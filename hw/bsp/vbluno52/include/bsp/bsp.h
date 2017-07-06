@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -17,43 +17,42 @@
  * under the License.
  */
 
-/* This file defines the HAL implementations within this MCU */
+#ifndef H_BSP_H
+#define H_BSP_H
 
-#ifndef MIPS_HAL_H
-#define MIPS_HAL_H
+#include <inttypes.h>
+
+#include <syscfg/syscfg.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* I/O pins for UART */
-struct mips_uart_cfg {
-    uint8_t tx;
-    uint8_t rx;
-};
+/* Define special stackos sections */
+#define sec_data_core   __attribute__((section(".data.core")))
+#define sec_bss_core    __attribute__((section(".bss.core")))
+#define sec_bss_nz_core __attribute__((section(".bss.core.nz")))
 
-/* I/O pins for SPI, SS pin is not handled by the driver */
-struct mips_spi_cfg {
-    uint8_t mosi;
-    uint8_t miso;
-    uint8_t sck;
-};
+/* More convenient section placement macros. */
+#define bssnz_t         sec_bss_nz_core
 
-/* I/O pins for I2C, also set frequency */
-struct mips_i2c_cfg {
-    uint8_t scl;
-    uint8_t sda;
-    uint32_t frequency;
-};
+extern uint8_t _ram_start;
+#define RAM_SIZE        0x10000
 
-/* Helper functions to enable/disable interrupts. */
-#define __HAL_DISABLE_INTERRUPTS(__os_sr) do {__os_sr = __builtin_get_isr_state(); \
-        __builtin_disable_interrupts();} while(0)
+/* LED pin */
+#define LED 			(12)
+#define LED_BLINK_PIN   LED
+#define LED_2           LED
 
-#define __HAL_ENABLE_INTERRUPTS(__os_sr) __builtin_set_isr_state(__os_sr)
+/* BUTTON pin */
+#define BUT 			(17)
+#define SW 				BUT
+
+
+#define NFFS_AREA_MAX   (8)
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* MCU_HAL_H */
+#endif  /* H_BSP_H */
