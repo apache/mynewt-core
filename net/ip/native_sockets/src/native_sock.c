@@ -778,6 +778,7 @@ socket_task(void *arg)
             if (ns->ns_type == SOCK_STREAM && ns->ns_tx) {
                 native_sock_stream_tx(ns, 1);
             }
+        }
     }
 }
 
