@@ -24,3 +24,14 @@ syscfg.defs:
             Specifies the required alignment for internal flash writes.
             Used internally by the newt tool.
         value: 1
+    WATCHDOG_RESET:
+        description: >
+            If 1 expired watchdog will reset platform. If 0 interrupt will
+            be generated. Set 1 in production builds.
+        value: 0
+    WATCHDOG_STUB:
+        description: >
+            Watchdog is part of always on domain, it counts even if debugger
+            is attached and system is stopped. Set WATCHDOG_STUB to 1 for
+            debugging.
+        value: 0
