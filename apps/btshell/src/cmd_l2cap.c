@@ -135,6 +135,7 @@ cmd_l2cap_connect(int argc, char **argv)
     conn = parse_arg_uint16("conn", &rc);
     if (rc != 0) {
         console_printf("invalid 'conn' parameter\n");
+        return rc;
     }
 
     psm = parse_arg_uint16("psm", &rc);
@@ -165,12 +166,13 @@ cmd_l2cap_disconnect(int argc, char **argv)
     conn = parse_arg_uint16("conn", &rc);
     if (rc != 0) {
         console_printf("invalid 'conn' parameter\n");
+        return rc;
     }
 
     idx = parse_arg_uint16("idx", &rc);
     if (rc != 0) {
         console_printf("invalid 'idx' parameter\n");
-        return 0;
+        return rc;
     }
 
     return btshell_l2cap_disconnect(conn, idx);
