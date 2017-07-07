@@ -35,3 +35,16 @@ syscfg.defs:
             is attached and system is stopped. Set WATCHDOG_STUB to 1 for
             debugging.
         value: 0
+    FLASH_MAX_CLOCK:
+        description: >
+            Maximum clock that flash can operate with. If system clock is more
+            then twice this value QSPI clock devider must be adjusted.
+        value: 50000000
+    HFROSC_DEFAULT_TRIM_VAL:
+        description: >
+            Default trimming value for interal high frequency oscillator.
+        value: 16
+    HFROSC_DEFAULT_DIVIDER:
+        description: >
+            Default divider used when high frequency oscillator is starting.
+        value: 4

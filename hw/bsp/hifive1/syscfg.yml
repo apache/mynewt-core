@@ -23,3 +23,7 @@ syscfg.defs:
     XTAL_32768:
         description: 'External 32k oscillator available.'
         value: 1
+
+    SYS_CLOCK:
+        description: 'System clock'
+        value:  HFXOSC_PLL_256_MHZ
