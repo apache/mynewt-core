@@ -2224,7 +2224,7 @@ static const struct shell_cmd_help l2cap_connect_help = {
  *****************************************************************************/
 
 static const struct shell_param l2cap_disconnect_params[] = {
-    {"conn", "disconnection handle, usage: =<UINT16>"},
+    {"conn", "connection handle, usage: =<UINT16>"},
     {"idx", "usage: =<UINT16>"},
     {NULL, NULL}
 };
@@ -2233,6 +2233,23 @@ static const struct shell_cmd_help l2cap_disconnect_help = {
     .summary = "perform l2cap disconnect procedure",
     .usage = "use show-coc to get the parameters",
     .params = l2cap_disconnect_params,
+};
+
+/*****************************************************************************
+ * $l2cap-send                                                               *
+ *****************************************************************************/
+
+static const struct shell_param l2cap_send_params[] = {
+    {"conn", "connection handle, usage: =<UINT16>"},
+    {"idx", "usage: =<UINT16>"},
+    {"bytes", "number of bytes to send, usage: =<UINT16>"},
+    {NULL, NULL}
+};
+
+static const struct shell_cmd_help l2cap_send_help = {
+    .summary = "perform l2cap send procedure",
+    .usage = "use show-coc to get the parameters",
+    .params = l2cap_send_params,
 };
 
 #endif
@@ -2440,6 +2457,13 @@ static const struct shell_cmd btshell_commands[] = {
         .sc_cmd_func = cmd_l2cap_disconnect,
 #if MYNEWT_VAL(SHELL_CMD_HELP)
         .help = &l2cap_disconnect_help,
+#endif
+    },
+    {
+        .sc_cmd = "l2cap-send",
+        .sc_cmd_func = cmd_l2cap_send,
+#if MYNEWT_VAL(SHELL_CMD_HELP)
+        .help = &l2cap_send_help,
 #endif
     },
 #endif

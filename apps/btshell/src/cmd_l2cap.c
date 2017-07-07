@@ -177,3 +177,41 @@ cmd_l2cap_disconnect(int argc, char **argv)
 
     return btshell_l2cap_disconnect(conn, idx);
 }
+
+/*****************************************************************************
+ * $l2cap-send                                                               *
+ *****************************************************************************/
+
+int
+cmd_l2cap_send(int argc, char **argv)
+{
+    uint16_t conn;
+    uint16_t idx;
+    uint16_t bytes;
+    int rc;
+
+    rc = parse_arg_all(argc - 1, argv + 1);
+    if (rc != 0) {
+        return rc;
+    }
+
+    conn = parse_arg_uint16("conn", &rc);
+    if (rc != 0) {
+       console_printf("invalid 'conn' parameter\n");
+       return rc;
+    }
+
+    idx = parse_arg_uint16("idx", &rc);
+    if (rc != 0) {
+       console_printf("invalid 'idx' parameter\n");
+       return rc;
+    }
+
+    bytes = parse_arg_uint16("bytes", &rc);
+    if (rc != 0) {
+       console_printf("invalid 'bytes' parameter\n");
+       return rc;
+    }
+
+    return btshell_l2cap_send(conn, idx, bytes);
+}
