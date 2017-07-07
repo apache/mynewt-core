@@ -73,6 +73,8 @@
 
 #if MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM)
 #define BTSHELL_COC_MTU               (256)
+/* We use same pool for incoming and outgoing sdu */
+#define BTSHELL_COC_BUF_COUNT         (3 * MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM))
 #endif
 
 struct log btshell_log;
@@ -94,7 +96,8 @@ static void *btshell_coc_conn_mem;
 static struct os_mempool btshell_coc_conn_pool;
 
 static void *btshell_sdu_coc_mem;
-static struct os_mempool btshell_sdu_coc_pool;
+struct os_mbuf_pool sdu_os_mbuf_pool;
+static struct os_mempool sdu_coc_mbuf_mempool;
 #endif
 
 static struct os_callout btshell_tx_timer;
@@ -1624,7 +1627,14 @@ btshell_l2cap_coc_remove(uint16_t conn_handle, struct ble_l2cap_chan *chan)
 static void
 btshell_l2cap_coc_recv(struct ble_l2cap_chan *chan, struct os_mbuf *sdu)
 {
-    console_printf("LE CoC SDU received, chan: 0x%08lx\n", (uint32_t) chan);
+    console_printf("LE CoC SDU received, chan: 0x%08lx, data len %d\n",
+                   (uint32_t) chan, OS_MBUF_PKTLEN(sdu));
+
+    os_mbuf_free_chain(sdu);
+    sdu = os_mbuf_get_pkthdr(&sdu_os_mbuf_pool, 0);
+    assert(sdu != NULL);
+
+    ble_l2cap_recv_ready(chan, sdu);
 }
 
 static int
@@ -1633,9 +1643,9 @@ btshell_l2cap_coc_accept(uint16_t conn_handle, uint16_t peer_mtu,
 {
     struct os_mbuf *sdu_rx;
 
-    sdu_rx = os_memblock_get(&btshell_sdu_coc_pool);
+    sdu_rx = os_mbuf_get_pkthdr(&sdu_os_mbuf_pool, 0);
     if (!sdu_rx) {
-            return BLE_HS_ENOMEM;
+        return BLE_HS_ENOMEM;
     }
 
     ble_l2cap_recv_ready(chan, sdu_rx);
@@ -1707,7 +1717,7 @@ btshell_l2cap_connect(uint16_t conn_handle, uint16_t psm)
 
     struct os_mbuf *sdu_rx;
 
-    sdu_rx = os_memblock_get(&btshell_sdu_coc_pool);
+    sdu_rx = os_mbuf_get_pkthdr(&sdu_os_mbuf_pool, 0);
     assert(sdu_rx != NULL);
 
     return ble_l2cap_connect(conn_handle, psm, BTSHELL_COC_MTU, sdu_rx,
@@ -1793,14 +1803,16 @@ main(void)
 #if MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM) != 0
     /* For testing we want to support all the available channels */
     btshell_sdu_coc_mem = malloc(
-        OS_MEMPOOL_BYTES(BTSHELL_COC_MTU * MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM),
-                         sizeof (struct os_mbuf)));
+        OS_MEMPOOL_BYTES(BTSHELL_COC_BUF_COUNT, BTSHELL_COC_MTU));
     assert(btshell_sdu_coc_mem != NULL);
 
-    rc = os_mempool_init(&btshell_sdu_coc_pool,
-                         BTSHELL_COC_MTU * MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM),
-                         sizeof (struct os_mbuf), btshell_sdu_coc_mem,
+    rc = os_mempool_init(&sdu_coc_mbuf_mempool, BTSHELL_COC_BUF_COUNT,
+                         BTSHELL_COC_MTU, btshell_sdu_coc_mem,
                          "btshell_coc_sdu_pool");
+    assert(rc == 0);
+
+    rc = os_mbuf_pool_init(&sdu_os_mbuf_pool, &sdu_coc_mbuf_mempool,
+                           BTSHELL_COC_MTU, BTSHELL_COC_BUF_COUNT);
     assert(rc == 0);
 
     btshell_coc_conn_mem = malloc(
