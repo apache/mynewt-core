@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <inttypes.h>
+#include "sysinit/sysinit.h"
 #include "syscfg/syscfg.h"
 #include "sysflash/sysflash.h"
 #include "os/endian.h"
@@ -65,8 +66,7 @@ boot_serial_test(void)
 int
 main(void)
 {
-    ts_config.ts_print_results = 1;
-    tu_init();
+    sysinit();
 
     boot_serial_test();
 

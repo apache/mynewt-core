@@ -17,6 +17,7 @@
  * under the License.
  */
 
+#include "sysinit/sysinit.h"
 #include "syscfg/syscfg.h"
 #include "testutil/testutil.h"
 #include "test_oic.h"
@@ -35,8 +36,7 @@ oic_test_init(void)
 int
 main(int argc, char **argv)
 {
-    ts_config.ts_print_results = 1;
-    tu_init();
+    sysinit();
 
     tu_suite_set_init_cb((void *)oic_test_init, NULL);
     oic_test_all();

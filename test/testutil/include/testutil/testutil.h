@@ -132,8 +132,6 @@ struct ts_config {
     void *ts_restart_arg;
 };
 
-int tu_parse_args(int argc, char **argv);
-int tu_init(void);
 void tu_restart(void);
 
 /*

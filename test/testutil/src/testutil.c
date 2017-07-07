@@ -37,15 +37,16 @@ int tu_any_failed;
 
 struct ts_testsuite_list *ts_suites;
 
-int
+void
 tu_init(void)
 {
+    /* Ensure this function only gets called by sysinit. */
+    SYSINIT_ASSERT_ACTIVE();
+
 #if MYNEWT_VAL(SELFTEST)
     os_init(NULL);
-    sysinit();
+    ts_config.ts_print_results = 1;
 #endif
-
-    return 0;
 }
 
 void
@@ -57,25 +58,6 @@ tu_arch_restart(void)
 #else
     hal_system_reset();
 #endif
-}
-
-int
-tu_parse_args(int argc, char **argv)
-{
-    int ch;
-
-    while ((ch = getopt(argc, argv, "s")) != -1) {
-        switch (ch) {
-        case 's':
-            ts_config.ts_system_assert = 1;
-            break;
-
-        default:
-            return EINVAL;
-        }
-    }
-
-    return 0;
 }
 
 void
