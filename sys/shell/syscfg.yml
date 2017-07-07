@@ -29,6 +29,9 @@ syscfg.defs:
     SHELL_CMD_HELP:
         description: 'Include help information for shell commands'
         value: 1
+    SHELL_PROMPT_SUFFIX:
+        description: 'Prompt suffix'
+        value: '"> "'
     SHELL_MAX_MODULES:
         description: 'Max number of modules'
         value: 3
