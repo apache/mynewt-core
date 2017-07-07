@@ -2231,7 +2231,7 @@ static const struct shell_param l2cap_disconnect_params[] = {
 
 static const struct shell_cmd_help l2cap_disconnect_help = {
     .summary = "perform l2cap disconnect procedure",
-    .usage = "use show-coc to get the parameters",
+    .usage = "use gatt-show-coc to get the parameters",
     .params = l2cap_disconnect_params,
 };
 
@@ -2248,7 +2248,7 @@ static const struct shell_param l2cap_send_params[] = {
 
 static const struct shell_cmd_help l2cap_send_help = {
     .summary = "perform l2cap send procedure",
-    .usage = "use show-coc to get the parameters",
+    .usage = "use gatt-show-coc to get the parameters",
     .params = l2cap_send_params,
 };
 
