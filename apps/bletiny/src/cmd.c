@@ -404,11 +404,13 @@ help_cmd_conn_start_end(void)
     console_printf("\t%s=<val> %s=<val> %s=<val>\n", "conn", "start", "end");
 }
 
+#if !MYNEWT_VAL(BLETINY_HELP)
 static void
 bletiny_help_disabled(void)
 {
     console_printf("bletiny help is disabled in this build\n");
 }
+#endif
 
 static void
 bletiny_adv_help(void)
