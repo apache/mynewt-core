@@ -62,17 +62,17 @@
 #include "../src/ble_hs_hci_priv.h"
 
 #if MYNEWT_VAL(BLE_ROLE_CENTRAL)
-#define BLETINY_MAX_SVCS               32
-#define BLETINY_MAX_CHRS               64
-#define BLETINY_MAX_DSCS               64
+#define BTSHELL_MAX_SVCS               32
+#define BTSHELL_MAX_CHRS               64
+#define BTSHELL_MAX_DSCS               64
 #else
-#define BLETINY_MAX_SVCS               1
-#define BLETINY_MAX_CHRS               1
-#define BLETINY_MAX_DSCS               1
+#define BTSHELL_MAX_SVCS               1
+#define BTSHELL_MAX_CHRS               1
+#define BTSHELL_MAX_DSCS               1
 #endif
 
 #if MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM)
-#define BLETINY_COC_MTU               (256)
+#define BTSHELL_COC_MTU               (256)
 #endif
 
 struct log btshell_log;
@@ -115,9 +115,9 @@ int btshell_full_disc_prev_chr_val;
 
 
 #ifdef DEVICE_NAME
-#define BLETINY_AUTO_DEVICE_NAME    XSTR(DEVICE_NAME)
+#define BTSHELL_AUTO_DEVICE_NAME    XSTR(DEVICE_NAME)
 #else
-#define BLETINY_AUTO_DEVICE_NAME    ""
+#define BTSHELL_AUTO_DEVICE_NAME    ""
 #endif
 
 static void
@@ -379,7 +379,7 @@ btshell_svc_add(uint16_t conn_handle, const struct ble_gatt_svc *gatt_svc)
 
     conn = btshell_conn_find(conn_handle);
     if (conn == NULL) {
-        BLETINY_LOG(DEBUG, "RECEIVED SERVICE FOR UNKNOWN CONNECTION; "
+        BTSHELL_LOG(DEBUG, "RECEIVED SERVICE FOR UNKNOWN CONNECTION; "
                            "HANDLE=%d\n",
                     conn_handle);
         return NULL;
@@ -393,7 +393,7 @@ btshell_svc_add(uint16_t conn_handle, const struct ble_gatt_svc *gatt_svc)
 
     svc = os_memblock_get(&btshell_svc_pool);
     if (svc == NULL) {
-        BLETINY_LOG(DEBUG, "OOM WHILE DISCOVERING SERVICE\n");
+        BTSHELL_LOG(DEBUG, "OOM WHILE DISCOVERING SERVICE\n");
         return NULL;
     }
     memset(svc, 0, sizeof *svc);
@@ -463,7 +463,7 @@ btshell_chr_add(uint16_t conn_handle,  uint16_t svc_start_handle,
 
     conn = btshell_conn_find(conn_handle);
     if (conn == NULL) {
-        BLETINY_LOG(DEBUG, "RECEIVED SERVICE FOR UNKNOWN CONNECTION; "
+        BTSHELL_LOG(DEBUG, "RECEIVED SERVICE FOR UNKNOWN CONNECTION; "
                            "HANDLE=%d\n",
                     conn_handle);
         return NULL;
@@ -471,7 +471,7 @@ btshell_chr_add(uint16_t conn_handle,  uint16_t svc_start_handle,
 
     svc = btshell_svc_find(conn, svc_start_handle, NULL);
     if (svc == NULL) {
-        BLETINY_LOG(DEBUG, "CAN'T FIND SERVICE FOR DISCOVERED CHR; HANDLE=%d\n",
+        BTSHELL_LOG(DEBUG, "CAN'T FIND SERVICE FOR DISCOVERED CHR; HANDLE=%d\n",
                     conn_handle);
         return NULL;
     }
@@ -484,7 +484,7 @@ btshell_chr_add(uint16_t conn_handle,  uint16_t svc_start_handle,
 
     chr = os_memblock_get(&btshell_chr_pool);
     if (chr == NULL) {
-        BLETINY_LOG(DEBUG, "OOM WHILE DISCOVERING CHARACTERISTIC\n");
+        BTSHELL_LOG(DEBUG, "OOM WHILE DISCOVERING CHARACTERISTIC\n");
         return NULL;
     }
     memset(chr, 0, sizeof *chr);
@@ -554,7 +554,7 @@ btshell_dsc_add(uint16_t conn_handle, uint16_t chr_val_handle,
 
     conn = btshell_conn_find(conn_handle);
     if (conn == NULL) {
-        BLETINY_LOG(DEBUG, "RECEIVED SERVICE FOR UNKNOWN CONNECTION; "
+        BTSHELL_LOG(DEBUG, "RECEIVED SERVICE FOR UNKNOWN CONNECTION; "
                            "HANDLE=%d\n",
                     conn_handle);
         return NULL;
@@ -562,14 +562,14 @@ btshell_dsc_add(uint16_t conn_handle, uint16_t chr_val_handle,
 
     svc = btshell_svc_find_range(conn, chr_val_handle);
     if (svc == NULL) {
-        BLETINY_LOG(DEBUG, "CAN'T FIND SERVICE FOR DISCOVERED DSC; HANDLE=%d\n",
+        BTSHELL_LOG(DEBUG, "CAN'T FIND SERVICE FOR DISCOVERED DSC; HANDLE=%d\n",
                     conn_handle);
         return NULL;
     }
 
     chr = btshell_chr_find(svc, chr_val_handle, NULL);
     if (chr == NULL) {
-        BLETINY_LOG(DEBUG, "CAN'T FIND CHARACTERISTIC FOR DISCOVERED DSC; "
+        BTSHELL_LOG(DEBUG, "CAN'T FIND CHARACTERISTIC FOR DISCOVERED DSC; "
                            "HANDLE=%d\n",
                     conn_handle);
         return NULL;
@@ -678,7 +678,7 @@ btshell_disc_full_dscs(uint16_t conn_handle)
 
     conn = btshell_conn_find(conn_handle);
     if (conn == NULL) {
-        BLETINY_LOG(DEBUG, "Failed to discover descriptors for conn=%d; "
+        BTSHELL_LOG(DEBUG, "Failed to discover descriptors for conn=%d; "
                            "not connected\n", conn_handle);
         btshell_full_disc_complete(BLE_HS_ENOTCONN);
         return;
@@ -716,7 +716,7 @@ btshell_disc_full_chrs(uint16_t conn_handle)
 
     conn = btshell_conn_find(conn_handle);
     if (conn == NULL) {
-        BLETINY_LOG(DEBUG, "Failed to discover characteristics for conn=%d; "
+        BTSHELL_LOG(DEBUG, "Failed to discover characteristics for conn=%d; "
                            "not connected\n", conn_handle);
         btshell_full_disc_complete(BLE_HS_ENOTCONN);
         return;
@@ -1691,7 +1691,7 @@ btshell_l2cap_create_srv(uint16_t psm)
     return 0;
 #else
 
-    return ble_l2cap_create_server(psm, BLETINY_COC_MTU, btshell_l2cap_event,
+    return ble_l2cap_create_server(psm, BTSHELL_COC_MTU, btshell_l2cap_event,
                                                                        NULL);
 #endif
 }
@@ -1710,7 +1710,7 @@ btshell_l2cap_connect(uint16_t conn_handle, uint16_t psm)
     sdu_rx = os_memblock_get(&btshell_sdu_coc_pool);
     assert(sdu_rx != NULL);
 
-    return ble_l2cap_connect(conn_handle, psm, BLETINY_COC_MTU, sdu_rx,
+    return ble_l2cap_connect(conn_handle, psm, BTSHELL_COC_MTU, sdu_rx,
                              btshell_l2cap_event, NULL);
 #endif
 }
@@ -1764,28 +1764,28 @@ main(void)
 
     /* Allocate some application specific memory pools. */
     btshell_svc_mem = malloc(
-        OS_MEMPOOL_BYTES(BLETINY_MAX_SVCS, sizeof (struct btshell_svc)));
+        OS_MEMPOOL_BYTES(BTSHELL_MAX_SVCS, sizeof (struct btshell_svc)));
     assert(btshell_svc_mem != NULL);
 
-    rc = os_mempool_init(&btshell_svc_pool, BLETINY_MAX_SVCS,
+    rc = os_mempool_init(&btshell_svc_pool, BTSHELL_MAX_SVCS,
                          sizeof (struct btshell_svc), btshell_svc_mem,
                          "btshell_svc_pool");
     assert(rc == 0);
 
     btshell_chr_mem = malloc(
-        OS_MEMPOOL_BYTES(BLETINY_MAX_CHRS, sizeof (struct btshell_chr)));
+        OS_MEMPOOL_BYTES(BTSHELL_MAX_CHRS, sizeof (struct btshell_chr)));
     assert(btshell_chr_mem != NULL);
 
-    rc = os_mempool_init(&btshell_chr_pool, BLETINY_MAX_CHRS,
+    rc = os_mempool_init(&btshell_chr_pool, BTSHELL_MAX_CHRS,
                          sizeof (struct btshell_chr), btshell_chr_mem,
                          "btshell_chr_pool");
     assert(rc == 0);
 
     btshell_dsc_mem = malloc(
-        OS_MEMPOOL_BYTES(BLETINY_MAX_DSCS, sizeof (struct btshell_dsc)));
+        OS_MEMPOOL_BYTES(BTSHELL_MAX_DSCS, sizeof (struct btshell_dsc)));
     assert(btshell_dsc_mem != NULL);
 
-    rc = os_mempool_init(&btshell_dsc_pool, BLETINY_MAX_DSCS,
+    rc = os_mempool_init(&btshell_dsc_pool, BTSHELL_MAX_DSCS,
                          sizeof (struct btshell_dsc), btshell_dsc_mem,
                          "btshell_dsc_pool");
     assert(rc == 0);
@@ -1793,12 +1793,12 @@ main(void)
 #if MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM) != 0
     /* For testing we want to support all the available channels */
     btshell_sdu_coc_mem = malloc(
-        OS_MEMPOOL_BYTES(BLETINY_COC_MTU * MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM),
+        OS_MEMPOOL_BYTES(BTSHELL_COC_MTU * MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM),
                          sizeof (struct os_mbuf)));
     assert(btshell_sdu_coc_mem != NULL);
 
     rc = os_mempool_init(&btshell_sdu_coc_pool,
-                         BLETINY_COC_MTU * MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM),
+                         BTSHELL_COC_MTU * MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM),
                          sizeof (struct os_mbuf), btshell_sdu_coc_mem,
                          "btshell_coc_sdu_pool");
     assert(rc == 0);
