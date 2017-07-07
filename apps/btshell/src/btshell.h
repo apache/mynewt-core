@@ -83,16 +83,7 @@ struct btshell_conn {
 extern struct btshell_conn btshell_conns[MYNEWT_VAL(BLE_MAX_CONNECTIONS)];
 extern int btshell_num_conns;
 
-extern uint16_t nm_attr_val_handle;
-
 extern struct log btshell_log;
-int nm_chr_access(uint16_t conn_handle, uint16_t attr_handle,
-                  uint8_t op, struct ble_gatt_access_ctxt *ctxt,
-                  void *arg);
-int nm_rx_rsp(uint8_t *attr_val, uint16_t attr_len);
-void nm_init(void);
-void btshell_lock(void);
-void btshell_unlock(void);
 int btshell_exchange_mtu(uint16_t conn_handle);
 int btshell_disc_svcs(uint16_t conn_handle);
 int btshell_disc_svc_by_uuid(uint16_t conn_handle, const ble_uuid_t *uuid);
@@ -136,7 +127,7 @@ int btshell_scan_cancel(void);
 int btshell_set_adv_data(struct ble_hs_adv_fields *adv_fields);
 int btshell_update_conn(uint16_t conn_handle,
                          struct ble_gap_upd_params *params);
-void btshell_chrup(uint16_t attr_handle);
+void btshell_notify(uint16_t attr_handle);
 int btshell_datalen(uint16_t conn_handle, uint16_t tx_octets,
                     uint16_t tx_time);
 int btshell_l2cap_update(uint16_t conn_handle,
