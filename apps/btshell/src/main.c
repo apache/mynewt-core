@@ -1740,6 +1740,7 @@ btshell_l2cap_disconnect(uint16_t conn_handle, uint16_t idx)
     struct btshell_conn *conn;
     struct btshell_l2cap_coc *coc;
     int i;
+    int rc = 0;
 
     conn = btshell_conn_find(conn_handle);
     assert(conn != NULL);
@@ -1753,9 +1754,12 @@ btshell_l2cap_disconnect(uint16_t conn_handle, uint16_t idx)
     }
     assert(coc != NULL);
 
-    ble_l2cap_disconnect(coc->chan);
+    rc = ble_l2cap_disconnect(coc->chan);
+    if (rc) {
+        console_printf("Could not disconnect channel rc=%d\n", rc);
+    }
 
-    return 0;
+    return rc;
 #endif
 }
 
