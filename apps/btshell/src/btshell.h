@@ -62,6 +62,7 @@ struct btshell_svc {
     SLIST_ENTRY(btshell_svc) next;
     struct ble_gatt_svc svc;
 
+    bool char_disc_sent;
     struct btshell_chr_list chrs;
 };
 
