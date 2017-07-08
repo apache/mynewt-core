@@ -46,6 +46,16 @@ static const struct fe310_uart_cfg os_bsp_uart0_cfg = {
 };
 #endif
 
+#if MYNEWT_VAL(TIMER_0)
+extern struct fe310_hal_tmr fe310_pwm2;
+#endif
+#if MYNEWT_VAL(TIMER_1)
+extern struct fe310_hal_tmr fe310_pwm1;
+#endif
+#if MYNEWT_VAL(TIMER_2)
+extern struct fe310_hal_tmr fe310_pwm0;
+#endif
+
 /*
  * What memory to include in coredump.
  */
@@ -81,6 +91,23 @@ hal_bsp_init(void)
     int rc;
 
     (void)rc;
+#if MYNEWT_VAL(TIMER_0)
+    rc = hal_timer_init(0, (void *)&fe310_pwm2);
+    assert(rc == 0);
+#endif
+#if MYNEWT_VAL(TIMER_1)
+    rc = hal_timer_init(1, (void *)&fe310_pwm1);
+    assert(rc == 0);
+#endif
+#if MYNEWT_VAL(TIMER_2)
+    rc = hal_timer_init(2, (void *)&fe310_pwm0);
+    assert(rc == 0);
+#endif
+
+#if (MYNEWT_VAL(OS_CPUTIME_TIMER_NUM) >= 0)
+    rc = os_cputime_init(MYNEWT_VAL(OS_CPUTIME_FREQ));
+    assert(rc == 0);
+#endif
 
 #if MYNEWT_VAL(UART_0)
     rc = os_dev_create((struct os_dev *) &os_bsp_uart0, "uart0",

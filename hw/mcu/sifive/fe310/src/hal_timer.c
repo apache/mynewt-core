@@ -31,24 +31,24 @@
 struct fe310_hal_tmr {
     void *pwm_regs;         /* Pointer to timer registers */
     uint32_t value;         /* Acumulated timer value, incremented on CMP0 */
-    uint16_t max_pwm;       /* Max value for PWMxCMP registers 0xFF or 0xFFFF */
+    uint8_t max_scale;      /* Max value for pwmcfg.pwmscale 7 (for PMW0) or 15 (for PWM1/2) */
     uint8_t pwmxcmp0_int;   /* PWMxCMP0 interrupt number */
     TAILQ_HEAD(hal_timer_qhead, hal_timer) sht_timers;
 };
 
 #if MYNEWT_VAL(TIMER_0)
 struct fe310_hal_tmr fe310_pwm2 = {
-    (uint32_t *) PWM2_CTRL_ADDR, 0, 0xFFFF, INT_PWM2_BASE
+    (uint32_t *) PWM2_CTRL_ADDR, 0, 15, INT_PWM2_BASE
 };
 #endif
 #if MYNEWT_VAL(TIMER_1)
 struct fe310_hal_tmr fe310_pwm1 = {
-    (uint32_t *) PWM1_CTRL_ADDR, 0, 0xFFFF, INT_PWM1_BASE
+    (uint32_t *) PWM1_CTRL_ADDR, 0, 15, INT_PWM1_BASE
 };
 #endif
 #if MYNEWT_VAL(TIMER_2)
 struct fe310_hal_tmr fe310_pwm0 = {
-    (uint32_t *) PWM0_CTRL_ADDR, 0, 0xFF, INT_PWM0_BASE
+    (uint32_t *) PWM0_CTRL_ADDR, 0, 7, INT_PWM0_BASE
 };
 #endif
 
@@ -203,7 +203,7 @@ hal_timer_config(int timer_num, uint32_t freq_hz)
     cpu_freq = get_cpu_freq();
     div = cpu_freq / freq_hz;
 
-    if (div >= 0x10000 || div == 0) {
+    if (div > (1 << tmr->max_scale) || div == 0) {
         return -1;
     }
 
@@ -215,8 +215,9 @@ hal_timer_config(int timer_num, uint32_t freq_hz)
 
     _REG32(tmr->pwm_regs, PWM_CFG) = 0;
     _REG32(tmr->pwm_regs, PWM_COUNT) = 0;
-    _REG32(tmr->pwm_regs, PWM_CMP0) = tmr->max_pwm;
-    _REG32(tmr->pwm_regs, PWM_CMP1) = tmr->max_pwm;
+    /* 15 -> 0xFFFF, 7 -> 0xFF*/
+    _REG32(tmr->pwm_regs, PWM_CMP0) = (1 << (1 + tmr->max_scale)) - 1;
+    _REG32(tmr->pwm_regs, PWM_CMP1) = _REG32(tmr->pwm_regs, PWM_CMP0);
     pwm_to_timer[(tmr->pwmxcmp0_int - INT_PWM0_BASE) >> 2] = (uint8_t) timer_num;
     plic_set_handler(tmr->pwmxcmp0_int, fe310_pwm_cmp0_handler, 3);
     plic_set_handler(tmr->pwmxcmp0_int + 1, fe310_pwm_cmp1_handler, 3);
