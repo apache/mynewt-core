@@ -37,6 +37,15 @@
 #include <os/os_dev.h>
 #include <bsp/bsp.h>
 #include <env/freedom-e300-hifive1/platform.h>
+
+#if MYNEWT_VAL(UART_0)
+static struct uart_dev os_bsp_uart0;
+static const struct fe310_uart_cfg os_bsp_uart0_cfg = {
+    .suc_pin_tx = HIFIVE_UART0_TX,
+    .suc_pin_rx = HIFIVE_UART0_RX,
+};
+#endif
+
 /*
  * What memory to include in coredump.
  */
@@ -72,4 +81,11 @@ hal_bsp_init(void)
     int rc;
 
     (void)rc;
+
+#if MYNEWT_VAL(UART_0)
+    rc = os_dev_create((struct os_dev *) &os_bsp_uart0, "uart0",
+      OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *)&os_bsp_uart0_cfg);
+    assert(rc == 0);
+#endif
+
 }
