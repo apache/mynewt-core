@@ -236,7 +236,7 @@ config_lis2dh12_sensor(void)
     memset(&cfg, 0, sizeof(cfg));
 
     cfg.lc_s_mask = SENSOR_TYPE_ACCELEROMETER;
-    cfg.lc_rate = LIS2DH12_DATA_RATE_1HZ;
+    cfg.lc_rate = LIS2DH12_DATA_RATE_HN_1344HZ_L_5376HZ;
     cfg.lc_fs = LIS2DH12_FS_2G;
 
     rc = lis2dh12_config((struct lis2dh12 *)dev, &cfg);
