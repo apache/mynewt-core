@@ -39,7 +39,7 @@ struct pwm_dev;
  */
 typedef int (*pwm_configure_channel_func_t)(struct pwm_dev *, uint8_t, void *);
 
-b/**
+ /**
  * Enable the PWM with specified duty cycle.
  *
  * This duty cycle is a fractional duty cycle where 0 == off, 65535=on,
