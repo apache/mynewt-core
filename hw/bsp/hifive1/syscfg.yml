@@ -27,3 +27,7 @@ syscfg.defs:
     SYS_CLOCK:
         description: 'System clock'
         value:  HFXOSC_PLL_256_MHZ
+
+    UART_0:
+        description: 'Whether to enable UART0'
+        value:  1

@@ -49,6 +49,8 @@ extern const struct hal_flash fe310_flash_dev;
 
 void hal_uart_sys_clock_changed(void);
 
+void hal_uart_sys_clock_changed(void);
+
 #ifdef __cplusplus
 }
 #endif
