@@ -31,3 +31,15 @@ syscfg.defs:
     UART_0:
         description: 'Whether to enable UART0'
         value:  1
+
+    TIMER_0:
+        description: 'Whether to use PWM2 16 bit timer as system timer'
+        value:  1
+
+    TIMER_1:
+        description: 'Whether to use PWM1 16 bit timer as system timer'
+        value:  1
+
+    TIMER_2:
+        description: 'Whether to use PWM0 8 bit timer as system timer'
+        value:  1
