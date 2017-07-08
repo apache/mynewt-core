@@ -115,7 +115,7 @@ struct pwm_dev {
     struct pwm_driver_funcs pwm_funcs;
     struct pwm_chan_conf *pwm_chans;
     uint32_t pwm_chan_count;
-    duty_frac uint16_t;
+    uint16_t duty_frac;
 };
 
 int pwm_chan_config(struct pwm_dev *dev, uint8_t cnum, void *data);

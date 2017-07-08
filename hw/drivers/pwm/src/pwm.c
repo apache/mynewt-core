@@ -56,11 +56,11 @@ pwm_chan_config(struct pwm_dev *dev, uint8_t cnum, void *data)
  * @return 0 on success, negative on error.
  */
 int
-pwm_enable_duty_cycle(struct pwm_dev *pwm_d, uint16_t fraction)
+pwm_enable_duty_cycle(struct pwm_dev *dev, uint16_t fraction)
 {
     assert(dev->pwm_funcs.pwm_enable_duty_cycle != NULL);
 
-    return (dev->pwm_funcs.pwm_enable_duty_cycle(dev, cnum, data));
+    return (dev->pwm_funcs.pwm_enable_duty_cycle(dev, fraction));
 }
 
 /**
@@ -122,7 +122,7 @@ pwm_get_resolution_bits(struct pwm_dev *dev)
 int
 pwm_disable(struct pwm_dev *dev, uint8_t cnum)
 {
-    assert(dev->pwm_funcs.pwm_disable_channel != NULL);
+    assert(dev->pwm_funcs.pwm_disable != NULL);
 
     if (cnum > dev->pwm_chan_count) {
         return (EINVAL);
@@ -132,7 +132,7 @@ pwm_disable(struct pwm_dev *dev, uint8_t cnum)
         return (EINVAL);
     }
 
-    return (dev->pwm_funcs.pwm_disable_channel(dev, cnum));
+    return (dev->pwm_funcs.pwm_disable(dev, cnum));
 }
 
 /* /\** */
