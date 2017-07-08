@@ -27,6 +27,11 @@
  extern "C" {
 #endif
 
+struct fe310_uart_cfg {
+    int8_t suc_pin_tx;                          /* pins for IO */
+    int8_t suc_pin_rx;
+};
+
 /* Helper functions to enable/disable interrupts. */
 #define __HAL_DISABLE_INTERRUPTS(x)                        \
     do {                                                   \
@@ -39,6 +44,10 @@
             set_csr(mstatus, MSTATUS_MIE);                 \
         }                                                  \
     } while(0);
+
+extern const struct hal_flash fe310_flash_dev;
+
+void hal_uart_sys_clock_changed(void);
 
 #ifdef __cplusplus
 }

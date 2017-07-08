@@ -46,6 +46,19 @@ static const struct hal_bsp_mem_dump dump_cfg[] = {
         .hbmd_size = RAM_SIZE
     }
 };
+
+const struct hal_flash *
+hal_bsp_flash_dev(uint8_t id)
+{
+    /*
+     * Internal flash mapped to id 0.
+     */
+    if (id != 0) {
+        return NULL;
+    }
+    return &fe310_flash_dev;
+}
+
 const struct hal_bsp_mem_dump *
 hal_bsp_core_dump(int *area_cnt)
 {
