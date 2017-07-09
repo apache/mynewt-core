@@ -73,7 +73,9 @@ static const oc_handler_t sensor_oic_handler = {
 /* Application-specified header. */
 #include "bleprph.h"
 
+#if MYNEWT_VAL(SENSOR_OIC)
 static int sensor_oic_gap_event(struct ble_gap_event *event, void *arg);
+#endif
 
 /** Log data. */
 struct log bleprph_log;
