@@ -22,9 +22,9 @@
 #include <errno.h>
 #include <string.h>
 
+#include "sysinit/sysinit.h"
 #include "defs/error.h"
 #include "os/os.h"
-#include "sysinit/sysinit.h"
 #include "hal/hal_spi.h"
 #include "sensor/sensor.h"
 #include "sensor/accel.h"
