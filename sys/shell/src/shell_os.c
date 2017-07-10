@@ -219,8 +219,8 @@ static const struct shell_cmd os_commands[] = {
 };
 
 void
-shell_os_register(shell_register_function_t register_func)
+shell_os_register(void)
 {
-    register_func(SHELL_OS, os_commands);
+    shell_register(SHELL_OS, os_commands);
 }
 

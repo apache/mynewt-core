@@ -28,28 +28,29 @@
 #include "shell/shell.h"
 #include "shell_priv.h"
 
-#define SHELL_PROMPT "shell> "
-
-#define MODULE_NAME_MAX_LEN     20
-
-/* additional chars are "> " (include '\0' )*/
-#define PROMPT_SUFFIX 3
-#define PROMPT_MAX_LEN (MODULE_NAME_MAX_LEN + PROMPT_SUFFIX)
+#define SHELL_PROMPT "shell"
 
 static struct shell_module shell_modules[MYNEWT_VAL(SHELL_MAX_MODULES)];
 static size_t num_of_shell_entities;
 
 static const char *prompt;
-static char default_module_prompt[PROMPT_MAX_LEN];
 static int default_module = -1;
 
 static shell_cmd_func_t app_cmd_handler;
 static shell_prompt_function_t app_prompt_handler;
 
-static struct console_input buf[MYNEWT_VAL(SHELL_MAX_CMD_QUEUED)];
-
+/* Shared queue for shell events to be processed */
+static struct os_eventq *shell_evq;
+/* Queue for available shell events */
 static struct os_eventq avail_queue;
 static struct os_event shell_console_ev[MYNEWT_VAL(SHELL_MAX_CMD_QUEUED)];
+static struct console_input buf[MYNEWT_VAL(SHELL_MAX_CMD_QUEUED)];
+
+void
+shell_evq_set(struct os_eventq *evq)
+{
+    os_eventq_designate(&shell_evq, evq, NULL);
+}
 
 static const char *
 get_prompt(void)
@@ -65,10 +66,16 @@ get_prompt(void)
     }
 
     if (default_module != -1) {
-        return default_module_prompt;
+        return shell_modules[default_module].name;
     }
 
     return prompt;
+}
+
+static void
+print_prompt(void)
+{
+    console_printf("%s%s", get_prompt(), MYNEWT_VAL(SHELL_PROMPT_SUFFIX));
 }
 
 static size_t
@@ -121,9 +128,14 @@ get_destination_module(const char *module_str, uint8_t len)
     int i;
 
     for (i = 0; i < num_of_shell_entities; i++) {
-        if (!strncmp(module_str,
-                     shell_modules[i].name, len)) {
-            return i;
+        if (len == -1) {
+            if (!strcmp(module_str, shell_modules[i].name)) {
+                return i;
+            }
+        } else {
+            if (!strncmp(module_str, shell_modules[i].name, len)) {
+                return i;
+            }
         }
     }
 
@@ -149,7 +161,7 @@ get_command_and_module(char *argv[], int *module)
             return NULL;
         }
 
-        *module = get_destination_module(argv[0], MODULE_NAME_MAX_LEN);
+        *module = get_destination_module(argv[0], -1);
         if (*module == -1) {
             console_printf("Illegal module %s\n", argv[0]);
             return NULL;
@@ -181,15 +193,17 @@ show_cmd_help(char *argv[])
             console_printf("%s:\n", shell_module->commands[i].sc_cmd);
 
             if (!shell_module->commands[i].help) {
-                console_printf("\n");
+                console_printf("(no help available)\n");
                 return 0;
             }
             if (shell_module->commands[i].help->usage) {
+                console_printf("%s:\n", shell_module->commands[i].sc_cmd);
                 console_printf("%s\n", shell_module->commands[i].help->usage);
             } else if (shell_module->commands[i].help->summary) {
+                console_printf("%s:\n", shell_module->commands[i].sc_cmd);
                 console_printf("%s\n", shell_module->commands[i].help->summary);
             } else {
-                console_printf("\n");
+                console_printf("(no help available)\n");
             }
 
             return 0;
@@ -241,7 +255,7 @@ show_help(int argc, char *argv[])
     /* help per module */
     if ((argc == 2) || ((default_module != -1) && (argc == 1))) {
         if (default_module == -1) {
-            module = get_destination_module(argv[1], MODULE_NAME_MAX_LEN);
+            module = get_destination_module(argv[1], -1);
             if (module == -1) {
                 console_printf("Illegal module %s\n", argv[1]);
                 return 0;
@@ -265,13 +279,7 @@ set_default_module(const char *name)
 {
     int module;
 
-    if (strlen(name) > MODULE_NAME_MAX_LEN) {
-        console_printf("Module name %s is too long, default is not changed\n",
-                       name);
-        return -1;
-    }
-
-    module = get_destination_module(name, MODULE_NAME_MAX_LEN);
+    module = get_destination_module(name, -1);
 
     if (module == -1) {
         console_printf("Illegal module %s, default is not changed\n", name);
@@ -279,9 +287,6 @@ set_default_module(const char *name)
     }
 
     default_module = module;
-
-    strncpy(default_module_prompt, name, MODULE_NAME_MAX_LEN);
-    strcat(default_module_prompt, "> ");
 
     return 0;
 }
@@ -331,7 +336,6 @@ get_cb(int argc, char *argv[])
     }
 
     shell_module = &shell_modules[module];
-    console_printf("module: %d, command: %s\n", module, command);
     for (i = 0; shell_module->commands[i].sc_cmd; i++) {
         if (!strcmp(command, shell_module->commands[i].sc_cmd)) {
             return shell_module->commands[i].sc_cmd_func;
@@ -351,7 +355,7 @@ shell_process_command(char *line)
 
     argc = line2argv(line, argv, MYNEWT_VAL(SHELL_CMD_ARGC_MAX) + 1);
     if (!argc) {
-        console_printf("%s", get_prompt());
+        print_prompt();
         return;
     }
 
@@ -362,7 +366,7 @@ shell_process_command(char *line)
         } else {
             console_printf("Unrecognized command: %s\n", argv[0]);
             console_printf("Type 'help' for list of available commands\n");
-            console_printf("%s", get_prompt());
+            print_prompt();
             return;
         }
     }
@@ -370,7 +374,8 @@ shell_process_command(char *line)
     /* Allow invoking a cmd with module name as a prefix; a command should
      * not know how it was invoked (with or without prefix)
      */
-    if (default_module == -1 && sc_cmd_func != select_module && sc_cmd_func != show_help) {
+    if (default_module == -1 && sc_cmd_func != select_module &&
+        sc_cmd_func != show_help) {
         argc_offset = 1;
     }
 
@@ -379,7 +384,7 @@ shell_process_command(char *line)
         show_cmd_help(argv);
     }
 
-    console_printf("%s", get_prompt());
+    print_prompt();
 }
 
 #if MYNEWT_VAL(SHELL_NEWTMGR)
@@ -412,13 +417,13 @@ shell(struct os_event *ev)
     struct console_input *cmd;
 
     if (!ev) {
-        console_printf("%s", get_prompt());
+        print_prompt();
         return;
     }
 
     cmd = ev->ev_arg;
     if (!cmd) {
-        console_printf("%s", get_prompt());
+        print_prompt();
         return;
     }
 
@@ -554,7 +559,7 @@ complete_param(char *line, const char *param_prefix,
 
     if (common_chars >= 0) {
         /* multiple match, restore prompt */
-        console_printf("%s", get_prompt());
+        print_prompt();
         console_printf("%s", line);
     } else {
         common_chars = strlen(first_match);
@@ -616,7 +621,7 @@ complete_command(char *line, char *command_prefix,
 
     if (common_chars >= 0) {
         /* multiple match, restore prompt */
-        console_printf("%s", get_prompt());
+        print_prompt();
         console_printf("%s", line);
     } else {
         common_chars = strlen(first_match);
@@ -649,7 +654,7 @@ complete_module(char *line, char *module_prefix,
         for (i = 0; i < num_of_shell_entities; i++) {
             console_printf("%s\n", shell_modules[i].name);
         }
-        console_printf("%s", get_prompt());
+        print_prompt();
         console_printf("%s", line);
         return;
     }
@@ -693,7 +698,7 @@ complete_module(char *line, char *module_prefix,
 
     if (common_chars >= 0) {
         /* multiple match, restore prompt */
-        console_printf("%s", get_prompt());
+        print_prompt();
         console_printf("%s", line);
     } else {
         common_chars = strlen(first_match);
@@ -727,7 +732,7 @@ complete_select(char *line, char *cur,
         }
         console_printf("\n");
         print_modules();
-        console_printf("%s", get_prompt());
+        print_prompt();
         console_printf("%s", line);
         return;
     }
@@ -766,7 +771,7 @@ completion(char *line, console_append_char_cb append_char)
         } else {
             print_module_commands(default_module);
         }
-        console_printf("%s", get_prompt());
+        print_prompt();
         console_printf("%s", line);
         return;
     }
@@ -802,7 +807,7 @@ completion(char *line, console_append_char_cb append_char)
         if (tok_len == 0) {
             console_printf("\n");
             print_module_commands(module);
-            console_printf("%s", get_prompt());
+            print_prompt();
             console_printf("%s", line);
             return;
         }
@@ -824,7 +829,7 @@ completion(char *line, console_append_char_cb append_char)
     if (tok_len == 0) {
         console_printf("\n");
         print_command_params(module, command);
-        console_printf("%s", get_prompt());
+        print_prompt();
         console_printf("%s", line);
         return;
     }
@@ -853,7 +858,7 @@ shell_register_default_module(const char *name)
 
     if (result != -1) {
         console_printf("\n");
-        console_printf("%s", default_module_prompt);
+        print_prompt();
     }
 }
 
@@ -873,7 +878,8 @@ int
 shell_register(const char *module_name, const struct shell_cmd *commands)
 {
     if (num_of_shell_entities >= MYNEWT_VAL(SHELL_MAX_MODULES)) {
-        return -1;
+        console_printf("Max number of modules reached\n");
+        assert(0);
     }
 
     shell_modules[num_of_shell_entities].name = module_name;
@@ -920,10 +926,12 @@ shell_init(void)
     return;
 #endif
 
+    shell_evq_set(os_eventq_dflt_get());
     os_eventq_init(&avail_queue);
     line_queue_init();
+    console_set_queues(&avail_queue, shell_evq);
+
     prompt = SHELL_PROMPT;
-    console_set_queues(&avail_queue, os_eventq_dflt_get());
 
 #if MYNEWT_VAL(SHELL_NEWTMGR)
     shell_nlip_init();
@@ -934,9 +942,9 @@ shell_init(void)
 #endif
 
 #if MYNEWT_VAL(SHELL_OS_MODULE)
-    shell_os_register(shell_register);
+    shell_os_register();
 #endif
 #if MYNEWT_VAL(SHELL_PROMPT_MODULE)
-    shell_prompt_register(shell_register);
+    shell_prompt_register();
 #endif
 }

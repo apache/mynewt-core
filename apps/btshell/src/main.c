@@ -1403,7 +1403,7 @@ btshell_update_conn(uint16_t conn_handle, struct ble_gap_upd_params *params)
 }
 
 void
-btshell_chrup(uint16_t attr_handle)
+btshell_notify(uint16_t attr_handle)
 {
     ble_gatts_chr_updated(attr_handle);
 }

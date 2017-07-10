@@ -25,7 +25,6 @@
 #include "host/ble_gap.h"
 #include "services/gatt/ble_svc_gatt.h"
 #include "console/console.h"
-#include "parse/parse.h"
 #include "btshell.h"
 #include "cmd.h"
 #include "cmd_gatt.h"
@@ -210,13 +209,13 @@ cmd_gatt_notify(int argc, char **argv)
         return rc;
     }
 
-    attr_handle = parse_arg_long("attr", &rc);
+    attr_handle = parse_arg_uint16("attr", &rc);
     if (rc != 0) {
         console_printf("invalid 'attr' parameter\n");
         return rc;
     }
 
-    btshell_chrup(attr_handle);
+    btshell_notify(attr_handle);
 
     return 0;
 }
@@ -534,18 +533,14 @@ cmd_gatt_write(int argc, char **argv)
         return rc;
     }
 
-    no_rsp = parse_arg_long("no_rsp", &rc);
-    if (rc == ENOENT) {
-        no_rsp = 0;
-    } else if (rc != 0) {
+    no_rsp = parse_arg_bool_dflt("no_rsp", 0, &rc);
+    if (rc != 0) {
         console_printf("invalid 'no_rsp' parameter\n");
         return rc;
     }
 
-    is_long = parse_arg_long("long", &rc);
-    if (rc == ENOENT) {
-        is_long = 0;
-    } else if (rc != 0) {
+    is_long = parse_arg_bool_dflt("long", 0, &rc);
+    if (rc != 0) {
         console_printf("invalid 'long' parameter\n");
         return rc;
     }
@@ -553,7 +548,7 @@ cmd_gatt_write(int argc, char **argv)
     total_attr_len = 0;
     num_attrs = 0;
     while (1) {
-        attr_handle = parse_arg_long("attr", &rc);
+        attr_handle = parse_arg_uint16("attr", &rc);
         if (rc == ENOENT) {
             break;
         } else if (rc != 0) {
@@ -562,8 +557,8 @@ cmd_gatt_write(int argc, char **argv)
             goto done;
         }
 
-        rc = parse_byte_stream("value", sizeof cmd_buf - total_attr_len,
-                               cmd_buf + total_attr_len, &attr_len);
+        rc = parse_arg_byte_stream("value", sizeof cmd_buf - total_attr_len,
+                                   cmd_buf + total_attr_len, &attr_len);
         if (rc == ENOENT) {
             break;
         } else if (rc != 0) {
