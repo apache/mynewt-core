@@ -51,16 +51,17 @@ pwm_chan_config(struct pwm_dev *dev, uint8_t cnum, void *data)
  * for 65535-fraction clocks.
  *
  * @param dev The device to configure.
+ * @param cnum The channel number.
  * @param fraction The fraction value.
  *
  * @return 0 on success, negative on error.
  */
 int
-pwm_enable_duty_cycle(struct pwm_dev *dev, uint16_t fraction)
+pwm_enable_duty_cycle(struct pwm_dev *dev, uint8_t cnum, uint16_t fraction)
 {
     assert(dev->pwm_funcs.pwm_enable_duty_cycle != NULL);
 
-    return (dev->pwm_funcs.pwm_enable_duty_cycle(dev, fraction));
+    return (dev->pwm_funcs.pwm_enable_duty_cycle(dev, cnum, fraction));
 }
 
 /**
@@ -134,22 +135,3 @@ pwm_disable(struct pwm_dev *dev, uint8_t cnum)
 
     return (dev->pwm_funcs.pwm_disable(dev, cnum));
 }
-
-/* /\** */
-/*  * Set an event handler.  This handler is called for all ADC events. */
-/*  * */
-/*  * @param dev The PWM device to set the event handler for */
-/*  * @param func The event handler function to call */
-/*  * @param arg The argument to pass the event handler function */
-/*  * */
-/*  * @return 0 on success, non-zero on failure */
-/*  *\/ */
-/* int */
-/* adc_event_handler_set(struct adc_dev *dev, adc_event_handler_func_t func, */
-/*         void *arg) */
-/* { */
-/*     dev->ad_event_handler_func = func; */
-/*     dev->ad_event_handler_arg = arg; */
-
-/*     return (0); */
-/* } */

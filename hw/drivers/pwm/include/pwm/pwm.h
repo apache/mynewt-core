@@ -51,7 +51,9 @@ typedef int (*pwm_configure_channel_func_t)(struct pwm_dev *, uint8_t, void *);
  *
  * @return 0 on success, negative on error.
  */
-typedef int (*pwm_enable_duty_cycle_func_t)(struct pwm_dev *, uint16_t);
+typedef int (*pwm_enable_duty_cycle_func_t)(struct pwm_dev *,
+                                            uint8_t,
+                                            uint16_t);
 
 /**
  * Set the frequency for the device's clock.
@@ -119,7 +121,7 @@ struct pwm_dev {
 };
 
 int pwm_chan_config(struct pwm_dev *dev, uint8_t cnum, void *data);
-int pwm_enable_duty_cycle(struct pwm_dev *pwm_d, uint16_t fraction);
+int pwm_enable_duty_cycle(struct pwm_dev *pwm_d, uint8_t cnum, uint16_t fraction);
 int pwm_set_frequency(struct pwm_dev *dev, uint32_t freq_hz);
 int pwm_get_clock_freq(struct pwm_dev *dev);
 int pwm_get_resolution_bits(struct pwm_dev *dev);
