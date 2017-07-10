@@ -40,6 +40,28 @@ syscfg.defs:
             simulator.
         value: 1
 
+    # Monitor interface settings
+    BLE_MONITOR_UART:
+        description: Enables monitor interface over UART
+        value: 0
+    BLE_MONITOR_UART_BAUDRATE:
+        description: Baudrate for monitor interface UART
+        value: 1000000
+    BLE_MONITOR_RTT:
+        description: Enables monitor interface over RTT
+        value: 0
+    BLE_MONITOR_RTT_BUFFERED:
+        description: >
+            Enables buffering when using monitor interface over RTT. The data
+            are written to RTT once complete packet is created in intermediate
+            buffer. This allows to skip complete packet if there is not enough
+            space in RTT buffer (e.g. there is no reader connected). If disabled,
+            monitor will simply block waiting for RTT to free space in buffer.
+        value: 1
+    BLE_MONITOR_DEBUG:
+        description: Enables host logging via monitor interface
+        value: 0
+
     # L2CAP settings.
     BLE_L2CAP_MAX_CHANS:
         description: >
@@ -76,6 +98,11 @@ syscfg.defs:
     BLE_SM_SC:
         description: 'Security manager secure connections (4.2).'
         value: 0
+    BLE_SM_ALG_DEBUG:
+        description: >
+            Detailed logging from cryptographic functions available when debug
+            level logs enabled in host.
+        value: 1
 
     BLE_SM_MAX_PROCS:
         description: >

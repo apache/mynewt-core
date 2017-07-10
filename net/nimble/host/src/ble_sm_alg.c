@@ -37,6 +37,12 @@
 #include "tinycrypt/ecc_dh.h"
 #endif
 
+#if MYNEWT_VAL(BLE_SM_ALG_DEBUG)
+#define BLE_SM_ALG_DEBUG(...) BLE_HS_DEBUG(__VA_ARGS__)
+#else
+#define BLE_SM_ALG_DEBUG(...)
+#endif
+
 static void
 ble_sm_alg_xor_128(uint8_t *p, uint8_t *q, uint8_t *r)
 {
@@ -77,6 +83,10 @@ ble_sm_alg_s1(uint8_t *k, uint8_t *r1, uint8_t *r2, uint8_t *out)
 {
     int rc;
 
+    BLE_SM_ALG_DEBUG("k %s", ble_hex(k, 16));
+    BLE_SM_ALG_DEBUG("r1 %s", ble_hex(r1, 16));
+    BLE_SM_ALG_DEBUG("r2 %s", ble_hex(r2, 16));
+
     /* The most significant 64-bits of r1 are discarded to generate
      * r1' and the most significant 64-bits of r2 are discarded to
      * generate r2'.
@@ -94,15 +104,7 @@ ble_sm_alg_s1(uint8_t *k, uint8_t *r1, uint8_t *r2, uint8_t *out)
         return rc;
     }
 
-    BLE_HS_LOG(DEBUG, "ble_sm_alg_s1()\n    k=");
-    ble_hs_log_flat_buf(k, 16);
-    BLE_HS_LOG(DEBUG, "\n    r1=");
-    ble_hs_log_flat_buf(r1, 16);
-    BLE_HS_LOG(DEBUG, "\n    r2=");
-    ble_hs_log_flat_buf(r2, 16);
-    BLE_HS_LOG(DEBUG, "\n    out=");
-    ble_hs_log_flat_buf(out, 16);
-    BLE_HS_LOG(DEBUG, "\n");
+    BLE_SM_ALG_DEBUG("out %s", ble_hex(out, 16));
 
     return 0;
 }
@@ -117,19 +119,12 @@ ble_sm_alg_c1(uint8_t *k, uint8_t *r,
     uint8_t p1[16], p2[16];
     int rc;
 
-    BLE_HS_LOG(DEBUG, "ble_sm_alg_c1()\n    k=");
-    ble_hs_log_flat_buf(k, 16);
-    BLE_HS_LOG(DEBUG, "\n    r=");
-    ble_hs_log_flat_buf(r, 16);
-    BLE_HS_LOG(DEBUG, "\n    iat=%d rat=%d", iat, rat);
-    BLE_HS_LOG(DEBUG, "\n    ia=");
-    ble_hs_log_flat_buf(ia, 6);
-    BLE_HS_LOG(DEBUG, "\n    ra=");
-    ble_hs_log_flat_buf(ra, 6);
-    BLE_HS_LOG(DEBUG, "\n    preq=");
-    ble_hs_log_flat_buf(preq, 7);
-    BLE_HS_LOG(DEBUG, "\n    pres=");
-    ble_hs_log_flat_buf(pres, 7);
+    BLE_SM_ALG_DEBUG("k %s", ble_hex(k, 16));
+    BLE_SM_ALG_DEBUG("r %s", ble_hex(r, 16));
+    BLE_SM_ALG_DEBUG("iat %02x ia %s", iat, ble_hex(ia, 6));
+    BLE_SM_ALG_DEBUG("rat %02x ra %s", rat, ble_hex(ra, 6));
+    BLE_SM_ALG_DEBUG("preq %s", ble_hex(preq, 7));
+    BLE_SM_ALG_DEBUG("pres %s", ble_hex(pres, 7));
 
     /* pres, preq, rat and iat are concatenated to generate p1 */
     p1[0] = iat;
@@ -137,8 +132,7 @@ ble_sm_alg_c1(uint8_t *k, uint8_t *r,
     memcpy(p1 + 2, preq, 7);
     memcpy(p1 + 9, pres, 7);
 
-    BLE_HS_LOG(DEBUG, "\n    p1=");
-    ble_hs_log_flat_buf(p1, sizeof p1);
+    BLE_SM_ALG_DEBUG("p1 %s", ble_hex(p1, 16));
 
     /* c1 = e(k, e(k, r XOR p1) XOR p2) */
 
@@ -156,8 +150,7 @@ ble_sm_alg_c1(uint8_t *k, uint8_t *r,
     memcpy(p2 + 6, ia, 6);
     memset(p2 + 12, 0, 4);
 
-    BLE_HS_LOG(DEBUG, "\n    p2=");
-    ble_hs_log_flat_buf(p2, sizeof p2);
+    BLE_SM_ALG_DEBUG("p2 %s", ble_hex(p2, 16));
 
     ble_sm_alg_xor_128(out_enc_data, p2, out_enc_data);
 
@@ -167,25 +160,15 @@ ble_sm_alg_c1(uint8_t *k, uint8_t *r,
         goto done;
     }
 
-    BLE_HS_LOG(DEBUG, "\n    out_enc_data=");
-    ble_hs_log_flat_buf(out_enc_data, 16);
+    BLE_SM_ALG_DEBUG("out %s", ble_hex(out_enc_data, 16));
 
     rc = 0;
 
 done:
-    BLE_HS_LOG(DEBUG, "\n    rc=%d\n", rc);
     return rc;
 }
 
 #if MYNEWT_VAL(BLE_SM_SC)
-
-static void
-ble_sm_alg_log_buf(const char *name, const uint8_t *buf, int len)
-{
-    BLE_HS_LOG(DEBUG, "    %s=", name);
-    ble_hs_log_flat_buf(buf, len);
-    BLE_HS_LOG(DEBUG, "\n");
-}
 
 /**
  * Cypher based Message Authentication Code (CMAC) with AES 128 bit
@@ -225,13 +208,10 @@ ble_sm_alg_f4(uint8_t *u, uint8_t *v, uint8_t *x, uint8_t z,
     uint8_t m[65];
     int rc;
 
-    BLE_HS_LOG(DEBUG, "ble_sm_alg_f4()\n    u=");
-    ble_hs_log_flat_buf(u, 32);
-    BLE_HS_LOG(DEBUG, "\n    v=");
-    ble_hs_log_flat_buf(v, 32);
-    BLE_HS_LOG(DEBUG, "\n    x=");
-    ble_hs_log_flat_buf(x, 16);
-    BLE_HS_LOG(DEBUG, "\n    z=0x%02x\n", z);
+    BLE_SM_ALG_DEBUG("u %s", ble_hex(u, 32));
+    BLE_SM_ALG_DEBUG("v %s", ble_hex(v, 32));
+    BLE_SM_ALG_DEBUG("x %s", ble_hex(x, 16));
+    BLE_SM_ALG_DEBUG("z %02x", z);
 
     /*
      * U, V and Z are concatenated and used as input m to the function
@@ -248,6 +228,8 @@ ble_sm_alg_f4(uint8_t *u, uint8_t *v, uint8_t *x, uint8_t z,
 
     swap_buf(xs, x, 16);
 
+    BLE_SM_ALG_DEBUG("m %s", ble_hex(m, 65));
+
     rc = ble_sm_alg_aes_cmac(xs, m, sizeof(m), out_enc_data);
     if (rc != 0) {
         return BLE_HS_EUNKNOWN;
@@ -255,9 +237,7 @@ ble_sm_alg_f4(uint8_t *u, uint8_t *v, uint8_t *x, uint8_t z,
 
     swap_in_place(out_enc_data, 16);
 
-    BLE_HS_LOG(DEBUG, "    out_enc_data=");
-    ble_hs_log_flat_buf(out_enc_data, 16);
-    BLE_HS_LOG(DEBUG, "\n");
+    BLE_SM_ALG_DEBUG("out %s", ble_hex(out_enc_data, 16));
 
     return 0;
 }
@@ -285,10 +265,11 @@ ble_sm_alg_f5(uint8_t *w, uint8_t *n1, uint8_t *n2, uint8_t a1t,
     uint8_t t[16];
     int rc;
 
-    BLE_HS_LOG(DEBUG, "ble_sm_alg_f5()\n");
-    ble_sm_alg_log_buf("w", w, 32);
-    ble_sm_alg_log_buf("n1", n1, 16);
-    ble_sm_alg_log_buf("n2", n2, 16);
+    BLE_SM_ALG_DEBUG("w %s", ble_hex(w, 32));
+    BLE_SM_ALG_DEBUG("n1 %s", ble_hex(n1, 16));
+    BLE_SM_ALG_DEBUG("n2 %s", ble_hex(n2, 16));
+    BLE_SM_ALG_DEBUG("a1t %02x a1 %s", a1t, ble_hex(a1, 6));
+    BLE_SM_ALG_DEBUG("a2t %02x a2 %s", a2t, ble_hex(a2, 6));
 
     swap_buf(ws, w, 32);
 
@@ -297,7 +278,7 @@ ble_sm_alg_f5(uint8_t *w, uint8_t *n1, uint8_t *n2, uint8_t a1t,
         return BLE_HS_EUNKNOWN;
     }
 
-    ble_sm_alg_log_buf("t", t, 16);
+    BLE_SM_ALG_DEBUG("t %s", ble_hex(t, 16));
 
     swap_buf(m + 5, n1, 16);
     swap_buf(m + 21, n2, 16);
@@ -311,7 +292,7 @@ ble_sm_alg_f5(uint8_t *w, uint8_t *n1, uint8_t *n2, uint8_t a1t,
         return BLE_HS_EUNKNOWN;
     }
 
-    ble_sm_alg_log_buf("mackey", mackey, 16);
+    BLE_SM_ALG_DEBUG("mackey %s", ble_hex(mackey, 16));
 
     swap_in_place(mackey, 16);
 
@@ -323,7 +304,7 @@ ble_sm_alg_f5(uint8_t *w, uint8_t *n1, uint8_t *n2, uint8_t a1t,
         return BLE_HS_EUNKNOWN;
     }
 
-    ble_sm_alg_log_buf("ltk", ltk, 16);
+    BLE_SM_ALG_DEBUG("ltk %s", ble_hex(ltk, 16));
 
     swap_in_place(ltk, 16);
 
@@ -340,16 +321,13 @@ ble_sm_alg_f6(const uint8_t *w, const uint8_t *n1, const uint8_t *n2,
     uint8_t m[65];
     int rc;
 
-    BLE_HS_LOG(DEBUG, "ble_sm_alg_f6()\n");
-    ble_sm_alg_log_buf("w", w, 16);
-    ble_sm_alg_log_buf("n1", n1, 16);
-    ble_sm_alg_log_buf("n2", n2, 16);
-    ble_sm_alg_log_buf("r", r, 16);
-    ble_sm_alg_log_buf("iocap", iocap, 3);
-    ble_sm_alg_log_buf("a1t", &a1t, 1);
-    ble_sm_alg_log_buf("a1", a1, 6);
-    ble_sm_alg_log_buf("a2t", &a2t, 1);
-    ble_sm_alg_log_buf("a2", a2, 6);
+    BLE_SM_ALG_DEBUG("w %s", ble_hex(w, 16));
+    BLE_SM_ALG_DEBUG("n1 %s", ble_hex(n1, 16));
+    BLE_SM_ALG_DEBUG("n2 %s", ble_hex(n2, 16));
+    BLE_SM_ALG_DEBUG("r %s", ble_hex(r, 16));
+    BLE_SM_ALG_DEBUG("iocap %s", ble_hex(iocap, 3));
+    BLE_SM_ALG_DEBUG("a1t %02x a1 %s", a1t, ble_hex(a1, 6));
+    BLE_SM_ALG_DEBUG("a2t %02x a2 %s", a2t, ble_hex(a2, 6));
 
     swap_buf(m, n1, 16);
     swap_buf(m + 16, n2, 16);
@@ -371,7 +349,7 @@ ble_sm_alg_f6(const uint8_t *w, const uint8_t *n1, const uint8_t *n2,
         return BLE_HS_EUNKNOWN;
     }
 
-    ble_sm_alg_log_buf("res", check, 16);
+    BLE_SM_ALG_DEBUG("out %s", ble_hex(check, 16));
 
     swap_in_place(check, 16);
 
@@ -385,11 +363,10 @@ ble_sm_alg_g2(uint8_t *u, uint8_t *v, uint8_t *x, uint8_t *y,
     uint8_t m[80], xs[16];
     int rc;
 
-    BLE_HS_LOG(DEBUG, "ble_sm_alg_g2()\n");
-    ble_sm_alg_log_buf("u", u, 32);
-    ble_sm_alg_log_buf("v", v, 32);
-    ble_sm_alg_log_buf("x", x, 16);
-    ble_sm_alg_log_buf("y", y, 16);
+    BLE_SM_ALG_DEBUG("u %s", ble_hex(u, 32));
+    BLE_SM_ALG_DEBUG("v %s", ble_hex(v, 32));
+    BLE_SM_ALG_DEBUG("x %s", ble_hex(x, 16));
+    BLE_SM_ALG_DEBUG("y %s", ble_hex(y, 16));
 
     swap_buf(m, u, 32);
     swap_buf(m + 32, v, 32);
@@ -403,10 +380,11 @@ ble_sm_alg_g2(uint8_t *u, uint8_t *v, uint8_t *x, uint8_t *y,
         return BLE_HS_EUNKNOWN;
     }
 
-    ble_sm_alg_log_buf("res", xs, 16);
+    BLE_SM_ALG_DEBUG("out %s", ble_hex(xs, 16));
 
     *passkey = get_be32(xs + 12) % 1000000;
-    BLE_HS_LOG(DEBUG, "    passkey=%u\n", *passkey);
+
+    BLE_SM_ALG_DEBUG("passkey %06" PRIu32, *passkey);
 
     return 0;
 }
@@ -417,6 +395,9 @@ ble_sm_alg_gen_dhkey(uint8_t *peer_pub_key_x, uint8_t *peer_pub_key_y,
 {
     uint32_t dh[8];
     EccPoint pk;
+
+    BLE_SM_ALG_DEBUG("x %s", ble_hex(peer_pub_key_x, 32));
+    BLE_SM_ALG_DEBUG("y %s", ble_hex(peer_pub_key_y, 32));
 
     memcpy(pk.x, peer_pub_key_x, 32);
     memcpy(pk.y, peer_pub_key_y, 32);
@@ -430,6 +411,8 @@ ble_sm_alg_gen_dhkey(uint8_t *peer_pub_key_x, uint8_t *peer_pub_key_y,
     }
 
     memcpy(out_dhkey, dh, 32);
+
+    BLE_SM_ALG_DEBUG("dhkey %s", ble_hex(out_dhkey, 32));
 
     return 0;
 }
@@ -467,6 +450,10 @@ ble_sm_alg_gen_key_pair(void *pub, uint32_t *priv)
 
     memcpy(pub + 0, pkey.x, 32);
     memcpy(pub + 32, pkey.y, 32);
+
+    BLE_SM_ALG_DEBUG("x %s", ble_hex(pkey.x, 32));
+    BLE_SM_ALG_DEBUG("y %s", ble_hex(pkey.y, 32));
+    BLE_SM_ALG_DEBUG("p %s", ble_hex(priv, 32));
 
     return 0;
 }
