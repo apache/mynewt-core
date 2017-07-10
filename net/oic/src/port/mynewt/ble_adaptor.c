@@ -43,7 +43,7 @@ static const ble_uuid128_t oc_gatt_svc_uuid =
 
 /* 16-bit service UUID. */
 static const ble_uuid16_t runtime_coap_svc_uuid =
-    BLE_UUID16_INIT(RUNTIME_COAP_SERVICE_UUID);
+    BLE_UUID16_INIT(OC_GATT_SEC_SERVICE_UUID);
 
 /* request characteristic UUID */
 /* AD7B334F-4637-4B86-90B6-9D787F03D218 */
