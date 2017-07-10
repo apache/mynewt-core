@@ -53,7 +53,7 @@ double NEG_INF = -1.0/0.0;
 static struct hal_spi_settings spi_bme280_settings = {
     .data_order = HAL_SPI_MSB_FIRST,
     .data_mode  = HAL_SPI_MODE0,
-    .baudrate   = 500,
+    .baudrate   = 4000,
     .word_size  = HAL_SPI_WORD_SIZE_8BIT,
 };
 

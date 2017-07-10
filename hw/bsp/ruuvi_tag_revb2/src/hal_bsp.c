@@ -50,6 +50,11 @@
 static struct bme280 bme280;
 #endif
 
+#if MYNEWT_VAL(LIS2DH12_ONB)
+#include <lis2dh12/lis2dh12.h>
+static struct lis2dh12 lis2dh12;
+#endif
+
 #if MYNEWT_VAL(UART_0)
 static struct uart_dev os_bsp_uart0;
 static const struct nrf52_uart_cfg os_bsp_uart0_cfg = {
@@ -85,6 +90,14 @@ static const struct sensor_itf spi_0_itf_bme = {
     .si_type = SENSOR_ITF_SPI,
     .si_num = 0,
     .si_cs_pin = 3
+};
+#endif
+
+#if MYNEWT_VAL(LIS2DH12_ONB)
+static const struct sensor_itf spi_0_itf_lis = {
+    .si_type = SENSOR_ITF_SPI,
+    .si_num = 0,
+    .si_cs_pin = 8
 };
 #endif
 #endif
@@ -204,6 +217,35 @@ config_bme280_sensor(void)
 }
 #endif
 
+/**
+ * LIS2Dh12 Sensor default configuration
+ *
+ * @return 0 on success, non-zero on failure
+ */
+#if MYNEWT_VAL(LIS2DH12_ONB)
+int
+config_lis2dh12_sensor(void)
+{
+    int rc;
+    struct os_dev *dev;
+    struct lis2dh12_cfg cfg;
+
+    dev = (struct os_dev *) os_dev_open("lis2dh12_0", OS_TIMEOUT_NEVER, NULL);
+    assert(dev != NULL);
+
+    memset(&cfg, 0, sizeof(cfg));
+
+    cfg.lc_s_mask = SENSOR_TYPE_ACCELEROMETER;
+    cfg.lc_rate = LIS2DH12_DATA_RATE_HN_1344HZ_L_5376HZ;
+    cfg.lc_fs = LIS2DH12_FS_2G;
+
+    rc = lis2dh12_config((struct lis2dh12 *)dev, &cfg);
+
+    os_dev_close(dev);
+    return rc;
+}
+#endif
+
 static void
 sensor_dev_create(void)
 {
@@ -213,6 +255,12 @@ sensor_dev_create(void)
 #if MYNEWT_VAL(BME280_ONB)
     rc = os_dev_create((struct os_dev *) &bme280, "bme280_0",
       OS_DEV_INIT_PRIMARY, 0, bme280_init, (void *)&spi_0_itf_bme);
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(LIS2DH12_ONB)
+    rc = os_dev_create((struct os_dev *) &lis2dh12, "lis2dh12_0",
+      OS_DEV_INIT_PRIMARY, 0, lis2dh12_init, (void *)&spi_0_itf_lis);
     assert(rc == 0);
 #endif
 
