@@ -105,19 +105,12 @@ struct pwm_driver_funcs {
     pwm_disable_func_t pwm_disable;
 };
 
-struct pwm_chan_conf {
-    bool c_configured;
-    uint8_t c_cnum;
-    //duty_frac uint16_t;
-};
-
 struct pwm_dev {
-    struct os_dev pwm_dev;
+    struct os_dev pwm_os_dev;
     struct os_mutex pwm_lock;
     struct pwm_driver_funcs pwm_funcs;
-    struct pwm_chan_conf *pwm_chans;
     uint32_t pwm_chan_count;
-    uint16_t duty_frac;
+    int pwm_instance_id;
 };
 
 int pwm_chan_config(struct pwm_dev *dev, uint8_t cnum, void *data);

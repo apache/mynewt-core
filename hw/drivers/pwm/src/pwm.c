@@ -129,9 +129,5 @@ pwm_disable(struct pwm_dev *dev, uint8_t cnum)
         return (EINVAL);
     }
 
-    if (!dev->pwm_chans[cnum].c_configured) {
-        return (EINVAL);
-    }
-
     return (dev->pwm_funcs.pwm_disable(dev, cnum));
 }
