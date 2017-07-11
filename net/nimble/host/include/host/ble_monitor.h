@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- *
+ * 
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -17,23 +17,24 @@
  * under the License.
  */
 
-#ifndef __CONSOLE_PRIV_H__
-#define __CONSOLE_PRIV_H__
+#ifndef H_BLE_MONITOR_
+#define H_BLE_MONITOR_
+
+#include <syscfg/syscfg.h>
+
+#undef BLE_MONITOR
+#define BLE_MONITOR (MYNEWT_VAL(BLE_MONITOR_UART) || MYNEWT_VAL(BLE_MONITOR_RTT))
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int uart_console_is_init(void);
-int uart_console_init(void);
-void uart_console_blocking_mode(void);
-void uart_console_non_blocking_mode(void);
-int rtt_console_is_init(void);
-int rtt_console_init(void);
-int ble_monitor_console_is_init(void);
+int ble_monitor_log(int level, const char *fmt, ...);
+
+int ble_monitor_out(int c);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __CONSOLE_PRIV_H__ */
+#endif
