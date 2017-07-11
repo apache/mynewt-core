@@ -375,9 +375,15 @@ int printf(const char *fmt, ...)
 int vsnprintf(char *str, size_t size, const char *fmt, va_list va)
 {
     struct MemFile state;
-    FILE *f = fmemopen_w(&state, str, size - 1);
+    FILE *f = fmemopen_w(&state, str, size);
     tfp_format(f, fmt, va);
-    *(state.buffer) = '\0';
+    if (size > 0) {
+        if (state.bytes_written < size) {
+            *(state.buffer) = '\0';
+        } else {
+            str[size - 1] = '\0';
+        }
+    }
     return state.bytes_written;
 }
 
