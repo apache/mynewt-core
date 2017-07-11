@@ -61,6 +61,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * PRINTF_SUPPORT_LONG because int == long.
  */
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <inttypes.h>
 
@@ -337,6 +338,7 @@ size_t tfp_format(FILE *putp, const char *fmt, va_list va)
                 break;
             case '%':
                 written += putf(putp, ch);
+                break;
             default:
                 break;
             }
