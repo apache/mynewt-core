@@ -67,6 +67,10 @@ syscfg.defs:
         description: 'NRF51 RTC0'
         value:  0
 
+    JLINK_DEBUG:
+        description: 'Use Segger JLINK OBE firmware'
+        value: 0
+
 syscfg.defs.BLE_LP_CLOCK:
     TIMER_0:
         value: 0

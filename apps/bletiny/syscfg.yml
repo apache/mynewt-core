@@ -18,6 +18,15 @@
 
 # Package: apps/bletiny
 
+syscfg.defs:
+    BLETINY_HELP:
+        description: Include usage information for bletiny shell commands.
+        value: 1
+
+    BLETINY_ANS:
+        description: Include support for the alert notification service.
+        value: 1
+
 syscfg.vals:
     # Enable the shell task.
     SHELL_TASK: 1
@@ -34,3 +43,6 @@ syscfg.vals:
 
     # Default task settings
     OS_MAIN_STACK_SIZE: 512
+
+    # Newtmgr is not supported in this app, so disable newtmgr-over-shell.
+    SHELL_NEWTMGR: 0

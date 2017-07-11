@@ -349,6 +349,7 @@ native_sock_close(struct mn_socket *s)
         STAILQ_REMOVE_HEAD(&ns->ns_rx, omp_next);
         os_mbuf_free_chain(OS_MBUF_PKTHDR_TO_MBUF(m));
     }
+    os_mbuf_free_chain(ns->ns_tx);
     native_sock_poll_rebuild(nss);
     os_mutex_release(&nss->mtx);
     return 0;
@@ -471,16 +472,20 @@ native_sock_stream_tx(struct native_sock *ns, int notify)
             rc = 0;
         } else {
             rc = errno;
+            if (rc == EAGAIN) {
+                rc = 0;
+            } else {
+                /*
+                 * Socket had an error. User should close it.
+                 */
+                os_mbuf_free_chain(ns->ns_tx);
+                ns->ns_tx = NULL;
+                rc = native_sock_err_to_mn_err(rc);
+            }
+            break;
         }
     }
     os_mutex_release(&nss->mtx);
-    if (rc) {
-        if (rc == EAGAIN) {
-            rc = 0;
-        } else {
-            rc = native_sock_err_to_mn_err(rc);
-        }
-    }
     if (notify) {
         if (ns->ns_tx == NULL) {
             mn_socket_writable(&ns->ns_sock, 0);
@@ -763,6 +768,15 @@ socket_task(void *arg)
                 native_sock_poll_rebuild(nss);
             } else {
                 mn_socket_readable(&ns->ns_sock, 0);
+            }
+        }
+        for (i = 0; i < NATIVE_SOCK_MAX; i++) {
+            ns = &native_socks[i];
+            if (ns->ns_fd < 0) {
+                continue;
+            }
+            if (ns->ns_type == SOCK_STREAM && ns->ns_tx) {
+                native_sock_stream_tx(ns, 1);
             }
         }
     }

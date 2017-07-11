@@ -50,15 +50,17 @@ cmd_l2cap_update(int argc, char **argv)
         return rc;
     }
 
-    params.itvl_min = parse_arg_uint16_dflt(
-        "itvl_min", BLE_GAP_INITIAL_CONN_ITVL_MIN, &rc);
+    params.itvl_min = parse_arg_uint16_dflt("interval_min",
+                                            BLE_GAP_INITIAL_CONN_ITVL_MIN,
+                                            &rc);
     if (rc != 0) {
         console_printf("invalid 'interval_min' parameter\n");
         return rc;
     }
 
-    params.itvl_max = parse_arg_uint16_dflt(
-        "itvl_max", BLE_GAP_INITIAL_CONN_ITVL_MAX, &rc);
+    params.itvl_max = parse_arg_uint16_dflt("interval_max",
+                                            BLE_GAP_INITIAL_CONN_ITVL_MAX,
+                                            &rc);
     if (rc != 0) {
         console_printf("invalid 'interval_max' parameter\n");
         return rc;

@@ -17,15 +17,12 @@
 # under the License.
 #
 
-pkg.name: net/nimble/host/profiles/lls
-pkg.description: Link Loss Service adopted specification.
-pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
-pkg.homepage: "http://mynewt.apache.org/"
+pkg.name: net/mqtt
+pkg.description: Eclipse Paho MQTT client for Embedded platforms 
+pkg.author: "eclipse"
+pkg.homepage: "http://eclipse.org/paho"
 pkg.keywords:
-    - ble 
-    - bluetooth
-    - lls
-    - nimble 
+    - mqtt
 
 pkg.deps:
-    - net/nimble/host
+    - "kernel/os"

@@ -44,4 +44,4 @@ syscfg.vals:
     CONFIG_NEWTMGR: 1
 
     # OS main/default task
-    OS_MAIN_STACK_SIZE: 428
+    OS_MAIN_STACK_SIZE: 468

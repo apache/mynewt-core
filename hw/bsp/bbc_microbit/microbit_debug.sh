@@ -27,11 +27,29 @@
 #  - RESET set if target should be reset when attaching
 #  - NO_GDB set if we should not start gdb to debug
 #
-. $CORE_PATH/hw/scripts/openocd.sh
 
+USE_OPENOCD=1
 FILE_NAME=$BIN_BASENAME.elf
-CFG="-f interface/cmsis-dap.cfg -f target/nrf51.cfg"
-# Exit openocd when gdb detaches.
-EXTRA_JTAG_CMD="$EXTRA_JTAG_CMD; nrf51.cpu configure -event gdb-detach {if {[nrf51.cpu curstate] eq \"halted\"} resume;shutdown}"
 
-openocd_debug
+# Look for 'JLINK_DEBUG' in FEATURES
+for feature in $FEATURES; do
+    if [ $feature = "JLINK_DEBUG" ]; then
+        USE_OPENOCD=0
+    fi
+done
+
+if [ $USE_OPENOCD -eq 1 ]; then
+    . $CORE_PATH/hw/scripts/openocd.sh
+
+    CFG="-f interface/cmsis-dap.cfg -f target/nrf51.cfg"
+    # Exit openocd when gdb detaches.
+    EXTRA_JTAG_CMD="$EXTRA_JTAG_CMD; nrf51.cpu configure -event gdb-detach {if {[nrf51.cpu curstate] eq \"halted\"} resume;shutdown}"
+
+    openocd_debug
+else
+    . $CORE_PATH/hw/scripts/jlink.sh
+
+    JLINK_DEV="nRF51422_xxAC"
+
+    jlink_debug
+fi

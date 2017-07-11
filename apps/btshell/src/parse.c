@@ -27,7 +27,6 @@
 #include "host/ble_hs.h"
 #include "host/ble_uuid.h"
 #include "host/ble_eddystone.h"
-#include "parse/parse.h"
 #include "cmd.h"
 #include "btshell.h"
 
@@ -81,10 +80,37 @@ parse_arg_extract(const char *key)
     return NULL;
 }
 
+/**
+ * Determines which number base to use when parsing the specified numeric
+ * string.  This just avoids base '0' so that numbers don't get interpreted as
+ * octal.
+ */
+static int
+parse_arg_long_base(char *sval)
+{
+    if (sval[0] == '0' && sval[1] == 'x') {
+        return 0;
+    } else {
+        return 10;
+    }
+}
+
 long
 parse_long_bounds(char *sval, long min, long max, int *out_status)
 {
-    return parse_ll_bounds(sval, min, max, out_status);
+    char *endptr;
+    long lval;
+
+    lval = strtol(sval, &endptr, parse_arg_long_base(sval));
+    if (sval[0] != '\0' && *endptr == '\0' &&
+        lval >= min && lval <= max) {
+
+        *out_status = 0;
+        return lval;
+    }
+
+    *out_status = EINVAL;
+    return 0;
 }
 
 long
@@ -114,7 +140,7 @@ parse_arg_long_bounds(char *name, long min, long max, int *out_status)
 }
 
 long
-parse_arg_long_bounds_default(char *name, long min, long max,
+parse_arg_long_bounds_dflt(char *name, long min, long max,
                               long dflt, int *out_status)
 {
     long val;
@@ -134,7 +160,9 @@ parse_arg_long_bounds_default(char *name, long min, long max,
 uint64_t
 parse_arg_uint64_bounds(char *name, uint64_t min, uint64_t max, int *out_status)
 {
+    char *endptr;
     char *sval;
+    uint64_t lval;
 
     sval = parse_arg_extract(name);
     if (sval == NULL) {
@@ -142,7 +170,16 @@ parse_arg_uint64_bounds(char *name, uint64_t min, uint64_t max, int *out_status)
         return 0;
     }
 
-    return parse_ull_bounds(sval, min, max, out_status);
+    lval = strtoull(sval, &endptr, parse_arg_long_base(sval));
+    if (sval[0] != '\0' && *endptr == '\0' &&
+        lval >= min && lval <= max) {
+
+        *out_status = 0;
+        return lval;
+    }
+
+    *out_status = EINVAL;
+    return 0;
 }
 
 long
@@ -158,9 +195,9 @@ parse_arg_bool(char *name, int *out_status)
 }
 
 uint8_t
-parse_arg_bool_default(char *name, uint8_t dflt, int *out_status)
+parse_arg_bool_dflt(char *name, uint8_t dflt, int *out_status)
 {
-    return parse_arg_long_bounds_default(name, 0, 1, dflt, out_status);
+    return parse_arg_long_bounds_dflt(name, 0, 1, dflt, out_status);
 }
 
 uint8_t
@@ -280,7 +317,7 @@ parse_arg_kv(char *name, const struct kv_pair *kvs, int *out_status)
 }
 
 int
-parse_arg_kv_default(char *name, const struct kv_pair *kvs, int def_val,
+parse_arg_kv_dflt(char *name, const struct kv_pair *kvs, int def_val,
                      int *out_status)
 {
     int val;
@@ -295,6 +332,70 @@ parse_arg_kv_default(char *name, const struct kv_pair *kvs, int def_val,
     *out_status = rc;
 
     return val;
+}
+
+
+static int
+parse_arg_byte_stream_delim(char *sval, char *delims, int max_len,
+                            uint8_t *dst, int *out_len)
+{
+    unsigned long ul;
+    char *endptr;
+    char *token;
+    int i;
+
+    i = 0;
+    for (token = strtok(sval, delims);
+         token != NULL;
+         token = strtok(NULL, delims)) {
+
+        if (i >= max_len) {
+            return EINVAL;
+        }
+
+        ul = strtoul(token, &endptr, 16);
+        if (sval[0] == '\0' || *endptr != '\0' || ul > UINT8_MAX) {
+            return -1;
+        }
+
+        dst[i] = ul;
+        i++;
+    }
+
+    *out_len = i;
+
+    return 0;
+}
+
+int
+parse_arg_byte_stream(char *name, int max_len, uint8_t *dst, int *out_len)
+{
+    char *sval;
+
+    sval = parse_arg_extract(name);
+    if (sval == NULL) {
+        return ENOENT;
+    }
+
+    return parse_arg_byte_stream_delim(sval, ":-", max_len, dst, out_len);
+}
+
+int
+parse_arg_byte_stream_exact_length(char *name, uint8_t *dst, int len)
+{
+    int actual_len;
+    int rc;
+
+    rc = parse_arg_byte_stream(name, len, dst, &actual_len);
+    if (rc != 0) {
+        return rc;
+    }
+
+    if (actual_len != len) {
+        return EINVAL;
+    }
+
+    return 0;
 }
 
 static void
@@ -315,7 +416,7 @@ parse_arg_mac(char *name, uint8_t *dst)
 {
     int rc;
 
-    rc = parse_byte_stream_exact_length(name, dst, 6);
+    rc = parse_arg_byte_stream_exact_length(name, dst, 6);
     if (rc != 0) {
         return rc;
     }
@@ -348,7 +449,7 @@ parse_arg_uuid(char *str, ble_uuid_any_t *uuid)
 
     default:
         len = 16;
-        rc = parse_byte_stream_exact_length(str, val, 16);
+        rc = parse_arg_byte_stream_exact_length(str, val, 16);
         if (rc != 0) {
             return EINVAL;
         }

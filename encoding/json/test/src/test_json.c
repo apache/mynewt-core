@@ -17,6 +17,7 @@
  * under the License.
  */
 
+#include "sysinit/sysinit.h"
 #include "syscfg/syscfg.h"
 #include "testutil/testutil.h"
 #include "test_json.h"
@@ -33,8 +34,7 @@ TEST_SUITE(test_json_suite) {
 int
 main(int argc, char **argv)
 {
-    ts_config.ts_print_results = 1;
-    tu_init();
+    sysinit();
 
     test_json_suite();
 

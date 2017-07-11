@@ -251,7 +251,6 @@ os_cputime_delay_usecs(uint32_t usecs)
 /**
  * os cputime timer init
  *
- *
  * @param timer The timer to initialize. Cannot be NULL.
  * @param fp    The timer callback function. Cannot be NULL.
  * @param arg   Pointer to data object to pass to timer.
@@ -270,15 +269,23 @@ os_cputime_timer_init(struct hal_timer *timer, hal_timer_cb fp, void *arg)
  *
  * Start a cputimer that will expire at 'cputime'. If cputime has already
  * passed, the timer callback will still be called (at interrupt context).
- * Cannot be called when the timer has already started.
+ *
+ * NOTE: This must be called when the timer is stopped.
  *
  * @param timer     Pointer to timer to start. Cannot be NULL.
  * @param cputime   The cputime at which the timer should expire.
+ *
+ * @return int 0 on success; EINVAL if timer already started or timer struct
+ *         invalid
+ *
  */
-void
+int
 os_cputime_timer_start(struct hal_timer *timer, uint32_t cputime)
 {
-    hal_timer_start_at(timer, cputime);
+    int rc;
+
+    rc = hal_timer_start_at(timer, cputime);
+    return rc;
 }
 
 /**
@@ -287,18 +294,26 @@ os_cputime_timer_start(struct hal_timer *timer, uint32_t cputime)
  * Sets a cpu timer that will expire 'usecs' microseconds from the current
  * cputime.
  *
+ * NOTE: This must be called when the timer is stopped.
+ *
  * @param timer Pointer to timer. Cannot be NULL.
  * @param usecs The number of usecs from now at which the timer will expire.
+ *
+ * @return int 0 on success; EINVAL if timer already started or timer struct
+ *         invalid
  */
-void
+int
 os_cputime_timer_relative(struct hal_timer *timer, uint32_t usecs)
 {
+    int rc;
     uint32_t cputime;
 
     assert(timer != NULL);
 
     cputime = os_cputime_get32() + os_cputime_usecs_to_ticks(usecs);
-    hal_timer_start_at(timer, cputime);
+    rc = hal_timer_start_at(timer, cputime);
+
+    return rc;
 }
 
 /**
