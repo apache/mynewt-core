@@ -255,6 +255,7 @@ size_t tfp_format(FILE *putp, const char *fmt, va_list va)
             p.width = 0;
             p.sign = 0;
             p.left = 0;
+            p.uc = 0;
             lng = 0;
 
             /* Flags */
@@ -320,8 +321,8 @@ size_t tfp_format(FILE *putp, const char *fmt, va_list va)
                 break;
             case 'p':
                 v = va_arg(va, void *);
-                ui2a((uintptr_t)v, &p);
                 p.base = 16;
+                ui2a((uintptr_t)v, &p);
                 p.width = 2 * sizeof(void*);
                 p.lz = 1;
                 written += putf(putp, '0');
