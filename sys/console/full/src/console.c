@@ -117,11 +117,17 @@ console_read(char *str, int cnt, int *newline)
     }
     cmd = ev->ev_arg;
     len = strlen(cmd->line);
+
     if ((cnt - 1) < len) {
         len = cnt - 1;
+        if (len > 0) {
+            memcpy(str, cmd->line, len);
+            str[len] = '\0';
+        } else {
+            str[len] = cmd->line[0];
+        }
     }
-    memcpy(str, cmd->line, len);
-    str[len] = '\0';
+
     os_eventq_put(avail_queue, ev);
     *newline = 1;
     return len;
@@ -467,6 +473,8 @@ console_handle_char(uint8_t byte)
         case ESC:
             esc_state |= ESC_ESC;
             break;
+        default:
+            insert_char(&input->line[cur], byte, end);
         case '\r':
             input->line[cur + end] = '\0';
             console_out('\r');
@@ -490,8 +498,6 @@ console_handle_char(uint8_t byte)
                 completion(input->line, console_append_char);
                 console_non_blocking_mode();
             }
-            break;
-        default:
             break;
         }
 
