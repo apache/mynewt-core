@@ -47,6 +47,7 @@ typedef int (*pwm_configure_channel_func_t)(struct pwm_dev *, uint8_t, void *);
  * for 65535-fraction clocks.
  *
  * @param dev The device to configure.
+ * @param cnum The channel to configure.
  * @param fraction The fraction value.
  *
  * @return 0 on success, negative on error.
@@ -58,8 +59,7 @@ typedef int (*pwm_enable_duty_cycle_func_t)(struct pwm_dev *,
 /**
  * Set the frequency for the device's clock.
  * This frequency must be between 1/2 the clock frequency and
- * the clock divided by the resolution. NOTE: This may affect
- * other PWM channels.
+ * the clock divided by the resolution.
  *
  * @param dev The device to configure.
  * @param freq_hz The frequency value in Hz.

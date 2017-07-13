@@ -65,9 +65,9 @@ pwm_enable_duty_cycle(struct pwm_dev *dev, uint8_t cnum, uint16_t fraction)
 }
 
 /**
+ * Set the frequency for the device's clock.
  * This frequency must be between 1/2 the clock frequency and
- * the clock divided by the resolution. NOTE: This may affect
- * other PWM channels.
+ * the clock divided by the resolution.
  *
  * @param dev The device to configure.
  * @param freq_hz The frequency value in Hz.
