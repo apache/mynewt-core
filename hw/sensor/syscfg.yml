@@ -38,5 +38,5 @@ syscfg.defs:
         value: 0
 
     SENSOR_OIC_OBS_RATE:
-        description: 'Set OIC server observation rate in seconds'
-        value: 1
+        description: 'Set OIC server observation rate in milli seconds'
+        value: 1000

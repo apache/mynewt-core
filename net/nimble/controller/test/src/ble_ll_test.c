@@ -17,6 +17,7 @@
  * under the License.
  */
 
+#include "sysinit/sysinit.h"
 #include "syscfg/syscfg.h"
 #include "controller/ble_ll_test.h"
 #include "os/os.h"
@@ -27,10 +28,7 @@
 int
 main(int argc, char **argv)
 {
-    ts_config.ts_print_results = 1;
-    tu_parse_args(argc, argv);
-
-    tu_init();
+    sysinit();
 
     ble_ll_csa2_test_all();
 

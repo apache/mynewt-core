@@ -48,11 +48,6 @@ extern struct log blecent_log;
 #define BLECENT_CHR_UNR_ALERT_STAT_UUID     0x2A45
 #define BLECENT_CHR_ALERT_NOT_CTRL_PT       0x2A44
 
-/** GATT server. */
-void gatt_svr_register(void);
-void gatt_svr_init_cfg(struct ble_hs_cfg *cfg);
-
-
 /** Misc. */
 void print_bytes(const uint8_t *bytes, int len);
 void print_mbuf(const struct os_mbuf *om);

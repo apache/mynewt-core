@@ -125,6 +125,11 @@ typedef enum {
 #define SENSOR_ITF_UART   (2)
 
 /**
+ * Useful constants
+ */
+#define STANDARD_ACCEL_GRAVITY 9.80665F
+
+/**
  * Configuration structure, describing a specific sensor type off of
  * an existing sensor.
  */

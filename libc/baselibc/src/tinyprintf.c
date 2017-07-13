@@ -61,6 +61,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * PRINTF_SUPPORT_LONG because int == long.
  */
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <inttypes.h>
 
@@ -254,6 +255,7 @@ size_t tfp_format(FILE *putp, const char *fmt, va_list va)
             p.width = 0;
             p.sign = 0;
             p.left = 0;
+            p.uc = 0;
             lng = 0;
 
             /* Flags */
@@ -319,8 +321,8 @@ size_t tfp_format(FILE *putp, const char *fmt, va_list va)
                 break;
             case 'p':
                 v = va_arg(va, void *);
-                ui2a((uintptr_t)v, &p);
                 p.base = 16;
+                ui2a((uintptr_t)v, &p);
                 p.width = 2 * sizeof(void*);
                 p.lz = 1;
                 written += putf(putp, '0');
@@ -337,6 +339,7 @@ size_t tfp_format(FILE *putp, const char *fmt, va_list va)
                 break;
             case '%':
                 written += putf(putp, ch);
+                break;
             default:
                 break;
             }
@@ -373,9 +376,15 @@ int printf(const char *fmt, ...)
 int vsnprintf(char *str, size_t size, const char *fmt, va_list va)
 {
     struct MemFile state;
-    FILE *f = fmemopen_w(&state, str, size - 1);
+    FILE *f = fmemopen_w(&state, str, size);
     tfp_format(f, fmt, va);
-    *(state.buffer) = '\0';
+    if (size > 0) {
+        if (state.bytes_written < size) {
+            *(state.buffer) = '\0';
+        } else {
+            str[size - 1] = '\0';
+        }
+    }
     return state.bytes_written;
 }
 

@@ -117,7 +117,7 @@ typedef struct oc_resource {
   oc_request_handler_t post_handler;
   oc_request_handler_t delete_handler;
   struct os_callout callout;
-  uint16_t observe_period_seconds;
+  uint32_t observe_period_mseconds;
   uint8_t num_observers;
 } oc_resource_t;
 
