@@ -475,6 +475,7 @@ console_handle_char(uint8_t byte)
             break;
         default:
             insert_char(&input->line[cur], byte, end);
+            /* Falls through. */
         case '\r':
             input->line[cur + end] = '\0';
             console_out('\r');
