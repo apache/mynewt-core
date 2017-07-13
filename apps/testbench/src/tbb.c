@@ -136,11 +136,11 @@ tbb_advertise(void)
     fields.name_len = strlen(name);
     fields.name_is_complete = 1;
 
-    fields.uuids128 = (ble_uuid128_t[]) {
-        BLE_UUID128_INIT(OC_GATT_SERVICE_UUID)
+    fields.uuids16 = (ble_uuid16_t[]) {
+        BLE_UUID16_INIT(OC_GATT_SEC_SERVICE_UUID)
     };
-    fields.num_uuids128 = 1;
-    fields.uuids128_is_complete = 1;
+    fields.num_uuids16 = 1;
+    fields.uuids16_is_complete = 1;
 
     rc = ble_gap_adv_set_fields(&fields);
     if (rc != 0) {

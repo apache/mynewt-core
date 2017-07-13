@@ -91,6 +91,10 @@ syscfg.defs:
         description: 'ruuvi-tag onboard bme280 sensor'
         value:  0
 
+    LIS2DH12_ONB:
+        description: 'ruuvi-tag onboard lis2dh12 sensor'
+        value:  0
+
 syscfg.defs.BLE_LP_CLOCK:
     TIMER_0:
         value: 0
