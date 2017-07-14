@@ -14,9 +14,13 @@ pts-gap.txt
 pts-gatt.txt
 pts-l2cap.txt
 pts-sm.txt
-90359-20161220-172100175.tpg
-90359-20161220-172113981.pts
+94654-20170317-085122560.tpg
+94654-20170317-085441153.pts
 00readme.txt
+uncrustify.cfg
+
+# unit tests executables
+bin
 
 # CRC16 - BSD License.
 crc16.*
@@ -84,6 +88,30 @@ arm_startup_nrf52.s
 uicr_config.h
 iar_startup_nrf51.s
 iar_startup_nrf52.s
+
+# Nordic BLE400 SDK - BSD License
+ble400_no_boot.ld
+split-ble400.ld
+
+# Nordic nRF52 Thingy SDK - BSD License
+nrf52-thingy_no_boot.ld
+split-nrf52-thingy.ld
+
+# RedBear Blend2 SDK - BSD License
+rb-blend2_no_boot.ld
+split-rb-blend2.ld
+
+# Telenor ee02 SDK - BSD License
+split-telee02.ld
+telee02_no_boot.ld
+
+# VBLUno51 board - BSD License
+split-vbluno51.ld
+vbluno51_no_boot.ld
+
+# VBLUno52 board - BSD License
+split-vbluno52.ld
+vbluno52_no_boot.ld
 
 # STM32CubeF4  - BSD License.
 stm32f4xx_hal_conf.h
@@ -185,6 +213,16 @@ cmsis_nvic.h
 HAL_CM0.s
 HAL_CM4.s
 SVC_Table.s
+arm_common_tables.h
+arm_const_structs.h
+arm_math.h
+cmsis_armcc.h
+cmsis_armcc_V6.h
+cmsis_gcc.h
+core_cm7.h
+core_cmSimd.h
+core_sc000.h
+core_sc300.h
 
 # microjson - BSD License.
 MSJSON_COPYING
@@ -249,3 +287,48 @@ system_MKW41Z4.c
 ctx.S
 excpt_isr.S
 uhi32.ld
+
+# HiFive1 - Apache License 2.0
+sifive
+
+# MQTT - Eclipse Public License
+mqtt
+
+# CMSIS Cortex-M7, STM32f7 - BSD License.
+STM32F7xx
+STM32F7xx_HAL_Driver
+
+# LORA - BSD License
+lora
+
+# loraping - BSD License (main.c only)
+loraping
+
+# SEGGER Sysview - BSD License
+sysview
+
+# SEGGER RTT - BSD License
+rtt
+
+# Adafruit TSL2561 Sensor - BSD License
+tsl2561
+
+# pic32mx470f512h - BSD License
+pic32mx470f512h
+
+# Sensorhub board - BSD License
+startup_STM32F427xx.s
+
+# STM32F7 Discovery BSP - BSD License
+stm32f7xx_hal_conf.h
+system_stm32f7xx.c
+startup_stm32f746xx.s
+
+# STM32F429 BSP - BSD License
+startup_STM32F429x.s
+
+# NUCLEO-F767 BSP - BSD License
+startup_stm32f767xx.s
+
+# Microchip PIC32 SDK - BSD License
+p32mz2048efg100.h
