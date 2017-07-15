@@ -36,7 +36,7 @@ pwm_chan_config(struct pwm_dev *dev, uint8_t cnum, void *data)
 {
     assert(dev->pwm_funcs.pwm_configure_channel != NULL);
 
-    if (cnum > dev->pwm_chan_count) {
+    if (cnum >= dev->pwm_chan_count) {
         return (EINVAL);
     }
 
@@ -60,6 +60,9 @@ int
 pwm_enable_duty_cycle(struct pwm_dev *dev, uint8_t cnum, uint16_t fraction)
 {
     assert(dev->pwm_funcs.pwm_enable_duty_cycle != NULL);
+    if (cnum >= dev->pwm_chan_count) {
+        return (EINVAL);
+    }
 
     return (dev->pwm_funcs.pwm_enable_duty_cycle(dev, cnum, fraction));
 }
