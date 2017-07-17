@@ -22,3 +22,6 @@ syscfg.defs:
     RTT_BUFFER_SIZE_UP:
         description: 'Size of the output buffer'
         value: 1024
+    RTT_BUFFER_SIZE_DOWN:
+        description: 'Size of the input buffer'
+        value: 16
