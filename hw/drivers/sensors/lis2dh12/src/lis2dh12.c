@@ -1089,8 +1089,6 @@ lis2dh12_config(struct lis2dh12 *lis2dh12, struct lis2dh12_cfg *cfg)
 
     lis2dh12->cfg.lc_s_mask = cfg->lc_s_mask;
 
-    os_time_delay((OS_TICKS_PER_SEC * 110)/1000);
-
     return 0;
 err:
     return rc;
