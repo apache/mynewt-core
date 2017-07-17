@@ -89,8 +89,14 @@ console_read(char *str, int cnt, int *newline)
     if ((cnt - 1) < len) {
         len = cnt - 1;
     }
-    memcpy(str, cmd->line, len);
-    str[len] = '\0';
+
+    if (len > 0) {
+        memcpy(str, cmd->line, len);
+        str[len] = '\0';
+    } else {
+        str[0] = cmd->line[0];
+    }
+
     os_eventq_put(avail_queue, ev);
     *newline = 1;
     return len;
