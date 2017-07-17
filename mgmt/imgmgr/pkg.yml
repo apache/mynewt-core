@@ -24,7 +24,6 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps:
-    - boot/bootutil
     - boot/split
     - encoding/base64
     - mgmt/mgmt
@@ -32,6 +31,7 @@ pkg.deps:
 
 pkg.req_apis:
     - newtmgr
+    - bootloader
 
 pkg.deps.IMGMGR_FS:
     - fs/fs

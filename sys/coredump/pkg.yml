@@ -26,6 +26,8 @@ pkg.keywords:
 
 pkg.deps:
     - hw/hal
-    - boot/bootutil
     - mgmt/imgmgr
     - sys/flash_map
+
+pkg.req_apis:
+    - bootloader
