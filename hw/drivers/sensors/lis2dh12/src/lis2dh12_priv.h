@@ -41,6 +41,10 @@ extern "C" {
 #define LIS2DH12_REG_TEMP_CFG                0x1F
 #define LIS2DH12_TEMP_CFG_EN           (0x3 << 6)
 
+#define LIS2DH12_REG_CTRL_REG0               0x1E
+#define LIS2DH12_CTRL_REG0_SPD           (1 << 7)
+#define LIS2DH12_CTRL_REG0_CORR_OP       (1 << 4)
+
 #define LIS2DH12_REG_CTRL_REG1               0x20
 #define LIS2DH12_CTRL_REG1_ODR         (0xf << 4)
 #define LIS2DH12_CTRL_REG1_LPEN          (1 << 3)
