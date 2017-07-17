@@ -25,6 +25,7 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps:
+    - "@apache-mynewt-core/boot/bootutil"
     - "@apache-mynewt-core/boot/split_app"
     - "@apache-mynewt-core/encoding/json/test"
     - "@apache-mynewt-core/kernel/os"
