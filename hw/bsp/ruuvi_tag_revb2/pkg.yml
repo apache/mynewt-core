@@ -99,5 +99,9 @@ pkg.deps.UART_1:
 pkg.deps.BME280_ONB:
     - hw/drivers/sensors/bme280
 
+pkg.deps.LIS2DH12_ONB:
+    - hw/drivers/sensors/lis2dh12
+
 pkg.init:
+    config_lis2dh12_sensor: 400
     config_bme280_sensor: 400

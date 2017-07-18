@@ -80,8 +80,7 @@ mn_socket_test_init()
 int
 main(int argc, char **argv)
 {
-    ts_config.ts_print_results = 1;
-    tu_init();
+    sysinit();
 
     tu_suite_set_init_cb((void*)mn_socket_test_init, NULL);
     mn_socket_test_all();

@@ -19,10 +19,6 @@
 # Package: apps/bleprph
 
 syscfg.vals:
-    # Use INFO log level to reduce code size.  DEBUG is too large for nRF51.
-    LOG_LEVEL: 1
-    CONSOLE_INPUT: 0
-
     # Disable central and observer roles.
     BLE_ROLE_BROADCASTER: 1
     BLE_ROLE_CENTRAL: 0
@@ -40,9 +36,12 @@ syscfg.vals:
     # Enable newtmgr commands.
     STATS_NEWTMGR: 1
     LOG_NEWTMGR: 1
-
-    # Enable Config.
     CONFIG_NEWTMGR: 1
 
     # OS main/default task
-    OS_MAIN_STACK_SIZE: 428
+    OS_MAIN_STACK_SIZE: 468
+
+    # Lots of smaller mbufs are required for newtmgr using typical BLE ATT MTU
+    # values.
+    MSYS_1_BLOCK_COUNT: 22
+    MSYS_1_BLOCK_SIZE: 110

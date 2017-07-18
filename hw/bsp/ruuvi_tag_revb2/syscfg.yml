@@ -91,6 +91,10 @@ syscfg.defs:
         description: 'ruuvi-tag onboard bme280 sensor'
         value:  0
 
+    LIS2DH12_ONB:
+        description: 'ruuvi-tag onboard lis2dh12 sensor'
+        value:  0
+
 syscfg.vals:
     CONFIG_FCB_FLASH_AREA: FLASH_AREA_NFFS
     REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG

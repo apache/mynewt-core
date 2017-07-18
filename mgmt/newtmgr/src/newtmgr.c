@@ -210,6 +210,10 @@ nmgr_handle_req(struct nmgr_transport *nt, struct os_mbuf *req)
     }
 
     mtu = nt->nt_get_mtu(req);
+    if (mtu == 0) {
+        /* The transport cannot support a transmission right now. */
+        goto err_norsp;
+    }
 
     /* Copy the request user header into the response. */
     memcpy(OS_MBUF_USRHDR(rsp), OS_MBUF_USRHDR(req), OS_MBUF_USRHDR_LEN(req));

@@ -1,0 +1,36 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+compiler.path.cc: "riscv64-unknown-elf-gcc"
+compiler.path.as: "riscv64-unknown-elf-gcc"
+compiler.path.archive: "riscv64-unknown-elf-ar"
+compiler.path.objdump: "riscv64-unknown-elf-objdump"
+compiler.path.objsize: "riscv64-unknown-elf-size"
+compiler.path.objcopy: "riscv64-unknown-elf-objcopy"
+
+compiler.flags.base: -std=gnu11 -Wall -Werror -Wno-format-truncation -ffunction-sections -fdata-sections -fno-builtin-printf
+compiler.flags.default: [compiler.flags.base, -O1 -ggdb]
+compiler.flags.optimized: [compiler.flags.base, -Os -ggdb]
+compiler.flags.debug: [compiler.flags.base, -O1 -ggdb]
+
+compiler.as.flags: [-x assembler-with-cpp]
+
+compiler.ld.flags: -static -specs=nosys.specs -Wl,--gc-sections -nostartfiles
+compiler.ld.resolve_circular_deps: true
+compiler.ld.mapfile: true

@@ -73,7 +73,9 @@ static const oc_handler_t sensor_oic_handler = {
 /* Application-specified header. */
 #include "bleprph.h"
 
+#if MYNEWT_VAL(SENSOR_OIC)
 static int sensor_oic_gap_event(struct ble_gap_event *event, void *arg);
+#endif
 
 /** Log data. */
 struct log bleprph_log;
@@ -177,7 +179,7 @@ sensor_oic_advertise(void)
     fields.name_is_complete = 1;
 
     fields.uuids128 = (ble_uuid128_t []) {
-        BLE_UUID128_INIT(OC_GATT_SERVICE_UUID)
+        BLE_UUID128_INIT(OC_GATT_UNSEC_SVC_UUID)
     };
     fields.num_uuids128 = 1;
     fields.uuids128_is_complete = 1;

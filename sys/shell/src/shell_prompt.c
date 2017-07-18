@@ -87,7 +87,7 @@ static const struct shell_cmd prompt_commands[] = {
 
 
 void
-shell_prompt_register(shell_register_function_t register_func)
+shell_prompt_register(void)
 {
-    register_func(SHELL_PROMPT, prompt_commands);
+    shell_register(SHELL_PROMPT, prompt_commands);
 }

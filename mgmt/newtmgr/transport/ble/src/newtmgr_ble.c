@@ -152,7 +152,8 @@ nmgr_ble_get_mtu(struct os_mbuf *req) {
     memcpy(&conn_handle, OS_MBUF_USRHDR(req), sizeof (conn_handle));
     mtu = ble_att_mtu(conn_handle);
     if (!mtu) {
-        assert(0);
+        /* No longer connected. */
+        return 0;
     }
 
     /* 3 is the number of bytes for ATT notification base */

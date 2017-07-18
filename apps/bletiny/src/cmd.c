@@ -404,9 +404,22 @@ help_cmd_conn_start_end(void)
     console_printf("\t%s=<val> %s=<val> %s=<val>\n", "conn", "start", "end");
 }
 
+#if !MYNEWT_VAL(BLETINY_HELP)
+static void
+bletiny_help_disabled(void)
+{
+    console_printf("bletiny help is disabled in this build\n");
+}
+#endif
+
 static void
 bletiny_adv_help(void)
 {
+#if !MYNEWT_VAL(BLETINY_HELP)
+    bletiny_help_disabled();
+    return;
+#endif
+
     console_printf("Available adv commands: \n");
     console_printf("\thelp\n");
     console_printf("\tstop\n");
@@ -557,6 +570,11 @@ cmd_adv(int argc, char **argv)
 static void
 bletiny_conn_help(void)
 {
+#if !MYNEWT_VAL(BLETINY_HELP)
+    bletiny_help_disabled();
+    return;
+#endif
+
     console_printf("Available conn commands: \n");
     console_printf("\thelp\n");
     console_printf("\tcancel\n");
@@ -715,6 +733,11 @@ cmd_conn(int argc, char **argv)
 static void
 bletiny_chrup_help(void)
 {
+#if !MYNEWT_VAL(BLETINY_HELP)
+    bletiny_help_disabled();
+    return;
+#endif
+
     console_printf("Available chrup commands: \n");
     console_printf("\thelp\n");
     console_printf("Available chrup params: \n");
@@ -751,6 +774,11 @@ cmd_chrup(int argc, char **argv)
 static void
 bletiny_datalen_help(void)
 {
+#if !MYNEWT_VAL(BLETINY_HELP)
+    bletiny_help_disabled();
+    return;
+#endif
+
     console_printf("Available datalen commands: \n");
     console_printf("\thelp\n");
     console_printf("Available datalen params: \n");
@@ -809,6 +837,11 @@ cmd_datalen(int argc, char **argv)
 static void
 bletiny_disc_chr_help(void)
 {
+#if !MYNEWT_VAL(BLETINY_HELP)
+    bletiny_help_disabled();
+    return;
+#endif
+
     console_printf("Available disc chr commands: \n");
     console_printf("\thelp\n");
     console_printf("Available disc chr params: \n");
@@ -859,6 +892,11 @@ cmd_disc_chr(int argc, char **argv)
 static void
 bletiny_disc_dsc_help(void)
 {
+#if !MYNEWT_VAL(BLETINY_HELP)
+    bletiny_help_disabled();
+    return;
+#endif
+
     console_printf("Available disc dsc commands: \n");
     console_printf("\thelp\n");
     console_printf("Available disc dsc params: \n");
@@ -897,6 +935,11 @@ cmd_disc_dsc(int argc, char **argv)
 static void
 bletiny_disc_svc_help(void)
 {
+#if !MYNEWT_VAL(BLETINY_HELP)
+    bletiny_help_disabled();
+    return;
+#endif
+
     console_printf("Available disc svc commands: \n");
     console_printf("\thelp\n");
     console_printf("Available disc svc params: \n");
@@ -945,6 +988,11 @@ cmd_disc_svc(int argc, char **argv)
 static void
 bletiny_disc_full_help(void)
 {
+#if !MYNEWT_VAL(BLETINY_HELP)
+    bletiny_help_disabled();
+    return;
+#endif
+
     console_printf("Available disc full commands: \n");
     console_printf("\thelp\n");
     console_printf("Available disc full params: \n");
@@ -983,6 +1031,11 @@ static struct cmd_entry cmd_disc_entries[];
 static int
 cmd_disc_help(int argc, char **argv)
 {
+#if !MYNEWT_VAL(BLETINY_HELP)
+    bletiny_help_disabled();
+    return 0;
+#endif
+
     int i;
 
     console_printf("Available disc commands:\n");
@@ -1021,6 +1074,11 @@ cmd_disc(int argc, char **argv)
 static void
 bletiny_find_inc_svcs_help(void)
 {
+#if !MYNEWT_VAL(BLETINY_HELP)
+    bletiny_help_disabled();
+    return;
+#endif
+
     console_printf("Available find inc svcs commands: \n");
     console_printf("\thelp\n");
     console_printf("Available find inc svcs params: \n");
@@ -1061,6 +1119,11 @@ static const struct cmd_entry cmd_find_entries[];
 static int
 cmd_find_help(int argc, char **argv)
 {
+#if !MYNEWT_VAL(BLETINY_HELP)
+    bletiny_help_disabled();
+    return 0;
+#endif
+
     int i;
 
     console_printf("Available find commands:\n");
@@ -1096,6 +1159,11 @@ cmd_find(int argc, char **argv)
 static void
 bletiny_l2cap_update_help(void)
 {
+#if !MYNEWT_VAL(BLETINY_HELP)
+    bletiny_help_disabled();
+    return;
+#endif
+
     console_printf("Available l2cap update commands: \n");
     console_printf("\thelp\n");
     console_printf("Available l2cap update params: \n");
@@ -1167,6 +1235,11 @@ cmd_l2cap_update(int argc, char **argv)
 static void
 bletiny_l2cap_create_srv_help(void)
 {
+#if !MYNEWT_VAL(BLETINY_HELP)
+    bletiny_help_disabled();
+    return;
+#endif
+
     console_printf("Available l2cap create_srv commands: \n");
     console_printf("\thelp\n");
     console_printf("Available l2cap create_srv params: \n");
@@ -1203,6 +1276,11 @@ cmd_l2cap_create_srv(int argc, char **argv)
 static void
 bletiny_l2cap_connect_help(void)
 {
+#if !MYNEWT_VAL(BLETINY_HELP)
+    bletiny_help_disabled();
+    return;
+#endif
+
     console_printf("Available l2cap connect commands: \n");
     console_printf("\thelp\n");
     console_printf("Available l2cap connect params: \n");
@@ -1242,6 +1320,11 @@ cmd_l2cap_connect(int argc, char **argv)
 static void
 bletiny_l2cap_disconnect_help(void)
 {
+#if !MYNEWT_VAL(BLETINY_HELP)
+    bletiny_help_disabled();
+    return;
+#endif
+
     console_printf("Available l2cap disconnect commands: \n");
     console_printf("\thelp\n");
     console_printf("Available l2cap disconnect params: \n");
@@ -1282,6 +1365,11 @@ cmd_l2cap_disconnect(int argc, char **argv)
 static void
 bletiny_l2cap_send_help(void)
 {
+#if !MYNEWT_VAL(BLETINY_HELP)
+    bletiny_help_disabled();
+    return;
+#endif
+
     console_printf("Available l2cap send commands: \n");
     console_printf("\thelp\n");
     console_printf("Available l2cap disconnect params: \n");
@@ -1333,6 +1421,11 @@ static const struct cmd_entry cmd_l2cap_entries[];
 static int
 cmd_l2cap_help(int argc, char **argv)
 {
+#if !MYNEWT_VAL(BLETINY_HELP)
+    bletiny_help_disabled();
+    return 0;
+#endif
+
     int i;
 
     console_printf("Available l2cap commands:\n");
@@ -1372,6 +1465,11 @@ cmd_l2cap(int argc, char **argv)
 static void
 bletiny_mtu_help(void)
 {
+#if !MYNEWT_VAL(BLETINY_HELP)
+    bletiny_help_disabled();
+    return;
+#endif
+
     console_printf("Available mtu commands: \n");
     console_printf("\thelp\n");
     console_printf("Available mtu params: \n");
@@ -1414,6 +1512,11 @@ cmd_mtu(int argc, char **argv)
 static void
 bletiny_read_help(void)
 {
+#if !MYNEWT_VAL(BLETINY_HELP)
+    bletiny_help_disabled();
+    return;
+#endif
+
     console_printf("Available read commands: \n");
     console_printf("\thelp\n");
     console_printf("Available read params: \n");
@@ -1546,6 +1649,11 @@ cmd_read(int argc, char **argv)
 static void
 bletiny_rssi_help(void)
 {
+#if !MYNEWT_VAL(BLETINY_HELP)
+    bletiny_help_disabled();
+    return;
+#endif
+
     console_printf("Available rssi commands: \n");
     console_printf("\thelp\n");
     console_printf("Available rssi params: \n");
@@ -1597,6 +1705,11 @@ static struct kv_pair cmd_scan_filt_policies[] = {
 static void
 bletiny_scan_help(void)
 {
+#if !MYNEWT_VAL(BLETINY_HELP)
+    bletiny_help_disabled();
+    return;
+#endif
+
     console_printf("Available scan commands: \n");
     console_printf("\thelp\n");
     console_printf("\tcancel\n");
@@ -1808,6 +1921,11 @@ static struct cmd_entry cmd_show_entries[];
 static int
 cmd_show_help(int argc, char **argv)
 {
+#if !MYNEWT_VAL(BLETINY_HELP)
+    bletiny_help_disabled();
+    return 0;
+#endif
+
     int i;
 
     console_printf("Available show commands:\n");
@@ -1846,6 +1964,11 @@ cmd_show(int argc, char **argv)
 static void
 bletiny_sec_pair_help(void)
 {
+#if !MYNEWT_VAL(BLETINY_HELP)
+    bletiny_help_disabled();
+    return;
+#endif
+
     console_printf("Available sec pair commands: \n");
     console_printf("\thelp\n");
     console_printf("Available sec pair params: \n");
@@ -1882,6 +2005,11 @@ cmd_sec_pair(int argc, char **argv)
 static void
 bletiny_sec_start_help(void)
 {
+#if !MYNEWT_VAL(BLETINY_HELP)
+    bletiny_help_disabled();
+    return;
+#endif
+
     console_printf("Available sec start commands: \n");
     console_printf("\thelp\n");
     console_printf("Available sec start params: \n");
@@ -1918,6 +2046,11 @@ cmd_sec_start(int argc, char **argv)
 static void
 bletiny_sec_enc_help(void)
 {
+#if !MYNEWT_VAL(BLETINY_HELP)
+    bletiny_help_disabled();
+    return;
+#endif
+
     console_printf("Available sec enc commands: \n");
     console_printf("\thelp\n");
     console_printf("Available sec enc params: \n");
@@ -1990,6 +2123,11 @@ static struct cmd_entry cmd_sec_entries[];
 static int
 cmd_sec_help(int argc, char **argv)
 {
+#if !MYNEWT_VAL(BLETINY_HELP)
+    bletiny_help_disabled();
+    return 0;
+#endif
+
     int i;
 
     console_printf("Available sec commands:\n");
@@ -2037,6 +2175,11 @@ cmd_sec(int argc, char **argv)
 static void
 bletiny_set_adv_data_help(void)
 {
+#if !MYNEWT_VAL(BLETINY_HELP)
+    bletiny_help_disabled();
+    return;
+#endif
+
     console_printf("Available set adv_data params: \n");
     help_cmd_long_bounds("flags", 0, UINT8_MAX);
     help_cmd_uint16("uuid16");
@@ -2360,6 +2503,11 @@ cmd_set_adv_data(void)
 static void
 bletiny_set_sm_data_help(void)
 {
+#if !MYNEWT_VAL(BLETINY_HELP)
+    bletiny_help_disabled();
+    return;
+#endif
+
     console_printf("Available set sm_data params: \n");
     help_cmd_bool("oob_flag");
     help_cmd_bool("mitm_flag");
@@ -2466,6 +2614,11 @@ static struct kv_pair cmd_set_addr_types[] = {
 static void
 bletiny_set_addr_help(void)
 {
+#if !MYNEWT_VAL(BLETINY_HELP)
+    bletiny_help_disabled();
+    return;
+#endif
+
     console_printf("Available set addr params: \n");
     help_cmd_kv_dflt("addr_type", cmd_set_addr_types, BLE_ADDR_PUBLIC);
     help_cmd_byte_stream_exact_length("addr", 6);
@@ -2521,6 +2674,11 @@ cmd_set_addr(void)
 static void
 bletiny_set_help(void)
 {
+#if !MYNEWT_VAL(BLETINY_HELP)
+    bletiny_help_disabled();
+    return;
+#endif
+
     console_printf("Available set commands: \n");
     console_printf("\thelp\n");
     console_printf("\tadv_data\n");
@@ -2606,6 +2764,11 @@ cmd_set(int argc, char **argv)
 static void
 bletiny_term_help(void)
 {
+#if !MYNEWT_VAL(BLETINY_HELP)
+    bletiny_help_disabled();
+    return;
+#endif
+
     console_printf("Available term commands: \n");
     console_printf("\thelp\n");
     console_printf("Available term params: \n");
@@ -2655,6 +2818,11 @@ cmd_term(int argc, char **argv)
 static void
 bletiny_update_help(void)
 {
+#if !MYNEWT_VAL(BLETINY_HELP)
+    bletiny_help_disabled();
+    return;
+#endif
+
     console_printf("Available update commands: \n");
     console_printf("\thelp\n");
     console_printf("Available update params: \n");
@@ -2748,6 +2916,11 @@ cmd_update(int argc, char **argv)
 static void
 bletiny_wl_help(void)
 {
+#if !MYNEWT_VAL(BLETINY_HELP)
+    bletiny_help_disabled();
+    return;
+#endif
+
     console_printf("Available wl commands: \n");
     console_printf("\thelp\n");
     console_printf("Available wl params: \n");
@@ -2809,6 +2982,11 @@ cmd_wl(int argc, char **argv)
 static void
 bletiny_write_help(void)
 {
+#if !MYNEWT_VAL(BLETINY_HELP)
+    bletiny_help_disabled();
+    return;
+#endif
+
     console_printf("Available write commands: \n");
     console_printf("\thelp\n");
     console_printf("Available write params: \n");
@@ -2965,6 +3143,11 @@ static struct kv_pair cmd_keystore_entry_type[] = {
 static void
 bletiny_keystore_parse_keydata_help(void)
 {
+#if !MYNEWT_VAL(BLETINY_HELP)
+    bletiny_help_disabled();
+    return;
+#endif
+
     console_printf("Available keystore parse keydata params: \n");
     help_cmd_kv("type", cmd_keystore_entry_type);
     help_cmd_kv("addr_type", cmd_addr_type);
@@ -3027,6 +3210,11 @@ cmd_keystore_parse_keydata(int argc, char **argv, union ble_store_key *out,
 static void
 bletiny_keystore_parse_valuedata_help(void)
 {
+#if !MYNEWT_VAL(BLETINY_HELP)
+    bletiny_help_disabled();
+    return;
+#endif
+
     console_printf("Available keystore parse valuedata params: \n");
     help_cmd_byte_stream_exact_length("ltk", 16);
     help_cmd_byte_stream_exact_length("irk", 16);
@@ -3091,6 +3279,11 @@ cmd_keystore_parse_valuedata(int argc, char **argv,
 static void
 bletiny_keystore_add_help(void)
 {
+#if !MYNEWT_VAL(BLETINY_HELP)
+    bletiny_help_disabled();
+    return;
+#endif
+
     console_printf("Available keystore add commands: \n");
     console_printf("\thelp\n");
     bletiny_keystore_parse_keydata_help();
@@ -3141,6 +3334,11 @@ cmd_keystore_add(int argc, char **argv)
 static void
 bletiny_keystore_del_help(void)
 {
+#if !MYNEWT_VAL(BLETINY_HELP)
+    bletiny_help_disabled();
+    return;
+#endif
+
     console_printf("Available keystore del commands: \n");
     console_printf("\thelp\n");
     bletiny_keystore_parse_keydata_help();
@@ -3208,6 +3406,11 @@ cmd_keystore_iterator(int obj_type,
 static void
 bletiny_keystore_show_help(void)
 {
+#if !MYNEWT_VAL(BLETINY_HELP)
+    bletiny_help_disabled();
+    return;
+#endif
+
     console_printf("Available keystore show commands: \n");
     console_printf("\thelp\n");
     console_printf("Available keystore show params: \n");
@@ -3241,6 +3444,11 @@ static struct cmd_entry cmd_keystore_entries[];
 static int
 cmd_keystore_help(int argc, char **argv)
 {
+#if !MYNEWT_VAL(BLETINY_HELP)
+    bletiny_help_disabled();
+    return 0;
+#endif
+
     int i;
 
     console_printf("Available keystore commands:\n");
@@ -3278,6 +3486,11 @@ cmd_keystore(int argc, char **argv)
 static void
 bletiny_passkey_help(void)
 {
+#if !MYNEWT_VAL(BLETINY_HELP)
+    bletiny_help_disabled();
+    return;
+#endif
+
     console_printf("Available passkey commands: \n");
     console_printf("\thelp\n");
     console_printf("Available passkey params: \n");
@@ -3390,6 +3603,11 @@ cmd_passkey(int argc, char **argv)
 static void
 bletiny_tx_help(void)
 {
+#if !MYNEWT_VAL(BLETINY_HELP)
+    bletiny_help_disabled();
+    return;
+#endif
+
     console_printf("Available tx commands: \n");
     console_printf("\thelp\n");
     console_printf("Available tx params: \n");
@@ -3453,6 +3671,11 @@ static struct cmd_entry cmd_b_entries[];
 static int
 cmd_help(int argc, char **argv)
 {
+#if !MYNEWT_VAL(BLETINY_HELP)
+    bletiny_help_disabled();
+    return 0;
+#endif
+
     int i;
 
     console_printf("Available commands:\n");
@@ -3469,6 +3692,11 @@ cmd_help(int argc, char **argv)
 static void
 bletiny_svcchg_help(void)
 {
+#if !MYNEWT_VAL(BLETINY_HELP)
+    bletiny_help_disabled();
+    return;
+#endif
+
     console_printf("Available svcchg params: \n");
     help_cmd_uint16("start");
     help_cmd_uint16("end");

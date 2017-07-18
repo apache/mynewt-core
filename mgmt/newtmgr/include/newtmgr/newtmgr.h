@@ -43,6 +43,9 @@ typedef int (*nmgr_transport_out_func_t)(struct nmgr_transport *nt,
  * from the peer whose MTU is being queried.  This function takes an mbuf
  * parameter because some transports store connection-specific information in
  * the mbuf user header (e.g., the BLE transport stores the connection handle).
+ *
+ * @return                      The transport's MTU;
+ *                              0 if transmission is currently not possible.
  */
 typedef uint16_t (*nmgr_transport_get_mtu_func_t)(struct os_mbuf *m);
 

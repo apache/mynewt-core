@@ -37,8 +37,8 @@ void shell_nlip_init(void);
 void shell_nlip_clear_pkt(void);
 #endif
 
-void shell_os_register(shell_register_function_t register_func);
-void shell_prompt_register(shell_register_function_t register_func);
+void shell_os_register(void);
+void shell_prompt_register(void);
 
 #ifdef __cplusplus
 }

@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "sysinit/sysinit.h"
 #include "syscfg/syscfg.h"
 #include "os/os.h"
 #include "testutil/testutil.h"
@@ -197,8 +198,7 @@ TEST_SUITE(fcb_test_all)
 int
 main(int argc, char **argv)
 {
-    ts_config.ts_print_results = 1;
-    tu_init();
+    sysinit();
 
     tu_suite_set_init_cb(fcb_ts_init, NULL);
     fcb_test_all();
