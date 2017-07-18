@@ -512,13 +512,17 @@ ble_ll_scan_init_ext_adv(void)
 }
 
 static int
-ble_ll_hci_send_legacy_ext_adv_report(uint8_t subev, uint8_t evtype,
+ble_ll_hci_send_legacy_ext_adv_report(uint8_t evtype,
                                       uint8_t addr_type, uint8_t *addr,
                                       uint8_t rssi,
                                       uint8_t adv_data_len, uint8_t *adv_data,
                                       uint8_t *inita)
 {
     struct ble_ll_ext_adv *evt;
+
+    if (!ble_ll_hci_is_le_event_enabled(BLE_HCI_LE_SUBEV_EXT_ADV_RPT)) {
+        return -1;
+    }
 
     evt = ble_ll_scan_init_ext_adv();
     if (!evt) {
@@ -549,15 +553,17 @@ ble_ll_hci_send_legacy_ext_adv_report(uint8_t subev, uint8_t evtype,
     evt->addr_type = addr_type;
     memcpy(evt->addr, addr, BLE_DEV_ADDR_LEN);
 
+    evt->event_len = sizeof(*evt);
+
     if (inita) {
         /* TODO Really ?? */
         evt->dir_addr_type = BLE_HCI_ADV_OWN_ADDR_RANDOM;
         memcpy(evt->dir_addr, inita, BLE_DEV_ADDR_LEN);
-        evt->event_len = sizeof(*evt) + BLE_DEV_ADDR_LEN  + 1;
-    } else if (adv_data_len <  (MYNEWT_VAL(BLE_HCI_EVT_BUF_SIZE) - sizeof(*evt))) {
+        evt->event_len += BLE_DEV_ADDR_LEN  + 1;
+    } else if (adv_data_len <= (MYNEWT_VAL(BLE_HCI_EVT_BUF_SIZE) - sizeof(*evt))) {
         evt->adv_data_len = adv_data_len;
         memcpy(evt->adv_data, adv_data, adv_data_len);
-        evt->event_len = sizeof(*evt) + adv_data_len;
+        evt->event_len += adv_data_len;
     }
 
     evt->rssi = rssi;
@@ -575,6 +581,10 @@ ble_ll_hci_send_adv_report(uint8_t subev, uint8_t evtype,uint8_t event_len,
     uint8_t *evbuf;
     uint8_t *tmp;
 
+    if (!ble_ll_hci_is_le_event_enabled(subev)) {
+        return -1;
+    }
+
     evbuf = ble_hci_trans_buf_alloc(BLE_HCI_TRANS_BUF_EVT_LO);
     if (!evbuf) {
         return -1;
@@ -589,14 +599,18 @@ ble_ll_hci_send_adv_report(uint8_t subev, uint8_t evtype,uint8_t event_len,
     memcpy(&evbuf[6], addr, BLE_DEV_ADDR_LEN);
 
     tmp = &evbuf[12];
-    if (inita) {
+    if (subev == BLE_HCI_LE_SUBEV_DIRECT_ADV_RPT) {
+        assert(inita);
         tmp[0] = BLE_HCI_ADV_OWN_ADDR_RANDOM;
         memcpy(tmp + 1, inita, BLE_DEV_ADDR_LEN);
         tmp += BLE_DEV_ADDR_LEN + 1;
-    } else if (adv_data_len) {
+    } else if (subev == BLE_HCI_LE_SUBEV_ADV_RPT) {
         tmp[0] = adv_data_len;
         memcpy(tmp + 1, adv_data, adv_data_len);
         tmp += adv_data_len + 1;
+    } else {
+        assert(0);
+        return -1;
     }
 
     tmp[0] = rssi;
@@ -634,24 +648,20 @@ ble_ll_scan_send_adv_report(uint8_t pdu_type, uint8_t txadd, uint8_t *rxbuf,
     uint8_t event_len;
 
     inita = NULL;
-    subev = BLE_HCI_LE_SUBEV_ADV_RPT;
-    if (!ble_ll_hci_is_le_event_enabled(subev)) {
-        return;
-    }
 
     if (pdu_type == BLE_ADV_PDU_TYPE_ADV_DIRECT_IND) {
         inita = rxbuf + BLE_LL_PDU_HDR_LEN + BLE_DEV_ADDR_LEN;
-        if ((inita[5] & 0x40) == 0x40) {
-            subev = BLE_HCI_LE_SUBEV_DIRECT_ADV_RPT;
-        } else {
+        if (!(inita[5] & 0x40)) {
             /* Let's ignore it if address is not resolvable */
             return;
         }
 
+        subev = BLE_HCI_LE_SUBEV_DIRECT_ADV_RPT;
         evtype = BLE_HCI_ADV_RPT_EVTYPE_DIR_IND;
         event_len = BLE_HCI_LE_ADV_DIRECT_RPT_LEN;
         adv_data_len = 0;
     } else {
+        subev = BLE_HCI_LE_SUBEV_ADV_RPT;
         if (pdu_type == BLE_ADV_PDU_TYPE_ADV_IND) {
             evtype = BLE_HCI_ADV_RPT_EVTYPE_ADV_IND;
         } else if (pdu_type == BLE_ADV_PDU_TYPE_ADV_SCAN_IND) {
@@ -692,7 +702,7 @@ ble_ll_scan_send_adv_report(uint8_t pdu_type, uint8_t txadd, uint8_t *rxbuf,
 
 #if MYNEWT_VAL(BLE_LL_CFG_FEAT_LL_EXT_ADV)
     if (scansm->ext_scanning) {
-        rc = ble_ll_hci_send_legacy_ext_adv_report(subev, evtype,
+        rc = ble_ll_hci_send_legacy_ext_adv_report(evtype,
                                                    addr_type, adv_addr,
                                                    hdr->rxinfo.rssi,
                                                    adv_data_len, adv_data,
@@ -2077,6 +2087,10 @@ ble_ll_hci_send_ext_adv_report(uint8_t ptype, uint8_t *rxbuf,
 {
     struct ble_ll_ext_adv *evt;
     int rc;
+
+    if (!ble_ll_hci_is_le_event_enabled(BLE_HCI_LE_SUBEV_EXT_ADV_RPT)) {
+        return;
+    }
 
     evt = ble_ll_scan_init_ext_adv();
     if (!evt) {
