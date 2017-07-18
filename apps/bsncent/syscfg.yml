@@ -24,3 +24,6 @@ syscfg.defs:
 syscfg.vals:
     # Disable logging.
     LOG_LEVEL: 255
+
+    # Turn strict scheduling on
+    BLE_LL_STRICT_CONN_SCHEDULING: 1
