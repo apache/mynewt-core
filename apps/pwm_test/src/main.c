@@ -16,6 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 #include <os/os.h>
 #include <pwm/pwm.h>
 #include <pwm_nrf52/pwm_nrf52.h>
