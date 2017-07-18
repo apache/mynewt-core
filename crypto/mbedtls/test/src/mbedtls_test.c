@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "sysinit/sysinit.h"
 #include "syscfg/syscfg.h"
 #include "testutil/testutil.h"
 
@@ -88,8 +89,7 @@ TEST_SUITE(mbedtls_test_all)
 int
 main(int argc, char **argv)
 {
-    ts_config.ts_print_results = 1;
-    tu_init();
+    sysinit();
 
     mbedtls_test_all();
 

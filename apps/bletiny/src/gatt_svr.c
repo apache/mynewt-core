@@ -570,15 +570,6 @@ gatt_svr_register_cb(struct ble_gatt_register_ctxt *ctxt, void *arg)
 }
 
 int
-gatt_svr_register(void)
-{
-    int rc;
-
-    rc = ble_gatts_register_svcs(gatt_svr_svcs, gatt_svr_register_cb, NULL);
-    return rc;
-}
-
-int
 gatt_svr_init(void)
 {
     int rc;

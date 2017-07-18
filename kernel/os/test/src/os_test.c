@@ -18,6 +18,7 @@
  */
 #include <assert.h>
 #include <stddef.h>
+#include "sysinit/sysinit.h"
 #include "syscfg/syscfg.h"
 #include "testutil/testutil.h"
 #include "os/os_test.h"
@@ -112,9 +113,7 @@ os_test_all(void)
 int
 main(int argc, char **argv)
 {
-    ts_config.ts_print_results = 1;
-    tu_parse_args(argc, argv);
-    tu_init();
+    sysinit();
 
     os_test_all();
 

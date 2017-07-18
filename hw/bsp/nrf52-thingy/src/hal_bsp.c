@@ -19,7 +19,9 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <string.h>
 #include <assert.h>
+#include <sysinit/sysinit.h>
 #include <nrf52.h>
 #include "os/os_cputime.h"
 #include "syscfg/syscfg.h"
@@ -42,6 +44,11 @@
 #endif
 #include "os/os_dev.h"
 #include "bsp.h"
+
+#if MYNEWT_VAL(LIS2DH12_ONB)
+#include <lis2dh12/lis2dh12.h>
+static struct lis2dh12 lis2dh12;
+#endif
 
 #if MYNEWT_VAL(UART_0)
 static struct uart_dev os_bsp_uart0;
@@ -85,10 +92,18 @@ static const struct nrf52_hal_spi_cfg os_bsp_spi0s_cfg = {
 
 #if MYNEWT_VAL(I2C_0)
 static const struct nrf52_hal_i2c_cfg hal_i2c_cfg = {
-    .scl_pin = 27,
-    .sda_pin = 26,
-    .i2c_frequency = 100    /* 100 kHz */
+    .scl_pin = 15,
+    .sda_pin = 14,
+    .i2c_frequency = 400    /* 400 kHz */
 };
+
+#if MYNEWT_VAL(LIS2DH12_ONB)
+static struct sensor_itf i2c_0_itf_lis = {
+    .si_type = SENSOR_ITF_I2C,
+    .si_num  = 0,
+    .si_addr = 0x19
+};
+#endif
 #endif
 
 /*
@@ -149,6 +164,51 @@ hal_bsp_get_nvic_priority(int irq_num, uint32_t pri)
         cfg_pri = pri;
     }
     return cfg_pri;
+}
+
+/**
+ * LIS2Dh12 Sensor default configuration
+ *
+ * @return 0 on success, non-zero on failure
+ */
+#if MYNEWT_VAL(LIS2DH12_ONB)
+int
+config_lis2dh12_sensor(void)
+{
+    int rc;
+    struct os_dev *dev;
+    struct lis2dh12_cfg cfg;
+
+    dev = (struct os_dev *) os_dev_open("lis2dh12_0", OS_TIMEOUT_NEVER, NULL);
+    assert(dev != NULL);
+
+    memset(&cfg, 0, sizeof(cfg));
+
+    cfg.lc_s_mask = SENSOR_TYPE_ACCELEROMETER;
+    cfg.lc_rate = LIS2DH12_DATA_RATE_HN_1344HZ_L_5376HZ;
+    cfg.lc_fs = LIS2DH12_FS_2G;
+    cfg.lc_pull_up_disc = 1;
+
+    rc = lis2dh12_config((struct lis2dh12 *)dev, &cfg);
+    SYSINIT_PANIC_ASSERT(rc == 0);
+
+    os_dev_close(dev);
+    return rc;
+}
+#endif
+
+static void
+sensor_dev_create(HN_1344HZ_L_5376HZ)
+{
+    int rc;
+    (void)rc;
+
+#if MYNEWT_VAL(LIS2DH12_ONB)
+    rc = os_dev_create((struct os_dev *) &lis2dh12, "lis2dh12_0",
+      OS_DEV_INIT_PRIMARY, 0, lis2dh12_init, (void *)&i2c_0_itf_lis);
+    assert(rc == 0);
+#endif
+
 }
 
 void
@@ -214,4 +274,5 @@ hal_bsp_init(void)
     assert(rc == 0);
 #endif
 
+    sensor_dev_create();
 }

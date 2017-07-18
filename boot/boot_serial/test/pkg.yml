@@ -24,6 +24,7 @@ pkg.keywords:
 
 pkg.deps:
     - boot/boot_serial
+    - boot/bootutil
     - test/testutil
 
 pkg.deps.SELFTEST:

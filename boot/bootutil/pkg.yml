@@ -25,6 +25,9 @@ pkg.keywords:
     - boot
     - bootloader
 
+pkg.apis:
+    - bootloader
+
 pkg.deps: 
     - hw/hal
     - crypto/mbedtls

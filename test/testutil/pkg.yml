@@ -29,3 +29,6 @@ pkg.deps:
     - hw/hal
     - kernel/os
     - sys/sysinit
+
+pkg.init:
+    tu_init: 1

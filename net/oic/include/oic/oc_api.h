@@ -86,6 +86,8 @@ void oc_resource_set_discoverable(oc_resource_t *resource);
 void oc_resource_set_observable(oc_resource_t *resource);
 void oc_resource_set_periodic_observable(oc_resource_t *resource,
                                          uint16_t seconds);
+void oc_resource_set_periodic_observable_ms(oc_resource_t *resource,
+                                            uint32_t mseconds);
 void oc_resource_set_request_handler(oc_resource_t *resource,
                                      oc_method_t method,
                                      oc_request_handler_t handler);

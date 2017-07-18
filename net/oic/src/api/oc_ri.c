@@ -276,7 +276,7 @@ oc_ri_add_resource(oc_resource_t *resource)
         valid = false;
     }
     if (resource->properties & OC_PERIODIC &&
-      resource->observe_period_seconds == 0) {
+      resource->observe_period_mseconds == 0) {
         valid = false;
     }
     if (valid) {
@@ -298,7 +298,7 @@ periodic_observe_handler(struct os_event *ev)
 
     if (coap_notify_observers(resource, NULL, NULL)) {
         os_callout_reset(&resource->callout,
-          resource->observe_period_seconds * OS_TICKS_PER_SEC);
+          (resource->observe_period_mseconds * OS_TICKS_PER_SEC)/1000);
     }
 }
 
@@ -581,7 +581,7 @@ oc_ri_invoke_coap_entity_handler(struct coap_packet_rx *request,
           bool set_observe_option = true;
           if (cur_resource->properties & OC_PERIODIC) {
               os_callout_reset(&cur_resource->callout,
-                cur_resource->observe_period_seconds * OS_TICKS_PER_SEC);
+                (cur_resource->observe_period_mseconds * OS_TICKS_PER_SEC)/1000);
           }
 
           if (set_observe_option) {

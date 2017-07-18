@@ -120,7 +120,7 @@ bleprph_advertise(void)
 #if MYNEWT_VAL(ADVERTISE_128BIT_UUID)
     /* Advertise the 128-bit CoAP-over-BLE service UUID in the scan response. */
     fields.uuids128 = (ble_uuid128_t []) {
-        BLE_UUID128_INIT(OC_GATT_SERVICE_UUID)
+        BLE_UUID128_INIT(OC_GATT_UNSEC_SVC_UUID)
     };
     fields.num_uuids128 = 1;
     fields.uuids128_is_complete = 1;
@@ -128,7 +128,7 @@ bleprph_advertise(void)
 #if MYNEWT_VAL(ADVERTISE_16BIT_UUID)
     /* Advertise the 16-bit CoAP-over-BLE service UUID in the scan response. */
     fields.uuids16 = (ble_uuid16_t[]) {
-        BLE_UUID16_INIT(RUNTIME_COAP_SERVICE_UUID)
+        BLE_UUID16_INIT(OC_GATT_SEC_SVC_UUID)
     };
     fields.num_uuids16 = 1;
     fields.uuids16_is_complete = 1;
