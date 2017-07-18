@@ -228,6 +228,9 @@ console_handle_char(uint8_t byte)
         case CONSOLE_NLIP_DATA_START1:
             nlip_state |= NLIP_DATA_START1;
             break;
+        default:
+            insert_char(&input->line[cur], byte, end);
+            /* Falls through. */
         case '\r':
             /* Falls through. */
         case '\n':
@@ -252,16 +255,6 @@ console_handle_char(uint8_t byte)
 
             input = NULL;
             ev = NULL;
-            break;
-        case '\t':
-            if (completion && !end) {
-                console_blocking_mode();
-                completion(input->line, console_append_char);
-                console_non_blocking_mode();
-            }
-            break;
-        default:
-            insert_char(&input->line[cur], byte, end);
             break;
         }
 

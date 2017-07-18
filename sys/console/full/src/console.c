@@ -475,6 +475,9 @@ console_handle_char(uint8_t byte)
         case ESC:
             esc_state |= ESC_ESC;
             break;
+        default:
+            insert_char(&input->line[cur], byte, end);
+            /* Falls through. */
         case '\r':
             /* Falls through. */
         case '\n':
@@ -506,9 +509,6 @@ console_handle_char(uint8_t byte)
                 completion(input->line, console_append_char);
                 console_non_blocking_mode();
             }
-            break;
-        default:
-            insert_char(&input->line[cur], byte, end);
             break;
         }
 
