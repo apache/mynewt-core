@@ -385,6 +385,7 @@ console_handle_char(uint8_t byte)
 
     static struct os_event *ev;
     static struct console_input *input;
+    static char prev_endl = '\0';
 
     if (!avail_queue || !lines_queue) {
         return 0;
@@ -473,10 +474,15 @@ console_handle_char(uint8_t byte)
         case ESC:
             esc_state |= ESC_ESC;
             break;
-        default:
-            insert_char(&input->line[cur], byte, end);
-            /* Falls through. */
         case '\r':
+            /* Falls through. */
+        case '\n':
+            if (byte == '\n' && prev_endl == '\r') {
+                /* handle double end line chars */
+                prev_endl = byte;
+                break;
+            }
+            prev_endl = byte;
             input->line[cur + end] = '\0';
             console_out('\r');
             console_out('\n');
@@ -499,6 +505,9 @@ console_handle_char(uint8_t byte)
                 completion(input->line, console_append_char);
                 console_non_blocking_mode();
             }
+            break;
+        default:
+            insert_char(&input->line[cur], byte, end);
             break;
         }
 
