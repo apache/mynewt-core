@@ -1050,7 +1050,7 @@ boot_go(struct boot_rsp *rsp)
 
     switch (swap_type) {
     case BOOT_SWAP_TYPE_NONE:
-#ifdef BOOTUTIL_VALIDATE_SLOT0
+#if MYNEWT_VAL(BOOTUTIL_VALIDATE_SLOT0)
         rc = boot_validate_slot(0);
         if (rc != 0) {
             return BOOT_EBADIMAGE;
