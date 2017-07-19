@@ -412,6 +412,16 @@ bletiny_help_disabled(void)
 }
 #endif
 
+#if MYNEWT_VAL(BLE_EXT_ADV)
+static struct kv_pair cmd_ext_adv_phy_opts[] = {
+    { "none",        0x00 },
+    { "1M",          0x01 },
+    { "2M",          0x02 },
+    { "coded",       0x03 },
+    { NULL }
+};
+#endif
+
 static void
 bletiny_adv_help(void)
 {
@@ -438,8 +448,8 @@ bletiny_adv_help(void)
     help_cmd_long_bounds_dflt("dur", 1, INT32_MAX, BLE_HS_FOREVER);
 #if MYNEWT_VAL(BLE_EXT_ADV)
     help_cmd_long_bounds_dflt("tx_power", -127, 127, 127);
-    help_cmd_long_bounds_dflt("primary_phy", 0, 3, 0);
-    help_cmd_long_bounds_dflt("secondary_phy", 0, 3, 0);
+    help_cmd_kv_dflt("primary_phy", cmd_ext_adv_phy_opts, 0);
+    help_cmd_kv_dflt("secondary_phy", cmd_ext_adv_phy_opts, 0);
 #endif
 }
 
@@ -570,17 +580,19 @@ cmd_adv(int argc, char **argv)
         return rc;
     }
 
-    primary_phy = parse_arg_uint8_dflt("primary_phy", 0, &rc);
+    primary_phy = parse_arg_kv_default("primary_phy", cmd_ext_adv_phy_opts,
+                                       0, &rc);
     if (rc != 0) {
         console_printf("invalid 'primary_phy' parameter\n");
-        help_cmd_long_bounds_dflt("primary_phy", 0, 3, 0);
+        help_cmd_kv_dflt("primary_phy", cmd_ext_adv_phy_opts, 0);
         return rc;
     }
 
-    secondary_phy = parse_arg_uint8_dflt("sec_phy", primary_phy, &rc);
+    secondary_phy = parse_arg_kv_default("secondary_phy", cmd_ext_adv_phy_opts,
+                                         primary_phy, &rc);
     if (rc != 0) {
         console_printf("invalid 'secondary_phy' parameter\n");
-        help_cmd_long_bounds_dflt("secondary_phy", 0, 3, primary_phy);
+        help_cmd_kv_dflt("secondary_phy", cmd_ext_adv_phy_opts, 0);
         return rc;
     }
 
