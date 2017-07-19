@@ -90,6 +90,10 @@ syscfg.defs:
         description: 'NRF52 I2C (TWI) interface 0'
         value:  '0'
 
+    LIS2DH12_ONB:
+        description: 'NRF52 Thingy onboard lis2dh12 sensor'
+        value:  0
+
 syscfg.defs.BLE_LP_CLOCK:
     TIMER_0:
         value: 0

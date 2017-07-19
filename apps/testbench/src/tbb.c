@@ -137,7 +137,7 @@ tbb_advertise(void)
     fields.name_is_complete = 1;
 
     fields.uuids16 = (ble_uuid16_t[]) {
-        BLE_UUID16_INIT(OC_GATT_SEC_SERVICE_UUID)
+        BLE_UUID16_INIT(OC_GATT_SEC_SVC_UUID)
     };
     fields.num_uuids16 = 1;
     fields.uuids16_is_complete = 1;

@@ -24,6 +24,7 @@ pkg.keywords:
 
 pkg.deps: 
     - boot/split
+    - boot/bootutil
     - kernel/os 
     - mgmt/imgmgr
     - mgmt/newtmgr

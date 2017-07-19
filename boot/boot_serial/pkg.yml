@@ -28,7 +28,6 @@ pkg.keywords:
 pkg.deps:
     - hw/hal
     - kernel/os
-    - boot/bootutil
     - encoding/tinycbor
     - encoding/base64
     - sys/flash_map
@@ -36,6 +35,7 @@ pkg.deps:
 
 pkg.req_apis:
     - console
+    - bootloader
 
 pkg.cflags.SELFTEST:
     - -DBOOT_SERIAL_DETECT_PIN=0

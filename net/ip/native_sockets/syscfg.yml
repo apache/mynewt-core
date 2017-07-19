@@ -16,12 +16,21 @@
 # under the License.
 #
 
-# Package: hw/drivers/rtt
-
 syscfg.defs:
-    RTT_BUFFER_SIZE_UP:
-        description: 'Size of the output buffer'
-        value: 1024
-    RTT_BUFFER_SIZE_DOWN:
-        description: 'Size of the input buffer'
-        value: 16
+    NATIVE_SOCKETS_MAX:
+        description: 'The number of allocated sockets.'
+        value: 8
+    NATIVE_SOCKETS_MAX_UDP:
+        description: 'The maximum UDP datagram size (send and receive).'
+        value: 2048
+    NATIVE_SOCKETS_POLL_ITVL:
+        description: >
+            The frequency at which to poll for received data.  Units
+            are OS ticks.
+        value: 'OS_TICKS_PER_SEC / 5'
+    NATIVE_SOCKETS_STACK_SZ:
+        description: 'The size of the native sockets task stack, in bytes.'
+        value: 4096
+    NATIVE_SOCKETS_PRIO:
+        description: 'The priority of the native sockets task.'
+        value: 2

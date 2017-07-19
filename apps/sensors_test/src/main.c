@@ -179,7 +179,7 @@ sensor_oic_advertise(void)
     fields.name_is_complete = 1;
 
     fields.uuids128 = (ble_uuid128_t []) {
-        BLE_UUID128_INIT(OC_GATT_SERVICE_UUID)
+        BLE_UUID128_INIT(OC_GATT_UNSEC_SVC_UUID)
     };
     fields.num_uuids128 = 1;
     fields.uuids128_is_complete = 1;

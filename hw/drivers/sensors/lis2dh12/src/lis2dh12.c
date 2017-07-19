@@ -26,6 +26,7 @@
 #include "defs/error.h"
 #include "os/os.h"
 #include "hal/hal_spi.h"
+#include "hal/hal_i2c.h"
 #include "sensor/sensor.h"
 #include "sensor/accel.h"
 #include "lis2dh12/lis2dh12.h"
@@ -86,19 +87,78 @@ static const struct sensor_driver g_lis2dh12_sensor_driver = {
     lis2dh12_sensor_get_config
 };
 
+/**
+ * Read multiple length data from LIS2DH12 sensor over I2C
+ *
+ * @param The sensor interface
+ * @param register address
+ * @param variable length buffer
+ * @param length of the payload to read
+ *
+ * @return 0 on success, non-zero on failure
+ */
+static int
+lis2dh12_i2c_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
+                     uint8_t len)
+{
+    int rc;
+    uint8_t payload[20] = { addr, 0, 0, 0, 0, 0, 0, 0,
+                              0, 0, 0, 0, 0, 0, 0, 0,
+                              0, 0, 0, 0};
+
+    struct hal_i2c_master_data data_struct = {
+        .address = itf->si_addr,
+        .len = 1,
+        .buffer = payload
+    };
+
+    /* Clear the supplied buffer */
+    memset(buffer, 0, len);
+
+    /* Register write */
+    rc = hal_i2c_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1);
+    if (rc) {
+        LIS2DH12_ERR("I2C access failed at address 0x%02X\n", data_struct.address);
+#if MYNEWT_VAL(LIS2DH12_STATS)
+        STATS_INC(g_lis2dh12stats, read_errors);
+#endif
+        goto err;
+    }
+
+    /* Read len bytes back */
+    memset(payload, 0, sizeof(payload));
+    data_struct.len = len;
+    rc = hal_i2c_master_read(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1);
+    if (rc) {
+        LIS2DH12_ERR("Failed to read from 0x%02X:0x%02X\n", data_struct.address, addr);
+#if MYNEWT_VAL(LIS2DH12_STATS)
+        STATS_INC(g_lis2dh12stats, read_errors);
+#endif
+        goto err;
+    }
+
+    /* Copy the I2C results into the supplied buffer */
+    memcpy(buffer, payload, len);
+
+    return 0;
+err:
+
+    return rc;
+}
 
 /**
  * Read multiple length data from LIS2DH12 sensor over SPI
  *
+ * @param The sensor interface
  * @param register address
  * @param variable length payload
  * @param length of the payload to read
  *
  * @return 0 on success, non-zero on failure
  */
-int
-lis2dh12_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
-               uint8_t len)
+static int
+lis2dh12_spi_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
+                     uint8_t len)
 {
     int i;
     uint16_t retval;
@@ -155,18 +215,62 @@ err:
     return rc;
 }
 
+
 /**
- * Write multiple length data to LIS2DH12 sensor over SPI
+ * Write multiple length data to LIS2DH12 sensor over I2C
  *
+ * @param The sensor interface
  * @param register address
  * @param variable length payload
  * @param length of the payload to write
  *
  * @return 0 on success, non-zero on failure
  */
-int
-lis2dh12_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
-                uint8_t len)
+static int
+lis2dh12_i2c_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
+                      uint8_t len)
+{
+    int rc;
+    uint8_t payload[20] = { addr, 0, 0, 0, 0, 0, 0, 0,
+                               0, 0, 0, 0, 0, 0, 0, 0,
+                               0, 0, 0, 0};
+
+    struct hal_i2c_master_data data_struct = {
+        .address = itf->si_addr,
+        .len = len + 1,
+        .buffer = payload
+    };
+
+    memcpy(&payload[1], buffer, len);
+
+    /* Register write */
+    rc = hal_i2c_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1);
+    if (rc) {
+        LIS2DH12_ERR("I2C access failed at address 0x%02X\n", data_struct.address);
+#if MYNEWT_VAL(LIS2DH12_STATS)
+        STATS_INC(g_lis2dh12stats, write_errors);
+#endif
+        goto err;
+    }
+
+    return 0;
+err:
+    return rc;
+}
+
+/**
+ * Write multiple length data to LIS2DH12 sensor over SPI
+ *
+ * @param The sensor interface
+ * @param register address
+ * @param variable length payload
+ * @param length of the payload to write
+ *
+ * @return 0 on success, non-zero on failure
+ */
+static int
+lis2dh12_spi_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
+                      uint8_t len)
 {
     int i;
     int rc;
@@ -217,6 +321,104 @@ err:
     hal_gpio_write(itf->si_cs_pin, 1);
 
     return rc;
+}
+
+/**
+ * Write multiple length data to LIS2DH12 sensor over different interfaces
+ *
+ * @param The sensor interface
+ * @param register address
+ * @param variable length payload
+ * @param length of the payload to write
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+lis2dh12_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
+                  uint8_t len)
+{
+    int rc;
+
+    if (itf->si_type == SENSOR_ITF_I2C) {
+        rc = lis2dh12_i2c_writelen(itf, addr, payload, len);
+    } else {
+        rc = lis2dh12_spi_writelen(itf, addr, payload, len);
+    }
+
+    return rc;
+}
+
+/**
+ * Read multiple length data from LIS2DH12 sensor over different interfaces
+ *
+ * @param register address
+ * @param variable length payload
+ * @param length of the payload to read
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+lis2dh12_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
+                 uint8_t len)
+{
+    int rc;
+
+    if (itf->si_type == SENSOR_ITF_I2C) {
+        rc = lis2dh12_i2c_readlen(itf, addr, payload, len);
+    } else {
+        rc = lis2dh12_spi_readlen(itf, addr, payload, len);
+    }
+
+    return rc;
+}
+
+/**
+ * Reset lis2dh12
+ *
+ * @param The sensor interface
+ */
+int
+lis2dh12_reset(struct sensor_itf *itf)
+{
+    int rc;
+    uint8_t reg;
+
+    rc = lis2dh12_readlen(itf, LIS2DH12_REG_CTRL_REG5, &reg, 1);
+    if (rc) {
+        goto err;
+    }
+
+    reg |= LIS2DH12_CTRL_REG5_BOOT;
+
+    rc = lis2dh12_writelen(itf, LIS2DH12_REG_CTRL_REG5, &reg, 1);
+    if (rc) {
+        goto err;
+    }
+
+    os_time_delay((OS_TICKS_PER_SEC * 6/1000) + 1);
+
+err:
+    return rc;
+}
+
+/**
+ * Pull up disconnect
+ *
+ * @param The sensor interface
+ * @param disconnect pull up
+ * @return 0 on success, non-zero on failure
+ */
+int
+lis2dh12_pull_up_disc(struct sensor_itf *itf, uint8_t disconnect)
+{
+    uint8_t reg;
+
+    reg = 0;
+
+    reg |= ((disconnect ? LIS2DH12_CTRL_REG0_SPD : 0) |
+            LIS2DH12_CTRL_REG0_CORR_OP);
+
+    return lis2dh12_writelen(itf, LIS2DH12_REG_CTRL_REG0, &reg, 1);
 }
 
 /**
@@ -284,7 +486,7 @@ lis2dh12_set_full_scale(struct sensor_itf *itf, uint8_t fs)
     int rc;
     uint8_t reg;
 
-    if (fs > 3) {
+    if (fs > LIS2DH12_FS_16G) {
         LIS2DH12_ERR("Invalid full scale value\n");
         rc = SYS_EINVAL;
         goto err;
@@ -296,7 +498,7 @@ lis2dh12_set_full_scale(struct sensor_itf *itf, uint8_t fs)
         goto err;
     }
 
-    reg = (reg & 0xCF) | (fs << 4);
+    reg = (reg & ~LIS2DH12_CTRL_REG4_FS) | fs;
 
     rc = lis2dh12_writelen(itf, LIS2DH12_REG_CTRL_REG4,
                            &reg, 1);
@@ -329,7 +531,7 @@ lis2dh12_get_full_scale(struct sensor_itf *itf, uint8_t *fs)
         goto err;
     }
 
-    *fs = (reg & 0xCF) >> 4;
+    *fs = (reg & LIS2DH12_CTRL_REG4_FS) >> 4;
 
     return 0;
 err:
@@ -387,7 +589,7 @@ lis2dh12_set_rate(struct sensor_itf *itf, uint8_t rate)
         goto err;
     }
 
-    reg = (reg & 0x0F) | (rate << 4);
+    reg = (reg & ~LIS2DH12_CTRL_REG1_ODR) | rate;
 
     rc = lis2dh12_writelen(itf, LIS2DH12_REG_CTRL_REG1,
                            &reg, 1);
@@ -446,14 +648,14 @@ lis2dh12_get_op_mode(struct sensor_itf *itf, uint8_t *mode)
         goto err;
     }
 
-    reg1 = (reg1 << 4) & 0xEF;
+    reg1 = (reg1 & LIS2DH12_CTRL_REG1_LPEN) << 4;
 
     rc = lis2dh12_readlen(itf, LIS2DH12_REG_CTRL_REG4, &reg4, 1);
     if (rc) {
         goto err;
     }
 
-    reg4 = reg4 & 0xFE;
+    reg4 = (reg4 & LIS2DH12_CTRL_REG4_HR);
 
     *mode = reg1 | reg4;
 
@@ -474,29 +676,30 @@ int
 lis2dh12_set_op_mode(struct sensor_itf *itf, uint8_t mode)
 {
     int rc;
-    uint8_t reg1;
-    uint8_t reg4;
+    uint8_t reg;
 
-    rc = lis2dh12_readlen(itf, LIS2DH12_REG_CTRL_REG1, &reg1, 1);
+    rc = lis2dh12_readlen(itf, LIS2DH12_REG_CTRL_REG1, &reg, 1);
     if (rc) {
         goto err;
     }
 
-    reg1 |= ((mode & 0xEF) >> 4);
+    reg &= ~LIS2DH12_CTRL_REG1_LPEN;
+    reg |= ((mode & 0x80) >> 4);
 
-    rc = lis2dh12_writelen(itf, LIS2DH12_REG_CTRL_REG1, &reg1, 1);
+    rc = lis2dh12_writelen(itf, LIS2DH12_REG_CTRL_REG1, &reg, 1);
     if (rc) {
         goto err;
     }
 
-    rc = lis2dh12_readlen(itf, LIS2DH12_REG_CTRL_REG4, &reg4, 1);
+    rc = lis2dh12_readlen(itf, LIS2DH12_REG_CTRL_REG4, &reg, 1);
     if (rc) {
         goto err;
     }
 
-    reg4 |= (mode & 0xFE);
+    reg &= ~LIS2DH12_CTRL_REG4_HR;
+    reg |= (mode & 0x08);
 
-    rc = lis2dh12_writelen(itf, LIS2DH12_REG_CTRL_REG4, &reg4, 1);
+    rc = lis2dh12_writelen(itf, LIS2DH12_REG_CTRL_REG4, &reg, 1);
     if (rc) {
         goto err;
     }
@@ -527,7 +730,12 @@ lis2dh12_get_data(struct sensor_itf *itf, int16_t *x, int16_t *y, int16_t *z)
 
     *x = *y = *z = 0;
 
-    rc = lis2dh12_readlen(itf, LIS2DH12_REG_OUT_X_L, payload, 6);
+    rc = lis2dh12_readlen(itf, LIS2DH12_REG_OUT_X_L, payload, 1);
+    rc |= lis2dh12_readlen(itf, LIS2DH12_REG_OUT_X_H, &payload[1], 1);
+    rc |= lis2dh12_readlen(itf, LIS2DH12_REG_OUT_Y_L, &payload[2], 1);
+    rc |= lis2dh12_readlen(itf, LIS2DH12_REG_OUT_Y_H, &payload[3], 1);
+    rc |= lis2dh12_readlen(itf, LIS2DH12_REG_OUT_Z_L, &payload[4], 1);
+    rc |= lis2dh12_readlen(itf, LIS2DH12_REG_OUT_Z_H, &payload[5], 1);
     if (rc) {
         goto err;
     }
@@ -636,27 +844,30 @@ lis2dh12_init(struct os_dev *dev, void *arg)
         goto err;
     }
 
-    rc = hal_spi_disable(sensor->s_itf.si_num);
-    if (rc) {
-        goto err;
-    }
+    if (sensor->s_itf.si_type == SENSOR_ITF_SPI) {
 
-    rc = hal_spi_config(sensor->s_itf.si_num, &spi_lis2dh12_settings);
-    if (rc == EINVAL) {
-        /* If spi is already enabled, for nrf52, it returns -1, We should not
-         * fail if the spi is already enabled
-         */
-        goto err;
-    }
+        rc = hal_spi_disable(sensor->s_itf.si_num);
+        if (rc) {
+            goto err;
+        }
 
-    rc = hal_spi_enable(sensor->s_itf.si_num);
-    if (rc) {
-        goto err;
-    }
+        rc = hal_spi_config(sensor->s_itf.si_num, &spi_lis2dh12_settings);
+        if (rc == EINVAL) {
+            /* If spi is already enabled, for nrf52, it returns -1, We should not
+             * fail if the spi is already enabled
+             */
+            goto err;
+        }
 
-    rc = hal_gpio_init_out(sensor->s_itf.si_cs_pin, 1);
-    if (rc) {
-        goto err;
+        rc = hal_spi_enable(sensor->s_itf.si_num);
+        if (rc) {
+            goto err;
+        }
+
+        rc = hal_gpio_init_out(sensor->s_itf.si_cs_pin, 1);
+        if (rc) {
+            goto err;
+        }
     }
 
     return 0;
@@ -713,22 +924,25 @@ lis2dh12_sensor_read(struct sensor *sensor, sensor_type_t type,
 
     x = y = z = 0;
 
-    rc = hal_spi_disable(sensor->s_itf.si_num);
-    if (rc) {
-        goto err;
-    }
+    if (itf->si_type == SENSOR_ITF_SPI) {
 
-    rc = hal_spi_config(sensor->s_itf.si_num, &spi_lis2dh12_settings);
-    if (rc == EINVAL) {
-        /* If spi is already enabled, for nrf52, it returns -1, We should not
-         * fail if the spi is already enabled
-         */
-        goto err;
-    }
+        rc = hal_spi_disable(sensor->s_itf.si_num);
+        if (rc) {
+            goto err;
+        }
 
-    rc = hal_spi_enable(sensor->s_itf.si_num);
-    if (rc) {
-        goto err;
+        rc = hal_spi_config(sensor->s_itf.si_num, &spi_lis2dh12_settings);
+        if (rc == EINVAL) {
+            /* If spi is already enabled, for nrf52, it returns -1, We should not
+             * fail if the spi is already enabled
+             */
+            goto err;
+        }
+
+        rc = hal_spi_enable(sensor->s_itf.si_num);
+        if (rc) {
+            goto err;
+        }
     }
 
     rc = lis2dh12_get_data(itf, &x, &y, &z);
@@ -794,22 +1008,25 @@ lis2dh12_config(struct lis2dh12 *lis2dh12, struct lis2dh12_cfg *cfg)
     itf = SENSOR_GET_ITF(&(lis2dh12->sensor));
     sensor = &(lis2dh12->sensor);
 
-    rc = hal_spi_disable(sensor->s_itf.si_num);
-    if (rc) {
-        goto err;
-    }
+    if (itf->si_type == SENSOR_ITF_SPI) {
 
-    rc = hal_spi_config(sensor->s_itf.si_num, &spi_lis2dh12_settings);
-    if (rc == EINVAL) {
-        /* If spi is already enabled, for nrf52, it returns -1, We should not
-         * fail if the spi is already enabled
-         */
-        goto err;
-    }
+        rc = hal_spi_disable(sensor->s_itf.si_num);
+        if (rc) {
+            goto err;
+        }
 
-    rc = hal_spi_enable(sensor->s_itf.si_num);
-    if (rc) {
-        goto err;
+        rc = hal_spi_config(sensor->s_itf.si_num, &spi_lis2dh12_settings);
+        if (rc == EINVAL) {
+            /* If spi is already enabled, for nrf52, it returns -1, We should not
+             * fail if the spi is already enabled
+             */
+            goto err;
+        }
+
+        rc = hal_spi_enable(sensor->s_itf.si_num);
+        if (rc) {
+            goto err;
+        }
     }
 
     rc = lis2dh12_get_chip_id(itf, &chip_id);
@@ -821,6 +1038,18 @@ lis2dh12_config(struct lis2dh12 *lis2dh12, struct lis2dh12_cfg *cfg)
         rc = SYS_EINVAL;
         goto err;
     }
+
+    rc = lis2dh12_reset(itf);
+    if (rc) {
+        goto err;
+    }
+
+    rc = lis2dh12_pull_up_disc(itf, cfg->lc_pull_up_disc);
+    if (rc) {
+        goto err;
+    }
+
+    lis2dh12->cfg.lc_pull_up_disc = cfg->lc_pull_up_disc;
 
     rc = lis2dh12_set_full_scale(itf, cfg->lc_fs);
     if (rc) {
@@ -837,8 +1066,8 @@ lis2dh12_config(struct lis2dh12 *lis2dh12, struct lis2dh12_cfg *cfg)
     lis2dh12->cfg.lc_rate = cfg->lc_rate;
 
     rc = lis2dh12_chan_enable(itf, LIS2DH12_CTRL_REG1_XPEN |
-                              LIS2DH12_CTRL_REG1_YPEN      |
-                              LIS2DH12_CTRL_REG1_ZPEN);
+                                   LIS2DH12_CTRL_REG1_YPEN |
+                                   LIS2DH12_CTRL_REG1_ZPEN);
     if (rc) {
         goto err;
     }
