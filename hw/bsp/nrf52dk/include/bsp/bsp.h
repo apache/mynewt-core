@@ -40,7 +40,6 @@ extern uint8_t _ram_start;
 #define RAM_SIZE        0x10000
 
 /* LED pins */
-=======
 #define LED_1           (17)
 #define LED_2           (18)
 #define LED_3           (19)

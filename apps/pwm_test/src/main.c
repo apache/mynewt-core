@@ -16,25 +16,46 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
+#include "sysinit/sysinit.h"
 #include <os/os.h>
 #include <pwm/pwm.h>
 #include <pwm_nrf52/pwm_nrf52.h>
 
 static struct os_dev dev;
-int arg = 1;
+int arg = 0;
+struct pwm_dev *pwm;
+/**
+ * init_tasks
+ *
+ * Called by main.c after sysinit(). This function performs initializations
+ * that are required before tasks are running.
+ *
+ * @return int 0 success; error otherwise.
+ */
+/* static void */
+/* init_tasks(void) */
+/* { */
+
+/* } */
+
 
 int
 main(int argc, char **argv)
 {
-    struct pwm_dev *pwm;
+    sysinit();
+    /* init_tasks(); */
     os_dev_create(&dev,
                   "pwm",
                   OS_DEV_INIT_KERNEL,
                   OS_DEV_INIT_PRIO_DEFAULT,
                   nrf52_pwm_dev_init,
-                  &arg);
+                  NULL);
     pwm = (struct pwm_dev *) os_dev_open("pwm", 0, NULL);
-    pwm_enable_duty_cycle(pwm, 0, 7500);
-    return 0;
+    pwm_enable_duty_cycle(pwm, 0, 10000);
+
+    /* while (1) { */
+    /*     os_eventq_run(os_eventq_dflt_get()); */
+    /* } */
+    assert(0);
+    return(0);
 }
