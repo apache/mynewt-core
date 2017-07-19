@@ -37,8 +37,44 @@ extern uint8_t _ram_start;
 #define RAM_SIZE        0x8000
 
 /* LED pins */
-#define LED_BLINK_PIN   (21)
-#define LED_2           (22)
+#define LED_1           (17)
+#define LED_2           (18)
+#define LED_3           (19)
+#define LED_4           (20)
+#define LED_BLINK_PIN   (LED_1)
+
+/* Buttons */
+#define BUTTON_1 (13)
+#define BUTTON_2 (14)
+#define BUTTON_3 (15)
+#define BUTTON_4 (16)
+
+/* Arduino board mappings */
+#define ARDUINO_SCL_PIN  (27)
+#define ARDUINO_SDA_PIN  (26)
+#define ARDUINO_AREF_PIN (2)
+#define ARDUINO_13_PIN   (25)
+#define ARDUINO_12_PIN   (24)
+#define ARDUINO_11_PIN   (23)
+#define ARDUINO_10_PIN   (22)
+#define ARDUINO_9_PIN    (20)
+#define ARDUINO_8_PIN    (19)
+
+#define ARDUINO_7_PIN    (18)
+#define ARDUINO_6_PIN    (17)
+#define ARDUINO_5_PIN    (16)
+#define ARDUINO_4_PIN    (15)
+#define ARDUINO_3_PIN    (14)
+#define ARDUINO_2_PIN    (13)
+#define ARDUINO_1_PIN    (12)
+#define ARDUINO_0_PIN    (11)
+
+#define ARDUINO_A0_PIN   (3)
+#define ARDUINO_A1_PIN   (4)
+#define ARDUINO_A2_PIN   (28)
+#define ARDUINO_A3_PIN   (29)
+#define ARDUINO_A4_PIN   (30)
+#define ARDUINO_A5_PIN   (31)
 
 #define NFFS_AREA_MAX    (8)
 
