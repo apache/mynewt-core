@@ -121,6 +121,16 @@ static const struct kv_pair cmd_adv_filt_types[] = {
     { NULL }
 };
 
+#if MYNEWT_VAL(BLE_EXT_ADV)
+static struct kv_pair cmd_ext_adv_phy_opts[] = {
+    { "none",        0x00 },
+    { "1M",          0x01 },
+    { "2M",          0x02 },
+    { "coded",       0x03 },
+    { NULL }
+};
+#endif
+
 static int
 cmd_advertise(int argc, char **argv)
 {
@@ -130,6 +140,10 @@ cmd_advertise(int argc, char **argv)
     ble_addr_t *peer_addr_param = &peer_addr;
     uint8_t own_addr_type;
     int rc;
+    #if MYNEWT_VAL(BLE_EXT_ADV)
+        int8_t tx_power;
+        uint8_t primary_phy, secondary_phy;
+    #endif
 
     rc = parse_arg_all(argc - 1, argv + 1);
     if (rc != 0) {
@@ -220,6 +234,42 @@ cmd_advertise(int argc, char **argv)
         return rc;
     }
 
+    #if MYNEWT_VAL(BLE_EXT_ADV)
+        tx_power = parse_arg_long_bounds_dflt("tx_power",
+                                                 -127, 127, 127, &rc);
+        if (rc != 0) {
+            console_printf("invalid 'tx_power' parameter\n");
+            return rc;
+        }
+
+        primary_phy = parse_arg_kv_dflt("primary_phy", cmd_ext_adv_phy_opts,
+                                           0, &rc);
+        if (rc != 0) {
+            console_printf("invalid 'primary_phy' parameter\n");
+            return rc;
+        }
+
+        secondary_phy = parse_arg_kv_dflt("secondary_phy",
+                                             cmd_ext_adv_phy_opts,
+                                             primary_phy, &rc);
+        if (rc != 0) {
+            console_printf("invalid 'secondary_phy' parameter\n");
+            return rc;
+       }
+
+        rc = ble_gap_adv_set_tx_power(tx_power);
+        if (rc != 0) {
+            console_printf("setting advertise TX power fail: %d\n", rc);
+           return rc;
+        }
+
+        rc = ble_gap_adv_set_phys(primary_phy, secondary_phy);
+        if (rc != 0) {
+            console_printf("setting advertise PHYs fail: %d\n", rc);
+            return rc;
+        }
+    #endif
+
     rc = btshell_adv_start(own_addr_type, peer_addr_param, duration_ms,
                            &params);
     if (rc != 0) {
@@ -243,6 +293,11 @@ static const struct shell_param advertise_params[] = {
     {"interval_max", "usage: =[0-UINT16_MAX], default: 0"},
     {"high_duty", "usage: =[0-1], default: 0"},
     {"duration", "usage: =[1-INT32_MAX], default: INT32_MAX"},
+#if MYNEWT_VAL(BLE_EXT_ADV)
+    {"tx_power", "usage: =[-127-127], default: 127"},
+    {"primary_phy", "usage: =[none|1M|2M|coded], default: none"},
+    {"secondary_phy", "usage: =[none|1M|2M|coded], default: primary_phy"},
+#endif
     {NULL, NULL}
 };
 
