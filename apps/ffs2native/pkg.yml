@@ -20,7 +20,7 @@
 pkg.name: apps/ffs2native
 pkg.type: app
 pkg.description: Support application for debugging the Newtron Flash File System.
-pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
+pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 

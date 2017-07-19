@@ -18,7 +18,7 @@
 pkg.name: sys/config/test-fcb
 pkg.type: unittest
 pkg.description: "Config unit tests for fcb."
-pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
+pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 

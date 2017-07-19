@@ -19,7 +19,7 @@
 
 pkg.name: net/ip
 pkg.description: LwIP adaptation to Mynewt
-pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
+pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage:
 pkg.keywords:
     - ip

@@ -20,7 +20,7 @@
 pkg.name: hw/mcu/sifive
 pkg.type: sdk
 pkg.description: MCU definition for Freedom E310 chips.
-pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
+pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
     - riscv

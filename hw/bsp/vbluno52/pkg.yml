@@ -20,7 +20,7 @@
 pkg.name: hw/bsp/vbluno52
 pkg.type: bsp
 pkg.description: BSP definition for the VNG VBLUno52 board (Nordic nRF52832 Cortex-M4 SoC based).
-pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
+pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
     - nrf52

@@ -19,7 +19,7 @@
 
 pkg.name: hw/sensor
 pkg.description: Sensor Interface
-pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
+pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 

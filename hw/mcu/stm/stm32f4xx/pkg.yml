@@ -19,7 +19,7 @@
 
 pkg.name: hw/mcu/stm/stm32f4xx
 pkg.description: MCU definition for STM32F4 ARM Cortex-M4 chips.
-pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
+pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
     - stm32

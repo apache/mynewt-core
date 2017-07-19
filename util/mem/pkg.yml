@@ -19,7 +19,7 @@
 
 pkg.name: util/mem
 pkg.description: Library containing miscellaneous utilities.
-pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
+pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
     - mempool
