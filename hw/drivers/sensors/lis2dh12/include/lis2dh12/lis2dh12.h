@@ -30,19 +30,19 @@ extern "C" {
 
 #define LIS2DH12_OM_LOW_POWER                   0x80
 #define LIS2DH12_OM_NORMAL                      0x00
-#define LIS2DH12_OM_HIGH_RESOLUTION             0x01
+#define LIS2DH12_OM_HIGH_RESOLUTION             0x08
 #define LIS2DH12_OM_NOT_ALLOWED                 0x88
 
 #define LIS2DH12_DATA_RATE_0HZ                  0x00
-#define LIS2DH12_DATA_RATE_1HZ                  0x01
-#define LIS2DH12_DATA_RATE_10HZ                 0x02
-#define LIS2DH12_DATA_RATE_25HZ                 0x03
-#define LIS2DH12_DATA_RATE_50HZ                 0x04
-#define LIS2DH12_DATA_RATE_100HZ                0x05
-#define LIS2DH12_DATA_RATE_200HZ                0x06
-#define LIS2DH12_DATA_RATE_400HZ                0x07
-#define LIS2DH12_DATA_RATE_L_1620HZ             0x08
-#define LIS2DH12_DATA_RATE_HN_1344HZ_L_5376HZ   0x09
+#define LIS2DH12_DATA_RATE_1HZ                  0x10
+#define LIS2DH12_DATA_RATE_10HZ                 0x20
+#define LIS2DH12_DATA_RATE_25HZ                 0x30
+#define LIS2DH12_DATA_RATE_50HZ                 0x40
+#define LIS2DH12_DATA_RATE_100HZ                0x50
+#define LIS2DH12_DATA_RATE_200HZ                0x60
+#define LIS2DH12_DATA_RATE_400HZ                0x70
+#define LIS2DH12_DATA_RATE_L_1620HZ             0x80
+#define LIS2DH12_DATA_RATE_HN_1344HZ_L_5376HZ   0x90
 
 #define LIS2DH12_ST_MODE_DISABLE                0x00
 #define LIS2DH12_ST_MODE_MODE1                  0x01
@@ -73,14 +73,15 @@ extern "C" {
 #define LIS2DH12_INT2_CFG_M_AND                  0x2
 #define LIS2DH12_INT2_CFG_M_6PR                  0x3
 
-#define LIS2DH12_FS_2G                           0x0
-#define LIS2DH12_FS_4G                           0x1
-#define LIS2DH12_FS_8G                           0x2
-#define LIS2DH12_FS_16G                          0x3
+#define LIS2DH12_FS_2G                          0x00
+#define LIS2DH12_FS_4G                          0x10
+#define LIS2DH12_FS_8G                          0x20
+#define LIS2DH12_FS_16G                         0x30
 
 struct lis2dh12_cfg {
     uint8_t lc_rate;
     uint8_t lc_fs;
+    uint8_t lc_pull_up_disc;
     sensor_type_t lc_s_mask;
 };
 
@@ -180,6 +181,24 @@ int lis2dh12_config(struct lis2dh12 *, struct lis2dh12_cfg *);
  */
 void
 lis2dh12_calc_acc_ms2(int16_t raw_acc, float *facc);
+
+/**
+ * Pull up disconnect
+ *
+ * @param The sensor interface
+ * @param disconnect pull up
+ * @return 0 on success, non-zero on failure
+ */
+int
+lis2dh12_pull_up_disc(struct sensor_itf *itf, uint8_t disconnect);
+
+/**
+ * Reset lis2dh12
+ *
+ * @param The sensor interface
+ */
+int
+lis2dh12_reset(struct sensor_itf *itf);
 
 #ifdef __cplusplus
 }

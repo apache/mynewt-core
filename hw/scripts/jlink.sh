@@ -57,6 +57,10 @@ jlink_load () {
     echo "target remote localhost:3333" >> $GDB_CMD_FILE
     echo "mon reset" >> $GDB_CMD_FILE
     echo "restore $FILE_NAME binary $FLASH_OFFSET" >> $GDB_CMD_FILE
+
+    # XXXX 'newt run' was not always updating the flash on nrf52dk. With
+    # 'info reg' in place it seems to work every time. Not sure why.
+    echo "info reg" >> $GDB_CMD_FILE
     echo "quit" >> $GDB_CMD_FILE
 
     msgs=`arm-none-eabi-gdb -x $GDB_CMD_FILE 2>&1`

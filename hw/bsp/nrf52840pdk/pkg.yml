@@ -82,7 +82,6 @@ pkg.cflags.HARDFLOAT:
     - -mfloat-abi=hard -mfpu=fpv4-sp-d16
 
 pkg.deps:
-    - boot/bootutil
     - hw/mcu/nordic/nrf52xxx
     - libc/baselibc
     - sys/flash_map

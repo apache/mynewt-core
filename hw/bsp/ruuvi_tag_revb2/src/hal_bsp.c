@@ -184,10 +184,10 @@ hal_bsp_get_nvic_priority(int irq_num, uint32_t pri)
  *
  * @return 0 on success, non-zero on failure
  */
-#if MYNEWT_VAL(BME280_ONB)
 int
 config_bme280_sensor(void)
 {
+#if MYNEWT_VAL(BME280_ONB)
     int rc;
     struct os_dev *dev;
     struct bme280_cfg bmecfg;
@@ -211,21 +211,22 @@ config_bme280_sensor(void)
                        SENSOR_TYPE_RELATIVE_HUMIDITY;
 
     rc = bme280_config((struct bme280 *)dev, &bmecfg);
+    SYSINIT_PANIC_ASSERT(rc == 0);
 
     os_dev_close(dev);
-    return rc;
-}
 #endif
+    return 0;
+}
 
 /**
  * LIS2Dh12 Sensor default configuration
  *
  * @return 0 on success, non-zero on failure
  */
-#if MYNEWT_VAL(LIS2DH12_ONB)
 int
 config_lis2dh12_sensor(void)
 {
+#if MYNEWT_VAL(LIS2DH12_ONB)
     int rc;
     struct os_dev *dev;
     struct lis2dh12_cfg cfg;
@@ -240,11 +241,12 @@ config_lis2dh12_sensor(void)
     cfg.lc_fs = LIS2DH12_FS_2G;
 
     rc = lis2dh12_config((struct lis2dh12 *)dev, &cfg);
+    SYSINIT_PANIC_ASSERT(rc == 0);
 
     os_dev_close(dev);
-    return rc;
-}
 #endif
+    return 0;
+}
 
 static void
 sensor_dev_create(void)
