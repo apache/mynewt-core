@@ -24,20 +24,32 @@
 static struct os_dev dev;
 int arg = 0;
 struct pwm_dev *pwm;
-/**
- * init_tasks
- *
- * Called by main.c after sysinit(). This function performs initializations
- * that are required before tasks are running.
- *
- * @return int 0 success; error otherwise.
- */
-/* static void */
-/* init_tasks(void) */
+static int value = 400;
+//static bool down = false;
+
+/* static void test_handler(nrf_drv_pwm_evt_type_t event_type) */
 /* { */
-
+/*     if (event_type == NRF_DRV_PWM_EVT_FINISHED) */
+/*     { */
+/*         if (down) */
+/*         { */
+/*             value -= 200; */
+/*             if (value == 0) */
+/*             { */
+/*                 down = false; */
+/*             } */
+/*         } */
+/*         else */
+/*         { */
+/*             value += 200; */
+/*             if (value >= 10000) */
+/*             { */
+/*                 down = true; */
+/*             } */
+/*         } */
+/*         pwm_enable_duty_cycle(pwm, 0, value); */
+/*     } */
 /* } */
-
 
 int
 main(int argc, char **argv)
@@ -51,11 +63,12 @@ main(int argc, char **argv)
                   nrf52_pwm_dev_init,
                   NULL);
     pwm = (struct pwm_dev *) os_dev_open("pwm", 0, NULL);
-    pwm_enable_duty_cycle(pwm, 0, 10000);
+    pwm_enable_duty_cycle(pwm, 0, value);
+    /* pwm_enable_duty_cycle(pwm, 1, 400); */
 
-    /* while (1) { */
-    /*     os_eventq_run(os_eventq_dflt_get()); */
-    /* } */
+    while (1) {
+        os_eventq_run(os_eventq_dflt_get());
+    }
     assert(0);
     return(0);
 }
