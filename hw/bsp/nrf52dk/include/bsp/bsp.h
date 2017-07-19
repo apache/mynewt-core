@@ -40,8 +40,17 @@ extern uint8_t _ram_start;
 #define RAM_SIZE        0x10000
 
 /* LED pins */
-#define LED_BLINK_PIN   (17)
+#define LED_1           (17)
 #define LED_2           (18)
+#define LED_3           (19)
+#define LED_4           (20)
+#define LED_BLINK_PIN   (LED_1)
+
+/* Buttons */
+#define BUTTON_1 (13)
+#define BUTTON_2 (14)
+#define BUTTON_3 (15)
+#define BUTTON_4 (16)
 
 #if MYNEWT_VAL(BOOT_SERIAL)
 #define BOOT_SERIAL_DETECT_PIN          13 /* Button 1 */
