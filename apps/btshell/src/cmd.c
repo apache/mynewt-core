@@ -464,12 +464,25 @@ static const struct kv_pair cmd_scan_filt_policies[] = {
     { NULL }
 };
 
+static struct kv_pair cmd_scan_ext_types[] = {
+    { "none",       0x00 },
+    { "1M",         0x01 },
+    { "coded",      0x02 },
+    { "both",       0x03 },
+    { NULL }
+};
+
 static int
 cmd_scan(int argc, char **argv)
 {
-    struct ble_gap_disc_params params;
+    struct ble_gap_disc_params params = {0};
+    struct ble_gap_ext_disc_params uncoded = {0};
+    struct ble_gap_ext_disc_params coded = {0};
+    uint8_t extended;
     int32_t duration_ms;
     uint8_t own_addr_type;
+    uint16_t duration;
+    uint16_t period;
     int rc;
 
     rc = parse_arg_all(argc - 1, argv + 1);
@@ -484,6 +497,12 @@ cmd_scan(int argc, char **argv)
             return rc;
         }
         return 0;
+    }
+
+    extended = parse_arg_kv_dflt("extended", cmd_scan_ext_types, 0, &rc);
+    if (rc != 0) {
+        console_printf("invalid 'extended' parameter\n");
+        return rc;
     }
 
     duration_ms = parse_arg_long_bounds_dflt("duration", 1, INT32_MAX,
@@ -537,17 +556,77 @@ cmd_scan(int argc, char **argv)
         return rc;
     }
 
-    rc = btshell_scan(own_addr_type, duration_ms, &params);
+    if (extended == 0) {
+        rc = btshell_scan(own_addr_type, duration_ms, &params);
+        if (rc != 0) {
+            console_printf("error scanning; rc=%d\n", rc);
+            return rc;
+        }
+    }
+
+    /* Copy above parameters to uncoded params */
+    uncoded.passive = params.passive;
+    uncoded.itvl = params.itvl;
+    uncoded.window = params.window;
+
+    duration = parse_arg_uint16_dflt("extended_duration", 0, &rc);
     if (rc != 0) {
-        console_printf("error scanning; rc=%d\n", rc);
+        console_printf("invalid 'extended_duration' parameter\n");
         return rc;
     }
 
-    return 0;
+    period = parse_arg_uint16_dflt("extended_period", 0, &rc);
+    if (rc != 0) {
+        console_printf("invalid 'extended_period' parameter\n");
+        return rc;
+    }
+
+    coded.itvl = parse_arg_uint16_dflt("longrange_interval", 0, &rc);
+    if (rc != 0) {
+        console_printf("invalid 'longrange_interval' parameter\n");
+        return rc;
+    }
+
+    coded.window = parse_arg_uint16_dflt("longrange_window", 0, &rc);
+    if (rc != 0) {
+        console_printf("invalid 'longrange_window' parameter\n");
+        return rc;
+    }
+
+    coded.passive = parse_arg_uint16_dflt("longrange_passive", 0, &rc);
+    if (rc != 0) {
+        console_printf("invalid 'longrange_passive' parameter\n");
+        return rc;
+    }
+
+    switch (extended) {
+    case 0x01:
+        rc = btshell_ext_scan(own_addr_type, duration, period,
+                              params.filter_duplicates, params.filter_policy,
+                              params.limited, &uncoded, NULL);
+        break;
+    case 0x02:
+        rc = btshell_ext_scan(own_addr_type, duration, period,
+                              params.filter_duplicates, params.filter_policy,
+                              params.limited, NULL, &coded);
+        break;
+    case 0x03:
+        rc = btshell_ext_scan(own_addr_type, duration, period,
+                              params.filter_duplicates, params.filter_policy,
+                              params.limited, &uncoded, &coded);
+        break;
+    default:
+        rc = -1;
+        console_printf("invalid 'extended' parameter\n");
+        break;
+    }
+
+    return rc;
 }
 
 static const struct shell_param scan_params[] = {
     {"cancel", "cancel scan procedure"},
+    {"extended", "usage: =[none|1M|coded|both], default: none"},
     {"duration", "usage: =[1-INT32_MAX], default: INT32_MAX"},
     {"limited", "usage: =[0-1], default: 0"},
     {"passive", "usage: =[0-1], default: 0"},
@@ -556,6 +635,11 @@ static const struct shell_param scan_params[] = {
     {"filter", "usage: =[no_wl|use_wl|no_wl_inita|use_wl_inita], default: no_wl"},
     {"nodups", "usage: =[0-UINT16_MAX], default: 0"},
     {"own_addr_type", "usage: =[public|random|rpa_pub|rpa_rnd], default: public"},
+    {"extended_duration", "usage: =[0-UINT16_MAX], default: 0"},
+    {"extended_period", "usage: =[0-UINT16_MAX], default: 0"},
+    {"longrange_interval", "usage: =[0-UINT16_MAX], default: 0"},
+    {"longrange_window", "usage: =[0-UINT16_MAX], default: 0"},
+    {"longrange_passive", "usage: =[0-1], default: 0"},
     {NULL, NULL}
 };
 

@@ -1396,6 +1396,27 @@ btshell_scan(uint8_t own_addr_type, int32_t duration_ms,
 }
 
 int
+btshell_ext_scan(uint8_t own_addr_type, uint16_t duration, uint16_t period,
+                 uint8_t filter_duplicates, uint8_t filter_policy,
+                 uint8_t limited,
+                 const struct ble_gap_ext_disc_params *uncoded_params,
+                 const struct ble_gap_ext_disc_params *coded_params)
+{
+#if !MYNEWT_VAL(BLE_EXT_ADV)
+    console_printf("BLE extended advertising not supported.");
+    console_printf(" Configure nimble host to enable it\n");
+    return 0;
+#else
+    int rc;
+
+    rc = ble_gap_ext_disc(own_addr_type, duration, period, filter_duplicates,
+                          filter_policy, limited, uncoded_params, coded_params,
+                          btshell_gap_event, NULL);
+    return rc;
+#endif
+}
+
+int
 btshell_scan_cancel(void)
 {
     int rc;
