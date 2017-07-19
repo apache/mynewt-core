@@ -19,7 +19,7 @@
 
 pkg.name: net/wifi/wifi_mgmt
 pkg.description: Wifi state management
-pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
+pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 pkg.deps:

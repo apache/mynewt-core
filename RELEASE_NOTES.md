@@ -24,4 +24,4 @@ More information is available in the [README](/README.md) file in this directory
 
 If building an Operating System for Microcontrollers sounds fun to you, get in
 touch by sending a mail to the [Apache Mynewt Developer's
-list](mailto:dev@mynewt.incubator.apache.org).
+list](mailto:dev@mynewt.apache.org).

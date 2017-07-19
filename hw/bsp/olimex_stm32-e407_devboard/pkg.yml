@@ -20,7 +20,7 @@
 pkg.name: hw/bsp/olimex_stm32-e407_devboard
 pkg.type: bsp
 pkg.description: BSP definition for the Olimex STM32-E407 board.
-pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
+pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
     - olimex

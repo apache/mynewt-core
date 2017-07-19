@@ -19,7 +19,7 @@
 
 pkg.name: net/ip/lwip_base
 pkg.description: LwIP
-pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
+pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://savannah.nongnu.org/git/?group=lwip"
 pkg.keywords:
     - ip

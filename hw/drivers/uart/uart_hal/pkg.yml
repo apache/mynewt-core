@@ -19,7 +19,7 @@
 
 pkg.name: hw/drivers/uart/uart_hal
 pkg.description: UART driver using HAL
-pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
+pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 pkg.apis:

@@ -19,7 +19,7 @@
 
 pkg.name: sys/config
 pkg.description: Configuration management for embedded systems.
-pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
+pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 

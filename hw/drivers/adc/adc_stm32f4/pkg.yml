@@ -19,7 +19,7 @@
 
 pkg.name: hw/drivers/adc/adc_stm32f4
 pkg.description: ADC driver for the STM32F4 series of processors.
-pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
+pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 pkg.features:

@@ -20,7 +20,7 @@
 pkg.name: hw/bsp/pic32mx470_6lp_clicker
 pkg.type: bsp
 pkg.description: BSP definition for the 6LoWPAN Clicker board.
-pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
+pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
     - pic32

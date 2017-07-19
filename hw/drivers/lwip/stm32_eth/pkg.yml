@@ -19,7 +19,7 @@
 
 pkg.name: hw/drivers/lwip/stm32_eth
 pkg.description: Driver for STM32FXXXX on-chip ethernet
-pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
+pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
     - ip
