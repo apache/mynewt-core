@@ -88,8 +88,11 @@ typedef uint64_t os_membuf_t;
 os_error_t os_mempool_init(struct os_mempool *mp, int blocks, int block_size,
                            void *membuf, char *name);
 
+/* Performs an integrity check of the specified mempool. */
+bool os_mempool_is_sane(const struct os_mempool *mp);
+
 /* Checks if a memory block was allocated from the specified mempool. */
-int os_memblock_from(struct os_mempool *mp, void *block_addr);
+int os_memblock_from(const struct os_mempool *mp, const void *block_addr);
 
 /* Get a memory block from the pool */
 void *os_memblock_get(struct os_mempool *mp);
