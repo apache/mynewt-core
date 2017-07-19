@@ -890,11 +890,72 @@ btshell_on_write_reliable(uint16_t conn_handle,
     return 0;
 }
 
+static void
+btshell_decode_adv_data(uint8_t *adv_data, uint8_t adv_data_len)
+{
+    struct ble_hs_adv_fields fields;
+
+    console_printf(" length_data=%d data=", adv_data_len);
+    print_bytes(adv_data, adv_data_len);
+    console_printf(" fields:\n");
+    ble_hs_adv_parse_fields(&fields, adv_data, adv_data_len);
+    btshell_print_adv_fields(&fields);
+    console_printf("\n");
+}
+
+#if MYNEWT_VAL(BLE_EXT_ADV)
+static void
+btshell_decode_event_type(struct ble_gap_ext_disc_desc *desc)
+{
+    if (desc->props & BLE_HCI_ADV_LEGACY_MASK) {
+        console_printf("Legacy PDU type %d", desc->legacy_event_type);
+        goto adv_data;
+    }
+
+    console_printf("Extended adv: ");
+    if (desc->props & BLE_HCI_ADV_CONN_MASK) {
+        console_printf("'conn' ");
+    }
+    if (desc->props & BLE_HCI_ADV_SCAN_MASK) {
+        console_printf("'scan' ");
+    }
+    if (desc->props & BLE_HCI_ADV_DIRECT_MASK) {
+        console_printf("'dir' ");
+    }
+
+    if (desc->props & BLE_HCI_ADV_SCAN_RSP_MASK) {
+        console_printf("'scan rsp' ");
+    }
+
+    switch(desc->data_status) {
+    case BLE_HCI_ADV_COMPLETED:
+        console_printf("completed");
+        break;
+    case BLE_HCI_ADV_INCOMPLETE:
+        console_printf("incompleted");
+        break;
+    case BLE_HCI_ADV_CORRUPTED:
+        console_printf("corrupted");
+        break;
+    default:
+        console_printf("reserved %d", desc->data_status);
+        break;
+    }
+    console_printf("\n");
+
+adv_data:
+    if(!desc->length_data) {
+        return;
+    }
+
+    btshell_decode_adv_data(desc->data, desc->length_data);
+}
+#endif
+
 static int
 btshell_gap_event(struct ble_gap_event *event, void *arg)
 {
     struct ble_gap_conn_desc desc;
-    struct ble_hs_adv_fields fields;
     int conn_idx;
     int rc;
 
@@ -921,7 +982,11 @@ btshell_gap_event(struct ble_gap_event *event, void *arg)
             btshell_conn_delete_idx(conn_idx);
         }
         return 0;
-
+#if MYNEWT_VAL(BLE_EXT_ADV)
+    case BLE_GAP_EVENT_EXT_DISC:
+        btshell_decode_event_type(&event->ext_disc);
+        return 0;
+#endif
     case BLE_GAP_EVENT_DISC:
         console_printf("received advertisement; event_type=%d rssi=%d "
                        "addr_type=%d addr=", event->disc.event_type,
@@ -938,14 +1003,8 @@ btshell_gap_event(struct ble_gap_event *event, void *arg)
                 return 0;
         }
 
-        console_printf(" length_data=%d data=",
-                               event->disc.length_data);
-        print_bytes(event->disc.data, event->disc.length_data);
-        console_printf(" fields:\n");
-        ble_hs_adv_parse_fields(&fields, event->disc.data,
-                                event->disc.length_data);
-        btshell_print_adv_fields(&fields);
-        console_printf("\n");
+        btshell_decode_adv_data(event->disc.data, event->disc.length_data);
+
         return 0;
 
     case BLE_GAP_EVENT_DISC_COMPLETE:
