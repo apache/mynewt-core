@@ -27,6 +27,8 @@
 #include "os/queue.h"
 
 #include "host/ble_gatt.h"
+#include "host/ble_gap.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -169,11 +171,21 @@ int bletiny_adv_stop(void);
 int bletiny_conn_initiate(uint8_t own_addr_type, const ble_addr_t *peer_addr,
                           int32_t duration_ms,
                           struct ble_gap_conn_params *params);
+int bletiny_ext_conn_initiate(uint8_t own_addr_type, const ble_addr_t *peer_addr,
+                              int32_t duration_ms,
+                              struct ble_gap_conn_params *phy_1m_params,
+                              struct ble_gap_conn_params *phy_2m_params,
+                              struct ble_gap_conn_params *phy_coded_params);
 int bletiny_conn_cancel(void);
 int bletiny_term_conn(uint16_t conn_handle, uint8_t reason);
 int bletiny_wl_set(ble_addr_t *addrs, int addrs_count);
 int bletiny_scan(uint8_t own_addr_type, int32_t duration_ms,
                  const struct ble_gap_disc_params *disc_params);
+int bletiny_ext_scan(uint8_t own_addr_type, uint16_t duration, uint16_t period,
+                     uint8_t filter_duplicates, uint8_t filter_policy,
+                     uint8_t limited,
+                     const struct ble_gap_ext_disc_params *uncoded_params,
+                     const struct ble_gap_ext_disc_params *coded_params);
 int bletiny_scan_cancel(void);
 int bletiny_set_adv_data(struct ble_hs_adv_fields *adv_fields);
 int bletiny_update_conn(uint16_t conn_handle,

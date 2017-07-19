@@ -92,9 +92,20 @@ syscfg.defs:
         description: 'NRF52 RTC 0'
         value:  0
 
+syscfg.defs.BLE_LP_CLOCK:
+    TIMER_0:
+        value: 0
+    TIMER_5:
+        value: 1
+
 syscfg.vals:
     CONFIG_FCB_FLASH_AREA: FLASH_AREA_NFFS
     REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG
     NFFS_FLASH_AREA: FLASH_AREA_NFFS
     COREDUMP_FLASH_AREA: FLASH_AREA_IMAGE_1
     MCU_DCDC_ENABLED: 1
+
+syscfg.vals.BLE_LP_CLOCK:
+    OS_CPUTIME_FREQ: 32768
+    OS_CPUTIME_TIMER_NUM: 5
+    BLE_XTAL_SETTLE_TIME: 1500

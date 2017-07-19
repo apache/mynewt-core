@@ -178,7 +178,7 @@ bletest_multi_adv_instances[BLETEST_CFG_ADV_TEST_INSTANCES] = {
 #define BLETEST_CFG_RAND_PKT_SIZE       (1)
 #define BLETEST_CFG_SUGG_DEF_TXOCTETS   (251)
 #define BLETEST_CFG_SUGG_DEF_TXTIME     \
-    BLE_TX_DUR_USECS_M(BLETEST_CFG_SUGG_DEF_TXOCTETS + 4)
+    ble_phy_pdu_dur(BLETEST_CFG_SUGG_DEF_TXOCTETS + 4, BLE_PHY_1M)
 
 /* Test configurations. One of these should be set to 1 */
 #if !defined(BLETEST_CONCURRENT_CONN_TEST) && !defined(BLETEST_THROUGHPUT_TEST)
@@ -361,7 +361,7 @@ bletest_set_adv_data(uint8_t *dptr, uint8_t *addr)
 }
 
 #if (BLETEST_CFG_ROLE == BLETEST_ROLE_ADVERTISER)
-#if MYNEWT_VAL(BLE_MULTI_ADV_SUPPORT)
+#if MYNEWT_VAL(BLE_ANDROID_MULTI_ADV_SUPPORT)
 void
 bletest_init_adv_instances(void)
 {
@@ -970,7 +970,7 @@ bletest_execute_advertiser(void)
                 /* restart initiating */
                 g_bletest_cur_peer_addr[5] += 1;
                 g_dev_addr[5] += 1;
-#if MYNEWT_VAL(BLE_MULTI_ADV_SUPPORT)
+#if MYNEWT_VAL(BLE_ANDROID_MULTI_ADV_SUPPORT)
                 bletest_init_advertising(0,0);
                 bletest_hci_le_set_multi_adv_enable(1, 0);
 #else
@@ -981,7 +981,7 @@ bletest_execute_advertiser(void)
         } else {
             /* If we failed to start advertising we should keep trying */
             if (ble_ll_adv_enabled() == 0) {
-#if MYNEWT_VAL(BLE_MULTI_ADV_SUPPORT)
+#if MYNEWT_VAL(BLE_ANDROID_MULTI_ADV_SUPPORT)
                 bletest_hci_le_set_multi_adv_enable(1, 0);
 #else
                 bletest_hci_le_set_adv_enable(1);
@@ -1134,7 +1134,7 @@ bletest_task_handler(void *arg)
 #if (BLETEST_CFG_ROLE == BLETEST_ROLE_ADVERTISER)
     /* Initialize the advertiser */
     console_printf("Starting BLE test task as advertiser\n");
-#if MYNEWT_VAL(BLE_MULTI_ADV_SUPPORT)
+#if MYNEWT_VAL(BLE_ANDROID_MULTI_ADV_SUPPORT)
     /* Start up all advertising instances except default one */
     bletest_init_adv_instances();
 
@@ -1239,7 +1239,7 @@ bletest_task_handler(void *arg)
 
     /* Begin advertising if we are an advertiser */
 #if (BLETEST_CFG_ROLE == BLETEST_ROLE_ADVERTISER)
-#if MYNEWT_VAL(BLE_MULTI_ADV_SUPPORT)
+#if MYNEWT_VAL(BLE_ANDROID_MULTI_ADV_SUPPORT)
     rc = bletest_hci_le_set_multi_adv_enable(1, 0);
     assert(rc == 0);
 #else
