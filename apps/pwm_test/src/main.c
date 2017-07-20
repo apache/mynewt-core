@@ -55,7 +55,7 @@ int
 main(int argc, char **argv)
 {
     sysinit();
-    /* init_tasks(); */
+
     os_dev_create(&dev,
                   "pwm",
                   OS_DEV_INIT_KERNEL,
@@ -64,7 +64,7 @@ main(int argc, char **argv)
                   NULL);
     pwm = (struct pwm_dev *) os_dev_open("pwm", 0, NULL);
     pwm_enable_duty_cycle(pwm, 0, value);
-    /* pwm_enable_duty_cycle(pwm, 1, 400); */
+    pwm_enable_duty_cycle(pwm, 1, 800);
 
     while (1) {
         os_eventq_run(os_eventq_dflt_get());
