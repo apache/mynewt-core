@@ -414,7 +414,7 @@ sensor_get_config(struct sensor *sensor, sensor_type_t type,
  * be triggered instead.
  */
 #define SENSOR_MGR_WAKEUP_TICKS (MYNEWT_VAL(SENSOR_MGR_WAKEUP_RATE) * \
-        (OS_TICKS_PER_SEC / 1000))
+    OS_TICKS_PER_SEC) / 1000
 
 int sensor_mgr_lock(void);
 void sensor_mgr_unlock(void);
@@ -481,6 +481,15 @@ struct sensor *sensor_mgr_find_next_bydevname(char *, struct sensor *);
  * @return 1 if matches, 0 if it doesn't match.
  */
 int sensor_mgr_match_bytype(struct sensor *sensor, void *arg);
+
+/**
+ * Set the sensor poll rate
+ *
+ * @param The devname
+ * @param The poll rate in milli seconds
+ */
+int
+sensor_set_poll_rate_ms(char *devname, uint32_t poll_rate);
 
 #if MYNEWT_VAL(SENSOR_CLI)
 char*
