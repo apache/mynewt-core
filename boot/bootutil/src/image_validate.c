@@ -101,7 +101,6 @@ bootutil_img_validate(struct image_header *hdr, const struct flash_area *fap,
     MYNEWT_VAL(BOOTUTIL_SIGN_EC256)
     uint32_t sig_off = 0;
     uint32_t sig_len = 0;
-    int i;
 #endif
     struct image_tlv tlv;
     uint8_t buf[256];
@@ -209,12 +208,10 @@ bootutil_img_validate(struct image_header *hdr, const struct flash_area *fap,
         return -1;
     }
 
-    for (i = 0; i < bootutil_key_cnt; i++) {
-        rc = bootutil_verify_sig(hash, sizeof(hash), buf, sig_len, i);
-        if (!rc) {
-            break;
-        }
+    if (hdr->ih_key_id >= bootutil_key_cnt) {
+        return -1;
     }
+    rc = bootutil_verify_sig(hash, sizeof(hash), buf, sig_len, hdr->ih_key_id);
     if (rc) {
         return -1;
     }
