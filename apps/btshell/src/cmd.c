@@ -711,7 +711,7 @@ cmd_scan(int argc, char **argv)
     if (argc > 1 && strcmp(argv[1], "cancel") == 0) {
         rc = btshell_scan_cancel();
         if (rc != 0) {
-            console_printf("connection cancel fail: %d\n", rc);
+            console_printf("scan cancel fail: %d\n", rc);
             return rc;
         }
         return 0;
