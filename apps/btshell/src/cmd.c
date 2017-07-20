@@ -382,6 +382,12 @@ cmd_connect(int argc, char **argv)
         return rc;
     }
 
+    duration_ms = parse_arg_long_bounds_dflt("duration", 1, INT32_MAX, 0, &rc);
+    if (rc != 0) {
+        console_printf("invalid 'duration' parameter\n");
+        return rc;
+    }
+
     phy_1M_params.scan_itvl = parse_arg_uint16_dflt("scan_interval", 0x0010, &rc);
     if (rc != 0) {
         console_printf("invalid 'scan_interval' parameter\n");
@@ -433,12 +439,6 @@ cmd_connect(int argc, char **argv)
                                                      0x0300, &rc);
     if (rc != 0) {
         console_printf("invalid 'max_conn_event_len' parameter\n");
-        return rc;
-    }
-
-    duration_ms = parse_arg_long_bounds_dflt("duration", 1, INT32_MAX, 0, &rc);
-    if (rc != 0) {
-        console_printf("invalid 'duration' parameter\n");
         return rc;
     }
 
@@ -588,6 +588,7 @@ static const struct shell_param connect_params[] = {
     {"peer_addr_type", "usage: =[public|random|public_id|random_id], default: public"},
     {"peer_addr", "usage: =[XX:XX:XX:XX:XX:XX]"},
     {"own_addr_type", "usage: =[public|random|rpa_pub|rpa_rnd], default: public"},
+    {"duration", "usage: =[1-INT32_MAX], default: 0"},
     {"scan_interval", "usage: =[0-UINT16_MAX], default: 0x0010"},
     {"scan_window", "usage: =[0-UINT16_MAX], default: 0x0010"},
     {"interval_min", "usage: =[0-UINT16_MAX], default: 30"},
@@ -596,7 +597,6 @@ static const struct shell_param connect_params[] = {
     {"timeout", "usage: =[UINT16], default: 0x0100"},
     {"min_conn_event_len", "usage: =[UINT16], default: 0x0010"},
     {"max_conn_event_len", "usage: =[UINT16], default: 0x0300"},
-    {"duration", "usage: =[1-INT32_MAX], default: 0"},
     {"coded_scan_interval", "usage: =[0-UINT16_MAX], default: 0x0010"},
     {"coded_scan_window", "usage: =[0-UINT16_MAX], default: 0x0010"},
     {"coded_interval_min", "usage: =[0-UINT16_MAX], default: 30"},
