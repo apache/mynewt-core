@@ -494,12 +494,14 @@ bme280_sensor_read(struct sensor *sensor, sensor_type_t type,
     int32_t rawtemp;
     int32_t rawpress;
     int32_t rawhumid;
-    struct sensor_temp_data std;
-    struct sensor_press_data spd;
-    struct sensor_humid_data shd;
+    struct sensor_itf *itf;
     struct bme280 *bme280;
     int rc;
-    struct sensor_itf *itf;
+    union {
+        struct sensor_temp_data std;
+        struct sensor_press_data spd;
+        struct sensor_humid_data shd;
+    } databuf;
 
     if (!(type & SENSOR_TYPE_PRESSURE)    &&
         !(type & SENSOR_TYPE_AMBIENT_TEMPERATURE) &&
@@ -539,7 +541,7 @@ bme280_sensor_read(struct sensor *sensor, sensor_type_t type,
         }
 
         /* Call data function */
-        rc = data_func(sensor, data_arg, &spd);
+        rc = data_func(sensor, data_arg, &databuf.spd, SENSOR_TYPE_PRESSURE);
         if (rc) {
             goto err;
         }
@@ -559,7 +561,7 @@ bme280_sensor_read(struct sensor *sensor, sensor_type_t type,
         }
 
         /* Call data function */
-        rc = data_func(sensor, data_arg, &std);
+        rc = data_func(sensor, data_arg, &databuf.std, SENSOR_TYPE_AMBIENT_TEMPERATURE);
         if (rc) {
             goto err;
         }
@@ -579,7 +581,7 @@ bme280_sensor_read(struct sensor *sensor, sensor_type_t type,
         }
 
         /* Call data function */
-        rc = data_func(sensor, data_arg, &shd);
+        rc = data_func(sensor, data_arg, &databuf.shd, SENSOR_TYPE_RELATIVE_HUMIDITY);
         if (rc) {
             goto err;
         }

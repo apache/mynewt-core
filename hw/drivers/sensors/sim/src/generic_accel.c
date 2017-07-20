@@ -142,7 +142,7 @@ sim_accel_sensor_read(struct sensor *sensor, sensor_type_t type,
 
     /* Call data function for each of the generated readings. */
     for (i = 0; i < num_samples; i++) {
-        rc = data_func(sensor, data_arg, &sad);
+        rc = data_func(sensor, data_arg, &sad, SENSOR_TYPE_ACCELEROMETER);
         if (rc != 0) {
             goto err;
         }

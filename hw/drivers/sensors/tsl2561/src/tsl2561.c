@@ -798,7 +798,7 @@ tsl2561_sensor_read(struct sensor *sensor, sensor_type_t type,
         sld.sld_lux_is_valid  = 1;
 
         /* Call data function */
-        rc = data_func(sensor, data_arg, &sld);
+        rc = data_func(sensor, data_arg, &sld, SENSOR_TYPE_LIGHT);
         if (rc != 0) {
             goto err;
         }
