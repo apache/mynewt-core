@@ -362,7 +362,7 @@ bletest_hci_le_rd_max_datalen(void)
     return rc;
 }
 
-#if MYNEWT_VAL(BLE_MULTI_ADV_SUPPORT)
+#if MYNEWT_VAL(BLE_ANDROID_MULTI_ADV_SUPPORT)
 int
 bletest_hci_le_set_multi_adv_data(uint8_t *data, uint8_t len, uint8_t instance)
 {
@@ -429,7 +429,7 @@ bletest_hci_le_read_rem_used_feat(uint16_t handle)
     return ble_hs_hci_cmd_tx(buf, NULL, 0, NULL);
 }
 
-#if MYNEWT_VAL(BLE_MULTI_ADV_SUPPORT)
+#if MYNEWT_VAL(BLE_ANDROID_MULTI_ADV_SUPPORT)
 int
 bletest_hci_le_set_multi_adv_params(struct hci_multi_adv_params *adv,
                                     uint8_t instance)
@@ -520,7 +520,7 @@ bletest_hci_le_set_rand_addr(uint8_t *addr)
     return ble_hs_hci_cmd_tx(buf, NULL, 0, NULL);
 }
 
-#if MYNEWT_VAL(BLE_MULTI_ADV_SUPPORT)
+#if MYNEWT_VAL(BLE_ANDROID_MULTI_ADV_SUPPORT)
 int
 bletest_hci_le_set_multi_rand_addr(uint8_t *addr, uint8_t instance)
 {
@@ -600,7 +600,7 @@ bletest_hci_le_rd_chanmap(uint16_t handle)
     return rc;
 }
 
-#if MYNEWT_VAL(BLE_MULTI_ADV_SUPPORT)
+#if MYNEWT_VAL(BLE_ANDROID_MULTI_ADV_SUPPORT)
 int
 bletest_hci_le_set_multi_adv_enable(uint8_t enable, uint8_t instance)
 {
@@ -656,7 +656,7 @@ bletest_hci_set_event_mask(uint64_t event_mask)
     return ble_hs_hci_cmd_tx_empty_ack(buf);
 }
 
-#if MYNEWT_VAL(BLE_MULTI_ADV_SUPPORT)
+#if MYNEWT_VAL(BLE_ANDROID_MULTI_ADV_SUPPORT)
 int
 bletest_hci_le_set_multi_scan_rsp_data(uint8_t *data, uint8_t len,
                                        uint8_t instance)

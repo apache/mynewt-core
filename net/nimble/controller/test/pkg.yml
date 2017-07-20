@@ -1,4 +1,3 @@
-#
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -16,23 +15,19 @@
 # specific language governing permissions and limitations
 # under the License.
 #
+pkg.name: net/nimble/controller/test
+pkg.type: unittest
+pkg.description: "NimBLE controller unit tests."
+pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
+pkg.homepage: "http://mynewt.apache.org/"
+pkg.keywords:
 
-syscfg.defs:
-    BSP_SIMULATED:
-        description: Indicates that Mynewt is being hosted in another OS.
-        value: 1
+pkg.deps:
+    - test/testutil
+    - net/nimble/controller
 
-syscfg.vals:
-    # Sim isn't flash constrained, so include filename, line number, and
-    # message in asserts and sysinit panic messages.
-    BASELIBC_ASSERT_FILE_LINE: 1
-    SYSINIT_PANIC_FILE_LINE: 1
-    SYSINIT_PANIC_MESSAGE: 1
-
-    NFFS_FLASH_AREA: FLASH_AREA_NFFS
-    CONFIG_FCB_FLASH_AREA: FLASH_AREA_NFFS
-    REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG
-    COREDUMP_FLASH_AREA: FLASH_AREA_IMAGE_1
-
-syscfg.vals.BLE_LP_CLOCK:
-    OS_CPUTIME_FREQ: 32768
+pkg.deps.SELFTEST:
+    - sys/console/stub
+    - sys/log/full
+    - sys/stats/stub
+    - net/nimble/transport/ram
