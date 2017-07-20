@@ -1112,6 +1112,15 @@ btshell_gap_event(struct ble_gap_event *event, void *arg)
         print_conn_desc(&desc);
         return 0;
 
+    case BLE_GAP_EVENT_PHY_UPDATE_COMPLETE:
+        console_printf("PHY update complete; status=%d, conn_handle=%d "
+                       " tx_phy=%d, rx_phy=%d\n",
+                       event->phy_updated.status,
+                       event->phy_updated.conn_handle,
+                       event->phy_updated.tx_phy,
+                       event->phy_updated.rx_phy);
+        return 0;
+
     case BLE_GAP_EVENT_REPEAT_PAIRING:
         /* We already have a bond with the peer, but it is attempting to
          * establish a new secure link.  This app sacrifices security for

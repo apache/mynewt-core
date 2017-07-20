@@ -2275,6 +2275,155 @@ static const struct shell_cmd_help test_tx_help = {
 };
 
 /*****************************************************************************
+ * $phy-set                                                                  *
+ *****************************************************************************/
+
+static int
+cmd_phy_set(int argc, char **argv)
+{
+    uint16_t conn;
+    uint8_t tx_phys_mask;
+    uint8_t rx_phys_mask;
+    uint16_t phy_opts;
+    int rc;
+
+    rc = parse_arg_all(argc - 1, argv + 1);
+    if (rc != 0) {
+        return rc;
+    }
+
+    conn = parse_arg_uint16("conn", &rc);
+    if (rc != 0) {
+        console_printf("invalid 'conn' parameter\n");
+        return rc;
+    }
+
+    tx_phys_mask = parse_arg_uint8("tx_phys_mask", &rc);
+    if (rc != 0) {
+        console_printf("invalid 'tx_phys_mask' parameter\n");
+        return rc;
+    }
+
+    rx_phys_mask = parse_arg_uint8("rx_phys_mask", &rc);
+    if (rc != 0) {
+        console_printf("invalid 'rx_phys_mask' parameter\n");
+        return rc;
+    }
+
+    phy_opts = parse_arg_uint16("phy_opts", &rc);
+    if (rc != 0) {
+        console_printf("invalid 'phy_opts' parameter\n");
+        return rc;
+    }
+
+    return ble_gap_set_prefered_le_phy(conn, tx_phys_mask, rx_phys_mask,
+                                       phy_opts);
+}
+
+static const struct shell_param phy_set_params[] = {
+    {"conn", "connection handle, usage: =<UINT16>"},
+    {"tx_phys_mask", "usage: =<UINT8>"},
+    {"rx_phys_mask", "usage: =<UINT8>"},
+    {"phy_opts", "usage: =<UINT16>"},
+    {NULL, NULL}
+};
+
+static const struct shell_cmd_help phy_set_help = {
+    .summary = "set preferred PHYs",
+    .usage = NULL,
+    .params = phy_set_params,
+};
+
+/*****************************************************************************
+ * $phy-set-default                                                          *
+ *****************************************************************************/
+
+static int
+cmd_phy_set_default(int argc, char **argv)
+{
+    uint8_t tx_phys_mask;
+    uint8_t rx_phys_mask;
+    int rc;
+
+    rc = parse_arg_all(argc - 1, argv + 1);
+    if (rc != 0) {
+        return rc;
+    }
+
+    tx_phys_mask = parse_arg_uint8("tx_phys_mask", &rc);
+    if (rc != 0) {
+        console_printf("invalid 'tx_phys_mask' parameter\n");
+        return rc;
+    }
+
+    rx_phys_mask = parse_arg_uint8("rx_phys_mask", &rc);
+    if (rc != 0) {
+        console_printf("invalid 'rx_phys_mask' parameter\n");
+        return rc;
+    }
+
+    return ble_gap_set_prefered_default_le_phy(tx_phys_mask, rx_phys_mask);
+}
+
+static const struct shell_param phy_set_default_params[] = {
+    {"tx_phys_mask", "usage: =<UINT8>"},
+    {"rx_phys_mask", "usage: =<UINT8>"},
+    {NULL, NULL}
+};
+
+static const struct shell_cmd_help phy_set_default_help = {
+    .summary = "set preferred default PHYs",
+    .usage = NULL,
+    .params = phy_set_default_params,
+};
+
+/*****************************************************************************
+ * $phy-read                                                                 *
+ *****************************************************************************/
+
+static int
+cmd_phy_read(int argc, char **argv)
+{
+    uint16_t conn = 0;
+    uint8_t tx_phy;
+    uint8_t rx_phy;
+    int rc;
+
+    rc = parse_arg_all(argc - 1, argv + 1);
+    if (rc != 0) {
+        return rc;
+    }
+
+    conn = parse_arg_uint16("conn", &rc);
+    if (rc != 0) {
+        console_printf("invalid 'conn' parameter\n");
+        return rc;
+    }
+
+    rc = ble_gap_read_le_phy(conn, &tx_phy, &rx_phy);
+    if (rc != 0) {
+        console_printf("Could not read PHY error: %d\n", rc);
+        return rc;
+    }
+
+    console_printf("TX_PHY: %d\n", tx_phy);
+    console_printf("RX_PHY: %d\n", tx_phy);
+
+    return 0;
+}
+
+static const struct shell_param phy_read_params[] = {
+    {"conn", "connection handle, usage: =<UINT16>"},
+    {NULL, NULL}
+};
+
+static const struct shell_cmd_help phy_read_help = {
+    .summary = "read PHYs",
+    .usage = NULL,
+    .params = phy_read_params,
+};
+
+/*****************************************************************************
  * $gatt-discover                                                            *
  *****************************************************************************/
 
@@ -2832,6 +2981,27 @@ static const struct shell_cmd btshell_commands[] = {
         .sc_cmd_func = cmd_test_tx,
 #if MYNEWT_VAL(SHELL_CMD_HELP)
         .help = &test_tx_help,
+#endif
+    },
+    {
+        .sc_cmd = "phy-set",
+        .sc_cmd_func = cmd_phy_set,
+#if MYNEWT_VAL(SHELL_CMD_HELP)
+        .help = &phy_set_help,
+#endif
+    },
+    {
+        .sc_cmd = "phy-set-default",
+        .sc_cmd_func = cmd_phy_set_default,
+#if MYNEWT_VAL(SHELL_CMD_HELP)
+        .help = &phy_set_default_help,
+#endif
+    },
+    {
+        .sc_cmd = "phy-read",
+        .sc_cmd_func = cmd_phy_read,
+#if MYNEWT_VAL(SHELL_CMD_HELP)
+        .help = &phy_read_help,
 #endif
     },
     { NULL, NULL, NULL },
