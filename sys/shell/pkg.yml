@@ -19,7 +19,7 @@
 
 pkg.name: sys/shell 
 pkg.description: Command processor for console-based applications.
-pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
+pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 

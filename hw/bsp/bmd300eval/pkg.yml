@@ -20,7 +20,7 @@
 pkg.name: hw/bsp/bmd300eval
 pkg.type: bsp
 pkg.description: BSP definition for the Rigado BMD-300 evaluation board. The BMD-300 contains the nrf52.
-pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
+pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
     - nrf52

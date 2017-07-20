@@ -19,7 +19,7 @@
 
 pkg.name: net/ip/native_sockets
 pkg.description: Socket interface for Mynewt, uses native sockets.
-pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
+pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
     - socket

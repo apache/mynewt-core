@@ -18,7 +18,7 @@
 pkg.name: apps/btshell
 pkg.type: app
 pkg.description: Shell application exposing the nimble GAP and GATT.
-pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
+pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 

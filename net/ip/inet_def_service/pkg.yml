@@ -19,7 +19,7 @@
 
 pkg.name: net/ip/inet_def_service
 pkg.description: INET services chargen, discard and echo
-pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
+pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
     - socket

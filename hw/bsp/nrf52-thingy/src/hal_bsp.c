@@ -171,10 +171,10 @@ hal_bsp_get_nvic_priority(int irq_num, uint32_t pri)
  *
  * @return 0 on success, non-zero on failure
  */
-#if MYNEWT_VAL(LIS2DH12_ONB)
 int
 config_lis2dh12_sensor(void)
 {
+#if MYNEWT_VAL(LIS2DH12_ONB)
     int rc;
     struct os_dev *dev;
     struct lis2dh12_cfg cfg;
@@ -193,9 +193,9 @@ config_lis2dh12_sensor(void)
     SYSINIT_PANIC_ASSERT(rc == 0);
 
     os_dev_close(dev);
-    return rc;
-}
 #endif
+    return 0;
+}
 
 static void
 sensor_dev_create(HN_1344HZ_L_5376HZ)

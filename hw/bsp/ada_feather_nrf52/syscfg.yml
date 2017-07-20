@@ -90,6 +90,12 @@ syscfg.defs:
         description: 'NRF52 I2C (TWI) interface 0'
         value:  '0'
 
+syscfg.defs.BLE_LP_CLOCK:
+    TIMER_0:
+        value: 0
+    TIMER_5:
+        value: 1
+
 syscfg.vals:
     CONFIG_FCB_FLASH_AREA: FLASH_AREA_NFFS
     REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG
@@ -100,3 +106,8 @@ syscfg.vals:
 # The module on the board has +/- 40 ppm crystal. A value of 5 is
 # for crystals in the range of 31 to 50 ppm.
     BLE_LL_MASTER_SCA: 5
+
+syscfg.vals.BLE_LP_CLOCK:
+    OS_CPUTIME_FREQ: 32768
+    OS_CPUTIME_TIMER_NUM: 5
+    BLE_XTAL_SETTLE_TIME: 1500

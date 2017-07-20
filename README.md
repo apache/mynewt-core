@@ -50,7 +50,7 @@ It currently supports the following hardware platforms:
 * BBC micro:bit (Nordic nrf51822; Cortex-M0)
 
 Apache Mynewt uses the
-[Newt](https://www.github.com/apache/incubator-mynewt-newt) build and package
+[Newt](https://www.github.com/apache/mynewt-newt) build and package
 management system, which allows you to compose your OS and choose only the
 components you need.
 
@@ -96,31 +96,31 @@ Mynewt is being actively developed.  Some of the features we're currently workin
 If you are browsing around the source tree, and want to see some of the
 major functional chunks, here are a few pointers:
 
-- kernel: Contains the core of the RTOS ([kernel/os](https://github.com/apache/incubator-mynewt-core/tree/master/kernel/os))
+- kernel: Contains the core of the RTOS ([kernel/os](https://github.com/apache/mynewt-core/tree/master/kernel/os))
 
 - sys: Contains a number of helper libraries for building applications.  Including a
-console ([sys/console](https://github.com/apache/incubator-mynewt-core/tree/master/sys/console))),
-shell ([sys/shell](https://github.com/apache/incubator-mynewt-core/tree/master/sys/shell)))
+console ([sys/console](https://github.com/apache/mynewt-core/tree/master/sys/console))),
+shell ([sys/shell](https://github.com/apache/mynewt-core/tree/master/sys/shell)))
 
-- mgmt: Contains the management libraries for newtmgr [mgmt/newtmgr](https://github.com/apache/incubator-mynewt-core/tree/master/sys/newtmgr)), which supports software upgrade and remote fetching of logs and statistics.
+- mgmt: Contains the management libraries for newtmgr [mgmt/newtmgr](https://github.com/apache/mynewt-core/tree/master/sys/newtmgr)), which supports software upgrade and remote fetching of logs and statistics.
 
 - net: Contains the networking packages.  Highlights of the net directory are the NimBLE and IP packages.
-[Nimble](https://github.com/apache/incubator-mynewt-core/tree/master/net/nimble)
+[Nimble](https://github.com/apache/mynewt-core/tree/master/net/nimble)
 is a full Bluetooth host and controller implementation, that is written
 from the ground up for the Apache Mynewt Operating System.
-[ip](https://github.com/apache/incubator-mynewt-core/tree/master/net/ip) is a port of LWIP, a complete IPv4 and IPv6 implementation.
+[ip](https://github.com/apache/mynewt-core/tree/master/net/ip) is a port of LWIP, a complete IPv4 and IPv6 implementation.
 
 - hw: Contains the HW specific support packages.  Board Support Packages
-are located in [hw/bsp](https://github.com/apache/incubator-mynewt-core/tree/master/hw/bsp),
+are located in [hw/bsp](https://github.com/apache/mynewt-core/tree/master/hw/bsp),
 and the MCU specific definitions they rely on are located in
-[hw/mcu](https://github.com/apache/incubator-mynewt-core/tree/master/hw/mcu).
+[hw/mcu](https://github.com/apache/mynewt-core/tree/master/hw/mcu).
 There is a HAL (Hardware Abstraction Layer) stored in
-[hw/hal](https://github.com/apache/incubator-mynewt-core/tree/master/hw/hal), even
-though the implementation of various HALs are stored in the MCU specific definitions.  Finally, drivers can be found in [hw/drivers](https://github.com/apache/incubator-mynewt-core/tree/master/hw/drivers).  Drivers provide a higher-level interface to the hardware than the HAL, and may require the Mynewt operating system to function.
+[hw/hal](https://github.com/apache/mynewt-core/tree/master/hw/hal), even
+though the implementation of various HALs are stored in the MCU specific definitions.  Finally, drivers can be found in [hw/drivers](https://github.com/apache/mynewt-core/tree/master/hw/drivers).  Drivers provide a higher-level interface to the hardware than the HAL, and may require the Mynewt operating system to function.
 
-- fs: Contains the FS package ([fs/fs](https://github.com/apache/incubator-mynewt-core/tree/master/fs/fs))
+- fs: Contains the FS package ([fs/fs](https://github.com/apache/mynewt-core/tree/master/fs/fs))
 which is the high-level Apache Mynewt file system API.   A specific implementation of that FS, is
-[NFFS](https://github.com/apache/incubator-mynewt-core/tree/master/fs/nffs) (Newtron
+[NFFS](https://github.com/apache/mynewt-core/tree/master/fs/nffs) (Newtron
 Flash File System.)  The Newtron file system is a FS that has been built from
 the ground-up in Apache Mynewt, designed to be optimized for small
 (64KB-32MB) flashes.
@@ -132,28 +132,28 @@ In addition to some of the core packages, there are also some sample
 applications that show how to instantiate the Apache Mynewt system.  These
 sample applications are located in the `apps/` directory.  They include:
 
-* [boot](https://github.com/apache/incubator-mynewt-core/tree/master/apps/boot):
+* [boot](https://github.com/apache/mynewt-core/tree/master/apps/boot):
   Project to build the bootloader for test platforms.
-* [blinky](https://github.com/apache/incubator-mynewt-core/tree/master/apps/blinky): The
+* [blinky](https://github.com/apache/mynewt-core/tree/master/apps/blinky): The
   minimal packages to build the OS, and blink a LED!
-* [slinky](https://github.com/apache/incubator-mynewt-core/tree/master/apps/slinky): A
+* [slinky](https://github.com/apache/mynewt-core/tree/master/apps/slinky): A
   slightly more complex project that includes the console and shell libraries.
-* [blecent](https://github.com/apache/incubator-mynewt-core/tree/master/apps/blecent): A basic central device with no user interface.  This
+* [blecent](https://github.com/apache/mynewt-core/tree/master/apps/blecent): A basic central device with no user interface.  This
 application scans for a peripheral that supports the alert notification
 service (ANS).  Upon discovering such a peripheral, blecent connects and
 performs a characteristic read, characteristic write, and notification subscription.
-* [blehci](https://github.com/apache/incubator-mynewt-core/tree/master/apps/blehci): Implements a BLE controller-only application.  A separate
+* [blehci](https://github.com/apache/mynewt-core/tree/master/apps/blehci): Implements a BLE controller-only application.  A separate
 host-only implementation, such as Linux's BlueZ, can interface with this
 application via HCI over UART.
-* [bleprph](https://github.com/apache/incubator-mynewt-core/tree/master/apps/bleprph): An
+* [bleprph](https://github.com/apache/mynewt-core/tree/master/apps/bleprph): An
   implementation of a minimal BLE peripheral.
-* [bletiny](https://github.com/apache/incubator-mynewt-core/tree/master/apps/bletiny): A
+* [bletiny](https://github.com/apache/mynewt-core/tree/master/apps/bletiny): A
   stripped down interface to the Apache Mynewt Bluetooth stack.
-* [bleuart](https://github.com/apache/incubator-mynewt-core/tree/master/apps/bleuart):
+* [bleuart](https://github.com/apache/mynewt-core/tree/master/apps/bleuart):
 Implements a simple BLE peripheral that supports the Nordic
 UART / Serial Port Emulation service
 (https://developer.nordicsemi.com/nRF5_SDK/nRF51_SDK_v8.x.x/doc/8.0.0/s110/html/a00072.html).
-* [test](https://github.com/apache/incubator-mynewt-core/tree/master/apps/test): Test
+* [test](https://github.com/apache/mynewt-core/tree/master/apps/test): Test
   project which can be compiled either with the simulator, or on a per-architecture basis.
   Test will run all the package's unit tests.
 
@@ -161,7 +161,7 @@ UART / Serial Port Emulation service
 
 If you are having trouble using or contributing to Apache Mynewt, or just want to talk
 to a human about what you're working on, you can contact us via the
-[developers mailing list](mailto:dev@mynewt.incubator.apache.org).
+[developers mailing list](mailto:dev@mynewt.apache.org).
 
 Although not a formal channel, you can also find a number of core developers
 on the #mynewt channel on Freenode.
@@ -183,7 +183,7 @@ website, located [here](https://mynewt.apache.org/community).
 
 Apache Mynewt welcomes pull request via Github.  Discussions are done on Github,
 but depending on the topic, can also be relayed to the official Apache Mynewt
-developer mailing list dev@mynewt.incubator.apache.org.
+developer mailing list dev@mynewt.apache.org.
 
 If you are suggesting a new feature, please email the developer list directly,
 with a description of the feature you are planning to work on.

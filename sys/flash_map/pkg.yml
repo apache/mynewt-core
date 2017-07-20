@@ -19,7 +19,7 @@
 
 pkg.name: sys/flash_map
 pkg.description: System utilities required by all BSPs.
-pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
+pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
     - bsp

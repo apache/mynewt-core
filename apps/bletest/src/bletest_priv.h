@@ -62,7 +62,7 @@ int bletest_hci_le_add_resolv_list(uint8_t *local_irk, uint8_t *peer_irk,
                                    uint8_t *peer_ident_addr, uint8_t addr_type);
 int bletest_hci_le_enable_resolv_list(uint8_t enable);
 
-#if MYNEWT_VAL(BLE_MULTI_ADV_SUPPORT)
+#if MYNEWT_VAL(BLE_ANDROID_MULTI_ADV_SUPPORT)
 int bletest_hci_le_set_multi_rand_addr(uint8_t *addr, uint8_t instance);
 int bletest_hci_le_set_multi_adv_data(uint8_t *data, uint8_t len,
                                       uint8_t instance);

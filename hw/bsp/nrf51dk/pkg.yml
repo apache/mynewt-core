@@ -20,7 +20,7 @@
 pkg.name: hw/bsp/nrf51dk
 pkg.type: bsp
 pkg.description: BSP definition for the Nordic nRF51 DK SoC.
-pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
+pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
     - nrf51

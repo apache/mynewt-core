@@ -20,7 +20,7 @@
 pkg.name: hw/bsp/native-armv7
 pkg.type: bsp
 pkg.description: BSP definition for native (ARMv7) applications.
-pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
+pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
     - native

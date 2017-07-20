@@ -20,7 +20,7 @@
 pkg.name: hw/bsp/ci40
 pkg.type: bsp
 pkg.description: BSP definition for the Creator CI40 board.
-pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
+pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
     - creator

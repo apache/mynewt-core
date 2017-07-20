@@ -77,7 +77,7 @@ sensor_display_help(void)
     console_printf("      list of sensors registered\n");
     console_printf("  read <sensor_name> <type> [-n nsamples] [-i poll_itvl(ms)] [-d poll_duration(ms)]\n");
     console_printf("      read <no_of_samples> from sensor<sensor_name> of type:<type> at preset interval or \n");
-    console_printf("      at <poll_interval> rate for <poll_duration>");
+    console_printf("      at <poll_interval> rate for <poll_duration>\n");
     console_printf("  type <sensor_name>\n");
     console_printf("      types supported by registered sensor\n");
 }

@@ -28,3 +28,6 @@ syscfg.defs:
     BOOTUTIL_SIGN_EC256:
         description: 'Images are signed using ECDSA NIST P-256.'
         value: '0'
+    BOOTUTIL_VALIDATE_SLOT0:
+        description: 'Always validate slot 0 on bootup.'
+        value: '0'

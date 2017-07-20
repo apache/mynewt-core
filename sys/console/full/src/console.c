@@ -120,12 +120,13 @@ console_read(char *str, int cnt, int *newline)
 
     if ((cnt - 1) < len) {
         len = cnt - 1;
-        if (len > 0) {
-            memcpy(str, cmd->line, len);
-            str[len] = '\0';
-        } else {
-            str[len] = cmd->line[0];
-        }
+    }
+
+    if (len > 0) {
+        memcpy(str, cmd->line, len);
+        str[len] = '\0';
+    } else {
+        str[0] = cmd->line[0];
     }
 
     os_eventq_put(avail_queue, ev);
@@ -385,6 +386,7 @@ console_handle_char(uint8_t byte)
 
     static struct os_event *ev;
     static struct console_input *input;
+    static char prev_endl = '\0';
 
     if (!avail_queue || !lines_queue) {
         return 0;
@@ -477,6 +479,14 @@ console_handle_char(uint8_t byte)
             insert_char(&input->line[cur], byte, end);
             /* Falls through. */
         case '\r':
+            /* Falls through. */
+        case '\n':
+            if (byte == '\n' && prev_endl == '\r') {
+                /* handle double end line chars */
+                prev_endl = byte;
+                break;
+            }
+            prev_endl = byte;
             input->line[cur + end] = '\0';
             console_out('\r');
             console_out('\n');
