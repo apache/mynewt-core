@@ -23,21 +23,13 @@
 #include "syscfg/syscfg.h"
 #include "os/os.h"
 #include "console/console.h"
+#include "console/ticks.h"
 
 #include "shell/shell.h"
 #include "shell_priv.h"
 
 #define PROMPT_LEN 15
 #define SHELL_PROMPT "prompt"
-
-static const char *
-ticks_prompt(void)
-{
-    static char str[PROMPT_LEN];
-    snprintf(str, sizeof(str), "%lu", (unsigned long)os_time_get());
-    strcat(str, "> ");
-    return str;
-}
 
 /**
  * Handles the 'ticks' command
@@ -47,12 +39,12 @@ shell_ticks_cmd(int argc, char **argv)
 {
     if (argc > 1) {
         if (!strcmp(argv[1], "on")) {
-            shell_register_prompt_handler(ticks_prompt);
+            console_yes_ticks();
             console_printf(" Console Ticks on\n");
         }
         else if (!strcmp(argv[1],"off")) {
             console_printf(" Console Ticks off\n");
-            shell_register_prompt_handler(NULL);
+            console_no_ticks();
         }
         return 0;
     }
