@@ -20,42 +20,22 @@
 #include <os/os.h>
 #include <pwm/pwm.h>
 #include <pwm_nrf52/pwm_nrf52.h>
+#include <bsp/bsp.h>
 
 static struct os_dev dev;
 int arg = 0;
 struct pwm_dev *pwm;
 static int value = 400;
-//static bool down = false;
-
-/* static void test_handler(nrf_drv_pwm_evt_type_t event_type) */
-/* { */
-/*     if (event_type == NRF_DRV_PWM_EVT_FINISHED) */
-/*     { */
-/*         if (down) */
-/*         { */
-/*             value -= 200; */
-/*             if (value == 0) */
-/*             { */
-/*                 down = false; */
-/*             } */
-/*         } */
-/*         else */
-/*         { */
-/*             value += 200; */
-/*             if (value >= 10000) */
-/*             { */
-/*                 down = true; */
-/*             } */
-/*         } */
-/*         pwm_enable_duty_cycle(pwm, 0, value); */
-/*     } */
-/* } */
 
 int
 main(int argc, char **argv)
 {
     sysinit();
 
+    struct nrf52_pwm_chan_cfg chan_conf = {
+        .pin = LED_1,
+        .inverted = true
+    };
     os_dev_create(&dev,
                   "pwm",
                   OS_DEV_INIT_KERNEL,
@@ -63,8 +43,14 @@ main(int argc, char **argv)
                   nrf52_pwm_dev_init,
                   NULL);
     pwm = (struct pwm_dev *) os_dev_open("pwm", 0, NULL);
-    pwm_enable_duty_cycle(pwm, 0, value);
-    pwm_enable_duty_cycle(pwm, 1, 800);
+    pwm_chan_config(pwm, 0, &chan_conf);
+
+    chan_conf.pin = LED_4;
+    pwm_chan_config(pwm, 1, &chan_conf);
+
+    pwm_enable_duty_cycle(pwm, 1, value);
+    pwm_enable_duty_cycle(pwm, 0, 5 * value);
+
 
     while (1) {
         os_eventq_run(os_eventq_dflt_get());
