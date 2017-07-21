@@ -25,7 +25,7 @@
 static struct os_dev dev;
 int arg = 0;
 struct pwm_dev *pwm;
-static int value = 400;
+static int value = 10000;
 
 int
 main(int argc, char **argv)
@@ -36,6 +36,7 @@ main(int argc, char **argv)
         .pin = LED_1,
         .inverted = true
     };
+
     os_dev_create(&dev,
                   "pwm",
                   OS_DEV_INIT_KERNEL,
@@ -43,14 +44,24 @@ main(int argc, char **argv)
                   nrf52_pwm_dev_init,
                   NULL);
     pwm = (struct pwm_dev *) os_dev_open("pwm", 0, NULL);
+
     pwm_chan_config(pwm, 0, &chan_conf);
+    pwm_enable_duty_cycle(pwm, 0, 10000);
+
+    chan_conf.pin = LED_2;
+    pwm_chan_config(pwm, 1, &chan_conf);
+    pwm_enable_duty_cycle(pwm, 1, value/10);
+
+    //changing frequency while playing
+    pwm_set_frequency(pwm, 2000000);
+
+    chan_conf.pin = LED_3;
+    pwm_chan_config(pwm, 2, &chan_conf);
+    pwm_enable_duty_cycle(pwm, 2, value/100);
 
     chan_conf.pin = LED_4;
-    pwm_chan_config(pwm, 1, &chan_conf);
-
-    pwm_enable_duty_cycle(pwm, 1, value);
-    pwm_enable_duty_cycle(pwm, 0, 5 * value);
-
+    pwm_chan_config(pwm, 3, &chan_conf);
+    pwm_enable_duty_cycle(pwm, 3, value/1000);
 
     while (1) {
         os_eventq_run(os_eventq_dflt_get());
