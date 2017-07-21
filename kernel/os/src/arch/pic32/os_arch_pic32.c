@@ -132,14 +132,11 @@ os_bytes_to_stack_aligned_words(int byts) {
 os_stack_t *
 os_arch_task_stack_init(struct os_task *t, os_stack_t *stack_top, int size)
 {
-    int lazy_space = 0;
+    int ctx_space = os_bytes_to_stack_aligned_words(sizeof(struct ctx));
 #if MYNEWT_VAL(HARDFLOAT)
-    lazy_space += os_bytes_to_stack_aligned_words(sizeof(struct ctx_fp));
-#endif
-
     /* If stack does not have space for the FPU context, assume the
     thread won't use it. */
-    int ctx_space = os_bytes_to_stack_aligned_words(sizeof(struct ctx));
+    int lazy_space = os_bytes_to_stack_aligned_words(sizeof(struct ctx_fp));
     if ((lazy_space + ctx_space + 4) >= size) {
         /* stack too small */
         stack_top -= 4;
@@ -149,6 +146,10 @@ os_arch_task_stack_init(struct os_task *t, os_stack_t *stack_top, int size)
         memcpy(stack_top - os_bytes_to_stack_aligned_words(sizeof(struct ctx_fp)), &ctx_fp, sizeof(ctx_fp));
         stack_top -= lazy_space + 4;
     }
+#else
+    stack_top -= 4;
+#endif
+
     os_stack_t *s = stack_top - ctx_space;
 
     struct ctx ctx;
@@ -160,7 +161,7 @@ os_arch_task_stack_init(struct os_task *t, os_stack_t *stack_top, int size)
     /* copy struct onto the stack */
     memcpy(s, &ctx, sizeof(ctx));
 
-    return (uint32_t)stack_top;
+    return stack_top;
 }
 
 void
