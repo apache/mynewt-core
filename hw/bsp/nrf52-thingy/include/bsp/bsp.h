@@ -40,11 +40,11 @@ extern uint8_t _ram_start;
 #define RAM_SIZE        0x10000
 
 /* LED pins */
-#define LED_BLINK_PIN   (17)
-#define LED_2           (18)
+#define LED_BLINK_PIN   (-1)
+#define LED_2           (-1)
 
 #if MYNEWT_VAL(BOOT_SERIAL)
-#define BOOT_SERIAL_DETECT_PIN          13 /* Button 1 */
+#define BOOT_SERIAL_DETECT_PIN          11 /* Button 1 */
 #define BOOT_SERIAL_DETECT_PIN_CFG      HAL_GPIO_PULL_UP
 #define BOOT_SERIAL_DETECT_PIN_VAL      0
 
