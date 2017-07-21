@@ -184,7 +184,7 @@ sensor_mgr_poll_one(struct sensor *sensor, os_time_t now)
      * listeners are called by default.  Specify NULL as a callback,
      * because we just want to run all the listeners.
      */
-    sensor_read(sensor, SENSOR_TYPE_ALL, NULL, NULL, OS_TIMEOUT_NEVER);
+    sensor_read(sensor, sensor->s_mask, NULL, NULL, OS_TIMEOUT_NEVER);
 
     /* Remove the sensor from the sensor list for insert. */
     sensor_mgr_remove(sensor);
@@ -627,20 +627,23 @@ err:
 }
 
 static int
-sensor_read_data_func(struct sensor *sensor, void *arg, void *data)
+sensor_read_data_func(struct sensor *sensor, void *arg, void *data,
+                      sensor_type_t type)
 {
     struct sensor_listener *listener;
     struct sensor_read_ctx *ctx;
 
     /* Notify all listeners first */
     SLIST_FOREACH(listener, &sensor->s_listener_list, sl_next) {
-        listener->sl_func(sensor, listener->sl_arg, data);
+        if (listener->sl_sensor_type & type) {
+            listener->sl_func(sensor, listener->sl_arg, data, type);
+        }
     }
 
     /* Call data function */
     ctx = (struct sensor_read_ctx *) arg;
     if (ctx->user_func != NULL) {
-        return (ctx->user_func(sensor, ctx->user_arg, data));
+        return (ctx->user_func(sensor, ctx->user_arg, data, type));
     } else {
         return (0);
     }
@@ -707,7 +710,7 @@ sensor_read(struct sensor *sensor, sensor_type_t type,
     sensor_up_timestamp(sensor);
 
     rc = sensor->s_funcs->sd_read(sensor, type, sensor_read_data_func, &src,
-            timeout);
+                                  timeout);
     if (rc) {
         goto err;
     }

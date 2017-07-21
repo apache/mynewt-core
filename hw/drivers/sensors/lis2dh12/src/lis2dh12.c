@@ -963,7 +963,7 @@ lis2dh12_sensor_read(struct sensor *sensor, sensor_type_t type,
     sad.sad_z_is_valid = 1;
 
     /* Call data function */
-    rc = data_func(sensor, data_arg, &sad);
+    rc = data_func(sensor, data_arg, &sad, SENSOR_TYPE_ACCELEROMETER);
     if (rc != 0) {
         goto err;
     }

@@ -149,10 +149,12 @@ struct sensor_cfg {
  * @param The sensor for which data is being returned
  * @param The argument provided to sensor_read() function.
  * @param A single sensor reading for that sensor listener
+ * @param The sensor type for the data function
  *
  * @return 0 on success, non-zero error code on failure.
  */
-typedef int (*sensor_data_func_t)(struct sensor *, void *, void *);
+typedef int (*sensor_data_func_t)(struct sensor *, void *, void *,
+             sensor_type_t);
 
 /**
  *
