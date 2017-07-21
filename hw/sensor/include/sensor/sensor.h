@@ -480,7 +480,7 @@ struct sensor *sensor_mgr_find_next_bydevname(char *, struct sensor *);
  *
  * @return 1 if matches, 0 if it doesn't match.
  */
-int sensor_mgr_match_bytype(struct sensor *sensor, void *arg);
+int sensor_mgr_match_bytype(struct sensor *, void *);
 
 /**
  * Set the sensor poll rate
@@ -489,11 +489,11 @@ int sensor_mgr_match_bytype(struct sensor *sensor, void *arg);
  * @param The poll rate in milli seconds
  */
 int
-sensor_set_poll_rate_ms(char *devname, uint32_t poll_rate);
+sensor_set_poll_rate_ms(char *, uint32_t);
 
 #if MYNEWT_VAL(SENSOR_CLI)
 char*
-sensor_ftostr(float num, char *fltstr, int len);
+sensor_ftostr(float, char *, int);
 #endif
 
 #if MYNEWT_VAL(SENSOR_OIC)
