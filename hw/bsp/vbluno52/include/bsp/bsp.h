@@ -40,9 +40,8 @@ extern uint8_t _ram_start;
 #define RAM_SIZE        0x10000
 
 /* LED pin */
-#define LED 			(12)
-#define LED_BLINK_PIN   LED
-#define LED_2           LED
+#define LED_BLINK_PIN   (12)
+#define LED_2           (12)
 
 /* BUTTON pin */
 #define BUT 			(17)
