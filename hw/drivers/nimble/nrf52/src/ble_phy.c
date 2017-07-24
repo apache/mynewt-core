@@ -493,6 +493,24 @@ ble_phy_wfr_enable(int txrx, uint32_t wfr_usecs)
     NRF_RADIO->INTENSET = RADIO_INTENSET_DISABLED_Msk;
 }
 
+static uint32_t
+ble_phy_get_ccm_datarate(void)
+{
+    switch (g_ble_phy_data.phy_cur_phy_mode) {
+    case BLE_PHY_MODE_1M:
+        return CCM_MODE_DATARATE_1Mbit << CCM_MODE_DATARATE_Pos;
+    case BLE_PHY_MODE_2M:
+        return CCM_MODE_DATARATE_2Mbit << CCM_MODE_DATARATE_Pos;
+    case BLE_PHY_MODE_CODED_125KBPS:
+        return CCM_MODE_DATARATE_125Kbps << CCM_MODE_DATARATE_Pos;
+    case BLE_PHY_MODE_CODED_500KBPS:
+        return CCM_MODE_DATARATE_500Kbps << CCM_MODE_DATARATE_Pos;
+    }
+
+    assert(0);
+    return 0;
+}
+
 /**
  * Setup transceiver for receive.
  */
@@ -510,12 +528,14 @@ ble_phy_rx_xcvr_setup(void)
         NRF_CCM->INPTR = (uint32_t)&g_ble_phy_enc_buf[0];
         NRF_CCM->OUTPTR = (uint32_t)dptr;
         NRF_CCM->SCRATCHPTR = (uint32_t)&g_nrf_encrypt_scratchpad[0];
-        NRF_CCM->MODE = CCM_MODE_LENGTH_Msk | CCM_MODE_MODE_Decryption;
+        NRF_CCM->MODE = CCM_MODE_LENGTH_Msk | CCM_MODE_MODE_Decryption |
+                                                    ble_phy_get_ccm_datarate();
         NRF_CCM->CNFPTR = (uint32_t)&g_nrf_ccm_data;
         NRF_CCM->SHORTS = 0;
         NRF_CCM->EVENTS_ERROR = 0;
         NRF_CCM->EVENTS_ENDCRYPT = 0;
-        NRF_PPI->CHENSET = PPI_CHEN_CH24_Msk | PPI_CHEN_CH25_Msk;
+        NRF_CCM->TASKS_KSGEN = 1;
+        NRF_PPI->CHENSET = PPI_CHEN_CH25_Msk;
     } else {
         NRF_RADIO->PACKETPTR = (uint32_t)dptr;
     }
@@ -1094,7 +1114,7 @@ ble_phy_encrypt_set_pkt_cntr(uint64_t pkt_counter, int dir)
 void
 ble_phy_encrypt_disable(void)
 {
-    NRF_PPI->CHENCLR = (PPI_CHEN_CH24_Msk | PPI_CHEN_CH25_Msk);
+    NRF_PPI->CHENCLR = PPI_CHEN_CH25_Msk;
     NRF_CCM->TASKS_STOP = 1;
     NRF_CCM->EVENTS_ERROR = 0;
     NRF_CCM->ENABLE = CCM_ENABLE_ENABLE_Disabled;
@@ -1237,9 +1257,9 @@ ble_phy_tx(struct os_mbuf *txpdu, uint8_t end_trans)
         NRF_CCM->OUTPTR = (uint32_t)pktptr;
         NRF_CCM->SCRATCHPTR = (uint32_t)&g_nrf_encrypt_scratchpad[0];
         NRF_CCM->EVENTS_ERROR = 0;
-        NRF_CCM->MODE = CCM_MODE_LENGTH_Msk;
+        NRF_CCM->MODE = CCM_MODE_LENGTH_Msk | ble_phy_get_ccm_datarate();
         NRF_CCM->CNFPTR = (uint32_t)&g_nrf_ccm_data;
-        NRF_PPI->CHENSET = PPI_CHEN_CH24_Msk;
+        NRF_CCM->TASKS_KSGEN = 1;
     } else {
 #if (MYNEWT_VAL(BLE_LL_CFG_FEAT_LL_PRIVACY) == 1)
         NRF_AAR->IRKPTR = (uint32_t)&g_nrf_irk_list[0];
@@ -1487,7 +1507,7 @@ ble_phy_disable_irq_and_ppi(void)
     NRF_RADIO->SHORTS = 0;
     NRF_RADIO->TASKS_DISABLE = 1;
     NRF_PPI->CHENCLR = PPI_CHEN_CH4_Msk | PPI_CHEN_CH5_Msk | PPI_CHEN_CH20_Msk |
-          PPI_CHEN_CH21_Msk | PPI_CHEN_CH23_Msk | PPI_CHEN_CH24_Msk |
+          PPI_CHEN_CH21_Msk | PPI_CHEN_CH23_Msk |
           PPI_CHEN_CH25_Msk | PPI_CHEN_CH31_Msk;
     NVIC_ClearPendingIRQ(RADIO_IRQn);
     g_ble_phy_data.phy_state = BLE_PHY_STATE_IDLE;
