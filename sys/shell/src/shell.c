@@ -50,6 +50,7 @@ void
 shell_evq_set(struct os_eventq *evq)
 {
     os_eventq_designate(&shell_evq, evq, NULL);
+    console_set_queues(&avail_queue, shell_evq);
 }
 
 static const char *
@@ -863,9 +864,11 @@ shell_register_default_module(const char *name)
 }
 
 static void
-line_queue_init(void)
+shell_avail_queue_init(void)
 {
     int i;
+
+    os_eventq_init(&avail_queue);
 
     for (i = 0; i < MYNEWT_VAL(SHELL_MAX_CMD_QUEUED); i++) {
         shell_console_ev[i].ev_cb = shell;
@@ -926,10 +929,8 @@ shell_init(void)
     return;
 #endif
 
+    shell_avail_queue_init();
     shell_evq_set(os_eventq_dflt_get());
-    os_eventq_init(&avail_queue);
-    line_queue_init();
-    console_set_queues(&avail_queue, shell_evq);
 
     prompt = SHELL_PROMPT;
 
