@@ -809,7 +809,7 @@ ble_ll_conn_reset_pending_aux_conn_rsp(void)
 }
 
 void
-ble_ll_conn_init_wrf_timer_exp(void)
+ble_ll_conn_init_wfr_timer_exp(void)
 {
 #if MYNEWT_VAL(BLE_LL_CFG_FEAT_LL_EXT_ADV)
     struct ble_ll_conn_sm *connsm;
@@ -3009,7 +3009,6 @@ ble_ll_init_rx_isr_end(uint8_t *rxbuf, uint8_t crcok,
     pdu_type = rxbuf[0] & BLE_ADV_PDU_HDR_TYPE_MASK;
     pyld_len = rxbuf[1] & BLE_ADV_PDU_HDR_LEN_MASK;
 
-
     if (!crcok) {
 #if MYNEWT_VAL(BLE_LL_CFG_FEAT_LL_EXT_ADV)
         /* Invalid packet - make sure we do not wait for AUX_CONNECT_RSP */
@@ -3045,7 +3044,7 @@ ble_ll_init_rx_isr_end(uint8_t *rxbuf, uint8_t crcok,
         if (!scansm->ext_scanning) {
             goto init_rx_isr_exit;
         }
-        /* Let see if there is AUX ptr. If so schedule for getting it */
+
         rc = ble_ll_scan_get_aux_data(scansm, ble_hdr, rxbuf, &aux_data);
         if (rc < 0) {
             /* No memory or broken packet */
