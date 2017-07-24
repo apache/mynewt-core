@@ -198,7 +198,7 @@ config_lis2dh12_sensor(void)
 }
 
 static void
-sensor_dev_create(HN_1344HZ_L_5376HZ)
+sensor_dev_create(void)
 {
     int rc;
     (void)rc;
