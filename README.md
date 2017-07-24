@@ -48,6 +48,7 @@ It currently supports the following hardware platforms:
 * NUCLEO-F401RE (Cortex-M4)
 * FRDM-K64F from NXP (Cortex-M4)
 * BBC micro:bit (Nordic nrf51822; Cortex-M0)
+* SiFive HiFive1 (RISC-V Instruction Set Architecture)
 
 Apache Mynewt uses the
 [Newt](https://www.github.com/apache/mynewt-newt) build and package
@@ -57,7 +58,7 @@ components you need.
 This repository contains the core packages of the Apache Mynewt OS, including:
 
 * A Pre-emptive, Real Time OS Kernel
-* A open-source Bluetooth 4.2 stack (both Host & Controller), NimBLE, that
+* A open-source Bluetooth 5.0 stack (both Host & Controller), NimBLE, that
 completely replaces the proprietary SoftDevice on Nordic chipsets.
     - Support for 251 byte packet size
     - Support for all 4 roles concurrently - Broadcaster, Observer, Peripheral and Central
