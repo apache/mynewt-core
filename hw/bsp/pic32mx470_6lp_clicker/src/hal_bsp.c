@@ -24,6 +24,8 @@
 #if MYNEWT_VAL(UART_0) || MYNEWT_VAL(UART_1)
 #include <uart/uart.h>
 #include <uart_hal/uart_hal.h>
+#include <mcu/mcu.h>
+#include <mcu/mips_hal.h>
 #endif
 
 #include <xc.h>
@@ -40,10 +42,18 @@ static struct uart_dev os_bsp_uart0;
 
 #if MYNEWT_VAL(UART_1)
 static struct uart_dev os_bsp_uart1;
+static const struct mips_uart_cfg uart1_cfg = {
+    .tx = MCU_GPIO_PORTD(11),
+    .rx = MCU_GPIO_PORTB(9)
+};
 #endif
 
 #if MYNEWT_VAL(UART_2)
 static struct uart_dev os_bsp_uart2;
+static const struct mips_uart_cfg uart2_cfg = {
+    .tx = MCU_GPIO_PORTF(4),
+    .rx = MCU_GPIO_PORTF(5)
+};
 #endif
 
 #if MYNEWT_VAL(UART_3)
@@ -69,13 +79,13 @@ hal_bsp_init(void)
 
 #if MYNEWT_VAL(UART_1)
     rc = os_dev_create((struct os_dev *) &os_bsp_uart1, "uart1",
-        OS_DEV_INIT_PRIMARY, 0, uart_hal_init, 0);
+        OS_DEV_INIT_PRIMARY, 0, uart_hal_init, &uart1_cfg);
     assert(rc == 0);
 #endif
 
 #if MYNEWT_VAL(UART_2)
     rc = os_dev_create((struct os_dev *) &os_bsp_uart2, "uart2",
-        OS_DEV_INIT_PRIMARY, 0, uart_hal_init, 0);
+        OS_DEV_INIT_PRIMARY, 0, uart_hal_init, &uart2_cfg);
     assert(rc == 0);
 #endif
 

@@ -29,11 +29,11 @@ syscfg.defs:
         value:  1
 
     UART_1:
-        description: 'Whether to enable UART1'
+        description: 'Whether to enable UART1 (serial pads)'
         value:  1
 
     UART_2:
-        description: 'Whether to enable UART2'
+        description: 'Whether to enable UART2 (Mikrobus)'
         value:  1
 
     UART_3:
