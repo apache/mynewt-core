@@ -21,7 +21,8 @@
 #include <hal/hal_bsp.h>
 #include <syscfg/syscfg.h>
 
-#if MYNEWT_VAL(UART_0) || MYNEWT_VAL(UART_1)
+#if MYNEWT_VAL(UART_0) || MYNEWT_VAL(UART_1) || \
+    MYNEWT_VAL(UART_2) || MYNEWT_VAL(UART_3)
 #include <uart/uart.h>
 #include <uart_hal/uart_hal.h>
 #include <mcu/mcu.h>
