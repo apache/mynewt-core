@@ -321,7 +321,7 @@ sensor_mgr_evq_get(void)
     return (sensor_mgr.mgr_eventq);
 }
 
-void
+static void
 sensor_mgr_evq_set(struct os_eventq *evq)
 {
     os_eventq_designate(&sensor_mgr.mgr_eventq, evq, NULL);
