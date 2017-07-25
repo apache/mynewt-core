@@ -45,7 +45,7 @@ extern uint8_t _ccram_start;
 #define LED_BLINK_PIN   LED_1
 
 /* UART */
-#define UART_CNT 4
+#define UART_CNT        (4)
 
 #define NFFS_AREA_MAX    (8)
 
