@@ -155,15 +155,16 @@ uart_receive_ready(int port)
 static void
 uart_transmit_ready(int port)
 {
-    int c = uarts[port].u_tx_func(uarts[port].u_func_arg);
-    if (c < 0) {
-        uart_disable_tx_int(port);
-
-        /* call tx done cb */
-        if (uarts[port].u_tx_done) {
-            uarts[port].u_tx_done(uarts[port].u_func_arg);
+    while(!(UxSTA(port) & _U1STA_UTXBF_MASK)) {
+        int c = uarts[port].u_tx_func(uarts[port].u_func_arg);
+        if (c < 0) {
+            uart_disable_tx_int(port);
+            /* call tx done cb */
+            if (uarts[port].u_tx_done) {
+                uarts[port].u_tx_done(uarts[port].u_func_arg);
+            }
+            break;
         }
-    } else {
         UxTXREG(port) = (uint32_t)c & 0xff;
     }
 }
