@@ -20,13 +20,17 @@
 
 #include <hal/hal_bsp.h>
 #include <syscfg/syscfg.h>
+#include <mcu/mcu.h>
+#include <mcu/mips_hal.h>
 
 #if MYNEWT_VAL(UART_0) || MYNEWT_VAL(UART_1) || \
     MYNEWT_VAL(UART_2) || MYNEWT_VAL(UART_3)
 #include <uart/uart.h>
 #include <uart_hal/uart_hal.h>
-#include <mcu/mcu.h>
-#include <mcu/mips_hal.h>
+#endif
+
+#if MYNEWT_VAL(SPI_0_MASTER) || MYNEWT_VAL(SPI_1_MASTER)
+#include "hal/hal_spi.h"
 #endif
 
 #include <xc.h>
@@ -61,6 +65,34 @@ static const struct mips_uart_cfg uart2_cfg = {
 static struct uart_dev os_bsp_uart3;
 #endif
 
+#if MYNEWT_VAL(SPI_0_MASTER)
+/*
+ * SPI 0 (connected to CA8210)
+ *   MOSI -> RD4
+ *   MISO -> RD3
+ *   SCK  -> RD2
+ */
+static const struct mips_spi_cfg spi0_cfg = {
+    .mosi = MCU_GPIO_PORTD(4),
+    .miso = MCU_GPIO_PORTD(3),
+    .sck = MCU_GPIO_PORTD(2)
+};
+#endif
+
+#if MYNEWT_VAL(SPI_1_MASTER)
+/*
+ * SPI 1 (Mikrobus connector)
+ *   MOSI -> RG8
+ *   MISO -> RG7
+ *   SCK  -> RG6
+ */
+static const struct mips_spi_cfg spi1_cfg = {
+    .mosi = MCU_GPIO_PORTG(8),
+    .miso = MCU_GPIO_PORTG(7),
+    .sck = MCU_GPIO_PORTG(6)
+};
+#endif
+
 const struct hal_flash *
 hal_bsp_flash_dev(uint8_t id)
 {
@@ -93,6 +125,16 @@ hal_bsp_init(void)
 #if MYNEWT_VAL(UART_3)
     rc = os_dev_create((struct os_dev *) &os_bsp_uart3, "uart3",
         OS_DEV_INIT_PRIMARY, 0, uart_hal_init, 0);
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(SPI_0_MASTER)
+    rc = hal_spi_init(0, &spi0_cfg, HAL_SPI_TYPE_MASTER);
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(SPI_1_MASTER)
+    rc = hal_spi_init(1, &spi1_cfg, HAL_SPI_TYPE_MASTER);
     assert(rc == 0);
 #endif
 

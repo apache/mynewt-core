@@ -40,5 +40,13 @@ syscfg.defs:
         description: 'Whether to enable UART3'
         value:  1
 
+    SPI_0_MASTER:
+        description: 'SPI connected to CA8210'
+        value:  1
+
+    SPI_1_MASTER:
+        description: 'SPI on Mikrobus connector'
+        value:  1
+
 syscfg.vals:
     CONSOLE_UART_DEV: '"uart2"'
