@@ -93,6 +93,19 @@ static const struct mips_spi_cfg spi1_cfg = {
 };
 #endif
 
+#if MYNEWT_VAL(I2C_0)
+/*
+ * I2C 0 (Mikrobus connector)
+ *   SCL -> RD10
+ *   SDA -> RD9
+ */
+static const struct mips_i2c_cfg hal_i2c0_cfg = {
+    .scl = MCU_GPIO_PORTD(10),
+    .sda = MCU_GPIO_PORTD(9),
+    .frequency = 400000
+};
+#endif
+
 const struct hal_flash *
 hal_bsp_flash_dev(uint8_t id)
 {
@@ -135,6 +148,11 @@ hal_bsp_init(void)
 
 #if MYNEWT_VAL(SPI_1_MASTER)
     rc = hal_spi_init(1, &spi1_cfg, HAL_SPI_TYPE_MASTER);
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(I2C_0)
+    rc = hal_i2c_init(0, &hal_i2c0_cfg);
     assert(rc == 0);
 #endif
 

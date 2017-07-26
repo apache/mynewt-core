@@ -50,6 +50,9 @@ extern uint8_t _ccram_start;
 /* SPI */
 #define SPI_CNT         (2)
 
+/* I2C */
+#define I2C_CNT         (2)
+
 #define NFFS_AREA_MAX    (8)
 
 #ifdef __cplusplus
