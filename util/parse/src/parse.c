@@ -142,7 +142,7 @@ parse_ll(const char *sval, int *out_status)
  * @return                      The parsed number on success;
  *                              unspecified on error.
  */
-long long
+unsigned long long
 parse_ull(const char *sval, int *out_status)
 {
     return parse_ull_bounds(sval, 0, ULLONG_MAX, out_status);

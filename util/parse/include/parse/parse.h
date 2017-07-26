@@ -31,7 +31,7 @@ parse_ull_bounds(const char *sval,
 long long
 parse_ll(const char *sval, int *out_status);
 
-long long
+unsigned long long
 parse_ull(const char *sval, int *out_status);
 
 int
