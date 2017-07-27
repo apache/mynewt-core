@@ -23,6 +23,11 @@
 #include <mcu/mcu.h>
 #include <mcu/mips_hal.h>
 
+#if MYNEWT_VAL(TIMER_0) || MYNEWT_VAL(TIMER_1) || MYNEWT_VAL(TIMER_2) || \
+    MYNEWT_VAL(TIMER_3)
+#include "hal/hal_timer.h"
+#endif
+
 #if MYNEWT_VAL(UART_0) || MYNEWT_VAL(UART_1) || \
     MYNEWT_VAL(UART_2) || MYNEWT_VAL(UART_3)
 #include <uart/uart.h>
@@ -116,6 +121,26 @@ void
 hal_bsp_init(void)
 {
     int rc;
+
+#if MYNEWT_VAL(TIMER_0)
+    rc = hal_timer_init(0, NULL);
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(TIMER_1)
+    rc = hal_timer_init(1, NULL);
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(TIMER_2)
+    rc = hal_timer_init(2, NULL);
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(TIMER_3)
+    rc = hal_timer_init(3, NULL);
+    assert(rc == 0);
+#endif
 
 #if MYNEWT_VAL(UART_0)
     rc = os_dev_create((struct os_dev *) &os_bsp_uart0, "uart0",
