@@ -33,6 +33,8 @@
 #pragma config FNOSC=3, FPLLODIV=0, UPLLEN=1, FPLLMUL=5, FPLLIDIV=1, FSRSSEL=7
 /* PGEC2/PGED2 pair is used */
 #pragma config ICESEL=2
+/* Watchdog in non-window mode, period: 32s */
+#pragma config WINDIS=1, WDTPS=15
 
 #if MYNEWT_VAL(UART_0)
 static struct uart_dev os_bsp_uart0;
