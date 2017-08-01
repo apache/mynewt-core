@@ -22,4 +22,19 @@
 
 #include "p32mx470f512h.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define MCU_GPIO_PORTB(pin)	((1 * 16) + (pin & 0xF))
+#define MCU_GPIO_PORTC(pin)	((2 * 16) + (pin & 0xF))
+#define MCU_GPIO_PORTD(pin)	((3 * 16) + (pin & 0xF))
+#define MCU_GPIO_PORTE(pin)	((4 * 16) + (pin & 0xF))
+#define MCU_GPIO_PORTF(pin)	((5 * 16) + (pin & 0xF))
+#define MCU_GPIO_PORTG(pin)	((6 * 16) + (pin & 0xF))
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* __MCU_MCU_H_ */

@@ -39,8 +39,19 @@ extern uint8_t _ccram_start;
 #define RAM_SIZE        (128 * 1024)
 #define CCRAM_SIZE      (64 * 1024)
 
+/* LED pins */
+#define LED_1           MCU_GPIO_PORTB(1)
+#define LED_2           MCU_GPIO_PORTB(2)
+#define LED_BLINK_PIN   LED_1
+
 /* UART */
-#define UART_CNT 4
+#define UART_CNT        (4)
+
+/* SPI */
+#define SPI_CNT         (2)
+
+/* I2C */
+#define I2C_CNT         (2)
 
 #define NFFS_AREA_MAX    (8)
 
