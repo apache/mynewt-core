@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -17,29 +17,32 @@
  * under the License.
  */
 
-#include "hal/hal_system.h"
 #include <xc.h>
+#include "hal/hal_system.h"
 
-void
-hal_system_reset(void)
+enum hal_reset_reason
+hal_reset_cause(void)
 {
-    /* Unlock sequence */
-    SYSKEY = 0x00000000;
-    SYSKEY = 0xAA996655;
-    SYSKEY = 0x556699AA;
+    static enum hal_reset_reason reason;
 
-    /* Enable Software reset */
-    RSWRSTSET = _RSWRST_SWRST_MASK;
-
-    /* Dummy read of RSWRST register to trigger reset */
-    RSWRST;
-
-    while (1) {
+    if (reason) {
+        return reason;
     }
-}
 
-int
-hal_debugger_connected(void)
-{
-    return 0;
+    if (RCON & _RCON_WDTO_MASK) {
+        reason = HAL_RESET_WATCHDOG;
+    } else if (RCON & _RCON_SWR_MASK) {
+        reason = HAL_RESET_SOFT;
+    } else if (RCON & _RCON_EXTR_MASK) {
+        reason = HAL_RESET_PIN;
+    } else if (RCON & _RCON_POR_MASK) {
+        reason = HAL_RESET_POR;
+    } else if (RCON & _RCON_BOR_MASK) {
+        reason = HAL_RESET_BROWNOUT;
+    }
+
+    RCONCLR = _RCON_EXTR_MASK | _RCON_SWR_MASK | _RCON_WDTO_MASK |
+              _RCON_BOR_MASK | _RCON_POR_MASK;
+
+    return reason;
 }
