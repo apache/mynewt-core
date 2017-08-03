@@ -495,8 +495,7 @@ cmd_gatt_show_coc(int argc, char **argv)
         console_printf("conn_handle: 0x%04x\n", conn->handle);
         j = 0;
         SLIST_FOREACH(coc, &conn->coc_list, next) {
-            console_printf("    idx: %i, chan pointer = 0x%08lx\n", j++,
-                           (uint32_t)coc->chan);
+            console_printf("    idx: %i, chan pointer = %p\n", j++, coc->chan);
         }
     }
 

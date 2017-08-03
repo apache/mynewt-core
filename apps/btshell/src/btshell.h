@@ -17,8 +17,8 @@
  * under the License.
  */
 
-#ifndef H_BLETINY_PRIV_
-#define H_BLETINY_PRIV_
+#ifndef H_BTSHELL_PRIV_
+#define H_BTSHELL_PRIV_
 
 #include <inttypes.h>
 #include "nimble/ble.h"
@@ -27,6 +27,8 @@
 #include "os/queue.h"
 
 #include "host/ble_gatt.h"
+#include "host/ble_gap.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -62,6 +64,7 @@ struct btshell_svc {
     SLIST_ENTRY(btshell_svc) next;
     struct ble_gatt_svc svc;
 
+    bool char_disc_sent;
     struct btshell_chr_list chrs;
 };
 
@@ -118,11 +121,22 @@ int btshell_adv_stop(void);
 int btshell_conn_initiate(uint8_t own_addr_type, const ble_addr_t *peer_addr,
                           int32_t duration_ms,
                           struct ble_gap_conn_params *params);
+int btshell_ext_conn_initiate(uint8_t own_addr_type,
+                              const ble_addr_t *peer_addr,
+                              int32_t duration_ms,
+                              struct ble_gap_conn_params *phy_1m_params,
+                              struct ble_gap_conn_params *phy_2m_params,
+                              struct ble_gap_conn_params *phy_coded_params);
 int btshell_conn_cancel(void);
 int btshell_term_conn(uint16_t conn_handle, uint8_t reason);
 int btshell_wl_set(ble_addr_t *addrs, int addrs_count);
 int btshell_scan(uint8_t own_addr_type, int32_t duration_ms,
                  const struct ble_gap_disc_params *disc_params);
+int btshell_ext_scan(uint8_t own_addr_type, uint16_t duration, uint16_t period,
+                     uint8_t filter_duplicates, uint8_t filter_policy,
+                     uint8_t limited,
+                     const struct ble_gap_ext_disc_params *uncoded_params,
+                     const struct ble_gap_ext_disc_params *coded_params);
 int btshell_scan_cancel(void);
 int btshell_set_adv_data(struct ble_hs_adv_fields *adv_fields);
 int btshell_update_conn(uint16_t conn_handle,
@@ -142,9 +156,10 @@ int btshell_rssi(uint16_t conn_handle, int8_t *out_rssi);
 int btshell_l2cap_create_srv(uint16_t psm);
 int btshell_l2cap_connect(uint16_t conn, uint16_t psm);
 int btshell_l2cap_disconnect(uint16_t conn, uint16_t idx);
-#define BLETINY_LOG_MODULE  (LOG_MODULE_PERUSER + 0)
-#define BLETINY_LOG(lvl, ...) \
-    LOG_ ## lvl(&btshell_log, BLETINY_LOG_MODULE, __VA_ARGS__)
+int btshell_l2cap_send(uint16_t conn, uint16_t idx, uint16_t bytes);
+#define BTSHELL_LOG_MODULE  (LOG_MODULE_PERUSER + 0)
+#define BTSHELL_LOG(lvl, ...) \
+    LOG_ ## lvl(&btshell_log, BTSHELL_LOG_MODULE, __VA_ARGS__)
 
 /** GATT server. */
 #define GATT_SVR_SVC_ALERT_UUID               0x1811
