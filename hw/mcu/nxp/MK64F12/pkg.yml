@@ -26,4 +26,3 @@ pkg.deps:
     - hw/hal
     - hw/cmsis-core
     - hw/mcu/nxp
-    - compiler/arm-none-eabi-m4
