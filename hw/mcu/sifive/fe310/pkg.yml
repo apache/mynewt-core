@@ -26,7 +26,6 @@ pkg.keywords:
     - riscv64
 
 pkg.deps:
-    - compiler/riscv64
     - hw/hal
     - hw/mcu/sifive
 
