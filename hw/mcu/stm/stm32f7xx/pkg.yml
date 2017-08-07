@@ -37,4 +37,3 @@ pkg.deps:
     - hw/hal
     - hw/mcu/stm/stm32f7xx
     - hw/cmsis-core
-    - compiler/arm-none-eabi-m7

@@ -65,7 +65,6 @@ struct sensor_poll_data {
 };
 
 struct sensor_shell_read_ctx {
-    sensor_type_t type;
     int num_entries;
 };
 
@@ -237,7 +236,8 @@ sensor_ftostr(float num, char *fltstr, int len)
 }
 
 static int
-sensor_shell_read_listener(struct sensor *sensor, void *arg, void *data)
+sensor_shell_read_listener(struct sensor *sensor, void *arg, void *data,
+                           sensor_type_t type)
 {
     struct sensor_shell_read_ctx *ctx;
     struct sensor_accel_data *sad;
@@ -261,9 +261,9 @@ sensor_shell_read_listener(struct sensor *sensor, void *arg, void *data)
                    (int)sensor->s_sts.st_ostv.tv_usec,
                    (unsigned int)sensor->s_sts.st_cputime);
 
-    if (ctx->type == SENSOR_TYPE_ACCELEROMETER ||
-        ctx->type == SENSOR_TYPE_LINEAR_ACCEL  ||
-        ctx->type == SENSOR_TYPE_GRAVITY) {
+    if (type == SENSOR_TYPE_ACCELEROMETER ||
+        type == SENSOR_TYPE_LINEAR_ACCEL  ||
+        type == SENSOR_TYPE_GRAVITY) {
 
         sad = (struct sensor_accel_data *) data;
         if (sad->sad_x_is_valid) {
@@ -278,7 +278,7 @@ sensor_shell_read_listener(struct sensor *sensor, void *arg, void *data)
         console_printf("\n");
     }
 
-    if (ctx->type == SENSOR_TYPE_MAGNETIC_FIELD) {
+    if (type == SENSOR_TYPE_MAGNETIC_FIELD) {
         smd = (struct sensor_mag_data *) data;
         if (smd->smd_x_is_valid) {
             console_printf("x = %s ", sensor_ftostr(smd->smd_x, tmpstr, 13));
@@ -292,7 +292,7 @@ sensor_shell_read_listener(struct sensor *sensor, void *arg, void *data)
         console_printf("\n");
     }
 
-    if (ctx->type == SENSOR_TYPE_GYROSCOPE) {
+    if (type == SENSOR_TYPE_GYROSCOPE) {
         sgd = (struct sensor_gyro_data *) data;
         if (sgd->sgd_x_is_valid) {
             console_printf("x = %s ", sensor_ftostr(sgd->sgd_x, tmpstr, 13));
@@ -306,7 +306,7 @@ sensor_shell_read_listener(struct sensor *sensor, void *arg, void *data)
         console_printf("\n");
     }
 
-    if (ctx->type == SENSOR_TYPE_LIGHT) {
+    if (type == SENSOR_TYPE_LIGHT) {
         sld = (struct sensor_light_data *) data;
         if (sld->sld_full_is_valid) {
             console_printf("Full = %u, ", sld->sld_full);
@@ -320,8 +320,8 @@ sensor_shell_read_listener(struct sensor *sensor, void *arg, void *data)
         console_printf("\n");
     }
 
-    if (ctx->type == SENSOR_TYPE_TEMPERATURE      ||
-        ctx->type == SENSOR_TYPE_AMBIENT_TEMPERATURE) {
+    if (type == SENSOR_TYPE_TEMPERATURE      ||
+        type == SENSOR_TYPE_AMBIENT_TEMPERATURE) {
 
         std = (struct sensor_temp_data *) data;
         if (std->std_temp_is_valid) {
@@ -330,7 +330,7 @@ sensor_shell_read_listener(struct sensor *sensor, void *arg, void *data)
         console_printf("\n");
     }
 
-    if (ctx->type == SENSOR_TYPE_EULER) {
+    if (type == SENSOR_TYPE_EULER) {
         sed = (struct sensor_euler_data *) data;
         if (sed->sed_h_is_valid) {
             console_printf("h = %s", sensor_ftostr(sed->sed_h, tmpstr, 13));
@@ -344,7 +344,7 @@ sensor_shell_read_listener(struct sensor *sensor, void *arg, void *data)
         console_printf("\n");
     }
 
-    if (ctx->type == SENSOR_TYPE_ROTATION_VECTOR) {
+    if (type == SENSOR_TYPE_ROTATION_VECTOR) {
         sqd = (struct sensor_quat_data *) data;
         if (sqd->sqd_x_is_valid) {
             console_printf("x = %s ", sensor_ftostr(sqd->sqd_x, tmpstr, 13));
@@ -361,7 +361,7 @@ sensor_shell_read_listener(struct sensor *sensor, void *arg, void *data)
         console_printf("\n");
     }
 
-    if (ctx->type == SENSOR_TYPE_COLOR) {
+    if (type == SENSOR_TYPE_COLOR) {
         scd = (struct sensor_color_data *) data;
         if (scd->scd_r_is_valid) {
             console_printf("r = %u, ", scd->scd_r);
@@ -403,7 +403,7 @@ sensor_shell_read_listener(struct sensor *sensor, void *arg, void *data)
         console_printf("\n\n");
     }
 
-    if (ctx->type == SENSOR_TYPE_PRESSURE) {
+    if (type == SENSOR_TYPE_PRESSURE) {
         spd = (struct sensor_press_data *) data;
         if (spd->spd_press_is_valid) {
             console_printf("pressure = %s Pa",
@@ -412,7 +412,7 @@ sensor_shell_read_listener(struct sensor *sensor, void *arg, void *data)
         console_printf("\n");
     }
 
-    if (ctx->type == SENSOR_TYPE_RELATIVE_HUMIDITY) {
+    if (type == SENSOR_TYPE_RELATIVE_HUMIDITY) {
         shd = (struct sensor_humid_data *) data;
         if (shd->shd_humid_is_valid) {
             console_printf("relative humidity = %s%%rh",
@@ -537,8 +537,6 @@ sensor_cmd_read(char *name, sensor_type_t type, struct sensor_poll_data *spd)
                        (int)type, name);
         return rc;
     }
-
-    ctx.type = type;
 
     listener.sl_sensor_type = type;
     listener.sl_func = sensor_shell_read_listener;

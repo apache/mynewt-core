@@ -77,6 +77,7 @@ struct ble_phy_obj
     uint8_t phy_tx_pyld_len;
     uint8_t phy_txtorx_phy_mode;
     uint8_t phy_cur_phy_mode;
+    uint8_t phy_bcc_offset;
     uint16_t phy_mode_pkt_start_off[BLE_PHY_NUM_MODE];
     uint32_t phy_aar_scratch;
     uint32_t phy_access_address;
@@ -462,13 +463,18 @@ ble_phy_wfr_enable(int txrx, uint32_t wfr_usecs)
         end_time = NRF_TIMER0->CC[2] + BLE_LL_IFS +
             ble_phy_mode_pdu_start_off(phy) + BLE_LL_JITTER_USECS;
 
-        /*
-         * FIXME!
-         * on Coded PHY the time calculated above seems to be too short - adding
-         * extra 32us "solves" the problem (extra 16us, i.e. doubling the jitter
-         * is not enough). Need to figure out what is wrong here.
-         */
-        end_time += 32;
+#if (BLE_LL_BT5_PHY_SUPPORTED == 1)
+        if (phy == BLE_PHY_MODE_CODED_125KBPS ||
+                phy == BLE_PHY_MODE_CODED_500KBPS) {
+            /*
+             * FIXME!
+             * on Coded PHY the time calculated above seems to be too short
+             * adding extra 32us "solves" the problem (extra 16us, i.e. doubling
+             * the jitter is not enough). Need to figure out what is wrong here.
+             */
+            end_time += 32;
+        }
+#endif
     } else {
         /* CC[0] is set to when RXEN occurs. NOTE: the extra 16 usecs is
            jitter */
@@ -487,6 +493,30 @@ ble_phy_wfr_enable(int txrx, uint32_t wfr_usecs)
     NRF_RADIO->INTENSET = RADIO_INTENSET_DISABLED_Msk;
 }
 
+#if MYNEWT_VAL(BLE_LL_CFG_FEAT_LE_ENCRYPTION)
+static uint32_t
+ble_phy_get_ccm_datarate(void)
+{
+#if BLE_LL_BT5_PHY_SUPPORTED
+    switch (g_ble_phy_data.phy_cur_phy_mode) {
+    case BLE_PHY_MODE_1M:
+        return CCM_MODE_DATARATE_1Mbit << CCM_MODE_DATARATE_Pos;
+    case BLE_PHY_MODE_2M:
+        return CCM_MODE_DATARATE_2Mbit << CCM_MODE_DATARATE_Pos;
+    case BLE_PHY_MODE_CODED_125KBPS:
+        return CCM_MODE_DATARATE_125Kbps << CCM_MODE_DATARATE_Pos;
+    case BLE_PHY_MODE_CODED_500KBPS:
+        return CCM_MODE_DATARATE_500Kbps << CCM_MODE_DATARATE_Pos;
+    }
+
+    assert(0);
+    return 0;
+#else
+    return CCM_MODE_DATARATE_1Mbit << CCM_MODE_DATARATE_Pos;
+#endif
+}
+#endif
+
 /**
  * Setup transceiver for receive.
  */
@@ -504,12 +534,14 @@ ble_phy_rx_xcvr_setup(void)
         NRF_CCM->INPTR = (uint32_t)&g_ble_phy_enc_buf[0];
         NRF_CCM->OUTPTR = (uint32_t)dptr;
         NRF_CCM->SCRATCHPTR = (uint32_t)&g_nrf_encrypt_scratchpad[0];
-        NRF_CCM->MODE = CCM_MODE_LENGTH_Msk | CCM_MODE_MODE_Decryption;
+        NRF_CCM->MODE = CCM_MODE_LENGTH_Msk | CCM_MODE_MODE_Decryption |
+                                                    ble_phy_get_ccm_datarate();
         NRF_CCM->CNFPTR = (uint32_t)&g_nrf_ccm_data;
         NRF_CCM->SHORTS = 0;
         NRF_CCM->EVENTS_ERROR = 0;
         NRF_CCM->EVENTS_ENDCRYPT = 0;
-        NRF_PPI->CHENSET = PPI_CHEN_CH24_Msk | PPI_CHEN_CH25_Msk;
+        NRF_CCM->TASKS_KSGEN = 1;
+        NRF_PPI->CHENSET = PPI_CHEN_CH25_Msk;
     } else {
         NRF_RADIO->PACKETPTR = (uint32_t)dptr;
     }
@@ -539,12 +571,28 @@ ble_phy_rx_xcvr_setup(void)
     g_ble_phy_data.phy_rx_started = 0;
     g_ble_phy_data.phy_state = BLE_PHY_STATE_RX;
 
+#if BLE_LL_BT5_PHY_SUPPORTED
+    /*
+     * On Coded PHY there are CI and TERM1 fields before PDU starts so we need
+     * to take this into account when setting up BCC.
+     */
+    if (g_ble_phy_data.phy_cur_phy_mode == BLE_PHY_MODE_CODED_125KBPS ||
+            g_ble_phy_data.phy_cur_phy_mode == BLE_PHY_MODE_CODED_500KBPS) {
+        g_ble_phy_data.phy_bcc_offset = 5;
+    } else {
+        g_ble_phy_data.phy_bcc_offset = 0;
+    }
+#else
+    g_ble_phy_data.phy_bcc_offset = 0;
+#endif
+
     /* I want to know when 1st byte received (after address) */
-    NRF_RADIO->BCC = 8; /* in bits */
+    NRF_RADIO->BCC = 8 + g_ble_phy_data.phy_bcc_offset; /* in bits */
     NRF_RADIO->EVENTS_ADDRESS = 0;
     NRF_RADIO->EVENTS_DEVMATCH = 0;
     NRF_RADIO->EVENTS_BCMATCH = 0;
     NRF_RADIO->EVENTS_RSSIEND = 0;
+    NRF_RADIO->EVENTS_CRCOK = 0;
     NRF_RADIO->SHORTS = RADIO_SHORTS_END_DISABLE_Msk |
                         RADIO_SHORTS_READY_START_Msk |
                         RADIO_SHORTS_DISABLED_TXEN_Msk |
@@ -665,7 +713,7 @@ ble_phy_rx_end_isr(void)
     dptr += 3;
 
     /* Count PHY crc errors and valid packets */
-    crcok = (uint8_t)NRF_RADIO->CRCSTATUS;
+    crcok = NRF_RADIO->EVENTS_CRCOK;
     if (!crcok) {
         STATS_INC(ble_phy_stats, rx_crc_err);
     } else {
@@ -723,6 +771,9 @@ ble_phy_rx_start_isr(void)
     uint32_t usecs;
     uint32_t ticks;
     struct ble_mbuf_hdr *ble_hdr;
+    uint8_t *dptr;
+
+    dptr = (uint8_t *)&g_ble_phy_rx_buf[0];
 
     /* Clear events and clear interrupt */
     NRF_RADIO->EVENTS_ADDRESS = 0;
@@ -777,7 +828,7 @@ ble_phy_rx_start_isr(void)
     }
 
     /* Call Link Layer receive start function */
-    rc = ble_ll_rx_start((uint8_t *)&g_ble_phy_rx_buf[0] + 3,
+    rc = ble_ll_rx_start(dptr + 3,
                          g_ble_phy_data.phy_chan,
                          &g_ble_phy_data.rxhdr);
     if (rc >= 0) {
@@ -802,12 +853,13 @@ ble_phy_rx_start_isr(void)
              * header (+2 octets).
              */
             if (BLE_MBUF_HDR_EXT_ADV(&g_ble_phy_data.rxhdr)) {
-                NRF_AAR->ADDRPTR = (uint32_t)&g_ble_phy_rx_buf[5];
-                NRF_RADIO->BCC = (BLE_DEV_ADDR_LEN + BLE_LL_PDU_HDR_LEN + 2) * 8;
-
+                NRF_AAR->ADDRPTR = (uint32_t)(dptr + 5);
+                NRF_RADIO->BCC = (BLE_DEV_ADDR_LEN + BLE_LL_PDU_HDR_LEN + 2) * 8 +
+                                 g_ble_phy_data.phy_bcc_offset;
             } else {
-                NRF_AAR->ADDRPTR = (uint32_t)&g_ble_phy_rx_buf[3];
-                NRF_RADIO->BCC = (BLE_DEV_ADDR_LEN + BLE_LL_PDU_HDR_LEN) * 8;
+                NRF_AAR->ADDRPTR = (uint32_t)(dptr + 3);
+                NRF_RADIO->BCC = (BLE_DEV_ADDR_LEN + BLE_LL_PDU_HDR_LEN) * 8 +
+                                 g_ble_phy_data.phy_bcc_offset;
             }
         }
 #endif
@@ -1071,7 +1123,7 @@ ble_phy_encrypt_set_pkt_cntr(uint64_t pkt_counter, int dir)
 void
 ble_phy_encrypt_disable(void)
 {
-    NRF_PPI->CHENCLR = (PPI_CHEN_CH24_Msk | PPI_CHEN_CH25_Msk);
+    NRF_PPI->CHENCLR = PPI_CHEN_CH25_Msk;
     NRF_CCM->TASKS_STOP = 1;
     NRF_CCM->EVENTS_ERROR = 0;
     NRF_CCM->ENABLE = CCM_ENABLE_ENABLE_Disabled;
@@ -1214,9 +1266,9 @@ ble_phy_tx(struct os_mbuf *txpdu, uint8_t end_trans)
         NRF_CCM->OUTPTR = (uint32_t)pktptr;
         NRF_CCM->SCRATCHPTR = (uint32_t)&g_nrf_encrypt_scratchpad[0];
         NRF_CCM->EVENTS_ERROR = 0;
-        NRF_CCM->MODE = CCM_MODE_LENGTH_Msk;
+        NRF_CCM->MODE = CCM_MODE_LENGTH_Msk | ble_phy_get_ccm_datarate();
         NRF_CCM->CNFPTR = (uint32_t)&g_nrf_ccm_data;
-        NRF_PPI->CHENSET = PPI_CHEN_CH24_Msk;
+        NRF_CCM->TASKS_KSGEN = 1;
     } else {
 #if (MYNEWT_VAL(BLE_LL_CFG_FEAT_LL_PRIVACY) == 1)
         NRF_AAR->IRKPTR = (uint32_t)&g_nrf_irk_list[0];
@@ -1464,7 +1516,7 @@ ble_phy_disable_irq_and_ppi(void)
     NRF_RADIO->SHORTS = 0;
     NRF_RADIO->TASKS_DISABLE = 1;
     NRF_PPI->CHENCLR = PPI_CHEN_CH4_Msk | PPI_CHEN_CH5_Msk | PPI_CHEN_CH20_Msk |
-          PPI_CHEN_CH21_Msk | PPI_CHEN_CH23_Msk | PPI_CHEN_CH24_Msk |
+          PPI_CHEN_CH21_Msk | PPI_CHEN_CH23_Msk |
           PPI_CHEN_CH25_Msk | PPI_CHEN_CH31_Msk;
     NVIC_ClearPendingIRQ(RADIO_IRQn);
     g_ble_phy_data.phy_state = BLE_PHY_STATE_IDLE;

@@ -38,6 +38,7 @@
 #include "controller/ble_ll_whitelist.h"
 #include "controller/ble_ll_resolv.h"
 #include "controller/ble_ll_xcvr.h"
+#include "ble_ll_conn_priv.h"
 #include "hal/hal_gpio.h"
 
 /*
@@ -785,8 +786,9 @@ ble_ll_scan_chk_filter_policy(uint8_t pdu_type, uint8_t *adv_addr,
         }
     }
 
-    /* If this is a directed advertisement, check that it is for us */
-    if (pdu_type == BLE_ADV_PDU_TYPE_ADV_DIRECT_IND) {
+    /* If this is a directed advertisement, init_addr is not NULL.
+     * Check that it is for us */
+    if (init_addr) {
         /* Is this for us? If not, is it resolvable */
         if (!ble_ll_is_our_devaddr(init_addr, init_addr_type)) {
             if (!chk_inita || !ble_ll_is_rpa(adv_addr, adv_addr_type)) {
@@ -1066,9 +1068,11 @@ ble_ll_scan_sm_start(struct ble_ll_scan_sm *scansm)
     scansm->scan_enabled = 1;
 
     /* Set first advertising channel */
+    assert(scansm->cur_phy != PHY_NOT_CONFIGURED);
     scansm->phy_data[scansm->cur_phy].scan_chan = BLE_PHY_ADV_CHAN_START;
 
-    if (scansm->next_phy != scansm->cur_phy) {
+    if (scansm->next_phy != PHY_NOT_CONFIGURED &&
+            scansm->next_phy != scansm->cur_phy) {
         scansm->phy_data[scansm->next_phy].scan_chan = BLE_PHY_ADV_CHAN_START;
     }
 
@@ -1254,6 +1258,14 @@ ble_ll_scan_event_proc(struct os_event *ev)
          start_scan = 0;
         break;
     case BLE_LL_STATE_INITIATING:
+        /* Must disable PHY since we will move to a new channel */
+        ble_phy_disable();
+        if (!inside_window) {
+            ble_ll_state_set(BLE_LL_STATE_STANDBY);
+        }
+        /* PHY is disabled - make sure we do not wait for AUX_CONNECT_RSP */
+        ble_ll_conn_reset_pending_aux_conn_rsp();
+        break;
     case BLE_LL_STATE_SCANNING:
         /* Must disable PHY since we will move to a new channel */
         ble_phy_disable();
@@ -1470,6 +1482,24 @@ ble_ll_ext_scan_parse_adv_info(struct ble_ll_scan_sm *scansm,
     evt->sid = (adv_info >> 12);
 }
 
+/**
+ * ble_ll_scan_get_aux_data
+ *
+ * Get aux data pointer. It is new allocated data for beacon or currently
+ * processing aux data pointer
+ *
+ * Context: Interrupt
+ *
+ * @param scansm
+ * @param ble_hdr
+ * @param rxbuf
+ * @param aux_data
+ *
+ * @return int
+ *  0: new allocated aux data
+ *  1: current processing aux data
+ * -1: error
+ */
 int
 ble_ll_scan_get_aux_data(struct ble_ll_scan_sm *scansm,
                          struct ble_mbuf_hdr *ble_hdr, uint8_t *rxbuf,
@@ -1852,7 +1882,7 @@ ble_ll_scan_rx_isr_end(struct os_mbuf *rxpdu, uint8_t crcok)
         if (!scansm->ext_scanning) {
             goto scan_rx_isr_exit;
         }
-        /* Let see if there is AUX ptr. If so schedule for getting it */
+        /* Create new aux data for beacon or get current processing aux ptr */
         rc = ble_ll_scan_get_aux_data(scansm, ble_hdr, rxbuf, &aux_data);
         if (rc < 0) {
             /* No memory or broken packet */

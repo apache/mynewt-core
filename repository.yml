@@ -28,6 +28,7 @@ repo.versions:
     "0.9.99": "mynewt_1_0_0_b2_tag"
     "0.9.999": "mynewt_1_0_0_rc1_tag"
     "1.0.0": "mynewt_1_0_0_tag"
+    "1.1.0": "mynewt_1_1_0_tag"
 
     "0-latest": "1.0.0"    # 1.0.0
     "0-dev": "0.0.0"       # master
@@ -35,3 +36,4 @@ repo.versions:
     "0.8-latest": "0.8.0"
     "0.9-latest": "0.9.0"
     "1.0-latest": "1.0.0"  # 1.0.0
+    "1.1-latest": "1.1.0"  # 1.1.0

@@ -1802,7 +1802,7 @@ ble_ll_adv_ext_set_param(uint8_t *cmdbuf, uint8_t *rspbuf, uint8_t *rsplen)
         min_itvl = BLE_LL_ADV_ITVL_MIN;
     }
 
-    if (props & BLE_HCI_LE_SET_EXT_ADV_PROP_DIRECTED) {
+    if (props & BLE_HCI_LE_SET_EXT_ADV_PROP_HD_DIRECTED) {
         if (advsm->adv_len || advsm->scan_rsp_len) {
             return BLE_ERR_INV_HCI_CMD_PARMS;
         }
@@ -2243,7 +2243,7 @@ ble_ll_adv_rx_req(uint8_t pdu_type, struct os_mbuf *rxpdu)
             rc = ble_phy_tx(rsp, BLE_PHY_TRANSITION_NONE);
             if (!rc) {
                 advsm->flags |= BLE_LL_ADV_SM_FLAG_CONN_RSP_TXD;
-                //STATS_INC(ble_ll_stats, scan_rsp_txg); TODO
+                STATS_INC(ble_ll_stats, aux_conn_rsp_tx);
             }
             os_mbuf_free_chain(rsp);
         }
@@ -2948,6 +2948,10 @@ ble_ll_adv_sm_init(struct ble_ll_adv_sm *advsm)
     /* Initialize advertising tx done event */
     advsm->adv_txdone_ev.ev_cb = ble_ll_adv_event_done;
     advsm->adv_txdone_ev.ev_arg = advsm;
+
+    /*XXX Configure instances to be legacy on start */
+    advsm->props |= BLE_HCI_LE_SET_EXT_ADV_PROP_SCANNABLE;
+    advsm->props |= BLE_HCI_LE_SET_EXT_ADV_PROP_LEGACY;
 }
 
 /**

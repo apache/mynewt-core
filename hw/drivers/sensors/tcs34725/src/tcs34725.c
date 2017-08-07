@@ -909,7 +909,7 @@ tcs34725_sensor_read(struct sensor *sensor, sensor_type_t type,
         }
 
         /* Call data function */
-        rc = data_func(sensor, data_arg, &scd);
+        rc = data_func(sensor, data_arg, &scd, SENSOR_TYPE_COLOR);
         if (rc != 0) {
             goto err;
         }

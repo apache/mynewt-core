@@ -123,7 +123,6 @@ union ble_ll_conn_sm_flags {
         uint32_t phy_update_event: 1;
         uint32_t peer_phy_update: 1; /* XXX:combine with ctrlr udpate bit? */
         uint32_t aux_conn_req: 1;
-        uint32_t aux_conn_rsp: 1;
         uint32_t rxd_features:1;
         uint32_t pending_hci_rd_features:1;
     } cfbit;
@@ -212,6 +211,10 @@ struct ble_ll_conn_sm
     uint8_t data_chan_index;
     uint8_t last_unmapped_chan;
     uint8_t num_used_chans;
+
+#if MYNEWT_VAL(BLE_LL_STRICT_CONN_SCHEDULING)
+    uint8_t period_occ_mask;    /* mask: period 0 = 0x01, period 3 = 0x08 */
+#endif
 
     /* Ack/Flow Control */
     uint8_t tx_seqnum;          /* note: can be 1 bit */
@@ -341,7 +344,6 @@ struct ble_ll_conn_sm
 #define CONN_F_PHY_UPDATE_EVENT(csm) ((csm)->csmflags.cfbit.phy_update_event)
 #define CONN_F_PEER_PHY_UPDATE(csm)  ((csm)->csmflags.cfbit.peer_phy_update)
 #define CONN_F_AUX_CONN_REQ(csm)  ((csm)->csmflags.cfbit.aux_conn_req)
-#define CONN_F_AUX_CONN_RSP(csm)  ((csm)->csmflags.cfbit.aux_conn_rsp)
 
 /* Role */
 #define CONN_IS_MASTER(csm)         (csm->conn_role == BLE_LL_CONN_ROLE_MASTER)

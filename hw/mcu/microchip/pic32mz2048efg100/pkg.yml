@@ -26,4 +26,3 @@ pkg.keywords:
 
 pkg.deps:
     - hw/hal
-    - compiler/xc32

@@ -21,6 +21,7 @@
 #include <stddef.h>
 #include <string.h>
 #include <assert.h>
+#include <sysinit/sysinit.h>
 #include <nrf52.h>
 #include "os/os_cputime.h"
 #include "syscfg/syscfg.h"
