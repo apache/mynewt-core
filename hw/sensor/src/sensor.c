@@ -31,6 +31,7 @@
 #include "os/os_cputime.h"
 #include "defs/error.h"
 #include "console/console.h"
+#include "syscfg/syscfg.h"
 
 struct {
     struct os_mutex mgr_lock;
@@ -321,7 +322,7 @@ sensor_mgr_evq_get(void)
     return (sensor_mgr.mgr_eventq);
 }
 
-void
+static void
 sensor_mgr_evq_set(struct os_eventq *evq)
 {
     os_eventq_designate(&sensor_mgr.mgr_eventq, evq, NULL);
@@ -333,7 +334,11 @@ sensor_mgr_init(void)
     struct os_timeval ostv;
     struct os_timezone ostz;
 
+#ifdef MYNEWT_VAL_SENSOR_MGR_EVQ
+    sensor_mgr_evq_set(MYNEWT_VAL(SENSOR_MGR_EVQ));
+#else
     sensor_mgr_evq_set(os_eventq_dflt_get());
+#endif
 
     /**
      * Initialize sensor polling callout and set it to fire on boot.

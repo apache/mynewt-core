@@ -40,3 +40,7 @@ syscfg.defs:
     SENSOR_OIC_OBS_RATE:
         description: 'Set OIC server observation rate in milli seconds'
         value: 1000
+
+    SENSOR_MGR_EVQ:
+        description: 'Specify the eventq to be used by sensor mgr'
+        value:
