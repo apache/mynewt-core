@@ -43,4 +43,4 @@ syscfg.defs:
 
     SENSOR_MGR_EVQ:
         description: 'Specify the eventq to be used by sensor mgr'
-        value: 0
+        value:
