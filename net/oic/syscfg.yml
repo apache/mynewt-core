@@ -75,3 +75,8 @@ syscfg.defs:
     OC_LOGGING:
         description: 'Logging enabled'
         value: 0
+
+    OC_TRANS_SECURITY:
+        description: >
+            Enables per-resource transport layer security requirements.
+        value: 1

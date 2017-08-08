@@ -358,6 +358,35 @@ does_interface_support_method(oc_resource_t *resource,
   return supported;
 }
 
+/**
+ * Determines if the endpoint meets the specified resource's minimum transport
+ * layer security requirements.
+ *
+ * @param oe                    The endpoint to check.
+ * @param res                   The resource being accessed.
+ *
+ * @return                      true if the endpoint has sufficient security;
+ *                              false if the security requirements are not met.
+ */
+static bool
+oc_ri_check_trans_security(const oc_endpoint_t *oe, const oc_resource_t *res)
+{
+#if MYNEWT_VAL(OC_TRANS_SECURITY)
+  oc_resource_properties_t res_sec_flags;
+
+  res_sec_flags = res->properties & OC_TRANS_SEC_MASK;
+  if (res_sec_flags == 0) {
+    return true;
+  }
+
+  if ((oc_get_trans_security(oe) ^ res_sec_flags) != 0) {
+    return false;
+  }
+#endif
+
+  return true;
+}
+
 bool
 oc_ri_invoke_coap_entity_handler(struct coap_packet_rx *request,
                                  coap_packet_t *response, int32_t *offset,
@@ -367,10 +396,7 @@ oc_ri_invoke_coap_entity_handler(struct coap_packet_rx *request,
    *  the request.
    */
   bool method_impl = true, bad_request = false, success = true;
-
-#ifdef OC_SECURITY
   bool authorized = true;
-#endif
 
   /* This function is a server-side entry point solely for requests.
    *  Hence, "code" contains the CoAP method code.
@@ -501,7 +527,9 @@ oc_ri_invoke_coap_entity_handler(struct coap_packet_rx *request,
       authorized = false;
     } else
 #endif
-    {
+    if (!oc_ri_check_trans_security(endpoint, cur_resource)) {
+      authorized = false;
+    } else {
       /* Invoke a specific request handler for the resource
              * based on the request method. If the resource has not
              * implemented that method, then return a 4.05 response.
@@ -545,7 +573,6 @@ oc_ri_invoke_coap_entity_handler(struct coap_packet_rx *request,
     response_buffer.code = oc_status_code(OC_STATUS_METHOD_NOT_ALLOWED);
     success = false;
   }
-#ifdef OC_SECURITY
   else if (!authorized) {
     OC_LOG_ERROR("ocri: Subject not authorized\n");
     /* If the requestor (subject) does not have access granted via an
@@ -556,7 +583,6 @@ oc_ri_invoke_coap_entity_handler(struct coap_packet_rx *request,
     response_buffer.code = oc_status_code(OC_STATUS_FORBIDDEN);
     success = false;
   }
-#endif
 
 #ifdef OC_SERVER
   /* If a GET request was successfully processed, then check its

@@ -81,6 +81,10 @@ void oc_process_baseline_interface(oc_resource_t *resource);
 #ifdef OC_SECURITY
 void oc_resource_make_secure(oc_resource_t *resource);
 #endif /* OC_SECURITY */
+#if MYNEWT_VAL(OC_TRANS_SECURITY)
+void oc_resource_set_trans_security(oc_resource_t *resource,
+                                    bool enc, bool auth);
+#endif
 
 void oc_resource_set_discoverable(oc_resource_t *resource);
 void oc_resource_set_observable(oc_resource_t *resource);

@@ -117,6 +117,8 @@ oc_endpoint_size(struct oc_endpoint *oe)
 uint16_t oc_connectivity_get_dtls_port(void);
 #endif /* OC_SECURITY */
 
+enum oc_resource_properties
+oc_get_trans_security(const struct oc_endpoint *oe);
 int oc_connectivity_init(void);
 void oc_connectivity_shutdown(void);
 

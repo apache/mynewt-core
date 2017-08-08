@@ -28,13 +28,17 @@ extern "C" {
 
 typedef enum { OC_GET = 1, OC_POST, OC_PUT, OC_DELETE } oc_method_t;
 
-typedef enum {
+typedef enum oc_resource_properties {
   OC_DISCOVERABLE = (1 << 0),
   OC_OBSERVABLE = (1 << 1),
   OC_ACTIVE = (1 << 2),
   OC_SECURE = (1 << 4),
   OC_PERIODIC = (1 << 6),
+  OC_TRANS_ENC = (1 << 7),    /* Requires transport layer encryption. */
+  OC_TRANS_AUTH = (1 << 8),   /* Requires transport layer authentication. */
 } oc_resource_properties_t;
+
+#define OC_TRANS_SEC_MASK (OC_TRANS_ENC | OC_TRANS_AUTH)
 
 typedef enum {
   OC_STATUS_OK = 0,
@@ -63,6 +67,7 @@ typedef enum {
 
 struct oc_separate_response;
 struct oc_response_buffer;
+struct oc_endpoint;
 
 typedef struct oc_response {
     struct oc_separate_response *separate_response;
@@ -94,7 +99,7 @@ typedef enum {
 #define NUM_OC_CORE_RESOURCES (__NUM_OC_CORE_RESOURCES__ + MAX_NUM_DEVICES)
 
 typedef struct oc_request {
-    oc_endpoint_t *origin;
+    struct oc_endpoint *origin;
     struct oc_resource *resource;
     const char *query;
     int query_len;
