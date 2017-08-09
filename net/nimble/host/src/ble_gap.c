@@ -1894,6 +1894,11 @@ ble_gap_adv_params_tx(uint8_t own_addr_type, const ble_addr_t *peer_addr,
     uint16_t props;
     int rc;
 
+    rc = ble_hs_misc_normalize_own_addr_type(&own_addr_type);
+    if (rc != 0) {
+        goto done;
+    }
+
     if (peer_addr == NULL) {
         peer_addr = BLE_ADDR_ANY;
     }
@@ -2115,6 +2120,11 @@ ble_gap_adv_start(uint8_t own_addr_type, const ble_addr_t *direct_addr,
     STATS_INC(ble_gap_stats, adv_start);
 
     ble_hs_lock();
+
+    rc = ble_hs_misc_normalize_own_addr_type(&own_addr_type);
+    if (rc != 0) {
+        goto done;
+    }
 
     rc = ble_gap_adv_validate(own_addr_type, direct_addr, adv_params);
     if (rc != 0) {
@@ -2443,6 +2453,11 @@ ble_gap_disc_tx_params(uint8_t own_addr_type,
     uint8_t scan_type;
     int rc;
 
+    rc = ble_hs_misc_normalize_own_addr_type(&own_addr_type);
+    if (rc != 0) {
+        return rc;
+    }
+
     if (disc_params->passive) {
         scan_type = BLE_HCI_SCAN_TYPE_PASSIVE;
     } else {
@@ -2480,6 +2495,11 @@ ble_gap_ext_disc_tx_params(uint8_t own_addr_type, uint8_t filter_policy,
     struct ble_hs_hci_ext_scan_param *p = param;
     int phy_count = 0;
     int rc;
+
+    rc = ble_hs_misc_normalize_own_addr_type(&own_addr_type);
+    if (rc != 0) {
+        return rc;
+    }
 
     if (uncoded_params) {
         phy_mask |= BLE_HCI_LE_PHY_1M_PREF_MASK;
@@ -2646,6 +2666,11 @@ ble_gap_ext_disc(uint8_t own_addr_type, uint16_t duration, uint16_t period,
 
     ble_hs_lock();
 
+    rc = ble_hs_misc_normalize_own_addr_type(&own_addr_type);
+    if (rc != 0) {
+        goto done;
+    }
+
     rc = ble_gap_disc_ext_validate(own_addr_type);
     if (rc != 0) {
         goto done;
@@ -2789,6 +2814,11 @@ ble_gap_disc(uint8_t own_addr_type, int32_t duration_ms,
 
     ble_hs_lock();
 
+    rc = ble_hs_misc_normalize_own_addr_type(&own_addr_type);
+    if (rc != 0) {
+        goto done;
+    }
+
     /* Make a copy of the parameter strcuture and fill unspecified values with
      * defaults.
      */
@@ -2882,6 +2912,11 @@ ble_gap_conn_create_tx(uint8_t own_addr_type, const ble_addr_t *peer_addr,
     struct hci_create_conn hcc;
     int rc;
 
+    rc = ble_hs_misc_normalize_own_addr_type(&own_addr_type);
+    if (rc != 0) {
+        return rc;
+    }
+
     hcc.scan_itvl = params->scan_itvl;
     hcc.scan_window = params->scan_window;
 
@@ -2945,6 +2980,11 @@ ble_gap_ext_conn_create_tx(uint8_t own_addr_type, const ble_addr_t *peer_addr,
     uint8_t buf[BLE_HCI_CMD_HDR_LEN + sizeof(struct hci_ext_create_conn)];
     struct hci_ext_create_conn hcc = {0};
     int rc;
+
+    rc = ble_hs_misc_normalize_own_addr_type(&own_addr_type);
+    if (rc != 0) {
+        return rc;
+    }
 
     if (peer_addr == NULL) {
         /* Application wants to connect to any device in the white list.  The
@@ -3061,6 +3101,11 @@ ble_gap_ext_connect(uint8_t own_addr_type, const ble_addr_t *peer_addr,
     STATS_INC(ble_gap_stats, initiate);
 
     ble_hs_lock();
+
+    rc = ble_hs_misc_normalize_own_addr_type(&own_addr_type);
+    if (rc != 0) {
+        goto done;
+    }
 
     if (ble_gap_conn_active()) {
         rc = BLE_HS_EALREADY;
@@ -3209,6 +3254,11 @@ ble_gap_connect(uint8_t own_addr_type, const ble_addr_t *peer_addr,
     STATS_INC(ble_gap_stats, initiate);
 
     ble_hs_lock();
+
+    rc = ble_hs_misc_normalize_own_addr_type(&own_addr_type);
+    if (rc != 0) {
+        goto done;
+    }
 
     if (ble_gap_conn_active()) {
         rc = BLE_HS_EALREADY;
