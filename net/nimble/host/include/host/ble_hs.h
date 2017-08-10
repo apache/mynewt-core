@@ -103,6 +103,13 @@ struct os_event;
 #define BLE_HS_IO_NO_INPUT_OUTPUT           0x03
 #define BLE_HS_IO_KEYBOARD_DISPLAY          0x04
 
+/* Automatic own address types.  The host converts these to an appropriate
+ * address type usable by the controller.  The actual address type that gets
+ * used depends on what address types the device has been  configured with.
+ */
+#define BLE_OWN_ADDR_AUTO_PUB               (0xf0)
+#define BLE_OWN_ADDR_AUTO_PRIV              (0xf1)
+
 typedef void ble_hs_reset_fn(int reason);
 typedef void ble_hs_sync_fn(void);
 

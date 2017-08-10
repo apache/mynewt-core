@@ -94,3 +94,29 @@ ble_hs_misc_addr_type_to_id(uint8_t own_addr_type)
         return BLE_ADDR_PUBLIC;
     }
 }
+
+/**
+ * Converts an "auto" address type to an actual address type.  If the specified
+ * address type is non-auto, this function is a no-op.
+ *
+ * @param own_addr_type         Points to the address type to normalize.  On
+ *                                  success, the normalized type gets written
+ *                                  here.
+ *
+ * @return                      0 on success; nonzero on failure.
+ */
+int
+ble_hs_misc_normalize_own_addr_type(uint8_t *own_addr_type)
+{
+    switch (*own_addr_type) {
+    case BLE_OWN_ADDR_AUTO_PUB:
+        return ble_hs_id_infer_auto(0, own_addr_type);
+
+    case BLE_OWN_ADDR_AUTO_PRIV:
+        return ble_hs_id_infer_auto(1, own_addr_type);
+
+    default:
+        /* Not auto. */
+        return 0;
+    }
+}
