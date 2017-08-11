@@ -724,6 +724,7 @@ hal_timer_deinit(int timer_num)
     NRF_TIMER_Type *hwtimer;
     NRF_RTC_Type *rtctimer;
 
+    rc = 0;
     NRF51_HAL_TIMER_RESOLVE(timer_num, bsptimer);
 
     __HAL_DISABLE_INTERRUPTS(ctx);
