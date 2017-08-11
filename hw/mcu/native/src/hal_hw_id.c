@@ -33,6 +33,9 @@
 int
 hal_bsp_hw_id(uint8_t *id, int max_len)
 {
+    if (max_len > HAL_BSP_MAX_ID_LEN) {
+        max_len = HAL_BSP_MAX_ID_LEN;
+    }
     memset(id, 0x42, max_len);
     return max_len;
 }
