@@ -49,7 +49,7 @@ static struct console_input buf[MYNEWT_VAL(SHELL_MAX_CMD_QUEUED)];
 void
 shell_evq_set(struct os_eventq *evq)
 {
-    os_eventq_designate(&shell_evq, evq, NULL);
+    shell_evq = evq;
     console_set_queues(&avail_queue, shell_evq);
 }
 

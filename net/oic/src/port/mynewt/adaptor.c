@@ -40,7 +40,7 @@ oc_evq_get(void)
 void
 oc_evq_set(struct os_eventq *evq)
 {
-    os_eventq_designate(&oc_evq, evq, NULL);
+    oc_evq = evq;
 }
 
 void
