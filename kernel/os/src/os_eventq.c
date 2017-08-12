@@ -310,6 +310,9 @@ os_eventq_dflt_get(void)
 }
 
 /**
+ * [DEPRECATED - packages should manually enqueue start events to the default
+ * task instead of calling this function]
+ *
  * Reassigns an event queue pointer to the specified value.  This function is
  * used for configuring a package to use a particular event queue.  A package's
  * event queue can generally be reassigned repeatedly.  If the package has a
