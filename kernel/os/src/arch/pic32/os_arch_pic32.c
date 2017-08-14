@@ -137,13 +137,15 @@ os_arch_task_stack_init(struct os_task *t, os_stack_t *stack_top, int size)
     /* If stack does not have space for the FPU context, assume the
     thread won't use it. */
     int lazy_space = os_bytes_to_stack_aligned_words(sizeof(struct ctx_fp));
-    if ((lazy_space + ctx_space + 4) >= size) {
+    if ((lazy_space + ctx_space + 4) >= (size * sizeof(os_stack_t))) {
         /* stack too small */
         stack_top -= 4;
     } else {
         struct ctx_fp ctx_fp;
         ctx_fp.fcsr = 0;
-        memcpy(stack_top - os_bytes_to_stack_aligned_words(sizeof(struct ctx_fp)), &ctx_fp, sizeof(ctx_fp));
+        memcpy(stack_top -
+            os_bytes_to_stack_aligned_words(sizeof(struct ctx_fp)),
+            &ctx_fp, sizeof(ctx_fp));
         stack_top -= lazy_space + 4;
     }
 #else
