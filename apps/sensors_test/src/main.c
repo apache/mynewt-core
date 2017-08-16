@@ -37,21 +37,7 @@
 #include <id/id.h>
 #include <os/os_time.h>
 #include <defs/error.h>
-#if MYNEWT_VAL(TCS34725_CLI)
-#include "tcs34725/tcs34725.h"
-#endif
-#if MYNEWT_VAL(TSL2561_CLI)
-#include "tsl2561/tsl2561.h"
-#endif
-#if MYNEWT_VAL(BME280_CLI)
-#include "bme280/bme280.h"
-#endif
-#if MYNEWT_VAL(BNO055_CLI)
-#include "bno055/bno055.h"
-#endif
-#if MYNEWT_VAL(LSM303DLHC_CLI)
-#include "lsm303dlhc/lsm303dlhc.h"
-#endif
+#include <sensor/accel.h>
 
 #if MYNEWT_VAL(SENSOR_OIC)
 #include <oic/oc_api.h>
@@ -417,7 +403,7 @@ sensor_ble_oic_server_init(void)
     int rc;
 
     /* Set initial BLE device address. */
-    memcpy(g_dev_addr, (uint8_t[6]){0x0a, 0xfa, 0xcf, 0xac, 0xfa, 0xc0}, 6);
+    memcpy(g_dev_addr, (uint8_t[6]){0xdd, 0xdd, 0xdd, 0xdd, 0xcc, 0xcc}, 6);
 
     oc_ble_coap_gatt_srv_init();
 
@@ -470,6 +456,9 @@ ble_oic_log_init(void)
 int
 main(int argc, char **argv)
 {
+    struct sensor_type_traits stt;
+    struct sensor_accel_data sad_low;
+    struct sensor_accel_data sad_high;
 
 #ifdef ARCH_sim
     mcu_sim_parse_args(argc, argv);
@@ -491,6 +480,26 @@ main(int argc, char **argv)
 
     /* Initialize BLE OIC GATT Server */
     sensor_ble_oic_server_init();
+
+    sad_low.sad_x = 0;
+    sad_low.sad_y = 0;
+    sad_low.sad_z = 0;
+
+    sad_low.sad_x_is_valid = 1;
+    sad_low.sad_y_is_valid = 1;
+    sad_low.sad_z_is_valid = 1;
+
+    sad_high.sad_x_is_valid = 0;
+    sad_high.sad_y_is_valid = 0;
+    sad_high.sad_z_is_valid = 0;
+
+    stt.stt_sensor_type = SENSOR_TYPE_ACCELEROMETER;
+    stt.stt_low_thresh = &sad_low;
+    stt.stt_high_thresh = &sad_high;
+
+    sensor_set_window_thresh("lis2dh12_0", &stt);
+
+    sensor_set_poll_rate_ms("lis2dh12_0", 500);
 
     /* log reboot */
     reboot_start(hal_reset_cause());

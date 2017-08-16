@@ -24,6 +24,10 @@
 #include "os/os_dev.h"
 #include "syscfg/syscfg.h"
 
+#if MYNEWT_VAL(SENSOR_OIC)
+#include "oic/oc_ri.h"
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -125,6 +129,25 @@ typedef enum {
 #define SENSOR_ITF_UART   (2)
 
 /**
+ * Sensor transport
+ */
+#define SENSOR_TRANSPORT_OIC    0x0
+#define SENSOR_TRANSPORT_BLE    0x1
+#define SENSOR_TRANSPORT_LORA   0x2
+#define SENSOR_TRANSPORT_WIFI   0x3
+
+/**
+ * Sensor threshold constants
+ */
+#define SENSOR_THRESH_ALGO_WINDOW     0x1
+#define SENSOR_THRESH_ALGO_WATERMARK  0x2
+
+/**
+ * Sensor listener constants
+ */
+#define SENSOR_IGN_LISTENER     1
+
+/**
  * Useful constants
  */
 #define STANDARD_ACCEL_GRAVITY 9.80665F
@@ -176,6 +199,31 @@ struct sensor_listener {
      * contained within the sensor object.
      */
     SLIST_ENTRY(sensor_listener) sl_next;
+};
+
+/**
+ * Sensor type traits list
+ */
+struct sensor_type_traits {
+    /* The type of sensor data for checking against thresholds */
+    sensor_type_t stt_sensor_type;
+
+    /* Low threshold per sensor type */
+    void *stt_low_thresh;
+
+    /* High threshold per sensor type */
+    void *stt_high_thresh;
+
+    /* field for selecting algorithm */
+    uint8_t stt_algo;
+
+    /* Sensor OIC resource */
+    oc_resource_t *stt_oic_res;
+
+    /* Next item in the sensor traits list.  The head of this list is
+     * contained within the sensor object.
+     */
+    SLIST_ENTRY(sensor_type_traits) stt_next;
 };
 
 /**
@@ -285,11 +333,15 @@ struct sensor {
      * sensor
      */
     SLIST_HEAD(, sensor_listener) s_listener_list;
+
+    /* A list of sensor thresholds that are registered */
+    SLIST_HEAD(, sensor_type_traits) s_type_traits_list;
+
     /* The next sensor in the global sensor list. */
     SLIST_ENTRY(sensor) s_next;
 };
 
-int sensor_init(struct sensor *, struct os_dev *dev);
+int sensor_init(struct sensor *, struct os_dev *);
 int sensor_lock(struct sensor *);
 void sensor_unlock(struct sensor *);
 
@@ -492,6 +544,76 @@ int sensor_mgr_match_bytype(struct sensor *, void *);
  */
 int
 sensor_set_poll_rate_ms(char *, uint32_t);
+
+/**
+ * Transmit OIC trigger
+ *
+ * @param ptr to the sensor
+ * @param ptr to sensor data
+ * @param The sensor type
+ *
+ * @return 0 on sucess, non-zero on failure
+ */
+int
+sensor_oic_tx_trigger(struct sensor *, void *, sensor_type_t);
+
+/**
+ * Sensor trigger initialization
+ *
+ * @param ptr to the sensor sturucture
+ * @param sensor type to enable trigger for
+ * @param transport for sending the trigger
+ */
+void
+sensor_trigger_init(struct sensor *, sensor_type_t,
+                    uint8_t);
+
+/**
+ * Search the sensor type traits list for specific type of sensor
+ *
+ * @param The sensor type to search for
+ * @param Ptr to a sensor
+ *
+ * @return NULL when no sensor type is found, ptr to sensor_type_traits structure
+ * when found
+ */
+struct sensor_type_traits *
+sensor_get_type_traits_bytype(sensor_type_t, struct sensor *);
+
+/**
+ * Get the type traits for a sensor
+ *
+ * @param name of the sensor
+ * @param Ptr to sensor types trait struct
+ * @param type of sensor
+ *
+ * @return NULL on failure, sensor struct on success
+ */
+struct sensor *
+sensor_get_type_traits_byname(char *, struct sensor_type_traits **,
+                              sensor_type_t);
+
+/**
+ * Set the windowed thresholds for a sensor
+ *
+ * @param name of the sensor
+ * @param Ptr to sensor type traits containing thresholds
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+sensor_set_window_thresh(char *, struct sensor_type_traits *);
+
+/**
+ * Set the watermark thresholds for a sensor
+ *
+ * @param name of the sensor
+ * @param Ptr to sensor type traits containing thresholds
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+sensor_set_watermark_thresh(char *, struct sensor_type_traits *);
 
 #if MYNEWT_VAL(SENSOR_CLI)
 char*

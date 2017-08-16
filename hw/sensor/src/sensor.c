@@ -32,6 +32,16 @@
 #include "defs/error.h"
 #include "console/console.h"
 #include "syscfg/syscfg.h"
+#include "sensor/accel.h"
+#include "sensor/mag.h"
+#include "sensor/light.h"
+#include "sensor/quat.h"
+#include "sensor/euler.h"
+#include "sensor/color.h"
+#include "sensor/temperature.h"
+#include "sensor/pressure.h"
+#include "sensor/humidity.h"
+#include "sensor/gyro.h"
 
 struct {
     struct os_mutex mgr_lock;
@@ -46,6 +56,22 @@ struct sensor_read_ctx {
     sensor_data_func_t user_func;
     void *user_arg;
 };
+
+typedef union {
+    struct sensor_mag_data   *smd;
+    struct sensor_accel_data *sad;
+    struct sensor_euler_data *sed;
+    struct sensor_quat_data  *sqd;
+    struct sensor_accel_data *slad;
+    struct sensor_accel_data *sgrd;
+    struct sensor_gyro_data  *sgd;
+    struct sensor_temp_data  *std;
+    struct sensor_temp_data  *satd;
+    struct sensor_light_data *sld;
+    struct sensor_color_data *scd;
+    struct sensor_press_data *spd;
+    struct sensor_humid_data *srhd;
+}sensor_data_t;
 
 struct sensor_timestamp sensor_base_ts;
 struct os_callout st_up_osco;
@@ -477,6 +503,66 @@ sensor_mgr_match_bydevname(struct sensor *sensor, void *arg)
     return (0);
 }
 
+/**
+ * Search the sensor thresh list for specific type of sensor
+ *
+ * @param The sensor type to search for
+ * @param Ptr to a sensor
+ *
+ * @return NULL when no sensor type is found, ptr to sensor_type_traits structure
+ * when found
+ */
+struct sensor_type_traits *
+sensor_get_type_traits_bytype(sensor_type_t type, struct sensor *sensor)
+{
+    struct sensor_type_traits *stt;
+
+    stt = NULL;
+
+    sensor_lock(sensor);
+
+    SLIST_FOREACH(stt, &sensor->s_type_traits_list, stt_next) {
+        if (stt->stt_sensor_type == type) {
+            break;
+        }
+    }
+
+    sensor_unlock(sensor);
+
+    return stt;
+}
+
+/**
+ * Remove a sensor type trait. This allows a calling application to unset
+ * sensortype trait for a given sensor object.
+ *
+ * @param The sensor object
+ * @param The sensor trait to remove from the sensor type trait list
+ *
+ * @return 0 on success, non-zero error code on failure.
+ */
+
+int
+sensor_remove_type_trait(struct sensor *sensor,
+                         struct sensor_type_traits *stt)
+{
+    int rc;
+
+    rc = sensor_lock(sensor);
+    if (rc != 0) {
+        goto err;
+    }
+
+    /* Remove this entry from the list */
+    SLIST_REMOVE(&sensor->s_type_traits_list, stt, sensor_type_traits,
+            stt_next);
+
+    sensor_unlock(sensor);
+
+    return (0);
+err:
+    return (rc);
+}
 
 /**
  * Search the sensor list and find the next sensor that corresponds
@@ -638,10 +724,12 @@ sensor_read_data_func(struct sensor *sensor, void *arg, void *data,
     struct sensor_listener *listener;
     struct sensor_read_ctx *ctx;
 
-    /* Notify all listeners first */
-    SLIST_FOREACH(listener, &sensor->s_listener_list, sl_next) {
-        if (listener->sl_sensor_type & type) {
-            listener->sl_func(sensor, listener->sl_arg, data, type);
+    if ((uint8_t)(uintptr_t)arg != SENSOR_IGN_LISTENER) {
+        /* Notify all listeners first */
+        SLIST_FOREACH(listener, &sensor->s_listener_list, sl_next) {
+            if (listener->sl_sensor_type & type) {
+                listener->sl_func(sensor, listener->sl_arg, data, type);
+            }
         }
     }
 
@@ -680,11 +768,805 @@ sensor_up_timestamp(struct sensor *sensor)
 
 }
 
+static int
+sensor_tx_trigger(struct sensor *sensor, uint8_t transport, void *data,
+                    sensor_type_t type)
+{
+    int rc;
+
+    rc = 0;
+#if MYNEWT_VAL(SENSOR_OIC)
+    if (transport == SENSOR_TRANSPORT_OIC) {
+        rc |= sensor_oic_tx_trigger(sensor, data, type);
+    }
+#endif
+
+    return rc;
+}
+
+/**
+ * Get the type traits for a sensor
+ *
+ * @param name of the sensor
+ * @param Ptr to sensor types trait struct
+ * @param type of sensor
+ *
+ * @return NULL on failure, sensor struct on success
+ */
+struct sensor *
+sensor_get_type_traits_byname(char *devname, struct sensor_type_traits **stt,
+                              sensor_type_t type)
+{
+    struct sensor *sensor;
+
+    sensor = sensor_mgr_find_next_bydevname(devname, NULL);
+    if (!sensor) {
+        goto err;
+    }
+
+    *stt = sensor_get_type_traits_bytype(type, sensor);
+
+err:
+    return sensor;
+}
+
+/**
+ * Set the windowed thresholds for a sensor
+ *
+ * @param name of the sensor
+ * @param Ptr to sensor threshold
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+sensor_set_window_thresh(char *devname, struct sensor_type_traits *stt)
+{
+    struct sensor_type_traits *stt_tmp;
+    struct sensor *sensor;
+    int rc;
+
+    sensor = sensor_get_type_traits_byname(devname, &stt_tmp, stt->stt_sensor_type);
+    if (!sensor) {
+        rc = SYS_EINVAL;
+        goto err;
+    }
+
+    if (!stt_tmp && stt) {
+        sensor_lock(sensor);
+        SLIST_INSERT_HEAD(&sensor->s_type_traits_list, stt, stt_next);
+        stt->stt_algo = SENSOR_THRESH_ALGO_WINDOW;
+        sensor_unlock(sensor);
+    } else if (stt_tmp) {
+        sensor_lock(sensor);
+        stt_tmp->stt_low_thresh = stt->stt_low_thresh;
+        stt_tmp->stt_high_thresh = stt->stt_high_thresh;
+        stt_tmp->stt_algo = SENSOR_THRESH_ALGO_WINDOW;
+        sensor_unlock(sensor);
+    } else {
+        rc = SYS_EINVAL;
+        goto err;
+    }
+
+    return 0;
+err:
+    return rc;
+}
+
+/**
+ * Set the watermark thresholds for a sensor
+ *
+ * @param name of the sensor
+ * @param Ptr to sensor threshold
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+sensor_set_watermark_thresh(char *devname, struct sensor_type_traits *stt)
+{
+    struct sensor_type_traits *stt_tmp;
+    struct sensor *sensor;
+    int rc;
+
+    sensor = sensor_get_type_traits_byname(devname, &stt_tmp, stt->stt_sensor_type);
+    if (!stt_tmp && stt) {
+        sensor_lock(sensor);
+        SLIST_INSERT_HEAD(&sensor->s_type_traits_list, stt, stt_next);
+        stt->stt_algo = SENSOR_THRESH_ALGO_WATERMARK;
+        sensor_unlock(sensor);
+    } else if (stt_tmp) {
+        sensor_lock(sensor);
+        stt_tmp->stt_low_thresh = stt->stt_low_thresh;
+        stt_tmp->stt_high_thresh = stt->stt_high_thresh;
+        stt_tmp->stt_algo = SENSOR_THRESH_ALGO_WATERMARK;
+        sensor_unlock(sensor);
+    } else {
+        goto err;
+    }
+
+    return 0;
+err:
+    return rc;
+}
+
+
+static int
+sensor_window_cmp(sensor_type_t type, sensor_data_t *low_thresh,
+                  sensor_data_t *high_thresh, void *data)
+{
+    uint8_t tx_trigger;
+    sensor_data_t dataptr;
+
+    tx_trigger = 0;
+
+    switch(type) {
+        case SENSOR_TYPE_ROTATION_VECTOR:
+            dataptr.sqd = data;
+            tx_trigger |= dataptr.sqd->sqd_x_is_valid ?
+                high_thresh->sqd->sqd_x_is_valid ?
+                    (dataptr.sqd->sqd_x < high_thresh->sqd->sqd_x) : 1 &&
+                    low_thresh->sqd->sqd_x_is_valid ?
+                    (dataptr.sqd->sqd_x > low_thresh->sqd->sqd_x) : 1 ?
+                        (low_thresh->sqd->sqd_x_is_valid |
+                         high_thresh->sqd->sqd_x_is_valid):0:0;
+            tx_trigger |= dataptr.sqd->sqd_y_is_valid ?
+                high_thresh->sqd->sqd_y_is_valid ?
+                    (dataptr.sqd->sqd_y < high_thresh->sqd->sqd_y) : 1 &&
+                    low_thresh->sqd->sqd_y_is_valid ?
+                    (dataptr.sqd->sqd_y > low_thresh->sqd->sqd_y) : 1 ?
+                        (low_thresh->sqd->sqd_y_is_valid |
+                         high_thresh->sqd->sqd_y_is_valid):0:0;
+            tx_trigger |= dataptr.sqd->sqd_z_is_valid ?
+                high_thresh->sqd->sqd_z_is_valid ?
+                    (dataptr.sqd->sqd_z < high_thresh->sqd->sqd_z) : 1 &&
+                    low_thresh->sqd->sqd_z_is_valid ?
+                    (dataptr.sqd->sqd_z > low_thresh->sqd->sqd_z) : 1 ?
+                        (low_thresh->sqd->sqd_z_is_valid |
+                         high_thresh->sqd->sqd_z_is_valid):0:0;
+            break;
+        case SENSOR_TYPE_ACCELEROMETER:
+            dataptr.sad = data;
+            tx_trigger |= dataptr.sad->sad_x_is_valid ?
+                high_thresh->sad->sad_x_is_valid ?
+                    (dataptr.sad->sad_x < high_thresh->sad->sad_x) : 1 &&
+                    low_thresh->sad->sad_x_is_valid ?
+                    (dataptr.sad->sad_x > low_thresh->sad->sad_x) : 1 ?
+                        (low_thresh->sad->sad_x_is_valid |
+                         high_thresh->sad->sad_x_is_valid):0:0;
+            tx_trigger |= dataptr.sad->sad_y_is_valid ?
+                high_thresh->sad->sad_y_is_valid ?
+                    (dataptr.sad->sad_y < high_thresh->sad->sad_y) : 1 &&
+                    low_thresh->sad->sad_y_is_valid ?
+                    (dataptr.sad->sad_y > low_thresh->sad->sad_y) : 1 ?
+                        (low_thresh->sad->sad_y_is_valid |
+                         high_thresh->sad->sad_y_is_valid):0:0;
+            tx_trigger |= dataptr.sad->sad_z_is_valid ?
+                high_thresh->sad->sad_z_is_valid ?
+                    (dataptr.sad->sad_z < high_thresh->sad->sad_z) : 1 &&
+                    low_thresh->sad->sad_z_is_valid ?
+                    (dataptr.sad->sad_z > low_thresh->sad->sad_z) : 1 ?
+                        (low_thresh->sad->sad_z_is_valid |
+                         high_thresh->sad->sad_z_is_valid):0:0;
+            break;
+        case SENSOR_TYPE_LINEAR_ACCEL:
+            dataptr.slad = data;
+            tx_trigger |= dataptr.slad->sad_x_is_valid ?
+                high_thresh->slad->sad_x_is_valid ?
+                    (dataptr.slad->sad_x < high_thresh->slad->sad_x) : 1 &&
+                    low_thresh->slad->sad_x_is_valid ?
+                    (dataptr.slad->sad_x > low_thresh->slad->sad_x) : 1 ?
+                        (low_thresh->slad->sad_x_is_valid |
+                         high_thresh->slad->sad_x_is_valid):0:0;
+            tx_trigger |= dataptr.slad->sad_y_is_valid ?
+                high_thresh->slad->sad_y_is_valid ?
+                    (dataptr.slad->sad_y < high_thresh->slad->sad_y) : 1 &&
+                    low_thresh->slad->sad_y_is_valid ?
+                    (dataptr.slad->sad_y > low_thresh->slad->sad_y) : 1 ?
+                        (low_thresh->slad->sad_y_is_valid |
+                         high_thresh->slad->sad_y_is_valid):0:0;
+            tx_trigger |= dataptr.slad->sad_z_is_valid ?
+                high_thresh->slad->sad_z_is_valid ?
+                    (dataptr.slad->sad_z < high_thresh->slad->sad_z) : 1 &&
+                    low_thresh->slad->sad_z_is_valid ?
+                    (dataptr.slad->sad_z > low_thresh->slad->sad_z) : 1 ?
+                        (low_thresh->slad->sad_z_is_valid |
+                         high_thresh->slad->sad_z_is_valid):0:0;
+            break;
+        case SENSOR_TYPE_EULER:
+            dataptr.sed = data;
+            tx_trigger |= dataptr.sed->sed_h_is_valid ?
+                high_thresh->sed->sed_h_is_valid ?
+                    (dataptr.sed->sed_h < high_thresh->sed->sed_h) : 1 &&
+                    low_thresh->sed->sed_h_is_valid ?
+                    (dataptr.sed->sed_h > low_thresh->sed->sed_h) : 1 ?
+                        (low_thresh->sed->sed_h_is_valid |
+                         high_thresh->sed->sed_h_is_valid):0:0;
+            tx_trigger |= dataptr.sed->sed_r_is_valid ?
+                high_thresh->sed->sed_r_is_valid ?
+                    (dataptr.sed->sed_r < high_thresh->sed->sed_r) : 1 &&
+                    low_thresh->sed->sed_r_is_valid ?
+                    (dataptr.sed->sed_r > low_thresh->sed->sed_r) : 1 ?
+                        (low_thresh->sed->sed_r_is_valid |
+                         high_thresh->sed->sed_r_is_valid):0:0;
+            tx_trigger |= dataptr.sed->sed_p_is_valid ?
+                high_thresh->sed->sed_p_is_valid ?
+                    (dataptr.sed->sed_p < high_thresh->sed->sed_p) : 1 &&
+                    low_thresh->sed->sed_p_is_valid ?
+                    (dataptr.sed->sed_p > low_thresh->sed->sed_p) : 1 ?
+                        (low_thresh->sed->sed_p_is_valid |
+                         high_thresh->sed->sed_p_is_valid):0:0;
+            break;
+        case SENSOR_TYPE_GYROSCOPE:
+            dataptr.sgd = data;
+            tx_trigger |= dataptr.sgd->sgd_x_is_valid ?
+                high_thresh->sgd->sgd_x_is_valid ?
+                    (dataptr.sgd->sgd_x < high_thresh->sgd->sgd_x) : 1 &&
+                    low_thresh->sgd->sgd_x_is_valid ?
+                    (dataptr.sgd->sgd_x > low_thresh->sgd->sgd_x) : 1 ?
+                        (low_thresh->sgd->sgd_x_is_valid |
+                         high_thresh->sgd->sgd_x_is_valid):0:0;
+            tx_trigger |= dataptr.sgd->sgd_y_is_valid ?
+                high_thresh->sgd->sgd_y_is_valid ?
+                    (dataptr.sgd->sgd_y < high_thresh->sgd->sgd_y) : 1 &&
+                    low_thresh->sgd->sgd_y_is_valid ?
+                    (dataptr.sgd->sgd_y > low_thresh->sgd->sgd_y) : 1 ?
+                        (low_thresh->sgd->sgd_y_is_valid |
+                         high_thresh->sgd->sgd_y_is_valid):0:0;
+            tx_trigger |= dataptr.sgd->sgd_z_is_valid ?
+                high_thresh->sgd->sgd_z_is_valid ?
+                    (dataptr.sgd->sgd_z < high_thresh->sgd->sgd_z) : 1 &&
+                    low_thresh->sgd->sgd_z_is_valid ?
+                    (dataptr.sgd->sgd_z > low_thresh->sgd->sgd_z) : 1 ?
+                        (low_thresh->sgd->sgd_z_is_valid |
+                         high_thresh->sgd->sgd_z_is_valid):0:0;
+            break;
+        case SENSOR_TYPE_GRAVITY:
+            dataptr.sgrd = data;
+            tx_trigger |= dataptr.sgrd->sad_x_is_valid ?
+                high_thresh->sgrd->sad_x_is_valid ?
+                    (dataptr.sgrd->sad_x < high_thresh->sgrd->sad_x) : 1 &&
+                    low_thresh->sgrd->sad_x_is_valid ?
+                    (dataptr.sgrd->sad_x > low_thresh->sgrd->sad_x) : 1 ?
+                        (low_thresh->sgrd->sad_x_is_valid |
+                         high_thresh->sgrd->sad_x_is_valid):0:0;
+            tx_trigger |= dataptr.sgrd->sad_y_is_valid ?
+                high_thresh->sgrd->sad_y_is_valid ?
+                    (dataptr.sgrd->sad_y < high_thresh->sgrd->sad_y) : 1 &&
+                    low_thresh->sgrd->sad_y_is_valid ?
+                    (dataptr.sgrd->sad_y > low_thresh->sgrd->sad_y) : 1 ?
+                        (low_thresh->sgrd->sad_y_is_valid |
+                         high_thresh->sgrd->sad_y_is_valid):0:0;
+            tx_trigger |= dataptr.sgrd->sad_z_is_valid ?
+                high_thresh->sgrd->sad_z_is_valid ?
+                    (dataptr.sgrd->sad_z < high_thresh->sgrd->sad_z) : 1 &&
+                    low_thresh->sgrd->sad_z_is_valid ?
+                    (dataptr.sgrd->sad_z > low_thresh->sgrd->sad_z) : 1 ?
+                        (low_thresh->sgrd->sad_z_is_valid |
+                         high_thresh->sgrd->sad_z_is_valid):0:0;
+            break;
+        case SENSOR_TYPE_MAGNETIC_FIELD:
+            dataptr.smd = data;
+            tx_trigger |= dataptr.smd->smd_x_is_valid ?
+                high_thresh->smd->smd_x_is_valid ?
+                    (dataptr.smd->smd_x < high_thresh->smd->smd_x) : 1 &&
+                    low_thresh->smd->smd_x_is_valid ?
+                    (dataptr.smd->smd_x > low_thresh->smd->smd_x) : 1 ?
+                        (low_thresh->smd->smd_x_is_valid |
+                         high_thresh->smd->smd_x_is_valid):0:0;
+            tx_trigger |= dataptr.smd->smd_y_is_valid ?
+                high_thresh->smd->smd_y_is_valid ?
+                    (dataptr.smd->smd_y < high_thresh->smd->smd_y) : 1 &&
+                    low_thresh->smd->smd_y_is_valid ?
+                    (dataptr.smd->smd_y > low_thresh->smd->smd_y) : 1 ?
+                        (low_thresh->smd->smd_y_is_valid |
+                         high_thresh->smd->smd_y_is_valid):0:0;
+            tx_trigger |= dataptr.smd->smd_z_is_valid ?
+                high_thresh->smd->smd_z_is_valid ?
+                    (dataptr.smd->smd_z < high_thresh->smd->smd_z) : 1 &&
+                    low_thresh->smd->smd_z_is_valid ?
+                    (dataptr.smd->smd_z > low_thresh->smd->smd_z) : 1 ?
+                        (low_thresh->smd->smd_z_is_valid |
+                         high_thresh->smd->smd_z_is_valid):0:0;
+            break;
+        case SENSOR_TYPE_TEMPERATURE:
+            dataptr.std = data;
+            tx_trigger |= dataptr.std->std_temp_is_valid ?
+                high_thresh->std->std_temp_is_valid ?
+                    (dataptr.std->std_temp < high_thresh->std->std_temp) : 1 &&
+                    low_thresh->std->std_temp_is_valid ?
+                    (dataptr.std->std_temp > low_thresh->std->std_temp) : 1 ?
+                        (low_thresh->std->std_temp_is_valid |
+                         high_thresh->std->std_temp_is_valid):0:0;
+            break;
+        case SENSOR_TYPE_AMBIENT_TEMPERATURE:
+            dataptr.satd = data;
+            tx_trigger |= dataptr.satd->std_temp_is_valid ?
+                high_thresh->satd->std_temp_is_valid ?
+                    (dataptr.satd->std_temp < high_thresh->satd->std_temp) : 1 &&
+                    low_thresh->satd->std_temp_is_valid ?
+                    (dataptr.satd->std_temp > low_thresh->satd->std_temp) : 1 ?
+                        (low_thresh->satd->std_temp_is_valid |
+                         high_thresh->satd->std_temp_is_valid):0:0;
+            break;
+        case SENSOR_TYPE_LIGHT:
+            dataptr.sld = data;
+            tx_trigger |= dataptr.sld->sld_full_is_valid ?
+                high_thresh->sld->sld_full_is_valid ?
+                    (dataptr.sld->sld_full < high_thresh->sld->sld_full) : 1 &&
+                    low_thresh->sld->sld_full_is_valid ?
+                    (dataptr.sld->sld_full > low_thresh->sld->sld_full) : 1 ?
+                        (low_thresh->sld->sld_full_is_valid |
+                         high_thresh->sld->sld_full_is_valid):0:0;
+            tx_trigger |= dataptr.sld->sld_ir_is_valid ?
+                high_thresh->sld->sld_ir_is_valid ?
+                    (dataptr.sld->sld_ir < high_thresh->sld->sld_ir) : 1 &&
+                    low_thresh->sld->sld_ir_is_valid ?
+                    (dataptr.sld->sld_ir > low_thresh->sld->sld_ir) : 1 ?
+                        (low_thresh->sld->sld_ir_is_valid |
+                         high_thresh->sld->sld_ir_is_valid):0:0;
+            tx_trigger |= dataptr.sld->sld_lux_is_valid ?
+                high_thresh->sld->sld_lux_is_valid ?
+                    (dataptr.sld->sld_lux < high_thresh->sld->sld_lux) : 1 &&
+                    low_thresh->sld->sld_lux_is_valid ?
+                    (dataptr.sld->sld_lux > low_thresh->sld->sld_lux) : 1 ?
+                        (low_thresh->sld->sld_lux_is_valid |
+                         high_thresh->sld->sld_lux_is_valid):0:0;
+            break;
+        case SENSOR_TYPE_COLOR:
+            dataptr.scd = data;
+            tx_trigger |= dataptr.scd->scd_r_is_valid ?
+                high_thresh->scd->scd_r_is_valid ?
+                    (dataptr.scd->scd_r < high_thresh->scd->scd_r) : 1 &&
+                    low_thresh->scd->scd_r_is_valid ?
+                    (dataptr.scd->scd_r > low_thresh->scd->scd_r) : 1 ?
+                        (low_thresh->scd->scd_r_is_valid |
+                         high_thresh->scd->scd_r_is_valid):0:0;
+            tx_trigger |= dataptr.scd->scd_g_is_valid ?
+                high_thresh->scd->scd_g_is_valid ?
+                    (dataptr.scd->scd_g < high_thresh->scd->scd_g) : 1 &&
+                    low_thresh->scd->scd_g_is_valid ?
+                    (dataptr.scd->scd_g > low_thresh->scd->scd_g) : 1 ?
+                        (low_thresh->scd->scd_g_is_valid |
+                         high_thresh->scd->scd_g_is_valid):0:0;
+            tx_trigger |= dataptr.scd->scd_b_is_valid ?
+                high_thresh->scd->scd_b_is_valid ?
+                    (dataptr.scd->scd_b < high_thresh->scd->scd_b) : 1 &&
+                    low_thresh->scd->scd_b_is_valid ?
+                    (dataptr.scd->scd_b > low_thresh->scd->scd_b) : 1 ?
+                        (low_thresh->scd->scd_b_is_valid |
+                         high_thresh->scd->scd_b_is_valid):0:0;
+            tx_trigger |= dataptr.scd->scd_c_is_valid ?
+                high_thresh->scd->scd_c_is_valid ?
+                    (dataptr.scd->scd_c < high_thresh->scd->scd_c) : 1 &&
+                    low_thresh->scd->scd_c_is_valid ?
+                    (dataptr.scd->scd_c > low_thresh->scd->scd_c) : 1 ?
+                        (low_thresh->scd->scd_c_is_valid |
+                         high_thresh->scd->scd_c_is_valid):0:0;
+            tx_trigger |= dataptr.scd->scd_lux_is_valid ?
+                high_thresh->scd->scd_lux_is_valid ?
+                    (dataptr.scd->scd_lux < high_thresh->scd->scd_lux) : 1 &&
+                    low_thresh->scd->scd_lux_is_valid ?
+                    (dataptr.scd->scd_lux > low_thresh->scd->scd_lux) : 1 ?
+                        (low_thresh->scd->scd_lux_is_valid |
+                         high_thresh->scd->scd_lux_is_valid):0:0;
+            tx_trigger |= dataptr.scd->scd_colortemp_is_valid ?
+                high_thresh->scd->scd_colortemp_is_valid ?
+                    (dataptr.scd->scd_colortemp < high_thresh->scd->scd_colortemp) : 1 &&
+                    low_thresh->scd->scd_colortemp_is_valid ?
+                    (dataptr.scd->scd_colortemp > low_thresh->scd->scd_colortemp) : 1 ?
+                        (low_thresh->scd->scd_colortemp_is_valid |
+                         high_thresh->scd->scd_colortemp_is_valid):0:0;
+            tx_trigger |= dataptr.scd->scd_ir_is_valid ?
+                high_thresh->scd->scd_ir_is_valid ?
+                    (dataptr.scd->scd_ir < high_thresh->scd->scd_ir) : 1 &&
+                    low_thresh->scd->scd_ir_is_valid ?
+                    (dataptr.scd->scd_ir > low_thresh->scd->scd_ir) : 1 ?
+                        (low_thresh->scd->scd_ir_is_valid |
+                         high_thresh->scd->scd_ir_is_valid):0:0;
+            break;
+        case SENSOR_TYPE_PRESSURE:
+            dataptr.spd = data;
+            tx_trigger |= dataptr.spd->spd_press_is_valid ?
+                high_thresh->spd->spd_press_is_valid ?
+                    (dataptr.spd->spd_press < high_thresh->spd->spd_press) : 1 &&
+                    low_thresh->spd->spd_press_is_valid ?
+                    (dataptr.spd->spd_press > low_thresh->spd->spd_press) : 1 ?
+                        (low_thresh->spd->spd_press_is_valid |
+                         high_thresh->spd->spd_press_is_valid):0:0;
+            break;
+        case SENSOR_TYPE_RELATIVE_HUMIDITY:
+            dataptr.srhd = data;
+            tx_trigger |= dataptr.srhd->shd_humid_is_valid ?
+                high_thresh->srhd->shd_humid_is_valid ?
+                    (dataptr.srhd->shd_humid < high_thresh->srhd->shd_humid) : 1 &&
+                    low_thresh->srhd->shd_humid_is_valid ?
+                    (dataptr.srhd->shd_humid > low_thresh->srhd->shd_humid) : 1 ?
+                        (low_thresh->srhd->shd_humid_is_valid |
+                         high_thresh->srhd->shd_humid_is_valid):0:0;
+            break;
+        case SENSOR_TYPE_PROXIMITY:
+            /* Falls Through */
+        case SENSOR_TYPE_WEIGHT:
+            /* Falls Through */
+        case SENSOR_TYPE_ALTITUDE:
+            /* Falls Through */
+        case SENSOR_TYPE_NONE:
+            /* Falls Through */
+        default:
+            break;
+    }
+
+    return tx_trigger;
+}
+
+static int
+sensor_watermark_cmp(sensor_type_t type, sensor_data_t *low_thresh,
+                     sensor_data_t *high_thresh, void *data)
+{
+    uint8_t tx_trigger;
+    sensor_data_t dataptr;
+
+    tx_trigger = 0;
+
+    switch(type) {
+        case SENSOR_TYPE_ROTATION_VECTOR:
+            dataptr.sqd = data;
+            tx_trigger |= dataptr.sqd->sqd_x_is_valid ?
+                high_thresh->sqd->sqd_x_is_valid ?
+                    (dataptr.sqd->sqd_x > high_thresh->sqd->sqd_x) : 0 ||
+                    low_thresh->sqd->sqd_x_is_valid ?
+                    (dataptr.sqd->sqd_x < low_thresh->sqd->sqd_x) : 0 ?
+                        (low_thresh->sqd->sqd_x_is_valid |
+                         high_thresh->sqd->sqd_x_is_valid):0:0;
+            tx_trigger |= dataptr.sqd->sqd_y_is_valid ?
+                high_thresh->sqd->sqd_y_is_valid ?
+                    (dataptr.sqd->sqd_y > high_thresh->sqd->sqd_y) : 0 ||
+                    low_thresh->sqd->sqd_y_is_valid ?
+                    (dataptr.sqd->sqd_y < low_thresh->sqd->sqd_y) : 0 ?
+                        (low_thresh->sqd->sqd_y_is_valid |
+                         high_thresh->sqd->sqd_y_is_valid):0:0;
+            tx_trigger |= dataptr.sqd->sqd_z_is_valid ?
+                high_thresh->sqd->sqd_z_is_valid ?
+                    (dataptr.sqd->sqd_z > high_thresh->sqd->sqd_z) : 0 ||
+                    low_thresh->sqd->sqd_z_is_valid ?
+                    (dataptr.sqd->sqd_z < low_thresh->sqd->sqd_z) : 0 ?
+                        (low_thresh->sqd->sqd_z_is_valid |
+                         high_thresh->sqd->sqd_z_is_valid):0:0;
+            break;
+        case SENSOR_TYPE_ACCELEROMETER:
+            dataptr.sad = data;
+            tx_trigger |= dataptr.sad->sad_x_is_valid ?
+                high_thresh->sad->sad_x_is_valid ?
+                    (dataptr.sad->sad_x > high_thresh->sad->sad_x) : 0 ||
+                    low_thresh->sad->sad_x_is_valid ?
+                    (dataptr.sad->sad_x < low_thresh->sad->sad_x) : 0 ?
+                        (low_thresh->sad->sad_x_is_valid |
+                         high_thresh->sad->sad_x_is_valid):0:0;
+            tx_trigger |= dataptr.sad->sad_y_is_valid ?
+                high_thresh->sad->sad_y_is_valid ?
+                    (dataptr.sad->sad_y > high_thresh->sad->sad_y) : 0 ||
+                    low_thresh->sad->sad_y_is_valid ?
+                    (dataptr.sad->sad_y < low_thresh->sad->sad_y) : 0 ?
+                        (low_thresh->sad->sad_y_is_valid |
+                         high_thresh->sad->sad_y_is_valid):0:0;
+            tx_trigger |= dataptr.sad->sad_z_is_valid ?
+                high_thresh->sad->sad_z_is_valid ?
+                    (dataptr.sad->sad_z > high_thresh->sad->sad_z) : 0 ||
+                    low_thresh->sad->sad_z_is_valid ?
+                    (dataptr.sad->sad_z < low_thresh->sad->sad_z) : 0 ?
+                        (low_thresh->sad->sad_z_is_valid |
+                         high_thresh->sad->sad_z_is_valid):0:0;
+            break;
+        case SENSOR_TYPE_LINEAR_ACCEL:
+            dataptr.slad = data;
+            tx_trigger |= dataptr.slad->sad_x_is_valid ?
+                high_thresh->slad->sad_x_is_valid ?
+                    (dataptr.slad->sad_x > high_thresh->slad->sad_x) : 0 ||
+                    low_thresh->slad->sad_x_is_valid ?
+                    (dataptr.slad->sad_x < low_thresh->slad->sad_x) : 0 ?
+                        (low_thresh->slad->sad_x_is_valid |
+                         high_thresh->slad->sad_x_is_valid):0:0;
+            tx_trigger |= dataptr.slad->sad_y_is_valid ?
+                high_thresh->slad->sad_y_is_valid ?
+                    (dataptr.slad->sad_y > high_thresh->slad->sad_y) : 0 ||
+                    low_thresh->slad->sad_y_is_valid ?
+                    (dataptr.slad->sad_y < low_thresh->slad->sad_y) : 0 ?
+                        (low_thresh->slad->sad_y_is_valid |
+                         high_thresh->slad->sad_y_is_valid):0:0;
+            tx_trigger |= dataptr.slad->sad_z_is_valid ?
+                high_thresh->slad->sad_z_is_valid ?
+                    (dataptr.slad->sad_z > high_thresh->slad->sad_z) : 0 ||
+                    low_thresh->slad->sad_z_is_valid ?
+                    (dataptr.slad->sad_z < low_thresh->slad->sad_z) : 0 ?
+                        (low_thresh->slad->sad_z_is_valid |
+                         high_thresh->slad->sad_z_is_valid):0:0;
+            break;
+        case SENSOR_TYPE_EULER:
+            dataptr.sed = data;
+            tx_trigger |= dataptr.sed->sed_h_is_valid ?
+                high_thresh->sed->sed_h_is_valid ?
+                    (dataptr.sed->sed_h > high_thresh->sed->sed_h) : 0 ||
+                    low_thresh->sed->sed_h_is_valid ?
+                    (dataptr.sed->sed_h < low_thresh->sed->sed_h) : 0 ?
+                        (low_thresh->sed->sed_h_is_valid |
+                         high_thresh->sed->sed_h_is_valid):0:0;
+            tx_trigger |= dataptr.sed->sed_r_is_valid ?
+                high_thresh->sed->sed_r_is_valid ?
+                    (dataptr.sed->sed_r > high_thresh->sed->sed_r) : 0 ||
+                    low_thresh->sed->sed_r_is_valid ?
+                    (dataptr.sed->sed_r < low_thresh->sed->sed_r) : 0 ?
+                        (low_thresh->sed->sed_r_is_valid |
+                         high_thresh->sed->sed_r_is_valid):0:0;
+            tx_trigger |= dataptr.sed->sed_p_is_valid ?
+                high_thresh->sed->sed_p_is_valid ?
+                    (dataptr.sed->sed_p > high_thresh->sed->sed_p) : 0 ||
+                    low_thresh->sed->sed_p_is_valid ?
+                    (dataptr.sed->sed_p < low_thresh->sed->sed_p) : 0 ?
+                        (low_thresh->sed->sed_p_is_valid |
+                         high_thresh->sed->sed_p_is_valid):0:0;
+            break;
+        case SENSOR_TYPE_GYROSCOPE:
+            dataptr.sgd = data;
+            tx_trigger |= dataptr.sgd->sgd_x_is_valid ?
+                high_thresh->sgd->sgd_x_is_valid ?
+                    (dataptr.sgd->sgd_x > high_thresh->sgd->sgd_x) : 0 ||
+                    low_thresh->sgd->sgd_x_is_valid ?
+                    (dataptr.sgd->sgd_x < low_thresh->sgd->sgd_x) : 0 ?
+                        (low_thresh->sgd->sgd_x_is_valid |
+                         high_thresh->sgd->sgd_x_is_valid):0:0;
+            tx_trigger |= dataptr.sgd->sgd_y_is_valid ?
+                high_thresh->sgd->sgd_y_is_valid ?
+                    (dataptr.sgd->sgd_y > high_thresh->sgd->sgd_y) : 0 ||
+                    low_thresh->sgd->sgd_y_is_valid ?
+                    (dataptr.sgd->sgd_y < low_thresh->sgd->sgd_y) : 0 ?
+                        (low_thresh->sgd->sgd_y_is_valid |
+                         high_thresh->sgd->sgd_y_is_valid):0:0;
+            tx_trigger |= dataptr.sgd->sgd_z_is_valid ?
+                high_thresh->sgd->sgd_z_is_valid ?
+                    (dataptr.sgd->sgd_z > high_thresh->sgd->sgd_z) : 0 ||
+                    low_thresh->sgd->sgd_z_is_valid ?
+                    (dataptr.sgd->sgd_z < low_thresh->sgd->sgd_z) : 0 ?
+                        (low_thresh->sgd->sgd_z_is_valid |
+                         high_thresh->sgd->sgd_z_is_valid):0:0;
+            break;
+        case SENSOR_TYPE_GRAVITY:
+            dataptr.sgrd = data;
+            tx_trigger |= dataptr.sgrd->sad_x_is_valid ?
+                high_thresh->sgrd->sad_x_is_valid ?
+                    (dataptr.sgrd->sad_x > high_thresh->sgrd->sad_x) : 0 ||
+                    low_thresh->sgrd->sad_x_is_valid ?
+                    (dataptr.sgrd->sad_x < low_thresh->sgrd->sad_x) : 0 ?
+                        (low_thresh->sgrd->sad_x_is_valid |
+                         high_thresh->sgrd->sad_x_is_valid):0:0;
+            tx_trigger |= dataptr.sgrd->sad_y_is_valid ?
+                high_thresh->sgrd->sad_y_is_valid ?
+                    (dataptr.sgrd->sad_y > high_thresh->sgrd->sad_y) : 0 ||
+                    low_thresh->sgrd->sad_y_is_valid ?
+                    (dataptr.sgrd->sad_y < low_thresh->sgrd->sad_y) : 0 ?
+                        (low_thresh->sgrd->sad_y_is_valid |
+                         high_thresh->sgrd->sad_y_is_valid):0:0;
+            tx_trigger |= dataptr.sgrd->sad_z_is_valid ?
+                high_thresh->sgrd->sad_z_is_valid ?
+                    (dataptr.sgrd->sad_z > high_thresh->sgrd->sad_z) : 0 ||
+                    low_thresh->sgrd->sad_z_is_valid ?
+                    (dataptr.sgrd->sad_z < low_thresh->sgrd->sad_z) : 0 ?
+                        (low_thresh->sgrd->sad_z_is_valid |
+                         high_thresh->sgrd->sad_z_is_valid):0:0;
+            break;
+        case SENSOR_TYPE_MAGNETIC_FIELD:
+            dataptr.smd = data;
+            tx_trigger |= dataptr.smd->smd_x_is_valid ?
+                high_thresh->smd->smd_x_is_valid ?
+                    (dataptr.smd->smd_x > high_thresh->smd->smd_x) : 0 ||
+                    low_thresh->smd->smd_x_is_valid ?
+                    (dataptr.smd->smd_x < low_thresh->smd->smd_x) : 0 ?
+                        (low_thresh->smd->smd_x_is_valid |
+                         high_thresh->smd->smd_x_is_valid):0:0;
+            tx_trigger |= dataptr.smd->smd_y_is_valid ?
+                high_thresh->smd->smd_y_is_valid ?
+                    (dataptr.smd->smd_y > high_thresh->smd->smd_y) : 0 ||
+                    low_thresh->smd->smd_y_is_valid ?
+                    (dataptr.smd->smd_y < low_thresh->smd->smd_y) : 0 ?
+                        (low_thresh->smd->smd_y_is_valid |
+                         high_thresh->smd->smd_y_is_valid):0:0;
+            tx_trigger |= dataptr.smd->smd_z_is_valid ?
+                high_thresh->smd->smd_z_is_valid ?
+                    (dataptr.smd->smd_z > high_thresh->smd->smd_z) : 0 ||
+                    low_thresh->smd->smd_z_is_valid ?
+                    (dataptr.smd->smd_z < low_thresh->smd->smd_z) : 0 ?
+                        (low_thresh->smd->smd_z_is_valid |
+                         high_thresh->smd->smd_z_is_valid):0:0;
+            break;
+        case SENSOR_TYPE_TEMPERATURE:
+            dataptr.std = data;
+            tx_trigger |= dataptr.std->std_temp_is_valid ?
+                high_thresh->std->std_temp_is_valid ?
+                    (dataptr.std->std_temp > high_thresh->std->std_temp) : 0 ||
+                    low_thresh->std->std_temp_is_valid ?
+                    (dataptr.std->std_temp < low_thresh->std->std_temp) : 0 ?
+                        (low_thresh->std->std_temp_is_valid |
+                         high_thresh->std->std_temp_is_valid):0:0;
+            break;
+        case SENSOR_TYPE_AMBIENT_TEMPERATURE:
+            dataptr.satd = data;
+            tx_trigger |= dataptr.satd->std_temp_is_valid ?
+                high_thresh->satd->std_temp_is_valid ?
+                    (dataptr.satd->std_temp > high_thresh->satd->std_temp) : 0 ||
+                    low_thresh->satd->std_temp_is_valid ?
+                    (dataptr.satd->std_temp < low_thresh->satd->std_temp) : 0 ?
+                        (low_thresh->satd->std_temp_is_valid |
+                         high_thresh->satd->std_temp_is_valid):0:0;
+            break;
+        case SENSOR_TYPE_LIGHT:
+            dataptr.sld = data;
+            tx_trigger |= dataptr.sld->sld_full_is_valid ?
+                high_thresh->sld->sld_full_is_valid ?
+                    (dataptr.sld->sld_full > high_thresh->sld->sld_full) : 0 ||
+                    low_thresh->sld->sld_full_is_valid ?
+                    (dataptr.sld->sld_full < low_thresh->sld->sld_full) : 0 ?
+                        (low_thresh->sld->sld_full_is_valid |
+                         high_thresh->sld->sld_full_is_valid):0:0;
+            tx_trigger |= dataptr.sld->sld_ir_is_valid ?
+                high_thresh->sld->sld_ir_is_valid ?
+                    (dataptr.sld->sld_ir > high_thresh->sld->sld_ir) : 0 ||
+                    low_thresh->sld->sld_ir_is_valid ?
+                    (dataptr.sld->sld_ir < low_thresh->sld->sld_ir) : 0 ?
+                        (low_thresh->sld->sld_ir_is_valid |
+                         high_thresh->sld->sld_ir_is_valid):0:0;
+            tx_trigger |= dataptr.sld->sld_lux_is_valid ?
+                high_thresh->sld->sld_lux_is_valid ?
+                    (dataptr.sld->sld_lux > high_thresh->sld->sld_lux) : 0 ||
+                    low_thresh->sld->sld_lux_is_valid ?
+                    (dataptr.sld->sld_lux < low_thresh->sld->sld_lux) : 0 ?
+                        (low_thresh->sld->sld_lux_is_valid |
+                         high_thresh->sld->sld_lux_is_valid):0:0;
+            break;
+        case SENSOR_TYPE_COLOR:
+            dataptr.scd = data;
+            tx_trigger |= dataptr.scd->scd_r_is_valid ?
+                high_thresh->scd->scd_r_is_valid ?
+                    (dataptr.scd->scd_r > high_thresh->scd->scd_r) : 0 ||
+                    low_thresh->scd->scd_r_is_valid ?
+                    (dataptr.scd->scd_r < low_thresh->scd->scd_r) : 0 ?
+                        (low_thresh->scd->scd_r_is_valid |
+                         high_thresh->scd->scd_r_is_valid):0:0;
+            tx_trigger |= dataptr.scd->scd_g_is_valid ?
+                high_thresh->scd->scd_g_is_valid ?
+                    (dataptr.scd->scd_g > high_thresh->scd->scd_g) : 0 ||
+                    low_thresh->scd->scd_g_is_valid ?
+                    (dataptr.scd->scd_g < low_thresh->scd->scd_g) : 0 ?
+                        (low_thresh->scd->scd_g_is_valid |
+                         high_thresh->scd->scd_g_is_valid):0:0;
+            tx_trigger |= dataptr.scd->scd_b_is_valid ?
+                high_thresh->scd->scd_b_is_valid ?
+                    (dataptr.scd->scd_b > high_thresh->scd->scd_b) : 0 ||
+                    low_thresh->scd->scd_b_is_valid ?
+                    (dataptr.scd->scd_b < low_thresh->scd->scd_b) : 0 ?
+                        (low_thresh->scd->scd_b_is_valid |
+                         high_thresh->scd->scd_b_is_valid):0:0;
+            tx_trigger |= dataptr.scd->scd_c_is_valid ?
+                high_thresh->scd->scd_c_is_valid ?
+                    (dataptr.scd->scd_c > high_thresh->scd->scd_c) : 0 ||
+                    low_thresh->scd->scd_c_is_valid ?
+                    (dataptr.scd->scd_c < low_thresh->scd->scd_c) : 0 ?
+                        (low_thresh->scd->scd_c_is_valid |
+                         high_thresh->scd->scd_c_is_valid):0:0;
+            tx_trigger |= dataptr.scd->scd_lux_is_valid ?
+                high_thresh->scd->scd_lux_is_valid ?
+                    (dataptr.scd->scd_lux > high_thresh->scd->scd_lux) : 0 ||
+                    low_thresh->scd->scd_lux_is_valid ?
+                    (dataptr.scd->scd_lux < low_thresh->scd->scd_lux) : 0 ?
+                        (low_thresh->scd->scd_lux_is_valid |
+                         high_thresh->scd->scd_lux_is_valid):0:0;
+            tx_trigger |= dataptr.scd->scd_colortemp_is_valid ?
+                high_thresh->scd->scd_colortemp_is_valid ?
+                    (dataptr.scd->scd_colortemp > high_thresh->scd->scd_colortemp) : 0 ||
+                    low_thresh->scd->scd_colortemp_is_valid ?
+                    (dataptr.scd->scd_colortemp < low_thresh->scd->scd_colortemp) : 0 ?
+                        (low_thresh->scd->scd_colortemp_is_valid |
+                         high_thresh->scd->scd_colortemp_is_valid):0:0;
+            tx_trigger |= dataptr.scd->scd_ir_is_valid ?
+                high_thresh->scd->scd_ir_is_valid ?
+                    (dataptr.scd->scd_ir > high_thresh->scd->scd_ir) : 0 ||
+                    low_thresh->scd->scd_ir_is_valid ?
+                    (dataptr.scd->scd_ir < low_thresh->scd->scd_ir) : 0 ?
+                        (low_thresh->scd->scd_ir_is_valid |
+                         high_thresh->scd->scd_ir_is_valid):0:0;
+            break;
+        case SENSOR_TYPE_PRESSURE:
+            dataptr.spd = data;
+            tx_trigger |= dataptr.spd->spd_press_is_valid ?
+                high_thresh->spd->spd_press_is_valid ?
+                    (dataptr.spd->spd_press > high_thresh->spd->spd_press) : 0 ||
+                    low_thresh->spd->spd_press_is_valid ?
+                    (dataptr.spd->spd_press < low_thresh->spd->spd_press) : 0 ?
+                        (low_thresh->spd->spd_press_is_valid |
+                         high_thresh->spd->spd_press_is_valid):0:0;
+            break;
+        case SENSOR_TYPE_RELATIVE_HUMIDITY:
+            dataptr.srhd = data;
+            tx_trigger |= dataptr.srhd->shd_humid_is_valid ?
+                high_thresh->srhd->shd_humid_is_valid ?
+                    (dataptr.srhd->shd_humid > high_thresh->srhd->shd_humid) : 0 ||
+                    low_thresh->srhd->shd_humid_is_valid ?
+                    (dataptr.srhd->shd_humid < low_thresh->srhd->shd_humid) : 0 ?
+                        (low_thresh->srhd->shd_humid_is_valid |
+                         high_thresh->srhd->shd_humid_is_valid):0:0;
+            break;
+        case SENSOR_TYPE_PROXIMITY:
+            /* Falls Through */
+        case SENSOR_TYPE_WEIGHT:
+            /* Falls Through */
+        case SENSOR_TYPE_ALTITUDE:
+            /* Falls Through */
+        case SENSOR_TYPE_NONE:
+            /* Falls Through */
+        default:
+            break;
+    }
+
+    return tx_trigger;
+}
+
+static int
+sensor_generate_trig(struct sensor *sensor,
+                     void *arg, void *data,
+                     sensor_type_t type)
+{
+    struct sensor_type_traits *stt;
+    sensor_data_t low_thresh;
+    sensor_data_t high_thresh;
+    uint8_t tx_trigger;
+
+    stt = sensor_get_type_traits_bytype(type, sensor);
+
+    tx_trigger = 0;
+
+    memcpy(&low_thresh, &stt->stt_low_thresh, sizeof(low_thresh));
+    memcpy(&high_thresh, &stt->stt_high_thresh, sizeof(high_thresh));
+
+    if (stt->stt_algo == SENSOR_THRESH_ALGO_WINDOW) {
+        tx_trigger = sensor_window_cmp(type, &low_thresh,
+                                       &high_thresh, data);
+
+    } else if (stt->stt_algo == SENSOR_THRESH_ALGO_WATERMARK) {
+        tx_trigger = sensor_watermark_cmp(type, &low_thresh,
+                                          &high_thresh, data);
+    }
+
+    return tx_trigger ? sensor_tx_trigger(sensor, (uintptr_t)arg, data, type): 0;
+}
+
+/**
+ * Sensor trigger initialization
+ *
+ * @param ptr to the sensor sturucture
+ * @param sensor type to enable trigger for
+ * @param transport for sending the trigger
+ */
+void
+sensor_trigger_init(struct sensor *sensor, sensor_type_t type,
+                    uint8_t transport)
+{
+    int rc;
+    struct sensor_listener *sensor_trig_lner;
+
+    sensor_trig_lner = malloc(sizeof(struct sensor_listener));
+
+    sensor_trig_lner->sl_func = sensor_generate_trig;
+    sensor_trig_lner->sl_sensor_type = type;
+    sensor_trig_lner->sl_arg = (void *)(uintptr_t)transport;
+
+    rc = sensor_register_listener(sensor, sensor_trig_lner);
+    if (rc) {
+        return;
+    }
+}
+
 /**
  * Read the data for sensor type "type," from the given sensor and
  * return the result into the "value" parameter.
  *
- * @param The senssor to read data from
+ * @param The sensor to read data from
  * @param The type of sensor data to read from the sensor
  * @param The callback to call for data returned from that sensor
  * @param The argument to pass to this callback.
