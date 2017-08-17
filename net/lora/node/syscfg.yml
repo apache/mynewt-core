@@ -32,8 +32,24 @@ syscfg.defs:
                 o 780
                 o 868
                 o 915
-        value: 868
+        value: 915
 
     LORA_NODE_CLI:
         description: "Include shell commands for LoRa operations"
         value: 0
+
+    LORA_APP_NUM_PORTS:
+        description: "The number of unique LoRa application ports"
+        value: 4
+
+    LORA_APP_AUTO_JOIN:
+        description: >
+                Determines if the stack will handle joining or whether the
+                application will handle joining.
+        value: 0
+
+    LORA_MAC_PRIO:
+        description: 'The priority of the LoRa MAC task'
+        type: 'task_priority'
+        value: 0
+

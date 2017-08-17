@@ -25,6 +25,7 @@ Maintainer: Miguel Luis, Gregory Cristian and Wael Guibene
 #include "node/radio.h"
 #include "sx1276.h"
 #include "sx1276-board.h"
+#include "node/lora_priv.h"
 
 /*
  * Local types definition
@@ -179,6 +180,10 @@ const FskBandwidth_t FskBandwidths[] =
     { 250000, 0x01 },
     { 300000, 0x00 }, // Invalid Bandwidth
 };
+
+/*
+ * Private global variables
+ */
 
 /*!
  * Radio callbacks variable
@@ -491,11 +496,9 @@ void SX1276SetRxConfig( RadioModems_t modem, uint32_t bandwidth,
         break;
     case MODEM_LORA:
         {
-            if( bandwidth > 2 )
-            {
-                // Fatal error: When using LoRa modem only bandwidths 125, 250 and 500 kHz are supported
-                while( 1 );
-            }
+            // Fatal error: When using LoRa modem only bandwidths 125, 250 and 500 kHz are supported
+            assert(bandwidth <= 2);
+
             bandwidth += 7;
             SX1276.Settings.LoRa.Bandwidth = bandwidth;
             SX1276.Settings.LoRa.Datarate = datarate;
@@ -509,22 +512,17 @@ void SX1276SetRxConfig( RadioModems_t modem, uint32_t bandwidth,
             SX1276.Settings.LoRa.IqInverted = iqInverted;
             SX1276.Settings.LoRa.RxContinuous = rxContinuous;
 
-            if( datarate > 12 )
-            {
+            /* XXX: why is this done? Why not an error? */
+            if (datarate > 12) {
                 datarate = 12;
-            }
-            else if( datarate < 6 )
-            {
+            } else if (datarate < 6) {
                 datarate = 6;
             }
 
             if( ( ( bandwidth == 7 ) && ( ( datarate == 11 ) || ( datarate == 12 ) ) ) ||
-                ( ( bandwidth == 8 ) && ( datarate == 12 ) ) )
-            {
+                ( ( bandwidth == 8 ) && ( datarate == 12 ) ) ) {
                 SX1276.Settings.LoRa.LowDatarateOptimize = 0x01;
-            }
-            else
-            {
+            } else {
                 SX1276.Settings.LoRa.LowDatarateOptimize = 0x00;
             }
 
@@ -549,18 +547,16 @@ void SX1276SetRxConfig( RadioModems_t modem, uint32_t bandwidth,
                            RFLR_MODEMCONFIG3_LOWDATARATEOPTIMIZE_MASK ) |
                            ( SX1276.Settings.LoRa.LowDatarateOptimize << 3 ) );
 
-            SX1276Write( REG_LR_SYMBTIMEOUTLSB, ( uint8_t )( symbTimeout & 0xFF ) );
+            SX1276Write(REG_LR_SYMBTIMEOUTLSB, (uint8_t)(symbTimeout & 0xFF));
 
             SX1276Write( REG_LR_PREAMBLEMSB, ( uint8_t )( ( preambleLen >> 8 ) & 0xFF ) );
             SX1276Write( REG_LR_PREAMBLELSB, ( uint8_t )( preambleLen & 0xFF ) );
 
-            if( fixLen == 1 )
-            {
+            if (fixLen == 1) {
                 SX1276Write( REG_LR_PAYLOADLENGTH, payloadLen );
             }
 
-            if( SX1276.Settings.LoRa.FreqHopOn == true )
-            {
+            if (SX1276.Settings.LoRa.FreqHopOn == true) {
                 SX1276Write( REG_LR_PLLHOP, ( SX1276Read( REG_LR_PLLHOP ) & RFLR_PLLHOP_FASTHOP_MASK ) | RFLR_PLLHOP_FASTHOP_ON );
                 SX1276Write( REG_LR_HOPPERIOD, SX1276.Settings.LoRa.HopPeriod );
             }
@@ -860,14 +856,14 @@ uint32_t SX1276GetTimeOnAir( RadioModems_t modem, uint8_t pktLen )
             double tmp = ceil( ( 8 * pktLen - 4 * SX1276.Settings.LoRa.Datarate +
                                  28 + 16 * SX1276.Settings.LoRa.CrcOn -
                                  ( SX1276.Settings.LoRa.FixLen ? 20 : 0 ) ) /
-                                 ( double )( 4 * SX1276.Settings.LoRa.Datarate -
-                                 ( ( SX1276.Settings.LoRa.LowDatarateOptimize > 0 ) ? 2 : 0 ) ) ) *
+                                 ( double )( 4 * ( SX1276.Settings.LoRa.Datarate -
+                                 ( ( SX1276.Settings.LoRa.LowDatarateOptimize > 0 ) ? 2 : 0 ) ) ) ) *
                                  ( SX1276.Settings.LoRa.Coderate + 4 );
             double nPayload = 8 + ( ( tmp > 0 ) ? tmp : 0 );
             double tPayload = nPayload * ts;
             // Time on air
             double tOnAir = tPreamble + tPayload;
-            // return us secs
+            // return ms secs
             airTime = floor( tOnAir * 1e3 + 0.999 );
         }
         break;
@@ -1109,13 +1105,12 @@ void SX1276SetRx( uint32_t timeout )
         os_cputime_timer_relative(&RxTimeoutTimer, timeout*1000);
     }
 
-    if( SX1276.Settings.Modem == MODEM_FSK )
-    {
+    if (SX1276.Settings.Modem == MODEM_FSK) {
         SX1276SetOpMode( RF_OPMODE_RECEIVER );
 
         if( rxContinuous == false )
         {
-            rx_timeout_sync_delay = 
+            rx_timeout_sync_delay =
                 ceil((8.0 * (SX1276.Settings.Fsk.PreambleLen +
                              ((SX1276Read(REG_SYNCCONFIG) &
                                 ~RF_SYNCCONFIG_SYNCSIZE_MASK) + 1.0) + 10.0) /
@@ -1123,15 +1118,10 @@ void SX1276SetRx( uint32_t timeout )
             os_cputime_timer_relative(
                 &RxTimeoutSyncWord, rx_timeout_sync_delay*1000);
         }
-    }
-    else
-    {
-        if( rxContinuous == true )
-        {
+    } else {
+        if (rxContinuous == true) {
             SX1276SetOpMode( RFLR_OPMODE_RECEIVER );
-        }
-        else
-        {
+        } else {
             SX1276SetOpMode( RFLR_OPMODE_RECEIVER_SINGLE );
         }
     }
@@ -1139,8 +1129,6 @@ void SX1276SetRx( uint32_t timeout )
 
 void SX1276SetTx( uint32_t timeout )
 {
-    os_cputime_timer_relative(&TxTimeoutTimer, timeout*1000);
-
     switch( SX1276.Settings.Modem )
     {
     case MODEM_FSK:
@@ -1222,7 +1210,7 @@ void SX1276StartCad( void )
                                         );
 
             // DIO3=CADDone
-            SX1276Write( REG_DIOMAPPING1, ( SX1276Read( REG_DIOMAPPING1 ) & RFLR_DIOMAPPING1_DIO0_MASK ) | RFLR_DIOMAPPING1_DIO0_00 );
+            SX1276Write( REG_DIOMAPPING1, ( SX1276Read( REG_DIOMAPPING1 ) & RFLR_DIOMAPPING1_DIO3_MASK ) | RFLR_DIOMAPPING1_DIO3_00 );
 
             SX1276.Settings.State = RF_CAD;
             SX1276SetOpMode( RFLR_OPMODE_CAD );
@@ -1394,6 +1382,22 @@ void SX1276SetMaxPayloadLength( RadioModems_t modem, uint8_t max )
     }
 }
 
+void SX1276SetPublicNetwork( bool enable )
+{
+    SX1276SetModem( MODEM_LORA );
+    SX1276.Settings.LoRa.PublicNetwork = enable;
+    if( enable == true )
+    {
+        // Change LoRa modem SyncWord
+        SX1276Write( REG_LR_SYNCWORD, LORA_MAC_PUBLIC_SYNCWORD );
+    }
+    else
+    {
+        // Change LoRa modem SyncWord
+        SX1276Write( REG_LR_SYNCWORD, LORA_MAC_PRIVATE_SYNCWORD );
+    }
+}
+
 void SX1276OnTimeoutIrq(void *unused)
 {
     switch( SX1276.Settings.State )
@@ -1426,6 +1430,7 @@ void SX1276OnTimeoutIrq(void *unused)
                 os_cputime_timer_stop(&RxTimeoutSyncWord);
             }
         }
+        lora_node_log(LORA_NODE_LOG_RADIO_TIMEOUT_IRQ, 0, 0, 0);
         SX1276RxTimeout( );
         break;
     case RF_TX_RUNNING:
@@ -1589,6 +1594,7 @@ void SX1276OnDio0Irq(void *unused)
                     }
 
                     SX1276.Settings.LoRaPacketHandler.Size = SX1276Read( REG_LR_RXNBBYTES );
+                    SX1276Write( REG_LR_FIFOADDRPTR, SX1276Read( REG_LR_FIFORXCURRENTADDR ) );
                     SX1276ReadFifo( RxTxBuffer, SX1276.Settings.LoRaPacketHandler.Size );
 
                     if( SX1276.Settings.LoRa.RxContinuous == false )
@@ -1661,6 +1667,8 @@ void SX1276OnDio1Irq(void *unused)
             case MODEM_LORA:
                 // Sync time out
                 os_cputime_timer_stop(&RxTimeoutTimer);
+                lora_node_log(LORA_NODE_LOG_RX_SYNC_TIMEOUT, 0, 0, 0);
+                SX1276Write( REG_LR_IRQFLAGS, RFLR_IRQFLAGS_RXTIMEOUT );
                 SX1276.Settings.State = RF_IDLE;
                 SX1276RxTimeout( );
                 break;
