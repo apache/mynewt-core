@@ -51,9 +51,7 @@ struct os_task g_lora_mac_task;
 os_stack_t g_lora_mac_stack[LORA_MAC_STACK_SIZE];
 
 /*
- * Global Link Layer data object. There is only one Link Layer data object
- * per controller although there may be many instances of the link layer state
- * machine running.
+ * Lora MAC data object
  */
 struct lora_mac_obj
 {
@@ -551,7 +549,6 @@ lora_mac_join_event(struct os_event *ev)
         break;
     }
 
-    /* If status is OK */
     if (status != LORAMAC_EVENT_INFO_STATUS_OK) {
         if (lora_join_cb_func) {
             lora_join_cb_func(status, 0);

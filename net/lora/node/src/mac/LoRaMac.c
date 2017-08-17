@@ -642,10 +642,21 @@ static uint8_t RxSlot = 0;
  */
 LoRaMacFlags_t LoRaMacFlags;
 
+/* Radio events */
+struct os_event g_lora_mac_radio_tx_timeout_event;
+struct os_event g_lora_mac_radio_tx_event;
+struct os_event g_lora_mac_radio_rx_event;
+struct os_event g_lora_mac_radio_rx_err_event;
+struct os_event g_lora_mac_radio_rx_timeout_event;
+
 /*!
  * \brief Function to be executed on Radio Tx Done event
  */
-static void OnRadioTxDone(void);
+static void
+OnRadioTxDone(void)
+{
+    os_eventq_put(lora_node_mac_evq_get(), &g_lora_mac_radio_tx_event);
+}
 
 /*!
  * \brief This function prepares the MAC to abort the execution of function
@@ -656,22 +667,45 @@ static void PrepareRxDoneAbort( void );
 /*!
  * \brief Function to be executed on Radio Rx Done event
  */
-static void OnRadioRxDone( uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr );
+static void
+OnRadioRxDone(uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr)
+{
+    lora_node_log(LORA_NODE_LOG_RX_DONE, Channel, size, 0);
+    os_eventq_put(lora_node_mac_evq_get(), &g_lora_mac_radio_rx_event);
+
+    /* The ISR fills out the payload pointer, size, rssi and snr of rx pdu */
+    McpsIndication.Rssi = rssi;
+    McpsIndication.Snr = snr;
+    McpsIndication.Buffer = payload;
+    McpsIndication.BufferSize = size;
+}
 
 /*!
  * \brief Function executed on Radio Tx Timeout event
  */
-static void OnRadioTxTimeout( void );
+static void
+OnRadioTxTimeout(void)
+{
+    os_eventq_put(lora_node_mac_evq_get(), &g_lora_mac_radio_tx_timeout_event);
+}
 
 /*!
  * \brief Function executed on Radio Rx error event
  */
-static void OnRadioRxError( void );
+static void
+OnRadioRxError(void)
+{
+    os_eventq_put(lora_node_mac_evq_get(), &g_lora_mac_radio_rx_err_event);
+}
 
 /*!
  * \brief Function executed on Radio Rx Timeout event
  */
-static void OnRadioRxTimeout( void );
+static void
+OnRadioRxTimeout(void)
+{
+    os_eventq_put(lora_node_mac_evq_get(), &g_lora_mac_radio_rx_timeout_event);
+}
 
 /*!
  * \brief Function executed on Resend Frame timer event.
@@ -964,7 +998,8 @@ LoRaMacStatus_t SetTxContinuousWave(uint16_t timeout);
  */
 static void ResetMacParameters(void);
 
-static void OnRadioTxDone(void)
+static void
+lora_mac_process_radio_tx(struct os_event *ev)
 {
     uint32_t curTime = os_cputime_get32();
 
@@ -1035,11 +1070,13 @@ static void PrepareRxDoneAbort( void )
     os_callout_reset(&g_mac_state_chk_timer, 1);
 }
 
-static void OnRadioRxDone( uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr )
+static void
+lora_mac_process_radio_rx(struct os_event *ev)
 {
     LoRaMacHeader_t macHdr;
     LoRaMacFrameCtrl_t fCtrl;
     bool skipIndication = false;
+    int8_t snr;
 
     uint8_t pktHeaderLen = 0;
     uint32_t address = 0;
@@ -1060,21 +1097,25 @@ static void OnRadioRxDone( uint8_t *payload, uint16_t size, int16_t rssi, int8_t
 
     uint8_t multicast = 0;
 
+    uint8_t *payload;
+    uint16_t size;
+
     bool isMicOk = false;
 
     McpsConfirm.AckReceived = false;
-    McpsIndication.Rssi = rssi;
-    McpsIndication.Snr = snr;
     McpsIndication.RxSlot = RxSlot;
     McpsIndication.Port = 0;
     McpsIndication.Multicast = 0;
     McpsIndication.FramePending = 0;
-    McpsIndication.Buffer = NULL;
-    McpsIndication.BufferSize = 0;
     McpsIndication.RxData = false;
     McpsIndication.AckReceived = false;
     McpsIndication.DownLinkCounter = 0;
     McpsIndication.McpsIndication = MCPS_UNCONFIRMED;
+
+    /* The ISR fills out the payload pointer, size, rssi and snr of rx pdu */
+    snr = McpsIndication.Snr;
+    payload = McpsIndication.Buffer;
+    size = McpsIndication.BufferSize;
 
     if( LoRaMacDeviceClass != CLASS_C )
     {
@@ -1431,7 +1472,8 @@ static void OnRadioRxDone( uint8_t *payload, uint16_t size, int16_t rssi, int8_t
     os_callout_reset(&g_mac_state_chk_timer, 1);
 }
 
-static void OnRadioTxTimeout( void )
+static void
+lora_mac_process_radio_tx_timeout(struct os_event *ev)
 {
     if( LoRaMacDeviceClass != CLASS_C )
     {
@@ -1447,7 +1489,8 @@ static void OnRadioTxTimeout( void )
     LoRaMacFlags.Bits.MacDone = 1;
 }
 
-static void OnRadioRxError( void )
+static void
+lora_mac_process_radio_rx_err(struct os_event *ev)
 {
     if( LoRaMacDeviceClass != CLASS_C )
     {
@@ -1469,7 +1512,8 @@ static void OnRadioRxError( void )
     }
 }
 
-static void OnRadioRxTimeout( void )
+static void
+lora_mac_process_radio_rx_timeout(struct os_event *ev)
 {
     lora_node_log(LORA_NODE_LOG_RX_TIMEOUT, Channel, 0, 0);
 
@@ -3464,6 +3508,13 @@ LoRaMacStatus_t LoRaMacInitialization( LoRaMacPrimitives_t *primitives, LoRaMacC
     os_cputime_timer_init(&RxWindowTimer1, OnRxWindow1TimerEvent, NULL);
     os_cputime_timer_init(&RxWindowTimer2, OnRxWindow2TimerEvent, NULL);
     os_cputime_timer_init(&AckTimeoutTimer, OnAckTimeoutTimerEvent, NULL);
+
+    /* Init MAC radio events */
+    g_lora_mac_radio_tx_timeout_event.ev_cb = lora_mac_process_radio_tx_timeout;
+    g_lora_mac_radio_tx_event.ev_cb = lora_mac_process_radio_tx;
+    g_lora_mac_radio_rx_event.ev_cb = lora_mac_process_radio_rx;
+    g_lora_mac_radio_rx_timeout_event.ev_cb = lora_mac_process_radio_rx_timeout;
+    g_lora_mac_radio_rx_err_event.ev_cb = lora_mac_process_radio_rx_err;
 
     // Initialize Radio driver
     RadioEvents.TxDone = OnRadioTxDone;

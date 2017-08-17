@@ -908,7 +908,7 @@ typedef struct sMcpsIndication
     /*!
      * Size of the received data stream
      */
-    uint8_t BufferSize;
+    uint16_t BufferSize;
     /*!
      * Indicates, if data is available
      */
