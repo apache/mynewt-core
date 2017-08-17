@@ -2231,9 +2231,6 @@ cmd_show_coc(int argc, char **argv)
 
     for (i = 0; i < bletiny_num_conns; i++) {
         conn = bletiny_conns + i;
-        if (!conn) {
-            break;
-        }
 
         if (SLIST_EMPTY(&conn->coc_list)) {
             continue;
