@@ -92,7 +92,7 @@ syscfg.defs:
 
     PWM_0:
         description: 'NRF52 PWM 0'
-        value: 1
+        value: 0
 
     PWM_1:
         description: 'NRF52 PWM 1'
@@ -104,7 +104,7 @@ syscfg.defs:
 
     PWM:
         description: 'NRF52 PWM'
-        value: 1
+        value: 0
 
 syscfg.defs.BLE_LP_CLOCK:
     TIMER_0:
