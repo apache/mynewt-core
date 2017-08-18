@@ -27,6 +27,7 @@ extern "C" {
 #endif
 
 struct pwm_dev;
+struct pwm_chan_cfg;
 
 /**
  * Configure a channel on the PWM device.
@@ -37,7 +38,9 @@ struct pwm_dev;
  *
  * @return 0 on success, non-zero error code on failure.
  */
-typedef int (*pwm_configure_channel_func_t)(struct pwm_dev *, uint8_t, void *);
+typedef int (*pwm_configure_channel_func_t)(struct pwm_dev *,
+                                            uint8_t,
+                                            struct pwm_chan_cfg *);
 
  /**
  * Enable the PWM with specified duty cycle.
@@ -113,7 +116,13 @@ struct pwm_dev {
     int pwm_instance_id;
 };
 
-int pwm_chan_config(struct pwm_dev *dev, uint8_t cnum, void *data);
+struct pwm_chan_cfg {
+    uint8_t pin;
+    bool inverted;
+    void* data;
+};
+
+int pwm_chan_config(struct pwm_dev *dev, uint8_t cnum, struct pwm_chan_cfg *cfg);
 int pwm_enable_duty_cycle(struct pwm_dev *pwm_d, uint8_t cnum, uint16_t fraction);
 int pwm_set_frequency(struct pwm_dev *dev, uint32_t freq_hz);
 int pwm_get_clock_freq(struct pwm_dev *dev);

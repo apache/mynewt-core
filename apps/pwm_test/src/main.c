@@ -20,7 +20,6 @@
 #include "sysinit/sysinit.h"
 #include <os/os.h>
 #include <pwm/pwm.h>
-#include <pwm_nrf52/pwm_nrf52.h>
 #include <bsp/bsp.h>
 
 struct pwm_dev *pwm;
@@ -29,9 +28,10 @@ static int value = 10000;
 int
 main(int argc, char **argv)
 {
-    struct nrf52_pwm_chan_cfg chan_conf = {
+    struct pwm_chan_cfg chan_conf = {
         .pin = LED_1,
-        .inverted = true
+        .inverted = true,
+        .data = NULL
     };
 
     sysinit();
