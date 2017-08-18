@@ -115,4 +115,18 @@ hal_system_clock_start(void)
         }
     }
 #endif
+#if MYNEWT_VAL(XTAL_RC)
+    NRF_CLOCK->TASKS_LFCLKSTOP = 1;
+    NRF_CLOCK->EVENTS_LFCLKSTARTED = 0;
+    NRF_CLOCK->LFCLKSRC = CLOCK_LFCLKSRC_SRC_RC;
+    NRF_CLOCK->TASKS_LFCLKSTART = 1;
+    while (1) {
+        if (NRF_CLOCK->EVENTS_LFCLKSTARTED) {
+            mask = CLOCK_LFCLKSTAT_STATE_Msk | CLOCK_LFCLKSRC_SRC_RC;
+            if ((NRF_CLOCK->LFCLKSTAT & mask) == mask) {
+                break;
+            }
+        }
+    }
+#endif
 }
