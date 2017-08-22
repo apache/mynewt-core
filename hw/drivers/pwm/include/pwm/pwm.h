@@ -34,7 +34,7 @@ struct pwm_chan_cfg;
  *
  * @param dev The device to configure.
  * @param cnum The channel number to configure.
- * @param data Driver specific configuration data for this channel.
+ * @param cfg Configuration data for this channel.
  *
  * @return 0 on success, non-zero error code on failure.
  */
@@ -116,6 +116,13 @@ struct pwm_dev {
     int pwm_instance_id;
 };
 
+/**
+ * PWM channel configuration data.
+ *
+ * pin - The pin to be assigned to this pwm channel.
+ * inverted - Whether this channel's output polarity is inverted or not.
+ * data - A pointer do a driver specific parameter.
+ */
 struct pwm_chan_cfg {
     uint8_t pin;
     bool inverted;

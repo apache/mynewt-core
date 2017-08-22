@@ -27,7 +27,7 @@
  *
  * @param dev The device to configure.
  * @param cnum The channel number to configure.
- * @param data Driver specific configuration data for this channel.
+ * @param cfg Configuration data for this channel.
  *
  * @return 0 on success, non-zero error code on failure.
  */
