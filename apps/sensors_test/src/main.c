@@ -496,8 +496,9 @@ main(int argc, char **argv)
     stt.stt_sensor_type = SENSOR_TYPE_ACCELEROMETER;
     stt.stt_low_thresh = &sad_low;
     stt.stt_high_thresh = &sad_high;
+    stt.stt_algo = SENSOR_THRESH_ALGO_WATERMARK;
 
-    sensor_set_window_thresh("lis2dh12_0", &stt);
+    sensor_set_thresh("lis2dh12_0", &stt);
 
     sensor_set_poll_rate_ms("lis2dh12_0", 500);
 

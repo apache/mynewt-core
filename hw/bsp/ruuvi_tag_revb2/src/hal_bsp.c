@@ -99,7 +99,9 @@ static const struct sensor_itf spi_0_itf_bme = {
 static const struct sensor_itf spi_0_itf_lis = {
     .si_type = SENSOR_ITF_SPI,
     .si_num = 0,
-    .si_cs_pin = 8
+    .si_cs_pin = 8,
+    .si_low_pin = 2,
+    .si_high_pin = 6
 };
 #endif
 #endif

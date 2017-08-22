@@ -57,22 +57,6 @@ struct sensor_read_ctx {
     void *user_arg;
 };
 
-typedef union {
-    struct sensor_mag_data   *smd;
-    struct sensor_accel_data *sad;
-    struct sensor_euler_data *sed;
-    struct sensor_quat_data  *sqd;
-    struct sensor_accel_data *slad;
-    struct sensor_accel_data *sgrd;
-    struct sensor_gyro_data  *sgd;
-    struct sensor_temp_data  *std;
-    struct sensor_temp_data  *satd;
-    struct sensor_light_data *sld;
-    struct sensor_color_data *scd;
-    struct sensor_press_data *spd;
-    struct sensor_humid_data *srhd;
-}sensor_data_t;
-
 struct sensor_timestamp sensor_base_ts;
 struct os_callout st_up_osco;
 
@@ -811,7 +795,7 @@ err:
 }
 
 /**
- * Set the windowed thresholds for a sensor
+ * Set the thresholds along with comparison algo for a sensor
  *
  * @param name of the sensor
  * @param Ptr to sensor threshold
@@ -819,13 +803,14 @@ err:
  * @return 0 on success, non-zero on failure
  */
 int
-sensor_set_window_thresh(char *devname, struct sensor_type_traits *stt)
+sensor_set_thresh(char *devname, struct sensor_type_traits *stt)
 {
     struct sensor_type_traits *stt_tmp;
     struct sensor *sensor;
     int rc;
 
-    sensor = sensor_get_type_traits_byname(devname, &stt_tmp, stt->stt_sensor_type);
+    sensor = sensor_get_type_traits_byname(devname, &stt_tmp,
+                                           stt->stt_sensor_type);
     if (!sensor) {
         rc = SYS_EINVAL;
         goto err;
@@ -834,60 +819,31 @@ sensor_set_window_thresh(char *devname, struct sensor_type_traits *stt)
     if (!stt_tmp && stt) {
         sensor_lock(sensor);
         SLIST_INSERT_HEAD(&sensor->s_type_traits_list, stt, stt_next);
-        stt->stt_algo = SENSOR_THRESH_ALGO_WINDOW;
+        stt_tmp = stt;
         sensor_unlock(sensor);
     } else if (stt_tmp) {
         sensor_lock(sensor);
         stt_tmp->stt_low_thresh = stt->stt_low_thresh;
         stt_tmp->stt_high_thresh = stt->stt_high_thresh;
-        stt_tmp->stt_algo = SENSOR_THRESH_ALGO_WINDOW;
+        stt_tmp->stt_algo = stt->stt_algo;
         sensor_unlock(sensor);
     } else {
         rc = SYS_EINVAL;
         goto err;
     }
 
-    return 0;
-err:
-    return rc;
-}
-
-/**
- * Set the watermark thresholds for a sensor
- *
- * @param name of the sensor
- * @param Ptr to sensor threshold
- *
- * @return 0 on success, non-zero on failure
- */
-int
-sensor_set_watermark_thresh(char *devname, struct sensor_type_traits *stt)
-{
-    struct sensor_type_traits *stt_tmp;
-    struct sensor *sensor;
-    int rc;
-
-    sensor = sensor_get_type_traits_byname(devname, &stt_tmp, stt->stt_sensor_type);
-    if (!stt_tmp && stt) {
-        sensor_lock(sensor);
-        SLIST_INSERT_HEAD(&sensor->s_type_traits_list, stt, stt_next);
-        stt->stt_algo = SENSOR_THRESH_ALGO_WATERMARK;
-        sensor_unlock(sensor);
-    } else if (stt_tmp) {
-        sensor_lock(sensor);
-        stt_tmp->stt_low_thresh = stt->stt_low_thresh;
-        stt_tmp->stt_high_thresh = stt->stt_high_thresh;
-        stt_tmp->stt_algo = SENSOR_THRESH_ALGO_WATERMARK;
-        sensor_unlock(sensor);
-    } else {
-        goto err;
+    if (sensor->s_funcs->sd_set_trigger_thresh) {
+        rc = sensor->s_funcs->sd_set_trigger_thresh(sensor, stt_tmp->stt_sensor_type,
+                                                    stt_tmp);
+        if (rc) {
+            goto err;
+        }
     }
 
     return 0;
 err:
     return rc;
 }
-
 
 static int
 sensor_window_cmp(sensor_type_t type, sensor_data_t *low_thresh,

@@ -256,9 +256,24 @@ typedef int (*sensor_read_func_t)(struct sensor *, sensor_type_t,
 typedef int (*sensor_get_config_func_t)(struct sensor *, sensor_type_t,
         struct sensor_cfg *);
 
+/**
+ * Set the trigger and threshold values for a specific sensor for the sensor
+ * type.
+ *
+ * @param ptr to the sensor
+ * @param type of sensor
+ * @param low threshold
+ * @param high threshold
+ *
+ * @return 0 on success, non-zero error code on failure.
+ */
+typedef int (*sensor_set_trigger_thresh_t)(struct sensor *, sensor_type_t,
+                                           struct sensor_type_traits *stt);
+
 struct sensor_driver {
     sensor_read_func_t sd_read;
     sensor_get_config_func_t sd_get_config;
+    sensor_set_trigger_thresh_t sd_set_trigger_thresh;
 };
 
 struct sensor_timestamp {
@@ -280,7 +295,29 @@ struct sensor_itf {
 
     /* Sensor address */
     uint16_t si_addr;
+
+    /* Sensor interface low int pin */
+    uint8_t si_low_pin;
+
+    /* Sensor interface high int pin */
+    uint8_t si_high_pin;
 };
+
+typedef union {
+    struct sensor_mag_data   *smd;
+    struct sensor_accel_data *sad;
+    struct sensor_euler_data *sed;
+    struct sensor_quat_data  *sqd;
+    struct sensor_accel_data *slad;
+    struct sensor_accel_data *sgrd;
+    struct sensor_gyro_data  *sgd;
+    struct sensor_temp_data  *std;
+    struct sensor_temp_data  *satd;
+    struct sensor_light_data *sld;
+    struct sensor_color_data *scd;
+    struct sensor_press_data *spd;
+    struct sensor_humid_data *srhd;
+}sensor_data_t;
 
 /*
  * Return the OS device structure corresponding to this sensor
@@ -594,7 +631,7 @@ sensor_get_type_traits_byname(char *, struct sensor_type_traits **,
                               sensor_type_t);
 
 /**
- * Set the windowed thresholds for a sensor
+ * Set the thresholds along with the comparison algo for a sensor
  *
  * @param name of the sensor
  * @param Ptr to sensor type traits containing thresholds
@@ -602,7 +639,7 @@ sensor_get_type_traits_byname(char *, struct sensor_type_traits **,
  * @return 0 on success, non-zero on failure
  */
 int
-sensor_set_window_thresh(char *, struct sensor_type_traits *);
+sensor_set_thresh(char *, struct sensor_type_traits *);
 
 /**
  * Set the watermark thresholds for a sensor
