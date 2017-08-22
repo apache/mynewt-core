@@ -55,7 +55,7 @@ run_evq_get(void)
 void
 run_evq_set(struct os_eventq *evq)
 {
-    os_eventq_designate(&run_evq, evq, NULL);
+    run_evq = evq;
 }
 
 /*

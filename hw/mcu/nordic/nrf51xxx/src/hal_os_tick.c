@@ -27,11 +27,11 @@
 #include <mcu/nrf51_hal.h>
 
 /* Must have external 32.768 crystal or used synthesized */
-#if (MYNEWT_VAL(XTAL_32768) == 1) && (MYNEWT_VAL(XTAL_32768_SYNTH) == 1)
+#if (MYNEWT_VAL(XTAL_32768) == 1) && (MYNEWT_VAL(XTAL_32768_SYNTH) == 1) && (MYNEWT_VAL(XTAL_RC) == 1)
 #error "Cannot configure both external and synthesized 32.768 xtal sources"
 #endif
 
-#if (MYNEWT_VAL(XTAL_32768) == 0) && (MYNEWT_VAL(XTAL_32768_SYNTH) == 0)
+#if (MYNEWT_VAL(XTAL_32768) == 0) && (MYNEWT_VAL(XTAL_32768_SYNTH) == 0) && (MYNEWT_VAL(XTAL_RC) == 0)
 #error "Must configure either external or synthesized 32.768 xtal source"
 #endif
 

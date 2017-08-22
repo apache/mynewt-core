@@ -1,3 +1,4 @@
+#
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -5,7 +6,7 @@
 # to you under the Apache License, Version 2.0 (the
 # "License"); you may not use this file except in compliance
 # with the License.  You may obtain a copy of the License at
-#
+# 
 #  http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing,
@@ -16,31 +17,18 @@
 # under the License.
 #
 
-# Package: hw/sensor
+pkg.name: apps/lora_app_shell
+pkg.type: app
+pkg.description: "Example application which uses a variety of lora app eatures."
+pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
+pkg.homepage: "http://mynewt.apache.org/"
+pkg.keywords:
 
-syscfg.defs:
-    SENSOR_MGR_WAKEUP_RATE:
-        description: 'The default wakeup rate of the sensor manager in ms'
-        value: 2000
-
-    SENSOR_CLI:
-        description: 'Whether or not to enable the sensor shell support'
-        value: 1
-
-    SENSOR_OIC:
-        description: 'Enable/Disable the OIC sensor server'
-        value: 1
-        restrictions:
-            - OC_SERVER
-
-    MATHLIB_SUPPORT:
-        description: 'Is MATHLIB support present'
-        value: 0
-
-    SENSOR_OIC_OBS_RATE:
-        description: 'Set OIC server observation rate in milli seconds'
-        value: 1000
-
-    SENSOR_MGR_EVQ:
-        description: 'Specify the eventq to be used by sensor mgr'
-        value:
+pkg.deps:
+    - "@apache-mynewt-core/kernel/os"
+    - "@apache-mynewt-core/net/lora/node"
+    - "@apache-mynewt-core/sys/console/full"
+    - "@apache-mynewt-core/sys/log/full"
+    - "@apache-mynewt-core/sys/shell"
+    - "@apache-mynewt-core/sys/stats/full"
+    - "@apache-mynewt-core/util/parse"

@@ -62,7 +62,7 @@ mgmt_evq_get(void)
 void
 mgmt_evq_set(struct os_eventq *evq)
 {
-    os_eventq_designate(&omgr_state.os_evq, evq, &omgr_state.os_event);
+    omgr_state.os_evq = evq;
 }
 
 static int
@@ -295,6 +295,13 @@ oicmgr_init(void)
     }
 
     mgmt_evq_set(os_eventq_dflt_get());
+
+    /* Enqueue the start event to the default event queue.  Using the default
+     * queue ensures the event won't run until the end of main().  This allows
+     * the application to configure this package in the meantime.
+     */
+    os_eventq_put(os_eventq_dflt_get(), &omgr_state.os_event);
+
     return (0);
 err:
     return (rc);

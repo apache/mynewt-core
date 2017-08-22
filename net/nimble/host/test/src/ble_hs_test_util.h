@@ -32,7 +32,6 @@ struct ble_l2cap_chan;
 struct hci_disconn_complete;
 struct hci_create_conn;
 
-extern struct os_eventq ble_hs_test_util_evq;
 extern const struct ble_gap_adv_params ble_hs_test_util_adv_params;
 
 struct ble_hs_test_util_num_completed_pkts_entry {
@@ -294,6 +293,9 @@ void ble_hs_test_util_post_test(void *arg);
 int ble_hs_test_util_num_cccds(void);
 int ble_hs_test_util_num_our_secs(void);
 int ble_hs_test_util_num_peer_secs(void);
+void ble_hs_test_util_reg_svcs(const struct ble_gatt_svc_def *svcs,
+                               ble_gatt_register_fn *reg_cb,
+                               void *cb_arg);
 void ble_hs_test_util_init_no_start(void);
 void ble_hs_test_util_init(void);
 

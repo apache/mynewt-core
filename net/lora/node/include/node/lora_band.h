@@ -17,25 +17,26 @@
  * under the License.
  */
 
-#include <inttypes.h>
-#include <string.h>
+#ifndef H_LORA_BAND_
+#define H_LORA_BAND_
 
-#include "hal/hal_bsp.h"
+#include "syscfg/syscfg.h"
 
-#ifndef min
-#define min(a, b) ((a)<(b)?(a):(b))
+#if   MYNEWT_VAL(LORA_NODE_FREQ_BAND) == 433
+#define USE_BAND_433
+
+#elif MYNEWT_VAL(LORA_NODE_FREQ_BAND) == 470
+#define USE_BAND_470
+
+#elif MYNEWT_VAL(LORA_NODE_FREQ_BAND) == 780
+#define USE_BAND_780
+
+#elif MYNEWT_VAL(LORA_NODE_FREQ_BAND) == 868
+#define USE_BAND_868
+
+#elif MYNEWT_VAL(LORA_NODE_FREQ_BAND) == 915
+#define USE_BAND_915
+
 #endif
 
-/*
- * This can be used as the unique hardware identifier for the platform, as
- * it's supposed to be unique for this particular MCU.
- */
-int
-hal_bsp_hw_id(uint8_t *id, int max_len)
-{
-    if (max_len > HAL_BSP_MAX_ID_LEN) {
-        max_len = HAL_BSP_MAX_ID_LEN;
-    }
-    memset(id, 0x42, max_len);
-    return max_len;
-}
+#endif

@@ -1,3 +1,4 @@
+#
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -16,31 +17,9 @@
 # under the License.
 #
 
-# Package: hw/sensor
-
-syscfg.defs:
-    SENSOR_MGR_WAKEUP_RATE:
-        description: 'The default wakeup rate of the sensor manager in ms'
-        value: 2000
-
-    SENSOR_CLI:
-        description: 'Whether or not to enable the sensor shell support'
-        value: 1
-
-    SENSOR_OIC:
-        description: 'Enable/Disable the OIC sensor server'
-        value: 1
-        restrictions:
-            - OC_SERVER
-
-    MATHLIB_SUPPORT:
-        description: 'Is MATHLIB support present'
-        value: 0
-
-    SENSOR_OIC_OBS_RATE:
-        description: 'Set OIC server observation rate in milli seconds'
-        value: 1000
-
-    SENSOR_MGR_EVQ:
-        description: 'Specify the eventq to be used by sensor mgr'
-        value:
+syscfg.vals:
+    STATS_CLI: 1
+    STATS_NAMES: 1
+    SHELL_TASK: 1
+    LORA_NODE_CLI: 0
+    SHELL_MAX_COMPAT_COMMANDS: 16
