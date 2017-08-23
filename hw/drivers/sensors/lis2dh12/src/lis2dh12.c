@@ -32,6 +32,7 @@
 #include "lis2dh12/lis2dh12.h"
 #include "lis2dh12_priv.h"
 #include "hal/hal_gpio.h"
+#include "console/console.h"
 
 static struct hal_spi_settings spi_lis2dh12_settings = {
     .data_order = HAL_SPI_MSB_FIRST,
@@ -551,7 +552,7 @@ err:
 void
 lis2dh12_calc_acc_ms2(int16_t acc_mg, float *acc_ms2)
 {
-    *acc_ms2 = acc_mg * STANDARD_ACCEL_GRAVITY;
+    *acc_ms2 = (acc_mg * STANDARD_ACCEL_GRAVITY)/1000;
 }
 
 /**
@@ -563,7 +564,7 @@ lis2dh12_calc_acc_ms2(int16_t acc_mg, float *acc_ms2)
 void
 lis2dh12_calc_acc_mg(float acc_ms2, int16_t *acc_mg)
 {
-    *acc_mg = acc_ms2/STANDARD_ACCEL_GRAVITY;
+    *acc_mg = (acc_ms2 * 1000)/STANDARD_ACCEL_GRAVITY;
 }
 
 /**
@@ -644,6 +645,59 @@ err:
 }
 
 /**
+ * Set FIFO mode
+ *
+ * @param the sensor interface
+ * @param mode
+ * @return 0 on success, non-zero on failure
+ */
+int
+lis2dh12_set_fifo_mode(struct sensor_itf *itf, uint8_t mode)
+{
+    int rc;
+    uint8_t reg;
+
+    rc = lis2dh12_readlen(itf, LIS2DH12_REG_CTRL_REG5, &reg, 1);
+    if (rc) {
+        goto err;
+    }
+
+    reg |= LIS2DH12_CTRL_REG5_FIFO_EN;
+
+    rc = lis2dh12_writelen(itf, LIS2DH12_REG_CTRL_REG5, &reg, 1);
+    if (rc) {
+        goto err;
+    }
+
+    rc = lis2dh12_readlen(itf, LIS2DH12_REG_FIFO_CTRL_REG, &reg, 1);
+    if (rc) {
+        goto err;
+    }
+
+    reg |= mode;
+
+    rc = lis2dh12_writelen(itf, LIS2DH12_REG_FIFO_CTRL_REG, &reg, 1);
+    if (rc) {
+        goto err;
+    }
+
+    rc = lis2dh12_readlen(itf, LIS2DH12_REG_FIFO_SRC_REG, &reg, 1);
+    if (rc) {
+        goto err;
+    }
+
+    if (mode == LIS2DH12_FIFO_M_BYPASS && reg != 0x20) {
+        console_printf("Bypass mode not set\n");
+        rc = SYS_EINVAL;
+        goto err;
+    }
+
+    return 0;
+err:
+    return rc;
+}
+
+/**
  *
  * Get operating mode
  *
@@ -678,6 +732,19 @@ lis2dh12_get_op_mode(struct sensor_itf *itf, uint8_t *mode)
     return 0;
 err:
     return rc;
+}
+
+/**
+ * Set high pass filter cfg
+ *
+ * @param the sensor interface
+ * @param filter register settings
+ * @return 0 on success, non-zero on failure
+ */
+int
+lis2dh12_hpf_cfg(struct sensor_itf *itf, uint8_t reg)
+{
+    return lis2dh12_writelen(itf, LIS2DH12_REG_CTRL_REG2, &reg, 1);
 }
 
 /**
@@ -1094,6 +1161,62 @@ lis2dh12_enable_int2(struct sensor_itf *itf, uint8_t *reg)
 }
 
 /**
+ * Latch interrupt 1
+ *
+ * @param the sensor interface
+ */
+int
+lis2dh12_latch_int1(struct sensor_itf *itf)
+{
+    uint8_t reg;
+    int rc;
+
+    rc = lis2dh12_readlen(itf, LIS2DH12_REG_CTRL_REG5, &reg, 1);
+    if (rc) {
+        goto err;
+    }
+
+    reg |= LIS2DH12_CTRL_REG5_LIR_INT1;
+
+    rc = lis2dh12_writelen(itf, LIS2DH12_REG_CTRL_REG5, &reg, 1);
+    if (rc) {
+        goto err;
+    }
+
+    return 0;
+err:
+    return rc;
+}
+
+/**
+ * Latch interrupt 2
+ *
+ * @param the sensor interface
+ */
+int
+lis2dh12_latch_int2(struct sensor_itf *itf)
+{
+    uint8_t reg;
+    int rc;
+
+    rc = lis2dh12_readlen(itf, LIS2DH12_REG_CTRL_REG5, &reg, 1);
+    if (rc) {
+        goto err;
+    }
+
+    reg |= LIS2DH12_CTRL_REG5_LIR_INT2;
+
+    rc = lis2dh12_writelen(itf, LIS2DH12_REG_CTRL_REG5, &reg, 1);
+    if (rc) {
+        goto err;
+    }
+
+    return 0;
+err:
+    return rc;
+}
+
+/**
  * Set interrupt pin configuration for interrupt 1
  *
  * @param the sensor interface
@@ -1165,24 +1288,34 @@ lis2dh12_enable_int1(struct sensor_itf *itf, uint8_t *reg)
  * @param arg
  */
 static void
-lis2dh12_low_irq_handler(void *arg)
+lis2dh12_low_int1_irq_handler(void *arg)
 {
     struct sensor *sensor = arg;
+    struct sensor_itf *itf;
+
+    itf = SENSOR_GET_ITF(sensor);
 
     lis2dh12_sensor_read(sensor, sensor->s_mask, NULL, NULL, OS_TIMEOUT_NEVER);
+
+    lis2dh12_clear_int1(itf);
 }
 
 /**
- * IRQ handler for int1 for high threshold
+ * IRQ handler for int2 for high threshold
  *
  * @param arg
  */
 static void
-lis2dh12_high_irq_handler(void *arg)
+lis2dh12_high_int2_irq_handler(void *arg)
 {
     struct sensor *sensor = arg;
+    struct sensor_itf *itf;
+
+    itf = SENSOR_GET_ITF(sensor);
 
     lis2dh12_sensor_read(sensor, sensor->s_mask, NULL, NULL, OS_TIMEOUT_NEVER);
+
+    lis2dh12_clear_int2(itf);
 }
 
 /* Set the trigger threshold values and enable interrupts
@@ -1270,20 +1403,23 @@ lis2dh12_sensor_set_trigger_thresh(struct sensor *sensor,
             goto err;
         }
 
-        rc = lis2dh12_set_int1_duration(itf, 10);
+        rc = lis2dh12_set_int1_duration(itf, 3);
         if (rc) {
             goto err;
         }
 
-        hal_gpio_irq_init(itf->si_low_pin, lis2dh12_low_irq_handler, sensor,
-                          HAL_GPIO_TRIG_RISING, HAL_GPIO_PULL_NONE);
+        rc = lis2dh12_latch_int1(itf);
         if (rc) {
             goto err;
         }
 
-        hal_gpio_irq_enable(itf->si_low_pin);
+        hal_gpio_irq_init(itf->si_low_pin, lis2dh12_low_int1_irq_handler, sensor,
+                          HAL_GPIO_TRIG_FALLING, HAL_GPIO_PULL_NONE);
+        if (rc) {
+            goto err;
+        }
 
-        reg =  low_thresh.sad->sad_x_is_valid ? LIS2DH12_INT2_CFG_XLIE : 0;
+        reg  = low_thresh.sad->sad_x_is_valid ? LIS2DH12_INT2_CFG_XLIE : 0;
         reg |= low_thresh.sad->sad_y_is_valid ? LIS2DH12_INT2_CFG_YLIE : 0;
         reg |= low_thresh.sad->sad_z_is_valid ? LIS2DH12_INT2_CFG_ZLIE : 0;
 
@@ -1296,6 +1432,8 @@ lis2dh12_sensor_set_trigger_thresh(struct sensor *sensor,
         if (rc) {
             goto err;
         }
+
+        hal_gpio_irq_enable(itf->si_low_pin);
     }
 
     if (high_thresh.sad->sad_x_is_valid ||
@@ -1333,20 +1471,23 @@ lis2dh12_sensor_set_trigger_thresh(struct sensor *sensor,
             goto err;
         }
 
-        rc = lis2dh12_set_int2_duration(itf, 10);
+        rc = lis2dh12_set_int2_duration(itf, 3);
         if (rc) {
             goto err;
         }
 
-        hal_gpio_irq_init(itf->si_high_pin, lis2dh12_high_irq_handler, sensor,
-                          HAL_GPIO_TRIG_RISING, HAL_GPIO_PULL_NONE);
+        rc = lis2dh12_latch_int2(itf);
         if (rc) {
             goto err;
         }
 
-        hal_gpio_irq_enable(itf->si_high_pin);
+        hal_gpio_irq_init(itf->si_high_pin, lis2dh12_high_int2_irq_handler, sensor,
+                          HAL_GPIO_TRIG_FALLING, HAL_GPIO_PULL_NONE);
+        if (rc) {
+            goto err;
+        }
 
-        reg =  high_thresh.sad->sad_x_is_valid  ? LIS2DH12_INT2_CFG_XHIE : 0;
+        reg  = high_thresh.sad->sad_x_is_valid ? LIS2DH12_INT2_CFG_XHIE : 0;
         reg |= high_thresh.sad->sad_y_is_valid ? LIS2DH12_INT2_CFG_YHIE : 0;
         reg |= high_thresh.sad->sad_z_is_valid ? LIS2DH12_INT2_CFG_ZHIE : 0;
 
@@ -1359,6 +1500,8 @@ lis2dh12_sensor_set_trigger_thresh(struct sensor *sensor,
         if (rc) {
             goto err;
         }
+
+        hal_gpio_irq_enable(itf->si_high_pin);
     }
 
     return 0;
@@ -1426,6 +1569,11 @@ lis2dh12_config(struct lis2dh12 *lis2dh12, struct lis2dh12_cfg *cfg)
 
     lis2dh12->cfg.lc_pull_up_disc = cfg->lc_pull_up_disc;
 
+    rc = lis2dh12_hpf_cfg(itf, 0);
+    if (rc) {
+        goto err;
+    }
+
     rc = lis2dh12_set_full_scale(itf, cfg->lc_fs);
     if (rc) {
         goto err;
@@ -1453,6 +1601,11 @@ lis2dh12_config(struct lis2dh12 *lis2dh12, struct lis2dh12_cfg *cfg)
     }
 
     rc = lis2dh12_set_op_mode(itf, LIS2DH12_OM_HIGH_RESOLUTION);
+    if (rc) {
+        goto err;
+    }
+
+    rc = lis2dh12_set_fifo_mode(itf, LIS2DH12_FIFO_M_BYPASS);
     if (rc) {
         goto err;
     }

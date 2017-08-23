@@ -294,6 +294,16 @@ lis2dh12_set_int1_duration(struct sensor_itf *itf, uint8_t dur);
 int
 lis2dh12_set_int2_duration(struct sensor_itf *itf, uint8_t dur);
 
+/**
+ * Set high pass filter cfg
+ *
+ * @param the sensor interface
+ * @param filter register settings
+ * @return 0 on success, non-zero on failure
+ */
+int
+lis2dh12_hpf_cfg(struct sensor_itf *itf, uint8_t reg);
+
 #ifdef __cplusplus
 }
 #endif
