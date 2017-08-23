@@ -27,12 +27,12 @@
  *
  * @param dev The device to configure.
  * @param cnum The channel number to configure.
- * @param data Driver specific configuration data for this channel.
+ * @param cfg Configuration data for this channel.
  *
  * @return 0 on success, non-zero error code on failure.
  */
 int
-pwm_chan_config(struct pwm_dev *dev, uint8_t cnum, void *data)
+pwm_chan_config(struct pwm_dev *dev, uint8_t cnum, struct pwm_chan_cfg *cfg)
 {
     assert(dev->pwm_funcs.pwm_configure_channel != NULL);
 
@@ -40,7 +40,7 @@ pwm_chan_config(struct pwm_dev *dev, uint8_t cnum, void *data)
         return (EINVAL);
     }
 
-    return (dev->pwm_funcs.pwm_configure_channel(dev, cnum, data));
+    return (dev->pwm_funcs.pwm_configure_channel(dev, cnum, cfg));
 }
 
 /**
