@@ -61,8 +61,6 @@ extern uint8_t _ram_start;
 #define BOOT_SERIAL_REPORT_FREQ         (MYNEWT_VAL(OS_CPUTIME_FREQ) / 4)
 #endif
 
-#define NFFS_AREA_MAX   (8)
-
 #ifdef __cplusplus
 }
 #endif

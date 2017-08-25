@@ -29,3 +29,9 @@ syscfg.defs:
     NFFS_DETECT_FAIL:
         description: 'Controls behaviour when encountering corrupt NFFS area.'
         value: 'NFFS_DETECT_FAIL_FORMAT'
+
+    NFFS_NUM_AREAS:
+        description: >
+            Number of areas to allocate in the NFFS disk.  A smaller number is
+            used if the flash hardware cannot support this value.
+        value: 8

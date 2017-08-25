@@ -44,8 +44,6 @@ extern uint8_t _ram_start;
 #define ESPDUINO_UART           "uart1"
 #define ESPDUINO_UART_SPEED     9600
 
-#define NFFS_AREA_MAX   (8)
-
 #ifdef __cplusplus
 }
 #endif

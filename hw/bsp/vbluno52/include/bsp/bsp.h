@@ -47,9 +47,6 @@ extern uint8_t _ram_start;
 #define BUT 			(17)
 #define SW 				BUT
 
-
-#define NFFS_AREA_MAX   (8)
-
 #ifdef __cplusplus
 }
 #endif

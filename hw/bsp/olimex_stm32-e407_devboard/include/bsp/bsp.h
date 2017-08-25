@@ -45,8 +45,6 @@ extern uint8_t _ccram_start;
 
 /* UART */
 #define UART_CNT 1
-
-#define NFFS_AREA_MAX    (8)
 #define SPI_SS_PIN       (4)
 
 #ifdef __cplusplus
