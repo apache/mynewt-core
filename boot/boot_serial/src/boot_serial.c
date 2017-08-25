@@ -55,6 +55,8 @@
 
 #define BOOT_SERIAL_INPUT_MAX   512
 #define BOOT_SERIAL_OUT_MAX     80
+#define BOOT_SERIAL_REPORT_DUR  \
+    (MYNEWT_VAL(OS_CPUTIME_FREQ) / MYNEWT_VAL(BOOT_SERIAL_REPORT_FREQ))
 
 static uint32_t curr_off;
 static uint32_t img_size;
@@ -555,7 +557,7 @@ boot_serial_start(int max_input)
     char *dec;
     int dec_off;
     int full_line;
-#ifdef BOOT_SERIAL_REPORT_PIN
+#if MYNEWT_VAL(BOOT_SERIAL_REPORT_PIN) != -1
     uint32_t tick;
 #endif
 
@@ -569,12 +571,12 @@ boot_serial_start(int max_input)
     rc = hal_watchdog_init(MYNEWT_VAL(WATCHDOG_INTERVAL));
     assert(rc == 0);
 #endif
-#ifdef BOOT_SERIAL_REPORT_PIN
+#if MYNEWT_VAL(BOOT_SERIAL_REPORT_PIN) != -1
     /*
      * Configure GPIO line as output. This is a pin we toggle at the
      * given frequency.
      */
-    hal_gpio_init_out(BOOT_SERIAL_REPORT_PIN, 0);
+    hal_gpio_init_out(MYNEWT_VAL(BOOT_SERIAL_REPORT_PIN), 0);
     tick = os_cputime_get32();
 #endif
 
@@ -589,9 +591,9 @@ boot_serial_start(int max_input)
     off = 0;
     while (1) {
         hal_watchdog_tickle();
-#ifdef BOOT_SERIAL_REPORT_PIN
-        if (os_cputime_get32() - tick > BOOT_SERIAL_REPORT_FREQ) {
-            hal_gpio_toggle(BOOT_SERIAL_REPORT_PIN);
+#if MYNEWT_VAL(BOOT_SERIAL_REPORT_PIN) != -1
+        if (os_cputime_get32() - tick > BOOT_SERIAL_REPORT_DUR) {
+            hal_gpio_toggle(MYNEWT_VAL(BOOT_SERIAL_REPORT_PIN));
             tick = os_cputime_get32();
         }
 #endif
@@ -638,7 +640,8 @@ boot_serial_os_dev_init(void)
      * Configure GPIO line as input. This is read later to see if
      * we should stay and keep waiting for input.
      */
-    hal_gpio_init_in(BOOT_SERIAL_DETECT_PIN, BOOT_SERIAL_DETECT_PIN_CFG);
+    hal_gpio_init_in(MYNEWT_VAL(BOOT_SERIAL_DETECT_PIN),
+                     MYNEWT_VAL(BOOT_SERIAL_DETECT_PIN_CFG));
 }
 
 void
@@ -648,7 +651,9 @@ boot_serial_pkg_init(void)
      * Configure a GPIO as input, and compare it against expected value.
      * If it matches, await for download commands from serial.
      */
-    if (hal_gpio_read(BOOT_SERIAL_DETECT_PIN) == BOOT_SERIAL_DETECT_PIN_VAL) {
+    if (hal_gpio_read(MYNEWT_VAL(BOOT_SERIAL_DETECT_PIN)) ==
+        MYNEWT_VAL(BOOT_SERIAL_DETECT_PIN_VAL)) {
+
         boot_serial_start(BOOT_SERIAL_INPUT_MAX);
         assert(0);
     }
