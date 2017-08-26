@@ -24,6 +24,7 @@
 #include <hal/hal_i2c.h>
 #include <mcu/p32mz2048efg100.h>
 #include "mcu/mips_hal.h"
+#include <os/os_time.h>
 
 #define I2CxCON(I)              (base_address[I][0x00 / 0x04])
 #define I2CxCONCLR(I)           (base_address[I][0x04 / 0x04])
