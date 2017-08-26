@@ -19,6 +19,7 @@
 
 #include <os/os.h>
 #include <stdint.h>
+#include <string.h>
 #include <xc.h>
 #include "hal/hal_timer.h"
 #include "mcu/mips_hal.h"
