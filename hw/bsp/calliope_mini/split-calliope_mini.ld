@@ -19,7 +19,7 @@ OUTPUT_FORMAT ("elf32-littlearm", "elf32-bigarm", "elf32-littlearm")
 
 MEMORY
 {
-  FLASH (rx) : ORIGIN = 0x00021400, LENGTH = 0x1d400
+  FLASH (rx) : ORIGIN = 0x00021000, LENGTH = 0x1d000
   RAM (rwx) :  ORIGIN = 0x20000000, LENGTH = 0x4000
 }
 
