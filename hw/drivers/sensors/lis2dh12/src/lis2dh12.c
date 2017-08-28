@@ -32,7 +32,6 @@
 #include "lis2dh12/lis2dh12.h"
 #include "lis2dh12_priv.h"
 #include "hal/hal_gpio.h"
-#include "console/console.h"
 
 static struct hal_spi_settings spi_lis2dh12_settings = {
     .data_order = HAL_SPI_MSB_FIRST,
@@ -687,7 +686,6 @@ lis2dh12_set_fifo_mode(struct sensor_itf *itf, uint8_t mode)
     }
 
     if (mode == LIS2DH12_FIFO_M_BYPASS && reg != 0x20) {
-        console_printf("Bypass mode not set\n");
         rc = SYS_EINVAL;
         goto err;
     }
@@ -1394,8 +1392,6 @@ lis2dh12_sensor_set_trigger_thresh(struct sensor *sensor,
             }
         }
 
-        console_printf("int1 thresh reg::0x%2x", reg);
-
         rc = lis2dh12_set_int1_thresh(itf, reg);
         if (rc) {
             goto err;
@@ -1467,8 +1463,6 @@ lis2dh12_sensor_set_trigger_thresh(struct sensor *sensor,
                 reg = acc_mg/tmp;
             }
         }
-
-        console_printf("int2 thresh reg::0x%2x\n", reg);
 
         rc = lis2dh12_set_int2_thresh(itf, reg);
         if (rc) {
