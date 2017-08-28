@@ -201,6 +201,22 @@ struct sensor_listener {
     SLIST_ENTRY(sensor_listener) sl_next;
 };
 
+typedef union {
+    struct sensor_mag_data   *smd;
+    struct sensor_accel_data *sad;
+    struct sensor_euler_data *sed;
+    struct sensor_quat_data  *sqd;
+    struct sensor_accel_data *slad;
+    struct sensor_accel_data *sgrd;
+    struct sensor_gyro_data  *sgd;
+    struct sensor_temp_data  *std;
+    struct sensor_temp_data  *satd;
+    struct sensor_light_data *sld;
+    struct sensor_color_data *scd;
+    struct sensor_press_data *spd;
+    struct sensor_humid_data *srhd;
+}sensor_data_t;
+
 /**
  * Sensor type traits list
  */
@@ -209,10 +225,10 @@ struct sensor_type_traits {
     sensor_type_t stt_sensor_type;
 
     /* Low threshold per sensor type */
-    void *stt_low_thresh;
+    sensor_data_t stt_low_thresh;
 
     /* High threshold per sensor type */
-    void *stt_high_thresh;
+    sensor_data_t stt_high_thresh;
 
     /* field for selecting algorithm */
     uint8_t stt_algo;
@@ -224,6 +240,13 @@ struct sensor_type_traits {
      * contained within the sensor object.
      */
     SLIST_ENTRY(sensor_type_traits) stt_next;
+};
+
+struct sensor_read_ev_ctx {
+    /* The sensor for which the ev cb should be called */
+    struct sensor *srec_sensor;
+    /* The sensor type */
+    sensor_type_t srec_type;
 };
 
 /**
@@ -302,22 +325,6 @@ struct sensor_itf {
     /* Sensor interface high int pin */
     uint8_t si_high_pin;
 };
-
-typedef union {
-    struct sensor_mag_data   *smd;
-    struct sensor_accel_data *sad;
-    struct sensor_euler_data *sed;
-    struct sensor_quat_data  *sqd;
-    struct sensor_accel_data *slad;
-    struct sensor_accel_data *sgrd;
-    struct sensor_gyro_data  *sgd;
-    struct sensor_temp_data  *std;
-    struct sensor_temp_data  *satd;
-    struct sensor_light_data *sld;
-    struct sensor_color_data *scd;
-    struct sensor_press_data *spd;
-    struct sensor_humid_data *srhd;
-}sensor_data_t;
 
 /*
  * Return the OS device structure corresponding to this sensor
@@ -474,6 +481,8 @@ sensor_set_interface(struct sensor *sensor, struct sensor_itf *s_itf)
     sensor->s_itf.si_num = s_itf->si_num;
     sensor->s_itf.si_cs_pin = s_itf->si_cs_pin;
     sensor->s_itf.si_addr = s_itf->si_addr;
+    sensor->s_itf.si_low_pin = s_itf->si_low_pin;
+    sensor->s_itf.si_high_pin = s_itf->si_high_pin;
 
     return (0);
 }
@@ -651,6 +660,14 @@ sensor_set_thresh(char *, struct sensor_type_traits *);
  */
 int
 sensor_set_watermark_thresh(char *, struct sensor_type_traits *);
+
+/**
+ * Puts read event on the sensor manager evq
+ *
+ * @param arg
+ */
+void
+sensor_mgr_put_read_evt(void *);
 
 #if MYNEWT_VAL(SENSOR_CLI)
 char*

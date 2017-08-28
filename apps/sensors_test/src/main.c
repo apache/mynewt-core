@@ -481,25 +481,25 @@ main(int argc, char **argv)
     /* Initialize BLE OIC GATT Server */
     sensor_ble_oic_server_init();
 
-    sad_low.sad_x = -20000;
-    sad_low.sad_y = -20000;
-    sad_low.sad_z = -20000;
+    sad_low.sad_x = 0.6712;
+    sad_low.sad_y = 0.6712;
+    sad_low.sad_z = 0.6712;
 
     sad_low.sad_x_is_valid = 1;
     sad_low.sad_y_is_valid = 1;
     sad_low.sad_z_is_valid = 1;
 
-    sad_high.sad_x = 0;
-    sad_high.sad_y = 0;
-    sad_high.sad_z = 0;
+    sad_high.sad_x = 0.6712;
+    sad_high.sad_y = 0.6712;
+    sad_high.sad_z = 0.6712;
 
     sad_high.sad_x_is_valid = 1;
     sad_high.sad_y_is_valid = 1;
     sad_high.sad_z_is_valid = 1;
 
     stt.stt_sensor_type = SENSOR_TYPE_ACCELEROMETER;
-    stt.stt_low_thresh = &sad_low;
-    stt.stt_high_thresh = &sad_high;
+    stt.stt_low_thresh.sad = &sad_low;
+    stt.stt_high_thresh.sad = &sad_high;
     stt.stt_algo = SENSOR_THRESH_ALGO_WATERMARK;
 
     sensor_set_thresh("lis2dh12_0", &stt);

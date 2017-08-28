@@ -866,7 +866,7 @@ err:
 /**
  * Expects to be called back through os_dev_create().
  *
- * @param The device object associated with this accellerometer
+ * @param The device object associated with this accelerometer
  * @param Argument passed to OS device init, unused
  *
  * @return 0 on success, non-zero error on failure.
@@ -1132,7 +1132,7 @@ lis2dh12_clear_int2(struct sensor_itf *itf)
 {
     uint8_t reg;
 
-    return lis2dh12_writelen(itf, LIS2DH12_REG_INT2_SRC, &reg, 1);
+    return lis2dh12_readlen(itf, LIS2DH12_REG_INT2_SRC, &reg, 1);
 }
 
 /**
@@ -1145,7 +1145,7 @@ lis2dh12_clear_int1(struct sensor_itf *itf)
 {
     uint8_t reg;
 
-    return lis2dh12_writelen(itf, LIS2DH12_REG_INT1_SRC, &reg, 1);
+    return lis2dh12_readlen(itf, LIS2DH12_REG_INT1_SRC, &reg, 1);
 }
 
 /**
@@ -1267,7 +1267,7 @@ lis2dh12_set_int2_duration(struct sensor_itf *itf, uint8_t dur)
 int
 lis2dh12_set_int2_pin_cfg(struct sensor_itf *itf, uint8_t cfg)
 {
-    return lis2dh12_writelen(itf, LIS2DH12_REG_CTRL_REG3, &cfg, 1);
+    return lis2dh12_writelen(itf, LIS2DH12_REG_CTRL_REG6, &cfg, 1);
 }
 
 /**
@@ -1290,14 +1290,15 @@ lis2dh12_enable_int1(struct sensor_itf *itf, uint8_t *reg)
 static void
 lis2dh12_low_int1_irq_handler(void *arg)
 {
-    struct sensor *sensor = arg;
     struct sensor_itf *itf;
+    struct sensor_read_ev_ctx *srec;
 
-    itf = SENSOR_GET_ITF(sensor);
+    srec = arg;
 
-    lis2dh12_sensor_read(sensor, sensor->s_mask, NULL, NULL, OS_TIMEOUT_NEVER);
-
+    sensor_mgr_put_read_evt(arg);
+    itf = SENSOR_GET_ITF(srec->srec_sensor);
     lis2dh12_clear_int1(itf);
+
 }
 
 /**
@@ -1308,14 +1309,15 @@ lis2dh12_low_int1_irq_handler(void *arg)
 static void
 lis2dh12_high_int2_irq_handler(void *arg)
 {
-    struct sensor *sensor = arg;
     struct sensor_itf *itf;
+    struct sensor_read_ev_ctx *srec;
 
-    itf = SENSOR_GET_ITF(sensor);
+    srec = arg;
 
-    lis2dh12_sensor_read(sensor, sensor->s_mask, NULL, NULL, OS_TIMEOUT_NEVER);
-
+    sensor_mgr_put_read_evt(arg);
+    itf = SENSOR_GET_ITF(srec->srec_sensor);
     lis2dh12_clear_int2(itf);
+
 }
 
 /* Set the trigger threshold values and enable interrupts
@@ -1333,12 +1335,13 @@ lis2dh12_sensor_set_trigger_thresh(struct sensor *sensor,
                                    struct sensor_type_traits *stt)
 {
     int rc;
-    struct sensor_itf *itf;
     uint8_t tmp;
-    sensor_data_t low_thresh;
-    sensor_data_t high_thresh;
     int16_t acc_mg;
     uint8_t reg;
+    struct sensor_itf *itf;
+    sensor_data_t low_thresh;
+    sensor_data_t high_thresh;
+    struct sensor_read_ev_ctx *srec;
 
     itf = SENSOR_GET_ITF(sensor);
 
@@ -1391,6 +1394,8 @@ lis2dh12_sensor_set_trigger_thresh(struct sensor *sensor,
             }
         }
 
+        console_printf("int1 thresh reg::0x%2x", reg);
+
         rc = lis2dh12_set_int1_thresh(itf, reg);
         if (rc) {
             goto err;
@@ -1408,12 +1413,13 @@ lis2dh12_sensor_set_trigger_thresh(struct sensor *sensor,
             goto err;
         }
 
-        rc = lis2dh12_latch_int1(itf);
-        if (rc) {
-            goto err;
-        }
+        os_time_delay((OS_TICKS_PER_SEC * 100)/1000 + 1);
 
-        hal_gpio_irq_init(itf->si_low_pin, lis2dh12_low_int1_irq_handler, sensor,
+        srec = malloc(sizeof(struct sensor_read_ev_ctx));
+        srec->srec_sensor = sensor;
+        srec->srec_type = type;
+
+        hal_gpio_irq_init(itf->si_low_pin, lis2dh12_low_int1_irq_handler, srec,
                           HAL_GPIO_TRIG_FALLING, HAL_GPIO_PULL_NONE);
         if (rc) {
             goto err;
@@ -1428,12 +1434,15 @@ lis2dh12_sensor_set_trigger_thresh(struct sensor *sensor,
             goto err;
         }
 
+        os_time_delay((OS_TICKS_PER_SEC * 20)/1000 + 1);
+
+        hal_gpio_irq_enable(itf->si_low_pin);
+
         rc = lis2dh12_enable_int1(itf, &reg);
         if (rc) {
             goto err;
         }
 
-        hal_gpio_irq_enable(itf->si_low_pin);
     }
 
     if (high_thresh.sad->sad_x_is_valid ||
@@ -1459,6 +1468,8 @@ lis2dh12_sensor_set_trigger_thresh(struct sensor *sensor,
             }
         }
 
+        console_printf("int2 thresh reg::0x%2x\n", reg);
+
         rc = lis2dh12_set_int2_thresh(itf, reg);
         if (rc) {
             goto err;
@@ -1476,12 +1487,13 @@ lis2dh12_sensor_set_trigger_thresh(struct sensor *sensor,
             goto err;
         }
 
-        rc = lis2dh12_latch_int2(itf);
-        if (rc) {
-            goto err;
-        }
+        os_time_delay((OS_TICKS_PER_SEC * 100)/1000 + 1);
 
-        hal_gpio_irq_init(itf->si_high_pin, lis2dh12_high_int2_irq_handler, sensor,
+        srec = malloc(sizeof(struct sensor_read_ev_ctx));
+        srec->srec_sensor = sensor;
+        srec->srec_type = type;
+
+        hal_gpio_irq_init(itf->si_high_pin, lis2dh12_high_int2_irq_handler, srec,
                           HAL_GPIO_TRIG_FALLING, HAL_GPIO_PULL_NONE);
         if (rc) {
             goto err;
@@ -1496,12 +1508,12 @@ lis2dh12_sensor_set_trigger_thresh(struct sensor *sensor,
             goto err;
         }
 
+        hal_gpio_irq_enable(itf->si_high_pin);
+
         rc = lis2dh12_enable_int2(itf, &reg);
         if (rc) {
             goto err;
         }
-
-        hal_gpio_irq_enable(itf->si_high_pin);
     }
 
     return 0;
@@ -1569,7 +1581,7 @@ lis2dh12_config(struct lis2dh12 *lis2dh12, struct lis2dh12_cfg *cfg)
 
     lis2dh12->cfg.lc_pull_up_disc = cfg->lc_pull_up_disc;
 
-    rc = lis2dh12_hpf_cfg(itf, 0);
+    rc = lis2dh12_hpf_cfg(itf, 0x00);
     if (rc) {
         goto err;
     }

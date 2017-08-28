@@ -60,6 +60,13 @@ struct sensor_read_ctx {
 struct sensor_timestamp sensor_base_ts;
 struct os_callout st_up_osco;
 
+static void sensor_read_ev_cb(struct os_event *ev);
+
+  /** OS event - for doing a sensor read */
+static struct os_event sensor_read_event = {
+    .ev_cb = sensor_read_ev_cb,
+};
+
 /**
  * Lock sensor manager to access the list of sensors
  */
@@ -708,7 +715,9 @@ sensor_read_data_func(struct sensor *sensor, void *arg, void *data,
     struct sensor_listener *listener;
     struct sensor_read_ctx *ctx;
 
-    if ((uint8_t)(uintptr_t)arg != SENSOR_IGN_LISTENER) {
+    ctx = (struct sensor_read_ctx *) arg;
+
+    if ((uint8_t)(uintptr_t)(ctx->user_arg) != SENSOR_IGN_LISTENER) {
         /* Notify all listeners first */
         SLIST_FOREACH(listener, &sensor->s_listener_list, sl_next) {
             if (listener->sl_sensor_type & type) {
@@ -718,12 +727,38 @@ sensor_read_data_func(struct sensor *sensor, void *arg, void *data,
     }
 
     /* Call data function */
-    ctx = (struct sensor_read_ctx *) arg;
     if (ctx->user_func != NULL) {
         return (ctx->user_func(sensor, ctx->user_arg, data, type));
     } else {
         return (0);
     }
+}
+
+uint32_t read_event;
+
+/**
+ * Puts read event on the sensor manager evq
+ *
+ * @param arg
+ */
+void
+sensor_mgr_put_read_evt(void *arg)
+{
+    read_event++;
+    sensor_read_event.ev_arg = arg;
+    os_eventq_put(sensor_mgr_evq_get(), &sensor_read_event);
+}
+
+static void
+sensor_read_ev_cb(struct os_event *ev)
+{
+    int rc;
+    struct sensor_read_ev_ctx *srec;
+
+    srec = ev->ev_arg;
+    rc = sensor_read(srec->srec_sensor, srec->srec_type, NULL, NULL,
+                     OS_TIMEOUT_NEVER);
+    assert(rc == 0);
 }
 
 static void
@@ -1558,9 +1593,8 @@ sensor_read(struct sensor *sensor, sensor_type_t type,
         goto err;
     }
 
-    sensor_unlock(sensor);
-
 err:
+    sensor_unlock(sensor);
     return (rc);
 }
 

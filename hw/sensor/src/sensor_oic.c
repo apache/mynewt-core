@@ -575,7 +575,8 @@ sensor_oic_get_data(oc_request_t *request, oc_interface_mask_t interface)
             goto err;
         }
 
-        rc = sensor_read(sensor, type, sensor_oic_encode, NULL,
+        rc = sensor_read(sensor, type, sensor_oic_encode,
+                         (uintptr_t *)SENSOR_IGN_LISTENER,
                          OS_TIMEOUT_NEVER);
         if (rc) {
             goto err;
