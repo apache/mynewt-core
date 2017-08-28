@@ -219,16 +219,14 @@ static const struct shell_cmd os_commands[] = {
     { NULL, NULL, NULL },
 };
 
-#define SHELL_OS_NUM_CMDS  (sizeof os_commands / sizeof os_commands[0])
-
 void
 shell_os_register(void)
 {
+    const struct shell_cmd *cmd;
     int rc;
-    int i;
 
-    for (i = 0; i < SHELL_OS_NUM_CMDS; i++) {
-        rc = shell_cmd_register(os_commands + i);
+    for (cmd = os_commands; cmd->sc_cmd != NULL; cmd++) {
+        rc = shell_cmd_register(cmd);
         SYSINIT_PANIC_ASSERT_MSG(
             rc == 0, "Failed to register OS shell commands");
     }
