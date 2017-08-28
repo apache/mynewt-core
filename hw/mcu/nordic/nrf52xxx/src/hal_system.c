@@ -67,7 +67,10 @@ hal_debugger_connected(void)
 void
 hal_system_clock_start(void)
 {
+#if MYNEWT_VAL(XTAL_32768) || MYNEWT_VAL(XTAL_RC) || \
+    MYNEWT_VAL(XTAL_32768_SYNTH)
     uint32_t mask;
+#endif
 
 #if MYNEWT_VAL(XTAL_32768)
     /* Check if this clock source is already running */
