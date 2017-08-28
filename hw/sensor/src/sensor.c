@@ -734,8 +734,6 @@ sensor_read_data_func(struct sensor *sensor, void *arg, void *data,
     }
 }
 
-uint32_t read_event;
-
 /**
  * Puts read event on the sensor manager evq
  *
@@ -744,7 +742,6 @@ uint32_t read_event;
 void
 sensor_mgr_put_read_evt(void *arg)
 {
-    read_event++;
     sensor_read_event.ev_arg = arg;
     os_eventq_put(sensor_mgr_evq_get(), &sensor_read_event);
 }

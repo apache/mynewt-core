@@ -403,7 +403,7 @@ sensor_ble_oic_server_init(void)
     int rc;
 
     /* Set initial BLE device address. */
-    memcpy(g_dev_addr, (uint8_t[6]){0xdd, 0xdd, 0xdd, 0xdd, 0xcc, 0xcc}, 6);
+    memcpy(g_dev_addr, (uint8_t[6]){0x0a, 0xfa, 0xcf, 0xac, 0xfa, 0xc0}, 6);
 
     oc_ble_coap_gatt_srv_init();
 
