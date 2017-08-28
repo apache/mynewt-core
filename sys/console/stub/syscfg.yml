@@ -6,7 +6,7 @@
 # to you under the Apache License, Version 2.0 (the
 # "License"); you may not use this file except in compliance
 # with the License.  You may obtain a copy of the License at
-# 
+#
 #  http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing,
@@ -17,18 +17,13 @@
 # under the License.
 #
 
-pkg.name: apps/boot
-pkg.type: app
-pkg.description: Boot loader application.
-pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
-pkg.homepage: "http://mynewt.apache.org/"
-pkg.keywords:
-    - loader
-
-pkg.deps:
-    - boot/bootutil
-    - kernel/os
-    - sys/console/stub
-
-pkg.deps.BOOT_SERIAL.OVERWRITE:
-    - boot/boot_serial
+syscfg.defs:
+    CONSOLE_UART_BAUD:
+        description: 'Console UART baud rate.'
+        value: '115200'
+    CONSOLE_UART_FLOW_CONTROL:
+        description: 'Console UART flow control.'
+        value: 'UART_FLOW_CTL_NONE'
+    CONSOLE_UART_DEV:
+        description: 'Console UART device.'
+        value: '"uart0"'
