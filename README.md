@@ -38,6 +38,7 @@ It currently supports the following hardware platforms:
 * BLE Nano2 and Blend2 from RedBear (Nordic nRF52832 SoC based)
 * BMD-300-EVAL-ES from Rigado (Cortex-M4)
 * BMD-200 from Rigado (Cortex-M0)
+* Adafruit Feather nRF52 Pro
 * STM32F4DISCOVERY from ST Micro (Cortex-M4)
 * STM32-E407 from Olimex (Cortex-M4)
 * Arduino Zero (Cortex-M0)
@@ -46,9 +47,16 @@ It currently supports the following hardware platforms:
 * Arduino MKR1000 (Cortex-M0)
 * Arduino Primo NRF52 (Cortex-M4)
 * NUCLEO-F401RE (Cortex-M4)
+* NUCLEO-F767ZI (Cortex-M7)
+* Discovery kit for STM32F7 Series (Cortex-M7)
 * FRDM-K64F from NXP (Cortex-M4)
 * BBC micro:bit (Nordic nrf51822; Cortex-M0)
 * SiFive HiFive1 (RISC-V Instruction Set Architecture)
+* NINA-B1 BLE module from u-blox (Cortex-M4)
+* 6LoWPAN clicker from MikroElectronika (PIC32MX470 microcontroller)
+* chipKIT Wi-FIRE (PIC32MZ microcontroller)
+* Creator Ci40 module (dual MIPS interAptiv CPU)
+* EE-02 board with Semtech Sx1276 chip from Telenor (Cortex-M4) 
 
 Apache Mynewt uses the
 [Newt](https://www.github.com/apache/mynewt-newt) build and package
