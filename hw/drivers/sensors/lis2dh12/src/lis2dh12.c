@@ -1288,15 +1288,7 @@ lis2dh12_enable_int1(struct sensor_itf *itf, uint8_t *reg)
 static void
 lis2dh12_low_int1_irq_handler(void *arg)
 {
-    struct sensor_itf *itf;
-    struct sensor_read_ev_ctx *srec;
-
-    srec = arg;
-
     sensor_mgr_put_read_evt(arg);
-    itf = SENSOR_GET_ITF(srec->srec_sensor);
-    lis2dh12_clear_int1(itf);
-
 }
 
 /**
@@ -1307,15 +1299,7 @@ lis2dh12_low_int1_irq_handler(void *arg)
 static void
 lis2dh12_high_int2_irq_handler(void *arg)
 {
-    struct sensor_itf *itf;
-    struct sensor_read_ev_ctx *srec;
-
-    srec = arg;
-
     sensor_mgr_put_read_evt(arg);
-    itf = SENSOR_GET_ITF(srec->srec_sensor);
-    lis2dh12_clear_int2(itf);
-
 }
 
 /* Set the trigger threshold values and enable interrupts
