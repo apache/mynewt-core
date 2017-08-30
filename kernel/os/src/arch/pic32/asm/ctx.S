@@ -217,7 +217,7 @@
 get_global_pointer:
     move   v0, gp
     jr     ra
-.end
+.end get_global_pointer
 
 .text
 .set noat
@@ -261,7 +261,7 @@ return :
 
 loop:
     b       loop                        # loop (default for general exception handler)
-.end
+.end _general_exception_context
 
 .text
 .global isr_sw0
@@ -288,4 +288,4 @@ isr_sw0:
     _gpctx_load                         # load the context
     wrpgpr  sp, sp
     eret
-.end
+.end isr_sw0

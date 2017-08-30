@@ -23,6 +23,7 @@
 #include <mcu/mcu.h>
 #include <mcu/mips_hal.h>
 
+#include "hal/hal_i2c.h"
 #if MYNEWT_VAL(TIMER_0) || MYNEWT_VAL(TIMER_1) || MYNEWT_VAL(TIMER_2) || \
     MYNEWT_VAL(TIMER_3)
 #include "hal/hal_timer.h"
@@ -152,13 +153,13 @@ hal_bsp_init(void)
 
 #if MYNEWT_VAL(UART_1)
     rc = os_dev_create((struct os_dev *) &os_bsp_uart1, "uart1",
-        OS_DEV_INIT_PRIMARY, 0, uart_hal_init, &uart1_cfg);
+        OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *)&uart1_cfg);
     assert(rc == 0);
 #endif
 
 #if MYNEWT_VAL(UART_2)
     rc = os_dev_create((struct os_dev *) &os_bsp_uart2, "uart2",
-        OS_DEV_INIT_PRIMARY, 0, uart_hal_init, &uart2_cfg);
+        OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *)&uart2_cfg);
     assert(rc == 0);
 #endif
 
@@ -169,17 +170,17 @@ hal_bsp_init(void)
 #endif
 
 #if MYNEWT_VAL(SPI_0_MASTER)
-    rc = hal_spi_init(0, &spi0_cfg, HAL_SPI_TYPE_MASTER);
+    rc = hal_spi_init(0, (void *)&spi0_cfg, HAL_SPI_TYPE_MASTER);
     assert(rc == 0);
 #endif
 
 #if MYNEWT_VAL(SPI_1_MASTER)
-    rc = hal_spi_init(1, &spi1_cfg, HAL_SPI_TYPE_MASTER);
+    rc = hal_spi_init(1, (void *)&spi1_cfg, HAL_SPI_TYPE_MASTER);
     assert(rc == 0);
 #endif
 
 #if MYNEWT_VAL(I2C_0)
-    rc = hal_i2c_init(0, &hal_i2c0_cfg);
+    rc = hal_i2c_init(0, (void *)&hal_i2c0_cfg);
     assert(rc == 0);
 #endif
 

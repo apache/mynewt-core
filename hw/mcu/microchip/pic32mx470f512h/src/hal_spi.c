@@ -18,6 +18,7 @@
  */
 
 #include <stdbool.h>
+#include <stddef.h>
 #include "bsp/bsp.h"
 #include "hal/hal_gpio.h"
 #include "hal/hal_spi.h"
