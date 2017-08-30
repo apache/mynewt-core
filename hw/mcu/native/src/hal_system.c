@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -26,6 +26,7 @@
 #include "syscfg/syscfg.h"
 #include "hal/hal_system.h"
 #include "mcu/mcu_sim.h"
+#include "hal_native_priv.h"
 
 #if MYNEWT_VAL(OS_SCHEDULING)
 #include <os/os.h>
@@ -55,6 +56,7 @@ usage(char *progname, int rc)
       "\n [-f flash_file][-u uart_log_file][--uart0 <file>][--uart1 <file>]\n"
       "     -f flash_file tells where binary flash file is located. It gets\n"
       "        created if it doesn't already exist.\n"
+      "     -i hw_id sets system hardware id.\n"
       "     -u uart_log_file puts all UART data exchanges into a logfile.\n"
       "     -uart0 uart0_file connects UART0 to character device uart0_file.\n"
       "     -uart1 uart1_file connects UART1 to character device uart1_file.\n";
@@ -76,6 +78,7 @@ mcu_sim_parse_args(int argc, char **argv)
         { "help",       no_argument,            0, 'h' },
         { "uart0",      required_argument,      0, 0 },
         { "uart1",      required_argument,      0, 0 },
+        { "hwid",       required_argument,      0, 'i' },
         { NULL }
     };
     int opt_idx;
@@ -87,7 +90,7 @@ mcu_sim_parse_args(int argc, char **argv)
     }
 #endif
     progname = argv[0];
-    while ((ch = getopt_long(argc, argv, "hf:u:", options, &opt_idx)) !=
+    while ((ch = getopt_long(argc, argv, "hf:u:i:", options, &opt_idx)) !=
             -1) {
         switch (ch) {
         case 'f':
@@ -95,6 +98,9 @@ mcu_sim_parse_args(int argc, char **argv)
             break;
         case 'u':
             native_uart_log_file = optarg;
+            break;
+        case 'i':
+            hal_bsp_set_hw_id((uint8_t *)optarg, strlen(optarg));
             break;
         case 'h':
             usage(progname, 0);
@@ -115,6 +121,9 @@ mcu_sim_parse_args(int argc, char **argv)
                 break;
             case 4:
                 native_uart_dev_strs[1] = optarg;
+                break;
+            case 5:
+                hal_bsp_set_hw_id((uint8_t *)optarg, strlen(optarg));
                 break;
             default:
                 usage(progname, -1);
