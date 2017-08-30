@@ -25,6 +25,7 @@
 #include "syscfg/syscfg.h"
 #include "flash_map/flash_map.h"
 #include "hal/hal_bsp.h"
+#include "hal/hal_system.h"
 #include "hal/hal_flash.h"
 #include "hal/hal_spi.h"
 #include "mcu/nrf52_hal.h"
@@ -137,6 +138,9 @@ void
 hal_bsp_init(void)
 {
     int rc;
+
+    /* Make sure system clocks have started */
+    hal_system_clock_start();
 
 #if MYNEWT_VAL(TIMER_0)
     rc = hal_timer_init(0, NULL);

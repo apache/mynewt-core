@@ -21,6 +21,7 @@
 #include <string.h>
 
 #include "syscfg/syscfg.h"
+#include "sysinit/sysinit.h"
 #include "os/os.h"
 #include "datetime/datetime.h"
 #include "console/console.h"
@@ -221,6 +222,12 @@ static const struct shell_cmd os_commands[] = {
 void
 shell_os_register(void)
 {
-    shell_register(SHELL_OS, os_commands);
-}
+    const struct shell_cmd *cmd;
+    int rc;
 
+    for (cmd = os_commands; cmd->sc_cmd != NULL; cmd++) {
+        rc = shell_cmd_register(cmd);
+        SYSINIT_PANIC_ASSERT_MSG(
+            rc == 0, "Failed to register OS shell commands");
+    }
+}
