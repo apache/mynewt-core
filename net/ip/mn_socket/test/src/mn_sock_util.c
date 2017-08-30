@@ -382,7 +382,7 @@ sock_itf_list(void)
     struct mn_itf itf;
     struct mn_itf_addr itf_addr;
     int if_cnt = 0;
-    int seen_127;
+    int seen_127 = 0;
     struct mn_in_addr addr127;
     char addr_str[64];
     int rc;
