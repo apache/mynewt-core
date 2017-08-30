@@ -42,7 +42,7 @@ main(int argc, char **argv)
     /* set the PWM frequency */
     pwm_set_frequency(pwm, 10000);
     base_freq = pwm_get_clock_freq(pwm);
-    max_val = (uint16_t) base_freq / 100;
+    max_val = (uint16_t) (base_freq / 10000);
 
     /* setup led 1 - 100% duty cycle*/
     pwm_chan_config(pwm, 0, &chan_conf);
