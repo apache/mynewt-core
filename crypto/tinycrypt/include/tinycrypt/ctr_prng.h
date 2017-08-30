@@ -67,7 +67,8 @@
 extern "C" {
 #endif
 
-typedef struct {
+typedef struct
+{
 	/* updated each time another BLOCKLEN_BYTES bytes are produced */
 	uint8_t V[TC_AES_BLOCK_SIZE]; 
 
@@ -98,11 +99,11 @@ typedef struct {
  *  @param plen IN -- personalization length in bytes
  *
  */
-int tc_ctr_prng_init(TCCtrPrng_t * const ctx, 
-		     uint8_t const * const entropy,
-		     unsigned int entropyLen, 
-		     uint8_t const * const personalization,
-		     unsigned int pLen);
+int32_t tc_ctr_prng_init(TCCtrPrng_t * const ctx, 
+			uint8_t const * const entropy,
+			uint32_t entropyLen, 
+			uint8_t const * const personalization,
+			uint32_t pLen);
 
 /**
  *  @brief CTR-PRNG reseed procedure
@@ -123,11 +124,11 @@ int tc_ctr_prng_init(TCCtrPrng_t * const ctx,
  *  @param additional_input IN -- additional input to the prng (may be null)
  *  @param additionallen IN -- additional input length in bytes
  */
-int tc_ctr_prng_reseed(TCCtrPrng_t * const ctx, 
-		       uint8_t const * const entropy,
-		       unsigned int entropyLen,
-		       uint8_t const * const additional_input,
-		       unsigned int additionallen);
+int32_t tc_ctr_prng_reseed(TCCtrPrng_t * const ctx, 
+			uint8_t const * const entropy,
+			uint32_t entropyLen,
+			uint8_t const * const additional_input,
+			uint32_t additionallen);
 
 /**
  *  @brief CTR-PRNG generate procedure
@@ -145,11 +146,11 @@ int tc_ctr_prng_reseed(TCCtrPrng_t * const ctx,
  *  @param out IN/OUT -- buffer to receive output
  *  @param outlen IN -- size of out buffer in bytes
  */
-int tc_ctr_prng_generate(TCCtrPrng_t * const ctx,
-			 uint8_t const * const additional_input,
-			 unsigned int additionallen,
-			 uint8_t * const out,
-			 unsigned int outlen);
+int32_t tc_ctr_prng_generate(TCCtrPrng_t * const ctx,
+			uint8_t const * const additional_input,
+			uint32_t additionallen,
+			uint8_t * const out,
+			uint32_t outlen);
 
 /**
  *  @brief CTR-PRNG uninstantiate procedure
@@ -163,4 +164,4 @@ void tc_ctr_prng_uninstantiate(TCCtrPrng_t * const ctx);
 }
 #endif
 
-#endif /* __TC_CTR_PRNG_H__ */
+#endif

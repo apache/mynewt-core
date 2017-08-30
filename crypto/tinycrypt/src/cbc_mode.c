@@ -1,7 +1,7 @@
 /* cbc_mode.c - TinyCrypt implementation of CBC mode encryption & decryption */
 
 /*
- *  Copyright (C) 2017 by Intel Corporation, All Rights Reserved.
+ *  Copyright (C) 2015 by Intel Corporation, All Rights Reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are met:
@@ -34,13 +34,13 @@
 #include <tinycrypt/constants.h>
 #include <tinycrypt/utils.h>
 
-int tc_cbc_mode_encrypt(uint8_t *out, unsigned int outlen, const uint8_t *in,
-			    unsigned int inlen, const uint8_t *iv,
+int32_t tc_cbc_mode_encrypt(uint8_t *out, uint32_t outlen, const uint8_t *in,
+			    uint32_t inlen, const uint8_t *iv,
 			    const TCAesKeySched_t sched)
 {
 
 	uint8_t buffer[TC_AES_BLOCK_SIZE];
-	unsigned int n, m;
+	uint32_t n, m;
 
 	/* input sanity check: */
 	if (out == (uint8_t *) 0 ||
@@ -74,14 +74,13 @@ int tc_cbc_mode_encrypt(uint8_t *out, unsigned int outlen, const uint8_t *in,
 	return TC_CRYPTO_SUCCESS;
 }
 
-int tc_cbc_mode_decrypt(uint8_t *out, unsigned int outlen, const uint8_t *in,
-			    unsigned int inlen, const uint8_t *iv,
+int32_t tc_cbc_mode_decrypt(uint8_t *out, uint32_t outlen, const uint8_t *in,
+			    uint32_t inlen, const uint8_t *iv,
 			    const TCAesKeySched_t sched)
 {
-
 	uint8_t buffer[TC_AES_BLOCK_SIZE];
 	const uint8_t *p;
-	unsigned int n, m;
+	uint32_t n, m;
 
 	/* sanity check the inputs */
 	if (out == (uint8_t *) 0 ||

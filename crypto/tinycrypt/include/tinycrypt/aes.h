@@ -1,7 +1,7 @@
 /* aes.h - TinyCrypt interface to an AES-128 implementation */
 
 /*
- *  Copyright (C) 2017 by Intel Corporation, All Rights Reserved.
+ *  Copyright (C) 2015 by Intel Corporation, All Rights Reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are met:
@@ -61,9 +61,10 @@ extern "C" {
 #define TC_AES_BLOCK_SIZE (Nb*Nk)
 #define TC_AES_KEY_SIZE (Nb*Nk)
 
-typedef struct tc_aes_key_sched_struct {
-	unsigned int words[Nb*(Nr+1)];
-} *TCAesKeySched_t;
+struct tc_aes_key_sched_struct {
+	uint32_t words[Nb*(Nr+1)];
+};
+typedef struct tc_aes_key_sched_struct *TCAesKeySched_t;
 
 /**
  *  @brief Set AES-128 encryption key
@@ -76,7 +77,7 @@ typedef struct tc_aes_key_sched_struct {
  *  @param      s IN/OUT -- initialized struct tc_aes_key_sched_struct
  *  @param      k IN -- points to the AES key
  */
-int tc_aes128_set_encrypt_key(TCAesKeySched_t s, const uint8_t *k);
+int32_t tc_aes128_set_encrypt_key(TCAesKeySched_t s, const uint8_t *k);
 
 /**
  *  @brief AES-128 Encryption procedure
@@ -90,8 +91,9 @@ int tc_aes128_set_encrypt_key(TCAesKeySched_t s, const uint8_t *k);
  *  @param in IN -- a plaintext block to encrypt
  *  @param s IN -- initialized AES key schedule
  */
-int tc_aes_encrypt(uint8_t *out, const uint8_t *in, 
-		   const TCAesKeySched_t s);
+int32_t tc_aes_encrypt(uint8_t *out,
+		       const uint8_t *in,
+		       const TCAesKeySched_t s);
 
 /**
  *  @brief Set the AES-128 decryption key
@@ -107,7 +109,7 @@ int tc_aes_encrypt(uint8_t *out, const uint8_t *in,
  *  @param s  IN/OUT -- initialized struct tc_aes_key_sched_struct
  *  @param k  IN -- points to the AES key
  */
-int tc_aes128_set_decrypt_key(TCAesKeySched_t s, const uint8_t *k);
+int32_t tc_aes128_set_decrypt_key(TCAesKeySched_t s, const uint8_t *k);
 
 /**
  *  @brief AES-128 Encryption procedure
@@ -120,11 +122,12 @@ int tc_aes128_set_decrypt_key(TCAesKeySched_t s, const uint8_t *k);
  *  @param in IN -- a plaintext block to encrypt
  *  @param s IN -- initialized AES key schedule
  */
-int tc_aes_decrypt(uint8_t *out, const uint8_t *in, 
-		   const TCAesKeySched_t s);
+int32_t tc_aes_decrypt(uint8_t *out,
+		       const uint8_t *in,
+		       const TCAesKeySched_t s);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __TC_AES_H__ */
+#endif

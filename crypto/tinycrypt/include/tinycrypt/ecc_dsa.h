@@ -1,8 +1,10 @@
 /* ecc_dh.h - TinyCrypt interface to EC-DSA implementation */
 
 /*
- * Copyright (c) 2014, Kenneth MacKay
+ * =============================================================================
+ * Copyright (c) 2013, Kenneth MacKay
  * All rights reserved.
+ * https://github.com/kmackay/micro-ecc
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -25,10 +27,9 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- */
-
-/*
- * Copyright (C) 2017 by Intel Corporation, All Rights Reserved.
+ *
+ * =============================================================================
+ * Copyright (C) 2015 by Intel Corporation, All Rights Reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are met:
@@ -86,54 +87,49 @@ extern "C" {
 
 /**
  * @brief Generate an ECDSA signature for a given hash value.
- * @return returns TC_CRYPTO_SUCCESS (1) if the signature generated successfully
- *         returns TC_CRYPTO_FAIL (0) if an error occurred.
+ * @return returns TC_CRYPTO_SUCCESS (1) if the the signature generated successfully
+ *         returns TC_CRYPTO_FAIL (0) if:
+ *                r == 0 or
+ *                p_random == 0
  *
- * @param p_private_key IN -- Your private key.
- * @param p_message_hash IN -- The hash of the message to sign.
- * @param p_hash_size IN -- The size of p_message_hash in bytes.
- * @param p_signature OUT -- Will be filled in with the signature value. Must be
- * at least 2 * curve size long (for secp256r1, signature must be 64 bytes long).
+ * @param r OUT -- to be filled with the signature values.
+ * @param s OUT -- to be filled with the signature values.
+ * @param p_privateKey IN -- Your private key.
+ * @param p_random IN -- The random number to use in generating ephemeral DSA
+ * keys.
+ * @param p_hash IN -- The message hash to sign.
  *
- * @warning A cryptographically-secure PRNG function must be set (using
- * uECC_set_rng()) before calling uECC_sign().
- * @note Usage: Compute a hash of the data you wish to sign (SHA-2 is
- * recommended) and pass it in to this function along with your private key.
+ * @note p_random must have NUM_ECC_DIGITS*2 bits of entropy to eliminate
+ * bias in keys.
+ *
  * @note side-channel countermeasure: algorithm strengthened against timing
  * attack.
  */
-int uECC_sign(const uint8_t *p_private_key, const uint8_t *p_message_hash,
-	      unsigned p_hash_size, uint8_t *p_signature, uECC_Curve curve);
+int32_t ecdsa_sign(uint32_t r[NUM_ECC_DIGITS], uint32_t s[NUM_ECC_DIGITS],
+		   uint32_t p_privateKey[NUM_ECC_DIGITS], uint32_t p_random[NUM_ECC_DIGITS * 2],
+		   uint32_t p_hash[NUM_ECC_DIGITS]);
 
-#ifdef ENABLE_TESTS
-/*
- * THIS FUNCTION SHOULD BE CALLED FOR TEST PURPOSES ONLY.
- * Refer to uECC_sign() function for real applications.
- */
-int uECC_sign_with_k(const uint8_t *private_key, const uint8_t *message_hash,
-		     unsigned int hash_size, uECC_word_t *k, uint8_t *signature,
-		     uECC_Curve curve);
-#endif
 
 /**
  * @brief Verify an ECDSA signature.
- * @return returns TC_SUCCESS (1) if the signature is valid
- * 	   returns TC_FAIL (0) if the signature is invalid.
+ * @return returns TC_CRYPTO_SUCCESS (1) if the the signature generated successfully
+ *         returns TC_CRYPTO_FAIL (0) if:
+ *                r == 0 or
+ *                p_random == 0
  *
- * @param p_public_key IN -- The signer's public key.
- * @param p_message_hash IN -- The hash of the signed data.
- * @param p_hash_size IN -- The size of p_message_hash in bytes.
- * @param p_signature IN -- The signature values.
+ * @param p_publicKey IN -- The signer's public key.
+ * @param p_hash IN -- The hash of the signed data.
+ * @param r IN -- The signature values.
+ * @param s IN -- The signature values.
  *
- * @note Usage: Compute the hash of the signed data using the same hash as the
- * signer and pass it to this function along with the signer's public key and
- * the signature values (hash_size and signature).
+ * @note side-channel countermeasure: algorithm strengthened against timing
+ * attack.
  */
-int uECC_verify(const uint8_t *p_public_key, const uint8_t *p_message_hash,
-		unsigned int p_hash_size, const uint8_t *p_signature, uECC_Curve curve);
+int32_t ecdsa_verify(EccPoint *p_publicKey, uint32_t p_hash[NUM_ECC_DIGITS],
+		     uint32_t r[NUM_ECC_DIGITS], uint32_t s[NUM_ECC_DIGITS]);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __TC_ECC_DSA_H__ */
+#endif
