@@ -26,6 +26,15 @@
 #include <nrf51_bitfields.h>
 #include <mcu/nrf51_hal.h>
 
+/* The OS scheduler requires a low-frequency timer. */
+#if MYNEWT_VAL(OS_SCHEDULING)       && \
+    !MYNEWT_VAL(XTAL_32768)         && \
+    !MYNEWT_VAL(XTAL_RC)            && \
+    !MYNEWT_VAL(XTAL_32768_SYNTH)
+
+    #error The OS scheduler requires a low-frequency timer; enable one of: XTAL_32768, XTAL_RC, or XTAL_32768_SYNTH
+#endif
+
 #define RTC_FREQ        32768
 #define OS_TICK_TIMER   NRF_RTC1
 #define OS_TICK_IRQ     RTC1_IRQn
