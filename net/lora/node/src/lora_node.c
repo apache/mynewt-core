@@ -23,6 +23,25 @@
 #include "node/lora_priv.h"
 #include "node/mac/LoRaMac.h"
 
+STATS_SECT_DECL(lora_mac_stats) lora_mac_stats;
+STATS_NAME_START(lora_mac_stats)
+    STATS_NAME(lora_mac_stats, join_req_tx)
+    STATS_NAME(lora_mac_stats, join_accept_rx)
+    STATS_NAME(lora_mac_stats, link_chk_tx)
+    STATS_NAME(lora_mac_stats, link_chk_ans_rxd)
+    STATS_NAME(lora_mac_stats, join_failures)
+    STATS_NAME(lora_mac_stats, joins)
+    STATS_NAME(lora_mac_stats, tx_timeouts)
+    STATS_NAME(lora_mac_stats, unconfirmed_tx)
+    STATS_NAME(lora_mac_stats, confirmed_tx_fail)
+    STATS_NAME(lora_mac_stats, confirmed_tx_good)
+    STATS_NAME(lora_mac_stats, rx_errors)
+    STATS_NAME(lora_mac_stats, rx_frames)
+    STATS_NAME(lora_mac_stats, rx_mic_failures)
+    STATS_NAME(lora_mac_stats, rx_mlme)
+    STATS_NAME(lora_mac_stats, rx_mcps)
+STATS_NAME_END(lora_mac_stats)
+
 STATS_SECT_DECL(lora_stats) lora_stats;
 STATS_NAME_START(lora_stats)
     STATS_NAME(lora_stats, rx_error)
@@ -164,7 +183,7 @@ lora_node_mcps_request(struct os_mbuf *om)
 static void
 lora_node_reset_txq_timer(void)
 {
-    /* For now, just reset timer to fire off every second */
+    /* XXX: For now, just reset timer to fire off in one second */
     os_callout_reset(&g_lora_mac_data.lm_txq_timer, OS_TICKS_PER_SEC);
 }
 
@@ -619,6 +638,12 @@ lora_node_init(void)
         STATS_HDR(lora_stats),
         STATS_SIZE_INIT_PARMS(lora_stats, STATS_SIZE_32),
         STATS_NAME_INIT_PARMS(lora_stats), "lora");
+    SYSINIT_PANIC_ASSERT(rc == 0);
+
+    rc = stats_init_and_reg(
+        STATS_HDR(lora_mac_stats),
+        STATS_SIZE_INIT_PARMS(lora_mac_stats, STATS_SIZE_32),
+        STATS_NAME_INIT_PARMS(lora_mac_stats), "lora_mac");
     SYSINIT_PANIC_ASSERT(rc == 0);
 
 #if MYNEWT_VAL(LORA_NODE_CLI)
