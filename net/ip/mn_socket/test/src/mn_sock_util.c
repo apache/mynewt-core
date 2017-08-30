@@ -369,9 +369,7 @@ sock_tcp_data(void)
     TEST_ASSERT(msin.msin_addr.s_addr != 0);
     os_mbuf_free_chain(m);
 
-    if (new_sock) {
-        mn_close(new_sock);
-    }
+    mn_close(new_sock);
     mn_close(sock);
     mn_close(listen_sock);
 }
