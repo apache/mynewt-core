@@ -19,6 +19,6 @@
 #ifndef H_MIPS_BSP_
 #define H_MIPS_BSP_
 
-extern const struct hal_flash native_flash_dev;
+extern const struct hal_flash pic32mx_flash_dev;
 
 #endif /* H_NATIVE_BSP_ */
