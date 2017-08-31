@@ -142,6 +142,33 @@ oc_resource_make_secure(oc_resource_t *resource)
 }
 #endif /* OC_SECURITY */
 
+#if MYNEWT_VAL(OC_TRANS_SECURITY)
+/**
+ * Configures the specified resource with a minimum set of transport layer
+ * security requirements.
+ *
+ * @param resource              The resource to configure.
+ * @param enc                   Whether transport layer encryption is required.
+ * @param auth                  Whether transport layer authentication is
+ *                                  required.
+ */
+void
+oc_resource_set_trans_security(oc_resource_t *resource, bool enc, bool auth)
+{
+    if (enc) {
+        resource->properties |= OC_TRANS_ENC;
+    } else {
+        resource->properties &= ~OC_TRANS_ENC;
+    }
+
+    if (auth) {
+        resource->properties |= OC_TRANS_AUTH;
+    } else {
+        resource->properties &= ~OC_TRANS_AUTH;
+    }
+}
+#endif
+
 void
 oc_resource_set_discoverable(oc_resource_t *resource)
 {
