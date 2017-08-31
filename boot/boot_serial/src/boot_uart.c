@@ -20,6 +20,8 @@
 #include <stddef.h>
 #include <inttypes.h>
 
+#include <syscfg/syscfg.h>
+
 #include <uart/uart.h>
 
 /*
@@ -139,6 +141,19 @@ bs_tx_char(void *arg)
     return ch;
 }
 
+#if MYNEWT_VAL(SELFTEST)
+/*
+ * OS is not running, so native uart 'driver' cannot run either.
+ * At the moment unit tests don't check the responses to messages it
+ * sends, so we can drop the outgoing data here.
+ */
+void
+boot_serial_uart_write(char *ptr, int cnt)
+{
+}
+
+#else
+
 void
 boot_serial_uart_write(char *ptr, int cnt)
 {
@@ -153,4 +168,4 @@ boot_serial_uart_write(char *ptr, int cnt)
     while (bs_uart_tx.cnt);
 }
 
-
+#endif
