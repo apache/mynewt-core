@@ -480,7 +480,7 @@ get_token(char **cur, int *null_terminated)
         str++;
     }
 
-    if (!str) {
+    if (*str == '\0') {
         *null_terminated = 1;
         return 0;
     }
