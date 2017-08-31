@@ -1,3 +1,4 @@
+#
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -16,24 +17,10 @@
 # under the License.
 #
 
-# Package: hw/sensor/creator
-
 syscfg.defs:
-    TSL2561_OFB:
-        description: 'TSL2561 is present'
-        value : 0
-    LSM303DLHC_OFB:
-        description: 'LSM303 is present'
-        value : 0
-    MPU6050_OFB:
-        description: 'MPU6050 is present'
-        value : 0
-    BNO055_OFB:
-        description: 'BNO055 is present'
-        value : 0
-    BME280_OFB:
-        description: 'BME280 is present'
-        value : 0
-    TCS34725_OFB:
-        description: 'TCS34725 is present'
-        value : 0
+    MPU6050_LOG:
+        description: 'Enable MPU6050 logging'
+        value: 0
+    MPU6050_STATS:
+        description: 'Enable MPU6050 statistics'
+        value: 0

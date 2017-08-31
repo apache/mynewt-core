@@ -28,6 +28,8 @@ pkg.deps.BME280_OFB:
     - hw/drivers/sensors/bme280
 pkg.deps.LSM303DLHC_OFB:
     - hw/drivers/sensors/lsm303dlhc
+pkg.deps.MPU6050_OFB:
+    - hw/drivers/sensors/mpu6050
 pkg.deps.TSL2561_OFB:
     - hw/drivers/sensors/tsl2561
 pkg.deps.BNO055_OFB:
