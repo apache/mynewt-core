@@ -150,7 +150,8 @@ nffs_unlock(void)
 static int
 nffs_stats_init(void)
 {
-    int rc = 0;
+    int rc;
+
     rc = stats_init_and_reg(
                     STATS_HDR(nffs_stats),
                     STATS_SIZE_INIT_PARMS(nffs_stats, STATS_SIZE_32),
