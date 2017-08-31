@@ -168,6 +168,7 @@ fops_from_filename(const char *filename)
             return unique;
         }
     }
+
     return safe_fs_ops_for(fs_name);
 }
 
