@@ -346,10 +346,10 @@ void
 print_nffs_hash_block(struct nffs_hash_entry *he, int verbose)
 {
     struct nffs_block nb = { 0 };
-    struct nffs_disk_block db;
-    uint32_t area_offset;
-    uint8_t area_idx;
-    int rc = 0;
+    struct nffs_disk_block db = { 0 };
+    uint32_t area_offset = 0;
+    uint8_t area_idx = 0;
+    int rc;
 
     if (he == NULL) {
         return;
@@ -361,6 +361,7 @@ print_nffs_hash_block(struct nffs_hash_entry *he, int verbose)
         if (rc) {
             printf("%p: fail block read id 0x%jx rc %d\n",
                    he, (uintmax_t)he->nhe_id, rc);
+
         }
         nb.nb_hash_entry = he;
         nb.nb_seq = db.ndb_seq;
@@ -375,9 +376,6 @@ print_nffs_hash_block(struct nffs_hash_entry *he, int verbose)
             nb.nb_prev = (void*)db.ndb_prev_id;
         }
         nb.nb_data_len = db.ndb_data_len;
-    } else {
-        nb.nb_inode_entry = NULL;
-        db.ndb_id = 0;
     }
     if (!verbose) {
         printf("%s%s id %jx idx/off %ju/%jx seq %ju ino %jx prev %jx "
@@ -388,7 +386,7 @@ print_nffs_hash_block(struct nffs_hash_entry *he, int verbose)
                (uintmax_t)area_idx,
                (uintmax_t)area_offset,
                (uintmax_t)nb.nb_seq,
-               (uintmax_t)nb.nb_inode_entry->nie_hash_entry.nhe_id,
+               (uintmax_t)(nb.nb_inode_entry ? nb.nb_inode_entry->nie_hash_entry.nhe_id : 0),
                (uintmax_t)db.ndb_prev_id,
                (uintmax_t)db.ndb_data_len);
         return;
@@ -423,12 +421,12 @@ print_nffs_hash_block(struct nffs_hash_entry *he, int verbose)
 void
 print_nffs_hash_inode(struct nffs_hash_entry *he, int verbose)
 {
-    struct nffs_inode ni;
-    struct nffs_disk_inode di;
+    struct nffs_inode ni = { 0 };
+    struct nffs_disk_inode di = { 0 };
     struct nffs_inode_entry *nie = (struct nffs_inode_entry*)he;
     int cached_name_len;
-    uint32_t area_offset;
-    uint8_t area_idx;
+    uint32_t area_offset = 0;
+    uint8_t area_idx = 0;
     int rc = 0;
 
     if (he == NULL) {
@@ -463,9 +461,6 @@ print_nffs_hash_inode(struct nffs_hash_entry *he, int verbose)
                 return;
             }
         }
-    } else {
-        ni.ni_inode_entry = NULL;
-        di.ndi_id = 0;
     }
     if (!verbose) {
         printf("%s%s id %jx idx/off %jx/%jx seq %ju prnt %jx last %jx "

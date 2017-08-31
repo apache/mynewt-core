@@ -124,6 +124,7 @@ uart_hal_init(struct os_dev *odev, void *arg)
 
     ch = odev->od_name[strlen(odev->od_name) - 1];
     if (!isdigit((int) ch)) {
+        os_free(priv);
         return OS_EINVAL;
     }
     priv->unit = ch - '0';

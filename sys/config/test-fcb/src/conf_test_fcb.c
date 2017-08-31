@@ -260,10 +260,12 @@ void config_wipe_srcs(void)
 
 void config_wipe_fcb(struct flash_area *fa, int cnt)
 {
+    int rc;
     int i;
 
     for (i = 0; i < cnt; i++) {
-        flash_area_erase(&fa[i], 0, fa[i].fa_size);
+        rc = flash_area_erase(&fa[i], 0, fa[i].fa_size);
+        TEST_ASSERT(rc == 0);
     }
 }
 

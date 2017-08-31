@@ -20,10 +20,12 @@ int asprintf(char **bufp, const char *format, ...)
 	va_end(ap1);
 
 	*bufp = p = malloc(bytes);
-	if (!p)
-		return -1;
+	if (p) {
+		rv = vsnprintf(p, bytes, format, ap);
+	} else {
+		rv = -1;
+	}
 
-	rv = vsnprintf(p, bytes, format, ap);
 	va_end(ap);
 
 	return rv;

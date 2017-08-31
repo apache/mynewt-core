@@ -20,6 +20,8 @@
 
 TEST_CASE(boot_test_nv_ns_01)
 {
+    int rc;
+
     struct image_header hdr = {
         .ih_magic = IMAGE_MAGIC,
         .ih_tlv_size = 4 + 32,
@@ -33,7 +35,8 @@ TEST_CASE(boot_test_nv_ns_01)
     boot_test_util_write_image(&hdr, 1);
     boot_test_util_write_hash(&hdr, 1);
 
-    boot_set_pending(0);
+    rc = boot_set_pending(0);
+    TEST_ASSERT(rc == 0);
 
     boot_test_util_verify_all(BOOT_SWAP_TYPE_REVERT, NULL, &hdr);
 }

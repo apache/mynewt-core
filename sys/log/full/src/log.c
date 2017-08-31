@@ -267,6 +267,7 @@ log_printf(struct log *log, uint16_t module, uint16_t level, char *msg, ...)
     va_start(args, msg);
     len = vsnprintf(&buf[LOG_ENTRY_HDR_SIZE], LOG_PRINTF_MAX_ENTRY_LEN, msg,
             args);
+    va_end(args);
     if (len >= LOG_PRINTF_MAX_ENTRY_LEN) {
         len = LOG_PRINTF_MAX_ENTRY_LEN-1;
     }

@@ -215,12 +215,10 @@ mutex_task2_handler(void *arg)
         }
     } else {
         if (g_mutex_test == 2) {
-            /* Sleep for 3 seconds */
-            t = os_sched_get_current_task();
+            /* Sleep for 500 miliseconds */
             os_time_delay(OS_TICKS_PER_SEC / 2);
         } else if (g_mutex_test == 3) {
-            /* Sleep for 3 seconds */
-            t = os_sched_get_current_task();
+            /* Sleep for 30 miliseconds */
             os_time_delay(OS_TICKS_PER_SEC / 33);
         }
 

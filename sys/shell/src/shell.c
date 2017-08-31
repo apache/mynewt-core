@@ -124,12 +124,12 @@ line2argv(char *str, char *argv[], size_t size)
 }
 
 static int
-get_destination_module(const char *module_str, uint8_t len)
+get_destination_module(const char *module_str, int len)
 {
     int i;
 
     for (i = 0; i < num_of_shell_entities; i++) {
-        if (len == -1) {
+        if (len < 0) {
             if (!strcmp(module_str, shell_modules[i].name)) {
                 return i;
             }
@@ -480,7 +480,7 @@ get_token(char **cur, int *null_terminated)
         str++;
     }
 
-    if (!str) {
+    if (*str == '\0') {
         *null_terminated = 1;
         return 0;
     }
