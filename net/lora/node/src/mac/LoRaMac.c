@@ -27,15 +27,18 @@ Maintainer: Miguel Luis ( Semtech ), Gregory Cristian ( Semtech ) and Daniel Jäc
 #include "node/mac/LoRaMacCrypto.h"
 #include "node/mac/LoRaMac.h"
 #include "node/mac/LoRaMacTest.h"
-
 #include "os/os.h"
 #include "hal/hal_timer.h"
+#include "node/lora_priv.h"
 
-#if MYNEWT_VAL(OS_CPUTIME_FREQ) != 1000000
-#error "Current code only allows a 1MHz cputime frequency"
+#if !MYNEWT_VAL(LORA_MAC_TIMER_NUM)
+#error "Must define a Lora MAC timer number"
+#else
+#define LORA_MAC_TIMER_NUM    MYNEWT_VAL(LORA_MAC_TIMER_NUM)
 #endif
 
-#include "node/lora_priv.h"
+/* The lora mac timer counts in 1 usec increments */
+#define LORA_MAC_TIMER_FREQ     1000000
 
 /* Convert mac state timeout to os ticks */
 #define MAC_STATE_CHECK_OS_TICKS        \
@@ -1122,8 +1125,8 @@ lora_mac_join_req_tx_fail(void)
         lora_mac_send_mlme_confirm(LORAMAC_EVENT_INFO_STATUS_JOIN_FAIL);
     } else {
         /* Add some transmit delay between join request transmissions */
-        os_cputime_timer_stop(&TxDelayedTimer);
-        os_cputime_timer_relative(&TxDelayedTimer,
+        hal_timer_stop(&TxDelayedTimer);
+        hal_timer_start(&TxDelayedTimer,
             randr(0, MYNEWT_VAL(LORA_JOIN_REQ_RAND_DELAY) * 1000));
     }
 }
@@ -1142,8 +1145,8 @@ lora_mac_unconfirmed_tx_done(void)
         lora_mac_send_mcps_confirm(LORAMAC_EVENT_INFO_STATUS_OK);
     } else {
        /* Add some transmit delay between unconfirmed transmissions */
-        os_cputime_timer_stop(&TxDelayedTimer);
-        os_cputime_timer_relative(&TxDelayedTimer,
+        hal_timer_stop(&TxDelayedTimer);
+        hal_timer_start(&TxDelayedTimer,
             randr(0, MYNEWT_VAL(LORA_UNCONFIRMED_TX_RAND_DELAY) * 1000));
      }
 }
@@ -1177,7 +1180,7 @@ static void
 lora_mac_process_radio_tx(struct os_event *ev)
 {
     /* XXX: We need to time this more accurately */
-    uint32_t curTime = os_cputime_get32();
+    uint32_t curTime = hal_timer_read(LORA_MAC_TIMER_NUM);
 
     if (LoRaMacDeviceClass != CLASS_C) {
         Radio.Sleep( );
@@ -1186,16 +1189,16 @@ lora_mac_process_radio_tx(struct os_event *ev)
     }
 
     /* Always start receive window 1 */
-    os_cputime_timer_start(&RxWindowTimer1, curTime + (RxWindow1Delay * 1000));
+    hal_timer_start_at(&RxWindowTimer1, curTime + (RxWindow1Delay * 1000));
 
     /* Only start receive window 2 if not a class C device */
     if (LoRaMacDeviceClass != CLASS_C) {
-        os_cputime_timer_start(&RxWindowTimer2,
+        hal_timer_start_at(&RxWindowTimer2,
                                curTime + (RxWindow2Delay * 1000));
     }
 
     if (NodeAckRequested == true) {
-        os_cputime_timer_start(&AckTimeoutTimer,  curTime +
+        hal_timer_start_at(&AckTimeoutTimer,  curTime +
                 ((RxWindow2Delay + ACK_TIMEOUT +
                   randr(-ACK_TIMEOUT_RND, ACK_TIMEOUT_RND)) * 1000));
     } else {
@@ -1205,8 +1208,8 @@ lora_mac_process_radio_tx(struct os_event *ev)
          * window before moving on to another transmission.
          */
         if (LoRaMacDeviceClass == CLASS_C) {
-            os_cputime_timer_start(&RxWindowTimer2,
-                                   curTime + (RxWindow2Delay * 1000));
+            hal_timer_start_at(&RxWindowTimer2,
+                               curTime + (RxWindow2Delay * 1000));
         }
     }
 
@@ -1374,7 +1377,7 @@ lora_mac_process_radio_rx(struct os_event *ev)
                 }
 #endif
                 STATS_INC(lora_mac_stats, joins);
-                os_cputime_timer_stop(&RxWindowTimer2);
+                hal_timer_stop(&RxWindowTimer2);
                 IsLoRaMacNetworkJoined = true;
                 UpLinkCounter = 0;
                 ChannelsNbRepCounter = 0;
@@ -1586,8 +1589,8 @@ lora_mac_process_radio_rx(struct os_event *ev)
                             McpsIndication.AckReceived = true;
 
                             /* Stop AckTimeout timer as no more retransmissions needed. */
-                            os_cputime_timer_stop(&AckTimeoutTimer);
-                            os_cputime_timer_stop(&RxWindowTimer2);
+                            hal_timer_stop(&AckTimeoutTimer);
+                            hal_timer_stop(&RxWindowTimer2);
                             lora_mac_tx_service_done(1);
                             goto process_rx_done;
                         }
@@ -1599,10 +1602,10 @@ lora_mac_process_radio_rx(struct os_event *ev)
                      * a frame? Not sure about this.
                      */
                     if ((LoRaMacDeviceClass == CLASS_A) || (RxSlot == 0)) {
-                        os_cputime_timer_stop(&RxWindowTimer2);
+                        hal_timer_stop(&RxWindowTimer2);
                     }
                 } else {
-                    os_cputime_timer_stop(&RxWindowTimer2);
+                    hal_timer_stop(&RxWindowTimer2);
                     if ((LoRaMacDeviceClass == CLASS_A) || (RxSlot == 0)) {
                         tx_service_over = 1;
                     }
@@ -2948,8 +2951,8 @@ ScheduleTx(void)
         LoRaMacState |= LORAMAC_TX_DELAYED;
 
         /* NOTE: dutyCycleTimeOff is already in cputime timer units. */
-        os_cputime_timer_stop(&TxDelayedTimer);
-        os_cputime_timer_relative(&TxDelayedTimer, duty_cycle_time_off);
+        hal_timer_stop(&TxDelayedTimer);
+        hal_timer_start(&TxDelayedTimer, duty_cycle_time_off);
 
         return LORAMAC_STATUS_OK;
     }
@@ -2985,8 +2988,8 @@ CalculateBackOff(uint8_t channel)
     // Reset time-off to initial value.
     Bands[Channels[channel].Band].TimeOff = 0;
 
-    /* Convert the tx time on air (which is in msecs) to cputimer ticks */
-    tx_ticks = os_cputime_usecs_to_ticks(TxTimeOnAir * 1000);
+    /* Convert the tx time on air (which is in msecs) to lora mac timer ticks */
+    tx_ticks = TxTimeOnAir * 1000;
 
     if (IsLoRaMacNetworkJoined == false) {
         // The node has not joined yet. Apply join duty cycle to all regions.
@@ -3459,10 +3462,15 @@ LoRaMacInitialization( LoRaMacPrimitives_t *primitives, LoRaMacCallback_t *callb
     ResetMacParameters( );
 
     /* XXX: determine which of these should be os callouts */
-    os_cputime_timer_init(&TxDelayedTimer, OnTxDelayedTimerEvent, NULL);
-    os_cputime_timer_init(&RxWindowTimer1, OnRxWindow1TimerEvent, NULL);
-    os_cputime_timer_init(&RxWindowTimer2, OnRxWindow2TimerEvent, NULL);
-    os_cputime_timer_init(&AckTimeoutTimer, OnAckTimeoutTimerEvent, NULL);
+    hal_timer_config(LORA_MAC_TIMER_NUM, LORA_MAC_TIMER_FREQ);
+    hal_timer_set_cb(LORA_MAC_TIMER_NUM, &TxDelayedTimer, OnTxDelayedTimerEvent,
+                     NULL);
+    hal_timer_set_cb(LORA_MAC_TIMER_NUM, &RxWindowTimer1, OnRxWindow1TimerEvent,
+                     NULL);
+    hal_timer_set_cb(LORA_MAC_TIMER_NUM, &RxWindowTimer2, OnRxWindow2TimerEvent,
+                     NULL);
+    hal_timer_set_cb(LORA_MAC_TIMER_NUM, &AckTimeoutTimer,
+                     OnAckTimeoutTimerEvent, NULL);
 
     /* Init MAC radio events */
     g_lora_mac_radio_tx_timeout_event.ev_cb = lora_mac_process_radio_tx_timeout;

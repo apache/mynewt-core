@@ -64,3 +64,8 @@ syscfg.defs:
                 Used to compute a random delay (in milliseconds) between
                 the transmission of join requests by an end device.
         value: 5000
+
+
+    LORA_MAC_TIMER_NUM:
+        description: Timer number used for lora mac and radio
+        value: -1

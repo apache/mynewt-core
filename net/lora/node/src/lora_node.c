@@ -127,7 +127,8 @@ lora_node_log(uint8_t logid, uint8_t p8, uint16_t p16, uint32_t p32)
     g_lnd_log[g_lnd_log_index].lnd_p8 = p8;
     g_lnd_log[g_lnd_log_index].lnd_p16 = p16;
     g_lnd_log[g_lnd_log_index].lnd_p32 = p32;
-    g_lnd_log[g_lnd_log_index].lnd_cputime = os_cputime_get32();
+    g_lnd_log[g_lnd_log_index].lnd_cputime =
+        hal_timer_read(MYNEWT_VAL(LORA_MAC_TIMER_NUM));
 
     ++g_lnd_log_index;
     if (g_lnd_log_index == LORA_NODE_DEBUG_LOG_ENTRIES) {
