@@ -21,6 +21,7 @@
 #include <syscfg/syscfg.h>
 
 #include <hal/hal_bsp.h>
+#include <mcu/mips_bsp.h>
 #include <mcu/mips_hal.h>
 #include "hal/hal_i2c.h"
 #if MYNEWT_VAL(TIMER_0) || MYNEWT_VAL(TIMER_1) || MYNEWT_VAL(TIMER_2) || \
@@ -144,7 +145,14 @@ static const struct mips_i2c_cfg hal_i2c3_cfg = {
 const struct hal_flash *
 hal_bsp_flash_dev(uint8_t id)
 {
-    return 0;
+    /*
+     * Internal flash mapped to id 0.
+     */
+    if (id != 0) {
+        return NULL;
+    }
+
+    return &pic32mz_flash_dev;
 }
 
 void
