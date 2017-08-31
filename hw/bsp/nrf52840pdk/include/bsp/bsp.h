@@ -41,8 +41,6 @@ extern uint8_t _ram_start;
 #define LED_BLINK_PIN   (13)
 #define LED_2           (14)
 
-#define NFFS_AREA_MAX   (8)
-
 #ifdef __cplusplus
 }
 #endif

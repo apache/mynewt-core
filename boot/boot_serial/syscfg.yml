@@ -16,22 +16,32 @@
 # under the License.
 #
 
-# Package: fs/nffs
-
 syscfg.defs:
-    NFFS_FLASH_AREA:
-        description: 'Flash area to use for NFFS.'
-        type: flash_owner
+    BOOT_SERIAL_DETECT_PIN:
+        description: >
+            Start the serial boot loader if this pin is asserted at boot time.
         value:
         restrictions:
-            - $notnull
+            - '$notnull'
 
-    NFFS_DETECT_FAIL:
-        description: 'Controls behaviour when encountering corrupt NFFS area.'
-        value: 'NFFS_DETECT_FAIL_FORMAT'
-
-    NFFS_NUM_AREAS:
+    BOOT_SERIAL_DETECT_PIN_CFG:
         description: >
-            Number of areas to allocate in the NFFS disk.  A smaller number is
-            used if the flash hardware cannot support this value.
-        value: 8
+            GPIO configuration for the serial boot loader detect pin.
+        value: 'HAL_GPIO_PULL_UP'
+
+    BOOT_SERIAL_DETECT_PIN_VAL:
+        description: >
+            The value the detect pin must be set to for the serial boot loader
+            to start.
+        value: 0
+
+    BOOT_SERIAL_REPORT_PIN:
+        description: >
+            The GPIO to toggle while the serial boot loader is running.  Set to
+            -1 to disable reporting.
+        value: 'LED_BLINK_PIN'
+
+    BOOT_SERIAL_REPORT_FREQ:
+        description: >
+            The toggle rate, in Hz, of the serial boot loader report pin.
+        value: 4

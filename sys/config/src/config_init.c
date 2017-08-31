@@ -51,7 +51,7 @@ config_init_fs(void)
 #include "fcb/fcb.h"
 #include "config/config_fcb.h"
 
-static struct flash_area conf_fcb_area[NFFS_AREA_MAX + 1];
+static struct flash_area conf_fcb_area[MYNEWT_VAL(CONFIG_FCB_NUM_AREAS) + 1];
 
 static struct conf_fcb config_init_conf_fcb = {
     .cf_fcb.f_magic = MYNEWT_VAL(CONFIG_FCB_MAGIC),

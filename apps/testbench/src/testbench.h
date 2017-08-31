@@ -89,17 +89,6 @@ extern struct nffs_area_desc *nffs_current_area_descs;
 extern struct log nffs_log; /* defined in the OS module */
 #endif
 
-#if 0 /* not ready for this yet */
-#if MYNEWT_VAL(CONFIG_FCB)
-static struct flash_area conf_fcb_area[NFFS_AREA_MAX + 1];
-
-static struct conf_fcb my_conf = {
-    .cf_fcb.f_magic = 0xc09f6e5e,
-    .cf_fcb.f_sectors = conf_fcb_area
-};
-#endif
-#endif
-
 /*
  * Test log cbmem buf
  */

@@ -52,17 +52,6 @@ extern uint8_t _ram_start;
 #define LED_2           (19)
 #define LED_BLINK_PIN   (LED_1)
 
-#if MYNEWT_VAL(BOOT_SERIAL)
-#define BOOT_SERIAL_DETECT_PIN          13 /* Button 1 */
-#define BOOT_SERIAL_DETECT_PIN_CFG      HAL_GPIO_PULL_UP
-#define BOOT_SERIAL_DETECT_PIN_VAL      0
-
-#define BOOT_SERIAL_REPORT_PIN          LED_BLINK_PIN
-#define BOOT_SERIAL_REPORT_FREQ         (MYNEWT_VAL(OS_CPUTIME_FREQ) / 4)
-#endif
-
-#define NFFS_AREA_MAX   (8)
-
 #ifdef __cplusplus
 }
 #endif

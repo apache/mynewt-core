@@ -758,7 +758,7 @@ nffs_init(void)
 void
 nffs_pkg_init(void)
 {
-    struct nffs_area_desc descs[NFFS_AREA_MAX + 1];
+    struct nffs_area_desc descs[MYNEWT_VAL(NFFS_NUM_AREAS) + 1];
     int cnt;
     int rc;
 
@@ -772,7 +772,7 @@ nffs_pkg_init(void)
     /* Convert the set of flash blocks we intend to use for nffs into an array
      * of nffs area descriptors.
      */
-    cnt = NFFS_AREA_MAX;
+    cnt = MYNEWT_VAL(NFFS_NUM_AREAS);
     rc = nffs_misc_desc_from_flash_area(
         MYNEWT_VAL(NFFS_FLASH_AREA), &cnt, descs);
     SYSINIT_PANIC_ASSERT(rc == 0);
