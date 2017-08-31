@@ -321,6 +321,7 @@ uart_open_dev(int port, int32_t baudrate, uint8_t databits,
     rc = uart_dev_set_attr(fd, baudrate, databits,
                            stopbits, parity, flow_ctl);
     if (rc != 0) {
+        close(fd);
         return rc;
     }
 
