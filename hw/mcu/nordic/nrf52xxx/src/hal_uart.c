@@ -210,6 +210,12 @@ static uint32_t
 hal_uart_baudrate(int baudrate)
 {
     switch (baudrate) {
+    case 1200:
+        return UARTE_BAUDRATE_BAUDRATE_Baud1200;
+    case 2400:
+        return UARTE_BAUDRATE_BAUDRATE_Baud2400;
+    case 4800:
+        return UARTE_BAUDRATE_BAUDRATE_Baud4800;
     case 9600:
         return UARTE_BAUDRATE_BAUDRATE_Baud9600;
     case 19200:
