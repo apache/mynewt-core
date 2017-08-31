@@ -20,5 +20,8 @@
 
 TEST_CASE(boot_serial_setup)
 {
+    int rc;
 
+    rc = boot_serial_uart_open();
+    assert(rc == 0);
 }
