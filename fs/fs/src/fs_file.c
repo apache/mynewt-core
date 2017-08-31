@@ -159,6 +159,7 @@ fops_from_filename(const char *filename)
     disk = disk_name_from_path(filename);
     if (disk) {
         fs_name = disk_fs_for(disk);
+        free(disk);
     } else {
         /**
          * special case: if only one fs was ever registered,
