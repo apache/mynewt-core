@@ -21,6 +21,7 @@
 
 #include <string.h>
 #include <assert.h>
+#include <stdbool.h>
 
 /**
  * @addtogroup OSKernel
@@ -105,6 +106,31 @@ os_mempool_init(struct os_mempool *mp, int blocks, int block_size,
 }
 
 /**
+ * Performs an integrity check of the specified mempool.  This function
+ * attempts to detect memory corruption in the specified memory pool.
+ *
+ * @param mp                    The mempool to check.
+ *
+ * @return                      true if the memory pool passes the integrity
+ *                                  check;
+ *                              false if the memory pool is corrupt.
+ */
+bool
+os_mempool_is_sane(const struct os_mempool *mp)
+{
+    struct os_memblock *block;
+
+    /* Verify that each block in the free list belongs to the mempool. */
+    SLIST_FOREACH(block, mp, mb_next) {
+        if (!os_memblock_from(mp, block)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+/**
  * Checks if a memory block was allocated from the specified mempool.
  *
  * @param mp                    The mempool to check as parent.
@@ -114,7 +140,7 @@ os_mempool_init(struct os_mempool *mp, int blocks, int block_size,
  *                              1 if the block does belong to the mempool.
  */
 int
-os_memblock_from(struct os_mempool *mp, void *block_addr)
+os_memblock_from(const struct os_mempool *mp, const void *block_addr)
 {
     uint32_t true_block_size;
     uint32_t baddr32;
