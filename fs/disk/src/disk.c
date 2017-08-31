@@ -142,7 +142,7 @@ disk_filepath_from_path(const char *path)
     } else {
         colon++;
         len = strlen(colon);
-        filepath = malloc(len);
+        filepath = malloc(len + 1);
         memcpy(filepath, colon, len);
         filepath[len] = '\0';
     }
