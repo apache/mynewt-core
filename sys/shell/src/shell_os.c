@@ -65,12 +65,12 @@ shell_os_tasks_display_cmd(int argc, char **argv)
             }
         }
 
-        console_printf("%8s %3u %3u %8lu %8lu %8u %8u %8lu %8lu %3x\n",
+        console_printf("%8s %3u %3u %8lu %8lu %8u %8u %8lu %8lu\n",
                 oti.oti_name, oti.oti_prio, oti.oti_taskid,
                 (unsigned long)oti.oti_runtime, (unsigned long)oti.oti_cswcnt,
                 oti.oti_stksize, oti.oti_stkusage,
                 (unsigned long)oti.oti_last_checkin,
-                (unsigned long)oti.oti_next_checkin, oti.oti_flags);
+                (unsigned long)oti.oti_next_checkin);
 
     }
 

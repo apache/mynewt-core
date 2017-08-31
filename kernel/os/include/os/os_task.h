@@ -110,7 +110,6 @@ struct os_task_info {
     uint8_t oti_prio;
     uint8_t oti_taskid;
     uint8_t oti_state;
-    uint8_t oti_flags;
     uint16_t oti_stkusage;
     uint16_t oti_stksize;
     uint32_t oti_cswcnt;
