@@ -130,13 +130,9 @@ conf_value_from_str(char *val_str, enum conf_type type, void *vp, int maxlen)
     case CONF_INT16:
     case CONF_INT32:
     case CONF_BOOL:
-        if (val_str) {
-            val = strtol(val_str, &eptr, 0);
-            if (*eptr != '\0') {
-                goto err;
-            }
-        } else {
-            val = 0;
+        val = strtol(val_str, &eptr, 0);
+        if (*eptr != '\0') {
+            goto err;
         }
         if (type == CONF_BOOL) {
             if (val < 0 || val > 1) {
