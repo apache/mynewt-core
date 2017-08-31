@@ -80,7 +80,7 @@ receive_byte(uint8_t i2c_num, uint8_t *data, uint8_t nak, uint32_t deadline)
     }
 
     I2CxCONSET(i2c_num) = _I2C1CON_ACKEN_MASK;
-    while (!(I2CxCON(i2c_num) & _I2C1CON_ACKEN_MASK)) {
+    while (I2CxCON(i2c_num) & _I2C1CON_ACKEN_MASK) {
         if (os_time_get() > deadline) {
             return 0;
         }
