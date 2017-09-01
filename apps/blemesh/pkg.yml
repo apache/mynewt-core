@@ -1,4 +1,3 @@
-#
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -6,7 +5,7 @@
 # to you under the Apache License, Version 2.0 (the
 # "License"); you may not use this file except in compliance
 # with the License.  You may obtain a copy of the License at
-# 
+#
 #  http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing,
@@ -16,37 +15,22 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-
-pkg.name: net/nimble/host
-pkg.description: Host side of the nimble Bluetooth Smart stack.
-pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
+pkg.name: apps/blemesh
+pkg.type: app
+pkg.description: Sample application for BLE Mesh node with on/off model
+pkg.author: "Łukasz Rymanowski <lukasz.rymanowski@codecoup.pl>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
-    - ble
-    - bluetooth
 
 pkg.deps:
-    - kernel/os
-    - net/nimble
-    - util/mem
-
-pkg.deps.BLE_SM_LEGACY:
-    - crypto/tinycrypt
-
-pkg.deps.BLE_SM_SC:
-    - crypto/tinycrypt
-
-pkg.deps.BLE_MONITOR_RTT:
-    - hw/drivers/rtt
-
-pkg.deps.BLE_MESH:
-    - net/nimble/host/mesh
-
-pkg.req_apis:
-    - ble_transport
-    - console
-    - log
-    - stats
-
-pkg.init:
-    ble_hs_init: 200
+    - kernel/os 
+    - net/nimble/controller
+    - net/nimble/host
+    - net/nimble/host/services/gap
+    - net/nimble/host/services/gatt
+    - net/nimble/host/store/ram
+    - net/nimble/transport/ram
+    - sys/console/full
+    - sys/log/full
+    - sys/stats/full
+    - sys/shell

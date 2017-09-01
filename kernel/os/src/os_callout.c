@@ -201,6 +201,29 @@ os_callout_wakeup_ticks(os_time_t now)
     return (rt);
 }
 
+/*
+ * Returns the number of ticks which remains to callout..
+ *
+ * @param c callout
+ * @param now The time now
+ *
+ * @return Number of ticks to first pending callout
+ */
+os_time_t os_callout_remaining_ticks(struct os_callout *c, os_time_t now)
+{
+    os_time_t rt;
+
+    OS_ASSERT_CRITICAL();
+
+    if (OS_TIME_TICK_GEQ(c->c_ticks, now)) {
+        rt = c->c_ticks - now;
+    } else {
+        rt = 0;     /* callout time is in the past */
+    }
+
+    return rt;
+}
+
 /**
  *   @} Callout Timers
  * @} OS Kernel
