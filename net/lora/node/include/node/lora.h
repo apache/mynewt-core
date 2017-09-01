@@ -24,6 +24,25 @@
 #include "syscfg/syscfg.h"
 #include "node/mac/LoRaMac.h"
 
+STATS_SECT_START(lora_mac_stats)
+    STATS_SECT_ENTRY(join_req_tx)
+    STATS_SECT_ENTRY(join_accept_rx)
+    STATS_SECT_ENTRY(link_chk_tx)
+    STATS_SECT_ENTRY(link_chk_ans_rxd)
+    STATS_SECT_ENTRY(join_failures)
+    STATS_SECT_ENTRY(joins)
+    STATS_SECT_ENTRY(tx_timeouts)
+    STATS_SECT_ENTRY(unconfirmed_tx)
+    STATS_SECT_ENTRY(confirmed_tx_fail)
+    STATS_SECT_ENTRY(confirmed_tx_good)
+    STATS_SECT_ENTRY(rx_errors)
+    STATS_SECT_ENTRY(rx_frames)
+    STATS_SECT_ENTRY(rx_mic_failures)
+    STATS_SECT_ENTRY(rx_mlme)
+    STATS_SECT_ENTRY(rx_mcps)
+STATS_SECT_END
+extern STATS_SECT_DECL(lora_mac_stats) lora_mac_stats;
+
 STATS_SECT_START(lora_stats)
     STATS_SECT_ENTRY(rx_error)
     STATS_SECT_ENTRY(rx_success)

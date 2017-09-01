@@ -53,3 +53,19 @@ syscfg.defs:
         type: 'task_priority'
         value: 0
 
+    LORA_JOIN_REQ_RAND_DELAY:
+        description: >
+                Used to compute a random delay (in milliseconds) between
+                the transmission of join requests by an end device.
+        value: 5000
+
+    LORA_UNCONFIRMED_TX_RAND_DELAY:
+        description: >
+                Used to compute a random delay (in milliseconds) between
+                the transmission of join requests by an end device.
+        value: 5000
+
+
+    LORA_MAC_TIMER_NUM:
+        description: Timer number used for lora mac and radio
+        value: -1
