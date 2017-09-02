@@ -21,6 +21,7 @@
 #include <hal/hal_bsp.h>
 #include <syscfg/syscfg.h>
 #include <mcu/mcu.h>
+#include <mcu/mips_bsp.h>
 #include <mcu/mips_hal.h>
 
 #include "hal/hal_i2c.h"
@@ -117,7 +118,14 @@ static const struct mips_i2c_cfg hal_i2c0_cfg = {
 const struct hal_flash *
 hal_bsp_flash_dev(uint8_t id)
 {
-    return 0;
+    /*
+     * Internal flash mapped to id 0.
+     */
+    if (id != 0) {
+        return NULL;
+    }
+
+    return &pic32mx_flash_dev;
 }
 
 void
