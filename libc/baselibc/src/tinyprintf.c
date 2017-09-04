@@ -289,6 +289,10 @@ size_t tfp_format(FILE *putp, const char *fmt, va_list va)
                 }
             }
 
+            if (ch == 'z') {
+                ch = *(fmt++);
+            }
+
             switch (ch) {
             case 0:
                 goto abort;
