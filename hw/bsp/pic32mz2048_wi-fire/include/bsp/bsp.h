@@ -47,6 +47,10 @@ extern uint8_t _ccram_start;
 #define LED_4           MCU_GPIO_PORTG(15)
 #define LED_BLINK_PIN   LED_1
 
+/* Buttons */
+#define BUTTON_1        MCU_GPIO_PORTA(5)
+#define BUTTON_2        MCU_GPIO_PORTA(4)
+
 /* UART */
 #define UART_CNT        (6)
 
