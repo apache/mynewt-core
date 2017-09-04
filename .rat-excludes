@@ -18,6 +18,7 @@ pts-sm.txt
 94654-20170317-085441153.pts
 00readme.txt
 uncrustify.cfg
+README.md
 
 # unit tests executables
 bin
@@ -223,6 +224,7 @@ core_cm7.h
 core_cmSimd.h
 core_sc000.h
 core_sc300.h
+HAL_CM7.s
 
 # microjson - BSD License.
 MSJSON_COPYING
@@ -332,3 +334,13 @@ startup_stm32f767xx.s
 
 # Microchip PIC32 SDK - BSD License
 p32mz2048efg100.h
+pic32/os
+arch/pic32
+pic32_init_cache.S
+pic32_init_tlb_ebi_sqi.S
+
+# Calliope SDK - BSD Licence
+split-calliope_mini.ld
+
+# Bluetooth Mesh - Apache 2.0 License
+mesh
