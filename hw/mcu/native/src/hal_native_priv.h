@@ -20,6 +20,8 @@
 #ifndef __HAL_NATIVE_PRIV_H__
 #define __HAL_NATIVE_PRIV_H__
 
+#include <stdint.h>
+
 void hal_bsp_set_hw_id(const uint8_t *id, int len);
 
 #endif /*  __HAL_NATIVE_PRIV_H__ */
