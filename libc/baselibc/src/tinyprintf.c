@@ -219,15 +219,11 @@ intarg(int lng, int sign, va_list *va)
 
     case 2:
     default:
-        /* Pull the 64-bit number off the stack as a pair of 32-bit integers.
-         * The va_arg macro was reading from the wrong location when a 64-bit
-         * type was specified.
-         */
-        /* XXX: Look into this; may just be an incorrect setting when the
-         * compiler / newlib was built.
-         */
-        val = va_arg(*va, unsigned long);
-        val |= (unsigned long long)(va_arg(*va, unsigned long)) << 32;
+        if (sign) {
+            val = va_arg(*va, long long);
+        } else {
+            val = va_arg(*va, unsigned long long);
+        }
         break;
     }
 
