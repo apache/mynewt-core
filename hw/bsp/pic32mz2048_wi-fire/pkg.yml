@@ -34,6 +34,7 @@ pkg.lflags:
 
 pkg.deps:
     - hw/mcu/microchip/pic32mz2048efg100
+    - libc/baselibc
 
 pkg.deps.UART_0:
     - hw/drivers/uart/uart_hal
