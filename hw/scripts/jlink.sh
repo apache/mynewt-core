@@ -64,7 +64,7 @@ jlink_load () {
     echo "quit" >> $GDB_CMD_FILE
 
     msgs=`arm-none-eabi-gdb -x $GDB_CMD_FILE 2>&1`
-    echo $msgs > $GDB_OUT_FILE
+    echo "$msgs" > $GDB_OUT_FILE
 
     rm $GDB_CMD_FILE
 
@@ -72,7 +72,7 @@ jlink_load () {
     # JLinkGDBServer always exits with non-zero error code, regardless of
     # whether there was an error during execution of it or not. So we cannot
     # use it.
-    echo $msgs
+    echo "$msgs"
 
     error=`echo $msgs | grep error`
     if [ -n "$error" ]; then
