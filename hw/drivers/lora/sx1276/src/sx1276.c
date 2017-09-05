@@ -28,7 +28,7 @@ Maintainer: Miguel Luis, Gregory Cristian and Wael Guibene
 #include "sx1276-board.h"
 #include "node/lora_priv.h"
 
-#if !MYNEWT_VAL(LORA_MAC_TIMER_NUM)
+#if MYNEWT_VAL(LORA_MAC_TIMER_NUM) == -1
 #error "Must define a Lora MAC timer number"
 #else
 #define SX1276_TIMER_NUM    MYNEWT_VAL(LORA_MAC_TIMER_NUM)

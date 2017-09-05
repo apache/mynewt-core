@@ -36,6 +36,8 @@ int lora_node_join(uint8_t *dev_eui, uint8_t *app_eui, uint8_t *app_key,
                    uint8_t trials);
 int lora_node_link_check(void);
 struct os_eventq *lora_node_mac_evq_get(void);
+void lora_node_reset_txq_timer(void);
+bool lora_node_txq_empty(void);
 
 /* Lora debug log */
 #define LORA_NODE_DEBUG_LOG

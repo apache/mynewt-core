@@ -31,7 +31,7 @@ Maintainer: Miguel Luis ( Semtech ), Gregory Cristian ( Semtech ) and Daniel Jäc
 #include "hal/hal_timer.h"
 #include "node/lora_priv.h"
 
-#if !MYNEWT_VAL(LORA_MAC_TIMER_NUM)
+#if MYNEWT_VAL(LORA_MAC_TIMER_NUM) == -1
 #error "Must define a Lora MAC timer number"
 #else
 #define LORA_MAC_TIMER_NUM    MYNEWT_VAL(LORA_MAC_TIMER_NUM)
@@ -145,12 +145,12 @@ static uint8_t LoRaMacBuffer[LORAMAC_PHY_MAXPAYLOAD];
 /*!
  * Length of packet in LoRaMacBuffer
  */
-static uint16_t LoRaMacBufferPktLen = 0;
+static uint16_t LoRaMacBufferPktLen;
 
 /*!
  * Length of the payload in LoRaMacBuffer
  */
-static uint8_t LoRaMacTxPayloadLen = 0;
+static uint8_t LoRaMacTxPayloadLen;
 
 /*!
  * Buffer containing the upper layer data.
@@ -162,13 +162,13 @@ static uint8_t LoRaMacRxPayload[LORAMAC_PHY_MAXPAYLOAD];
  * LoRaMAC frame counter. Each time a packet is sent the counter is incremented.
  * Only the 16 LSB bits are sent
  */
-static uint32_t UpLinkCounter = 0;
+static uint32_t UpLinkCounter;
 
 /*!
  * LoRaMAC frame counter. Each time a packet is received the counter is incremented.
  * Only the 16 LSB bits are received
  */
-static uint32_t DownLinkCounter = 0;
+static uint32_t DownLinkCounter;
 
 /*!
  * IsPacketCounterFixed enables the MIC field tests by fixing the
@@ -189,7 +189,7 @@ static bool AdrCtrlOn = false;
 /*!
  * Counts the number of missed ADR acknowledgements
  */
-static uint32_t AdrAckCounter = 0;
+static uint32_t AdrAckCounter;
 
 /*!
  * If the node has sent a FRAME_TYPE_DATA_CONFIRMED_UP this variable indicates
@@ -211,12 +211,12 @@ static bool MacCommandsInNextTx = false;
 /*!
  * Contains the current MacCommandsBuffer index
  */
-static uint8_t MacCommandsBufferIndex = 0;
+static uint8_t MacCommandsBufferIndex;
 
 /*!
  * Contains the current MacCommandsBuffer index for MAC commands to repeat
  */
-static uint8_t MacCommandsBufferToRepeatIndex = 0;
+static uint8_t MacCommandsBufferToRepeatIndex;
 
 /*!
  * Buffer containing the MAC layer commands
@@ -1009,6 +1009,27 @@ LoRaMacStatus_t SetTxContinuousWave(uint16_t timeout);
  */
 static void ResetMacParameters(void);
 
+/*
+ * XXX: TODO
+ *
+ * Need to understand how to handle mac commands that are waiting to be
+ * transmitted. We do not want to constantly transmit them but if we dont
+ * get a downlink packet for commands that we need to repeat until we hear
+ * a downlink.
+ */
+
+/**
+ * Checks to see if there are additional transmissions that need to occur.
+ * If so, we restart the transmit queue timer to process them.
+ */
+static void
+lora_mac_chk_kickstart_tx(void)
+{
+    if (!lora_node_txq_empty()) {
+        lora_node_reset_txq_timer();
+    }
+}
+
 /**
  * Called to send MCPS confirmations
  */
@@ -1022,6 +1043,7 @@ lora_mac_send_mcps_confirm(LoRaMacEventInfoStatus_t status)
         LoRaMacPrimitives->MacMcpsConfirm( &McpsConfirm );
         LoRaMacFlags.Bits.McpsReq = 0;
     }
+    lora_mac_chk_kickstart_tx();
 }
 
 /**
@@ -1123,6 +1145,12 @@ lora_mac_join_req_tx_fail(void)
         STATS_INC(lora_mac_stats, join_failures);
         MlmeConfirm.NbRetries = JoinRequestTrials;
         lora_mac_send_mlme_confirm(LORAMAC_EVENT_INFO_STATUS_JOIN_FAIL);
+
+        /*
+         * The reason we do this if failed to join is to flush the transmit
+         * queue and any mac commands.
+         */
+        lora_mac_chk_kickstart_tx();
     } else {
         /* Add some transmit delay between join request transmissions */
         hal_timer_stop(&TxDelayedTimer);
@@ -1156,6 +1184,7 @@ lora_mac_tx_service_done(int rxd_confirmation)
 {
     /* If no MLME or MCPS request in progress we just return. */
     if ((LoRaMacFlags.Bits.MlmeReq == 0) && (LoRaMacFlags.Bits.McpsReq == 0)) {
+        lora_mac_chk_kickstart_tx();
         return;
     }
 
@@ -1707,6 +1736,7 @@ lora_mac_process_tx_delay_timeout(struct os_event *ev)
      * the transmit service. If that is the case, just return
      */
     if ((LoRaMacFlags.Bits.MlmeReq == 0) && (LoRaMacFlags.Bits.McpsReq == 0)) {
+        lora_mac_chk_kickstart_tx();
         return;
     }
 
@@ -1725,7 +1755,7 @@ lora_mac_process_tx_delay_timeout(struct os_event *ev)
         /* In case of join request retransmissions, the stack must prepare
          * the frame again, because the network server keeps track of the random
          * LoRaMacDevNonce values to prevent reply attacks. */
-        PrepareFrame( &macHdr, &fCtrl, 0, NULL, 0 );
+        PrepareFrame(&macHdr, &fCtrl, 0, NULL, 0);
     }
 
     ScheduleTx( );
@@ -2487,8 +2517,8 @@ static LoRaMacStatus_t AddMacCommand( uint8_t cmd, uint8_t p1, uint8_t p2 )
         default:
             return LORAMAC_STATUS_SERVICE_UNKNOWN;
     }
-    if( status == LORAMAC_STATUS_OK )
-    {
+
+    if (status == LORAMAC_STATUS_OK) {
         MacCommandsInNextTx = true;
     }
     return status;
@@ -2545,7 +2575,8 @@ static uint8_t ParseMacCommandsToRepeat( uint8_t* cmdBufIn, uint8_t length, uint
     return cmdCount;
 }
 
-static void ProcessMacCommands( uint8_t *payload, uint8_t macIndex, uint8_t commandsSize, uint8_t snr )
+static void
+ProcessMacCommands(uint8_t *payload, uint8_t macIndex, uint8_t commandsSize, uint8_t snr)
 {
     while( macIndex < commandsSize )
     {
@@ -3102,7 +3133,8 @@ static void ResetMacParameters( void )
     LoRaMacInitializationTime = os_get_uptime_usec();
 }
 
-LoRaMacStatus_t PrepareFrame( LoRaMacHeader_t *macHdr, LoRaMacFrameCtrl_t *fCtrl, uint8_t fPort, void *fBuffer, uint16_t fBufferSize )
+LoRaMacStatus_t
+PrepareFrame( LoRaMacHeader_t *macHdr, LoRaMacFrameCtrl_t *fCtrl, uint8_t fPort, void *fBuffer, uint16_t fBufferSize )
 {
     uint16_t i;
     uint8_t pktHeaderLen = 0;
@@ -3146,15 +3178,14 @@ LoRaMacStatus_t PrepareFrame( LoRaMacHeader_t *macHdr, LoRaMacFrameCtrl_t *fCtrl
             LoRaMacBuffer[LoRaMacBufferPktLen++] = ( mic >> 8 ) & 0xFF;
             LoRaMacBuffer[LoRaMacBufferPktLen++] = ( mic >> 16 ) & 0xFF;
             LoRaMacBuffer[LoRaMacBufferPktLen++] = ( mic >> 24 ) & 0xFF;
-
             break;
         case FRAME_TYPE_DATA_CONFIRMED_UP:
             NodeAckRequested = true;
             //Intentional fallthrough
         case FRAME_TYPE_DATA_UNCONFIRMED_UP:
-            if( IsLoRaMacNetworkJoined == false )
-            {
-                return LORAMAC_STATUS_NO_NETWORK_JOINED; // No network has been joined yet
+            // No network has been joined yet
+            if (IsLoRaMacNetworkJoined == false) {
+                return LORAMAC_STATUS_NO_NETWORK_JOINED;
             }
 
             fCtrl->Bits.AdrAckReq = AdrNextDr( fCtrl->Bits.Adr, true, &LoRaMacParams.ChannelsDatarate );
@@ -3167,8 +3198,7 @@ LoRaMacStatus_t PrepareFrame( LoRaMacHeader_t *macHdr, LoRaMacFrameCtrl_t *fCtrl
             RxWindow1Delay = LoRaMacParams.ReceiveDelay1 - RADIO_WAKEUP_TIME;
             RxWindow2Delay = LoRaMacParams.ReceiveDelay2 - RADIO_WAKEUP_TIME;
 
-            if( SrvAckRequested == true )
-            {
+            if (SrvAckRequested == true) {
                 SrvAckRequested = false;
                 fCtrl->Bits.Ack = 1;
             }
@@ -3177,44 +3207,40 @@ LoRaMacStatus_t PrepareFrame( LoRaMacHeader_t *macHdr, LoRaMacFrameCtrl_t *fCtrl
             LoRaMacBuffer[pktHeaderLen++] = ( LoRaMacDevAddr >> 8 ) & 0xFF;
             LoRaMacBuffer[pktHeaderLen++] = ( LoRaMacDevAddr >> 16 ) & 0xFF;
             LoRaMacBuffer[pktHeaderLen++] = ( LoRaMacDevAddr >> 24 ) & 0xFF;
-
             LoRaMacBuffer[pktHeaderLen++] = fCtrl->Value;
-
             LoRaMacBuffer[pktHeaderLen++] = UpLinkCounter & 0xFF;
             LoRaMacBuffer[pktHeaderLen++] = ( UpLinkCounter >> 8 ) & 0xFF;
 
-            // Copy the MAC commands which must be re-send into the MAC command buffer
-            memcpy( &MacCommandsBuffer[MacCommandsBufferIndex], MacCommandsBufferToRepeat, MacCommandsBufferToRepeatIndex );
+            /* XXX: Insure that MacCommandsBufferIndex does not exceed
+               maximum length if we have payload. */
+            // Copy MAC commands which must be re-sent into MAC command buffer
+            memcpy(&MacCommandsBuffer[MacCommandsBufferIndex],
+                   MacCommandsBufferToRepeat, MacCommandsBufferToRepeatIndex);
             MacCommandsBufferIndex += MacCommandsBufferToRepeatIndex;
 
-            if( ( payload != NULL ) && ( LoRaMacTxPayloadLen > 0 ) )
-            {
-                if( ( MacCommandsBufferIndex <= LORA_MAC_COMMAND_MAX_LENGTH ) && ( MacCommandsInNextTx == true ) )
+            if ((payload != NULL) && (LoRaMacTxPayloadLen > 0)) {
+                if((MacCommandsBufferIndex <= LORA_MAC_COMMAND_MAX_LENGTH) && (MacCommandsInNextTx == true))
                 {
                     fCtrl->Bits.FOptsLen += MacCommandsBufferIndex;
 
                     // Update FCtrl field with new value of OptionsLength
                     LoRaMacBuffer[0x05] = fCtrl->Value;
-                    for( i = 0; i < MacCommandsBufferIndex; i++ )
-                    {
+                    for (i = 0; i < MacCommandsBufferIndex; i++) {
                         LoRaMacBuffer[pktHeaderLen++] = MacCommandsBuffer[i];
                     }
                 }
-            }
-            else
-            {
-                if( ( MacCommandsBufferIndex > 0 ) && ( MacCommandsInNextTx ) )
-                {
+            } else {
+                if((MacCommandsBufferIndex > 0) && (MacCommandsInNextTx)) {
                     LoRaMacTxPayloadLen = MacCommandsBufferIndex;
                     payload = MacCommandsBuffer;
                     framePort = 0;
                 }
             }
             MacCommandsInNextTx = false;
+
             // Store MAC commands which must be re-send in case the device does not receive a downlink anymore
             MacCommandsBufferToRepeatIndex = ParseMacCommandsToRepeat( MacCommandsBuffer, MacCommandsBufferIndex, MacCommandsBufferToRepeat );
-            if( MacCommandsBufferToRepeatIndex > 0 )
-            {
+            if (MacCommandsBufferToRepeatIndex > 0) {
                 MacCommandsInNextTx = true;
             }
             MacCommandsBufferIndex = 0;
