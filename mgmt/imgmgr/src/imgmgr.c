@@ -94,7 +94,7 @@ imgr_img_tlvs(const struct flash_area *fa, struct image_header *hdr,
         rc = -1;
         goto end;
     }
-    if (tlv_info.it_magic != IMAGE_TRAILER_MAGIC) {
+    if (tlv_info.it_magic != IMAGE_TLV_INFO_MAGIC) {
         rc = 1;
         goto end;
     }
