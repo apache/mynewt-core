@@ -181,14 +181,14 @@ lora_node_mcps_request(struct os_mbuf *om)
 }
 
 #if !MYNEWT_VAL(LORA_NODE_CLI)
-static void
+void
 lora_node_reset_txq_timer(void)
 {
     /* XXX: For now, just reset timer to fire off in one second */
     os_callout_reset(&g_lora_mac_data.lm_txq_timer, OS_TICKS_PER_SEC);
 }
 
-static bool
+bool
 lora_node_txq_empty(void)
 {
     bool rc;
@@ -229,11 +229,6 @@ lora_node_mac_mcps_confirm(McpsConfirm_t *confirm)
     lpkt->txdinfo.uplink_cntr = confirm->UpLinkCounter;
     lpkt->txdinfo.uplink_freq = confirm->UpLinkFrequency;
     lora_app_mcps_confirm(om);
-
-    /* Reset transmit queue timer as there may be packets on transmit queue */
-    if (!lora_node_txq_empty()) {
-        lora_node_reset_txq_timer();
-    }
 }
 
 /* MAC MCPS-Indicate primitive  */

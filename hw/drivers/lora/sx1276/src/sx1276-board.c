@@ -64,6 +64,8 @@ void SX1276IoInit( void )
     rc = hal_gpio_init_out(RADIO_NSS, 1);
     assert(rc == 0);
 
+    hal_spi_disable(RADIO_SPI_IDX);
+
     spi_settings.data_order = HAL_SPI_MSB_FIRST;
     spi_settings.data_mode = HAL_SPI_MODE0;
     spi_settings.baudrate = MYNEWT_VAL(SX1276_SPI_BAUDRATE);
