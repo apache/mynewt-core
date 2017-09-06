@@ -44,6 +44,8 @@ struct ble_ll_resolv_data g_ble_ll_resolv_data;
 
 struct ble_ll_resolv_entry g_ble_ll_resolv_list[MYNEWT_VAL(BLE_LL_RESOLV_LIST_SIZE)];
 
+uint8_t g_default_privacy_mode = BLE_HCI_PRIVACY_NETWORK;
+
 static int
 ble_ll_is_controller_busy(void)
 {
@@ -246,8 +248,7 @@ ble_ll_resolv_list_add(uint8_t *cmdbuf)
         swap_buf(rl->rl_peer_irk, cmdbuf + 7, 16);
         swap_buf(rl->rl_local_irk, cmdbuf + 23, 16);
 
-        /* By default use ptivacy network mode */
-        rl->rl_priv_mode = BLE_HCI_PRIVACY_NETWORK;
+        rl->rl_priv_mode = g_default_privacy_mode;
 
         /*
          * Add peer IRK to HW resolving list. If we can add it, also
@@ -375,6 +376,12 @@ ble_ll_resolv_set_rpa_tmo(uint8_t *cmdbuf)
     g_ble_ll_resolv_data.rpa_tmo = tmo_secs * OS_TICKS_PER_SEC;
     return os_callout_reset(&g_ble_ll_resolv_data.rpa_timer,
                             (int32_t)g_ble_ll_resolv_data.rpa_tmo);
+}
+
+void
+ble_ll_resolv_set_def_priv_mode(uint8_t mode)
+{
+    g_default_privacy_mode = mode;
 }
 
 int

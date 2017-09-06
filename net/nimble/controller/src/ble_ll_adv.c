@@ -1523,6 +1523,13 @@ ble_ll_adv_set_enable(uint8_t instance, uint8_t enable, int duration,
         rc = BLE_ERR_INV_HCI_CMD_PARMS;
     }
 
+#if (MYNEWT_VAL(BLE_LL_CFG_FEAT_LL_PRIVACY) == 1)
+    /* If devices uses legacy commands let's assume BLE_HCI_PRIVACY_DEVICE for
+     * all the peer devices as a default mode
+     */
+    ble_ll_resolv_set_def_priv_mode(BLE_HCI_PRIVACY_DEVICE);
+#endif
+
     return rc;
 }
 

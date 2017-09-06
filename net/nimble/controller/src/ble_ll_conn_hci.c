@@ -33,6 +33,7 @@
 #include "controller/ble_ll_ctrl.h"
 #include "controller/ble_ll_scan.h"
 #include "controller/ble_ll_adv.h"
+#include "controller/ble_ll_resolv.h"
 #include "ble_ll_conn_priv.h"
 
 /*
@@ -530,6 +531,13 @@ ble_ll_conn_create(uint8_t *cmdbuf)
         /* Set the connection state machine we are trying to create. */
         g_ble_ll_conn_create_sm = connsm;
     }
+
+#if (MYNEWT_VAL(BLE_LL_CFG_FEAT_LL_PRIVACY) == 1)
+    /* If devices uses legacy commands let's assume BLE_HCI_PRIVACY_DEVICE for
+     * all the peer devices as a default mode
+     */
+    ble_ll_resolv_set_def_priv_mode(BLE_HCI_PRIVACY_DEVICE);
+#endif
 
     return rc;
 }

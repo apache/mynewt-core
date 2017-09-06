@@ -86,6 +86,10 @@ int ble_ll_resolv_gen_rpa(uint8_t *addr, uint8_t addr_type, uint8_t *rpa,
 /* Set the resolvable private address timeout */
 int ble_ll_resolv_set_rpa_tmo(uint8_t *cmdbuf);
 
+/* Set default privacy mode */
+void
+ble_ll_resolv_set_def_priv_mode(uint8_t mode);
+
 /* Set the privacy mode */
 int ble_ll_resolve_set_priv_mode(uint8_t *cmdbuf);
 
