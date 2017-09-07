@@ -103,7 +103,7 @@ mpu6050_write8(struct sensor_itf *itf, uint8_t reg, uint32_t value)
 
     if (rc != 0) {
         MPU6050_ERR("Failed to write to 0x%02X:0x%02X with value 0x%02X\n",
-                       itf->si_add, reg, value);
+                       itf->si_addr, reg, value);
 #if MYNEWT_VAL(MPU6050_STATS)
         STATS_INC(g_mpu6050stats, read_errors);
 #endif
@@ -136,7 +136,7 @@ mpu6050_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
     rc = hal_i2c_master_write(itf->si_num, &data_struct,
                               OS_TICKS_PER_SEC / 10, 0);
     if (rc != 0) {
-        MPU6050_ERR("I2C access failed at address 0x%02X\n", itf->si_add);
+        MPU6050_ERR("I2C access failed at address 0x%02X\n", itf->si_addr);
 #if MYNEWT_VAL(MPU6050_STATS)
         STATS_INC(g_mpu6050stats, write_errors);
 #endif
@@ -149,7 +149,7 @@ mpu6050_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
                              OS_TICKS_PER_SEC / 10, 1);
 
     if (rc != 0) {
-         MPU6050_ERR("Failed to read from 0x%02X:0x%02X\n", itf->si_add, reg);
+         MPU6050_ERR("Failed to read from 0x%02X:0x%02X\n", itf->si_addr, reg);
  #if MYNEWT_VAL(MPU6050_STATS)
          STATS_INC(g_mpu6050stats, read_errors);
  #endif
@@ -181,7 +181,7 @@ mpu6050_read48(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer)
     rc = hal_i2c_master_write(itf->si_num, &data_struct,
                               OS_TICKS_PER_SEC / 10, 0);
     if (rc != 0) {
-        MPU6050_ERR("I2C access failed at address 0x%02X\n", itf->si_add);
+        MPU6050_ERR("I2C access failed at address 0x%02X\n", itf->si_addr);
 #if MYNEWT_VAL(MPU6050_STATS)
         STATS_INC(g_mpu6050stats, write_errors);
 #endif
@@ -195,7 +195,7 @@ mpu6050_read48(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer)
                              OS_TICKS_PER_SEC / 10, 1);
 
     if (rc != 0) {
-         MPU6050_ERR("Failed to read from 0x%02X:0x%02X\n", itf->si_add, reg);
+         MPU6050_ERR("Failed to read from 0x%02X:0x%02X\n", itf->si_addr, reg);
  #if MYNEWT_VAL(MPU6050_STATS)
          STATS_INC(g_mpu6050stats, read_errors);
  #endif
