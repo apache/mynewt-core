@@ -28,13 +28,11 @@
 extern "C" {
 #endif
 
-#define MPU6050_I2C_ADDR (0xD0 >> 1)
-
 enum mpu6050_gyro_range {
-    MPU6050_GYRO_RANGE_250           = 0x00 << 4, /* +/- 250 Deg/s  */
-    MPU6050_GYRO_RANGE_500           = 0x01 << 4, /* +/- 500 Deg/s  */
-    MPU6050_GYRO_RANGE_1000          = 0x02 << 4, /* +/- 1000 Deg/s */
-    MPU6050_GYRO_RANGE_2000          = 0x03 << 4, /* +/- 2000 Deg/s */
+    MPU6050_GYRO_RANGE_250           = 0x00 << 3, /* +/- 250 Deg/s  */
+    MPU6050_GYRO_RANGE_500           = 0x01 << 3, /* +/- 500 Deg/s  */
+    MPU6050_GYRO_RANGE_1000          = 0x02 << 3, /* +/- 1000 Deg/s */
+    MPU6050_GYRO_RANGE_2000          = 0x03 << 3, /* +/- 2000 Deg/s */
 };
 
 enum mpu6050_accel_range {
@@ -44,8 +42,7 @@ enum mpu6050_accel_range {
     MPU6050_ACCEL_RANGE_16           = 0x03 << 3, /* +/- 16g */
 };
 
-#define MPU6050_ADDR_ACCEL                  0x19  /* 0011001 */
-#define MPU6050_ADDR_MAG                    0x1E  /* 0011110 */
+#define MPU6050_I2C_ADDR (0xD0 >> 1)
 
 struct mpu6050_cfg {
     enum mpu6050_accel_range accel_range;
@@ -53,7 +50,6 @@ struct mpu6050_cfg {
     uint8_t gyro_rate_div; /* Sample Rate = Gyroscope Output Rate /
             (1 + gyro_rate_div) */
     uint8_t lpf_cfg; /* See data sheet */
-    uint8_t addr;
     sensor_type_t mask;
 };
 

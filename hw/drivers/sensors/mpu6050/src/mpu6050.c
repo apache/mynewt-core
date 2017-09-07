@@ -81,21 +81,19 @@ static const struct sensor_driver g_mpu6050_sensor_driver = {
  * Writes a single byte to the specified register
  *
  * @param The sensor interface
- * @param The I2C address to use
  * @param The register address to write to
  * @param The value to write
  *
  * @return 0 on success, non-zero error on failure.
  */
 int
-mpu6050_write8(struct sensor_itf *itf, uint8_t addr, uint8_t reg,
-                  uint32_t value)
+mpu6050_write8(struct sensor_itf *itf, uint8_t reg, uint32_t value)
 {
     int rc;
     uint8_t payload[2] = { reg, value & 0xFF };
 
     struct hal_i2c_master_data data_struct = {
-        .address = addr,
+        .address = itf->si_addr,
         .len = 2,
         .buffer = payload
     };
@@ -105,7 +103,7 @@ mpu6050_write8(struct sensor_itf *itf, uint8_t addr, uint8_t reg,
 
     if (rc != 0) {
         MPU6050_ERR("Failed to write to 0x%02X:0x%02X with value 0x%02X\n",
-                       addr, reg, value);
+                       itf->si_add, reg, value);
 #if MYNEWT_VAL(MPU6050_STATS)
         STATS_INC(g_mpu6050stats, read_errors);
 #endif
@@ -118,20 +116,18 @@ mpu6050_write8(struct sensor_itf *itf, uint8_t addr, uint8_t reg,
  * Reads a single byte from the specified register
  *
  * @param The sensor interface
- * @param The I2C address to use
  * @param The register address to read from
  * @param Pointer to where the register value should be written
  *
  * @return 0 on success, non-zero error on failure.
  */
 int
-mpu6050_read8(struct sensor_itf *itf, uint8_t addr, uint8_t reg,
-                 uint8_t *value)
+mpu6050_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
 {
     int rc;
 
     struct hal_i2c_master_data data_struct = {
-        .address = addr,
+        .address = itf->si_addr,
         .len = 1,
         .buffer = &reg
     };
@@ -140,7 +136,7 @@ mpu6050_read8(struct sensor_itf *itf, uint8_t addr, uint8_t reg,
     rc = hal_i2c_master_write(itf->si_num, &data_struct,
                               OS_TICKS_PER_SEC / 10, 0);
     if (rc != 0) {
-        MPU6050_ERR("I2C access failed at address 0x%02X\n", addr);
+        MPU6050_ERR("I2C access failed at address 0x%02X\n", itf->si_add);
 #if MYNEWT_VAL(MPU6050_STATS)
         STATS_INC(g_mpu6050stats, write_errors);
 #endif
@@ -153,7 +149,7 @@ mpu6050_read8(struct sensor_itf *itf, uint8_t addr, uint8_t reg,
                              OS_TICKS_PER_SEC / 10, 1);
 
     if (rc != 0) {
-         MPU6050_ERR("Failed to read from 0x%02X:0x%02X\n", addr, reg);
+         MPU6050_ERR("Failed to read from 0x%02X:0x%02X\n", itf->si_add, reg);
  #if MYNEWT_VAL(MPU6050_STATS)
          STATS_INC(g_mpu6050stats, read_errors);
  #endif
@@ -165,20 +161,18 @@ mpu6050_read8(struct sensor_itf *itf, uint8_t addr, uint8_t reg,
  * Reads a six bytes from the specified register
  *
  * @param The sensor interface
- * @param The I2C address to use
  * @param The register address to read from
  * @param Pointer to where the register value should be written
  *
  * @return 0 on success, non-zero error on failure.
  */
 int
-mpu6050_read48(struct sensor_itf *itf, uint8_t addr, uint8_t reg,
-                  uint8_t *buffer)
+mpu6050_read48(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer)
 {
     int rc;
 
     struct hal_i2c_master_data data_struct = {
-        .address = addr,
+        .address = itf->si_addr,
         .len = 1,
         .buffer = &reg
     };
@@ -187,7 +181,7 @@ mpu6050_read48(struct sensor_itf *itf, uint8_t addr, uint8_t reg,
     rc = hal_i2c_master_write(itf->si_num, &data_struct,
                               OS_TICKS_PER_SEC / 10, 0);
     if (rc != 0) {
-        MPU6050_ERR("I2C access failed at address 0x%02X\n", addr);
+        MPU6050_ERR("I2C access failed at address 0x%02X\n", itf->si_add);
 #if MYNEWT_VAL(MPU6050_STATS)
         STATS_INC(g_mpu6050stats, write_errors);
 #endif
@@ -201,7 +195,7 @@ mpu6050_read48(struct sensor_itf *itf, uint8_t addr, uint8_t reg,
                              OS_TICKS_PER_SEC / 10, 1);
 
     if (rc != 0) {
-         MPU6050_ERR("Failed to read from 0x%02X:0x%02X\n", addr, reg);
+         MPU6050_ERR("Failed to read from 0x%02X:0x%02X\n", itf->si_add, reg);
  #if MYNEWT_VAL(MPU6050_STATS)
          STATS_INC(g_mpu6050stats, read_errors);
  #endif
@@ -282,13 +276,13 @@ mpu6050_config(struct mpu6050 *mpu, struct mpu6050_cfg *cfg)
     itf = SENSOR_GET_ITF(&(mpu->sensor));
 
     /* Power on */
-    rc = mpu6050_write8(itf, cfg->addr, MPU6050_PWR_MGMT_1, 1);
+    rc = mpu6050_write8(itf, MPU6050_PWR_MGMT_1, 1);
     if (rc != 0) {
         return rc;
     }
 
     uint8_t val;
-    rc = mpu6050_read8(itf, cfg->addr, MPU6050_WHO_AM_I, &val);
+    rc = mpu6050_read8(itf, MPU6050_WHO_AM_I, &val);
     if (rc != 0) {
         return rc;
     }
@@ -297,7 +291,7 @@ mpu6050_config(struct mpu6050 *mpu, struct mpu6050_cfg *cfg)
     }
 
     /* Set LPF */
-    rc = mpu6050_write8(itf, cfg->addr, MPU6050_CONFIG, cfg->lpf_cfg);
+    rc = mpu6050_write8(itf, MPU6050_CONFIG, cfg->lpf_cfg);
     if (rc != 0) {
         return rc;
     }
@@ -305,7 +299,7 @@ mpu6050_config(struct mpu6050 *mpu, struct mpu6050_cfg *cfg)
     mpu->cfg.lpf_cfg = cfg->lpf_cfg;
 
     /* Set gyro data rate */
-    rc = mpu6050_write8(itf, cfg->addr, MPU6050_SMPRT_DIV, cfg->gyro_rate_div);
+    rc = mpu6050_write8(itf, MPU6050_SMPRT_DIV, cfg->gyro_rate_div);
     if (rc != 0) {
         return rc;
     }
@@ -313,7 +307,7 @@ mpu6050_config(struct mpu6050 *mpu, struct mpu6050_cfg *cfg)
     mpu->cfg.gyro_rate_div = cfg->gyro_rate_div;
 
     /* Set the gyroscope range */
-    rc = mpu6050_write8(itf, cfg->addr, MPU6050_GYRO_CONFIG, cfg->gyro_range);
+    rc = mpu6050_write8(itf, MPU6050_GYRO_CONFIG, cfg->gyro_range);
     if (rc != 0) {
         return rc;
     }
@@ -321,7 +315,7 @@ mpu6050_config(struct mpu6050 *mpu, struct mpu6050_cfg *cfg)
     mpu->cfg.gyro_range = cfg->gyro_range;
 
     /* Set accelerometer range */
-    rc = mpu6050_write8(itf, cfg->addr, MPU6050_ACCEL_CONFIG, cfg->accel_range);
+    rc = mpu6050_write8(itf, MPU6050_ACCEL_CONFIG, cfg->accel_range);
     if (rc != 0) {
         return rc;
     }
@@ -334,7 +328,6 @@ mpu6050_config(struct mpu6050 *mpu, struct mpu6050_cfg *cfg)
     }
 
     mpu->cfg.mask = cfg->mask;
-    mpu->cfg.addr = cfg->addr;
 
     return 0;
 }
@@ -366,8 +359,7 @@ mpu6050_sensor_read(struct sensor *sensor, sensor_type_t type,
 
     /* Get a new accelerometer sample */
     if (type & SENSOR_TYPE_ACCELEROMETER) {
-        rc = mpu6050_read48(itf, mpu->cfg.addr, MPU6050_ACCEL_XOUT_H,
-                          payload);
+        rc = mpu6050_read48(itf, MPU6050_ACCEL_XOUT_H, payload);
         if (rc != 0) {
             return rc;
         }
@@ -407,8 +399,7 @@ mpu6050_sensor_read(struct sensor *sensor, sensor_type_t type,
 
     /* Get a new gyroscope sample */
     if (type & SENSOR_TYPE_GYROSCOPE) {
-        rc = mpu6050_read48(itf, mpu->cfg.addr, MPU6050_GYRO_XOUT_H,
-                          payload);
+        rc = mpu6050_read48(itf, MPU6050_GYRO_XOUT_H, payload);
         if (rc != 0) {
             return rc;
         }

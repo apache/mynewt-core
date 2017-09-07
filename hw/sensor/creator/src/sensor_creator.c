@@ -100,10 +100,10 @@ static struct sensor_itf i2c_0_itf_lsm = {
 };
 #endif
 
-#if MYNEWT_VAL(I2C_3) && MYNEWT_VAL(MPU6050_OFB)
-static struct sensor_itf i2c_3_itf_mpu = {
+#if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(MPU6050_OFB)
+static struct sensor_itf i2c_0_itf_mpu = {
     .si_type = SENSOR_ITF_I2C,
-    .si_num  = 3,
+    .si_num  = 0,
     .si_addr = MPU6050_I2C_ADDR
 };
 #endif
@@ -288,9 +288,6 @@ config_mpu6050_sensor(void)
             (1 + gyro_rate_div */
     mpucfg.lpf_cfg = 0; /* See data sheet */
 
-    /* Device I2C addr for accelerometer */
-    mpucfg.addr = MPU6050_I2C_ADDR;
-
     mpucfg.mask = SENSOR_TYPE_ACCELEROMETER|
                   SENSOR_TYPE_GYROSCOPE;
 
@@ -365,7 +362,7 @@ sensor_dev_create(void)
 
 #if MYNEWT_VAL(MPU6050_OFB)
     rc = os_dev_create((struct os_dev *) &mpu6050, "mpu6050_0",
-      OS_DEV_INIT_PRIMARY, 0, mpu6050_init, (void *)&i2c_3_itf_mpu);
+      OS_DEV_INIT_PRIMARY, 0, mpu6050_init, (void *)&i2c_0_itf_mpu);
     assert(rc == 0);
 
     rc = config_mpu6050_sensor();
