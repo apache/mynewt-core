@@ -484,9 +484,6 @@ cmd_gatt_show_coc(int argc, char **argv)
 
     for (i = 0; i < btshell_num_conns; i++) {
         conn = btshell_conns + i;
-        if (!conn) {
-            break;
-        }
 
         if (SLIST_EMPTY(&conn->coc_list)) {
             continue;
