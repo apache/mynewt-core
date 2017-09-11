@@ -2613,6 +2613,22 @@ static const struct shell_cmd_help gatt_service_changed_help = {
 };
 
 /*****************************************************************************
+ * $gatt-service-visibility                                                  *
+ *****************************************************************************/
+
+static const struct shell_param gatt_service_visibility_params[] = {
+    {"handle", "usage: =<UINT16>"},
+    {"visibility", "usage: =<0-1>"},
+    {NULL, NULL}
+};
+
+static const struct shell_cmd_help gatt_service_visibility_help = {
+    .summary = "change service visibility",
+    .usage = NULL,
+    .params = gatt_service_visibility_params,
+};
+
+/*****************************************************************************
  * $gatt-show                                                                *
  *****************************************************************************/
 
@@ -2895,6 +2911,13 @@ static const struct shell_cmd btshell_commands[] = {
         .sc_cmd_func = cmd_gatt_service_changed,
 #if MYNEWT_VAL(SHELL_CMD_HELP)
         .help = &gatt_service_changed_help,
+#endif
+    },
+    {
+        .sc_cmd = "gatt-service-visibility",
+        .sc_cmd_func = cmd_gatt_service_visibility,
+#if MYNEWT_VAL(SHELL_CMD_HELP)
+        .help = &gatt_service_visibility_help,
 #endif
     },
     {
