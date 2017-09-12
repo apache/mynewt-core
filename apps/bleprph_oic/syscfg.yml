@@ -43,9 +43,6 @@ syscfg.vals:
     BLE_LL_CFG_FEAT_LE_ENCRYPTION: 0
     BLE_LL_CFG_FEAT_LL_PRIVACY: 0
 
-    # Disable unused eddystone feature.
-    BLE_EDDYSTONE: 0
-
     # Log reboot messages to a flash circular buffer.
     REBOOT_LOG_FCB: 1
     LOG_FCB: 1
