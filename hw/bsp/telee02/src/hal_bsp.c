@@ -212,5 +212,10 @@ hal_bsp_init(void)
      * Could probably set this as a gpio input with pull-down but for now
      * make it an output and set it low.
      */
-    hal_gpio_init_out(SX1276_NRESET, 0);
+    rc = hal_gpio_init_out(SX1276_NRESET, 0);
+    assert(rc == 0);
+
+    // Enable the external antenna.
+    rc = hal_gpio_init_out(SX1276_ANT_HF_CTRL, 1);
+    assert(rc == 0);
 }
