@@ -1899,10 +1899,6 @@ static const struct shell_cmd_help keystore_show_help = {
 static int
 cmd_auth_passkey(int argc, char **argv)
 {
-#if !NIMBLE_BLE_SM
-    return BLE_HS_ENOTSUP;
-#endif
-
     uint16_t conn_handle;
     struct ble_sm_io pk;
     char *yesno;
