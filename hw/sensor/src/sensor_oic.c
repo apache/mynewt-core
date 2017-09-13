@@ -739,7 +739,7 @@ sensor_oic_init(void)
                 if (rc) {
                     break;
                 }
-                sensor_trigger_init(sensor, type, SENSOR_TRANSPORT_OIC);
+                sensor_trigger_init(sensor, type, sensor_oic_tx_trigger);
             }
             i++;
         }

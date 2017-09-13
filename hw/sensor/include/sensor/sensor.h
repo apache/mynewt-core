@@ -141,6 +141,7 @@ typedef enum {
  */
 #define SENSOR_THRESH_ALGO_WINDOW     0x1
 #define SENSOR_THRESH_ALGO_WATERMARK  0x2
+#define SENSOR_THRESH_ALGO_USERDEF    0x3
 
 /**
  * Sensor listener constants
@@ -166,6 +167,22 @@ struct sensor_cfg {
     uint8_t _reserved[3];
 };
 
+typedef union {
+    struct sensor_mag_data   *smd;
+    struct sensor_accel_data *sad;
+    struct sensor_euler_data *sed;
+    struct sensor_quat_data  *sqd;
+    struct sensor_accel_data *slad;
+    struct sensor_accel_data *sgrd;
+    struct sensor_gyro_data  *sgd;
+    struct sensor_temp_data  *std;
+    struct sensor_temp_data  *satd;
+    struct sensor_light_data *sld;
+    struct sensor_color_data *scd;
+    struct sensor_press_data *spd;
+    struct sensor_humid_data *srhd;
+}sensor_data_t;
+
 /**
  * Callback for handling sensor data, specified in a sensor listener.
  *
@@ -178,6 +195,29 @@ struct sensor_cfg {
  */
 typedef int (*sensor_data_func_t)(struct sensor *, void *, void *,
              sensor_type_t);
+
+/**
+ * Callback for sending trigger notification.
+ *
+ * @param ptr to the sensor
+ * @param ptr to sensor data
+ * @param the sensor type
+ */
+typedef int
+(*sensor_trigger_notify_func_t)(struct sensor *, void *, sensor_type_t);
+
+/**
+ * Callback for trigger compare functions.
+ *
+ * @param type of sensor
+ * @param the sensor low threshold
+ * @param the sensor high threshold
+ * @param ptr to data
+ */
+
+typedef int
+(*sensor_trigger_cmp_func_t)(sensor_type_t, sensor_data_t *,
+                             sensor_data_t *, void *);
 
 /**
  *
@@ -201,22 +241,6 @@ struct sensor_listener {
     SLIST_ENTRY(sensor_listener) sl_next;
 };
 
-typedef union {
-    struct sensor_mag_data   *smd;
-    struct sensor_accel_data *sad;
-    struct sensor_euler_data *sed;
-    struct sensor_quat_data  *sqd;
-    struct sensor_accel_data *slad;
-    struct sensor_accel_data *sgrd;
-    struct sensor_gyro_data  *sgd;
-    struct sensor_temp_data  *std;
-    struct sensor_temp_data  *satd;
-    struct sensor_light_data *sld;
-    struct sensor_color_data *scd;
-    struct sensor_press_data *spd;
-    struct sensor_humid_data *srhd;
-}sensor_data_t;
-
 /**
  * Sensor type traits list
  */
@@ -233,8 +257,13 @@ struct sensor_type_traits {
     /* field for selecting algorithm */
     uint8_t stt_algo;
 
+    /* function ptr for setting comparison algo */
+    sensor_trigger_cmp_func_t stt_trigger_cmp_algo;
+
+#if MYNEWT_VAL(SENSOR_OIC)
     /* Sensor OIC resource */
     oc_resource_t *stt_oic_res;
+#endif
 
     /* Next item in the sensor traits list.  The head of this list is
      * contained within the sensor object.
@@ -335,6 +364,12 @@ struct sensor_itf {
  * Return the interface for this sensor
  */
 #define SENSOR_GET_ITF(__s) (&((__s)->s_itf))
+
+#define SENSOR_DATA_CMP_GT(__d, __t, __f) (\
+    ((__d->__f##_is_valid) && (__t->__f##_is_valid)) ? (__d->__f > __t->__f) : (0))
+
+#define SENSOR_DATA_CMP_LT(__d, __t, __f) (\
+    ((__d->__f##_is_valid) && (__t->__f##_is_valid)) ? (__d->__f < __t->__f) : (0))
 
 struct sensor {
     /* The OS device this sensor inherits from, this is typically a sensor
@@ -608,11 +643,11 @@ sensor_oic_tx_trigger(struct sensor *, void *, sensor_type_t);
  *
  * @param ptr to the sensor sturucture
  * @param sensor type to enable trigger for
- * @param transport for sending the trigger
+ * @param the function to call if the trigger condition is satisfied
  */
 void
 sensor_trigger_init(struct sensor *, sensor_type_t,
-                    uint8_t);
+                    sensor_trigger_notify_func_t);
 
 /**
  * Search the sensor type traits list for specific type of sensor

@@ -685,7 +685,7 @@ lis2dh12_set_fifo_mode(struct sensor_itf *itf, uint8_t mode)
         goto err;
     }
 
-    if (mode == LIS2DH12_FIFO_M_BYPASS && reg != 0x20) {
+    if (mode == LIS2DH12_FIFO_M_BYPASS && reg != LIS2DH12_FIFO_SRC_EMPTY) {
         rc = SYS_EINVAL;
         goto err;
     }
