@@ -884,12 +884,12 @@ div#block-views-diagram-of-usage-block-diagram ul {
   border-left: 0;
 }
 /* line 45, ../scss/modules/docs/_base.scss */
-.page-documentation .docs-menu .toctree-l1 > a.reference.internal::before {
+/*.page-documentation .docs-menu .toctree-l1 > a.reference.internal::before {
   position: absolute;
   content: '\f105';
   font-family: FontAwesome;
   left: 10px;
-}
+}*/
 /* line 55, ../scss/modules/docs/_base.scss */
 .page-documentation .docs-menu .toctree-l1.current {
   border-top: 1px solid #e0e0e0;
@@ -898,20 +898,20 @@ div#block-views-diagram-of-usage-block-diagram ul {
 /* line 60, ../scss/modules/docs/_base.scss */
 .page-documentation .docs-menu .toctree-l1.current > a.reference.internal {
   border-bottom: 1px solid #e0e0e0;
-  background: #e6e6e6;
+  /*background: #e6e6e6;*/
   /*color: #7929D2;*/
   font-weight: bold;
 }
 /* line 65, ../scss/modules/docs/_base.scss */
-.page-documentation .docs-menu .toctree-l1.current > a.reference.internal::before {
+/*.page-documentation .docs-menu .toctree-l1.current > a.reference.internal::before {
   position: absolute;
   content: '\f107';
   font-family: FontAwesome;
   left: 10px;
-}
+}*/
 /* line 73, ../scss/modules/docs/_base.scss */
 .page-documentation .docs-menu .toctree-l1.current > ul {
-  background: #e6e6e6;
+  /*background: #e6e6e6;*/
 }
 /* line 78, ../scss/modules/docs/_base.scss */
 .page-documentation .docs-menu .toctree-l2 > a {
@@ -921,17 +921,17 @@ div#block-views-diagram-of-usage-block-diagram ul {
 /* line 85, ../scss/modules/docs/_base.scss */
 .page-documentation .docs-menu .toctree-l2.current > a.reference.internal {
   /*color: #7929D2;*/
-  background: #F6F7F8;
-  padding-left: 42px;
+  /*background: #F6F7F8;*/
+  padding-left: 34px;
   font-weight: bold;
 }
 /* line 90, ../scss/modules/docs/_base.scss */
-.page-documentation .docs-menu .toctree-l2.current > a.reference.internal::before {
+/*.page-documentation .docs-menu .toctree-l2.current > a.reference.internal::before {
   position: absolute;
   content: '\f107';
   font-family: FontAwesome;
   left: 26px;
-}
+}*/
 /* line 99, ../scss/modules/docs/_base.scss */
 .page-documentation .docs-menu .toctree-l3 a {
   margin-left: 29px;
@@ -941,6 +941,7 @@ div#block-views-diagram-of-usage-block-diagram ul {
 /* line 107, ../scss/modules/docs/_base.scss */
 .page-documentation .docs-menu .toctree-l3.current > a.current {
   /*color: #7929D2;*/
+  font-weight: bold;
 }
 
 /* line 2, ../scss/modules/downloads/_base.scss */
