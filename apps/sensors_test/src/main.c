@@ -37,7 +37,22 @@
 #include <id/id.h>
 #include <os/os_time.h>
 #include <defs/error.h>
-#include <sensor/accel.h>
+
+#if MYNEWT_VAL(BNO055_CLI)
+#include <bno055/bno055.h>
+#endif
+
+#if MYNEWT_VAL(TSL2561_CLI)
+#include <tsl2561/tsl2561.h>
+#endif
+
+#if MYNEWT_VAL(TCS34725_CLI)
+#include <tcs34725/tcs34725.h>
+#endif
+
+#if MYNEWT_VAL(BME280_CLI)
+#include <bme280/bme280.h>
+#endif
 
 #if MYNEWT_VAL(SENSOR_OIC)
 #include <oic/oc_api.h>
