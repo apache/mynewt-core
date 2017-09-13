@@ -129,14 +129,6 @@ typedef enum {
 #define SENSOR_ITF_UART   (2)
 
 /**
- * Sensor transport
- */
-#define SENSOR_TRANSPORT_OIC    0x0
-#define SENSOR_TRANSPORT_BLE    0x1
-#define SENSOR_TRANSPORT_LORA   0x2
-#define SENSOR_TRANSPORT_WIFI   0x3
-
-/**
  * Sensor threshold constants
  */
 #define SENSOR_THRESH_ALGO_WINDOW     0x1
