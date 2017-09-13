@@ -80,7 +80,7 @@ install the project dependencies, this can be done with the
 ``newt install`` command (to see more output, provide the ``-v`` verbose
 option.):
 
-.. code:: no-highlight
+.. code-block:: console
 
     $ newt install
     apache-mynewt-core
@@ -104,7 +104,7 @@ To generate the bootloader target, you need to specify the following
 options. The output of the commands (indicating success) have been
 suppressed for easier readability.
 
-.. code:: no-highlight
+.. code-block:: console
 
     $ newt target create arduino_boot
     $ newt target set arduino_boot bsp=@mynewt_arduino_zero/hw/bsp/arduino_zero
@@ -148,7 +148,7 @@ Once you've configured the bootloader target, the next step is to build
 the bootloader for your Arduino. You can do this by using the
 ``newt build`` command:
 
-.. code:: no-highlight
+.. code-block:: console
 
     $ newt build arduino_boot
     Compiling asprintf.c
@@ -194,7 +194,7 @@ Arduino Zero and not a Pro!
 
 You can now build the target, with ``newt build``:
 
-.. code:: no-highlight
+.. code-block:: console
 
     $ newt build arduino_blinky
     Compiling main.c
@@ -262,7 +262,7 @@ target device.
 Here, we will load our ``arduino_blinky`` target onto the device, and we
 should see it run:
 
-.. code:: no-highlight
+.. code-block:: console
 
     $ newt run arduino_blinky 0.0.0
     Debugging myproject/bin/arduino_blinky/apps/blinky/blinky.elf

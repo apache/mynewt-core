@@ -1,11 +1,11 @@
+Basic Setup
+===========
 
 .. toctree::
-   :maxdepth: 1
    :hidden:
 
-
-Basic Setup
-###########
+   native_install_option/index
+   Docker Container Option <docker_container_option>
 
 If you are curious about Mynewt and want to get a quick feel for the
 project, you've come to the right place. We have two options for you:
@@ -40,5 +40,3 @@ Upon successful start, several tutorials await your eager attention!
 **Send us an email on the dev@ mailing list if you have comments or
 suggestions!** If you haven't joined the mailing list, you will find the
 links `here <../../community.md>`__.
-
-

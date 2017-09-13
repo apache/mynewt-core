@@ -1,10 +1,11 @@
+Native Installation
+===================
 
 .. toctree::
-   :maxdepth: 1
    :hidden:
 
-Native Installation
-###################
+   install_newt_on_mac
+   install_newt_on_linux
 
 This section shows you how to install the tools to develop and build
 Mynewt OS applications on Mac OS, Linux, and Windows, and run and debug

@@ -1,16 +1,11 @@
-.. Mynewt documentation master file
-
 Mynewt Documentation
-##################
+====================
 
 .. toctree::
    :hidden:
-   :maxdepth: 2
-   :glob:
 
-   basic_setup/*
-   mynewt_doc/tutorials/tutorials.rst
-   mynewt_doc/os_user_guide/os_user_guide.rst
+   basic_setup/index
+   concepts
 
 
 Welcome to Apache Mynewt
@@ -93,4 +88,3 @@ and started </os/get_started/get_started/>`__ with your first Mynewt
 application.
 
 Happy Hacking!
-
