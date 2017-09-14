@@ -638,6 +638,8 @@ sensor_init(struct sensor *sensor, struct os_dev *dev)
     }
     sensor->s_dev = dev;
 
+    sensor->s_poll_rate = OS_TIMEOUT_NEVER;
+
     return (0);
 err:
     return (rc);
