@@ -30,6 +30,7 @@
 #include "host/ble_hs.h"
 #include "services/gap/ble_svc_gap.h"
 #include "mesh/glue.h"
+#include "mesh/pts.h"
 
 #include "blemesh.h"
 
@@ -263,6 +264,14 @@ blemesh_cfg_relay_set(bool enable)
         return 0;
     }
     return 1;
+}
+
+int
+blemesh_send_msg(uint8_t ttl, uint16_t appkey_index, uint16_t src_addr,
+                 uint16_t dst_addr, uint8_t *buf, uint16_t len)
+{
+    return pts_mesh_net_send_msg(ttl, appkey_index, src_addr,
+                                 dst_addr, buf, len);
 }
 
 static int output_number(bt_mesh_output_action action, uint32_t number)

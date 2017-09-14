@@ -23,6 +23,8 @@
 #include <stdbool.h>
 
 int blemesh_cfg_relay_set(bool enable);
+int blemesh_send_msg(uint8_t ttl, uint16_t appkey_index, uint16_t src_addr,
+                     uint16_t dst_addr, uint8_t *buf, uint16_t len);
 
 void cmd_init(void);
 
