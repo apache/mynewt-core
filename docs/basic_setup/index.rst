@@ -18,12 +18,12 @@ for the Mac OS we created brew formulas.
 
 We recommend this option if you are familiar with such environments or
 are concerned about performance on your machine. Follow the instructions
-in the `Native Install Option <native_install_intro.md>`__ if you prefer
+in the `Native Install Option <native_install_option>`__ if you prefer
 this option.
 
 **Option 2** is an easy, self-contained way to get up and running with
 Mynewt - but has limitations! The Newt tool and build toolchains are all
-available in a single `All-in-one Docker Container <docker.md>`__ that
+available in a single `All-in-one Docker Container <docker_container_option.html>`__ that
 you can install on your laptop or computer.
 
 However, this is not a long-term option since support is not likely for
@@ -33,7 +33,7 @@ available in the new Docker releases. The Docker option is also
 typically slower than the native install option.
 
 You can then proceed with the instructions on how to `Create Your First
-Project <project_create.md>`__ - on simulated hardware.
+Project <project_create.html>`__ - on simulated hardware.
 
 Upon successful start, several tutorials await your eager attention!
 

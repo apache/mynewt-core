@@ -65,9 +65,9 @@ In order to provide all this functionality, and operate in an extremely
 low resource environment, Mynewt provides a very fine-grained source
 package management and build system tool, called *newt*.
 
-You can install *newt* for `Mac OS <../newt/install/newt_mac/>`__,
-`Linux <../newt/install/newt_linux/>`__, or
-`Windows <../newt/install/newt_windows/>`__.
+You can install *newt* for `Mac OS <basic_setup/native_install_option/install_newt_on_mac.html>`__,
+`Linux <basic_setup/native_install_option/install_newt_on_linux.html>`__, or
+`Windows <basic_setup/native_install_option/install_newt_on_windows.html>`__.
 
 Newt Manager
 ~~~~~~~~~~~~
@@ -84,7 +84,7 @@ Build your first Mynewt App with Newt
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 With the introductions out of the way, now is a good time to `get set up
-and started </os/get_started/get_started/>`__ with your first Mynewt
+and started <basic_setup>`__ with your first Mynewt
 application.
 
 Happy Hacking!
