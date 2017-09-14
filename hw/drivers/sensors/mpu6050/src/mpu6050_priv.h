@@ -111,6 +111,10 @@ enum mpu6050_registers {
 
 #define MPU6050_WHO_AM_I_VAL (0x68)
 
+#define MPU6050_DATA_RDY_EN (0x01)
+#define MPU6050_DEVICE_RESET (0x80)
+#define MPU6050_SLEEP (0x40)
+
 int mpu6050_write8(struct sensor_itf *itf, uint8_t reg, uint32_t value);
 int mpu6050_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value);
 int mpu6050_read48(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer);

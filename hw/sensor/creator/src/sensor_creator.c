@@ -284,12 +284,13 @@ config_mpu6050_sensor(void)
 
     mpucfg.accel_range = MPU6050_ACCEL_RANGE_4;
     mpucfg.gyro_range = MPU6050_GYRO_RANGE_500;
-    mpucfg.gyro_rate_div = 7; /* Sample Rate = Gyroscope Output Rate /
-            (1 + gyro_rate_div */
-    mpucfg.lpf_cfg = 0; /* See data sheet */
-
-    mpucfg.mask = SENSOR_TYPE_ACCELEROMETER|
-                  SENSOR_TYPE_GYROSCOPE;
+    mpucfg.clock_source = MPU6050_CLK_GYRO_X;
+    mpucfg.sample_rate_div = 39; /* Sample Rate = Gyroscope Output Rate /
+            (1 + sample_rate_div) */
+    mpucfg.lpf_cfg = 3; /* See data sheet */
+    mpucfg.int_enable = 0;
+    mpucfg.int_cfg = MPU6050_INT_LATCH_EN | MPU6050_INT_RD_CLEAR;
+    mpucfg.mask = SENSOR_TYPE_ACCELEROMETER | SENSOR_TYPE_GYROSCOPE;
 
     rc = mpu6050_config((struct mpu6050 *) dev, &mpucfg);
 

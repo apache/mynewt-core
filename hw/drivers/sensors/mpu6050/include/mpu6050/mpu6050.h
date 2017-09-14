@@ -42,14 +42,31 @@ enum mpu6050_accel_range {
     MPU6050_ACCEL_RANGE_16           = 0x03 << 3, /* +/- 16g */
 };
 
+enum mpu6050_clock_select {
+    MPU6050_CLK_8MHZ_INTERNAL        = 0x00, /* Internal 8MHz oscillator */
+    MPU6050_CLK_GYRO_X               = 0x01, /* PLL with X axis gyroscope reference  */
+    MPU6050_CLK_GYRO_Y               = 0x02, /* PLL with Y axis gyroscope reference */
+    MPU6050_CLK_GYRO_Z               = 0x03, /* PLL with Z axis gyroscope reference */
+    MPU6050_CLK_EXTERNAL_LS          = 0x04, /* PLL with external 32.768kHz reference */
+    MPU6050_CLK_EXTERNAL_HS          = 0x05, /* PLL with external 19.2MHz reference */
+};
+
 #define MPU6050_I2C_ADDR (0xD0 >> 1)
+
+#define MPU6050_INT_LEVEL (0x80)
+#define MPU6050_INT_OPEN (0x40)
+#define MPU6050_INT_LATCH_EN (0x20)
+#define MPU6050_INT_RD_CLEAR (0x10)
 
 struct mpu6050_cfg {
     enum mpu6050_accel_range accel_range;
     enum mpu6050_gyro_range gyro_range;
-    uint8_t gyro_rate_div; /* Sample Rate = Gyroscope Output Rate /
-            (1 + gyro_rate_div) */
+    enum mpu6050_clock_select clock_source;
+    uint8_t sample_rate_div; /* Sample Rate = Gyroscope Output Rate /
+            (1 + sample_rate_div) */
     uint8_t lpf_cfg; /* See data sheet */
+    uint8_t int_enable;
+    uint8_t int_cfg;
     sensor_type_t mask;
 };
 
@@ -59,6 +76,27 @@ struct mpu6050 {
     struct mpu6050_cfg cfg;
     os_time_t last_read_time;
 };
+
+int mpu6050_reset(struct sensor_itf *itf);
+int mpu6050_sleep(struct sensor_itf *itf, uint8_t enable);
+int mpu6050_set_clock_source(struct sensor_itf *itf,
+    enum mpu6050_clock_select source);
+int mpu6050_get_clock_source(struct sensor_itf *itf,
+    enum mpu6050_clock_select *source);
+int mpu6050_set_lpf(struct sensor_itf *itf, uint8_t cfg);
+int mpu6050_get_lpf(struct sensor_itf *itf, uint8_t *cfg);
+int mpu6050_set_sample_rate(struct sensor_itf *itf, uint8_t rate_div);
+int mpu6050_get_sample_rate(struct sensor_itf *itf, uint8_t *rate_div);
+int mpu6050_set_gyro_range(struct sensor_itf *itf,
+    enum mpu6050_gyro_range range);
+int mpu6050_get_gyro_range(struct sensor_itf *itf,
+    enum mpu6050_gyro_range *range);
+int mpu6050_set_accel_range(struct sensor_itf *itf,
+    enum mpu6050_accel_range range);
+int mpu6050_get_accel_range(struct sensor_itf *itf,
+    enum mpu6050_accel_range *range);
+int mpu6050_enable_interrupt(struct sensor_itf *itf, uint8_t enable);
+int mpu6050_config_interrupt(struct sensor_itf *itf, uint8_t cfg);
 
 int mpu6050_init(struct os_dev *, void *);
 int mpu6050_config(struct mpu6050 *, struct mpu6050_cfg *);
