@@ -6,7 +6,7 @@
     <div class="region region-sidebar">
       <div class="docs-menu">
       {% block menu %}
-        {% set toctree = toctree(maxdepth=5, collapse=True, titles_only=True, includehidden=True) %}
+        {% set toctree = toctree(maxdepth=-1, collapse=True, titles_only=False, includehidden=True) %}
         {% if toctree %}
             {{ toctree }}
         {% else %}
