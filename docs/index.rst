@@ -4,8 +4,14 @@ Mynewt Documentation
 .. toctree::
    :hidden:
 
-   basic_setup/index
-   concepts
+   os/get_started/get_started
+   os/get_started/vocabulary
+   os/tutorials/tutorials
+   os/os_user_guide
+   BLE User Guide <network/ble/ble_intro>
+   newt/newt_intro
+   newtmgr/overview
+   known_issues
 
 
 Welcome to Apache Mynewt

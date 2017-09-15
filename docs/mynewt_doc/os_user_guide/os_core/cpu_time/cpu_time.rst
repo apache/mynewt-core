@@ -42,31 +42,31 @@ The functions available in cputime are:
 +--------------------------------------------------------------------+-----------------------------------------------------------------------------------------+
 | **Function**                                                       | **Description**                                                                         |
 +====================================================================+=========================================================================================+
-| `os\_cputime\_delay\_nsecs <os_cputime_delay_nsecs.md>`__          | Delays for a specified number of nanoseconds.                                           |
+| `os\_cputime\_delay\_nsecs <os_cputime_delay_nsecs.html>`__          | Delays for a specified number of nanoseconds.                                           |
 +--------------------------------------------------------------------+-----------------------------------------------------------------------------------------+
-| `os\_cputime\_delay\_ticks <os_cputime_delay_ticks.md>`__          | Delays for a specified number of ticks.                                                 |
+| `os\_cputime\_delay\_ticks <os_cputime_delay_ticks.html>`__          | Delays for a specified number of ticks.                                                 |
 +--------------------------------------------------------------------+-----------------------------------------------------------------------------------------+
-| `os\_cputime\_delay\_usecs <os_cputime_delay_usecs.md>`__          | Delays for a specified number of microseconds.                                          |
+| `os\_cputime\_delay\_usecs <os_cputime_delay_usecs.html>`__          | Delays for a specified number of microseconds.                                          |
 +--------------------------------------------------------------------+-----------------------------------------------------------------------------------------+
-| `os\_cputime\_get32 <os_cputime_get32.md>`__                       | Gets the current value of the cpu time.                                                 |
+| `os\_cputime\_get32 <os_cputime_get32.html>`__                       | Gets the current value of the cpu time.                                                 |
 +--------------------------------------------------------------------+-----------------------------------------------------------------------------------------+
-| `os\_cputime\_init <os_cputime_init.md>`__                         | Initializes the cputime module.                                                         |
+| `os\_cputime\_init <os_cputime_init.html>`__                         | Initializes the cputime module.                                                         |
 +--------------------------------------------------------------------+-----------------------------------------------------------------------------------------+
-| `os\_cputime\_nsecs\_to\_ticks <os_cputime_nsecs_to_ticks.md>`__   | Converts the specified number of nanoseconds to number of ticks.                        |
+| `os\_cputime\_nsecs\_to\_ticks <os_cputime_nsecs_to_ticks.html>`__   | Converts the specified number of nanoseconds to number of ticks.                        |
 +--------------------------------------------------------------------+-----------------------------------------------------------------------------------------+
-| `os\_cputime\_ticks\_to\_nsecs <os_cputime_ticks_to_nsecs.md>`__   | Converts the specified number of ticks to number of nanoseconds.                        |
+| `os\_cputime\_ticks\_to\_nsecs <os_cputime_ticks_to_nsecs.html>`__   | Converts the specified number of ticks to number of nanoseconds.                        |
 +--------------------------------------------------------------------+-----------------------------------------------------------------------------------------+
-| `os\_cputime\_ticks\_to\_usecs <os_cputime_ticks_to_usecs.md>`__   | Converts the specified number of ticks to number of microseconds.                       |
+| `os\_cputime\_ticks\_to\_usecs <os_cputime_ticks_to_usecs.html>`__   | Converts the specified number of ticks to number of microseconds.                       |
 +--------------------------------------------------------------------+-----------------------------------------------------------------------------------------+
-| `os\_cputime\_timer\_init <os_cputime_timer_init.md>`__            | Initializes a timer.                                                                    |
+| `os\_cputime\_timer\_init <os_cputime_timer_init.html>`__            | Initializes a timer.                                                                    |
 +--------------------------------------------------------------------+-----------------------------------------------------------------------------------------+
-| `os\_cputime\_timer\_relative <os_cputime_timer_relative.md>`__    | Sets a timer to expire in the specified number of microseconds from the current time.   |
+| `os\_cputime\_timer\_relative <os_cputime_timer_relative.html>`__    | Sets a timer to expire in the specified number of microseconds from the current time.   |
 +--------------------------------------------------------------------+-----------------------------------------------------------------------------------------+
-| `os\_cputime\_timer\_start <os_cputime_timer_start.md>`__          | Sets a timer to expire at the specified cputime.                                        |
+| `os\_cputime\_timer\_start <os_cputime_timer_start.html>`__          | Sets a timer to expire at the specified cputime.                                        |
 +--------------------------------------------------------------------+-----------------------------------------------------------------------------------------+
-| `os\_cputime\_timer\_stop <os_cputime_timer_stop.md>`__            | Stops a timer from running.                                                             |
+| `os\_cputime\_timer\_stop <os_cputime_timer_stop.html>`__            | Stops a timer from running.                                                             |
 +--------------------------------------------------------------------+-----------------------------------------------------------------------------------------+
-| `os\_cputime\_usecs\_to\_ticks <os_cputime_usecs_to_ticks.md>`__   | Converts the specified number of microseconds to number of ticks.                       |
+| `os\_cputime\_usecs\_to\_ticks <os_cputime_usecs_to_ticks.html>`__   | Converts the specified number of microseconds to number of ticks.                       |
 +--------------------------------------------------------------------+-----------------------------------------------------------------------------------------+
 
 List of Macros

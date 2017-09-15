@@ -46,18 +46,18 @@ create on his/her own.
 
 Core OS Features
 ~~~~~~~~~~~~~~~~
--  `Scheduler/context switching <context_switch/context_switch.md>`__
--  `Time <time/os_time.md>`__
--  `Tasks <task/task.md>`__
--  `Event queues/callouts <event_queue/event_queue.md>`__
--  `Semaphores <semaphore/semaphore.md>`__
--  `Mutexes <mutex/mutex.md>`__
--  `Memory pools <memory_pool/memory_pool.md>`__
--  `Heap <heap/heap.md>`__
--  `Mbufs <mbuf/mbuf.md>`__
--  `Sanity <sanity/sanity.md>`__
--  `Callouts <callout/callout.md>`__
--  `Porting OS to other platforms <porting/port_os.md>`__
+-  `Scheduler/context switching <context_switch/context_switch.html>`__
+-  `Time <time/os_time.html>`__
+-  `Tasks <task/task.html>`__
+-  `Event queues/callouts <event_queue/event_queue.html>`__
+-  `Semaphores <semaphore/semaphore.html>`__
+-  `Mutexes <mutex/mutex.html>`__
+-  `Memory pools <memory_pool/memory_pool.html>`__
+-  `Heap <heap/heap.html>`__
+-  `Mbufs <mbuf/mbuf.html>`__
+-  `Sanity <sanity/sanity.html>`__
+-  `Callouts <callout/callout.html>`__
+-  `Porting OS to other platforms <porting/port_os.html>`__
 
 Basic OS Application Creation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -72,7 +72,7 @@ task. The main steps are:
    function to initialize the system and packages, perform application
    specific initialization, then wait and dispatch events from the OS
    default event queue in an infinite loop. (See `System Configuration
-   and Initialization </os/modules//sysinitconfig/sysinitconfig.md>`__
+   and Initialization </os/modules//sysinitconfig/sysinitconfig.html>`__
    for more details.)
 
 Initializing application modules and tasks can get somewhat complicated

@@ -39,10 +39,10 @@ Install Mynewt and Newt
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 -  If you have not already done so, install Newt as shown in the `Newt
-   install tutorial <../../newt/install/newt_mac.md>`__
+   install tutorial <../../newt/install/newt_mac.html>`__
 -  If you have not already done so, create a project as shown in the
    Quick Start guide on how to `Create Your First
-   Project <../get_started/project_create.md>`__. Skip the testing and
+   Project <../get_started/project_create.html>`__. Skip the testing and
    building the project steps in that tutorial since you will be
    defining a target for your Arduino board in this tutorial.
 
@@ -326,12 +326,12 @@ the Arduino Zero. The LED right next to the power LED should be
 blinking. It is toggled by one task running on the Mynewt OS.
 
 We have more fun tutorials for you to get your hands dirty. Be bold and
-try other Blinky-like `tutorials <../tutorials/nRF52.md>`__ or try
+try other Blinky-like `tutorials <../tutorials/nRF52.html>`__ or try
 enabling additional functionality such as `remote
-comms <project-target-slinky.md>`__ on the current board.
+comms <project-target-slinky.html>`__ on the current board.
 
 If you see anything missing or want to send us feedback, please do so by
 signing up for appropriate mailing lists on our `Community
-Page <../../community.md>`__.
+Page <../../community.html>`__.
 
 Keep on hacking and blinking!
