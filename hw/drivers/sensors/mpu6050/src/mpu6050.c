@@ -101,7 +101,7 @@ mpu6050_write8(struct sensor_itf *itf, uint8_t reg, uint32_t value)
     rc = hal_i2c_master_write(itf->si_num, &data_struct,
                               OS_TICKS_PER_SEC / 10, 1);
 
-    if (rc != 0) {
+    if (rc) {
         MPU6050_ERR("Failed to write to 0x%02X:0x%02X with value 0x%02X\n",
                        itf->si_addr, reg, value);
 #if MYNEWT_VAL(MPU6050_STATS)
@@ -135,7 +135,7 @@ mpu6050_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
     /* Register write */
     rc = hal_i2c_master_write(itf->si_num, &data_struct,
                               OS_TICKS_PER_SEC / 10, 0);
-    if (rc != 0) {
+    if (rc) {
         MPU6050_ERR("I2C access failed at address 0x%02X\n", itf->si_addr);
 #if MYNEWT_VAL(MPU6050_STATS)
         STATS_INC(g_mpu6050stats, write_errors);
@@ -148,7 +148,7 @@ mpu6050_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
     rc = hal_i2c_master_read(itf->si_num, &data_struct,
                              OS_TICKS_PER_SEC / 10, 1);
 
-    if (rc != 0) {
+    if (rc) {
          MPU6050_ERR("Failed to read from 0x%02X:0x%02X\n", itf->si_addr, reg);
  #if MYNEWT_VAL(MPU6050_STATS)
          STATS_INC(g_mpu6050stats, read_errors);
@@ -180,7 +180,7 @@ mpu6050_read48(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer)
     /* Register write */
     rc = hal_i2c_master_write(itf->si_num, &data_struct,
                               OS_TICKS_PER_SEC / 10, 0);
-    if (rc != 0) {
+    if (rc) {
         MPU6050_ERR("I2C access failed at address 0x%02X\n", itf->si_addr);
 #if MYNEWT_VAL(MPU6050_STATS)
         STATS_INC(g_mpu6050stats, write_errors);
@@ -194,13 +194,189 @@ mpu6050_read48(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer)
     rc = hal_i2c_master_read(itf->si_num, &data_struct,
                              OS_TICKS_PER_SEC / 10, 1);
 
-    if (rc != 0) {
+    if (rc) {
          MPU6050_ERR("Failed to read from 0x%02X:0x%02X\n", itf->si_addr, reg);
  #if MYNEWT_VAL(MPU6050_STATS)
          STATS_INC(g_mpu6050stats, read_errors);
  #endif
     }
     return rc;
+}
+
+int
+mpu6050_reset(struct sensor_itf *itf)
+{
+    return mpu6050_write8(itf, MPU6050_PWR_MGMT_1, MPU6050_DEVICE_RESET);
+}
+
+int
+mpu6050_sleep(struct sensor_itf *itf, uint8_t enable)
+{
+    uint8_t reg;
+    int rc;
+
+    rc = mpu6050_read8(itf, MPU6050_PWR_MGMT_1, &reg);
+    if (rc) {
+        return rc;
+    }
+
+    if (enable) {
+        reg |= MPU6050_SLEEP;
+    } else {
+        reg &= ~MPU6050_SLEEP;
+    }
+
+    return mpu6050_write8(itf, MPU6050_PWR_MGMT_1, reg);
+}
+
+int
+mpu6050_set_clock_source(struct sensor_itf *itf,
+    enum mpu6050_clock_select source)
+{
+    uint8_t reg;
+    int rc;
+
+    rc = mpu6050_read8(itf, MPU6050_PWR_MGMT_1, &reg);
+    if (rc) {
+        return rc;
+    }
+
+    reg &= 0xf8;
+    reg |= source & 0x07;
+
+    return mpu6050_write8(itf, MPU6050_PWR_MGMT_1, reg);
+}
+
+int
+mpu6050_get_clock_source(struct sensor_itf *itf,
+        enum mpu6050_clock_select *source)
+{
+    uint8_t reg;
+    int rc;
+
+    rc = mpu6050_read8(itf, MPU6050_PWR_MGMT_1, &reg);
+    if (rc) {
+        return rc;
+    }
+
+    *source = (enum mpu6050_clock_select)(reg & 0x07);
+
+    return 0;
+}
+
+int
+mpu6050_set_lpf(struct sensor_itf *itf, uint8_t cfg)
+{
+    return mpu6050_write8(itf, MPU6050_CONFIG, cfg & 0x07);
+}
+
+int
+mpu6050_get_lpf(struct sensor_itf *itf, uint8_t *cfg)
+{
+    uint8_t reg;
+    int rc;
+
+    rc = mpu6050_read8(itf, MPU6050_CONFIG, &reg);
+    if (rc) {
+        return rc;
+    }
+
+    *cfg = reg & 0x07;
+
+    return 0;
+}
+
+int
+mpu6050_set_sample_rate(struct sensor_itf *itf, uint8_t rate_div)
+{
+    return mpu6050_write8(itf, MPU6050_SMPRT_DIV, rate_div);
+}
+
+int
+mpu6050_get_sample_rate(struct sensor_itf *itf, uint8_t *rate_div)
+{
+    return mpu6050_read8(itf, MPU6050_SMPRT_DIV, rate_div);
+}
+
+int
+mpu6050_set_gyro_range(struct sensor_itf *itf, enum mpu6050_gyro_range range)
+{
+    return mpu6050_write8(itf, MPU6050_GYRO_CONFIG, (uint8_t)range);
+}
+
+int
+mpu6050_get_gyro_range(struct sensor_itf *itf, enum mpu6050_gyro_range *range)
+{
+    uint8_t reg;
+    int rc;
+
+    rc = mpu6050_read8(itf, MPU6050_GYRO_CONFIG, reg);
+    if (rc) {
+        return rc;
+    }
+
+    *range = (enum mpu6050_gyro_range)(reg & 0x18);
+
+    return 0;
+}
+
+int
+mpu6050_set_accel_range(struct sensor_itf *itf, enum mpu6050_accel_range range)
+{
+    return mpu6050_write8(itf, MPU6050_ACCEL_CONFIG, (uint8_t)range);
+}
+
+int
+mpu6050_get_accel_range(struct sensor_itf *itf, enum mpu6050_accel_range *range)
+{
+    uint8_t reg;
+    int rc;
+
+    rc = mpu6050_read8(itf, MPU6050_ACCEL_CONFIG, &reg);
+    if (rc) {
+        return rc;
+    }
+
+    *range = (enum mpu6050_accel_range)(reg & 0x18);
+
+    return 0;
+}
+
+int
+mpu6050_enable_interrupt(struct sensor_itf *itf, uint8_t enable)
+{
+    uint8_t reg;
+    int rc;
+
+    rc = mpu6050_read8(itf, MPU6050_INT_ENABLE, &reg);
+    if (rc) {
+        return rc;
+    }
+
+    if (enable) {
+        reg |= MPU6050_DATA_RDY_EN;
+    } else {
+        reg &= ~MPU6050_DATA_RDY_EN;
+    }
+
+    return mpu6050_write8(itf, MPU6050_INT_ENABLE, reg);
+}
+
+int
+mpu6050_config_interrupt(struct sensor_itf *itf, uint8_t cfg)
+{
+    uint8_t reg;
+    int rc;
+
+    rc = mpu6050_read8(itf, MPU6050_INT_PIN_CFG, &reg);
+    if (rc) {
+        return rc;
+    }
+
+    reg &= 0x0f;
+    reg |= cfg & 0xf0;
+
+    return mpu6050_write8(itf, MPU6050_INT_PIN_CFG, reg);
 }
 
 /**
@@ -245,7 +421,7 @@ mpu6050_init(struct os_dev *dev, void *arg)
 #endif
 
     rc = sensor_init(sensor, dev);
-    if (rc != 0) {
+    if (rc) {
         return rc;
     }
 
@@ -253,18 +429,16 @@ mpu6050_init(struct os_dev *dev, void *arg)
     rc = sensor_set_driver(sensor, SENSOR_TYPE_GYROSCOPE |
         SENSOR_TYPE_ACCELEROMETER,
             (struct sensor_driver *) &g_mpu6050_sensor_driver);
-    if (rc != 0) {
+    if (rc) {
         return rc;
     }
 
-    /* Set the interface */
     rc = sensor_set_interface(sensor, arg);
-    if (rc != 0) {
+    if (rc) {
         return rc;
     }
 
-    rc = sensor_mgr_register(sensor);
-    return rc;
+    return sensor_mgr_register(sensor);
 }
 
 int
@@ -275,55 +449,73 @@ mpu6050_config(struct mpu6050 *mpu, struct mpu6050_cfg *cfg)
 
     itf = SENSOR_GET_ITF(&(mpu->sensor));
 
-    /* Power on */
-    rc = mpu6050_write8(itf, MPU6050_PWR_MGMT_1, 1);
-    if (rc != 0) {
+    /* Wake up */
+    rc = mpu6050_sleep(itf, 0);
+    if (rc) {
         return rc;
     }
+
+    rc = mpu6050_set_clock_source(itf, cfg->clock_source);
+    if (rc) {
+        return rc;
+    }
+
+    mpu->cfg.clock_source = cfg->clock_source;
 
     uint8_t val;
     rc = mpu6050_read8(itf, MPU6050_WHO_AM_I, &val);
-    if (rc != 0) {
+    if (rc) {
         return rc;
     }
     if (val != MPU6050_WHO_AM_I_VAL) {
-        return SYS_EIO;
+        return SYS_EINVAL;
     }
 
-    /* Set LPF */
-    rc = mpu6050_write8(itf, MPU6050_CONFIG, cfg->lpf_cfg);
-    if (rc != 0) {
+    rc = mpu6050_set_lpf(itf, cfg->lpf_cfg);
+    if (rc) {
         return rc;
     }
 
     mpu->cfg.lpf_cfg = cfg->lpf_cfg;
 
-    /* Set gyro data rate */
-    rc = mpu6050_write8(itf, MPU6050_SMPRT_DIV, cfg->gyro_rate_div);
-    if (rc != 0) {
+    rc = mpu6050_set_sample_rate(itf, cfg->sample_rate_div);
+    if (rc) {
         return rc;
     }
 
-    mpu->cfg.gyro_rate_div = cfg->gyro_rate_div;
+    mpu->cfg.sample_rate_div = cfg->sample_rate_div;
 
-    /* Set the gyroscope range */
-    rc = mpu6050_write8(itf, MPU6050_GYRO_CONFIG, cfg->gyro_range);
-    if (rc != 0) {
+    rc = mpu6050_set_gyro_range(itf, cfg->gyro_range);
+    if (rc) {
         return rc;
     }
 
     mpu->cfg.gyro_range = cfg->gyro_range;
 
-    /* Set accelerometer range */
-    rc = mpu6050_write8(itf, MPU6050_ACCEL_CONFIG, cfg->accel_range);
-    if (rc != 0) {
+    rc = mpu6050_set_accel_range(itf, cfg->accel_range);
+    if (rc) {
         return rc;
     }
 
     mpu->cfg.accel_range = cfg->accel_range;
 
-    rc = sensor_set_type_mask(&(mpu->sensor),  cfg->mask);
-    if (rc != 0) {
+    rc = mpu6050_config_interrupt(itf, cfg->int_cfg);
+    if (rc) {
+        return rc;
+    }
+
+    mpu->cfg.int_cfg = cfg->int_cfg;
+
+    /* Enable/disable interrupt */
+    rc = mpu6050_enable_interrupt(itf, cfg->int_enable);
+    if (rc) {
+        return rc;
+    }
+
+    mpu->cfg.int_enable = cfg->int_enable;
+
+    rc = sensor_set_type_mask(&(mpu->sensor), cfg->mask);
+    if (rc) {
         return rc;
     }
 
@@ -360,7 +552,7 @@ mpu6050_sensor_read(struct sensor *sensor, sensor_type_t type,
     /* Get a new accelerometer sample */
     if (type & SENSOR_TYPE_ACCELEROMETER) {
         rc = mpu6050_read48(itf, MPU6050_ACCEL_XOUT_H, payload);
-        if (rc != 0) {
+        if (rc) {
             return rc;
         }
 
@@ -392,7 +584,7 @@ mpu6050_sensor_read(struct sensor *sensor, sensor_type_t type,
 
         rc = data_func(sensor, data_arg, &databuf.sad,
                 SENSOR_TYPE_ACCELEROMETER);
-        if (rc != 0) {
+        if (rc) {
             return rc;
         }
     }
@@ -400,7 +592,7 @@ mpu6050_sensor_read(struct sensor *sensor, sensor_type_t type,
     /* Get a new gyroscope sample */
     if (type & SENSOR_TYPE_GYROSCOPE) {
         rc = mpu6050_read48(itf, MPU6050_GYRO_XOUT_H, payload);
-        if (rc != 0) {
+        if (rc) {
             return rc;
         }
 
@@ -431,20 +623,18 @@ mpu6050_sensor_read(struct sensor *sensor, sensor_type_t type,
         databuf.sgd.sgd_z_is_valid = 1;
 
         rc = data_func(sensor, data_arg, &databuf.sgd, SENSOR_TYPE_GYROSCOPE);
-        if (rc != 0) {
+        if (rc) {
             return rc;
         }
     }
 
-    return rc;
+    return 0;
 }
 
 static int
 mpu6050_sensor_get_config(struct sensor *sensor, sensor_type_t type,
         struct sensor_cfg *cfg)
 {
-    int rc;
-
     /* If the read isn't looking for accel or gyro, don't do anything. */
     if (!(type & SENSOR_TYPE_ACCELEROMETER) &&
        (!(type & SENSOR_TYPE_GYROSCOPE))) {
@@ -453,5 +643,5 @@ mpu6050_sensor_get_config(struct sensor *sensor, sensor_type_t type,
 
     cfg->sc_valtype = SENSOR_VALUE_TYPE_FLOAT_TRIPLET;
 
-    return (rc);
+    return 0;
 }
