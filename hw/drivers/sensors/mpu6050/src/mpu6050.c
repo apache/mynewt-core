@@ -81,7 +81,6 @@ static const struct sensor_driver g_mpu6050_sensor_driver = {
  * Writes a single byte to the specified register
  *
  * @param The sensor interface
- * @param The I2C address to use
  * @param The register address to write to
  * @param The value to write
  *
@@ -117,7 +116,6 @@ mpu6050_write8(struct sensor_itf *itf, uint8_t reg, uint32_t value)
  * Reads a single byte from the specified register
  *
  * @param The sensor interface
- * @param The I2C address to use
  * @param The register address to read from
  * @param Pointer to where the register value should be written
  *
@@ -163,7 +161,6 @@ mpu6050_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
  * Reads a six bytes from the specified register
  *
  * @param The sensor interface
- * @param The I2C address to use
  * @param The register address to read from
  * @param Pointer to where the register value should be written
  *
