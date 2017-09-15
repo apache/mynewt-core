@@ -27,7 +27,7 @@
  * "signals" implementation.
  *
  * To use this version of sim, disable the MCU_NATIVE_USE_SIGNALS syscfg
- * setting.  
+ * setting.
  */
 
 #include "syscfg/syscfg.h"

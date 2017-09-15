@@ -26,7 +26,7 @@
  * causing deadlock or memory corruption.
  *
  * To use this version of sim, enable the MCU_NATIVE_USE_SIGNALS syscfg
- * setting.  
+ * setting.
  */
 
 #include "syscfg/syscfg.h"
