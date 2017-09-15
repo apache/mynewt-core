@@ -38,9 +38,6 @@ syscfg.vals:
     BLE_SM_LEGACY: 0
     BLE_SM_SC: 0
 
-    # Disable eddystone beacons.
-    BLE_EDDYSTONE: 0
-
     # Default task settings
     OS_MAIN_STACK_SIZE: 512
 

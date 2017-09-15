@@ -30,6 +30,3 @@ syscfg.vals:
     BLE_ROLE_CENTRAL: 0
     BLE_ROLE_OBSERVER: 0
     BLE_ROLE_PERIPHERAL: 1
-
-    # Disable unused eddystone feature.
-    BLE_EDDYSTONE: 0
