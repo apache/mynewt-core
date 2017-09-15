@@ -4,8 +4,9 @@ Mynewt Core OS
 .. toctree::
    :hidden:
 
-   Functions <os_started>
    context_switch/context_switch
+   cputime/os_cputime
+   time/os_time
 
 
 The Mynewt Core OS is a multitasking, preemptive real-time operating
@@ -227,9 +228,8 @@ task2\_sem before task2\_sem was initialized.
             /* main never returns */
     }
 
-OS Functions
+API
 ~~~~~~~~~~~~
 
-The functions available at the OS level are:
-
--  `os\_started <os_started.html>`__
+.. doxygengroup:: OSGeneral
+    :content-only:

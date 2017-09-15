@@ -62,56 +62,11 @@ UTC and a negative number if the local time is *ahead* of UTC.
    struct os_timezone IST = { -330, 0 };
    </pre>
 
-List of Functions
+API
 -----------------
 
-The functions available in time are:
-
-+--------------+----------------+
-| **Function** | **Description* |
-|              | *              |
-+==============+================+
-| `os\_time\_a | Increments the |
-| dvance <os_t | OS time tick   |
-| ime_advance. | for the        |
-| md>`__       | system.        |
-+--------------+----------------+
-| `os\_time\_d | Put the        |
-| elay <os_tim | current task   |
-| e_delay.html>` | to sleep for   |
-| __           | the given      |
-|              | number of      |
-|              | ticks.         |
-+--------------+----------------+
-| `os\_time\_g | Get the        |
-| et <os_time_ | current value  |
-| get.html>`__   | of OS time.    |
-+--------------+----------------+
-| `os\_time\_m | Converts       |
-| s\_to\_ticks | milliseconds   |
-|  <os_time_ms | to os ticks.   |
-| _to_ticks.md |                |
-| >`__         |                |
-+--------------+----------------+
-| `os\_get\_up | Gets the time  |
-| time\_usec < | duration since |
-| os_get_uptim | boot.          |
-| e_usec.html>`_ |                |
-| _            |                |
-+--------------+----------------+
-| `os\_gettime | Populate the   |
-| ofday <os_ge | given timeval  |
-| ttimeofday.m | and timezone   |
-| d>`__        | structs with   |
-|              | current time   |
-|              | data.          |
-+--------------+----------------+
-| `os\_settime | Set the        |
-| ofday <os_se | current time   |
-| ttimeofday.m | of day to the  |
-| d>`__        | given time     |
-|              | structs.       |
-+--------------+----------------+
+.. doxygengroup:: OSTime
+    :content-only:
 
 List of Macros
 --------------
