@@ -84,6 +84,16 @@ static struct os_eventq *avail_queue;
 static struct os_eventq *lines_queue;
 static completion_cb completion;
 
+/*
+ * Default implementation in case all consoles are disabled - we just ignore any
+ * output to console.
+ */
+int __attribute__((weak))
+console_out(int c)
+{
+    return c;
+}
+
 void
 console_echo(int on)
 {
