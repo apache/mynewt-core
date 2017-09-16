@@ -26,10 +26,5 @@ pkg.keywords:
 
 pkg.deps:
     - kernel/os
-   # - hw/hal
-   # - hw/cmsis-core
     - sys/console/full
-   # - hw/bsp/nrf52dk
     - hw/drivers/pwm
-   # - "@mynewt_nordic/hw/mcu/nordic_sdk"
-    - "@mynewt_nordic/hw/drivers/pwm/pwm_nrf52"

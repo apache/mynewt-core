@@ -49,7 +49,8 @@ static struct console_input buf[MYNEWT_VAL(SHELL_MAX_CMD_QUEUED)];
 void
 shell_evq_set(struct os_eventq *evq)
 {
-    os_eventq_designate(&shell_evq, evq, NULL);
+    shell_evq = evq;
+    console_set_queues(&avail_queue, shell_evq);
 }
 
 static const char *
@@ -123,12 +124,12 @@ line2argv(char *str, char *argv[], size_t size)
 }
 
 static int
-get_destination_module(const char *module_str, uint8_t len)
+get_destination_module(const char *module_str, int len)
 {
     int i;
 
     for (i = 0; i < num_of_shell_entities; i++) {
-        if (len == -1) {
+        if (len < 0) {
             if (!strcmp(module_str, shell_modules[i].name)) {
                 return i;
             }
@@ -479,7 +480,7 @@ get_token(char **cur, int *null_terminated)
         str++;
     }
 
-    if (!str) {
+    if (*str == '\0') {
         *null_terminated = 1;
         return 0;
     }
@@ -863,9 +864,11 @@ shell_register_default_module(const char *name)
 }
 
 static void
-line_queue_init(void)
+shell_avail_queue_init(void)
 {
     int i;
+
+    os_eventq_init(&avail_queue);
 
     for (i = 0; i < MYNEWT_VAL(SHELL_MAX_CMD_QUEUED); i++) {
         shell_console_ev[i].ev_cb = shell;
@@ -926,10 +929,8 @@ shell_init(void)
     return;
 #endif
 
+    shell_avail_queue_init();
     shell_evq_set(os_eventq_dflt_get());
-    os_eventq_init(&avail_queue);
-    line_queue_init();
-    console_set_queues(&avail_queue, shell_evq);
 
     prompt = SHELL_PROMPT;
 

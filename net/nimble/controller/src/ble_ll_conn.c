@@ -785,16 +785,58 @@ ble_ll_conn_wfr_timer_exp(void)
 }
 
 void
-ble_ll_conn_init_wrf_timer_exp(void)
+ble_ll_conn_reset_pending_aux_conn_rsp(void)
+{
+#if !MYNEWT_VAL(BLE_LL_CFG_FEAT_LL_EXT_ADV)
+    return;
+#endif
+    struct ble_ll_conn_sm *connsm;
+
+    connsm = g_ble_ll_conn_create_sm;
+    if (!connsm) {
+        return;
+    }
+
+    if (CONN_F_AUX_CONN_REQ(connsm)) {
+        STATS_INC(ble_ll_stats, aux_conn_rsp_err);
+        CONN_F_CONN_REQ_TXD(connsm) = 0;
+        CONN_F_AUX_CONN_REQ(connsm) = 0;
+        ble_ll_sched_rmv_elem(&connsm->conn_sch);
+        return;
+    }
+
+    return;
+}
+
+bool
+ble_ll_conn_init_pending_aux_conn_rsp(void)
+{
+#if !MYNEWT_VAL(BLE_LL_CFG_FEAT_LL_EXT_ADV)
+    return false;
+#endif
+    struct ble_ll_conn_sm *connsm;
+
+    connsm = g_ble_ll_conn_create_sm;
+    if (!connsm) {
+        return false;
+    }
+
+    return CONN_F_AUX_CONN_REQ(connsm);
+}
+
+void
+ble_ll_conn_init_wfr_timer_exp(void)
 {
 #if MYNEWT_VAL(BLE_LL_CFG_FEAT_LL_EXT_ADV)
     struct ble_ll_conn_sm *connsm;
     struct ble_ll_scan_sm *scansm;
 
-    connsm = g_ble_ll_conn_cur_sm;
+    connsm = g_ble_ll_conn_create_sm;
     if (!connsm) {
         return;
     }
+
+    ble_ll_conn_reset_pending_aux_conn_rsp();
 
     scansm = connsm->scansm;
     if (scansm && scansm->cur_aux_data) {
@@ -897,6 +939,10 @@ ble_ll_conn_continue_rx_encrypt(void *arg)
 static uint32_t
 ble_ll_conn_get_next_sched_time(struct ble_ll_conn_sm *connsm)
 {
+#if MYNEWT_VAL(BLE_LL_STRICT_CONN_SCHEDULING)
+    uint32_t ce_end;
+    ce_end = connsm->ce_end_time;
+#else
     uint32_t ce_end;
     uint32_t next_sched_time;
 
@@ -913,6 +959,7 @@ ble_ll_conn_get_next_sched_time(struct ble_ll_conn_sm *connsm)
             ce_end = next_sched_time;
         }
     }
+#endif
 
     return ce_end;
 }
@@ -1028,6 +1075,7 @@ ble_ll_conn_tx_data_pdu(struct ble_ll_conn_sm *connsm)
     struct os_mbuf_pkthdr *nextpkthdr;
     struct ble_ll_empty_pdu empty_pdu;
     ble_phy_tx_end_func txend_func;
+    int tx_phy_mode;
 
     /* For compiler warnings... */
     ble_hdr = NULL;
@@ -1172,9 +1220,15 @@ ble_ll_conn_tx_data_pdu(struct ble_ll_conn_sm *connsm)
          * now. This is not the most accurate especially if we have
          * received a frame and we are replying to it.
          */
+#if BLE_LL_BT5_PHY_SUPPORTED
+        tx_phy_mode = connsm->phy_data.tx_phy_mode;
+#else
+        tx_phy_mode = BLE_PHY_MODE_1M;
+#endif
+
         ticks = (BLE_LL_IFS * 3) + connsm->eff_max_rx_time +
-            ble_ll_pdu_tx_time_get(next_txlen, connsm->phy_data.tx_phy_mode) +
-            ble_ll_pdu_tx_time_get(cur_txlen, connsm->phy_data.tx_phy_mode);
+            ble_ll_pdu_tx_time_get(next_txlen, tx_phy_mode) +
+            ble_ll_pdu_tx_time_get(cur_txlen, tx_phy_mode);
 
         if (connsm->conn_role == BLE_LL_CONN_ROLE_MASTER) {
             ticks += (BLE_LL_IFS + connsm->eff_max_rx_time);
@@ -1378,16 +1432,6 @@ ble_ll_conn_event_start_cb(struct ble_ll_sched_item *sch)
     g_ble_ll_conn_cur_sm = connsm;
     assert(connsm);
 
-    if (CONN_F_AUX_CONN_REQ(connsm) && !CONN_F_AUX_CONN_RSP(connsm)) {
-        /*We are here when AUX_CONN_REQ has been sent but we did not receive
-         * AUX CONN RSP. Forget about last aux_conn_req and scan again
-         */
-
-        CONN_F_AUX_CONN_REQ(connsm) = 0;
-        ble_ll_scan_chk_resume();
-        return BLE_LL_SCHED_STATE_DONE;
-    }
-
     /* Disable whitelisting as connections do not use it */
     ble_ll_whitelist_disable();
 
@@ -1532,6 +1576,13 @@ ble_ll_conn_can_send_next_pdu(struct ble_ll_conn_sm *connsm, uint32_t begtime,
     struct os_mbuf_pkthdr *pkthdr;
     struct ble_mbuf_hdr *txhdr;
     uint32_t allowed_usecs;
+    int tx_phy_mode;
+
+#if BLE_LL_BT5_PHY_SUPPORTED
+    tx_phy_mode = connsm->phy_data.tx_phy_mode;
+#else
+    tx_phy_mode = BLE_PHY_MODE_1M;
+#endif
 
     rc = 1;
     if (connsm->conn_role == BLE_LL_CONN_ROLE_MASTER) {
@@ -1556,11 +1607,10 @@ ble_ll_conn_can_send_next_pdu(struct ble_ll_conn_sm *connsm, uint32_t begtime,
             if (rem_bytes > connsm->eff_max_tx_octets) {
                 rem_bytes = connsm->eff_max_tx_octets;
             }
-            usecs = ble_ll_pdu_tx_time_get(rem_bytes,
-                                               connsm->phy_data.tx_phy_mode);
+            usecs = ble_ll_pdu_tx_time_get(rem_bytes, tx_phy_mode);
         } else {
             /* We will send empty pdu (just a LL header) */
-            usecs = ble_ll_pdu_tx_time_get(0, connsm->phy_data.tx_phy_mode);
+            usecs = ble_ll_pdu_tx_time_get(0, tx_phy_mode);
         }
         usecs += (BLE_LL_IFS * 2) + connsm->eff_max_rx_time;
 
@@ -1721,25 +1771,6 @@ ble_ll_update_max_tx_octets_phy_mode(struct ble_ll_conn_sm *connsm)
             ble_ll_pdu_max_tx_octets_get(usecs, BLE_PHY_MODE_CODED_500KBPS);
 }
 
-#if MYNEWT_VAL(BLE_LL_CFG_FEAT_LL_EXT_ADV)
-
-void
-ble_ll_conn_ext_master_init(struct ble_ll_conn_sm *connsm,
-                        struct hci_ext_create_conn *hcc)
-{
-
-    ble_ll_conn_master_common_init(connsm);
-
-    /* Set own address type and peer address if needed */
-    connsm->own_addr_type = hcc->own_addr_type;
-    if (hcc->filter_policy == 0) {
-        memcpy(&connsm->peer_addr, &hcc->peer_addr, BLE_DEV_ADDR_LEN);
-        connsm->peer_addr_type = hcc->peer_addr_type;
-    }
-
-    connsm->initial_params = *hcc;
-}
-
 #if (BLE_LL_BT5_PHY_SUPPORTED == 1)
 
 static void
@@ -1792,6 +1823,25 @@ ble_ll_conn_init_phy(struct ble_ll_conn_sm *connsm, int phy)
 }
 
 #endif
+
+#if MYNEWT_VAL(BLE_LL_CFG_FEAT_LL_EXT_ADV)
+
+void
+ble_ll_conn_ext_master_init(struct ble_ll_conn_sm *connsm,
+                        struct hci_ext_create_conn *hcc)
+{
+
+    ble_ll_conn_master_common_init(connsm);
+
+    /* Set own address type and peer address if needed */
+    connsm->own_addr_type = hcc->own_addr_type;
+    if (hcc->filter_policy == 0) {
+        memcpy(&connsm->peer_addr, &hcc->peer_addr, BLE_DEV_ADDR_LEN);
+        connsm->peer_addr_type = hcc->peer_addr_type;
+    }
+
+    connsm->initial_params = *hcc;
+}
 
 void
 ble_ll_conn_ext_set_params(struct ble_ll_conn_sm *connsm,
@@ -2021,6 +2071,9 @@ ble_ll_conn_end(struct ble_ll_conn_sm *connsm, uint8_t ble_err)
     uint8_t *evbuf;
     struct os_mbuf *m;
     struct os_mbuf_pkthdr *pkthdr;
+#if MYNEWT_VAL(BLE_LL_STRICT_CONN_SCHEDULING)
+    os_sr_t sr;
+#endif
 
     /* Remove scheduler events just in case */
     ble_ll_sched_rmv_elem(&connsm->conn_sch);
@@ -2056,6 +2109,16 @@ ble_ll_conn_end(struct ble_ll_conn_sm *connsm, uint8_t ble_err)
 
     /* Make sure events off queue */
     os_eventq_remove(&g_ble_ll_data.ll_evq, &connsm->conn_ev_end);
+
+#if MYNEWT_VAL(BLE_LL_STRICT_CONN_SCHEDULING)
+    /* Remove from occupied periods */
+    OS_ENTER_CRITICAL(sr);
+    assert(g_ble_ll_sched_data.sch_num_occ_periods > 0);
+    assert(g_ble_ll_sched_data.sch_occ_period_mask & connsm->period_occ_mask);
+    --g_ble_ll_sched_data.sch_num_occ_periods;
+    g_ble_ll_sched_data.sch_occ_period_mask &= ~connsm->period_occ_mask;
+    OS_EXIT_CRITICAL(sr);
+#endif
 
     /* Connection state machine is now idle */
     connsm->conn_state = BLE_LL_CONN_STATE_IDLE;
@@ -2101,7 +2164,8 @@ ble_ll_conn_end(struct ble_ll_conn_sm *connsm, uint8_t ble_err)
     STAILQ_INSERT_TAIL(&g_ble_ll_conn_free_list, connsm, free_stqe);
 
     /* Log connection end */
-    ble_ll_log(BLE_LL_LOG_ID_CONN_END,connsm->conn_handle,0,connsm->event_cntr);
+    ble_ll_log(BLE_LL_LOG_ID_CONN_END,connsm->conn_handle, ble_err,
+               connsm->event_cntr);
 }
 
 /**
@@ -2294,7 +2358,11 @@ ble_ll_conn_next_event(struct ble_ll_conn_sm *connsm)
      * Calculate ce end time. For a slave, we need to add window widening and
      * the transmit window if we still have one.
      */
+#if MYNEWT_VAL(BLE_LL_STRICT_CONN_SCHEDULING)
+    itvl = g_ble_ll_sched_data.sch_ticks_per_period;
+#else
     itvl = MYNEWT_VAL(BLE_LL_CONN_INIT_SLOTS) * BLE_LL_SCHED_32KHZ_TICKS_PER_SLOT;
+#endif
     if (connsm->conn_role == BLE_LL_CONN_ROLE_SLAVE) {
         cur_ww = ble_ll_conn_calc_window_widening(connsm);
         max_ww = (connsm->conn_itvl * (BLE_LL_CONN_ITVL_USECS/2)) - BLE_LL_IFS;
@@ -2333,6 +2401,7 @@ ble_ll_conn_created(struct ble_ll_conn_sm *connsm, struct ble_mbuf_hdr *rxhdr)
     uint8_t *evbuf;
     uint32_t endtime;
     uint32_t usecs;
+    int rx_phy_mode;
 
     /* XXX: TODO this assumes we received in 1M phy */
 
@@ -2366,10 +2435,14 @@ ble_ll_conn_created(struct ble_ll_conn_sm *connsm, struct ble_mbuf_hdr *rxhdr)
          */
         connsm->last_anchor_point = rxhdr->beg_cputime;
 
+#if BLE_LL_BT5_PHY_SUPPORTED
+        rx_phy_mode = connsm->phy_data.rx_phy_mode;
+#else
+        rx_phy_mode = BLE_PHY_MODE_1M;
+#endif
         usecs = rxhdr->rem_usecs + 1250 +
                 (connsm->tx_win_off * BLE_LL_CONN_TX_WIN_USECS) +
-                ble_ll_pdu_tx_time_get(BLE_CONNECT_REQ_LEN,
-                                       connsm->phy_data.rx_phy_mode);
+                ble_ll_pdu_tx_time_get(BLE_CONNECT_REQ_LEN, rx_phy_mode);
 
         if (rxhdr->rxinfo.channel < BLE_PHY_NUM_DATA_CHANS) {
             switch (rxhdr->rxinfo.phy) {
@@ -2397,10 +2470,16 @@ ble_ll_conn_created(struct ble_ll_conn_sm *connsm, struct ble_mbuf_hdr *rxhdr)
 
         connsm->slave_cur_tx_win_usecs =
             connsm->tx_win_size * BLE_LL_CONN_TX_WIN_USECS;
+#if MYNEWT_VAL(BLE_LL_STRICT_CONN_SCHEDULING)
+        connsm->ce_end_time = connsm->anchor_point +
+            g_ble_ll_sched_data.sch_ticks_per_period +
+            os_cputime_usecs_to_ticks(connsm->slave_cur_tx_win_usecs) + 1;
 
+#else
         connsm->ce_end_time = connsm->anchor_point +
             (MYNEWT_VAL(BLE_LL_CONN_INIT_SLOTS) * BLE_LL_SCHED_32KHZ_TICKS_PER_SLOT)
             + os_cputime_usecs_to_ticks(connsm->slave_cur_tx_win_usecs) + 1;
+#endif
         connsm->slave_cur_window_widening = BLE_LL_JITTER_USECS;
 
         /* Start the scheduler for the first connection event */
@@ -2556,13 +2635,15 @@ ble_ll_conn_event_end(struct os_event *ev)
      */
     if (connsm->conn_state == BLE_LL_CONN_STATE_CREATED) {
         tmo = (uint32_t)connsm->conn_itvl * BLE_LL_CONN_ITVL_USECS * 6UL;
+        ble_err = BLE_ERR_CONN_ESTABLISHMENT;
     } else {
         tmo = connsm->supervision_tmo * BLE_HCI_CONN_SPVN_TMO_UNITS * 1000UL;
+        ble_err = BLE_ERR_CONN_SPVN_TMO;
     }
     /* XXX: Convert to ticks to usecs calculation instead??? */
     tmo = os_cputime_usecs_to_ticks(tmo);
     if ((int32_t)(connsm->anchor_point - connsm->last_rxd_pdu_cputime) >= tmo) {
-        ble_ll_conn_end(connsm, BLE_ERR_CONN_SPVN_TMO);
+        ble_ll_conn_end(connsm, ble_err);
         return;
     }
 
@@ -2661,13 +2742,18 @@ ble_ll_conn_req_pdu_update(struct os_mbuf *m, uint8_t *adva, uint8_t addr_type,
     ble_hdr->txinfo.hdr_byte = hdr;
 }
 
-/* Returns true if the address matches the connection peer address */
+/* Returns true if the address matches the connection peer address having in
+ * mind privacy mode
+ */
 static int
 ble_ll_conn_is_peer_adv(uint8_t addr_type, uint8_t *adva, int index)
 {
     int rc;
     uint8_t *peer_addr;
     struct ble_ll_conn_sm *connsm;
+#if (MYNEWT_VAL(BLE_LL_CFG_FEAT_LL_PRIVACY) == 1)
+    struct ble_ll_resolv_entry *rl;
+#endif
 
     /* XXX: Deal with different types of random addresses here! */
     connsm = g_ble_ll_conn_create_sm;
@@ -2679,10 +2765,30 @@ ble_ll_conn_is_peer_adv(uint8_t addr_type, uint8_t *adva, int index)
     /* Fall-through intentional */
     case BLE_HCI_CONN_PEER_ADDR_PUBLIC:
     case BLE_HCI_CONN_PEER_ADDR_RANDOM:
-        if (addr_type != connsm->peer_addr_type) {
+        if (addr_type == connsm->peer_addr_type) {
+#if (MYNEWT_VAL(BLE_LL_CFG_FEAT_LL_PRIVACY) == 1)
+                /* Peer uses its identity address. Let's verify privacy mode*/
+            if (ble_ll_resolv_enabled()) {
+                rl = ble_ll_resolv_list_find(adva, addr_type);
+                if (rl && (rl->rl_priv_mode == BLE_HCI_PRIVACY_NETWORK)) {
+                    return 0;
+                }
+            }
+#endif
+            peer_addr = adva;
+            break;
+        }
+
+        /* Check if peer uses RPA. If so and it match, use it as controller
+         * supports privacy mode
+         */
+        if ((index < 0) ||
+            (g_ble_ll_resolv_list[index].rl_addr_type != connsm->peer_addr_type)) {
             return 0;
         }
-        peer_addr = adva;
+
+        peer_addr = g_ble_ll_resolv_list[index].rl_identity_addr;
+
         break;
     case BLE_HCI_CONN_PEER_ADDR_PUBLIC_IDENT:
         if ((index < 0) ||
@@ -2960,18 +3066,33 @@ ble_ll_init_rx_isr_end(uint8_t *rxbuf, uint8_t crcok,
     /* Get connection state machine to use if connection to be established */
     connsm = g_ble_ll_conn_create_sm;
 
-    /*
-     * We have to restart receive if we cant hand up pdu. We return 0 so that
-     * the phy does not get disabled.
-     */
     rc = -1;
+    pdu_type = rxbuf[0] & BLE_ADV_PDU_HDR_TYPE_MASK;
     pyld_len = rxbuf[1] & BLE_ADV_PDU_HDR_LEN_MASK;
+
     if (!crcok) {
-        goto init_rx_isr_exit;
+#if MYNEWT_VAL(BLE_LL_CFG_FEAT_LL_EXT_ADV)
+        /* Invalid packet - make sure we do not wait for AUX_CONNECT_RSP */
+        ble_ll_conn_reset_pending_aux_conn_rsp();
+#endif
+
+        /* Ignore this packet - do not send to LL */
+        goto init_rx_isr_ignore_exit;
     }
 
-    /* Only interested in ADV IND or ADV DIRECT IND */
-    pdu_type = rxbuf[0] & BLE_ADV_PDU_HDR_TYPE_MASK;
+#if MYNEWT_VAL(BLE_LL_CFG_FEAT_LL_EXT_ADV)
+    /* If we sent AUX_CONNECT_REQ, we only expect AUX_CONNECT_RSP here */
+    if (CONN_F_AUX_CONN_REQ(connsm)) {
+        if (pdu_type != BLE_ADV_PDU_TYPE_AUX_CONNECT_RSP) {
+            STATS_INC(ble_ll_stats, aux_conn_rsp_err);
+            CONN_F_CONN_REQ_TXD(connsm) = 0;
+            CONN_F_AUX_CONN_REQ(connsm) = 0;
+            ble_ll_sched_rmv_elem(&connsm->conn_sch);
+        }
+        goto init_rx_isr_exit;
+    }
+#endif
+
     inita_is_rpa = 0;
 
 #if MYNEWT_VAL(BLE_LL_CFG_FEAT_LL_EXT_ADV)
@@ -2984,7 +3105,7 @@ ble_ll_init_rx_isr_end(uint8_t *rxbuf, uint8_t crcok,
         if (!scansm->ext_scanning) {
             goto init_rx_isr_exit;
         }
-        /* Let see if there is AUX ptr. If so schedule for getting it */
+
         rc = ble_ll_scan_get_aux_data(scansm, ble_hdr, rxbuf, &aux_data);
         if (rc < 0) {
             /* No memory or broken packet */
@@ -3001,8 +3122,6 @@ ble_ll_init_rx_isr_end(uint8_t *rxbuf, uint8_t crcok,
                                     &ext_adv_mode)) {
         goto init_rx_isr_exit;
     }
-
-    inita_is_rpa = (uint8_t)ble_ll_is_rpa(init_addr, init_addr_type);
 
     switch (pdu_type) {
     case BLE_ADV_PDU_TYPE_ADV_IND:
@@ -3042,6 +3161,7 @@ ble_ll_init_rx_isr_end(uint8_t *rxbuf, uint8_t crcok,
              * If we expect our address to be private and the INITA is not,
              * we dont respond!
              */
+            inita_is_rpa = (uint8_t)ble_ll_is_rpa(init_addr, init_addr_type);
             if (connsm->own_addr_type > BLE_HCI_ADV_OWN_ADDR_RANDOM) {
                 if (!inita_is_rpa) {
                     goto init_rx_isr_exit;
@@ -3052,10 +3172,6 @@ ble_ll_init_rx_isr_end(uint8_t *rxbuf, uint8_t crcok,
                 }
             }
             break;
-    case BLE_ADV_PDU_TYPE_AUX_CONNECT_RSP:
-        CONN_F_AUX_CONN_RSP(connsm) = 1;
-        rc = -1;
-        goto init_rx_isr_exit;
     default:
         goto init_rx_isr_exit;
     }
@@ -3081,7 +3197,7 @@ ble_ll_init_rx_isr_end(uint8_t *rxbuf, uint8_t crcok,
             resolved = 1;
 
             /* Assure privacy */
-            if ((rl->rl_priv_mode == BLE_HCI_PRIVACY_NETWORK) &&
+            if ((rl->rl_priv_mode == BLE_HCI_PRIVACY_NETWORK) && init_addr &&
                 !inita_is_rpa) {
                 goto init_rx_isr_exit;
             }
@@ -3090,7 +3206,8 @@ ble_ll_init_rx_isr_end(uint8_t *rxbuf, uint8_t crcok,
                 goto init_rx_isr_exit;
             }
         }
-    } else if (ble_ll_resolv_enabled()) {
+    } else if (init_addr && ble_ll_resolv_enabled()) {
+
         /* Let's see if we have IRK with that peer. If so lets make sure
          * privacy mode is correct together with initA
          */
@@ -3200,6 +3317,7 @@ init_rx_isr_exit:
         ble_ll_rx_pdu_in(rxpdu);
     }
 
+init_rx_isr_ignore_exit:
     if (rc) {
         ble_ll_state_set(BLE_LL_STATE_STANDBY);
     }
@@ -3452,6 +3570,7 @@ ble_ll_conn_rx_isr_end(uint8_t *rxbuf, struct ble_mbuf_hdr *rxhdr)
     struct ble_ll_conn_sm *connsm;
     struct os_mbuf *rxpdu;
     struct ble_mbuf_hdr *txhdr;
+    int rx_phy_mode;
 
     /* Retrieve the header and payload length */
     hdr_byte = rxbuf[0];
@@ -3483,8 +3602,13 @@ ble_ll_conn_rx_isr_end(uint8_t *rxbuf, struct ble_mbuf_hdr *rxhdr)
      * to the 'additional usecs' field to save some calculations.
      */
     endtime = rxhdr->beg_cputime;
+#if BLE_LL_BT5_PHY_SUPPORTED
+    rx_phy_mode = connsm->phy_data.rx_phy_mode;
+#else
+    rx_phy_mode = BLE_PHY_MODE_1M;
+#endif
     add_usecs = rxhdr->rem_usecs +
-            ble_ll_pdu_tx_time_get(rx_pyld_len, connsm->phy_data.rx_phy_mode);
+            ble_ll_pdu_tx_time_get(rx_pyld_len, rx_phy_mode);
 
     /*
      * Check the packet CRC. A connection event can continue even if the

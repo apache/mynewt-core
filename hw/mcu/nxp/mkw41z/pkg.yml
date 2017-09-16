@@ -26,6 +26,5 @@ pkg.keywords:
     - nxp
 
 pkg.deps:
-    - compiler/arm-none-eabi-m0
     - hw/cmsis-core
     - hw/hal

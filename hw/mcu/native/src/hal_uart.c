@@ -182,6 +182,7 @@ uart_poller(void *arg)
     int rc;
     int bytes;
     int sr;
+    int didwork;
     unsigned char ch;
     struct uart *uart;
 
@@ -193,21 +194,17 @@ uart_poller(void *arg)
             uart = &uarts[i];
 
             for (bytes = 0; bytes < UART_MAX_BYTES_PER_POLL; bytes++) {
+                didwork = 0;
                 if (uart->u_tx_run) {
                     uart_transmit_char(uart);
-                } else {
-                    break;
+                    didwork = 1;
                 }
-            }
-            for (bytes = 0; bytes < UART_MAX_BYTES_PER_POLL; bytes++) {
                 if (uart->u_rx_char < 0) {
                     rc = read(uart->u_fd, &ch, 1);
                     if (rc == 0) {
                         /* XXX EOF, what now? */
                         assert(0);
-                    } else if (rc < 0) {
-                        break;
-                    } else {
+                    } else if (rc > 0) {
                         uart->u_rx_char = ch;
                     }
                 }
@@ -218,8 +215,12 @@ uart_poller(void *arg)
                     /* Delivered */
                     if (rc >= 0) {
                         uart->u_rx_char = -1;
+                        didwork = 1;
                     }
                     OS_EXIT_CRITICAL(sr);
+                }
+                if (!didwork) {
+                    break;
                 }
             }
         }
@@ -320,6 +321,7 @@ uart_open_dev(int port, int32_t baudrate, uint8_t databits,
     rc = uart_dev_set_attr(fd, baudrate, databits,
                            stopbits, parity, flow_ctl);
     if (rc != 0) {
+        close(fd);
         return rc;
     }
 

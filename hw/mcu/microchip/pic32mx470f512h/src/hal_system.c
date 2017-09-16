@@ -18,12 +18,22 @@
  */
 
 #include "hal/hal_system.h"
-
-#include <stdint.h>
+#include <xc.h>
 
 void
 hal_system_reset(void)
 {
+    /* Unlock sequence */
+    SYSKEY = 0x00000000;
+    SYSKEY = 0xAA996655;
+    SYSKEY = 0x556699AA;
+
+    /* Enable Software reset */
+    RSWRSTSET = _RSWRST_SWRST_MASK;
+
+    /* Dummy read of RSWRST register to trigger reset */
+    RSWRST;
+
     while (1) {
     }
 }

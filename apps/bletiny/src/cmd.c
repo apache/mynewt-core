@@ -2231,9 +2231,6 @@ cmd_show_coc(int argc, char **argv)
 
     for (i = 0; i < bletiny_num_conns; i++) {
         conn = bletiny_conns + i;
-        if (!conn) {
-            break;
-        }
 
         if (SLIST_EMPTY(&conn->coc_list)) {
             continue;
@@ -4112,6 +4109,54 @@ cmd_svcchg(int argc, char **argv)
     return 0;
 }
 
+/*****************************************************************************
+ * $svcvis                                                                   *
+ *****************************************************************************/
+
+static void
+bletiny_svcvis_help(void)
+{
+#if !MYNEWT_VAL(BLETINY_HELP)
+    bletiny_help_disabled();
+    return;
+#endif
+
+    console_printf("Available svcvis params: \n");
+    help_cmd_uint16("handle");
+    help_cmd_bool("vis");
+}
+
+static int
+cmd_svcvis(int argc, char **argv)
+{
+    uint16_t handle;
+    bool vis;
+    int rc;
+
+    if (argc > 1 && strcmp(argv[1], "help") == 0) {
+        bletiny_svcvis_help();
+        return 0;
+    }
+
+    handle = parse_arg_uint16("handle", &rc);
+    if (rc != 0) {
+        console_printf("invalid 'handle' parameter\n");
+        help_cmd_uint16("handle");
+        return rc;
+    }
+
+    vis = parse_arg_bool("vis", &rc);
+    if (rc != 0) {
+        console_printf("invalid 'vis' parameter\n");
+        help_cmd_bool("vis");
+        return rc;
+    }
+
+    ble_gatts_svc_set_visibility(handle, vis);
+
+    return 0;
+}
+
 static const struct cmd_entry cmd_phy_entries[];
 
 static int
@@ -4315,6 +4360,7 @@ static struct cmd_entry cmd_b_entries[] = {
     { "write",      cmd_write },
     { "svcchg",     cmd_svcchg },
     { "phy",        cmd_phy },
+    { "svcvis",     cmd_svcvis },
     { NULL, NULL }
 };
 

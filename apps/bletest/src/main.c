@@ -35,7 +35,6 @@
 #include "nimble/ble.h"
 #include "nimble/ble_hci_trans.h"
 #include "nimble/hci_common.h"
-#include "nimble/hci_vendor.h"
 #include "host/ble_hs.h"
 #include "controller/ble_ll.h"
 #include "controller/ble_ll_hci.h"
@@ -178,7 +177,7 @@ bletest_multi_adv_instances[BLETEST_CFG_ADV_TEST_INSTANCES] = {
 #define BLETEST_CFG_RAND_PKT_SIZE       (1)
 #define BLETEST_CFG_SUGG_DEF_TXOCTETS   (251)
 #define BLETEST_CFG_SUGG_DEF_TXTIME     \
-    ble_phy_pdu_dur(BLETEST_CFG_SUGG_DEF_TXOCTETS + 4, BLE_PHY_1M)
+    ble_ll_pdu_tx_time_get(BLETEST_CFG_SUGG_DEF_TXOCTETS + 4, BLE_PHY_1M)
 
 /* Test configurations. One of these should be set to 1 */
 #if !defined(BLETEST_CONCURRENT_CONN_TEST) && !defined(BLETEST_THROUGHPUT_TEST)

@@ -30,6 +30,8 @@
 #include "os/os_time.h"
 #include "os/os_cputime.h"
 #include "defs/error.h"
+#include "console/console.h"
+#include "syscfg/syscfg.h"
 
 struct {
     struct os_mutex mgr_lock;
@@ -104,6 +106,36 @@ sensor_mgr_insert(struct sensor *sensor)
 }
 
 /**
+ * Set the sensor poll rate based on teh device name
+ *
+ * @param The devname
+ * @param The poll rate in milli seconds
+ */
+int
+sensor_set_poll_rate_ms(char *devname, uint32_t poll_rate)
+{
+    struct sensor *sensor;
+    int rc;
+
+    sensor = sensor_mgr_find_next_bydevname(devname, NULL);
+
+    if (!sensor) {
+        rc = SYS_EINVAL;
+        goto err;
+    }
+
+    sensor_lock(sensor);
+
+    sensor->s_poll_rate = poll_rate;
+
+    sensor_unlock(sensor);
+
+    return 0;
+err:
+    return rc;
+}
+
+/**
  * Register the sensor with the global sensor list. This makes the sensor
  * searchable by other packages, who may want to look it up by type.
  *
@@ -153,7 +185,7 @@ sensor_mgr_poll_one(struct sensor *sensor, os_time_t now)
      * listeners are called by default.  Specify NULL as a callback,
      * because we just want to run all the listeners.
      */
-    sensor_read(sensor, SENSOR_TYPE_ALL, NULL, NULL, OS_TIMEOUT_NEVER);
+    sensor_read(sensor, sensor->s_mask, NULL, NULL, OS_TIMEOUT_NEVER);
 
     /* Remove the sensor from the sensor list for insert. */
     sensor_mgr_remove(sensor);
@@ -162,7 +194,7 @@ sensor_mgr_poll_one(struct sensor *sensor, os_time_t now)
      * list.
      */
     os_time_ms_to_ticks(sensor->s_poll_rate, &sensor_ticks);
-    sensor->s_next_run = now + sensor_ticks;
+    sensor->s_next_run = sensor_ticks + now;
 
     /* Re-insert the sensor manager, with the new wakeup time. */
     sensor_mgr_insert(sensor);
@@ -170,7 +202,7 @@ sensor_mgr_poll_one(struct sensor *sensor, os_time_t now)
     /* Unlock the sensor to allow other access */
     sensor_unlock(sensor);
 
-    return (sensor->s_next_run);
+    return (sensor_ticks);
 err:
     /* Couldn't lock it.  Re-run task and spin until we get result. */
     return (0);
@@ -192,12 +224,13 @@ sensor_mgr_wakeup_event(struct os_event *ev)
     int rc;
 
     now = os_time_get();
-    task_next_wakeup = now + SENSOR_MGR_WAKEUP_TICKS;
+
+    task_next_wakeup = SENSOR_MGR_WAKEUP_TICKS;
 
     rc = sensor_mgr_lock();
     if (rc != 0) {
         /* Schedule again in 1 tick, see if we can reacquire the lock */
-        task_next_wakeup = now + 1;
+        task_next_wakeup = 1;
         goto done;
     }
 
@@ -217,8 +250,8 @@ sensor_mgr_wakeup_event(struct os_event *ev)
         }
 
         /* Sensor poll one completes the poll, updates the sensor's "next run,"
-         * and re-inserts it into the list.  It returns the next wakeup time
-         * for this sensor.
+         * and re-inserts it into the list.  It returns the next wakeup time in ticks
+         * from now ticks for this sensor.
          */
         next_wakeup = sensor_mgr_poll_one(cursor, now);
 
@@ -229,6 +262,7 @@ sensor_mgr_wakeup_event(struct os_event *ev)
         if (task_next_wakeup > next_wakeup) {
             task_next_wakeup = next_wakeup;
         }
+
     }
 
 done:
@@ -288,10 +322,10 @@ sensor_mgr_evq_get(void)
     return (sensor_mgr.mgr_eventq);
 }
 
-void
+static void
 sensor_mgr_evq_set(struct os_eventq *evq)
 {
-    os_eventq_designate(&sensor_mgr.mgr_eventq, evq, NULL);
+    sensor_mgr.mgr_eventq = evq;
 }
 
 static void
@@ -300,7 +334,11 @@ sensor_mgr_init(void)
     struct os_timeval ostv;
     struct os_timezone ostz;
 
+#ifdef MYNEWT_VAL_SENSOR_MGR_EVQ
+    sensor_mgr_evq_set(MYNEWT_VAL(SENSOR_MGR_EVQ));
+#else
     sensor_mgr_evq_set(os_eventq_dflt_get());
+#endif
 
     /**
      * Initialize sensor polling callout and set it to fire on boot.
@@ -594,20 +632,23 @@ err:
 }
 
 static int
-sensor_read_data_func(struct sensor *sensor, void *arg, void *data)
+sensor_read_data_func(struct sensor *sensor, void *arg, void *data,
+                      sensor_type_t type)
 {
     struct sensor_listener *listener;
     struct sensor_read_ctx *ctx;
 
     /* Notify all listeners first */
     SLIST_FOREACH(listener, &sensor->s_listener_list, sl_next) {
-        listener->sl_func(sensor, listener->sl_arg, data);
+        if (listener->sl_sensor_type & type) {
+            listener->sl_func(sensor, listener->sl_arg, data, type);
+        }
     }
 
     /* Call data function */
     ctx = (struct sensor_read_ctx *) arg;
     if (ctx->user_func != NULL) {
-        return (ctx->user_func(sensor, ctx->user_arg, data));
+        return (ctx->user_func(sensor, ctx->user_arg, data, type));
     } else {
         return (0);
     }
@@ -674,7 +715,7 @@ sensor_read(struct sensor *sensor, sensor_type_t type,
     sensor_up_timestamp(sensor);
 
     rc = sensor->s_funcs->sd_read(sensor, type, sensor_read_data_func, &src,
-            timeout);
+                                  timeout);
     if (rc) {
         goto err;
     }

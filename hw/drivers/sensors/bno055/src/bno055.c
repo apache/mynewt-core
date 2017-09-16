@@ -30,6 +30,7 @@
 #include "sensor/mag.h"
 #include "sensor/quat.h"
 #include "sensor/euler.h"
+#include "sensor/gyro.h"
 #include "sensor/temperature.h"
 #include "bno055/bno055.h"
 #include "bno055_priv.h"
@@ -1112,42 +1113,133 @@ static int
 bno055_sensor_read(struct sensor *sensor, sensor_type_t type,
         sensor_data_func_t data_func, void *data_arg, uint32_t timeout)
 {
-    void *databuf;
     int rc;
     struct sensor_itf *itf;
 
+    union {
+        struct sensor_quat_data sqd;
+        struct sensor_euler_data sed;
+        struct sensor_accel_data sad;
+        struct sensor_accel_data slad;
+        struct sensor_accel_data sgrd;
+        struct sensor_mag_data smd;
+        struct sensor_gyro_data sgd;
+        struct sensor_temp_data std;
+    } databuf;
+
+
     itf = SENSOR_GET_ITF(sensor);
 
-    /* Since this is the biggest struct, malloc space for it */
-    databuf = malloc(sizeof(struct sensor_quat_data));
-
-    if (type == SENSOR_TYPE_ROTATION_VECTOR) {
+    if (type & SENSOR_TYPE_ROTATION_VECTOR) {
         /* Quaternion is a rotation vector */
-        rc = bno055_get_quat_data(itf, databuf);
+        rc = bno055_get_quat_data(itf, &databuf.sqd);
         if (rc) {
             goto err;
         }
-    } else if (type == SENSOR_TYPE_TEMPERATURE) {
-        rc = bno055_get_temp_data(itf, databuf);
+
+        /* Call data function */
+        rc = data_func(sensor, data_arg, &databuf, SENSOR_TYPE_ROTATION_VECTOR);
         if (rc) {
             goto err;
         }
-    } else {
+    }
+
+    if (type & SENSOR_TYPE_TEMPERATURE) {
+        rc = bno055_get_temp_data(itf, &databuf.std);
+        if (rc) {
+            goto err;
+        }
+
+        /* Call data function */
+        rc = data_func(sensor, data_arg, &databuf.std, SENSOR_TYPE_TEMPERATURE);
+        if (rc) {
+            goto err;
+        }
+    }
+
+    if (type & SENSOR_TYPE_EULER) {
         /* Get vector data, accel or gravity values */
-        rc = bno055_get_vector_data(itf, databuf, type);
+        rc = bno055_get_vector_data(itf, &databuf.sed, SENSOR_TYPE_EULER);
+        if (rc) {
+            goto err;
+        }
+
+        /* Call data function */
+        rc = data_func(sensor, data_arg, &databuf.sed, SENSOR_TYPE_EULER);
         if (rc) {
             goto err;
         }
     }
 
-    /* Call data function */
-    rc = data_func(sensor, data_arg, databuf);
-    if (rc) {
-        goto err;
+    if (type & SENSOR_TYPE_ACCELEROMETER) {
+        /* Get vector data, accel or gravity values */
+        rc = bno055_get_vector_data(itf, &databuf.sad, SENSOR_TYPE_ACCELEROMETER);
+        if (rc) {
+            goto err;
+        }
+
+        /* Call data function */
+        rc = data_func(sensor, data_arg, &databuf.sad, SENSOR_TYPE_ACCELEROMETER);
+        if (rc) {
+            goto err;
+        }
     }
 
-    /* Free the data buffer */
-    free(databuf);
+    if (type & SENSOR_TYPE_LINEAR_ACCEL) {
+        /* Get vector data, accel or gravity values */
+        rc = bno055_get_vector_data(itf, &databuf.slad, SENSOR_TYPE_LINEAR_ACCEL);
+        if (rc) {
+            goto err;
+        }
+
+        /* Call data function */
+        rc = data_func(sensor, data_arg, &databuf.slad, SENSOR_TYPE_LINEAR_ACCEL);
+        if (rc) {
+            goto err;
+        }
+    }
+
+    if (type & SENSOR_TYPE_MAGNETIC_FIELD) {
+        /* Get vector data, accel or gravity values */
+        rc = bno055_get_vector_data(itf, &databuf.smd, SENSOR_TYPE_MAGNETIC_FIELD);
+        if (rc) {
+            goto err;
+        }
+
+        /* Call data function */
+        rc = data_func(sensor, data_arg, &databuf.smd, SENSOR_TYPE_MAGNETIC_FIELD);
+        if (rc) {
+            goto err;
+        }
+    }
+
+    if (type & SENSOR_TYPE_GYROSCOPE) {
+        /* Get vector data, accel or gravity values */
+        rc = bno055_get_vector_data(itf, &databuf.sgd, SENSOR_TYPE_GYROSCOPE);
+        if (rc) {
+            goto err;
+        }
+
+        /* Call data function */
+        rc = data_func(sensor, data_arg, &databuf.sgd, SENSOR_TYPE_GYROSCOPE);
+        if (rc) {
+            goto err;
+        }
+    }
+
+    if (type & SENSOR_TYPE_GRAVITY) {
+        /* Get vector data, accel or gravity values */
+        rc = bno055_get_vector_data(itf, &databuf.sgrd, SENSOR_TYPE_GRAVITY);
+        if (rc) {
+            goto err;
+        }
+
+        /* Call data function */
+        rc = data_func(sensor, data_arg, &databuf.sgrd, SENSOR_TYPE_GRAVITY);
+        if (rc) {
+            goto err;
+        }
+    }
 
     return 0;
 err:

@@ -25,6 +25,9 @@ syscfg.defs:
     LSM303DLHC_OFB:
         description: 'LSM303 is present'
         value : 0
+    MPU6050_OFB:
+        description: 'MPU6050 is present'
+        value : 0
     BNO055_OFB:
         description: 'BNO055 is present'
         value : 0

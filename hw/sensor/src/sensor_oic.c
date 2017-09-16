@@ -50,11 +50,9 @@
 static const char g_s_oic_dn[] = "x.mynewt.snsr.";
 
 static int
-sensor_oic_encode(struct sensor* sensor, void *arg, void *databuf)
+sensor_oic_encode(struct sensor* sensor, void *arg, void *databuf,
+                  sensor_type_t type)
 {
-    sensor_type_t type;
-
-    type = *(sensor_type_t *)arg;
 
     switch(type) {
         /* Gyroscope supported */
@@ -577,7 +575,6 @@ sensor_oic_get_data(oc_request_t *request, oc_interface_mask_t interface)
 
         listener.sl_sensor_type = type;
         listener.sl_func = sensor_oic_encode;
-        listener.sl_arg = (void *)&listener.sl_sensor_type;
 
         rc = sensor_register_listener(sensor, &listener);
         if (rc) {

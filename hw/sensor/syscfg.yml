@@ -20,8 +20,8 @@
 
 syscfg.defs:
     SENSOR_MGR_WAKEUP_RATE:
-        description: 'The default wakeup rate of the sensor manager'
-        value: 1
+        description: 'The default wakeup rate of the sensor manager in ms'
+        value: 2000
 
     SENSOR_CLI:
         description: 'Whether or not to enable the sensor shell support'
@@ -40,3 +40,7 @@ syscfg.defs:
     SENSOR_OIC_OBS_RATE:
         description: 'Set OIC server observation rate in milli seconds'
         value: 1000
+
+    SENSOR_MGR_EVQ:
+        description: 'Specify the eventq to be used by sensor mgr'
+        value:

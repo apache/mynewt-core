@@ -46,10 +46,12 @@
 #ifndef __LORAMAC_H__
 #define __LORAMAC_H__
 
-// Includes board dependent definitions such as channels frequencies
-#include "LoRaMac-definitions.h"
-#include "node/utilities.h"
+#include <stdbool.h>
 
+// Includes board dependent definitions such as channels frequencies
+#include "node/mac/LoRaMac-definitions.h"
+#include "node/utilities.h"
+#include "os/os.h"
 
 /*!
  * Beacon interval in ms
@@ -613,6 +615,14 @@ typedef enum eLoRaMacEventInfoStatus
      * message integrity check failure
      */
     LORAMAC_EVENT_INFO_STATUS_MIC_FAIL,
+    /*!
+     * No network joined
+     */
+    LORAMAC_EVENT_INFO_STATUS_NO_NETWORK_JOINED,
+    /*!
+     * Maximum number of frame retries attempted with no ack
+     */
+    LORAMAC_EVENT_INFO_STATUS_TX_RETRIES_EXCEEDED,
 }LoRaMacEventInfoStatus_t;
 
 /*!
@@ -797,6 +807,9 @@ typedef struct sMcpsReq
      */
     Mcps_t Type;
 
+    /* Pointer to mbuf */
+    struct os_mbuf *om;
+
     /*!
      * MCPS-Request parameters
      */
@@ -822,8 +835,11 @@ typedef struct sMcpsReq
  */
 typedef struct sMcpsConfirm
 {
+    /* Pointer to packet buffer */
+    struct os_mbuf *om;
+
     /*!
-     * Holds the previously performed MCPS-Request
+     * Holds the previously performed MCPS-Request Type
      */
     Mcps_t McpsRequest;
     /*!
@@ -896,7 +912,7 @@ typedef struct sMcpsIndication
     /*!
      * Size of the received data stream
      */
-    uint8_t BufferSize;
+    uint16_t BufferSize;
     /*!
      * Indicates, if data is available
      */
@@ -1882,6 +1898,19 @@ LoRaMacStatus_t LoRaMacMlmeRequest( MlmeReq_t *mlmeRequest );
  *          \ref LORAMAC_STATUS_DEVICE_OFF.
  */
 LoRaMacStatus_t LoRaMacMcpsRequest( McpsReq_t *mcpsRequest );
+
+/*!
+ * \brief   lora_mac_tx_state
+ *
+ * \details Returns transmit state of mac. OK means no current transmission or
+ *              transmission is not delayed. BUSY means currently not able to
+ *              transmit.
+ *
+ * \retval  LoRaMacStatus_t Status of the operation. Possible returns are:
+ *          \ref LORAMAC_STATUS_OK,
+ *          \ref LORAMAC_STATUS_BUSY,
+ */
+LoRaMacStatus_t lora_mac_tx_state(void);
 
 /*! \} defgroup LORAMAC */
 

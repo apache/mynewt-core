@@ -37,7 +37,6 @@
 #include "nimble/ble.h"
 #include "nimble/nimble_opt.h"
 #include "nimble/ble_hci_trans.h"
-#include "controller/ble_ll.h"
 #include "host/ble_hs.h"
 #include "host/ble_hs_adv.h"
 #include "host/ble_uuid.h"
@@ -46,9 +45,6 @@
 #include "host/ble_gatt.h"
 #include "host/ble_store.h"
 #include "host/ble_sm.h"
-
-/* RAM HCI transport. */
-#include "transport/ram/ble_hci_ram.h"
 
 /* Mandatory services. */
 #include "services/gap/ble_svc_gap.h"
@@ -62,17 +58,19 @@
 #include "../src/ble_hs_hci_priv.h"
 
 #if MYNEWT_VAL(BLE_ROLE_CENTRAL)
-#define BLETINY_MAX_SVCS               32
-#define BLETINY_MAX_CHRS               64
-#define BLETINY_MAX_DSCS               64
+#define BTSHELL_MAX_SVCS               32
+#define BTSHELL_MAX_CHRS               64
+#define BTSHELL_MAX_DSCS               64
 #else
-#define BLETINY_MAX_SVCS               1
-#define BLETINY_MAX_CHRS               1
-#define BLETINY_MAX_DSCS               1
+#define BTSHELL_MAX_SVCS               1
+#define BTSHELL_MAX_CHRS               1
+#define BTSHELL_MAX_DSCS               1
 #endif
 
 #if MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM)
-#define BLETINY_COC_MTU               (256)
+#define BTSHELL_COC_MTU               (256)
+/* We use same pool for incoming and outgoing sdu */
+#define BTSHELL_COC_BUF_COUNT         (3 * MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM))
 #endif
 
 struct log btshell_log;
@@ -94,7 +92,8 @@ static void *btshell_coc_conn_mem;
 static struct os_mempool btshell_coc_conn_pool;
 
 static void *btshell_sdu_coc_mem;
-static struct os_mempool btshell_sdu_coc_pool;
+struct os_mbuf_pool sdu_os_mbuf_pool;
+static struct os_mempool sdu_coc_mbuf_mempool;
 #endif
 
 static struct os_callout btshell_tx_timer;
@@ -115,9 +114,9 @@ int btshell_full_disc_prev_chr_val;
 
 
 #ifdef DEVICE_NAME
-#define BLETINY_AUTO_DEVICE_NAME    XSTR(DEVICE_NAME)
+#define BTSHELL_AUTO_DEVICE_NAME    XSTR(DEVICE_NAME)
 #else
-#define BLETINY_AUTO_DEVICE_NAME    ""
+#define BTSHELL_AUTO_DEVICE_NAME    ""
 #endif
 
 static void
@@ -379,7 +378,7 @@ btshell_svc_add(uint16_t conn_handle, const struct ble_gatt_svc *gatt_svc)
 
     conn = btshell_conn_find(conn_handle);
     if (conn == NULL) {
-        BLETINY_LOG(DEBUG, "RECEIVED SERVICE FOR UNKNOWN CONNECTION; "
+        BTSHELL_LOG(DEBUG, "RECEIVED SERVICE FOR UNKNOWN CONNECTION; "
                            "HANDLE=%d\n",
                     conn_handle);
         return NULL;
@@ -393,7 +392,7 @@ btshell_svc_add(uint16_t conn_handle, const struct ble_gatt_svc *gatt_svc)
 
     svc = os_memblock_get(&btshell_svc_pool);
     if (svc == NULL) {
-        BLETINY_LOG(DEBUG, "OOM WHILE DISCOVERING SERVICE\n");
+        BTSHELL_LOG(DEBUG, "OOM WHILE DISCOVERING SERVICE\n");
         return NULL;
     }
     memset(svc, 0, sizeof *svc);
@@ -463,7 +462,7 @@ btshell_chr_add(uint16_t conn_handle,  uint16_t svc_start_handle,
 
     conn = btshell_conn_find(conn_handle);
     if (conn == NULL) {
-        BLETINY_LOG(DEBUG, "RECEIVED SERVICE FOR UNKNOWN CONNECTION; "
+        BTSHELL_LOG(DEBUG, "RECEIVED SERVICE FOR UNKNOWN CONNECTION; "
                            "HANDLE=%d\n",
                     conn_handle);
         return NULL;
@@ -471,7 +470,7 @@ btshell_chr_add(uint16_t conn_handle,  uint16_t svc_start_handle,
 
     svc = btshell_svc_find(conn, svc_start_handle, NULL);
     if (svc == NULL) {
-        BLETINY_LOG(DEBUG, "CAN'T FIND SERVICE FOR DISCOVERED CHR; HANDLE=%d\n",
+        BTSHELL_LOG(DEBUG, "CAN'T FIND SERVICE FOR DISCOVERED CHR; HANDLE=%d\n",
                     conn_handle);
         return NULL;
     }
@@ -484,7 +483,7 @@ btshell_chr_add(uint16_t conn_handle,  uint16_t svc_start_handle,
 
     chr = os_memblock_get(&btshell_chr_pool);
     if (chr == NULL) {
-        BLETINY_LOG(DEBUG, "OOM WHILE DISCOVERING CHARACTERISTIC\n");
+        BTSHELL_LOG(DEBUG, "OOM WHILE DISCOVERING CHARACTERISTIC\n");
         return NULL;
     }
     memset(chr, 0, sizeof *chr);
@@ -554,7 +553,7 @@ btshell_dsc_add(uint16_t conn_handle, uint16_t chr_val_handle,
 
     conn = btshell_conn_find(conn_handle);
     if (conn == NULL) {
-        BLETINY_LOG(DEBUG, "RECEIVED SERVICE FOR UNKNOWN CONNECTION; "
+        BTSHELL_LOG(DEBUG, "RECEIVED SERVICE FOR UNKNOWN CONNECTION; "
                            "HANDLE=%d\n",
                     conn_handle);
         return NULL;
@@ -562,14 +561,14 @@ btshell_dsc_add(uint16_t conn_handle, uint16_t chr_val_handle,
 
     svc = btshell_svc_find_range(conn, chr_val_handle);
     if (svc == NULL) {
-        BLETINY_LOG(DEBUG, "CAN'T FIND SERVICE FOR DISCOVERED DSC; HANDLE=%d\n",
+        BTSHELL_LOG(DEBUG, "CAN'T FIND SERVICE FOR DISCOVERED DSC; HANDLE=%d\n",
                     conn_handle);
         return NULL;
     }
 
     chr = btshell_chr_find(svc, chr_val_handle, NULL);
     if (chr == NULL) {
-        BLETINY_LOG(DEBUG, "CAN'T FIND CHARACTERISTIC FOR DISCOVERED DSC; "
+        BTSHELL_LOG(DEBUG, "CAN'T FIND CHARACTERISTIC FOR DISCOVERED DSC; "
                            "HANDLE=%d\n",
                     conn_handle);
         return NULL;
@@ -678,7 +677,7 @@ btshell_disc_full_dscs(uint16_t conn_handle)
 
     conn = btshell_conn_find(conn_handle);
     if (conn == NULL) {
-        BLETINY_LOG(DEBUG, "Failed to discover descriptors for conn=%d; "
+        BTSHELL_LOG(DEBUG, "Failed to discover descriptors for conn=%d; "
                            "not connected\n", conn_handle);
         btshell_full_disc_complete(BLE_HS_ENOTCONN);
         return;
@@ -716,14 +715,19 @@ btshell_disc_full_chrs(uint16_t conn_handle)
 
     conn = btshell_conn_find(conn_handle);
     if (conn == NULL) {
-        BLETINY_LOG(DEBUG, "Failed to discover characteristics for conn=%d; "
+        BTSHELL_LOG(DEBUG, "Failed to discover characteristics for conn=%d; "
                            "not connected\n", conn_handle);
         btshell_full_disc_complete(BLE_HS_ENOTCONN);
         return;
     }
 
     SLIST_FOREACH(svc, &conn->svcs, next) {
-        if (!svc_is_empty(svc) && SLIST_EMPTY(&svc->chrs)) {
+        if (!svc_is_empty(svc) && !svc->char_disc_sent) {
+            /* Since it might happen that service does not have characteristics
+             * for some reason, lets keep track on services for which we send
+             * characteristic discovery
+             */
+            svc->char_disc_sent = true;
             rc = btshell_disc_all_chrs(conn_handle, svc->svc.start_handle,
                                        svc->svc.end_handle);
             if (rc != 0) {
@@ -886,11 +890,89 @@ btshell_on_write_reliable(uint16_t conn_handle,
     return 0;
 }
 
+static void
+btshell_decode_adv_data(uint8_t *adv_data, uint8_t adv_data_len)
+{
+    struct ble_hs_adv_fields fields;
+
+    console_printf(" length_data=%d data=", adv_data_len);
+    print_bytes(adv_data, adv_data_len);
+    console_printf(" fields:\n");
+    ble_hs_adv_parse_fields(&fields, adv_data, adv_data_len);
+    btshell_print_adv_fields(&fields);
+    console_printf("\n");
+}
+
+#if MYNEWT_VAL(BLE_EXT_ADV)
+static void
+btshell_decode_event_type(struct ble_gap_ext_disc_desc *desc)
+{
+    uint8_t directed = 0;
+
+    if (desc->props & BLE_HCI_ADV_LEGACY_MASK) {
+        console_printf("Legacy PDU type %d", desc->legacy_event_type);
+        if (desc->legacy_event_type == BLE_HCI_ADV_RPT_EVTYPE_DIR_IND) {
+            directed = 1;
+        }
+        goto common_data;
+    }
+
+    console_printf("Extended adv: ");
+    if (desc->props & BLE_HCI_ADV_CONN_MASK) {
+        console_printf("'conn' ");
+    }
+    if (desc->props & BLE_HCI_ADV_SCAN_MASK) {
+        console_printf("'scan' ");
+    }
+    if (desc->props & BLE_HCI_ADV_DIRECT_MASK) {
+        console_printf("'dir' ");
+        directed = 1;
+    }
+
+    if (desc->props & BLE_HCI_ADV_SCAN_RSP_MASK) {
+        console_printf("'scan rsp' ");
+    }
+
+    switch(desc->data_status) {
+    case BLE_HCI_ADV_COMPLETED:
+        console_printf("completed");
+        break;
+    case BLE_HCI_ADV_INCOMPLETE:
+        console_printf("incompleted");
+        break;
+    case BLE_HCI_ADV_CORRUPTED:
+        console_printf("corrupted");
+        break;
+    default:
+        console_printf("reserved %d", desc->data_status);
+        break;
+    }
+
+common_data:
+    console_printf(" rssi=%d txpower=%d, pphy=%d, sphy=%d, sid=%d,"
+                   " addr_type=%d addr=",
+                   desc->rssi, desc->tx_power, desc->prim_phy, desc->sec_phy,
+                   desc->sid, desc->addr.type);
+    print_addr(desc->addr.val);
+    if (directed) {
+        console_printf(" init_addr_type=%d inita=", desc->direct_addr.type);
+        print_addr(desc->direct_addr.val);
+    }
+
+    console_printf("\n");
+
+    if(!desc->length_data) {
+        return;
+    }
+
+    btshell_decode_adv_data(desc->data, desc->length_data);
+}
+#endif
+
 static int
 btshell_gap_event(struct ble_gap_event *event, void *arg)
 {
     struct ble_gap_conn_desc desc;
-    struct ble_hs_adv_fields fields;
     int conn_idx;
     int rc;
 
@@ -917,7 +999,11 @@ btshell_gap_event(struct ble_gap_event *event, void *arg)
             btshell_conn_delete_idx(conn_idx);
         }
         return 0;
-
+#if MYNEWT_VAL(BLE_EXT_ADV)
+    case BLE_GAP_EVENT_EXT_DISC:
+        btshell_decode_event_type(&event->ext_disc);
+        return 0;
+#endif
     case BLE_GAP_EVENT_DISC:
         console_printf("received advertisement; event_type=%d rssi=%d "
                        "addr_type=%d addr=", event->disc.event_type,
@@ -928,20 +1014,13 @@ btshell_gap_event(struct ble_gap_event *event, void *arg)
          * There is no adv data to print in case of connectable
          * directed advertising
          */
-        if (event->disc.event_type == BLE_HCI_ADV_TYPE_ADV_DIRECT_IND_HD ||
-                event->disc.event_type == BLE_HCI_ADV_TYPE_ADV_DIRECT_IND_LD) {
+        if (event->disc.event_type == BLE_HCI_ADV_RPT_EVTYPE_DIR_IND) {
                 console_printf("\nConnectable directed advertising event\n");
                 return 0;
         }
 
-        console_printf(" length_data=%d data=",
-                               event->disc.length_data);
-        print_bytes(event->disc.data, event->disc.length_data);
-        console_printf(" fields:\n");
-        ble_hs_adv_parse_fields(&fields, event->disc.data,
-                                event->disc.length_data);
-        btshell_print_adv_fields(&fields);
-        console_printf("\n");
+        btshell_decode_adv_data(event->disc.data, event->disc.length_data);
+
         return 0;
 
     case BLE_GAP_EVENT_DISC_COMPLETE:
@@ -1032,6 +1111,31 @@ btshell_gap_event(struct ble_gap_event *event, void *arg)
         assert(rc == 0);
         print_conn_desc(&desc);
         return 0;
+
+    case BLE_GAP_EVENT_PHY_UPDATE_COMPLETE:
+        console_printf("PHY update complete; status=%d, conn_handle=%d "
+                       " tx_phy=%d, rx_phy=%d\n",
+                       event->phy_updated.status,
+                       event->phy_updated.conn_handle,
+                       event->phy_updated.tx_phy,
+                       event->phy_updated.rx_phy);
+        return 0;
+
+    case BLE_GAP_EVENT_REPEAT_PAIRING:
+        /* We already have a bond with the peer, but it is attempting to
+         * establish a new secure link.  This app sacrifices security for
+         * convenience: just throw away the old bond and accept the new link.
+         */
+
+        /* Delete the old bond. */
+        rc = ble_gap_conn_find(event->repeat_pairing.conn_handle, &desc);
+        assert(rc == 0);
+        ble_store_util_delete_peer(&desc.peer_id_addr);
+
+        /* Return BLE_GAP_REPEAT_PAIRING_RETRY to indicate that the host should
+         * continue with the pairing operation.
+         */
+        return BLE_GAP_REPEAT_PAIRING_RETRY;
 
     default:
         return 0;
@@ -1338,6 +1442,41 @@ btshell_conn_initiate(uint8_t own_addr_type, const ble_addr_t *peer_addr,
 }
 
 int
+btshell_ext_conn_initiate(uint8_t own_addr_type, const ble_addr_t *peer_addr,
+                          int32_t duration_ms,
+                          struct ble_gap_conn_params *phy_1m_params,
+                          struct ble_gap_conn_params *phy_2m_params,
+                          struct ble_gap_conn_params *phy_coded_params)
+{
+#if !MYNEWT_VAL(BLE_EXT_ADV)
+    console_printf("BLE extended advertising not supported.");
+    console_printf(" Configure nimble host to enable it\n");
+    return 0;
+#else
+    int rc;
+    uint8_t phy_mask = 0;
+
+    if (phy_1m_params) {
+        phy_mask |= BLE_GAP_LE_PHY_1M_MASK;
+    }
+
+    if (phy_2m_params) {
+        phy_mask |= BLE_GAP_LE_PHY_2M_MASK;
+    }
+
+    if (phy_coded_params) {
+        phy_mask |= BLE_GAP_LE_PHY_CODED_MASK;
+    }
+
+    rc = ble_gap_ext_connect(own_addr_type, peer_addr, duration_ms, phy_mask,
+                             phy_1m_params, phy_2m_params, phy_coded_params,
+                             btshell_gap_event, NULL);
+
+    return rc;
+#endif
+}
+
+int
 btshell_conn_cancel(void)
 {
     int rc;
@@ -1373,6 +1512,27 @@ btshell_scan(uint8_t own_addr_type, int32_t duration_ms,
     rc = ble_gap_disc(own_addr_type, duration_ms, disc_params,
                       btshell_gap_event, NULL);
     return rc;
+}
+
+int
+btshell_ext_scan(uint8_t own_addr_type, uint16_t duration, uint16_t period,
+                 uint8_t filter_duplicates, uint8_t filter_policy,
+                 uint8_t limited,
+                 const struct ble_gap_ext_disc_params *uncoded_params,
+                 const struct ble_gap_ext_disc_params *coded_params)
+{
+#if !MYNEWT_VAL(BLE_EXT_ADV)
+    console_printf("BLE extended advertising not supported.");
+    console_printf(" Configure nimble host to enable it\n");
+    return 0;
+#else
+    int rc;
+
+    rc = ble_gap_ext_disc(own_addr_type, duration, period, filter_duplicates,
+                          filter_policy, limited, uncoded_params, coded_params,
+                          btshell_gap_event, NULL);
+    return rc;
+#endif
 }
 
 int
@@ -1624,7 +1784,14 @@ btshell_l2cap_coc_remove(uint16_t conn_handle, struct ble_l2cap_chan *chan)
 static void
 btshell_l2cap_coc_recv(struct ble_l2cap_chan *chan, struct os_mbuf *sdu)
 {
-    console_printf("LE CoC SDU received, chan: 0x%08lx\n", (uint32_t) chan);
+    console_printf("LE CoC SDU received, chan: 0x%08lx, data len %d\n",
+                   (uint32_t) chan, OS_MBUF_PKTLEN(sdu));
+
+    os_mbuf_free_chain(sdu);
+    sdu = os_mbuf_get_pkthdr(&sdu_os_mbuf_pool, 0);
+    assert(sdu != NULL);
+
+    ble_l2cap_recv_ready(chan, sdu);
 }
 
 static int
@@ -1633,9 +1800,12 @@ btshell_l2cap_coc_accept(uint16_t conn_handle, uint16_t peer_mtu,
 {
     struct os_mbuf *sdu_rx;
 
-    sdu_rx = os_memblock_get(&btshell_sdu_coc_pool);
+    console_printf("LE CoC accepting, chan: 0x%08lx, peer_mtu %d\n",
+                   (uint32_t) chan, peer_mtu);
+
+    sdu_rx = os_mbuf_get_pkthdr(&sdu_os_mbuf_pool, 0);
     if (!sdu_rx) {
-            return BLE_HS_ENOMEM;
+        return BLE_HS_ENOMEM;
     }
 
     ble_l2cap_recv_ready(chan, sdu_rx);
@@ -1691,7 +1861,7 @@ btshell_l2cap_create_srv(uint16_t psm)
     return 0;
 #else
 
-    return ble_l2cap_create_server(psm, BLETINY_COC_MTU, btshell_l2cap_event,
+    return ble_l2cap_create_server(psm, BTSHELL_COC_MTU, btshell_l2cap_event,
                                                                        NULL);
 #endif
 }
@@ -1707,10 +1877,10 @@ btshell_l2cap_connect(uint16_t conn_handle, uint16_t psm)
 
     struct os_mbuf *sdu_rx;
 
-    sdu_rx = os_memblock_get(&btshell_sdu_coc_pool);
+    sdu_rx = os_mbuf_get_pkthdr(&sdu_os_mbuf_pool, 0);
     assert(sdu_rx != NULL);
 
-    return ble_l2cap_connect(conn_handle, psm, BLETINY_COC_MTU, sdu_rx,
+    return ble_l2cap_connect(conn_handle, psm, BTSHELL_COC_MTU, sdu_rx,
                              btshell_l2cap_event, NULL);
 #endif
 }
@@ -1727,6 +1897,7 @@ btshell_l2cap_disconnect(uint16_t conn_handle, uint16_t idx)
     struct btshell_conn *conn;
     struct btshell_l2cap_coc *coc;
     int i;
+    int rc = 0;
 
     conn = btshell_conn_find(conn_handle);
     assert(conn != NULL);
@@ -1740,12 +1911,90 @@ btshell_l2cap_disconnect(uint16_t conn_handle, uint16_t idx)
     }
     assert(coc != NULL);
 
-    ble_l2cap_disconnect(coc->chan);
+    rc = ble_l2cap_disconnect(coc->chan);
+    if (rc) {
+        console_printf("Could not disconnect channel rc=%d\n", rc);
+    }
 
-    return 0;
+    return rc;
 #endif
 }
 
+int
+btshell_l2cap_send(uint16_t conn_handle, uint16_t idx, uint16_t bytes)
+{
+#if MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM) == 0
+    console_printf("BLE L2CAP LE COC not supported.");
+    console_printf(" Configure nimble host to enable it\n");
+    return 0;
+#else
+
+    struct btshell_conn *conn;
+    struct btshell_l2cap_coc *coc;
+    struct os_mbuf *sdu_tx;
+    uint8_t b[] = {0x00, 0x11,0x22,0x33,0x44,0x55,0x66,0x77,0x88, 0x99};
+    int i;
+    int rc;
+
+    console_printf("conn=%d, idx=%d, bytes=%d\n", conn_handle, idx, bytes);
+
+    conn = btshell_conn_find(conn_handle);
+    if (conn == NULL) {
+        console_printf("conn=%d does not exist\n", conn_handle);
+        return 0;
+    }
+
+    i = 0;
+    SLIST_FOREACH(coc, &conn->coc_list, next) {
+        if (i == idx) {
+            break;
+        }
+        i++;
+    }
+    if (coc == NULL) {
+        console_printf("Are you sure your channel exist?\n");
+        return 0;
+    }
+
+    sdu_tx = os_mbuf_get_pkthdr(&sdu_os_mbuf_pool, 0);
+    if (sdu_tx == NULL) {
+        console_printf("No memory in the test sdu pool\n");
+        return 0;
+    }
+
+    /* For the testing purpose we fill up buffer with known data, easy
+     * to validate on other side. In this loop we add as many full chunks as we
+     * can
+     */
+    for (i = 0; i < bytes / sizeof(b); i++) {
+        rc = os_mbuf_append(sdu_tx, b, sizeof(b));
+        if (rc) {
+            console_printf("Cannot append data %i !\n", i);
+            os_mbuf_free_chain(sdu_tx);
+            return rc;
+        }
+    }
+
+    /* Here we add the rest < sizeof(b) */
+    rc = os_mbuf_append(sdu_tx, b, bytes - (sizeof(b) * i));
+    if (rc) {
+        console_printf("Cannot append data %i !\n", i);
+        os_mbuf_free_chain(sdu_tx);
+        return rc;
+    }
+
+    rc = ble_l2cap_send(coc->chan, sdu_tx);
+    if (rc) {
+        console_printf("Could not send data rc=%d\n", rc);
+        if (rc == BLE_HS_EBUSY) {
+            os_mbuf_free_chain(sdu_tx);
+        }
+    }
+
+    return rc;
+
+#endif
+}
 /**
  * main
  *
@@ -1755,37 +2004,41 @@ btshell_l2cap_disconnect(uint16_t conn_handle, uint16_t idx)
  * @return int NOTE: this function should never return!
  */
 int
-main(void)
+main(int argc, char **argv)
 {
     int rc;
+
+#ifdef ARCH_sim
+    mcu_sim_parse_args(argc, argv);
+#endif
 
     /* Initialize OS */
     sysinit();
 
     /* Allocate some application specific memory pools. */
     btshell_svc_mem = malloc(
-        OS_MEMPOOL_BYTES(BLETINY_MAX_SVCS, sizeof (struct btshell_svc)));
+        OS_MEMPOOL_BYTES(BTSHELL_MAX_SVCS, sizeof (struct btshell_svc)));
     assert(btshell_svc_mem != NULL);
 
-    rc = os_mempool_init(&btshell_svc_pool, BLETINY_MAX_SVCS,
+    rc = os_mempool_init(&btshell_svc_pool, BTSHELL_MAX_SVCS,
                          sizeof (struct btshell_svc), btshell_svc_mem,
                          "btshell_svc_pool");
     assert(rc == 0);
 
     btshell_chr_mem = malloc(
-        OS_MEMPOOL_BYTES(BLETINY_MAX_CHRS, sizeof (struct btshell_chr)));
+        OS_MEMPOOL_BYTES(BTSHELL_MAX_CHRS, sizeof (struct btshell_chr)));
     assert(btshell_chr_mem != NULL);
 
-    rc = os_mempool_init(&btshell_chr_pool, BLETINY_MAX_CHRS,
+    rc = os_mempool_init(&btshell_chr_pool, BTSHELL_MAX_CHRS,
                          sizeof (struct btshell_chr), btshell_chr_mem,
                          "btshell_chr_pool");
     assert(rc == 0);
 
     btshell_dsc_mem = malloc(
-        OS_MEMPOOL_BYTES(BLETINY_MAX_DSCS, sizeof (struct btshell_dsc)));
+        OS_MEMPOOL_BYTES(BTSHELL_MAX_DSCS, sizeof (struct btshell_dsc)));
     assert(btshell_dsc_mem != NULL);
 
-    rc = os_mempool_init(&btshell_dsc_pool, BLETINY_MAX_DSCS,
+    rc = os_mempool_init(&btshell_dsc_pool, BTSHELL_MAX_DSCS,
                          sizeof (struct btshell_dsc), btshell_dsc_mem,
                          "btshell_dsc_pool");
     assert(rc == 0);
@@ -1793,14 +2046,16 @@ main(void)
 #if MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM) != 0
     /* For testing we want to support all the available channels */
     btshell_sdu_coc_mem = malloc(
-        OS_MEMPOOL_BYTES(BLETINY_COC_MTU * MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM),
-                         sizeof (struct os_mbuf)));
+        OS_MEMPOOL_BYTES(BTSHELL_COC_BUF_COUNT, BTSHELL_COC_MTU));
     assert(btshell_sdu_coc_mem != NULL);
 
-    rc = os_mempool_init(&btshell_sdu_coc_pool,
-                         BLETINY_COC_MTU * MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM),
-                         sizeof (struct os_mbuf), btshell_sdu_coc_mem,
+    rc = os_mempool_init(&sdu_coc_mbuf_mempool, BTSHELL_COC_BUF_COUNT,
+                         BTSHELL_COC_MTU, btshell_sdu_coc_mem,
                          "btshell_coc_sdu_pool");
+    assert(rc == 0);
+
+    rc = os_mbuf_pool_init(&sdu_os_mbuf_pool, &sdu_coc_mbuf_mempool,
+                           BTSHELL_COC_MTU, BTSHELL_COC_BUF_COUNT);
     assert(rc == 0);
 
     btshell_coc_conn_mem = malloc(
@@ -1824,6 +2079,7 @@ main(void)
                  LOG_SYSLEVEL);
     ble_hs_cfg.reset_cb = btshell_on_reset;
     ble_hs_cfg.gatts_register_cb = gatt_svr_register_cb;
+    ble_hs_cfg.store_status_cb = ble_store_util_status_rr;
 
     rc = gatt_svr_init();
     assert(rc == 0);

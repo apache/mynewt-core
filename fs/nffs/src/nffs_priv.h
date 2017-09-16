@@ -167,7 +167,6 @@ struct nffs_block {
     struct nffs_inode_entry *nb_inode_entry; /* Owning inode. */
     struct nffs_hash_entry *nb_prev;         /* Previous block in file. */
     uint16_t nb_data_len;                    /* # of data bytes in block. */
-    uint16_t reserved16;
 };
 
 struct nffs_file {

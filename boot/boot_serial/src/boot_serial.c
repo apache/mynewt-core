@@ -37,8 +37,6 @@
 #include <os/os_malloc.h>
 #include <os/os_cputime.h>
 
-#include <console/console.h>
-
 #include <tinycbor/cbor.h>
 #include <tinycbor/cbor_buf_reader.h>
 #include <base64/base64.h>
@@ -55,6 +53,8 @@
 
 #define BOOT_SERIAL_INPUT_MAX   512
 #define BOOT_SERIAL_OUT_MAX     80
+#define BOOT_SERIAL_REPORT_DUR  \
+    (MYNEWT_VAL(OS_CPUTIME_FREQ) / MYNEWT_VAL(BOOT_SERIAL_REPORT_FREQ))
 
 static uint32_t curr_off;
 static uint32_t img_size;
@@ -83,34 +83,6 @@ bs_cbor_writer(struct cbor_encoder_writer *cew, const char *data, int len)
     cew->bytes_written += len;
 
     return 0;
-}
-
-/*
- * Looks for 'name' from NULL-terminated json data in buf.
- * Returns pointer to first character of value for that name.
- * Returns NULL if 'name' is not found.
- */
-char *
-bs_find_val(char *buf, char *name)
-{
-    char *ptr;
-
-    ptr = strstr(buf, name);
-    if (!ptr) {
-        return NULL;
-    }
-    ptr += strlen(name);
-
-    while (*ptr != '\0') {
-        if (*ptr != ':' && !isspace(*ptr)) {
-            break;
-        }
-        ++ptr;
-    }
-    if (*ptr == '\0') {
-        ptr = NULL;
-    }
-    return ptr;
 }
 
 /*
@@ -221,29 +193,6 @@ bs_upload(char *buf, int len)
     long long int data_len = UINT_MAX;
     size_t slen;
     char name_str[8];
-    /*
-    const struct cbor_attr_t attr[4] = {
-        [0] = {
-            .attribute = "data",
-            .type = CborAttrByteStringType,
-            .addr.bytestring.data = img_data,
-            .addr.bytestring.len = &img_blen,
-            .len = sizeof(img_data)
-        },
-        [1] = {
-            .attribute = "off",
-            .type = CborAttrUnsignedIntegerType,
-            .addr.uinteger = &off,
-            .nodefault = true
-        },
-        [2] = {
-            .attribute = "len",
-            .type = CborAttrUnsignedIntegerType,
-            .addr.uinteger = &data_len,
-            .nodefault = true
-        }
-    };
-     */
     const struct flash_area *fap = NULL;
     int rc;
 
@@ -388,11 +337,15 @@ out:
 }
 
 /*
- * Console echo control. Send empty response, don't do anything.
+ * Console echo control/image erase. Send empty response, don't do anything.
  */
 static void
-bs_echo_ctl(char *buf, int len)
+bs_empty_rsp(char *buf, int len)
 {
+    cbor_encoder_create_map(&bs_root, &bs_rsp, CborIndefiniteLength);
+    cbor_encode_text_stringz(&bs_rsp, "rc");
+    cbor_encode_int(&bs_rsp, 0);
+    cbor_encoder_close_container(&bs_root, &bs_rsp);
     boot_serial_output();
 }
 
@@ -403,12 +356,7 @@ bs_echo_ctl(char *buf, int len)
 static int
 bs_reset(char *buf, int len)
 {
-    cbor_encoder_create_map(&bs_root, &bs_rsp, CborIndefiniteLength);
-    cbor_encode_text_stringz(&bs_rsp, "rc");
-    cbor_encode_int(&bs_rsp, 0);
-    cbor_encoder_close_container(&bs_root, &bs_rsp);
-
-    boot_serial_output();
+    bs_empty_rsp(buf, len);
     os_cputime_delay_usecs(250000);
     hal_system_reset();
 }
@@ -449,12 +397,13 @@ boot_serial_input(char *buf, int len)
             bs_upload(buf, len);
             break;
         default:
+            bs_empty_rsp(buf, len);
             break;
         }
     } else if (hdr->nh_group == MGMT_GROUP_ID_DEFAULT) {
         switch (hdr->nh_id) {
         case NMGR_ID_CONS_ECHO_CTRL:
-            bs_echo_ctl(buf, len);
+            bs_empty_rsp(buf, len);
             break;
         case NMGR_ID_RESET:
             bs_reset(buf, len);
@@ -488,7 +437,7 @@ boot_serial_output(void)
     crc = crc16_ccitt(crc, data, len);
     crc = htons(crc);
 
-    console_write(pkt_start, sizeof(pkt_start));
+    boot_serial_uart_write(pkt_start, sizeof(pkt_start));
 
     totlen = len + sizeof(*bs_hdr) + sizeof(crc);
     totlen = htons(totlen);
@@ -502,8 +451,8 @@ boot_serial_output(void)
     memcpy(&buf[totlen], &crc, sizeof(crc));
     totlen += sizeof(crc);
     totlen = base64_encode(buf, totlen, encoded_buf, 1);
-    console_write(encoded_buf, totlen);
-    console_write("\n", 1);
+    boot_serial_uart_write(encoded_buf, totlen);
+    boot_serial_uart_write("\n\r", 2);
 }
 
 /*
@@ -555,7 +504,7 @@ boot_serial_start(int max_input)
     char *dec;
     int dec_off;
     int full_line;
-#ifdef BOOT_SERIAL_REPORT_PIN
+#if MYNEWT_VAL(BOOT_SERIAL_REPORT_PIN) != -1
     uint32_t tick;
 #endif
 
@@ -569,18 +518,17 @@ boot_serial_start(int max_input)
     rc = hal_watchdog_init(MYNEWT_VAL(WATCHDOG_INTERVAL));
     assert(rc == 0);
 #endif
-#ifdef BOOT_SERIAL_REPORT_PIN
+#if MYNEWT_VAL(BOOT_SERIAL_REPORT_PIN) != -1
     /*
      * Configure GPIO line as output. This is a pin we toggle at the
      * given frequency.
      */
-    hal_gpio_init_out(BOOT_SERIAL_REPORT_PIN, 0);
+    hal_gpio_init_out(MYNEWT_VAL(BOOT_SERIAL_REPORT_PIN), 0);
     tick = os_cputime_get32();
 #endif
 
-    rc = console_init(NULL);
+    rc = boot_serial_uart_open();
     assert(rc == 0);
-    console_echo(0);
 
     buf = os_malloc(max_input);
     dec = os_malloc(max_input);
@@ -589,13 +537,13 @@ boot_serial_start(int max_input)
     off = 0;
     while (1) {
         hal_watchdog_tickle();
-#ifdef BOOT_SERIAL_REPORT_PIN
-        if (os_cputime_get32() - tick > BOOT_SERIAL_REPORT_FREQ) {
-            hal_gpio_toggle(BOOT_SERIAL_REPORT_PIN);
+#if MYNEWT_VAL(BOOT_SERIAL_REPORT_PIN) != -1
+        if (os_cputime_get32() - tick > BOOT_SERIAL_REPORT_DUR) {
+            hal_gpio_toggle(MYNEWT_VAL(BOOT_SERIAL_REPORT_PIN));
             tick = os_cputime_get32();
         }
 #endif
-        rc = console_read(buf + off, max_input - off, &full_line);
+        rc = boot_serial_uart_read(buf + off, max_input - off, &full_line);
         if (rc <= 0 && !full_line) {
             continue;
         }
@@ -638,7 +586,8 @@ boot_serial_os_dev_init(void)
      * Configure GPIO line as input. This is read later to see if
      * we should stay and keep waiting for input.
      */
-    hal_gpio_init_in(BOOT_SERIAL_DETECT_PIN, BOOT_SERIAL_DETECT_PIN_CFG);
+    hal_gpio_init_in(MYNEWT_VAL(BOOT_SERIAL_DETECT_PIN),
+                     MYNEWT_VAL(BOOT_SERIAL_DETECT_PIN_CFG));
 }
 
 void
@@ -648,7 +597,9 @@ boot_serial_pkg_init(void)
      * Configure a GPIO as input, and compare it against expected value.
      * If it matches, await for download commands from serial.
      */
-    if (hal_gpio_read(BOOT_SERIAL_DETECT_PIN) == BOOT_SERIAL_DETECT_PIN_VAL) {
+    if (hal_gpio_read(MYNEWT_VAL(BOOT_SERIAL_DETECT_PIN)) ==
+        MYNEWT_VAL(BOOT_SERIAL_DETECT_PIN_VAL)) {
+
         boot_serial_start(BOOT_SERIAL_INPUT_MAX);
         assert(0);
     }

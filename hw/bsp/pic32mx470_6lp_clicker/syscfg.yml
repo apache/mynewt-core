@@ -24,20 +24,48 @@ syscfg.defs:
         description: 'System clock frequency, defined in hal_bsp.c'
         value:  80000000ul
 
+    TIMER_0:
+        description: "Whether to enable Timer 0"
+        value:  1
+
+    TIMER_1:
+        description: "Whether to enable Timer 1"
+        value:  0
+
+    TIMER_2:
+        description: "Whether to enable Timer 2"
+        value:  0
+
+    TIMER_3:
+        description: "Whether to enable Timer 3"
+        value:  0
+
     UART_0:
         description: 'Whether to enable UART0'
         value:  1
 
     UART_1:
-        description: 'Whether to enable UART1'
+        description: 'Whether to enable UART1 (serial pads)'
         value:  1
 
     UART_2:
-        description: 'Whether to enable UART2'
+        description: 'Whether to enable UART2 (Mikrobus)'
         value:  1
 
     UART_3:
         description: 'Whether to enable UART3'
+        value:  1
+
+    SPI_0_MASTER:
+        description: 'SPI connected to CA8210'
+        value:  1
+
+    SPI_1_MASTER:
+        description: 'SPI on Mikrobus connector'
+        value:  1
+
+    I2C_0:
+        description: 'I2C on Mikrobus connector'
         value:  1
 
 syscfg.vals:

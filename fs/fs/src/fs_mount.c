@@ -81,10 +81,12 @@ fs_ops_for(const char *fs_name)
     struct fs_ops *fops = NULL;
     struct fs_ops *sc;
 
-    SLIST_FOREACH(sc, &root_fops, sc_next) {
-        if (strcmp(sc->f_name, fs_name) == 0) {
-            fops = sc;
-            break;
+    if (fs_name) {
+        SLIST_FOREACH(sc, &root_fops, sc_next) {
+            if (strcmp(sc->f_name, fs_name) == 0) {
+                fops = sc;
+                break;
+            }
         }
     }
 

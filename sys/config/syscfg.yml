@@ -48,6 +48,11 @@ syscfg.defs.CONFIG_FCB:
     CONFIG_FCB_MAGIC:
         description: 'Magic to identify valid configuration area'
         value: 0xc0ffeeee
+    CONFIG_FCB_NUM_AREAS:
+        description: >
+            Number of areas to allocate in the config FCB.  A smaller number is
+            used if the flash hardware cannot support this value.
+        value: 8
 
 syscfg.defs.CONFIG_NFFS:
     CONFIG_NFFS_DIR:

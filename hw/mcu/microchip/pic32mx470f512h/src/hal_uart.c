@@ -21,10 +21,25 @@
 #include "bsp/bsp.h"
 #include "syscfg/syscfg.h"
 #include "mcu/mips_hal.h"
+#include "mcu/pps.h"
 #include <assert.h>
 #include <stdlib.h>
 
 #include <xc.h>
+
+#define UxMODE(U)           (base_address[U][0x0 / 0x4])
+#define UxMODESET(U)        (base_address[U][0x8 / 0x4])
+#define UxSTA(U)            (base_address[U][0x10 / 0x4])
+#define UxTXREG(U)          (base_address[U][0x20 / 0x4])
+#define UxRXREG(U)          (base_address[U][0x30 / 0x4])
+#define UxBRG(U)            (base_address[U][0x40 / 0x4])
+
+static volatile uint32_t* base_address[UART_CNT] = {
+    (volatile uint32_t *)_UART1_BASE_ADDRESS,
+    (volatile uint32_t *)_UART2_BASE_ADDRESS,
+    (volatile uint32_t *)_UART3_BASE_ADDRESS,
+    (volatile uint32_t *)_UART4_BASE_ADDRESS,
+};
 
 struct hal_uart {
     volatile uint8_t u_rx_stall:1;
@@ -33,6 +48,7 @@ struct hal_uart {
     hal_uart_tx_char u_tx_func;
     hal_uart_tx_done u_tx_done;
     void *u_func_arg;
+    const struct mips_uart_cfg *u_pins;
 };
 static struct hal_uart uarts[UART_CNT];
 
@@ -126,20 +142,7 @@ uart_enable_rx_int(int port)
 static void
 uart_receive_ready(int port)
 {
-    switch (port) {
-        case 0:
-            uarts[port].u_rx_data = U1RXREG;
-            break;
-        case 1:
-            uarts[port].u_rx_data = U2RXREG;
-            break;
-        case 2:
-            uarts[port].u_rx_data = U3RXREG;
-            break;
-        case 3:
-            uarts[port].u_rx_data = U4RXREG;
-            break;
-    }
+    uarts[port].u_rx_data = UxRXREG(port);
 
     int c = uarts[port].u_rx_func(uarts[port].u_func_arg,
                                     uarts[port].u_rx_data);
@@ -152,30 +155,17 @@ uart_receive_ready(int port)
 static void
 uart_transmit_ready(int port)
 {
-    int c = uarts[port].u_tx_func(uarts[port].u_func_arg);
-    if (c < 0) {
-        uart_disable_tx_int(port);
-
-        /* call tx done cb */
-        if (uarts[port].u_tx_done) {
-            uarts[port].u_tx_done(uarts[port].u_func_arg);
+    while(!(UxSTA(port) & _U1STA_UTXBF_MASK)) {
+        int c = uarts[port].u_tx_func(uarts[port].u_func_arg);
+        if (c < 0) {
+            uart_disable_tx_int(port);
+            /* call tx done cb */
+            if (uarts[port].u_tx_done) {
+                uarts[port].u_tx_done(uarts[port].u_func_arg);
+            }
+            break;
         }
-    } else {
-        /* write char out */
-        switch (port) {
-            case 0:
-                U1TXREG = (uint32_t)c & 0xff;
-                break;
-            case 1:
-                U2TXREG = (uint32_t)c & 0xff;
-                break;
-            case 2:
-                U3TXREG = (uint32_t)c & 0xff;
-                break;
-            case 3:
-                U4TXREG = (uint32_t)c & 0xff;
-                break;
-        }
+        UxTXREG(port) = (uint32_t)c & 0xff;
     }
 }
 
@@ -262,41 +252,21 @@ hal_uart_start_tx(int port)
 void
 hal_uart_blocking_tx(int port, uint8_t data)
 {
-    switch (port){
-    case 0:
-        /* wait for transmit holding register to be empty */
-        while(!(U1STA & _U1STA_TRMT_MASK)) {
-        }
-        /* write to transmit register */
-        U1TXREG = data;
-        break;
-    case 1:
-        /* wait for transmit holding register to be empty */
-        while(!(U2STA & _U2STA_TRMT_MASK)) {
-        }
-        /* write to transmit register */
-        U2TXREG = data;
-        break;
-    case 2:
-        /* wait for transmit holding register to be empty */
-        while(!(U3STA & _U3STA_TRMT_MASK)) {
-        }
-        /* write to transmit register */
-        U3TXREG = data;
-        break;
-    case 3:
-        /* wait for transmit holding register to be empty */
-        while(!(U4STA & _U4STA_TRMT_MASK)) {
-        }
-        /* write to transmit register */
-        U4TXREG = data;
-        break;
+    while (!(UxSTA(port) & _U1STA_TRMT_MASK)) {
     }
+
+    UxTXREG(port) = data;
 }
 
 int
 hal_uart_init(int port, void *arg)
 {
+    if (port >= UART_CNT) {
+        return -1;
+    }
+
+    uarts[port].u_pins = arg;
+
     return 0;
 }
 
@@ -338,16 +308,44 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
         return -1;
     }
 
+    /* Configure TX/RX pins */
+    if (uarts[port].u_pins) {
+        int ret = 0;
+        switch(port) {
+        case 0:
+            ret += pps_configure_output(uarts[port].u_pins->tx, U1TX_OUT_FUNC);
+            ret += pps_configure_input(uarts[port].u_pins->rx, U1RX_IN_FUNC);
+            break;
+        case 1:
+            ret += pps_configure_output(uarts[port].u_pins->tx, U2TX_OUT_FUNC);
+            ret += pps_configure_input(uarts[port].u_pins->rx, U2RX_IN_FUNC);
+            break;
+        case 2:
+            ret += pps_configure_output(uarts[port].u_pins->tx, U3TX_OUT_FUNC);
+            ret += pps_configure_input(uarts[port].u_pins->rx, U3RX_IN_FUNC);
+            break;
+        case 3:
+            ret += pps_configure_output(uarts[port].u_pins->tx, U4TX_OUT_FUNC);
+            ret += pps_configure_input(uarts[port].u_pins->rx, U4RX_IN_FUNC);
+            break;
+        default:
+            return -1;
+        }
+        if (ret) {
+            return -1;
+        }
+    }
+
     uint16_t divisor = peripheral_clk / (4 * baudrate) - 1;
+
+    UxMODE(port) = 0;
+    __asm__("nop");
+    UxBRG(port) = divisor;
+    UxMODE(port) = mode;
+    UxSTA(port) = _U1STA_URXEN_MASK | _U1STA_UTXEN_MASK;
 
     switch (port) {
     case 0:
-        /* disable */
-        U1MODE = 0;
-        __asm__("nop");
-        U1BRG = divisor;
-        U1MODE = mode;
-        U1STA = _U1STA_URXEN_MASK | _U1STA_UTXEN_MASK;
         /* clear RX interrupt flag */
         IFS1CLR = _IFS1_U1RXIF_MASK;
 
@@ -360,15 +358,8 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
         /* set interrupt subpriority */
         IPC7CLR = _IPC7_U1IS_MASK;
         IPC7SET = (0 << _IPC7_U1IS_POSITION); // subpriority 0
-        U1MODESET = _U1MODE_ON_MASK;
         break;
     case 1:
-        /* disable */
-        U2MODE = 0;
-        __asm__("nop");
-        U2BRG = divisor;
-        U2MODE = mode;
-        U2STA = _U2STA_URXEN_MASK | _U2STA_UTXEN_MASK;
         /* clear RX interrupt flag */
         IFS1CLR = _IFS1_U2RXIF_MASK;
 
@@ -381,15 +372,8 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
         /* set interrupt subpriority */
         IPC9CLR = _IPC9_U2IS_MASK;
         IPC9SET = (0 << _IPC9_U2IS_POSITION); // subpriority 0
-        U2MODESET = _U2MODE_ON_MASK;
         break;
     case 2:
-        /* disable */
-        U3MODE = 0;
-        __asm__("nop");
-        U3BRG = divisor;
-        U3MODE = mode;
-        U3STA = _U3STA_URXEN_MASK | _U3STA_UTXEN_MASK;
         /* clear RX interrupt flag */
         IFS1CLR = _IFS1_U3RXIF_MASK;
 
@@ -402,15 +386,8 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
         /* set interrupt subpriority */
         IPC9CLR = _IPC9_U3IS_MASK;
         IPC9SET = (0 << _IPC9_U3IS_POSITION); // subpriority 0
-        U3MODESET = _U3MODE_ON_MASK;
         break;
     case 3:
-        /* disable */
-        U4MODE = 0;
-        __asm__("nop");
-        U4BRG = divisor;
-        U4MODE = mode;
-        U4STA = _U4STA_URXEN_MASK | _U4STA_UTXEN_MASK;
         /* clear RX interrupt flag */
         IFS2CLR = _IFS2_U4RXIF_MASK;
 
@@ -423,41 +400,23 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
         /* set interrupt subpriority */
         IPC9CLR = _IPC9_U4IS_MASK;
         IPC9SET = (0 << _IPC9_U4IS_POSITION); // subpriority 0
-        U4MODESET = _U4MODE_ON_MASK;
         break;
     }
+
+    UxMODESET(port) = _U1MODE_ON_MASK;
+
     return 0;
 }
 
 int
 hal_uart_close(int port)
 {
-    switch(port) {
-    case 0:
-        /* disable */
-        U1MODE = 0;
-        /* disable RX interrupt */
-        IEC1CLR = _IEC1_U1RXIE_MASK;
-        break;
-    case 1:
-        /* disable */
-        U2MODE = 0;
-        /* disable RX interrupt */
-        IEC1CLR = _IEC1_U2RXIE_MASK;
-        break;
-    case 2:
-        U3MODE = 0;
-        /* disable RX interrupt */
-        IEC1CLR = _IEC1_U3RXIE_MASK;
-        break;
-    case 3:
-        /* disable */
-        U4MODE = 0;
-        /* disable RX interrupt */
-        IEC2CLR = _IEC2_U4RXIE_MASK;
-        break;
-    default:
+    if (port >= UART_CNT) {
         return -1;
     }
+
+    UxMODE(port) = 0;
+    uart_disable_rx_int(port);
+
     return 0;
 }

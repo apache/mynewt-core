@@ -145,7 +145,7 @@ ble_gatt_disc_d_test_misc_verify_dscs(struct ble_gatt_disc_d_test_dsc *dscs,
     int i;
 
     if (stop_after == 0) {
-        stop_after = INT_MAX;
+        stop_after = BLE_GATT_DISC_D_TEST_MAX_DSCS;
     }
 
     for (i = 0; i < stop_after && dscs[i].chr_val_handle != 0; i++) {
@@ -406,7 +406,8 @@ TEST_CASE(ble_gatt_disc_d_test_oom_all)
     TEST_ASSERT(ticks_until == BLE_GATT_RESUME_RATE_TICKS);
 
     /* Verify the procedure proceeds after mbufs become available. */
-    os_mbuf_free_chain(oms);
+    rc = os_mbuf_free_chain(oms);
+    TEST_ASSERT_FATAL(rc == 0);
     os_time_advance(ticks_until);
     ble_gattc_timer();
 
@@ -428,7 +429,8 @@ TEST_CASE(ble_gatt_disc_d_test_oom_all)
     TEST_ASSERT(ticks_until == BLE_GATT_RESUME_RATE_TICKS);
 
     /* Verify the procedure succeeds after mbufs become available. */
-    os_mbuf_free_chain(oms);
+    rc = os_mbuf_free_chain(oms);
+    TEST_ASSERT_FATAL(rc == 0);
     os_time_advance(ticks_until);
     ble_gattc_timer();
 

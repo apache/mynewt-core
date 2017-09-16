@@ -141,7 +141,7 @@ nrf51_flash_write(const struct hal_flash *dev, uint32_t address,
     }
     rc = 0;
     if (nrf51_flash_wait_ready()) {
-        goto out;
+        rc = -1;
     }
 out:
     NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Ren;

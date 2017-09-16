@@ -149,10 +149,12 @@ struct sensor_cfg {
  * @param The sensor for which data is being returned
  * @param The argument provided to sensor_read() function.
  * @param A single sensor reading for that sensor listener
+ * @param The sensor type for the data function
  *
  * @return 0 on success, non-zero error code on failure.
  */
-typedef int (*sensor_data_func_t)(struct sensor *, void *, void *);
+typedef int (*sensor_data_func_t)(struct sensor *, void *, void *,
+             sensor_type_t);
 
 /**
  *
@@ -414,7 +416,7 @@ sensor_get_config(struct sensor *sensor, sensor_type_t type,
  * be triggered instead.
  */
 #define SENSOR_MGR_WAKEUP_TICKS (MYNEWT_VAL(SENSOR_MGR_WAKEUP_RATE) * \
-        (OS_TICKS_PER_SEC / 1000))
+    OS_TICKS_PER_SEC) / 1000
 
 int sensor_mgr_lock(void);
 void sensor_mgr_unlock(void);
@@ -480,11 +482,20 @@ struct sensor *sensor_mgr_find_next_bydevname(char *, struct sensor *);
  *
  * @return 1 if matches, 0 if it doesn't match.
  */
-int sensor_mgr_match_bytype(struct sensor *sensor, void *arg);
+int sensor_mgr_match_bytype(struct sensor *, void *);
+
+/**
+ * Set the sensor poll rate
+ *
+ * @param The devname
+ * @param The poll rate in milli seconds
+ */
+int
+sensor_set_poll_rate_ms(char *, uint32_t);
 
 #if MYNEWT_VAL(SENSOR_CLI)
 char*
-sensor_ftostr(float num, char *fltstr, int len);
+sensor_ftostr(float, char *, int);
 #endif
 
 #if MYNEWT_VAL(SENSOR_OIC)

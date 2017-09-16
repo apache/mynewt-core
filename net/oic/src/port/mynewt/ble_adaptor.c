@@ -26,6 +26,7 @@
 #include <stats/stats.h>
 #include "oic/oc_gatt.h"
 #include "oic/oc_log.h"
+#include "oic/oc_ri.h"
 #include "messaging/coap/coap.h"
 #include "api/oc_buffer.h"
 #include "port/oc_connectivity.h"
@@ -424,6 +425,32 @@ err:
     os_mbuf_free_chain(m);
     STATS_INC(oc_ble_stats, oerr);
 #endif
+}
+
+/**
+ * Retrieves the specified BLE endpoint's transport layer security properties.
+ */
+oc_resource_properties_t
+oc_get_trans_security_gatt(const struct oc_endpoint_ble *oe_ble)
+{
+    oc_resource_properties_t props;
+    struct ble_gap_conn_desc desc;
+    int rc;
+
+    rc = ble_gap_conn_find(oe_ble->conn_handle, &desc);
+    if (rc != 0) {
+        return 0;
+    }
+
+    props = 0;
+    if (desc.sec_state.encrypted) {
+        props |= OC_TRANS_ENC;
+    }
+    if (desc.sec_state.authenticated) {
+        props |= OC_TRANS_AUTH;
+    }
+
+    return props;
 }
 
 #endif

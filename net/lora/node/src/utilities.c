@@ -57,11 +57,11 @@ round(double d)
 uint32_t
 TimerGetElapsedTime(uint32_t savedTime)
 {
-    return os_cputime_get32() - savedTime;
+    return hal_timer_read(MYNEWT_VAL(LORA_MAC_TIMER_NUM)) - savedTime;
 }
 
 uint32_t
 TimerGetFutureTime(uint32_t eventInFuture)
 {
-    return os_cputime_get32() + eventInFuture;
+    return hal_timer_read(MYNEWT_VAL(LORA_MAC_TIMER_NUM)) + eventInFuture;
 }

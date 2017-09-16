@@ -31,5 +31,4 @@ pkg.deps:
     - sys/console/stub
 
 pkg.deps.BOOT_SERIAL.OVERWRITE:
-    - sys/console/minimal
     - boot/boot_serial

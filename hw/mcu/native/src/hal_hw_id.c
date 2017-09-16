@@ -22,9 +22,14 @@
 
 #include "hal/hal_bsp.h"
 
+#include "hal_native_priv.h"
+
 #ifndef min
 #define min(a, b) ((a)<(b)?(a):(b))
 #endif
+
+static uint8_t hal_hw_id[HAL_BSP_MAX_ID_LEN];
+static uint8_t hal_hw_id_len;
 
 /*
  * This can be used as the unique hardware identifier for the platform, as
@@ -33,6 +38,26 @@
 int
 hal_bsp_hw_id(uint8_t *id, int max_len)
 {
+    if (hal_hw_id_len) {
+        if (max_len > hal_hw_id_len) {
+            max_len = hal_hw_id_len;
+        }
+        memcpy(id, hal_hw_id, max_len);
+        return max_len;
+    }
+    if (max_len > HAL_BSP_MAX_ID_LEN) {
+        max_len = HAL_BSP_MAX_ID_LEN;
+    }
     memset(id, 0x42, max_len);
     return max_len;
+}
+
+void
+hal_bsp_set_hw_id(const uint8_t *id, int len)
+{
+    if (len > HAL_BSP_MAX_ID_LEN) {
+        len = HAL_BSP_MAX_ID_LEN;
+    }
+    hal_hw_id_len = len;
+    memcpy(hal_hw_id, id, len);
 }

@@ -188,11 +188,11 @@ hal_i2c_clear_bus(struct nrf51_hal_i2c_cfg *cfg)
             } else {
                 break;
             }
-            hal_gpio_write(cfg->scl_pin, 0);
-            hal_i2c_delay_us(4);
-            hal_gpio_write(cfg->scl_pin, 1);
-            hal_i2c_delay_us(4);
         }
+        hal_gpio_write(cfg->scl_pin, 0);
+        hal_i2c_delay_us(4);
+        hal_gpio_write(cfg->scl_pin, 1);
+        hal_i2c_delay_us(4);
     }
 
     /*

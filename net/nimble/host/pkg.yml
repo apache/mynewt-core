@@ -39,6 +39,9 @@ pkg.deps.BLE_SM_SC:
 pkg.deps.BLE_MONITOR_RTT:
     - hw/drivers/rtt
 
+pkg.deps.BLE_MESH:
+    - net/nimble/host/mesh
+
 pkg.req_apis:
     - ble_transport
     - console

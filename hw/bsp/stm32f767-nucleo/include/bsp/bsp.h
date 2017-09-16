@@ -51,8 +51,6 @@ extern uint8_t _ram2_start;
 /* UART */
 #define UART_CNT        1
 
-#define NFFS_AREA_MAX   (8)
-
 #ifdef __cplusplus
 }
 #endif

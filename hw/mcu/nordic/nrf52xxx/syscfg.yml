@@ -31,3 +31,27 @@ syscfg.defs:
             external circuitry so is defined to be zero by default and
             expected to be overridden by the BSP.
         value: 0
+
+# The XTAL_xxx definitions are used to set the clock source used for the low
+# frequency clock. It is required that at least one of these sources is
+# enabled (the bsp should set one of these clock sources).
+    XTAL_32768:
+        description: 'External 32k oscillator LF clock source.'
+        value: 0
+        restrictions:
+            - "!XTAL_32768_SYNTH"
+            - "!XTAL_RC"
+
+    XTAL_RC:
+        description: 'internal RC LF clock source'
+        value: 0
+        restrictions:
+            - "!XTAL_32768_SYNTH"
+            - "!XTAL_32768"
+
+    XTAL_32768_SYNTH:
+        description: 'Synthesized 32k LF clock source.'
+        value: 0
+        restrictions:
+            - "!XTAL_RC"
+            - "!XTAL_32768"

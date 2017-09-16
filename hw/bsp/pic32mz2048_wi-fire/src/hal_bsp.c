@@ -21,8 +21,9 @@
 #include <syscfg/syscfg.h>
 
 #include <hal/hal_bsp.h>
+#include <mcu/mips_bsp.h>
 #include <mcu/mips_hal.h>
-
+#include "hal/hal_i2c.h"
 #if MYNEWT_VAL(TIMER_0) || MYNEWT_VAL(TIMER_1) || MYNEWT_VAL(TIMER_2) || \
     MYNEWT_VAL(TIMER_3) || MYNEWT_VAL(TIMER_4) || MYNEWT_VAL(TIMER_5) || \
     MYNEWT_VAL(TIMER_6) || MYNEWT_VAL(TIMER_7)
@@ -41,7 +42,7 @@
 #include "hal/hal_spi.h"
 #endif
 #include <bsp/bsp.h>
-
+#include <string.h>
 #include <xc.h>
 
 /* JTAG on, WDT off */
@@ -144,7 +145,14 @@ static const struct mips_i2c_cfg hal_i2c3_cfg = {
 const struct hal_flash *
 hal_bsp_flash_dev(uint8_t id)
 {
-    return 0;
+    /*
+     * Internal flash mapped to id 0.
+     */
+    if (id != 0) {
+        return NULL;
+    }
+
+    return &pic32mz_flash_dev;
 }
 
 void
@@ -212,7 +220,7 @@ hal_bsp_init(void)
 
     #if MYNEWT_VAL(UART_3)
         rc = os_dev_create((struct os_dev *) &os_bsp_uart3, "uart3",
-            OS_DEV_INIT_PRIMARY, 0, uart_hal_init, &uart4_cfg);
+            OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *)&uart4_cfg);
         assert(rc == 0);
     #endif
 
@@ -234,17 +242,17 @@ hal_bsp_init(void)
     #endif
 
     #if MYNEWT_VAL(SPI_1_MASTER)
-        rc = hal_spi_init(1, &spi1_cfg, HAL_SPI_TYPE_MASTER);
+        rc = hal_spi_init(1, (void *)&spi1_cfg, HAL_SPI_TYPE_MASTER);
         assert(rc == 0);
     #endif
 
     #if MYNEWT_VAL(SPI_2_MASTER)
-        rc = hal_spi_init(2, &spi2_cfg, HAL_SPI_TYPE_MASTER);
+        rc = hal_spi_init(2, (void *)&spi2_cfg, HAL_SPI_TYPE_MASTER);
         assert(rc == 0);
     #endif
 
     #if MYNEWT_VAL(SPI_3_MASTER)
-        rc = hal_spi_init(3, &spi3_cfg, HAL_SPI_TYPE_MASTER);
+        rc = hal_spi_init(3, (void *)&spi3_cfg, HAL_SPI_TYPE_MASTER);
         assert(rc == 0);
     #endif
 
@@ -259,7 +267,7 @@ hal_bsp_init(void)
     #endif
 
     #if MYNEWT_VAL(I2C_3)
-        rc = hal_i2c_init(3, &hal_i2c3_cfg);
+        rc = hal_i2c_init(3, (void*)&hal_i2c3_cfg);
         assert(rc == 0);
     #endif
 
@@ -273,6 +281,6 @@ hal_bsp_hw_id(uint8_t *id, int max_len)
         max_len = sizeof(DEVID);
     }
 
-    memcpy(id, &DEVID, max_len);
+    memcpy(id, (const void *)&DEVID, max_len);
     return max_len;
 }

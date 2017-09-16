@@ -26,21 +26,19 @@
 #include <nrf51_bitfields.h>
 #include <mcu/nrf51_hal.h>
 
-/* Must have external 32.768 crystal or used synthesized */
-#if (MYNEWT_VAL(XTAL_32768) == 1) && (MYNEWT_VAL(XTAL_32768_SYNTH) == 1)
-#error "Cannot configure both external and synthesized 32.768 xtal sources"
+/* The OS scheduler requires a low-frequency timer. */
+#if MYNEWT_VAL(OS_SCHEDULING)       && \
+    !MYNEWT_VAL(XTAL_32768)         && \
+    !MYNEWT_VAL(XTAL_RC)            && \
+    !MYNEWT_VAL(XTAL_32768_SYNTH)
+
+    #error The OS scheduler requires a low-frequency timer; enable one of: XTAL_32768, XTAL_RC, or XTAL_32768_SYNTH
 #endif
 
-#if (MYNEWT_VAL(XTAL_32768) == 0) && (MYNEWT_VAL(XTAL_32768_SYNTH) == 0)
-#error "Must configure either external or synthesized 32.768 xtal source"
-#endif
-
-#define OS_TICK_CMPREG  0
 #define RTC_FREQ        32768
 #define OS_TICK_TIMER   NRF_RTC1
 #define OS_TICK_IRQ     RTC1_IRQn
-
-
+#define OS_TICK_CMPREG      3   /* generate timer interrupt */
 #define RTC_COMPARE_INT_MASK(ccreg) (1UL << ((ccreg) + 16))
 
 static uint32_t lastocmp;
@@ -183,9 +181,6 @@ os_tick_init(uint32_t os_ticks_per_sec, int prio)
      * rolls over.
      */
     nrf51_max_idle_ticks = (1UL << 22) / timer_ticks_per_ostick;
-
-    /* Make sure system clocks have started */
-    hal_system_clock_start();
 
     /* disable interrupts */
     __HAL_DISABLE_INTERRUPTS(ctx);

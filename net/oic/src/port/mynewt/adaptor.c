@@ -24,6 +24,7 @@
 #include <string.h>
 #include <log/log.h>
 #include "oic/oc_log.h"
+#include "oic/oc_ri.h"
 #include "port/oc_connectivity.h"
 #include "adaptor.h"
 
@@ -40,7 +41,7 @@ oc_evq_get(void)
 void
 oc_evq_set(struct os_eventq *evq)
 {
-    os_eventq_designate(&oc_evq, evq, NULL);
+    oc_evq = evq;
 }
 
 void
@@ -111,6 +112,35 @@ oc_send_multicast_message(struct os_mbuf *m)
         m = n;
     }
     funcs[(sizeof(funcs) / sizeof(funcs[0])) - 1](m);
+}
+
+/**
+ * Retrieves the specified endpoint's transport layer security properties.
+ */
+oc_resource_properties_t
+oc_get_trans_security(const struct oc_endpoint *oe)
+{
+    switch (oe->oe.flags) {
+#if (MYNEWT_VAL(OC_TRANSPORT_GATT) == 1)
+    case GATT:
+        return oc_get_trans_security_gatt(&oe->oe_ble);
+#endif
+#if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1) && (MYNEWT_VAL(OC_TRANSPORT_IPV6) == 1)
+    case IP:
+        return 0;
+#endif
+#if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1) && (MYNEWT_VAL(OC_TRANSPORT_IPV4) == 1)
+    case IP4:
+        return 0;
+#endif
+#if (MYNEWT_VAL(OC_TRANSPORT_SERIAL) == 1)
+    case SERIAL:
+        return 0;
+#endif
+    default:
+        OC_LOG_ERROR("Unknown transport option %u\n", oe->oe.flags);
+        return 0;
+    }
 }
 
 void

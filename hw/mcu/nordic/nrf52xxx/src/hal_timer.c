@@ -635,7 +635,9 @@ hal_timer_config(int timer_num, uint32_t freq_hz)
     __HAL_DISABLE_INTERRUPTS(ctx);
 
     /* Make sure HFXO is started */
-    if ((NRF_CLOCK->HFCLKSTAT & CLOCK_HFCLKSTAT_STATE_Msk) == 0) {
+    if ((NRF_CLOCK->HFCLKSTAT &
+         (CLOCK_HFCLKSTAT_SRC_Msk | CLOCK_HFCLKSTAT_STATE_Msk)) !=
+        (CLOCK_HFCLKSTAT_SRC_Msk | CLOCK_HFCLKSTAT_STATE_Msk)) {
         NRF_CLOCK->EVENTS_HFCLKSTARTED = 0;
         NRF_CLOCK->TASKS_HFCLKSTART = 1;
         while (1) {
@@ -687,6 +689,7 @@ hal_timer_deinit(int timer_num)
     NRF_TIMER_Type *hwtimer;
     NRF_RTC_Type *rtctimer;
 
+    rc = 0;
     NRF52_HAL_TIMER_RESOLVE(timer_num, bsptimer);
 
     __HAL_DISABLE_INTERRUPTS(ctx);

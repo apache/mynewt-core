@@ -21,6 +21,7 @@
 #include <string.h>
 
 #include "syscfg/syscfg.h"
+#include "sysinit/sysinit.h"
 #include "os/os.h"
 #include "datetime/datetime.h"
 #include "console/console.h"
@@ -64,12 +65,12 @@ shell_os_tasks_display_cmd(int argc, char **argv)
             }
         }
 
-        console_printf("%8s %3u %3u %8lu %8lu %8u %8u %8lu %8lu %3x\n",
+        console_printf("%8s %3u %3u %8lu %8lu %8u %8u %8lu %8lu\n",
                 oti.oti_name, oti.oti_prio, oti.oti_taskid,
                 (unsigned long)oti.oti_runtime, (unsigned long)oti.oti_cswcnt,
                 oti.oti_stksize, oti.oti_stkusage,
                 (unsigned long)oti.oti_last_checkin,
-                (unsigned long)oti.oti_next_checkin, oti.oti_flags);
+                (unsigned long)oti.oti_next_checkin);
 
     }
 
@@ -221,6 +222,12 @@ static const struct shell_cmd os_commands[] = {
 void
 shell_os_register(void)
 {
-    shell_register(SHELL_OS, os_commands);
-}
+    const struct shell_cmd *cmd;
+    int rc;
 
+    for (cmd = os_commands; cmd->sc_cmd != NULL; cmd++) {
+        rc = shell_cmd_register(cmd);
+        SYSINIT_PANIC_ASSERT_MSG(
+            rc == 0, "Failed to register OS shell commands");
+    }
+}

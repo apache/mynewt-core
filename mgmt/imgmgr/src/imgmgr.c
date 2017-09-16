@@ -81,6 +81,38 @@ static struct mgmt_group imgr_nmgr_group = {
 
 struct imgr_state imgr_state;
 
+#if MYNEWT_VAL(BOOTUTIL_IMAGE_FORMAT_V2)
+static int
+imgr_img_tlvs(const struct flash_area *fa, struct image_header *hdr,
+              uint32_t *start_off, uint32_t *end_off)
+{
+    struct image_tlv_info tlv_info;
+    int rc;
+
+    rc = flash_area_read(fa, *start_off, &tlv_info, sizeof(tlv_info));
+    if (rc) {
+        rc = -1;
+        goto end;
+    }
+    if (tlv_info.it_magic != IMAGE_TLV_INFO_MAGIC) {
+        rc = 1;
+        goto end;
+    }
+    *start_off += sizeof(tlv_info);
+    *end_off = *start_off + tlv_info.it_tlv_tot;
+    rc = 0;
+end:
+    return rc;
+}
+#else
+static int
+imgr_img_tlvs(const struct flash_area *fa, struct image_header *hdr,
+              uint32_t *start_off, uint32_t *end_off)
+{
+    *end_off = *start_off + hdr->ih_tlv_size;
+    return 0;
+}
+#endif
 /*
  * Read version and build hash from image located slot "image_slot".  Note:
  * this is a slot index, not a flash area ID.
@@ -133,14 +165,19 @@ imgr_read_info(int image_slot, struct image_version *ver, uint8_t *hash,
         }
     }
 
-    if(flags) {
+    if (flags) {
         *flags = hdr->ih_flags;
     }
+
     /*
      * Build ID is in a TLV after the image.
      */
     data_off = hdr->ih_hdr_size + hdr->ih_img_size;
-    data_end = data_off + hdr->ih_tlv_size;
+
+    rc = imgr_img_tlvs(fa, hdr, &data_off, &data_end);
+    if (rc) {
+        goto end;
+    }
 
     if (data_end > fa->fa_size) {
         rc = 1;
@@ -385,9 +422,6 @@ imgr_upload(struct mgmt_cbuf *cb)
             }
             rc = flash_area_open(area_id, &imgr_state.upload.fa);
             if (rc) {
-                return MGMT_ERR_EINVAL;
-            }
-            if (IMAGE_SIZE(hdr) > imgr_state.upload.fa->fa_size) {
                 return MGMT_ERR_EINVAL;
             }
 

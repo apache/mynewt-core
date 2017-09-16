@@ -167,11 +167,13 @@ STATS_SECT_START(ble_ll_stats)
     STATS_SECT_ENTRY(aux_received)
     STATS_SECT_ENTRY(aux_fired_for_read)
     STATS_SECT_ENTRY(aux_conn_req_tx)
+    STATS_SECT_ENTRY(aux_conn_rsp_tx)
     STATS_SECT_ENTRY(aux_conn_rsp_err)
     STATS_SECT_ENTRY(aux_scan_req_tx)
     STATS_SECT_ENTRY(aux_scan_rsp_err)
     STATS_SECT_ENTRY(aux_chain_cnt)
     STATS_SECT_ENTRY(aux_chain_err)
+    STATS_SECT_ENTRY(adv_evt_dropped)
 STATS_SECT_END
 extern STATS_SECT_DECL(ble_ll_stats) ble_ll_stats;
 
@@ -382,13 +384,7 @@ int ble_ll_is_valid_random_addr(uint8_t *addr);
 
 /* Calculate the amount of time in microseconds a PDU with payload length of
  * 'payload_len' will take to transmit on a PHY 'phy_mode'. */
-#if (MYNEWT_VAL(BLE_LL_CFG_FEAT_LE_2M_PHY) || MYNEWT_VAL(BLE_LL_CFG_FEAT_LE_CODED_PHY))
 uint32_t ble_ll_pdu_tx_time_get(uint16_t payload_len, int phy_mode);
-#else
-#define ble_ll_pdu_tx_time_get(payload_len, phy_mode) \
-    (((payload_len) + BLE_LL_PDU_HDR_LEN + BLE_LL_ACC_ADDR_LEN \
-            + BLE_LL_PREAMBLE_LEN + BLE_LL_CRC_LEN) << 3)
-#endif
 
 /* Calculate maximum octets of PDU payload which can be transmitted during
  * 'usecs' on a PHY 'phy_mode'. */

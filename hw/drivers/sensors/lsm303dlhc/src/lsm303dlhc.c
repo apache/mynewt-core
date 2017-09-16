@@ -394,9 +394,6 @@ static int
 lsm303dlhc_sensor_read(struct sensor *sensor, sensor_type_t type,
         sensor_data_func_t data_func, void *data_arg, uint32_t timeout)
 {
-    struct lsm303dlhc *lsm;
-    struct sensor_accel_data sad;
-    struct sensor_mag_data smd;
     int rc;
     int16_t x, y, z;
     float mg_lsb;
@@ -404,6 +401,11 @@ lsm303dlhc_sensor_read(struct sensor *sensor, sensor_type_t type,
     int16_t gauss_lsb_z;
     uint8_t payload[6];
     struct sensor_itf *itf;
+    struct lsm303dlhc *lsm;
+    union {
+        struct sensor_accel_data sad;
+        struct sensor_mag_data smd;
+    }databuf;
 
     /* If the read isn't looking for accel or mag data, don't do anything. */
     if (!(type & SENSOR_TYPE_LINEAR_ACCEL) &&
@@ -464,16 +466,16 @@ lsm303dlhc_sensor_read(struct sensor *sensor, sensor_type_t type,
         }
 
         /* Convert from mg to Earth gravity in m/s^2 */
-        sad.sad_x = (float)x * mg_lsb * 9.80665F;
-        sad.sad_y = (float)y * mg_lsb * 9.80665F;
-        sad.sad_z = (float)z * mg_lsb * 9.80665F;
+        databuf.sad.sad_x = (float)x * mg_lsb * 9.80665F;
+        databuf.sad.sad_y = (float)y * mg_lsb * 9.80665F;
+        databuf.sad.sad_z = (float)z * mg_lsb * 9.80665F;
 
-        sad.sad_x_is_valid = 1;
-        sad.sad_y_is_valid = 1;
-        sad.sad_z_is_valid = 1;
+        databuf.sad.sad_x_is_valid = 1;
+        databuf.sad.sad_y_is_valid = 1;
+        databuf.sad.sad_z_is_valid = 1;
 
         /* Call data function */
-        rc = data_func(sensor, data_arg, &sad);
+        rc = data_func(sensor, data_arg, &databuf.sad, SENSOR_TYPE_LINEAR_ACCEL);
         if (rc != 0) {
             goto err;
         }
@@ -554,16 +556,16 @@ lsm303dlhc_sensor_read(struct sensor *sensor, sensor_type_t type,
         }
 
         /* Convert from gauss to micro Tesla */
-        smd.smd_x = (float)x / gauss_lsb_xy * 100.0F;
-        smd.smd_y = (float)y / gauss_lsb_xy * 100.0F;
-        smd.smd_z = (float)z / gauss_lsb_z * 100.0F;
+        databuf.smd.smd_x = (float)x / gauss_lsb_xy * 100.0F;
+        databuf.smd.smd_y = (float)y / gauss_lsb_xy * 100.0F;
+        databuf.smd.smd_z = (float)z / gauss_lsb_z * 100.0F;
 
-        smd.smd_x_is_valid = 1;
-        smd.smd_y_is_valid = 1;
-        smd.smd_z_is_valid = 1;
+        databuf.smd.smd_x_is_valid = 1;
+        databuf.smd.smd_y_is_valid = 1;
+        databuf.smd.smd_z_is_valid = 1;
 
         /* Call data function */
-        rc = data_func(sensor, data_arg, &smd);
+        rc = data_func(sensor, data_arg, &databuf.smd, SENSOR_TYPE_MAGNETIC_FIELD);
         if (rc != 0) {
             goto err;
         }

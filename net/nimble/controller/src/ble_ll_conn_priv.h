@@ -133,12 +133,13 @@ int ble_ll_init_rx_isr_start(uint8_t pdu_type, struct ble_mbuf_hdr *ble_hdr);
 int ble_ll_init_rx_isr_end(uint8_t *rxbuf, uint8_t crcok,
                            struct ble_mbuf_hdr *ble_hdr);
 void ble_ll_conn_wfr_timer_exp(void);
-void ble_ll_conn_init_wrf_timer_exp(void);
+void ble_ll_conn_init_wfr_timer_exp(void);
 int ble_ll_conn_is_lru(struct ble_ll_conn_sm *s1, struct ble_ll_conn_sm *s2);
 uint32_t ble_ll_conn_get_ce_end_time(void);
 void ble_ll_conn_event_halt(void);
 uint8_t ble_ll_conn_calc_used_chans(uint8_t *chmap);
-
+void ble_ll_conn_reset_pending_aux_conn_rsp(void);
+bool ble_ll_conn_init_pending_aux_conn_rsp(void);
 /* HCI */
 void ble_ll_disconn_comp_event_send(struct ble_ll_conn_sm *connsm,
                                     uint8_t reason);

@@ -27,4 +27,3 @@ pkg.keywords:
 
 pkg.deps:
     - hw/hal
-    - compiler/mips

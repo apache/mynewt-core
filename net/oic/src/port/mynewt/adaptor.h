@@ -24,6 +24,8 @@
 extern "C" {
 #endif
 
+enum oc_resource_properties;
+
 struct os_eventq *oc_evq_get(void);
 
 #if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1) && (MYNEWT_VAL(OC_TRANSPORT_IPV6) == 1)
@@ -43,6 +45,8 @@ void oc_send_buffer_ip4_mcast(struct os_mbuf *);
 int oc_connectivity_init_gatt(void);
 void oc_connectivity_shutdown_gatt(void);
 void oc_send_buffer_gatt(struct os_mbuf *);
+enum oc_resource_properties
+oc_get_trans_security_gatt(const struct oc_endpoint_ble *oe_ble);
 #endif
 
 #if (MYNEWT_VAL(OC_TRANSPORT_SERIAL) == 1)

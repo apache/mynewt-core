@@ -28,6 +28,7 @@
 #include "sysflash/sysflash.h"
 #include "flash_map/flash_map.h"
 #include "hal/hal_bsp.h"
+#include "hal/hal_system.h"
 #include "hal/hal_flash.h"
 #include "hal/hal_spi.h"
 #include "hal/hal_watchdog.h"
@@ -198,7 +199,7 @@ config_lis2dh12_sensor(void)
 }
 
 static void
-sensor_dev_create(HN_1344HZ_L_5376HZ)
+sensor_dev_create(void)
 {
     int rc;
     (void)rc;
@@ -217,6 +218,10 @@ hal_bsp_init(void)
     int rc;
 
     (void)rc;
+
+    /* Make sure system clocks have started */
+    hal_system_clock_start();
+
 #if MYNEWT_VAL(TIMER_0)
     rc = hal_timer_init(0, NULL);
     assert(rc == 0);

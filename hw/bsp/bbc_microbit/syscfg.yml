@@ -24,10 +24,6 @@ syscfg.defs:
         description: 'Set to indicate that BSP has NRF51'
         value: 1
 
-    XTAL_32768_SYNTH:
-        description: 'Synthesize 32k clock.'
-        value: 1
-
     UART_0:
         description: 'Whether to enable UART0'
         value: 1
@@ -82,6 +78,7 @@ syscfg.vals:
     REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG
     NFFS_FLASH_AREA: FLASH_AREA_NFFS
     COREDUMP_FLASH_AREA: FLASH_AREA_IMAGE_1
+    XTAL_32768_SYNTH: 1
 
 syscfg.vals.BLE_LP_CLOCK:
     OS_CPUTIME_FREQ: 32768
