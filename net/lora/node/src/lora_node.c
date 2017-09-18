@@ -149,6 +149,7 @@ lora_pkt_alloc(void)
     return p;
 }
 
+#if !MYNEWT_VAL(LORA_NODE_CLI)
 static struct os_mbuf *
 lora_node_alloc_empty_pkt(void)
 {
@@ -165,6 +166,7 @@ lora_node_alloc_empty_pkt(void)
     }
     return om;
 }
+#endif
 
 /**
  * This is the application to mac layer transmit interface.
@@ -536,6 +538,7 @@ lora_node_link_check(void)
     return rc;
 }
 
+#if !MYNEWT_VAL(LORA_NODE_CLI)
 static void
 lora_mac_join_event(struct os_event *ev)
 {
@@ -613,6 +616,7 @@ lora_mac_link_chk_event(struct os_event *ev)
         }
     }
 }
+#endif
 #endif
 
 struct os_eventq *
