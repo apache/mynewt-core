@@ -65,7 +65,7 @@ syscfg.defs:
 
     I2C_0:
         description: 'NRF51 I2C (TWI) interface 0'
-        value:  '0'
+        value:  0
 
 syscfg.defs.BLE_LP_CLOCK:
     TIMER_0:
