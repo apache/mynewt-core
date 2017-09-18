@@ -367,6 +367,39 @@ cmd_gatt_service_changed(int argc, char **argv)
 }
 
 /*****************************************************************************
+ * $gatt-service-visibility                                                  *
+ *****************************************************************************/
+
+int
+cmd_gatt_service_visibility(int argc, char **argv)
+{
+    uint16_t handle;
+    bool vis;
+    int rc;
+
+    rc = parse_arg_all(argc - 1, argv + 1);
+    if (rc != 0) {
+        return rc;
+    }
+
+    handle = parse_arg_uint16("handle", &rc);
+    if (rc != 0) {
+        console_printf("invalid 'handle' parameter\n");
+        return rc;
+    }
+
+    vis = parse_arg_bool("visibility", &rc);
+    if (rc != 0) {
+        console_printf("invalid 'visibility' parameter\n");
+        return rc;
+    }
+
+    ble_gatts_svc_set_visibility(handle, vis);
+
+    return 0;
+}
+
+/*****************************************************************************
  * $gatt-find-included-services                                              *
  *****************************************************************************/
 
@@ -484,9 +517,6 @@ cmd_gatt_show_coc(int argc, char **argv)
 
     for (i = 0; i < btshell_num_conns; i++) {
         conn = btshell_conns + i;
-        if (!conn) {
-            break;
-        }
 
         if (SLIST_EMPTY(&conn->coc_list)) {
             continue;
