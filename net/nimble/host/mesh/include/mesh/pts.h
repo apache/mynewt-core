@@ -22,12 +22,17 @@
 
 #include "syscfg/syscfg.h"
 
+extern bool pts_iv_update_test_mode;
+#define IV_UPDATE_TEST_MODE (MYNEWT_VAL(BLE_MESH_PTS) && \
+                             pts_iv_update_test_mode)
+
 #if MYNEWT_VAL(BLE_MESH_PTS)
 
 #include "glue.h"
 
 int pts_mesh_net_send_msg(u8_t ttl, u16_t app_idx, u16_t src_addr,
                           u16_t dst_addr, u8_t *buf, u16_t len);
+void pts_mesh_iv_update(bool enable, u32_t iv_index, bool iv_update);
 
 #endif /* MYNEWT_VAL(BLE_MESH_PTS) */
 

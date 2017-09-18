@@ -18,6 +18,9 @@
  */
 
 #include "syscfg/syscfg.h"
+#include "stdbool.h"
+
+bool pts_iv_update_test_mode = false;
 
 #if MYNEWT_VAL(BLE_MESH_PTS)
 
@@ -69,6 +72,18 @@ pts_mesh_net_send_msg(u8_t ttl, u16_t app_idx, u16_t src_addr, u16_t dst_addr,
     rc = bt_mesh_trans_send(&tx, msg, NULL, NULL);
     os_mbuf_free_chain(msg);
     return rc;
+}
+
+void
+pts_mesh_iv_update(bool enable, u32_t iv_index, bool iv_update)
+{
+    pts_iv_update_test_mode = enable;
+
+    if (!enable) {
+        return;
+    }
+
+    bt_mesh_iv_update(iv_index, iv_update);
 }
 
 #endif /* MYNEWT_VAL(BLE_MESH_PTS) */

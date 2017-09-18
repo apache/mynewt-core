@@ -12,6 +12,7 @@
 
 #include "os/os_mbuf.h"
 #include "mesh/mesh.h"
+#include "mesh/pts.h"
 
 #include "syscfg/syscfg.h"
 #define BT_DBG_ENABLED MYNEWT_VAL(BLE_MESH_DEBUG_NET)
@@ -32,7 +33,7 @@
 /* Seq limit after IV Update is triggered */
 #define IV_UPDATE_SEQ_LIMIT 8000000
 
-#if MYNEWT_VAL(BLE_MESH_IV_UPDATE_TEST)
+#if IV_UPDATE_TEST_MODE
 /* Small test timeout for IV Update Procedure testing */
 #define IV_UPDATE_TIMEOUT  K_SECONDS(120)
 #else
@@ -607,7 +608,7 @@ void bt_mesh_iv_update(u32_t iv_index, bool iv_update)
 		}
 	}
 
-	if (!(MYNEWT_VAL(BLE_MESH_IV_UPDATE_TEST))) {
+	if (!IV_UPDATE_TEST_MODE) {
 		s64_t delta = k_uptime_get() - bt_mesh.last_update;
 
 		if (delta < K_HOURS(96)) {
