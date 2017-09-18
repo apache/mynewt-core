@@ -16,9 +16,9 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
+import os
+import sys
+sys.path.insert(0, os.path.abspath('_ext'))
 
 
 # -- General configuration ------------------------------------------------
@@ -32,7 +32,7 @@
 # ones.
 extensions = [
     'sphinx.ext.autodoc', 'breathe', 'sphinx.ext.todo',
-    'sphinx.ext.extlinks'
+    'sphinx.ext.extlinks', 'edit_on_github'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -169,3 +169,6 @@ breathe_projects = {
     "mynewt": "xml"
 }
 breathe_default_project = "mynewt"
+
+edit_on_github_project = 'aditihilbert/mynewt-core'
+edit_on_github_branch = 'doxygen/docs'
