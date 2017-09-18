@@ -143,7 +143,62 @@ static const struct shell_cmd_help send_msg_help = {
     .params = send_msg_params,
 };
 
+static int
+cmd_iv_update(int argc, char **argv)
+{
+    int rc;
+    uint32_t index;
+    bool enable, update;
+
+
+    rc = parse_arg_all(argc - 1, argv + 1);
+    if (rc != 0) {
+        return rc;
+    }
+
+    enable = parse_arg_bool("enable", &rc);
+    if (rc != 0) {
+        console_printf("invalid 'enable' parameter\n");
+        return rc;
+    }
+
+    index = parse_arg_uint32_dflt("index", 0, &rc);
+    if (rc != 0) {
+        console_printf("invalid 'index' parameter\n");
+        return rc;
+    }
+
+    update = parse_arg_bool_dflt("update", 0, &rc);
+    if (rc != 0) {
+        console_printf("invalid 'update' parameter\n");
+        return rc;
+    }
+
+    blemesh_iv_update(enable, index, update);
+
+    return rc;
+}
+
+static const struct shell_param iv_update_params[] = {
+    {"enable", "usage: =<0-1>"},
+    {"index", "usage: =<UINT32>"},
+    {"update", "usage: =<0-1>"},
+    {NULL, NULL}
+};
+
+static const struct shell_cmd_help iv_update_help = {
+    .summary = "iv update",
+    .usage = NULL,
+    .params = iv_update_params,
+};
+
+
 static const struct shell_cmd mesh_commands[] = {
+    {
+        .sc_cmd = "iv-update",
+        .sc_cmd_func = cmd_iv_update,
+        .help = &iv_update_help,
+    },
     {
         .sc_cmd = "relay-set",
         .sc_cmd_func = cmd_relay_set,
