@@ -84,7 +84,7 @@ syscfg.defs:
 
     I2C_0:
         description: 'NRF52 I2C (TWI) interface 0'
-        value:  '0'
+        value:  0
 
     PWM_0:
         description: 'NRF52 PWM 0'

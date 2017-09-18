@@ -1301,6 +1301,57 @@ static const struct shell_cmd_help set_adv_data_help = {
 };
 
 /*****************************************************************************
+ * $set-priv-mode                                                            *
+ *****************************************************************************/
+
+static int
+cmd_set_priv_mode(int argc, char **argv)
+{
+    ble_addr_t addr;
+    uint8_t priv_mode;
+    int rc;
+
+    rc = parse_arg_all(argc - 1, argv + 1);
+    if (rc != 0) {
+        return rc;
+    }
+
+    addr.type = parse_arg_kv_dflt("addr_type", cmd_set_addr_types,
+                                  BLE_ADDR_PUBLIC, &rc);
+    if (rc != 0) {
+        console_printf("invalid 'addr_type' parameter\n");
+        return rc;
+    }
+
+    rc = parse_arg_mac("addr", addr.val);
+    if (rc != 0) {
+        console_printf("invalid 'addr' parameter\n");
+        return rc;
+    }
+
+    priv_mode = parse_arg_uint8("mode", &rc);
+    if (rc != 0) {
+        console_printf("missing mode\n");
+        return rc;
+    }
+
+    return ble_gap_set_priv_mode(&addr, priv_mode);
+}
+
+static const struct shell_param set_priv_mode_params[] = {
+    {"addr", "set priv mode for device address, usage: =[XX:XX:XX:XX:XX:XX]"},
+    {"addr_type", "set priv mode for device address type, usage: =[public|random], default: public"},
+    {"mode", "set priv mode, usage: =[0-UINT8_MAX]"},
+    {NULL, NULL}
+};
+
+static const struct shell_cmd_help set_priv_mode_help = {
+    .summary = "set priv mode",
+    .usage = NULL,
+    .params = set_priv_mode_params,
+};
+
+/*****************************************************************************
  * $white-list                                                               *
  *****************************************************************************/
 
@@ -1848,10 +1899,6 @@ static const struct shell_cmd_help keystore_show_help = {
 static int
 cmd_auth_passkey(int argc, char **argv)
 {
-#if !NIMBLE_BLE_SM
-    return BLE_HS_ENOTSUP;
-#endif
-
     uint16_t conn_handle;
     struct ble_sm_io pk;
     char *yesno;
@@ -2562,6 +2609,22 @@ static const struct shell_cmd_help gatt_service_changed_help = {
 };
 
 /*****************************************************************************
+ * $gatt-service-visibility                                                  *
+ *****************************************************************************/
+
+static const struct shell_param gatt_service_visibility_params[] = {
+    {"handle", "usage: =<UINT16>"},
+    {"visibility", "usage: =<0-1>"},
+    {NULL, NULL}
+};
+
+static const struct shell_cmd_help gatt_service_visibility_help = {
+    .summary = "change service visibility",
+    .usage = NULL,
+    .params = gatt_service_visibility_params,
+};
+
+/*****************************************************************************
  * $gatt-show                                                                *
  *****************************************************************************/
 
@@ -2749,6 +2812,13 @@ static const struct shell_cmd btshell_commands[] = {
 #endif
     },
     {
+        .sc_cmd = "set-priv-mode",
+        .sc_cmd_func = cmd_set_priv_mode,
+#if MYNEWT_VAL(SHELL_CMD_HELP)
+        .help = &set_priv_mode_help,
+#endif
+    },
+    {
         .sc_cmd = "white-list",
         .sc_cmd_func = cmd_white_list,
 #if MYNEWT_VAL(SHELL_CMD_HELP)
@@ -2837,6 +2907,13 @@ static const struct shell_cmd btshell_commands[] = {
         .sc_cmd_func = cmd_gatt_service_changed,
 #if MYNEWT_VAL(SHELL_CMD_HELP)
         .help = &gatt_service_changed_help,
+#endif
+    },
+    {
+        .sc_cmd = "gatt-service-visibility",
+        .sc_cmd_func = cmd_gatt_service_visibility,
+#if MYNEWT_VAL(SHELL_CMD_HELP)
+        .help = &gatt_service_visibility_help,
 #endif
     },
     {
