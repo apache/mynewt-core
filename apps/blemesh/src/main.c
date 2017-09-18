@@ -257,6 +257,12 @@ static const struct bt_mesh_comp comp = {
 };
 
 int
+blemesh_lpn_set(bool enable)
+{
+    return bt_mesh_lpn_set(enable);
+}
+
+int
 blemesh_cfg_relay_set(bool enable)
 {
     if (cfg_srv.relay == 0x00 || cfg_srv.relay == 0x01) {
