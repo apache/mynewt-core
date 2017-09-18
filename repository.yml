@@ -40,3 +40,11 @@ repo.versions:
     "1.0-latest": "1.0.0"  # 1.0.0
     "1.1-latest": "1.1.0"  # 1.1.0
     "1.2-latest": "1.2.0"  # 1.2.0
+
+repo.newt_compatibility:
+    # Core 1.1.0+ requires newt 1.1.0+ (feature: self-overrides).
+    1.2.0:
+        1.1.0: good
+    1.1.0:
+        1.1.0: good
+
