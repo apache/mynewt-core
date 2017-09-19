@@ -975,7 +975,7 @@ bno055_get_vector_data(struct sensor_itf *itf, void *datastruct, int type)
 
     acc_div  = units & BNO055_ACC_UNIT_MG ? 1.0:100.0;
     gyro_div = units & BNO055_ANGRATE_UNIT_RPS ? 900.0:16.0;
-    euler_div = units & BNO055_EULER_UNIT_RAD ? 16.0:900.0;
+    euler_div = units & BNO055_EULER_UNIT_RAD ? 900.0:16.0;
 
     /**
      * Convert the value to an appropriate range (section 3.6.4)
