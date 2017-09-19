@@ -43,11 +43,7 @@
 #endif
 
 #ifndef MATHLIB_SUPPORT
-
-double NAN = 0.0/0.0;
-double POS_INF = 1.0 /0.0;
-double NEG_INF = -1.0/0.0;
-
+static double NAN = 0.0/0.0;
 #endif
 
 static struct hal_spi_settings spi_bme280_settings = {
@@ -534,10 +530,10 @@ bme280_sensor_read(struct sensor *sensor, sensor_type_t type,
             goto err;
         }
 
-        spd.spd_press = bme280_compensate_pressure(itf, rawpress, &(bme280->pdd));
+        databuf.spd.spd_press = bme280_compensate_pressure(itf, rawpress, &(bme280->pdd));
 
-        if (spd.spd_press != NAN) {
-            spd.spd_press_is_valid = 1;
+        if (databuf.spd.spd_press != NAN) {
+            databuf.spd.spd_press_is_valid = 1;
         }
 
         /* Call data function */
@@ -554,10 +550,10 @@ bme280_sensor_read(struct sensor *sensor, sensor_type_t type,
             goto err;
         }
 
-        std.std_temp = bme280_compensate_temperature(rawtemp, &(bme280->pdd));
+        databuf.std.std_temp = bme280_compensate_temperature(rawtemp, &(bme280->pdd));
 
-        if (std.std_temp != NAN) {
-            std.std_temp_is_valid = 1;
+        if (databuf.std.std_temp != NAN) {
+            databuf.std.std_temp_is_valid = 1;
         }
 
         /* Call data function */
@@ -574,10 +570,10 @@ bme280_sensor_read(struct sensor *sensor, sensor_type_t type,
             goto err;
         }
 
-        shd.shd_humid = bme280_compensate_humidity(itf, rawhumid, &(bme280->pdd));
+        databuf.shd.shd_humid = bme280_compensate_humidity(itf, rawhumid, &(bme280->pdd));
 
-        if (shd.shd_humid != NAN) {
-            shd.shd_humid_is_valid = 1;
+        if (databuf.shd.shd_humid != NAN) {
+            databuf.shd.shd_humid_is_valid = 1;
         }
 
         /* Call data function */
