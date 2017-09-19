@@ -129,10 +129,10 @@ os_task_init(struct os_task *t, const char *name, os_task_func_t func,
     }
 
     _clear_stack(stack_bottom, stack_size);
-    t->t_stackptr = os_arch_task_stack_init(t, &stack_bottom[stack_size],
-            stack_size);
     t->t_stacktop = &stack_bottom[stack_size];
     t->t_stacksize = stack_size;
+    t->t_stackptr = os_arch_task_stack_init(t, t->t_stacktop,
+            t->t_stacksize);
 
     STAILQ_FOREACH(task, &g_os_task_list, t_os_task_list) {
         assert(t->t_prio != task->t_prio);
