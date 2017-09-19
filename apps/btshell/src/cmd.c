@@ -280,6 +280,7 @@ cmd_advertise(int argc, char **argv)
     return 0;
 }
 
+#if MYNEWT_VAL(SHELL_CMD_HELP)
 static const struct shell_param advertise_params[] = {
     {"stop", "stop advertising procedure"},
     {"conn", "connectable mode, usage: =[non|und|dir], default: und"},
@@ -306,6 +307,7 @@ static const struct shell_cmd_help advertise_help = {
     .usage = NULL,
     .params = advertise_params,
 };
+#endif
 
 /*****************************************************************************
  * $connect                                                                  *
@@ -582,6 +584,7 @@ cmd_connect(int argc, char **argv)
     return rc;
 }
 
+#if MYNEWT_VAL(SHELL_CMD_HELP)
 static const struct shell_param connect_params[] = {
     {"cancel", "cancel connection procedure"},
     {"extended", "usage: =[none|1M|coded|both|all], default: none"},
@@ -619,7 +622,7 @@ static const struct shell_cmd_help connect_help = {
     .usage = NULL,
     .params = connect_params,
 };
-
+#endif
 
 /*****************************************************************************
  * $disconnect                                                               *
@@ -658,6 +661,7 @@ cmd_disconnect(int argc, char **argv)
     return 0;
 }
 
+#if MYNEWT_VAL(SHELL_CMD_HELP)
 static const struct shell_param disconnect_params[] = {
     {"conn", "connection handle parameter, usage: =<UINT16>"},
     {"reason", "disconnection reason, usage: =[UINT8], default: 19 (remote user terminated connection)"},
@@ -669,6 +673,7 @@ static const struct shell_cmd_help disconnect_help = {
     .usage = NULL,
     .params = disconnect_params,
 };
+#endif
 
 /*****************************************************************************
  * $scan                                                                     *
@@ -842,6 +847,7 @@ cmd_scan(int argc, char **argv)
     return rc;
 }
 
+#if MYNEWT_VAL(SHELL_CMD_HELP)
 static const struct shell_param scan_params[] = {
     {"cancel", "cancel scan procedure"},
     {"extended", "usage: =[none|1M|coded|both], default: none"},
@@ -866,6 +872,7 @@ static const struct shell_cmd_help scan_help = {
     .usage = NULL,
     .params = scan_params,
 };
+#endif
 
 /*****************************************************************************
  * $set                                                                      *
@@ -971,6 +978,7 @@ cmd_set(int argc, char **argv)
     return 0;
 }
 
+#if MYNEWT_VAL(SHELL_CMD_HELP)
 static const struct shell_param set_params[] = {
     {"addr", "set device address, usage: =[XX:XX:XX:XX:XX:XX]"},
     {"addr_type", "set device address type, usage: =[public|random], default: public"},
@@ -984,6 +992,7 @@ static const struct shell_cmd_help set_help = {
     .usage = NULL,
     .params = set_params,
 };
+#endif
 
 /*****************************************************************************
  * $set-adv-data                                                             *
@@ -1271,6 +1280,7 @@ cmd_set_adv_data(int argc, char **argv)
     return 0;
 }
 
+#if MYNEWT_VAL(SHELL_CMD_HELP)
 static const struct shell_param set_adv_data_params[] = {
     {"flags", "usage: =[0-UINT8_MAX]"},
     {"uuid16", "usage: =[UINT16]"},
@@ -1299,6 +1309,7 @@ static const struct shell_cmd_help set_adv_data_help = {
     .usage = NULL,
     .params = set_adv_data_params,
 };
+#endif
 
 /*****************************************************************************
  * $set-priv-mode                                                            *
@@ -1338,6 +1349,7 @@ cmd_set_priv_mode(int argc, char **argv)
     return ble_gap_set_priv_mode(&addr, priv_mode);
 }
 
+#if MYNEWT_VAL(SHELL_CMD_HELP)
 static const struct shell_param set_priv_mode_params[] = {
     {"addr", "set priv mode for device address, usage: =[XX:XX:XX:XX:XX:XX]"},
     {"addr_type", "set priv mode for device address type, usage: =[public|random], default: public"},
@@ -1350,6 +1362,7 @@ static const struct shell_cmd_help set_priv_mode_help = {
     .usage = NULL,
     .params = set_priv_mode_params,
 };
+#endif
 
 /*****************************************************************************
  * $white-list                                                               *
@@ -1401,6 +1414,7 @@ cmd_white_list(int argc, char **argv)
     return 0;
 }
 
+#if MYNEWT_VAL(SHELL_CMD_HELP)
 static const struct shell_param white_list_params[] = {
     {"addr", "white-list device addresses, usage: =[XX:XX:XX:XX:XX:XX]"},
     {"addr_type", "white-list address types, usage: =[public|random]"},
@@ -1412,6 +1426,7 @@ static const struct shell_cmd_help white_list_help = {
     .usage = NULL,
     .params = white_list_params,
 };
+#endif
 
 /*****************************************************************************
  * $conn-rssi                                                                *
@@ -1446,6 +1461,7 @@ cmd_conn_rssi(int argc, char **argv)
     return 0;
 }
 
+#if MYNEWT_VAL(SHELL_CMD_HELP)
 static const struct shell_param conn_rssi_params[] = {
     {"conn", "connection handle parameter, usage: =<UINT16>"},
     {NULL, NULL}
@@ -1456,6 +1472,7 @@ static const struct shell_cmd_help conn_rssi_help = {
     .usage = NULL,
     .params = conn_rssi_params,
 };
+#endif
 
 /*****************************************************************************
  * $conn-update-params                                                       *
@@ -1530,6 +1547,7 @@ cmd_conn_update_params(int argc, char **argv)
     return 0;
 }
 
+#if MYNEWT_VAL(SHELL_CMD_HELP)
 static const struct shell_param conn_update_params_params[] = {
     {"conn", "conn_update_paramsion handle, usage: =<UINT16>"},
     {"interval_min", "usage: =[0-UINT16_MAX], default: 30"},
@@ -1546,6 +1564,7 @@ static const struct shell_cmd_help conn_update_params_help = {
     .usage = "conn_update_params usage",
     .params = conn_update_params_params,
 };
+#endif
 
 /*****************************************************************************
  * $conn-datalen                                                             *
@@ -1591,6 +1610,7 @@ cmd_conn_datalen(int argc, char **argv)
     return 0;
 }
 
+#if MYNEWT_VAL(SHELL_CMD_HELP)
 static const struct shell_param conn_datalen_params[] = {
     {"conn", "conn_datalenion handle, usage: =<UINT16>"},
     {"octets", "usage: =<UINT16>"},
@@ -1603,6 +1623,7 @@ static const struct shell_cmd_help conn_datalen_help = {
     .usage = NULL,
     .params = conn_datalen_params,
 };
+#endif
 
 /*****************************************************************************
  * keystore                                                                  *
@@ -1759,6 +1780,7 @@ cmd_keystore_add(int argc, char **argv)
     return rc;
 }
 
+#if MYNEWT_VAL(SHELL_CMD_HELP)
 static const struct shell_param keystore_add_params[] = {
     {"type", "entry type, usage: =<msec|ssec|cccd>"},
     {"addr_type", "usage: =<public|random>"},
@@ -1776,6 +1798,7 @@ static const struct shell_cmd_help keystore_add_help = {
     .usage = NULL,
     .params = keystore_add_params,
 };
+#endif
 
 /*****************************************************************************
  * keystore-del                                                              *
@@ -1802,6 +1825,7 @@ cmd_keystore_del(int argc, char **argv)
     return rc;
 }
 
+#if MYNEWT_VAL(SHELL_CMD_HELP)
 static const struct shell_param keystore_del_params[] = {
     {"type", "entry type, usage: =<msec|ssec|cccd>"},
     {"addr_type", "usage: =<public|random>"},
@@ -1816,6 +1840,7 @@ static const struct shell_cmd_help keystore_del_help = {
     .usage = NULL,
     .params = keystore_del_params,
 };
+#endif
 
 /*****************************************************************************
  * keystore-show                                                             *
@@ -1880,6 +1905,7 @@ cmd_keystore_show(int argc, char **argv)
     return 0;
 }
 
+#if MYNEWT_VAL(SHELL_CMD_HELP)
 static const struct shell_param keystore_show_params[] = {
     {"type", "entry type, usage: =<msec|ssec|cccd>"},
     {NULL, NULL}
@@ -1890,6 +1916,7 @@ static const struct shell_cmd_help keystore_show_help = {
     .usage = NULL,
     .params = keystore_show_params,
 };
+#endif
 
 #if NIMBLE_BLE_SM
 /*****************************************************************************
@@ -1977,6 +2004,7 @@ cmd_auth_passkey(int argc, char **argv)
     return 0;
 }
 
+#if MYNEWT_VAL(SHELL_CMD_HELP)
 static const struct shell_param auth_passkey_params[] = {
     {"conn", "connection handle, usage: =<UINT16>"},
     {"action", "auth action type, usage: =<UINT16>"},
@@ -1991,6 +2019,7 @@ static const struct shell_cmd_help auth_passkey_help = {
     .usage = NULL,
     .params = auth_passkey_params,
 };
+#endif
 
 /*****************************************************************************
  * $security-pair                                                            *
@@ -2022,6 +2051,7 @@ cmd_security_pair(int argc, char **argv)
     return 0;
 }
 
+#if MYNEWT_VAL(SHELL_CMD_HELP)
 static const struct shell_param security_pair_params[] = {
     {"conn", "connection handle, usage: =<UINT16>"},
     {NULL, NULL}
@@ -2032,6 +2062,7 @@ static const struct shell_cmd_help security_pair_help = {
     .usage = NULL,
     .params = security_pair_params,
 };
+#endif
 
 /*****************************************************************************
  * $security-start                                                           *
@@ -2063,6 +2094,7 @@ cmd_security_start(int argc, char **argv)
     return 0;
 }
 
+#if MYNEWT_VAL(SHELL_CMD_HELP)
 static const struct shell_param security_start_params[] = {
     {"conn", "connection handle, usage: =<UINT16>"},
     {NULL, NULL}
@@ -2073,6 +2105,7 @@ static const struct shell_cmd_help security_start_help = {
     .usage = NULL,
     .params = security_start_params,
 };
+#endif
 
 /*****************************************************************************
  * $security-encryption                                                      *
@@ -2132,6 +2165,7 @@ cmd_security_encryption(int argc, char **argv)
     return 0;
 }
 
+#if MYNEWT_VAL(SHELL_CMD_HELP)
 static const struct shell_param security_encryption_params[] = {
     {"conn", "connection handle, usage: =<UINT16>"},
     {"ediv", "usage: =[UINT16]"},
@@ -2146,6 +2180,7 @@ static const struct shell_cmd_help security_encryption_help = {
     .usage = NULL,
     .params = security_encryption_params,
 };
+#endif
 
 /*****************************************************************************
  * $security-set-data                                                        *
@@ -2236,6 +2271,7 @@ cmd_security_set_data(int argc, char **argv)
     return 0;
 }
 
+#if MYNEWT_VAL(SHELL_CMD_HELP)
 static const struct shell_param security_set_data_params[] = {
     {"oob_flag", "usage: =[0-1]"},
     {"mitm_flag", "usage: =[0-1]"},
@@ -2252,6 +2288,7 @@ static const struct shell_cmd_help security_set_data_help = {
     .usage = NULL,
     .params = security_set_data_params,
 };
+#endif
 #endif
 
 /*****************************************************************************
@@ -2307,6 +2344,7 @@ cmd_test_tx(int argc, char **argv)
     return rc;
 }
 
+#if MYNEWT_VAL(SHELL_CMD_HELP)
 static const struct shell_param test_tx_params[] = {
     {"num", "number of packets, usage: =<UINT16>"},
     {"length", "size of packet, usage: =<UINT16>"},
@@ -2320,6 +2358,7 @@ static const struct shell_cmd_help test_tx_help = {
     .usage = NULL,
     .params = test_tx_params,
 };
+#endif
 
 /*****************************************************************************
  * $phy-set                                                                  *
@@ -2367,6 +2406,7 @@ cmd_phy_set(int argc, char **argv)
                                        phy_opts);
 }
 
+#if MYNEWT_VAL(SHELL_CMD_HELP)
 static const struct shell_param phy_set_params[] = {
     {"conn", "connection handle, usage: =<UINT16>"},
     {"tx_phys_mask", "usage: =<UINT8>"},
@@ -2380,6 +2420,7 @@ static const struct shell_cmd_help phy_set_help = {
     .usage = NULL,
     .params = phy_set_params,
 };
+#endif
 
 /*****************************************************************************
  * $phy-set-default                                                          *
@@ -2412,6 +2453,7 @@ cmd_phy_set_default(int argc, char **argv)
     return ble_gap_set_prefered_default_le_phy(tx_phys_mask, rx_phys_mask);
 }
 
+#if MYNEWT_VAL(SHELL_CMD_HELP)
 static const struct shell_param phy_set_default_params[] = {
     {"tx_phys_mask", "usage: =<UINT8>"},
     {"rx_phys_mask", "usage: =<UINT8>"},
@@ -2423,6 +2465,7 @@ static const struct shell_cmd_help phy_set_default_help = {
     .usage = NULL,
     .params = phy_set_default_params,
 };
+#endif
 
 /*****************************************************************************
  * $phy-read                                                                 *
@@ -2459,6 +2502,7 @@ cmd_phy_read(int argc, char **argv)
     return 0;
 }
 
+#if MYNEWT_VAL(SHELL_CMD_HELP)
 static const struct shell_param phy_read_params[] = {
     {"conn", "connection handle, usage: =<UINT16>"},
     {NULL, NULL}
@@ -2681,8 +2725,10 @@ static const struct shell_cmd_help gatt_write_help = {
     .usage = NULL,
     .params = gatt_write_params,
 };
+#endif
 
 #if MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM)
+#if MYNEWT_VAL(SHELL_CMD_HELP)
 /*****************************************************************************
  * $l2cap-update                                                             *
  *****************************************************************************/
@@ -2766,6 +2812,7 @@ static const struct shell_cmd_help l2cap_send_help = {
     .params = l2cap_send_params,
 };
 
+#endif
 #endif
 
 static const struct shell_cmd btshell_commands[] = {
