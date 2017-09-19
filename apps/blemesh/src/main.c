@@ -171,7 +171,7 @@ static int output_number(bt_mesh_output_action action, uint32_t number)
 
 static void prov_complete(void)
 {
-    console_printf("Provisioning completed");
+    console_printf("Provisioning completed\n");
 }
 
 static const uint8_t dev_uuid[16] = MYNEWT_VAL(BLE_MESH_DEV_UUID);
