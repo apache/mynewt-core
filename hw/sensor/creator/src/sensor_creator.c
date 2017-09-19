@@ -260,7 +260,7 @@ config_lsm303dlhc_sensor(void)
     /* Set default mag sample rate to 15Hz */
     lsmcfg.mag_rate = LSM303DLHC_MAG_RATE_15;
 
-    lsmcfg.mask = SENSOR_TYPE_LINEAR_ACCEL|
+    lsmcfg.mask = SENSOR_TYPE_ACCELEROMETER|
                   SENSOR_TYPE_MAGNETIC_FIELD;
 
     rc = lsm303dlhc_config((struct lsm303dlhc *) dev, &lsmcfg);
