@@ -255,6 +255,10 @@ config_lsm303dlhc_sensor(void)
     lsmcfg.acc_addr = LSM303DLHC_ADDR_ACCEL;
     /* Device I2C addr for magnetometer */
     lsmcfg.mag_addr = LSM303DLHC_ADDR_MAG;
+    /* Set default mag gain to +/-1.3 gauss */
+    lsmcfg.mag_gain = LSM303DLHC_MAG_GAIN_1_3;
+    /* Set default mag sample rate to 15Hz */
+    lsmcfg.mag_rate = LSM303DLHC_MAG_RATE_15;
 
     lsmcfg.mask = SENSOR_TYPE_LINEAR_ACCEL|
                   SENSOR_TYPE_MAGNETIC_FIELD;
