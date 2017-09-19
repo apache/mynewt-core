@@ -185,13 +185,13 @@ static const struct bt_mesh_prov prov = {
 };
 
 static void
-bleprph_on_reset(int reason)
+blemesh_on_reset(int reason)
 {
     BLE_HS_LOG(ERROR, "Resetting state; reason=%d\n", reason);
 }
 
 static void
-bleprph_on_sync(void)
+blemesh_on_sync(void)
 {
     int err;
 
@@ -218,8 +218,8 @@ main(void)
     /* Initialize the NimBLE host configuration. */
     log_register("ble_hs", &ble_hs_log, &log_console_handler, NULL,
                  LOG_SYSLEVEL);
-    ble_hs_cfg.reset_cb = bleprph_on_reset;
-    ble_hs_cfg.sync_cb = bleprph_on_sync;
+    ble_hs_cfg.reset_cb = blemesh_on_reset;
+    ble_hs_cfg.sync_cb = blemesh_on_sync;
     ble_hs_cfg.store_status_cb = ble_store_util_status_rr;
 
     hal_gpio_init_out(LED_2, 0);
