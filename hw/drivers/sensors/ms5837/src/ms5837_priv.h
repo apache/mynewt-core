@@ -21,21 +21,51 @@
 #define __MS5837_PRIV_H__
 
 /* Commands */
-#define	MS5837_CMD_RESET    0x1E
-#define MS5837_CMD_D1_256   0x40			/* Max conversion time: 0.56 ms ; 0.11  mbar RMS resolution */
-#define CMD_D1_512		      0x42			/* Max conversion time: 1.10 ms : 0.062 mbar RMS resolution */
-#define CMD_D1_1024         0x44			/* Max conversion time: 2.17 ms : 0.039 mbar RMS resolution */
-#define CMD_D1_2048				  0x46			/* Max conversion time: 4.32 ms ; 0.028 mbar RMS resolution */
-#define CMD_D1_4096				  0x48			/* Max conversion time: 8.61 ms : 0.021 mbar RMS resolution */
-#define CMD_D1_8192				  0x4A			/* Max conversion time: 17.2 ms : 0.016 mbar RMS resolution */
-#define CMD_D2_256				  0x50			/* Max conversion time: 0.56 ms : 0.012   °C RMS resolution */
-#define CMD_D2_512				  0x52			/* Max conversion time: 1.10 ms : 0.009   °C RMS resolution */
-#define CMD_D2_1024				  0x54			/* Max conversion time: 2.17 ms : 0.006   °C RMS resolution */
-#define CMD_D2_2048				  0x56			/* Max conversion time: 4.32 ms ; 0.004   °C RMS resolution */
-#define CMD_D2_4096				  0x58			/* Max conversion time: 8.61 ms : 0.003   °C RMS resolution */
-#define CMD_D2_8192				  0x5A			/* Max conversion time: 17.2 ms : 0.002   °C RMS resolution */
-#define	CMD_ADC_READ			  0x00
-#define CMD_PROM_READ			  0xA0
+#define	MS5837_CMD_RESET            0x1E
+#define MS5837_CMD_D1_256           0x40	/* Max conversion time: 0.56 ms ; 0.11  mbar RMS resolution */
+#define MS5837_CMD_D1_512           0x42	/* Max conversion time: 1.10 ms : 0.062 mbar RMS resolution */
+#define MS5837_CMD_D1_1024          0x44	/* Max conversion time: 2.17 ms : 0.039 mbar RMS resolution */
+#define MS5837_CMD_D1_2048          0x46	/* Max conversion time: 4.32 ms ; 0.028 mbar RMS resolution */
+#define MS5837_CMD_D1_4096          0x48	/* Max conversion time: 8.61 ms : 0.021 mbar RMS resolution */
+#define MS5837_CMD_D1_8192          0x4A	/* Max conversion time: 17.2 ms : 0.016 mbar RMS resolution */
+#define MS5837_CMD_D2_256           0x50	/* Max conversion time: 0.56 ms : 0.012   °C RMS resolution */
+#define MS5837_CMD_D2_512           0x52	/* Max conversion time: 1.10 ms : 0.009   °C RMS resolution */
+#define MS5837_CMD_D2_1024          0x54	/* Max conversion time: 2.17 ms : 0.006   °C RMS resolution */
+#define MS5837_CMD_D2_2048          0x56	/* Max conversion time: 4.32 ms ; 0.004   °C RMS resolution */
+#define MS5837_CMD_D2_4096          0x58	/* Max conversion time: 8.61 ms : 0.003   °C RMS resolution */
+#define MS5837_CMD_D2_8192          0x5A    /* Max conversion time: 17.2 ms : 0.002   °C RMS resolution */
+#define	MS5837_CMD_ADC_READ         0x00
+#define MS5837_CMD_PROM_READ        0xA0
+
+/* PROM Address commands */
+#define MS5837_CMD_PROM_READ_ADDR0  0xA0
+#define MS5837_CMD_PROM_READ_ADDR1  0xA2
+#define MS5837_CMD_PROM_READ_ADDR2  0xA4
+#define MS5837_CMD_PROM_READ_ADDR3  0xA6
+#define MS5837_CMD_PROM_READ_ADDR4  0xA8
+#define MS5837_CMD_PROM_READ_ADDR5  0xAA
+#define MS5837_CMD_PROM_READ_ADDR6  0xAC
+#define MS5837_CMD_PROM_READ_ADDR7  0xAE
+
+/* Conversion time in micro seconds */
+#define MS5837_CNV_TIME_OSR_256      560
+#define MS5837_CNV_TIME_OSR_512     1100
+#define MS5837_CNV_TIME_OSR_1024    2170
+#define MS5837_CNV_TIME_OSR_2048    4320
+#define MS5837_CNV_TIME_OSR_4096    8610
+#define MS5837_CNV_TIME_OSR_8192   17200
+
+/* Coefficient EEPROM indexes for temperature and pressure compensation */
+#define MS5837_IDX_CRC                      0
+#define MS5837_IDX_PRESS_SENS               1
+#define MS5837_IDX_PRESS_OFF                2
+#define MS5837_IDX_TEMP_COEFF_PRESS_SENS    3
+#define MS5837_IDX_TEMP_COEFF_PRESS_OFF     4
+#define MS5837_IDX_REF_TEMP                 5
+#define MS5837_IDX_TEMP_COEFF_TEMP          6
+#define MS5837_NUMBER_COEFFS                7
+
+#define MS5837_CNV_OSR_MASK         0x0F
 
 #ifdef __cplusplus
 extern "C" {

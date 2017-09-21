@@ -46,11 +46,13 @@
 static double NAN = 0.0/0.0;
 #endif
 
-static struct hal_spi_settings spi_bme280_settings = {
-    .data_order = HAL_SPI_MSB_FIRST,
-    .data_mode  = HAL_SPI_MODE0,
-    .baudrate   = 4000,
-    .word_size  = HAL_SPI_WORD_SIZE_8BIT,
+static uint16_t cnv_time[6] = {
+    MS5837_CNV_TIME_OSR_256,
+    MS5837_CNV_TIME_OSR_512,
+    MS5837_CNV_TIME_OSR_1024,
+    MS5837_CNV_TIME_OSR_2048,
+    MS5837_CNV_TIME_OSR_4096,
+    MS5837_CNV_TIME_OSR_8192
 };
 
 #if MYNEWT_VAL(BME280_STATS)
@@ -848,121 +850,6 @@ err:
 }
 
 /**
- * Read multiple length data from BME280 sensor over SPI
- *
- * @param register address
- * @param variable length payload
- * @param length of the payload to read
- *
- * @return 0 on success, non-zero on failure
- */
-int
-bme280_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
-               uint8_t len)
-{
-    int i;
-    uint16_t retval;
-    int rc;
-
-    rc = 0;
-
-    /* Select the device */
-    hal_gpio_write(itf->si_cs_pin, 0);
-
-    /* Send the address */
-    retval = hal_spi_tx_val(itf->si_num, addr | BME280_SPI_READ_CMD_BIT);
-    if (retval == 0xFFFF) {
-        rc = SYS_EINVAL;
-        BME280_ERR("SPI_%u register write failed addr:0x%02X\n",
-                   itf->si_num, addr);
-#if MYNEWT_VAL(BME280_STATS)
-        STATS_INC(g_bme280stats, read_errors);
-#endif
-        goto err;
-    }
-
-    for (i = 0; i < len; i++) {
-        /* Read data */
-        retval = hal_spi_tx_val(itf->si_num, 0);
-        if (retval == 0xFFFF) {
-            rc = SYS_EINVAL;
-            BME280_ERR("SPI_%u read failed addr:0x%02X\n",
-                       itf->si_num, addr);
-#if MYNEWT_VAL(BME280_STATS)
-            STATS_INC(g_bme280stats, read_errors);
-#endif
-            goto err;
-        }
-        payload[i] = retval;
-    }
-
-    rc = 0;
-
-err:
-    /* De-select the device */
-    hal_gpio_write(itf->si_cs_pin, 1);
-
-    return rc;
-}
-
-/**
- * Write multiple length data to BME280 sensor over SPI
- *
- * @param register address
- * @param variable length payload
- * @param length of the payload to write
- *
- * @return 0 on success, non-zero on failure
- */
-int
-bme280_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
-                uint8_t len)
-{
-    int i;
-    int rc;
-
-    /* Select the device */
-    hal_gpio_write(itf->si_cs_pin, 0);
-
-    /* Send the address */
-    rc = hal_spi_tx_val(itf->si_num, addr & ~BME280_SPI_READ_CMD_BIT);
-    if (rc == 0xFFFF) {
-        rc = SYS_EINVAL;
-        BME280_ERR("SPI_%u register write failed addr:0x%02X\n",
-                   itf->si_num, addr);
-#if MYNEWT_VAL(BME280_STATS)
-        STATS_INC(g_bme280stats, write_errors);
-#endif
-        goto err;
-    }
-
-    for (i = 0; i < len; i++) {
-        /* Read data */
-        rc = hal_spi_tx_val(itf->si_num, payload[i]);
-        if (rc == 0xFFFF) {
-            rc = SYS_EINVAL;
-            BME280_ERR("SPI_%u write failed addr:0x%02X:0x%02X\n",
-                       itf->si_num, addr);
-#if MYNEWT_VAL(BME280_STATS)
-            STATS_INC(g_bme280stats, write_errors);
-#endif
-            goto err;
-        }
-    }
-
-
-    rc = 0;
-
-err:
-    /* De-select the device */
-    hal_gpio_write(itf->si_cs_pin, 1);
-
-    os_time_delay((OS_TICKS_PER_SEC * 30)/1000 + 1);
-
-    return rc;
-}
-
-/**
  * Gets temperature
  *
  * @param temperature
@@ -994,34 +881,6 @@ err:
 }
 
 /**
- * Gets humidity
- *
- * @param humidity
- *
- * @return 0 on success, and non-zero error code on failure
- */
-int
-bme280_get_humidity(struct sensor_itf *itf, int32_t *humid)
-{
-    int rc;
-    uint8_t tmp[2];
-
-    rc = bme280_readlen(itf, BME280_REG_ADDR_HUM, tmp, 2);
-    if (rc) {
-        goto err;
-    }
-#if MYNEWT_VAL(BME280_SPEC_CALC)
-    *humid = (tmp[0] << 8 | tmp[1]);
-#else
-    *humid = (tmp[0] << 8 | tmp[1]);
-#endif
-
-    return 0;
-err:
-    return rc;
-}
-
-/**
  * Gets pressure
  *
  * @param pressure
@@ -1029,7 +888,7 @@ err:
  * @return 0 on success, and non-zero error code on failure
  */
 int
-bme280_get_pressure(struct sensor_itf *itf, int32_t *press)
+ms5837_get_pressure(struct sensor_itf *itf, int32_t *press)
 {
     int rc;
     uint8_t tmp[3];
@@ -1053,281 +912,246 @@ err:
 }
 
 /**
- * Resets the BME280 chip
+ * Write multiple length data to MS5837 sensor over I2C
+ *
+ * @param The sensor interface
+ * @param register address
+ * @param variable length payload
+ * @param length of the payload to write
+ *
+ * @return 0 on success, non-zero on failure
+ */
+static int
+ms5837_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
+                uint8_t len)
+{
+    int rc;
+    uint8_t payload[3] = {addr, 0, 0};
+
+    struct hal_i2c_master_data data_struct = {
+        .address = itf->si_addr,
+        .len = 1,
+        .buffer = payload
+    };
+
+    memcpy(&payload[1], buffer, len);
+
+    /* Register write */
+    rc = hal_i2c_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1);
+    if (rc) {
+        MS5837_ERR("I2C access failed at address 0x%02X\n", data_struct.address);
+#if MYNEWT_VAL(MS5837_STATS)
+        STATS_INC(g_ms5837stats, write_errors);
+#endif
+        goto err;
+    }
+
+    memset(payload, 0, sizeof(payload));
+    data_struct.len = len;
+    rc = hal_i2c_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, len);
+    if (rc) {
+        MS5837_ERR("Failed to read from 0x%02X:0x%02X\n", data_struct.address, reg);
+#if MYNEWT_VAL(MS5837_STATS)
+        STATS_INC(g_ms5837stats, errors);
+#endif
+        goto err;
+    }
+
+    return 0;
+err:
+    return rc;
+}
+
+/**
+ * Read multiple length data from MS5837 sensor over I2C
+ *
+ * @param The sensor interface
+ * @param register address
+ * @param variable length buffer
+ * @param length of the payload to read
+ *
+ * @return 0 on success, non-zero on failure
+ */
+static int
+ms5837_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
+               uint8_t len)
+{
+    int rc;
+    uint8_t payload[3] = { addr, 0, 0};
+
+    struct hal_i2c_master_data data_struct = {
+        .address = itf->si_addr,
+        .len = 1,
+        .buffer = payload
+    };
+
+    /* Clear the supplied buffer */
+    memset(buffer, 0, len);
+
+    /* Register write */
+    rc = hal_i2c_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1);
+    if (rc) {
+        MS5837_ERR("I2C access failed at address 0x%02X\n", data_struct.address);
+#if MYNEWT_VAL(MS5837_STATS)
+        STATS_INC(g_ms5837stats, read_errors);
+#endif
+        goto err;
+    }
+
+    /* Read len bytes back */
+    memset(payload, 0, sizeof(payload));
+    data_struct.len = len;
+    rc = hal_i2c_master_read(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1);
+    if (rc) {
+        MS5837_ERR("Failed to read from 0x%02X:0x%02X\n", data_struct.address, addr);
+#if MYNEWT_VAL(MS5837_STATS)
+        STATS_INC(g_ms5837stats, read_errors);
+#endif
+        goto err;
+    }
+
+    /* Copy the I2C results into the supplied buffer */
+    memcpy(buffer, payload, len);
+
+    return 0;
+err:
+
+    return rc;
+}
+
+
+
+
+/**
+ * Reads the temperature ADC value
+ *
+ * @the sensor interface
+ * @param temperature in Deg C
+ *
+ * @return 0 on success, non-zero on failure
+ */
+static int
+ms5837_get_temperature(struct sensor_itf *itf, float *temperature)
+{
+    uint32_t rawtemp, rawpress;
+    int32_t dt, temp;
+    int64_t off, sens, p, t2, off2, sens2;
+    uint8_t cmd;
+
+    /* Read temperature ADC value */
+    cmd = ms5837_resolution_osr * 2;
+    cmd |= MS5837_START_TEMPERATURE_ADC_CONVERSION;
+    rc = ms5837_get_raw_data(cmd, &rawtemp);
+    if(rc) {
+        goto err;
+    }
+
+    /* read pressure ADC value */
+    cmd = ms5837_resolution_osr * 2;
+    cmd |= MS5837_START_PRESSURE_ADC_CONVERSION;
+    rc = ms5837_get_raw_data(cmd, &rawpress);
+    if(rc) {
+        goto err;
+    }
+
+    /* difference between actual and reference temperature = D2 - Tref */
+    dt = (int32_t)rawtemp - ((int32_t)eeprom_coeff[MS5837_REFERENCE_TEMPERATURE_INDEX] << 8);
+
+    /* actual temperature = 2000 + dt * tempsens */
+    temp = 2000 + ((int64_t)dt * (int64_t)eeprom_coeff[MS5837_TEMP_COEFF_OF_TEMPERATURE_INDEX] >> 23) ;
+
+    /* second order temperature compensation */
+    if(temp < 2000)
+    {
+        t2 = (3 * ((int64_t)dt  * (int64_t)dt)) >> 33;
+        off2 = 3 * ((int64_t)temp - 2000) * ((int64_t)temp - 2000)/2;
+        sens2 = 5 * ((int64_t)temp - 2000) * ((int64_t)temp - 2000)/8;
+
+        if(temp < -1500)
+        {
+            off2 += 7 * ((int64_t)temp + 1500) * ((int64_t)temp + 1500);
+            sens2 += 4 * ((int64_t)temp + 1500) * ((int64_t)temp + 1500);
+        }
+    } else {
+        t2 = ( 2 * ( (int64_t)dt  * (int64_t)dt  ) ) >> 37;
+        off2 = ((int64_t)temp + 1500) * ((int64_t)temp + 1500) >> 4;
+        sens2 = 0;
+    }
+
+    *temperature = ((float)temp-t2)/100;
+
+    /* off = off_T1 + TCO * dt */
+    off = ((int64_t)(eeprom_coeff[MS5837_PRESSURE_OFFSET_INDEX]) << 16) + (((int64_t)(eeprom_coeff[MS5837_TEMP_COEFF_OF_PRESSURE_OFFSET_INDEX]) * dt) >> 7);
+    off -= off2;
+
+    /* sensitivity at actual temperature = sens_T1 + TCS * dt */
+    sens = ((int64_t)eeprom_coeff[MS5837_PRESSURE_SENSITIVITY_INDEX] << 15) + (((int64_t)eeprom_coeff[MS5837_TEMP_COEFF_OF_PRESSURE_SENSITIVITY_INDEX] * dt) >> 8) ;
+    sens -= sens2;
+
+    /* temperature compensated pressure = D1 * sens - off */
+    p = (((rawpress * sens) >> 21) - off) >> 13;
+
+    *pressure = (float)p/100;
+
+    return 0;
+err:
+    return rc;
+}
+
+
+/**
+ * Resets the MS5837 chip
  *
  * @return 0 on success, non-zero on failure
  */
 int
-bme280_reset(struct sensor_itf *itf)
+ms5837_reset(struct sensor_itf *itf)
 {
     uint8_t txdata;
 
-    txdata = 0xB6;
+    txdata = 0;
 
-    return bme280_writelen(itf, BME280_REG_ADDR_RESET, &txdata, 1);
+    return ms5837_writelen(itf, MS5837_CMD_RESET, &txdata, 0);
 }
 
+
 /**
- * Get IIR filter setting
+ * Triggers conversion and read ADC value
  *
- * @param ptr to fill up iir setting into
+ * @param the sensor interface
+ * @param cmd used for conversion, considers temperature, pressure and OSR
+ * @param ptr to ADC value
  *
  * @return 0 on success, non-zero on failure
  */
-int
-bme280_get_iir(struct sensor_itf *itf, uint8_t *iir)
+static int
+ms5837_get_raw_data(struct sensor_itf *itf, uint8_t cmd, uint32_t *data)
 {
     int rc;
-    uint8_t tmp;
+    uint8_t payload[4] = {cmd, 0, 0, 0};
 
-    rc = bme280_readlen(itf, BME280_REG_ADDR_CONFIG, &tmp, 1);
+    /* send conversion command based on OSR, temperature and pressure */
+    rc = ms5837_writelen(itf, cmd, payload, 0);
     if (rc) {
         goto err;
     }
 
-    *iir = ((tmp & BME280_REG_CONFIG_FILTER) >> 5);
+    /* delay conversion depending on resolution */
+    os_time_delay((cnv_time[(cmd & MS5837_CNV_OSR_MASK)/2] + 1)/1000);
+
+    /* read adc value */
+    rc = ms5837_readlen(itf, MS5837_READ_ADC, payload, 3);
+    if (rc) {
+        goto err;
+    }
+
+    *data = ((uint32_t)payload[1] << 16) | ((uint32_t)payload[2] << 8) | payload[3];
 
     return 0;
 err:
     return rc;
 }
 
-/**
- * Sets IIR filter
- *
- * @param filter setting
- *
- * @return 0 on success, non-zero on failure
- */
-int
-bme280_set_iir(struct sensor_itf *itf, uint8_t iir)
-{
-    int rc;
-    uint8_t cfg;
-
-    rc = bme280_readlen(itf, BME280_REG_ADDR_CONFIG, &cfg, 1);
-    if (rc) {
-        goto err;
-    }
-
-    iir = cfg | ((iir << 5) & BME280_REG_CONFIG_FILTER);
-
-    rc = bme280_writelen(itf, BME280_REG_ADDR_CONFIG, &iir, 1);
-    if (rc) {
-        goto err;
-    }
-
-    return 0;
-err:
-    return rc;
-}
-
-/**
- * Gets the operating mode
- *
- * @param ptr to the mode variable to be filled up
- *
- * @return 0 on success, and non-zero error code on failure
- */
-int
-bme280_get_mode(struct sensor_itf *itf, uint8_t *mode)
-{
-    int rc;
-    uint8_t tmp;
-
-    rc = bme280_readlen(itf, BME280_REG_ADDR_CTRL_MEAS, &tmp, 1);
-    if (rc) {
-        goto err;
-    }
-
-    *mode = (tmp & BME280_REG_CTRL_MEAS_MODE);
-
-    return 0;
-err:
-    return rc;
-}
-
-/**
- * Sets the operating mode
- *
- * @param mode
- *
- * @return 0 on success, and non-zero error code on failure
- */
-int
-bme280_set_mode(struct sensor_itf *itf, uint8_t mode)
-{
-    int rc;
-    uint8_t cfg;
-
-    rc = bme280_readlen(itf, BME280_REG_ADDR_CTRL_MEAS, &cfg, 1);
-    if (rc) {
-        goto err;
-    }
-
-    cfg = cfg | (mode & BME280_REG_CTRL_MEAS_MODE);
-
-    rc = bme280_writelen(itf, BME280_REG_ADDR_CTRL_MEAS, &cfg, 1);
-    if (rc) {
-        goto err;
-    }
-
-    return 0;
-err:
-    return rc;
-}
-
-/**
- * Gets the current sampling rate for the type of sensor
- *
- * @param Type of sensor to return sampling rate
- *
- * @return 0 on success, non-zero on failure
- */
-int
-bme280_get_oversample(struct sensor_itf *itf, sensor_type_t type,
-                      uint8_t *oversample)
-{
-    int rc;
-    uint8_t tmp;
-
-    if (type & SENSOR_TYPE_AMBIENT_TEMPERATURE || type & SENSOR_TYPE_PRESSURE) {
-        rc = bme280_readlen(itf, BME280_REG_ADDR_CTRL_MEAS, &tmp, 1);
-        if (rc) {
-            goto err;
-        }
-
-        if (type & SENSOR_TYPE_AMBIENT_TEMPERATURE) {
-            *oversample = ((tmp & BME280_REG_CTRL_MEAS_TOVER) >> 5);
-        }
-
-        if (type & SENSOR_TYPE_PRESSURE) {
-            *oversample = ((tmp & BME280_REG_CTRL_MEAS_POVER) >> 2);
-        }
-    }
-
-    if (type & SENSOR_TYPE_RELATIVE_HUMIDITY) {
-        rc = bme280_readlen(itf, BME280_REG_ADDR_CTRL_HUM, &tmp, 1);
-        if (rc) {
-            goto err;
-        }
-        *oversample = (tmp & BME280_REG_CTRL_HUM_HOVER);
-    }
-
-    return 0;
-err:
-    return rc;
-}
-
-/**
- * Sets the sampling rate
- *
- * @param sensor type
- * @param sampling rate
- *
- * @return 0 on success, and non-zero error code on failure
- */
-int
-bme280_set_oversample(struct sensor_itf *itf, sensor_type_t type,
-                      uint8_t oversample)
-{
-    int rc;
-    uint8_t cfg;
-
-    if (type & SENSOR_TYPE_AMBIENT_TEMPERATURE || type & SENSOR_TYPE_PRESSURE) {
-        rc = bme280_readlen(itf, BME280_REG_ADDR_CTRL_MEAS, &cfg, 1);
-        if (rc) {
-            goto err;
-        }
-
-        if (type & SENSOR_TYPE_AMBIENT_TEMPERATURE) {
-            cfg = cfg | ((oversample << 5) & BME280_REG_CTRL_MEAS_TOVER);
-        }
-
-        if (type & SENSOR_TYPE_PRESSURE) {
-            cfg = cfg | ((oversample << 2) & BME280_REG_CTRL_MEAS_POVER);
-        }
-
-        rc = bme280_writelen(itf, BME280_REG_ADDR_CTRL_MEAS, &cfg, 1);
-        if (rc) {
-            goto err;
-        }
-    }
-
-    if (type & SENSOR_TYPE_RELATIVE_HUMIDITY) {
-        rc = bme280_readlen(itf, BME280_REG_ADDR_CTRL_HUM, &cfg, 1);
-        if (rc) {
-            goto err;
-        }
-
-        cfg = cfg | (oversample & BME280_REG_CTRL_HUM_HOVER);
-
-        rc = bme280_writelen(itf, BME280_REG_ADDR_CTRL_HUM, &cfg, 1);
-        if (rc) {
-            goto err;
-        }
-    }
-
-    return 0;
-err:
-    return rc;
-}
-
-/**
- * Get the chip id
- *
- * @param sensor interface
- * @param ptr to fill up the chip id
- *
- * @return 0 on success, non-zero on failure
- */
-int
-bme280_get_chipid(struct sensor_itf *itf, uint8_t *chipid)
-{
-    int rc;
-    uint8_t tmp;
-
-    rc = bme280_readlen(itf, BME280_REG_ADDR_CHIPID, &tmp, 1);
-    if (rc) {
-        goto err;
-    }
-
-    *chipid = tmp;
-
-    return 0;
-err:
-    return rc;
-}
-
-/**
- * Set the standy duration setting
- *
- * @param sensor interface
- * @param duration
- * @return 0 on success, non-zero on failure
- */
-int
-bme280_set_sby_duration(struct sensor_itf *itf, uint8_t dur)
-{
-    int rc;
-    uint8_t cfg;
-
-    rc = bme280_readlen(itf, BME280_REG_ADDR_CONFIG, &cfg, 1);
-    if (rc) {
-        goto err;
-    }
-
-    cfg = cfg | ((dur << 5) & BME280_REG_CONFIG_STANDBY);
-
-    rc = bme280_writelen(itf, BME280_REG_ADDR_CONFIG, &cfg, 1);
-    if (rc) {
-        goto err;
-    }
-
-    return 0;
-err:
-    return rc;
-}
 
 /**
  * crc4 check for MS5837 EEPROM
@@ -1342,22 +1166,22 @@ ms5837_crc_check(uint16_t *prom, uint8_t crc)
 {
     uint8_t cnt, bit;
     uint16_t rem, crc_read;
-    
+
     rem = 0x00;
     crc_read = prom[0];
     prom[MS5837_COEFFICIENT_NUMBERS] = 0;
-    
+
     /* Clear the CRC byte */
     prom[0] = (0x0FFF & prom[0]);
-    
+
     for(cnt = 0; cnt < (MS5837_COEFFICIENT_NUMBERS + 1) * 2; cnt++) {
         /* Get next byte */
         if (cnt%2 == 1) {
-            rem ^=  prom[cnt>>1] & 0x00FF;
+            rem ^=  (prom[cnt>>1] & 0x00FF);
         } else {
-            rem ^=  prom[cnt>>1] >> 8;
+            rem ^=  (prom[cnt>>1] >> 8);
         }
-        
+
         for(bit = 8; bit > 0; bit--) {
             if(rem & 0x8000) {
                 rem = (rem << 1) ^ 0x3000;
@@ -1366,9 +1190,9 @@ ms5837_crc_check(uint16_t *prom, uint8_t crc)
             }
         }
     }
-    
+
     rem >>= 12;
     prom[0] = crc_read;
-    
-    return  (rem == crc);
+
+    return  (rem != crc);
 }

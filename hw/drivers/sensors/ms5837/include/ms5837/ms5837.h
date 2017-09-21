@@ -95,6 +95,17 @@ ms5837_reset(struct sensor_itf *itf);
 int
 ms5837_config(struct ms5837 *ms5837, struct ms5837_cfg *cfg);
 
+/**
+ * crc4 check for MS5837 EEPROM
+ *
+ * @param buffer containing EEPROM coefficients
+ * @param crc to compare with
+ *
+ * return 0 on success (CRC is OK), non-zero on failure
+ */
+int
+ms5837_crc_check(uint16_t *prom, uint8_t crc);
+
 #ifdef __cplusplus
 }
 #endif
