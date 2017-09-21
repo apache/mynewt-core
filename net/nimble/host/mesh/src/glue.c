@@ -65,7 +65,7 @@ net_buf_ref(struct os_mbuf *om)
 
     /* For bufs with header we count refs*/
     if (OS_MBUF_USRHDR_LEN(om) == 0) {
-        return NULL;
+        return om;
     }
 
     adv = BT_MESH_ADV(om);
@@ -270,11 +270,15 @@ k_fifo_is_empty(struct os_eventq *q)
     return STAILQ_EMPTY(&q->evq_list);
 }
 
-void * net_buf_get(struct os_eventq *fifo,s32_t t)
+void * net_buf_get(struct os_eventq *fifo, s32_t t)
 {
     struct os_event *ev = os_eventq_get_no_wait(fifo);
 
-    return ev->ev_arg;
+    if (ev) {
+        return ev->ev_arg;
+    }
+
+    return NULL;
 }
 
 uint8_t *

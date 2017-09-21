@@ -8,8 +8,10 @@
 
 #include "mesh/mesh.h"
 
+#include "syscfg/syscfg.h"
 #define BT_DBG_ENABLED (MYNEWT_VAL(BLE_MESH_DEBUG_ADV))
 #include "host/ble_hs_log.h"
+
 #include "host/ble_hs_adv.h"
 #include "host/ble_gap.h"
 #include "nimble/hci_common.h"
@@ -214,7 +216,9 @@ static void bt_mesh_scan_cb(const bt_addr_le_t *addr, s8_t rssi,
 		return;
 	}
 
+#if BT_MESH_EXTENDED_DEBUG
 	BT_DBG("len %u: %s", buf->om_len, bt_hex(buf->om_data, buf->om_len));
+#endif
 
 	while (buf->om_len > 1) {
 		struct net_buf_simple_state state;
@@ -292,7 +296,9 @@ ble_adv_gap_mesh_cb(struct ble_gap_event *event, void *arg)
     struct ble_gap_disc_desc *desc;
     struct os_mbuf *buf = NULL;
 
+#if BT_MESH_EXTENDED_DEBUG
     BT_DBG("event->type %d", event->type);
+#endif
 
     switch (event->type) {
 #if MYNEWT_VAL(BLE_EXT_ADV)

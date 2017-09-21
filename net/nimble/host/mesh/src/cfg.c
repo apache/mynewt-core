@@ -12,6 +12,7 @@
 
 #include "mesh/mesh.h"
 
+#include "syscfg/syscfg.h"
 #define BT_DBG_ENABLED MYNEWT_VAL(BLE_MESH_DEBUG_MODEL)
 #include "host/ble_hs_log.h"
 
@@ -3024,7 +3025,7 @@ int bt_mesh_conf_init(struct bt_mesh_model *model, bool primary)
 	}
 
 	if (!(MYNEWT_VAL(BLE_MESH_FRIEND))) {
-		cfg->frnd = BT_MESH_RELAY_NOT_SUPPORTED;
+		cfg->frnd = BT_MESH_FRIEND_NOT_SUPPORTED;
 	}
 
 	if (!(MYNEWT_VAL(BLE_MESH_GATT_PROXY))) {
@@ -3032,6 +3033,7 @@ int bt_mesh_conf_init(struct bt_mesh_model *model, bool primary)
 	}
 
 	k_delayed_work_init(&cfg->hb_pub.timer, hb_publish);
+	k_delayed_work_add_arg(&cfg->hb_pub.timer, cfg);
 	cfg->hb_sub.expiry = 0;
 
 	cfg->model = model;
