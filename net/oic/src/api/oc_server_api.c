@@ -99,9 +99,13 @@ static int query_iterator;
 oc_resource_t *
 oc_new_resource(const char *uri, uint8_t num_resource_types, int device)
 {
-  oc_resource_t *resource = oc_ri_alloc_resource();
+  oc_resource_t *resource;
   const char *start = uri;
   size_t end = strlen(uri);
+
+  resource = oc_ri_alloc_resource();
+  assert(resource);
+
   oc_alloc_string(&resource->uri, end + 1);
   strncpy((char *)oc_string(resource->uri), start, end);
   strcpy((char *)oc_string(resource->uri) + end, (const char *)"");
