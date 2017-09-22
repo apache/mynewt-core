@@ -36,6 +36,8 @@ pkg.deps.BNO055_OFB:
     - hw/drivers/sensors/bno055
 pkg.deps.TCS34725_OFB:
     - hw/drivers/sensors/tcs34725
+pkg.deps.MS5837_OFB:
+    - hw/drivers/sensors/ms5837
 pkg.deps.MCU_NATIVE:
     - hw/drivers/sensors/sim
 pkg.init:

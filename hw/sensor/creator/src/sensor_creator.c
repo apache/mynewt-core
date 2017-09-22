@@ -20,6 +20,7 @@
 #include <os/os_dev.h>
 #include <assert.h>
 #include <defs/error.h>
+#include <string.h>
 
 #if MYNEWT_VAL(LSM303DLHC_OFB)
 #include <lsm303dlhc/lsm303dlhc.h>
@@ -38,6 +39,9 @@
 #endif
 #if MYNEWT_VAL(BME280_OFB)
 #include <bme280/bme280.h>
+#endif
+#if MYNEWT_VAL(MS5837_OFB)
+#include <ms5837/ms5837.h>
 #endif
 
 /* Driver definitions */
@@ -63,6 +67,10 @@ static struct tcs34725 tcs34725;
 
 #if MYNEWT_VAL(BME280_OFB)
 static struct bme280 bme280;
+#endif
+
+#if MYNEWT_VAL(MS5837_OFB)
+static struct ms5837 ms5837;
 #endif
 
 /**
@@ -133,6 +141,45 @@ static struct sensor_itf i2c_0_itf_tcs = {
     /* HW I2C address for the TCS34725 */
     .si_addr = 0x29
 };
+#endif
+
+#if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(MS5837_OFB)
+static struct sensor_itf i2c_0_itf_ms = {
+    .si_type = SENSOR_ITF_I2C,
+    .si_num  = 0,
+    /* HW I2C address for the MS5837 */
+    .si_addr = 0x76
+};
+#endif
+
+/**
+ * BMP280 Sensor default configuration used by the creator package
+ *
+ * @return 0 on success, non-zero on failure
+ */
+#if MYNEWT_VAL(MS5837_OFB)
+static int
+config_ms5837_sensor(void)
+{
+    int rc;
+    struct os_dev *dev;
+    struct ms5837_cfg mscfg;
+
+    dev = (struct os_dev *) os_dev_open("ms5837_0", OS_TIMEOUT_NEVER, NULL);
+    assert(dev != NULL);
+
+    memset(&mscfg, 0, sizeof(mscfg));
+
+
+    mscfg.mc_s_res_osr = MS5837_RES_OSR_256;
+    mscfg.mc_s_mask = SENSOR_TYPE_AMBIENT_TEMPERATURE|
+                      SENSOR_TYPE_PRESSURE;
+
+    rc = ms5837_config((struct ms5837 *)dev, &mscfg);
+
+    os_dev_close(dev);
+    return rc;
+}
 #endif
 
 /* Sensor default configuration used by the creator package */
@@ -407,6 +454,15 @@ sensor_dev_create(void)
     assert(rc == 0);
 
     rc = config_bme280_sensor();
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(MS5837_OFB)
+    rc = os_dev_create((struct os_dev *) &ms5837, "ms5837_0",
+      OS_DEV_INIT_PRIMARY, 0, ms5837_init, (void *)&i2c_0_itf_ms);
+    assert(rc == 0);
+
+    rc = config_ms5837_sensor();
     assert(rc == 0);
 #endif
 
