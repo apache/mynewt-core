@@ -200,6 +200,110 @@ lis2dh12_pull_up_disc(struct sensor_itf *itf, uint8_t disconnect);
 int
 lis2dh12_reset(struct sensor_itf *itf);
 
+/**
+ * Enable interrupt 2
+ *
+ * @param the sensor interface
+ * @param events to enable int for
+ */
+int
+lis2dh12_enable_int2(struct sensor_itf *itf, uint8_t *reg);
+
+/**
+ * Enable interrupt 1
+ *
+ * @param the sensor interface
+ * @param events to enable int for
+ */
+int
+lis2dh12_enable_int1(struct sensor_itf *itf, uint8_t *reg);
+
+/**
+ * Set interrupt threshold for int 1
+ *
+ * @param the sensor interface
+ * @param threshold
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+lis2dh12_set_int1_thresh(struct sensor_itf *itf, uint8_t ths);
+
+/**
+ * Set interrupt threshold for int 2
+ *
+ * @param the sensor interface
+ * @param threshold
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+lis2dh12_set_int2_thresh(struct sensor_itf *itf, uint8_t ths);
+
+/**
+ * Clear interrupt 1
+ *
+ * @param the sensor interface
+ */
+int
+lis2dh12_clear_int1(struct sensor_itf *itf);
+
+/**
+ * Clear interrupt 2
+ *
+ * @param the sensor interface
+ */
+int
+lis2dh12_clear_int2(struct sensor_itf *itf);
+
+/**
+ * Set interrupt pin configuration for interrupt 1
+ *
+ * @param the sensor interface
+ * @param config
+ * @return 0 on success, non-zero on failure
+ */
+int
+lis2dh12_set_int1_pin_cfg(struct sensor_itf *itf, uint8_t cfg);
+
+/**
+ * Set interrupt pin configuration for interrupt 2
+ *
+ * @param the sensor interface
+ * @param config
+ * @return 0 on success, non-zero on failure
+ */
+int
+lis2dh12_set_int2_pin_cfg(struct sensor_itf *itf, uint8_t cfg);
+
+/**
+ * Set interrupt 1 duration
+ *
+ * @param duration in N/ODR units
+ * @return 0 on success, non-zero on failure
+ */
+int
+lis2dh12_set_int1_duration(struct sensor_itf *itf, uint8_t dur);
+
+/**
+ * Set interrupt 2 duration
+ *
+ * @param duration in N/ODR units
+ * @return 0 on success, non-zero on failure
+ */
+int
+lis2dh12_set_int2_duration(struct sensor_itf *itf, uint8_t dur);
+
+/**
+ * Set high pass filter cfg
+ *
+ * @param the sensor interface
+ * @param filter register settings
+ * @return 0 on success, non-zero on failure
+ */
+int
+lis2dh12_hpf_cfg(struct sensor_itf *itf, uint8_t reg);
+
 #ifdef __cplusplus
 }
 #endif

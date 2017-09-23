@@ -46,6 +46,7 @@
 #include <oic/oc_rep.h>
 #include <oic/oc_ri.h>
 #include <oic/oc_api.h>
+#include <oic/messaging/coap/observe.h>
 
 static const char g_s_oic_dn[] = "x.mynewt.snsr.";
 
@@ -53,6 +54,10 @@ static int
 sensor_oic_encode(struct sensor* sensor, void *arg, void *databuf,
                   sensor_type_t type)
 {
+
+    if (!databuf) {
+        return SYS_EINVAL;
+    }
 
     switch(type) {
         /* Gyroscope supported */
@@ -529,7 +534,6 @@ sensor_oic_get_data(oc_request_t *request, oc_interface_mask_t interface)
 {
     int rc;
     struct sensor *sensor;
-    struct sensor_listener listener;
     char *devname;
     char *typename;
     sensor_type_t type;
@@ -562,8 +566,6 @@ sensor_oic_get_data(oc_request_t *request, oc_interface_mask_t interface)
     case OC_IF_BASELINE:
         oc_process_baseline_interface(request->resource);
     case OC_IF_R:
-        /* Register a listener and then trigger/read a bunch of samples */
-        memset(&listener, 0, sizeof(listener));
 
         typename =
             &(request->resource->types.oa_arr.s[sizeof(g_s_oic_dn) - 1]);
@@ -573,19 +575,8 @@ sensor_oic_get_data(oc_request_t *request, oc_interface_mask_t interface)
             goto err;
         }
 
-        listener.sl_sensor_type = type;
-        listener.sl_func = sensor_oic_encode;
-
-        rc = sensor_register_listener(sensor, &listener);
-        if (rc) {
-            goto err;
-        }
-
-        /* Sensor read results.  Every time a sensor is read, all of its
-         * listeners are called by default.  Specify NULL as a callback,
-         * because we just want to run all the listeners.
-         */
-        rc = sensor_read(sensor, listener.sl_sensor_type, NULL, NULL,
+        rc = sensor_read(sensor, type, sensor_oic_encode,
+                         (uintptr_t *)SENSOR_IGN_LISTENER,
                          OS_TIMEOUT_NEVER);
         if (rc) {
             goto err;
@@ -596,23 +587,130 @@ sensor_oic_get_data(oc_request_t *request, oc_interface_mask_t interface)
         break;
     }
 
-    sensor_unregister_listener(sensor, &listener);
     oc_rep_end_root_object();
     oc_send_response(request, OC_STATUS_OK);
     return;
 err:
-    sensor_unregister_listener(sensor, &listener);
     oc_send_response(request, OC_STATUS_NOT_FOUND);
+}
+
+/**
+ * Transmit OIC trigger
+ *
+ * @param ptr to the sensor
+ * @param ptr to sensor data
+ * @param The sensor type
+ *
+ * @return 0 on sucess, non-zero on failure
+ */
+int
+sensor_oic_tx_trigger(struct sensor *sensor, void *arg, sensor_type_t type)
+{
+    oc_request_t request = {};
+    oc_response_t response = {};
+    oc_response_buffer_t response_buffer;
+    struct os_mbuf *m = NULL;
+    struct sensor_type_traits *stt;
+    int rc;
+
+    (void)request;
+
+    memset(&response_buffer, 0, sizeof(response_buffer));
+    stt = sensor_get_type_traits_bytype(type, sensor);
+    if (!stt->stt_oic_res->num_observers) {
+        return 0;
+    }
+
+    m = os_msys_get_pkthdr(0, 0);
+    if (!m) {
+        rc = SYS_EINVAL;
+        goto err;
+    }
+
+    response_buffer.buffer = m;
+    response_buffer.block_offset = NULL;
+    response.response_buffer = &response_buffer;
+    request.resource = stt->stt_oic_res;
+    request.response = &response;
+    oc_rep_new(m);
+    oc_rep_start_root_object();
+    rc = sensor_oic_encode(sensor, NULL, arg, type);
+    if (rc) {
+        goto err;
+    }
+    oc_rep_end_root_object();
+    oc_send_response(&request, OC_STATUS_OK);
+    coap_notify_observers(stt->stt_oic_res, &response_buffer, NULL);
+    os_mbuf_free_chain(m);
+
+    return 0;
+err:
+    return rc;
+}
+
+static int
+sensor_oic_add_resource(struct sensor *sensor, sensor_type_t type)
+{
+    char *typename;
+    char tmpstr[COAP_MAX_URI];
+    struct sensor_type_traits *stt;
+    int rc;
+
+    stt = sensor_get_type_traits_bytype(type, sensor);
+    if (!stt) {
+        stt = malloc(sizeof(struct sensor_type_traits));
+        memset(stt, 0, sizeof(struct sensor_type_traits));
+        sensor_lock(sensor);
+        SLIST_INSERT_HEAD(&sensor->s_type_traits_list, stt, stt_next);
+        sensor_unlock(sensor);
+    }
+
+    typename = NULL;
+
+    rc = sensor_type_to_typename(&typename, type, sensor);
+    if (rc) {
+        return rc;
+    }
+
+    memset(tmpstr, 0, sizeof(tmpstr));
+    snprintf(tmpstr, sizeof(tmpstr), "/%s/%s",
+             sensor->s_dev->od_name, typename);
+
+    sensor_lock(sensor);
+
+    stt->stt_sensor_type = type;
+
+    stt->stt_oic_res = oc_new_resource(tmpstr, 1, 0);
+
+    memset(tmpstr, 0, sizeof(tmpstr));
+    snprintf(tmpstr, sizeof(tmpstr), "%s%s", g_s_oic_dn, typename);
+    oc_resource_bind_resource_type(stt->stt_oic_res, tmpstr);
+    oc_resource_bind_resource_interface(stt->stt_oic_res, OC_IF_R);
+    oc_resource_set_default_interface(stt->stt_oic_res, OC_IF_R);
+
+    oc_resource_set_discoverable(stt->stt_oic_res);
+
+#if MYNEWT_VAL(SENSOR_OIC_PERIODIC)
+    oc_resource_set_periodic_observable_ms(stt->stt_oic_res,
+                                           MYNEWT_VAL(SENSOR_OIC_OBS_RATE));
+#else
+    oc_resource_set_observable(stt->stt_oic_res);
+#endif
+    oc_resource_set_request_handler(stt->stt_oic_res, OC_GET,
+                                    sensor_oic_get_data);
+
+    oc_add_resource(stt->stt_oic_res);
+
+    sensor_unlock(sensor);
+
+    return 0;
 }
 
 void
 sensor_oic_init(void)
 {
-    oc_resource_t *res;
     struct sensor *sensor;
-    char tmpstr[COAP_MAX_URI];
     sensor_type_t type;
-    char *typename;
     int i;
     int rc;
 
@@ -632,33 +730,16 @@ sensor_oic_init(void)
         }
 
         i = 0;
-        typename = NULL;
 
         /* Iterate through N types of sensors */
         while (i < 32) {
             type = (1 << i);
             if (sensor_mgr_match_bytype(sensor, &type)) {
-                rc = sensor_type_to_typename(&typename, type, sensor);
+                rc = sensor_oic_add_resource(sensor, type);
                 if (rc) {
                     break;
                 }
-
-                memset(tmpstr, 0, sizeof(tmpstr));
-                snprintf(tmpstr, sizeof(tmpstr), "/%s/%s", sensor->s_dev->od_name, typename);
-
-                res = oc_new_resource(tmpstr, 1, 0);
-
-                memset(tmpstr, 0, sizeof(tmpstr));
-                snprintf(tmpstr, sizeof(tmpstr), "%s%s", g_s_oic_dn, typename);
-                oc_resource_bind_resource_type(res, tmpstr);
-                oc_resource_bind_resource_interface(res, OC_IF_R);
-                oc_resource_set_default_interface(res, OC_IF_R);
-
-                oc_resource_set_discoverable(res);
-                oc_resource_set_periodic_observable_ms(res, MYNEWT_VAL(SENSOR_OIC_OBS_RATE));
-                oc_resource_set_request_handler(res, OC_GET,
-                                                sensor_oic_get_data);
-                oc_add_resource(res);
+                sensor_trigger_init(sensor, type, sensor_oic_tx_trigger);
             }
             i++;
         }

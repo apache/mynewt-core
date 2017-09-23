@@ -44,3 +44,7 @@ syscfg.defs:
     SENSOR_MGR_EVQ:
         description: 'Specify the eventq to be used by sensor mgr'
         value:
+
+    SENSOR_OIC_PERIODIC:
+        description: 'Sensor polling is periodic'
+        value: 0
