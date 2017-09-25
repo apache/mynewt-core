@@ -462,7 +462,7 @@ err:
  * @param raw temperature
  * @param raw pressure
  * @param compensated temperature in DegC
- * @param compensated pressure in mBar
+ * @param compensated pressure in Pa
  */
 void
 ms5837_compensate_temp_press(uint16_t *coeffs, uint32_t rawtemp, uint32_t rawpress,
@@ -503,7 +503,7 @@ ms5837_compensate_temp_press(uint16_t *coeffs, uint32_t rawtemp, uint32_t rawpre
     *temperature = ((float)temp - t2)/100;
 
     /* temperature compensated second order pressure = D1 * sens - off */
-    *pressure = ((float)((((rawpress * sens2) >> 21) - off2) >> 15))/100;
+    *pressure = ((float)((((rawpress * sens2) >> 21) - off2) >> 15));
 }
 
 /**
