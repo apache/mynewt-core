@@ -56,7 +56,7 @@ int g_led_pin;
 
 #if MYNEWT_VAL(SPI_0_MASTER)
 #define SPI_MASTER 1
-#define SPI_SS_PIN  (MYNEWT_VAL(SPI_0_MASTER_SS_PIN))
+#define SPI_SS_PIN  (MYNEWT_VAL(LORA_SPI_CS_PIN))
 #endif
 #if MYNEWT_VAL(SPI_0_SLAVE)
 #define SPI_SLAVE 1
