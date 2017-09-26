@@ -42,9 +42,14 @@ repo.versions:
     "1.2-latest": "1.2.0"  # 1.2.0
 
 repo.newt_compatibility:
+    # Allow all versions for 0.0.0.  This is a workaround to prevent a warning
+    # from being displayed when newt doesn't know which version of the repo is
+    # present.
+    0.0.0:
+        0.0.0: good
+
     # Core 1.1.0+ requires newt 1.1.0+ (feature: self-overrides).
     1.2.0:
         1.1.0: good
     1.1.0:
         1.1.0: good
-
