@@ -39,7 +39,8 @@ static struct shell_cmd bmp280_shell_cmd_struct = {
 static struct sensor_itf g_sensor_itf = {
     .si_type = MYNEWT_VAL(BMP280_SHELL_ITF_TYPE),
     .si_num = MYNEWT_VAL(BMP280_SHELL_ITF_NUM),
-    .si_cs_pin = MYNEWT_VAL(BMP280_SHELL_CSPIN)
+    .si_cs_pin = MYNEWT_VAL(BMP280_SHELL_CSPIN),
+    .si_addr = MYNEWT_VAL(BMP280_SHELL_ITF_ADDR)
 };
 
 static int
@@ -143,7 +144,7 @@ bmp280_shell_cmd_read(int argc, char **argv)
             return rc;
         }
 
-        console_printf("temperature: %d pressure: %d\n",
+        console_printf("raw temperature: %d raw pressure: %d\n",
                        (int)temp, (int)press);
     }
 
@@ -314,18 +315,24 @@ bmp280_shell_cmd_dump(int argc, char **argv)
   console_printf("0x%02X (CHIPID):   0x%02X\n", BMP280_REG_ADDR_CHIPID, val);
   assert(0 == bmp280_readlen(&g_sensor_itf, BMP280_REG_ADDR_VERSION, &val, 1));
   console_printf("0x%02X (VER):   0x%02X\n", BMP280_REG_ADDR_VERSION, val);
-  assert(0 == bmp280_readlen(&g_sensor_itf, BMP280_REG_ADDR_CTRL_HUM, &val, 1));
-  console_printf("0x%02X (CTRL_HUM):   0x%02X\n", BMP280_REG_ADDR_CTRL_HUM, val);
   assert(0 == bmp280_readlen(&g_sensor_itf, BMP280_REG_ADDR_STATUS, &val, 1));
   console_printf("0x%02X (STATUS):   0x%02X\n", BMP280_REG_ADDR_STATUS, val);
   assert(0 == bmp280_readlen(&g_sensor_itf, BMP280_REG_ADDR_CTRL_MEAS, &val, 1));
   console_printf("0x%02X (CTRL_MEAS):   0x%02X\n", BMP280_REG_ADDR_CTRL_MEAS, val);
   assert(0 == bmp280_readlen(&g_sensor_itf, BMP280_REG_ADDR_CONFIG, &val, 1));
   console_printf("0x%02X (CONFIG):   0x%02X\n", BMP280_REG_ADDR_CONFIG, val);
-  assert(0 == bmp280_readlen(&g_sensor_itf, BMP280_REG_ADDR_PRESS, &val, 1));
-  console_printf("0x%02X (PRESS):   0x%02X\n", BMP280_REG_ADDR_PRESS, val);
-  assert(0 == bmp280_readlen(&g_sensor_itf, BMP280_REG_ADDR_TEMP, &val, 1));
-  console_printf("0x%02X (TEMP):   0x%02X\n", BMP280_REG_ADDR_TEMP, val);
+  assert(0 == bmp280_readlen(&g_sensor_itf, BMP280_REG_ADDR_PRESS_MSB, &val, 1));
+  console_printf("0x%02X (PRESS MSB):   0x%02X\n", BMP280_REG_ADDR_PRESS_MSB, val);
+  assert(0 == bmp280_readlen(&g_sensor_itf, BMP280_REG_ADDR_PRESS_LSB, &val, 1));
+  console_printf("0x%02X (PRESS LSB):   0x%02X\n", BMP280_REG_ADDR_PRESS_LSB, val);
+  assert(0 == bmp280_readlen(&g_sensor_itf, BMP280_REG_ADDR_PRESS_XLSB, &val, 1));
+  console_printf("0x%02X (PRESS XLSB):   0x%02X\n", BMP280_REG_ADDR_PRESS_XLSB, val);
+  assert(0 == bmp280_readlen(&g_sensor_itf, BMP280_REG_ADDR_TEMP_XLSB, &val, 1));
+  console_printf("0x%02X (TEMP MSB):   0x%02X\n", BMP280_REG_ADDR_TEMP_MSB, val);
+  assert(0 == bmp280_readlen(&g_sensor_itf, BMP280_REG_ADDR_TEMP_LSB, &val, 1));
+  console_printf("0x%02X (TEMP LSB):   0x%02X\n", BMP280_REG_ADDR_TEMP_LSB, val);
+  assert(0 == bmp280_readlen(&g_sensor_itf, BMP280_REG_ADDR_TEMP_XLSB, &val, 1));
+  console_printf("0x%02X (TEMP XLSB):   0x%02X\n", BMP280_REG_ADDR_TEMP_XLSB, val);
 
   return 0;
 }

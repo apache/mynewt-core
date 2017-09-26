@@ -40,9 +40,6 @@
 
 #define BMP280_REG_ADDR_CAL26             0xE1  /* R calibration stored in 0xE1-0xF0 */
 
-#define BMP280_REG_ADDR_CTRL_HUM          0xF2
-#define BMP280_REG_CTRL_HUM_HOVER        (0x7)
-
 #define BMP280_REG_ADDR_STATUS            0XF3
 #define BMP280_REG_STATUS_MEAS            0x04
 #define BMP280_REG_STATUS_IM_UP           0x01
@@ -66,8 +63,6 @@
 #define BMP280_REG_ADDR_TEMP_MSB          0xFA
 #define BMP280_REG_ADDR_TEMP_LSB          0xFB
 #define BMP280_REG_ADDR_TEMP_XLSB         0xFC
-
-#define BMP280_REG_ADDR_HUM               0xFD
 
 #define BMP280_REG_ADDR_RESET             0xE0
 

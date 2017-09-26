@@ -176,22 +176,24 @@ bmp280_init(struct os_dev *dev, void *arg)
         goto err;
     }
 
-    rc = hal_spi_config(sensor->s_itf.si_num, &spi_bmp280_settings);
-    if (rc == EINVAL) {
-        /* If spi is already enabled, for nrf52, it returns -1, We should not
-         * fail if the spi is already enabled
-         */
-        goto err;
-    }
+    if (sensor->s_itf.si_type == SENSOR_ITF_SPI) {
+        rc = hal_spi_config(sensor->s_itf.si_num, &spi_bmp280_settings);
+        if (rc == EINVAL) {
+            /* If spi is already enabled, for nrf52, it returns -1, We should not
+             * fail if the spi is already enabled
+             */
+            goto err;
+        }
 
-    rc = hal_spi_enable(sensor->s_itf.si_num);
-    if (rc) {
-        goto err;
-    }
+        rc = hal_spi_enable(sensor->s_itf.si_num);
+        if (rc) {
+            goto err;
+        }
 
-    rc = hal_gpio_init_out(sensor->s_itf.si_cs_pin, 1);
-    if (rc) {
-        goto err;
+        rc = hal_gpio_init_out(sensor->s_itf.si_cs_pin, 1);
+        if (rc) {
+            goto err;
+        }
     }
 
     return (0);
@@ -721,11 +723,11 @@ bmp280_i2c_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
     memset(buffer, 0, len);
 
     /* Register write */
-    rc = hal_i2c_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1);
+    rc = hal_i2c_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 0);
     if (rc) {
         BMP280_ERR("I2C access failed at address 0x%02X\n", data_struct.address);
-#if MYNEWT_VAL(bmp280_STATS)
-        STATS_INC(g_bmp280stats, read_errors);
+#if MYNEWT_VAL(BMP280_STATS)
+        STATS_INC(g_bmp280stats, write_errors);
 #endif
         goto err;
     }
@@ -736,7 +738,7 @@ bmp280_i2c_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
     rc = hal_i2c_master_read(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1);
     if (rc) {
         BMP280_ERR("Failed to read from 0x%02X:0x%02X\n", data_struct.address, addr);
-#if MYNEWT_VAL(bmp280_STATS)
+#if MYNEWT_VAL(BMP280_STATS)
         STATS_INC(g_bmp280stats, read_errors);
 #endif
         goto err;
@@ -747,7 +749,6 @@ bmp280_i2c_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
 
     return 0;
 err:
-
     return rc;
 }
 
@@ -824,26 +825,32 @@ bmp280_i2c_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
                       uint8_t len)
 {
     int rc;
-    uint8_t payload[20] = { addr, 0, 0, 0, 0, 0, 0, 0,
-                               0, 0, 0, 0, 0, 0, 0, 0,
-                               0, 0, 0, 0};
+    int i;
+
+    uint8_t payload[2];
 
     struct hal_i2c_master_data data_struct = {
         .address = itf->si_addr,
-        .len = len + 1,
+        .len = 2,
         .buffer = payload
     };
 
-    memcpy(&payload[1], buffer, len);
+    i = 0;
 
-    /* Register write */
-    rc = hal_i2c_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1);
-    if (rc) {
-        BMP280_ERR("I2C access failed at address 0x%02X\n", data_struct.address);
-#if MYNEWT_VAL(bmp280_STATS)
-        STATS_INC(g_bmp280stats, write_errors);
+    while(i < (data_struct.len - 1)) {
+        payload[0] = addr + i;
+        payload[1] = buffer[i];
+
+        rc = hal_i2c_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1);
+        if (rc) {
+            BMP280_ERR("Failed to write 0x%02X:0x%02X\n", data_struct.address, addr);
+#if MYNEWT_VAL(BMP280_STATS)
+            STATS_INC(g_bmp280stats, write_errors);
 #endif
-        goto err;
+            goto err;
+        }
+
+        i++;
     }
 
     return 0;
