@@ -153,7 +153,7 @@ static struct sensor_itf i2c_0_itf_ms = {
 #endif
 
 /**
- * BMP280 Sensor default configuration used by the creator package
+ * MS5837 Sensor default configuration used by the creator package
  *
  * @return 0 on success, non-zero on failure
  */

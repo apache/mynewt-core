@@ -78,9 +78,17 @@ static const struct nrf52_hal_spi_cfg os_bsp_spi0s_cfg = {
 #endif
 
 #if MYNEWT_VAL(I2C_0)
-static const struct nrf52_hal_i2c_cfg hal_i2c_cfg = {
+static const struct nrf52_hal_i2c_cfg hal_i2c0_cfg = {
     .scl_pin = 27,
     .sda_pin = 26,
+    .i2c_frequency = 100    /* 100 kHz */
+};
+#endif
+
+#if MYNEWT_VAL(I2C_1)
+static const struct nrf52_hal_i2c_cfg hal_i2c1_cfg = {
+    .scl_pin = 25,
+    .sda_pin = 24,
     .i2c_frequency = 100    /* 100 kHz */
 };
 #endif
@@ -184,7 +192,12 @@ hal_bsp_init(void)
 #endif
 
 #if MYNEWT_VAL(I2C_0)
-    rc = hal_i2c_init(0, (void *)&hal_i2c_cfg);
+    rc = hal_i2c_init(0, (void *)&hal_i2c0_cfg);
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(I2C_1)
+    rc = hal_i2c_init(1, (void *)&hal_i2c1_cfg);
     assert(rc == 0);
 #endif
 
