@@ -168,6 +168,10 @@ bleprph_gap_event(struct ble_gap_event *event, void *arg)
             rc = ble_gap_conn_find(event->connect.conn_handle, &desc);
             assert(rc == 0);
             bleprph_print_conn_desc(&desc);
+
+#if MYNEWT_VAL(BLEPRPH_LE_PHY_SUPPORT)
+            phy_conn_changed(event->connect.conn_handle);
+#endif
         }
         BLEPRPH_LOG(INFO, "\n");
 
@@ -181,6 +185,10 @@ bleprph_gap_event(struct ble_gap_event *event, void *arg)
         BLEPRPH_LOG(INFO, "disconnect; reason=%d ", event->disconnect.reason);
         bleprph_print_conn_desc(&event->disconnect.conn);
         BLEPRPH_LOG(INFO, "\n");
+
+#if MYNEWT_VAL(BLEPRPH_LE_PHY_SUPPORT)
+        phy_conn_changed(CONN_HANDLE_INVALID);
+#endif
 
         /* Connection terminated; resume advertising. */
         bleprph_advertise();
@@ -240,6 +248,13 @@ bleprph_gap_event(struct ble_gap_event *event, void *arg)
          * continue with the pairing operation.
          */
         return BLE_GAP_REPEAT_PAIRING_RETRY;
+
+#if MYNEWT_VAL(BLEPRPH_LE_PHY_SUPPORT)
+    case BLE_GAP_EVENT_PHY_UPDATE_COMPLETE:
+        /* XXX: assume symmetric phy for now */
+        phy_update(event->phy_updated.tx_phy);
+        return 0;
+#endif
     }
 
     return 0;
@@ -295,6 +310,10 @@ main(void)
     /* Set the default device name. */
     rc = ble_svc_gap_device_name_set("nimble-bleprph");
     assert(rc == 0);
+
+#if MYNEWT_VAL(BLEPRPH_LE_PHY_SUPPORT)
+    phy_init();
+#endif
 
     conf_load();
 

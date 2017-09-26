@@ -18,6 +18,27 @@
 
 # Package: apps/bleprph
 
+syscfg.defs:
+    BLEPRPH_LE_PHY_SUPPORT:
+        description: >
+            Enable support for changing PHY preference on active connection.
+            PHY preference change is triggered by configured GPIO pins.
+            Current PHY is indicated using LEDs connected to configured
+            GPIO pins.
+        value: 0
+    BLEPRPH_LE_PHY_BUTTON_GPIO:
+        description: >
+            GPIO pins for changing PHY preference on active connection. This
+            is an array of 4 GPIO pin numbers for 1M, 2M, LE Coded S=2 and
+            LE Coded S=8 respectively.
+        value: "(int[]){ BUTTON_1, BUTTON_2, BUTTON_3, BUTTON_4 }"
+    BLEPRPH_LE_PHY_LED_GPIO:
+        description: >
+            GPIO pins for indicating current PHY on active connection. This
+            is an array of 3 GPIO pin numbers for 1M, 2M and LE Coded
+            respectively.
+        value: "(int[]){ LED_1, LED_2, LED_3 }"
+
 syscfg.vals:
     # Disable central and observer roles.
     BLE_ROLE_BROADCASTER: 1
