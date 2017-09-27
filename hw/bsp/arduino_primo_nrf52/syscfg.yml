@@ -54,33 +54,6 @@ syscfg.defs:
         description: 'RX pin for UART1'
         value:  5
 
-    SPI_0_MASTER:
-        description: 'Whether to enable SPI 0 in master mode'
-        value:  1
-        restrictions:
-            - "!SPI_0_SLAVE"
-    SPI_0_MASTER_SS_PIN:
-        description: 'SPI 0 (master) SS pin number.'
-        value:  19
-    SPI_1_MASTER:
-        description: 'Whether to enable SPI 1 in master mode'
-        value:  0
-        restrictions:
-            - "!SPI_1_SLAVE"
-    SPI_1_MASTER_SS_PIN:
-        description: 'SPI 1 (master) SS pin number.'
-        value:  -1
-    SPI_0_SLAVE:
-        description: 'Whether to enable SPI 0 in slave mode'
-        value:  0
-        restrictions:
-            - "!SPI_0_MASTER"
-    SPI_1_SLAVE:
-        description: 'Whether to enable SPI 1 in slave mode'
-        value:  0
-        restrictions:
-            - "!SPI_1_MASTER"
-
     TIMER_0:
         description: 'NRF52 Timer 0'
         value:  1
@@ -112,6 +85,7 @@ syscfg.vals:
     NFFS_FLASH_AREA: FLASH_AREA_NFFS
     COREDUMP_FLASH_AREA: FLASH_AREA_IMAGE_1
     MCU_DCDC_ENABLED: 1
+    SPI_0_MASTER: 1
     XTAL_32768: 1
 
 syscfg.vals.BLE_LP_CLOCK:
