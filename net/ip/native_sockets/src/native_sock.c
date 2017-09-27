@@ -493,6 +493,24 @@ native_sock_stream_tx(struct native_sock *ns, int notify)
 }
 
 static int
+native_sock_set_tx_buf(struct native_sock *ns, struct os_mbuf *om)
+{
+    struct native_sock_state *nss = &native_sock_state;
+    int rc;
+
+    os_mutex_pend(&nss->mtx, OS_WAIT_FOREVER);
+    if (ns->ns_tx) {
+        rc = MN_EAGAIN;
+    } else {
+        ns->ns_tx = om;
+        rc = 0;
+    }
+    os_mutex_release(&nss->mtx);
+
+    return rc;
+}
+
+static int
 native_sock_sendto(struct mn_socket *s, struct os_mbuf *m,
   struct mn_sockaddr *addr)
 {
@@ -525,10 +543,10 @@ native_sock_sendto(struct mn_socket *s, struct os_mbuf *m,
         os_mbuf_free_chain(m);
         return 0;
     } else {
-        if (ns->ns_tx) {
-            return MN_EAGAIN;
+        rc = native_sock_set_tx_buf(ns, m);
+        if (rc != 0) {
+            return rc;
         }
-        ns->ns_tx = m;
 
         rc = native_sock_stream_tx(ns, 0);
         return rc;
