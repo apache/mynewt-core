@@ -675,7 +675,6 @@ int bt_mesh_net_resend(struct bt_mesh_subnet *sub, struct os_mbuf *buf,
 	return 0;
 }
 
-#if (MYNEWT_VAL(BLE_MESH_LOCAL_INTERFACE))
 static void bt_mesh_net_local(struct os_event *work)
 {
 	struct os_mbuf *buf;
@@ -686,7 +685,6 @@ static void bt_mesh_net_local(struct os_event *work)
 		net_buf_unref(buf);
 	}
 }
-#endif
 
 int bt_mesh_net_encode(struct bt_mesh_net_tx *tx, struct os_mbuf *buf,
 		       bool proxy)
@@ -763,7 +761,6 @@ int bt_mesh_net_encode(struct bt_mesh_net_tx *tx, struct os_mbuf *buf,
 int bt_mesh_net_send(struct bt_mesh_net_tx *tx, struct os_mbuf *buf,
 		     bt_mesh_adv_func_t cb)
 {
-	bool is_local;
 	int err;
 
 	BT_DBG("src 0x%04x dst 0x%04x len %u headroom %zu tailroom %zu",
@@ -797,33 +794,23 @@ int bt_mesh_net_send(struct bt_mesh_net_tx *tx, struct os_mbuf *buf,
 	/* Deliver to GATT Proxy Clients if necessary */
 	if ((MYNEWT_VAL(BLE_MESH_GATT_PROXY))) {
 		if (bt_mesh_proxy_relay(buf, tx->ctx->addr) &&
-			BT_MESH_ADDR_IS_UNICAST(tx->ctx->addr)) {
+		    BT_MESH_ADDR_IS_UNICAST(tx->ctx->addr)) {
 			err = 0;
 			goto done;
 		}
 	}
 
-#if (MYNEWT_VAL(BLE_MESH_LOCAL_INTERFACE))
 	/* Deliver to local network interface if necessary */
-	is_local = true;
-
-	if (bt_mesh_fixed_group_match(tx->ctx->addr)) {
-		bt_mesh_adv_send(buf, cb);
-	} else if (!bt_mesh_elem_find(tx->ctx->addr)) {
-		bt_mesh_adv_send(buf, cb);
-		is_local = false;
-	}
-
-	if (is_local) {
+	if (bt_mesh_fixed_group_match(tx->ctx->addr) ||
+	    bt_mesh_elem_find(tx->ctx->addr)) {
 		net_buf_put(&bt_mesh.local_queue, net_buf_ref(buf));
 		if (cb) {
 			cb(buf, 0);
 		}
 		k_work_submit(&bt_mesh.local_work);
+	} else {
+		bt_mesh_adv_send(buf, cb);
 	}
-#else
-	bt_mesh_adv_send(buf, cb);
-#endif
 
 done:
 	net_buf_unref(buf);
@@ -984,9 +971,6 @@ static int net_find_and_decrypt(const u8_t *data, size_t data_len,
 	return false;
 }
 
-#if ((MYNEWT_VAL(BLE_MESH_RELAY)) || \
-     (MYNEWT_VAL(BLE_MESH_FRIEND)) || \
-     (MYNEWT_VAL(BLE_MESH_GATT_PROXY)))
 static void bt_mesh_net_relay(struct os_mbuf *sbuf,
 			      struct bt_mesh_net_rx *rx)
 {
@@ -997,7 +981,7 @@ static void bt_mesh_net_relay(struct os_mbuf *sbuf,
 	BT_DBG("TTL %u CTL %u dst 0x%04x", rx->ctx.recv_ttl, CTL(sbuf->om_data),
 	       rx->dst);
 
-	if (rx->ctx.recv_ttl <= 1) {
+	if (rx->net_if != BT_MESH_NET_IF_LOCAL && rx->ctx.recv_ttl <= 1) {
 		return;
 	}
 
@@ -1093,7 +1077,6 @@ static void bt_mesh_net_relay(struct os_mbuf *sbuf,
 done:
 	net_buf_unref(buf);
 }
-#endif /* RELAY || FRIEND || GATT_PROXY */
 
 int bt_mesh_net_decode(struct os_mbuf *data, enum bt_mesh_net_if net_if,
 		       struct bt_mesh_net_rx *rx, struct os_mbuf *buf,
@@ -1208,12 +1191,8 @@ void bt_mesh_net_recv(struct os_mbuf *data, s8_t rssi,
 		}
 	}
 
-#if ((MYNEWT_VAL(BLE_MESH_RELAY)) || \
-     (MYNEWT_VAL(BLE_MESH_FRIEND)) || \
-     (MYNEWT_VAL(BLE_MESH_GATT_PROXY)))
 	net_buf_simple_restore(buf, &state);
 	bt_mesh_net_relay(buf, &rx);
-#endif /* MYNEWT_VAL(BLE_MESH_RELAY)  || FRIEND || GATT_PROXY */
 
 done:
     os_mbuf_free_chain(buf);
@@ -1231,8 +1210,6 @@ void bt_mesh_net_init(void)
 {
 	k_delayed_work_init(&bt_mesh.ivu_complete, ivu_complete);
 
-#if (MYNEWT_VAL(BLE_MESH_LOCAL_INTERFACE))
 	os_eventq_init(&bt_mesh.local_queue);
 	k_work_init(&bt_mesh.local_work, bt_mesh_net_local);
-#endif
 }
