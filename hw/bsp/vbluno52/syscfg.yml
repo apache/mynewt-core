@@ -82,7 +82,6 @@ syscfg.vals:
     MCU_DCDC_ENABLED: 1
     I2C_0: 1
     I2C_1: 1
-    LORA_SPI_CS_PIN: 11
     XTAL_32768: 1
 
 syscfg.vals.BLE_LP_CLOCK:

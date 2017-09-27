@@ -22,7 +22,7 @@ syscfg.defs:
         description:
         value: -1
 
-    LORA_SPI_CS_PIN:
+    SX1276_SPI_CS_PIN:
         description: 'SPI chip select pin number'
         value:  -1
 
