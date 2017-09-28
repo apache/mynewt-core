@@ -31,6 +31,8 @@
 #include "sensor/temperature.h"
 #include "sensor/pressure.h"
 #include "ms5837_priv.h"
+#include "os/os_cputime.h"
+#include "console/console.h"
 
 #if MYNEWT_VAL(MS5837_LOG)
 #include "log/log.h"
@@ -172,6 +174,8 @@ ms5837_sensor_read(struct sensor *sensor, sensor_type_t type,
 {
     uint32_t rawtemp;
     uint32_t rawpress;
+    int32_t comptemp;
+    int32_t deltat;
     float temperature;
     float pressure;
     struct sensor_itf *itf;
@@ -201,14 +205,25 @@ ms5837_sensor_read(struct sensor *sensor, sensor_type_t type,
 
     /* Get a new pressure sample */
     if (type & SENSOR_TYPE_PRESSURE) {
-        rc = ms5837_get_temp_press(itf, &rawtemp, &rawpress, cfg->mc_s_res_osr);
+        rc = ms5837_get_rawtemp(itf, &rawtemp, cfg->mc_s_temp_res_osr);
         if (rc) {
             goto err;
         }
 
-        /* compensate using temperature and pressure coefficients */
-        ms5837_compensate_temp_press(ms5837->pdd.eeprom_coeff, rawtemp, rawpress,
-                                     &temperature, &pressure);
+        rc = ms5837_get_rawpress(itf, &rawpress, cfg->mc_s_press_res_osr);
+        if (rc) {
+            goto err;
+        }
+
+        /* compensate using temperature and pressure coefficients
+         * competemp is the first order compensated temperature
+         * which is used as input to the pressure compensation
+         */
+        temperature = ms5837_compensate_temperature(ms5837->pdd.eeprom_coeff, rawtemp,
+                                                    &comptemp, &deltat);
+
+        pressure = ms5837_compensate_pressure(ms5837->pdd.eeprom_coeff, comptemp,
+                                              rawpress, deltat);
 
         databuf.spd.spd_press = pressure;
         databuf.spd.spd_press_is_valid = 1;
@@ -222,15 +237,14 @@ ms5837_sensor_read(struct sensor *sensor, sensor_type_t type,
 
     /* Get a new temperature sample */
     if (type & SENSOR_TYPE_AMBIENT_TEMPERATURE) {
-        if (!pressure && !temperature) {
-            rc = ms5837_get_temp_press(itf, &rawtemp, &rawpress, cfg->mc_s_res_osr);
+        if (!temperature) {
+            rc = ms5837_get_rawtemp(itf, &rawtemp, cfg->mc_s_temp_res_osr);
             if (rc) {
                 goto err;
             }
 
-            /* compensate using temperature coefficients */
-            ms5837_compensate_temp_press(ms5837->pdd.eeprom_coeff, rawtemp, rawpress,
-                                         &temperature, &pressure);
+            temperature = ms5837_compensate_temperature(ms5837->pdd.eeprom_coeff, rawtemp,
+                                                        NULL, NULL);
         }
 
         databuf.std.std_temp = temperature;
@@ -294,7 +308,9 @@ ms5837_config(struct ms5837 *ms5837, struct ms5837_cfg *cfg)
         goto err;
     }
 
-    ms5837->cfg.mc_s_res_osr = cfg->mc_s_res_osr;
+    ms5837->cfg.mc_s_temp_res_osr = cfg->mc_s_temp_res_osr;
+
+    ms5837->cfg.mc_s_press_res_osr = cfg->mc_s_press_res_osr;
 
     ms5837->cfg.mc_s_mask = cfg->mc_s_mask;
 
@@ -373,7 +389,7 @@ ms5837_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
         MS5837_ERR("I2C read command write failed at address 0x%02X\n",
                    data_struct.address);
 #if MYNEWT_VAL(MS5837_STATS)
-        STATS_INC(g_ms5837stats, read_errors);
+        STATS_INC(g_ms5837stats, write_errors);
 #endif
         goto err;
     }
@@ -443,41 +459,34 @@ err:
 }
 
 /**
- * Compensate for temperature and pressure using coefficients from teh EEPROM
+ * Compensate for pressure using coefficients from the EEPROM
  *
  * @param ptr to coefficients
- * @param raw temperature
+ * @param first order compensated temperature
  * @param raw pressure
- * @param compensated temperature in DegC
- * @param compensated pressure in Pa
+ * @param deltat temperature
+ *
+ * @return second order temperature compensated pressure
  */
-void
-ms5837_compensate_temp_press(uint16_t *coeffs, uint32_t rawtemp, uint32_t rawpress,
-                             float *temperature, float *pressure)
+float
+ms5837_compensate_pressure(uint16_t *coeffs, int32_t temp,
+                           uint32_t rawpress, int32_t deltat)
 {
-    int32_t dt, temp;
-    int64_t off, sens, t2, off2, sens2;
+    int64_t off, sens, off2, sens2;
 
-    off2 = sens2 = t2 = 0;
-
-    /* difference between actual and reference temperature = D2 - Tref */
-    dt = (int32_t)rawtemp - ((int32_t)coeffs[MS5837_IDX_REF_TEMP] << 8);
-
-    /* actual temperature = 2000 + dt * tempsens */
-    temp = 2000 + (dt * coeffs[MS5837_IDX_TEMP_COEFF_TEMP] >> 23);
+    off2 = sens2 = 0;
 
     /* off = off_T1 + TCO * dt */
     off = ((int64_t)(coeffs[MS5837_IDX_PRESS_OFF]) << 17) +
-          (((int64_t)(coeffs[MS5837_IDX_TEMP_COEFF_PRESS_OFF]) * dt) >> 6);
+          (((int64_t)(coeffs[MS5837_IDX_TEMP_COEFF_PRESS_OFF]) * deltat) >> 6);
 
     /* sensitivity at actual temperature = sens_T1 + TCS * dt */
     sens = ((int64_t)coeffs[MS5837_IDX_PRESS_SENS] << 16) +
-           (((int64_t)coeffs[MS5837_IDX_TEMP_COEFF_PRESS_SENS] * dt) >> 7);
+           (((int64_t)coeffs[MS5837_IDX_TEMP_COEFF_PRESS_SENS] * deltat) >> 7);
 
     /* second order temperature compensation */
     if(temp < 2000) {
         /* low temperature */
-        t2 = (11 * (int64_t)dt  * (int64_t)dt) >> 35;
         off2 = (31 * ((int64_t)temp - 2000) * ((int64_t)temp - 2000)) >> 3;
         sens2 = (63 * ((int64_t)temp - 2000) * ((int64_t)temp - 2000)) >> 5;
     }
@@ -486,15 +495,55 @@ ms5837_compensate_temp_press(uint16_t *coeffs, uint32_t rawtemp, uint32_t rawpre
 
     sens2 = sens - sens2;
 
-    /* second order temperature */
-    *temperature = ((float)temp - t2)/100;
-
     /* temperature compensated second order pressure = D1 * sens - off */
-    *pressure = ((float)((((rawpress * sens2) >> 21) - off2) >> 15));
+    return ((float)(((rawpress * sens2) >> 21) - off2)/32768);
 }
 
 /**
- * Triggers conversion and read ADC value
+ * Compensate for temperature using coefficients from the EEPROM
+ *
+ * @param ptr to coefficients
+ * @param compensated temperature
+ * @param raw temperature
+ * @param optional ptr to fill up first order compensated temperature
+ * @param optional ptr to fill up delta temperature
+ *
+ * @return second order temperature compensated temperature
+ */
+float
+ms5837_compensate_temperature(uint16_t *coeffs, uint32_t rawtemp,
+                              int32_t *comptemp, int32_t *deltat)
+{
+    int32_t dt, temp;
+    int64_t t2;
+
+    t2 = 0;
+
+    /* difference between actual and reference temperature = D2 - Tref */
+    dt = (int32_t)rawtemp - ((int32_t)coeffs[MS5837_IDX_REF_TEMP] << 8);
+
+    /* actual temperature = 2000 + dt * tempsens */
+    temp = 2000 + (dt * coeffs[MS5837_IDX_TEMP_COEFF_TEMP] >> 23);
+
+    if (comptemp) {
+        *comptemp = temp;
+    }
+
+    if (deltat) {
+        *deltat = dt;
+    }
+
+    if(temp < 2000) {
+        /* low temperature */
+        t2 = (11 * (int64_t)dt  * (int64_t)dt) >> 35;
+    }
+
+    /* second order temperature */
+    return (((float)temp - t2)/100);
+}
+
+/**
+ * Triggers conversion and reads ADC value
  *
  * @param the sensor interface
  * @param cmd used for conversion, considers temperature, pressure and OSR
@@ -506,7 +555,6 @@ static int
 ms5837_get_raw_data(struct sensor_itf *itf, uint8_t cmd, uint32_t *data)
 {
     int rc;
-    int64_t now;
     uint8_t payload[3] = {0};
 
     /* send conversion command based on OSR, temperature and pressure */
@@ -515,11 +563,8 @@ ms5837_get_raw_data(struct sensor_itf *itf, uint8_t cmd, uint32_t *data)
         goto err;
     }
 
-    now = os_get_uptime_usec();
-
     /* delay conversion depending on resolution */
-    while ((os_get_uptime_usec() - now) <
-           cnv_time[(cmd & MS5837_CNV_OSR_MASK)/2]);
+    os_cputime_delay_usecs(cnv_time[(cmd & MS5837_CNV_OSR_MASK)/2]);
 
     /* read adc value */
     rc = ms5837_readlen(itf, MS5837_CMD_ADC_READ, payload, 3);
@@ -535,19 +580,17 @@ err:
 }
 
 /**
- * Reads the temperature ADC value and applies eeprom coefficients
- * for compensation
+ * Reads the temperature ADC value
  *
  * @param the sensor interface
  * @param raw adc temperature value
- * @param raw adc pressure value
  * @param resolution osr
  *
  * @return 0 on success, non-zero on failure
  */
 int
-ms5837_get_temp_press(struct sensor_itf *itf, uint32_t *rawtemp,
-                      uint32_t *rawpress, uint8_t res_osr)
+ms5837_get_rawtemp(struct sensor_itf *itf, uint32_t *rawtemp,
+                   uint8_t res_osr)
 {
     uint8_t cmd;
     uint32_t tmp;
@@ -561,6 +604,28 @@ ms5837_get_temp_press(struct sensor_itf *itf, uint32_t *rawtemp,
     }
 
     *rawtemp = tmp;
+
+    return 0;
+err:
+    return rc;
+}
+
+/**
+ * Reads the pressure ADC value
+ *
+ * @param the sensor interface
+ * @param raw adc pressure value
+ * @param resolution osr
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+ms5837_get_rawpress(struct sensor_itf *itf, uint32_t *rawpress,
+                    uint8_t res_osr)
+{
+    uint8_t cmd;
+    uint32_t tmp;
+    int rc;
 
     /* read pressure ADC value */
     cmd = res_osr | MS5837_CMD_PRESS;
@@ -592,8 +657,6 @@ ms5837_reset(struct sensor_itf *itf)
 
     return ms5837_writelen(itf, MS5837_CMD_RESET, &txdata, 0);
 }
-
-
 
 /**
  * crc4 check for MS5837 EEPROM

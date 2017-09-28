@@ -171,7 +171,8 @@ config_ms5837_sensor(void)
     memset(&mscfg, 0, sizeof(mscfg));
 
 
-    mscfg.mc_s_res_osr = MS5837_RES_OSR_256;
+    mscfg.mc_s_temp_res_osr  = MS5837_RES_OSR_256;
+    mscfg.mc_s_press_res_osr = MS5837_RES_OSR_256;
     mscfg.mc_s_mask = SENSOR_TYPE_AMBIENT_TEMPERATURE|
                       SENSOR_TYPE_PRESSURE;
 

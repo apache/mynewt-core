@@ -37,7 +37,8 @@ struct ms5837_pdd {
 };
 
 struct ms5837_cfg {
-    uint8_t mc_s_res_osr;
+    uint8_t mc_s_temp_res_osr;
+    uint8_t mc_s_press_res_osr;
     sensor_type_t mc_s_mask;
 };
 
@@ -67,19 +68,30 @@ int
 ms5837_init(struct os_dev *dev, void *arg);
 
 /**
- * Reads the temperature ADC value and applies eeprom coefficients
- * for compensation
+ * Reads the temperature ADC value
  *
  * @param the sensor interface
- * @param temperature in DegC
- * @param pressure in mBar
+ * @param raw adc temperature value
  * @param resolution osr
  *
  * @return 0 on success, non-zero on failure
  */
 int
-ms5837_get_temp_press(struct sensor_itf *itf, uint32_t *rawtemp,
-                      uint32_t *rawpress, uint8_t res_osr);
+ms5837_get_rawtemp(struct sensor_itf *itf, uint32_t *rawtemp,
+                   uint8_t res_osr);
+
+/**
+ * Reads the pressure ADC value
+ *
+ * @param the sensor interface
+ * @param raw adc pressure value
+ * @param resolution osr
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+ms5837_get_rawpress(struct sensor_itf *itf, uint32_t *rawpress,
+                    uint8_t res_osr);
 
 /**
  * Resets the MS5837 chip
@@ -125,17 +137,33 @@ int
 ms5837_read_eeprom(struct sensor_itf *itf, uint16_t *coeff);
 
 /**
- * Compensate for temperature and pressure using coefficients from teh EEPROM
+ * Compensate for pressure using coefficients from the EEPROM
  *
  * @param ptr to coefficients
- * @param raw temperature
+ * @param first order compensated temperature
  * @param raw pressure
- * @param compensated temperature in DegC
- * @param compensated pressure in mBar
+ * @param deltat temperature
+ *
+ * @return second order temperature compensated pressure
  */
-void
-ms5837_compensate_temp_press(uint16_t *coeffs, uint32_t rawtemp, uint32_t rawpress,
-                             float *temperature, float *pressure);
+float
+ms5837_compensate_pressure(uint16_t *coeffs, int32_t temp,
+                           uint32_t rawpress, int32_t deltat);
+
+/**
+ * Compensate for temperature using coefficients from the EEPROM
+ *
+ * @param ptr to coefficients
+ * @param compensated temperature
+ * @param raw temperature
+ * @param optional ptr to fill up first order compensated temperature
+ * @param optional ptr to fill up delta temperature
+ *
+ * @return second order temperature compensated temperature
+ */
+float
+ms5837_compensate_temperature(uint16_t *coeffs, uint32_t rawtemp,
+                              int32_t *comptemp, int32_t *deltat);
 
 #ifdef __cplusplus
 }
