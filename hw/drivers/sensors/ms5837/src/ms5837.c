@@ -31,7 +31,6 @@
 #include "sensor/temperature.h"
 #include "sensor/pressure.h"
 #include "ms5837_priv.h"
-#include "hal/hal_gpio.h"
 
 #if MYNEWT_VAL(MS5837_LOG)
 #include "log/log.h"
@@ -62,7 +61,7 @@ STATS_SECT_END
 STATS_NAME_START(ms5837_stat_section)
     STATS_NAME(ms5837_stat_section, read_errors)
     STATS_NAME(ms5837_stat_section, write_errors)
-    STATS_SECT_ENTRY(eeprom_crc_errors)
+    STATS_NAME(ms5837_stat_section, eeprom_crc_errors)
 STATS_NAME_END(ms5837_stat_section)
 
 /* Global variable used to hold stats data */
@@ -319,33 +318,20 @@ ms5837_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
                 uint8_t len)
 {
     int rc;
-    uint8_t payload[3] = {addr, 0, 0};
 
     struct hal_i2c_master_data data_struct = {
         .address = itf->si_addr,
         .len = 1,
-        .buffer = payload
+        .buffer = &addr
     };
-
-    memcpy(&payload[1], buffer, len);
 
     /* Register write */
     rc = hal_i2c_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1);
     if (rc) {
-        MS5837_ERR("I2C access failed at address 0x%02X\n", data_struct.address);
+        MS5837_ERR("I2C write command write failed at address 0x%02X\n",
+                   data_struct.address);
 #if MYNEWT_VAL(MS5837_STATS)
         STATS_INC(g_ms5837stats, write_errors);
-#endif
-        goto err;
-    }
-
-    memset(payload, 0, sizeof(payload));
-    data_struct.len = len;
-    rc = hal_i2c_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, len);
-    if (rc) {
-        MS5837_ERR("Failed to read from 0x%02X:0x%02X\n", data_struct.address, reg);
-#if MYNEWT_VAL(MS5837_STATS)
-        STATS_INC(g_ms5837stats, errors);
 #endif
         goto err;
     }
@@ -381,10 +367,11 @@ ms5837_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
     /* Clear the supplied buffer */
     memset(buffer, 0, len);
 
-    /* Register write */
+    /* Command write */
     rc = hal_i2c_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1);
     if (rc) {
-        MS5837_ERR("I2C access failed at address 0x%02X\n", data_struct.address);
+        MS5837_ERR("I2C read command write failed at address 0x%02X\n",
+                   data_struct.address);
 #if MYNEWT_VAL(MS5837_STATS)
         STATS_INC(g_ms5837stats, read_errors);
 #endif
@@ -434,8 +421,8 @@ ms5837_read_eeprom(struct sensor_itf *itf, uint16_t *coeff)
             goto err;
         }
 
-        payload[idx] = (*(uint16_t *)(((uint8_t *)(payload + idx))) >> 8 |
-                        *(uint16_t *)(((uint8_t *)(payload + idx) + 1)));
+        payload[idx] = (((payload[idx] & 0xFF00) >> 8)|
+                        ((payload[idx] & 0x00FF) << 8));
     }
 
     rc = ms5837_crc_check(payload, (payload[MS5837_IDX_CRC] & 0xF000) >> 12);
@@ -477,7 +464,7 @@ ms5837_compensate_temp_press(uint16_t *coeffs, uint32_t rawtemp, uint32_t rawpre
     dt = (int32_t)rawtemp - ((int32_t)coeffs[MS5837_IDX_REF_TEMP] << 8);
 
     /* actual temperature = 2000 + dt * tempsens */
-    temp = 2000 + ((int64_t)dt * (int64_t)coeffs[MS5837_IDX_TEMP_COEFF_TEMP] >> 23) ;
+    temp = 2000 + (dt * coeffs[MS5837_IDX_TEMP_COEFF_TEMP] >> 23);
 
     /* off = off_T1 + TCO * dt */
     off = ((int64_t)(coeffs[MS5837_IDX_PRESS_OFF]) << 17) +
@@ -519,7 +506,8 @@ static int
 ms5837_get_raw_data(struct sensor_itf *itf, uint8_t cmd, uint32_t *data)
 {
     int rc;
-    uint8_t payload[4] = {cmd, 0, 0, 0};
+    int64_t now;
+    uint8_t payload[3] = {0};
 
     /* send conversion command based on OSR, temperature and pressure */
     rc = ms5837_writelen(itf, cmd, payload, 0);
@@ -527,8 +515,11 @@ ms5837_get_raw_data(struct sensor_itf *itf, uint8_t cmd, uint32_t *data)
         goto err;
     }
 
+    now = os_get_uptime_usec();
+
     /* delay conversion depending on resolution */
-    os_time_delay((cnv_time[(cmd & MS5837_CNV_OSR_MASK)/2] + 1)/1000);
+    while ((os_get_uptime_usec() - now) <
+           cnv_time[(cmd & MS5837_CNV_OSR_MASK)/2]);
 
     /* read adc value */
     rc = ms5837_readlen(itf, MS5837_CMD_ADC_READ, payload, 3);
@@ -536,7 +527,7 @@ ms5837_get_raw_data(struct sensor_itf *itf, uint8_t cmd, uint32_t *data)
         goto err;
     }
 
-    *data = ((uint32_t)payload[1] << 16) | ((uint32_t)payload[2] << 8) | payload[3];
+    *data = ((uint32_t)payload[0] << 16) | ((uint32_t)payload[1] << 8) | payload[2];
 
     return 0;
 err:
