@@ -64,9 +64,6 @@ syscfg.defs:
         restrictions:
             - "!SPI_1_SLAVE"
             - "!I2C_1"
-    SPI_1_MASTER_SS_PIN:
-        description: 'SPI 1 (master) SS pin number'
-        value:  -1
     SPI_1_SLAVE:
         description: 'SPI 1 slave'
         value:  0
