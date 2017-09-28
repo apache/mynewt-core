@@ -31,5 +31,4 @@ pkg.deps:
     - sys/console/full
    # - hw/bsp/nrf52dk
     - hw/drivers/pwm
-   # - "@mynewt_nordic/hw/mcu/nordic_sdk"
-    - "@mynewt_nordic/hw/drivers/pwm/soft_pwm_nrf5x"
+    - hw/drivers/pwm/soft_pwm

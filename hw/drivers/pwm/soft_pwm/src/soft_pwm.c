@@ -23,27 +23,26 @@
 #include <string.h>
 #include <pwm/pwm.h>
 #include <hal/hal_bsp.h>
-#include <hal/hal_timer.h>
+#include <hal/hal_gpio.h>
 
 #define BASE_FREQ MYNEWT_VAL(OS_CPUTIME_FREQ)
 #define MAX_FREQ BASE_FREQ / 2
-#define PIN_NOT_USED 0xFFFF
+#define PIN_NOT_USED 0xFF
+#define SPWM_CHANS 4
 
 struct soft_pwm_channel {
     uint8_t pin;
     uint16_t fraction;
-    /* uint32_t duty_ticks; */
     bool inverted;
     bool playing;
     struct hal_timer toggle_timer;
-}
+};
 
 struct soft_pwm_dev_global {
     uint32_t frequency;
     uint16_t top_value;
-    /* uint16_t pwm_ticks; */
     struct hal_timer cycle_timer;
-    soft_pwm_channel chans[SPWM_CHANS];
+    struct soft_pwm_channel chans[SPWM_CHANS];
 };
 
 static struct soft_pwm_dev_global soft_pwm_dev;
@@ -51,6 +50,7 @@ static struct soft_pwm_dev_global soft_pwm_dev;
 static void cycle_cb(void* arg)
 {
     int cnum;
+    bool inverted;
     uint32_t now = os_cputime_get32();
 
     for (cnum = 0; cnum < SPWM_CHANS; cnum++) {
@@ -69,7 +69,7 @@ static void cycle_cb(void* arg)
 
 static void toggle_cb(void* arg)
 {
-    soft_pwm_channel* chan = (soft_pwm_channel*) arg;
+    struct soft_pwm_channel* chan = (struct soft_pwm_channel*) arg;
     hal_gpio_toggle(chan->pin);
 }
 
@@ -82,9 +82,7 @@ static void toggle_cb(void* arg)
  * @param wait The time in MS to wait.  If 0 specified, returns immediately
  *             if resource unavailable.  If OS_WAIT_FOREVER specified, blocks
  *             until resource is available.
- * @param arg  Argument provided by higher layer to open, in this case
- *             it can be a nrf_drv_pwm_config_t, to override the default
- *             configuration.
+ * @param arg
  *
  * @return 0 on success, non-zero on failure.
  */
@@ -96,7 +94,6 @@ soft_pwm_open(struct os_dev *odev, uint32_t wait, void *arg)
     int cnum;
 
     dev = (struct pwm_dev *) odev;
-
 
     if (os_started()) {
         stat = os_mutex_pend(&dev->pwm_lock, wait);
@@ -112,21 +109,21 @@ soft_pwm_open(struct os_dev *odev, uint32_t wait, void *arg)
     }
 
     soft_pwm_dev.frequency = 100;
-    /* soft_pwm_dev.pwm_ticks = BASEFREQ / 100; */
-    top_value = BASEFREQ / 100;
-    os_cputime_timer_init(soft_pwm_dev.toggle_timer,
+    soft_pwm_dev.top_value = BASE_FREQ / 100;
+    os_cputime_timer_init(&soft_pwm_dev.cycle_timer,
                           cycle_cb,
                           NULL);
 
-    for (cnum = 0, cnum < SPWM_CHANS; cnum++) {
+    for (cnum = 0; cnum < SPWM_CHANS; cnum++) {
         soft_pwm_dev.chans[cnum].pin = PIN_NOT_USED;
-        soft_pwm_dev.chans[cnum].fraction = top_value / 2;
+        soft_pwm_dev.chans[cnum].fraction = soft_pwm_dev.top_value / 2;
         soft_pwm_dev.chans[cnum].inverted = false;
         soft_pwm_dev.chans[cnum].playing = false;
-        os_cputime_timer_init(soft_pwm_dev.chans[cnum].toggle_timer,
+        os_cputime_timer_init(&soft_pwm_dev.chans[cnum].toggle_timer,
                               toggle_cb,
                               &soft_pwm_dev.chans[cnum]);
     }
+    /* Start */
     cycle_cb(NULL);
 
     if (stat) {
@@ -146,9 +143,14 @@ soft_pwm_open(struct os_dev *odev, uint32_t wait, void *arg)
 static int
 soft_pwm_close(struct os_dev *odev)
 {
-    os_cputime_timer_stop(soft_pwm_dev.cycle_timer);
-    for (chan = 0, chan < SPWM_CHANS; chan++) {
-        os_cputime_timer_stop(soft_pwm_dev.chans[chan].toggle_timer);
+    struct pwm_dev *dev;
+    int cnum;
+
+    dev = (struct pwm_dev *) odev;
+
+    os_cputime_timer_stop(&soft_pwm_dev.cycle_timer);
+    for (cnum = 0; cnum < SPWM_CHANS; cnum++) {
+        os_cputime_timer_stop(&soft_pwm_dev.chans[cnum].toggle_timer);
     }
 
     if (os_started()) {
@@ -172,12 +174,13 @@ soft_pwm_configure_channel(struct pwm_dev *dev,
                            uint8_t cnum,
                            struct pwm_chan_cfg *cfg)
 {
-    uint8_t last_pin = soft_pwm_dev.chans[chan].pin;
-    soft_pwm_dev.chans[chan].pin = cfg->pin;
-    soft_pwm_dev.chans[chan].inverted = cfg->inverted;
+    uint8_t last_pin = soft_pwm_dev.chans[cnum].pin;
+    soft_pwm_dev.chans[cnum].pin = cfg->pin;
+    soft_pwm_dev.chans[cnum].inverted = cfg->inverted;
 
-    if ( (cfg->pin != last_pin) && soft_pwm_dev.chans[chan].playing ) {
-        os_cputime_timer_stop(soft_pwm_dev.chans[chan].toggle_timer);
+    /* Set the previously used pin to low */ //FIXME - 100%duty case
+    if ( (cfg->pin != last_pin) && soft_pwm_dev.chans[cnum].playing ) {
+        os_cputime_timer_stop(&soft_pwm_dev.chans[cnum].toggle_timer);
         hal_gpio_write(last_pin, 0);
     }
 
@@ -200,7 +203,6 @@ soft_pwm_configure_channel(struct pwm_dev *dev,
 static int
 soft_pwm_enable_duty_cycle(struct pwm_dev *dev, uint8_t cnum, uint16_t fraction)
 {
-    int stat;
     bool inverted;
     assert (soft_pwm_dev.chans[cnum].pin != PIN_NOT_USED);
 
@@ -233,7 +235,7 @@ static int
 soft_pwm_disable(struct pwm_dev *dev, uint8_t cnum)
 {
     soft_pwm_dev.chans[cnum].playing = false;
-    os_cputime_timer_stop(soft_pwm_dev.chans[chan].toggle_timer);
+    os_cputime_timer_stop(&soft_pwm_dev.chans[cnum].toggle_timer);
     hal_gpio_write(soft_pwm_dev.chans[cnum].pin, 0);
     return (0);
 }
@@ -298,7 +300,7 @@ soft_pwm_dev_init(struct os_dev *odev, void *arg)
 
     dev = (struct pwm_dev *) odev;
     dev->pwm_instance_id = 0;
-    dev->pwm_chan_count = NRF_PWM_CHANNEL_COUNT;
+    dev->pwm_chan_count = SPWM_CHANS;
 
     OS_DEV_SETHANDLERS(odev, soft_pwm_open, soft_pwm_close);
 

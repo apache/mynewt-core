@@ -19,70 +19,43 @@
 #include "sysinit/sysinit.h"
 #include <os/os.h>
 #include <pwm/pwm.h>
-#include <soft_pwm_nrf5x/soft_pwm_nrf5x.h>
 #include <bsp/bsp.h>
+#include <soft_pwm/soft_pwm.h>
 
 static struct os_dev dev;
-int arg = 0;
 struct pwm_dev *pwm;
-//static int value = 10000;
-
-/**
- * @brief Function to be called in timer interrupt.
- *
- * @param[in] p_context     General purpose pointer (unused).
- */
-/* void pwm_handler() */
-/* { */
-/*     uint8_t new_duty_cycle = 22; */
-/*     /\* uint32_t err_code; *\/ */
-/*     /\* UNUSED_PARAMETER(p_context); *\/ */
-
-/*     /\* low_power_pwm_t * pwm_instance = (low_power_pwm_t*)p_context; *\/ */
-/*     /\* if(interval <= n_intervals && interval >= 0) *\/ */
-/*     /\* { *\/ */
-/*     /\*     new_duty_cycle = pow (2, (interval / R)) - 1; *\/ */
-/*     /\*     err_code = low_power_pwm_duty_set(pwm_instance, new_duty_cycle); *\/ */
-/*     /\*     APP_ERROR_CHECK(err_code); *\/ */
-/*     /\*     interval += (up) ? 1 : -1; *\/ */
-/*     /\* } *\/ */
-/*     /\* else *\/ */
-/*     /\* { *\/ */
-/*     /\*     interval += (up) ? -1 : 1; *\/ */
-/*     /\*     up = ! up; *\/ */
-/*     /\* } *\/ */
-/*     pwm_enable_duty_cycle(pwm, 0, new_duty_cycle); */
-/* } */
+uint16_t max_val;
 
 int
 main(int argc, char **argv)
 {
     sysinit();
-
-    /* struct nrf52_pwm_chan_cfg chan_conf = { */
-    /*     .pin = LED_1, */
-    /*     .inverted = true */
-    /* }; */
+    struct pwm_chan_cfg chan_conf = {
+        .pin = LED_1,
+        .inverted = true,
+        .data = NULL
+    };
+    uint32_t base_freq;
 
     os_dev_create(&dev,
                   "spwm",
                   OS_DEV_INIT_KERNEL,
                   OS_DEV_INIT_PRIO_DEFAULT,
-                  nrf5x_soft_pwm_dev_init,
+                  soft_pwm_dev_init,
                   NULL);
     pwm = (struct pwm_dev *) os_dev_open("spwm", 0, NULL);
 
-    uint32_t pin = LED_1;
-    /* pwm_chan_config(pwm, 0, &chan_conf); */
-    pwm_chan_config(pwm, 0, &pin);
-    pwm_enable_duty_cycle(pwm, 0, 10);
+    base_freq = pwm_set_frequency(pwm, 600);
+    max_val = (uint16_t) (base_freq / 600);
+    pwm_chan_config(pwm, 0, &chan_conf);
+    pwm_enable_duty_cycle(pwm, 0, max_val/2);
 
     /* chan_conf.pin = LED_2; */
     /* pwm_chan_config(pwm, 1, &chan_conf); */
     /* pwm_enable_duty_cycle(pwm, 1, value/10); */
 
     //changing frequency while playing
-    /* pwm_set_frequency(pwm, 2000000); */
+
 
     /* chan_conf.pin = LED_3; */
     /* pwm_chan_config(pwm, 2, &chan_conf); */
