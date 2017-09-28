@@ -461,12 +461,20 @@ native_sock_stream_tx(struct native_sock *ns, int notify)
     while (ns->ns_tx && rc == 0) {
         m = ns->ns_tx;
         n = SLIST_NEXT(m, om_next);
+
+        errno = 0;
         rc = write(ns->ns_fd, m->om_data, m->om_len);
         if (rc == m->om_len) {
+            /* Complete write. */
             ns->ns_tx = n;
             os_mbuf_free(m);
             rc = 0;
+        } else if (rc != -1) {
+            /* Partial write. */
+            os_mbuf_adj(m, m->om_len - rc);
+            rc = 0;
         } else {
+            /* Error. */
             rc = errno;
             if (rc == EAGAIN) {
                 rc = 0;
@@ -483,11 +491,7 @@ native_sock_stream_tx(struct native_sock *ns, int notify)
     }
     os_mutex_release(&nss->mtx);
     if (notify) {
-        if (ns->ns_tx == NULL) {
-            mn_socket_writable(&ns->ns_sock, 0);
-        } else {
-            mn_socket_writable(&ns->ns_sock, rc);
-        }
+        mn_socket_writable(&ns->ns_sock, rc);
     }
     return rc;
 }
