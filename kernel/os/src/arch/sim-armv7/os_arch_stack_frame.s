@@ -29,7 +29,7 @@
 os_arch_frame_init:
     mov	    r1, sp
     mov	    sp, r0		/* stack for the task starts from sf */
-    sub     sp, sp, #20
+    sub     sp, sp, #24	/* stack must be aligned by 8 */
     str	    r1, [sp, #12]
     str     lr, [sp, #16]	/* Store LR there */
     str     r0, [sp, #4]	/* Store sf pointer to stack */
@@ -40,6 +40,7 @@ os_arch_frame_init:
     beq     end
     mov	    r1, r0
     ldr     r0, [sp, #4]
+    and     sp, sp, #0xfffffff8
     bl      os_arch_task_start
 end:
     ldr	    r1, [sp, #16]	/* return $sp for the callee */

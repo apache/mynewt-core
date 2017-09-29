@@ -18,6 +18,11 @@
 
 # Package: apps/spitest
 
+syscfg.defs:
+    SPITEST_SS_PIN:
+        description: 'SPI slave select pin number'
+        value:  -1
+
 syscfg.vals:
     SHELL_TASK: 0
 

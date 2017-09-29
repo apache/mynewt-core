@@ -32,6 +32,16 @@
 #include "defs/error.h"
 #include "console/console.h"
 #include "syscfg/syscfg.h"
+#include "sensor/accel.h"
+#include "sensor/mag.h"
+#include "sensor/light.h"
+#include "sensor/quat.h"
+#include "sensor/euler.h"
+#include "sensor/color.h"
+#include "sensor/temperature.h"
+#include "sensor/pressure.h"
+#include "sensor/humidity.h"
+#include "sensor/gyro.h"
 
 struct {
     struct os_mutex mgr_lock;
@@ -49,6 +59,13 @@ struct sensor_read_ctx {
 
 struct sensor_timestamp sensor_base_ts;
 struct os_callout st_up_osco;
+
+static void sensor_read_ev_cb(struct os_event *ev);
+
+  /** OS event - for doing a sensor read */
+static struct os_event sensor_read_event = {
+    .ev_cb = sensor_read_ev_cb,
+};
 
 /**
  * Lock sensor manager to access the list of sensors
@@ -477,6 +494,66 @@ sensor_mgr_match_bydevname(struct sensor *sensor, void *arg)
     return (0);
 }
 
+/**
+ * Search the sensor thresh list for specific type of sensor
+ *
+ * @param The sensor type to search for
+ * @param Ptr to a sensor
+ *
+ * @return NULL when no sensor type is found, ptr to sensor_type_traits structure
+ * when found
+ */
+struct sensor_type_traits *
+sensor_get_type_traits_bytype(sensor_type_t type, struct sensor *sensor)
+{
+    struct sensor_type_traits *stt;
+
+    stt = NULL;
+
+    sensor_lock(sensor);
+
+    SLIST_FOREACH(stt, &sensor->s_type_traits_list, stt_next) {
+        if (stt->stt_sensor_type == type) {
+            break;
+        }
+    }
+
+    sensor_unlock(sensor);
+
+    return stt;
+}
+
+/**
+ * Remove a sensor type trait. This allows a calling application to unset
+ * sensortype trait for a given sensor object.
+ *
+ * @param The sensor object
+ * @param The sensor trait to remove from the sensor type trait list
+ *
+ * @return 0 on success, non-zero error code on failure.
+ */
+
+int
+sensor_remove_type_trait(struct sensor *sensor,
+                         struct sensor_type_traits *stt)
+{
+    int rc;
+
+    rc = sensor_lock(sensor);
+    if (rc != 0) {
+        goto err;
+    }
+
+    /* Remove this entry from the list */
+    SLIST_REMOVE(&sensor->s_type_traits_list, stt, sensor_type_traits,
+            stt_next);
+
+    sensor_unlock(sensor);
+
+    return (0);
+err:
+    return (rc);
+}
 
 /**
  * Search the sensor list and find the next sensor that corresponds
@@ -561,6 +638,8 @@ sensor_init(struct sensor *sensor, struct os_dev *dev)
     }
     sensor->s_dev = dev;
 
+    sensor->s_poll_rate = OS_TIMEOUT_NEVER;
+
     return (0);
 err:
     return (rc);
@@ -638,20 +717,47 @@ sensor_read_data_func(struct sensor *sensor, void *arg, void *data,
     struct sensor_listener *listener;
     struct sensor_read_ctx *ctx;
 
-    /* Notify all listeners first */
-    SLIST_FOREACH(listener, &sensor->s_listener_list, sl_next) {
-        if (listener->sl_sensor_type & type) {
-            listener->sl_func(sensor, listener->sl_arg, data, type);
+    ctx = (struct sensor_read_ctx *) arg;
+
+    if ((uint8_t)(uintptr_t)(ctx->user_arg) != SENSOR_IGN_LISTENER) {
+        /* Notify all listeners first */
+        SLIST_FOREACH(listener, &sensor->s_listener_list, sl_next) {
+            if (listener->sl_sensor_type & type) {
+                listener->sl_func(sensor, listener->sl_arg, data, type);
+            }
         }
     }
 
     /* Call data function */
-    ctx = (struct sensor_read_ctx *) arg;
     if (ctx->user_func != NULL) {
         return (ctx->user_func(sensor, ctx->user_arg, data, type));
     } else {
         return (0);
     }
+}
+
+/**
+ * Puts read event on the sensor manager evq
+ *
+ * @param arg
+ */
+void
+sensor_mgr_put_read_evt(void *arg)
+{
+    sensor_read_event.ev_arg = arg;
+    os_eventq_put(sensor_mgr_evq_get(), &sensor_read_event);
+}
+
+static void
+sensor_read_ev_cb(struct os_event *ev)
+{
+    int rc;
+    struct sensor_read_ev_ctx *srec;
+
+    srec = ev->ev_arg;
+    rc = sensor_read(srec->srec_sensor, srec->srec_type, NULL, NULL,
+                     OS_TIMEOUT_NEVER);
+    assert(rc == 0);
 }
 
 static void
@@ -681,10 +787,760 @@ sensor_up_timestamp(struct sensor *sensor)
 }
 
 /**
+ * Get the type traits for a sensor
+ *
+ * @param name of the sensor
+ * @param Ptr to sensor types trait struct
+ * @param type of sensor
+ *
+ * @return NULL on failure, sensor struct on success
+ */
+struct sensor *
+sensor_get_type_traits_byname(char *devname, struct sensor_type_traits **stt,
+                              sensor_type_t type)
+{
+    struct sensor *sensor;
+
+    sensor = sensor_mgr_find_next_bydevname(devname, NULL);
+    if (!sensor) {
+        goto err;
+    }
+
+    *stt = sensor_get_type_traits_bytype(type, sensor);
+
+err:
+    return sensor;
+}
+
+static uint8_t
+sensor_window_cmp_quat(struct sensor_quat_data *d_sqd,
+                       struct sensor_quat_data *h_sqd,
+                       struct sensor_quat_data *l_sqd)
+{
+    uint8_t trigger;
+
+    trigger = 0;
+
+    trigger =
+        (SENSOR_DATA_CMP_LT(d_sqd, h_sqd, sqd_x) &&
+         SENSOR_DATA_CMP_GT(d_sqd, l_sqd, sqd_x));
+    trigger |=
+        (SENSOR_DATA_CMP_LT(d_sqd, h_sqd, sqd_y) &&
+         SENSOR_DATA_CMP_GT(d_sqd, l_sqd, sqd_y));
+    trigger |=
+        (SENSOR_DATA_CMP_LT(d_sqd, h_sqd, sqd_z) &&
+         SENSOR_DATA_CMP_GT(d_sqd, l_sqd, sqd_z));
+
+    return trigger;
+}
+
+static uint8_t
+sensor_window_cmp_accel(struct sensor_accel_data *d_sad,
+                        struct sensor_accel_data *h_sad,
+                        struct sensor_accel_data *l_sad)
+{
+    uint8_t trigger;
+
+    trigger = 0;
+
+    trigger =
+        (SENSOR_DATA_CMP_LT(d_sad, h_sad, sad_x) &&
+         SENSOR_DATA_CMP_GT(d_sad, l_sad, sad_x));
+    trigger |=
+        (SENSOR_DATA_CMP_LT(d_sad, h_sad, sad_y) &&
+         SENSOR_DATA_CMP_GT(d_sad, l_sad, sad_y));
+    trigger |=
+        (SENSOR_DATA_CMP_LT(d_sad, h_sad, sad_z) &&
+         SENSOR_DATA_CMP_GT(d_sad, l_sad, sad_z));
+
+    return trigger;
+}
+
+static uint8_t
+sensor_window_cmp_euler(struct sensor_euler_data *d_sed,
+                        struct sensor_euler_data *h_sed,
+                        struct sensor_euler_data *l_sed)
+{
+    uint8_t trigger;
+
+    trigger = 0;
+
+    trigger =
+        (SENSOR_DATA_CMP_LT(d_sed, h_sed, sed_h) &&
+         SENSOR_DATA_CMP_GT(d_sed, l_sed, sed_h));
+    trigger |=
+        (SENSOR_DATA_CMP_LT(d_sed, h_sed, sed_r) &&
+         SENSOR_DATA_CMP_GT(d_sed, l_sed, sed_r));
+    trigger |=
+        (SENSOR_DATA_CMP_LT(d_sed, h_sed, sed_p) &&
+         SENSOR_DATA_CMP_GT(d_sed, l_sed, sed_p));
+
+    return trigger;
+}
+
+static uint8_t
+sensor_window_cmp_gyro(struct sensor_gyro_data *d_sgd,
+                       struct sensor_gyro_data *h_sgd,
+                       struct sensor_gyro_data *l_sgd)
+{
+    uint8_t trigger;
+
+    trigger = 0;
+
+    trigger =
+        (SENSOR_DATA_CMP_LT(d_sgd, h_sgd, sgd_x) &&
+         SENSOR_DATA_CMP_GT(d_sgd, l_sgd, sgd_x));
+    trigger |=
+        (SENSOR_DATA_CMP_LT(d_sgd, h_sgd, sgd_y) &&
+         SENSOR_DATA_CMP_GT(d_sgd, l_sgd, sgd_y));
+    trigger |=
+        (SENSOR_DATA_CMP_LT(d_sgd, h_sgd, sgd_z) &&
+         SENSOR_DATA_CMP_GT(d_sgd, l_sgd, sgd_z));
+
+    return trigger;
+}
+
+static uint8_t
+sensor_window_cmp_mag(struct sensor_mag_data *d_smd,
+                      struct sensor_mag_data *h_smd,
+                      struct sensor_mag_data *l_smd)
+{
+    uint8_t trigger;
+
+    trigger = 0;
+
+    trigger =
+         (SENSOR_DATA_CMP_LT(d_smd, h_smd, smd_x) &&
+          SENSOR_DATA_CMP_GT(d_smd, l_smd, smd_x));
+    trigger |=
+         (SENSOR_DATA_CMP_LT(d_smd, h_smd, smd_y) &&
+          SENSOR_DATA_CMP_GT(d_smd, l_smd, smd_y));
+    trigger |=
+         (SENSOR_DATA_CMP_LT(d_smd, h_smd, smd_z) &&
+          SENSOR_DATA_CMP_GT(d_smd, l_smd, smd_z));
+
+    return trigger;
+}
+
+static uint8_t
+sensor_window_cmp_temp(struct sensor_temp_data *d_std,
+                       struct sensor_temp_data *h_std,
+                       struct sensor_temp_data *l_std)
+{
+    uint8_t trigger;
+
+    trigger = 0;
+
+    trigger |=
+        (SENSOR_DATA_CMP_LT(d_std, h_std, std_temp) &&
+         SENSOR_DATA_CMP_GT(d_std, l_std, std_temp));
+
+    return trigger;
+}
+
+static uint8_t
+sensor_window_cmp_light(struct sensor_light_data *d_sld,
+                        struct sensor_light_data *h_sld,
+                        struct sensor_light_data *l_sld)
+{
+    uint8_t trigger;
+
+    trigger = 0;
+
+    trigger =
+        (SENSOR_DATA_CMP_LT(d_sld, h_sld, sld_full) &&
+         SENSOR_DATA_CMP_GT(d_sld, l_sld, sld_full));
+    trigger |=
+        (SENSOR_DATA_CMP_LT(d_sld, h_sld, sld_ir) &&
+         SENSOR_DATA_CMP_GT(d_sld, l_sld, sld_ir));
+    trigger |=
+        (SENSOR_DATA_CMP_LT(d_sld, h_sld, sld_lux) &&
+         SENSOR_DATA_CMP_GT(d_sld, l_sld, sld_lux));
+
+    return trigger;
+}
+
+static uint8_t
+sensor_window_cmp_color(struct sensor_color_data *d_scd,
+                        struct sensor_color_data *h_scd,
+                        struct sensor_color_data *l_scd)
+{
+    uint8_t trigger;
+
+    trigger = 0;
+
+    trigger =
+        (SENSOR_DATA_CMP_LT(d_scd, h_scd, scd_r) &&
+         SENSOR_DATA_CMP_GT(d_scd, l_scd, scd_r));
+    trigger |=
+        (SENSOR_DATA_CMP_LT(d_scd, h_scd, scd_g) &&
+         SENSOR_DATA_CMP_GT(d_scd, l_scd, scd_g));
+    trigger |=
+        (SENSOR_DATA_CMP_LT(d_scd, h_scd, scd_b) &&
+         SENSOR_DATA_CMP_GT(d_scd, l_scd, scd_b));
+    trigger |=
+        (SENSOR_DATA_CMP_LT(d_scd, h_scd, scd_c) &&
+         SENSOR_DATA_CMP_GT(d_scd, l_scd, scd_c));
+    trigger |=
+        (SENSOR_DATA_CMP_LT(d_scd, h_scd, scd_lux) &&
+         SENSOR_DATA_CMP_GT(d_scd, l_scd, scd_lux));
+    trigger |=
+        (SENSOR_DATA_CMP_LT(d_scd, h_scd, scd_colortemp) &&
+         SENSOR_DATA_CMP_GT(d_scd, l_scd, scd_colortemp));
+    trigger |=
+        (SENSOR_DATA_CMP_LT(d_scd, h_scd, scd_ir) &&
+         SENSOR_DATA_CMP_GT(d_scd, l_scd, scd_ir));
+
+    return trigger;
+}
+
+static uint8_t
+sensor_window_cmp_press(struct sensor_press_data *d_spd,
+                        struct sensor_press_data *h_spd,
+                        struct sensor_press_data *l_spd)
+{
+    uint8_t trigger;
+
+    trigger = 0;
+
+    trigger =
+        (SENSOR_DATA_CMP_LT(d_spd, h_spd, spd_press) &&
+         SENSOR_DATA_CMP_GT(d_spd, l_spd, spd_press));
+
+    return trigger;
+}
+
+static uint8_t
+sensor_window_cmp_humid(struct sensor_humid_data *d_shd,
+                        struct sensor_humid_data *h_shd,
+                        struct sensor_humid_data *l_shd)
+{
+    uint8_t trigger;
+
+    trigger = 0;
+
+    trigger =
+        (SENSOR_DATA_CMP_LT(d_shd, h_shd, shd_humid) &&
+         SENSOR_DATA_CMP_GT(d_shd, l_shd, shd_humid));
+
+    return trigger;
+}
+
+static int
+sensor_window_cmp(sensor_type_t type, sensor_data_t *low, sensor_data_t *high,
+                  void *data)
+{
+    uint8_t trigger;
+    sensor_data_t dptr;
+
+    trigger = 0;
+
+    switch(type) {
+        case SENSOR_TYPE_ROTATION_VECTOR:
+            dptr.sqd = data;
+            trigger = sensor_window_cmp_quat(dptr.sqd, high->sqd, low->sqd);
+            break;
+        case SENSOR_TYPE_ACCELEROMETER:
+            dptr.sad = data;
+            trigger = sensor_window_cmp_accel(dptr.sad, high->sad, low->sad);
+            break;
+        case SENSOR_TYPE_LINEAR_ACCEL:
+            dptr.slad = data;
+            trigger = sensor_window_cmp_accel(dptr.slad, high->slad, low->slad);
+            break;
+        case SENSOR_TYPE_EULER:
+            dptr.sed = data;
+            trigger = sensor_window_cmp_euler(dptr.sed, high->sed, low->sed);
+            break;
+        case SENSOR_TYPE_GYROSCOPE:
+            dptr.sgd = data;
+            trigger = sensor_window_cmp_gyro(dptr.sgd, high->sgd, low->sgd);
+            break;
+        case SENSOR_TYPE_GRAVITY:
+            dptr.sgrd = data;
+            trigger = sensor_window_cmp_accel(dptr.sgrd, high->sgrd, low->sgrd);
+            break;
+        case SENSOR_TYPE_MAGNETIC_FIELD:
+            dptr.smd = data;
+            trigger = sensor_window_cmp_mag(dptr.smd, high->smd, low->smd);
+            break;
+        case SENSOR_TYPE_TEMPERATURE:
+            dptr.std = data;
+            trigger = sensor_window_cmp_temp(dptr.std, high->std, low->std);
+            break;
+        case SENSOR_TYPE_AMBIENT_TEMPERATURE:
+            dptr.satd = data;
+            trigger = sensor_window_cmp_temp(dptr.satd, high->satd, low->satd);
+            break;
+        case SENSOR_TYPE_LIGHT:
+            dptr.sld = data;
+            trigger = sensor_window_cmp_light(dptr.sld, high->sld, low->sld);
+            break;
+        case SENSOR_TYPE_COLOR:
+            dptr.scd = data;
+            trigger = sensor_window_cmp_color(dptr.scd, high->scd, low->scd);
+            break;
+        case SENSOR_TYPE_PRESSURE:
+            dptr.spd = data;
+            trigger = sensor_window_cmp_press(dptr.spd, high->spd, low->spd);
+            break;
+        case SENSOR_TYPE_RELATIVE_HUMIDITY:
+            dptr.srhd = data;
+            trigger = sensor_window_cmp_humid(dptr.srhd, high->srhd, low->srhd);
+            break;
+        case SENSOR_TYPE_PROXIMITY:
+            /* Falls Through */
+        case SENSOR_TYPE_WEIGHT:
+            /* Falls Through */
+        case SENSOR_TYPE_ALTITUDE:
+            /* Falls Through */
+        case SENSOR_TYPE_NONE:
+            /* Falls Through */
+        default:
+            break;
+    }
+
+    return trigger;
+}
+
+static uint8_t
+sensor_watermark_cmp_quat(struct sensor_quat_data *d_sqd,
+                          struct sensor_quat_data *h_sqd,
+                          struct sensor_quat_data *l_sqd)
+{
+    uint8_t trigger;
+
+    trigger = 0;
+
+    trigger =
+        (SENSOR_DATA_CMP_LT(d_sqd, h_sqd, sqd_x) ||
+         SENSOR_DATA_CMP_GT(d_sqd, l_sqd, sqd_x));
+    trigger |=
+        (SENSOR_DATA_CMP_LT(d_sqd, h_sqd, sqd_y) ||
+         SENSOR_DATA_CMP_GT(d_sqd, l_sqd, sqd_y));
+    trigger |=
+        (SENSOR_DATA_CMP_LT(d_sqd, h_sqd, sqd_z) ||
+         SENSOR_DATA_CMP_GT(d_sqd, l_sqd, sqd_z));
+
+    return trigger;
+}
+
+static uint8_t
+sensor_watermark_cmp_accel(struct sensor_accel_data *d_sad,
+                           struct sensor_accel_data *h_sad,
+                           struct sensor_accel_data *l_sad)
+{
+    uint8_t trigger;
+
+    trigger = 0;
+
+    trigger =
+        (SENSOR_DATA_CMP_LT(d_sad, h_sad, sad_x) ||
+         SENSOR_DATA_CMP_GT(d_sad, l_sad, sad_x));
+    trigger |=
+        (SENSOR_DATA_CMP_LT(d_sad, h_sad, sad_y) ||
+         SENSOR_DATA_CMP_GT(d_sad, l_sad, sad_y));
+    trigger |=
+        (SENSOR_DATA_CMP_LT(d_sad, h_sad, sad_z) ||
+         SENSOR_DATA_CMP_GT(d_sad, l_sad, sad_z));
+
+    return trigger;
+}
+
+static uint8_t
+sensor_watermark_cmp_euler(struct sensor_euler_data *d_sed,
+                           struct sensor_euler_data *h_sed,
+                           struct sensor_euler_data *l_sed)
+{
+    uint8_t trigger;
+
+    trigger = 0;
+
+    trigger =
+        (SENSOR_DATA_CMP_LT(d_sed, h_sed, sed_h) ||
+         SENSOR_DATA_CMP_GT(d_sed, l_sed, sed_h));
+    trigger |=
+        (SENSOR_DATA_CMP_LT(d_sed, h_sed, sed_r) ||
+         SENSOR_DATA_CMP_GT(d_sed, l_sed, sed_r));
+    trigger |=
+        (SENSOR_DATA_CMP_LT(d_sed, h_sed, sed_p) ||
+         SENSOR_DATA_CMP_GT(d_sed, l_sed, sed_p));
+
+    return trigger;
+}
+
+static uint8_t
+sensor_watermark_cmp_gyro(struct sensor_gyro_data *d_sgd,
+                          struct sensor_gyro_data *h_sgd,
+                          struct sensor_gyro_data *l_sgd)
+{
+    uint8_t trigger;
+
+    trigger = 0;
+
+    trigger =
+        (SENSOR_DATA_CMP_LT(d_sgd, h_sgd, sgd_x) ||
+         SENSOR_DATA_CMP_GT(d_sgd, l_sgd, sgd_x));
+    trigger |=
+        (SENSOR_DATA_CMP_LT(d_sgd, h_sgd, sgd_y) ||
+         SENSOR_DATA_CMP_GT(d_sgd, l_sgd, sgd_y));
+    trigger |=
+        (SENSOR_DATA_CMP_LT(d_sgd, h_sgd, sgd_z) ||
+         SENSOR_DATA_CMP_GT(d_sgd, l_sgd, sgd_z));
+
+    return trigger;
+}
+
+static uint8_t
+sensor_watermark_cmp_mag(struct sensor_mag_data *d_smd,
+                         struct sensor_mag_data *h_smd,
+                         struct sensor_mag_data *l_smd)
+{
+    uint8_t trigger;
+
+    trigger = 0;
+
+    trigger =
+         (SENSOR_DATA_CMP_LT(d_smd, h_smd, smd_x) ||
+          SENSOR_DATA_CMP_GT(d_smd, l_smd, smd_x));
+    trigger |=
+         (SENSOR_DATA_CMP_LT(d_smd, h_smd, smd_y) ||
+          SENSOR_DATA_CMP_GT(d_smd, l_smd, smd_y));
+    trigger |=
+         (SENSOR_DATA_CMP_LT(d_smd, h_smd, smd_z) ||
+          SENSOR_DATA_CMP_GT(d_smd, l_smd, smd_z));
+
+    return trigger;
+}
+
+static uint8_t
+sensor_watermark_cmp_temp(struct sensor_temp_data *d_std,
+                          struct sensor_temp_data *h_std,
+                          struct sensor_temp_data *l_std)
+{
+    uint8_t trigger;
+
+    trigger = 0;
+
+    trigger =
+        (SENSOR_DATA_CMP_LT(d_std, h_std, std_temp) ||
+         SENSOR_DATA_CMP_GT(d_std, l_std, std_temp));
+
+    return trigger;
+}
+
+static uint8_t
+sensor_watermark_cmp_light(struct sensor_light_data *d_sld,
+                           struct sensor_light_data *h_sld,
+                           struct sensor_light_data *l_sld)
+{
+    uint8_t trigger;
+
+    trigger = 0;
+
+    trigger =
+        (SENSOR_DATA_CMP_LT(d_sld, h_sld, sld_full) ||
+         SENSOR_DATA_CMP_GT(d_sld, l_sld, sld_full));
+    trigger |=
+        (SENSOR_DATA_CMP_LT(d_sld, h_sld, sld_ir) ||
+         SENSOR_DATA_CMP_GT(d_sld, l_sld, sld_ir));
+    trigger |=
+        (SENSOR_DATA_CMP_LT(d_sld, h_sld, sld_lux) ||
+         SENSOR_DATA_CMP_GT(d_sld, l_sld, sld_lux));
+
+    return trigger;
+}
+
+static uint8_t
+sensor_watermark_cmp_color(struct sensor_color_data *d_scd,
+                           struct sensor_color_data *h_scd,
+                           struct sensor_color_data *l_scd)
+{
+    uint8_t trigger;
+
+    trigger = 0;
+
+    trigger =
+        (SENSOR_DATA_CMP_LT(d_scd, h_scd, scd_r) ||
+         SENSOR_DATA_CMP_GT(d_scd, l_scd, scd_r));
+    trigger |=
+        (SENSOR_DATA_CMP_LT(d_scd, h_scd, scd_g) ||
+         SENSOR_DATA_CMP_GT(d_scd, l_scd, scd_g));
+    trigger |=
+        (SENSOR_DATA_CMP_LT(d_scd, h_scd, scd_b) ||
+         SENSOR_DATA_CMP_GT(d_scd, l_scd, scd_b));
+    trigger |=
+        (SENSOR_DATA_CMP_LT(d_scd, h_scd, scd_c) ||
+         SENSOR_DATA_CMP_GT(d_scd, l_scd, scd_c));
+    trigger |=
+        (SENSOR_DATA_CMP_LT(d_scd, h_scd, scd_lux) ||
+         SENSOR_DATA_CMP_GT(d_scd, l_scd, scd_lux));
+    trigger |=
+        (SENSOR_DATA_CMP_LT(d_scd, h_scd, scd_colortemp) ||
+         SENSOR_DATA_CMP_GT(d_scd, l_scd, scd_colortemp));
+    trigger |=
+        (SENSOR_DATA_CMP_LT(d_scd, h_scd, scd_ir) ||
+         SENSOR_DATA_CMP_GT(d_scd, l_scd, scd_ir));
+
+    return trigger;
+}
+
+static uint8_t
+sensor_watermark_cmp_press(struct sensor_press_data *d_spd,
+                           struct sensor_press_data *h_spd,
+                           struct sensor_press_data *l_spd)
+{
+    uint8_t trigger;
+
+    trigger = 0;
+
+    trigger =
+        (SENSOR_DATA_CMP_LT(d_spd, h_spd, spd_press) ||
+         SENSOR_DATA_CMP_GT(d_spd, l_spd, spd_press));
+
+    return trigger;
+}
+
+static uint8_t
+sensor_watermark_cmp_humid(struct sensor_humid_data *d_shd,
+                           struct sensor_humid_data *h_shd,
+                           struct sensor_humid_data *l_shd)
+{
+    uint8_t trigger;
+
+    trigger = 0;
+
+    trigger =
+        (SENSOR_DATA_CMP_LT(d_shd, h_shd, shd_humid) ||
+         SENSOR_DATA_CMP_GT(d_shd, l_shd, shd_humid));
+
+    return trigger;
+}
+
+static int
+sensor_watermark_cmp(sensor_type_t type, sensor_data_t *low, sensor_data_t *high,
+                     void *data)
+{
+    uint8_t trigger;
+    sensor_data_t dptr;
+
+    trigger = 0;
+
+    switch(type) {
+        case SENSOR_TYPE_ROTATION_VECTOR:
+            dptr.sqd = data;
+            trigger = sensor_watermark_cmp_quat(dptr.sqd, high->sqd,
+                                                low->sqd);
+            break;
+        case SENSOR_TYPE_ACCELEROMETER:
+            dptr.sad = data;
+            trigger = sensor_watermark_cmp_accel(dptr.sad, high->sad,
+                                                 low->sad);
+            break;
+        case SENSOR_TYPE_LINEAR_ACCEL:
+            dptr.slad = data;
+            trigger = sensor_watermark_cmp_accel(dptr.slad, high->slad,
+                                                 low->slad);
+            break;
+        case SENSOR_TYPE_EULER:
+            dptr.sed = data;
+            trigger = sensor_watermark_cmp_euler(dptr.sed, high->sed,
+                                                 low->sed);
+            break;
+        case SENSOR_TYPE_GYROSCOPE:
+            dptr.sgd = data;
+            trigger = sensor_watermark_cmp_gyro(dptr.sgd, high->sgd,
+                                                low->sgd);
+            break;
+        case SENSOR_TYPE_GRAVITY:
+            dptr.sgrd = data;
+            trigger = sensor_watermark_cmp_accel(dptr.sgrd, high->sgrd,
+                                                 low->sgrd);
+            break;
+        case SENSOR_TYPE_MAGNETIC_FIELD:
+            dptr.smd = data;
+            trigger = sensor_watermark_cmp_mag(dptr.smd, high->smd,
+                                               low->smd);
+            break;
+        case SENSOR_TYPE_TEMPERATURE:
+            dptr.std = data;
+            trigger = sensor_watermark_cmp_temp(dptr.std, high->std,
+                                                low->std);
+            break;
+        case SENSOR_TYPE_AMBIENT_TEMPERATURE:
+            dptr.satd = data;
+            trigger = sensor_watermark_cmp_temp(dptr.satd, high->satd,
+                                                low->satd);
+            break;
+        case SENSOR_TYPE_LIGHT:
+            dptr.sld = data;
+            trigger = sensor_watermark_cmp_light(dptr.sld, high->sld,
+                                                 low->sld);
+            break;
+        case SENSOR_TYPE_COLOR:
+            dptr.scd = data;
+            trigger = sensor_watermark_cmp_color(dptr.scd, high->scd,
+                                                 low->scd);
+            break;
+        case SENSOR_TYPE_PRESSURE:
+            dptr.spd = data;
+            trigger = sensor_watermark_cmp_press(dptr.spd, high->spd,
+                                                 low->spd);
+            break;
+        case SENSOR_TYPE_RELATIVE_HUMIDITY:
+            dptr.srhd = data;
+            trigger = sensor_watermark_cmp_humid(dptr.srhd, high->srhd,
+                                                 low->srhd);
+            break;
+        case SENSOR_TYPE_PROXIMITY:
+            /* Falls Through */
+        case SENSOR_TYPE_WEIGHT:
+            /* Falls Through */
+        case SENSOR_TYPE_ALTITUDE:
+            /* Falls Through */
+        case SENSOR_TYPE_NONE:
+            /* Falls Through */
+        default:
+            break;
+    }
+
+    return trigger;
+}
+
+static void
+sensor_set_trigger_cmp_algo(struct sensor *sensor, struct sensor_type_traits *stt)
+{
+    sensor_lock(sensor);
+    if (stt->stt_algo == SENSOR_THRESH_ALGO_WATERMARK) {
+        /* select watermark comparison algo */
+        stt->stt_trigger_cmp_algo = sensor_watermark_cmp;
+    } else if (stt->stt_algo == SENSOR_THRESH_ALGO_WINDOW) {
+        /* select window comparison algo */
+        stt->stt_trigger_cmp_algo = sensor_window_cmp;
+    } else if (stt->stt_algo == SENSOR_THRESH_ALGO_USERDEF) {
+        /* select user defined comparison algo if any */
+        stt->stt_trigger_cmp_algo = stt->stt_trigger_cmp_algo;
+    }
+    sensor_unlock(sensor);
+}
+
+/**
+ * Set the thresholds along with comparison algo for a sensor
+ *
+ * @param name of the sensor
+ * @param Ptr to sensor threshold
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+sensor_set_thresh(char *devname, struct sensor_type_traits *stt)
+{
+    struct sensor_type_traits *stt_tmp;
+    struct sensor *sensor;
+    int rc;
+
+    sensor = sensor_get_type_traits_byname(devname, &stt_tmp,
+                                           stt->stt_sensor_type);
+    if (!sensor) {
+        rc = SYS_EINVAL;
+        goto err;
+    }
+
+    if (!stt_tmp && stt) {
+        sensor_lock(sensor);
+        SLIST_INSERT_HEAD(&sensor->s_type_traits_list, stt, stt_next);
+        stt_tmp = stt;
+        sensor_unlock(sensor);
+    } else if (stt_tmp) {
+        sensor_lock(sensor);
+        stt_tmp->stt_low_thresh = stt->stt_low_thresh;
+        stt_tmp->stt_high_thresh = stt->stt_high_thresh;
+        stt_tmp->stt_algo = stt->stt_algo;
+        sensor_unlock(sensor);
+    } else {
+        rc = SYS_EINVAL;
+        goto err;
+    }
+
+    sensor_set_trigger_cmp_algo(sensor, stt_tmp);
+
+    if (sensor->s_funcs->sd_set_trigger_thresh) {
+        rc = sensor->s_funcs->sd_set_trigger_thresh(sensor,
+                                                    stt_tmp->stt_sensor_type,
+                                                    stt_tmp);
+        if (rc) {
+            goto err;
+        }
+    }
+
+    return 0;
+err:
+    return rc;
+}
+
+static int
+sensor_generate_trig(struct sensor *sensor,
+                     void *arg, void *data,
+                     sensor_type_t type)
+{
+    struct sensor_type_traits *stt;
+    sensor_data_t low_thresh;
+    sensor_data_t high_thresh;
+    uint8_t tx_trigger;
+    sensor_trigger_notify_func_t notify;
+
+    if (!arg) {
+        return SYS_EINVAL;
+    }
+
+    notify = arg;
+    stt = sensor_get_type_traits_bytype(type, sensor);
+
+    tx_trigger = 0;
+
+    memcpy(&low_thresh, &stt->stt_low_thresh, sizeof(low_thresh));
+    memcpy(&high_thresh, &stt->stt_high_thresh, sizeof(high_thresh));
+
+    if (stt->stt_trigger_cmp_algo) {
+        tx_trigger = stt->stt_trigger_cmp_algo(type, &low_thresh,
+                                               &high_thresh, data);
+    }
+
+    return tx_trigger ? notify(sensor, data, type): 0;
+}
+
+/**
+ * Sensor trigger initialization
+ *
+ * @param ptr to the sensor sturucture
+ * @param sensor type to enable trigger for
+ * @param the function to call if the trigger condition is satisfied
+ */
+void
+sensor_trigger_init(struct sensor *sensor, sensor_type_t type,
+                    sensor_trigger_notify_func_t notify)
+{
+    int rc;
+    struct sensor_listener *sensor_trig_lner;
+
+    sensor_trig_lner = malloc(sizeof(struct sensor_listener));
+    assert(sensor_trig_lner != NULL);
+
+    sensor_trig_lner->sl_func = sensor_generate_trig;
+    sensor_trig_lner->sl_sensor_type = type;
+    sensor_trig_lner->sl_arg = (void *)notify;
+
+    rc = sensor_register_listener(sensor, sensor_trig_lner);
+    if (rc) {
+        return;
+    }
+}
+
+/**
  * Read the data for sensor type "type," from the given sensor and
  * return the result into the "value" parameter.
  *
- * @param The senssor to read data from
+ * @param The sensor to read data from
  * @param The type of sensor data to read from the sensor
  * @param The callback to call for data returned from that sensor
  * @param The argument to pass to this callback.
@@ -720,9 +1576,8 @@ sensor_read(struct sensor *sensor, sensor_type_t type,
         goto err;
     }
 
-    sensor_unlock(sensor);
-
 err:
+    sensor_unlock(sensor);
     return (rc);
 }
 

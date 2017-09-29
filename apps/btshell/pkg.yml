@@ -26,7 +26,6 @@ pkg.deps:
     - kernel/os
     - net/nimble/controller
     - net/nimble/host
-    - net/nimble/host/services/ans
     - net/nimble/host/services/gap
     - net/nimble/host/services/gatt
     - net/nimble/host/store/ram
@@ -35,3 +34,6 @@ pkg.deps:
     - sys/stats/full
     - sys/console/full
     - sys/shell
+
+pkg.deps.BTSHELL_ANS:
+    - net/nimble/host/services/ans

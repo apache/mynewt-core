@@ -19,6 +19,19 @@
 # Package: hw/bsp/nrf52dk
 
 syscfg.defs:
+    I2C_0:
+        description: 'I2C (TWI) interface 0'
+        value:  0
+        restrictions:
+            - "!SPI_0_MASTER"
+            - "!SPI_0_SLAVE"
+    I2C_1:
+        description: 'I2C (TWI) interface 1'
+        value:  0
+        restrictions:
+            - "!SPI_1_MASTER"
+            - "!SPI_1_SLAVE"
+
     MCU_FLASH_MIN_WRITE_SIZE:
         description: >
             Specifies the required alignment for internal flash writes.
@@ -31,6 +44,32 @@ syscfg.defs:
             external circuitry so is defined to be zero by default and
             expected to be overridden by the BSP.
         value: 0
+
+    SPI_0_MASTER:
+        description: 'SPI 0 master'
+        value:  0
+        restrictions:
+            - "!SPI_0_SLAVE"
+            - "!I2C_0"
+    SPI_0_SLAVE:
+        description: 'SPI 0 slave'
+        value:  0
+        restrictions:
+            - "!SPI_0_MASTER"
+            - "!I2C_0"
+
+    SPI_1_MASTER:
+        description: 'SPI 1 master'
+        value:  0
+        restrictions:
+            - "!SPI_1_SLAVE"
+            - "!I2C_1"
+    SPI_1_SLAVE:
+        description: 'SPI 1 slave'
+        value:  0
+        restrictions:
+            - "!SPI_1_MASTER"
+            - "!I2C_1"
 
 # The XTAL_xxx definitions are used to set the clock source used for the low
 # frequency clock. It is required that at least one of these sources is

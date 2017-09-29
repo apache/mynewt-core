@@ -40,16 +40,6 @@ syscfg.defs:
         description: 'CTS pin for UART0'
         value: 0
 
-    SPI_0_MASTER:
-        description: 'Whether to enable SPI 0 in master mode'
-        value:  0
-    SPI_0_MASTER_SS_PIN:
-        description: 'SPI 0 (master) SS pin number.'
-        value:  24
-    SPI_1_SLAVE:
-        description: 'Whether to enable SPI 1 in slave mode'
-        value:  0
-
     TIMER_0:
         description: 'NRF51 Timer 0'
         value:  1

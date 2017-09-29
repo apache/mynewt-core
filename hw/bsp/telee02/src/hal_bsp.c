@@ -76,14 +76,6 @@ static const struct nrf52_hal_spi_cfg os_bsp_spi0m_cfg = {
 };
 #endif
 
-#if MYNEWT_VAL(I2C_0)
-static const struct nrf52_hal_i2c_cfg hal_i2c_cfg = {
-    .scl_pin = 26,
-    .sda_pin = 28,
-    .i2c_frequency = 100    /* 100 kHz */
-};
-#endif
-
 /*
  * What memory to include in coredump.
  */
@@ -182,11 +174,6 @@ hal_bsp_init(void)
 
 #if (MYNEWT_VAL(OS_CPUTIME_TIMER_NUM) >= 0)
     rc = os_cputime_init(MYNEWT_VAL(OS_CPUTIME_FREQ));
-    assert(rc == 0);
-#endif
-
-#if MYNEWT_VAL(I2C_0)
-    rc = hal_i2c_init(0, (void *)&hal_i2c_cfg);
     assert(rc == 0);
 #endif
 

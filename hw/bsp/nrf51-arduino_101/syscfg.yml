@@ -40,16 +40,6 @@ syscfg.defs:
         description: 'CTS pin for UART0'
         value: 10
 
-    SPI_0_MASTER:
-        description: 'SPI 0 master'
-        value:  1
-    SPI_0_MASTER_SS_PIN:
-        description: 'SPI 0 (master) SS pin number.'
-        value:  24
-    SPI_1_SLAVE:
-        description: 'SPI 1 slave'
-        value:  1
-
     TIMER_0:
         description: 'NRF51 Timer 0'
         value:  1
@@ -74,6 +64,8 @@ syscfg.vals:
     REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG
     NFFS_FLASH_AREA: FLASH_AREA_NFFS
     COREDUMP_FLASH_AREA: FLASH_AREA_IMAGE_1
+    SPI_0_MASTER: 1
+    SPI_1_SLAVE: 1
     XTAL_32768: 1
 
 syscfg.vals.BLE_LP_CLOCK:

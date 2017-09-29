@@ -142,7 +142,7 @@ native_sock_poll_rebuild(struct native_sock_state *nss)
             continue;
         }
         nss->poll_fds[j].fd = ns->ns_fd;
-        nss->poll_fds[j].events = POLLIN;
+        nss->poll_fds[j].events = POLLIN | POLLOUT;
         nss->poll_fds[j].revents = 0;
         j++;
     }
@@ -461,12 +461,20 @@ native_sock_stream_tx(struct native_sock *ns, int notify)
     while (ns->ns_tx && rc == 0) {
         m = ns->ns_tx;
         n = SLIST_NEXT(m, om_next);
+
+        errno = 0;
         rc = write(ns->ns_fd, m->om_data, m->om_len);
         if (rc == m->om_len) {
+            /* Complete write. */
             ns->ns_tx = n;
             os_mbuf_free(m);
             rc = 0;
+        } else if (rc != -1) {
+            /* Partial write. */
+            os_mbuf_adj(m, m->om_len - rc);
+            rc = 0;
         } else {
+            /* Error. */
             rc = errno;
             if (rc == EAGAIN) {
                 rc = 0;
@@ -483,12 +491,26 @@ native_sock_stream_tx(struct native_sock *ns, int notify)
     }
     os_mutex_release(&nss->mtx);
     if (notify) {
-        if (ns->ns_tx == NULL) {
-            mn_socket_writable(&ns->ns_sock, 0);
-        } else {
-            mn_socket_writable(&ns->ns_sock, rc);
-        }
+        mn_socket_writable(&ns->ns_sock, rc);
     }
+    return rc;
+}
+
+static int
+native_sock_set_tx_buf(struct native_sock *ns, struct os_mbuf *om)
+{
+    struct native_sock_state *nss = &native_sock_state;
+    int rc;
+
+    os_mutex_pend(&nss->mtx, OS_WAIT_FOREVER);
+    if (ns->ns_tx) {
+        rc = MN_EAGAIN;
+    } else {
+        ns->ns_tx = om;
+        rc = 0;
+    }
+    os_mutex_release(&nss->mtx);
+
     return rc;
 }
 
@@ -525,10 +547,10 @@ native_sock_sendto(struct mn_socket *s, struct os_mbuf *m,
         os_mbuf_free_chain(m);
         return 0;
     } else {
-        if (ns->ns_tx) {
-            return MN_EAGAIN;
+        rc = native_sock_set_tx_buf(ns, m);
+        if (rc != 0) {
+            return rc;
         }
-        ns->ns_tx = m;
 
         rc = native_sock_stream_tx(ns, 0);
         return rc;
@@ -717,6 +739,7 @@ socket_task(void *arg)
     struct native_sock *ns, *new_ns;
     struct sockaddr_storage ss;
     struct sockaddr *sa = (struct sockaddr *)&ss;
+    int revents;
     int i;
     socklen_t slen;
     int rc;
@@ -735,44 +758,47 @@ socket_task(void *arg)
             continue;
         }
         for (i = 0; i < nss->poll_fd_cnt; i++) {
-            if (!nss->poll_fds[i].revents) {
+            if (nss->poll_fds[i].revents == 0) {
                 continue;
             }
+
+            revents = nss->poll_fds[i].revents;
             nss->poll_fds[i].revents = 0;
+
             ns = native_find_sock(nss->poll_fds[i].fd);
             assert(ns);
-            if (ns->ns_listen) {
-                new_ns = native_get_sock();
-                if (!new_ns) {
-                    continue;
+
+            if (revents & POLLIN) {
+                if (ns->ns_listen) {
+                    new_ns = native_get_sock();
+                    if (!new_ns) {
+                        continue;
+                    }
+                    slen = sizeof(ss);
+                    new_ns->ns_fd = accept(ns->ns_fd, sa, &slen);
+                    if (new_ns->ns_fd < 0) {
+                        continue;
+                    }
+                    new_ns->ns_type = ns->ns_type;
+                    new_ns->ns_sock.ms_ops = &native_sock_ops;
+                    os_mutex_release(&nss->mtx);
+                    if (mn_socket_newconn(&ns->ns_sock, &new_ns->ns_sock)) {
+                        /*
+                         * should close
+                         */
+                    }
+                    os_mutex_pend(&nss->mtx, OS_WAIT_FOREVER);
+                    new_ns->ns_poll = 1;
+                    native_sock_poll_rebuild(nss);
+                } else {
+                    mn_socket_readable(&ns->ns_sock, 0);
                 }
-                slen = sizeof(ss);
-                new_ns->ns_fd = accept(ns->ns_fd, sa, &slen);
-                if (new_ns->ns_fd < 0) {
-                    continue;
-                }
-                new_ns->ns_type = ns->ns_type;
-                new_ns->ns_sock.ms_ops = &native_sock_ops;
-                os_mutex_release(&nss->mtx);
-                if (mn_socket_newconn(&ns->ns_sock, &new_ns->ns_sock)) {
-                    /*
-                     * should close
-                     */
-                }
-                os_mutex_pend(&nss->mtx, OS_WAIT_FOREVER);
-                new_ns->ns_poll = 1;
-                native_sock_poll_rebuild(nss);
-            } else {
-                mn_socket_readable(&ns->ns_sock, 0);
             }
-        }
-        for (i = 0; i < MYNEWT_VAL(NATIVE_SOCKETS_MAX); i++) {
-            ns = &native_socks[i];
-            if (ns->ns_fd < 0) {
-                continue;
-            }
-            if (ns->ns_type == SOCK_STREAM && ns->ns_tx) {
-                native_sock_stream_tx(ns, 1);
+
+            if (revents & POLLOUT) {
+                if (ns->ns_type == SOCK_STREAM && ns->ns_tx) {
+                    native_sock_stream_tx(ns, 1);
+                }
             }
         }
     }

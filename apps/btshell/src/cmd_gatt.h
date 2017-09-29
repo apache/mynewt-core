@@ -31,6 +31,7 @@ int cmd_gatt_exchange_mtu(int argc, char **argv);
 int cmd_gatt_notify(int argc, char **argv);
 int cmd_gatt_read(int argc, char **argv);
 int cmd_gatt_service_changed(int argc, char **argv);
+int cmd_gatt_service_visibility(int argc, char **argv);
 int cmd_gatt_show(int argc, char **argv);
 int cmd_gatt_show_local(int argc, char **argv);
 int cmd_gatt_show_addr(int argc, char **argv);

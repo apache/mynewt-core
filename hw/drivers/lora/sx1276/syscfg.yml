@@ -22,6 +22,10 @@ syscfg.defs:
         description:
         value: -1
 
+    SX1276_SPI_CS_PIN:
+        description: 'SPI chip select pin number'
+        value:  -1
+
     SX1276_SPI_BAUDRATE:
         description:
         value: 500

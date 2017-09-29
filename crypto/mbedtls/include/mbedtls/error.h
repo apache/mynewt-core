@@ -66,13 +66,12 @@
  * PBKDF2    1  0x007C-0x007C
  * HMAC_DRBG 4  0x0003-0x0009
  * CCM       2                  0x000D-0x000F
- * CMAC      2                  0x0011-0x0013
  *
  * High-level module nr (3 bits - 0x0...-0x7...)
  * Name      ID  Nr of Errors
  * PEM       1   9
  * PKCS#12   1   4 (Started from top)
- * X509      2   19
+ * X509      2   20
  * PKCS5     2   4 (Started from top)
  * DHM       3   9
  * PK        3   14 (Started from top)

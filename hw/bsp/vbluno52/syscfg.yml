@@ -49,20 +49,6 @@ syscfg.defs:
         description: 'RX pin for UART1'
         value:  -1
 
-    SPI_0_MASTER:
-        description: 'SPI 0 master'
-        value:  1
-        restrictions:
-            - "!SPI_0_SLAVE"
-    SPI_0_MASTER_SS_PIN:
-        description: 'SPI 0 (master) SS pin number.'
-        value:  11
-    SPI_0_SLAVE:
-        description: 'SPI 0 slave'
-        value:  0
-        restrictions:
-            - "!SPI_0_MASTER"
-
     TIMER_0:
         description: 'NRF52 Timer 0'
         value:  1
@@ -82,14 +68,6 @@ syscfg.defs:
         description: 'NRF52 RTC 0'
         value:  0
 
-    I2C_0:
-        description: 'NRF52 I2C (TWI) interface 0'
-        value:  '1'
-
-    I2C_1:
-        description: 'NRF52 I2C (TWI) interface 1'
-        value:  '1'
-
 syscfg.defs.BLE_LP_CLOCK:
     TIMER_0:
         value: 0
@@ -102,6 +80,8 @@ syscfg.vals:
     NFFS_FLASH_AREA: FLASH_AREA_NFFS
     COREDUMP_FLASH_AREA: FLASH_AREA_IMAGE_1
     MCU_DCDC_ENABLED: 1
+    I2C_0: 1
+    I2C_1: 1
     XTAL_32768: 1
 
 syscfg.vals.BLE_LP_CLOCK:

@@ -290,7 +290,7 @@ lsm303dlhc_init(struct os_dev *dev, void *arg)
     }
 
     /* Add the accelerometer/magnetometer driver */
-    rc = sensor_set_driver(sensor, SENSOR_TYPE_LINEAR_ACCEL |
+    rc = sensor_set_driver(sensor, SENSOR_TYPE_ACCELEROMETER |
             SENSOR_TYPE_MAGNETIC_FIELD,
             (struct sensor_driver *) &g_lsm303dlhc_sensor_driver);
     if (rc != 0) {
@@ -408,7 +408,7 @@ lsm303dlhc_sensor_read(struct sensor *sensor, sensor_type_t type,
     }databuf;
 
     /* If the read isn't looking for accel or mag data, don't do anything. */
-    if (!(type & SENSOR_TYPE_LINEAR_ACCEL) &&
+    if (!(type & SENSOR_TYPE_ACCELEROMETER) &&
        (!(type & SENSOR_TYPE_MAGNETIC_FIELD))) {
         rc = SYS_EINVAL;
         goto err;
@@ -418,7 +418,7 @@ lsm303dlhc_sensor_read(struct sensor *sensor, sensor_type_t type,
     lsm = (struct lsm303dlhc *) SENSOR_GET_DEVICE(sensor);
 
     /* Get a new accelerometer sample */
-    if (type & SENSOR_TYPE_LINEAR_ACCEL) {
+    if (type & SENSOR_TYPE_ACCELEROMETER) {
         x = y = z = 0;
         rc = lsm303dlhc_read48(itf, lsm->cfg.acc_addr,
                                LSM303DLHC_REGISTER_ACCEL_OUT_X_L_A | 0x80,
@@ -475,7 +475,7 @@ lsm303dlhc_sensor_read(struct sensor *sensor, sensor_type_t type,
         databuf.sad.sad_z_is_valid = 1;
 
         /* Call data function */
-        rc = data_func(sensor, data_arg, &databuf.sad, SENSOR_TYPE_LINEAR_ACCEL);
+        rc = data_func(sensor, data_arg, &databuf.sad, SENSOR_TYPE_ACCELEROMETER);
         if (rc != 0) {
             goto err;
         }
@@ -582,7 +582,7 @@ lsm303dlhc_sensor_get_config(struct sensor *sensor, sensor_type_t type,
 {
     int rc;
 
-    if ((type != SENSOR_TYPE_LINEAR_ACCEL) &&
+    if ((type != SENSOR_TYPE_ACCELEROMETER) &&
         (type != SENSOR_TYPE_MAGNETIC_FIELD)) {
         rc = SYS_EINVAL;
         goto err;

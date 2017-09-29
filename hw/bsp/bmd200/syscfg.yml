@@ -40,26 +40,6 @@ syscfg.defs:
         description: 'CTS pin for UART0'
         value: 8
 
-    SPI_0_MASTER:
-        description: 'SPI 0 master'
-        value:  0
-    SPI_0_MASTER_SS_PIN:
-        description: 'SPI 0 (master) SS pin number.'
-        value:  24
-    SPI_1_MASTER:
-        description: 'SPI 1 master'
-        value:  0
-        restrictions:
-            - "!SPI_1_SLAVE"
-    SPI_1_MASTER_SS_PIN:
-        description: 'SPI 1 (master) SS pin number.'
-        value:  -1
-    SPI_1_SLAVE:
-        description: 'SPI 1 slave'
-        value:  0
-        restrictions:
-            - "!SPI_1_MASTER"
-
     TIMER_0:
         description: 'NRF51 Timer 0'
         value:  1
@@ -72,10 +52,6 @@ syscfg.defs:
     TIMER_3:
         description: 'NRF51 RTC0'
         value:  0
-
-    I2C_0:
-        description: 'NRF51 I2C (TWI) interface 0'
-        value:  '0'
 
 syscfg.defs.BLE_LP_CLOCK:
     TIMER_0:
