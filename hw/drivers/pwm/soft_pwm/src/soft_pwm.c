@@ -71,6 +71,7 @@ static void toggle_cb(void* arg)
 {
     struct soft_pwm_channel* chan = (struct soft_pwm_channel*) arg;
     hal_gpio_toggle(chan->pin);
+
 }
 
 /**
@@ -126,10 +127,6 @@ soft_pwm_open(struct os_dev *odev, uint32_t wait, void *arg)
     /* Start */
     cycle_cb(NULL);
 
-    if (stat) {
-        return (stat);
-    }
-
     return (0);
 }
 
@@ -183,6 +180,7 @@ soft_pwm_configure_channel(struct pwm_dev *dev,
         os_cputime_timer_stop(&soft_pwm_dev.chans[cnum].toggle_timer);
         hal_gpio_write(last_pin, 0);
     }
+    hal_gpio_init_out(cfg->pin, (cfg->inverted) ? 1 : 0);
 
     return (0);
 }

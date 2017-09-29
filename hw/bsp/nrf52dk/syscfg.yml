@@ -102,6 +102,10 @@ syscfg.defs:
         description: 'NRF52 PWM'
         value: 0
 
+    SOFT_PWM:
+        description: 'NRF52 PWM'
+        value: 1
+
 syscfg.defs.BLE_LP_CLOCK:
     TIMER_0:
         value: 0
