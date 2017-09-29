@@ -17,24 +17,36 @@
  * under the License.
  */
 
-#ifndef H_BLE_HS_ID_
-#define H_BLE_HS_ID_
+#ifndef H_BLEHR_SENSOR_
+#define H_BLEHR_SENSOR_
 
-#include <inttypes.h>
+#include "log/log.h"
 #include "nimble/ble.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int ble_hs_id_gen_rnd(int nrpa, ble_addr_t *out_addr);
-int ble_hs_id_set_rnd(const uint8_t *rnd_addr);
-int ble_hs_id_copy_addr(uint8_t id_addr_type, uint8_t *out_id_addr,
-                        int *out_is_nrpa);
-int ble_hs_id_infer_auto(int privacy, uint8_t *out_addr_type);
+extern struct log blehr_log;
 
-int ble_hs_id_infer_auto(int privacy, uint8_t *out_addr_type);
-int ble_hs_id_use_addr(uint8_t addr_type);
+/* blehr uses the first "peruser" log module */
+#define BLEHR_LOG_MODULE (LOG_MODULE_PERUSER + 0)
+
+/* Convenience macro for logging to the blerh module */
+#define BLEHR_LOG(lvl, ...) \
+    LOG_ ## lvl(&blehr_log, BLEHR_LOG_MODULE, __VA_ARGS__)
+
+/* Heart-rate configuration */
+#define GATT_HRS_UUID                           0x180D
+#define GATT_HRS_MEASUREMENT_UUID               0x2A37
+#define GATT_HRS_BODY_SENSOR_LOC_UUID           0x2A38
+#define GATT_DEVICE_INFO_UUID                   0x180A
+#define GATT_MANUFACTURER_NAME_UUID             0x2A29
+#define GATT_MODEL_NUMBER_UUID                  0x2A24
+
+extern uint16_t hrs_hrm_handle;
+
+int gatt_svr_init(void);
 
 #ifdef __cplusplus
 }
