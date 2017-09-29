@@ -20,7 +20,6 @@
 #include <string.h>
 
 #include "syscfg/syscfg.h"
-
 #if MYNEWT_VAL(BOOTUTIL_SIGN_EC256)
 #include "bootutil/sign_key.h"
 
@@ -40,7 +39,7 @@ static const uint8_t ec_secp256r1_oid[] = MBEDTLS_OID_EC_GRP_SECP256R1;
  * Parse the public key used for signing.
  */
 static int
-tinycrypt_import_key(EccPoint *pubkey, uint8_t *cp, uint8_t *end)
+tinycrypt_import_key(uint8_t *pubkey, uint8_t *cp, uint8_t *end)
 {
     size_t len;
     mbedtls_asn1_buf alg;
@@ -77,8 +76,8 @@ tinycrypt_import_key(EccPoint *pubkey, uint8_t *cp, uint8_t *end)
         return -9;
     }
 
-    ecc_bytes2native(pubkey->x, cp + 1);
-    ecc_bytes2native(pubkey->y, cp + 1 + NUM_ECC_BYTES);
+    /* TODO avoid this copy? */
+    memcpy(pubkey, cp + 1, 2 * NUM_ECC_BYTES);
 
     return 0;
 }
@@ -88,22 +87,21 @@ tinycrypt_import_key(EccPoint *pubkey, uint8_t *cp, uint8_t *end)
  * Verify the tag, and that the length is 32 bytes.
  */
 static int
-tinycrypt_read_bigint(uint32_t i[NUM_ECC_DIGITS], uint8_t **cp, uint8_t *end)
+tinycrypt_read_bigint(uint8_t i[NUM_ECC_BYTES], uint8_t **cp, uint8_t *end)
 {
     size_t len;
-    uint8_t bigint[NUM_ECC_BYTES];
 
     if (mbedtls_asn1_get_tag(cp, end, &len, MBEDTLS_ASN1_INTEGER)) {
         return -3;
     }
+
     if (len > NUM_ECC_BYTES) {
-        memcpy(bigint, *cp + len - NUM_ECC_BYTES, NUM_ECC_BYTES);
+        memcpy(i, *cp + len - NUM_ECC_BYTES, NUM_ECC_BYTES);
     } else {
-        memset(bigint, 0, NUM_ECC_BYTES - len);
-        memcpy(bigint + NUM_ECC_BYTES - len, *cp, len);
+        memset(i + NUM_ECC_BYTES, 0, NUM_ECC_BYTES - len);
+        memcpy(i + NUM_ECC_BYTES - len, *cp, len);
     }
     *cp += len;
-    ecc_bytes2native(i, bigint);
     return 0;
 }
 
@@ -111,8 +109,7 @@ tinycrypt_read_bigint(uint32_t i[NUM_ECC_DIGITS], uint8_t **cp, uint8_t *end)
  * Read in signature. Signature has r and s encoded as integers.
  */
 static int
-tinycrypt_decode_sig(uint32_t r[NUM_ECC_DIGITS], uint32_t s[NUM_ECC_DIGITS],
-                     uint8_t *cp, uint8_t *end)
+tinycrypt_decode_sig(uint8_t signature[NUM_ECC_BYTES * 2], uint8_t *cp, uint8_t *end)
 {
     int rc;
     size_t len;
@@ -125,11 +122,12 @@ tinycrypt_decode_sig(uint32_t r[NUM_ECC_DIGITS], uint32_t s[NUM_ECC_DIGITS],
     if (cp + len > end) {
         return -2;
     }
-    rc = tinycrypt_read_bigint(r, &cp, end);
+
+    rc = tinycrypt_read_bigint(signature, &cp, end);
     if (rc) {
         return -3;
     }
-    rc = tinycrypt_read_bigint(s, &cp, end);
+    rc = tinycrypt_read_bigint(signature + NUM_ECC_BYTES, &cp, end);
     if (rc) {
         return -4;
     }
@@ -143,20 +141,19 @@ bootutil_verify_sig(uint8_t *hash, uint32_t hlen, uint8_t *sig, int slen,
     int rc;
     uint8_t *cp;
     uint8_t *end;
-    EccPoint ctx;
-    uint32_t r[NUM_ECC_DIGITS];
-    uint32_t s[NUM_ECC_DIGITS];
-    uint32_t hash_t[NUM_ECC_DIGITS];
+
+    uint8_t public_key[2 * NUM_ECC_BYTES];
+    uint8_t signature[2 * NUM_ECC_BYTES];
 
     cp = (uint8_t *)bootutil_keys[key_id].key;
     end = cp + *bootutil_keys[key_id].len;
 
-    rc = tinycrypt_import_key(&ctx, cp, end);
+    rc = tinycrypt_import_key(public_key, cp, end);
     if (rc) {
         return -1;
     }
 
-    rc = tinycrypt_decode_sig(r, s, sig, sig + slen);
+    rc = tinycrypt_decode_sig(signature, sig, sig + slen);
     if (rc) {
         return -1;
     }
@@ -168,8 +165,7 @@ bootutil_verify_sig(uint8_t *hash, uint32_t hlen, uint8_t *sig, int slen,
         return -1;
     }
 
-    ecc_bytes2native(hash_t, hash);
-    rc = ecdsa_verify(&ctx, hash_t, r, s);
+    rc = uECC_verify(public_key, hash, NUM_ECC_BYTES, signature, uECC_secp256r1());
     if (rc == 1) {
         return 0;
     } else {
