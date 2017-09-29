@@ -438,7 +438,7 @@ sensor_shell_timer_cb(void *arg)
 static void
 sensor_shell_config_timer(struct sensor_poll_data *spd)
 {
-    sensor_shell_timer_arg = os_cputime_usecs_to_ticks(spd->spd_poll_itvl * 1000);
+    sensor_shell_timer_arg = spd->spd_poll_itvl * 1000;
 
     os_cputime_timer_init(&g_sensor_shell_timer, sensor_shell_timer_cb,
                           &sensor_shell_timer_arg);
