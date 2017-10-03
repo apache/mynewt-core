@@ -20,7 +20,6 @@
 pkg.name: hw/drivers/sensors/mpu6050
 pkg.description: Driver for the mpu6050 3 axis accel/gyro
 pkg.author: "Julian Ingram"
-pkg.homepage:
 pkg.keywords:
     - accelerometer
     - gyroscope
@@ -29,5 +28,12 @@ pkg.keywords:
     - invensense
 
 pkg.deps:
-    - "hw/sensor"
-    - "hw/hal"
+    - "@apache-mynewt-core/hw/hal"
+    - "@apache-mynewt-core/kernel/os"
+    - "@apache-mynewt-core/hw/sensor"
+
+pkg.deps.MPU6050_STATS:
+    - "@apache-mynewt-core/sys/stats/full"
+
+pkg.deps.MPU6050_LOG:
+    - "@apache-mynewt-core/sys/log/full"

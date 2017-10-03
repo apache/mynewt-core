@@ -310,7 +310,7 @@ mpu6050_get_gyro_range(struct sensor_itf *itf, enum mpu6050_gyro_range *range)
     uint8_t reg;
     int rc;
 
-    rc = mpu6050_read8(itf, MPU6050_GYRO_CONFIG, reg);
+    rc = mpu6050_read8(itf, MPU6050_GYRO_CONFIG, &reg);
     if (rc) {
         return rc;
     }
@@ -562,6 +562,8 @@ mpu6050_sensor_read(struct sensor *sensor, sensor_type_t type,
 
         switch (mpu->cfg.gyro_range) {
             case MPU6050_ACCEL_RANGE_2: /* +/- 2g - 16384 LSB/g */
+            /* Falls through */
+            default:
                 lsb = 16384.0F;
             break;
             case MPU6050_ACCEL_RANGE_4: /* +/- 4g - 8192 LSB/g */
@@ -602,6 +604,8 @@ mpu6050_sensor_read(struct sensor *sensor, sensor_type_t type,
 
         switch (mpu->cfg.gyro_range) {
             case MPU6050_GYRO_RANGE_250: /* +/- 250 Deg/s - 131 LSB/Deg/s */
+            /* Falls through */
+            default:
                 lsb = 131.0F;
             break;
             case MPU6050_GYRO_RANGE_500: /* +/- 500 Deg/s - 65.5 LSB/Deg/s */
