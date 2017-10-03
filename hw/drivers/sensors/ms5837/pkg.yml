@@ -30,3 +30,10 @@ pkg.keywords:
 pkg.deps:
     - "@apache-mynewt-core/kernel/os"
     - "@apache-mynewt-core/hw/hal"
+    - "@apache-mynewt-core/hw/sensor"
+
+pkg.deps.MS5837_STATS:
+    - "@apache-mynewt-core/sys/stats/full"
+
+pkg.deps.MS5837_LOG:
+    - "@apache-mynewt-core/sys/log/full"
