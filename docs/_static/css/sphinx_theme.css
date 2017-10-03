@@ -1453,21 +1453,6 @@ body.not-front div#main-content div#content div.views-row p:last-child {
 body.not-front div#main-content div#content div.views-row:last-child {
 	margin-bottom: 0;
 }
-/* line 48, ../scss/partials/_main.scss */
-body.not-front h1 {
-	margin-bottom: 40px;
-	position: relative;
-}
-/* line 51, ../scss/partials/_main.scss */
-body.not-front h1::after {
-	width: 100px;
-	height: 6px;
-	background-color: #af7fe4;
-	content: "";
-	position: absolute;
-	left: 0px;
-	bottom: -20px;
-}
 
 /* line 59, ../scss/partials/_main.scss */
 :target:before {
@@ -1633,6 +1618,7 @@ div.region-sidebar {
 	/* line 26, ../scss/partials/_sidebar.scss */
 	div.region-sidebar {
 		display: block;
+		margin-top: 15px;
 	}
 }
 
