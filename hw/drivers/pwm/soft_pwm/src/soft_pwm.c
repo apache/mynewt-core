@@ -27,7 +27,7 @@
 
 #define BASE_FREQ MYNEWT_VAL(OS_CPUTIME_FREQ)
 #define MAX_FREQ BASE_FREQ / 2
-#define CHAN_COUNT MYNEWT_VAL(SPWM_CHANS)
+#define CHAN_COUNT MYNEWT_VAL(SOFT_PWM_CHANS)
 #define PIN_NOT_USED 0xff
 
 
@@ -48,6 +48,12 @@ struct soft_pwm_dev_global {
 
 static struct soft_pwm_dev_global soft_pwm_dev;
 
+/**
+ * Cycle start callback
+ *
+ * Initializes every channel's output to high (or low accrding to its polarity).
+ * Schedules toggle_cb for every channel.
+ */
 static void cycle_cb(void* arg)
 {
     int cnum;
@@ -68,6 +74,11 @@ static void cycle_cb(void* arg)
                            now + soft_pwm_dev.top_value);
 }
 
+/**
+ * Channel output toggle callback
+ *
+ * Toggles a channel's output.
+ */
 static void toggle_cb(void* arg)
 {
     struct soft_pwm_channel* chan = (struct soft_pwm_channel*) arg;
@@ -115,7 +126,7 @@ soft_pwm_open(struct os_dev *odev, uint32_t wait, void *arg)
                           cycle_cb,
                           NULL);
 
-    for (cnum = 0; cnum < SPWM_CHANS; cnum++) {
+    for (cnum = 0; cnum < CHAN_COUNT; cnum++) {
         soft_pwm_dev.chans[cnum].pin = PIN_NOT_USED;
         soft_pwm_dev.chans[cnum].fraction = soft_pwm_dev.top_value / 2;
         soft_pwm_dev.chans[cnum].inverted = false;
@@ -132,7 +143,7 @@ soft_pwm_open(struct os_dev *odev, uint32_t wait, void *arg)
 }
 
 /**
- * Close the SOFT PWM device.
+ * Close the Soft PWM device.
  *
  * This function unlocks the device.
  *
@@ -172,9 +183,8 @@ soft_pwm_configure_channel(struct pwm_dev *dev,
                            uint8_t cnum,
                            struct pwm_chan_cfg *cfg)
 {
-    bool maxmin_duty;
     uint16_t last_pin = (soft_pwm_dev.chans[cnum].pin == PIN_NOT_USED) ?
-        cfg-pin :
+        cfg->pin :
         soft_pwm_dev.chans[cnum].pin;
 
     /* Set the previously used pin to low */
@@ -197,7 +207,7 @@ soft_pwm_configure_channel(struct pwm_dev *dev,
 /**
  * Enable the PWM with specified duty cycle.
  *
- * This duty cycle is a fractional duty cycle where 0 == off, 65535=on,
+ * This duty cycle is a fractional duty cycle where 0 == off, clk_freq/pwm_freq=on,
  * and any value in between is on for fraction clocks and off
  * for 65535-fraction clocks.
  *
@@ -293,7 +303,7 @@ static int
 soft_pwm_get_resolution_bits(struct pwm_dev *dev)
 {
     int shamt;
-    uint16_t mask = 0x80;
+    uint16_t mask = 0x8000;
 
     for (shamt = 0; shamt < 15; shamt++) {
         if (soft_pwm_dev.top_value & mask) {

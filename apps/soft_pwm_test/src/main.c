@@ -21,6 +21,7 @@
 #include <pwm/pwm.h>
 #include <bsp/bsp.h>
 #include <soft_pwm/soft_pwm.h>
+#include <console/console.h>
 
 struct pwm_dev* pwm;
 
@@ -30,6 +31,7 @@ main(int argc, char **argv)
 {
     uint16_t max_val;
     uint32_t base_freq;
+    int res;
     struct pwm_chan_cfg chan_conf = {
         .pin = LED_1,
         .inverted = true,
@@ -39,10 +41,12 @@ main(int argc, char **argv)
     sysinit();
     pwm = (struct pwm_dev *) os_dev_open("spwm", 0, NULL);
 
-    base_freq = pwm_set_frequency(pwm, 2000);
-    max_val = (uint16_t) (base_freq / 2000);
+    base_freq = pwm_set_frequency(pwm, 200);
+    max_val = (uint16_t) (base_freq / 200);
     pwm_chan_config(pwm, 0, &chan_conf);
     pwm_enable_duty_cycle(pwm, 0, max_val/2);
+    res = pwm_get_resolution_bits(pwm);
+    console_printf("\ntval = %d, res = %d\n", max_val, res);
 
     chan_conf.pin = LED_2;
     pwm_chan_config(pwm, 1, &chan_conf);

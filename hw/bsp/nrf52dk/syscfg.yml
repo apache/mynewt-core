@@ -85,7 +85,7 @@ syscfg.defs:
         value: 0
 
     SOFT_PWM:
-        description: 'NRF52 PWM'
+        description: 'SOFT PWM'
         value: 1
 
 syscfg.defs.BLE_LP_CLOCK:
