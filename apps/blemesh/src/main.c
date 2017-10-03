@@ -35,6 +35,9 @@
 
 /* Company ID*/
 #define CID_VENDOR 0xFFFF
+#define STANDARD_TEST_ID 0x00
+#define TEST_ID 0x01
+static int recent_test_id = STANDARD_TEST_ID;
 
 #define FAULT_ARR_SIZE 2
 
@@ -67,7 +70,7 @@ fault_get_cur(struct bt_mesh_model *model,
 
     console_printf("fault_get_cur() has_reg_fault %u\n", has_reg_fault);
 
-    *test_id = 0x00;
+    *test_id = recent_test_id;
     *company_id = CID_VENDOR;
 
     *fault_count = min(*fault_count, sizeof(reg_faults));
@@ -89,7 +92,7 @@ fault_get_reg(struct bt_mesh_model *model,
 
     console_printf("fault_get_reg() has_reg_fault %u\n", has_reg_fault);
 
-    *test_id = 0x00;
+    *test_id = recent_test_id;
 
     if (has_reg_fault) {
         uint8_t reg_faults[FAULT_ARR_SIZE] = { [0 ... FAULT_ARR_SIZE-1] = 0xff };
@@ -122,6 +125,11 @@ fault_test(struct bt_mesh_model *model, uint8_t test_id, uint16_t company_id)
         return -BLE_HS_EINVAL;
     }
 
+    if (test_id != STANDARD_TEST_ID && test_id != TEST_ID) {
+        return -BLE_HS_EINVAL;
+    }
+
+    recent_test_id = test_id;
     has_reg_fault = true;
     bt_mesh_fault_update(model->elem);
 
