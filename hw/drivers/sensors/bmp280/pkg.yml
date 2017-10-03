@@ -25,11 +25,19 @@ pkg.keywords:
     - adafruit
     - bmp280
     - i2c
+    - spi
     - sensor
 
 pkg.deps:
     - "@apache-mynewt-core/kernel/os"
     - "@apache-mynewt-core/hw/hal"
+    - "@apache-mynewt-core/hw/sensor"
 
 pkg.deps.BMP280_CLI:
     - "@apache-mynewt-core/util/parse"
+
+pkg.deps.BMP280_STATS:
+    - "@apache-mynewt-core/sys/stats/full"
+
+pkg.deps.BMP280_LOG:
+    - "@apache-mynewt-core/sys/log/full"
