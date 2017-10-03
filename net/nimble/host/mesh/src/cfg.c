@@ -2551,14 +2551,22 @@ static void lpn_timeout_get(struct bt_mesh_model *model,
 	BT_DBG("net_idx 0x%04x app_idx 0x%04x src 0x%04x lpn_addr 0x%02x",
 	       ctx->net_idx, ctx->app_idx, ctx->addr, lpn_addr);
 
+	/* check if it's the address of the Low Power Node? */
+	if (!BT_MESH_ADDR_IS_UNICAST(lpn_addr)) {
+		BT_WARN("Invalid LPNAddress; ignoring msg");
+		goto done;
+	}
+
 	bt_mesh_model_msg_init(msg, OP_LPN_TIMEOUT_STATUS);
 	net_buf_simple_add_le16(msg, lpn_addr);
 	memset(net_buf_simple_add(msg, 3), 0, 3);
 
 	if (bt_mesh_model_send(model, ctx, msg, NULL, NULL)) {
-		BT_ERR("Unable to send Friend Status");
+		BT_ERR("Unable to send LPN PollTimeout Status");
 	}
-    os_mbuf_free_chain(msg);
+
+done:
+	os_mbuf_free_chain(msg);
 }
 
 static void send_krp_status(struct bt_mesh_model *model,
@@ -2717,18 +2725,18 @@ send:
     os_mbuf_free_chain(msg);
 }
 
-static void hearbeat_pub_get(struct bt_mesh_model *model,
-			     struct bt_mesh_msg_ctx *ctx,
-			     struct os_mbuf *buf)
+static void heartbeat_pub_get(struct bt_mesh_model *model,
+			      struct bt_mesh_msg_ctx *ctx,
+			      struct os_mbuf *buf)
 {
 	BT_DBG("src 0x%04x", ctx->addr);
 
 	hb_pub_send_status(model, ctx, STATUS_SUCCESS, NULL);
 }
 
-static void hearbeat_pub_set(struct bt_mesh_model *model,
-			     struct bt_mesh_msg_ctx *ctx,
-			     struct os_mbuf *buf)
+static void heartbeat_pub_set(struct bt_mesh_model *model,
+			      struct bt_mesh_msg_ctx *ctx,
+			      struct os_mbuf *buf)
 {
 	struct hb_pub_param *param = (void *)buf->om_data;
 	struct bt_mesh_cfg *cfg = model->user_data;
@@ -2838,18 +2846,18 @@ static void hb_sub_send_status(struct bt_mesh_model *model,
     os_mbuf_free_chain(msg);
 }
 
-static void hearbeat_sub_get(struct bt_mesh_model *model,
-			     struct bt_mesh_msg_ctx *ctx,
-			     struct os_mbuf *buf)
+static void heartbeat_sub_get(struct bt_mesh_model *model,
+			      struct bt_mesh_msg_ctx *ctx,
+			      struct os_mbuf *buf)
 {
 	BT_DBG("src 0x%04x", ctx->addr);
 
 	hb_sub_send_status(model, ctx, STATUS_SUCCESS);
 }
 
-static void hearbeat_sub_set(struct bt_mesh_model *model,
-			     struct bt_mesh_msg_ctx *ctx,
-			     struct os_mbuf *buf)
+static void heartbeat_sub_set(struct bt_mesh_model *model,
+			      struct bt_mesh_msg_ctx *ctx,
+			      struct os_mbuf *buf)
 {
 	struct bt_mesh_cfg *cfg = model->user_data;
 	u16_t sub_src, sub_dst;
@@ -2886,21 +2894,27 @@ static void hearbeat_sub_set(struct bt_mesh_model *model,
 	    sub_period == 0x00) {
 		cfg->hb_sub.src = BT_MESH_ADDR_UNASSIGNED;
 		cfg->hb_sub.dst = BT_MESH_ADDR_UNASSIGNED;
+		cfg->hb_sub.min_hops = 0;
+		cfg->hb_sub.max_hops = 0;
+
 		period_ms = 0;
 	} else {
 		cfg->hb_sub.src = sub_src;
 		cfg->hb_sub.dst = sub_dst;
+		cfg->hb_sub.min_hops = 0x7f;
+		cfg->hb_sub.max_hops = 0;
+
 		period_ms = hb_pwr2(sub_period, 1) * 1000;
 	}
 
 	BT_DBG("period_ms %u", period_ms);
 
 	cfg->hb_sub.count = 0;
-	cfg->hb_sub.min_hops = 0x7f;
-	cfg->hb_sub.max_hops = 0;
 
 	if (period_ms) {
 		cfg->hb_sub.expiry = k_uptime_get() + period_ms;
+	} else {
+		cfg->hb_sub.expiry = 0;
 	}
 
 	hb_sub_send_status(model, ctx, STATUS_SUCCESS);
@@ -2950,10 +2964,10 @@ const struct bt_mesh_model_op bt_mesh_cfg_op[] = {
 	{ OP_LPN_TIMEOUT_GET,          2,   lpn_timeout_get },
 	{ OP_KRP_GET,                  2,   krp_get },
 	{ OP_KRP_SET,                  3,   krp_set },
-	{ OP_HEARTBEAT_PUB_GET,        0,   hearbeat_pub_get },
-	{ OP_HEARTBEAT_PUB_SET,        9,   hearbeat_pub_set },
-	{ OP_HEARTBEAT_SUB_GET,        0,   hearbeat_sub_get },
-	{ OP_HEARTBEAT_SUB_SET,        5,   hearbeat_sub_set },
+	{ OP_HEARTBEAT_PUB_GET,        0,   heartbeat_pub_get },
+	{ OP_HEARTBEAT_PUB_SET,        9,   heartbeat_pub_set },
+	{ OP_HEARTBEAT_SUB_GET,        0,   heartbeat_sub_get },
+	{ OP_HEARTBEAT_SUB_SET,        5,   heartbeat_sub_set },
 	BT_MESH_MODEL_OP_END,
 };
 
