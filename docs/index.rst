@@ -3,6 +3,7 @@ Mynewt Documentation
 
 .. toctree::
    :hidden:
+   :titlesonly:
 
    os/get_started/get_started
    os/get_started/vocabulary
