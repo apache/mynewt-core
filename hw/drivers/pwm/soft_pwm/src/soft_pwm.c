@@ -27,11 +27,12 @@
 
 #define BASE_FREQ MYNEWT_VAL(OS_CPUTIME_FREQ)
 #define MAX_FREQ BASE_FREQ / 2
-#define PIN_NOT_USED 0xFF
-#define SPWM_CHANS 4
+#define CHAN_COUNT MYNEWT_VAL(SPWM_CHANS)
+#define PIN_NOT_USED 0xff
+
 
 struct soft_pwm_channel {
-    uint8_t pin;
+    uint16_t pin;
     uint16_t fraction;
     bool inverted;
     bool playing;
@@ -42,7 +43,7 @@ struct soft_pwm_dev_global {
     uint32_t frequency;
     uint16_t top_value;
     struct hal_timer cycle_timer;
-    struct soft_pwm_channel chans[SPWM_CHANS];
+    struct soft_pwm_channel chans[CHAN_COUNT];
 };
 
 static struct soft_pwm_dev_global soft_pwm_dev;
@@ -53,7 +54,7 @@ static void cycle_cb(void* arg)
     bool inverted;
     uint32_t now = os_cputime_get32();
 
-    for (cnum = 0; cnum < SPWM_CHANS; cnum++) {
+    for (cnum = 0; cnum < CHAN_COUNT; cnum++) {
         if (soft_pwm_dev.chans[cnum].playing) {
 
             inverted = soft_pwm_dev.chans[cnum].inverted;
@@ -71,7 +72,6 @@ static void toggle_cb(void* arg)
 {
     struct soft_pwm_channel* chan = (struct soft_pwm_channel*) arg;
     hal_gpio_toggle(chan->pin);
-
 }
 
 /**
@@ -124,6 +124,7 @@ soft_pwm_open(struct os_dev *odev, uint32_t wait, void *arg)
                               toggle_cb,
                               &soft_pwm_dev.chans[cnum]);
     }
+
     /* Start */
     cycle_cb(NULL);
 
@@ -146,7 +147,7 @@ soft_pwm_close(struct os_dev *odev)
     dev = (struct pwm_dev *) odev;
 
     os_cputime_timer_stop(&soft_pwm_dev.cycle_timer);
-    for (cnum = 0; cnum < SPWM_CHANS; cnum++) {
+    for (cnum = 0; cnum < CHAN_COUNT; cnum++) {
         os_cputime_timer_stop(&soft_pwm_dev.chans[cnum].toggle_timer);
     }
 
@@ -171,15 +172,23 @@ soft_pwm_configure_channel(struct pwm_dev *dev,
                            uint8_t cnum,
                            struct pwm_chan_cfg *cfg)
 {
-    uint8_t last_pin = soft_pwm_dev.chans[cnum].pin;
+    bool maxmin_duty;
+    uint16_t last_pin = (soft_pwm_dev.chans[cnum].pin == PIN_NOT_USED) ?
+        cfg-pin :
+        soft_pwm_dev.chans[cnum].pin;
+
+    /* Set the previously used pin to low */
+    if (cfg->pin != last_pin) {
+        if (soft_pwm_dev.chans[cnum].playing) {
+            soft_pwm_dev.chans[cnum].playing = false;
+            os_cputime_timer_stop(&soft_pwm_dev.chans[cnum].toggle_timer);
+        }
+        hal_gpio_write(last_pin, 0);
+    }
+
     soft_pwm_dev.chans[cnum].pin = cfg->pin;
     soft_pwm_dev.chans[cnum].inverted = cfg->inverted;
 
-    /* Set the previously used pin to low */ //FIXME - 100%duty case
-    if ( (cfg->pin != last_pin) && soft_pwm_dev.chans[cnum].playing ) {
-        os_cputime_timer_stop(&soft_pwm_dev.chans[cnum].toggle_timer);
-        hal_gpio_write(last_pin, 0);
-    }
     hal_gpio_init_out(cfg->pin, (cfg->inverted) ? 1 : 0);
 
     return (0);
@@ -209,13 +218,14 @@ soft_pwm_enable_duty_cycle(struct pwm_dev *dev, uint8_t cnum, uint16_t fraction)
         fraction :
         soft_pwm_dev.top_value;
 
-    /* Handling 100% duty cycles. */
+    /* Handling 0% and 100% duty cycles. */
     if (fraction < soft_pwm_dev.top_value) {
         soft_pwm_dev.chans[cnum].playing = true;
     } else {
         soft_pwm_dev.chans[cnum].playing = false;
         inverted = soft_pwm_dev.chans[cnum].inverted;
-        hal_gpio_write(soft_pwm_dev.chans[cnum].pin, (inverted) ? 0 : 1);
+        hal_gpio_write(soft_pwm_dev.chans[cnum].pin,
+                       (inverted && fraction) ? 0 : 1);
     }
 
     return (0);
@@ -282,7 +292,17 @@ soft_pwm_get_clock_freq(struct pwm_dev *dev)
 static int
 soft_pwm_get_resolution_bits(struct pwm_dev *dev)
 {
-    return (-EINVAL);
+    int shamt;
+    uint16_t mask = 0x80;
+
+    for (shamt = 0; shamt < 15; shamt++) {
+        if (soft_pwm_dev.top_value & mask) {
+            break;
+        }
+        mask >>= 1;
+    }
+
+    return (16 - shamt - 1);
 }
 
 /**
@@ -298,7 +318,7 @@ soft_pwm_dev_init(struct os_dev *odev, void *arg)
 
     dev = (struct pwm_dev *) odev;
     dev->pwm_instance_id = 0;
-    dev->pwm_chan_count = SPWM_CHANS;
+    dev->pwm_chan_count = CHAN_COUNT;
 
     OS_DEV_SETHANDLERS(odev, soft_pwm_open, soft_pwm_close);
 
