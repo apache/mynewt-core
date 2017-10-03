@@ -84,18 +84,6 @@ syscfg.defs:
         description: 'Whether to enable UART5'
         value:  1
 
-    SPI_1_MASTER:
-        description: 'SPI on J9 connector'
-        value:  1
-
-    SPI_2_MASTER:
-        description: 'SPI connected to microSD card'
-        value:  1
-
-    SPI_3_MASTER:
-        description: 'SPI connected to MRF24WG0MA'
-        value:  1
-
     I2C_3:
         description: 'I2C available on J6 connector'
         value:  1
