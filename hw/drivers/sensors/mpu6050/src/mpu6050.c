@@ -30,16 +30,9 @@
 #include "sensor/gyro.h"
 #include "mpu6050/mpu6050.h"
 #include "mpu6050_priv.h"
-
-#if MYNEWT_VAL(MPU6050_LOG)
 #include "log/log.h"
-#endif
-
-#if MYNEWT_VAL(MPU6050_STATS)
 #include "stats/stats.h"
-#endif
 
-#if MYNEWT_VAL(MPU6050_STATS)
 /* Define the stats section and records */
 STATS_SECT_START(mpu6050_stat_section)
     STATS_SECT_ENTRY(read_errors)
@@ -54,17 +47,11 @@ STATS_NAME_END(mpu6050_stat_section)
 
 /* Global variable used to hold stats data */
 STATS_SECT_DECL(mpu6050_stat_section) g_mpu6050stats;
-#endif
 
-#if MYNEWT_VAL(MPU6050_LOG)
 #define LOG_MODULE_MPU6050    (6050)
 #define MPU6050_INFO(...)     LOG_INFO(&_log, LOG_MODULE_MPU6050, __VA_ARGS__)
 #define MPU6050_ERR(...)      LOG_ERROR(&_log, LOG_MODULE_MPU6050, __VA_ARGS__)
 static struct log _log;
-#else
-#define MPU6050_INFO(...)
-#define MPU6050_ERR(...)
-#endif
 
 /* Exports for the sensor API */
 static int mpu6050_sensor_read(struct sensor *, sensor_type_t,
@@ -104,9 +91,7 @@ mpu6050_write8(struct sensor_itf *itf, uint8_t reg, uint32_t value)
     if (rc) {
         MPU6050_ERR("Failed to write to 0x%02X:0x%02X with value 0x%02X\n",
                        itf->si_addr, reg, value);
-#if MYNEWT_VAL(MPU6050_STATS)
         STATS_INC(g_mpu6050stats, read_errors);
-#endif
     }
 
     return rc;
@@ -137,9 +122,7 @@ mpu6050_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
                               OS_TICKS_PER_SEC / 10, 0);
     if (rc) {
         MPU6050_ERR("I2C access failed at address 0x%02X\n", itf->si_addr);
-#if MYNEWT_VAL(MPU6050_STATS)
         STATS_INC(g_mpu6050stats, write_errors);
-#endif
         return rc;
     }
 
@@ -150,9 +133,7 @@ mpu6050_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
 
     if (rc) {
          MPU6050_ERR("Failed to read from 0x%02X:0x%02X\n", itf->si_addr, reg);
- #if MYNEWT_VAL(MPU6050_STATS)
          STATS_INC(g_mpu6050stats, read_errors);
- #endif
     }
     return rc;
 }
@@ -182,9 +163,7 @@ mpu6050_read48(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer)
                               OS_TICKS_PER_SEC / 10, 0);
     if (rc) {
         MPU6050_ERR("I2C access failed at address 0x%02X\n", itf->si_addr);
-#if MYNEWT_VAL(MPU6050_STATS)
         STATS_INC(g_mpu6050stats, write_errors);
-#endif
         return rc;
     }
 
@@ -196,9 +175,7 @@ mpu6050_read48(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer)
 
     if (rc) {
          MPU6050_ERR("Failed to read from 0x%02X:0x%02X\n", itf->si_addr, reg);
- #if MYNEWT_VAL(MPU6050_STATS)
          STATS_INC(g_mpu6050stats, read_errors);
- #endif
     }
     return rc;
 }
@@ -402,13 +379,10 @@ mpu6050_init(struct os_dev *dev, void *arg)
 
     mpu->cfg.mask = SENSOR_TYPE_ALL;
 
-#if MYNEWT_VAL(MPU6050_LOG)
     log_register(dev->od_name, &_log, &log_console_handler, NULL, LOG_SYSLEVEL);
-#endif
 
     sensor = &mpu->sensor;
 
-#if MYNEWT_VAL(MPU6050_STATS)
     /* Initialise the stats entry */
     rc = stats_init(
         STATS_HDR(g_mpu6050stats),
@@ -418,7 +392,6 @@ mpu6050_init(struct os_dev *dev, void *arg)
     /* Register the entry with the stats registry */
     rc = stats_register(dev->od_name, STATS_HDR(g_mpu6050stats));
     SYSINIT_PANIC_ASSERT(rc == 0);
-#endif
 
     rc = sensor_init(sensor, dev);
     if (rc) {

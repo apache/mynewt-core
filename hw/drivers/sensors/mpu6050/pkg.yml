@@ -32,8 +32,6 @@ pkg.deps:
     - "@apache-mynewt-core/kernel/os"
     - "@apache-mynewt-core/hw/sensor"
 
-pkg.deps.MPU6050_STATS:
-    - "@apache-mynewt-core/sys/stats/full"
-
-pkg.deps.MPU6050_LOG:
-    - "@apache-mynewt-core/sys/log/full"
+pkg.req_apis:
+    - stats
+    - log

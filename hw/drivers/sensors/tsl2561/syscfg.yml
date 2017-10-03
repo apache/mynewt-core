@@ -24,12 +24,6 @@ syscfg.defs:
     TSL2561_CLI:
         description: 'Enable shell support for the TSL2561'
         value: 0
-    TSL2561_LOG:
-        description: 'Enable TSL2561 logging'
-        value: 0
-    TSL2561_STATS:
-        description: 'Enable TSL2561 statistics'
-        value: 0
     TSL2561_SHELL_ITF_TYPE:
         description: 'Select interface type'
         value: 1

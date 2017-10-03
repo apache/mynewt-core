@@ -138,9 +138,7 @@ struct log_entry_hdr {
     (LOG_MODULE_TEST        == module ? "TEST"        :\
      "UNKNOWN")))))))))
 
-/*
- * Logging Implementations
- */
+/* Logging medium */
 #define LOG_STORE_CONSOLE    1
 #define LOG_STORE_CBMEM      2
 #define LOG_STORE_FCB        3

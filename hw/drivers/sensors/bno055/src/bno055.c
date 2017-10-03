@@ -34,16 +34,9 @@
 #include "sensor/temperature.h"
 #include "bno055/bno055.h"
 #include "bno055_priv.h"
-
-#if MYNEWT_VAL(BNO055_LOG)
 #include "log/log.h"
-#endif
-
-#if MYNEWT_VAL(BNO055_STATS)
 #include "stats/stats.h"
-#endif
 
-#if MYNEWT_VAL(BNO055_STATS)
 /* Define the stats section and records */
 STATS_SECT_START(bno055_stat_section)
     STATS_SECT_ENTRY(errors)
@@ -56,17 +49,11 @@ STATS_NAME_END(bno055_stat_section)
 
 /* Global variable used to hold stats data */
 STATS_SECT_DECL(bno055_stat_section) g_bno055stats;
-#endif
 
-#if MYNEWT_VAL(BNO055_LOG)
 #define LOG_MODULE_BNO055 (305)
 #define BNO055_INFO(...)  LOG_INFO(&_log, LOG_MODULE_BNO055, __VA_ARGS__)
 #define BNO055_ERR(...)   LOG_ERROR(&_log, LOG_MODULE_BNO055, __VA_ARGS__)
 static struct log _log;
-#else
-#define BNO055_INFO(...)
-#define BNO055_ERR(...)
-#endif
 
 /* Exports for the sensor API.*/
 static int bno055_sensor_read(struct sensor *, sensor_type_t,
@@ -104,9 +91,7 @@ bno055_write8(struct sensor_itf *itf, uint8_t reg, uint8_t value)
     if (rc) {
         BNO055_ERR("Failed to write to 0x%02X:0x%02X with value 0x%02X\n",
                        data_struct.address, reg, value);
-#if MYNEWT_VAL(BNO055_STATS)
         STATS_INC(g_bno055stats, errors);
-#endif
     }
 
     return rc;
@@ -142,9 +127,7 @@ bno055_writelen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
     rc = hal_i2c_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1);
     if (rc) {
         BNO055_ERR("I2C access failed at address 0x%02X\n", data_struct.address);
-#if MYNEWT_VAL(BNO055_STATS)
         STATS_INC(g_bno055stats, errors);
-#endif
         goto err;
     }
 
@@ -153,9 +136,7 @@ bno055_writelen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
     rc = hal_i2c_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, len);
     if (rc) {
         BNO055_ERR("Failed to read from 0x%02X:0x%02X\n", data_struct.address, reg);
-#if MYNEWT_VAL(BNO055_STATS)
         STATS_INC(g_bno055stats, errors);
-#endif
         goto err;
     }
 
@@ -191,9 +172,7 @@ bno055_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
     if (rc) {
         BNO055_ERR("I2C register write failed at address 0x%02X:0x%02X\n",
                    data_struct.address, reg);
-#if MYNEWT_VAL(BNO055_STATS)
         STATS_INC(g_bno055stats, errors);
-#endif
         goto err;
     }
 
@@ -203,9 +182,7 @@ bno055_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
     *value = payload;
     if (rc) {
         BNO055_ERR("Failed to read from 0x%02X:0x%02X\n", data_struct.address, reg);
-#if MYNEWT_VAL(BNO055_STATS)
         STATS_INC(g_bno055stats, errors);
-#endif
     }
 
 err:
@@ -244,9 +221,7 @@ bno055_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
     rc = hal_i2c_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1);
     if (rc) {
         BNO055_ERR("I2C access failed at address 0x%02X\n", data_struct.address);
-#if MYNEWT_VAL(BNO055_STATS)
         STATS_INC(g_bno055stats, errors);
-#endif
         goto err;
     }
 
@@ -256,9 +231,7 @@ bno055_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
     rc = hal_i2c_master_read(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1);
     if (rc) {
         BNO055_ERR("Failed to read from 0x%02X:0x%02X\n", data_struct.address, reg);
-#if MYNEWT_VAL(BNO055_STATS)
         STATS_INC(g_bno055stats, errors);
-#endif
         goto err;
     }
 
@@ -476,13 +449,10 @@ bno055_init(struct os_dev *dev, void *arg)
         goto err;
     }
 
-#if MYNEWT_VAL(BNO055_LOG)
     log_register(dev->od_name, &_log, &log_console_handler, NULL, LOG_SYSLEVEL);
-#endif
 
     sensor = &bno055->sensor;
 
-#if MYNEWT_VAL(BNO055_STATS)
     /* Initialise the stats entry */
     rc = stats_init(
         STATS_HDR(g_bno055stats),
@@ -492,7 +462,6 @@ bno055_init(struct os_dev *dev, void *arg)
     /* Register the entry with the stats registry */
     rc = stats_register(dev->od_name, STATS_HDR(g_bno055stats));
     SYSINIT_PANIC_ASSERT(rc == 0);
-#endif
 
     rc = sensor_init(sensor, dev);
     if (rc != 0) {

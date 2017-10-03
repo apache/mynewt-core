@@ -25,3 +25,7 @@ syscfg.defs:
     LOG_FCB:
         description: 'Stub'
         value: 0
+
+    LOG_CONSOLE:
+        description: 'Support logging to console.'
+        value: 1

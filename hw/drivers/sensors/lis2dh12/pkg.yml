@@ -29,8 +29,6 @@ pkg.deps:
     - "@apache-mynewt-core/hw/hal"
     - "@apache-mynewt-core/hw/sensor"
 
-pkg.deps.LIS2DH12_STATS:
-    - "@apache-mynewt-core/sys/stats/full"
-
-pkg.deps.LIS2DH12_LOG:
-    - "@apache-mynewt-core/sys/log/full"
+pkg.req_apis:
+    - stats
+    - log

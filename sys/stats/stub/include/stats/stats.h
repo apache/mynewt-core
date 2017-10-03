@@ -71,7 +71,7 @@ struct stats_hdr {
 #define STATS_NAME_END(__name)
 #define STATS_NAME_INIT_PARMS(__name) NULL, 0
 
-#define stats_init(shdr, size, cnt, map, map_cnt) 0
+#define stats_init(...) 0
 #define stats_register(name, shdr) 0
 #define stats_init_and_reg(...) 0
 #define stats_reset(shdr)
