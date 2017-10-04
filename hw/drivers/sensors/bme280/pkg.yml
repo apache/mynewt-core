@@ -19,8 +19,8 @@
 
 pkg.name: hw/drivers/sensors/bme280
 pkg.description: Driver for the BME280 light to digital sensor
-pkg.author: "Vipul Rahane <vipul@runtime.io>"
-pkg.homepage: "http://www.runtime.io/"
+pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
+pkg.homepage: "https://mynewt.apache.org"
 pkg.keywords:
     - adafruit
     - bme280

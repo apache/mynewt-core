@@ -26,7 +26,6 @@ pkg.keywords:
 
 pkg.deps:
     - sys/config
-    - mgmt/imgmgr
 
 pkg.req_apis:
     - bootloader
