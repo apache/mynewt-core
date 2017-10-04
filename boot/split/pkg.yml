@@ -24,6 +24,9 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
     - split
 
+pkg.deps:
+    - sys/config
+
 pkg.req_apis:
     - bootloader
 

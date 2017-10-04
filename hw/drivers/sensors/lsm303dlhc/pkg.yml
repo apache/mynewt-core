@@ -22,3 +22,17 @@ pkg.description: Driver for the LSM303DLHC 3 axis accel/mag
 pkg.author: "Adafruit Industries"
 pkg.homepage: "http://www.adafruit.com"
 pkg.keywords:
+    - adafruit
+    - lsm303dlhc
+    - i2c
+    - sensor
+
+pkg.deps:
+    - "@apache-mynewt-core/kernel/os"
+    - "@apache-mynewt-core/hw/hal"
+    - "@apache-mynewt-core/hw/sensor"
+
+pkg.req_apis:
+    - stats
+    - log
+

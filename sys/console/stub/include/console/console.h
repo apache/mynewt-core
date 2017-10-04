@@ -32,6 +32,8 @@ struct console_input {
 };
 
 typedef void (*console_rx_cb)(void);
+typedef int (*console_append_char_cb)(char *line, uint8_t byte);
+typedef void (*completion_cb)(char *str, console_append_char_cb cb);
 
 static int inline
 console_is_init(void)
@@ -88,7 +90,7 @@ console_set_queues(struct os_eventq *avail_queue,
 }
 
 static void inline
-console_set_completion_cb(uint8_t (*completion)(char *str, uint8_t len))
+console_set_completion_cb(void (*completion)(char *str, console_append_char_cb cb))
 {
 }
 

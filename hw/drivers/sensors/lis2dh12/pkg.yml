@@ -27,3 +27,8 @@ pkg.keywords:
 pkg.deps:
     - "@apache-mynewt-core/kernel/os"
     - "@apache-mynewt-core/hw/hal"
+    - "@apache-mynewt-core/hw/sensor"
+
+pkg.req_apis:
+    - stats
+    - log

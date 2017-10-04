@@ -47,16 +47,9 @@
 #include "sensor/light.h"
 #include "tsl2561/tsl2561.h"
 #include "tsl2561_priv.h"
-
-#if MYNEWT_VAL(TSL2561_LOG)
 #include "log/log.h"
-#endif
-
-#if MYNEWT_VAL(TSL2561_STATS)
 #include "stats/stats.h"
-#endif
 
-#if MYNEWT_VAL(TSL2561_STATS)
 /* Define the stats section and records */
 STATS_SECT_START(tsl2561_stat_section)
     STATS_SECT_ENTRY(ints_cleared)
@@ -71,17 +64,11 @@ STATS_NAME_END(tsl2561_stat_section)
 
 /* Global variable used to hold stats data */
 STATS_SECT_DECL(tsl2561_stat_section) g_tsl2561stats;
-#endif
 
-#if MYNEWT_VAL(TSL2561_LOG)
 #define LOG_MODULE_TSL2561    (2561)
 #define TSL2561_INFO(...)     LOG_INFO(&_log, LOG_MODULE_TSL2561, __VA_ARGS__)
 #define TSL2561_ERR(...)      LOG_ERROR(&_log, LOG_MODULE_TSL2561, __VA_ARGS__)
 static struct log _log;
-#else
-#define TSL2561_INFO(...)
-#define TSL2561_ERR(...)
-#endif
 
 /* Exports for the sensor API */
 static int tsl2561_sensor_read(struct sensor *, sensor_type_t,
@@ -111,9 +98,7 @@ tsl2561_write8(struct sensor_itf *itf, uint8_t reg, uint32_t value)
     if (rc) {
         TSL2561_ERR("Failed to write 0x%02X:0x%02X with value 0x%02X\n",
                     data_struct.address, reg, value);
-#if MYNEWT_VAL(TSL2561_STATS)
         STATS_INC(g_tsl2561stats, errors);
-#endif
     }
 
     return rc;
@@ -548,9 +533,7 @@ tsl2561_clear_interrupt(struct sensor_itf *itf)
         goto err;
     }
 
-#if MYNEWT_VAL(TSL2561_STATS)
     STATS_INC(g_tsl2561stats, ints_cleared);
-#endif
 
     return 0;
 err:
@@ -581,13 +564,10 @@ tsl2561_init(struct os_dev *dev, void *arg)
 
     tsl2561->cfg.mask = SENSOR_TYPE_ALL;
 
-#if MYNEWT_VAL(TSL2561_LOG)
     log_register(dev->od_name, &_log, &log_console_handler, NULL, LOG_SYSLEVEL);
-#endif
 
     sensor = &tsl2561->sensor;
 
-#if MYNEWT_VAL(TSL2561_STATS)
     /* Initialise the stats entry */
     rc = stats_init(
         STATS_HDR(g_tsl2561stats),
@@ -597,7 +577,7 @@ tsl2561_init(struct os_dev *dev, void *arg)
     /* Register the entry with the stats registry */
     rc = stats_register(dev->od_name, STATS_HDR(g_tsl2561stats));
     SYSINIT_PANIC_ASSERT(rc == 0);
-#endif
+
     rc = sensor_init(sensor, dev);
     if (rc) {
         goto err;

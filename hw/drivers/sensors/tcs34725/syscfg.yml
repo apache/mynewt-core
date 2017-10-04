@@ -21,12 +21,6 @@ syscfg.defs:
     TCS34725_CLI:
         description: 'Enable shell support for the TCS34725'
         value: 0
-    TCS34725_LOG:
-        description: 'Enable TCS34725 logging'
-        value: 0
-    TCS34725_STATS:
-        description: 'Enable TCS34725 statistics'
-        value: 0
     TCS34725_SHELL_ITF_TYPE:
         description: 'TCS34725 interface type - I2C'
         value: 1

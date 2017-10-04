@@ -21,12 +21,6 @@ syscfg.defs:
     BNO055_CLI:
         description: 'Enable shell support for the BNO055'
         value: 0
-    BNO055_LOG:
-        description: 'Enable BNO055 logging'
-        value: 0
-    BNO055_STATS:
-        description: 'Enable BNO055 statistics'
-        value: 0
     BNO055_SHELL_ITF_TYPE:
         description: 'BNO055 interface type'
         value: 1

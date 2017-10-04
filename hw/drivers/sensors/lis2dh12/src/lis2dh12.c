@@ -32,6 +32,8 @@
 #include "lis2dh12/lis2dh12.h"
 #include "lis2dh12_priv.h"
 #include "hal/hal_gpio.h"
+#include "log/log.h"
+#include "stats/stats.h"
 
 static struct hal_spi_settings spi_lis2dh12_settings = {
     .data_order = HAL_SPI_MSB_FIRST,
@@ -40,16 +42,6 @@ static struct hal_spi_settings spi_lis2dh12_settings = {
     .word_size  = HAL_SPI_WORD_SIZE_8BIT,
 };
 
-
-#if MYNEWT_VAL(LIS2DH12_LOG)
-#include "log/log.h"
-#endif
-
-#if MYNEWT_VAL(LIS2DH12_STATS)
-#include "stats/stats.h"
-#endif
-
-#if MYNEWT_VAL(LIS2DH12_STATS)
 /* Define the stats section and records */
 STATS_SECT_START(lis2dh12_stat_section)
     STATS_SECT_ENTRY(write_errors)
@@ -64,17 +56,11 @@ STATS_NAME_END(lis2dh12_stat_section)
 
 /* Global variable used to hold stats data */
 STATS_SECT_DECL(lis2dh12_stat_section) g_lis2dh12stats;
-#endif
 
-#if MYNEWT_VAL(LIS2DH12_LOG)
 #define LOG_MODULE_LIS2DH12    (212)
 #define LIS2DH12_INFO(...)     LOG_INFO(&_log, LOG_MODULE_LIS2DH12, __VA_ARGS__)
 #define LIS2DH12_ERR(...)      LOG_ERROR(&_log, LOG_MODULE_LIS2DH12, __VA_ARGS__)
 static struct log _log;
-#else
-#define LIS2DH12_INFO(...)
-#define LIS2DH12_ERR(...)
-#endif
 
 /* Exports for the sensor API */
 static int lis2dh12_sensor_read(struct sensor *, sensor_type_t,
@@ -123,9 +109,7 @@ lis2dh12_i2c_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
     rc = hal_i2c_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1);
     if (rc) {
         LIS2DH12_ERR("I2C access failed at address 0x%02X\n", data_struct.address);
-#if MYNEWT_VAL(LIS2DH12_STATS)
         STATS_INC(g_lis2dh12stats, read_errors);
-#endif
         goto err;
     }
 
@@ -135,9 +119,7 @@ lis2dh12_i2c_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
     rc = hal_i2c_master_read(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1);
     if (rc) {
         LIS2DH12_ERR("Failed to read from 0x%02X:0x%02X\n", data_struct.address, addr);
-#if MYNEWT_VAL(LIS2DH12_STATS)
         STATS_INC(g_lis2dh12stats, read_errors);
-#endif
         goto err;
     }
 
@@ -189,9 +171,7 @@ lis2dh12_spi_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
         rc = SYS_EINVAL;
         LIS2DH12_ERR("SPI_%u register write failed addr:0x%02X\n",
                      itf->si_num, addr);
-#if MYNEWT_VAL(LIS2DH12_STATS)
         STATS_INC(g_lis2dh12stats, read_errors);
-#endif
         goto err;
     }
 
@@ -202,9 +182,7 @@ lis2dh12_spi_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
             rc = SYS_EINVAL;
             LIS2DH12_ERR("SPI_%u read failed addr:0x%02X\n",
                          itf->si_num, addr);
-#if MYNEWT_VAL(LIS2DH12_STATS)
             STATS_INC(g_lis2dh12stats, read_errors);
-#endif
             goto err;
         }
         payload[i] = retval;
@@ -251,9 +229,7 @@ lis2dh12_i2c_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
     rc = hal_i2c_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1);
     if (rc) {
         LIS2DH12_ERR("I2C access failed at address 0x%02X\n", data_struct.address);
-#if MYNEWT_VAL(LIS2DH12_STATS)
         STATS_INC(g_lis2dh12stats, write_errors);
-#endif
         goto err;
     }
 
@@ -297,9 +273,7 @@ lis2dh12_spi_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
         rc = SYS_EINVAL;
         LIS2DH12_ERR("SPI_%u register write failed addr:0x%02X\n",
                      itf->si_num, addr);
-#if MYNEWT_VAL(LIS2DH12_STATS)
         STATS_INC(g_lis2dh12stats, write_errors);
-#endif
         goto err;
     }
 
@@ -310,9 +284,7 @@ lis2dh12_spi_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
             rc = SYS_EINVAL;
             LIS2DH12_ERR("SPI_%u write failed addr:0x%02X:0x%02X\n",
                          itf->si_num, addr);
-#if MYNEWT_VAL(LIS2DH12_STATS)
             STATS_INC(g_lis2dh12stats, write_errors);
-#endif
             goto err;
         }
     }
@@ -885,13 +857,10 @@ lis2dh12_init(struct os_dev *dev, void *arg)
 
     lis2dh12->cfg.lc_s_mask = SENSOR_TYPE_ALL;
 
-#if MYNEWT_VAL(LIS2DH12_LOG)
     log_register(dev->od_name, &_log, &log_console_handler, NULL, LOG_SYSLEVEL);
-#endif
 
     sensor = &lis2dh12->sensor;
 
-#if MYNEWT_VAL(LIS2DH12_STATS)
     /* Initialise the stats entry */
     rc = stats_init(
         STATS_HDR(g_lis2dh12stats),
@@ -901,7 +870,7 @@ lis2dh12_init(struct os_dev *dev, void *arg)
     /* Register the entry with the stats registry */
     rc = stats_register(dev->od_name, STATS_HDR(g_lis2dh12stats));
     SYSINIT_PANIC_ASSERT(rc == 0);
-#endif
+
     rc = sensor_init(sensor, dev);
     if (rc) {
         goto err;

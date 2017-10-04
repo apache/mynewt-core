@@ -33,12 +33,6 @@ syscfg.defs:
     BME280_CLI:
         description: 'Enable shell support for the BME280'
         value: 0
-    BME280_LOG:
-        description: 'Enable BME280 logging'
-        value: 0
-    BME280_STATS:
-        description: 'Enable BME280 statistics'
-        value: 0
     BME280_SPEC_CALC:
         description: 'BME280 Spec calculation insetad of built in one'
         value : 1

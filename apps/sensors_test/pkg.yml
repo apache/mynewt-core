@@ -25,21 +25,19 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps:
-    - test/flash_test
-    - test/i2c_scan
     - kernel/os
     - hw/sensor
     - boot/bootutil
-    - sys/shell
-    - sys/config
     - sys/console/full
-    - sys/id
     - sys/log/full
     - sys/stats/full
-    - boot/split
-    - mgmt/imgmgr
-    - mgmt/newtmgr/transport/ble
     - hw/sensor/creator
+    - sys/reboot
+    - mgmt/newtmgr/transport/ble
+    - sys/id
+    - mgmt/imgmgr
+    - test/flash_test
+    - test/i2c_scan
 
 pkg.deps.SENSOR_OIC:
    #- mgmt/oicmgr
