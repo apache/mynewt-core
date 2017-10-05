@@ -33,14 +33,8 @@
 #include "ms5837_priv.h"
 #include "os/os_cputime.h"
 #include "console/console.h"
-
-#if MYNEWT_VAL(MS5837_LOG)
 #include "log/log.h"
-#endif
-
-#if MYNEWT_VAL(MS5837_STATS)
 #include "stats/stats.h"
-#endif
 
 static uint16_t cnv_time[6] = {
     MS5837_CNV_TIME_OSR_256,
@@ -51,7 +45,6 @@ static uint16_t cnv_time[6] = {
     MS5837_CNV_TIME_OSR_8192
 };
 
-#if MYNEWT_VAL(MS5837_STATS)
 /* Define the stats section and records */
 STATS_SECT_START(ms5837_stat_section)
     STATS_SECT_ENTRY(read_errors)
@@ -68,17 +61,11 @@ STATS_NAME_END(ms5837_stat_section)
 
 /* Global variable used to hold stats data */
 STATS_SECT_DECL(ms5837_stat_section) g_ms5837stats;
-#endif
 
-#if MYNEWT_VAL(MS5837_LOG)
 #define LOG_MODULE_MS5837    (5837)
 #define MS5837_INFO(...)     LOG_INFO(&_log, LOG_MODULE_MS5837, __VA_ARGS__)
 #define MS5837_ERR(...)      LOG_ERROR(&_log, LOG_MODULE_MS5837, __VA_ARGS__)
 static struct log _log;
-#else
-#define MS5837_INFO(...)
-#define MS5837_ERR(...)
-#endif
 
 /* Exports for the sensor API */
 static int ms5837_sensor_read(struct sensor *, sensor_type_t,
@@ -114,15 +101,12 @@ ms5837_init(struct os_dev *dev, void *arg)
 
     ms5837 = (struct ms5837 *)dev;
 
-#if MYNEWT_VAL(MS5837_LOG)
     log_register(dev->od_name, &_log, &log_console_handler, NULL, LOG_SYSLEVEL);
-#endif
 
     sensor = &ms5837->sensor;
 
     itf = SENSOR_GET_ITF(sensor);
 
-#if MYNEWT_VAL(MS5837_STATS)
     /* Initialise the stats entry */
     rc = stats_init(
         STATS_HDR(g_ms5837stats),
@@ -132,7 +116,7 @@ ms5837_init(struct os_dev *dev, void *arg)
     /* Register the entry with the stats registry */
     rc = stats_register(dev->od_name, STATS_HDR(g_ms5837stats));
     SYSINIT_PANIC_ASSERT(rc == 0);
-#endif
+
     rc = sensor_init(sensor, dev);
     if (rc != 0) {
         goto err;
@@ -346,9 +330,7 @@ ms5837_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
     if (rc) {
         MS5837_ERR("I2C write command write failed at address 0x%02X\n",
                    data_struct.address);
-#if MYNEWT_VAL(MS5837_STATS)
         STATS_INC(g_ms5837stats, write_errors);
-#endif
         goto err;
     }
 
@@ -388,9 +370,7 @@ ms5837_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
     if (rc) {
         MS5837_ERR("I2C read command write failed at address 0x%02X\n",
                    data_struct.address);
-#if MYNEWT_VAL(MS5837_STATS)
         STATS_INC(g_ms5837stats, write_errors);
-#endif
         goto err;
     }
 
@@ -400,9 +380,7 @@ ms5837_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
     rc = hal_i2c_master_read(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1);
     if (rc) {
         MS5837_ERR("Failed to read from 0x%02X:0x%02X\n", data_struct.address, addr);
-#if MYNEWT_VAL(MS5837_STATS)
         STATS_INC(g_ms5837stats, read_errors);
-#endif
         goto err;
     }
 
@@ -445,9 +423,7 @@ ms5837_read_eeprom(struct sensor_itf *itf, uint16_t *coeff)
     if (rc) {
         rc = SYS_EINVAL;
         MS5837_ERR("Failure in CRC, 0x%02X\n", payload[idx]);
-#if MYNEWT_VAL(MS5837_STATS)
         STATS_INC(g_ms5837stats, eeprom_crc_errors);
-#endif
         goto err;
     }
 
