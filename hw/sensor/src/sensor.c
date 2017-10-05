@@ -1113,14 +1113,14 @@ sensor_watermark_cmp_quat(struct sensor_quat_data *d_sqd,
     trigger = 0;
 
     trigger =
-        (SENSOR_DATA_CMP_LT(d_sqd, h_sqd, sqd_x) ||
-         SENSOR_DATA_CMP_GT(d_sqd, l_sqd, sqd_x));
+        (SENSOR_DATA_CMP_LT(d_sqd, l_sqd, sqd_x) ||
+         SENSOR_DATA_CMP_GT(d_sqd, h_sqd, sqd_x));
     trigger |=
-        (SENSOR_DATA_CMP_LT(d_sqd, h_sqd, sqd_y) ||
-         SENSOR_DATA_CMP_GT(d_sqd, l_sqd, sqd_y));
+        (SENSOR_DATA_CMP_LT(d_sqd, l_sqd, sqd_y) ||
+         SENSOR_DATA_CMP_GT(d_sqd, h_sqd, sqd_y));
     trigger |=
-        (SENSOR_DATA_CMP_LT(d_sqd, h_sqd, sqd_z) ||
-         SENSOR_DATA_CMP_GT(d_sqd, l_sqd, sqd_z));
+        (SENSOR_DATA_CMP_LT(d_sqd, l_sqd, sqd_z) ||
+         SENSOR_DATA_CMP_GT(d_sqd, h_sqd, sqd_z));
 
     return trigger;
 }
@@ -1135,14 +1135,14 @@ sensor_watermark_cmp_accel(struct sensor_accel_data *d_sad,
     trigger = 0;
 
     trigger =
-        (SENSOR_DATA_CMP_LT(d_sad, h_sad, sad_x) ||
-         SENSOR_DATA_CMP_GT(d_sad, l_sad, sad_x));
+        (SENSOR_DATA_CMP_LT(d_sad, l_sad, sad_x) ||
+         SENSOR_DATA_CMP_GT(d_sad, h_sad, sad_x));
     trigger |=
-        (SENSOR_DATA_CMP_LT(d_sad, h_sad, sad_y) ||
-         SENSOR_DATA_CMP_GT(d_sad, l_sad, sad_y));
+        (SENSOR_DATA_CMP_LT(d_sad, l_sad, sad_y) ||
+         SENSOR_DATA_CMP_GT(d_sad, h_sad, sad_y));
     trigger |=
-        (SENSOR_DATA_CMP_LT(d_sad, h_sad, sad_z) ||
-         SENSOR_DATA_CMP_GT(d_sad, l_sad, sad_z));
+        (SENSOR_DATA_CMP_LT(d_sad, l_sad, sad_z) ||
+         SENSOR_DATA_CMP_GT(d_sad, h_sad, sad_z));
 
     return trigger;
 }
@@ -1157,14 +1157,14 @@ sensor_watermark_cmp_euler(struct sensor_euler_data *d_sed,
     trigger = 0;
 
     trigger =
-        (SENSOR_DATA_CMP_LT(d_sed, h_sed, sed_h) ||
-         SENSOR_DATA_CMP_GT(d_sed, l_sed, sed_h));
+        (SENSOR_DATA_CMP_LT(d_sed, l_sed, sed_h) ||
+         SENSOR_DATA_CMP_GT(d_sed, h_sed, sed_h));
     trigger |=
-        (SENSOR_DATA_CMP_LT(d_sed, h_sed, sed_r) ||
-         SENSOR_DATA_CMP_GT(d_sed, l_sed, sed_r));
+        (SENSOR_DATA_CMP_LT(d_sed, l_sed, sed_r) ||
+         SENSOR_DATA_CMP_GT(d_sed, h_sed, sed_r));
     trigger |=
-        (SENSOR_DATA_CMP_LT(d_sed, h_sed, sed_p) ||
-         SENSOR_DATA_CMP_GT(d_sed, l_sed, sed_p));
+        (SENSOR_DATA_CMP_LT(d_sed, l_sed, sed_p) ||
+         SENSOR_DATA_CMP_GT(d_sed, h_sed, sed_p));
 
     return trigger;
 }
@@ -1179,14 +1179,14 @@ sensor_watermark_cmp_gyro(struct sensor_gyro_data *d_sgd,
     trigger = 0;
 
     trigger =
-        (SENSOR_DATA_CMP_LT(d_sgd, h_sgd, sgd_x) ||
-         SENSOR_DATA_CMP_GT(d_sgd, l_sgd, sgd_x));
+        (SENSOR_DATA_CMP_LT(d_sgd, l_sgd, sgd_x) ||
+         SENSOR_DATA_CMP_GT(d_sgd, h_sgd, sgd_x));
     trigger |=
-        (SENSOR_DATA_CMP_LT(d_sgd, h_sgd, sgd_y) ||
-         SENSOR_DATA_CMP_GT(d_sgd, l_sgd, sgd_y));
+        (SENSOR_DATA_CMP_LT(d_sgd, l_sgd, sgd_y) ||
+         SENSOR_DATA_CMP_GT(d_sgd, h_sgd, sgd_y));
     trigger |=
-        (SENSOR_DATA_CMP_LT(d_sgd, h_sgd, sgd_z) ||
-         SENSOR_DATA_CMP_GT(d_sgd, l_sgd, sgd_z));
+        (SENSOR_DATA_CMP_LT(d_sgd, l_sgd, sgd_z) ||
+         SENSOR_DATA_CMP_GT(d_sgd, h_sgd, sgd_z));
 
     return trigger;
 }
@@ -1201,14 +1201,14 @@ sensor_watermark_cmp_mag(struct sensor_mag_data *d_smd,
     trigger = 0;
 
     trigger =
-         (SENSOR_DATA_CMP_LT(d_smd, h_smd, smd_x) ||
-          SENSOR_DATA_CMP_GT(d_smd, l_smd, smd_x));
+         (SENSOR_DATA_CMP_LT(d_smd, l_smd, smd_x) ||
+          SENSOR_DATA_CMP_GT(d_smd, h_smd, smd_x));
     trigger |=
-         (SENSOR_DATA_CMP_LT(d_smd, h_smd, smd_y) ||
-          SENSOR_DATA_CMP_GT(d_smd, l_smd, smd_y));
+         (SENSOR_DATA_CMP_LT(d_smd, l_smd, smd_y) ||
+          SENSOR_DATA_CMP_GT(d_smd, h_smd, smd_y));
     trigger |=
-         (SENSOR_DATA_CMP_LT(d_smd, h_smd, smd_z) ||
-          SENSOR_DATA_CMP_GT(d_smd, l_smd, smd_z));
+         (SENSOR_DATA_CMP_LT(d_smd, l_smd, smd_z) ||
+          SENSOR_DATA_CMP_GT(d_smd, h_smd, smd_z));
 
     return trigger;
 }
@@ -1223,8 +1223,8 @@ sensor_watermark_cmp_temp(struct sensor_temp_data *d_std,
     trigger = 0;
 
     trigger =
-        (SENSOR_DATA_CMP_LT(d_std, h_std, std_temp) ||
-         SENSOR_DATA_CMP_GT(d_std, l_std, std_temp));
+        (SENSOR_DATA_CMP_LT(d_std, l_std, std_temp) ||
+         SENSOR_DATA_CMP_GT(d_std, h_std, std_temp));
 
     return trigger;
 }
@@ -1239,14 +1239,14 @@ sensor_watermark_cmp_light(struct sensor_light_data *d_sld,
     trigger = 0;
 
     trigger =
-        (SENSOR_DATA_CMP_LT(d_sld, h_sld, sld_full) ||
-         SENSOR_DATA_CMP_GT(d_sld, l_sld, sld_full));
+        (SENSOR_DATA_CMP_LT(d_sld, l_sld, sld_full) ||
+         SENSOR_DATA_CMP_GT(d_sld, h_sld, sld_full));
     trigger |=
-        (SENSOR_DATA_CMP_LT(d_sld, h_sld, sld_ir) ||
-         SENSOR_DATA_CMP_GT(d_sld, l_sld, sld_ir));
+        (SENSOR_DATA_CMP_LT(d_sld, l_sld, sld_ir) ||
+         SENSOR_DATA_CMP_GT(d_sld, h_sld, sld_ir));
     trigger |=
-        (SENSOR_DATA_CMP_LT(d_sld, h_sld, sld_lux) ||
-         SENSOR_DATA_CMP_GT(d_sld, l_sld, sld_lux));
+        (SENSOR_DATA_CMP_LT(d_sld, l_sld, sld_lux) ||
+         SENSOR_DATA_CMP_GT(d_sld, h_sld, sld_lux));
 
     return trigger;
 }
@@ -1261,26 +1261,26 @@ sensor_watermark_cmp_color(struct sensor_color_data *d_scd,
     trigger = 0;
 
     trigger =
-        (SENSOR_DATA_CMP_LT(d_scd, h_scd, scd_r) ||
-         SENSOR_DATA_CMP_GT(d_scd, l_scd, scd_r));
+        (SENSOR_DATA_CMP_LT(d_scd, l_scd, scd_r) ||
+         SENSOR_DATA_CMP_GT(d_scd, h_scd, scd_r));
     trigger |=
-        (SENSOR_DATA_CMP_LT(d_scd, h_scd, scd_g) ||
-         SENSOR_DATA_CMP_GT(d_scd, l_scd, scd_g));
+        (SENSOR_DATA_CMP_LT(d_scd, l_scd, scd_g) ||
+         SENSOR_DATA_CMP_GT(d_scd, h_scd, scd_g));
     trigger |=
-        (SENSOR_DATA_CMP_LT(d_scd, h_scd, scd_b) ||
-         SENSOR_DATA_CMP_GT(d_scd, l_scd, scd_b));
+        (SENSOR_DATA_CMP_LT(d_scd, l_scd, scd_b) ||
+         SENSOR_DATA_CMP_GT(d_scd, h_scd, scd_b));
     trigger |=
-        (SENSOR_DATA_CMP_LT(d_scd, h_scd, scd_c) ||
-         SENSOR_DATA_CMP_GT(d_scd, l_scd, scd_c));
+        (SENSOR_DATA_CMP_LT(d_scd, l_scd, scd_c) ||
+         SENSOR_DATA_CMP_GT(d_scd, h_scd, scd_c));
     trigger |=
-        (SENSOR_DATA_CMP_LT(d_scd, h_scd, scd_lux) ||
-         SENSOR_DATA_CMP_GT(d_scd, l_scd, scd_lux));
+        (SENSOR_DATA_CMP_LT(d_scd, l_scd, scd_lux) ||
+         SENSOR_DATA_CMP_GT(d_scd, h_scd, scd_lux));
     trigger |=
-        (SENSOR_DATA_CMP_LT(d_scd, h_scd, scd_colortemp) ||
-         SENSOR_DATA_CMP_GT(d_scd, l_scd, scd_colortemp));
+        (SENSOR_DATA_CMP_LT(d_scd, l_scd, scd_colortemp) ||
+         SENSOR_DATA_CMP_GT(d_scd, h_scd, scd_colortemp));
     trigger |=
-        (SENSOR_DATA_CMP_LT(d_scd, h_scd, scd_ir) ||
-         SENSOR_DATA_CMP_GT(d_scd, l_scd, scd_ir));
+        (SENSOR_DATA_CMP_LT(d_scd, l_scd, scd_ir) ||
+         SENSOR_DATA_CMP_GT(d_scd, h_scd, scd_ir));
 
     return trigger;
 }
@@ -1295,8 +1295,8 @@ sensor_watermark_cmp_press(struct sensor_press_data *d_spd,
     trigger = 0;
 
     trigger =
-        (SENSOR_DATA_CMP_LT(d_spd, h_spd, spd_press) ||
-         SENSOR_DATA_CMP_GT(d_spd, l_spd, spd_press));
+        (SENSOR_DATA_CMP_LT(d_spd, l_spd, spd_press) ||
+         SENSOR_DATA_CMP_GT(d_spd, h_spd, spd_press));
 
     return trigger;
 }
@@ -1311,8 +1311,8 @@ sensor_watermark_cmp_humid(struct sensor_humid_data *d_shd,
     trigger = 0;
 
     trigger =
-        (SENSOR_DATA_CMP_LT(d_shd, h_shd, shd_humid) ||
-         SENSOR_DATA_CMP_GT(d_shd, l_shd, shd_humid));
+        (SENSOR_DATA_CMP_LT(d_shd, l_shd, shd_humid) ||
+         SENSOR_DATA_CMP_GT(d_shd, h_shd, shd_humid));
 
     return trigger;
 }
