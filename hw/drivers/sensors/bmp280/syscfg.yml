@@ -36,12 +36,6 @@ syscfg.defs:
     BMP280_CLI:
         description: 'Enable shell support for the BMP280'
         value: 0
-    BMP280_LOG:
-        description: 'Enable BMP280 logging'
-        value: 0
-    BMP280_STATS:
-        description: 'Enable BMP280 statistics'
-        value: 0
     BMP280_SPEC_CALC:
         description: 'BMP280 Spec calculation instead of built in one'
         value : 1
