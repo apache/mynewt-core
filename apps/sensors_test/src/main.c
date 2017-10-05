@@ -25,9 +25,8 @@
 #include <hal/hal_gpio.h>
 #include <hal/hal_flash.h>
 #include <console/console.h>
-#include <shell/shell.h>
-#include <log/log.h>
 #include <config/config.h>
+#include <log/log.h>
 #include <sensor/sensor.h>
 #include "flash_map/flash_map.h"
 #include <hal/hal_system.h>

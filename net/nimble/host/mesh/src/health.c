@@ -99,6 +99,7 @@ static size_t health_get_current(struct bt_mesh_model *mod,
 			fault_count = 0;
 		} else {
 			sys_put_le16(company_id, company_ptr);
+			net_buf_simple_add(msg, fault_count);
 		}
 	} else {
 		BT_WARN("No callback for getting faults");
@@ -205,6 +206,7 @@ static void health_fault_test(struct bt_mesh_model *model,
 	struct bt_mesh_health *srv = model->user_data;
 	u16_t company_id;
 	u8_t test_id;
+	int rc;
 
 	BT_DBG("");
 
@@ -214,7 +216,11 @@ static void health_fault_test(struct bt_mesh_model *model,
 	BT_DBG("test 0x%02x company 0x%04x", test_id, company_id);
 
 	if (srv->fault_test) {
-		srv->fault_test(model, test_id, company_id);
+		rc = srv->fault_test(model, test_id, company_id);
+		if (rc) {
+			BT_WARN("Running fault test failed with err %d", rc);
+			goto done;
+		}
 	}
 
 	health_get_registered(model, company_id, msg);
@@ -223,6 +229,7 @@ static void health_fault_test(struct bt_mesh_model *model,
 		BT_ERR("Unable to send Health Current Status response");
 	}
 
+done:
 	os_mbuf_free_chain(msg);
 }
 
@@ -283,11 +290,10 @@ static void send_health_period_status(struct bt_mesh_model *model,
 {
 	/* Needed size: opcode (2 bytes) + msg + MIC */
 	struct os_mbuf *msg = NET_BUF_SIMPLE(2 + 1 + 4);
-	struct bt_mesh_health *srv = model->user_data;
 
 	bt_mesh_model_msg_init(msg, OP_HEALTH_PERIOD_STATUS);
 
-	net_buf_simple_add_u8(msg, srv->period);
+	net_buf_simple_add_u8(msg, model->pub->period_div);
 
 	bt_mesh_model_send(model, ctx, msg, NULL, NULL);
 	os_mbuf_free_chain(msg);
@@ -306,7 +312,6 @@ static void health_period_set_unrel(struct bt_mesh_model *model,
 				    struct bt_mesh_msg_ctx *ctx,
 				    struct os_mbuf *buf)
 {
-	struct bt_mesh_health *srv = model->user_data;
 	u8_t period;
 
 	period = net_buf_simple_pull_u8(buf);
@@ -317,7 +322,7 @@ static void health_period_set_unrel(struct bt_mesh_model *model,
 
 	BT_DBG("period %u", period);
 
-	srv->period = period;
+	model->pub->period_div = period;
 }
 
 static void health_period_set(struct bt_mesh_model *model,
@@ -349,16 +354,13 @@ const struct bt_mesh_model_op bt_mesh_health_op[] = {
 static void health_pub(struct bt_mesh_model *mod)
 {
 	struct os_mbuf *msg = NET_BUF_SIMPLE(HEALTH_STATUS_SIZE);
-	struct bt_mesh_health *srv = mod->user_data;
 	size_t count;
 	int err;
 
 	BT_DBG("");
 
 	count = health_get_current(mod, msg);
-	if (count) {
-		mod->pub->period_div = srv->period;
-	} else {
+	if (!count) {
 		mod->pub->period_div = 0;
 	}
 

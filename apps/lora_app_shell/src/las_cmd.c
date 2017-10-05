@@ -238,7 +238,7 @@ las_parse_bool(char *str)
     } else if (!strcmp(str, "1")) {
         rc = 1;
     } else {
-        console_printf("Invalid value. Valid values are 0 or 1");
+        console_printf("Invalid value. Valid values are 0 or 1\n");
         rc = -1;
     }
 
@@ -279,12 +279,12 @@ las_cmd_wr_mib(int argc, char **argv)
             if (!strcmp(argv[2], "A")) {
                 mib.Param.Class = CLASS_A;
             } else if (!strcmp(argv[2], "B")) {
-                console_printf("Class B devices currently not supported");
+                console_printf("Class B devices currently not supported\n");
                 return 0;
             } else if (!strcmp(argv[2], "C")) {
                 mib.Param.Class = CLASS_C;
             } else {
-                console_printf("Invalid value. Valid values are A, B or C");
+                console_printf("Invalid value. Valid values are A, B or C\n");
                 return 0;
             }
             break;
@@ -311,14 +311,14 @@ las_cmd_wr_mib(int argc, char **argv)
         case MIB_NET_ID:
             mib.Param.NetID = (uint32_t)parse_ull(argv[2], &rc);
             if (rc) {
-                console_printf("Unable to parse value");
+                console_printf("Unable to parse value\n");
                 return 0;
             }
             break;
         case MIB_DEV_ADDR:
             mib.Param.DevAddr = (uint32_t)parse_ull(argv[2], &rc);
             if (rc) {
-                console_printf("Unable to parse value");
+                console_printf("Unable to parse value\n");
                 return 0;
             }
             break;
@@ -326,7 +326,7 @@ las_cmd_wr_mib(int argc, char **argv)
             rc = parse_byte_stream(argv[2], LORA_KEY_LEN, key, &plen);
             if (rc || (plen != LORA_KEY_LEN)) {
                 console_printf("Key does not parse. Must be 16 bytes"
-                               " and separated by : or -");
+                               " and separated by : or -\n");
                 return 0;
             }
             mib.Param.NwkSKey = key;
@@ -335,7 +335,7 @@ las_cmd_wr_mib(int argc, char **argv)
             rc = parse_byte_stream(argv[2], LORA_KEY_LEN, key, &plen);
             if (rc || (plen != LORA_KEY_LEN)) {
                 console_printf("Key does not parse. Must be 16 bytes"
-                               " and separated by : or -");
+                               " and separated by : or -\n");
                 return 0;
             }
             mib.Param.AppSKey = key;
@@ -382,7 +382,7 @@ las_cmd_wr_mib(int argc, char **argv)
             rc = parse_byte_stream(argv[2], mask_len, key, &plen);
             if (rc || (plen != mask_len)) {
                 console_printf("Mask does not parse. Must be %d bytes"
-                               " and separated by : or -", mask_len);
+                               " and separated by : or -\n", mask_len);
                 return 0;
             }
 
@@ -423,14 +423,14 @@ las_cmd_wr_mib(int argc, char **argv)
         case MIB_CHANNELS_DEFAULT_DATARATE:
             mib.Param.ChannelsDefaultDatarate = parse_ll(argv[2], &rc);
             if (rc) {
-                console_printf("Unable to parse value");
+                console_printf("Unable to parse value\n");
                 return 0;
             }
             break;
         case MIB_CHANNELS_DATARATE:
             mib.Param.ChannelsDatarate = parse_ll(argv[2], &rc);
             if (rc) {
-                console_printf("Unable to parse value");
+                console_printf("Unable to parse value\n");
                 return 0;
             }
             break;
@@ -510,7 +510,7 @@ las_cmd_rd_mib(int argc, char **argv)
     /* Display the value */
     switch (mibGet.Type) {
         case MIB_DEVICE_CLASS:
-            console_printf("%d\n", mibGet.Param.Class);
+            console_printf("%c\n", 'A' + mibGet.Param.Class);
             break;
         case MIB_NETWORK_JOINED:
             console_printf("%d\n", mibGet.Param.IsNetworkJoined);
@@ -786,7 +786,7 @@ cmd_app_port_err:
     console_printf("\tlas_app_port open <port num>\n");
     console_printf("\tlas_app_port close <port num>\n");
     console_printf("\tlas_app_port cfg <port num> <datarate> <retries>\n");
-    console_printf("\tlas_app_port show <port num | all>\n");
+    console_printf("\not implemented! las_app_port show <port num | all>\n");
     return 0;
 }
 
