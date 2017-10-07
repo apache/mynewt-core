@@ -8,7 +8,7 @@ OS are called "counting" semaphores as they are allowed to have more
 than one token (explained below).
 
 Description
-~~~~~~~~~~~
+------------
 
 A semaphore is a fairly simple construct consisting of a queue for
 waiting tasks and the number of tokens currently owned by the semaphore.
@@ -62,7 +62,7 @@ bell rings as there are button presses. In other words, each call to
 *os\_sem\_release* adds exactly one token.
 
 Data structures
-~~~~~~~~~~~~~~~
+----------------
 
 .. code:: c
 
@@ -83,30 +83,10 @@ Data structures
 | sem\_tokens   | Current number of tokens                            |
 +---------------+-----------------------------------------------------+
 
-List of Functions
-~~~~~~~~~~~~~~~~~
+API
+----
 
-The functions available in semaphore are:
+.. doxygengroup:: OSSem
+    :content-only:
 
-+--------------+----------------+
-| **Function** | **Description* |
-|              | *              |
-+==============+================+
-| `os\_sem\_in | Initialize a   |
-| it <os_sem_i | semaphore with |
-| nit>`__      | a given number |
-|              | of tokens.     |
-+--------------+----------------+
-| `os\_sem\_pe | Wait for a     |
-| nd <os_sem_p | semaphore for  |
-| end>`__      | a given amount |
-|              | of time.       |
-+--------------+----------------+
-| `os\_sem\_re | Release a      |
-| lease <os_se | semaphore that |
-| m_release>`_ | you are        |
-| _            | holding. This  |
-|              | adds a token   |
-|              | to the         |
-|              | semaphore.     |
-+--------------+----------------+
+

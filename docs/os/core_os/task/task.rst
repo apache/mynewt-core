@@ -329,37 +329,8 @@ Data structures
 |              | task           |
 +--------------+----------------+
 
- ## List of Functions
+API
+-------
 
-The functions available in task are:
-
-+--------------+----------------+
-| **Function** | **Description* |
-|              | *              |
-+==============+================+
-| `os\_task\_i | Called to      |
-| nit <os_task | create a task. |
-| _init.html>`__ | This adds the  |
-|              | task object to |
-|              | the list of    |
-|              | ready to run   |
-|              | tasks.         |
-+--------------+----------------+
-| `os\_task\_c | Returns the    |
-| ount <os_tas | number of      |
-| k_count.html>` | tasks that     |
-| __           | have been      |
-|              | created.       |
-+--------------+----------------+
-| `os\_task\_i | Populates the  |
-| nfo\_get\_ne | os task info   |
-| xt <os_task_ | structure      |
-| info_get_nex | given with     |
-| t.html>`__     | task           |
-|              | information.   |
-+--------------+----------------+
-| `os\_task\_r | Removes a task |
-| emove <os_ta | from the task  |
-| sk_remove.md | list.          |
-| >`__         |                |
-+--------------+----------------+
+.. doxygengroup:: OSTask
+    :content-only:

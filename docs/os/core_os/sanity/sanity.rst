@@ -30,7 +30,7 @@ Description
 -----------
 
 Sanity Task
-~~~~~~~~~~~
+-----------
 
 Mynewt OS uses the OS Idle task to check sanity. The ``SANITY_INTERVAL``
 syscfg setting specifies the interval in seconds to perform the sanity
@@ -50,7 +50,7 @@ check in with the sanity task, with the ``sanity_itvl`` parameter in the
 must register in with the sanity task.
 
 Checking in with Sanity Task
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-----------------------------
 
 The task must then register in with the sanity task every
 ``sanity_itvl`` seconds. In order to do that, the task should call the
@@ -101,7 +101,7 @@ callout to checkin with the sanity task every 50 seconds:
     }
 
 Registering a Custom Sanity Check
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-----------------------------------
 
 If a particular task wants to further hook into the sanity framework to
 perform other checks during the sanity task's operation, it can do so by
@@ -164,7 +164,7 @@ Data structures
 ---------------
 
 OS Sanity Check
-~~~~~~~~~~~~~~~
+----------------
 
 .. code:: c
 
@@ -225,39 +225,8 @@ OS Sanity Check
 |              | is called.     |
 +--------------+----------------+
 
-List of Functions
+API
 -----------------
 
-The functions available in sanity are:
-
-+--------------+----------------+
-| **Function** | **Description* |
-|              | *              |
-+==============+================+
-| `os\_sanity\ | Initialize the |
-| _check\_init | given sanity   |
-|  <os_sanity_ | check.         |
-| check_init.m |                |
-| d>`__        |                |
-+--------------+----------------+
-| `os\_sanity\ | Register the   |
-| _check\_regi | given sanity   |
-| ster <os_san | check with the |
-| ity_check_re | sanity task.   |
-| gister.html>`_ |                |
-| _            |                |
-+--------------+----------------+
-| `os\_sanity\ | Reset the      |
-| _check\_rese | given sanity   |
-| t <os_sanity | check.         |
-| _check_reset |                |
-| .html>`__      |                |
-+--------------+----------------+
-| `os\_sanity\ | Informs the    |
-| _task\_check | sanity task    |
-| in <os_sanit | that the given |
-| y_task_check | task is still  |
-| in.html>`__    | alive and      |
-|              | working        |
-|              | normally.      |
-+--------------+----------------+
+.. doxygengroup:: OSSanity
+    :content-only:

@@ -33,44 +33,8 @@ here (other than in the API descriptions themselves) as the msys API is
 used in exactly the same manner as the mbuf API. The only difference is
 that mbuf pools are added to msys by calling ``os_msys_register().``
 
-List of Functions
-~~~~~~~~~~~~~~~~~
+API
+-----------------
 
-The functions available in msys are:
-
-+--------------+----------------+
-| **Function** | **Description* |
-|              | *              |
-+==============+================+
-| `os\_msys\_g | Retrieve an    |
-| et <os_msys_ | mbuf from the  |
-| get.html>`__   | system mbuf    |
-|              | pools with the |
-|              | given number   |
-|              | of bytes       |
-|              | available in   |
-|              | the mbuf.      |
-+--------------+----------------+
-| `os\_msys\_g | Retrieve a     |
-| et\_pkthdr < | packet header  |
-| os_msys_get_ | mbuf from the  |
-| pkthdr.html>`_ | system mbuf    |
-| _            | pools with the |
-|              | given number   |
-|              | of bytes       |
-|              | available for  |
-|              | the user       |
-|              | header in the  |
-|              | mbuf.          |
-+--------------+----------------+
-| `os\_msys\_r | Register an    |
-| egister <os_ | mbuf pool for  |
-| msys_registe | use as a       |
-| r.html>`__     | system mbuf    |
-|              | pool.          |
-+--------------+----------------+
-| `os\_msys\_r | Resets msys    |
-| eset <os_msy | module.        |
-| s_reset.html>` |                |
-| __           |                |
-+--------------+----------------+
+.. doxygengroup:: OSMsys
+    :content-only:

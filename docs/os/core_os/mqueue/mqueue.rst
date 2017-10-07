@@ -8,7 +8,7 @@ post an event to the task monitoring that queue. When the task handles
 the event, it processes each packet on the packet queue.
 
 Using Mqueue
-~~~~~~~~~~~~
+--------------
 
 The following code sample demonstrates how to use an mqueue. In this
 example:
@@ -79,7 +79,7 @@ Presumably, some other code will call this API.
     }
 
 Data Structures
-~~~~~~~~~~~~~~~
+----------------
 
 .. code:: c
 
@@ -88,17 +88,8 @@ Data Structures
         struct os_event mq_ev;
     };
 
-List of Functions
-~~~~~~~~~~~~~~~~~
+API
+-----------------
 
-The functions available in Mqueue are:
-
-+--------------------------------------------+---------------------------------------------------------+
-| **Function**                               | **Description**                                         |
-+============================================+=========================================================+
-| `os\_mqueue\_init <os_mqueue_init.html>`__   | Initializes an mqueue.                                  |
-+--------------------------------------------+---------------------------------------------------------+
-| `os\_mqueue\_get <os_mqueue_get.html>`__     | Retrieves a packet off an Mqueue.                       |
-+--------------------------------------------+---------------------------------------------------------+
-| `os\_mqueue\_put <os_mqueue_put.html>`__     | Adds a packet (i.e. packet header mbuf) to an mqueue.   |
-+--------------------------------------------+---------------------------------------------------------+
+.. doxygengroup:: OSMqueue
+    :content-only:

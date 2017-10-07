@@ -7,7 +7,17 @@ Mynewt Core OS
    context_switch/context_switch
    cputime/os_cputime
    time/os_time
-
+   task/task
+   event_queue/event_queue
+   semaphote/semaphore
+   mutex/mutex
+   memory_pool/memory_pool
+   heap/heap
+   mbuf/mbuf
+   msys/msys
+   mqueue/mqueue
+   sanity/sanity
+   callout/callout
 
 The Mynewt Core OS is a multitasking, preemptive real-time operating
 system combining a scheduler with typical RTOS features such as mutexes,

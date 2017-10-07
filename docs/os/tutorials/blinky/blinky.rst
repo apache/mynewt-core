@@ -1,5 +1,16 @@
 Blinky, your "Hello World!" on a Target Board
----------------------------------------------
+=============================================
+
+.. toctree::
+   :hidden:
+
+   arduino_zero
+   blinky_primo
+   olimex
+   nRF52
+   rbnano2
+   blinky_stm32f4disc
+   blinky_console
 
 The set of Blinky tutorials show you how to create, build, and run a
 "Hello World" application that blinks a LED on the various target boards

@@ -9,7 +9,7 @@ owned by a lower priority task. Using a mutex, the lower priority task
 will inherit the highest priority of any task waiting on the mutex.
 
 Description
-~~~~~~~~~~~
+-------------
 
 The first order of business when using a mutex is to declare the mutex
 globally. The mutex needs to be initialized before it is used (see the
@@ -47,7 +47,7 @@ task, once the mutex is released the highest priority task waiting on
 the mutex is run.
 
 Data structures
-~~~~~~~~~~~~~~~
+----------------
 
 .. code:: c
 
@@ -88,27 +88,10 @@ Data structures
 |              | mutex          |
 +--------------+----------------+
 
-List of Functions
-~~~~~~~~~~~~~~~~~
+API
+----
 
-The functions available in this OS feature are:
+.. doxygengroup:: OSMutex
+    :content-only:
 
-+--------------+----------------+
-| **Function** | **Description* |
-|              | *              |
-+==============+================+
-| `os\_mutex\_ | Initialize the |
-| init <os_mut | mutex. Must be |
-| ex_init>`__  | called before  |
-|              | the mutex can  |
-|              | be used.       |
-+--------------+----------------+
-| `os\_mutex\_ | Acquire        |
-| pend <os_mut | ownership of a |
-| ex_pend>`__  | mutex.         |
-+--------------+----------------+
-| `os\_mutex\_ | Release        |
-| release <os_ | ownership of a |
-| mutex_releas | mutex.         |
-| e>`__        |                |
-+--------------+----------------+
+

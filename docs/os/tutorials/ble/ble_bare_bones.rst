@@ -1,5 +1,13 @@
 Set up a bare bones NimBLE application
---------------------------------------
+=======================================
+
+.. toctree::
+   :hidden:
+
+   ibeacon
+   eddystone
+   bleprph/
+   blehci_project/
 
 This tutorial explains how to set up a minimal application using the
 NimBLE stack. This tutorial assumes that you have already installed the

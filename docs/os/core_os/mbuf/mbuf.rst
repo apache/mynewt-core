@@ -16,7 +16,7 @@ aspect of the mbuf: the ability to chain mbufs together to create larger
 "packets" (chains of mbufs).
 
 Why use mbufs?
-~~~~~~~~~~~~~~
+----------------
 
 The main reason is to conserve memory. Consider a networking protocol
 that generally sends small packets but occasionally sends large ones.
@@ -28,7 +28,7 @@ leaving more packet buffers available to the networking stack for
 smaller packets.
 
 Packet Header mbuf
-~~~~~~~~~~~~~~~~~~
+--------------------
 
 Not all mbufs are created equal. The first mbuf in a chain of mbufs is a
 special mbuf called a "packet header mbuf". The reason that this mbuf is
@@ -51,7 +51,7 @@ length of the memory pool used by the mbuf pool.
    Packet header mbuf
 
 Normal mbuf
-~~~~~~~~~~~
+--------------
 
 Now let's take a deeper dive into the mbuf structure. Figure 2
 illustrates a normal mbuf and breaks out the various fields in the
@@ -106,7 +106,7 @@ packet header and normal ones) the total length of the memory block is
    Packet
 
 Mbuf pools
-~~~~~~~~~~
+---------------
 
 Mbufs are collected into "mbuf pools" much like memory blocks. The mbuf
 pool itself contains a pointer to a memory pool. The memory blocks in
@@ -123,7 +123,7 @@ this is a fair amount of overhead. However, the flexibility provided by
 the mbuf library usually outweighs overhead concerns.
 
 Create mbuf pool
-~~~~~~~~~~~~~~~~
+-----------------
 
 Creating an mbuf pool is fairly simple: create a memory pool and then
 create the mbuf pool using that memory pool. Once the developer has
@@ -173,7 +173,7 @@ block size required, denoted by the macro *MBUF\_MEMBLOCK\_OVERHEAD*.
     }
 
 Using mbufs
-~~~~~~~~~~~
+--------------
 
 The following examples illustrate typical mbuf usage. There are two
 basic mbuf allocation API: ``os_mbuf_get()`` and
@@ -294,7 +294,7 @@ definitions used in the first example.
     }
 
 Data Structures
-~~~~~~~~~~~~~~~
+-----------------
 
 .. code:: c
 
@@ -465,159 +465,8 @@ Data Structures
 |              | header mbufs   |
 +--------------+----------------+
 
-List of Functions/Macros
-~~~~~~~~~~~~~~~~~~~~~~~~
+API
+-----------------
 
-The functions/macros available in mbuf are:
-
-+--------------+----------------+
-| **Function/M | **Description* |
-| acro**       | *              |
-+==============+================+
-| `OS\_MBUF\_P | Get a pointer  |
-| KTHDR <OS_MB | to the os mbuf |
-| UF_PKTHDR.md | packet header  |
-| >`__         | of an mbuf.    |
-+--------------+----------------+
-| `OS\_MBUF\_P | Get a pointer  |
-| KTHDR\_TO\_M | to the mbuf    |
-| BUF <OS_MBUF | given a        |
-| _PKTHDR_TO_M | pointer to the |
-| BUF.html>`__   | os mbuf packet |
-|              | header.        |
-+--------------+----------------+
-| `OS\_MBUF\_P | Get the length |
-| KTLEN <OS_MB | of an entire   |
-| UF_PKTLEN.md | mbuf chain.    |
-| >`__         |                |
-+--------------+----------------+
-| `OS\_MBUF\_D | Cast the data  |
-| ATA <OS_MBUF | pointer of an  |
-| _DATA.html>`__ | mbuf to a      |
-|              | given type.    |
-+--------------+----------------+
-| `OS\_MBUF\_U | Get a pointer  |
-| SRHDR <OS_MB | to the user    |
-| UF_USRHDR.md | packet header  |
-| >`__         | of an mbuf.    |
-+--------------+----------------+
-| `OS\_MBUF\_U | Retrieve the   |
-| SRHDR\_LEN < | length of the  |
-| OS_MBUF_USRH | user packet    |
-| DR_LEN.html>`_ | header in an   |
-| _            | mbuf.          |
-+--------------+----------------+
-| `OS\_MBUF\_L | Get the amount |
-| EADINGSPACE  | of leading     |
-| <OS_MBUF_LEA | space in an    |
-| DINGSPACE.md | mbuf (in       |
-| >`__         | bytes).        |
-+--------------+----------------+
-| `OS\_MBUF\_T | Get the amount |
-| RAILINGSPACE | of trailing    |
-|  <OS_MBUF_TR | space in an    |
-| AILINGSPACE. | mbuf (in       |
-| md>`__       | bytes).        |
-+--------------+----------------+
-| `os\_mbuf\_a | Trims the      |
-| dj <os_mbuf_ | given number   |
-| adj.html>`__   | of bytes from  |
-|              | either the     |
-|              | head (if       |
-|              | positive) or   |
-|              | tail (if       |
-|              | negative) of   |
-|              | an mbuf chain. |
-+--------------+----------------+
-| `os\_mbuf\_a | Appends a data |
-| ppend <os_mb | buffer of the  |
-| uf_append.md | given length   |
-| >`__         | to the end of  |
-|              | an mbuf chain. |
-+--------------+----------------+
-| `os\_mbuf\_c | Attaches a     |
-| oncat <os_mb | second mbuf    |
-| uf_concat.md | chain onto the |
-| >`__         | end of the     |
-|              | first.         |
-+--------------+----------------+
-| `os\_mbuf\_c | Copy data from |
-| opydata <os_ | an mbuf chain. |
-| mbuf_copydat |                |
-| a.html>`__     |                |
-+--------------+----------------+
-| `os\_mbuf\_c | Copies the     |
-| opyinto <os_ | contents of a  |
-| mbuf_copyint | flat buffer    |
-| o.html>`__     | into an mbuf   |
-|              | chain.         |
-+--------------+----------------+
-| `os\_mbuf\_d | Duplicate a    |
-| up <os_mbuf_ | chain of       |
-| dup.html>`__   | mbufs.         |
-+--------------+----------------+
-| `os\_mbuf\_e | Increases the  |
-| xtend <os_mb | length of an   |
-| uf_extend.md | mbuf chain by  |
-| >`__         | the specified  |
-|              | amount.        |
-+--------------+----------------+
-| `os\_mbuf\_f | Frees a chain  |
-| ree\_chain < | of mbufs.      |
-| os_mbuf_free |                |
-| _chain.html>`_ |                |
-| _            |                |
-+--------------+----------------+
-| `os\_mbuf\_g | Get an mbuf    |
-| et <os_mbuf_ | from the mbuf  |
-| get.html>`__   | pool.          |
-+--------------+----------------+
-| `os\_mbuf\_g | Allocates a    |
-| et\_pkthdr < | packet header  |
-| os_mbuf_get_ | mbuf from the  |
-| pkthdr.html>`_ | given mbuf     |
-| _            | pool. Adds a   |
-|              | user header to |
-|              | the packet     |
-|              | header mbuf.   |
-+--------------+----------------+
-| `os\_mbuf\_m | Performs a     |
-| emcmp <os_mb | memory compare |
-| uf_memcmp.md | of the         |
-| >`__         | specified      |
-|              | region of an   |
-|              | mbuf chain     |
-|              | against a flat |
-|              | buffer.        |
-+--------------+----------------+
-| `os\_mbuf\_o | Given an       |
-| ff <os_mbuf_ | offset in the  |
-| off.html>`__   | packet, return |
-|              | the mbuf and   |
-|              | the offset in  |
-|              | that mbuf      |
-|              | where byte     |
-|              | 'off' is       |
-|              | located.       |
-+--------------+----------------+
-| `os\_mbuf\_p | nitialize an   |
-| ool\_init <o | mbuf pool.     |
-| s_mbuf_pool_ |                |
-| init.html>`__  |                |
-+--------------+----------------+
-| `os\_mbuf\_p | Increases the  |
-| repend <os_m | length of an   |
-| buf_prepend. | mbuf chain by  |
-| md>`__       | adding data to |
-|              | the front.     |
-+--------------+----------------+
-| `os\_mbuf\_p | Rearrange an   |
-| ullup <os_mb | mbuf chain so  |
-| uf_pullup.md | that the given |
-| >`__         | length of      |
-|              | bytes are      |
-|              | contiguous and |
-|              | in the data    |
-|              | area of an     |
-|              | mbuf.          |
-+--------------+----------------+
+.. doxygengroup:: OSMbuf
+    :content-only:

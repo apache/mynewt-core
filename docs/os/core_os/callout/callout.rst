@@ -75,39 +75,8 @@ Data structures
 | cf\_arg    | Generic void \* argument to that function                           |
 +------------+---------------------------------------------------------------------+
 
-List of Functions
-~~~~~~~~~~~~~~~~~
+API
+-----------------
 
-The functions available in callout are:
-
-+--------------+----------------+
-| **Function** | **Description* |
-|              | *              |
-+==============+================+
-| `os\_callout | Initializes    |
-| \_func\_init | the given      |
-|  <os_callout | callout        |
-| _func_init>` | function       |
-| __           | struct.        |
-+--------------+----------------+
-| `os\_callout | Initializes    |
-| \_init <os_c | the given      |
-| allout_init> | callout        |
-| `__          | struct.        |
-+--------------+----------------+
-| `os\_callout | Checks whether |
-| \_queued <os | the given      |
-| _callout_que | callout has    |
-| ued>`__      | been armed.    |
-+--------------+----------------+
-| `os\_callout | Resets the     |
-| \_reset <os_ | callout to     |
-| callout_rese | happen in the  |
-| t>`__        | given number   |
-|              | of OS ticks.   |
-+--------------+----------------+
-| `os\_callout | Disarms a      |
-| \_stop <os_c | timer.         |
-| allout_stop> |                |
-| `__          |                |
-+--------------+----------------+
+.. doxygengroup:: OSCallouts
+    :content-only:

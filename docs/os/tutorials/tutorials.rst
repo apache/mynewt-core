@@ -1,5 +1,13 @@
 Tutorials
----------
+==========
+
+.. toctree::
+   :hidden:
+
+   Project Blinky <blinky/blinky>
+   Working with repositories <repo/add_repos>
+   Project Slinky for Remote Comms <slinky/project-slinky>
+   Bluetooth Low Energy <ble/ble_bare_bones>
 
 If the introduction to Mynewt has piqued your interest and you want to
 familiarize yourself with some of its functionality, this series of

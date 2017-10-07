@@ -9,7 +9,7 @@ there is sufficient memory, memory pools can insure sufficient memory
 allocation.
 
 Description
-~~~~~~~~~~~
+------------
 
 In order to create a memory pool the developer needs to do a few things.
 The first task is to define the memory pool itself. This is a data
@@ -69,7 +69,7 @@ memory block is no longer needed the memory can be freed by calling
 ``os_memblock_put``.
 
 Data structures
-~~~~~~~~~~~~~~~
+----------------
 
 .. code:: c
 
@@ -148,52 +148,10 @@ Data structures
 |              | memory block   |
 +--------------+----------------+
 
-List of Functions/Macros
-~~~~~~~~~~~~~~~~~~~~~~~~
+API
+-----
 
-The functions/macros available in mem\_pool are:
+.. doxygengroup:: OSMempool
+    :content-only:
 
-+--------------+----------------+
-| **Function** | **Description* |
-|              | *              |
-+==============+================+
-| `os\_membloc | Allocate an    |
-| k\_get <os_m | element from   |
-| emblock_get> | the memory     |
-| `__          | pool.          |
-+--------------+----------------+
-| `os\_mempool | Initializes    |
-| \_init <os_m | the memory     |
-| empool_init> | pool.          |
-| `__          |                |
-+--------------+----------------+
-| `os\_membloc | Releases       |
-| k\_put <os_m | previously     |
-| emblock_put> | allocated      |
-| `__          | element back   |
-|              | to the pool.   |
-+--------------+----------------+
-| `os\_mempool | Retrieves      |
-| \_info\_get\ | memory pool    |
-| _next <os_me | information    |
-| mpool_info_g | for the next   |
-| et_next>`__  | memory pool.   |
-+--------------+----------------+
-| `OS\_MEMPOOL | Calculates how |
-| \_BYTES <OS_ | many bytes of  |
-| MEMPOOL_BYTE | memory is used |
-| S>`__        | by n number of |
-|              | elements, when |
-|              | individual     |
-|              | element size   |
-|              | is blksize     |
-|              | bytes.         |
-+--------------+----------------+
-| `OS\_MEMPOOL | Calculates the |
-| \_SIZE <OS_M | number of      |
-| EMPOOL_SIZE> | os\_membuf\_t  |
-| `__          | elements used  |
-|              | by n blocks of |
-|              | size blksize   |
-|              | bytes.         |
-+--------------+----------------+
+

@@ -9,7 +9,7 @@ callouts <../callout/callout.html>`__, interrupt handlers, and other
 tasks.
 
 Description
-~~~~~~~~~~~
+---------------
 
 Mynewt's event queue model uses callback functions to process events.
 Each event is associated with a callback function that is called to
@@ -61,7 +61,7 @@ Note:
    timer expiration notification.
 
 Data structures
-~~~~~~~~~~~~~~~
+---------------
 
 The ``os_event`` structure defines an event and has the following
 fields:
@@ -173,79 +173,10 @@ in the NimBLE host:
 You must call the ``os_eventq_init()`` function to initialize an event
 queue before you can add events to the queue.
 
-List of Functions
-~~~~~~~~~~~~~~~~~
+API
+----
 
-The functions available in the Event Queue feature are:
+.. doxygengroup:: OSEvent
+    :content-only:
 
-+------------+----------------+
-| **Function | **Description* |
-| **         | *              |
-+============+================+
-| ```os_even | Initializes an |
-| tq_init``  | event queue.   |
-| <os_eventq |                |
-| _init.html>` |                |
-| __         |                |
-+------------+----------------+
-| ```os_even | Indicates      |
-| tq_inited` | whether an     |
-| ` <os_even | event queue    |
-| tq_inited. | has been       |
-| md>`__     | initialized.   |
-+------------+----------------+
-| ```os_even | Dequeues an    |
-| tq_get`` < | event from the |
-| os_eventq_ | head of an     |
-| get.html>`__ | event queue.   |
-|            | The calling    |
-|            | task blocks    |
-|            | (in the        |
-|            | ``sleeping``   |
-|            | state) when    |
-|            | the event      |
-|            | queue is       |
-|            | empty.         |
-+------------+----------------+
-| ```os_even | Enqueues an    |
-| tq_put`` < | event at the   |
-| os_eventq_ | tail of an     |
-| put.html>`__ | event queue    |
-|            | and puts a     |
-|            | task waiting   |
-|            | for an event   |
-|            | on the queue   |
-|            | into the       |
-|            | ``ready-to-run |
-|            | ``             |
-|            | state.         |
-+------------+----------------+
-| ```os_even | Removes an     |
-| tq_remove` | event from an  |
-| ` <os_even | event queue.   |
-| tq_remove. |                |
-| md>`__     |                |
-+------------+----------------+
-| ```os_even | Gets the       |
-| tq_dflt_ge | default event  |
-| t`` <os_ev | queue.         |
-| entq_dflt_ |                |
-| get.html>`__ |                |
-+------------+----------------+
-| ```os_even | Reassigns a    |
-| tq_designa | package's      |
-| te`` <os_e | current event  |
-| ventq_desi | queue to a new |
-| gnate.html>` | event queue.   |
-| __         |                |
-+------------+----------------+
-| ```os_even | Wrapper        |
-| tq_run`` < | function that  |
-| os_eventq_ | dequeues an    |
-| run.html>`__ | event from an  |
-|            | event queue    |
-|            | and calls the  |
-|            | callbck        |
-|            | function for   |
-|            | the event.     |
-+------------+----------------+
+
