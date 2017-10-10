@@ -1184,6 +1184,7 @@ lora_mac_tx_service_done(int rxd_confirmation)
 {
     /* If no MLME or MCPS request in progress we just return. */
     if ((LoRaMacFlags.Bits.MlmeReq == 0) && (LoRaMacFlags.Bits.McpsReq == 0)) {
+        assert((LoRaMacState & LORAMAC_TX_RUNNING) == 0);
         lora_mac_chk_kickstart_tx();
         return;
     }
@@ -1214,7 +1215,7 @@ lora_mac_process_radio_tx(struct os_event *ev)
     if (LoRaMacDeviceClass != CLASS_C) {
         Radio.Sleep( );
     } else {
-        lora_mac_rx_on_window2(false);
+        lora_mac_rx_on_window2(true);
     }
 
     /* Always start receive window 1 */
@@ -1631,13 +1632,13 @@ lora_mac_process_radio_rx(struct os_event *ev)
                      * A should we stop rx window 2 since we received
                      * a frame? Not sure about this.
                      */
-                    if ((LoRaMacDeviceClass == CLASS_A) || (RxSlot == 0)) {
+                    if (LoRaMacDeviceClass == CLASS_A) {
                         hal_timer_stop(&RxWindowTimer2);
                     }
                 } else {
                     /*
                      * No need to stop window 2 if class A and we received
-                     * a frame on window 2. For any class  we are
+                     * a frame on window 2. For any class we are
                      * allowed to transmit again since we heard a frame.
                      */
                     if ((LoRaMacDeviceClass == CLASS_C) || (RxSlot == 0)) {
@@ -1694,6 +1695,9 @@ lora_mac_process_radio_tx_timeout(struct os_event *ev)
         lora_mac_rx_on_window2(true);
     }
     STATS_INC(lora_mac_stats, tx_timeouts);
+
+    /* XXX: what happens if ack requested? What should we do? */
+    /* XXX: Have we set up any window timers or ACK timers? I dont think so */
     lora_mac_tx_service_done(0);
 }
 
@@ -1710,6 +1714,14 @@ lora_mac_process_radio_rx_err(struct os_event *ev)
             }
         }
     } else {
+        /*
+         * If this is a class C device and the RxSlot is 1 it means that
+         * we got an error during rx window 2. No way this could happen unless
+         * there is an unconfirmed frame waiting to be transmitted.
+         */
+        if (RxSlot == 1) {
+            lora_mac_tx_service_done(0);
+        }
         lora_mac_rx_on_window2(true);
     }
 }
@@ -1728,6 +1740,7 @@ lora_mac_process_radio_rx_timeout(struct os_event *ev)
             }
         }
     } else {
+        lora_mac_tx_service_done(0);
         lora_mac_rx_on_window2(true);
     }
 }
@@ -1901,8 +1914,20 @@ lora_mac_rx_on_window2(bool rx_continuous)
     uint16_t symbTimeout = 5; // DR_2, DR_1, DR_0
     uint32_t bandwidth = 0; // LoRa 125 kHz
 
-    /* To denote that we are not receiving on rx window 1 */
-    RxSlot = 1;
+    /*
+     * RxSlot = 1 means we are receiving on the "real" window 2. RxSlot = 2
+     * means we are a class C device receiving on window 2 parameters but
+     * not during the actual second receive window.
+     */
+    if (LoRaMacDeviceClass == CLASS_C) {
+        if (rx_continuous) {
+            RxSlot = 2;
+        } else {
+            RxSlot = 1;
+        }
+    } else {
+        RxSlot = 1;
+    }
 
 #if defined( USE_BAND_433 ) || defined( USE_BAND_780 ) || defined( USE_BAND_868 )
     // For higher datarates, we increase the number of symbols generating a Rx Timeout
@@ -1988,9 +2013,6 @@ static void
 lora_mac_process_rx_win2_timeout(struct os_event *ev)
 {
     lora_mac_rx_on_window2(false);
-    if (LoRaMacDeviceClass == CLASS_C) {
-        lora_mac_tx_service_done(0);
-    }
 }
 
 static void

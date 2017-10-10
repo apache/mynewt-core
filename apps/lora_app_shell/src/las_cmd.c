@@ -843,6 +843,7 @@ las_cmd_app_tx(int argc, char **argv)
     rc = lora_app_port_send(port, mcps_type, om);
     if (rc) {
         console_printf("Failed to send to port %u err=%d\n", port, rc);
+        os_mbuf_free_chain(om);
     } else {
         console_printf("Packet sent on port %u\n", port);
     }
