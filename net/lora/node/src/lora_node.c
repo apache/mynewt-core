@@ -429,10 +429,10 @@ lora_mac_proc_tx_q_event(struct os_event *ev)
                 evstatus = LORAMAC_EVENT_INFO_STATUS_ERROR;
                 break;
             }
-        }
 
-        if (evstatus == LORAMAC_EVENT_INFO_STATUS_OK) {
-            break;
+            if (evstatus == LORAMAC_EVENT_INFO_STATUS_OK) {
+                break;
+            }
         }
 
         /*
