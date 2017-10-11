@@ -40,13 +40,13 @@
 #if MYNEWT_VAL(BME280_OFB)
 #include <bme280/bme280.h>
 #endif
-<<<<<<< HEAD
+
 #if MYNEWT_VAL(MS5837_OFB)
 #include <ms5837/ms5837.h>
-=======
+#endif
+
 #if MYNEWT_VAL(BMP280_OFB)
 #include <bmp280/bmp280.h>
->>>>>>> MYNEWT-840 bmp280 driver and sensor fmwk support
 #endif
 
 /* Driver definitions */
@@ -74,13 +74,12 @@ static struct tcs34725 tcs34725;
 static struct bme280 bme280;
 #endif
 
-<<<<<<< HEAD
 #if MYNEWT_VAL(MS5837_OFB)
 static struct ms5837 ms5837;
-=======
+#endif
+
 #if MYNEWT_VAL(BMP280_OFB)
 static struct bmp280 bmp280;
->>>>>>> MYNEWT-840 bmp280 driver and sensor fmwk support
 #endif
 
 /**
