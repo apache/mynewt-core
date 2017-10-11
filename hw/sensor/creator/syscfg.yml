@@ -34,6 +34,9 @@ syscfg.defs:
     BME280_OFB:
         description: 'BME280 is present'
         value : 0
+    MS5837_OFB:
+        description: 'MS5837 is present'
+        value : 0
     TCS34725_OFB:
         description: 'TCS34725 is present'
         value : 0
