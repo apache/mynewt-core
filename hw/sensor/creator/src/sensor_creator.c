@@ -40,8 +40,13 @@
 #if MYNEWT_VAL(BME280_OFB)
 #include <bme280/bme280.h>
 #endif
+<<<<<<< HEAD
 #if MYNEWT_VAL(MS5837_OFB)
 #include <ms5837/ms5837.h>
+=======
+#if MYNEWT_VAL(BMP280_OFB)
+#include <bmp280/bmp280.h>
+>>>>>>> MYNEWT-840 bmp280 driver and sensor fmwk support
 #endif
 
 /* Driver definitions */
@@ -69,8 +74,13 @@ static struct tcs34725 tcs34725;
 static struct bme280 bme280;
 #endif
 
+<<<<<<< HEAD
 #if MYNEWT_VAL(MS5837_OFB)
 static struct ms5837 ms5837;
+=======
+#if MYNEWT_VAL(BMP280_OFB)
+static struct bmp280 bmp280;
+>>>>>>> MYNEWT-840 bmp280 driver and sensor fmwk support
 #endif
 
 /**
@@ -92,11 +102,19 @@ static struct ms5837 ms5837;
  *#endif
  */
 
+#if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(BMP280_OFB)
+static struct sensor_itf i2c_0_itf_bmp = {
+    .si_type = SENSOR_ITF_I2C,
+    .si_num = 0,
+    .si_addr = BMP280_DFLT_I2C_ADDR
+};
+#endif
+
 #if MYNEWT_VAL(SPI_0_MASTER) && MYNEWT_VAL(BME280_OFB)
 static struct sensor_itf spi_0_itf_bme = {
     .si_type = SENSOR_ITF_SPI,
     .si_num = 0,
-    .si_cspin = 3
+    .si_cs_pin = 3
 };
 #endif
 
@@ -223,6 +241,41 @@ config_bme280_sensor(void)
 }
 #endif
 
+/**
+ * BMP280 Sensor default configuration used by the creator package
+ *
+ * @return 0 on success, non-zero on failure
+ */
+#if MYNEWT_VAL(BMP280_OFB)
+static int
+config_bmp280_sensor(void)
+{
+    int rc;
+    struct os_dev *dev;
+    struct bmp280_cfg bmpcfg;
+
+    dev = (struct os_dev *) os_dev_open("bmp280_0", OS_TIMEOUT_NEVER, NULL);
+    assert(dev != NULL);
+
+    memset(&bmpcfg, 0, sizeof(bmpcfg));
+
+    bmpcfg.bc_mode = BMP280_MODE_NORMAL;
+    bmpcfg.bc_iir = BMP280_FILTER_X16;
+    bmpcfg.bc_sby_dur = BMP280_STANDBY_MS_0_5;
+    bmpcfg.bc_boc[0].boc_type = SENSOR_TYPE_AMBIENT_TEMPERATURE;
+    bmpcfg.bc_boc[1].boc_type = SENSOR_TYPE_PRESSURE;
+    bmpcfg.bc_boc[0].boc_oversample = BMP280_SAMPLING_X2;
+    bmpcfg.bc_boc[1].boc_oversample = BMP280_SAMPLING_X16;
+    bmpcfg.bc_s_mask = SENSOR_TYPE_AMBIENT_TEMPERATURE|
+                       SENSOR_TYPE_PRESSURE;
+
+    rc = bmp280_config((struct bmp280 *)dev, &bmpcfg);
+
+    os_dev_close(dev);
+    return rc;
+}
+
+#endif
 /**
  * TCS34725 Sensor default configuration used by the creator package
  *
@@ -464,6 +517,15 @@ sensor_dev_create(void)
     assert(rc == 0);
 
     rc = config_ms5837_sensor();
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(BMP280_OFB)
+    rc = os_dev_create((struct os_dev *) &bmp280, "bmp280_0",
+      OS_DEV_INIT_PRIMARY, 0, bmp280_init, (void *)&i2c_0_itf_bmp);
+    assert(rc == 0);
+
+    rc = config_bmp280_sensor();
     assert(rc == 0);
 #endif
 

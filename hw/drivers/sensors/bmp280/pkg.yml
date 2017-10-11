@@ -17,30 +17,25 @@
 # under the License.
 #
 
-pkg.name: hw/sensor/creator
-pkg.description: Device creation for the sensor
+pkg.name: hw/drivers/sensors/bmp280
+pkg.description: Driver for the BMP280 pressure sensor
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
-pkg.homepage: "http://mynewt.apache.org/"
+pkg.homepage: "https://mynewt.apache.org"
 pkg.keywords:
-    - sensors
+    - adafruit
+    - bmp280
+    - i2c
+    - spi
+    - sensor
 
-pkg.deps.BME280_OFB:
-    - hw/drivers/sensors/bme280
-pkg.deps.LSM303DLHC_OFB:
-    - hw/drivers/sensors/lsm303dlhc
-pkg.deps.MPU6050_OFB:
-    - hw/drivers/sensors/mpu6050
-pkg.deps.TSL2561_OFB:
-    - hw/drivers/sensors/tsl2561
-pkg.deps.BNO055_OFB:
-    - hw/drivers/sensors/bno055
-pkg.deps.TCS34725_OFB:
-    - hw/drivers/sensors/tcs34725
-pkg.deps.MS5837_OFB:
-    - hw/drivers/sensors/ms5837
-pkg.deps.MCU_NATIVE:
-    - hw/drivers/sensors/sim
-pkg.deps.BMP280_OFB:
-    - hw/drivers/sensors/bmp280
-pkg.init:
-    sensor_dev_create: 500
+pkg.deps:
+    - "@apache-mynewt-core/kernel/os"
+    - "@apache-mynewt-core/hw/hal"
+    - "@apache-mynewt-core/hw/sensor"
+
+pkg.req_apis:
+    - stats
+    - log
+
+pkg.deps.BMP280_CLI:
+    - "@apache-mynewt-core/util/parse"

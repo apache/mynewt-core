@@ -40,17 +40,17 @@
 #if MYNEWT_VAL(BNO055_CLI)
 #include <bno055/bno055.h>
 #endif
-
-#if MYNEWT_VAL(TSL2561_CLI)
-#include <tsl2561/tsl2561.h>
-#endif
-
 #if MYNEWT_VAL(TCS34725_CLI)
 #include <tcs34725/tcs34725.h>
 #endif
-
+#if MYNEWT_VAL(TSL2561_CLI)
+#include <tsl2561/tsl2561.h>
+#endif
 #if MYNEWT_VAL(BME280_CLI)
 #include <bme280/bme280.h>
+#endif
+#if MYNEWT_VAL(BMP280_CLI)
+#include <bmp280/bmp280.h>
 #endif
 
 #if MYNEWT_VAL(SENSOR_OIC)
@@ -408,6 +408,9 @@ sensors_dev_shell_init(void)
     bme280_shell_init();
 #endif
 
+#if MYNEWT_VAL(BMP280_CLI)
+    bmp280_shell_init();
+#endif
 }
 
 static void
