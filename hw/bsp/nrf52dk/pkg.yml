@@ -96,3 +96,6 @@ pkg.deps.UART_1:
 
 pkg.deps.PWM:
     - "@mynewt_nordic/hw/drivers/pwm/pwm_nrf52"
+
+pkg.deps.SOFT_PWM:
+    - hw/drivers/pwm/soft_pwm
