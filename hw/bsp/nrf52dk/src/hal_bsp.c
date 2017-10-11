@@ -46,7 +46,9 @@
 #if MYNEWT_VAL(PWM)
 #include <pwm_nrf52/pwm_nrf52.h>
 #endif
+#if MYNEWT_VAL(SOFT_PWM)
 #include <soft_pwm/soft_pwm.h>
+#endif
 
 #if MYNEWT_VAL(UART_0)
 static struct uart_dev os_bsp_uart0;
