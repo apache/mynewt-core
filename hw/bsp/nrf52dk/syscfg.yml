@@ -86,7 +86,7 @@ syscfg.defs:
 
     SOFT_PWM:
         description: 'SOFT PWM'
-        value: 1
+        value: 0
 
 syscfg.defs.BLE_LP_CLOCK:
     TIMER_0:
