@@ -238,6 +238,8 @@ static struct bt_mesh_model root_models[] = {
 };
 
 static struct bt_mesh_model vnd_models[] = {
+    BT_MESH_MODEL_VND(CID_VENDOR, BT_MESH_MODEL_ID_GEN_ONOFF_SRV, gen_onoff_op,
+              &gen_onoff_pub, NULL),
 };
 
 static struct bt_mesh_elem elements[] = {
