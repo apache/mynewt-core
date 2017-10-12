@@ -54,6 +54,7 @@ static inline CborError extract_number(const CborParser *p, int *offset, uint64_
 {
     uint8_t additional_information = p->d->get8(p->d, *offset) & SmallValueMask;
     ++*offset;
+    *len = 1;
     if (additional_information < Value8Bit) {
         *len = additional_information;
         return CborNoError;
