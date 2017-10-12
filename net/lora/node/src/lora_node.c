@@ -182,6 +182,24 @@ lora_node_mcps_request(struct os_mbuf *om)
     assert(rc == 0);
 }
 
+/**
+ * What's the maximum payload which can be sent on next frame
+ *
+ * @return int payload length, negative on error.
+ */
+int
+lora_node_mtu(void)
+{
+    struct sLoRaMacTxInfo info;
+    int rc;
+
+    rc = LoRaMacQueryTxPossible(0, &info);
+    if (rc != LORAMAC_STATUS_MAC_CMD_LENGTH_ERROR) {
+        return info.CurrentPayloadSize;
+    }
+    return -1;
+}
+
 #if !MYNEWT_VAL(LORA_NODE_CLI)
 void
 lora_node_reset_txq_timer(void)
