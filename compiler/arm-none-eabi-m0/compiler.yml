@@ -27,7 +27,7 @@ compiler.path.objcopy: arm-none-eabi-objcopy
 
 compiler.flags.default: -mcpu=cortex-m0 -mthumb-interwork -mthumb -Wall -Werror -fno-exceptions -fomit-frame-pointer -ffunction-sections -fdata-sections
 compiler.flags.optimized: [compiler.flags.default, -Os -ggdb]
-compiler.flags.debug: [compiler.flags.default, -O1 -ggdb]
+compiler.flags.debug: [compiler.flags.default, -Og -ggdb]
 
 compiler.as.flags: [-x, assembler-with-cpp]
 
