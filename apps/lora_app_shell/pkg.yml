@@ -32,3 +32,5 @@ pkg.deps:
     - "@apache-mynewt-core/sys/shell"
     - "@apache-mynewt-core/sys/stats/full"
     - "@apache-mynewt-core/util/parse"
+    - "mgmt/oicmgr"
+    - "mgmt/newtmgr/nmgr_os"
