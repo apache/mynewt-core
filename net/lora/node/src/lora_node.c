@@ -35,6 +35,7 @@ STATS_NAME_START(lora_mac_stats)
     STATS_NAME(lora_mac_stats, unconfirmed_tx)
     STATS_NAME(lora_mac_stats, confirmed_tx_fail)
     STATS_NAME(lora_mac_stats, confirmed_tx_good)
+    STATS_NAME(lora_mac_stats, tx_mac_flush)
     STATS_NAME(lora_mac_stats, rx_errors)
     STATS_NAME(lora_mac_stats, rx_frames)
     STATS_NAME(lora_mac_stats, rx_mic_failures)
@@ -195,7 +196,7 @@ lora_node_mtu(void)
 
     rc = LoRaMacQueryTxPossible(0, &info);
     if (rc != LORAMAC_STATUS_MAC_CMD_LENGTH_ERROR) {
-        return info.CurrentPayloadSize;
+        return info.MaxPossiblePayload;
     }
     return -1;
 }
@@ -376,6 +377,7 @@ lora_mac_proc_tx_q_event(struct os_event *ev)
         rc = LoRaMacQueryTxPossible(mp->omp_len, &txinfo);
         if (rc == LORAMAC_STATUS_MAC_CMD_LENGTH_ERROR) {
             /* Need to flush MAC commands. Send empty unconfirmed frame */
+            STATS_INC(lora_mac_stats, tx_mac_flush);
             om = lora_node_alloc_empty_pkt();
             if (!om) {
                 lora_node_reset_txq_timer();
