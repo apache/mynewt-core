@@ -35,6 +35,12 @@ syscfg.defs:
     OC_TRANSPORT_IPV4:
         description: 'Support IPv4'
         value: '0'
+    OC_TRANSPORT_LORA:
+        description: 'Support Lora'
+        value: '0'
+    OC_LORA_PORT:
+        description: 'Which LORA port to use'
+        value: 0xbb
     OC_CLIENT:
         description: 'Enables OIC client support'
         value: '0'

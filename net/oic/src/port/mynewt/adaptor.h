@@ -55,6 +55,12 @@ void oc_connectivity_shutdown_serial(void);
 void oc_send_buffer_serial(struct os_mbuf *);
 #endif
 
+#if (MYNEWT_VAL(OC_TRANSPORT_LORA) == 1)
+int oc_connectivity_init_lora(void);
+void oc_connectivity_shutdown_lora(void);
+void oc_send_buffer_lora(struct os_mbuf *);
+#endif
+
 #ifdef __cplusplus
 }
 #endif
