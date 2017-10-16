@@ -1,0 +1,23 @@
+<!-- STARTS .container-sidebar -->
+<div class="container-sidebar col-xs-12 col-sm-3">
+  <div id="docSidebar" class="sticky-container">
+    <span id="secondary-menu-button" class="">Mynewt Documentation</span>
+    {% include "searchbox.html" %}
+    {% include "versions.html" %}
+    <div class="region region-sidebar">
+      <div class="docs-menu">
+      {% block menu %}
+        {% set toctree = toctree(maxdepth=-1, collapse=True, titles_only=False, includehidden=True) %}
+        {% if toctree %}
+            {{ toctree }}
+        {% else %}
+          <!-- Local TOC -->
+          <div class="local-toc">{{ toc }}</div>
+        {% endif %}
+      {% endblock %}
+      </div>
+    </div>
+  </div>
+  <!-- ENDS STICKY CONTAINER -->
+</div>
+<!-- ENDS .container-sidebar -->

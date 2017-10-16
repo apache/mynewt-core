@@ -1,0 +1,461 @@
+.content {
+	margin-bottom: 15px;
+}
+
+.bg-orange {
+	background-color: #f2853f;
+}
+
+.bg-purple {
+	background-color: #41557f;
+}
+
+.bg-grey {
+	background-color: #959696;
+}
+
+.home .logo-container,
+.Download .logo-container,
+.Community .logo-container,
+.Documentation .logo-container,
+.Events .logo-container {
+	display: none !important;
+}
+
+.logo-container {
+	display: none;
+}
+
+@media (max-width: 768px) {
+	.navbar {
+		padding: 14px 40px;
+	}
+
+	.small-no-padding,
+	.small-no-padding .col-md-6 {
+		padding: 0;
+	}
+
+	.doc-section {
+		margin-bottom: -10px !important;
+	}
+
+	.doc-section .outline-title {
+		padding: 15px 10px;
+		margin-bottom: 0;
+	}
+
+	.doc-section:nth-of-type(odd) {
+		background-color: #f2853f;
+	}
+
+	.doc-section:nth-of-type(even) {
+		background-color: #e87738;
+	}
+
+	.doc-section:nth-of-type(odd) .outline-title,
+	.doc-section:nth-of-type(even) .outline-title,
+	.doc-section a {
+		background: none;
+		color: #fff !important;
+	}
+
+	.sidebar-top {
+		padding: 40px 0px 20px !important;
+	}
+}
+
+@media (max-width: 992px) {
+	.logo-container {
+		display: block;
+		position: absolute;
+		top: 0;
+		left: 20px;
+		padding: 20px;
+		max-height: 100px;
+		max-width: 100px;
+	}
+
+	.logo-container img {
+		width: 100%;
+	}
+}
+
+@media (min-width: 992px) {
+	.documentation-viewer {
+		padding: 1%;
+	}
+
+	.documentation-viewer {
+		display: block !important;
+	}
+}
+
+.documentation-viewer {
+	font-size: 14px;
+	color: #454041;
+}
+
+.documentation-viewer h2 {
+	font-size: 28px;
+	font-weight: 500;
+}
+
+.documentation-viewer h3 {
+	font-size: 22px;
+	font-weight: 600;
+	color: #333;
+}
+
+.navbar {
+	background-color: #42567e;
+	border-radius: 0px;
+	margin-bottom: 0px;
+	z-index: 2;
+}
+
+.navbar li.important a {
+	color: #f2853f !important;
+}
+
+.navbar-inverse .navbar-nav > .active > a,
+.navbar-inverse .navbar-nav > .active > a:hover,
+.navbar-inverse .navbar-nav > .active > a:focus {
+	background-color: #293d65;
+}
+
+.affix {
+	top: 0;
+	left: 0;
+	right: 0;
+}
+
+div > .v2-main-banner {
+	margin-bottom: 52px;
+}
+
+.affix-top {
+	margin-top: -52px;
+}
+
+.sidebar-top {
+	padding: 0px;
+}
+
+.logo-small {
+	display: block;
+	height: 150px;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.home .search-container {
+	padding: 20px 10px;
+	margin-bottom: 20px;
+}
+
+.home #rtd-search-form label {
+	color: #ffffff;
+	margin-bottom: 20px;
+}
+
+div.col-md-2 {
+	padding-left: 0;
+}
+
+footer div.container div.row {
+	background-color: #f7f8fa;
+	text-align: center;
+	padding-top: 10px;
+	padding-bottom: 10px;
+	border-top: double #42567e;
+}
+
+footer .copyright {
+	font-size: 14px;
+	display: block;
+	margin: 0 auto;
+	width: 80%;
+}
+
+footer .logos {
+	display: flex;
+	font-size: 10px;
+	flex-wrap: nowrap;
+	justify-content: space-between;
+	align-items: center;
+}
+
+footer .logos img {
+	width: 200px;
+	flex-shrink: 0; /* Safari needs this */
+}
+
+footer .logos .footnote {
+	padding: 10px 40px;
+}
+
+.goal p {
+	max-width: 350px;
+	display: block;
+	margin: 10px auto;
+}
+
+.goal-image {
+	height: 100%;
+	width: 100%;
+	white-space: nowrap;
+	text-align: center;
+	margin: 1em auto;
+}
+
+.helper {
+	display: inline-block;
+	height: 100%;
+	vertical-align: middle;
+}
+
+.goal img {
+	vertical-align: middle;
+	max-height: 260px;
+	max-width: 260px;
+}
+
+.goals {
+	padding: 50px 0 80px;
+}
+
+.Events h1,
+.Community h1 {
+	text-align: center;
+}
+
+.Community h2 {
+	font-weight: 600;
+	color: #333;
+}
+
+.Community h1,
+.Download h1 {
+	margin-bottom: 80px;
+}
+
+.download-button {
+	color: #ffffff;
+	padding: 10px 20px;
+	border: 0;
+	font-size: 13pt;
+	width: 100%;
+}
+
+.download-button:hover {
+	text-decoration: underline;
+}
+
+.downloadables {
+	margin-bottom: 50px;
+}
+
+.downloadable {
+	min-height: 100px;
+	background: #f6f7f9;
+	padding: 20px 10px 50px;
+	color: #42567e;
+}
+
+.downloadable h3 {
+	font-size: 13pt;
+	font-weight: 500;
+}
+
+.doc-section .outline-title {
+	color: #fff;
+	background: #818484;
+	font-weight: 500;
+	padding: 10px;
+	margin-bottom: 10px;
+}
+
+.doc-section {
+	padding: 15px !important;
+	min-height: 300px;
+	margin-bottom: 20px;
+}
+
+.doc-section ul li {
+	list-style-type: none;
+}
+
+.doc-section ul li a {
+	color: #564243;
+	text-decoration: underline;
+}
+
+.doc-section ul li a:hover {
+	text-decoration: none;
+}
+
+.navbar-default .navbar-toggle {
+	border: none;
+}
+
+.navbar-toggle .icon-bar {
+	width: 40px;
+	height: 6px;
+	border-radius: 0;
+}
+
+.navbar-default .navbar-toggle .icon-bar {
+	background-color: #fff;
+}
+
+b,
+strong {
+	font-weight: bold;
+}
+
+.Community .bg-purple {
+	color: #fff !important;
+}
+
+.padded {
+	padding: 20px 0;
+}
+
+.list-info {
+	font-size: 12pt;
+	padding: 5px 10px;
+	background: #f6f7f9;
+}
+
+.mailing-list {
+	margin-bottom: 40px;
+}
+
+.subscribe,
+.mailing-list-title {
+	padding: 2px 8px;
+	text-transform: uppercase;
+	color: #fff;
+	font-weight: 500;
+	font-size: 14px;
+}
+
+.list-info p,
+.list-info a {
+	font-size: 12pt;
+}
+
+.list-info a {
+	text-decoration: underline;
+}
+
+.list-info a:hover {
+	text-decoration: none;
+}
+
+a.bold-link {
+	font-weight: 500;
+	text-decoration: none;
+	color: #454041;
+}
+
+a.bold-link:hover {
+	text-decoration: underline;
+}
+
+/* Breadcrumbs */
+.wy-breadcrumbs {
+	padding: 0;
+}
+
+ul.wy-breadcrumbs {
+	margin-top: 10px;
+}
+
+.wy-breadcrumbs li {
+	display: inline-block;
+}
+
+.wy-breadcrumbs li.wy-breadcrumbs-aside {
+	float: right;
+}
+
+.wy-breadcrumbs li a {
+	display: inline-block;
+	padding: 5 px;
+}
+
+.wy-breadcrumbs: first-child {
+	padding-left: 0;
+}
+
+.wy-breadcrumbs-extra {
+	margin-bottom: 0;
+	color: #b3b3b3;
+	font-size: 80%;
+	display: inline-block;
+}
+
+@media screen and(max-width: 480 px) {
+	.wy-breadcrumbs-extra {
+		display: none;
+	}
+
+	.wy-breadcrumbs li.wy-breadcrumbs-aside {
+		display: none;
+	}
+}
+
+@media print {
+	.wy-breadcrumbs li.wy-breadcrumbs-aside {
+		display: none;
+	}
+}
+
+.event-callout {
+	color: #fff;
+}
+
+.event-callout a {
+	color: #fff;
+	text-decoration: underline;
+}
+
+.event-callout a:hover {
+	text-decoration: none;
+}
+
+.event-callout h3 {
+	font-weight: 300;
+	font-size: 13pt;
+	color: #fff;
+	margin: 0;
+}
+
+.event-callout p {
+	font-size: 12pt;
+	margin: 0;
+}
+
+.Events h2 {
+	margin: 10px 0;
+	font-weight: 600;
+}
+
+.event {
+	margin: 40px 0;
+}
+
+code {
+	font-family: "Courier New";
+}
+
+.doc-header .col-sm-6 {
+	padding-left: 0px;
+}
+
+.sourcelink {
+	float: right;
+	display: inline-block;
+}
