@@ -1,8 +1,5 @@
-BLE Peripheral Project
-----------------------
-
 Advertising
-~~~~~~~~~~~
+===========
 
 Overview
 ^^^^^^^^

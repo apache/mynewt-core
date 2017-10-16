@@ -1,8 +1,5 @@
-BLE Peripheral Project
-----------------------
-
 Service Registration
-~~~~~~~~~~~~~~~~~~~~
+====================
 
 Attribute Set
 ^^^^^^^^^^^^^

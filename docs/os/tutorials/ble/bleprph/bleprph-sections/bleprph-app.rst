@@ -1,5 +1,5 @@
-BLE Peripheral Project
-----------------------
+BLE Peripheral App
+==================
 
 Overview
 ~~~~~~~~

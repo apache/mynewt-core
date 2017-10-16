@@ -6,7 +6,7 @@ Set up a bare bones NimBLE application
 
    ibeacon
    eddystone
-   bleprph/
+   bleprph/bleprph
    blehci_project/
 
 This tutorial explains how to set up a minimal application using the

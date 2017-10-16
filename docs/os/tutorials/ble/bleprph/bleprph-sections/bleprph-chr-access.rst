@@ -1,8 +1,5 @@
-BLE Peripheral Project
-----------------------
-
 Characteristic Access
-~~~~~~~~~~~~~~~~~~~~~
+=====================
 
 Review
 ^^^^^^

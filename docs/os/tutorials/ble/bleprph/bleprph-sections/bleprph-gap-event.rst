@@ -1,8 +1,5 @@
-BLE Peripheral Project
-----------------------
-
 GAP Event callbacks
-~~~~~~~~~~~~~~~~~~~
+===================
 
 Overview
 ^^^^^^^^
