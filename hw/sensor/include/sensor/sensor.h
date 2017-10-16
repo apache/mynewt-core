@@ -249,6 +249,11 @@ struct sensor_type_traits {
     /* field for selecting algorithm */
     uint8_t stt_algo;
 
+    /* Poll rate multiple */
+    uint16_t stt_poll_n;
+
+    os_time_t stt_next_run;
+
     /* function ptr for setting comparison algo */
     sensor_trigger_cmp_func_t stt_trigger_cmp_algo;
 
@@ -617,6 +622,16 @@ int sensor_mgr_match_bytype(struct sensor *, void *);
  */
 int
 sensor_set_poll_rate_ms(char *, uint32_t);
+
+/**
+ * Set the sensor poll rate multiple based on the device name, sensor type
+ *
+ * @param The devname
+ * @param The sensor type trait
+ * @param The multiple of the poll rate
+ */
+int
+sensor_set_n_poll_rate(char *devname, struct sensor_type_traits *stt);
 
 /**
  * Transmit OIC trigger

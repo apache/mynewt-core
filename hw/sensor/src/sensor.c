@@ -30,7 +30,6 @@
 #include "os/os_time.h"
 #include "os/os_cputime.h"
 #include "defs/error.h"
-#include "console/console.h"
 #include "syscfg/syscfg.h"
 #include "sensor/accel.h"
 #include "sensor/mag.h"
@@ -42,6 +41,7 @@
 #include "sensor/pressure.h"
 #include "sensor/humidity.h"
 #include "sensor/gyro.h"
+#include "console/console.h"
 
 struct {
     struct os_mutex mgr_lock;
@@ -123,7 +123,148 @@ sensor_mgr_insert(struct sensor *sensor)
 }
 
 /**
- * Set the sensor poll rate based on teh device name
+ * Remove a sensor type trait. This allows a calling application to unset
+ * sensortype trait for a given sensor object.
+ *
+ * @param The sensor object
+ * @param The sensor trait to remove from the sensor type trait list
+ *
+ * @return 0 on success, non-zero error code on failure.
+ */
+
+static int
+sensor_remove_type_trait(struct sensor *sensor,
+                         struct sensor_type_traits *stt)
+{
+    int rc;
+
+    rc = sensor_lock(sensor);
+    if (rc != 0) {
+        goto err;
+    }
+
+    /* Remove this entry from the list */
+    SLIST_REMOVE(&sensor->s_type_traits_list, stt, sensor_type_traits,
+            stt_next);
+
+    sensor_unlock(sensor);
+
+    return (0);
+err:
+    return (rc);
+}
+
+/**
+ * Insert sensor type trait sorting based on the poll rate multiple
+ *
+ * @param sensor to insert type traits in
+ * @param sensor type traits to insert
+ *
+ * @return 0 on success, non-zero on failure
+ */
+static int
+sensor_insert_type_trait(struct sensor *sensor, struct sensor_type_traits *stt)
+{
+    struct sensor_type_traits *cursor, *prev;
+    int rc;
+
+    rc = sensor_lock(sensor);
+    if (rc != 0) {
+        goto err;
+    }
+
+    prev = cursor = NULL;
+    SLIST_FOREACH(cursor, &sensor->s_type_traits_list, stt_next) {
+        if (cursor->stt_poll_n == 0) {
+            break;
+        }
+
+        if (OS_TIME_TICK_LT(stt->stt_poll_n, cursor->stt_poll_n)) {
+            break;
+        }
+
+        prev = cursor;
+    }
+
+    if (prev == NULL) {
+        SLIST_INSERT_HEAD(&sensor->s_type_traits_list, stt, stt_next);
+    } else {
+        SLIST_INSERT_AFTER(prev, stt, stt_next);
+    }
+
+    sensor_unlock(sensor);
+
+    return 0;
+err:
+    return rc;
+}
+
+
+/**
+ * Set the sensor poll rate multiple based on the device name, sensor type
+ *
+ * @param The devname
+ * @param The sensor type trait
+ * @param The multiple of the poll rate
+ */
+int
+sensor_set_n_poll_rate(char *devname, struct sensor_type_traits *stt)
+{
+    struct sensor *sensor;
+    struct sensor_type_traits *stt_tmp;
+    int rc;
+
+    if (!stt) {
+        rc = SYS_EINVAL;
+        goto err;
+    }
+
+    stt_tmp = NULL;
+
+    sensor = sensor_get_type_traits_byname(devname, &stt_tmp,
+                                           stt->stt_sensor_type);
+    if (!sensor) {
+        rc = SYS_EINVAL;
+        goto err;
+    }
+
+    if (!stt_tmp && stt) {
+        rc = sensor_insert_type_trait(sensor, stt);
+        rc |= sensor_lock(sensor);
+        if (rc) {
+            goto err;
+        }
+        stt_tmp = stt;
+        sensor_unlock(sensor);
+    } else if (stt_tmp) {
+        rc = sensor_remove_type_trait(sensor, stt_tmp);
+        if (rc) {
+            goto err;
+        }
+
+        sensor_lock(sensor);
+
+        stt_tmp->stt_poll_n = stt->stt_poll_n;
+
+        sensor_unlock(sensor);
+
+        rc = sensor_insert_type_trait(sensor, stt_tmp);
+        if (rc) {
+            goto err;
+        }
+
+    } else {
+        rc = SYS_EINVAL;
+        goto err;
+    }
+
+    return 0;
+err:
+    return rc;
+}
+
+/**
+ * Set the sensor poll rate based on the device name
  *
  * @param The devname
  * @param The poll rate in milli seconds
@@ -132,6 +273,8 @@ int
 sensor_set_poll_rate_ms(char *devname, uint32_t poll_rate)
 {
     struct sensor *sensor;
+    uint32_t sensor_ticks;
+    os_time_t now;
     int rc;
 
     sensor = sensor_mgr_find_next_bydevname(devname, NULL);
@@ -141,9 +284,26 @@ sensor_set_poll_rate_ms(char *devname, uint32_t poll_rate)
         goto err;
     }
 
-    sensor_lock(sensor);
+    now = os_time_get();
+
+    rc = sensor_lock(sensor);
+    if (rc != 0) {
+        goto err;
+    }
+
+    /* Remove the sensor from the sensor list for insert. */
+    sensor_mgr_remove(sensor);
 
     sensor->s_poll_rate = poll_rate;
+
+    /* Set next wakeup, and insert the sensor back into the
+     * list.
+     */
+    os_time_ms_to_ticks(sensor->s_poll_rate, &sensor_ticks);
+    sensor->s_next_run = sensor_ticks + now;
+
+    /* Re-insert the sensor manager, with the new wakeup time. */
+    sensor_mgr_insert(sensor);
 
     sensor_unlock(sensor);
 
@@ -187,31 +347,56 @@ err:
 }
 
 
+/* Sensor poll one completes the poll, updates the sensor's "next
+ * run," and re-inserts it into the list
+ */
 static os_time_t
-sensor_mgr_poll_one(struct sensor *sensor, os_time_t now)
+sensor_mgr_poll_one(struct sensor *sensor, sensor_type_t type,
+                    struct sensor_type_traits *stt, os_time_t next_wakeup,
+                    os_time_t now)
 {
-    uint32_t sensor_ticks;
-    int rc;
+    os_time_t sensor_ticks;
+    os_time_t next_run;
+    uint32_t n;
 
-    rc = sensor_lock(sensor);
-    if (rc != 0) {
-        goto err;
+    stt = sensor_get_type_traits_bytype(type, sensor);
+
+    n = 0;
+    next_run = now;
+
+    if (stt) {
+        /* If traits are defined but the poll multiple is not defined,
+         * we would specify the poll multiple
+         */
+        n = stt->stt_poll_n ? stt->stt_poll_n : 1;
+
+        next_run = stt->stt_next_run;
     }
 
-    /* Sensor read results.  Every time a sensor is read, all of its
-     * listeners are called by default.  Specify NULL as a callback,
-     * because we just want to run all the listeners.
-     */
-    sensor_read(sensor, sensor->s_mask, NULL, NULL, OS_TIMEOUT_NEVER);
+    os_time_ms_to_ticks(sensor->s_poll_rate * n, &sensor_ticks);
+
+    next_wakeup = min(sensor_ticks, next_wakeup);
+
+    if (OS_TIME_TICK_GEQ(now, next_run)) {
+        console_printf("type :%u poll multiple: %u now: %u next_wakeup: %u\n",
+                       (unsigned int)type, (unsigned int)n,
+                       (unsigned int)os_time_get(), (unsigned int)next_wakeup);
+
+
+        /* Sensor read results. Every time a sensor is read, all of its
+         * listeners are called by default. Specify NULL as a callback,
+         * because we just want to run all the listeners.
+         */
+
+        sensor_read(sensor, type, NULL, NULL, OS_TIMEOUT_NEVER);
+    }
+
+    sensor_lock(sensor);
 
     /* Remove the sensor from the sensor list for insert. */
     sensor_mgr_remove(sensor);
 
-    /* Set next wakeup, and insert the sensor back into the
-     * list.
-     */
-    os_time_ms_to_ticks(sensor->s_poll_rate, &sensor_ticks);
-    sensor->s_next_run = sensor_ticks + now;
+    sensor->s_next_run = next_wakeup + now;
 
     /* Re-insert the sensor manager, with the new wakeup time. */
     sensor_mgr_insert(sensor);
@@ -219,10 +404,7 @@ sensor_mgr_poll_one(struct sensor *sensor, os_time_t now)
     /* Unlock the sensor to allow other access */
     sensor_unlock(sensor);
 
-    return (sensor_ticks);
-err:
-    /* Couldn't lock it.  Re-run task and spin until we get result. */
-    return (0);
+    return next_wakeup;
 }
 
 /**
@@ -235,19 +417,19 @@ static void
 sensor_mgr_wakeup_event(struct os_event *ev)
 {
     struct sensor *cursor;
+    struct sensor_type_traits *stt;
     os_time_t now;
-    os_time_t task_next_wakeup;
     os_time_t next_wakeup;
     int rc;
 
     now = os_time_get();
 
-    task_next_wakeup = SENSOR_MGR_WAKEUP_TICKS;
+    next_wakeup = SENSOR_MGR_WAKEUP_TICKS;
 
     rc = sensor_mgr_lock();
     if (rc != 0) {
         /* Schedule again in 1 tick, see if we can reacquire the lock */
-        task_next_wakeup = 1;
+        next_wakeup = 1;
         goto done;
     }
 
@@ -266,24 +448,34 @@ sensor_mgr_wakeup_event(struct os_event *ev)
             break;
         }
 
-        /* Sensor poll one completes the poll, updates the sensor's "next run,"
-         * and re-inserts it into the list.  It returns the next wakeup time in ticks
-         * from now ticks for this sensor.
-         */
-        next_wakeup = sensor_mgr_poll_one(cursor, now);
-
-        /* If the next wakeup time for this sensor is before the task's next
-         * scheduled wakeup, move that forward, so we can collect data from that
-         * sensor
-         */
-        if (task_next_wakeup > next_wakeup) {
-            task_next_wakeup = next_wakeup;
+        if (SLIST_EMPTY(&cursor->s_type_traits_list)) {
+            /* poll multiple needed is one here, as a result, the sensor would
+             * get polled at the poll rate
+             */
+            next_wakeup = sensor_mgr_poll_one(cursor, cursor->s_mask, NULL,
+                                              next_wakeup, now);
+            sensor_mgr_unlock();
+            goto done;
         }
 
+        SLIST_FOREACH(stt, &cursor->s_type_traits_list, stt_next) {
+
+            /* poll multiple is one if no multiple is specified,
+             * as a result, the sensor would get polled at the
+             * poll rate if no multiple is specified
+             *
+             * If a multiple is specified, the sensor would get polled
+             * at the poll multiple
+             */
+            next_wakeup = sensor_mgr_poll_one(cursor, stt->stt_sensor_type, stt,
+                                              next_wakeup, now);
+        }
     }
 
+    sensor_mgr_unlock();
+
 done:
-    os_callout_reset(&sensor_mgr.mgr_wakeup_callout, task_next_wakeup);
+    os_callout_reset(&sensor_mgr.mgr_wakeup_callout, next_wakeup);
 }
 
 /**
@@ -521,38 +713,6 @@ sensor_get_type_traits_bytype(sensor_type_t type, struct sensor *sensor)
     sensor_unlock(sensor);
 
     return stt;
-}
-
-/**
- * Remove a sensor type trait. This allows a calling application to unset
- * sensortype trait for a given sensor object.
- *
- * @param The sensor object
- * @param The sensor trait to remove from the sensor type trait list
- *
- * @return 0 on success, non-zero error code on failure.
- */
-
-int
-sensor_remove_type_trait(struct sensor *sensor,
-                         struct sensor_type_traits *stt)
-{
-    int rc;
-
-    rc = sensor_lock(sensor);
-    if (rc != 0) {
-        goto err;
-    }
-
-    /* Remove this entry from the list */
-    SLIST_REMOVE(&sensor->s_type_traits_list, stt, sensor_type_traits,
-            stt_next);
-
-    sensor_unlock(sensor);
-
-    return (0);
-err:
-    return (rc);
 }
 
 /**
@@ -1447,12 +1607,18 @@ sensor_set_thresh(char *devname, struct sensor_type_traits *stt)
     }
 
     if (!stt_tmp && stt) {
-        sensor_lock(sensor);
-        SLIST_INSERT_HEAD(&sensor->s_type_traits_list, stt, stt_next);
+        rc = sensor_insert_type_trait(sensor, stt);
+        rc |= sensor_lock(sensor);
+        if (rc) {
+            goto err;
+        }
         stt_tmp = stt;
         sensor_unlock(sensor);
     } else if (stt_tmp) {
-        sensor_lock(sensor);
+        rc = sensor_lock(sensor);
+        if (rc) {
+            goto err;
+        }
         stt_tmp->stt_low_thresh = stt->stt_low_thresh;
         stt_tmp->stt_high_thresh = stt->stt_high_thresh;
         stt_tmp->stt_algo = stt->stt_algo;

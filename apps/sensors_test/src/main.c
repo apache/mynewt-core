@@ -495,6 +495,25 @@ main(int argc, char **argv)
     /* Initialize BLE OIC GATT Server */
     sensor_ble_oic_server_init();
 
+    sensor_set_poll_rate_ms("ms5837_0", 60);
+
+    struct sensor_type_traits stt_temp;
+    struct sensor_type_traits stt_press;
+
+    stt_temp = (struct sensor_type_traits) {
+        .stt_sensor_type = SENSOR_TYPE_AMBIENT_TEMPERATURE,
+        .stt_poll_n      = 2
+    };
+
+    sensor_set_n_poll_rate("ms5837_0", &stt_temp);
+
+    stt_press = (struct sensor_type_traits) {
+        .stt_sensor_type = SENSOR_TYPE_PRESSURE,
+        .stt_poll_n      = 5
+    };
+
+    sensor_set_n_poll_rate("ms5837_0", &stt_press);
+
     /* log reboot */
     reboot_start(hal_reset_cause());
 
