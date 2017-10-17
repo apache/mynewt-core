@@ -142,7 +142,7 @@ oc_send_buffer_lora(struct os_mbuf *m)
         src_off += blk_len;
         STATS_INC(oc_lora_stats, oframe);
         STATS_INCN(oc_lora_stats, obytes, OS_MBUF_PKTLEN(n));
-        if (lora_app_port_send(oe->port, MCPS_UNCONFIRMED, n)) {
+        if (lora_app_port_send(oe->port, MCPS_CONFIRMED, n)) {
             STATS_INC(oc_lora_stats, oerr);
             goto err;
         }
