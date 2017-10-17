@@ -31,6 +31,7 @@
 #include "parse/parse.h"
 #include "node/lora_priv.h"
 #include "node/lora.h"
+#include "oic/oc_api.h"
 
 extern void las_cmd_init(void);
 extern void las_cmd_disp_byte_str(uint8_t *bytes, int len);
@@ -123,6 +124,18 @@ lora_app_shell_link_chk_cb(LoRaMacEventInfoStatus_t status, uint8_t num_gw,
                    status, num_gw, demod_margin);
 }
 
+static void
+oic_app_init(void)
+{
+    oc_init_platform("MyNewt", NULL, NULL);
+    oc_add_device("/oic/d", "oic.d.light", "MynewtLed", "1.0", "1.0", NULL,
+                  NULL);
+}
+
+static const oc_handler_t omgr_oc_handler = {
+    .init = oic_app_init,
+};
+
 int
 main(void)
 {
@@ -132,8 +145,11 @@ main(void)
 
     sysinit();
 
+    console_printf("\n");
     console_printf("lora_app_shell\n");
     las_cmd_init();
+
+    oc_main_init((oc_handler_t *)&omgr_oc_handler);
 
     /*
      * As the last thing, process events from default event queue.

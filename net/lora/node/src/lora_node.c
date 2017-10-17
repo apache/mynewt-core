@@ -185,6 +185,24 @@ lora_node_mcps_request(struct os_mbuf *om)
     assert(rc == 0);
 }
 
+/**
+ * What's the maximum payload which can be sent on next frame
+ *
+ * @return int payload length, negative on error.
+ */
+int
+lora_node_mtu(void)
+{
+    struct sLoRaMacTxInfo info;
+    int rc;
+
+    rc = LoRaMacQueryTxPossible(0, &info);
+    if (rc != LORAMAC_STATUS_MAC_CMD_LENGTH_ERROR) {
+        return info.MaxPossiblePayload;
+    }
+    return -1;
+}
+
 #if !MYNEWT_VAL(LORA_NODE_CLI)
 static void
 lora_node_reset_txq_timer(void)
@@ -381,7 +399,6 @@ lora_mac_proc_tx_q_event(struct os_event *ev)
         if (rc == LORAMAC_STATUS_MAC_CMD_LENGTH_ERROR) {
             /* Need to flush MAC commands. Send empty unconfirmed frame */
             STATS_INC(lora_mac_stats, tx_mac_flush);
-
             /* NOTE: no need to get a mbuf. */
 send_empty_ack:
             lpkt = NULL;

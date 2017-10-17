@@ -260,6 +260,11 @@ int lora_app_join(uint8_t *dev_eui, uint8_t *app_eui, uint8_t *app_key,
 /* Performs a link check */
 int lora_app_link_check(void);
 
+/*
+ * Maximum payload that can be sent in the next frame.
+ */
+int lora_app_mtu(void);
+
 #endif
 
 /**
