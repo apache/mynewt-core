@@ -556,38 +556,55 @@ void bt_mesh_iv_update(u32_t iv_index, bool iv_update)
 {
 	int i;
 
-	if (iv_index < bt_mesh.iv_index || iv_index > bt_mesh.iv_index + 42) {
-		BT_ERR("IV Index completely out of sync: 0x%08x != 0x%08x",
-			iv_index, bt_mesh.iv_index);
-		return;
-	}
+	/* If we are in normal*/
+	if (!bt_mesh.iv_update) {
 
-	if (iv_index > bt_mesh.iv_index + 1) {
-		BT_WARN("Performing IV Index Recovery");
-		memset(bt_mesh.rpl, 0, sizeof(bt_mesh.rpl));
-		bt_mesh.iv_index = iv_index;
-		bt_mesh.seq = 0;
-		goto do_update;
-	}
-
-	if (iv_update == bt_mesh.iv_update) {
-		if (iv_index != bt_mesh.iv_index) {
-			BT_WARN("No update, but IV Index 0x%08x != 0x%08x",
-				iv_index, bt_mesh.iv_index);
+		if (iv_index < bt_mesh.iv_index ||
+		    iv_index > bt_mesh.iv_index + 42) {
+			BT_ERR("IV Index completely out of sync: "
+			       "0x%08x != 0x%08x", iv_index, bt_mesh.iv_index);
+			return;
 		}
-		return;
-	}
 
-	if (bt_mesh.iv_update) {
+		if (iv_index > bt_mesh.iv_index + 1) {
+			BT_WARN("Performing IV Index Recovery");
+			memset(bt_mesh.rpl, 0, sizeof(bt_mesh.rpl));
+			bt_mesh.iv_index = iv_index;
+			bt_mesh.seq = 0;
+			goto do_update;
+		}
+
+		if (iv_index == bt_mesh.iv_index + 1 && !iv_update) {
+			BT_WARN("Ignoring new index in normal mode",
+				iv_index, bt_mesh.iv_index);
+			/* TODO: We could also update iv index
+			 * according to spec
+			 */
+			return;
+		}
+
+		if (!iv_update) {
+			/* Nothing to be done here */
+			BT_DBG("Already in Normal state");
+			return;
+		}
+
+		if (iv_index != bt_mesh.iv_index + 1) {
+			BT_WARN("Wrong new IV Index: 0x%08x != 0x%08x + 1",
+				iv_index, bt_mesh.iv_index);
+			return;
+		}
+	} else  {
+		/* If we are in Update in Progress state*/
 		if (iv_index != bt_mesh.iv_index) {
 			BT_WARN("IV Index mismatch: 0x%08x != 0x%08x",
 				iv_index, bt_mesh.iv_index);
 			return;
 		}
-	} else {
-		if (iv_index != bt_mesh.iv_index + 1) {
-			BT_WARN("Wrong new IV Index: 0x%08x != 0x%08x + 1",
-				iv_index, bt_mesh.iv_index);
+
+		if (iv_update) {
+			/* Nothing to be done here */
+			BT_DBG("Already in IV Update in Progress state");
 			return;
 		}
 	}
