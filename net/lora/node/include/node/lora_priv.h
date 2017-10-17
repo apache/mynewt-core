@@ -36,14 +36,15 @@ int lora_node_join(uint8_t *dev_eui, uint8_t *app_eui, uint8_t *app_key,
                    uint8_t trials);
 int lora_node_link_check(void);
 struct os_eventq *lora_node_mac_evq_get(void);
-void lora_node_reset_txq_timer(void);
+void lora_node_chk_txq(void);
 bool lora_node_txq_empty(void);
+bool lora_mac_srv_ack_requested(void);
 
 /* Lora debug log */
 #define LORA_NODE_DEBUG_LOG
 
 #if defined(LORA_NODE_DEBUG_LOG)
-#define LORA_NODE_DEBUG_LOG_ENTRIES     (64)
+#define LORA_NODE_DEBUG_LOG_ENTRIES     (128)
 void lora_node_log(uint8_t logid, uint8_t p8, uint16_t p16, uint32_t p32);
 
 /* IDs */
@@ -53,6 +54,10 @@ void lora_node_log(uint8_t logid, uint8_t p8, uint16_t p16, uint32_t p32);
 #define LORA_NODE_LOG_RX_DONE           (22)
 #define LORA_NODE_LOG_RX_SYNC_TIMEOUT   (23)
 #define LORA_NODE_LOG_RADIO_TIMEOUT_IRQ (24)
+#define LORA_NODE_LOG_RX_PORT           (25)
+#define LORA_NODE_LOG_RX_WIN2           (26)
+#define LORA_NODE_LOG_RX_WIN_SETUP_FAIL (27)
+#define LORA_NODE_LOG_APP_TX            (40)
 
 #else
 #define lora_node_log(a,b,c,d)
