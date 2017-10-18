@@ -73,11 +73,13 @@ static STAILQ_HEAD(, os_mbuf_pkthdr) oc_lora_reass_q =
 /*
  * Fragmentation/reassembly.
  */
+#define COAP_LORA_LAST_FRAG	0x80	/* Indicates last frag in a frame. */
+#define COAP_LORA_FRAG_NUM(a)   ((a) & ~COAP_LORA_LAST_FRAG)
+
 struct coap_lora_frag_start {
     uint8_t frag_num;	/* 0 */
-    uint8_t frag_cnt;	/* number of fragments to expect */
     uint16_t crc;	/* crc over reassembled packet */
-};
+} __attribute__((packed));
 
 struct coap_lora_frag {
     uint8_t frag_num;	/* which fragment within packet */
@@ -102,8 +104,6 @@ oc_send_buffer_lora(struct os_mbuf *m)
 
     oe = (struct oc_endpoint_lora *)OC_MBUF_ENDPOINT(m);
     bytes = OS_MBUF_PKTLEN(m);
-    mtu = lora_app_mtu();
-
     crc = CRC16_INITIAL_CRC;
     for (n = m; n; n = SLIST_NEXT(n, om_next)) {
         crc = crc16_ccitt(crc, n->om_data, n->om_len);
@@ -111,17 +111,18 @@ oc_send_buffer_lora(struct os_mbuf *m)
     i = 0;
     src_off = 0;
     for (off = 0; off < bytes; off += blk_len) {
+        mtu = lora_app_mtu();
         n = os_msys_get_pkthdr(mtu, sizeof(struct lora_pkt_info));
         if (!n) {
             goto oom;
         }
         if (off == 0) {
             hdr.s.frag_num = i++;
-            hdr.s.frag_cnt = ((bytes + 2) / (mtu - 1)) + 1;
             hdr.s.crc = crc;
             blk_len = mtu - sizeof(hdr.s);
-            if (blk_len > bytes) {
+            if (blk_len >= bytes) {
                 blk_len = bytes;
+                hdr.s.frag_num |= COAP_LORA_LAST_FRAG;
             }
             if (os_mbuf_copyinto(n, 0, &hdr.s, sizeof(hdr.s))) {
                 goto oom;
@@ -129,8 +130,9 @@ oc_send_buffer_lora(struct os_mbuf *m)
         } else {
             hdr.f.frag_num = i++;
             blk_len = mtu - sizeof(hdr.f);
-            if (blk_len > bytes - src_off) {
+            if (blk_len >= bytes - src_off) {
                 blk_len = bytes - src_off;
+                hdr.f.frag_num |= COAP_LORA_LAST_FRAG;
             }
             if (os_mbuf_copyinto(n, 0, &hdr.f, sizeof(hdr.f))) {
                 goto oom;
@@ -261,16 +263,7 @@ oc_lora_frag_num(struct os_mbuf *m)
     struct coap_lora_frag *cf;
 
     cf = (struct coap_lora_frag *)m->om_data;
-    return cf->frag_num;
-}
-
-static uint8_t
-oc_lora_frag_cnt(struct os_mbuf *m)
-{
-    struct coap_lora_frag_start *cfs;
-
-    cfs = (struct coap_lora_frag_start *)m->om_data;
-    return cfs->frag_cnt;
+    return COAP_LORA_FRAG_NUM(cf->frag_num);
 }
 
 static void
@@ -278,6 +271,7 @@ oc_lora_rx_reass(struct os_mbuf *m, uint16_t port)
 {
     struct coap_lora_frag_start *cfs;
     struct coap_lora_frag cf;
+    uint8_t frag_num;
     struct os_mbuf_pkthdr *pkt;
     struct os_mbuf_pkthdr *pkt2;
 
@@ -285,7 +279,8 @@ oc_lora_rx_reass(struct os_mbuf *m, uint16_t port)
         STATS_INC(oc_lora_stats, ishort);
         goto err;
     }
-    if (cf.frag_num == 0) {
+    frag_num = COAP_LORA_FRAG_NUM(cf.frag_num);
+    if (frag_num == 0) {
         m = os_mbuf_pullup(m, sizeof(*cfs));
     } else {
         m = os_mbuf_pullup(m, sizeof(cf));
@@ -298,19 +293,18 @@ oc_lora_rx_reass(struct os_mbuf *m, uint16_t port)
     pkt = OS_MBUF_PKTHDR(m);
 
     if (STAILQ_EMPTY(&oc_lora_reass_q)) {
-        if (cf.frag_num != 0) {
+        if (frag_num != 0) {
             STATS_INC(oc_lora_stats, ioof);
             goto err;
         }
-        if (oc_lora_frag_cnt(m) == 1) {
+        if (cf.frag_num & COAP_LORA_LAST_FRAG) {
             oc_lora_deliver(pkt, port);
         } else {
             STAILQ_INSERT_TAIL(&oc_lora_reass_q, pkt, omp_next);
         }
     } else {
         pkt2 = STAILQ_LAST(&oc_lora_reass_q, os_mbuf_pkthdr, omp_next);
-        if (oc_lora_frag_num(OS_MBUF_PKTHDR_TO_MBUF(pkt2)) + 1 !=
-            cf.frag_num) {
+        if (oc_lora_frag_num(OS_MBUF_PKTHDR_TO_MBUF(pkt2)) + 1 != frag_num) {
             while ((pkt2 = STAILQ_FIRST(&oc_lora_reass_q))) {
                 STAILQ_REMOVE_HEAD(&oc_lora_reass_q, omp_next);
                 STATS_INC(oc_lora_stats, ioof);
@@ -320,8 +314,7 @@ oc_lora_rx_reass(struct os_mbuf *m, uint16_t port)
         } else {
             STAILQ_INSERT_TAIL(&oc_lora_reass_q, pkt, omp_next);
             pkt2 = STAILQ_FIRST(&oc_lora_reass_q);
-            if (cf.frag_num + 1 ==
-                oc_lora_frag_cnt(OS_MBUF_PKTHDR_TO_MBUF(pkt2))) {
+            if (cf.frag_num & COAP_LORA_LAST_FRAG) {
                 STAILQ_INIT(&oc_lora_reass_q);
                 oc_lora_deliver(pkt2, port);
             }
