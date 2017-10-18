@@ -405,6 +405,11 @@ blecent_gap_event(struct ble_gap_event *event, void *arg)
         blecent_scan();
         return 0;
 
+    case BLE_GAP_EVENT_DISC_COMPLETE:
+        BLECENT_LOG(INFO, "discovery complete; reason=%d\n",
+                    event->disc_complete.reason);
+        return 0;
+
     case BLE_GAP_EVENT_ENC_CHANGE:
         /* Encryption has been enabled or disabled for this connection. */
         BLECENT_LOG(INFO, "encryption change event; status=%d ",
