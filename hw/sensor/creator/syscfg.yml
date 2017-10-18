@@ -43,3 +43,6 @@ syscfg.defs:
     TCS34725_OFB:
         description: 'TCS34725 is present'
         value : 0
+    BMA253_OFB:
+        description: 'BMA253 is present'
+        value : 0

@@ -49,6 +49,10 @@
 #include <bmp280/bmp280.h>
 #endif
 
+#if MYNEWT_VAL(BMA253_OFB)
+#include <bma253/bma253.h>
+#endif
+
 /* Driver definitions */
 #if MYNEWT_VAL(LSM303DLHC_OFB)
 static struct lsm303dlhc lsm303dlhc;
@@ -80,6 +84,10 @@ static struct ms5837 ms5837;
 
 #if MYNEWT_VAL(BMP280_OFB)
 static struct bmp280 bmp280;
+#endif
+
+#if MYNEWT_VAL(BMA253_OFB)
+static struct bma253 bma253;
 #endif
 
 /**
@@ -166,6 +174,14 @@ static struct sensor_itf i2c_0_itf_ms = {
     .si_num  = 0,
     /* HW I2C address for the MS5837 */
     .si_addr = 0x76
+};
+#endif
+
+#if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(BMA253_OFB)
+static struct sensor_itf i2c_0_itf_lis = {
+    .si_type = SENSOR_ITF_I2C,
+    .si_num  = 0,
+    .si_addr = 0x18,
 };
 #endif
 
@@ -443,6 +459,51 @@ config_bno055_sensor(void)
 }
 #endif
 
+#if MYNEWT_VAL(BMA253_OFB)
+/**
+ * BMA253 sensor default configuration
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+config_bma253_sensor(void)
+{
+    struct os_dev * dev;
+    struct bma253_cfg cfg;
+    int rc;
+
+    dev = os_dev_open("bma253_0", OS_TIMEOUT_NEVER, NULL);
+    assert(dev != NULL);
+
+    cfg.g_range = BMA253_G_RANGE_2;
+    cfg.filter_bandwidth = BMA253_FILTER_BANDWIDTH_1000_HZ;
+    cfg.use_unfiltered_data = false;
+    cfg.int_pin_output = BMA253_INT_PIN_OUTPUT_PUSH_PULL;
+    cfg.int_pin_active = BMA253_INT_PIN_ACTIVE_HIGH;
+    cfg.tap_quiet = BMA253_TAP_QUIET_30_MS;
+    cfg.tap_shock = BMA253_TAP_SHOCK_50_MS;
+    cfg.d_tap_window = BMA253_D_TAP_WINDOW_250_MS;
+    cfg.tap_wake_samples = BMA253_TAP_WAKE_SAMPLES_2;
+    cfg.tap_thresh_g = 1.0;
+    cfg.i2c_watchdog = BMA253_I2C_WATCHDOG_DISABLED;
+    cfg.offset_x_g = 0.0;
+    cfg.offset_y_g = 0.0;
+    cfg.offset_z_g = 0.0;
+    cfg.power_mode = BMA253_POWER_MODE_NORMAL;
+    cfg.sleep_duration = BMA253_SLEEP_DURATION_0_5_MS;
+    cfg.int_pin1_num = 20;
+    cfg.int_pin2_num = 19;
+    cfg.sensor_mask = SENSOR_TYPE_ACCELEROMETER;
+
+    rc = bma253_config((struct bma253 *)dev, &cfg);
+    assert(rc == 0);
+
+    os_dev_close(dev);
+
+    return 0;
+}
+#endif
+
 /* Sensor device creation */
 void
 sensor_dev_create(void)
@@ -527,5 +588,15 @@ sensor_dev_create(void)
     rc = config_bmp280_sensor();
     assert(rc == 0);
 #endif
+
+#if MYNEWT_VAL(BMA253_OFB)
+    rc = os_dev_create((struct os_dev *)&bma253, "bma253_0",
+      OS_DEV_INIT_PRIMARY, 0, bma253_init, &i2c_0_itf_lis);
+    assert(rc == 0);
+
+    rc = config_bma253_sensor();
+    assert(rc == 0);
+#endif
+
 
 }
