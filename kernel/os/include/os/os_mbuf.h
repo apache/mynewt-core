@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -17,8 +17,8 @@
  * under the License.
  */
 
-#ifndef _OS_MBUF_H 
-#define _OS_MBUF_H 
+#ifndef _OS_MBUF_H
+#define _OS_MBUF_H
 
 #include "os/queue.h"
 #include "os/os_eventq.h"
@@ -28,15 +28,15 @@ extern "C" {
 #endif
 
 /**
- * A mbuf pool from which to allocate mbufs. This contains a pointer to the os 
- * mempool to allocate mbufs out of, the total number of elements in the pool, 
- * and the amount of "user" data in a non-packet header mbuf. The total pool 
- * size, in bytes, should be: 
+ * A mbuf pool from which to allocate mbufs. This contains a pointer to the os
+ * mempool to allocate mbufs out of, the total number of elements in the pool,
+ * and the amount of "user" data in a non-packet header mbuf. The total pool
+ * size, in bytes, should be:
  *  os_mbuf_count * (omp_databuf_len + sizeof(struct os_mbuf))
  */
 struct os_mbuf_pool {
-    /** 
-     * Total length of the databuf in each mbuf.  This is the size of the 
+    /**
+     * Total length of the databuf in each mbuf.  This is the size of the
      * mempool block, minus the mbuf header
      */
     uint16_t omp_databuf_len;
@@ -45,7 +45,7 @@ struct os_mbuf_pool {
      */
     uint16_t omp_mbuf_count;
     /**
-     * The memory pool which to allocate mbufs out of 
+     * The memory pool which to allocate mbufs out of
      */
     struct os_mempool *omp_pool;
 
@@ -91,12 +91,12 @@ struct os_mbuf {
      */
     uint8_t om_pkthdr_len;
     /**
-     * Length of data in this buffer 
+     * Length of data in this buffer
      */
     uint16_t om_len;
 
     /**
-     * The mbuf pool this mbuf was allocated out of 
+     * The mbuf pool this mbuf was allocated out of
      */
     struct os_mbuf_pool *om_omp;
 
@@ -119,14 +119,14 @@ struct os_mqueue {
 /*
  * Given a flag number, provide the mask for it
  *
- * @param __n The number of the flag in the mask 
+ * @param __n The number of the flag in the mask
  */
 #define OS_MBUF_F_MASK(__n) (1 << (__n))
 
-/* 
- * Checks whether a given mbuf is a packet header mbuf 
+/*
+ * Checks whether a given mbuf is a packet header mbuf
  *
- * @param __om The mbuf to check 
+ * @param __om The mbuf to check
  */
 #define OS_MBUF_IS_PKTHDR(__om) \
     ((__om)->om_pkthdr_len >= sizeof (struct os_mbuf_pkthdr))
@@ -148,8 +148,8 @@ struct os_mqueue {
 /*
  * Access the data of a mbuf, and cast it to type
  *
- * @param __om The mbuf to access, and cast 
- * @param __type The type to cast it to 
+ * @param __om The mbuf to access, and cast
+ * @param __type The type to cast it to
  */
 #define OS_MBUF_DATA(__om, __type) \
      (__type) ((__om)->om_data)
@@ -174,7 +174,7 @@ struct os_mqueue {
 /*
  * Called by OS_MBUF_LEADINGSPACE() macro
  */
-static inline uint16_t 
+static inline uint16_t
 _os_mbuf_leadingspace(struct os_mbuf *om)
 {
     uint16_t startoff;
@@ -185,26 +185,26 @@ _os_mbuf_leadingspace(struct os_mbuf *om)
         startoff = om->om_pkthdr_len;
     }
 
-    leadingspace = (uint16_t) (OS_MBUF_DATA(om, uint8_t *) - 
+    leadingspace = (uint16_t) (OS_MBUF_DATA(om, uint8_t *) -
         ((uint8_t *) &om->om_databuf[0] + startoff));
 
     return (leadingspace);
 }
 
 /**
- * Returns the leading space (space at the beginning) of the mbuf. 
- * Works on both packet header, and regular mbufs, as it accounts 
+ * Returns the leading space (space at the beginning) of the mbuf.
+ * Works on both packet header, and regular mbufs, as it accounts
  * for the additional space allocated to the packet header.
- * 
- * @param __omp Is the mbuf pool (which contains packet header length.)
- * @param __om  Is the mbuf in that pool to get the leadingspace for 
  *
- * @return Amount of leading space available in the mbuf 
+ * @param __omp Is the mbuf pool (which contains packet header length.)
+ * @param __om  Is the mbuf in that pool to get the leadingspace for
+ *
+ * @return Amount of leading space available in the mbuf
  */
 #define OS_MBUF_LEADINGSPACE(__om) _os_mbuf_leadingspace(__om)
 
 /* Called by OS_MBUF_TRAILINGSPACE() macro. */
-static inline uint16_t 
+static inline uint16_t
 _os_mbuf_trailingspace(struct os_mbuf *om)
 {
     struct os_mbuf_pool *omp;
@@ -219,10 +219,10 @@ _os_mbuf_trailingspace(struct os_mbuf *om)
  * Returns the trailing space (space at the end) of the mbuf.
  * Works on both packet header and regular mbufs.
  *
- * @param __omp The mbuf pool for this mbuf 
- * @param __om  Is the mbuf in that pool to get trailing space for 
+ * @param __omp The mbuf pool for this mbuf
+ * @param __om  Is the mbuf in that pool to get trailing space for
  *
- * @return The amount of trailing space available in the mbuf 
+ * @return The amount of trailing space available in the mbuf
  */
 #define OS_MBUF_TRAILINGSPACE(__om) _os_mbuf_trailingspace(__om)
 
@@ -253,14 +253,14 @@ int os_msys_count(void);
 int os_msys_num_free(void);
 
 /* Initialize a mbuf pool */
-int os_mbuf_pool_init(struct os_mbuf_pool *, struct os_mempool *mp, 
+int os_mbuf_pool_init(struct os_mbuf_pool *, struct os_mempool *mp,
         uint16_t, uint16_t);
 
-/* Allocate a new mbuf out of the os_mbuf_pool */ 
+/* Allocate a new mbuf out of the os_mbuf_pool */
 struct os_mbuf *os_mbuf_get(struct os_mbuf_pool *omp, uint16_t);
 
-/* Allocate a new packet header mbuf out of the os_mbuf_pool */ 
-struct os_mbuf *os_mbuf_get_pkthdr(struct os_mbuf_pool *omp, 
+/* Allocate a new packet header mbuf out of the os_mbuf_pool */
+struct os_mbuf *os_mbuf_get_pkthdr(struct os_mbuf_pool *omp,
         uint8_t pkthdr_len);
 
 /* Duplicate a mbuf from the pool */

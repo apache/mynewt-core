@@ -823,6 +823,11 @@ las_cmd_app_tx(int argc, char **argv)
         return 0;
     }
 
+    if (lora_app_mtu() < len) {
+        console_printf("Can send at max %d bytes\n", lora_app_mtu());
+        return 0;
+    }
+
     /* Attempt to allocate a mbuf */
     om = lora_pkt_alloc();
     if (!om) {
