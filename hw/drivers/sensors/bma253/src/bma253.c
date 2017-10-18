@@ -3492,16 +3492,19 @@ int bma253_config(struct bma253 * bma253, struct bma253_cfg * cfg)
 			       HAL_GPIO_PULL_NONE);
 	if (rc != 0)
 		return rc;
-	rc = hal_gpio_irq_init(cfg->int_pin2_num,
-			       interrupt_handler,
-			       bma253->ints + BMA253_INT_PIN_2,
-			       gpio_trig,
-			       HAL_GPIO_PULL_NONE);
-	if (rc != 0)
-		return rc;
+
+  if (cfg->int_pin2_num) {
+	    rc = hal_gpio_irq_init(cfg->int_pin2_num,
+			           interrupt_handler,
+			           bma253->ints + BMA253_INT_PIN_2,
+	    		       gpio_trig,
+    			       HAL_GPIO_PULL_NONE);
+    	if (rc != 0)
+	        return rc;
+	    hal_gpio_irq_enable(cfg->int_pin2_num);
+  }
 
 	hal_gpio_irq_enable(cfg->int_pin1_num);
-	hal_gpio_irq_enable(cfg->int_pin2_num);
 
 	rc = sensor_set_type_mask(sensor, cfg->sensor_mask);
 	if (rc != 0)
