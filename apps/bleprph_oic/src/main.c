@@ -345,6 +345,7 @@ omgr_app_init(void)
     oc_resource_set_periodic_observable(res, 1);
     oc_resource_set_request_handler(res, OC_GET, app_get_light);
     oc_resource_set_request_handler(res, OC_PUT, app_set_light);
+    oc_resource_set_request_handler(res, OC_POST, app_set_light);
     oc_add_resource(res);
 
 }
