@@ -67,142 +67,182 @@ STATS_NAME_START(oc_lora_stats)
 STATS_NAME_END(oc_lora_stats)
 static uint8_t oc_lora_stat_reg;
 
-static STAILQ_HEAD(, os_mbuf_pkthdr) oc_lora_reass_q =
-    STAILQ_HEAD_INITIALIZER(oc_lora_reass_q);
+static struct oc_lora_state {
+    struct os_mbuf_pkthdr *rx_pkt;
+    STAILQ_HEAD(, os_mbuf_pkthdr) tx_q;
+    uint8_t tx_frag_num;
+    uint8_t rx_frag_num;
+    uint16_t rx_crc;
+    uint8_t rx_port;
+} oc_lora_state = {
+    .tx_q = STAILQ_HEAD_INITIALIZER(oc_lora_state.tx_q)
+};
 
 /*
  * Fragmentation/reassembly.
  */
+#define COAP_LORA_LAST_FRAG	0x80	/* Indicates last frag in a frame. */
+#define COAP_LORA_FRAG_NUM(a)   ((a) & ~COAP_LORA_LAST_FRAG)
+
 struct coap_lora_frag_start {
     uint8_t frag_num;	/* 0 */
-    uint8_t frag_cnt;	/* number of fragments to expect */
     uint16_t crc;	/* crc over reassembled packet */
-};
+} __attribute__((packed));
 
 struct coap_lora_frag {
     uint8_t frag_num;	/* which fragment within packet */
 };
 
 void
-oc_send_buffer_lora(struct os_mbuf *m)
+oc_send_frag_lora(struct oc_lora_state *os)
 {
     union {
         struct coap_lora_frag_start s;
         struct coap_lora_frag f;
     } hdr;
     struct oc_endpoint_lora *oe;
+    struct os_mbuf_pkthdr *pkt;
+    struct os_mbuf *m;
     struct os_mbuf *n;
-    int bytes;
-    int src_off;
-    int off;
+    struct os_mbuf *o;
     int mtu;
     int blk_len;
-    int i;
     uint16_t crc;
 
+    pkt = STAILQ_FIRST(&os->tx_q);
+    m = OS_MBUF_PKTHDR_TO_MBUF(pkt);
     oe = (struct oc_endpoint_lora *)OC_MBUF_ENDPOINT(m);
-    bytes = OS_MBUF_PKTLEN(m);
+
     mtu = lora_app_mtu();
 
-    crc = CRC16_INITIAL_CRC;
-    for (n = m; n; n = SLIST_NEXT(n, om_next)) {
-        crc = crc16_ccitt(crc, n->om_data, n->om_len);
+    n = os_msys_get_pkthdr(mtu, sizeof(struct lora_pkt_info));
+    if (!n) {
+        goto oom;
     }
-    i = 0;
-    src_off = 0;
-    for (off = 0; off < bytes; off += blk_len) {
-        n = os_msys_get_pkthdr(mtu, sizeof(struct lora_pkt_info));
-        if (!n) {
+    if (os->tx_frag_num == 0) {
+        crc = CRC16_INITIAL_CRC;
+        for (o = m; o; o = SLIST_NEXT(o, om_next)) {
+            crc = crc16_ccitt(crc, o->om_data, o->om_len);
+        }
+        hdr.s.frag_num = 0;
+        hdr.s.crc = crc;
+        os->tx_frag_num = 1;
+        blk_len = mtu - sizeof(hdr.s);
+        if (blk_len >= pkt->omp_len) {
+            blk_len = pkt->omp_len;
+            hdr.s.frag_num |= COAP_LORA_LAST_FRAG;
+        }
+        if (os_mbuf_copyinto(n, 0, &hdr.s, sizeof(hdr.s))) {
             goto oom;
         }
-        if (off == 0) {
-            hdr.s.frag_num = i++;
-            hdr.s.frag_cnt = ((bytes + 2) / (mtu - 1)) + 1;
-            hdr.s.crc = crc;
-            blk_len = mtu - sizeof(hdr.s);
-            if (blk_len > bytes) {
-                blk_len = bytes;
-            }
-            if (os_mbuf_copyinto(n, 0, &hdr.s, sizeof(hdr.s))) {
-                goto oom;
-            }
-        } else {
-            hdr.f.frag_num = i++;
-            blk_len = mtu - sizeof(hdr.f);
-            if (blk_len > bytes - src_off) {
-                blk_len = bytes - src_off;
-            }
-            if (os_mbuf_copyinto(n, 0, &hdr.f, sizeof(hdr.f))) {
-                goto oom;
-            }
+    } else {
+        hdr.f.frag_num = os->tx_frag_num++;
+        blk_len = mtu - sizeof(hdr.f);
+        if (blk_len >= pkt->omp_len) {
+            blk_len = pkt->omp_len;
+            hdr.f.frag_num |= COAP_LORA_LAST_FRAG;
         }
-        if (os_mbuf_appendfrom(n, m, src_off, blk_len)) {
+        if (os_mbuf_copyinto(n, 0, &hdr.f, sizeof(hdr.f))) {
             goto oom;
         }
-        src_off += blk_len;
-        STATS_INC(oc_lora_stats, oframe);
-        STATS_INCN(oc_lora_stats, obytes, OS_MBUF_PKTLEN(n));
-        if (lora_app_port_send(oe->port, MCPS_CONFIRMED, n)) {
-            STATS_INC(oc_lora_stats, oerr);
-            goto err;
-        }
     }
-    os_mbuf_free_chain(m);
+    if (os_mbuf_appendfrom(n, m, 0, blk_len)) {
+        goto oom;
+    }
+    os_mbuf_adj(m, blk_len);
+    STATS_INC(oc_lora_stats, oframe);
+    STATS_INCN(oc_lora_stats, obytes, OS_MBUF_PKTLEN(n));
+    if (lora_app_port_send(oe->port, MCPS_CONFIRMED, n)) {
+        STATS_INC(oc_lora_stats, oerr);
+        goto err;
+    }
     return;
 oom:
     STATS_INC(oc_lora_stats, oom);
 err:
     os_mbuf_free_chain(n);
     os_mbuf_free_chain(m);
+    STAILQ_REMOVE_HEAD(&os->tx_q, omp_next);
+    /* XXX unlikely that there's something else queued, but if there is,
+     * we should start tx again */
 }
 
 static void
 oc_lora_tx_cb(uint8_t port, LoRaMacEventInfoStatus_t status, Mcps_t pkt_type,
               struct os_mbuf *m)
 {
+    struct oc_lora_state *os = &oc_lora_state;
+    struct os_mbuf_pkthdr *pkt;
+
     os_mbuf_free_chain(m);
     if (status != LORAMAC_EVENT_INFO_STATUS_OK) {
         STATS_INC(oc_lora_stats, oerr);
     }
+
+    pkt = STAILQ_FIRST(&os->tx_q);
+    assert(pkt);
+    if (pkt->omp_len == 0) {
+        STAILQ_REMOVE_HEAD(&os->tx_q, omp_next);
+        os->tx_frag_num = 0;
+        os_mbuf_free_chain(OS_MBUF_PKTHDR_TO_MBUF(pkt));
+    }
+    if (!STAILQ_EMPTY(&os->tx_q)) {
+        oc_send_frag_lora(os);
+    }
 }
 
-static struct os_mbuf *
-oc_lora_rx_compact(struct os_mbuf *m)
+void
+oc_send_buffer_lora(struct os_mbuf *m)
 {
-    struct os_mbuf *n;
+    struct oc_lora_state *os = &oc_lora_state;
+    int in_progress = 0;
 
-    n = SLIST_NEXT(m, om_next);
-    if (OS_MBUF_TRAILINGSPACE(m) >= n->om_len) {
-        memcpy(m->om_data + m->om_len, n->om_data, n->om_len);
-        m->om_len += n->om_len;
-        SLIST_NEXT(m, om_next) = SLIST_NEXT(n, om_next);
-        os_mbuf_free(n);
-        return m;
-    } else {
-        return n;
+    if (!STAILQ_EMPTY(&os->tx_q)) {
+        in_progress = 1;
+    }
+    STAILQ_INSERT_TAIL(&os->tx_q, OS_MBUF_PKTHDR(m), omp_next);
+    if (!in_progress) {
+        oc_send_frag_lora(os);
     }
 }
 
 static void
-oc_lora_deliver(struct os_mbuf_pkthdr *mp, uint16_t port)
+oc_lora_rx_append(struct oc_lora_state *os, struct os_mbuf *m)
+{
+    struct os_mbuf *n;
+
+    /*
+     * Don't try to be too smart about this: if data comes in small
+     * fragments, fragment would likely be in a single incoming mbuf.
+     *
+     * If that fits within the last mbuf in the chain, copy it in.
+     */
+    os->rx_pkt->omp_len += OS_MBUF_PKTLEN(m);
+    n = OS_MBUF_PKTHDR_TO_MBUF(os->rx_pkt);
+    while (SLIST_NEXT(n, om_next)) {
+         n = SLIST_NEXT(n, om_next);
+    }
+    if (OS_MBUF_TRAILINGSPACE(n) >= m->om_len) {
+        memcpy(n->om_data + n->om_len, m->om_data, m->om_len);
+        n->om_len += m->om_len;
+        SLIST_NEXT(n, om_next) = SLIST_NEXT(m, om_next);
+        os_mbuf_free(m);
+    } else {
+        SLIST_NEXT(n, om_next) = m;
+    }
+}
+
+static void
+oc_lora_deliver(struct oc_lora_state *os)
 {
     struct oc_endpoint_lora *oe;
     struct os_mbuf *m;
     struct os_mbuf *n;
-    struct os_mbuf *o;
-    struct os_mbuf_pkthdr *np;
     uint16_t crc;
-    uint16_t pktcrc;
 
-    m = OS_MBUF_PKTHDR_TO_MBUF(mp);
+    m = OS_MBUF_PKTHDR_TO_MBUF(os->rx_pkt);
 
-    os_mbuf_copydata(m, (int)(&((struct coap_lora_frag_start *)0)->crc),
-                     sizeof(crc), &pktcrc);
-
-    /*
-     * Trim frag header out.
-     */
-    os_mbuf_adj(m, sizeof(struct coap_lora_frag_start));
+    os->rx_pkt = NULL;
 
     /*
      * add oc_endpoint_lora in the front.
@@ -221,33 +261,16 @@ oc_lora_deliver(struct os_mbuf_pkthdr *mp, uint16_t port)
     }
     oe = (struct oc_endpoint_lora *)OC_MBUF_ENDPOINT(m);
     oe->flags = LORA;
-    oe->port = port;
+    oe->port = os->rx_port;
 
     /*
-     * CRC first fragment.
+     * Check CRC.
      */
-    crc = crc16_ccitt(CRC16_INITIAL_CRC, m->om_data, m->om_len);
-    n = m;
-    while ((o = SLIST_NEXT(n, om_next))) {
-        crc = crc16_ccitt(crc, o->om_data, o->om_len);
-        n = oc_lora_rx_compact(n);
+    crc = CRC16_INITIAL_CRC;
+    for (n = m; n; n = SLIST_NEXT(n, om_next)) {
+        crc = crc16_ccitt(crc, n->om_data, n->om_len);
     }
-
-    while ((np = STAILQ_NEXT(mp, omp_next))) {
-        /*
-         * XXX coalesce short fragments
-         */
-        STAILQ_NEXT(mp, omp_next) = STAILQ_NEXT(np, omp_next);
-        os_mbuf_adj(OS_MBUF_PKTHDR_TO_MBUF(np), sizeof(struct coap_lora_frag));
-        SLIST_NEXT(n, om_next) = OS_MBUF_PKTHDR_TO_MBUF(np);
-        mp->omp_len += np->omp_len;
-        while ((o = SLIST_NEXT(n, om_next))) {
-            crc = crc16_ccitt(crc, o->om_data, o->om_len);
-            n = oc_lora_rx_compact(n);
-        }
-    }
-
-    if (crc != pktcrc) {
+    if (crc != os->rx_crc) {
         STATS_INC(oc_lora_stats, icsum);
         os_mbuf_free_chain(m);
     } else {
@@ -255,37 +278,21 @@ oc_lora_deliver(struct os_mbuf_pkthdr *mp, uint16_t port)
     }
 }
 
-static uint8_t
-oc_lora_frag_num(struct os_mbuf *m)
-{
-    struct coap_lora_frag *cf;
-
-    cf = (struct coap_lora_frag *)m->om_data;
-    return cf->frag_num;
-}
-
-static uint8_t
-oc_lora_frag_cnt(struct os_mbuf *m)
-{
-    struct coap_lora_frag_start *cfs;
-
-    cfs = (struct coap_lora_frag_start *)m->om_data;
-    return cfs->frag_cnt;
-}
-
 static void
 oc_lora_rx_reass(struct os_mbuf *m, uint16_t port)
 {
+    struct oc_lora_state *os = &oc_lora_state;
     struct coap_lora_frag_start *cfs;
     struct coap_lora_frag cf;
+    uint8_t frag_num;
     struct os_mbuf_pkthdr *pkt;
-    struct os_mbuf_pkthdr *pkt2;
 
     if (os_mbuf_copydata(m, 0, sizeof(cf), &cf)) {
         STATS_INC(oc_lora_stats, ishort);
         goto err;
     }
-    if (cf.frag_num == 0) {
+    frag_num = COAP_LORA_FRAG_NUM(cf.frag_num);
+    if (frag_num == 0) {
         m = os_mbuf_pullup(m, sizeof(*cfs));
     } else {
         m = os_mbuf_pullup(m, sizeof(cf));
@@ -297,35 +304,40 @@ oc_lora_rx_reass(struct os_mbuf *m, uint16_t port)
 
     pkt = OS_MBUF_PKTHDR(m);
 
-    if (STAILQ_EMPTY(&oc_lora_reass_q)) {
-        if (cf.frag_num != 0) {
+    if (os->rx_pkt == NULL) {
+        /*
+         * If no frame being reassembled, then it must have frag num 0,
+         * and start header.
+         */
+        if (frag_num != 0) {
             STATS_INC(oc_lora_stats, ioof);
             goto err;
         }
-        if (oc_lora_frag_cnt(m) == 1) {
-            oc_lora_deliver(pkt, port);
-        } else {
-            STAILQ_INSERT_TAIL(&oc_lora_reass_q, pkt, omp_next);
-        }
+        os_mbuf_copydata(m, (int)(&((struct coap_lora_frag_start *)0)->crc),
+                         sizeof(os->rx_crc), &os->rx_crc);
+        os_mbuf_adj(m, sizeof(struct coap_lora_frag_start));
+        os->rx_frag_num = 0;
+        os->rx_pkt = pkt;
+        os->rx_port = port;
     } else {
-        pkt2 = STAILQ_LAST(&oc_lora_reass_q, os_mbuf_pkthdr, omp_next);
-        if (oc_lora_frag_num(OS_MBUF_PKTHDR_TO_MBUF(pkt2)) + 1 !=
-            cf.frag_num) {
-            while ((pkt2 = STAILQ_FIRST(&oc_lora_reass_q))) {
-                STAILQ_REMOVE_HEAD(&oc_lora_reass_q, omp_next);
-                STATS_INC(oc_lora_stats, ioof);
-                os_mbuf_free_chain(OS_MBUF_PKTHDR_TO_MBUF(pkt2));
-            }
-            STAILQ_INSERT_TAIL(&oc_lora_reass_q, pkt, omp_next);
-        } else {
-            STAILQ_INSERT_TAIL(&oc_lora_reass_q, pkt, omp_next);
-            pkt2 = STAILQ_FIRST(&oc_lora_reass_q);
-            if (cf.frag_num + 1 ==
-                oc_lora_frag_cnt(OS_MBUF_PKTHDR_TO_MBUF(pkt2))) {
-                STAILQ_INIT(&oc_lora_reass_q);
-                oc_lora_deliver(pkt2, port);
-            }
+        /*
+         * Subsequent fragments must come in order.
+         */
+        if (frag_num != os->rx_frag_num + 1 || os->rx_port != port) {
+            os_mbuf_free_chain(OS_MBUF_PKTHDR_TO_MBUF(os->rx_pkt));
+            os->rx_pkt = NULL;
+            STATS_INC(oc_lora_stats, ioof);
+            goto err;
         }
+        os->rx_frag_num++;
+        os_mbuf_adj(m, sizeof(struct coap_lora_frag));
+        oc_lora_rx_append(os, m);
+    }
+    if (cf.frag_num & COAP_LORA_LAST_FRAG) {
+        /*
+         * If last fragment, deliver the frame to stack.
+         */
+        oc_lora_deliver(os);
     }
     return;
 err:
