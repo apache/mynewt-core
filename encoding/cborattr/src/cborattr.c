@@ -186,13 +186,13 @@ cbor_internal_read_object(CborValue *root_value,
     }
 
     /* contains key value pairs */
-    while (cbor_value_is_valid(&cur_value)) {
+    while (cbor_value_is_valid(&cur_value) && !err) {
         /* get the attribute */
         if (cbor_value_is_text_string(&cur_value)) {
             if (cbor_value_calculate_string_length(&cur_value, &len) == 0) {
                 if (len > MYNEWT_VAL(CBORATTR_MAX_SIZE)) {
                     err |= CborErrorDataTooLarge;
-                    goto err_return;
+                    break;
                 }
                 err |= cbor_value_copy_text_string(&cur_value, attrbuf, &len,
                                                      NULL);
@@ -205,7 +205,7 @@ cbor_internal_read_object(CborValue *root_value,
                 type = cbor_value_get_type(&cur_value);
             } else {
                 err |= CborErrorIllegalType;
-                goto err_return;
+                break;
             }
         } else {
             attrbuf[0] = '\0';
@@ -278,9 +278,10 @@ cbor_internal_read_object(CborValue *root_value,
         }
         cbor_value_advance(&cur_value);
     }
-err_return:
-    /* that should be it for this container */
-    err |= cbor_value_leave_container(root_value, &cur_value);
+    if (!err) {
+        /* that should be it for this container */
+        err |= cbor_value_leave_container(root_value, &cur_value);
+    }
     return err;
 }
 
