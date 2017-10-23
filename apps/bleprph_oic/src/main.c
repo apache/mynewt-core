@@ -290,7 +290,7 @@ app_get_light(oc_request_t *request, oc_interface_mask_t interface)
     switch (interface) {
     case OC_IF_BASELINE:
         oc_process_baseline_interface(request->resource);
-    case OC_IF_RW:
+    case OC_IF_A:
         oc_rep_set_boolean(root, value, value);
         break;
     default:
