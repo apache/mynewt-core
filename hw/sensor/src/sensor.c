@@ -353,25 +353,12 @@ err:
 static os_time_t
 sensor_mgr_poll_one(struct sensor *sensor, sensor_type_t type,
                     struct sensor_type_traits *stt, os_time_t next_wakeup,
-                    os_time_t now)
+                    os_time_t now, uint32_t n)
 {
     os_time_t sensor_ticks;
     os_time_t next_run;
-    uint32_t n;
 
-    stt = sensor_get_type_traits_bytype(type, sensor);
-
-    n = 0;
-    next_run = now;
-
-    if (stt) {
-        /* If traits are defined but the poll multiple is not defined,
-         * we would specify the poll multiple
-         */
-        n = stt->stt_poll_n ? stt->stt_poll_n : 1;
-
-        next_run = stt->stt_next_run;
-    }
+    next_run = stt ? stt->stt_next_run : 0;
 
     os_time_ms_to_ticks(sensor->s_poll_rate * n, &sensor_ticks);
 
@@ -389,6 +376,19 @@ sensor_mgr_poll_one(struct sensor *sensor, sensor_type_t type,
          */
 
         sensor_read(sensor, type, NULL, NULL, OS_TIMEOUT_NEVER);
+
+        sensor_lock(sensor);
+
+        /* Remove the sensor from the sensor list for insert. */
+        sensor_mgr_remove(sensor);
+
+        stt->stt_next_run = sensor_ticks + now;
+
+        /* Re-insert the sensor manager, with the new wakeup time. */
+        sensor_mgr_insert(sensor);
+
+        /* Unlock the sensor to allow other access */
+        sensor_unlock(sensor);
     }
 
     sensor_lock(sensor);
@@ -403,6 +403,7 @@ sensor_mgr_poll_one(struct sensor *sensor, sensor_type_t type,
 
     /* Unlock the sensor to allow other access */
     sensor_unlock(sensor);
+
 
     return next_wakeup;
 }
@@ -421,6 +422,7 @@ sensor_mgr_wakeup_event(struct os_event *ev)
     os_time_t now;
     os_time_t next_wakeup;
     int rc;
+    uint32_t n;
 
     now = os_time_get();
 
@@ -449,16 +451,25 @@ sensor_mgr_wakeup_event(struct os_event *ev)
         }
 
         if (SLIST_EMPTY(&cursor->s_type_traits_list)) {
+
             /* poll multiple needed is one here, as a result, the sensor would
              * get polled at the poll rate
              */
             next_wakeup = sensor_mgr_poll_one(cursor, cursor->s_mask, NULL,
-                                              next_wakeup, now);
+                                              next_wakeup, now, 1);
             sensor_mgr_unlock();
             goto done;
         }
 
+        n = 0;
+
         SLIST_FOREACH(stt, &cursor->s_type_traits_list, stt_next) {
+
+            /* If traits are defined but the poll multiple is not defined,
+             * we would specify the poll multiple
+             */
+            n = stt->stt_poll_n ? stt->stt_poll_n : 1;
+
 
             /* poll multiple is one if no multiple is specified,
              * as a result, the sensor would get polled at the
@@ -468,7 +479,7 @@ sensor_mgr_wakeup_event(struct os_event *ev)
              * at the poll multiple
              */
             next_wakeup = sensor_mgr_poll_one(cursor, stt->stt_sensor_type, stt,
-                                              next_wakeup, now);
+                                              next_wakeup, now, n);
         }
     }
 
