@@ -713,7 +713,6 @@ las_cmd_app_port(int argc, char **argv)
 {
     int rc;
     uint8_t port;
-    uint8_t dr;
     uint8_t retries;
 
     if (argc < 3) {
@@ -743,15 +742,9 @@ las_cmd_app_port(int argc, char **argv)
             console_printf("Failed to close app port %u err=%d\n", port, rc);
         }
     } else if (!strcmp(argv[1], "cfg")) {
-        if (argc != 5) {
+        if (argc != 4) {
             console_printf("Invalid # of arguments.\n");
             goto cmd_app_port_err;
-        }
-        dr = parse_ull_bounds(argv[2], 0, LORAMAC_TX_MAX_DATARATE, &rc);
-        if (rc) {
-            console_printf("Invalid data rate. Must be between 0 and "
-                           "%d (inclusve)\n", LORAMAC_TX_MAX_DATARATE);
-            return 0;
         }
         retries = parse_ull_bounds(argv[2], 1, MAX_ACK_RETRIES, &rc);
         if (rc) {
@@ -760,10 +753,10 @@ las_cmd_app_port(int argc, char **argv)
             return 0;
         }
 
-        rc = lora_app_port_cfg(port, dr, retries);
+        rc = lora_app_port_cfg(port, retries);
         if (rc == LORA_APP_STATUS_OK) {
-            console_printf("App port %u configured w/dr=%u retries=%u\n",
-                           port, dr, retries);
+            console_printf("App port %u configured w/retries=%u\n",
+                           port, retries);
         } else {
             console_printf("Cannot configure port %u err=%d\n", port, rc);
         }
@@ -785,7 +778,7 @@ cmd_app_port_err:
     console_printf("Usage:\n");
     console_printf("\tlas_app_port open <port num>\n");
     console_printf("\tlas_app_port close <port num>\n");
-    console_printf("\tlas_app_port cfg <port num> <datarate> <retries>\n");
+    console_printf("\tlas_app_port cfg <port num> <retries>\n");
     console_printf("\not implemented! las_app_port show <port num | all>\n");
     return 0;
 }
@@ -857,7 +850,7 @@ las_cmd_app_tx(int argc, char **argv)
 
 cmd_app_tx_err:
     console_printf("Usage:\n");
-    console_printf("\tlas_app_tx <port> <len> <type> [dr] [retries]\n");
+    console_printf("\tlas_app_tx <port> <len> <type>\n");
     console_printf("Where:\n");
     console_printf("\tport = port number on which to send\n");
     console_printf("\tlen = size n bytes of app data\n");

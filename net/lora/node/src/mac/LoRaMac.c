@@ -2059,12 +2059,14 @@ SetNextChannel(uint32_t *time)
     memset(enabledChannels, 0, LORA_MAX_NB_CHANNELS);
 
 #if defined( USE_BAND_915 ) || defined( USE_BAND_915_HYBRID )
-    if( CountNbEnabled125kHzChannels( ChannelsMaskRemaining ) == 0 )
-    { // Restore default channels
-        memcpy( ( uint8_t* ) ChannelsMaskRemaining, ( uint8_t* ) LoRaMacParams.ChannelsMask, 8 );
+    /* Add all 125kHz channels if none left */
+    if (CountNbEnabled125kHzChannels(ChannelsMaskRemaining) == 0) {
+        memcpy((uint8_t*)ChannelsMaskRemaining, (uint8_t*) LoRaMacParams.ChannelsMask, 8 );
     }
-    if( ( LoRaMacParams.ChannelsDatarate >= DR_4 ) && ( ( ChannelsMaskRemaining[4] & 0x00FF ) == 0 ) )
-    { // Make sure, that the channels are activated
+
+    /* If 500 kHz channels needed, make sure there are some */
+    if ((LoRaMacParams.ChannelsDatarate >= DR_4) &&
+        ((ChannelsMaskRemaining[4] & 0x00FF) == 0)) {
         ChannelsMaskRemaining[4] = LoRaMacParams.ChannelsMask[4];
     }
 #elif defined( USE_BAND_470 )
@@ -2123,8 +2125,7 @@ SetNextChannel(uint32_t *time)
 #if defined( USE_BAND_868 ) || defined( USE_BAND_433 ) || defined( USE_BAND_780 )
                     if( IsLoRaMacNetworkJoined == false )
                     {
-                        if( ( JOIN_CHANNELS & ( 1 << j ) ) == 0 )
-                        {
+                        if ((JOIN_CHANNELS & (1 << j)) == 0) {
                             continue;
                         }
                     }
@@ -3478,7 +3479,8 @@ LoRaMacInitialization( LoRaMacPrimitives_t *primitives, LoRaMacCallback_t *callb
 
     // Reset to defaults
     LoRaMacParamsDefaults.ChannelsTxPower = LORAMAC_DEFAULT_TX_POWER;
-    LoRaMacParamsDefaults.ChannelsDatarate = LORAMAC_DEFAULT_DATARATE;
+    LoRaMacParamsDefaults.ChannelsDatarate =
+        MYNEWT_VAL(LORA_NODE_DEFAULT_DATARATE);
 
     LoRaMacParamsDefaults.MaxRxWindow = MAX_RX_WINDOW;
     LoRaMacParamsDefaults.ReceiveDelay1 = RECEIVE_DELAY1;
@@ -4386,7 +4388,6 @@ LoRaMacMcpsRequest(McpsReq_t *mcpsRequest)
     uint8_t fPort = 0;
     void *fBuffer;
     uint16_t fBufferSize;
-    int8_t datarate;
 
     assert(mcpsRequest != NULL);
 
@@ -4409,12 +4410,10 @@ LoRaMacMcpsRequest(McpsReq_t *mcpsRequest)
     switch (mcpsRequest->Type) {
         case MCPS_UNCONFIRMED:
             AckTimeoutRetries = 1;
-
             macHdr.Bits.MType = FRAME_TYPE_DATA_UNCONFIRMED_UP;
             fPort = mcpsRequest->Req.Unconfirmed.fPort;
             fBuffer = mcpsRequest->Req.Unconfirmed.fBuffer;
             fBufferSize = mcpsRequest->Req.Unconfirmed.fBufferSize;
-            datarate = mcpsRequest->Req.Unconfirmed.Datarate;
             break;
         case MCPS_CONFIRMED:
             AckTimeoutRetriesCounter = 1;
@@ -4427,32 +4426,20 @@ LoRaMacMcpsRequest(McpsReq_t *mcpsRequest)
             fPort = mcpsRequest->Req.Confirmed.fPort;
             fBuffer = mcpsRequest->Req.Confirmed.fBuffer;
             fBufferSize = mcpsRequest->Req.Confirmed.fBufferSize;
-            datarate = mcpsRequest->Req.Confirmed.Datarate;
             break;
+
         case MCPS_PROPRIETARY:
             AckTimeoutRetries = 1;
-
             macHdr.Bits.MType = FRAME_TYPE_PROPRIETARY;
             fBuffer = mcpsRequest->Req.Proprietary.fBuffer;
             fBufferSize = mcpsRequest->Req.Proprietary.fBufferSize;
-            datarate = mcpsRequest->Req.Proprietary.Datarate;
             break;
-    default:
-            datarate = 0;
+        default:
             assert(0);
             break;
     }
 
-    if (AdrCtrlOn == false) {
-        if (ValueInRange(datarate, LORAMAC_TX_MIN_DATARATE, LORAMAC_TX_MAX_DATARATE))
-        {
-            LoRaMacParams.ChannelsDatarate = datarate;
-        } else {
-            return LORAMAC_STATUS_PARAMETER_INVALID;
-        }
-    }
-
-    status = Send( &macHdr, fPort, fBuffer, fBufferSize );
+    status = Send(&macHdr, fPort, fBuffer, fBufferSize);
     if (status == LORAMAC_STATUS_OK) {
         LoRaMacFlags.Bits.McpsReq = 1;
     } else {
