@@ -746,7 +746,7 @@ las_cmd_app_port(int argc, char **argv)
             console_printf("Invalid # of arguments.\n");
             goto cmd_app_port_err;
         }
-        retries = parse_ull_bounds(argv[2], 1, MAX_ACK_RETRIES, &rc);
+        retries = parse_ull_bounds(argv[3], 1, MAX_ACK_RETRIES, &rc);
         if (rc) {
             console_printf("Invalid # of retries. Must be between 1 and "
                            "%d (inclusve)\n", MAX_ACK_RETRIES);
