@@ -205,16 +205,15 @@ int lora_app_port_open(uint8_t port, lora_txd_func txd_cb, lora_rxd_func rxd_cb)
 int lora_app_port_close(uint8_t port);
 
 /**
- * Configure an application port. This configures the datarate for uplink
- * packets and the number of retries for confirmed packets.
+ * Configure an application port. This configures the number of retries for
+ * confirmed packets.
  *
  * @param port Port number
- * @param datarate Data rate for uplink packets
  * @param retries NUmmber of retries for confirmed packets
  *
  * @return int A return code from set of lora return codes
  */
-int lora_app_port_cfg(uint8_t port, uint8_t datarate, uint8_t retries);
+int lora_app_port_cfg(uint8_t port, uint8_t retries);
 
 /**
  * Send a packet on a port.

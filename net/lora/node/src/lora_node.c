@@ -160,11 +160,9 @@ lora_node_alloc_empty_pkt(void)
 
     om = lora_pkt_alloc();
     if (om) {
-        /* XXX: what to do for datarate here? */
         lpkt = LORA_PKT_INFO_PTR(om);
         lpkt->port = 0;
         lpkt->pkt_type = MCPS_UNCONFIRMED;
-        lpkt->txdinfo.datarate = DR_0;
     }
     return om;
 }
@@ -405,8 +403,6 @@ send_empty_ack:
             om = NULL;
             memset(&req, 0, sizeof(McpsReq_t));
             req.Type = MCPS_UNCONFIRMED;
-            /* XXX: what to do here? What datarate to use? */
-            req.Req.Unconfirmed.Datarate = DR_0;
             rc = LORAMAC_STATUS_OK;
         } else {
             om = os_mqueue_get(&g_lora_mac_data.lm_txq);
@@ -433,7 +429,6 @@ send_empty_ack:
                 req.Req.Unconfirmed.fPort = lpkt->port;
                 req.Req.Unconfirmed.fBuffer = om->om_data;
                 req.Req.Unconfirmed.fBufferSize = OS_MBUF_PKTLEN(om);
-                req.Req.Unconfirmed.Datarate = lpkt->txdinfo.datarate;
             }
             evstatus = LORAMAC_EVENT_INFO_STATUS_OK;
             break;
@@ -441,7 +436,6 @@ send_empty_ack:
             req.Req.Confirmed.fPort = lpkt->port;
             req.Req.Confirmed.fBuffer = om->om_data;
             req.Req.Confirmed.fBufferSize = OS_MBUF_PKTLEN(om);
-            req.Req.Confirmed.Datarate = lpkt->txdinfo.datarate;
             req.Req.Confirmed.NbTrials = lpkt->txdinfo.retries;
             evstatus = LORAMAC_EVENT_INFO_STATUS_OK;
             break;

@@ -59,6 +59,7 @@ void lora_node_log(uint8_t logid, uint8_t p8, uint16_t p16, uint32_t p32);
 #define LORA_NODE_LOG_RX_WIN2           (26)
 #define LORA_NODE_LOG_RX_WIN_SETUP_FAIL (27)
 #define LORA_NODE_LOG_APP_TX            (40)
+#define LORA_NODE_LOG_RX_ADR_REQ        (80)
 
 #else
 #define lora_node_log(a,b,c,d)

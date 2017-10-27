@@ -32,7 +32,18 @@ syscfg.defs:
                 o 780
                 o 868
                 o 915
+                o 916 Hybrid 915 band
         value: 915
+
+    LORA_NODE_DEFAULT_DATARATE:
+        description: >
+            The default data rate to be used. Data rate definitions are
+            band specific and some values may not be valid for certain
+            bands. The data rates are enumerated values with 0 being
+            the lowest data rate (generally) and higher numbers either
+            representing higher data rates or different spreading
+            factors and/or higher channel bandwidths.
+        value: 0
 
     LORA_NODE_CLI:
         description: "Include shell commands for LoRa operations"

@@ -37,6 +37,9 @@
 #elif MYNEWT_VAL(LORA_NODE_FREQ_BAND) == 915
 #define USE_BAND_915
 
+#elif MYNEWT_VAL(LORA_NODE_FREQ_BAND) == 916
+#define USE_BAND_915_HYBRID
+
 #endif
 
 #endif
