@@ -277,12 +277,10 @@ lora_app_port_send(uint8_t port, Mcps_t pkt_type, struct os_mbuf *om)
     struct lora_pkt_info *lpkt;
 
     /* If no buffer to send, fine. */
-    if (om == NULL) {
-        return LORA_APP_STATUS_OK;
+    if ((om == NULL) || (OS_MBUF_PKTLEN(om) == 0)) {
+        return LORA_APP_STATUS_INVALID_PARAM;
     }
     assert(OS_MBUF_USRHDR_LEN(om) >= sizeof(struct lora_pkt_info));
-
-    /* XXX: TODO: support multicast */
 
     /* Check valid packet type. Only confirmed and unconfirmed for now. */
     if ((pkt_type != MCPS_UNCONFIRMED) && (pkt_type != MCPS_CONFIRMED)) {
