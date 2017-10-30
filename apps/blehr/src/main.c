@@ -40,7 +40,7 @@ static const char *device_name = "blehr_sensor";
 
 static int blehr_gap_event(struct ble_gap_event *event, void *arg);
 
-static uint8_t addr_type;
+static uint8_t blehr_addr_type;
 
 /* Sending notify data timer */
 static struct os_callout blehr_tx_timer;
@@ -98,7 +98,7 @@ blehr_advertise(void)
     memset(&adv_params, 0, sizeof(adv_params));
     adv_params.conn_mode = BLE_GAP_CONN_MODE_UND;
     adv_params.disc_mode = BLE_GAP_DISC_MODE_GEN;
-    rc = ble_gap_adv_start(addr_type, NULL, BLE_HS_FOREVER,
+    rc = ble_gap_adv_start(blehr_addr_type, NULL, BLE_HS_FOREVER,
                            &adv_params, blehr_gap_event, NULL);
     if (rc != 0) {
         BLEHR_LOG(ERROR, "error enabling advertisement; rc=%d\n", rc);
@@ -210,13 +210,9 @@ static void
 blehr_on_sync(void)
 {
     int rc;
-    uint8_t addr_type;
 
     /* Use privacy */
-    rc = ble_hs_id_infer_auto(1, &addr_type);
-    assert(rc == 0);
-
-    rc = ble_hs_id_use_addr(addr_type);
+    rc = ble_hs_id_infer_auto(0, &blehr_addr_type);
     assert(rc == 0);
 
     /* Begin advertising */
