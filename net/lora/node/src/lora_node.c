@@ -427,21 +427,13 @@ send_empty_ack:
         case MCPS_UNCONFIRMED:
             if (lpkt) {
                 req.Req.Unconfirmed.fPort = lpkt->port;
-                req.Req.Unconfirmed.fBuffer = om->om_data;
-                req.Req.Unconfirmed.fBufferSize = OS_MBUF_PKTLEN(om);
             }
             evstatus = LORAMAC_EVENT_INFO_STATUS_OK;
             break;
         case MCPS_CONFIRMED:
             req.Req.Confirmed.fPort = lpkt->port;
-            req.Req.Confirmed.fBuffer = om->om_data;
-            req.Req.Confirmed.fBufferSize = OS_MBUF_PKTLEN(om);
             req.Req.Confirmed.NbTrials = lpkt->txdinfo.retries;
             evstatus = LORAMAC_EVENT_INFO_STATUS_OK;
-            break;
-        case MCPS_MULTICAST:
-            /* XXX: implement */
-            evstatus = LORAMAC_EVENT_INFO_STATUS_ERROR;
             break;
         case MCPS_PROPRIETARY:
             /* XXX: not allowed */
