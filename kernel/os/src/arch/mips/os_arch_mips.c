@@ -17,6 +17,7 @@
  * under the License.
  */
 
+
 #include "os/os.h"
 #include "os/os_arch.h"
 #include "syscfg/syscfg.h"
@@ -44,8 +45,9 @@ extern struct os_task g_idle_task;
 void __attribute__((interrupt, keep_interrupts_masked))
 _mips_isr_hw5(void)
 {
-    mips_setcompare(mips_getcompare() + ((MYNEWT_VAL(CLOCK_FREQ) / 2) /
-       OS_TICKS_PER_SEC));
+    unsigned long int inc = (MYNEWT_VAL(CLOCK_FREQ) / 2) / OS_TICKS_PER_SEC;
+    unsigned long int compare = mips_getcompare();
+    mips_setcompare(compare + inc);
     timer_handler();
 }
 
@@ -123,6 +125,7 @@ os_arch_task_stack_init(struct os_task *t, os_stack_t *stack_top, int size)
 void
 os_arch_init(void)
 {
+    /* enable software interrupt 0 */
     mips_bissr((1 << 15) | (1 << 8));
     os_init_idle_task();
 }
