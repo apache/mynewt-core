@@ -19,10 +19,6 @@
 # Package: hw/sensor
 
 syscfg.defs:
-    SENSOR_MGR_WAKEUP_RATE:
-        description: 'The default wakeup rate of the sensor manager in ms'
-        value: 2000
-
     SENSOR_CLI:
         description: 'Whether or not to enable the sensor shell support'
         value: 1

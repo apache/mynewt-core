@@ -64,6 +64,7 @@ extern "C" {
 #endif
 
 typedef uint32_t os_time_t;
+typedef int32_t os_stime_t;
 #define OS_TIME_MAX UINT32_MAX
  
 /* Used to wait forever for events and mutexs */
@@ -73,9 +74,9 @@ os_time_t os_time_get(void);
 void os_time_advance(int ticks);
 void os_time_delay(int32_t osticks);
 
-#define OS_TIME_TICK_LT(__t1, __t2) ((int32_t) ((__t1) - (__t2)) < 0)
-#define OS_TIME_TICK_GT(__t1, __t2) ((int32_t) ((__t1) - (__t2)) > 0)
-#define OS_TIME_TICK_GEQ(__t1, __t2) ((int32_t) ((__t1) - (__t2)) >= 0)
+#define OS_TIME_TICK_LT(__t1, __t2) ((os_stime_t) ((__t1) - (__t2)) < 0)
+#define OS_TIME_TICK_GT(__t1, __t2) ((os_stime_t) ((__t1) - (__t2)) > 0)
+#define OS_TIME_TICK_GEQ(__t1, __t2) ((os_stime_t) ((__t1) - (__t2)) >= 0)
 
 struct os_timeval {
     int64_t tv_sec;         /* seconds since Jan 1 1970 */
