@@ -254,11 +254,9 @@ struct sensor_type_traits {
 
     uint16_t stt_polls_left;
 
-    uint32_t ts_buff[100];
-
-    uint32_t ts_buff_idx;
-
+#if MYNEWT_VAL(SENSOR_POLL_TEST_LOG)
     os_time_t prev_now;
+#endif
 
     /* function ptr for setting comparison algo */
     sensor_trigger_cmp_func_t stt_trigger_cmp_algo;

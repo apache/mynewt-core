@@ -43,6 +43,7 @@
 #include "sensor/gyro.h"
 #include "console/console.h"
 
+#if MYNEWT_VAL(SENSOR_POLL_TEST_LOG)
 uint32_t test_log_idx;
 uint32_t smgr_wakeup_idx;
 
@@ -56,6 +57,7 @@ struct test_log {
 }test_log[100];
 
 os_time_t smgr_wakeup[500];
+#endif
 
 struct {
     struct os_mutex mgr_lock;
@@ -306,7 +308,7 @@ sensor_calc_nextrun_delta(struct sensor *sensor, os_time_t now)
 
     sensor_lock(sensor);
 
-    delta = (int32_t)(now - sensor->s_next_run);
+    delta = (int32_t)(sensor->s_next_run - now);
     if (delta < 0) {
         /* This fires the callout right away */
         sensor_ticks = 0;
@@ -319,11 +321,10 @@ sensor_calc_nextrun_delta(struct sensor *sensor, os_time_t now)
     return sensor_ticks;
 }
 
-static os_time_t
-sensor_find_min_nextrun(os_time_t now)
+static struct sensor *
+sensor_find_min_nextrun_sensor(os_time_t now, os_time_t *min_nextrun)
 {
     struct sensor *head;
-    os_time_t next_wakeup;
 
     head = NULL;
 
@@ -331,18 +332,21 @@ sensor_find_min_nextrun(os_time_t now)
 
     head = SLIST_FIRST(&sensor_mgr.mgr_sensor_list);
 
-    next_wakeup = sensor_calc_nextrun_delta(head, now);
+    *min_nextrun = sensor_calc_nextrun_delta(head, now);
 
     sensor_mgr_unlock();
 
-    return next_wakeup;
+    return head;
 
 }
 
 static void
-sensor_update_nextrun(struct sensor *sensor, os_time_t now,
-                      os_time_t next_wakeup)
+sensor_update_nextrun(struct sensor *sensor, os_time_t now)
 {
+    os_time_t sensor_ticks;
+
+    os_time_ms_to_ticks(sensor->s_poll_rate, &sensor_ticks);
+
     sensor_lock(sensor);
 
     /* Remove the sensor from the sensor list for insert. */
@@ -351,7 +355,7 @@ sensor_update_nextrun(struct sensor *sensor, os_time_t now,
     /* Set next wakeup, and insert the sensor back into the
      * list.
      */
-    sensor->s_next_run = next_wakeup + now;
+    sensor->s_next_run = sensor_ticks + now;
 
     /* Re-insert the sensor manager, with the new wakeup time. */
     sensor_mgr_insert(sensor);
@@ -389,11 +393,11 @@ sensor_set_poll_rate_ms(char *devname, uint32_t poll_rate)
 
     sensor_update_poll_rate(sensor, poll_rate);
 
-    sensor_update_nextrun(sensor, now, next_wakeup);
+    sensor_update_nextrun(sensor, now);
 
     sensor_unlock(sensor);
 
-    next_wakeup = sensor_find_min_nextrun(now);
+    sensor = sensor_find_min_nextrun_sensor(now, &next_wakeup);
 
     os_callout_reset(&sensor_mgr.mgr_wakeup_callout, next_wakeup);
 
@@ -440,18 +444,10 @@ err:
  * run," and re-inserts it into the list
  */
 static void
-sensor_mgr_poll_one(struct sensor *sensor, sensor_type_t type,
-                    struct sensor_type_traits *stt,
-                    os_time_t now, os_time_t next_wakeup)
+sensor_mgr_poll_bytype(struct sensor *sensor, sensor_type_t type,
+                       struct sensor_type_traits *stt, os_time_t now)
 {
     if (!stt || !stt->stt_polls_left) {
-#if 0
-        console_printf("%c%c n: %u now: %u delta_now(ms): %d, s_next_run: %u polls_left: %u\n",
-                 sensor->s_dev->od_name[0],
-                 type == 1 ? 'a' : type == 32 ? 't' : type == 64 ? 'p' : 'x' ,
-                 (unsigned int)stt->stt_poll_n, (unsigned int)now, ((int)(now - ((stt != NULL)? stt->prev_now : 0))),
-                 (unsigned int)sensor->s_next_run, stt->stt_polls_left);
-#endif
         /* Sensor read results. Every time a sensor is read, all of its
          * listeners are called by default. Specify NULL as a callback,
          * because we just want to run all the listeners.
@@ -466,6 +462,7 @@ sensor_mgr_poll_one(struct sensor *sensor, sensor_type_t type,
                 stt->stt_polls_left = stt->stt_poll_n;
                 stt->stt_polls_left--;
             }
+#if MYNEWT_VAL(SENSOR_POLL_TEST_LOG)
             test_log[test_log_idx].delta = (uint32_t)(now - stt->prev_now);
             test_log[test_log_idx].polls_left = stt->stt_polls_left;
             test_log[test_log_idx].now = now;
@@ -476,6 +473,7 @@ sensor_mgr_poll_one(struct sensor *sensor, sensor_type_t type,
             test_log_idx++;
             test_log_idx %= 100;
             stt->prev_now = now;
+#endif
         }
 
         /* Unlock the sensor to allow other access */
@@ -484,6 +482,39 @@ sensor_mgr_poll_one(struct sensor *sensor, sensor_type_t type,
     } else {
         stt->stt_polls_left--;
     }
+}
+
+static uint8_t
+sensor_type_traits_empty(struct sensor *sensor)
+{
+    return SLIST_EMPTY(&sensor->s_type_traits_list);
+}
+
+static void
+sensor_poll_per_type_trait(struct sensor *sensor, os_time_t now,
+                           os_time_t next_wakeup)
+{
+    struct sensor_type_traits *stt;
+
+    /* Lock the sensor */
+    sensor_lock(sensor);
+
+    SLIST_FOREACH(stt, &sensor->s_type_traits_list, stt_next) {
+
+        /* poll multiple is one if no multiple is specified,
+         * as a result, the sensor would get polled at the
+         * poll rate if no multiple is specified
+         *
+         * If a multiple is specified, the sensor would get polled
+         * at the poll multiple
+         */
+
+        sensor_mgr_poll_bytype(sensor, stt->stt_sensor_type, stt,
+                               now);
+    }
+
+    /* Unlock the sensor to allow other access */
+    sensor_unlock(sensor);
 }
 
 /**
@@ -496,78 +527,49 @@ static void
 sensor_mgr_wakeup_event(struct os_event *ev)
 {
     struct sensor *cursor;
-    struct sensor_type_traits *stt;
     os_time_t now;
     os_time_t next_wakeup;
-    os_time_t sensor_ticks;
 
     now = os_time_get();
 
+#if MYNEWT_VAL(SENSOR_POLL_TEST_LOG)
     smgr_wakeup[smgr_wakeup_idx++%500] = now;
+#endif
 
     sensor_mgr_lock();
 
     cursor = NULL;
     while (1) {
 
-        cursor = SLIST_FIRST(&sensor_mgr.mgr_sensor_list);
+        cursor = sensor_find_min_nextrun_sensor(now, &next_wakeup);
 
+        sensor_lock(cursor);
         /* Sensors that are not periodic are inserted at the end of the sensor
          * list.
          */
         if (!cursor->s_poll_rate) {
+            sensor_unlock(cursor);
             sensor_mgr_unlock();
             return;
         }
 
-        next_wakeup = sensor_calc_nextrun_delta(cursor, now);
-
-        os_time_ms_to_ticks(cursor->s_poll_rate, &sensor_ticks);
-
         /* List is sorted by what runs first.  If we reached the first element that
          * doesn't run, break out.
          */
-        if (OS_TIME_TICK_LT(now, cursor->s_next_run)) {
+        if (next_wakeup > 0) {
             break;
         }
 
-        if (SLIST_EMPTY(&cursor->s_type_traits_list)) {
+        if (sensor_type_traits_empty(cursor)) {
 
-            sensor_mgr_poll_one(cursor, cursor->s_mask, NULL,
-                                now, next_wakeup);
-
-            sensor_update_nextrun(cursor, now, sensor_ticks);
-
-            break;
+            sensor_mgr_poll_bytype(cursor, cursor->s_mask, NULL, now);
+        } else {
+            sensor_poll_per_type_trait(cursor, now, next_wakeup);
         }
 
-        /* Lock the sensor */
-        sensor_lock(cursor);
+        sensor_update_nextrun(cursor, now);
 
-        /* Remove the sensor from the sensor list for insert. */
-        sensor_mgr_remove(cursor);
-
-        SLIST_FOREACH(stt, &cursor->s_type_traits_list, stt_next) {
-
-            /* poll multiple is one if no multiple is specified,
-             * as a result, the sensor would get polled at the
-             * poll rate if no multiple is specified
-             *
-             * If a multiple is specified, the sensor would get polled
-             * at the poll multiple
-             */
-
-            sensor_mgr_poll_one(cursor, stt->stt_sensor_type, stt,
-                                now, next_wakeup);
-        }
-
-        cursor->s_next_run = sensor_ticks + now;
-
-        /* Unlock the sensor to allow other access */
         sensor_unlock(cursor);
-
-        /* Re-insert the sensor manager, with the new wakeup time. */
-        sensor_mgr_insert(cursor);
     }
 
     sensor_mgr_unlock();

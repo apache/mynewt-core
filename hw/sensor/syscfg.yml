@@ -44,3 +44,7 @@ syscfg.defs:
     SENSOR_OIC_PERIODIC:
         description: 'Sensor polling is periodic'
         value: 0
+
+    SENSOR_POLL_TEST_LOG:
+        description: 'Sensor poller log'
+        value: '0'
