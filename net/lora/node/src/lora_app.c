@@ -35,8 +35,8 @@ struct lora_app_port
 {
     uint8_t port_num;
     uint8_t opened;
-    uint8_t datarate;
     uint8_t retries;
+    uint8_t pad8;
     lora_rxd_func rxd_cb;
     lora_txd_func txd_cb;
 };
@@ -193,7 +193,6 @@ lora_app_port_open(uint8_t port, lora_txd_func txd_cb, lora_rxd_func rxd_cb)
         lora_app_ports[avail].port_num = port;
         lora_app_ports[avail].rxd_cb = rxd_cb;
         lora_app_ports[avail].txd_cb = txd_cb;
-        lora_app_ports[avail].datarate = LORAMAC_DEFAULT_DATARATE;
         lora_app_ports[avail].retries = 8;
         lora_app_ports[avail].opened = 1;
         rc = LORA_APP_STATUS_OK;
@@ -228,34 +227,30 @@ lora_app_port_close(uint8_t port)
 }
 
 /**
- * Configure an application port. This configures the datarate for uplink
- * packets and the number of retries for confirmed packets.
+ * Configure an application port. This configures the number of retries for
+ * confirmed packets.
  *
  * NOTE: The port must be opened or this will return an error
  *
  * @param port Port number
- * @param datarate Data rate for uplink packets
  * @param retries NUmmber of retries for confirmed packets
  *
  * @return int A return code from set of lora return codes
  */
 int
-lora_app_port_cfg(uint8_t port, uint8_t datarate, uint8_t retries)
+lora_app_port_cfg(uint8_t port, uint8_t retries)
 {
     int rc;
     struct lora_app_port *lap;
 
     /* Verify datarate and retries */
-    if ((datarate < LORAMAC_TX_MIN_DATARATE) ||
-        (datarate > LORAMAC_TX_MAX_DATARATE) ||
-        (retries > MAX_ACK_RETRIES)) {
+    if (retries > MAX_ACK_RETRIES) {
         return LORA_APP_STATUS_INVALID_PARAM;
     }
 
     rc = LORA_APP_STATUS_NO_PORT;
     lap = lora_app_port_find_open(port);
     if (lap) {
-        lap->datarate = datarate;
         lap->retries = retries;
         rc = LORA_APP_STATUS_OK;
     }
@@ -282,12 +277,10 @@ lora_app_port_send(uint8_t port, Mcps_t pkt_type, struct os_mbuf *om)
     struct lora_pkt_info *lpkt;
 
     /* If no buffer to send, fine. */
-    if (om == NULL) {
-        return LORA_APP_STATUS_OK;
+    if ((om == NULL) || (OS_MBUF_PKTLEN(om) == 0)) {
+        return LORA_APP_STATUS_INVALID_PARAM;
     }
     assert(OS_MBUF_USRHDR_LEN(om) >= sizeof(struct lora_pkt_info));
-
-    /* XXX: TODO: support multicast */
 
     /* Check valid packet type. Only confirmed and unconfirmed for now. */
     if ((pkt_type != MCPS_UNCONFIRMED) && (pkt_type != MCPS_CONFIRMED)) {
@@ -300,7 +293,6 @@ lora_app_port_send(uint8_t port, Mcps_t pkt_type, struct os_mbuf *om)
         lpkt = LORA_PKT_INFO_PTR(om);
         lpkt->port = port;
         lpkt->pkt_type = pkt_type;
-        lpkt->txdinfo.datarate = lap->datarate;
         lpkt->txdinfo.retries = lap->retries;
         lora_node_mcps_request(om);
         rc = LORA_APP_STATUS_OK;

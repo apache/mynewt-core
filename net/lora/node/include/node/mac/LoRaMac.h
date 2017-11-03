@@ -429,6 +429,8 @@ typedef enum eLoRaMacMoteCmd
     MOTE_MAC_RX_TIMING_SETUP_ANS     = 0x08,
 }LoRaMacMoteCmd_t;
 
+#define LORA_MAC_MAX_MAC_CMD_CID    (MOTE_MAC_RX_TIMING_SETUP_ANS)
+
 /*!
  * LoRaMAC server MAC commands
  *
@@ -718,14 +720,6 @@ typedef struct sMcpsReqUnconfirmed
      */
     uint8_t fPort;
     /*!
-     * Pointer to the buffer of the frame payload
-     */
-    void *fBuffer;
-    /*!
-     * Size of the frame payload
-     */
-    uint16_t fBufferSize;
-    /*!
      * Uplink datarate, if ADR is off
      */
     int8_t Datarate;
@@ -743,14 +737,6 @@ typedef struct sMcpsReqConfirmed
      * LoRaWAN Specification V1.0.1, chapter 4.3.2
      */
     uint8_t fPort;
-    /*!
-     * Pointer to the buffer of the frame payload
-     */
-    void *fBuffer;
-    /*!
-     * Size of the frame payload
-     */
-    uint16_t fBufferSize;
     /*!
      * Uplink datarate, if ADR is off
      */
@@ -783,14 +769,6 @@ typedef struct sMcpsReqConfirmed
  */
 typedef struct sMcpsReqProprietary
 {
-    /*!
-     * Pointer to the buffer of the frame payload
-     */
-    void *fBuffer;
-    /*!
-     * Size of the frame payload
-     */
-    uint16_t fBufferSize;
     /*!
      * Uplink datarate, if ADR is off
      */

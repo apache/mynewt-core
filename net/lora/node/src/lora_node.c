@@ -62,6 +62,9 @@ uint8_t g_lora_app_eui[LORA_EUI_LEN];
 /* Application Key */
 uint8_t g_lora_app_key[LORA_KEY_LEN];
 
+/* Flag to denote if we last sent a mac command */
+uint8_t g_lora_node_last_tx_mac_cmd;
+
 #if !MYNEWT_VAL(LORA_NODE_CLI)
 LoRaMacPrimitives_t g_lora_primitives;
 #endif
@@ -160,11 +163,9 @@ lora_node_alloc_empty_pkt(void)
 
     om = lora_pkt_alloc();
     if (om) {
-        /* XXX: what to do for datarate here? */
         lpkt = LORA_PKT_INFO_PTR(om);
         lpkt->port = 0;
         lpkt->pkt_type = MCPS_UNCONFIRMED;
-        lpkt->txdinfo.datarate = DR_0;
     }
     return om;
 }
@@ -371,14 +372,11 @@ lora_mac_proc_tx_q_event(struct os_event *ev)
     }
 
     /*
-     * XXX: there is a disconnect in the stack here.
-     * The LoRaMacQueryTxPossible() routine uses the Default channel rate
-     * to determine if the frame can be sent if ADR is not enabled. However,
-     * the stack can set the data it wants to send in the request. If these
-     * two are different there will be problems. Not sure why the app is even
-     * specifying data rate. But I guess we can leave it for now and hope
-     * that the app does not use a datarate that is different than the
-     * default.
+     * WWW: what I need to determine is what happens in the following case:
+     * a Mac command gets added to the buffer but we have nothing on the
+     * transmit queue. What do we do? I do not think we currently
+     * send the response until another frame is enqueued. Need to
+     * look at this. I think I should just send the response back
      */
 
     /*
@@ -390,6 +388,7 @@ lora_mac_proc_tx_q_event(struct os_event *ev)
         mp = STAILQ_FIRST(&g_lora_mac_data.lm_txq.mq_head);
         if (mp == NULL) {
             if (lora_mac_srv_ack_requested()) {
+                g_lora_node_last_tx_mac_cmd = 0;
                 goto send_empty_ack;
             }
             break;
@@ -397,6 +396,20 @@ lora_mac_proc_tx_q_event(struct os_event *ev)
 
         rc = LoRaMacQueryTxPossible(mp->omp_len, &txinfo);
         if (rc == LORAMAC_STATUS_MAC_CMD_LENGTH_ERROR) {
+            /*
+             * XXX: an ugly hack for now. If the server decides to send MAC
+             * commands all the time, it could be that we never send the
+             * data packet enqueued as we cannot add more data to it. For now,
+             * just alternate between sending the packet on the queue and
+             * a mac command. Yes, ugly.
+             */
+            if (g_lora_node_last_tx_mac_cmd) {
+                rc = LORAMAC_STATUS_OK;
+                goto send_from_txq;
+            }
+
+            g_lora_node_last_tx_mac_cmd = 1;
+
             /* Need to flush MAC commands. Send empty unconfirmed frame */
             STATS_INC(lora_mac_stats, tx_mac_flush);
             /* NOTE: no need to get a mbuf. */
@@ -405,15 +418,15 @@ send_empty_ack:
             om = NULL;
             memset(&req, 0, sizeof(McpsReq_t));
             req.Type = MCPS_UNCONFIRMED;
-            /* XXX: what to do here? What datarate to use? */
-            req.Req.Unconfirmed.Datarate = DR_0;
             rc = LORAMAC_STATUS_OK;
         } else {
+send_from_txq:
             om = os_mqueue_get(&g_lora_mac_data.lm_txq);
             assert(om != NULL);
             lpkt = LORA_PKT_INFO_PTR(om);
             req.om = om;
             req.Type = lpkt->pkt_type;
+            g_lora_node_last_tx_mac_cmd = 0;
         }
 
         if (rc != LORAMAC_STATUS_OK) {
@@ -431,23 +444,13 @@ send_empty_ack:
         case MCPS_UNCONFIRMED:
             if (lpkt) {
                 req.Req.Unconfirmed.fPort = lpkt->port;
-                req.Req.Unconfirmed.fBuffer = om->om_data;
-                req.Req.Unconfirmed.fBufferSize = OS_MBUF_PKTLEN(om);
-                req.Req.Unconfirmed.Datarate = lpkt->txdinfo.datarate;
             }
             evstatus = LORAMAC_EVENT_INFO_STATUS_OK;
             break;
         case MCPS_CONFIRMED:
             req.Req.Confirmed.fPort = lpkt->port;
-            req.Req.Confirmed.fBuffer = om->om_data;
-            req.Req.Confirmed.fBufferSize = OS_MBUF_PKTLEN(om);
-            req.Req.Confirmed.Datarate = lpkt->txdinfo.datarate;
             req.Req.Confirmed.NbTrials = lpkt->txdinfo.retries;
             evstatus = LORAMAC_EVENT_INFO_STATUS_OK;
-            break;
-        case MCPS_MULTICAST:
-            /* XXX: implement */
-            evstatus = LORAMAC_EVENT_INFO_STATUS_ERROR;
             break;
         case MCPS_PROPRIETARY:
             /* XXX: not allowed */

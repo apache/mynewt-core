@@ -35,6 +35,13 @@
 
 /* Company ID*/
 #define CID_VENDOR 0xFFFF
+#define STANDARD_TEST_ID 0x00
+#define TEST_ID 0x01
+static int recent_test_id = STANDARD_TEST_ID;
+
+#define FAULT_ARR_SIZE 2
+
+static bool has_reg_fault = true;
 
 static struct bt_mesh_cfg cfg_srv = {
     .relay = BT_MESH_RELAY_DISABLED,
@@ -52,7 +59,88 @@ static struct bt_mesh_cfg cfg_srv = {
     .relay_retransmit = BT_MESH_TRANSMIT(2, 20),
 };
 
+static int
+fault_get_cur(struct bt_mesh_model *model,
+              uint8_t *test_id,
+              uint16_t *company_id,
+              uint8_t *faults,
+              uint8_t *fault_count)
+{
+    uint8_t reg_faults[FAULT_ARR_SIZE] = { [0 ... FAULT_ARR_SIZE-1] = 0xff };
+
+    console_printf("fault_get_cur() has_reg_fault %u\n", has_reg_fault);
+
+    *test_id = recent_test_id;
+    *company_id = CID_VENDOR;
+
+    *fault_count = min(*fault_count, sizeof(reg_faults));
+    memcpy(faults, reg_faults, *fault_count);
+
+    return 0;
+}
+
+static int
+fault_get_reg(struct bt_mesh_model *model,
+              uint16_t company_id,
+              uint8_t *test_id,
+              uint8_t *faults,
+              uint8_t *fault_count)
+{
+    if (company_id != CID_VENDOR) {
+        return -BLE_HS_EINVAL;
+    }
+
+    console_printf("fault_get_reg() has_reg_fault %u\n", has_reg_fault);
+
+    *test_id = recent_test_id;
+
+    if (has_reg_fault) {
+        uint8_t reg_faults[FAULT_ARR_SIZE] = { [0 ... FAULT_ARR_SIZE-1] = 0xff };
+
+        *fault_count = min(*fault_count, sizeof(reg_faults));
+        memcpy(faults, reg_faults, *fault_count);
+    } else {
+        *fault_count = 0;
+    }
+
+    return 0;
+}
+
+static int
+fault_clear(struct bt_mesh_model *model, uint16_t company_id)
+{
+    if (company_id != CID_VENDOR) {
+        return -BLE_HS_EINVAL;
+    }
+
+    has_reg_fault = false;
+
+    return 0;
+}
+
+static int
+fault_test(struct bt_mesh_model *model, uint8_t test_id, uint16_t company_id)
+{
+    if (company_id != CID_VENDOR) {
+        return -BLE_HS_EINVAL;
+    }
+
+    if (test_id != STANDARD_TEST_ID && test_id != TEST_ID) {
+        return -BLE_HS_EINVAL;
+    }
+
+    recent_test_id = test_id;
+    has_reg_fault = true;
+    bt_mesh_fault_update(model->elem);
+
+    return 0;
+}
+
 static struct bt_mesh_health health_srv = {
+        .fault_get_cur = &fault_get_cur,
+        .fault_get_reg = &fault_get_reg,
+        .fault_clear = &fault_clear,
+        .fault_test = &fault_test,
 };
 
 static struct bt_mesh_model_pub gen_level_pub;
@@ -150,6 +238,8 @@ static struct bt_mesh_model root_models[] = {
 };
 
 static struct bt_mesh_model vnd_models[] = {
+    BT_MESH_MODEL_VND(CID_VENDOR, BT_MESH_MODEL_ID_GEN_ONOFF_SRV, gen_onoff_op,
+              &gen_onoff_pub, NULL),
 };
 
 static struct bt_mesh_elem elements[] = {

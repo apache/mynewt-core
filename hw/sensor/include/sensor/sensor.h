@@ -249,6 +249,15 @@ struct sensor_type_traits {
     /* field for selecting algorithm */
     uint8_t stt_algo;
 
+    /* Poll rate multiple */
+    uint16_t stt_poll_n;
+
+    uint16_t stt_polls_left;
+
+#if MYNEWT_VAL(SENSOR_POLL_TEST_LOG)
+    os_time_t prev_now;
+#endif
+
     /* function ptr for setting comparison algo */
     sensor_trigger_cmp_func_t stt_trigger_cmp_algo;
 
@@ -540,8 +549,6 @@ sensor_get_config(struct sensor *sensor, sensor_type_t type,
  * polling has been configured more frequently than this, it will
  * be triggered instead.
  */
-#define SENSOR_MGR_WAKEUP_TICKS (MYNEWT_VAL(SENSOR_MGR_WAKEUP_RATE) * \
-    OS_TICKS_PER_SEC) / 1000
 
 int sensor_mgr_lock(void);
 void sensor_mgr_unlock(void);
@@ -617,6 +624,16 @@ int sensor_mgr_match_bytype(struct sensor *, void *);
  */
 int
 sensor_set_poll_rate_ms(char *, uint32_t);
+
+/**
+ * Set the sensor poll rate multiple based on the device name, sensor type
+ *
+ * @param The devname
+ * @param The sensor type trait
+ * @param The multiple of the poll rate
+ */
+int
+sensor_set_n_poll_rate(char *, struct sensor_type_traits *);
 
 /**
  * Transmit OIC trigger

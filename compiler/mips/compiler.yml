@@ -31,6 +31,6 @@ compiler.flags.debug: [compiler.flags.base, -g3]
 
 compiler.as.flags: [-x, assembler-with-cpp]
 
-compiler.ld.flags: -Wl,-defsym,__app_start=0x80000000
+compiler.ld.flags: -Wl,-defsym,__app_start=0x80000000 -Wl,-defsym,__use_excpt_boot=0 -nostartfiles
 compiler.ld.resolve_circular_deps: true
 compiler.ld.mapfile: true

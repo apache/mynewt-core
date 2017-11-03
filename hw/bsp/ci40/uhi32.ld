@@ -34,13 +34,15 @@
  * support.
  */
 
-__entry = DEFINED(__reset_vector) ? 0xbfc00000 : _start;
+EXTERN(_start0)
+EXTERN(_start)
+__entry = DEFINED(__reset_vector) ? 0xbfc00000 : _start0;
 ENTRY(__entry)
 OUTPUT_FORMAT("elf32-tradlittlemips", "elf32-tradbigmips", "elf32-tradlittlemips")
 GROUP(-lc -luhi -lgcc -lhal)
 SEARCH_DIR(.)
 __DYNAMIC  =  0;
-STARTUP(crt0.o)
+
 /* Force the exception handler to be registered */
 EXTERN(__register_excpt_handler)
 /* Force the exception handler to be included in the link */

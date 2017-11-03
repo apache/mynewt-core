@@ -18,11 +18,46 @@
  */
 #include "hal/hal_bsp.h"
 #include "bsp/bsp.h"
+#include "syscfg/syscfg.h"
+#include "uart/uart.h"
+#if MYNEWT_VAL(UART_0) || MYNEWT_VAL(UART_1)
+#include "uart_hal/uart_hal.h"
+#endif
+
 #include <assert.h>
 
 const struct hal_flash *
-bsp_flash_dev(uint8_t id)
+hal_bsp_flash_dev(uint8_t id)
 {
     return 0;
 }
 
+#if MYNEWT_VAL(UART_0)
+static struct uart_dev os_bsp_uart0;
+#endif
+
+#if MYNEWT_VAL(UART_1)
+static struct uart_dev os_bsp_uart1;
+#endif
+
+void _close(int fd);
+
+void
+hal_bsp_init(void)
+{
+    int rc;
+
+#if MYNEWT_VAL(UART_0)
+    rc = os_dev_create((struct os_dev *) &os_bsp_uart0, "uart0",
+        OS_DEV_INIT_PRIMARY, 0, uart_hal_init, 0);
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(UART_1)
+    rc = os_dev_create((struct os_dev *) &os_bsp_uart1, "uart1",
+        OS_DEV_INIT_PRIMARY, 0, uart_hal_init, 0);
+    assert(rc == 0);
+#endif
+
+    (void)rc;
+}

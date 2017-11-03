@@ -17,7 +17,7 @@
  * under the License.
  */
 
-#include "gic.h"
+#include "mcu/gic.h"
 
 #include <mips/cpu.h>
 #include <mips/hal.h>
@@ -127,7 +127,7 @@ gic_place(uint32_t base)
 int
 gic_init(void)
 {
-    /* Check for GCR and get GIC location */
+    /* Check for GCR */
     if (!((mips32_getconfig0() & CFG0_M) && (mips32_getconfig1() & CFG1_M)
         && (mips32_getconfig2() & CFG2_M)
         && (mips32_getconfig3() & CFG3_CMGCR))) {

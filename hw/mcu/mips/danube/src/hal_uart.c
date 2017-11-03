@@ -26,7 +26,7 @@
 #include <mips/cpu.h>
 #include <mips/hal.h>
 
-#include "gic.h"
+#include "mcu/gic.h"
 
 static const uint32_t UART_0_INT_NO = 24;
 static const uint32_t UART_1_INT_NO = 25;
