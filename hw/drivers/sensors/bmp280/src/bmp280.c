@@ -685,9 +685,9 @@ bmp280_i2c_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
                    uint8_t len)
 {
     int rc;
-    uint8_t payload[20] = { addr, 0, 0, 0, 0, 0, 0, 0,
+    uint8_t payload[24] = { addr, 0, 0, 0, 0, 0, 0, 0,
                               0, 0, 0, 0, 0, 0, 0, 0,
-                              0, 0, 0, 0};
+                              0, 0, 0, 0, 0 ,0 ,0, 0};
 
     struct hal_i2c_master_data data_struct = {
         .address = itf->si_addr,
