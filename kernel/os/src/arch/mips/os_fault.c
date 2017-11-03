@@ -17,7 +17,6 @@
  * under the License.
  */
 
-#include <console/console.h>
 #include <hal/hal_system.h>
 #ifdef COREDUMP_PRESENT
 #include <coredump/coredump.h>
@@ -82,17 +81,8 @@ void
 __assert_func(const char *file, int line, const char *func, const char *e)
 {
     int sr;
-
     OS_ENTER_CRITICAL(sr);
     (void)sr;
-    console_blocking_mode();
-    console_printf("Assert @ 0x%x\n",
-                   (unsigned int)__builtin_return_address(0));
-    if (hal_debugger_connected()) {
-       /*
-        * If debugger is attached, breakpoint before the trap.
-        */
-    }
     hal_system_reset();
 }
 
@@ -103,17 +93,6 @@ os_default_irq(struct trap_frame *tf)
     struct coredump_regs regs;
 #endif
 
-    console_blocking_mode();
-    console_printf("Unhandled interrupt, exception sp 0x%08lx\n",
-      (uint32_t)tf->ef);
-    console_printf(" r0:0x%08lx  r1:0x%08lx  r2:0x%08lx  r3:0x%08lx\n",
-      tf->ef->r0, tf->ef->r1, tf->ef->r2, tf->ef->r3);
-    console_printf(" r4:0x%08lx  r5:0x%08lx  r6:0x%08lx  r7:0x%08lx\n",
-      tf->r4, tf->r5, tf->r6, tf->r7);
-    console_printf(" r8:0x%08lx  r9:0x%08lx r10:0x%08lx r11:0x%08lx\n",
-      tf->r8, tf->r9, tf->r10, tf->r11);
-    console_printf("r12:0x%08lx  lr:0x%08lx  pc:0x%08lx psr:0x%08lx\n",
-      tf->ef->r12, tf->ef->lr, tf->ef->pc, tf->ef->psr);
 #ifdef COREDUMP_PRESENT
     trap_to_coredump(tf, &regs);
     coredump_dump(&regs, sizeof(regs));

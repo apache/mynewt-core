@@ -31,6 +31,10 @@ pkg.keywords:
 pkg.cflags:
 pkg.deps:
     - hw/mcu/mips/danube
+    - libc/baselibc
+    - hw/mips-hal
+
+pkg.arch: mips
 
 pkg.deps.UART_0:
     - hw/drivers/uart/uart_hal
