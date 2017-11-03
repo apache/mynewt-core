@@ -219,6 +219,12 @@ ocf_ble_gap_event(struct ble_gap_event *event, void *arg)
         OCF_BLE_LOG(INFO, "\n");
         return 0;
 
+    case BLE_GAP_EVENT_ADV_COMPLETE:
+        OCF_BLE_LOG(INFO, "advertise complete; reason=%d\n",
+                    event->adv_complete.reason);
+        ocf_ble_advertise();
+        return 0;
+
     case BLE_GAP_EVENT_ENC_CHANGE:
         /* Encryption has been enabled or disabled for this connection. */
         OCF_BLE_LOG(INFO, "encryption change event; status=%d ",

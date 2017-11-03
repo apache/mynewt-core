@@ -196,6 +196,13 @@ blesplit_gap_event(struct ble_gap_event *event, void *arg)
         BLESPLIT_LOG(INFO, "\n");
         return 0;
 
+
+    case BLE_GAP_EVENT_ADV_COMPLETE:
+        BLESPLIT_LOG(INFO, "advertise complete; reason=%d\n",
+                     event->adv_complete.reason);
+        blesplit_advertise();
+        return 0;
+
     case BLE_GAP_EVENT_ENC_CHANGE:
         /* Encryption has been enabled or disabled for this connection. */
         BLESPLIT_LOG(INFO, "encryption change event; status=%d ",

@@ -160,6 +160,12 @@ bleuart_gap_event(struct ble_gap_event *event, void *arg)
         bleuart_advertise();
         return 0;
 
+
+    case BLE_GAP_EVENT_ADV_COMPLETE:
+        /* Advertising terminated; resume advertising. */
+        bleuart_advertise();
+        return 0;
+
     case BLE_GAP_EVENT_REPEAT_PAIRING:
         /* We already have a bond with the peer, but it is attempting to
          * establish a new secure link.  This app sacrifices security for
