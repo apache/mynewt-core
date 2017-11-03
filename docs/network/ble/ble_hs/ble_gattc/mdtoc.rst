@@ -1,0 +1,28 @@
+::
+
+            - 'GATT client':
+                - toc: 'network/ble/ble_hs/ble_gattc/ble_gattc.md'
+                - 'Definitions':
+                    - 'GATT client definitions': 'network/ble/ble_hs/ble_gattc/definitions/ble_gattc_defs.md'
+                - 'Functions':
+                    - 'ble_gattc_disc_all_chrs': 'network/ble/ble_hs/ble_gattc/functions/ble_gattc_disc_all_chrs.md'
+                    - 'ble_gattc_disc_all_dscs': 'network/ble/ble_hs/ble_gattc/functions/ble_gattc_disc_all_dscs.md'
+                    - 'ble_gattc_disc_all_svcs': 'network/ble/ble_hs/ble_gattc/functions/ble_gattc_disc_all_svcs.md'
+                    - 'ble_gattc_disc_chrs_by_uuid': 'network/ble/ble_hs/ble_gattc/functions/ble_gattc_disc_chrs_by_uuid.md'
+                    - 'ble_gattc_disc_svc_by_uuid': 'network/ble/ble_hs/ble_gattc/functions/ble_gattc_disc_svc_by_uuid.md'
+                    - 'ble_gattc_exchange_mtu': 'network/ble/ble_hs/ble_gattc/functions/ble_gattc_exchange_mtu.md'
+                    - 'ble_gattc_find_inc_svcs': 'network/ble/ble_hs/ble_gattc/functions/ble_gattc_find_inc_svcs.md'
+                    - 'ble_gattc_indicate': 'network/ble/ble_hs/ble_gattc/functions/ble_gattc_indicate.md'
+                    - 'ble_gattc_indicate_custom': 'network/ble/ble_hs/ble_gattc/functions/ble_gattc_indicate_custom.md'
+                    - 'ble_gattc_notify': 'network/ble/ble_hs/ble_gattc/functions/ble_gattc_notify.md'
+                    - 'ble_gattc_notify_custom': 'network/ble/ble_hs/ble_gattc/functions/ble_gattc_notify_custom.md'
+                    - 'ble_gattc_read': 'network/ble/ble_hs/ble_gattc/functions/ble_gattc_read.md'
+                    - 'ble_gattc_read_by_uuid': 'network/ble/ble_hs/ble_gattc/functions/ble_gattc_read_by_uuid.md'
+                    - 'ble_gattc_read_long': 'network/ble/ble_hs/ble_gattc/functions/ble_gattc_read_long.md'
+                    - 'ble_gattc_read_mult': 'network/ble/ble_hs/ble_gattc/functions/ble_gattc_read_mult.md'
+                    - 'ble_gattc_write': 'network/ble/ble_hs/ble_gattc/functions/ble_gattc_write.md'
+                    - 'ble_gattc_write_flat': 'network/ble/ble_hs/ble_gattc/functions/ble_gattc_write_flat.md'
+                    - 'ble_gattc_write_long': 'network/ble/ble_hs/ble_gattc/functions/ble_gattc_write_long.md'
+                    - 'ble_gattc_write_no_rsp': 'network/ble/ble_hs/ble_gattc/functions/ble_gattc_write_no_rsp.md'
+                    - 'ble_gattc_write_no_rsp_flat': 'network/ble/ble_hs/ble_gattc/functions/ble_gattc_write_no_rsp_flat.md'
+                    - 'ble_gattc_write_reliable': 'network/ble/ble_hs/ble_gattc/functions/ble_gattc_write_reliable.md'

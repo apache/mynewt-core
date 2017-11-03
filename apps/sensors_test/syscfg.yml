@@ -31,10 +31,11 @@ syscfg.vals:
 
     CONFIG_FCB: 1
 
+    CONFIG_CLI: 1
+
     # Enable shell commands.
     STATS_CLI: 1
     LOG_CLI: 1
-    CONFIG_CLI: 1
 
     # Enable newtmgr commands.
     STATS_NEWTMGR: 0
@@ -56,6 +57,7 @@ syscfg.vals:
     OC_APP_RESOURCES : 20
 
     FLOAT_USER: 1
+    SENSOR_OIC_PERIODIC: 1
 
 syscfg.defs:
     SENSOR_BLE:

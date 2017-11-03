@@ -24,6 +24,10 @@
 #include "os/os_dev.h"
 #include "syscfg/syscfg.h"
 
+#if MYNEWT_VAL(SENSOR_OIC)
+#include "oic/oc_ri.h"
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -125,6 +129,18 @@ typedef enum {
 #define SENSOR_ITF_UART   (2)
 
 /**
+ * Sensor threshold constants
+ */
+#define SENSOR_THRESH_ALGO_WINDOW     0x1
+#define SENSOR_THRESH_ALGO_WATERMARK  0x2
+#define SENSOR_THRESH_ALGO_USERDEF    0x3
+
+/**
+ * Sensor listener constants
+ */
+#define SENSOR_IGN_LISTENER     1
+
+/**
  * Useful constants
  */
 #define STANDARD_ACCEL_GRAVITY 9.80665F
@@ -143,6 +159,22 @@ struct sensor_cfg {
     uint8_t _reserved[3];
 };
 
+typedef union {
+    struct sensor_mag_data   *smd;
+    struct sensor_accel_data *sad;
+    struct sensor_euler_data *sed;
+    struct sensor_quat_data  *sqd;
+    struct sensor_accel_data *slad;
+    struct sensor_accel_data *sgrd;
+    struct sensor_gyro_data  *sgd;
+    struct sensor_temp_data  *std;
+    struct sensor_temp_data  *satd;
+    struct sensor_light_data *sld;
+    struct sensor_color_data *scd;
+    struct sensor_press_data *spd;
+    struct sensor_humid_data *srhd;
+}sensor_data_t;
+
 /**
  * Callback for handling sensor data, specified in a sensor listener.
  *
@@ -155,6 +187,29 @@ struct sensor_cfg {
  */
 typedef int (*sensor_data_func_t)(struct sensor *, void *, void *,
              sensor_type_t);
+
+/**
+ * Callback for sending trigger notification.
+ *
+ * @param ptr to the sensor
+ * @param ptr to sensor data
+ * @param the sensor type
+ */
+typedef int
+(*sensor_trigger_notify_func_t)(struct sensor *, void *, sensor_type_t);
+
+/**
+ * Callback for trigger compare functions.
+ *
+ * @param type of sensor
+ * @param the sensor low threshold
+ * @param the sensor high threshold
+ * @param ptr to data
+ */
+
+typedef int
+(*sensor_trigger_cmp_func_t)(sensor_type_t, sensor_data_t *,
+                             sensor_data_t *, void *);
 
 /**
  *
@@ -176,6 +231,43 @@ struct sensor_listener {
      * contained within the sensor object.
      */
     SLIST_ENTRY(sensor_listener) sl_next;
+};
+
+/**
+ * Sensor type traits list
+ */
+struct sensor_type_traits {
+    /* The type of sensor data for checking against thresholds */
+    sensor_type_t stt_sensor_type;
+
+    /* Low threshold per sensor type */
+    sensor_data_t stt_low_thresh;
+
+    /* High threshold per sensor type */
+    sensor_data_t stt_high_thresh;
+
+    /* field for selecting algorithm */
+    uint8_t stt_algo;
+
+    /* function ptr for setting comparison algo */
+    sensor_trigger_cmp_func_t stt_trigger_cmp_algo;
+
+#if MYNEWT_VAL(SENSOR_OIC)
+    /* Sensor OIC resource */
+    oc_resource_t *stt_oic_res;
+#endif
+
+    /* Next item in the sensor traits list.  The head of this list is
+     * contained within the sensor object.
+     */
+    SLIST_ENTRY(sensor_type_traits) stt_next;
+};
+
+struct sensor_read_ev_ctx {
+    /* The sensor for which the ev cb should be called */
+    struct sensor *srec_sensor;
+    /* The sensor type */
+    sensor_type_t srec_type;
 };
 
 /**
@@ -208,9 +300,24 @@ typedef int (*sensor_read_func_t)(struct sensor *, sensor_type_t,
 typedef int (*sensor_get_config_func_t)(struct sensor *, sensor_type_t,
         struct sensor_cfg *);
 
+/**
+ * Set the trigger and threshold values for a specific sensor for the sensor
+ * type.
+ *
+ * @param ptr to the sensor
+ * @param type of sensor
+ * @param low threshold
+ * @param high threshold
+ *
+ * @return 0 on success, non-zero error code on failure.
+ */
+typedef int (*sensor_set_trigger_thresh_t)(struct sensor *, sensor_type_t,
+                                           struct sensor_type_traits *stt);
+
 struct sensor_driver {
     sensor_read_func_t sd_read;
     sensor_get_config_func_t sd_get_config;
+    sensor_set_trigger_thresh_t sd_set_trigger_thresh;
 };
 
 struct sensor_timestamp {
@@ -232,6 +339,12 @@ struct sensor_itf {
 
     /* Sensor address */
     uint16_t si_addr;
+
+    /* Sensor interface low int pin */
+    uint8_t si_low_pin;
+
+    /* Sensor interface high int pin */
+    uint8_t si_high_pin;
 };
 
 /*
@@ -243,6 +356,12 @@ struct sensor_itf {
  * Return the interface for this sensor
  */
 #define SENSOR_GET_ITF(__s) (&((__s)->s_itf))
+
+#define SENSOR_DATA_CMP_GT(__d, __t, __f) (\
+    ((__d->__f##_is_valid) && (__t->__f##_is_valid)) ? (__d->__f > __t->__f) : (0))
+
+#define SENSOR_DATA_CMP_LT(__d, __t, __f) (\
+    ((__d->__f##_is_valid) && (__t->__f##_is_valid)) ? (__d->__f < __t->__f) : (0))
 
 struct sensor {
     /* The OS device this sensor inherits from, this is typically a sensor
@@ -285,11 +404,15 @@ struct sensor {
      * sensor
      */
     SLIST_HEAD(, sensor_listener) s_listener_list;
+
+    /* A list of sensor thresholds that are registered */
+    SLIST_HEAD(, sensor_type_traits) s_type_traits_list;
+
     /* The next sensor in the global sensor list. */
     SLIST_ENTRY(sensor) s_next;
 };
 
-int sensor_init(struct sensor *, struct os_dev *dev);
+int sensor_init(struct sensor *, struct os_dev *);
 int sensor_lock(struct sensor *);
 void sensor_unlock(struct sensor *);
 
@@ -385,6 +508,8 @@ sensor_set_interface(struct sensor *sensor, struct sensor_itf *s_itf)
     sensor->s_itf.si_num = s_itf->si_num;
     sensor->s_itf.si_cs_pin = s_itf->si_cs_pin;
     sensor->s_itf.si_addr = s_itf->si_addr;
+    sensor->s_itf.si_low_pin = s_itf->si_low_pin;
+    sensor->s_itf.si_high_pin = s_itf->si_high_pin;
 
     return (0);
 }
@@ -492,6 +617,84 @@ int sensor_mgr_match_bytype(struct sensor *, void *);
  */
 int
 sensor_set_poll_rate_ms(char *, uint32_t);
+
+/**
+ * Transmit OIC trigger
+ *
+ * @param ptr to the sensor
+ * @param ptr to sensor data
+ * @param The sensor type
+ *
+ * @return 0 on sucess, non-zero on failure
+ */
+int
+sensor_oic_tx_trigger(struct sensor *, void *, sensor_type_t);
+
+/**
+ * Sensor trigger initialization
+ *
+ * @param ptr to the sensor sturucture
+ * @param sensor type to enable trigger for
+ * @param the function to call if the trigger condition is satisfied
+ */
+void
+sensor_trigger_init(struct sensor *, sensor_type_t,
+                    sensor_trigger_notify_func_t);
+
+/**
+ * Search the sensor type traits list for specific type of sensor
+ *
+ * @param The sensor type to search for
+ * @param Ptr to a sensor
+ *
+ * @return NULL when no sensor type is found, ptr to sensor_type_traits structure
+ * when found
+ */
+struct sensor_type_traits *
+sensor_get_type_traits_bytype(sensor_type_t, struct sensor *);
+
+/**
+ * Get the type traits for a sensor
+ *
+ * @param name of the sensor
+ * @param Ptr to sensor types trait struct
+ * @param type of sensor
+ *
+ * @return NULL on failure, sensor struct on success
+ */
+struct sensor *
+sensor_get_type_traits_byname(char *, struct sensor_type_traits **,
+                              sensor_type_t);
+
+/**
+ * Set the thresholds along with the comparison algo for a sensor
+ *
+ * @param name of the sensor
+ * @param Ptr to sensor type traits containing thresholds
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+sensor_set_thresh(char *, struct sensor_type_traits *);
+
+/**
+ * Set the watermark thresholds for a sensor
+ *
+ * @param name of the sensor
+ * @param Ptr to sensor type traits containing thresholds
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+sensor_set_watermark_thresh(char *, struct sensor_type_traits *);
+
+/**
+ * Puts read event on the sensor manager evq
+ *
+ * @param arg
+ */
+void
+sensor_mgr_put_read_evt(void *);
 
 #if MYNEWT_VAL(SENSOR_CLI)
 char*

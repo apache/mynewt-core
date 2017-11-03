@@ -50,25 +50,6 @@ syscfg.defs:
         description: 'RX pin for UART1'
         value:  -1
 
-    SPI_0_MASTER:
-        description: 'SPI 0 master'
-        value:  0
-    SPI_0_MASTER_SS_PIN:
-        description: 'SPI 0 (master) SS pin number'
-        value:  22
-    SPI_1_MASTER:
-        description: 'SPI 1 master'
-        value:  0
-    SPI_1_MASTER_SS_PIN:
-        description: 'SPI 1 (master) SS pin number.'
-        value:  -1
-    SPI_0_SLAVE:
-        description: 'SPI 0 slave'
-        value:  0
-    SPI_1_SLAVE:
-        description: 'SPI 1 slave'
-        value:  0
-
     TIMER_0:
         description: 'NRF52 Timer 0'
         value:  1

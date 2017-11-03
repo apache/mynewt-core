@@ -12,6 +12,7 @@
 
 #include "mesh/mesh.h"
 
+#include "syscfg/syscfg.h"
 #define BT_DBG_ENABLED MYNEWT_VAL(BLE_MESH_DEBUG_MODEL)
 #include "host/ble_hs_log.h"
 
@@ -77,6 +78,10 @@ static void hb_send(struct bt_mesh_model *model)
 		feat |= BT_MESH_FEAT_RELAY;
 	}
 
+	if (bt_mesh_gatt_proxy_get() == BT_MESH_GATT_PROXY_ENABLED) {
+		feat |= BT_MESH_FEAT_PROXY;
+	}
+
 	if (bt_mesh_friend_get() == BT_MESH_FRIEND_ENABLED) {
 		feat |= BT_MESH_FEAT_FRIEND;
 	}
@@ -89,7 +94,7 @@ static void hb_send(struct bt_mesh_model *model)
 
 	hb.feat = sys_cpu_to_be16(feat);
 
-	BT_DBG("InitTTL %u feat 0x%02x", cfg->hb_pub.ttl, feat);
+	BT_DBG("InitTTL %u feat 0x%04x", cfg->hb_pub.ttl, feat);
 
 	bt_mesh_ctl_send(&tx, TRANS_CTL_OP_HEARTBEAT, &hb, sizeof(hb), NULL);
 }
@@ -135,6 +140,14 @@ static int comp_get_page_0(struct os_mbuf *buf)
 
 	if ((MYNEWT_VAL(BLE_MESH_RELAY))) {
 		feat |= BT_MESH_FEAT_RELAY;
+	}
+
+	if ((MYNEWT_VAL(BLE_MESH_GATT_PROXY))) {
+		feat |= BT_MESH_FEAT_PROXY;
+	}
+
+	if ((MYNEWT_VAL(BLE_MESH_FRIEND))) {
+		feat |= BT_MESH_FEAT_FRIEND;
 	}
 
 	if ((MYNEWT_VAL(BLE_MESH_LOW_POWER))) {
@@ -1245,11 +1258,7 @@ static void send_mod_sub_status(struct bt_mesh_model *model,
 
 	net_buf_simple_add_u8(msg, status);
 	net_buf_simple_add_le16(msg, elem_addr);
-	if (status) {
-		net_buf_simple_add_le16(msg, BT_MESH_ADDR_UNASSIGNED);
-	} else {
-		net_buf_simple_add_le16(msg, sub_addr);
-	}
+	net_buf_simple_add_le16(msg, sub_addr);
 
 	if (vnd) {
 		memcpy(net_buf_simple_add(msg, 4), mod_id, 4);
@@ -1734,7 +1743,7 @@ static void mod_sub_va_overwrite(struct bt_mesh_model *model,
 				 struct bt_mesh_msg_ctx *ctx,
 				 struct os_mbuf *buf)
 {
-	u16_t elem_addr, sub_addr;
+	u16_t elem_addr, sub_addr = BT_MESH_ADDR_UNASSIGNED;
 	struct bt_mesh_model *mod;
 	struct bt_mesh_elem *elem;
 	u8_t *label_uuid;
@@ -1745,10 +1754,10 @@ static void mod_sub_va_overwrite(struct bt_mesh_model *model,
 	elem_addr = net_buf_simple_pull_le16(buf);
 	label_uuid = buf->om_data;
 	net_buf_simple_pull(buf, 16);
-
-	BT_DBG("elem_addr 0x%04x", elem_addr);
-
 	mod_id = buf->om_data;
+
+	BT_DBG("elem_addr 0x%04x, addr %s, mod_id %s", elem_addr,
+	       bt_hex(label_uuid, 16), bt_hex(mod_id, buf->om_len));
 
 	elem = bt_mesh_elem_find(elem_addr);
 	if (!elem) {
@@ -2550,14 +2559,22 @@ static void lpn_timeout_get(struct bt_mesh_model *model,
 	BT_DBG("net_idx 0x%04x app_idx 0x%04x src 0x%04x lpn_addr 0x%02x",
 	       ctx->net_idx, ctx->app_idx, ctx->addr, lpn_addr);
 
+	/* check if it's the address of the Low Power Node? */
+	if (!BT_MESH_ADDR_IS_UNICAST(lpn_addr)) {
+		BT_WARN("Invalid LPNAddress; ignoring msg");
+		goto done;
+	}
+
 	bt_mesh_model_msg_init(msg, OP_LPN_TIMEOUT_STATUS);
 	net_buf_simple_add_le16(msg, lpn_addr);
 	memset(net_buf_simple_add(msg, 3), 0, 3);
 
 	if (bt_mesh_model_send(model, ctx, msg, NULL, NULL)) {
-		BT_ERR("Unable to send Friend Status");
+		BT_ERR("Unable to send LPN PollTimeout Status");
 	}
-    os_mbuf_free_chain(msg);
+
+done:
+	os_mbuf_free_chain(msg);
 }
 
 static void send_krp_status(struct bt_mesh_model *model,
@@ -2640,7 +2657,7 @@ static void krp_set(struct bt_mesh_model *model, struct bt_mesh_msg_ctx *ctx,
 	} else if ((sub->kr_phase == BT_MESH_KR_PHASE_1 ||
 		    sub->kr_phase == BT_MESH_KR_PHASE_2) &&
 		   phase == BT_MESH_KR_PHASE_3) {
-		memcpy(&sub->keys[0], &sub->keys[1], sizeof(sub->keys[0]));
+		bt_mesh_net_revoke_keys(sub);
 		if ((MYNEWT_VAL(BLE_MESH_LOW_POWER)) ||
 		    (MYNEWT_VAL(BLE_MESH_FRIEND))) {
 			bt_mesh_friend_cred_refresh(ctx->net_idx);
@@ -2716,18 +2733,18 @@ send:
     os_mbuf_free_chain(msg);
 }
 
-static void hearbeat_pub_get(struct bt_mesh_model *model,
-			     struct bt_mesh_msg_ctx *ctx,
-			     struct os_mbuf *buf)
+static void heartbeat_pub_get(struct bt_mesh_model *model,
+			      struct bt_mesh_msg_ctx *ctx,
+			      struct os_mbuf *buf)
 {
 	BT_DBG("src 0x%04x", ctx->addr);
 
 	hb_pub_send_status(model, ctx, STATUS_SUCCESS, NULL);
 }
 
-static void hearbeat_pub_set(struct bt_mesh_model *model,
-			     struct bt_mesh_msg_ctx *ctx,
-			     struct os_mbuf *buf)
+static void heartbeat_pub_set(struct bt_mesh_model *model,
+			      struct bt_mesh_msg_ctx *ctx,
+			      struct os_mbuf *buf)
 {
 	struct hb_pub_param *param = (void *)buf->om_data;
 	struct bt_mesh_cfg *cfg = model->user_data;
@@ -2789,7 +2806,7 @@ static void hearbeat_pub_set(struct bt_mesh_model *model,
 		 * as possible after the Heartbeat Publication Period state
 		 * has been configured for periodic publishing.
 		 */
-		if (param->period_log) {
+		if (param->period_log && param->count_log) {
 			k_work_submit(&cfg->hb_pub.timer.work);
 		} else {
 			k_delayed_work_cancel(&cfg->hb_pub.timer);
@@ -2837,18 +2854,18 @@ static void hb_sub_send_status(struct bt_mesh_model *model,
     os_mbuf_free_chain(msg);
 }
 
-static void hearbeat_sub_get(struct bt_mesh_model *model,
-			     struct bt_mesh_msg_ctx *ctx,
-			     struct os_mbuf *buf)
+static void heartbeat_sub_get(struct bt_mesh_model *model,
+			      struct bt_mesh_msg_ctx *ctx,
+			      struct os_mbuf *buf)
 {
 	BT_DBG("src 0x%04x", ctx->addr);
 
 	hb_sub_send_status(model, ctx, STATUS_SUCCESS);
 }
 
-static void hearbeat_sub_set(struct bt_mesh_model *model,
-			     struct bt_mesh_msg_ctx *ctx,
-			     struct os_mbuf *buf)
+static void heartbeat_sub_set(struct bt_mesh_model *model,
+			      struct bt_mesh_msg_ctx *ctx,
+			      struct os_mbuf *buf)
 {
 	struct bt_mesh_cfg *cfg = model->user_data;
 	u16_t sub_src, sub_dst;
@@ -2885,21 +2902,27 @@ static void hearbeat_sub_set(struct bt_mesh_model *model,
 	    sub_period == 0x00) {
 		cfg->hb_sub.src = BT_MESH_ADDR_UNASSIGNED;
 		cfg->hb_sub.dst = BT_MESH_ADDR_UNASSIGNED;
+		cfg->hb_sub.min_hops = 0;
+		cfg->hb_sub.max_hops = 0;
+
 		period_ms = 0;
 	} else {
 		cfg->hb_sub.src = sub_src;
 		cfg->hb_sub.dst = sub_dst;
+		cfg->hb_sub.min_hops = 0x7f;
+		cfg->hb_sub.max_hops = 0;
+
 		period_ms = hb_pwr2(sub_period, 1) * 1000;
 	}
 
 	BT_DBG("period_ms %u", period_ms);
 
 	cfg->hb_sub.count = 0;
-	cfg->hb_sub.min_hops = 0x7f;
-	cfg->hb_sub.max_hops = 0;
 
 	if (period_ms) {
 		cfg->hb_sub.expiry = k_uptime_get() + period_ms;
+	} else {
+		cfg->hb_sub.expiry = 0;
 	}
 
 	hb_sub_send_status(model, ctx, STATUS_SUCCESS);
@@ -2949,10 +2972,10 @@ const struct bt_mesh_model_op bt_mesh_cfg_op[] = {
 	{ OP_LPN_TIMEOUT_GET,          2,   lpn_timeout_get },
 	{ OP_KRP_GET,                  2,   krp_get },
 	{ OP_KRP_SET,                  3,   krp_set },
-	{ OP_HEARTBEAT_PUB_GET,        0,   hearbeat_pub_get },
-	{ OP_HEARTBEAT_PUB_SET,        9,   hearbeat_pub_set },
-	{ OP_HEARTBEAT_SUB_GET,        0,   hearbeat_sub_get },
-	{ OP_HEARTBEAT_SUB_SET,        5,   hearbeat_sub_set },
+	{ OP_HEARTBEAT_PUB_GET,        0,   heartbeat_pub_get },
+	{ OP_HEARTBEAT_PUB_SET,        9,   heartbeat_pub_set },
+	{ OP_HEARTBEAT_SUB_GET,        0,   heartbeat_sub_get },
+	{ OP_HEARTBEAT_SUB_SET,        5,   heartbeat_sub_set },
 	BT_MESH_MODEL_OP_END,
 };
 
@@ -2963,7 +2986,7 @@ static void hb_publish(struct os_event *work)
 	struct bt_mesh_subnet *sub;
 	u16_t period_ms;
 
-	BT_DBG("");
+	BT_DBG("hb_pub.count: %u", cfg->hb_pub.count);
 
 	sub = bt_mesh_subnet_get(cfg->hb_pub.net_idx);
 	if (!sub) {
@@ -2974,6 +2997,10 @@ static void hb_publish(struct os_event *work)
 	}
 
 	hb_send(model);
+
+	if (cfg->hb_pub.count == 0) {
+		return;
+	}
 
 	if (cfg->hb_pub.count != 0xffff) {
 		cfg->hb_pub.count--;
@@ -3024,7 +3051,7 @@ int bt_mesh_conf_init(struct bt_mesh_model *model, bool primary)
 	}
 
 	if (!(MYNEWT_VAL(BLE_MESH_FRIEND))) {
-		cfg->frnd = BT_MESH_RELAY_NOT_SUPPORTED;
+		cfg->frnd = BT_MESH_FRIEND_NOT_SUPPORTED;
 	}
 
 	if (!(MYNEWT_VAL(BLE_MESH_GATT_PROXY))) {
@@ -3032,6 +3059,7 @@ int bt_mesh_conf_init(struct bt_mesh_model *model, bool primary)
 	}
 
 	k_delayed_work_init(&cfg->hb_pub.timer, hb_publish);
+	k_delayed_work_add_arg(&cfg->hb_pub.timer, cfg);
 	cfg->hb_sub.expiry = 0;
 
 	cfg->model = model;

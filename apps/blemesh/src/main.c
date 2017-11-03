@@ -80,7 +80,7 @@ static void gen_onoff_set_unack(struct bt_mesh_model *model,
     console_printf("SET UNACK\n");
 }
 
-static const struct bt_mesh_model_op const gen_onoff_op[] = {
+static const struct bt_mesh_model_op gen_onoff_op[] = {
     { BT_MESH_MODEL_OP_2(0x82, 0x01), 0, gen_onoff_get },
     { BT_MESH_MODEL_OP_2(0x82, 0x02), 2, gen_onoff_set },
     { BT_MESH_MODEL_OP_2(0x82, 0x03), 2, gen_onoff_set_unack },
@@ -129,7 +129,7 @@ static void gen_move_set_unack(struct bt_mesh_model *model,
 {
 }
 
-static const struct bt_mesh_model_op const gen_level_op[] = {
+static const struct bt_mesh_model_op gen_level_op[] = {
     { BT_MESH_MODEL_OP_2(0x82, 0x05), 0, gen_level_get },
     { BT_MESH_MODEL_OP_2(0x82, 0x06), 3, gen_level_set },
     { BT_MESH_MODEL_OP_2(0x82, 0x07), 3, gen_level_set_unack },
@@ -171,7 +171,7 @@ static int output_number(bt_mesh_output_action action, uint32_t number)
 
 static void prov_complete(void)
 {
-    console_printf("Provisioning completed");
+    console_printf("Provisioning completed\n");
 }
 
 static const uint8_t dev_uuid[16] = MYNEWT_VAL(BLE_MESH_DEV_UUID);
@@ -185,19 +185,26 @@ static const struct bt_mesh_prov prov = {
 };
 
 static void
-bleprph_on_reset(int reason)
+blemesh_on_reset(int reason)
 {
     BLE_HS_LOG(ERROR, "Resetting state; reason=%d\n", reason);
 }
 
 static void
-bleprph_on_sync(void)
+blemesh_on_sync(void)
 {
     int err;
+    ble_addr_t addr;
 
     console_printf("Bluetooth initialized\n");
 
-    err = bt_mesh_init(BLE_ADDR_PUBLIC, &prov, &comp);
+    /* Use NRPA */
+    err = ble_hs_id_gen_rnd(1, &addr);
+    assert(err == 0);
+    err = ble_hs_id_set_rnd(addr.val);
+    assert(err == 0);
+
+    err = bt_mesh_init(addr.type, &prov, &comp);
     if (err) {
         console_printf("Initializing mesh failed (err %d)\n", err);
         return;
@@ -209,17 +216,14 @@ bleprph_on_sync(void)
 int
 main(void)
 {
-    /* Set initial BLE device address. */
-    memcpy(g_dev_addr, (uint8_t[6]){0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a}, 6);
-
     /* Initialize OS */
     sysinit();
 
     /* Initialize the NimBLE host configuration. */
     log_register("ble_hs", &ble_hs_log, &log_console_handler, NULL,
                  LOG_SYSLEVEL);
-    ble_hs_cfg.reset_cb = bleprph_on_reset;
-    ble_hs_cfg.sync_cb = bleprph_on_sync;
+    ble_hs_cfg.reset_cb = blemesh_on_reset;
+    ble_hs_cfg.sync_cb = blemesh_on_sync;
     ble_hs_cfg.store_status_cb = ble_store_util_status_rr;
 
     hal_gpio_init_out(LED_2, 0);

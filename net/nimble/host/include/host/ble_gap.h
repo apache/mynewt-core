@@ -346,6 +346,39 @@ struct ble_gap_event {
          */
         struct ble_gap_ext_disc_desc ext_disc;
 #endif
+
+        /**
+         * Represents a completed discovery procedure.  Valid for the following
+         * event types:
+         *     o BLE_GAP_EVENT_DISC_COMPLETE
+         */
+        struct {
+            /**
+             * The reason the discovery procedure stopped.  Typical reason
+             * codes are:
+             *     o 0: Duration expired.
+             *     o BLE_HS_EPREEMPTED: Host aborted procedure to configure a
+             *       peer's identity.
+             */
+            int reason;
+        } disc_complete;
+
+        /**
+         * Represents a completed advertise procedure.  Valid for the following
+         * event types:
+         *     o BLE_GAP_EVENT_ADV_COMPLETE
+         */
+        struct {
+            /**
+             * The reason the advertise procedure stopped.  Typical reason
+             * codes are:
+             *     o 0: Duration expired.
+             *     o BLE_HS_EPREEMPTED: Host aborted procedure to configure a
+             *       peer's identity.
+             */
+            int reason;
+        } adv_complete;
+
         /**
          * Represents an attempt to update a connection's parameters.  If the
          * attempt was successful, the connection's descriptor reflects the
@@ -686,12 +719,13 @@ int ble_gap_set_priv_mode(const ble_addr_t *peer_addr, uint8_t priv_mode);
 
 #define BLE_GAP_LE_PHY_1M                   1
 #define BLE_GAP_LE_PHY_2M                   2
-#define BLE_GAP_LE_CODED                    3
+#define BLE_GAP_LE_PHY_CODED                3
 int ble_gap_read_le_phy(uint16_t conn_handle, uint8_t *tx_phy, uint8_t *rx_phy);
 
 #define BLE_GAP_LE_PHY_1M_MASK              0x01
 #define BLE_GAP_LE_PHY_2M_MASK              0x02
 #define BLE_GAP_LE_PHY_CODED_MASK           0x04
+#define BLE_GAP_LE_PHY_ANY_MASK             0x0F
 int ble_gap_set_prefered_default_le_phy(uint8_t tx_phys_mask,
                                         uint8_t rx_phys_mask);
 

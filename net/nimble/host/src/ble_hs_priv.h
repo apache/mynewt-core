@@ -83,6 +83,8 @@ STATS_SECT_START(ble_hs_stats)
     STATS_SECT_ENTRY(hci_timeout)
     STATS_SECT_ENTRY(reset)
     STATS_SECT_ENTRY(sync)
+    STATS_SECT_ENTRY(pvcy_add_entry)
+    STATS_SECT_ENTRY(pvcy_add_entry_fail)
 STATS_SECT_END
 extern STATS_SECT_DECL(ble_hs_stats) ble_hs_stats;
 
@@ -95,9 +97,9 @@ extern uint16_t ble_hs_max_attrs;
 extern uint16_t ble_hs_max_services;
 extern uint16_t ble_hs_max_client_configs;
 
-void ble_hs_process_tx_data_queue(void);
 void ble_hs_process_rx_data_queue(void);
 int ble_hs_tx_data(struct os_mbuf *om);
+void ble_hs_wakeup_tx(void);
 void ble_hs_enqueue_hci_event(uint8_t *hci_evt);
 void ble_hs_event_enqueue(struct os_event *ev);
 
@@ -111,6 +113,7 @@ void ble_hs_misc_conn_chan_find_reqd(uint16_t conn_handle, uint16_t cid,
                                      struct ble_hs_conn **out_conn,
                                      struct ble_l2cap_chan **out_chan);
 uint8_t ble_hs_misc_addr_type_to_id(uint8_t addr_type);
+int ble_hs_misc_restore_irks(void);
 
 int ble_hs_locked_by_cur_task(void);
 int ble_hs_is_parent_task(void);

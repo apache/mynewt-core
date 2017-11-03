@@ -641,7 +641,7 @@ struct os_event g_lora_mac_rx_win1_event;
 struct os_event g_lora_mac_rx_win2_event;
 struct os_event g_lora_mac_tx_delay_timeout_event;
 
-static void lora_mac_rx_on_window2(void);
+static void lora_mac_rx_on_window2(bool rx_continuous);
 
 /*!
  * \brief Function to be executed on Radio Tx Done event
@@ -663,7 +663,6 @@ OnRadioTxDone(void)
 static void
 OnRadioRxDone(uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr)
 {
-    lora_node_log(LORA_NODE_LOG_RX_DONE, Channel, size, 0);
     os_eventq_put(lora_node_mac_evq_get(), &g_lora_mac_radio_rx_event);
 
     /*
@@ -1018,17 +1017,6 @@ static void ResetMacParameters(void);
  * a downlink.
  */
 
-/**
- * Checks to see if there are additional transmissions that need to occur.
- * If so, we restart the transmit queue timer to process them.
- */
-static void
-lora_mac_chk_kickstart_tx(void)
-{
-    if (!lora_node_txq_empty()) {
-        lora_node_reset_txq_timer();
-    }
-}
 
 /**
  * Called to send MCPS confirmations
@@ -1043,7 +1031,7 @@ lora_mac_send_mcps_confirm(LoRaMacEventInfoStatus_t status)
         LoRaMacPrimitives->MacMcpsConfirm( &McpsConfirm );
         LoRaMacFlags.Bits.McpsReq = 0;
     }
-    lora_mac_chk_kickstart_tx();
+    lora_node_chk_txq();
 }
 
 /**
@@ -1150,7 +1138,7 @@ lora_mac_join_req_tx_fail(void)
          * The reason we do this if failed to join is to flush the transmit
          * queue and any mac commands.
          */
-        lora_mac_chk_kickstart_tx();
+        lora_node_chk_txq();
     } else {
         /* Add some transmit delay between join request transmissions */
         hal_timer_stop(&TxDelayedTimer);
@@ -1172,11 +1160,16 @@ lora_mac_unconfirmed_tx_done(void)
         UpLinkCounter++;
         lora_mac_send_mcps_confirm(LORAMAC_EVENT_INFO_STATUS_OK);
     } else {
-       /* Add some transmit delay between unconfirmed transmissions */
-        hal_timer_stop(&TxDelayedTimer);
-        hal_timer_start(&TxDelayedTimer,
-            randr(0, MYNEWT_VAL(LORA_UNCONFIRMED_TX_RAND_DELAY) * 1000));
-     }
+#if 0
+        /* If this is just mac commands or an ack, no need to retry */
+        if (McpsConfirm.om != NULL) {
+           /* Add some transmit delay between unconfirmed transmissions */
+            hal_timer_stop(&TxDelayedTimer);
+            hal_timer_start(&TxDelayedTimer,
+                randr(0, MYNEWT_VAL(LORA_UNCONFIRMED_TX_RAND_DELAY) * 1000));
+        }
+#endif
+    }
 }
 
 static void
@@ -1184,7 +1177,8 @@ lora_mac_tx_service_done(int rxd_confirmation)
 {
     /* If no MLME or MCPS request in progress we just return. */
     if ((LoRaMacFlags.Bits.MlmeReq == 0) && (LoRaMacFlags.Bits.McpsReq == 0)) {
-        lora_mac_chk_kickstart_tx();
+        assert((LoRaMacState & LORAMAC_TX_RUNNING) == 0);
+        lora_node_chk_txq();
         return;
     }
 
@@ -1214,7 +1208,7 @@ lora_mac_process_radio_tx(struct os_event *ev)
     if (LoRaMacDeviceClass != CLASS_C) {
         Radio.Sleep( );
     } else {
-        lora_mac_rx_on_window2();
+        lora_mac_rx_on_window2(true);
     }
 
     /* Always start receive window 1 */
@@ -1276,6 +1270,7 @@ lora_mac_process_radio_rx(struct os_event *ev)
 {
     LoRaMacHeader_t macHdr;
     LoRaMacFrameCtrl_t fCtrl;
+    uint8_t entry_rx_slot;
     bool skipIndication = false;
     bool send_indicate = false;
     int tx_service_over = 0;
@@ -1318,7 +1313,8 @@ lora_mac_process_radio_rx(struct os_event *ev)
     snr = McpsIndication.Snr;
 
     /* Reset rest of global indication element */
-    McpsIndication.RxSlot = RxSlot;
+    entry_rx_slot = RxSlot;
+    McpsIndication.RxSlot = entry_rx_slot;
     McpsIndication.Port = 0;
     McpsIndication.Multicast = 0;
     McpsIndication.FramePending = 0;
@@ -1326,7 +1322,7 @@ lora_mac_process_radio_rx(struct os_event *ev)
     McpsIndication.AckReceived = false;
     McpsIndication.DownLinkCounter = 0;
 
-    lora_node_log(LORA_NODE_LOG_RX_DONE, Channel, size, 0);
+    lora_node_log(LORA_NODE_LOG_RX_DONE, Channel, size, entry_rx_slot);
 
     macHdr.Value = payload[pktHeaderLen++];
 
@@ -1488,6 +1484,9 @@ lora_mac_process_radio_rx(struct os_event *ev)
                  * status and let the application handle re-join. Note this in
                  * the documentation! This is only if the MIC is valid. If not,
                  * we will just ignore the received frame.
+                 *
+                 * NOTE: we wont process an ACK, so confirmed frames would get
+                 * re-transmitted here.
                  */
                 if (isMicOk) {
                     McpsIndication.Status = LORAMAC_EVENT_INFO_STATUS_DOWNLINK_TOO_MANY_FRAMES_LOSS;
@@ -1562,6 +1561,8 @@ lora_mac_process_radio_rx(struct os_event *ev)
 
                     McpsIndication.Port = port;
 
+                    lora_node_log(LORA_NODE_LOG_RX_PORT, port, frameLen, 0);
+
                     if (port == 0) {
                         STATS_INC(lora_mac_stats, rx_mlme);
                         if (fCtrl.Bits.FOptsLen == 0) {
@@ -1616,8 +1617,6 @@ lora_mac_process_radio_rx(struct os_event *ev)
                         // Check if the frame is an acknowledgement
                         if (fCtrl.Bits.Ack == 1) {
                             McpsIndication.AckReceived = true;
-
-                            /* Stop AckTimeout timer as no more retransmissions needed. */
                             hal_timer_stop(&AckTimeoutTimer);
                             hal_timer_stop(&RxWindowTimer2);
                             lora_mac_tx_service_done(1);
@@ -1626,18 +1625,24 @@ lora_mac_process_radio_rx(struct os_event *ev)
                     }
 
                     /*
+                     * XXX:
                      * We received a valid frame but no ack. If class
                      * A should we stop rx window 2 since we received
                      * a frame? Not sure about this.
                      */
-                    if ((LoRaMacDeviceClass == CLASS_A) || (RxSlot == 0)) {
+                    if (LoRaMacDeviceClass == CLASS_A) {
                         hal_timer_stop(&RxWindowTimer2);
                     }
                 } else {
-                    hal_timer_stop(&RxWindowTimer2);
-                    if ((LoRaMacDeviceClass == CLASS_A) || (RxSlot == 0)) {
-                        tx_service_over = 1;
+                    /*
+                     * No need to stop window 2 if class A and we received
+                     * a frame on window 2. For any class we are
+                     * allowed to transmit again since we heard a frame.
+                     */
+                    if ((LoRaMacDeviceClass == CLASS_C) || (!entry_rx_slot)) {
+                        hal_timer_stop(&RxWindowTimer2);
                     }
+                    tx_service_over = 1;
                 }
             }
             break;
@@ -1652,11 +1657,27 @@ lora_mac_process_radio_rx(struct os_event *ev)
 
 process_rx_done:
     if (LoRaMacDeviceClass == CLASS_C) {
-        lora_mac_rx_on_window2();
+        lora_mac_rx_on_window2(true);
+        if (tx_service_over) {
+            lora_mac_tx_service_done(0);
+        } else {
+            /* If an ack is being requested it means that the ack retry
+             * timer will dictate when we can send again. Note that
+             * the original frame cannot be handed up yet (the tx
+             * service is not done).
+             *
+             * If not a confirmed frame and we received on window 2, we
+             * are now allowed to transmit.
+             */
+            if ((NodeAckRequested == false) && (entry_rx_slot == 1)) {
+                lora_mac_tx_service_done(0);
+            }
+        }
     } else {
         /* If second receive window and a transmit service is running end it */
-        if (tx_service_over || ((NodeAckRequested == false) && (RxSlot == 1) &&
-            (LoRaMacState & LORAMAC_TX_RUNNING))) {
+        if (tx_service_over ||
+            ((NodeAckRequested == false) && (entry_rx_slot == 1) &&
+             (LoRaMacState & LORAMAC_TX_RUNNING))) {
             lora_mac_tx_service_done(0);
         }
     }
@@ -1682,9 +1703,12 @@ lora_mac_process_radio_tx_timeout(struct os_event *ev)
     if (LoRaMacDeviceClass != CLASS_C) {
         Radio.Sleep( );
     } else {
-        lora_mac_rx_on_window2();
+        lora_mac_rx_on_window2(true);
     }
     STATS_INC(lora_mac_stats, tx_timeouts);
+
+    /* XXX: what happens if ack requested? What should we do? */
+    /* XXX: Have we set up any window timers or ACK timers? I dont think so */
     lora_mac_tx_service_done(0);
 }
 
@@ -1701,14 +1725,22 @@ lora_mac_process_radio_rx_err(struct os_event *ev)
             }
         }
     } else {
-        lora_mac_rx_on_window2();
+        /*
+         * If this is a class C device and the RxSlot is 1 it means that
+         * we got an error during rx window 2. No way this could happen unless
+         * there is an unconfirmed frame waiting to be transmitted.
+         */
+        if (RxSlot == 1) {
+            lora_mac_tx_service_done(0);
+        }
+        lora_mac_rx_on_window2(true);
     }
 }
 
 static void
 lora_mac_process_radio_rx_timeout(struct os_event *ev)
 {
-    lora_node_log(LORA_NODE_LOG_RX_TIMEOUT, Channel, 0, 0);
+    lora_node_log(LORA_NODE_LOG_RX_TIMEOUT, Channel, RxSlot, 0);
 
     if (LoRaMacDeviceClass != CLASS_C) {
         Radio.Sleep( );
@@ -1719,7 +1751,16 @@ lora_mac_process_radio_rx_timeout(struct os_event *ev)
             }
         }
     } else {
-        lora_mac_rx_on_window2();
+        /*
+         * If class C and we sent an unconfirmed frame, we can only
+         * re-transmit after window 2 expires. If this is a confirmed frame
+         * we never started window 2 and re-transmission occurs after ACK
+         * retry timer.
+         */
+        if ((NodeAckRequested == false) && (RxSlot == 1)) {
+            lora_mac_tx_service_done(0);
+        }
+        lora_mac_rx_on_window2(true);
     }
 }
 
@@ -1736,7 +1777,7 @@ lora_mac_process_tx_delay_timeout(struct os_event *ev)
      * the transmit service. If that is the case, just return
      */
     if ((LoRaMacFlags.Bits.MlmeReq == 0) && (LoRaMacFlags.Bits.McpsReq == 0)) {
-        lora_mac_chk_kickstart_tx();
+        lora_node_chk_txq();
         return;
     }
 
@@ -1877,15 +1918,37 @@ lora_mac_process_rx_win1_timeout(struct os_event *ev)
 #endif
 }
 
+/**
+ * Called to set receiver on window 2 parameters. The parameter rx_continuous
+ * is used exclusively for Class C devices. It is used when receiving at the
+ * start of receive window 2 and it used so that we can generate a timeout if
+ * no packet is received.
+ *
+ *
+ * @param rx_continuous
+ */
 void
-lora_mac_rx_on_window2(void)
+lora_mac_rx_on_window2(bool rx_continuous)
 {
     uint16_t symbTimeout = 5; // DR_2, DR_1, DR_0
     uint32_t bandwidth = 0; // LoRa 125 kHz
-    bool rxContinuousMode = false;
 
-    /* To denote that we are not receiving on rx window 1 */
-    RxSlot = 1;
+    /*
+     * RxSlot = 1 means we are receiving on the "real" window 2. RxSlot = 2
+     * means we are a class C device receiving on window 2 parameters but
+     * not during the actual second receive window.
+     */
+    if (LoRaMacDeviceClass == CLASS_C) {
+        if (rx_continuous) {
+            RxSlot = 2;
+        } else {
+            RxSlot = 1;
+        }
+    } else {
+        RxSlot = 1;
+    }
+
+    lora_node_log(LORA_NODE_LOG_RX_WIN2, RxSlot, 0, rx_continuous);
 
 #if defined( USE_BAND_433 ) || defined( USE_BAND_780 ) || defined( USE_BAND_868 )
     // For higher datarates, we increase the number of symbols generating a Rx Timeout
@@ -1952,12 +2015,10 @@ lora_mac_rx_on_window2(void)
     #error "Please define a frequency band in the compiler options."
 #endif
 
-    if (LoRaMacDeviceClass == CLASS_C) {
-        rxContinuousMode = true;
-    }
-
     /* XXX: what happens if call to this fails? Can it? */
-    RxWindowSetup(LoRaMacParams.Rx2Channel.Frequency, LoRaMacParams.Rx2Channel.Datarate, bandwidth, symbTimeout, rxContinuousMode);
+    RxWindowSetup(LoRaMacParams.Rx2Channel.Frequency,
+                  LoRaMacParams.Rx2Channel.Datarate, bandwidth, symbTimeout,
+                  rx_continuous);
 }
 
 /**
@@ -1972,10 +2033,10 @@ lora_mac_rx_on_window2(void)
 static void
 lora_mac_process_rx_win2_timeout(struct os_event *ev)
 {
-    lora_mac_rx_on_window2();
     if (LoRaMacDeviceClass == CLASS_C) {
-        lora_mac_tx_service_done(0);
+        Radio.Standby( );
     }
+    lora_mac_rx_on_window2(false);
 }
 
 static void
@@ -2117,9 +2178,12 @@ static bool
 RxWindowSetup( uint32_t freq, int8_t datarate, uint32_t bandwidth, uint16_t timeout, bool rxContinuous )
 {
     uint8_t downlinkDatarate = Datarates[datarate];
+    RadioState_t rstate;
     RadioModems_t modem;
 
-    if (Radio.GetStatus( ) != RF_IDLE) {
+    rstate = Radio.GetStatus();
+    if (rstate != RF_IDLE) {
+        lora_node_log(LORA_NODE_LOG_RX_WIN_SETUP_FAIL, 0, 0, rstate);
         return false;
     }
 
@@ -3039,7 +3103,8 @@ CalculateBackOff(uint8_t channel)
     AggregatedTimeOff = AggregatedTimeOff + ((tx_ticks * AggregatedDCycle) - tx_ticks);
 }
 
-static int8_t AlternateDatarate( uint16_t nbTrials )
+static int8_t
+AlternateDatarate(uint16_t nbTrials)
 {
     int8_t datarate = LORAMAC_TX_MIN_DATARATE;
 #if defined( USE_BAND_915 ) || defined( USE_BAND_915_HYBRID )
@@ -3051,7 +3116,7 @@ static int8_t AlternateDatarate( uint16_t nbTrials )
     ReenableChannels( LoRaMacParamsDefaults.ChannelsMask[4], LoRaMacParams.ChannelsMask );
 #endif
 
-    if( ( nbTrials & 0x01 ) == 0x01 ) {
+    if ((nbTrials & 0x01) == 0x01) {
         datarate = DR_4;
     } else {
         datarate = DR_0;
@@ -3738,7 +3803,7 @@ LoRaMacStatus_t LoRaMacMibSetRequestConfirm( MibRequestConfirm_t *mibSet )
                 case CLASS_C:
                     // Set the NodeAckRequested indicator to default
                     NodeAckRequested = false;
-                    lora_mac_rx_on_window2();
+                    lora_mac_rx_on_window2(true);
                     break;
             }
             break;
@@ -4431,4 +4496,10 @@ lora_mac_tx_state(void)
     }
 
     return rc;
+}
+
+bool
+lora_mac_srv_ack_requested(void)
+{
+    return SrvAckRequested;
 }

@@ -17,6 +17,13 @@
 
 #include "mesh/glue.h"
 
+
+/**
+ * Print out all the incoming advertising packets
+ * Used on log level 0
+ */
+#define BT_MESH_EXTENDED_DEBUG 0
+
 /**
  *  @brief Parsing state of a buffer.
  *
@@ -305,9 +312,6 @@ extern const struct bt_mesh_model_op bt_mesh_cfg_op[];
 struct bt_mesh_health
 {
     struct bt_mesh_model *model;
-
-    /* Health Period (divider) */
-    u8_t period;
 
     /* Fetch current faults */
     int

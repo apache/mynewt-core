@@ -19,8 +19,7 @@
 
 pkg.name: hw/drivers/sensors/bno055
 pkg.description: Driver for the BNO055
-pkg.author: "Adafruit <support@adafruit.com>"
-pkg.homepage: "http://www.adafruit.com/"
+pkg.author: "Vipul Rahane"
 pkg.keywords:
     - adafruit
     - bno055
@@ -30,6 +29,11 @@ pkg.keywords:
 pkg.deps:
     - "@apache-mynewt-core/kernel/os"
     - "@apache-mynewt-core/hw/hal"
+    - "@apache-mynewt-core/hw/sensor"
+
+pkg.req_apis:
+    - stats
+    - log
 
 pkg.deps.BNO055_CLI:
     - "@apache-mynewt-core/util/parse"

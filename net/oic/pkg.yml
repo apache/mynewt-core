@@ -24,23 +24,26 @@ pkg.homepage: "https://www.iotivity.org/"
 pkg.keywords:
 
 pkg.deps:
-    - "encoding/cborattr"
-    - "encoding/tinycbor"
-    - "kernel/os"
+    - encoding/cborattr
+    - encoding/tinycbor
+    - kernel/os
 pkg.req_apis:
     - log
     - stats
 
 pkg.deps.OC_TRANSPORT_GATT:
-    - "net/nimble/host"
-    - "net/nimble/host/services/gap"
-    - "net/nimble/host/services/gatt"
+    - net/nimble/host
+    - net/nimble/host/services/gap
+    - net/nimble/host/services/gatt
 
 pkg.deps.OC_TRANSPORT_IP:
-    - "net/ip/mn_socket"
+    - net/ip/mn_socket
 
 pkg.deps.OC_TRANSPORT_SERIAL:
-    - "sys/shell"
+    - sys/shell
+
+pkg.deps.OC_TRANSPORT_LORA:
+    - net/lora/node
 
 # remove debug option to save logging
 pkg.cflags:

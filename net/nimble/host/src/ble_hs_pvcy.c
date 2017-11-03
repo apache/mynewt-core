@@ -19,13 +19,14 @@
 #include <inttypes.h>
 #include <stdio.h>
 #include <string.h>
+#include "stats/stats.h"
 #include "ble_hs_priv.h"
 
 static uint8_t ble_hs_pvcy_started;
-uint8_t ble_hs_pvcy_irk[16];
+static uint8_t ble_hs_pvcy_irk[16];
 
 /** Use this as a default IRK if none gets set. */
-const uint8_t default_irk[16] = {
+const uint8_t ble_hs_pvcy_default_irk[16] = {
     0xef, 0x8d, 0xe2, 0x16, 0x4f, 0xec, 0x43, 0x0d,
     0xbf, 0x5b, 0xdd, 0x34, 0xc0, 0x53, 0x1e, 0xb8,
 };
@@ -105,12 +106,13 @@ ble_hs_pvcy_clear_entries(void)
     return 0;
 }
 
-int
-ble_hs_pvcy_add_entry(const uint8_t *addr, uint8_t addr_type,
-                      const uint8_t *irk)
+static int
+ble_hs_pvcy_add_entry_hci(const uint8_t *addr, uint8_t addr_type,
+                          const uint8_t *irk)
 {
     struct hci_add_dev_to_resolving_list add;
     uint8_t buf[BLE_HCI_ADD_TO_RESOLV_LIST_LEN];
+    ble_addr_t peer_addr;
     int rc;
 
     add.addr_type = addr_type;
@@ -130,7 +132,47 @@ ble_hs_pvcy_add_entry(const uint8_t *addr, uint8_t addr_type,
         return rc;
     }
 
+
+    /* FIXME Controller is BT5.0 and default privacy mode is network which
+     * can cause problems for apps which are not aware of it. We need to
+     * sort it out somehow. For now we set device mode for all of the peer
+     * devices and application should change it to network if needed
+     */
+    peer_addr.type = addr_type;
+    memcpy(peer_addr.val, addr, sizeof peer_addr.val);
+    rc = ble_hs_pvcy_set_mode(&peer_addr, BLE_GAP_PRIVATE_MODE_DEVICE);
+    if (rc != 0) {
+        return rc;
+    }
+
     return 0;
+}
+
+int
+ble_hs_pvcy_add_entry(const uint8_t *addr, uint8_t addr_type,
+                      const uint8_t *irk)
+{
+    int rc;
+
+    STATS_INC(ble_hs_stats, pvcy_add_entry);
+
+    /* No GAP procedures can be active when adding an entry to the resolving
+     * list (Vol 2, Part E, 7.8.38).  Stop all GAP procedures and temporarily
+     * prevent any new ones from being started.
+     */
+    ble_gap_preempt();
+
+    /* Try to add the entry now that GAP is halted. */
+    rc = ble_hs_pvcy_add_entry_hci(addr, addr_type, irk);
+
+    /* Allow GAP procedures to be started again. */
+    ble_gap_preempt_done();
+
+    if (rc != 0) {
+        STATS_INC(ble_hs_stats, pvcy_add_entry_fail);
+    }
+
+    return rc;
 }
 
 int
@@ -165,7 +207,7 @@ ble_hs_pvcy_set_our_irk(const uint8_t *irk)
     if (irk != NULL) {
         memcpy(new_irk, irk, 16);
     } else {
-        memcpy(new_irk, default_irk, 16);
+        memcpy(new_irk, ble_hs_pvcy_default_irk, 16);
     }
 
     /* Clear the resolving list if this is a new IRK. */

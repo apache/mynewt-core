@@ -46,6 +46,9 @@
 #if MYNEWT_VAL(PWM)
 #include <pwm_nrf52/pwm_nrf52.h>
 #endif
+#if MYNEWT_VAL(SOFT_PWM)
+#include <soft_pwm/soft_pwm.h>
+#endif
 
 #if MYNEWT_VAL(UART_0)
 static struct uart_dev os_bsp_uart0;
@@ -96,6 +99,10 @@ static struct pwm_dev os_bsp_pwm1;
 #if MYNEWT_VAL(PWM_2)
 static struct pwm_dev os_bsp_pwm2;
 #endif
+#if MYNEWT_VAL(SOFT_PWM)
+static struct pwm_dev os_bsp_spwm;
+#endif
+
 
 #if MYNEWT_VAL(I2C_0)
 static const struct nrf52_hal_i2c_cfg hal_i2c_cfg = {
@@ -227,6 +234,16 @@ hal_bsp_init(void)
                        NULL);
     assert(rc == 0);
 #endif
+#if MYNEWT_VAL(SOFT_PWM)
+    rc = os_dev_create((struct os_dev *) &os_bsp_spwm,
+                       "spwm",
+                       OS_DEV_INIT_KERNEL,
+                       OS_DEV_INIT_PRIO_DEFAULT,
+                       soft_pwm_dev_init,
+                       NULL);
+    assert(rc == 0);
+#endif
+
 
 #if (MYNEWT_VAL(OS_CPUTIME_TIMER_NUM) >= 0)
     rc = os_cputime_init(MYNEWT_VAL(OS_CPUTIME_FREQ));

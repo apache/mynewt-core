@@ -24,10 +24,6 @@
 #ifndef MBEDTLS_PK_WRAP_H
 #define MBEDTLS_PK_WRAP_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #if !defined(MBEDTLS_CONFIG_FILE)
 #include "config.h"
 #else
@@ -113,10 +109,6 @@ extern const mbedtls_pk_info_t mbedtls_ecdsa_info;
 
 #if defined(MBEDTLS_PK_RSA_ALT_SUPPORT)
 extern const mbedtls_pk_info_t mbedtls_rsa_alt_info;
-#endif
-
-#ifdef __cplusplus
-}
 #endif
 
 #endif /* MBEDTLS_PK_WRAP_H */

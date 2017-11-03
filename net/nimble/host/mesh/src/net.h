@@ -177,12 +177,10 @@ struct bt_mesh_net
 
     s64_t last_update; /* Time since last IV Update change */
 
-#if MYNEWT_VAL(BLE_MESH_LOCAL_INTERFACE)
     /* Local network interface */
     struct os_callout local_work;
     struct os_eventq local_queue;
     struct os_event local_ev;
-#endif
 
 #if MYNEWT_VAL(BLE_MESH_FRIEND)
     struct bt_mesh_friend frnd; /* Friend state */
@@ -264,6 +262,9 @@ bt_mesh_friend_cred_del(u16_t net_idx, u16_t addr);
 
 bool
 bt_mesh_kr_update(struct bt_mesh_subnet *sub, u8_t new_kr, bool new_key);
+
+void
+bt_mesh_net_revoke_keys(struct bt_mesh_subnet *sub);
 
 int
 bt_mesh_net_beacon_update(struct bt_mesh_subnet *sub);

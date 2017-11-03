@@ -31,7 +31,6 @@ int tu_case_idx;
 
 const char *tu_case_name;
 
-/*#define TU_CASE_BUF_SZ      1024*/
 #define TU_CASE_BUF_SZ      256
 
 static char tu_case_buf[TU_CASE_BUF_SZ];
@@ -152,25 +151,39 @@ tu_case_post_test(void)
     }
 }
 
-void
-tu_case_pass(void)
+static void
+tu_case_buf_clear(void)
+{
+    tu_case_buf_len = 0;
+    tu_case_buf[0] = '\0';
+}
+
+static void
+tu_case_write_pass_buf(void)
 {
 #if MYNEWT_VAL(SELFTEST)
     if (ts_config.ts_print_results) {
-        printf("[pass] %s/%s\n", ts_current_config->ts_suite_name, tu_case_name);
-        if (tu_case_buf_len > 0) {
-            printf("%s", tu_case_buf);
-        }
+        printf("[pass] %s/%s %s\n", ts_current_config->ts_suite_name,
+               tu_case_name, tu_case_buf);
         fflush(stdout);
     }
 #endif
 
     tu_case_reported = 1;
-    tu_case_failed = 0;
 
     if (ts_config.ts_case_pass_cb != NULL) {
         ts_config.ts_case_pass_cb(tu_case_buf, ts_config.ts_case_pass_arg);
     }
+
+    tu_case_buf_clear();
+}
+
+void
+tu_case_pass(void)
+{
+    tu_case_write_pass_buf();
+    tu_case_reported = 1;
+    tu_case_failed = 0;
 }
 
 void
@@ -183,7 +196,8 @@ tu_case_fail(void)
 
 #if MYNEWT_VAL(SELFTEST)
     if (ts_config.ts_print_results) {
-        printf("[FAIL] %s/%s %s", ts_current_config->ts_suite_name, tu_case_name, tu_case_buf);
+        printf("[FAIL] %s/%s %s", ts_current_config->ts_suite_name,
+               tu_case_name, tu_case_buf);
         fflush(stdout);
     }
 #endif
@@ -193,6 +207,8 @@ tu_case_fail(void)
     if (ts_config.ts_case_fail_cb != NULL) {
         ts_config.ts_case_fail_cb(tu_case_buf, ts_config.ts_case_fail_arg);
     }
+
+    tu_case_buf_clear();
 }
 
 static void
@@ -214,27 +230,6 @@ tu_case_append_assert_msg(const char *expr)
 }
 
 static void
-tu_case_write_pass_buf(void)
-{
-
-#if MYNEWT_VAL(SELFTEST)
-    if (ts_config.ts_print_results) {
-        printf("[pass] %s/%s\n", ts_current_config->ts_suite_name, tu_case_name);
-        if (tu_case_buf_len > 0) {
-            printf("%s", tu_case_buf);
-        }
-        fflush(stdout);
-    }
-#endif
-
-    tu_case_reported = 1;
-
-    if (ts_config.ts_case_pass_cb != NULL) {
-        ts_config.ts_case_pass_cb(tu_case_buf, ts_config.ts_case_pass_arg);
-    }
-}
-
-static void
 tu_case_append_manual_pass_msg(void)
 {
     int rc;
@@ -247,8 +242,8 @@ void
 tu_case_write_pass_auto(void)
 {
     if (!tu_case_reported) {
-        tu_case_buf_len = 0;
         tu_case_write_pass_buf();
+        tu_case_reported = 1;
     }
 }
 
@@ -297,8 +292,6 @@ tu_case_pass_manual(const char *file, int line, const char *format, ...)
     if (tu_case_reported) {
         return;
     }
-
-    tu_case_buf_len = 0;
 
     tu_case_append_file_info(file, line);
     tu_case_append_manual_pass_msg();

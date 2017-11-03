@@ -93,7 +93,7 @@ ble_l2cap_test_util_rx_update_req(uint16_t conn_handle, uint8_t id,
     req->slave_latency = htole16(params->slave_latency);
     req->timeout_multiplier = htole16(params->timeout_multiplier);
 
-    ble_hs_test_util_set_ack(
+    ble_hs_test_util_hci_ack_set(
         ble_hs_hci_util_opcode_join(BLE_HCI_OGF_LE,
                                     BLE_HCI_OCF_LE_CONN_UPDATE), 0);
     rc = ble_hs_test_util_l2cap_rx_first_frag(conn_handle, BLE_L2CAP_CID_SIG,
@@ -108,7 +108,7 @@ ble_l2cap_test_util_verify_tx_update_conn(
     uint8_t param_len;
     uint8_t *param;
 
-    param = ble_hs_test_util_verify_tx_hci(BLE_HCI_OGF_LE,
+    param = ble_hs_test_util_hci_verify_tx(BLE_HCI_OGF_LE,
                                            BLE_HCI_OCF_LE_CONN_UPDATE,
                                            &param_len);
     TEST_ASSERT(param_len == BLE_HCI_CONN_UPDATE_LEN);
@@ -150,7 +150,7 @@ ble_l2cap_test_util_create_conn(uint16_t conn_handle, uint8_t *addr,
 
     ble_hs_conn_chan_insert(conn, chan);
 
-    ble_hs_test_util_prev_hci_tx_clear();
+    ble_hs_test_util_hci_out_clear();
 
     ble_hs_unlock();
 }
@@ -293,7 +293,6 @@ TEST_CASE(ble_l2cap_test_case_bad_handle)
     TEST_ASSERT(rc == BLE_HS_ENOTCONN);
 
     /* Ensure we did not send anything in return. */
-    ble_hs_test_util_tx_all();
     TEST_ASSERT_FATAL(ble_hs_test_util_prev_tx_dequeue() == NULL);
 }
 
@@ -437,13 +436,13 @@ TEST_CASE(ble_l2cap_test_case_frag_timeout)
     TEST_ASSERT(ticks_from_now == MYNEWT_VAL(BLE_L2CAP_RX_FRAG_TIMEOUT));
 
     /* Allow the timer to expire. */
-    ble_hs_test_util_set_ack_disconnect(0);
+    ble_hs_test_util_hci_ack_set_disconnect(0);
     os_time_advance(MYNEWT_VAL(BLE_L2CAP_RX_FRAG_TIMEOUT));
     ticks_from_now = ble_hs_conn_timer();
     TEST_ASSERT(ticks_from_now == BLE_HS_FOREVER);
 
     /* Ensure connection was terminated. */
-    ble_hs_test_util_verify_tx_disconnect(2, BLE_ERR_REM_USER_CONN_TERM);
+    ble_hs_test_util_hci_verify_tx_disconnect(2, BLE_ERR_REM_USER_CONN_TERM);
 }
 
 /*****************************************************************************
@@ -464,7 +463,6 @@ TEST_CASE(ble_l2cap_test_case_sig_unsol_rsp)
     TEST_ASSERT(rc == 0);
 
     /* Ensure we did not send anything in return. */
-    ble_hs_test_util_tx_all();
     TEST_ASSERT_FATAL(ble_hs_test_util_prev_tx_dequeue() == NULL);
 }
 
@@ -506,7 +504,6 @@ ble_l2cap_test_util_peer_updates(int accept)
     ble_l2cap_test_util_rx_update_req(2, 1, &l2cap_params);
 
     /* Ensure an update response command got sent. */
-    ble_hs_process_tx_data_queue();
     ble_hs_test_util_verify_tx_l2cap_update_rsp(1, !accept);
 
     if (accept) {
@@ -552,8 +549,6 @@ ble_l2cap_test_util_we_update(int peer_accepts)
     params.timeout_multiplier = 0x100;
     rc = ble_l2cap_sig_update(2, &params, ble_l2cap_test_util_update_cb, NULL);
     TEST_ASSERT_FATAL(rc == 0);
-
-    ble_hs_test_util_tx_all();
 
     /* Ensure an update request got sent. */
     id = ble_hs_test_util_verify_tx_l2cap_update_req(&params);
@@ -609,7 +604,6 @@ TEST_CASE(ble_l2cap_test_case_sig_update_init_fail_master)
     TEST_ASSERT_FATAL(rc == BLE_HS_EINVAL);
 
     /* Ensure callback never called. */
-    ble_hs_test_util_tx_all();
     TEST_ASSERT(ble_l2cap_test_update_status == -1);
 }
 
@@ -633,8 +627,6 @@ TEST_CASE(ble_l2cap_test_case_sig_update_init_fail_bad_id)
     params.timeout_multiplier = 0x100;
     rc = ble_l2cap_sig_update(2, &params, ble_l2cap_test_util_update_cb, NULL);
     TEST_ASSERT_FATAL(rc == 0);
-
-    ble_hs_test_util_tx_all();
 
     /* Ensure an update request got sent. */
     id = ble_hs_test_util_verify_tx_l2cap_update_req(&params);
@@ -755,8 +747,6 @@ ble_l2cap_test_coc_connect(struct test_data *t)
         return;
     }
 
-    ble_hs_test_util_tx_all();
-
     req.credits = htole16((t->mtu + (BLE_L2CAP_COC_MTU - 1) / 2) /
                                                         BLE_L2CAP_COC_MTU);
     req.mps = htole16(BLE_L2CAP_COC_MTU);
@@ -797,8 +787,6 @@ ble_l2cap_test_coc_connect_by_peer(struct test_data *t)
 
     ble_l2cap_test_util_create_conn(2, ((uint8_t[]){1,2,3,4,5,6}),
                                     ble_l2cap_test_util_conn_cb, NULL);
-
-    ble_hs_test_util_tx_all();
 
     /* Use some different parameters for peer */
     req.credits = htole16(30);
@@ -854,8 +842,6 @@ ble_l2cap_test_coc_disc(struct test_data *t)
     rc = ble_l2cap_sig_disconnect(t->chan);
     TEST_ASSERT_FATAL(rc == 0);
 
-    ble_hs_test_util_tx_all();
-
     req.dcid = htole16(t->chan->dcid);
     req.scid = htole16(t->chan->scid);
 
@@ -879,8 +865,6 @@ ble_l2cap_test_coc_disc_by_peer(struct test_data *t)
     struct event *ev = &t->event[t->event_iter++];
     uint8_t id = 10;
     int rc;
-
-    ble_hs_test_util_tx_all();
 
     /* Receive disconnect request from peer. Note that source cid
      * and destination cid are from peer perspective */
@@ -908,8 +892,6 @@ ble_l2cap_test_coc_invalid_disc_by_peer(struct test_data *t)
     uint8_t id = 10;
     int rc;
     struct event *ev = &t->event[t->event_iter++];
-
-    ble_hs_test_util_tx_all();
 
     /* Receive disconnect request from peer. Note that source cid
      * and destination cid are from peer perspective */

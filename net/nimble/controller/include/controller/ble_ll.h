@@ -155,6 +155,7 @@ STATS_SECT_START(ble_ll_stats)
     STATS_SECT_ENTRY(rx_aux_connect_rsp)
     STATS_SECT_ENTRY(adv_txg)
     STATS_SECT_ENTRY(adv_late_starts)
+    STATS_SECT_ENTRY(adv_resched_pdu_fail)
     STATS_SECT_ENTRY(sched_state_conn_errs)
     STATS_SECT_ENTRY(sched_state_adv_errs)
     STATS_SECT_ENTRY(scan_starts)
@@ -174,6 +175,8 @@ STATS_SECT_START(ble_ll_stats)
     STATS_SECT_ENTRY(aux_chain_cnt)
     STATS_SECT_ENTRY(aux_chain_err)
     STATS_SECT_ENTRY(adv_evt_dropped)
+    STATS_SECT_ENTRY(scan_timer_stopped)
+    STATS_SECT_ENTRY(scan_timer_restarted)
 STATS_SECT_END
 extern STATS_SECT_DECL(ble_ll_stats) ble_ll_stats;
 
@@ -479,6 +482,13 @@ ble_ll_get_addr_type(uint8_t txrxflag)
         return BLE_HCI_ADV_OWN_ADDR_RANDOM;
     }
     return BLE_HCI_ADV_OWN_ADDR_PUBLIC;
+}
+
+/* Convert usecs to ticks and round up to nearest tick */
+static inline uint32_t
+ble_ll_usecs_to_ticks_round_up(uint32_t usecs)
+{
+    return os_cputime_usecs_to_ticks(usecs + 30);
 }
 
 #include "console/console.h"

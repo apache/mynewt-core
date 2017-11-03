@@ -29,16 +29,9 @@
 #include "tcs34725/tcs34725.h"
 #include "tcs34725_priv.h"
 #include "sensor/color.h"
-
-#if MYNEWT_VAL(TCS34725_LOG)
 #include "log/log.h"
-#endif
-
-#if MYNEWT_VAL(TCS34725_STATS)
 #include "stats/stats.h"
-#endif
 
-#if MYNEWT_VAL(TCS34725_STATS)
 /* Define the stats section and records */
 STATS_SECT_START(tcs34725_stat_section)
     STATS_SECT_ENTRY(samples_2_4ms)
@@ -65,17 +58,11 @@ STATS_NAME_END(tcs34725_stat_section)
 
 /* Global variable used to hold stats data */
 STATS_SECT_DECL(tcs34725_stat_section) g_tcs34725stats;
-#endif
 
-#if MYNEWT_VAL(TCS34725_LOG)
 #define LOG_MODULE_TCS34725 (307)
 #define TCS34725_INFO(...)  LOG_INFO(&_log, LOG_MODULE_TCS34725, __VA_ARGS__)
 #define TCS34725_ERR(...)   LOG_ERROR(&_log, LOG_MODULE_TCS34725, __VA_ARGS__)
 static struct log _log;
-#else
-#define TCS34725_INFO(...)
-#define TCS34725_ERR(...)
-#endif
 
 /* Exports for the sensor API */
 static int tcs34725_sensor_read(struct sensor *, sensor_type_t,
@@ -114,9 +101,7 @@ tcs34725_write8(struct sensor_itf *itf, uint8_t reg, uint32_t value)
     if (rc) {
         TCS34725_ERR("Failed to write to 0x%02X:0x%02X with value 0x%02X\n",
                        data_struct.address, reg, value);
-#if MYNEWT_VAL(TCS34725_STATS)
         STATS_INC(g_tcs34725stats, errors);
-#endif
     }
 
     return rc;
@@ -148,9 +133,7 @@ tcs34725_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
     rc = hal_i2c_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1);
     if (rc) {
         TCS34725_ERR("I2C access failed at address 0x%02X\n", data_struct.address);
-#if MYNEWT_VAL(TCS34725_STATS)
         STATS_INC(g_tcs34725stats, errors);
-#endif
         goto error;
     }
 
@@ -160,9 +143,7 @@ tcs34725_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
     *value = payload;
     if (rc) {
         TCS34725_ERR("Failed to read from 0x%02X:0x%02X\n", data_struct.address, reg);
-#if MYNEWT_VAL(TCS34725_STATS)
         STATS_INC(g_tcs34725stats, errors);
-#endif
     }
 
 error:
@@ -198,9 +179,7 @@ tcs34725_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer, uint8_t l
                               OS_TICKS_PER_SEC / 10, 1);
     if (rc) {
         TCS34725_ERR("I2C access failed at address 0x%02X\n", data_struct.address);
-#if MYNEWT_VAL(TCS34725_STATS)
         STATS_INC(g_tcs34725stats, errors);
-#endif
         goto err;
     }
 
@@ -212,9 +191,7 @@ tcs34725_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer, uint8_t l
 
     if (rc) {
         TCS34725_ERR("Failed to read from 0x%02X:0x%02X\n", data_struct.address, reg);
-#if MYNEWT_VAL(TCS34725_STATS)
         STATS_INC(g_tcs34725stats, errors);
-#endif
         goto err;
     }
 
@@ -254,9 +231,7 @@ tcs34725_writelen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer, uint8_t 
                               OS_TICKS_PER_SEC / 10, 1);
     if (rc) {
         TCS34725_ERR("I2C access failed at address 0x%02X\n", data_struct.address);
-#if MYNEWT_VAL(TCS34725_STATS)
         STATS_INC(g_tcs34725stats, errors);
-#endif
         goto err;
     }
 
@@ -267,9 +242,7 @@ tcs34725_writelen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer, uint8_t 
 
     if (rc) {
         TCS34725_ERR("Failed to read from 0x%02X:0x%02X\n", data_struct.address, reg);
-#if MYNEWT_VAL(TCS34725_STATS)
         STATS_INC(g_tcs34725stats, errors);
-#endif
         goto err;
     }
 
@@ -358,13 +331,10 @@ tcs34725_init(struct os_dev *dev, void *arg)
 
     tcs34725->cfg.mask = SENSOR_TYPE_ALL;
 
-#if MYNEWT_VAL(TCS34725_LOG)
     log_register(dev->od_name, &_log, &log_console_handler, NULL, LOG_SYSLEVEL);
-#endif
 
     sensor = &tcs34725->sensor;
 
-#if MYNEWT_VAL(TCS34725_STATS)
     /* Initialise the stats entry */
     rc = stats_init(
         STATS_HDR(g_tcs34725stats),
@@ -374,7 +344,6 @@ tcs34725_init(struct os_dev *dev, void *arg)
     /* Register the entry with the stats registry */
     rc = stats_register("tcs34725", STATS_HDR(g_tcs34725stats));
     SYSINIT_PANIC_ASSERT(rc == 0);
-#endif
 
     rc = sensor_init(sensor, dev);
     if (rc != 0) {
@@ -649,7 +618,6 @@ tcs34725_get_rawdata(struct sensor_itf *itf, uint16_t *r, uint16_t *g,
     *g = payload[5] << 8 | payload[4];
     *b = payload[7] << 8 | payload[6];
 
-#if MYNEWT_VAL(TCS34725_STATS)
     switch (tcs34725->cfg.integration_time) {
         case TCS34725_INTEGRATIONTIME_2_4MS:
             STATS_INC(g_tcs34725stats, samples_2_4ms);
@@ -672,8 +640,6 @@ tcs34725_get_rawdata(struct sensor_itf *itf, uint16_t *r, uint16_t *g,
             STATS_INC(g_tcs34725stats, samples_userdef);
         break;
     }
-
-#endif
 
     return 0;
 err:

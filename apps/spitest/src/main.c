@@ -56,11 +56,16 @@ int g_led_pin;
 
 #if MYNEWT_VAL(SPI_0_MASTER)
 #define SPI_MASTER 1
-#define SPI_SS_PIN  (MYNEWT_VAL(SPI_0_MASTER_SS_PIN))
+#define SPI_SS_PIN  (MYNEWT_VAL(SPITEST_SS_PIN))
+#if SPI_SS_PIN < 0
+#error SPITEST_SS_PIN must be set in the target config.
 #endif
+#endif
+
 #if MYNEWT_VAL(SPI_0_SLAVE)
 #define SPI_SLAVE 1
 #endif
+
 #ifdef SPI_MASTER
 uint8_t g_spi_tx_buf[32];
 uint8_t g_spi_last_tx_buf[32];

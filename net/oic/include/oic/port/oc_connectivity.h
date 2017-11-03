@@ -44,6 +44,7 @@ enum oc_transport_flags {
     SECURED = 1 << 4,
     SERIAL = 1 << 5,
     IP4 = 1 << 6,
+    LORA = 1 << 7,
 };
 
 /*
@@ -71,6 +72,14 @@ struct oc_endpoint_ble {
 };
 
 /*
+ * oc_endpoint for LORA.
+ */
+struct oc_endpoint_lora {
+    enum oc_transport_flags flags;
+    uint8_t port;
+};
+
+/*
  * oc_endpoint for multicast target and serial port.
  */
 struct oc_endpoint_plain {
@@ -81,6 +90,7 @@ typedef struct oc_endpoint {
     union {
         struct oc_endpoint_ip oe_ip;
         struct oc_endpoint_ble oe_ble;
+        struct oc_endpoint_lora oe_lora;
         struct oc_endpoint_plain oe;
     };
 } oc_endpoint_t;
@@ -92,6 +102,8 @@ oc_endpoint_size(struct oc_endpoint *oe)
         return sizeof (struct oc_endpoint_ip);
     } else if (oe->oe.flags & GATT) {
         return sizeof (struct oc_endpoint_ble);
+    } else if (oe->oe.flags & LORA) {
+        return sizeof (struct oc_endpoint_lora);
     } else if (oe->oe.flags & SERIAL) {
         return sizeof (struct oc_endpoint_plain);
     } else {

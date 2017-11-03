@@ -40,19 +40,6 @@ syscfg.defs:
         description: 'CTS pin for UART0'
         value: 10
 
-    SPI_0_MASTER:
-        description: 'SPI 0 master'
-        value:  0
-    SPI_0_MASTER_SS_PIN:
-        description: 'SPI 0 (master) SS pin number.'
-        value:  24
-    SPI_1_SLAVE:
-        description: 'SPI 1 slave'
-        value:  0
-
-    I2C_0:
-        description: 'I2C0 enable'
-        value: 0
     I2C_0_SDA_PIN:
         description: 'Data pin for I2C0'
         value: 6
@@ -63,9 +50,6 @@ syscfg.defs:
         description: 'Bus frequency in KHz for I2C0'
         value: 100
 
-    I2C_1:
-        description: 'I2C1 enable'
-        value: 0
     I2C_1_SDA_PIN:
         description: 'Data pin for I2C1'
         value: 28

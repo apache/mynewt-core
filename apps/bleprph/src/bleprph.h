@@ -20,6 +20,7 @@
 #ifndef H_BLEPRPH_
 #define H_BLEPRPH_
 
+#include <stdbool.h>
 #include "log/log.h"
 #include "nimble/ble.h"
 #ifdef __cplusplus
@@ -48,6 +49,15 @@ extern struct log bleprph_log;
 
 void gatt_svr_register_cb(struct ble_gatt_register_ctxt *ctxt, void *arg);
 int gatt_svr_init(void);
+
+/* PHY support */
+#if MYNEWT_VAL(BLEPRPH_LE_PHY_SUPPORT)
+#define CONN_HANDLE_INVALID     0xffff
+
+void phy_init(void);
+void phy_conn_changed(uint16_t handle);
+void phy_update(uint8_t phy);
+#endif
 
 /** Misc. */
 void print_bytes(const uint8_t *bytes, int len);

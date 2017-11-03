@@ -42,7 +42,7 @@
 /**
  * @addtogroup OSKernel
  * @{
- *   @defgroup OSMbuf Chained Memory Buffers
+ *   @defgroup OSMqueue Queue of Mbufs
  *   @{
  */
 
@@ -149,6 +149,19 @@ os_mqueue_put(struct os_mqueue *mq, struct os_eventq *evq, struct os_mbuf *m)
 err:
     return (rc);
 }
+
+/**
+ *   @} OSMqueue
+ * @} OSKernel
+ */
+
+
+/**
+ * @addtogroup OSKernel
+ * @{
+ *   @defgroup OSMsys System level mbuf
+ *   @{
+ */
 
 /**
  * MSYS is a system level mbuf registry.  Allows the system to share
@@ -297,6 +310,20 @@ os_msys_num_free(void)
 
     return total;
 }
+
+/**
+ *   @} OSMsys
+ * @} OSKernel
+ */
+
+
+/**
+ * @addtogroup OSKernel
+ * @{
+ *   @defgroup OSMbuf Chained Memory Buffers
+ *   @{
+ */
+
 
 /**
  * Initialize a pool of mbufs.

@@ -32,6 +32,8 @@
 #include "lis2dh12/lis2dh12.h"
 #include "lis2dh12_priv.h"
 #include "hal/hal_gpio.h"
+#include "log/log.h"
+#include "stats/stats.h"
 
 static struct hal_spi_settings spi_lis2dh12_settings = {
     .data_order = HAL_SPI_MSB_FIRST,
@@ -40,16 +42,6 @@ static struct hal_spi_settings spi_lis2dh12_settings = {
     .word_size  = HAL_SPI_WORD_SIZE_8BIT,
 };
 
-
-#if MYNEWT_VAL(LIS2DH12_LOG)
-#include "log/log.h"
-#endif
-
-#if MYNEWT_VAL(LIS2DH12_STATS)
-#include "stats/stats.h"
-#endif
-
-#if MYNEWT_VAL(LIS2DH12_STATS)
 /* Define the stats section and records */
 STATS_SECT_START(lis2dh12_stat_section)
     STATS_SECT_ENTRY(write_errors)
@@ -64,27 +56,25 @@ STATS_NAME_END(lis2dh12_stat_section)
 
 /* Global variable used to hold stats data */
 STATS_SECT_DECL(lis2dh12_stat_section) g_lis2dh12stats;
-#endif
 
-#if MYNEWT_VAL(LIS2DH12_LOG)
 #define LOG_MODULE_LIS2DH12    (212)
 #define LIS2DH12_INFO(...)     LOG_INFO(&_log, LOG_MODULE_LIS2DH12, __VA_ARGS__)
 #define LIS2DH12_ERR(...)      LOG_ERROR(&_log, LOG_MODULE_LIS2DH12, __VA_ARGS__)
 static struct log _log;
-#else
-#define LIS2DH12_INFO(...)
-#define LIS2DH12_ERR(...)
-#endif
 
 /* Exports for the sensor API */
 static int lis2dh12_sensor_read(struct sensor *, sensor_type_t,
         sensor_data_func_t, void *, uint32_t);
 static int lis2dh12_sensor_get_config(struct sensor *, sensor_type_t,
         struct sensor_cfg *);
-
+static int
+lis2dh12_sensor_set_trigger_thresh(struct sensor *, sensor_type_t,
+                                   struct sensor_type_traits *);
 static const struct sensor_driver g_lis2dh12_sensor_driver = {
     lis2dh12_sensor_read,
-    lis2dh12_sensor_get_config
+    lis2dh12_sensor_get_config,
+    /* Setting trigger threshold is optional */
+    lis2dh12_sensor_set_trigger_thresh
 };
 
 /**
@@ -119,9 +109,7 @@ lis2dh12_i2c_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
     rc = hal_i2c_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1);
     if (rc) {
         LIS2DH12_ERR("I2C access failed at address 0x%02X\n", data_struct.address);
-#if MYNEWT_VAL(LIS2DH12_STATS)
         STATS_INC(g_lis2dh12stats, read_errors);
-#endif
         goto err;
     }
 
@@ -131,9 +119,7 @@ lis2dh12_i2c_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
     rc = hal_i2c_master_read(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1);
     if (rc) {
         LIS2DH12_ERR("Failed to read from 0x%02X:0x%02X\n", data_struct.address, addr);
-#if MYNEWT_VAL(LIS2DH12_STATS)
         STATS_INC(g_lis2dh12stats, read_errors);
-#endif
         goto err;
     }
 
@@ -185,9 +171,7 @@ lis2dh12_spi_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
         rc = SYS_EINVAL;
         LIS2DH12_ERR("SPI_%u register write failed addr:0x%02X\n",
                      itf->si_num, addr);
-#if MYNEWT_VAL(LIS2DH12_STATS)
         STATS_INC(g_lis2dh12stats, read_errors);
-#endif
         goto err;
     }
 
@@ -198,9 +182,7 @@ lis2dh12_spi_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
             rc = SYS_EINVAL;
             LIS2DH12_ERR("SPI_%u read failed addr:0x%02X\n",
                          itf->si_num, addr);
-#if MYNEWT_VAL(LIS2DH12_STATS)
             STATS_INC(g_lis2dh12stats, read_errors);
-#endif
             goto err;
         }
         payload[i] = retval;
@@ -247,9 +229,7 @@ lis2dh12_i2c_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
     rc = hal_i2c_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1);
     if (rc) {
         LIS2DH12_ERR("I2C access failed at address 0x%02X\n", data_struct.address);
-#if MYNEWT_VAL(LIS2DH12_STATS)
         STATS_INC(g_lis2dh12stats, write_errors);
-#endif
         goto err;
     }
 
@@ -293,9 +273,7 @@ lis2dh12_spi_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
         rc = SYS_EINVAL;
         LIS2DH12_ERR("SPI_%u register write failed addr:0x%02X\n",
                      itf->si_num, addr);
-#if MYNEWT_VAL(LIS2DH12_STATS)
         STATS_INC(g_lis2dh12stats, write_errors);
-#endif
         goto err;
     }
 
@@ -306,9 +284,7 @@ lis2dh12_spi_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
             rc = SYS_EINVAL;
             LIS2DH12_ERR("SPI_%u write failed addr:0x%02X:0x%02X\n",
                          itf->si_num, addr);
-#if MYNEWT_VAL(LIS2DH12_STATS)
             STATS_INC(g_lis2dh12stats, write_errors);
-#endif
             goto err;
         }
     }
@@ -541,13 +517,25 @@ err:
 /**
  * Calculates the acceleration in m/s^2 from mg
  *
- * @param raw acc value
- * @param float ptr to return calculated value
+ * @param acc value in mg
+ * @param float ptr to return calculated value in ms2
  */
 void
-lis2dh12_calc_acc_ms2(int16_t raw_acc, float *facc)
+lis2dh12_calc_acc_ms2(int16_t acc_mg, float *acc_ms2)
 {
-    *facc = raw_acc * STANDARD_ACCEL_GRAVITY;
+    *acc_ms2 = (acc_mg * STANDARD_ACCEL_GRAVITY)/1000;
+}
+
+/**
+ * Calculates the acceleration in mg from m/s^2
+ *
+ * @param acc value in m/s^2
+ * @param int16 ptr to return calculated value in mg
+ */
+void
+lis2dh12_calc_acc_mg(float acc_ms2, int16_t *acc_mg)
+{
+    *acc_mg = (acc_ms2 * 1000)/STANDARD_ACCEL_GRAVITY;
 }
 
 /**
@@ -628,6 +616,58 @@ err:
 }
 
 /**
+ * Set FIFO mode
+ *
+ * @param the sensor interface
+ * @param mode
+ * @return 0 on success, non-zero on failure
+ */
+int
+lis2dh12_set_fifo_mode(struct sensor_itf *itf, uint8_t mode)
+{
+    int rc;
+    uint8_t reg;
+
+    rc = lis2dh12_readlen(itf, LIS2DH12_REG_CTRL_REG5, &reg, 1);
+    if (rc) {
+        goto err;
+    }
+
+    reg |= LIS2DH12_CTRL_REG5_FIFO_EN;
+
+    rc = lis2dh12_writelen(itf, LIS2DH12_REG_CTRL_REG5, &reg, 1);
+    if (rc) {
+        goto err;
+    }
+
+    rc = lis2dh12_readlen(itf, LIS2DH12_REG_FIFO_CTRL_REG, &reg, 1);
+    if (rc) {
+        goto err;
+    }
+
+    reg |= mode;
+
+    rc = lis2dh12_writelen(itf, LIS2DH12_REG_FIFO_CTRL_REG, &reg, 1);
+    if (rc) {
+        goto err;
+    }
+
+    rc = lis2dh12_readlen(itf, LIS2DH12_REG_FIFO_SRC_REG, &reg, 1);
+    if (rc) {
+        goto err;
+    }
+
+    if (mode == LIS2DH12_FIFO_M_BYPASS && reg != LIS2DH12_FIFO_SRC_EMPTY) {
+        rc = SYS_EINVAL;
+        goto err;
+    }
+
+    return 0;
+err:
+    return rc;
+}
+
+/**
  *
  * Get operating mode
  *
@@ -662,6 +702,19 @@ lis2dh12_get_op_mode(struct sensor_itf *itf, uint8_t *mode)
     return 0;
 err:
     return rc;
+}
+
+/**
+ * Set high pass filter cfg
+ *
+ * @param the sensor interface
+ * @param filter register settings
+ * @return 0 on success, non-zero on failure
+ */
+int
+lis2dh12_hpf_cfg(struct sensor_itf *itf, uint8_t reg)
+{
+    return lis2dh12_writelen(itf, LIS2DH12_REG_CTRL_REG2, &reg, 1);
 }
 
 /**
@@ -783,7 +836,7 @@ err:
 /**
  * Expects to be called back through os_dev_create().
  *
- * @param The device object associated with this accellerometer
+ * @param The device object associated with this accelerometer
  * @param Argument passed to OS device init, unused
  *
  * @return 0 on success, non-zero error on failure.
@@ -804,13 +857,10 @@ lis2dh12_init(struct os_dev *dev, void *arg)
 
     lis2dh12->cfg.lc_s_mask = SENSOR_TYPE_ALL;
 
-#if MYNEWT_VAL(LIS2DH12_LOG)
     log_register(dev->od_name, &_log, &log_console_handler, NULL, LOG_SYSLEVEL);
-#endif
 
     sensor = &lis2dh12->sensor;
 
-#if MYNEWT_VAL(LIS2DH12_STATS)
     /* Initialise the stats entry */
     rc = stats_init(
         STATS_HDR(g_lis2dh12stats),
@@ -820,7 +870,7 @@ lis2dh12_init(struct os_dev *dev, void *arg)
     /* Register the entry with the stats registry */
     rc = stats_register(dev->od_name, STATS_HDR(g_lis2dh12stats));
     SYSINIT_PANIC_ASSERT(rc == 0);
-#endif
+
     rc = sensor_init(sensor, dev);
     if (rc) {
         goto err;
@@ -950,6 +1000,7 @@ lis2dh12_sensor_read(struct sensor *sensor, sensor_type_t type,
         goto err;
     }
 
+    /* converting values from mg to ms^2 */
     lis2dh12_calc_acc_ms2(x, &fx);
     lis2dh12_calc_acc_ms2(y, &fy);
     lis2dh12_calc_acc_ms2(z, &fz);
@@ -985,6 +1036,432 @@ lis2dh12_sensor_get_config(struct sensor *sensor, sensor_type_t type,
     }
 
     cfg->sc_valtype = SENSOR_VALUE_TYPE_FLOAT_TRIPLET;
+
+    return 0;
+err:
+    return rc;
+}
+
+/**
+ * Set interrupt threshold for int 2
+ *
+ * @param the sensor interface
+ * @param threshold
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+lis2dh12_set_int2_thresh(struct sensor_itf *itf, uint8_t ths)
+{
+    int rc;
+
+    rc = lis2dh12_writelen(itf, LIS2DH12_REG_INT2_THS, &ths, 1);
+    if (rc) {
+        goto err;
+    }
+
+    return 0;
+err:
+    return rc;
+}
+
+/**
+ * Set interrupt threshold for int 1
+ *
+ * @param the sensor interface
+ * @param threshold
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+lis2dh12_set_int1_thresh(struct sensor_itf *itf, uint8_t ths)
+{
+
+    int rc;
+
+    rc = lis2dh12_writelen(itf, LIS2DH12_REG_INT1_THS, &ths, 1);
+    if (rc) {
+        goto err;
+    }
+
+    return 0;
+err:
+    return rc;
+}
+
+/**
+ * Clear interrupt 2
+ *
+ * @param the sensor interface
+ */
+int
+lis2dh12_clear_int2(struct sensor_itf *itf)
+{
+    uint8_t reg;
+
+    return lis2dh12_readlen(itf, LIS2DH12_REG_INT2_SRC, &reg, 1);
+}
+
+/**
+ * Clear interrupt 1
+ *
+ * @param the sensor interface
+ */
+int
+lis2dh12_clear_int1(struct sensor_itf *itf)
+{
+    uint8_t reg;
+
+    return lis2dh12_readlen(itf, LIS2DH12_REG_INT1_SRC, &reg, 1);
+}
+
+/**
+ * Enable interrupt 2
+ *
+ * @param the sensor interface
+ * @param events to enable int for
+ */
+int
+lis2dh12_enable_int2(struct sensor_itf *itf, uint8_t *reg)
+{
+    return lis2dh12_writelen(itf, LIS2DH12_REG_INT2_CFG, reg, 1);
+}
+
+/**
+ * Latch interrupt 1
+ *
+ * @param the sensor interface
+ */
+int
+lis2dh12_latch_int1(struct sensor_itf *itf)
+{
+    uint8_t reg;
+    int rc;
+
+    rc = lis2dh12_readlen(itf, LIS2DH12_REG_CTRL_REG5, &reg, 1);
+    if (rc) {
+        goto err;
+    }
+
+    reg |= LIS2DH12_CTRL_REG5_LIR_INT1;
+
+    rc = lis2dh12_writelen(itf, LIS2DH12_REG_CTRL_REG5, &reg, 1);
+    if (rc) {
+        goto err;
+    }
+
+    return 0;
+err:
+    return rc;
+}
+
+/**
+ * Latch interrupt 2
+ *
+ * @param the sensor interface
+ */
+int
+lis2dh12_latch_int2(struct sensor_itf *itf)
+{
+    uint8_t reg;
+    int rc;
+
+    rc = lis2dh12_readlen(itf, LIS2DH12_REG_CTRL_REG5, &reg, 1);
+    if (rc) {
+        goto err;
+    }
+
+    reg |= LIS2DH12_CTRL_REG5_LIR_INT2;
+
+    rc = lis2dh12_writelen(itf, LIS2DH12_REG_CTRL_REG5, &reg, 1);
+    if (rc) {
+        goto err;
+    }
+
+    return 0;
+err:
+    return rc;
+}
+
+/**
+ * Set interrupt pin configuration for interrupt 1
+ *
+ * @param the sensor interface
+ * @param config
+ * @return 0 on success, non-zero on failure
+ */
+int
+lis2dh12_set_int1_pin_cfg(struct sensor_itf *itf, uint8_t cfg)
+{
+    uint8_t reg;
+
+    reg = ~0x08 & cfg;
+
+    return lis2dh12_writelen(itf, LIS2DH12_REG_CTRL_REG3, &reg, 1);
+}
+
+/**
+ * Set interrupt 1 duration
+ *
+ * @param duration in N/ODR units
+ * @return 0 on success, non-zero on failure
+ */
+int
+lis2dh12_set_int1_duration(struct sensor_itf *itf, uint8_t dur)
+{
+    return lis2dh12_writelen(itf, LIS2DH12_REG_INT1_DURATION, &dur, 1);
+}
+
+/**
+ * Set interrupt 2 duration
+ *
+ * @param duration in N/ODR units
+ * @return 0 on success, non-zero on failure
+ */
+int
+lis2dh12_set_int2_duration(struct sensor_itf *itf, uint8_t dur)
+{
+    return lis2dh12_writelen(itf, LIS2DH12_REG_INT2_DURATION, &dur, 1);
+}
+
+/**
+ * Set interrupt pin configuration for interrupt 2
+ *
+ * @param the sensor interface
+ * @param config
+ * @return 0 on success, non-zero on failure
+ */
+int
+lis2dh12_set_int2_pin_cfg(struct sensor_itf *itf, uint8_t cfg)
+{
+    return lis2dh12_writelen(itf, LIS2DH12_REG_CTRL_REG6, &cfg, 1);
+}
+
+/**
+ * Enable interrupt 1
+ *
+ * @param the sensor interface
+ * @param events to enable int for
+ */
+int
+lis2dh12_enable_int1(struct sensor_itf *itf, uint8_t *reg)
+{
+    return lis2dh12_writelen(itf, LIS2DH12_REG_INT1_CFG, reg, 1);
+}
+
+/**
+ * IRQ handler for int1 for low threshold
+ *
+ * @param arg
+ */
+static void
+lis2dh12_low_int1_irq_handler(void *arg)
+{
+    sensor_mgr_put_read_evt(arg);
+}
+
+/**
+ * IRQ handler for int2 for high threshold
+ *
+ * @param arg
+ */
+static void
+lis2dh12_high_int2_irq_handler(void *arg)
+{
+    sensor_mgr_put_read_evt(arg);
+}
+
+/* Set the trigger threshold values and enable interrupts
+ *
+ * @param ptr to sensor
+ * @param the Sensor type
+ * @param low threshold
+ * @param high threshold
+ *
+ * @return 0 on success, non-zero on failure
+ */
+static int
+lis2dh12_sensor_set_trigger_thresh(struct sensor *sensor,
+                                   sensor_type_t type,
+                                   struct sensor_type_traits *stt)
+{
+    int rc;
+    uint8_t tmp;
+    int16_t acc_mg;
+    uint8_t reg;
+    struct sensor_itf *itf;
+    sensor_data_t low_thresh;
+    sensor_data_t high_thresh;
+    struct sensor_read_ev_ctx *srec;
+
+    itf = SENSOR_GET_ITF(sensor);
+
+    if (type != SENSOR_TYPE_ACCELEROMETER) {
+        rc = SYS_EINVAL;
+        goto err;
+    }
+
+    memcpy(&low_thresh, &stt->stt_low_thresh, sizeof(low_thresh));
+    memcpy(&high_thresh, &stt->stt_high_thresh, sizeof(high_thresh));
+
+    rc = lis2dh12_get_full_scale(itf, &tmp);
+    if (rc) {
+        goto err;
+    }
+
+    if (tmp == LIS2DH12_FS_2G) {
+        tmp = 16;
+    } else if (tmp == LIS2DH12_FS_4G) {
+        tmp = 32;
+    } else if (tmp == LIS2DH12_FS_8G) {
+        tmp = 62;
+    } else if (tmp == LIS2DH12_FS_16G) {
+        tmp = 186;
+    } else {
+        rc = SYS_EINVAL;
+        goto err;
+    }
+
+    if (low_thresh.sad->sad_x_is_valid ||
+        low_thresh.sad->sad_y_is_valid ||
+        low_thresh.sad->sad_z_is_valid) {
+
+        if (low_thresh.sad->sad_x_is_valid) {
+            lis2dh12_calc_acc_mg(low_thresh.sad->sad_x, &acc_mg);
+            reg = acc_mg/tmp;
+        }
+
+        if (low_thresh.sad->sad_y_is_valid) {
+            lis2dh12_calc_acc_mg(low_thresh.sad->sad_y, &acc_mg);
+            if (reg > acc_mg/tmp) {
+                reg = acc_mg/tmp;
+            }
+        }
+
+        if (low_thresh.sad->sad_z_is_valid) {
+            lis2dh12_calc_acc_mg(low_thresh.sad->sad_z, &acc_mg);
+            if (reg > acc_mg/tmp) {
+                reg = acc_mg/tmp;
+            }
+        }
+
+        rc = lis2dh12_set_int1_thresh(itf, reg);
+        if (rc) {
+            goto err;
+        }
+
+        reg = LIS2DH12_CTRL_REG3_I1_IA1;
+
+        rc = lis2dh12_set_int1_pin_cfg(itf, reg);
+        if (rc) {
+            goto err;
+        }
+
+        rc = lis2dh12_set_int1_duration(itf, 3);
+        if (rc) {
+            goto err;
+        }
+
+        os_time_delay((OS_TICKS_PER_SEC * 100)/1000 + 1);
+
+        srec = malloc(sizeof(struct sensor_read_ev_ctx));
+        srec->srec_sensor = sensor;
+        srec->srec_type = type;
+
+        hal_gpio_irq_init(itf->si_low_pin, lis2dh12_low_int1_irq_handler, srec,
+                          HAL_GPIO_TRIG_FALLING, HAL_GPIO_PULL_NONE);
+        if (rc) {
+            goto err;
+        }
+
+        reg  = low_thresh.sad->sad_x_is_valid ? LIS2DH12_INT2_CFG_XLIE : 0;
+        reg |= low_thresh.sad->sad_y_is_valid ? LIS2DH12_INT2_CFG_YLIE : 0;
+        reg |= low_thresh.sad->sad_z_is_valid ? LIS2DH12_INT2_CFG_ZLIE : 0;
+
+        rc = lis2dh12_clear_int1(itf);
+        if (rc) {
+            goto err;
+        }
+
+        os_time_delay((OS_TICKS_PER_SEC * 20)/1000 + 1);
+
+        hal_gpio_irq_enable(itf->si_low_pin);
+
+        rc = lis2dh12_enable_int1(itf, &reg);
+        if (rc) {
+            goto err;
+        }
+
+    }
+
+    if (high_thresh.sad->sad_x_is_valid ||
+        high_thresh.sad->sad_y_is_valid ||
+        high_thresh.sad->sad_z_is_valid) {
+
+        if (high_thresh.sad->sad_x_is_valid) {
+            lis2dh12_calc_acc_mg(high_thresh.sad->sad_x, &acc_mg);
+            reg = acc_mg/tmp;
+        }
+
+        if (high_thresh.sad->sad_y_is_valid) {
+            lis2dh12_calc_acc_mg(high_thresh.sad->sad_y, &acc_mg);
+            if (reg < acc_mg/tmp) {
+                reg = acc_mg/tmp;
+            }
+        }
+
+        if (high_thresh.sad->sad_z_is_valid) {
+            lis2dh12_calc_acc_mg(high_thresh.sad->sad_z, &acc_mg);
+            if (reg < acc_mg/tmp) {
+                reg = acc_mg/tmp;
+            }
+        }
+
+        rc = lis2dh12_set_int2_thresh(itf, reg);
+        if (rc) {
+            goto err;
+        }
+
+        reg = LIS2DH12_CTRL_REG6_I2_IA2;
+
+        rc = lis2dh12_set_int2_pin_cfg(itf, reg);
+        if (rc) {
+            goto err;
+        }
+
+        rc = lis2dh12_set_int2_duration(itf, 3);
+        if (rc) {
+            goto err;
+        }
+
+        os_time_delay((OS_TICKS_PER_SEC * 100)/1000 + 1);
+
+        srec = malloc(sizeof(struct sensor_read_ev_ctx));
+        srec->srec_sensor = sensor;
+        srec->srec_type = type;
+
+        hal_gpio_irq_init(itf->si_high_pin, lis2dh12_high_int2_irq_handler, srec,
+                          HAL_GPIO_TRIG_FALLING, HAL_GPIO_PULL_NONE);
+        if (rc) {
+            goto err;
+        }
+
+        reg  = high_thresh.sad->sad_x_is_valid ? LIS2DH12_INT2_CFG_XHIE : 0;
+        reg |= high_thresh.sad->sad_y_is_valid ? LIS2DH12_INT2_CFG_YHIE : 0;
+        reg |= high_thresh.sad->sad_z_is_valid ? LIS2DH12_INT2_CFG_ZHIE : 0;
+
+        rc = lis2dh12_clear_int2(itf);
+        if (rc) {
+            goto err;
+        }
+
+        hal_gpio_irq_enable(itf->si_high_pin);
+
+        rc = lis2dh12_enable_int2(itf, &reg);
+        if (rc) {
+            goto err;
+        }
+    }
 
     return 0;
 err:
@@ -1051,6 +1528,11 @@ lis2dh12_config(struct lis2dh12 *lis2dh12, struct lis2dh12_cfg *cfg)
 
     lis2dh12->cfg.lc_pull_up_disc = cfg->lc_pull_up_disc;
 
+    rc = lis2dh12_hpf_cfg(itf, 0x00);
+    if (rc) {
+        goto err;
+    }
+
     rc = lis2dh12_set_full_scale(itf, cfg->lc_fs);
     if (rc) {
         goto err;
@@ -1078,6 +1560,11 @@ lis2dh12_config(struct lis2dh12 *lis2dh12, struct lis2dh12_cfg *cfg)
     }
 
     rc = lis2dh12_set_op_mode(itf, LIS2DH12_OM_HIGH_RESOLUTION);
+    if (rc) {
+        goto err;
+    }
+
+    rc = lis2dh12_set_fifo_mode(itf, LIS2DH12_FIFO_M_BYPASS);
     if (rc) {
         goto err;
     }

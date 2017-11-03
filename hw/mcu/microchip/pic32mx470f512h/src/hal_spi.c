@@ -131,18 +131,18 @@ hal_spi_config_master(int spi_num, struct hal_spi_settings *psettings)
 
     switch (psettings->data_mode) {
         case HAL_SPI_MODE0:
-            SPIxCONCLR(spi_num) = _SPI1CON_CKP_MASK | _SPI1CON_CKE_MASK;
-            break;
-        case HAL_SPI_MODE1:
             SPIxCONCLR(spi_num) = _SPI1CON_CKP_MASK;
             SPIxCONSET(spi_num) = _SPI1CON_CKE_MASK;
             break;
+        case HAL_SPI_MODE1:
+            SPIxCONCLR(spi_num) = _SPI1CON_CKP_MASK | _SPI1CON_CKE_MASK;
+            break;
         case HAL_SPI_MODE2:
-            SPIxCONCLR(spi_num) = _SPI1CON_CKE_MASK;
-            SPIxCONSET(spi_num) = _SPI1CON_CKP_MASK;
+            SPIxCONSET(spi_num) = _SPI1CON_CKP_MASK | _SPI1CON_CKE_MASK;
             break;
         case HAL_SPI_MODE3:
-            SPIxCONSET(spi_num) = _SPI1CON_CKP_MASK | _SPI1CON_CKE_MASK;
+            SPIxCONCLR(spi_num) = _SPI1CON_CKE_MASK;
+            SPIxCONSET(spi_num) = _SPI1CON_CKP_MASK;
             break;
         default:
             return -1;

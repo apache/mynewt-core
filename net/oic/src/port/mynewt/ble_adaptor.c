@@ -327,6 +327,7 @@ oc_connectivity_shutdown_gatt(void)
     /* there is not unregister for BLE */
 }
 
+#if (MYNEWT_VAL(OC_SERVER) == 1)
 static int
 oc_ble_frag(struct os_mbuf *m, uint16_t mtu)
 {
@@ -369,25 +370,28 @@ err:
     };
     return -1;
 }
+#endif
 
 void
 oc_send_buffer_gatt(struct os_mbuf *m)
 {
+#if (MYNEWT_VAL(OC_SERVER) == 1)
     struct oc_endpoint *oe;
     struct os_mbuf_pkthdr *pkt;
     uint16_t mtu;
     uint16_t conn_handle;
     uint16_t attr_handle;
-
-    assert(OS_MBUF_USRHDR_LEN(m) >= sizeof(struct oc_endpoint_ble));
-    oe = OC_MBUF_ENDPOINT(m);
-    conn_handle = oe->oe_ble.conn_handle;
+#endif
 
 #if (MYNEWT_VAL(OC_CLIENT) == 1)
     OC_LOG_ERROR("oc_gatt send not supported on client");
 #endif
 
 #if (MYNEWT_VAL(OC_SERVER) == 1)
+
+    assert(OS_MBUF_USRHDR_LEN(m) >= sizeof(struct oc_endpoint_ble));
+    oe = OC_MBUF_ENDPOINT(m);
+    conn_handle = oe->oe_ble.conn_handle;
 
     STATS_INC(oc_ble_stats, oframe);
     STATS_INCN(oc_ble_stats, obytes, OS_MBUF_PKTLEN(m));

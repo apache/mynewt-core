@@ -285,6 +285,7 @@ lora_app_port_send(uint8_t port, Mcps_t pkt_type, struct os_mbuf *om)
     if (om == NULL) {
         return LORA_APP_STATUS_OK;
     }
+    assert(OS_MBUF_USRHDR_LEN(om) >= sizeof(struct lora_pkt_info));
 
     /* XXX: TODO: support multicast */
 
@@ -308,6 +309,17 @@ lora_app_port_send(uint8_t port, Mcps_t pkt_type, struct os_mbuf *om)
     }
 
     return rc;
+}
+
+/**
+ * What's the maximum payload which can be sent on next frame
+ *
+ * @return int payload length, negative on error.
+ */
+int
+lora_app_mtu(void)
+{
+    return lora_node_mtu();
 }
 
 /**

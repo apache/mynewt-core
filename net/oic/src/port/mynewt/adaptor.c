@@ -67,6 +67,11 @@ oc_send_buffer(struct os_mbuf *m)
         oc_send_buffer_gatt(m);
         break;
 #endif
+#if (MYNEWT_VAL(OC_TRANSPORT_LORA) == 1)
+    case LORA:
+        oc_send_buffer_lora(m);
+        break;
+#endif
 #if (MYNEWT_VAL(OC_TRANSPORT_SERIAL) == 1)
     case SERIAL:
         oc_send_buffer_serial(m);
@@ -94,6 +99,10 @@ oc_send_multicast_message(struct os_mbuf *m)
 #if (MYNEWT_VAL(OC_TRANSPORT_GATT) == 1)
         /* no multicast for GATT, just send unicast */
         oc_send_buffer_gatt,
+#endif
+#if (MYNEWT_VAL(OC_TRANSPORT_LORA) == 1)
+        /* no multi-cast for serial.  just send unicast */
+        oc_send_buffer_lora,
 #endif
 #if (MYNEWT_VAL(OC_TRANSPORT_SERIAL) == 1)
         /* no multi-cast for serial.  just send unicast */
@@ -133,6 +142,10 @@ oc_get_trans_security(const struct oc_endpoint *oe)
     case IP4:
         return 0;
 #endif
+#if (MYNEWT_VAL(OC_TRANSPORT_LORA) == 1)
+    case LORA:
+        return 0;
+#endif
 #if (MYNEWT_VAL(OC_TRANSPORT_SERIAL) == 1)
     case SERIAL:
         return 0;
@@ -154,6 +167,9 @@ oc_connectivity_shutdown(void)
 #endif
 #if (MYNEWT_VAL(OC_TRANSPORT_SERIAL) == 1)
     oc_connectivity_shutdown_serial();
+#endif
+#if (MYNEWT_VAL(OC_TRANSPORT_LORA) == 1)
+    oc_connectivity_shutdown_lora();
 #endif
 #if (MYNEWT_VAL(OC_TRANSPORT_GATT) == 1)
     oc_connectivity_shutdown_gatt();
@@ -182,6 +198,11 @@ oc_connectivity_init(void)
 #endif
 #if (MYNEWT_VAL(OC_TRANSPORT_GATT) == 1)
     if (oc_connectivity_init_gatt() == 0) {
+        rc = 0;
+    }
+#endif
+#if (MYNEWT_VAL(OC_TRANSPORT_LORA) == 1)
+    if (oc_connectivity_init_lora() == 0) {
         rc = 0;
     }
 #endif

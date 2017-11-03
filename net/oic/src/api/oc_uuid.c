@@ -34,7 +34,7 @@ oc_str_to_uuid(const char *str, oc_uuid_t *uuid)
   for (i = 0; i < strlen(str); i++) {
     if (str[i] == '-')
       continue;
-    else if (isalpha(str[i])) {
+    else if (isalpha((int)str[i])) {
       switch (str[i]) {
       case 65:
       case 97:

@@ -11,6 +11,7 @@
 #include <os/os_mbuf.h>
 #include "mesh/mesh.h"
 
+#include "syscfg/syscfg.h"
 #define BT_DBG_ENABLED (MYNEWT_VAL(BLE_MESH_DEBUG_ACCESS))
 #include "host/ble_hs_log.h"
 
@@ -28,7 +29,7 @@ static u16_t dev_primary_addr;
 static const struct {
 	const u16_t id;
 	int (*const init)(struct bt_mesh_model *model, bool primary);
-} const model_init[] = {
+} model_init[] = {
 	{ BT_MESH_MODEL_ID_CFG_SRV, bt_mesh_conf_init },
 	{ BT_MESH_MODEL_ID_HEALTH_SRV, bt_mesh_health_init },
 };
@@ -97,14 +98,14 @@ static void mod_publish(struct os_event *work)
 
 	BT_DBG("");
 
-	if (pub->func) {
-		pub->func(pub->mod);
-	}
-
 	period_ms = bt_mesh_model_pub_period_get(pub->mod);
 	BT_DBG("period %u ms", period_ms);
 	if (period_ms) {
 		k_delayed_work_submit(&pub->timer, period_ms);
+	}
+
+	if (pub->func) {
+		pub->func(pub->mod);
 	}
 }
 
@@ -118,6 +119,7 @@ static void mod_init(struct bt_mesh_model *mod, struct bt_mesh_elem *elem,
 	if (mod->pub) {
 		mod->pub->mod = mod;
 		k_delayed_work_init(&mod->pub->timer, mod_publish);
+		k_delayed_work_add_arg(&mod->pub->timer, mod->pub);
 	}
 
 	for (i = 0; i < ARRAY_SIZE(mod->keys); i++) {

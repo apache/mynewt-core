@@ -24,10 +24,6 @@ syscfg.defs:
     TIMER_0:
         description: 'Timer 0'
         value:  0
-    I2C_0:
-        description: 'I2C 0'
-        value:  0
-
 
 syscfg.vals:
     REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG

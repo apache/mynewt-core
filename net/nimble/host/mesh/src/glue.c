@@ -20,6 +20,8 @@
 #include "mesh/glue.h"
 #include "adv.h"
 
+extern u8_t g_mesh_addr_type;
+
 const char *
 bt_hex(const void *buf, size_t len)
 {
@@ -65,7 +67,7 @@ net_buf_ref(struct os_mbuf *om)
 
     /* For bufs with header we count refs*/
     if (OS_MBUF_USRHDR_LEN(om) == 0) {
-        return NULL;
+        return om;
     }
 
     adv = BT_MESH_ADV(om);
@@ -270,11 +272,15 @@ k_fifo_is_empty(struct os_eventq *q)
     return STAILQ_EMPTY(&q->evq_list);
 }
 
-void * net_buf_get(struct os_eventq *fifo,s32_t t)
+void * net_buf_get(struct os_eventq *fifo, s32_t t)
 {
     struct os_event *ev = os_eventq_get_no_wait(fifo);
 
-    return ev->ev_arg;
+    if (ev) {
+        return ev->ev_arg;
+    }
+
+    return NULL;
 }
 
 uint8_t *
@@ -370,7 +376,7 @@ u32_t k_uptime_get_32(void)
 }
 
 static uint8_t pub[64];
-static uint32_t priv[8];
+static uint8_t priv[32];
 static bool has_pub = false;
 
 int
@@ -464,7 +470,8 @@ bt_le_adv_start(const struct ble_gap_adv_params *param,
         return err;
     }
 
-    err = ble_gap_adv_start(0x00, NULL, BLE_HS_FOREVER, param, NULL, NULL);
+    err = ble_gap_adv_start(g_mesh_addr_type, NULL, BLE_HS_FOREVER, param,
+                            NULL, NULL);
     if (err) {
         BT_ERR("Advertising failed: err %d", err);
         return err;

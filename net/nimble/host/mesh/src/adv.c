@@ -8,8 +8,10 @@
 
 #include "mesh/mesh.h"
 
+#include "syscfg/syscfg.h"
 #define BT_DBG_ENABLED (MYNEWT_VAL(BLE_MESH_DEBUG_ADV))
 #include "host/ble_hs_log.h"
+
 #include "host/ble_hs_adv.h"
 #include "host/ble_gap.h"
 #include "nimble/hci_common.h"
@@ -41,7 +43,7 @@
 
 struct os_task adv_task;
 static struct os_eventq adv_queue;
-static uint8_t g_own_addr_type;
+extern u8_t g_mesh_addr_type;
 
 static os_membuf_t adv_buf_mem[OS_MEMPOOL_SIZE(
         MYNEWT_VAL(BLE_MESH_ADV_BUF_COUNT),
@@ -214,7 +216,9 @@ static void bt_mesh_scan_cb(const bt_addr_le_t *addr, s8_t rssi,
 		return;
 	}
 
+#if BT_MESH_EXTENDED_DEBUG
 	BT_DBG("len %u: %s", buf->om_len, bt_hex(buf->om_data, buf->om_len));
+#endif
 
 	while (buf->om_len > 1) {
 		struct net_buf_simple_state state;
@@ -256,15 +260,13 @@ static void bt_mesh_scan_cb(const bt_addr_le_t *addr, s8_t rssi,
 	}
 }
 
-void bt_mesh_adv_init(uint8_t own_addr_type)
+void bt_mesh_adv_init(void)
 {
     os_stack_t *pstack;
     int rc;
 
     pstack = malloc(sizeof(os_stack_t) * ADV_STACK_SIZE);
     assert(pstack);
-
-    g_own_addr_type = own_addr_type;
 
     rc = os_mempool_init(&adv_buf_mempool, MYNEWT_VAL(BLE_MESH_ADV_BUF_COUNT),
     BT_MESH_ADV_DATA_SIZE + BT_MESH_ADV_USER_DATA_SIZE,
@@ -292,7 +294,9 @@ ble_adv_gap_mesh_cb(struct ble_gap_event *event, void *arg)
     struct ble_gap_disc_desc *desc;
     struct os_mbuf *buf = NULL;
 
+#if BT_MESH_EXTENDED_DEBUG
     BT_DBG("event->type %d", event->type);
+#endif
 
     switch (event->type) {
 #if MYNEWT_VAL(BLE_EXT_ADV)
@@ -337,7 +341,7 @@ int bt_mesh_scan_enable(void)
 
     BT_DBG("");
 
-    return ble_gap_disc(g_own_addr_type, BLE_HS_FOREVER, &scan_param, NULL, NULL);
+    return ble_gap_disc(g_mesh_addr_type, BLE_HS_FOREVER, &scan_param, NULL, NULL);
 }
 
 int bt_mesh_scan_disable(void)
