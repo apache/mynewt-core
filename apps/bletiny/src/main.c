@@ -1031,10 +1031,6 @@ bletiny_gap_event(struct ble_gap_event *event, void *arg)
         console_printf("advertising complete.\n");
         return 0;
 
-    case BLE_GAP_EVENT_CONN_CANCEL:
-        console_printf("connection procedure cancelled.\n");
-        return 0;
-
     case BLE_GAP_EVENT_CONN_UPDATE:
         console_printf("connection updated; status=%d ",
                        event->conn_update.status);
