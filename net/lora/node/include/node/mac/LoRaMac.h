@@ -429,6 +429,8 @@ typedef enum eLoRaMacMoteCmd
     MOTE_MAC_RX_TIMING_SETUP_ANS     = 0x08,
 }LoRaMacMoteCmd_t;
 
+#define LORA_MAC_MAX_MAC_CMD_CID    (MOTE_MAC_RX_TIMING_SETUP_ANS)
+
 /*!
  * LoRaMAC server MAC commands
  *
