@@ -137,6 +137,8 @@ struct bma253_int {
 	struct os_sem wait;
 	bool active;
 	bool asleep;
+	int pin;
+	int pin_active;
 };
 
 enum bma253_int_pin {

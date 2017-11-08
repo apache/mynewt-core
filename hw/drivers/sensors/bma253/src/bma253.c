@@ -142,6 +142,13 @@ interrupt_wait(struct bma253_int * interrupt)
     bool wait;
 
     OS_ENTER_CRITICAL(interrupt->lock);
+
+    /* Check if we did not missed interrupt */
+    if (hal_gpio_read(interrupt->pin) == interrupt->pin_active) {
+        OS_EXIT_CRITICAL(interrupt->lock);
+        return;
+    }
+
     if (interrupt->active) {
         interrupt->active = false;
         wait = false;
@@ -3714,6 +3721,9 @@ bma253_config(struct bma253 * bma253, struct bma253_cfg * cfg)
         return rc;
     }
 
+    bma253->ints[BMA253_INT_PIN_1].pin = cfg->int_pin1_num;
+    bma253->ints[BMA253_INT_PIN_1].pin_active = cfg->int_pin_active;
+
     if (cfg->int_pin2_num >= 0) {
         rc = hal_gpio_irq_init(cfg->int_pin2_num,
                                interrupt_handler,
@@ -3723,6 +3733,9 @@ bma253_config(struct bma253 * bma253, struct bma253_cfg * cfg)
         if (rc != 0) {
             return rc;
         }
+
+        bma253->ints[BMA253_INT_PIN_2].pin = cfg->int_pin2_num;
+        bma253->ints[BMA253_INT_PIN_2].pin_active = cfg->int_pin_active;
 
         hal_gpio_irq_enable(cfg->int_pin2_num);
     }
