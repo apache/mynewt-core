@@ -76,7 +76,12 @@ struct sensor_read_ctx {
 struct sensor_timestamp sensor_base_ts;
 struct os_callout st_up_osco;
 
+static void sensor_notify_ev_cb(struct os_event * ev);
 static void sensor_read_ev_cb(struct os_event *ev);
+
+static struct os_event sensor_notify_event = {
+    .ev_cb = sensor_notify_ev_cb,
+};
 
   /** OS event - for doing a sensor read */
 static struct os_event sensor_read_event = {
@@ -967,6 +972,96 @@ err:
 }
 
 static int
+sensor_set_notification(struct sensor *sensor)
+{
+    sensor_event_type_t event_type;
+    const struct sensor_notifier *notifier;
+    int rc;
+
+    event_type = 0;
+    SLIST_FOREACH(notifier, &sensor->s_notifier_list, sn_next) {
+        event_type |= notifier->sn_sensor_event_type;
+    }
+
+    if (sensor->s_funcs->sd_set_notification) {
+        rc = sensor->s_funcs->sd_set_notification(sensor, event_type);
+    } else {
+        rc = SYS_ENODEV;
+    }
+
+    return rc;
+}
+
+/**
+ * Register a sensor notifier. This allows a calling application to receive
+ * callbacks any time a requested event is observed.
+ *
+ * @param The sensor to register the notifier on
+ * @param The notifier to register
+ *
+ * @return 0 on success, non-zero error code on failure.
+ */
+int
+sensor_register_notifier(struct sensor *sensor,
+        struct sensor_notifier *notifier)
+{
+    int rc;
+
+    rc = sensor_lock(sensor);
+    if (rc != 0) {
+        goto err;
+    }
+
+    SLIST_INSERT_HEAD(&sensor->s_notifier_list, notifier, sn_next);
+
+    rc = sensor_set_notification(sensor);
+    if (rc != 0) {
+        goto remove;
+    }
+
+    sensor_unlock(sensor);
+
+    return (0);
+
+remove:
+    SLIST_REMOVE(&sensor->s_notifier_list, notifier, sensor_notifier,
+            sn_next);
+
+err:
+    return (rc);
+}
+
+/**
+ * Un-register a sensor notifier. This allows a calling application to stop
+ * receiving callbacks for events on the sensor object.
+ *
+ * @param The sensor object to un-register the notifier on
+ * @param The notifier to remove from the notification list
+ *
+ * @return 0 on success, non-zero error code on failure.
+ */
+int
+sensor_unregister_notifier(struct sensor *sensor,
+        struct sensor_notifier *notifier)
+{
+    int rc;
+
+    rc = sensor_lock(sensor);
+    if (rc != 0) {
+        goto err;
+    }
+
+    SLIST_REMOVE(&sensor->s_notifier_list, notifier, sensor_notifier,
+            sn_next);
+
+    sensor_unlock(sensor);
+
+    return (0);
+err:
+    return (rc);
+}
+
+static int
 sensor_read_data_func(struct sensor *sensor, void *arg, void *data,
                       sensor_type_t type)
 {
@@ -993,6 +1088,18 @@ sensor_read_data_func(struct sensor *sensor, void *arg, void *data,
 }
 
 /**
+ * Puts a notification event on the sensor manager evq
+ *
+ * @param notification event context
+ */
+void
+sensor_mgr_put_notify_evt(struct sensor_notify_ev_ctx *ctx)
+{
+    sensor_notify_event.ev_arg = ctx;
+    os_eventq_put(sensor_mgr_evq_get(), &sensor_notify_event);
+}
+
+/**
  * Puts read event on the sensor manager evq
  *
  * @param arg
@@ -1002,6 +1109,23 @@ sensor_mgr_put_read_evt(void *arg)
 {
     sensor_read_event.ev_arg = arg;
     os_eventq_put(sensor_mgr_evq_get(), &sensor_read_event);
+}
+
+static void
+sensor_notify_ev_cb(struct os_event * ev)
+{
+    const struct sensor_notify_ev_ctx *ctx;
+    const struct sensor_notifier *notifier;
+
+    ctx = ev->ev_arg;
+
+    SLIST_FOREACH(notifier, &ctx->snec_sensor->s_notifier_list, sn_next) {
+        if (notifier->sn_sensor_event_type & ctx->snec_evtype) {
+            notifier->sn_func(ctx->snec_sensor,
+                              notifier->sn_arg,
+                              ctx->snec_evtype);
+        }
+    }
 }
 
 static void
