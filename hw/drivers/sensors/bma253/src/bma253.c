@@ -3714,7 +3714,7 @@ bma253_config(struct bma253 * bma253, struct bma253_cfg * cfg)
         return rc;
     }
 
-    if (cfg->int_pin2_num) {
+    if (cfg->int_pin2_num >= 0) {
         rc = hal_gpio_irq_init(cfg->int_pin2_num,
                                interrupt_handler,
                                bma253->ints + BMA253_INT_PIN_2,

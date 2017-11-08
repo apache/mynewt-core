@@ -21,3 +21,9 @@ syscfg.defs:
     BMA253_LOG:
         description: 'Enable BMA253 logging'
         value: 1
+    BMA253_PIN_INT1:
+        description: 'GPIO on the board connected to sensor INT1'
+        value: -1
+    BMA253_PIN_INT2:
+        description: 'GPIO on the board connected to sensor INT2'
+        value: -1

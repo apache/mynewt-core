@@ -17,6 +17,7 @@
  * under the License.
  */
 
+#include "syscfg/syscfg.h"
 #include <os/os_dev.h>
 #include <assert.h>
 #include <defs/error.h>
@@ -460,6 +461,10 @@ config_bno055_sensor(void)
 #endif
 
 #if MYNEWT_VAL(BMA253_OFB)
+
+#if (MYNEWT_VAL(BMA253_PIN_INT1) == -1)
+#error "BMA253 requires BMA253_PIN_INT1 to be configured";
+#endif
 /**
  * BMA253 sensor default configuration
  *
@@ -491,8 +496,8 @@ config_bma253_sensor(void)
     cfg.offset_z_g = 0.0;
     cfg.power_mode = BMA253_POWER_MODE_NORMAL;
     cfg.sleep_duration = BMA253_SLEEP_DURATION_0_5_MS;
-    cfg.int_pin1_num = 20;
-    cfg.int_pin2_num = 19;
+    cfg.int_pin1_num = MYNEWT_VAL(BMA253_PIN_INT1);
+    cfg.int_pin2_num = MYNEWT_VAL(BMA253_PIN_INT2);
     cfg.sensor_mask = SENSOR_TYPE_ACCELEROMETER;
 
     rc = bma253_config((struct bma253 *)dev, &cfg);
