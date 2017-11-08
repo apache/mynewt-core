@@ -63,4 +63,4 @@ static inline uint16_t os_sem_get_count(struct os_sem *sem)
 }
 #endif
 
-#endif  /* _OS_MUTEX_H_ */
+#endif  /* _OS_SEM_H_ */
