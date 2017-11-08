@@ -601,12 +601,11 @@ sensor_cmd_exec(int argc, char **argv)
 {
     struct sensor_poll_data spd;
     char *subcmd;
-    int rc;
+    int rc = 0;
     int i;
 
     if (argc <= 1) {
         sensor_display_help();
-        rc = 0;
         goto done;
     }
 
@@ -620,7 +619,7 @@ sensor_cmd_exec(int argc, char **argv)
                            "[-n nsamples] [-i poll_itvl(ms)] [-d poll_duration(ms)]\n",
                            argc - 2);
             rc = SYS_EINVAL;
-            goto err;
+            goto done;
         }
 
         i = 4;
@@ -640,22 +639,20 @@ sensor_cmd_exec(int argc, char **argv)
 
         rc = sensor_cmd_read(argv[2], (sensor_type_t) strtol(argv[3], NULL, 0), &spd);
         if (rc) {
-            goto err;
+            goto done;
         }
     } else if (!strcmp(argv[1], "type")) {
         rc = sensor_cmd_display_type(argv);
         if (rc) {
-            goto err;
+            goto done;
         }
     } else {
         console_printf("Unknown sensor command %s\n", subcmd);
         rc = SYS_EINVAL;
-        goto err;
+        goto done;
     }
 
 done:
-    return (0);
-err:
     return (rc);
 }
 
