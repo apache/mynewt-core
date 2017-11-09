@@ -470,12 +470,14 @@ int
 config_bma253_sensor(void)
 {
     struct os_dev * dev;
-    struct bma253_cfg cfg;
+    struct bma253_cfg cfg = {0};
     int rc;
 
     dev = os_dev_open("bma253_0", OS_TIMEOUT_NEVER, NULL);
     assert(dev != NULL);
 
+    cfg.low_g_delay_ms = BMA253_LOW_G_DELAY_MS_DEFAULT;
+    cfg.high_g_delay_ms = BMA253_HIGH_G_DELAY_MS_DEFAULT;
     cfg.g_range = BMA253_G_RANGE_2;
     cfg.filter_bandwidth = BMA253_FILTER_BANDWIDTH_1000_HZ;
     cfg.use_unfiltered_data = false;

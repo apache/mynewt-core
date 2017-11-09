@@ -30,6 +30,10 @@
 #extern "C" {
 #endif
 
+/* XXX use some better defaults. For now it is min */
+#define BMA253_LOW_G_DELAY_MS_DEFAULT       2
+#define BMA253_HIGH_G_DELAY_MS_DEFAULT      2
+
 /* Range of acceleration measurements */
 enum bma253_g_range {
     BMA253_G_RANGE_2  = 0,
