@@ -125,11 +125,8 @@ os_mutex_release(struct os_mutex *mu)
     mu->mu_owner = rdy;
     if (rdy) {
         rdy->t_lockcnt++;
-        rdy->t_flags |= OS_TASK_FLAG_LOCK_HELD;
     }
-    if (--current->t_lockcnt == 0) {
-        current->t_flags &= ~OS_TASK_FLAG_LOCK_HELD;
-    }
+    --current->t_lockcnt;
 
     /* Do we need to re-schedule? */
     resched = 0;
@@ -191,7 +188,6 @@ os_mutex_pend(struct os_mutex *mu, uint32_t timeout)
         mu->mu_owner = current;
         mu->mu_prio  = current->t_prio;
         current->t_lockcnt++;
-        current->t_flags |= OS_TASK_FLAG_LOCK_HELD;
         mu->mu_level = 1;
         OS_EXIT_CRITICAL(sr);
         return OS_OK;
