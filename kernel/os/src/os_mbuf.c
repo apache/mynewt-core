@@ -927,6 +927,9 @@ os_mbuf_cmpm(const struct os_mbuf *om1, uint16_t offset1,
     uint16_t om2_off;
     int rc;
 
+    om1_off = 0;
+    om2_off = 0;
+
     cur1 = os_mbuf_off(om1, offset1, &om1_off);
     cur2 = os_mbuf_off(om2, offset2, &om2_off);
 
