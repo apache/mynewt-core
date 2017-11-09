@@ -59,6 +59,10 @@ syscfg.vals:
     FLOAT_USER: 1
     SENSOR_OIC_PERIODIC: 1
 
+syscfg.vals.BMA253_OFB:
+    BMA253_PIN_INT1: 19
+    BMA253_PIN_INT2: 20
+
 syscfg.defs:
     SENSOR_BLE:
         description: 'BLE transport is used for sensor data'
