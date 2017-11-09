@@ -4071,9 +4071,11 @@ int
 bma253_wait_for_tap(struct bma253 * bma253,
                     enum bma253_tap_type tap_type)
 {
-    int rc;
+    int rc = 0;
     enum bma253_power_mode request_power[3];
     struct int_enable int_enable;
+    struct int_routes int_routes;
+    enum int_route backup_s_tap;
 
     switch (tap_type) {
     case BMA253_TAP_TYPE_DOUBLE:
@@ -4081,6 +4083,25 @@ bma253_wait_for_tap(struct bma253 * bma253,
         break;
     default:
         return SYS_EINVAL;
+    }
+
+    if (tap_type == BMA253_TAP_TYPE_DOUBLE) {
+        /* According to BMA253 when single tap shall not be used we should not
+         * route it to any INTX
+         */
+         rc = bma253_get_int_routes(bma253, &int_routes);
+         if (rc) {
+             return rc;
+         }
+
+         backup_s_tap = int_routes.s_tap_int_route;
+         int_routes.s_tap_int_route = INT_ROUTE_NONE;
+
+         rc = bma253_set_int_routes(bma253, &int_routes);
+         if (rc) {
+              return rc;
+         }
+         int_routes.s_tap_int_route = backup_s_tap;
     }
 
     rc = enable_intpin(bma253,
@@ -4098,7 +4119,7 @@ bma253_wait_for_tap(struct bma253 * bma253,
                        request_power,
                        sizeof(request_power) / sizeof(*request_power));
     if (rc != 0) {
-        return rc;
+        goto done;
     }
 
     undo_interrupt(&bma253->intr);
@@ -4124,7 +4145,7 @@ bma253_wait_for_tap(struct bma253 * bma253,
 
     rc = bma253_set_int_enable(bma253, &int_enable);
     if (rc != 0) {
-        return rc;
+        goto done;
     }
 
     wait_interrupt(&bma253->intr);
@@ -4150,17 +4171,21 @@ bma253_wait_for_tap(struct bma253 * bma253,
 
     rc = bma253_set_int_enable(bma253, &int_enable);
     if (rc != 0) {
-        return rc;
+        goto done;
     }
 
     rc = default_power(bma253);
-    if (rc != 0) {
-        return rc;
-    }
+
+done:
 
     disable_intpin(bma253);
 
-    return 0;
+    if (tap_type == BMA253_TAP_TYPE_DOUBLE) {
+        /* Restore previous routing */
+        rc = bma253_set_int_routes(bma253, &int_routes);
+    }
+
+    return rc;
 }
 
 int
