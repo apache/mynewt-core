@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -21,7 +21,7 @@
 #define _OS_TASK_H
 
 #include "os/os.h"
-#include "os/os_sanity.h" 
+#include "os/os_sanity.h"
 #include "os/queue.h"
 
 #ifdef __cplusplus
@@ -32,14 +32,13 @@ extern "C" {
 #define OS_TASK_PRI_HIGHEST (0)
 #define OS_TASK_PRI_LOWEST  (0xff)
 
-/* 
+/*
  * Generic "object" structure. All objects that a task can wait on must
- * have a SLIST_HEAD(, os_task) head_name as the first element in the object 
+ * have a SLIST_HEAD(, os_task) head_name as the first element in the object
  * structure. The element 'head_name' can be any name. See os_mutex.h or
  * os_sem.h for an example.
  */
-struct os_task_obj
-{
+struct os_task_obj {
     SLIST_HEAD(, os_task) obj_head;     /* chain of waiting tasks */
 };
 
@@ -54,7 +53,6 @@ typedef enum os_task_state {
 #define OS_TASK_FLAG_SEM_WAIT       (0x02U)
 #define OS_TASK_FLAG_MUTEX_WAIT     (0x04U)
 #define OS_TASK_FLAG_EVQ_WAIT       (0x08U)
-#define OS_TASK_FLAG_LOCK_HELD      (0x10U)
 
 typedef void (*os_task_func_t)(void *);
 
@@ -119,9 +117,9 @@ struct os_task_info {
 
     char oti_name[OS_TASK_MAX_NAME_LEN];
 };
+
 struct os_task *os_task_info_get_next(const struct os_task *,
         struct os_task_info *);
-
 
 #ifdef __cplusplus
 }

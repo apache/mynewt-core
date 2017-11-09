@@ -191,15 +191,9 @@ os_task_remove(struct os_task *t)
     }
 
     /*
-     * Disallowing suspending tasks which are holding a lock
-     * Checking lockcnt and flags separately so we can assert separately XXX
+     * Disallowing suspending tasks which are holding a mutex
      */
     if (t->t_lockcnt) {
-        assert(t->t_flags & OS_TASK_FLAG_LOCK_HELD);
-        return OS_EBUSY;
-    }
-    if (t->t_flags & OS_TASK_FLAG_LOCK_HELD) {
-        assert(t->t_lockcnt);
         return OS_EBUSY;
     }
 
