@@ -3031,7 +3031,7 @@ default_power(struct bma253 * bma253)
 }
 
 static int
-enable_intpin(const struct bma253 * bma253,
+enable_intpin(const struct bma253 * bma253, uint8_t pin,
               hal_gpio_irq_handler_t handler,
               void * arg)
 {
@@ -3045,7 +3045,7 @@ enable_intpin(const struct bma253 * bma253,
     trig = HAL_GPIO_TRIG_FALLING;
 #endif
 
-    rc = hal_gpio_irq_init(MYNEWT_VAL(BMA253_INT_PIN_HOST),
+    rc = hal_gpio_irq_init(pin,
                            handler,
                            arg,
                            trig,
@@ -3054,7 +3054,7 @@ enable_intpin(const struct bma253 * bma253,
         return rc;
     }
 
-    hal_gpio_irq_enable(MYNEWT_VAL(BMA253_INT_PIN_HOST));
+    hal_gpio_irq_enable(pin);
 
     return 0;
 #else
@@ -3063,11 +3063,11 @@ enable_intpin(const struct bma253 * bma253,
 }
 
 static void
-disable_intpin(const struct bma253 * bma253)
+disable_intpin(const struct bma253 * bma253, uint8_t pin)
 {
 #if MYNEWT_VAL(BMA253_INT_ENABLE)
-    hal_gpio_irq_disable(MYNEWT_VAL(BMA253_INT_PIN_HOST));
-    hal_gpio_irq_release(MYNEWT_VAL(BMA253_INT_PIN_HOST));
+    hal_gpio_irq_disable(pin);
+    hal_gpio_irq_release(pin);
 #endif
 }
 
@@ -3539,7 +3539,7 @@ bma253_stream_read(struct bma253 * bma253,
 
     stop_ticks = 0;
 #if MYNEWT_VAL(BMA253_INT_ENABLE)
-    rc = enable_intpin(bma253,
+    rc = enable_intpin(bma253, MYNEWT_VAL(BMA253_INT_PIN_HOST),
                        interrupt_handler_wake_up,
                        &bma253->intr);
     if (rc != 0) {
@@ -3676,7 +3676,7 @@ bma253_stream_read(struct bma253 * bma253,
         return rc;
     }
 
-    disable_intpin(bma253);
+    disable_intpin(bma253, MYNEWT_VAL(BMA253_INT_PIN_HOST));
 
     return 0;
 }
@@ -3805,7 +3805,7 @@ bma253_wait_for_orient(struct bma253 * bma253,
     struct int_enable int_enable;
     struct int_status int_status;
 
-    rc = enable_intpin(bma253,
+    rc = enable_intpin(bma253, MYNEWT_VAL(BMA253_INT_PIN_HOST),
                        interrupt_handler_wake_up,
                        &bma253->intr);
     if (rc != 0) {
@@ -3820,7 +3820,7 @@ bma253_wait_for_orient(struct bma253 * bma253,
                        request_power,
                        sizeof(request_power) / sizeof(*request_power));
     if (rc != 0) {
-        return rc;
+        goto done;
     }
 
     undo_interrupt(&bma253->intr);
@@ -3846,14 +3846,14 @@ bma253_wait_for_orient(struct bma253 * bma253,
 
     rc = bma253_set_int_enable(bma253, &int_enable);
     if (rc != 0) {
-        return rc;
+        goto done;
     }
 
     wait_interrupt(&bma253->intr);
 
     rc = bma253_get_int_status(bma253, &int_status);
     if (rc != 0) {
-        return rc;
+        goto done;
     }
 
     int_enable.flat_int_enable          = false;
@@ -3877,20 +3877,20 @@ bma253_wait_for_orient(struct bma253 * bma253,
 
     rc = bma253_set_int_enable(bma253, &int_enable);
     if (rc != 0) {
-        return rc;
+        goto done;
     }
 
     rc = default_power(bma253);
     if (rc != 0) {
-        return rc;
+        goto done;
     }
-
-    disable_intpin(bma253);
 
     orient_xyz->orient_xy  = int_status.device_orientation;
     orient_xyz->downward_z = int_status.device_is_down;
 
-    return 0;
+done:
+    disable_intpin(bma253, MYNEWT_VAL(BMA253_INT_PIN_HOST));
+    return rc;
 }
 
 int
@@ -3900,7 +3900,7 @@ bma253_wait_for_high_g(struct bma253 * bma253)
     enum bma253_power_mode request_power[3];
     struct int_enable int_enable;
 
-    rc = enable_intpin(bma253,
+    rc = enable_intpin(bma253, MYNEWT_VAL(BMA253_INT_PIN_HOST),
                        interrupt_handler_wake_up,
                        &bma253->intr);
     if (rc != 0) {
@@ -3915,7 +3915,7 @@ bma253_wait_for_high_g(struct bma253 * bma253)
                        request_power,
                        sizeof(request_power) / sizeof(*request_power));
     if (rc != 0) {
-        return rc;
+        goto done;
     }
 
     undo_interrupt(&bma253->intr);
@@ -3941,7 +3941,7 @@ bma253_wait_for_high_g(struct bma253 * bma253)
 
     rc = bma253_set_int_enable(bma253, &int_enable);
     if (rc != 0) {
-        return rc;
+        goto done;
     }
 
     wait_interrupt(&bma253->intr);
@@ -3967,17 +3967,17 @@ bma253_wait_for_high_g(struct bma253 * bma253)
 
     rc = bma253_set_int_enable(bma253, &int_enable);
     if (rc != 0) {
-        return rc;
+        goto done;
     }
 
     rc = default_power(bma253);
     if (rc != 0) {
-        return rc;
+        goto done;
     }
 
-    disable_intpin(bma253);
-
-    return 0;
+done:
+    disable_intpin(bma253, MYNEWT_VAL(BMA253_INT_PIN_HOST));
+    return rc;
 }
 
 int
@@ -3987,7 +3987,7 @@ bma253_wait_for_low_g(struct bma253 * bma253)
     enum bma253_power_mode request_power[3];
     struct int_enable int_enable;
 
-    rc = enable_intpin(bma253,
+    rc = enable_intpin(bma253, MYNEWT_VAL(BMA253_INT_PIN_HOST),
                        interrupt_handler_wake_up,
                        &bma253->intr);
     if (rc != 0) {
@@ -4002,7 +4002,7 @@ bma253_wait_for_low_g(struct bma253 * bma253)
                        request_power,
                        sizeof(request_power) / sizeof(*request_power));
     if (rc != 0) {
-        return rc;
+        goto done;
     }
 
     undo_interrupt(&bma253->intr);
@@ -4028,7 +4028,7 @@ bma253_wait_for_low_g(struct bma253 * bma253)
 
     rc = bma253_set_int_enable(bma253, &int_enable);
     if (rc != 0) {
-        return rc;
+        goto done;
     }
 
     wait_interrupt(&bma253->intr);
@@ -4054,15 +4054,16 @@ bma253_wait_for_low_g(struct bma253 * bma253)
 
     rc = bma253_set_int_enable(bma253, &int_enable);
     if (rc != 0) {
-        return rc;
+        goto done;
     }
 
     rc = default_power(bma253);
     if (rc != 0) {
-        return rc;
+        goto done;
     }
 
-    disable_intpin(bma253);
+done:
+    disable_intpin(bma253, MYNEWT_VAL(BMA253_INT_PIN_HOST));
 
     return 0;
 }
@@ -4104,7 +4105,7 @@ bma253_wait_for_tap(struct bma253 * bma253,
          int_routes.s_tap_int_route = backup_s_tap;
     }
 
-    rc = enable_intpin(bma253,
+    rc = enable_intpin(bma253, MYNEWT_VAL(BMA253_INT_PIN_HOST),
                        interrupt_handler_wake_up,
                        &bma253->intr);
     if (rc != 0) {
@@ -4177,8 +4178,7 @@ bma253_wait_for_tap(struct bma253 * bma253,
     rc = default_power(bma253);
 
 done:
-
-    disable_intpin(bma253);
+    disable_intpin(bma253, MYNEWT_VAL(BMA253_INT_PIN_HOST));
 
     if (tap_type == BMA253_TAP_TYPE_DOUBLE) {
         /* Restore previous routing */
@@ -4352,7 +4352,7 @@ sensor_driver_set_trigger_thresh(struct sensor * sensor,
     sensor_read_ev_ctx.srec_sensor = sensor;
     sensor_read_ev_ctx.srec_type   = sensor_type;
 
-    rc = enable_intpin(bma253,
+    rc = enable_intpin(bma253, MYNEWT_VAL(BMA253_INT_PIN_HOST),
                        interrupt_handler_read_evt,
                        &sensor_read_ev_ctx);
     if (rc != 0) {
@@ -4367,7 +4367,7 @@ sensor_driver_set_trigger_thresh(struct sensor * sensor,
                        request_power,
                        sizeof(request_power) / sizeof(*request_power));
     if (rc != 0) {
-        return rc;
+        goto done;
     }
 
     low_thresh  = stt->stt_low_thresh.sad;
@@ -4421,7 +4421,7 @@ sensor_driver_set_trigger_thresh(struct sensor * sensor,
         rc = bma253_set_low_g_int_cfg(bma253,
                                       &low_g_int_cfg);
         if (rc != 0) {
-            return rc;
+            goto done;
         }
 
         int_enable.low_g_int_enable = true;
@@ -4456,7 +4456,7 @@ sensor_driver_set_trigger_thresh(struct sensor * sensor,
                                        cfg->g_range,
                                        &high_g_int_cfg);
         if (rc != 0) {
-            return rc;
+            goto done;
         }
 
         int_enable.high_g_z_int_enable = high_thresh->sad_z_is_valid;
@@ -4464,7 +4464,14 @@ sensor_driver_set_trigger_thresh(struct sensor * sensor,
         int_enable.high_g_x_int_enable = high_thresh->sad_x_is_valid;
     }
 
-    return bma253_set_int_enable(bma253, &int_enable);
+    rc = bma253_set_int_enable(bma253, &int_enable);
+
+done:
+    if (rc != 0) {
+        disable_intpin(bma253, MYNEWT_VAL(BMA253_INT_PIN_HOST));
+    }
+
+    return rc;
 }
 
 static int
@@ -4480,16 +4487,13 @@ sensor_driver_set_notification(struct sensor * sensor,
                                SENSOR_EVENT_TYPE_SINGLE_TAP)) != 0) {
         return SYS_EINVAL;
     }
-    if ((sensor_event_type & (sensor_event_type - 1)) != 0) {
-        return SYS_EINVAL;
-    }
 
     bma253 = (struct bma253 *)SENSOR_GET_DEVICE(sensor);
 
     sensor_notify_ev_ctx.snec_sensor = sensor;
     sensor_notify_ev_ctx.snec_evtype = sensor_event_type;
 
-    rc = enable_intpin(bma253,
+    rc = enable_intpin(bma253,  MYNEWT_VAL(BMA253_INT_PIN_HOST),
                        interrupt_handler_notify_evt,
                        &sensor_notify_ev_ctx);
     if (rc != 0) {
@@ -4504,7 +4508,7 @@ sensor_driver_set_notification(struct sensor * sensor,
                        request_power,
                        sizeof(request_power) / sizeof(*request_power));
     if (rc != 0) {
-        return rc;
+        goto done;
     }
 
     int_enable.flat_int_enable          = false;
@@ -4529,11 +4533,13 @@ sensor_driver_set_notification(struct sensor * sensor,
     int_enable.slow_no_mot_x_int_enable = false;
 
     rc = bma253_set_int_enable(bma253, &int_enable);
+
+done:
     if (rc != 0) {
-        return rc;
+        disable_intpin(bma253, MYNEWT_VAL(BMA253_INT_PIN_HOST));
     }
 
-    return 0;
+    return rc;
 }
 
 static struct sensor_driver bma253_sensor_driver = {
