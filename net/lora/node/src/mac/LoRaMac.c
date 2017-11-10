@@ -2615,6 +2615,8 @@ ProcessMacCommands(uint8_t *payload, uint8_t macIndex, uint8_t commandsSize, uin
     uint16_t channelsMask[6];
     uint32_t freq;
 
+    lora_node_log(LORA_NODE_LOG_PROC_MAC_CMD, macIndex, snr, commandsSize);
+
     while (macIndex < commandsSize) {
         // Decode Frame MAC commands
         switch( payload[macIndex++] )
@@ -3221,7 +3223,6 @@ PrepareFrame(LoRaMacHeader_t *macHdr, LoRaMacFrameCtrl_t *fCtrl, uint8_t fPort,
     uint16_t bufsize;
     uint32_t mic = 0;
     uint8_t port = fPort;
-    uint8_t *payload;
     const uint8_t *key;
     uint8_t maxbytes;
     uint8_t max_cmd_bytes;
@@ -3231,10 +3232,8 @@ PrepareFrame(LoRaMacHeader_t *macHdr, LoRaMacFrameCtrl_t *fCtrl, uint8_t fPort,
 
     /* Get the mac payload size from the mbuf. A NULL mbuf is valid */
     if (om == NULL) {
-        payload = NULL;
         bufsize = 0;
     } else {
-        payload = om->om_data;
         bufsize = OS_MBUF_PKTLEN(om);
         assert(bufsize > 0);
     }
@@ -3316,7 +3315,7 @@ PrepareFrame(LoRaMacHeader_t *macHdr, LoRaMacFrameCtrl_t *fCtrl, uint8_t fPort,
             MacCommandsBufferIndex += MacCommandsBufferToRepeatIndex;
 
             cmd_bytes_txd = 0;
-            if (payload != NULL) {
+            if (om != NULL) {
                 if ((MacCommandsBufferIndex != 0) && (max_cmd_bytes != 0)) {
                     /* fopts cannot exceed 15 bytes */
                     if (max_cmd_bytes > LORA_MAC_COMMAND_MAX_LENGTH) {
@@ -3326,12 +3325,17 @@ PrepareFrame(LoRaMacHeader_t *macHdr, LoRaMacFrameCtrl_t *fCtrl, uint8_t fPort,
                     cmd_bytes_txd = lora_mac_extract_mac_cmds(max_cmd_bytes,
                                                               &LoRaMacBuffer[hdrlen]);
                     if (cmd_bytes_txd) {
-                        // Update FCtrl field with new value of OptionsLength
+                        /* Update FCtrl field with new value of OptionsLength */
                         fCtrl->Bits.FOptsLen += cmd_bytes_txd;
                         LoRaMacBuffer[0x05] = fCtrl->Value;
                         hdrlen += cmd_bytes_txd;
                     }
                 }
+
+                /* Set the port and copy in the application payload */
+                LoRaMacBuffer[hdrlen++] = port;
+                os_mbuf_copydata(om, 0, LoRaMacTxPayloadLen,
+                                 LoRaMacBuffer + hdrlen);
             } else {
                 if (MacCommandsBufferIndex > 0) {
                     port = 0;
@@ -3341,7 +3345,6 @@ PrepareFrame(LoRaMacHeader_t *macHdr, LoRaMacFrameCtrl_t *fCtrl, uint8_t fPort,
 
                     LoRaMacTxPayloadLen = cmd_bytes_txd;
                     assert(cmd_bytes_txd != 0);
-                    payload = MacCommandsBuffer;
                 }
             }
 
@@ -3365,12 +3368,6 @@ PrepareFrame(LoRaMacHeader_t *macHdr, LoRaMacFrameCtrl_t *fCtrl, uint8_t fPort,
             }
 
             if (LoRaMacTxPayloadLen > 0) {
-                /* If application data, set port and copy in payload */
-                if (payload) {
-                    LoRaMacBuffer[hdrlen++] = port;
-                    os_mbuf_copydata(om, 0, LoRaMacTxPayloadLen, LoRaMacBuffer + hdrlen);
-                }
-
                 /* Encrypt the MAC payload using appropriate key */
                 if (port == 0) {
                     key = LoRaMacNwkSKey;
@@ -4482,3 +4479,15 @@ lora_mac_srv_ack_requested(void)
 {
     return SrvAckRequested;
 }
+
+/**
+ * Returns the number of bytes of MAC commands to send.
+ *
+ * @return uint8_t Number of bytes of MAC commands that need to be sent
+ */
+uint8_t
+lora_mac_cmd_buffer_len(void)
+{
+    return MacCommandsBufferIndex + MacCommandsBufferToRepeatIndex;
+}
+

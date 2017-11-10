@@ -154,23 +154,6 @@ lora_pkt_alloc(void)
     return p;
 }
 
-#if !MYNEWT_VAL(LORA_NODE_CLI)
-static struct os_mbuf *
-lora_node_alloc_empty_pkt(void)
-{
-    struct os_mbuf *om;
-    struct lora_pkt_info *lpkt;
-
-    om = lora_pkt_alloc();
-    if (om) {
-        lpkt = LORA_PKT_INFO_PTR(om);
-        lpkt->port = 0;
-        lpkt->pkt_type = MCPS_UNCONFIRMED;
-    }
-    return om;
-}
-#endif
-
 /**
  * This is the application to mac layer transmit interface.
  *
@@ -372,14 +355,6 @@ lora_mac_proc_tx_q_event(struct os_event *ev)
     }
 
     /*
-     * WWW: what I need to determine is what happens in the following case:
-     * a Mac command gets added to the buffer but we have nothing on the
-     * transmit queue. What do we do? I do not think we currently
-     * send the response until another frame is enqueued. Need to
-     * look at this. I think I should just send the response back
-     */
-
-    /*
      * Check if possible to send frame. If a MAC command length error we
      * need to send an empty, unconfirmed frame to flush mac commands.
      */
@@ -387,9 +362,16 @@ lora_mac_proc_tx_q_event(struct os_event *ev)
     while (1) {
         mp = STAILQ_FIRST(&g_lora_mac_data.lm_txq.mq_head);
         if (mp == NULL) {
+            /* If an ack has been requested, send one */
             if (lora_mac_srv_ack_requested()) {
                 g_lora_node_last_tx_mac_cmd = 0;
-                goto send_empty_ack;
+                goto send_empty_msg;
+            } else {
+                /* Check for any mac commands */
+                if (lora_mac_cmd_buffer_len() != 0) {
+                    g_lora_node_last_tx_mac_cmd = 1;
+                    goto send_empty_msg;
+                }
             }
             break;
         }
@@ -413,7 +395,7 @@ lora_mac_proc_tx_q_event(struct os_event *ev)
             /* Need to flush MAC commands. Send empty unconfirmed frame */
             STATS_INC(lora_mac_stats, tx_mac_flush);
             /* NOTE: no need to get a mbuf. */
-send_empty_ack:
+send_empty_msg:
             lpkt = NULL;
             om = NULL;
             memset(&req, 0, sizeof(McpsReq_t));
@@ -626,14 +608,21 @@ lora_mac_join_event(struct os_event *ev)
     }
 }
 
+/**
+ * lora mac link chk event
+ *
+ * Called from the Lora MAC task when a link check event has been posted
+ * to it. This event gets posted when link check API gets called.
+ *
+ *
+ * @param ev
+ */
 static void
 lora_mac_link_chk_event(struct os_event *ev)
 {
-    int err;
     MlmeReq_t mlmeReq;
     LoRaMacStatus_t rc;
     LoRaMacEventInfoStatus_t status;
-    struct os_mbuf *om;
 
     mlmeReq.Type = MLME_LINK_CHECK;
     rc = LoRaMacMlmeRequest(&mlmeReq);
@@ -647,6 +636,8 @@ lora_mac_link_chk_event(struct os_event *ev)
         break;
     }
 
+    lora_node_log(LORA_NODE_LOG_LINK_CHK, 0, 0, status);
+
     /* If status is OK */
     if (status != LORAMAC_EVENT_INFO_STATUS_OK) {
         if (lora_link_chk_cb_func) {
@@ -654,17 +645,11 @@ lora_mac_link_chk_event(struct os_event *ev)
         }
     } else {
         /*
-         * If nothing on transmit queue this will sit around until the
-         * application decides to send its next packet. In this case, we
-         * create a dummy frame to send the command.
+         * If nothing on transmit queue, we need to send event so that link
+         * check gets sent.
          */
         if (lora_node_txq_empty()) {
-            om = lora_node_alloc_empty_pkt();
-            if (om) {
-                err = os_mqueue_put(&g_lora_mac_data.lm_txq,
-                                 &g_lora_mac_data.lm_evq, om);
-                assert(err == 0);
-            }
+            lora_node_chk_txq();
         }
     }
 }
