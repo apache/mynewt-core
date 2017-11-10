@@ -216,6 +216,11 @@ int hal_spi_slave_set_def_tx_val(int spi_num, uint16_t val);
  */
 int hal_spi_abort(int spi_num);
 
+/** Utility functions; defined once for all MCUs. */
+int hal_spi_data_mode_breakout(uint8_t data_mode,
+                               int *out_cpol, int *out_cpha);
+
+
 #ifdef __cplusplus
 }
 #endif

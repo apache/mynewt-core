@@ -1,0 +1,4 @@
+eclipse.preferences.version=1
+svd_custom_file_path=
+svd_file_path=${AMBIQ_ROOT}/pack/SVD/apollo2.svd
+
