@@ -40,6 +40,7 @@ struct os_eventq *lora_node_mac_evq_get(void);
 void lora_node_chk_txq(void);
 bool lora_node_txq_empty(void);
 bool lora_mac_srv_ack_requested(void);
+uint8_t lora_mac_cmd_buffer_len(void);
 
 /* Lora debug log */
 #define LORA_NODE_DEBUG_LOG
@@ -60,6 +61,8 @@ void lora_node_log(uint8_t logid, uint8_t p8, uint16_t p16, uint32_t p32);
 #define LORA_NODE_LOG_RX_WIN_SETUP_FAIL (27)
 #define LORA_NODE_LOG_APP_TX            (40)
 #define LORA_NODE_LOG_RX_ADR_REQ        (80)
+#define LORA_NODE_LOG_PROC_MAC_CMD      (85)
+#define LORA_NODE_LOG_LINK_CHK          (90)
 
 #else
 #define lora_node_log(a,b,c,d)
