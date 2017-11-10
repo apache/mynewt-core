@@ -37,7 +37,7 @@ pkg.deps:
     - net/nimble/host/services/gatt
     - net/nimble/host/store/config
     - net/nimble/transport/emspi
-    - sys/console/stub
+    - sys/console/full
     - sys/id
     - sys/log/full
     - sys/stats/full
