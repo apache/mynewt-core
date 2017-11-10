@@ -1,0 +1,102 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+# Package: hw/bsp/nrf52dk
+
+syscfg.defs:
+    MCU_FLASH_MIN_WRITE_SIZE:
+        description: >
+            Specifies the required alignment for internal flash writes.
+            Used internally by the newt tool.
+        value: 1
+
+    MCU_APOLLO2:
+        value: 1
+
+    SPI_0_MASTER:
+        description: 'SPI 0 master'
+        value:  0
+        restrictions:
+            - "!SPI_0_SLAVE"
+            - "!I2C_0"
+    SPI_0_SLAVE:
+        description: 'SPI 0 slave'
+        value:  0
+        restrictions:
+            - "!SPI_0_MASTER"
+            - "!I2C_0"
+    SPI_1_MASTER:
+        description: 'SPI 1 master'
+        value:  0
+        restrictions:
+            - "!SPI_1_SLAVE"
+            - "!I2C_1"
+    SPI_1_SLAVE:
+        description: 'SPI 1 slave'
+        value:  0
+        restrictions:
+            - "!SPI_1_MASTER"
+            - "!I2C_1"
+    SPI_2_MASTER:
+        description: 'SPI 2 master'
+        value:  0
+        restrictions:
+            - "!SPI_2_SLAVE"
+            - "!I2C_2"
+    SPI_2_SLAVE:
+        description: 'SPI 2 slave'
+        value:  0
+        restrictions:
+            - "!SPI_2_MASTER"
+            - "!I2C_2"
+    SPI_3_MASTER:
+        description: 'SPI 3 master'
+        value:  0
+        restrictions:
+            - "!SPI_3_SLAVE"
+            - "!I2C_3"
+    SPI_3_SLAVE:
+        description: 'SPI 3 slave'
+        value:  0
+        restrictions:
+            - "!SPI_3_MASTER"
+            - "!I2C_3"
+    SPI_4_MASTER:
+        description: 'SPI 4 master'
+        value:  0
+        restrictions:
+            - "!SPI_4_SLAVE"
+            - "!I2C_4"
+    SPI_4_SLAVE:
+        description: 'SPI 4 slave'
+        value:  0
+        restrictions:
+            - "!SPI_4_MASTER"
+            - "!I2C_4"
+    SPI_5_MASTER:
+        description: 'SPI 5 master'
+        value:  0
+        restrictions:
+            - "!SPI_5_SLAVE"
+            - "!I2C_5"
+    SPI_5_SLAVE:
+        description: 'SPI 5 slave'
+        value:  0
+        restrictions:
+            - "!SPI_5_MASTER"
+            - "!I2C_5"
