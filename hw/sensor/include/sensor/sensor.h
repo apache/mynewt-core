@@ -410,6 +410,11 @@ struct sensor_timestamp {
     uint32_t st_cputime;
 };
 
+struct sensor_int {
+    uint8_t pin;
+    uint8_t active;
+};
+
 struct sensor_itf {
 
     /* Sensor interface type */
@@ -430,10 +435,11 @@ struct sensor_itf {
     /* Sensor interface high int pin */
     uint8_t si_high_pin;
 
-    /* Sensor interface interupts pins */
-    /* XXX We should probably remove low/high pins and replace it with those */
-    uint8_t si_int1_pin;
-    uint8_t si_int2_pin;
+    /* Sensor interface interrupts pins */
+    /* XXX We should probably remove low/high pins and replace it with those
+     */
+    uint8_t si_configured_ints_num;
+    struct sensor_int si_ints[MYNEWT_VAL(SENSOR_MAX_INTERRUPTS_PINS)];
 };
 
 /*
@@ -620,13 +626,7 @@ sensor_check_type(struct sensor *sensor, sensor_type_t type)
 static inline int
 sensor_set_interface(struct sensor *sensor, struct sensor_itf *s_itf)
 {
-    sensor->s_itf.si_type = s_itf->si_type;
-    sensor->s_itf.si_num = s_itf->si_num;
-    sensor->s_itf.si_cs_pin = s_itf->si_cs_pin;
-    sensor->s_itf.si_addr = s_itf->si_addr;
-    sensor->s_itf.si_low_pin = s_itf->si_low_pin;
-    sensor->s_itf.si_high_pin = s_itf->si_high_pin;
-
+    memcpy(&sensor->s_itf, s_itf, sizeof(*s_itf));
     return (0);
 }
 

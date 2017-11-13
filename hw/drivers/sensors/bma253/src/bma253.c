@@ -41,6 +41,11 @@ static struct log bma253_log;
 #define BMA253_INFO(...)
 #endif
 
+enum bma253_int_num {
+    INT1_PIN,
+    INT2_PIN
+};
+
 static void
 delay_msec(uint32_t delay)
 {
@@ -3031,19 +3036,31 @@ default_power(struct bma253 * bma253)
 }
 
 static int
-enable_intpin(const struct bma253 * bma253, uint8_t pin,
+enable_intpin(const struct bma253 * bma253,
+              enum bma253_int_num int_num,
               hal_gpio_irq_handler_t handler,
               void * arg)
 {
 #if MYNEWT_VAL(BMA253_INT_ENABLE)
     hal_gpio_irq_trig_t trig;
+    uint8_t pin;
     int rc;
 
-#if MYNEWT_VAL(BMA253_INT_CFG_ACTIVE)
-    trig = HAL_GPIO_TRIG_RISING;
-#else
-    trig = HAL_GPIO_TRIG_FALLING;
-#endif
+    if ((int_num + 1) > bma253->sensor.s_itf.si_configured_ints_num) {
+        /* Interrupt pin not configured */
+        return SYS_EINVAL;
+    }
+
+    pin = bma253->sensor.s_itf.si_ints[int_num].pin;
+    if (pin < 0) {
+        return SYS_EINVAL;
+    }
+
+    if (bma253->sensor.s_itf.si_ints[int_num].active) {
+        trig = HAL_GPIO_TRIG_RISING;
+    } else {
+        trig = HAL_GPIO_TRIG_FALLING;
+    }
 
     rc = hal_gpio_irq_init(pin,
                            handler,
@@ -3063,11 +3080,15 @@ enable_intpin(const struct bma253 * bma253, uint8_t pin,
 }
 
 static void
-disable_intpin(const struct bma253 * bma253, uint8_t pin)
+disable_intpin(const struct bma253 * bma253, enum bma253_int_num int_num)
 {
 #if MYNEWT_VAL(BMA253_INT_ENABLE)
-    hal_gpio_irq_disable(pin);
-    hal_gpio_irq_release(pin);
+    if ((int_num + 1) > bma253->sensor.s_itf.si_configured_ints_num) {
+        /* Interrupt pin not configured */
+        return;
+    }
+    hal_gpio_irq_disable(bma253->sensor.s_itf.si_ints[int_num].pin);
+    hal_gpio_irq_release(bma253->sensor.s_itf.si_ints[int_num].pin);
 #endif
 }
 
@@ -3540,7 +3561,7 @@ bma253_stream_read(struct bma253 * bma253,
 
     stop_ticks = 0;
 #if MYNEWT_VAL(BMA253_INT_ENABLE)
-    rc = enable_intpin(bma253, bma253->sensor.s_itf.si_int1_pin,
+    rc = enable_intpin(bma253, INT1_PIN,
                        interrupt_handler_wake_up,
                        &bma253->intr);
     if (rc != 0) {
@@ -3649,7 +3670,7 @@ bma253_stream_read(struct bma253 * bma253,
         return rc;
     }
 
-    disable_intpin(bma253, bma253->sensor.s_itf.si_int1_pin);
+    disable_intpin(bma253, INT1_PIN);
 
     return 0;
 }
@@ -3754,7 +3775,7 @@ bma253_wait_for_orient(struct bma253 * bma253,
     struct int_enable int_enable = {0};
     struct int_status int_status;
 
-    rc = enable_intpin(bma253, bma253->sensor.s_itf.si_int1_pin,
+    rc = enable_intpin(bma253, INT1_PIN,
                        interrupt_handler_wake_up,
                        &bma253->intr);
     if (rc != 0) {
@@ -3810,7 +3831,7 @@ bma253_wait_for_orient(struct bma253 * bma253,
     orient_xyz->downward_z = int_status.device_is_down;
 
 done:
-    disable_intpin(bma253, bma253->sensor.s_itf.si_int1_pin);
+    disable_intpin(bma253, INT1_PIN);
     return rc;
 }
 
@@ -3822,7 +3843,7 @@ bma253_wait_for_high_g(struct bma253 * bma253)
     struct int_enable int_enable_org;
     struct int_enable int_enable = { 0 };
 
-    rc = enable_intpin(bma253, bma253->sensor.s_itf.si_int1_pin,
+    rc = enable_intpin(bma253, INT1_PIN,
                        interrupt_handler_wake_up,
                        &bma253->intr);
     if (rc != 0) {
@@ -3873,7 +3894,7 @@ bma253_wait_for_high_g(struct bma253 * bma253)
     }
 
 done:
-    disable_intpin(bma253, bma253->sensor.s_itf.si_int1_pin);
+    disable_intpin(bma253, INT1_PIN);
     return rc;
 }
 
@@ -3885,7 +3906,7 @@ bma253_wait_for_low_g(struct bma253 * bma253)
     struct int_enable int_enable_org;
     struct int_enable int_enable = { 0 };
 
-    rc = enable_intpin(bma253, bma253->sensor.s_itf.si_int1_pin,
+    rc = enable_intpin(bma253, INT1_PIN,
                        interrupt_handler_wake_up,
                        &bma253->intr);
     if (rc != 0) {
@@ -3934,7 +3955,7 @@ bma253_wait_for_low_g(struct bma253 * bma253)
     }
 
 done:
-    disable_intpin(bma253, bma253->sensor.s_itf.si_int1_pin);
+    disable_intpin(bma253, INT1_PIN);
 
     return 0;
 }
@@ -3980,7 +4001,7 @@ bma253_wait_for_tap(struct bma253 * bma253,
         return rc;
     }
 
-    rc = enable_intpin(bma253, bma253->sensor.s_itf.si_int1_pin,
+    rc = enable_intpin(bma253, INT1_PIN,
                        interrupt_handler_wake_up,
                        &bma253->intr);
     if (rc != 0) {
@@ -4023,7 +4044,7 @@ bma253_wait_for_tap(struct bma253 * bma253,
     rc = default_power(bma253);
 
 done:
-    disable_intpin(bma253, bma253->sensor.s_itf.si_int1_pin);
+    disable_intpin(bma253, INT1_PIN);
 
     /* Restore previous routing */
     rc = bma253_set_int_routes(bma253, &int_routes_org);
@@ -4195,7 +4216,7 @@ sensor_driver_set_trigger_thresh(struct sensor * sensor,
     sensor_read_ev_ctx.srec_sensor = sensor;
     sensor_read_ev_ctx.srec_type   = sensor_type;
 
-    rc = enable_intpin(bma253, bma253->sensor.s_itf.si_int1_pin,
+    rc = enable_intpin(bma253, INT1_PIN,
                        interrupt_handler_read_evt,
                        &sensor_read_ev_ctx);
     if (rc != 0) {
@@ -4312,7 +4333,7 @@ sensor_driver_set_trigger_thresh(struct sensor * sensor,
 done:
     if (rc != 0) {
         /* In case of error let's disable interrupt */
-        disable_intpin(bma253, bma253->sensor.s_itf.si_int1_pin);
+        disable_intpin(bma253, INT1_PIN);
     }
 
     return rc;
@@ -4341,7 +4362,7 @@ sensor_driver_unset_notification(struct sensor * sensor,
 
     bma253 = (struct bma253 *)SENSOR_GET_DEVICE(sensor);
 
-    disable_intpin(bma253, bma253->sensor.s_itf.si_int2_pin);
+    disable_intpin(bma253, INT2_PIN);
 
     rc = interim_power(bma253,
                        request_power,
@@ -4405,15 +4426,10 @@ sensor_driver_set_notification(struct sensor * sensor,
 
     bma253 = (struct bma253 *)SENSOR_GET_DEVICE(sensor);
 
-    /* Make sure int2 is connected. We use it for tap events*/
-    if (bma253->sensor.s_itf.si_int2_pin < 0) {
-        return SYS_EINVAL;
-    }
-
     sensor_notify_ev_ctx.snec_sensor = sensor;
     sensor_notify_ev_ctx.snec_evtype = sensor_event_type;
 
-    rc = enable_intpin(bma253, bma253->sensor.s_itf.si_int2_pin,
+    rc = enable_intpin(bma253, INT2_PIN,
                        interrupt_handler_notify_evt,
                        &sensor_notify_ev_ctx);
     if (rc != 0) {
@@ -4466,7 +4482,7 @@ sensor_driver_set_notification(struct sensor * sensor,
 done:
     if (rc != 0) {
         /* In case of error disable interrupt*/
-        disable_intpin(bma253, bma253->sensor.s_itf.si_int2_pin);
+        disable_intpin(bma253, INT2_PIN);
     }
 
     return rc;

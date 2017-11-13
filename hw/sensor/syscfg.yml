@@ -48,3 +48,8 @@ syscfg.defs:
     SENSOR_POLL_TEST_LOG:
         description: 'Sensor poller log'
         value: '0'
+
+    SENSOR_MAX_INTERRUPTS_PINS:
+         desecrition: 'Max number of interupts configuration for the sensor.
+                This should be max from all the sensors attached to the system'
+         value: 2

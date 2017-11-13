@@ -183,8 +183,11 @@ static struct sensor_itf i2c_0_itf_lis = {
     .si_type = SENSOR_ITF_I2C,
     .si_num  = 0,
     .si_addr = 0x18,
-    .si_int1_pin = MYNEWT_VAL(BMA253_INT_PIN_HOST),
-    .si_int2_pin = MYNEWT_VAL(BMA253_INT2_PIN_HOST)
+    .si_configured_ints_num = 2,
+    .si_ints = {
+       { MYNEWT_VAL(BMA253_INT_PIN_HOST), MYNEWT_VAL(BMA253_INT_CFG_ACTIVE)},
+       { MYNEWT_VAL(BMA253_INT2_PIN_HOST), MYNEWT_VAL(BMA253_INT_CFG_ACTIVE)}
+    },
 };
 #endif
 
