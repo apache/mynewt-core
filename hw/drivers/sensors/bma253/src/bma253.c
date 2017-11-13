@@ -54,7 +54,7 @@ delay_msec(uint32_t delay)
 }
 
 static void
-init_interrupt(struct bma253_int * interrupt)
+init_interrupt(struct bma253_int * interrupt, struct sensor_int *ints)
 {
     os_error_t error;
 
@@ -63,6 +63,7 @@ init_interrupt(struct bma253_int * interrupt)
 
     interrupt->active = false;
     interrupt->asleep = false;
+    interrupt->ints = ints;
 }
 
 static void
@@ -75,11 +76,19 @@ undo_interrupt(struct bma253_int * interrupt)
 }
 
 static void
-wait_interrupt(struct bma253_int * interrupt)
+wait_interrupt(struct bma253_int * interrupt, enum bma253_int_num int_num)
 {
     bool wait;
 
     OS_ENTER_CRITICAL(interrupt->lock);
+
+    /* Check if we did not missed interrupt */
+    if (hal_gpio_read(interrupt->ints[int_num].pin) ==
+                                            interrupt->ints[int_num].active) {
+        OS_EXIT_CRITICAL(interrupt->lock);
+        return;
+    }
+
     if (interrupt->active) {
         interrupt->active = false;
         wait = false;
@@ -3603,7 +3612,7 @@ bma253_stream_read(struct bma253 * bma253,
 
     for (;;) {
 #if MYNEWT_VAL(BMA253_INT_ENABLE)
-        wait_interrupt(&bma253->intr);
+        wait_interrupt(&bma253->intr, INT1_PIN);
 #else
         switch (cfg->filter_bandwidth) {
         case BMA253_FILTER_BANDWIDTH_7_81_HZ:
@@ -3809,7 +3818,7 @@ bma253_wait_for_orient(struct bma253 * bma253,
         goto done;
     }
 
-    wait_interrupt(&bma253->intr);
+    wait_interrupt(&bma253->intr, INT1_PIN);
 
     rc = bma253_get_int_status(bma253, &int_status);
     if (rc != 0) {
@@ -3881,7 +3890,7 @@ bma253_wait_for_high_g(struct bma253 * bma253)
         goto done;
     }
 
-    wait_interrupt(&bma253->intr);
+    wait_interrupt(&bma253->intr, INT1_PIN);
 
     rc = bma253_set_int_enable(bma253, &int_enable_org);
     if (rc != 0) {
@@ -3942,7 +3951,7 @@ bma253_wait_for_low_g(struct bma253 * bma253)
         goto done;
     }
 
-    wait_interrupt(&bma253->intr);
+    wait_interrupt(&bma253->intr, INT1_PIN);
 
     rc = bma253_set_int_enable(bma253, &int_enable_org);
     if (rc != 0) {
@@ -4034,7 +4043,7 @@ bma253_wait_for_tap(struct bma253 * bma253,
         goto done;
     }
 
-    wait_interrupt(&bma253->intr);
+    wait_interrupt(&bma253->intr, INT1_PIN);
 
     rc = bma253_set_int_enable(bma253, &int_enable_org);
     if (rc != 0) {
@@ -4584,7 +4593,7 @@ bma253_init(struct os_dev * dev, void * arg)
         return rc;
     }
 
-    init_interrupt(&bma253->intr);
+    init_interrupt(&bma253->intr, bma253->sensor.s_itf.si_ints);
 
     bma253->power = BMA253_POWER_MODE_NORMAL;
 

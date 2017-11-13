@@ -176,6 +176,8 @@ struct bma253_int {
     bool active;
     /* Is there a waiter currently sleeping */
     bool asleep;
+    /* Configured interrupts */
+    struct sensor_int *ints;
 };
 
 /* The device itself */
