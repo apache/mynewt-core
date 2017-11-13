@@ -416,6 +416,11 @@ struct sensor_itf {
 
     /* Sensor interface high int pin */
     uint8_t si_high_pin;
+
+    /* Sensor interface interupts pins */
+    /* XXX We should probably remove low/high pins and replace it with those */
+    uint8_t si_int1_pin;
+    uint8_t si_int2_pin;
 };
 
 /*
