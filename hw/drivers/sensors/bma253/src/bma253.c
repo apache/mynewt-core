@@ -4319,6 +4319,70 @@ done:
 }
 
 static int
+sensor_driver_unset_notification(struct sensor * sensor,
+                               sensor_event_type_t sensor_event_type)
+{
+    struct bma253 * bma253;
+    enum bma253_power_mode request_power[3];
+    struct int_enable int_enable;
+    struct int_routes int_routes;
+    int rc;
+
+    if ((sensor_event_type & ~(SENSOR_EVENT_TYPE_DOUBLE_TAP |
+                               SENSOR_EVENT_TYPE_SINGLE_TAP)) != 0) {
+        return SYS_EINVAL;
+    }
+
+    /*XXX for now we do not support registering for both events */
+    if (sensor_event_type == (SENSOR_EVENT_TYPE_DOUBLE_TAP |
+                                        SENSOR_EVENT_TYPE_SINGLE_TAP)) {
+        return SYS_EINVAL;
+    }
+
+    bma253 = (struct bma253 *)SENSOR_GET_DEVICE(sensor);
+
+    disable_intpin(bma253, bma253->sensor.s_itf.si_int2_pin);
+
+    rc = interim_power(bma253,
+                       request_power,
+                       sizeof(request_power) / sizeof(*request_power));
+    if (rc != 0) {
+        return rc;
+    }
+
+    /* Clear route and interrupts. We can do it for single and double as driver
+     * supports notification only for one of them at the time
+     */
+    rc = bma253_get_int_routes(bma253, &int_routes);
+    if (rc != 0) {
+        return rc;
+    }
+
+    int_routes.s_tap_int_route = INT_ROUTE_NONE;
+    int_routes.d_tap_int_route = INT_ROUTE_NONE;
+
+    rc = bma253_set_int_routes(bma253, &int_routes);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = bma253_get_int_enable(bma253, &int_enable);
+    if (rc != 0) {
+        return rc;
+    }
+
+    int_enable.d_tap_int_enable = false;
+    int_enable.s_tap_int_enable = false;
+
+    rc = bma253_set_int_enable(bma253, &int_enable);
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
+}
+
+static int
 sensor_driver_set_notification(struct sensor * sensor,
                                sensor_event_type_t sensor_event_type)
 {
@@ -4413,6 +4477,7 @@ static struct sensor_driver bma253_sensor_driver = {
     .sd_get_config         = sensor_driver_get_config,
     .sd_set_trigger_thresh = sensor_driver_set_trigger_thresh,
     .sd_set_notification   = sensor_driver_set_notification,
+    .sd_unset_notification = sensor_driver_unset_notification,
 };
 
 int

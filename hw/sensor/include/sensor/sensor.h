@@ -384,11 +384,24 @@ typedef int (*sensor_set_trigger_thresh_t)(struct sensor *, sensor_type_t,
 typedef int (*sensor_set_notification_t)(struct sensor *,
                                          sensor_event_type_t);
 
+/**
+ * Un set the notification expectation for a targeted set of events for the
+ * specific sensor.
+ *
+ * @param The sensor.
+ * @param The mask of event types.
+ *
+ * @return 0 on success, non-zero error code on failure.
+ */
+typedef int (*sensor_unset_notification_t)(struct sensor *,
+                                           sensor_event_type_t);
+
 struct sensor_driver {
     sensor_read_func_t sd_read;
     sensor_get_config_func_t sd_get_config;
     sensor_set_trigger_thresh_t sd_set_trigger_thresh;
     sensor_set_notification_t sd_set_notification;
+    sensor_unset_notification_t sd_unset_notification;
 };
 
 struct sensor_timestamp {

@@ -1050,12 +1050,12 @@ int
 sensor_unregister_notifier(struct sensor *sensor,
                            struct sensor_notifier *notifier)
 {
-    int rc;
+    int rc = 0;
     struct sensor_notifier *tmp;
 
     rc = sensor_lock(sensor);
     if (rc != 0) {
-        goto err;
+        goto done;
     }
 
     SLIST_FOREACH(tmp, &sensor->s_notifier_list, sn_next) {
@@ -1068,8 +1068,12 @@ sensor_unregister_notifier(struct sensor *sensor,
 
     sensor_unlock(sensor);
 
-    return (0);
-err:
+    if (sensor->s_funcs->sd_unset_notification) {
+        rc = sensor->s_funcs->sd_unset_notification(sensor,
+                                                notifier->sn_sensor_event_type);
+    }
+
+done:
     return (rc);
 }
 
