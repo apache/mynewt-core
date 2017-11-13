@@ -954,15 +954,21 @@ sensor_unregister_listener(struct sensor *sensor,
         struct sensor_listener *listener)
 {
     int rc;
+    struct sensor_listener *tmp;
 
     rc = sensor_lock(sensor);
     if (rc != 0) {
         goto err;
     }
 
-    /* Remove this entry from the list */
-    SLIST_REMOVE(&sensor->s_listener_list, listener, sensor_listener,
-            sl_next);
+    SLIST_FOREACH(tmp, &sensor->s_listener_list, sl_next) {
+        if (listener == tmp) {
+        /* Remove this entry from the list */
+            SLIST_REMOVE(&sensor->s_listener_list, listener, sensor_listener,
+                    sl_next);
+            break;
+        }
+    }
 
     sensor_unlock(sensor);
 
@@ -1042,17 +1048,23 @@ err:
  */
 int
 sensor_unregister_notifier(struct sensor *sensor,
-        struct sensor_notifier *notifier)
+                           struct sensor_notifier *notifier)
 {
     int rc;
+    struct sensor_notifier *tmp;
 
     rc = sensor_lock(sensor);
     if (rc != 0) {
         goto err;
     }
 
-    SLIST_REMOVE(&sensor->s_notifier_list, notifier, sensor_notifier,
-            sn_next);
+    SLIST_FOREACH(tmp, &sensor->s_notifier_list, sn_next) {
+        if (notifier == tmp) {
+            SLIST_REMOVE(&sensor->s_notifier_list, notifier, sensor_notifier,
+                         sn_next);
+            break;
+        }
+    }
 
     sensor_unlock(sensor);
 
