@@ -1009,7 +1009,7 @@ sensor_set_notification(struct sensor *sensor)
  */
 int
 sensor_register_notifier(struct sensor *sensor,
-        struct sensor_notifier *notifier)
+                         struct sensor_notifier *notifier)
 {
     int rc;
 
@@ -1034,6 +1034,7 @@ remove:
             sn_next);
 
 err:
+    sensor_unlock(sensor);
     return (rc);
 }
 
