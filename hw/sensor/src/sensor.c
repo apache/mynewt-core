@@ -1099,9 +1099,9 @@ sensor_read_data_func(struct sensor *sensor, void *arg, void *data,
     /* Call data function */
     if (ctx->user_func != NULL) {
         return (ctx->user_func(sensor, ctx->user_arg, data, type));
-    } else {
-        return (0);
     }
+
+    return (0);
 }
 
 /**
