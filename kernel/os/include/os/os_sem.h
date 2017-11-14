@@ -53,8 +53,14 @@ os_error_t os_sem_release(struct os_sem *sem);
 /* Pend (wait) for a semaphore */
 os_error_t os_sem_pend(struct os_sem *sem, uint32_t timeout);
 
+/* Get current semaphore's count */
+static inline uint16_t os_sem_get_count(struct os_sem *sem)
+{
+    return sem->sem_tokens;
+}
+
 #ifdef __cplusplus
 }
 #endif
 
-#endif  /* _OS_MUTEX_H_ */
+#endif  /* _OS_SEM_H_ */
