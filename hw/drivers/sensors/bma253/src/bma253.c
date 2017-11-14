@@ -41,6 +41,11 @@ static struct log bma253_log;
 #define BMA253_INFO(...)
 #endif
 
+enum bma253_int_num {
+    INT1_PIN,
+    INT2_PIN
+};
+
 static void
 delay_msec(uint32_t delay)
 {
@@ -49,7 +54,7 @@ delay_msec(uint32_t delay)
 }
 
 static void
-init_interrupt(struct bma253_int * interrupt)
+init_interrupt(struct bma253_int * interrupt, struct sensor_int *ints)
 {
     os_error_t error;
 
@@ -58,6 +63,7 @@ init_interrupt(struct bma253_int * interrupt)
 
     interrupt->active = false;
     interrupt->asleep = false;
+    interrupt->ints = ints;
 }
 
 static void
@@ -70,11 +76,19 @@ undo_interrupt(struct bma253_int * interrupt)
 }
 
 static void
-wait_interrupt(struct bma253_int * interrupt)
+wait_interrupt(struct bma253_int * interrupt, enum bma253_int_num int_num)
 {
     bool wait;
 
     OS_ENTER_CRITICAL(interrupt->lock);
+
+    /* Check if we did not missed interrupt */
+    if (hal_gpio_read(interrupt->ints[int_num].pin) ==
+                                            interrupt->ints[int_num].active) {
+        OS_EXIT_CRITICAL(interrupt->lock);
+        return;
+    }
+
     if (interrupt->active) {
         interrupt->active = false;
         wait = false;
@@ -2779,8 +2793,8 @@ reset_and_recfg(struct bma253 * bma253)
 
     int_routes.flat_int_route        = INT_ROUTE_NONE;
     int_routes.orient_int_route      = int_route;
-    int_routes.s_tap_int_route       = int_route;
-    int_routes.d_tap_int_route       = int_route;
+    int_routes.s_tap_int_route       = INT_ROUTE_NONE;
+    int_routes.d_tap_int_route       = INT_ROUTE_NONE;
     int_routes.slow_no_mot_int_route = INT_ROUTE_NONE;
     int_routes.slope_int_route       = INT_ROUTE_NONE;
     int_routes.high_g_int_route      = int_route;
@@ -3032,20 +3046,32 @@ default_power(struct bma253 * bma253)
 
 static int
 enable_intpin(const struct bma253 * bma253,
+              enum bma253_int_num int_num,
               hal_gpio_irq_handler_t handler,
               void * arg)
 {
 #if MYNEWT_VAL(BMA253_INT_ENABLE)
     hal_gpio_irq_trig_t trig;
+    uint8_t pin;
     int rc;
 
-#if MYNEWT_VAL(BMA253_INT_CFG_ACTIVE)
-    trig = HAL_GPIO_TRIG_RISING;
-#else
-    trig = HAL_GPIO_TRIG_FALLING;
-#endif
+    if ((int_num + 1) > bma253->sensor.s_itf.si_configured_ints_num) {
+        /* Interrupt pin not configured */
+        return SYS_EINVAL;
+    }
 
-    rc = hal_gpio_irq_init(MYNEWT_VAL(BMA253_INT_PIN_HOST),
+    pin = bma253->sensor.s_itf.si_ints[int_num].pin;
+    if (pin < 0) {
+        return SYS_EINVAL;
+    }
+
+    if (bma253->sensor.s_itf.si_ints[int_num].active) {
+        trig = HAL_GPIO_TRIG_RISING;
+    } else {
+        trig = HAL_GPIO_TRIG_FALLING;
+    }
+
+    rc = hal_gpio_irq_init(pin,
                            handler,
                            arg,
                            trig,
@@ -3054,7 +3080,7 @@ enable_intpin(const struct bma253 * bma253,
         return rc;
     }
 
-    hal_gpio_irq_enable(MYNEWT_VAL(BMA253_INT_PIN_HOST));
+    hal_gpio_irq_enable(pin);
 
     return 0;
 #else
@@ -3063,11 +3089,15 @@ enable_intpin(const struct bma253 * bma253,
 }
 
 static void
-disable_intpin(const struct bma253 * bma253)
+disable_intpin(const struct bma253 * bma253, enum bma253_int_num int_num)
 {
 #if MYNEWT_VAL(BMA253_INT_ENABLE)
-    hal_gpio_irq_disable(MYNEWT_VAL(BMA253_INT_PIN_HOST));
-    hal_gpio_irq_release(MYNEWT_VAL(BMA253_INT_PIN_HOST));
+    if ((int_num + 1) > bma253->sensor.s_itf.si_configured_ints_num) {
+        /* Interrupt pin not configured */
+        return;
+    }
+    hal_gpio_irq_disable(bma253->sensor.s_itf.si_ints[int_num].pin);
+    hal_gpio_irq_release(bma253->sensor.s_itf.si_ints[int_num].pin);
 #endif
 }
 
@@ -3529,7 +3559,8 @@ bma253_stream_read(struct bma253 * bma253,
     const struct bma253_cfg * cfg;
     int rc;
     enum bma253_power_mode request_power;
-    struct int_enable int_enable;
+    struct int_enable int_enable_org;
+    struct int_enable int_enable = { 0 };
     os_time_t time_ticks;
     os_time_t stop_ticks;
     struct accel_data accel_data[AXIS_ALL];
@@ -3539,7 +3570,7 @@ bma253_stream_read(struct bma253 * bma253,
 
     stop_ticks = 0;
 #if MYNEWT_VAL(BMA253_INT_ENABLE)
-    rc = enable_intpin(bma253,
+    rc = enable_intpin(bma253, INT1_PIN,
                        interrupt_handler_wake_up,
                        &bma253->intr);
     if (rc != 0) {
@@ -3556,24 +3587,15 @@ bma253_stream_read(struct bma253 * bma253,
 
     undo_interrupt(&bma253->intr);
 
-    int_enable.flat_int_enable          = false;
-    int_enable.orient_int_enable        = false;
-    int_enable.s_tap_int_enable         = false;
-    int_enable.d_tap_int_enable         = false;
-    int_enable.slope_z_int_enable       = false;
-    int_enable.slope_y_int_enable       = false;
-    int_enable.slope_x_int_enable       = false;
-    int_enable.fifo_wmark_int_enable    = false;
-    int_enable.fifo_full_int_enable     = false;
-    int_enable.data_int_enable          = true;
-    int_enable.low_g_int_enable         = false;
-    int_enable.high_g_z_int_enable      = false;
-    int_enable.high_g_y_int_enable      = false;
-    int_enable.high_g_x_int_enable      = false;
-    int_enable.no_motion_select         = false;
-    int_enable.slow_no_mot_z_int_enable = false;
-    int_enable.slow_no_mot_y_int_enable = false;
-    int_enable.slow_no_mot_x_int_enable = false;
+    rc = bma253_get_int_enable(bma253, &int_enable_org);
+    if (rc != 0) {
+        return rc;
+    }
+
+    /* Leave tap configured as it is since it is on int2*/
+    int_enable.s_tap_int_enable = int_enable_org.s_tap_int_enable;
+    int_enable.d_tap_int_enable = int_enable_org.d_tap_int_enable;
+    int_enable.data_int_enable = true;
 
     rc = bma253_set_int_enable(bma253, &int_enable);
     if (rc != 0) {
@@ -3590,7 +3612,7 @@ bma253_stream_read(struct bma253 * bma253,
 
     for (;;) {
 #if MYNEWT_VAL(BMA253_INT_ENABLE)
-        wait_interrupt(&bma253->intr);
+        wait_interrupt(&bma253->intr, INT1_PIN);
 #else
         switch (cfg->filter_bandwidth) {
         case BMA253_FILTER_BANDWIDTH_7_81_HZ:
@@ -3647,26 +3669,7 @@ bma253_stream_read(struct bma253 * bma253,
         }
     }
 
-    int_enable.flat_int_enable          = false;
-    int_enable.orient_int_enable        = false;
-    int_enable.s_tap_int_enable         = false;
-    int_enable.d_tap_int_enable         = false;
-    int_enable.slope_z_int_enable       = false;
-    int_enable.slope_y_int_enable       = false;
-    int_enable.slope_x_int_enable       = false;
-    int_enable.fifo_wmark_int_enable    = false;
-    int_enable.fifo_full_int_enable     = false;
-    int_enable.data_int_enable          = false;
-    int_enable.low_g_int_enable         = false;
-    int_enable.high_g_z_int_enable      = false;
-    int_enable.high_g_y_int_enable      = false;
-    int_enable.high_g_x_int_enable      = false;
-    int_enable.no_motion_select         = false;
-    int_enable.slow_no_mot_z_int_enable = false;
-    int_enable.slow_no_mot_y_int_enable = false;
-    int_enable.slow_no_mot_x_int_enable = false;
-
-    rc = bma253_set_int_enable(bma253, &int_enable);
+    rc = bma253_set_int_enable(bma253, &int_enable_org);
     if (rc != 0) {
         return rc;
     }
@@ -3676,7 +3679,7 @@ bma253_stream_read(struct bma253 * bma253,
         return rc;
     }
 
-    disable_intpin(bma253);
+    disable_intpin(bma253, INT1_PIN);
 
     return 0;
 }
@@ -3718,7 +3721,8 @@ bma253_current_orient(struct bma253 * bma253,
 {
     enum bma253_power_mode request_power[3];
     int rc;
-    struct int_enable int_enable;
+    struct int_enable int_enable_org;
+    struct int_enable int_enable = { 0 };
     struct int_status int_status;
 
     request_power[0] = BMA253_POWER_MODE_LPM_1;
@@ -3732,24 +3736,16 @@ bma253_current_orient(struct bma253 * bma253,
         return rc;
     }
 
-    int_enable.flat_int_enable          = false;
-    int_enable.orient_int_enable        = true;
-    int_enable.s_tap_int_enable         = false;
-    int_enable.d_tap_int_enable         = false;
-    int_enable.slope_z_int_enable       = false;
-    int_enable.slope_y_int_enable       = false;
-    int_enable.slope_x_int_enable       = false;
-    int_enable.fifo_wmark_int_enable    = false;
-    int_enable.fifo_full_int_enable     = false;
-    int_enable.data_int_enable          = false;
-    int_enable.low_g_int_enable         = false;
-    int_enable.high_g_z_int_enable      = false;
-    int_enable.high_g_y_int_enable      = false;
-    int_enable.high_g_x_int_enable      = false;
-    int_enable.no_motion_select         = false;
-    int_enable.slow_no_mot_z_int_enable = false;
-    int_enable.slow_no_mot_y_int_enable = false;
-    int_enable.slow_no_mot_x_int_enable = false;
+    rc = bma253_get_int_enable(bma253, &int_enable_org);
+    if (rc != 0) {
+        return rc;
+    }
+
+   /* Leave tap configured as it is since it is on int2*/
+    int_enable.s_tap_int_enable = int_enable_org.s_tap_int_enable;
+    int_enable.d_tap_int_enable = int_enable_org.d_tap_int_enable;
+
+    int_enable.orient_int_enable = true;
 
     rc = bma253_set_int_enable(bma253, &int_enable);
     if (rc != 0) {
@@ -3761,26 +3757,8 @@ bma253_current_orient(struct bma253 * bma253,
         return rc;
     }
 
-    int_enable.flat_int_enable          = false;
-    int_enable.orient_int_enable        = false;
-    int_enable.s_tap_int_enable         = false;
-    int_enable.d_tap_int_enable         = false;
-    int_enable.slope_z_int_enable       = false;
-    int_enable.slope_y_int_enable       = false;
-    int_enable.slope_x_int_enable       = false;
-    int_enable.fifo_wmark_int_enable    = false;
-    int_enable.fifo_full_int_enable     = false;
-    int_enable.data_int_enable          = false;
-    int_enable.low_g_int_enable         = false;
-    int_enable.high_g_z_int_enable      = false;
-    int_enable.high_g_y_int_enable      = false;
-    int_enable.high_g_x_int_enable      = false;
-    int_enable.no_motion_select         = false;
-    int_enable.slow_no_mot_z_int_enable = false;
-    int_enable.slow_no_mot_y_int_enable = false;
-    int_enable.slow_no_mot_x_int_enable = false;
-
-    rc = bma253_set_int_enable(bma253, &int_enable);
+    /* Back to original interrupts */
+    rc = bma253_set_int_enable(bma253, &int_enable_org);
     if (rc != 0) {
         return rc;
     }
@@ -3802,10 +3780,11 @@ bma253_wait_for_orient(struct bma253 * bma253,
 {
     int rc;
     enum bma253_power_mode request_power[3];
-    struct int_enable int_enable;
+    struct int_enable int_enable_org;
+    struct int_enable int_enable = {0};
     struct int_status int_status;
 
-    rc = enable_intpin(bma253,
+    rc = enable_intpin(bma253, INT1_PIN,
                        interrupt_handler_wake_up,
                        &bma253->intr);
     if (rc != 0) {
@@ -3820,77 +3799,49 @@ bma253_wait_for_orient(struct bma253 * bma253,
                        request_power,
                        sizeof(request_power) / sizeof(*request_power));
     if (rc != 0) {
-        return rc;
+        goto done;
     }
 
     undo_interrupt(&bma253->intr);
 
-    int_enable.flat_int_enable          = false;
-    int_enable.orient_int_enable        = true;
-    int_enable.s_tap_int_enable         = false;
-    int_enable.d_tap_int_enable         = false;
-    int_enable.slope_z_int_enable       = false;
-    int_enable.slope_y_int_enable       = false;
-    int_enable.slope_x_int_enable       = false;
-    int_enable.fifo_wmark_int_enable    = false;
-    int_enable.fifo_full_int_enable     = false;
-    int_enable.data_int_enable          = false;
-    int_enable.low_g_int_enable         = false;
-    int_enable.high_g_z_int_enable      = false;
-    int_enable.high_g_y_int_enable      = false;
-    int_enable.high_g_x_int_enable      = false;
-    int_enable.no_motion_select         = false;
-    int_enable.slow_no_mot_z_int_enable = false;
-    int_enable.slow_no_mot_y_int_enable = false;
-    int_enable.slow_no_mot_x_int_enable = false;
-
-    rc = bma253_set_int_enable(bma253, &int_enable);
+    rc = bma253_get_int_enable(bma253, &int_enable_org);
     if (rc != 0) {
         return rc;
     }
 
-    wait_interrupt(&bma253->intr);
+   /* Leave tap configured as it is since it is on int2*/
+    int_enable.s_tap_int_enable = int_enable_org.s_tap_int_enable;
+    int_enable.d_tap_int_enable = int_enable_org.d_tap_int_enable;
+    int_enable.orient_int_enable = true;
+    rc = bma253_set_int_enable(bma253, &int_enable);
+    if (rc != 0) {
+        goto done;
+    }
+
+    wait_interrupt(&bma253->intr, INT1_PIN);
 
     rc = bma253_get_int_status(bma253, &int_status);
     if (rc != 0) {
-        return rc;
+        goto done;
     }
 
-    int_enable.flat_int_enable          = false;
-    int_enable.orient_int_enable        = false;
-    int_enable.s_tap_int_enable         = false;
-    int_enable.d_tap_int_enable         = false;
-    int_enable.slope_z_int_enable       = false;
-    int_enable.slope_y_int_enable       = false;
-    int_enable.slope_x_int_enable       = false;
-    int_enable.fifo_wmark_int_enable    = false;
-    int_enable.fifo_full_int_enable     = false;
-    int_enable.data_int_enable          = false;
-    int_enable.low_g_int_enable         = false;
-    int_enable.high_g_z_int_enable      = false;
-    int_enable.high_g_y_int_enable      = false;
-    int_enable.high_g_x_int_enable      = false;
-    int_enable.no_motion_select         = false;
-    int_enable.slow_no_mot_z_int_enable = false;
-    int_enable.slow_no_mot_y_int_enable = false;
-    int_enable.slow_no_mot_x_int_enable = false;
-
-    rc = bma253_set_int_enable(bma253, &int_enable);
+    /* Back to original interrupts */
+    rc = bma253_set_int_enable(bma253, &int_enable_org);
     if (rc != 0) {
-        return rc;
+        goto done;
     }
 
     rc = default_power(bma253);
     if (rc != 0) {
-        return rc;
+        goto done;
     }
-
-    disable_intpin(bma253);
 
     orient_xyz->orient_xy  = int_status.device_orientation;
     orient_xyz->downward_z = int_status.device_is_down;
 
-    return 0;
+done:
+    disable_intpin(bma253, INT1_PIN);
+    return rc;
 }
 
 int
@@ -3898,9 +3849,10 @@ bma253_wait_for_high_g(struct bma253 * bma253)
 {
     int rc;
     enum bma253_power_mode request_power[3];
-    struct int_enable int_enable;
+    struct int_enable int_enable_org;
+    struct int_enable int_enable = { 0 };
 
-    rc = enable_intpin(bma253,
+    rc = enable_intpin(bma253, INT1_PIN,
                        interrupt_handler_wake_up,
                        &bma253->intr);
     if (rc != 0) {
@@ -3915,69 +3867,44 @@ bma253_wait_for_high_g(struct bma253 * bma253)
                        request_power,
                        sizeof(request_power) / sizeof(*request_power));
     if (rc != 0) {
-        return rc;
+        goto done;
     }
 
     undo_interrupt(&bma253->intr);
 
-    int_enable.flat_int_enable          = false;
-    int_enable.orient_int_enable        = false;
-    int_enable.s_tap_int_enable         = false;
-    int_enable.d_tap_int_enable         = false;
-    int_enable.slope_z_int_enable       = false;
-    int_enable.slope_y_int_enable       = false;
-    int_enable.slope_x_int_enable       = false;
-    int_enable.fifo_wmark_int_enable    = false;
-    int_enable.fifo_full_int_enable     = false;
-    int_enable.data_int_enable          = false;
-    int_enable.low_g_int_enable         = false;
-    int_enable.high_g_z_int_enable      = true;
-    int_enable.high_g_y_int_enable      = true;
-    int_enable.high_g_x_int_enable      = true;
-    int_enable.no_motion_select         = false;
-    int_enable.slow_no_mot_z_int_enable = false;
-    int_enable.slow_no_mot_y_int_enable = false;
-    int_enable.slow_no_mot_x_int_enable = false;
-
-    rc = bma253_set_int_enable(bma253, &int_enable);
+    rc = bma253_get_int_enable(bma253, &int_enable_org);
     if (rc != 0) {
         return rc;
     }
 
-    wait_interrupt(&bma253->intr);
+   /* Leave tap configured as it is since it is on int2*/
+    int_enable.s_tap_int_enable = int_enable_org.s_tap_int_enable;
+    int_enable.d_tap_int_enable = int_enable_org.d_tap_int_enable;
 
-    int_enable.flat_int_enable          = false;
-    int_enable.orient_int_enable        = false;
-    int_enable.s_tap_int_enable         = false;
-    int_enable.d_tap_int_enable         = false;
-    int_enable.slope_z_int_enable       = false;
-    int_enable.slope_y_int_enable       = false;
-    int_enable.slope_x_int_enable       = false;
-    int_enable.fifo_wmark_int_enable    = false;
-    int_enable.fifo_full_int_enable     = false;
-    int_enable.data_int_enable          = false;
-    int_enable.low_g_int_enable         = false;
-    int_enable.high_g_z_int_enable      = false;
-    int_enable.high_g_y_int_enable      = false;
-    int_enable.high_g_x_int_enable      = false;
-    int_enable.no_motion_select         = false;
-    int_enable.slow_no_mot_z_int_enable = false;
-    int_enable.slow_no_mot_y_int_enable = false;
-    int_enable.slow_no_mot_x_int_enable = false;
+    int_enable.high_g_z_int_enable = true;
+    int_enable.high_g_y_int_enable = true;
+    int_enable.high_g_x_int_enable = true;
 
     rc = bma253_set_int_enable(bma253, &int_enable);
     if (rc != 0) {
-        return rc;
+        goto done;
+    }
+
+    wait_interrupt(&bma253->intr, INT1_PIN);
+
+    rc = bma253_set_int_enable(bma253, &int_enable_org);
+    if (rc != 0) {
+        goto done;
     }
 
     rc = default_power(bma253);
     if (rc != 0) {
-        return rc;
+        goto done;
     }
 
-    disable_intpin(bma253);
-
-    return 0;
+done:
+    disable_intpin(bma253, INT1_PIN);
+    return rc;
 }
 
 int
@@ -3985,9 +3912,10 @@ bma253_wait_for_low_g(struct bma253 * bma253)
 {
     int rc;
     enum bma253_power_mode request_power[3];
-    struct int_enable int_enable;
+    struct int_enable int_enable_org;
+    struct int_enable int_enable = { 0 };
 
-    rc = enable_intpin(bma253,
+    rc = enable_intpin(bma253, INT1_PIN,
                        interrupt_handler_wake_up,
                        &bma253->intr);
     if (rc != 0) {
@@ -4002,67 +3930,41 @@ bma253_wait_for_low_g(struct bma253 * bma253)
                        request_power,
                        sizeof(request_power) / sizeof(*request_power));
     if (rc != 0) {
-        return rc;
+        goto done;
     }
 
     undo_interrupt(&bma253->intr);
 
-    int_enable.flat_int_enable          = false;
-    int_enable.orient_int_enable        = false;
-    int_enable.s_tap_int_enable         = false;
-    int_enable.d_tap_int_enable         = false;
-    int_enable.slope_z_int_enable       = false;
-    int_enable.slope_y_int_enable       = false;
-    int_enable.slope_x_int_enable       = false;
-    int_enable.fifo_wmark_int_enable    = false;
-    int_enable.fifo_full_int_enable     = false;
-    int_enable.data_int_enable          = false;
-    int_enable.low_g_int_enable         = true;
-    int_enable.high_g_z_int_enable      = false;
-    int_enable.high_g_y_int_enable      = false;
-    int_enable.high_g_x_int_enable      = false;
-    int_enable.no_motion_select         = false;
-    int_enable.slow_no_mot_z_int_enable = false;
-    int_enable.slow_no_mot_y_int_enable = false;
-    int_enable.slow_no_mot_x_int_enable = false;
-
-    rc = bma253_set_int_enable(bma253, &int_enable);
+    rc = bma253_get_int_enable(bma253, &int_enable_org);
     if (rc != 0) {
         return rc;
     }
 
-    wait_interrupt(&bma253->intr);
+   /* Leave tap configured as it is since it is on int2 */
+    int_enable.s_tap_int_enable = int_enable_org.s_tap_int_enable;
+    int_enable.d_tap_int_enable = int_enable_org.d_tap_int_enable;
 
-    int_enable.flat_int_enable          = false;
-    int_enable.orient_int_enable        = false;
-    int_enable.s_tap_int_enable         = false;
-    int_enable.d_tap_int_enable         = false;
-    int_enable.slope_z_int_enable       = false;
-    int_enable.slope_y_int_enable       = false;
-    int_enable.slope_x_int_enable       = false;
-    int_enable.fifo_wmark_int_enable    = false;
-    int_enable.fifo_full_int_enable     = false;
-    int_enable.data_int_enable          = false;
-    int_enable.low_g_int_enable         = false;
-    int_enable.high_g_z_int_enable      = false;
-    int_enable.high_g_y_int_enable      = false;
-    int_enable.high_g_x_int_enable      = false;
-    int_enable.no_motion_select         = false;
-    int_enable.slow_no_mot_z_int_enable = false;
-    int_enable.slow_no_mot_y_int_enable = false;
-    int_enable.slow_no_mot_x_int_enable = false;
+    int_enable.low_g_int_enable         = true;
 
     rc = bma253_set_int_enable(bma253, &int_enable);
     if (rc != 0) {
-        return rc;
+        goto done;
+    }
+
+    wait_interrupt(&bma253->intr, INT1_PIN);
+
+    rc = bma253_set_int_enable(bma253, &int_enable_org);
+    if (rc != 0) {
+        goto done;
     }
 
     rc = default_power(bma253);
     if (rc != 0) {
-        return rc;
+        goto done;
     }
 
-    disable_intpin(bma253);
+done:
+    disable_intpin(bma253, INT1_PIN);
 
     return 0;
 }
@@ -4071,9 +3973,12 @@ int
 bma253_wait_for_tap(struct bma253 * bma253,
                     enum bma253_tap_type tap_type)
 {
-    int rc;
+    int rc = 0;
     enum bma253_power_mode request_power[3];
-    struct int_enable int_enable;
+    struct int_enable int_enable_org;
+    struct int_enable int_enable = { 0 };
+    struct int_routes int_routes;
+    struct int_routes int_routes_org;
 
     switch (tap_type) {
     case BMA253_TAP_TYPE_DOUBLE:
@@ -4083,7 +3988,29 @@ bma253_wait_for_tap(struct bma253 * bma253,
         return SYS_EINVAL;
     }
 
-    rc = enable_intpin(bma253,
+    rc = bma253_get_int_routes(bma253, &int_routes_org);
+    if (rc != 0) {
+        return rc;
+    }
+
+    int_routes = int_routes_org;
+    if (tap_type == BMA253_TAP_TYPE_DOUBLE) {
+        /* According to BMA253 when single tap shall not be used we should not
+         * route it to any INTX
+         */
+        int_routes.d_tap_int_route = INT_ROUTE_PIN_1;
+        int_routes.s_tap_int_route = INT_ROUTE_NONE;
+    } else {
+        int_routes.d_tap_int_route = INT_ROUTE_NONE;
+        int_routes.s_tap_int_route = INT_ROUTE_PIN_1;
+    }
+
+    rc = bma253_set_int_routes(bma253, &int_routes);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = enable_intpin(bma253, INT1_PIN,
                        interrupt_handler_wake_up,
                        &bma253->intr);
     if (rc != 0) {
@@ -4098,69 +4025,40 @@ bma253_wait_for_tap(struct bma253 * bma253,
                        request_power,
                        sizeof(request_power) / sizeof(*request_power));
     if (rc != 0) {
-        return rc;
+        goto done;
     }
 
     undo_interrupt(&bma253->intr);
 
-    int_enable.flat_int_enable          = false;
-    int_enable.orient_int_enable        = false;
-    int_enable.s_tap_int_enable         = tap_type == BMA253_TAP_TYPE_SINGLE;
-    int_enable.d_tap_int_enable         = tap_type == BMA253_TAP_TYPE_DOUBLE;
-    int_enable.slope_z_int_enable       = false;
-    int_enable.slope_y_int_enable       = false;
-    int_enable.slope_x_int_enable       = false;
-    int_enable.fifo_wmark_int_enable    = false;
-    int_enable.fifo_full_int_enable     = false;
-    int_enable.data_int_enable          = false;
-    int_enable.low_g_int_enable         = false;
-    int_enable.high_g_z_int_enable      = false;
-    int_enable.high_g_y_int_enable      = false;
-    int_enable.high_g_x_int_enable      = false;
-    int_enable.no_motion_select         = false;
-    int_enable.slow_no_mot_z_int_enable = false;
-    int_enable.slow_no_mot_y_int_enable = false;
-    int_enable.slow_no_mot_x_int_enable = false;
-
-    rc = bma253_set_int_enable(bma253, &int_enable);
+    rc = bma253_get_int_enable(bma253, &int_enable_org);
     if (rc != 0) {
         return rc;
     }
 
-    wait_interrupt(&bma253->intr);
-
-    int_enable.flat_int_enable          = false;
-    int_enable.orient_int_enable        = false;
-    int_enable.s_tap_int_enable         = false;
-    int_enable.d_tap_int_enable         = false;
-    int_enable.slope_z_int_enable       = false;
-    int_enable.slope_y_int_enable       = false;
-    int_enable.slope_x_int_enable       = false;
-    int_enable.fifo_wmark_int_enable    = false;
-    int_enable.fifo_full_int_enable     = false;
-    int_enable.data_int_enable          = false;
-    int_enable.low_g_int_enable         = false;
-    int_enable.high_g_z_int_enable      = false;
-    int_enable.high_g_y_int_enable      = false;
-    int_enable.high_g_x_int_enable      = false;
-    int_enable.no_motion_select         = false;
-    int_enable.slow_no_mot_z_int_enable = false;
-    int_enable.slow_no_mot_y_int_enable = false;
-    int_enable.slow_no_mot_x_int_enable = false;
+    int_enable.s_tap_int_enable         = tap_type == BMA253_TAP_TYPE_SINGLE;
+    int_enable.d_tap_int_enable         = tap_type == BMA253_TAP_TYPE_DOUBLE;
 
     rc = bma253_set_int_enable(bma253, &int_enable);
     if (rc != 0) {
-        return rc;
+        goto done;
+    }
+
+    wait_interrupt(&bma253->intr, INT1_PIN);
+
+    rc = bma253_set_int_enable(bma253, &int_enable_org);
+    if (rc != 0) {
+        goto done;
     }
 
     rc = default_power(bma253);
-    if (rc != 0) {
-        return rc;
-    }
 
-    disable_intpin(bma253);
+done:
+    disable_intpin(bma253, INT1_PIN);
 
-    return 0;
+    /* Restore previous routing */
+    rc = bma253_set_int_routes(bma253, &int_routes_org);
+
+    return rc;
 }
 
 int
@@ -4327,7 +4225,7 @@ sensor_driver_set_trigger_thresh(struct sensor * sensor,
     sensor_read_ev_ctx.srec_sensor = sensor;
     sensor_read_ev_ctx.srec_type   = sensor_type;
 
-    rc = enable_intpin(bma253,
+    rc = enable_intpin(bma253, INT1_PIN,
                        interrupt_handler_read_evt,
                        &sensor_read_ev_ctx);
     if (rc != 0) {
@@ -4342,7 +4240,7 @@ sensor_driver_set_trigger_thresh(struct sensor * sensor,
                        request_power,
                        sizeof(request_power) / sizeof(*request_power));
     if (rc != 0) {
-        return rc;
+        goto done;
     }
 
     low_thresh  = stt->stt_low_thresh.sad;
@@ -4396,7 +4294,7 @@ sensor_driver_set_trigger_thresh(struct sensor * sensor,
         rc = bma253_set_low_g_int_cfg(bma253,
                                       &low_g_int_cfg);
         if (rc != 0) {
-            return rc;
+            goto done;
         }
 
         int_enable.low_g_int_enable = true;
@@ -4431,7 +4329,7 @@ sensor_driver_set_trigger_thresh(struct sensor * sensor,
                                        cfg->g_range,
                                        &high_g_int_cfg);
         if (rc != 0) {
-            return rc;
+            goto done;
         }
 
         int_enable.high_g_z_int_enable = high_thresh->sad_z_is_valid;
@@ -4439,7 +4337,79 @@ sensor_driver_set_trigger_thresh(struct sensor * sensor,
         int_enable.high_g_x_int_enable = high_thresh->sad_x_is_valid;
     }
 
-    return bma253_set_int_enable(bma253, &int_enable);
+    rc = bma253_set_int_enable(bma253, &int_enable);
+
+done:
+    if (rc != 0) {
+        /* In case of error let's disable interrupt */
+        disable_intpin(bma253, INT1_PIN);
+    }
+
+    return rc;
+}
+
+static int
+sensor_driver_unset_notification(struct sensor * sensor,
+                               sensor_event_type_t sensor_event_type)
+{
+    struct bma253 * bma253;
+    enum bma253_power_mode request_power[3];
+    struct int_enable int_enable;
+    struct int_routes int_routes;
+    int rc;
+
+    if ((sensor_event_type & ~(SENSOR_EVENT_TYPE_DOUBLE_TAP |
+                               SENSOR_EVENT_TYPE_SINGLE_TAP)) != 0) {
+        return SYS_EINVAL;
+    }
+
+    /*XXX for now we do not support registering for both events */
+    if (sensor_event_type == (SENSOR_EVENT_TYPE_DOUBLE_TAP |
+                                        SENSOR_EVENT_TYPE_SINGLE_TAP)) {
+        return SYS_EINVAL;
+    }
+
+    bma253 = (struct bma253 *)SENSOR_GET_DEVICE(sensor);
+
+    disable_intpin(bma253, INT2_PIN);
+
+    rc = interim_power(bma253,
+                       request_power,
+                       sizeof(request_power) / sizeof(*request_power));
+    if (rc != 0) {
+        return rc;
+    }
+
+    /* Clear route and interrupts. We can do it for single and double as driver
+     * supports notification only for one of them at the time
+     */
+    rc = bma253_get_int_routes(bma253, &int_routes);
+    if (rc != 0) {
+        return rc;
+    }
+
+    int_routes.s_tap_int_route = INT_ROUTE_NONE;
+    int_routes.d_tap_int_route = INT_ROUTE_NONE;
+
+    rc = bma253_set_int_routes(bma253, &int_routes);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = bma253_get_int_enable(bma253, &int_enable);
+    if (rc != 0) {
+        return rc;
+    }
+
+    int_enable.d_tap_int_enable = false;
+    int_enable.s_tap_int_enable = false;
+
+    rc = bma253_set_int_enable(bma253, &int_enable);
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
 }
 
 static int
@@ -4450,12 +4420,16 @@ sensor_driver_set_notification(struct sensor * sensor,
     int rc;
     enum bma253_power_mode request_power[3];
     struct int_enable int_enable;
+    struct int_routes int_routes;
 
     if ((sensor_event_type & ~(SENSOR_EVENT_TYPE_DOUBLE_TAP |
                                SENSOR_EVENT_TYPE_SINGLE_TAP)) != 0) {
         return SYS_EINVAL;
     }
-    if ((sensor_event_type & (sensor_event_type - 1)) != 0) {
+
+    /*XXX for now we do not support registering for both events */
+    if (sensor_event_type == (SENSOR_EVENT_TYPE_DOUBLE_TAP |
+                                        SENSOR_EVENT_TYPE_SINGLE_TAP)) {
         return SYS_EINVAL;
     }
 
@@ -4464,7 +4438,7 @@ sensor_driver_set_notification(struct sensor * sensor,
     sensor_notify_ev_ctx.snec_sensor = sensor;
     sensor_notify_ev_ctx.snec_evtype = sensor_event_type;
 
-    rc = enable_intpin(bma253,
+    rc = enable_intpin(bma253, INT2_PIN,
                        interrupt_handler_notify_evt,
                        &sensor_notify_ev_ctx);
     if (rc != 0) {
@@ -4479,36 +4453,48 @@ sensor_driver_set_notification(struct sensor * sensor,
                        request_power,
                        sizeof(request_power) / sizeof(*request_power));
     if (rc != 0) {
-        return rc;
+        goto done;
     }
 
-    int_enable.flat_int_enable          = false;
-    int_enable.orient_int_enable        = false;
-    int_enable.s_tap_int_enable         = sensor_event_type ==
-                                          SENSOR_EVENT_TYPE_SINGLE_TAP;
-    int_enable.d_tap_int_enable         = sensor_event_type ==
-                                          SENSOR_EVENT_TYPE_DOUBLE_TAP;
-    int_enable.slope_z_int_enable       = false;
-    int_enable.slope_y_int_enable       = false;
-    int_enable.slope_x_int_enable       = false;
-    int_enable.fifo_wmark_int_enable    = false;
-    int_enable.fifo_full_int_enable     = false;
-    int_enable.data_int_enable          = false;
-    int_enable.low_g_int_enable         = false;
-    int_enable.high_g_z_int_enable      = false;
-    int_enable.high_g_y_int_enable      = false;
-    int_enable.high_g_x_int_enable      = false;
-    int_enable.no_motion_select         = false;
-    int_enable.slow_no_mot_z_int_enable = false;
-    int_enable.slow_no_mot_y_int_enable = false;
-    int_enable.slow_no_mot_x_int_enable = false;
-
-    rc = bma253_set_int_enable(bma253, &int_enable);
+    /* Configure route */
+    rc = bma253_get_int_routes(bma253, &int_routes);
     if (rc != 0) {
         return rc;
     }
 
-    return 0;
+    if (sensor_event_type & SENSOR_EVENT_TYPE_DOUBLE_TAP) {
+        int_routes.s_tap_int_route = INT_ROUTE_NONE;
+        int_routes.d_tap_int_route = INT_ROUTE_PIN_2;
+    } else {
+        int_routes.s_tap_int_route = INT_ROUTE_PIN_2;
+        int_routes.d_tap_int_route = INT_ROUTE_NONE;
+    }
+
+    rc = bma253_set_int_routes(bma253, &int_routes);
+    if (rc != 0) {
+        return rc;
+    }
+
+    /* Configure enable event*/
+    rc = bma253_get_int_enable(bma253, &int_enable);
+    if (rc != 0) {
+        goto done;
+    }
+
+    /* Enable tap event*/
+    int_enable.s_tap_int_enable         = sensor_event_type &
+                                          SENSOR_EVENT_TYPE_SINGLE_TAP;
+    int_enable.d_tap_int_enable         = sensor_event_type &
+                                          SENSOR_EVENT_TYPE_DOUBLE_TAP;
+    rc = bma253_set_int_enable(bma253, &int_enable);
+
+done:
+    if (rc != 0) {
+        /* In case of error disable interrupt*/
+        disable_intpin(bma253, INT2_PIN);
+    }
+
+    return rc;
 }
 
 static struct sensor_driver bma253_sensor_driver = {
@@ -4516,6 +4502,7 @@ static struct sensor_driver bma253_sensor_driver = {
     .sd_get_config         = sensor_driver_get_config,
     .sd_set_trigger_thresh = sensor_driver_set_trigger_thresh,
     .sd_set_notification   = sensor_driver_set_notification,
+    .sd_unset_notification = sensor_driver_unset_notification,
 };
 
 int
@@ -4606,7 +4593,7 @@ bma253_init(struct os_dev * dev, void * arg)
         return rc;
     }
 
-    init_interrupt(&bma253->intr);
+    init_interrupt(&bma253->intr, bma253->sensor.s_itf.si_ints);
 
     bma253->power = BMA253_POWER_MODE_NORMAL;
 

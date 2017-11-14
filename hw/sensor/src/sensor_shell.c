@@ -79,6 +79,7 @@ sensor_display_help(void)
     console_printf("      at <poll_interval> rate for <poll_duration>\n");
     console_printf("  type <sensor_name>\n");
     console_printf("      types supported by registered sensor\n");
+    console_printf("  notify <sensor_name> [on/off] <type>\n");
 }
 
 static void
@@ -596,17 +597,106 @@ err:
     return rc;
 }
 
+int
+sensor_one_tap_notif(struct sensor *sensor, void *data,
+                     sensor_event_type_t type)
+{
+
+    console_printf("Single tap happend\n");
+
+    return 0;
+};
+
+static struct sensor_notifier one_tap = {
+    .sn_sensor_event_type = SENSOR_EVENT_TYPE_SINGLE_TAP,
+    .sn_func = sensor_one_tap_notif,
+    .sn_arg = NULL,
+};
+
+int
+sensor_double_tap_notif(struct sensor *sensor, void *data,
+                        sensor_event_type_t type)
+{
+    console_printf("Double tap happend\n");
+
+    return 0;
+};
+
+static struct sensor_notifier double_tap = {
+    .sn_sensor_event_type = SENSOR_EVENT_TYPE_DOUBLE_TAP,
+    .sn_func = sensor_double_tap_notif,
+    .sn_arg = NULL,
+};
+
+static int
+sensor_cmd_notify(char *name, bool on, char *type_string)
+{
+    struct sensor *sensor;
+    int type = 0;
+    int rc = 0;
+
+    /* Look up sensor by name */
+    sensor = sensor_mgr_find_next_bydevname(name, NULL);
+    if (!sensor) {
+        console_printf("Sensor %s not found!\n", name);
+    }
+
+    if (!strcmp(type_string, "single")) {
+        type = SENSOR_EVENT_TYPE_SINGLE_TAP;
+    } else if (!strcmp(type_string, "double")) {
+        type = SENSOR_EVENT_TYPE_DOUBLE_TAP;
+    } else {
+        return 1;
+    }
+
+    if (!on) {
+        if (type == SENSOR_EVENT_TYPE_SINGLE_TAP) {
+            rc = sensor_unregister_notifier(sensor, &one_tap);
+            if (rc) {
+                console_printf("Could not unregister single tap\n");
+                goto done;
+            }
+        }
+        if (type == SENSOR_EVENT_TYPE_DOUBLE_TAP) {
+            rc = sensor_unregister_notifier(sensor, &double_tap);
+            if (rc) {
+                 console_printf("Could not unregister double tap\n");
+                 goto done;
+            }
+        }
+        goto done;
+    }
+
+    if (type == SENSOR_EVENT_TYPE_SINGLE_TAP) {
+        rc = sensor_register_notifier(sensor, &one_tap);
+        if (rc) {
+            console_printf("Could not register single tap\n");
+            goto done;
+        }
+    }
+
+    if (type == SENSOR_EVENT_TYPE_DOUBLE_TAP) {
+        rc = sensor_register_notifier(sensor, &double_tap);
+        if (rc) {
+             console_printf("Could not register double tap\n");
+             goto done;
+        }
+    }
+
+done:
+    return rc;
+}
+
 static int
 sensor_cmd_exec(int argc, char **argv)
 {
     struct sensor_poll_data spd;
     char *subcmd;
-    int rc;
+    int rc = 0;
     int i;
 
     if (argc <= 1) {
         sensor_display_help();
-        rc = 0;
         goto done;
     }
 
@@ -620,7 +710,7 @@ sensor_cmd_exec(int argc, char **argv)
                            "[-n nsamples] [-i poll_itvl(ms)] [-d poll_duration(ms)]\n",
                            argc - 2);
             rc = SYS_EINVAL;
-            goto err;
+            goto done;
         }
 
         i = 4;
@@ -640,22 +730,37 @@ sensor_cmd_exec(int argc, char **argv)
 
         rc = sensor_cmd_read(argv[2], (sensor_type_t) strtol(argv[3], NULL, 0), &spd);
         if (rc) {
-            goto err;
+            goto done;
         }
     } else if (!strcmp(argv[1], "type")) {
         rc = sensor_cmd_display_type(argv);
         if (rc) {
-            goto err;
+            goto done;
         }
+    } else if (!strcmp(argv[1], "notify")) {
+        if (argc < 3) {
+            console_printf("Too few arguments: %d\n"
+                           "Usage: sensor notify <sensor_name> <on/off> <single/double>",
+                           argc - 2);
+            rc = SYS_EINVAL;
+            goto done;
+        }
+
+        rc = sensor_cmd_notify(argv[2], !strcmp(argv[3], "on"), argv[4]);
+        if (rc) {
+            console_printf("Too few arguments: %d\n"
+                           "Usage: sensor notify <sensor_name> <on/off> <single/double>",
+                           argc - 2);
+           goto done;
+        }
+
     } else {
         console_printf("Unknown sensor command %s\n", subcmd);
         rc = SYS_EINVAL;
-        goto err;
+        goto done;
     }
 
 done:
-    return (0);
-err:
     return (rc);
 }
 

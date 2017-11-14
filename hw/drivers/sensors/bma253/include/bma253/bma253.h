@@ -30,6 +30,10 @@
 #extern "C" {
 #endif
 
+/* XXX use some better defaults. For now it is min */
+#define BMA253_LOW_G_DELAY_MS_DEFAULT       2
+#define BMA253_HIGH_G_DELAY_MS_DEFAULT      2
+
 /* Range of acceleration measurements */
 enum bma253_g_range {
     BMA253_G_RANGE_2  = 0,
@@ -172,6 +176,8 @@ struct bma253_int {
     bool active;
     /* Is there a waiter currently sleeping */
     bool asleep;
+    /* Configured interrupts */
+    struct sensor_int *ints;
 };
 
 /* The device itself */

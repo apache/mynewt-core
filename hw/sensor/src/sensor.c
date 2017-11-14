@@ -954,15 +954,21 @@ sensor_unregister_listener(struct sensor *sensor,
         struct sensor_listener *listener)
 {
     int rc;
+    struct sensor_listener *tmp;
 
     rc = sensor_lock(sensor);
     if (rc != 0) {
         goto err;
     }
 
-    /* Remove this entry from the list */
-    SLIST_REMOVE(&sensor->s_listener_list, listener, sensor_listener,
-            sl_next);
+    SLIST_FOREACH(tmp, &sensor->s_listener_list, sl_next) {
+        if (listener == tmp) {
+        /* Remove this entry from the list */
+            SLIST_REMOVE(&sensor->s_listener_list, listener, sensor_listener,
+                    sl_next);
+            break;
+        }
+    }
 
     sensor_unlock(sensor);
 
@@ -1003,7 +1009,7 @@ sensor_set_notification(struct sensor *sensor)
  */
 int
 sensor_register_notifier(struct sensor *sensor,
-        struct sensor_notifier *notifier)
+                         struct sensor_notifier *notifier)
 {
     int rc;
 
@@ -1028,6 +1034,7 @@ remove:
             sn_next);
 
 err:
+    sensor_unlock(sensor);
     return (rc);
 }
 
@@ -1042,22 +1049,32 @@ err:
  */
 int
 sensor_unregister_notifier(struct sensor *sensor,
-        struct sensor_notifier *notifier)
+                           struct sensor_notifier *notifier)
 {
-    int rc;
+    int rc = 0;
+    struct sensor_notifier *tmp;
 
     rc = sensor_lock(sensor);
     if (rc != 0) {
-        goto err;
+        goto done;
     }
 
-    SLIST_REMOVE(&sensor->s_notifier_list, notifier, sensor_notifier,
-            sn_next);
+    SLIST_FOREACH(tmp, &sensor->s_notifier_list, sn_next) {
+        if (notifier == tmp) {
+            SLIST_REMOVE(&sensor->s_notifier_list, notifier, sensor_notifier,
+                         sn_next);
+            break;
+        }
+    }
 
     sensor_unlock(sensor);
 
-    return (0);
-err:
+    if (sensor->s_funcs->sd_unset_notification) {
+        rc = sensor->s_funcs->sd_unset_notification(sensor,
+                                                notifier->sn_sensor_event_type);
+    }
+
+done:
     return (rc);
 }
 
@@ -1082,9 +1099,9 @@ sensor_read_data_func(struct sensor *sensor, void *arg, void *data,
     /* Call data function */
     if (ctx->user_func != NULL) {
         return (ctx->user_func(sensor, ctx->user_arg, data, type));
-    } else {
-        return (0);
     }
+
+    return (0);
 }
 
 /**

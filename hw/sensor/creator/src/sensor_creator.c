@@ -17,6 +17,7 @@
  * under the License.
  */
 
+#include <syscfg/syscfg.h>
 #include <os/os_dev.h>
 #include <assert.h>
 #include <defs/error.h>
@@ -182,6 +183,11 @@ static struct sensor_itf i2c_0_itf_lis = {
     .si_type = SENSOR_ITF_I2C,
     .si_num  = 0,
     .si_addr = 0x18,
+    .si_configured_ints_num = 2,
+    .si_ints = {
+       { MYNEWT_VAL(BMA253_INT_PIN_HOST), MYNEWT_VAL(BMA253_INT_CFG_ACTIVE)},
+       { MYNEWT_VAL(BMA253_INT2_PIN_HOST), MYNEWT_VAL(BMA253_INT_CFG_ACTIVE)}
+    },
 };
 #endif
 
@@ -469,30 +475,27 @@ int
 config_bma253_sensor(void)
 {
     struct os_dev * dev;
-    struct bma253_cfg cfg;
+    struct bma253_cfg cfg = {0};
     int rc;
 
     dev = os_dev_open("bma253_0", OS_TIMEOUT_NEVER, NULL);
     assert(dev != NULL);
 
+    cfg.low_g_delay_ms = BMA253_LOW_G_DELAY_MS_DEFAULT;
+    cfg.high_g_delay_ms = BMA253_HIGH_G_DELAY_MS_DEFAULT;
     cfg.g_range = BMA253_G_RANGE_2;
     cfg.filter_bandwidth = BMA253_FILTER_BANDWIDTH_1000_HZ;
     cfg.use_unfiltered_data = false;
-    cfg.int_pin_output = BMA253_INT_PIN_OUTPUT_PUSH_PULL;
-    cfg.int_pin_active = BMA253_INT_PIN_ACTIVE_HIGH;
     cfg.tap_quiet = BMA253_TAP_QUIET_30_MS;
     cfg.tap_shock = BMA253_TAP_SHOCK_50_MS;
     cfg.d_tap_window = BMA253_D_TAP_WINDOW_250_MS;
     cfg.tap_wake_samples = BMA253_TAP_WAKE_SAMPLES_2;
     cfg.tap_thresh_g = 1.0;
-    cfg.i2c_watchdog = BMA253_I2C_WATCHDOG_DISABLED;
     cfg.offset_x_g = 0.0;
     cfg.offset_y_g = 0.0;
     cfg.offset_z_g = 0.0;
     cfg.power_mode = BMA253_POWER_MODE_NORMAL;
     cfg.sleep_duration = BMA253_SLEEP_DURATION_0_5_MS;
-    cfg.int_pin1_num = 20;
-    cfg.int_pin2_num = 19;
     cfg.sensor_mask = SENSOR_TYPE_ACCELEROMETER;
 
     rc = bma253_config((struct bma253 *)dev, &cfg);

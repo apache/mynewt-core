@@ -384,17 +384,35 @@ typedef int (*sensor_set_trigger_thresh_t)(struct sensor *, sensor_type_t,
 typedef int (*sensor_set_notification_t)(struct sensor *,
                                          sensor_event_type_t);
 
+/**
+ * Un set the notification expectation for a targeted set of events for the
+ * specific sensor.
+ *
+ * @param The sensor.
+ * @param The mask of event types.
+ *
+ * @return 0 on success, non-zero error code on failure.
+ */
+typedef int (*sensor_unset_notification_t)(struct sensor *,
+                                           sensor_event_type_t);
+
 struct sensor_driver {
     sensor_read_func_t sd_read;
     sensor_get_config_func_t sd_get_config;
     sensor_set_trigger_thresh_t sd_set_trigger_thresh;
     sensor_set_notification_t sd_set_notification;
+    sensor_unset_notification_t sd_unset_notification;
 };
 
 struct sensor_timestamp {
     struct os_timeval st_ostv;
     struct os_timezone st_ostz;
     uint32_t st_cputime;
+};
+
+struct sensor_int {
+    uint8_t pin;
+    uint8_t active;
 };
 
 struct sensor_itf {
@@ -416,6 +434,12 @@ struct sensor_itf {
 
     /* Sensor interface high int pin */
     uint8_t si_high_pin;
+
+    /* Sensor interface interrupts pins */
+    /* XXX We should probably remove low/high pins and replace it with those
+     */
+    uint8_t si_configured_ints_num;
+    struct sensor_int si_ints[MYNEWT_VAL(SENSOR_MAX_INTERRUPTS_PINS)];
 };
 
 /*
@@ -602,13 +626,7 @@ sensor_check_type(struct sensor *sensor, sensor_type_t type)
 static inline int
 sensor_set_interface(struct sensor *sensor, struct sensor_itf *s_itf)
 {
-    sensor->s_itf.si_type = s_itf->si_type;
-    sensor->s_itf.si_num = s_itf->si_num;
-    sensor->s_itf.si_cs_pin = s_itf->si_cs_pin;
-    sensor->s_itf.si_addr = s_itf->si_addr;
-    sensor->s_itf.si_low_pin = s_itf->si_low_pin;
-    sensor->s_itf.si_high_pin = s_itf->si_high_pin;
-
+    memcpy(&sensor->s_itf, s_itf, sizeof(*s_itf));
     return (0);
 }
 
