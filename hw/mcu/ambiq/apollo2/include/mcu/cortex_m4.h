@@ -28,7 +28,7 @@
 extern "C" {
 #endif
 
-#define OS_TICKS_PER_SEC    (1000)
+#define OS_TICKS_PER_SEC    (128)
 
 #ifdef __cplusplus
 }
