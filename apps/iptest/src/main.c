@@ -321,19 +321,19 @@ net_cli(int argc, char **argv)
 static void
 app_get_light(oc_request_t *request, oc_interface_mask_t interface)
 {
-    bool state;
+    bool value;
 
     if (hal_gpio_read(LED_BLINK_PIN)) {
-        state = true;
+        value = true;
     } else {
-        state = false;
+        value = false;
     }
     oc_rep_start_root_object();
     switch (interface) {
     case OC_IF_BASELINE:
         oc_process_baseline_interface(request->resource);
-    case OC_IF_RW:
-        oc_rep_set_boolean(root, state, state);
+    case OC_IF_A:
+        oc_rep_set_boolean(root, value, value);
         break;
     default:
         break;
@@ -345,15 +345,15 @@ app_get_light(oc_request_t *request, oc_interface_mask_t interface)
 static void
 app_set_light(oc_request_t *request, oc_interface_mask_t interface)
 {
-    bool state;
+    bool value;
     int len;
     uint16_t data_off;
     struct os_mbuf *m;
     struct cbor_attr_t attrs[] = {
         [0] = {
-            .attribute = "state",
+            .attribute = "value",
             .type = CborAttrBooleanType,
-            .addr.boolean = &state,
+            .addr.boolean = &value,
             .dflt.boolean = false
         },
         [1] = {
@@ -364,7 +364,7 @@ app_set_light(oc_request_t *request, oc_interface_mask_t interface)
     if (cbor_read_mbuf_attrs(m, data_off, len, attrs)) {
         oc_send_response(request, OC_STATUS_BAD_REQUEST);
     } else {
-        hal_gpio_write(LED_BLINK_PIN, state == true);
+        hal_gpio_write(LED_BLINK_PIN, value == true);
         oc_send_response(request, OC_STATUS_CHANGED);
     }
 }
@@ -379,14 +379,15 @@ omgr_app_init(void)
                   NULL);
 
     res = oc_new_resource("/light/1", 1, 0);
-    oc_resource_bind_resource_type(res, "oic.r.light");
-    oc_resource_bind_resource_interface(res, OC_IF_RW);
-    oc_resource_set_default_interface(res, OC_IF_RW);
+    oc_resource_bind_resource_type(res, "oic.r.switch.binary");
+    oc_resource_bind_resource_interface(res, OC_IF_A);
+    oc_resource_set_default_interface(res, OC_IF_A);
 
     oc_resource_set_discoverable(res);
     oc_resource_set_periodic_observable(res, 1);
     oc_resource_set_request_handler(res, OC_GET, app_get_light);
     oc_resource_set_request_handler(res, OC_PUT, app_set_light);
+    oc_resource_set_request_handler(res, OC_POST, app_set_light);
     oc_add_resource(res);
 
     hal_gpio_init_out(LED_BLINK_PIN, 1);
