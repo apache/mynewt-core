@@ -1017,10 +1017,19 @@ sensor_register_notifier(struct sensor *sensor,
                          struct sensor_notifier *notifier)
 {
     int rc;
+    struct sensor_notifier *tmp;
 
     rc = sensor_lock(sensor);
     if (rc != 0) {
         goto err;
+    }
+
+    /* Check if notifier is not already on the list */
+    SLIST_FOREACH(tmp, &sensor->s_notifier_list, sn_next) {
+        if (notifier == tmp) {
+            rc = SYS_EINVAL;
+            goto err;
+        }
     }
 
     SLIST_INSERT_HEAD(&sensor->s_notifier_list, notifier, sn_next);
