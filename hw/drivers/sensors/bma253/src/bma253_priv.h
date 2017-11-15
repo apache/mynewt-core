@@ -265,6 +265,11 @@ enum int_route {
     INT_ROUTE_BOTH  = 3,
 };
 
+enum bma253_int_num {
+    INT1_PIN,
+    INT2_PIN
+};
+
 /* Pin routing settings of all interrupts */
 struct int_routes {
     enum int_route flat_int_route;

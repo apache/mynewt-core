@@ -78,6 +78,11 @@ struct os_callout st_up_osco;
 
 static void sensor_notify_ev_cb(struct os_event * ev);
 static void sensor_read_ev_cb(struct os_event *ev);
+static void sensor_interrupt_ev_cb(struct os_event *ev);
+
+static struct os_event sensor_interrupt_event = {
+    .ev_cb = sensor_interrupt_ev_cb,
+};
 
 static struct os_event sensor_notify_event = {
     .ev_cb = sensor_notify_ev_cb,
@@ -1105,6 +1110,18 @@ sensor_read_data_func(struct sensor *sensor, void *arg, void *data,
 }
 
 /**
+ * Puts a interrupt event on the sensor manager evq
+ *
+ * @param interrupt event context
+ */
+void
+sensor_mgr_put_interrupt_evt(struct sensor *sensor)
+{
+    sensor_interrupt_event.ev_arg = sensor;
+    os_eventq_put(sensor_mgr_evq_get(), &sensor_interrupt_event);
+}
+
+/**
  * Puts a notification event on the sensor manager evq
  *
  * @param notification event context
@@ -1126,6 +1143,18 @@ sensor_mgr_put_read_evt(void *arg)
 {
     sensor_read_event.ev_arg = arg;
     os_eventq_put(sensor_mgr_evq_get(), &sensor_read_event);
+}
+
+static void
+sensor_interrupt_ev_cb(struct os_event *ev)
+{
+    struct sensor *sensor;
+
+    sensor = ev->ev_arg;
+
+    if (sensor && sensor->s_funcs->sd_handle_interrupt) {
+        sensor->s_funcs->sd_handle_interrupt(sensor);
+    }
 }
 
 static void
