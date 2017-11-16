@@ -34,5 +34,40 @@ end
 
 document os_tasks
 usage: os_tasks
-
 Displays os tasks
+end
+
+define os_callouts
+	printf "Callouts:\n"
+	printf " %8s %10s %10s\n", "tick", "callout", "func"
+	while $c != 0
+		printf " %8d %10p %10p\n", $c->c_ticks, $c, $c->c_ev.ev_cb
+		set $c = $c->c_next.tqe_next
+	end
+end
+
+define os_sleep_list
+	printf "Tasks:\n"
+	printf " %8s %10s %10s\n", "tick", "task", "taskname"
+	set $t = g_os_sleep_list.tqh_first
+	while $t != 0
+		set $no_timo = $t->t_flags & 0x1
+		if $no_timo == 0
+			printf " %8d %10p ", $t->t_next_wakeup, $t
+			printf "%10s\n", $t->t_name
+		end
+		set $t = $t->t_os_list.tqe_next
+	end
+end
+
+define os_wakeups
+	set $c = g_callout_list.tqh_first
+	printf " Now is %d\n", g_os_time
+	os_callouts
+	os_sleep_list
+end
+
+document os_wakeups
+usage: os_wakeups
+Displays scheduled OS callouts, and next scheduled task wakeups
+end
