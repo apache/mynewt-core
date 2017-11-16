@@ -1,12 +1,12 @@
 //*****************************************************************************
 //
-//! @file am_hal_pwrctrl.c
+//  am_hal_pwrctrl.c
+//! @file
 //!
 //! @brief Functions for enabling and disabling power domains.
 //!
-//! @addtogroup hal Hardware Abstraction Layer (HAL)
-//! @addtogroup pwrctrl Power Control
-//! @ingroup hal
+//! @addtogroup pwrctrl2 Power Control
+//! @ingroup apollo2hal
 //! @{
 //
 //*****************************************************************************
@@ -42,7 +42,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-// This is part of revision 1.2.8 of the AmbiqSuite Development Package.
+// This is part of revision v1.2.10-2-gea660ad-hotfix2 of the AmbiqSuite Development Package.
 //
 //*****************************************************************************
 
@@ -56,21 +56,6 @@
 //
 //*****************************************************************************
 #define ONE_BIT(ui32Value)   (ui32Value  &&  !(ui32Value & (ui32Value - 1)))
-
-//*****************************************************************************
-//
-//  Determine if Apollo2 A revision.
-//
-//  Note - this function is intended to be temporary until Apollo2 revA chips
-//  are no longer relevant.
-//
-//*****************************************************************************
-static bool
-isRevA(void)
-{
-    return AM_BFM(MCUCTRL, CHIPREV, REVMAJ) == AM_REG_MCUCTRL_CHIPREV_REVMAJ_A ?
-            true : false;
-}
 
 //*****************************************************************************
 //
@@ -423,7 +408,7 @@ am_hal_pwrctrl_memory_enable(uint32_t ui32MemEn)
 
 //*****************************************************************************
 //
-//! @brief Intialize the core and memory buck converters.
+//! @brief Initialize the core and memory buck converters.
 //!
 //! This function is intended to be used for first time core and memory buck
 //! converters initialization.
@@ -463,8 +448,6 @@ am_hal_pwrctrl_bucks_init(void)
 void
 am_hal_pwrctrl_bucks_enable(void)
 {
-    uint32_t corebuck_trim, membuck_trim, mcuctrl_ldoreg1, mcuctrl_ldoreg3;
-
     //
     // Check to see if the bucks are already on. If so, we can just return.
     //
@@ -474,18 +457,6 @@ am_hal_pwrctrl_bucks_enable(void)
         return;
     }
 
-    if ( isRevA() )
-    {
-        //
-        // 1) Override the buck pwd. This forces the buck to power up.
-        //
-        AM_REG(MCUCTRL, BUCK) = (AM_BFV(MCUCTRL, BUCK, MEMBUCKRST,  1) |
-                                 AM_BFV(MCUCTRL, BUCK, MEMBUCKPWD,  0) |
-                                 AM_BFV(MCUCTRL, BUCK, COREBUCKRST, 1) |
-                                 AM_BFV(MCUCTRL, BUCK, COREBUCKPWD, 0) |
-                                 AM_BFV(MCUCTRL, BUCK, BUCKSWE, 1));
-    }
-
     //
     // Enable BUCK power up
     //
@@ -493,38 +464,13 @@ am_hal_pwrctrl_bucks_enable(void)
     AM_BFW(PWRCTRL, SUPPLYSRC, MEMBUCKEN, 1);
 
     //
-    // Wait until BUCKs are enabled.
+    // Make sure bucks are ready.
     //
     while ( ( AM_REG(PWRCTRL, POWERSTATUS)                      &
               ( AM_REG_PWRCTRL_POWERSTATUS_COREBUCKON_M |
                 AM_REG_PWRCTRL_POWERSTATUS_MEMBUCKON_M ) )  !=
               ( AM_REG_PWRCTRL_POWERSTATUS_COREBUCKON_M |
-                AM_REG_PWRCTRL_POWERSTATUS_MEMBUCKON_M ) ) {};
-
-    if ( isRevA() )
-    {
-        //
-        // 4) Get the trims that need to be programmed for buck
-        //
-        corebuck_trim = AM_REGVAL(BUCK_TRIM_REG_ADDR) & 0x00003FF;
-        membuck_trim  = (AM_REGVAL(BUCK_TRIM_REG_ADDR) & 0x03FF0000) >> 16;
-
-        mcuctrl_ldoreg1 = (AM_REG(MCUCTRL, LDOREG1) & ~AM_REG_MCUCTRL_LDOREG1_TRIMCORELDOR1_M) | (corebuck_trim <<
-                                          AM_REG_MCUCTRL_LDOREG1_TRIMCORELDOR1_S);
-        mcuctrl_ldoreg3 = (AM_REG(MCUCTRL, LDOREG3) & ~AM_REG_MCUCTRL_LDOREG3_TRIMMEMLDOR1_M)  | (membuck_trim <<
-                                          AM_REG_MCUCTRL_LDOREG3_TRIMMEMLDOR1_S);
-
-        //
-        // 5) Remove the sw overrides
-        //
-        AM_BFW(MCUCTRL, BUCK, BUCKSWE, 0);
-
-        //
-        // 6) Program the trims
-        //
-        AM_REG(MCUCTRL, LDOREG1) = mcuctrl_ldoreg1;
-        AM_REG(MCUCTRL, LDOREG3) = mcuctrl_ldoreg3;
-    }
+                AM_REG_PWRCTRL_POWERSTATUS_MEMBUCKON_M ) );
 }
 
 //*****************************************************************************
@@ -548,6 +494,9 @@ am_hal_pwrctrl_bucks_disable(void)
         return;
     }
 
+    //
+    // Handle the special case if only the ADC is powered.
+    //
     if ( isRev_ADC()  &&
          (AM_REG(PWRCTRL, DEVICEEN) == AM_REG_PWRCTRL_DEVICEEN_ADC_EN) )
     {
@@ -557,52 +506,6 @@ am_hal_pwrctrl_bucks_disable(void)
             AM_REG(PWRCTRL, SUPPLYSRC) &=
                 (AM_REG_PWRCTRL_SUPPLYSRC_SWITCH_LDO_IN_SLEEP_EN    |
                  AM_REG_PWRCTRL_SUPPLYSRC_MEMBUCKEN_EN);
-    }
-    else if ( isRevA() )
-    {
-        uint32_t coreldo_trim, memldo_trim, mcuctrl_ldoreg1, mcuctrl_ldoreg3;
-
-        //
-        // Sequence for BUCK to LDO
-        // 1) get the trims needed for transition
-        //
-        coreldo_trim = AM_REGVAL(LDO_TRIM_REG_ADDR) & 0x000003FF;
-        memldo_trim  = (AM_REGVAL(LDO_TRIM_REG_ADDR) & 0x03FF0000) >> 16;
-
-        mcuctrl_ldoreg1 = (AM_REG(MCUCTRL, LDOREG1) & ~AM_REG_MCUCTRL_LDOREG1_TRIMCORELDOR1_M) | (coreldo_trim << AM_REG_MCUCTRL_LDOREG1_TRIMCORELDOR1_S);
-        mcuctrl_ldoreg3 = (AM_REG(MCUCTRL, LDOREG3) & ~AM_REG_MCUCTRL_LDOREG3_TRIMMEMLDOR1_M)  | (memldo_trim << AM_REG_MCUCTRL_LDOREG3_TRIMMEMLDOR1_S);
-
-        if ( AM_BFR(PWRCTRL, POWERSTATUS, COREBUCKON) )
-        {
-            //
-            // 2) Disable buck
-            //
-            AM_BFW(PWRCTRL, SUPPLYSRC, COREBUCKEN, 0);
-
-            //
-            // 3) Program the LDO trims
-            //
-            AM_REG(MCUCTRL, LDOREG1) = mcuctrl_ldoreg1;
-        }
-
-        if (AM_BFR(PWRCTRL, POWERSTATUS, MEMBUCKON))
-        {
-            //
-            // 4) Disable buck
-            //
-            AM_BFW(PWRCTRL, SUPPLYSRC, MEMBUCKEN, 0);
-
-            //
-            // 5) Program the LDO trims
-            //
-            AM_REG(MCUCTRL, LDOREG3) = mcuctrl_ldoreg3;
-        }
-
-        //
-        // Power them down
-        //
-        AM_BFW(PWRCTRL, SUPPLYSRC, COREBUCKEN, 0);
-        AM_BFW(PWRCTRL, SUPPLYSRC, MEMBUCKEN, 0);
     }
     else
     {

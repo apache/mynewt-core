@@ -31,7 +31,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-# This is part of revision 1.2.8 of the AmbiqSuite Development Package.
+# This is part of revision v1.2.10-2-gea660ad-hotfix2 of the AmbiqSuite Development Package.
 #
 #******************************************************************************
 TARGET = libam_hal
@@ -72,8 +72,7 @@ $(CONFIG)/$(PROJECT).a: $(CONFIG)
 	$(ECLIPSE) --launcher.suppressErrors -nosplash -data "$$WKSP" \
 	    -application org.eclipse.cdt.managedbuilder.core.headlessbuild \
 	    -import ./  -E cross_rm=$(RM) -cleanBuild .*/.*$(CONFIG).* \
-	     1> '$(PROJECT).log' 2> '$(PROJECT).errlog' ;\
-	$(RM) -rf $$WKSP
+	     1> '$(PROJECT).log' 2> '$(PROJECT).errlog' && $(RM) -rf $$WKSP
 
 OBJS =  $(CONFIG)/**/*
 

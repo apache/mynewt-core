@@ -1,6 +1,7 @@
 //*****************************************************************************
 //
-//! @file am_hal_i2c_bit_bang.h
+//  am_hal_i2c_bit_bang.h
+//! @file
 //!
 //! @brief I2C bit bang module.
 //!
@@ -39,16 +40,11 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-// This is part of revision 1.2.8 of the AmbiqSuite Development Package.
+// This is part of revision v1.2.10-2-gea660ad-hotfix2 of the AmbiqSuite Development Package.
 //
 //*****************************************************************************
 #ifndef AM_HAL_I2C_BIT_BANG_H
 #define AM_HAL_I2C_BIT_BANG_H
-
-#ifdef __cplusplus
-extern "C"
-{
-#endif
 
 //*****************************************************************************
 //
@@ -62,7 +58,13 @@ typedef enum
     AM_HAL_I2C_BIT_BANG_DATA_NAKED,
     AM_HAL_I2C_BIT_BANG_CLOCK_TIMEOUT,
     AM_HAL_I2C_BIT_BANG_DATA_TIMEOUT,
+    AM_HAL_I2C_BIT_BANG_STATUS_MAX,
 }am_hal_i2c_bit_bang_enum_t;
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
 //*****************************************************************************
 //

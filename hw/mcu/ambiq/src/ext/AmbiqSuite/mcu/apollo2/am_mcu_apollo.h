@@ -1,10 +1,15 @@
 //*****************************************************************************
 //
-//! @file am_mcu_apollo.h
+//! @file
 //!
-//! @brief Top Include for Apollo class devices.
+//! @brief Top Include for Apollo2 class devices.
 //!
 //! This file provides all the includes necessary for an apollo device.
+//!
+//! @addtogroup hal Hardware Abstraction Layer (HAL)
+//
+//! @defgroup apollo2hal HAL for Apollo2
+//! @ingroup hal
 //
 //*****************************************************************************
 
@@ -39,7 +44,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-// This is part of revision 1.2.8 of the AmbiqSuite Development Package.
+// This is part of revision v1.2.10-2-gea660ad-hotfix2 of the AmbiqSuite Development Package.
 //
 //*****************************************************************************
 #ifndef AM_MCU_APOLLO_H

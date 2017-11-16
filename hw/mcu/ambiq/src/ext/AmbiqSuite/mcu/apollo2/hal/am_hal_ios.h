@@ -1,12 +1,12 @@
 //*****************************************************************************
 //
-//! @file am_hal_ios.h
+//  am_hal_ios.h
+//! @file
 //!
 //! @brief Functions for interfacing with the IO Slave module
 //!
-//! @addtogroup hal Hardware Abstraction Layer (HAL)
-//! @addtogroup ios IO Slave (SPI/I2C)
-//! @ingroup hal
+//! @addtogroup ios2 IO Slave (SPI/I2C)
+//! @ingroup apollo2hal
 //! @{
 //
 //*****************************************************************************
@@ -42,16 +42,12 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-// This is part of revision 1.2.8 of the AmbiqSuite Development Package.
+// This is part of revision v1.2.10-2-gea660ad-hotfix2 of the AmbiqSuite Development Package.
 //
 //*****************************************************************************
 #ifndef AM_HAL_IOS_H
 #define AM_HAL_IOS_H
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
 
 //*****************************************************************************
 //
@@ -300,6 +296,10 @@ typedef struct
 }
 am_hal_ios_config_t;
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 //*****************************************************************************
 //
 // External function definitions

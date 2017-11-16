@@ -1,12 +1,12 @@
 //*****************************************************************************
 //
-//! @file am_hal_reset.h
+//  am_hal_reset.h
+//! @file
 //!
 //! @brief Hardware abstraction layer for the Reset Generator module.
 //!
-//! @addtogroup hal Hardware Abstraction Layer (HAL)
-//! @addtogroup wdt Watchdog Timer (RSTGEN)
-//! @ingroup hal
+//! @addtogroup wdt2 Watchdog Timer (RSTGEN)
+//! @ingroup apollo2hal
 //! @{
 //
 //*****************************************************************************
@@ -42,7 +42,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-// This is part of revision 1.2.8 of the AmbiqSuite Development Package.
+// This is part of revision v1.2.10-2-gea660ad-hotfix2 of the AmbiqSuite Development Package.
 //
 //*****************************************************************************
 #ifndef AM_HAL_RSTGEN_H

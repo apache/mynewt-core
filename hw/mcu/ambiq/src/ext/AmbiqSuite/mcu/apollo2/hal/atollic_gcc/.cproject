@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <?fileVersion 4.0.0?><cproject storage_type_id="org.eclipse.cdt.core.XmlProjectDescriptionStorage">
 	<storageModule moduleId="org.eclipse.cdt.core.settings">
-		<cconfiguration id="com.atollic.truestudio.lib.debug.7796040824.4860393155">
-			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.atollic.truestudio.lib.debug.7796040824.4860393155" moduleId="org.eclipse.cdt.core.settings" name="bin">
+		<cconfiguration id="com.atollic.truestudio.lib.debug.6783851084.5418262406">
+			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.atollic.truestudio.lib.debug.6783851084.5418262406" moduleId="org.eclipse.cdt.core.settings" name="bin">
 				<macros>
 					<stringMacro name="AMBIQ_ROOT" type="VALUE_TEXT" value="${ProjDirPath}/../../../.."/>
 					<stringMacro name="AM_CFLAGS" type="VALUE_TEXT" value="-mthumb -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=softfp -ffunction-sections -fdata-sections -MMD -MP -O3 -funroll-loops "/>
@@ -21,8 +21,8 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactExtension="a" artifactName="${ProjName}" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.staticLib" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.staticLib" cleanCommand="rm -f" description="AmbiqSuite bin directory for objects, libs, and executables." id="com.atollic.truestudio.lib.debug.7796040824.4860393155" name="bin" parent="com.atollic.truestudio.lib.debug">
-					<folderInfo id="com.atollic.truestudio.lib.debug.7796040824.4860393155." name="/" resourcePath="">
+				<configuration artifactExtension="a" artifactName="${ProjName}" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.staticLib" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.staticLib" cleanCommand="rm -f" description="AmbiqSuite bin directory for objects, libs, and executables." id="com.atollic.truestudio.lib.debug.6783851084.5418262406" name="bin" parent="com.atollic.truestudio.lib.debug">
+					<folderInfo id="com.atollic.truestudio.lib.debug.6783851084.5418262406." name="/" resourcePath="">
 						<toolChain id="com.atollic.truestudio.lib.debug.toolchain.394601402" name="Atollic ARM Tools" superClass="com.atollic.truestudio.lib.debug.toolchain">
 							<option id="com.atollic.truestudio.toolchain_options.mcu.1354743296" name="Microcontroller" superClass="com.atollic.truestudio.toolchain_options.mcu" useByScannerDiscovery="false" value="Cortex-M4" valueType="string"/>
 							<option id="com.atollic.truestudio.toolchain_options.vendor.2144693964" name="Vendor name" superClass="com.atollic.truestudio.toolchain_options.vendor" useByScannerDiscovery="false" value="ARM" valueType="string"/>
@@ -47,7 +47,7 @@
 								<option id="com.atollic.truestudio.gcc.optimization.prep_data.622389316" name="Prepare dead data removal" superClass="com.atollic.truestudio.gcc.optimization.prep_data" useByScannerDiscovery="false" value="true" valueType="boolean"/>
 								<option id="com.atollic.truestudio.common_options.target.interwork.1678943818" name="Mix ARM/Thumb" superClass="com.atollic.truestudio.common_options.target.interwork" useByScannerDiscovery="false"/>
 								<option id="com.atollic.truestudio.gcc.cstandard.827476387" name="C standard" superClass="com.atollic.truestudio.gcc.cstandard" useByScannerDiscovery="false" value="com.atollic.truestudio.gcc.cstandard.c99" valueType="enumerated"/>
-								<option id="com.atollic.truestudio.gcc.misc.stackusage.4203574732" name="Generate per function stack usage information" superClass="com.atollic.truestudio.gcc.misc.stackusage" useByScannerDiscovery="false" value="false" valueType="boolean"/>
+								<option id="com.atollic.truestudio.gcc.misc.stackusage.8262666576" name="Generate per function stack usage information" superClass="com.atollic.truestudio.gcc.misc.stackusage" useByScannerDiscovery="false" value="false" valueType="boolean"/>
 								<option id="com.atollic.truestudio.gcc.symbols.defined.288842290" name="Defined symbols" superClass="com.atollic.truestudio.gcc.symbols.defined" useByScannerDiscovery="false" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="AM_DEBUG_ASSERT"/>
 									<listOptionValue builtIn="false" value="AM_ASSERT_INVALID_THRESHOLD=0"/>
@@ -109,7 +109,7 @@
 	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
 	<storageModule moduleId="scannerConfiguration">
 		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		<scannerConfigBuildInfo instanceId="com.atollic.truestudio.lib.debug.7796040824.4860393155;com.atollic.truestudio.lib.debug.7796040824.4860393155.;com.atollic.truestudio.lib.debug.toolchain.gcc.334071979;com.atollic.truestudio.gcc.input.1533629434">
+		<scannerConfigBuildInfo instanceId="com.atollic.truestudio.lib.debug.6783851084.5418262406;com.atollic.truestudio.lib.debug.6783851084.5418262406.;com.atollic.truestudio.lib.debug.toolchain.gcc.334071979;com.atollic.truestudio.gcc.input.1533629434">
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="com.atollic.truestudio.mbs.ARMToolsPerProjectProfileC"/>
 		</scannerConfigBuildInfo>
 	</storageModule>

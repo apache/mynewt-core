@@ -37,7 +37,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-// This is part of revision 1.2.8 of the AmbiqSuite Development Package.
+// This is part of revision v1.2.10-2-gea660ad-hotfix2 of the AmbiqSuite Development Package.
 //
 //*****************************************************************************
 #ifndef AM_UTIL_DELAY_H
@@ -56,6 +56,7 @@ extern "C"
 extern void am_util_delay_cycles(uint32_t ui32Iterations);
 extern void am_util_delay_ms(uint32_t ui32MilliSeconds);
 extern void am_util_delay_us(uint32_t ui32MicroSeconds);
+extern uint32_t am_util_wait_status_change(uint32_t ui32Iterations, uint32_t ui32Address, uint32_t ui32Mask, uint32_t ui32Value);
 
 #ifdef __cplusplus
 }

@@ -79,8 +79,8 @@
             <nStopB2X>0</nStopB2X>
           </BeforeMake>
           <AfterMake>
-            <RunUserProg1>1</RunUserProg1>
-            <RunUserProg2>1</RunUserProg2>
+            <RunUserProg1>0</RunUserProg1>
+            <RunUserProg2>0</RunUserProg2>
             <UserProg1Name>fromelf --bin --output bin\libam_hal.bin bin\libam_hal.axf</UserProg1Name>
             <UserProg2Name>fromelf -cedrst --output bin\libam_hal.txt bin\libam_hal.axf</UserProg2Name>
             <UserProg1Dos16Mode>0</UserProg1Dos16Mode>
@@ -369,7 +369,7 @@
             <ScatterFile></ScatterFile>
             <IncludeLibs></IncludeLibs>
             <IncludeLibsPath></IncludeLibsPath>
-            <Misc>../../../../mcu/apollo2/hal/keil/bin/libam_hal.lib(am_hal_global.o) --keep=am_hal_global.o(.data)</Misc>
+            <Misc>../../../../mcu/apollo2/hal/keil/bin/libam_hal.lib(am_hal_global.o) --keep=am_hal_global.o(.data) </Misc>
             <LinkerInputFile></LinkerInputFile>
             <DisabledWarnings></DisabledWarnings>
           </LDads>

@@ -1,12 +1,12 @@
 //*****************************************************************************
 //
-//! @file am_hal_pdm.h
+//  am_hal_pdm.h
+//! @file
 //!
 //! @brief Functions for accessing and configuring the PDM module
 //!
-//! @addtogroup hal Hardware Abstraction Layer (HAL)
-//! @addtogroup pdm Pulse Density Modulation (PDM) Input Module.
-//! @ingroup hal
+//! @addtogroup pdm2 Pulse Density Modulation (PDM) Input Module.
+//! @ingroup apollo2hal
 //! @{
 
 //*****************************************************************************
@@ -42,12 +42,17 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-// This is part of revision 1.2.8 of the AmbiqSuite Development Package.
+// This is part of revision v1.2.10-2-gea660ad-hotfix2 of the AmbiqSuite Development Package.
 //
 //*****************************************************************************
 
 #ifndef AM_HAL_PDM_H
 #define AM_HAL_PDM_H
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
 //*****************************************************************************
 //
@@ -654,6 +659,10 @@ extern void am_hal_pdm_enable(void);
 extern void am_hal_pdm_disable(void);
 
 extern uint32_t am_hal_pdm_int_status_get(bool bEnabledOnly);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // AM_HAL_PDM_H
 

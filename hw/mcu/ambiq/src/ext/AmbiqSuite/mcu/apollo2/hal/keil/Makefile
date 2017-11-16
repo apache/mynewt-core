@@ -30,24 +30,38 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-# 
-# This is part of revision 1.2.8 of the AmbiqSuite Development Package.
+#
+# This is part of revision v1.2.10-2-gea660ad-hotfix2 of the AmbiqSuite Development Package.
 #
 #******************************************************************************
+TARGET = libam_hal
+COMPILERNAME = Keil
+PROJECT = libam_hal_Keil
+CONFIG := $(CURDIR)/bin
+AM_SoftwareRoot ?= ../../..
 
 SHELL=/bin/bash
+#### Required Executables ####
 K := $(shell type -p uv4)
+RM = $(shell which rm 2>/dev/null)
 
+.PHONY: all clean directories
 ifeq ($(K),)
 all clean:
-	$(info Keil tools not found, skipping...)
+	$(info Tools w/$(COMPILERNAME) not installed.)
+	$(RM) -rf bin
 else
-all:
-	+mkdir -p bin ;\
+all: directories
 	(uv4 -b -t "libam_hal" libam_hal.uvprojx -j0) || \
 	    ( RC=$$?;[ $$RC -eq 1 ] || exit $$RC )
+
+directories: $(CONFIG)
+
+$(CONFIG):
+	@mkdir -p $@
+
 clean:
 	@+echo Cleaning... ;\
-	rm -rf bin
+	$(RM) -rf $(CONFIG)
 endif
 

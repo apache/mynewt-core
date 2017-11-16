@@ -1,12 +1,12 @@
 //*****************************************************************************
 //
-//! @file am_hal_ctimer.h
+//  am_hal_ctimer.h
+//! @file
 //!
 //! @brief Functions for accessing and configuring the CTIMER.
 //!
-//! @addtogroup hal Hardware Abstraction Layer (HAL)
-//! @addtogroup ctimer Counter/Timer (CTIMER)
-//! @ingroup hal
+//! @addtogroup ctimer2 Counter/Timer (CTIMER)
+//! @ingroup apollo2hal
 //! @{
 //
 //*****************************************************************************
@@ -42,16 +42,18 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-// This is part of revision 1.2.8 of the AmbiqSuite Development Package.
+// This is part of revision v1.2.10-2-gea660ad-hotfix2 of the AmbiqSuite Development Package.
 //
 //*****************************************************************************
 #ifndef AM_HAL_CTIMER_H
 #define AM_HAL_CTIMER_H
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
+//*****************************************************************************
+//
+//! Number of timers
+//
+//*****************************************************************************
+#define AM_HAL_CTIMER_TIMERS_NUM    4
 
 //*****************************************************************************
 //
@@ -107,7 +109,7 @@ extern "C"
 //!
 //! These options are to be used with the \e am_hal_ctimer_config_t structure
 //! used by \e am_hal_ctimer_config
-//!  @{
+//! @{
 //
 //*****************************************************************************
 #define AM_HAL_CTIMER_CLK_PIN               AM_REG_CTIMER_CTRL0_TMRA0CLK(0x0)
@@ -126,6 +128,7 @@ extern "C"
 #define AM_HAL_CTIMER_LFRC_1_16HZ           AM_REG_CTIMER_CTRL0_TMRA0CLK(0xD)
 #define AM_HAL_CTIMER_RTC_100HZ             AM_REG_CTIMER_CTRL0_TMRA0CLK(0xE)
 #define AM_HAL_CTIMER_HCLK                  AM_REG_CTIMER_CTRL0_TMRA0CLK(0xF)
+#define AM_HAL_CTIMER_BUCK                  AM_REG_CTIMER_CTRL0_TMRA0CLK(0x10)
 //! @}
 
 //*****************************************************************************
@@ -200,6 +203,11 @@ am_hal_ctimer_config_t;
 //*****************************************************************************
 typedef void (*am_hal_ctimer_handler_t)(void);
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 //*****************************************************************************
 //
 // External function definitions
@@ -253,7 +261,7 @@ extern void am_hal_ctimer_int_set(uint32_t ui32Interrupt);
 extern void am_hal_ctimer_int_clear(uint32_t ui32Interrupt);
 extern uint32_t am_hal_ctimer_int_status_get(bool bEnabledOnly);
 extern void am_hal_ctimer_int_register(uint32_t ui32Interrupt,
-                         am_hal_ctimer_handler_t pfnHandler);
+                                       am_hal_ctimer_handler_t pfnHandler);
 extern void am_hal_ctimer_int_service(uint32_t ui32Status);
 
 #ifdef __cplusplus

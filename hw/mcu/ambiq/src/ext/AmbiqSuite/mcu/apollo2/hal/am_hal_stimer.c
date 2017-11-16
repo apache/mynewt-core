@@ -1,12 +1,12 @@
 //*****************************************************************************
 //
-//! @file am_hal_stimer.c
+//  am_hal_stimer.c
+//! @file
 //!
 //! @brief Functions for interfacing with the system timer (STIMER).
 //!
-//! @addtogroup hal Hardware Abstraction Layer (HAL)
-//! @addtogroup stimer System Timer (STIMER)
-//! @ingroup hal
+//! @addtogroup stimer2 System Timer (STIMER)
+//! @ingroup apollo2hal
 //! @{
 //
 //*****************************************************************************
@@ -42,7 +42,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-// This is part of revision 1.2.8 of the AmbiqSuite Development Package.
+// This is part of revision v1.2.10-2-gea660ad-hotfix2 of the AmbiqSuite Development Package.
 //
 //*****************************************************************************
 
@@ -148,12 +148,18 @@ am_hal_stimer_counter_clear(void)
 void
 am_hal_stimer_compare_delta_set(uint32_t ui32CmprInstance, uint32_t ui32Delta)
 {
+    uint32_t cfgVal;
     if ( ui32CmprInstance > 7 )
     {
         return;
     }
 
+    cfgVal = AM_REG(CTIMER, STCFG);
+    // Disable the compare if already enabled, when setting the new value
+    AM_REG(CTIMER, STCFG) &= ~((AM_HAL_STIMER_CFG_COMPARE_A_ENABLE << ui32CmprInstance));
     AM_REGVAL(AM_REG_STIMER_COMPARE(0, ui32CmprInstance)) = ui32Delta;
+    // Restore Compare Enable bit
+    AM_REG(CTIMER, STCFG) |= cfgVal & (AM_HAL_STIMER_CFG_COMPARE_A_ENABLE << ui32CmprInstance);
 }
 
 //*****************************************************************************

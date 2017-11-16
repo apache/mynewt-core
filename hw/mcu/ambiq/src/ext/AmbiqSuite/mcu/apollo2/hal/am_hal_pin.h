@@ -1,12 +1,11 @@
 //*****************************************************************************
 //
-//! @file am_hal_pin.h
-//!
+//  am_hal_pin.h
+//! @file
 //! @brief Macros for configuring specific pins.
 //!
-//! @addtogroup hal Hardware Abstraction Layer (HAL)
-//! @addtogroup pin PIN
-//! @ingroup hal
+//! @addtogroup pin2 PIN definitions for Apollo2.
+//! @ingroup apollo2hal
 //! @{
 //
 //*****************************************************************************
@@ -42,7 +41,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-// This is part of revision 1.2.8 of the AmbiqSuite Development Package.
+// This is part of revision 1.2.10 of the AmbiqSuite Development Package.
 //
 //*****************************************************************************
 

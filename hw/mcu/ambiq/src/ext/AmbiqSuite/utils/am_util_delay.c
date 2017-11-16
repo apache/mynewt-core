@@ -39,7 +39,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-// This is part of revision 1.2.8 of the AmbiqSuite Development Package.
+// This is part of revision v1.2.10-2-gea660ad-hotfix2 of the AmbiqSuite Development Package.
 //
 //*****************************************************************************
 #include <stdint.h>
@@ -118,3 +118,42 @@ am_util_delay_us(uint32_t ui32MicroSeconds)
     //
     am_hal_flash_delay(ui32Loops);
 }
+//*****************************************************************************
+//
+//! @brief Delays for a desired amount of cycles while also waiting for a
+//! status change.
+//!
+//! @param ui32CycleLoops - Desired number of cycle loops to delay for.
+//! @param ui32Address - Address of the register for the status change.
+//! @param ui32Mask - Mask for the status change.
+//! @param ui32Value - Value for the status change.
+//!
+//! This function will delay for a number of cycle loops while checking for
+//! a status change, exiting either when the number of cycles is exhausted
+//! or the status change is detected.
+//!
+//! @note - the number of cycles each loops takes to execute is approximately 3.
+//! Therefore the actual number of cycles executed will be ~3x ui32CycleLoops.
+//!
+//! For example, a ui32CycleLoops value of 100 will delay for 300 cycles.
+//!
+//! @returns 0 = timeout; 1 = status change detected.
+//
+//*****************************************************************************
+uint32_t
+am_util_wait_status_change(uint32_t ui32Iterations,
+		uint32_t ui32Address, uint32_t ui32Mask, uint32_t ui32Value)
+{
+	for (uint32_t i = 0; i < ui32Iterations; i++)
+	{
+		// Check the status
+		if (((*(volatile uint32_t *)ui32Address) & ui32Mask) == ui32Value)
+		{
+			return 1;
+		}
+        // Call the BOOTROM cycle delay function to get about 1 usec @ 48MHz
+        am_hal_flash_delay(16);
+	}
+	return 0;
+}
+

@@ -1,12 +1,12 @@
 //*****************************************************************************
 //
-//! @file am_hal_itm.h
+//  am_hal_itm.h
+//! @file
 //!
 //! @brief Functions for accessing and configuring the ARM ITM.
 //!
-//! @addtogroup hal Hardware Abstraction Layer (HAL)
-//! @addtogroup itm Instrumentation Trace Macrocell (ITM)
-//! @ingroup hal
+//! @addtogroup itm2 Instrumentation Trace Macrocell (ITM)
+//! @ingroup apollo2hal
 //! @{
 //
 //*****************************************************************************
@@ -42,17 +42,12 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-// This is part of revision 1.2.8 of the AmbiqSuite Development Package.
+// This is part of revision v1.2.10-2-gea660ad-hotfix2 of the AmbiqSuite Development Package.
 //
 //*****************************************************************************
 
 #ifndef AM_HAL_ITM_H
 #define AM_HAL_ITM_H
-
-#ifdef __cplusplus
-extern "C"
-{
-#endif
 
 //*****************************************************************************
 //
@@ -70,6 +65,11 @@ extern "C"
 #define AM_HAL_ITM_PRINT_NUM_BYTES      1
 #define AM_HAL_ITM_PRINT_NUM_REGS       1
 extern uint32_t am_hal_itm_print_registers[AM_HAL_ITM_PRINT_NUM_REGS];
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
 //*****************************************************************************
 //

@@ -37,7 +37,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-// This is part of revision 1.2.8 of the AmbiqSuite Development Package.
+// This is part of revision v1.2.10-2-gea660ad-hotfix2 of the AmbiqSuite Development Package.
 //
 //*****************************************************************************
 #ifndef AM_UTIL_STRING_H
@@ -95,6 +95,7 @@ extern int32_t am_util_string_strnicmp(const char *str1, const char *str2,
 extern uint32_t am_util_string_strlen(const char *pcStr);
 extern char *am_util_string_strcpy(char *pcDst, const char *pcSrc);
 extern char *am_util_string_strncpy(char *pcDst, const char *pcSrc, uint32_t uNum);
+extern char *am_util_string_strcat(char *pcDst, const char *pcSrc);
 
 
 //*****************************************************************************

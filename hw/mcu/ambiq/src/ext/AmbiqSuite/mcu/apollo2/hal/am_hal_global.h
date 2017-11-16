@@ -1,6 +1,7 @@
 //*****************************************************************************
 //
-//! @file am_hal_global.h
+//  am_hal_global.h
+//! @file
 //!
 //! @brief Locate all HAL global variables here.
 //!
@@ -41,16 +42,11 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-// This is part of revision 1.2.8 of the AmbiqSuite Development Package.
+// This is part of revision v1.2.10-2-gea660ad-hotfix2 of the AmbiqSuite Development Package.
 //
 //*****************************************************************************
 #ifndef AM_HAL_GLOBAL_H
 #define AM_HAL_GLOBAL_H
-
-#ifdef __cplusplus
-extern "C"
-{
-#endif
 
 //*****************************************************************************
 //
@@ -105,6 +101,11 @@ extern "C"
 //
 //*****************************************************************************
 extern volatile uint32_t g_ui32HALflags;
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
 #ifdef __cplusplus
 }

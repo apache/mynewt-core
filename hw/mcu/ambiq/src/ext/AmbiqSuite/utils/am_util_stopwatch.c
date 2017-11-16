@@ -45,7 +45,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-// This is part of revision 1.2.8 of the AmbiqSuite Development Package.
+// This is part of revision v1.2.10-2-gea660ad-hotfix2 of the AmbiqSuite Development Package.
 //
 //*****************************************************************************
 #include <stdint.h>
@@ -156,7 +156,7 @@ am_util_stopwatch_start(am_util_stopwatch_t *pStopwatch)
     //
     // If the start time is clear, read the RTC time to get a reference starting
     // time.
-    if (pStopwatch->bPaused == false && pStopwatch->bStarted == false)
+    if ( pStopwatch->bPaused == false && pStopwatch->bStarted == false )
     {
         //
         // Clear the timer which gets the current time as well.
@@ -168,12 +168,12 @@ am_util_stopwatch_start(am_util_stopwatch_t *pStopwatch)
     // We were paused.
     // Now we need to figure out how long we were paused for.
     //
-    else if (pStopwatch->bPaused == true && pStopwatch->bStarted == true)
+    else if ( pStopwatch->bPaused == true && pStopwatch->bStarted == true )
     {
         //
         // Get the RTC time.
         //
-        while(am_hal_rtc_time_get(&rtc_time));
+        while ( am_hal_rtc_time_get(&rtc_time) );
 
         //
         // Add the time we spent paused to the time we already spent paused.
@@ -211,7 +211,7 @@ am_util_stopwatch_stop(am_util_stopwatch_t *pStopwatch)
     //
     // Save the current time so we know how long we've been paused for.
     //
-    while(am_hal_rtc_time_get(&pStopwatch->sPauseTime));
+    while ( am_hal_rtc_time_get(&pStopwatch->sPauseTime) );
 
     //
     // Set the state to paused.
@@ -237,7 +237,7 @@ am_util_stopwatch_clear(am_util_stopwatch_t *pStopwatch)
     //
     // Read the RTC and save in pStopwatch->sStartTime.
     //
-    while(am_hal_rtc_time_get(&pStopwatch->sStartTime));
+    while ( am_hal_rtc_time_get(&pStopwatch->sStartTime) );
 
     //
     // Reset the paused time.
@@ -312,12 +312,12 @@ am_util_stopwatch_elapsed_get(am_util_stopwatch_t *pStopwatch, uint32_t ui32Reso
     // Stop watch is not paused and is running.
     // Figure out elapsed time.
     //
-    if (pStopwatch->bPaused == false && pStopwatch->bStarted == true)
+    if ( pStopwatch->bPaused == false && pStopwatch->bStarted == true )
     {
         //
         // Get the RTC time.
         //
-        while(am_hal_rtc_time_get(&rtc_time));
+        while ( am_hal_rtc_time_get(&rtc_time) );
 
         pStopwatch->ui64ElapsedTime = elapsed_time_ms(&pStopwatch->sStartTime, &rtc_time) -
                                 pStopwatch->ui64PausedTime;
@@ -367,7 +367,7 @@ am_util_stopwatch_elapsed_get(am_util_stopwatch_t *pStopwatch, uint32_t ui32Reso
     //
     // Years.
     //
-    if (ui64MS >= 31536000000)
+    if ( ui64MS >= 31536000000 )
     {
         //
         // Fill in the structure.
@@ -383,7 +383,7 @@ am_util_stopwatch_elapsed_get(am_util_stopwatch_t *pStopwatch, uint32_t ui32Reso
     //
     // Months.
     //
-    if (ui64MS >= 2592000000)
+    if ( ui64MS >= 2592000000 )
     {
         //
         // Fill in the structure.
@@ -399,7 +399,7 @@ am_util_stopwatch_elapsed_get(am_util_stopwatch_t *pStopwatch, uint32_t ui32Reso
     //
     // Days.
     //
-    if (ui64MS >= 86400000)
+    if ( ui64MS >= 86400000 )
     {
         //
         // Fill in the structure.
@@ -415,7 +415,7 @@ am_util_stopwatch_elapsed_get(am_util_stopwatch_t *pStopwatch, uint32_t ui32Reso
     //
     // Hours.
     //
-    if (ui64MS >= 3600000)
+    if ( ui64MS >= 3600000 )
     {
         //
         // Fill in the structure.
@@ -431,7 +431,7 @@ am_util_stopwatch_elapsed_get(am_util_stopwatch_t *pStopwatch, uint32_t ui32Reso
     //
     // Minutes.
     //
-    if (ui64MS >= 60000)
+    if ( ui64MS >= 60000 )
     {
         //
         // Fill in the structure.
@@ -447,7 +447,7 @@ am_util_stopwatch_elapsed_get(am_util_stopwatch_t *pStopwatch, uint32_t ui32Reso
     //
     // Seconds.
     //
-    if (ui64MS >= 1000)
+    if ( ui64MS >= 1000 )
     {
         //
         // Fill in the structure.

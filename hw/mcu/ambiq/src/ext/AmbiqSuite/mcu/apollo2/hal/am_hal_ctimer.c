@@ -1,12 +1,12 @@
 //*****************************************************************************
 //
-//! @file am_hal_ctimer.c
+//  am_hal_ctimer.c
+//! @file
 //!
 //! @brief Functions for interfacing with the Counter/Timer module.
 //!
-//! @addtogroup hal Hardware Abstraction Layer (HAL)
-//! @addtogroup ctimer Counter/Timer (CTIMER)
-//! @ingroup hal
+//! @addtogroup ctimer2 Counter/Timer (CTIMER)
+//! @ingroup apollo2hal
 //! @{
 //
 //*****************************************************************************
@@ -42,7 +42,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-// This is part of revision 1.2.8 of the AmbiqSuite Development Package.
+// This is part of revision v1.2.10-2-gea660ad-hotfix2 of the AmbiqSuite Development Package.
 //
 //*****************************************************************************
 
@@ -68,11 +68,12 @@
 // still pass in the event of a timer rollover.
 //
 //*****************************************************************************
+//! Timer read workaround: Do count values differ by one tick or less.
 #define adjacent(A, B)      (((A) == (B)) || (((A) + 1) == (B)) || ((B) == 0))
 
 //*****************************************************************************
 //
-// Array of function pointers for handling CTimer interrupts.
+//! Array of function pointers for handling CTimer interrupts.
 //
 //*****************************************************************************
 am_hal_ctimer_handler_t am_hal_ctimer_ppfnHandlers[16];
@@ -162,10 +163,93 @@ back2back_reads( uint32_t u32TimerAddr, uint32_t u32Data[])
 
 //*****************************************************************************
 //
-// Forward Declaration.
+//! @brief Check to see if the given CTimer is using the HFRC
+//!
+//! @note Calls to this function should be from inside a critical section.
+//!
+//! @return None.
 //
 //*****************************************************************************
-static bool am_hal_ctimers_use_hfrc(void);
+static bool
+ctimer_source_hfrc(uint32_t ui32CtimerNum)
+{
+    uint32_t *pui32ConfigReg;
+    uint32_t ui32TimerASrc, ui32TimerBSrc;
+
+    //
+    // Find the correct register to write.
+    //
+    pui32ConfigReg = (uint32_t *)(AM_REG_CTIMERn(0) + AM_REG_CTIMER_CTRL0_O +
+                                  (ui32CtimerNum * TIMER_OFFSET));
+
+    //
+    // Determine if this timer is using HFRC as the clock source.
+    // The value we are looking for is HFRC_DIV4 to HFRC_DIV4K.
+    // Get the clock sources and 0-base the extracted value.
+    //
+    ui32TimerASrc = AM_BFX(CTIMER, CTRL0, TMRA0CLK, *pui32ConfigReg) -
+                    AM_ENUMX(CTIMER, CTRL0, TMRA0CLK, HFRC_DIV4);
+    ui32TimerBSrc = AM_BFX(CTIMER, CTRL0, TMRB0CLK, *pui32ConfigReg) -
+                    AM_ENUMX(CTIMER, CTRL0, TMRB0CLK, HFRC_DIV4);
+
+    //
+    // If the source value is 0 to (HFRC_DIV4K - HFRC_DIV4), then it's HFRC.
+    //
+    if ( (ui32TimerASrc <= (AM_ENUMX(CTIMER, CTRL0, TMRA0CLK, HFRC_DIV4K) -
+                            AM_ENUMX(CTIMER, CTRL0, TMRA0CLK, HFRC_DIV4)))  ||
+         (ui32TimerBSrc <= (AM_ENUMX(CTIMER, CTRL0, TMRB0CLK, HFRC_DIV4K) -
+                            AM_ENUMX(CTIMER, CTRL0, TMRB0CLK, HFRC_DIV4))) )
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+
+} // ctimer_source_hfrc()
+
+//*****************************************************************************
+//
+// @brief Check to see if any of the CTimers or STimer are using the HFRC.
+//
+//  This function should be used to check if the HFRC is being used in order
+//  to correctly establish power related settings.
+//
+//  Note - Calls to this function should be from inside a critical section.
+//
+//! @return None.
+//
+//*****************************************************************************
+static bool
+timers_use_hfrc(void)
+{
+    uint32_t ui32TimerASrc, ui32CtimerNum;
+
+    //
+    // Check STimer to see if it is using HFRC.
+    //
+    ui32TimerASrc = AM_BFR(CTIMER, STCFG, CLKSEL);
+    if ( (ui32TimerASrc == AM_REG_CTIMER_STCFG_CLKSEL_HFRC_DIV16)   ||
+         (ui32TimerASrc == AM_REG_CTIMER_STCFG_CLKSEL_HFRC_DIV256) )
+    {
+        return true;
+    }
+
+    //
+    // Check the CTimers to see if any are using HFRC as their clock source.
+    //
+    for ( ui32CtimerNum = 0; ui32CtimerNum < MAX_CTIMERS; ui32CtimerNum++ )
+    {
+        if ( ctimer_source_hfrc(ui32CtimerNum) )
+        {
+            return true;
+        }
+    }
+
+    return false;
+
+} // timers_use_hfrc()
 
 //*****************************************************************************
 //
@@ -224,8 +308,7 @@ am_hal_ctimer_int_service(uint32_t ui32Status)
             pfnHandler();
         }
     }
-
-}
+} // am_hal_ctimer_int_service()
 
 //*****************************************************************************
 //
@@ -254,10 +337,11 @@ am_hal_ctimer_int_register(uint32_t ui32Interrupt,
                            am_hal_ctimer_handler_t pfnHandler)
 {
     uint32_t intIdx = 0;
+
     //
     // Check to make sure the interrupt number is valid. (Debug builds only)
     //
-    switch(ui32Interrupt)
+    switch (ui32Interrupt)
     {
         case AM_REG_CTIMER_INTEN_CTMRA0C0INT_M:
             intIdx = AM_REG_CTIMER_INTEN_CTMRA0C0INT_S;
@@ -326,8 +410,10 @@ am_hal_ctimer_int_register(uint32_t ui32Interrupt,
         default:
             am_hal_debug_assert_msg(false, "CTimer interrupt number out of range.");
     }
+
     am_hal_ctimer_ppfnHandlers[intIdx] = pfnHandler;
-}
+
+} // am_hal_ctimer_int_register()
 
 //*****************************************************************************
 //
@@ -372,6 +458,11 @@ am_hal_ctimer_config(uint32_t ui32TimerNumber,
     ui32ConfigVal |= psConfig->ui32Link ? AM_HAL_CTIMER_LINK : 0;
 
     //
+    // Begin critical section while config registers are read and modified.
+    //
+    AM_CRITICAL_BEGIN_ASM
+
+    //
     // Find the correct register to write.
     //
     pui32ConfigReg = (uint32_t *)(AM_REG_CTIMERn(0) + AM_REG_CTIMER_CTRL0_O +
@@ -385,7 +476,7 @@ am_hal_ctimer_config(uint32_t ui32TimerNumber,
     //
     // If all of the clock sources are not HRFC disable LDO when sleeping if timers are enabled.
     //
-    if ( am_hal_ctimers_use_hfrc() )
+    if ( timers_use_hfrc() )
     {
         AM_BFW(PWRCTRL, MISCOPT, DIS_LDOLPMODE_TIMERS, 0);
     }
@@ -394,7 +485,12 @@ am_hal_ctimer_config(uint32_t ui32TimerNumber,
         AM_BFW(PWRCTRL, MISCOPT, DIS_LDOLPMODE_TIMERS, 1);
     }
 
-}
+    //
+    // Done with critical section.
+    //
+    AM_CRITICAL_END_ASM
+
+} // am_hal_ctimer_config()
 
 //*****************************************************************************
 //
@@ -406,7 +502,7 @@ am_hal_ctimer_config(uint32_t ui32TimerNumber,
 //! @param ui32TimerSegment specifies which segment of the timer should be
 //! enabled.
 //!
-//! @param ui32Configval specifies the configuration options for the selected
+//! @param ui32ConfigVal specifies the configuration options for the selected
 //! timer.
 //!
 //! This function should be used to perform the initial set-up of the
@@ -481,6 +577,7 @@ am_hal_ctimer_config_single(uint32_t ui32TimerNumber,
     // If we're working with TIMERB, we need to shift our configuration value
     // up by 16 bits.
     //
+
     if ( ui32TimerSegment == AM_HAL_CTIMER_TIMERB )
     {
         ui32ConfigVal = ((ui32ConfigVal & 0xFFFF) << 16);
@@ -506,86 +603,23 @@ am_hal_ctimer_config_single(uint32_t ui32TimerNumber,
     AM_REGVAL(pui32ConfigReg) = ui32WriteVal;
 
     //
+    // If all of the clock sources are not HRFC disable LDO when sleeping if timers are enabled.
+    //
+    if ( timers_use_hfrc() )
+    {
+        AM_BFW(PWRCTRL, MISCOPT, DIS_LDOLPMODE_TIMERS, 0);
+    }
+    else
+    {
+        AM_BFW(PWRCTRL, MISCOPT, DIS_LDOLPMODE_TIMERS, 1);
+    }
+
+    //
     // Done with critical section.
     //
     AM_CRITICAL_END_ASM
 
-    //
-    // If all of the clock sources are not HRFC disable LDO when sleeping if timers are enabled.
-    //
-    if ( am_hal_ctimers_use_hfrc() )
-    {
-      AM_BFW(PWRCTRL, MISCOPT, DIS_LDOLPMODE_TIMERS, 0);
-    }
-    else
-    {
-      AM_BFW(PWRCTRL, MISCOPT, DIS_LDOLPMODE_TIMERS, 1);
-    }
-
-}
-
-//*****************************************************************************
-//
-//! @brief Check to see if any of the CTimers is using the HFRC
-//!
-//! This function should be used to check if the HFRC is being used in order
-//! to correctly establish power related settings.
-//!
-//! @return None.
-//
-//*****************************************************************************
-static bool
-am_hal_ctimers_use_hfrc(void)
-{
-    uint32_t *pui32ConfigReg;
-    uint32_t ui32TimerASrc;
-    uint32_t ui32TimerBSrc;
-    uint32_t ui32CtimerIndex;
-
-    //
-    // Check STimer to see if it is set to use HFRC
-    //
-    if ( (AM_BFR(CTIMER, STCFG, CLKSEL) == AM_REG_CTIMER_STCFG_CLKSEL_HFRC_DIV16)   ||
-         (AM_BFR(CTIMER, STCFG, CLKSEL) == AM_REG_CTIMER_STCFG_CLKSEL_HFRC_DIV256) )
-    {
-        return true;
-    }
-
-    //
-    //  Check all the CTimers to see if they use HFRC
-    //
-    for ( ui32CtimerIndex = 0; ui32CtimerIndex < MAX_CTIMERS; ui32CtimerIndex++ )
-    {
-        //
-        // Find the correct register to write.
-        //
-        pui32ConfigReg = (uint32_t *)(AM_REG_CTIMERn(0) + AM_REG_CTIMER_CTRL0_O +
-                                      (ui32CtimerIndex * TIMER_OFFSET));
-
-        //
-        // If clock source is not HRFC, we must disable LDO when sleeping.
-        // The value we are looking for is HFRC_DIV4 to HFRC_DIV4K.
-        // Get the clock sources and 0-base the extracted value.
-        //
-        ui32TimerASrc = AM_BFX(CTIMER, CTRL0, TMRA0CLK, *pui32ConfigReg) -
-                        AM_ENUMX(CTIMER, CTRL0, TMRA0CLK, HFRC_DIV4);
-        ui32TimerBSrc = AM_BFX(CTIMER, CTRL0, TMRB0CLK, *pui32ConfigReg) -
-                        AM_ENUMX(CTIMER, CTRL0, TMRB0CLK, HFRC_DIV4);
-
-        //
-        // If the source value is 0 to (HFRC_DIV4K - HFRC_DIV4), then it's HFRC.
-        //
-        if ( (ui32TimerASrc <= (AM_ENUMX(CTIMER, CTRL0, TMRA0CLK, HFRC_DIV4K) -
-                                AM_ENUMX(CTIMER, CTRL0, TMRA0CLK, HFRC_DIV4)))  ||
-             (ui32TimerBSrc <= (AM_ENUMX(CTIMER, CTRL0, TMRB0CLK, HFRC_DIV4K) -
-                                AM_ENUMX(CTIMER, CTRL0, TMRB0CLK, HFRC_DIV4))) )
-        {
-            return true;
-        }
-    }
-
-    return false;
-}
+} // am_hal_ctimer_config_single()
 
 //*****************************************************************************
 //
@@ -651,7 +685,7 @@ am_hal_ctimer_start(uint32_t ui32TimerNumber, uint32_t ui32TimerSegment)
     // Done with critical section.
     //
     AM_CRITICAL_END_ASM
-}
+} // am_hal_ctimer_start()
 
 //*****************************************************************************
 //
@@ -708,7 +742,7 @@ am_hal_ctimer_stop(uint32_t ui32TimerNumber, uint32_t ui32TimerSegment)
     // Done with critical section.
     //
     AM_CRITICAL_END_ASM
-}
+} // am_hal_ctimer_stop()
 
 //*****************************************************************************
 //
@@ -721,7 +755,7 @@ am_hal_ctimer_stop(uint32_t ui32TimerNumber, uint32_t ui32TimerSegment)
 //!
 //! This function will stop a free-running counter-timer, reset its value to
 //! zero, and leave the timer disabled. When you would like to restart the
-//! counter, you will need to call am_hal_ctimer_enable().
+//! counter, you will need to call am_hal_ctimer_start().
 //!
 //! The \e ui32TimerSegment parameter allows the caller to individually select
 //! a segment within, such as TIMER0A, TIMER0B, or both.
@@ -762,7 +796,7 @@ am_hal_ctimer_clear(uint32_t ui32TimerNumber, uint32_t ui32TimerSegment)
     // Done with critical section.
     //
     AM_CRITICAL_END_ASM
-}
+} // am_hal_ctimer_clear()
 
 //*****************************************************************************
 //
@@ -790,7 +824,7 @@ uint32_t
 am_hal_ctimer_read(uint32_t ui32TimerNumber, uint32_t ui32TimerSegment)
 {
     volatile uint32_t ui32Value = 0;
-    uint32_t ui32Values[3] = {0};
+    uint32_t ui32Values[4] = {0,};
     uint32_t ui32TimerAddrTbl[4] =
     {
         REG_CTIMER_BASEADDR + AM_REG_CTIMER_TMR0_O,
@@ -880,7 +914,7 @@ am_hal_ctimer_read(uint32_t ui32TimerNumber, uint32_t ui32TimerSegment)
     }
 
     return ui32Value;
-}
+} // am_hal_ctimer_read()
 
 //*****************************************************************************
 //
@@ -930,7 +964,7 @@ am_hal_ctimer_pin_enable(uint32_t ui32TimerNumber, uint32_t ui32TimerSegment)
     // Done with critical section.
     //
     AM_CRITICAL_END_ASM
-}
+} // am_hal_ctimer_pin_enable()
 
 //*****************************************************************************
 //
@@ -980,7 +1014,7 @@ am_hal_ctimer_pin_disable(uint32_t ui32TimerNumber, uint32_t ui32TimerSegment)
     // Done with critical section.
     //
     AM_CRITICAL_END_ASM
-}
+} // am_hal_ctimer_pin_disable()
 
 //*****************************************************************************
 //
@@ -990,7 +1024,7 @@ am_hal_ctimer_pin_disable(uint32_t ui32TimerNumber, uint32_t ui32TimerSegment)
 //!
 //! @param ui32TimerSegment specifies which segment of the timer to use.
 //!
-//! @param bInvertOutpt determines whether the output should be inverted. If
+//! @param bInvertOutput determines whether the output should be inverted. If
 //! true, the timer output pin for the selected timer segment will be
 //! inverted.
 //!
@@ -1050,7 +1084,7 @@ am_hal_ctimer_pin_invert(uint32_t ui32TimerNumber, uint32_t ui32TimerSegment,
     // Done with critical section.
     //
     AM_CRITICAL_END_ASM
-}
+} // am_hal_ctimer_pin_invert()
 
 //*****************************************************************************
 //
@@ -1098,7 +1132,7 @@ am_hal_ctimer_compare_set(uint32_t ui32TimerNumber, uint32_t ui32TimerSegment,
     pui32CmprRegA = (uint32_t *)(AM_REG_CTIMERn(0) +
                                  AM_REG_CTIMER_CMPRA0_O +
                                  (ui32TimerNumber * TIMER_OFFSET));
-    pui32CmprRegB = pui32CmprRegA + CTIMER_CMPR_OFFSET;
+    pui32CmprRegB = pui32CmprRegA + CTIMER_CMPR_OFFSET/4;
 
     //
     // Write the compare register with the selected value.
@@ -1114,7 +1148,6 @@ am_hal_ctimer_compare_set(uint32_t ui32TimerNumber, uint32_t ui32TimerSegment,
         //
         // CMPR reg 1
         // Get the lower 16b (but may not be used if TIMERB).
-        // Mask existing CMPR0 bits, add
         //
         ui32CmprRegA = ( (ui32CmprRegA & AM_REG_CTIMER_CMPRA0_CMPR0A0_M) |
                           AM_REG_CTIMER_CMPRA0_CMPR1A0(ui32Value & 0xFFFF) );
@@ -1162,7 +1195,7 @@ am_hal_ctimer_compare_set(uint32_t ui32TimerNumber, uint32_t ui32TimerSegment,
     // Done with critical section.
     //
     AM_CRITICAL_END_ASM
-}
+} // am_hal_ctimer_compare_set()
 
 //*****************************************************************************
 //
@@ -1300,7 +1333,7 @@ am_hal_ctimer_period_set(uint32_t ui32TimerNumber, uint32_t ui32TimerSegment,
     // Done with critical section.
     //
     AM_CRITICAL_END_ASM
-}
+} // am_hal_ctimer_period_set()
 
 //*****************************************************************************
 //
@@ -1328,7 +1361,7 @@ am_hal_ctimer_adc_trigger_enable(void)
     // Done with critical section.
     //
     AM_CRITICAL_END_ASM
-}
+} // am_hal_ctimer_adc_trigger_enable()
 
 //*****************************************************************************
 //
@@ -1356,7 +1389,7 @@ am_hal_ctimer_adc_trigger_disable(void)
     // Done with critical section.
     //
     AM_CRITICAL_END_ASM
-}
+} // am_hal_ctimer_adc_trigger_disable()
 
 //*****************************************************************************
 //
@@ -1410,7 +1443,7 @@ am_hal_ctimer_int_enable(uint32_t ui32Interrupt)
     // Done with critical section.
     //
     AM_CRITICAL_END_ASM
-}
+} // am_hal_ctimer_int_enable()
 
 //*****************************************************************************
 //
@@ -1448,7 +1481,7 @@ am_hal_ctimer_int_enable_get(void)
     // Return enabled interrupts.
     //
     return AM_REGn(CTIMER, 0, INTEN);
-}
+} // am_hal_ctimer_int_enable_get()
 
 //*****************************************************************************
 //
@@ -1499,7 +1532,7 @@ am_hal_ctimer_int_disable(uint32_t ui32Interrupt)
     // Done with critical section.
     //
     AM_CRITICAL_END_ASM
-}
+} // am_hal_ctimer_int_disable()
 
 //*****************************************************************************
 //
@@ -1540,7 +1573,7 @@ am_hal_ctimer_int_clear(uint32_t ui32Interrupt)
     // Disable the interrupt at the module level.
     //
     AM_REGn(CTIMER, 0, INTCLR) = ui32Interrupt;
-}
+} // am_hal_ctimer_int_clear()
 
 //*****************************************************************************
 //
@@ -1581,7 +1614,7 @@ am_hal_ctimer_int_set(uint32_t ui32Interrupt)
     // Set the interrupts.
     //
     AM_REGn(CTIMER, 0, INTSET) = ui32Interrupt;
-}
+} // am_hal_ctimer_int_set()
 
 //*****************************************************************************
 //
@@ -1645,7 +1678,7 @@ am_hal_ctimer_int_status_get(bool bEnabledOnly)
     {
         return AM_REGn(CTIMER, 0, INTSTAT);
     }
-}
+} // am_hal_ctimer_int_status_get()
 
 //*****************************************************************************
 //

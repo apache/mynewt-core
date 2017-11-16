@@ -1,12 +1,12 @@
 //*****************************************************************************
 //
-//! @file am_hal_uart.h
+//  am_hal_uart.h
+//! @file
 //!
 //! @brief Functions for accessing and configuring the UART.
 //!
-//! @addtogroup hal Hardware Abstraction Layer (HAL)
-//! @addtogroup uart UART
-//! @ingroup hal
+//! @addtogroup uart2 UART
+//! @ingroup apollo2hal
 //! @{
 //
 //*****************************************************************************
@@ -42,16 +42,11 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-// This is part of revision 1.2.8 of the AmbiqSuite Development Package.
+// This is part of revision v1.2.10-2-gea660ad-hotfix2 of the AmbiqSuite Development Package.
 //
 //*****************************************************************************
 #ifndef AM_HAL_UART_H
 #define AM_HAL_UART_H
-
-#ifdef __cplusplus
-extern "C"
-{
-#endif
 
 //*****************************************************************************
 //
@@ -269,6 +264,11 @@ am_hal_uart_pwrsave_t;
 //
 //*****************************************************************************
 extern am_hal_uart_pwrsave_t am_hal_uart_pwrsave[AM_REG_UART_NUM_MODULES];
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
 //*****************************************************************************
 //

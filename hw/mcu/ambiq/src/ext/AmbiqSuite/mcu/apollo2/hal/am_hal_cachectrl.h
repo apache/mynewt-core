@@ -1,6 +1,7 @@
 //*****************************************************************************
 //
-//! @file am_hal_cachectrl.h
+//  am_hal_cachectrl.h
+//! @file
 //!
 //! @brief Functions for accessing and configuring the CACHE controller.
 //
@@ -37,16 +38,11 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-// This is part of revision 1.2.8 of the AmbiqSuite Development Package.
+// This is part of revision v1.2.10-2-gea660ad-hotfix2 of the AmbiqSuite Development Package.
 //
 //*****************************************************************************
 #ifndef AM_HAL_CACHECTRL_H
 #define AM_HAL_CACHECTRL_H
-
-#ifdef __cplusplus
-extern "C"
-{
-#endif
 
 //*****************************************************************************
 //
@@ -184,6 +180,11 @@ extern const am_hal_cachectrl_config_t am_hal_cachectrl_defaults;
      AM_HAL_CACHECTRL_CACHECFG_CACHE_CLKGATE_ENABLE |                         \
      AM_HAL_CACHECTRL_CACHECFG_DATA_CLKGATE_ENABLE |                          \
      AM_HAL_CACHECTRL_CACHECFG_CONFIG_2WAY_512)
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
 //*****************************************************************************
 //

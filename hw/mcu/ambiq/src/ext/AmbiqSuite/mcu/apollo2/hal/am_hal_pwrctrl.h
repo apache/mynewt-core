@@ -1,12 +1,12 @@
 //*****************************************************************************
 //
-//! @file am_hal_pwrctrl.h
+//  am_hal_pwrctrl.h
+//! @file
 //!
 //! @brief Functions for enabling and disabling power domains.
 //!
-//! @addtogroup hal Hardware Abstraction Layer (HAL)
-//! @addtogroup pwrctrl Power Control
-//! @ingroup hal
+//! @addtogroup pwrctrl2 Power Control
+//! @ingroup apollo2hal
 //! @{
 
 //*****************************************************************************
@@ -42,7 +42,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-// This is part of revision 1.2.8 of the AmbiqSuite Development Package.
+// This is part of revision v1.2.10-2-gea660ad-hotfix2 of the AmbiqSuite Development Package.
 //
 //*****************************************************************************
 
@@ -319,6 +319,11 @@
 #define AM_HAL_PWRCTRL_PWRONSTATUS_SRAM_ALL                 \
         AM_HAL_PWRCTRL_PWRONSTATUS_SRAM_256K
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 //*****************************************************************************
 //
 // Function prototypes
@@ -331,6 +336,10 @@ extern void am_hal_pwrctrl_bucks_init(void);
 extern void am_hal_pwrctrl_bucks_enable(void);
 extern void am_hal_pwrctrl_bucks_disable(void);
 extern void am_hal_pwrctrl_low_power_init(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // AM_HAL_PWRCTRL_H
 
