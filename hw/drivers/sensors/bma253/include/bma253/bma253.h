@@ -180,6 +180,18 @@ struct bma253_int {
     struct sensor_int *ints;
 };
 
+/* Device private data */
+struct bma253_private_driver_data {
+    struct bma253_int * interrupt;
+    struct sensor_notify_ev_ctx notify_ctx;
+    struct sensor_read_ev_ctx read_ctx;
+    uint8_t registered_mask;
+
+    uint8_t int_num;
+    uint8_t int_route;
+    uint8_t int_ref_cnt;
+};
+
 /* The device itself */
 struct bma253 {
     /* Underlying OS device */
@@ -194,6 +206,9 @@ struct bma253 {
      * power mode if a function that requires a higher power mode is
      * currently running. */
     enum bma253_power_mode power;
+
+    /* Private driver data */
+    struct bma253_private_driver_data pdd;
 };
 
 /* Offset compensation is performed to target this given value, by axis */

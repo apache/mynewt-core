@@ -41,11 +41,10 @@ static struct log bma253_log;
 #define BMA253_INFO(...)
 #endif
 
-enum bma253_int_num {
-    INT1_PIN,
-    INT2_PIN
-};
+#define BMA253_NOTIFY_MASK  0x01
+#define BMA253_READ_MASK    0x02
 
+    enum int_route int_route;
 static void
 delay_msec(uint32_t delay)
 {
@@ -53,6 +52,7 @@ delay_msec(uint32_t delay)
     os_time_delay(delay);
 }
 
+#if MYNEWT_VAL(BMA253_INT_ENABLE)
 static void
 init_interrupt(struct bma253_int * interrupt, struct sensor_int *ints)
 {
@@ -83,7 +83,7 @@ wait_interrupt(struct bma253_int * interrupt, enum bma253_int_num int_num)
     OS_ENTER_CRITICAL(interrupt->lock);
 
     /* Check if we did not missed interrupt */
-    if (hal_gpio_read(interrupt->ints[int_num].pin) ==
+    if (hal_gpio_read(interrupt->ints[int_num].host_pin) ==
                                             interrupt->ints[int_num].active) {
         OS_EXIT_CRITICAL(interrupt->lock);
         return;
@@ -129,26 +129,21 @@ wake_interrupt(struct bma253_int * interrupt)
     }
 }
 
-static struct sensor_notify_ev_ctx sensor_notify_ev_ctx;
-static struct sensor_read_ev_ctx   sensor_read_ev_ctx;
-
 static void
-interrupt_handler_notify_evt(void * arg)
+interrupt_handler(void * arg)
 {
-    sensor_mgr_put_notify_evt(arg);
-}
+    struct sensor *sensor = arg;
+    struct bma253 *bma253;
 
-static void
-interrupt_handler_read_evt(void * arg)
-{
-    sensor_mgr_put_read_evt(arg);
-}
+    bma253 = (struct bma253 *)SENSOR_GET_DEVICE(sensor);
 
-static void
-interrupt_handler_wake_up(void * arg)
-{
-    wake_interrupt(arg);
+    if (bma253->pdd.interrupt) {
+        wake_interrupt(bma253->pdd.interrupt);
+    }
+
+    sensor_mgr_put_interrupt_evt(sensor);
 }
+#endif
 
 static int
 get_register(const struct bma253 * bma253,
@@ -168,8 +163,7 @@ get_register(const struct bma253 * bma253,
     rc = hal_i2c_master_write(itf->si_num, &oper,
                               OS_TICKS_PER_SEC / 10, 1);
     if (rc != 0) {
-        BMA253_ERROR("I2C access failed at address 0x%02X\n",
-                     addr);
+        BMA253_ERROR("I2C access failed at address 0x%02X\n", addr);
         return rc;
     }
 
@@ -2750,8 +2744,10 @@ reset_and_recfg(struct bma253 * bma253)
     struct orient_int_cfg orient_int_cfg;
     enum i2c_watchdog i2c_watchdog;
     struct fifo_cfg fifo_cfg;
+    struct bma253_private_driver_data *pdd;
 
     cfg = &bma253->cfg;
+    pdd = &bma253->pdd;
 
     bma253->power = BMA253_POWER_MODE_NORMAL;
 
@@ -2779,16 +2775,7 @@ reset_and_recfg(struct bma253 * bma253)
 
     int_route = INT_ROUTE_NONE;
 #if MYNEWT_VAL(BMA253_INT_ENABLE)
- #if MYNEWT_VAL(BMA253_INT_PIN_DEVICE) < 1 || \
-     MYNEWT_VAL(BMA253_INT_PIN_DEVICE) > 2
-  #error "invalid BMA253_INT_PIN_DEVICE value"
- #endif
- #if MYNEWT_VAL(BMA253_INT_PIN_DEVICE) == 1
-    int_route = INT_ROUTE_PIN_1;
- #endif
- #if MYNEWT_VAL(BMA253_INT_PIN_DEVICE) == 2
-    int_route = INT_ROUTE_PIN_2;
- #endif
+    int_route = pdd->int_route;
 #endif
 
     int_routes.flat_int_route        = INT_ROUTE_NONE;
@@ -3044,31 +3031,44 @@ default_power(struct bma253 * bma253)
     return change_power(bma253, cfg->power_mode);
 }
 
+#if MYNEWT_VAL(BMA253_INT_ENABLE)
 static int
-enable_intpin(const struct bma253 * bma253,
-              enum bma253_int_num int_num,
+init_intpin(struct bma253 * bma253,
               hal_gpio_irq_handler_t handler,
               void * arg)
 {
-#if MYNEWT_VAL(BMA253_INT_ENABLE)
+    struct bma253_private_driver_data *pdd = &bma253->pdd;
     hal_gpio_irq_trig_t trig;
-    uint8_t pin;
+    int pin = -1;
     int rc;
+    int i;
 
-    if ((int_num + 1) > bma253->sensor.s_itf.si_configured_ints_num) {
-        /* Interrupt pin not configured */
-        return SYS_EINVAL;
+    for (i = 0; i < MYNEWT_VAL(SENSOR_MAX_INTERRUPTS_PINS); i++){
+        pin = bma253->sensor.s_itf.si_ints[i].host_pin;
+        if (pin > 0) {
+            break;
+        }
     }
 
-    pin = bma253->sensor.s_itf.si_ints[int_num].pin;
     if (pin < 0) {
+        BMA253_ERROR("Interrupt pin not configured\n");
         return SYS_EINVAL;
     }
 
-    if (bma253->sensor.s_itf.si_ints[int_num].active) {
+    pdd->int_num = i;
+    if (bma253->sensor.s_itf.si_ints[pdd->int_num].active) {
         trig = HAL_GPIO_TRIG_RISING;
     } else {
         trig = HAL_GPIO_TRIG_FALLING;
+    }
+
+    if (bma253->sensor.s_itf.si_ints[pdd->int_num].device_pin == 1) {
+        pdd->int_route = INT_ROUTE_PIN_1;
+    } else if (bma253->sensor.s_itf.si_ints[pdd->int_num].device_pin == 2) {
+        pdd->int_route = INT_ROUTE_PIN_2;
+    } else {
+        BMA253_ERROR("Route not configured\n");
+        return SYS_EINVAL;
     }
 
     rc = hal_gpio_irq_init(pin,
@@ -3080,26 +3080,39 @@ enable_intpin(const struct bma253 * bma253,
         return rc;
     }
 
-    hal_gpio_irq_enable(pin);
-
     return 0;
-#else
-    return SYS_ENODEV;
-#endif
 }
 
 static void
-disable_intpin(const struct bma253 * bma253, enum bma253_int_num int_num)
+enable_intpin(struct bma253 * bma253)
 {
-#if MYNEWT_VAL(BMA253_INT_ENABLE)
-    if ((int_num + 1) > bma253->sensor.s_itf.si_configured_ints_num) {
-        /* Interrupt pin not configured */
+    struct bma253_private_driver_data *pdd = &bma253->pdd;
+    enum bma253_int_num int_num = pdd->int_num;
+
+    pdd->int_ref_cnt++;
+
+    if (pdd->int_ref_cnt == 1) {
+        hal_gpio_irq_enable(bma253->sensor.s_itf.si_ints[int_num].host_pin);
+    }
+}
+
+static void
+disable_intpin(struct bma253 * bma253)
+{
+    struct bma253_private_driver_data *pdd = &bma253->pdd;
+    enum bma253_int_num int_num = pdd->int_num;
+
+    if (pdd->int_ref_cnt == 0) {
         return;
     }
-    hal_gpio_irq_disable(bma253->sensor.s_itf.si_ints[int_num].pin);
-    hal_gpio_irq_release(bma253->sensor.s_itf.si_ints[int_num].pin);
-#endif
+
+    pdd->int_ref_cnt--;
+
+    if (pdd->int_ref_cnt == 0) {
+        hal_gpio_irq_disable(bma253->sensor.s_itf.si_ints[int_num].host_pin);
+    }
 }
+#endif
 
 static int
 self_test_enable(const struct bma253 * bma253,
@@ -3565,18 +3578,12 @@ bma253_stream_read(struct bma253 * bma253,
     os_time_t stop_ticks;
     struct accel_data accel_data[AXIS_ALL];
     struct sensor_accel_data sad;
+    struct bma253_private_driver_data *pdd;
 
     cfg = &bma253->cfg;
+    pdd = &bma253->pdd;
 
     stop_ticks = 0;
-#if MYNEWT_VAL(BMA253_INT_ENABLE)
-    rc = enable_intpin(bma253, INT1_PIN,
-                       interrupt_handler_wake_up,
-                       &bma253->intr);
-    if (rc != 0) {
-        return rc;
-    }
-#endif
 
     request_power = BMA253_POWER_MODE_NORMAL;
 
@@ -3585,11 +3592,19 @@ bma253_stream_read(struct bma253 * bma253,
         return rc;
     }
 
+#if MYNEWT_VAL(BMA253_INT_ENABLE)
     undo_interrupt(&bma253->intr);
+
+    if (pdd->interrupt) {
+        return SYS_EBUSY;
+    }
+    pdd->interrupt = &bma253->intr;
+    enable_intpin(bma253);
+#endif
 
     rc = bma253_get_int_enable(bma253, &int_enable_org);
     if (rc != 0) {
-        return rc;
+        goto done;
     }
 
     /* Leave tap configured as it is since it is on int2*/
@@ -3599,20 +3614,20 @@ bma253_stream_read(struct bma253 * bma253,
 
     rc = bma253_set_int_enable(bma253, &int_enable);
     if (rc != 0) {
-        return rc;
+        goto done;
     }
 
     if (time_ms != 0) {
         rc = os_time_ms_to_ticks(time_ms, &time_ticks);
         if (rc != 0) {
-            return rc;
+            goto done;
         }
         stop_ticks = os_time_get() + time_ticks;
     }
 
     for (;;) {
 #if MYNEWT_VAL(BMA253_INT_ENABLE)
-        wait_interrupt(&bma253->intr, INT1_PIN);
+        wait_interrupt(&bma253->intr, pdd->int_num);
 #else
         switch (cfg->filter_bandwidth) {
         case BMA253_FILTER_BANDWIDTH_7_81_HZ:
@@ -3650,7 +3665,7 @@ bma253_stream_read(struct bma253 * bma253,
                              FIFO_DATA_X_AND_Y_AND_Z,
                              accel_data);
         if (rc != 0) {
-            return rc;
+            goto done;
         }
 
         sad.sad_x = accel_data[AXIS_X].accel_g;
@@ -3671,17 +3686,21 @@ bma253_stream_read(struct bma253 * bma253,
 
     rc = bma253_set_int_enable(bma253, &int_enable_org);
     if (rc != 0) {
-        return rc;
+        goto done;
     }
 
     rc = default_power(bma253);
     if (rc != 0) {
-        return rc;
+        goto done;
     }
 
-    disable_intpin(bma253, INT1_PIN);
+done:
+#if MYNEWT_VAL(BMA253_INT_ENABLE)
+    pdd->interrupt = NULL;
+    disable_intpin(bma253);
+#endif
 
-    return 0;
+    return rc;
 }
 
 int
@@ -3778,18 +3797,23 @@ int
 bma253_wait_for_orient(struct bma253 * bma253,
                        struct bma253_orient_xyz * orient_xyz)
 {
+#if MYNEWT_VAL(BMA253_INT_ENABLE)
     int rc;
     enum bma253_power_mode request_power[3];
     struct int_enable int_enable_org;
     struct int_enable int_enable = {0};
     struct int_status int_status;
+    struct bma253_private_driver_data *pdd;
 
-    rc = enable_intpin(bma253, INT1_PIN,
-                       interrupt_handler_wake_up,
-                       &bma253->intr);
-    if (rc != 0) {
-        return rc;
+    pdd = &bma253->pdd;
+
+    if (pdd->interrupt) {
+        BMA253_ERROR("Interrupt used\n");
+        return SYS_EINVAL;
     }
+
+    pdd->interrupt = &bma253->intr;
+    enable_intpin(bma253);
 
     request_power[0] = BMA253_POWER_MODE_LPM_1;
     request_power[1] = BMA253_POWER_MODE_LPM_2;
@@ -3818,7 +3842,7 @@ bma253_wait_for_orient(struct bma253 * bma253,
         goto done;
     }
 
-    wait_interrupt(&bma253->intr, INT1_PIN);
+    wait_interrupt(&bma253->intr, pdd->int_num);
 
     rc = bma253_get_int_status(bma253, &int_status);
     if (rc != 0) {
@@ -3840,24 +3864,33 @@ bma253_wait_for_orient(struct bma253 * bma253,
     orient_xyz->downward_z = int_status.device_is_down;
 
 done:
-    disable_intpin(bma253, INT1_PIN);
+    pdd->interrupt = NULL;
+    disable_intpin(bma253);
     return rc;
+#else
+    return SYS_ENODEV;
+#endif
 }
 
 int
 bma253_wait_for_high_g(struct bma253 * bma253)
 {
+#if MYNEWT_VAL(BMA253_INT_ENABLE)
     int rc;
     enum bma253_power_mode request_power[3];
     struct int_enable int_enable_org;
     struct int_enable int_enable = { 0 };
+    struct bma253_private_driver_data *pdd;
 
-    rc = enable_intpin(bma253, INT1_PIN,
-                       interrupt_handler_wake_up,
-                       &bma253->intr);
-    if (rc != 0) {
-        return rc;
+    pdd = &bma253->pdd;
+
+    if (pdd->interrupt) {
+        BMA253_ERROR("Interrupt used\n");
+        return SYS_EINVAL;
     }
+
+    pdd->interrupt = &bma253->intr;
+    enable_intpin(bma253);
 
     request_power[0] = BMA253_POWER_MODE_LPM_1;
     request_power[1] = BMA253_POWER_MODE_LPM_2;
@@ -3890,7 +3923,7 @@ bma253_wait_for_high_g(struct bma253 * bma253)
         goto done;
     }
 
-    wait_interrupt(&bma253->intr, INT1_PIN);
+    wait_interrupt(&bma253->intr, pdd->int_num);
 
     rc = bma253_set_int_enable(bma253, &int_enable_org);
     if (rc != 0) {
@@ -3903,24 +3936,33 @@ bma253_wait_for_high_g(struct bma253 * bma253)
     }
 
 done:
-    disable_intpin(bma253, INT1_PIN);
+    pdd->interrupt = NULL;
+    disable_intpin(bma253);
     return rc;
+#else
+    return SYS_ENODEV;
+#endif
 }
 
 int
 bma253_wait_for_low_g(struct bma253 * bma253)
 {
+#if MYNEWT_VAL(BMA253_INT_ENABLE)
     int rc;
     enum bma253_power_mode request_power[3];
     struct int_enable int_enable_org;
     struct int_enable int_enable = { 0 };
+    struct bma253_private_driver_data *pdd;
 
-    rc = enable_intpin(bma253, INT1_PIN,
-                       interrupt_handler_wake_up,
-                       &bma253->intr);
-    if (rc != 0) {
-        return rc;
+    pdd = &bma253->pdd;
+
+    if (pdd->interrupt) {
+        BMA253_ERROR("Interrupt used\n");
+        return SYS_EINVAL;
     }
+
+    pdd->interrupt = &bma253->intr;
+    enable_intpin(bma253);
 
     request_power[0] = BMA253_POWER_MODE_LPM_1;
     request_power[1] = BMA253_POWER_MODE_LPM_2;
@@ -3951,7 +3993,7 @@ bma253_wait_for_low_g(struct bma253 * bma253)
         goto done;
     }
 
-    wait_interrupt(&bma253->intr, INT1_PIN);
+    wait_interrupt(&bma253->intr, pdd->int_num);
 
     rc = bma253_set_int_enable(bma253, &int_enable_org);
     if (rc != 0) {
@@ -3964,21 +4006,28 @@ bma253_wait_for_low_g(struct bma253 * bma253)
     }
 
 done:
-    disable_intpin(bma253, INT1_PIN);
-
+    pdd->interrupt = NULL;
+    disable_intpin(bma253);
     return 0;
+#else
+    return SYS_ENODEV;
+#endif
 }
 
 int
 bma253_wait_for_tap(struct bma253 * bma253,
                     enum bma253_tap_type tap_type)
 {
+#if MYNEWT_VAL(BMA253_INT_ENABLE)
     int rc = 0;
     enum bma253_power_mode request_power[3];
     struct int_enable int_enable_org;
     struct int_enable int_enable = { 0 };
     struct int_routes int_routes;
     struct int_routes int_routes_org;
+    struct bma253_private_driver_data *pdd;
+
+    pdd = &bma253->pdd;
 
     switch (tap_type) {
     case BMA253_TAP_TYPE_DOUBLE:
@@ -3998,11 +4047,11 @@ bma253_wait_for_tap(struct bma253 * bma253,
         /* According to BMA253 when single tap shall not be used we should not
          * route it to any INTX
          */
-        int_routes.d_tap_int_route = INT_ROUTE_PIN_1;
+        int_routes.d_tap_int_route = pdd->int_route;
         int_routes.s_tap_int_route = INT_ROUTE_NONE;
     } else {
         int_routes.d_tap_int_route = INT_ROUTE_NONE;
-        int_routes.s_tap_int_route = INT_ROUTE_PIN_1;
+        int_routes.s_tap_int_route = pdd->int_route;
     }
 
     rc = bma253_set_int_routes(bma253, &int_routes);
@@ -4010,12 +4059,13 @@ bma253_wait_for_tap(struct bma253 * bma253,
         return rc;
     }
 
-    rc = enable_intpin(bma253, INT1_PIN,
-                       interrupt_handler_wake_up,
-                       &bma253->intr);
-    if (rc != 0) {
-        return rc;
+    if (pdd->interrupt) {
+        BMA253_ERROR("Interrupt used\n");
+        return SYS_EINVAL;
     }
+
+    pdd->interrupt = &bma253->intr;
+    enable_intpin(bma253);
 
     request_power[0] = BMA253_POWER_MODE_LPM_1;
     request_power[1] = BMA253_POWER_MODE_LPM_2;
@@ -4043,7 +4093,7 @@ bma253_wait_for_tap(struct bma253 * bma253,
         goto done;
     }
 
-    wait_interrupt(&bma253->intr, INT1_PIN);
+    wait_interrupt(&bma253->intr, pdd->int_num);
 
     rc = bma253_set_int_enable(bma253, &int_enable_org);
     if (rc != 0) {
@@ -4053,12 +4103,15 @@ bma253_wait_for_tap(struct bma253 * bma253,
     rc = default_power(bma253);
 
 done:
-    disable_intpin(bma253, INT1_PIN);
-
+    pdd->interrupt = NULL;
+    disable_intpin(bma253);
     /* Restore previous routing */
     rc = bma253_set_int_routes(bma253, &int_routes_org);
 
     return rc;
+#else
+    return SYS_ENODEV;
+#endif
 }
 
 int
@@ -4204,6 +4257,7 @@ sensor_driver_set_trigger_thresh(struct sensor * sensor,
                                  sensor_type_t sensor_type,
                                  struct sensor_type_traits * stt)
 {
+#if MYNEWT_VAL(BMA253_INT_ENABLE)
     struct bma253 * bma253;
     const struct bma253_cfg * cfg;
     int rc;
@@ -4214,6 +4268,7 @@ sensor_driver_set_trigger_thresh(struct sensor * sensor,
     float thresh;
     struct low_g_int_cfg low_g_int_cfg;
     struct high_g_int_cfg high_g_int_cfg;
+    struct bma253_private_driver_data *pdd;
 
     if (sensor_type != SENSOR_TYPE_ACCELEROMETER) {
         return SYS_EINVAL;
@@ -4221,16 +4276,11 @@ sensor_driver_set_trigger_thresh(struct sensor * sensor,
 
     bma253 = (struct bma253 *)SENSOR_GET_DEVICE(sensor);
     cfg = &bma253->cfg;
+    pdd = &bma253->pdd;
 
-    sensor_read_ev_ctx.srec_sensor = sensor;
-    sensor_read_ev_ctx.srec_type   = sensor_type;
-
-    rc = enable_intpin(bma253, INT1_PIN,
-                       interrupt_handler_read_evt,
-                       &sensor_read_ev_ctx);
-    if (rc != 0) {
-        return rc;
-    }
+    pdd->read_ctx.srec_type |= sensor_type;
+    pdd->registered_mask |= BMA253_READ_MASK;
+    enable_intpin(bma253);
 
     request_power[0] = BMA253_POWER_MODE_LPM_1;
     request_power[1] = BMA253_POWER_MODE_LPM_2;
@@ -4246,24 +4296,10 @@ sensor_driver_set_trigger_thresh(struct sensor * sensor,
     low_thresh  = stt->stt_low_thresh.sad;
     high_thresh = stt->stt_high_thresh.sad;
 
-    int_enable.flat_int_enable          = false;
-    int_enable.orient_int_enable        = false;
-    int_enable.s_tap_int_enable         = false;
-    int_enable.d_tap_int_enable         = false;
-    int_enable.slope_z_int_enable       = false;
-    int_enable.slope_y_int_enable       = false;
-    int_enable.slope_x_int_enable       = false;
-    int_enable.fifo_wmark_int_enable    = false;
-    int_enable.fifo_full_int_enable     = false;
-    int_enable.data_int_enable          = false;
-    int_enable.low_g_int_enable         = false;
-    int_enable.high_g_z_int_enable      = false;
-    int_enable.high_g_y_int_enable      = false;
-    int_enable.high_g_x_int_enable      = false;
-    int_enable.no_motion_select         = false;
-    int_enable.slow_no_mot_z_int_enable = false;
-    int_enable.slow_no_mot_y_int_enable = false;
-    int_enable.slow_no_mot_x_int_enable = false;
+    rc = bma253_get_int_enable(bma253, &int_enable);
+    if (rc != 0) {
+        goto done;
+    }
 
     if (low_thresh->sad_x_is_valid |
         low_thresh->sad_y_is_valid |
@@ -4341,21 +4377,28 @@ sensor_driver_set_trigger_thresh(struct sensor * sensor,
 
 done:
     if (rc != 0) {
-        /* In case of error let's disable interrupt */
-        disable_intpin(bma253, INT1_PIN);
+        /* Something went wrong, unregister from interrupt */
+        pdd->read_ctx.srec_type &= ~sensor_type;
+        pdd->registered_mask &= ~BMA253_READ_MASK;
+        disable_intpin(bma253);
     }
 
     return rc;
+#else
+    return SYS_ENODEV;
+#endif
 }
 
 static int
 sensor_driver_unset_notification(struct sensor * sensor,
                                sensor_event_type_t sensor_event_type)
 {
+#if MYNEWT_VAL(BMA253_INT_ENABLE)
     struct bma253 * bma253;
     enum bma253_power_mode request_power[3];
     struct int_enable int_enable;
     struct int_routes int_routes;
+    struct bma253_private_driver_data *pdd;
     int rc;
 
     if ((sensor_event_type & ~(SENSOR_EVENT_TYPE_DOUBLE_TAP |
@@ -4370,8 +4413,11 @@ sensor_driver_unset_notification(struct sensor * sensor,
     }
 
     bma253 = (struct bma253 *)SENSOR_GET_DEVICE(sensor);
+    pdd = &bma253->pdd;
 
-    disable_intpin(bma253, INT2_PIN);
+    pdd->notify_ctx.snec_evtype &= ~sensor_event_type;
+    pdd->registered_mask &= ~BMA253_NOTIFY_MASK;
+    disable_intpin(bma253);
 
     rc = interim_power(bma253,
                        request_power,
@@ -4388,8 +4434,13 @@ sensor_driver_unset_notification(struct sensor * sensor,
         return rc;
     }
 
-    int_routes.s_tap_int_route = INT_ROUTE_NONE;
-    int_routes.d_tap_int_route = INT_ROUTE_NONE;
+    if (sensor_event_type & SENSOR_EVENT_TYPE_SINGLE_TAP) {
+        int_routes.s_tap_int_route = INT_ROUTE_NONE;
+    }
+
+    if (sensor_event_type & SENSOR_EVENT_TYPE_DOUBLE_TAP) {
+        int_routes.d_tap_int_route = INT_ROUTE_NONE;
+    }
 
     rc = bma253_set_int_routes(bma253, &int_routes);
     if (rc != 0) {
@@ -4410,17 +4461,22 @@ sensor_driver_unset_notification(struct sensor * sensor,
     }
 
     return 0;
+#else
+    return SYS_ENODEV;
+#endif
 }
 
 static int
 sensor_driver_set_notification(struct sensor * sensor,
                                sensor_event_type_t sensor_event_type)
 {
+#if MYNEWT_VAL(BMA253_INT_ENABLE)
     struct bma253 * bma253;
     int rc;
     enum bma253_power_mode request_power[3];
     struct int_enable int_enable;
     struct int_routes int_routes;
+    struct bma253_private_driver_data *pdd;
 
     if ((sensor_event_type & ~(SENSOR_EVENT_TYPE_DOUBLE_TAP |
                                SENSOR_EVENT_TYPE_SINGLE_TAP)) != 0) {
@@ -4434,16 +4490,15 @@ sensor_driver_set_notification(struct sensor * sensor,
     }
 
     bma253 = (struct bma253 *)SENSOR_GET_DEVICE(sensor);
+    pdd = &bma253->pdd;
 
-    sensor_notify_ev_ctx.snec_sensor = sensor;
-    sensor_notify_ev_ctx.snec_evtype = sensor_event_type;
-
-    rc = enable_intpin(bma253, INT2_PIN,
-                       interrupt_handler_notify_evt,
-                       &sensor_notify_ev_ctx);
-    if (rc != 0) {
-        return rc;
+    if (pdd->registered_mask & BMA253_NOTIFY_MASK) {
+        return SYS_EBUSY;
     }
+
+    pdd->notify_ctx.snec_evtype |= sensor_event_type;
+    pdd->registered_mask |= BMA253_NOTIFY_MASK;
+    enable_intpin(bma253);
 
     request_power[0] = BMA253_POWER_MODE_LPM_1;
     request_power[1] = BMA253_POWER_MODE_LPM_2;
@@ -4463,11 +4518,11 @@ sensor_driver_set_notification(struct sensor * sensor,
     }
 
     if (sensor_event_type & SENSOR_EVENT_TYPE_DOUBLE_TAP) {
-        int_routes.s_tap_int_route = INT_ROUTE_NONE;
-        int_routes.d_tap_int_route = INT_ROUTE_PIN_2;
-    } else {
-        int_routes.s_tap_int_route = INT_ROUTE_PIN_2;
-        int_routes.d_tap_int_route = INT_ROUTE_NONE;
+        int_routes.d_tap_int_route = pdd->int_route;
+    }
+
+    if (sensor_event_type & SENSOR_EVENT_TYPE_SINGLE_TAP) {
+        int_routes.s_tap_int_route = pdd->int_route;
     }
 
     rc = bma253_set_int_routes(bma253, &int_routes);
@@ -4490,11 +4545,49 @@ sensor_driver_set_notification(struct sensor * sensor,
 
 done:
     if (rc != 0) {
-        /* In case of error disable interrupt*/
-        disable_intpin(bma253, INT2_PIN);
+        pdd->notify_ctx.snec_evtype &= ~sensor_event_type;
+        pdd->registered_mask &= ~BMA253_NOTIFY_MASK;
+        disable_intpin(bma253);
     }
 
     return rc;
+#else
+    return SYS_ENODEV;
+#endif
+}
+
+static int
+sensor_driver_handle_interrupt(struct sensor * sensor)
+{
+#if MYNEWT_VAL(BMA253_INT_ENABLE)
+    struct bma253 * bma253;
+    struct bma253_private_driver_data *pdd;
+    struct int_status int_status;
+    int rc;
+
+    bma253 = (struct bma253 *)SENSOR_GET_DEVICE(sensor);
+    pdd = &bma253->pdd;
+
+    rc = bma253_get_int_status(bma253, &int_status);
+    if (rc != 0) {
+        BMA253_ERROR("Cound not read int status err=0x%02x\n", rc);
+        return rc;
+    }
+
+    if ((pdd->registered_mask & BMA253_NOTIFY_MASK) &&
+            (int_status.s_tap_int_active || int_status.d_tap_int_active)) {
+        sensor_mgr_put_notify_evt(&pdd->notify_ctx);
+    }
+
+    if ((pdd->registered_mask & BMA253_READ_MASK) &&
+            (int_status.high_g_int_active || int_status.low_g_int_active)) {
+        sensor_mgr_put_read_evt(&pdd->read_ctx);
+    }
+
+    return 0;
+#else
+    return SYS_ENODEV;
+#endif
 }
 
 static struct sensor_driver bma253_sensor_driver = {
@@ -4503,6 +4596,7 @@ static struct sensor_driver bma253_sensor_driver = {
     .sd_set_trigger_thresh = sensor_driver_set_trigger_thresh,
     .sd_set_notification   = sensor_driver_set_notification,
     .sd_unset_notification = sensor_driver_unset_notification,
+    .sd_handle_interrupt   = sensor_driver_handle_interrupt,
 };
 
 int
@@ -4548,6 +4642,9 @@ bma253_init(struct os_dev * dev, void * arg)
 {
     struct bma253 * bma253;
     struct sensor * sensor;
+#if MYNEWT_VAL(BMA253_INT_ENABLE)
+    struct bma253_private_driver_data *pdd;
+#endif
     int rc;
 
     if (!dev || !arg) {
@@ -4593,7 +4690,19 @@ bma253_init(struct os_dev * dev, void * arg)
         return rc;
     }
 
+#if MYNEWT_VAL(BMA253_INT_ENABLE)
     init_interrupt(&bma253->intr, bma253->sensor.s_itf.si_ints);
+
+    pdd = &bma253->pdd;
+
+    pdd->read_ctx.srec_sensor = sensor;
+    pdd->notify_ctx.snec_sensor = sensor;
+
+    rc = init_intpin(bma253, interrupt_handler, sensor);
+    if (rc != 0) {
+        return rc;
+    }
+#endif
 
     bma253->power = BMA253_POWER_MODE_NORMAL;
 

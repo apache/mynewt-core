@@ -385,7 +385,7 @@ typedef int (*sensor_set_notification_t)(struct sensor *,
                                          sensor_event_type_t);
 
 /**
- * Un set the notification expectation for a targeted set of events for the
+ * Unset the notification expectation for a targeted set of events for the
  * specific sensor.
  *
  * @param The sensor.
@@ -396,12 +396,23 @@ typedef int (*sensor_set_notification_t)(struct sensor *,
 typedef int (*sensor_unset_notification_t)(struct sensor *,
                                            sensor_event_type_t);
 
+/**
+ * Let driver handle interrupt in the sensor context
+ *
+ * @param The sensor.
+ * @param Interrupt argument
+ *
+ * @return 0 on success, non-zero error code on failure.
+ */
+typedef int (*sensor_handle_interrupt_t)(struct sensor *);
+
 struct sensor_driver {
     sensor_read_func_t sd_read;
     sensor_get_config_func_t sd_get_config;
     sensor_set_trigger_thresh_t sd_set_trigger_thresh;
     sensor_set_notification_t sd_set_notification;
     sensor_unset_notification_t sd_unset_notification;
+    sensor_handle_interrupt_t sd_handle_interrupt;
 };
 
 struct sensor_timestamp {
@@ -411,7 +422,8 @@ struct sensor_timestamp {
 };
 
 struct sensor_int {
-    uint8_t pin;
+    uint8_t host_pin;
+    uint8_t device_pin;
     uint8_t active;
 };
 
@@ -438,7 +450,6 @@ struct sensor_itf {
     /* Sensor interface interrupts pins */
     /* XXX We should probably remove low/high pins and replace it with those
      */
-    uint8_t si_configured_ints_num;
     struct sensor_int si_ints[MYNEWT_VAL(SENSOR_MAX_INTERRUPTS_PINS)];
 };
 
@@ -819,6 +830,14 @@ sensor_set_watermark_thresh(char *, struct sensor_type_traits *);
  */
 void
 sensor_mgr_put_notify_evt(struct sensor_notify_ev_ctx *);
+
+/**
+ * Puts a interrupt event on the sensor manager evq
+ *
+ * @param interrupt event context
+ */
+void
+sensor_mgr_put_interrupt_evt(struct sensor *);
 
 /**
  * Puts read event on the sensor manager evq
