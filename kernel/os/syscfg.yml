@@ -39,6 +39,12 @@ syscfg.defs:
     OS_SCHEDULING:
         description: 'Whether OS will be started or not'
         value: 1
+    OS_CTX_SW_STACK_CHECK:
+        description: 'Whether to do stack sanity check during context switch'
+        value: 1
+    OS_CTX_SW_STACK_GUARD:
+        description: 'How many os_stack_ts to keep as stack guard'
+        value: 4
     OS_CPUTIME_FREQ:
         description: 'Frequency of os cputime'
         value: 1000000
