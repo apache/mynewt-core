@@ -46,7 +46,11 @@ static bool has_reg_fault = true;
 static struct bt_mesh_cfg cfg_srv = {
     .relay = BT_MESH_RELAY_DISABLED,
     .beacon = BT_MESH_BEACON_ENABLED,
-    .frnd = BT_MESH_FRIEND_NOT_SUPPORTED,
+#if MYNEWT_VAL(BLE_MESH_FRIEND)
+    .frnd = BT_MESH_FRIEND_ENABLED,
+#else
+    .gatt_proxy = BT_MESH_GATT_PROXY_NOT_SUPPORTED,
+#endif
 #if MYNEWT_VAL(BLE_MESH_GATT_PROXY)
     .gatt_proxy = BT_MESH_GATT_PROXY_ENABLED,
 #else
