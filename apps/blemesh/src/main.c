@@ -346,9 +346,9 @@ static int output_number(bt_mesh_output_action action, uint32_t number)
     return 0;
 }
 
-static void prov_complete(void)
+static void prov_complete(u16_t addr)
 {
-    console_printf("Provisioning completed\n");
+    console_printf("Local node provisioned, primary address 0x%04x\n", addr);
 }
 
 static const uint8_t dev_uuid[16] = MYNEWT_VAL(BLE_MESH_DEV_UUID);
