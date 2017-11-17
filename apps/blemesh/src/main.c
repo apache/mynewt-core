@@ -146,26 +146,57 @@ static struct bt_mesh_health health_srv = {
 static struct bt_mesh_model_pub gen_level_pub;
 static struct bt_mesh_model_pub gen_onoff_pub;
 
+static uint8_t gen_on_off_state;
+static int16_t gen_level_state;
+
+static void gen_onoff_status(struct bt_mesh_model *model,
+                             struct bt_mesh_msg_ctx *ctx)
+{
+    struct os_mbuf *msg = NET_BUF_SIMPLE(3);
+    uint8_t *status;
+
+    console_printf("#mesh-onoff STATUS\n");
+
+    bt_mesh_model_msg_init(msg, BT_MESH_MODEL_OP_2(0x82, 0x04));
+    status = net_buf_simple_add(msg, 1);
+    *status = gen_on_off_state;
+
+    if (bt_mesh_model_send(model, ctx, msg, NULL, NULL)) {
+        console_printf("#mesh-onoff STATUS: send status failed\n");
+    }
+
+    os_mbuf_free_chain(msg);
+}
+
 static void gen_onoff_get(struct bt_mesh_model *model,
               struct bt_mesh_msg_ctx *ctx,
               struct os_mbuf *buf)
 {
-    console_printf("GET\n");
+    console_printf("#mesh-onoff GET\n");
+
+    gen_onoff_status(model, ctx);
 }
 
 static void gen_onoff_set(struct bt_mesh_model *model,
               struct bt_mesh_msg_ctx *ctx,
               struct os_mbuf *buf)
 {
-    hal_gpio_write(LED_2, !buf->om_data[0]);
-    console_printf("SET\n");
+    console_printf("#mesh-onoff SET\n");
+
+    gen_on_off_state = buf->om_data[0];
+    hal_gpio_write(LED_2, !gen_on_off_state);
+
+    gen_onoff_status(model, ctx);
 }
 
 static void gen_onoff_set_unack(struct bt_mesh_model *model,
                 struct bt_mesh_msg_ctx *ctx,
                 struct os_mbuf *buf)
 {
-    console_printf("SET UNACK\n");
+    console_printf("#mesh-onoff SET-UNACK\n");
+
+    gen_on_off_state = buf->om_data[0];
+    hal_gpio_write(LED_2, !gen_on_off_state);
 }
 
 static const struct bt_mesh_model_op gen_onoff_op[] = {
@@ -175,34 +206,86 @@ static const struct bt_mesh_model_op gen_onoff_op[] = {
     BT_MESH_MODEL_OP_END,
 };
 
+static void gen_level_status(struct bt_mesh_model *model,
+                             struct bt_mesh_msg_ctx *ctx)
+{
+    struct os_mbuf *msg = NET_BUF_SIMPLE(4);
+
+    console_printf("#mesh-level STATUS\n");
+
+    bt_mesh_model_msg_init(msg, BT_MESH_MODEL_OP_2(0x82, 0x08));
+    net_buf_simple_add_le16(msg, gen_level_state);
+
+    if (bt_mesh_model_send(model, ctx, msg, NULL, NULL)) {
+        console_printf("#mesh-level STATUS: send status failed\n");
+    }
+
+    os_mbuf_free_chain(msg);
+}
+
 static void gen_level_get(struct bt_mesh_model *model,
               struct bt_mesh_msg_ctx *ctx,
               struct os_mbuf *buf)
 {
+    console_printf("#mesh-level GET\n");
+
+    gen_level_status(model, ctx);
 }
 
 static void gen_level_set(struct bt_mesh_model *model,
               struct bt_mesh_msg_ctx *ctx,
               struct os_mbuf *buf)
 {
+    int16_t level;
+
+    level = (int16_t) net_buf_simple_pull_le16(buf);
+    console_printf("#mesh-level SET: level=%d\n", level);
+
+    gen_level_status(model, ctx);
+
+    gen_level_state = level;
+    console_printf("#mesh-level: level=%d\n", gen_level_state);
 }
 
 static void gen_level_set_unack(struct bt_mesh_model *model,
                 struct bt_mesh_msg_ctx *ctx,
                 struct os_mbuf *buf)
 {
+    int16_t level;
+
+    level = (int16_t) net_buf_simple_pull_le16(buf);
+    console_printf("#mesh-level SET-UNACK: level=%d\n", level);
+
+    gen_level_state = level;
+    console_printf("#mesh-level: level=%d\n", gen_level_state);
 }
 
 static void gen_delta_set(struct bt_mesh_model *model,
               struct bt_mesh_msg_ctx *ctx,
               struct os_mbuf *buf)
 {
+    int16_t delta_level;
+
+    delta_level = (int16_t) net_buf_simple_pull_le16(buf);
+    console_printf("#mesh-level DELTA-SET: delta_level=%d\n", delta_level);
+
+    gen_level_status(model, ctx);
+
+    gen_level_state += delta_level;
+    console_printf("#mesh-level: level=%d\n", gen_level_state);
 }
 
 static void gen_delta_set_unack(struct bt_mesh_model *model,
                 struct bt_mesh_msg_ctx *ctx,
                 struct os_mbuf *buf)
 {
+    int16_t delta_level;
+
+    delta_level = (int16_t) net_buf_simple_pull_le16(buf);
+    console_printf("#mesh-level DELTA-SET: delta_level=%d\n", delta_level);
+
+    gen_level_state += delta_level;
+    console_printf("#mesh-level: level=%d\n", gen_level_state);
 }
 
 static void gen_move_set(struct bt_mesh_model *model,
