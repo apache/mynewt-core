@@ -326,6 +326,6 @@ void
 oc_rep_init(void)
 {
     os_mempool_init(&oc_rep_objects, EST_NUM_REP_OBJECTS,
-      sizeof(oc_rep_t), oc_rep_objects_area, "oc_rep_o");
+                    sizeof(oc_rep_t), oc_rep_objects_area, "oc_rep_o");
 }
 #endif
