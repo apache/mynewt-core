@@ -1985,9 +1985,7 @@ btshell_l2cap_send(uint16_t conn_handle, uint16_t idx, uint16_t bytes)
     rc = ble_l2cap_send(coc->chan, sdu_tx);
     if (rc) {
         console_printf("Could not send data rc=%d\n", rc);
-        if (rc == BLE_HS_EBUSY) {
-            os_mbuf_free_chain(sdu_tx);
-        }
+        os_mbuf_free_chain(sdu_tx);
     }
 
     return rc;
