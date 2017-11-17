@@ -41,10 +41,16 @@ syscfg.defs:
         value: 1
     OS_CTX_SW_STACK_CHECK:
         description: 'Whether to do stack sanity check during context switch'
-        value: 1
+        value: 0
     OS_CTX_SW_STACK_GUARD:
         description: 'How many os_stack_ts to keep as stack guard'
         value: 4
+    OS_MEMPOOL_CHECK:
+        description: 'Whether to do stack sanity check of mempool operations'
+        value: 0
+    OS_MEMPOOL_POISON:
+        description: 'Whether to do write known pattern to freed memory'
+        value: 0
     OS_CPUTIME_FREQ:
         description: 'Frequency of os cputime'
         value: 1000000

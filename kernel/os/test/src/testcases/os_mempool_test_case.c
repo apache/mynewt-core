@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -19,11 +19,11 @@
 #include "os_test_priv.h"
 
 /**
- * os mempool test 
- *  
- * Main test loop for memory pool testing. 
- * 
- * @return int 
+ * os mempool test
+ *
+ * Main test loop for memory pool testing.
+ *
+ * @return int
  */
 void
 mempool_test(int num_blocks, int block_size)
@@ -31,7 +31,6 @@ mempool_test(int num_blocks, int block_size)
     int cnt;
     int true_block_size;
     int mem_pool_size;
-    uint32_t test_block;
     uint8_t *tstptr;
     void **free_ptr;
     void *block;
@@ -40,7 +39,7 @@ mempool_test(int num_blocks, int block_size)
     /* Check for too many blocks */
     TEST_ASSERT(num_blocks <= MEMPOOL_TEST_MAX_BLOCKS);
 
-    rc = os_mempool_init(&g_TstMempool, num_blocks, MEM_BLOCK_SIZE, 
+    rc = os_mempool_init(&g_TstMempool, num_blocks, MEM_BLOCK_SIZE,
                          &TstMembuf[0], "TestMemPool");
     TEST_ASSERT_FATAL(rc == 0, "Error creating memory pool %d", rc);
 
@@ -125,7 +124,7 @@ mempool_test(int num_blocks, int block_size)
         }
     }
 
-    TEST_ASSERT((cnt == g_TstMempool.mp_num_blocks) && 
+    TEST_ASSERT((cnt == g_TstMempool.mp_num_blocks) &&
                 (cnt != MEMPOOL_TEST_MAX_BLOCKS),
                 "Got more blocks than mempool contains (%d vs %d)",
                 cnt, g_TstMempool.mp_num_blocks);
@@ -139,7 +138,7 @@ mempool_test(int num_blocks, int block_size)
     for (cnt = 0; cnt < g_TstMempool.mp_num_blocks; ++cnt) {
         rc = os_memblock_put(&g_TstMempool, block_array[cnt]);
         TEST_ASSERT(rc == 0,
-                    "Error putting back block %p (cnt=%d err=%d)", 
+                    "Error putting back block %p (cnt=%d err=%d)",
                     block_array[cnt], cnt, rc);
     }
 
@@ -158,21 +157,6 @@ mempool_test(int num_blocks, int block_size)
     TEST_ASSERT(os_memblock_get(NULL) == NULL,
                 "No error trying to get a block from NULL pool");
 
-    /* Attempt to free a block outside the range of the membuf */
-    test_block = g_TstMempool.mp_membuf_addr;
-    test_block -= 4;
-    rc = os_memblock_put(&g_TstMempool, (void *)test_block);
-    TEST_ASSERT(rc == OS_INVALID_PARM, "No error freeing bad block address");
-
-    test_block += (true_block_size * g_TstMempool.mp_num_blocks) + 100;
-    rc = os_memblock_put(&g_TstMempool, (void *)test_block);
-    TEST_ASSERT(rc == OS_INVALID_PARM, "No error freeing bad block address");
-
-    /* Attempt to free on bad boundary */
-    test_block = g_TstMempool.mp_membuf_addr;
-    test_block += (true_block_size / 2);
-    rc = os_memblock_put(&g_TstMempool, (void *)test_block);
-    TEST_ASSERT(rc == OS_INVALID_PARM, "No error freeing bad block address");
 }
 
 TEST_CASE(os_mempool_test_case)
