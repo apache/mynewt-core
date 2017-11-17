@@ -43,7 +43,7 @@ static int recent_test_id = STANDARD_TEST_ID;
 
 static bool has_reg_fault = true;
 
-static struct bt_mesh_cfg cfg_srv = {
+static struct bt_mesh_cfg_srv cfg_srv = {
     .relay = BT_MESH_RELAY_DISABLED,
     .beacon = BT_MESH_BEACON_ENABLED,
 #if MYNEWT_VAL(BLE_MESH_FRIEND)
