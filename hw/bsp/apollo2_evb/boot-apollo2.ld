@@ -17,8 +17,14 @@
  */
 MEMORY
 {
-  FLASH (rx) : ORIGIN = 0x00000000, LENGTH = 0x100000
-  RAM (rwx) : ORIGIN = 0x10000000, LENGTH = 0x40000
+  FLASH (rx) : ORIGIN = 0x00000000, LENGTH = 0x4000
+
+  /* NOTE: The last 8 bytes of SRAM are intentionally excluded.  The Apollo2's
+   * in-ROM boot loader crashes when the initial stack pointer is at the end of
+   * RAM.  Reducing the size of RAM slightly forces the initial MSP down by 8
+   * bytes.
+   */
+  RAM (rwx) : ORIGIN = 0x10000000, LENGTH = 0x3fff8
 }
 
 /* The bootloader does not contain an image header */
