@@ -30,31 +30,51 @@ extern "C" {
 
 /*
  * NOTE: these definitions allow one to override the cputime frequency used.
- * The reason these definitions exist is to make the code more efficient/smaller
- * when CPUTIME counts at 1 MHz.
+ * The reason these definitions exist is to make the code more
+ * efficient/smaller when CPUTIME counts at 1 MHz.
  *
  * For those who want a different cputime frequency, you can set the config
  * definition for OS_CPUTIME_FREQ to the desired frequency in your project,
  * target or bsp.
  */
-#if (MYNEWT_VAL(OS_CPUTIME_FREQ) == 0)
-#error "cputime frequency cannot be 0!"
-#endif
-
 #if (MYNEWT_VAL(OS_CPUTIME_FREQ) == 1000000)
+
 #define OS_CPUTIME_FREQ_1MHZ
+
+#elif MYNEWT_VAL(OS_CPUTIME_FREQ) == 256        ||  \
+      MYNEWT_VAL(OS_CPUTIME_FREQ) == 512        ||  \
+      MYNEWT_VAL(OS_CPUTIME_FREQ) == 1024       ||  \
+      MYNEWT_VAL(OS_CPUTIME_FREQ) == 2048       ||  \
+      MYNEWT_VAL(OS_CPUTIME_FREQ) == 4096       ||  \
+      MYNEWT_VAL(OS_CPUTIME_FREQ) == 8192       ||  \
+      MYNEWT_VAL(OS_CPUTIME_FREQ) == 16384      ||  \
+      MYNEWT_VAL(OS_CPUTIME_FREQ) == 32768      ||  \
+      MYNEWT_VAL(OS_CPUTIME_FREQ) == 65536      ||  \
+      MYNEWT_VAL(OS_CPUTIME_FREQ) == 131072     ||  \
+      MYNEWT_VAL(OS_CPUTIME_FREQ) == 262144     ||  \
+      MYNEWT_VAL(OS_CPUTIME_FREQ) == 524288
+
+#define OS_CPUTIME_FREQ_PWR2
+
+#elif MYNEWT_VAL(OS_CPUTIME_FREQ) > 1000000
+
+#define OS_CPUTIME_FREQ_HIGH
+
+#else
+
+#error "Invalid OS_CPUTIME_FREQ value.  Value must be one of a) a power of 2" \
+       ">= 256Hz, or b) any value >= 1MHz"
+
 #endif
 
-#if (MYNEWT_VAL(OS_CPUTIME_FREQ) == 32768)
-#define OS_CPUTIME_FREQ_32768
-#endif
-
+#if defined(OS_CPUTIME_FREQ_HIGH)
 /* CPUTIME data. */
 struct os_cputime_data
 {
     uint32_t ticks_per_usec;    /* number of ticks per usec */
 };
-extern struct os_cputime_data g_cputime;
+extern struct os_cputime_data g_os_cputime;
+#endif
 
 /* Helpful macros to compare cputimes */
 #define CPUTIME_LT(__t1, __t2) ((int32_t)   ((__t1) - (__t2)) < 0)
@@ -84,7 +104,7 @@ int os_cputime_init(uint32_t clock_freq);
  */
 uint32_t os_cputime_get32(void);
 
-#if !defined(OS_CPUTIME_FREQ_32768)
+#if !defined(OS_CPUTIME_FREQ_PWR2)
 /**
  * os cputime nsecs to ticks
  *
@@ -106,6 +126,15 @@ uint32_t os_cputime_nsecs_to_ticks(uint32_t nsecs);
  * @return uint32_t The number of nanoseconds corresponding to 'ticks'
  */
 uint32_t os_cputime_ticks_to_nsecs(uint32_t ticks);
+
+/**
+ * os cputime delay nsecs
+ *
+ * Wait until 'nsecs' nanoseconds has elapsed. This is a blocking delay.
+ *
+ * @param nsecs The number of nanoseconds to wait.
+ */
+void os_cputime_delay_nsecs(uint32_t nsecs);
 #endif
 
 #if defined(OS_CPUTIME_FREQ_1MHZ)
@@ -143,17 +172,6 @@ uint32_t os_cputime_ticks_to_usecs(uint32_t ticks);
  * @param ticks The number of ticks to wait.
  */
 void os_cputime_delay_ticks(uint32_t ticks);
-
-#if !defined(OS_CPUTIME_FREQ_32768)
-/**
- * os cputime delay nsecs
- *
- * Wait until 'nsecs' nanoseconds has elapsed. This is a blocking delay.
- *
- * @param nsecs The number of nanoseconds to wait.
- */
-void os_cputime_delay_nsecs(uint32_t nsecs);
-#endif
 
 /**
  * os cputime delay usecs
