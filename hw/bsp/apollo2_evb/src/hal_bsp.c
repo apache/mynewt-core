@@ -122,9 +122,27 @@ hal_bsp_core_dump(int *area_cnt)
 void
 hal_bsp_init(void)
 {
+    struct apollo2_timer_cfg timer_cfg;
     int rc;
 
+    (void) timer_cfg;
     (void) rc;
+
+#if MYNEWT_VAL(TIMER_0_SOURCE)
+    timer_cfg.source = MYNEWT_VAL(TIMER_0_SOURCE);
+    rc = hal_timer_init(0, &timer_cfg);
+    assert(rc == 0);
+#endif
+#if MYNEWT_VAL(TIMER_1_SOURCE)
+    timer_cfg.source = MYNEWT_VAL(TIMER_1_SOURCE);
+    rc = hal_timer_init(1, &timer_cfg);
+    assert(rc == 0);
+#endif
+
+#if (MYNEWT_VAL(OS_CPUTIME_TIMER_NUM) >= 0)
+    rc = os_cputime_init(MYNEWT_VAL(OS_CPUTIME_FREQ));
+    assert(rc == 0);
+#endif
 
 #if MYNEWT_VAL(UART_0)
     rc = os_dev_create((struct os_dev *) &os_bsp_uart0, "uart0",
