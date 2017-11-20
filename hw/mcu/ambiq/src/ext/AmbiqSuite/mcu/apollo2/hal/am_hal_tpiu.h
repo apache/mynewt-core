@@ -1,12 +1,12 @@
 //*****************************************************************************
 //
-//! @file am_hal_tpiu.h
+//  am_hal_tpiu.h
+//! @file
 //!
 //! @brief Definitions and structures for working with the TPIU.
 //!
-//! @addtogroup hal Hardware Abstraction Layer (HAL)
-//! @addtogroup tpiu Trace Port Interface Unit (TPIU)
-//! @ingroup hal
+//! @addtogroup tpiu2 Trace Port Interface Unit (TPIU)
+//! @ingroup apollo2hal
 //! @{
 //
 //*****************************************************************************
@@ -42,18 +42,13 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-// This is part of revision 1.2.8 of the AmbiqSuite Development Package.
+// This is part of revision v1.2.10-2-gea660ad-hotfix2 of the AmbiqSuite Development Package.
 //
 //*****************************************************************************
 #ifndef AM_HAL_TPIU_H
 #define AM_HAL_TPIU_H
 
 #include <stdint.h>
-
-#ifdef __cplusplus
-extern "C"
-{
-#endif
 
 //*****************************************************************************
 //
@@ -164,6 +159,11 @@ typedef struct
     uint32_t ui32ClockPrescaler;
 }
 am_hal_tpiu_config_t;
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
 //*****************************************************************************
 //

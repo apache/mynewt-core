@@ -1,12 +1,12 @@
 //*****************************************************************************
 //
-//! @file am_hal_gpio.c
+//  am_hal_gpio.c
+//! @file
 //!
 //! @brief Functions for interfacing with the GPIO module
 //!
-//! @addtogroup hal Hardware Abstraction Layer (HAL)
-//! @addtogroup gpio GPIO
-//! @ingroup hal
+//! @addtogroup gpio2 GPIO
+//! @ingroup apollo2hal
 //! @{
 //
 //*****************************************************************************
@@ -42,7 +42,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-// This is part of revision 1.2.8 of the AmbiqSuite Development Package.
+// This is part of revision v1.2.10-2-gea660ad-hotfix2 of the AmbiqSuite Development Package.
 //
 //*****************************************************************************
 

@@ -1,12 +1,12 @@
 //*****************************************************************************
 //
-//! @file am_hal_flash.h
+//  am_hal_flash.h
+//! @file
 //!
 //! @brief Functions for performing Flash operations.
 //!
-//! @addtogroup hal Hardware Abstraction Layer (HAL)
-//! @addtogroup flash Flash
-//! @ingroup hal
+//! @addtogroup flash2 Flash
+//! @ingroup apollo2hal
 //! @{
 //
 //*****************************************************************************
@@ -42,16 +42,11 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-// This is part of revision 1.2.8 of the AmbiqSuite Development Package.
+// This is part of revision v1.2.10-2-gea660ad-hotfix2 of the AmbiqSuite Development Package.
 //
 //*****************************************************************************
 #ifndef AM_HAL_FLASH_H
 #define AM_HAL_FLASH_H
-
-#ifdef __cplusplus
-extern "C"
-{
-#endif
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -79,12 +74,29 @@ extern "C"
 #define AM_HAL_FLASH_TOTAL_SIZE             ( AM_HAL_FLASH_INSTANCE_SIZE * 2 )
 #define AM_HAL_FLASH_LARGEST_VALID_ADDR     ( AM_HAL_FLASH_ADDR + AM_HAL_FLASH_TOTAL_SIZE - 1 )
 
+//
 // Convert an absolute flash address to a instance
+//
 #define AM_HAL_FLASH_ADDR2INST(addr)        ( ( addr >> 19 ) & 1 )
+
+//
 // Convert an absolute flash address to a page number relative to the instance
+//
 #define AM_HAL_FLASH_ADDR2PAGE(addr)        ( ( addr >> 13 ) & 0x3F )
+
+//
 // Convert an absolute flash address to an absolute page number
+//
 #define AM_HAL_FLASH_ADDR2ABSPAGE(addr)     ( addr >> 13 )
+
+//
+// Given a number of microseconds, convert to a value representing the number of
+// cycles that will give that delay. This macro is basically taking into account
+// some of the call overhead.
+// e.g. To provide a 2us delay:
+//  am_hal_flash_delay( FLASH_CYCLES_US(2) );
+//
+#define FLASH_CYCLES_US(n)      ((n * (AM_HAL_CLKGEN_FREQ_MAX_MHZ / 3)) - 4)
 
 //
 // Backward compatibility
@@ -205,6 +217,11 @@ extern g_am_hal_flash_t g_am_hal_flash;
 #define AM_HAL_FLASH_INFO_CHUNK2ADDR(n)     (AM_HAL_FLASH_ADDR + (n << 14))
 #define AM_HAL_FLASH_INFO_CHUNK2INST(n)     ((n >> 5) & 1
 #define AM_HAL_FLASH_INFO_ADDR2CHUNK(n)     ((n) >> 14)
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
 //*****************************************************************************
 //

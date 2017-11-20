@@ -53,6 +53,5 @@ hal_reset_cause(void)
 int
 hal_debugger_connected(void)
 {
-    /* XXX: Unimplemented. */
-    return 0;
+    return CoreDebug->DHCSR & CoreDebug_DHCSR_C_DEBUGEN_Msk;
 }

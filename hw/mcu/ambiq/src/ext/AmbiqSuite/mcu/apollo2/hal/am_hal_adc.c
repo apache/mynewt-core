@@ -1,12 +1,12 @@
 //*****************************************************************************
 //
-//! @file am_hal_adc.c
+//  am_hal_adc.c
+//! @file
 //!
 //! @brief Functions for interfacing with the Analog to Digital Converter.
 //!
-//! @addtogroup hal Hardware Abstraction Layer (HAL)
-//! @addtogroup adc Analog-to-Digital Converter (ADC)
-//! @ingroup hal
+//! @addtogroup adc2 Analog-to-Digital Converter (ADC)
+//! @ingroup apollo2hal
 //! @{
 //
 //*****************************************************************************
@@ -42,7 +42,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-// This is part of revision 1.2.8 of the AmbiqSuite Development Package.
+// This is part of revision v1.2.10-2-gea660ad-hotfix2 of the AmbiqSuite Development Package.
 //
 //*****************************************************************************
 
@@ -134,9 +134,9 @@ am_hal_adc_config(am_hal_adc_config_t *psConfig)
         // default calibration values.  These default values should result
         // in worst-case temperature measurements of +-6 degress C.
         //
-        priv_temp_trims.flt.fCalibrationOffset      = 299.5F;
-        priv_temp_trims.flt.fCalibrationTemperature = 1.02809F;
-        priv_temp_trims.flt.fCalibrationVoltage     = -0.004281F;
+        priv_temp_trims.flt.fCalibrationTemperature = AM_HAL_ADC_CALIB_TEMP_DEFAULT;
+        priv_temp_trims.flt.fCalibrationVoltage     = AM_HAL_ADC_CALIB_AMBIENT_DEFAULT;
+        priv_temp_trims.flt.fCalibrationOffset      = AM_HAL_ADC_CALIB_ADC_OFFSET_DEFAULT;
         priv_temp_trims.ui32.bMeasured = false;
     }
     else

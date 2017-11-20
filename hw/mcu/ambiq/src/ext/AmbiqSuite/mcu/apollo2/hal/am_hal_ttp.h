@@ -1,6 +1,7 @@
 //*****************************************************************************
 //
-//! @file am_hal_ttp.h
+//  am_hal_ttp.h
+//! @file
 //!
 //! @brief Functions for handling the "two time program" interface.
 //!
@@ -38,7 +39,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-// This is part of revision 1.2.8 of the AmbiqSuite Development Package.
+// This is part of revision v1.2.10-2-gea660ad-hotfix2 of the AmbiqSuite Development Package.
 //
 //*****************************************************************************
 #ifndef AM_HAL_TTP_H

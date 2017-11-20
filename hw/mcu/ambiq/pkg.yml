@@ -32,6 +32,9 @@ pkg.src_dirs:
     - "src/ext/AmbiqSuite/mcu/apollo2/"
     - "src/ext/AmbiqSuite/utils/"
 
+pkg.cflags:
+    - '-Wno-enum-compare'
+
 pkg.deps: 
     - hw/hal 
     - hw/cmsis-core 

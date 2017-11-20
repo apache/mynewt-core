@@ -1,12 +1,12 @@
 //*****************************************************************************
 //
-//! @file am_hal_rtc.h
+//  am_hal_rtc.h
+//! @file
 //!
 //! @brief Functions for interfacing and accessing the Real-Time Clock (RTC).
 //!
-//! @addtogroup hal Hardware Abstraction Layer (HAL)
-//! @addtogroup rtc Real-Time Clock (RTC)
-//! @ingroup hal
+//! @addtogroup rtc2 Real-Time Clock (RTC)
+//! @ingroup apollo2hal
 //! @{
 //
 //*****************************************************************************
@@ -42,16 +42,11 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-// This is part of revision 1.2.8 of the AmbiqSuite Development Package.
+// This is part of revision v1.2.10-2-gea660ad-hotfix2 of the AmbiqSuite Development Package.
 //
 //*****************************************************************************
 #ifndef AM_HAL_RTC_H
 #define AM_HAL_RTC_H
-
-#ifdef __cplusplus
-extern "C"
-{
-#endif
 
 //*****************************************************************************
 //
@@ -148,6 +143,11 @@ typedef struct am_hal_rtc_time_struct
     uint32_t ui32Second;
     uint32_t ui32Hundredths;
 }am_hal_rtc_time_t;
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
 //*****************************************************************************
 //

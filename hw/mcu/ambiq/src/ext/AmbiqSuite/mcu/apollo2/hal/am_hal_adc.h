@@ -1,12 +1,12 @@
 //*****************************************************************************
 //
-//! @file am_hal_adc.h
+//  am_hal_adc.h
+//! @file
 //!
 //! @brief Functions for interfacing with the Analog to Digital Converter
 //!
-//! @addtogroup hal Hardware Abstraction Layer (HAL)
-//! @addtogroup adc Analog-to-Digital Converter (ADC)
-//! @ingroup hal
+//! @addtogroup adc2 Analog-to-Digital Converter (ADC)
+//! @ingroup apollo2hal
 //! @{
 //
 //*****************************************************************************
@@ -42,16 +42,11 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-// This is part of revision 1.2.8 of the AmbiqSuite Development Package.
+// This is part of revision v1.2.10-2-gea660ad-hotfix2 of the AmbiqSuite Development Package.
 //
 //*****************************************************************************
 #ifndef AM_HAL_ADC_H
 #define AM_HAL_ADC_H
-
-#ifdef __cplusplus
-extern "C"
-{
-#endif
 
 //*****************************************************************************
 //
@@ -231,9 +226,19 @@ extern "C"
 //! @{
 //
 //*****************************************************************************
-#define AM_HAL_ADC_CALIB_AMBIENT_ADDR       (0x50023010)
-#define AM_HAL_ADC_CALIB_TEMP_ADDR          (0x50023014)
+#define AM_HAL_ADC_CALIB_TEMP_ADDR          (0x50023010)
+#define AM_HAL_ADC_CALIB_AMBIENT_ADDR       (0x50023014)
 #define AM_HAL_ADC_CALIB_ADC_OFFSET_ADDR    (0x50023018)
+
+//
+// Default coefficients (used when trims not provided):
+//  TEMP_DEFAULT    = Temperature in deg K (e.g. 299.5 - 273.15 = 26.35)
+//  AMBIENT_DEFAULT = Voltage measurement at default temperature.
+//  OFFSET_DEFAULT  = Default ADC offset at 1v.
+//
+#define AM_HAL_ADC_CALIB_TEMP_DEFAULT       (299.5F)
+#define AM_HAL_ADC_CALIB_AMBIENT_DEFAULT    (1.02809F)
+#define AM_HAL_ADC_CALIB_ADC_OFFSET_DEFAULT (-0.004281F)
 //! @}
 
 //*****************************************************************************
@@ -298,6 +303,11 @@ am_hal_adc_config_t;
 #define AM_HAL_ADC_FIFO_COUNT(value)                                          \
     (((value) & AM_REG_ADC_FIFO_COUNT_M) >> AM_REG_ADC_FIFO_COUNT_S)
 //! @}
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
 //*****************************************************************************
 //

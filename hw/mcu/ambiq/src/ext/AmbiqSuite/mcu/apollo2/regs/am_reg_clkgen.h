@@ -1,6 +1,7 @@
 //*****************************************************************************
 //
-//! @file am_reg_clkgen.h
+//  am_reg_clkgen.h
+//! @file
 //!
 //! @brief Register macros for the CLKGEN module
 //
@@ -37,7 +38,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-// This is part of revision 1.2.8 of the AmbiqSuite Development Package.
+// This is part of revision v1.2.10-2-gea660ad-hotfix2 of the AmbiqSuite Development Package.
 //
 //*****************************************************************************
 #ifndef AM_REG_CLKGEN_H
@@ -268,7 +269,8 @@
 #define AM_REG_CLKGEN_CLKOUT_CKEN_DIS                0x00000000
 #define AM_REG_CLKGEN_CLKOUT_CKEN_EN                 0x00000080
 
-// CLKOUT signal select
+// CLKOUT signal select.  Note that HIGH_DRIVE should be selected if any high
+// frequencies (such as from HFRC) are selected for CLKOUT.
 #define AM_REG_CLKGEN_CLKOUT_CKSEL_S                 0
 #define AM_REG_CLKGEN_CLKOUT_CKSEL_M                 0x0000003F
 #define AM_REG_CLKGEN_CLKOUT_CKSEL(n)                (((uint32_t)(n) << 0) & 0x0000003F)

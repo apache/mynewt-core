@@ -44,6 +44,16 @@ struct apollo2_spi_cfg {
     uint8_t ss_pin;
 };
 
+#define APOLLO2_TIMER_SOURCE_HFRC       1 /* High-frequency RC oscillator. */
+#define APOLLO2_TIMER_SOURCE_XT         2 /* 32.768 kHz crystal oscillator. */
+#define APOLLO2_TIMER_SOURCE_LFRC       3 /* Low-frequency RC oscillator. */
+#define APOLLO2_TIMER_SOURCE_RTC        4 /* Real time clock. */
+#define APOLLO2_TIMER_SOURCE_HCLK       5 /* Main CPU clock. */
+
+struct apollo2_timer_cfg {
+    uint8_t source;
+};
+
 #ifdef __cplusplus
 }
 #endif

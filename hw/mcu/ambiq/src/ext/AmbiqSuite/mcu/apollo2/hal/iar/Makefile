@@ -30,20 +30,34 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-# 
-# This is part of revision 1.2.8 of the AmbiqSuite Development Package.
+#
+# This is part of revision v1.2.10-2-gea660ad-hotfix2 of the AmbiqSuite Development Package.
 #
 #******************************************************************************
+TARGET = libam_hal
+COMPILERNAME = IAR
+PROJECT = libam_hal_IAR
+CONFIG := $(CURDIR)/bin
+AM_SoftwareRoot ?= ../../..
 
 SHELL=/bin/bash
+#### Required Executables ####
 K := $(shell type -p IarBuild.exe)
+RM = $(shell which rm 2>/dev/null)
 
+.PHONY: all clean directories
 ifeq ($(K),)
 all clean:
-	$(info IAR tools not found, skipping...)
+	$(info Tools w/$(COMPILERNAME) not installed.)
+	$(RM) -rf bin
 else
-all:
+all: directories
 	IarBuild.exe libam_hal.ewp -make Debug -log info
+
+directories: $(CONFIG)
+
+$(CONFIG):
+	@mkdir -p $@
 
 clean:
 	@+echo Cleaning... ;\

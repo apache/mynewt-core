@@ -1,12 +1,12 @@
 //*****************************************************************************
 //
-//! @file am_hal_ios.c
+//  am_hal_ios.c
+//! @file
 //!
 //! @brief Functions for interfacing with the IO Slave module
 //!
-//! @addtogroup hal Hardware Abstraction Layer (HAL)
-//! @addtogroup ios IO Slave (SPI/I2C)
-//! @ingroup hal
+//! @addtogroup ios2 IO Slave (SPI/I2C)
+//! @ingroup apollo2hal
 //! @{
 //
 //*****************************************************************************
@@ -42,7 +42,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-// This is part of revision 1.2.8 of the AmbiqSuite Development Package.
+// This is part of revision v1.2.10-2-gea660ad-hotfix2 of the AmbiqSuite Development Package.
 //
 //*****************************************************************************
 
@@ -102,6 +102,23 @@ uint8_t *g_pui8FIFOEnd = (uint8_t *) REG_IOSLAVE_BASEADDR;
 uint8_t *g_pui8FIFOPtr = (uint8_t *) REG_IOSLAVE_BASEADDR;
 uint8_t g_ui32HwFifoSize = 0;
 uint32_t g_ui32FifoBaseOffset = 0;
+
+//*****************************************************************************
+//
+// Checks to see if this processor is a Rev B2 device.
+//
+// This is needed to disable SHELBY-1654 workaround.
+//
+//*****************************************************************************
+bool
+isRevB2(void)
+{
+    //
+    // Check to make sure the major rev is B and the minor rev is 2.
+    //
+    return ( (AM_REG(MCUCTRL, CHIPREV) & 0xFF) ==   \
+        (AM_REG_MCUCTRL_CHIPREV_REVMAJ_B | (AM_REG_MCUCTRL_CHIPREV_REVMIN_REV0 + 2)) );
+}
 
 //*****************************************************************************
 //
@@ -957,7 +974,10 @@ am_hal_ios_fifo_service(uint32_t ui32Status)
                     }
                 }
             }
-            resync_fifoSize();
+            if (!isRevB2())
+            {
+                resync_fifoSize();
+            }
 
             //
             // Need to retake the FIFO space, after Threshold interrupt has been reenabled
@@ -1041,7 +1061,10 @@ am_hal_ios_fifo_write(uint8_t *pui8Data, uint32_t ui32NumBytes)
             ui32NumBytes -= ui32FIFOSpace;
             pui8Data += ui32FIFOSpace;
         };
-        resync_fifoSize();
+        if (!isRevB2())
+        {
+            resync_fifoSize();
+        }
     }
 
     //

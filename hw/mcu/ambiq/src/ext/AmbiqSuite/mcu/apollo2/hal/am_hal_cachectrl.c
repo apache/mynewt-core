@@ -1,12 +1,12 @@
 //*****************************************************************************
 //
-//! @file am_hal_cachectrl.c
+//  am_hal_cachectrl.c
+//! @file
 //!
 //! @brief Functions for interfacing with the CACHE controller.
 //!
-//! @addtogroup hal Hardware Abstraction Layer (HAL)
-//! @addtogroup clkgen Clock Generator (CACHE)
-//! @ingroup hal
+//! @addtogroup clkgen2 Clock Generator (CACHE)
+//! @ingroup apollo2hal
 //! @{
 //
 //*****************************************************************************
@@ -42,7 +42,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-// This is part of revision 1.2.8 of the AmbiqSuite Development Package.
+// This is part of revision v1.2.10-2-gea660ad-hotfix2 of the AmbiqSuite Development Package.
 //
 //*****************************************************************************
 

@@ -1,14 +1,14 @@
 //*****************************************************************************
 //
-//! @file am_hal_tpiu.c
+//  am_hal_tpiu.c
+//! @file
 //!
 //! @brief Support functions for the ARM TPIU module
 //!
 //! Provides support functions for configuring the ARM TPIU module
 //!
-//! @addtogroup hal Hardware Abstraction Layer (HAL)
-//! @addtogroup tpiu Trace Port Interface Unit (TPIU)
-//! @ingroup hal
+//! @addtogroup tpiu2 Trace Port Interface Unit (TPIU)
+//! @ingroup apollo2hal
 //! @{
 //
 //*****************************************************************************
@@ -44,7 +44,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-// This is part of revision 1.2.8 of the AmbiqSuite Development Package.
+// This is part of revision v1.2.10-2-gea660ad-hotfix2 of the AmbiqSuite Development Package.
 //
 //*****************************************************************************
 

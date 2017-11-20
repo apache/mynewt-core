@@ -1,12 +1,12 @@
 //*****************************************************************************
 //
-//! @file am_hal_sysctrl.h
+//! am_hal_sysctrl.h
+//! @file
 //!
 //! @brief Functions for interfacing with the M4F system control registers
 //!
-//! @addtogroup hal Hardware Abstraction Layer (HAL)
-//! @addtogroup sysctrl System Control (SYSCTRL)
-//! @ingroup hal
+//! @addtogroup sysctrl2 System Control (SYSCTRL)
+//! @ingroup apollo2hal
 //! @{
 //
 //*****************************************************************************
@@ -42,16 +42,12 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-// This is part of revision 1.2.8 of the AmbiqSuite Development Package.
+// This is part of revision v1.2.10-2-gea660ad-hotfix2 of the AmbiqSuite Development Package.
 //
 //*****************************************************************************
 #ifndef AM_HAL_SYSCTRL_H
 #define AM_HAL_SYSCTRL_H
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
 
 //*****************************************************************************
 //
@@ -63,15 +59,51 @@ extern "C"
 
 //*****************************************************************************
 //
+// Parameters for am_hal_sysctrl_buck_ctimer_isr_init()
+//
+//*****************************************************************************
+//
+// Define the maximum valid timer number
+//
+#define BUCK_TIMER_MAX                  (AM_HAL_CTIMER_TIMERS_NUM - 1)
+
+//
+// Define the valid timer numbers
+//
+#define AM_HAL_SYSCTRL_BUCK_CTIMER_TIMER0   0
+#define AM_HAL_SYSCTRL_BUCK_CTIMER_TIMER1   1
+#define AM_HAL_SYSCTRL_BUCK_CTIMER_TIMER2   2
+#define AM_HAL_SYSCTRL_BUCK_CTIMER_TIMER3   3
+
+//
+// The following is an invalid timer number. If used, it is the caller telling
+// the HAL to use the "Hard Option", which applies a constant value to the zero
+// cross. The applied value is more noise immune, if less energy efficent.
+//
+#define AM_HAL_SYSCTRL_BUCK_CTIMER_ZX_CONSTANT      0x01000000  // No timer, apply a constant value
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+//*****************************************************************************
+//
 // External function definitions
 //
 //*****************************************************************************
-extern void am_hal_sysctrl_sleep(bool bSleepDeep);
-extern void am_hal_sysctrl_fpu_enable(void);
-extern void am_hal_sysctrl_fpu_disable(void);
-extern void am_hal_sysctrl_fpu_stacking_enable(bool bLazy);
-extern void am_hal_sysctrl_fpu_stacking_disable(void);
-extern void am_hal_sysctrl_aircr_reset(void);
+extern void     am_hal_sysctrl_sleep(bool bSleepDeep);
+extern void     am_hal_sysctrl_fpu_enable(void);
+extern void     am_hal_sysctrl_fpu_disable(void);
+extern void     am_hal_sysctrl_fpu_stacking_enable(bool bLazy);
+extern void     am_hal_sysctrl_fpu_stacking_disable(void);
+extern void     am_hal_sysctrl_aircr_reset(void);
+
+//
+// Apollo2 zero-cross buck/ctimer related functions
+//
+extern uint32_t am_hal_sysctrl_buck_ctimer_isr_init(uint32_t ui32BuckTimerNumber);
+extern bool     am_hal_sysctrl_buck_update_complete(void);
+
 #ifdef __cplusplus
 }
 #endif

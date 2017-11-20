@@ -40,7 +40,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-// This is part of revision 1.2.8 of the AmbiqSuite Development Package.
+// This is part of revision v1.2.10-2-gea660ad-hotfix2 of the AmbiqSuite Development Package.
 //
 //*****************************************************************************
 
@@ -371,16 +371,16 @@ am_util_string_strcmp(const char *str1, const char *str2)
 int32_t
 am_util_string_strncmp(const char *str1, const char *str2, uint32_t num)
 {
-    while ( *str1 && *str2 && num )
+    while ( num-- )
     {
-        if ( *str1 != *str2 )
+        // Check for inequality OR end of string
+        if ( *str1 != *str2 || *str1 == '\0' )
         {
             return *str1 - *str2;
         }
 
         str1++;
         str2++;
-        num--;
     }
 
     //
@@ -569,6 +569,42 @@ am_util_string_strncpy(char *pcDst, const char *pcSrc, uint32_t uNum)
         }
         uNum--;
     }
+
+    return pcRet;
+}
+
+//*****************************************************************************
+//
+//! @brief Concatenate a string.
+//!
+//! @param pcDst pointer to the destination string.
+//! @param pcSrc pointer to the source string to be copied to pcDst.
+//!
+//! This function concatenates the string at pcSrc to the existing string
+//! at pcDst.
+//!
+//! Both strings, pcDst and pcSrc, must be NULL-terminated.
+//! No overflow checking is performed.
+//! pcDst and pcSrc shall not overlap.
+//!
+//! @return pcDst (the location of the destination string).
+//
+//*****************************************************************************
+char *
+am_util_string_strcat(char *pcDst, const char *pcSrc)
+{
+    char *pcRet = pcDst;
+
+    //
+    // Find the end of the existing string.
+    //
+    while ( *pcDst++ );
+    pcDst--;
+
+    //
+    // Now, copy the new string.
+    //
+    am_util_string_strcpy(pcDst, pcSrc);
 
     return pcRet;
 }

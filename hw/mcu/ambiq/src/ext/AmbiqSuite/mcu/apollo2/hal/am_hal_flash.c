@@ -1,12 +1,12 @@
 //*****************************************************************************
 //
-//! @file am_hal_flash.c
+//  am_hal_flash.c
+//! @file
 //!
 //! @brief Functions for performing Flash operations.
 //!
-//! @addtogroup hal Hardware Abstraction Layer (HAL)
-//! @addtogroup flash Flash
-//! @ingroup hal
+//! @addtogroup flash2 Flash
+//! @ingroup apollo2hal
 //!
 //! IMPORTANT: Interrupts are active during execution of all HAL flash
 //! functions. If an interrupt occurs during execution of a flash function
@@ -54,7 +54,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-// This is part of revision 1.2.8 of the AmbiqSuite Development Package.
+// This is part of revision v1.2.10-2-gea660ad-hotfix2 of the AmbiqSuite Development Package.
 //
 //*****************************************************************************
 
@@ -402,14 +402,19 @@ am_hal_flash_store_ui32(uint32_t ui32Address, uint32_t ui32Data)
 //! Note that the ROM-based function executes at 3 cycles per iteration plus
 //! the regular function call, entry, and exit overhead.
 //! The call and return overhead, including the call to this function, is
-//! somewhere in the neighborhood of 36 cycles.
+//! somewhere in the neighborhood of 14 cycles, or 4.7 iterations.
 //!
 //! Example:
 //! - MCU operating at 48MHz -> 20.83 ns / cycle
 //! - Therefore each iteration (once inside the bootrom function) will consume
 //!   62.5ns.
-//! - The total overhead (assuming 36 cycles) is 750ns.
-//! - If ui32Iterations = 4: 0.750 + (0.0625 * 4) = 1us.
+//! - The total overhead (assuming 14 cycles) is 292ns.
+//! - For ui32Iterations=28: Total delay time = 0.292 + (0.0625 * 28) = 2.04us.
+//!
+//! The FLASH_CYCLES_US(n) macro can be used with am_hal_flash_delay() to
+//! get an approximate microsecond delay.
+//! e.g. For a 2us delay, use:
+//!      am_hal_flash_delay( FLASH_CYCLES_US(2) );
 //!
 //! @note Interrupts are active during execution of this function.  Therefore,
 //! any interrupt taken will affect the delay timing.

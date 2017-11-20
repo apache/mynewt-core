@@ -1,6 +1,7 @@
 //*****************************************************************************
 //
-//! @file am_reg_mcuctrl.h
+//  am_reg_mcuctrl.h
+//! @file
 //!
 //! @brief Register macros for the MCUCTRL module
 //
@@ -37,7 +38,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-// This is part of revision 1.2.8 of the AmbiqSuite Development Package.
+// This is part of revision v1.2.10-2-gea660ad-hotfix2 of the AmbiqSuite Development Package.
 //
 //*****************************************************************************
 #ifndef AM_REG_MCUCTRL_H
@@ -72,7 +73,6 @@
 #define AM_REG_MCUCTRL_ADCCAL_O                      0x0000010C
 #define AM_REG_MCUCTRL_ADCBATTLOAD_O                 0x00000110
 #define AM_REG_MCUCTRL_BUCKTRIM_O                    0x00000114
-#define AM_REG_MCUCTRL_EXTCLKSEL_O                   0x00000160
 #define AM_REG_MCUCTRL_BOOTLOADERLOW_O               0x000001A0
 #define AM_REG_MCUCTRL_SHADOWVALID_O                 0x000001A4
 #define AM_REG_MCUCTRL_ICODEFAULTADDR_O              0x000001C0
@@ -84,14 +84,12 @@
 #define AM_REG_MCUCTRL_DBGR2_O                       0x00000204
 #define AM_REG_MCUCTRL_PMUENABLE_O                   0x00000220
 #define AM_REG_MCUCTRL_TPIUCTRL_O                    0x00000250
-#define AM_REG_MCUCTRL_KEXTCLKSEL_O                  0x00000348
 
 //*****************************************************************************
 //
 // Key values.
 //
 //*****************************************************************************
-#define AM_REG_MCUCTRL_KEXTCLKSEL_KEYVAL             0x00000053
 
 //*****************************************************************************
 //
@@ -144,7 +142,8 @@
 #define AM_REG_MCUCTRL_CHIPREV_REVMIN_S              0
 #define AM_REG_MCUCTRL_CHIPREV_REVMIN_M              0x0000000F
 #define AM_REG_MCUCTRL_CHIPREV_REVMIN(n)             (((uint32_t)(n) << 0) & 0x0000000F)
-#define AM_REG_MCUCTRL_CHIPREV_REVMIN_REV0           0x00000001
+#define AM_REG_MCUCTRL_CHIPREV_REVMIN_REV0           0x00000000
+#define AM_REG_MCUCTRL_CHIPREV_REVMIN_REV2           0x00000002
 
 //*****************************************************************************
 //
@@ -424,32 +423,6 @@
 #define AM_REG_MCUCTRL_BUCKTRIM_MEMBUCKR1_S          0
 #define AM_REG_MCUCTRL_BUCKTRIM_MEMBUCKR1_M          0x0000003F
 #define AM_REG_MCUCTRL_BUCKTRIM_MEMBUCKR1(n)         (((uint32_t)(n) << 0) & 0x0000003F)
-
-//*****************************************************************************
-//
-// MCUCTRL_EXTCLKSEL - Source selection of LFRC, HFRC and XTAL clock sources
-//
-//*****************************************************************************
-// HFRC External Clock Source Select.
-#define AM_REG_MCUCTRL_EXTCLKSEL_EXT_HF_S            2
-#define AM_REG_MCUCTRL_EXTCLKSEL_EXT_HF_M            0x00000004
-#define AM_REG_MCUCTRL_EXTCLKSEL_EXT_HF(n)           (((uint32_t)(n) << 2) & 0x00000004)
-#define AM_REG_MCUCTRL_EXTCLKSEL_EXT_HF_INT          0x00000000
-#define AM_REG_MCUCTRL_EXTCLKSEL_EXT_HF_EXT          0x00000004
-
-// LFRC External Clock Source Select.
-#define AM_REG_MCUCTRL_EXTCLKSEL_EXT_LF_S            1
-#define AM_REG_MCUCTRL_EXTCLKSEL_EXT_LF_M            0x00000002
-#define AM_REG_MCUCTRL_EXTCLKSEL_EXT_LF(n)           (((uint32_t)(n) << 1) & 0x00000002)
-#define AM_REG_MCUCTRL_EXTCLKSEL_EXT_LF_INT          0x00000000
-#define AM_REG_MCUCTRL_EXTCLKSEL_EXT_LF_EXT          0x00000002
-
-// XTAL External Clock Source Select.
-#define AM_REG_MCUCTRL_EXTCLKSEL_EXT_XT_S            0
-#define AM_REG_MCUCTRL_EXTCLKSEL_EXT_XT_M            0x00000001
-#define AM_REG_MCUCTRL_EXTCLKSEL_EXT_XT(n)           (((uint32_t)(n) << 0) & 0x00000001)
-#define AM_REG_MCUCTRL_EXTCLKSEL_EXT_XT_INT          0x00000000
-#define AM_REG_MCUCTRL_EXTCLKSEL_EXT_XT_EXT          0x00000001
 
 //*****************************************************************************
 //

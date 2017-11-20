@@ -39,7 +39,6 @@ syscfg.defs:
         description: 'CTS pin for UART0'
         value: 38
 
-
 syscfg.vals:
     CONFIG_FCB_FLASH_AREA: FLASH_AREA_NFFS
     REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG
