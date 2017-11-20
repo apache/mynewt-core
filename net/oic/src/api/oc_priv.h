@@ -21,5 +21,6 @@
 
 void oc_rep_init(void);
 void oc_buffer_init(void);
+void oc_ri_mem_init(void);
 
 #endif /* __OC_OC_PRIV_H__ */

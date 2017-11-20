@@ -25,6 +25,7 @@
 #include <log/log.h>
 #include "oic/oc_log.h"
 #include "oic/oc_ri.h"
+#include "api/oc_priv.h"
 #include "port/oc_connectivity.h"
 #include "adaptor.h"
 
@@ -219,5 +220,6 @@ void
 oc_init(void)
 {
     SYSINIT_ASSERT_ACTIVE();
+    oc_ri_mem_init();
     oc_evq_set(os_eventq_dflt_get());
 }

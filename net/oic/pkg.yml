@@ -53,4 +53,4 @@ pkg.cflags:
     - "-I@apache-mynewt-core/net/oic/include/oic"
 
 pkg.init:
-    oc_init: 500
+    oc_init: 300

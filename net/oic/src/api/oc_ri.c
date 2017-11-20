@@ -47,7 +47,8 @@
 #endif /* OC_SECURITY */
 
 #ifdef OC_SERVER
-static SLIST_HEAD(, oc_resource) oc_app_resources;
+static SLIST_HEAD(, oc_resource) oc_app_resources =
+    SLIST_HEAD_INITIALIZER(&oc_app_resources);
 static struct os_mempool oc_resource_pool;
 static uint8_t oc_resource_area[OS_MEMPOOL_BYTES(MAX_APP_RESOURCES,
       sizeof(oc_resource_t))];
@@ -209,26 +210,31 @@ oc_ri_get_app_resource_by_uri(const char *uri)
 #endif
 
 void
+oc_ri_mem_init(void)
+{
+#ifdef OC_SERVER
+  os_mempool_init(&oc_resource_pool, MAX_APP_RESOURCES, sizeof(oc_resource_t),
+                  oc_resource_area, "oc_res");
+#endif
+#ifdef OC_CLIENT
+    os_mempool_init(&oc_client_cb_pool, MAX_NUM_CONCURRENT_REQUESTS,
+      sizeof(oc_client_cb_t), oc_client_cb_area, "oc_cl_cbs");
+    oc_rep_init();
+#endif
+    oc_buffer_init();
+}
+
+void
 oc_ri_init(void)
 {
-  oc_random_init(0); // Fix: allow user to seed RNG.
-
-#ifdef OC_SERVER
-  SLIST_INIT(&oc_app_resources);
-  os_mempool_init(&oc_resource_pool, MAX_APP_RESOURCES, sizeof(oc_resource_t),
-    oc_resource_area, "oc_res");
-#endif
+    oc_random_init(0); // Fix: allow user to seed RNG.
 
 #ifdef OC_CLIENT
-  SLIST_INIT(&oc_client_cbs);
-  os_mempool_init(&oc_client_cb_pool, MAX_NUM_CONCURRENT_REQUESTS,
-    sizeof(oc_client_cb_t), oc_client_cb_area, "oc_cl_cbs");
-  oc_rep_init();
+    SLIST_INIT(&oc_client_cbs);
 #endif
-  oc_buffer_init();
 
-  start_processes();
-  oc_create_discovery_resource();
+    start_processes();
+    oc_create_discovery_resource();
 }
 
 void
