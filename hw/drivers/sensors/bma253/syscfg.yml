@@ -18,6 +18,36 @@
 #
 
 syscfg.defs:
+    BMA253_CLI:
+        description: 'Enable shell support for BMA253'
+        value: 0
+    BMA253_I2C_WDT:
+        description: 'Enable I2C watchdog functionality'
+        value: 1
+    BMA253_INT_ENABLE:
+        description: 'Enable interrupt support, necessary for events'
+        value: 1
+    BMA253_INT_CFG_ACTIVE:
+        description: 'Set 0 for active-low, 1 for active-high'
+        value: 1
+    BMA253_INT_CFG_OUTPUT:
+        description: 'Set 0 for push-pull, 1 for open-drain'
+        value: 1
+    BMA253_INT_PIN_DEVICE:
+        description: 'Interrupt pin number 1 or 2 on accelerometer device'
+        value: 1
+    BMA253_INT2_PIN_DEVICE:
+        description: 'Interrupt pin number 1 or 2 on accelerometer device'
+        value: 2
+    BMA253_INT_PIN_HOST:
+        description: 'Interrupt pin number on host device connected to INT1 on device'
+        value: 20
+    BMA253_INT2_PIN_HOST:
+        description: 'Interrupt pin number on host device connected to INT2 on device'
+        value: -1
     BMA253_LOG:
         description: 'Enable BMA253 logging'
-        value: 1
+        value: 0
+    BMA253_SHELL_DEV_NAME:
+        description: 'BMA253 Shell device name'
+        value: "\"bma253_0\""
