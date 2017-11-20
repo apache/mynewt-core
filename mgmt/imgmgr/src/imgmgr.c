@@ -328,10 +328,6 @@ imgr_erase(struct mgmt_cbuf *cb)
         return MGMT_ERR_ENOMEM;
     }
 
-    if (!imgr_state.upload.fa) {
-        return MGMT_ERR_EINVAL;
-    }
-
     g_err |= cbor_encode_text_stringz(&cb->encoder, "rc");
     g_err |= cbor_encode_int(&cb->encoder, MGMT_ERR_EOK);
 
