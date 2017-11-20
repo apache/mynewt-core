@@ -160,7 +160,7 @@ __ASM volatile (
  * This should reset state from (most of) the devices on the other end.
  */
 static void
-hal_i2c_clear_bus(struct nrf52_hal_i2c_cfg *cfg)
+hal_i2c_clear_bus(const struct nrf52_hal_i2c_cfg *cfg)
 {
     int i;
 
@@ -321,6 +321,13 @@ hal_i2c_master_read(uint8_t i2c_num, struct hal_i2c_master_data *pdata,
 
     start = os_time_get();
 
+    if (regs->EVENTS_RXDREADY) {
+        /*
+         * If previous read was interrupted, flush RXD.
+         */
+        (void)regs->RXD;
+        (void)regs->RXD;
+    }
     regs->EVENTS_ERROR = 0;
     regs->EVENTS_STOPPED = 0;
     regs->EVENTS_SUSPENDED = 0;
