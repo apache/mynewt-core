@@ -84,6 +84,15 @@ err:
 void
 os_sched_ctx_sw_hook(struct os_task *next_t)
 {
+#if MYNEWT_VAL(OS_CTX_SW_STACK_CHECK)
+    os_stack_t *top;
+    int i;
+
+    top = g_current_task->t_stacktop - g_current_task->t_stacksize;
+    for (i = 0; i < MYNEWT_VAL(OS_CTX_SW_STACK_GUARD); i++) {
+        assert(top[i] == OS_STACK_PATTERN);
+    }
+#endif
     os_trace_task_start_exec(next_t->t_taskid);
     next_t->t_ctx_sw_cnt++;
     g_current_task->t_run_time += g_os_time - g_os_last_ctx_sw_time;

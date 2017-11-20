@@ -23,6 +23,8 @@
 #include <stdlib.h>
 #include <inttypes.h>
 
+#include <syscfg/syscfg.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -46,40 +46,6 @@ static struct os_mbuf_pool os_msys_init_2_mbuf_pool;
 static struct os_mempool os_msys_init_2_mempool;
 #endif
 
-#if MYNEWT_VAL(MSYS_3_BLOCK_COUNT) > 0
-#define SYSINIT_MSYS_3_MEMBLOCK_SIZE                \
-    OS_ALIGN(MYNEWT_VAL(MSYS_3_BLOCK_SIZE), 4)
-#define SYSINIT_MSYS_3_MEMPOOL_SIZE                 \
-    OS_MEMPOOL_SIZE(MYNEWT_VAL(MSYS_3_BLOCK_COUNT),  \
-                    SYSINIT_MSYS_3_MEMBLOCK_SIZE)
-static os_membuf_t os_msys_init_3_data[SYSINIT_MSYS_3_MEMPOOL_SIZE];
-static struct os_mbuf_pool os_msys_init_3_mbuf_pool;
-static struct os_mempool os_msys_init_3_mempool;
-#endif
-
-#if MYNEWT_VAL(MSYS_4_BLOCK_COUNT) > 0
-#define SYSINIT_MSYS_4_MEMBLOCK_SIZE                \
-    OS_ALIGN(MYNEWT_VAL(MSYS_4_BLOCK_SIZE), 4)
-#define SYSINIT_MSYS_4_MEMPOOL_SIZE                 \
-    OS_MEMPOOL_SIZE(MYNEWT_VAL(MSYS_4_BLOCK_COUNT),  \
-                    SYSINIT_MSYS_4_MEMBLOCK_SIZE)
-static os_membuf_t os_msys_init_4_data[SYSINIT_MSYS_4_MEMPOOL_SIZE];
-static struct os_mbuf_pool os_msys_init_4_mbuf_pool;
-static struct os_mempool os_msys_init_4_mempool;
-#endif
-
-#if MYNEWT_VAL(MSYS_5_BLOCK_COUNT) > 0
-#define SYSINIT_MSYS_5_MEMBLOCK_SIZE                \
-    OS_ALIGN(MYNEWT_VAL(MSYS_5_BLOCK_SIZE), 4)
-#define SYSINIT_MSYS_5_MEMPOOL_SIZE                 \
-    OS_MEMPOOL_SIZE(MYNEWT_VAL(MSYS_5_BLOCK_COUNT),  \
-                    SYSINIT_MSYS_5_MEMBLOCK_SIZE)
-
-static os_membuf_t os_msys_init_5_data[SYSINIT_MSYS_5_MEMPOOL_SIZE];
-static struct os_mbuf_pool os_msys_init_5_mbuf_pool;
-static struct os_mempool os_msys_init_5_mempool;
-#endif
-
 static void
 os_msys_init_once(void *data, struct os_mempool *mempool,
                   struct os_mbuf_pool *mbuf_pool,
@@ -117,32 +83,5 @@ os_msys_init(void)
                       MYNEWT_VAL(MSYS_2_BLOCK_COUNT),
                       SYSINIT_MSYS_2_MEMBLOCK_SIZE,
                       "msys_2");
-#endif
-
-#if MYNEWT_VAL(MSYS_3_BLOCK_COUNT) > 0
-    os_msys_init_once(os_msys_init_3_data,
-                      &os_msys_init_3_mempool,
-                      &os_msys_init_3_mbuf_pool,
-                      MYNEWT_VAL(MSYS_3_BLOCK_COUNT),
-                      SYSINIT_MSYS_3_MEMBLOCK_SIZE,
-                      "msys_3");
-#endif
-
-#if MYNEWT_VAL(MSYS_4_BLOCK_COUNT) > 0
-    os_msys_init_once(os_msys_init_4_data,
-                      &os_msys_init_4_mempool,
-                      &os_msys_init_4_mbuf_pool,
-                      MYNEWT_VAL(MSYS_4_BLOCK_COUNT),
-                      SYSINIT_MSYS_4_MEMBLOCK_SIZE,
-                      "msys_4");
-#endif
-
-#if MYNEWT_VAL(MSYS_5_BLOCK_COUNT) > 0
-    os_msys_init_once(os_msys_init_5_data,
-                      &os_msys_init_5_mempool,
-                      &os_msys_init_5_mbuf_pool,
-                      MYNEWT_VAL(MSYS_5_BLOCK_COUNT),
-                      SYSINIT_MSYS_5_MEMBLOCK_SIZE,
-                      "msys_5");
 #endif
 }

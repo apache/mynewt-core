@@ -72,6 +72,8 @@ static oc_rep_t *
 _alloc_rep(void)
 {
     oc_rep_t *rep = os_memblock_get(&oc_rep_objects);
+
+    memset(rep, 0, sizeof(*rep));
 #ifdef DEBUG
     oc_assert(rep != NULL);
 #endif

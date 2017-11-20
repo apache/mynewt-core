@@ -802,6 +802,7 @@ oc_ri_invoke_client_cb(struct coap_packet_rx *rsp, oc_endpoint_t *endpoint)
                 if (oc_ri_process_discovery_payload(rsp, cb->handler,
                                               endpoint) == OC_STOP_DISCOVERY) {
                     free_client_cb(cb);
+                    return true;
                 }
             } else {
                 client_response.packet = rsp;
