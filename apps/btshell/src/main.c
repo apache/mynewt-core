@@ -1561,15 +1561,6 @@ btshell_scan_cancel(void)
 }
 
 int
-btshell_set_adv_data(struct ble_hs_adv_fields *adv_fields)
-{
-    int rc;
-
-    rc = ble_gap_adv_set_fields(adv_fields);
-    return rc;
-}
-
-int
 btshell_update_conn(uint16_t conn_handle, struct ble_gap_upd_params *params)
 {
     int rc;

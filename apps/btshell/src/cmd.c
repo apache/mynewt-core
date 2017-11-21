@@ -46,6 +46,16 @@
 
 #define BTSHELL_MODULE "btshell"
 
+#if MYNEWT_VAL(BLE_EXT_ADV)
+
+#define EXT_ADV_POOL_SIZE (MYNEWT_VAL(BLE_EXT_ADV_MAX_SIZE) + \
+                            sizeof(struct os_mbuf) + sizeof(struct os_mbuf_pkthdr))
+
+/* 1 mbuf is enough for configuring adv data */
+static os_membuf_t ext_adv_mem[OS_MEMPOOL_SIZE(1, EXT_ADV_POOL_SIZE)];
+static struct os_mempool ext_adv_pool;
+static struct os_mbuf_pool ext_adv_mbuf_pool;
+#endif
 
 int
 cmd_parse_conn_start_end(uint16_t *out_conn, uint16_t *out_start,
@@ -1360,7 +1370,7 @@ static const struct shell_cmd_help set_help = {
 #define CMD_ADV_DATA_MFG_DATA_MAX_LEN           BLE_HS_ADV_MAX_FIELD_SZ
 
 static int
-cmd_set_adv_data(int argc, char **argv)
+cmd_set_adv_data_or_scan_rsp(int argc, char **argv, bool scan_rsp)
 {
     static bssnz_t ble_uuid16_t uuids16[CMD_ADV_DATA_MAX_UUIDS16];
     static bssnz_t ble_uuid32_t uuids32[CMD_ADV_DATA_MAX_UUIDS32];
@@ -1394,6 +1404,10 @@ cmd_set_adv_data(int argc, char **argv)
     int mfg_data_len;
     int tmp;
     int rc;
+#if MYNEWT_VAL(BLE_EXT_ADV)
+    uint8_t instance;
+    struct os_mbuf *adv_data;
+#endif
 
     memset(&adv_fields, 0, sizeof adv_fields);
 
@@ -1401,6 +1415,19 @@ cmd_set_adv_data(int argc, char **argv)
     if (rc != 0) {
         return rc;
     }
+
+#if MYNEWT_VAL(BLE_EXT_ADV)
+    instance = parse_arg_uint8_dflt("instance", 0, &rc);
+    if (rc != 0 || instance >= BLE_ADV_INSTANCES) {
+        console_printf("invalid instance\n");
+        return rc;
+    }
+
+    if (!adv_instances[instance]) {
+        console_printf("instance not configured\n");
+        return rc;
+    }
+#endif
 
     tmp = parse_arg_uint8("flags", &rc);
     if (rc == 0) {
@@ -1613,7 +1640,7 @@ cmd_set_adv_data(int argc, char **argv)
                                  &eddystone_url_body_len,
                                  &eddystone_url_suffix);
         if (rc != 0) {
-            return rc;
+            goto done;
         }
 
         rc = ble_eddystone_set_adv_data_url(&adv_fields, eddystone_url_scheme,
@@ -1621,14 +1648,52 @@ cmd_set_adv_data(int argc, char **argv)
                                             eddystone_url_body_len,
                                             eddystone_url_suffix);
     } else {
-        rc = btshell_set_adv_data(&adv_fields);
+#if MYNEWT_VAL(BLE_EXT_ADV)
+        adv_data = os_mbuf_get_pkthdr(&ext_adv_mbuf_pool, 0);
+        if (!adv_data) {
+            rc = ENOMEM;
+            goto done;
+        }
+
+        rc = ble_hs_adv_set_fields_mbuf(&adv_fields, adv_data);
+        if (rc) {
+            goto done;
+        }
+
+        if (scan_rsp) {
+            rc = ble_gap_ext_adv_rsp_set_data(instance, adv_data);
+        } else {
+            rc = ble_gap_ext_adv_set_data(instance, adv_data);
+        }
+
+        os_mbuf_free_chain(adv_data);
+#else
+        if (scan_rsp) {
+            rc = ble_gap_adv_rsp_set_fields(&adv_fields);
+        } else {
+            rc = ble_gap_adv_set_fields(&adv_fields);
+        }
+#endif
     }
+done:
     if (rc != 0) {
         console_printf("error setting advertisement data; rc=%d\n", rc);
         return rc;
     }
 
     return 0;
+}
+
+static int
+cmd_set_adv_data(int argc, char **argv)
+{
+    return cmd_set_adv_data_or_scan_rsp(argc, argv, false);
+}
+
+static int
+cmd_set_scan_rsp(int argc, char **argv)
+{
+    return cmd_set_adv_data_or_scan_rsp(argc, argv, true);
 }
 
 #if MYNEWT_VAL(SHELL_CMD_HELP)
@@ -1657,6 +1722,12 @@ static const struct shell_param set_adv_data_params[] = {
 
 static const struct shell_cmd_help set_adv_data_help = {
     .summary = "set advertising data",
+    .usage = NULL,
+    .params = set_adv_data_params,
+};
+
+static const struct shell_cmd_help set_scan_rsp_help = {
+    .summary = "set scan response",
     .usage = NULL,
     .params = set_adv_data_params,
 };
@@ -3183,6 +3254,20 @@ static const struct shell_cmd btshell_commands[] = {
 #endif
     },
     {
+        .sc_cmd = "advertise-set-adv-data",
+        .sc_cmd_func = cmd_set_adv_data,
+#if MYNEWT_VAL(SHELL_CMD_HELP)
+        .help = &set_adv_data_help,
+#endif
+    },
+    {
+        .sc_cmd = "advertise-set-scan-rsp",
+        .sc_cmd_func = cmd_set_scan_rsp,
+#if MYNEWT_VAL(SHELL_CMD_HELP)
+        .help = &set_scan_rsp_help,
+#endif
+    },
+    {
         .sc_cmd = "advertise-start",
         .sc_cmd_func = cmd_advertise_start,
 #if MYNEWT_VAL(SHELL_CMD_HELP)
@@ -3240,6 +3325,7 @@ static const struct shell_cmd btshell_commands[] = {
         .help = &set_help,
 #endif
     },
+#if !MYNEWT_VAL(BLE_EXT_ADV)
     {
         .sc_cmd = "set-adv-data",
         .sc_cmd_func = cmd_set_adv_data,
@@ -3247,6 +3333,14 @@ static const struct shell_cmd btshell_commands[] = {
         .help = &set_adv_data_help,
 #endif
     },
+    {
+        .sc_cmd = "set-scan-rsp",
+        .sc_cmd_func = cmd_set_scan_rsp,
+#if MYNEWT_VAL(SHELL_CMD_HELP)
+        .help = &set_scan_rsp_help,
+#endif
+    },
+#endif
     {
         .sc_cmd = "set-priv-mode",
         .sc_cmd_func = cmd_set_priv_mode,
@@ -3524,6 +3618,17 @@ static const struct shell_cmd btshell_commands[] = {
 void
 cmd_init(void)
 {
+    int rc;
+
     shell_register(BTSHELL_MODULE, btshell_commands);
     shell_register_default_module(BTSHELL_MODULE);
+
+    rc = os_mempool_init(&ext_adv_pool, 1,
+            EXT_ADV_POOL_SIZE,
+                         ext_adv_mem, "ext_adv_mem");
+    assert(rc == 0);
+
+    rc = os_mbuf_pool_init(&ext_adv_mbuf_pool, &ext_adv_pool,
+            EXT_ADV_POOL_SIZE,
+                           1);
 }

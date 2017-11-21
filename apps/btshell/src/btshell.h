@@ -143,7 +143,6 @@ int btshell_ext_scan(uint8_t own_addr_type, uint16_t duration, uint16_t period,
                      const struct ble_gap_ext_disc_params *uncoded_params,
                      const struct ble_gap_ext_disc_params *coded_params);
 int btshell_scan_cancel(void);
-int btshell_set_adv_data(struct ble_hs_adv_fields *adv_fields);
 int btshell_update_conn(uint16_t conn_handle,
                          struct ble_gap_upd_params *params);
 void btshell_notify(uint16_t attr_handle);
