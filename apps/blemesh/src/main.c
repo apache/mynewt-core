@@ -140,12 +140,24 @@ fault_test(struct bt_mesh_model *model, uint8_t test_id, uint16_t company_id)
     return 0;
 }
 
-static struct bt_mesh_health_srv health_srv = {
-        .fault_get_cur = &fault_get_cur,
-        .fault_get_reg = &fault_get_reg,
-        .fault_clear = &fault_clear,
-        .fault_test = &fault_test,
+static const struct bt_mesh_health_srv_cb health_srv_cb = {
+    .fault_get_cur = &fault_get_cur,
+    .fault_get_reg = &fault_get_reg,
+    .fault_clear = &fault_clear,
+    .fault_test = &fault_test,
 };
+
+static struct bt_mesh_health_srv health_srv = {
+    .cb = &health_srv_cb,
+};
+
+static struct bt_mesh_model_pub health_pub;
+
+static void
+health_pub_init(void)
+{
+    health_pub.msg  = BT_MESH_HEALTH_FAULT_MSG(0);
+}
 
 static struct bt_mesh_model_pub gen_level_pub;
 static struct bt_mesh_model_pub gen_onoff_pub;
@@ -317,7 +329,7 @@ static const struct bt_mesh_model_op gen_level_op[] = {
 
 static struct bt_mesh_model root_models[] = {
     BT_MESH_MODEL_CFG_SRV(&cfg_srv),
-    BT_MESH_MODEL_HEALTH_SRV(&health_srv),
+    BT_MESH_MODEL_HEALTH_SRV(&health_srv, &health_pub),
     BT_MESH_MODEL(BT_MESH_MODEL_ID_GEN_ONOFF_SRV, gen_onoff_op,
               &gen_onoff_pub, NULL),
     BT_MESH_MODEL(BT_MESH_MODEL_ID_GEN_LEVEL_SRV, gen_level_op,
@@ -406,6 +418,7 @@ main(void)
     hal_gpio_init_out(LED_2, 0);
 
     bt_mesh_register_gatt();
+    health_pub_init();
 
     while (1) {
         os_eventq_run(os_eventq_dflt_get());
