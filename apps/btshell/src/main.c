@@ -1408,6 +1408,17 @@ btshell_write_reliable(uint16_t conn_handle,
     return rc;
 }
 
+#if MYNEWT_VAL(BLE_EXT_ADV)
+int
+btshell_ext_adv_configure(uint8_t instance,
+                          const struct ble_gap_ext_adv_params *params,
+                          int8_t *selected_tx_power)
+{
+    return ble_gap_ext_adv_configure(instance, params, selected_tx_power,
+                                     btshell_gap_event, NULL);
+}
+#endif
+
 int
 btshell_adv_stop(void)
 {

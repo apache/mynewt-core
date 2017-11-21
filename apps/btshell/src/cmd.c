@@ -98,7 +98,420 @@ static const struct kv_pair cmd_addr_type[] = {
 /*****************************************************************************
  * $advertise                                                                *
  *****************************************************************************/
+static const struct kv_pair cmd_adv_filt_types[] = {
+    { "none", BLE_HCI_ADV_FILT_NONE },
+    { "scan", BLE_HCI_ADV_FILT_SCAN },
+    { "conn", BLE_HCI_ADV_FILT_CONN },
+    { "both", BLE_HCI_ADV_FILT_BOTH },
+    { NULL }
+};
 
+#if MYNEWT_VAL(BLE_EXT_ADV)
+static struct kv_pair cmd_ext_adv_phy_opts[] = {
+    { "1M",          0x01 },
+    { "2M",          0x02 },
+    { "coded",       0x03 },
+    { NULL }
+};
+
+static bool adv_instances[BLE_ADV_INSTANCES];
+
+static int
+cmd_advertise_configure(int argc, char **argv)
+{
+    struct ble_gap_ext_adv_params params;
+    int8_t selected_tx_power;
+    uint8_t instance;
+    int rc;
+
+    rc = parse_arg_all(argc - 1, argv + 1);
+    if (rc != 0) {
+        return rc;
+    }
+
+    instance = parse_arg_uint8_dflt("instance", 0, &rc);
+    if (rc != 0 || instance >= BLE_ADV_INSTANCES) {
+        console_printf("invalid instance\n");
+        return rc;
+    }
+
+    if (adv_instances[instance]) {
+        console_printf("instance already configured\n");
+        return rc;
+    }
+
+    memset(&params, 0, sizeof(params));
+
+    params.connectable = parse_arg_bool_dflt("connectable", 0, &rc);
+    if (rc != 0) {
+        console_printf("invalid 'connectable' parameter\n");
+        return rc;
+    }
+
+    params.scannable = parse_arg_bool_dflt("scannable", 0, &rc);
+    if (rc != 0) {
+        console_printf("invalid 'scannable' parameter\n");
+        return rc;
+    }
+
+    params.high_duty_directed = parse_arg_bool_dflt("high_duty", 0, &rc);
+    if (rc != 0) {
+        console_printf("invalid 'high_duty' parameter\n");
+        return rc;
+    }
+
+    params.anonymous = parse_arg_bool_dflt("anonymous", 0, &rc);
+    if (rc != 0) {
+        console_printf("invalid 'anonymous' parameter\n");
+        return rc;
+    }
+
+    params.legacy_pdu = parse_arg_bool_dflt("legacy", 0, &rc);
+    if (rc != 0) {
+        console_printf("invalid 'legacy' parameter\n");
+        return rc;
+    }
+
+    params.include_tx_power = parse_arg_bool_dflt("include_tx_power", 0, &rc);
+    if (rc != 0) {
+        console_printf("invalid 'include_tx_power' parameter\n");
+        return rc;
+    }
+
+    params.scan_req_notif = parse_arg_bool_dflt("scan_req_notif", 0, &rc);
+    if (rc != 0) {
+        console_printf("invalid 'scan_req_notif' parameter\n");
+        return rc;
+    }
+
+    rc = parse_arg_mac("peer_addr", params.peer.val);
+    if (rc == 0) {
+        params.directed = 1;
+
+        params.peer.type = parse_arg_kv_dflt("peer_addr_type",
+                                             cmd_peer_addr_types,
+                                             BLE_ADDR_PUBLIC, &rc);
+        if (rc != 0) {
+            console_printf("invalid 'peer_addr_type' parameter\n");
+            return rc;
+        }
+    }
+    else if (rc == ENOENT) {
+       /* skip, no peer address provided */
+    } else {
+        console_printf("invalid 'peer_addr' parameter\n");
+        return rc;
+    }
+
+    params.own_addr_type = parse_arg_kv_dflt("own_addr_type",
+                                             cmd_own_addr_types,
+                                             BLE_OWN_ADDR_PUBLIC, &rc);
+    if (rc != 0) {
+        console_printf("invalid 'own_addr_type' parameter\n");
+        return rc;
+    }
+
+    params.channel_map = parse_arg_uint8_dflt("channel_map", 0, &rc);
+    if (rc != 0) {
+        console_printf("invalid 'channel_map' parameter\n");
+        return rc;
+    }
+
+    params.filter_policy = parse_arg_kv_dflt("filter", cmd_adv_filt_types,
+                                             BLE_HCI_ADV_FILT_NONE, &rc);
+    if (rc != 0) {
+        console_printf("invalid 'filter' parameter\n");
+        return rc;
+    }
+
+    params.itvl_min = parse_arg_uint32_dflt("interval_min", 0, &rc);
+    if (rc != 0) {
+        console_printf("invalid 'interval_min' parameter\n");
+        return rc;
+    }
+
+    params.itvl_max = parse_arg_uint32_dflt("interval_max", 0, &rc);
+    if (rc != 0) {
+        console_printf("invalid 'interval_max' parameter\n");
+        return rc;
+    }
+
+    params.tx_power = parse_arg_long_bounds_dflt("tx_power",
+                                             -127, 127, 127, &rc);
+    if (rc != 0) {
+        console_printf("invalid 'tx_power' parameter\n");
+        return rc;
+    }
+
+    params.primary_phy = parse_arg_kv_dflt("primary_phy", cmd_ext_adv_phy_opts,
+                                           1, &rc);
+    if (rc != 0) {
+        console_printf("invalid 'primary_phy' parameter\n");
+        return rc;
+    }
+
+    params.secondary_phy = parse_arg_kv_dflt("secondary_phy",
+                                         cmd_ext_adv_phy_opts,
+                                         params.primary_phy, &rc);
+    if (rc != 0) {
+        console_printf("invalid 'secondary_phy' parameter\n");
+        return rc;
+   }
+
+    params.sid = parse_arg_uint8_dflt("sid", 0, &rc);
+    if (rc != 0) {
+        console_printf("invalid 'sid' parameter\n");
+        return rc;
+    }
+
+    params.high_duty_directed = parse_arg_uint8_dflt("high_duty", 0, &rc);
+    if (rc != 0) {
+        console_printf("invalid 'high_duty' parameter\n");
+        return rc;
+    }
+
+    rc = btshell_ext_adv_configure(instance, &params, &selected_tx_power);
+    if (rc) {
+        console_printf("failed to configure advertising instance\n");
+        return rc;
+    }
+
+    console_printf("Instance %u configured (selected tx power: %d)\n",
+                   instance, selected_tx_power);
+
+    adv_instances[instance] = true;
+
+    return 0;
+}
+
+static int
+cmd_advertise_set_addr(int argc, char **argv)
+{
+    ble_addr_t addr;
+    uint8_t instance;
+    int rc;
+
+    rc = parse_arg_all(argc - 1, argv + 1);
+    if (rc != 0) {
+        return rc;
+    }
+
+    instance = parse_arg_uint8_dflt("instance", 0, &rc);
+    if (rc != 0 || instance >= BLE_ADV_INSTANCES) {
+        console_printf("invalid instance\n");
+        return rc;
+    }
+
+    if (!adv_instances[instance]) {
+        console_printf("instance not configured\n");
+        return rc;
+    }
+
+    rc = parse_arg_mac("addr", addr.val);
+    if (rc != 0) {
+        console_printf("invalid 'addr' parameter\n");
+                    return rc;
+    }
+
+    addr.type = BLE_ADDR_RANDOM;
+
+    rc = ble_gap_ext_adv_set_addr(instance, &addr);
+    if (rc) {
+        console_printf("failed to start advertising instance\n");
+        return rc;
+    }
+
+    return 0;
+}
+
+static int
+cmd_advertise_start(int argc, char **argv)
+{
+    int max_events;
+    uint8_t instance;
+    int duration;
+    int rc;
+
+    rc = parse_arg_all(argc - 1, argv + 1);
+    if (rc != 0) {
+        return rc;
+    }
+
+    instance = parse_arg_uint8_dflt("instance", 0, &rc);
+    if (rc != 0 || instance >= BLE_ADV_INSTANCES) {
+        console_printf("invalid instance\n");
+        return rc;
+    }
+
+    if (!adv_instances[instance]) {
+        console_printf("instance not configured\n");
+        return rc;
+    }
+
+    duration = parse_arg_uint16_dflt("duration", 0, &rc);
+    if (rc != 0) {
+        console_printf("invalid 'duration' parameter\n");
+        return rc;
+    }
+
+    max_events = parse_arg_uint8_dflt("max_events", 0, &rc);
+    if (rc != 0) {
+        console_printf("invalid 'max_events' parameter\n");
+        return rc;
+    }
+
+    rc = ble_gap_ext_adv_start(instance, duration, max_events);
+    if (rc) {
+        console_printf("failed to start advertising instance\n");
+        return rc;
+    }
+
+    return 0;
+}
+
+static int
+cmd_advertise_stop(int argc, char **argv)
+{
+    uint8_t instance;
+    int rc;
+
+    rc = parse_arg_all(argc - 1, argv + 1);
+    if (rc != 0) {
+        return rc;
+    }
+
+    instance = parse_arg_uint8_dflt("instance", 0, &rc);
+    if (rc != 0 || instance >= BLE_ADV_INSTANCES) {
+        console_printf("invalid instance\n");
+        return rc;
+    }
+
+    if (!adv_instances[instance]) {
+        console_printf("instance not configured\n");
+        return rc;
+    }
+
+    rc = ble_gap_ext_adv_stop(instance);
+    if (rc) {
+        console_printf("failed to stop advertising instance\n");
+        return rc;
+    }
+
+    return 0;
+}
+
+static int
+cmd_advertise_remove(int argc, char **argv)
+{
+    uint8_t instance;
+    int rc;
+
+    rc = parse_arg_all(argc - 1, argv + 1);
+    if (rc != 0) {
+        return rc;
+    }
+
+    instance = parse_arg_uint8_dflt("instance", 0, &rc);
+    if (rc != 0 || instance >= BLE_ADV_INSTANCES) {
+        console_printf("invalid instance\n");
+        return rc;
+    }
+
+    if (!adv_instances[instance]) {
+        console_printf("instance not configured\n");
+        return rc;
+    }
+
+    rc = ble_gap_ext_adv_remove(instance);
+    if (rc) {
+        console_printf("failed to remove advertising instance\n");
+        return rc;
+    }
+
+    adv_instances[instance] = false;
+
+    return 0;
+}
+
+#if MYNEWT_VAL(SHELL_CMD_HELP)
+static const struct shell_param advertise_configure_params[] = {
+    {"instance", "default: 0"},
+    {"connectable", "connectable advertising, usage: =[0-1], default: 0"},
+    {"scannable", "scannable advertising, usage: =[0-1], default: 0"},
+    {"peer_addr_type", "usage: =[public|random|public_id|random_id], default: public"},
+    {"peer_addr", "usage: =[XX:XX:XX:XX:XX:XX]"},
+    {"own_addr_type", "usage: =[public|random|rpa_pub|rpa_rnd], default: public"},
+    {"channel_map", "usage: =[0x00-0xff], default: 0"},
+    {"filter", "usage: =[none|scan|conn|both], default: none"},
+    {"interval_min", "usage: =[0-UINT32_MAX], default: 0"},
+    {"interval_max", "usage: =[0-UINT32_MAX], default: 0"},
+    {"tx_power", "usage: =[-127-127], default: 127"},
+    {"primary_phy", "usage: =[1M|2M|coded], default: 1M"},
+    {"secondary_phy", "usage: =[1M|2M|coded], default: primary_phy"},
+    {"sid", "usage: =[0-UINT8_MAX], default: 0"},
+    {"high_duty", "usage: =[0-1], default: 0"},
+    {"anonymous", "enable anonymous advertising, usage: =[0-1], default: 0"},
+    {"legacy", "use legacy PDUs, usage: =[0-1], default: 0"},
+    {"include_tx_power", "include TX power in PDU, usage: =[0-1], default: 0"},
+    {"scan_req_notif", "enable Scan Request notification usage: =[0-1], default: 0"},
+    {NULL, NULL}
+};
+
+static const struct shell_cmd_help advertise_configure_help = {
+    .summary = "configure new advertising instance",
+    .usage = NULL,
+    .params = advertise_configure_params,
+};
+
+static const struct shell_param advertise_set_addr_params[] = {
+    {"instance", "default: 0"},
+    {"addr", "usage: =[XX:XX:XX:XX:XX:XX]"},
+    {NULL, NULL}
+};
+
+static const struct shell_cmd_help advertise_set_addr_help = {
+    .summary = "set advertising instance random address",
+    .usage = NULL,
+    .params = advertise_set_addr_params,
+};
+
+static const struct shell_param advertise_start_params[] = {
+    {"instance", "default: 0"},
+    {"duration", "advertising duration in 10ms units, default: 0 (forever)"},
+    {"max_events", "max number of advertising events, default: 0 (no limit)"},
+    {NULL, NULL}
+};
+
+static const struct shell_cmd_help advertise_start_help = {
+    .summary = "start advertising instance",
+    .usage = NULL,
+    .params = advertise_start_params,
+};
+
+static const struct shell_param advertise_stop_params[] = {
+    {"instance", "default: 0"},
+    {NULL, NULL}
+};
+
+static const struct shell_cmd_help advertise_stop_help = {
+    .summary = "stop advertising instance",
+    .usage = NULL,
+    .params = advertise_stop_params,
+};
+
+static const struct shell_param advertise_remove_params[] = {
+    {"instance", "default: 0"},
+    {NULL, NULL}
+};
+
+static const struct shell_cmd_help advertise_remove_help = {
+    .summary = "remove advertising instance",
+    .usage = NULL,
+    .params = advertise_remove_params,
+};
+#endif
+
+#else
 static const struct kv_pair cmd_adv_conn_modes[] = {
     { "non", BLE_GAP_CONN_MODE_NON },
     { "und", BLE_GAP_CONN_MODE_UND },
@@ -113,24 +526,6 @@ static const struct kv_pair cmd_adv_disc_modes[] = {
     { NULL }
 };
 
-static const struct kv_pair cmd_adv_filt_types[] = {
-    { "none", BLE_HCI_ADV_FILT_NONE },
-    { "scan", BLE_HCI_ADV_FILT_SCAN },
-    { "conn", BLE_HCI_ADV_FILT_CONN },
-    { "both", BLE_HCI_ADV_FILT_BOTH },
-    { NULL }
-};
-
-#if MYNEWT_VAL(BLE_EXT_ADV)
-static struct kv_pair cmd_ext_adv_phy_opts[] = {
-    { "none",        0x00 },
-    { "1M",          0x01 },
-    { "2M",          0x02 },
-    { "coded",       0x03 },
-    { NULL }
-};
-#endif
-
 static int
 cmd_advertise(int argc, char **argv)
 {
@@ -140,10 +535,6 @@ cmd_advertise(int argc, char **argv)
     ble_addr_t *peer_addr_param = &peer_addr;
     uint8_t own_addr_type;
     int rc;
-    #if MYNEWT_VAL(BLE_EXT_ADV)
-        int8_t tx_power;
-        uint8_t primary_phy, secondary_phy;
-    #endif
 
     rc = parse_arg_all(argc - 1, argv + 1);
     if (rc != 0) {
@@ -234,42 +625,6 @@ cmd_advertise(int argc, char **argv)
         return rc;
     }
 
-    #if MYNEWT_VAL(BLE_EXT_ADV)
-        tx_power = parse_arg_long_bounds_dflt("tx_power",
-                                                 -127, 127, 127, &rc);
-        if (rc != 0) {
-            console_printf("invalid 'tx_power' parameter\n");
-            return rc;
-        }
-
-        primary_phy = parse_arg_kv_dflt("primary_phy", cmd_ext_adv_phy_opts,
-                                           0, &rc);
-        if (rc != 0) {
-            console_printf("invalid 'primary_phy' parameter\n");
-            return rc;
-        }
-
-        secondary_phy = parse_arg_kv_dflt("secondary_phy",
-                                             cmd_ext_adv_phy_opts,
-                                             primary_phy, &rc);
-        if (rc != 0) {
-            console_printf("invalid 'secondary_phy' parameter\n");
-            return rc;
-       }
-
-        rc = ble_gap_adv_set_tx_power(tx_power);
-        if (rc != 0) {
-            console_printf("setting advertise TX power fail: %d\n", rc);
-           return rc;
-        }
-
-        rc = ble_gap_adv_set_phys(primary_phy, secondary_phy);
-        if (rc != 0) {
-            console_printf("setting advertise PHYs fail: %d\n", rc);
-            return rc;
-        }
-    #endif
-
     rc = btshell_adv_start(own_addr_type, peer_addr_param, duration_ms,
                            &params);
     if (rc != 0) {
@@ -294,11 +649,6 @@ static const struct shell_param advertise_params[] = {
     {"interval_max", "usage: =[0-UINT16_MAX], default: 0"},
     {"high_duty", "usage: =[0-1], default: 0"},
     {"duration", "usage: =[1-INT32_MAX], default: INT32_MAX"},
-#if MYNEWT_VAL(BLE_EXT_ADV)
-    {"tx_power", "usage: =[-127-127], default: 127"},
-    {"primary_phy", "usage: =[none|1M|2M|coded], default: none"},
-    {"secondary_phy", "usage: =[none|1M|2M|coded], default: primary_phy"},
-#endif
     {NULL, NULL}
 };
 
@@ -307,6 +657,7 @@ static const struct shell_cmd_help advertise_help = {
     .usage = NULL,
     .params = advertise_params,
 };
+#endif
 #endif
 
 /*****************************************************************************
@@ -2816,6 +3167,43 @@ static const struct shell_cmd_help l2cap_send_help = {
 #endif
 
 static const struct shell_cmd btshell_commands[] = {
+#if MYNEWT_VAL(BLE_EXT_ADV)
+    {
+        .sc_cmd = "advertise-configure",
+        .sc_cmd_func = cmd_advertise_configure,
+#if MYNEWT_VAL(SHELL_CMD_HELP)
+        .help = &advertise_configure_help,
+#endif
+    },
+    {
+        .sc_cmd = "advertise-set-addr",
+        .sc_cmd_func = cmd_advertise_set_addr,
+#if MYNEWT_VAL(SHELL_CMD_HELP)
+        .help = &advertise_set_addr_help,
+#endif
+    },
+    {
+        .sc_cmd = "advertise-start",
+        .sc_cmd_func = cmd_advertise_start,
+#if MYNEWT_VAL(SHELL_CMD_HELP)
+        .help = &advertise_start_help,
+#endif
+    },
+    {
+        .sc_cmd = "advertise-stop",
+        .sc_cmd_func = cmd_advertise_stop,
+#if MYNEWT_VAL(SHELL_CMD_HELP)
+        .help = &advertise_stop_help,
+#endif
+    },
+    {
+        .sc_cmd = "advertise-remove",
+        .sc_cmd_func = cmd_advertise_remove,
+#if MYNEWT_VAL(SHELL_CMD_HELP)
+        .help = &advertise_remove_help,
+#endif
+    },
+#else
     {
         .sc_cmd = "advertise",
         .sc_cmd_func = cmd_advertise,
@@ -2823,6 +3211,7 @@ static const struct shell_cmd btshell_commands[] = {
         .help = &advertise_help,
 #endif
     },
+#endif
     {
         .sc_cmd = "connect",
         .sc_cmd_func = cmd_connect,
