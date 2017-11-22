@@ -152,17 +152,19 @@ imgr_read_info(int image_slot, struct image_version *ver, uint8_t *hash,
         goto end;
     }
 
-    if (ver != NULL) {
+    if (ver) {
         memset(ver, 0xff, sizeof(*ver));
-        if (hdr->ih_magic == IMAGE_MAGIC) {
+    }
+    if (hdr->ih_magic == IMAGE_MAGIC) {
+        if (ver) {
             memcpy(ver, &hdr->ih_ver, sizeof(*ver));
-        } else if (hdr->ih_magic == 0xffffffff) {
-            rc = 2;
-            goto end;
-        } else {
-            rc = 1;
-            goto end;
         }
+    } else if (hdr->ih_magic == 0xffffffff) {
+        rc = 2;
+        goto end;
+    } else {
+        rc = 1;
+        goto end;
     }
 
     if (flags) {
