@@ -274,7 +274,7 @@ unicode.c
 split-nrf52840pdk.ld
 nrf52840pdk_no_boot.ld
 
-#Freescale Semiconductor License
+# Freescale Semiconductor License
 boot-mkw41z512.ld
 mkw41z512.ld
 no-boot-mkw41z512.ld
@@ -285,10 +285,15 @@ system_MKW41Z4.h
 MKW41Z4_features.h
 system_MKW41Z4.c
 
-#Imagination Technologies License
+# Imagination Technologies - BSD License
+mips-hal
 ctx.S
 excpt_isr.S
 uhi32.ld
+abiflags.S
+
+# Cygnus Support - MIT like License
+gcc_startup_mips.S
 
 # HiFive1 - Apache License 2.0
 sifive
@@ -334,13 +339,40 @@ startup_stm32f767xx.s
 
 # Microchip PIC32 SDK - BSD License
 p32mz2048efg100.h
-pic32/os
-arch/pic32
 pic32_init_cache.S
 pic32_init_tlb_ebi_sqi.S
+cache-err-exception.S
+cp0defs.h
+simple-tlb-refill-exception.S
+crt0.S
 
 # Calliope SDK - BSD Licence
 split-calliope_mini.ld
 
 # Bluetooth Mesh - Apache 2.0 License
 mesh
+
+# pic32mx470_6lp_clicker BSP - one BSD licensed file (other are Apache):
+# /hw/bsp/pic32mx470_6lp_clicker/src/sbrk.c
+pic32mx470_6lp_clicker
+
+# pic32mz2048_wi-fire BSP - one BSD licensed file (other are Apache):
+# ./hw/bsp/pic32mz2048_wi-fire/src/sbrk.c
+pic32mz2048_wi-fire
+
+# SDK for Apollo2 - MIT/BSD/Apache License
+# hw/bsp/apollo2_evb/src/arch/cortex_m4/gcc_startup.s
+apollo2_evb
+
+# BSP for Apollo2 - BSD License
+AmbiqSuite
+apollo2.h
+system_apollo2.h
+system_apollo2.c
+apollo_nvic.h
+
+# Apollo2 linker script - MIT License
+apollo2.ld
+
+# Ignore documentation folder
+docs
