@@ -412,16 +412,6 @@ bletiny_help_disabled(void)
 }
 #endif
 
-#if MYNEWT_VAL(BLE_EXT_ADV)
-static struct kv_pair cmd_ext_adv_phy_opts[] = {
-    { "none",        0x00 },
-    { "1M",          0x01 },
-    { "2M",          0x02 },
-    { "coded",       0x03 },
-    { NULL }
-};
-#endif
-
 static void
 bletiny_adv_help(void)
 {
@@ -446,11 +436,6 @@ bletiny_adv_help(void)
     help_cmd_long_bounds_dflt("itvl_max", 0, UINT16_MAX, 0);
     help_cmd_long_bounds_dflt("hd", 0, 1, 0);
     help_cmd_long_bounds_dflt("dur", 1, INT32_MAX, BLE_HS_FOREVER);
-#if MYNEWT_VAL(BLE_EXT_ADV)
-    help_cmd_long_bounds_dflt("tx_power", -127, 127, 127);
-    help_cmd_kv_dflt("primary_phy", cmd_ext_adv_phy_opts, 0);
-    help_cmd_kv_dflt("secondary_phy", cmd_ext_adv_phy_opts, 0);
-#endif
 }
 
 static int
@@ -462,10 +447,6 @@ cmd_adv(int argc, char **argv)
     ble_addr_t *peer_addr_param = &peer_addr;
     uint8_t own_addr_type;
     int rc;
-#if MYNEWT_VAL(BLE_EXT_ADV)
-    int8_t tx_power;
-    uint8_t primary_phy, secondary_phy;
-#endif
 
     if (argc > 1 && strcmp(argv[1], "help") == 0) {
         bletiny_adv_help();
@@ -571,43 +552,6 @@ cmd_adv(int argc, char **argv)
         help_cmd_long_bounds_dflt("dur", 1, INT32_MAX, BLE_HS_FOREVER);
         return rc;
     }
-
-#if MYNEWT_VAL(BLE_EXT_ADV)
-    tx_power = parse_arg_long_bounds_default("tx_power", -127, 127, 127, &rc);
-    if (rc != 0) {
-        console_printf("invalid 'tx_power' parameter\n");
-        help_cmd_long_bounds_dflt("tx_power", -127, 127, 127);
-        return rc;
-    }
-
-    primary_phy = parse_arg_kv_default("primary_phy", cmd_ext_adv_phy_opts,
-                                       0, &rc);
-    if (rc != 0) {
-        console_printf("invalid 'primary_phy' parameter\n");
-        help_cmd_kv_dflt("primary_phy", cmd_ext_adv_phy_opts, 0);
-        return rc;
-    }
-
-    secondary_phy = parse_arg_kv_default("secondary_phy", cmd_ext_adv_phy_opts,
-                                         primary_phy, &rc);
-    if (rc != 0) {
-        console_printf("invalid 'secondary_phy' parameter\n");
-        help_cmd_kv_dflt("secondary_phy", cmd_ext_adv_phy_opts, 0);
-        return rc;
-    }
-
-    rc = ble_gap_adv_set_tx_power(tx_power);
-    if (rc != 0) {
-        console_printf("setting advertise TX power fail: %d\n", rc);
-        return rc;
-    }
-
-    rc = ble_gap_adv_set_phys(primary_phy, secondary_phy);
-    if (rc != 0) {
-        console_printf("setting advertise PHYs fail: %d\n", rc);
-        return rc;
-    }
-#endif
 
     rc = bletiny_adv_start(own_addr_type, peer_addr_param, duration_ms,
                            &params);
