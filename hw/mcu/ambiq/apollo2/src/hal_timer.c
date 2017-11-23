@@ -206,35 +206,33 @@ apollo2_timer_sdk_cfg(const struct apollo2_timer_cfg *cfg, uint32_t freq_hz,
         entry = apollo2_timer_tbl_find(apollo2_timer_tbl_hfrc, freq_hz);
         *out_actual_hz = entry->freq;
         *out_cfg = entry->cfg;
-        break;
+        return 0;
 
     case APOLLO2_TIMER_SOURCE_XT:
         entry = apollo2_timer_tbl_find(apollo2_timer_tbl_xt, freq_hz);
         *out_actual_hz = entry->freq;
         *out_cfg = entry->cfg;
-        break;
+        return 0;
 
     case APOLLO2_TIMER_SOURCE_LFRC:
         entry = apollo2_timer_tbl_find(apollo2_timer_tbl_lfrc, freq_hz);
         *out_actual_hz = entry->freq;
         *out_cfg = entry->cfg;
-        break;
+        return 0;
 
     case APOLLO2_TIMER_SOURCE_RTC:
         *out_actual_hz = 100;
         *out_cfg = AM_HAL_CTIMER_RTC_100HZ;
-        break;
+        return 0;
 
     case APOLLO2_TIMER_SOURCE_HCLK:
         *out_actual_hz = 48000000;
         *out_cfg = AM_HAL_CTIMER_HCLK;
-        break;
+        return 0;
 
     default:
         return SYS_EINVAL;
     }
-
-    return 0;
 }
 
 /**
@@ -781,8 +779,7 @@ hal_timer_stop(struct hal_timer *timer)
     if (reset_ocmp) {
         timer = TAILQ_FIRST(&bsp_timer->hal_timer_q);
         if (timer != NULL) {
-            TAILQ_REMOVE(&bsp_timer->hal_timer_q, timer, link);
-            hal_timer_start_at(timer, timer->expiry);
+            apollo2_timer_set_ocmp_at(bsp_timer, timer->expiry);
         } else {
             apollo2_timer_clear_ocmp(bsp_timer);
         }
