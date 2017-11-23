@@ -779,8 +779,7 @@ hal_timer_stop(struct hal_timer *timer)
     if (reset_ocmp) {
         timer = TAILQ_FIRST(&bsp_timer->hal_timer_q);
         if (timer != NULL) {
-            TAILQ_REMOVE(&bsp_timer->hal_timer_q, timer, link);
-            hal_timer_start_at(timer, timer->expiry);
+            apollo2_timer_set_ocmp_at(bsp_timer, timer->expiry);
         } else {
             apollo2_timer_clear_ocmp(bsp_timer);
         }
