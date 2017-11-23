@@ -206,35 +206,33 @@ apollo2_timer_sdk_cfg(const struct apollo2_timer_cfg *cfg, uint32_t freq_hz,
         entry = apollo2_timer_tbl_find(apollo2_timer_tbl_hfrc, freq_hz);
         *out_actual_hz = entry->freq;
         *out_cfg = entry->cfg;
-        break;
+        return 0;
 
     case APOLLO2_TIMER_SOURCE_XT:
         entry = apollo2_timer_tbl_find(apollo2_timer_tbl_xt, freq_hz);
         *out_actual_hz = entry->freq;
         *out_cfg = entry->cfg;
-        break;
+        return 0;
 
     case APOLLO2_TIMER_SOURCE_LFRC:
         entry = apollo2_timer_tbl_find(apollo2_timer_tbl_lfrc, freq_hz);
         *out_actual_hz = entry->freq;
         *out_cfg = entry->cfg;
-        break;
+        return 0;
 
     case APOLLO2_TIMER_SOURCE_RTC:
         *out_actual_hz = 100;
         *out_cfg = AM_HAL_CTIMER_RTC_100HZ;
-        break;
+        return 0;
 
     case APOLLO2_TIMER_SOURCE_HCLK:
         *out_actual_hz = 48000000;
         *out_cfg = AM_HAL_CTIMER_HCLK;
-        break;
+        return 0;
 
     default:
         return SYS_EINVAL;
     }
-
-    return 0;
 }
 
 /**
