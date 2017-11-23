@@ -114,6 +114,8 @@ os_tick_idle(os_time_t ticks)
 void
 os_tick_init(uint32_t os_ticks_per_sec, int prio)
 {
+    os_sr_t sr;
+
     /* Reset the timer to 0. */
     am_hal_stimer_counter_clear();
 
@@ -131,4 +133,9 @@ os_tick_init(uint32_t os_ticks_per_sec, int prio)
     NVIC_SetPriority(APOLLO2_OS_TICK_IRQ, prio);
     NVIC_SetVector(APOLLO2_OS_TICK_IRQ, (uint32_t)apollo2_os_tick_handler);
     NVIC_EnableIRQ(APOLLO2_OS_TICK_IRQ);
+
+    /* Schedule timer to interrupt at the next tick. */
+    OS_ENTER_CRITICAL(sr);
+    apollo2_os_tick_set_timer(1);
+    OS_EXIT_CRITICAL(sr);
 }
