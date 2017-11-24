@@ -3618,17 +3618,19 @@ static const struct shell_cmd btshell_commands[] = {
 void
 cmd_init(void)
 {
+#if MYNEWT_VAL(BLE_EXT_ADV)
     int rc;
 
-    shell_register(BTSHELL_MODULE, btshell_commands);
-    shell_register_default_module(BTSHELL_MODULE);
-
-    rc = os_mempool_init(&ext_adv_pool, 1,
-            EXT_ADV_POOL_SIZE,
+    rc = os_mempool_init(&ext_adv_pool, 1, EXT_ADV_POOL_SIZE,
                          ext_adv_mem, "ext_adv_mem");
     assert(rc == 0);
 
     rc = os_mbuf_pool_init(&ext_adv_mbuf_pool, &ext_adv_pool,
-            EXT_ADV_POOL_SIZE,
-                           1);
+                           EXT_ADV_POOL_SIZE, 1);
+
+    assert(rc == 0);
+#endif
+
+    shell_register(BTSHELL_MODULE, btshell_commands);
+    shell_register_default_module(BTSHELL_MODULE);
 }
