@@ -30,6 +30,10 @@
 #include "host/ble_hs.h"
 #include "services/gap/ble_svc_gap.h"
 #include "mesh/glue.h"
+#include "mesh/pts.h"
+
+#include "blemesh.h"
+
 
 #define BT_DBG_ENABLED (MYNEWT_VAL(BLE_MESH_DEBUG))
 
@@ -335,6 +339,36 @@ static const struct bt_mesh_comp comp = {
     .elem_count = ARRAY_SIZE(elements),
 };
 
+int
+blemesh_lpn_set(bool enable)
+{
+    return bt_mesh_lpn_set(enable);
+}
+
+int
+blemesh_cfg_relay_set(bool enable)
+{
+    if (cfg_srv.relay == 0x00 || cfg_srv.relay == 0x01) {
+        cfg_srv.relay = enable;
+        return 0;
+    }
+    return 1;
+}
+
+int
+blemesh_send_msg(uint8_t ttl, uint16_t appkey_index, uint16_t src_addr,
+                 uint16_t dst_addr, uint8_t *buf, uint16_t len)
+{
+    return pts_mesh_net_send_msg(ttl, appkey_index, src_addr,
+                                 dst_addr, buf, len);
+}
+
+void
+blemesh_iv_update(bool enable, uint32_t iv_index, bool iv_update)
+{
+    pts_mesh_iv_update(enable, iv_index, iv_update);
+}
+
 static int output_number(bt_mesh_output_action action, uint32_t number)
 {
     console_printf("OOB Number: %lu\n", number);
@@ -402,6 +436,8 @@ main(void)
     hal_gpio_init_out(LED_2, 0);
 
     bt_mesh_register_gatt();
+
+    cmd_init();
 
     while (1) {
         os_eventq_run(os_eventq_dflt_get());
