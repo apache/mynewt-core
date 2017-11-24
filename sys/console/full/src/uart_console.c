@@ -39,6 +39,7 @@ static struct console_ring cr_tx;
 static uint8_t cr_tx_buf[MYNEWT_VAL(CONSOLE_UART_TX_BUF_SIZE)];
 typedef void (*console_write_char)(struct uart_dev*, uint8_t);
 static console_write_char write_char_cb;
+static bool skip_if_tx_full;
 
 struct console_ring {
     uint8_t cr_head;
@@ -71,6 +72,10 @@ console_queue_char(struct uart_dev *uart_dev, uint8_t ch)
 
     OS_ENTER_CRITICAL(sr);
     while (CONSOLE_HEAD_INC(&cr_tx) == cr_tx.cr_tail) {
+        if (skip_if_tx_full) {
+            OS_EXIT_CRITICAL(sr);
+            return;
+        }
         /* TX needs to drain */
         uart_start_tx(uart_dev);
         OS_EXIT_CRITICAL(sr);
@@ -167,7 +172,12 @@ console_tx_char(void *arg)
 static int
 console_rx_char(void *arg, uint8_t byte)
 {
-    return console_handle_char(byte);
+    int rc;
+
+    skip_if_tx_full = true;
+    rc = console_handle_char(byte);
+    skip_if_tx_full  = false;
+    return rc;
 }
 
 int
