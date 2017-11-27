@@ -17,7 +17,7 @@
 # under the License.
 #
 
-pkg.name: net/mqtt
+pkg.name: net/mqtt/eclipse
 pkg.description: Eclipse Paho MQTT client for Embedded platforms 
 pkg.author: "eclipse"
 pkg.homepage: "http://eclipse.org/paho"
