@@ -38,7 +38,7 @@ extern uint8_t _ram_start;
 #define RAM_SIZE        0x10000
 
 /* LED pins */
-#define LED_BLINK_PIN   (25)
+#define LED_BLINK_PIN   (20)
 
 /* UART info */
 #define ESPDUINO_UART           "uart1"
