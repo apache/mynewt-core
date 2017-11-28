@@ -37,3 +37,4 @@ pkg.deps.CONFIG_NFFS:
 
 pkg.init:
     config_pkg_init: 50
+    config_pkg_init_stage2: 220

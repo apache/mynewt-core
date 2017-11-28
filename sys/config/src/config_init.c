@@ -40,7 +40,6 @@ config_init_fs(void)
 {
     int rc;
 
-    fs_mkdir(MYNEWT_VAL(CONFIG_NFFS_DIR));
     rc = conf_file_src(&config_init_conf_file);
     SYSINIT_PANIC_ASSERT(rc == 0);
     rc = conf_file_dst(&config_init_conf_file);
@@ -103,5 +102,16 @@ config_pkg_init(void)
     config_init_fs();
 #elif MYNEWT_VAL(CONFIG_FCB)
     config_init_fcb();
+#endif
+}
+
+void
+config_pkg_init_stage2(void)
+{
+    /*
+     * Must be called after root FS has been initialized.
+     */
+#if MYNEWT_VAL(CONFIG_NFFS)
+    fs_mkdir(MYNEWT_VAL(CONFIG_NFFS_DIR));
 #endif
 }
