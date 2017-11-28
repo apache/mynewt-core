@@ -134,7 +134,7 @@ stm32_eth_fill_rx(struct stm32_eth_state *ses)
     }
 }
 
-static struct pbuf *
+static void
 stm32_eth_input(struct stm32_eth_state *ses)
 {
     struct stm32_eth_desc *sed;
@@ -178,8 +178,6 @@ stm32_eth_input(struct stm32_eth_state *ses)
         ses->st_eth.Instance->DMASR = ETH_DMASR_RBUS;
         ses->st_eth.Instance->DMARPDR = 0;
     }
-
-    return p;
 }
 
 void
