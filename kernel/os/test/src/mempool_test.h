@@ -26,7 +26,7 @@
 #include "os_test_priv.h"
 
 #ifdef __cplusplus
-#extern "C" {
+extern "C" {
 #endif
 
 /* Limit max blocks for testing */
