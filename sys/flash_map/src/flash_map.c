@@ -186,7 +186,7 @@ flash_area_is_empty(const struct flash_area *fa, bool *empty)
     uint8_t i;
     int rc;
 
-    while(data_off < fa->fa_size) {
+    while (data_off < fa->fa_size) {
         bytes_to_read = min(64, fa->fa_size - data_off);
         rc = flash_area_read(fa, data_off, data, bytes_to_read);
         if (rc) {
@@ -197,7 +197,7 @@ flash_area_is_empty(const struct flash_area *fa, bool *empty)
             goto not_empty;
           }
         }
-        data_off+=bytes_to_read;
+        data_off += bytes_to_read;
     }
     *empty = true;
     return 0;
