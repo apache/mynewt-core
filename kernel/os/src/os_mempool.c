@@ -82,7 +82,7 @@ os_mempool_poison_check(void *start, int sz)
  * @return os_error_t
  */
 os_error_t
-os_mempool_init(struct os_mempool *mp, int blocks, int block_size,
+os_mempool_init(struct os_mempool *mp, uint16_t blocks, uint32_t block_size,
                 void *membuf, char *name)
 {
     int true_block_size;

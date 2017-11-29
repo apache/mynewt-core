@@ -44,10 +44,10 @@ struct os_memblock {
 
 /* Memory pool */
 struct os_mempool {
-    int mp_block_size;          /* Size of the memory blocks, in bytes. */
-    int mp_num_blocks;          /* The number of memory blocks. */
-    int mp_num_free;            /* The number of free blocks left */
-    int mp_min_free;            /* The lowest number of free blocks seen */
+    uint32_t mp_block_size;     /* Size of the memory blocks, in bytes. */
+    uint16_t mp_num_blocks;     /* The number of memory blocks. */
+    uint16_t mp_num_free;       /* The number of free blocks left */
+    uint16_t mp_min_free;       /* The lowest number of free blocks seen */
     uint32_t mp_membuf_addr;    /* Address of memory buffer used by pool */
     STAILQ_ENTRY(os_mempool) mp_list;
     SLIST_HEAD(,os_memblock);   /* Pointer to list of free blocks */
@@ -85,8 +85,8 @@ typedef uint64_t os_membuf_t;
     (sizeof (os_membuf_t) * OS_MEMPOOL_SIZE((n), (blksize)))
 
 /* Initialize a memory pool */
-os_error_t os_mempool_init(struct os_mempool *mp, int blocks, int block_size,
-                           void *membuf, char *name);
+os_error_t os_mempool_init(struct os_mempool *mp, uint16_t blocks,
+                           uint32_t block_size, void *membuf, char *name);
 
 /* Performs an integrity check of the specified mempool. */
 bool os_mempool_is_sane(const struct os_mempool *mp);

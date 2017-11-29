@@ -37,8 +37,8 @@
  *                              Other OS code on unexpected error.
  */
 int
-mem_malloc_mempool(struct os_mempool *mempool, int num_blocks, int block_size,
-                   char *name, void **out_buf)
+mem_malloc_mempool(struct os_mempool *mempool, uint16_t num_blocks,
+                   uint32_t block_size, char *name, void **out_buf)
 {
     void *buf;
     int rc;
@@ -87,8 +87,8 @@ mem_malloc_mempool(struct os_mempool *mempool, int num_blocks, int block_size,
  */
 int
 mem_malloc_mbuf_pool(struct os_mempool *mempool,
-                     struct os_mbuf_pool *mbuf_pool, int num_blocks,
-                     int block_size, char *name,
+                     struct os_mbuf_pool *mbuf_pool, uint16_t num_blocks,
+                     uint32_t block_size, char *name,
                      void **out_buf)
 {
     void *buf;
