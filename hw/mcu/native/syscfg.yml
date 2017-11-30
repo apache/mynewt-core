@@ -49,3 +49,14 @@ syscfg.defs:
         description: >
             Set to indicate that we are using native mcu.
         value: 1
+    MCU_FLASH_STYLE_ST:
+        description: Emulated flash layout is similar to one in STM32.
+        value: 1
+        restrictions:
+            - "!MCU_FLASH_STYLE_NORDIC"
+    MCU_FLASH_STYLE_NORDIC:
+        description: >
+            Emulated flash layout is similar to one in NRF51/2 and SAMD21.
+        value: 0
+        restrictions:
+            - "!MCU_FLASH_STYLE_ST"

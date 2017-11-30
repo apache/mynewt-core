@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -23,6 +23,9 @@
 #include <string.h>
 #include <inttypes.h>
 #include <stdlib.h>
+
+#include <syscfg/syscfg.h>
+
 #include "hal/hal_flash_int.h"
 #include "mcu/mcu_sim.h"
 
@@ -48,6 +51,7 @@ static const struct hal_flash_funcs native_flash_funcs = {
     .hff_init = native_flash_init
 };
 
+#if MYNEWT_VAL(MCU_FLASH_STYLE_ST)
 static const uint32_t native_flash_sectors[] = {
     0x00000000, /* 16 * 1024 */
     0x00004000, /* 16 * 1024 */
@@ -62,6 +66,11 @@ static const uint32_t native_flash_sectors[] = {
     0x000c0000, /* 128 * 1024 */
     0x000e0000, /* 128 * 1024 */
 };
+#elif MYNEWT_VAL(MCU_FLASH_STYLE_NORDIC)
+static uint32_t native_flash_sectors[1024 * 1024 / 2048];
+#else
+#error "Need to specify either MCU_FLASH_STYLE_NORDIC or MCU_FLASH_STYLE_ST"
+#endif
 
 #define FLASH_NUM_AREAS   (int)(sizeof native_flash_sectors /           \
                                 sizeof native_flash_sectors[0])
@@ -245,5 +254,12 @@ native_flash_init(const struct hal_flash *dev)
     if (native_flash_file) {
         flash_native_file_open(native_flash_file);
     }
+#if MYNEWT_VAL(MCU_FLASH_STYLE_NORDIC)
+    int i;
+
+    for (i = 0; i < FLASH_NUM_AREAS; i++) {
+        native_flash_sectors[i] = i * 2048;
+    }
+#endif
     return 0;
 }
