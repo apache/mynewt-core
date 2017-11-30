@@ -1,7 +1,7 @@
 Installing Newtmgr on Linux
 ---------------------------
 
-You can install the latest release (1.2.0) of the newtmgr tool from a
+You can install the latest release (1.3.0) of the newtmgr tool from a
 Debian binary package (amd64). You can also download and build the
 latest release version of newtmgr from source.
 
@@ -135,8 +135,8 @@ Download and install the package manually.
 
 .. code-block:: console
 
-    $wget https://raw.githubusercontent.com/runtimeco/debian-mynewt/master/pool/main/n/newtmgr/newtmgr_1.2.0-1_amd64.deb
-    $sudo dpkg -i newtmgr_1.2.0-1_amd64.deb
+    $wget https://raw.githubusercontent.com/runtimeco/debian-mynewt/master/pool/main/n/newtmgr/newtmgr_1.3.0-1_amd64.deb
+    $sudo dpkg -i newtmgr_1.3.0-1_amd64.deb
 
 See `Checking the Installed Version of Newtmgr <#check>`__ to verify
 that you are using the installed version of newtmgr.
@@ -177,8 +177,8 @@ newtmgr.
 
 
     $ cd src/mynewt.apache.org/newtmgr
-    $ git checkout mynewt_1_2_0_tag
-    Note: checking out 'mynewt_1_2_0_tag'.
+    $ git checkout mynewt_1_3_0_tag
+    Note: checking out 'mynewt_1_3_0_tag'.
 
  5. Build newtmgr from the latest release version:
 

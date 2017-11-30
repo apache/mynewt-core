@@ -1,10 +1,6 @@
 Installing Newtmgr on Windows
 -----------------------------
 
-**Note**: Newtmgr 1.2 on Windows will be released in 1.2.1 patch
-release. If you want to use newtmgr on Windows, please use Apache Mynewt
-1.1.0 release.
-
 This guide shows you how to install the latest release of newtmgr from
 binary or from source. The tool is written in Go (golang).
 
@@ -37,7 +33,7 @@ tested on Windows 10 64 bit platform.
 .. code-block:: console
 
 
-    $ wget -P /tmp https://raw.githubusercontent.com/runtimeco/binary-releases/master/mynewt-newt-tools_1.2.0/newtmgr_1_2_0_windows_amd64.tar.gz
+    $ wget -P /tmp https://raw.githubusercontent.com/runtimeco/binary-releases/master/mynewt-newt-tools_1.3.0/newtmgr_1_3_0_windows_amd64.tar.gz
 
  3. Extract the file:
 
@@ -48,14 +44,14 @@ tested on Windows 10 64 bit platform.
 
    ::
 
-        tar -xzf /tmp/newtmgr_1_2_0_windows_amd64.tar.gz -C $GOPATH/bin
+        tar -xzf /tmp/newtmgr_1_3_0_windows_amd64.tar.gz -C $GOPATH/bin
 
 -  If you are installing newtmgr for the first time and do not have Go
    setup, you can extract into /usr/bin directory:
 
    ::
 
-        tar -xzf /tmp/newtmgr_1_2_0_windows_amd64.tar.gz -C /usr/bin
+        tar -xzf /tmp/newtmgr_1_3_0_windows_amd64.tar.gz -C /usr/bin
 
  4. Verify the installed version of newtmgr. See `Checking the Installed
 Version <#check_newtmgr>`__.
@@ -106,8 +102,8 @@ step:
 
 
     $ cd src/mynewt.apache.org/newtmgr
-    $ git checkout mynewt_1_2_0_tag
-    Note: checking out 'mynewt_1_2_0_tag'.
+    $ git checkout mynewt_1_3_0_tag
+    Note: checking out 'mynewt_1_3_0_tag'.
 
  6. Build newtmgr from the latest release version:
 
