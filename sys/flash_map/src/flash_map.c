@@ -93,6 +93,7 @@ flash_area_to_sectors(int id, int *cnt, struct flash_area *ret)
             (*cnt)++;
         }
     }
+    flash_area_close(fa);
     return 0;
 }
 
@@ -111,7 +112,8 @@ flash_area_getnext_sector(int id, int *sec_id, struct flash_area *ret)
         return rc;
     }
     if (!ret || *sec_id < -1) {
-        return SYS_EINVAL;
+        rc = SYS_EINVAL;
+        goto end;
     }
     hf = hal_bsp_flash_dev(fa->fa_device_id);
     i = *sec_id + 1;
@@ -123,10 +125,14 @@ flash_area_getnext_sector(int id, int *sec_id, struct flash_area *ret)
             ret->fa_off = start;
             ret->fa_size = size;
             *sec_id = i;
-            return 0;
+            rc = 0;
+            goto end;
         }
     }
-    return SYS_ENOENT;
+    rc = SYS_ENOENT;
+end:
+    flash_area_close(fa);
+    return rc;
 }
 
 int
