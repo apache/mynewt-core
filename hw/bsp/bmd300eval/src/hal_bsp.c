@@ -28,6 +28,7 @@
 #include "hal/hal_system.h"
 #include "hal/hal_flash.h"
 #include "hal/hal_spi.h"
+#include "hal/hal_i2c.h"
 #include "mcu/nrf52_hal.h"
 #include "uart/uart.h"
 #include "uart_hal/uart_hal.h"
@@ -59,9 +60,9 @@ static const struct uart_bitbang_conf os_bsp_uart1_cfg = {
  * and is handled outside the SPI routines.
  */
 static const struct nrf52_hal_spi_cfg os_bsp_spi0m_cfg = {
-    .sck_pin      = 23,
-    .mosi_pin     = 24,
-    .miso_pin     = 25,
+    .sck_pin      = MYNEWT_VAL(SPI_0_PIN_CLK),
+    .mosi_pin     = MYNEWT_VAL(SPI_0_PIN_MOSI),
+    .miso_pin     = MYNEWT_VAL(SPI_0_PIN_MISO)
 };
 #endif
 
@@ -71,6 +72,14 @@ static const struct nrf52_hal_spi_cfg os_bsp_spi0s_cfg = {
     .mosi_pin     = 24,
     .miso_pin     = 25,
     .ssn_pin      = 22,
+};
+#endif
+
+#if MYNEWT_VAL(I2C_0)
+static const struct nrf52_hal_i2c_cfg hal_i2c_cfg = {
+    .scl_pin = 15,
+    .sda_pin = 14,
+    .i2c_frequency = 400    /* 400 kHz */
 };
 #endif
 
@@ -180,6 +189,11 @@ hal_bsp_init(void)
 #if MYNEWT_VAL(SPI_0_SLAVE)
     rc = hal_spi_init(0, (void *)&os_bsp_spi0s_cfg, HAL_SPI_TYPE_SLAVE);
     assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(I2C_0)
+rc = hal_i2c_init(0, (void *)&hal_i2c_cfg);
+assert(rc == 0);
 #endif
 
 #if MYNEWT_VAL(UART_0)
