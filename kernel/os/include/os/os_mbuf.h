@@ -41,10 +41,6 @@ struct os_mbuf_pool {
      */
     uint16_t omp_databuf_len;
     /**
-     * Total number of memblock's allocated in this mempool.
-     */
-    uint16_t omp_mbuf_count;
-    /**
      * The memory pool which to allocate mbufs out of
      */
     struct os_mempool *omp_pool;

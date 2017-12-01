@@ -340,7 +340,6 @@ os_mbuf_pool_init(struct os_mbuf_pool *omp, struct os_mempool *mp,
                   uint16_t buf_len, uint16_t nbufs)
 {
     omp->omp_databuf_len = buf_len - sizeof(struct os_mbuf);
-    omp->omp_mbuf_count = nbufs;
     omp->omp_pool = mp;
 
     return (0);
