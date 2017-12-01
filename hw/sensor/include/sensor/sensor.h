@@ -363,7 +363,7 @@ typedef int (*sensor_read_func_t)(struct sensor *, sensor_type_t,
 typedef int (*sensor_get_config_func_t)(struct sensor *, sensor_type_t,
         struct sensor_cfg *);
 
-/** 
+/**
  * Send a new configuration register set to the sensor.
  *
  * @param ptr to the sensor-specific stucture

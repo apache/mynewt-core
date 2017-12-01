@@ -60,6 +60,10 @@
 #include <bma253/bma253.h>
 #endif
 
+#if MYNEWT_VAL(BMA2XX_OFB)
+#include <bma2xx/bma2xx.h>
+#endif
+
 
 #if MYNEWT_VAL(ADXL345_OFB)
 #include <adxl345/adxl345.h>
@@ -116,6 +120,10 @@ static struct bmp280 bmp280;
 
 #if MYNEWT_VAL(BMA253_OFB)
 static struct bma253 bma253;
+#endif
+
+#if MYNEWT_VAL(BMA2XX_OFB)
+static struct bma2xx bma2xx;
 #endif
 
 #if MYNEWT_VAL(ADXL345_OFB)
@@ -246,6 +254,33 @@ static struct sensor_itf i2c_0_itf_lis = {
                                          MYNEWT_VAL(BMA253_INT_CFG_ACTIVE)},
        { MYNEWT_VAL(BMA253_INT2_PIN_HOST), MYNEWT_VAL(BMA253_INT2_PIN_DEVICE),
                                        MYNEWT_VAL(BMA253_INT_CFG_ACTIVE)}
+    },
+};
+#endif
+
+#if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(BMA2XX_OFB)
+static struct sensor_itf spi2c_0_itf_bma2xx = {
+    .si_type = SENSOR_ITF_I2C,
+    .si_num  = 0,
+    .si_addr = 0x18,
+    .si_ints = {
+       { MYNEWT_VAL(BMA2XX_INT_PIN_HOST), MYNEWT_VAL(BMA2XX_INT_PIN_DEVICE),
+                                         MYNEWT_VAL(BMA2XX_INT_CFG_ACTIVE)},
+       { MYNEWT_VAL(BMA2XX_INT2_PIN_HOST), MYNEWT_VAL(BMA2XX_INT2_PIN_DEVICE),
+                                       MYNEWT_VAL(BMA2XX_INT_CFG_ACTIVE)}
+    },
+};
+#endif
+#if MYNEWT_VAL(SPI_0_MASTER) && MYNEWT_VAL(BMA2XX_OFB)
+static struct sensor_itf spi2c_0_itf_bma2xx = {
+    .si_type = SENSOR_ITF_SPI,
+    .si_num = 0,
+    .si_cs_pin = MYNEWT_VAL(BMA2XX_SPI_CS),
+    .si_ints = {
+       { MYNEWT_VAL(BMA2XX_INT_PIN_HOST), MYNEWT_VAL(BMA2XX_INT_PIN_DEVICE),
+                                         MYNEWT_VAL(BMA2XX_INT_CFG_ACTIVE)},
+       { MYNEWT_VAL(BMA2XX_INT2_PIN_HOST), MYNEWT_VAL(BMA2XX_INT2_PIN_DEVICE),
+                                       MYNEWT_VAL(BMA2XX_INT_CFG_ACTIVE)}
     },
 };
 #endif
@@ -756,7 +791,7 @@ config_lis2dw12_sensor(void)
 
     cfg.filter_bw = LIS2DW12_FILTER_BW_ODR_DIV_2;
     cfg.high_pass = 0;
-    
+
     cfg.tap_cfg.en_x = 1;
     cfg.tap_cfg.en_y = 1;
     cfg.tap_cfg.en_z = 1;
@@ -771,9 +806,9 @@ config_lis2dw12_sensor(void)
     cfg.tap_cfg.shock = 3; /* 120ms */
     cfg.double_tap_event_enable = 0;
 
-    cfg.freefall_dur = 6; 
+    cfg.freefall_dur = 6;
     cfg.freefall_ths = 3; /* ~312mg */
-    
+
     cfg.int1_pin_cfg = 0;
     cfg.int2_pin_cfg = 0;
     cfg.int_enable = 0;
@@ -783,7 +818,7 @@ config_lis2dw12_sensor(void)
     cfg.int_active = 0;
     cfg.slp_mode = 0;
     cfg.self_test_mode = LIS2DW12_ST_MODE_DISABLE;
-    
+
     cfg.fifo_mode = LIS2DW12_FIFO_M_BYPASS;
     cfg.fifo_threshold = 32;
     cfg.stream_read_interrupt = LIS2DW12_INT1_CFG_DRDY;
@@ -797,15 +832,59 @@ config_lis2dw12_sensor(void)
     cfg.power_mode = LIS2DW12_PM_HIGH_PERF;
     cfg.inactivity_sleep_enable = 0;
     cfg.low_noise_enable = 1;
-    
+
     cfg.read_mode = LIS2DW12_READ_M_POLL;
     cfg.mask = SENSOR_TYPE_ACCELEROMETER;
 
     rc = lis2dw12_config((struct lis2dw12 *) dev, &cfg);
     assert(rc == 0);
-    
+
     os_dev_close(dev);
     return rc;
+}
+#endif
+
+#if MYNEWT_VAL(BMA2XX_OFB)
+/**
+ * BMA2XX sensor default configuration
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+config_bma2xx_sensor(void)
+{
+    struct os_dev * dev;
+    struct bma2xx_cfg cfg;
+    int rc;
+
+    dev = os_dev_open("bma2xx_0", OS_TIMEOUT_NEVER, NULL);
+    assert(dev != NULL);
+
+    cfg.low_g_delay_ms = BMA2XX_LOW_G_DELAY_MS_DEFAULT;
+    cfg.high_g_delay_ms = BMA2XX_HIGH_G_DELAY_MS_DEFAULT;
+    cfg.g_range = BMA2XX_G_RANGE_2;
+    cfg.filter_bandwidth = BMA2XX_FILTER_BANDWIDTH_500_HZ;
+    cfg.use_unfiltered_data = false;
+    cfg.tap_quiet = BMA2XX_TAP_QUIET_30_MS;
+    cfg.tap_shock = BMA2XX_TAP_SHOCK_50_MS;
+    cfg.d_tap_window = BMA2XX_D_TAP_WINDOW_250_MS;
+    cfg.tap_wake_samples = BMA2XX_TAP_WAKE_SAMPLES_16;
+    cfg.tap_thresh_g = 1.0;
+    cfg.offset_x_g = 0.0;
+    cfg.offset_y_g = 0.0;
+    cfg.offset_z_g = 0.0;
+    cfg.orient_blocking = BMA2XX_ORIENT_BLOCKING_NONE;
+    cfg.orient_mode = BMA2XX_ORIENT_MODE_SYMMETRICAL;
+    cfg.power_mode = BMA2XX_POWER_MODE_NORMAL;
+    cfg.sleep_duration = BMA2XX_SLEEP_DURATION_0_5_MS;
+    cfg.sensor_mask = SENSOR_TYPE_ACCELEROMETER;
+
+    rc = bma2xx_config((struct bma2xx *)dev, &cfg);
+    assert(rc == 0);
+
+    os_dev_close(dev);
+
+    return 0;
 }
 #endif
 
@@ -922,6 +1001,15 @@ sensor_dev_create(void)
 
     rc = config_bma253_sensor();
     assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(BMA2XX_OFB)
+rc = os_dev_create((struct os_dev *)&bma2xx, "bma2xx_0",
+  OS_DEV_INIT_PRIMARY, 0, bma2xx_init, &spi2c_0_itf_bma2xx);
+assert(rc == 0);
+
+rc = config_bma2xx_sensor();
+assert(rc == 0);
 #endif
 
 #if MYNEWT_VAL(ADXL345_OFB)

@@ -61,4 +61,7 @@ syscfg.defs:
     LIS2DW12_OFB:
         description: 'LIS2DW12 is present'
         value : 0
+    BMA2XX_OFB:
+        description: 'A sensor in the BMA2XX family is present'
+        value : 0
 
