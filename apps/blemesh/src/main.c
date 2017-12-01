@@ -24,6 +24,7 @@
 #include "hal/hal_system.h"
 #include "hal/hal_gpio.h"
 #include "bsp/bsp.h"
+#include "shell/shell.h"
 
 /* BLE */
 #include "nimble/ble.h"
@@ -398,6 +399,8 @@ blemesh_on_sync(void)
         console_printf("Initializing mesh failed (err %d)\n", err);
         return;
     }
+
+    shell_register_default_module("mesh");
 
     console_printf("Mesh initialized\n");
 }
