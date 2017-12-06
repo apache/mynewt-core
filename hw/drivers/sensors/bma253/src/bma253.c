@@ -44,7 +44,6 @@ static struct log bma253_log;
 #define BMA253_NOTIFY_MASK  0x01
 #define BMA253_READ_MASK    0x02
 
-    enum int_route int_route;
 static void
 delay_msec(uint32_t delay)
 {
