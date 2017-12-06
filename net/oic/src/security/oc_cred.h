@@ -25,13 +25,12 @@
 extern "C" {
 #endif
 
-typedef struct oc_sec_cred_s
-{
-  struct oc_sec_cred_s *next;
-  int credid;
-  int credtype;
-  oc_uuid_t subjectuuid;
-  uint8_t key[16]; // Supports only 128-bit keys
+typedef struct oc_sec_cred {
+    struct oc_sec_cred_s *next;
+    int credid;
+    int credtype;
+    oc_uuid_t subjectuuid;
+    uint8_t key[16]; // Supports only 128-bit keys
 } oc_sec_cred_t;
 
 void oc_sec_encode_cred(void);
