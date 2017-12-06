@@ -23,13 +23,12 @@
 extern "C" {
 #endif
 
-typedef struct
-{
-  bool isop;
-  int cm;
-  int tm;
-  int om;
-  int sm;
+typedef struct oc_sec_pstat {
+    bool isop;
+    int cm;
+    int tm;
+    int om;
+    int sm;
 } oc_sec_pstat_t;
 
 bool oc_sec_provisioned(void);
