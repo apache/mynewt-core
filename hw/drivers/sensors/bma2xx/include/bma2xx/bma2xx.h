@@ -34,6 +34,12 @@
 #define BMA2XX_LOW_G_DELAY_MS_DEFAULT       2
 #define BMA2XX_HIGH_G_DELAY_MS_DEFAULT      2
 
+/* Supported device models.  */
+enum bma2xx_model {
+    BMA2XX_BMA280 = 0,
+    BMA2XX_BMA253 = 1,
+};
+
 /* Range of acceleration measurements */
 enum bma2xx_g_range {
     BMA2XX_G_RANGE_2  = 0,
@@ -132,6 +138,8 @@ enum bma2xx_sleep_duration {
 
 /* Default configuration values to use with the device */
 struct bma2xx_cfg {
+    /* device model within BMA2XX family */
+    enum bma2xx_model model;
     /* Accelerometer configuration */
     enum bma2xx_g_range g_range;
     enum bma2xx_filter_bandwidth filter_bandwidth;

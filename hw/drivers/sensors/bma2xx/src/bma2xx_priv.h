@@ -97,23 +97,20 @@
 #define REG_ADDR_FIFO_CONFIG_1 0x3E    /*    rw           */
 #define REG_ADDR_FIFO_DATA     0x3F    /*    r            */
 
-/* Magical value that the chip always reports as its ID */
-#if MYNEWT_VAL(BMA253)
-#define REG_VALUE_CHIP_ID    0xFA
-#define BMA2XX_G_SCALE_2     (0.00098)
-#define BMA2XX_G_SCALE_4     (0.00195)
-#define BMA2XX_G_SCALE_8     (0.00391)
-#define BMA2XX_G_SCALE_16     (0.00781)
-#define BMA2XX_ACCEL_BIT_SHIFT 4
-#endif
-#if MYNEWT_VAL(BMA280)
-#define REG_VALUE_CHIP_ID    0xFB
-#define BMA2XX_G_SCALE_2     (0.000244)
-#define BMA2XX_G_SCALE_4     (0.000488)
-#define BMA2XX_G_SCALE_8     (0.000977)
-#define BMA2XX_G_SCALE_16     (0.001953)
-#define BMA2XX_ACCEL_BIT_SHIFT 2
-#endif
+/* BMA253, BMA280 unique settings */
+#define BMA253_REG_VALUE_CHIP_ID    0xFA
+#define BMA253_G_SCALE_2     (0.00098)
+#define BMA253_G_SCALE_4     (0.00195)
+#define BMA253_G_SCALE_8     (0.00391)
+#define BMA253_G_SCALE_16     (0.00781)
+#define BMA253_ACCEL_BIT_SHIFT 4
+
+#define BMA280_REG_VALUE_CHIP_ID    0xFB
+#define BMA280_G_SCALE_2     (0.000244)
+#define BMA280_G_SCALE_4     (0.000488)
+#define BMA280_G_SCALE_8     (0.000977)
+#define BMA280_G_SCALE_16     (0.001953)
+#define BMA280_ACCEL_BIT_SHIFT 2
 /* Magical value that is used to initiate a full reset */
 #define REG_VALUE_SOFT_RESET 0xB6
 
