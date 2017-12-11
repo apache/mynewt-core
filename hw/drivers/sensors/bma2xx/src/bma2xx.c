@@ -400,16 +400,89 @@ bma2xx_get_chip_id(const struct bma2xx * bma2xx,
 
 static void
 compute_accel_data(struct accel_data * accel_data,
+                   enum bma2xx_model model,
                    const uint8_t * raw_data,
                    float accel_scale)
 {
     int16_t raw_accel;
+    uint8_t model_shift = 0;
+
+    switch (model) {
+        case BMA2XX_BMA280:
+            model_shift = BMA280_ACCEL_BIT_SHIFT;
+            break;
+        case BMA2XX_BMA253:
+            model_shift = BMA253_ACCEL_BIT_SHIFT;
+            break;
+        default:
+            break;
+    }
 
     raw_accel = (int16_t)(raw_data[0] & 0xFC) | (int16_t)(raw_data[1] << 8);
-    raw_accel >>= BMA2XX_ACCEL_BIT_SHIFT;
+    raw_accel >>= model_shift;
 
     accel_data->accel_g = (float)raw_accel * accel_scale;
     accel_data->new_data = raw_data[0] & 0x01;
+}
+
+static int get_accel_scale(enum bma2xx_model model,
+                            enum bma2xx_g_range g_range,
+                            float *accel_scale)
+{
+    switch (g_range) {
+        case BMA2XX_G_RANGE_2:
+            switch(model){
+                case BMA2XX_BMA280:
+                    *accel_scale = BMA280_G_SCALE_2;
+                    break;
+                case BMA2XX_BMA253:
+                    *accel_scale = BMA253_G_SCALE_2;
+                    break;
+                default:
+                    return SYS_EINVAL;
+            }
+            break;
+        case BMA2XX_G_RANGE_4:
+            switch(model){
+                case BMA2XX_BMA280:
+                    *accel_scale = BMA280_G_SCALE_4;
+                    break;
+                case BMA2XX_BMA253:
+                    *accel_scale = BMA253_G_SCALE_4;
+                    break;
+                default:
+                    return SYS_EINVAL;
+            }
+            break;
+        case BMA2XX_G_RANGE_8:
+            switch(model){
+                case BMA2XX_BMA280:
+                    *accel_scale = BMA280_G_SCALE_8;
+                    break;
+                case BMA2XX_BMA253:
+                    *accel_scale = BMA253_G_SCALE_8;
+                    break;
+                default:
+                    return SYS_EINVAL;
+            }
+            break;
+        case BMA2XX_G_RANGE_16:
+            switch(model){
+                case BMA2XX_BMA280:
+                    *accel_scale = BMA280_G_SCALE_16;
+                    break;
+                case BMA2XX_BMA253:
+                    *accel_scale = BMA253_G_SCALE_16;
+                    break;
+                default:
+                    return SYS_EINVAL;
+            }
+            break;
+        default:
+            return SYS_EINVAL;
+    }
+
+    return 0;
 }
 
 int
@@ -423,21 +496,9 @@ bma2xx_get_accel(const struct bma2xx * bma2xx,
     uint8_t data[2];
     int rc;
 
-    switch (g_range) {
-    case BMA2XX_G_RANGE_2:
-        accel_scale = BMA2XX_G_SCALE_2;
-        break;
-    case BMA2XX_G_RANGE_4:
-        accel_scale = BMA2XX_G_SCALE_4;
-        break;
-    case BMA2XX_G_RANGE_8:
-        accel_scale = BMA2XX_G_SCALE_8;
-        break;
-    case BMA2XX_G_RANGE_16:
-        accel_scale = BMA2XX_G_SCALE_16;
-        break;
-    default:
-        return SYS_EINVAL;
+    rc = get_accel_scale(bma2xx->cfg.model, g_range, &accel_scale);
+    if (rc != 0){
+        return rc;
     }
 
     switch (axis) {
@@ -460,7 +521,7 @@ bma2xx_get_accel(const struct bma2xx * bma2xx,
         return rc;
     }
 
-    compute_accel_data(accel_data, data, accel_scale);
+    compute_accel_data(accel_data, bma2xx->cfg.model, data, accel_scale);
 
     return 0;
 }
@@ -697,20 +758,28 @@ bma2xx_set_filter_bandwidth(const struct bma2xx * bma2xx,
     case BMA2XX_FILTER_BANDWIDTH_500_HZ:
         data = 0x0E;
         break;
-#if MYNEWT_VAL(BMA253)
     case BMA2XX_FILTER_BANDWIDTH_1000_HZ:
-        data = 0x0F;
-		break;
-    case BMA2XX_FILTER_BANDWIDTH_ODR_MAX:
-        return SYS_EINVAL;
-#endif
-#if MYNEWT_VAL(BMA280)
-    case BMA2XX_FILTER_BANDWIDTH_1000_HZ:
-        return SYS_EINVAL;
-    case BMA2XX_FILTER_BANDWIDTH_ODR_MAX:
-        data = 0x0F;
+        switch( bma2xx->cfg.model) {
+            case BMA2XX_BMA253:
+                data = 0x0F;
+                break;
+            case BMA2XX_BMA280:
+                return SYS_EINVAL;
+            default:
+                return SYS_EINVAL;
+        }
         break;
-#endif
+    case BMA2XX_FILTER_BANDWIDTH_ODR_MAX:
+        switch( bma2xx->cfg.model) {
+            case BMA2XX_BMA253:
+                return SYS_EINVAL;
+            case BMA2XX_BMA280:
+                data = 0x0F;
+                break;
+            default:
+                return SYS_EINVAL;
+        }
+        break;
     default:
         return SYS_EINVAL;
     }
@@ -2826,20 +2895,8 @@ bma2xx_get_fifo(const struct bma2xx * bma2xx,
     uint8_t data[AXIS_ALL << 1];
     int rc;
 
-    switch (g_range) {
-    case BMA2XX_G_RANGE_2:
-        accel_scale = BMA2XX_G_SCALE_2;
-        break;
-    case BMA2XX_G_RANGE_4:
-        accel_scale = BMA2XX_G_SCALE_4;
-        break;
-    case BMA2XX_G_RANGE_8:
-        accel_scale = BMA2XX_G_SCALE_8;
-        break;
-    case BMA2XX_G_RANGE_16:
-        accel_scale = BMA2XX_G_SCALE_16;
-        break;
-    default:
+    rc = get_accel_scale(bma2xx->cfg.model, g_range, &accel_scale);
+    if (rc != 0){
         return SYS_EINVAL;
     }
 
@@ -2863,6 +2920,7 @@ bma2xx_get_fifo(const struct bma2xx * bma2xx,
 
     for (iter = 0; iter < size; iter += 2) {
         compute_accel_data(accel_data + (iter >> 1),
+                           bma2xx->cfg.model,
                            data + iter,
                            accel_scale);
     }
@@ -4747,6 +4805,7 @@ bma2xx_config(struct bma2xx * bma2xx, struct bma2xx_cfg * cfg)
     struct sensor * sensor;
     int rc;
     uint8_t chip_id;
+    uint8_t model_chip_id;
 
     bma2xx->cfg = *cfg;
 
@@ -4756,7 +4815,18 @@ bma2xx_config(struct bma2xx * bma2xx, struct bma2xx_cfg * cfg)
     if (rc != 0) {
         return rc;
     }
-    if (chip_id != REG_VALUE_CHIP_ID) {
+    switch (cfg->model) {
+        case BMA2XX_BMA280:
+            model_chip_id = BMA280_REG_VALUE_CHIP_ID;
+            break;
+        case BMA2XX_BMA253:
+            model_chip_id = BMA253_REG_VALUE_CHIP_ID;
+            break;
+        default:
+            return SYS_EINVAL;
+    }
+
+    if (chip_id != model_chip_id) {
         BMA2XX_ERROR("received incorrect chip ID 0x%02X\n", chip_id);
         return SYS_EINVAL;
     }
