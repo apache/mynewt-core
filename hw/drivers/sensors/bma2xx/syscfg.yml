@@ -39,27 +39,9 @@ syscfg.defs:
     BMA2XX_INT2_PIN_DEVICE:
         description: 'Interrupt pin number 1 or 2 on accelerometer device'
         value: 2
-    BMA2XX_INT_PIN_HOST:
-        description: 'Interrupt pin number on host device connected to INT1 on device'
-        value: 20
-    BMA2XX_INT2_PIN_HOST:
-        description: 'Interrupt pin number on host device connected to INT2 on device'
-        value: -1
-    BMA2XX_SPI_CS:
-        description: 'Chip select pin for SPI interface'
-        value: 5
-    BMA2XX_SPI_CLK:
-      description: 'Clock pin for SPI interface'
-      value:
     BMA2XX_LOG:
         description: 'Enable BMA2XX logging'
         value: 0
     BMA2XX_SHELL_DEV_NAME:
         description: 'BMA2XX Shell device name'
         value: "\"bma2xx_0\""
-    BMA280:
-        description: 'Flag to indicate this a BMA280 (14bit) sensor'
-        value: 0
-    BMA253:
-        description: 'Flag to indicate this a BMA253 (12bit) sensor'
-        value: 0
