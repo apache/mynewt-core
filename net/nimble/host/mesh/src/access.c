@@ -30,8 +30,14 @@ static const struct {
 	const u16_t id;
 	int (*const init)(struct bt_mesh_model *model, bool primary);
 } model_init[] = {
-	{ BT_MESH_MODEL_ID_CFG_SRV, bt_mesh_conf_init },
-	{ BT_MESH_MODEL_ID_HEALTH_SRV, bt_mesh_health_init },
+	{ BT_MESH_MODEL_ID_CFG_SRV, bt_mesh_cfg_srv_init },
+	{ BT_MESH_MODEL_ID_HEALTH_SRV, bt_mesh_health_srv_init },
+#if MYNEWT_VAL(BLE_MESH_CFG_CLI)
+	{ BT_MESH_MODEL_ID_CFG_CLI, bt_mesh_cfg_cli_init },
+#endif
+#if MYNEWT_VAL(BLE_MESH_HEALTH_CLI)
+	{ BT_MESH_MODEL_ID_HEALTH_CLI, bt_mesh_health_cli_init },
+#endif
 };
 
 void bt_mesh_model_foreach(void (*func)(struct bt_mesh_model *mod,
@@ -91,21 +97,135 @@ s32_t bt_mesh_model_pub_period_get(struct bt_mesh_model *mod)
 	return period >> mod->pub->period_div;
 }
 
+static s32_t next_period(struct bt_mesh_model *mod)
+{
+	struct bt_mesh_model_pub *pub = mod->pub;
+	u32_t elapsed, period;
+
+	period = bt_mesh_model_pub_period_get(mod);
+	if (!period) {
+		return 0;
+	}
+
+	elapsed = k_uptime_get_32() - pub->period_start;
+
+	BT_DBG("Publishing took %ums", elapsed);
+
+	if (elapsed > period) {
+		BT_WARN("Publication sending took longer than the period");
+		/* Return smallest positive number since 0 means disabled */
+		return K_MSEC(1);
+	}
+
+	return period - elapsed;
+}
+
+static void publish_sent(int err, void *user_data)
+{
+	struct bt_mesh_model *mod = user_data;
+	s32_t delay;
+
+	BT_DBG("err %d", err);
+
+	if (mod->pub->count) {
+		delay = BT_MESH_PUB_TRANSMIT_INT(mod->pub->retransmit);
+	} else {
+		delay = next_period(mod);
+	}
+
+	if (delay) {
+		BT_DBG("Publishing next time in %dms", delay);
+		k_delayed_work_submit(&mod->pub->timer, delay);
+	}
+}
+
+static const struct bt_mesh_send_cb pub_sent_cb = {
+	.end = publish_sent,
+};
+
+static int publish_retransmit(struct bt_mesh_model *mod)
+{
+	struct os_mbuf *sdu = NET_BUF_SIMPLE(BT_MESH_TX_SDU_MAX);
+	struct bt_mesh_model_pub *pub = mod->pub;
+	struct bt_mesh_app_key *key;
+	struct bt_mesh_msg_ctx ctx = {
+		.addr = pub->addr,
+		.send_ttl = pub->ttl,
+	};
+	struct bt_mesh_net_tx tx = {
+		.ctx = &ctx,
+		.src = mod->elem->addr,
+		.xmit = bt_mesh_net_transmit_get(),
+		.friend_cred = pub->cred,
+	};
+
+	key = bt_mesh_app_key_find(pub->key);
+	if (!key) {
+		return -EADDRNOTAVAIL;
+	}
+
+	tx.sub = bt_mesh_subnet_get(key->net_idx);
+
+	ctx.net_idx = key->net_idx;
+	ctx.app_idx = key->app_idx;
+
+	net_buf_simple_init(sdu, 0);
+	net_buf_simple_add_mem(sdu, pub->msg->om_data, pub->msg->om_len);
+
+	pub->count--;
+
+	return bt_mesh_trans_send(&tx, sdu, &pub_sent_cb, mod);
+}
+
 static void mod_publish(struct os_event *work)
 {
 	struct bt_mesh_model_pub *pub = work->ev_arg;
 	s32_t period_ms;
+	int err;
 
 	BT_DBG("");
 
 	period_ms = bt_mesh_model_pub_period_get(pub->mod);
 	BT_DBG("period %u ms", period_ms);
-	if (period_ms) {
-		k_delayed_work_submit(&pub->timer, period_ms);
+
+	if (pub->count) {
+		err = publish_retransmit(pub->mod);
+		if (err) {
+			BT_ERR("Failed to retransmit (err %d)", err);
+
+			pub->count = 0;
+
+			/* Continue with normal publication */
+			if (period_ms) {
+				k_delayed_work_submit(&pub->timer, period_ms);
+			}
+		}
+
+		return;
 	}
 
-	if (pub->func) {
-		pub->func(pub->mod);
+	if (!period_ms) {
+		return;
+	}
+
+	__ASSERT_NO_MSG(pub->update != NULL);
+
+	pub->period_start = k_uptime_get_32();
+
+	err = pub->update(pub->mod);
+	if (err) {
+		BT_ERR("Failed to update publication message");
+		return;
+	}
+
+	err = bt_mesh_model_publish(pub->mod);
+	if (err) {
+		BT_ERR("Publishing failed (err %d)", err);
+	}
+
+	if (pub->count) {
+		/* Retransmissions also control the timer */
+		k_delayed_work_cancel(&pub->timer);
 	}
 }
 
@@ -433,25 +553,19 @@ void bt_mesh_model_msg_init(struct os_mbuf *msg, u32_t opcode)
 	net_buf_simple_add_le16(msg, opcode & 0xffff);
 }
 
-int bt_mesh_model_send(struct bt_mesh_model *model,
-		       struct bt_mesh_msg_ctx *ctx,
-		       struct os_mbuf *msg, bt_mesh_cb_t cb,
-		       void *cb_data)
+static int model_send(struct bt_mesh_model *model,
+		      struct bt_mesh_net_tx *tx, bool implicit_bind,
+		      struct os_mbuf *msg,
+		      const struct bt_mesh_send_cb *cb, void *cb_data)
 {
-	struct bt_mesh_net_tx tx = {
-		.sub = bt_mesh_subnet_get(ctx->net_idx),
-		.ctx = ctx,
-		.src = model->elem->addr,
-	};
-
-	if (ctx->friend_cred && !bt_mesh_lpn_established()) {
-		BT_ERR("Friendship Credentials requested without a Friend");
-		return -EINVAL;
-	}
-
-	BT_DBG("net_idx 0x%04x app_idx 0x%04x dst 0x%04x", ctx->net_idx,
-	       ctx->app_idx, ctx->addr);
+	BT_DBG("net_idx 0x%04x app_idx 0x%04x dst 0x%04x", tx->ctx->net_idx,
+	       tx->ctx->app_idx, tx->ctx->addr);
 	BT_DBG("len %u: %s", msg->om_len, bt_hex(msg->om_data, msg->om_len));
+
+	if (!bt_mesh_is_provisioned()) {
+		BT_ERR("Local node is not yet provisioned");
+		return -EAGAIN;
+	}
 
 	if (net_buf_simple_tailroom(msg) < 4) {
 		BT_ERR("Not enough tailroom for TransMIC");
@@ -463,41 +577,92 @@ int bt_mesh_model_send(struct bt_mesh_model *model,
 		return -EMSGSIZE;
 	}
 
-	if (!model_has_key(model, ctx->app_idx)) {
-		BT_ERR("Model not bound to AppKey 0x%04x", ctx->app_idx);
+	if (!implicit_bind && !model_has_key(model, tx->ctx->app_idx)) {
+		BT_ERR("Model not bound to AppKey 0x%04x", tx->ctx->app_idx);
 		return -EINVAL;
 	}
 
-	return bt_mesh_trans_send(&tx, msg, cb, cb_data);
+	return bt_mesh_trans_send(tx, msg, cb, cb_data);
 }
 
-int bt_mesh_model_publish(struct bt_mesh_model *model,
-			  struct os_mbuf *msg)
+int bt_mesh_model_send(struct bt_mesh_model *model,
+		       struct bt_mesh_msg_ctx *ctx,
+		       struct os_mbuf *msg,
+		       const struct bt_mesh_send_cb *cb, void *cb_data)
 {
-	struct bt_mesh_app_key *key;
-	struct bt_mesh_msg_ctx ctx;
+	struct bt_mesh_net_tx tx = {
+		.sub = bt_mesh_subnet_get(ctx->net_idx),
+		.ctx = ctx,
+		.src = model->elem->addr,
+		.xmit = bt_mesh_net_transmit_get(),
+		.friend_cred = 0,
+	};
 
-	if (!model->pub) {
+	return model_send(model, &tx, false, msg, cb, cb_data);
+}
+
+int bt_mesh_model_publish(struct bt_mesh_model *model)
+{
+	struct os_mbuf *sdu = NET_BUF_SIMPLE(BT_MESH_TX_SDU_MAX);
+	struct bt_mesh_model_pub *pub = model->pub;
+	struct bt_mesh_app_key *key;
+	struct bt_mesh_msg_ctx ctx = {
+	};
+	struct bt_mesh_net_tx tx = {
+		.ctx = &ctx,
+		.src = model->elem->addr,
+		.xmit = bt_mesh_net_transmit_get(),
+	};
+	int err;
+
+	BT_DBG("");
+
+	if (!pub) {
 		return -ENOTSUP;
 	}
 
-	if (model->pub->key == BT_MESH_KEY_UNUSED ||
-	    model->pub->addr == BT_MESH_ADDR_UNASSIGNED) {
+	if (pub->addr == BT_MESH_ADDR_UNASSIGNED) {
 		return -EADDRNOTAVAIL;
 	}
 
-	key = bt_mesh_app_key_find(model->pub->key);
+	key = bt_mesh_app_key_find(pub->key);
 	if (!key) {
 		return -EADDRNOTAVAIL;
 	}
 
+	if (pub->msg->om_len + 4 > BT_MESH_TX_SDU_MAX) {
+		BT_ERR("Message does not fit maximum SDU size");
+		return -EMSGSIZE;
+	}
+
+	if (pub->count) {
+		BT_WARN("Clearing publish retransmit timer");
+		k_delayed_work_cancel(&pub->timer);
+	}
+
+	net_buf_simple_init(sdu, 0);
+	net_buf_simple_add_mem(sdu, pub->msg->om_data, pub->msg->om_len);
+
+	ctx.addr = pub->addr;
+	ctx.send_ttl = pub->ttl;
 	ctx.net_idx = key->net_idx;
 	ctx.app_idx = key->app_idx;
-	ctx.addr = model->pub->addr;
-	ctx.friend_cred = model->pub->cred;
-	ctx.send_ttl = model->pub->ttl;
 
-	return bt_mesh_model_send(model, &ctx, msg, NULL, NULL);
+	tx.friend_cred = pub->cred;
+	tx.sub = bt_mesh_subnet_get(ctx.net_idx),
+
+	pub->count = BT_MESH_PUB_TRANSMIT_COUNT(pub->retransmit);
+
+	BT_DBG("Publish Retransmit Count %u Interval %ums", pub->count,
+	       BT_MESH_PUB_TRANSMIT_INT(pub->retransmit));
+
+	err = model_send(model, &tx, true, sdu, &pub_sent_cb, model);
+	if (err) {
+		pub->count = 0;
+		return err;
+	}
+
+	return 0;
 }
 
 struct bt_mesh_model *bt_mesh_model_find_vnd(struct bt_mesh_elem *elem,

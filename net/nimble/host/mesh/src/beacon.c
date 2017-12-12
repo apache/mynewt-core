@@ -39,24 +39,18 @@
 
 static struct k_delayed_work beacon_timer;
 
-static struct {
-	u16_t net_idx;
-	u8_t  data[21];
-} beacon_cache[MYNEWT_VAL(BLE_MESH_SUBNET_COUNT)];
-
 static struct bt_mesh_subnet *cache_check(u8_t data[21])
 {
-	struct bt_mesh_subnet *sub;
 	int i;
 
-	for (i = 0; i < ARRAY_SIZE(beacon_cache); i++) {
-		if (memcmp(beacon_cache[i].data, data, 21)) {
+	for (i = 0; i < ARRAY_SIZE(bt_mesh.sub); i++) {
+		struct bt_mesh_subnet *sub = &bt_mesh.sub[i];
+
+		if (sub->net_idx == BT_MESH_KEY_UNUSED) {
 			continue;
 		}
 
-		sub = bt_mesh_subnet_get(beacon_cache[i].net_idx);
-		if (sub) {
-			BT_DBG("Match found in cache");
+		if (!memcmp(sub->beacon_cache, data, 21)) {
 			return sub;
 		}
 	}
@@ -64,22 +58,19 @@ static struct bt_mesh_subnet *cache_check(u8_t data[21])
 	return NULL;
 }
 
-static void cache_add(u8_t data[21], u16_t net_idx)
+static void cache_add(u8_t data[21], struct bt_mesh_subnet *sub)
 {
-	memcpy(beacon_cache[net_idx].data, data, 21);
+	memcpy(sub->beacon_cache, data, 21);
 }
 
-static void beacon_complete(struct os_mbuf *buf, int err)
+static void beacon_complete(int err, void *user_data)
 {
-	struct bt_mesh_subnet *sub;
+	struct bt_mesh_subnet *sub = user_data;
 
 	BT_DBG("err %d", err);
 
-	sub = &bt_mesh.sub[BT_MESH_ADV(buf)->user_data[0]];
-	sub->beacon_sent = k_uptime_get();
+	sub->beacon_sent = k_uptime_get_32();
 }
-
-#define BEACON_INTERVAL(sub) K_SECONDS(10 * ((sub)->beacons_last + 1))
 
 void bt_mesh_beacon_create(struct bt_mesh_subnet *sub,
 			   struct os_mbuf *buf)
@@ -111,27 +102,32 @@ void bt_mesh_beacon_create(struct bt_mesh_subnet *sub,
 	       bt_hex(sub->auth, 8));
 }
 
+/* If the interval has passed or is within 5 seconds from now send a beacon */
+#define BEACON_THRESHOLD(sub) (K_SECONDS(10 * ((sub)->beacons_last + 1)) - \
+			       K_SECONDS(5))
+
 static int secure_beacon_send(void)
 {
-	s64_t threshold;
+	static const struct bt_mesh_send_cb send_cb = {
+		.end = beacon_complete,
+	};
+	u32_t now = k_uptime_get_32();
 	int i;
 
 	BT_DBG("");
 
-	/* If the interval has passed or is within 5 seconds from now
-	 * send a beacon.
-	 */
-	threshold = k_uptime_get() + K_SECONDS(5);
-
 	for (i = 0; i < ARRAY_SIZE(bt_mesh.sub); i++) {
 		struct bt_mesh_subnet *sub = &bt_mesh.sub[i];
 		struct os_mbuf *buf;
+		u32_t time_diff;
 
 		if (sub->net_idx == BT_MESH_KEY_UNUSED) {
 			continue;
 		}
 
-		if (sub->beacon_sent + BEACON_INTERVAL(sub) > threshold) {
+		time_diff = now - sub->beacon_sent;
+		if (time_diff < K_SECONDS(600) &&
+		    time_diff < BEACON_THRESHOLD(sub)) {
 			continue;
 		}
 
@@ -142,11 +138,9 @@ static int secure_beacon_send(void)
 			return -ENOBUFS;
 		}
 
-		BT_MESH_ADV(buf)->user_data[0] = i;
-
 		bt_mesh_beacon_create(sub, buf);
 
-		bt_mesh_adv_send(buf, beacon_complete);
+		bt_mesh_adv_send(buf, &send_cb, sub);
 		net_buf_unref(buf);
 	}
 
@@ -173,7 +167,7 @@ static int unprovisioned_beacon_send(void)
 	/* OOB Info (2 bytes) + URI Hash (4 bytes) */
 	net_buf_add_zeros(buf, 2 + 4);
 
-	bt_mesh_adv_send(buf, NULL);
+	bt_mesh_adv_send(buf, NULL, NULL);
 	net_buf_unref(buf);
 
 #endif /* MYNEWT_VAL(BLE_MESH_PB_ADV) */
@@ -238,8 +232,8 @@ static void secure_beacon_recv(struct os_mbuf *buf)
 	u8_t *data, *net_id, *auth;
 	struct bt_mesh_subnet *sub;
 	u32_t iv_index;
+	bool new_key, kr_change, iv_change;
 	u8_t flags;
-	bool new_key;
 
 	if (buf->om_len < 21) {
 		BT_ERR("Too short secure beacon (len %u)", buf->om_len);
@@ -275,7 +269,7 @@ static void secure_beacon_recv(struct os_mbuf *buf)
 		return;
 	}
 
-	cache_add(data, sub->net_idx);
+	cache_add(data, sub);
 
 	/* If we have NetKey0 accept initiation only from it */
 	if (bt_mesh_subnet_get(BT_MESH_KEY_PRIMARY) &&
@@ -292,10 +286,19 @@ static void secure_beacon_recv(struct os_mbuf *buf)
 		bt_mesh_beacon_ivu_initiator(false);
 	}
 
-	bt_mesh_iv_update(iv_index, BT_MESH_IV_UPDATE(flags));
+	iv_change = bt_mesh_net_iv_update(iv_index, BT_MESH_IV_UPDATE(flags));
 
-	if (bt_mesh_kr_update(sub, BT_MESH_KEY_REFRESH(flags), new_key)) {
+	kr_change = bt_mesh_kr_update(sub, BT_MESH_KEY_REFRESH(flags), new_key);
+	if (kr_change) {
 		bt_mesh_net_beacon_update(sub);
+	}
+
+	if (iv_change) {
+		/* Update all subnets */
+		bt_mesh_net_sec_update(NULL);
+	} else if (kr_change) {
+		/* Key Refresh without IV Update only impacts one subnet */
+		bt_mesh_net_sec_update(sub);
 	}
 
 update_stats:
@@ -333,9 +336,6 @@ void bt_mesh_beacon_recv(struct os_mbuf *buf)
 void bt_mesh_beacon_init(void)
 {
 	k_delayed_work_init(&beacon_timer, beacon_send);
-
-	/* Start beaconing since we're unprovisioned */
-	k_work_submit(&beacon_timer.work);
 }
 
 void bt_mesh_beacon_ivu_initiator(bool enable)

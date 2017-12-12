@@ -24,27 +24,15 @@
 
 #define HEALTH_TEST_STANDARD 0x00
 
-/* Increasing this requires also increasing the system workqueue */
-#define MAX_FAULTS 32
-#define HEALTH_STATUS_SIZE_MAX (1 + 3 + MAX_FAULTS + 4)
-
-#if BT_MESH_TX_SDU_MAX < HEALTH_STATUS_SIZE_MAX
-#define HEALTH_STATUS_SIZE BT_MESH_TX_SDU_MAX
-#else
-#define HEALTH_STATUS_SIZE HEALTH_STATUS_SIZE_MAX
-#endif
-
 /* Health Server context of the primary element */
-struct bt_mesh_health *health_srv;
+struct bt_mesh_health_srv *health_srv;
 
 static void health_get_registered(struct bt_mesh_model *mod,
 				  u16_t company_id,
 				  struct os_mbuf *msg)
 {
-	struct bt_mesh_health *srv = mod->user_data;
-	u8_t fault_count;
+	struct bt_mesh_health_srv *srv = mod->user_data;
 	u8_t *test_id;
-	int err;
 
 	BT_DBG("Company ID 0x%04x", company_id);
 
@@ -52,12 +40,14 @@ static void health_get_registered(struct bt_mesh_model *mod,
 
 	test_id = net_buf_simple_add(msg, 1);
 	net_buf_simple_add_le16(msg, company_id);
-	fault_count = net_buf_simple_tailroom(msg) - 4;
 
-	if (srv->fault_get_reg) {
-		err = srv->fault_get_reg(mod, company_id, test_id,
-					 net_buf_simple_tail(msg),
-					 &fault_count);
+	if (srv->cb && srv->cb->fault_get_reg) {
+		u8_t fault_count = net_buf_simple_tailroom(msg) - 4;
+		int err;
+
+		err = srv->cb->fault_get_reg(mod, company_id, test_id,
+					     net_buf_simple_tail(msg),
+					     &fault_count);
 		if (err) {
 			BT_ERR("Failed to get faults (err %d)", err);
 			*test_id = HEALTH_TEST_STANDARD;
@@ -73,7 +63,7 @@ static void health_get_registered(struct bt_mesh_model *mod,
 static size_t health_get_current(struct bt_mesh_model *mod,
 				 struct os_mbuf *msg)
 {
-	struct bt_mesh_health *srv = mod->user_data;
+	struct bt_mesh_health_srv *srv = mod->user_data;
 	const struct bt_mesh_comp *comp;
 	u8_t *test_id, *company_ptr;
 	u16_t company_id;
@@ -86,12 +76,11 @@ static size_t health_get_current(struct bt_mesh_model *mod,
 	company_ptr = net_buf_simple_add(msg, sizeof(company_id));
 	comp = bt_mesh_comp_get();
 
-	fault_count = net_buf_simple_tailroom(msg) - 4;
-
-	if (srv->fault_get_cur) {
-		err = srv->fault_get_cur(mod, test_id, &company_id,
-					 net_buf_simple_tail(msg),
-					 &fault_count);
+	if (srv->cb && srv->cb->fault_get_cur) {
+		fault_count = net_buf_simple_tailroom(msg);
+		err = srv->cb->fault_get_cur(mod, test_id, &company_id,
+					     net_buf_simple_tail(msg),
+					     &fault_count);
 		if (err) {
 			BT_ERR("Failed to get faults (err %d)", err);
 			sys_put_le16(comp->cid, company_ptr);
@@ -115,35 +104,35 @@ static void health_fault_get(struct bt_mesh_model *model,
 			     struct bt_mesh_msg_ctx *ctx,
 			     struct os_mbuf *buf)
 {
-	struct os_mbuf *msg = NET_BUF_SIMPLE(HEALTH_STATUS_SIZE);
+	struct os_mbuf *sdu = NET_BUF_SIMPLE(BT_MESH_TX_SDU_MAX);
 	u16_t company_id;
 
 	company_id = net_buf_simple_pull_le16(buf);
 
 	BT_DBG("company_id 0x%04x", company_id);
 
-	health_get_registered(model, company_id, msg);
+	health_get_registered(model, company_id, sdu);
 
-	if (bt_mesh_model_send(model, ctx, msg, NULL, NULL)) {
+	if (bt_mesh_model_send(model, ctx, sdu, NULL, NULL)) {
 		BT_ERR("Unable to send Health Current Status response");
 	}
 
-	os_mbuf_free_chain(msg);
+	os_mbuf_free_chain(sdu);
 }
 
 static void health_fault_clear_unrel(struct bt_mesh_model *model,
 				     struct bt_mesh_msg_ctx *ctx,
 				     struct os_mbuf *buf)
 {
-	struct bt_mesh_health *srv = model->user_data;
+	struct bt_mesh_health_srv *srv = model->user_data;
 	u16_t company_id;
 
 	company_id = net_buf_simple_pull_le16(buf);
 
 	BT_DBG("company_id 0x%04x", company_id);
 
-	if (srv->fault_clear) {
-		srv->fault_clear(model, company_id);
+	if (srv->cb && srv->cb->fault_clear) {
+		srv->cb->fault_clear(model, company_id);
 	}
 }
 
@@ -151,33 +140,32 @@ static void health_fault_clear(struct bt_mesh_model *model,
 			       struct bt_mesh_msg_ctx *ctx,
 			       struct os_mbuf *buf)
 {
-	struct os_mbuf *msg = NET_BUF_SIMPLE(HEALTH_STATUS_SIZE);
-	struct bt_mesh_health *srv = model->user_data;
+	struct os_mbuf *sdu = NET_BUF_SIMPLE(BT_MESH_TX_SDU_MAX);
+	struct bt_mesh_health_srv *srv = model->user_data;
 	u16_t company_id;
 
 	company_id = net_buf_simple_pull_le16(buf);
 
 	BT_DBG("company_id 0x%04x", company_id);
 
-	if (srv->fault_clear) {
-		srv->fault_clear(model, company_id);
+	if (srv->cb && srv->cb->fault_clear) {
+		srv->cb->fault_clear(model, company_id);
 	}
 
-	health_get_registered(model, company_id, msg);
+	health_get_registered(model, company_id, sdu);
 
-	if (bt_mesh_model_send(model, ctx, msg, NULL, NULL)) {
+	if (bt_mesh_model_send(model, ctx, sdu, NULL, NULL)) {
 		BT_ERR("Unable to send Health Current Status response");
 	}
 
-	os_mbuf_free_chain(msg);
+	os_mbuf_free_chain(sdu);
 }
 
 static void health_fault_test_unrel(struct bt_mesh_model *model,
 				    struct bt_mesh_msg_ctx *ctx,
 				    struct os_mbuf *buf)
 {
-	struct bt_mesh_health *srv = model->user_data;
-	const struct bt_mesh_comp *comp;
+	struct bt_mesh_health_srv *srv = model->user_data;
 	u16_t company_id;
 	u8_t test_id;
 
@@ -186,15 +174,8 @@ static void health_fault_test_unrel(struct bt_mesh_model *model,
 
 	BT_DBG("test 0x%02x company 0x%04x", test_id, company_id);
 
-	comp = bt_mesh_comp_get();
-	if (comp->cid != company_id) {
-		BT_WARN("CID 0x%04x doesn't match composition CID 0x%04x",
-			company_id, comp->cid);
-		return;
-	}
-
-	if (srv->fault_test) {
-		srv->fault_test(model, test_id, company_id);
+	if (srv->cb && srv->cb->fault_test) {
+		srv->cb->fault_test(model, test_id, company_id);
 	}
 }
 
@@ -202,11 +183,10 @@ static void health_fault_test(struct bt_mesh_model *model,
 			      struct bt_mesh_msg_ctx *ctx,
 			      struct os_mbuf *buf)
 {
-	struct os_mbuf *msg = NET_BUF_SIMPLE(HEALTH_STATUS_SIZE);
-	struct bt_mesh_health *srv = model->user_data;
+	struct os_mbuf *sdu = NET_BUF_SIMPLE(BT_MESH_TX_SDU_MAX);
+	struct bt_mesh_health_srv *srv = model->user_data;
 	u16_t company_id;
 	u8_t test_id;
-	int rc;
 
 	BT_DBG("");
 
@@ -215,22 +195,24 @@ static void health_fault_test(struct bt_mesh_model *model,
 
 	BT_DBG("test 0x%02x company 0x%04x", test_id, company_id);
 
-	if (srv->fault_test) {
-		rc = srv->fault_test(model, test_id, company_id);
-		if (rc) {
-			BT_WARN("Running fault test failed with err %d", rc);
+	if (srv->cb && srv->cb->fault_test) {
+		int err;
+
+		err = srv->cb->fault_test(model, test_id, company_id);
+		if (err) {
+			BT_WARN("Running fault test failed with err %d", err);
 			goto done;
 		}
 	}
 
-	health_get_registered(model, company_id, msg);
+	health_get_registered(model, company_id, sdu);
 
-	if (bt_mesh_model_send(model, ctx, msg, NULL, NULL)) {
+	if (bt_mesh_model_send(model, ctx, sdu, NULL, NULL)) {
 		BT_ERR("Unable to send Health Current Status response");
 	}
 
 done:
-	os_mbuf_free_chain(msg);
+	os_mbuf_free_chain(sdu);
 }
 
 static void send_attention_status(struct bt_mesh_model *model,
@@ -238,17 +220,20 @@ static void send_attention_status(struct bt_mesh_model *model,
 {
 	/* Needed size: opcode (2 bytes) + msg + MIC */
 	struct os_mbuf *msg = NET_BUF_SIMPLE(2 + 1 + 4);
-	struct bt_mesh_health *srv = model->user_data;
+	struct bt_mesh_health_srv *srv = model->user_data;
 	u8_t time;
 
-	time = k_delayed_work_remaining_get(&srv->attention.timer) / 1000;
+	time = k_delayed_work_remaining_get(&srv->attn_timer) / 1000;
 	BT_DBG("%u second%s", time, (time == 1) ? "" : "s");
 
 	bt_mesh_model_msg_init(msg, OP_ATTENTION_STATUS);
 
 	net_buf_simple_add_u8(msg, time);
 
-	bt_mesh_model_send(model, ctx, msg, NULL, NULL);
+	if (bt_mesh_model_send(model, ctx, msg, NULL, NULL)) {
+		BT_ERR("Unable to send Attention Status");
+	}
+
 	os_mbuf_free_chain(msg);
 }
 
@@ -295,7 +280,10 @@ static void send_health_period_status(struct bt_mesh_model *model,
 
 	net_buf_simple_add_u8(msg, model->pub->period_div);
 
-	bt_mesh_model_send(model, ctx, msg, NULL, NULL);
+	if (bt_mesh_model_send(model, ctx, msg, NULL, NULL)) {
+		BT_ERR("Unable to send Health Period Status");
+	}
+
 	os_mbuf_free_chain(msg);
 }
 
@@ -336,7 +324,7 @@ static void health_period_set(struct bt_mesh_model *model,
 	send_health_period_status(model, ctx);
 }
 
-const struct bt_mesh_model_op bt_mesh_health_op[] = {
+const struct bt_mesh_model_op bt_mesh_health_srv_op[] = {
 	{ OP_HEALTH_FAULT_GET,         2,   health_fault_get },
 	{ OP_HEALTH_FAULT_CLEAR,       2,   health_fault_clear },
 	{ OP_HEALTH_FAULT_CLEAR_UNREL, 2,   health_fault_clear_unrel },
@@ -351,29 +339,20 @@ const struct bt_mesh_model_op bt_mesh_health_op[] = {
 	BT_MESH_MODEL_OP_END,
 };
 
-static void health_pub(struct bt_mesh_model *mod)
+static int health_pub_update(struct bt_mesh_model *mod)
 {
-	struct os_mbuf *msg = NET_BUF_SIMPLE(HEALTH_STATUS_SIZE);
+	struct bt_mesh_model_pub *pub = mod->pub;
 	size_t count;
-	int err;
 
 	BT_DBG("");
 
-	count = health_get_current(mod, msg);
+	count = health_get_current(mod, pub->msg);
 	if (!count) {
-		mod->pub->period_div = 0;
+		pub->period_div = 0;
 	}
 
-	err = bt_mesh_model_publish(mod, msg);
-	if (err) {
-		BT_ERR("Publishing failed (err %d)", err);
-	}
-	os_mbuf_free_chain(msg);
+	return 0;
 }
-
-struct bt_mesh_model_pub bt_mesh_health_pub = {
-	.func = health_pub,
-};
 
 int bt_mesh_fault_update(struct bt_mesh_elem *elem)
 {
@@ -384,23 +363,22 @@ int bt_mesh_fault_update(struct bt_mesh_elem *elem)
 		return -EINVAL;
 	}
 
-	k_delayed_work_submit(&mod->pub->timer, K_NO_WAIT);
-	return 0;
+	return bt_mesh_model_publish(mod);
 }
 
 static void attention_off(struct os_event *work)
 {
-	struct bt_mesh_health *srv = work->ev_arg;
+	struct bt_mesh_health_srv *srv = work->ev_arg;
 	BT_DBG("");
 
-	if (srv->attention.off) {
-		srv->attention.off(srv->model);
+	if (srv->cb && srv->cb->attn_off) {
+		srv->cb->attn_off(srv->model);
 	}
 }
 
-int bt_mesh_health_init(struct bt_mesh_model *model, bool primary)
+int bt_mesh_health_srv_init(struct bt_mesh_model *model, bool primary)
 {
-	struct bt_mesh_health *srv = model->user_data;
+	struct bt_mesh_health_srv *srv = model->user_data;
 
 	if (!srv) {
 		if (!primary) {
@@ -411,8 +389,15 @@ int bt_mesh_health_init(struct bt_mesh_model *model, bool primary)
 		return -EINVAL;
 	}
 
-	k_delayed_work_init(&srv->attention.timer, attention_off);
-	k_delayed_work_add_arg(&srv->attention.timer, srv);
+	if (!model->pub) {
+		BT_ERR("Health Server has no publication support");
+		return -EINVAL;
+	}
+
+	model->pub->update = health_pub_update,
+
+	k_delayed_work_init(&srv->attn_timer, attention_off);
+	k_delayed_work_add_arg(&srv->attn_timer, srv);
 
 	srv->model = model;
 
@@ -425,7 +410,7 @@ int bt_mesh_health_init(struct bt_mesh_model *model, bool primary)
 
 void bt_mesh_attention(struct bt_mesh_model *model, u8_t time)
 {
-	struct bt_mesh_health *srv;
+	struct bt_mesh_health_srv *srv;
 
 	BT_DBG("bt_mesh_attention");
 	if (!model) {
@@ -441,16 +426,16 @@ void bt_mesh_attention(struct bt_mesh_model *model, u8_t time)
 	}
 
 	if (time) {
-		if (srv->attention.on) {
-			srv->attention.on(model);
+		if (srv->cb && srv->cb->attn_on) {
+			srv->cb->attn_on(model);
 		}
 
-		k_delayed_work_submit(&srv->attention.timer, time * 1000);
+		k_delayed_work_submit(&srv->attn_timer, time * 1000);
 	} else {
-		k_delayed_work_cancel(&srv->attention.timer);
+		k_delayed_work_cancel(&srv->attn_timer);
 
-		if (srv->attention.off) {
-			srv->attention.off(model);
+		if (srv->cb && srv->cb->attn_off) {
+			srv->cb->attn_off(model);
 		}
 	}
 }

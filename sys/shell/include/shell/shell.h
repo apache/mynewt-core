@@ -24,6 +24,8 @@
 extern "C" {
 #endif
 
+#include "syscfg/syscfg.h"
+
 struct os_eventq;
 
 /** @brief Callback called when command is entered.
