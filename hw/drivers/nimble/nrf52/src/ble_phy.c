@@ -930,7 +930,6 @@ ble_phy_rx_start_isr(void)
     pdu_usecs = ble_phy_mode_pdu_start_off(ble_hdr->rxinfo.phy_mode) +
                 g_ble_phy_t_rxaddrdelay[ble_hdr->rxinfo.phy_mode];
     if (usecs < pdu_usecs) {
-        ticks--;
         usecs += 30;
     }
     usecs -= pdu_usecs;
