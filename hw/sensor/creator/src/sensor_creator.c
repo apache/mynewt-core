@@ -54,6 +54,10 @@
 #include <bma253/bma253.h>
 #endif
 
+#if MYNEWT_VAL(BMA2XX_OFB)
+#include <bma2xx/bma2xx.h>
+#endif
+
 /* Driver definitions */
 #if MYNEWT_VAL(LSM303DLHC_OFB)
 static struct lsm303dlhc lsm303dlhc;
@@ -89,6 +93,10 @@ static struct bmp280 bmp280;
 
 #if MYNEWT_VAL(BMA253_OFB)
 static struct bma253 bma253;
+#endif
+
+#if MYNEWT_VAL(BMA2XX_OFB)
+static struct bma2xx bma2xx;
 #endif
 
 /**
@@ -184,10 +192,37 @@ static struct sensor_itf i2c_0_itf_lis = {
     .si_num  = 0,
     .si_addr = 0x18,
     .si_ints = {
-       { MYNEWT_VAL(BMA253_INT_PIN_HOST), MYNEWT_VAL(BMA253_INT_PIN_DEVICE),
-                                         MYNEWT_VAL(BMA253_INT_CFG_ACTIVE)},
-       { MYNEWT_VAL(BMA253_INT2_PIN_HOST), MYNEWT_VAL(BMA253_INT2_PIN_DEVICE),
-                                       MYNEWT_VAL(BMA253_INT_CFG_ACTIVE)}
+        { 26, MYNEWT_VAL(BMA2XX_INT_PIN_DEVICE),
+            MYNEWT_VAL(BMA2XX_INT_CFG_ACTIVE)},
+        { 25, MYNEWT_VAL(BMA2XX_INT2_PIN_DEVICE),
+            MYNEWT_VAL(BMA2XX_INT_CFG_ACTIVE)}
+    },
+};
+#endif
+
+#if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(BMA2XX_OFB)
+static struct sensor_itf spi2c_0_itf_bma2xx = {
+    .si_type = SENSOR_ITF_I2C,
+    .si_num  = 0,
+    .si_addr = 0x18,
+    .si_ints = {
+        { 26, MYNEWT_VAL(BMA2XX_INT_PIN_DEVICE),
+            MYNEWT_VAL(BMA2XX_INT_CFG_ACTIVE)},
+        { 25, MYNEWT_VAL(BMA2XX_INT2_PIN_DEVICE),
+            MYNEWT_VAL(BMA2XX_INT_CFG_ACTIVE)}
+    },
+};
+#endif
+#if MYNEWT_VAL(SPI_0_MASTER) && MYNEWT_VAL(BMA2XX_OFB)
+static struct sensor_itf spi2c_0_itf_bma2xx = {
+    .si_type = SENSOR_ITF_SPI,
+    .si_num = 0,
+    .si_cs_pin = 21,
+    .si_ints = {
+        { 26, MYNEWT_VAL(BMA2XX_INT_PIN_DEVICE),
+            MYNEWT_VAL(BMA2XX_INT_CFG_ACTIVE)},
+        { 25, MYNEWT_VAL(BMA2XX_INT2_PIN_DEVICE),
+            MYNEWT_VAL(BMA2XX_INT_CFG_ACTIVE)}
     },
 };
 #endif
@@ -508,6 +543,51 @@ config_bma253_sensor(void)
 }
 #endif
 
+#if MYNEWT_VAL(BMA2XX_OFB)
+/**
+ * BMA2XX sensor default configuration
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+config_bma2xx_sensor(void)
+{
+    struct os_dev * dev;
+    struct bma2xx_cfg cfg;
+    int rc;
+
+    dev = os_dev_open("bma2xx_0", OS_TIMEOUT_NEVER, NULL);
+    assert(dev != NULL);
+
+    cfg.model = BMA2XX_BMA280;
+    cfg.low_g_delay_ms = BMA2XX_LOW_G_DELAY_MS_DEFAULT;
+    cfg.high_g_delay_ms = BMA2XX_HIGH_G_DELAY_MS_DEFAULT;
+    cfg.g_range = BMA2XX_G_RANGE_2;
+    cfg.filter_bandwidth = BMA2XX_FILTER_BANDWIDTH_500_HZ;
+    cfg.use_unfiltered_data = false;
+    cfg.tap_quiet = BMA2XX_TAP_QUIET_30_MS;
+    cfg.tap_shock = BMA2XX_TAP_SHOCK_50_MS;
+    cfg.d_tap_window = BMA2XX_D_TAP_WINDOW_250_MS;
+    cfg.tap_wake_samples = BMA2XX_TAP_WAKE_SAMPLES_16;
+    cfg.tap_thresh_g = 1.0;
+    cfg.offset_x_g = 0.0;
+    cfg.offset_y_g = 0.0;
+    cfg.offset_z_g = 0.0;
+    cfg.orient_blocking = BMA2XX_ORIENT_BLOCKING_NONE;
+    cfg.orient_mode = BMA2XX_ORIENT_MODE_SYMMETRICAL;
+    cfg.power_mode = BMA2XX_POWER_MODE_NORMAL;
+    cfg.sleep_duration = BMA2XX_SLEEP_DURATION_0_5_MS;
+    cfg.sensor_mask = SENSOR_TYPE_ACCELEROMETER;
+
+    rc = bma2xx_config((struct bma2xx *)dev, &cfg);
+    assert(rc == 0);
+
+    os_dev_close(dev);
+
+    return 0;
+}
+#endif
+
 /* Sensor device creation */
 void
 sensor_dev_create(void)
@@ -600,6 +680,15 @@ sensor_dev_create(void)
 
     rc = config_bma253_sensor();
     assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(BMA2XX_OFB)
+rc = os_dev_create((struct os_dev *)&bma2xx, "bma2xx_0",
+  OS_DEV_INIT_PRIMARY, 0, bma2xx_init, &spi2c_0_itf_bma2xx);
+assert(rc == 0);
+
+rc = config_bma2xx_sensor();
+assert(rc == 0);
 #endif
 
 

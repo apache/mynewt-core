@@ -50,6 +50,23 @@ syscfg.defs:
         description: 'RX pin for UART1'
         value:  -1
 
+    SPI_0_PIN_CLK:
+        description: 'Pin Number for SPI Clock'
+        value: 4
+    SPI_0_PIN_MOSI:
+        description: 'Pin Number for SPI MOSI'
+        value: 2
+    SPI_0_PIN_MISO:
+        description: 'Pin Number for SPI MISO'
+        value: 3
+
+    I2C_0_PIN_CLK:
+        description: 'Pin Number for I2C Clock'
+        value: 15
+    I2C_0_PIN_SDA:
+        description: 'Pin Number for I2C SDA'
+        value: 14
+
     TIMER_0:
         description: 'NRF52 Timer 0'
         value:  1
