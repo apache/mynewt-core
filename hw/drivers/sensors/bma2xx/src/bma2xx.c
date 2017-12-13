@@ -36,7 +36,7 @@
 
 #if MYNEWT_VAL(BMA2XX_LOG)
 static struct log bma2xx_log;
-#define LOG_MODULE_BMA2XX (253)
+#define LOG_MODULE_BMA2XX (200)
 #define BMA2XX_ERROR(...) LOG_ERROR(&bma2xx_log, LOG_MODULE_BMA2XX, __VA_ARGS__)
 #define BMA2XX_INFO(...)  LOG_INFO(&bma2xx_log, LOG_MODULE_BMA2XX, __VA_ARGS__)
 #else
@@ -55,8 +55,6 @@ static struct hal_spi_settings spi_bma2xx_settings = {
         .word_size  = HAL_SPI_WORD_SIZE_8BIT,
 };
 #endif
-
-enum int_route int_route;
 
 static void
 delay_msec(uint32_t delay)
