@@ -34,5 +34,5 @@ pkg.req_apis:
     - stats
     - log
 
-pkg.deps.BMA253_CLI:
+pkg.deps.BMA2XX_CLI:
     - "@apache-mynewt-core/util/parse"
