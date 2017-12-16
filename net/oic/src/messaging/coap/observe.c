@@ -289,6 +289,7 @@ coap_notify_observers(oc_resource_t *resource,
                 coap_set_payload(notification, response_buf->buffer,
                                  OS_MBUF_PKTLEN(response_buf->buffer));
                 coap_set_status_code(notification, response_buf->code);
+                coap_set_header_content_format(notification, APPLICATION_CBOR);
                 if (notification->code < BAD_REQUEST_4_00 &&
                   obs->resource->num_observers) {
                     coap_set_header_observe(notification, (obs->obs_counter)++);
