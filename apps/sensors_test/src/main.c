@@ -55,6 +55,10 @@
 #if MYNEWT_VAL(BMP280_CLI)
 #include <bmp280/bmp280.h>
 #endif
+#if MYNEWT_VAL(DRV2605_CLI)
+#include <drv2605/drv2605.h>
+#endif
+
 
 #if MYNEWT_VAL(SENSOR_OIC)
 #include <oic/oc_api.h>
@@ -429,6 +433,10 @@ sensors_dev_shell_init(void)
 
 #if MYNEWT_VAL(BMP280_CLI)
     bmp280_shell_init();
+#endif
+
+#if MYNEWT_VAL(DRV2605_CLI)
+    drv2605_shell_init();
 #endif
 }
 
