@@ -20,6 +20,7 @@
 #ifndef __SENSOR_H__
 #define __SENSOR_H__
 
+#include <string.h>
 #include "os/os.h"
 #include "os/os_dev.h"
 #include "syscfg/syscfg.h"
