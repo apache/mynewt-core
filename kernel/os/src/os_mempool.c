@@ -90,7 +90,7 @@ os_mempool_init(struct os_mempool *mp, int blocks, int block_size,
     struct os_memblock *block_ptr;
 
     /* Check for valid parameters */
-    if (!mp || (blocks < 0) || (block_size <= sizeof(struct os_memblock))) {
+    if (!mp || (blocks < 0) || (block_size <= 0)) {
         return OS_INVALID_PARM;
     }
 
