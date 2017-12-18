@@ -230,6 +230,11 @@ intarg(int lng, int sign, va_list *va)
     return val;
 }
 
+typedef union {
+    uint64_t i;
+    double d;
+} number_t;
+
 size_t tfp_format(FILE *putp, const char *fmt, va_list va)
 {
     size_t written = 0;
@@ -336,6 +341,37 @@ size_t tfp_format(FILE *putp, const char *fmt, va_list va)
                 p.bf = va_arg(va, char *);
                 written += putchw(putp, &p);
                 p.bf = bf;
+                break;
+            case 'f':
+                p.base = 10;
+                volatile number_t num;
+                int n;
+                //Check that the va pointer is 8 byte aligned, and increment it if it is not
+                if((int)va.__ap % 8)
+                    va.__ap += 4;
+                /* Grab 32-bit integers and assign them to the integer member
+                 * of the union. This is necessary, since something in the
+                 * software stack is just ignoring us when we as for a double
+                 * from va_arg. */
+                num.i = va_arg(va, uint64_t);
+                /* use the double member of the union, and cast it to an int to
+                 * get the integer part of the number
+                 */
+                n = (int)num.d;
+                //convert to ascii
+                i2a(n, &p);
+                //write it to console
+                written += putchw(putp, &p);
+                //take the decimal part and multiply by 1000
+                n = (num.d-n)*1000;
+                //set the leading zeros for the next integer output to 3
+                p.lz = 3;
+                //convert to asii
+                i2a(n, &p);
+                //output a decimal point
+                putf(putp, '.');
+                //output the decimal part.
+                written += putchw(putp, &p);
                 break;
             case '%':
                 written += putf(putp, ch);
