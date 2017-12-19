@@ -61,21 +61,21 @@ the key has changed.
 3. Add the repository for the binary and source packages to the apt
    source list.
 
- 1. Install the apt-transport-https package:
+1. Install the apt-transport-https package:
 
 .. code-block:: console
 
     $sudo apt-get update
     $sudo apt-get install apt-transport-https
 
- 2. Download the public key for the runtimeco apt repo (**Note:** There
+2. Download the public key for the runtimeco apt repo (**Note:** There
 is a ``-`` after ``apt-key add``):
 
 .. code-block:: console
 
     wget -qO - https://raw.githubusercontent.com/runtimeco/debian-mynewt/master/mynewt.gpg.key | sudo apt-key add -
 
- 3. Add the repository for the binary packages to the ``mynewt.list``
+3. Add the repository for the binary packages to the ``mynewt.list``
 apt source list file.
 
 .. code-block:: console
@@ -89,14 +89,14 @@ apt source list file.
 
 **Note:** Do not forget to exit the root shell.
 
- 4. Verify the content of the source list file:
+4. Verify the content of the source list file:
 
 .. code-block:: console
 
     $more /etc/apt/sources.list.d/mynewt.list
     deb https://raw.githubusercontent.com/runtimeco/debian-mynewt/master latest main
 
- 5. Update the available packages:
+5. Update the available packages:
 
 .. code-block:: console
 
@@ -152,11 +152,11 @@ Installing the Latest Release Version of Newtmgr from Source
 If you are running Linux on a different architecture, you can build and
 install the latest release version of newtmgr from source.
 
- 1. Download and install the latest version of
+1. Download and install the latest version of
 `Go <https://golang.org/dl/>`__. Newtmgr requires Go version 1.7.6 or
 higher.
 
- 2. Create a Go workspace in the /tmp directory:
+2. Create a Go workspace in the /tmp directory:
 
 .. code-block:: console
 
@@ -166,7 +166,7 @@ higher.
     $ cd go
     $ export GOPATH=/tmp/go
 
- 3. Run ``go get`` to download the newtmgr source. Note that ``go get``
+3. Run ``go get`` to download the newtmgr source. Note that ``go get``
 pulls down the HEAD from the master branch in git, builds, and installs
 newtmgr.
 
@@ -177,7 +177,7 @@ newtmgr.
     $ ls -l /tmp/go/bin/newtmgr
     -rwxr-xr-x  1 user staff  17884488 Jul 29 16:25 /tmp/go/bin/newtmgr
 
- 4. Check out the source from the latest release version:
+4. Check out the source from the latest release version:
 
 .. code-block:: console
 
@@ -186,7 +186,7 @@ newtmgr.
     $ git checkout mynewt_1_3_0_tag
     Note: checking out 'mynewt_1_3_0_tag'.
 
- 5. Build newtmgr from the latest release version:
+5. Build newtmgr from the latest release version:
 
 .. code-block:: console
 
@@ -196,20 +196,20 @@ newtmgr.
     $ ls /tmp/go/bin/newtmgr
     -rwxr-xr-x  1 user  staff  17888680 Jul 29 16:28 /tmp/go/bin/newtmgr
 
- 6. If you have a Go workspace, remember to reset your GOPATH to your Go
+6. If you have a Go workspace, remember to reset your GOPATH to your Go
 workspace.
 
- 7. Copy the newtmgr executable to a bin directory in your path. You can
+7. Copy the newtmgr executable to a bin directory in your path. You can
 put it in the /usr/bin or the $GOPATH/bin directory.
 
 Checking the Latest Version of Newtmgr is Installed
 ~~~~~~~~~~~~~~~
 
 
- 1. Run ``which newtmgr`` to verify that you are using the installed
+1. Run ``which newtmgr`` to verify that you are using the installed
 version of newtmgr.
 
- 2. Get information about the newtmgr tool:
+2. Get information about the newtmgr tool:
 
 .. code-block:: console
 

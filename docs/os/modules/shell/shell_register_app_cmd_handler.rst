@@ -1,4 +1,4 @@
- shell\_register\_app\_cmd\_handler 
+shell\_register\_app\_cmd\_handler 
 ------------------------------------
 
 .. code:: c

@@ -54,7 +54,7 @@ one for the Blinky application.
 Run the following ``newt target`` commands, from your project directory,
 to create a bootloader target. We name the target ``nrf52_boot``:
 
- Note: This tutorial uses the Nordic nRF52-DK board. You must specify
+Note: This tutorial uses the Nordic nRF52-DK board. You must specify
 the correct bsp for the board you are using.
 
 -  For the Nordic Preview Dev Kit choose
@@ -71,7 +71,7 @@ the correct bsp for the board you are using.
     $ newt target set nrf52_boot bsp=@apache-mynewt-core/hw/bsp/nrf52pdk
     $ newt target set nrf52_boot build_profile=optimized
 
- Run the following ``newt target`` commands to create a target for the
+Run the following ``newt target`` commands to create a target for the
 Blinky application. We name the target ``nrf52_blinky``.
 
 .. code:: hl_lines="3"
@@ -81,7 +81,7 @@ Blinky application. We name the target ``nrf52_blinky``.
     $ newt target set nrf52_blinky bsp=@apache-mynewt-core/hw/bsp/nrf52dk
     $ newt target set nrf52_blinky build_profile=debug
 
- You can run the ``newt target show`` command to verify the target
+You can run the ``newt target show`` command to verify the target
 settings:
 
 .. code-block:: console
@@ -121,7 +121,7 @@ Run the ``newt build nrf52_boot`` command to build the bootloader:
     Linking ~/dev/myproj/bin/targets/nrf52_boot/app/apps/boot/boot.elf
     Target successfully built: targets/nrf52_boot
 
- Run the ``newt build nrf52_blinky`` command to build the Blinky
+Run the ``newt build nrf52_blinky`` command to build the Blinky
 application:
 
 .. code-block:: console
@@ -175,7 +175,7 @@ board:
     Loading bootloader
     $
 
- Run the ``newt load nrf52_blinky`` command to load the Blinky
+Run the ``newt load nrf52_blinky`` command to load the Blinky
 application image onto the board.
 
 .. code-block:: console

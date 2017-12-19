@@ -64,7 +64,7 @@ You need to install two extensions:
 2. The Native Debug extension from webfreak. This extension provides GDB
    support.
 
- To install the C/C++ extension:
+To install the C/C++ extension:
 
 1. Press ``Ctrl-P`` to open the search box.
 2. Type ``ext install cpptools`` in the search box and press Enter. You
@@ -128,7 +128,7 @@ create a task runner for external commands.
 
    </p>
 
- Tasks are defined in the ``tasks.json`` file. You should see the
+Tasks are defined in the ``tasks.json`` file. You should see the
 ``.vscode`` folder created in the ``MYPROJ`` folder and a ``tasks.json``
 file created in the ``.vscode`` folder. The ``tasks.json`` file has the
 following default values.
@@ -180,7 +180,7 @@ following definitions, and press ``Ctrl-S`` to save the file.
         ]
     }
 
- The ``tasks.json`` file specifies the tasks that are run to build and
+The ``tasks.json`` file specifies the tasks that are run to build and
 debug the Arduino blinky targets. Each task runs a ``newt`` command. The
 ``newt`` command to run and the arguments for the ``newt`` command are
 passed in the ``args`` property for each task.
@@ -266,7 +266,7 @@ the ``tasks.json`` file:
                 "suppressTaskName":true
             },
 
- To run a command from the Visual Studio integrated terminal, instead of
+To run a command from the Visual Studio integrated terminal, instead of
 starting a task, press ``Ctrl-``` to launch the integrated terminal and
 enter the command on the prompt:
 
@@ -305,7 +305,7 @@ folder.
 
    </p>
 
- Step 2: Delete the content from the ``launch.json`` file, add the
+Step 2: Delete the content from the ``launch.json`` file, add the
 following definitions, and press 'Ctrl-S' to save the file.
 
 .. code-block:: console
@@ -327,7 +327,7 @@ following definitions, and press 'Ctrl-S' to save the file.
         ]
     }
 
- This defines a ``gdb_arduino_blinky`` debugger configuration. It
+This defines a ``gdb_arduino_blinky`` debugger configuration. It
 specifies:
 
 -  The debugger is type **gdb**.
@@ -370,7 +370,7 @@ Step 2: Start the GDB session. Perform the following:
 
    </p>
 
- Step 3: Debug your application. You should see a debug session similar
+Step 3: Debug your application. You should see a debug session similar
 to the one shown below:
 
 .. raw:: html
@@ -381,7 +381,7 @@ to the one shown below:
 
    </p>
 
- For more information on how to use the Visual Studio Code Debugger, see
+For more information on how to use the Visual Studio Code Debugger, see
 the `Visual Studio Code debugging
 documentation <https://code.visualstudio.com/docs/editor/debugging>`__.
 

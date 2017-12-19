@@ -52,7 +52,7 @@ to create a bootloader target. We name the target ``stm32f4disc_boot``:
     $ newt target set stm32f4disc_boot bsp=@apache-mynewt-core/hw/bsp/stm32f4discovery
     $ newt target set stm32f4disc_boot build_profile=optimized
 
- Run the following ``newt target`` commands to create a target for the
+Run the following ``newt target`` commands to create a target for the
 Blinky application. We name the target ``stm32f4disc_blinky``:
 
 .. code-block:: console
@@ -62,7 +62,7 @@ Blinky application. We name the target ``stm32f4disc_blinky``:
     $ newt target set stm32f4disc_blinky bsp=@apache-mynewt-core/hw/bsp/stm32f4discovery
     $ newt target set stm32f4disc_blinky build_profile=debug
 
- You can run the ``newt target show`` command to verify the target
+You can run the ``newt target show`` command to verify the target
 settings:
 
 .. code-block:: console
@@ -106,7 +106,7 @@ Run the ``newt build stm32f4disc_boot`` command to build the bootloader:
     Linking ~/dev/myproj/bin/targets/stm32f4disc_boot/app/apps/boot/boot.elf
     Target successfully built: targets/stm32f4disc_boot
 
- Run the ``newt build stm32f4disc_blinky`` command to build the Blinky
+Run the ``newt build stm32f4disc_blinky`` command to build the Blinky
 application:
 
 .. code-block:: console
@@ -197,7 +197,7 @@ If you receive an error like
 some example ``udev`` rules for ST-LINK programmers
 `here <https://github.com/texane/stlink/tree/master/etc/udev/rules.d>`__.
 
- Run the ``newt load stm32f4disc_blinky`` command to load the Blinky
+Run the ``newt load stm32f4disc_blinky`` command to load the Blinky
 application image onto the board.
 
 .. code-block:: console

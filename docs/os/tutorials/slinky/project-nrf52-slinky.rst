@@ -35,7 +35,7 @@ Run the following commands to create a new project. We name the project
     $newt install
     apache-mynewt-core
 
- Create the Targets
+Create the Targets
 ~~~~~~~~~~~~~~~~~~~
 
 Create two targets for the nRF52-DK board - one for the bootloader and
@@ -51,7 +51,7 @@ to create a bootloader target. We name the target ``nrf52_boot``.
     $ newt target set nrf52_boot build_profile=optimized
     $ newt target set nrf52_boot app=@apache-mynewt-core/apps/boot
 
- Run the following ``newt target`` commands to create a target for the
+Run the following ``newt target`` commands to create a target for the
 Slinky application. We name the target ``nrf52_slinky``.
 
 .. code-block:: console
@@ -145,7 +145,7 @@ board:
     Loading bootloader
     $
 
- Run the ``newt load nrf52_slinky`` command to load the Slinky
+Run the ``newt load nrf52_slinky`` command to load the Slinky
 application image onto the board:
 
 .. code-block:: console
@@ -200,7 +200,7 @@ profile for the serial port. We name the connection profile
     Connection profile nrf52serial successfully added
     $
 
- You can run the ``newt conn show`` command to see all the newtmgr
+You can run the ``newt conn show`` command to see all the newtmgr
 connection profiles:
 
 .. code-block:: console
@@ -227,7 +227,7 @@ simplest command that requests the board to echo back the text.
     hello
     $
 
- Run the ``newtmgr image list -c nrf52serial`` command to list the
+Run the ``newtmgr image list -c nrf52serial`` command to list the
 images on the board:
 
 .. code-block:: console
@@ -242,7 +242,7 @@ images on the board:
     Split status: N/A
     $
 
- Run the ``newtmgr taskstat -c nrf52serial`` command to display the task
+Run the ``newtmgr taskstat -c nrf52serial`` command to display the task
 statistics on the board:
 
 .. code-block:: console

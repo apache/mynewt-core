@@ -104,7 +104,7 @@ callback function to process the event:
         .ev_cb = my_ev_cb,
     };
 
- Implement the ``my_ev_cb()`` callback function to process a task
+Implement the ``my_ev_cb()`` callback function to process a task
 generated event and toggle the LED at pin ``TASK_LED``:
 
 .. code:: c
@@ -124,7 +124,7 @@ generated event and toggle the LED at pin ``TASK_LED``:
         return;
     }
 
- Create a task that generates an event at periodic intervals and adds,
+Create a task that generates an event at periodic intervals and adds,
 using the ``os_eventq_put()`` function, the event to the Mynewt default
 event queue:
 
@@ -163,7 +163,7 @@ event queue:
 
     }
 
- Implement the application ``main()`` function to call the
+Implement the application ``main()`` function to call the
 ``os_eventq_run()`` function to dequeue an event from the Mynewt default
 event queue and call the callback function to process the event.
 
@@ -215,7 +215,7 @@ event and toggle the LED at pin ``CALLOUT_LED``:
         os_callout_reset(&my_callout, OS_TICKS_PER_SEC / 2);
     }
 
- In the ``init_tasks()`` function, initialize the
+In the ``init_tasks()`` function, initialize the
 ``my_timer_interrupt_eventq`` event queue, create a task to process
 events from the queue, and initialize the OS callout for the timer:
 
@@ -254,7 +254,7 @@ events from the queue, and initialize the OS callout for the timer:
 
     }
 
- Implement the ``my_timer_interrupt_task()`` task handler to dispatch
+Implement the ``my_timer_interrupt_task()`` task handler to dispatch
 events from the ``my_timer_interrupt_eventq`` event queue:
 
 .. code:: c
@@ -287,7 +287,7 @@ Declare and initialize the ``gpio_ev`` event with the
         .ev_cb = my_interrupt_ev_cb,
     };
 
- Implement the ``my_interrupt_ev_cb()`` callback function to process an
+Implement the ``my_interrupt_ev_cb()`` callback function to process an
 interrupt event and toggle the LED at pin ``GPIO_LED``:
 
 .. code:: c

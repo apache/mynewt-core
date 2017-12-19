@@ -1,4 +1,4 @@
- shell\_register 
+shell\_register 
 -----------------
 
 .. code:: c

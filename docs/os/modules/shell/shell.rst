@@ -160,7 +160,7 @@ enabled over shell. The setting is enabled by default.
 Data Structures
 ---------------
 
- The ``struct shell_cmd`` data structure represents a shell command and
+The ``struct shell_cmd`` data structure represents a shell command and
 is used to register a command.
 
 .. code-block:: console
@@ -248,7 +248,7 @@ module.
 **Note**: A command handler registered via the ``shell_cmd_register()``
 function is automatically added to the ``compat`` module.
 
- The ``struct shell_param`` and ``struct shell_cmd_help`` data
+The ``struct shell_param`` and ``struct shell_cmd_help`` data
 structures hold help texts for a shell command.
 
 .. code:: c

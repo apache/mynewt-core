@@ -104,7 +104,7 @@ Check that you are using the installed version of newt:
 "/usr/local/bin" for your PATH in ~/.bash\_profile, and source
 ~/.bash\_profile.
 
- Get information about newt:
+Get information about newt:
 
 .. code-block:: console
 
@@ -186,7 +186,7 @@ commands:
     $ echo 'export PATH=/usr/local/Cellar/mynewt-newt@1.0/1.0.0/bin:$PATH' >> ~/.bash_profile
     $ source ~/.bash_profile
 
- You can also manually symlink into /usr/local/bin as follows:
+You can also manually symlink into /usr/local/bin as follows:
 
 1. Unlink newt if you have the latest version of newt installed:
 
@@ -213,14 +213,14 @@ install newt from the HEAD of the master branch.
 -  This installation will install the latest version of Go on your
    computer, if it is not installed, and compile newt locally.
 
- If you previously installed newt using brew, unlink the current
+If you previously installed newt using brew, unlink the current
 version:
 
 .. code-block:: console
 
     $brew unlink mynewt-newt
 
- Install the latest unstable version of newt from the master branch:
+Install the latest unstable version of newt from the master branch:
 
 .. code-block:: console
 
@@ -239,7 +239,7 @@ version:
     $newt version
     Apache Newt version: 1.3.0-dev
 
- To switch back to the latest stable release version (1.3.0) of newt,
+To switch back to the latest stable release version (1.3.0) of newt,
 you can run:
 
 .. code-block:: console

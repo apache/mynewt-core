@@ -90,7 +90,7 @@ Check that you are using the installed version of newtmgr:
 "/usr/local/bin" for your PATH in ~/.bash\_profile, and source
 ~/.bash\_profile.
 
- Get information about newtmgr:
+Get information about newtmgr:
 
 .. code-block:: console
 
@@ -139,13 +139,13 @@ install newtmgr from the HEAD of the master branch.
 -  This installation will install the latest version of Go on your
    computer, if it is not installed, and compile newtmgr locally.
 
- If you already installed newtgmr, unlink the current version:
+If you already installed newtgmr, unlink the current version:
 
 .. code-block:: console
 
     $brew unlink mynewt-newtmgr
 
- Install the latest unstable version of newtmgr from the master branch:
+Install the latest unstable version of newtmgr from the master branch:
 
 .. code-block:: console
 
@@ -165,7 +165,7 @@ install newtmgr from the HEAD of the master branch.
     ==> go install
     🍺  /usr/local/Cellar/mynewt-newtmgr/HEAD-2d5217f: 3 files, 17.3MB, built in 1 minute 10 seconds
 
- To switch back to the latest stable release version of newtmgr, you can
+To switch back to the latest stable release version of newtmgr, you can
 run:
 
 .. code-block:: console

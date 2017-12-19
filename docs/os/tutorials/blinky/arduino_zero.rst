@@ -44,7 +44,7 @@ Run the following commands to create a new project:
         apache-mynewt-core
         $
 
- Fetch External Packages
+Fetch External Packages
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 Mynewt uses source code provided directly from the chip manufacturer for
@@ -76,7 +76,7 @@ repo: mynewt-core
 repository.mynewt\_arduino\_zero: type: github vers: 1-latest user:
 runtimeco repo: mynewt\_arduino\_zero $ \`\`\`
 
- Install the project dependencies using the ``newt install`` command
+Install the project dependencies using the ``newt install`` command
 (you can specify ``-v`` for verbose output):
 
 .. code-block:: console
@@ -268,7 +268,7 @@ will need to erase the board.
     Info : at91samd21g18.cpu: hardware has 4 breakpoints, 2 watchpoints
     Error: Target not halted
 
- To erase your board, start a debug session and enter the highlighted
+To erase your board, start a debug session and enter the highlighted
 commands at the ``(gdb)`` prompts:
 
 **Note:** On Windows, openocd and gdb are started in separate Windows
@@ -281,7 +281,7 @@ terminal.
 Run the ``newt load arduino_boot`` command again after erasing the
 board.
 
- Reminder if you are using Docker: When working with actual hardware,
+Reminder if you are using Docker: When working with actual hardware,
 remember that each board has an ID. If you swap boards and do not
 refresh the USB Device Filter on the VirtualBox UI, the ID might be
 stale and the Docker instance may not be able to see the board
@@ -374,4 +374,4 @@ If you want the image to run without the debugger connected, simply quit
 the debugger and restart the board. The image you programmed will come
 and run on the Arduino on next boot!
 
- You should see the LED blink!
+You should see the LED blink!

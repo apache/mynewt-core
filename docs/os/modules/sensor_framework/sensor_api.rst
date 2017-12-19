@@ -262,7 +262,7 @@ sensor type:
         uint8_t _reserved[3];
     };
 
- Only the ``sc_valtype`` field is currently used and specifies the data
+Only the ``sc_valtype`` field is currently used and specifies the data
 value type of the sensor data. The valid value types are:
 
 .. code:: c

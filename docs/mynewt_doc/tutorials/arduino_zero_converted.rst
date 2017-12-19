@@ -209,7 +209,7 @@ You can now build the target, with ``newt build``:
     <snip>
     App successfully built: myproject/bin/arduino_blinky/apps/blinky/blinky.elf
 
- Congratulations! You have successfully built your application. Now it's
+Congratulations! You have successfully built your application. Now it's
 time to load both the bootloader and application onto the target.
 
 Connect the Target
@@ -238,7 +238,7 @@ Execute the command to download the bootloader.
 If the newt tool finishes without error, that means the bootloader has
 been successfully loaded onto the target.
 
- Reminder if you are using Docker: When working with actual hardware,
+Reminder if you are using Docker: When working with actual hardware,
 remember that each board has an ID. If you swap boards and do not
 refresh the USB Device Filter on the VirtualBox UI, the ID might be
 stale and the Docker instance may not be able to see the board

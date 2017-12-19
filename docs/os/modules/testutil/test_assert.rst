@@ -1,4 +1,4 @@
- TEST\_ASSERT
+TEST\_ASSERT
 -------------
 
 .. code-block:: console

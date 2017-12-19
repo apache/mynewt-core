@@ -46,7 +46,7 @@ will be prompted for your sudo password.
 You can also extract (or ``git clone``) Homebrew and install it to
 /usr/local.
 
- Use brew to install Go:
+Use brew to install Go:
 
 .. code-block:: console
 
@@ -102,7 +102,7 @@ newtmgr repositories.
     $ cd dev/go
     $ export GOPATH=`pwd`
 
- Add the following export statements to your ~/.bash\_profile file and
+Add the following export statements to your ~/.bash\_profile file and
 source the file:
 
 .. code-block:: console
@@ -149,7 +149,7 @@ Download the newt package source and install the tool:
 used or updated. The current **newtmgr** source has its own Git
 repository.
 
- Check that the newt binary is installed and you are using the one from
+Check that the newt binary is installed and you are using the one from
 \*\* $GOPATH/bin\*\*:
 
 .. code-block:: console
@@ -183,7 +183,7 @@ Download the newtmgr package and install the tool:
     Your branch is up-to-date with 'origin/master'.
     nothing to commit, working directory clean
 
- Check that the newtmgr binary is installed and you are using the one
+Check that the newtmgr binary is installed and you are using the one
 from **$GOPATH/bin**:
 
 .. code-block:: console
@@ -211,7 +211,7 @@ tools.
    `FAQ </faq/answers/>`__).
 3. Build and install the tool.
 
- Change to the directory where the source for the tool is installed.
+Change to the directory where the source for the tool is installed.
 
 For the **newt** tool:
 
@@ -225,7 +225,7 @@ For the **newtmgr** tool:
 
     $cd $GOPATH/src/mynewt.apache.org/newtmgr/newtmgr
 
- After you change to the specific tool directory, get the latest updates
+After you change to the specific tool directory, get the latest updates
 from the master branch. If you made changes and need to rebase with the
 origin, add the ``--rebase origin master`` arguments to the ``git pull``
 command:
@@ -234,7 +234,7 @@ command:
 
     $git pull
 
- Build and install the tool. The updated binary will be installed in the
+Build and install the tool. The updated binary will be installed in the
 **$GOPATH/bin** directory:
 
 .. code-block:: console

@@ -1,4 +1,4 @@
- shell\_register\_default\_module
+shell\_register\_default\_module
 ---------------------------------
 
 .. code:: c

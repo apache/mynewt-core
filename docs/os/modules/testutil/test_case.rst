@@ -1,4 +1,4 @@
- TEST\_CASE 
+TEST\_CASE 
 ------------
 
 .. code-block:: console
