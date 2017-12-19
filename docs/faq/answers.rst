@@ -4,15 +4,17 @@ FAQ
 Here are some lists, grouped by categories, of frequently asked
 questions.
 
-**Mynewt software questions:**
+Mynewt software questions:
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 -  `How do I reduce the code size for my Mynewt
    image? </os/tutorials/codesize/>`__
 
-**Administrative questions:**
+Administrative questions:
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
--  `How do I submit a bug? <#submit-a-bug>`__
--  `How do I request a feature? <#request-feature>`__
+-  `How do I submit a bug? <#how-do-i-submit-a-bug>`__
+-  `How do I request a feature? <#how-do-i-request-a-feature>`__
 -  `How do I submit a patch if I am not a
    committer? <#not-committer-patch>`__
 -  `Can I merge my own Pull Request into the git repo if I am a
@@ -21,7 +23,10 @@ questions.
 -  `How do I make changes to documentation using an editor on my
    laptop? <#doc-editor>`__
 
- ### How do I submit a bug? If you do not have a JIRA account sign up
+How do I submit a bug?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you do not have a JIRA account sign up
 for an account on
 `JIRA <https://issues.apache.org/jira/secure/Signup!default.jspa>`__.
 
@@ -34,10 +39,10 @@ Log in. Choose the "MYNEWT" project. Click on the "Create" button to
 create a ticket. Choose "Bug" as the Issue Type. Fill in the bug
 description, how it is triggered, and other details.
 
- How do I request a feature?
+How do I request a feature?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
- If you do not have a JIRA account sign up for an account on
+If you do not have a JIRA account sign up for an account on
 `JIRA <https://issues.apache.org/jira/secure/Signup!default.jspa>`__.
 
 Submit a request to the @dev mailing list for your JIRA username to be
@@ -54,28 +59,34 @@ If you are not a committer and you wish to work on it, someone who is on
 the committer list will have to review your request and assign it to
 you. You will have to refer to this JIRA ticket in your pull request.
 
+.. _not-committer-patch:
+
 I am not on the committer list. How do I submit a patch?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
- **You submit your proposed changes for your peers with committer status
+**You submit your proposed changes for your peers with committer status
 to review and merge.**
 
 The process to submit a Pull Request on github.com is described on the
 `Confluence page for the
 project <https://cwiki.apache.org/confluence/display/MYNEWT/Submitting+Pull+Requests>`__.
 
+.. _committer-merge:
+
 I am a committer in the project. Can I merge my own Pull Request into the git repository?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
- Yes, but only if your Pull Request has been reviewed and approved by
+Yes, but only if your Pull Request has been reviewed and approved by
 another committer in Apache Mynewt. The process to merge a Pull Request
 is described on the `Confluence page for the
 project <https://cwiki.apache.org/confluence/display/MYNEWT/Merging+Pull+Requests>`__.
 
+.. _change-doc:
+
 I would like to make some edits to the documentation. What do I do?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
- You submit your proposed changes for your peers with committer status
+You submit your proposed changes for your peers with committer status
 to review and merge.
 
 Go to the `documentation
@@ -107,10 +118,12 @@ If you want to withdraw the pull request simply go to your fork
 "branches". You should see your branch under "Your branches". Click on
 the delete icon.
 
+.. _doc-editor:
+
 I would like to make some edits to the documentation but want to use an editor on my own laptop. What do I do?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
- You submit your proposed changes for your peers with committer status
+You submit your proposed changes for your peers with committer status
 to review and merge.
 
 Go to the `documentation

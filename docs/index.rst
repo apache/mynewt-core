@@ -13,6 +13,7 @@ Mynewt Documentation
    newt/newt_intro
    newtmgr/overview
    known_issues
+   FAQ <faq/answers>
 
 
 Welcome to Apache Mynewt
