@@ -108,7 +108,7 @@ Step 2: Change to the root directory:
 
     $cd / 
 
- Step 3: Untar the tarball and install into \*\* /usr/local/bin**. You
+Step 3: Untar the tarball and install into \*\* /usr/local/bin**. You
 will need to replace ** ~/Downloads \*\* with the directory that the
 tarball is downloaded to.
 
@@ -116,7 +116,7 @@ tarball is downloaded to.
 
     sudo tar -xf ~/Downloads/openocd-bin-0.10.0-MacOS.tgz ` 
 
- Step 4: Check the OpenOCD version you are using.
+Step 4: Check the OpenOCD version you are using.
 
 .. code-block:: console
 
@@ -149,7 +149,7 @@ Step 2: Change to the root directory:
 
     $cd / 
 
- Step 3: Untar the tarball and install into \*\* /usr/local/bin**. You
+Step 3: Untar the tarball and install into \*\* /usr/local/bin**. You
 will need to replace ** ~/Downloads \*\* with the directory that the
 tarball is downloaded to.
 
@@ -159,7 +159,7 @@ tarball is downloaded to.
 
     $sudo tar -xpf ~/Downloads/openocd-bin-0.10.0-Linux.tgz
 
- Step 4: Check the OpenOCD version you are using:
+Step 4: Check the OpenOCD version you are using:
 
 .. code-block:: console
 

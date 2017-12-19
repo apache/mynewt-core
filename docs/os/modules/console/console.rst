@@ -64,7 +64,7 @@ file:
     pkg.req_apis:
         - console
 
- The project ``pkg.yml`` file also specifies the version of the console
+The project ``pkg.yml`` file also specifies the version of the console
 package to use.
 
  #### Using the Full Console Package A project that requires the full
@@ -172,7 +172,7 @@ The following syscfg settings control input from the console:
    set echo on or off programatically.
 -  ``CONSOLE_MAX_INPUT_LEN``: Specifies the maximum input line length.
 
- The Mynewt 1.1 console package adds a new API for reading input data
+The Mynewt 1.1 console package adds a new API for reading input data
 from the console. The package supports backward compatibility for the
 Mynewt 1.0 console API. The steps you use to receive data from the
 console for each API version are provided below.
@@ -246,7 +246,7 @@ is received. The two event queues are used as follows:
    pointers to the callback and the ``console_input`` buffer, must be
    added to the avail\_queue.
 
- Here is a code excerpt that shows how to use the
+Here is a code excerpt that shows how to use the
 ``console_set_queues()`` function. The example adds one event to the
 avail\_queue and uses the OS default event queue for the lines\_queue.
 

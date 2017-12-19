@@ -379,7 +379,7 @@ is an excerpt from its ``syscfg.yml`` file:
         STATS_NEWTMGR: 1
         LOG_NEWMGR: 1
 
- The ``newt target config show slinky_sim`` command outputs the
+The ``newt target config show slinky_sim`` command outputs the
 following WARNING message:
 
 .. code-block:: console

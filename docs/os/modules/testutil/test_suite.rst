@@ -1,4 +1,4 @@
- TEST\_SUITE 
+TEST\_SUITE 
 -------------
 
 .. code-block:: console

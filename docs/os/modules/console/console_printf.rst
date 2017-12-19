@@ -1,4 +1,4 @@
- console\_printf
+console\_printf
 ----------------
 
 .. code-block:: console

@@ -120,7 +120,7 @@ the following syscfg settings enabled:
 commands. The ``SENSOR_CLI`` setting, that specifies whether the
 ``sensor`` shell command is enabled, is enabled by default.
 
- 1. Run the ``newt target create`` command, from your project base
+1. Run the ``newt target create`` command, from your project base
 directory, to create the target. We name the target
 ``nrf52_bno055_test``:
 
@@ -131,7 +131,7 @@ directory, to create the target. We name the target
     Target targets/nrf52_bno055_test successfully created
     $
 
- 2. Run the ``newt target set`` command to set the app, bsp, and
+2. Run the ``newt target set`` command to set the app, bsp, and
 build\_profile variables for the target:
 
 .. code-block:: console
@@ -144,7 +144,7 @@ build\_profile variables for the target:
 
     $
 
- 3. Run the ``newt target set`` command to enable the ``I2C_0``,
+3. Run the ``newt target set`` command to enable the ``I2C_0``,
 ``BNO055_OFB``, and ``BBNO055_CLI`` syscfg settings:
 
 .. code-block:: console
@@ -191,7 +191,7 @@ bootloader target. We name the target ``nrf52_boot``:
     Linking ~/dev/myproj/bin/targets/nrf52_boot/app/apps/boot/boot.elf
     Target successfully built: targets/nrf52_boot
 
- 2. Run the ``newt build nrf52_bno055_test`` command to build the
+2. Run the ``newt build nrf52_bno055_test`` command to build the
 sensors\_test application:
 
 .. code-block:: console
@@ -273,7 +273,7 @@ two connections between your computer and the nRF52-DK board:
    board to power the board and to load the bootloader and application
    image.
 
- 2. Turn the power on the board to ON. You should see the green LED
+2. Turn the power on the board to ON. You should see the green LED
 light up on the board.
 
  ### Step 7: Loading the Bootloader and the Application Image 1. Run the
@@ -286,7 +286,7 @@ light up on the board.
     Loading bootloader
     $
 
- 2. Run the ``newt load nrf52_bno055_test`` command to load the
+2. Run the ``newt load nrf52_bno055_test`` command to load the
 application image on to the board:
 
 .. code-block:: console
@@ -296,7 +296,7 @@ application image on to the board:
     Loading app image into slot 1
     $ 
 
- 3. Power the nRF52-DK board OFF and ON. ### Step 8: Using a Terminal
+3. Power the nRF52-DK board OFF and ON. ### Step 8: Using a Terminal
 Emulator to Connect to the Application Console
 
 Start up a terminal emulator to connect the sensors\_test application
@@ -318,7 +318,7 @@ of your choice:
 
    You can also use the Windows Device Manager to locate the COM port.
 
- We use minicom for this tutorial. After minicom connects, enter
+We use minicom for this tutorial. After minicom connects, enter
 <return> to ensure the shell is running. You should see the ``compat>``
 prompt:
 
@@ -429,7 +429,7 @@ These two lines are for the first sample:
     042974 ts: [ secs: 335 usecs: 745441 cputime: 336218225 ]                       
     042976 x = -0.519999968 y = -7.289999968 z = 6.489999776                        
 
- These two lines are for the last sample:
+These two lines are for the last sample:
 
 .. code-block:: console
 

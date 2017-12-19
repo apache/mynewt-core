@@ -1,4 +1,4 @@
- console\_init 
+console\_init 
 ---------------
 
 .. code-block:: console

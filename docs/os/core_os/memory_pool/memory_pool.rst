@@ -20,7 +20,7 @@ of blocks, size of the blocks, etc).
 
     struct os_mempool my_pool;
 
- The next order of business is to allocate the memory used by the memory
+The next order of business is to allocate the memory used by the memory
 pool. This memory can either be statically allocated (i.e. a global
 variable) or dynamically allocated (i.e. from the heap). When
 determining the amount of memory required for the memory pool, simply
@@ -54,7 +54,7 @@ allocated on the correct boundary (i.e. OS\_ALIGNMENT).
 
     os_membuf_t my_memory_buffer[OS_MEMPOOL_SIZE(NUM_BLOCKS, BLOCK_SIZE)];
 
- Now that the memory pool has been defined as well as the memory
+Now that the memory pool has been defined as well as the memory
 required for the memory blocks which make up the pool the user needs to
 initialize the memory pool by calling ``os_mempool_init``.
 
@@ -63,7 +63,7 @@ initialize the memory pool by calling ``os_mempool_init``.
     os_mempool_init(&my_pool, NUM_BLOCKS, BLOCK_SIZE, my_memory_buffer,
                              "MyPool");
 
- Once the memory pool has been initialized the developer can allocate
+Once the memory pool has been initialized the developer can allocate
 memory blocks from the pool by calling ``os_memblock_get``. When the
 memory block is no longer needed the memory can be freed by calling
 ``os_memblock_put``.

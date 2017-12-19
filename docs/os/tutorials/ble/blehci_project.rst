@@ -136,7 +136,7 @@ Load the bootloader:
     Loading bootloader
     $
 
- Load the application image:
+Load the application image:
 
 .. code-block:: console
 

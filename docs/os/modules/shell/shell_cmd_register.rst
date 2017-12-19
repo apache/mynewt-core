@@ -1,4 +1,4 @@
- shell\_cmd\_register 
+shell\_cmd\_register 
 ----------------------
 
 .. code-block:: console

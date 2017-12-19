@@ -48,7 +48,7 @@ and fetch the core mynewt source repository.
 
 Choose a name for your project. We name the project ``myproj``.
 
- Run the ``newt new myproj`` command, from your **dev** directory, to
+Run the ``newt new myproj`` command, from your **dev** directory, to
 create a new project:
 
 **Note:** This tutorial assumes you created a **dev** directory under
@@ -138,7 +138,7 @@ branch may not be stable and you may encounter bugs or other problems.**
 and use the latest master branch. Release 1.0.0 is not supported on
 Windows.
 
- Run the ``newt install`` command, from your project base directory
+Run the ``newt install`` command, from your project base directory
 (myproj), to fetch the source repository and dependencies.
 
 **Note:** It may take a while to download the apache-mynewt-core
@@ -410,7 +410,7 @@ If you natively install the toolchain execute the binary directly:
     $ ./bin/targets/my_blinky_sim/app/apps/blinky/blinky.elf
     hal_gpio set pin  1 to 0
 
- If you are using newt docker, use ``newt run`` to run the simulated
+If you are using newt docker, use ``newt run`` to run the simulated
 binary.
 
 .. code-block:: console

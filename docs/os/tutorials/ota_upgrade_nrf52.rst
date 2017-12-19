@@ -80,7 +80,7 @@ device over BLE:
     $ newtmgr conn add mybleprph type=ble connstring="peer_name=nimble-bleprph"
     Connection profile mybleprph successfully added
 
- Verify that the newtmgr tool can communicate with the device and check
+Verify that the newtmgr tool can communicate with the device and check
 the image status on the device:
 
 .. code-block:: console
@@ -107,7 +107,7 @@ upload the new image. You can upload a different image.
     $ newt create-image myperiph 2.0.0
     App image succesfully generated: ~/dev/myproj/bin/targets/myperiph/app/apps/bleprph/bleprph.img
 
- Run the ``newtmgr image upload`` command to upload the image:
+Run the ``newtmgr image upload`` command to upload the image:
 
 .. code-block:: console
 
@@ -132,7 +132,7 @@ upload the new image. You can upload a different image.
 The numbers indicate the number of bytes that the newtmgr tool has
 uploaded.
 
- Verify that the image uploaded to the secondary slot on the device
+Verify that the image uploaded to the secondary slot on the device
 successfully:
 
 .. code-block:: console
@@ -178,7 +178,7 @@ slot and runs the image.
 
 The status of the image in the secondary slot is now set to **pending**.
 
- Power the device OFF and ON and run the ``newtmgr image list`` command
+Power the device OFF and ON and run the ``newtmgr image list`` command
 to check the image status on the device after the reboot:
 
 .. code-block:: console

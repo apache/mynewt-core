@@ -69,7 +69,7 @@ to create a bootloader target. We name the target ``primo_boot``.
     $ newt target create primo_boot
     $ newt target set primo_boot app=@apache-mynewt-core/apps/boot bsp=@apache-mynewt-core/hw/bsp/arduino_primo_nrf52 build_profile=optimized
 
- Run the following ``newt target`` commands to create a target for the
+Run the following ``newt target`` commands to create a target for the
 Blinky application. We name the target ``primoblinky``.
 
 .. code-block:: console
@@ -77,7 +77,7 @@ Blinky application. We name the target ``primoblinky``.
     $ newt target create primoblinky
     $ newt target set primoblinky app=apps/blinky bsp=@apache-mynewt-core/hw/bsp/arduino_primo_nrf52 build_profile=debug
 
- If you are using openocd, run the following ``newt target set``
+If you are using openocd, run the following ``newt target set``
 commands:
 
 .. code-block:: console
@@ -85,7 +85,7 @@ commands:
     $ newt target set primoblinky syscfg=OPENOCD_DEBUG=1
     $ newt target set primo_boot syscfg=OPENOCD_DEBUG=1
 
- You can run the ``newt target show`` command to verify the target
+You can run the ``newt target show`` command to verify the target
 settings:
 
 .. code-block:: console
@@ -129,7 +129,7 @@ Run the ``newt build primo_boot`` command to build the bootloader:
     Linking ~/dev/myproj/bin/targets/primo_boot/app/apps/boot/boot.elf
     Target successfully built: targets/primo_boot
 
- Run the ``newt build primoblinky`` command to build the Blinky
+Run the ``newt build primoblinky`` command to build the Blinky
 application:
 
 .. code-block:: console

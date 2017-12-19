@@ -1,4 +1,4 @@
- console\_set\_queues 
+console\_set\_queues 
 ----------------------
 
 .. code:: c

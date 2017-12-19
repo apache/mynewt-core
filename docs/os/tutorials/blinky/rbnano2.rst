@@ -51,7 +51,7 @@ to create a bootloader target. We name the target ``rbnano2_boot``:
     $ newt target set rbnano2_boot bsp=@apache-mynewt-core/hw/bsp/rb-nano2
     $ newt target set rbnano2_boot build_profile=optimized
 
- Run the following ``newt target`` commands to create a target for the
+Run the following ``newt target`` commands to create a target for the
 Blinky application. We name the target ``nrf52_blinky``.
 
 .. code-block:: console
@@ -61,7 +61,7 @@ Blinky application. We name the target ``nrf52_blinky``.
     $ newt target set rbnano2_blinky bsp=@apache-mynewt-core/hw/bsp/rb-nano2
     $ newt target set rbnano2_blinky build_profile=debug
 
- You can run the ``newt target show`` command to verify the target
+You can run the ``newt target show`` command to verify the target
 settings:
 
 .. code-block:: console
@@ -101,7 +101,7 @@ Run the ``newt build rbnano2_boot`` command to build the bootloader:
     Linking ~/dev/myproj/bin/targets/rbnano2_boot/app/apps/boot/boot.elf
     Target successfully built: targets/rbnano2_boot
 
- Run the ``newt build rbnano2_blinky`` command to build the Blinky
+Run the ``newt build rbnano2_blinky`` command to build the Blinky
 application:
 
 .. code-block:: console

@@ -50,7 +50,7 @@ to create a bootloader target. We name the target ``boot_olimex``.
     $ newt target set boot_olimex app=@apache-mynewt-core/apps/boot
     $ newt target set boot_olimex bsp=@apache-mynewt-core/hw/bsp/olimex_stm32-e407_devboard
 
- Run the following ``newt target`` commands to create a target for the
+Run the following ``newt target`` commands to create a target for the
 Blinky application. We name the target ``olimex_blinky``.
 
 .. code-block:: console
@@ -190,7 +190,7 @@ will need to install the usb driver. Download
 -  Click Install Driver.
 -  Run the ``newt load boot_olimex`` command again.
 
- Run the ``newt load olimex_blinky`` command to load the blinky
+Run the ``newt load olimex_blinky`` command to load the blinky
 application image onto the board:
 
 .. code-block:: console
@@ -200,9 +200,9 @@ application image onto the board:
     Load command: ~/dev/myproj/repos/apache-mynewt-core/hw/bsp/olimex_stm32-e407_devboard/olimex_stm32-e407_devboard_download.sh ~/dev/myproj/repos/apache-mynewt-core/hw/bsp/olimex_stm32-e407_devboard ~/dev/myproj/bin/targets/olimex_blinky/app/apps/blinky/blinky
     Successfully loaded image.
 
- The LED should be blinking!
+The LED should be blinking!
 
- Let's double check that it is indeed booting from flash and making the
+Let's double check that it is indeed booting from flash and making the
 LED blink from the image in flash. Pull the USB cable off the Olimex
 JTAG adaptor, severing the debug connection to the JTAG port. Next power
 off the Olimex board by pulling out the USB cable from the board. Wait
@@ -220,7 +220,7 @@ when you quit gdb. In addition, the output of openocd is logged to the
 openocd.log file in your project's base directory instead of the
 terminal.
 
- Type ``c`` to continue inside the gdb session.
+Type ``c`` to continue inside the gdb session.
 
 .. code-block:: console
 

@@ -1,4 +1,4 @@
- json\_encode\_object\_finish 
+json\_encode\_object\_finish 
 ------------------------------
 
 .. code-block:: console

@@ -1,4 +1,4 @@
- console\_echo 
+console\_echo 
 ---------------
 
 .. code-block:: console

@@ -1,4 +1,4 @@
- imgmgr\_module\_init 
+imgmgr\_module\_init 
 ----------------------
 
 .. code-block:: console

@@ -1,4 +1,4 @@
- console\_write 
+console\_write 
 ----------------
 
 .. code-block:: console
