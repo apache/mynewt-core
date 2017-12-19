@@ -9,7 +9,7 @@ Mynewt Core OS
    time/os_time
    task/task
    event_queue/event_queue
-   semaphote/semaphore
+   semaphore/semaphore
    mutex/mutex
    memory_pool/memory_pool
    heap/heap
