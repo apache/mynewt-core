@@ -25,9 +25,9 @@ See `Installing Previous Releases of
 Newt </newt/install/prev_releases>`__ to install an earlier version of
 newt. You still need to set up your MinGW development environment.
 
-**Note:** If you would like to contribute to the newt tool, see `Setting
+**Note:** If you would like to contribute to the newt tool, see :doc:`Setting
 Up Go Environment to Contribute to Newt and Newtmgr
-Tools </faq/go_env.html>`__.
+Tools </misc/go_env>`.
 
 Installing MSYS2/MinGW
 ^^^^^^^^^^^^^^^^^^^^^^

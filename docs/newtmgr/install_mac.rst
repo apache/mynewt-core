@@ -13,8 +13,8 @@ See `Installing Previous Releases of Newtmgr </newtmgr/prev_releases>`__
 to install an earlier version of newtmgr.
 
 **Note:** If you would like to contribute to the newtmgr tool, see
-`Setting Up Go Environment to Contribute to Newt and Newtmgr
-Tools </faq/go_env>`__.
+:doc:`Setting Up Go Environment to Contribute to Newt and Newtmgr
+Tools </misc/go_env>`.
 
 Adding the Mynewt Homebrew Tap
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -170,5 +170,3 @@ run:
     Cleaning /usr/local/Cellar/mynewt-newtmgr/1.2.0
     Cleaning /usr/local/Cellar/mynewt-newtmgr/HEAD-2d5217f
     1 links created for /usr/local/Cellar/mynewt-newtmgr/1.2.0
-
-
