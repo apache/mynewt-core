@@ -508,30 +508,6 @@ cmd_gatt_show_conn(int argc, char **argv)
     return 0;
 }
 
-int
-cmd_gatt_show_coc(int argc, char **argv)
-{
-    struct btshell_conn *conn = NULL;
-    struct btshell_l2cap_coc *coc;
-    int i, j;
-
-    for (i = 0; i < btshell_num_conns; i++) {
-        conn = btshell_conns + i;
-
-        if (SLIST_EMPTY(&conn->coc_list)) {
-            continue;
-        }
-
-        console_printf("conn_handle: 0x%04x\n", conn->handle);
-        j = 0;
-        SLIST_FOREACH(coc, &conn->coc_list, next) {
-            console_printf("    idx: %i, chan pointer = %p\n", j++, coc->chan);
-        }
-    }
-
-    return 0;
-}
-
 /*****************************************************************************
  * $gatt-write                                                               *
  *****************************************************************************/

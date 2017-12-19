@@ -36,7 +36,6 @@ int cmd_gatt_show(int argc, char **argv);
 int cmd_gatt_show_local(int argc, char **argv);
 int cmd_gatt_show_addr(int argc, char **argv);
 int cmd_gatt_show_conn(int argc, char **argv);
-int cmd_gatt_show_coc(int argc, char **argv);
 int cmd_gatt_write(int argc, char **argv);
 
 #endif

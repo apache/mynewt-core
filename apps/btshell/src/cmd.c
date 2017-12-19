@@ -3475,13 +3475,6 @@ static const struct shell_cmd btshell_commands[] = {
 #endif
     },
     {
-        .sc_cmd = "gatt-show-coc",
-        .sc_cmd_func = cmd_gatt_show_coc,
-#if MYNEWT_VAL(SHELL_CMD_HELP)
-        .help = &gatt_show_coc_help,
-#endif
-    },
-    {
         .sc_cmd = "gatt-write",
         .sc_cmd_func = cmd_gatt_write,
 #if MYNEWT_VAL(SHELL_CMD_HELP)
@@ -3522,6 +3515,13 @@ static const struct shell_cmd btshell_commands[] = {
         .sc_cmd_func = cmd_l2cap_send,
 #if MYNEWT_VAL(SHELL_CMD_HELP)
         .help = &l2cap_send_help,
+#endif
+    },
+    {
+        .sc_cmd = "l2cap-show-coc",
+        .sc_cmd_func = cmd_l2cap_show_coc,
+#if MYNEWT_VAL(SHELL_CMD_HELP)
+        .help = &gatt_show_coc_help,
 #endif
     },
 #endif
