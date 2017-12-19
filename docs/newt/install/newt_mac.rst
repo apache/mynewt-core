@@ -4,11 +4,12 @@ Installing Newt on Mac OS
 Newt is supported on Mac OS X 64 bit platforms and has been tested on
 Mac OS 10.10 and higher.
 
-This page shows you how to install the following versions of newt:
+This page shows you how to:
 
--  Upgrade to or install the latest release version (1.1.0).
--  Install earlier release versions.
--  Install the latest from the master branch (unstable).
+-  Upgrade to or install the latest release version of newt.
+-  Install the latest newt from the master branch (unstable).
+
+See `Installing Previous Releases of Newt <prev_releases>`__ to install an earlier version of newt.
 
 **Note:** If you would like to contribute to the newt tool, see `Setting
 Up Go Environment to Contribute to Newt and Newtmgr

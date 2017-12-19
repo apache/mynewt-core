@@ -75,38 +75,17 @@ fields:
         STAILQ_ENTRY(os_event) ev_next;
     };
 
-+------------+----------------+
-| Element    | Description    |
-+============+================+
-| ``ev_queue | Internal field |
-| d``        | that indicates |
-|            | whether this   |
-|            | event is       |
-|            | currently      |
-|            | linked to an   |
-|            | event queue    |
-+------------+----------------+
-| ``ev_cb``  | Pointer to the |
-|            | callback       |
-|            | function to    |
-|            | call to        |
-|            | process this   |
-|            | event          |
-+------------+----------------+
-| ``ev_arg`` | Pointer to an  |
-|            | optional       |
-|            | opaque data    |
-|            | that the       |
-|            | callback       |
-|            | function uses  |
-|            | to process     |
-|            | this event     |
-+------------+----------------+
-| ``ev_next` | Linkage        |
-| `          | attaching this |
-|            | event to an    |
-|            | event queue    |
-+------------+----------------+
++-----------------+--------------------------------------------------------------------------------------------+
+| Element         | Description                                                                                |
++=================+============================================================================================+
+| ``ev_queued``   | Internal field that indicates whether this event is currently linked to an event queue     |
++-----------------+--------------------------------------------------------------------------------------------+
+| ``ev_cb``       | Pointer to the callback function to call to process this event                             |
++-----------------+--------------------------------------------------------------------------------------------+
+| ``ev_arg``      | Pointer to an optional opaque data that the callback function uses to process this event   |
++-----------------+--------------------------------------------------------------------------------------------+
+| ``ev_next``     | Linkage attaching this event to an event queue                                             |
++-----------------+--------------------------------------------------------------------------------------------+
 
 An event callback function has the following function prototype:
 
@@ -138,9 +117,7 @@ in the NimBLE host:
         .ev_cb = ble_hs_event_tx_notify,
     };
 
-| 
-| The ``os_eventq`` structure defines an event queue and has the
-  following fields:
+The ``os_eventq`` structure defines an event queue and has the following fields:
 
 .. code:: c
 
@@ -149,26 +126,14 @@ in the NimBLE host:
         STAILQ_HEAD(, os_event) evq_list;
     };
 
-+------------+----------------+
-| Element    | Description    |
-+============+================+
-| ``evq_task | Pointer to the |
-| ``         | task, if any,  |
-|            | that is        |
-|            | waiting (in    |
-|            | the            |
-|            | ``sleeping``   |
-|            | state) for the |
-|            | ``os_eventq_ge |
-|            | t()``          |
-|            | function to    |
-|            | return an      |
-|            | event          |
-+------------+----------------+
-| ``evq_list | Head of the    |
-| ``         | list of events |
-|            | in this queue  |
-+------------+----------------+
++----------------+------------------------------------------------------------------------------------------------------------------------------------+
+| Element        | Description                                                                                                                        |
++================+====================================================================================================================================+
+| ``evq_task``   | Pointer to the task, if any, that is waiting (in the ``sleeping`` state) for the ``os_eventq_get()`` function to return an event   |
++----------------+------------------------------------------------------------------------------------------------------------------------------------+
+| ``evq_list``   | Head of the list of events in this queue                                                                                           |
++----------------+------------------------------------------------------------------------------------------------------------------------------------+
+
 
 You must call the ``os_eventq_init()`` function to initialize an event
 queue before you can add events to the queue.
@@ -178,5 +143,3 @@ API
 
 .. doxygengroup:: OSEvent
     :content-only:
-
-
