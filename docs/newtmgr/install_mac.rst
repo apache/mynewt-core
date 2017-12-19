@@ -6,7 +6,7 @@ Mac OS 10.11 and higher.
 
 This page shows you how to install the following versions of newtmgr:
 
--  Upgrade to or install the latest release version (1.2.0).
+-  Upgrade to or install the latest release version (1.3.0).
 -  Install the latest from the master branch (unstable).
 
 See `Installing Previous Releases of Newtmgr </newtmgr/prev_releases>`__
@@ -58,13 +58,13 @@ newtmgr:
     $ brew update
     $ brew install mynewt-newtmgr
     ==> Installing mynewt-newtmgr from runtimeco/mynewt
-    ==> Downloading https://github.com/runtimeco/binary-releases/raw/master/mynewt-newt-tools_1.2.0/mynewt-newtmgr-1.2.0.sierra.bottle.tar.gz
-    ==> Downloading from https://raw.githubusercontent.com/runtimeco/binary-releases/master/mynewt-newt-tools_1.2.0/mynewt-newtmgr-1.2.0.sierra.bottle.tar.gz
+    ==> Downloading https://github.com/runtimeco/binary-releases/raw/master/mynewt-newt-tools_1.3.0/mynewt-newtmgr-1.3.0.sierra.bottle.tar.gz
+    ==> Downloading from https://raw.githubusercontent.com/runtimeco/binary-releases/master/mynewt-newt-tools_1.3.0/mynewt-newtmgr-1.3.0.sierra.bottle.tar.gz
     ######################################################################## 100.0%
-    ==> Pouring mynewt-newtmgr-1.2.0.sierra.bottle.tar.gz
-    🍺  /usr/local/Cellar/mynewt-newtmgr/1.2.0: 3 files, 17.3MB
+    ==> Pouring mynewt-newtmgr-1.3.0.sierra.bottle.tar.gz
+    🍺  /usr/local/Cellar/mynewt-newtmgr/1.3.0: 3 files, 17.3MB
 
- **Notes:** Homebrew bottles for newtmgr 1.2.0 are available for Mac OS
+ **Notes:** Homebrew bottles for newtmgr 1.3.0 are available for Mac OS
 Sierra, El Captian. If you are running an earlier version of Mac OS, the
 installation will install the latest version of Go and compile newtmgr
 locally.
@@ -78,7 +78,7 @@ Check that you are using the installed version of newtmgr:
     $which newtmgr
     /usr/local/bin/newtmgr
     ls -l /usr/local/bin/newtmgr
-    lrwxr-xr-x  1 user  staff  42 Sep 11 21:15 /usr/local/bin/newtmgr -> ../Cellar/mynewt-newtmgr/1.2.0/bin/newtmgr
+    lrwxr-xr-x  1 user  staff  42 Sep 11 21:15 /usr/local/bin/newtmgr -> ../Cellar/mynewt-newtmgr/1.3.0/bin/newtmgr
 
 **Note:** If you previously built newtmgr from source and the output of
 ``which newtmgr`` shows
@@ -166,9 +166,9 @@ run:
 
 .. code-block:: console
 
-    $brew switch mynewt-newtmgr 1.2.0
-    Cleaning /usr/local/Cellar/mynewt-newtmgr/1.2.0
+    $brew switch mynewt-newtmgr 1.3.0
+    Cleaning /usr/local/Cellar/mynewt-newtmgr/1.3.0
     Cleaning /usr/local/Cellar/mynewt-newtmgr/HEAD-2d5217f
-    1 links created for /usr/local/Cellar/mynewt-newtmgr/1.2.0
+    1 links created for /usr/local/Cellar/mynewt-newtmgr/1.3.0
 
 

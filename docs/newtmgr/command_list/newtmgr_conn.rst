@@ -124,7 +124,7 @@ support.
    <li>
 
 **bhd**: newtmgr protocol over BLE. This type uses the blehostd
-implemenation.
+implementation.
 
 .. raw:: html
 

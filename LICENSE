@@ -342,6 +342,7 @@ This product bundles part of linker scripts Nordic Semiconductor nRF5 devices, w
     * hw/bsp/nrf52dk/nrf52dk_no_boot.ld
     * hw/mcu/nordic/nrf51xxx/nrf51.ld
     * hw/mcu/nordic/nrf52xxx/nrf52.ld
+    * hw/mcu/ambiq/apollo2/apollo2.ld
 
 This product bundles part of NXP/FreeScale SDK, which is available
 under the "3-clause BSD" license. Bundled files are:
@@ -374,3 +375,76 @@ This product bundles tinycrypt, which is available under the "3-clause BSD"
 license. For details, and bundled files see:
     * crypto/tinycrypt/LICENSE
     * crypto/tinycrypt
+
+This product bundles parts of the Generic SX1276 driver from Semtech, which
+is available under the "3-clause BSD" license. For details, see:
+    * apps/loraping/src/main.c
+    * hw/drivers/lora/sx1276/LICENSE.txt
+
+This product bundles parts of SEGGER RTT, which is available under the
+"3-clause BSD" license. For details, see:
+    * hw/drivers/rtt
+
+This products bundle Adafruit's tsl2561 driver, which is available under the
+"3-clause BSD" license. For details, see:
+    * hw/drivers/sensors/tsl2561
+
+This products bundles Amiq Micro Apollo 2, which is available under the
+"3-clause BSD" license. Bundled files are:
+    * hw/mcu/ambiq/apollo2/include/mcu/apollo2.h
+    * hw/mcu/ambiq/apollo2/include/mcu/system_apollo2.h
+
+This product bundles processor headers for PIC32 by Microchip Technology
+Inc., which is available under the "3-clause BSD" license. Bundled files are:
+    * hw/mcu/microchip/pic32mx470f512h/include/mcu/p32mx470f512h.h
+    * hw/mcu/microchip/pic32mx470f512h/include/mcu/ppic32mx.h
+
+This product bundles MIPS processor low-level macros by Imagination
+Technologies Limited, which is available under the "3-clause BSD" license.
+Bundled files are included inside:
+    * hw/mips-hal/src/arch/mips
+
+This product bundles parts of LoRaWAN endpoint stack by Semtech, which is
+available under the "3-clause BSD" license. For details, see:
+    * net/lora/node/LICENSE.txt
+
+This product bundles Eclipse Paho's MQTT by IBM Corp. which is available
+under the Eclipse Public License 1.0. For details see:
+    * net/mqtt/eclipse/LICENSE.txt
+
+This product bundles SEGGER SystemView, which is available under the
+"3-clause BSD" license. For details, see:
+    * sys/sysview/vendor
+
+This product bundles normalizer.css, affix.js and scrollspy.js by Twitter
+which are available under the MIT license. Bundled files are:
+    * docs/_static/css/bootstrap-3.0.3.min.css
+    * docs/themes/mynewt/static/js/affix.js
+    * docs/themes/mynewt/static/js/scrollspy.js
+
+This product bundles tinycbor by Intel Corporation, which is available under
+the MIT license. For details see:
+    * encoding/tinycbor/include/tinycbor
+
+This product bundles FontAwesome by Dave Gandy, which is available under the
+SIL Open Font License 1.1. Bundled files are:
+    * docs/themes/mynewt/static/fonts/fontawesome-webfont.eot
+    * docs/themes/mynewt/static/fonts/fontawesome-webfont.svg
+    * docs/themes/mynewt/static/fonts/fontawesome-webfont.ttf
+    * docs/themes/mynewt/static/fonts/fontawesome-webfont.woff
+    * docs/themes/mynewt/static/fonts/FontAwesome.otf
+
+This product bundles Inconsolata by Raph Levien, which is available under the
+SIL Open Font License 1.1. Bundled files are:
+    * docs/themes/mynewt/static/fonts/Inconsolata-Bold.ttf
+    * docs/themes/mynewt/static/fonts/Inconsolata-Regular.ttf
+
+This product bundles Lato by Łukasz Dziedzic, which is available under the
+SIL Open Font License 1.1. Bundled files are:
+    * docs/themes/mynewt/static/fonts/Lato-Bold.ttf
+    * docs/themes/mynewt/static/fonts/Lato-Regular.ttf
+
+This product bundles RobotSlab by Christian Robertson, which is available
+under the Apache License v2.0. Bundled files are:
+    * docs/themes/mynewt/static/fonts/RobotoSlab-Bold.ttf
+    * docs/themes/mynewt/static/fonts/RobotoSlab-Regular.ttf

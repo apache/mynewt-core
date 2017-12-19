@@ -44,13 +44,13 @@ Upgrading to or Installing the Latest Release Version
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Perform the following to upgrade or install the latest release version
-of newt (1.1.0).
+of newt (1.3.0).
 
 Upgrading to the Latest Release Version of Newt
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-If you previously installed newt 1.0.0 using brew, run the following
-commands to upgrade to newt 1.1.0:
+If you previously installed newt using brew, run the following commands
+to upgrade to newt 1.3.0:
 
 .. code-block:: console
 
@@ -60,7 +60,7 @@ commands to upgrade to newt 1.1.0:
 
  #### Installing the Latest Release Version of Newt
 
-Run the following command to install the latest release version (1.1.0)
+Run the following command to install the latest release version (1.3.0)
 of newt:
 
 .. code-block:: console
@@ -69,14 +69,14 @@ of newt:
     $ brew update
     $ brew install mynewt-newt
     ==> Installing mynewt-newt from runtimeco/mynewt
-    ==> Downloading https://github.com/runtimeco/binary-releases/raw/master/mynewt-newt-tools_1.1.0/mynewt-newt-1.1.0.sierra.bottle.tar.gz
-    ==> Downloading from https://raw.githubusercontent.com/runtimeco/binary-releases/master/mynewt-newt-tools_1.1.0/mynewt-newt-1.1.0.sierra.bottle.tar.gz
+    ==> Downloading https://github.com/runtimeco/binary-releases/raw/master/mynewt-newt-tools_1.3.0/mynewt-newt-1.3.0.sierra.bottle.tar.gz
+    ==> Downloading from https://raw.githubusercontent.com/runtimeco/binary-releases/master/mynewt-newt-tools_1.3.0/mynewt-newt-1.3.0.sierra.bottle.tar.gz
     ######################################################################## 100.0%
-    ==> Pouring mynewt-newt-1.1.0.sierra.bottle.tar.gz
-    🍺  /usr/local/Cellar/mynewt-newt/1.1.0: 3 files, 10.5MB
+    ==> Pouring mynewt-newt-1.3.0.sierra.bottle.tar.gz
+    🍺  /usr/local/Cellar/mynewt-newt/1.3.0: 3 files, 10.5MB
 
- **Notes:** Homebrew bottles for newt 1.1.0 are available for Mac OS
-Sierra, El Captian, and Yosemite. If you are running an earlier version
+ **Notes:** Homebrew bottles for newt 1.3.0 are available for Mac OS
+Sierra, El Capitan, and Yosemite. If you are running an earlier version
 of Mac OS, the installation will install the latest version of Go and
 compile newt locally.
 
@@ -90,9 +90,9 @@ Check that you are using the installed version of newt:
     $which newt
     /usr/local/bin/newt
     $ls -l /usr/local/bin/newt
-    lrwxr-xr-x  1 user  staff  36 Jul 25 19:04 /usr/local/bin/newt -> ../Cellar/mynewt-newt/1.1.0/bin/newt
+    lrwxr-xr-x  1 user  staff  36 Jul 25 19:04 /usr/local/bin/newt -> ../Cellar/mynewt-newt/1.3.0/bin/newt
     $newt version
-    Apache Newt version: 1.1.0
+    Apache Newt version: 1.3.0
 
 **Note:** If you previously built newt from source and the output of
 ``which newt`` shows
@@ -197,7 +197,7 @@ commands:
 Installing Newt from the Master Branch
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-We recommend that you use the latest release version (1.1.0) of newt. If
+We recommend that you use the latest release version (1.3.0) of newt. If
 you would like to use the master branch with the latest updates, you can
 install newt from the HEAD of the master branch.
 
@@ -231,16 +231,16 @@ version:
     ==> go install
     🍺  /usr/local/Cellar/mynewt-newt/HEAD-5a6266e: 3 files, 10.5MB, built in 5 seconds
     $newt version
-    Apache Newt version: 1.1.0-dev
+    Apache Newt version: 1.3.0-dev
 
- To switch back to the latest stable release version (1.1.0) of newt,
+ To switch back to the latest stable release version (1.3.0) of newt,
 you can run:
 
 .. code-block:: console
 
-    $brew switch mynewt-newt 1.1.0
-    Cleaning /usr/local/Cellar/mynewt-newt/1.1.0
+    $brew switch mynewt-newt 1.3.0
+    Cleaning /usr/local/Cellar/mynewt-newt/1.3.0
     Cleaning /usr/local/Cellar/mynewt-newt/HEAD-5a6266e
-    1 links created for /usr/local/Cellar/mynewt-newt/1.1.0
+    1 links created for /usr/local/Cellar/mynewt-newt/1.3.0
     $newt version
-    Apache Newt version: 1.1.0
+    Apache Newt version: 1.3.0
