@@ -87,7 +87,9 @@ commands, also set ``SENSOR_CLI=0`` and ``BNO055_CLI=0``.
 ``newt create-image nrf52_bno055_oic_test 1.0.0`` commands to build and
 create the application image.
 
- ### Step 2: Connecting the Sensor and Loading the Images to the Board
+Step 2: Connecting the Sensor and Loading the Images to the Board
+~~~~~~~~~~~~~~~
+
 
 Perform the following steps to reboot the board with the new images:
 
@@ -105,7 +107,9 @@ Perform the following steps to reboot the board with the new images:
    application image.
 4. Power the device OFF and ON to reboot.
 
- ### Step 3: Viewing Sensor Data from the Mynewt Smart Device Controller
+Step 3: Viewing Sensor Data from the Mynewt Smart Device Controller
+~~~~~~~~~~~~~~~
+
 
 Start the Mynewt Smart Device Controller app on your iOS or Android
 device to view the sensor data. If you have not installed the Mynewt

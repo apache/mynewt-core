@@ -90,8 +90,10 @@ run from and the task results can be analyzed in Visual Studio Code.
 Tasks are defined within the scope of a workspace. This means that the
 tasks you define for a workspace only apply to the given workspace.
 
- ####Associating a Mynewt Project to a Workspace For your Mynewt
-project, your Visual Studio Code workspace is the Mynewt project base
+Associating a Mynewt Project to a Workspace
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For your Mynewt project, your Visual Studio Code workspace is the Mynewt project base
 directory. For example, if you create a project named ``myproj`` under
 the ``~/dev`` directory, then you open the ``~/dev/myproj`` folder for
 your workspace.
@@ -99,8 +101,8 @@ your workspace.
 Select **File** > **Open Folder**, and select the ``myproj`` folder from
 the ``Select Folder`` dialog box to open the folder.
 
- ####Defining Visual Studio Code Tasks to Build and Debug Mynewt
-Applications
+Defining Visual Studio Code Tasks to Build and Debug Mynewt Applications
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
 You define Visual Studio Code tasks to build and debug your Mynewt
 targets in Visual Studio Code. We use the Blinky application for the
@@ -152,7 +154,7 @@ following definitions, and press ``Ctrl-S`` to save the file.
         "command": "newt",
         "echoCommand": true,
         "isShellCommand": true,
-        
+
         "tasks":[
             {
                 "taskName": "build_arduino_boot",
@@ -162,14 +164,14 @@ following definitions, and press ``Ctrl-S`` to save the file.
             {
                 "taskName": "build_arduino_blinky",
                 "args": ["build", "arduino_blinky"],
-                "isBuildCommand": true,  
+                "isBuildCommand": true,
                 "suppressTaskName": true
             },
             {
                 "taskName": "create_arduino_blinky",
                 "args": ["create-image", "arduino_blinky", "1.0.0"],
                 "suppressTaskName":true
-            }, 
+            },
             {
                 "taskName": "debug_arduino_blinky",
                 "args": ["debug", "arduino_blinky", "-n"],
@@ -207,7 +209,9 @@ For more information on tasks and all supported properties, see the
 `Visual Studio Code Task
 documentation <https://code.visualstudio.com/docs/editor/tasks>`__.
 
- ####Running a Task
+Running a Task
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
 
 To run a task, press ``Ctrl-Shift-P``, type ``task`` on the search box,
 and select **Tasks: Run Task**. The tasks that you define in the
@@ -235,7 +239,9 @@ The following is an example of running the ``build_arduino_boot`` task:
 keyboard shortcut ``Ctrl-Shift-B`` because the task has the property
 ``isBuildCommand`` set to true.
 
- ####Defining Tasks for Other Newt Commands
+Defining Tasks for Other Newt Commands
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
 
 Other newt commands, such as the ``newt load`` command, do not need to
 run from within Visual Studio Code. You can define a task for each
@@ -253,12 +259,12 @@ the ``tasks.json`` file:
                 "taskName": "load_arduino_boot",
                 "args": ["load", "arduino_boot"],
                 "suppressTaskName":true
-            }, 
+            },
             {
                 "taskName": "load_arduino_blinky",
                 "args": ["load", "arduino_blinky"],
                 "suppressTaskName":true
-            }, 
+            },
 
  To run a command from the Visual Studio integrated terminal, instead of
 starting a task, press ``Ctrl-``` to launch the integrated terminal and
@@ -272,8 +278,10 @@ enter the command on the prompt:
 
    </p>
 
- ###Defining Debugger Configurations You need to define a debugger
-configuration to launch the GDB debugger from within Visual Studio Code:
+Defining Debugger Configurations
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You need to define a debugger configuration to launch the GDB debugger from within Visual Studio Code:
 
 Step 1: Select **Debug** > **Open Configuration**, and select the
 **GDB** environment.

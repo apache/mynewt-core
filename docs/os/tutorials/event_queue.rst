@@ -81,7 +81,9 @@ The application handles events from three sources on two event queues:
         - hw/hal
         - sys/console/stub
 
- #### Application Task Generated Events
+Application Task Generated Events
+^^^^^^^^^^^^^^^^^^^
+
 
 The application creates a task that generates events, at periodic
 intervals, to toggle the LED at pin ``TASK_LED``. The event is queued on
@@ -181,7 +183,9 @@ event queue and call the callback function to process the event.
         assert(0);
     }
 
- #### OS Callout Timer Events
+OS Callout Timer Events
+^^^^^^^^^^^^^^^^^^^
+
 
 Set up OS callout timer events. For this example, we use a dedicated
 event queue for timer events to show you how to create a dedicated event
@@ -264,7 +268,9 @@ events from the ``my_timer_interrupt_eventq`` event queue:
         }
     }
 
- #### Interrupt Events
+Interrupt Events
+^^^^^^^^^^^^^^^^^^^
+
 
 The application toggles the LED each time button 1 on the board is
 pressed. The interrupt handler generates an event when the GPIO for
@@ -351,7 +357,9 @@ the LEDs:
         hal_gpio_init_out(GPIO_LED, 1);
     }
 
- ### Putting It All Together
+Putting It All Together
+~~~~~~~~~~~~~~~
+
 
 Here is the complete ``main.c`` source for your application. Build the
 application and load it on your board. The task LED (LED1) blinks at an

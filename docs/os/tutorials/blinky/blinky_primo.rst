@@ -15,8 +15,10 @@ Prerequisites
 -  Install a debugger. Choose one of the two options below: Option 1
    requires additional hardware but very easy to set up.
 
- ##### Option 1 \* `Segger J-Link Debug
-Probe <https://www.segger.com/jlink-debug-probes.html>`__ - any model
+# Option 1
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+ \* `Segger J-Link Debug Probe <https://www.segger.com/jlink-debug-probes.html>`__ - any model
 (this tutorial has been tested with J-Link EDU and J-Link Pro) \*
 `J-Link 9 pin Cortex-M
 Adapter <https://www.segger.com/jlink-adapters.html#CM_9pin>`__ that
@@ -56,7 +58,9 @@ Run the following commands to create a new project:
         apache-mynewt-core
         $
 
- ### Create the Targets
+Create the Targets
+~~~~~~~~~~~~~~~
+
 
 Create two targets for the Arduino Primo board - one for the bootloader
 and one for the Blinky application.
@@ -222,12 +226,14 @@ additional notes about the installation:
 
 Run the ``newt load primo_boot`` command again.
 
- ###Load the Blinky Application Image Run the ``newt load primoblinky``
-command to load the Blinky application image onto the board.
+Load the Blinky Application Image
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Run the ``newt load primoblinky`` command to load the Blinky application image onto the board.
 
 .. code-block:: console
 
-    $ newt  load primoblinky 
+    $ newt  load primoblinky
     Loading app image into slot 1
     $
 
@@ -236,8 +242,10 @@ blink!
 
 Note: If the LED does not blink, try resetting the board.
 
- ###Erase Flash If you want to erase the flash and load the image again,
-use JLinkExe and issue the ``erase`` command when you are using the
+Erase Flash
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you want to erase the flash and load the image again, use JLinkExe and issue the ``erase`` command when you are using the
 Jlink debug probe:
 
 **Note:** On Windows: Run the ``jlink`` command with the same arguments
@@ -292,5 +300,3 @@ terminal.
     warning: Source file is more recent than executable.
     200    if (ticks > 0) {
     (gdb) mon nrf52 mass_erase
-
-

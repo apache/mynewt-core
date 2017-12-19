@@ -154,7 +154,9 @@ sub-procedures:
 |       |            |                  | ng=1``  |
 +-------+------------+------------------+---------+
 
- ### Using nimBLE commands Assuming you have discovered and established
+Using nimBLE commands Assuming you have discovered and established
+~~~~~~~~~~~~~~~
+
 a BLE connection with at least one peer device (as explained earlier in
 `API for bletiny app <bletiny_api.html>`__, you can find out what
 characteristics and services are available over these connections. Here

@@ -56,7 +56,10 @@ Controller App, see the `Android Sensor
 source <https://github.com/runtimeco/android_sensor>`__ and `iOS Sensor
 source <https://github.com/runtimeco/iOS_oic>`__ on github.
 
- ### Prerequisites Ensure that you meet the following prerequisites
+Prerequisites
+~~~~~~~~~~~~~~~
+
+Ensure that you meet the following prerequisites
 before continuing with one of the tutorials.
 
 -  Have Internet connectivity to fetch remote Mynewt components.

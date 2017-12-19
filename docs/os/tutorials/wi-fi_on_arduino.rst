@@ -148,7 +148,9 @@ application target ``mkr1000_wifi``.
     $ newt target set mkr1000_wifi build_profile=debug
     $ newt target set mkr1000_boot syscfg=BSP_ARDUINO_ZERO_PRO=1
 
- ### Build the Bootloader
+Build the Bootloader
+~~~~~~~~~~~~~~~
+
 
 Run the ``newt build mkr1000_boot`` command to build the bootloader:
 
@@ -192,7 +194,9 @@ application image:
     Target successfully built: targets/mkr1000_wifi
     $
 
- ### Sign and Create the Wi-Fi Application Image
+Sign and Create the Wi-Fi Application Image
+~~~~~~~~~~~~~~~
+
 
 Run the ``newt create-image mkr1000_wifi 1.0.0`` command to sign and
 create an image file for the Wi-Fi application. You may assign an
@@ -247,7 +251,9 @@ onto the board:
     Loading app image into slot 1
     $
 
- ### Setup a Serial Connection Between Your Computer and the Board
+Setup a Serial Connection Between Your Computer and the Board
+~~~~~~~~~~~~~~~
+
 
 Set up a serial connection from your computer to the MKR1000 board (See
 `Serial Port Setup </os/get_started/serial_access.html>`__). On the

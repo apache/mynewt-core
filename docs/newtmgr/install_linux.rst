@@ -112,12 +112,16 @@ download and install the binary package.
     W: Failed to fetch https://raw.githubusercontent.com/runtimeco/debian-mynewt/master/dists/latest/main/source/Sources  Ht
     tpError404
 
- ### Installing the Latest Release of Newtmgr from a Binary Package
+Installing the Latest Release of Newtmgr from a Binary Package
+~~~~~~~~~~~~~~~
+
 
 You can use either apt-get to install the package, or manually download
 and install the Debian binary package.
 
- #### Method 1: Using apt-get to Upgrade or to Install
+Method 1: Using apt-get to Upgrade or to Install
+^^^^^^^^^^^^^^^^^^^
+
 
 Run the following commands to upgrade or install the latest version of
 newtmgr:
@@ -141,7 +145,9 @@ Download and install the package manually.
 See `Checking the Installed Version of Newtmgr <#check>`__ to verify
 that you are using the installed version of newtmgr.
 
- ### Installing the Latest Release Version of Newtmgr from Source
+Installing the Latest Release Version of Newtmgr from Source
+~~~~~~~~~~~~~~~
+
 
 If you are running Linux on a different architecture, you can build and
 install the latest release version of newtmgr from source.
@@ -196,7 +202,9 @@ workspace.
  7. Copy the newtmgr executable to a bin directory in your path. You can
 put it in the /usr/bin or the $GOPATH/bin directory.
 
- ### Checking the Latest Version of Newtmgr is Installed
+Checking the Latest Version of Newtmgr is Installed
+~~~~~~~~~~~~~~~
+
 
  1. Run ``which newtmgr`` to verify that you are using the installed
 version of newtmgr.

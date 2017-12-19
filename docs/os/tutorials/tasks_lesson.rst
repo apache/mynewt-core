@@ -107,7 +107,7 @@ majority of work is done by a task. Let’s write a task function for
 
         g_led_pin = LED_BLINK_PIN;
         hal_gpio_init_out(g_led_pin, 1);
-        
+
         while (1) {
             t = os_sched_get_current_task();
             assert(t->t_func == work_task_handler);
@@ -155,7 +155,7 @@ our main function clean.
         /* … */
         os_stack_t *work_stack;
         work_stack = malloc(sizeof(os_stack_t)*WORK_STACK_SIZE);
-        
+
         assert(work_stack);
         os_task_init(&work_task, "work", work_task_handler, NULL,
                 WORK_TASK_PRIO, OS_WAIT_FOREVER, work_stack,
@@ -193,7 +193,10 @@ loop:
  When GDB appears press C then Enter to continue and … *wait, why
 doesn't our LED blink anymore?*
 
- #### Review Before we run our new app, let’s review what we need in
+Review
+^^^^^^^^^^^^^^^^^^^
+
+Before we run our new app, let’s review what we need in
 order to create a task. This is a general case for a new task called
 mytask:
 
@@ -213,7 +216,7 @@ mytask:
 
 .. code:: c
 
-    void 
+    void
     mytask_handler(void *arg)
     {
       while (1) {
@@ -225,7 +228,7 @@ mytask:
 
 .. code:: c
 
-    os_task_init(&mytask, "mytask", mytask_handler, NULL, 
+    os_task_init(&mytask, "mytask", mytask_handler, NULL,
                 MYTASK_PRIO, OS_WAIT_FOREVER, mytask_stack,
                 MYTASK_STACK_SIZE);
 

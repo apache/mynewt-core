@@ -56,7 +56,9 @@ tested on Windows 10 64 bit platform.
  4. Verify the installed version of newtmgr. See `Checking the Installed
 Version <#check_newtmgr>`__.
 
- ### Installing the Latest Release of Newtmgr from Source
+Installing the Latest Release of Newtmgr from Source
+~~~~~~~~~~~~~~~
+
 
 If you have an older version of Windows or a 32 bit platform, you can
 build and install the latest release version of newtmgr from source.
@@ -121,7 +123,9 @@ workspace.
  7. Copy the newtmgr executable to a bin directory in your path. You can
 put it in the /usr/bin or the $GOPATH/bin directory.
 
- ### Checking the Installed Version
+Checking the Installed Version
+~~~~~~~~~~~~~~~
+
 
  1. Run ``which newtmgr`` to verify that you are using the installed
 version of newtmgr.

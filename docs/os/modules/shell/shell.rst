@@ -105,7 +105,9 @@ There are two methods to register command handlers in Mynewt 1.1:
       this method. You can increase this value if your application and
       the packages it includes register more than the default value.
 
- ####Enabling Help Information for Shell Commands
+Enabling Help Information for Shell Commands
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
 
 The shell supports command help. A package that supports command help
 initializes the ``struct shell_cmd`` data structure with help text for
@@ -133,13 +135,17 @@ whether to print the current os ticks in the prompt. The
 ``SHELL_PROMPT_MODULE`` syscfg setting enables or disables this module.
 The module is disabled by default.
 
- #### Enabling Command Name Completion
+Enabling Command Name Completion
+^^^^^^^^^^^^^^^^^^^
+
 
 The shell supports command name completion. The ``SHELL_COMPLETION``
 syscfg setting enables or disables the feature. The feature is enabled
 by default.
 
- ### Processing Newtmgr Line Protocol Over Serial Transport
+Processing Newtmgr Line Protocol Over Serial Transport
+~~~~~~~~~~~~~~~
+
 
 The shell's second job is to handle packet framing, encoding, and
 decoding of newtmgr protocol messages that are sent over the console.

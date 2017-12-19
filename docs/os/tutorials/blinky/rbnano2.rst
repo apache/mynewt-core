@@ -167,7 +167,9 @@ additional notes about the installation:
 
 Run the ``newt load rbnano2_boot`` command again.
 
- ####Clear the Write Protection on the Flash Memory The flash memory on
+Clear the Write Protection on the Flash Memory The flash memory on
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
 the RedBear Nano 2 comes write protected from the factory. If you get an
 error loading the bootloader and you are using a brand new chip, you
 need to clear the write protection from the debugger and then load the

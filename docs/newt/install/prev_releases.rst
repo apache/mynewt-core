@@ -46,7 +46,9 @@ commands:
 
     $ brew link -f mynewt-newt@1.0
 
- ### Linux 1. Download the binary:
+Linux 1. Download the binary:
+~~~~~~~~~~~~~~~
+
 
 +-----------+----------------------------------------------------------------------------------------------------------------------------------------------------+
 | Version   | Download                                                                                                                                           |
@@ -62,7 +64,9 @@ current installation.
  3. Install the package. For example, run
 ``sudo dpkg -i newt_1.0.0-1_amd64.deb`` to install newt 1.0.0
 
- ### Windows 1. Download the binary:
+Windows 1. Download the binary:
+~~~~~~~~~~~~~~~
+
 
 +-----------+----------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | Version   | Download                                                                                                                                                       |

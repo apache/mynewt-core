@@ -58,7 +58,9 @@ to upgrade to newt 1.3.0:
     $ brew update
     $ brew upgrade mynewt-newt
 
- #### Installing the Latest Release Version of Newt
+Installing the Latest Release Version of Newt
+^^^^^^^^^^^^^^^^^^^
+
 
 Run the following command to install the latest release version (1.3.0)
 of newt:
@@ -80,7 +82,9 @@ Sierra, El Capitan, and Yosemite. If you are running an earlier version
 of Mac OS, the installation will install the latest version of Go and
 compile newt locally.
 
- ### Checking the Installed Version
+Checking the Installed Version
+~~~~~~~~~~~~~~~
+
 
 Check that you are using the installed version of newt:
 
@@ -157,7 +161,9 @@ Check that you are using the installed version of newt:
 
     Use "newt [command] --help" for more information about a command.
 
- ### Installing Earlier Release Versions of Newt
+Installing Earlier Release Versions of Newt
+~~~~~~~~~~~~~~~
+
 
 If you want to install newt 1.0, run the following commands:
 

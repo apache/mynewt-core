@@ -47,7 +47,9 @@ following commands to upgrade to the latest version of newtmgr:
     $ brew update
     $ brew upgrade mynewt-newtmgr
 
- #### Installing the Latest Release Version of Newtmgr
+Installing the Latest Release Version of Newtmgr
+^^^^^^^^^^^^^^^^^^^
+
 
 Run the following command to install the latest release version of
 newtmgr:
@@ -69,7 +71,9 @@ Sierra, El Captian. If you are running an earlier version of Mac OS, the
 installation will install the latest version of Go and compile newtmgr
 locally.
 
- ### Checking the Installed Version
+Checking the Installed Version
+~~~~~~~~~~~~~~~
+
 
 Check that you are using the installed version of newtmgr:
 

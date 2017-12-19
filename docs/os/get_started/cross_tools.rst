@@ -31,7 +31,7 @@ created points to the correct version of the debugger.
     $ brew tap PX4/homebrew-px4
     $ brew update
     $ brew install gcc-arm-none-eabi-49
-    $ arm-none-eabi-gcc --version  
+    $ arm-none-eabi-gcc --version
     arm-none-eabi-gcc (GNU Tools for ARM Embedded Processors) 4.9.3 20150529 (release) [ARM/embedded-4_9-branch revision 224288]
     Copyright (C) 2014 Free Software Foundation, Inc.
     This is free software; see the source for copying conditions.  There is NO
@@ -42,7 +42,9 @@ created points to the correct version of the debugger.
 **Note:** If no version is specified, brew will install the latest
 version available.
 
- ### Installing the ARM Toolchain For Linux
+Installing the ARM Toolchain For Linux
+~~~~~~~~~~~~~~~
+
 
 On a Debian-based Linux distribution, gcc 4.9.3 for ARM can be installed
 with apt-get as documented below. The steps are explained in depth at
@@ -50,14 +52,16 @@ https://launchpad.net/~team-gcc-arm-embedded/+archive/ubuntu/ppa.
 
 .. code-block:: console
 
-    $ sudo apt-get remove binutils-arm-none-eabi gcc-arm-none-eabi 
+    $ sudo apt-get remove binutils-arm-none-eabi gcc-arm-none-eabi
     $ sudo add-apt-repository ppa:team-gcc-arm-embedded/ppa
-    $ sudo apt-get update 
+    $ sudo apt-get update
     $ sudo apt-get install gcc-arm-none-eabi
     $ sudo apt-get install gdb-arm-none-eabi
 
- ### Installing the ARM Toolchain for Windows Step 1: Download and run
-the
+Installing the ARM Toolchain for Windows
+~~~~~~~~~~~~~~~
+
+Step 1: Download and run the
 `installer <https://launchpad.net/gcc-arm-embedded/4.9/4.9-2015-q2-update/+download/gcc-arm-none-eabi-4_9-2015q2-20150609-win32.exe>`__
 to install arm-none-eabi-gcc and arm-none-eabi-gdb. Select the default
 destination folder: **C::raw-latex:`\Program `Files
@@ -98,15 +102,17 @@ to http://openocd.org.
 OpenOCD version 0.10.0 with nrf52 support is required. A binary for this
 version is available to download for Mac OS, Linux, and Windows.
 
- #### Installing OpenOCD on Mac OS Step 1: Download the `binary tarball
-for Mac
+Installing OpenOCD on Mac OS
+^^^^^^^^^^^^^^^^^^^
+
+Step 1: Download the `binary tarball for Mac
 OS <https://github.com/runtimeco/openocd-binaries/raw/master/openocd-bin-0.10.0-MacOS.tgz>`__.
 
 Step 2: Change to the root directory:
 
 .. code-block:: console
 
-    $cd / 
+    $cd /
 
  Step 3: Untar the tarball and install into \*\* /usr/local/bin**. You
 will need to replace ** ~/Downloads \*\* with the directory that the
@@ -114,7 +120,7 @@ tarball is downloaded to.
 
 .. code-block:: console
 
-    sudo tar -xf ~/Downloads/openocd-bin-0.10.0-MacOS.tgz ` 
+    sudo tar -xf ~/Downloads/openocd-bin-0.10.0-MacOS.tgz `
 
  Step 4: Check the OpenOCD version you are using.
 
@@ -139,17 +145,19 @@ If you see one of these errors:
 -  Library not loaded: /usr/local/lib/libhidapi.0.dylib - Run
    ``brew install hidapi``.
 
- #### Installing OpenOCD on Linux Step 1: Download the `binary tarball
-for
+Installing OpenOCD on Linux
+^^^^^^^^^^^^^^^^^^^
+
+Step 1: Download the `binary tarball for
 Linux <https://github.com/runtimeco/openocd-binaries/raw/master/openocd-bin-0.10.0-Linux.tgz>`__
 
 Step 2: Change to the root directory:
 
 ::
 
-    $cd / 
+    $cd /
 
- Step 3: Untar the tarball and install into \*\* /usr/local/bin**. You
+Step 3: Untar the tarball and install into \*\* /usr/local/bin**. You
 will need to replace ** ~/Downloads \*\* with the directory that the
 tarball is downloaded to.
 
@@ -187,8 +195,10 @@ run the following command to install the libraries:
 
     $sudo apt-get install libhidapi-dev:i386
 
- #### Installing OpenOCD on Windows Step 1: Download the `binary zip
-file for
+Installing OpenOCD on Windows
+^^^^^^^^^^^^^^^^^^^
+
+Step 1: Download the `binary zip file for
 Windows <https://github.com/runtimeco/openocd-binaries/raw/master/openocd-0.10.0.zip>`__.
 
 Step 2: Extract into the **C::raw-latex:`\openocd`-0.10.0** folder.
@@ -215,7 +225,9 @@ terminal and run the following commands:
 
 You should see version: **0.10.0**.
 
- ###Installing SEGGER J-Link You can download and install Segger J-LINK
+Installing SEGGER J-Link You can download and install Segger J-LINK
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
 Software and documentation pack from
 `SEGGER <https://www.segger.com/jlink-software.html>`__.
 

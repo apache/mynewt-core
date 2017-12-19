@@ -18,7 +18,9 @@ driver for the sensor named ``SENSORNAME``.
 **Note:** All example excerpts are from the BNO055 sensor device driver
 package.
 
- ### Initializing and Configuring a Sensor Device
+Initializing and Configuring a Sensor Device
+~~~~~~~~~~~~~~~
+
 
 A driver package for a sensor named ``SENSORNAME`` must define and
 export the following data structures and functions to initialize and
@@ -146,7 +148,9 @@ For example:
         bno055_sensor_get_config
     };
 
- ### Registering the Sensor in the Sensor Framework
+Registering the Sensor in the Sensor Framework
+~~~~~~~~~~~~~~~
+
 
 The device driver must initialize and register a ``struct sensor``
 object with the sensor manager. See the `Sensor
@@ -312,7 +316,9 @@ err: return rc; }
 
 \`\`\`
 
- ### Implementing a Sensor Device Shell Command
+Implementing a Sensor Device Shell Command
+~~~~~~~~~~~~~~~
+
 
 A sensor device driver package may optionally implement a sensor device
 shell command that retrieves and sets sensor device information to aid
@@ -408,7 +414,9 @@ endif
 
 \`\`\`
 
- ### Defining Stats
+Defining Stats
+~~~~~~~~~~~~~~~
+
 
 A sensor device driver may also define stats for the sensor. See the
 `Stats OS Guide <os/modules/stats/stats.html>`__ for more details on how

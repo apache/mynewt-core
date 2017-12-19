@@ -32,7 +32,7 @@ Run the following commands to create a new project. We name the project
     Installing skeleton in slink...
     Project slinky successfully created
     $ cd slinky
-    $newt install 
+    $newt install
     apache-mynewt-core
 
  Create the Targets
@@ -132,7 +132,9 @@ Connect to the Board
 -  Turn the power on the board to ON. You should see the green LED light
    up on the board.
 
- ### Load the Bootloader and the Slinky Application Image
+Load the Bootloader and the Slinky Application Image
+~~~~~~~~~~~~~~~
+
 
 Run the ``newt load nrf52_boot`` command to load the bootloader onto the
 board:
@@ -209,8 +211,10 @@ connection profiles:
       sim1: type=serial, connstring='/dev/ttys012'
     $
 
- ### Use Newtmgr to Query the Board Run some newtmgr commands to query
-and receive responses back from the board (See the `Newt Manager
+Use Newtmgr to Query the Board
+~~~~~~~~~~~~~~~
+
+Run some newtmgr commands to query and receive responses back from the board (See the `Newt Manager
 Guide <../../newtmgr/overview>`__ for more information on the newtmgr
 commands).
 
@@ -219,7 +223,7 @@ simplest command that requests the board to echo back the text.
 
 .. code-block:: console
 
-    $ newtmgr echo hello -c nrf52serial 
+    $ newtmgr echo hello -c nrf52serial
     hello
     $
 
@@ -228,7 +232,7 @@ images on the board:
 
 .. code-block:: console
 
-    $ newtmgr image list -c nrf52serial 
+    $ newtmgr image list -c nrf52serial
     Images:
      slot=0
         version: 1.0.0
