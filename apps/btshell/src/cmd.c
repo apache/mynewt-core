@@ -1022,6 +1022,52 @@ cmd_disconnect(int argc, char **argv)
     return 0;
 }
 
+static int
+cmd_show_conn(int argc, char **argv)
+{
+    struct ble_gap_conn_desc conn_desc;
+    struct btshell_conn *conn;
+    int rc;
+    int i;
+
+    for (i = 0; i < btshell_num_conns; i++) {
+        conn = btshell_conns + i;
+
+        rc = ble_gap_conn_find(conn->handle, &conn_desc);
+        if (rc == 0) {
+            print_conn_desc(&conn_desc);
+        }
+    }
+
+    return 0;
+}
+
+static int
+cmd_show_addr(int argc, char **argv)
+{
+    uint8_t id_addr[6];
+    int rc;
+
+    console_printf("public_id_addr=");
+    rc = ble_hs_id_copy_addr(BLE_ADDR_PUBLIC, id_addr, NULL);
+    if (rc == 0) {
+        print_addr(id_addr);
+    } else {
+        console_printf("none");
+    }
+
+    console_printf(" random_id_addr=");
+    rc = ble_hs_id_copy_addr(BLE_ADDR_RANDOM, id_addr, NULL);
+    if (rc == 0) {
+        print_addr(id_addr);
+    } else {
+        console_printf("none");
+    }
+    console_printf("\n");
+
+    return 0;
+}
+
 #if MYNEWT_VAL(SHELL_CMD_HELP)
 static const struct shell_param disconnect_params[] = {
     {"conn", "connection handle parameter, usage: =<UINT16>"},
@@ -3312,6 +3358,20 @@ static const struct shell_cmd btshell_commands[] = {
 #endif
     },
     {
+        .sc_cmd = "show-addr",
+        .sc_cmd_func = cmd_show_addr,
+#if MYNEWT_VAL(SHELL_CMD_HELP)
+        .help = &gatt_show_addr_help,
+#endif
+    },
+    {
+        .sc_cmd = "show-conn",
+        .sc_cmd_func = cmd_show_conn,
+#if MYNEWT_VAL(SHELL_CMD_HELP)
+        .help = &gatt_show_conn_help,
+#endif
+    },
+    {
         .sc_cmd = "scan",
         .sc_cmd_func = cmd_scan,
 #if MYNEWT_VAL(SHELL_CMD_HELP)
@@ -3458,20 +3518,6 @@ static const struct shell_cmd btshell_commands[] = {
         .sc_cmd_func = cmd_gatt_show_local,
 #if MYNEWT_VAL(SHELL_CMD_HELP)
         .help = &gatt_show_local_help,
-#endif
-    },
-    {
-        .sc_cmd = "gatt-show-addr",
-        .sc_cmd_func = cmd_gatt_show_addr,
-#if MYNEWT_VAL(SHELL_CMD_HELP)
-        .help = &gatt_show_addr_help,
-#endif
-    },
-    {
-        .sc_cmd = "gatt-show-conn",
-        .sc_cmd_func = cmd_gatt_show_conn,
-#if MYNEWT_VAL(SHELL_CMD_HELP)
-        .help = &gatt_show_conn_help,
 #endif
     },
     {

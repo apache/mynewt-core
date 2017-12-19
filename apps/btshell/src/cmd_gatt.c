@@ -462,52 +462,6 @@ cmd_gatt_show_local(int argc, char **argv)
     return 0;
 }
 
-int
-cmd_gatt_show_addr(int argc, char **argv)
-{
-    uint8_t id_addr[6];
-    int rc;
-
-    console_printf("public_id_addr=");
-    rc = ble_hs_id_copy_addr(BLE_ADDR_PUBLIC, id_addr, NULL);
-    if (rc == 0) {
-        print_addr(id_addr);
-    } else {
-        console_printf("none");
-    }
-
-    console_printf(" random_id_addr=");
-    rc = ble_hs_id_copy_addr(BLE_ADDR_RANDOM, id_addr, NULL);
-    if (rc == 0) {
-        print_addr(id_addr);
-    } else {
-        console_printf("none");
-    }
-    console_printf("\n");
-
-    return 0;
-}
-
-int
-cmd_gatt_show_conn(int argc, char **argv)
-{
-    struct ble_gap_conn_desc conn_desc;
-    struct btshell_conn *conn;
-    int rc;
-    int i;
-
-    for (i = 0; i < btshell_num_conns; i++) {
-        conn = btshell_conns + i;
-
-        rc = ble_gap_conn_find(conn->handle, &conn_desc);
-        if (rc == 0) {
-            print_conn_desc(&conn_desc);
-        }
-    }
-
-    return 0;
-}
-
 /*****************************************************************************
  * $gatt-write                                                               *
  *****************************************************************************/
