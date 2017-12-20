@@ -456,7 +456,7 @@ static const struct shell_param advertise_configure_params[] = {
     {"interval_min", "usage: =[0-UINT32_MAX], default: 0"},
     {"interval_max", "usage: =[0-UINT32_MAX], default: 0"},
     {"tx_power", "usage: =[-127-127], default: 127"},
-    {"primary_phy", "usage: =[1M|2M|coded], default: 1M"},
+    {"primary_phy", "usage: =[1M|coded], default: 1M"},
     {"secondary_phy", "usage: =[1M|2M|coded], default: primary_phy"},
     {"sid", "usage: =[0-UINT8_MAX], default: 0"},
     {"high_duty", "usage: =[0-1], default: 0"},
@@ -1022,6 +1022,52 @@ cmd_disconnect(int argc, char **argv)
     return 0;
 }
 
+static int
+cmd_show_conn(int argc, char **argv)
+{
+    struct ble_gap_conn_desc conn_desc;
+    struct btshell_conn *conn;
+    int rc;
+    int i;
+
+    for (i = 0; i < btshell_num_conns; i++) {
+        conn = btshell_conns + i;
+
+        rc = ble_gap_conn_find(conn->handle, &conn_desc);
+        if (rc == 0) {
+            print_conn_desc(&conn_desc);
+        }
+    }
+
+    return 0;
+}
+
+static int
+cmd_show_addr(int argc, char **argv)
+{
+    uint8_t id_addr[6];
+    int rc;
+
+    console_printf("public_id_addr=");
+    rc = ble_hs_id_copy_addr(BLE_ADDR_PUBLIC, id_addr, NULL);
+    if (rc == 0) {
+        print_addr(id_addr);
+    } else {
+        console_printf("none");
+    }
+
+    console_printf(" random_id_addr=");
+    rc = ble_hs_id_copy_addr(BLE_ADDR_RANDOM, id_addr, NULL);
+    if (rc == 0) {
+        print_addr(id_addr);
+    } else {
+        console_printf("none");
+    }
+    console_printf("\n");
+
+    return 0;
+}
+
 #if MYNEWT_VAL(SHELL_CMD_HELP)
 static const struct shell_param disconnect_params[] = {
     {"conn", "connection handle parameter, usage: =<UINT16>"},
@@ -1218,7 +1264,7 @@ static const struct shell_param scan_params[] = {
     {"interval", "usage: =[0-UINT16_MAX], default: 0"},
     {"window", "usage: =[0-UINT16_MAX], default: 0"},
     {"filter", "usage: =[no_wl|use_wl|no_wl_inita|use_wl_inita], default: no_wl"},
-    {"nodups", "usage: =[0-UINT16_MAX], default: 0"},
+    {"nodups", "usage: =[0-1], default: 0"},
     {"own_addr_type", "usage: =[public|random|rpa_pub|rpa_rnd], default: public"},
     {"extended_duration", "usage: =[0-UINT16_MAX], default: 0"},
     {"extended_period", "usage: =[0-UINT16_MAX], default: 0"},
@@ -3045,7 +3091,7 @@ static const struct shell_param gatt_read_params[] = {
     {"conn", "connection handle, usage: =<UINT16>"},
     {"long", "is read long, usage: =[0-1], default=0"},
     {"attr", "attribute handle, usage: =<UINT16>"},
-    {"offset", "attribute handle, usage: =<UINT16>"},
+    {"offset", "offset value, usage: =<UINT16>"},
     {"uuid", "read by uuid, usage: =[UUID]"},
     {"start", "start handle, usage: =<UINT16>"},
     {"end", "end handle, usage: =<UINT16>"},
@@ -3312,6 +3358,20 @@ static const struct shell_cmd btshell_commands[] = {
 #endif
     },
     {
+        .sc_cmd = "show-addr",
+        .sc_cmd_func = cmd_show_addr,
+#if MYNEWT_VAL(SHELL_CMD_HELP)
+        .help = &gatt_show_addr_help,
+#endif
+    },
+    {
+        .sc_cmd = "show-conn",
+        .sc_cmd_func = cmd_show_conn,
+#if MYNEWT_VAL(SHELL_CMD_HELP)
+        .help = &gatt_show_conn_help,
+#endif
+    },
+    {
         .sc_cmd = "scan",
         .sc_cmd_func = cmd_scan,
 #if MYNEWT_VAL(SHELL_CMD_HELP)
@@ -3461,27 +3521,6 @@ static const struct shell_cmd btshell_commands[] = {
 #endif
     },
     {
-        .sc_cmd = "gatt-show-addr",
-        .sc_cmd_func = cmd_gatt_show_addr,
-#if MYNEWT_VAL(SHELL_CMD_HELP)
-        .help = &gatt_show_addr_help,
-#endif
-    },
-    {
-        .sc_cmd = "gatt-show-conn",
-        .sc_cmd_func = cmd_gatt_show_conn,
-#if MYNEWT_VAL(SHELL_CMD_HELP)
-        .help = &gatt_show_conn_help,
-#endif
-    },
-    {
-        .sc_cmd = "gatt-show-coc",
-        .sc_cmd_func = cmd_gatt_show_coc,
-#if MYNEWT_VAL(SHELL_CMD_HELP)
-        .help = &gatt_show_coc_help,
-#endif
-    },
-    {
         .sc_cmd = "gatt-write",
         .sc_cmd_func = cmd_gatt_write,
 #if MYNEWT_VAL(SHELL_CMD_HELP)
@@ -3522,6 +3561,13 @@ static const struct shell_cmd btshell_commands[] = {
         .sc_cmd_func = cmd_l2cap_send,
 #if MYNEWT_VAL(SHELL_CMD_HELP)
         .help = &l2cap_send_help,
+#endif
+    },
+    {
+        .sc_cmd = "l2cap-show-coc",
+        .sc_cmd_func = cmd_l2cap_show_coc,
+#if MYNEWT_VAL(SHELL_CMD_HELP)
+        .help = &gatt_show_coc_help,
 #endif
     },
 #endif
