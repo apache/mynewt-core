@@ -64,15 +64,21 @@ os_sched_insert(struct os_task *t)
 
     entry = NULL;
     OS_ENTER_CRITICAL(sr);
-    TAILQ_FOREACH(entry, &g_os_run_list, t_os_list) {
-        if (t->t_prio < entry->t_prio) {
-            break;
-        }
-    }
-    if (entry) {
-        TAILQ_INSERT_BEFORE(entry, (struct os_task *) t, t_os_list);
+
+    /* If sleep list empty, add to front */
+    if (TAILQ_EMPTY(&g_os_run_list)) {
+        TAILQ_INSERT_HEAD(&g_os_run_list, t, t_os_list);
     } else {
-        TAILQ_INSERT_TAIL(&g_os_run_list, (struct os_task *) t, t_os_list);
+        TAILQ_FOREACH(entry, &g_os_run_list, t_os_list) {
+            if (t->t_prio < entry->t_prio) {
+                break;
+            }
+        }
+        if (entry) {
+            TAILQ_INSERT_BEFORE(entry, (struct os_task *) t, t_os_list);
+        } else {
+            TAILQ_INSERT_TAIL(&g_os_run_list, (struct os_task *) t, t_os_list);
+        }
     }
     OS_EXIT_CRITICAL(sr);
 
@@ -177,8 +183,18 @@ os_sched_sleep(struct os_task *t, os_time_t nticks)
     TAILQ_REMOVE(&g_os_run_list, t, t_os_list);
     t->t_state = OS_TASK_SLEEP;
     t->t_next_wakeup = os_time_get() + nticks;
+
     if (nticks == OS_TIMEOUT_NEVER) {
         t->t_flags |= OS_TASK_FLAG_NO_TIMEOUT;
+    }
+
+    /* If sleep list empty, add to front */
+    if (TAILQ_EMPTY(&g_os_sleep_list)) {
+        TAILQ_INSERT_HEAD(&g_os_sleep_list, t, t_os_list);
+        goto exit_sched_sleep;
+    }
+
+    if (nticks == OS_TIMEOUT_NEVER) {
         TAILQ_INSERT_TAIL(&g_os_sleep_list, t, t_os_list);
     } else {
         TAILQ_FOREACH(entry, &g_os_sleep_list, t_os_list) {
@@ -194,6 +210,7 @@ os_sched_sleep(struct os_task *t, os_time_t nticks)
         }
     }
 
+exit_sched_sleep:
     os_trace_task_stop_ready(t->t_taskid, OS_TASK_SLEEP);
     return (0);
 }
