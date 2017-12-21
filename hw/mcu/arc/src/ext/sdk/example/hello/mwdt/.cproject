@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?fileVersion 4.0.0?><cproject storage_type_id="org.eclipse.cdt.core.XmlProjectDescriptionStorage">
+	<storageModule moduleId="org.eclipse.cdt.core.settings">
+		<cconfiguration id="com.arc.cdt.toolchain.av2em.exeDebugConfig.1723870626">
+			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.arc.cdt.toolchain.av2em.exeDebugConfig.1723870626" moduleId="org.eclipse.cdt.core.settings" name="build_arcem">
+				<externalSettings/>
+				<extensions>
+					<extension id="org.eclipse.cdt.core.ELF" point="org.eclipse.cdt.core.BinaryParser"/>
+					<extension id="org.eclipse.cdt.core.GmakeErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+					<extension id="org.eclipse.cdt.core.MakeErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+					<extension id="com.arc.cdt.toolchain.ARCLinkerErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+					<extension id="org.eclipse.cdt.core.CWDLocator" point="org.eclipse.cdt.core.ErrorParser"/>
+					<extension id="com.arc.cdt.toolchain.ARCCompilerErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+					<extension id="com.arc.cdt.toolchain.ARCAssemblerErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+					<extension id="org.eclipse.cdt.core.GCCErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+				</extensions>
+			</storageModule>
+			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
+				<configuration artifactName="${ProjName}" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.debug" cleanCommand="rm -rf" description="Designware ARC EM Core Configuration" errorParsers="com.arc.cdt.toolchain.ARCCompilerErrorParser;com.arc.cdt.toolchain.ARCLinkerErrorParser;com.arc.cdt.toolchain.ARCAssemblerErrorParser;org.eclipse.cdt.core.MakeErrorParser" id="com.arc.cdt.toolchain.av2em.exeDebugConfig.1723870626" name="build_arcem" parent="com.arc.cdt.toolchain.av2em.exeDebugConfig">
+					<folderInfo id="com.arc.cdt.toolchain.av2em.exeDebugConfig.1723870626." name="/" resourcePath="">
+						<toolChain id="com.arc.cdt.toolchain.av2em.exeToolChainDebug.1365018122" superClass="com.arc.cdt.toolchain.av2em.exeToolChainDebug">
+							<targetPlatform id="hcTargetPlatform.760846643" isAbstract="false" name="Generic platform" superClass="hcTargetPlatform"/>
+							<builder buildPath="${workspace_loc:/bsp_hello}/build_arcem" id="makeBuilder.1310268102" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="Gnu Make Builder" superClass="makeBuilder"/>
+							<tool id="av2em.exe.debug.exeCompilerDebug.1582870860" superClass="av2em.exe.debug.exeCompilerDebug">
+								<option id="arc.compiler.options.target.version.1476036657" isActive="true" name="ARC Core Version" superClass="arc.compiler.options.target.version" value="arc.compiler.options.target.arcv2em" valueType="enumerated"/>
+								<option id="arc.arc.compiler.options.nosdata.442221624" isActive="false" name="Small-data section" superClass="arc.arc.compiler.options.nosdata" useByScannerDiscovery="false" value="nosdata" valueType="enumerated"/>
+								<option id="arc.compiler.options.arcv2emcore.1899871171" isActive="true" name="ARC EM Core" superClass="arc.compiler.options.arcv2emcore" useByScannerDiscovery="true" value="arc.compiler.options.arcv2emcore.core3" valueType="enumerated"/>
+								<option id="arc.compiler.options.bs.2099429510" isActive="true" name="Barrel shifter (-Xbs/-Xbarrel_shifter)" superClass="arc.compiler.options.bs" useByScannerDiscovery="true" value="true" valueType="boolean"/>
+								<option id="arc.compiler.options.sa.2128017552" isActive="true" name="Shift Assist (-Xsa/-Xshift_assist)" superClass="arc.compiler.options.sa" useByScannerDiscovery="true" value="true" valueType="boolean"/>
+								<option id="arc.compiler.options.unaligned.1759257466" isActive="true" name="Unaligned memory access  (-Xunaligned)" superClass="arc.compiler.options.unaligned" useByScannerDiscovery="true" value="true" valueType="boolean"/>
+								<option id="arc.compiler.options.mpyEMoption.5246124" isActive="true" name="Multiply Option -Xmpy_option=" superClass="arc.compiler.options.mpyEMoption" useByScannerDiscovery="true" value="arc.options.mpyoption.mpyd" valueType="enumerated"/>
+								<option id="arc.compiler.options.mpyHSoption.536210743" isActive="true" name="Multiply Option -Xmpy_option=" superClass="arc.compiler.options.mpyHSoption" value="arc.options.mpyoption.hsmpyd" valueType="enumerated"/>
+								<option id="arc.compiler.options.div_rem.1664406728" isActive="true" name="Integer divide (-Xdiv_rem=)" superClass="arc.compiler.options.div_rem" useByScannerDiscovery="true" value="arc.options.divrem.radix2" valueType="enumerated"/>
+								<option id="arc.compiler.options.bitscan.741265246" isActive="true" name="Bit scan instructions (-Xbitscan)" superClass="arc.compiler.options.bitscan" useByScannerDiscovery="true" value="true" valueType="boolean"/>
+								<option id="arc.compiler.options.swap.105399133" isActive="true" name="Swap instruction (-Xswap)" superClass="arc.compiler.options.swap" useByScannerDiscovery="true" value="true" valueType="boolean"/>
+								<option id="arc.compiler.options.cd.30817344" isActive="true" name="Code density extension (-Xcd/-Xcode_density)" superClass="arc.compiler.options.cd" useByScannerDiscovery="true" value="true" valueType="boolean"/>
+								<option id="arc.compiler.options.timers.timer0.1716737856" isActive="true" name="Use Timer 0 (-Xtimer0)" superClass="arc.compiler.options.timers.timer0" useByScannerDiscovery="true" value="true" valueType="boolean"/>
+								<option id="arc.compiler.options.timers.timer1.1617607946" isActive="true" name="Use timer 1 (-Xtimer1)" superClass="arc.compiler.options.timers.timer1" useByScannerDiscovery="true" value="true" valueType="boolean"/>
+								<option id="arc.compiler.options.dsp2.1224160066" isActive="true" name="DSP instruction version 2(-Xdsp2)" superClass="arc.compiler.options.dsp2" useByScannerDiscovery="true" value="true" valueType="boolean"/>
+								<option id="arc.compiler.options.dspComplex.267248521" isActive="true" name="DSP complex instructions  (-Xdsp_complex)" superClass="arc.compiler.options.dspComplex" useByScannerDiscovery="true" value="true" valueType="boolean"/>
+								<option id="arc.compiler.options.dspDivsqrt.1708340963" isActive="true" name="DSP divide and square root instructions(-Xdsp_divsqrt=)" superClass="arc.compiler.options.dspDivsqrt" useByScannerDiscovery="true" value="radix2" valueType="enumerated"/>
+								<option id="arc.compiler.options.dspItu.790380237" isActive="true" name="Support for pre-accumulator shift (-Xdsp_itu)" superClass="arc.compiler.options.dspItu" useByScannerDiscovery="true" value="true" valueType="boolean"/>
+								<option id="arc.compiler.options.bitstream.1911891129" isActive="true" name="Support for bitstream instructions (-Xbitstream)" superClass="arc.compiler.options.bitstream" useByScannerDiscovery="true" value="true" valueType="boolean"/>
+								<option id="arc.compiler.options.xy.387529052" isActive="true" name="XY Memory (-Xxy)" superClass="arc.compiler.options.xy" useByScannerDiscovery="true" value="true" valueType="boolean"/>
+								<option id="arc.compiler.options.agu.2051656298" isActive="true" name="Address generator unit configuration" superClass="arc.compiler.options.agu" useByScannerDiscovery="true" value="large" valueType="enumerated"/>
+								<option id="arc.compiler.options.dma.1811165103" isActive="true" name="Enable DMA (-dmac)" superClass="arc.compiler.options.dma" useByScannerDiscovery="true" value="true" valueType="boolean"/>
+								<option id="arc.arc.compiler.options.harvard.281307245" isActive="true" name="Hccm memory convention (-Hccm)" superClass="arc.arc.compiler.options.harvard" useByScannerDiscovery="false" value="true" valueType="boolean"/>
+								<option id="arc.compiler.options.fsfpus_mpy.1625811451" isActive="true" name="Single-precision multiply" superClass="arc.compiler.options.fsfpus_mpy" useByScannerDiscovery="false" value="arc.options.fsfpus_mpy.slow" valueType="enumerated"/>
+								<option id="arc.compiler.options.fpus_div.1177735478" isActive="true" name="Single-precision floating point unit with divide and sqrt(-Xfpus_div)" superClass="arc.compiler.options.fpus_div" useByScannerDiscovery="true" value="true" valueType="boolean"/>
+								<option id="arc.compiler.options.fpuda.1961074302" isActive="true" name="Single-precision floating point unit and double precision assist (-Xfpuda)" superClass="arc.compiler.options.fpuda" useByScannerDiscovery="true" value="true" valueType="boolean"/>
+								<option id="arc.compiler.options.fpu_mac.1889895927" isActive="true" name="Fused floating point unit multiply addition/subtraction(-Xfpu_mac)" superClass="arc.compiler.options.fpu_mac" useByScannerDiscovery="true" value="true" valueType="boolean"/>
+								<option id="arc.compiler.options.stack_check.1650377320" isActive="true" name="Hardware Stack Checking(-Xstack_check)" superClass="arc.compiler.options.stack_check" useByScannerDiscovery="true" value="true" valueType="boolean"/>
+								<option id="arc.compiler.options.pc_width.504557143" isActive="true" name="PC register width (-Hpc_width=)" superClass="arc.compiler.options.pc_width" useByScannerDiscovery="false" value="com.arc.cdt.toolchain.arc.pcwidth.32" valueType="enumerated"/>
+								<option id="arc.compiler.options.rgfBankedRegs.554601118" isActive="true" name="ARC Core Register Per Additional Bank(-Hrgf_banked_regs=)" superClass="arc.compiler.options.rgfBankedRegs" useByScannerDiscovery="true" value="32" valueType="enumerated"/>
+								<option id="arc.compiler.options.bcf.1724108920" isActive="false" name="Tools Configuration File" superClass="arc.compiler.options.bcf" value="${workspace_loc:/${ProjName}/arc_core.tcf}" valueType="string"/>
+								<option id="arc.compiler.options.autoSyncTCF.290005789" isActive="false" name="Auto-Sync TCF" superClass="arc.compiler.options.autoSyncTCF" value="true" valueType="boolean"/>
+								<option id="arc.compiler.options.include_dirs.1630861987" isActive="false" name="Include Directories (one per line)" superClass="arc.compiler.options.include_dirs" useByScannerDiscovery="false" valueType="includePath">
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/embarc_bsp/inc}/..&quot;"/>
+								</option>
+								<option id="arc.compiler.options.defines.1710532752" isActive="false" superClass="arc.compiler.options.defines" valueType="definedSymbols">
+									<listOptionValue builtIn="false" value="MID_COMMON"/>
+								</option>
+								<inputType id="com.arc.cdt.toolchain.arc.ccac.inputTypeCPP.908188638" name="MetaWare C++ Input" superClass="com.arc.cdt.toolchain.arc.ccac.inputTypeCPP"/>
+								<inputType id="com.arc.cdt.toolchain.arc.ccac.inputTypeC.1206168706" name="MetaWare C Input" superClass="com.arc.cdt.toolchain.arc.ccac.inputTypeC"/>
+								<inputType id="com.arc.cdt.toolchain.arc.inputTypeCL.1327235408" name="MetaWare OpenCL" superClass="com.arc.cdt.toolchain.arc.inputTypeCL"/>
+							</tool>
+							<tool id="com.arc.cdt.toolchain.av2em.asmDebugExe.983829820" superClass="com.arc.cdt.toolchain.av2em.asmDebugExe">
+								<option id="arc.compiler.options.target.asm.version.69520376" isActive="true" name="ARC Core Version" superClass="arc.compiler.options.target.asm.version" value="arc.compiler.options.target.arcv2em" valueType="enumerated"/>
+								<option id="arc.compiler.options.asm.arcv2emcore.479982489" isActive="true" name="ARC EM Core" superClass="arc.compiler.options.asm.arcv2emcore" value="arc.compiler.options.arcv2emcore.core3" valueType="enumerated"/>
+								<option id="arc.asm.options.bs.1630161795" isActive="true" name="Barrel shifter (-Xbs/-Xbarrel_shifter)" superClass="arc.asm.options.bs" value="true" valueType="boolean"/>
+								<option id="arc.asm.options.sa.103879669" isActive="true" name="Shift Assist (-Xsa/-Xshift_assist)" superClass="arc.asm.options.sa" value="true" valueType="boolean"/>
+								<option id="arc.asm.options.unaligned.608968748" isActive="true" name="Unaligned memory access (-Xunaligned)" superClass="arc.asm.options.unaligned" value="true" valueType="boolean"/>
+								<option id="arc.asm.options.mpyEMoption.398932867" isActive="true" name="Multiply Option -Xmpy_option=" superClass="arc.asm.options.mpyEMoption" value="arc.options.mpyoption.mpyd" valueType="enumerated"/>
+								<option id="arc.asm.options.mpyHSoption.1545225325" isActive="true" name="Multiply Option -Xmpy_option=" superClass="arc.asm.options.mpyHSoption" value="arc.options.mpyoption.hsmpyd" valueType="enumerated"/>
+								<option id="arc.asm.options.div_rem.1789019377" isActive="true" name="Integer divide (-Xdiv_rem=)" superClass="arc.asm.options.div_rem" value="arc.options.divrem.radix2" valueType="enumerated"/>
+								<option id="arc.asm.options.bitscan.388285470" isActive="true" name="Bit scan (includes norm) (-Xbitscan)" superClass="arc.asm.options.bitscan" value="true" valueType="boolean"/>
+								<option id="arc.asm.options.swap.1689699516" isActive="true" name="Swap instruction (-Xswap)" superClass="arc.asm.options.swap" value="true" valueType="boolean"/>
+								<option id="arc.asm.options.cd.62813329" isActive="true" name="Code density extension (-Xcd/-Xcode_density)" superClass="arc.asm.options.cd" value="true" valueType="boolean"/>
+								<option id="arc.asm.options.timers.timer0.328650706" isActive="true" name="Use Timer 0 (-Xtimer0)" superClass="arc.asm.options.timers.timer0" value="true" valueType="boolean"/>
+								<option id="arc.asm.options.timers.timer1.1737180836" isActive="true" name="Use timer 1 (-Xtimer1)" superClass="arc.asm.options.timers.timer1" value="true" valueType="boolean"/>
+								<option id="arc.asm.options.dsp2.1441392678" isActive="true" name="DSP Instruction version 2(-Xdsp2)" superClass="arc.asm.options.dsp2" value="true" valueType="boolean"/>
+								<option id="arc.asm.options.dspComplex.1509452895" isActive="true" name="DSP complex instructions  (-Xdsp_complex)" superClass="arc.asm.options.dspComplex" value="true" valueType="boolean"/>
+								<option id="arc.asm.options.dspDivsqrt.734873956" isActive="true" name="DSP divide and square root instructions(-Xdsp_divsqrt=)" superClass="arc.asm.options.dspDivsqrt" value="radix2" valueType="enumerated"/>
+								<option id="arc.asm.options.dspItu.1449079949" isActive="true" name="Support for pre-accumulator shift (-Xdsp_itu)" superClass="arc.asm.options.dspItu" value="true" valueType="boolean"/>
+								<option id="arc.asm.options.bitstream.1832291339" isActive="true" name="Support for bitstream instructions (-Xbitstream)" superClass="arc.asm.options.bitstream" value="true" valueType="boolean"/>
+								<option id="arc.asm.options.xy.163092451" isActive="true" name="XY Memory (-Xxy)" superClass="arc.asm.options.xy" value="true" valueType="boolean"/>
+								<option id="arc.asm.options.agu.842484875" isActive="true" name="Address generator unit configuration" superClass="arc.asm.options.agu" value="large" valueType="enumerated"/>
+								<option id="arc.asm.options.dma.1964738200" isActive="true" name="Enable DMA (-dmac)" superClass="arc.asm.options.dma" value="true" valueType="boolean"/>
+								<option id="arc.asm.options.fpus_div.1807369197" isActive="true" name="Single-precision floating point unit with divide and sqrt(-Xfpus_div)" superClass="arc.asm.options.fpus_div" value="true" valueType="boolean"/>
+								<option id="arc.asm.options.fpuda.1101185218" isActive="true" name="Single-precision floating point unit and double precision assist (-Xfpuda)" superClass="arc.asm.options.fpuda" value="true" valueType="boolean"/>
+								<option id="arc.asm.options.fpu_mac.1238313766" isActive="true" name="Fused floating point unit multiply addition/subtraction(-Xfpu_mac)" superClass="arc.asm.options.fpu_mac" value="true" valueType="boolean"/>
+								<option id="arc.asm.options.stack_check.544512424" isActive="true" name="Hardware Stack Checking(-Xstack_check)" superClass="arc.asm.options.stack_check" value="true" valueType="boolean"/>
+								<option id="com.arc.cdt.toolchain.asm.option.defines.228350517" isActive="false" name="Preprocessor Defines (one per line)" superClass="com.arc.cdt.toolchain.asm.option.defines" valueType="definedSymbols">
+									<listOptionValue builtIn="false" value="MID_COMMON"/>
+								</option>
+								<option id="com.arc.cdt.toolchain.asm.option.includes.1888976304" isActive="false" name="Directories to search for .include files" superClass="com.arc.cdt.toolchain.asm.option.includes" valueType="includePath">
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/embarc_bsp/inc}/..&quot;"/>
+								</option>
+								<option id="com.arc.cdt.toolchain.asm.option.asmcpp.323595310" isActive="false" name="Process C-style preprocessing directives (-Hasmcpp)" superClass="com.arc.cdt.toolchain.asm.option.asmcpp" value="true" valueType="boolean"/>
+								<inputType id="com.arc.cdt.toolchain.asminput.1723236380" name="Assembler Inputs" superClass="com.arc.cdt.toolchain.asminput"/>
+							</tool>
+							<tool id="com.arc.cdt.toolchain.av2em.exeLinkerDebug.685974633" superClass="com.arc.cdt.toolchain.av2em.exeLinkerDebug">
+								<option id="com.arc.cdt.toolchain.option.linker.autoGenLCF.908565479" isActive="false" name="Auto-Generate Linker Command File (LCF)" superClass="com.arc.cdt.toolchain.option.linker.autoGenLCF" value="false" valueType="boolean"/>
+								<option id="arc.linker.options.target.version.550133502" isActive="true" name="Target Runtime Libraries" superClass="arc.linker.options.target.version" value="arc.compiler.options.target.arcv2em" valueType="enumerated"/>
+								<option id="com.arc.cdt.toolchain.option.linker.svr3.1488916824" isActive="false" name="SVR3-style command files" superClass="com.arc.cdt.toolchain.option.linker.svr3" valueType="userObjs">
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/arc_core.ld}&quot;"/>
+								</option>
+								<option id="arc.compiler.options.linker.arcv2emcore.62324536" isActive="true" name="ARC EM Core" superClass="arc.compiler.options.linker.arcv2emcore" value="arc.compiler.options.arcv2emcore.core3" valueType="enumerated"/>
+								<option id="arc.linker.options.bs.345044048" isActive="true" name="Barrel shifter (-Xbs/-Xbarrel_shifter)" superClass="arc.linker.options.bs" value="true" valueType="boolean"/>
+								<option id="arc.linker.options.sa.206551518" isActive="true" name="Shift Assist (-Xsa/-Xshift_assist)" superClass="arc.linker.options.sa" value="true" valueType="boolean"/>
+								<option id="arc.linker.options.unaligned.887741271" isActive="true" name="Unaligned memory access (-Xunaligned)" superClass="arc.linker.options.unaligned" value="true" valueType="boolean"/>
+								<option id="arc.linker.options.mpyEMoption.1395363815" isActive="true" name="Multiply Option -Xmpy_option=" superClass="arc.linker.options.mpyEMoption" value="arc.options.mpyoption.mpyd" valueType="enumerated"/>
+								<option id="arc.linker.options.mpyHSoption.134927529" isActive="true" name="Multiply Option -Xmpy_option=" superClass="arc.linker.options.mpyHSoption" value="arc.options.mpyoption.hsmpyd" valueType="enumerated"/>
+								<option id="arc.linker.options.div_rem.1556380844" isActive="true" name="Integer divide (-Xdiv_rem=)" superClass="arc.linker.options.div_rem" value="arc.options.divrem.radix2" valueType="enumerated"/>
+								<option id="arc.linker.options.bitscan.1140207902" isActive="true" name="Bit scan instructions (-Xbitscan)" superClass="arc.linker.options.bitscan" value="true" valueType="boolean"/>
+								<option id="arc.linker.options.swap.1778030890" isActive="true" name="Swap instruction (-Xswap)" superClass="arc.linker.options.swap" value="true" valueType="boolean"/>
+								<option id="arc.linker.options.cd.915325992" isActive="true" name="Code density extension (-Xcd/-Xcode_density)" superClass="arc.linker.options.cd" value="true" valueType="boolean"/>
+								<option id="arc.linker.options.dsp2.906540111" isActive="true" name="DSP instruction version 2 (-Xdsp2)" superClass="arc.linker.options.dsp2" value="true" valueType="boolean"/>
+								<option id="arc.linker.options.dspComplex.345893916" isActive="true" name="DSP complex instruction (-Xdsp_complex)" superClass="arc.linker.options.dspComplex" value="true" valueType="boolean"/>
+								<option id="arc.linker.options.dspDivsqrt.979565823" isActive="true" name="DSP divide and square root instructions(-Xdsp_divsqrt=)" superClass="arc.linker.options.dspDivsqrt" value="radix2" valueType="enumerated"/>
+								<option id="arc.linker.options.dspItu.1935440965" isActive="true" name="Support for pre-accumulator shift (-Xdsp_itu)" superClass="arc.linker.options.dspItu" value="true" valueType="boolean"/>
+								<option id="arc.linker.options.bitstream.1814887819" isActive="true" name="Support for bitstream instructions (-Xbitstream)" superClass="arc.linker.options.bitstream" value="true" valueType="boolean"/>
+								<option id="arc.linker.options.xy.782523447" isActive="true" name="XY Memory (-Xxy)" superClass="arc.linker.options.xy" value="true" valueType="boolean"/>
+								<option id="arc.linker.options.agu.1902872962" isActive="true" name="Address generator unit configuration" superClass="arc.linker.options.agu" value="large" valueType="enumerated"/>
+								<option id="arc.linker.options.fpus_div.1580397079" isActive="true" name="Single-precision floating point unit with divide and sqrt(-Xfpus_div)" superClass="arc.linker.options.fpus_div" value="true" valueType="boolean"/>
+								<option id="arc.linker.options.fpuda.1481373692" isActive="true" name="Single-precision floating point unit and double precision assist (-Xfpuda)" superClass="arc.linker.options.fpuda" value="true" valueType="boolean"/>
+								<option id="arc.linker.options.fpu_mac.1444644464" isActive="true" name="Fused floating point unit multiply addition/subtraction(-Xfpu_mac)" superClass="arc.linker.options.fpu_mac" value="true" valueType="boolean"/>
+								<option id="arc.linker.options.stack_check.220407053" isActive="true" name="Hardware Stack Checking(-Xstack_check)" superClass="arc.linker.options.stack_check" value="true" valueType="boolean"/>
+								<option id="arc.linker.options.pc_width.157900875" isActive="true" name="PC register width (-Bpc_width=)" superClass="arc.linker.options.pc_width" value="com.arc.cdt.toolchain.arc.pcwidth.32" valueType="enumerated"/>
+								<option id="arc.linker.options.harvard.1012361204" isActive="true" name="Hccm memory convention (-Hccm)" superClass="arc.linker.options.harvard" value="true" valueType="boolean"/>
+								<option id="arc.arc.linker.options.xtimer.1499234672" isActive="true" name="Timer for hardware profiling" superClass="arc.arc.linker.options.xtimer" value="1" valueType="enumerated"/>
+								<option id="arc.linker.options.nocrt.2051027212" isActive="false" name="Link in default startup code (-Hnocrt)" superClass="arc.linker.options.nocrt" value="false" valueType="boolean"/>
+								<option id="com.arc.cdt.toolchain.linker.option.map.2133272242" isActive="false" name="Generate listing file (=.map)" superClass="com.arc.cdt.toolchain.linker.option.map" value="true" valueType="boolean"/>
+								<inputType id="com.arc.cdt.toolchain.linker.input.2015751056" name="Linker Input" superClass="com.arc.cdt.toolchain.linker.input">
+									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
+									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
+								</inputType>
+							</tool>
+							<tool id="com.arc.cdt.toolchain.arc.archiver.571541613" superClass="com.arc.cdt.toolchain.arc.archiver"/>
+						</toolChain>
+					</folderInfo>
+				</configuration>
+			</storageModule>
+			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
+		</cconfiguration>
+	</storageModule>
+	<storageModule moduleId="cdtBuildSystem" version="4.0.0">
+		<project id="bsp_hello.com.arc.cdt.toolchain.arc.av2em.exeProject.837937556" name="Executable" projectType="com.arc.cdt.toolchain.arc.av2em.exeProject"/>
+	</storageModule>
+	<storageModule moduleId="scannerConfiguration">
+		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		<scannerConfigBuildInfo instanceId="com.arc.cdt.toolchain.av2em.exeDebugConfig.1723870626;com.arc.cdt.toolchain.av2em.exeDebugConfig.1723870626.;av2em.exe.debug.exeCompilerDebug.1582870860;com.arc.cdt.toolchain.arc.inputTypeCL.1327235408">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="com.arc.cdt.toolchain.av2em.exeDebugConfig.1723870626;com.arc.cdt.toolchain.av2em.exeDebugConfig.1723870626.;av2em.exe.debug.exeCompilerDebug.1582870860;com.arc.cdt.toolchain.arc.ccac.inputTypeCPP.908188638">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="com.arc.cdt.toolchain.av2em.exeDebugConfig.1723870626;com.arc.cdt.toolchain.av2em.exeDebugConfig.1723870626.;av2em.exe.debug.exeCompilerDebug.1582870860;com.arc.cdt.toolchain.arc.ccac.inputTypeC.1206168706">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+	</storageModule>
+	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
+	<storageModule moduleId="refreshScope" versionNumber="2">
+		<configuration configurationName="build_arcem">
+			<resource resourceType="PROJECT" workspacePath="/bsp_hello"/>
+		</configuration>
+		<configuration configurationName="Debug">
+			<resource resourceType="PROJECT" workspacePath="/bsp_hello"/>
+		</configuration>
+	</storageModule>
+</cproject>

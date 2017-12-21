@@ -1,0 +1,36 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+compiler.path.cc: arc-elf32-gcc
+compiler.path.cpp: arc-elf32-g++
+compiler.path.archive: arc-elf32-ar
+compiler.path.as: arc-elf32-gcc
+compiler.path.objdump: arc-elf32-objdump
+compiler.path.objsize: arc-elf32-size
+compiler.path.objcopy: arc-elf32-objcopy
+
+compiler.flags.default: -mno-sdata -Wall -Werror -fno-exceptions -fomit-frame-pointer -ffunction-sections -fdata-sections
+compiler.flags.optimized: [compiler.flags.default, -Os -ggdb]
+compiler.flags.debug: [compiler.flags.default, -Og -ggdb]
+
+compiler.as.flags: [-x, assembler-with-cpp]
+
+compiler.ld.flags: -static -specs=nosys.specs -lgcc -Wl,--gc-sections -nostartfiles
+compiler.ld.resolve_circular_deps: true
+compiler.ld.mapfile: true

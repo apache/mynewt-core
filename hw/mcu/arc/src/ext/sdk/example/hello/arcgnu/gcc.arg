@@ -1,0 +1,11 @@
+	-mcpu=em4_fpuda
+	-mlittle-endian
+	-mcode-density
+	-mdiv-rem
+	-mswap
+	-mnorm
+	-mmpy-option=6
+	-mbarrel-shifter
+	-mfpu=fpuda_all
+	--param l1-cache-size=16384
+	--param l1-cache-line-size=32
