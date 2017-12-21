@@ -2372,7 +2372,9 @@ static bool ValidateDatarate( int8_t datarate, uint16_t* channelsMask )
 static int8_t
 LimitTxPower( int8_t txPower, int8_t maxBandTxPower )
 {
+#if defined( USE_BAND_915 ) || defined( USE_BAND_915_HYBRID )
     int8_t dr;
+#endif
     int8_t resultTxPower;
 
     // Limit tx power to the band max
