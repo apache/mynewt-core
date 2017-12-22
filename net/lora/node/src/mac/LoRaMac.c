@@ -3416,7 +3416,7 @@ SendFrameOnChannel( ChannelParams_t channel )
 
     /* Set MCPS confirm information */
     McpsConfirm.Datarate = LoRaMacParams.ChannelsDatarate;
-    McpsConfirm.TxPower = txPowerIndex;
+    McpsConfirm.TxPower = txPower;
     McpsConfirm.UpLinkFrequency = channel.Frequency;
 
     Radio.SetChannel( channel.Frequency );

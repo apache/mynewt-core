@@ -51,7 +51,7 @@ lora_app_shell_txd_func(uint8_t port, LoRaMacEventInfoStatus_t status,
 
     lpkt = LORA_PKT_INFO_PTR(om);
     console_printf("\tdr:%u\n", lpkt->txdinfo.datarate);
-    console_printf("\ttxpower:%d\n", lpkt->txdinfo.txpower);
+    console_printf("\ttxpower (dbm):%d\n", lpkt->txdinfo.txpower);
     console_printf("\ttries:%u\n", lpkt->txdinfo.retries);
     console_printf("\tack_rxd:%u\n", lpkt->txdinfo.ack_rxd);
     console_printf("\ttx_time_on_air:%lu\n", lpkt->txdinfo.tx_time_on_air);
