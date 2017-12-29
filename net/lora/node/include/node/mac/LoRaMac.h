@@ -53,6 +53,8 @@
 #include "node/utilities.h"
 #include "os/os.h"
 
+struct lora_pkt_info;
+
 /*!
  * Beacon interval in ms
  */
@@ -683,241 +685,30 @@ typedef union eLoRaMacFlags_t
  *
  * Primitive        | Function
  * ---------------- | :---------------------:
- * MCPS-Request     | \ref LoRaMacMlmeRequest
- * MCPS-Confirm     | MacMcpsConfirm in \ref LoRaMacPrimitives_t
- * MCPS-Indication  | MacMcpsIndication in \ref LoRaMacPrimitives_t
+ * MCPS-Request     | \ref lora_node_mcps_request
+ * MLME-Confirm    | \ref lora_node_mac_mlme_confirm
+ * MCPS-Confirm     | \ref lora_node_mac_mcps_confirm
+ * MCPS-Indication  |  \ref lora_node_mac_mcps_indicate
  */
 typedef enum eMcps
 {
     /*!
      * Unconfirmed LoRaMAC frame
      */
-    MCPS_UNCONFIRMED,
+    MCPS_UNCONFIRMED = 0,
     /*!
      * Confirmed LoRaMAC frame
      */
-    MCPS_CONFIRMED,
+    MCPS_CONFIRMED = 1,
     /*!
      * Multicast LoRaMAC frame
      */
-    MCPS_MULTICAST,
+    MCPS_MULTICAST = 2,
     /*!
      * Proprietary frame
      */
-    MCPS_PROPRIETARY,
+    MCPS_PROPRIETARY = 3,
 }Mcps_t;
-
-/*!
- * LoRaMAC MCPS-Request for an unconfirmed frame
- */
-typedef struct sMcpsReqUnconfirmed
-{
-    /*!
-     * Frame port field. Must be set if the payload is not empty. Use the
-     * application specific frame port values: [1...223]
-     *
-     * LoRaWAN Specification V1.0.1, chapter 4.3.2
-     */
-    uint8_t fPort;
-    /*!
-     * Uplink datarate, if ADR is off
-     */
-    int8_t Datarate;
-}McpsReqUnconfirmed_t;
-
-/*!
- * LoRaMAC MCPS-Request for a confirmed frame
- */
-typedef struct sMcpsReqConfirmed
-{
-    /*!
-     * Frame port field. Must be set if the payload is not empty. Use the
-     * application specific frame port values: [1...223]
-     *
-     * LoRaWAN Specification V1.0.1, chapter 4.3.2
-     */
-    uint8_t fPort;
-    /*!
-     * Uplink datarate, if ADR is off
-     */
-    int8_t Datarate;
-    /*!
-     * Number of trials to transmit the frame, if the LoRaMAC layer did not
-     * receive an acknowledgment. The MAC performs a datarate adaptation,
-     * according to the LoRaWAN Specification V1.0.1, chapter 19.4, according
-     * to the following table:
-     *
-     * Transmission nb | Data Rate
-     * ----------------|-----------
-     * 1 (first)       | DR
-     * 2               | DR
-     * 3               | max(DR-1,0)
-     * 4               | max(DR-1,0)
-     * 5               | max(DR-2,0)
-     * 6               | max(DR-2,0)
-     * 7               | max(DR-3,0)
-     * 8               | max(DR-3,0)
-     *
-     * Note, that if NbTrials is set to 1 or 2, the MAC will not decrease
-     * the datarate, in case the LoRaMAC layer did not receive an acknowledgment
-     */
-    uint8_t NbTrials;
-}McpsReqConfirmed_t;
-
-/*!
- * LoRaMAC MCPS-Request for a proprietary frame
- */
-typedef struct sMcpsReqProprietary
-{
-    /*!
-     * Uplink datarate, if ADR is off
-     */
-    int8_t Datarate;
-}McpsReqProprietary_t;
-
-/*!
- * LoRaMAC MCPS-Request structure
- */
-typedef struct sMcpsReq
-{
-    /*!
-     * MCPS-Request type
-     */
-    Mcps_t Type;
-
-    /* Pointer to mbuf */
-    struct os_mbuf *om;
-
-    /*!
-     * MCPS-Request parameters
-     */
-    union uMcpsParam
-    {
-        /*!
-         * MCPS-Request parameters for an unconfirmed frame
-         */
-        McpsReqUnconfirmed_t Unconfirmed;
-        /*!
-         * MCPS-Request parameters for a confirmed frame
-         */
-        McpsReqConfirmed_t Confirmed;
-        /*!
-         * MCPS-Request parameters for a proprietary frame
-         */
-        McpsReqProprietary_t Proprietary;
-    }Req;
-}McpsReq_t;
-
-/*!
- * LoRaMAC MCPS-Confirm
- */
-typedef struct sMcpsConfirm
-{
-    /* Pointer to packet buffer */
-    struct os_mbuf *om;
-
-    /*!
-     * Holds the previously performed MCPS-Request Type
-     */
-    Mcps_t McpsRequest;
-    /*!
-     * Status of the operation
-     */
-    LoRaMacEventInfoStatus_t Status;
-    /*!
-     * Uplink datarate
-     */
-    uint8_t Datarate;
-    /*!
-     * Transmission power
-     */
-    int8_t TxPower;
-    /*!
-     * Set if an acknowledgement was received
-     */
-    bool AckReceived;
-    /*!
-     * Provides the number of retransmissions
-     */
-    uint8_t NbRetries;
-    /*!
-     * The transmission time on air of the frame
-     */
-    uint32_t TxTimeOnAir;
-    /*!
-     * The uplink counter value related to the frame
-     */
-    uint32_t UpLinkCounter;
-    /*!
-     * The uplink frequency related to the frame
-     */
-    uint32_t UpLinkFrequency;
-}McpsConfirm_t;
-
-/*!
- * LoRaMAC MCPS-Indication primitive
- */
-typedef struct sMcpsIndication
-{
-    /*!
-     * MCPS-Indication type
-     */
-    Mcps_t McpsIndication;
-    /*!
-     * Status of the operation
-     */
-    LoRaMacEventInfoStatus_t Status;
-    /*!
-     * Multicast
-     */
-    uint8_t Multicast;
-    /*!
-     * Application port
-     */
-    uint8_t Port;
-    /*!
-     * Downlink datarate
-     */
-    uint8_t RxDatarate;
-    /*!
-     * Frame pending status
-     */
-    uint8_t FramePending;
-    /*!
-     * Pointer to the received data stream
-     */
-    uint8_t *Buffer;
-    /*!
-     * Size of the received data stream
-     */
-    uint16_t BufferSize;
-    /*!
-     * Indicates, if data is available
-     */
-    bool RxData;
-    /*!
-     * Rssi of the received packet
-     */
-    int16_t Rssi;
-    /*!
-     * Snr of the received packet
-     */
-    uint8_t Snr;
-    /*!
-     * Receive window
-     *
-     * [0: Rx window 1, 1: Rx window 2]
-     */
-    uint8_t RxSlot;
-    /*!
-     * Set if an acknowledgement was received
-     */
-    bool AckReceived;
-    /*!
-     * The downlink counter value for the received frame
-     */
-    uint32_t DownLinkCounter;
-}McpsIndication_t;
 
 /*!
  * \brief LoRaMAC management services
@@ -946,25 +737,25 @@ typedef enum eMlme
      *
      * LoRaWAN Specification V1.0.1, chapter 6.2
      */
-    MLME_JOIN,
+    MLME_JOIN = 0,
     /*!
      * LinkCheckReq - Connectivity validation
      *
      * LoRaWAN Specification V1.0.1, chapter 5, table 4
      */
-    MLME_LINK_CHECK,
+    MLME_LINK_CHECK = 1,
     /*!
      * Sets Tx continuous wave mode
      *
      * LoRaWAN end-device certification
      */
-    MLME_TXCW,
+    MLME_TXCW = 2,
     /*!
      * Sets Tx continuous wave mode (new LoRa-Alliance CC definition)
      *
      * LoRaWAN end-device certification
      */
-    MLME_TXCW_1,
+    MLME_TXCW_1 = 3,
 }Mlme_t;
 
 /*!
@@ -1040,38 +831,6 @@ typedef struct sMlmeReq
         MlmeReqTxCw_t TxCw;
     }Req;
 }MlmeReq_t;
-
-/*!
- * LoRaMAC MLME-Confirm primitive
- */
-typedef struct sMlmeConfirm
-{
-    /*!
-     * Holds the previously performed MLME-Request
-     */
-    Mlme_t MlmeRequest;
-    /*!
-     * Status of the operation
-     */
-    LoRaMacEventInfoStatus_t Status;
-    /*!
-     * The transmission time on air of the frame
-     */
-    uint32_t TxTimeOnAir;
-    /*!
-     * Demodulation margin. Contains the link margin [dB] of the last
-     * successfully received LinkCheckReq
-     */
-    uint8_t DemodMargin;
-    /*!
-     * Number of gateways which received the last LinkCheckReq
-     */
-    uint8_t NbGateways;
-    /*!
-     * Provides the number of retransmissions
-     */
-    uint8_t NbRetries;
-}MlmeConfirm_t;
 
 /*!
  * LoRa Mac Information Base (MIB)
@@ -1589,32 +1348,6 @@ typedef enum eLoRaMacStatus
     LORAMAC_STATUS_DEVICE_OFF,
 }LoRaMacStatus_t;
 
-/*!
- * LoRaMAC events structure
- * Used to notify upper layers of MAC events
- */
-typedef struct sLoRaMacPrimitives
-{
-    /*!
-     * \brief   MCPS-Confirm primitive
-     *
-     * \param   [OUT] MCPS-Confirm parameters
-     */
-    void ( *MacMcpsConfirm )( McpsConfirm_t *McpsConfirm );
-    /*!
-     * \brief   MCPS-Indication primitive
-     *
-     * \param   [OUT] MCPS-Indication parameters
-     */
-    void ( *MacMcpsIndication )( McpsIndication_t *McpsIndication );
-    /*!
-     * \brief   MLME-Confirm primitive
-     *
-     * \param   [OUT] MLME-Confirm parameters
-     */
-    void ( *MacMlmeConfirm )( MlmeConfirm_t *MlmeConfirm );
-}LoRaMacPrimitives_t;
-
 typedef struct sLoRaMacCallback
 {
     /*!
@@ -1633,11 +1366,7 @@ typedef struct sLoRaMacCallback
  *
  * \details In addition to the initialization of the LoRaMAC layer, this
  *          function initializes the callback primitives of the MCPS and
- *          MLME services. Every data field of \ref LoRaMacPrimitives_t must be
- *          set to a valid callback function.
- *
- * \param   [IN] events - Pointer to a structure defining the LoRaMAC
- *                        event functions. Refer to \ref LoRaMacPrimitives_t.
+ *          MLME services.
  *
  * \param   [IN] events - Pointer to a structure defining the LoRaMAC
  *                        callback functions. Refer to \ref LoRaMacCallback_t.
@@ -1647,7 +1376,7 @@ typedef struct sLoRaMacCallback
  *          \ref LORAMAC_STATUS_OK,
  *          \ref LORAMAC_STATUS_PARAMETER_INVALID.
  */
-LoRaMacStatus_t LoRaMacInitialization( LoRaMacPrimitives_t *primitives, LoRaMacCallback_t *callbacks );
+LoRaMacStatus_t LoRaMacInitialization( LoRaMacCallback_t *callbacks );
 
 /*!
  * \brief   Queries the LoRaMAC if it is possible to send the next frame with
@@ -1849,22 +1578,8 @@ LoRaMacStatus_t LoRaMacMlmeRequest( MlmeReq_t *mlmeRequest );
  *          code-snippet shows how to use the API to send an unconfirmed
  *          LoRaMAC frame.
  *
- * \code
- * uint8_t myBuffer[] = { 1, 2, 3 };
- *
- * McpsReq_t mcpsReq;
- * mcpsReq.Type = MCPS_UNCONFIRMED;
- * mcpsReq.Req.Unconfirmed.fPort = 1;
- * mcpsReq.Req.Unconfirmed.fBuffer = myBuffer;
- * mcpsReq.Req.Unconfirmed.fBufferSize = sizeof( myBuffer );
- *
- * if( LoRaMacMcpsRequest( &mcpsReq ) == LORAMAC_STATUS_OK )
- * {
- *   // Service started successfully. Waiting for the MCPS-Confirm event
- * }
- * \endcode
- *
- * \param   [IN] mcpsRequest - MCPS-Request to perform. Refer to \ref McpsReq_t.
+ * \param   [om] Pointer to mbuf to transmit.
+ * \param   [txi] Pointer to lora_pkt_info structure of current transmission.
  *
  * \retval  LoRaMacStatus_t Status of the operation. Possible returns are:
  *          \ref LORAMAC_STATUS_OK,
@@ -1875,7 +1590,8 @@ LoRaMacStatus_t LoRaMacMlmeRequest( MlmeReq_t *mlmeRequest );
  *          \ref LORAMAC_STATUS_LENGTH_ERROR,
  *          \ref LORAMAC_STATUS_DEVICE_OFF.
  */
-LoRaMacStatus_t LoRaMacMcpsRequest( McpsReq_t *mcpsRequest );
+LoRaMacStatus_t
+LoRaMacMcpsRequest(struct os_mbuf *om, struct lora_pkt_info *txi);
 
 /*!
  * \brief   lora_mac_tx_state

@@ -536,11 +536,6 @@ enum eLoRaMacState
 uint32_t LoRaMacState;
 
 /*!
- * LoRaMac upper layer event functions
- */
-static LoRaMacPrimitives_t *LoRaMacPrimitives;
-
-/*!
  * LoRaMac upper layer callback functions
  */
 static LoRaMacCallback_t *LoRaMacCallbacks;
@@ -600,21 +595,6 @@ static uint8_t JoinRequestTrials;
 static uint8_t MaxJoinRequestTrials;
 
 /*!
- * Structure to hold an MCPS indication data.
- */
-static McpsIndication_t McpsIndication;
-
-/*!
- * Structure to hold MCPS confirm data.
- */
-static McpsConfirm_t McpsConfirm;
-
-/*!
- * Structure to hold MLME confirm data.
- */
-static MlmeConfirm_t MlmeConfirm;
-
-/*!
  * Holds the current rx window slot
  */
 static uint8_t RxSlot;
@@ -664,15 +644,15 @@ OnRadioRxDone(uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr)
     os_eventq_put(lora_node_mac_evq_get(), &g_lora_mac_radio_rx_event);
 
     /*
-      * XXX: for class C devices we may need to handle this differently as
+      * TODO: for class C devices we may need to handle this differently as
       * the device is continuously listening I believe and it may be possible
       * to get a receive done event before the previous one has been handled.
       */
     /* The ISR fills out the payload pointer, size, rssi and snr of rx pdu */
-    McpsIndication.Rssi = rssi;
-    McpsIndication.Snr = snr;
-    McpsIndication.Buffer = payload;
-    McpsIndication.BufferSize = size;
+    g_lora_mac_data.rxpkt.rxdinfo.rssi = rssi;
+    g_lora_mac_data.rxpkt.rxdinfo.snr = snr;
+    g_lora_mac_data.rxbuf = payload;
+    g_lora_mac_data.rxbufsize = size;
 }
 
 /**
@@ -1024,32 +1004,31 @@ lora_mac_send_mcps_confirm(LoRaMacEventInfoStatus_t status)
 {
     /* We are no longer running a tx service */
     LoRaMacState &= ~LORAMAC_TX_RUNNING;
+    /* TODO: deal w/this bit. What exactly does McpsReq mean? Can om be NULL? */
     if (LoRaMacFlags.Bits.McpsReq == 1) {
-        McpsConfirm.Status = status;
-        LoRaMacPrimitives->MacMcpsConfirm( &McpsConfirm );
+        assert(g_lora_mac_data.curtx != NULL);
+        g_lora_mac_data.curtx->status = status;
+        if (g_lora_mac_data.cur_tx_mbuf) {
+            lora_app_mcps_confirm(g_lora_mac_data.cur_tx_mbuf);
+        }
         LoRaMacFlags.Bits.McpsReq = 0;
     }
     lora_node_chk_txq();
 }
 
 /**
- * Called to send MLME confirmations
+ * Called to send join confirmations
  */
 static void
-lora_mac_send_mlme_confirm(LoRaMacEventInfoStatus_t status)
+lora_mac_send_join_confirm(LoRaMacEventInfoStatus_t status, uint8_t attempts)
 {
-    /* We are no longer running a tx service */
-    if (MlmeConfirm.MlmeRequest == MLME_JOIN) {
-        LoRaMacState &= ~LORAMAC_TX_RUNNING;
-    }
-
-    MlmeConfirm.Status = status;
-    LoRaMacPrimitives->MacMlmeConfirm( &MlmeConfirm );
+    LoRaMacState &= ~LORAMAC_TX_RUNNING;
+    lora_app_join_confirm(status, attempts);
     LoRaMacFlags.Bits.MlmeReq = 0;
 }
 
 static void
-lora_mac_confirmed_tx_fail(void)
+lora_mac_confirmed_tx_fail(struct lora_pkt_info *txi)
 {
     STATS_INC(lora_mac_stats, confirmed_tx_fail);
 
@@ -1070,8 +1049,8 @@ lora_mac_confirmed_tx_fail(void)
         } else {
             // The DR is not applicable for the payload size
             NodeAckRequested = false;
-            McpsConfirm.NbRetries = AckTimeoutRetriesCounter;
-            McpsConfirm.Datarate = LoRaMacParams.ChannelsDatarate;
+            txi->txdinfo.retries = AckTimeoutRetriesCounter;
+            txi->txdinfo.datarate = LoRaMacParams.ChannelsDatarate;
             UpLinkCounter++;
             lora_mac_send_mcps_confirm(LORAMAC_EVENT_INFO_STATUS_TX_DR_PAYLOAD_SIZE_ERROR);
         }
@@ -1093,13 +1072,13 @@ lora_mac_confirmed_tx_fail(void)
 #endif
         UpLinkCounter++;
         NodeAckRequested = false;
-        McpsConfirm.NbRetries = AckTimeoutRetriesCounter;
+        txi->txdinfo.retries = AckTimeoutRetriesCounter;
         lora_mac_send_mcps_confirm(LORAMAC_EVENT_INFO_STATUS_TX_RETRIES_EXCEEDED);
     }
 }
 
 static void
-lora_mac_confirmed_tx_success(void)
+lora_mac_confirmed_tx_success(struct lora_pkt_info *txi)
 {
     /* XXX: should this be done on success? */
 #if defined( USE_BAND_433 ) || defined( USE_BAND_780 ) || defined( USE_BAND_868 )
@@ -1121,8 +1100,8 @@ lora_mac_confirmed_tx_success(void)
     STATS_INC(lora_mac_stats, confirmed_tx_good);
     UpLinkCounter++;
     NodeAckRequested = false;
-    McpsConfirm.AckReceived = true;
-    McpsConfirm.NbRetries = AckTimeoutRetriesCounter;
+    txi->txdinfo.ack_rxd = true;
+    txi->txdinfo.retries = AckTimeoutRetriesCounter;
     lora_mac_send_mcps_confirm(LORAMAC_EVENT_INFO_STATUS_OK);
 }
 
@@ -1133,8 +1112,8 @@ lora_mac_join_req_tx_fail(void)
     if (JoinRequestTrials >= MaxJoinRequestTrials) {
         /* Join was a failure */
         STATS_INC(lora_mac_stats, join_failures);
-        MlmeConfirm.NbRetries = JoinRequestTrials;
-        lora_mac_send_mlme_confirm(LORAMAC_EVENT_INFO_STATUS_JOIN_FAIL);
+        lora_mac_send_join_confirm(LORAMAC_EVENT_INFO_STATUS_JOIN_FAIL,
+                                   JoinRequestTrials);
 
         /*
          * The reason we do this if failed to join is to flush the transmit
@@ -1150,13 +1129,13 @@ lora_mac_join_req_tx_fail(void)
 }
 
 static void
-lora_mac_unconfirmed_tx_done(void)
+lora_mac_unconfirmed_tx_done(struct lora_pkt_info *txi)
 {
     STATS_INC(lora_mac_stats, unconfirmed_tx);
 
     /* Unconfirmed frames get repeated N times. */
     if (ChannelsNbRepCounter >= LoRaMacParams.ChannelsNbRep) {
-        McpsConfirm.NbRetries = ChannelsNbRepCounter;
+        txi->txdinfo.retries = ChannelsNbRepCounter;
         ChannelsNbRepCounter = 0;
         AdrAckCounter++;
         UpLinkCounter++;
@@ -1177,6 +1156,8 @@ lora_mac_unconfirmed_tx_done(void)
 static void
 lora_mac_tx_service_done(int rxd_confirmation)
 {
+    struct lora_pkt_info *txi;
+
     /* If no MLME or MCPS request in progress we just return. */
     if ((LoRaMacFlags.Bits.MlmeReq == 0) && (LoRaMacFlags.Bits.McpsReq == 0)) {
         assert((LoRaMacState & LORAMAC_TX_RUNNING) == 0);
@@ -1184,18 +1165,21 @@ lora_mac_tx_service_done(int rxd_confirmation)
         return;
     }
 
-    if (LoRaMacFlags.Bits.MlmeReq && (MlmeConfirm.MlmeRequest == MLME_JOIN)) {
+    if (LoRaMacFlags.Bits.MlmeReq &&
+        (g_lora_mac_data.txpkt.pkt_type == MLME_JOIN)) {
         lora_mac_join_req_tx_fail();
     } else {
         if (LoRaMacFlags.Bits.McpsReq == 1) {
+            txi = g_lora_mac_data.curtx;
+            assert(txi != NULL);
             if (NodeAckRequested) {
                 if (rxd_confirmation) {
-                    lora_mac_confirmed_tx_success();
+                    lora_mac_confirmed_tx_success(txi);
                 } else {
-                    lora_mac_confirmed_tx_fail();
+                    lora_mac_confirmed_tx_fail(txi);
                 }
             } else {
-                lora_mac_unconfirmed_tx_done();
+                lora_mac_unconfirmed_tx_done(txi);
             }
         }
     }
@@ -1253,9 +1237,10 @@ lora_mac_process_radio_tx(struct os_event *ev)
         ChannelsNbRepCounter++;
     }
 
+    /* TODO: move this somewhere else? */
     /* We increment join request transmissions here */
     if ((LoRaMacFlags.Bits.MlmeReq == 1) &&
-        (MlmeConfirm.MlmeRequest == MLME_JOIN)) {
+        (g_lora_mac_data.txpkt.pkt_type == MLME_JOIN)) {
         STATS_INC(lora_mac_stats, join_req_tx);
     }
 }
@@ -1273,6 +1258,7 @@ lora_mac_process_radio_rx(struct os_event *ev)
     LoRaMacHeader_t macHdr;
     LoRaMacFrameCtrl_t fCtrl;
     uint8_t entry_rx_slot;
+    struct lora_pkt_info *rxi;
     bool skipIndication = false;
     bool send_indicate = false;
     int tx_service_over = 0;
@@ -1310,19 +1296,21 @@ lora_mac_process_radio_rx(struct os_event *ev)
     STATS_INC(lora_mac_stats, rx_frames);
 
     /* Payload, size and snr are filled in by radio rx ISR */
-    payload = McpsIndication.Buffer;
-    size = McpsIndication.BufferSize;
-    snr = McpsIndication.Snr;
+    payload = g_lora_mac_data.rxbuf;
+    size = g_lora_mac_data.rxbufsize;
+
+    rxi = &g_lora_mac_data.rxpkt;
+    snr = rxi->rxdinfo.snr;
 
     /* Reset rest of global indication element */
+    rxi->port = 0;
     entry_rx_slot = RxSlot;
-    McpsIndication.RxSlot = entry_rx_slot;
-    McpsIndication.Port = 0;
-    McpsIndication.Multicast = 0;
-    McpsIndication.FramePending = 0;
-    McpsIndication.RxData = false;
-    McpsIndication.AckReceived = false;
-    McpsIndication.DownLinkCounter = 0;
+    rxi->rxdinfo.rxslot = entry_rx_slot;
+    rxi->rxdinfo.multicast = 0;
+    rxi->rxdinfo.frame_pending = 0;
+    rxi->rxdinfo.rxdata = false;
+    rxi->rxdinfo.ack_rxd = false;
+    rxi->rxdinfo.downlink_cntr = 0;
 
     lora_node_log(LORA_NODE_LOG_RX_DONE, Channel, size, entry_rx_slot);
 
@@ -1344,7 +1332,7 @@ lora_mac_process_radio_rx(struct os_event *ev)
              * do. Guess we will just ignore this packet.
              */
             if ((LoRaMacFlags.Bits.MlmeReq == 0) ||
-                (MlmeConfirm.MlmeRequest != MLME_JOIN)) {
+                (g_lora_mac_data.txpkt.pkt_type != MLME_JOIN)) {
                 goto process_rx_done;
             }
 
@@ -1407,8 +1395,8 @@ lora_mac_process_radio_rx(struct os_event *ev)
                 UpLinkCounter = 0;
                 ChannelsNbRepCounter = 0;
                 LoRaMacParams.ChannelsDatarate = LoRaMacParamsDefaults.ChannelsDatarate;
-                MlmeConfirm.NbRetries = JoinRequestTrials;
-                lora_mac_send_mlme_confirm(LORAMAC_EVENT_INFO_STATUS_OK);
+                lora_mac_send_join_confirm(LORAMAC_EVENT_INFO_STATUS_OK,
+                                           JoinRequestTrials);
             }
             break;
         case FRAME_TYPE_DATA_CONFIRMED_DOWN:
@@ -1469,10 +1457,10 @@ lora_mac_process_radio_rx(struct os_event *ev)
             if (micRx == mic) {
                 isMicOk = true;
                 /* XXX: inc mic good stat */
-                McpsIndication.Status = LORAMAC_EVENT_INFO_STATUS_OK;
-                McpsIndication.Multicast = multicast;
-                McpsIndication.FramePending = fCtrl.Bits.FPending;
-                McpsIndication.DownLinkCounter = downLinkCounter;
+                rxi->status = LORAMAC_EVENT_INFO_STATUS_OK;
+                rxi->rxdinfo.multicast = multicast;
+                rxi->rxdinfo.frame_pending = fCtrl.Bits.FPending;
+                rxi->rxdinfo.downlink_cntr = downLinkCounter;
             } else {
                 STATS_INC(lora_mac_stats, rx_mic_failures);
             }
@@ -1489,7 +1477,7 @@ lora_mac_process_radio_rx(struct os_event *ev)
                  * re-transmitted here.
                  */
                 if (isMicOk) {
-                    McpsIndication.Status = LORAMAC_EVENT_INFO_STATUS_DOWNLINK_TOO_MANY_FRAMES_LOSS;
+                    rxi->status = LORAMAC_EVENT_INFO_STATUS_DOWNLINK_TOO_MANY_FRAMES_LOSS;
                     send_indicate = true;
                 }
                 goto process_rx_done;
@@ -1501,7 +1489,7 @@ lora_mac_process_radio_rx(struct os_event *ev)
 
                 // Update 32 bits downlink counter
                 if (multicast == 1) {
-                    McpsIndication.McpsIndication = MCPS_MULTICAST;
+                    rxi->pkt_type = MCPS_MULTICAST;
 
                     if((curMulticastParams->DownLinkCounter == downLinkCounter ) &&
                         (curMulticastParams->DownLinkCounter != 0)) {
@@ -1510,7 +1498,7 @@ lora_mac_process_radio_rx(struct os_event *ev)
                            transmissions? */
 
                         /* XXX: count stat */
-                        McpsIndication.Status = LORAMAC_EVENT_INFO_STATUS_DOWNLINK_REPEATED;
+                        rxi->status = LORAMAC_EVENT_INFO_STATUS_DOWNLINK_REPEATED;
                         send_indicate = true;
                         goto process_rx_done;
                     }
@@ -1518,7 +1506,7 @@ lora_mac_process_radio_rx(struct os_event *ev)
                 } else {
                     if (macHdr.Bits.MType == FRAME_TYPE_DATA_CONFIRMED_DOWN) {
                         SrvAckRequested = true;
-                        McpsIndication.McpsIndication = MCPS_CONFIRMED;
+                        rxi->pkt_type = MCPS_CONFIRMED;
 
                         if ((DownLinkCounter == downLinkCounter) &&
                             (DownLinkCounter != 0) ) {
@@ -1527,13 +1515,13 @@ lora_mac_process_radio_rx(struct os_event *ev)
                         }
                     } else {
                         SrvAckRequested = false;
-                        McpsIndication.McpsIndication = MCPS_UNCONFIRMED;
+                        rxi->pkt_type = MCPS_UNCONFIRMED;
 
                         /* XXX: this should never happen. What should we do?
                            Count stat */
                         if ((DownLinkCounter == downLinkCounter ) &&
                             (DownLinkCounter != 0)) {
-                            McpsIndication.Status = LORAMAC_EVENT_INFO_STATUS_DOWNLINK_REPEATED;
+                            rxi->status = LORAMAC_EVENT_INFO_STATUS_DOWNLINK_REPEATED;
                             send_indicate = true;
                             goto process_rx_done;
                         }
@@ -1545,7 +1533,8 @@ lora_mac_process_radio_rx(struct os_event *ev)
                 // This must be done before parsing the payload and the MAC commands.
                 // We need to reset the MacCommandsBufferIndex here, since we need
                 // to take retransmissions and repititions into account.
-                if (McpsConfirm.McpsRequest == MCPS_CONFIRMED) {
+                if ((g_lora_mac_data.curtx != NULL) &&
+                    (g_lora_mac_data.curtx->pkt_type == MCPS_CONFIRMED)) {
                     if (fCtrl.Bits.Ack == 1) {
                         // Reset MacCommandsBufferIndex when we have received an ACK.
                         MacCommandsBufferIndex = 0;
@@ -1559,7 +1548,7 @@ lora_mac_process_radio_rx(struct os_event *ev)
                     port = payload[appPayloadStartIndex++];
                     frameLen = (size - 4) - appPayloadStartIndex;
 
-                    McpsIndication.Port = port;
+                    rxi->port = port;
 
                     lora_node_log(LORA_NODE_LOG_RX_PORT, port, frameLen, 0);
 
@@ -1598,9 +1587,9 @@ lora_mac_process_radio_rx(struct os_event *ev)
                                                LoRaMacRxPayload );
 
                         if (skipIndication == false ) {
-                            McpsIndication.Buffer = LoRaMacRxPayload;
-                            McpsIndication.BufferSize = frameLen;
-                            McpsIndication.RxData = true;
+                            g_lora_mac_data.rxbuf = LoRaMacRxPayload;
+                            g_lora_mac_data.rxbufsize = frameLen;
+                            rxi->rxdinfo.rxdata = true;
                             send_indicate = true;
                         }
                     }
@@ -1616,7 +1605,7 @@ lora_mac_process_radio_rx(struct os_event *ev)
                     if (skipIndication == false) {
                         // Check if the frame is an acknowledgement
                         if (fCtrl.Bits.Ack == 1) {
-                            McpsIndication.AckReceived = true;
+                            rxi->rxdinfo.ack_rxd = true;
                             hal_timer_stop(&AckTimeoutTimer);
                             hal_timer_stop(&RxWindowTimer2);
                             lora_mac_tx_service_done(1);
@@ -1684,7 +1673,7 @@ process_rx_done:
 
     /* Send MCPS indication if flag set */
     if (send_indicate) {
-        LoRaMacPrimitives->MacMcpsIndication(&McpsIndication);
+        lora_node_mac_mcps_indicate();
     }
 }
 
@@ -1781,7 +1770,8 @@ lora_mac_process_tx_delay_timeout(struct os_event *ev)
         return;
     }
 
-    if ((LoRaMacFlags.Bits.MlmeReq == 1) && (MlmeConfirm.MlmeRequest == MLME_JOIN)) {
+    if ((LoRaMacFlags.Bits.MlmeReq == 1) &&
+        (g_lora_mac_data.txpkt.pkt_type == MLME_JOIN)) {
         ResetMacParameters( );
 
         // Add a +1, since we start to count from 0
@@ -2187,7 +2177,7 @@ RxWindowSetup( uint32_t freq, int8_t datarate, uint32_t bandwidth, uint16_t time
     Radio.SetChannel( freq );
 
     // Store downlink datarate
-    McpsIndication.RxDatarate = ( uint8_t ) datarate;
+    g_lora_mac_data.rxpkt.rxdinfo.rxdatarate = ( uint8_t ) datarate;
 
 #if defined( USE_BAND_433 ) || defined( USE_BAND_780 ) || defined( USE_BAND_868 )
     if( datarate == DR_7 ) {
@@ -2607,6 +2597,8 @@ static void
 ProcessMacCommands(uint8_t *payload, uint8_t macIndex, uint8_t commandsSize, uint8_t snr)
 {
     uint8_t i;
+    uint8_t demod_margin;
+    uint8_t gateways;
     uint8_t status = 0x07;
     uint16_t chMask;
     int8_t txPower = 0;
@@ -2624,13 +2616,11 @@ ProcessMacCommands(uint8_t *payload, uint8_t macIndex, uint8_t commandsSize, uin
         switch( payload[macIndex++] )
         {
             case SRV_MAC_LINK_CHECK_ANS:
-                MlmeConfirm.DemodMargin = payload[macIndex++];
-                MlmeConfirm.NbGateways = payload[macIndex++];
-                if ((LoRaMacFlags.Bits.MlmeReq == 1) &&
-                    (MlmeConfirm.MlmeRequest == MLME_LINK_CHECK)) {
-                    STATS_INC(lora_mac_stats, link_chk_ans_rxd);
-                    lora_mac_send_mlme_confirm(LORAMAC_EVENT_INFO_STATUS_OK);
-                }
+                demod_margin = payload[macIndex++];
+                gateways = payload[macIndex++];
+                STATS_INC(lora_mac_stats, link_chk_ans_rxd);
+                lora_app_link_chk_confirm(LORAMAC_EVENT_INFO_STATUS_OK,
+                                          gateways, demod_margin);
                 break;
             case SRV_MAC_LINK_ADR_REQ:
                 // Initialize local copy of the channels mask array
@@ -3407,6 +3397,7 @@ PrepareFrame(LoRaMacHeader_t *macHdr, LoRaMacFrameCtrl_t *fCtrl, uint8_t fPort,
 LoRaMacStatus_t
 SendFrameOnChannel( ChannelParams_t channel )
 {
+    struct lora_pkt_info *txi;
     int8_t datarate = Datarates[LoRaMacParams.ChannelsDatarate];
     int8_t txPowerIndex = 0;
     int8_t txPower = 0;
@@ -3415,9 +3406,10 @@ SendFrameOnChannel( ChannelParams_t channel )
     txPower = TxPowers[txPowerIndex];
 
     /* Set MCPS confirm information */
-    McpsConfirm.Datarate = LoRaMacParams.ChannelsDatarate;
-    McpsConfirm.TxPower = txPower;
-    McpsConfirm.UpLinkFrequency = channel.Frequency;
+    txi = g_lora_mac_data.curtx;
+    txi->txdinfo.datarate = LoRaMacParams.ChannelsDatarate;
+    txi->txdinfo.txpower = txPower;
+    txi->txdinfo.uplink_freq = channel.Frequency;
 
     Radio.SetChannel( channel.Frequency );
 
@@ -3462,8 +3454,7 @@ SendFrameOnChannel( ChannelParams_t channel )
 #endif
 
     // Store the time on air
-    McpsConfirm.TxTimeOnAir = TxTimeOnAir;
-    MlmeConfirm.TxTimeOnAir = TxTimeOnAir;
+    txi->txdinfo.tx_time_on_air = TxTimeOnAir;
 
     if (IsLoRaMacNetworkJoined == false) {
         JoinRequestTrials++;
@@ -3493,15 +3484,8 @@ LoRaMacStatus_t SetTxContinuousWave( uint16_t timeout )
 }
 
 LoRaMacStatus_t
-LoRaMacInitialization( LoRaMacPrimitives_t *primitives, LoRaMacCallback_t *callbacks )
+LoRaMacInitialization(LoRaMacCallback_t *callbacks )
 {
-    assert(primitives != NULL);
-
-    assert((primitives->MacMcpsConfirm != NULL) &&
-               (primitives->MacMcpsIndication != NULL)  &&
-               (primitives->MacMlmeConfirm != NULL));
-
-    LoRaMacPrimitives = primitives;
     LoRaMacCallbacks = callbacks;
 
     LoRaMacFlags.Value = 0;
@@ -4301,9 +4285,9 @@ LoRaMacMlmeRequest(MlmeReq_t *mlmeRequest)
         return LORAMAC_STATUS_BUSY;
     }
 
-    memset( ( uint8_t* ) &MlmeConfirm, 0, sizeof( MlmeConfirm ) );
-    MlmeConfirm.Status = LORAMAC_EVENT_INFO_STATUS_ERROR;
-    MlmeConfirm.MlmeRequest = mlmeRequest->Type;
+    g_lora_mac_data.txpkt.port = 0;
+    g_lora_mac_data.txpkt.status = LORAMAC_EVENT_INFO_STATUS_ERROR;
+    g_lora_mac_data.txpkt.pkt_type = mlmeRequest->Type;
 
     switch( mlmeRequest->Type )
     {
@@ -4354,8 +4338,7 @@ LoRaMacMlmeRequest(MlmeReq_t *mlmeRequest)
             status = Send(&macHdr, 0, NULL);
             break;
         case MLME_LINK_CHECK:
-            LoRaMacFlags.Bits.MlmeReq = 1;
-            // LoRaMac will send this command piggy-pack
+            // LoRaMac will send this command piggy-back.
             status = AddMacCommand(MOTE_MAC_LINK_CHECK_REQ, 0, 0);
             if (status == LORAMAC_STATUS_OK) {
                 STATS_INC(lora_mac_stats, link_chk_tx);
@@ -4366,6 +4349,7 @@ LoRaMacMlmeRequest(MlmeReq_t *mlmeRequest)
             status = SetTxContinuousWave( mlmeRequest->Req.TxCw.Timeout );
             break;
         default:
+            status = LORAMAC_STATUS_SERVICE_UNKNOWN;
             break;
     }
 
@@ -4377,13 +4361,12 @@ LoRaMacMlmeRequest(MlmeReq_t *mlmeRequest)
 }
 
 LoRaMacStatus_t
-LoRaMacMcpsRequest(McpsReq_t *mcpsRequest)
+LoRaMacMcpsRequest(struct os_mbuf *om, struct lora_pkt_info *txi)
 {
     LoRaMacStatus_t status = LORAMAC_STATUS_SERVICE_UNKNOWN;
     LoRaMacHeader_t macHdr;
-    uint8_t fPort = 0;
 
-    assert(mcpsRequest != NULL);
+    assert(txi != NULL);
 
     if (((LoRaMacState & LORAMAC_TX_RUNNING) == LORAMAC_TX_RUNNING) ||
         ((LoRaMacState & LORAMAC_TX_DELAYED) == LORAMAC_TX_DELAYED)) {
@@ -4392,30 +4375,20 @@ LoRaMacMcpsRequest(McpsReq_t *mcpsRequest)
 
     macHdr.Value = 0;
 
-    /* Reset confirm parameters */
-    memset(&McpsConfirm, 0, sizeof(McpsConfirm));
-    McpsConfirm.Status = LORAMAC_EVENT_INFO_STATUS_ERROR;
-    McpsConfirm.om = mcpsRequest->om;
-    McpsConfirm.NbRetries = 0;
-    McpsConfirm.AckReceived = false;
-    McpsConfirm.UpLinkCounter = UpLinkCounter;
-    McpsConfirm.McpsRequest = mcpsRequest->Type;
-
-    switch (mcpsRequest->Type) {
+    switch (txi->pkt_type) {
         case MCPS_UNCONFIRMED:
             AckTimeoutRetries = 1;
             macHdr.Bits.MType = FRAME_TYPE_DATA_UNCONFIRMED_UP;
-            fPort = mcpsRequest->Req.Unconfirmed.fPort;
             break;
         case MCPS_CONFIRMED:
             AckTimeoutRetriesCounter = 1;
-            AckTimeoutRetries = mcpsRequest->Req.Confirmed.NbTrials;
+            /* The retries field is seeded with trials, then cleared */
+            AckTimeoutRetries = txi->txdinfo.retries;
             if (AckTimeoutRetries > MAX_ACK_RETRIES) {
                 AckTimeoutRetries = MAX_ACK_RETRIES;
             }
 
             macHdr.Bits.MType = FRAME_TYPE_DATA_CONFIRMED_UP;
-            fPort = mcpsRequest->Req.Confirmed.fPort;
             break;
 
         case MCPS_PROPRIETARY:
@@ -4427,7 +4400,14 @@ LoRaMacMcpsRequest(McpsReq_t *mcpsRequest)
             break;
     }
 
-    status = Send(&macHdr, fPort, mcpsRequest->om);
+    /* Default packet status to error; will get set if ok later */
+    txi->status = LORAMAC_EVENT_INFO_STATUS_ERROR;
+
+    /* Clear out all transmitted information. */
+    memset(&txi->txdinfo, 0, sizeof(struct lora_txd_info));
+    txi->txdinfo.uplink_cntr = UpLinkCounter;
+
+    status = Send(&macHdr, txi->port, om);
     if (status == LORAMAC_STATUS_OK) {
         LoRaMacFlags.Bits.McpsReq = 1;
     } else {
