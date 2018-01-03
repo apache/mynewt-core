@@ -29,3 +29,8 @@ syscfg.defs:
     SX1276_SPI_BAUDRATE:
         description:
         value: 500
+
+    SX1276_HAS_ANT_SW:
+        description: 'Set to 1 if board has an antenna switch'
+        value: 0
+
