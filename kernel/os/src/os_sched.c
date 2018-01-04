@@ -65,7 +65,7 @@ os_sched_insert(struct os_task *t)
     entry = NULL;
     OS_ENTER_CRITICAL(sr);
 
-    /* If run list empty, add to front */
+    /* If sleep list empty, add to front */
     if (TAILQ_EMPTY(&g_os_run_list)) {
         TAILQ_INSERT_HEAD(&g_os_run_list, t, t_os_list);
     } else {
