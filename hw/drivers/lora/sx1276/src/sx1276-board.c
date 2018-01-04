@@ -19,10 +19,12 @@ Maintainer: Miguel Luis and Gregory Cristian
 #include "sx1276.h"
 #include "sx1276-board.h"
 
+#if MYNEWT_VAL(SX1276_HAS_ANT_SW)
 /*!
  * Flag used to set the RF switch control pins in low power mode when the radio is not active.
  */
 static bool RadioIsActive = false;
+#endif
 
 /*!
  * Radio driver structure initialization
@@ -58,8 +60,10 @@ void SX1276IoInit( void )
     struct hal_spi_settings spi_settings;
     int rc;
 
+#if MYNEWT_VAL(SX1276_HAS_ANT_SW)
     rc = hal_gpio_init_out(SX1276_RXTX, 1);
     assert(rc == 0);
+#endif
 
     rc = hal_gpio_init_out(RADIO_NSS, 1);
     assert(rc == 0);
@@ -135,6 +139,7 @@ uint8_t SX1276GetPaSelect( uint32_t channel )
     }
 }
 
+#if MYNEWT_VAL(SX1276_HAS_ANT_SW)
 void SX1276SetAntSwLowPower( bool status )
 {
     if( RadioIsActive != status )
@@ -174,6 +179,7 @@ void SX1276SetAntSw( uint8_t rxTx )
         hal_gpio_write(SX1276_RXTX, 0);
     }
 }
+#endif
 
 bool SX1276CheckRfFrequency( uint32_t frequency )
 {

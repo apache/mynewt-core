@@ -81,6 +81,7 @@ void SX1276SetRfTxPower( int8_t power );
  */
 uint8_t SX1276GetPaSelect( uint32_t channel );
 
+#if MYNEWT_VAL(SX1276_HAS_ANT_SW)
 /*!
  * \brief Set the RF Switch I/Os pins in Low Power mode
  *
@@ -108,6 +109,7 @@ void SX1276AntSwDeInit( void );
  * \param [IN] opMode Current radio operating mode
  */
 void SX1276SetAntSw( uint8_t opMode );
+#endif
 
 /*!
  * \brief Checks if the given RF frequency is supported by the hardware
