@@ -17,30 +17,3 @@
 #
 
 # Package: hw/mcu/arc/snps
-
-syscfg.defs:
-    I2C_0:
-        description: 'I2C (TWI) interface 0'
-        value:  0
-        restrictions:
-            - "!SPI_0_MASTER"
-            - "!SPI_0_SLAVE"
-
-    MCU_FLASH_MIN_WRITE_SIZE:
-        description: >
-            Specifies the required alignment for internal flash writes.
-            Used internally by the newt tool.
-        value: 1
-
-    SPI_0_MASTER:
-        description: 'SPI 0 master'
-        value:  0
-        restrictions:
-            - "!SPI_0_SLAVE"
-            - "!I2C_0"
-    SPI_0_SLAVE:
-        description: 'SPI 0 slave'
-        value:  0
-        restrictions:
-            - "!SPI_0_MASTER"
-            - "!I2C_0"

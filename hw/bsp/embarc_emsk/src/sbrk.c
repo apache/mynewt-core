@@ -25,7 +25,8 @@ static char *sbrkLimit __attribute__ ((section (".data")));
 static char *brk __attribute__ ((section (".data")));
 
 void
-_sbrkInit(char *base, char *limit) {
+_sbrkInit(char *base, char *limit)
+{
     sbrkBase = base;
     sbrkLimit = limit;
     brk = base;
