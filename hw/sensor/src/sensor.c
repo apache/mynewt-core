@@ -203,6 +203,13 @@ sensor_insert_type_trait(struct sensor *sensor, struct sensor_type_traits *stt)
     struct sensor_type_traits *cursor, *prev;
     int rc;
 
+    if (!sensor) {
+        rc = SYS_EINVAL;
+        goto err;
+    }
+
+    stt->stt_sensor = sensor;
+
     rc = sensor_lock(sensor);
     if (rc != 0) {
         goto err;
@@ -1187,10 +1194,10 @@ static void
 sensor_read_ev_cb(struct os_event *ev)
 {
     int rc;
-    struct sensor_read_ev_ctx *srec;
+    struct sensor_type_traits *stt;
 
-    srec = ev->ev_arg;
-    rc = sensor_read(srec->srec_sensor, srec->srec_type, NULL, NULL,
+    stt = ev->ev_arg;
+    rc = sensor_read(stt->stt_sensor, stt->stt_sensor_type, NULL, NULL,
                      OS_TIMEOUT_NEVER);
     assert(rc == 0);
 }
@@ -1892,6 +1899,7 @@ sensor_set_thresh(char *devname, struct sensor_type_traits *stt)
         stt_tmp->stt_low_thresh = stt->stt_low_thresh;
         stt_tmp->stt_high_thresh = stt->stt_high_thresh;
         stt_tmp->stt_algo = stt->stt_algo;
+        stt_tmp->stt_sensor = sensor;
         sensor_unlock(sensor);
     } else {
         rc = SYS_EINVAL;

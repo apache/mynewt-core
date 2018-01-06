@@ -1297,7 +1297,6 @@ lis2dh12_sensor_set_trigger_thresh(struct sensor *sensor,
     struct sensor_itf *itf;
     sensor_data_t low_thresh;
     sensor_data_t high_thresh;
-    struct sensor_read_ev_ctx *srec;
 
     itf = SENSOR_GET_ITF(sensor);
 
@@ -1369,12 +1368,10 @@ lis2dh12_sensor_set_trigger_thresh(struct sensor *sensor,
 
         os_time_delay((OS_TICKS_PER_SEC * 100)/1000 + 1);
 
-        srec = malloc(sizeof(struct sensor_read_ev_ctx));
-        srec->srec_sensor = sensor;
-        srec->srec_type = type;
+        hal_gpio_irq_release(itf->si_low_pin);
 
-        hal_gpio_irq_init(itf->si_low_pin, lis2dh12_low_int1_irq_handler, srec,
-                          HAL_GPIO_TRIG_FALLING, HAL_GPIO_PULL_NONE);
+        rc = hal_gpio_irq_init(itf->si_low_pin, lis2dh12_low_int1_irq_handler, stt,
+                               HAL_GPIO_TRIG_FALLING, HAL_GPIO_PULL_NONE);
         if (rc) {
             goto err;
         }
@@ -1441,12 +1438,10 @@ lis2dh12_sensor_set_trigger_thresh(struct sensor *sensor,
 
         os_time_delay((OS_TICKS_PER_SEC * 100)/1000 + 1);
 
-        srec = malloc(sizeof(struct sensor_read_ev_ctx));
-        srec->srec_sensor = sensor;
-        srec->srec_type = type;
+        hal_gpio_irq_release(itf->si_high_pin);
 
-        hal_gpio_irq_init(itf->si_high_pin, lis2dh12_high_int2_irq_handler, srec,
-                          HAL_GPIO_TRIG_FALLING, HAL_GPIO_PULL_NONE);
+        rc = hal_gpio_irq_init(itf->si_high_pin, lis2dh12_high_int2_irq_handler, stt,
+                               HAL_GPIO_TRIG_FALLING, HAL_GPIO_PULL_NONE);
         if (rc) {
             goto err;
         }

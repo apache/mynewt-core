@@ -308,6 +308,8 @@ struct sensor_type_traits {
     oc_resource_t *stt_oic_res;
 #endif
 
+    struct sensor *stt_sensor;
+
     /* Next item in the sensor traits list.  The head of this list is
      * contained within the sensor object.
      */
@@ -319,13 +321,6 @@ struct sensor_notify_ev_ctx {
     struct sensor * snec_sensor;
     /* The event type */
     sensor_event_type_t snec_evtype;
-};
-
-struct sensor_read_ev_ctx {
-    /* The sensor for which the ev cb should be called */
-    struct sensor *srec_sensor;
-    /* The sensor type */
-    sensor_type_t srec_type;
 };
 
 /**
