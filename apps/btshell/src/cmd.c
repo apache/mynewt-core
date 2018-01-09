@@ -3168,12 +3168,6 @@ static const struct shell_cmd_help gatt_show_conn_help = {
     .params = gatt_show_params,
 };
 
-static const struct shell_cmd_help gatt_show_coc_help = {
-    .summary = "show coc information",
-    .usage = NULL,
-    .params = gatt_show_params,
-};
-
 /*****************************************************************************
  * $gatt-write                                                                *
  *****************************************************************************/
@@ -3276,8 +3270,22 @@ static const struct shell_param l2cap_send_params[] = {
 
 static const struct shell_cmd_help l2cap_send_help = {
     .summary = "perform l2cap send procedure",
-    .usage = "use gatt-show-coc to get the parameters",
+    .usage = "use l2cap-show-coc to get the parameters",
     .params = l2cap_send_params,
+};
+
+/*****************************************************************************
+ * $l2cap-show-coc                                                           *
+ *****************************************************************************/
+
+static const struct shell_param l2cap_show_coc_params[] = {
+    {NULL, NULL}
+};
+
+static const struct shell_cmd_help l2cap_show_coc_help = {
+    .summary = "show coc information",
+    .usage = NULL,
+    .params = l2cap_show_coc_params,
 };
 
 #endif
@@ -3567,7 +3575,7 @@ static const struct shell_cmd btshell_commands[] = {
         .sc_cmd = "l2cap-show-coc",
         .sc_cmd_func = cmd_l2cap_show_coc,
 #if MYNEWT_VAL(SHELL_CMD_HELP)
-        .help = &gatt_show_coc_help,
+        .help = &l2cap_show_coc_help,
 #endif
     },
 #endif
