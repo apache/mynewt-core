@@ -73,7 +73,9 @@ excerpt for this function is shown below:
         return rc;
     }
 
- ### Changing the Default Configuration
+Changing the Default Configuration
+~~~~~~~~~~~~~~~
+
 
 To change the default configuration, you can directly edit the fields in
 the ``config_bno055_sensor()`` function in the
@@ -87,15 +89,19 @@ application, you must initialize all the fields in the sensor
 configuration data structure even if you are not changing the default
 values.
 
- #### Step 1: Adding the Sensor Device Driver Header File
+Step 1: Adding the Sensor Device Driver Header File
+^^^^^^^^^^^^^^^^^^^
+
 
 Add the bno055 device driver header file:
 
 ::
 
-    #include <bno055/bno055.h> 
+    #include <bno055/bno055.h>
 
- #### Step 2: Adding a New Configuration Function
+Step 2: Adding a New Configuration Function
+^^^^^^^^^^^^^^^^^^^
+
 
 Add the ``sensors_test_config_bno055()`` function and copy the code from
 the ``config_bno055_sensor()`` function in the
@@ -139,7 +145,9 @@ below:
         return rc;
     }
 
- #### Step 3: Changing the Default Configuration Settings
+Step 3: Changing the Default Configuration Settings
+^^^^^^^^^^^^^^^^^^^
+
 
 Delete the ``SENSOR_TYPE_ACCELEROMETER`` type from the ``bcfg.bc_mask``
 initialization setting values:
@@ -199,18 +207,24 @@ Add the ``int rc`` declaration and the call to the
         return (0);
     }
 
- #### Step 5: Building a New Application Image
+Step 5: Building a New Application Image
+^^^^^^^^^^^^^^^^^^^
+
 
 Run the ``newt build nrf52_bno055_test`` and the
 ``newt create-image nrf52_bno055_test 2.0.0`` commands to rebuild and
 create a new application image.
 
- #### Step 6: Loading the New Image and Rebooting the Device
+Step 6: Loading the New Image and Rebooting the Device
+^^^^^^^^^^^^^^^^^^^
+
 
 Run the ``newt load nrf52_bno055_test`` command and power the device OFF
 and On.
 
- #### Step 7: Verifing the Sensor is Configured with the New Values
+Step 7: Verifing the Sensor is Configured with the New Values
+^^^^^^^^^^^^^^^^^^^
+
 
 Start a terminal emulator, and run the ``sensor list`` command to verify
 the accelerometer (0x1) is not configured. The ``configured type``
@@ -220,11 +234,11 @@ listed for the sensor should not have the value ``0x1``.
 
 
     045930 compat> sensor list
-    046482 sensor dev = bno055_0, configured type = 0x2 0x4 0x200 0x1000 0x2000 0x4000 
+    046482 sensor dev = bno055_0, configured type = 0x2 0x4 0x200 0x1000 0x2000 0x4000
     046484 compat>
 
- #### Step 8: Verifying that the Accelerometer Data Samples Cannot be
-Read
+Step 8: Verifying that the Accelerometer Data Samples Cannot be Read
+^^^^^^^^^^^^^^^^^^^
 
 Run the ``sensor read`` command to read data samples from the
 accelerometer to verify that the sensor cannot be read:
@@ -234,4 +248,3 @@ accelerometer to verify that the sensor cannot be read:
 
     046484 compat> sensor read bno055_0 0x1 -n 5
     092387 Cannot read sensor bno055_0
-

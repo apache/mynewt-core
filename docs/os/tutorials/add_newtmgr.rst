@@ -238,7 +238,9 @@ command to see the BLE stats.
 
 Your application is now able to communicate with the newtmgr tool.
 
- ### Other Configuration Options
+Other Configuration Options
+~~~~~~~~~~~~~~~
+
 
 This section explains how to customize your application to use other
 Newt Manager protocol options.

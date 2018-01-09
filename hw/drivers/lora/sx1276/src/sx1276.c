@@ -1272,6 +1272,7 @@ void SX1276Reset( void )
 
 void SX1276SetOpMode( uint8_t opMode )
 {
+#if MYNEWT_VAL(SX1276_HAS_ANT_SW)
     if( opMode == RF_OPMODE_SLEEP )
     {
         SX1276SetAntSwLowPower( true );
@@ -1288,6 +1289,7 @@ void SX1276SetOpMode( uint8_t opMode )
             SX1276SetAntSw( 0 );
         }
     }
+#endif
     SX1276Write( REG_OPMODE, ( SX1276Read( REG_OPMODE ) & RF_OPMODE_MASK ) | opMode );
 }
 

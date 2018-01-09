@@ -55,7 +55,9 @@ following setting corresponds to LOG\_LEVEL\_ERROR:
 The ``LOG_LEVEL`` setting applies to all modules registered with the log
 package.
 
- ### Log
+Log
+~~~~~~~~~~~~~~~
+
 
 Each log stream requires a ``log`` structure to define its logging
 properties.

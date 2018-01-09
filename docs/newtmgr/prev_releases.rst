@@ -46,7 +46,9 @@ You can also manually symlink into /usr/local/bin as follows:
 
     $ brew link -f mynewt-newtmgr@1.0
 
- ### Linux 1. Download the binary:
+Linux 1. Download the binary:
+~~~~~~~~~~~~~~~
+
 
 +-----------+----------------------------------------------------------------------------------------------------------------------------------------------------------+
 | Version   | Download                                                                                                                                                 |
@@ -62,7 +64,9 @@ current installation.
 3. Install the package. For example, run
 ``sudo dpkg -i newtmgr_1.0.0-1_amd64.deb`` to install newtmgr 1.0.0
 
- ### Windows 1. Download the binary:
+Windows 1. Download the binary:
+~~~~~~~~~~~~~~~
+
 
 +-----------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | Version   | Download                                                                                                                                                             |

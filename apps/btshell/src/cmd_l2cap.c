@@ -215,3 +215,27 @@ cmd_l2cap_send(int argc, char **argv)
 
     return btshell_l2cap_send(conn, idx, bytes);
 }
+
+int
+cmd_l2cap_show_coc(int argc, char **argv)
+{
+    struct btshell_conn *conn = NULL;
+    struct btshell_l2cap_coc *coc;
+    int i, j;
+
+    for (i = 0; i < btshell_num_conns; i++) {
+        conn = btshell_conns + i;
+
+        if (SLIST_EMPTY(&conn->coc_list)) {
+            continue;
+        }
+
+        console_printf("conn_handle: 0x%04x\n", conn->handle);
+        j = 0;
+        SLIST_FOREACH(coc, &conn->coc_list, next) {
+            console_printf("    idx: %i, chan pointer = %p\n", j++, coc->chan);
+        }
+    }
+
+    return 0;
+}

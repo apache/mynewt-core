@@ -11,8 +11,10 @@ discuss what the ``hw/sensor/creator`` package does differently to
 create an off-board sensor. We also discuss how an application can
 change the default configuration for a sensor device.
 
- ### Creating an Onboard Sensor To create and initialize a sensor device
-named ``SENSORNAME``, the BSP implements the following in the
+Creating an Onboard Sensor
+~~~~~~~~~~~~~~~
+
+To create and initialize a sensor device named ``SENSORNAME``, the BSP implements the following in the
 ``hal_bsp.c`` file.
 
 **Note**: All example excerpts are from the code that creates the
@@ -157,7 +159,9 @@ For example:
     pkg.init:
         config_lis2dh12_sensor: 400
 
- ### Creating an Off-Board Sensor
+Creating an Off-Board Sensor
+~~~~~~~~~~~~~~~
+
 
 The steps to create an off-board sensor is very similar to the steps for
 a BSP. The ``hw/sensor/creator/`` package also declares the variables
@@ -184,7 +188,7 @@ enabled by the application.
         BNO055_OFB:
             description: 'BNO055 is present'
             value : 0
-          
+
            ...
 
 2. Add the calls to the ``os_dev_create()`` and the

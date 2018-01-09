@@ -85,6 +85,7 @@ syscfg.vals:
     SX1276_SPI_CS_PIN: 22
     XTAL_32768: 1
     BOOT_SERIAL_DETECT_PIN: 12
+    SX1276_HAS_ANT_SW: 1
 
 syscfg.vals.BLE_LP_CLOCK:
     OS_CPUTIME_FREQ: 32768

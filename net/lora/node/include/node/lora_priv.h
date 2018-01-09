@@ -21,6 +21,55 @@
 #define H_LORA_PRIV_
 
 #include "node/mac/LoRaMac.h"
+#include "os/os.h"
+#include "node/lora.h"
+
+/*
+ * Lora MAC data object
+ */
+struct lora_mac_obj
+{
+    /* Task event queue */
+    struct os_eventq lm_evq;
+
+    /* Transmit queue */
+    struct os_mqueue lm_txq;
+
+    /* Join event */
+    struct os_event lm_join_ev;
+
+    /* Link check event */
+    struct os_event lm_link_chk_ev;
+
+    /* TODO: this is temporary until we figure out a better way to deal */
+    /* Transmit queue timer */
+    struct os_callout lm_txq_timer;
+
+    /*
+     * Pointer to the lora packet information of the packet being currently
+     * transmitted.
+     */
+    struct lora_pkt_info *curtx;
+
+    /*
+     * Global lora tx packet info structure. Used when transmitting but no mbuf
+     * was available for transmission.
+     */
+    struct lora_pkt_info txpkt;
+
+    /* Pointer to current transmit mbuf. Can be NULL and still txing */
+    struct os_mbuf *cur_tx_mbuf;
+
+    /*
+     * Global lora rx packet info structure. Used when receiving and prior to
+     * obtaining a mbuf.
+     */
+    uint16_t rxbufsize;
+    uint8_t *rxbuf;
+    struct lora_pkt_info rxpkt;
+};
+
+extern struct lora_mac_obj g_lora_mac_data;
 
 void lora_cli_init(void);
 void lora_app_init(void);
@@ -32,6 +81,7 @@ void lora_app_join_confirm(LoRaMacEventInfoStatus_t status, uint8_t attempts);
 void lora_app_link_chk_confirm(LoRaMacEventInfoStatus_t status, uint8_t num_gw,
                                uint8_t demod_margin);
 void lora_node_mcps_request(struct os_mbuf *om);
+void lora_node_mac_mcps_indicate(void);
 int lora_node_join(uint8_t *dev_eui, uint8_t *app_eui, uint8_t *app_key,
                    uint8_t trials);
 int lora_node_link_check(void);

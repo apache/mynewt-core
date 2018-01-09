@@ -1,7 +1,9 @@
 Pin Wheel Modifications to "Blinky" on STM32F3 Discovery
 --------------------------------------------------------
 
- ### Objective
+Objective
+~~~~~~~~~~~~~~~
+
 
 Learn how to modify an existing app -- the `blinky <STM32F303.html>`__ app
 -- to light all the LEDs on the STM32F3 Discovery board.

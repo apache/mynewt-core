@@ -208,7 +208,9 @@ application image:
     Linking ~/dev/myproj/bin/targets/arduino_blinky/app/apps/blinky/blinky.elf
     Target successfully built: targets/arduino_blinky
 
- ### Connect to the Board
+Connect to the Board
+~~~~~~~~~~~~~~~
+
 
 Connect your computer to the Arduino Zero (from now on we'll call this
 the target) with a Micro-USB cable through the Programming Port as shown

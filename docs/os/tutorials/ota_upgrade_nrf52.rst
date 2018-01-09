@@ -39,7 +39,9 @@ Ensure that you meet the following prerequisites:
    via a serial connection. See `BLE Peripheral
    App </os/tutorials/bleprph/bleprph-app/>`__.
 
- ### Reducing the Log Level
+Reducing the Log Level
+~~~~~~~~~~~~~~~
+
 
 You need to build your application with log level set to INFO or lower.
 The default log level for the **bleprph** app is set to DEBUG. The extra
@@ -54,8 +56,10 @@ reduce the log level to INFO, build, and load the application.
     $ newt create-image myperiph 1.0.0
     $ newt load myperiph
 
- ### Upgrading an Image on a Device Once you have an application with
-newtmgr image management with BLE transport support running on a device,
+Upgrading an Image on a Device
+~~~~~~~~~~~~~~~
+
+Once you have an application with newtmgr image management with BLE transport support running on a device,
 you can use the newtmgr tool to upgrade an image over-the-air.
 
 You must perform the following steps to upgrade an image:
@@ -68,8 +72,10 @@ image permanent.
 See the `Bootloader </os/modules/bootloader/bootloader>`__ section for
 more information on the bootloader, image slots, and boot states.
 
- ### Step 1: Creating a Newtmgr Connection Profile The **bleprph**
-application sets and advertises ``nimble-bleprph`` as its bluetooth
+Step 1: Creating a Newtmgr Connection Profile
+~~~~~~~~~~~~~~~
+
+The **bleprph** application sets and advertises ``nimble-bleprph`` as its bluetooth
 device address. Run the ``newtmgr conn add`` command to create a newtmgr
 connection profile that uses this peer address to communicate with the
 device over BLE:
@@ -86,7 +92,7 @@ the image status on the device:
 .. code-block:: console
 
 
-    $ newtmgr image list -c mybleprph 
+    $ newtmgr image list -c mybleprph
     Images:
      slot=0
         version: 1.0.0
@@ -148,7 +154,7 @@ successfully:
      slot=1
         version: 2.0.0
         bootable: true
-        flags: 
+        flags:
         hash: 291ebc02a8c345911c96fdf4e7b9015a843697658fd6b5faa0eb257a23e93682
     Split status: N/A (0)
 
@@ -212,7 +218,7 @@ image hash value in the command:
 .. code-block:: console
 
 
-    $ newtmgr image confirm -c mybleprph 
+    $ newtmgr image confirm -c mybleprph
     Images:
      slot=0
         version: 2.0.0
@@ -222,7 +228,7 @@ image hash value in the command:
      slot=1
         version: 1.0.0
         bootable: true
-        flags: 
+        flags:
         hash: b8d17c77a03b37603cd9f89fdcfe0ba726f8ddff6eac63011dee2e959cc316c2
     Split status: N/A (0)
 

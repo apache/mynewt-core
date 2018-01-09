@@ -39,7 +39,9 @@ behave:
 
 Let's take these one at a time.
 
- #### 1. Wait for host-controller sync
+1. Wait for host-controller sync
+^^^^^^^^^^^^^^^^^^^
+
 
 The first step, waiting for host-controller-sync, is mandatory in all
 BLE applications. The NimBLE stack is inoperable while the two
@@ -83,7 +85,9 @@ sync occurs. Our callback function, ``ble_app_on_sync()``, kicks off the
 control flow that we specified above. Now we need to fill in the two
 stub functions.
 
- #### 2. Configure the NimBLE stack with an address
+2. Configure the NimBLE stack with an address
+^^^^^^^^^^^^^^^^^^^
+
 
 A BLE device needs an address to do just about anything. Some devices
 have a public Bluetooth address burned into them, but this is not always
@@ -132,7 +136,9 @@ stack:
 You can click either of the function names for more detailed
 documentation.
 
- #### 3. Advertise indefinitely
+3. Advertise indefinitely
+^^^^^^^^^^^^^^^^^^^
+
 
 The first step in advertising is to configure the host with advertising
 data. This operation tells the host what data to use for the contents of

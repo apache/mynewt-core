@@ -1,7 +1,7 @@
 Installing Newt on Linux
 ------------------------
 
-You can install the latest release (1.1.0) of the newt tool from a
+You can install the latest release (1.3.0) of the newt tool from a
 Debian binary package (amd64). You can also download and build the
 latest release version of newt from source.
 
@@ -10,7 +10,7 @@ This page shows you how to:
 1. Set up your computer to download Debian binary packages from the
    runtimeco APT repository.
    **Note:** The key for signing the repository has changed. If you set
-   up your computer before release 1.1.0, you will need to download and
+   up your computer before release 1.3.0, you will need to download and
    import the public key again.
 
 2. Install the latest release version of newt from a Debian binary
@@ -132,8 +132,8 @@ Download and install the package manually.
 
 .. code-block:: console
 
-    $wget https://raw.githubusercontent.com/runtimeco/debian-mynewt/master/pool/main/n/newt/newt_1.1.0-1_amd64.deb
-    $sudo dpkg -i newt_1.1.0-1_amd64.deb
+    $wget https://raw.githubusercontent.com/runtimeco/debian-mynewt/master/pool/main/n/newt/newt_1.3.0-1_amd64.deb
+    $sudo dpkg -i newt_1.3.0-1_amd64.deb
 
 See `Checking the Installed Version of Newt <#check>`__ to verify that
 you are using the installed version of newt.
@@ -183,7 +183,9 @@ a bin directory in your PATH:
 
        $ mv newt/newt /usr/bin
 
- ### Checking the Installed Version of Newt
+Checking the Installed Version of Newt
+~~~~~~~~~~~~~~~
+
 
 1. Check which newt you are using and that the version is the latest
 release version.
@@ -193,7 +195,7 @@ release version.
     $which newt
     /usr/bin/newt
     $newt version
-    Apache Newt version: 1.1.0
+    Apache Newt version: 1.3.0
 
 2. Get information about newt:
 

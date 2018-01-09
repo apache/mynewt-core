@@ -125,7 +125,28 @@ struct lora_txd_info
     int8_t txpower;
 
     /*!
-     * Provides the number of retransmissions
+     * Initially, 'retries' for confirmed frames is the number of trials
+     * (described below). In the confirmation, this field is set to the
+     * actual # of retries (0 retries if successful on first attempt).
+     *
+     * Number of trials to transmit the frame, if the LoRaMAC layer did not
+     * receive an acknowledgment. The MAC performs a datarate adaptation,
+     * according to the LoRaWAN Specification V1.0.1, chapter 19.4, according
+     * to the following table:
+     *
+     * Transmission nb | Data Rate
+     * ----------------|-----------
+     * 1 (first)       | DR
+     * 2               | DR
+     * 3               | max(DR-1,0)
+     * 4               | max(DR-1,0)
+     * 5               | max(DR-2,0)
+     * 6               | max(DR-2,0)
+     * 7               | max(DR-3,0)
+     * 8               | max(DR-3,0)
+     *
+     * Note, that if NbTrials is set to 1 or 2, the MAC will not decrease
+     * the datarate, in case the LoRaMAC layer did not receive an acknowledgment
      */
     uint8_t retries;
 
@@ -157,7 +178,7 @@ struct lora_txd_info
 struct lora_pkt_info
 {
     uint8_t port;
-    Mcps_t pkt_type;
+    uint8_t pkt_type;
     LoRaMacEventInfoStatus_t status;
 
     union {

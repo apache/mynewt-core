@@ -27,5 +27,6 @@ int cmd_l2cap_create_server(int argc, char **argv);
 int cmd_l2cap_connect(int argc, char **argv);
 int cmd_l2cap_disconnect(int argc, char **argv);
 int cmd_l2cap_send(int argc, char **argv);
+int cmd_l2cap_show_coc(int argc, char **argv);
 
 #endif

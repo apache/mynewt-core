@@ -92,8 +92,10 @@ enable the application functionality that this tutorial demonstrates:
    setting needs to be set to enable the shell support in the package.
    The sensors\_test application enables this setting by default.
 
- ### Step 1: Creating the Application Target In this step, you create a
-target for the sensors\_test application that enables the BNO055
+Step 1: Creating the Application Target
+~~~~~~~~~~~~~~~
+
+In this step, you create a target for the sensors\_test application that enables the BNO055
 off-board sensor.
 
 To add the BNO055 sensor support, you create the application target with
@@ -137,7 +139,7 @@ build\_profile variables for the target:
 .. code-block:: console
 
 
-    $ newt target set nrf52_bno055_test app=@apache-mynewt-core/apps/sensors_test bsp=@apache-mynewt-core/hw/bsp/nrf52dk build_profile=debug 
+    $ newt target set nrf52_bno055_test app=@apache-mynewt-core/apps/sensors_test bsp=@apache-mynewt-core/hw/bsp/nrf52dk build_profile=debug
     Target targets/nrf52_bno055_test successfully set target.app to @apache-mynewt-core/apps/sensors_test
     Target targets/nrf52_bno055_test successfully set target.bsp to @apache-mynewt-core/hw/bsp/nrf52dk
     Target targets/nrf52_bno055_test successfully set target.build_profile to debug
@@ -154,23 +156,27 @@ build\_profile variables for the target:
     Target targets/nrf52_bno055_test successfully set target.syscfg to BNO055_OFB=1:I2C_0=1:BNO055_CLI=1
     $
 
- ### Step 2: Creating the Bootloader Target Run the following
-``newt target`` commands, from your project directory, to create a
+Step 2: Creating the Bootloader Target
+~~~~~~~~~~~~~~~
+
+Run the following ``newt target`` commands, from your project directory, to create a
 bootloader target. We name the target ``nrf52_boot``:
 
 .. code-block:: console
 
 
     $ newt target create nrf52_boot
-    Target targets/nrf52_boot successfully created 
+    Target targets/nrf52_boot successfully created
     $ newt target set nrf52_boot app=@apache-mynewt-core/apps/boot bsp=@apache-mynewt-core/hw/bsp/nrf52dk  build_profile=optimized
     Target targets/nrf52_boot successfully set target.app to @apache-mynewt-core/apps/boot
     Target targets/nrf52_boot successfully set target.bsp to @apache-mynewt-core/hw/bsp/nrf52dk
     Target targets/nrf52_boot successfully set target.build_profile to optimized
     $
 
- ### Step 3: Building the Bootloader and Application Image 1. Run the
-``newt build nrf52_boot`` command to build the bootloader:
+Step 3: Building the Bootloader and Application Image
+~~~~~~~~~~~~~~~
+
+1. Run the ``newt build nrf52_boot`` command to build the bootloader:
 
 .. code-block:: console
 
@@ -258,8 +264,10 @@ specified in the following table:
 
 |Alt Layout - BNO055| |Alt Layout - NRF52\_IC2|
 
- ### Step 6: Connecting the nRF52-DK Board to your Computer 1. Set up
-two connections between your computer and the nRF52-DK board:
+Step 6: Connecting the nRF52-DK Board to your Computer
+~~~~~~~~~~~~~~~
+
+1. Set up two connections between your computer and the nRF52-DK board:
 
 -  A serial connection to communicate with the sensors\_test application
    and view the sensor data and hardware information via the Mynewt
@@ -276,8 +284,10 @@ two connections between your computer and the nRF52-DK board:
 2. Turn the power on the board to ON. You should see the green LED
 light up on the board.
 
- ### Step 7: Loading the Bootloader and the Application Image 1. Run the
-``newt load nrf52_boot`` command to load the bootloader onto the board:
+Step 7: Loading the Bootloader and the Application Image
+~~~~~~~~~~~~~~~
+
+1. Run the ``newt load nrf52_boot`` command to load the bootloader onto the board:
 
 .. code-block:: console
 
@@ -294,10 +304,12 @@ application image on to the board:
 
     $ newt load nrf52_bno055_test
     Loading app image into slot 1
-    $ 
+    $
 
-3. Power the nRF52-DK board OFF and ON. ### Step 8: Using a Terminal
-Emulator to Connect to the Application Console
+3. Power the nRF52-DK board OFF and ON.
+
+Step 8: Using a Terminal Emulator to Connect to the Application Console
+~~~~~~~~~~~~~~~
 
 Start up a terminal emulator to connect the sensors\_test application
 console. You can use one of the terminal emulators listed below or one
@@ -327,17 +339,19 @@ prompt:
 
     Welcome to minicom 2.7.1
 
-    OPTIONS: 
+    OPTIONS:
     Compiled on May 17 2017, 15:29:14.
     Port /dev/tty.usbserial, 13:55:21
 
     Press Meta-Z for help on special keys
 
 
-    010674 compat> 
+    010674 compat>
 
- ### Step 9: Viewing the Registered Sensors and Sensor Data The sensor
-framework package implements the ``sensor`` shell command. This command
+Step 9: Viewing the Registered Sensors and Sensor Data
+~~~~~~~~~~~~~~~
+
+The sensor framework package implements the ``sensor`` shell command. This command
 allows you to:
 
 -  List all the registered sensor devices.
@@ -353,21 +367,23 @@ To view the command syntax, enter ``sensor``
     002341   list
     002341       list of sensors registered
     002342   read <sensor_name> <type> [-n nsamples] [-i poll_itvl(ms)] [-d poll_du]
-    002344       read <no_of_samples> from sensor<sensor_name> of type:<type> at pr 
+    002344       read <no_of_samples> from sensor<sensor_name> of type:<type> at pr
     002347       at <poll_interval> rate for <poll_duration>
     002348   type <sensor_name>
     002349       types supported by registered sensor
-    002350 compat> 
+    002350 compat>
 
- #### Listing the Registered Sensors You use the ``sensor list`` command
-to list all the registered sensor devices:
+Listing the Registered Sensors
+^^^^^^^^^^^^^^^^^^^
+
+You use the ``sensor list`` command to list all the registered sensor devices:
 
 .. code-block:: console
 
 
     031798 compat> sensor list
-    129441 sensor dev = bno055_0, configured type = 0x1 0x2 0x4 0x200 0x1000 0x2000 
-    129444 compat> 
+    129441 sensor dev = bno055_0, configured type = 0x1 0x2 0x4 0x200 0x1000 0x2000
+    129444 compat>
 
 The output shows one sensor, **bno055\_0**, registered, and the
 configured types for the sensor. A configure type is a subset of the
@@ -382,19 +398,22 @@ supports:
 .. code-block:: console
 
 
-    031822 compat> sensor type bno055_0                                             
+    031822 compat> sensor type bno055_0
     033156 sensor dev = bno055_0,
     type =
-    033157     accelerometer: 0x1                                               
-    033157     magnetic field: 0x2                                                  
-    033158     gyroscope: 0x4                                                       
-    033159     temperature: 0x10                                                    
-    033160     vector: 0x200                                                        
-    033160     accel: 0x1000                                                        
-    033161     gravity: 0x2000                                                      
-    033162     euler: 0x4000    
+    033157     accelerometer: 0x1
+    033157     magnetic field: 0x2
+    033158     gyroscope: 0x4
+    033159     temperature: 0x10
+    033160     vector: 0x200
+    033160     accel: 0x1000
+    033161     gravity: 0x2000
+    033162     euler: 0x4000
 
- #### Viewing Sensor Data Samples You use the ``sensor read`` command to
+Viewing Sensor Data Samples
+^^^^^^^^^^^^^^^^^^^
+
+You use the ``sensor read`` command to
 read data samples for a configured type. You can specify the number of
 samples to read, a poll interval, and a poll duration. You can only view
 sensor data for the sensor types that a sensor device is configured for.
@@ -405,17 +424,17 @@ sensor data for the sensor types that a sensor device is configured for.
 .. code-block:: console
 
 
-    033163 compat> sensor read bno055_0 0x1 -n 5                                    
-    042974 ts: [ secs: 335 usecs: 745441 cputime: 336218225 ]                       
-    042976 x = -0.519999968 y = -7.289999968 z = 6.489999776                        
-    042978 ts: [ secs: 335 usecs: 771216 cputime: 336244000 ]                       
-    042979 x = -0.529999968 y = -7.360000128 z = 6.559999936                        
-    042981 ts: [ secs: 335 usecs: 794640 cputime: 336267424 ]                       
-    042982 x = -0.529999968 y = -7.340000160 z = 6.480000032                        
-    042983 ts: [ secs: 335 usecs: 810795 cputime: 336283579 ]                       
-    042984 x = -0.519999968 y = -7.300000192 z = 6.530000224                        
-    042986 ts: [ secs: 335 usecs: 833703 cputime: 336306487 ]                       
-    042987 x = -0.510000000 y = -7.309999936 z = 6.380000128  
+    033163 compat> sensor read bno055_0 0x1 -n 5
+    042974 ts: [ secs: 335 usecs: 745441 cputime: 336218225 ]
+    042976 x = -0.519999968 y = -7.289999968 z = 6.489999776
+    042978 ts: [ secs: 335 usecs: 771216 cputime: 336244000 ]
+    042979 x = -0.529999968 y = -7.360000128 z = 6.559999936
+    042981 ts: [ secs: 335 usecs: 794640 cputime: 336267424 ]
+    042982 x = -0.529999968 y = -7.340000160 z = 6.480000032
+    042983 ts: [ secs: 335 usecs: 810795 cputime: 336283579 ]
+    042984 x = -0.519999968 y = -7.300000192 z = 6.530000224
+    042986 ts: [ secs: 335 usecs: 833703 cputime: 336306487 ]
+    042987 x = -0.510000000 y = -7.309999936 z = 6.380000128
 
 Each sample contains two lines of output. The first line is the time
 when the sample is read. The second line is the sample data. For the
@@ -426,48 +445,50 @@ These two lines are for the first sample:
 .. code-block:: console
 
 
-    042974 ts: [ secs: 335 usecs: 745441 cputime: 336218225 ]                       
-    042976 x = -0.519999968 y = -7.289999968 z = 6.489999776                        
+    042974 ts: [ secs: 335 usecs: 745441 cputime: 336218225 ]
+    042976 x = -0.519999968 y = -7.289999968 z = 6.489999776
 
 These two lines are for the last sample:
 
 .. code-block:: console
 
 
-    042986 ts: [ secs: 335 usecs: 833703 cputime: 336306487 ]                       
-    042987 x = -0.510000000 y = -7.309999936 z = 6.380000128  
+    042986 ts: [ secs: 335 usecs: 833703 cputime: 336306487 ]
+    042987 x = -0.510000000 y = -7.309999936 z = 6.380000128
 
 **Example 2:** Read the vector data at 20 ms poll interval. You can
 enter ``ctrl-c``, ``q <return>``, or ``Q <return>`` to stop the polling.
 
 .. code-block:: console
 
-    002350 compat> sensor read bno055_0 0x200 -i 20 
+    002350 compat> sensor read bno055_0 0x200 -i 20
     019271 ts: [ secs: 150 usecs: 560056 cputime: 151019584 ]
-    019272 x = 3.442626944 y = 0.026977540 z = 3.993286144 w = 0.829833984 
+    019272 x = 3.442626944 y = 0.026977540 z = 3.993286144 w = 0.829833984
     019274 ts: [ secs: 150 usecs: 580598 cputime: 151040126 ]
-    019275 x = 3.442626944 y = 0.026977540 z = 3.993286144 w = 0.829833984          
-    019277 ts: [ secs: 150 usecs: 604036 cputime: 151063564 ]                       
-    019278 x = 3.442626944 y = 0.026977540 z = 3.993286144 w = 0.829833984          
-    019280 ts: [ secs: 150 usecs: 627474 cputime: 151087002 ]                       
-    019281 x = 3.442626944 y = 0.026977540 z = 3.993286144 w = 0.829833984          
-    019283 ts: [ secs: 150 usecs: 650912 cputime: 151110440 ]                       
-    019284 x = 3.442626944 y = 0.026977540 z = 3.993286144 w = 0.829833984          
-    019286 ts: [ secs: 150 usecs: 674350 cputime: 151133878 ]                       
-    019287 x = 3.442626944 y = 0.026977540 z = 3.993286144 w = 0.829833984          
-    019289 ts: [ secs: 150 usecs: 697788 cputime: 151157316 ]                       
-    019290 x = 3.442626944 y = 0.026977540 z = 3.993286144 w = 0.829833984          
-    019292 ts: [ secs: 150 usecs: 721225 cputime: 151180753 ]                       
-    019293 x = 3.442626944 y = 0.026977540 z = 3.993286144 w = 0.829833984          
-    019295 ts: [ secs: 150 usecs: 744663 cputime: 151204191 ]                       
-    019296 x = 3.442626944 y = 0.026977540 z = 3.993286144 w = 0.829833984          
-    019298 ts: [ secs: 150 usecs: 768101 cputime: 151227629 ]                       
-    019299 x = 3.442626944 y = 0.026977540 z = 3.993286144 w = 0.829833984          
-    019301 ts: [ secs: 150 usecs: 791539 cputime: 151251067 ]                       
-    019302 x = 3.442626944 y = 0.026977540 z = 3.993286144 w = 0.829833984   
+    019275 x = 3.442626944 y = 0.026977540 z = 3.993286144 w = 0.829833984
+    019277 ts: [ secs: 150 usecs: 604036 cputime: 151063564 ]
+    019278 x = 3.442626944 y = 0.026977540 z = 3.993286144 w = 0.829833984
+    019280 ts: [ secs: 150 usecs: 627474 cputime: 151087002 ]
+    019281 x = 3.442626944 y = 0.026977540 z = 3.993286144 w = 0.829833984
+    019283 ts: [ secs: 150 usecs: 650912 cputime: 151110440 ]
+    019284 x = 3.442626944 y = 0.026977540 z = 3.993286144 w = 0.829833984
+    019286 ts: [ secs: 150 usecs: 674350 cputime: 151133878 ]
+    019287 x = 3.442626944 y = 0.026977540 z = 3.993286144 w = 0.829833984
+    019289 ts: [ secs: 150 usecs: 697788 cputime: 151157316 ]
+    019290 x = 3.442626944 y = 0.026977540 z = 3.993286144 w = 0.829833984
+    019292 ts: [ secs: 150 usecs: 721225 cputime: 151180753 ]
+    019293 x = 3.442626944 y = 0.026977540 z = 3.993286144 w = 0.829833984
+    019295 ts: [ secs: 150 usecs: 744663 cputime: 151204191 ]
+    019296 x = 3.442626944 y = 0.026977540 z = 3.993286144 w = 0.829833984
+    019298 ts: [ secs: 150 usecs: 768101 cputime: 151227629 ]
+    019299 x = 3.442626944 y = 0.026977540 z = 3.993286144 w = 0.829833984
+    019301 ts: [ secs: 150 usecs: 791539 cputime: 151251067 ]
+    019302 x = 3.442626944 y = 0.026977540 z = 3.993286144 w = 0.829833984
 
- ### Step 10: Controlling and Viewing Sensor Device Hardware and Sensor
-Data The BNO055 device driver implements the ``bno055`` shell command
+Step 10: Controlling and Viewing Sensor Device Hardware and Sensor Data
+~~~~~~~~~~~~~~~
+
+The BNO055 device driver implements the ``bno055`` shell command
 that allows you to:
 
 -  Read sensor data samples for all the sensor types that the device
@@ -487,42 +508,44 @@ Enter ``bno055`` to see the command syntax:
 .. code-block:: console
 
 
-    711258 bno055 cmd  [flags...]                                                   
-    711259 cmd:                                                                     
+    711258 bno055 cmd  [flags...]
+    711259 cmd:
     711259  r     [n_samples] [ 0-acc          | 1 -mag       | 2 -gyro    | 4 -tem|
                                 9-quat         | 26-linearacc | 27-gravity | 28-eul]
-                                                                                    
+
     711264  mode  [0-config   | 1-acc          | 2 -mag       | 3 -gyro    | 4 -acc|
                    5-accgyro  | 6-maggyro      | 7 -amg       | 8 -imuplus | 9 -com|
-                   9-m4g      |11-NDOF_FMC_OFF | 12-NDOF  ]                         
-    711269  chip_id                                                                 
-    711270  rev                                                                     
-    711270  reset                                                                   
-    711270  pmode [0-normal   | 1-lowpower     | 2-suspend]                         
-    711272  sensor_offsets                                                          
-    711272  dumpreg [addr] 
+                   9-m4g      |11-NDOF_FMC_OFF | 12-NDOF  ]
+    711269  chip_id
+    711270  rev
+    711270  reset
+    711270  pmode [0-normal   | 1-lowpower     | 2-suspend]
+    711272  sensor_offsets
+    711272  dumpreg [addr]
 
  \*\* Example 3: \*\* Query the device chip id:
 
 .. code-block:: console
 
 
-    711273 compat> bno055 chip_id                                                   
-    769056 0xA0     
+    711273 compat> bno055 chip_id
+    769056 0xA0
 
 **Example 4:** View the sensor revisions:
 
 .. code-block:: console
 
 
-    827472 compat> bno055 rev                                                       
-    862354 accel_rev:0xFB                                                           
-    mag_rev:0x32                                                                    
-    gyro_rev:0x0F                                                                   
-    sw_rev:0x311                                                                    
-    bl_rev:0x15   
+    827472 compat> bno055 rev
+    862354 accel_rev:0xFB
+    mag_rev:0x32
+    gyro_rev:0x0F
+    sw_rev:0x311
+    bl_rev:0x15
 
- ### Next Steps
+Next Steps
+~~~~~~~~~~~~~~~
+
 
 Now that you have successfully enabled an application to communicate
 with a sensor, We recommend that you:
@@ -552,4 +575,3 @@ with a sensor, We recommend that you:
 
 .. |Alt Layout - BNO055| image:: /os/tutorials/pics/BNO055_small.jpg
 .. |Alt Layout - NRF52\_IC2| image:: /os/tutorials/pics/NRF52_I2C_small.jpg
-

@@ -108,7 +108,9 @@ application:
     Target successfully built: targets/stm32_slinky
     $
 
- ### Sign and Create the Slinky Application Image
+Sign and Create the Slinky Application Image
+~~~~~~~~~~~~~~~
+
 
 Run the ``newt create-image stm32_slinky 1.0.0`` command to create and
 sign the application image. You may assign an arbitrary version (e.g.
@@ -136,7 +138,9 @@ Connect to the Board
 
 You should see a red LED light up on the board.
 
- ### Load the Bootloader and the Slinky Application Image
+Load the Bootloader and the Slinky Application Image
+~~~~~~~~~~~~~~~
+
 
 Run the ``newt load stm32_boot`` command to load the bootloader onto the
 board:
@@ -242,8 +246,10 @@ connection profiles:
       sim1: type=serial, connstring='/dev/ttys012'
     $
 
- ### Use Newtmgr to Query the Board Run some newtmgr commands to query
-and receive responses back from the board (See the `Newt Manager
+Use Newtmgr to Query the Board
+~~~~~~~~~~~~~~~
+
+Run some newtmgr commands to query and receive responses back from the board (See the `Newt Manager
 Guide <newtmgr/overview>`__ for more information on the newtmgr
 commands).
 

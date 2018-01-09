@@ -44,7 +44,8 @@ To add OIC sensor support, we modify the bleprph\_oic application to
 call the ``sensor_oic_init()`` function in the OIC application
 initialization handler.
 
- ### Step 1: Copying the bleprph\_oic source
+Step 1: Copying the bleprph\_oic source
+~~~~~~~~~~~~~~~
 
 1. Copy the @apache-mynewt-core/apps/bleprph\_oic to a new package. We
 name the new package **apps/bleprph\_oic\_sensor**. From your project
@@ -92,7 +93,9 @@ net/nimble/host/store/ram - net/nimble/transport/ram
 
 \`\`\`
 
- ### Step 3: Setting Syscfg Values to Enable OIC Support
+Step 3: Setting Syscfg Values to Enable OIC Support
+~~~~~~~~~~~~~~~
+
 
 Add the following setting values to ``syscfg.vals`` in the
 ``syscfg.yml`` file:
@@ -138,7 +141,9 @@ We make the following modifications to main.c:
 -  Delete the OIC application request handler functions that process the
    CoAP requests for the light resource.
 
- #### Adding the Sensor Package Header File:
+Adding the Sensor Package Header File:
+^^^^^^^^^^^^^^^^^^^
+
 
 Add the sensor package header file ``sensor/sensor.h`` below
 ``#include "bleprph.h"`` file:
@@ -175,7 +180,7 @@ The lines to delete are highlighted below:
     oc_resource_set_default_interface(res, OC_IF_RW);
 
     oc_resource_set_discoverable(res);
-    oc_resource_set_periodic_observable(res, 1); 
+    oc_resource_set_periodic_observable(res, 1);
     oc_resource_set_request_handler(res, OC_GET, app_get_light);
     oc_resource_set_request_handler(res, OC_PUT, app_set_light);
     oc_add_resource(res);
@@ -190,8 +195,8 @@ to create an OIC resource for the sensor device:
 
     static void
     omgr_app_init(void)
-    {   
-        
+    {
+
         oc_init_platform("MyNewt", NULL, NULL);
 
         oc_add_device("/oic/d", "oic.d.sensy", "sensy", "1.0", "1.0", NULL, NULL);
@@ -206,17 +211,19 @@ sensor framework OIC server support:
 
     static void
     omgr_app_init(void)
-    {  
-       
+    {
+
         oc_init_platform("MyNewt", NULL, NULL);
 
         oc_add_device("/oic/d", "oic.d.sensy", "sensy", "1.0", "1.0", NULL, NULL);
-       
+
         sensor_oic_init();
 
     }
 
- #### Deleting the app\_get\_light() and app\_set\_light() Functions
+Deleting the app\_get\_light() and app\_set\_light() Functions
+^^^^^^^^^^^^^^^^^^^
+
 
 Since we modify the application to no longer create an OIC light
 resource, the ``app_get_light()`` and the ``app_set_light()`` handler
@@ -224,7 +231,9 @@ functions that process read and write requests are not used. We need to
 delete the functions to avoid compilation errors. Search for the two
 functions and delete them.
 
- ### Step 5: Creating and Building the Application Image
+Step 5: Creating and Building the Application Image
+~~~~~~~~~~~~~~~
+
 
 In this step of the tutorial we create and build an application image
 for the bleprph\_oic\_sensor application to verify that the application
@@ -249,10 +258,10 @@ build\_profile variables for the target.
 .. code-block:: console
 
 
-    $ newt target set nrf52_bleprph_oic_bno055 app=@apache-mynewt-core/apps/bleprph_oic_sensor bsp=@apache-mynewt-core/hw/bsp/nrf52dk build_profile=debug 
+    $ newt target set nrf52_bleprph_oic_bno055 app=@apache-mynewt-core/apps/bleprph_oic_sensor bsp=@apache-mynewt-core/hw/bsp/nrf52dk build_profile=debug
     Target targets/nrf52_bleprph_oic_bno055 successfully set target.app to @apache-mynewt-core/apps/bleprph_oic_sensor
     Target targets/nrf52_bleprph_oic_bno055 successfully set target.bsp to @apache-mynewt-core/hw/bsp/nrf52dk
-    Target targets/nrf52_bleprph_oic_bno055 successfully set target.build_profile to debug 
+    Target targets/nrf52_bleprph_oic_bno055 successfully set target.build_profile to debug
     $
 
 3. Run the ``newt target set`` command to set ``I2C_0=1``,
@@ -270,7 +279,9 @@ build\_profile variables for the target.
 ``newt create-image nrf52_bleprph_oic_bno055 1.0.0`` commands to build
 and create the application image.
 
- ### Step 6: Connecting the Sensor and Loading the Images to the Board
+Step 6: Connecting the Sensor and Loading the Images to the Board
+~~~~~~~~~~~~~~~
+
 
 Perform the following steps to reboot the board with the new images:
 
@@ -291,7 +302,9 @@ Perform the following steps to reboot the board with the new images:
    application image.
 4. Power the device OFF and ON to reboot.
 
- ### Step 7: Viewing Sensor Data from the Mynewt Smart Device Controller
+Step 7: Viewing Sensor Data from the Mynewt Smart Device Controller
+~~~~~~~~~~~~~~~
+
 
 Start the Mynewt Smart Device Controller app on your iOS or Android
 device to view the sensor data. You should already have the app
