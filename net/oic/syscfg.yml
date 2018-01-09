@@ -23,33 +23,43 @@ syscfg.defs:
     OC_TRANSPORT_SERIAL:
         description: 'Enables OIC transport over nlip serial'
         value: '0'
+
     OC_TRANSPORT_GATT:
         description: 'Enables OIC transport over BLE GATT'
         value: '0'
+
     OC_TRANSPORT_IP:
         description: 'Enables OIC transport over IP UDP'
         value: '0'
+
     OC_TRANSPORT_IPV6:
         description: 'Support IPv6'
         value: '1'
+
     OC_TRANSPORT_IPV4:
         description: 'Support IPv4'
         value: '0'
+
     OC_TRANSPORT_LORA:
         description: 'Support Lora'
         value: '0'
+
     OC_LORA_PORT:
         description: 'Which LORA port to use'
         value: 0xbb
+
     OC_CLIENT:
         description: 'Enables OIC client support'
         value: '0'
+
     OC_SERVER:
         description: 'Enables OIC server support'
         value: '0'
+
     OC_DEBUG:
         description: 'Enables OIC debug logs'
         value: '0'
+
     OC_NUM_REP_OBJECTS:
         description: 'Estimated number of nodes in payload tree structure'
         value: 32
@@ -86,3 +96,4 @@ syscfg.defs:
         description: >
             Enables per-resource transport layer security requirements.
         value: 1
+

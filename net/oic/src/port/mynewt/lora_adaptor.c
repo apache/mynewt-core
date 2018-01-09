@@ -17,10 +17,12 @@
  * under the License.
  */
 
-#include <syscfg/syscfg.h>
-#if MYNEWT_VAL(OC_TRANSPORT_LORA)
 #include <assert.h>
 #include <string.h>
+#include <stdint.h>
+
+#include <syscfg/syscfg.h>
+#if MYNEWT_VAL(OC_TRANSPORT_LORA)
 
 #include <os/os.h>
 #include <os/endian.h>
@@ -35,10 +37,29 @@
 #include "oic/oc_log.h"
 #include "api/oc_buffer.h"
 #include "adaptor.h"
+#include "oic/port/mynewt/transport.h"
 
 #ifdef OC_SECURITY
 #error This implementation does not yet support security
 #endif
+
+static void oc_send_buffer_lora(struct os_mbuf *m);
+static char *oc_log_ep_lora(char *ptr, int maxlen, const struct oc_endpoint *);
+static int oc_connectivity_init_lora(void);
+void oc_connectivity_shutdown_lora(void);
+
+static const struct oc_transport oc_lora_transport = {
+    .ot_ep_size = sizeof(struct oc_endpoint_lora),
+    .ot_flags = 0,
+    .ot_tx_ucast = oc_send_buffer_lora,
+    .ot_tx_mcast = oc_send_buffer_lora,
+    .ot_get_trans_security = NULL,
+    .ot_ep_str = oc_log_ep_lora,
+    .ot_init = oc_connectivity_init_lora,
+    .ot_shutdown = oc_connectivity_shutdown_lora
+};
+
+static uint8_t oc_lora_transport_id;
 
 STATS_SECT_START(oc_lora_stats)
     STATS_SECT_ENTRY(iframe)
@@ -92,6 +113,15 @@ struct coap_lora_frag_start {
 struct coap_lora_frag {
     uint8_t frag_num;	/* which fragment within packet */
 };
+
+static char *
+oc_log_ep_lora(char *ptr, int maxlen, const struct oc_endpoint *oe)
+{
+    struct oc_endpoint_lora *oe_lora = (struct oc_endpoint_lora *)oe;
+
+    snprintf(ptr, maxlen, "lora %u", oe_lora->port);
+    return ptr;
+}
 
 void
 oc_send_frag_lora(struct oc_lora_state *os)
@@ -260,7 +290,8 @@ oc_lora_deliver(struct oc_lora_state *os)
         m = n;
     }
     oe = (struct oc_endpoint_lora *)OC_MBUF_ENDPOINT(m);
-    oe->flags = LORA;
+    oe->ep.oe_type = oc_lora_transport_id;
+    oe->ep.oe_flags = 0;
     oe->port = os->rx_port;
 
     /*
@@ -384,5 +415,12 @@ oc_connectivity_init_lora(void)
     }
     return 0;
 }
-
 #endif
+
+void
+oc_register_lora(void)
+{
+#if (MYNEWT_VAL(OC_TRANSPORT_LORA) == 1)
+    oc_lora_transport_id = oc_transport_register(&oc_lora_transport);
+#endif
+}

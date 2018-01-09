@@ -24,42 +24,7 @@
 extern "C" {
 #endif
 
-enum oc_resource_properties;
-
 struct os_eventq *oc_evq_get(void);
-
-#if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1) && (MYNEWT_VAL(OC_TRANSPORT_IPV6) == 1)
-int oc_connectivity_init_ip6(void);
-void oc_connectivity_shutdown_ip6(void);
-void oc_send_buffer_ip6(struct os_mbuf *);
-void oc_send_buffer_ip6_mcast(struct os_mbuf *);
-#endif
-#if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1) && (MYNEWT_VAL(OC_TRANSPORT_IPV4) == 1)
-int oc_connectivity_init_ip4(void);
-void oc_connectivity_shutdown_ip4(void);
-void oc_send_buffer_ip4(struct os_mbuf *);
-void oc_send_buffer_ip4_mcast(struct os_mbuf *);
-#endif
-
-#if (MYNEWT_VAL(OC_TRANSPORT_GATT) == 1)
-int oc_connectivity_init_gatt(void);
-void oc_connectivity_shutdown_gatt(void);
-void oc_send_buffer_gatt(struct os_mbuf *);
-enum oc_resource_properties
-oc_get_trans_security_gatt(const struct oc_endpoint_ble *oe_ble);
-#endif
-
-#if (MYNEWT_VAL(OC_TRANSPORT_SERIAL) == 1)
-int oc_connectivity_init_serial(void);
-void oc_connectivity_shutdown_serial(void);
-void oc_send_buffer_serial(struct os_mbuf *);
-#endif
-
-#if (MYNEWT_VAL(OC_TRANSPORT_LORA) == 1)
-int oc_connectivity_init_lora(void);
-void oc_connectivity_shutdown_lora(void);
-void oc_send_buffer_lora(struct os_mbuf *);
-#endif
 
 #ifdef __cplusplus
 }

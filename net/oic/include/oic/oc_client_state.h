@@ -71,7 +71,7 @@ typedef struct oc_client_cb {
 } oc_client_cb_t;
 
 bool oc_ri_invoke_client_cb(struct coap_packet_rx *response,
-                            oc_endpoint_t *endpoint);
+                            oc_endpoint_t *);
 
 oc_client_cb_t *oc_ri_alloc_client_cb(const char *uri,
                                       oc_server_handle_t *server,
@@ -85,10 +85,10 @@ void oc_ri_remove_client_cb_by_mid(uint16_t mid);
 
 oc_discovery_flags_t oc_ri_process_discovery_payload(struct coap_packet_rx *rsp,
                                                      oc_discovery_cb_t *handler,
-                                                     oc_endpoint_t *endpoint);
+                                                     oc_endpoint_t *);
 
-bool oc_ri_send_rst(oc_endpoint_t *endpoint, uint8_t *token, uint8_t token_len,
-                    uint16_t mid);
+bool oc_ri_send_rst(oc_endpoint_t *endpoint, uint8_t *token,
+                    uint8_t token_len, uint16_t mid);
 #endif
 
 #ifdef __cplusplus

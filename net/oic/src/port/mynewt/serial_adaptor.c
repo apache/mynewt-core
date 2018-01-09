@@ -17,10 +17,11 @@
  * under the License.
  */
 
+#include <assert.h>
+#include <stdint.h>
+
 #include <syscfg/syscfg.h>
 #if (MYNEWT_VAL(OC_TRANSPORT_SERIAL) == 1)
-
-#include <assert.h>
 
 #include <os/os.h>
 
@@ -30,10 +31,33 @@
 #include "port/oc_connectivity.h"
 #include "oic/oc_log.h"
 #include "adaptor.h"
+#include "oic/port/mynewt/transport.h"
 
-struct os_mqueue oc_serial_mqueue;
+static void oc_send_buffer_serial(struct os_mbuf *m);
+static char *oc_log_ep_serial(char *ptr, int max, const struct oc_endpoint *);
+static int oc_connectivity_init_serial(void);
+void oc_connectivity_shutdown_serial(void);
 
+static const struct oc_transport oc_serial_transport = {
+    .ot_ep_size = sizeof(struct oc_endpoint_plain),
+    .ot_flags = 0,
+    .ot_tx_ucast = oc_send_buffer_serial,
+    .ot_tx_mcast = oc_send_buffer_serial,
+    .ot_get_trans_security = NULL,
+    .ot_ep_str = oc_log_ep_serial,
+    .ot_init = oc_connectivity_init_serial,
+    .ot_shutdown = oc_connectivity_shutdown_serial
+};
+
+static uint8_t oc_serial_transport_id;
+static struct os_mqueue oc_serial_mqueue;
 static struct os_mbuf *oc_attempt_rx_serial(void);
+
+static char *
+oc_log_ep_serial(char *ptr, int max, const struct oc_endpoint *oe)
+{
+    return "serial";
+}
 
 static int
 oc_serial_in(struct os_mbuf *m, void *arg)
@@ -94,7 +118,7 @@ oc_attempt_rx_serial(void)
 {
     struct os_mbuf *m;
     struct os_mbuf *n;
-    struct oc_endpoint *oe;
+    struct oc_endpoint_plain *oe_plain;
 
     /* get an mbuf from the queue */
     n = os_mqueue_get(&oc_serial_mqueue);
@@ -110,8 +134,9 @@ oc_attempt_rx_serial(void)
     OS_MBUF_PKTHDR(m)->omp_len = OS_MBUF_PKTHDR(n)->omp_len;
     SLIST_NEXT(m, om_next) = n;
 
-    oe = OC_MBUF_ENDPOINT(m);
-    oe->oe.flags = SERIAL;
+    oe_plain = (struct oc_endpoint_plain *)OC_MBUF_ENDPOINT(m);
+    oe_plain->ep.oe_type = oc_serial_transport_id;
+    oe_plain->ep.oe_flags = 0;
 
     return m;
 
@@ -119,4 +144,13 @@ rx_attempt_err:
     os_mbuf_free_chain(n);
     return NULL;
 }
+
 #endif
+
+void
+oc_register_serial(void)
+{
+#if (MYNEWT_VAL(OC_TRANSPORT_SERIAL) == 1)
+    oc_serial_transport_id = oc_transport_register(&oc_serial_transport);
+#endif
+}
