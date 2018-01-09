@@ -1,4 +1,4 @@
- tu\_init
+tu\_init
 ---------
 
 .. code-block:: console

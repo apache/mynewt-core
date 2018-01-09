@@ -31,7 +31,7 @@ Slinky <project-slinky.html>`__ tutorial.
     $newt install
     apache-mynewt-core
 
- Create the Targets
+Create the Targets
 ~~~~~~~~~~~~~~~~~~~
 
 Create two targets for the STM32-E407 board - one for the bootloader and
@@ -47,7 +47,7 @@ to create a bootloader target. We name the target ``stm32_boot``.
     $ newt target set stm32_boot build_profile=optimized
     $ newt target set stm32_boot target.app=@apache-mynewt-core/apps/boot
 
- Run the following ``newt target`` commands to create a target for the
+Run the following ``newt target`` commands to create a target for the
 Slinky application. We name the target ``stm32_slinky``.
 
 .. code-block:: console
@@ -84,7 +84,7 @@ Run the ``newt build stm32_boot`` command to build the bootloader:
     Target successfully built: targets/stm32_boot
     $
 
- Run the ``newt build stm32_slinky`` command to build the Slinky
+Run the ``newt build stm32_slinky`` command to build the Slinky
 application:
 
 .. code-block:: console
@@ -108,7 +108,9 @@ application:
     Target successfully built: targets/stm32_slinky
     $
 
- ### Sign and Create the Slinky Application Image
+Sign and Create the Slinky Application Image
+~~~~~~~~~~~~~~~
+
 
 Run the ``newt create-image stm32_slinky 1.0.0`` command to create and
 sign the application image. You may assign an arbitrary version (e.g.
@@ -136,7 +138,9 @@ Connect to the Board
 
 You should see a red LED light up on the board.
 
- ### Load the Bootloader and the Slinky Application Image
+Load the Bootloader and the Slinky Application Image
+~~~~~~~~~~~~~~~
+
 
 Run the ``newt load stm32_boot`` command to load the bootloader onto the
 board:
@@ -147,7 +151,7 @@ board:
     Loading bootloader
     $
 
- Note: If you are using Windows and get a ``no device found`` error, you
+Note: If you are using Windows and get a ``no device found`` error, you
 will need to install the usb driver. Download
 `Zadig <http://zadig.akeo.ie>`__ and run it:
 
@@ -158,7 +162,7 @@ will need to install the usb driver. Download
 -  Click Install Driver.
 -  Run the ``newt load stm32_boot`` command again.
 
- Run the ``newt load stm32_slinky`` command to load the Slinky
+Run the ``newt load stm32_slinky`` command to load the Slinky
 application image onto the board:
 
 .. code-block:: console
@@ -190,7 +194,7 @@ for reference.
 -  Connect the GND pin of the USB-TTL serial cable to the GND (Pin 2) of
    the UEXT connector on the board.
 
- Locate the port, in the /dev directory on your computer, that the
+Locate the port, in the /dev directory on your computer, that the
 serial connection uses. The format of the port name is platform
 dependent:
 
@@ -211,7 +215,7 @@ dependent:
     /dev/tty.usbserial-1d13
     $
 
- Setup a newtmgr connection profile for the serial port. For our
+Setup a newtmgr connection profile for the serial port. For our
 example, the port is ``/dev/tty.usbserial-1d13``.
 
 Run the ``newtmgr conn add`` command to define a newtmgr connection
@@ -231,7 +235,7 @@ profile for the serial port. We name the connection profile
     Connection profile stm32serial successfully added
     $
 
- You can run the ``newt conn show`` command to see all the newtmgr
+You can run the ``newt conn show`` command to see all the newtmgr
 connection profiles:
 
 .. code-block:: console
@@ -242,8 +246,10 @@ connection profiles:
       sim1: type=serial, connstring='/dev/ttys012'
     $
 
- ### Use Newtmgr to Query the Board Run some newtmgr commands to query
-and receive responses back from the board (See the `Newt Manager
+Use Newtmgr to Query the Board
+~~~~~~~~~~~~~~~
+
+Run some newtmgr commands to query and receive responses back from the board (See the `Newt Manager
 Guide <newtmgr/overview>`__ for more information on the newtmgr
 commands).
 
@@ -256,7 +262,7 @@ simplest command that requests the board to echo back the text.
     hello
     $
 
- Run the ``newtmgr image list -c stm32serial`` command to list the
+Run the ``newtmgr image list -c stm32serial`` command to list the
 images on the board:
 
 .. code-block:: console
@@ -271,7 +277,7 @@ images on the board:
     Split status: N/A
     $
 
- Run the ``newtmgr taskstat -c stm32serial`` command to display the task
+Run the ``newtmgr taskstat -c stm32serial`` command to display the task
 statistics on the board:
 
 .. code-block:: console

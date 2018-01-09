@@ -44,11 +44,12 @@ Creating a New Project and Fetching the Source Repository
 This section describes how to use the newt tool to create a new project
 and fetch the core mynewt source repository.
 
- ####Creating a New Project
+Creating a New Project
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Choose a name for your project. We name the project ``myproj``.
 
- Run the ``newt new myproj`` command, from your **dev** directory, to
+Run the ``newt new myproj`` command, from your **dev** directory, to
 create a new project:
 
 **Note:** This tutorial assumes you created a **dev** directory under
@@ -74,7 +75,7 @@ and ``pacman -Su tree`` from a MinGW terminal to install on Windows.
 .. code-block:: console
 
     $ cd myproj
-    $ tree 
+    $ tree
     .
     ├── DISCLAIMER
     ├── LICENSE
@@ -116,7 +117,8 @@ base directory:
 **Note:** The actual code and package files are not installed (except
 the template for ``main.c``). See the next step to install the packages.
 
- #### Fetching the Mynewt Source Repository and Dependencies
+Fetching the Mynewt Source Repository and Dependencies
+^^^^^^^^^^^^^^^^^^^
 
 By default, Mynewt projects rely on a single repository:
 **apache-mynewt-core** and uses the source in the master branch. If you
@@ -138,7 +140,7 @@ branch may not be stable and you may encounter bugs or other problems.**
 and use the latest master branch. Release 1.0.0 is not supported on
 Windows.
 
- Run the ``newt install`` command, from your project base directory
+Run the ``newt install`` command, from your project base directory
 (myproj), to fetch the source repository and dependencies.
 
 **Note:** It may take a while to download the apache-mynewt-core
@@ -374,12 +376,14 @@ on Mynewt's simulated hardware.
 Tutorials </os/tutorials/blinky.html>`__ to create a blinky application
 for a target board.
 
- ####Building the Application To build the simulated blinky application,
-run ``newt build my_blinky_sim``:
+Building the Application
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To build the simulated blinky application, run ``newt build my_blinky_sim``:
 
 .. code-block:: console
 
-    $ newt build my_blinky_sim 
+    $ newt build my_blinky_sim
     Building target targets/my_blinky_sim
     Compiling repos/apache-mynewt-core/hw/hal/src/hal_common.c
     Compiling repos/apache-mynewt-core/hw/drivers/uart/src/uart.c
@@ -410,7 +414,7 @@ If you natively install the toolchain execute the binary directly:
     $ ./bin/targets/my_blinky_sim/app/apps/blinky/blinky.elf
     hal_gpio set pin  1 to 0
 
- If you are using newt docker, use ``newt run`` to run the simulated
+If you are using newt docker, use ``newt run`` to run the simulated
 binary.
 
 .. code-block:: console

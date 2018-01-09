@@ -53,7 +53,9 @@ object:
    API </os/modules/sensor_framework/sensor_manager_api.html>`__ for
    details.
 
- #### Setting the Configured Sensor Types
+Setting the Configured Sensor Types
+^^^^^^^^^^^^^^^^^^^
+
 
 The BSP, or the sensor creator package, also calls the
 ``<sensorname>_config()`` function to configure the sensor device with
@@ -169,7 +171,9 @@ is a bit mask that specifies the sensor types that the sensor device is
 configured for. Only sensor data for a configured sensor type can be
 read.
 
- #### Sensor Types
+Sensor Types
+^^^^^^^^^^^^^^^^^^^
+
 
 The ``sensor_type_t`` type is an enumeration of a bit mask of sensor
 types, with each bit representing one sensor type. Here is an excerpt of
@@ -235,7 +239,9 @@ The ``si_cs_pin`` specifies the chip select pin and is optional. The
     #define SENSOR_ITF_I2C    (1)
     #define SENSOR_ITF_UART   (2) 
 
- #### Sensor Value Type
+Sensor Value Type
+^^^^^^^^^^^^^^^^^^^
+
 
 The ``struct sensor_cfg`` data structure represents the configuration
 sensor type:
@@ -256,7 +262,7 @@ sensor type:
         uint8_t _reserved[3];
     };
 
- Only the ``sc_valtype`` field is currently used and specifies the data
+Only the ``sc_valtype`` field is currently used and specifies the data
 value type of the sensor data. The valid value types are:
 
 .. code:: c
@@ -284,7 +290,9 @@ value type of the sensor data. The valid value types are:
      */
     #define SENSOR_VALUE_TYPE_FLOAT_TRIPLET (4)
 
- #### Sensor Driver Functions
+Sensor Driver Functions
+^^^^^^^^^^^^^^^^^^^
+
 
 The ``struct sensor_device`` data structure represents the device driver
 functions. The sensor device driver must implement the functions and set
@@ -297,7 +305,9 @@ up the function pointers.
         sensor_get_config_func_t sd_get_config;
     };
 
- ### List of Functions:
+List of Functions:
+~~~~~~~~~~~~~~~
+
 
 These are the functions defined by the sensor API. Please see the
 `sensor.h <https://github.com/apache/mynewt-core/blob/master/hw/sensor/include/sensor/sensor.h>`__

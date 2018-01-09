@@ -1,4 +1,4 @@
- console\_read 
+console\_read 
 ---------------
 
 .. code:: c

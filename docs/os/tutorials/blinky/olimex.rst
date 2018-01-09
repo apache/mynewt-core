@@ -13,8 +13,10 @@ application on an Olimex STM32-E407 board. ### Prerequisites
 -  Have a USB A-B type cable to connect the debugger to your computer.
 -  Install the `OpenOCD debugger </os/get_started/cross_tools/>`__.
 
- ### Create a Project Create a new project if you do not have an
-existing one. You can skip this step and proceed to `create the
+Create a Project
+~~~~~~~~~~~~~~~
+
+Create a new project if you do not have an existing one. You can skip this step and proceed to `create the
 targets <#create_targets>`__ if you already created a project.
 
 Run the following commands to create a new project:
@@ -50,7 +52,7 @@ to create a bootloader target. We name the target ``boot_olimex``.
     $ newt target set boot_olimex app=@apache-mynewt-core/apps/boot
     $ newt target set boot_olimex bsp=@apache-mynewt-core/hw/bsp/olimex_stm32-e407_devboard
 
- Run the following ``newt target`` commands to create a target for the
+Run the following ``newt target`` commands to create a target for the
 Blinky application. We name the target ``olimex_blinky``.
 
 .. code-block:: console
@@ -84,8 +86,10 @@ Run the ``newt build boot_olimex`` command to build the bootloader:
     Linking ~/dev/myproj/bin/targets/boot_olimex/app/apps/boot/boot.elf
     Target successfully built: targets/boot_olimex
 
- ### Build the Blinky Application Run the ``newt build olimex_blinky``
-command to build the blinky application:
+Build the Blinky Application
+~~~~~~~~~~~~~~~
+
+Run the ``newt build olimex_blinky`` command to build the blinky application:
 
 .. code-block:: console
 
@@ -190,7 +194,7 @@ will need to install the usb driver. Download
 -  Click Install Driver.
 -  Run the ``newt load boot_olimex`` command again.
 
- Run the ``newt load olimex_blinky`` command to load the blinky
+Run the ``newt load olimex_blinky`` command to load the blinky
 application image onto the board:
 
 .. code-block:: console
@@ -200,9 +204,9 @@ application image onto the board:
     Load command: ~/dev/myproj/repos/apache-mynewt-core/hw/bsp/olimex_stm32-e407_devboard/olimex_stm32-e407_devboard_download.sh ~/dev/myproj/repos/apache-mynewt-core/hw/bsp/olimex_stm32-e407_devboard ~/dev/myproj/bin/targets/olimex_blinky/app/apps/blinky/blinky
     Successfully loaded image.
 
- The LED should be blinking!
+The LED should be blinking!
 
- Let's double check that it is indeed booting from flash and making the
+Let's double check that it is indeed booting from flash and making the
 LED blink from the image in flash. Pull the USB cable off the Olimex
 JTAG adaptor, severing the debug connection to the JTAG port. Next power
 off the Olimex board by pulling out the USB cable from the board. Wait
@@ -220,7 +224,7 @@ when you quit gdb. In addition, the output of openocd is logged to the
 openocd.log file in your project's base directory instead of the
 terminal.
 
- Type ``c`` to continue inside the gdb session.
+Type ``c`` to continue inside the gdb session.
 
 .. code-block:: console
 
@@ -234,7 +238,7 @@ terminal.
         (info)
         ...
         target state: halted
-        target halted due to debug-request, current mode: Thread 
+        target halted due to debug-request, current mode: Thread
         xPSR: 0x01000000 pc: 0x08000250 msp: 0x10010000
         Info : accepting 'gdb' connection from 3333
         Info : device id = 0x10036413
@@ -257,8 +261,8 @@ locations is specific to the processor.
         (gdb) monitor flash erase_sector 0 0 4
         erased sectors 0 through 4 on flash bank 0 in 2.296712s
         (gdb) monitor mdw 0x08000000 16
-        0x08000000: ffffffff ffffffff ffffffff ffffffff ffffffff ffffffff ffffffff ffffffff 
-        (0x08000020: ffffffff ffffffff ffffffff ffffffff ffffffff ffffffff ffffffff ffffffff 
-        (0x08000000: ffffffff ffffffff ffffffff ffffffff ffffffff ffffffff ffffffff ffffffff 
-        (0x08000020: ffffffff ffffffff ffffffff ffffffff ffffffff ffffffff ffffffff ffffffff         
+        0x08000000: ffffffff ffffffff ffffffff ffffffff ffffffff ffffffff ffffffff ffffffff
+        (0x08000020: ffffffff ffffffff ffffffff ffffffff ffffffff ffffffff ffffffff ffffffff
+        (0x08000000: ffffffff ffffffff ffffffff ffffffff ffffffff ffffffff ffffffff ffffffff
+        (0x08000020: ffffffff ffffffff ffffffff ffffffff ffffffff ffffffff ffffffff ffffffff
         (gdb) monitor flash info 0

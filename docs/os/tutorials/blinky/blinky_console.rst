@@ -214,7 +214,7 @@ a Windows COM port: ``/dev/ttyS<N>`` maps to ``COM<N+1>``. For example,
 
 You can also use the Windows Device Manager to locate the COM port.
 
- To test and make sure that the Shell is running, first just hit :
+To test and make sure that the Shell is running, first just hit :
 
 .. code-block:: console
 

@@ -26,16 +26,16 @@ Installing the Latest Release of Newtmgr Tool from Binary
 You can install the latest release of newtmgr from binary. It has been
 tested on Windows 10 64 bit platform.
 
- 1. Start a MinGW terminal.
+1. Start a MinGW terminal.
 
- 2. Download the newtmgr binary tar file:
+2. Download the newtmgr binary tar file:
 
 .. code-block:: console
 
 
     $ wget -P /tmp https://raw.githubusercontent.com/runtimeco/binary-releases/master/mynewt-newt-tools_1.3.0/newtmgr_1_3_0_windows_amd64.tar.gz
 
- 3. Extract the file:
+3. Extract the file:
 
 -  If you previously built newtmgr from the master branch, you can
    extract the file into your $GOPATH/bin directory. Note: This
@@ -53,21 +53,23 @@ tested on Windows 10 64 bit platform.
 
         tar -xzf /tmp/newtmgr_1_3_0_windows_amd64.tar.gz -C /usr/bin
 
- 4. Verify the installed version of newtmgr. See `Checking the Installed
+4. Verify the installed version of newtmgr. See `Checking the Installed
 Version <#check_newtmgr>`__.
 
- ### Installing the Latest Release of Newtmgr from Source
+Installing the Latest Release of Newtmgr from Source
+~~~~~~~~~~~~~~~
+
 
 If you have an older version of Windows or a 32 bit platform, you can
 build and install the latest release version of newtmgr from source.
 
- 1. Download and install the latest version of
+1. Download and install the latest version of
 `Go <https://golang.org/dl/>`__. Newtmgr requires Go version 1.7.6 or
 higher.
 
- 2. Start MinGW terminal.
+2. Start MinGW terminal.
 
- 3. Create a Go workspace in the /tmp directory:
+3. Create a Go workspace in the /tmp directory:
 
 .. code-block:: console
 
@@ -77,7 +79,7 @@ higher.
     $ cd go
     $ export GOPATH=/tmp/go
 
- 4. Run ``go get`` to download the newtmgr source. Note that ``go get``
+4. Run ``go get`` to download the newtmgr source. Note that ``go get``
 pulls down the HEAD from the master branch in git, builds, and installs
 newtmgr.
 
@@ -96,7 +98,7 @@ step:
     # github.com/currantlabs/ble/examples/lib/dev
     ..\..\..\github.com\currantlabs\ble\examples\lib\dev\dev.go:7: undefined: DefaultDevice
 
- 5. Check out the source from the latest release version:
+5. Check out the source from the latest release version:
 
 .. code-block:: console
 
@@ -105,7 +107,7 @@ step:
     $ git checkout mynewt_1_3_0_tag
     Note: checking out 'mynewt_1_3_0_tag'.
 
- 6. Build newtmgr from the latest release version:
+6. Build newtmgr from the latest release version:
 
 .. code-block:: console
 
@@ -115,18 +117,20 @@ step:
     $ ls /tmp/go/bin/newtmgr.exe
     -rwxr-xr-x 1 user None 15457280 Sep 12 00:30 /tmp/go/bin/newtmgr.exe
 
- 7. If you have a Go workspace, remember to reset your GOPATH to your Go
+7. If you have a Go workspace, remember to reset your GOPATH to your Go
 workspace.
 
- 7. Copy the newtmgr executable to a bin directory in your path. You can
+7. Copy the newtmgr executable to a bin directory in your path. You can
 put it in the /usr/bin or the $GOPATH/bin directory.
 
- ### Checking the Installed Version
+Checking the Installed Version
+~~~~~~~~~~~~~~~
 
- 1. Run ``which newtmgr`` to verify that you are using the installed
+
+1. Run ``which newtmgr`` to verify that you are using the installed
 version of newtmgr.
 
- 2. Get information about the newtmgr tool:
+2. Get information about the newtmgr tool:
 
 .. code-block:: console
 

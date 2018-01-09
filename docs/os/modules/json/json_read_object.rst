@@ -1,4 +1,4 @@
- json\_read\_object 
+json\_read\_object 
 --------------------
 
 .. code-block:: console

@@ -81,7 +81,9 @@ The application handles events from three sources on two event queues:
         - hw/hal
         - sys/console/stub
 
- #### Application Task Generated Events
+Application Task Generated Events
+^^^^^^^^^^^^^^^^^^^
+
 
 The application creates a task that generates events, at periodic
 intervals, to toggle the LED at pin ``TASK_LED``. The event is queued on
@@ -102,7 +104,7 @@ callback function to process the event:
         .ev_cb = my_ev_cb,
     };
 
- Implement the ``my_ev_cb()`` callback function to process a task
+Implement the ``my_ev_cb()`` callback function to process a task
 generated event and toggle the LED at pin ``TASK_LED``:
 
 .. code:: c
@@ -122,7 +124,7 @@ generated event and toggle the LED at pin ``TASK_LED``:
         return;
     }
 
- Create a task that generates an event at periodic intervals and adds,
+Create a task that generates an event at periodic intervals and adds,
 using the ``os_eventq_put()`` function, the event to the Mynewt default
 event queue:
 
@@ -161,7 +163,7 @@ event queue:
 
     }
 
- Implement the application ``main()`` function to call the
+Implement the application ``main()`` function to call the
 ``os_eventq_run()`` function to dequeue an event from the Mynewt default
 event queue and call the callback function to process the event.
 
@@ -181,7 +183,9 @@ event queue and call the callback function to process the event.
         assert(0);
     }
 
- #### OS Callout Timer Events
+OS Callout Timer Events
+^^^^^^^^^^^^^^^^^^^
+
 
 Set up OS callout timer events. For this example, we use a dedicated
 event queue for timer events to show you how to create a dedicated event
@@ -211,7 +215,7 @@ event and toggle the LED at pin ``CALLOUT_LED``:
         os_callout_reset(&my_callout, OS_TICKS_PER_SEC / 2);
     }
 
- In the ``init_tasks()`` function, initialize the
+In the ``init_tasks()`` function, initialize the
 ``my_timer_interrupt_eventq`` event queue, create a task to process
 events from the queue, and initialize the OS callout for the timer:
 
@@ -250,7 +254,7 @@ events from the queue, and initialize the OS callout for the timer:
 
     }
 
- Implement the ``my_timer_interrupt_task()`` task handler to dispatch
+Implement the ``my_timer_interrupt_task()`` task handler to dispatch
 events from the ``my_timer_interrupt_eventq`` event queue:
 
 .. code:: c
@@ -264,7 +268,9 @@ events from the ``my_timer_interrupt_eventq`` event queue:
         }
     }
 
- #### Interrupt Events
+Interrupt Events
+^^^^^^^^^^^^^^^^^^^
+
 
 The application toggles the LED each time button 1 on the board is
 pressed. The interrupt handler generates an event when the GPIO for
@@ -281,7 +287,7 @@ Declare and initialize the ``gpio_ev`` event with the
         .ev_cb = my_interrupt_ev_cb,
     };
 
- Implement the ``my_interrupt_ev_cb()`` callback function to process an
+Implement the ``my_interrupt_ev_cb()`` callback function to process an
 interrupt event and toggle the LED at pin ``GPIO_LED``:
 
 .. code:: c
@@ -351,7 +357,9 @@ the LEDs:
         hal_gpio_init_out(GPIO_LED, 1);
     }
 
- ### Putting It All Together
+Putting It All Together
+~~~~~~~~~~~~~~~
+
 
 Here is the complete ``main.c`` source for your application. Build the
 application and load it on your board. The task LED (LED1) blinks at an

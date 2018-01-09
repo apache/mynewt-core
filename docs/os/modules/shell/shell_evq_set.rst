@@ -1,4 +1,4 @@
- shell\_evq\_set
+shell\_evq\_set
 ----------------
 
 .. code:: c

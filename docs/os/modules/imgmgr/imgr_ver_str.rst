@@ -1,4 +1,4 @@
- imgr\_ver\_str 
+imgr\_ver\_str 
 ----------------
 
 .. code-block:: console

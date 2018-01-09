@@ -183,7 +183,9 @@ a bin directory in your PATH:
 
        $ mv newt/newt /usr/bin
 
- ### Checking the Installed Version of Newt
+Checking the Installed Version of Newt
+~~~~~~~~~~~~~~~
+
 
 1. Check which newt you are using and that the version is the latest
 release version.

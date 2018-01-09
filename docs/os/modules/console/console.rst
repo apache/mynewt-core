@@ -64,11 +64,13 @@ file:
     pkg.req_apis:
         - console
 
- The project ``pkg.yml`` file also specifies the version of the console
+The project ``pkg.yml`` file also specifies the version of the console
 package to use.
 
- #### Using the Full Console Package A project that requires the full
-console capability must list the ``sys/console/full`` package as a
+Using the Full Console Package
+^^^^^^^^^^^^^^^^^^^
+
+A project that requires the full console capability must list the ``sys/console/full`` package as a
 dependency in its ``pkg.yml`` file.
 
 An example is the ``slinky`` application. It requires the full console
@@ -89,7 +91,9 @@ capability and has the following ``pkg.yml`` file:
            ...
         - sys/id
 
- #### Using the Stub Console Package
+Using the Stub Console Package
+^^^^^^^^^^^^^^^^^^^
+
 
 A project that uses console stub API must list the ``sys/console/stub``
 package as a dependency in its ``pkg.yml`` file.
@@ -153,13 +157,17 @@ has the following ``pkg.yml`` file:
         - sys/console/minimal
         - boot/boot_serial
 
- #### Output to the Console
+Output to the Console
+^^^^^^^^^^^^^^^^^^^
+
 
 You use the ``console_write()`` function to write raw output and the
 ``console_printf()`` function to write a C-style formatted string to the
 console.
 
- #### Input from the Console
+Input from the Console
+^^^^^^^^^^^^^^^^^^^
+
 
 The following syscfg settings control input from the console:
 
@@ -172,12 +180,14 @@ The following syscfg settings control input from the console:
    set echo on or off programatically.
 -  ``CONSOLE_MAX_INPUT_LEN``: Specifies the maximum input line length.
 
- The Mynewt 1.1 console package adds a new API for reading input data
+The Mynewt 1.1 console package adds a new API for reading input data
 from the console. The package supports backward compatibility for the
 Mynewt 1.0 console API. The steps you use to receive data from the
 console for each API version are provided below.
 
- ##### Mynewt 1.0 Console API
+# Mynewt 1.0 Console API
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
 
 To use the Mynewt 1.0 console API for reading input from the console,
 you perform the follow steps:
@@ -193,7 +203,9 @@ you perform the follow steps:
 enable backward compatibility support. The setting is enabled by
 default.
 
- ##### Mynewt 1.1 Console API
+# Mynewt 1.1 Console API
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
 
 Mynewt 1.1 console API adds the
 ``console_set_queues(struct os_eventq *avail_queue, struct os_eventq *lines_queue)``
@@ -246,7 +258,7 @@ is received. The two event queues are used as follows:
    pointers to the callback and the ``console_input`` buffer, must be
    added to the avail\_queue.
 
- Here is a code excerpt that shows how to use the
+Here is a code excerpt that shows how to use the
 ``console_set_queues()`` function. The example adds one event to the
 avail\_queue and uses the OS default event queue for the lines\_queue.
 
@@ -282,16 +294,18 @@ avail\_queue and uses the OS default event queue for the lines\_queue.
         return;
     }
 
-    static void 
+    static void
     myapp_init(void)
     {
         os_eventq_init(&avail_queue);
         os_eventq_put(&avail_queue, &myapp_console_event);
-        
+
         console_set_queues(&avail_queue, os_eventq_dflt_get());
     }
 
- ###Data structures
+Data structures
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
 The ``struct console_input`` data structure represents a console input
 buffer. Each event added to the console avail\_queue must have the

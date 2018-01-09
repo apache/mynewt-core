@@ -22,7 +22,7 @@ follows:
     pkg.req_apis:
         - log
 
- The application's ``pkg.yml`` file specifies the version of the log
+The application's ``pkg.yml`` file specifies the version of the log
 package to use. A project that requires the full logging capability must
 list the ``sys/log/full`` package as a dependency in its ``pkg.yml``
 file:
@@ -32,7 +32,7 @@ file:
     pkg.deps:
         - sys/log/full
 
- You can use the ``sys/log/stub`` package if you want to build your
+You can use the ``sys/log/stub`` package if you want to build your
 application without logging to reduce code size.
 
 Syscfg Settings
@@ -55,7 +55,9 @@ following setting corresponds to LOG\_LEVEL\_ERROR:
 The ``LOG_LEVEL`` setting applies to all modules registered with the log
 package.
 
- ### Log
+Log
+~~~~~~~~~~~~~~~
+
 
 Each log stream requires a ``log`` structure to define its logging
 properties.

@@ -11,14 +11,16 @@ discuss what the ``hw/sensor/creator`` package does differently to
 create an off-board sensor. We also discuss how an application can
 change the default configuration for a sensor device.
 
- ### Creating an Onboard Sensor To create and initialize a sensor device
-named ``SENSORNAME``, the BSP implements the following in the
+Creating an Onboard Sensor
+~~~~~~~~~~~~~~~
+
+To create and initialize a sensor device named ``SENSORNAME``, the BSP implements the following in the
 ``hal_bsp.c`` file.
 
 **Note**: All example excerpts are from the code that creates the
 LIS2DH12 onboard sensor in the nrf52\_thingy BSP.
 
- 1. Define a ``<SENSORNAME>_ONB`` syscfg setting to specify whether the
+1. Define a ``<SENSORNAME>_ONB`` syscfg setting to specify whether the
 onboard sensor named ``SENSORNAME`` is enabled. The setting is disabled
 by default. The setting is used to conditionally include the code to
 create a sensor device for ``SENSORNAME`` when it is enabled by the
@@ -32,13 +34,13 @@ application. For example:
             description: 'NRF52 Thingy onboard lis2dh12 sensor'
             value:  0
 
- 2. Include the "<sensorname>/<sensorname>.h" header file. The BSP uses
+2. Include the "<sensorname>/<sensorname>.h" header file. The BSP uses
 the functions and data structures that a device driver package exports.
 See the `Sensor Device
 Driver </os/modules/sensor_framework/sensor_driver.html>`__ page for
 details.
 
- 3. Declare a variable named ``sensorname`` of type
+3. Declare a variable named ``sensorname`` of type
 ``struct sensorname``. For example:
 
 .. code:: c
@@ -49,7 +51,7 @@ details.
     static struct lis2dh12 lis2dh12;
     #endif
 
- 4. Declare and specify the values for a variable of type
+4. Declare and specify the values for a variable of type
 ``struct sensor_itf`` that the sensor device driver uses to communicate
 with the sensor device. For example:
 
@@ -63,7 +65,7 @@ with the sensor device. For example:
         .si_addr = 0x19
     <br>
 
- 5. In the ``hal_bsp_init()`` function, create an OS device for the
+5. In the ``hal_bsp_init()`` function, create an OS device for the
 sensor device. Call the ``os_dev_create()`` function and pass the
 following to the function:
 
@@ -137,7 +139,7 @@ is called when the BSP is initialized during sysinit(). For example:
         return 0;
     }
 
- 7. Add the following in the BSP ``pkg.yml`` file:
+7. Add the following in the BSP ``pkg.yml`` file:
 
 -  A conditional package dependency for the
    ``hw/drivers/sensors/<sensorname>`` package when the
@@ -157,7 +159,9 @@ For example:
     pkg.init:
         config_lis2dh12_sensor: 400
 
- ### Creating an Off-Board Sensor
+Creating an Off-Board Sensor
+~~~~~~~~~~~~~~~
+
 
 The steps to create an off-board sensor is very similar to the steps for
 a BSP. The ``hw/sensor/creator/`` package also declares the variables
@@ -167,7 +171,7 @@ for a BSP. The package does the following differently.
 **Note**: All example excerpts are from the code that creates the BNO055
 off-board sensor in ``hw/sensor/creator`` package.
 
- 1. Define a ``<SENSORNAME>_OFB`` syscfg setting to specify whether the
+1. Define a ``<SENSORNAME>_OFB`` syscfg setting to specify whether the
 off-board sensor named ``SENSORNAME`` is enabled. This setting is
 disabled by default. The ``hw/sensor/creator`` package uses the setting
 to conditionally include the code to create the sensor device when it is
@@ -184,10 +188,10 @@ enabled by the application.
         BNO055_OFB:
             description: 'BNO055 is present'
             value : 0
-          
+
            ...
 
- 2. Add the calls to the ``os_dev_create()`` and the
+2. Add the calls to the ``os_dev_create()`` and the
 ``config_<sensorname>_sensor()`` functions in the
 ``sensor_dev_create()`` function defined in the ``sensor_creator.c``
 file . The ``sensor_dev_create()`` function is the ``hw/sensor/creator``
@@ -218,7 +222,7 @@ For example:
 
     }
 
- 3. Add a conditional package dependency for the
+3. Add a conditional package dependency for the
 ``hw/drivers/sensors/<sensorname>`` package when the
 ``<SENSORNAME>_OFB`` setting is enabled. For example:
 

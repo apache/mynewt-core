@@ -1,7 +1,9 @@
 SEGGER SystemView
 -----------------
 
- ### Objective
+Objective
+~~~~~~~~~~~~~~~
+
 
 With `SEGGER's SystemView <https://www.segger.com/systemview.html>`__
 you can "record data from the target system while it is running. The
@@ -71,7 +73,7 @@ attach to:
 Launch the app
 ~~~~~~~~~~~~~~
 
- Launch the app and press **OK** in the System Information dialog box.
+Launch the app and press **OK** in the System Information dialog box.
 
 .. figure:: pics/segger_sysview1.png
    :alt: SEGGER SystemView

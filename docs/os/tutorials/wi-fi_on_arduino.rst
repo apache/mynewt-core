@@ -57,7 +57,7 @@ Run the following commands to create a new project:
         apache-mynewt-core
         $
 
- Fetch External Packages
+Fetch External Packages
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 Mynewt uses source code provided directly from the chip manufacturer for
@@ -100,7 +100,7 @@ repo: mynewt-core
 repository.mynewt\_arduino\_zero: type: github vers: 1-latest user:
 runtimeco repo: mynewt\_arduino\_zero $ \`\`\`
 
- Install the project dependencies using the ``newt install`` command
+Install the project dependencies using the ``newt install`` command
 (you can specify ``-v`` for verbose output):
 
 .. code-block:: console
@@ -148,7 +148,9 @@ application target ``mkr1000_wifi``.
     $ newt target set mkr1000_wifi build_profile=debug
     $ newt target set mkr1000_boot syscfg=BSP_ARDUINO_ZERO_PRO=1
 
- ### Build the Bootloader
+Build the Bootloader
+~~~~~~~~~~~~~~~
+
 
 Run the ``newt build mkr1000_boot`` command to build the bootloader:
 
@@ -192,7 +194,9 @@ application image:
     Target successfully built: targets/mkr1000_wifi
     $
 
- ### Sign and Create the Wi-Fi Application Image
+Sign and Create the Wi-Fi Application Image
+~~~~~~~~~~~~~~~
+
 
 Run the ``newt create-image mkr1000_wifi 1.0.0`` command to sign and
 create an image file for the Wi-Fi application. You may assign an
@@ -220,7 +224,7 @@ Connect to the Board
 
    <p>
 
- Mynewt will download and debug the target through this port. You should
+Mynewt will download and debug the target through this port. You should
 see a green LED come on and indicates the board has power.
 
 Load the Bootloader onto the Board
@@ -247,7 +251,9 @@ onto the board:
     Loading app image into slot 1
     $
 
- ### Setup a Serial Connection Between Your Computer and the Board
+Setup a Serial Connection Between Your Computer and the Board
+~~~~~~~~~~~~~~~
+
 
 Set up a serial connection from your computer to the MKR1000 board (See
 `Serial Port Setup </os/get_started/serial_access.html>`__). On the
@@ -258,7 +264,7 @@ Connection to MKR1000|
 
    <p>
 
- Locate the port, in the /dev directory on your computer, that the
+Locate the port, in the /dev directory on your computer, that the
 serial connection uses. The format of the port name is platform
 dependent:
 
@@ -292,7 +298,7 @@ command with the serial port you located on your computer:
 
     $ minicom -D /dev/tty.usbserial-1d13 -b 115200
 
- Type ``wifi start`` to start Wi-Fi.
+Type ``wifi start`` to start Wi-Fi.
 
 .. code:: hl_lines="11"
 
@@ -313,7 +319,7 @@ command with the serial port you located on your computer:
     (APP)(INFO)Curr driver ver: 19.3.0
     wifi_init : 0
 
- Connect to the local Wi-Fi network. Note that the MKR1000 board only
+Connect to the local Wi-Fi network. Note that the MKR1000 board only
 supports 2.4 GHz Wi-Fi networks.
 
 Run the ``wifi connect`` command and specify your network and . After

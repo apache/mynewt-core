@@ -1,4 +1,4 @@
- TEST\_PASS 
+TEST\_PASS 
 ------------
 
 .. code-block:: console

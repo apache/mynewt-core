@@ -15,8 +15,10 @@ Prerequisites
 -  Install a debugger. Choose one of the two options below: Option 1
    requires additional hardware but very easy to set up.
 
- ##### Option 1 \* `Segger J-Link Debug
-Probe <https://www.segger.com/jlink-debug-probes.html>`__ - any model
+# Option 1
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+ \* `Segger J-Link Debug Probe <https://www.segger.com/jlink-debug-probes.html>`__ - any model
 (this tutorial has been tested with J-Link EDU and J-Link Pro) \*
 `J-Link 9 pin Cortex-M
 Adapter <https://www.segger.com/jlink-adapters.html#CM_9pin>`__ that
@@ -56,7 +58,9 @@ Run the following commands to create a new project:
         apache-mynewt-core
         $
 
- ### Create the Targets
+Create the Targets
+~~~~~~~~~~~~~~~
+
 
 Create two targets for the Arduino Primo board - one for the bootloader
 and one for the Blinky application.
@@ -69,7 +73,7 @@ to create a bootloader target. We name the target ``primo_boot``.
     $ newt target create primo_boot
     $ newt target set primo_boot app=@apache-mynewt-core/apps/boot bsp=@apache-mynewt-core/hw/bsp/arduino_primo_nrf52 build_profile=optimized
 
- Run the following ``newt target`` commands to create a target for the
+Run the following ``newt target`` commands to create a target for the
 Blinky application. We name the target ``primoblinky``.
 
 .. code-block:: console
@@ -77,7 +81,7 @@ Blinky application. We name the target ``primoblinky``.
     $ newt target create primoblinky
     $ newt target set primoblinky app=apps/blinky bsp=@apache-mynewt-core/hw/bsp/arduino_primo_nrf52 build_profile=debug
 
- If you are using openocd, run the following ``newt target set``
+If you are using openocd, run the following ``newt target set``
 commands:
 
 .. code-block:: console
@@ -85,7 +89,7 @@ commands:
     $ newt target set primoblinky syscfg=OPENOCD_DEBUG=1
     $ newt target set primo_boot syscfg=OPENOCD_DEBUG=1
 
- You can run the ``newt target show`` command to verify the target
+You can run the ``newt target show`` command to verify the target
 settings:
 
 .. code-block:: console
@@ -129,7 +133,7 @@ Run the ``newt build primo_boot`` command to build the bootloader:
     Linking ~/dev/myproj/bin/targets/primo_boot/app/apps/boot/boot.elf
     Target successfully built: targets/primo_boot
 
- Run the ``newt build primoblinky`` command to build the Blinky
+Run the ``newt build primoblinky`` command to build the Blinky
 application:
 
 .. code-block:: console
@@ -222,12 +226,14 @@ additional notes about the installation:
 
 Run the ``newt load primo_boot`` command again.
 
- ###Load the Blinky Application Image Run the ``newt load primoblinky``
-command to load the Blinky application image onto the board.
+Load the Blinky Application Image
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Run the ``newt load primoblinky`` command to load the Blinky application image onto the board.
 
 .. code-block:: console
 
-    $ newt  load primoblinky 
+    $ newt  load primoblinky
     Loading app image into slot 1
     $
 
@@ -236,8 +242,10 @@ blink!
 
 Note: If the LED does not blink, try resetting the board.
 
- ###Erase Flash If you want to erase the flash and load the image again,
-use JLinkExe and issue the ``erase`` command when you are using the
+Erase Flash
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you want to erase the flash and load the image again, use JLinkExe and issue the ``erase`` command when you are using the
 Jlink debug probe:
 
 **Note:** On Windows: Run the ``jlink`` command with the same arguments
@@ -292,5 +300,3 @@ terminal.
     warning: Source file is more recent than executable.
     200    if (ticks > 0) {
     (gdb) mon nrf52 mass_erase
-
-

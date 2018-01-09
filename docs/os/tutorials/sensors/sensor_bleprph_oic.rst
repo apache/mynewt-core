@@ -44,9 +44,11 @@ To add OIC sensor support, we modify the bleprph\_oic application to
 call the ``sensor_oic_init()`` function in the OIC application
 initialization handler.
 
- ### Step 1: Copying the bleprph\_oic source
+Step 1: Copying the bleprph\_oic source
+~~~~~~~~~~~~~~~
 
- 1. Copy the @apache-mynewt-core/apps/bleprph\_oic to a new package. We
+
+1. Copy the @apache-mynewt-core/apps/bleprph\_oic to a new package. We
 name the new package **apps/bleprph\_oic\_sensor**. From your project
 base directory, run the ``newt pkg copy`` command:
 
@@ -56,7 +58,7 @@ base directory, run the ``newt pkg copy`` command:
     $ newt pkg copy @apache-mynewt-core/apps/bleprph_oic @apache-mynewt-core/apps/bleprph_oic_sensor
     Copying package @apache-mynewt-core/apps/bleprph_oic to @apache-mynewt-core/apps/bleprph_oic_sensor
 
- 2. The newt tools creates the ``bleprph_oic_sensor`` package in the
+2. The newt tools creates the ``bleprph_oic_sensor`` package in the
 ``~/dev/myproj/repos/apache-mynewt-core/apps/bleprph_oic_sensor``
 directory. Go to the directory to update the package ``pkg.yml`` and
 source files.
@@ -92,7 +94,9 @@ net/nimble/host/store/ram - net/nimble/transport/ram
 
 \`\`\`
 
- ### Step 3: Setting Syscfg Values to Enable OIC Support
+Step 3: Setting Syscfg Values to Enable OIC Support
+~~~~~~~~~~~~~~~
+
 
 Add the following setting values to ``syscfg.vals`` in the
 ``syscfg.yml`` file:
@@ -138,7 +142,9 @@ We make the following modifications to main.c:
 -  Delete the OIC application request handler functions that process the
    CoAP requests for the light resource.
 
- #### Adding the Sensor Package Header File:
+Adding the Sensor Package Header File:
+^^^^^^^^^^^^^^^^^^^
+
 
 Add the sensor package header file ``sensor/sensor.h`` below
 ``#include "bleprph.h"`` file:
@@ -155,7 +161,7 @@ Modifying the omgr\_app\_init() Function
 
 Make the following modifications to the ``omgr_app_init()`` function:
 
- 1. Delete the code segment that creates the OIC device and resource.
+1. Delete the code segment that creates the OIC device and resource.
 The lines to delete are highlighted below:
 
 \`\`\`hl\_lines="4 7 8 9 10 11 12 13 14 15 16 17 18 19"
@@ -198,7 +204,7 @@ to create an OIC resource for the sensor device:
 
     }
 
- 3. Add the call to the ``sensor_oic_init()`` function to initialize the
+3. Add the call to the ``sensor_oic_init()`` function to initialize the
 sensor framework OIC server support:
 
 .. code:: hl_lines="9"
@@ -216,7 +222,9 @@ sensor framework OIC server support:
 
     }
 
- #### Deleting the app\_get\_light() and app\_set\_light() Functions
+Deleting the app\_get\_light() and app\_set\_light() Functions
+^^^^^^^^^^^^^^^^^^^
+
 
 Since we modify the application to no longer create an OIC light
 resource, the ``app_get_light()`` and the ``app_set_light()`` handler
@@ -224,7 +232,9 @@ functions that process read and write requests are not used. We need to
 delete the functions to avoid compilation errors. Search for the two
 functions and delete them.
 
- ### Step 5: Creating and Building the Application Image
+Step 5: Creating and Building the Application Image
+~~~~~~~~~~~~~~~
+
 
 In this step of the tutorial we create and build an application image
 for the bleprph\_oic\_sensor application to verify that the application
@@ -234,7 +244,7 @@ We use the same syscfg settings from the `Enabling OIC Sensor Data
 Monitoring in the sensors\_test Application
 Tutorial </os/tutorials/sensors/sensor_nrf52_bno055_oic.html>`__.
 
- 1. From your project base directory, run the ``newt create target``
+1. From your project base directory, run the ``newt create target``
 command to create a new target named ``nrf52_bleprph_oic_bno055``:
 
 .. code-block:: console
@@ -243,7 +253,7 @@ command to create a new target named ``nrf52_bleprph_oic_bno055``:
     $ newt target create nrf52_bleprph_oic_bno055
     Target targets/nrf52_bleprph_oic_bno055 successfully created
 
- 2. Run the ``newt target set`` command to set the app, bsp, and
+2. Run the ``newt target set`` command to set the app, bsp, and
 build\_profile variables for the target.
 
 .. code-block:: console
@@ -255,7 +265,7 @@ build\_profile variables for the target.
     Target targets/nrf52_bleprph_oic_bno055 successfully set target.build_profile to debug 
     $
 
- 3. Run the ``newt target set`` command to set ``I2C_0=1``,
+3. Run the ``newt target set`` command to set ``I2C_0=1``,
 ``BNO055_OFB=1``, ``BLE_MAX_CONNECTIONS=4``, ``MSYS_1_BLOCK_COUNT=52``,
 ``MSYS_1_BLOCK_SIZE=100``, and ``OC_APP_RESOURCES=11``.
 
@@ -266,11 +276,13 @@ build\_profile variables for the target.
     Target targets/nrf52_bleprph_oic_bno055 successfully set target.syscfg to BNO055_OFB=1:I2C_0=1:BLE_MAX_CONNECTIONS=4:MSYS_1_BLOCK_COUNT=52:MSYS_1_BLOCK_SIZE=100:OC_APP_RESOURCES=11
     $
 
- 4. Run the ``newt build nrf52_bleprph_oic_bno055`` and
+4. Run the ``newt build nrf52_bleprph_oic_bno055`` and
 ``newt create-image nrf52_bleprph_oic_bno055 1.0.0`` commands to build
 and create the application image.
 
- ### Step 6: Connecting the Sensor and Loading the Images to the Board
+Step 6: Connecting the Sensor and Loading the Images to the Board
+~~~~~~~~~~~~~~~
+
 
 Perform the following steps to reboot the board with the new images:
 
@@ -291,7 +303,9 @@ Perform the following steps to reboot the board with the new images:
    application image.
 4. Power the device OFF and ON to reboot.
 
- ### Step 7: Viewing Sensor Data from the Mynewt Smart Device Controller
+Step 7: Viewing Sensor Data from the Mynewt Smart Device Controller
+~~~~~~~~~~~~~~~
+
 
 Start the Mynewt Smart Device Controller app on your iOS or Android
 device to view the sensor data. You should already have the app
@@ -333,5 +347,5 @@ from the Android App:
 
    <p>
 
- 2. Move your BNO055 sensor device around to see the values for the
+2. Move your BNO055 sensor device around to see the values for the
 coordinates change.

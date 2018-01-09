@@ -1,7 +1,7 @@
 Enabling Newt Manager in Your Application
 -----------------------------------------
 
- In order for your application to communicate with the newtmgr tool and
+In order for your application to communicate with the newtmgr tool and
 process Newt Manager commands, you must enable Newt Manager device
 management and the support to process Newt Manager commands in your
 application. This tutorial explains how to add the support to your
@@ -89,7 +89,7 @@ parameter in the target or application ``syscfg.yml`` file:
         SHELL_TASK: 1
         SHELL_NEWTMGR: 1
 
- The first five configuration settings enable support for the Newt
+The first five configuration settings enable support for the Newt
 Manager ``log``, ``stat``, ``config``, ``crash``, and ``run`` commands.
 The ``SHELL_TASK`` setting enables the shell for serial transport. The
 ``SHELL_NEWTMGR`` setting enables newtmgr support in the shell.
@@ -128,7 +128,7 @@ Add the ``mgmt/mgmt.h`` header file:
 
     #include <mgmt/mgmt.h>
 
- Add the call to specify the event queue. In the ``main()`` function,
+Add the call to specify the event queue. In the ``main()`` function,
 scroll down to the ``while (1)`` loop and add the following statement
 above the loop:
 
@@ -204,7 +204,7 @@ communicating with the newtmgr tool:
     # newtmgr -c myconn echo hello
     hello
 
- Test your application to ensure that it can process a Newt Manager
+Test your application to ensure that it can process a Newt Manager
 command that is supported by a different package. Issue the ``stat``
 command to see the BLE stats.
 
@@ -238,7 +238,9 @@ command to see the BLE stats.
 
 Your application is now able to communicate with the newtmgr tool.
 
- ### Other Configuration Options
+Other Configuration Options
+~~~~~~~~~~~~~~~
+
 
 This section explains how to customize your application to use other
 Newt Manager protocol options.

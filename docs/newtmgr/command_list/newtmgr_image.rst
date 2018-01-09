@@ -1,4 +1,4 @@
-newtmgr image 
+newtmgr image
 --------------
 
 Manage images on a device.
@@ -8,7 +8,7 @@ Usage:
 
 .. code-block:: console
 
-        newtmgr image [command] -c <connection_profile> [flags] 
+        newtmgr image [command] -c <connection_profile> [flags]
 
 Flags:
 ^^^^^^
@@ -17,11 +17,13 @@ The coredownload subcommand uses the following local flags:
 
 .. code-block:: console
 
-        -n, --bytes uint32         Number of bytes of the core to download 
-        -e, --elfify               Create an ELF file 
-            --offset unint32       Offset of the core file to start the download 
+        -n, --bytes uint32         Number of bytes of the core to download
+        -e, --elfify               Create an ELF file
+            --offset unint32       Offset of the core file to start the download
 
- #### Global Flags:
+Global Flags:
+^^^^^^^^^^^^^^^^^^^
+
 
 .. code-block:: console
 
@@ -32,8 +34,10 @@ The coredownload subcommand uses the following local flags:
       -t, --timeout float     timeout in seconds (partial seconds allowed) (default 10)
       -r, --tries int         total number of tries in case of timeout (default 1)
 
- ####Description The image command provides subcommands to manage core
-and image files on a device. Newtmgr uses the ``conn_profile``
+Description
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The image command provides subcommands to manage core and image files on a device. Newtmgr uses the ``conn_profile``
 connection profile to connect to the device.
 
 +----------------+---------------------------+

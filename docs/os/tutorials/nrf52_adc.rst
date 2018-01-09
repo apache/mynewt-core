@@ -102,7 +102,7 @@ Create the targets
 
 Create two targets - one for the bootloader and one for the nrf52 board.
 
- Note: The correct bsp must be chosen for the board you are using.
+Note: The correct bsp must be chosen for the board you are using.
 
 -  For the Nordic Dev Kit choose @apache-mynewt-core/hw/bsp/nrf52dk
    instead (in the highlighted lines)

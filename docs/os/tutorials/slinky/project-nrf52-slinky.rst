@@ -32,10 +32,10 @@ Run the following commands to create a new project. We name the project
     Installing skeleton in slink...
     Project slinky successfully created
     $ cd slinky
-    $newt install 
+    $newt install
     apache-mynewt-core
 
- Create the Targets
+Create the Targets
 ~~~~~~~~~~~~~~~~~~~
 
 Create two targets for the nRF52-DK board - one for the bootloader and
@@ -51,7 +51,7 @@ to create a bootloader target. We name the target ``nrf52_boot``.
     $ newt target set nrf52_boot build_profile=optimized
     $ newt target set nrf52_boot app=@apache-mynewt-core/apps/boot
 
- Run the following ``newt target`` commands to create a target for the
+Run the following ``newt target`` commands to create a target for the
 Slinky application. We name the target ``nrf52_slinky``.
 
 .. code-block:: console
@@ -132,7 +132,9 @@ Connect to the Board
 -  Turn the power on the board to ON. You should see the green LED light
    up on the board.
 
- ### Load the Bootloader and the Slinky Application Image
+Load the Bootloader and the Slinky Application Image
+~~~~~~~~~~~~~~~
+
 
 Run the ``newt load nrf52_boot`` command to load the bootloader onto the
 board:
@@ -143,7 +145,7 @@ board:
     Loading bootloader
     $
 
- Run the ``newt load nrf52_slinky`` command to load the Slinky
+Run the ``newt load nrf52_slinky`` command to load the Slinky
 application image onto the board:
 
 .. code-block:: console
@@ -198,7 +200,7 @@ profile for the serial port. We name the connection profile
     Connection profile nrf52serial successfully added
     $
 
- You can run the ``newt conn show`` command to see all the newtmgr
+You can run the ``newt conn show`` command to see all the newtmgr
 connection profiles:
 
 .. code-block:: console
@@ -209,8 +211,10 @@ connection profiles:
       sim1: type=serial, connstring='/dev/ttys012'
     $
 
- ### Use Newtmgr to Query the Board Run some newtmgr commands to query
-and receive responses back from the board (See the `Newt Manager
+Use Newtmgr to Query the Board
+~~~~~~~~~~~~~~~
+
+Run some newtmgr commands to query and receive responses back from the board (See the `Newt Manager
 Guide <../../newtmgr/overview>`__ for more information on the newtmgr
 commands).
 
@@ -219,16 +223,16 @@ simplest command that requests the board to echo back the text.
 
 .. code-block:: console
 
-    $ newtmgr echo hello -c nrf52serial 
+    $ newtmgr echo hello -c nrf52serial
     hello
     $
 
- Run the ``newtmgr image list -c nrf52serial`` command to list the
+Run the ``newtmgr image list -c nrf52serial`` command to list the
 images on the board:
 
 .. code-block:: console
 
-    $ newtmgr image list -c nrf52serial 
+    $ newtmgr image list -c nrf52serial
     Images:
      slot=0
         version: 1.0.0
@@ -238,7 +242,7 @@ images on the board:
     Split status: N/A
     $
 
- Run the ``newtmgr taskstat -c nrf52serial`` command to display the task
+Run the ``newtmgr taskstat -c nrf52serial`` command to display the task
 statistics on the board:
 
 .. code-block:: console

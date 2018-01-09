@@ -37,7 +37,9 @@ override violations:
    value but needs to conditionally override the value based on another
    setting value.
 
- ####Example: Ambiguity Violation Error Message
+Example: Ambiguity Violation Error Message
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
 
 The following example shows the error message that newt outputs for an
 ambiguity violation:
@@ -206,7 +208,9 @@ cause the error:
     syscfg.vals: 
         REBOOT_LOG_FLASH_AREA: FLASH_AREA_NFFS
 
- ###Restriction Violations For setting definitions with ``restrictions``
+Restriction Violations For setting definitions with ``restrictions``
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
 specified, newt checks for the following violations:
 
 -  A setting with a ``$notnull`` restriction does not have a value.
@@ -283,7 +287,9 @@ files that cause the error:
     syscfg.vals:
         CONFIG_FCB: 1
 
- ###Task Priority Violations
+Task Priority Violations
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
 For ``task_priority`` type setting definitions, newt checks for the
 following violations:
@@ -330,7 +336,9 @@ value.
 **Note:** Newt does not output the ``Setting history`` with task
 priority violation error messages.
 
- ###Duplicate System Configuration Setting Definition
+Duplicate System Configuration Setting Definition
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
 A setting definition must be unique. Newt checks that only one package
 in the target defines a setting. The following example shows the error
@@ -379,7 +387,7 @@ is an excerpt from its ``syscfg.yml`` file:
         STATS_NEWTMGR: 1
         LOG_NEWMGR: 1
 
- The ``newt target config show slinky_sim`` command outputs the
+The ``newt target config show slinky_sim`` command outputs the
 following WARNING message:
 
 .. code-block:: console
@@ -405,7 +413,9 @@ DEBUG message:
     2017/02/18 17:06:21.451 [DEBUG]     LOG_NEWMGR: [apps/slinky:1]
     2017/02/18 17:06:21.451 [DEBUG]     NFFS_FLASH_AREA: [hw/bsp/native:FLASH_AREA_NFFS]
 
- #### BSP Package Overrides Undefined Configuration Settings
+BSP Package Overrides Undefined Configuration Settings
+^^^^^^^^^^^^^^^^^^^
+
 
 You might see a warning that indicates your application's BSP package is
 overriding some undefined settings. As you can see from the previous

@@ -47,7 +47,7 @@ not need to set these settings in the target because the
 enables the ``BLE_ROLE_PERIPHERAL`` and ``BLE_ROLE_BROADCASTER``
 settings by default.
 
- 1. Run the ``newt target create`` command to create the target. We name
+1. Run the ``newt target create`` command to create the target. We name
 the target ``nrf52_bno055_oic_test``.
 
 .. code-block:: console
@@ -57,7 +57,7 @@ the target ``nrf52_bno055_oic_test``.
     Target targets/nrf52_bno055_oic_test successfully created
     $
 
- 2. Run the ``newt target set`` command to set the app, bsp, and
+2. Run the ``newt target set`` command to set the app, bsp, and
 build\_profile variables for the target:
 
 .. code-block:: console
@@ -69,7 +69,7 @@ build\_profile variables for the target:
     Target targets/nrf52_bno055_oic_test successfully set target.build_profile to debug
     $
 
- 3. Run the ``newt target set`` command to set ``I2C_0=1``,
+3. Run the ``newt target set`` command to set ``I2C_0=1``,
 ``BNO055_OFB=1``, ``BLE_MAX_CONNECTIONS=4``, ``MSYS_1_BLOCK_COUNT=52``,
 ``MSYS_1_BLOCK_SIZE=100``, and ``OC_APP_RESOURCES=11``.
 
@@ -83,11 +83,13 @@ commands, also set ``SENSOR_CLI=0`` and ``BNO055_CLI=0``.
     Target targets/nrf52_bno055_oic_test successfully set target.syscfg to BNO055_OFB=1:I2C_0=1:BLE_MAX_CONNECTIONS=4:MSYS_1_BLOCK_COUNT=52:MSYS_1_BLOCK_SIZE=100:OC_APP_RESOURCES=11
     $
 
- 4. Run the ``newt build nrf52_bno055_oic_test`` and
+4. Run the ``newt build nrf52_bno055_oic_test`` and
 ``newt create-image nrf52_bno055_oic_test 1.0.0`` commands to build and
 create the application image.
 
- ### Step 2: Connecting the Sensor and Loading the Images to the Board
+Step 2: Connecting the Sensor and Loading the Images to the Board
+~~~~~~~~~~~~~~~
+
 
 Perform the following steps to reboot the board with the new images:
 
@@ -105,7 +107,9 @@ Perform the following steps to reboot the board with the new images:
    application image.
 4. Power the device OFF and ON to reboot.
 
- ### Step 3: Viewing Sensor Data from the Mynewt Smart Device Controller
+Step 3: Viewing Sensor Data from the Mynewt Smart Device Controller
+~~~~~~~~~~~~~~~
+
 
 Start the Mynewt Smart Device Controller app on your iOS or Android
 device to view the sensor data. If you have not installed the Mynewt
@@ -113,7 +117,7 @@ Smart Device Controller follow the instructions in the `Sensor Tutorials
 Overview </os/tutorials/sensors/sensors.html>`__ to install the app, then
 continue with this step of the tutorial.
 
- The Mynewt Smart Device Controller scans for the devices when it starts
+The Mynewt Smart Device Controller scans for the devices when it starts
 up and displays the sensors it can view. The following is an example
 from the Android App:
 

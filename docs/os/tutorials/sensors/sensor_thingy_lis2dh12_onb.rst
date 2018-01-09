@@ -8,7 +8,7 @@ completed the `Enabling an Off-Board Sensor in an Existing Application
 Tutorial </os/tutorials/sensors/sensor_nrf52_bno055.html>`__ and are
 familiar with the sensor framework and sensor shell command.
 
- This tutorial shows you how to:
+This tutorial shows you how to:
 
 -  Develop an application for the Nordic Thingy LIS2DH12 accelerometer
    onboard sensor with the sensor framework ``sensor`` shell command
@@ -39,7 +39,9 @@ Developing a Sensor Enabled Application with Shell Support
 We first develop a simple application with the LIS2DH12 onboard sensor
 on the Nordic Thingy and the ``sensor`` shell command enabled.
 
- #### Step 1: Creating a New App Package
+Step 1: Creating a New App Package
+^^^^^^^^^^^^^^^^^^^
+
 
 We name the new app package ``my_sensor_app``. From your project base
 directory, run the ``newt pkg new`` command to create a new app package.
@@ -52,7 +54,7 @@ This tutorial uses ~/dev/myproj for the project.
     Download package template for package type app.
     Package successfuly installed into ~/dev/myproj/apps/my_sensor_app
 
- The newt tool creates a skeleton ``my_sensor_app`` package directory in
+The newt tool creates a skeleton ``my_sensor_app`` package directory in
 the ``~/dev/myproj/apps/`` directory. Go to the ``my_sensor_app``
 directory to update the package ``pkg.yml`` and source files.
 
@@ -61,7 +63,9 @@ directory to update the package ``pkg.yml`` and source files.
 
     $ cd apps/my_sensor_app
 
- #### Step 2: Adding the Package Dependencies
+Step 2: Adding the Package Dependencies
+^^^^^^^^^^^^^^^^^^^
+
 
 The my\_sensor\_app package requires the sensor framework,
 ``hw/sensor``, package as a package dependency. Note that the BSP
@@ -82,7 +86,9 @@ Add the highlighted line to the ``pkg.yml`` file to add the
         - "@apache-mynewt-core/sys/stats/full"
         - "@apache-mynewt-core/hw/sensor"
 
- #### Step 3: Using the Skeleton main.c File
+Step 3: Using the Skeleton main.c File
+^^^^^^^^^^^^^^^^^^^
+
 
 The newt tool creates a skeleton main.c file in the
 ``my_sensor_app/src`` directory. The skeleton ``main()`` code shown is
@@ -114,7 +120,9 @@ event queue.
         return 0;
     }
 
- #### Step 4: Creating the Target for the my\_sensor\_app Application
+Step 4: Creating the Target for the my\_sensor\_app Application
+^^^^^^^^^^^^^^^^^^^
+
 
 You create a target for the my\_sensor\_app to run on the Nordic Thingy.
 The following syscfg settings must be set:
@@ -147,7 +155,7 @@ The following syscfg settings must be set:
 ``/hw/driver/sensors/lis2dh12``, currently does not support a shell
 command to view information on the device.
 
- 1. Run the following newt commands to create the target and set the
+1. Run the following newt commands to create the target and set the
 application and BSP.
 
 .. code-block:: console
@@ -162,7 +170,7 @@ application and BSP.
     $ newt target set thingy_my_sensor build_profile=debug
     Target targets/thingy_my_sensor successfully set target.build_profile to debug
 
- 2. Run the following ``newt target set`` command to set the syscfg
+2. Run the following ``newt target set`` command to set the syscfg
 settings:
 
 .. code-block:: console
@@ -171,12 +179,14 @@ settings:
     $ newt target set thingy_my_sensor syscfg=I2C_0=1:LIS2DH12_ONB=1:SHELL_TASK=1:CONSOLE_RTT=1:CONSOLE_UART=0:SENSOR_OIC=0
     Target targets/thingy_my_sensor successfully set target.syscfg to I2C_0=1:LIS2DH12_ONB=1:SHELL_TASK=1:CONSOLE_RTT=1:CONSOLE_UART=0:SENSOR_OIC=0
 
- #### Step 5: Creating and Building the Bootloader Target
+Step 5: Creating and Building the Bootloader Target
+^^^^^^^^^^^^^^^^^^^
+
 
 Create a target for the bootloader for the nRF52 Thingy. We name the
 target ``thingy_boot``.
 
- 1. Run the following ``newt target`` commands to create the target:
+1. Run the following ``newt target`` commands to create the target:
 
 .. code-block:: console
 
@@ -190,12 +200,12 @@ target ``thingy_boot``.
     $ newt target set thingy_boot build_profile=optimized
     Target targets/thingy_boot successfully set target.build_profile to optimized
 
- 2. Run the ``newt build`` command to build the bootloader target:
+2. Run the ``newt build`` command to build the bootloader target:
 
 .. code-block:: console
 
 
-    $ newt build thingy_boot 
+    $ newt build thingy_boot
     Building target targets/thingy_boot
 
            ...
@@ -205,14 +215,16 @@ target ``thingy_boot``.
     Linking ~/dev/myproj/bin/targets/thingy_boot/app/apps/boot/boot.elf
     Target successfully built: targets/thingy_boot
 
- #### Step 6: Connecting the Thingy to your Computer Perform the
-following steps to connect the Thingy to your computer:
+Step 6: Connecting the Thingy to your Computer
+^^^^^^^^^^^^^^^^^^^
 
- 1. Move the power switch to the left to power ON the Thingy:
+Perform the following steps to connect the Thingy to your computer:
+
+1. Move the power switch to the left to power ON the Thingy:
 
  |Thingy|
 
- 2. Connect the debug probe to the JTAG port on the board using the
+2. Connect the debug probe to the JTAG port on the board using the
 Jlink 9-pin adapter and cable, and connect the probe to your computer.
 
  |J-Link debug probe to Thingy|
@@ -221,13 +233,15 @@ Jlink 9-pin adapter and cable, and connect the probe to your computer.
 
    <p>
 
- #### Step 7: Loading the Image and Connecting to the Console via RTT
+Step 7: Loading the Image and Connecting to the Console via RTT
+^^^^^^^^^^^^^^^^^^^
+
 
 To run the application, you need to load the bootloader on to the
 device, load the application image, and start a GDB debug process for
 RTT to attach to.
 
- 1. Run the ``newt load`` command to load the bootloader:
+1. Run the ``newt load`` command to load the bootloader:
 
 .. code-block:: console
 
@@ -235,7 +249,7 @@ RTT to attach to.
     $ newt load thingy_boot
     Loading bootloader
 
- 2. Run the ``newt run`` command to build and create an image for the
+2. Run the ``newt run`` command to build and create an image for the
 my\_sensor\_app, load the image, and start a GDB process to debug the
 application:
 
@@ -282,11 +296,11 @@ application:
     204     if (ticks > 0) {
     Resetting target
     0x000000dc in ?? ()
-    (gdb) 
+    (gdb)
 
- 3. Enter ``c <return>`` in the (gdb) prompt to continue.
+3. Enter ``c <return>`` in the (gdb) prompt to continue.
 
- 4. Run the following telnet command to connect to the Mynewt console
+4. Run the following telnet command to connect to the Mynewt console
 via RTT and enter <return> to get the shell prompt after you are
 connected.
 
@@ -305,9 +319,11 @@ connected.
 
     011468 compat>
 
- #### Step 8: Viewing the list of Sensors and Sensor Data
+Step 8: Viewing the list of Sensors and Sensor Data
+^^^^^^^^^^^^^^^^^^^
 
- 1. Enter ``sensor list`` to see the sensors that are registered with
+
+1. Enter ``sensor list`` to see the sensors that are registered with
 the sensor manager. You should see the ``lis2dh12_0`` sensor. This
 sensor is only configured for the accelerometer (0x1).
 
@@ -316,10 +332,10 @@ sensor is only configured for the accelerometer (0x1).
 
     011468 compat> sensor list
     sensor list
-    029706 sensor dev = lis2dh12_0, configured type = 0x1 
-    029707 compat> 
+    029706 sensor dev = lis2dh12_0, configured type = 0x1
+    029707 compat>
 
- 2. Enter the ``sensor read`` command to read some data samples from the
+2. Enter the ``sensor read`` command to read some data samples from the
 accelerometer:
 
 .. code-block:: console
@@ -337,9 +353,11 @@ accelerometer:
     042538 x = 9.806650176 y = 29.419950496 z = -9904.716796
     042538 ts: [ secs: 331 usecs: 111288 cputime: 331445551 ]
     042538 x = 58.839900992 y = 0.000000000 z = -9816.457031
-    042538 compat> 
+    042538 compat>
 
- ### Extending the Application to Use the Sensor API to Read Sensor Data
+Extending the Application to Use the Sensor API to Read Sensor Data
+~~~~~~~~~~~~~~~
+
 
 As this tutorial demonstrates so far, the Mynewt sensor framework
 enables you to easily and quickly develop an application with a sensor
@@ -375,11 +393,13 @@ a listener. An application may not need to poll sensors. For example, an
 application that processes remote requests for sensor data might only
 read the sensor data when it receives a request.
 
- #### Step 1: Modifying main.c to Add a Sensor Listener
+Step 1: Modifying main.c to Add a Sensor Listener
+^^^^^^^^^^^^^^^^^^^
+
 
 Add the following code to the ``my_sensor_app/src/main.c`` file:
 
- 1. Add the highlighted include files:
+1. Add the highlighted include files:
 
 \`\`\`hl\_lines="4 5 6 7"
 
@@ -389,21 +409,21 @@ include "sysinit/sysinit.h"
 include "os/os.h"
 =================
 
-include 
+include
 ========
 
-include 
+include
 ========
 
-include 
+include
 ========
 
-include 
+include
 ========
 
 \`\`\`
 
- 2. Add the ``struct sensor * my_sensor``. This is the handle for the
+2. Add the ``struct sensor * my_sensor``. This is the handle for the
 sensor that the sensor API uses to perform operations on the sensor. We
 set this variable when we lookup the sensor.
 
@@ -412,7 +432,7 @@ set this variable when we lookup the sensor.
 
     static struct sensor *my_sensor;
 
- 3. Declare and initialize a sensor listener. You specify a bit mask for
+3. Declare and initialize a sensor listener. You specify a bit mask for
 the sensor types to listen for, the callback function, and an opaque
 argument to pass to the callback. You initialize the type to
 SENSOR\_TYPE\_ACCELEROMETER, the listener callback to the
@@ -440,7 +460,7 @@ callback.
        .sl_arg = (void *)LISTENER_CB,
     };
 
- 4. Add the code for the ``read_accelerometer()`` function. The sensor
+4. Add the code for the ``read_accelerometer()`` function. The sensor
 data is stored in the ``databuf`` and ``type`` specifies the type of
 sensor data.
 
@@ -466,7 +486,7 @@ sensor data.
 
             return SYS_EINVAL;
         }
-       
+
         console_printf("%s: [ secs: %ld usecs: %d cputime: %u ]\n",
                        ((int)arg == LISTENER_CB) ? "LISTENER_CB" : "READ_CB",
                        (long int)sensor->s_sts.st_ostv.tv_sec,
@@ -479,7 +499,7 @@ sensor data.
         return 0;
     }
 
- 5. Set the poll rate for the sensor to two seconds. The
+5. Set the poll rate for the sensor to two seconds. The
 ``sensor_set_poll_rate_ms()`` function sets the poll rate for a named
 sensor.
 
@@ -522,7 +542,7 @@ int main(int argc, char \*\*argv) { int rc ...
 
 \`\`\`
 
- 6. Look up the sensor by name to get the handle for the sensor and
+6. Look up the sensor by name to get the handle for the sensor and
 register a listener for the sensor.
 
 \`\`\`hl\_lines="9 10 11 12"
@@ -550,9 +570,11 @@ int main(int argc, char \*\*argv) { ...
 
 \`\`\`
 
- #### Step 2: Rebuilding the Application and Connecting to Console
+Step 2: Rebuilding the Application and Connecting to Console
+^^^^^^^^^^^^^^^^^^^
 
- 1. Run the ``newt run`` command to rebuild the application, create a
+
+1. Run the ``newt run`` command to rebuild the application, create a
 new image, load the image, and start a GDB process:
 
 .. code-block:: console
@@ -576,10 +598,10 @@ new image, load the image, and start a GDB process:
     204     if (ticks > 0) {
     Resetting target
     0x000000dc in ?? ()
-    (gdb) c 
+    (gdb) c
     Continuing.
 
- 2. Connect to the console via RTT:
+2. Connect to the console via RTT:
 
 .. code-block:: console
 
@@ -612,8 +634,8 @@ new image, load the image, and start a GDB process:
 You should see the accelerometer sensor data output from the listener
 callback.
 
- #### Step 3: Modifying main.c to Use sensor\_read() Instead of a
-Listener
+Step 3: Modifying main.c to Use sensor\_read() Instead of a Listener
+^^^^^^^^^^^^^^^^^^^
 
 Lets extend the application to use the ``sensor_read()`` function
 instead of a listener. We setup an OS callout to call the
@@ -621,7 +643,7 @@ instead of a listener. We setup an OS callout to call the
 will most likely read the sensor data when it gets a request or some
 other event.
 
- 1. Add an OS callout and initialize an OS timer to fire every 5
+1. Add an OS callout and initialize an OS timer to fire every 5
 seconds. The timer callback calls the ``sensor_read()`` function to read
 the sensor data. The ``read_accelerometer()`` callback is called when
 the sensor data is read. The READ\_CB value is passed to the
@@ -670,7 +692,7 @@ from the ``sensor_read()`` function and not from the listener.
 
     }
 
- 2. Remove the listener registration and call the ``init_timer()``
+2. Remove the listener registration and call the ``init_timer()``
 function in ``main()``. You can delete the
 ``sensor_register_listener()`` function call, but we call the
 ``sensor_unregister_listener()`` function to illustrate how to use this
@@ -703,8 +725,10 @@ function.
 
 \`\`\`
 
- #### Step 4: Rebuilding the Application and Connecting to Console 1.
-Run the ``newt run`` command to rebuild the application, create an new
+Step 4: Rebuilding the Application and Connecting to Console
+^^^^^^^^^^^^^^^^^^^
+
+1. Run the ``newt run`` command to rebuild the application, create an new
 image, and start a GDB process:
 
 .. code-block:: console
@@ -731,7 +755,7 @@ image, and start a GDB process:
     (gdb) c
     Continuing.
 
- 3. Connect to the console via RTT:
+3. Connect to the console via RTT:
 
 .. code-block:: console
 
@@ -764,4 +788,3 @@ data callback.
 
 .. |Thingy| image:: /os/tutorials/pics/thingy.jpg
 .. |J-Link debug probe to Thingy| image:: /os/tutorials/pics/thingy_jlink.jpg
-

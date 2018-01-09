@@ -96,7 +96,7 @@ directory and the format of the port name is platform dependent:
 -  Linux uses the format ``TTYUSB<N>``, where ``N`` is a number. For
    example, TTYUSB2.
 
- This example is run on a Mac OS system.
+This example is run on a Mac OS system.
 
 Check what USB devices are already connected:
 
@@ -107,7 +107,7 @@ Check what USB devices are already connected:
     0 crw-rw-rw-  1 root  wheel   20,  62 Nov 23 11:13 /dev/tty.usbmodem401322
     $
 
- Plug in the FT232H board and check the ports again:
+Plug in the FT232H board and check the ports again:
 
 .. code-block:: console
 
@@ -118,7 +118,7 @@ Check what USB devices are already connected:
     0 crw-rw-rw-  1 root  wheel   20,  64 Nov 23 11:26 /dev/tty.usbserial-0020124
     $
 
- The FT232H is connected to ``/dev/tty.usbserial-0020124`` (The number
+The FT232H is connected to ``/dev/tty.usbserial-0020124`` (The number
 after tty.usbserial will be different on your machine.) Use the screen
 command to connect to the board:
 
@@ -126,7 +126,7 @@ command to connect to the board:
 
     $ screen /dev/tty.usbserial-0020124 115200
 
- To exit out of ``screen`` you'll type ``control-A`` followed by
+To exit out of ``screen`` you'll type ``control-A`` followed by
 ``control-\`` and you'll be back to a terminal prompt.
 
 You can also use minicom:
@@ -143,7 +143,7 @@ You can also use minicom:
 
     Press Meta-Z for help on special keys
 
- If there's no Mynewt app running, or the Mynewt app doesn't have the
+If there's no Mynewt app running, or the Mynewt app doesn't have the
 Shell and Console enabled, you won't see anything there, but you can
 always refer back to this page from later tutorials if you need to.
 
@@ -182,7 +182,7 @@ Plug in the FT232H board and check the ports again:
     crw-rw-rw- 1 <user> None 117,  5 May  9 04:55 /dev/ttyS5
     $
 
- The FT232H board is connected to port /dev/ttyS10 (or COM11):
+The FT232H board is connected to port /dev/ttyS10 (or COM11):
 
  |Device Manager - FT232H|
 

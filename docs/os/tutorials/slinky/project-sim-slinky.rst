@@ -5,7 +5,9 @@ This tutorial shows you how to create, build and run the Slinky
 application and communicate with newtmgr for a simulated device. This is
 supported on Mac OS and Linux platforms.
 
- ### Prerequisites
+Prerequisites
+~~~~~~~~~~~~~~~
+
 
 Meet the prerequisites listed in `Project
 Slinky </os/tutorials/project-slinky.html>`__.

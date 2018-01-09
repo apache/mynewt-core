@@ -32,7 +32,9 @@ The latest master branch of newt and newtmgr requires GO version 1.7.6
 or higher. You can skip this step and proceed to Step 2 if you already
 have Go version 1.7.6 or higher installed.
 
- #### Installing Go on Mac OS X
+Installing Go on Mac OS X
+^^^^^^^^^^^^^^^^^^^
+
 
 If you do not have Homebrew installed, run the following command. You
 will be prompted for your sudo password.
@@ -44,14 +46,14 @@ will be prompted for your sudo password.
 You can also extract (or ``git clone``) Homebrew and install it to
 /usr/local.
 
- Use brew to install Go:
+Use brew to install Go:
 
 .. code-block:: console
 
     $ brew install go
-    ==> 
+    ==>
     ...
-    ... 
+    ...
     ==> Summary
     🍺  /usr/local/Cellar/go/1.8.3: 7,035 files, 282.0MB
 
@@ -59,10 +61,16 @@ You can also download the Go package directly from
 (https://golang.org/dl/) and install it in /usr/local/bin instead of
 brewing it.
 
- #### Installing Go on Linux and Windows You can download Go from
+Installing Go on Linux and Windows
+^^^^^^^^^^^^^^^^^^^
+
+You can download Go from
+
 https://golang.org/dl/.
 
- ###Step 2: Setting Up Your Go Environment
+Step 2: Setting Up Your Go Environment
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
 This section describes the Go environment and how to setup a Go
 workspace. If you already have a Go workspace for your other Go
@@ -90,11 +98,11 @@ newtmgr repositories.
 .. code-block:: console
 
     $ cd $HOME
-    $ mkdir -p dev/go  
+    $ mkdir -p dev/go
     $ cd dev/go
     $ export GOPATH=`pwd`
 
- Add the following export statements to your ~/.bash\_profile file and
+Add the following export statements to your ~/.bash\_profile file and
 source the file:
 
 .. code-block:: console
@@ -111,7 +119,9 @@ repositories. You can download the source and install one or both tools.
 We use the ``go get`` command to download the source, build, and install
 the binary in the **$GOPATH/bin** directory.
 
- #### Downloading and Installing the Newt Tool
+Downloading and Installing the Newt Tool
+^^^^^^^^^^^^^^^^^^^
+
 
 The newt Go package is **mynewt.apache.org/newt/newt** and is stored in
 the `Apache Mynewt newt tool repository mirrored on
@@ -124,7 +134,7 @@ Download the newt package source and install the tool:
     $cd $GOPATH
     $go get mynewt.apache.org/newt/newt
     $cd $GOPATH/src/mynewt.apache.org/newt
-    $ls 
+    $ls
     DISCLAIMER      RELEASE_NOTES.md    util
     INSTALLING.md       build.sh        viper
     LICENSE         newt            yaml
@@ -139,7 +149,7 @@ Download the newt package source and install the tool:
 used or updated. The current **newtmgr** source has its own Git
 repository.
 
- Check that the newt binary is installed and you are using the one from
+Check that the newt binary is installed and you are using the one from
 \*\* $GOPATH/bin\*\*:
 
 .. code-block:: console
@@ -151,7 +161,9 @@ repository.
     $newt version
     Apache Newt version: 1.1.0-dev
 
- #### Downloading and Installing the Newtmgr Tool
+Downloading and Installing the Newtmgr Tool
+^^^^^^^^^^^^^^^^^^^
+
 
 The newtmgr Go package is **mynewt.apache.org/newtmgr/newtmgr**. It is
 stored in the `Apache Mynewt newtmgr tool repository mirrored on
@@ -171,7 +183,7 @@ Download the newtmgr package and install the tool:
     Your branch is up-to-date with 'origin/master'.
     nothing to commit, working directory clean
 
- Check that the newtmgr binary is installed and you are using the one
+Check that the newtmgr binary is installed and you are using the one
 from **$GOPATH/bin**:
 
 .. code-block:: console
@@ -181,8 +193,10 @@ from **$GOPATH/bin**:
     $which newtmgr
     ~/dev/go/bin/newtmgr
 
- ### Step 4: Updating and Rebuilding the Tools: This section shows you
-how to rebuild the newt and newtmgr tools with the latest updates from
+Step 4: Updating and Rebuilding the Tools
+~~~~~~~~~~~~~~~
+
+This section shows you how to rebuild the newt and newtmgr tools with the latest updates from
 the master branch or after you have made changes in your branch.
 
 Here is the general procedure to rebuild either the newt or newtmgr
@@ -197,7 +211,7 @@ tools.
    `FAQ </faq/answers/>`__).
 3. Build and install the tool.
 
- Change to the directory where the source for the tool is installed.
+Change to the directory where the source for the tool is installed.
 
 For the **newt** tool:
 
@@ -211,16 +225,16 @@ For the **newtmgr** tool:
 
     $cd $GOPATH/src/mynewt.apache.org/newtmgr/newtmgr
 
- After you change to the specific tool directory, get the latest updates
+After you change to the specific tool directory, get the latest updates
 from the master branch. If you made changes and need to rebase with the
 origin, add the ``--rebase origin master`` arguments to the ``git pull``
 command:
 
 .. code-block:: console
 
-    $git pull 
+    $git pull
 
- Build and install the tool. The updated binary will be installed in the
+Build and install the tool. The updated binary will be installed in the
 **$GOPATH/bin** directory:
 
 .. code-block:: console

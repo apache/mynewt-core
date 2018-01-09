@@ -1,4 +1,4 @@
- lua\_init 
+lua\_init 
 -----------
 
 .. code-block:: console

@@ -1,4 +1,4 @@
- shell\_cmd\_register 
+shell\_cmd\_register 
 ----------------------
 
 .. code-block:: console
@@ -34,7 +34,9 @@ number of shell commands that the ``compat`` module supports. This
 function aborts if the number of handlers registered exceeds this limit.
 You can increase the value for this setting.
 
- #### Example
+Example
+^^^^^^^^^^^^^^^^^^^
+
 
 .. code-block:: console
 

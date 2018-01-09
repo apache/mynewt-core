@@ -116,7 +116,7 @@ The statistics for the ble\_att Stats:
              0 write_rsp_rx
              0 write_rsp_tx
 
- The list of Stats names using the list subcommand:
+The list of Stats names using the list subcommand:
 
 .. code-block:: console
 
