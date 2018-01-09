@@ -18,12 +18,10 @@ Prerequisites:
 -  Perform `native
    installation </os/get_started/native_install_intro.html>`__ for the
    Mynewt tools and toolchains.
-
    **Note:** For Windows platforms, ensure that the MinGW bash you
    install is added to your Windows Path. In addition, if you are using
    Windows 10 WSL, you must have the MinGW bash before the Windows 10
    WSL bash in your Windows Path.
-
 -  Read the Mynewt OS Concepts section.
 -  Create a project space (directory structure) and populate it with the
    core code repository (apache-mynewt-core) or know how to as explained
@@ -77,8 +75,10 @@ To install the Native Debugger:
 2. Type ``ext install webfreak.debug`` in the search box and press
    Enter. You should see the Native Debug extension at the top of the
    list.
-3. Click ``Install`` to install the extension. ###Defining Tasks for
-   Mynewt Projects
+3. Click ``Install`` to install the extension.
+
+Defining Tasks for Mynewt Projects
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Two main concepts in Visual Studio Code are workspaces and tasks. A
 workspace represents a folder that is open. You can open multiple
@@ -91,9 +91,10 @@ Tasks are defined within the scope of a workspace. This means that the
 tasks you define for a workspace only apply to the given workspace.
 
 Associating a Mynewt Project to a Workspace
-^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-For your Mynewt project, your Visual Studio Code workspace is the Mynewt project base
+For your Mynewt
+project, your Visual Studio Code workspace is the Mynewt project base
 directory. For example, if you create a project named ``myproj`` under
 the ``~/dev`` directory, then you open the ``~/dev/myproj`` folder for
 your workspace.
@@ -102,7 +103,7 @@ Select **File** > **Open Folder**, and select the ``myproj`` folder from
 the ``Select Folder`` dialog box to open the folder.
 
 Defining Visual Studio Code Tasks to Build and Debug Mynewt Applications
-^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 You define Visual Studio Code tasks to build and debug your Mynewt
 targets in Visual Studio Code. We use the Blinky application for the
@@ -120,26 +121,14 @@ Step 1: Press ``Ctrl-Shift-P``, type ``task``, and select
 Step 2: Select **Others** (scroll down to the bottom of the list) to
 create a task runner for external commands.
 
-.. raw:: html
-
-   <p align="center">
-
-.. raw:: html
-
-   </p>
+.. figure:: pics/task_runner_small.png
 
 Tasks are defined in the ``tasks.json`` file. You should see the
 ``.vscode`` folder created in the ``MYPROJ`` folder and a ``tasks.json``
 file created in the ``.vscode`` folder. The ``tasks.json`` file has the
 following default values.
 
-.. raw:: html
-
-   <p align="center">
-
-.. raw:: html
-
-   </p>
+.. figure:: pics/task_json_small.png
 
 The sample ``tasks.json`` file defines a simple task that runs the echo
 command with "Hello World" as the argument.
@@ -210,8 +199,7 @@ For more information on tasks and all supported properties, see the
 documentation <https://code.visualstudio.com/docs/editor/tasks>`__.
 
 Running a Task
-^^^^^^^^^^^^^^^^^^^^^^^^^
-
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 To run a task, press ``Ctrl-Shift-P``, type ``task`` on the search box,
 and select **Tasks: Run Task**. The tasks that you define in the
@@ -219,29 +207,16 @@ and select **Tasks: Run Task**. The tasks that you define in the
 
 The following is an example of running the ``build_arduino_boot`` task:
 
-.. raw:: html
+.. figure:: pics/task_select_small.png
 
-   <p align="center">
+.. figure:: pics/task_start_small.png
 
-.. raw:: html
-
-   </p>
-
-.. raw:: html
-
-   <p align="center">
-
-.. raw:: html
-
-   </p>
-
-**Note**:To run the ``build_arduino_blinky`` task, you can use the
+**Note**: To run the ``build_arduino_blinky`` task, you can use the
 keyboard shortcut ``Ctrl-Shift-B`` because the task has the property
 ``isBuildCommand`` set to true.
 
 Defining Tasks for Other Newt Commands
-^^^^^^^^^^^^^^^^^^^^^^^^^
-
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Other newt commands, such as the ``newt load`` command, do not need to
 run from within Visual Studio Code. You can define a task for each
@@ -270,40 +245,24 @@ To run a command from the Visual Studio integrated terminal, instead of
 starting a task, press ``Ctrl-``` to launch the integrated terminal and
 enter the command on the prompt:
 
-.. raw:: html
-
-   <p align="center">
-
-.. raw:: html
-
-   </p>
+.. figure:: pics/integrated_terminal_small.png
 
 Defining Debugger Configurations
-~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-You need to define a debugger configuration to launch the GDB debugger from within Visual Studio Code:
+You need to define a debugger
+configuration to launch the GDB debugger from within Visual Studio Code:
 
 Step 1: Select **Debug** > **Open Configuration**, and select the
 **GDB** environment.
 
-.. raw:: html
+.. figure:: pics/debug_new_config_small.png
 
-   <p align="center">
-
-.. raw:: html
-
-   </p>
 
 You should see a default ``launch.json`` file created in the ``.vscode``
 folder.
 
-.. raw:: html
-
-   <p align="center">
-
-.. raw:: html
-
-   </p>
+.. figure:: pics/launch_small.png
 
 Step 2: Delete the content from the ``launch.json`` file, add the
 following definitions, and press 'Ctrl-S' to save the file.
@@ -346,13 +305,7 @@ Perform the following:
 3. Press ``Ctrl-Shift-U`` to open the Output Panel and see the OpenOCD
    GDB Server output.
 
-   .. raw:: html
-
-      <p align="center">
-
-   .. raw:: html
-
-      </p>
+.. figure:: pics/gdb_server_small.png
 
 Step 2: Start the GDB session. Perform the following:
 
@@ -362,24 +315,12 @@ Step 2: Start the GDB session. Perform the following:
 3. Select ``gdb_arduino_blinky`` from the DEBUG drop down menu.
 4. Press the green play button to start the gdb session.
 
-.. raw:: html
-
-   <p align="center">
-
-.. raw:: html
-
-   </p>
+.. figure:: pics/gdb_small.png
 
 Step 3: Debug your application. You should see a debug session similar
 to the one shown below:
 
-.. raw:: html
-
-   <p align="center">
-
-.. raw:: html
-
-   </p>
+.. figure:: pics/gdb_debug_small.png
 
 For more information on how to use the Visual Studio Code Debugger, see
 the `Visual Studio Code debugging

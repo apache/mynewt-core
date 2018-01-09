@@ -122,7 +122,7 @@ The FT232H is connected to ``/dev/tty.usbserial-0020124`` (The number
 after tty.usbserial will be different on your machine.) Use the screen
 command to connect to the board:
 
-::
+.. code-block:: console
 
     $ screen /dev/tty.usbserial-0020124 115200
 
@@ -131,13 +131,13 @@ To exit out of ``screen`` you'll type ``control-A`` followed by
 
 You can also use minicom:
 
-::
+.. code-block:: console
 
     $ minicom -D /dev/tty.usbserial-0020124
 
     Welcome to minicom 2.7
 
-    OPTIONS: 
+    OPTIONS:
     Compiled on Nov 24 2015, 16:14:21.
     Port /dev/tty.usbserial-0020124, 09:57:17
 
@@ -163,20 +163,20 @@ Check what USB devices are already connected:
 
 .. code-block:: console
 
-    $ls -l /dev/ttyS* 
+    $ ls -l /dev/ttyS*
     crw-rw-rw- 1 <user> None 117, 5 May  9 04:24 /dev/ttyS5
     $
 
- /dev/ttyS5 maps to the Windows COM6 port. You can run Windows Device
+/dev/ttyS5 maps to the Windows COM6 port. You can run Windows Device
 Manager to confirm:
 
- |Device Manager - USB Devices|
+|Device Manager - USB Devices|
 
 Plug in the FT232H board and check the ports again:
 
 .. code-block:: console
 
-    $ls -l /dev/ttyS* 
+    $ ls -l /dev/ttyS*
     ls -l /dev/ttyS*
     crw-rw-rw- 1 <user> None 117, 10 May  9 04:55 /dev/ttyS10
     crw-rw-rw- 1 <user> None 117,  5 May  9 04:55 /dev/ttyS5
@@ -184,7 +184,7 @@ Plug in the FT232H board and check the ports again:
 
 The FT232H board is connected to port /dev/ttyS10 (or COM11):
 
- |Device Manager - FT232H|
+|Device Manager - FT232H|
 
 We use the PuTTY terminal application to connect to the board on the
 COM11 port: |PuTTY|
@@ -201,4 +201,3 @@ move on to creating one!
 .. |Device Manager - USB Devices| image:: /os/tutorials/pics/device_manager_no_ft232H.png
 .. |Device Manager - FT232H| image:: /os/tutorials/pics/device_manager_ft232H.png
 .. |PuTTY| image:: /os/tutorials/pics/putty.png
-

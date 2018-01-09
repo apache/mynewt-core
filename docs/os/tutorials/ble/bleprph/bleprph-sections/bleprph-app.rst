@@ -46,20 +46,16 @@ Peripheral
 Now if you reset the board, and fire up your BLE Central App, you should
 see a new peripheral device called 'nimble-bleprph'.
 
-.. figure:: ../pics/LightBlue-1.jpg
+.. figure:: /os/tutorials/pics/LightBlue-1.jpg
    :alt: LightBlue iOS App with nimble-bleprph device
-
-   LightBlue
 
 Now that you can see the device, you can begin to interact with the
 advertised service.
 
 Click on the device and you'll establish a connection.
 
-.. figure:: ../pics/LightBlue-2.jpg
+.. figure:: /os/tutorials/pics/LightBlue-2.jpg
    :alt: LightBlue iOS App connected to the nimble-bleprph device
-
-   LightBlue
 
 Now that you're connected, you can see the Services that are being
 advertised.
@@ -67,37 +63,31 @@ advertised.
 Scroll to the bottom and you will see a Read Characteristic, and a
 Read/Write Characteristic.
 
-.. figure:: ../pics/LightBlue-3.jpg
+.. figure:: /os/tutorials/pics/LightBlue-3.jpg
    :alt: LightBlue iOS App connected to the nimble-bleprph device
-
-   LightBlue
 
 Just click on the Read Write Characteristic and you will see the
 existing value.
 
-.. figure:: ../pics/LightBlue-4.jpg
+.. figure:: /os/tutorials/pics/LightBlue-4.jpg
    :alt: LightBlue iOS App with nimble-bleprph device Characteristic
-
-   LightBlue
 
 Type in a new value.
 
-.. figure:: ../pics/LightBlue-5.jpg
+.. figure:: /os/tutorials/pics/LightBlue-5.jpg
    :alt: LightBlue iOS App Value Change
 
    LightBlue
 
 And you will see the new value reflected.
 
-.. figure:: ../pics/LightBlue-6.jpg
+.. figure:: /os/tutorials/pics/LightBlue-6.jpg
    :alt: LightBlue iOS App with nimble-bleprph new value
-
-   LightBlue
 
 If you still have your console connected, you will be able to see the
 connection requests, and pairing, happen on the device as well.
 
-.. code:: hl_lines="1"
+.. code:: console
 
     258894:[ts=2022609336ssb, mod=64 level=1] connection established; status=0 handle=1 our_ota_addr_type=0 our_ota_addr=0a:0a:0a:0a:0a:0a our_id_addr_type=0 our_id_addr=0a:0a:0a:0a:0a:0a peer_ota_addr_type=1 peer_ota_addr=7f:be:d4:44:c0:d4 peer_id_addr_type=1 peer_id_addr=7f:be:d4:44:c0:d4 conn_itvl=24 conn_latency=0 supervision_timeout=72 encrypted=0 authenticated=0 bonded=0
     258904:[ts=2022687456ssb, mod=64 level=1]

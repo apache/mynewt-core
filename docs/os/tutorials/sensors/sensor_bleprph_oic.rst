@@ -47,7 +47,6 @@ initialization handler.
 Step 1: Copying the bleprph\_oic source
 ~~~~~~~~~~~~~~~
 
-
 1. Copy the @apache-mynewt-core/apps/bleprph\_oic to a new package. We
 name the new package **apps/bleprph\_oic\_sensor**. From your project
 base directory, run the ``newt pkg copy`` command:
@@ -181,7 +180,7 @@ The lines to delete are highlighted below:
     oc_resource_set_default_interface(res, OC_IF_RW);
 
     oc_resource_set_discoverable(res);
-    oc_resource_set_periodic_observable(res, 1); 
+    oc_resource_set_periodic_observable(res, 1);
     oc_resource_set_request_handler(res, OC_GET, app_get_light);
     oc_resource_set_request_handler(res, OC_PUT, app_set_light);
     oc_add_resource(res);
@@ -196,8 +195,8 @@ to create an OIC resource for the sensor device:
 
     static void
     omgr_app_init(void)
-    {   
-        
+    {
+
         oc_init_platform("MyNewt", NULL, NULL);
 
         oc_add_device("/oic/d", "oic.d.sensy", "sensy", "1.0", "1.0", NULL, NULL);
@@ -212,12 +211,12 @@ sensor framework OIC server support:
 
     static void
     omgr_app_init(void)
-    {  
-       
+    {
+
         oc_init_platform("MyNewt", NULL, NULL);
 
         oc_add_device("/oic/d", "oic.d.sensy", "sensy", "1.0", "1.0", NULL, NULL);
-       
+
         sensor_oic_init();
 
     }
@@ -259,10 +258,10 @@ build\_profile variables for the target.
 .. code-block:: console
 
 
-    $ newt target set nrf52_bleprph_oic_bno055 app=@apache-mynewt-core/apps/bleprph_oic_sensor bsp=@apache-mynewt-core/hw/bsp/nrf52dk build_profile=debug 
+    $ newt target set nrf52_bleprph_oic_bno055 app=@apache-mynewt-core/apps/bleprph_oic_sensor bsp=@apache-mynewt-core/hw/bsp/nrf52dk build_profile=debug
     Target targets/nrf52_bleprph_oic_bno055 successfully set target.app to @apache-mynewt-core/apps/bleprph_oic_sensor
     Target targets/nrf52_bleprph_oic_bno055 successfully set target.bsp to @apache-mynewt-core/hw/bsp/nrf52dk
-    Target targets/nrf52_bleprph_oic_bno055 successfully set target.build_profile to debug 
+    Target targets/nrf52_bleprph_oic_bno055 successfully set target.build_profile to debug
     $
 
 3. Run the ``newt target set`` command to set ``I2C_0=1``,

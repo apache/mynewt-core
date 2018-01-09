@@ -33,8 +33,8 @@ versions (for example: Ubuntu 14) may have incompatibility with the
 repository. You can manually download and install the Debian binary
 package.
 
-**Note:** See `Setting Up a Go Environment to Contribute to Newt and
-Newtmgr Tools </faq/go_env>`__ if you want to:
+**Note:** See :doc:`Setting Up a Go Environment to Contribute to Newt and
+Newtmgr Tools </misc/go_env>` if you want to:
 
 -  Use the newtmgr tool with the latest updates from the master branch.
    The master branch may be unstable and we recommend that you use the
@@ -129,7 +129,7 @@ newtmgr:
 .. code-block:: console
 
 
-    $ sudo apt-get update 
+    $ sudo apt-get update
     $ sudo apt-get install newtmgr
 
 Method 2: Downloading and Installing the Debian Package Manually
@@ -246,5 +246,3 @@ version of newtmgr.
       -r, --tries int         total number of tries in case of timeout (default 1)
 
     Use "newtmgr [command] --help" for more information about a command.
-
-

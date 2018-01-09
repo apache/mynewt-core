@@ -17,8 +17,8 @@ See `Installing Previous Releases of Newtmgr </newtmgr/prev_releases>`__
 to install an earlier version of newtgmr.
 
 **Note:** If you would like to contribute to the newtmgr tool, see
-`Setting Up Go Environment to Contribute to Newt and Newtmgr
-Tools </faq/go_env.html>`__.
+:doc:`Setting Up Go Environment to Contribute to Newt and Newtmgr
+Tools </misc/go_env>`.
 
 Installing the Latest Release of Newtmgr Tool from Binary
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -167,4 +167,3 @@ version of newtmgr.
       -r, --tries int         total number of tries in case of timeout (default 1)
 
     Use "newtmgr [command] --help" for more information about a command.
-

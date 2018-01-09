@@ -11,9 +11,8 @@ This page shows you how to:
 
 See `Installing Previous Releases of Newt <prev_releases>`__ to install an earlier version of newt.
 
-**Note:** If you would like to contribute to the newt tool, see `Setting
-Up Go Environment to Contribute to Newt and Newtmgr
-Tools </faq/go_env>`__.
+**Note:** If you would like to contribute to the newt tool, see :doc:`Setting Up Go Environment to Contribute
+to Newt and Newtmgr Tools </misc/go_env>`.
 
 Installing Homebrew
 ~~~~~~~~~~~~~~~~~~~
