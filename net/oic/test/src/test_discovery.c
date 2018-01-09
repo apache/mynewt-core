@@ -38,7 +38,7 @@ test_discovery_cb(const char *di, const char *uri, oc_string_array_t types,
                   oc_interface_mask_t interfaces,
                   struct oc_server_handle *server)
 {
-    if ((server->endpoint.oe.flags & IP) == 0) {
+    if (server->endpoint.ep.oe_type != oc_ip6_transport_id) {
         return 0;
     }
     oic_test_set_endpoint(server);

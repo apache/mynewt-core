@@ -18,9 +18,9 @@
 #define OC_RI_H
 
 #include "oic/port/mynewt/config.h"
+#include "oic/port/oc_connectivity.h"
 #include "oic/oc_rep.h"
 #include "oic/oc_uuid.h"
-#include "oic/port/oc_connectivity.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -155,7 +155,7 @@ struct coap_packet;
 bool oc_ri_invoke_coap_entity_handler(struct coap_packet_rx *request,
                                       struct coap_packet *response,
                                       int32_t *offset,
-                                      oc_endpoint_t *endpoint);
+                                      struct oc_endpoint *endpoint);
 
 #ifdef __cplusplus
 }
