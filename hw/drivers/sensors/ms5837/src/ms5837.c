@@ -72,10 +72,12 @@ static int ms5837_sensor_read(struct sensor *, sensor_type_t,
         sensor_data_func_t, void *, uint32_t);
 static int ms5837_sensor_get_config(struct sensor *, sensor_type_t,
         struct sensor_cfg *);
+static int ms5837_sensor_set_config(struct sensor *, void *);
 
 static const struct sensor_driver g_ms5837_sensor_driver = {
-    ms5837_sensor_read,
-    ms5837_sensor_get_config
+    .sd_read = ms5837_sensor_read,
+    .sd_get_config = ms5837_sensor_get_config,
+    .sd_set_config = ms5837_sensor_set_config,
 };
 
 /**
@@ -264,6 +266,14 @@ ms5837_sensor_get_config(struct sensor *sensor, sensor_type_t type,
     return (0);
 err:
     return (rc);
+}
+
+static int
+ms5837_sensor_set_config(struct sensor *sensor, void *cfg)
+{
+    struct ms5837* ms5837 = (struct ms5837 *)SENSOR_GET_DEVICE(sensor);
+    
+    return ms5837_config(ms5837, (struct ms5837_cfg*)cfg);
 }
 
 /**

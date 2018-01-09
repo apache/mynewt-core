@@ -358,6 +358,16 @@ typedef int (*sensor_read_func_t)(struct sensor *, sensor_type_t,
 typedef int (*sensor_get_config_func_t)(struct sensor *, sensor_type_t,
         struct sensor_cfg *);
 
+/** 
+ * Send a new configuration register set to the sensor.
+ *
+ * @param ptr to the sensor-specific stucture
+ * @param ptr to the sensor-specific configuration structure
+ *
+ * @return 0 on success, non-zero error code on failure.
+ */
+typedef int (*sensor_set_config_func_t)(struct sensor *, void *);
+
 /**
  * Set the trigger and threshold values for a specific sensor for the sensor
  * type.
@@ -410,6 +420,7 @@ typedef int (*sensor_handle_interrupt_t)(struct sensor *);
 struct sensor_driver {
     sensor_read_func_t sd_read;
     sensor_get_config_func_t sd_get_config;
+    sensor_set_config_func_t sd_set_config;
     sensor_set_trigger_thresh_t sd_set_trigger_thresh;
     sensor_set_notification_t sd_set_notification;
     sensor_unset_notification_t sd_unset_notification;
