@@ -432,7 +432,7 @@ ms5837_read_eeprom(struct sensor_itf *itf, uint16_t *coeff)
     rc = ms5837_crc_check(payload, (payload[MS5837_IDX_CRC] & 0xF000) >> 12);
     if (rc) {
         rc = SYS_EINVAL;
-        MS5837_ERR("Failure in CRC, 0x%02X\n", payload[idx]);
+        // MS5837_ERR("Failure in CRC, 0x%02X\n", payload[idx]);
         STATS_INC(g_ms5837stats, eeprom_crc_errors);
         goto err;
     }
