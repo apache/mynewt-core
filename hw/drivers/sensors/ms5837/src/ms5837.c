@@ -72,10 +72,12 @@ static int ms5837_sensor_read(struct sensor *, sensor_type_t,
         sensor_data_func_t, void *, uint32_t);
 static int ms5837_sensor_get_config(struct sensor *, sensor_type_t,
         struct sensor_cfg *);
+static int ms5837_sensor_set_config(struct sensor *, void *);
 
 static const struct sensor_driver g_ms5837_sensor_driver = {
-    ms5837_sensor_read,
-    ms5837_sensor_get_config
+    .sd_read = ms5837_sensor_read,
+    .sd_get_config = ms5837_sensor_get_config,
+    .sd_set_config = ms5837_sensor_set_config,
 };
 
 /**
@@ -266,6 +268,14 @@ err:
     return (rc);
 }
 
+static int
+ms5837_sensor_set_config(struct sensor *sensor, void *cfg)
+{
+    struct ms5837* ms5837 = (struct ms5837 *)SENSOR_GET_DEVICE(sensor);
+    
+    return ms5837_config(ms5837, (struct ms5837_cfg*)cfg);
+}
+
 /**
  * Configure MS5837 sensor
  *
@@ -422,7 +432,7 @@ ms5837_read_eeprom(struct sensor_itf *itf, uint16_t *coeff)
     rc = ms5837_crc_check(payload, (payload[MS5837_IDX_CRC] & 0xF000) >> 12);
     if (rc) {
         rc = SYS_EINVAL;
-        MS5837_ERR("Failure in CRC, 0x%02X\n", payload[idx]);
+        // MS5837_ERR("Failure in CRC, 0x%02X\n", payload[idx]);
         STATS_INC(g_ms5837stats, eeprom_crc_errors);
         goto err;
     }

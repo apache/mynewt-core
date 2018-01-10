@@ -74,10 +74,12 @@ static int bmp280_sensor_read(struct sensor *, sensor_type_t,
         sensor_data_func_t, void *, uint32_t);
 static int bmp280_sensor_get_config(struct sensor *, sensor_type_t,
         struct sensor_cfg *);
+static int bmp280_sensor_set_config(struct sensor *, void *);
 
 static const struct sensor_driver g_bmp280_sensor_driver = {
-    bmp280_sensor_read,
-    bmp280_sensor_get_config
+    .sd_read = bmp280_sensor_read,
+    .sd_get_config = bmp280_sensor_get_config,
+    .sd_set_config = bmp280_sensor_set_config,
 };
 
 static int
@@ -465,6 +467,14 @@ bmp280_sensor_get_config(struct sensor *sensor, sensor_type_t type,
     return (0);
 err:
     return (rc);
+}
+
+static int
+bmp280_sensor_set_config(struct sensor *sensor, void *cfg)
+{
+    struct bmp280* bmp280 = (struct bmp280 *)SENSOR_GET_DEVICE(sensor);
+    
+    return bmp280_config(bmp280, (struct bmp280_cfg*)cfg);
 }
 
 /**
