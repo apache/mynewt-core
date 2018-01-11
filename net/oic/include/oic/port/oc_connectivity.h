@@ -26,15 +26,6 @@
 extern "C" {
 #endif
 
-typedef struct {
-    uint8_t address[16];
-    uint8_t scope;
-} oc_ipv6_addr_t;
-
-typedef struct {
-    uint8_t address[4];
-} oc_ipv4_addr_t;
-
 /*
  * OC endpoint data structure comes in different variations,
  * depending on type of transport.
@@ -56,36 +47,7 @@ typedef struct oc_endpoint {
 } oc_endpoint_t;
 
 /*
- * oc_endpoint for IPv4/IPv6
- */
-struct oc_endpoint_ip {
-    struct oc_ep_hdr ep;
-    uint16_t port;
-    union {
-        oc_ipv6_addr_t v6;
-        oc_ipv4_addr_t v4;
-    };
-};
-
-/*
- * oc_endpoint for BLE source.
- */
-struct oc_endpoint_ble {
-    struct oc_ep_hdr ep;
-    uint8_t srv_idx;
-    uint16_t conn_handle;
-};
-
-/*
- * oc_endpoint for LORA.
- */
-struct oc_endpoint_lora {
-    struct oc_ep_hdr ep;
-    uint8_t port;
-};
-
-/*
- * oc_endpoint for multicast target and serial port.
+ * Plain oc_endpoint for multicast target.
  */
 struct oc_endpoint_plain {
     struct oc_ep_hdr ep;
@@ -106,28 +68,6 @@ oc_endpoint_use_tcp(struct oc_endpoint *oe)
 #define OC_MBUF_ENDPOINT(m)                                            \
     ((struct oc_endpoint *)((uint8_t *)m + sizeof(struct os_mbuf) +    \
                             sizeof(struct os_mbuf_pkthdr)))
-
-extern uint8_t oc_ip6_transport_id;
-extern uint8_t oc_ip4_transport_id;
-
-static inline int
-oc_endpoint_is_ip(struct oc_endpoint *oe)
-{
-    return oe->ep.oe_type == oc_ip6_transport_id ||
-      oe->ep.oe_type == oc_ip4_transport_id;
-}
-
-#define oc_make_ip6_endpoint(__name__, __flags__, __port__, ...)        \
-    struct oc_endpoint_ip __name__ = {.ep = {.oe_type = oc_ip6_transport_id, \
-                                             .oe_flags = __flags__ },   \
-                                      .port = __port__,                 \
-                                      .v6 = {.scope = 0,                \
-                                             .address = { __VA_ARGS__ } } }
-#define oc_make_ip4_endpoint(__name__, __flags__, __port__, ...)        \
-    struct oc_endpoint_ip __name__ = {.ep = {.oe_type = oc_ip4_transport_id, \
-                                             .oe_flags = __flags__},    \
-                                      .port = __port__,                 \
-                                      .v4 = {.address = { __VA_ARGS__ } } }
 
 #ifdef OC_SECURITY
 uint16_t oc_connectivity_get_dtls_port(void);
