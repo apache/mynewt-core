@@ -42,8 +42,24 @@ void net_recv_ev(uint8_t ttl, uint8_t ctl, uint16_t src, uint16_t dst,
                    payload_len);
 }
 
+static void model_bound_cb(u16_t addr, struct bt_mesh_model *model,
+                           u16_t key_idx)
+{
+    console_printf("Model bound: remote addr 0x%04x key_idx 0x%04x model %p\n",
+                   addr, key_idx, model);
+}
+
+static void model_unbound_cb(u16_t addr, struct bt_mesh_model *model,
+                             u16_t key_idx)
+{
+    console_printf("Model unbound: remote addr 0x%04x key_idx 0x%04x "
+                   "model %p\n", addr, key_idx, model);
+}
+
 static struct bt_test_cb bt_test_cb = {
     .mesh_net_recv = net_recv_ev,
+    .mesh_model_bound = model_bound_cb,
+    .mesh_model_unbound = model_unbound_cb,
 };
 
 static void
