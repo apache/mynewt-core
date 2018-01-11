@@ -56,10 +56,16 @@ static void model_unbound_cb(u16_t addr, struct bt_mesh_model *model,
                    "model %p\n", addr, key_idx, model);
 }
 
+static void invalid_bearer_cb(u8_t opcode)
+{
+    console_printf("Invalid bearer: opcode 0x%02x\n", opcode);
+}
+
 static struct bt_test_cb bt_test_cb = {
     .mesh_net_recv = net_recv_ev,
     .mesh_model_bound = model_bound_cb,
     .mesh_model_unbound = model_unbound_cb,
+    .mesh_prov_invalid_bearer = invalid_bearer_cb,
 };
 
 static void
