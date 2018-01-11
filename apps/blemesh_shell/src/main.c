@@ -61,11 +61,17 @@ static void invalid_bearer_cb(u8_t opcode)
     console_printf("Invalid bearer: opcode 0x%02x\n", opcode);
 }
 
+static void incomp_timer_exp_cb(void)
+{
+    console_printf("Incomplete timer expired\n");
+}
+
 static struct bt_test_cb bt_test_cb = {
     .mesh_net_recv = net_recv_ev,
     .mesh_model_bound = model_bound_cb,
     .mesh_model_unbound = model_unbound_cb,
     .mesh_prov_invalid_bearer = invalid_bearer_cb,
+    .mesh_trans_incomp_timer_exp = incomp_timer_exp_cb,
 };
 
 static void
