@@ -400,7 +400,9 @@ blemesh_on_sync(void)
         return;
     }
 
+#if (MYNEWT_VAL(BLE_MESH_SHELL))
     shell_register_default_module("mesh");
+#endif
 
     console_printf("Mesh initialized\n");
 }
