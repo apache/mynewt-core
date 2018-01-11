@@ -31,6 +31,20 @@
 #include "host/ble_hs.h"
 #include "services/gap/ble_svc_gap.h"
 #include "mesh/glue.h"
+#include "mesh/testing.h"
+
+
+void net_recv_ev(uint8_t ttl, uint8_t ctl, uint16_t src, uint16_t dst,
+                 const void *payload, size_t payload_len)
+{
+    console_printf("Received net packet: ttl 0x%02x ctl 0x%02x src 0x%04x "
+                   "dst 0x%04x " "payload_len %d\n", ttl, ctl, src, dst,
+                   payload_len);
+}
+
+static struct bt_test_cb bt_test_cb = {
+    .mesh_net_recv = net_recv_ev,
+};
 
 static void
 blemesh_on_reset(int reason)
@@ -44,6 +58,10 @@ blemesh_on_sync(void)
     console_printf("Bluetooth initialized\n");
 
     shell_register_default_module("mesh");
+
+    if (IS_ENABLED(CONFIG_BT_TESTING)) {
+        bt_test_cb_register(&bt_test_cb);
+    }
 }
 
 int
