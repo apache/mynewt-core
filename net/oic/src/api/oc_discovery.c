@@ -24,6 +24,7 @@
 #include "oic/messaging/coap/oc_coap.h"
 #include "oic/oc_api.h"
 #include "oic/oc_core_res.h"
+#include "oic/port/mynewt/ip.h"
 
 static bool
 filter_resource(oc_resource_t *resource, const char *rt, int rt_len,

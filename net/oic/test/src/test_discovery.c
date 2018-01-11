@@ -20,6 +20,7 @@
 
 #include <os/os.h>
 #include <oic/oc_api.h>
+#include <oic/port/mynewt/ip.h>
 
 static int test_discovery_state;
 static volatile int test_discovery_done;

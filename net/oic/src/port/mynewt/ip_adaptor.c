@@ -32,11 +32,12 @@
 #include <mn_socket/mn_socket.h>
 #include <stats/stats.h>
 
-#include "port/oc_connectivity.h"
+#include "oic/port/oc_connectivity.h"
 #include "oic/oc_log.h"
 #include "api/oc_buffer.h"
 #include "adaptor.h"
 #include "oic/port/mynewt/transport.h"
+#include "oic/port/mynewt/ip.h"
 
 static void oc_send_buffer_ip6(struct os_mbuf *m);
 static void oc_send_buffer_ip6_mcast(struct os_mbuf *m);

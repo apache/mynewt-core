@@ -21,6 +21,9 @@
 #include "oic/messaging/coap/transactions.h"
 #include "oic/oc_api.h"
 #include "api/oc_buffer.h"
+#if MYNEWT_VAL(OC_TRANSPORT_IPV6) || MYNEWT_VAL(OC_TRANSPORT_IPV4)
+#include "oic/port/mynewt/ip.h"
+#endif
 
 #ifdef OC_CLIENT
 #define OC_CLIENT_CB_TIMEOUT_SECS COAP_RESPONSE_TIMEOUT
