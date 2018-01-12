@@ -18,6 +18,7 @@ Mynewt Core OS
    mqueue/mqueue
    sanity/sanity
    callout/callout
+   API <API>
 
 The Mynewt Core OS is a multitasking, preemptive real-time operating
 system combining a scheduler with typical RTOS features such as mutexes,
@@ -57,18 +58,18 @@ create on his/her own.
 Core OS Features
 ~~~~~~~~~~~~~~~~
 
--  `Scheduler/context switching <context_switch/context_switch.html>`__
--  `Time <time/os_time.html>`__
--  `Tasks <task/task.html>`__
--  `Event queues/callouts <event_queue/event_queue.html>`__
--  `Semaphores <semaphore/semaphore.html>`__
--  `Mutexes <mutex/mutex.html>`__
--  `Memory pools <memory_pool/memory_pool.html>`__
--  `Heap <heap/heap.html>`__
--  `Mbufs <mbuf/mbuf.html>`__
--  `Sanity <sanity/sanity.html>`__
--  `Callouts <callout/callout.html>`__
--  `Porting OS to other platforms <porting/port_os.html>`__
+-  :doc:`Scheduler/context switching <context_switch/context_switch>`
+-  :doc:`Time <time/os_time>`
+-  :doc:`Tasks <task/task>`
+-  :doc:`Event queues/callouts <event_queue/event_queue>`
+-  :doc:`Semaphores <semaphore/semaphore>`
+-  :doc:`Mutexes <mutex/mutex>`
+-  :doc:`Memory pools <memory_pool/memory_pool>`
+-  :doc:`Heap <heap/heap>`
+-  :doc:`Mbufs <mbuf/mbuf>`
+-  :doc:`Sanity <sanity/sanity>`
+-  :doc:`Callouts <callout/callout>`
+-  :doc:`Porting OS to other platforms <porting/port_os>`
 
 Basic OS Application Creation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -82,8 +83,7 @@ task. The main steps are:
 3. In your application ``main()`` function, call the ``sysinit()``
    function to initialize the system and packages, perform application
    specific initialization, then wait and dispatch events from the OS
-   default event queue in an infinite loop. (See `System Configuration
-   and Initialization </os/modules//sysinitconfig/sysinitconfig.html>`__
+   default event queue in an infinite loop. (See :doc:`../modules/sysinitconfig/sysinitconfig`
    for more details.)
 
 Initializing application modules and tasks can get somewhat complicated
@@ -131,12 +131,11 @@ semaphore 2. Task 2 waits for a token on semaphore 1 and once it gets
 it, adds a token to semaphore 2. Notice that the semaphores are
 initialized by the application specific task initialization functions
 and not inside the task handler functions. If task 2 (being lower in
-priority than task 1) had called os\_sem\_init() for task2\_sem inside
-task2\_handler(), task 1 would have called os\_sem\_pend() using
-task2\_sem before task2\_sem was initialized.
+priority than task 1) had called os_sem_init() for task2_sem inside
+task2_handler(), task 1 would have called os_sem_pend() using
+task2_sem before task2_sem was initialized.
 
 .. code:: c
-
 
         struct os_sem task1_sem;
         struct os_sem task2_sem;
@@ -237,9 +236,3 @@ task2\_sem before task2\_sem was initialized.
             }
             /* main never returns */
     }
-
-API
-~~~~~~~~~~~~
-
-.. doxygengroup:: OSGeneral
-    :content-only:

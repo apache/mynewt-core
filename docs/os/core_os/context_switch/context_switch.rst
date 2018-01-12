@@ -1,11 +1,9 @@
-#########
 Scheduler
-#########
+=========
 
 Scheduler's job is to maintain the list of tasks and decide which one
 should be running next.
 
-***********
 Description
 ***********
 
@@ -35,9 +33,7 @@ process is called context switch. During context switching the state of
 the CPU (e.g. registers) for the currently *running* task is stored and
 the new task is swapped in.
 
-***
 API
 ***
 
-.. doxygengroup:: OSSched
-    :content-only:
+* :cpp:func:`os_sched()`

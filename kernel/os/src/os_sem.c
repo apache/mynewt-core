@@ -220,6 +220,6 @@ os_sem_pend(struct os_sem *sem, uint32_t timeout)
 
 
 /**
- *   @} OSSched
+ *   @} OSSem
  * @} OSKernel
  */

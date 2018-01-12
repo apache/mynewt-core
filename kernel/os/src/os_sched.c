@@ -130,13 +130,36 @@ os_sched_set_current_task(struct os_task *t)
 }
 
 /**
- * os sched
+ * Performs context switch if needed. If next_t is set, that task will be made
+ * running. If next_t is NULL, highest priority ready to run is swapped in. This
+ * function can be called when new tasks were made ready to run or if the current
+ * task is moved to sleeping state.
  *
- * Performs a context switch. When called, it will either find the highest
- * priority task ready to run if next_t is NULL (i.e. the head of the os run
- * list) or will schedule next_t as the task to run.
+ * This function will call the architecture specific routine to swap in the new task.
  *
- * @param next_t Task to run
+ * @param next_t Pointer to task which must run next (optional)
+ *
+ * @return n/a
+ *
+ * @note Interrupts must be disabled when calling this.
+ *
+ * @code{.cpp}
+ * // example
+ * os_error_t
+ * os_mutex_release(struct os_mutex *mu)
+ * {
+ *     ...
+ *     OS_EXIT_CRITICAL(sr);
+ *
+ *     // Re-schedule if needed
+ *     if (resched) {
+ *         os_sched(rdy);
+ *     }
+ *
+ *     return OS_OK;
+ *
+ * }
+ * @endcode
  */
 void
 os_sched(struct os_task *next_t)
