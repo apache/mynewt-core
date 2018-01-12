@@ -24,6 +24,7 @@
 #include "oic/messaging/coap/oc_coap.h"
 #include "oic/oc_api.h"
 #include "oic/oc_core_res.h"
+#include "oic/port/mynewt/ip.h"
 
 static bool
 filter_resource(oc_resource_t *resource, const char *rt, int rt_len,
@@ -193,15 +194,19 @@ oc_ri_process_discovery_payload(struct coap_packet_rx *rsp,
       .os_str = NULL
   };
   bool secure = false;
-  uint16_t dtls_port = 0, default_port = endpoint->oe_ip.v6.port;
+  uint16_t dtls_port = 0, default_port = 0;
   oc_string_array_t types = {};
   oc_interface_mask_t interfaces = 0;
   oc_server_handle_t handle;
   uint16_t data_off;
   struct os_mbuf *m;
   int len;
+  struct oc_endpoint_ip *ip;
 
-  memcpy(&handle.endpoint, endpoint, sizeof(oc_endpoint_t));
+  memcpy(&handle.endpoint, endpoint, oc_endpoint_size(endpoint));
+  if (oc_endpoint_is_ip(endpoint)) {
+      default_port = ((struct oc_endpoint_ip *)endpoint)->port;
+  }
 
   oc_rep_t *array = 0, *rep;
 
@@ -276,14 +281,16 @@ oc_ri_process_discovery_payload(struct coap_packet_rx *rsp,
               }
               resource_info = resource_info->next;
             }
-            if (secure) {
-              handle.endpoint.oe_ip.v6.port = dtls_port;
-              handle.endpoint.oe_ip.flags |= SECURED;
-            } else {
-              handle.endpoint.oe_ip.v6.port = default_port;
-              handle.endpoint.oe_ip.flags &= ~SECURED;
+            if (default_port) {
+                ip = (struct oc_endpoint_ip *)&handle.endpoint;
+                if (secure) {
+                    ip->port = dtls_port;
+                    ip->ep.oe_flags |= OC_ENDPOINT_SECURED;
+                } else {
+                    ip->port = default_port;
+                    ip->ep.oe_flags &= ~OC_ENDPOINT_SECURED;
+                }
             }
-
             if (handler(oc_string(di), oc_string(uri), types, interfaces,
                         &handle) == OC_STOP_DISCOVERY) {
               ret = OC_STOP_DISCOVERY;

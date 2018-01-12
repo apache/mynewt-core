@@ -375,7 +375,8 @@ does_interface_support_method(oc_resource_t *resource,
  *                              false if the security requirements are not met.
  */
 static bool
-oc_ri_check_trans_security(const oc_endpoint_t *oe, const oc_resource_t *res)
+oc_ri_check_trans_security(const oc_endpoint_t *oe,
+                           const oc_resource_t *res)
 {
 #if MYNEWT_VAL(OC_TRANS_SECURITY)
   oc_resource_properties_t res_sec_flags;

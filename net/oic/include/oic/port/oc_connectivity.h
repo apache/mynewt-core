@@ -20,129 +20,62 @@
 #include <stdint.h>
 
 #include "oic/port/mynewt/config.h"
+#include "oic/port/mynewt/transport.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-typedef struct {
-    uint16_t port;
-    uint8_t address[16];
-    uint8_t scope;
-} oc_ipv6_addr_t;
-
-typedef struct {
-    uint16_t port;
-    uint8_t address[4];
-} oc_ipv4_addr_t;
-
-enum oc_transport_flags {
-    IP = 1 << 0,
-    GATT = 1 << 1,
-    IPSP = 1 << 2,
-    MULTICAST = 1 << 3,
-    SECURED = 1 << 4,
-    SERIAL = 1 << 5,
-    IP4 = 1 << 6,
-    LORA = 1 << 7,
-};
-
 /*
  * OC endpoint data structure comes in different variations,
- * depending on flags field.
+ * depending on type of transport.
  */
-/*
- * oc_endpoint for IPv6 source
- */
-struct oc_endpoint_ip {
-    enum oc_transport_flags flags;
-    union {
-        oc_ipv6_addr_t v6;
-        oc_ipv4_addr_t v4;
-    };
+struct oc_ep_hdr {
+    uint8_t oe_type:3;          /* index to oc_transports array */
+    uint8_t oe_flags:5;         /* OC_ENDPOINT flags */
 };
 
-/*
- * oc_endpoint for BLE source.
- */
-struct oc_endpoint_ble {
-    enum oc_transport_flags flags;
-    uint8_t srv_idx;
-    uint16_t conn_handle;
-};
+#define OC_ENDPOINT_MULTICAST   1 << 0
+#define OC_ENDPOINT_SECURED     1 << 1
 
 /*
- * oc_endpoint for LORA.
+ * Use this when reserving memory for oc_endpoint of unknown type.
  */
-struct oc_endpoint_lora {
-    enum oc_transport_flags flags;
-    uint8_t port;
-};
+typedef struct oc_endpoint {
+    struct oc_ep_hdr ep;
+    uint8_t _res[23];          /* based on size of oc_endpoint_ip6 */
+} oc_endpoint_t;
 
 /*
- * oc_endpoint for multicast target and serial port.
+ * Plain oc_endpoint for multicast target.
  */
 struct oc_endpoint_plain {
-    enum oc_transport_flags flags;
+    struct oc_ep_hdr ep;
 };
-
-typedef struct oc_endpoint {
-    union {
-        struct oc_endpoint_ip oe_ip;
-        struct oc_endpoint_ble oe_ble;
-        struct oc_endpoint_lora oe_lora;
-        struct oc_endpoint_plain oe;
-    };
-} oc_endpoint_t;
 
 static inline int
 oc_endpoint_size(struct oc_endpoint *oe)
 {
-    if (oe->oe.flags & (IP | IP4)) {
-        return sizeof (struct oc_endpoint_ip);
-    } else if (oe->oe.flags & GATT) {
-        return sizeof (struct oc_endpoint_ble);
-    } else if (oe->oe.flags & LORA) {
-        return sizeof (struct oc_endpoint_lora);
-    } else if (oe->oe.flags & SERIAL) {
-        return sizeof (struct oc_endpoint_plain);
-    } else {
-        return sizeof (struct oc_endpoint);
-    }
+    return oc_transports[oe->ep.oe_type]->ot_ep_size;
+}
+
+static inline int
+oc_endpoint_use_tcp(struct oc_endpoint *oe)
+{
+    return oc_transports[oe->ep.oe_type]->ot_flags & OC_TRANSPORT_USE_TCP;
 }
 
 #define OC_MBUF_ENDPOINT(m)                                            \
     ((struct oc_endpoint *)((uint8_t *)m + sizeof(struct os_mbuf) +    \
                             sizeof(struct os_mbuf_pkthdr)))
 
-
-#define oc_make_ip_endpoint(__name__, __flags__, __port__, ...)         \
-    oc_endpoint_t __name__ = {.oe_ip = {.flags = __flags__,             \
-                                        .v6 = {.port = __port__,        \
-                                               .address = { __VA_ARGS__ } } } }
-#define oc_make_ip4_endpoint(__name__, __flags__, __port__, ...)        \
-    oc_endpoint_t __name__ = {.oe_ip = {.flags = __flags__,             \
-                                        .v4 = {.port = __port__,        \
-                                               .address = { __VA_ARGS__ } } } }
-
 #ifdef OC_SECURITY
 uint16_t oc_connectivity_get_dtls_port(void);
 #endif /* OC_SECURITY */
 
-enum oc_resource_properties
-oc_get_trans_security(const struct oc_endpoint *oe);
+enum oc_resource_properties oc_get_trans_security(const struct oc_endpoint *oe);
 int oc_connectivity_init(void);
 void oc_connectivity_shutdown(void);
-
-static inline int
-oc_endpoint_use_tcp(struct oc_endpoint *oe)
-{
-    if (oe->oe.flags & GATT) {
-        return 1;
-    }
-    return 0;
-}
-
 
 void oc_send_buffer(struct os_mbuf *);
 void oc_send_multicast_message(struct os_mbuf *);

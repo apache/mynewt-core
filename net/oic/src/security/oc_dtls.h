@@ -41,14 +41,13 @@ int oc_sec_dtls_send_message(oc_message_t *message);
 oc_uuid_t *oc_sec_dtls_get_peer_uuid(oc_endpoint_t *endpoint);
 bool oc_sec_dtls_connected(oc_endpoint_t *endpoint);
 
-typedef struct oc_sec_dtls_peer_s
-{
-  struct oc_sec_dtls_peer_s *next;
-  OC_LIST_STRUCT(send_queue);
-  session_t session;
-  oc_uuid_t uuid;
-  bool connected;
-  oc_clock_time_t timestamp;
+typedef struct oc_sec_dtls_peer {
+    struct oc_sec_dtls_peer_s *next;
+    OC_LIST_STRUCT(send_queue);
+    session_t session;
+    oc_uuid_t uuid;
+    bool connected;
+    oc_clock_time_t timestamp;
 } oc_sec_dtls_peer_t;
 
 #ifdef __cplusplus

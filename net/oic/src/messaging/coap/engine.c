@@ -60,13 +60,14 @@ coap_receive(struct os_mbuf **mp)
     static struct coap_packet response[1];
     static coap_transaction_t *transaction = NULL;
     struct os_mbuf *rsp;
-    oc_endpoint_t endpoint; /* XXX */
+    struct oc_endpoint endpoint; /* XXX */
 
     erbium_status_code = NO_ERROR;
 
     OC_LOG_INFO("CoAP: received datalen=%u\n", OS_MBUF_PKTLEN(*mp));
 
-    memcpy(&endpoint, OC_MBUF_ENDPOINT(*mp), sizeof(endpoint)); /* XXXXX */
+    memcpy(&endpoint, OC_MBUF_ENDPOINT(*mp),
+           oc_endpoint_size(OC_MBUF_ENDPOINT(*mp)));
     erbium_status_code = coap_parse_message(message, mp);
     if (erbium_status_code != NO_ERROR) {
         goto out;

@@ -17,18 +17,24 @@
  * under the License.
  */
 
-#ifndef ADAPTOR_H
-#define ADAPTOR_H
+#ifndef __OIC_MYNEWT_BLE_H_
+#define __OIC_MYNEWT_BLE_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-struct os_eventq *oc_evq_get(void);
+/*
+ * oc_endpoint for BLE source.
+ */
+struct oc_endpoint_ble {
+    struct oc_ep_hdr ep;
+    uint8_t srv_idx;
+    uint16_t conn_handle;
+};
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* ADAPTOR_H */
-
+#endif /* __OIC_MYNEWT_BLE_H_ */

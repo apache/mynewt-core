@@ -29,15 +29,14 @@
 extern "C" {
 #endif
 
-typedef struct
-{
-  int oxmsel;
-  int sct;
-  bool owned;
-  bool dpc;
-  oc_uuid_t deviceuuid;
-  oc_uuid_t devowneruuid;
-  oc_uuid_t rowneruuid;
+typedef struct oc_sec_doxm {
+    int oxmsel;
+    int sct;
+    bool owned;
+    bool dpc;
+    oc_uuid_t deviceuuid;
+    oc_uuid_t devowneruuid;
+    oc_uuid_t rowneruuid;
 } oc_sec_doxm_t;
 
 void oc_sec_decode_doxm(oc_rep_t *rep);

@@ -17,11 +17,13 @@
  * under the License.
  */
 
+#include <assert.h>
+#include <string.h>
+#include <stdint.h>
+
 #include <syscfg/syscfg.h>
 #if (MYNEWT_VAL(OC_TRANSPORT_GATT) == 1)
-#include <assert.h>
 #include <os/os.h>
-#include <string.h>
 
 #include <stats/stats.h>
 #include "oic/oc_gatt.h"
@@ -29,11 +31,32 @@
 #include "oic/oc_ri.h"
 #include "messaging/coap/coap.h"
 #include "api/oc_buffer.h"
-#include "port/oc_connectivity.h"
+#include "oic/port/oc_connectivity.h"
 #include "adaptor.h"
+#include "oic/port/mynewt/ble.h"
 #include "host/ble_hs.h"
 #include "services/gap/ble_svc_gap.h"
 #include "services/gatt/ble_svc_gatt.h"
+
+static void oc_send_buffer_gatt(struct os_mbuf *m);
+static char *oc_log_ep_gatt(char *ptr, int maxlen, const struct oc_endpoint *);
+enum oc_resource_properties
+oc_get_trans_security_gatt(const struct oc_endpoint *oe_ble);
+static int oc_connectivity_init_gatt(void);
+void oc_connectivity_shutdown_gatt(void);
+
+static const struct oc_transport oc_gatt_transport = {
+    .ot_ep_size = sizeof(struct oc_endpoint_ble),
+    .ot_flags = 0,
+    .ot_tx_ucast = oc_send_buffer_gatt,
+    .ot_tx_mcast = oc_send_buffer_gatt,
+    .ot_get_trans_security = oc_get_trans_security_gatt,
+    .ot_ep_str = oc_log_ep_gatt,
+    .ot_init = oc_connectivity_init_gatt,
+    .ot_shutdown = oc_connectivity_shutdown_gatt
+};
+
+static uint8_t oc_gatt_transport_id;
 
 /* OIC Transport Profile GATT */
 
@@ -168,6 +191,15 @@ oc_ble_req_attr_to_idx(uint16_t attr_handle)
     return -1;
 }
 
+static char *
+oc_log_ep_gatt(char *ptr, int maxlen, const struct oc_endpoint *oe)
+{
+    struct oc_endpoint_ble *oe_ble = (struct oc_endpoint_ble *)oe;
+
+    snprintf(ptr, maxlen, "ble %u", oe_ble->conn_handle);
+    return ptr;
+}
+
 int
 oc_ble_reass(struct os_mbuf *om1, uint16_t conn_handle, uint8_t srv_idx)
 {
@@ -224,7 +256,8 @@ oc_ble_reass(struct os_mbuf *om1, uint16_t conn_handle, uint8_t srv_idx)
             om2 = om1;
         }
         oe_ble = (struct oc_endpoint_ble *)OC_MBUF_ENDPOINT(om2);
-        oe_ble->flags = GATT;
+        oe_ble->ep.oe_type = oc_gatt_transport_id;
+        oe_ble->ep.oe_flags = 0;
         oe_ble->srv_idx = srv_idx;
         oe_ble->conn_handle = conn_handle;
         pkt2 = OS_MBUF_PKTHDR(om2);
@@ -376,7 +409,7 @@ void
 oc_send_buffer_gatt(struct os_mbuf *m)
 {
 #if (MYNEWT_VAL(OC_SERVER) == 1)
-    struct oc_endpoint *oe;
+    struct oc_endpoint_ble *oe_ble;
     struct os_mbuf_pkthdr *pkt;
     uint16_t mtu;
     uint16_t conn_handle;
@@ -390,16 +423,16 @@ oc_send_buffer_gatt(struct os_mbuf *m)
 #if (MYNEWT_VAL(OC_SERVER) == 1)
 
     assert(OS_MBUF_USRHDR_LEN(m) >= sizeof(struct oc_endpoint_ble));
-    oe = OC_MBUF_ENDPOINT(m);
-    conn_handle = oe->oe_ble.conn_handle;
+    oe_ble = (struct oc_endpoint_ble *)OC_MBUF_ENDPOINT(m);
+    conn_handle = oe_ble->conn_handle;
 
     STATS_INC(oc_ble_stats, oframe);
     STATS_INCN(oc_ble_stats, obytes, OS_MBUF_PKTLEN(m));
 
-    if (oe->oe_ble.srv_idx >= OC_BLE_SRV_CNT) {
+    if (oe_ble->srv_idx >= OC_BLE_SRV_CNT) {
         goto err;
     }
-    attr_handle = oc_ble_srv_handles[oe->oe_ble.srv_idx].rsp;
+    attr_handle = oc_ble_srv_handles[oe_ble->srv_idx].rsp;
 
     mtu = ble_att_mtu(conn_handle);
     if (mtu < 4) {
@@ -435,12 +468,14 @@ err:
  * Retrieves the specified BLE endpoint's transport layer security properties.
  */
 oc_resource_properties_t
-oc_get_trans_security_gatt(const struct oc_endpoint_ble *oe_ble)
+oc_get_trans_security_gatt(const struct oc_endpoint *oe)
 {
+    const struct oc_endpoint_ble *oe_ble;
     oc_resource_properties_t props;
     struct ble_gap_conn_desc desc;
     int rc;
 
+    oe_ble = (const struct oc_endpoint_ble *)oe;
     rc = ble_gap_conn_find(oe_ble->conn_handle, &desc);
     if (rc != 0) {
         return 0;
@@ -458,3 +493,11 @@ oc_get_trans_security_gatt(const struct oc_endpoint_ble *oe_ble)
 }
 
 #endif
+
+void
+oc_register_gatt(void)
+{
+#if (MYNEWT_VAL(OC_TRANSPORT_GATT) == 1)
+    oc_gatt_transport_id = oc_transport_register(&oc_gatt_transport);
+#endif
+}

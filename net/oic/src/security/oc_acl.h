@@ -28,32 +28,29 @@
 extern "C" {
 #endif
 
-typedef enum {
-  OC_PERM_CREATE = (1 << 0),
-  OC_PERM_RETRIEVE = (1 << 1),
-  OC_PERM_UPDATE = (1 << 2),
-  OC_PERM_DELETE = (1 << 3),
-  OC_PERM_NOTIFY = (1 << 4)
+typedef enum oc_sec_acl_permissions_mask {
+    OC_PERM_CREATE = (1 << 0),
+    OC_PERM_RETRIEVE = (1 << 1),
+    OC_PERM_UPDATE = (1 << 2),
+    OC_PERM_DELETE = (1 << 3),
+    OC_PERM_NOTIFY = (1 << 4)
 } oc_sec_acl_permissions_mask_t;
 
-typedef struct
-{
-  OC_LIST_STRUCT(subjects);
-  oc_uuid_t rowneruuid;
+typedef struct oc_sec_acl {
+    OC_LIST_STRUCT(subjects);
+    oc_uuid_t rowneruuid;
 } oc_sec_acl_t;
 
-typedef struct oc_sec_acl_res_s
-{
-  struct oc_sec_acl_res_s *next;
-  oc_resource_t *resource;
-  uint16_t permissions;
+typedef struct oc_sec_acl_res {
+    struct oc_sec_acl_res_s *next;
+    oc_resource_t *resource;
+    uint16_t permissions;
 } oc_sec_acl_res_t;
 
-typedef struct oc_sec_ace_s
-{
-  struct oc_sec_ace_s *next;
-  OC_LIST_STRUCT(resources);
-  oc_uuid_t subjectuuid;
+typedef struct oc_sec_ace {
+    struct oc_sec_ace_s *next;
+    OC_LIST_STRUCT(resources);
+    oc_uuid_t subjectuuid;
 } oc_sec_ace_t;
 
 void oc_sec_acl_default(void);
