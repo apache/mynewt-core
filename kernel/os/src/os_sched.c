@@ -24,13 +24,6 @@
 
 #include <assert.h>
 
-/**
- * @addtogroup OSKernel
- * @{
- *   @defgroup OSSched Scheduler
- *   @{
- */
-
 struct os_task_list g_os_run_list = TAILQ_HEAD_INITIALIZER(g_os_run_list);
 struct os_task_list g_os_sleep_list = TAILQ_HEAD_INITIALIZER(g_os_sleep_list);
 
@@ -129,38 +122,6 @@ os_sched_set_current_task(struct os_task *t)
     g_current_task = t;
 }
 
-/**
- * Performs context switch if needed. If next_t is set, that task will be made
- * running. If next_t is NULL, highest priority ready to run is swapped in. This
- * function can be called when new tasks were made ready to run or if the current
- * task is moved to sleeping state.
- *
- * This function will call the architecture specific routine to swap in the new task.
- *
- * @param next_t Pointer to task which must run next (optional)
- *
- * @return n/a
- *
- * @note Interrupts must be disabled when calling this.
- *
- * @code{.cpp}
- * // example
- * os_error_t
- * os_mutex_release(struct os_mutex *mu)
- * {
- *     ...
- *     OS_EXIT_CRITICAL(sr);
- *
- *     // Re-schedule if needed
- *     if (resched) {
- *         os_sched(rdy);
- *     }
- *
- *     return OS_OK;
- *
- * }
- * @endcode
- */
 void
 os_sched(struct os_task *next_t)
 {
@@ -394,8 +355,3 @@ os_sched_resort(struct os_task *t)
         os_sched_insert(t);
     }
 }
-
-/**
- *   @} OSSched
- * @} OSKernel
- */
