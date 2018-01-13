@@ -32,11 +32,11 @@ sys.path.insert(0, os.path.abspath('_ext'))
 # ones.
 extensions = [
     'sphinx.ext.autodoc', 'breathe', 'sphinx.ext.todo',
-    'sphinx.ext.extlinks', 'edit_on_github'
+    'sphinx.ext.extlinks'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = []
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
@@ -170,6 +170,3 @@ breathe_projects = {
     "mynewt": "_build/xml"
 }
 breathe_default_project = "mynewt"
-
-edit_on_github_project = 'apache/mynewt-core'
-edit_on_github_branch = 'master'
