@@ -4,7 +4,7 @@ OS User Guide
 .. toctree::
    :hidden:
 
-   core_os/mynewt_os
+   OS Core <core_os/mynewt_os>
    core_os/porting/port_os
 
 This guide provides comprehensive information about Mynewt OS, the
@@ -18,4 +18,4 @@ application. The guide covers all the features and services available in
 the OS and contains several examples showing how they can be used.
 **Send us an email on the dev@ mailing list if you have comments or
 suggestions!** If you haven't joined the mailing list, you will find the
-links `here <../community.html>`__.
+links `here </community.html>`__.
