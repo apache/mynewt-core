@@ -1,28 +1,25 @@
-# Minimal makefile for Sphinx documentation
-#
+# Make a preview site for Sphinx & Doxygen output
 
-# You can set these variables from the command line.
 SPHINXOPTS    =
 SPHINXBUILD   = sphinx-build
 SPHINXPROJ    = Mynewt
 SOURCEDIR     = .
-BUILDDIR      = _build
+BUILDDIR      = _build/sphinx
 
-# Put it first so that "make" without argument is like "make help".
-help:
-	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
-
-.PHONY: help Makefile clean htmldocs doxy
+.PHONY: Makefile clean preview doxygen
 
 clean:
-	rm -rf _build xml
+	rm -rf _build
 
-htmldocs: doxy html
+preview: _build doxygen sphinx
 
-doxy:
+_build:
+	mkdir -p _build
+
+doxygen:
+	mkdir -p _build/html
 	cd .. && doxygen docs/doxygen.xml
 
-# Catch-all target: route all unknown targets to Sphinx using the new
-# "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
-%: Makefile
-	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+sphinx:
+	sphinx-build . _build/sphinx
+	mv _build/sphinx _build/html/documentation
