@@ -1579,6 +1579,9 @@ void TIM_DMADelayPulseCplt(DMA_HandleTypeDef *hdma);
 void TIM_DMAError(DMA_HandleTypeDef *hdma);
 void TIM_DMACaptureCplt(DMA_HandleTypeDef *hdma);
 
+void TIM_Base_SetConfig(TIM_TypeDef *TIMx, TIM_Base_InitTypeDef *Structure);
+void TIM_CCxChannelCmd(TIM_TypeDef* TIMx, uint32_t Channel, uint32_t ChannelState);
+
 /**
   * @}
   */

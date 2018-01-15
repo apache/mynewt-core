@@ -20,7 +20,7 @@
 #include <assert.h>
 #include <stddef.h>
 #include <inttypes.h>
-#include <mcu/cortex_m4.h>
+#include <mcu/cortex_m3.h>
 
 /**
  * Boots the image described by the supplied image header.

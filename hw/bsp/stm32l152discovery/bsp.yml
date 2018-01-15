@@ -1,0 +1,63 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+bsp.arch: cortex_m3
+bsp.compiler: compiler/arm-none-eabi-m3
+bsp.linkerscript:
+    - "hw/bsp/stm32l152discovery/stm32l152discovery.ld"
+    - "hw/mcu/stm/stm32l1xx/stm32l152.ld"
+bsp.linkerscript.BOOT_LOADER.OVERWRITE:
+    - "hw/bsp/stm32l152discovery/boot-stm32l152discovery.ld"
+    - "hw/mcu/stm/stm32l1xx/stm32l152.ld"
+bsp.downloadscript: "hw/bsp/stm32l152discovery/stm32l152discovery_download.sh"
+bsp.debugscript: "hw/bsp/stm32l152discovery/stm32l152discovery_debug.sh"
+bsp.downloadscript.WINDOWS.OVERWRITE: "hw/bsp/stm32l152discovery/stm32l152discovery_download.cmd"
+bsp.debugscript.WINDOWS.OVERWRITE: "hw/bsp/stm32l152discovery/stm32l152discovery_debug.cmd"
+
+bsp.flash_map:
+    areas:
+        # System areas.
+        FLASH_AREA_BOOTLOADER:
+            device: 0
+            offset: 0x08000000
+            size: 16kB
+        FLASH_AREA_IMAGE_0:
+            device: 0
+            offset: 0x0800a000
+            size: 104kB
+        FLASH_AREA_IMAGE_1:
+            device: 0
+            offset: 0x08024000
+            size: 104kB
+        FLASH_AREA_IMAGE_SCRATCH:
+            device: 0
+            offset: 0x0803e000
+            size: 8kB
+
+        # User areas.
+        FLASH_AREA_REBOOT_LOG:
+            user_id: 0
+            device: 0
+            offset: 0x08004000
+            size: 8kB
+        FLASH_AREA_NFFS:
+            user_id: 1
+            device: 0
+            offset: 0x08006000
+            size: 16kB

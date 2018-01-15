@@ -21,12 +21,12 @@
 #include "hal/hal_gpio.h"
 #include "bsp/cmsis_nvic.h"
 #include "bsp/bsp.h"
-#include "stm32f4xx.h"
-#include "stm32f4xx_hal_dma.h"
-#include "stm32f4xx_hal_uart.h"
-#include "stm32f4xx_hal_rcc.h"
-#include "mcu/stm32f4_bsp.h"
-#include "mcu/stm32f4xx_mynewt_hal.h"
+#include "stm32l1xx.h"
+#include "stm32l1xx_hal_dma.h"
+#include "stm32l1xx_hal_uart.h"
+#include "stm32l1xx_hal_rcc.h"
+#include "mcu/stm32l1_bsp.h"
+#include "mcu/stm32l1xx_mynewt_hal.h"
 #include <assert.h>
 #include <stdlib.h>
 
@@ -40,7 +40,7 @@ struct hal_uart {
     hal_uart_tx_char u_tx_func;
     hal_uart_tx_done u_tx_done;
     void *u_func_arg;
-    const struct stm32f4_uart_cfg *u_cfg;
+    const struct stm32l1_uart_cfg *u_cfg;
 };
 static struct hal_uart uarts[UART_CNT];
 
@@ -184,30 +184,10 @@ uart_irq2(void)
 
 }
 
-#if !defined(STM32F401xE)
 static void
 uart_irq3(void)
 {
     uart_irq_handler(2);
-}
-
-static void
-uart_irq4(void)
-{
-    uart_irq_handler(3);
-}
-
-static void
-uart_irq5(void)
-{
-    uart_irq_handler(4);
-}
-#endif
-
-static void
-uart_irq6(void)
-{
-    uart_irq_handler(5);
 }
 
 static void
@@ -225,23 +205,9 @@ hal_uart_set_nvic(IRQn_Type irqn, struct hal_uart *uart)
         isr = (uint32_t)&uart_irq2;
         ui = &uart_irqs[1];
         break;
-#if !defined(STM32F401xE)
     case USART3_IRQn:
         isr = (uint32_t)&uart_irq3;
         ui = &uart_irqs[2];
-        break;
-    case UART4_IRQn:
-        isr = (uint32_t)&uart_irq4;
-        ui = &uart_irqs[3];
-        break;
-    case UART5_IRQn:
-        isr = (uint32_t)&uart_irq5;
-        ui = &uart_irqs[4];
-        break;
-#endif
-    case USART6_IRQn:
-        isr = (uint32_t)&uart_irq6;
-        ui = &uart_irqs[5];
         break;
     default:
         assert(0);
@@ -265,7 +231,7 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
   enum hal_uart_parity parity, enum hal_uart_flow_ctl flow_ctl)
 {
     struct hal_uart *u;
-    const struct stm32f4_uart_cfg *cfg;
+    const struct stm32l1_uart_cfg *cfg;
     uint32_t cr1, cr2, cr3;
 
     if (port >= UART_CNT) {
@@ -362,7 +328,7 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
     u->u_regs->CR3 = cr3;
     u->u_regs->CR2 = cr2;
     u->u_regs->CR1 = cr1;
-    if (cfg->suc_uart == USART1 || cfg->suc_uart == USART6) {
+    if (cfg->suc_uart == USART1) {
         u->u_regs->BRR = UART_BRR_SAMPLING16(HAL_RCC_GetPCLK2Freq(), baudrate);
     } else {
         u->u_regs->BRR = UART_BRR_SAMPLING16(HAL_RCC_GetPCLK1Freq(), baudrate);
@@ -387,7 +353,7 @@ hal_uart_init(int port, void *arg)
         return -1;
     }
     u = &uarts[port];
-    u->u_cfg = (const struct stm32f4_uart_cfg *)arg;
+    u->u_cfg = (const struct stm32l1_uart_cfg *)arg;
 
     return 0;
 }

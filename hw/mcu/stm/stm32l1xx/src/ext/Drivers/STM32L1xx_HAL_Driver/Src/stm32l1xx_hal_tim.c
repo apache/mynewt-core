@@ -149,7 +149,6 @@
 /** @defgroup TIM_Private_Functions TIM Private Functions
   * @{
   */
-static void TIM_Base_SetConfig(TIM_TypeDef *TIMx, TIM_Base_InitTypeDef *Structure);
 static void TIM_OC1_SetConfig(TIM_TypeDef *TIMx, TIM_OC_InitTypeDef *OC_Config);
 static void TIM_OC2_SetConfig(TIM_TypeDef *TIMx, TIM_OC_InitTypeDef *OC_Config);
 static void TIM_OC3_SetConfig(TIM_TypeDef *TIMx, TIM_OC_InitTypeDef *OC_Config);
@@ -162,7 +161,6 @@ static void TIM_TI3_SetConfig(TIM_TypeDef *TIMx, uint32_t TIM_ICPolarity, uint32
 static void TIM_TI4_SetConfig(TIM_TypeDef *TIMx, uint32_t TIM_ICPolarity, uint32_t TIM_ICSelection, uint32_t TIM_ICFilter);
 static void TIM_ETR_SetConfig(TIM_TypeDef* TIMx, uint32_t TIM_ExtTRGPrescaler, uint32_t TIM_ExtTRGPolarity, uint32_t ExtTRGFilter);
 static void TIM_ITRx_SetConfig(TIM_TypeDef* TIMx, uint16_t InputTriggerSource);
-static void TIM_CCxChannelCmd(TIM_TypeDef* TIMx, uint32_t Channel, uint32_t ChannelState);
 static void TIM_DMAPeriodElapsedCplt(DMA_HandleTypeDef *hdma);
 static void TIM_DMATriggerCplt(DMA_HandleTypeDef *hdma);
 static void TIM_SlaveTimer_SetConfig(TIM_HandleTypeDef *htim, TIM_SlaveConfigTypeDef * sSlaveConfig);
@@ -4452,7 +4450,7 @@ static void TIM_DMATriggerCplt(DMA_HandleTypeDef *hdma)
   * @param  Structure: TIM Base configuration structure
   * @retval None
   */
-static void TIM_Base_SetConfig(TIM_TypeDef *TIMx, TIM_Base_InitTypeDef *Structure)
+void TIM_Base_SetConfig(TIM_TypeDef *TIMx, TIM_Base_InitTypeDef *Structure)
 {
   uint32_t tmpcr1 = 0;
   tmpcr1 = TIMx->CR1;
@@ -5150,7 +5148,7 @@ static void TIM_ETR_SetConfig(TIM_TypeDef* TIMx, uint32_t TIM_ExtTRGPrescaler,
   *          This parameter can be: TIM_CCx_ENABLE or TIM_CCx_Disable.
   * @retval None
   */
-static void TIM_CCxChannelCmd(TIM_TypeDef* TIMx, uint32_t Channel, uint32_t ChannelState)
+void TIM_CCxChannelCmd(TIM_TypeDef* TIMx, uint32_t Channel, uint32_t ChannelState)
 {
   uint32_t tmp = 0;
 

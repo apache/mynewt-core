@@ -17,43 +17,19 @@
  * under the License.
  */
 
-#include "hal/hal_watchdog.h"
-#include "stm32l1xx_hal.h"
-#include "stm32l1xx_hal_iwdg.h"
+#ifndef __MCU_CORTEX_M3_H__
+#define __MCU_CORTEX_M3_H__
 
-IWDG_HandleTypeDef g_wdt_cfg;
+#include "stm32l1xx.h"
 
-int
-hal_watchdog_init(uint32_t expire_msecs)
-{
-    uint32_t reload;
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-    /* Max prescaler is 256 */
-    reload = 32768 / 256;
-    reload = (reload * expire_msecs) / 1000;
+#define OS_TICKS_PER_SEC    (1000)
 
-    /* Check to make sure we are not trying a reload value that is too large */
-    if (reload > IWDG_RLR_RL) {
-        return -1;
-    }
-
-    g_wdt_cfg.Instance = IWDG;
-    g_wdt_cfg.Init.Prescaler = IWDG_PRESCALER_256;
-    g_wdt_cfg.Init.Reload = reload;
-
-    return 0;
+#ifdef __cplusplus
 }
+#endif
 
-void
-hal_watchdog_enable(void)
-{
-    __HAL_DBGMCU_FREEZE_IWDG();
-    HAL_IWDG_Init(&g_wdt_cfg);
-}
-
-void
-hal_watchdog_tickle(void)
-{
-    HAL_IWDG_Refresh(&g_wdt_cfg);
-}
-
+#endif /* __MCU_CORTEX_M3_H__ */

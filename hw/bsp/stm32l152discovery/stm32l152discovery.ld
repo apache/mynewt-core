@@ -17,43 +17,14 @@
  * under the License.
  */
 
-#include "hal/hal_watchdog.h"
-#include "stm32l1xx_hal.h"
-#include "stm32l1xx_hal_iwdg.h"
+/* Linker script for STM32L152 when running from flash and using the bootloader */
 
-IWDG_HandleTypeDef g_wdt_cfg;
-
-int
-hal_watchdog_init(uint32_t expire_msecs)
+/* Linker script to configure memory regions. */
+MEMORY
 {
-    uint32_t reload;
-
-    /* Max prescaler is 256 */
-    reload = 32768 / 256;
-    reload = (reload * expire_msecs) / 1000;
-
-    /* Check to make sure we are not trying a reload value that is too large */
-    if (reload > IWDG_RLR_RL) {
-        return -1;
-    }
-
-    g_wdt_cfg.Instance = IWDG;
-    g_wdt_cfg.Init.Prescaler = IWDG_PRESCALER_256;
-    g_wdt_cfg.Init.Reload = reload;
-
-    return 0;
+  FLASH (rx) :  ORIGIN = 0x0800a000, LENGTH = 104K /* First image slot. */
+  RAM (rwx) :   ORIGIN = 0x20000000, LENGTH = 32K
 }
 
-void
-hal_watchdog_enable(void)
-{
-    __HAL_DBGMCU_FREEZE_IWDG();
-    HAL_IWDG_Init(&g_wdt_cfg);
-}
-
-void
-hal_watchdog_tickle(void)
-{
-    HAL_IWDG_Refresh(&g_wdt_cfg);
-}
-
+/* This linker script is used for images and thus contains an image header */
+_imghdr_size = 0x20;

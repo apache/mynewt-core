@@ -18,59 +18,43 @@
  */
 
 #include <string.h>
-#include "stm32f4xx_hal_def.h"
-#include "stm32f4xx_hal_flash.h"
-#include "stm32f4xx_hal_flash_ex.h"
+#include "stm32l1xx_hal_def.h"
+#include "stm32l1xx_hal_flash.h"
+#include "stm32l1xx_hal_flash_ex.h"
 #include "hal/hal_flash_int.h"
+#include "hal/hal_watchdog.h"
 
-static int stm32f4_flash_read(const struct hal_flash *dev, uint32_t address,
+static int stm32l1_flash_read(const struct hal_flash *dev, uint32_t address,
         void *dst, uint32_t num_bytes);
-static int stm32f4_flash_write(const struct hal_flash *dev, uint32_t address,
+static int stm32l1_flash_write(const struct hal_flash *dev, uint32_t address,
         const void *src, uint32_t num_bytes);
-static int stm32f4_flash_erase_sector(const struct hal_flash *dev,
+static int stm32l1_flash_erase_sector(const struct hal_flash *dev,
         uint32_t sector_address);
-static int stm32f4_flash_sector_info(const struct hal_flash *dev, int idx,
+static int stm32l1_flash_sector_info(const struct hal_flash *dev, int idx,
         uint32_t *address, uint32_t *sz);
-static int stm32f4_flash_init(const struct hal_flash *dev);
+static int stm32l1_flash_init(const struct hal_flash *dev);
 
-static const struct hal_flash_funcs stm32f4_flash_funcs = {
-    .hff_read = stm32f4_flash_read,
-    .hff_write = stm32f4_flash_write,
-    .hff_erase_sector = stm32f4_flash_erase_sector,
-    .hff_sector_info = stm32f4_flash_sector_info,
-    .hff_init = stm32f4_flash_init
+static const struct hal_flash_funcs stm32l1_flash_funcs = {
+    .hff_read = stm32l1_flash_read,
+    .hff_write = stm32l1_flash_write,
+    .hff_erase_sector = stm32l1_flash_erase_sector,
+    .hff_sector_info = stm32l1_flash_sector_info,
+    .hff_init = stm32l1_flash_init,
 };
 
-static const uint32_t stm32f4_flash_sectors[] = {
-    0x08000000,     /* 16kB */
-    0x08004000,     /* 16kB */
-    0x08008000,     /* 16kB */
-    0x0800c000,     /* 16kB */
-    0x08010000,     /* 64kB */
-    0x08020000,     /* 128kB */
-    0x08040000,     /* 128kB */
-    0x08060000,     /* 128kB */
-    0x08080000,     /* 128kB */
-    0x080a0000,     /* 128kB */
-    0x080c0000,     /* 128kB */
-    0x080e0000,     /* 128kB */
-    0x08100000      /* End of flash */
-};
+#define _FLASH_SIZE            (256 * 1024)
+#define _FLASH_SECTOR_SIZE     4096
 
-#define STM32F4_FLASH_NUM_AREAS                                         \
-    (int)(sizeof(stm32f4_flash_sectors) /                               \
-      sizeof(stm32f4_flash_sectors[0]))
-
-const struct hal_flash stm32f4_flash_dev = {
-    .hf_itf = &stm32f4_flash_funcs,
+const struct hal_flash stm32l1_flash_dev = {
+    .hf_itf = &stm32l1_flash_funcs,
     .hf_base_addr = 0x08000000,
-    .hf_size = 1024 * 1024,
-    .hf_sector_cnt = STM32F4_FLASH_NUM_AREAS - 1,
-    .hf_align = 1
+    .hf_size = _FLASH_SIZE,
+    .hf_sector_cnt = _FLASH_SIZE / _FLASH_SECTOR_SIZE,
+    .hf_align = 8,
 };
 
 static int
-stm32f4_flash_read(const struct hal_flash *dev, uint32_t address, void *dst,
+stm32l1_flash_read(const struct hal_flash *dev, uint32_t address, void *dst,
         uint32_t num_bytes)
 {
     memcpy(dst, (void *)address, num_bytes);
@@ -78,54 +62,63 @@ stm32f4_flash_read(const struct hal_flash *dev, uint32_t address, void *dst,
 }
 
 static int
-stm32f4_flash_write(const struct hal_flash *dev, uint32_t address,
+stm32l1_flash_write(const struct hal_flash *dev, uint32_t address,
         const void *src, uint32_t num_bytes)
 {
-    const uint8_t *sptr;
+    const uint32_t *sptr;
     uint32_t i;
     int rc;
+    uint32_t num_words;
 
-    sptr = src;
-    /*
-     * Clear status of previous operation.
-     */
-    __HAL_FLASH_CLEAR_FLAG(FLASH_FLAG_EOP | FLASH_FLAG_OPERR | FLASH_FLAG_WRPERR | \
-      FLASH_FLAG_PGAERR | FLASH_FLAG_PGPERR| FLASH_FLAG_PGSERR);
-    for (i = 0; i < num_bytes; i++) {
-        rc = HAL_FLASH_Program(FLASH_TYPEPROGRAM_BYTE, address, sptr[i]);
-        if (rc != 0) {
+    if (!num_bytes) {
+        return -1;
+    }
+
+    /* Clear status of previous operation. */
+    __HAL_FLASH_CLEAR_FLAG(FLASH_FLAG_MASK);
+
+    sptr = (const uint32_t *)src;
+    num_words = ((num_bytes - 1) / 4) + 1;
+    for (i = 0; i < num_words; i++) {
+        rc = HAL_FLASH_Program(FLASH_TYPEPROGRAMDATA_WORD, address, sptr[i]);
+        if (rc != HAL_OK) {
             return rc;
         }
+        address += 4;
 
-        address++;
+        /*
+         * Long writes take excessive time, and stall the idle
+         * thread, so tickling the watchdog here to avoid resetting
+         * during writes...
+         */
+        if (!(i % 32)) {
+            hal_watchdog_tickle();
+        }
     }
 
     return 0;
 }
 
-static void
-stm32f4_flash_erase_sector_id(int sector_id)
+static int
+stm32l1_flash_erase_sector(const struct hal_flash *dev, uint32_t sector_address)
 {
     FLASH_EraseInitTypeDef eraseinit;
-    uint32_t SectorError;
-    
-    eraseinit.TypeErase = FLASH_TYPEERASE_SECTORS;
-    eraseinit.Banks = 0;
-    eraseinit.Sector = sector_id;
-    eraseinit.NbSectors = 1;
-    eraseinit.VoltageRange = FLASH_VOLTAGE_RANGE_1; 
+    uint32_t PageError;
+    HAL_StatusTypeDef rc;
 
-    HAL_FLASHEx_Erase(&eraseinit, &SectorError);
-}
+    (void)PageError;
 
-static int
-stm32f4_flash_erase_sector(const struct hal_flash *dev, uint32_t sector_address)
-{
-    int i;
+    if (!(sector_address & (_FLASH_SECTOR_SIZE - 1))) {
+        /* FIXME: why is an err flag set? */
 
-    for (i = 0; i < STM32F4_FLASH_NUM_AREAS - 1; i++) {
-        if (stm32f4_flash_sectors[i] == sector_address) {
-            stm32f4_flash_erase_sector_id(i);
+        /* Clear status of previous operation. */
+        __HAL_FLASH_CLEAR_FLAG(FLASH_FLAG_MASK);
+
+        eraseinit.TypeErase = FLASH_TYPEERASE_PAGES;
+        eraseinit.PageAddress = sector_address;
+        eraseinit.NbPages = _FLASH_SECTOR_SIZE / FLASH_PAGE_SIZE;
+        rc = HAL_FLASHEx_Erase(&eraseinit, &PageError);
+        if (rc == HAL_OK) {
             return 0;
         }
     }
@@ -134,17 +127,18 @@ stm32f4_flash_erase_sector(const struct hal_flash *dev, uint32_t sector_address)
 }
 
 static int
-stm32f4_flash_sector_info(const struct hal_flash *dev, int idx,
+stm32l1_flash_sector_info(const struct hal_flash *dev, int idx,
         uint32_t *address, uint32_t *sz)
 {
-    *address = stm32f4_flash_sectors[idx];
-    *sz = stm32f4_flash_sectors[idx + 1] - stm32f4_flash_sectors[idx];
+    *address = dev->hf_base_addr + _FLASH_SECTOR_SIZE * idx;
+    *sz = _FLASH_SECTOR_SIZE;
     return 0;
 }
 
 static int
-stm32f4_flash_init(const struct hal_flash *dev)
+stm32l1_flash_init(const struct hal_flash *dev)
 {
     HAL_FLASH_Unlock();
+    /* TODO: enable ACC64 + prefetch */
     return 0;
 }

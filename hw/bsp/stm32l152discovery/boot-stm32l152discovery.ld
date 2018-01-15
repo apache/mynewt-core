@@ -17,43 +17,12 @@
  * under the License.
  */
 
-#include "hal/hal_watchdog.h"
-#include "stm32l1xx_hal.h"
-#include "stm32l1xx_hal_iwdg.h"
-
-IWDG_HandleTypeDef g_wdt_cfg;
-
-int
-hal_watchdog_init(uint32_t expire_msecs)
+/* Linker script to configure memory regions. */
+MEMORY
 {
-    uint32_t reload;
-
-    /* Max prescaler is 256 */
-    reload = 32768 / 256;
-    reload = (reload * expire_msecs) / 1000;
-
-    /* Check to make sure we are not trying a reload value that is too large */
-    if (reload > IWDG_RLR_RL) {
-        return -1;
-    }
-
-    g_wdt_cfg.Instance = IWDG;
-    g_wdt_cfg.Init.Prescaler = IWDG_PRESCALER_256;
-    g_wdt_cfg.Init.Reload = reload;
-
-    return 0;
+  FLASH (rx) : ORIGIN = 0x08000000, LENGTH = 16K
+  RAM (rwx) : ORIGIN = 0x20000000, LENGTH = 32K
 }
 
-void
-hal_watchdog_enable(void)
-{
-    __HAL_DBGMCU_FREEZE_IWDG();
-    HAL_IWDG_Init(&g_wdt_cfg);
-}
-
-void
-hal_watchdog_tickle(void)
-{
-    HAL_IWDG_Refresh(&g_wdt_cfg);
-}
-
+/* The bootloader does not contain an image header */
+_imghdr_size = 0x0;
