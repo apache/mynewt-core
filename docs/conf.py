@@ -32,23 +32,16 @@ sys.path.insert(0, os.path.abspath('_ext'))
 # ones.
 extensions = [
     'sphinx.ext.autodoc', 'breathe', 'sphinx.ext.todo',
-    'sphinx.ext.extlinks', 'edit_on_github'
+    'sphinx.ext.extlinks'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
-
-# Markdown support
-from recommonmark.parser import CommonMarkParser
-source_parsers = {
-    '.md': CommonMarkParser,
-}
+templates_path = []
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
 #
-source_suffix = ['.rst', '.md']
-# source_suffix = '.rst'
+source_suffix = '.rst'
 
 # The master toctree document.
 master_doc = 'index'
@@ -77,7 +70,7 @@ language = None
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', 'node_modules', 'themes']
+exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', 'themes']
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
@@ -92,15 +85,23 @@ todo_include_todos = False
 # a list of builtin themes.
 #
 
-html_theme = 'mynewt'
-html_theme_path = ['./themes']
+html_theme = 'alabaster'
+html_theme_path = []
+html_sidebars = {
+    '**': [
+        'about.html',
+        'navigation.html',
+        'relations.html',
+        'searchbox.html',
+        'donate.html',
+    ]
+}
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
 html_theme_options = {
-    'google_analytics': ('UA-72162311-1', 'auto')
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,
@@ -166,9 +167,6 @@ texinfo_documents = [
 ]
 
 breathe_projects = {
-    "mynewt": "xml"
+    "mynewt": "_build/xml"
 }
 breathe_default_project = "mynewt"
-
-edit_on_github_project = 'aditihilbert/mynewt-core'
-edit_on_github_branch = 'doxygen/docs'
