@@ -26,9 +26,9 @@
 #include "oic/oc_log.h"
 #include "oic/oc_ri.h"
 #include "api/oc_priv.h"
-#include "port/oc_connectivity.h"
-#include "adaptor.h"
-#include "port/mynewt/transport.h"
+#include "oic/port/oc_connectivity.h"
+#include "oic/port/mynewt/adaptor.h"
+#include "oic/port/mynewt/transport.h"
 
 static struct os_eventq *oc_evq;
 struct log oc_log;

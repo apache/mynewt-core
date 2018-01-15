@@ -27,10 +27,9 @@
 
 #include <shell/shell.h>
 
-#include "api/oc_buffer.h"
-#include "port/oc_connectivity.h"
 #include "oic/oc_log.h"
-#include "adaptor.h"
+#include "oic/port/oc_connectivity.h"
+#include "oic/port/mynewt/adaptor.h"
 #include "oic/port/mynewt/transport.h"
 
 static void oc_send_buffer_serial(struct os_mbuf *m);

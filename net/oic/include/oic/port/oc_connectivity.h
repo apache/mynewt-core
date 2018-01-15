@@ -80,6 +80,8 @@ void oc_connectivity_shutdown(void);
 void oc_send_buffer(struct os_mbuf *);
 void oc_send_multicast_message(struct os_mbuf *);
 
+void oc_recv_message(struct os_mbuf *m);
+
 #ifdef __cplusplus
 }
 #endif
