@@ -21,6 +21,27 @@
 #include "mem/mem.h"
 
 /**
+ * Generic mempool allocation function.  Used with basic and extended mempools.
+ */
+static int
+mem_malloc_mempool_gen(uint16_t num_blocks, uint32_t block_size,
+                       void **out_buf)
+{
+    block_size = OS_ALIGN(block_size, OS_ALIGNMENT);
+
+    if (num_blocks > 0) {
+        *out_buf = malloc(OS_MEMPOOL_BYTES(num_blocks, block_size));
+        if (*out_buf == NULL) {
+            return OS_ENOMEM;
+        }
+    } else {
+        *out_buf = NULL;
+    }
+
+    return 0;
+}
+
+/**
  * Mallocs a block of memory and initializes a mempool to use it.
  *
  * @param mempool               The mempool to initialize.
@@ -37,24 +58,59 @@
  *                              Other OS code on unexpected error.
  */
 int
-mem_malloc_mempool(struct os_mempool *mempool, int num_blocks, int block_size,
-                   char *name, void **out_buf)
+mem_malloc_mempool(struct os_mempool *mempool, uint16_t num_blocks,
+                   uint32_t block_size, char *name, void **out_buf)
 {
     void *buf;
     int rc;
 
-    block_size = OS_ALIGN(block_size, OS_ALIGNMENT);
-
-    if (num_blocks > 0) {
-        buf = malloc(OS_MEMPOOL_BYTES(num_blocks, block_size));
-        if (buf == NULL) {
-            return OS_ENOMEM;
-        }
-    } else {
-        buf = NULL;
+    rc = mem_malloc_mempool_gen(num_blocks, block_size, &buf);
+    if (rc != 0) {
+        return rc;
     }
 
     rc = os_mempool_init(mempool, num_blocks, block_size, buf, name);
+    if (rc != 0) {
+        free(buf);
+        return rc;
+    }
+
+    if (out_buf != NULL) {
+        *out_buf = buf;
+    }
+
+    return 0;
+}
+
+/**
+ * Mallocs a block of memory and initializes an extended mempool to use it.
+ *
+ * @param mpe                   The extended mempool to initialize.
+ * @param num_blocks            The total number of memory blocks in the
+ *                                  mempool.
+ * @param block_size            The size of each mempool entry.
+ * @param name                  The name to give the mempool.
+ * @param out_buf               On success, this points to the malloced memory.
+ *                                  Pass NULL if you don't need this
+ *                                  information.
+ *
+ * @return                      0 on success;
+ *                              OS_ENOMEM on malloc failure;
+ *                              Other OS code on unexpected error.
+ */
+int
+mem_malloc_mempool_ext(struct os_mempool_ext *mpe, uint16_t num_blocks,
+                       uint32_t block_size, char *name, void **out_buf)
+{
+    void *buf;
+    int rc;
+
+    rc = mem_malloc_mempool_gen(num_blocks, block_size, &buf);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = os_mempool_ext_init(mpe, num_blocks, block_size, buf, name);
     if (rc != 0) {
         free(buf);
         return rc;
@@ -87,8 +143,8 @@ mem_malloc_mempool(struct os_mempool *mempool, int num_blocks, int block_size,
  */
 int
 mem_malloc_mbuf_pool(struct os_mempool *mempool,
-                     struct os_mbuf_pool *mbuf_pool, int num_blocks,
-                     int block_size, char *name,
+                     struct os_mbuf_pool *mbuf_pool, uint16_t num_blocks,
+                     uint32_t block_size, char *name,
                      void **out_buf)
 {
     void *buf;

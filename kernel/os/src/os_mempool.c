@@ -82,7 +82,7 @@ os_mempool_poison_check(void *start, int sz)
  * @return os_error_t
  */
 os_error_t
-os_mempool_init(struct os_mempool *mp, int blocks, int block_size,
+os_mempool_init(struct os_mempool *mp, uint16_t blocks, uint32_t block_size,
                 void *membuf, char *name)
 {
     int true_block_size;
@@ -112,6 +112,7 @@ os_mempool_init(struct os_mempool *mp, int blocks, int block_size,
     mp->mp_block_size = block_size;
     mp->mp_num_free = blocks;
     mp->mp_min_free = blocks;
+    mp->mp_flags = 0;
     mp->mp_num_blocks = blocks;
     mp->mp_membuf_addr = (uint32_t)membuf;
     mp->name = name;
@@ -135,6 +136,37 @@ os_mempool_init(struct os_mempool *mp, int blocks, int block_size,
     STAILQ_INSERT_TAIL(&g_os_mempool_list, mp, mp_list);
 
     return OS_OK;
+}
+
+/**
+ * Initializes an extended memory pool.  Extended attributes (e.g., callbacks)
+ * are not specified when this function is called; they are assigned manually
+ * after initialization.
+ *
+ * @param mpe           The extended memory pool to initialize.
+ * @param blocks        The number of blocks in the pool.
+ * @param block_size    The size of each block, in bytes.
+ * @param membuf        Pointer to memory to contain blocks.
+ * @param name          Name of the pool.
+ *
+ * @return os_error_t
+ */
+os_error_t
+os_mempool_ext_init(struct os_mempool_ext *mpe, uint16_t blocks,
+                    uint32_t block_size, void *membuf, char *name)
+{
+    int rc;
+
+    rc = os_mempool_init(&mpe->mpe_mp, blocks, block_size, membuf, name);
+    if (rc != 0) {
+        return rc;
+    }
+
+    mpe->mpe_mp.mp_flags = OS_MEMPOOL_F_EXT;
+    mpe->mpe_put_cb = NULL;
+    mpe->mpe_put_arg = NULL;
+
+    return 0;
 }
 
 /**
@@ -241,6 +273,42 @@ os_memblock_get(struct os_mempool *mp)
 }
 
 /**
+ * os memblock put from cb
+ *
+ * Puts the memory block back into the pool, ignoring the put callback, if any.
+ * This function should only be called from a put callback to free a block
+ * without causing infinite recursion.
+ *
+ * @param mp Pointer to memory pool
+ * @param block_addr Pointer to memory block
+ *
+ * @return os_error_t
+ */
+os_error_t
+os_memblock_put_from_cb(struct os_mempool *mp, void *block_addr)
+{
+    os_sr_t sr;
+    struct os_memblock *block;
+
+    os_mempool_poison(block_addr, OS_MEMPOOL_TRUE_BLOCK_SIZE(mp));
+
+    block = (struct os_memblock *)block_addr;
+    OS_ENTER_CRITICAL(sr);
+
+    /* Chain current free list pointer to this block; make this block head */
+    SLIST_NEXT(block, mb_next) = SLIST_FIRST(mp);
+    SLIST_FIRST(mp) = block;
+
+    /* XXX: Should we check that the number free <= number blocks? */
+    /* Increment number free */
+    mp->mp_num_free++;
+
+    OS_EXIT_CRITICAL(sr);
+
+    return OS_OK;
+}
+
+/**
  * os memblock put
  *
  * Puts the memory block back into the pool
@@ -253,8 +321,8 @@ os_memblock_get(struct os_mempool *mp)
 os_error_t
 os_memblock_put(struct os_mempool *mp, void *block_addr)
 {
-    os_sr_t sr;
-    struct os_memblock *block;
+    struct os_mempool_ext *mpe;
+    int rc;
 
     /* Make sure parameters are valid */
     if ((mp == NULL) || (block_addr == NULL)) {
@@ -272,23 +340,21 @@ os_memblock_put(struct os_mempool *mp, void *block_addr)
         assert(block != (struct os_memblock *)block_addr);
     }
 #endif
-    os_mempool_poison(block_addr, OS_MEMPOOL_TRUE_BLOCK_SIZE(mp));
-    block = (struct os_memblock *)block_addr;
-    OS_ENTER_CRITICAL(sr);
 
-    /* Chain current free list pointer to this block; make this block head */
-    SLIST_NEXT(block, mb_next) = SLIST_FIRST(mp);
-    SLIST_FIRST(mp) = block;
+    /* If this is an extended mempool with a put callback, call the callback
+     * instead of freeing the block directly.
+     */
+    if (mp->mp_flags & OS_MEMPOOL_F_EXT) {
+        mpe = (struct os_mempool_ext *)mp;
+        if (mpe->mpe_put_cb != NULL) {
+            rc = mpe->mpe_put_cb(mpe, block_addr, mpe->mpe_put_arg);
+            return rc;
+        }
+    }
 
-    /* XXX: Should we check that the number free <= number blocks? */
-    /* Increment number free */
-    mp->mp_num_free++;
-
-    OS_EXIT_CRITICAL(sr);
-
-    return OS_OK;
+    /* No callback; free the block. */
+    return os_memblock_put_from_cb(mp, block_addr);
 }
-
 
 struct os_mempool *
 os_mempool_info_get_next(struct os_mempool *mp, struct os_mempool_info *omi)

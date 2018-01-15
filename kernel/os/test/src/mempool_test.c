@@ -82,8 +82,12 @@ os_mempool_test_init(void *arg)
 }
 
 TEST_CASE_DECL(os_mempool_test_case)
+TEST_CASE_DECL(os_mempool_test_ext_basic)
+TEST_CASE_DECL(os_mempool_test_ext_nested)
 
 TEST_SUITE(os_mempool_test_suite)
 {
     os_mempool_test_case();
+    os_mempool_test_ext_basic();
+    os_mempool_test_ext_nested();
 }

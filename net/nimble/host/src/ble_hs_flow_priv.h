@@ -16,53 +16,21 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#ifndef _MEMPOOL_TEST_H
-#define _MEMPOOL_TEST_H
 
-#include <stdio.h>
-#include <string.h>
-#include "testutil/testutil.h"
-#include "os/os.h"
-#include "os_test_priv.h"
+#ifndef H_BLE_HS_FLOW_PRIV_
+#define H_BLE_HS_FLOW_PRIV_
 
+#include <inttypes.h>
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* Limit max blocks for testing */
-#ifndef MEMPOOL_TEST_MAX_BLOCKS
-#define MEMPOOL_TEST_MAX_BLOCKS     (128)
-#endif
-
-/* Create a memory pool for testing */
-#ifndef MEM_BLOCK_SIZE
-#define MEM_BLOCK_SIZE  (80)
-#endif
-
-#ifndef NUM_MEM_BLOCKS
-#define NUM_MEM_BLOCKS  (10)
-#endif
-
-extern int alignment;
-
-/* Test memory pool structure */
-extern struct os_mempool g_TstMempool;
-
-/* Test memory pool buffer */
-extern os_membuf_t *TstMembuf;
-extern uint32_t TstMembufSz;
-
-/* Array of block pointers. */
-extern void *block_array[MEMPOOL_TEST_MAX_BLOCKS];
-
-extern int verbose;
-
-int mempool_test_get_pool_size(int num_blocks, int block_size);
-
-void mempool_test(int num_blocks, int block_size);
+void ble_hs_flow_connection_broken(uint16_t conn_handle);
+void ble_hs_flow_fill_acl_usrhdr(struct os_mbuf *om);
+int ble_hs_flow_startup(void);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* _MEMPOOL_TEST_H */
+#endif

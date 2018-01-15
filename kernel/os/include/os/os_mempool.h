@@ -44,14 +44,52 @@ struct os_memblock {
 
 /* Memory pool */
 struct os_mempool {
-    int mp_block_size;          /* Size of the memory blocks, in bytes. */
-    int mp_num_blocks;          /* The number of memory blocks. */
-    int mp_num_free;            /* The number of free blocks left */
-    int mp_min_free;            /* The lowest number of free blocks seen */
+    uint32_t mp_block_size;     /* Size of the memory blocks, in bytes. */
+    uint16_t mp_num_blocks;     /* The number of memory blocks. */
+    uint16_t mp_num_free;       /* The number of free blocks left */
+    uint16_t mp_min_free;       /* The lowest number of free blocks seen */
+    uint8_t mp_flags;           /* Bitmap of OS_MEMPOOL_F_[...] values. */
     uint32_t mp_membuf_addr;    /* Address of memory buffer used by pool */
     STAILQ_ENTRY(os_mempool) mp_list;
     SLIST_HEAD(,os_memblock);   /* Pointer to list of free blocks */
     char *name;                 /* Name for memory block */
+};
+
+/**
+ * Indicates an extended mempool.  Address can be safely cast to
+ * (struct os_mempool_ext *).
+ */
+#define OS_MEMPOOL_F_EXT        0x01
+
+struct os_mempool_ext;
+
+/**
+ * Block put callback function.  If configured, this callback gets executed
+ * whenever a block is freed to the corresponding extended mempool.  Note: The
+ * os_memblock_put() function calls this callback instead of freeing the block
+ * itself.  Therefore, it is the callback's responsibility to free the block
+ * via a call to os_memblock_put_from_cb().
+ *
+ * @param ome                   The extended mempool that a block is being
+ *                                  freed back to.
+ * @param data                  The block being freed.
+ * @param arg                   Optional argument configured along with the
+ *                                  callback.
+ *
+ * @return                      Indicates whether the block was successfully
+ *                                  freed.  A non-zero value should only be
+ *                                  returned if the block was not successfully
+ *                                  released back to its pool.
+ */
+typedef os_error_t os_mempool_put_fn(struct os_mempool_ext *ome, void *data,
+                                     void *arg);
+
+struct os_mempool_ext {
+    struct os_mempool mpe_mp;
+
+    /* Callback that is executed immediately when a block is freed. */
+    os_mempool_put_fn *mpe_put_cb;
+    void *mpe_put_arg;
 };
 
 #define OS_MEMPOOL_INFO_NAME_LEN (32)
@@ -85,8 +123,10 @@ typedef uint64_t os_membuf_t;
     (sizeof (os_membuf_t) * OS_MEMPOOL_SIZE((n), (blksize)))
 
 /* Initialize a memory pool */
-os_error_t os_mempool_init(struct os_mempool *mp, int blocks, int block_size,
-                           void *membuf, char *name);
+os_error_t os_mempool_init(struct os_mempool *mp, uint16_t blocks,
+                           uint32_t block_size, void *membuf, char *name);
+os_error_t os_mempool_ext_init(struct os_mempool_ext *mpe, uint16_t blocks,
+                               uint32_t block_size, void *membuf, char *name);
 
 /* Performs an integrity check of the specified mempool. */
 bool os_mempool_is_sane(const struct os_mempool *mp);
@@ -96,6 +136,8 @@ int os_memblock_from(const struct os_mempool *mp, const void *block_addr);
 
 /* Get a memory block from the pool */
 void *os_memblock_get(struct os_mempool *mp);
+
+os_error_t os_memblock_put_from_cb(struct os_mempool *mp, void *block_addr);
 
 /* Put the memory block back into the pool */
 os_error_t os_memblock_put(struct os_mempool *mp, void *block_addr);

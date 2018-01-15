@@ -27,12 +27,14 @@ extern "C" {
 struct os_mempool;
 struct os_mbuf_pool;
 
-int mem_malloc_mempool(struct os_mempool *mempool, int num_blocks,
-                       int block_size, char *name, void **out_buf);
+int mem_malloc_mempool(struct os_mempool *mempool, uint16_t num_blocks,
+                       uint32_t block_size, char *name, void **out_buf);
+int mem_malloc_mempool_ext(struct os_mempool_ext *mempool, uint16_t num_blocks,
+                           uint32_t block_size, char *name, void **out_buf);
 
 int mem_malloc_mbuf_pool(struct os_mempool *mempool,
-                         struct os_mbuf_pool *mbuf_pool, int num_blocks,
-                         int block_size, char *name,
+                         struct os_mbuf_pool *mbuf_pool, uint16_t num_blocks,
+                         uint32_t block_size, char *name,
                          void **out_buf);
 int mem_malloc_mbufpkt_pool(struct os_mempool *mempool,
                             struct os_mbuf_pool *mbuf_pool, int num_blocks,
