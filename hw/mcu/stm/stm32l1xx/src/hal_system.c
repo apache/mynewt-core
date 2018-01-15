@@ -17,10 +17,10 @@
  * under the License.
  */
 
-#include <mcu/cortex_m4.h>
+#include <mcu/cortex_m3.h>
 #include <os/os.h>
 #include "hal/hal_system.h"
-#include "stm32f4xx_hal_def.h"
+#include "stm32l1xx_hal_def.h"
 
 void
 hal_system_reset(void)

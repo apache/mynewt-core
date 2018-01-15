@@ -18,7 +18,7 @@
  */
 #include <hal/hal_system.h>
 
-#include "stm32f4xx_hal_def.h"
+#include "stm32l1xx_hal_def.h"
 
 enum hal_reset_reason
 hal_reset_cause(void)
@@ -32,13 +32,14 @@ hal_reset_cause(void)
 
     reg = RCC->CSR;
 
-    if (reg & (RCC_CSR_WDGRSTF | RCC_CSR_WWDGRSTF)) {
+    if (reg & RCC_CSR_WWDGRSTF) {
         reason = HAL_RESET_WATCHDOG;
     } else if (reg & RCC_CSR_SFTRSTF) {
         reason = HAL_RESET_SOFT;
-    } else if (reg & RCC_CSR_PADRSTF) {
+    } else if (reg & RCC_CSR_PINRSTF) {
         reason = HAL_RESET_PIN;
-    } else if (reg & RCC_CSR_BORRSTF) {
+    } else if (reg & RCC_CSR_LPWRRSTF) {
+        /* For L1xx this is low-power reset */
         reason = HAL_RESET_BROWNOUT;
     } else {
         reason = HAL_RESET_POR;

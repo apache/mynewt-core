@@ -27,8 +27,9 @@
 #endif
 
 /*
- * STM32F4 has a unique 96-bit id at address 0x1FFF7A10.
- * See ref manual chapter 39.1.
+ * STM32L1 has a unique 96-bit id at address either address
+ * 0x1FF80050 or 0x1FF800D0 depending on the specific device.
+ * See ref manual chapter 31.2.
  */
 int
 hal_bsp_hw_id(uint8_t *id, int max_len)
@@ -36,7 +37,9 @@ hal_bsp_hw_id(uint8_t *id, int max_len)
     int cnt;
 
     cnt = min(12, max_len);
-    memcpy(id, (void *)0x1FFF7A10, cnt);
+
+    /* 96-bit id address for STM32L152C */
+    memcpy(id, (void *)0x1FF800D0, cnt);
 
     return cnt;
 }

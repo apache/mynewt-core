@@ -26,33 +26,33 @@
 
 #include <syscfg/syscfg.h>
 
-#include "stm32f4xx.h"
-#include "stm32f4xx_hal_dma.h"
-#include "stm32f4xx_hal_spi.h"
-#include "stm32f4xx_hal_gpio.h"
-#include "stm32f4xx_hal_gpio_ex.h"
-#include "stm32f4xx_hal_rcc.h"
-#include "mcu/stm32f4xx_mynewt_hal.h"
-#include "mcu/stm32f4_bsp.h"
+#include "stm32l1xx.h"
+#include "stm32l1xx_hal_dma.h"
+#include "stm32l1xx_hal_spi.h"
+#include "stm32l1xx_hal_gpio.h"
+#include "stm32l1xx_hal_gpio_ex.h"
+#include "stm32l1xx_hal_rcc.h"
+#include "mcu/stm32l1xx_mynewt_hal.h"
+#include "mcu/stm32l1_bsp.h"
 #include "bsp/cmsis_nvic.h"
 
-#define STM32F4_HAL_SPI_TIMEOUT (1000)
+#define STM32L1_HAL_SPI_TIMEOUT (1000)
 
-#define STM32F4_HAL_SPI_MAX (6)
+#define STM32L1_HAL_SPI_MAX (6)
 
-struct stm32f4_hal_spi {
+struct stm32l1_hal_spi {
     SPI_HandleTypeDef handle;
     uint8_t slave:1;			/* slave or master */
     uint8_t tx_in_prog:1;		/* slave: tx'ing user data not def */
     uint8_t selected:1;			/* slave: if we see SS */
     uint8_t def_char[4];		/* slave: default data to tx */
-    struct stm32f4_hal_spi_cfg *cfg;
+    struct stm32l1_hal_spi_cfg *cfg;
     /* Callback and arguments */
     hal_spi_txrx_cb txrx_cb_func;
     void            *txrx_cb_arg;
 };
 
-static struct stm32f4_spi_stat {
+static struct stm32l1_spi_stat {
     uint32_t irq;
     uint32_t ss_irq;
     uint32_t tx;
@@ -61,73 +61,73 @@ static struct stm32f4_spi_stat {
     uint32_t efre;
 } spi_stat;
 
-static void spi_irq_handler(struct stm32f4_hal_spi *spi);
+static void spi_irq_handler(struct stm32l1_hal_spi *spi);
 
 #if MYNEWT_VAL(SPI_0)
-struct stm32f4_hal_spi stm32f4_hal_spi0;
+struct stm32l1_hal_spi stm32l1_hal_spi0;
 #endif
 #if MYNEWT_VAL(SPI_1)
-struct stm32f4_hal_spi stm32f4_hal_spi1;
+struct stm32l1_hal_spi stm32l1_hal_spi1;
 #endif
 #if MYNEWT_VAL(SPI_2)
-struct stm32f4_hal_spi stm32f4_hal_spi2;
+struct stm32l1_hal_spi stm32l1_hal_spi2;
 #endif
 #if MYNEWT_VAL(SPI_3)
-struct stm32f4_hal_spi stm32f4_hal_spi3;
+struct stm32l1_hal_spi stm32l1_hal_spi3;
 #endif
 #if MYNEWT_VAL(SPI_4)
-struct stm32f4_hal_spi stm32f4_hal_spi4;
+struct stm32l1_hal_spi stm32l1_hal_spi4;
 #endif
 #if MYNEWT_VAL(SPI_5)
-struct stm32f4_hal_spi stm32f4_hal_spi5;
+struct stm32l1_hal_spi stm32l1_hal_spi5;
 #endif
 
-static struct stm32f4_hal_spi *stm32f4_hal_spis[STM32F4_HAL_SPI_MAX] = {
+static struct stm32l1_hal_spi *stm32l1_hal_spis[STM32L1_HAL_SPI_MAX] = {
 #if MYNEWT_VAL(SPI_0)
-    &stm32f4_hal_spi0,
+    &stm32l1_hal_spi0,
 #else
     NULL,
 #endif
 #if MYNEWT_VAL(SPI_1)
-    &stm32f4_hal_spi1,
+    &stm32l1_hal_spi1,
 #else
     NULL,
 #endif
 #if MYNEWT_VAL(SPI_2)
-    &stm32f4_hal_spi2,
+    &stm32l1_hal_spi2,
 #else
     NULL,
 #endif
 #if MYNEWT_VAL(SPI_3)
-    &stm32f4_hal_spi3,
+    &stm32l1_hal_spi3,
 #else
     NULL,
 #endif
 #if MYNEWT_VAL(SPI_4)
-    &stm32f4_hal_spi4,
+    &stm32l1_hal_spi4,
 #else
     NULL,
 #endif
 #if MYNEWT_VAL(SPI_5)
-    &stm32f4_hal_spi5,
+    &stm32l1_hal_spi5,
 #else
     NULL,
 #endif
 };
 
-#define STM32F4_HAL_SPI_RESOLVE(__n, __v)                        \
-    if ((__n) >= STM32F4_HAL_SPI_MAX) {                          \
+#define STM32L1_HAL_SPI_RESOLVE(__n, __v)                        \
+    if ((__n) >= STM32L1_HAL_SPI_MAX) {                          \
         rc = -1;                                                 \
         goto err;                                                \
     }                                                            \
-    (__v) = (struct stm32f4_hal_spi *) stm32f4_hal_spis[(__n)];  \
+    (__v) = (struct stm32l1_hal_spi *) stm32l1_hal_spis[(__n)];  \
     if ((__v) == NULL) {                                         \
         rc = -1;                                                 \
         goto err;                                                \
     }
 
 static IRQn_Type
-stm32f4_resolve_spi_irq(SPI_HandleTypeDef *hspi)
+stm32l1_resolve_spi_irq(SPI_HandleTypeDef *hspi)
 {
     uintptr_t spi = (uintptr_t)hspi->Instance;
 
@@ -159,7 +159,7 @@ stm32f4_resolve_spi_irq(SPI_HandleTypeDef *hspi)
  * SPI master IRQ handler.
  */
 static void
-spim_irq_handler(struct stm32f4_hal_spi *spi)
+spim_irq_handler(struct stm32l1_hal_spi *spi)
 {
     if (spi->handle.TxXferCount == 0 && spi->handle.RxXferCount == 0) {
         if (spi->txrx_cb_func) {
@@ -172,7 +172,7 @@ spim_irq_handler(struct stm32f4_hal_spi *spi)
  * SPI slave IRQ handler.
  */
 static void
-spis_irq_handler(struct stm32f4_hal_spi *spi)
+spis_irq_handler(struct stm32l1_hal_spi *spi)
 {
     if (spi->tx_in_prog) {
         if (spi->handle.TxXferCount == 0 && spi->handle.RxXferCount == 0) {
@@ -200,7 +200,7 @@ spis_irq_handler(struct stm32f4_hal_spi *spi)
  * Common IRQ handler for both master and slave.
  */
 static void
-spi_irq_handler(struct stm32f4_hal_spi *spi)
+spi_irq_handler(struct stm32l1_hal_spi *spi)
 {
     uint32_t err;
 
@@ -233,7 +233,7 @@ spi_irq_handler(struct stm32f4_hal_spi *spi)
 static void
 spi_ss_isr(void *arg)
 {
-    struct stm32f4_hal_spi *spi = (struct stm32f4_hal_spi *)arg;
+    struct stm32l1_hal_spi *spi = (struct stm32l1_hal_spi *)arg;
     int ss;
     int len;
     uint16_t reg;
@@ -299,26 +299,26 @@ spi_ss_isr(void *arg)
 static void
 spi1_irq_handler(void)
 {
-    spi_irq_handler(stm32f4_hal_spis[0]);
+    spi_irq_handler(stm32l1_hal_spis[0]);
 }
 
 static void
 spi2_irq_handler(void)
 {
-    spi_irq_handler(stm32f4_hal_spis[1]);
+    spi_irq_handler(stm32l1_hal_spis[1]);
 }
 
 static void
 spi3_irq_handler(void)
 {
-    spi_irq_handler(stm32f4_hal_spis[2]);
+    spi_irq_handler(stm32l1_hal_spis[2]);
 }
 
 #ifdef SPI4
 static void
 spi4_irq_handler(void)
 {
-    spi_irq_handler(stm32f4_hal_spis[3]);
+    spi_irq_handler(stm32l1_hal_spis[3]);
 }
 #endif
 
@@ -326,7 +326,7 @@ spi4_irq_handler(void)
 static void
 spi5_irq_handler(void)
 {
-    spi_irq_handler(stm32f4_hal_spis[4]);
+    spi_irq_handler(stm32l1_hal_spis[4]);
 }
 #endif
 
@@ -335,12 +335,12 @@ spi5_irq_handler(void)
 static void
 spi6_irq_handler(void)
 {
-    spi_irq_handler(stm32f4_hal_spis[5]);
+    spi_irq_handler(stm32l1_hal_spis[5]);
 }
 #endif
 
 uint32_t
-stm32f4_resolve_spi_irq_handler(SPI_HandleTypeDef *hspi)
+stm32l1_resolve_spi_irq_handler(SPI_HandleTypeDef *hspi)
 {
     switch((uintptr_t)hspi->Instance) {
         case (uintptr_t)SPI1:
@@ -369,7 +369,7 @@ stm32f4_resolve_spi_irq_handler(SPI_HandleTypeDef *hspi)
 int
 hal_spi_init(int spi_num, void *usercfg, uint8_t spi_type)
 {
-    struct stm32f4_hal_spi *spi;
+    struct stm32l1_hal_spi *spi;
     int rc;
 
     /* Check for valid arguments */
@@ -386,7 +386,7 @@ hal_spi_init(int spi_num, void *usercfg, uint8_t spi_type)
      * This can be done in BSP, so that only the generic SPI settings
      * are passed to the user configure() call.
      */
-    STM32F4_HAL_SPI_RESOLVE(spi_num, spi);
+    STM32L1_HAL_SPI_RESOLVE(spi_num, spi);
 
     spi->cfg = usercfg;
     spi->slave = (spi_type == HAL_SPI_TYPE_SLAVE);
@@ -397,13 +397,13 @@ err:
 }
 
 static int
-stm32f4_spi_resolve_prescaler(uint8_t spi_num, uint32_t baudrate, uint32_t *prescaler)
+stm32l1_spi_resolve_prescaler(uint8_t spi_num, uint32_t baudrate, uint32_t *prescaler)
 {
     uint32_t candidate_br;
     uint32_t apbfreq;
     int i;
 
-    /* SPIx {1,4,5,6} use PCLK2 on the STM32F4, otherwise use PCKL1.
+    /* SPIx {1,4,5,6} use PCLK2 on the STM32L1, otherwise use PCKL1.
      * The numbers in the switch below are offset by 1, because the HALs index
      * SPI ports from 0.
      */
@@ -458,11 +458,11 @@ stm32f4_spi_resolve_prescaler(uint8_t spi_num, uint32_t baudrate, uint32_t *pres
 int
 hal_spi_set_txrx_cb(int spi_num, hal_spi_txrx_cb txrx_cb, void *arg)
 {
-    struct stm32f4_hal_spi *spi;
+    struct stm32l1_hal_spi *spi;
     int rc = 0;
     int sr;
 
-    STM32F4_HAL_SPI_RESOLVE(spi_num, spi);
+    STM32L1_HAL_SPI_RESOLVE(spi_num, spi);
 
     __HAL_DISABLE_INTERRUPTS(sr);
     spi->txrx_cb_func = txrx_cb;
@@ -484,11 +484,11 @@ err:
 int
 hal_spi_enable(int spi_num)
 {
-    struct stm32f4_hal_spi *spi;
+    struct stm32l1_hal_spi *spi;
     int rc;
 
     rc = 0;
-    STM32F4_HAL_SPI_RESOLVE(spi_num, spi);
+    STM32L1_HAL_SPI_RESOLVE(spi_num, spi);
 
     /* XXX power up */
 err:
@@ -506,11 +506,11 @@ err:
 int
 hal_spi_disable(int spi_num)
 {
-    struct stm32f4_hal_spi *spi;
+    struct stm32l1_hal_spi *spi;
     int rc;
 
     rc = 0;
-    STM32F4_HAL_SPI_RESOLVE(spi_num, spi);
+    STM32L1_HAL_SPI_RESOLVE(spi_num, spi);
 
     /* XXX power down */
 err:
@@ -520,8 +520,8 @@ err:
 int
 hal_spi_config(int spi_num, struct hal_spi_settings *settings)
 {
-    struct stm32f4_hal_spi *spi;
-    struct stm32f4_hal_spi_cfg *cfg;
+    struct stm32l1_hal_spi *spi;
+    struct stm32l1_hal_spi_cfg *cfg;
     SPI_InitTypeDef *init;
     GPIO_InitTypeDef gpio;
     IRQn_Type irq;
@@ -530,7 +530,7 @@ hal_spi_config(int spi_num, struct hal_spi_settings *settings)
     int sr;
 
     __HAL_DISABLE_INTERRUPTS(sr);
-    STM32F4_HAL_SPI_RESOLVE(spi_num, spi);
+    STM32L1_HAL_SPI_RESOLVE(spi_num, spi);
 
     init = &spi->handle.Init;
 
@@ -676,7 +676,7 @@ hal_spi_config(int spi_num, struct hal_spi_settings *settings)
             goto err;
     }
 
-    rc = stm32f4_spi_resolve_prescaler(spi_num, settings->baudrate * 1000,
+    rc = stm32l1_spi_resolve_prescaler(spi_num, settings->baudrate * 1000,
       &prescaler);
     if (rc != 0) {
         goto err;
@@ -684,9 +684,9 @@ hal_spi_config(int spi_num, struct hal_spi_settings *settings)
 
     init->BaudRatePrescaler = prescaler;
 
-    irq = stm32f4_resolve_spi_irq(&spi->handle);
+    irq = stm32l1_resolve_spi_irq(&spi->handle);
     NVIC_SetPriority(irq, cfg->irq_prio);
-    NVIC_SetVector(irq, stm32f4_resolve_spi_irq_handler(&spi->handle));
+    NVIC_SetVector(irq, stm32l1_resolve_spi_irq_handler(&spi->handle));
     NVIC_EnableIRQ(irq);
 
     /* Init, Enable */
@@ -710,11 +710,11 @@ err:
 int
 hal_spi_txrx_noblock(int spi_num, void *txbuf, void *rxbuf, int len)
 {
-    struct stm32f4_hal_spi *spi;
+    struct stm32l1_hal_spi *spi;
     int rc;
     int sr;
 
-    STM32F4_HAL_SPI_RESOLVE(spi_num, spi);
+    STM32L1_HAL_SPI_RESOLVE(spi_num, spi);
 
     spi_stat.tx++;
     rc = -1;
@@ -752,12 +752,12 @@ err:
 int
 hal_spi_slave_set_def_tx_val(int spi_num, uint16_t val)
 {
-    struct stm32f4_hal_spi *spi;
+    struct stm32l1_hal_spi *spi;
     int rc;
     int sr;
     int i;
 
-    STM32F4_HAL_SPI_RESOLVE(spi_num, spi);
+    STM32L1_HAL_SPI_RESOLVE(spi_num, spi);
 
     if (spi->slave) {
         rc = 0;
@@ -803,12 +803,12 @@ err:
 uint16_t hal_spi_tx_val(int spi_num, uint16_t val)
 {
     int rc;
-    struct stm32f4_hal_spi *spi;
+    struct stm32l1_hal_spi *spi;
     uint16_t retval;
     int len;
     int sr;
 
-    STM32F4_HAL_SPI_RESOLVE(spi_num, spi);
+    STM32L1_HAL_SPI_RESOLVE(spi_num, spi);
     if (spi->slave) {
         retval = -1;
         goto err;
@@ -822,7 +822,7 @@ uint16_t hal_spi_tx_val(int spi_num, uint16_t val)
     spi_stat.tx++;
     rc = HAL_SPI_TransmitReceive(&spi->handle,(uint8_t *)&val,
                                  (uint8_t *)&retval, len,
-                                 STM32F4_HAL_SPI_TIMEOUT);
+                                 STM32L1_HAL_SPI_TIMEOUT);
     __HAL_ENABLE_INTERRUPTS(sr);
     if (rc != HAL_OK) {
         retval = 0xFFFF;
@@ -859,14 +859,14 @@ int
 hal_spi_txrx(int spi_num, void *txbuf, void *rxbuf, int len)
 {
     int rc;
-    struct stm32f4_hal_spi *spi;
+    struct stm32l1_hal_spi *spi;
     int sr;
 
     rc = -1;
     if (!len) {
         goto err;
     }
-    STM32F4_HAL_SPI_RESOLVE(spi_num, spi);
+    STM32L1_HAL_SPI_RESOLVE(spi_num, spi);
     if (spi->slave) {
         goto err;
     }
@@ -875,7 +875,7 @@ hal_spi_txrx(int spi_num, void *txbuf, void *rxbuf, int len)
     __HAL_SPI_ENABLE(&spi->handle);
     rc = HAL_SPI_TransmitReceive(&spi->handle, (uint8_t *)txbuf,
                                  (uint8_t *)rxbuf, len,
-                                 STM32F4_HAL_SPI_TIMEOUT);
+                                 STM32L1_HAL_SPI_TIMEOUT);
     __HAL_ENABLE_INTERRUPTS(sr);
     if (rc != HAL_OK) {
         rc = -1;
@@ -890,11 +890,11 @@ int
 hal_spi_abort(int spi_num)
 {
     int rc;
-    struct stm32f4_hal_spi *spi;
+    struct stm32l1_hal_spi *spi;
     int sr;
 
     rc = 0;
-    STM32F4_HAL_SPI_RESOLVE(spi_num, spi);
+    STM32L1_HAL_SPI_RESOLVE(spi_num, spi);
     if (spi->slave) {
         goto err;
     }

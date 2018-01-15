@@ -26,33 +26,33 @@
 #include <hal/hal_i2c.h>
 #include <hal/hal_gpio.h>
 
-#include "stm32f4xx.h"
-#include "stm32f4xx_hal_dma.h"
-#include "stm32f4xx_hal_i2c.h"
-#include "stm32f4xx_hal_gpio.h"
-#include "stm32f4xx_hal_rcc.h"
-#include "mcu/stm32f4xx_mynewt_hal.h"
-#include "mcu/stm32f4_bsp.h"
+#include "stm32l1xx.h"
+#include "stm32l1xx_hal_dma.h"
+#include "stm32l1xx_hal_i2c.h"
+#include "stm32l1xx_hal_gpio.h"
+#include "stm32l1xx_hal_rcc.h"
+#include "mcu/stm32l1xx_mynewt_hal.h"
+#include "mcu/stm32l1_bsp.h"
 
 #define HAL_I2C_MAX_DEVS	3
 
 #define I2C_ADDRESS 		0xae
 
-struct stm32f4_hal_i2c {
+struct stm32l1_hal_i2c {
     I2C_HandleTypeDef hid_handle;
 };
 
 #if MYNEWT_VAL(I2C_0)
-static struct stm32f4_hal_i2c i2c0;
+static struct stm32l1_hal_i2c i2c0;
 #endif
 #if MYNEWT_VAL(I2C_1)
-static struct stm32f4_hal_i2c i2c1;
+static struct stm32l1_hal_i2c i2c1;
 #endif
 #if MYNEWT_VAL(I2C_2)
-static struct stm32f4_hal_i2c i2c2;
+static struct stm32l1_hal_i2c i2c2;
 #endif
 
-static struct stm32f4_hal_i2c *hal_i2c_devs[HAL_I2C_MAX_DEVS] = {
+static struct stm32l1_hal_i2c *hal_i2c_devs[HAL_I2C_MAX_DEVS] = {
 #if MYNEWT_VAL(I2C_0)
     &i2c0,
 #else
@@ -73,8 +73,8 @@ static struct stm32f4_hal_i2c *hal_i2c_devs[HAL_I2C_MAX_DEVS] = {
 int
 hal_i2c_init(uint8_t i2c_num, void *usercfg)
 {
-    struct stm32f4_hal_i2c_cfg *cfg = (struct stm32f4_hal_i2c_cfg *)usercfg;
-    struct stm32f4_hal_i2c *dev;
+    struct stm32l1_hal_i2c_cfg *cfg = (struct stm32l1_hal_i2c_cfg *)usercfg;
+    struct stm32l1_hal_i2c *dev;
     I2C_InitTypeDef *init;
     int rc;
 
@@ -123,7 +123,7 @@ int
 hal_i2c_master_write(uint8_t i2c_num, struct hal_i2c_master_data *data,
   uint32_t timo, uint8_t last_op)
 {
-    struct stm32f4_hal_i2c *dev;
+    struct stm32l1_hal_i2c *dev;
 
     if (i2c_num >= HAL_I2C_MAX_DEVS || !(dev = hal_i2c_devs[i2c_num])) {
         return -1;
@@ -142,7 +142,7 @@ int
 hal_i2c_master_read(uint8_t i2c_num, struct hal_i2c_master_data *pdata,
   uint32_t timo, uint8_t last_op)
 {
-    struct stm32f4_hal_i2c *dev;
+    struct stm32l1_hal_i2c *dev;
 
     if (i2c_num >= HAL_I2C_MAX_DEVS || !(dev = hal_i2c_devs[i2c_num])) {
         return -1;
@@ -160,7 +160,7 @@ hal_i2c_master_read(uint8_t i2c_num, struct hal_i2c_master_data *pdata,
 int
 hal_i2c_master_probe(uint8_t i2c_num, uint8_t address, uint32_t timo)
 {
-    struct stm32f4_hal_i2c *dev;
+    struct stm32l1_hal_i2c *dev;
     int rc;
 
     if (i2c_num >= HAL_I2C_MAX_DEVS || !(dev = hal_i2c_devs[i2c_num])) {

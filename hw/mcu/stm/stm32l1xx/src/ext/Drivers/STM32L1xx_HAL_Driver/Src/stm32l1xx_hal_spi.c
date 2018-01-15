@@ -912,6 +912,11 @@ HAL_StatusTypeDef HAL_SPI_Transmit_IT(SPI_HandleTypeDef *hspi, uint8_t *pData, u
     /* Process Unlocked */
     __HAL_UNLOCK(hspi);
 
+    if ((hspi->Instance->CR1 & SPI_CR1_MSTR) == 0)
+    {
+      hspi->TxISR(hspi);
+    }
+
     /* Check if the SPI is already enabled */ 
     if((hspi->Instance->CR1 &SPI_CR1_SPE) != SPI_CR1_SPE)
     {
@@ -987,6 +992,11 @@ HAL_StatusTypeDef HAL_SPI_Receive_IT(SPI_HandleTypeDef *hspi, uint8_t *pData, ui
 
     /* Process Unlocked */
     __HAL_UNLOCK(hspi);
+
+    if ((hspi->Instance->CR1 & SPI_CR1_MSTR) == 0) 
+    {
+      hspi->TxISR(hspi);
+    }
 
     /* Note : The SPI must be enabled after unlocking current process 
               to avoid the risk of SPI interrupt handle execution before current
