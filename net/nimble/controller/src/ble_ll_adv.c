@@ -349,43 +349,45 @@ ble_ll_adv_legacy_pdu_make(struct ble_ll_adv_sm *advsm, struct os_mbuf *m)
  *
  */
 static uint8_t
-ble_ll_adv_secondary_pdu_len(struct ble_ll_adv_sm *advsm)
+ble_ll_adv_secondary_pdu_payload_len(struct ble_ll_adv_sm *advsm)
 {
-    uint8_t pdulen;
+    uint8_t len;
 
-    pdulen = 2 + BLE_LL_PDU_HDR_LEN + BLE_LL_EXT_ADV_DATA_INFO_SIZE;
+    len = BLE_LL_EXT_ADV_HDR_LEN + BLE_LL_EXT_ADV_FLAGS_SIZE +
+          BLE_LL_EXT_ADV_DATA_INFO_SIZE;
 
     if (!(advsm->props & BLE_HCI_LE_SET_EXT_ADV_PROP_SCANNABLE) &&
             advsm->adv_len) {
-        pdulen += advsm->adv_len;
+        len += advsm->adv_len;
     }
 
     if (advsm->props & BLE_HCI_LE_SET_EXT_ADV_PROP_INC_TX_PWR) {
-        pdulen += BLE_LL_EXT_ADV_TX_POWER_SIZE;
+        len += BLE_LL_EXT_ADV_TX_POWER_SIZE;
     }
 
     if ((advsm->props & BLE_HCI_LE_SET_EXT_ADV_PROP_DIRECTED) ||
             (advsm->props & BLE_HCI_LE_SET_EXT_ADV_PROP_CONNECTABLE)) {
-        pdulen += BLE_LL_EXT_ADV_TARGETA_SIZE;
+        len += BLE_LL_EXT_ADV_TARGETA_SIZE;
     }
 
-    return pdulen;
+    return len;
 }
 
 static uint8_t
-ble_ll_adv_aux_scan_rsp_len(struct ble_ll_adv_sm *advsm)
+ble_ll_adv_aux_scan_rsp_payload_len(struct ble_ll_adv_sm *advsm)
 {
-    uint8_t pdulen;
+    uint8_t len;
 
-    pdulen = 2 + BLE_LL_PDU_HDR_LEN + BLE_LL_EXT_ADV_ADVA_SIZE;
+    len = BLE_LL_EXT_ADV_HDR_LEN + BLE_LL_EXT_ADV_FLAGS_SIZE +
+          BLE_LL_EXT_ADV_ADVA_SIZE;
 
     if (advsm->props & BLE_HCI_LE_SET_EXT_ADV_PROP_INC_TX_PWR) {
-        pdulen += BLE_LL_EXT_ADV_TX_POWER_SIZE;
+        len += BLE_LL_EXT_ADV_TX_POWER_SIZE;
     }
 
-    pdulen += advsm->scan_rsp_len;
+    len += advsm->scan_rsp_len;
 
-    return pdulen;
+    return len;
 }
 
 /**
@@ -413,14 +415,10 @@ ble_ll_adv_pdu_make(struct ble_ll_adv_sm *advsm, struct os_mbuf *m)
         return ble_ll_adv_legacy_pdu_make(advsm, m);
     }
 
-    pdulen = 1; /* ext hdr len + AdvMode */
+    pdulen = BLE_LL_EXT_ADV_HDR_LEN;
 
-    ext_hdr_len = 0;
-
-    /* TODO for now always add flags */
-    ext_hdr_len += 1;
+    ext_hdr_len = BLE_LL_EXT_ADV_FLAGS_SIZE;
     ext_hdr_flags = 0;
-
 
     if (ble_ll_adv_active_chanset_is_sec(advsm)) {
         pdu_type = BLE_ADV_PDU_TYPE_AUX_ADV_IND;
@@ -631,19 +629,14 @@ ble_ll_adv_scan_rsp_pdu_make(struct ble_ll_adv_sm *advsm)
         return ble_ll_adv_scan_rsp_legacy_pdu_make(advsm);
     }
 
-    /* ext hdr len + SCAN_RSP */
-    pdulen = 1 + advsm->scan_rsp_len;
-
-    /* flags, adva and optional TX power */
-    ext_hdr_len = 1 + BLE_LL_EXT_ADV_ADVA_SIZE;
+    ext_hdr_len = BLE_LL_EXT_ADV_FLAGS_SIZE + BLE_LL_EXT_ADV_ADVA_SIZE;
     ext_hdr_flags = (1 << BLE_LL_EXT_ADV_ADVA_BIT);
 
     if (advsm->props & BLE_HCI_LE_SET_EXT_ADV_PROP_INC_TX_PWR) {
         ext_hdr_len += BLE_LL_EXT_ADV_TX_POWER_SIZE;
-        ext_hdr_len += BLE_LL_EXT_ADV_TX_POWER_SIZE;
     }
 
-    pdulen += ext_hdr_len;
+    pdulen = BLE_LL_EXT_ADV_HDR_LEN + ext_hdr_len + advsm->scan_rsp_len;
 
     /* Obtain scan response buffer */
     m = os_msys_get_pkthdr(pdulen, sizeof(struct ble_mbuf_hdr));
@@ -707,15 +700,13 @@ ble_ll_adv_aux_conn_rsp_pdu_make(struct ble_ll_adv_sm *advsm, uint8_t *peer,
     uint8_t     hdr;
     struct os_mbuf *m;
 
-    /* ext hdr len */
-    pdulen = 1;
-
     /* flags,AdvA and TargetA */
-    ext_hdr_len = 1 + BLE_LL_EXT_ADV_ADVA_SIZE + BLE_LL_EXT_ADV_TARGETA_SIZE;
+    ext_hdr_len = BLE_LL_EXT_ADV_FLAGS_SIZE + BLE_LL_EXT_ADV_ADVA_SIZE +
+                  BLE_LL_EXT_ADV_TARGETA_SIZE;
     ext_hdr_flags = (1 << BLE_LL_EXT_ADV_ADVA_BIT);
     ext_hdr_flags |= (1 << BLE_LL_EXT_ADV_TARGETA_BIT);
 
-    pdulen += ext_hdr_len;
+    pdulen = BLE_LL_EXT_ADV_HDR_LEN + ext_hdr_len;
 
     /* Obtain scan response buffer */
     m = os_msys_get_pkthdr(pdulen, sizeof(struct ble_mbuf_hdr));
@@ -1090,7 +1081,7 @@ ble_ll_adv_secondary_set_sched(struct ble_ll_adv_sm *advsm)
     advsm->adv_secondary_chan = rand() % BLE_PHY_NUM_DATA_CHANS;
 
     /* Set end time to maximum time this schedule item may take */
-    max_usecs = ble_ll_pdu_tx_time_get(ble_ll_adv_secondary_pdu_len(advsm),
+    max_usecs = ble_ll_pdu_tx_time_get(ble_ll_adv_secondary_pdu_payload_len(advsm),
                                        advsm->sec_phy);
 
     if (advsm->props & BLE_HCI_LE_SET_EXT_ADV_PROP_CONNECTABLE) {
@@ -1106,7 +1097,7 @@ ble_ll_adv_secondary_set_sched(struct ble_ll_adv_sm *advsm)
                      ble_ll_pdu_tx_time_get(12, advsm->sec_phy)  +
                      BLE_LL_IFS +
                      /* AUX_SCAN_RSP */
-                     ble_ll_pdu_tx_time_get(ble_ll_adv_aux_scan_rsp_len(advsm),
+                     ble_ll_pdu_tx_time_get(ble_ll_adv_aux_scan_rsp_payload_len(advsm),
                                             advsm->sec_phy);
     }
 
