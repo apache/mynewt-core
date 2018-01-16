@@ -20,6 +20,8 @@
 #ifndef __MCU_STM32F3_BSP_H_
 #define __MCU_STM32F3_BSP_H_
 
+#include <stdint.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
