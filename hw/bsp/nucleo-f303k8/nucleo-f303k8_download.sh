@@ -52,7 +52,6 @@ else
 fi
 
 echo "Downloading" $FILE_NAME "to" $FLASH_OFFSET
-echo "Downloading" $FILE_NAME "to" $FLASH_OFFSET > /tmp/newt.log
 
 openocd -f board/st_nucleo_f3.cfg -c init -c "reset halt" -c "flash write_image erase $FILE_NAME $FLASH_OFFSET" -c "reset run" -c shutdown
 
