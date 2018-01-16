@@ -20,6 +20,7 @@
 #define H_BSP_H
 
 #include <inttypes.h>
+#include <mcu/mcu.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -43,7 +44,7 @@ extern uint8_t _ccram_start;
 #define CCRAM_SIZE (4 *1024)
 
 /* LED pins */
-#define LED_BLINK_PIN_1   (0x13)  /* PB3 */
+#define LED_BLINK_PIN_1   MCU_GPIO_PORTB(3)
     
 #define LED_BLINK_PIN LED_BLINK_PIN_1
     

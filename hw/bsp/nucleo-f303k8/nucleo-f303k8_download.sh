@@ -40,18 +40,16 @@ for feature in $FEATURES; do
     fi
 done
 
-if [ $MFG_IMAGE -eq 1 ]; then
-    FLASH_OFFSET=0x08000000
+if [ "$MFG_IMAGE" == "1" ]; then
     FILE_NAME=$BASENAME.bin
 elif [ $IS_BOOTLOADER -eq 1 ]; then
-    FLASH_OFFSET=0x08000000
     FILE_NAME=$BIN_BASENAME.elf.bin
 else
-    FLASH_OFFSET=0x08000000
-    FILE_NAME=$BIN_BASENAME.img
+    FILE_NAME=$BIN_BASENAME.elf
 fi
+FLASH_OFFSET=0x08000000
 
 echo "Downloading" $FILE_NAME "to" $FLASH_OFFSET
 
-openocd -f board/st_nucleo_f3.cfg -c init -c "reset halt" -c "flash write_image erase $FILE_NAME $FLASH_OFFSET" -c "reset run" -c shutdown
+openocd -d0 -f board/st_nucleo_f3.cfg -c "init; reset halt; flash write_image erase $FILE_NAME; reset run; shutdown" 2>&1 | tee /tmp/newt.log
 
