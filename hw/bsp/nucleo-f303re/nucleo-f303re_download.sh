@@ -53,5 +53,6 @@ fi
 
 echo "Downloading" $FILE_NAME "to" $FLASH_OFFSET
 
-openocd -f board/st_nucleo_f3.cfg -c "$EXTRA_JTAG_CMD" -c init -c "reset halt" -c "flash write_image erase $FILE_NAME $FLASH_OFFSET" -c "reset run" -c shutdown
+#openocd -f board/st_nucleo_f3.cfg -c "$EXTRA_JTAG_CMD" -c "init" -c "reset halt" -c "flash write_image erase $FILE_NAME $FLASH_OFFSET" -c "reset run" -c "shutdown"
+openocd -f board/st_nucleo_f3.cfg -c "$EXTRA_JTAG_CMD" -c "init; reset halt; flash write_image erase $BIN_BASENAME.elf; reset run; shutdown"
 
