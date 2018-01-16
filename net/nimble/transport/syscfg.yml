@@ -15,24 +15,25 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-pkg.name: apps/btshell
-pkg.type: app
-pkg.description: Shell application exposing the nimble GAP and GATT.
-pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
-pkg.homepage: "http://mynewt.apache.org/"
-pkg.keywords:
 
-pkg.deps:
-    - kernel/os
-    - net/nimble/host
-    - net/nimble/host/services/gap
-    - net/nimble/host/services/gatt
-    - net/nimble/host/store/ram
-    - net/nimble/transport
-    - sys/log/full
-    - sys/stats/full
-    - sys/console/full
-    - sys/shell
+# Package: net/nimble/transport
 
-pkg.deps.BTSHELL_ANS:
-    - net/nimble/host/services/ans
+syscfg.defs:
+    BLE_HCI_TRANSPORT_NIMBLE_BUILTIN:
+        description: >
+            Enables HCI transport for built-in NimBLE controller.
+            This is virtually the same as enabling RAM HCI transport and
+            adding dependency to NimBLE controller package explicitly.
+        value: 1
+    BLE_HCI_TRANSPORT_EMSPI:
+        description: Enables EM SPI HCI transport package
+        value: 0
+    BLE_HCI_TRANSPORT_RAM:
+        description: Enables RAM HCI transport package
+        value: 0
+    BLE_HCI_TRANSPORT_SOCKET:
+        description: Enables socket HCI transport package
+        value: 0
+    BLE_HCI_TRANSPORT_UART:
+        description: Enables UART HCI transport package
+        value: 0

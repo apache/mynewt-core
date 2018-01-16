@@ -29,13 +29,13 @@ pkg.deps:
     - mgmt/imgmgr
     - mgmt/newtmgr
     - mgmt/newtmgr/transport/ble
-    - net/nimble/controller
     - net/nimble/host
     - net/nimble/host/services/ans
     - net/nimble/host/services/gap
     - net/nimble/host/services/gatt
     - net/nimble/host/store/config
-    - net/nimble/transport/ram
+    - net/nimble/host/util
+    - net/nimble/transport
     - sys/console/full
     - sys/log/full
     - sys/stats/full

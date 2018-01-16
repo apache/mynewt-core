@@ -1312,6 +1312,7 @@ cmd_set_addr(void)
     }
 
     switch (addr_type) {
+#if MYNEWT_VAL(BLE_DEVICE)
     case BLE_ADDR_PUBLIC:
         /* We shouldn't be writing to the controller's address (g_dev_addr).
          * There is no standard way to set the local public address, so this is
@@ -1320,6 +1321,7 @@ cmd_set_addr(void)
         memcpy(g_dev_addr, addr, 6);
         ble_hs_id_set_pub(g_dev_addr);
         break;
+#endif
 
     case BLE_ADDR_RANDOM:
         rc = ble_hs_id_set_rnd(addr);
