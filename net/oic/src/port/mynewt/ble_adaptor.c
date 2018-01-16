@@ -45,7 +45,7 @@ void oc_connectivity_shutdown_gatt(void);
 
 static const struct oc_transport oc_gatt_transport = {
     .ot_ep_size = sizeof(struct oc_endpoint_ble),
-    .ot_flags = 0,
+    .ot_flags = OC_TRANSPORT_USE_TCP,
     .ot_tx_ucast = oc_send_buffer_gatt,
     .ot_tx_mcast = oc_send_buffer_gatt,
     .ot_get_trans_security = oc_get_trans_security_gatt,
