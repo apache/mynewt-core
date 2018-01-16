@@ -47,7 +47,7 @@ oc_log_endpoint(uint16_t lvl, struct oc_endpoint *oe)
             str = "<unkwn>";
         }
     }
-    log_printf(&oc_log, LOG_MODULE_IOTIVITY, lvl, str);
+    log_printf(&oc_log, LOG_MODULE_IOTIVITY, lvl, "%s\n", str);
 }
 
 void
