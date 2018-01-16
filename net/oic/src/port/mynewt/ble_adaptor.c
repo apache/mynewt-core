@@ -229,8 +229,8 @@ oc_ble_reass(struct os_mbuf *om1, uint16_t conn_handle, uint8_t srv_idx)
         oe_ble->conn_handle = conn_handle;
         pkt2 = OS_MBUF_PKTHDR(om2);
 
-        if (os_mbuf_copydata(om2, 0, sizeof(hdr), hdr) ||
-          coap_tcp_msg_size(hdr, sizeof(hdr)) > pkt2->omp_len) {
+        os_mbuf_copydata(om2, 0, sizeof(hdr), hdr);
+        if (coap_tcp_msg_size(hdr, sizeof(hdr)) > pkt2->omp_len) {
             STAILQ_INSERT_TAIL(&oc_ble_reass_q, pkt2, omp_next);
         } else {
             STATS_INC(oc_ble_stats, iframe);
