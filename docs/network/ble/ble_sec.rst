@@ -1,5 +1,5 @@
-BLE Security
-------------
+NimBLE Security
+---------------
 
 The Bluetooth Low Energy security model includes five distinct security
 concepts as listed below. For detailed specifications, see BLUETOOTH

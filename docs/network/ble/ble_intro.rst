@@ -1,4 +1,4 @@
-BLE Introduction
+BLE User Guide
 ----------------
 
 Apache Mynewt offers the world's first fully open-source Bluetooth Low
@@ -12,6 +12,20 @@ signal. BLE FHSS employs 40 2-MHz-wide channels to ensure greater
 reliability over longer distances. It also features 0-dBm (1 mW) power
 output and a typical maximum range of 50 meters. With Bluetooth 5
 specification range can be increased 4 times and speed 2 time.
+
+.. toctree::
+   :hidden:
+   :titlesonly:
+
+   ble_sec
+   ble_setup/ble_setup_intro
+   ble_hs/ble_hs
+   btshell Usage API <btshell/btshell_api>
+   mesh/index
+
+.. contents::
+    :local:
+    :depth: 2
 
 Note that BLE is not compatible with standard Bluetooth.
 
@@ -106,5 +120,3 @@ services.
    a connection is terminated. It supports a maximum of one connection.
 3. **blemesh**: A sample application for Bluetooth Mesh Node using
    on/off model.
-
-
