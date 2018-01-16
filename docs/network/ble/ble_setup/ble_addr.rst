@@ -1,10 +1,9 @@
-Configure an Address
---------------------
+Configure device ddress
+------------------------
 
 A BLE device needs an address to do just about anything. For information
 on the various types of Bluetooth addresses, see the `NimBLE Host
-Identity
-Reference <../../../network/ble/ble_hs/ble_hs_id/ble_hs_id.html>`__.
+Identity Reference :doc:`<../../../network/ble/ble_hs/ble_hs_id/ble_hs_id>`.
 
 There are several methods for assigning an address to a NimBLE device.
 The available options are documented below:
@@ -28,7 +27,7 @@ Method 2: Hardcode a public address in the Mynewt target
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The NimBLE controller package exports a
-`syscfg <../../../os/modules/sysinitconfig/sysinitconfig.html>`__ setting
+:doc:`syscfg <../../../os/modules/sysinitconfig/sysinitconfig>` setting
 called ``BLE_PUBLIC_DEV_ADDR``. This setting can be overridden at the
 application or target level to configure a public Bluetooth address. For
 example, a target can assign the public address *11:22:33:44:55:66* as
@@ -53,13 +52,12 @@ Method 3: Configure a random address at runtime
 Random addresses get configured through the NimBLE host. The following
 two functions are used in random address configuration:
 
--  `ble\_hs\_id\_gen\_rnd <../../../network/ble/ble_hs/ble_hs_id/functions/ble_hs_id_gen_rnd/>`__:
+-  :doc:`ble_hs_id_gen_rnd <../../../network/ble/ble_hs/ble_hs_id/functions/ble_hs_id_gen_rnd>`:
    Generates a new random address.
--  `ble\_hs\_id\_set\_rnd <../../../network/ble/ble_hs/ble_hs_id/functions/ble_hs_id_set_rnd/>`__:
+-  :doc:`ble_hs_id_set_rnd <../../../network/ble/ble_hs/ble_hs_id/functions/ble_hs_id_set_rnd>`:
    Sets the device's random address.
 
-For an example of how this is done, see the `BLE iBeacon
-tutorial <../../../os/tutorials/ibeacon/>`__.
+For an example of how this is done, see the :doc:`<../../../os/tutorials/ibeacon>`.
 
 *Note:* A NimBLE device can be configured with multiple addresses; at
 most one of each address type.

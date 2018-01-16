@@ -24,8 +24,7 @@ properly:
 -  OS cputime timer source shall be set to 32768 Hz clock source
 -  Default 1 MHz clock source can be disabled if not used by application
 -  32768 Hz clock source shall be enabled
--  Crystal settling time shall be set to non-zero value (see
-   `below <#crystal-settle-time-configuration>`__)
+-  Crystal settling time shall be set to non-zero value (see below)
 
 For example, on nRF52 platform timer 5 can be used as source for 32768
 Hz clock. Also, timer 0 can be disabled since this is the default source
