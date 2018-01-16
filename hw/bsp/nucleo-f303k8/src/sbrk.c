@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- *
+ * 
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -17,25 +17,30 @@
  * under the License.
  */
 
-#include <hal/hal_bsp.h>
-
-extern char _heap;
-extern char _eheap;
-static char *_brk = &_heap;
+extern char __HeapBase;
+extern char __HeapLimit;
 
 void *
 _sbrk(int incr)
 {
+    static char *brk = &__HeapBase;
+
     void *prev_brk;
 
     if (incr < 0) {
         /* Returning memory to the heap. */
-        prev_brk = (void *)-1;
+        incr = -incr;
+        if (brk - incr < &__HeapBase) {
+            prev_brk = (void *)-1;
+        } else {
+            prev_brk = brk;
+            brk -= incr;
+        }
     } else {
         /* Allocating memory from the heap. */
-        if (&_eheap - _brk >= incr) {
-            prev_brk = _brk;
-            _brk += incr;
+        if (&__HeapLimit - brk >= incr) {
+            prev_brk = brk;
+            brk += incr;
         } else {
             prev_brk = (void *)-1;
         }
