@@ -29,7 +29,7 @@
  * Split entire flash into 16KB sectors.
  * */
 #define HAL_FLASH_SECTOR_SIZE   (FLASH_PAGE_SIZE * 8)
-#define HAL_FLASH_SIZE          (*((uint16_t*)FLASH_SIZE_DATA_REGISTER))
+#define HAL_FLASH_SIZE          ((*((uint16_t*)FLASH_SIZE_DATA_REGISTER)) * 1024U)
 
 
 static int stm32f3_flash_read(const struct hal_flash *dev, uint32_t address,
@@ -111,7 +111,7 @@ static int
 stm32f3_flash_sector_info(const struct hal_flash *dev, int idx,
         uint32_t *address, uint32_t *sz)
 {
-    *address = HAL_FLASH_SECTOR_SIZE * idx;
+    *address = FLASH_BASE + HAL_FLASH_SECTOR_SIZE * idx;
     *sz = HAL_FLASH_SECTOR_SIZE;
     return 0;
 }
@@ -127,7 +127,7 @@ stm32f3_flash_dev()
 {
     if (0 == stm32f3_flash_dev_.hf_itf) {
         stm32f3_flash_dev_.hf_itf = &stm32f3_flash_funcs;
-        stm32f3_flash_dev_.hf_base_addr = 0x08000000;
+        stm32f3_flash_dev_.hf_base_addr = FLASH_BASE;
         stm32f3_flash_dev_.hf_size = HAL_FLASH_SIZE;
         stm32f3_flash_dev_.hf_sector_cnt = HAL_FLASH_SIZE / HAL_FLASH_SECTOR_SIZE;
         stm32f3_flash_dev_.hf_align = FLASH_PAGE_SIZE;

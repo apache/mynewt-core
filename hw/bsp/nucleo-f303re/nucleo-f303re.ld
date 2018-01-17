@@ -22,11 +22,11 @@ ENTRY(Reset_Handler)
  * Memory map
  */
 MEMORY {
-	FLASH (rx):	ORIGIN = 0x08000000, LENGTH = 192K
+	FLASH (rx):	ORIGIN = 0x08008000, LENGTH = 192K
 	CCRAM (rw):	ORIGIN = 0x10000000, LENGTH =  16K
 	SRAM  (rw):	ORIGIN = 0x20000000, LENGTH =  64K
 }
 /*
  * Image header size - no bootloader support, no header.
  */
-_imghdr_size = 0x00;
+_imghdr_size = 0x20;
