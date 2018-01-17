@@ -71,10 +71,10 @@ static int
 lis2dh12_sensor_set_trigger_thresh(struct sensor *, sensor_type_t,
                                    struct sensor_type_traits *);
 static const struct sensor_driver g_lis2dh12_sensor_driver = {
-    lis2dh12_sensor_read,
-    lis2dh12_sensor_get_config,
+    .sd_read = lis2dh12_sensor_read,
+    .sd_get_config = lis2dh12_sensor_get_config,
     /* Setting trigger threshold is optional */
-    lis2dh12_sensor_set_trigger_thresh
+    .sd_set_trigger_thresh = lis2dh12_sensor_set_trigger_thresh
 };
 
 /**
