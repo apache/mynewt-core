@@ -1,16 +1,21 @@
 Validation and Error Messages
 -----------------------------
 
-| With multiple packages defining and overriding system configuration
-  settings, it is easy to introduce conflicts and violations that are
-  difficult to find. The ``newt build <target-name>`` command validates
-  the setting definitions and value overrides for all the packages in
-  the target to ensure a valid and consistent build. It aborts the build
-  when it detects violations or ambiguities between packages.
-| The following sections describe the error conditions that newt detects
-  and the error messages that it outputs. For most errors, newt also
-  outputs the ``Setting history`` with the order of package overrides to
-  help you resolve the errors.
+With multiple packages defining and overriding system configuration
+settings, it is easy to introduce conflicts and violations that are
+difficult to find. The ``newt build <target-name>`` command validates
+the setting definitions and value overrides for all the packages in
+the target to ensure a valid and consistent build. It aborts the build
+when it detects violations or ambiguities between packages.
+
+The following sections describe the error conditions that newt detects
+and the error messages that it outputs. For most errors, newt also
+outputs the ``Setting history`` with the order of package overrides to
+help you resolve the errors.
+
+.. contents::
+   :local:
+   :depth: 2
 
 **Note:** The ``newt target config <target-name>`` command also detects
 errors and outputs error messages at the top of the command output. The
@@ -32,20 +37,18 @@ override violations:
 -  Priority Violation - A package overrides a setting defined by a
    package with higher or equal priority.
 
-   **Note:** A package may override the default value for a setting that
-   it defines. For example, a package defines a setting with a default
-   value but needs to conditionally override the value based on another
-   setting value.
+**Note:** A package may override the default value for a setting that
+it defines. For example, a package defines a setting with a default
+value but needs to conditionally override the value based on another
+setting value.
 
 Example: Ambiguity Violation Error Message
-^^^^^^^^^^^^^^^^^^^^^^^^^
-
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The following example shows the error message that newt outputs for an
 ambiguity violation:
 
 .. code-block:: console
-
 
     Error: Syscfg ambiguities detected:
         Setting: LOG_NEWTMGR, Packages: [apps/slinky, apps/splitty]
@@ -61,8 +64,7 @@ sets the setting to 0. The overrides are ambiguous because both are
 of the defintion and the two overrides from the ``syscfg.yml`` files
 that cause the error:
 
-.. code-block:: console
-
+.. code-block:: yaml
 
     #Package: sys/log/full
     syscfg.defs:
@@ -87,7 +89,6 @@ defined by another package at the same priority level:
 
 .. code-block:: console
 
-
     Error: Priority violations detected (Packages can only override settings defined by packages of lower priority):
         Package: mgmt/newtmgr overriding setting: LOG_NEWTMGR defined by sys/log/full
 
@@ -99,8 +100,7 @@ overrides the ``LOG_NEWTMGR`` setting that the ``sys/log/full`` lib
 package defines. The following are excerpts of the definition and the
 override from the ``syscfg.yml`` files that cause this error:
 
-.. code-block:: console
-
+.. code-block:: yaml
 
     #Package: sys/log/full
     syscfg.defs:
@@ -129,7 +129,6 @@ undefined flash area.
 
 .. code-block:: console
 
-
     Building target targets/sim_slinky
     Error: Flash errors detected:
         Setting REBOOT_LOG_FLASH_AREA specifies unknown flash area: FLASH_AREA_NOEXIST
@@ -143,8 +142,7 @@ package ``REBOOT_LOG_FLASH_AREA`` setting. The following are excerpts of
 the definition and the override from the ``syscfg.yml`` files that cause
 the error:
 
-.. code-block:: console
-
+.. code-block:: yaml
 
     #Package: sys/reboot
     syscfg.defs:
@@ -165,7 +163,6 @@ multiple settings are assigned the same flash area:
 
 .. code-block:: console
 
-
     Error: Flash errors detected:
         Multiple flash_owner settings specify the same flash area
               settings: REBOOT_LOG_FLASH_AREA, CONFIG_FCB_FLASH_AREA
@@ -183,8 +180,7 @@ assigns ``FLASH_AREA_NFFS`` to the ``sys/reboot`` package
 definitions and the two overrides from the ``syscfg.yml`` files that
 cause the error:
 
-.. code-block:: console
-
+.. code-block:: yaml
 
     # Package: sys/config
     syscfg.defs.CONFIG_FCB:
@@ -197,7 +193,7 @@ cause the error:
     syscfg.defs:
         REBOOT_LOG_FLASH_AREA:
             description: 'The flash area for the reboot log'
-            type: 'flash_owner' 
+            type: 'flash_owner'
             value:
 
     #Package: hw/bsp/native
@@ -205,13 +201,13 @@ cause the error:
          CONFIG_FCB_FLASH_AREA: FLASH_AREA_NFFS
 
     #Package: apps/slinky
-    syscfg.vals: 
+    syscfg.vals:
         REBOOT_LOG_FLASH_AREA: FLASH_AREA_NFFS
 
-Restriction Violations For setting definitions with ``restrictions``
-~~~~~~~~~~~~~~~~~~~~~~~~~
+Restriction Violations
+~~~~~~~~~~~~~~~~~~~~~~
 
-specified, newt checks for the following violations:
+For setting definitions with ``restrictions`` specified, newt checks for the following violations:
 
 -  A setting with a ``$notnull`` restriction does not have a value.
 -  For a setting with expression restrictions, some required setting
@@ -227,7 +223,7 @@ setting with ``$notnull`` restriction does not have a value:
 
 
     Error: Syscfg restriction violations detected:
-        NFFS_FLASH_AREA must not be null 
+        NFFS_FLASH_AREA must not be null
 
     Setting history (newest -> oldest):
         NFFS_FLASH_AREA: [fs/nffs:]
@@ -237,8 +233,7 @@ The above error occurs because the ``fs/nffs`` package defines the
 packages override the setting. The following is an excerpt of the
 definition in the ``syscfg.yml`` file that causes the error:
 
-.. code-block:: console
-
+.. code-block:: yaml
 
     #Package: fs/nffs
     syscfg.defs:
@@ -257,7 +252,6 @@ expression restriction violation:
 
 .. code-block:: console
 
-
     Error: Syscfg restriction violations detected:
         CONFIG_FCB=1 requires CONFIG_FCB_FLASH_AREA be set, but CONFIG_FCB_FLASH_AREA=
 
@@ -271,8 +265,7 @@ the ``CONFIG_FCB_FLASH_AREA`` setting must also be set. The following
 are excerpts of the definition and the override from the ``syscfg.yml``
 files that cause the error:
 
-.. code-block:: console
-
+.. code-block:: yaml
 
     # Package:  sys/config
     syscfg.defs:
@@ -289,7 +282,6 @@ files that cause the error:
 
 Task Priority Violations
 ~~~~~~~~~~~~~~~~~~~~~~~~~
-
 
 For ``task_priority`` type setting definitions, newt checks for the
 following violations:
@@ -310,7 +302,6 @@ for this example because currently only one Mynewt package defines a
 
 .. code-block:: console
 
-
     Error: duplicate priority value: setting1=SHELL_TASK_PRIORITY setting2=SLINKY_TASK_PRIORITY pkg1=apps/slinky pkg2=sys/shell value=1
 
 The above error occurs because the ``apps/slinky`` package defines a
@@ -326,7 +317,6 @@ setting is assigned an invalid task priority value:
 
 .. code-block:: console
 
-
     Error: invalid priority value: value too great (> 239); setting=SLINKY_TASK_PRIORITY value=240 pkg=apps/slinky
 
 The above error occurs because the ``apps/slinky`` package defines the
@@ -337,8 +327,7 @@ value.
 priority violation error messages.
 
 Duplicate System Configuration Setting Definition
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A setting definition must be unique. Newt checks that only one package
 in the target defines a setting. The following example shows the error
@@ -347,12 +336,13 @@ message that newt outputs when multiple packages define the
 
 .. code-block:: console
 
-
     Error: setting LOG_NEWTMGR redefined
 
 **Note:** Newt does not output the ``Setting history`` with duplicate
-setting error messages. ###Override of Undefined System Configuration
-Setting
+setting error messages.
+
+Override of Undefined System Configuration Setting
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The ``newt build`` command ignores overrides of undefined system
 configuration settings. The command does not print a warning when you
@@ -368,14 +358,16 @@ options to troubleshoot this problem:
 
 Note: The ``newt build -ldebug`` command generates lots of output and we
 recommend that you use the ``newt target config show`` command option.
-####Example: Ignoring Override of Undefined Setting Message
+
+Example: Ignoring Override of Undefined Setting Message
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The following example shows that the ``apps/slinky`` application
 overrides the ``LOG_NEWTMGR`` setting but omits the **T** as an example
 of an error and overrides the misspelled **LOG\_NEWMGR** setting. Here
 is an excerpt from its ``syscfg.yml`` file:
 
-.. code-block:: console
+.. code-block:: yaml
 
     #package: apps/slinky
     syscfg.vals:
@@ -392,7 +384,6 @@ following WARNING message:
 
 .. code-block:: console
 
-
     2017/02/18 17:19:12.119 [WARNING] Ignoring override of undefined settings:
     2017/02/18 17:19:12.119 [WARNING]     LOG_NEWMGR
     2017/02/18 17:19:12.119 [WARNING]     NFFS_FLASH_AREA
@@ -405,7 +396,6 @@ DEBUG message:
 
 .. code-block:: console
 
-
     2017/02/18 17:06:21.451 [DEBUG] Ignoring override of undefined settings:
     2017/02/18 17:06:21.451 [DEBUG]     LOG_NEWMGR
     2017/02/18 17:06:21.451 [DEBUG]     NFFS_FLASH_AREA
@@ -414,8 +404,7 @@ DEBUG message:
     2017/02/18 17:06:21.451 [DEBUG]     NFFS_FLASH_AREA: [hw/bsp/native:FLASH_AREA_NFFS]
 
 BSP Package Overrides Undefined Configuration Settings
-^^^^^^^^^^^^^^^^^^^
-
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 You might see a warning that indicates your application's BSP package is
 overriding some undefined settings. As you can see from the previous
@@ -443,8 +432,7 @@ flash area settings for all packages in its ``syscfg.yml`` file. The
 the ``NFFS_FLASH_AREA`` setting. Newt warns that the ``hw/bsp/native``
 packages overrides the undefined ``NFFS_FLASH_AREA`` setting.
 
-.. code-block:: consoles
-
+.. code-block:: yaml
 
     # hw/bsp/native bsp.yml
     bsp.flash_map:
