@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -29,7 +29,15 @@ extern "C" {
 
 struct os_eventq;
 
+/** @struct console_input
+ * The console_input data structure represents a console input buffer.
+ *
+ * Each event added to the console avail_queue must have the
+ * ev_arg field point to a console_input structure.
+ */
 struct console_input {
+    /** Data buffer that the console uses to save received
+     *  characters until a new line is received. */
     char line[MYNEWT_VAL(CONSOLE_MAX_INPUT_LEN)];
 };
 
