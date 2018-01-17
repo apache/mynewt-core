@@ -172,3 +172,6 @@ breathe_projects = {
     "mynewt": "_build/xml"
 }
 breathe_default_project = "mynewt"
+breathe_domain_by_extension = {
+    "h" : "c",
+}

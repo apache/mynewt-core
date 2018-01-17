@@ -10,7 +10,7 @@ Description
 The ``cputime`` API provides high resolution time and timer support. The
 module must be initialized, using the ``os_cputime_init()`` function,
 with the clock frequency to use. The module uses the ``hal_timer`` API,
-defined in hal/hal\_timer.h, to access the hardware timers. It uses the
+defined in hal/hal_timer.h, to access the hardware timers. It uses the
 hardware timer number specified by the ``OS_CPUTIME_TIMER_NUM`` system
 configuration setting.
 
@@ -26,18 +26,20 @@ The module uses the following data structures:
 API
 -----------------
 
-.. doxygengroup:: OSCPUTime
-    :content-only:
-
-List of Macros
---------------
-
-These macros should be used to evaluate the time with respect to each
-other.
-
--  ``CPUIME_LT(t1,t2)`` -- evaluates to true if t1 is before t2 in time.
--  ``CPUTIME_GT(t1,t2)`` -- evaluates to true if t1 is after t2 in time
--  ``CPUTIME_LEQ(t1,t2)`` -- evaluates to true if t1 is on or before t2
-   in time.
--  ``CPUTIME_GEQ(t1,t2)`` -- evaluates to true if t1 is on or after t2
-   in time.
+* :c:func:`os_cputime_delay_nsecs()`
+* :c:func:`os_cputime_delay_ticks()`
+* :c:func:`os_cputime_delay_usecs()`
+* :c:func:`os_cputime_get32()`
+* :c:func:`os_cputime_init()`
+* :c:func:`os_cputime_nsecs_to_ticks()`
+* :c:func:`os_cputime_ticks_to_nsecs()`
+* :c:func:`os_cputime_ticks_to_usecs()`
+* :c:func:`os_cputime_timer_init()`
+* :c:func:`os_cputime_timer_relative()`
+* :c:func:`os_cputime_timer_start()`
+* :c:func:`os_cputime_timer_stop()`
+* :c:func:`os_cputime_usecs_to_ticks()`
+* :c:macro:`CPUTIME_LT`
+* :c:macro:`CPUTIME_GT`
+* :c:macro:`CPUTIME_LEQ`
+* :c:macro:`CPUTIME_GEQ`
