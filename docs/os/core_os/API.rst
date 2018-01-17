@@ -5,6 +5,13 @@ Core OS API
   :local:
   :depth: 2
 
+
+Core
+~~~~
+
+.. doxygenfile:: os.h
+
+
 Scheduler
 ~~~~~~~~~
 
