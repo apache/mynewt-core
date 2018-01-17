@@ -40,14 +40,16 @@ extern "C" {
 extern uint8_t _sram_start;
 extern uint8_t _ccram_start;
 
-#define SRAM_SIZE (40 * 1024)
-#define CCRAM_SIZE (8 *1024)
+#define SRAM_SIZE  (64 * 1024)
+#define CCRAM_SIZE (16 * 1024)
 
 /* LED pins */
 #define LED_BLINK_PIN_1   MCU_GPIO_PORTA(5)
     
 #define LED_BLINK_PIN LED_BLINK_PIN_1
     
+/* Buttons */
+#define BTN_USER_1        MCU_GPIO_PORTC(13)
 
 /* UART ports */
 #define UART_CNT        1

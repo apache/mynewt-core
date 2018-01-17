@@ -188,7 +188,7 @@ SECTIONS
     __HeapBase = .;
     __HeapLimit = ORIGIN(SRAM) + LENGTH(SRAM);
 
-    _ram_start = ORIGIN(SRAM);
+    _sram_start = ORIGIN(SRAM);
     _ccram_start = ORIGIN(CCRAM);
 
     /* .stack_dummy section doesn't contains any symbols. It is only
