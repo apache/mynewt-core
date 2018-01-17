@@ -1,9 +1,0 @@
-/build_arcem/
-/Debug/
-/BUILD_*/
-*.o
-*.elf
-*.map
-*.d
-*.log
-.settings
