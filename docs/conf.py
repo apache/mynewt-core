@@ -75,6 +75,8 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', 'themes']
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
 
+highlight_language = 'none'
+
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
 

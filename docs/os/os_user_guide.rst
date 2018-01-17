@@ -6,6 +6,7 @@ OS User Guide
 
    OS Core <core_os/mynewt_os>
    core_os/porting/port_os
+   modules/sysinitconfig/sysinitconfig
 
 This guide provides comprehensive information about Mynewt OS, the
 real-time operating system for embedded systems. It is intended both for
