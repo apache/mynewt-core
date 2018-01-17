@@ -17,6 +17,13 @@
  * under the License.
  */
 
+ /**
+  * @addtogroup OSKernel
+  * @{
+  *   @defgroup OSCPUTime High Resolution Timers
+  *   @{
+  */
+
 #ifndef H_OS_CPUTIME_
 #define H_OS_CPUTIME_
 
@@ -77,9 +84,13 @@ extern struct os_cputime_data g_os_cputime;
 #endif
 
 /* Helpful macros to compare cputimes */
+/** evaluates to true if t1 is before t2 in time */
 #define CPUTIME_LT(__t1, __t2) ((int32_t)   ((__t1) - (__t2)) < 0)
+/** evaluates to true if t1 is after t2 in time */
 #define CPUTIME_GT(__t1, __t2) ((int32_t)   ((__t1) - (__t2)) > 0)
+/** evaluates to true if t1 is after t2 in time */
 #define CPUTIME_GEQ(__t1, __t2) ((int32_t)  ((__t1) - (__t2)) >= 0)
+/** evaluates to true if t1 is on or after t2 in time */
 #define CPUTIME_LEQ(__t1, __t2) ((int32_t)  ((__t1) - (__t2)) <= 0)
 
 /**
@@ -240,3 +251,8 @@ void os_cputime_timer_stop(struct hal_timer *timer);
 #endif
 
 #endif /* H_OS_CPUTIME_ */
+
+/**
+ *   @} OSCPUTime
+ * @} OSKernel
+ */

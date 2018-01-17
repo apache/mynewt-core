@@ -37,3 +37,14 @@ API
 ***
 
 * :cpp:func:`os_sched()`
+* :cpp:func:`os_arch_ctx_sw()`
+* :cpp:func:`os_sched_ctx_sw_hook()`
+* :cpp:func:`os_sched_get_current_task()`
+* :cpp:func:`os_sched_insert()`
+* :cpp:func:`os_sched_next_task()`
+* :cpp:func:`os_sched_os_timer_exp()`
+* :cpp:func:`os_sched_remove()`
+* :cpp:func:`os_sched_resort()`
+* :cpp:func:`os_sched_set_current_task()`
+* :cpp:func:`os_sched_sleep()`
+* :cpp:func:`os_sched_wakeup()`

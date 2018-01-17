@@ -9,3 +9,8 @@ Scheduler
 ~~~~~~~~~
 
 .. doxygenfile:: os_sched.h
+
+CPU Time
+~~~~~~~~
+
+.. doxygenfile:: os_cputime.h
