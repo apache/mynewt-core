@@ -37,16 +37,17 @@
 extern "C" {
 #endif
 
-uint8_t val8;
-int c2_var_count;
-char val_string[64][CONF_MAX_VAL_LEN];
+extern uint8_t val8;
+extern int c2_var_count;
+extern char val_string[64][CONF_MAX_VAL_LEN];
 
-uint32_t val32;
+extern uint32_t val32;
+extern uint32_t val64;
 
-int test_get_called;
-int test_set_called;
-int test_commit_called;
-int test_export_block;
+extern int test_get_called;
+extern int test_set_called;
+extern int test_commit_called;
+extern int test_export_block;
 
 char *ctest_handle_get(int argc, char **argv, char *val, int val_len_max);
 int ctest_handle_set(int argc, char **argv, char *val);
@@ -70,11 +71,11 @@ int c3_handle_set(int argc, char **argv, char *val);
 int c3_handle_export(void (*cb)(char *name, char *value),
                      enum conf_export_tgt tgt);
 
-struct conf_handler config_test_handler;
+extern struct conf_handler config_test_handler;
 
-struct conf_handler c2_test_handler;
+extern struct conf_handler c2_test_handler;
 
-struct conf_handler c3_test_handler;
+extern struct conf_handler c3_test_handler;
 
 extern struct nffs_area_desc config_nffs[];
 
