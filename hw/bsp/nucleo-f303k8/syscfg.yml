@@ -21,3 +21,8 @@ syscfg.defs:
     UART_0:
         description: 'Whether to enable UART0'
         value:  1
+
+    TIMER_0:
+        description: 'Support for timer 0'
+        value: 1
+
