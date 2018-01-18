@@ -64,24 +64,20 @@ static int
 stm32f3_flash_write(const struct hal_flash *dev, uint32_t address,
         const void *src, uint32_t num_bytes)
 {
-    const uint8_t *sptr;
-    uint32_t i;
+    const uint16_t *sptr;
+    uint32_t i, half_words;
     int rc;
 
     sptr = src;
+    half_words = (num_bytes + 1) / 2;
 
     HAL_FLASH_Unlock();
-    /*
-     * Clear status of previous operation.
-     */
-
     __HAL_FLASH_CLEAR_FLAG(FLASH_FLAG_EOP | FLASH_FLAG_WRPERR | FLASH_FLAG_PGERR);
 
-    for (i = 0, rc = HAL_OK; i < num_bytes && rc == HAL_OK; i += 2) {
+    for (i = 0, rc = HAL_OK; i < half_words && rc == HAL_OK; ++i) {
         rc = HAL_FLASH_Program(FLASH_TYPEPROGRAM_HALFWORD, address, sptr[i]);
         address += 2;
     }
-
     HAL_FLASH_Lock();
 
     return rc == HAL_OK ? 0 : rc;
@@ -119,6 +115,7 @@ stm32f3_flash_sector_info(const struct hal_flash *dev, int idx,
 static int
 stm32f3_flash_init(const struct hal_flash *dev)
 {
+    HAL_FLASH_Lock();
     return 0;
 }
 
