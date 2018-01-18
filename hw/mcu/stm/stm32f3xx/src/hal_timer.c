@@ -28,17 +28,20 @@
 #include <hal/hal_timer.h>
 
 #include "stm32f3xx.h"
+#include "stm32f3xx_hal.h"
 #include "stm32f3xx_hal_dma.h"
 #include "stm32f3xx_hal_tim.h"
 #include "stm32f3xx_hal_rcc.h"
 
 #include "mcu/stm32f3xx_mynewt_hal.h"
 
-#define STM32F3_HAL_TIMER_MAX     (3)
+#define STM32F3_HAL_TIMER_MAX     (2)
+#define STM32F3_OFLOW_VALUE       (0x10000UL)
+#define STM32F3_NSEC_PER_SEC      (1000000000UL)
 
 struct stm32f3_hal_tmr {
     TIM_TypeDef *sht_regs;	/* Pointer to timer registers */
-    uint32_t sht_oflow;		/* 16 bits of overflow to make timer 32bits */
+    uint32_t     sht_oflow;	/* 16 bits of overflow to make timer 32bits */
     TAILQ_HEAD(hal_timer_qhead, hal_timer) sht_timers;
 };
 
@@ -47,9 +50,6 @@ struct stm32f3_hal_tmr stm32f3_tmr0;
 #endif
 #if MYNEWT_VAL(TIMER_1)
 struct stm32f3_hal_tmr stm32f3_tmr1;
-#endif
-#if MYNEWT_VAL(TIMER_2)
-struct stm32f3_hal_tmr stm32f3_tmr2;
 #endif
 
 static struct stm32f3_hal_tmr *stm32f3_tmr_devs[STM32F3_HAL_TIMER_MAX] = {
@@ -63,16 +63,11 @@ static struct stm32f3_hal_tmr *stm32f3_tmr_devs[STM32F3_HAL_TIMER_MAX] = {
 #else
     NULL,
 #endif
-#if MYNEWT_VAL(TIMER_2)
-    &stm32f3_tmr2,
-#else
-    NULL,
-#endif
 };
 
 static uint32_t hal_timer_cnt(struct stm32f3_hal_tmr *tmr);
 
-#if (MYNEWT_VAL(TIMER_0) || MYNEWT_VAL(TIMER_1) || MYNEWT_VAL(TIMER_2))
+#if (MYNEWT_VAL(TIMER_0) || MYNEWT_VAL(TIMER_1))
 /*
  * Call expired timer callbacks, and reprogram timer with new expiry time.
  */
@@ -119,7 +114,7 @@ stm32f3_tmr_irq(struct stm32f3_hal_tmr *tmr)
         /*
          * Overflow interrupt
          */
-        tmr->sht_oflow += 0x10000;
+        tmr->sht_oflow += STM32F3_OFLOW_VALUE;
         clr |= TIM_SR_UIF;
     }
     if (sr & TIM_SR_CC1IF) {
@@ -147,14 +142,6 @@ static void
 stm32f3_tmr1_irq(void)
 {
     stm32f3_tmr_irq(&stm32f3_tmr1);
-}
-#endif
-
-#if MYNEWT_VAL(TIMER_2)
-static void
-stm32f3_tmr2_irq(void)
-{
-    stm32f3_tmr_irq(&stm32f3_tmr2);
 }
 #endif
 
@@ -186,14 +173,14 @@ stm32f3_base_freq(TIM_TypeDef *regs)
 #ifdef TIM8
     case (uint32_t)TIM8:
 #endif
-#ifdef TIM9
-    case (uint32_t)TIM9:
+#ifdef TIM15
+    case (uint32_t)TIM15:
 #endif
-#ifdef TIM10
-    case (uint32_t)TIM10:
+#ifdef TIM16
+    case (uint32_t)TIM16:
 #endif
-#ifdef TIM11
-    case (uint32_t)TIM11:
+#ifdef TIM17
+    case (uint32_t)TIM17:
 #endif
         freq = HAL_RCC_GetPCLK2Freq();
         if (clocks.APB2CLKDivider) {
@@ -222,11 +209,6 @@ stm32f3_hw_setup(int num, TIM_TypeDef *regs)
         func = (uint32_t)stm32f3_tmr1_irq;
         break;
 #endif
-#if MYNEWT_VAL(TIMER_2)
-    case 2:
-        func = (uint32_t)stm32f3_tmr2_irq;
-        break;
-#endif
     default:
         assert(0);
         return;
@@ -246,22 +228,22 @@ stm32f3_hw_setup(int num, TIM_TypeDef *regs)
         __HAL_RCC_TIM8_CLK_ENABLE();
     }
 #endif
-#ifdef TIM9
-    if (regs == TIM9) {
-        stm32f3_tmr_reg_irq(TIM1_BRK_TIM9_IRQn, func);
-        __HAL_RCC_TIM9_CLK_ENABLE();
+#ifdef TIM15
+    if (regs == TIM15) {
+        stm32f3_tmr_reg_irq(TIM1_BRK_TIM15_IRQn, func);
+        __HAL_RCC_TIM15_CLK_ENABLE();
     }
 #endif
-#ifdef TIM10
-    if (regs == TIM10) {
-        stm32f3_tmr_reg_irq(TIM1_UP_TIM10_IRQn, func);
-        __HAL_RCC_TIM10_CLK_ENABLE();
+#ifdef TIM16
+    if (regs == TIM16) {
+        stm32f3_tmr_reg_irq(TIM1_UP_TIM16_IRQn, func);
+        __HAL_RCC_TIM16_CLK_ENABLE();
     }
 #endif
-#ifdef TIM11
-    if (regs == TIM11) {
-        stm32f3_tmr_reg_irq(TIM1_TRG_COM_TIM11_IRQn, func);
-        __HAL_RCC_TIM11_CLK_ENABLE();
+#ifdef TIM17
+    if (regs == TIM17) {
+        stm32f3_tmr_reg_irq(TIM1_TRG_COM_TIM17_IRQn, func);
+        __HAL_RCC_TIM17_CLK_ENABLE();
     }
 #endif
 }
@@ -279,19 +261,19 @@ stm32f3_hw_setdown(TIM_TypeDef *regs)
         __HAL_RCC_TIM8_CLK_DISABLE();
     }
 #endif
-#ifdef TIM9
-    if (regs == TIM9) {
-        __HAL_RCC_TIM9_CLK_DISABLE();
+#ifdef TIM15
+    if (regs == TIM15) {
+        __HAL_RCC_TIM15_CLK_DISABLE();
     }
 #endif
-#ifdef TIM10
-    if (regs == TIM10) {
-        __HAL_RCC_TIM10_CLK_DISABLE();
+#ifdef TIM16
+    if (regs == TIM16) {
+        __HAL_RCC_TIM16_CLK_DISABLE();
     }
 #endif
-#ifdef TIM11
-    if (regs == TIM11) {
-        __HAL_RCC_TIM11_CLK_DISABLE();
+#ifdef TIM17
+    if (regs == TIM17) {
+        __HAL_RCC_TIM17_CLK_DISABLE();
     }
 #endif
 }
@@ -309,6 +291,7 @@ stm32f3_hw_setdown(TIM_TypeDef *regs)
 int
 hal_timer_init(int num, void *cfg)
 {
+    TIM_TypeDef *regs;
     struct stm32f3_hal_tmr *tmr;
 
     if (num >= STM32F3_HAL_TIMER_MAX || !(tmr = stm32f3_tmr_devs[num]) ||
@@ -316,19 +299,43 @@ hal_timer_init(int num, void *cfg)
         return -1;
     }
 
-    tmr->sht_regs = (TIM_TypeDef *)cfg;
+    regs = (TIM_TypeDef *)cfg;
+    tmr->sht_regs = regs;
 
-    if (!IS_TIM_CC1_INSTANCE(tmr->sht_regs)) {
+    if (!IS_TIM_CC1_INSTANCE(regs)) {
         return -1;
     }
 
-    stm32f3_hw_setup(num, tmr->sht_regs);
+    stm32f3_hw_setup(num, regs);
 
     /*
-     * Stop the timers at debugger. XXX Which TIM?
+     * Stop the timers at debugger.
      */
-    DBGMCU->APB1FZ |= 0x1ff; /* TIM2 - TIM7, TIM12-TIM14 */
-    DBGMCU->APB2FZ |= 0x70003; /* TIM1, TIM8-TIM11 */
+#ifdef TIM1
+    if (regs == TIM1) {
+        __HAL_DBGMCU_FREEZE_TIM1();
+    }
+#endif
+#ifdef TIM8
+    if (regs == TIM8) {
+        __HAL_DBGMCU_FREEZE_TIM8();
+    }
+#endif
+#ifdef TIM15
+    if (regs == TIM15) {
+        __HAL_DBGMCU_FREEZE_TIM15();
+    }
+#endif
+#ifdef TIM16
+    if (regs == TIM16) {
+        __HAL_DBGMCU_FREEZE_TIM16();
+    }
+#endif
+#ifdef TIM17
+    if (regs == TIM17) {
+        __HAL_DBGMCU_FREEZE_TIM17();
+    }
+#endif
 
     return 0;
 }
@@ -431,7 +438,7 @@ hal_timer_get_resolution(int num)
     if (num >= STM32F3_HAL_TIMER_MAX || !(tmr = stm32f3_tmr_devs[num])) {
         return -1;
     }
-    return (1000000000 / (SystemCoreClock / tmr->sht_regs->PSC));
+    return (STM32F3_NSEC_PER_SEC / (SystemCoreClock / tmr->sht_regs->PSC));
 }
 
 static uint32_t
@@ -446,7 +453,7 @@ hal_timer_cnt(struct stm32f3_hal_tmr *tmr)
         /*
          * Just overflowed
          */
-        cnt = tmr->sht_oflow + tmr->sht_regs->CNT + 0x10000;
+        cnt += STM32F3_OFLOW_VALUE;
     }
     __HAL_ENABLE_INTERRUPTS(sr);
 
