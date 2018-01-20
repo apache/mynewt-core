@@ -525,10 +525,15 @@ hal_timer_set_cb(int num, struct hal_timer *timer, hal_timer_cb cb_func,
     if (num >= STM32F3_HAL_TIMER_MAX || !(tmr = stm32f3_tmr_devs[num])) {
         return -1;
     }
+
+    /* make sure user doesn't use timer already in use */
+    if (timer->link.tqe_prev != NULL) {
+        return -1;
+    }
+
     timer->cb_func = cb_func;
     timer->cb_arg = arg;
     timer->bsp_timer = tmr;
-    timer->link.tqe_prev = NULL;
 
     return 0;
 }
@@ -571,43 +576,49 @@ hal_timer_start_at(struct hal_timer *timer, uint32_t tick)
     struct stm32f3_hal_tmr *tmr;
     struct hal_timer *ht;
     int sr;
+    int rc;
 
-    tmr = (struct stm32f3_hal_tmr *)timer->bsp_timer;
+    if (timer->link.tqe_prev == NULL) {
+        tmr = (struct stm32f3_hal_tmr *)timer->bsp_timer;
 
-    timer->expiry = tick;
+        timer->expiry = tick;
 
-    __HAL_DISABLE_INTERRUPTS(sr);
+        __HAL_DISABLE_INTERRUPTS(sr);
 
-    if (TAILQ_EMPTY(&tmr->sht_timers)) {
-        TAILQ_INSERT_HEAD(&tmr->sht_timers, timer, link);
-    } else {
-        TAILQ_FOREACH(ht, &tmr->sht_timers, link) {
-            if ((int32_t)(timer->expiry - ht->expiry) < 0) {
-                TAILQ_INSERT_BEFORE(ht, timer, link);
-                break;
+        if (TAILQ_EMPTY(&tmr->sht_timers)) {
+            TAILQ_INSERT_HEAD(&tmr->sht_timers, timer, link);
+        } else {
+            TAILQ_FOREACH(ht, &tmr->sht_timers, link) {
+                if ((int32_t)(timer->expiry - ht->expiry) < 0) {
+                    TAILQ_INSERT_BEFORE(ht, timer, link);
+                    break;
+                }
+            }
+            if (!ht) {
+                TAILQ_INSERT_TAIL(&tmr->sht_timers, timer, link);
             }
         }
-        if (!ht) {
-            TAILQ_INSERT_TAIL(&tmr->sht_timers, timer, link);
-        }
-    }
 
-    if ((int32_t)(tick - hal_timer_cnt(tmr)) <= 0) {
-        /*
-         * Event in the past (should be the case if it was just inserted).
-         */
-        tmr->sht_regs->EGR |= TIM_EGR_CC1G;
-        tmr->sht_regs->DIER |= TIM_DIER_CC1IE;
-    } else {
-        if (timer == TAILQ_FIRST(&tmr->sht_timers)) {
-            TIM_CCxChannelCmd(tmr->sht_regs, TIM_CHANNEL_1, TIM_CCx_ENABLE);
-            tmr->sht_regs->CCR1 = timer->expiry;
+        if ((int32_t)(tick - hal_timer_cnt(tmr)) <= 0) {
+            /*
+             * Event in the past (should be the case if it was just inserted).
+             */
+            tmr->sht_regs->EGR |= TIM_EGR_CC1G;
             tmr->sht_regs->DIER |= TIM_DIER_CC1IE;
+        } else {
+            if (timer == TAILQ_FIRST(&tmr->sht_timers)) {
+                TIM_CCxChannelCmd(tmr->sht_regs, TIM_CHANNEL_1, TIM_CCx_ENABLE);
+                tmr->sht_regs->CCR1 = timer->expiry;
+                tmr->sht_regs->DIER |= TIM_DIER_CC1IE;
+            }
         }
+        __HAL_ENABLE_INTERRUPTS(sr);
+        rc = 0;
+    } else {
+        rc = -1;
     }
-    __HAL_ENABLE_INTERRUPTS(sr);
 
-    return 0;
+    return rc;
 }
 
 /**
