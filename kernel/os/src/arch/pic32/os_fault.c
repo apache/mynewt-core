@@ -25,7 +25,6 @@
 #include "os/os.h"
 
 #include <stdint.h>
-#include <unistd.h>
 
 struct exception_frame {
     uint32_t r0;
