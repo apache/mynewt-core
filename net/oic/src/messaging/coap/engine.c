@@ -39,7 +39,7 @@
 
 #include "oic/port/mynewt/config.h"
 /* OIC Stack headers */
-#include "api/oc_buffer.h"
+#include "oic/oc_buffer.h"
 #include "oic/oc_ri.h"
 #include "messaging/coap/engine.h"
 
@@ -271,7 +271,7 @@ out:
         OC_LOG_DEBUG(" Clearing transaction for manual response\n");
         /* used in server for separate response */
         coap_clear_transaction(transaction);
-  }
+    }
 #ifdef OC_CLIENT
     else if (erbium_status_code == EMPTY_ACK_RESPONSE) {
         coap_init_message(response, COAP_TYPE_ACK, 0, message->mid);

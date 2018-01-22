@@ -20,7 +20,7 @@
 #include "oic/messaging/coap/coap.h"
 #include "oic/messaging/coap/transactions.h"
 #include "oic/oc_api.h"
-#include "api/oc_buffer.h"
+#include "oic/oc_buffer.h"
 #if MYNEWT_VAL(OC_TRANSPORT_IPV6) || MYNEWT_VAL(OC_TRANSPORT_IPV4)
 #include "oic/port/mynewt/ip.h"
 #endif

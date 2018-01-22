@@ -42,7 +42,7 @@
 
 #if defined(OC_SERVER) && MYNEWT_VAL(OC_SEPARATE_RESPONSES)
 
-#include "api/oc_buffer.h"
+#include "oic/oc_buffer.h"
 #include "oic/messaging/coap/separate.h"
 #include "oic/messaging/coap/transactions.h"
 

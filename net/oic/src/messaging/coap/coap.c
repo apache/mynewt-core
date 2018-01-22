@@ -41,7 +41,7 @@
 #include "oic/messaging/coap/coap.h"
 #include "oic/messaging/coap/transactions.h"
 
-#include "api/oc_buffer.h"
+#include "oic/oc_buffer.h"
 #ifdef OC_SECURITY
 #include "security/oc_dtls.h"
 #endif

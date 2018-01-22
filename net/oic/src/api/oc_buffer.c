@@ -29,10 +29,9 @@
 #include "security/oc_dtls.h"
 #endif
 
-#include "api/oc_buffer.h"
-
-#include "port/mynewt/adaptor.h"
-#include "port/mynewt/transport.h"
+#include "oic/oc_buffer.h"
+#include "oic/port/mynewt/adaptor.h"
+#include "oic/port/mynewt/transport.h"
 
 static struct os_mqueue oc_inq;
 static struct os_mqueue oc_outq;

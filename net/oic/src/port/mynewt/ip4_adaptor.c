@@ -32,7 +32,6 @@
 #include <stats/stats.h>
 
 #include "oic/oc_log.h"
-#include "api/oc_buffer.h"
 #include "oic/port/oc_connectivity.h"
 #include "oic/port/mynewt/adaptor.h"
 #include "oic/port/mynewt/transport.h"
