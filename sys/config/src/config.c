@@ -120,6 +120,7 @@ int
 conf_value_from_str(char *val_str, enum conf_type type, void *vp, int maxlen)
 {
     int32_t val;
+    int64_t val64;
     char *eptr;
 
     if (!val_str) {
@@ -152,6 +153,13 @@ conf_value_from_str(char *val_str, enum conf_type type, void *vp, int maxlen)
         } else if (type == CONF_INT32) {
             *(int32_t *)vp = val;
         }
+        break;
+    case CONF_INT64:
+        val64 = strtoll(val_str, &eptr, 0);
+        if (*eptr != '\0') {
+            goto err;
+        }
+        *(int64_t *)vp = val64;
         break;
     case CONF_STRING:
         val = strlen(val_str);
@@ -207,6 +215,9 @@ conf_str_from_value(enum conf_type type, void *vp, char *buf, int buf_len)
             val = *(int32_t *)vp;
         }
         snprintf(buf, buf_len, "%ld", (long)val);
+        return buf;
+    case CONF_INT64:
+        snprintf(buf, buf_len, "%lld", *(long long *)vp);
         return buf;
     default:
         return NULL;

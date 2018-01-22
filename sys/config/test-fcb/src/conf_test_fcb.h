@@ -34,8 +34,8 @@
 extern "C" {
 #endif
 
-uint8_t val8;
-int c2_var_count;
+extern uint8_t val8;
+extern int c2_var_count;
 
 #define CONF_TEST_FCB_VAL_STR_CNT   64
 
@@ -45,12 +45,13 @@ extern char val_string[CONF_TEST_FCB_VAL_STR_CNT][CONF_MAX_VAL_LEN];
 
 extern struct flash_area fcb_areas[CONF_TEST_FCB_FLASH_CNT];
 
-uint32_t val32;
+extern uint32_t val32;
+extern uint64_t val64;
 
-int test_get_called;
-int test_set_called;
-int test_commit_called;
-int test_export_block;
+extern int test_get_called;
+extern int test_set_called;
+extern int test_commit_called;
+extern int test_export_block;
 
 void ctest_clear_call_state(void);
 int ctest_get_call_state(void);
@@ -77,11 +78,11 @@ int c3_handle_set(int argc, char **argv, char *val);
 int c3_handle_export(void (*cb)(char *name, char *value),
                      enum conf_export_tgt tgt);
 
-struct conf_handler config_test_handler;
+extern struct conf_handler config_test_handler;
 
-struct conf_handler c2_test_handler;
+extern struct conf_handler c2_test_handler;
 
-struct conf_handler c3_test_handler;
+extern struct conf_handler c3_test_handler;
 
 #ifdef __cplusplus
 }

@@ -34,6 +34,7 @@ int c2_var_count = 1;
 char val_string[64][CONF_MAX_VAL_LEN];
 
 uint32_t val32;
+uint64_t val64;
 
 int test_get_called;
 int test_set_called;
@@ -72,6 +73,9 @@ ctest_handle_get(int argc, char **argv, char *val, int val_len_max)
     if (argc == 1 && !strcmp(argv[0], "mybar")) {
         return conf_str_from_value(CONF_INT8, &val8, val, val_len_max);
     }
+    if (argc == 1 && !strcmp(argv[0], "mybar64")) {
+        return conf_str_from_value(CONF_INT64, &val64, val, val_len_max);
+    }
     return NULL;
 }
 
@@ -79,6 +83,7 @@ int
 ctest_handle_set(int argc, char **argv, char *val)
 {
     uint8_t newval;
+    uint64_t newval64;
     int rc;
 
     test_set_called = 1;
@@ -86,6 +91,12 @@ ctest_handle_set(int argc, char **argv, char *val)
         rc = CONF_VALUE_SET(val, CONF_INT8, newval);
         TEST_ASSERT(rc == 0);
         val8 = newval;
+        return 0;
+    }
+    if (argc == 1 && !strcmp(argv[0], "mybar64")) {
+        rc = CONF_VALUE_SET(val, CONF_INT64, newval64);
+        TEST_ASSERT(rc == 0);
+        val64 = newval64;
         return 0;
     }
     return OS_ENOENT;
@@ -109,6 +120,9 @@ ctest_handle_export(void (*cb)(char *name, char *value),
     }
     conf_str_from_value(CONF_INT8, &val8, value, sizeof(value));
     cb("myfoo/mybar", value);
+
+    conf_str_from_value(CONF_INT64, &val64, value, sizeof(value));
+    cb("myfoo/mybar64", value);
 
     return 0;
 }
@@ -317,6 +331,7 @@ TEST_CASE_DECL(config_test_insert)
 TEST_CASE_DECL(config_test_getset_unknown)
 TEST_CASE_DECL(config_test_getset_int)
 TEST_CASE_DECL(config_test_getset_bytes)
+TEST_CASE_DECL(config_test_getset_int64)
 TEST_CASE_DECL(config_test_commit)
 TEST_CASE_DECL(config_setup_nffs)
 TEST_CASE_DECL(config_test_empty_file)
@@ -335,6 +350,7 @@ TEST_SUITE(config_test_all)
     config_test_getset_unknown();
     config_test_getset_int();
     config_test_getset_bytes();
+    config_test_getset_int64();
 
     config_test_commit();
 
