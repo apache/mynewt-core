@@ -38,15 +38,9 @@ struct stm32f1_uart_cfg {
     int8_t suc_pin_rx;
     int8_t suc_pin_rts;
     int8_t suc_pin_cts;
-    uint8_t suc_pin_af;                 /* AF selection for this */
+    void (*suc_pin_remap_fn)(void);     /* AF selection for this */
     IRQn_Type suc_irqn;                 /* NVIC IRQn */
 };
-
-/*
- * Internal API for stm32f1xx mcu specific code.
- */
-int hal_gpio_init_af(int pin, uint8_t af_type, enum hal_gpio_pull pull, uint8_t
-od);
 
 struct hal_flash;
 extern struct hal_flash stm32f1_flash_dev;

@@ -36,6 +36,7 @@
 #include <stm32f1xx_hal_pwr.h>
 #include <stm32f1xx_hal_flash.h>
 #include <stm32f1xx_hal_gpio_ex.h>
+#include <stm32f1xx_ll_gpio.h>       /* AF remapping */
 #include <mcu/stm32f1_bsp.h>
 #include "mcu/stm32f1xx_mynewt_hal.h"
 #include "hal/hal_i2c.h"
@@ -47,17 +48,15 @@ static struct uart_dev hal_uart0;
 
 static const struct stm32f1_uart_cfg uart_cfg[UART_CNT] = {
     [0] = {
-        .suc_uart = USART3,
+        .suc_uart = USART2,
         .suc_rcc_reg = &RCC->APB1ENR,
-        .suc_rcc_dev = RCC_APB1ENR_USART3EN,
-        .suc_pin_tx = MCU_GPIO_PORTB(10),
-        .suc_pin_rx = MCU_GPIO_PORTB(11),
+        .suc_rcc_dev = RCC_APB1ENR_USART2EN,
+        .suc_pin_tx = MCU_GPIO_PORTA(2),
+        .suc_pin_rx = MCU_GPIO_PORTA(3),
         .suc_pin_rts = -1,
         .suc_pin_cts = -1,
-        //.suc_pin_af = GPIO_AF7_USART3,
-        /* TODO: AF must be implemented! */
-        .suc_pin_af = -1,
-        .suc_irqn = USART3_IRQn
+        .suc_pin_remap_fn = LL_GPIO_AF_DisableRemap_USART2,
+        .suc_irqn = USART2_IRQn,
     }
 };
 #endif
