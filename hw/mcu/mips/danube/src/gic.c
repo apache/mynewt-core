@@ -29,9 +29,6 @@ static const uint32_t GIC_BASE = 0x1bdc0000ul;
 static const uint32_t GIC_EN = 1;
 static const uint32_t GIC_MAP_TO_PIN = 1 << 31;
 
-static const uint32_t GLOBAL_CONTROL_OFF = 0x0000;
-static const uint32_t GCR_GIC_BASE_OFF = 0x0080;
-
 static uint32_t* _GCR = NULL;
 static uint32_t* _GIC = NULL;
 
