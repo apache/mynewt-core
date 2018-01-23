@@ -223,10 +223,7 @@ code coverage is a win for every Apache Mynewt user.
 Contributing to documentation (in addition to writing tests), is a great way
 to get involved with the Apache Mynewt project.
 
-Pull requests to the apache-mynewt-site repository on Github are the best
-way to submit documentation.  For more information on contributing to the
-documentation, the [FAQ](https://mynewt.apache.org/faq/answers/) has some
-more information.
+The Mynewt core OS documentation is found in [/docs](/docs).
 
 # License
 
