@@ -29,9 +29,9 @@
 #include "security/oc_dtls.h"
 #endif
 
-#include "api/oc_buffer.h"
-
-#include "port/mynewt/adaptor.h"
+#include "oic/oc_buffer.h"
+#include "oic/port/mynewt/adaptor.h"
+#include "oic/port/mynewt/transport.h"
 
 static struct os_mqueue oc_inq;
 static struct os_mqueue oc_outq;
@@ -40,13 +40,16 @@ struct os_mbuf *
 oc_allocate_mbuf(struct oc_endpoint *oe)
 {
     struct os_mbuf *m;
+    int ep_size;
+
+    ep_size = oc_endpoint_size(oe);
 
     /* get a packet header */
-    m = os_msys_get_pkthdr(0, sizeof(struct oc_endpoint));
+    m = os_msys_get_pkthdr(0, ep_size);
     if (!m) {
         return NULL;
     }
-    memcpy(OC_MBUF_ENDPOINT(m), oe, sizeof(struct oc_endpoint));
+    memcpy(OC_MBUF_ENDPOINT(m), oe, ep_size);
     return m;
 }
 
@@ -78,7 +81,7 @@ oc_buffer_tx(struct os_event *ev)
         OC_LOG_DEBUG("oc_buffer_tx: ");
         OC_LOG_ENDPOINT(LOG_LEVEL_DEBUG, OC_MBUF_ENDPOINT(m));
 #ifdef OC_CLIENT
-        if (OC_MBUF_ENDPOINT(m)->oe.flags & MULTICAST) {
+        if (OC_MBUF_ENDPOINT(m)->ep.oe_flags & OC_ENDPOINT_MULTICAST) {
             oc_send_multicast_message(m);
         } else {
 #endif

@@ -33,19 +33,20 @@
 void
 oc_sec_create_svr(void)
 {
-  oc_core_populate_resource(OCF_SEC_DOXM, "/oic/sec/doxm", "oic.sec.doxm",
-                            OC_IF_BASELINE, OC_IF_BASELINE,
-                            OC_ACTIVE | OC_SECURE | OC_DISCOVERABLE, get_doxm,
-                            0, post_doxm, 0, 0);
-  oc_core_populate_resource(
-    OCF_SEC_PSTAT, "/oic/sec/pstat", "oic.sec.pstat", OC_IF_BASELINE,
-    OC_IF_BASELINE, OC_ACTIVE | OC_SECURE, get_pstat, 0, post_pstat, 0, 0);
-  oc_core_populate_resource(OCF_SEC_ACL, "/oic/sec/acl", "oic.sec.acl",
-                            OC_IF_BASELINE, OC_IF_BASELINE,
-                            OC_ACTIVE | OC_SECURE, 0, 0, post_acl, 0, 0);
-  oc_core_populate_resource(OCF_SEC_CRED, "/oic/sec/cred", "oic.sec.cred",
-                            OC_IF_BASELINE, OC_IF_BASELINE,
-                            OC_ACTIVE | OC_SECURE, 0, 0, post_cred, 0, 0);
+    oc_core_populate_resource(OCF_SEC_DOXM, "/oic/sec/doxm", "oic.sec.doxm",
+                              OC_IF_BASELINE, OC_IF_BASELINE,
+                              OC_ACTIVE | OC_SECURE | OC_DISCOVERABLE, get_doxm,
+                              0, post_doxm, 0, 0);
+    oc_core_populate_resource(OCF_SEC_PSTAT, "/oic/sec/pstat", "oic.sec.pstat",
+                              OC_IF_BASELINE, OC_IF_BASELINE,
+                              OC_ACTIVE | OC_SECURE, get_pstat, 0,
+                              post_pstat, 0, 0);
+    oc_core_populate_resource(OCF_SEC_ACL, "/oic/sec/acl", "oic.sec.acl",
+                              OC_IF_BASELINE, OC_IF_BASELINE,
+                              OC_ACTIVE | OC_SECURE, 0, 0, post_acl, 0, 0);
+    oc_core_populate_resource(OCF_SEC_CRED, "/oic/sec/cred", "oic.sec.cred",
+                              OC_IF_BASELINE, OC_IF_BASELINE,
+                              OC_ACTIVE | OC_SECURE, 0, 0, post_cred, 0, 0);
 }
 
 #endif /* OC_SECURITY */

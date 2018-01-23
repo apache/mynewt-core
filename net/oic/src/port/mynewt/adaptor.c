@@ -26,12 +26,13 @@
 #include "oic/oc_log.h"
 #include "oic/oc_ri.h"
 #include "api/oc_priv.h"
-#include "port/oc_connectivity.h"
-#include "adaptor.h"
+#include "oic/port/oc_connectivity.h"
+#include "oic/port/mynewt/adaptor.h"
+#include "oic/port/mynewt/transport.h"
 
 static struct os_eventq *oc_evq;
-
 struct log oc_log;
+const struct oc_transport *oc_transports[OC_TRANSPORT_MAX];
 
 struct os_eventq *
 oc_evq_get(void)
@@ -45,83 +46,95 @@ oc_evq_set(struct os_eventq *evq)
     oc_evq = evq;
 }
 
-void
-oc_send_buffer(struct os_mbuf *m)
+int8_t
+oc_transport_register(const struct oc_transport *ot)
 {
-    struct oc_endpoint *oe;
+    int i;
+    int first = -1;
 
-    oe = OC_MBUF_ENDPOINT(m);
+    for (i = 0; i < OC_TRANSPORT_MAX; i++) {
+        if (oc_transports[i] == ot) {
+            return -1;
+        }
+        if (oc_transports[i] == NULL && first < 0) {
+            oc_transports[i] = ot;
+            first = i;
+        }
+    }
+    return first;
+}
 
-    switch (oe->oe.flags) {
-#if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1) && (MYNEWT_VAL(OC_TRANSPORT_IPV6) == 1)
-    case IP:
-        oc_send_buffer_ip6(m);
-        break;
-#endif
-#if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1) && (MYNEWT_VAL(OC_TRANSPORT_IPV4) == 1)
-    case IP4:
-        oc_send_buffer_ip4(m);
-        break;
-#endif
-#if (MYNEWT_VAL(OC_TRANSPORT_GATT) == 1)
-    case GATT:
-        oc_send_buffer_gatt(m);
-        break;
-#endif
-#if (MYNEWT_VAL(OC_TRANSPORT_LORA) == 1)
-    case LORA:
-        oc_send_buffer_lora(m);
-        break;
-#endif
-#if (MYNEWT_VAL(OC_TRANSPORT_SERIAL) == 1)
-    case SERIAL:
-        oc_send_buffer_serial(m);
-        break;
-#endif
-    default:
-        OC_LOG_ERROR("Unknown transport option %u\n", oe->oe.flags);
-        os_mbuf_free_chain(m);
+int8_t
+oc_transport_lookup(const struct oc_transport *ot)
+{
+    int i;
+
+    for (i = 0; i < OC_TRANSPORT_MAX; i++) {
+        if (oc_transports[i] == ot) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+void
+oc_transport_unregister(const struct oc_transport *ot)
+{
+    int i;
+
+    i = oc_transport_lookup(ot);
+    if (i >= 0) {
+        oc_transports[i] = NULL;
     }
 }
 
 void
+oc_send_buffer(struct os_mbuf *m)
+{
+    struct oc_endpoint *oe;
+    const struct oc_transport *ot;
+
+    oe = OC_MBUF_ENDPOINT(m);
+
+    ot = oc_transports[oe->ep.oe_type];
+    if (ot) {
+        ot->ot_tx_ucast(m);
+    } else {
+        OC_LOG_ERROR("Unknown transport option %u\n", oe->ep.oe_type);
+        os_mbuf_free_chain(m);
+    }
+}
+
+/*
+ * Send on all the transports.
+ */
+void
 oc_send_multicast_message(struct os_mbuf *m)
 {
-    /*
-     * Send on all the transports.
-     */
-    void (*funcs[])(struct os_mbuf *) = {
-#if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1) && (MYNEWT_VAL(OC_TRANSPORT_IPV6) == 1)
-        oc_send_buffer_ip6_mcast,
-#endif
-#if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1) && (MYNEWT_VAL(OC_TRANSPORT_IPV4) == 1)
-        oc_send_buffer_ip4_mcast,
-#endif
-#if (MYNEWT_VAL(OC_TRANSPORT_GATT) == 1)
-        /* no multicast for GATT, just send unicast */
-        oc_send_buffer_gatt,
-#endif
-#if (MYNEWT_VAL(OC_TRANSPORT_LORA) == 1)
-        /* no multi-cast for serial.  just send unicast */
-        oc_send_buffer_lora,
-#endif
-#if (MYNEWT_VAL(OC_TRANSPORT_SERIAL) == 1)
-        /* no multi-cast for serial.  just send unicast */
-        oc_send_buffer_serial,
-#endif
-    };
+    const struct oc_transport *ot;
+    const struct oc_transport *prev = NULL;
     struct os_mbuf *n;
     int i;
 
-    for (i = 0; i < (sizeof(funcs) / sizeof(funcs[0])) - 1; i++) {
-        n = os_mbuf_dup(m);
-        funcs[i](m);
-        if (!n) {
-            return;
+    for (i = 0; i < OC_TRANSPORT_MAX; i++) {
+        if (!oc_transports[i]) {
+            continue;
         }
-        m = n;
+
+        ot = oc_transports[i];
+        if (prev) {
+            n = os_mbuf_dup(m);
+            prev->ot_tx_mcast(m);
+            if (!n) {
+                return;
+            }
+            m = n;
+        }
+        prev = ot;
     }
-    funcs[(sizeof(funcs) / sizeof(funcs[0])) - 1](m);
+    if (prev) {
+        prev->ot_tx_mcast(m);
+    }
 }
 
 /**
@@ -130,90 +143,52 @@ oc_send_multicast_message(struct os_mbuf *m)
 oc_resource_properties_t
 oc_get_trans_security(const struct oc_endpoint *oe)
 {
-    switch (oe->oe.flags) {
-#if (MYNEWT_VAL(OC_TRANSPORT_GATT) == 1)
-    case GATT:
-        return oc_get_trans_security_gatt(&oe->oe_ble);
-#endif
-#if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1) && (MYNEWT_VAL(OC_TRANSPORT_IPV6) == 1)
-    case IP:
-        return 0;
-#endif
-#if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1) && (MYNEWT_VAL(OC_TRANSPORT_IPV4) == 1)
-    case IP4:
-        return 0;
-#endif
-#if (MYNEWT_VAL(OC_TRANSPORT_LORA) == 1)
-    case LORA:
-        return 0;
-#endif
-#if (MYNEWT_VAL(OC_TRANSPORT_SERIAL) == 1)
-    case SERIAL:
-        return 0;
-#endif
-    default:
-        OC_LOG_ERROR("Unknown transport option %u\n", oe->oe.flags);
-        return 0;
+    const struct oc_transport *ot;
+
+    ot = oc_transports[oe->ep.oe_type];
+    if (ot) {
+        if (ot->ot_get_trans_security) {
+            return ot->ot_get_trans_security(oe);
+        } else {
+            return 0;
+        }
     }
+    OC_LOG_ERROR("Unknown transport option %u\n", oe->ep.oe_type);
+    return 0;
 }
 
 void
 oc_connectivity_shutdown(void)
 {
-#if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1) && (MYNEWT_VAL(OC_TRANSPORT_IPV6) == 1)
-    oc_connectivity_shutdown_ip6();
-#endif
-#if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1) && (MYNEWT_VAL(OC_TRANSPORT_IPV4) == 1)
-    oc_connectivity_shutdown_ip4();
-#endif
-#if (MYNEWT_VAL(OC_TRANSPORT_SERIAL) == 1)
-    oc_connectivity_shutdown_serial();
-#endif
-#if (MYNEWT_VAL(OC_TRANSPORT_LORA) == 1)
-    oc_connectivity_shutdown_lora();
-#endif
-#if (MYNEWT_VAL(OC_TRANSPORT_GATT) == 1)
-    oc_connectivity_shutdown_gatt();
-#endif
+    int i;
+    const struct oc_transport *ot;
+
+    for (i = 0; i < OC_TRANSPORT_MAX; i++) {
+        if (!oc_transports[i]) {
+            continue;
+        }
+        ot = oc_transports[i];
+        ot->ot_shutdown();
+    }
 }
 
 int
 oc_connectivity_init(void)
 {
     int rc = -1;
+    int i;
+    const struct oc_transport *ot;
 
-#if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1) && (MYNEWT_VAL(OC_TRANSPORT_IPV6) == 1)
-    if (oc_connectivity_init_ip6() == 0) {
-        rc = 0;
+    for (i = 0; i < OC_TRANSPORT_MAX; i++) {
+        if (!oc_transports[i]) {
+            continue;
+        }
+        ot = oc_transports[i];
+        if (ot->ot_init() == 0) {
+            rc = 0;
+        }
     }
-#endif
-#if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1) && (MYNEWT_VAL(OC_TRANSPORT_IPV4) == 1)
-    if (oc_connectivity_init_ip4() == 0) {
-        rc = 0;
-    }
-#endif
-#if (MYNEWT_VAL(OC_TRANSPORT_SERIAL) == 1)
-    if (oc_connectivity_init_serial() == 0) {
-        rc = 0;
-    }
-#endif
-#if (MYNEWT_VAL(OC_TRANSPORT_GATT) == 1)
-    if (oc_connectivity_init_gatt() == 0) {
-        rc = 0;
-    }
-#endif
-#if (MYNEWT_VAL(OC_TRANSPORT_LORA) == 1)
-    if (oc_connectivity_init_lora() == 0) {
-        rc = 0;
-    }
-#endif
-
-    if (rc != 0) {
-        oc_connectivity_shutdown();
-        return rc;
-    }
-
-    return 0;
+    return rc;
 }
 
 void

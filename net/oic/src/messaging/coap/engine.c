@@ -39,7 +39,7 @@
 
 #include "oic/port/mynewt/config.h"
 /* OIC Stack headers */
-#include "api/oc_buffer.h"
+#include "oic/oc_buffer.h"
 #include "oic/oc_ri.h"
 #include "messaging/coap/engine.h"
 
@@ -60,13 +60,14 @@ coap_receive(struct os_mbuf **mp)
     static struct coap_packet response[1];
     static coap_transaction_t *transaction = NULL;
     struct os_mbuf *rsp;
-    oc_endpoint_t endpoint; /* XXX */
+    struct oc_endpoint endpoint; /* XXX */
 
     erbium_status_code = NO_ERROR;
 
     OC_LOG_INFO("CoAP: received datalen=%u\n", OS_MBUF_PKTLEN(*mp));
 
-    memcpy(&endpoint, OC_MBUF_ENDPOINT(*mp), sizeof(endpoint)); /* XXXXX */
+    memcpy(&endpoint, OC_MBUF_ENDPOINT(*mp),
+           oc_endpoint_size(OC_MBUF_ENDPOINT(*mp)));
     erbium_status_code = coap_parse_message(message, mp);
     if (erbium_status_code != NO_ERROR) {
         goto out;
@@ -270,7 +271,7 @@ out:
         OC_LOG_DEBUG(" Clearing transaction for manual response\n");
         /* used in server for separate response */
         coap_clear_transaction(transaction);
-  }
+    }
 #ifdef OC_CLIENT
     else if (erbium_status_code == EMPTY_ACK_RESPONSE) {
         coap_init_message(response, COAP_TYPE_ACK, 0, message->mid);

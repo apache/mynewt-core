@@ -25,7 +25,6 @@ struct os_mbuf;
 struct oc_endpoint;
 struct os_mbuf *oc_allocate_mbuf(struct oc_endpoint *oe);
 
-void oc_recv_message(struct os_mbuf *m);
 void oc_send_message(struct os_mbuf *m);
 
 #ifdef __cplusplus

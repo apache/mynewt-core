@@ -17,11 +17,13 @@
  * under the License.
  */
 
-#include <syscfg/syscfg.h>
-#if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1) && (MYNEWT_VAL(OC_TRANSPORT_IPV4) == 1)
 #include <assert.h>
 #include <string.h>
+#include <stdint.h>
 
+#include <syscfg/syscfg.h>
+
+#if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1) && (MYNEWT_VAL(OC_TRANSPORT_IPV4) == 1)
 #include <os/os.h>
 #include <os/endian.h>
 
@@ -29,20 +31,33 @@
 #include <mn_socket/mn_socket.h>
 #include <stats/stats.h>
 
-#include "port/oc_connectivity.h"
 #include "oic/oc_log.h"
-#include "api/oc_buffer.h"
-#include "adaptor.h"
+#include "oic/port/oc_connectivity.h"
+#include "oic/port/mynewt/adaptor.h"
+#include "oic/port/mynewt/transport.h"
+#include "oic/port/mynewt/ip.h"
 
+static void oc_send_buffer_ip4(struct os_mbuf *m);
+static void oc_send_buffer_ip4_mcast(struct os_mbuf *m);
+static char *oc_log_ep_ip4(char *ptr, int maxlen, const struct oc_endpoint *);
+static int oc_connectivity_init_ip4(void);
+void oc_connectivity_shutdown_ip4(void);
 static void oc_event_ip4(struct os_event *ev);
+
+static const struct oc_transport oc_ip4_transport = {
+    .ot_ep_size = sizeof(struct oc_endpoint_ip),
+    .ot_flags = 0,
+    .ot_tx_ucast = oc_send_buffer_ip4,
+    .ot_tx_mcast = oc_send_buffer_ip4_mcast,
+    .ot_get_trans_security = NULL,
+    .ot_ep_str = oc_log_ep_ip4,
+    .ot_init = oc_connectivity_init_ip4,
+    .ot_shutdown = oc_connectivity_shutdown_ip4
+};
 
 static struct os_event oc_sock4_read_event = {
     .ev_cb = oc_event_ip4,
 };
-
-#ifdef OC_SECURITY
-#error This implementation does not yet support security
-#endif
 
 #define COAP_PORT_UNSECURED (5683)
 
@@ -78,26 +93,38 @@ static struct mn_socket *oc_ucast4;
 static struct mn_socket *oc_mcast4;
 #endif
 
+#ifdef OC_SECURITY
+#error This implementation does not yet support security
+#endif
+
+static char *
+oc_log_ep_ip4(char *ptr, int maxlen, const struct oc_endpoint *oe)
+{
+    const struct oc_endpoint_ip *oe_ip = (const struct oc_endpoint_ip *)oe;
+    int len;
+
+    mn_inet_ntop(MN_PF_INET, oe_ip->v4.address, ptr, maxlen);
+    len = strlen(ptr);
+    snprintf(ptr + len, maxlen - len, "-%u", oe_ip->port);
+    return ptr;
+}
+
 static void
 oc_send_buffer_ip4_int(struct os_mbuf *m, int is_mcast)
 {
     struct mn_sockaddr_in to;
-    struct oc_endpoint *oe;
+    struct oc_endpoint_ip *oe_ip;
     struct mn_itf itf;
     uint32_t if2_idx;
     struct os_mbuf *n;
     int rc;
 
     assert(OS_MBUF_USRHDR_LEN(m) >= sizeof(struct oc_endpoint_ip));
-    oe = OC_MBUF_ENDPOINT(m);
-    if ((oe->oe_ip.flags & IP4) == 0) {
-        os_mbuf_free_chain(m);
-        return;
-    }
+    oe_ip = (struct oc_endpoint_ip *)OC_MBUF_ENDPOINT(m);
     to.msin_len = sizeof(to);
     to.msin_family = MN_AF_INET;
-    to.msin_port = htons(oe->oe_ip.v4.port);
-    memcpy(&to.msin_addr, oe->oe_ip.v4.address, sizeof(to.msin_addr));
+    to.msin_port = htons(oe_ip->port);
+    memcpy(&to.msin_addr, oe_ip->v4.address, sizeof(to.msin_addr));
 
     STATS_INCN(oc_ip4_stats, obytes, OS_MBUF_PKTLEN(m));
     if (is_mcast) {
@@ -186,7 +213,7 @@ oc_attempt_rx_ip4_sock(struct mn_socket *rxsock)
     int rc;
     struct os_mbuf *m;
     struct os_mbuf *n;
-    struct oc_endpoint *oe;
+    struct oc_endpoint_ip *oe_ip;
     struct mn_sockaddr_in from;
 
     rc = mn_recvfrom(rxsock, &n, (struct mn_sockaddr *) &from);
@@ -205,12 +232,12 @@ oc_attempt_rx_ip4_sock(struct mn_socket *rxsock)
     OS_MBUF_PKTHDR(m)->omp_len = OS_MBUF_PKTHDR(n)->omp_len;
     SLIST_NEXT(m, om_next) = n;
 
-    oe = OC_MBUF_ENDPOINT(m);
+    oe_ip = (struct oc_endpoint_ip *)OC_MBUF_ENDPOINT(m);
 
-    oe->oe_ip.flags = IP4;
-    memcpy(&oe->oe_ip.v4.address, &from.msin_addr,
-           sizeof(oe->oe_ip.v4.address));
-    oe->oe_ip.v4.port = ntohs(from.msin_port);
+    oe_ip->ep.oe_type = oc_ip4_transport_id;
+    oe_ip->ep.oe_flags = 0;
+    memcpy(&oe_ip->v4.address, &from.msin_addr, sizeof(oe_ip->v4.address));
+    oe_ip->port = ntohs(from.msin_port);
 
     return m;
 
@@ -352,3 +379,13 @@ oc_connectivity_init_err:
 }
 
 #endif
+
+uint8_t oc_ip4_transport_id = -1;
+
+void
+oc_register_ip4(void)
+{
+#if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1) && (MYNEWT_VAL(OC_TRANSPORT_IPV4) == 1)
+    oc_ip4_transport_id = oc_transport_register(&oc_ip4_transport);
+#endif
+}

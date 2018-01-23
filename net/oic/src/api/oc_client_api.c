@@ -20,7 +20,10 @@
 #include "oic/messaging/coap/coap.h"
 #include "oic/messaging/coap/transactions.h"
 #include "oic/oc_api.h"
-#include "api/oc_buffer.h"
+#include "oic/oc_buffer.h"
+#if MYNEWT_VAL(OC_TRANSPORT_IPV6) || MYNEWT_VAL(OC_TRANSPORT_IPV4)
+#include "oic/port/mynewt/ip.h"
+#endif
 
 #ifdef OC_CLIENT
 #define OC_CLIENT_CB_TIMEOUT_SECS COAP_RESPONSE_TIMEOUT
@@ -301,10 +304,9 @@ oc_do_ip6_discovery(const char *rt, oc_discovery_cb_t handler)
 {
     oc_server_handle_t handle;
 
-    oc_make_ip_endpoint(mcast, IP | MULTICAST, 5683,
+    oc_make_ip6_endpoint(mcast, OC_ENDPOINT_MULTICAST, 5683,
                        0xff, 0x02, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xfd);
-    mcast.oe_ip.v6.scope = 0;
-    memcpy(&handle.endpoint, &mcast, sizeof(oc_endpoint_t));
+    memcpy(&handle.endpoint, &mcast, sizeof(mcast));
 
     return oc_send_ip_discovery(&handle, rt, handler);
 
@@ -317,8 +319,9 @@ oc_do_ip4_discovery(const char *rt, oc_discovery_cb_t handler)
 {
     oc_server_handle_t handle;
 
-    oc_make_ip4_endpoint(mcast, IP4 | MULTICAST, 5683, 0xe0, 0, 0x01, 0xbb);
-    memcpy(&handle.endpoint, &mcast, sizeof(oc_endpoint_t));
+    oc_make_ip4_endpoint(mcast, OC_ENDPOINT_MULTICAST, 5683,
+                         0xe0, 0, 0x01, 0xbb);
+    memcpy(&handle.endpoint, &mcast, sizeof(mcast));
 
     return oc_send_ip_discovery(&handle, rt, handler);
 }

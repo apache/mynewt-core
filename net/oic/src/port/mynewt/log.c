@@ -25,47 +25,29 @@
 #endif
 #include "oic/oc_log.h"
 #include "port/oc_connectivity.h"
+#include "oic/port/mynewt/transport.h"
 
 void
 oc_log_endpoint(uint16_t lvl, struct oc_endpoint *oe)
 {
     char *str;
     char tmp[46 + 6];
+    const struct oc_transport *ot;
 
     (void)tmp;
     (void)str;
 
-    switch (oe->oe.flags) {
-#if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1)
-    case IP: {
-        int len;
-
-        mn_inet_ntop(MN_PF_INET6, oe->oe_ip.v6.address, tmp, sizeof(tmp));
-        len = strlen(tmp);
-        snprintf(tmp + len, sizeof(tmp) - len, "-%u\n", oe->oe_ip.v6.port);
-        str = tmp;
-        break;
+    if (oe->ep.oe_flags & OC_ENDPOINT_MULTICAST) {
+        str = "multicast";
+    } else {
+        ot = oc_transports[oe->ep.oe_type];
+        if (ot) {
+            str = ot->ot_ep_str(tmp, sizeof(tmp), oe);
+        } else {
+            str = "<unkwn>";
+        }
     }
-#endif
-#if (MYNEWT_VAL(OC_TRANSPORT_GATT) == 1)
-    case GATT:
-        snprintf(tmp, sizeof(tmp), "ble %u\n", oe->oe_ble.conn_handle);
-        str = tmp;
-        break;
-#endif
-#if (MYNEWT_VAL(OC_TRANSPORT_SERIAL) == 1)
-    case SERIAL:
-        str = "serial\n";
-        break;
-#endif
-    case MULTICAST:
-        str = "multicast\n";
-        break;
-    default:
-        str = "<unkwn>\n";
-        break;
-    }
-    log_printf(&oc_log, LOG_MODULE_IOTIVITY, lvl, str);
+    log_printf(&oc_log, LOG_MODULE_IOTIVITY, lvl, "%s\n", str);
 }
 
 void

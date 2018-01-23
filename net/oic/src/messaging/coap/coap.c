@@ -41,7 +41,7 @@
 #include "oic/messaging/coap/coap.h"
 #include "oic/messaging/coap/transactions.h"
 
-#include "api/oc_buffer.h"
+#include "oic/oc_buffer.h"
 #ifdef OC_SECURITY
 #include "security/oc_dtls.h"
 #endif
@@ -345,6 +345,8 @@ coap_serialize_message(coap_packet_t *pkt, struct os_mbuf *m)
     struct coap_tcp_hdr16 *cth16;
     struct coap_tcp_hdr32 *cth32;
     unsigned int current_number = 0;
+    uint16_t u16;
+    uint32_t u32;
     int tcp_hdr;
     int len, data_len;
 
@@ -415,7 +417,9 @@ coap_serialize_message(coap_packet_t *pkt, struct os_mbuf *m)
     }
     data_len = OS_MBUF_PKTLEN(m) + pkt->payload_len;
 
-    /* set header fields */
+    /*
+     * Set header fields, aka CoAP header alignment nightmare.
+     */
     if (!tcp_hdr) {
         len = sizeof(struct coap_udp_hdr) + pkt->token_len;
         os_mbuf_prepend(m, len);
@@ -424,7 +428,8 @@ coap_serialize_message(coap_packet_t *pkt, struct os_mbuf *m)
         cuh->type = pkt->type;
         cuh->token_len = pkt->token_len;
         cuh->code = pkt->code;
-        cuh->id = htons(pkt->mid);
+        u16 = htons(pkt->mid);
+        memcpy(&cuh->id, &u16, sizeof(u16));
         memcpy(cuh + 1, pkt->token, pkt->token_len);
     } else {
         if (data_len < 13) {
@@ -450,7 +455,8 @@ coap_serialize_message(coap_packet_t *pkt, struct os_mbuf *m)
             cth16 = (struct coap_tcp_hdr16 *)m->om_data;
             cth16->type = COAP_TCP_TYPE16;
             cth16->token_len = pkt->token_len;
-            cth16->data_len = htons(data_len - COAP_TCP_LENGTH16_OFF);
+            u16 = htons(data_len - COAP_TCP_LENGTH16_OFF);
+            memcpy(&cth16->data_len, &u16, sizeof(u16));
             cth16->code = pkt->code;
             memcpy(cth16 + 1, pkt->token, pkt->token_len);
         } else {
@@ -459,7 +465,8 @@ coap_serialize_message(coap_packet_t *pkt, struct os_mbuf *m)
             cth32 = (struct coap_tcp_hdr32 *)m->om_data;
             cth32->type = COAP_TCP_TYPE32;
             cth32->token_len = pkt->token_len;
-            cth32->data_len = htonl(data_len - COAP_TCP_LENGTH32_OFF);
+            u32 = htonl(data_len - COAP_TCP_LENGTH32_OFF);
+            memcpy(&cth32->data_len, &u32, sizeof(u32));
             cth32->code = pkt->code;
             memcpy(cth32 + 1, pkt->token, pkt->token_len);
         }
