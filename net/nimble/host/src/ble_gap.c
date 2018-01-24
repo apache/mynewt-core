@@ -2795,7 +2795,6 @@ ble_gap_ext_adv_set(uint8_t instance, uint16_t opcode, struct os_mbuf *data)
     static uint8_t buf[BLE_HCI_SET_EXT_ADV_DATA_HDR_LEN + \
                        BLE_HCI_MAX_EXT_ADV_DATA_LEN];
     uint16_t len = OS_MBUF_PKTLEN(data);
-    uint16_t off = 0;
     uint8_t op;
     int rc;
 
@@ -2829,8 +2828,9 @@ ble_gap_ext_adv_set(uint8_t instance, uint16_t opcode, struct os_mbuf *data)
             return rc;
         }
 
+        os_mbuf_adj(data, BLE_HCI_MAX_EXT_ADV_DATA_LEN);
+
         len -= BLE_HCI_MAX_EXT_ADV_DATA_LEN;
-        off += BLE_HCI_MAX_EXT_ADV_DATA_LEN;
         op = BLE_HCI_LE_SET_EXT_ADV_DATA_OPER_INT;
     } while (len > BLE_HCI_MAX_EXT_ADV_DATA_LEN);
 
@@ -2853,20 +2853,23 @@ ble_gap_ext_adv_set_data(uint8_t instance, struct os_mbuf *data)
     int rc;
 
     if (instance >= BLE_ADV_INSTANCES) {
-        return BLE_HS_EINVAL;
+        rc = BLE_HS_EINVAL;
+        goto done;
     }
 
     ble_hs_lock();
     rc = ble_gap_ext_adv_set_data_validate(instance, data);
     if (rc != 0) {
         ble_hs_unlock();
-        return rc;
+        goto done;
     }
 
     rc = ble_gap_ext_adv_set(instance, BLE_HCI_OCF_LE_SET_EXT_ADV_DATA, data);
 
     ble_hs_unlock();
 
+done:
+    os_mbuf_free_chain(data);
     return rc;
 }
 
@@ -2914,14 +2917,15 @@ ble_gap_ext_adv_rsp_set_data(uint8_t instance, struct os_mbuf *data)
     int rc;
 
     if (instance >= BLE_ADV_INSTANCES) {
-        return BLE_HS_EINVAL;
+        rc = BLE_HS_EINVAL;
+        goto done;
     }
 
     ble_hs_lock();
     rc = ble_gap_ext_adv_rsp_set_validate(instance, data);
     if (rc != 0) {
         ble_hs_unlock();
-        return rc;
+        goto done;
     }
 
     rc = ble_gap_ext_adv_set(instance, BLE_HCI_OCF_LE_SET_EXT_SCAN_RSP_DATA,
@@ -2929,6 +2933,8 @@ ble_gap_ext_adv_rsp_set_data(uint8_t instance, struct os_mbuf *data)
 
     ble_hs_unlock();
 
+done:
+    os_mbuf_free_chain(data);
     return rc;
 }
 

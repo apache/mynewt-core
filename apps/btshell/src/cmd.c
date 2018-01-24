@@ -1713,8 +1713,6 @@ cmd_set_adv_data_or_scan_rsp(int argc, char **argv, bool scan_rsp)
         } else {
             rc = ble_gap_ext_adv_set_data(instance, adv_data);
         }
-
-        os_mbuf_free_chain(adv_data);
 #else
         if (scan_rsp) {
             rc = ble_gap_adv_rsp_set_fields(&adv_fields);
