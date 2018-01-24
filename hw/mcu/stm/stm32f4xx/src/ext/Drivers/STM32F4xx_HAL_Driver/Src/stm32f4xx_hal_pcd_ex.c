@@ -2,8 +2,6 @@
   ******************************************************************************
   * @file    stm32f4xx_hal_pcd_ex.c
   * @author  MCD Application Team
-  * @version V1.5.1
-  * @date    01-July-2016
   * @brief   PCD HAL module driver.
   *          This file provides firmware functions to manage the following 
   *          functionalities of the USB Peripheral Controller:
@@ -12,7 +10,7 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; COPYRIGHT(c) 2016 STMicroelectronics</center></h2>
+  * <h2><center>&copy; COPYRIGHT(c) 2017 STMicroelectronics</center></h2>
   *
   * Redistribution and use in source and binary forms, with or without modification,
   * are permitted provided that the following conditions are met:
@@ -55,7 +53,7 @@
     defined(STM32F427xx) || defined(STM32F437xx) || defined(STM32F429xx) || defined(STM32F439xx) || \
     defined(STM32F401xC) || defined(STM32F401xE) || defined(STM32F411xE) || defined(STM32F446xx) || \
     defined(STM32F469xx) || defined(STM32F479xx) || defined(STM32F412Zx) || defined(STM32F412Vx) || \
-    defined(STM32F412Rx) || defined(STM32F412Cx)
+    defined(STM32F412Rx) || defined(STM32F412Cx) || defined(STM32F413xx) || defined(STM32F423xx)
 /* Private types -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 /* Private constants ---------------------------------------------------------*/
@@ -83,14 +81,14 @@
 
 /**
   * @brief  Set Tx FIFO
-  * @param  hpcd: PCD handle
-  * @param  fifo: The number of Tx fifo
-  * @param  size: Fifo size
+  * @param  hpcd PCD handle
+  * @param  fifo The number of Tx fifo
+  * @param  size Fifo size
   * @retval HAL status
   */
 HAL_StatusTypeDef HAL_PCDEx_SetTxFiFo(PCD_HandleTypeDef *hpcd, uint8_t fifo, uint16_t size)
 {
-  uint8_t i = 0U;
+  uint8_t i = 0;
   uint32_t Tx_Offset = 0U;
 
   /*  TXn min size = 16 words. (n  : Transmit FIFO index)
@@ -105,20 +103,20 @@ HAL_StatusTypeDef HAL_PCDEx_SetTxFiFo(PCD_HandleTypeDef *hpcd, uint8_t fifo, uin
   
   Tx_Offset = hpcd->Instance->GRXFSIZ;
   
-  if(fifo == 0U)
+  if(fifo == 0)
   {
     hpcd->Instance->DIEPTXF0_HNPTXFSIZ = (uint32_t)(((uint32_t)size << 16U) | Tx_Offset);
   }
   else
   {
     Tx_Offset += (hpcd->Instance->DIEPTXF0_HNPTXFSIZ) >> 16U;
-    for (i = 0U; i < (fifo - 1U); i++)
+    for (i = 0; i < (fifo - 1); i++)
     {
       Tx_Offset += (hpcd->Instance->DIEPTXF[i] >> 16U);
     }
     
     /* Multiply Tx_Size by 2 to get higher performance */
-    hpcd->Instance->DIEPTXF[fifo - 1U] = (uint32_t)(((uint32_t)size << 16U) | Tx_Offset);        
+    hpcd->Instance->DIEPTXF[fifo - 1] = (uint32_t)(((uint32_t)size << 16U) | Tx_Offset);        
   }
   
   return HAL_OK;
@@ -126,8 +124,8 @@ HAL_StatusTypeDef HAL_PCDEx_SetTxFiFo(PCD_HandleTypeDef *hpcd, uint8_t fifo, uin
 
 /**
   * @brief  Set Rx FIFO
-  * @param  hpcd: PCD handle
-  * @param  size: Size of Rx fifo
+  * @param  hpcd PCD handle
+  * @param  size Size of Rx fifo
   * @retval HAL status
   */
 HAL_StatusTypeDef HAL_PCDEx_SetRxFiFo(PCD_HandleTypeDef *hpcd, uint16_t size)
@@ -138,10 +136,10 @@ HAL_StatusTypeDef HAL_PCDEx_SetRxFiFo(PCD_HandleTypeDef *hpcd, uint16_t size)
 }
 
 #if defined(STM32F446xx) || defined(STM32F469xx) || defined(STM32F479xx) || defined(STM32F412Zx) || defined(STM32F412Vx) || \
-    defined(STM32F412Rx) || defined(STM32F412Cx)
+    defined(STM32F412Rx) || defined(STM32F412Cx) || defined(STM32F413xx) || defined(STM32F423xx)
 /**
   * @brief  Activate LPM feature
-  * @param  hpcd: PCD handle
+  * @param  hpcd PCD handle
   * @retval HAL status
   */
 HAL_StatusTypeDef HAL_PCDEx_ActivateLPM(PCD_HandleTypeDef *hpcd)
@@ -158,7 +156,7 @@ HAL_StatusTypeDef HAL_PCDEx_ActivateLPM(PCD_HandleTypeDef *hpcd)
 
 /**
   * @brief  Deactivate LPM feature.
-  * @param  hpcd: PCD handle
+  * @param  hpcd PCD handle
   * @retval HAL status
   */
 HAL_StatusTypeDef HAL_PCDEx_DeActivateLPM(PCD_HandleTypeDef *hpcd)
@@ -174,8 +172,8 @@ HAL_StatusTypeDef HAL_PCDEx_DeActivateLPM(PCD_HandleTypeDef *hpcd)
 
 /**
   * @brief  Send LPM message to user layer callback.
-  * @param  hpcd: PCD handle
-  * @param  msg: LPM message
+  * @param  hpcd PCD handle
+  * @param  msg LPM message
   * @retval HAL status
   */
 __weak void HAL_PCDEx_LPM_Callback(PCD_HandleTypeDef *hpcd, PCD_LPM_MsgTypeDef msg)
@@ -184,12 +182,12 @@ __weak void HAL_PCDEx_LPM_Callback(PCD_HandleTypeDef *hpcd, PCD_LPM_MsgTypeDef m
   UNUSED(hpcd);
   UNUSED(msg);
 }
-#endif /* STM32F446xx || STM32F469xx || STM32F479xx || STM32F412Zx || STM32F412Rx || STM32F412Vx || STM32F412Cx */
+#endif /* STM32F446xx || STM32F469xx || STM32F479xx || STM32F412Zx || STM32F412Rx || STM32F412Vx || STM32F412Cx || STM32F413xx || STM32F423xx  */
 
-#if defined(STM32F412Zx) || defined(STM32F412Vx) || defined(STM32F412Rx) || defined(STM32F412Cx)
+#if defined(STM32F412Zx) || defined(STM32F412Vx) || defined(STM32F412Rx) || defined(STM32F412Cx) || defined(STM32F413xx) || defined(STM32F423xx)
 /**
   * @brief  HAL_PCDEx_BCD_VBUSDetect : handle BatteryCharging Process
-  * @param  hpcd: PCD handle
+  * @param  hpcd PCD handle
   * @retval HAL status
   */
 void HAL_PCDEx_BCD_VBUSDetect(PCD_HandleTypeDef *hpcd)
@@ -260,7 +258,7 @@ void HAL_PCDEx_BCD_VBUSDetect(PCD_HandleTypeDef *hpcd)
 
 /**
   * @brief  HAL_PCDEx_ActivateBCD : active BatteryCharging feature
-  * @param  hpcd: PCD handle
+  * @param  hpcd PCD handle
   * @retval HAL status
   */
 HAL_StatusTypeDef HAL_PCDEx_ActivateBCD(PCD_HandleTypeDef *hpcd)
@@ -275,7 +273,7 @@ HAL_StatusTypeDef HAL_PCDEx_ActivateBCD(PCD_HandleTypeDef *hpcd)
 
 /**
   * @brief  HAL_PCDEx_DeActivateBCD : de-active BatteryCharging feature
-  * @param  hpcd: PCD handle
+  * @param  hpcd PCD handle
   * @retval HAL status
   */
 HAL_StatusTypeDef HAL_PCDEx_DeActivateBCD(PCD_HandleTypeDef *hpcd)
@@ -288,8 +286,8 @@ HAL_StatusTypeDef HAL_PCDEx_DeActivateBCD(PCD_HandleTypeDef *hpcd)
 
 /**
   * @brief  HAL_PCDEx_BatteryCharging_Callback : Send BatteryCharging message to user layer
-  * @param  hpcd: PCD handle
-  * @param  msg: LPM message
+  * @param  hpcd PCD handle
+  * @param  msg LPM message
   * @retval HAL status
   */
 __weak void HAL_PCDEx_BCD_Callback(PCD_HandleTypeDef *hpcd, PCD_BCD_MsgTypeDef msg)
@@ -299,7 +297,7 @@ __weak void HAL_PCDEx_BCD_Callback(PCD_HandleTypeDef *hpcd, PCD_BCD_MsgTypeDef m
   UNUSED(msg);
 }
 
-#endif /* STM32F412Zx || STM32F412Rx || STM32F412Vx || STM32F412Cx */
+#endif /* STM32F412Zx || STM32F412Rx || STM32F412Vx || STM32F412Cx || STM32F413xx || STM32F423xx */
 
 /**
   * @}
@@ -311,7 +309,7 @@ __weak void HAL_PCDEx_BCD_Callback(PCD_HandleTypeDef *hpcd, PCD_BCD_MsgTypeDef m
 
 #endif /* STM32F405xx || STM32F415xx || STM32F407xx || STM32F417xx || STM32F427xx || STM32F437xx || STM32F429xx || STM32F439xx ||
           STM32F401xC || STM32F401xE || STM32F411xE || STM32F446xx || STM32F469xx || STM32F479xx || STM32F412Zx || STM32F412Rx ||
-          STM32F412Vx || STM32F412Cx */
+          STM32F412Vx || STM32F412Cx || STM32F413xx || STM32F423xx  */
 #endif /* HAL_PCD_MODULE_ENABLED */
 /**
   * @}

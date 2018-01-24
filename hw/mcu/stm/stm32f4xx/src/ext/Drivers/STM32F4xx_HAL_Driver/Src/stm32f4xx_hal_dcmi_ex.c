@@ -2,8 +2,6 @@
   ******************************************************************************
   * @file    stm32f4xx_hal_dcmi_ex.c
   * @author  MCD Application Team
-  * @version V1.5.1
-  * @date    01-July-2016
   * @brief   DCMI Extension HAL module driver
   *          This file provides firmware functions to manage the following
   *          functionalities of DCMI extension peripheral:
@@ -27,7 +25,7 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; COPYRIGHT(c) 2016 STMicroelectronics</center></h2>
+  * <h2><center>&copy; COPYRIGHT(c) 2017 STMicroelectronics</center></h2>
   *
   * Redistribution and use in source and binary forms, with or without modification,
   * are permitted provided that the following conditions are met:
@@ -80,25 +78,18 @@
   * @{
   */
 
-/** @defgroup DCMIEx_Exported_Functions_Group1 Initialization and Configuration functions
- *  @brief   Initialization and Configuration functions
- *
-@verbatim   
- ===============================================================================
-                ##### Initialization and Configuration functions #####
- ===============================================================================
-    [..]  This section provides functions allowing to:
-      (+) Initialize and configure the DCMI
-      (+) De-initialize the DCMI
+/**
+  * @}
+  */
 
-@endverbatim
+/** @addtogroup DCMI_Exported_Functions_Group1 Initialization and Configuration functions
   * @{
   */
 
 /**
   * @brief  Initializes the DCMI according to the specified
   *         parameters in the DCMI_InitTypeDef and create the associated handle.
-  * @param  hdcmi: pointer to a DCMI_HandleTypeDef structure that contains
+  * @param  hdcmi pointer to a DCMI_HandleTypeDef structure that contains
   *                the configuration information for DCMI.
   * @retval HAL status
   */
@@ -172,15 +163,6 @@ HAL_StatusTypeDef HAL_DCMI_Init(DCMI_HandleTypeDef *hdcmi)
 
   return HAL_OK;
 }
-
-
-/**
-  * @}
-  */
-
-/**
-  * @}
-  */
   
 /**
   * @}

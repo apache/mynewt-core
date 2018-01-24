@@ -2,13 +2,11 @@
   ******************************************************************************
   * @file    stm32f4xx_hal_fmpi2c_ex.h
   * @author  MCD Application Team
-  * @version V1.5.1
-  * @date    01-July-2016
   * @brief   Header file of FMPI2C HAL Extended module.
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; COPYRIGHT(c) 2016 STMicroelectronics</center></h2>
+  * <h2><center>&copy; COPYRIGHT(c) 2017 STMicroelectronics</center></h2>
   *
   * Redistribution and use in source and binary forms, with or without modification,
   * are permitted provided that the following conditions are met:
@@ -40,11 +38,11 @@
 #define __STM32F4xx_HAL_FMPI2C_EX_H
 
 #ifdef __cplusplus
- extern "C" {
+extern "C" {
 #endif
 
 #if defined(STM32F410Tx) || defined(STM32F410Cx) || defined(STM32F410Rx) || defined(STM32F446xx) || defined(STM32F412Zx) ||\
-    defined(STM32F412Vx) || defined(STM32F412Rx) || defined(STM32F412Cx)
+    defined(STM32F412Vx) || defined(STM32F412Rx) || defined(STM32F412Cx) || defined(STM32F413xx) || defined(STM32F423xx)
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f4xx_hal_def.h"
@@ -55,7 +53,7 @@
 
 /** @addtogroup FMPI2CEx
   * @{
-  */ 
+  */
 
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
@@ -67,8 +65,8 @@
 /** @defgroup FMPI2CEx_Analog_Filter FMPI2C Extended Analog Filter
   * @{
   */
-#define FMPI2C_ANALOGFILTER_ENABLE        ((uint32_t)0x00000000U)
-#define FMPI2C_ANALOGFILTER_DISABLE       FMPI2C_CR1_ANFOFF
+#define FMPI2C_ANALOGFILTER_ENABLE         0x00000000U
+#define FMPI2C_ANALOGFILTER_DISABLE        FMPI2C_CR1_ANFOFF
 /**
   * @}
   */
@@ -84,8 +82,8 @@
 
 /**
   * @}
-  */ 
-  
+  */
+
 /* Exported macro ------------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
 
@@ -111,7 +109,7 @@ void HAL_FMPI2CEx_DisableFastModePlus(uint32_t ConfigFastModePlus);
 
 /**
   * @}
-  */ 
+  */
 
 /* Private macros ------------------------------------------------------------*/
 /** @defgroup FMPI2CEx_Private_Macro FMPI2C Extended Private Macros
@@ -152,12 +150,11 @@ void HAL_FMPI2CEx_DisableFastModePlus(uint32_t ConfigFastModePlus);
 /**
   * @}
   */
-#endif /* STM32F410xx || STM32F446xx || STM32F412Zx || STM32F412Vx || STM32F412Rx || STM32F412Cx */  
+#endif /* STM32F410xx || STM32F446xx || STM32F412Zx || STM32F412Vx || STM32F412Rx || STM32F412Cx || STM32F413xx || STM32F423xx */  
 #ifdef __cplusplus
 }
 #endif
 
 #endif /* __STM32F4xx_HAL_FMPI2C_EX_H */
-
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

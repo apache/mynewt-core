@@ -38,6 +38,11 @@
 
 #define I2C_ADDRESS 		0xae
 
+extern HAL_StatusTypeDef HAL_I2C_Master_Transmit_NoStop(I2C_HandleTypeDef *hi2c,
+        uint16_t DevAddress, uint8_t *pData, uint16_t Size, uint32_t Timeout);
+extern HAL_StatusTypeDef HAL_I2C_Master_Receive_NoStop(I2C_HandleTypeDef *hi2c,
+        uint16_t DevAddress, uint8_t *pData, uint16_t Size, uint32_t Timeout);
+
 struct stm32f4_hal_i2c {
     I2C_HandleTypeDef hid_handle;
 };
@@ -69,6 +74,7 @@ static struct stm32f4_hal_i2c *hal_i2c_devs[HAL_I2C_MAX_DEVS] = {
     NULL,
 #endif
 };
+
 
 int
 hal_i2c_init(uint8_t i2c_num, void *usercfg)

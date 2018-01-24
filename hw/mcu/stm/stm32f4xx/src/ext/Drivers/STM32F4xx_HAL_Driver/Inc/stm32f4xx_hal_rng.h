@@ -2,13 +2,11 @@
   ******************************************************************************
   * @file    stm32f4xx_hal_rng.h
   * @author  MCD Application Team
-  * @version V1.5.1
-  * @date    01-July-2016
   * @brief   Header file of RNG HAL module.
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; COPYRIGHT(c) 2016 STMicroelectronics</center></h2>
+  * <h2><center>&copy; COPYRIGHT(c) 2017 STMicroelectronics</center></h2>
   *
   * Redistribution and use in source and binary forms, with or without modification,
   * are permitted provided that the following conditions are met:
@@ -47,7 +45,7 @@
     defined(STM32F427xx) || defined(STM32F437xx) || defined(STM32F429xx) || defined(STM32F439xx) ||\
     defined(STM32F410Tx) || defined(STM32F410Cx) || defined(STM32F410Rx) || defined(STM32F469xx) ||\
     defined(STM32F479xx) || defined(STM32F412Zx) || defined(STM32F412Vx) || defined(STM32F412Rx) ||\
-    defined(STM32F412Cx)
+    defined(STM32F412Cx) || defined(STM32F413xx) || defined(STM32F423xx)
       
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f4xx_hal_def.h"
@@ -145,29 +143,29 @@ typedef struct
   */
 
 /** @brief Reset RNG handle state
-  * @param  __HANDLE__: RNG Handle
+  * @param  __HANDLE__ RNG Handle
   * @retval None
   */
 #define __HAL_RNG_RESET_HANDLE_STATE(__HANDLE__) ((__HANDLE__)->State = HAL_RNG_STATE_RESET)
 
 /**
   * @brief  Enables the RNG peripheral.
-  * @param  __HANDLE__: RNG Handle
+  * @param  __HANDLE__ RNG Handle
   * @retval None
   */
 #define __HAL_RNG_ENABLE(__HANDLE__) ((__HANDLE__)->Instance->CR |=  RNG_CR_RNGEN)
 
 /**
   * @brief  Disables the RNG peripheral.
-  * @param  __HANDLE__: RNG Handle
+  * @param  __HANDLE__ RNG Handle
   * @retval None
   */
 #define __HAL_RNG_DISABLE(__HANDLE__) ((__HANDLE__)->Instance->CR &= ~RNG_CR_RNGEN)
 
 /**
   * @brief  Check the selected RNG flag status.
-  * @param  __HANDLE__: RNG Handle
-  * @param  __FLAG__: RNG flag
+  * @param  __HANDLE__ RNG Handle
+  * @param  __FLAG__ RNG flag
   *          This parameter can be one of the following values:
   *            @arg RNG_FLAG_DRDY: Data ready                
   *            @arg RNG_FLAG_CECS: Clock error current status
@@ -178,8 +176,8 @@ typedef struct
 
 /**
   * @brief  Clears the selected RNG flag status.
-  * @param  __HANDLE__: RNG handle
-  * @param  __FLAG__: RNG flag to clear  
+  * @param  __HANDLE__ RNG handle
+  * @param  __FLAG__ RNG flag to clear  
   * @note   WARNING: This is a dummy macro for HAL code alignment,
   *         flags RNG_FLAG_DRDY, RNG_FLAG_CECS and RNG_FLAG_SECS are read-only.
   * @retval None
@@ -190,22 +188,22 @@ typedef struct
 
 /**
   * @brief  Enables the RNG interrupts.
-  * @param  __HANDLE__: RNG Handle
+  * @param  __HANDLE__ RNG Handle
   * @retval None
   */
 #define __HAL_RNG_ENABLE_IT(__HANDLE__) ((__HANDLE__)->Instance->CR |=  RNG_CR_IE)
     
 /**
   * @brief  Disables the RNG interrupts.
-  * @param  __HANDLE__: RNG Handle
+  * @param  __HANDLE__ RNG Handle
   * @retval None
   */
 #define __HAL_RNG_DISABLE_IT(__HANDLE__) ((__HANDLE__)->Instance->CR &= ~RNG_CR_IE)
 
 /**
   * @brief  Checks whether the specified RNG interrupt has occurred or not.
-  * @param  __HANDLE__: RNG Handle
-  * @param  __INTERRUPT__: specifies the RNG interrupt status flag to check.
+  * @param  __HANDLE__ RNG Handle
+  * @param  __INTERRUPT__ specifies the RNG interrupt status flag to check.
   *         This parameter can be one of the following values:
   *            @arg RNG_IT_DRDY: Data ready interrupt              
   *            @arg RNG_IT_CEI: Clock error interrupt
@@ -216,8 +214,8 @@ typedef struct
 
 /**
   * @brief  Clear the RNG interrupt status flags.
-  * @param  __HANDLE__: RNG Handle
-  * @param  __INTERRUPT__: specifies the RNG interrupt status flag to clear.
+  * @param  __HANDLE__ RNG Handle
+  * @param  __INTERRUPT__ specifies the RNG interrupt status flag to clear.
   *          This parameter can be one of the following values:            
   *            @arg RNG_IT_CEI: Clock error interrupt
   *            @arg RNG_IT_SEI: Seed error interrupt
@@ -357,7 +355,7 @@ HAL_RNG_StateTypeDef HAL_RNG_GetState(RNG_HandleTypeDef *hrng);
 
 #endif /* STM32F405xx || STM32F415xx || STM32F407xx || STM32F417xx || STM32F427xx || STM32F437xx ||\
           STM32F429xx || STM32F439xx || STM32F410xx || STM32F469xx || STM32F479xx || STM32F412Zx ||\
-          STM32F412Vx || STM32F412Rx || STM32F412Cx */
+          STM32F412Vx || STM32F412Rx || STM32F412Cx || STM32F413xx || STM32F423xx */
 
 #ifdef __cplusplus
 }

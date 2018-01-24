@@ -40,6 +40,13 @@
 
 #define STM32F4_HAL_SPI_MAX (6)
 
+extern HAL_StatusTypeDef HAL_SPI_QueueTransmit(SPI_HandleTypeDef *hspi,
+        uint8_t *pData, uint16_t Size);
+
+extern HAL_StatusTypeDef HAL_SPI_Slave_Queue_TransmitReceive(
+        SPI_HandleTypeDef *hspi, uint8_t *pTxData, uint8_t *pRxData,
+        uint16_t Size);
+
 struct stm32f4_hal_spi {
     SPI_HandleTypeDef handle;
     uint8_t slave:1;			/* slave or master */
@@ -138,15 +145,15 @@ stm32f4_resolve_spi_irq(SPI_HandleTypeDef *hspi)
             return SPI2_IRQn;
         case (uintptr_t)SPI3:
             return SPI3_IRQn;
-#ifdef SPI4
+#if MYNEWT_VAL(SPI_4)
         case (uintptr_t)SPI4:
             return SPI4_IRQn;
 #endif
-#ifdef SPI5
+#if MYNEWT_VAL(SPI_5)
         case (uintptr_t)SPI5:
             return SPI5_IRQn;
 #endif
-#ifdef SPI6
+#if MYNEWT_VAL(SPI_6)
         case (uintptr_t)SPI6:
             return SPI6_IRQn;
 #endif
@@ -281,6 +288,7 @@ spi_ss_isr(void *arg)
              * default data and call callback, if user was waiting for
              * data.
              */
+
             spi->handle.State = HAL_SPI_STATE_READY;
             HAL_SPI_QueueTransmit(&spi->handle, spi->def_char, 2);
 
@@ -314,7 +322,7 @@ spi3_irq_handler(void)
     spi_irq_handler(stm32f4_hal_spis[2]);
 }
 
-#ifdef SPI4
+#if MYNEWT_VAL(SPI_4)
 static void
 spi4_irq_handler(void)
 {
@@ -322,7 +330,7 @@ spi4_irq_handler(void)
 }
 #endif
 
-#ifdef SPI5
+#if MYNEWT_VAL(SPI_5)
 static void
 spi5_irq_handler(void)
 {
@@ -331,7 +339,7 @@ spi5_irq_handler(void)
 #endif
 
 
-#ifdef SPI6
+#if MYNEWT_VAL(SPI_6)
 static void
 spi6_irq_handler(void)
 {
@@ -349,15 +357,15 @@ stm32f4_resolve_spi_irq_handler(SPI_HandleTypeDef *hspi)
             return (uint32_t)&spi2_irq_handler;
         case (uintptr_t)SPI3:
             return (uint32_t)&spi3_irq_handler;
-#ifdef SPI4
+#if MYNEWT_VAL(SPI_4)
         case (uintptr_t)SPI4:
             return (uint32_t)&spi4_irq_handler;
 #endif
-#ifdef SPI5
+#if MYNEWT_VAL(SPI_5)
         case (uintptr_t)SPI5:
             return (uint32_t)&spi5_irq_handler;
 #endif
-#ifdef SPI6
+#if MYNEWT_VAL(SPI_6)
         case (uintptr_t)SPI6:
             return (uint32_t)&spi6_irq_handler;
 #endif
@@ -571,21 +579,21 @@ hal_spi_config(int spi_num, struct hal_spi_settings *settings)
             gpio.Alternate = GPIO_AF6_SPI3;
             spi->handle.Instance = SPI3;
             break;
-#ifdef SPI4
+#if MYNEWT_VAL(SPI_4)
         case 3:
             __HAL_RCC_SPI4_CLK_ENABLE();
             gpio.Alternate = GPIO_AF5_SPI4;
             spi->handle.Instance = SPI4;
             break;
 #endif
-#ifdef SPI5
+#if MYNEWT_VAL(SPI_5)
         case 4:
             __HAL_RCC_SPI5_CLK_ENABLE();
             gpio.Alternate = GPIO_AF5_SPI5;
             spi->handle.Instance = SPI5;
             break;
 #endif
-#ifdef SPI6
+#if MYNEWT_VAL(SPI_6)
         case 5:
             __HAL_RCC_SPI6_CLK_ENABLE();
             gpio.Alternate = GPIO_AF5_SPI6;
