@@ -79,7 +79,7 @@ static int nlip_state;
 static int echo = MYNEWT_VAL(CONSOLE_ECHO);
 static unsigned int ansi_val, ansi_val_2;
 
-static uint8_t cur, end;
+static uint16_t cur, end;
 static struct os_eventq *avail_queue;
 static struct os_eventq *lines_queue;
 static completion_cb completion;
@@ -190,7 +190,7 @@ cursor_restore(void)
 }
 
 static void
-insert_char(char *pos, char c, uint8_t end)
+insert_char(char *pos, char c, uint16_t end)
 {
     char tmp;
 
@@ -227,7 +227,7 @@ insert_char(char *pos, char c, uint8_t end)
 }
 
 static void
-del_char(char *pos, uint8_t end)
+del_char(char *pos, uint16_t end)
 {
     console_out('\b');
 
