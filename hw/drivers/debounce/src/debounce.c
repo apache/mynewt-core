@@ -21,97 +21,108 @@
 #include "syscfg/syscfg.h"
 #include <string.h>
 
-static void debounce_check(void *arg) {
-  debounce_t *d = (debounce_t*)arg;
+static void
+debounce_check(void *arg)
+{
+    debounce_t *d = (debounce_t*)arg;
 
-  int32_t btn = hal_gpio_read(d->pin) ? +1 : -1;
-  int32_t integrate = (int32_t)d->accu + btn;
+    int32_t btn = hal_gpio_read(d->pin) ? +1 : -1;
+    int32_t integrate = (int32_t)d->accu + btn;
 
-  if (integrate >= d->count) {
-    if (0 == d->state) {
-      d->state = 1;
-      if (d->on_rise && d->on_change) {
-        d->on_change(d);
-      }
+    if (integrate >= d->count) {
+        if (0 == d->state) {
+            d->state = 1;
+            if (d->on_rise && d->on_change) {
+                d->on_change(d);
+            }
+        }
+        integrate = d->count;
+    } else if ( integrate <= 0) {
+        if (1 == d->state) {
+            d->state = 0;
+            if (d->on_fall && d->on_change) {
+                d->on_change(d);
+            }
+        }
+        integrate = 0;
     }
-    integrate = d->count;
-  } else if ( integrate <= 0) {
-    if (1 == d->state) {
-      d->state = 0;
-      if (d->on_fall && d->on_change) {
-        d->on_change(d);
-      }
-    }
-    integrate = 0;
-  }
-  d->accu = integrate;
+    d->accu = integrate;
 
-  if (0 == integrate || d->count == integrate) {
-    // debouncing complete, no point in periodically updating
-    hal_gpio_irq_enable(d->pin);
-  } else {
-    // no decision yet, continue debouncing
+    if (0 == integrate || d->count == integrate) {
+        /* debouncing complete, no point in periodically updating */
+        hal_gpio_irq_enable(d->pin);
+    } else {
+        /* no decision yet, continue debouncing */
+        hal_timer_start(&d->timer, d->ticks);
+    }
+}
+
+static void
+debounce_trigger(void *arg)
+{
+    debounce_t *d = (debounce_t*)arg;
+
+    /* once triggered, switch to periodic checks */
+    hal_gpio_irq_disable(d->pin);
     hal_timer_start(&d->timer, d->ticks);
-  }
-}
-
-static void debounce_trigger(void *arg) {
-  debounce_t *d = (debounce_t*)arg;
-
-  // once triggered, switch to periodic checks
-  hal_gpio_irq_disable(d->pin);
-  hal_timer_start(&d->timer, d->ticks);
 }
 
 
-int debounce_init(debounce_t *d, int pin, hal_gpio_pull_t pull, int timer)
+int
+debounce_init(debounce_t *d, int pin, hal_gpio_pull_t pull, int timer)
 {
-  memset(d, 0, sizeof(debounce_t));
-  d->pin = pin;
-  d->ticks = MYNEWT_VAL(DEBOUNCE_PARAM_TICKS);
-  d->count = MYNEWT_VAL(DEBOUNCE_PARAM_COUNT);
+    memset(d, 0, sizeof(debounce_t));
+    d->pin = pin;
+    d->ticks = MYNEWT_VAL(DEBOUNCE_PARAM_TICKS);
+    d->count = MYNEWT_VAL(DEBOUNCE_PARAM_COUNT);
 
-  if (hal_timer_set_cb(timer, &d->timer, debounce_check, d)) {
-    return -1;
-  }
+    if (hal_timer_set_cb(timer, &d->timer, debounce_check, d)) {
+        return -1;
+    }
 
-  if (hal_gpio_irq_init(pin, debounce_trigger, d, HAL_GPIO_TRIG_BOTH, pull)) {
-    return -1;
-  }
+    if (hal_gpio_irq_init(pin, debounce_trigger, d, HAL_GPIO_TRIG_BOTH, pull)) {
+        return -1;
+    }
 
-  if (hal_gpio_read(pin)) {
-    d->state = 1;
-    d->accu = d->count;
-  }
+    if (hal_gpio_read(pin)) {
+        d->state = 1;
+        d->accu = d->count;
+    }
 
-  return 0;
+    return 0;
 }
 
-int debounce_set_params(debounce_t *d, uint16_t ticks, uint8_t count)
+int
+debounce_set_params(debounce_t *d, uint16_t ticks, uint8_t count)
 {
-  d->ticks = ticks;
-  d->count = count;
-  if (d->state) {
-    d->accu = count;
-  }
+    d->ticks = ticks;
+    d->count = count;
+    if (d->state) {
+        d->accu = count;
+    }
 
-  return 0;
+    return 0;
 }
 
-int debounce_start(debounce_t *d, debounce_callback_event_t event, debounce_callback_t cb, void *arg)
+int
+debounce_start(debounce_t *d,
+               debounce_callback_event_t event,
+               debounce_callback_t cb,
+               void *arg)
 {
-  d->on_rise = (event & DEBOUNCE_CALLBACK_EVENT_RISE) ? 1 : 0;
-  d->on_fall = (event & DEBOUNCE_CALLBACK_EVENT_FALL) ? 1 : 0;
-  d->on_change = cb;
-  d->arg = arg;
+    d->on_rise = (event & DEBOUNCE_CALLBACK_EVENT_RISE) ? 1 : 0;
+    d->on_fall = (event & DEBOUNCE_CALLBACK_EVENT_FALL) ? 1 : 0;
+    d->on_change = cb;
+    d->arg = arg;
 
-  hal_gpio_irq_enable(d->pin);
-  return 0;
+    hal_gpio_irq_enable(d->pin);
+    return 0;
 }
 
-int debounce_stop(debounce_t *d)
+int
+debounce_stop(debounce_t *d)
 {
-  hal_gpio_irq_disable(d->pin);
-  hal_timer_stop(&d->timer);
-  return 0;
+    hal_gpio_irq_disable(d->pin);
+    hal_timer_stop(&d->timer);
+    return 0;
 }

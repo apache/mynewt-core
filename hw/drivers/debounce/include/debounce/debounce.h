@@ -102,9 +102,9 @@ typedef struct debounce_s {
  */
 typedef enum debounce_callback_event_e {
     DEBOUNCE_CALLBACK_NEVER      = 0, /* no callback invocation */
-    DEBOUNCE_CALLBACK_EVENT_RISE = 1, /* callbak when debounced signal rises */
-    DEBOUNCE_CALLBACK_EVENT_FALL = 2, /* callbak when debounced signal falls */
-    DEBOUNCE_CALLBACK_EVENT_ANY  = 3  /* callbak when debounced signal changes */
+    DEBOUNCE_CALLBACK_EVENT_RISE = 1, /* callbak when signal rises */
+    DEBOUNCE_CALLBACK_EVENT_FALL = 2, /* callbak when signal falls */
+    DEBOUNCE_CALLBACK_EVENT_ANY  = 3  /* callbak when signal changes */
 } debounce_callback_event_t;
 
 /*
@@ -173,7 +173,10 @@ int debounce_set_params(debounce_t *d, uint16_t ticks, uint8_t count);
  *
  * @return int  0: no error; -1 otherwise.
  */
-int debounce_start(debounce_t *d, debounce_callback_event_t event, debounce_callback_t cb, void *arg);
+int debounce_start(debounce_t *d,
+                   debounce_callback_event_t event,
+                   debounce_callback_t cb,
+                   void *arg);
 
 /**
  * debounce stop
@@ -193,7 +196,8 @@ int debounce_stop(debounce_t*);
  *
  * @return int  pin
  */
-static inline int debounce_pin(debounce_t *d)
+static inline int
+debounce_pin(debounce_t *d)
 {
     return d->pin;
 }
@@ -205,7 +209,8 @@ static inline int debounce_pin(debounce_t *d)
  *
  * @return int  state
  */
-static inline int debounce_state(debounce_t *d)
+static inline int
+debounce_state(debounce_t *d)
 {
     return d->state;
 }
@@ -217,7 +222,8 @@ static inline int debounce_state(debounce_t *d)
  *
  * @return void*  arg
  */
-static inline void* debounce_arg(debounce_t *d)
+static inline void*
+debounce_arg(debounce_t *d)
 {
     return d->arg;
 }
