@@ -224,7 +224,7 @@ drv2605_shell_cmd_dump_cal(int argc, char **argv)
             console_printf("Read failed %d\n", rc);
             goto err;
         }
-        console_printf("DRV2605_CALIBRATED_COMP: 0x%02X\nDRV2605_CALIBRATED_BEMF: 0x%02X\nDRV2605_CALIBRATED_BEMF_GAIN: %0d\n", tmp[0], tmp[1], tmp[2] & 0x03);
+        console_printf("\nDRV2605_CALIBRATED_COMP: 0x%02X\nDRV2605_CALIBRATED_BEMF: 0x%02X\nDRV2605_CALIBRATED_BEMF_GAIN: %0d\n", tmp[0], tmp[1], tmp[2] & 0x03);
     }
 
     return 0;

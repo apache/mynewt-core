@@ -432,13 +432,13 @@ drv2605_send_defaults(struct sensor_itf *itf)
     }
 
     //todo LRA specific
-    rc = drv2605_write8(itf, DRV2605_FEEDBACK_CONTROL_ADDR, ((MYNEWT_VAL(DRV2605_CALIBRATED_BEMF_GAIN)) << DRV2605_FEEDBACK_CONTROL_BEMF_GAIN_POS) | DRV2605_FEEDBACK_CONTROL_N_LRA );
+    rc = drv2605_write8(itf, DRV2605_FEEDBACK_CONTROL_ADDR, ((MYNEWT_VAL(DRV2605_CALIBRATED_BEMF_GAIN) & DRV2605_FEEDBACK_CONTROL_BEMF_GAIN_MAX) << DRV2605_FEEDBACK_CONTROL_BEMF_GAIN_POS) | DRV2605_FEEDBACK_CONTROL_N_LRA );
     if (rc) {
         goto err;
     }
 
     // They seem to always enable startup boost in the dev kit so throw it in?
-    rc = drv2605_write8(itf, DRV2605_CONTROL1_ADDR, ((MYNEWT_VAL(DRV2605_DRIVE_TIME)) << DRV2605_CONTROL1_DRIVE_TIME_POS) | DRV2605_CONTROL1_STARTUP_BOOST_ENABLE);
+    rc = drv2605_write8(itf, DRV2605_CONTROL1_ADDR, ((MYNEWT_VAL(DRV2605_DRIVE_TIME) & DRV2605_CONTROL1_DRIVE_TIME_MAX) << DRV2605_CONTROL1_DRIVE_TIME_POS) | DRV2605_CONTROL1_STARTUP_BOOST_ENABLE);
     if (rc) {
         goto err;
     }
@@ -472,6 +472,51 @@ err:
     return rc;
 }
 
+int
+drv2605_validate_cal(struct drv2605_cal *cal)
+{
+    int rc;
+
+    if (cal->brake_factor > DRV2605_FEEDBACK_CONTROL_FB_BRAKE_FACTOR_MAX) {
+        rc = 1; //TODO what code to return?
+        goto err;
+    }
+
+    if (cal->loop_gain > DRV2605_FEEDBACK_CONTROL_LOOP_GAIN_MAX) {
+        rc = 1; //TODO what code to return?
+        goto err;
+    }
+
+    if (cal->lra_sample_time > DRV2605_CONTROL2_SAMPLE_TIME_MAX) {
+        rc = 1; //TODO what code to return?
+        goto err;
+    }
+
+    if (cal->lra_blanking_time > DRV2605_BLANKING_TIME_MAX) {
+        rc = 1; //TODO what code to return?
+        goto err;
+    }
+
+    if (cal->lra_idiss_time > DRV2605_IDISS_TIME_MAX) {
+        rc = 1; //TODO what code to return?
+        goto err;
+    }
+
+    if (cal->auto_cal_time > DRV2605_CONTROL4_AUTO_CAL_TIME_MAX) {
+        rc = 1; //TODO what code to return?
+        goto err;
+    }
+
+    if (cal->lra_zc_det_time > DRV2605_CONTROL4_ZC_DET_TIME_MAX) {
+        rc = 1; //TODO what code to return?
+        goto err;
+    }
+
+    return 0;
+err:
+    return rc;
+}
+
 // if succesful calibration overrites DRV2605_BEMF_GAIN, DRV2605_CALIBRATED_COMP and DRV2605_CALIBRATED_BEMF
 // if successful restores mode bit
 int
@@ -483,6 +528,11 @@ drv2605_auto_calibrate(struct sensor_itf *itf, struct drv2605_cal *cal)
 
     uint8_t last_mode;
     uint8_t last_fb;
+
+    rc = drv2605_validate_cal(cal);
+    if (rc) {
+        goto err;
+    }
 
     rc = drv2605_read8(itf, DRV2605_MODE_ADDR, &last_mode);
     if (rc) {
