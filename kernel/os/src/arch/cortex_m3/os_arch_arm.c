@@ -210,7 +210,7 @@ os_arch_os_init(void)
             NVIC->IP[i] = -1;
         }
 
-        NVIC_SetVector(SVC_IRQn, (uint32_t)SVC_Handler);
+        NVIC_SetVector(SVCall_IRQn, (uint32_t)SVC_Handler);
         NVIC_SetVector(PendSV_IRQn, (uint32_t)PendSV_Handler);
         NVIC_SetVector(SysTick_IRQn, (uint32_t)SysTick_Handler);
 
@@ -232,7 +232,7 @@ os_arch_os_init(void)
         NVIC_SetPriority(PendSV_IRQn, PEND_SV_PRIO);
 
         /* Set the SVC interrupt to priority 0 (highest configurable) */
-        NVIC_SetPriority(SVC_IRQn, SVC_PRIO);
+        NVIC_SetPriority(SVCall_IRQn, SVC_PRIO);
 
         /* Check if privileged or not */
         if ((__get_CONTROL() & 1) == 0) {
