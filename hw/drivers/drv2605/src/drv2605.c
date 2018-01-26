@@ -240,6 +240,21 @@ err:
     return rc;
 }
 
+//  general best fit values from datasheet 8.5.6
+int
+drv2605_default_cal(struct drv2605_cal *cal)
+{
+    cal->brake_factor = 2;
+    cal->loop_gain = 2;
+    cal->lra_sample_time = 3;
+    cal->lra_blanking_time = 1;
+    cal->lra_idiss_time = 1;
+    cal->auto_cal_time = 3;
+    cal->lra_zc_det_time = 0;
+
+    return 0;
+}
+
 /**
  * Expects to be called back through os_dev_create().
  *
@@ -253,6 +268,7 @@ drv2605_init(struct os_dev *dev, void *arg)
 {
     struct drv2605 *drv2605;
     struct sensor *sensor;
+    uint8_t id;
     int rc;
 
     if (!arg || !dev) {
@@ -291,10 +307,24 @@ drv2605_init(struct os_dev *dev, void *arg)
         goto err;
     }
 
-    //TODO.. since im not a sensor my config isnt being called. I dont seem to need to wait to talk to device so im just going to setup here
-    rc = drv2605_config(drv2605);
-    if (rc != 0) {
+    /* Check if we can read the chip address */
+    rc = drv2605_get_chip_id(arg, &id);
+    if (rc) {
         goto err;
+    }
+
+    if (id != DRV2605_STATUS_DEVICE_ID_2605 && id != DRV2605_STATUS_DEVICE_ID_2605L) {
+        os_time_delay((OS_TICKS_PER_SEC * 100)/1000 + 1);
+
+        rc = drv2605_get_chip_id(arg, &id);
+        if (rc) {
+            goto err;
+        }
+
+        if (id != DRV2605_STATUS_DEVICE_ID_2605 && id != DRV2605_STATUS_DEVICE_ID_2605L) {
+            rc = SYS_EINVAL;
+            goto err;
+        }
     }
 
     return (0);
@@ -328,53 +358,18 @@ err:
     return rc;
 }
 
-int
-drv2605_reset(struct sensor_itf *itf)
-{
-    int rc;
-    uint8_t temp;
-    uint8_t interval = 255;
-
-    rc = drv2605_write8(itf, DRV2605_MODE_ADDR, DRV2605_MODE_RESET);
-    if (rc) {
-        goto err;
-    }
-
-    //When reset is complete, the reset bit automatically clears. Timeout after 255 x 5ms or 1275ms
-    do{
-        os_time_delay((OS_TICKS_PER_SEC * 5)/1000 + 1);
-        rc = drv2605_read8(itf, DRV2605_MODE_ADDR, &temp);
-    } while (!rc && interval-- && (temp & DRV2605_MODE_RESET));
-
-    //if we timed out
-    if (!interval) {
-        rc = 1; //TODO what code to return?
-        goto err;
-    }
-
-    return 0;
-err:
-    return rc;
-}
-
 
 //NOTE diagnistics (and frankly all operation) will in all likelyhood fail if your motor is not SECURED to a mass
 //it cant be floating on your desk even for prototyping
 //if successful restores mode bit
 int
-drv2605_diagnostics(struct sensor_itf *itf)
+drv2605_mode_diagnostic(struct sensor_itf *itf)
 {
     int rc;
     uint8_t temp;
     uint8_t interval = 255;
-    uint8_t last_mode;
 
-    rc = drv2605_read8(itf, DRV2605_MODE_ADDR, &last_mode);
-    if (rc) {
-        goto err;
-    }
-
-    rc = drv2605_write8(itf, DRV2605_MODE_ADDR, DRV2605_MODE_DIAGNOSTICS);
+    rc = drv2605_write8(itf, DRV2605_MODE_ADDR, DRV2605_MODE_DIAGNOSTICS | DRV2605_MODE_ACTIVE);
     if (rc) {
         goto err;
     }
@@ -401,12 +396,6 @@ drv2605_diagnostics(struct sensor_itf *itf)
     rc = drv2605_read8(itf, DRV2605_STATUS_ADDR, &temp);
     if (rc || (temp & DRV2605_STATUS_DIAG_RESULT_FAIL)) {
         rc = 1; //TODO what code to return?
-        goto err;
-    }
-
-    //return to mode at start
-    rc = drv2605_write8(itf, DRV2605_MODE_ADDR, last_mode | DRV2605_MODE_MODE_POS);
-    if (rc) {
         goto err;
     }
 
@@ -473,6 +462,54 @@ err:
 }
 
 int
+drv2605_get_power_mode(struct sensor_itf *itf, enum drv2605_power_mode *power_mode)
+{
+    // int rc;
+    // uint8_t temp;
+
+    // //todo look at gpio pin
+    // //todo deal with gpio NC
+    // rc = drv2605_read8(itf, DRV2605_MODE_ADDR, &temp);
+    // if (rc) {
+    //     goto err;
+    // }
+
+    // *status = temp & DRV2605_MODE_STANDBY_MASK;
+    return 0;
+// err:
+//     return rc;
+}
+
+int
+drv2605_set_power_mode(struct sensor_itf *itf, enum drv2605_power_mode power_mode)
+{
+    // int rc;
+    // uint8_t last_mode;
+
+    // //todo deal with gpio NC
+    // rc = drv2605_read8(itf, DRV2605_MODE_ADDR, &last_mode);
+    // if (rc) {
+    //     goto err;
+    // }
+
+    // uint8_t mode;
+    // if(active){
+    //     mode = DRV2605_MODE_ACTIVE
+    // }else{
+    //     mode = DRV2605_MODE_STANDBY
+    // }
+
+    // rc = drv2605_write8(itf, DRV2605_MODE_ADDR, (last_mode & (~DRV2605_MODE_MODE_MASK)) | mode);
+    // if (rc) {
+    //     goto err;
+    // }
+
+    return 0;
+// err:
+//     return rc;
+}
+
+int
 drv2605_validate_cal(struct drv2605_cal *cal)
 {
     int rc;
@@ -520,21 +557,14 @@ err:
 // if succesful calibration overrites DRV2605_BEMF_GAIN, DRV2605_CALIBRATED_COMP and DRV2605_CALIBRATED_BEMF
 // if successful restores mode bit
 int
-drv2605_auto_calibrate(struct sensor_itf *itf, struct drv2605_cal *cal)
+drv2605_mode_calibrate(struct sensor_itf *itf, struct drv2605_cal *cal)
 {
     int rc;
     uint8_t temp;
     uint8_t interval = 255;
-
-    uint8_t last_mode;
     uint8_t last_fb;
 
     rc = drv2605_validate_cal(cal);
-    if (rc) {
-        goto err;
-    }
-
-    rc = drv2605_read8(itf, DRV2605_MODE_ADDR, &last_mode);
     if (rc) {
         goto err;
     }
@@ -574,7 +604,7 @@ drv2605_auto_calibrate(struct sensor_itf *itf, struct drv2605_cal *cal)
     }
 
     //2. Write a value of 0x07 to register 0x01. This value moves the DRV2605L device out of STANDBY and places the MODE[2:0] bits in auto-calibration mode.
-    rc = drv2605_write8(itf, DRV2605_MODE_ADDR, DRV2605_MODE_AUTO_CALIBRATION);
+    rc = drv2605_write8(itf, DRV2605_MODE_ADDR, DRV2605_MODE_AUTO_CALIBRATION | DRV2605_MODE_ACTIVE);
     if (rc) {
         goto err;
     }
@@ -604,8 +634,17 @@ drv2605_auto_calibrate(struct sensor_itf *itf, struct drv2605_cal *cal)
         goto err;
     }
 
-    //return to mode at start
-    rc = drv2605_write8(itf, DRV2605_MODE_ADDR, last_mode | DRV2605_MODE_MODE_POS);
+    return 0;
+err:
+    return rc;
+}
+
+int
+drv2605_mode_rom(struct sensor_itf *itf)
+{
+    int rc;
+
+    rc = drv2605_write8(itf, DRV2605_MODE_ADDR, DRV2605_MODE_INTERNAL_TRIGGER | DRV2605_MODE_STANDBY);
     if (rc) {
         goto err;
     }
@@ -616,51 +655,109 @@ err:
 }
 
 int
-drv2605_config(struct drv2605 *drv2605)
+drv2605_mode_rtp(struct sensor_itf *itf)
 {
     int rc;
-    uint8_t id;
-    struct sensor_itf *itf;
 
-    itf = SENSOR_GET_ITF(&(drv2605->sensor));
-
-    /* Check if we can read the chip address */
-    rc = drv2605_get_chip_id(itf, &id);
-    if (rc) {
-        goto err;
-    }
-
-    if (id != DRV2605_STATUS_DEVICE_ID_2605 && id != DRV2605_STATUS_DEVICE_ID_2605L) {
-        os_time_delay((OS_TICKS_PER_SEC * 100)/1000 + 1);
-
-        rc = drv2605_get_chip_id(itf, &id);
-        if (rc) {
-            goto err;
-        }
-
-        if (id != DRV2605_STATUS_DEVICE_ID_2605 && id != DRV2605_STATUS_DEVICE_ID_2605L) {
-            rc = SYS_EINVAL;
-            goto err;
-        }
-    }
-
-    rc = drv2605_send_defaults(itf);
-    if (rc) {
-        goto err;
-    }
-
-    rc = drv2605_write8(itf, DRV2605_MODE_ADDR, DRV2605_MODE_STANDBY);
+    rc = drv2605_write8(itf, DRV2605_MODE_ADDR, DRV2605_MODE_RTP | DRV2605_MODE_STANDBY);
     if (rc) {
         goto err;
     }
 
     return 0;
 err:
-    return (rc);
+    return rc;
 }
 
 int
-drv2605_load(struct sensor_itf *itf, uint8_t* wav_ids, size_t len)
+drv2605_mode_pwm(struct sensor_itf *itf)
+{
+    int rc;
+
+    rc = drv2605_write8(itf, DRV2605_MODE_ADDR, DRV2605_MODE_PWM_ANALOG_INPUT | DRV2605_MODE_STANDBY);
+    if (rc) {
+        goto err;
+    }
+
+    rc = drv2605_write8(itf, DRV2605_CONTROL3_ADDR, DRV2605_CONTROL3_N_PWM_ANALOG_MASK);
+    if (rc) {
+        goto err;
+    }
+
+    return 0;
+err:
+    return rc;
+}
+
+// NOTE reset sets mode back to standby
+// obviously you must _configure again after a reset
+int
+drv2605_mode_reset(struct sensor_itf *itf)
+{
+    int rc;
+    uint8_t temp;
+    uint8_t interval = 255;
+
+    rc = drv2605_write8(itf, DRV2605_MODE_ADDR, DRV2605_MODE_RESET);
+    if (rc) {
+        goto err;
+    }
+
+    //When reset is complete, the reset bit automatically clears. Timeout after 255 x 5ms or 1275ms
+    do{
+        os_time_delay((OS_TICKS_PER_SEC * 5)/1000 + 1);
+        rc = drv2605_read8(itf, DRV2605_MODE_ADDR, &temp);
+    } while (!rc && interval-- && (temp & DRV2605_MODE_RESET));
+
+    //if we timed out
+    if (!interval) {
+        rc = 1; //TODO what code to return?
+        goto err;
+    }
+
+    return 0;
+err:
+    return rc;
+}
+
+// note device needs to be reconfigured after a an error and after succsessful diag and calibration and reset
+// note all modes attempt to leave you back in standby, youll need to setactive
+int
+drv2605_config(struct drv2605 *drv2605, struct drv2605_cfg *cfg)
+{
+    int rc;
+    struct sensor_itf *itf;
+
+    itf = SENSOR_GET_ITF(&(drv2605->sensor));
+
+
+    rc = drv2605_send_defaults(itf);
+    if (rc) {
+        return rc;
+    }
+
+    switch(cfg->op_mode) {
+        case DRV2605_OP_ROM:
+            return drv2605_mode_rom(itf);
+        case DRV2605_OP_PWM:
+            return drv2605_mode_pwm(itf);
+        case DRV2605_OP_ANALOG:
+            return drv2605_mode_pwm(itf);
+        case DRV2605_OP_RTP:
+            return drv2605_mode_rtp(itf);
+        case DRV2605_OP_DIAGNOSTIC:
+            return drv2605_mode_diagnostic(itf);
+        case DRV2605_OP_CALIBRATION:
+            return drv2605_mode_calibrate(itf, &cfg->cal);
+        case DRV2605_OP_RESET:
+            return drv2605_mode_reset(itf);
+        default:
+            return SYS_EINVAL;
+    }
+}
+
+int
+drv2605_load_rom(struct sensor_itf *itf, uint8_t* wav_ids, size_t len)
 {
     int rc;
 
@@ -679,20 +776,37 @@ err:
     return rc;
 }
 
-//note DOES NOT restore mode bit as is non blocking TODO, take async callback handler to inform of completion and allow mode change
 int
-drv2605_internal_trigger(struct sensor_itf *itf)
+drv2605_trigger_rom(struct sensor_itf *itf)
+{
+    return drv2605_write8(itf, DRV2605_GO_ADDR, DRV2605_GO_GO);
+}
+
+// theres sadly no interrupt for knowing when long running roms are finished, youll need to block on this or set a callout
+// to poll for completion
+int
+drv2605_rom_busy(struct sensor_itf *itf, bool *status)
 {
     int rc;
+    uint8_t temp;
 
-    //out of standby and Internal trigger
-    rc = drv2605_write8(itf, DRV2605_MODE_ADDR, DRV2605_MODE_INTERNAL_TRIGGER | DRV2605_MODE_ACTIVE);
+    rc = drv2605_read8(itf, DRV2605_GO_ADDR, &temp);
     if (rc) {
         goto err;
     }
 
-    // Trigger
-    rc = drv2605_write8(itf, DRV2605_GO_ADDR, DRV2605_GO_GO);
+    *status = temp;
+    return 0;
+err:
+    return rc;
+}
+
+int
+drv2605_load_rtp(struct sensor_itf *itf, uint8_t value)
+{
+    int rc;
+
+    rc = drv2605_write8(itf, DRV2605_REAL_TIME_PLAYBACK_INPUT_ADDR, value);
     if (rc) {
         goto err;
     }

@@ -30,32 +30,42 @@ extern "C" {
 
 
 struct drv2605_cal {
-    // (b) FB_BRAKE_FACTOR[2:0] — A value of 2 is valid for most actuators. DRV2605_FEEDBACK_CONTROL_FB_BRAKE_FACTOR_3X
     uint8_t brake_factor;
-
-    // (c) LOOP_GAIN[1:0] — A value of 2 is valid for most actuators. DRV2605_FEEDBACK_CONTROL_LOOP_GAIN_HIGH
     uint8_t loop_gain;
-
-    // (h) SAMPLE_TIME[1:0] — A value of 3 is valid for most actuators. DRV2605_CONTROL2_SAMPLE_TIME_300
     uint8_t lra_sample_time;
-
-    // (i) BLANKING_TIME[3:0] — A value of 1 is valid for most actuators. DRV2605_CONTROL2_BLANKING_TIME_LRA_15
     uint8_t lra_blanking_time;
-
-    // (j) IDISS_TIME[3:0] — A value of 1 is valid for most actuators. DRV2605_CONTROL2_IDISS_TIME_LRA_25
     uint8_t lra_idiss_time;
-
-    // (f) AUTO_CAL_TIME[1:0] — A value of 3 is valid for most actuators. DRV2605_CONTROL4_AUTO_CAL_TIME_1000
     uint8_t auto_cal_time;
-
-    // (k) ZC_DET_TIME[1:0] — A value of 0 is valid for most actuators. DRV2605_CONTROL4_ZC_DET_TIME_100
     uint8_t lra_zc_det_time;
+};
+
+enum drv2605_power_mode {
+    DRV2605_POWER_STANDBY = 0x00, // en pin high, standby bit high
+    DRV2605_POWER_ACTIVE, //en pin high, standby bit low
+    DRV2605_POWER_OFF //en pin low
+};
+
+enum drv2605_op_mode {
+    DRV2605_OP_ROM = 0x00,
+    DRV2605_OP_PWM,
+    DRV2605_OP_ANALOG,
+    DRV2605_OP_RTP,
+    DRV2605_OP_DIAGNOSTIC,
+    DRV2605_OP_CALIBRATION,
+    DRV2605_OP_RESET
+};
+
+struct drv2605_cfg {
+    enum drv2605_op_mode op_mode;
+    struct drv2605_cal cal;
 };
 
 struct drv2605 {
     struct os_dev dev;
     struct sensor sensor;
+    struct drv2605_cfg cfg;
 };
+
 
 /**
  * Initialize the drv2605. This function is normally called by sysinit.
@@ -66,25 +76,7 @@ int
 drv2605_init(struct os_dev *dev, void *arg);
 
 int
-drv2605_config(struct drv2605 *drv2605);
-
-int
-drv2605_internal_trigger(struct sensor_itf *itf);
-
-int
-drv2605_auto_calibrate(struct sensor_itf *itf, struct drv2605_cal *cal);
-
-int
-drv2605_send_defaults(struct sensor_itf *itf);
-
-int
-drv2605_reset(struct sensor_itf *itf);
-
-int
-drv2605_diagnostics(struct sensor_itf *itf);
-
-int
-drv2605_load(struct sensor_itf *itf, uint8_t *buffer, size_t length);
+drv2605_config(struct drv2605 *drv2605, struct drv2605_cfg *cfg);
 
 
 #if MYNEWT_VAL(DRV2605_CLI)
@@ -92,6 +84,15 @@ int drv2605_shell_init(void);
 #endif
 
 
+/**
+ * Get a best effort defaults for the drv2605_cal
+ *
+ * @param The sensor interface
+ * @param Pointer to the drv2605_cal struct
+ * @return 0 on success, non-zero on failure
+ */
+int
+drv2605_default_cal(struct drv2605_cal *cal);
 
 /**
  * Get chip ID from the sensor
@@ -103,6 +104,65 @@ int drv2605_shell_init(void);
 int
 drv2605_get_chip_id(struct sensor_itf *itf, uint8_t *id);
 
+/**
+ * Get chip ID from the sensor
+ *
+ * @param The sensor interface
+ * @param Pointer to the buffer of rom library selections
+ * @param Size of the rom buffer (max 8)
+ * @return 0 on success, non-zero on failure
+ */
+int
+drv2605_load_rom(struct sensor_itf *itf, uint8_t *buffer, size_t length);
+
+/**
+ * Load value for rtp playback to device
+ *
+ * @param The sensor interface
+ * @param Value to load
+ * @return 0 on success, non-zero on failure
+ */
+int
+drv2605_load_rtp(struct sensor_itf *itf, uint8_t value);
+
+/**
+ * Trigger preloaded rom selections
+ *
+ * @param The sensor interface
+ * @return 0 on success, non-zero on failure
+ */
+int
+drv2605_trigger_rom(struct sensor_itf *itf);
+
+/**
+ * Get rom playback status from device
+ *
+ * @param The sensor interface
+ * @param Pointer to the variable to fill up status in
+ * @return 0 on success, non-zero on failure
+ */
+int
+drv2605_rom_busy(struct sensor_itf *itf, bool *status);
+
+/**
+ * Set the current power mode from device.
+ *
+ * @param The sensor interface
+ * @param drv2605_power_mode to send to device
+ * @return 0 on success, non-zero on failure
+ */
+int
+drv2605_set_power_mode(struct sensor_itf *itf, enum drv2605_power_mode power_mode);
+
+/**
+ * Get the current power mode from device
+ *
+ * @param The sensor interface
+ * @param Pointer to drv2605_power_mode enum
+ * @return 0 on success, non-zero on failure
+ */
+int
+drv2605_get_power_mode(struct sensor_itf *itf, enum drv2605_power_mode *power_mode);
 
 #ifdef __cplusplus
 }

@@ -61,10 +61,12 @@ extern "C" {
 #define DRV2605_MODE_RESET                                      ((1) << DRV2605_MODE_DEV_RESET_POS)
 
 #define DRV2605_MODE_STANDBY_POS                                6
+#define DRV2605_MODE_STANDBY_MASK                               ((1) << DRV2605_MODE_STANDBY_POS)
 #define DRV2605_MODE_ACTIVE                                     ((0) << DRV2605_MODE_STANDBY_POS)
 #define DRV2605_MODE_STANDBY                                    ((1) << DRV2605_MODE_STANDBY_POS)
 
 #define DRV2605_MODE_MODE_POS                                   0
+#define DRV2605_MODE_MODE_MASK                                   ((7) << DRV2605_MODE_MODE_POS)
 #define DRV2605_MODE_INTERNAL_TRIGGER                           ((0) << DRV2605_MODE_MODE_POS)
 #define DRV2605_MODE_EXTERNAL_TRIGGER_EDGE                      ((1) << DRV2605_MODE_MODE_POS)
 #define DRV2605_MODE_EXTERNAL_TRIGGER_LEVEL                     ((2) << DRV2605_MODE_MODE_POS)
@@ -213,6 +215,7 @@ extern "C" {
 #define DRV2605_CONTROL3_LRA_DRIVE_MODE_TWICE                   ((1) << DRV2605_CONTROL3_LRA_DRIVE_MODE_POS)
 
 #define DRV2605_CONTROL3_N_PWM_ANALOG_POS                       1
+#define DRV2605_CONTROL3_N_PWM_ANALOG_MASK                      ((1) << DRV2605_CONTROL3_N_PWM_ANALOG_POS)
 #define DRV2605_CONTROL3_N_PWM_ANALOG_PWM                       ((0) << DRV2605_CONTROL3_N_PWM_ANALOG_POS)
 #define DRV2605_CONTROL3_N_PWM_ANALOG_ANALOG                    ((1) << DRV2605_CONTROL3_N_PWM_ANALOG_POS)
 
