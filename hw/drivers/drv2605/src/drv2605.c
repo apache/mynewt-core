@@ -25,6 +25,7 @@
 #include "os/os.h"
 #include "sysinit/sysinit.h"
 #include "hal/hal_i2c.h"
+#include "hal/hal_gpio.h"
 #include "drv2605/drv2605.h"
 #include "drv2605_priv.h"
 
@@ -361,13 +362,18 @@ err:
 
 //NOTE diagnistics (and frankly all operation) will in all likelyhood fail if your motor is not SECURED to a mass
 //it cant be floating on your desk even for prototyping
-//if successful restores mode bit
 int
 drv2605_mode_diagnostic(struct sensor_itf *itf)
 {
     int rc;
     uint8_t temp;
     uint8_t interval = 255;
+    uint8_t last_mode;
+
+    rc = drv2605_read8(itf, DRV2605_MODE_ADDR, &last_mode);
+    if (rc) {
+        goto err;
+    }
 
     rc = drv2605_write8(itf, DRV2605_MODE_ADDR, DRV2605_MODE_DIAGNOSTICS | DRV2605_MODE_ACTIVE);
     if (rc) {
@@ -396,6 +402,12 @@ drv2605_mode_diagnostic(struct sensor_itf *itf)
     rc = drv2605_read8(itf, DRV2605_STATUS_ADDR, &temp);
     if (rc || (temp & DRV2605_STATUS_DIAG_RESULT_FAIL)) {
         rc = 1; //TODO what code to return?
+        goto err;
+    }
+
+    //put back into standby like all other successful mode ops
+    rc = drv2605_write8(itf, DRV2605_MODE_ADDR, (last_mode & (~DRV2605_MODE_STANDBY_MASK)) | DRV2605_MODE_STANDBY);
+    if (rc) {
         goto err;
     }
 
@@ -464,49 +476,78 @@ err:
 int
 drv2605_get_power_mode(struct sensor_itf *itf, enum drv2605_power_mode *power_mode)
 {
-    // int rc;
-    // uint8_t temp;
+    int rc;
+    uint8_t last_mode;
+    bool standby, en_pin;
 
-    // //todo look at gpio pin
-    // //todo deal with gpio NC
-    // rc = drv2605_read8(itf, DRV2605_MODE_ADDR, &temp);
-    // if (rc) {
-    //     goto err;
-    // }
+    rc = drv2605_read8(itf, DRV2605_MODE_ADDR, &last_mode);
+    if (rc) {
+        goto err;
+    }
 
-    // *status = temp & DRV2605_MODE_STANDBY_MASK;
+    standby = last_mode & DRV2605_MODE_STANDBY_MASK;
+    en_pin = hal_gpio_read(itf->si_cs_pin);
+
+    if(!en_pin){
+        *power_mode = DRV2605_POWER_OFF;
+    }else{
+        if(standby){
+            *power_mode = DRV2605_POWER_STANDBY;
+        }else{
+            *power_mode = DRV2605_POWER_ACTIVE;
+        }
+    }
+
     return 0;
-// err:
-//     return rc;
+err:
+    return rc;
+}
+
+int
+drv2605_set_standby(struct sensor_itf *itf, bool standby)
+{
+    int rc;
+    uint8_t last_mode;
+
+    rc = drv2605_read8(itf, DRV2605_MODE_ADDR, &last_mode);
+    if (rc) {
+        goto err;
+    }
+
+    uint8_t mode;
+    if(standby){
+        mode = DRV2605_MODE_STANDBY;
+    }else{
+        mode = DRV2605_MODE_ACTIVE;
+    }
+
+    rc = drv2605_write8(itf, DRV2605_MODE_ADDR, (last_mode & (~DRV2605_MODE_STANDBY_MASK)) | mode);
+    if (rc) {
+        goto err;
+    }
+
+    return 0;
+err:
+    return rc;
 }
 
 int
 drv2605_set_power_mode(struct sensor_itf *itf, enum drv2605_power_mode power_mode)
 {
-    // int rc;
-    // uint8_t last_mode;
-
-    // //todo deal with gpio NC
-    // rc = drv2605_read8(itf, DRV2605_MODE_ADDR, &last_mode);
-    // if (rc) {
-    //     goto err;
-    // }
-
-    // uint8_t mode;
-    // if(active){
-    //     mode = DRV2605_MODE_ACTIVE
-    // }else{
-    //     mode = DRV2605_MODE_STANDBY
-    // }
-
-    // rc = drv2605_write8(itf, DRV2605_MODE_ADDR, (last_mode & (~DRV2605_MODE_MODE_MASK)) | mode);
-    // if (rc) {
-    //     goto err;
-    // }
-
-    return 0;
-// err:
-//     return rc;
+    //todo, any hiccup in writing enable if already active? dont like the idea of reading it first though..
+    switch(power_mode) {
+        case DRV2605_POWER_STANDBY:
+            hal_gpio_write(itf->si_cs_pin, 1);
+            return drv2605_set_standby(itf, 1);
+        case DRV2605_POWER_ACTIVE:
+            hal_gpio_write(itf->si_cs_pin, 1);
+            return drv2605_set_standby(itf, 0);
+        case DRV2605_POWER_OFF:
+            hal_gpio_write(itf->si_cs_pin, 0);
+            return 0;
+        default:
+            return SYS_EINVAL;
+    }
 }
 
 int
@@ -555,14 +596,18 @@ err:
 }
 
 // if succesful calibration overrites DRV2605_BEMF_GAIN, DRV2605_CALIBRATED_COMP and DRV2605_CALIBRATED_BEMF
-// if successful restores mode bit
 int
 drv2605_mode_calibrate(struct sensor_itf *itf, struct drv2605_cal *cal)
 {
     int rc;
     uint8_t temp;
     uint8_t interval = 255;
-    uint8_t last_fb;
+    uint8_t last_fb, last_mode;
+
+    rc = drv2605_read8(itf, DRV2605_MODE_ADDR, &last_mode);
+    if (rc) {
+        goto err;
+    }
 
     rc = drv2605_validate_cal(cal);
     if (rc) {
@@ -631,6 +676,12 @@ drv2605_mode_calibrate(struct sensor_itf *itf, struct drv2605_cal *cal)
     rc = drv2605_read8(itf, DRV2605_STATUS_ADDR, &temp);
     if (rc || (temp & DRV2605_STATUS_DIAG_RESULT_FAIL)) {
         rc = 1; //TODO what code to return?
+        goto err;
+    }
+
+    //put back into standby like all other successful mode ops
+    rc = drv2605_write8(itf, DRV2605_MODE_ADDR, (last_mode & (~DRV2605_MODE_STANDBY_MASK)) | DRV2605_MODE_STANDBY);
+    if (rc) {
         goto err;
     }
 
@@ -720,8 +771,9 @@ err:
     return rc;
 }
 
-// note device needs to be reconfigured after a an error and after succsessful diag and calibration and reset
-// note all modes attempt to leave you back in standby, youll need to setactive
+// note device MSUT be reconfigured for an operational state after a an error or after succsessful diag and calibration and reset
+// upon success the device is always left in DRV2605_POWER_STANDBY state
+// no device state is guaranteed for error returns
 int
 drv2605_config(struct drv2605 *drv2605, struct drv2605_cfg *cfg)
 {
@@ -730,6 +782,10 @@ drv2605_config(struct drv2605 *drv2605, struct drv2605_cfg *cfg)
 
     itf = SENSOR_GET_ITF(&(drv2605->sensor));
 
+    rc = hal_gpio_init_out(itf->si_cs_pin, 1);
+    if (rc) {
+        return rc;
+    }
 
     rc = drv2605_send_defaults(itf);
     if (rc) {
