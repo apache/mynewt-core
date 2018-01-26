@@ -162,7 +162,6 @@ ble_ll_dtm_tx_done(void *arg)
     if (!ctx->evt.ev_cb) {
         return;
     }
-    ctx->num_of_packets++;
     /* Reschedule event in LL context */
     os_eventq_put(&g_ble_ll_data.ll_evq, &ctx->evt);
 
@@ -197,7 +196,7 @@ ble_ll_dtm_tx_sched_cb(struct ble_ll_sched_item *sch)
     rc = ble_phy_tx_set_start_time(sch->start_time, sch->remainder);
     assert(rc == 0);
 
-    rc = ble_phy_tx(ctx->om, BLE_PHY_TRANSITION_NONE);
+    rc = ble_phy_tx(ble_ll_tx_mbuf_pducb, ctx->om, BLE_PHY_TRANSITION_NONE);
     assert(rc == 0);
 
     ble_ll_state_set(BLE_LL_STATE_DTM);
