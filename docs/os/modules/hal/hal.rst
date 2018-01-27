@@ -11,8 +11,7 @@ typically the software libraries that initialize the hardware and manage
 access to the hardware by higher layers of software. In the Mynewt OS,
 the layers can be depicted in the following manner.
 
-.. code-block:: console
-
+::
 
     +———————————————————————————+
     |            app            |

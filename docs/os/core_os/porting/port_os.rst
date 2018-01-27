@@ -1,8 +1,19 @@
 Porting Mynewt OS
 =================
 
+.. toctree::
+   :hidden:
+
+   port_bsp
+   port_mcu
+   port_cpu
+
 This chapter describes how to adapt the Mynewt OS to different
 platforms.
+
+.. contents::
+  :local:
+  :depth: 2
 
 Description
 ~~~~~~~~~~~
@@ -62,11 +73,10 @@ hardware layout of your system.
 
 -  If your BSP is already supported my Mynewt, there is no additional
    BSP work involved in porting to your platform. You need only to set
-   the ``bsp`` attribute in your Mynewt target using the `newt command
-   tool <../../../../newt/newt_intro>`__.
+   the ``bsp`` attribute in your Mynewt target using the :doc:`newt command
+   tool <../../../newt/index>`.
 -  If your BSP is not yet supported by Mynewt, you can add support
-   following the instructions on `how to add BSP support to
-   Mynewt <port_bsp.html>`__
+   following the instructions on :doc:`port_bsp`.
 
 MCU Dependency
 ~~~~~~~~~~~~~~
@@ -77,11 +87,10 @@ where code and data can reside.
 
 -  If your MCU is already supported my Mynewt, there is no additional
    MCU work involved in porting to your platform. You need only to set
-   the ``arch`` attribute in your Mynewt target using the `newt command
-   tool <../../../../newt/newt_intro>`__.
+   the ``arch`` attribute in your Mynewt target using the :doc:`newt command
+   tool <../../../newt/index>`.
 -  If your MCU is not yet supported by Mynewt, you can add support
-   following the instructions on\ `how to add MCU support to
-   Mynewt <port_mcu.html>`__
+   following the instructions in :doc:`port_mcu`.
 
 MCU HAL
 ~~~~~~~
@@ -91,7 +100,7 @@ common on or off-chip MCU peripherals such as GPIO, UARTs, flash memory
 etc. Even if your MCU is supported for the core OS, you may find that
 you need to implement the HAL functionality for a new peripheral. For a
 description of the HAL abstraction and implementation information, see
-the `HAL API <../../modules/hal/hal.html>`__
+the :doc:`HAL API <../../modules/hal/hal>`
 
 CPU Core Dependency
 ~~~~~~~~~~~~~~~~~~~
@@ -104,7 +113,6 @@ the appropriate instruction set.
 -  If your CPU architecture is already supported my Mynewt, there is no
    CPU core work involved in porting to your platform. You need only to
    set the ``arch`` and ``compiler`` attributes in your Mynewt target
-   using the `newt command tool <../../../../newt/newt_intro>`__.
+   using the :doc:`newt command tool <../../../newt/index>`.
 -  If your CPU architecture is not supported by Mynewt, you can add
-   support following the instructions on `how to add CPU architecture
-   support to Mynewt <port_cpu.html>`__
+   support following the instructions on :doc:`port_cpu`.
