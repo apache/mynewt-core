@@ -36,15 +36,15 @@ the new task is swapped in.
 API
 ***
 
-* :cpp:func:`os_sched()`
-* :cpp:func:`os_arch_ctx_sw()`
-* :cpp:func:`os_sched_ctx_sw_hook()`
-* :cpp:func:`os_sched_get_current_task()`
-* :cpp:func:`os_sched_insert()`
-* :cpp:func:`os_sched_next_task()`
-* :cpp:func:`os_sched_os_timer_exp()`
-* :cpp:func:`os_sched_remove()`
-* :cpp:func:`os_sched_resort()`
-* :cpp:func:`os_sched_set_current_task()`
-* :cpp:func:`os_sched_sleep()`
-* :cpp:func:`os_sched_wakeup()`
+* :c:func:`os_sched()`
+* :c:func:`os_arch_ctx_sw()`
+* :c:func:`os_sched_ctx_sw_hook()`
+* :c:func:`os_sched_get_current_task()`
+* :c:func:`os_sched_insert()`
+* :c:func:`os_sched_next_task()`
+* :c:func:`os_sched_os_timer_exp()`
+* :c:func:`os_sched_remove()`
+* :c:func:`os_sched_resort()`
+* :c:func:`os_sched_set_current_task()`
+* :c:func:`os_sched_sleep()`
+* :c:func:`os_sched_wakeup()`
