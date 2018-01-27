@@ -20,7 +20,7 @@ To get started:
 -  Create a ``hw/mcu/mymcu/variant/pkg.yml`` file. Copy from another mcu
    and fill out the relevant information
 -  Create
-   ``hw/mcu/mymcu/variant/include``,\ ``hw/mcu/mymcu/variant/include/mcu``,
+   ``hw/mcu/mymcu/variant/include``, ``hw/mcu/mymcu/variant/include/mcu``,
    and ``hw/mcu/mymcu/variant/src`` directories to contain the code for
    your mcu.
 
