@@ -18,9 +18,6 @@
 #
 
 syscfg.defs:
-    DRV2605_OFB:
-        description: 'Enable driver in BSP'
-        value: 1
     DRV2605_CLI:
         description: 'Enable shell support for the DRV2605'
         value: 0
@@ -39,6 +36,10 @@ syscfg.defs:
     DRV2605_SHELL_ITF_ADDR:
         description: 'DRV2605 I2C Address'
         value: 0x5A
+
+    DRV2605_EN_PIN:
+        description: 'EN pin'
+        value: 3
 
     # these are settings taken from the drv2605 evm for the SEMCO1030 (Mplus)
     # 205hz freq, nominal voltage 1.5V, max voltage 3.0V, DRV2605_LRA_SAMPLE_TIME: 3, DRV2605_LRA_BLANKING_TIME: 2, DRV2605_LRA_IDISS_TIME: 2

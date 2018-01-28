@@ -22,6 +22,9 @@ syscfg.defs:
     TSL2561_OFB:
         description: 'TSL2561 is present'
         value : 0
+    DRV2605_OFB:
+        description: 'DRV2605 is present'
+        value : 0
     LSM303DLHC_OFB:
         description: 'LSM303 is present'
         value : 0

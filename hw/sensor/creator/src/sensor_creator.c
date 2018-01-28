@@ -23,6 +23,10 @@
 #include <defs/error.h>
 #include <string.h>
 
+#if MYNEWT_VAL(DRV2605_OFB)
+#include "hal/hal_gpio.h"
+#include <drv2605/drv2605.h>
+#endif
 #if MYNEWT_VAL(LSM303DLHC_OFB)
 #include <lsm303dlhc/lsm303dlhc.h>
 #endif
@@ -55,6 +59,10 @@
 #endif
 
 /* Driver definitions */
+#if MYNEWT_VAL(DRV2605_OFB)
+static struct drv2605 drv2605;
+#endif
+
 #if MYNEWT_VAL(LSM303DLHC_OFB)
 static struct lsm303dlhc lsm303dlhc;
 #endif
@@ -123,6 +131,15 @@ static struct sensor_itf spi_0_itf_bme = {
     .si_type = SENSOR_ITF_SPI,
     .si_num = 0,
     .si_cs_pin = 3
+};
+#endif
+
+#if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(DRV2605_OFB)
+static struct sensor_itf i2c_0_itf_drv = {
+    .si_type = SENSOR_ITF_I2C,
+    .si_num  = 0,
+    .si_addr = MYNEWT_VAL(DRV2605_SHELL_ITF_ADDR),
+    .si_cs_pin = MYNEWT_VAL(DRV2605_EN_PIN)
 };
 #endif
 
@@ -356,6 +373,29 @@ config_tsl2561_sensor(void)
 #endif
 
 /**
+ * DRV2605 Actuator default configuration used by the creator package
+ *
+ * @return 0 on success, non-zero on failure
+ */
+#if MYNEWT_VAL(DRV2605_OFB)
+static int
+config_drv2605_actuator(void)
+{
+    int rc;
+    struct os_dev *dev;
+    struct drv2605_cfg cfg = {0};
+
+    dev = (struct os_dev *) os_dev_open("drv2605_0", OS_TIMEOUT_NEVER, NULL);
+    assert(dev != NULL);
+
+    rc = drv2605_config((struct drv2605 *) dev, &cfg);
+
+    os_dev_close(dev);
+    return rc;
+}
+#endif
+
+/**
  * LSM303DLHC Sensor default configuration used by the creator package
  *
  * @return 0 on success, non-zero on failure
@@ -515,6 +555,18 @@ sensor_dev_create(void)
     int rc;
 
     (void)rc;
+#if MYNEWT_VAL(DRV2605_OFB)
+    rc = hal_gpio_init_out(MYNEWT_VAL(DRV2605_EN_PIN), 1);
+    assert(rc == 0);
+
+    rc = os_dev_create((struct os_dev *) &drv2605, "drv2605_0",
+      OS_DEV_INIT_PRIMARY, 0, drv2605_init, (void *)&i2c_0_itf_drv);
+    assert(rc == 0);
+
+    rc = config_drv2605_actuator();
+    assert(rc == 0);
+#endif
+
 #if MYNEWT_VAL(LSM303DLHC_OFB)
     /* Since this sensor has multiple I2C addreses,
      * 0x1E for accelerometer and 0x19 for magnetometer,

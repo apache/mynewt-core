@@ -26,6 +26,8 @@ pkg.keywords:
 
 pkg.deps.BME280_OFB:
     - hw/drivers/sensors/bme280
+pkg.deps.DRV2605_OFB:
+    - hw/drivers/drv2605
 pkg.deps.LSM303DLHC_OFB:
     - hw/drivers/sensors/lsm303dlhc
 pkg.deps.MPU6050_OFB:
