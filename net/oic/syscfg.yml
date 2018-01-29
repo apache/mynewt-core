@@ -97,3 +97,6 @@ syscfg.defs:
             Enables per-resource transport layer security requirements.
         value: 1
 
+    OC_COAP_RESPONSE_TIMEOUT:
+        description: 'How many seconds before client request times out'
+        value: 4
