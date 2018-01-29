@@ -1417,6 +1417,20 @@ static const struct shell_cmd_help set_help = {
 #define CMD_ADV_DATA_URI_MAX_LEN                BLE_HS_ADV_MAX_FIELD_SZ
 #define CMD_ADV_DATA_MFG_DATA_MAX_LEN           BLE_HS_ADV_MAX_FIELD_SZ
 
+#if MYNEWT_VAL(BLE_EXT_ADV)
+static void
+update_pattern(uint8_t *buf, int counter)
+{
+    int i;
+
+    for (i = 0; i < 10; i += 2) {
+        counter += 2;
+        buf[i] = (counter / 1000) << 4 | (counter / 100 % 10);
+        buf[i + 1] = (counter / 10 % 10) << 4 | (counter % 10);
+    }
+}
+#endif
+
 static int
 cmd_set_adv_data_or_scan_rsp(int argc, char **argv, bool scan_rsp)
 {
@@ -1454,6 +1468,9 @@ cmd_set_adv_data_or_scan_rsp(int argc, char **argv, bool scan_rsp)
     int rc;
 #if MYNEWT_VAL(BLE_EXT_ADV)
     uint8_t instance;
+    uint8_t extra_data[10];
+    uint16_t counter;
+    uint16_t extra_data_len;
     struct os_mbuf *adv_data;
 #endif
 
@@ -1708,6 +1725,21 @@ cmd_set_adv_data_or_scan_rsp(int argc, char **argv, bool scan_rsp)
             goto done;
         }
 
+        /* Append some extra data, if requested */
+        extra_data_len = parse_arg_uint16("extra_data_len", &rc);
+        if (rc == 0) {
+            counter = 0;
+            extra_data_len = min(extra_data_len, 1650);
+            while (counter < extra_data_len) {
+                update_pattern(extra_data, counter);
+
+                os_mbuf_append(adv_data, extra_data,
+                               min(extra_data_len - counter, 10));
+
+                counter += 10;
+            }
+        }
+
         if (scan_rsp) {
             rc = ble_gap_ext_adv_rsp_set_data(instance, adv_data);
         } else {
@@ -1763,6 +1795,9 @@ static const struct shell_param set_adv_data_params[] = {
     {"uri", "usage: =[XX:XX...]"},
     {"mfg_data", "usage: =[XX:XX...]"},
     {"eddystone_url", "usage: =[string]"},
+#if MYNEWT_VAL(BLE_EXT_ADV)
+    {"extra_data_len", "usage: =[UINT16]"},
+#endif
     {NULL, NULL}
 };
 
