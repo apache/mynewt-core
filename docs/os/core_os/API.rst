@@ -21,3 +21,8 @@ CPU Time
 ~~~~~~~~
 
 .. doxygenfile:: os_cputime.h
+
+OS Time
+~~~~~~~~
+
+.. doxygenfile:: os_time.h

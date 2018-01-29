@@ -3,3 +3,4 @@ node_modules
 _build
 doxygen_*
 *.pyc
+.doctrees
