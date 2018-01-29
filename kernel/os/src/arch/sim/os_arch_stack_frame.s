@@ -23,6 +23,9 @@
 #elif defined MN_OSX
 #define sigsetjmp   sigsetjmp
 #define CNAME(x)    _ ## x
+#elif defined MN_FreeBSD
+#define sigsetjmp   sigsetjmp
+#define CNAME(x)    x
 #else
 #error "unsupported platform"
 #endif
