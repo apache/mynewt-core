@@ -36,6 +36,7 @@
 #include "services/gap/ble_svc_gap.h"
 #include "services/gatt/ble_svc_gatt.h"
 
+static uint8_t oc_ep_gatt_size(const struct oc_endpoint *oe);
 static void oc_send_buffer_gatt(struct os_mbuf *m);
 static char *oc_log_ep_gatt(char *ptr, int maxlen, const struct oc_endpoint *);
 enum oc_resource_properties
@@ -44,8 +45,8 @@ static int oc_connectivity_init_gatt(void);
 void oc_connectivity_shutdown_gatt(void);
 
 static const struct oc_transport oc_gatt_transport = {
-    .ot_ep_size = sizeof(struct oc_endpoint_ble),
     .ot_flags = OC_TRANSPORT_USE_TCP,
+    .ot_ep_size = oc_ep_gatt_size,
     .ot_tx_ucast = oc_send_buffer_gatt,
     .ot_tx_mcast = oc_send_buffer_gatt,
     .ot_get_trans_security = oc_get_trans_security_gatt,
@@ -187,6 +188,12 @@ oc_ble_req_attr_to_idx(uint16_t attr_handle)
         }
     }
     return -1;
+}
+
+static uint8_t
+oc_ep_gatt_size(const struct oc_endpoint *oe)
+{
+    return sizeof(struct oc_endpoint_ble);
 }
 
 static char *
