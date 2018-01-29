@@ -360,8 +360,8 @@ err:
 }
 
 
-//NOTE diagnistics (and frankly all operation) will in all likelyhood fail if your motor is not SECURED to a mass
-//it cant be floating on your desk even for prototyping
+// NOTE diagnistics (and frankly all operation) will in all likelyhood fail if your motor is not SECURED to a mass
+// it cant be floating on your desk even for prototyping
 int
 drv2605_mode_diagnostic(struct sensor_itf *itf)
 {
@@ -380,32 +380,32 @@ drv2605_mode_diagnostic(struct sensor_itf *itf)
         goto err;
     }
 
-    //4. Set the GO bit (write 0x01 to register 0x0C) to start the auto-calibration process
+    // 4. Set the GO bit (write 0x01 to register 0x0C) to start the auto-calibration process
     rc = drv2605_write8(itf, DRV2605_GO_ADDR, DRV2605_GO_GO);
     if (rc) {
         goto err;
     }
 
-    //When diagnostic is complete, the GO bit automatically clears. Timeout after 255 x 5ms or 1275ms
+    // When diagnostic is complete, the GO bit automatically clears. Timeout after 255 x 5ms or 1275ms
     do{
         os_time_delay((OS_TICKS_PER_SEC * 5)/1000 + 1);
         rc = drv2605_read8(itf, DRV2605_GO_ADDR, &temp);
     } while (!rc && interval-- && (temp & DRV2605_GO_GO));
 
-    //if we timed out
+    // if we timed out
     if (!interval) {
-        rc = 1; //TODO what code to return?
+        rc = OS_TIMEOUT;
         goto err;
     }
 
-    //5. Check the status of the DIAG_RESULT bit (in register 0x00) to ensure that the diagnostic routine is complete without faults.
+    // 5. Check the status of the DIAG_RESULT bit (in register 0x00) to ensure that the diagnostic routine is complete without faults.
     rc = drv2605_read8(itf, DRV2605_STATUS_ADDR, &temp);
     if (rc || (temp & DRV2605_STATUS_DIAG_RESULT_FAIL)) {
-        rc = 1; //TODO what code to return?
+        rc = OS_ERROR;
         goto err;
     }
 
-    //put back into standby like all other successful mode ops
+    // put back into standby like all other successful mode ops
     rc = drv2605_write8(itf, DRV2605_MODE_ADDR, (last_mode & (~DRV2605_MODE_STANDBY_MASK)) | DRV2605_MODE_STANDBY);
     if (rc) {
         goto err;
@@ -432,7 +432,7 @@ drv2605_send_defaults(struct sensor_itf *itf)
         goto err;
     }
 
-    //todo LRA specific
+    // TODO: Support ERM?
     rc = drv2605_write8(itf, DRV2605_FEEDBACK_CONTROL_ADDR, ((MYNEWT_VAL(DRV2605_CALIBRATED_BEMF_GAIN) & DRV2605_FEEDBACK_CONTROL_BEMF_GAIN_MAX) << DRV2605_FEEDBACK_CONTROL_BEMF_GAIN_POS) | DRV2605_FEEDBACK_CONTROL_N_LRA );
     if (rc) {
         goto err;
@@ -444,13 +444,12 @@ drv2605_send_defaults(struct sensor_itf *itf)
         goto err;
     }
 
-    //TODO lra specific?
+    // TODO: Support ERM?
     rc = drv2605_write8(itf, DRV2605_CONTROL3_ADDR, DRV2605_CONTROL3_LRA_DRIVE_MODE_ONCE | DRV2605_CONTROL3_LRA_OPEN_LOOP_CLOSED);
     if (rc) {
         goto err;
     }
 
-    //previously computed
     rc = drv2605_write8(itf, DRV2605_AUTO_CALIBRATION_COMPENSATION_RESULT_ADDR, MYNEWT_VAL(DRV2605_CALIBRATED_COMP));
     if (rc) {
         goto err;
@@ -461,8 +460,8 @@ drv2605_send_defaults(struct sensor_itf *itf)
         goto err;
     }
 
-    //TODO select for ERM too
-    //Library 6 is a closed-loop library tuned for LRAs. The library selection occurs through register 0x03 (see the (Address: 0x03) section).
+    // TODO: Support ERM?
+    // Library 6 is a closed-loop library tuned for LRAs. The library selection occurs through register 0x03 (see the (Address: 0x03) section).
     rc = drv2605_write8(itf, DRV2605_WAVEFORM_CONTROL_ADDR, DRV2605_WAVEFORM_CONTROL_LIBRARY_SEL_LRA);
     if (rc) {
         goto err;
@@ -534,7 +533,7 @@ err:
 int
 drv2605_set_power_mode(struct sensor_itf *itf, enum drv2605_power_mode power_mode)
 {
-    //todo, any hiccup in writing enable if already active? dont like the idea of reading it first though..
+    // TODO: any hiccup in writing enable if already active? dont like the idea of reading it first though..
     switch(power_mode) {
         case DRV2605_POWER_STANDBY:
             hal_gpio_write(itf->si_cs_pin, 1);
@@ -556,37 +555,37 @@ drv2605_validate_cal(struct drv2605_cal *cal)
     int rc;
 
     if (cal->brake_factor > DRV2605_FEEDBACK_CONTROL_FB_BRAKE_FACTOR_MAX) {
-        rc = 1; //TODO what code to return?
+        rc = OS_EINVAL;
         goto err;
     }
 
     if (cal->loop_gain > DRV2605_FEEDBACK_CONTROL_LOOP_GAIN_MAX) {
-        rc = 1; //TODO what code to return?
+        rc = OS_EINVAL;
         goto err;
     }
 
     if (cal->lra_sample_time > DRV2605_CONTROL2_SAMPLE_TIME_MAX) {
-        rc = 1; //TODO what code to return?
+        rc = OS_EINVAL;
         goto err;
     }
 
     if (cal->lra_blanking_time > DRV2605_BLANKING_TIME_MAX) {
-        rc = 1; //TODO what code to return?
+        rc = OS_EINVAL;
         goto err;
     }
 
     if (cal->lra_idiss_time > DRV2605_IDISS_TIME_MAX) {
-        rc = 1; //TODO what code to return?
+        rc = OS_EINVAL;
         goto err;
     }
 
     if (cal->auto_cal_time > DRV2605_CONTROL4_AUTO_CAL_TIME_MAX) {
-        rc = 1; //TODO what code to return?
+        rc = OS_EINVAL;
         goto err;
     }
 
     if (cal->lra_zc_det_time > DRV2605_CONTROL4_ZC_DET_TIME_MAX) {
-        rc = 1; //TODO what code to return?
+        rc = OS_EINVAL;
         goto err;
     }
 
@@ -648,38 +647,38 @@ drv2605_mode_calibrate(struct sensor_itf *itf, struct drv2605_cal *cal)
         goto err;
     }
 
-    //2. Write a value of 0x07 to register 0x01. This value moves the DRV2605L device out of STANDBY and places the MODE[2:0] bits in auto-calibration mode.
+    // 2. Write a value of 0x07 to register 0x01. This value moves the DRV2605L device out of STANDBY and places the MODE[2:0] bits in auto-calibration mode.
     rc = drv2605_write8(itf, DRV2605_MODE_ADDR, DRV2605_MODE_AUTO_CALIBRATION | DRV2605_MODE_ACTIVE);
     if (rc) {
         goto err;
     }
 
-    //4. Set the GO bit (write 0x01 to register 0x0C) to start the auto-calibration process.
+    // 4. Set the GO bit (write 0x01 to register 0x0C) to start the auto-calibration process.
     rc = drv2605_write8(itf, DRV2605_GO_ADDR, DRV2605_GO_GO);
     if (rc) {
         goto err;
     }
 
-    //When auto calibration is complete, the GO bit automatically clears. The auto-calibration results are written in the respective registers as shown in Figure 25.
+    // When auto calibration is complete, the GO bit automatically clears. The auto-calibration results are written in the respective registers as shown in Figure 25.
     do{
         os_time_delay((OS_TICKS_PER_SEC * 5)/1000 + 1);
         rc = drv2605_read8(itf, DRV2605_GO_ADDR, &temp);
     } while (!rc && interval-- && (temp & DRV2605_GO_GO));
 
-    //if we timed out
+    // if we timed out
     if (!interval) {
-        rc = 1; //TODO what code to return?
+        rc = OS_TIMEOUT;
         goto err;
     }
 
-    //5. Check the status of the DIAG_RESULT bit (in register 0x00) to ensure that the auto-calibration routine is complete without faults
+    // 5. Check the status of the DIAG_RESULT bit (in register 0x00) to ensure that the auto-calibration routine is complete without faults
     rc = drv2605_read8(itf, DRV2605_STATUS_ADDR, &temp);
     if (rc || (temp & DRV2605_STATUS_DIAG_RESULT_FAIL)) {
-        rc = 1; //TODO what code to return?
+        rc = OS_ERROR;
         goto err;
     }
 
-    //put back into standby like all other successful mode ops
+    // put back into standby like all other successful mode ops
     rc = drv2605_write8(itf, DRV2605_MODE_ADDR, (last_mode & (~DRV2605_MODE_STANDBY_MASK)) | DRV2605_MODE_STANDBY);
     if (rc) {
         goto err;
@@ -754,15 +753,15 @@ drv2605_mode_reset(struct sensor_itf *itf)
         goto err;
     }
 
-    //When reset is complete, the reset bit automatically clears. Timeout after 255 x 5ms or 1275ms
+    // When reset is complete, the reset bit automatically clears. Timeout after 255 x 5ms or 1275ms
     do{
         os_time_delay((OS_TICKS_PER_SEC * 5)/1000 + 1);
         rc = drv2605_read8(itf, DRV2605_MODE_ADDR, &temp);
     } while (!rc && interval-- && (temp & DRV2605_MODE_RESET));
 
-    //if we timed out
+    // if we timed out
     if (!interval) {
-        rc = 1; //TODO what code to return?
+        rc = OS_TIMEOUT;
         goto err;
     }
 
