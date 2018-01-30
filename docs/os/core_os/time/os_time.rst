@@ -84,9 +84,9 @@ other.
 
 -  :c:macro:`OS_TIME_TICK_LT` -- evaluates to true if t1 is before t2 in
    time.
--  :c:macro:`OS_TIME_TICK_GT()` -- evaluates to true if t1 is after t2 in
+-  :c:macro:`OS_TIME_TICK_GT` -- evaluates to true if t1 is after t2 in
    time
--  :c:macro:`OS_TIME_TICK_GEQ()` -- evaluates to true if t1 is on or after
+-  :c:macro:`OS_TIME_TICK_GEQ` -- evaluates to true if t1 is on or after
    t2 in time.
 
 NOTE: For all of these macros the calculations are done modulo
@@ -99,9 +99,9 @@ The following macros help adding or subtracting time when represented as
 :c:data:`struct os_timeval <os_timeval>`. All parameters to the following macros are
 pointers to :c:data:`struct os_timeval <os_timeval>`.
 
--  :c:macro:`os_timeradd()` -- Add ``uvp`` to ``tvp`` and store
+-  :c:macro:`os_timeradd` -- Add ``uvp`` to ``tvp`` and store
    result in ``vvp``.
--  :c:macro:`os_timersub()` -- Subtract ``uvp`` from ``tvp`` and
+-  :c:macro:`os_timersub` -- Subtract ``uvp`` from ``tvp`` and
    store result in ``vvp``.
 
 Special Notes
