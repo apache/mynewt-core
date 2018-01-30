@@ -30,5 +30,5 @@ pkg.deps:
     - kernel/os
     - sys/console/stub
 
-pkg.deps.BOOT_SERIAL.OVERWRITE:
+pkg.deps.BOOT_SERIAL:
     - boot/boot_serial
