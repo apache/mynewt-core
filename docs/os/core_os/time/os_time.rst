@@ -1,7 +1,11 @@
-OS\_Time
-========
+OS Time
+=======
 
 The system time for the Mynewt OS.
+
+.. contents::
+  :local:
+  :depth: 2
 
 Description
 -----------
@@ -22,33 +26,29 @@ operating systems).
 Data Structures
 ---------------
 
-Time is stored in Mynewt as an ``os_time_t`` value.
+Time is stored in Mynewt as an :c:type:`os_time_t` value.
 
-Wallclock time is represented using the ``struct os_timeval`` and
-``struct os_timezone`` tuple.
+Wallclock time is represented using the :c:data:`struct os_timeval <os_timeval>` and
+:c:data:`struct os_timezone <os_timezone>` tuple.
 
-``struct os_timeval`` represents the number of seconds elapsed since
+:c:data:`struct os_timeval <os_timeval>` represents the number of seconds elapsed since
 00:00:00 Jan 1, 1970 UTC.
 
-.. raw:: html
+.. code-block:: c
 
-   <pre>
    struct os_timeval {
        int64_t tv_sec;  /* seconds since Jan 1 1970 UTC */
        int32_t tv_usec; /* fractional seconds */
    };
 
    struct os_timeval tv = { 1457400000, 0 };  /* 01:20:00 Mar 8 2016 UTC */
-   </pre>
 
-``struct os_timezone`` is used to specify the offset of local time from
-UTC and whether daylight savings is in effect. Note that
-``tz_minuteswest`` is a positive number if the local time is *behind*
-UTC and a negative number if the local time is *ahead* of UTC.
+:c:data:`struct os_timezone <os_timezone>` is used to specify the offset of local time from
+UTC and whether daylight savings is in effect. Note that ``tz_minuteswest`` is a positive number
+if the local time is *behind* UTC and a negative number if the local time is *ahead* of UTC.
 
-.. raw:: html
+.. code-block:: c
 
-   <pre>
    struct os_timezone {
        int16_t tz_minuteswest;
        int16_t tz_dsttime;
@@ -60,40 +60,48 @@ UTC and a negative number if the local time is *ahead* of UTC.
 
    /* Indian Standard Time is 05:30 hours east of UTC */
    struct os_timezone IST = { -330, 0 };
-   </pre>
 
-API
+Functions
 -----------------
 
-.. doxygengroup:: OSTime
-    :content-only:
+=============================== ====================
+Function            	          Description
+=============================== ====================
+:c:func:`os_time_advance()`	    Increments the OS time tick for the system.
+:c:func:`os_time_delay()`	      Put the current task to sleep for the given number of ticks.
+:c:func:`os_time_get()`	        Get the current value of OS time.
+:c:func:`os_time_ms_to_ticks()`	Converts milliseconds to os ticks.
+:c:func:`os_get_uptime_usec()`	Gets the time duration since boot.
+:c:func:`os_gettimeofday()`	    Populate the given timeval and timezone structs with current time data.
+:c:func:`os_settimeofday()`	    Set the current time of day to the given time structs.
+=============================== ====================
 
-List of Macros
+Macros
 --------------
 
 Several macros help with the evalution of times with respect to each
 other.
 
--  ``OS_TIME_TICK_LT(t1,t2)`` -- evaluates to true if t1 is before t2 in
+-  :c:macro:`OS_TIME_TICK_LT` -- evaluates to true if t1 is before t2 in
    time.
--  ``OS_TIME_TICK_GT(t1,t2)`` -- evaluates to true if t1 is after t2 in
+-  :c:macro:`OS_TIME_TICK_GT` -- evaluates to true if t1 is after t2 in
    time
--  ``OS_TIME_TICK_GEQ(t1,t2)`` -- evaluates to true if t1 is on or after
+-  :c:macro:`OS_TIME_TICK_GEQ` -- evaluates to true if t1 is on or after
    t2 in time.
 
 NOTE: For all of these macros the calculations are done modulo
-'os\_time\_t'.
+'os_time_t'.
 
 Ensure that comparison of OS time always uses the macros above (to
 compensate for the possible wrap of OS time).
 
 The following macros help adding or subtracting time when represented as
-``struct os_timeval``. All parameters to the following macros are
-pointers to ``struct os_timeval``.
+:c:data:`struct os_timeval <os_timeval>`. All parameters to the following macros are
+pointers to :c:data:`struct os_timeval <os_timeval>`.
 
--  ``os_timeradd(tvp, uvp, vvp)`` -- Add ``uvp`` to ``tvp`` and store
+-  :c:macro:`os_timeradd` -- Add ``uvp`` to ``tvp`` and store
    result in ``vvp``.
--  ``os_timersub(tvp, uvp, vvp)`` -- Subtract ``uvp`` from ``tvp`` and
+-  :c:macro:`os_timersub` -- Subtract ``uvp`` from ``tvp`` and
    store result in ``vvp``.
 
 Special Notes
@@ -102,7 +110,7 @@ Special Notes
 Its important to understand how quickly the time wraps especially when
 doing time comparison using the macros above (or by any other means).
 
-For example, if a tick is 1 millisecond and ``os_time_t`` is 32-bits the
+For example, if a tick is 1 millisecond and :c:type:`os_time_t` is 32-bits the
 OS time will wrap back to zero in about 49.7 days or stated another way,
 the OS time epoch is 49.7 days.
 
