@@ -268,7 +268,7 @@ TEST_SUITE_##suite_name(void);                               \
 
 #define TEST_ASSERT_FULL(fatal, expr, ...) (assert(expr))
 
-#else 
+#else
 
 #define TEST_ASSERT_FULL(fatal, expr, ...) do                 \
 {                                                             \

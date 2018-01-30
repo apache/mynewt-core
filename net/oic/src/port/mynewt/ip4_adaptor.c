@@ -39,14 +39,15 @@
 
 static void oc_send_buffer_ip4(struct os_mbuf *m);
 static void oc_send_buffer_ip4_mcast(struct os_mbuf *m);
+static uint8_t oc_ep_ip4_size(const struct oc_endpoint *oe);
 static char *oc_log_ep_ip4(char *ptr, int maxlen, const struct oc_endpoint *);
 static int oc_connectivity_init_ip4(void);
 void oc_connectivity_shutdown_ip4(void);
 static void oc_event_ip4(struct os_event *ev);
 
 static const struct oc_transport oc_ip4_transport = {
-    .ot_ep_size = sizeof(struct oc_endpoint_ip),
     .ot_flags = 0,
+    .ot_ep_size = oc_ep_ip4_size,
     .ot_tx_ucast = oc_send_buffer_ip4,
     .ot_tx_mcast = oc_send_buffer_ip4_mcast,
     .ot_get_trans_security = NULL,
@@ -107,6 +108,12 @@ oc_log_ep_ip4(char *ptr, int maxlen, const struct oc_endpoint *oe)
     len = strlen(ptr);
     snprintf(ptr + len, maxlen - len, "-%u", oe_ip->port);
     return ptr;
+}
+
+static uint8_t
+oc_ep_ip4_size(const struct oc_endpoint *oe)
+{
+    return sizeof(struct oc_endpoint_ip);
 }
 
 static void
@@ -327,7 +334,7 @@ oc_connectivity_init_ip4(void)
 
     sin.msin_len = sizeof(sin);
     sin.msin_family = MN_AF_INET;
-    sin.msin_port = 11111;
+    sin.msin_port = 0;
     memset(&sin.msin_addr, 0, sizeof(sin.msin_addr));
 
     rc = mn_bind(oc_ucast4, (struct mn_sockaddr *)&sin);

@@ -36,8 +36,8 @@ struct oc_endpoint;
 enum oc_resource_properties;
 
 struct oc_transport {
-    uint8_t ot_ep_size;
     uint8_t ot_flags;
+    uint8_t (*ot_ep_size)(const struct oc_endpoint *);
     void (*ot_tx_ucast)(struct os_mbuf *);
     void (*ot_tx_mcast)(struct os_mbuf *);
     enum oc_resource_properties

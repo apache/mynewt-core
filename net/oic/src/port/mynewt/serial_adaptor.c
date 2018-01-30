@@ -33,13 +33,14 @@
 #include "oic/port/mynewt/transport.h"
 
 static void oc_send_buffer_serial(struct os_mbuf *m);
+static uint8_t oc_ep_serial_size(const struct oc_endpoint *oe);
 static char *oc_log_ep_serial(char *ptr, int max, const struct oc_endpoint *);
 static int oc_connectivity_init_serial(void);
 void oc_connectivity_shutdown_serial(void);
 
 static const struct oc_transport oc_serial_transport = {
-    .ot_ep_size = sizeof(struct oc_endpoint_plain),
     .ot_flags = 0,
+    .ot_ep_size = oc_ep_serial_size,
     .ot_tx_ucast = oc_send_buffer_serial,
     .ot_tx_mcast = oc_send_buffer_serial,
     .ot_get_trans_security = NULL,
@@ -56,6 +57,12 @@ static char *
 oc_log_ep_serial(char *ptr, int max, const struct oc_endpoint *oe)
 {
     return "serial";
+}
+
+static uint8_t
+oc_ep_serial_size(const struct oc_endpoint *oe)
+{
+    return sizeof(struct oc_endpoint_plain);
 }
 
 static int

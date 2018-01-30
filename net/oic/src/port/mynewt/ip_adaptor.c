@@ -38,6 +38,7 @@
 #include "oic/port/mynewt/transport.h"
 #include "oic/port/mynewt/ip.h"
 
+static uint8_t oc_ep_ip6_size(const struct oc_endpoint *oe);
 static void oc_send_buffer_ip6(struct os_mbuf *m);
 static void oc_send_buffer_ip6_mcast(struct os_mbuf *m);
 static char *oc_log_ep_ip6(char *ptr, int maxlen, const struct oc_endpoint *);
@@ -46,8 +47,8 @@ void oc_connectivity_shutdown_ip6(void);
 static void oc_event_ip6(struct os_event *ev);
 
 static const struct oc_transport oc_ip6_transport = {
-    .ot_ep_size = sizeof(struct oc_endpoint_ip),
     .ot_flags = 0,
+    .ot_ep_size = oc_ep_ip6_size,
     .ot_tx_ucast = oc_send_buffer_ip6,
     .ot_tx_mcast = oc_send_buffer_ip6_mcast,
     .ot_get_trans_security = NULL,
@@ -111,6 +112,12 @@ oc_log_ep_ip6(char *ptr, int maxlen, const struct oc_endpoint *oe)
     len = strlen(ptr);
     snprintf(ptr + len, maxlen - len, "-%u", oe_ip->port);
     return ptr;
+}
+
+static uint8_t
+oc_ep_ip6_size(const struct oc_endpoint *oe)
+{
+    return sizeof(struct oc_endpoint_ip);
 }
 
 static void

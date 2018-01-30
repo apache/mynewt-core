@@ -323,6 +323,9 @@ os_memblock_put(struct os_mempool *mp, void *block_addr)
 {
     struct os_mempool_ext *mpe;
     int rc;
+#if MYNEWT_VAL(OS_MEMPOOL_CHECK)
+    struct os_memblock *block;
+#endif
 
     /* Make sure parameters are valid */
     if ((mp == NULL) || (block_addr == NULL)) {

@@ -18,6 +18,7 @@
 #define OC_CONNECTIVITY_H
 
 #include <stdint.h>
+#include <assert.h>
 
 #include "oic/port/mynewt/config.h"
 #include "oic/port/mynewt/transport.h"
@@ -56,7 +57,8 @@ struct oc_endpoint_plain {
 static inline int
 oc_endpoint_size(struct oc_endpoint *oe)
 {
-    return oc_transports[oe->ep.oe_type]->ot_ep_size;
+    assert(oc_transports[oe->ep.oe_type]);
+    return oc_transports[oe->ep.oe_type]->ot_ep_size(oe);
 }
 
 static inline int

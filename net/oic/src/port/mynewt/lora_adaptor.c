@@ -44,13 +44,14 @@
 #endif
 
 static void oc_send_buffer_lora(struct os_mbuf *m);
+static uint8_t oc_ep_lora_size(const struct oc_endpoint *oe);
 static char *oc_log_ep_lora(char *ptr, int maxlen, const struct oc_endpoint *);
 static int oc_connectivity_init_lora(void);
 void oc_connectivity_shutdown_lora(void);
 
 static const struct oc_transport oc_lora_transport = {
-    .ot_ep_size = sizeof(struct oc_endpoint_lora),
     .ot_flags = 0,
+    .ot_ep_size = oc_ep_lora_size,
     .ot_tx_ucast = oc_send_buffer_lora,
     .ot_tx_mcast = oc_send_buffer_lora,
     .ot_get_trans_security = NULL,
@@ -121,6 +122,12 @@ oc_log_ep_lora(char *ptr, int maxlen, const struct oc_endpoint *oe)
 
     snprintf(ptr, maxlen, "lora %u", oe_lora->port);
     return ptr;
+}
+
+static uint8_t
+oc_ep_lora_size(const struct oc_endpoint *oe)
+{
+    return sizeof(struct oc_endpoint_lora);
 }
 
 void
