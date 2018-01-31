@@ -34,8 +34,8 @@
 
 #define BT_DBG_ENABLED (MYNEWT_VAL(BLE_MESH_DEBUG))
 
-/* Company ID*/
-#define CID_VENDOR 0xFFFF
+/* Company ID */
+#define CID_VENDOR 0x05C3
 #define STANDARD_TEST_ID 0x00
 #define TEST_ID 0x01
 static int recent_test_id = STANDARD_TEST_ID;
