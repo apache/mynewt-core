@@ -2,13 +2,11 @@
   ******************************************************************************
   * @file    stm32f4xx_hal_sai.h
   * @author  MCD Application Team
-  * @version V1.5.1
-  * @date    01-July-2016
   * @brief   Header file of SAI HAL module.
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; COPYRIGHT(c) 2016 STMicroelectronics</center></h2>
+  * <h2><center>&copy; COPYRIGHT(c) 2017 STMicroelectronics</center></h2>
   *
   * Redistribution and use in source and binary forms, with or without modification,
   * are permitted provided that the following conditions are met:
@@ -50,7 +48,8 @@
   * @{
   */
 #if defined(STM32F427xx) || defined(STM32F437xx) || defined(STM32F429xx) || defined(STM32F439xx) || \
-    defined(STM32F446xx) || defined(STM32F469xx) || defined(STM32F479xx)
+    defined(STM32F446xx) || defined(STM32F469xx) || defined(STM32F479xx) || defined(STM32F413xx) || \
+    defined(STM32F423xx)
 
 /** @addtogroup SAI
   * @{
@@ -244,6 +243,10 @@ typedef struct __SAI_HandleTypeDef
   * @}
   */
 
+/**
+  * @}
+  */
+
 /* Exported constants --------------------------------------------------------*/
 
 /** @defgroup SAI_Exported_Constants SAI Exported Constants
@@ -253,15 +256,15 @@ typedef struct __SAI_HandleTypeDef
 /** @defgroup SAI_Error_Code SAI Error Code 
   * @{
   */
-#define HAL_SAI_ERROR_NONE    ((uint32_t)0x00000000U)  /*!< No error                                    */
-#define HAL_SAI_ERROR_OVR     ((uint32_t)0x00000001U)  /*!< Overrun Error                               */
-#define HAL_SAI_ERROR_UDR     ((uint32_t)0x00000002U)  /*!< Underrun error                              */
-#define HAL_SAI_ERROR_AFSDET  ((uint32_t)0x00000004U)  /*!< Anticipated Frame synchronisation detection */
-#define HAL_SAI_ERROR_LFSDET  ((uint32_t)0x00000008U)  /*!< Late Frame synchronisation detection        */
-#define HAL_SAI_ERROR_CNREADY ((uint32_t)0x00000010U)  /*!< codec not ready                             */
-#define HAL_SAI_ERROR_WCKCFG  ((uint32_t)0x00000020U)  /*!< Wrong clock configuration                   */
-#define HAL_SAI_ERROR_TIMEOUT ((uint32_t)0x00000040U)  /*!< Timeout error                               */
-#define HAL_SAI_ERROR_DMA     ((uint32_t)0x00000080U)  /*!< DMA error                                   */
+#define HAL_SAI_ERROR_NONE    0x00000000U  /*!< No error                                    */
+#define HAL_SAI_ERROR_OVR     0x00000001U  /*!< Overrun Error                               */
+#define HAL_SAI_ERROR_UDR     0x00000002U  /*!< Underrun error                              */
+#define HAL_SAI_ERROR_AFSDET  0x00000004U  /*!< Anticipated Frame synchronisation detection */
+#define HAL_SAI_ERROR_LFSDET  0x00000008U  /*!< Late Frame synchronisation detection        */
+#define HAL_SAI_ERROR_CNREADY 0x00000010U  /*!< codec not ready                             */
+#define HAL_SAI_ERROR_WCKCFG  0x00000020U  /*!< Wrong clock configuration                   */
+#define HAL_SAI_ERROR_TIMEOUT 0x00000040U  /*!< Timeout error                               */
+#define HAL_SAI_ERROR_DMA     0x00000080U  /*!< DMA error                                   */
 /**
   * @}
   */
@@ -299,30 +302,19 @@ typedef struct __SAI_HandleTypeDef
   * @}
   */
 
-/** @defgroup SAI_Clock_Source  SAI Clock Source
-  * @{
-  */
-#define SAI_CLKSOURCE_PLLSAI             ((uint32_t)0x00000000U)
-#define SAI_CLKSOURCE_PLLI2S             ((uint32_t)0x00100000U)
-#define SAI_CLKSOURCE_EXT                ((uint32_t)0x00200000U)
-#define SAI_CLKSOURCE_NA                 ((uint32_t)0x00400000U) /*!< No applicable for STM32F446xx  */
-/**
-  * @}
-  */
-
 /** @defgroup SAI_Audio_Frequency SAI Audio Frequency
   * @{
   */
-#define SAI_AUDIO_FREQUENCY_192K          ((uint32_t)192000U)
-#define SAI_AUDIO_FREQUENCY_96K           ((uint32_t)96000U)
-#define SAI_AUDIO_FREQUENCY_48K           ((uint32_t)48000U)
-#define SAI_AUDIO_FREQUENCY_44K           ((uint32_t)44100U)
-#define SAI_AUDIO_FREQUENCY_32K           ((uint32_t)32000U)
-#define SAI_AUDIO_FREQUENCY_22K           ((uint32_t)22050U)
-#define SAI_AUDIO_FREQUENCY_16K           ((uint32_t)16000U)
-#define SAI_AUDIO_FREQUENCY_11K           ((uint32_t)11025U)
-#define SAI_AUDIO_FREQUENCY_8K            ((uint32_t)8000U)
-#define SAI_AUDIO_FREQUENCY_MCKDIV        ((uint32_t)0U)
+#define SAI_AUDIO_FREQUENCY_192K          192000U
+#define SAI_AUDIO_FREQUENCY_96K           96000U
+#define SAI_AUDIO_FREQUENCY_48K           48000U
+#define SAI_AUDIO_FREQUENCY_44K           44100U
+#define SAI_AUDIO_FREQUENCY_32K           32000U
+#define SAI_AUDIO_FREQUENCY_22K           22050U
+#define SAI_AUDIO_FREQUENCY_16K           16000U
+#define SAI_AUDIO_FREQUENCY_11K           11025U
+#define SAI_AUDIO_FREQUENCY_8K            8000U
+#define SAI_AUDIO_FREQUENCY_MCKDIV        0U
 /**
   * @}
   */
@@ -330,7 +322,7 @@ typedef struct __SAI_HandleTypeDef
 /** @defgroup SAI_Block_Mode SAI Block Mode
   * @{
   */
-#define SAI_MODEMASTER_TX         ((uint32_t)0x00000000U)
+#define SAI_MODEMASTER_TX         0x00000000U
 #define SAI_MODEMASTER_RX         ((uint32_t)SAI_xCR1_MODE_0)
 #define SAI_MODESLAVE_TX          ((uint32_t)SAI_xCR1_MODE_1)
 #define SAI_MODESLAVE_RX          ((uint32_t)(SAI_xCR1_MODE_1 | SAI_xCR1_MODE_0))
@@ -341,7 +333,7 @@ typedef struct __SAI_HandleTypeDef
 /** @defgroup SAI_Block_Protocol SAI Block Protocol
   * @{
   */
-#define SAI_FREE_PROTOCOL                 ((uint32_t)0x00000000U)
+#define SAI_FREE_PROTOCOL                 0x00000000U
 #define SAI_SPDIF_PROTOCOL                ((uint32_t)SAI_xCR1_PRTCFG_0)
 #define SAI_AC97_PROTOCOL                 ((uint32_t)SAI_xCR1_PRTCFG_1)
 /**
@@ -364,7 +356,7 @@ typedef struct __SAI_HandleTypeDef
 /** @defgroup SAI_Block_MSB_LSB_transmission SAI Block MSB LSB transmission
   * @{
   */
-#define SAI_FIRSTBIT_MSB                  ((uint32_t)0x00000000U)
+#define SAI_FIRSTBIT_MSB                  0x00000000U
 #define SAI_FIRSTBIT_LSB                  ((uint32_t)SAI_xCR1_LSBFIRST)
 /**
   * @}
@@ -393,7 +385,7 @@ typedef struct __SAI_HandleTypeDef
 /** @defgroup SAI_Block_Output_Drive SAI Block Output Drive 
   * @{
   */
-#define SAI_OUTPUTDRIVE_DISABLE          ((uint32_t)0x00000000U)
+#define SAI_OUTPUTDRIVE_DISABLE          0x00000000U
 #define SAI_OUTPUTDRIVE_ENABLE           ((uint32_t)SAI_xCR1_OUTDRIV)
 /**
   * @}
@@ -402,7 +394,7 @@ typedef struct __SAI_HandleTypeDef
 /** @defgroup SAI_Block_NoDivider SAI Block NoDivider
   * @{
   */
-#define SAI_MASTERDIVIDER_ENABLE         ((uint32_t)0x00000000U)
+#define SAI_MASTERDIVIDER_ENABLE         0x00000000U
 #define SAI_MASTERDIVIDER_DISABLE        ((uint32_t)SAI_xCR1_NODIV)
 /**
   * @}
@@ -411,7 +403,7 @@ typedef struct __SAI_HandleTypeDef
 /** @defgroup SAI_Block_FS_Definition SAI Block FS Definition
   * @{
   */
-#define SAI_FS_STARTFRAME                 ((uint32_t)0x00000000U)
+#define SAI_FS_STARTFRAME                 0x00000000U
 #define SAI_FS_CHANNEL_IDENTIFICATION     ((uint32_t)SAI_xFRCR_FSDEF)
 /**
   * @}
@@ -420,7 +412,7 @@ typedef struct __SAI_HandleTypeDef
 /** @defgroup SAI_Block_FS_Polarity SAI Block FS Polarity 
   * @{
   */
-#define SAI_FS_ACTIVE_LOW                  ((uint32_t)0x00000000U)
+#define SAI_FS_ACTIVE_LOW                  0x00000000U
 #define SAI_FS_ACTIVE_HIGH                 ((uint32_t)SAI_xFRCR_FSPOL)
 /**
   * @}
@@ -429,7 +421,7 @@ typedef struct __SAI_HandleTypeDef
 /** @defgroup SAI_Block_FS_Offset SAI Block FS Offset 
   * @{
   */
-#define SAI_FS_FIRSTBIT                   ((uint32_t)0x00000000U)
+#define SAI_FS_FIRSTBIT                   0x00000000U
 #define SAI_FS_BEFOREFIRSTBIT             ((uint32_t)SAI_xFRCR_FSOFF)
 /**
   * @}
@@ -438,7 +430,7 @@ typedef struct __SAI_HandleTypeDef
 /** @defgroup SAI_Block_Slot_Size SAI Block Slot Size
   * @{
   */
-#define SAI_SLOTSIZE_DATASIZE             ((uint32_t)0x00000000U)  
+#define SAI_SLOTSIZE_DATASIZE             0x00000000U  
 #define SAI_SLOTSIZE_16B                  ((uint32_t)SAI_xSLOTR_SLOTSZ_0)
 #define SAI_SLOTSIZE_32B                  ((uint32_t)SAI_xSLOTR_SLOTSZ_1)
 /**
@@ -448,24 +440,24 @@ typedef struct __SAI_HandleTypeDef
 /** @defgroup SAI_Block_Slot_Active SAI Block Slot Active
   * @{
   */
-#define SAI_SLOT_NOTACTIVE           ((uint32_t)0x00000000U)
-#define SAI_SLOTACTIVE_0             ((uint32_t)0x00000001U)
-#define SAI_SLOTACTIVE_1             ((uint32_t)0x00000002U)
-#define SAI_SLOTACTIVE_2             ((uint32_t)0x00000004U)
-#define SAI_SLOTACTIVE_3             ((uint32_t)0x00000008U)
-#define SAI_SLOTACTIVE_4             ((uint32_t)0x00000010U)
-#define SAI_SLOTACTIVE_5             ((uint32_t)0x00000020U)
-#define SAI_SLOTACTIVE_6             ((uint32_t)0x00000040U)
-#define SAI_SLOTACTIVE_7             ((uint32_t)0x00000080U)
-#define SAI_SLOTACTIVE_8             ((uint32_t)0x00000100U)
-#define SAI_SLOTACTIVE_9             ((uint32_t)0x00000200U)
-#define SAI_SLOTACTIVE_10            ((uint32_t)0x00000400U)
-#define SAI_SLOTACTIVE_11            ((uint32_t)0x00000800U)
-#define SAI_SLOTACTIVE_12            ((uint32_t)0x00001000U)
-#define SAI_SLOTACTIVE_13            ((uint32_t)0x00002000U)
-#define SAI_SLOTACTIVE_14            ((uint32_t)0x00004000U)
-#define SAI_SLOTACTIVE_15            ((uint32_t)0x00008000U)
-#define SAI_SLOTACTIVE_ALL           ((uint32_t)0x0000FFFFU)
+#define SAI_SLOT_NOTACTIVE           0x00000000U
+#define SAI_SLOTACTIVE_0             0x00000001U
+#define SAI_SLOTACTIVE_1             0x00000002U
+#define SAI_SLOTACTIVE_2             0x00000004U
+#define SAI_SLOTACTIVE_3             0x00000008U
+#define SAI_SLOTACTIVE_4             0x00000010U
+#define SAI_SLOTACTIVE_5             0x00000020U
+#define SAI_SLOTACTIVE_6             0x00000040U
+#define SAI_SLOTACTIVE_7             0x00000080U
+#define SAI_SLOTACTIVE_8             0x00000100U
+#define SAI_SLOTACTIVE_9             0x00000200U
+#define SAI_SLOTACTIVE_10            0x00000400U
+#define SAI_SLOTACTIVE_11            0x00000800U
+#define SAI_SLOTACTIVE_12            0x00001000U
+#define SAI_SLOTACTIVE_13            0x00002000U
+#define SAI_SLOTACTIVE_14            0x00004000U
+#define SAI_SLOTACTIVE_15            0x00008000U
+#define SAI_SLOTACTIVE_ALL           0x0000FFFFU
 /**
   * @}
   */
@@ -473,7 +465,7 @@ typedef struct __SAI_HandleTypeDef
 /** @defgroup SAI_Mono_Stereo_Mode SAI Mono Stereo Mode
   * @{
   */
-#define SAI_STEREOMODE                    ((uint32_t)0x00000000U)
+#define SAI_STEREOMODE                    0x00000000U
 #define SAI_MONOMODE                      ((uint32_t)SAI_xCR1_MONO)
 /**
   * @}
@@ -482,7 +474,7 @@ typedef struct __SAI_HandleTypeDef
 /** @defgroup SAI_TRIState_Management SAI TRIState Management
   * @{
   */
-#define SAI_OUTPUT_NOTRELEASED              ((uint32_t)0x00000000U)
+#define SAI_OUTPUT_NOTRELEASED              0x00000000U
 #define SAI_OUTPUT_RELEASED                 ((uint32_t)SAI_xCR2_TRIS)
 /**
   * @}
@@ -491,7 +483,7 @@ typedef struct __SAI_HandleTypeDef
 /** @defgroup SAI_Block_Fifo_Threshold SAI Block Fifo Threshold
   * @{
   */
-#define SAI_FIFOTHRESHOLD_EMPTY  ((uint32_t)0x00000000U)
+#define SAI_FIFOTHRESHOLD_EMPTY  0x00000000U
 #define SAI_FIFOTHRESHOLD_1QF    ((uint32_t)(SAI_xCR2_FTH_0))
 #define SAI_FIFOTHRESHOLD_HF     ((uint32_t)(SAI_xCR2_FTH_1))
 #define SAI_FIFOTHRESHOLD_3QF    ((uint32_t)(SAI_xCR2_FTH_1 | SAI_xCR2_FTH_0))
@@ -503,7 +495,7 @@ typedef struct __SAI_HandleTypeDef
 /** @defgroup SAI_Block_Companding_Mode SAI Block Companding Mode
   * @{
   */
-#define SAI_NOCOMPANDING                 ((uint32_t)0x00000000U)
+#define SAI_NOCOMPANDING                 0x00000000U
 #define SAI_ULAW_1CPL_COMPANDING         ((uint32_t)(SAI_xCR2_COMP_1))
 #define SAI_ALAW_1CPL_COMPANDING         ((uint32_t)(SAI_xCR2_COMP_1 | SAI_xCR2_COMP_0))
 #define SAI_ULAW_2CPL_COMPANDING         ((uint32_t)(SAI_xCR2_COMP_1 | SAI_xCR2_CPL))
@@ -515,7 +507,7 @@ typedef struct __SAI_HandleTypeDef
 /** @defgroup SAI_Block_Mute_Value SAI Block Mute Value
   * @{
   */
-#define SAI_ZERO_VALUE                      ((uint32_t)0x00000000U)
+#define SAI_ZERO_VALUE                      0x00000000U
 #define SAI_LAST_SENT_VALUE                 ((uint32_t)SAI_xCR2_MUTEVAL)
 /**
   * @}
@@ -552,12 +544,12 @@ typedef struct __SAI_HandleTypeDef
 /** @defgroup SAI_Block_Fifo_Status_Level   SAI Block Fifo Status Level
   * @{
   */
-#define SAI_FIFOSTATUS_EMPTY              ((uint32_t)0x00000000U)
-#define SAI_FIFOSTATUS_LESS1QUARTERFULL   ((uint32_t)0x00010000U)
-#define SAI_FIFOSTATUS_1QUARTERFULL       ((uint32_t)0x00020000U)
-#define SAI_FIFOSTATUS_HALFFULL           ((uint32_t)0x00030000U)
-#define SAI_FIFOSTATUS_3QUARTERFULL       ((uint32_t)0x00040000U)
-#define SAI_FIFOSTATUS_FULL               ((uint32_t)0x00050000U)
+#define SAI_FIFOSTATUS_EMPTY              0x00000000U
+#define SAI_FIFOSTATUS_LESS1QUARTERFULL   0x00010000U
+#define SAI_FIFOSTATUS_1QUARTERFULL       0x00020000U
+#define SAI_FIFOSTATUS_HALFFULL           0x00030000U
+#define SAI_FIFOSTATUS_3QUARTERFULL       0x00040000U
+#define SAI_FIFOSTATUS_FULL               0x00050000U
 /**
   * @}
   */
@@ -574,14 +566,14 @@ typedef struct __SAI_HandleTypeDef
  */
 
 /** @brief Reset SAI handle state
-  * @param  __HANDLE__: specifies the SAI Handle.
+  * @param  __HANDLE__ specifies the SAI Handle.
   * @retval NoneS
   */
 #define __HAL_SAI_RESET_HANDLE_STATE(__HANDLE__) ((__HANDLE__)->State = HAL_SAI_STATE_RESET)
 
 /** @brief  Enable or disable the specified SAI interrupts.
-  * @param  __HANDLE__: specifies the SAI Handle.
-  * @param  __INTERRUPT__: specifies the interrupt source to enable or disable.
+  * @param  __HANDLE__ specifies the SAI Handle.
+  * @param  __INTERRUPT__ specifies the interrupt source to enable or disable.
   *         This parameter can be one of the following values:
   *            @arg SAI_IT_OVRUDR: Overrun underrun interrupt enable
   *            @arg SAI_IT_MUTEDET: Mute detection interrupt enable
@@ -596,9 +588,9 @@ typedef struct __SAI_HandleTypeDef
 #define __HAL_SAI_DISABLE_IT(__HANDLE__, __INTERRUPT__)  ((__HANDLE__)->Instance->IMR &= (~(__INTERRUPT__)))
 
 /** @brief  Check if the specified SAI interrupt source is enabled or disabled.
-  * @param  __HANDLE__: specifies the SAI Handle.
+  * @param  __HANDLE__ specifies the SAI Handle.
   *         This parameter can be SAI where x: 1, 2, or 3 to select the SAI peripheral.
-  * @param  __INTERRUPT__: specifies the SAI interrupt source to check.
+  * @param  __INTERRUPT__ specifies the SAI interrupt source to check.
   *         This parameter can be one of the following values:
   *            @arg SAI_IT_OVRUDR: Overrun underrun interrupt enable
   *            @arg SAI_IT_MUTEDET: Mute detection interrupt enable
@@ -612,8 +604,8 @@ typedef struct __SAI_HandleTypeDef
 #define __HAL_SAI_GET_IT_SOURCE(__HANDLE__, __INTERRUPT__) ((((__HANDLE__)->Instance->IMR & (__INTERRUPT__)) == (__INTERRUPT__)) ? SET : RESET)
 
 /** @brief  Check whether the specified SAI flag is set or not.
-  * @param  __HANDLE__: specifies the SAI Handle.
-  * @param  __FLAG__: specifies the flag to check.
+  * @param  __HANDLE__ specifies the SAI Handle.
+  * @param  __FLAG__ specifies the flag to check.
   *         This parameter can be one of the following values:
   *            @arg SAI_FLAG_OVRUDR: Overrun underrun flag.
   *            @arg SAI_FLAG_MUTEDET: Mute detection flag.
@@ -627,8 +619,8 @@ typedef struct __SAI_HandleTypeDef
 #define __HAL_SAI_GET_FLAG(__HANDLE__, __FLAG__) ((((__HANDLE__)->Instance->SR) & (__FLAG__)) == (__FLAG__))
 
 /** @brief  Clear the specified SAI pending flag.
-  * @param  __HANDLE__: specifies the SAI Handle.
-  * @param  __FLAG__: specifies the flag to check.
+  * @param  __HANDLE__ specifies the SAI Handle.
+  * @param  __FLAG__ specifies the flag to check.
   *          This parameter can be any combination of the following values:
   *            @arg SAI_FLAG_OVRUDR: Clear Overrun underrun  
   *            @arg SAI_FLAG_MUTEDET: Clear Mute detection 
@@ -642,13 +634,13 @@ typedef struct __SAI_HandleTypeDef
 #define __HAL_SAI_CLEAR_FLAG(__HANDLE__, __FLAG__) ((__HANDLE__)->Instance->CLRFR = (__FLAG__))
 
 /** @brief  Enable SAI
-  * @param  __HANDLE__: specifies the SAI Handle.
+  * @param  __HANDLE__ specifies the SAI Handle.
   * @retval None
   */    
 #define __HAL_SAI_ENABLE(__HANDLE__) ((__HANDLE__)->Instance->CR1 |=  SAI_xCR1_SAIEN)
 
 /** @brief  Disable SAI
-  * @param  __HANDLE__: specifies the SAI Handle.
+  * @param  __HANDLE__ specifies the SAI Handle.
   * @retval None
   */
 #define __HAL_SAI_DISABLE(__HANDLE__) ((__HANDLE__)->Instance->CR1 &=  ~SAI_xCR1_SAIEN)
@@ -752,10 +744,6 @@ uint32_t HAL_SAI_GetError(SAI_HandleTypeDef *hsai);
                                               ((DATASIZE) == SAI_PROTOCOL_DATASIZE_24BIT)         ||\
                                               ((DATASIZE) == SAI_PROTOCOL_DATASIZE_32BIT))
 
-#define IS_SAI_CLK_SOURCE(SOURCE) (((SOURCE) == SAI_CLKSOURCE_PLLSAI) ||\
-                                   ((SOURCE) == SAI_CLKSOURCE_PLLI2S) ||\
-                                   ((SOURCE) == SAI_CLKSOURCE_EXT))
-
 #define IS_SAI_AUDIO_FREQUENCY(AUDIO) (((AUDIO) == SAI_AUDIO_FREQUENCY_192K) || ((AUDIO) == SAI_AUDIO_FREQUENCY_96K) || \
                                        ((AUDIO) == SAI_AUDIO_FREQUENCY_48K)  || ((AUDIO) == SAI_AUDIO_FREQUENCY_44K) || \
                                        ((AUDIO) == SAI_AUDIO_FREQUENCY_32K)  || ((AUDIO) == SAI_AUDIO_FREQUENCY_22K) || \
@@ -857,10 +845,11 @@ uint32_t HAL_SAI_GetError(SAI_HandleTypeDef *hsai);
   * @}
   */
 
-#endif /* STM32F427xx || STM32F437xx || STM32F429xx || STM32F439xx || STM32F446xx || STM32F469xx || STM32F479xx */
 /**
   * @}
-  */ 
+  */
+
+#endif /* STM32F427xx || STM32F437xx || STM32F429xx || STM32F439xx || STM32F446xx || STM32F469xx || STM32F479xx || STM32F413xx || STM32F423xx  */
 
 /**
   * @}

@@ -35,6 +35,7 @@ docs/html
 docs/latex
 cscope.*
 *.tags
+stlink.log 
 
 # Prevent accidental checkins of personal targets.  If you need to commit a
 # target, specify the -f option for "git add".

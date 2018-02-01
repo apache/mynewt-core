@@ -2,8 +2,6 @@
   ******************************************************************************
   * @file    stm32f4xx_hal_adc.c
   * @author  MCD Application Team
-  * @version V1.5.1
-  * @date    01-July-2016
   * @brief   This file provides firmware functions to manage the following 
   *          functionalities of the Analog to Digital Convertor (ADC) peripheral:
   *           + Initialization and de-initialization functions
@@ -164,7 +162,7 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; COPYRIGHT(c) 2016 STMicroelectronics</center></h2>
+  * <h2><center>&copy; COPYRIGHT(c) 2017 STMicroelectronics</center></h2>
   *
   * Redistribution and use in source and binary forms, with or without modification,
   * are permitted provided that the following conditions are met:
@@ -251,7 +249,7 @@ static void ADC_DMAHalfConvCplt(DMA_HandleTypeDef *hdma);
   *         External trigger source and edge, DMA continuous request after the  
   *         last transfer and End of conversion selection).
   *             
-  * @param  hadc: pointer to a ADC_HandleTypeDef structure that contains
+  * @param  hadc pointer to a ADC_HandleTypeDef structure that contains
   *         the configuration information for the specified ADC.  
   * @retval HAL status
   */
@@ -329,7 +327,7 @@ HAL_StatusTypeDef HAL_ADC_Init(ADC_HandleTypeDef* hadc)
 
 /**
   * @brief  Deinitializes the ADCx peripheral registers to their default reset values. 
-  * @param  hadc: pointer to a ADC_HandleTypeDef structure that contains
+  * @param  hadc pointer to a ADC_HandleTypeDef structure that contains
   *         the configuration information for the specified ADC.  
   * @retval HAL status
   */
@@ -376,7 +374,7 @@ HAL_StatusTypeDef HAL_ADC_DeInit(ADC_HandleTypeDef* hadc)
 
 /**
   * @brief  Initializes the ADC MSP.
-  * @param  hadc: pointer to a ADC_HandleTypeDef structure that contains
+  * @param  hadc pointer to a ADC_HandleTypeDef structure that contains
   *         the configuration information for the specified ADC.  
   * @retval None
   */
@@ -391,7 +389,7 @@ __weak void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc)
 
 /**
   * @brief  DeInitializes the ADC MSP.
-  * @param  hadc: pointer to a ADC_HandleTypeDef structure that contains
+  * @param  hadc pointer to a ADC_HandleTypeDef structure that contains
   *         the configuration information for the specified ADC.  
   * @retval None
   */
@@ -430,13 +428,14 @@ __weak void HAL_ADC_MspDeInit(ADC_HandleTypeDef* hadc)
 
 /**
   * @brief  Enables ADC and starts conversion of the regular channels.
-  * @param  hadc: pointer to a ADC_HandleTypeDef structure that contains
+  * @param  hadc pointer to a ADC_HandleTypeDef structure that contains
   *         the configuration information for the specified ADC.
   * @retval HAL status
   */
 HAL_StatusTypeDef HAL_ADC_Start(ADC_HandleTypeDef* hadc)
 {
   __IO uint32_t counter = 0U;
+  ADC_Common_TypeDef *tmpADC_Common;
   
   /* Check the parameters */
   assert_param(IS_FUNCTIONAL_STATE(hadc->Init.ContinuousConvMode));
@@ -489,19 +488,24 @@ HAL_StatusTypeDef HAL_ADC_Start(ADC_HandleTypeDef* hadc)
     {
       /* Reset ADC all error code fields */
       ADC_CLEAR_ERRORCODE(hadc);
-    }
-    
+    } 
+
     /* Process unlocked */
     /* Unlock before starting ADC conversions: in case of potential           */
     /* interruption, to let the process to ADC IRQ Handler.                   */
     __HAL_UNLOCK(hadc);
-    
+
+    /* Pointer to the common control register to which is belonging hadc    */
+    /* (Depending on STM32F4 product, there may be up to 3 ADCs and 1 common */
+    /* control register)                                                    */
+    tmpADC_Common = ADC_COMMON_REGISTER(hadc);
+
     /* Clear regular group conversion flag and overrun flag */
     /* (To ensure of no unknown state from potential previous ADC operations) */
     __HAL_ADC_CLEAR_FLAG(hadc, ADC_FLAG_EOC | ADC_FLAG_OVR);
     
     /* Check if Multimode enabled */
-    if(HAL_IS_BIT_CLR(ADC->CCR, ADC_CCR_MULTI))
+    if(HAL_IS_BIT_CLR(tmpADC_Common->CCR, ADC_CCR_MULTI))
     {
       /* if no external trigger present enable software conversion of regular channels */
       if((hadc->Instance->CR2 & ADC_CR2_EXTEN) == RESET) 
@@ -530,7 +534,7 @@ HAL_StatusTypeDef HAL_ADC_Start(ADC_HandleTypeDef* hadc)
   * 
   * @note   Caution: This function will stop also injected channels.  
   *
-  * @param  hadc: pointer to a ADC_HandleTypeDef structure that contains
+  * @param  hadc pointer to a ADC_HandleTypeDef structure that contains
   *         the configuration information for the specified ADC.
   *
   * @retval HAL status.
@@ -573,9 +577,9 @@ HAL_StatusTypeDef HAL_ADC_Stop(ADC_HandleTypeDef* hadc)
   *         In this case, DMA resets the flag EOC and polling cannot be
   *         performed on each conversion. Nevertheless, polling can still 
   *         be performed on the complete sequence.
-  * @param  hadc: pointer to a ADC_HandleTypeDef structure that contains
+  * @param  hadc pointer to a ADC_HandleTypeDef structure that contains
   *         the configuration information for the specified ADC.
-  * @param  Timeout: Timeout value in millisecond.  
+  * @param  Timeout Timeout value in millisecond.  
   * @retval HAL status
   */
 HAL_StatusTypeDef HAL_ADC_PollForConversion(ADC_HandleTypeDef* hadc, uint32_t Timeout)
@@ -654,13 +658,13 @@ HAL_StatusTypeDef HAL_ADC_PollForConversion(ADC_HandleTypeDef* hadc, uint32_t Ti
 
 /**
   * @brief  Poll for conversion event
-  * @param  hadc: pointer to a ADC_HandleTypeDef structure that contains
+  * @param  hadc pointer to a ADC_HandleTypeDef structure that contains
   *         the configuration information for the specified ADC.
-  * @param  EventType: the ADC event type.
+  * @param  EventType the ADC event type.
   *          This parameter can be one of the following values:
   *            @arg ADC_AWD_EVENT: ADC Analog watch Dog event.
   *            @arg ADC_OVR_EVENT: ADC Overrun event.
-  * @param  Timeout: Timeout value in millisecond.   
+  * @param  Timeout Timeout value in millisecond.   
   * @retval HAL status
   */
 HAL_StatusTypeDef HAL_ADC_PollForEvent(ADC_HandleTypeDef* hadc, uint32_t EventType, uint32_t Timeout)
@@ -721,13 +725,14 @@ HAL_StatusTypeDef HAL_ADC_PollForEvent(ADC_HandleTypeDef* hadc, uint32_t EventTy
 
 /**
   * @brief  Enables the interrupt and starts ADC conversion of regular channels.
-  * @param  hadc: pointer to a ADC_HandleTypeDef structure that contains
+  * @param  hadc pointer to a ADC_HandleTypeDef structure that contains
   *         the configuration information for the specified ADC.
   * @retval HAL status.
   */
 HAL_StatusTypeDef HAL_ADC_Start_IT(ADC_HandleTypeDef* hadc)
 {
   __IO uint32_t counter = 0U;
+  ADC_Common_TypeDef *tmpADC_Common;
   
   /* Check the parameters */
   assert_param(IS_FUNCTIONAL_STATE(hadc->Init.ContinuousConvMode));
@@ -781,12 +786,17 @@ HAL_StatusTypeDef HAL_ADC_Start_IT(ADC_HandleTypeDef* hadc)
       /* Reset ADC all error code fields */
       ADC_CLEAR_ERRORCODE(hadc);
     }
-    
+
     /* Process unlocked */
     /* Unlock before starting ADC conversions: in case of potential           */
     /* interruption, to let the process to ADC IRQ Handler.                   */
     __HAL_UNLOCK(hadc);
-    
+
+    /* Pointer to the common control register to which is belonging hadc    */
+    /* (Depending on STM32F4 product, there may be up to 3 ADCs and 1 common */
+    /* control register)                                                    */
+    tmpADC_Common = ADC_COMMON_REGISTER(hadc);
+
     /* Clear regular group conversion flag and overrun flag */
     /* (To ensure of no unknown state from potential previous ADC operations) */
     __HAL_ADC_CLEAR_FLAG(hadc, ADC_FLAG_EOC | ADC_FLAG_OVR);
@@ -795,7 +805,7 @@ HAL_StatusTypeDef HAL_ADC_Start_IT(ADC_HandleTypeDef* hadc)
     __HAL_ADC_ENABLE_IT(hadc, (ADC_IT_EOC | ADC_IT_OVR));
     
     /* Check if Multimode enabled */
-    if(HAL_IS_BIT_CLR(ADC->CCR, ADC_CCR_MULTI))
+    if(HAL_IS_BIT_CLR(tmpADC_Common->CCR, ADC_CCR_MULTI))
     {
       /* if no external trigger present enable software conversion of regular channels */
       if((hadc->Instance->CR2 & ADC_CR2_EXTEN) == RESET) 
@@ -824,7 +834,7 @@ HAL_StatusTypeDef HAL_ADC_Start_IT(ADC_HandleTypeDef* hadc)
   * 
   * @note   Caution: This function will stop also injected channels.  
   *
-  * @param  hadc: pointer to a ADC_HandleTypeDef structure that contains
+  * @param  hadc pointer to a ADC_HandleTypeDef structure that contains
   *         the configuration information for the specified ADC.
   * @retval HAL status.
   */
@@ -861,7 +871,7 @@ HAL_StatusTypeDef HAL_ADC_Stop_IT(ADC_HandleTypeDef* hadc)
 
 /**
   * @brief  Handles ADC interrupt request  
-  * @param  hadc: pointer to a ADC_HandleTypeDef structure that contains
+  * @param  hadc pointer to a ADC_HandleTypeDef structure that contains
   *         the configuration information for the specified ADC.
   * @retval None
   */
@@ -1004,15 +1014,16 @@ void HAL_ADC_IRQHandler(ADC_HandleTypeDef* hadc)
 
 /**
   * @brief  Enables ADC DMA request after last transfer (Single-ADC mode) and enables ADC peripheral  
-  * @param  hadc: pointer to a ADC_HandleTypeDef structure that contains
+  * @param  hadc pointer to a ADC_HandleTypeDef structure that contains
   *         the configuration information for the specified ADC.
-  * @param  pData: The destination Buffer address.
-  * @param  Length: The length of data to be transferred from ADC peripheral to memory.
+  * @param  pData The destination Buffer address.
+  * @param  Length The length of data to be transferred from ADC peripheral to memory.
   * @retval HAL status
   */
 HAL_StatusTypeDef HAL_ADC_Start_DMA(ADC_HandleTypeDef* hadc, uint32_t* pData, uint32_t Length)
 {
   __IO uint32_t counter = 0U;
+  ADC_Common_TypeDef *tmpADC_Common;
   
   /* Check the parameters */
   assert_param(IS_FUNCTIONAL_STATE(hadc->Init.ContinuousConvMode));
@@ -1066,11 +1077,16 @@ HAL_StatusTypeDef HAL_ADC_Start_DMA(ADC_HandleTypeDef* hadc, uint32_t* pData, ui
       /* Reset ADC all error code fields */
       ADC_CLEAR_ERRORCODE(hadc);
     }
-    
+
     /* Process unlocked */
     /* Unlock before starting ADC conversions: in case of potential           */
     /* interruption, to let the process to ADC IRQ Handler.                   */
     __HAL_UNLOCK(hadc);   
+
+    /* Pointer to the common control register to which is belonging hadc    */
+    /* (Depending on STM32F4 product, there may be up to 3 ADCs and 1 common */
+    /* control register)                                                    */
+    tmpADC_Common = ADC_COMMON_REGISTER(hadc);
 
     /* Set the DMA transfer complete callback */
     hadc->DMA_Handle->XferCpltCallback = ADC_DMAConvCplt;
@@ -1099,7 +1115,7 @@ HAL_StatusTypeDef HAL_ADC_Start_DMA(ADC_HandleTypeDef* hadc, uint32_t* pData, ui
     HAL_DMA_Start_IT(hadc->DMA_Handle, (uint32_t)&hadc->Instance->DR, (uint32_t)pData, Length);
     
     /* Check if Multimode enabled */
-    if(HAL_IS_BIT_CLR(ADC->CCR, ADC_CCR_MULTI))
+    if(HAL_IS_BIT_CLR(tmpADC_Common->CCR, ADC_CCR_MULTI))
     {
       /* if no external trigger present enable software conversion of regular channels */
       if((hadc->Instance->CR2 & ADC_CR2_EXTEN) == RESET) 
@@ -1125,7 +1141,7 @@ HAL_StatusTypeDef HAL_ADC_Start_DMA(ADC_HandleTypeDef* hadc, uint32_t* pData, ui
 
 /**
   * @brief  Disables ADC DMA (Single-ADC mode) and disables ADC peripheral    
-  * @param  hadc: pointer to a ADC_HandleTypeDef structure that contains
+  * @param  hadc pointer to a ADC_HandleTypeDef structure that contains
   *         the configuration information for the specified ADC.
   * @retval HAL status
   */
@@ -1171,7 +1187,7 @@ HAL_StatusTypeDef HAL_ADC_Stop_DMA(ADC_HandleTypeDef* hadc)
 
 /**
   * @brief  Gets the converted value from data register of regular channel.
-  * @param  hadc: pointer to a ADC_HandleTypeDef structure that contains
+  * @param  hadc pointer to a ADC_HandleTypeDef structure that contains
   *         the configuration information for the specified ADC.
   * @retval Converted value
   */
@@ -1183,7 +1199,7 @@ uint32_t HAL_ADC_GetValue(ADC_HandleTypeDef* hadc)
 
 /**
   * @brief  Regular conversion complete callback in non blocking mode 
-  * @param  hadc: pointer to a ADC_HandleTypeDef structure that contains
+  * @param  hadc pointer to a ADC_HandleTypeDef structure that contains
   *         the configuration information for the specified ADC.
   * @retval None
   */
@@ -1198,7 +1214,7 @@ __weak void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
 
 /**
   * @brief  Regular conversion half DMA transfer callback in non blocking mode 
-  * @param  hadc: pointer to a ADC_HandleTypeDef structure that contains
+  * @param  hadc pointer to a ADC_HandleTypeDef structure that contains
   *         the configuration information for the specified ADC.
   * @retval None
   */
@@ -1213,7 +1229,7 @@ __weak void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef* hadc)
 
 /**
   * @brief  Analog watchdog callback in non blocking mode 
-  * @param  hadc: pointer to a ADC_HandleTypeDef structure that contains
+  * @param  hadc pointer to a ADC_HandleTypeDef structure that contains
   *         the configuration information for the specified ADC.
   * @retval None
   */
@@ -1234,7 +1250,7 @@ __weak void HAL_ADC_LevelOutOfWindowCallback(ADC_HandleTypeDef* hadc)
   *         - If needed, restart a new ADC conversion using function
   *           "HAL_ADC_Start_DMA()"
   *           (this function is also clearing overrun flag)
-  * @param  hadc: pointer to a ADC_HandleTypeDef structure that contains
+  * @param  hadc pointer to a ADC_HandleTypeDef structure that contains
   *         the configuration information for the specified ADC.
   * @retval None
   */
@@ -1271,14 +1287,15 @@ __weak void HAL_ADC_ErrorCallback(ADC_HandleTypeDef *hadc)
   /**
   * @brief  Configures for the selected ADC regular channel its corresponding
   *         rank in the sequencer and its sample time.
-  * @param  hadc: pointer to a ADC_HandleTypeDef structure that contains
+  * @param  hadc pointer to a ADC_HandleTypeDef structure that contains
   *         the configuration information for the specified ADC.
-  * @param  sConfig: ADC configuration structure. 
+  * @param  sConfig ADC configuration structure. 
   * @retval HAL status
   */
 HAL_StatusTypeDef HAL_ADC_ConfigChannel(ADC_HandleTypeDef* hadc, ADC_ChannelConfTypeDef* sConfig)
 {
   __IO uint32_t counter = 0U;
+  ADC_Common_TypeDef *tmpADC_Common;
   
   /* Check the parameters */
   assert_param(IS_ADC_CHANNEL(sConfig->Channel));
@@ -1333,19 +1350,24 @@ HAL_StatusTypeDef HAL_ADC_ConfigChannel(ADC_HandleTypeDef* hadc, ADC_ChannelConf
     /* Set the SQx bits for the selected rank */
     hadc->Instance->SQR1 |= ADC_SQR1_RK(sConfig->Channel, sConfig->Rank);
   }
-  
+
+    /* Pointer to the common control register to which is belonging hadc    */
+    /* (Depending on STM32F4 product, there may be up to 3 ADCs and 1 common */
+    /* control register)                                                    */
+    tmpADC_Common = ADC_COMMON_REGISTER(hadc);
+
   /* if ADC1 Channel_18 is selected enable VBAT Channel */
   if ((hadc->Instance == ADC1) && (sConfig->Channel == ADC_CHANNEL_VBAT))
   {
     /* Enable the VBAT channel*/
-    ADC->CCR |= ADC_CCR_VBATE;
+    tmpADC_Common->CCR |= ADC_CCR_VBATE;
   }
   
   /* if ADC1 Channel_16 or Channel_17 is selected enable TSVREFE Channel(Temperature sensor and VREFINT) */
   if ((hadc->Instance == ADC1) && ((sConfig->Channel == ADC_CHANNEL_TEMPSENSOR) || (sConfig->Channel == ADC_CHANNEL_VREFINT)))
   {
     /* Enable the TSVREFE channel*/
-    ADC->CCR |= ADC_CCR_TSVREFE;
+    tmpADC_Common->CCR |= ADC_CCR_TSVREFE;
     
     if((sConfig->Channel == ADC_CHANNEL_TEMPSENSOR))
     {
@@ -1376,9 +1398,9 @@ HAL_StatusTypeDef HAL_ADC_ConfigChannel(ADC_HandleTypeDef* hadc, ADC_ChannelConf
   * Considering that registers write delay may happen due to
   * bus activity, this might cause an uncertainty on the
   * effective timing of the new programmed threshold values.
-  * @param  hadc: pointer to a ADC_HandleTypeDef structure that contains
+  * @param  hadc pointer to a ADC_HandleTypeDef structure that contains
   *         the configuration information for the specified ADC.
-  * @param  AnalogWDGConfig : pointer to an ADC_AnalogWDGConfTypeDef structure 
+  * @param  AnalogWDGConfig  pointer to an ADC_AnalogWDGConfTypeDef structure 
   *         that contains the configuration information of ADC analog watchdog.
   * @retval HAL status	  
   */
@@ -1460,7 +1482,7 @@ HAL_StatusTypeDef HAL_ADC_AnalogWDGConfig(ADC_HandleTypeDef* hadc, ADC_AnalogWDG
   
 /**
   * @brief  return the ADC state
-  * @param  hadc: pointer to a ADC_HandleTypeDef structure that contains
+  * @param  hadc pointer to a ADC_HandleTypeDef structure that contains
   *         the configuration information for the specified ADC.
   * @retval HAL state
   */
@@ -1472,7 +1494,7 @@ uint32_t HAL_ADC_GetState(ADC_HandleTypeDef* hadc)
 
 /**
   * @brief  Return the ADC error code
-  * @param  hadc: pointer to a ADC_HandleTypeDef structure that contains
+  * @param  hadc pointer to a ADC_HandleTypeDef structure that contains
   *         the configuration information for the specified ADC.
   * @retval ADC Error Code
   */
@@ -1492,16 +1514,23 @@ uint32_t HAL_ADC_GetError(ADC_HandleTypeDef *hadc)
 /**
   * @brief  Initializes the ADCx peripheral according to the specified parameters 
   *         in the ADC_InitStruct without initializing the ADC MSP.       
-  * @param  hadc: pointer to a ADC_HandleTypeDef structure that contains
+  * @param  hadc pointer to a ADC_HandleTypeDef structure that contains
   *         the configuration information for the specified ADC.  
   * @retval None
   */
 static void ADC_Init(ADC_HandleTypeDef* hadc)
 {
+  ADC_Common_TypeDef *tmpADC_Common;
+  
   /* Set ADC parameters */
+  /* Pointer to the common control register to which is belonging hadc    */
+  /* (Depending on STM32F4 product, there may be up to 3 ADCs and 1 common */
+  /* control register)                                                    */
+  tmpADC_Common = ADC_COMMON_REGISTER(hadc);
+  
   /* Set the ADC clock prescaler */
-  ADC->CCR &= ~(ADC_CCR_ADCPRE);
-  ADC->CCR |=  hadc->Init.ClockPrescaler;
+  tmpADC_Common->CCR &= ~(ADC_CCR_ADCPRE);
+  tmpADC_Common->CCR |=  hadc->Init.ClockPrescaler;
   
   /* Set ADC scan mode */
   hadc->Instance->CR1 &= ~(ADC_CR1_SCAN);
@@ -1573,7 +1602,7 @@ static void ADC_Init(ADC_HandleTypeDef* hadc)
 
 /**
   * @brief  DMA transfer complete callback. 
-  * @param  hdma: pointer to a DMA_HandleTypeDef structure that contains
+  * @param  hdma pointer to a DMA_HandleTypeDef structure that contains
   *                the configuration information for the specified DMA module.
   * @retval None
   */
@@ -1626,7 +1655,7 @@ static void ADC_DMAConvCplt(DMA_HandleTypeDef *hdma)
 
 /**
   * @brief  DMA half transfer complete callback. 
-  * @param  hdma: pointer to a DMA_HandleTypeDef structure that contains
+  * @param  hdma pointer to a DMA_HandleTypeDef structure that contains
   *                the configuration information for the specified DMA module.
   * @retval None
   */
@@ -1639,7 +1668,7 @@ static void ADC_DMAHalfConvCplt(DMA_HandleTypeDef *hdma)
 
 /**
   * @brief  DMA error callback 
-  * @param  hdma: pointer to a DMA_HandleTypeDef structure that contains
+  * @param  hdma pointer to a DMA_HandleTypeDef structure that contains
   *                the configuration information for the specified DMA module.
   * @retval None
   */

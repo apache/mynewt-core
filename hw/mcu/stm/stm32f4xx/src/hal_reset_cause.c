@@ -38,8 +38,10 @@ hal_reset_cause(void)
         reason = HAL_RESET_SOFT;
     } else if (reg & RCC_CSR_PADRSTF) {
         reason = HAL_RESET_PIN;
+#ifdef RCC_CSR_BORRSTF
     } else if (reg & RCC_CSR_BORRSTF) {
         reason = HAL_RESET_BROWNOUT;
+#endif
     } else {
         reason = HAL_RESET_POR;
     }

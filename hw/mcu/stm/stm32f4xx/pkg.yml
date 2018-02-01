@@ -27,8 +27,16 @@ pkg.keywords:
 
 pkg.type: sdk
 
+# Ignoring I2C and SPI from STM32 repository is hacky and awful, but we've
+# been maintaining our own versions of these files awhile.  At least this 
+# leaves the cube SDK unmolested, as we now maintain our own copies of these
+# files in our HAL implementation.  
+# I'm ignoring the files as the symbols would otherwise conflict -- this needs
+# to be improved.
 pkg.ign_files:
-    - ".*template.*" 
+    - ".*template.*"
+    - "stm32f4xx_hal_i2c.c"
+    - "stm32f4xx_hal_spi.c"
 
 pkg.ign_dirs:
     - "Device"

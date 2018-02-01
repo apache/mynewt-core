@@ -1,8 +1,6 @@
-;******************** (C) COPYRIGHT 2016 STMicroelectronics ********************
+;******************** (C) COPYRIGHT 2017 STMicroelectronics ********************
 ;* File Name          : startup_stm32f412cx.s
 ;* Author             : MCD Application Team
-;* Version            : V2.5.1
-;* Date               : 28-June-2016
 ;* Description        : STM32F412Cx devices vector table for MDK-ARM toolchain. 
 ;*                      This module performs:
 ;*                      - Set the initial SP

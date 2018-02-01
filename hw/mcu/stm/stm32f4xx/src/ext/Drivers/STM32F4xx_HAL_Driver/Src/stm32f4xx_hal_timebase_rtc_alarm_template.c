@@ -2,8 +2,6 @@
   ******************************************************************************
   * @file    stm32f4xx_hal_timebase_rtc_alarm_template.c 
   * @author  MCD Application Team
-  * @version V1.5.1
-  * @date    01-July-2016
   * @brief   HAL time base based on the hardware RTC_ALARM Template.
   *
   *          This file override the native HAL time base functions (defined as weak)
@@ -34,7 +32,7 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; COPYRIGHT(c) 2016 STMicroelectronics</center></h2>
+  * <h2><center>&copy; COPYRIGHT(c) 2017 STMicroelectronics</center></h2>
   *
   * Redistribution and use in source and binary forms, with or without modification,
   * are permitted provided that the following conditions are met:
@@ -107,7 +105,7 @@ void RTC_Alarm_IRQHandler(void);
   *         Tick interrupt priority. 
   * @note   This function is called  automatically at the beginning of program after
   *         reset by HAL_Init() or at any time when clock is configured, by HAL_RCC_ClockConfig().
-  * @param  TickPriority: Tick interrupt priority.
+  * @param  TickPriority Tick interrupt priority.
   * @retval HAL status
   */
 HAL_StatusTypeDef HAL_InitTick (uint32_t TickPriority)
@@ -231,7 +229,6 @@ HAL_StatusTypeDef HAL_InitTick (uint32_t TickPriority)
 /**
   * @brief  Suspend Tick increment.
   * @note   Disable the tick increment by disabling RTC ALARM interrupt.
-  * @param  None
   * @retval None
   */
 void HAL_SuspendTick(void)
@@ -247,7 +244,6 @@ void HAL_SuspendTick(void)
 /**
   * @brief  Resume Tick increment.
   * @note   Enable the tick increment by Enabling RTC ALARM interrupt.
-  * @param  None
   * @retval None
   */
 void HAL_ResumeTick(void)
@@ -265,7 +261,7 @@ void HAL_ResumeTick(void)
   * @note   This function is called  when RTC_ALARM interrupt took place, inside
   * RTC_ALARM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
   * a global variable "uwTick" used as application time base.
-  * @param  hrtc : RTC handle
+  * @param  hrtc  RTC handle
   * @retval None
   */
 void HAL_RTC_AlarmAEventCallback(RTC_HandleTypeDef *hrtc)
@@ -298,7 +294,6 @@ void HAL_RTC_AlarmAEventCallback(RTC_HandleTypeDef *hrtc)
 
 /**
   * @brief  This function handles RTC ALARM interrupt request.
-  * @param  None
   * @retval None
   */
 void RTC_Alarm_IRQHandler(void)

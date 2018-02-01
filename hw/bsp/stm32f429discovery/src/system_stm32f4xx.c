@@ -103,6 +103,8 @@
   * @}
   */
 
+
+
 /** @addtogroup STM32F4xx_System_Private_Macros
   * @{
   */
@@ -123,8 +125,9 @@
                variable is updated automatically.
   */
   uint32_t SystemCoreClock = 16000000;
-  __I uint8_t AHBPrescTable[16] = {0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 6, 7, 8, 9};
 
+  const uint8_t AHBPrescTable[16] = {0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 6, 7, 8, 9};
+  const uint8_t APBPrescTable[8] = {0U, 0U, 0U, 0U, 1U, 2U, 3U, 4U};
 /**
   * @}
   */
