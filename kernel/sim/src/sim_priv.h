@@ -20,6 +20,7 @@
 #ifndef H_SIM_PRIV_
 #define H_SIM_PRIV_
 
+#include <sys/types.h>
 #include <os/os.h>
 
 #ifdef __cplusplus

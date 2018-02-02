@@ -49,3 +49,9 @@ compiler.path.objcopy.DARWIN.OVERWRITE: "gobjcopy"
 compiler.flags.base.DARWIN: >
     -DMN_OSX
 compiler.ld.resolve_circular_deps.DARWIN.OVERWRITE: false
+
+compiler.path.cc.FREEBSD.OVERWRITE: "gcc7"
+compiler.path.as.FREEBSD.OVERWRITE: "gcc7"
+compiler.flags.base.FREEBSD: >
+    -DMN_FreeBSD -D_WITH_DPRINTF
+compiler.ld.flags.FREEBSD.OVERWRITE: -L/usr/lib32 -B/usr/lib32 -lutil

@@ -30,6 +30,9 @@
 #ifdef MN_OSX
 #include <util.h>
 #endif
+#ifdef MN_FreeBSD
+#include <libutil.h>
+#endif
 #include <ctype.h>
 #include <stdio.h>
 #include <fcntl.h>
