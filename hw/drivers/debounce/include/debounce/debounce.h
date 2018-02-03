@@ -80,7 +80,7 @@ extern "C" {
  * use the API to access it's data members and not directly manipulate or
  * retrieve any of them.
  */
-typedef struct debounce_s {
+typedef struct debounce_pin {
     uint32_t pin     : 24;
     uint32_t state   :  1;
     uint32_t on_rise :  1;
@@ -89,10 +89,10 @@ typedef struct debounce_s {
     uint32_t ticks   : 16;
     uint32_t count   :  8;
     uint32_t accu    :  8;
-    void (*on_change)(struct debounce_s*);
+    void (*on_change)(struct debounce_pin*);
     void *arg;
     struct hal_timer timer;
-} debounce_t;
+} debounce_pin_t;
 
 /*
  * A callback can be invoked when the debounced pin's state changes. It
@@ -100,7 +100,7 @@ typedef struct debounce_s {
  * If either \c DEBOUNCE_CALLBACK_NEVER is specified or the callbak itself
  * is set to \c NULL no callback is invoked.
  */
-typedef enum debounce_callback_event_e {
+typedef enum debounce_callback_event {
     DEBOUNCE_CALLBACK_NEVER      = 0, /* no callback invocation */
     DEBOUNCE_CALLBACK_EVENT_RISE = 1, /* callbak when signal rises */
     DEBOUNCE_CALLBACK_EVENT_FALL = 2, /* callbak when signal falls */
@@ -115,7 +115,7 @@ typedef enum debounce_callback_event_e {
  *  - debounce_pin
  *  - debounce_state
  */
-typedef void (*debounce_callback_t)(debounce_t *);
+typedef void (*debounce_callback_t)(debounce_pin_t *);
 
 /**
  * debounce init
@@ -132,7 +132,7 @@ typedef void (*debounce_callback_t)(debounce_t *);
  *
  * @return int  0: no error; -1 otherwise.
  */
-int debounce_init(debounce_t *d, int pin, hal_gpio_pull_t pull, int timer);
+int debounce_init(debounce_pin_t *d, int pin, hal_gpio_pull_t pull, int timer);
 
 /**
  * debounce set params
@@ -159,7 +159,7 @@ int debounce_init(debounce_t *d, int pin, hal_gpio_pull_t pull, int timer);
  *
  * @return int  0: no error; -1 otherwise.
  */
-int debounce_set_params(debounce_t *d, uint16_t ticks, uint8_t count);
+int debounce_set_params(debounce_pin_t *d, uint16_t ticks, uint8_t count);
 
 /**
  * debounce start
@@ -173,7 +173,7 @@ int debounce_set_params(debounce_t *d, uint16_t ticks, uint8_t count);
  *
  * @return int  0: no error; -1 otherwise.
  */
-int debounce_start(debounce_t *d,
+int debounce_start(debounce_pin_t *d,
                    debounce_callback_event_t event,
                    debounce_callback_t cb,
                    void *arg);
@@ -187,7 +187,7 @@ int debounce_start(debounce_t *d,
  *
  * @return int  0: no error; -1 otherwise.
  */
-int debounce_stop(debounce_t*);
+int debounce_stop(debounce_pin_t*);
 
 /**
  * debounce pin
@@ -197,7 +197,7 @@ int debounce_stop(debounce_t*);
  * @return int  pin
  */
 static inline int
-debounce_pin(debounce_t *d)
+debounce_pin(debounce_pin_t *d)
 {
     return d->pin;
 }
@@ -210,7 +210,7 @@ debounce_pin(debounce_t *d)
  * @return int  state
  */
 static inline int
-debounce_state(debounce_t *d)
+debounce_state(debounce_pin_t *d)
 {
     return d->state;
 }
@@ -223,7 +223,7 @@ debounce_state(debounce_t *d)
  * @return void*  arg
  */
 static inline void*
-debounce_arg(debounce_t *d)
+debounce_arg(debounce_pin_t *d)
 {
     return d->arg;
 }

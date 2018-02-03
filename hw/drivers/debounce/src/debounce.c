@@ -24,7 +24,7 @@
 static void
 debounce_check(void *arg)
 {
-    debounce_t *d = (debounce_t*)arg;
+    debounce_pin_t *d = (debounce_pin_t*)arg;
 
     int32_t btn = hal_gpio_read(d->pin) ? +1 : -1;
     int32_t integrate = (int32_t)d->accu + btn;
@@ -60,7 +60,7 @@ debounce_check(void *arg)
 static void
 debounce_trigger(void *arg)
 {
-    debounce_t *d = (debounce_t*)arg;
+    debounce_pin_t *d = (debounce_pin_t*)arg;
 
     /* once triggered, switch to periodic checks */
     hal_gpio_irq_disable(d->pin);
@@ -69,9 +69,9 @@ debounce_trigger(void *arg)
 
 
 int
-debounce_init(debounce_t *d, int pin, hal_gpio_pull_t pull, int timer)
+debounce_init(debounce_pin_t *d, int pin, hal_gpio_pull_t pull, int timer)
 {
-    memset(d, 0, sizeof(debounce_t));
+    memset(d, 0, sizeof(debounce_pin_t));
     d->pin = pin;
     d->ticks = MYNEWT_VAL(DEBOUNCE_PARAM_TICKS);
     d->count = MYNEWT_VAL(DEBOUNCE_PARAM_COUNT);
@@ -93,7 +93,7 @@ debounce_init(debounce_t *d, int pin, hal_gpio_pull_t pull, int timer)
 }
 
 int
-debounce_set_params(debounce_t *d, uint16_t ticks, uint8_t count)
+debounce_set_params(debounce_pin_t *d, uint16_t ticks, uint8_t count)
 {
     d->ticks = ticks;
     d->count = count;
@@ -105,7 +105,7 @@ debounce_set_params(debounce_t *d, uint16_t ticks, uint8_t count)
 }
 
 int
-debounce_start(debounce_t *d,
+debounce_start(debounce_pin_t *d,
                debounce_callback_event_t event,
                debounce_callback_t cb,
                void *arg)
@@ -120,7 +120,7 @@ debounce_start(debounce_t *d,
 }
 
 int
-debounce_stop(debounce_t *d)
+debounce_stop(debounce_pin_t *d)
 {
     hal_gpio_irq_disable(d->pin);
     hal_timer_stop(&d->timer);
