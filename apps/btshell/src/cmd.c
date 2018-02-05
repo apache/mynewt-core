@@ -2080,7 +2080,7 @@ cmd_conn_datalen(int argc, char **argv)
 
 #if MYNEWT_VAL(SHELL_CMD_HELP)
 static const struct shell_param conn_datalen_params[] = {
-    {"conn", "conn_datalenion handle, usage: =<UINT16>"},
+    {"conn", "conn_datalen handle, usage: =<UINT16>"},
     {"octets", "usage: =<UINT16>"},
     {"time", "usage: =<UINT16>"},
     {NULL, NULL}
