@@ -60,3 +60,7 @@ syscfg.defs:
         value: 0
         restrictions:
             - "!MCU_FLASH_STYLE_ST"
+    MCU_UART_POLLER_PRIO:
+        description: 'Priority of native UART poller task.'
+        type: task_priority
+        value: 0
