@@ -19,12 +19,17 @@
 
 #include <hal/hal_system.h>
 #include "os/os.h"
+#include "os_priv.h"
 
 void
 __assert_func(const char *file, int line, const char *func, const char *e)
 {
     int sr;
+
     OS_ENTER_CRITICAL(sr);
     (void)sr;
+    console_blocking_mode();
+    OS_PRINT_ASSERT(file, line, func, e);
+
     hal_system_reset();
 }

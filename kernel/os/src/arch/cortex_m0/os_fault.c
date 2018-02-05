@@ -27,7 +27,7 @@
 #include "coredump/coredump.h"
 #endif
 #include "os/os.h"
-
+#include "os_priv.h"
 
 struct exception_frame {
     uint32_t r0;
@@ -116,8 +116,8 @@ __assert_func(const char *file, int line, const char *func, const char *e)
     OS_ENTER_CRITICAL(sr);
     (void)sr;
     console_blocking_mode();
-    console_printf("Assert @ 0x%x\n",
-                   (unsigned int)__builtin_return_address(0));
+    OS_PRINT_ASSERT(file, line, func, e);
+
     if (hal_debugger_connected()) {
        /*
         * If debugger is attached, breakpoint before the trap.

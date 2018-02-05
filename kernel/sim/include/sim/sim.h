@@ -24,6 +24,7 @@
 extern "C" {
 #endif
 
+#include <stdio.h>
 #include <setjmp.h>
 #include "os/os_arch.h"
 #include "os/os_error.h"
@@ -48,9 +49,23 @@ os_sr_t sim_save_sr(void);
 void sim_restore_sr(os_sr_t osr);
 int sim_in_critical(void);
 void sim_tick_idle(os_time_t ticks);
-void sim_assert_fail(const char *file, int line, const char *func,
-                     const char *e)
-                     __attribute((noreturn));
+
+/**
+ * Prints information about a crash to stdout.  This functionality is defined
+ * as a macro rather than a function to ensure that it gets inlined, enforcing
+ * a predictable call stack.
+ */
+#define OS_PRINT_ASSERT_SIM(file, line, func, e) do                         \
+{                                                                           \
+    if (!(file)) {                                                          \
+        dprintf(1, "Assert @ 0x%x\n",                                       \
+                (unsigned int)__builtin_return_address(0));                 \
+    } else {                                                                \
+        dprintf(1, "Assert @ 0x%x - %s:%d\n",                               \
+                (unsigned int)__builtin_return_address(0),                  \
+                (file), (line));                                            \
+    }                                                                       \
+} while (0)
 
 #ifdef __cplusplus
 }
