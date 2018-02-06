@@ -34,7 +34,7 @@ Description: Ping-Pong implementation.  Adapted to run in the MyNewt OS.
 #include "hal/hal_spi.h"
 #include "bsp/bsp.h"
 #include "os/os.h"
-#include "node/radio.h"
+#include "radio/radio.h"
 #include "loraping.h"
 
 #define USE_BAND_915
@@ -140,7 +140,7 @@ loraping_tx(struct os_event *ev)
 
             /* A master already exists.  Become a slave. */
             loraping_is_master = 0;
-        } else { 
+        } else {
             /* Valid reception but neither a PING nor a PONG message. */
             loraping_stats.rx_other++;
             /* Set device as master and start again. */
@@ -224,6 +224,8 @@ main(void)
 #endif
 
     sysinit();
+
+    hal_timer_config(4, 1000000);
 
     /* Radio initialization. */
     radio_events.TxDone = on_tx_done;

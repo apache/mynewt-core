@@ -17,15 +17,18 @@
 # under the License.
 #
 
-pkg.name: hw/drivers/lora/sx1276
-pkg.description: LoRaMac-node radio driver for the SX1276 modem.
-pkg.author: "Semtech"
-pkg.homepage: "http://mynewt.apache.org/"
-pkg.keywords:
-    - lora
+syscfg.defs:
+    LORA_NODE:
+        description: >
+            Used by package management system to include mfrg firmware.
+        value: 1
 
-pkg.deps:
-    - "@apache-mynewt-core/kernel/os"
+    LORA_MAC_TIMER_NUM:
+        description: Timer number used for lora mac and radio
+        value: -1
 
-pkg.apis:
-    - lora_node_driver
+syscfg.vals:
+    STATS_CLI: 1
+    STATS_NAMES: 1
+    SHELL_TASK: 1
+    SHELL_MAX_COMPAT_COMMANDS: 32

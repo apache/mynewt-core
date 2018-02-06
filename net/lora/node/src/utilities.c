@@ -30,30 +30,6 @@ randr(int32_t min, int32_t max)
     return rand() % (max - min + 1) + min;
 }
 
-double
-ceil(double d)
-{
-    int64_t i;
-
-    i = d;
-    if (d == i) {
-        return i;
-    }
-    return i + 1;
-}
-
-double
-floor(double d)
-{
-    return (int64_t)d;
-}
-
-double
-round(double d)
-{
-    return (int64_t)(d + 0.5);
-}
-
 uint32_t
 TimerGetElapsedTime(uint32_t savedTime)
 {

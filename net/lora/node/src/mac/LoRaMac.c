@@ -20,7 +20,6 @@ Maintainer: Miguel Luis ( Semtech ), Gregory Cristian ( Semtech ) and Daniel Jäc
 
 #include <string.h>
 #include <assert.h>
-#include "node/radio.h"
 #include "node/lora.h"
 #include "radio/radio.h"
 #include "node/utilities.h"
@@ -35,6 +34,14 @@ Maintainer: Miguel Luis ( Semtech ), Gregory Cristian ( Semtech ) and Daniel Jäc
 #error "Must define a Lora MAC timer number"
 #else
 #define LORA_MAC_TIMER_NUM    MYNEWT_VAL(LORA_MAC_TIMER_NUM)
+#endif
+
+/*
+ * XXX: TODO. This is radio dependent! Need to put this in driver. For
+ * now, just use SX1276 time
+ */
+#ifndef RADIO_WAKEUP_TIME
+#define RADIO_WAKEUP_TIME       (3)
 #endif
 
 /* The lora mac timer counts in 1 usec increments */

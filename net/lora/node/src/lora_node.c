@@ -41,15 +41,6 @@ STATS_NAME_START(lora_mac_stats)
     STATS_NAME(lora_mac_stats, rx_mcps)
 STATS_NAME_END(lora_mac_stats)
 
-STATS_SECT_DECL(lora_stats) lora_stats;
-STATS_NAME_START(lora_stats)
-    STATS_NAME(lora_stats, rx_error)
-    STATS_NAME(lora_stats, rx_success)
-    STATS_NAME(lora_stats, rx_timeout)
-    STATS_NAME(lora_stats, tx_success)
-    STATS_NAME(lora_stats, tx_timeout)
-STATS_NAME_END(lora_stats)
-
 /* Device EUI */
 uint8_t g_lora_dev_eui[LORA_EUI_LEN];
 
@@ -579,12 +570,6 @@ lora_node_init(void)
     LoRaMacStatus_t lms;
     LoRaMacCallback_t lora_cb;
 #endif
-
-    rc = stats_init_and_reg(
-        STATS_HDR(lora_stats),
-        STATS_SIZE_INIT_PARMS(lora_stats, STATS_SIZE_32),
-        STATS_NAME_INIT_PARMS(lora_stats), "lora");
-    SYSINIT_PANIC_ASSERT(rc == 0);
 
     rc = stats_init_and_reg(
         STATS_HDR(lora_mac_stats),
