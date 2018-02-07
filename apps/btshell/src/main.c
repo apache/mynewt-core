@@ -934,14 +934,14 @@ btshell_decode_event_type(struct ble_gap_ext_disc_desc *desc)
     }
 
     switch(desc->data_status) {
-    case BLE_HCI_ADV_COMPLETED:
-        console_printf("completed");
+    case BLE_HCI_ADV_DATA_STATUS_COMPLETE:
+        console_printf("complete");
         break;
-    case BLE_HCI_ADV_INCOMPLETE:
-        console_printf("incompleted");
+    case BLE_HCI_ADV_DATA_STATUS_INCOMPLETE:
+        console_printf("incomplete");
         break;
-    case BLE_HCI_ADV_CORRUPTED:
-        console_printf("corrupted");
+    case BLE_HCI_ADV_DATA_STATUS_TRUNCATED:
+        console_printf("truncated");
         break;
     default:
         console_printf("reserved %d", desc->data_status);
