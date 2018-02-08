@@ -204,7 +204,7 @@ err:
 }
 
 /**
- * Writes a multiple bytes to the specified register
+ * Writes a multiple bytes to the specified register (MAX: 8 bytes)
  *
  * @param The sensor interface
  * @param The register address to write to
@@ -223,6 +223,11 @@ tcs34725_writelen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer, uint8_t 
         .len = 1,
         .buffer = payload
     };
+
+    if (len > (sizeof(payload) - 1)) {
+        rc = OS_EINVAL;
+        goto err;
+    }
 
     memcpy(&payload[1], buffer, len);
 

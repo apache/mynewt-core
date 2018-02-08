@@ -98,7 +98,7 @@ bno055_write8(struct sensor_itf *itf, uint8_t reg, uint8_t value)
 }
 
 /**
- * Writes a multiple bytes to the specified register
+ * Writes a multiple bytes to the specified register  (MAX: 22 bytes)
  *
  * @param The Sesnsor interface
  * @param The register address to write to
@@ -120,6 +120,11 @@ bno055_writelen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
         .len = 1,
         .buffer = payload
     };
+
+    if (len > (sizeof(payload) - 1)) {
+        rc = OS_EINVAL;
+        goto err;
+    }
 
     memcpy(&payload[1], buffer, len);
 
