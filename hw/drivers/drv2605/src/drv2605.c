@@ -97,7 +97,7 @@ drv2605_write8(struct sensor_itf *itf, uint8_t reg, uint8_t value)
 }
 
 /**
- * Writes a multiple bytes to the specified register
+ * Writes a multiple bytes to the specified register (MAX: 8 bytes)
  *
  * @param The Sesnsor interface
  * @param The register address to write to
@@ -110,15 +110,18 @@ drv2605_writelen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
                       uint8_t len)
 {
     int rc;
-    uint8_t payload[20] = { reg, 0, 0, 0, 0, 0, 0, 0,
-                               0, 0, 0, 0, 0, 0, 0, 0,
-                               0, 0, 0, 0};
+    uint8_t payload[9] = { reg, 0, 0, 0, 0, 0, 0, 0, 0};
 
     struct hal_i2c_master_data data_struct = {
         .address = itf->si_addr,
         .len = len + 1,
         .buffer = payload
     };
+
+    if (len > (sizeof(payload) - 1)) {
+        rc = OS_EINVAL;
+        goto err;
+    }
 
     memcpy(&payload[1], buffer, len);
 
