@@ -21,34 +21,32 @@
 #define __BQ24040_H__
 
 #include "os/os.h"
+#include "hal/hal_gpio.h"
 #include "sensor/sensor.h"
 
+typedef void (*bq24040_interrupt_handler)(void *arg);
+
+struct bq24040_pin {
+	int 						bp_pin_num;
+	int 						bp_init_value;
+	hal_gpio_irq_trig_t 		bp_trig;
+	hal_gpio_irq_pull_t 		bp_pull;
+	bq24040_interrupt_handler 	bp_int;
+};
+
 struct bq24040_cfg {
-	int pg_pin_num;
-	int chg_pin_num;
-	int ts_pin_num;
-	int iset2_pin_num;
-	sensor_type_t s_mask;
-};
-
-struct bq24040_int {
-	os_sr_t lock;
-	struct os_sem wait;
-	bool active;
-	bool sleep;
-};
-
-enum bq24040_int_pin {
-	BQ24040_INT_PIN_PG 	=	0,
-	BQ24040_INT_PIN_CHG	=	1,
-	BQ24040_INT_PIN_MAX	=	2,
+	struct bq24040_pin 			bc_pg_pin;
+	struct bq24040_pin 			bc_chg_pin;
+	struct bq24040_pin 			bc_ts_pin;
+	struct bq24040_pin 			bc_iset2_pin;
+	sensor_type_t 				bc_s_mask;
 };
 
 struct bq24040 {
-	struct os_dev 			dev;
-	struct sensor 			sensor;
-	struct bq24040_cfg 		cfg;
-	os_time_t 				last_read_time;
+	struct os_dev 				b_dev;
+	struct sensor 				b_sensor;
+	struct bq24040_cfg 			b_cfg;
+	os_time_t 					b_last_read_time;
 };
 
 /**

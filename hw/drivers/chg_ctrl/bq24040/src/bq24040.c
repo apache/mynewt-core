@@ -99,6 +99,23 @@ bq24040_config(struct bq24040 *bq24040, struct bq24040_cfg *cfg)
 
     bq24040->cfg = *cfg;
 
+    if(cfg->pg_pin_num != -1)
+    {
+        hal_gpio_init_in(cfg->pg_pin_num, HAL_GPIO_PULL_NONE);
+    }
+    if(cfg->chg_pin_num != -1)
+    {
+        hal_gpio_init_in(cfg->chg_pin_num, HAL_GPIO_PULL_NONE);
+    }
+    if(cfg->ts_pin_num != -1)
+    {
+        hal_gpio_init_out(cfg->ts_pin_num, 0);
+    }
+    if(cfg->iset2_pin_num != -1)
+    {
+        hal_gpio_init_out(cfg->iset2_pin_num, 1);
+    }
+
     return 0;
 err:
     return (rc);
