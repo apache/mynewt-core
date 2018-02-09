@@ -26,7 +26,7 @@ compiler.path.objdump: "objdump"
 compiler.path.objsize: "size"
 compiler.path.objcopy: "objcopy"
 compiler.flags.base: >
-    -m32 -Wall -Werror -ggdb
+    -m32 -Wall -Werror -ggdb  -D__MYNEWT__=1
 compiler.ld.resolve_circular_deps: true
 
 compiler.flags.default: [compiler.flags.base, -O1]
