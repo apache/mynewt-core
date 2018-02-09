@@ -32,10 +32,16 @@
 
 static struct uart_dev *uart_dev;
 static struct console_ring cr_tx;
-/* must be after console_ring */
 static uint8_t cr_tx_buf[MYNEWT_VAL(CONSOLE_UART_TX_BUF_SIZE)];
 typedef void (*console_write_char)(struct uart_dev*, uint8_t);
 static console_write_char write_char_cb;
+
+#if MYNEWT_VAL(CONSOLE_UART_RX_BUF_SIZE) > 0
+static struct console_ring cr_rx;
+static uint8_t cr_rx_buf[MYNEWT_VAL(CONSOLE_UART_RX_BUF_SIZE)];
+
+struct os_event rx_ev;
+#endif
 
 struct console_ring {
     uint8_t head;
@@ -176,8 +182,38 @@ console_tx_char(void *arg)
 static int
 console_rx_char(void *arg, uint8_t byte)
 {
+#if MYNEWT_VAL(CONSOLE_UART_RX_BUF_SIZE) > 0
+    if (console_ring_is_full(&cr_rx)) {
+        console_ring_pull_char(&cr_rx);
+    }
+
+    console_ring_add_char(&cr_rx, byte);
+
+    if (!rx_ev.ev_queued) {
+        os_eventq_put(os_eventq_dflt_get(), &rx_ev);
+    }
+
+    return 0;
+#else
     return console_handle_char(byte);
+#endif
 }
+
+#if MYNEWT_VAL(CONSOLE_UART_RX_BUF_SIZE) > 0
+static void
+console_rx_char_event(struct os_event *ev)
+{
+    uint8_t b;
+    int sr;
+
+    while (!console_ring_is_empty(&cr_rx)) {
+        OS_ENTER_CRITICAL(sr);
+        b = console_ring_pull_char(&cr_rx);
+        OS_EXIT_CRITICAL(sr);
+        console_handle_char(b);
+    }
+}
+#endif
 
 int
 uart_console_is_init(void)
@@ -201,6 +237,13 @@ uart_console_init(void)
     cr_tx.size = MYNEWT_VAL(CONSOLE_UART_TX_BUF_SIZE);
     cr_tx.buf = cr_tx_buf;
     write_char_cb = console_queue_char;
+
+#if MYNEWT_VAL(CONSOLE_UART_RX_BUF_SIZE) > 0
+    cr_rx.size = MYNEWT_VAL(CONSOLE_UART_RX_BUF_SIZE);
+    cr_rx.buf = cr_rx_buf;
+
+    rx_ev.ev_cb = console_rx_char_event;
+#endif
 
     if (!uart_dev) {
         uart_dev = (struct uart_dev *)os_dev_open(MYNEWT_VAL(CONSOLE_UART_DEV),
