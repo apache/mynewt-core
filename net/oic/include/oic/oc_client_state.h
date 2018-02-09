@@ -31,6 +31,7 @@ typedef enum { HIGH_QOS = 0, LOW_QOS } oc_qos_t;
 
 typedef struct oc_client_response {
     struct coap_packet_rx *packet;
+    struct oc_endpoint *origin;
     oc_status_t code;
     uint32_t observe_option;
 } oc_client_response_t;

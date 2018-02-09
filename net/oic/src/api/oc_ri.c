@@ -807,6 +807,7 @@ oc_ri_invoke_client_cb(struct coap_packet_rx *rsp, oc_endpoint_t *endpoint)
                 }
             } else {
                 client_response.packet = rsp;
+                client_response.origin = endpoint;
                 handler = (oc_response_handler_t)cb->handler;
                 handler(&client_response);
             }
