@@ -67,13 +67,25 @@ console_pull_char(struct console_ring *cr)
     return ch;
 }
 
+static bool
+console_ring_is_full(const struct console_ring *cr)
+{
+    return inc_and_wrap(cr->head, cr->size) == cr->tail;
+}
+
+static bool
+console_ring_is_empty(const struct console_ring *cr)
+{
+    return cr->head == cr->tail;
+}
+
 static void
 console_queue_char(struct uart_dev *uart_dev, uint8_t ch)
 {
     int sr;
 
     OS_ENTER_CRITICAL(sr);
-    while (inc_and_wrap(cr_tx.head, cr_tx.size) == cr_tx.tail) {
+    while (console_ring_is_full(&cr_tx)) {
         /* TX needs to drain */
         uart_start_tx(uart_dev);
         OS_EXIT_CRITICAL(sr);
@@ -96,10 +108,7 @@ console_tx_flush(int cnt)
     uint8_t byte;
 
     for (i = 0; i < cnt; i++) {
-        if (cr_tx.head == cr_tx.tail) {
-            /*
-             * Queue is empty.
-             */
+        if (console_ring_is_empty(&cr_tx)) {
             break;
         }
         byte = console_pull_char(&cr_tx);
@@ -155,10 +164,7 @@ console_out(int c)
 static int
 console_tx_char(void *arg)
 {
-    if (cr_tx.head == cr_tx.tail) {
-        /*
-         * No more data.
-         */
+    if (console_ring_is_empty(&cr_tx)) {
         return -1;
     }
     return console_pull_char(&cr_tx);
