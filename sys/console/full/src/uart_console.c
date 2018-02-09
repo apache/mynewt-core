@@ -30,9 +30,6 @@
 #include "console/console.h"
 #include "console_priv.h"
 
-#define CONSOLE_HEAD_INC(cr)    (((cr)->head + 1) & ((cr)->size - 1))
-#define CONSOLE_TAIL_INC(cr)    (((cr)->tail + 1) & ((cr)->size - 1))
-
 static struct uart_dev *uart_dev;
 static struct console_ring cr_tx;
 /* must be after console_ring */
@@ -47,11 +44,17 @@ struct console_ring {
     uint8_t *buf;
 };
 
+static inline int
+inc_and_wrap(int i, int max)
+{
+    return (i + 1) & (max - 1);
+}
+
 static void
 console_add_char(struct console_ring *cr, char ch)
 {
     cr->buf[cr->head] = ch;
-    cr->head = CONSOLE_HEAD_INC(cr);
+    cr->head = inc_and_wrap(cr->head, cr->size);
 }
 
 static uint8_t
@@ -60,7 +63,7 @@ console_pull_char(struct console_ring *cr)
     uint8_t ch;
 
     ch = cr->buf[cr->tail];
-    cr->tail = CONSOLE_TAIL_INC(cr);
+    cr->tail = inc_and_wrap(cr->tail, cr->size);
     return ch;
 }
 
@@ -70,7 +73,7 @@ console_queue_char(struct uart_dev *uart_dev, uint8_t ch)
     int sr;
 
     OS_ENTER_CRITICAL(sr);
-    while (CONSOLE_HEAD_INC(&cr_tx) == cr_tx.tail) {
+    while (inc_and_wrap(cr_tx.head, cr_tx.size) == cr_tx.tail) {
         /* TX needs to drain */
         uart_start_tx(uart_dev);
         OS_EXIT_CRITICAL(sr);
