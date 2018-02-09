@@ -51,14 +51,14 @@ inc_and_wrap(int i, int max)
 }
 
 static void
-console_add_char(struct console_ring *cr, char ch)
+console_ring_add_char(struct console_ring *cr, char ch)
 {
     cr->buf[cr->head] = ch;
     cr->head = inc_and_wrap(cr->head, cr->size);
 }
 
 static uint8_t
-console_pull_char(struct console_ring *cr)
+console_ring_pull_char(struct console_ring *cr)
 {
     uint8_t ch;
 
@@ -94,7 +94,7 @@ console_queue_char(struct uart_dev *uart_dev, uint8_t ch)
         }
         OS_ENTER_CRITICAL(sr);
     }
-    console_add_char(&cr_tx, ch);
+    console_ring_add_char(&cr_tx, ch);
     OS_EXIT_CRITICAL(sr);
 }
 
@@ -111,7 +111,7 @@ console_tx_flush(int cnt)
         if (console_ring_is_empty(&cr_tx)) {
             break;
         }
-        byte = console_pull_char(&cr_tx);
+        byte = console_ring_pull_char(&cr_tx);
         uart_blocking_tx(uart_dev, byte);
     }
 }
@@ -167,7 +167,7 @@ console_tx_char(void *arg)
     if (console_ring_is_empty(&cr_tx)) {
         return -1;
     }
-    return console_pull_char(&cr_tx);
+    return console_ring_pull_char(&cr_tx);
 }
 
 /*
