@@ -30,8 +30,8 @@
 #include "console/console.h"
 #include "console_priv.h"
 
-#define CONSOLE_HEAD_INC(cr)    (((cr)->cr_head + 1) & ((cr)->cr_size - 1))
-#define CONSOLE_TAIL_INC(cr)    (((cr)->cr_tail + 1) & ((cr)->cr_size - 1))
+#define CONSOLE_HEAD_INC(cr)    (((cr)->head + 1) & ((cr)->size - 1))
+#define CONSOLE_TAIL_INC(cr)    (((cr)->tail + 1) & ((cr)->size - 1))
 
 static struct uart_dev *uart_dev;
 static struct console_ring cr_tx;
@@ -41,17 +41,17 @@ typedef void (*console_write_char)(struct uart_dev*, uint8_t);
 static console_write_char write_char_cb;
 
 struct console_ring {
-    uint8_t cr_head;
-    uint8_t cr_tail;
-    uint16_t cr_size;
-    uint8_t *cr_buf;
+    uint8_t head;
+    uint8_t tail;
+    uint16_t size;
+    uint8_t *buf;
 };
 
 static void
 console_add_char(struct console_ring *cr, char ch)
 {
-    cr->cr_buf[cr->cr_head] = ch;
-    cr->cr_head = CONSOLE_HEAD_INC(cr);
+    cr->buf[cr->head] = ch;
+    cr->head = CONSOLE_HEAD_INC(cr);
 }
 
 static uint8_t
@@ -59,8 +59,8 @@ console_pull_char(struct console_ring *cr)
 {
     uint8_t ch;
 
-    ch = cr->cr_buf[cr->cr_tail];
-    cr->cr_tail = CONSOLE_TAIL_INC(cr);
+    ch = cr->buf[cr->tail];
+    cr->tail = CONSOLE_TAIL_INC(cr);
     return ch;
 }
 
@@ -70,7 +70,7 @@ console_queue_char(struct uart_dev *uart_dev, uint8_t ch)
     int sr;
 
     OS_ENTER_CRITICAL(sr);
-    while (CONSOLE_HEAD_INC(&cr_tx) == cr_tx.cr_tail) {
+    while (CONSOLE_HEAD_INC(&cr_tx) == cr_tx.tail) {
         /* TX needs to drain */
         uart_start_tx(uart_dev);
         OS_EXIT_CRITICAL(sr);
@@ -93,7 +93,7 @@ console_tx_flush(int cnt)
     uint8_t byte;
 
     for (i = 0; i < cnt; i++) {
-        if (cr_tx.cr_head == cr_tx.cr_tail) {
+        if (cr_tx.head == cr_tx.tail) {
             /*
              * Queue is empty.
              */
@@ -152,7 +152,7 @@ console_out(int c)
 static int
 console_tx_char(void *arg)
 {
-    if (cr_tx.cr_head == cr_tx.cr_tail) {
+    if (cr_tx.head == cr_tx.tail) {
         /*
          * No more data.
          */
@@ -189,8 +189,8 @@ uart_console_init(void)
         .uc_rx_char = console_rx_char,
     };
 
-    cr_tx.cr_size = MYNEWT_VAL(CONSOLE_UART_TX_BUF_SIZE);
-    cr_tx.cr_buf = cr_tx_buf;
+    cr_tx.size = MYNEWT_VAL(CONSOLE_UART_TX_BUF_SIZE);
+    cr_tx.buf = cr_tx_buf;
     write_char_cb = console_queue_char;
 
     if (!uart_dev) {
