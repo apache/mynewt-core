@@ -18,28 +18,29 @@
  */
 #include <stddef.h>
 
-#include <os/os_dev.h>
+#include "os/os_dev.h"
 
 #if MYNEWT_VAL(UART_0)
 /*
  * It is necessary to include uart/uart.h before stm32fxx_hal_uart.h gets included
  * due to a name conflict for UART_PARITY_NONE.
  */
-#include <uart/uart.h>
-#include <uart_hal/uart_hal.h>
+#include "uart/uart.h"
+#include "uart_hal/uart_hal.h"
 #endif
 
-#include "hal/hal_bsp.h"
-#include "hal/hal_gpio.h"
-#include "hal/hal_flash_int.h"
-#include "hal/hal_system.h"
-#include "stm32f3xx.h"
-#include "stm32f3xx_hal_rcc.h"
-#include "stm32f3xx_hal_gpio.h"
-#include "mcu/stm32f3_bsp.h"
+#include "assert.h"
 #include "bsp/bsp.h"
-#include <syscfg/syscfg.h>
-#include <assert.h>
+#include "hal/hal_bsp.h"
+#include "hal/hal_flash_int.h"
+#include "hal/hal_gpio.h"
+#include "hal/hal_system.h"
+#include "mcu/stm32f3_bsp.h"
+#include "os/os_cputime.h"
+#include "stm32f3xx.h"
+#include "stm32f3xx_hal_gpio.h"
+#include "stm32f3xx_hal_rcc.h"
+#include "syscfg/syscfg.h"
 
 #if MYNEWT_VAL(UART_0)
 static struct uart_dev hal_uart0;
@@ -126,7 +127,13 @@ hal_bsp_init(void)
 #endif
 
 #if MYNEWT_VAL(TIMER_0)
-    hal_timer_init(0, TIM15);
+    rc = hal_timer_init(0, TIM15);
+    assert(rc == 0);
+#endif
+
+#if (MYNEWT_VAL(OS_CPUTIME_TIMER_NUM) >= 0)
+    rc = os_cputime_init(MYNEWT_VAL(OS_CPUTIME_FREQ));
+    assert(rc == 0);
 #endif
 }
 
