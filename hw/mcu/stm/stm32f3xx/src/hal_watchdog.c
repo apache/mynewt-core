@@ -55,12 +55,6 @@ hal_watchdog_enable(void)
 void
 hal_watchdog_tickle(void)
 {
-    /*
-     * Somebody decided that it is OK to call hal_watchdog_tickle but not call
-     * hal_watchdog_init before that - see boot/boot_serial/src/boot_serial.c
-     */
-    if (IWDG == g_wdt_cfg.Instance) {
-        HAL_IWDG_Refresh(&g_wdt_cfg);
-    }
+    HAL_IWDG_Refresh(&g_wdt_cfg);
 }
 
