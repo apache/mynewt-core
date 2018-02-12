@@ -494,14 +494,61 @@ static int
 charge_control_insert_type_trait(struct charge_control *cc,
         struct charge_control_type_traits *cctt)
 {
+    struct charge_control_type_traits *cursor, *prev;
+    int rc;
+
+    rc = charge_control_lock(cc);
+    if (rc != 0) {
+        goto err;
+    }
+
+    prev = cursor = NULL;
+    SLIST_FOREACH(cursor, &cc->cc_type_traits_list, cctt_next) {
+        if (cursor->cctt_poll_n == 0) {
+            break;
+        }
+
+        if (OS_TIME_TICK_LT(cctt->cctt_poll_n, cursor->cctt_poll_n)) {
+            break;
+        }
+
+        prev = cursor;
+    }
+
+    if (prev == NULL) {
+        SLIST_INSERT_HEAD(&cc->cc_type_traits_list, cctt, cctt_next);
+    }
+    else {
+        SLIST_INSERT_AFTER(prev, cctt, cctt_next);
+    }
+
+    charge_control_unlock(cc);
+
     return 0;
+err:
+    return rc;
 }
 
 static int
 charge_control_remove_type_trait(struct charge_control *cc,
         struct charge_control_type_traits *cctt)
 {
-    return 0;
+    int rc;
+
+    rc = charge_control_lock(cc);
+    if (rc != 0) {
+        goto err;
+    }
+
+    /* Remove this entry from the list */
+    SLIST_REMOVE(&cc->cc_type_traits_list, cctt, charge_control_type_traits,
+            cctt_next);
+
+    charge_control_unlock(cc);
+
+    return (0);
+err:
+    return (rc);
 }
 
 static struct charge_control_type_traits *
