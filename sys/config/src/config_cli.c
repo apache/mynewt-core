@@ -54,6 +54,7 @@ conf_dump_running(void)
     }
 }
 
+#if MYNEWT_VAL(CONFIG_CLI_DEBUG)
 static void
 conf_saved_one(char *name, char *val, void *cb_arg)
 {
@@ -69,6 +70,7 @@ conf_dump_saved(void)
         cs->cs_itf->csi_load(cs, conf_saved_one, NULL);
     }
 }
+#endif
 
 static int
 shell_conf_command(int argc, char **argv)
@@ -103,9 +105,11 @@ shell_conf_command(int argc, char **argv)
         if (!val || !strcmp(val, "running")) {
             conf_dump_running();
         }
+#if MYNEWT_VAL(CONFIG_CLI_DEBUG)
         if (val && !strcmp(val, "saved")) {
             conf_dump_saved();
         }
+#endif
         return 0;
     } else if (!strcmp(name, "save")) {
         conf_save();

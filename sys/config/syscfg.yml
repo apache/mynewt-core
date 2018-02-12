@@ -40,6 +40,13 @@ syscfg.defs:
         restrictions:
             - 'SHELL_TASK'
 
+    CONFIG_CLI_DEBUG:
+        description: 'CLI debug commands for accessing config'
+        value: 0
+        restrictions:
+            - 'SHELL_TASK'
+            - 'CONFIG_CLI'
+
 syscfg.defs.CONFIG_FCB:
     CONFIG_FCB_FLASH_AREA:
         description: 'BSP flash area for config'
