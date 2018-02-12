@@ -199,7 +199,7 @@ err:
 
 
 /**
- * Write multiple length data to LIS2DH12 sensor over I2C
+ * Write multiple length data to LIS2DH12 sensor over I2C  (MAX: 19 bytes)
  *
  * @param The sensor interface
  * @param register address
@@ -222,6 +222,11 @@ lis2dh12_i2c_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
         .len = len + 1,
         .buffer = payload
     };
+
+    if (len > (sizeof(payload) - 1)) {
+        rc = OS_EINVAL;
+        goto err;
+    }
 
     memcpy(&payload[1], buffer, len);
 

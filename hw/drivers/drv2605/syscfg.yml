@@ -1,0 +1,67 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+syscfg.defs:
+    DRV2605_CLI:
+        description: 'Enable shell support for the DRV2605'
+        value: 0
+    DRV2605_LOG:
+        description: 'Enable DRV2605 logging'
+        value: 0
+    DRV2605_STATS:
+        description: 'Enable DRV2605 statistics'
+        value: 0
+    DRV2605_SHELL_ITF_TYPE:
+        description: 'DRV2605 interface type - I2C'
+        value: 1
+    DRV2605_SHELL_ITF_NUM:
+        description: 'DRV2605 interface number'
+        value: 0
+    DRV2605_SHELL_ITF_ADDR:
+        description: 'DRV2605 I2C Address'
+        value: 0x5A
+
+    DRV2605_EN_PIN:
+        description: 'EN pin'
+        value: -1
+
+    # these are settings taken from the drv2605 evm for the SEMCO1030 (Mplus)
+    # 205hz freq, nominal voltage 1.5V, max voltage 3.0V, DRV2605_LRA_SAMPLE_TIME: 3, DRV2605_LRA_BLANKING_TIME: 2, DRV2605_LRA_IDISS_TIME: 2
+    # REQUIRED, you need to change based on your motor
+    DRV2605_RATED_VOLTAGE:
+        description: '8.5.2.1 Rated Voltage Programming'
+        value: 0x3E
+    DRV2605_OD_CLAMP:
+        description: '8.5.2.2 Overdrive Voltage-Clamp Programming, Note: LRA and ERM (8) and (9) equations are swapped in the "SLOS854C REVISED SEPTEMBER 2014" datasheet, confirmed https://e2e.ti.com/support/other_analog/haptics/f/927/t/655886'
+        value: 0x89
+    DRV2605_DRIVE_TIME:
+        description: '8.6.21 LRA DRIVE_TIME = (0.5 × (1/fLRA * 1000) - 0.5 ms) /  0.1 ms'
+        value: 19
+
+    # Now supply previously computed calibration values, specific to your motor, these are settings from the SEMCO1030 from drv2605 devkit
+    # If you don't have these youll need to run drv2605_auto_calibrate with the appropriate inputs to generate them
+    DRV2605_CALIBRATED_COMP:
+        description: 'Previously Computed Automatic Compensation for Resistive Losses for SEMCO1030'
+        value: 0x09
+    DRV2605_CALIBRATED_BEMF:
+        description: 'Previously Computed Auto-Calibration Back-EMF Result for SEMCO1030'
+        value: 0x79
+    DRV2605_CALIBRATED_BEMF_GAIN:
+        description: 'Previously Computed Auto-Calibration BEMF_GAIN Result for SEMCO1030'
+        value: 1
