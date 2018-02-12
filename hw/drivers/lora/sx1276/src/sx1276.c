@@ -22,11 +22,9 @@ Maintainer: Miguel Luis, Gregory Cristian and Wael Guibene
 #include "hal/hal_timer.h"
 #include "bsp/bsp.h"
 #include "os/os.h"
-#include "node/lora.h"
-#include "node/radio.h"
+#include "radio/radio.h"
 #include "sx1276.h"
 #include "sx1276-board.h"
-#include "node/lora_priv.h"
 
 #if MYNEWT_VAL(LORA_MAC_TIMER_NUM) == -1
 #error "Must define a Lora MAC timer number"
@@ -227,11 +225,33 @@ struct hal_timer RxTimeoutSyncWord;
 
 static uint32_t rx_timeout_sync_delay = -1;
 
+double
+ceil(double d)
+{
+    int64_t i;
+
+    i = d;
+    if (d == i) {
+        return i;
+    }
+    return i + 1;
+}
+
+double
+floor(double d)
+{
+    return (int64_t)d;
+}
+
+double
+round(double d)
+{
+    return (int64_t)(d + 0.5);
+}
+
 static void
 SX1276RxDone( uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr )
 {
-    STATS_INC(lora_stats, rx_success);
-
     if( ( RadioEvents != NULL ) && ( RadioEvents->RxDone != NULL ) )
     {
         RadioEvents->RxDone( payload, size, rssi, snr );
@@ -241,8 +261,6 @@ SX1276RxDone( uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr )
 static void
 SX1276RxError( void )
 {
-    STATS_INC(lora_stats, rx_error);
-
     if( ( RadioEvents != NULL ) && ( RadioEvents->RxError != NULL ) )
     {
         RadioEvents->RxError( );
@@ -252,8 +270,6 @@ SX1276RxError( void )
 static void
 SX1276RxTimeout( void )
 {
-    STATS_INC(lora_stats, rx_timeout);
-
     if( ( RadioEvents != NULL ) && ( RadioEvents->RxTimeout != NULL ) )
     {
         RadioEvents->RxTimeout( );
@@ -263,8 +279,6 @@ SX1276RxTimeout( void )
 static void
 SX1276TxDone( void )
 {
-    STATS_INC(lora_stats, tx_success);
-
     if( ( RadioEvents != NULL ) && ( RadioEvents->TxDone != NULL ) )
     {
         RadioEvents->TxDone( );
@@ -274,8 +288,6 @@ SX1276TxDone( void )
 static void
 SX1276TxTimeout( void )
 {
-    STATS_INC(lora_stats, tx_timeout);
-
     if( ( RadioEvents != NULL ) && ( RadioEvents->TxTimeout != NULL ) )
     {
         RadioEvents->TxTimeout( );
@@ -1440,7 +1452,6 @@ void SX1276OnTimeoutIrq(void *unused)
                 hal_timer_stop(&RxTimeoutSyncWord);
             }
         }
-        lora_node_log(LORA_NODE_LOG_RADIO_TIMEOUT_IRQ, 0, 0, 0);
         SX1276RxTimeout( );
         break;
     case RF_TX_RUNNING:
@@ -1677,7 +1688,6 @@ void SX1276OnDio1Irq(void *unused)
             case MODEM_LORA:
                 // Sync time out
                 hal_timer_stop(&RxTimeoutTimer);
-                lora_node_log(LORA_NODE_LOG_RX_SYNC_TIMEOUT, 0, 0, 0);
                 SX1276Write( REG_LR_IRQFLAGS, RFLR_IRQFLAGS_RXTIMEOUT );
                 SX1276.Settings.State = RF_IDLE;
                 SX1276RxTimeout( );

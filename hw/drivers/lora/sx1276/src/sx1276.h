@@ -16,7 +16,7 @@ Maintainer: Miguel Luis and Gregory Cristian
 #define __SX1276_H__
 #include <stdint.h>
 #include <stdbool.h>
-#include "node/radio.h"
+#include "radio/radio.h"
 #include "sx1276Regs-Fsk.h"
 #include "sx1276Regs-LoRa.h"
 
@@ -29,6 +29,21 @@ Maintainer: Miguel Luis and Gregory Cristian
  * Sync word for Public LoRa networks
  */
 #define LORA_MAC_PUBLIC_SYNCWORD                    0x34
+
+/*!
+ * Radio wakeup time from SLEEP mode
+ */
+#define RADIO_OSC_STARTUP                           1 // [ms]
+
+/*!
+ * Radio PLL lock and Mode Ready delay which can vary with the temperature
+ */
+#define RADIO_SLEEP_TO_RX                           2 // [ms]
+
+/*!
+ * Radio complete Wake-up Time with margin for temperature compensation
+ */
+#define RADIO_WAKEUP_TIME                           ( RADIO_OSC_STARTUP + RADIO_SLEEP_TO_RX )
 
 /*!
  * Radio FSK modem parameters

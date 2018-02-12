@@ -31,7 +31,6 @@ pkg.deps:
     - "@apache-mynewt-core/mgmt/imgmgr"
     - "@apache-mynewt-core/mgmt/newtmgr"
     - "@apache-mynewt-core/mgmt/newtmgr/transport/nmgr_shell"
-    - "@apache-mynewt-core/net/lora/node"
     - "@apache-mynewt-core/sys/config"
     - "@apache-mynewt-core/sys/console/full"
     - "@apache-mynewt-core/sys/id"

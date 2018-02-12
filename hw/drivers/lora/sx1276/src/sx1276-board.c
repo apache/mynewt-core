@@ -15,7 +15,7 @@ Maintainer: Miguel Luis and Gregory Cristian
 #include <assert.h>
 #include "hal/hal_spi.h"
 #include "bsp/bsp.h"
-#include "node/radio.h"
+#include "radio/radio.h"
 #include "sx1276.h"
 #include "sx1276-board.h"
 
