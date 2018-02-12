@@ -431,7 +431,7 @@ charge_control_set_poll_rate_ms(char *, uint32_t);
  * @param The multiple of the poll rate
  */
 int 
-charge_control_set_n_poll_rate(char *, charge_control_type_t, int);
+charge_control_set_n_poll_rate(char *, struct charge_control_type_traits *);
 
 /**
  * Set the driver functions for this charge controller, along with the type of 

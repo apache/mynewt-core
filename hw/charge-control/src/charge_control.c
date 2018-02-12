@@ -93,6 +93,20 @@ charge_control_read_data_func(struct charge_control *, void *, void *,
 static void charge_control_up_timestamp(struct charge_control *);
 
 /**
+ *
+ */
+static int
+charge_control_insert_type_trait(struct charge_control *,
+        struct charge_control_type_traits *);
+
+/** 
+ * 
+ */
+static int
+charge_control_remove_type_trait(struct charge_control *,
+        struct charge_control_type_traits *);
+
+/**
  * Search the charge control type traits list for a specific type of charge
  * controller.  Set the charge control pointer to NULL to start from the 
  * beginning of the list or to a specific charge control object to begin from
@@ -107,6 +121,13 @@ static void charge_control_up_timestamp(struct charge_control *);
 static struct charge_control_type_traits *
 charge_control_get_type_traits_bytype(charge_control_type_t, 
         struct charge_control *);
+
+/**
+ *
+ */
+static struct charge_control *
+charge_control_get_type_traits_byname(char *, 
+        struct charge_control_type_traits **, charge_control_type_t);
 
 /**
  *
@@ -469,6 +490,58 @@ static void charge_control_up_timestamp(struct charge_control *cc)
     cc->cc_sts.cct_ostv.tv_usec = charge_control_base_ts.cct_ostv.tv_usec;
 }
 
+static int
+charge_control_insert_type_trait(struct charge_control *cc,
+        struct charge_control_type_traits *cctt)
+{
+    return 0;
+}
+
+static int
+charge_control_remove_type_trait(struct charge_control *cc,
+        struct charge_control_type_traits *cctt)
+{
+    return 0;
+}
+
+static struct charge_control_type_traits *
+charge_control_get_type_traits_bytype(charge_control_type_t type, 
+        struct charge_control * cc)
+{
+    struct charge_control_type_traits *cctt;
+
+    cctt = NULL;
+
+    charge_control_lock(cc);
+
+    SLIST_FOREACH(cctt, &cc->cc_type_traits_list, cctt_next) {
+        if (cctt->cctt_charge_control_type == type) {
+            break;
+        }
+    }
+
+    charge_control_unlock(cc);
+
+    return cctt;
+}
+
+static struct charge_control *
+charge_control_get_type_traits_byname(char *devname, 
+        struct charge_control_type_traits **cctt, charge_control_type_t type)
+{
+    struct charge_control *cc;
+
+    cc = charge_control_mgr_find_next_bydevname(devname, NULL);
+    if (!cc) {
+        goto err;
+    }
+
+    *cctt = charge_control_get_type_traits_bytype(type, cc);
+
+err:
+    return cc;
+}
+
 static uint8_t
 charge_control_type_traits_empty(struct charge_control * cc)
 {
@@ -577,7 +650,7 @@ charge_control_read(struct charge_control *cc, charge_control_type_t type,
     ccrc.user_func = data_func;
     ccrc.user_arg = arg;
 
-    if (!charge_control_mgr_match_bytype(cc, type)) {
+    if (!charge_control_mgr_match_bytype(cc, (void *)&type)) {
         rc = SYS_ENOENT;
         goto err;
     }
@@ -697,16 +770,16 @@ charge_control_mgr_poll_bytype(struct charge_control *cc,
                 cctt->cctt_polls_left--;
             }
 // #if MYNEWT_VAL(SENSOR_POLL_TEST_LOG)
-//             test_log[test_log_idx].delta = (uint32_t)(now - stt->prev_now);
-//             test_log[test_log_idx].polls_left = stt->stt_polls_left;
+//             test_log[test_log_idx].delta = (uint32_t)(now - cctt->prev_now);
+//             test_log[test_log_idx].polls_left = cctt->cctt_polls_left;
 //             test_log[test_log_idx].now = now;
 //             test_log[test_log_idx].os_now = os_time_get();
 //             test_log[test_log_idx].name[0] = sensor->s_dev->od_name[0];
 //             test_log[test_log_idx].name[1] = type == 1 ? 'a' : type == 32 ? 't' : type == 64 ? 'p' : 'x';
-//             test_log[test_log_idx].poll_multiple = stt->stt_poll_n;
+//             test_log[test_log_idx].poll_multiple = cctt->cctt_poll_n;
 //             test_log_idx++;
 //             test_log_idx %= 100;
-//             stt->prev_now = now;
+//             cctt->prev_now = now;
 // #endif
         }
 
@@ -895,6 +968,65 @@ charge_control_set_poll_rate_ms(char *devname, uint32_t poll_rate)
     charge_control = charge_control_find_min_nextrun(now, &next_wakeup);
 
     os_callout_reset(&charge_control_mgr.mgr_wakeup_callout, next_wakeup);
+
+    return 0;
+err:
+    return rc;
+}
+
+int 
+charge_control_set_n_poll_rate(char * devname, 
+        struct charge_control_type_traits *cctt)
+{
+    struct charge_control *cc;
+    struct charge_control_type_traits *cctt_tmp;
+    int rc;
+
+    if (!cctt) {
+        rc = SYS_EINVAL;
+        goto err;
+    }
+
+    cctt_tmp = NULL;
+
+    cc = charge_control_get_type_traits_byname(devname, &cctt_tmp,
+                                           cctt->cctt_charge_control_type);
+    if (!cc) {
+        rc = SYS_EINVAL;
+        goto err;
+    }
+
+    if (!cctt_tmp && cctt) {
+        rc = charge_control_insert_type_trait(cc, cctt);
+        rc |= charge_control_lock(cc);
+        if (rc) {
+            goto err;
+        }
+        cctt_tmp = cctt;
+        cctt_tmp->cctt_polls_left = cctt->cctt_poll_n;
+        charge_control_unlock(cc);
+    } else if (cctt_tmp) {
+        rc = charge_control_remove_type_trait(cc, cctt_tmp);
+        if (rc) {
+            goto err;
+        }
+
+        charge_control_lock(cc);
+
+        cctt_tmp->cctt_poll_n = cctt->cctt_poll_n;
+        cctt_tmp->cctt_polls_left = cctt->cctt_poll_n;
+
+        charge_control_unlock(cc);
+
+        rc = charge_control_insert_type_trait(cc, cctt_tmp);
+        if (rc) {
+            goto err;
+        }
+
+    } else {
+        rc = SYS_EINVAL;
+        goto err;
+    }
 
     return 0;
 err:
