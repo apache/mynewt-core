@@ -17,6 +17,14 @@
  * under the License.
  */
 
+/**
+ * @file charge_control.h
+ * @brief Hardware-agnostic interface for battery charge control ICs
+ *
+ * The Charge Control interface provides a hardware-agnostic layer for driving
+ * battery charge controller ICs. 
+ */
+
 #ifndef __CHARGE_CONTROL_H__
 #define __CHARGE_CONTROL_H__
 
@@ -47,13 +55,21 @@ struct charge_control;
  */
 #define CHARGE_CONTROL_IGN_LISTENER     1
 
-// =================================================================
-// ====================== CHARGE CONTROL ===========================
-// =================================================================
-
 /**
  * @{ Charge Control API
  */
+
+/**
+ * Return the OS device structure corresponding to this charge controller
+ */
+#define CHARGE_CONTROL_GET_DEVICE(__c) ((__c)->cc_dev)
+
+/**
+ * Return the interface for this charge controller
+ */
+#define CHARGE_CONTROL_GET_ITF(__c) (&((__c)->cc_itf))
+
+// ---------------------- TYPE -------------------------------------
 
 /** 
  * Charge controller supported functionality
@@ -68,17 +84,18 @@ typedef enum {
 } charge_control_type_t;
 
 /** 
- * Charge controller status, determined at each call to the 
- * charge_control_read() function
+ * Possible charge controller states
  */
 typedef enum {
-    /** Charge controller is off (or disabled) */
-    CHARGE_CONTROL_STATUS_OFF           = 0,
+    /** Charge controller is disabled (if enable/disable function exists) */
+    CHARGE_CONTROL_STATUS_DISABLED      = 0,
+    /** No charge source is present at the charge controller input */
+    CHARGE_CONTROL_STATUS_NO_SOURCE,
     /** Charge controller is charging a battery */
     CHARGE_CONTROL_STATUS_CHARGING,
     /** Charge controller has completed its charging cycle */
     CHARGE_CONTROL_STATUS_CHARGE_COMPLETE,
-    /** Charging is suspended */
+    /** Charging is temporarily suspended */
     CHARGE_CONTROL_STATUS_SUSPEND,
     /** Charge controller has detected a fault condition */
     CHARGE_CONTROL_STATUS_FAULT,
@@ -87,7 +104,7 @@ typedef enum {
 } charge_control_status_t;
 
 /**
- * Possible fault conditions for the charg controller
+ * Possible fault conditions for the charge controller
  */
 typedef enum {
     /** No fault detected */
@@ -103,6 +120,39 @@ typedef enum {
     /** Unspecified fault; User must understand how to interpret */
     CHARGE_CONTROL_FAULT_OTHER          = (1 << 4),
 } charge_control_fault_t;
+
+/**
+ * Charge controller type traits list.  Allows a certain type of charge control
+ * data to be polled at n times the normal poll rate.
+ */
+struct charge_control_type_traits {
+    /** The type of charge control data to which the traits apply */
+    charge_control_type_t cctt_charge_control_type;
+
+    /** Poll rate multiple */
+    uint16_t cctt_poll_n;
+
+    /** Polls left until the charge control type is polled */
+    uint16_t cctt_polls_left;
+
+    /** Next item in the traits list.  The head of this list is contained
+     * within the charge control object 
+     */
+    SLIST_ENTRY(charge_control_type_traits) cctt_next;
+};
+
+// ---------------------- CONFIG -----------------------------------
+
+/**
+ * Configuration structure, describing a specific charge controller type off of
+ * an existing charge controller.
+ */
+struct charge_control_cfg {
+    /** Reserved for future use */
+    uint8_t _reserved[4];
+};
+
+// ---------------------- INTERFACE --------------------------------
 
 /**
  * Charge control serial interface types
@@ -131,18 +181,10 @@ struct charge_control_itf {
     uint16_t cci_addr;
 };
 
-/**
- * Configuration structure, describing a specific charge controller type off of
- * an existing charge controller.
- */
-struct charge_control_cfg {
-    /** Reserved for future use */
-    uint8_t _reserved[4];
-};
+// ---------------------- LISTENER ---------------------------------
 
 /**
- * Callback for handling charge controller status, specified in a charge control 
- * listener.
+ * Callback for handling charge controller status.
  *
  * @param The charge control object for which data is being returned
  * @param The argument provided to charge_control_read() function.
@@ -177,6 +219,8 @@ struct charge_control_listener {
      */
     SLIST_ENTRY(charge_control_listener) ccl_next;
 };
+
+// ---------------------- DRIVER FUNCTIONS -------------------------
 
 /**
  * Read from a charge controller, given a specific type of information to read
@@ -248,21 +292,15 @@ struct charge_control_driver {
     charge_control_disable_func_t       ccd_disable;
 };
 
+// ---------------------- POLL RATE CONTROL ------------------------
+
 struct charge_control_timestamp {
     struct os_timeval cct_ostv;
     struct os_timezone cct_ostz;
     uint32_t cct_cputime;
 };
 
-/*
- * Return the OS device structure corresponding to this charge controller
- */
-#define CHARGE_CONTROL_GET_DEVICE(__c) ((__c)->cc_dev)
-
-/*
- * Return the interface for this charge controller
- */
-#define CHARGE_CONTROL_GET_ITF(__c) (&((__c)->cc_itf))
+// ---------------------- CHARGE CONTROL OBJECT --------------------
 
 struct charge_control {
     /* The OS device this charge controller inherits from, this is typically a 
@@ -309,13 +347,27 @@ struct charge_control {
      */
     SLIST_HEAD(, charge_control_listener) cc_listener_list;
 
+    /** A list of traits registered to the charge control data types */
+    SLIST_HEAD(, charge_control_type_traits) cc_type_traits_list;
+
     /* The next charge controller in the global charge controller list. */
     SLIST_ENTRY(charge_control) cc_next;
 };
 
+// =================================================================
+// ====================== CHARGE CONTROL ===========================
+// =================================================================
+
+/**
+ * Initialize charge control structure data and mutex and associate it with an
+ * os_dev.
+ *
+ * @param Charge control struct to initialize
+ * @param os_dev to associate with the charge control struct
+ *
+ * @return 0 on success, non-zero error code on failure.
+ */
 int charge_control_init(struct charge_control *, struct os_dev *);
-int charge_control_lock(struct charge_control *);
-void charge_control_unlock(struct charge_control *);
 
 /**
  * Register a charge control listener. This allows a calling application to 
@@ -345,8 +397,41 @@ int charge_control_unregister_listener(struct charge_control *,
         struct charge_control_listener *);
 
 
+/**
+ * Read from a charge controller, given a specific type of information to read
+ * (e.g. CHARGE_CONTROL_TYPE_STATUS).
+ *
+ * @param The charge controller to read from
+ * @param The type(s) of charge control value(s) to read, interpreted as a mask
+ * @param The function to call with each value read.  If NULL, it calls all
+ *        charge control listeners associated with this function.
+ * @param The argument to pass to the read callback.
+ * @param Timeout.  If block until result, specify OS_TIMEOUT_NEVER, 0 returns
+ *        immediately (no wait.)
+ *
+ * @return 0 on success, non-zero error code on failure.
+ */
 int charge_control_read(struct charge_control *, charge_control_type_t, 
         charge_control_data_func_t, void *, uint32_t);
+
+/**
+ * Set the charge controller poll rate
+ *
+ * @param The name of the charge controller
+ * @param The poll rate in milli seconds
+ */
+int
+charge_control_set_poll_rate_ms(char *, uint32_t);
+
+/**
+ * Set a charge control type to poll at some multiple of the poll rate
+ *
+ * @param The name of the charge controller
+ * @param The charge control type
+ * @param The multiple of the poll rate
+ */
+int 
+charge_control_set_n_poll_rate(char *, charge_control_type_t, int);
 
 /**
  * Set the driver functions for this charge controller, along with the type of 
@@ -445,17 +530,6 @@ charge_control_get_config(struct charge_control *cc,
  */
 
 /**
- * Pends on the charge control manager mutex indefinitely.  Must be used prior
- * to operations which iterate through the list of charge controllers.
- *
- * @return 0 on success, non-zero error code on failure.
- */
-int charge_control_mgr_lock(void);
-
-/** Releases the charge control manager mutex. */
-void charge_control_mgr_unlock(void);
-
-/**
  * Registers a charge controller with the charge control manager list.  This
  * makes the charge controller externally searchable.
  *
@@ -536,15 +610,6 @@ struct charge_control *charge_control_mgr_find_next_bydevname(char *,
 int charge_control_mgr_match_bytype(struct charge_control *, void *);
 
 /**
- * Set the charge controller poll rate
- *
- * @param The devname
- * @param The poll rate in milli seconds
- */
-int
-charge_control_set_poll_rate_ms(char *, uint32_t);
-
-/**
  * Puts read event on the charge control manager evq
  *
  * @param arg
@@ -561,11 +626,14 @@ charge_control_ftostr(float, char *, int);
  * }@
  */
 
+/* End Charge Control Manager API */
 
 
 /**
  * @}
  */
+
+/* End Charge Control API */
 
 #ifdef __cplusplus
 }
