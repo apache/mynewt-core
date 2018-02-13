@@ -22,8 +22,8 @@ pkg.description: ADC driver for the NRF52
 pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
-pkg.apis: 
+pkg.apis:
     - ADC_HW_IMPL
 pkg.deps:
-   - "@apache-mynewt-core/hw/drivers/adc"
-   - hw/mcu/nordic_sdk
+   - hw/drivers/adc
+   - hw/mcu/nordic

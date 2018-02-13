@@ -25,18 +25,11 @@
 #include <bsp/cmsis_nvic.h>
 
 /* Nordic headers */
-#include <nrf.h>
+#include <nrfx.h>
 #include <nrf_saadc.h>
-#include <nrf_drv_saadc.h>
-#include <app_error.h>
+#include <nrfx_saadc.h>
 
 #include "adc_nrf52/adc_nrf52.h"
-
-/**
- * Weak symbol, this is defined in Nordic drivers but not exported.
- * Needed for NVIC_SetVector().
- */
-extern void SAADC_IRQHandler(void);
 
 struct nrf52_saadc_stats {
     uint16_t saadc_events;
@@ -45,15 +38,15 @@ struct nrf52_saadc_stats {
 static struct nrf52_saadc_stats nrf52_saadc_stats;
 
 static struct adc_dev *global_adc_dev;
-static nrf_drv_saadc_config_t *global_adc_config;
+static nrfx_saadc_config_t *global_adc_config;
 static struct nrf52_adc_dev_cfg *init_adc_config;
 
 static uint8_t nrf52_adc_chans[NRF_SAADC_CHANNEL_COUNT * sizeof(struct adc_chan_config)];
 
 static void
-nrf52_saadc_event_handler(const nrf_drv_saadc_evt_t *event)
+nrf52_saadc_event_handler(const nrfx_saadc_evt_t *event)
 {
-    nrf_drv_saadc_done_evt_t *done_ev;
+    nrfx_saadc_done_evt_t *done_ev;
     int rc;
 
     if (global_adc_dev == NULL) {
@@ -66,9 +59,9 @@ nrf52_saadc_event_handler(const nrf_drv_saadc_evt_t *event)
     /* Right now only data reads supported, assert for unknown event
      * type.
      */
-    assert(event->type == NRF_DRV_SAADC_EVT_DONE);
+    assert(event->type == NRFX_SAADC_EVT_DONE);
 
-    done_ev = (nrf_drv_saadc_done_evt_t * const) &event->data.done;
+    done_ev = (nrfx_saadc_done_evt_t * const) &event->data.done;
 
     rc = global_adc_dev->ad_event_handler_func(global_adc_dev,
             global_adc_dev->ad_event_handler_arg,
@@ -90,7 +83,7 @@ nrf52_saadc_event_handler(const nrf_drv_saadc_evt_t *event)
  *             if resource unavailable.  If OS_WAIT_FOREVER specified, blocks
  *             until resource is available.
  * @param arg  Argument provided by higher layer to open, in this case
- *             it can be a nrf_drv_saadc_config_t, to override the default
+ *             it can be a nrfx_saadc_config_t, to override the default
  *             configuration.
  *
  * @return 0 on success, non-zero on failure.
@@ -117,9 +110,9 @@ nrf52_adc_open(struct os_dev *odev, uint32_t wait, void *arg)
     }
 
     /* Initialize the device */
-    rc = nrf_drv_saadc_init((nrf_drv_saadc_config_t *) arg,
+    rc = nrfx_saadc_init((nrfx_saadc_config_t *) arg,
             nrf52_saadc_event_handler);
-    if (rc != 0) {
+    if (rc != NRFX_SUCCESS) {
         goto err;
     }
 
@@ -146,7 +139,7 @@ nrf52_adc_close(struct os_dev *odev)
 
     dev = (struct adc_dev *) odev;
 
-    nrf_drv_saadc_uninit();
+    nrfx_saadc_uninit();
 
     global_adc_dev = NULL;
     global_adc_config = NULL;
@@ -179,8 +172,8 @@ nrf52_adc_configure_channel(struct adc_dev *dev, uint8_t cnum,
 
     cc = (nrf_saadc_channel_config_t *) cfgdata;
 
-    rc = nrf_drv_saadc_channel_init(cnum, cc);
-    if (rc != 0) {
+    rc = nrfx_saadc_channel_init(cnum, cc);
+    if (rc != NRFX_SUCCESS) {
         goto err;
     }
 
@@ -274,15 +267,15 @@ nrf52_adc_set_buffer(struct adc_dev *dev, void *buf1, void *buf2,
      */
     buf_len /= sizeof(nrf_saadc_value_t);
 
-    rc = nrf_drv_saadc_buffer_convert((nrf_saadc_value_t *) buf1, buf_len);
-    if (rc != 0) {
+    rc = nrfx_saadc_buffer_convert((nrf_saadc_value_t *) buf1, buf_len);
+    if (rc != NRFX_SUCCESS) {
         goto err;
     }
 
     if (buf2) {
-        rc = nrf_drv_saadc_buffer_convert((nrf_saadc_value_t *) buf2,
+        rc = nrfx_saadc_buffer_convert((nrf_saadc_value_t *) buf2,
                 buf_len);
-        if (rc != 0) {
+        if (rc != NRFX_SUCCESS) {
             goto err;
         }
     }
@@ -298,8 +291,8 @@ nrf52_adc_release_buffer(struct adc_dev *dev, void *buf, int buf_len)
 
     buf_len /= sizeof(nrf_saadc_value_t);
 
-    rc = nrf_drv_saadc_buffer_convert((nrf_saadc_value_t *) buf, buf_len);
-    if (rc != 0) {
+    rc = nrfx_saadc_buffer_convert((nrf_saadc_value_t *) buf, buf_len);
+    if (rc != NRFX_SUCCESS) {
         goto err;
     }
 
@@ -314,7 +307,7 @@ err:
 static int
 nrf52_adc_sample(struct adc_dev *dev)
 {
-    nrf_drv_saadc_sample();
+    nrfx_saadc_sample();
 
     return (0);
 }
@@ -328,8 +321,8 @@ nrf52_adc_read_channel(struct adc_dev *dev, uint8_t cnum, int *result)
     nrf_saadc_value_t adc_value;
     int rc;
 
-    rc = nrf_drv_saadc_sample_convert(cnum, &adc_value);
-    if (rc != 0) {
+    rc = nrfx_saadc_sample_convert(cnum, &adc_value);
+    if (rc != NRFX_SUCCESS) {
         goto err;
     }
 
@@ -396,7 +389,7 @@ nrf52_adc_dev_init(struct os_dev *odev, void *arg)
     af->af_read_buffer = nrf52_adc_read_buffer;
     af->af_size_buffer = nrf52_adc_size_buffer;
 
-    NVIC_SetVector(SAADC_IRQn, (uint32_t) SAADC_IRQHandler);
+    NVIC_SetVector(SAADC_IRQn, (uint32_t) nrfx_saadc_irq_handler);
 
     return (0);
 }

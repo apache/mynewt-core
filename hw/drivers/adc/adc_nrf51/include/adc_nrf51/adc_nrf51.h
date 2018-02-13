@@ -22,7 +22,7 @@
 
 #include <adc/adc.h>
 
-#include <nrf.h>
+#include <nrfx.h>
 #include <nrf_adc.h>
 
 #ifdef __cplusplus

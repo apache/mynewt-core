@@ -22,9 +22,6 @@
 
 #include <adc/adc.h>
 
-#include <nrf.h>
-#include <nrf_saadc.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
