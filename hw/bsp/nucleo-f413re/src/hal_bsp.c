@@ -35,6 +35,7 @@
 #include <mcu/stm32f4_bsp.h>
 #include "mcu/stm32f4xx_mynewt_hal.h"
 #include "hal/hal_i2c.h"
+#include "hal/hal_spi.h"
 
 #include "bsp/bsp.h"
 
@@ -69,6 +70,28 @@ static struct stm32f4_hal_i2c_cfg i2c_cfg0 = {
 };
 #endif
 
+#if MYNEWT_VAL(SPI_0_MASTER)
+/*
+ * NOTE: Our HAL expects that the SS pin, if used, is treated as a gpio line
+ * and is handled outside the SPI routines.
+ */
+static const struct stm32f4_hal_spi_cfg os_bsp_spi0m_cfg = {
+    .sck_pin      = MCU_GPIO_PORTA(5),
+    .mosi_pin     = MCU_GPIO_PORTA(7),
+    .miso_pin     = MCU_GPIO_PORTA(6),
+    .irq_prio     = 2,
+};
+#endif
+
+#if MYNEWT_VAL(SPI_0_SLAVE)
+static const struct stm32f4_hal_spi_cfg os_bsp_spi0s_cfg = {
+    .sck_pin      = MCU_GPIO_PORTA(5),
+    .mosi_pin     = MCU_GPIO_PORTA(7),
+    .miso_pin     = MCU_GPIO_PORTA(6),
+    .ss_pin       = MCU_GPIO_PORTA(4),
+    .irq_prio     = 2,
+};
+#endif
 
 static const struct hal_bsp_mem_dump dump_cfg[] = {
     [0] = {
@@ -121,6 +144,15 @@ hal_bsp_init(void)
     assert(rc == 0);
 #endif
 
+#if MYNEWT_VAL(SPI_0_MASTER)
+    rc = hal_spi_init(0, (void *)&os_bsp_spi0m_cfg, HAL_SPI_TYPE_MASTER);
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(SPI_0_SLAVE)
+    rc = hal_spi_init(0, (void *)&os_bsp_spi0s_cfg, HAL_SPI_TYPE_SLAVE);
+    assert(rc == 0);
+#endif
 }
 
 /**
