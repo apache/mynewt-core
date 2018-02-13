@@ -24,10 +24,6 @@ syscfg.defs:
         description: 'Set to indicate that BSP has NRF52'
         value: 1
 
-    XTAL_32768:
-        description: 'External 32k oscillator available.'
-        value: 1
-
     UART_0:
         description: 'Whether to enable UART0'
         value: 1
@@ -85,6 +81,7 @@ syscfg.vals:
     NFFS_FLASH_AREA: FLASH_AREA_NFFS
     COREDUMP_FLASH_AREA: FLASH_AREA_IMAGE_1
     MCU_DCDC_ENABLED: 1
+    XTAL_32768: 1
 
 syscfg.vals.BLE_LP_CLOCK:
     OS_CPUTIME_FREQ: 32768

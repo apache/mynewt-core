@@ -67,6 +67,9 @@ syscfg.defs:
     TIMER_5:
         description: 'NRF52 RTC 0'
         value:  0
+    PWM_3:
+        description: 'NRF52 PWM 3'
+        value: 0
 
 syscfg.defs.BLE_LP_CLOCK:
     TIMER_0:

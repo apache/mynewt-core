@@ -71,6 +71,10 @@ syscfg.defs:
             - "!SPI_1_MASTER"
             - "!I2C_1"
 
+    ADC_0:
+        description: 'ADC'
+        value:  0
+
 # The XTAL_xxx definitions are used to set the clock source used for the low
 # frequency clock. It is required that at least one of these sources is
 # enabled (the bsp should set one of these clock sources).

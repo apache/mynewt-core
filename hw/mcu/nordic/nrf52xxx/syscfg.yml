@@ -71,6 +71,38 @@ syscfg.defs:
             - "!SPI_1_MASTER"
             - "!I2C_1"
 
+    ADC_0:
+        description: 'NRF52 ADC 0'
+        value:  0
+
+    ADC_0_RESOLUTION:
+        description: 'NRF52 ADC 0 RESOLUTION'
+        value: 'NRFX_SAADC_CONFIG_RESOLUTION'
+
+    ADC_0_OVERSAMPLE:
+        description: 'NRF52 ADC 0 OVERSAMPLE'
+        value: 'NRFX_SAADC_CONFIG_OVERSAMPLE'
+
+    ADC_0_INTERRUPT_PRIORITY:
+        description: 'NRF52 ADC IRQ PRIORITY'
+        value: 'NRFX_SAADC_CONFIG_IRQ_PRIORITY'
+
+    PWM_0:
+        description: 'NRF52 PWM 0'
+        value: 0
+
+    PWM_1:
+        description: 'NRF52 PWM 1'
+        value: 0
+
+    PWM_2:
+        description: 'NRF52 PWM 2'
+        value: 0
+
+    SOFT_PWM:
+        description: 'SOFT PWM'
+        value: 0
+
 # The XTAL_xxx definitions are used to set the clock source used for the low
 # frequency clock. It is required that at least one of these sources is
 # enabled (the bsp should set one of these clock sources).

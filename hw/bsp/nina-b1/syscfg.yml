@@ -23,10 +23,6 @@ syscfg.defs:
         description: 'Set to indicate that BSP has NRF52'
         value: 1
 
-    XTAL_32768:
-        description: 'External 32k oscillator available.'
-        value: 1
-
     UART_0:
         description: 'Whether to enable UART0'
         value:  1
@@ -84,6 +80,7 @@ syscfg.vals:
     NFFS_FLASH_AREA: FLASH_AREA_NFFS
     COREDUMP_FLASH_AREA: FLASH_AREA_IMAGE_1
     MCU_DCDC_ENABLED: 1
+    XTAL_32768: 1
     BOOT_SERIAL_DETECT_PIN: 16  # on IRC-BTLE board P0.16=SWITCH_1
     # BOOT_SERIAL_DETECT_PIN 30 # on IRC-BTLE board P0.30=SWITCH_2
 
