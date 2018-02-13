@@ -22,31 +22,33 @@
 
 #include "os/os.h"
 #include "hal/hal_gpio.h"
-#include "sensor/sensor.h"
+#include "charge-control/charge_control.h"
 
 typedef void (*bq24040_interrupt_handler)(void *arg);
 
 struct bq24040_pin {
 	int 						bp_pin_num;
+	enum hal_gpio_mode_e 		bp_pin_direction;
 	int 						bp_init_value;
-	hal_gpio_irq_trig_t 		bp_trig;
-	hal_gpio_irq_pull_t 		bp_pull;
-	bq24040_interrupt_handler 	bp_int;
+	hal_gpio_irq_trig_t 		bp_irq_trig;
+	hal_gpio_pull_t 			bp_pull;
+	bq24040_interrupt_handler 	bp_irq_fn;
 };
 
 struct bq24040_cfg {
-	struct bq24040_pin 			bc_pg_pin;
-	struct bq24040_pin 			bc_chg_pin;
-	struct bq24040_pin 			bc_ts_pin;
-	struct bq24040_pin 			bc_iset2_pin;
-	sensor_type_t 				bc_s_mask;
+	struct bq24040_pin *		bc_pg_pin;
+	struct bq24040_pin *		bc_chg_pin;
+	struct bq24040_pin *		bc_ts_pin;
+	struct bq24040_pin *		bc_iset2_pin;
+	charge_control_type_t 		bc_mask;
 };
 
 struct bq24040 {
 	struct os_dev 				b_dev;
-	struct sensor 				b_sensor;
+	struct charge_control 		b_chg_ctrl;
 	struct bq24040_cfg 			b_cfg;
 	os_time_t 					b_last_read_time;
+	bool 						b_is_enabled;
 };
 
 /**

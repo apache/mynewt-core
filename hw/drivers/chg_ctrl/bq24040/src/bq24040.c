@@ -26,24 +26,56 @@
 #include "console/console.h"
 #include "log/log.h"
 
-/* Exports for the sensor API */
-static int bq24040_sensor_read(struct sensor *, sensor_type_t,
-     sensor_data_func_t, void *, uint32_t);
-static int bq24040_sensor_get_config(struct sensor *, sensor_type_t,
-     struct sensor_cfg *);
-static int bq24040_sensor_set_config(struct sensor *, void *);
+/* Exports for the charge control API */
+static int bq24040_chg_ctrl_read(struct charge_control *, charge_control_type_t,
+        charge_control_data_func_t, void *, uint32_t);
+static int bq24040_chg_ctrl_get_config(struct charge_control *, 
+        charge_control_type_t, struct charge_control_cfg *);
+static int bq24040_chg_ctrl_set_config(struct charge_control *, void *);
+static int bq24040_chg_ctrl_enable(struct charge_control *);
+static int bq24040_chg_ctrl_disable(struct charge_control *);
 
-static const struct sensor_driver g_bq24040_sensor_driver = {
-    .sd_read = bq24040_sensor_read,
-    .sd_get_config = bq24040_sensor_get_config,
-    .sd_set_config = bq24040_sensor_set_config,
+static const struct charge_control_driver g_bq24040_chg_ctrl_driver = {
+    .ccd_read = bq24040_chg_ctrl_read,
+    .ccd_get_config = bq24040_chg_ctrl_get_config,
+    .ccd_set_config = bq24040_chg_ctrl_set_config,
+    .ccd_enable = bq24040_chg_ctrl_enable,
+    .ccd_disable = bq24040_chg_ctrl_disable,
 };
+
+static int bq24040_configure_pin(struct bq24040_pin *pin)
+{
+    if ((!pin) || (pin->bp_pin_num == -1))
+    {
+        return 0;
+    }
+
+    if (pin->bp_pin_direction == HAL_GPIO_MODE_IN)
+    {
+        if (pin->bp_irq_trig != HAL_GPIO_TRIG_NONE)
+        {
+            assert(pin->bp_irq_fn != NULL);
+            return hal_gpio_irq_init(pin->bp_pin_num, pin->bp_irq_fn,
+                    NULL, pin->bp_irq_trig, pin->bp_pull);
+        }
+        else
+        {
+            return hal_gpio_init_in(pin->bp_pin_num, pin->bp_pull);
+        }
+    }
+    else if (pin->bp_pin_direction == HAL_GPIO_MODE_OUT)
+    {
+        return hal_gpio_init_out(pin->bp_pin_num, pin->bp_init_value);
+    }
+    
+    return SYS_EINVAL;
+}
 
 int
 bq24040_init(struct os_dev *dev, void *arg)
 {
     struct bq24040 *bq24040;
-    struct sensor *sensor;
+    struct charge_control *cc;
     int rc;
 
     if (!dev) {
@@ -56,7 +88,7 @@ bq24040_init(struct os_dev *dev, void *arg)
     /* register a log */
     // ...
 
-    sensor = &bq24040->sensor;
+    cc = &bq24040->b_chg_ctrl;
 
     /* Initialize the stats entry */
     // ...
@@ -64,23 +96,25 @@ bq24040_init(struct os_dev *dev, void *arg)
     /* Register the entry with the stats registery */
     // ...
 
-    rc = sensor_init(sensor, dev);
+    rc = charge_control_init(cc, dev);
     if (rc) {
         goto err;
     }
 
     /* Add the driver with all the supported types */
-    rc = sensor_set_driver(sensor, SENSOR_TYPE_USER_DEFINED_1 | 
-            SENSOR_TYPE_USER_DEFINED_2,
-            (struct sensor_driver *)&g_bq24040_sensor_driver);
+    rc = charge_control_set_driver(cc, CHARGE_CONTROL_TYPE_STATUS |
+            CHARGE_CONTROL_TYPE_FAULT,
+            (struct charge_control_driver *)&g_bq24040_chg_ctrl_driver);
     if (rc) {
         goto err;
     }
 
-    rc = sensor_mgr_register(sensor);
+    rc = charge_control_mgr_register(cc);
     if (rc) {
         goto err;
     }
+
+    bq24040->b_is_enabled = false;
 
     return 0;
 err:
@@ -92,29 +126,32 @@ bq24040_config(struct bq24040 *bq24040, struct bq24040_cfg *cfg)
 {
     int rc;
 
-    rc = sensor_set_type_mask(&(bq24040->sensor), cfg->s_mask);
+    rc = charge_control_set_type_mask(&(bq24040->b_chg_ctrl), cfg->bc_mask);
     if (rc) {
         goto err;
     }
 
-    bq24040->cfg = *cfg;
+    bq24040->b_cfg = *cfg;
 
-    if(cfg->pg_pin_num != -1)
-    {
-        hal_gpio_init_in(cfg->pg_pin_num, HAL_GPIO_PULL_NONE);
+    rc = bq24040_configure_pin(cfg->bc_pg_pin);
+    if (rc) {
+        goto err;
     }
-    if(cfg->chg_pin_num != -1)
-    {
-        hal_gpio_init_in(cfg->chg_pin_num, HAL_GPIO_PULL_NONE);
+
+    rc = bq24040_configure_pin(cfg->bc_chg_pin);
+    if (rc) {
+        goto err;
     }
-    if(cfg->ts_pin_num != -1)
-    {
-        hal_gpio_init_out(cfg->ts_pin_num, 0);
+    
+    rc = bq24040_configure_pin(cfg->bc_ts_pin);
+    if (rc) {
+        goto err;
     }
-    if(cfg->iset2_pin_num != -1)
-    {
-        hal_gpio_init_out(cfg->iset2_pin_num, 1);
-    }
+    
+    rc = bq24040_configure_pin(cfg->bc_iset2_pin);
+    if (rc) {
+        goto err;
+    } 
 
     return 0;
 err:
@@ -124,9 +161,12 @@ err:
 int
 bq24040_get_charge_source_status(struct bq24040 *bq24040, int *status)
 {
-    if(bq24040->cfg.pg_pin_num != -1)
+    int read_val;
+
+    if (bq24040->b_cfg.bc_pg_pin->bp_pin_num != -1)
     {
-        *status = hal_gpio_read(bq24040->cfg.pg_pin_num) == 0 ? 1 : 0;
+        read_val = hal_gpio_read(bq24040->b_cfg.bc_pg_pin->bp_pin_num);
+        *status = read_val == 0 ? 1 : 0;
         return 0;
     }
     return 1;
@@ -135,9 +175,12 @@ bq24040_get_charge_source_status(struct bq24040 *bq24040, int *status)
 int
 bq24040_get_charging_status(struct bq24040 *bq24040, int *status)
 {
-    if(bq24040->cfg.chg_pin_num != -1)
+    int read_val;
+
+    if (bq24040->b_cfg.bc_chg_pin->bp_pin_num != -1)
     {
-        *status = hal_gpio_read(bq24040->cfg.chg_pin_num) == 0 ? 1 : 0;
+        read_val = hal_gpio_read(bq24040->b_cfg.bc_chg_pin->bp_pin_num);
+        *status = read_val == 0 ? 1 : 0;
         return 0;
     }
     return 1;
@@ -146,9 +189,10 @@ bq24040_get_charging_status(struct bq24040 *bq24040, int *status)
 int
 bq24040_enable(struct bq24040 *bq24040)
 {
-    if(bq24040->cfg.ts_pin_num != -1)
+    if(bq24040->b_cfg.bc_ts_pin->bp_pin_num != -1)
     {
-        hal_gpio_write(bq24040->cfg.ts_pin_num, 1);
+        hal_gpio_write(bq24040->b_cfg.bc_ts_pin->bp_pin_num, 1);
+        bq24040->b_is_enabled = true;
         return 0;
     }
     return SYS_EINVAL;
@@ -157,9 +201,10 @@ bq24040_enable(struct bq24040 *bq24040)
 int
 bq24040_disable(struct bq24040 *bq24040)
 {
-    if(bq24040->cfg.ts_pin_num != -1)
+    if(bq24040->b_cfg.bc_ts_pin->bp_pin_num != -1)
     {
-        hal_gpio_write(bq24040->cfg.ts_pin_num, 0);
+        hal_gpio_write(bq24040->b_cfg.bc_ts_pin->bp_pin_num, 0);
+        bq24040->b_is_enabled = false;
         return 0;
     }
     return SYS_EINVAL;
@@ -180,55 +225,71 @@ bq24040_disable(struct bq24040 *bq24040)
  * @return 0 on success, non-zero error code on failure.
  */
 static int
-bq24040_sensor_read(struct sensor *sns, sensor_type_t type,
-     sensor_data_func_t data_func, void *data_arg, uint32_t timeout)
+bq24040_chg_ctrl_read(struct charge_control *cc, charge_control_type_t type,
+     charge_control_data_func_t data_func, void *data_arg, uint32_t timeout)
 {
-    int charge_source_status;
-    int charging_status;
+    int is_charge_source_present;
+    int is_charging;
+    int status;
+
     struct bq24040 *bq24040;
     int rc;
 
-    if (!(type & SENSOR_TYPE_USER_DEFINED_1) &&
-        !(type & SENSOR_TYPE_USER_DEFINED_2)) {
+    if (!(type & CHARGE_CONTROL_TYPE_STATUS) &&
+        !(type & CHARGE_CONTROL_TYPE_FAULT)) {
         rc = SYS_EINVAL;
         goto err;
     }
 
-    bq24040 = (struct bq24040 *)SENSOR_GET_DEVICE(sns);
+    bq24040 = (struct bq24040 *)CHARGE_CONTROL_GET_DEVICE(cc);
 
-    charge_source_status = 0;
-    charging_status = 0;
+    is_charge_source_present = 0;
+    is_charging = 0;
+    status = CHARGE_CONTROL_STATUS_DISABLED;
 
-    if (type & SENSOR_TYPE_USER_DEFINED_1)
+    if (type & CHARGE_CONTROL_TYPE_STATUS)
     {
-        rc = bq24040_get_charge_source_status(bq24040,
-                &charge_source_status);
-        if (rc) {
+        if (!bq24040->b_is_enabled)
+        {
+            status = CHARGE_CONTROL_STATUS_DISABLED;
+            goto done;
+        }
+
+        rc = bq24040_get_charge_source_status(bq24040, &is_charge_source_present);
+        if (rc)
+        {
             goto err;
         }
 
-        rc = data_func(sns, data_arg, &charge_source_status, 
-                SENSOR_TYPE_USER_DEFINED_1);
-        if (rc) {
+        rc = bq24040_get_charging_status(bq24040, &is_charging);
+        if (rc)
+        {
             goto err;
         }
+
+        if (is_charge_source_present && is_charging)
+        {
+            status = CHARGE_CONTROL_STATUS_CHARGING;
+        }
+        else if (is_charge_source_present && !is_charging)
+        {
+            status = CHARGE_CONTROL_STATUS_CHARGE_COMPLETE;
+        }
+        else if (!is_charge_source_present)
+        {
+            status = CHARGE_CONTROL_STATUS_NO_SOURCE;
+        }
+
+        data_func(cc, data_arg, (void*)&status, CHARGE_CONTROL_TYPE_STATUS);
+
     }
 
-    if (type & SENSOR_TYPE_USER_DEFINED_2)
+    if (type & CHARGE_CONTROL_TYPE_FAULT)
     {
-        rc = bq24040_get_charging_status(bq24040,
-                &charging_status);
-        if (rc) {
-            goto err;
-        }
-
-        rc = data_func(sns, data_arg, &charging_status,
-                SENSOR_TYPE_USER_DEFINED_2);
-        if (rc) {
-            goto err;
-        }
+        // Get fault info
     }
 
+done:
     return 0;
 err:
     return rc;
@@ -243,18 +304,16 @@ err:
  * @return 0 on success, non-zero error code on failure.
  */
 static int
-bq24040_sensor_get_config(struct sensor *sns, sensor_type_t type,
-     struct sensor_cfg * cfg)
+bq24040_chg_ctrl_get_config(struct charge_control *cc, 
+        charge_control_type_t type, struct charge_control_cfg * cfg)
 {
     int rc;
 
-    if (!(type & SENSOR_TYPE_USER_DEFINED_1) ||
-        !(type & SENSOR_TYPE_USER_DEFINED_2)) {
+    if (!(type & CHARGE_CONTROL_TYPE_STATUS) ||
+        !(type & CHARGE_CONTROL_TYPE_FAULT)) {
         rc = SYS_EINVAL;
         goto err;
     }
-
-    cfg->sc_valtype = SENSOR_VALUE_TYPE_INT32;
 
     return 0;
 err:
@@ -262,9 +321,21 @@ err:
 }
 
 static int
-bq24040_sensor_set_config(struct sensor *sns, void *cfg)
+bq24040_chg_ctrl_set_config(struct charge_control *cc, void *cfg)
 {
-    struct bq24040* bq24040 = (struct bq24040 *)SENSOR_GET_DEVICE(sns);
+    struct bq24040* bq24040 = (struct bq24040 *)CHARGE_CONTROL_GET_DEVICE(cc);
     
     return bq24040_config(bq24040, (struct bq24040_cfg*)cfg);
+}
+
+static int
+bq24040_chg_ctrl_enable(struct charge_control *cc)
+{
+    return 0;
+}
+
+static int
+bq24040_chg_ctrl_disable(struct charge_control *cc)
+{
+    return 0;
 }
