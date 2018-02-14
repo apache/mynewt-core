@@ -78,20 +78,31 @@ struct log btshell_log;
 bssnz_t struct btshell_conn btshell_conns[MYNEWT_VAL(BLE_MAX_CONNECTIONS)];
 int btshell_num_conns;
 
-static void *btshell_svc_mem;
+static os_membuf_t btshell_svc_mem[
+    OS_MEMPOOL_SIZE(BTSHELL_MAX_SVCS, sizeof(struct btshell_svc))
+];
 static struct os_mempool btshell_svc_pool;
 
-static void *btshell_chr_mem;
+static os_membuf_t btshell_chr_mem[
+    OS_MEMPOOL_SIZE(BTSHELL_MAX_CHRS, sizeof(struct btshell_chr))
+];
 static struct os_mempool btshell_chr_pool;
 
-static void *btshell_dsc_mem;
+static os_membuf_t btshell_dsc_mem[
+    OS_MEMPOOL_SIZE(BTSHELL_MAX_DSCS, sizeof(struct btshell_dsc))
+];
 static struct os_mempool btshell_dsc_pool;
 
 #if MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM)
-static void *btshell_coc_conn_mem;
+static os_membuf_t btshell_coc_conn_mem[
+    OS_MEMPOOL_SIZE(MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM),
+    sizeof(struct btshell_l2cap_coc))
+];
 static struct os_mempool btshell_coc_conn_pool;
 
-static void *btshell_sdu_coc_mem;
+static os_membuf_t btshell_sdu_coc_mem[
+    OS_MEMPOOL_SIZE(BTSHELL_COC_BUF_COUNT, BTSHELL_COC_MTU)
+];
 struct os_mbuf_pool sdu_os_mbuf_pool;
 static struct os_mempool sdu_coc_mbuf_mempool;
 #endif
@@ -2020,28 +2031,16 @@ main(int argc, char **argv)
     /* Initialize OS */
     sysinit();
 
-    /* Allocate some application specific memory pools. */
-    btshell_svc_mem = malloc(
-        OS_MEMPOOL_BYTES(BTSHELL_MAX_SVCS, sizeof (struct btshell_svc)));
-    assert(btshell_svc_mem != NULL);
-
+    /* Initialize some application specific memory pools. */
     rc = os_mempool_init(&btshell_svc_pool, BTSHELL_MAX_SVCS,
                          sizeof (struct btshell_svc), btshell_svc_mem,
                          "btshell_svc_pool");
     assert(rc == 0);
 
-    btshell_chr_mem = malloc(
-        OS_MEMPOOL_BYTES(BTSHELL_MAX_CHRS, sizeof (struct btshell_chr)));
-    assert(btshell_chr_mem != NULL);
-
     rc = os_mempool_init(&btshell_chr_pool, BTSHELL_MAX_CHRS,
                          sizeof (struct btshell_chr), btshell_chr_mem,
                          "btshell_chr_pool");
     assert(rc == 0);
-
-    btshell_dsc_mem = malloc(
-        OS_MEMPOOL_BYTES(BTSHELL_MAX_DSCS, sizeof (struct btshell_dsc)));
-    assert(btshell_dsc_mem != NULL);
 
     rc = os_mempool_init(&btshell_dsc_pool, BTSHELL_MAX_DSCS,
                          sizeof (struct btshell_dsc), btshell_dsc_mem,
@@ -2050,10 +2049,6 @@ main(int argc, char **argv)
 
 #if MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM) != 0
     /* For testing we want to support all the available channels */
-    btshell_sdu_coc_mem = malloc(
-        OS_MEMPOOL_BYTES(BTSHELL_COC_BUF_COUNT, BTSHELL_COC_MTU));
-    assert(btshell_sdu_coc_mem != NULL);
-
     rc = os_mempool_init(&sdu_coc_mbuf_mempool, BTSHELL_COC_BUF_COUNT,
                          BTSHELL_COC_MTU, btshell_sdu_coc_mem,
                          "btshell_coc_sdu_pool");
@@ -2062,11 +2057,6 @@ main(int argc, char **argv)
     rc = os_mbuf_pool_init(&sdu_os_mbuf_pool, &sdu_coc_mbuf_mempool,
                            BTSHELL_COC_MTU, BTSHELL_COC_BUF_COUNT);
     assert(rc == 0);
-
-    btshell_coc_conn_mem = malloc(
-        OS_MEMPOOL_BYTES(MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM),
-                         sizeof (struct btshell_l2cap_coc)));
-    assert(btshell_coc_conn_mem != NULL);
 
     rc = os_mempool_init(&btshell_coc_conn_pool,
                          MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM),
