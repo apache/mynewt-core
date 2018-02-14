@@ -129,7 +129,9 @@ drv2605_writelen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
     rc = hal_i2c_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1);
     if (rc) {
         DRV2605_ERR("I2C access failed at address 0x%02X\n", data_struct.address);
+#if MYNEWT_VAL(DRV2605_STATS)
         STATS_INC(g_drv2605stats, errors);
+#endif
         goto err;
     }
 
