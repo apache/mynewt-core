@@ -378,6 +378,17 @@ typedef int (*sensor_set_trigger_thresh_t)(struct sensor *, sensor_type_t,
                                            struct sensor_type_traits *stt);
 
 /**
+ * Clear the high/low threshold values for a specific sensor for the sensor
+ * type.
+ *
+ * @param ptr to the sensor
+ * @param type of sensor
+ *
+ * @return 0 on success, non-zero error code on failure.
+ */
+typedef int (*sensor_clear_trigger_thresh_t)(struct sensor *, sensor_type_t);
+
+/**
  * Set the notification expectation for a targeted set of events for the
  * specific sensor. After this function returns successfully, the implementer
  * shall post corresponding event notifications to the sensor manager.
@@ -417,6 +428,8 @@ struct sensor_driver {
     sensor_get_config_func_t sd_get_config;
     sensor_set_config_func_t sd_set_config;
     sensor_set_trigger_thresh_t sd_set_trigger_thresh;
+    sensor_clear_trigger_thresh_t sd_clear_low_trigger_thresh;
+    sensor_clear_trigger_thresh_t sd_clear_high_trigger_thresh;
     sensor_set_notification_t sd_set_notification;
     sensor_unset_notification_t sd_unset_notification;
     sensor_handle_interrupt_t sd_handle_interrupt;
@@ -549,7 +562,7 @@ void sensor_unlock(struct sensor *);
 int sensor_register_listener(struct sensor *, struct sensor_listener *);
 
 /**
- * Un-register a sensor listener. This allows a calling application to unset
+ * Un-register a sensor listener. This allows a calling application to clear
  * callbacks for a given sensor object.
  *
  * @param The sensor object
@@ -818,6 +831,28 @@ sensor_get_type_traits_byname(char *, struct sensor_type_traits **,
  */
 int
 sensor_set_thresh(char *, struct sensor_type_traits *);
+
+/**
+ * Clears the low threshold for a sensor
+ *
+ * @param name of the sensor
+ * @param sensor type
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+sensor_clear_low_thresh(char *, sensor_type_t);
+
+/**
+ * Clears the high threshold for a sensor
+ *
+ * @param name of the sensor
+ * @param sensor type
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+sensor_clear_high_thresh(char *, sensor_type_t);
 
 /**
  * Set the watermark thresholds for a sensor

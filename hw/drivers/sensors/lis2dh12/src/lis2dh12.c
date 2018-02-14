@@ -70,11 +70,19 @@ static int lis2dh12_sensor_get_config(struct sensor *, sensor_type_t,
 static int
 lis2dh12_sensor_set_trigger_thresh(struct sensor *, sensor_type_t,
                                    struct sensor_type_traits *);
+static int
+lis2dh12_sensor_clear_low_thresh(struct sensor *, sensor_type_t);
+
+static int
+lis2dh12_sensor_clear_high_thresh(struct sensor *, sensor_type_t);
+
 static const struct sensor_driver g_lis2dh12_sensor_driver = {
     .sd_read = lis2dh12_sensor_read,
     .sd_get_config = lis2dh12_sensor_get_config,
     /* Setting trigger threshold is optional */
-    .sd_set_trigger_thresh = lis2dh12_sensor_set_trigger_thresh
+    .sd_set_trigger_thresh = lis2dh12_sensor_set_trigger_thresh,
+    .sd_clear_low_trigger_thresh = lis2dh12_sensor_clear_low_thresh,
+    .sd_clear_high_trigger_thresh = lis2dh12_sensor_clear_high_thresh
 };
 
 /**
@@ -1243,6 +1251,60 @@ lis2dh12_set_int2_pin_cfg(struct sensor_itf *itf, uint8_t cfg)
 }
 
 /**
+ * Disable interrupt 1
+ *
+ * @param the sensor interface
+ * @return 0 on success, non-zero on failure
+ */
+int
+lis2dh12_disable_int1(struct sensor_itf *itf)
+{
+    uint8_t reg;
+    int rc;
+
+    reg = 0;
+
+    rc = lis2dh12_clear_int1(itf);
+    if (rc) {
+        goto err;
+    }
+
+    os_time_delay((OS_TICKS_PER_SEC * 20)/1000 + 1);
+
+    rc = lis2dh12_writelen(itf, LIS2DH12_REG_INT1_CFG, &reg, 1);
+
+err:
+    return rc;
+}
+
+/**
+ * Disable interrupt 2
+ *
+ * @param the sensor interface
+ * @return 0 on success, non-zero on failure
+ */
+int
+lis2dh12_disable_int2(struct sensor_itf *itf)
+{
+    uint8_t reg;
+    int rc;
+
+    reg = 0;
+
+    rc = lis2dh12_clear_int2(itf);
+    if (rc) {
+        goto err;
+    }
+
+    os_time_delay((OS_TICKS_PER_SEC * 20)/1000 + 1);
+
+    rc = lis2dh12_writelen(itf, LIS2DH12_REG_INT2_CFG, &reg, 1);
+
+err:
+    return rc;
+}
+
+/**
  * Enable interrupt 1
  *
  * @param the sensor interface
@@ -1255,48 +1317,31 @@ lis2dh12_enable_int1(struct sensor_itf *itf, uint8_t *reg)
 }
 
 /**
- * IRQ handler for int1 for low threshold
+ * IRQ handler for interrupts for high/low threshold
  *
  * @param arg
  */
 static void
-lis2dh12_low_int1_irq_handler(void *arg)
+lis2dh12_int_irq_handler(void *arg)
 {
     sensor_mgr_put_read_evt(arg);
 }
 
 /**
- * IRQ handler for int2 for high threshold
- *
- * @param arg
- */
-static void
-lis2dh12_high_int2_irq_handler(void *arg)
-{
-    sensor_mgr_put_read_evt(arg);
-}
-
-/* Set the trigger threshold values and enable interrupts
+ * Clear the low threshold values and disable interrupt
  *
  * @param ptr to sensor
  * @param the Sensor type
- * @param low threshold
- * @param high threshold
+ * @param Sensor type traits
  *
  * @return 0 on success, non-zero on failure
  */
 static int
-lis2dh12_sensor_set_trigger_thresh(struct sensor *sensor,
-                                   sensor_type_t type,
-                                   struct sensor_type_traits *stt)
+lis2dh12_sensor_clear_low_thresh(struct sensor *sensor,
+                                 sensor_type_t type)
 {
     int rc;
-    uint8_t tmp;
-    int16_t acc_mg;
-    uint8_t reg;
     struct sensor_itf *itf;
-    sensor_data_t low_thresh;
-    sensor_data_t high_thresh;
 
     itf = SENSOR_GET_ITF(sensor);
 
@@ -1305,47 +1350,84 @@ lis2dh12_sensor_set_trigger_thresh(struct sensor *sensor,
         goto err;
     }
 
-    memcpy(&low_thresh, &stt->stt_low_thresh, sizeof(low_thresh));
-    memcpy(&high_thresh, &stt->stt_high_thresh, sizeof(high_thresh));
-
-    rc = lis2dh12_get_full_scale(itf, &tmp);
+    rc = lis2dh12_disable_int1(itf);
     if (rc) {
         goto err;
     }
 
-    if (tmp == LIS2DH12_FS_2G) {
-        tmp = 16;
-    } else if (tmp == LIS2DH12_FS_4G) {
-        tmp = 32;
-    } else if (tmp == LIS2DH12_FS_8G) {
-        tmp = 62;
-    } else if (tmp == LIS2DH12_FS_16G) {
-        tmp = 186;
-    } else {
+    hal_gpio_irq_release(itf->si_low_pin);
+
+    return 0;
+err:
+    return rc;
+}
+
+/**
+ * Clear the high threshold values and disable interrupt
+ *
+ * @param ptr to sensor
+ * @param the Sensor type
+ * @param Sensor type traits
+ *
+ * @return 0 on success, non-zero on failure
+ */
+static int
+lis2dh12_sensor_clear_high_thresh(struct sensor *sensor,
+                                  sensor_type_t type)
+{
+    int rc;
+    struct sensor_itf *itf;
+
+    itf = SENSOR_GET_ITF(sensor);
+
+    if (type != SENSOR_TYPE_ACCELEROMETER) {
         rc = SYS_EINVAL;
         goto err;
     }
 
+    rc = lis2dh12_disable_int2(itf);
+    if (rc) {
+        goto err;
+    }
+
+    hal_gpio_irq_release(itf->si_high_pin);
+
+    return 0;
+err:
+    return rc;
+}
+
+static int
+lis2dh12_set_low_thresh(struct sensor_itf *itf,
+                        sensor_data_t low_thresh,
+                        uint8_t fs,
+                        struct sensor_type_traits *stt)
+{
+    int16_t acc_mg;
+    uint8_t reg;
+    int rc;
+
+    rc = 0;
     if (low_thresh.sad->sad_x_is_valid ||
         low_thresh.sad->sad_y_is_valid ||
         low_thresh.sad->sad_z_is_valid) {
 
         if (low_thresh.sad->sad_x_is_valid) {
             lis2dh12_calc_acc_mg(low_thresh.sad->sad_x, &acc_mg);
-            reg = acc_mg/tmp;
+            reg = acc_mg/fs;
         }
 
         if (low_thresh.sad->sad_y_is_valid) {
             lis2dh12_calc_acc_mg(low_thresh.sad->sad_y, &acc_mg);
-            if (reg > acc_mg/tmp) {
-                reg = acc_mg/tmp;
+            if (reg > acc_mg/fs) {
+                reg = acc_mg/fs;
             }
         }
 
         if (low_thresh.sad->sad_z_is_valid) {
             lis2dh12_calc_acc_mg(low_thresh.sad->sad_z, &acc_mg);
-            if (reg > acc_mg/tmp) {
-                reg = acc_mg/tmp;
+            if (reg > acc_mg/fs) {
+                reg = acc_mg/fs;
             }
         }
 
@@ -1370,7 +1452,7 @@ lis2dh12_sensor_set_trigger_thresh(struct sensor *sensor,
 
         hal_gpio_irq_release(itf->si_low_pin);
 
-        rc = hal_gpio_irq_init(itf->si_low_pin, lis2dh12_low_int1_irq_handler, stt,
+        rc = hal_gpio_irq_init(itf->si_low_pin, lis2dh12_int_irq_handler, stt,
                                HAL_GPIO_TRIG_FALLING, HAL_GPIO_PULL_NONE);
         if (rc) {
             goto err;
@@ -1393,29 +1475,44 @@ lis2dh12_sensor_set_trigger_thresh(struct sensor *sensor,
         if (rc) {
             goto err;
         }
-
     }
 
+err:
+    hal_gpio_irq_release(itf->si_low_pin);
+    return rc;
+}
+
+static int
+lis2dh12_set_high_thresh(struct sensor_itf *itf,
+                         sensor_data_t high_thresh,
+                         uint8_t fs,
+                         struct sensor_type_traits *stt)
+{
+    int16_t acc_mg;
+    uint8_t reg;
+    int rc;
+
+    rc = 0;
     if (high_thresh.sad->sad_x_is_valid ||
         high_thresh.sad->sad_y_is_valid ||
         high_thresh.sad->sad_z_is_valid) {
 
         if (high_thresh.sad->sad_x_is_valid) {
             lis2dh12_calc_acc_mg(high_thresh.sad->sad_x, &acc_mg);
-            reg = acc_mg/tmp;
+            reg = acc_mg/fs;
         }
 
         if (high_thresh.sad->sad_y_is_valid) {
             lis2dh12_calc_acc_mg(high_thresh.sad->sad_y, &acc_mg);
-            if (reg < acc_mg/tmp) {
-                reg = acc_mg/tmp;
+            if (reg < acc_mg/fs) {
+                reg = acc_mg/fs;
             }
         }
 
         if (high_thresh.sad->sad_z_is_valid) {
             lis2dh12_calc_acc_mg(high_thresh.sad->sad_z, &acc_mg);
-            if (reg < acc_mg/tmp) {
-                reg = acc_mg/tmp;
+            if (reg < acc_mg/fs) {
+                reg = acc_mg/fs;
             }
         }
 
@@ -1440,7 +1537,7 @@ lis2dh12_sensor_set_trigger_thresh(struct sensor *sensor,
 
         hal_gpio_irq_release(itf->si_high_pin);
 
-        rc = hal_gpio_irq_init(itf->si_high_pin, lis2dh12_high_int2_irq_handler, stt,
+        rc = hal_gpio_irq_init(itf->si_high_pin, lis2dh12_int_irq_handler, stt,
                                HAL_GPIO_TRIG_FALLING, HAL_GPIO_PULL_NONE);
         if (rc) {
             goto err;
@@ -1463,7 +1560,74 @@ lis2dh12_sensor_set_trigger_thresh(struct sensor *sensor,
         }
     }
 
+err:
+    hal_gpio_irq_release(itf->si_high_pin);
+    return rc;
+}
+
+
+/**
+ * Set the trigger threshold values and enable interrupts
+ *
+ * @param ptr to sensor
+ * @param the Sensor type
+ * @param Sensor type traits
+ *
+ * @return 0 on success, non-zero on failure
+ */
+static int
+lis2dh12_sensor_set_trigger_thresh(struct sensor *sensor,
+                                   sensor_type_t type,
+                                   struct sensor_type_traits *stt)
+{
+    int rc;
+    uint8_t fs;
+    struct sensor_itf *itf;
+    sensor_data_t low_thresh;
+    sensor_data_t high_thresh;
+
+    itf = SENSOR_GET_ITF(sensor);
+
+    if (type != SENSOR_TYPE_ACCELEROMETER) {
+        rc = SYS_EINVAL;
+        goto err;
+    }
+
+    memcpy(&low_thresh, &stt->stt_low_thresh, sizeof(low_thresh));
+    memcpy(&high_thresh, &stt->stt_high_thresh, sizeof(high_thresh));
+
+    rc = lis2dh12_get_full_scale(itf, &fs);
+    if (rc) {
+        goto err;
+    }
+
+    if (fs == LIS2DH12_FS_2G) {
+        fs = 16;
+    } else if (fs == LIS2DH12_FS_4G) {
+        fs = 32;
+    } else if (fs == LIS2DH12_FS_8G) {
+        fs = 62;
+    } else if (fs == LIS2DH12_FS_16G) {
+        fs = 186;
+    } else {
+        rc = SYS_EINVAL;
+        goto err;
+    }
+
+    /* Set low threshold and enable interrupt */
+    rc = lis2dh12_set_low_thresh(itf, low_thresh, fs, stt);
+    if (rc) {
+        goto err;
+    }
+
+    /* Set high threshold and enable interrupt */
+    rc = lis2dh12_set_high_thresh(itf, high_thresh, fs, stt);
+    if (rc) {
+        goto err;
+    }
+
     return 0;
+
 err:
     return rc;
 }
