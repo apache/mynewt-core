@@ -40,6 +40,16 @@ syscfg.defs:
         description: 'CTS pin for UART0'
         value: 28
 
+    UART_1:
+        description: 'Whether to enable bitbanger UART1'
+        value:  0
+    UART_1_PIN_TX:
+        description: 'TX pin for UART1'
+        value:  -1
+    UART_1_PIN_RX:
+        description: 'RX pin for UART1'
+        value:  -1
+
     TIMER_0:
         description: 'NRF52 Timer 0'
         value:  1

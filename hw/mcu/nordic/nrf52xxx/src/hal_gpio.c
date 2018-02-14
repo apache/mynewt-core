@@ -47,6 +47,7 @@
  *  number is used unexpected and/or erroneous behavior will result.
  */
 #ifdef NRF52
+#define HAL_GPIO_INDEX(pin)     (pin)
 #define HAL_GPIO_PORT(pin)      (NRF_P0)
 #define HAL_GPIO_MASK(pin)      (1 << pin)
 #define HAL_GPIOTE_PIN_MASK     GPIOTE_CONFIG_PSEL_Msk
@@ -168,9 +169,11 @@ int
 hal_gpio_read(int pin)
 {
     NRF_GPIO_Type *port;
-
     port = HAL_GPIO_PORT(pin);
-    return ((port->IN & HAL_GPIO_MASK(pin)) != 0);
+
+    return (port->DIR & HAL_GPIO_MASK(pin)) ?
+        (port->OUT >> HAL_GPIO_INDEX(pin)) & 1UL :
+        (port->IN >> HAL_GPIO_INDEX(pin)) & 1UL;
 }
 
 /**

@@ -31,6 +31,12 @@
 #include "hal/hal_flash.h"
 #include "hal/hal_spi.h"
 #include "hal/hal_i2c.h"
+
+#if MYNEWT_VAL(ADC_0)
+#include <adc_nrf51/adc_nrf51.h>
+#include <nrfx_adc.h>
+#endif
+
 #if MYNEWT_VAL(UART_0) || MYNEWT_VAL(UART_1)
 #include "uart/uart.h"
 #endif
@@ -74,6 +80,15 @@ static const struct nrf51_hal_i2c_cfg hal_i2c_cfg = {
     .scl_pin = 7,
     .sda_pin = 30,
     .i2c_frequency = 100    /* 100 kHz */
+};
+#endif
+
+#if MYNEWT_VAL(ADC_0)
+static struct adc_dev os_bsp_adc0;
+static struct nrf51_adc_dev_cfg os_bsp_adc0_config = {
+    .nadc_refmv0    = MYNEWT_VAL(ADC_0_REFMV_0),
+    .nadc_refmv1    = MYNEWT_VAL(ADC_0_REFMV_1),
+    .nadc_refmv_vdd = MYNEWT_VAL(ADC_0_REFMV_VDD)
 };
 #endif
 
@@ -146,6 +161,15 @@ hal_bsp_init(void)
 
     /* Make sure system clocks have started */
     hal_system_clock_start();
+
+#if MYNEWT_VAL(ADC_0)
+    rc = os_dev_create((struct os_dev *) &os_bsp_adc0, "adc0",
+      OS_DEV_INIT_KERNEL,
+      OS_DEV_INIT_PRIO_DEFAULT,
+      nrf51_adc_dev_init,
+      &os_bsp_adc0_config);
+    assert(rc == 0);
+#endif
 
 #if MYNEWT_VAL(UART_0)
     rc = os_dev_create((struct os_dev *) &os_bsp_uart0, "uart0",

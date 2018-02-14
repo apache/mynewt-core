@@ -23,6 +23,7 @@ pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
     - nrf51
+    - nrfx
 
 pkg.deps: 
     - hw/mcu/nordic

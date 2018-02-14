@@ -26,6 +26,7 @@
 #include "sysflash/sysflash.h"
 #include "flash_map/flash_map.h"
 #include "hal/hal_bsp.h"
+#include "hal/hal_system.h"
 #include "hal/hal_flash.h"
 #include "hal/hal_spi.h"
 #include "hal/hal_watchdog.h"
@@ -42,6 +43,16 @@
 #endif
 #include "os/os_dev.h"
 #include "bsp.h"
+#if MYNEWT_VAL(ADC_0)
+#include <adc_nrf52/adc_nrf52.h>
+#include <nrfx_saadc.h>
+#endif
+#if MYNEWT_VAL(PWM_0) || MYNEWT_VAL(PWM_1) || MYNEWT_VAL(PWM_2)
+#include <pwm_nrf52/pwm_nrf52.h>
+#endif
+#if MYNEWT_VAL(SOFT_PWM)
+#include <soft_pwm/soft_pwm.h>
+#endif
 
 #if MYNEWT_VAL(UART_0)
 static struct uart_dev os_bsp_uart0;
@@ -81,6 +92,31 @@ static const struct nrf52_hal_spi_cfg os_bsp_spi0s_cfg = {
     .miso_pin     = 25,
     .ss_pin       = 22,
 };
+#endif
+
+#if MYNEWT_VAL(ADC_0)
+static struct adc_dev os_bsp_adc0;
+static nrfx_saadc_config_t os_bsp_adc0_config = {
+    .resolution         = MYNEWT_VAL(ADC_0_RESOLUTION),
+    .oversample         = MYNEWT_VAL(ADC_0_OVERSAMPLE),
+    .interrupt_priority = MYNEWT_VAL(ADC_0_INTERRUPT_PRIORITY),
+};
+#endif
+
+#if MYNEWT_VAL(PWM_0)
+static struct pwm_dev os_bsp_pwm0;
+int pwm0_idx;
+#endif
+#if MYNEWT_VAL(PWM_1)
+static struct pwm_dev os_bsp_pwm1;
+int pwm1_idx;
+#endif
+#if MYNEWT_VAL(PWM_2)
+static struct pwm_dev os_bsp_pwm2;
+int pwm2_idx;
+#endif
+#if MYNEWT_VAL(SOFT_PWM)
+static struct pwm_dev os_bsp_spwm;
 #endif
 
 #if MYNEWT_VAL(I2C_0)
@@ -183,6 +219,56 @@ hal_bsp_init(void)
 #endif
 #if MYNEWT_VAL(TIMER_5)
     rc = hal_timer_init(5, NULL);
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(ADC_0)
+rc = os_dev_create((struct os_dev *) &os_bsp_adc0,
+                   "adc0",
+                   OS_DEV_INIT_KERNEL,
+                   OS_DEV_INIT_PRIO_DEFAULT,
+                   nrf52_adc_dev_init,
+                   &os_bsp_adc0_config);
+assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(PWM_0)
+    pwm0_idx = 0;
+    rc = os_dev_create((struct os_dev *) &os_bsp_pwm0,
+                       "pwm0",
+                       OS_DEV_INIT_KERNEL,
+                       OS_DEV_INIT_PRIO_DEFAULT,
+                       nrf52_pwm_dev_init,
+                       &pwm0_idx);
+    assert(rc == 0);
+#endif
+#if MYNEWT_VAL(PWM_1)
+    pwm1_idx = 1;
+    rc = os_dev_create((struct os_dev *) &os_bsp_pwm1,
+                       "pwm1",
+                       OS_DEV_INIT_KERNEL,
+                       OS_DEV_INIT_PRIO_DEFAULT,
+                       nrf52_pwm_dev_init,
+                       &pwm1_idx);
+    assert(rc == 0);
+#endif
+#if MYNEWT_VAL(PWM_2)
+    pwm2_idx = 2;
+    rc = os_dev_create((struct os_dev *) &os_bsp_pwm2,
+                       "pwm2",
+                       OS_DEV_INIT_KERNEL,
+                       OS_DEV_INIT_PRIO_DEFAULT,
+                       nrf52_pwm_dev_init,
+                       &pwm2_idx);
+    assert(rc == 0);
+#endif
+#if MYNEWT_VAL(SOFT_PWM)
+    rc = os_dev_create((struct os_dev *) &os_bsp_spwm,
+                       "spwm",
+                       OS_DEV_INIT_KERNEL,
+                       OS_DEV_INIT_PRIO_DEFAULT,
+                       soft_pwm_dev_init,
+                       NULL);
     assert(rc == 0);
 #endif
 
