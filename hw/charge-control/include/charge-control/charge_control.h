@@ -264,6 +264,27 @@ typedef int (*charge_control_set_config_func_t)(struct charge_control *,
         void *);
 
 /**
+ * Read the status of a charge controller.
+ *
+ * @param ptr to the charge controller-specific structure
+ * @param ptr to the location where the charge control status will be stored
+ *
+ * @return 0 on success, non-zero error code on failure.
+ */
+typedef int (*charge_control_get_status_func_t)(struct charge_control *, int *);
+
+/**
+ * Read the fault status of a charge controller.
+ *
+ * @param ptr to the charge controller-specific structure
+ * @param ptr to the location where the fault status will be stored
+ *
+ * @return 0 on success, non-zero error code on failure.
+ */
+typedef int (*charge_control_get_fault_func_t)(struct charge_control *,
+        charge_control_fault_t *);
+
+/**
  * Enable a charge controller
  *
  * @param The charge controller to enable
@@ -288,6 +309,8 @@ struct charge_control_driver {
     charge_control_read_func_t          ccd_read;
     charge_control_get_config_func_t    ccd_get_config;
     charge_control_set_config_func_t    ccd_set_config;
+    charge_control_get_status_func_t    ccd_get_status;
+    charge_control_get_fault_func_t     ccd_get_fault;
     charge_control_enable_func_t        ccd_enable;
     charge_control_disable_func_t       ccd_disable;
 };

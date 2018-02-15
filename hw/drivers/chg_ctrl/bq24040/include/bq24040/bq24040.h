@@ -24,6 +24,18 @@
 #include "hal/hal_gpio.h"
 #include "charge-control/charge_control.h"
 
+/** 
+ * Configuration setting for the temperature sense (TS) pin.  If temperature
+ * sensing is enabled in the hardware, the BQ24040 will always be considered to
+ * be "enabled".
+ */
+typedef enum {
+	/** Temperature sensing is not enabled in the hardware */
+	BQ24040_TS_MODE_DISABLED 		=	0,
+	/** Temperature sensing is enabled in the hardware */
+	BQ24040_TS_MODE_ENABLED,
+} bq24040_ts_mode_t;
+
 typedef void (*bq24040_interrupt_handler)(void *arg);
 
 struct bq24040_pin {
@@ -40,6 +52,7 @@ struct bq24040_cfg {
 	struct bq24040_pin *		bc_chg_pin;
 	struct bq24040_pin *		bc_ts_pin;
 	struct bq24040_pin *		bc_iset2_pin;
+	bq24040_ts_mode_t 			bc_ts_mode;
 	charge_control_type_t 		bc_mask;
 };
 
