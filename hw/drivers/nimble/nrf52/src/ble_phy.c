@@ -275,12 +275,14 @@ ble_phy_mode_set(int cur_phy_mode, int txtorx_phy_mode)
     } else if (cur_phy_mode == BLE_PHY_MODE_2M) {
         NRF_RADIO->MODE = RADIO_MODE_MODE_Ble_2Mbit;
         NRF_RADIO->PCNF0 = NRF_PCNF0_2M;
+#if MYNEWT_VAL(BLE_LL_CFG_FEAT_LE_CODED_PHY)
     } else if (cur_phy_mode == BLE_PHY_MODE_CODED_125KBPS) {
         NRF_RADIO->MODE = RADIO_MODE_MODE_Ble_LR125Kbit;
         NRF_RADIO->PCNF0 = NRF_PCNF0_CODED;
     } else if (cur_phy_mode == BLE_PHY_MODE_CODED_500KBPS) {
         NRF_RADIO->MODE = RADIO_MODE_MODE_Ble_LR500Kbit;
         NRF_RADIO->PCNF0 = NRF_PCNF0_CODED;
+#endif
     } else {
         assert(0);
     }
@@ -578,10 +580,12 @@ ble_phy_get_ccm_datarate(void)
         return CCM_MODE_DATARATE_1Mbit << CCM_MODE_DATARATE_Pos;
     case BLE_PHY_MODE_2M:
         return CCM_MODE_DATARATE_2Mbit << CCM_MODE_DATARATE_Pos;
+#if MYNEWT_VAL(BLE_LL_CFG_FEAT_LE_CODED_PHY)
     case BLE_PHY_MODE_CODED_125KBPS:
         return CCM_MODE_DATARATE_125Kbps << CCM_MODE_DATARATE_Pos;
     case BLE_PHY_MODE_CODED_500KBPS:
         return CCM_MODE_DATARATE_500Kbps << CCM_MODE_DATARATE_Pos;
+#endif
     }
 
     assert(0);
@@ -780,7 +784,7 @@ ble_phy_get_cur_rx_phy_mode(void)
 
     phy = g_ble_phy_data.phy_cur_phy_mode;
 
-#if BLE_LL_BT5_PHY_SUPPORTED
+#if MYNEWT_VAL(BLE_LL_CFG_FEAT_LE_CODED_PHY)
     /*
      * For Coded PHY mode can be set to either codings since actual coding is
      * set in packet header. However, here we need actual coding of received
@@ -789,12 +793,7 @@ ble_phy_get_cur_rx_phy_mode(void)
      */
     if ((phy == BLE_PHY_MODE_CODED_125KBPS) ||
                                     (phy == BLE_PHY_MODE_CODED_500KBPS)) {
-        /*
-         * XXX CI field value is bits [2:1] in NRF_RADIO->PDUSTAT which is
-         *     available in nrfx for nrf52840 only - it's NRF_RADIO->RESERVED7[0]
-         *     for other nrf52 vairants.
-         */
-        phy = NRF_RADIO->PDUSTAT & 0x06 ?
+        phy = NRF_RADIO->PDUSTAT & RADIO_PDUSTAT_CISTAT_Msk ?
                                    BLE_PHY_MODE_CODED_500KBPS :
                                    BLE_PHY_MODE_CODED_125KBPS;
     }
