@@ -20,7 +20,7 @@
 
 #include "os/os_dev.h"
 
-#if MYNEWT_VAL(UART_0)
+#if MYNEWT_VAL(UART_0) || MYNEWT_VAL(UART_1)
 /*
  * It is necessary to include uart/uart.h before stm32fxx_hal_uart.h gets included
  * due to a name conflict for UART_PARITY_NONE.
@@ -44,8 +44,8 @@
 #include "stm32f3xx_hal_rcc.h"
 #include "syscfg/syscfg.h"
 
-#if MYNEWT_VAL(UART_0)
-static struct uart_dev hal_uart0;
+#if MYNEWT_VAL(UART_0) || MYNEWT_VAL(UART_1)
+static struct uart_dev hal_uart[2];
 
 static const struct stm32f3_uart_cfg uart_cfg[UART_CNT] = {
     [0] = {
@@ -58,6 +58,17 @@ static const struct stm32f3_uart_cfg uart_cfg[UART_CNT] = {
         .suc_pin_cts = MCU_GPIO_PORTA(0),
         .suc_pin_af  = GPIO_AF7_USART2,
         .suc_irqn    = USART2_IRQn
+    },
+    [1] = {
+        .suc_uart    = USART1,
+        .suc_rcc_reg = &RCC->APB2ENR,
+        .suc_rcc_dev = RCC_APB2ENR_USART1EN,
+        .suc_pin_tx  = MCU_GPIO_PORTA(9),
+        .suc_pin_rx  = MCU_GPIO_PORTA(10),
+        .suc_pin_rts = MCU_GPIO_PORTA(12),
+        .suc_pin_cts = MCU_GPIO_PORTA(11),
+        .suc_pin_af  = GPIO_AF7_USART1,
+        .suc_irqn    = USART1_IRQn
     }
 };
 
@@ -123,8 +134,14 @@ hal_bsp_init(void)
     (void)rc;  /* in case there are no devices declared */
 
 #if MYNEWT_VAL(UART_0)
-    rc = os_dev_create((struct os_dev *) &hal_uart0, "uart0",
+    rc = os_dev_create((struct os_dev *) &hal_uart[0], "uart0",
       OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *)&uart_cfg[0]);
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(UART_1)
+    rc = os_dev_create((struct os_dev *) &hal_uart[1], "uart1",
+      OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *)&uart_cfg[1]);
     assert(rc == 0);
 #endif
 

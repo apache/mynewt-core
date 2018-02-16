@@ -50,7 +50,7 @@ extern uint8_t _ccram_start;
     
 
 /* UART ports */
-#define UART_CNT        1
+#define UART_CNT        2
 #define CONSOLE_UART    1
 
 #ifdef __cplusplus
