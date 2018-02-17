@@ -27,31 +27,32 @@
 #include "charge-control/charge_control.h"
 #include "charge_control_priv.h"
 
-// =================================================================
-// ====================== LOCAL FUNCTION DECLARATIONS ==============
-// =================================================================
+/* =================================================================
+ * ====================== LOCAL FUNCTION DECLARATIONS ==============
+ * =================================================================
+ */
 
-// ---------------------- OS ---------------------------------------
+/* ---------------------------- OS -------------------------------- */
 
 static void charge_control_read_ev_cb(struct os_event *ev);
 
 static void charge_control_mgr_wakeup_event(struct os_event *);
 static void charge_control_base_ts_update_event(struct os_event *);
 
-// ---------------------- CHARGE CONTROL ---------------------------
+/* ---------------------- CHARGE CONTROL --------------------------- */
 
-/** 
- * Prevents changes to a charge control device during an operation 
+/**
+ * Prevents changes to a charge control device during an operation
  *
  * @param Charge control device to lock
- * 
+ *
  * @return 0 on success, non-zero error code on failure
  */
 static int charge_control_lock(struct charge_control *);
 
-/** 
- * Releases mutex lock on charge control device 
- * 
+/**
+ * Releases mutex lock on charge control device
+ *
  * @param Charge control device to release
  */
 static void charge_control_unlock(struct charge_control *);
@@ -59,56 +60,36 @@ static void charge_control_unlock(struct charge_control *);
 /**
  * Thread-safe operation to change poll rate on charge control device
  */
-static void 
+static void
 charge_control_update_poll_rate(struct charge_control *, uint32_t);
 
-/**
- *
- */
-static os_time_t 
+static os_time_t
 charge_control_calc_nextrun_delta(struct charge_control *, os_time_t);
 
-/**
- *
- */
 static struct charge_control *
 charge_control_find_min_nextrun(os_time_t, os_time_t *);
 
-/**
- *
- */
 static void
 charge_control_update_nextrun(struct charge_control *, os_time_t);
 
-/**
- *
- */
 static int
 charge_control_read_data_func(struct charge_control *, void *, void *,
         charge_control_type_t);
 
-/**
- *
- */
-static void charge_control_up_timestamp(struct charge_control *);
+static void
+charge_control_up_timestamp(struct charge_control *);
 
-/**
- *
- */
 static int
 charge_control_insert_type_trait(struct charge_control *,
         struct charge_control_type_traits *);
 
-/** 
- * 
- */
 static int
 charge_control_remove_type_trait(struct charge_control *,
         struct charge_control_type_traits *);
 
 /**
  * Search the charge control type traits list for a specific type of charge
- * controller.  Set the charge control pointer to NULL to start from the 
+ * controller.  Set the charge control pointer to NULL to start from the
  * beginning of the list or to a specific charge control object to begin from
  * that point in the list.
  *
@@ -119,30 +100,21 @@ charge_control_remove_type_trait(struct charge_control *,
  * charge_control_type_traits structure when found.
  */
 static struct charge_control_type_traits *
-charge_control_get_type_traits_bytype(charge_control_type_t, 
+charge_control_get_type_traits_bytype(charge_control_type_t,
         struct charge_control *);
 
-/**
- *
- */
 static struct charge_control *
-charge_control_get_type_traits_byname(char *, 
+charge_control_get_type_traits_byname(char *,
         struct charge_control_type_traits **, charge_control_type_t);
 
-/**
- *
- */
 static uint8_t
 charge_control_type_traits_empty(struct charge_control *);
 
-/**
- *
- */
 static void
 charge_control_poll_per_type_trait(struct charge_control *, os_time_t,
         os_time_t);
 
-// ---------------------- CHARGE CONTROL MANAGER -------------------
+/* ---------------------- CHARGE CONTROL MANAGER ------------------- */
 
 /**
  * Pends on the charge control manager mutex indefinitely.  Must be used prior
@@ -150,47 +122,36 @@ charge_control_poll_per_type_trait(struct charge_control *, os_time_t,
  *
  * @return 0 on success, non-zero error code on failure.
  */
-static int charge_control_mgr_lock(void);
+static int
+charge_control_mgr_lock(void);
 
 /** Releases the charge control manager mutex. */
-static void charge_control_mgr_unlock(void);
+static void
+charge_control_mgr_unlock(void);
 
-/**
- *
- */
 static int
 charge_control_mgr_match_bydevname(struct charge_control *, void *arg);
 
-/**
- *
- */
-static void charge_control_mgr_remove(struct charge_control *);
+static void
+charge_control_mgr_remove(struct charge_control *);
 
-/**
- *
- */
-static void charge_control_mgr_insert(struct charge_control *);
+static void
+charge_control_mgr_insert(struct charge_control *);
 
-/**
- *
- */
 static void
 charge_control_mgr_poll_bytype(struct charge_control *, charge_control_type_t,
         struct charge_control_type_traits *, os_time_t);
 
-/**
- * 
- */
-static void charge_control_mgr_evq_set(struct os_eventq *);
+static void
+charge_control_mgr_evq_set(struct os_eventq *);
 
-/**
- * 
- */
-static void charge_control_mgr_init(void);
+static void
+charge_control_mgr_init(void);
 
-// =================================================================
-// ====================== LOCAL STRUCTS/VARIABLES ==================
-// =================================================================
+/* =================================================================
+ * ====================== LOCAL STRUCTS/VARIABLES ==================
+ * =================================================================
+ */
 
 /**
  * Declaration and definition of manager for the list of charge control devices
@@ -224,9 +185,10 @@ static struct os_event charge_control_read_event = {
     .ev_cb = charge_control_read_ev_cb,
 };
 
-// =================================================================
-// ====================== PKG ======================================
-// =================================================================
+/* =================================================================
+ * ====================== PKG ======================================
+ * =================================================================
+ */
 
 void charge_control_pkg_init(void)
 {
@@ -240,11 +202,13 @@ void charge_control_pkg_init(void)
 #endif
 }
 
-// =================================================================
-// ====================== OS =======================================
-// =================================================================
+/* =================================================================
+ * ====================== OS =======================================
+ * =================================================================
+ */
 
-static void charge_control_read_ev_cb(struct os_event *ev)
+static void
+charge_control_read_ev_cb(struct os_event *ev)
 {
     int rc;
     struct charge_control_read_ev_ctx *ccrec;
@@ -255,7 +219,8 @@ static void charge_control_read_ev_cb(struct os_event *ev)
     assert(rc == 0);
 }
 
-static void charge_control_mgr_wakeup_event(struct os_event *ev)
+static void
+charge_control_mgr_wakeup_event(struct os_event *ev)
 {
     struct charge_control *cursor;
     os_time_t now;
@@ -275,7 +240,7 @@ static void charge_control_mgr_wakeup_event(struct os_event *ev)
         cursor = charge_control_find_min_nextrun(now, &next_wakeup);
 
         charge_control_lock(cursor);
-        /* Charge controllers that are not periodic are inserted at the end of 
+        /* Charge controllers that are not periodic are inserted at the end of
          * the charge_control list.
          */
         if (!cursor->cc_poll_rate) {
@@ -284,7 +249,7 @@ static void charge_control_mgr_wakeup_event(struct os_event *ev)
             return;
         }
 
-        /* List is sorted by what runs first.  If we reached the first element 
+        /* List is sorted by what runs first.  If we reached the first element
          * that doesn't run, break out.
          */
         if (next_wakeup > 0) {
@@ -308,7 +273,8 @@ static void charge_control_mgr_wakeup_event(struct os_event *ev)
     os_callout_reset(&charge_control_mgr.mgr_wakeup_callout, next_wakeup);
 }
 
-static void charge_control_base_ts_update_event(struct os_event *ev)
+static void
+charge_control_base_ts_update_event(struct os_event *ev)
 {
     os_time_t ticks;
     int rc;
@@ -345,9 +311,10 @@ done:
     os_callout_reset(&cct_up_osco, ticks);
 }
 
-// =================================================================
-// ====================== CHARGE CONTROL ===========================
-// =================================================================
+/* =================================================================
+ * ====================== CHARGE CONTROL ===========================
+ * =================================================================
+ */
 
 static int
 charge_control_lock(struct charge_control *cc)
@@ -367,7 +334,7 @@ charge_control_unlock(struct charge_control *cc)
     os_mutex_release(&cc->cc_lock);
 }
 
-static void 
+static void
 charge_control_update_poll_rate(struct charge_control * cc, uint32_t poll_rate)
 {
     charge_control_lock(cc);
@@ -377,7 +344,7 @@ charge_control_update_poll_rate(struct charge_control * cc, uint32_t poll_rate)
     charge_control_unlock(cc);
 }
 
-static os_time_t 
+static os_time_t
 charge_control_calc_nextrun_delta(struct charge_control * cc, os_time_t now)
 {
     os_time_t charge_control_ticks;
@@ -440,7 +407,7 @@ charge_control_update_nextrun(struct charge_control *cc, os_time_t now)
 }
 
 static int
-charge_control_read_data_func(struct charge_control *cc, void *arg, 
+charge_control_read_data_func(struct charge_control *cc, void *arg,
         void *data, charge_control_type_t type)
 {
     struct charge_control_listener *listener;
@@ -479,8 +446,8 @@ static void charge_control_up_timestamp(struct charge_control *cc)
     charge_control_base_ts.cct_cputime = cc->cc_sts.cct_cputime = curr_ts_ticks;
 
     /* Updating seconds */
-    charge_control_base_ts.cct_ostv.tv_sec  = 
-        charge_control_base_ts.cct_ostv.tv_sec 
+    charge_control_base_ts.cct_ostv.tv_sec  =
+        charge_control_base_ts.cct_ostv.tv_sec
         + (ts + charge_control_base_ts.cct_ostv.tv_usec)/1000000;
     cc->cc_sts.cct_ostv.tv_sec = charge_control_base_ts.cct_ostv.tv_sec;
 
@@ -552,7 +519,7 @@ err:
 }
 
 static struct charge_control_type_traits *
-charge_control_get_type_traits_bytype(charge_control_type_t type, 
+charge_control_get_type_traits_bytype(charge_control_type_t type,
         struct charge_control * cc)
 {
     struct charge_control_type_traits *cctt;
@@ -573,7 +540,7 @@ charge_control_get_type_traits_bytype(charge_control_type_t type,
 }
 
 static struct charge_control *
-charge_control_get_type_traits_byname(char *devname, 
+charge_control_get_type_traits_byname(char *devname,
         struct charge_control_type_traits **cctt, charge_control_type_t type)
 {
     struct charge_control *cc;
@@ -683,7 +650,7 @@ err:
 }
 
 int
-charge_control_read(struct charge_control *cc, charge_control_type_t type, 
+charge_control_read(struct charge_control *cc, charge_control_type_t type,
         charge_control_data_func_t data_func, void *arg, uint32_t timeout)
 {
     struct charge_control_read_ctx ccrc;
@@ -715,9 +682,10 @@ err:
     return (rc);
 }
 
-// =================================================================
-// ====================== CHARGE CONTROL MANAGER ===================
-// =================================================================
+/* =================================================================
+ * ====================== CHARGE CONTROL MANAGER ===================
+ * =================================================================
+ */
 
 static int
 charge_control_mgr_lock(void)
@@ -754,7 +722,7 @@ charge_control_mgr_match_bydevname(struct charge_control *cc, void *arg)
 static void
 charge_control_mgr_remove(struct charge_control *cc)
 {
-    SLIST_REMOVE(&charge_control_mgr.mgr_charge_control_list, cc, 
+    SLIST_REMOVE(&charge_control_mgr.mgr_charge_control_list, cc,
             charge_control, cc_next);
 }
 
@@ -786,7 +754,7 @@ charge_control_mgr_insert(struct charge_control *cc)
 
 insert:
     if (prev == NULL) {
-        SLIST_INSERT_HEAD(&charge_control_mgr.mgr_charge_control_list, cc, 
+        SLIST_INSERT_HEAD(&charge_control_mgr.mgr_charge_control_list, cc,
                 cc_next);
     } else {
         SLIST_INSERT_AFTER(prev, cc, cc_next);
@@ -795,13 +763,12 @@ insert:
 
 static void
 charge_control_mgr_poll_bytype(struct charge_control *cc,
-        charge_control_type_t type, struct charge_control_type_traits *cctt, 
+        charge_control_type_t type, struct charge_control_type_traits *cctt,
         os_time_t now)
 {
-    if (!cctt || !cctt->cctt_polls_left)
-    {
-        /* Charge control read results. Every time a charge controller is read, 
-         * all of its listeners are called by default. Specify NULL as a 
+    if (!cctt || !cctt->cctt_polls_left) {
+        /* Charge control read results. Every time a charge controller is read,
+         * all of its listeners are called by default. Specify NULL as a
          * callback, because we just want to run all the listeners.
          */
 
@@ -809,33 +776,17 @@ charge_control_mgr_poll_bytype(struct charge_control *cc,
 
         charge_control_lock(cc);
 
-        if (cctt)
-        {
-            if (!cctt->cctt_polls_left && cctt->cctt_poll_n)
-            {
+        if (cctt) {
+            if (!cctt->cctt_polls_left && cctt->cctt_poll_n) {
                 cctt->cctt_polls_left = cctt->cctt_poll_n;
                 cctt->cctt_polls_left--;
             }
-// #if MYNEWT_VAL(SENSOR_POLL_TEST_LOG)
-//             test_log[test_log_idx].delta = (uint32_t)(now - cctt->prev_now);
-//             test_log[test_log_idx].polls_left = cctt->cctt_polls_left;
-//             test_log[test_log_idx].now = now;
-//             test_log[test_log_idx].os_now = os_time_get();
-//             test_log[test_log_idx].name[0] = sensor->s_dev->od_name[0];
-//             test_log[test_log_idx].name[1] = type == 1 ? 'a' : type == 32 ? 't' : type == 64 ? 'p' : 'x';
-//             test_log[test_log_idx].poll_multiple = cctt->cctt_poll_n;
-//             test_log_idx++;
-//             test_log_idx %= 100;
-//             cctt->prev_now = now;
-// #endif
         }
 
         /* Unlock the sensor to allow other access */
         charge_control_unlock(cc);
 
-    } 
-    else
-    {
+    } else {
         cctt->cctt_polls_left--;
     }
 }
@@ -862,8 +813,8 @@ charge_control_mgr_init(void)
     /**
      * Initialize charge control polling callout and set it to fire on boot.
      */
-    os_callout_init(&charge_control_mgr.mgr_wakeup_callout, 
-            charge_control_mgr_evq_get(), charge_control_mgr_wakeup_event, 
+    os_callout_init(&charge_control_mgr.mgr_wakeup_callout,
+            charge_control_mgr_evq_get(), charge_control_mgr_wakeup_event,
             NULL);
 
     /* Initialize sensor cputime update callout and set it to fire after an
@@ -917,7 +868,7 @@ charge_control_mgr_evq_get(void)
 }
 
 struct charge_control *
-charge_control_mgr_find_next(charge_control_mgr_compare_func_t compare_func, 
+charge_control_mgr_find_next(charge_control_mgr_compare_func_t compare_func,
         void *arg, struct charge_control *prev_cursor)
 {
     struct charge_control *cursor;
@@ -952,18 +903,18 @@ done:
 }
 
 struct charge_control *
-charge_control_mgr_find_next_bytype(charge_control_type_t type, 
+charge_control_mgr_find_next_bytype(charge_control_type_t type,
         struct charge_control *prev_cursor)
 {
-    return (charge_control_mgr_find_next(charge_control_mgr_match_bytype, 
+    return (charge_control_mgr_find_next(charge_control_mgr_match_bytype,
             (void *) &type, prev_cursor));
 }
 
 struct charge_control *
-charge_control_mgr_find_next_bydevname(char *devname, 
+charge_control_mgr_find_next_bydevname(char *devname,
         struct charge_control *prev_cursor)
 {
-    return (charge_control_mgr_find_next(charge_control_mgr_match_bydevname, 
+    return (charge_control_mgr_find_next(charge_control_mgr_match_bydevname,
             devname, prev_cursor));
 }
 
@@ -975,10 +926,10 @@ charge_control_mgr_match_bytype(struct charge_control *cc, void *arg)
     type = (charge_control_type_t *) arg;
 
     /* cc_types is a bitmask that contains the supported charge control types
-     * for this charge controller, and type is the bitmask we're searching for. 
-     * We also look at the mask as the driver might be configured to work in a 
-     * mode where only some of the charge control types are supported but not 
-     * all. Compare the three, and if there is a match, return 1. If it is not 
+     * for this charge controller, and type is the bitmask we're searching for
+     * We also look at the mask as the driver might be configured to work in a
+     * mode where only some of the charge control types are supported but not
+     * all. Compare the three, and if there is a match, return 1. If it is not
      * supported, return 0.
      */
     return (*type & cc->cc_types & cc->cc_mask) ? 1 : 0;
@@ -1021,8 +972,8 @@ err:
     return rc;
 }
 
-int 
-charge_control_set_n_poll_rate(char * devname, 
+int
+charge_control_set_n_poll_rate(char * devname,
         struct charge_control_type_traits *cctt)
 {
     struct charge_control *cc;
@@ -1086,11 +1037,3 @@ charge_control_mgr_put_read_evt(void *arg)
     charge_control_read_event.ev_arg = arg;
     os_eventq_put(charge_control_mgr_evq_get(), &charge_control_read_event);
 }
-
-#if MYNEWT_VAL(CHARGE_CONTROL_CLI)
-char*
-charge_control_ftostr(float f, char *c, int k)
-{
-
-}
-#endif

@@ -24,14 +24,14 @@
 #include "hal/hal_gpio.h"
 #include "charge-control/charge_control.h"
 
-/** 
+/**
  * Configuration setting for the temperature sense (TS) pin.  If temperature
  * sensing is enabled in the hardware, the BQ24040 will always be considered to
  * be "enabled".
  */
 typedef enum {
 	/** Temperature sensing is not enabled in the hardware */
-	BQ24040_TS_MODE_DISABLED 		=	0,
+	BQ24040_TS_MODE_DISABLED = 0,
 	/** Temperature sensing is enabled in the hardware */
 	BQ24040_TS_MODE_ENABLED,
 } bq24040_ts_mode_t;
@@ -39,29 +39,29 @@ typedef enum {
 typedef void (*bq24040_interrupt_handler)(void *arg);
 
 struct bq24040_pin {
-	int 						bp_pin_num;
-	enum hal_gpio_mode_e 		bp_pin_direction;
-	int 						bp_init_value;
-	hal_gpio_irq_trig_t 		bp_irq_trig;
-	hal_gpio_pull_t 			bp_pull;
-	bq24040_interrupt_handler 	bp_irq_fn;
+	int bp_pin_num;
+	enum hal_gpio_mode_e bp_pin_direction;
+	int bp_init_value;
+	hal_gpio_irq_trig_t bp_irq_trig;
+	hal_gpio_pull_t bp_pull;
+	bq24040_interrupt_handler bp_irq_fn;
 };
 
 struct bq24040_cfg {
-	struct bq24040_pin *		bc_pg_pin;
-	struct bq24040_pin *		bc_chg_pin;
-	struct bq24040_pin *		bc_ts_pin;
-	struct bq24040_pin *		bc_iset2_pin;
-	bq24040_ts_mode_t 			bc_ts_mode;
-	charge_control_type_t 		bc_mask;
+	struct bq24040_pin *bc_pg_pin;
+	struct bq24040_pin *bc_chg_pin;
+	struct bq24040_pin *bc_ts_pin;
+	struct bq24040_pin *bc_iset2_pin;
+	bq24040_ts_mode_t	bc_ts_mode;
+	charge_control_type_t	bc_mask;
 };
 
 struct bq24040 {
-	struct os_dev 				b_dev;
-	struct charge_control 		b_chg_ctrl;
-	struct bq24040_cfg 			b_cfg;
-	os_time_t 					b_last_read_time;
-	bool 						b_is_enabled;
+	struct os_dev	b_dev;
+	struct charge_control	b_chg_ctrl;
+	struct bq24040_cfg b_cfg;
+	os_time_t	b_last_read_time;
+	bool b_is_enabled;
 };
 
 /**
@@ -110,7 +110,7 @@ int
 bq24040_get_charging_status(struct bq24040 *, int *);
 
 /**
- * Set the BQ24040 TS pin to logic 1 (if configured), enabling charger mode on 
+ * Set the BQ24040 TS pin to logic 1 (if configured), enabling charger mode on
  * the IC
  *
  * @param Sensor device BQ24040 structure

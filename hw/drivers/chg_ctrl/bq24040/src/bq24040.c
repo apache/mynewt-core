@@ -29,7 +29,7 @@
 /* Exports for the charge control API */
 static int bq24040_chg_ctrl_read(struct charge_control *, charge_control_type_t,
         charge_control_data_func_t, void *, uint32_t);
-static int bq24040_chg_ctrl_get_config(struct charge_control *, 
+static int bq24040_chg_ctrl_get_config(struct charge_control *,
         charge_control_type_t, struct charge_control_cfg *);
 static int bq24040_chg_ctrl_set_config(struct charge_control *, void *);
 static int bq24040_chg_ctrl_get_status(struct charge_control *, int *);
@@ -46,31 +46,25 @@ static const struct charge_control_driver g_bq24040_chg_ctrl_driver = {
     .ccd_disable = bq24040_chg_ctrl_disable,
 };
 
-static int bq24040_configure_pin(struct bq24040_pin *pin)
+static int
+bq24040_configure_pin(struct bq24040_pin *pin)
 {
-    if ((!pin) || (pin->bp_pin_num == -1))
-    {
+    if ((!pin) || (pin->bp_pin_num == -1)) {
         return 0;
     }
 
-    if (pin->bp_pin_direction == HAL_GPIO_MODE_IN)
-    {
-        if (pin->bp_irq_trig != HAL_GPIO_TRIG_NONE)
-        {
+    if (pin->bp_pin_direction == HAL_GPIO_MODE_IN) {
+        if (pin->bp_irq_trig != HAL_GPIO_TRIG_NONE) {
             assert(pin->bp_irq_fn != NULL);
             return hal_gpio_irq_init(pin->bp_pin_num, pin->bp_irq_fn,
                     NULL, pin->bp_irq_trig, pin->bp_pull);
-        }
-        else
-        {
+        } else {
             return hal_gpio_init_in(pin->bp_pin_num, pin->bp_pull);
         }
-    }
-    else if (pin->bp_pin_direction == HAL_GPIO_MODE_OUT)
-    {
+    } else if (pin->bp_pin_direction == HAL_GPIO_MODE_OUT) {
         return hal_gpio_init_out(pin->bp_pin_num, pin->bp_init_value);
     }
-    
+
     return SYS_EINVAL;
 }
 
@@ -88,16 +82,7 @@ bq24040_init(struct os_dev *dev, void *arg)
 
     bq24040 = (struct bq24040 *)dev;
 
-    /* register a log */
-    // ...
-
     cc = &bq24040->b_chg_ctrl;
-
-    /* Initialize the stats entry */
-    // ...
-
-    /* Register the entry with the stats registery */
-    // ...
 
     rc = charge_control_init(cc, dev);
     if (rc) {
@@ -144,23 +129,20 @@ bq24040_config(struct bq24040 *bq24040, struct bq24040_cfg *cfg)
     if (rc) {
         goto err;
     }
-    
-    if (cfg->bc_ts_mode == BQ24040_TS_MODE_DISABLED)
-    {
+
+    if (cfg->bc_ts_mode == BQ24040_TS_MODE_DISABLED) {
         rc = bq24040_configure_pin(cfg->bc_ts_pin);
         if (rc) {
             goto err;
         }
-    }
-    else
-    {
+    } else {
         bq24040->b_is_enabled = true;
     }
-    
+
     rc = bq24040_configure_pin(cfg->bc_iset2_pin);
     if (rc) {
         goto err;
-    } 
+    }
 
     return 0;
 err:
@@ -172,8 +154,7 @@ bq24040_get_charge_source_status(struct bq24040 *bq24040, int *status)
 {
     int read_val;
 
-    if (bq24040->b_cfg.bc_pg_pin->bp_pin_num != -1)
-    {
+    if (bq24040->b_cfg.bc_pg_pin->bp_pin_num != -1) {
         read_val = hal_gpio_read(bq24040->b_cfg.bc_pg_pin->bp_pin_num);
         *status = read_val == 0 ? 1 : 0;
         return 0;
@@ -186,8 +167,7 @@ bq24040_get_charging_status(struct bq24040 *bq24040, int *status)
 {
     int read_val;
 
-    if (bq24040->b_cfg.bc_chg_pin->bp_pin_num != -1)
-    {
+    if (bq24040->b_cfg.bc_chg_pin->bp_pin_num != -1) {
         read_val = hal_gpio_read(bq24040->b_cfg.bc_chg_pin->bp_pin_num);
         *status = read_val == 0 ? 1 : 0;
         return 0;
@@ -198,14 +178,12 @@ bq24040_get_charging_status(struct bq24040 *bq24040, int *status)
 int
 bq24040_enable(struct bq24040 *bq24040)
 {
-    // Don't enable if already enabled.
-    if (bq24040->b_is_enabled)
-    {
+    /* Don't enable if already enabled */
+    if (bq24040->b_is_enabled) {
         return 0;
     }
 
-    if (bq24040->b_cfg.bc_ts_pin->bp_pin_num != -1)
-    {
+    if (bq24040->b_cfg.bc_ts_pin->bp_pin_num != -1) {
         hal_gpio_write(bq24040->b_cfg.bc_ts_pin->bp_pin_num, 1);
         bq24040->b_is_enabled = true;
         return 0;
@@ -216,14 +194,12 @@ bq24040_enable(struct bq24040 *bq24040)
 int
 bq24040_disable(struct bq24040 *bq24040)
 {
-    // Don't disable if already disabled
-    if (!bq24040->b_is_enabled)
-    {
+    /* Don't disable if already disabled */
+    if (!bq24040->b_is_enabled) {
         return 0;
     }
 
-    if (bq24040->b_cfg.bc_ts_pin->bp_pin_num != -1)
-    {
+    if (bq24040->b_cfg.bc_ts_pin->bp_pin_num != -1) {
         hal_gpio_write(bq24040->b_cfg.bc_ts_pin->bp_pin_num, 0);
         bq24040->b_is_enabled = false;
         return 0;
@@ -232,7 +208,7 @@ bq24040_disable(struct bq24040 *bq24040)
 }
 
 /**
- *  Reads the charge source and charging status pins (if configured)
+ * Reads the charge source and charging status pins (if configured)
  *
  * @param The bq24040 charge controller to read from
  * @param The type(s) of sensor values to read.  Mask containing that type, provide
@@ -258,10 +234,9 @@ bq24040_chg_ctrl_read(struct charge_control *cc, charge_control_type_t type,
     }
 
     status = CHARGE_CONTROL_STATUS_DISABLED;
-    
+
     rc = bq24040_chg_ctrl_get_status(cc, &status);
-    if (rc)
-    {
+    if (rc) {
         goto err;
     }
 
@@ -300,7 +275,7 @@ static int
 bq24040_chg_ctrl_set_config(struct charge_control *cc, void *cfg)
 {
     struct bq24040* bq24040 = (struct bq24040 *)CHARGE_CONTROL_GET_DEVICE(cc);
-    
+
     return bq24040_config(bq24040, (struct bq24040_cfg*)cfg);
 }
 
@@ -312,44 +287,31 @@ bq24040_chg_ctrl_get_status(struct charge_control *cc, int * status)
     int rc;
 
     bq24040 = (struct bq24040 *)CHARGE_CONTROL_GET_DEVICE(cc);
-    if (bq24040 == NULL)
-    {
+    if (bq24040 == NULL) {
         return SYS_ENODEV;
     }
 
-    if (bq24040->b_is_enabled)
-    {
+    if (bq24040->b_is_enabled) {
         rc = bq24040_get_charge_source_status(bq24040, &ch_src_present);
-        if (rc)
-        {
+        if (rc) {
             return rc;
         }
 
         rc = bq24040_get_charging_status(bq24040, &is_charging);
-        if (rc)
-        {
+        if (rc) {
             return rc;
         }
 
-        if (ch_src_present)
-        {
-            if (is_charging)
-            {
+        if (ch_src_present) {
+            if (is_charging) {
                 *status = CHARGE_CONTROL_STATUS_CHARGING;
-            }
-            else
-            {
+            } else {
                 *status = CHARGE_CONTROL_STATUS_CHARGE_COMPLETE;
             }
-        }
-        else
-        {
+        } else {
             *status = CHARGE_CONTROL_STATUS_NO_SOURCE;
         }
-
-    }
-    else
-    {
+    } else {
         *status = CHARGE_CONTROL_STATUS_DISABLED;
     }
 
@@ -360,10 +322,11 @@ static int
 bq24040_chg_ctrl_enable(struct charge_control *cc)
 {
     struct bq24040 *bq24040 = (struct bq24040 *)CHARGE_CONTROL_GET_DEVICE(cc);
-    if (bq24040 == NULL)
-    {
+
+    if (bq24040 == NULL) {
         return SYS_ENODEV;
     }
+
     return bq24040_enable(bq24040);
 }
 
@@ -371,9 +334,10 @@ static int
 bq24040_chg_ctrl_disable(struct charge_control *cc)
 {
     struct bq24040 *bq24040 = (struct bq24040 *)CHARGE_CONTROL_GET_DEVICE(cc);
-    if (bq24040 == NULL)
-    {
+
+    if (bq24040 == NULL) {
         return SYS_ENODEV;
     }
+
     return bq24040_disable(bq24040);
 }

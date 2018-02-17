@@ -22,7 +22,7 @@
  * @brief Hardware-agnostic interface for battery charge control ICs
  *
  * The Charge Control interface provides a hardware-agnostic layer for driving
- * battery charge controller ICs. 
+ * battery charge controller ICs.
  */
 
 #ifndef __CHARGE_CONTROL_H__
@@ -46,9 +46,10 @@ struct charge_control;
 
 /* Comments above intentionally not in Doxygen format */
 
-// =================================================================
-// ====================== DEFINES/MACROS ===========================
-// =================================================================
+/* =================================================================
+ * ====================== DEFINES/MACROS ===========================
+ * =================================================================
+ */
 
 /**
  * Charge control listener constants
@@ -135,8 +136,8 @@ struct charge_control_type_traits {
     /** Polls left until the charge control type is polled */
     uint16_t cctt_polls_left;
 
-    /** Next item in the traits list.  The head of this list is contained
-     * within the charge control object 
+    /** Next item in the traits list. The head of this list is contained
+     * within the charge control object
      */
     SLIST_ENTRY(charge_control_type_traits) cctt_next;
 };
@@ -220,7 +221,7 @@ struct charge_control_listener {
     SLIST_ENTRY(charge_control_listener) ccl_next;
 };
 
-// ---------------------- DRIVER FUNCTIONS -------------------------
+/* ---------------------- DRIVER FUNCTIONS ------------------------- */
 
 /**
  * Read from a charge controller, given a specific type of information to read
@@ -236,11 +237,11 @@ struct charge_control_listener {
  *
  * @return 0 on success, non-zero error code on failure.
  */
-typedef int (*charge_control_read_func_t)(struct charge_control *, 
+typedef int (*charge_control_read_func_t)(struct charge_control *,
         charge_control_type_t, charge_control_data_func_t, void *, uint32_t);
 
 /**
- * Get the configuration of the charge controller.  This includes the value 
+ * Get the configuration of the charge controller.  This includes the value
  * type of the charge controller.
  *
  * @param The desired charge controller
@@ -249,7 +250,7 @@ typedef int (*charge_control_read_func_t)(struct charge_control *,
  *
  * @return 0 on success, non-zero error code on failure.
  */
-typedef int (*charge_control_get_config_func_t)(struct charge_control *, 
+typedef int (*charge_control_get_config_func_t)(struct charge_control *,
         charge_control_type_t, struct charge_control_cfg *);
 
 /** 
@@ -326,7 +327,7 @@ struct charge_control_timestamp {
 // ---------------------- CHARGE CONTROL OBJECT --------------------
 
 struct charge_control {
-    /* The OS device this charge controller inherits from, this is typically a 
+    /* The OS device this charge controller inherits from, this is typically a
      * charge controller specific driver.
      */
     struct os_dev *cc_dev;
@@ -335,17 +336,17 @@ struct charge_control {
     struct os_mutex cc_lock;
 
 
-    /* A bit mask describing information types available from this charge 
-     * controller.  If the bit corresponding to the charge_control_type_t is 
+    /* A bit mask describing information types available from this charge
+     * controller.  If the bit corresponding to the charge_control_type_t is
      * set, then this charge controller supports that type of information.
      */
     charge_control_type_t cc_types;
 
     /* Charge control information type mask.  A driver for a charge controller
-     * or an implementation of the controller may be written to support some or 
+     * or an implementation of the controller may be written to support some or
      * all of the types of information */
     charge_control_type_t cc_mask;
-    
+
     /**
      * Poll rate in MS for this charge controller.
      */
@@ -354,7 +355,7 @@ struct charge_control {
     /* The next time at which we will poll data from this charge controller */
     os_time_t cc_next_run;
 
-    /* Charge controller driver specific functions, created by the device 
+    /* Charge controller driver specific functions, created by the device
      * registering the charge controller.
      */
     struct charge_control_driver *cc_funcs;
@@ -377,9 +378,9 @@ struct charge_control {
     SLIST_ENTRY(charge_control) cc_next;
 };
 
-// =================================================================
-// ====================== CHARGE CONTROL ===========================
-// =================================================================
+/* =================================================================
+ * ====================== CHARGE CONTROL ===========================
+ * =================================================================
 
 /**
  * Initialize charge control structure data and mutex and associate it with an
@@ -393,7 +394,7 @@ struct charge_control {
 int charge_control_init(struct charge_control *, struct os_dev *);
 
 /**
- * Register a charge control listener. This allows a calling application to 
+ * Register a charge control listener. This allows a calling application to
  * receive callbacks for data from a given charge control object.
  *
  * For more information on the type of callbacks available, see the documentation
@@ -408,7 +409,7 @@ int charge_control_register_listener(struct charge_control *,
         struct charge_control_listener *);
 
 /**
- * Un-register a charge control listener. This allows a calling application to 
+ * Un-register a charge control listener. This allows a calling application to
  * unset callbacks for a given charge control object.
  *
  * @param The charge control object
@@ -457,7 +458,7 @@ int
 charge_control_set_n_poll_rate(char *, struct charge_control_type_traits *);
 
 /**
- * Set the driver functions for this charge controller, along with the type of 
+ * Set the driver functions for this charge controller, along with the type of
  * data available for the given charge controller.
  *
  * @param The charge controller to set the driver information for
@@ -485,7 +486,7 @@ charge_control_set_driver(struct charge_control *cc, charge_control_type_t type,
  * @param The mask
  */
 static inline int
-charge_control_set_type_mask(struct charge_control *cc, 
+charge_control_set_type_mask(struct charge_control *cc,
         charge_control_type_t mask)
 {
     cc->cc_mask = mask;
@@ -502,7 +503,7 @@ charge_control_set_type_mask(struct charge_control *cc,
  * @return type bitfield, if supported, 0 if not supported
  */
 static inline charge_control_type_t
-charge_control_check_type(struct charge_control *cc, 
+charge_control_check_type(struct charge_control *cc,
         charge_control_type_t type)
 {
     return (cc->cc_types & cc->cc_mask & type);
@@ -516,14 +517,14 @@ charge_control_check_type(struct charge_control *cc,
  * @param The interface number to set
  */
 static inline int
-charge_control_set_interface(struct charge_control *cc, 
+charge_control_set_interface(struct charge_control *cc,
         struct charge_control_itf *itf)
 {
     cc->cc_itf.cci_type = itf->cci_type;
     cc->cc_itf.cci_num = itf->cci_num;
     cc->cc_itf.cci_cs_pin = itf->cci_cs_pin;
     cc->cc_itf.cci_addr = itf->cci_addr;
- 
+
     return (0);
 }
 
@@ -538,7 +539,7 @@ charge_control_set_interface(struct charge_control *cc,
  * @return 0 on success, non-zero error code on failure.
  */
 static inline int
-charge_control_get_config(struct charge_control *cc, 
+charge_control_get_config(struct charge_control *cc,
         charge_control_type_t type, struct charge_control_cfg *cfg)
 {
     return (cc->cc_funcs->ccd_get_config(cc, type, cfg));
@@ -568,24 +569,24 @@ int charge_control_mgr_register(struct charge_control *);
 struct os_eventq *charge_control_mgr_evq_get(void);
 
 
-typedef int (*charge_control_mgr_compare_func_t)(struct charge_control *, 
+typedef int (*charge_control_mgr_compare_func_t)(struct charge_control *,
         void *);
 
 /**
- * The charge control manager contains a list of charge controllers, this 
- * function returns the next charge controller in that list, for which 
- * compare_func() returns successful (one).  If prev_cursor is provided, the 
+ * The charge control manager contains a list of charge controllers, this
+ * function returns the next charge controller in that list, for which
+ * compare_func() returns successful (one).  If prev_cursor is provided, the
  * function starts at that point in the charge controller list.
  *
- * @warn This function MUST be locked by charge_control_mgr_lock/unlock() if 
- * the goal is to iterate through charge controllers (as opposed to just 
- * finding one.)  As the "prev_cursor" may be resorted in the charge control 
+ * @warn This function MUST be locked by charge_control_mgr_lock/unlock() if
+ * the goal is to iterate through charge controllers (as opposed to just
+ * finding one.)  As the "prev_cursor" may be resorted in the charge control
  * list, in between calls.
  *
  * @param The comparison function to use against charge controllers in the list.
  * @param The argument to provide to that comparison function
  * @param The previous charge controller in the manager list, in case of
- *        iteration.  If desire is to find first matching charge controller, 
+ *        iteration.  If desire is to find first matching charge controller,
  *        provide a NULL value.
  *
  * @return A pointer to the first charge controller found from prev_cursor, or
