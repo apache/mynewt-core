@@ -25,7 +25,6 @@
 #include "mcu/nrf52_hal.h"
 #include "os/os_trace_api.h"
 
-
 #include <assert.h>
 
 #define UARTE_INT_ENDTX		UARTE_INTEN_ENDTX_Msk
@@ -33,7 +32,7 @@
 #define UARTE_CONFIG_PARITY	UARTE_CONFIG_PARITY_Msk
 #define UARTE_CONFIG_HWFC	UARTE_CONFIG_HWFC_Msk
 #define UARTE_ENABLE		UARTE_ENABLE_ENABLE_Enabled
-#define UARTE_DISABLE           UARTE_ENABLE_ENABLE_Disabled
+#define UARTE_DISABLE       UARTE_ENABLE_ENABLE_Disabled
 
 /*
  * Only one UART on NRF 52832.
@@ -90,22 +89,35 @@ hal_uart_tx_fill_buf(struct hal_uart *u)
 void
 hal_uart_start_tx(int port)
 {
+    NRF_UARTE_Type *nrf_uart;
     struct hal_uart *u;
     int sr;
     int rc;
 
+#if defined(NRF52840_XXAA)
+    if (port == 0) {
+        nrf_uart = NRF_UARTE0;
+    } else if (port == 1) {
+        nrf_uart = NRF_UARTE1;
+    } else {
+        return;
+    }
+#else
     if (port != 0) {
         return;
     }
+    nrf_uart = NRF_UARTE0;
+#endif
+
     u = &uart;
     __HAL_DISABLE_INTERRUPTS(sr);
     if (u->u_tx_started == 0) {
         rc = hal_uart_tx_fill_buf(u);
         if (rc > 0) {
-            NRF_UARTE0->INTENSET = UARTE_INT_ENDTX;
-            NRF_UARTE0->TXD.PTR = (uint32_t)&u->u_tx_buf;
-            NRF_UARTE0->TXD.MAXCNT = rc;
-            NRF_UARTE0->TASKS_STARTTX = 1;
+            nrf_uart->INTENSET = UARTE_INT_ENDTX;
+            nrf_uart->TXD.PTR = (uint32_t)&u->u_tx_buf;
+            nrf_uart->TXD.MAXCNT = rc;
+            nrf_uart->TASKS_STARTTX = 1;
             u->u_tx_started = 1;
         }
     }
@@ -115,20 +127,33 @@ hal_uart_start_tx(int port)
 void
 hal_uart_start_rx(int port)
 {
+    NRF_UARTE_Type *nrf_uart;
     struct hal_uart *u;
     int sr;
     int rc;
 
+#if defined(NRF52840_XXAA)
+    if (port == 0) {
+        nrf_uart = NRF_UARTE0;
+    } else if (port == 1) {
+        nrf_uart = NRF_UARTE1;
+    } else {
+        return;
+    }
+#else
     if (port != 0) {
         return;
     }
+    nrf_uart = NRF_UARTE0;
+#endif
+
     u = &uart;
     if (u->u_rx_stall) {
         __HAL_DISABLE_INTERRUPTS(sr);
         rc = u->u_rx_func(u->u_func_arg, u->u_rx_buf);
         if (rc == 0) {
             u->u_rx_stall = 0;
-            NRF_UARTE0->TASKS_STARTRX = 1;
+            nrf_uart->TASKS_STARTRX = 1;
         }
 
         __HAL_ENABLE_INTERRUPTS(sr);
@@ -139,10 +164,22 @@ void
 hal_uart_blocking_tx(int port, uint8_t data)
 {
     struct hal_uart *u;
+    NRF_UARTE_Type *nrf_uart;
 
+#if defined(NRF52840_XXAA)
+    if (port == 0) {
+        nrf_uart = NRF_UARTE0;
+    } else if (port == 1) {
+        nrf_uart = NRF_UARTE1;
+    } else {
+        return;
+    }
+#else
     if (port != 0) {
         return;
     }
+    nrf_uart = NRF_UARTE0;
+#endif
 
     u = &uart;
     if (!u->u_open) {
@@ -151,26 +188,26 @@ hal_uart_blocking_tx(int port, uint8_t data)
 
     /* If we have started, wait until the current uart dma buffer is done */
     if (u->u_tx_started) {
-        while (NRF_UARTE0->EVENTS_ENDTX == 0) {
+        while (nrf_uart->EVENTS_ENDTX == 0) {
             /* Wait here until the dma is finished */
         }
     }
 
-    NRF_UARTE0->EVENTS_ENDTX = 0;
-    NRF_UARTE0->TXD.PTR = (uint32_t)&data;
-    NRF_UARTE0->TXD.MAXCNT = 1;
-    NRF_UARTE0->TASKS_STARTTX = 1;
+    nrf_uart->EVENTS_ENDTX = 0;
+    nrf_uart->TXD.PTR = (uint32_t)&data;
+    nrf_uart->TXD.MAXCNT = 1;
+    nrf_uart->TASKS_STARTTX = 1;
 
-    while (NRF_UARTE0->EVENTS_ENDTX == 0) {
+    while (nrf_uart->EVENTS_ENDTX == 0) {
         /* Wait till done */
     }
 
     /* Stop the uart */
-    NRF_UARTE0->TASKS_STOPTX = 1;
+    nrf_uart->TASKS_STOPTX = 1;
 }
 
 static void
-uart_irq_handler(void)
+uart_irq_handler(NRF_UARTE_Type *nrf_uart)
 {
     struct hal_uart *u;
     int rc;
@@ -178,33 +215,47 @@ uart_irq_handler(void)
     os_trace_enter_isr();
 
     u = &uart;
-    if (NRF_UARTE0->EVENTS_ENDTX) {
-        NRF_UARTE0->EVENTS_ENDTX = 0;
+    if (nrf_uart->EVENTS_ENDTX) {
+        nrf_uart->EVENTS_ENDTX = 0;
         rc = hal_uart_tx_fill_buf(u);
         if (rc > 0) {
-            NRF_UARTE0->TXD.PTR = (uint32_t)&u->u_tx_buf;
-            NRF_UARTE0->TXD.MAXCNT = rc;
-            NRF_UARTE0->TASKS_STARTTX = 1;
+            nrf_uart->TXD.PTR = (uint32_t)&u->u_tx_buf;
+            nrf_uart->TXD.MAXCNT = rc;
+            nrf_uart->TASKS_STARTTX = 1;
         } else {
             if (u->u_tx_done) {
                 u->u_tx_done(u->u_func_arg);
             }
-            NRF_UARTE0->INTENCLR = UARTE_INT_ENDTX;
-            NRF_UARTE0->TASKS_STOPTX = 1;
+            nrf_uart->INTENCLR = UARTE_INT_ENDTX;
+            nrf_uart->TASKS_STOPTX = 1;
             u->u_tx_started = 0;
         }
     }
-    if (NRF_UARTE0->EVENTS_ENDRX) {
-        NRF_UARTE0->EVENTS_ENDRX = 0;
+    if (nrf_uart->EVENTS_ENDRX) {
+        nrf_uart->EVENTS_ENDRX = 0;
         rc = u->u_rx_func(u->u_func_arg, u->u_rx_buf);
         if (rc < 0) {
             u->u_rx_stall = 1;
         } else {
-            NRF_UARTE0->TASKS_STARTRX = 1;
+            nrf_uart->TASKS_STARTRX = 1;
         }
     }
     os_trace_exit_isr();
 }
+
+static void
+uart0_irq_handler(void)
+{
+    uart_irq_handler(NRF_UARTE0);
+}
+
+#if defined(NRF52840_XXAA)
+static void
+uart1_irq_handler(void)
+{
+    uart_irq_handler(NRF_UARTE1);
+}
+#endif
 
 static uint32_t
 hal_uart_baudrate(int baudrate)
@@ -245,18 +296,32 @@ int
 hal_uart_init(int port, void *arg)
 {
     struct nrf52_uart_cfg *cfg;
+    NRF_UARTE_Type *nrf_uart;
 
+#if defined(NRF52840_XXAA)
+    if (port == 0) {
+        nrf_uart = NRF_UARTE0;
+        NVIC_SetVector(UARTE0_UART0_IRQn, (uint32_t)uart0_irq_handler);
+    } else if (port == 1) {
+        nrf_uart = NRF_UARTE1;
+        NVIC_SetVector(UARTE1_IRQn, (uint32_t)uart1_irq_handler);
+    } else {
+        return -1;
+    }
+#else
     if (port != 0) {
         return -1;
     }
+    nrf_uart = NRF_UARTE0;
+    NVIC_SetVector(UARTE0_UART0_IRQn, (uint32_t)uart0_irq_handler);
+#endif
+
     cfg = (struct nrf52_uart_cfg *)arg;
 
-    NRF_UARTE0->PSEL.TXD = cfg->suc_pin_tx;
-    NRF_UARTE0->PSEL.RXD = cfg->suc_pin_rx;
-    NRF_UARTE0->PSEL.RTS = cfg->suc_pin_rts;
-    NRF_UARTE0->PSEL.CTS = cfg->suc_pin_cts;
-
-    NVIC_SetVector(UARTE0_UART0_IRQn, (uint32_t)uart_irq_handler);
+    nrf_uart->PSEL.TXD = cfg->suc_pin_tx;
+    nrf_uart->PSEL.RXD = cfg->suc_pin_rx;
+    nrf_uart->PSEL.RTS = cfg->suc_pin_rts;
+    nrf_uart->PSEL.CTS = cfg->suc_pin_cts;
 
     return 0;
 }
@@ -268,10 +333,26 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
     struct hal_uart *u;
     uint32_t cfg_reg = 0;
     uint32_t baud_reg;
+    NRF_UARTE_Type *nrf_uart;
+    IRQn_Type irqnum;
 
+#if defined(NRF52840_XXAA)
+    if (port == 0) {
+        nrf_uart = NRF_UARTE0;
+        irqnum = UARTE0_UART0_IRQn;
+    } else if (port == 1) {
+        nrf_uart = NRF_UARTE1;
+        irqnum = UARTE1_IRQn;
+    } else {
+        return -1;
+    }
+#else
     if (port != 0) {
         return -1;
     }
+    nrf_uart = NRF_UARTE0;
+    irqnum = UARTE0_UART0_IRQn;
+#endif
 
     u = &uart;
     if (u->u_open) {
@@ -306,8 +387,8 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
         break;
     case HAL_UART_FLOW_CTL_RTS_CTS:
         cfg_reg |= UARTE_CONFIG_HWFC;
-        if (NRF_UARTE0->PSEL.RTS == 0xffffffff ||
-          NRF_UARTE0->PSEL.CTS == 0xffffffff) {
+        if (nrf_uart->PSEL.RTS == 0xffffffff ||
+          nrf_uart->PSEL.CTS == 0xffffffff) {
             /*
              * Can't turn on HW flow control if pins to do that are not
              * defined.
@@ -321,19 +402,19 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
     if (baud_reg == 0) {
         return -1;
     }
-    NRF_UARTE0->ENABLE = 0;
-    NRF_UARTE0->INTENCLR = 0xffffffff;
-    NRF_UARTE0->BAUDRATE = baud_reg;
-    NRF_UARTE0->CONFIG = cfg_reg;
+    nrf_uart->ENABLE = 0;
+    nrf_uart->INTENCLR = 0xffffffff;
+    nrf_uart->BAUDRATE = baud_reg;
+    nrf_uart->CONFIG = cfg_reg;
 
-    NVIC_EnableIRQ(UARTE0_UART0_IRQn);
+    NVIC_EnableIRQ(irqnum);
 
-    NRF_UARTE0->ENABLE = UARTE_ENABLE;
+    nrf_uart->ENABLE = UARTE_ENABLE;
 
-    NRF_UARTE0->INTENSET = UARTE_INT_ENDRX;
-    NRF_UARTE0->RXD.PTR = (uint32_t)&u->u_rx_buf;
-    NRF_UARTE0->RXD.MAXCNT = sizeof(u->u_rx_buf);
-    NRF_UARTE0->TASKS_STARTRX = 1;
+    nrf_uart->INTENSET = UARTE_INT_ENDRX;
+    nrf_uart->RXD.PTR = (uint32_t)&u->u_rx_buf;
+    nrf_uart->RXD.MAXCNT = sizeof(u->u_rx_buf);
+    nrf_uart->TASKS_STARTRX = 1;
 
     u->u_rx_stall = 0;
     u->u_tx_started = 0;
@@ -346,14 +427,27 @@ int
 hal_uart_close(int port)
 {
     struct hal_uart *u;
+    NRF_UARTE_Type *nrf_uart;
 
     u = &uart;
 
+#if defined(NRF52840_XXAA)
     if (port == 0) {
-        u->u_open = 0;
-        NRF_UARTE0->ENABLE = 0;
-        NRF_UARTE0->INTENCLR = 0xffffffff;
-        return 0;
+        nrf_uart = NRF_UARTE0;
+    } else if (port == 1) {
+        nrf_uart = NRF_UARTE1;
+    } else {
+        return -1;
     }
-    return -1;
+#else
+    if (port != 0) {
+        return -1;
+    }
+    nrf_uart = NRF_UARTE0;
+#endif
+
+    u->u_open = 0;
+    nrf_uart->ENABLE = 0;
+    nrf_uart->INTENCLR = 0xffffffff;
+    return 0;
 }
