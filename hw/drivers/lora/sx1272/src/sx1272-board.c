@@ -36,6 +36,8 @@ Maintainer: Miguel Luis and Gregory Cristian
 static bool RadioIsActive = false;
 #endif
 
+extern DioIrqHandler *DioIrq[];
+
 /*!
  * Radio driver structure initialization
  */
@@ -113,39 +115,69 @@ void SX1272IoIrqInit( DioIrqHandler **irqHandlers )
 {
     int rc;
 
-    rc = hal_gpio_irq_init(SX1272_DIO0, irqHandlers[0], NULL,
-                           HAL_GPIO_TRIG_RISING, HAL_GPIO_PULL_NONE);
-    assert(rc == 0);
-    hal_gpio_irq_enable(SX1272_DIO0);
+    if (irqHandlers[0] != NULL) {
+        rc = hal_gpio_irq_init(SX1272_DIO0, irqHandlers[0], NULL,
+                               HAL_GPIO_TRIG_RISING, HAL_GPIO_PULL_NONE);
+        assert(rc == 0);
+        hal_gpio_irq_enable(SX1272_DIO0);
+    }
 
-    rc = hal_gpio_irq_init(SX1272_DIO1, irqHandlers[1], NULL,
-                           HAL_GPIO_TRIG_RISING, HAL_GPIO_PULL_NONE);
-    assert(rc == 0);
-    hal_gpio_irq_enable(SX1272_DIO1);
+    if (irqHandlers[1] != NULL) {
+        rc = hal_gpio_irq_init(SX1272_DIO1, irqHandlers[1], NULL,
+                               HAL_GPIO_TRIG_RISING, HAL_GPIO_PULL_NONE);
+        assert(rc == 0);
+        hal_gpio_irq_enable(SX1272_DIO1);
+    }
 
-    rc = hal_gpio_irq_init(SX1272_DIO2, irqHandlers[2], NULL,
-                           HAL_GPIO_TRIG_RISING, HAL_GPIO_PULL_NONE);
-    assert(rc == 0);
-    hal_gpio_irq_enable(SX1272_DIO2);
+    if (irqHandlers[2] != NULL) {
+        rc = hal_gpio_irq_init(SX1272_DIO2, irqHandlers[2], NULL,
+                               HAL_GPIO_TRIG_RISING, HAL_GPIO_PULL_NONE);
+        assert(rc == 0);
+        hal_gpio_irq_enable(SX1272_DIO2);
+    }
 
-    rc = hal_gpio_irq_init(SX1272_DIO3, irqHandlers[3], NULL,
-                           HAL_GPIO_TRIG_RISING, HAL_GPIO_PULL_NONE);
-    assert(rc == 0);
-    hal_gpio_irq_enable(SX1272_DIO3);
+    if (irqHandlers[3] != NULL) {
+        rc = hal_gpio_irq_init(SX1272_DIO3, irqHandlers[3], NULL,
+                               HAL_GPIO_TRIG_RISING, HAL_GPIO_PULL_NONE);
+        assert(rc == 0);
+        hal_gpio_irq_enable(SX1272_DIO3);
+    }
 
-    rc = hal_gpio_irq_init(SX1272_DIO4, irqHandlers[4], NULL,
-                           HAL_GPIO_TRIG_RISING, HAL_GPIO_PULL_NONE);
-    assert(rc == 0);
-    hal_gpio_irq_enable(SX1272_DIO4);
+    if (irqHandlers[4] != NULL) {
+        rc = hal_gpio_irq_init(SX1272_DIO4, irqHandlers[4], NULL,
+                               HAL_GPIO_TRIG_RISING, HAL_GPIO_PULL_NONE);
+        assert(rc == 0);
+        hal_gpio_irq_enable(SX1272_DIO4);
+    }
+
+    if (irqHandlers[5] != NULL) {
+        rc = hal_gpio_irq_init(SX1272_DIO5, irqHandlers[5], NULL,
+                               HAL_GPIO_TRIG_RISING, HAL_GPIO_PULL_NONE);
+        assert(rc == 0);
+        hal_gpio_irq_enable(SX1272_DIO5);
+    }
 }
 
 void SX1272IoDeInit( void )
 {
-    hal_gpio_irq_release(SX1272_DIO0);
-    hal_gpio_irq_release(SX1272_DIO1);
-    hal_gpio_irq_release(SX1272_DIO2);
-    hal_gpio_irq_release(SX1272_DIO3);
-    hal_gpio_irq_release(SX1272_DIO4);
+    if (DioIrq[0] != NULL) {
+        hal_gpio_irq_release(SX1272_DIO0);
+    }
+    if (DioIrq[1] != NULL) {
+        hal_gpio_irq_release(SX1272_DIO1);
+    }
+    if (DioIrq[2] != NULL) {
+        hal_gpio_irq_release(SX1272_DIO2);
+    }
+    if (DioIrq[3] != NULL) {
+        hal_gpio_irq_release(SX1272_DIO3);
+    }
+    if (DioIrq[4] != NULL) {
+        hal_gpio_irq_release(SX1272_DIO4);
+    }
+    if (DioIrq[5] != NULL) {
+        hal_gpio_irq_release(SX1272_DIO5);
+    }
 }
 
 void SX1272SetRfTxPower( int8_t power )
