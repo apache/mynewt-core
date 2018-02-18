@@ -43,18 +43,20 @@
 #define CSC_SIM_SPEED_KPH_MAX                     35
 
 /* Log data */
-struct log blehr_log;
+struct log blecsc_log;
 
+/* Noticication status */
 static bool notify_state = false;
 
+/* Connection handle */
+static uint16_t conn_handle;
+
+/* Advertised device name  */
 static const char *device_name = "blecsc_sensor";
+static uint8_t blecsc_addr_type;
 
-static int blehr_gap_event(struct ble_gap_event *event, void *arg);
-
-static uint8_t blehr_addr_type;
-
-/* Sending notify data timer */
-static struct os_callout blecsc_tx_timer;
+/* Measurement and notification timer */
+static struct os_callout blecsc_measure_timer;
 
 /* Variable holds current CSC measurement state */
 static struct ble_csc_measurement_state csc_measurement_state;
@@ -65,26 +67,8 @@ static uint16_t csc_sim_speed_kph = CSC_SIM_SPEED_KPH_MIN;
 /* Variable holds simulated cadence (RPM) */
 static uint8_t csc_sim_crank_rpm = CSC_SIM_CRANK_RPM_MIN;
 
-static void 
-store_le32_as_u8_arr(uint32_t val, uint8_t * arr)
-{
-    *arr++ = (val & 0x000000FF);
-    val >>= 8;
-    *arr++ = (val & 0x000000FF);
-    val >>= 8;
-    *arr++ = (val & 0x000000FF);
-    val >>= 8;
-    *arr = (val & 0x000000FF);
-}
 
-static void 
-store_le16_as_u8_arr(uint32_t val, uint8_t * arr)
-{
-    *arr++ = (val & 0x000000FF);
-    val >>= 8;
-    *arr = (val & 0x000000FF);
-}
-
+static int blecsc_gap_event(struct ble_gap_event *event, void *arg);
 
 
 /*
@@ -93,7 +77,7 @@ store_le16_as_u8_arr(uint32_t val, uint8_t * arr)
  *     o Undirected connectable mode
  */
 static void
-blehr_advertise(void)
+blecsc_advertise(void)
 {
     struct ble_gap_adv_params adv_params;
     struct ble_hs_adv_fields fields;
@@ -113,7 +97,7 @@ blehr_advertise(void)
      *      o BLE-only (BR/EDR unsupported)
      */
     fields.flags = BLE_HS_ADV_F_DISC_GEN |
-                    BLE_HS_ADV_F_BREDR_UNSUP;
+                   BLE_HS_ADV_F_BREDR_UNSUP;
 
     /*
      * Indicate that the TX power level field should be included; have the
@@ -126,10 +110,16 @@ blehr_advertise(void)
     fields.name = (uint8_t *)device_name;
     fields.name_len = strlen(device_name);
     fields.name_is_complete = 1;
+    
+    /*
+     * Set appearance to: Cycling Speed and Cadence Sensor.
+     */    
+    fields.appearance = 1157;
+    fields.appearance_is_present = 1;
 
     rc = ble_gap_adv_set_fields(&fields);
     if (rc != 0) {
-        BLEHR_LOG(ERROR, "error setting advertisement data; rc=%d\n", rc);
+        BLECSC_LOG(ERROR, "error setting advertisement data; rc=%d\n", rc);
         return;
     }
 
@@ -137,25 +127,29 @@ blehr_advertise(void)
     memset(&adv_params, 0, sizeof(adv_params));
     adv_params.conn_mode = BLE_GAP_CONN_MODE_UND;
     adv_params.disc_mode = BLE_GAP_DISC_MODE_GEN;
-    rc = ble_gap_adv_start(blehr_addr_type, NULL, BLE_HS_FOREVER,
-                           &adv_params, blehr_gap_event, NULL);
+    rc = ble_gap_adv_start(blecsc_addr_type, NULL, BLE_HS_FOREVER,
+                           &adv_params, blecsc_gap_event, NULL);
     if (rc != 0) {
-        BLEHR_LOG(ERROR, "error enabling advertisement; rc=%d\n", rc);
+        BLECSC_LOG(ERROR, "error enabling advertisement; rc=%d\n", rc);
         return;
     }
 }
 
-/* Reset heartrate measurment */
-static void
-blehr_tx_hrate_reset(void)
-{
-    int rc;
 
-    rc = os_callout_reset(&blecsc_tx_timer, OS_TICKS_PER_SEC);
-    assert(rc == 0);
-}
-
-/* This functions updates simulated CSC measurements */
+/* This functions updates simulated CSC measurements.
+ * Each call increments wheel and crank revolution counters by one and
+ * computes last event time in order to match simulated candence and speed.
+ * Last event time is expressedd in 1/1024th of second units.
+ *
+ *                  60 * 1024
+ * crank_dt =    --------------
+ *                cadence[RPM]
+ *
+ *
+ *                circumference[mm] * 1024 * 60 * 60
+ * wheel_dt =    -------------------------------------
+ *                         10^6 * speed [kph] 
+ */
 static void 
 blecsc_simulate_speed_and_cadence()
 {
@@ -163,7 +157,7 @@ blecsc_simulate_speed_and_cadence()
     uint16_t crank_rev_period;
 
     /* Update simulated crank and wheel rotation speed */
-    csc_sim_speed_kph += 1;
+    csc_sim_speed_kph++;
     if (csc_sim_speed_kph >= CSC_SIM_SPEED_KPH_MAX) {
          csc_sim_speed_kph = CSC_SIM_SPEED_KPH_MIN;
     }
@@ -175,7 +169,7 @@ blecsc_simulate_speed_and_cadence()
     
     /* Calculate simulated measurement values */
     if (csc_sim_speed_kph > 0){
-        wheel_rev_period = (6*6*64*CSC_SIM_WHEEL_CIRCUMFERENCE_MM) / 
+        wheel_rev_period = (36*1024*CSC_SIM_WHEEL_CIRCUMFERENCE_MM) / 
                            (625*csc_sim_speed_kph);
         csc_measurement_state.cumulative_wheel_rev++;
         csc_measurement_state.last_wheel_evt_time += wheel_rev_period;
@@ -187,98 +181,73 @@ blecsc_simulate_speed_and_cadence()
         csc_measurement_state.last_crank_evt_time += crank_rev_period; 
     }    
     
-    BLEHR_LOG(INFO, "CSC simulated values: speed = %d kph, cadence = %d \n",
+    BLECSC_LOG(INFO, "CSC simulated values: speed = %d kph, cadence = %d \n",
                     csc_sim_speed_kph, csc_sim_crank_rpm);  
 }
 
-/* This functions simulates CSC measurement and notifies it to the client */
+/* This functions runs CSC measurement simulation and 
+ * notifies it to the client 
+ */
 static void
-blehr_tx_csc_measurement(struct os_event *ev)
+blecsc_measurement(struct os_event *ev)
 {
     int rc;
-    struct os_mbuf *om;
-    uint8_t data_buf[11];
-    uint8_t data_offset = 1;
+
+    rc = os_callout_reset(&blecsc_measure_timer, OS_TICKS_PER_SEC);
+    assert(rc == 0);    
     
     blecsc_simulate_speed_and_cadence();
     
-    if (!notify_state) {
-         blehr_tx_hrate_reset();
-         return;
+    if (notify_state) {
+        rc = gatt_svr_chr_notify_csc_measurement(conn_handle);
+        assert(rc == 0);
     }    
-    
-    memset(data_buf, 0, sizeof(data_buf));
-
-#if (CSC_FEATURES & CSC_FEATURE_WHEEL_REV_DATA)
-    data_buf[0] |= CSC_MEASUREMENT_WHEEL_REV_PRESENT;
-    store_le32_as_u8_arr(csc_measurement_state.cumulative_wheel_rev, 
-                         &(data_buf[1]));
-    store_le16_as_u8_arr(csc_measurement_state.last_wheel_evt_time, 
-                         &(data_buf[5]));
-    data_offset += 6;
-#endif
-
-#if (CSC_FEATURES & CSC_FEATURE_CRANK_REV_DATA)
-    data_buf[0] |= CSC_MEASUREMENT_CRANK_REV_PRESENT;
-    store_le16_as_u8_arr(csc_measurement_state.cumulative_crank_rev, 
-                         &(data_buf[data_offset]));  
-    store_le16_as_u8_arr(csc_measurement_state.last_crank_evt_time, 
-                         &(data_buf[data_offset + 2]));
-    data_offset += 4;                         
-#endif  
-    
-    om = ble_hs_mbuf_from_flat(data_buf, data_offset);
-
-    rc = ble_gattc_notify_custom(notify_state, csc_measurement_handle, om);
-
-    assert(rc == 0);
-    blehr_tx_hrate_reset();
 }
 
 static int
-blehr_gap_event(struct ble_gap_event *event, void *arg)
+blecsc_gap_event(struct ble_gap_event *event, void *arg)
 {
     switch (event->type) {
     case BLE_GAP_EVENT_CONNECT:
         /* A new connection was established or a connection attempt failed */
-        BLEHR_LOG(INFO, "connection %s; status=%d\n",
+        BLECSC_LOG(INFO, "connection %s; status=%d\n",
                     event->connect.status == 0 ? "established" : "failed",
                     event->connect.status);
 
         if (event->connect.status != 0) {
             /* Connection failed; resume advertising */
-            blehr_advertise();
+            blecsc_advertise();
+            conn_handle = 0;
+        }
+        else {
+          conn_handle = event->connect.conn_handle;
         }
         break;
 
     case BLE_GAP_EVENT_DISCONNECT:
-        BLEHR_LOG(INFO, "disconnect; reason=%d\n", event->disconnect.reason);
-
+        BLECSC_LOG(INFO, "disconnect; reason=%d\n", event->disconnect.reason);
+        conn_handle = 0;
         /* Connection terminated; resume advertising */
-        blehr_advertise();
+        blecsc_advertise();
         break;
 
     case BLE_GAP_EVENT_ADV_COMPLETE:
-        BLEHR_LOG(INFO, "adv complete\n");
-        blehr_advertise();
+        BLECSC_LOG(INFO, "adv complete\n");
+        blecsc_advertise();
         break;
 
     case BLE_GAP_EVENT_SUBSCRIBE:
-        BLEHR_LOG(INFO, "subscribe event; cur_notify=%d\n value handle; "
+        BLECSC_LOG(INFO, "subscribe event; cur_notify=%d\n value handle; "
                   "val_handle=%d\n",
                         event->subscribe.cur_notify,
                         csc_measurement_handle);
         if (event->subscribe.attr_handle == csc_measurement_handle) {
             notify_state = event->subscribe.cur_notify;
-            blehr_tx_hrate_reset();
-        } else {
-            notify_state = event->subscribe.cur_notify;
-       //     blehr_tx_hrate_stop();
         }
         break;
 
     case BLE_GAP_EVENT_MTU:
-        BLEHR_LOG(INFO, "mtu update event; conn_handle=%d mtu=%d\n",
+        BLECSC_LOG(INFO, "mtu update event; conn_handle=%d mtu=%d\n",
                     event->mtu.conn_handle,
                     event->mtu.value);
         break;
@@ -289,16 +258,16 @@ blehr_gap_event(struct ble_gap_event *event, void *arg)
 }
 
 static void
-blehr_on_sync(void)
+blecsc_on_sync(void)
 {
     int rc;
 
     /* Use privacy */
-    rc = ble_hs_id_infer_auto(0, &blehr_addr_type);
+    rc = ble_hs_id_infer_auto(0, &blecsc_addr_type);
     assert(rc == 0);
 
     /* Begin advertising */
-    blehr_advertise();
+    blecsc_advertise();
 }
 
 /*
@@ -318,18 +287,21 @@ main(void)
     sysinit();
 
     /* Initialize the blecsc log */
-    log_register("blecsc_sens_log", &blehr_log, &log_console_handler, NULL,
+    log_register("blecsc_sens_log", &blecsc_log, &log_console_handler, NULL,
                     LOG_SYSLEVEL);
 
     /* Initialize the NimBLE host configuration */
     log_register("blecsc_sens", &ble_hs_log, &log_console_handler, NULL,
                     LOG_SYSLEVEL);
-    ble_hs_cfg.sync_cb = blehr_on_sync;
+    ble_hs_cfg.sync_cb = blecsc_on_sync;
 
-    os_callout_init(&blecsc_tx_timer, os_eventq_dflt_get(),
-                    blehr_tx_csc_measurement, NULL);
+    /* Initialize measurement and notification timer */
+    os_callout_init(&blecsc_measure_timer, os_eventq_dflt_get(),
+                    blecsc_measurement, NULL);
+    rc = os_callout_reset(&blecsc_measure_timer, OS_TICKS_PER_SEC);
+    assert(rc == 0); 
 
-    rc = gatt_svr_init();
+    rc = gatt_svr_init(&csc_measurement_state);
     assert(rc == 0);
 
     /* Set the default device name */

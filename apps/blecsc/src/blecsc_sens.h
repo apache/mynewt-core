@@ -27,14 +27,14 @@
 extern "C" {
 #endif
 
-extern struct log blehr_log;
+extern struct log blecsc_log;
 
-/* blehr uses the first "peruser" log module */
-#define BLEHR_LOG_MODULE (LOG_MODULE_PERUSER + 0)
+/* blecsc uses the first "peruser" log module */
+#define BLECSC_LOG_MODULE (LOG_MODULE_PERUSER + 0)
 
 /* Convenience macro for logging to the blerh module */
-#define BLEHR_LOG(lvl, ...) \
-    LOG_ ## lvl(&blehr_log, BLEHR_LOG_MODULE, __VA_ARGS__)
+#define BLECSC_LOG(lvl, ...) \
+    LOG_ ## lvl(&blecsc_log, BLECSC_LOG_MODULE, __VA_ARGS__)
 
 /* Cycling Speed and Cadence configuration */
 #define GATT_CSC_UUID                           0x1816
@@ -100,10 +100,11 @@ struct ble_csc_measurement_state {
     uint16_t cumulative_crank_rev;
     uint16_t last_crank_evt_time;
 };
-                                                
+
 extern uint16_t csc_measurement_handle;
 
-int gatt_svr_init(void);
+int gatt_svr_init(struct ble_csc_measurement_state * csc_measurement_state);
+int gatt_svr_chr_notify_csc_measurement(uint16_t conn_handle);
 
 #ifdef __cplusplus
 }

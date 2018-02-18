@@ -35,6 +35,7 @@ static const uint8_t csc_supported_sensor_locations[] = {
 };
 
 static uint8_t sensor_location = SENSOR_LOCATION_REAR_DROPOUT;
+static struct ble_csc_measurement_state * measurement_state;
 uint16_t csc_measurement_handle;
 uint16_t csc_control_point_handle;
 
@@ -109,14 +110,51 @@ static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
         }, }
     },
 
-        {
-            0, /* No more services */
-        },
+    {
+        0, /* No more services */
+    },
 };
+
+static void 
+store_le32_as_u8_arr(uint32_t val, uint8_t * arr)
+{
+    *arr++ = (val & 0x000000FF);
+    val >>= 8;
+    *arr++ = (val & 0x000000FF);
+    val >>= 8;
+    *arr++ = (val & 0x000000FF);
+    val >>= 8;
+    *arr = (val & 0x000000FF);
+}
+
+static void 
+store_le16_as_u8_arr(uint32_t val, uint8_t * arr)
+{
+    *arr++ = (val & 0x000000FF);
+    val >>= 8;
+    *arr = (val & 0x000000FF);
+}
+
+static uint32_t 
+le_u8_arr_to_mcu_u32(uint8_t * arr)
+{
+    uint32_t val = 0;
+    
+    arr += 3;
+    val |= *arr--;
+    val <<= 8;
+    val |= *arr--;
+    val <<= 8;
+    val |= *arr--;
+    val <<= 8;
+    val |= *arr;
+    
+    return val;
+}
 
 static int
 gatt_svr_chr_access_csc_measurement(uint16_t conn_handle, uint16_t attr_handle,
-                                   struct ble_gatt_access_ctxt *ctxt, void *arg)
+                                  struct ble_gatt_access_ctxt *ctxt, void *arg)
 {
     return BLE_ATT_ERR_READ_NOT_PERMITTED;
 }
@@ -136,7 +174,7 @@ gatt_svr_chr_access_csc_feature(uint16_t conn_handle, uint16_t attr_handle,
 
 static int
 gatt_svr_chr_access_sensor_location(uint16_t conn_handle, uint16_t attr_handle,
-                                   struct ble_gatt_access_ctxt *ctxt, void *arg)
+                                  struct ble_gatt_access_ctxt *ctxt, void *arg)
 {
     int rc;
     
@@ -144,23 +182,6 @@ gatt_svr_chr_access_sensor_location(uint16_t conn_handle, uint16_t attr_handle,
     rc = os_mbuf_append(ctxt->om, &sensor_location, sizeof(sensor_location));
 
     return (rc == 0) ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
-}
-
-static uint32_t 
-le_u8_arr_to_mcu_u32(uint8_t * arr)
-{
-    uint32_t val = 0;
-    
-    arr += 3;
-    val |= *arr--;
-    val <<= 8;
-    val |= *arr--;
-    val <<= 8;
-    val |= *arr--;
-    val <<= 8;
-    val |= *arr;
-    
-    return val;
 }
 
 static int
@@ -183,7 +204,7 @@ gatt_svr_chr_access_sc_control_point(uint16_t conn_handle, uint16_t attr_handle,
     if (rc != 0){
         return BLE_ATT_ERR_INVALID_ATTR_VALUE_LEN;
     }
-    BLEHR_LOG(INFO, "SC Control Point; opcode=%d\n", op_code);  
+    BLECSC_LOG(INFO, "SC Control Point; opcode=%d\n", op_code);  
 
     /* Allocate response buffer */
     om_indication = ble_hs_mbuf_att_pkt();
@@ -201,7 +222,7 @@ gatt_svr_chr_access_sc_control_point(uint16_t conn_handle, uint16_t attr_handle,
         new_cumulative_wheel_rev = 
             le_u8_arr_to_mcu_u32(new_cumulative_wheel_rev_arr);
             
-        BLEHR_LOG(INFO, "SC Control Point write cumulative value=%d\n", 
+        BLECSC_LOG(INFO, "SC Control Point write cumulative value=%d\n", 
                         new_cumulative_wheel_rev);  
                         
         response = SC_CP_RESPONSE_SUCCESS;                         
@@ -215,7 +236,7 @@ gatt_svr_chr_access_sc_control_point(uint16_t conn_handle, uint16_t attr_handle,
           return BLE_ATT_ERR_INVALID_ATTR_VALUE_LEN;
         }
         
-        BLEHR_LOG(INFO, "SC Control Point; New sensor location requested = %d\n", 
+        BLECSC_LOG(INFO, "SC Control Point; New sensor location requested = %d\n", 
                          new_sensor_location);         
         
         /* Verify if requested new location is on supported locations list */
@@ -283,6 +304,40 @@ gatt_svr_chr_access_device_info(uint16_t conn_handle, uint16_t attr_handle,
     return BLE_ATT_ERR_UNLIKELY;
 }
 
+int
+gatt_svr_chr_notify_csc_measurement(uint16_t conn_handle)
+{
+    int rc;
+    struct os_mbuf *om;
+    uint8_t data_buf[11];
+    uint8_t data_offset = 1;
+
+    memset(data_buf, 0, sizeof(data_buf));
+    
+#if (CSC_FEATURES & CSC_FEATURE_WHEEL_REV_DATA)
+    data_buf[0] |= CSC_MEASUREMENT_WHEEL_REV_PRESENT;
+    store_le32_as_u8_arr(measurement_state->cumulative_wheel_rev, 
+                         &(data_buf[1]));
+    store_le16_as_u8_arr(measurement_state->last_wheel_evt_time, 
+                         &(data_buf[5]));
+    data_offset += 6;
+#endif
+
+#if (CSC_FEATURES & CSC_FEATURE_CRANK_REV_DATA)
+    data_buf[0] |= CSC_MEASUREMENT_CRANK_REV_PRESENT;
+    store_le16_as_u8_arr(measurement_state->cumulative_crank_rev, 
+                         &(data_buf[data_offset]));  
+    store_le16_as_u8_arr(measurement_state->last_crank_evt_time, 
+                         &(data_buf[data_offset + 2]));
+    data_offset += 4;                         
+#endif  
+    
+    om = ble_hs_mbuf_from_flat(data_buf, data_offset);
+
+    rc = ble_gattc_notify_custom(conn_handle, csc_measurement_handle, om);
+    return rc;
+}
+
 void
 gatt_svr_register_cb(struct ble_gatt_register_ctxt *ctxt, void *arg)
 {
@@ -290,13 +345,13 @@ gatt_svr_register_cb(struct ble_gatt_register_ctxt *ctxt, void *arg)
 
     switch (ctxt->op) {
     case BLE_GATT_REGISTER_OP_SVC:
-        BLEHR_LOG(DEBUG, "registered service %s with handle=%d\n",
+        BLECSC_LOG(DEBUG, "registered service %s with handle=%d\n",
                     ble_uuid_to_str(ctxt->svc.svc_def->uuid, buf),
                     ctxt->svc.handle);
         break;
 
     case BLE_GATT_REGISTER_OP_CHR:
-        BLEHR_LOG(DEBUG, "registering characteristic %s with "
+        BLECSC_LOG(DEBUG, "registering characteristic %s with "
                            "def_handle=%d val_handle=%d\n",
                     ble_uuid_to_str(ctxt->chr.chr_def->uuid, buf),
                     ctxt->chr.def_handle,
@@ -304,7 +359,7 @@ gatt_svr_register_cb(struct ble_gatt_register_ctxt *ctxt, void *arg)
         break;
 
     case BLE_GATT_REGISTER_OP_DSC:
-        BLEHR_LOG(DEBUG, "registering descriptor %s with handle=%d\n",
+        BLECSC_LOG(DEBUG, "registering descriptor %s with handle=%d\n",
                     ble_uuid_to_str(ctxt->dsc.dsc_def->uuid, buf),
                     ctxt->dsc.handle);
         break;
@@ -316,7 +371,7 @@ gatt_svr_register_cb(struct ble_gatt_register_ctxt *ctxt, void *arg)
 }
 
 int
-gatt_svr_init(void)
+gatt_svr_init(struct ble_csc_measurement_state * csc_measurement_state)
 {
     int rc;
 
@@ -329,6 +384,8 @@ gatt_svr_init(void)
     if (rc != 0) {
         return rc;
     }
+    
+    measurement_state = csc_measurement_state;
 
     return 0;
 }
