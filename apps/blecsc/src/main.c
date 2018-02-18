@@ -51,9 +51,13 @@ static bool notify_state = false;
 /* Connection handle */
 static uint16_t conn_handle;
 
+static uint8_t blecsc_addr_type;
+
 /* Advertised device name  */
 static const char *device_name = "blecsc_sensor";
-static uint8_t blecsc_addr_type;
+
+/* Advertised device appearance  */
+static const uint16_t device_appearance = 1157;
 
 /* Measurement and notification timer */
 static struct os_callout blecsc_measure_timer;
@@ -114,7 +118,7 @@ blecsc_advertise(void)
     /*
      * Set appearance to: Cycling Speed and Cadence Sensor.
      */    
-    fields.appearance = 1157;
+    fields.appearance = device_appearance;
     fields.appearance_is_present = 1;
 
     rc = ble_gap_adv_set_fields(&fields);
@@ -136,7 +140,7 @@ blecsc_advertise(void)
 }
 
 
-/* This functions updates simulated CSC measurements.
+/* Update simulated CSC measurements.
  * Each call increments wheel and crank revolution counters by one and
  * computes last event time in order to match simulated candence and speed.
  * Last event time is expressedd in 1/1024th of second units.
@@ -185,9 +189,7 @@ blecsc_simulate_speed_and_cadence()
                     csc_sim_speed_kph, csc_sim_crank_rpm);  
 }
 
-/* This functions runs CSC measurement simulation and 
- * notifies it to the client 
- */
+/* Run CSC measurement simulation and notify it to the client */
 static void
 blecsc_measurement(struct os_event *ev)
 {
@@ -238,12 +240,13 @@ blecsc_gap_event(struct ble_gap_event *event, void *arg)
 
     case BLE_GAP_EVENT_SUBSCRIBE:
         BLECSC_LOG(INFO, "subscribe event; cur_notify=%d\n value handle; "
-                  "val_handle=%d\n",
+                         "val_handle=%d\n",
                         event->subscribe.cur_notify,
-                        csc_measurement_handle);
+                        event->subscribe.attr_handle);
+
         if (event->subscribe.attr_handle == csc_measurement_handle) {
             notify_state = event->subscribe.cur_notify;
-        }
+        } 
         break;
 
     case BLE_GAP_EVENT_MTU:
@@ -262,7 +265,7 @@ blecsc_on_sync(void)
 {
     int rc;
 
-    /* Use privacy */
+    /* Figure out address to use while advertising (no privacy) */
     rc = ble_hs_id_infer_auto(0, &blecsc_addr_type);
     assert(rc == 0);
 
@@ -307,6 +310,9 @@ main(void)
     /* Set the default device name */
     rc = ble_svc_gap_device_name_set(device_name);
     assert(rc == 0);
+    
+    /* Set device appearance */
+    rc = ble_svc_gap_device_appearance_set(device_appearance);
 
     /* As the last thing, process events from default event queue */
     while (1) {

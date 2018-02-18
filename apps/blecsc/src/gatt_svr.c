@@ -40,24 +40,34 @@ uint16_t csc_measurement_handle;
 uint16_t csc_control_point_handle;
 
 static int
-gatt_svr_chr_access_csc_measurement(uint16_t conn_handle, uint16_t attr_handle,
-                                  struct ble_gatt_access_ctxt *ctxt, void *arg);
+gatt_svr_chr_access_csc_measurement(uint16_t conn_handle, 
+                                    uint16_t attr_handle,
+                                    struct ble_gatt_access_ctxt *ctxt, 
+                                    void *arg);
                                   
 static int
-gatt_svr_chr_access_csc_feature(uint16_t conn_handle, uint16_t attr_handle,
-                                struct ble_gatt_access_ctxt *ctxt, void *arg);                                  
+gatt_svr_chr_access_csc_feature(uint16_t conn_handle, 
+                                uint16_t attr_handle,
+                                struct ble_gatt_access_ctxt *ctxt, 
+                                void *arg);                                  
                                 
 static int
-gatt_svr_chr_access_sensor_location(uint16_t conn_handle, uint16_t attr_handle,
-                                  struct ble_gatt_access_ctxt *ctxt, void *arg);
+gatt_svr_chr_access_sensor_location(uint16_t conn_handle, 
+                                    uint16_t attr_handle,
+                                    struct ble_gatt_access_ctxt *ctxt, 
+                                    void *arg);
                                   
 static int
-gatt_svr_chr_access_sc_control_point(uint16_t conn_handle, uint16_t attr_handle,
-                                  struct ble_gatt_access_ctxt *ctxt, void *arg);                                       
+gatt_svr_chr_access_sc_control_point(uint16_t conn_handle, 
+                                     uint16_t attr_handle,
+                                     struct ble_gatt_access_ctxt *ctxt, 
+                                     void *arg);                                       
 
 static int
-gatt_svr_chr_access_device_info(uint16_t conn_handle, uint16_t attr_handle,
-                                struct ble_gatt_access_ctxt *ctxt, void *arg);
+gatt_svr_chr_access_device_info(uint16_t conn_handle, 
+                                uint16_t attr_handle,
+                                struct ble_gatt_access_ctxt *ctxt, 
+                                void *arg);
 
 static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
     {
@@ -185,13 +195,14 @@ gatt_svr_chr_access_sensor_location(uint16_t conn_handle, uint16_t attr_handle,
 }
 
 static int
-gatt_svr_chr_access_sc_control_point(uint16_t conn_handle, uint16_t attr_handle,
-                                   struct ble_gatt_access_ctxt *ctxt, void *arg)
+gatt_svr_chr_access_sc_control_point(uint16_t conn_handle, 
+                                     uint16_t attr_handle,
+                                     struct ble_gatt_access_ctxt *ctxt, 
+                                     void *arg)
 {
     uint8_t op_code;
     uint8_t new_sensor_location;
     uint8_t new_cumulative_wheel_rev_arr[4];
-    uint32_t new_cumulative_wheel_rev;
     struct os_mbuf *om_indication;
     uint8_t response = SC_CP_RESPONSE_OP_NOT_SUPPORTED;
     int ii;
@@ -210,25 +221,26 @@ gatt_svr_chr_access_sc_control_point(uint16_t conn_handle, uint16_t attr_handle,
     om_indication = ble_hs_mbuf_att_pkt();
     
     switch(op_code){
+#if (CSC_FEATURES & CSC_FEATURE_WHEEL_REV_DATA)          
     case SC_CP_OP_SET_CUMULATIVE_VALUE:
-#if (CSC_FEATURES & CSC_FEATURE_WHEEL_REV_DATA)    
         /* Read new cumulative wheel revolutions value*/
-        rc = os_mbuf_copydata(ctxt->om, 1, sizeof(new_cumulative_wheel_rev_arr), 
+        rc = os_mbuf_copydata(ctxt->om, 1, 
+                              sizeof(new_cumulative_wheel_rev_arr), 
                               new_cumulative_wheel_rev_arr);
         if (rc != 0){
             return BLE_ATT_ERR_INVALID_ATTR_VALUE_LEN;
         }
+
+        measurement_state->cumulative_wheel_rev = 
+                           le_u8_arr_to_mcu_u32(new_cumulative_wheel_rev_arr);
         
-        new_cumulative_wheel_rev = 
-            le_u8_arr_to_mcu_u32(new_cumulative_wheel_rev_arr);
-            
-        BLECSC_LOG(INFO, "SC Control Point write cumulative value=%d\n", 
-                        new_cumulative_wheel_rev);  
+        BLECSC_LOG(INFO, "SC Control Point; Set cumulative value = %d\n", 
+                          measurement_state->cumulative_wheel_rev);  
                         
         response = SC_CP_RESPONSE_SUCCESS;                         
-#endif  
         break;
-      
+#endif  
+
     case SC_CP_OP_UPDATE_SENSOR_LOCATION:
         /* Read new sensor location value*/
         rc = os_mbuf_copydata(ctxt->om, 1, 1, &new_sensor_location);
@@ -236,7 +248,7 @@ gatt_svr_chr_access_sc_control_point(uint16_t conn_handle, uint16_t attr_handle,
           return BLE_ATT_ERR_INVALID_ATTR_VALUE_LEN;
         }
         
-        BLECSC_LOG(INFO, "SC Control Point; New sensor location requested = %d\n", 
+        BLECSC_LOG(INFO, "SC Control Point; Sensor location update = %d\n", 
                          new_sensor_location);         
         
         /* Verify if requested new location is on supported locations list */

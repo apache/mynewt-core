@@ -93,7 +93,6 @@ extern struct log blecsc_log;
                                                 CSC_FEATURE_CRANK_REV_DATA |\
                                                 CSC_FEATURE_MULTIPLE_SENSOR_LOC)
 
-
 struct ble_csc_measurement_state {
     uint32_t cumulative_wheel_rev;
     uint16_t last_wheel_evt_time;
