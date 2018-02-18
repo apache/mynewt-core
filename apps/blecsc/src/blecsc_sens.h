@@ -17,8 +17,8 @@
  * under the License.
  */
 
-#ifndef H_BLEHR_SENSOR_
-#define H_BLEHR_SENSOR_
+#ifndef H_BLECSC_SENSOR_
+#define H_BLECSC_SENSOR_
 
 #include "log/log.h"
 #include "nimble/ble.h"
@@ -89,9 +89,9 @@ extern struct log blecsc_log;
 #define SC_CP_RESPONSE_OP_FAILED               4
 
 /* CSC simulation configuration */
-#define CSC_FEATURES                           (CSC_FEATURE_WHEEL_REV_DATA | \
-                                                CSC_FEATURE_CRANK_REV_DATA |\
-                                                CSC_FEATURE_MULTIPLE_SENSOR_LOC)
+#define CSC_FEATURES                         (CSC_FEATURE_WHEEL_REV_DATA | \
+                                              CSC_FEATURE_CRANK_REV_DATA |\
+                                              CSC_FEATURE_MULTIPLE_SENSOR_LOC)
 
 struct ble_csc_measurement_state {
     uint32_t cumulative_wheel_rev;

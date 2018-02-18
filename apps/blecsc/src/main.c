@@ -145,7 +145,7 @@ blecsc_advertise(void)
  * computes last event time in order to match simulated candence and speed.
  * Last event time is expressedd in 1/1024th of second units.
  *
- *                  60 * 1024
+ *                 60 * 1024
  * crank_dt =    --------------
  *                cadence[RPM]
  *
@@ -173,7 +173,7 @@ blecsc_simulate_speed_and_cadence()
     
     /* Calculate simulated measurement values */
     if (csc_sim_speed_kph > 0){
-        wheel_rev_period = (36*1024*CSC_SIM_WHEEL_CIRCUMFERENCE_MM) / 
+        wheel_rev_period = (36*64*CSC_SIM_WHEEL_CIRCUMFERENCE_MM) / 
                            (625*csc_sim_speed_kph);
         csc_measurement_state.cumulative_wheel_rev++;
         csc_measurement_state.last_wheel_evt_time += wheel_rev_period;
