@@ -241,6 +241,7 @@ gatt_svr_chr_access_sc_control_point(uint16_t conn_handle,
         break;
 #endif  
 
+#if (CSC_FEATURES & CSC_FEATURE_MULTIPLE_SENSOR_LOC) 
     case SC_CP_OP_UPDATE_SENSOR_LOCATION:
         /* Read new sensor location value*/
         rc = os_mbuf_copydata(ctxt->om, 1, 1, &new_sensor_location);
@@ -261,11 +262,12 @@ gatt_svr_chr_access_sc_control_point(uint16_t conn_handle,
             }
         }
         break;
-      
+
     case SC_CP_OP_REQ_SUPPORTED_SENSOR_LOCATIONS:
         response = SC_CP_RESPONSE_SUCCESS;
         break;
-      
+#endif
+     
     default:
         break;
     }
@@ -276,7 +278,8 @@ gatt_svr_chr_access_sc_control_point(uint16_t conn_handle,
     if (rc != 0){
       return BLE_ATT_ERR_INSUFFICIENT_RES;
     }
-    
+
+#if (CSC_FEATURES & CSC_FEATURE_MULTIPLE_SENSOR_LOC)     
     /* In case of supported locations request append locations list */
     if (op_code == SC_CP_OP_REQ_SUPPORTED_SENSOR_LOCATIONS){
       rc = os_mbuf_append(om_indication, &csc_supported_sensor_locations, 
@@ -286,7 +289,8 @@ gatt_svr_chr_access_sc_control_point(uint16_t conn_handle,
     if (rc != 0){
       return BLE_ATT_ERR_INSUFFICIENT_RES;
     }
-    
+#endif
+
     rc = ble_gattc_indicate_custom(conn_handle, csc_control_point_handle,
                                    om_indication);    
     
