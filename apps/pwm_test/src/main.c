@@ -24,9 +24,10 @@
 
 struct pwm_dev *pwm;
 uint16_t max_val;
+static struct os_callout my_callout;
 
 int
-main(int argc, char **argv)
+pwm_init(void)
 {
     struct pwm_chan_cfg chan_conf = {
         .pin = LED_BLINK_PIN,
@@ -35,8 +36,6 @@ main(int argc, char **argv)
     };
     uint32_t base_freq;
     int rc;
-
-    sysinit();
 
 #if MYNEWT_VAL(SOFT_PWM)
     pwm = (struct pwm_dev *) os_dev_open("spwm", 0, NULL);
@@ -83,6 +82,35 @@ main(int argc, char **argv)
     rc = pwm_enable_duty_cycle(pwm, 3, max_val/10);
     assert(rc == 0);
 #endif
+
+    return rc;
+}
+
+static void
+pwm_toggle(struct os_event *ev)
+{
+    int rc;
+
+    if(pwm!=0){
+        rc = os_dev_close((struct os_dev *)pwm);
+        assert(rc == 0);
+        pwm = NULL;
+    }else{
+        rc = pwm_init();
+        assert(rc == 0);
+    }
+    os_callout_reset(&my_callout, OS_TICKS_PER_SEC * 5);
+}
+
+int
+main(int argc, char **argv)
+{
+    sysinit();
+
+    os_callout_init(&my_callout, os_eventq_dflt_get(),
+                    pwm_toggle, NULL);
+
+    os_callout_reset(&my_callout, OS_TICKS_PER_SEC * 5);
 
     while (1) {
         os_eventq_run(os_eventq_dflt_get());
