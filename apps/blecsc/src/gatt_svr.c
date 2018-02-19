@@ -23,6 +23,9 @@
 #include "host/ble_hs.h"
 #include "host/ble_uuid.h"
 #include "blecsc_sens.h"
+#include "os/endian.h"
+
+#define CSC_ERR_CCC_DESC_IMPROPERLY_CONFIGURED  0x81
 
 static const char *manuf_name = "Apache Mynewt";
 static const char *model_num = "Mynewt CSC Sensor";
@@ -38,6 +41,7 @@ static uint8_t sensor_location = SENSOR_LOCATION_REAR_DROPOUT;
 static struct ble_csc_measurement_state * measurement_state;
 uint16_t csc_measurement_handle;
 uint16_t csc_control_point_handle;
+uint8_t csc_cp_indication_status;
 
 static int
 gatt_svr_chr_access_csc_measurement(uint16_t conn_handle, 
@@ -125,43 +129,6 @@ static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
     },
 };
 
-static void 
-store_le32_as_u8_arr(uint32_t val, uint8_t * arr)
-{
-    *arr++ = (val & 0x000000FF);
-    val >>= 8;
-    *arr++ = (val & 0x000000FF);
-    val >>= 8;
-    *arr++ = (val & 0x000000FF);
-    val >>= 8;
-    *arr = (val & 0x000000FF);
-}
-
-static void 
-store_le16_as_u8_arr(uint32_t val, uint8_t * arr)
-{
-    *arr++ = (val & 0x000000FF);
-    val >>= 8;
-    *arr = (val & 0x000000FF);
-}
-
-static uint32_t 
-le_u8_arr_to_mcu_u32(uint8_t * arr)
-{
-    uint32_t val = 0;
-    
-    arr += 3;
-    val |= *arr--;
-    val <<= 8;
-    val |= *arr--;
-    val <<= 8;
-    val |= *arr--;
-    val <<= 8;
-    val |= *arr;
-    
-    return val;
-}
-
 static int
 gatt_svr_chr_access_csc_measurement(uint16_t conn_handle, uint16_t attr_handle,
                                   struct ble_gatt_access_ctxt *ctxt, void *arg)
@@ -210,6 +177,13 @@ gatt_svr_chr_access_sc_control_point(uint16_t conn_handle,
     
     assert(ctxt->op == BLE_GATT_ACCESS_OP_WRITE_CHR);
 
+    if (!csc_cp_indication_status)
+    {
+        BLECSC_LOG(INFO, "Client Characteristic Configuration descriptor "
+                         "improperly configured");      
+        return CSC_ERR_CCC_DESC_IMPROPERLY_CONFIGURED;
+    }
+    
     /* Read control point op code*/
     rc = os_mbuf_copydata(ctxt->om, 0, sizeof(op_code), &op_code);
     if (rc != 0){
@@ -232,7 +206,7 @@ gatt_svr_chr_access_sc_control_point(uint16_t conn_handle,
         }
 
         measurement_state->cumulative_wheel_rev = 
-                           le_u8_arr_to_mcu_u32(new_cumulative_wheel_rev_arr);
+                           get_le32(new_cumulative_wheel_rev_arr);
         
         BLECSC_LOG(INFO, "SC Control Point; Set cumulative value = %d\n", 
                           measurement_state->cumulative_wheel_rev);  
@@ -332,19 +306,17 @@ gatt_svr_chr_notify_csc_measurement(uint16_t conn_handle)
     
 #if (CSC_FEATURES & CSC_FEATURE_WHEEL_REV_DATA)
     data_buf[0] |= CSC_MEASUREMENT_WHEEL_REV_PRESENT;
-    store_le32_as_u8_arr(measurement_state->cumulative_wheel_rev, 
-                         &(data_buf[1]));
-    store_le16_as_u8_arr(measurement_state->last_wheel_evt_time, 
-                         &(data_buf[5]));
+    put_le16(&(data_buf[5]), measurement_state->last_wheel_evt_time);
+    put_le32(&(data_buf[1]), measurement_state->cumulative_wheel_rev);
     data_offset += 6;
 #endif
 
 #if (CSC_FEATURES & CSC_FEATURE_CRANK_REV_DATA)
     data_buf[0] |= CSC_MEASUREMENT_CRANK_REV_PRESENT;
-    store_le16_as_u8_arr(measurement_state->cumulative_crank_rev, 
-                         &(data_buf[data_offset]));  
-    store_le16_as_u8_arr(measurement_state->last_crank_evt_time, 
-                         &(data_buf[data_offset + 2]));
+    put_le16(&(data_buf[data_offset]), 
+             measurement_state->cumulative_crank_rev);  
+    put_le16(&(data_buf[data_offset + 2]),
+             measurement_state->last_crank_evt_time);
     data_offset += 4;                         
 #endif  
     
@@ -352,6 +324,12 @@ gatt_svr_chr_notify_csc_measurement(uint16_t conn_handle)
 
     rc = ble_gattc_notify_custom(conn_handle, csc_measurement_handle, om);
     return rc;
+}
+
+void 
+gatt_svr_set_cp_indicate(uint8_t indication_status)
+{
+  csc_cp_indication_status = indication_status;
 }
 
 void

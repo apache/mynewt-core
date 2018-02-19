@@ -48,8 +48,8 @@ extern struct log blecsc_log;
 #define GATT_MODEL_NUMBER_UUID                  0x2A24
 
 /*CSC Measurement flags*/
-#define CSC_MEASUREMENT_WHEEL_REV_PRESENT      0x01
-#define CSC_MEASUREMENT_CRANK_REV_PRESENT      0x02
+#define CSC_MEASUREMENT_WHEEL_REV_PRESENT       0x01
+#define CSC_MEASUREMENT_CRANK_REV_PRESENT       0x02
 
 /* CSC feature flags */
 #define CSC_FEATURE_WHEEL_REV_DATA              0x01
@@ -83,16 +83,16 @@ extern struct log blecsc_log;
 #define SC_CP_OP_RESPONSE                       16
 
 /*SC Control Point response values */
-#define SC_CP_RESPONSE_SUCCESS                 1
-#define SC_CP_RESPONSE_OP_NOT_SUPPORTED        2
-#define SC_CP_RESPONSE_INVALID_PARAM           3
-#define SC_CP_RESPONSE_OP_FAILED               4
+#define SC_CP_RESPONSE_SUCCESS                  1
+#define SC_CP_RESPONSE_OP_NOT_SUPPORTED         2
+#define SC_CP_RESPONSE_INVALID_PARAM            3
+#define SC_CP_RESPONSE_OP_FAILED                4
 
 /* CSC simulation configuration */
 #define CSC_FEATURES                         (CSC_FEATURE_WHEEL_REV_DATA | \
                                               CSC_FEATURE_CRANK_REV_DATA |\
                                               CSC_FEATURE_MULTIPLE_SENSOR_LOC)
-
+                                              
 struct ble_csc_measurement_state {
     uint32_t cumulative_wheel_rev;
     uint16_t last_wheel_evt_time;
@@ -101,9 +101,11 @@ struct ble_csc_measurement_state {
 };
 
 extern uint16_t csc_measurement_handle;
+extern uint16_t csc_control_point_handle;
 
 int gatt_svr_init(struct ble_csc_measurement_state * csc_measurement_state);
 int gatt_svr_chr_notify_csc_measurement(uint16_t conn_handle);
+void gatt_svr_set_cp_indicate(uint8_t indication_status);
 
 #ifdef __cplusplus
 }

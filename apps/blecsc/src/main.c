@@ -56,9 +56,6 @@ static uint8_t blecsc_addr_type;
 /* Advertised device name  */
 static const char *device_name = "blecsc_sensor";
 
-/* Advertised device appearance  */
-static const uint16_t device_appearance = 1157;
-
 /* Measurement and notification timer */
 static struct os_callout blecsc_measure_timer;
 
@@ -70,7 +67,6 @@ static uint16_t csc_sim_speed_kph = CSC_SIM_SPEED_KPH_MIN;
 
 /* Variable holds simulated cadence (RPM) */
 static uint8_t csc_sim_crank_rpm = CSC_SIM_CRANK_RPM_MIN;
-
 
 static int blecsc_gap_event(struct ble_gap_event *event, void *arg);
 
@@ -116,9 +112,9 @@ blecsc_advertise(void)
     fields.name_is_complete = 1;
     
     /*
-     * Set appearance to: Cycling Speed and Cadence Sensor.
+     * Set appearance.
      */    
-    fields.appearance = device_appearance;
+    fields.appearance = ble_svc_gap_device_appearance();
     fields.appearance_is_present = 1;
 
     rc = ble_gap_adv_set_fields(&fields);
@@ -235,18 +231,22 @@ blecsc_gap_event(struct ble_gap_event *event, void *arg)
 
     case BLE_GAP_EVENT_ADV_COMPLETE:
         BLECSC_LOG(INFO, "adv complete\n");
-        blecsc_advertise();
         break;
 
     case BLE_GAP_EVENT_SUBSCRIBE:
-        BLECSC_LOG(INFO, "subscribe event; cur_notify=%d\n value handle; "
-                         "val_handle=%d\n",
-                        event->subscribe.cur_notify,
-                        event->subscribe.attr_handle);
+        BLECSC_LOG(INFO, "subscribe event attr_handle=%d\n",
+                         event->subscribe.attr_handle);
 
         if (event->subscribe.attr_handle == csc_measurement_handle) {
             notify_state = event->subscribe.cur_notify;
+            BLECSC_LOG(INFO, "csc measurement notify state = %d\n",
+                              notify_state);
         } 
+        else if (event->subscribe.attr_handle == csc_control_point_handle) {
+            gatt_svr_set_cp_indicate(event->subscribe.cur_indicate);
+            BLECSC_LOG(INFO, "csc control point indicate state = %d\n",
+                              event->subscribe.cur_indicate);            
+        }
         break;
 
     case BLE_GAP_EVENT_MTU:
@@ -310,9 +310,6 @@ main(void)
     /* Set the default device name */
     rc = ble_svc_gap_device_name_set(device_name);
     assert(rc == 0);
-    
-    /* Set device appearance */
-    rc = ble_svc_gap_device_appearance_set(device_appearance);
 
     /* As the last thing, process events from default event queue */
     while (1) {
