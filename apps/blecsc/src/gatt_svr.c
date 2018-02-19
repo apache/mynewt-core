@@ -177,10 +177,9 @@ gatt_svr_chr_access_sc_control_point(uint16_t conn_handle,
     
     assert(ctxt->op == BLE_GATT_ACCESS_OP_WRITE_CHR);
 
-    if (!csc_cp_indication_status)
-    {
-        BLECSC_LOG(INFO, "Client Characteristic Configuration descriptor "
-                         "improperly configured");      
+    if (!csc_cp_indication_status) {
+        BLECSC_LOG(INFO, "SC Control Point; CCC descriptor "
+                         "improperly configured");
         return CSC_ERR_CCC_DESC_IMPROPERLY_CONFIGURED;
     }
     
@@ -190,7 +189,7 @@ gatt_svr_chr_access_sc_control_point(uint16_t conn_handle,
         return BLE_ATT_ERR_INVALID_ATTR_VALUE_LEN;
     }
     BLECSC_LOG(INFO, "SC Control Point; opcode=%d\n", op_code);  
-
+ 
     /* Allocate response buffer */
     om_indication = ble_hs_mbuf_att_pkt();
     
