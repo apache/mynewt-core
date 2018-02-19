@@ -24,7 +24,6 @@
 #include <errno.h>
 #include <pwm/pwm.h>
 #include <string.h>
-#include <bsp/cmsis_nvic.h>
 
 /* Nordic headers */
 #include <nrfx.h>
@@ -119,16 +118,6 @@ init_instance(int inst_id, nrfx_pwm_config_t* init_conf)
 }
 
 /**
- * Cleanup a driver instance.
- */
-static void
-cleanup_instance(int inst_id)
-{
-    instances[inst_id].playing = false;
-    instances[inst_id].in_use = false;
-}
-
-/**
  * Open the NRF52 PWM device
  *
  * This function locks the device for access from other tasks.
@@ -190,8 +179,7 @@ nrf52_pwm_close(struct os_dev *odev)
     inst_id = dev->pwm_instance_id;
 
     nrfx_pwm_uninit(&instances[inst_id].drv_instance);
-
-    cleanup_instance(inst_id);
+    instances[inst_id].playing = false;
 
     if (os_started()) {
         os_mutex_release(&dev->pwm_lock);
