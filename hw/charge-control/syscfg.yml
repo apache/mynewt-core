@@ -26,4 +26,4 @@ syscfg.defs:
     CHARGE_CONTROL_MGR_EVQ:
         description: >
             Specify the eventq to be used by the charge control manager
-        value: 
+        value:
