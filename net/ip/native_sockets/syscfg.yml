@@ -33,4 +33,5 @@ syscfg.defs:
         value: 4096
     NATIVE_SOCKETS_PRIO:
         description: 'The priority of the native sockets task.'
+        type: task_priority
         value: 2
