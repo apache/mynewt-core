@@ -641,6 +641,8 @@ config_lps33hw_sensor(void)
     struct lps33hw_cfg cfg;
 
     cfg.mask = SENSOR_TYPE_PRESSURE;
+    cfg.data_rate = LPS33HW_1KHZ;
+    cfg.lpf = LPS33HW_LPF_DISABLED;
 
     dev = (struct os_dev *) os_dev_open("lps33hw_0", OS_TIMEOUT_NEVER, NULL);
     assert(dev != NULL);

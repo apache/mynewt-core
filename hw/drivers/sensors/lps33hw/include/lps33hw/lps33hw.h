@@ -35,8 +35,34 @@ extern "C" {
 #define LPS33HW_INT_LATCH_EN (0x20)
 #define LPS33HW_INT_RD_CLEAR (0x10)
 
+enum lps33hw_output_data_rates {
+    LPS33HW_ONE_SHOT            = 0x00,
+    LPS33HW_1KHZ                = 0x01,
+    LPS33HW_10KHZ               = 0x02,
+    LPS33HW_25KHZ               = 0x03,
+    LPS33HW_50KHZ               = 0x04,
+    LPS33HW_75KHZ               = 0x05,
+};
+
+enum lps33hw_low_pass_config {
+    LPS33HW_LPF_DISABLED        = 0x00, /* Bandwidth = data rate / 2 */
+    LPS33HW_LPF_ENABLED_LOW_BW  = 0x02, /* Bandwidth = data rate / 9 */
+    LPS33HW_LPF_ENABLED_HIGH_BW = 0x03, /* Bandwidth = data rate / 20 */
+};
+
+struct lps33hw_int_cfg {
+    unsigned int pressure_low : 1;
+    unsigned int pressure_high : 1;
+    unsigned int enabled : 1;
+    unsigned int active_low : 1;
+    unsigned int open_drain : 1;
+};
+
 struct lps33hw_cfg {
     sensor_type_t mask;
+    struct lps33hw_int_cfg int_cfg;
+    enum lps33hw_output_data_rates data_rate;
+    enum lps33hw_low_pass_config lpf;
 };
 
 struct lps33hw {
@@ -45,6 +71,11 @@ struct lps33hw {
     struct lps33hw_cfg cfg;
     os_time_t last_read_time;
 };
+
+int lps33hw_config_interrupt(struct sensor_itf *itf,
+    struct lps33hw_int_cfg cfg);
+int lps33hw_set_lpf(struct sensor_itf *itf,
+    enum lps33hw_low_pass_config lpf);
 
 int lps33hw_init(struct os_dev *, void *);
 int lps33hw_config(struct lps33hw *, struct lps33hw_cfg *);

@@ -181,6 +181,65 @@ lps33hw_read24(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer)
     return rc;
 }
 
+int
+lps33hw_set_field(struct sensor_itf *itf, uint8_t reg, uint8_t mask,
+    uint8_t value)
+{
+    int rc;
+    unsigned char r;
+
+    rc = lps33hw_read8(itf, reg, &r);
+    if (rc) {
+        return rc;
+    }
+
+    return lps33hw_write8(itf, reg, (r & mask) | value);
+}
+
+int
+lps33hw_set_data_rate(struct sensor_itf *itf,
+    enum lps33hw_output_data_rates rate)
+{
+    return lps33hw_set_field(itf, LPS33HW_CTRL_REG1, 0x8f, rate << 4);
+}
+
+int
+lps33hw_set_lpf(struct sensor_itf *itf, enum lps33hw_low_pass_config lpf)
+{
+    return lps33hw_set_field(itf, LPS33HW_CTRL_REG1, 0xf3, lpf << 2);
+}
+
+/**
+ * Software reset.
+ *
+ * @param The interface object associated with the lps33hw.
+ *
+ * @return 0 on success, non-zero error on failure.
+ */
+int
+lps33hw_reset(struct sensor_itf *itf)
+{
+    return lps33hw_write8(itf, LPS33HW_CTRL_REG2, 0x04);
+}
+
+/**
+ * Configure interrupts.
+ *
+ * @param The device object associated with this lps33hw.
+ * @param Argument passed to OS device init, unused.
+ *
+ * @return 0 on success, non-zero error on failure.
+ */
+int
+lps33hw_config_interrupt(struct sensor_itf *itf, struct lps33hw_int_cfg cfg)
+{
+    int rc;
+
+    rc = 0;
+
+    return rc;
+}
+
 /**
  * Expects to be called back through os_dev_create().
  *
@@ -255,8 +314,12 @@ lps33hw_config(struct lps33hw *lps, struct lps33hw_cfg *cfg)
         return SYS_EINVAL;
     }
 
-    /* set the poll rate to 10Hz */
-    rc = lps33hw_write8(itf, LPS33HW_CTRL_REG1, 0x20);
+    rc = lps33hw_set_data_rate(itf, cfg->data_rate);
+    if (rc) {
+        return rc;
+    }
+
+    rc = lps33hw_set_lpf(itf, cfg->lpf);
     if (rc) {
         return rc;
     }
@@ -289,7 +352,7 @@ lps33hw_sensor_read(struct sensor *sensor, sensor_type_t type,
     }
 
     itf = SENSOR_GET_ITF(sensor);
-    //lps = (struct lps33hw *) SENSOR_GET_DEVICE(sensor);
+    // lps = (struct lps33hw *) SENSOR_GET_DEVICE(sensor);
 
     rc = lps33hw_read24(itf, LPS33HW_PRESS_OUT_XL, payload);
     if (rc) {

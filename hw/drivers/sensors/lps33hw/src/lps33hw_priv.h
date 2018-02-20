@@ -54,6 +54,7 @@ enum lps33hw_registers {
 
 int lps33hw_write8(struct sensor_itf *itf, uint8_t reg, uint8_t value);
 int lps33hw_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value);
+int lps33hw_read24(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer);
 
 #ifdef __cplusplus
 }
