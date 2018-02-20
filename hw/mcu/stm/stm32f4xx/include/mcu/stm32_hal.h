@@ -17,39 +17,38 @@
  * under the License.
  */
 
-#include <assert.h>
-#include <os/os.h>
-#include <hal/hal_os_tick.h>
+#ifndef STM32_HAL_H
+#define STM32_HAL_H
 
-/*
- * XXX implement tickless mode.
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include <mcu/cortex_m4.h>
+
+#include "stm32f4xx_hal.h"
+#include "stm32f4xx_hal_def.h"
+
+/* hal_watchdog */
+#include "stm32f4xx_hal_iwdg.h"
+#define STM32_HAL_WATCHDOG_CUSTOM_INIT(x)
+
+/* hal_system_start */
+#define STM32_HAL_FLASH_REMAP()                  \
+    do {                                         \
+        SYSCFG->MEMRMP = 0;                      \
+        __DSB();                                 \
+    } while (0)
+
+/* stm32_hw_id
+ *
+ * STM32F4 has a unique 96-bit id at address 0x1FFF7A10.
+ * See ref manual chapter 39.1.
  */
-void
-os_tick_idle(os_time_t ticks)
-{
-    OS_ASSERT_CRITICAL();
-    __DSB();
-    __WFI();
+#define STM32_HW_ID_ADDR 0x1FFF7A10
+
+#ifdef __cplusplus
 }
+#endif
 
-void
-os_tick_init(uint32_t os_ticks_per_sec, int prio)
-{
-    uint32_t reload_val;
-
-    reload_val = ((uint64_t)SystemCoreClock / os_ticks_per_sec) - 1;
-
-    /* Set the system time ticker up */
-    SysTick->LOAD = reload_val;
-    SysTick->VAL = 0;
-    SysTick->CTRL = 0x0007;
-
-    /* Set the system tick priority */
-    NVIC_SetPriority(SysTick_IRQn, prio);
-
-    /*
-     * Keep clocking debug even when CPU is sleeping, stopped or in standby.
-     */
-    DBGMCU->CR |= (DBGMCU_CR_DBG_SLEEP | DBGMCU_CR_DBG_STOP |
-      DBGMCU_CR_DBG_STANDBY);
-}
+#endif /* STM32_HAL_H */

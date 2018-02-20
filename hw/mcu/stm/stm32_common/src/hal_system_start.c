@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- *
+ * 
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -17,26 +17,37 @@
  * under the License.
  */
 
+#include <assert.h>
+#include <stddef.h>
 #include <inttypes.h>
-#include <string.h>
 
-#include <hal/hal_bsp.h>
+#include "mcu/stm32_hal.h"
 
-#ifndef min
-#define min(a, b) ((a)<(b)?(a):(b))
-#endif
-
-/*
- * STM32F4 has a unique 96-bit id at address 0x1FFF7A10.
- * See ref manual chapter 39.1.
+/**
+ * Boots the image described by the supplied image header.
+ *
+ * @param hdr                   The header for the image to boot.
  */
-int
-hal_bsp_hw_id(uint8_t *id, int max_len)
+void
+hal_system_start(void *img_start)
 {
-    int cnt;
+    typedef void jump_fn(void);
 
-    cnt = min(12, max_len);
-    memcpy(id, (void *)0x1FFF7A10, cnt);
+    uint32_t base0entry;
+    uint32_t jump_addr;
+    jump_fn *fn;
 
-    return cnt;
+    /* First word contains initial MSP value. */
+    __set_MSP(*(uint32_t *)img_start);
+
+    /* Second word contains address of entry point (Reset_Handler). */
+    base0entry = *(uint32_t *)(img_start + 4);
+    jump_addr = base0entry;
+    fn = (jump_fn *)jump_addr;
+
+    STM32_HAL_FLASH_REMAP();
+
+    /* Jump to image. */
+    fn();
 }
+

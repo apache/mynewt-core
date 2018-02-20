@@ -17,43 +17,23 @@
  * under the License.
  */
 
-#include "hal/hal_watchdog.h"
-#include "stm32l1xx_hal.h"
-#include "stm32l1xx_hal_iwdg.h"
+#include <inttypes.h>
+#include <string.h>
 
-IWDG_HandleTypeDef g_wdt_cfg;
+#include "mcu/stm32_hal.h"
+#include <hal/hal_bsp.h>
+
+#ifndef min
+#define min(a, b) ((a)<(b)?(a):(b))
+#endif
 
 int
-hal_watchdog_init(uint32_t expire_msecs)
+hal_bsp_hw_id(uint8_t *id, int max_len)
 {
-    uint32_t reload;
+    int cnt;
 
-    /* Max prescaler is 256 */
-    reload = 32768 / 256;
-    reload = (reload * expire_msecs) / 1000;
+    cnt = min(12, max_len);
+    memcpy(id, (void *)STM32_HW_ID_ADDR, cnt);
 
-    /* Check to make sure we are not trying a reload value that is too large */
-    if (reload > IWDG_RLR_RL) {
-        return -1;
-    }
-
-    g_wdt_cfg.Instance = IWDG;
-    g_wdt_cfg.Init.Prescaler = IWDG_PRESCALER_256;
-    g_wdt_cfg.Init.Reload = reload;
-
-    return 0;
+    return cnt;
 }
-
-void
-hal_watchdog_enable(void)
-{
-    __HAL_DBGMCU_FREEZE_IWDG();
-    HAL_IWDG_Init(&g_wdt_cfg);
-}
-
-void
-hal_watchdog_tickle(void)
-{
-    HAL_IWDG_Refresh(&g_wdt_cfg);
-}
-
