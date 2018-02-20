@@ -20,6 +20,7 @@
 #include <console/console.h>
 #include <hal/hal_system.h>
 #include "os/os.h"
+#include "os_priv.h"
 
 void
 __assert_func(const char *file, int line, const char *func, const char *e)
@@ -29,7 +30,6 @@ __assert_func(const char *file, int line, const char *func, const char *e)
     OS_ENTER_CRITICAL(sr);
     (void)sr;
     console_blocking_mode();
-    console_printf("Assert @ 0x%x\n",
-                   (unsigned int)__builtin_return_address(0));
+    OS_PRINT_ASSERT(file, line, func, e);
     hal_system_reset();
 }

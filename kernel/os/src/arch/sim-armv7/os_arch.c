@@ -90,5 +90,6 @@ os_tick_idle(os_time_t ticks)
 void
 __assert_func(const char *file, int line, const char *func, const char *e)
 {
-    sim_assert_fail(file, line, func, e);
+    OS_PRINT_ASSERT_SIM(file, line, func, e);
+    _Exit(1);
 }
