@@ -17,9 +17,9 @@
 # under the License.
 #
 
-pkg.name: hw/bsp/nucleo413zh
+pkg.name: hw/bsp/nucleo-f413zh
 pkg.type: bsp
-pkg.description: BSP definition for the stm32f4 nucleo 413zh board.
+pkg.description: BSP definition for the stm32f4 nucleo f413zh board.
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:

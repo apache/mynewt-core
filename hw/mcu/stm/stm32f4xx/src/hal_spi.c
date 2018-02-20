@@ -36,6 +36,13 @@
 #include "mcu/stm32f4_bsp.h"
 #include "bsp/cmsis_nvic.h"
 
+#define SPI_0_ENABLED (MYNEWT_VAL(SPI_0_MASTER) || MYNEWT_VAL(SPI_0_SLAVE))
+#define SPI_1_ENABLED (MYNEWT_VAL(SPI_1_MASTER) || MYNEWT_VAL(SPI_1_SLAVE))
+#define SPI_2_ENABLED (MYNEWT_VAL(SPI_2_MASTER) || MYNEWT_VAL(SPI_2_SLAVE))
+#define SPI_3_ENABLED (MYNEWT_VAL(SPI_3_MASTER) || MYNEWT_VAL(SPI_3_SLAVE))
+#define SPI_4_ENABLED (MYNEWT_VAL(SPI_4_MASTER) || MYNEWT_VAL(SPI_4_SLAVE))
+#define SPI_5_ENABLED (MYNEWT_VAL(SPI_5_MASTER) || MYNEWT_VAL(SPI_5_SLAVE))
+
 #define STM32F4_HAL_SPI_TIMEOUT (1000)
 
 #define STM32F4_HAL_SPI_MAX (6)
@@ -70,52 +77,52 @@ static struct stm32f4_spi_stat {
 
 static void spi_irq_handler(struct stm32f4_hal_spi *spi);
 
-#if MYNEWT_VAL(SPI_0)
+#if SPI_0_ENABLED
 struct stm32f4_hal_spi stm32f4_hal_spi0;
 #endif
-#if MYNEWT_VAL(SPI_1)
+#if SPI_1_ENABLED
 struct stm32f4_hal_spi stm32f4_hal_spi1;
 #endif
-#if MYNEWT_VAL(SPI_2)
+#if SPI_2_ENABLED
 struct stm32f4_hal_spi stm32f4_hal_spi2;
 #endif
-#if MYNEWT_VAL(SPI_3)
+#if SPI_3_ENABLED
 struct stm32f4_hal_spi stm32f4_hal_spi3;
 #endif
-#if MYNEWT_VAL(SPI_4)
+#if SPI_4_ENABLED
 struct stm32f4_hal_spi stm32f4_hal_spi4;
 #endif
-#if MYNEWT_VAL(SPI_5)
+#if SPI_5_ENABLED
 struct stm32f4_hal_spi stm32f4_hal_spi5;
 #endif
 
 static struct stm32f4_hal_spi *stm32f4_hal_spis[STM32F4_HAL_SPI_MAX] = {
-#if MYNEWT_VAL(SPI_0)
+#if SPI_0_ENABLED
     &stm32f4_hal_spi0,
 #else
     NULL,
 #endif
-#if MYNEWT_VAL(SPI_1)
+#if SPI_1_ENABLED
     &stm32f4_hal_spi1,
 #else
     NULL,
 #endif
-#if MYNEWT_VAL(SPI_2)
+#if SPI_2_ENABLED
     &stm32f4_hal_spi2,
 #else
     NULL,
 #endif
-#if MYNEWT_VAL(SPI_3)
+#if SPI_3_ENABLED
     &stm32f4_hal_spi3,
 #else
     NULL,
 #endif
-#if MYNEWT_VAL(SPI_4)
+#if SPI_4_ENABLED
     &stm32f4_hal_spi4,
 #else
     NULL,
 #endif
-#if MYNEWT_VAL(SPI_5)
+#if SPI_5_ENABLED
     &stm32f4_hal_spi5,
 #else
     NULL,
@@ -145,15 +152,15 @@ stm32f4_resolve_spi_irq(SPI_HandleTypeDef *hspi)
             return SPI2_IRQn;
         case (uintptr_t)SPI3:
             return SPI3_IRQn;
-#if MYNEWT_VAL(SPI_4)
+#if SPI_4_ENABLED
         case (uintptr_t)SPI4:
             return SPI4_IRQn;
 #endif
-#if MYNEWT_VAL(SPI_5)
+#if SPI_5_ENABLED
         case (uintptr_t)SPI5:
             return SPI5_IRQn;
 #endif
-#if MYNEWT_VAL(SPI_6)
+#if SPI_6_ENABLED
         case (uintptr_t)SPI6:
             return SPI6_IRQn;
 #endif
@@ -322,7 +329,7 @@ spi3_irq_handler(void)
     spi_irq_handler(stm32f4_hal_spis[2]);
 }
 
-#if MYNEWT_VAL(SPI_4)
+#if SPI_4_ENABLED
 static void
 spi4_irq_handler(void)
 {
@@ -330,7 +337,7 @@ spi4_irq_handler(void)
 }
 #endif
 
-#if MYNEWT_VAL(SPI_5)
+#if SPI_5_ENABLED
 static void
 spi5_irq_handler(void)
 {
@@ -339,7 +346,7 @@ spi5_irq_handler(void)
 #endif
 
 
-#if MYNEWT_VAL(SPI_6)
+#if SPI_6_ENABLED
 static void
 spi6_irq_handler(void)
 {
@@ -357,15 +364,15 @@ stm32f4_resolve_spi_irq_handler(SPI_HandleTypeDef *hspi)
             return (uint32_t)&spi2_irq_handler;
         case (uintptr_t)SPI3:
             return (uint32_t)&spi3_irq_handler;
-#if MYNEWT_VAL(SPI_4)
+#if SPI_4_ENABLED
         case (uintptr_t)SPI4:
             return (uint32_t)&spi4_irq_handler;
 #endif
-#if MYNEWT_VAL(SPI_5)
+#if SPI_5_ENABLED
         case (uintptr_t)SPI5:
             return (uint32_t)&spi5_irq_handler;
 #endif
-#if MYNEWT_VAL(SPI_6)
+#if SPI_6_ENABLED
         case (uintptr_t)SPI6:
             return (uint32_t)&spi6_irq_handler;
 #endif
@@ -579,21 +586,21 @@ hal_spi_config(int spi_num, struct hal_spi_settings *settings)
             gpio.Alternate = GPIO_AF6_SPI3;
             spi->handle.Instance = SPI3;
             break;
-#if MYNEWT_VAL(SPI_4)
+#if SPI_4_ENABLED
         case 3:
             __HAL_RCC_SPI4_CLK_ENABLE();
             gpio.Alternate = GPIO_AF5_SPI4;
             spi->handle.Instance = SPI4;
             break;
 #endif
-#if MYNEWT_VAL(SPI_5)
+#if SPI_5_ENABLED
         case 4:
             __HAL_RCC_SPI5_CLK_ENABLE();
             gpio.Alternate = GPIO_AF5_SPI5;
             spi->handle.Instance = SPI5;
             break;
 #endif
-#if MYNEWT_VAL(SPI_6)
+#if SPI_6_ENABLED
         case 5:
             __HAL_RCC_SPI6_CLK_ENABLE();
             gpio.Alternate = GPIO_AF5_SPI6;
