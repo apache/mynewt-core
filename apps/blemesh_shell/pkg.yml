@@ -1,4 +1,3 @@
-#
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -6,7 +5,7 @@
 # to you under the Apache License, Version 2.0 (the
 # "License"); you may not use this file except in compliance
 # with the License.  You may obtain a copy of the License at
-# 
+#
 #  http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing,
@@ -16,29 +15,22 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-
-pkg.name: net/nimble/host/mesh
-pkg.description: Bluetooth Mesh
-pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
+pkg.name: apps/blemesh_shell
+pkg.type: app
+pkg.description: Sample application for BLE Mesh node with shell support
+pkg.author: "Michał Narajowski <michal.narajowski@codecoup.pl>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
-    - ble
-    - bluetooth
-    - mesh
 
 pkg.deps:
-    - kernel/os
-    - net/nimble
-    - util/mem
-    - net/nimble/host  
-    - crypto/tinycrypt
-
-pkg.deps.BLE_MESH_SHELL:
+    - kernel/os 
+    - net/nimble/controller
+    - net/nimble/host
+    - net/nimble/host/services/gap
+    - net/nimble/host/services/gatt
+    - net/nimble/host/store/ram
+    - net/nimble/transport/ram
+    - sys/console/full
+    - sys/log/full
+    - sys/stats/full
     - sys/shell
-
-pkg.req_apis:
-    - log
-    - stats
-
-pkg.init:
-    ble_mesh_shell_init: 1000
