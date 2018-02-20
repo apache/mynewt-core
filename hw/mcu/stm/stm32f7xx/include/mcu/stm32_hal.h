@@ -17,26 +17,42 @@
  * under the License.
  */
 
-#include <inttypes.h>
-#include <string.h>
+#ifndef STM32_HAL_H
+#define STM32_HAL_H
 
-#include <hal/hal_bsp.h>
-
-#ifndef min
-#define min(a, b) ((a)<(b)?(a):(b))
+#ifdef __cplusplus
+extern "C" {
 #endif
 
-/*
+#include <mcu/cortex_m7.h>
+
+#include "stm32f7xx_hal.h"
+#include "stm32f7xx_hal_def.h"
+
+/* hal_watchdog */
+#include "stm32f7xx_hal_iwdg.h"
+#define STM32_HAL_WATCHDOG_CUSTOM_INIT(x)           \
+    do {                                            \
+        (x)->Init.Window = IWDG_WINDOW_DISABLE;     \
+    } while (0)
+
+/* hal_system_start */
+#define STM32_HAL_FLASH_REMAP()                  \
+    do {                                         \
+        SYSCFG->MEMRMP = 0;                      \
+        SCB_InvalidateICache();                  \
+        __DSB();                                 \
+    } while (0)
+
+/* stm32_hw_id
+ *
  * STM32F7 has a unique 96-bit id at address 0x1FF0F420.
  * See ref manual chapter 45.1.
  */
-int
-hal_bsp_hw_id(uint8_t *id, int max_len)
-{
-    int cnt;
+#define STM32_HW_ID_ADDR 0x1FF0F420
 
-    cnt = min(12, max_len);
-    memcpy(id, (void *)0x1FF0F420, cnt);
-
-    return cnt;
+#ifdef __cplusplus
 }
+#endif
+
+#endif /* STM32_HAL_H */
