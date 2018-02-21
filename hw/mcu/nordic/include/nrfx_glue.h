@@ -97,7 +97,7 @@ extern "C" {
 /**
  * @brief Macro for entering into a critical section.
  */
-os_sr_t sr_from_macro;
+static os_sr_t sr_from_macro __attribute__((unused));
 
 #define NRFX_CRITICAL_SECTION_ENTER() OS_ENTER_CRITICAL(sr_from_macro);
 
