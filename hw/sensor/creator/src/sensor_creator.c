@@ -54,6 +54,10 @@
 #include <bma253/bma253.h>
 #endif
 
+#if MYNEWT_VAL(ADXL345_OFB)
+#include <adxl345/adxl345.h>
+#endif
+
 /* Driver definitions */
 #if MYNEWT_VAL(LSM303DLHC_OFB)
 static struct lsm303dlhc lsm303dlhc;
@@ -89,6 +93,10 @@ static struct bmp280 bmp280;
 
 #if MYNEWT_VAL(BMA253_OFB)
 static struct bma253 bma253;
+#endif
+
+#if MYNEWT_VAL(ADXL345_OFB)
+static struct adxl345 adxl345;
 #endif
 
 /**
@@ -189,6 +197,14 @@ static struct sensor_itf i2c_0_itf_lis = {
        { MYNEWT_VAL(BMA253_INT2_PIN_HOST), MYNEWT_VAL(BMA253_INT2_PIN_DEVICE),
                                        MYNEWT_VAL(BMA253_INT_CFG_ACTIVE)}
     },
+};
+#endif
+
+#if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(ADXL345_OFB)
+static struct sensor_itf i2c_0_itf_adxl = {
+    .si_type = SENSOR_ITF_I2C,
+    .si_num  = 0,
+    .si_addr = 0x1D
 };
 #endif
 
@@ -508,6 +524,68 @@ config_bma253_sensor(void)
 }
 #endif
 
+/**
+ * ADXL345 Sensor default configuration used by the creator package
+ *
+ * @return 0 on success, non-zero on failure
+ */
+#if MYNEWT_VAL(ADXL345_OFB)
+static int
+config_adxl345_sensor(void)
+{
+    int rc;
+    struct os_dev *dev;
+    struct adxl345_cfg cfg;
+
+    dev = (struct os_dev *) os_dev_open("adxl345_0", OS_TIMEOUT_NEVER, NULL);
+    assert(dev != NULL);
+
+    cfg.power_mode = ADXL345_POWER_MEASURE;
+    cfg.low_power_enable = 0;
+    cfg.accel_range = ADXL345_ACCEL_RANGE_4;
+    cfg.sample_rate = ADXL345_RATE_12_5_HZ;
+
+    cfg.offset_x = 0;
+    cfg.offset_y = 0;
+    cfg.offset_z = 0;
+
+    cfg.tap_cfg.threshold = 0x30; /* 3g */
+    cfg.tap_cfg.duration = 0x10;  /* 10 ms */
+    cfg.tap_cfg.latency = 0x10;   /* 20 ms */
+    cfg.tap_cfg.window = 0x80;    /* 160 ms */
+    cfg.tap_cfg.x_enable = 1;
+    cfg.tap_cfg.y_enable = 1;
+    cfg.tap_cfg.z_enable = 1;
+    cfg.tap_cfg.suppress = 0;
+
+    cfg.active_threshold = 0x30; /* 3g */
+    cfg.inactive_threshold = 0x08; /* 0.5g */
+    cfg.inactive_time = 60; /* 1 minute */
+    cfg.act_inact_cfg.act_x = 0;
+    cfg.act_inact_cfg.act_y = 0;
+    cfg.act_inact_cfg.act_z = 0;
+    cfg.act_inact_cfg.inact_x = 0;
+    cfg.act_inact_cfg.inact_y = 0;
+    cfg.act_inact_cfg.inact_z = 0;
+    cfg.act_inact_cfg.act_ac_dc = 0;
+    cfg.act_inact_cfg.inact_ac_dc = 0;
+
+    cfg.freefall_threshold = 0x07; /* 440mg */
+    cfg.freefall_time = 0x14; /* 100ms */ 
+
+    cfg.int_enables = ADXL345_INT_SINGLE_TAP_BIT | ADXL345_INT_DOUBLE_TAP_BIT;
+    cfg.int_mapping = ADXL345_INT_DOUBLE_TAP_BIT;
+
+    cfg.mask = SENSOR_TYPE_ACCELEROMETER;
+
+    rc = adxl345_config((struct adxl345 *) dev, &cfg);
+    assert(rc == 0);
+    
+    os_dev_close(dev);
+    return rc;
+}
+#endif
+
 /* Sensor device creation */
 void
 sensor_dev_create(void)
@@ -599,6 +677,15 @@ sensor_dev_create(void)
     assert(rc == 0);
 
     rc = config_bma253_sensor();
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(ADXL345_OFB)
+    rc = os_dev_create((struct os_dev *) &adxl345, "adxl345_0",
+      OS_DEV_INIT_PRIMARY, 0, adxl345_init, (void *)&i2c_0_itf_adxl);
+    assert(rc == 0);
+
+    rc = config_adxl345_sensor();
     assert(rc == 0);
 #endif
 
