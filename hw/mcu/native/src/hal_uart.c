@@ -262,7 +262,7 @@ uart_pty_set_attr(int fd)
 
     tios.c_cflag &= ~(CSIZE | CSTOPB | PARENB);
     tios.c_cflag |= CS8 | CREAD;
-    tios.c_iflag = IGNPAR | IXON;
+    tios.c_iflag = IGNPAR;
     tios.c_oflag = 0;
     tios.c_lflag = 0;
     if (tcsetattr(fd, TCSAFLUSH, &tios) < 0) {
