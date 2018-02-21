@@ -69,11 +69,6 @@ enum adxl345_sample_rate {
     ADXL345_RATE_3200_HZ  = 15  /* 3200Hz */
 };
   
-//#define MPU6050_INT_LEVEL (0x80)
-//#define MPU6050_INT_OPEN (0x40)
-//#define MPU6050_INT_LATCH_EN (0x20)
-//#define MPU6050_INT_RD_CLEAR (0x10)
-
 struct adxl345_tap_settings {
     uint8_t threshold; /* threshold compared with data to identify a tap event
                               16g range, 62.5 mg/LSB */
@@ -84,26 +79,26 @@ struct adxl345_tap_settings {
     uint8_t window; /* length of time in which a double tap can be triggered, this
                        time starts after the latency time expires. 1.25ms/LSB */
 
-    uint8_t x_enable; /* enables tap/double tap detection on X axis */
-    uint8_t y_enable; /* enables tap/double tap detection on Y axis */
-    uint8_t z_enable; /* enables tap/double tap detection on Z axis */
+    uint8_t x_enable:1; /* enables tap/double tap detection on X axis */
+    uint8_t y_enable:1; /* enables tap/double tap detection on Y axis */
+    uint8_t z_enable:1; /* enables tap/double tap detection on Z axis */
 
-    uint8_t suppress; /* if enabled suppresses double tap detection if acceleration
+    uint8_t suppress:1; /* if enabled suppresses double tap detection if acceleration
                          greater than threshold is present between taps */
 
 };
 
 struct adxl345_act_inact_enables {
-    uint8_t act_x; /* enable detection of activity from X axis data */
-    uint8_t act_y; /* enable detection of activity from Y axis data */
-    uint8_t act_z; /* enable detection of activity from Z axis data */
+    uint8_t act_x:1; /* enable detection of activity from X axis data */
+    uint8_t act_y:1; /* enable detection of activity from Y axis data */
+    uint8_t act_z:1; /* enable detection of activity from Z axis data */
 
-    uint8_t inact_x; /* enable detection of inactivity from X axis data */
-    uint8_t inact_y; /* enable detection of inactivity from Y axis data */
-    uint8_t inact_z; /* enable detection of inactivity from Z axis data */
+    uint8_t inact_x:1; /* enable detection of inactivity from X axis data */
+    uint8_t inact_y:1; /* enable detection of inactivity from Y axis data */
+    uint8_t inact_z:1; /* enable detection of inactivity from Z axis data */
 
-    uint8_t act_ac_dc; /* 0 = dc-coupled operation, 1 = ac-coupled operation */
-    uint8_t inact_ac_dc; /* 0 = dc-coupled operation, 1 = ac-coupled operation */
+    uint8_t act_ac_dc:1; /* 0 = dc-coupled operation, 1 = ac-coupled operation */
+    uint8_t inact_ac_dc:1; /* 0 = dc-coupled operation, 1 = ac-coupled operation */
 };
 
 struct adxl345_cfg {
@@ -186,6 +181,13 @@ int adxl345_clear_interrupts(struct sensor_itf *itf, uint8_t *int_status);
 int adxl345_init(struct os_dev *, void *);
 int adxl345_config(struct adxl345 *, struct adxl345_cfg *);
 
+int adxl345_get_accel_data(struct sensor_itf *itf, struct sensor_accel_data *sad);
+
+#if MYNEWT_VAL(ADXL345_CLI)
+int adxl345_shell_init(void);
+#endif
+
+    
 #ifdef __cplusplus
 }
 #endif

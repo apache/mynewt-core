@@ -40,21 +40,21 @@ enum adxl345_registers {
     ADXL345_THRESH_FF      = 0x28, /* R/W */
     ADXL345_TIME_FF        = 0x29, /* R/W */
     ADXL345_TAP_AXES       = 0x2A, /* R/W */
-    ADXL345_ACT_TAP_STATUS = 0x2B, /* R/W */
+    ADXL345_ACT_TAP_STATUS = 0x2B, /* R */
     ADXL345_BW_RATE        = 0x2C, /* R/W */
     ADXL345_POWER_CTL      = 0x2D, /* R/W */
     ADXL345_INT_ENABLE     = 0x2E, /* R/W */
     ADXL345_INT_MAP        = 0x2F, /* R/W */
-    ADXL345_INT_SOURCE     = 0x30, /* R/W */
+    ADXL345_INT_SOURCE     = 0x30, /* R */
     ADXL345_DATA_FORMAT    = 0x31, /* R/W */
-    ADXL345_DATAX0         = 0x32, /* R/W */
-    ADXL345_DATAX1         = 0x33, /* R/W */
-    ADXL345_DATAY0         = 0x34, /* R/W */
-    ADXL345_DATAY1         = 0x35, /* R/W */
-    ADXL345_DATAZ0         = 0x36, /* R/W */
-    ADXL345_DATAZ1         = 0x37, /* R/W */
+    ADXL345_DATAX0         = 0x32, /* R */
+    ADXL345_DATAX1         = 0x33, /* R */
+    ADXL345_DATAY0         = 0x34, /* R */
+    ADXL345_DATAY1         = 0x35, /* R */
+    ADXL345_DATAZ0         = 0x36, /* R */
+    ADXL345_DATAZ1         = 0x37, /* R */
     ADXL345_FIFO_CTL       = 0x38, /* R/W */
-    ADXL345_FIFO_STATUS    = 0x39, /* R/W */
+    ADXL345_FIFO_STATUS    = 0x39, /* R */
 };
 
 #define ADXL345_DEVID_VAL (0xE5)
@@ -62,10 +62,6 @@ enum adxl345_registers {
 #define ADXL345_SPI_READ_CMD_BIT      (0x80)
 #define ADXL345_SPI_MULTIBYTE_CMD_BIT (0x40)
     
-  /*#define MPU6050_DATA_RDY_EN (0x01)
-#define MPU6050_DEVICE_RESET (0x80)
-#define MPU6050_SLEEP (0x40)*/
-
 int adxl345_i2c_write8(struct sensor_itf *itf, uint8_t reg, uint8_t value);
 int adxl345_i2c_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value);
 int adxl345_i2c_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer, uint8_t len);

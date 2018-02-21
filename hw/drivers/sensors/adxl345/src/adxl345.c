@@ -37,7 +37,7 @@
 static struct hal_spi_settings spi_adxl345_settings = {
     .data_order = HAL_SPI_MSB_FIRST,
     .data_mode  = HAL_SPI_MODE3,
-    .baudrate   = 1000,
+    .baudrate   = 4000,
     .word_size  = HAL_SPI_WORD_SIZE_8BIT,
 };
 
@@ -177,7 +177,7 @@ adxl345_i2c_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer, uint8_
         return rc;
     }
 
-    /* Read six bytes back */
+    /* Read data */
     data_struct.len = len;
     data_struct.buffer = buffer;
     rc = hal_i2c_master_read(itf->si_num, &data_struct,
@@ -1022,13 +1022,6 @@ adxl345_init(struct os_dev *dev, void *arg)
         return rc;
     }
 
-    ADXL345_ERR("SENSOR\n");
-    
-
-
-    
-
-    
     if (sensor->s_itf.si_type == SENSOR_ITF_SPI) {
         rc = hal_spi_config(sensor->s_itf.si_num, &spi_adxl345_settings);
         if (rc == EINVAL) {
@@ -1064,12 +1057,6 @@ adxl345_config(struct adxl345 *dev, struct adxl345_cfg *cfg)
     struct sensor_itf *itf;
 
     itf = SENSOR_GET_ITF(&(dev->sensor));
-
-    /* Wake up */
-    //rc = mpu6050_sleep(itf, 0);
-    //if (rc) {
-    //    return rc;
-    //}  
 
     /* Check device id is correct */
     uint8_t val = 0;
@@ -1180,6 +1167,45 @@ adxl345_config(struct adxl345 *dev, struct adxl345_cfg *cfg)
 }
 
 /**
+ * Reads Accelerometer data from ADXL345 sensor
+ *
+ * @param Pointer to sensor interface
+ * @param Pointer to structure to store result
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+adxl345_get_accel_data(struct sensor_itf *itf, struct sensor_accel_data *sad)
+{
+    int rc;
+
+    uint8_t payload[6];
+    int16_t x,y,z;
+
+    float lsb = 0.004; /* lsb is always 4mg when device is set to full resolution */
+
+    /* Get a new accelerometer sample */
+    rc = adxl345_readlen(itf, ADXL345_DATAX0, payload, 6);
+    if (rc) {
+        return rc;
+    }
+
+    x = (((int16_t)payload[1]) << 8) | payload[0];
+    y = (((int16_t)payload[3]) << 8) | payload[2];
+    z = (((int16_t)payload[5]) << 8) | payload[4];   
+
+    /* calculate MS*2 values to provide to data_func */
+    sad->sad_x = x * lsb * STANDARD_ACCEL_GRAVITY;
+    sad->sad_x_is_valid = 1;
+    sad->sad_y = y * lsb * STANDARD_ACCEL_GRAVITY;
+    sad->sad_y_is_valid = 1;
+    sad->sad_z = z * lsb * STANDARD_ACCEL_GRAVITY;
+    sad->sad_z_is_valid = 1;
+
+    return 0;
+}
+
+/**
  * Read Accelerometer data from ADXL345 sensor
  *
  * @param Pointer to sensor structure
@@ -1197,17 +1223,6 @@ adxl345_sensor_read(struct sensor *sensor, sensor_type_t type,
     (void)timeout;
     int rc;
 
-    union {
-        uint8_t payload[6];
-        struct {
-            int16_t x;
-            int16_t y;
-            int16_t z;
-        } accel;
-    } data;
-
-    float lsb = 0.004; /* lsb is always 4mg when device is set to full resolution */
-
     struct sensor_itf *itf;
     struct sensor_accel_data sad;
   
@@ -1218,19 +1233,10 @@ adxl345_sensor_read(struct sensor *sensor, sensor_type_t type,
   
     itf = SENSOR_GET_ITF(sensor);
   
-    /* Get a new accelerometer sample */
-    rc = adxl345_readlen(itf, ADXL345_DATAX0, data.payload, 6);
+    rc = adxl345_get_accel_data(itf, &sad);
     if (rc) {
         return rc;
     }
-
-    /* calculate MS*2 values to provide to data_func */
-    sad.sad_x = data.accel.x * lsb * STANDARD_ACCEL_GRAVITY;
-    sad.sad_x_is_valid = 1;
-    sad.sad_y = data.accel.y * lsb * STANDARD_ACCEL_GRAVITY;
-    sad.sad_y_is_valid = 1;
-    sad.sad_z = data.accel.z * lsb * STANDARD_ACCEL_GRAVITY;
-    sad.sad_z_is_valid = 1;
 
     /* output data using data_func */
     rc = data_func(sensor, data_arg, &sad, SENSOR_TYPE_ACCELEROMETER);

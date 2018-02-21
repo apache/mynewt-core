@@ -1,4 +1,3 @@
-#
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -17,24 +16,20 @@
 # under the License.
 #
 
-pkg.name: hw/drivers/sensors/adxl345
-pkg.description: Driver for the ADXL345 3 axis accelerometer
-pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
-pkg.homepage: "http://mynewt.apache.org/"
-pkg.keywords:
-    - accelerometer
-    - spi
-    - i2c
-    - sensor
+syscfg.defs:
+    ADXL345_SHELL_ITF_NUM:
+        description: 'Shell interface number for the ADXL345'
+        value: 0
+    ADXL345_SHELL_ITF_TYPE:
+        description: 'Shell interface type for the ADXL345'
+        value: 1
+    ADXL345_SHELL_CSPIN:
+        description: 'CS pin for ADXL345'
+        value : -1
+    ADXL345_SHELL_ITF_ADDR:
+        description: 'Slave address for ADXL345'
+        value : 0x1D
+    ADXL345_CLI:
+        description: 'Enable shell support for the ADXL345'
+        value: 0
 
-pkg.deps:
-    - "@apache-mynewt-core/hw/hal"
-    - "@apache-mynewt-core/kernel/os"
-    - "@apache-mynewt-core/hw/sensor"
-
-pkg.req_apis:
-    - stats
-    - log
-
-pkg.deps.ADXL345_CLI:
-    - "@apache-mynewt-core/util/parse"
