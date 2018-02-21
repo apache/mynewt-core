@@ -48,7 +48,8 @@
 static struct uart_dev hal_uart[2];
 
 static const struct stm32f3_uart_cfg uart_cfg[UART_CNT] = {
-    [0] = {
+#if MYNEWT_VAL(UART_0)
+    {
         .suc_uart    = USART2,
         .suc_rcc_reg = &RCC->APB1ENR,
         .suc_rcc_dev = RCC_APB1ENR_USART2EN,
@@ -58,8 +59,13 @@ static const struct stm32f3_uart_cfg uart_cfg[UART_CNT] = {
         .suc_pin_cts = MCU_GPIO_PORTA(0),
         .suc_pin_af  = GPIO_AF7_USART2,
         .suc_irqn    = USART2_IRQn
-    },
-    [1] = {
+    }
+#endif
+#if MYNEWT_VAL(UART_0) && MYNEWT_VAL(UART_1)
+    ,
+#endif
+#if MYNEWT_VAL(UART_1)
+    {
         .suc_uart    = USART1,
         .suc_rcc_reg = &RCC->APB2ENR,
         .suc_rcc_dev = RCC_APB2ENR_USART1EN,
@@ -70,6 +76,7 @@ static const struct stm32f3_uart_cfg uart_cfg[UART_CNT] = {
         .suc_pin_af  = GPIO_AF7_USART1,
         .suc_irqn    = USART1_IRQn
     }
+#endif
 };
 
 const struct stm32f3_uart_cfg *
@@ -134,14 +141,18 @@ hal_bsp_init(void)
     (void)rc;  /* in case there are no devices declared */
 
 #if MYNEWT_VAL(UART_0)
-    rc = os_dev_create((struct os_dev *) &hal_uart[0], "uart0",
-      OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *)&uart_cfg[0]);
+    rc = os_dev_create((struct os_dev *)&hal_uart[UART_0_DEV_ID],
+        UART_DEV_NAME(UART_0_DEV_ID),
+        OS_DEV_INIT_PRIMARY, 0, uart_hal_init,
+        (void *)&uart_cfg[UART_0_DEV_ID]);
     assert(rc == 0);
 #endif
 
 #if MYNEWT_VAL(UART_1)
-    rc = os_dev_create((struct os_dev *) &hal_uart[1], "uart1",
-      OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *)&uart_cfg[1]);
+    rc = os_dev_create((struct os_dev *)&hal_uart[UART_1_DEV_ID],
+        UART_DEV_NAME(UART_1_DEV_ID),
+        OS_DEV_INIT_PRIMARY, 0, uart_hal_init,
+        (void *)&uart_cfg[UART_1_DEV_ID]);
     assert(rc == 0);
 #endif
 

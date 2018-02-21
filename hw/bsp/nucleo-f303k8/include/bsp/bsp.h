@@ -21,6 +21,7 @@
 
 #include <inttypes.h>
 #include <mcu/mcu.h>
+#include <syscfg/syscfg.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -50,8 +51,22 @@ extern uint8_t _ccram_start;
     
 
 /* UART ports */
-#define UART_CNT        2
-#define CONSOLE_UART    1
+#if (MYNEWT_VAL(UART_0) && MYNEWT_VAL(UART_1))
+# define  UART_CNT      2
+# define  UART_0_DEV_ID 0
+# define  UART_1_DEV_ID 1
+#elif MYNEWT_VAL(UART_0)
+# define  UART_CNT      1
+# define  UART_0_DEV_ID 0
+#elif MYNEWT_VAL(UART_1)
+# define UART_CNT       1
+# define  UART_1_DEV_ID 0
+#else
+# define UART_CNT       0
+#endif
+
+#define _UART_DEV_NAME(id) ("uart" #id)
+#define UART_DEV_NAME(id) _UART_DEV_NAME(id)
 
 #ifdef __cplusplus
 }
