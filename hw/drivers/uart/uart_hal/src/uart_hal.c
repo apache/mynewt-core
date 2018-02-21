@@ -32,13 +32,13 @@
 inline static int
 uart_hal_dev_get_id(struct uart_dev *dev)
 {
-    return (int)(dev->ud_priv) - 1;
+    return (intptr_t)(dev->ud_priv) - 1;
 }
 
 inline static void
 uart_hal_dev_set_id(struct uart_dev *dev, int id)
 {
-    dev->ud_priv = (void *)(id + 1);
+    dev->ud_priv = (void *)((intptr_t)(id + 1));
 }
 
 static void
