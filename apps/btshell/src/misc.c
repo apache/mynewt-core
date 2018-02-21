@@ -76,7 +76,7 @@ print_uuid(const ble_uuid_t *uuid)
 int
 svc_is_empty(const struct btshell_svc *svc)
 {
-    return svc->svc.end_handle < svc->svc.start_handle;
+    return svc->svc.end_handle <= svc->svc.start_handle;
 }
 
 uint16_t
