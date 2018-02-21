@@ -45,6 +45,7 @@
 /* OIC */
 #include <oic/oc_rep.h>
 #include <oic/oc_ri.h>
+#include <oic/oc_ri_const.h>
 #include <oic/oc_api.h>
 #include <oic/messaging/coap/observe.h>
 

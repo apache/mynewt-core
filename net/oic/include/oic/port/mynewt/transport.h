@@ -23,6 +23,7 @@
 #include <os/queue.h>
 
 #include "oic/oc_ri.h"
+#include "oic/oc_ri_const.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -33,7 +34,6 @@ extern "C" {
 #define OC_TRANSPORT_USE_TCP (1 << 0)
 
 struct oc_endpoint;
-enum oc_resource_properties;
 
 struct oc_transport {
     uint8_t ot_flags;

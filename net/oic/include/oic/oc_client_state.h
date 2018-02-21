@@ -21,6 +21,7 @@
 
 #include "oic/messaging/coap/constants.h"
 #include "oic/oc_ri.h"
+#include "oic/oc_ri_const.h"
 
 #ifdef __cplusplus
 extern "C" {
