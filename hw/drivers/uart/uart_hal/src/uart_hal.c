@@ -80,8 +80,11 @@ uart_hal_open(struct os_dev *odev, uint32_t wait, void *arg)
     if (odev->od_flags & OS_DEV_F_STATUS_OPEN) {
         return OS_EBUSY;
     }
-    hal_uart_init_cbs(priv->unit, uc->uc_tx_char, uc->uc_tx_done,
-      uc->uc_rx_char, uc->uc_cb_arg);
+    rc = hal_uart_init_cbs(priv->unit, uc->uc_tx_char, uc->uc_tx_done,
+                           uc->uc_rx_char, uc->uc_cb_arg);
+    if (rc) {
+        return OS_EINVAL;
+    }
 
     rc = hal_uart_config(priv->unit, uc->uc_speed, uc->uc_databits,
       uc->uc_stopbits, (enum hal_uart_parity)uc->uc_parity, (enum hal_uart_flow_ctl)uc->uc_flow_ctl);

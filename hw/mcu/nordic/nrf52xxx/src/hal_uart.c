@@ -48,7 +48,13 @@ struct hal_uart {
     hal_uart_tx_done u_tx_done;
     void *u_func_arg;
 };
-static struct hal_uart uart;
+
+#if defined(NRF52840_XXAA)
+static struct hal_uart uart0;
+static struct hal_uart uart1;
+#else
+static struct hal_uart uart0;
+#endif
 
 int
 hal_uart_init_cbs(int port, hal_uart_tx_char tx_func, hal_uart_tx_done tx_done,
@@ -56,10 +62,21 @@ hal_uart_init_cbs(int port, hal_uart_tx_char tx_func, hal_uart_tx_done tx_done,
 {
     struct hal_uart *u;
 
+#if defined(NRF52840_XXAA)
+    if (port == 0) {
+        u = &uart0;
+    } else if (port == 1) {
+        u = &uart1;
+    } else {
+        return -1;
+    }
+#else
     if (port != 0) {
         return -1;
     }
-    u = &uart;
+    u = &uart0;
+#endif
+
     if (u->u_open) {
         return -1;
     }
@@ -97,8 +114,10 @@ hal_uart_start_tx(int port)
 #if defined(NRF52840_XXAA)
     if (port == 0) {
         nrf_uart = NRF_UARTE0;
+        u = &uart0;
     } else if (port == 1) {
         nrf_uart = NRF_UARTE1;
+        u = &uart1;
     } else {
         return;
     }
@@ -107,9 +126,9 @@ hal_uart_start_tx(int port)
         return;
     }
     nrf_uart = NRF_UARTE0;
+    u = &uart0;
 #endif
 
-    u = &uart;
     __HAL_DISABLE_INTERRUPTS(sr);
     if (u->u_tx_started == 0) {
         rc = hal_uart_tx_fill_buf(u);
@@ -135,8 +154,10 @@ hal_uart_start_rx(int port)
 #if defined(NRF52840_XXAA)
     if (port == 0) {
         nrf_uart = NRF_UARTE0;
+        u = &uart0;
     } else if (port == 1) {
         nrf_uart = NRF_UARTE1;
+        u = &uart1;
     } else {
         return;
     }
@@ -145,9 +166,9 @@ hal_uart_start_rx(int port)
         return;
     }
     nrf_uart = NRF_UARTE0;
+    u = &uart0;
 #endif
 
-    u = &uart;
     if (u->u_rx_stall) {
         __HAL_DISABLE_INTERRUPTS(sr);
         rc = u->u_rx_func(u->u_func_arg, u->u_rx_buf);
@@ -169,8 +190,10 @@ hal_uart_blocking_tx(int port, uint8_t data)
 #if defined(NRF52840_XXAA)
     if (port == 0) {
         nrf_uart = NRF_UARTE0;
+        u = &uart0;
     } else if (port == 1) {
         nrf_uart = NRF_UARTE1;
+        u = &uart1;
     } else {
         return;
     }
@@ -179,9 +202,9 @@ hal_uart_blocking_tx(int port, uint8_t data)
         return;
     }
     nrf_uart = NRF_UARTE0;
+    u = &uart0;
 #endif
 
-    u = &uart;
     if (!u->u_open) {
         return;
     }
@@ -207,14 +230,12 @@ hal_uart_blocking_tx(int port, uint8_t data)
 }
 
 static void
-uart_irq_handler(NRF_UARTE_Type *nrf_uart)
+uart_irq_handler(NRF_UARTE_Type *nrf_uart, struct hal_uart *u)
 {
-    struct hal_uart *u;
     int rc;
 
     os_trace_enter_isr();
 
-    u = &uart;
     if (nrf_uart->EVENTS_ENDTX) {
         nrf_uart->EVENTS_ENDTX = 0;
         rc = hal_uart_tx_fill_buf(u);
@@ -246,14 +267,14 @@ uart_irq_handler(NRF_UARTE_Type *nrf_uart)
 static void
 uart0_irq_handler(void)
 {
-    uart_irq_handler(NRF_UARTE0);
+    uart_irq_handler(NRF_UARTE0, &uart0);
 }
 
 #if defined(NRF52840_XXAA)
 static void
 uart1_irq_handler(void)
 {
-    uart_irq_handler(NRF_UARTE1);
+    uart_irq_handler(NRF_UARTE1, &uart1);
 }
 #endif
 
@@ -340,9 +361,11 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
     if (port == 0) {
         nrf_uart = NRF_UARTE0;
         irqnum = UARTE0_UART0_IRQn;
+        u = &uart0;
     } else if (port == 1) {
         nrf_uart = NRF_UARTE1;
         irqnum = UARTE1_IRQn;
+        u = &uart1;
     } else {
         return -1;
     }
@@ -352,9 +375,9 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
     }
     nrf_uart = NRF_UARTE0;
     irqnum = UARTE0_UART0_IRQn;
+    u = &uart0;
 #endif
 
-    u = &uart;
     if (u->u_open) {
         return -1;
     }
@@ -429,13 +452,13 @@ hal_uart_close(int port)
     struct hal_uart *u;
     NRF_UARTE_Type *nrf_uart;
 
-    u = &uart;
-
 #if defined(NRF52840_XXAA)
     if (port == 0) {
         nrf_uart = NRF_UARTE0;
+        u = &uart0;
     } else if (port == 1) {
         nrf_uart = NRF_UARTE1;
+        u = &uart1;
     } else {
         return -1;
     }
@@ -444,6 +467,7 @@ hal_uart_close(int port)
         return -1;
     }
     nrf_uart = NRF_UARTE0;
+    u = &uart0;
 #endif
 
     u->u_open = 0;
