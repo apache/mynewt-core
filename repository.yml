@@ -57,3 +57,11 @@ repo.newt_compatibility:
         1.1.0: good
     1.1.0:
         1.1.0: good
+
+repo.deps:
+    apache-mynewt-nimble:
+        type: github
+        user: apache
+        repo: mynewt-nimble
+        vers:
+            master: 0-dev
