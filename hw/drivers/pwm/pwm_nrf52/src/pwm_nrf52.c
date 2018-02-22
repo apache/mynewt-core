@@ -211,6 +211,9 @@ nrf52_pwm_open(struct os_dev *odev, uint32_t wait, void *arg)
     dev = (struct pwm_dev *) odev;
     inst_id = dev->pwm_instance_id;
 
+    if (instances[inst_id].in_use) {
+        return (EINVAL)
+    }
     instances[inst_id].in_use = true;
 
     if (os_started()) {
@@ -240,6 +243,8 @@ nrf52_pwm_open(struct os_dev *odev, uint32_t wait, void *arg)
  * This function unlocks the device.
  *
  * @param odev The device to close.
+ *
+ * @return 0 on success, non-zero on failure.
  */
 static int
 nrf52_pwm_close(struct os_dev *odev)
@@ -249,7 +254,10 @@ nrf52_pwm_close(struct os_dev *odev)
 
     dev = (struct pwm_dev *) odev;
     inst_id = dev->pwm_instance_id;
-    assert(instances[inst_id].in_use);
+
+    if (!instances[inst_id].in_use) {
+        return (EINVAL)
+    }
 
     nrfx_pwm_uninit(&instances[inst_id].drv_instance);
     cleanup_instance(inst_id);
@@ -267,7 +275,9 @@ nrf52_pwm_close(struct os_dev *odev)
 static void
 play_current_config(struct nrf52_pwm_dev_global *instance)
 {
-    assert(instance->in_use);
+    if (!instance.in_use) {
+        return (EINVAL)
+    }
 
     nrf_pwm_sequence_t const seq =
         {
@@ -300,7 +310,9 @@ nrf52_pwm_configure_channel(struct pwm_dev *dev,
     int inst_id = dev->pwm_instance_id;
     nrfx_pwm_config_t *config = &instances[inst_id].config;
 
-    assert(instances[inst_id].in_use);
+    if (!instances[inst_id].in_use) {
+        return (EINVAL)
+    }
 
     config->output_pins[cnum] = cfg->pin;
     config->output_pins[cnum] |= (cfg->inverted) ?
@@ -345,8 +357,15 @@ nrf52_pwm_enable_duty_cycle(struct pwm_dev *dev, uint8_t cnum, uint16_t fraction
     nrfx_pwm_config_t *config;
     bool inverted;
 
+    if (!instances[inst_id].in_use) {
+        return (-EINVAL)
+    }
+
     config = &instances[inst_id].config;
-    assert(config->output_pins[cnum] != NRFX_PWM_PIN_NOT_USED);
+    if (config->output_pins[cnum] = NRFX_PWM_PIN_NOT_USED) {
+        return (-EINVAL)
+    }
+
     inverted = ((config->output_pins[cnum] & NRFX_PWM_PIN_INVERTED) != 0);
 
     ((uint16_t *) &instances[inst_id].duty_cycles)[cnum] =
@@ -377,6 +396,10 @@ static int
 nrf52_pwm_disable(struct pwm_dev *dev, uint8_t cnum)
 {
     int inst_id = dev->pwm_instance_id;
+    if (!instances[inst_id].in_use) {
+        return (-EINVAL)
+    }
+
     instances[inst_id].config.output_pins[cnum] = NRFX_PWM_PIN_NOT_USED;
 
     nrfx_pwm_uninit(&instances[inst_id].drv_instance);
@@ -405,6 +428,10 @@ static int
 nrf52_pwm_set_frequency(struct pwm_dev *dev, uint32_t freq_hz)
 {
     int inst_id = dev->pwm_instance_id;
+    if (!instances[inst_id].in_use) {
+        return (-EINVAL)
+    }
+
     nrf_pwm_clk_t *frq = &instances[inst_id].config.base_clock;
     uint16_t *top_value = &instances[inst_id].config.top_value;
     uint32_t base_freq_val;
@@ -463,7 +490,9 @@ static int
 nrf52_pwm_get_clock_freq(struct pwm_dev *dev)
 {
     int inst_id = dev->pwm_instance_id;
-    assert(instances[inst_id].in_use);
+    if (!instances[inst_id].in_use) {
+        return (-EINVAL)
+    }
 
     switch (instances[inst_id].config.base_clock) {
     case NRF_PWM_CLK_16MHz:
@@ -497,7 +526,9 @@ static int
 nrf52_pwm_get_resolution_bits(struct pwm_dev *dev)
 {
     int inst_id = dev->pwm_instance_id;
-    assert(instances[inst_id].in_use);
+    if (!instances[inst_id].in_use) {
+        return (-EINVAL)
+    }
 
     uint16_t top_val = instances[inst_id].config.top_value;
     if (top_val >= 32768)
