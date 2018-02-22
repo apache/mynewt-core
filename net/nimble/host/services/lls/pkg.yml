@@ -18,17 +18,7 @@
 #
 
 pkg.name: net/nimble/host/services/lls
-pkg.description: Link Loss Service Implementation.
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
-pkg.keywords:
-    - ble 
-    - bluetooth
-    - lls
-    - nimble
-
 pkg.deps:
-    - net/nimble/host
-
-pkg.init:
-    ble_svc_lls_init: 303
+    - "@apache-mynewt-nimble/nimble/host/services/lls"
