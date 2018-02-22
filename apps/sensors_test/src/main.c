@@ -36,8 +36,6 @@
 #include <id/id.h>
 #include <os/os_time.h>
 #include <defs/error.h>
-#include <sensor/accel.h>
-#include <sensor/sensor.h>
 
 #if MYNEWT_VAL(BNO055_CLI)
 #include <bno055/bno055.h>
@@ -81,10 +79,6 @@ static const oc_handler_t sensor_oic_handler = {
 #include <services/gap/ble_svc_gap.h>
 /* Application-specified header. */
 #include "bleprph.h"
-
-struct sensor_type_traits stt;
-struct sensor_accel_data sad_low;
-struct sensor_accel_data sad_high;
 
 #if MYNEWT_VAL(SENSOR_OIC)
 static int sensor_oic_gap_event(struct ble_gap_event *event, void *arg);
@@ -277,9 +271,6 @@ sensor_oic_gap_event(struct ble_gap_event *event, void *arg)
         BLEPRPH_LOG(INFO, "\n");
 
         oc_ble_coap_conn_del(event->disconnect.conn.conn_handle);
-
-        sensor_clear_low_thresh("lis2dh12_0", SENSOR_TYPE_ACCELEROMETER);
-        sensor_clear_high_thresh("lis2dh12_0", SENSOR_TYPE_ACCELEROMETER);
 
         /* Connection terminated; resume advertising. */
         sensor_oic_advertise();
@@ -533,35 +524,6 @@ main(int argc, char **argv)
 
     /* log reboot */
     reboot_start(hal_reset_cause());
-
-    stt = (struct sensor_type_traits) {
-        .stt_sensor_type     = SENSOR_TYPE_ACCELEROMETER,
-        .stt_low_thresh.sad = &sad_low,
-        .stt_high_thresh.sad = &sad_high,
-        .stt_algo            = SENSOR_THRESH_ALGO_WATERMARK
-    };
-
-    /* The thresholds are specified in m/s^2 */
-
-    sad_low = (struct sensor_accel_data) {
-        .sad_x = 0.6712,
-        .sad_x_is_valid = 1,
-        .sad_y = 0.6712,
-        .sad_y_is_valid = 1,
-        .sad_z = 0.6712,
-        .sad_z_is_valid = 1
-    };
-
-    sad_high = (struct sensor_accel_data) {
-        .sad_x = 0.6712,
-        .sad_x_is_valid = 1,
-        .sad_y = 0.6712,
-        .sad_y_is_valid = 1,
-        .sad_z = 0.6712,
-        .sad_z_is_valid = 1
-    };
-
-    sensor_set_thresh("lis2dh12_0", &stt);
 
     /*
      * As the last thing, process events from default event queue.
