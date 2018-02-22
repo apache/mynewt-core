@@ -158,7 +158,7 @@ insert:
 }
 
 /**
- * Remove a sensor type trait. This allows a calling application to unset
+ * Remove a sensor type trait. This allows a calling application to clear
  * sensortype trait for a given sensor object.
  *
  * @param The sensor object
@@ -202,6 +202,13 @@ sensor_insert_type_trait(struct sensor *sensor, struct sensor_type_traits *stt)
 {
     struct sensor_type_traits *cursor, *prev;
     int rc;
+
+    if (!sensor) {
+        rc = SYS_EINVAL;
+        goto err;
+    }
+
+    stt->stt_sensor = sensor;
 
     rc = sensor_lock(sensor);
     if (rc != 0) {
@@ -1085,7 +1092,7 @@ sensor_unregister_notifier(struct sensor *sensor,
 
     if (sensor->s_funcs->sd_unset_notification) {
         rc = sensor->s_funcs->sd_unset_notification(sensor,
-                                                notifier->sn_sensor_event_type);
+                                               notifier->sn_sensor_event_type);
     }
 
 done:
@@ -1187,10 +1194,10 @@ static void
 sensor_read_ev_cb(struct os_event *ev)
 {
     int rc;
-    struct sensor_read_ev_ctx *srec;
+    struct sensor_type_traits *stt;
 
-    srec = ev->ev_arg;
-    rc = sensor_read(srec->srec_sensor, srec->srec_type, NULL, NULL,
+    stt = ev->ev_arg;
+    rc = sensor_read(stt->stt_sensor, stt->stt_sensor_type, NULL, NULL,
                      OS_TIMEOUT_NEVER);
     assert(rc == 0);
 }
@@ -1892,6 +1899,7 @@ sensor_set_thresh(char *devname, struct sensor_type_traits *stt)
         stt_tmp->stt_low_thresh = stt->stt_low_thresh;
         stt_tmp->stt_high_thresh = stt->stt_high_thresh;
         stt_tmp->stt_algo = stt->stt_algo;
+        stt_tmp->stt_sensor = sensor;
         sensor_unlock(sensor);
     } else {
         rc = SYS_EINVAL;
@@ -1900,14 +1908,104 @@ sensor_set_thresh(char *devname, struct sensor_type_traits *stt)
 
     sensor_set_trigger_cmp_algo(sensor, stt_tmp);
 
+    rc = sensor_lock(sensor);
+    if (rc) {
+        goto err;
+    }
+
     if (sensor->s_funcs->sd_set_trigger_thresh) {
         rc = sensor->s_funcs->sd_set_trigger_thresh(sensor,
                                                     stt_tmp->stt_sensor_type,
                                                     stt_tmp);
         if (rc) {
+            sensor_unlock(sensor);
             goto err;
         }
     }
+
+    sensor_unlock(sensor);
+
+    return 0;
+err:
+    return rc;
+}
+
+/**
+ * Clear the low threshold for a sensor
+ *
+ * @param name of the sensor
+ * @param sensor type
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+sensor_clear_low_thresh(char *devname, sensor_type_t type)
+{
+    struct sensor *sensor;
+    struct sensor_type_traits *stt_tmp;
+    int rc;
+
+    sensor = sensor_get_type_traits_byname(devname, &stt_tmp, type);
+    if (!sensor || !stt_tmp) {
+        rc = SYS_EINVAL;
+        goto err;
+    }
+
+    rc = sensor_lock(sensor);
+    if (rc) {
+        goto err;
+    }
+
+    if (sensor->s_funcs->sd_clear_low_trigger_thresh) {
+        rc = sensor->s_funcs->sd_clear_low_trigger_thresh(sensor, type);
+        if (rc) {
+            sensor_unlock(sensor);
+            goto err;
+        }
+    }
+
+    sensor_unlock(sensor);
+
+    return 0;
+err:
+    return rc;
+}
+
+/**
+ * Clear the high threshold for a sensor
+ *
+ * @param name of the sensor
+ * @param sensor type
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+sensor_clear_high_thresh(char *devname, sensor_type_t type)
+{
+    struct sensor *sensor;
+    struct sensor_type_traits *stt_tmp;
+    int rc;
+
+    sensor = sensor_get_type_traits_byname(devname, &stt_tmp, type);
+    if (!sensor || !stt_tmp) {
+        rc = SYS_EINVAL;
+        goto err;
+    }
+
+    rc = sensor_lock(sensor);
+    if (rc) {
+        goto err;
+    }
+
+    if (sensor->s_funcs->sd_clear_high_trigger_thresh) {
+        rc = sensor->s_funcs->sd_clear_high_trigger_thresh(sensor, type);
+        if (rc) {
+            sensor_unlock(sensor);
+            goto err;
+        }
+    }
+
+    sensor_unlock(sensor);
 
     return 0;
 err:

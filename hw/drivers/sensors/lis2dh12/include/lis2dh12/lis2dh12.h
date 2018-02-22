@@ -295,6 +295,24 @@ int
 lis2dh12_set_int2_duration(struct sensor_itf *itf, uint8_t dur);
 
 /**
+ * Disable interrupt 1
+ *
+ * @param the sensor interface
+ * @return 0 on success, non-zero on failure
+ */
+int
+lis2dh12_disable_int1(struct sensor_itf *itf);
+
+/**
+ * Disable interrupt 2
+ *
+ * @param the sensor interface
+ * @return 0 on success, non-zero on failure
+ */
+int
+lis2dh12_disable_int2(struct sensor_itf *itf);
+
+/**
  * Set high pass filter cfg
  *
  * @param the sensor interface
