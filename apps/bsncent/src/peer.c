@@ -435,7 +435,7 @@ peer_disc_chrs(struct peer *peer)
 int
 peer_svc_is_empty(const struct peer_svc *svc)
 {
-    return svc->svc.end_handle < svc->svc.start_handle;
+    return svc->svc.end_handle <= svc->svc.start_handle;
 }
 
 static struct peer_svc *

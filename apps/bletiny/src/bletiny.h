@@ -74,7 +74,6 @@ SLIST_HEAD(bletiny_chr_list, bletiny_chr);
 struct bletiny_svc {
     SLIST_ENTRY(bletiny_svc) next;
     struct ble_gatt_svc svc;
-    bool char_disc_sent;
     struct bletiny_chr_list chrs;
 };
 
