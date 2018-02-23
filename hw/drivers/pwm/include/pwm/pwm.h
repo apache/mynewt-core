@@ -99,6 +99,8 @@ typedef int (*pwm_get_resolution_bits_func_t) (struct pwm_dev *);
  */
 typedef int (*pwm_disable_func_t) (struct pwm_dev *, uint8_t);
 
+typedef void (*user_handler_t) (void*);
+
 struct pwm_driver_funcs {
     pwm_configure_channel_func_t pwm_configure_channel;
     pwm_enable_duty_cycle_func_t pwm_enable_duty_cycle;
@@ -121,11 +123,16 @@ struct pwm_dev {
  *
  * pin - The pin to be assigned to this pwm channel.
  * inverted - Whether this channel's output polarity is inverted or not.
- * data - A pointer do a driver specific parameter.
+ * user_handler - A pointer to a user_handler_t function for a cycle interrupt.
+ * cycle_int_prio - The cycle interrupt priority.
+ * data - A pointer do a driver specific parameter, if cycle_handler is set it
+ *  will be passed to it as a parameter.
  */
 struct pwm_chan_cfg {
     uint8_t pin;
     bool inverted;
+    user_handler_t cycle_handler;
+    uint32_t cycle_int_prio;
     void* data;
 };
 
