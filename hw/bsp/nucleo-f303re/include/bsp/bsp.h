@@ -21,6 +21,7 @@
 
 #include <inttypes.h>
 #include <mcu/mcu.h>
+#include <syscfg/syscfg.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -52,8 +53,23 @@ extern uint8_t _ccram_start;
 #define BTN_USER_1        MCU_GPIO_PORTC(13)
 
 /* UART ports */
-#define UART_CNT        1
-#define CONSOLE_UART    1
+#if (MYNEWT_VAL(UART_0) && MYNEWT_VAL(UART_1))
+#   define  UART_CNT      2
+#   define  UART_0_DEV_ID 0
+#   define  UART_1_DEV_ID 1
+#elif MYNEWT_VAL(UART_0)
+#   define  UART_CNT      1
+#   define  UART_0_DEV_ID 0
+#elif MYNEWT_VAL(UART_1)
+#   define UART_CNT       1
+#   define  UART_1_DEV_ID 0
+#else
+#   define UART_CNT       0
+#endif
+
+#define _UART_DEV_NAME(id) ("uart" #id)
+#define UART_DEV_NAME(id) _UART_DEV_NAME(id)
+
 
 /* This defines the maximum NFFS areas (block) are in the BSPs NFS file 
  * system space.  This in conjunction with flash map determines how 
