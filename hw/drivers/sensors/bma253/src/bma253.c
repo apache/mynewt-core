@@ -4389,8 +4389,16 @@ done:
 }
 
 static int
+sensor_driver_set_config(struct sensor *sensor, void *cfg)
+{
+    struct bma253* bma253 = (struct bma253 *)SENSOR_GET_DEVICE(sensor);
+
+    return bma253_config(bma253, (struct bma253_cfg*)cfg);
+}
+
+static int
 sensor_driver_unset_notification(struct sensor * sensor,
-                               sensor_event_type_t sensor_event_type)
+                                 sensor_event_type_t sensor_event_type)
 {
 #if MYNEWT_VAL(BMA253_INT_ENABLE)
     struct bma253 * bma253;
@@ -4591,6 +4599,7 @@ sensor_driver_handle_interrupt(struct sensor * sensor)
 
 static struct sensor_driver bma253_sensor_driver = {
     .sd_read               = sensor_driver_read,
+    .sd_set_config         = sensor_driver_set_config,
     .sd_get_config         = sensor_driver_get_config,
     .sd_set_trigger_thresh = sensor_driver_set_trigger_thresh,
     .sd_set_notification   = sensor_driver_set_notification,
