@@ -99,6 +99,13 @@ typedef int (*pwm_get_resolution_bits_func_t) (struct pwm_dev *);
  */
 typedef int (*pwm_disable_func_t) (struct pwm_dev *, uint8_t);
 
+/**
+ * User interrupt handler.
+ *
+ * @param user_data Pointer to user data.
+ *
+ * @return 0 on success, negative on error.
+ */
 typedef void (*user_handler_t) (void*);
 
 struct pwm_driver_funcs {
@@ -131,8 +138,8 @@ struct pwm_dev {
 struct pwm_chan_cfg {
     uint8_t pin;
     bool inverted;
-    user_handler_t cycle_handler;
     uint32_t cycle_int_prio;
+    user_handler_t cycle_handler;
     void* data;
 };
 
