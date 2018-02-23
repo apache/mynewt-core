@@ -36,6 +36,8 @@ pkg.deps.LOG_CLI:
 
 pkg.deps.LOG_NEWTMGR:
     - mgmt/mgmt
+    - encoding/cborattr
+    - encoding/tinycbor
 
 pkg.apis:
     - log
