@@ -21,10 +21,27 @@
 #include <os/os.h>
 #include <pwm/pwm.h>
 #include <bsp/bsp.h>
+#include <easing/easing.h>
 
 struct pwm_dev *pwm;
-uint16_t max_val;
-static struct os_callout my_callout;
+static uint32_t pwm_freq = 1000;
+static uint32_t max_steps = 2000; /* two seconds motion up/down */
+static uint16_t top_val;
+static volatile uint32_t step = 0;
+static volatile bool up = false;
+
+static void
+pwm_handler(void* unused)
+{
+    int16_t eased;
+    eased = sine_int_io(step, max_steps, top_val);
+    pwm_enable_duty_cycle(pwm, 0, eased);
+    if (step >= max_steps || step <= 0) {
+        up = !up;
+    }
+
+    step += (up) ? 1 : -1;
+}
 
 int
 pwm_init(void)
@@ -32,6 +49,8 @@ pwm_init(void)
     struct pwm_chan_cfg chan_conf = {
         .pin = LED_BLINK_PIN,
         .inverted = true,
+        .cycle_handler = pwm_handler, /* this won't work on soft_pwm */
+        .cycle_int_prio = 3,
         .data = NULL
     };
     uint32_t base_freq;
@@ -44,62 +63,18 @@ pwm_init(void)
 #endif
 
     /* set the PWM frequency */
-    pwm_set_frequency(pwm, 10000);
+    pwm_set_frequency(pwm, 1000);
     base_freq = pwm_get_clock_freq(pwm);
-    max_val = (uint16_t) (base_freq / 10000);
+    top_val = (uint16_t) (base_freq / pwm_freq);
 
     /* setup led 1 - 100% duty cycle*/
     rc = pwm_chan_config(pwm, 0, &chan_conf);
     assert(rc == 0);
 
-    rc = pwm_enable_duty_cycle(pwm, 0, max_val);
+    rc = pwm_enable_duty_cycle(pwm, 0, top_val);
     assert(rc == 0);
-
-#ifdef LED_2
-    /* setup led 2 - 50% duty cycle */
-    chan_conf.pin = LED_2;
-    rc = pwm_chan_config(pwm, 1, &chan_conf);
-    assert(rc == 0);
-
-    rc = pwm_enable_duty_cycle(pwm, 1, max_val/2);
-    assert(rc == 0);
-#endif
-#ifdef LED_3
-    /* setup led 3 - 25% duty cycle */
-    chan_conf.pin = LED_3;
-    rc = pwm_chan_config(pwm, 2, &chan_conf);
-    assert(rc == 0);
-
-    rc = pwm_enable_duty_cycle(pwm, 2, max_val/4);
-    assert(rc == 0);
-#endif
-#ifdef LED_4
-    /* setup led 4 - 10% duty cycle */
-    chan_conf.pin = LED_4;
-    rc = pwm_chan_config(pwm, 3, &chan_conf);
-    assert(rc == 0);
-
-    rc = pwm_enable_duty_cycle(pwm, 3, max_val/10);
-    assert(rc == 0);
-#endif
 
     return rc;
-}
-
-static void
-pwm_toggle(struct os_event *ev)
-{
-    int rc;
-
-    if(pwm!=0){
-        rc = os_dev_close((struct os_dev *)pwm);
-        assert(rc == 0);
-        pwm = NULL;
-    }else{
-        rc = pwm_init();
-        assert(rc == 0);
-    }
-    os_callout_reset(&my_callout, OS_TICKS_PER_SEC * 5);
 }
 
 int
@@ -107,10 +82,7 @@ main(int argc, char **argv)
 {
     sysinit();
 
-    os_callout_init(&my_callout, os_eventq_dflt_get(),
-                    pwm_toggle, NULL);
-
-    os_callout_reset(&my_callout, OS_TICKS_PER_SEC * 5);
+    pwm_init();
 
     while (1) {
         os_eventq_run(os_eventq_dflt_get());
