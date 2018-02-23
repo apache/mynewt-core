@@ -3332,6 +3332,13 @@ static int sensor_driver_read(struct sensor * sensor,
 	return context.result_code;
 }
 
+static int sensor_driver_set_config(struct sensor *sensor, void *cfg)
+{
+    struct bma253* bma253 = (struct bma253 *)SENSOR_GET_DEVICE(sensor);
+    
+    return bma253_config(bma253, (struct bma253_cfg*)cfg);
+}
+
 static int sensor_driver_get_config(struct sensor * sensor,
 				    sensor_type_t sensor_type,
 				    struct sensor_cfg * cfg)
@@ -3346,6 +3353,7 @@ static int sensor_driver_get_config(struct sensor * sensor,
 
 static struct sensor_driver bma253_sensor_driver = {
 	.sd_read       = sensor_driver_read,
+	.sd_set_config = sensor_driver_set_config,
 	.sd_get_config = sensor_driver_get_config,
 };
 
