@@ -52,17 +52,17 @@ extern uint8_t _ccram_start;
 
 /* UART ports */
 #if (MYNEWT_VAL(UART_0) && MYNEWT_VAL(UART_1))
-# define  UART_CNT      2
-# define  UART_0_DEV_ID 0
-# define  UART_1_DEV_ID 1
+#   define  UART_CNT      2
+#   define  UART_0_DEV_ID 0
+#   define  UART_1_DEV_ID 1
 #elif MYNEWT_VAL(UART_0)
-# define  UART_CNT      1
-# define  UART_0_DEV_ID 0
+#   define  UART_CNT      1
+#   define  UART_0_DEV_ID 0
 #elif MYNEWT_VAL(UART_1)
-# define UART_CNT       1
-# define  UART_1_DEV_ID 0
+#   define UART_CNT       1
+#   define  UART_1_DEV_ID 0
 #else
-# define UART_CNT       0
+#   define UART_CNT       0
 #endif
 
 #define _UART_DEV_NAME(id) ("uart" #id)
