@@ -302,6 +302,10 @@ err:
     if (regs && regs->EVENTS_ERROR) {
         rc = regs->ERRORSRC;
         regs->ERRORSRC = rc;
+
+        // Disable/re-enable to release SCL after an error
+        regs->ENABLE = TWI_ENABLE_ENABLE_Disabled;
+        regs->ENABLE = TWI_ENABLE_ENABLE_Enabled;
     }
     return (rc);
 }
@@ -367,6 +371,10 @@ err:
     if (regs && regs->EVENTS_ERROR) {
         rc = regs->ERRORSRC;
         regs->ERRORSRC = rc;
+
+        // Disable/re-enable to release SCL after an error
+        regs->ENABLE = TWI_ENABLE_ENABLE_Disabled;
+        regs->ENABLE = TWI_ENABLE_ENABLE_Enabled;
     }
     return (rc);
 }
