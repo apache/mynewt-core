@@ -19,9 +19,9 @@ semaphore, the initial number of tokens can be set as well.
 
 When used for exclusive access to a shared resource the semaphore only
 needs a single token. In this case, a single task "creates" the
-semaphore by calling *os\_sem\_init* with a value of one (1) for the
+semaphore by calling :c:func:`os_sem_init()` with a value of one (1) for the
 token. When a task desires exclusive access to the shared resource it
-requests the semaphore by calling *os\_sem\_pend*. If there is a token
+requests the semaphore by calling :c:func:`os_sem_pend()`. If there is a token
 the requesting task will acquire the semaphore and continue operation.
 If no tokens are available the task will be put to sleep until there is
 a token. A common "problem" with using a semaphore for exclusive access
@@ -45,48 +45,27 @@ of this would be the following. A task creates a semaphore and
 initializes it with no tokens. The task then waits on the semaphore, and
 since there are no tokens, the task is put to sleep. When other tasks
 want to wake up the sleeping task they simply add a token by calling
-*os\_sem\_release*. This will cause the sleeping task to wake up
+:c:func:`os_sem_release()`. This will cause the sleeping task to wake up
 (instantly if no other higher priority tasks want to run).
 
 The other common use of a counting semaphore is in what is commonly
 called a "producer/consumer" relationship. The producer adds tokens (by
-calling *os\_sem\_release*) and the consumer consumes them by calling
-*os\_sem\_pend*. In this relationship, the producer has work for the
+calling :c:func:`os_sem_release()`) and the consumer consumes them by calling
+:c:func:`os_sem_pend()`. In this relationship, the producer has work for the
 consumer to do. Each token added to the semaphore will cause the
 consumer to do whatever work is required. A simple example could be the
 following: every time a button is pressed there is some work to do (ring
 a bell). Each button press causes the producer to add a token. Each
 token consumed rings the bell. There will exactly the same number of
 bell rings as there are button presses. In other words, each call to
-*os\_sem\_pend* subtracts exactly one token and each call to
-*os\_sem\_release* adds exactly one token.
-
-Data structures
-----------------
-
-.. code:: c
-
-    struct os_sem
-    {
-        SLIST_HEAD(, os_task) sem_head;     /* chain of waiting tasks */
-        uint16_t    _pad;
-        uint16_t    sem_tokens;             /* # of tokens */
-    };
-
-+---------------+-----------------------------------------------------+
-| Element       | Description                                         |
-+===============+=====================================================+
-| sem\_head     | Queue head for list of tasks waiting on semaphore   |
-+---------------+-----------------------------------------------------+
-| \_pad         | Padding for alignment                               |
-+---------------+-----------------------------------------------------+
-| sem\_tokens   | Current number of tokens                            |
-+---------------+-----------------------------------------------------+
+:c:func:`os_sem_pend()` subtracts exactly one token and each call to
+:c:func:`os_sem_release()` adds exactly one token.
 
 API
 ----
 
 .. doxygengroup:: OSSem
     :content-only:
+    :members:
 
 

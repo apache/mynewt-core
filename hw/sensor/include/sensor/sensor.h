@@ -276,6 +276,16 @@ struct sensor_notifier {
 };
 
 /**
+ * Context for sensor read events
+ */
+struct sensor_read_ev_ctx {
+    /* The sensor for which the ev cb should be called */
+    struct sensor *srec_sensor;
+    /* The sensor type */
+    sensor_type_t srec_type;
+};
+
+/**
  * Sensor type traits list
  */
 struct sensor_type_traits {

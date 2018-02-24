@@ -374,5 +374,15 @@ apollo_nvic.h
 # Apollo2 linker script - MIT License
 apollo2.ld
 
+# CMSIS Cortex-M4, STM32f3 - BSD License.
+STM32F3xx
+STM32F3xx_HAL_Driver
+
+# Nucleo-F303K8, Nucleo-F303RE - BSD License.
+system_stm32f3xx.c
+startup_stm32f303x8.s
+startup_stm32f303xe.s
+stm32f3xx_hal_conf.h
+
 # Ignore documentation folder
 docs

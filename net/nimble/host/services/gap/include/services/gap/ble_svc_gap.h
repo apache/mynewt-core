@@ -20,26 +20,30 @@
 #ifndef H_BLE_SVC_GAP_
 #define H_BLE_SVC_GAP_
 
+#include <inttypes.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-struct ble_hs_cfg;
-
 #define BLE_SVC_GAP_UUID16                                  0x1800
 #define BLE_SVC_GAP_CHR_UUID16_DEVICE_NAME                  0x2a00
 #define BLE_SVC_GAP_CHR_UUID16_APPEARANCE                   0x2a01
-#define BLE_SVC_GAP_CHR_UUID16_PERIPH_PRIV_FLAG             0x2a02
-#define BLE_SVC_GAP_CHR_UUID16_RECONNECT_ADDR               0x2a03
 #define BLE_SVC_GAP_CHR_UUID16_PERIPH_PREF_CONN_PARAMS      0x2a04
+#define BLE_SVC_GAP_CHR_UUID16_CENTRAL_ADDRESS_RESOLUTION   0x2aa6
 
 #define BLE_SVC_GAP_APPEARANCE_GEN_UNKNOWN                         0
 #define BLE_SVC_GAP_APPEARANCE_GEN_COMPUTER                        128
-#define BLE_SVC_GAP_APPEARANCE_CYC_SPEED_AND_CADENCE_SENSOR        1157          
+#define BLE_SVC_GAP_APPEARANCE_CYC_SPEED_AND_CADENCE_SENSOR        1157
+
+typedef void (ble_svc_gap_chr_changed_fn) (uint16_t uuid);
+
+void ble_svc_gap_set_chr_changed_cb(ble_svc_gap_chr_changed_fn *cb);
 
 const char *ble_svc_gap_device_name(void);
 int ble_svc_gap_device_name_set(const char *name);
 uint16_t ble_svc_gap_device_appearance(void);
+int ble_svc_gap_device_appearance_set(uint16_t appearance);
 
 void ble_svc_gap_init(void);
 

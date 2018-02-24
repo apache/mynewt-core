@@ -39,6 +39,7 @@
 #include "oic/oc_discovery.h"
 #include "oic/oc_ri.h"
 #include "oic/oc_uuid.h"
+#include "oic/oc_ri_const.h"
 #include "api/oc_priv.h"
 
 #ifdef OC_SECURITY
