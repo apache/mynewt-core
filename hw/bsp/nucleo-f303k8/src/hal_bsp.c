@@ -59,10 +59,7 @@ static const struct stm32f3_uart_cfg uart_cfg[UART_CNT] = {
         .suc_pin_cts = MCU_GPIO_PORTA(0),
         .suc_pin_af  = GPIO_AF7_USART2,
         .suc_irqn    = USART2_IRQn
-    }
-#endif
-#if MYNEWT_VAL(UART_0) && MYNEWT_VAL(UART_1)
-    ,
+    },
 #endif
 #if MYNEWT_VAL(UART_1)
     {
@@ -75,7 +72,7 @@ static const struct stm32f3_uart_cfg uart_cfg[UART_CNT] = {
         .suc_pin_cts = MCU_GPIO_PORTA(11),
         .suc_pin_af  = GPIO_AF7_USART1,
         .suc_irqn    = USART1_IRQn
-    }
+    },
 #endif
 };
 

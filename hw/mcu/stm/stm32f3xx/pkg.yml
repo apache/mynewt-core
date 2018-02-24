@@ -18,7 +18,7 @@
 #
 
 pkg.name: hw/mcu/stm/stm32f3xx
-pkg.description: MCU definition for STM32F3 ARM Cortex-M3 chips.
+pkg.description: MCU definition for STM32F3 ARM Cortex-M4 chips.
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
