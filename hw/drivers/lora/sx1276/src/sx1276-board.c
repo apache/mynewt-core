@@ -63,7 +63,7 @@ void SX1276IoInit( void )
     int rc;
 
 #if MYNEWT_VAL(SX1276_HAS_ANT_SW)
-    rc = hal_gpio_init_out(SX1276_RXTX, 1);
+    rc = hal_gpio_init_out(SX1276_RXTX, 0);
     assert(rc == 0);
 #endif
 
