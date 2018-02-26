@@ -17,6 +17,7 @@
 #ifndef OC_CORE_RES_H
 #define OC_CORE_RES_H
 
+#include "oc_ri_const.h"
 #include "oc_ri.h"
 
 #ifdef __cplusplus

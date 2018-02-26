@@ -19,6 +19,7 @@
 
 #include "oic/port/mynewt/config.h"
 #include "oic/oc_ri.h"
+#include "oic/oc_ri_const.h"
 #include "oic/oc_api.h"
 #include "oic/port/oc_storage.h"
 #include "oic/messaging/coap/coap.h"
