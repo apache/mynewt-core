@@ -28,15 +28,6 @@
 extern "C" {
 #endif
 
-#define ADXL345_INT_OVERRUN_BIT     0x1
-#define ADXL345_INT_WATERMARK_BIT   0x2
-#define ADXL345_INT_FREEFALL_BIT    0x4
-#define ADXL345_INT_INACTIVITY_BIT  0x8
-#define ADXL345_INT_ACTIVITY_BIT    0x10
-#define ADXL345_INT_DOUBLE_TAP_BIT  0x20
-#define ADXL345_INT_SINGLE_TAP_BIT  0x40
-#define ADXL345_INT_DATA_READY_BIT  0x80
-
 enum adxl345_accel_range {
     ADXL345_ACCEL_RANGE_2   = 0, /* +/- 2g  */
     ADXL345_ACCEL_RANGE_4   = 1, /* +/- 4g  */
@@ -88,19 +79,6 @@ struct adxl345_tap_settings {
 
 };
 
-struct adxl345_act_inact_enables {
-    uint8_t act_x:1; /* enable detection of activity from X axis data */
-    uint8_t act_y:1; /* enable detection of activity from Y axis data */
-    uint8_t act_z:1; /* enable detection of activity from Z axis data */
-
-    uint8_t inact_x:1; /* enable detection of inactivity from X axis data */
-    uint8_t inact_y:1; /* enable detection of inactivity from Y axis data */
-    uint8_t inact_z:1; /* enable detection of inactivity from Z axis data */
-
-    uint8_t act_ac_dc:1; /* 0 = dc-coupled operation, 1 = ac-coupled operation */
-    uint8_t inact_ac_dc:1; /* 0 = dc-coupled operation, 1 = ac-coupled operation */
-};
-
 struct adxl345_cfg {
     enum adxl345_power_mode power_mode;
     uint8_t low_power_enable;
@@ -116,30 +94,46 @@ struct adxl345_cfg {
     /* configuration of tap/double tap detection interrupts */
     struct adxl345_tap_settings tap_cfg;
 
-    /* configuration of activity/inactivity detection interrupts */
-    uint8_t active_threshold;
-    uint8_t inactive_threshold;
-    uint8_t inactive_time;
-    struct adxl345_act_inact_enables act_inact_cfg;
-
     /* configuration of freefall detection interrupt */
     uint8_t freefall_threshold;
     uint8_t freefall_time;
     
-    /* configuration of interrupt enables/mapping */
-    uint8_t int_enables; /* see datasheet reg 0x2E */
-    uint8_t int_mapping; /* see datasheet reg 0x2F */
-    
     sensor_type_t mask;
 };
 
+/* Used to track interrupt state to wake any present waiters */
+struct adxl345_int {
+    /* Synchronize access to this structure */
+    os_sr_t lock;
+    /* Sleep waiting for an interrupt to occur */
+    struct os_sem wait;
+    /* Is the interrupt currently active */
+    bool active;
+    /* Is there a waiter currently sleeping */
+    bool asleep;
+    /* Configured interrupts */
+    struct sensor_int *ints;
+};
+
+/* Device private data */
+struct adxl345_private_driver_data {
+    struct sensor_notify_ev_ctx notify_ctx;
+    struct sensor_read_ev_ctx read_ctx;
+    uint8_t registered_mask;
+
+    uint8_t int_num;
+    uint8_t int_route;
+    uint8_t int_enable;
+};
+
+    
 struct adxl345 {
     struct os_dev dev;
     struct sensor sensor;
     struct adxl345_cfg cfg;
 
+    struct adxl345_private_driver_data pdd;  
 };
-
 
 int adxl345_set_power_mode(struct sensor_itf *itf, enum adxl345_power_mode state);
 int adxl345_get_power_mode(struct sensor_itf *itf, enum adxl345_power_mode *state);
@@ -166,17 +160,11 @@ int adxl345_get_active_threshold(struct sensor_itf *itf, uint8_t *threshold);
 int adxl345_set_inactive_settings(struct sensor_itf *itf, uint8_t threshold, uint8_t time);
 int adxl345_get_inactive_settings(struct sensor_itf *itf, uint8_t *threshold, uint8_t *time);
 
-int adxl345_set_act_inact_enables(struct sensor_itf *itf, struct adxl345_act_inact_enables cfg);
-int adxl345_get_act_inact_enables(struct sensor_itf *itf, struct adxl345_act_inact_enables *cfg);
-
 int adxl345_set_freefall_settings(struct sensor_itf *itf, uint8_t threshold, uint8_t time);
 int adxl345_get_freefall_settings(struct sensor_itf *itf, uint8_t *threshold, uint8_t *time);
 
 int adxl345_set_sample_rate(struct sensor_itf *itf, enum adxl345_sample_rate rate);
 int adxl345_get_sample_rate(struct sensor_itf *itf, enum adxl345_sample_rate *rate);
-
-int adxl345_setup_interrupts(struct sensor_itf *itf, uint8_t enables, uint8_t mapping);
-int adxl345_clear_interrupts(struct sensor_itf *itf, uint8_t *int_status);
 
 int adxl345_init(struct os_dev *, void *);
 int adxl345_config(struct adxl345 *, struct adxl345_cfg *);

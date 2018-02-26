@@ -32,4 +32,18 @@ syscfg.defs:
     ADXL345_CLI:
         description: 'Enable shell support for the ADXL345'
         value: 0
-
+    ADXL345_INT_ENABLE:
+        description: 'Enable interrupt support, necessary for events'
+        value: 1
+    ADXL345_INT_CFG_ACTIVE:
+        description: 'Set 0 for active-low, 1 for active-high'
+        value: 1
+    ADXL345_INT_CFG_OUTPUT:
+        description: 'Set 0 for push-pull, 1 for open-drain'
+        value: 1
+    ADXL345_INT_PIN_HOST:
+        description: 'Interrupt pin number on host device connected to INT on device'
+        value: 1
+    ADXL345_INT_PIN_DEVICE:
+        description: 'Interrupt pin number 1 or 2 on accelerometer device'
+        value: 1

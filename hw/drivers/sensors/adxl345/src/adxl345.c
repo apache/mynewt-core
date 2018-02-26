@@ -20,10 +20,11 @@
 #include <string.h>
 #include <errno.h>
 #include <assert.h>
+#include <math.h>
 
+#include "sysinit/sysinit.h"
 #include "defs/error.h"
 #include "os/os.h"
-#include "sysinit/sysinit.h"
 #include "hal/hal_i2c.h"
 #include "hal/hal_spi.h"
 #include "hal/hal_gpio.h"
@@ -62,15 +63,45 @@ STATS_SECT_DECL(adxl345_stat_section) g_adxl345stats;
 #define ADXL345_ERR(...)      LOG_ERROR(&_log, LOG_MODULE_ADXL345, __VA_ARGS__)
 static struct log _log;
 
+#define ADXL345_NOTIFY_MASK  0x01
+#define ADXL345_READ_MASK    0x02
+
+#if MYNEWT_VAL(ADXL345_INT_ENABLE)
+static void interrupt_handler(void * arg);
+static int init_intpin(struct adxl345 * adxl345, hal_gpio_irq_handler_t handler,
+                       void * arg);
+static int enable_interrupt(struct sensor * sensor, uint8_t ints_to_enable);
+static int disable_interrupt(struct sensor * sensor, uint8_t ints_to_disable);
+#endif
+
 /* Exports for the sensor API */
 static int adxl345_sensor_read(struct sensor *, sensor_type_t,
                                sensor_data_func_t, void *, uint32_t);
 static int adxl345_sensor_get_config(struct sensor *, sensor_type_t,
                                      struct sensor_cfg *);
+static int adxl345_sensor_set_trigger_thresh(struct sensor * sensor,
+                                             sensor_type_t sensor_type,
+                                             struct sensor_type_traits * stt);
+static int adxl345_sensor_set_notification(struct sensor * sensor,
+                                           sensor_event_type_t sensor_event_type);
+static int adxl345_sensor_unset_notification(struct sensor * sensor,
+                                             sensor_event_type_t sensor_event_type);
+static int adxl345_sensor_handle_interrupt(struct sensor * sensor);
+static int adxl345_sensor_clear_low_thresh(struct sensor *sensor,
+                                           sensor_type_t type);
+static int adxl345_sensor_clear_high_thresh(struct sensor *sensor,
+                                            sensor_type_t type);
 
-static const struct sensor_driver g_adxl345_sensor_driver = {
-    adxl345_sensor_read,
-    adxl345_sensor_get_config
+
+static const struct sensor_driver adxl345_sensor_driver = {
+     .sd_read                      = adxl345_sensor_read,
+     .sd_get_config                = adxl345_sensor_get_config,
+     .sd_set_trigger_thresh        = adxl345_sensor_set_trigger_thresh,
+     .sd_set_notification          = adxl345_sensor_set_notification,
+     .sd_unset_notification        = adxl345_sensor_unset_notification,
+     .sd_handle_interrupt          = adxl345_sensor_handle_interrupt,
+     .sd_clear_low_trigger_thresh  = adxl345_sensor_clear_low_thresh,
+     .sd_clear_high_trigger_thresh = adxl345_sensor_clear_high_thresh
 };
 
 /**
@@ -507,7 +538,7 @@ adxl345_get_low_power_enable(struct sensor_itf *itf, uint8_t *enable)
     uint8_t reg;
     int rc;
 
-    rc = adxl345_read8(itf, ADXL345_DATA_FORMAT, &reg);
+    rc = adxl345_read8(itf, ADXL345_BW_RATE, &reg);
     if (rc) {
         return rc;
     }
@@ -516,7 +547,6 @@ adxl345_get_low_power_enable(struct sensor_itf *itf, uint8_t *enable)
 
     return 0;
 }
-
 
 /**
  * Sets the accelerometer range to specified setting
@@ -809,6 +839,8 @@ adxl345_set_act_inact_enables(struct sensor_itf *itf, struct adxl345_act_inact_e
     reg |= cfg.act_x       ? (1 << 6) : 0;
     reg |= cfg.act_ac_dc   ? (1 << 7) : 0;
 
+    ADXL345_ERR("act_inact = 0x%x\n", reg);
+    
     return adxl345_write8(itf, ADXL345_ACT_INACT_CTL, reg);
     
 }
@@ -1007,7 +1039,7 @@ adxl345_init(struct os_dev *dev, void *arg)
 
     /* Add the accelerometer/gyroscope driver */
     rc = sensor_set_driver(sensor, SENSOR_TYPE_ACCELEROMETER,
-                           (struct sensor_driver *) &g_adxl345_sensor_driver);
+                           (struct sensor_driver *) &adxl345_sensor_driver);
     if (rc) {
         return rc;
     }
@@ -1039,6 +1071,17 @@ adxl345_init(struct os_dev *dev, void *arg)
         }
     }
 
+#if MYNEWT_VAL(ADXL345_INT_ENABLE)
+    adxl->pdd.read_ctx.srec_sensor = sensor;
+    adxl->pdd.notify_ctx.snec_sensor = sensor;
+
+    rc = init_intpin(adxl, interrupt_handler, sensor);
+    if (rc != 0) {
+        return rc;
+    }
+#endif
+
+    
     return 0;
 }
 
@@ -1068,8 +1111,22 @@ adxl345_config(struct adxl345 *dev, struct adxl345_cfg *cfg)
         return SYS_EINVAL;
     }
 
+    rc = adxl345_read8(itf, ADXL345_DATA_FORMAT, &val);
+    if (rc) {
+        return rc;
+    }
+
     /* Set accelerometer into full resolution */
-    rc = adxl345_write8(itf, ADXL345_DATA_FORMAT, 0x08);
+    val |= 0x08;
+
+    /* Set interupt pin polarity to match local pin setting */
+    if (dev->sensor.s_itf.si_ints[dev->pdd.int_num].active) {
+        val &= ~0x20;
+    } else {
+        val |= 0x20;
+    }
+
+    rc = adxl345_write8(itf, ADXL345_DATA_FORMAT, val);
     if (rc) {
         return rc;
     } 
@@ -1105,24 +1162,15 @@ adxl345_config(struct adxl345 *dev, struct adxl345_cfg *cfg)
     dev->cfg.tap_cfg = cfg->tap_cfg;
 
     /* setup activity detection settings */
-    rc = adxl345_set_active_threshold(itf, cfg->active_threshold);
+    rc = adxl345_set_active_threshold(itf, 0xFF);
     if (rc) {
         return rc;
     }
-    dev->cfg.active_threshold = cfg->active_threshold;
     
-    rc = adxl345_set_inactive_settings(itf, cfg->inactive_threshold, cfg->inactive_time);
+    rc = adxl345_set_inactive_settings(itf, 0, 0);
     if (rc) {
         return rc;
     }
-    dev->cfg.inactive_threshold = cfg->inactive_threshold;
-    dev->cfg.inactive_time = cfg->inactive_time;
-
-    rc = adxl345_set_act_inact_enables(itf, cfg->act_inact_cfg);
-    if (rc) {
-        return rc;
-    }
-    dev->cfg.act_inact_cfg = cfg->act_inact_cfg;
 
     /* setup freefall settings */
     rc = adxl345_set_freefall_settings(itf, cfg->freefall_threshold, cfg->freefall_time);
@@ -1139,15 +1187,17 @@ adxl345_config(struct adxl345 *dev, struct adxl345_cfg *cfg)
     }
     dev->cfg.low_power_enable = cfg->low_power_enable;
     
-    /* setup interrupt config */
-    rc = adxl345_setup_interrupts(itf, cfg->int_enables, cfg->int_mapping);
+    /* setup default interrupt config */
+    rc = adxl345_setup_interrupts(itf, 0, 0);
     if (rc) {
         return rc;
     }
 
-    dev->cfg.int_enables = cfg->int_enables;
-    dev->cfg.int_mapping = cfg->int_mapping;
-
+    rc = adxl345_clear_interrupts(itf, &val);
+    if (rc) {
+        return rc;
+    }
+    
     /* Setup current power mode */
     rc = adxl345_set_power_mode(itf, cfg->power_mode);
     if (rc) {
@@ -1166,6 +1216,19 @@ adxl345_config(struct adxl345 *dev, struct adxl345_cfg *cfg)
     return 0;
 }
 
+static float adxl345_convert_reg_to_ms2(int16_t val, float lsb_mg)
+{
+    float tmp = val * lsb_mg * 0.001; /* convert to g */
+    return tmp * STANDARD_ACCEL_GRAVITY; /* convert to ms2 */
+}
+
+static uint8_t adxl345_convert_ms2_to_reg(float ms2, float lsb_mg)
+{
+    float tmp = (ms2 * 1000) / STANDARD_ACCEL_GRAVITY; /* convert to mg */
+    tmp /= lsb_mg; /* convert to reg format */   
+    return (uint8_t) tmp;
+}
+
 /**
  * Reads Accelerometer data from ADXL345 sensor
  *
@@ -1182,7 +1245,7 @@ adxl345_get_accel_data(struct sensor_itf *itf, struct sensor_accel_data *sad)
     uint8_t payload[6];
     int16_t x,y,z;
 
-    float lsb = 0.004; /* lsb is always 4mg when device is set to full resolution */
+    float lsb_mg = 4; /* lsb is always 4mg when device is set to full resolution */
 
     /* Get a new accelerometer sample */
     rc = adxl345_readlen(itf, ADXL345_DATAX0, payload, 6);
@@ -1195,11 +1258,11 @@ adxl345_get_accel_data(struct sensor_itf *itf, struct sensor_accel_data *sad)
     z = (((int16_t)payload[5]) << 8) | payload[4];   
 
     /* calculate MS*2 values to provide to data_func */
-    sad->sad_x = x * lsb * STANDARD_ACCEL_GRAVITY;
+    sad->sad_x = adxl345_convert_reg_to_ms2(x, lsb_mg);
     sad->sad_x_is_valid = 1;
-    sad->sad_y = y * lsb * STANDARD_ACCEL_GRAVITY;
+    sad->sad_y = adxl345_convert_reg_to_ms2(y, lsb_mg);
     sad->sad_y_is_valid = 1;
-    sad->sad_z = z * lsb * STANDARD_ACCEL_GRAVITY;
+    sad->sad_z = adxl345_convert_reg_to_ms2(z, lsb_mg);
     sad->sad_z_is_valid = 1;
 
     return 0;
@@ -1260,3 +1323,482 @@ adxl345_sensor_get_config(struct sensor *sensor, sensor_type_t type,
 
     return 0;
 }
+
+#if MYNEWT_VAL(ADXL345_INT_ENABLE)
+static void
+interrupt_handler(void * arg)
+{
+    struct sensor *sensor = arg;
+    sensor_mgr_put_interrupt_evt(sensor);
+}
+
+/**
+ * Initialises the local interrupt pin 
+ *
+ * @param Pointer to device structure
+ * @param interrupt handler to setup
+ * @param Pointer to data to pass to irq
+ *
+ * @return 0 on success, non-zero on failure
+ */
+static int
+init_intpin(struct adxl345 * adxl345, hal_gpio_irq_handler_t handler,
+            void * arg)
+{
+    struct adxl345_private_driver_data *pdd = &adxl345->pdd;
+    hal_gpio_irq_trig_t trig;
+    int pin = -1;
+    int rc;
+    int i;
+
+    for (i = 0; i < MYNEWT_VAL(SENSOR_MAX_INTERRUPTS_PINS); i++){
+        pin = adxl345->sensor.s_itf.si_ints[i].host_pin;
+        if (pin >= 0) {
+            break;
+        }
+    }
+
+    if (pin < 0) {
+        ADXL345_ERR("Interrupt pin not configured\n");
+        return SYS_EINVAL;
+    }
+
+    pdd->int_num = i;
+    if (adxl345->sensor.s_itf.si_ints[pdd->int_num].active) {
+        trig = HAL_GPIO_TRIG_RISING;
+    } else {
+        trig = HAL_GPIO_TRIG_FALLING;
+    }
+  
+    if (adxl345->sensor.s_itf.si_ints[pdd->int_num].device_pin == 1) {
+        pdd->int_route = 0x00;
+    } else if (adxl345->sensor.s_itf.si_ints[pdd->int_num].device_pin == 2) {
+        pdd->int_route = 0xFF;
+    } else {
+        ADXL345_ERR("Route not configured\n");
+        return SYS_EINVAL;
+    }
+
+    rc = hal_gpio_irq_init(pin,
+                           handler,
+                           arg,
+                           trig,
+                           HAL_GPIO_PULL_NONE);
+    if (rc != 0) {
+        ADXL345_ERR("Failed to initialise interrupt pin %d\n", pin);
+        return rc;
+    } 
+    
+    return 0;
+}
+
+/**
+ * Enables an interrupt in ADXL345 device
+ *
+ * @param Pointer to sensor structure
+ * @param which interrupt(s) to enable
+ *
+ * @return 0 on success, non-zero on failure
+ */
+static int
+enable_interrupt(struct sensor * sensor, uint8_t ints_to_enable)
+{
+    struct adxl345_private_driver_data *pdd;
+    struct adxl345 *adxl345;
+    struct sensor_itf *itf;
+
+    if (ints_to_enable == 0) {
+        return SYS_EINVAL;
+    }
+
+    adxl345 = (struct adxl345 *)SENSOR_GET_DEVICE(sensor);
+    itf = SENSOR_GET_ITF(sensor);
+    pdd = &adxl345->pdd;
+ 
+    /* if no interrupts are currently in use enable int pin */
+    if (pdd->int_enable == 0) {
+        hal_gpio_irq_enable(adxl345->sensor.s_itf.si_ints[pdd->int_num].host_pin);
+    }
+    
+    /* update which interrupts are enabled */
+    pdd->int_enable |= ints_to_enable;
+
+    /* enable interrupt in device */
+    return adxl345_setup_interrupts(itf, pdd->int_enable, pdd->int_route);
+}
+
+/**
+ * Disables an interrupt in ADXL345 device
+ *
+ * @param Pointer to sensor structure
+ * @param which interrupt(s) to disable
+ *
+ * @return 0 on success, non-zero on failure
+ */
+static int
+disable_interrupt(struct sensor * sensor, uint8_t ints_to_disable)
+{
+    struct adxl345_private_driver_data *pdd;
+    struct adxl345 *adxl345;
+    struct sensor_itf *itf;
+
+    if (ints_to_disable == 0) {
+        return SYS_EINVAL;
+    }
+
+    adxl345 = (struct adxl345 *)SENSOR_GET_DEVICE(sensor);
+    itf = SENSOR_GET_ITF(sensor);
+    pdd = &adxl345->pdd;
+    
+    /* update which interrupts are enabled */
+    pdd->int_enable &= ~ints_to_disable;
+
+    /* if no interrupts are now in use disable int pin */
+    if (pdd->int_enable == 0) {
+        hal_gpio_irq_disable(adxl345->sensor.s_itf.si_ints[pdd->int_num].host_pin);
+    }
+
+    /* update interrupt setup in device */
+    return adxl345_setup_interrupts(itf, pdd->int_enable, pdd->int_route);
+}
+#endif
+
+/**
+ * Handles and interrupt, firing correct events
+ *
+ * @param Pointer to sensor structure
+ *
+ * @return 0 on success, non-zero on failure
+ */
+static int
+adxl345_sensor_handle_interrupt(struct sensor * sensor)
+{
+#if MYNEWT_VAL(ADXL345_INT_ENABLE)
+    struct adxl345 * adxl345;
+    struct adxl345_private_driver_data *pdd;
+    struct sensor_itf *itf;
+    uint8_t int_status;
+    
+    int rc;
+
+    adxl345 = (struct adxl345 *)SENSOR_GET_DEVICE(sensor);
+    itf = SENSOR_GET_ITF(sensor);
+
+    pdd = &adxl345->pdd;
+
+    rc = adxl345_clear_interrupts(itf, &int_status);
+    if (rc != 0) {
+        ADXL345_ERR("Cound not read int status err=0x%02x\n", rc);
+        return rc;
+    }
+
+    if ((pdd->registered_mask & ADXL345_NOTIFY_MASK) &&
+        ((int_status & ADXL345_INT_SINGLE_TAP_BIT) ||
+         (int_status & ADXL345_INT_DOUBLE_TAP_BIT))) {
+        sensor_mgr_put_notify_evt(&pdd->notify_ctx);
+    }
+
+    if ((pdd->registered_mask & ADXL345_READ_MASK) &&
+        ((int_status & ADXL345_INT_ACTIVITY_BIT) ||
+         (int_status & ADXL345_INT_INACTIVITY_BIT))) {
+        ADXL345_ERR("READ EVT 0x%02x\n", int_status);
+        sensor_mgr_put_read_evt(&pdd->read_ctx);
+    }
+
+    return 0;
+#else
+    return SYS_ENODEV;
+#endif
+}
+
+/**
+ * Sets up trigger thresholds and enables interrupts
+ *
+ * @param Pointer to sensor structure
+ * @param type of sensor
+ * @param threshold settings to configure
+ *
+ * @return 0 on success, non-zero on failure
+ */
+static int
+adxl345_sensor_set_trigger_thresh(struct sensor * sensor,
+                                  sensor_type_t sensor_type,
+                                  struct sensor_type_traits * stt)
+{
+#if MYNEWT_VAL(ADXL345_INT_ENABLE)
+    struct adxl345 * adxl345;
+    struct sensor_itf *itf;
+    int rc;
+    const struct sensor_accel_data * low_thresh;
+    const struct sensor_accel_data * high_thresh;
+    uint8_t ints_to_enable = 0;
+    float thresh;
+    struct adxl345_private_driver_data *pdd;
+    struct adxl345_act_inact_enables axis_enables = { 0 };
+
+    if (sensor_type != SENSOR_TYPE_ACCELEROMETER) {
+        return SYS_EINVAL;
+    }
+
+    adxl345 = (struct adxl345 *)SENSOR_GET_DEVICE(sensor);
+    itf = SENSOR_GET_ITF(sensor);
+    pdd = &adxl345->pdd;
+
+    low_thresh  = stt->stt_low_thresh.sad;
+    high_thresh = stt->stt_high_thresh.sad;
+
+    if (low_thresh->sad_x_is_valid |
+        low_thresh->sad_y_is_valid |
+        low_thresh->sad_z_is_valid) {
+        thresh = INFINITY;
+
+        if (low_thresh->sad_x_is_valid) {
+            axis_enables.inact_x = 1;
+            if (thresh > low_thresh->sad_x) {
+                thresh = low_thresh->sad_x;
+            }
+        }
+        if (low_thresh->sad_y_is_valid) {
+            axis_enables.inact_y = 1;
+            if (thresh > low_thresh->sad_y) {
+                thresh = low_thresh->sad_y;
+            }
+        }
+        if (low_thresh->sad_z_is_valid) {
+            axis_enables.inact_z = 1;
+            if (thresh > low_thresh->sad_z) {
+                thresh = low_thresh->sad_z;
+            }
+        }
+
+        rc = adxl345_set_inactive_settings(itf,
+                adxl345_convert_ms2_to_reg(thresh, 62.5), 2);
+        
+        if (rc) {
+            return rc;
+        }
+
+        ints_to_enable |= ADXL345_INT_INACTIVITY_BIT;
+    }
+
+    if (high_thresh->sad_x_is_valid |
+        high_thresh->sad_y_is_valid |
+        high_thresh->sad_z_is_valid) {
+        thresh = 0.0;
+
+        if (high_thresh->sad_x_is_valid) {
+            axis_enables.act_x = 1;
+            if (thresh < high_thresh->sad_x) {
+                thresh = high_thresh->sad_x;
+            }
+        }
+        if (high_thresh->sad_y_is_valid) {
+            axis_enables.act_y = 1;
+            if (thresh < high_thresh->sad_y) {
+                thresh = high_thresh->sad_y;
+            }
+        }
+        if (high_thresh->sad_z_is_valid) {
+            axis_enables.act_z = 1;
+            if (thresh < high_thresh->sad_z) {
+                thresh = high_thresh->sad_z;
+            }
+        }
+
+        rc = adxl345_set_active_threshold(itf,
+                   adxl345_convert_ms2_to_reg(thresh, 62.5));
+        if (rc) {
+            return rc;
+        }
+
+        ints_to_enable |= ADXL345_INT_ACTIVITY_BIT;
+       
+    }
+
+    rc = enable_interrupt(sensor, ints_to_enable);
+    if (rc) {
+        return rc;
+    }
+
+    rc = adxl345_set_act_inact_enables(itf, axis_enables);
+    if (rc) {
+        return rc;
+    }
+    
+    pdd->read_ctx.srec_type |= sensor_type;
+    pdd->registered_mask |= ADXL345_READ_MASK;
+
+    return 0;
+#else
+    return SYS_ENODEV;
+#endif
+}
+
+/**
+ * Disable the low threshold interrupt
+ *
+ * @param ptr to sensor
+ * @param the Sensor type
+ *
+ * @return 0 on success, non-zero on failure
+ */
+static int
+adxl345_sensor_clear_low_thresh(struct sensor *sensor,
+                                 sensor_type_t type)
+{
+    struct adxl345 *adxl345;
+    uint8_t ints_to_disable = ADXL345_INT_INACTIVITY_BIT;
+
+    if (type != SENSOR_TYPE_ACCELEROMETER) {
+        return SYS_EINVAL;
+    }
+
+    adxl345 = (struct adxl345 *)SENSOR_GET_DEVICE(sensor);
+
+    /* if neither high or low threshs are now set disable read mask */
+    if((adxl345->pdd.int_enable & ADXL345_INT_ACTIVITY_BIT) == 0) {
+        adxl345->pdd.read_ctx.srec_type &= ~type;
+        adxl345->pdd.registered_mask &= ~ADXL345_READ_MASK;
+    }
+
+    return disable_interrupt(sensor, ints_to_disable);
+}
+
+
+/**
+ * Disable the high threshold interrupt
+ *
+ * @param ptr to sensor
+ * @param the Sensor type
+ *
+ * @return 0 on success, non-zero on failure
+ */
+static int
+adxl345_sensor_clear_high_thresh(struct sensor *sensor,
+                                  sensor_type_t type)
+{
+    struct adxl345 *adxl345;
+    uint8_t ints_to_disable = ADXL345_INT_ACTIVITY_BIT;
+
+    if (type != SENSOR_TYPE_ACCELEROMETER) {
+        return SYS_EINVAL;
+    }
+
+    adxl345 = (struct adxl345 *)SENSOR_GET_DEVICE(sensor);
+
+    /* if neither high or low threshs are now set disable read mask */
+    if((adxl345->pdd.int_enable & ADXL345_INT_INACTIVITY_BIT) == 0) {
+        adxl345->pdd.read_ctx.srec_type &= ~type;
+        adxl345->pdd.registered_mask &= ~ADXL345_READ_MASK;
+    }
+
+    return disable_interrupt(sensor, ints_to_disable);
+}
+
+/**
+ * Enables notifications on tap or double tap events
+ *
+ * @param Pointer to sensor structure
+ * @param which event to get notifications for
+ *
+ * @return 0 on success, non-zero on failure
+ */
+static int
+adxl345_sensor_set_notification(struct sensor * sensor,
+                                sensor_event_type_t sensor_event_type)
+{
+#if MYNEWT_VAL(ADXL345_INT_ENABLE)
+    struct adxl345 * adxl345;
+    uint8_t ints_to_enable = 0;
+    struct adxl345_private_driver_data *pdd;
+    int rc;
+
+    ADXL345_ERR("Enabling notifications\n");
+    
+    if ((sensor_event_type & ~(SENSOR_EVENT_TYPE_DOUBLE_TAP |
+                               SENSOR_EVENT_TYPE_SINGLE_TAP)) != 0) {
+        return SYS_EINVAL;
+    }
+
+    /*XXX for now we do not support registering for both events */
+    if (sensor_event_type == (SENSOR_EVENT_TYPE_DOUBLE_TAP |
+                                        SENSOR_EVENT_TYPE_SINGLE_TAP)) {
+        return SYS_EINVAL;
+    }
+
+    adxl345 = (struct adxl345 *)SENSOR_GET_DEVICE(sensor);
+    pdd = &adxl345->pdd;
+
+    if (pdd->registered_mask & ADXL345_NOTIFY_MASK) {
+        return SYS_EBUSY;
+    }
+
+    /* Enable tap event*/
+    if(sensor_event_type == SENSOR_EVENT_TYPE_DOUBLE_TAP) {
+        ints_to_enable |= ADXL345_INT_DOUBLE_TAP_BIT;
+    }
+    if(sensor_event_type == SENSOR_EVENT_TYPE_SINGLE_TAP) {
+        ints_to_enable |= ADXL345_INT_SINGLE_TAP_BIT;
+    }
+
+    rc = enable_interrupt(sensor, ints_to_enable);
+    if (rc) {
+        return rc;
+    }
+
+    pdd->notify_ctx.snec_evtype |= sensor_event_type;
+    pdd->registered_mask |= ADXL345_NOTIFY_MASK;
+
+    ADXL345_ERR("Enabled notifications\n");
+    
+    return 0;
+#else
+    return SYS_ENODEV;
+#endif
+}
+
+
+/**
+ * Disables notifications on tap or double tap events
+ *
+ * @param Pointer to sensor structure
+ * @param which event to get notifications for
+ *
+ * @return 0 on success, non-zero on failure
+ */
+static int
+adxl345_sensor_unset_notification(struct sensor * sensor,
+                                  sensor_event_type_t sensor_event_type)
+{
+#if MYNEWT_VAL(ADXL345_INT_ENABLE)
+    struct adxl345 * adxl345;
+    uint8_t ints_to_disable = 0;
+
+    if ((sensor_event_type & ~(SENSOR_EVENT_TYPE_DOUBLE_TAP |
+                               SENSOR_EVENT_TYPE_SINGLE_TAP)) != 0) {
+        return SYS_EINVAL;
+    }
+
+    /*XXX for now we do not support registering for both events */
+    if (sensor_event_type == (SENSOR_EVENT_TYPE_DOUBLE_TAP |
+                                        SENSOR_EVENT_TYPE_SINGLE_TAP)) {
+        return SYS_EINVAL;
+    }
+
+    adxl345 = (struct adxl345 *)SENSOR_GET_DEVICE(sensor);
+
+    adxl345->pdd.notify_ctx.snec_evtype &= ~sensor_event_type;
+    adxl345->pdd.registered_mask &= ~ADXL345_NOTIFY_MASK;
+
+    ints_to_disable |= ADXL345_INT_SINGLE_TAP_BIT;
+    ints_to_disable |= ADXL345_INT_DOUBLE_TAP_BIT;
+   
+    return disable_interrupt(sensor, ints_to_disable);
+    
+#else
+    return SYS_ENODEV;
+#endif
+}
+
+
+

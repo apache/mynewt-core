@@ -204,7 +204,10 @@ static struct sensor_itf i2c_0_itf_lis = {
 static struct sensor_itf i2c_0_itf_adxl = {
     .si_type = SENSOR_ITF_I2C,
     .si_num  = 0,
-    .si_addr = 0x1D
+    .si_addr = 0x1D,
+    .si_ints = {
+       { MYNEWT_VAL(ADXL345_INT_PIN_HOST), MYNEWT_VAL(ADXL345_INT_PIN_DEVICE),
+         MYNEWT_VAL(ADXL345_INT_CFG_ACTIVE)}}
 };
 #endif
 
@@ -558,23 +561,8 @@ config_adxl345_sensor(void)
     cfg.tap_cfg.z_enable = 1;
     cfg.tap_cfg.suppress = 0;
 
-    cfg.active_threshold = 0x30; /* 3g */
-    cfg.inactive_threshold = 0x08; /* 0.5g */
-    cfg.inactive_time = 60; /* 1 minute */
-    cfg.act_inact_cfg.act_x = 0;
-    cfg.act_inact_cfg.act_y = 0;
-    cfg.act_inact_cfg.act_z = 0;
-    cfg.act_inact_cfg.inact_x = 0;
-    cfg.act_inact_cfg.inact_y = 0;
-    cfg.act_inact_cfg.inact_z = 0;
-    cfg.act_inact_cfg.act_ac_dc = 0;
-    cfg.act_inact_cfg.inact_ac_dc = 0;
-
     cfg.freefall_threshold = 0x07; /* 440mg */
     cfg.freefall_time = 0x14; /* 100ms */ 
-
-    cfg.int_enables = ADXL345_INT_SINGLE_TAP_BIT | ADXL345_INT_DOUBLE_TAP_BIT;
-    cfg.int_mapping = ADXL345_INT_DOUBLE_TAP_BIT;
 
     cfg.mask = SENSOR_TYPE_ACCELEROMETER;
 
