@@ -24,6 +24,8 @@
 #include <hal/hal_os_tick.h>
 #include <bsp/cmsis_nvic.h>
 
+#include "mcu/mcu.h"
+
 #include "os_priv.h"
 
 /*
@@ -210,8 +212,7 @@ os_arch_os_init(void)
             NVIC->IP[i] = -1;
         }
 
-        /* SVC_IRQn or SVCall_IRQn depending on specific model */
-        NVIC_SetVector(-5, (uint32_t)SVC_Handler);
+        NVIC_SetVector(SVC_IRQ_NUMBER, (uint32_t)SVC_Handler);
         NVIC_SetVector(PendSV_IRQn, (uint32_t)PendSV_Handler);
         NVIC_SetVector(SysTick_IRQn, (uint32_t)SysTick_Handler);
 
@@ -233,7 +234,7 @@ os_arch_os_init(void)
         NVIC_SetPriority(PendSV_IRQn, PEND_SV_PRIO);
 
         /* Set the SVC interrupt to priority 0 (highest configurable) */
-        NVIC_SetPriority(-5, SVC_PRIO);
+        NVIC_SetPriority(SVC_IRQ_NUMBER, SVC_PRIO);
 
         /* Check if privileged or not */
         if ((__get_CONTROL() & 1) == 0) {
