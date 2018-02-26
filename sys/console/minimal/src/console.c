@@ -59,6 +59,12 @@ static uint8_t cur, end;
 static struct os_eventq *avail_queue;
 static struct os_eventq *lines_queue;
 
+int __attribute__((weak))
+console_out(int c)
+{
+    return c;
+}
+
 void
 console_write(const char *str, int cnt)
 {
