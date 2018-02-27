@@ -57,34 +57,11 @@ enum adxl345_registers {
     ADXL345_FIFO_STATUS    = 0x39, /* R */
 };
 
-struct adxl345_act_inact_enables {
-    uint8_t act_x:1; /* enable detection of activity from X axis data */
-    uint8_t act_y:1; /* enable detection of activity from Y axis data */
-    uint8_t act_z:1; /* enable detection of activity from Z axis data */
-
-    uint8_t inact_x:1; /* enable detection of inactivity from X axis data */
-    uint8_t inact_y:1; /* enable detection of inactivity from Y axis data */
-    uint8_t inact_z:1; /* enable detection of inactivity from Z axis data */
-
-    uint8_t act_ac_dc:1; /* 0 = dc-coupled operation, 1 = ac-coupled operation */
-    uint8_t inact_ac_dc:1; /* 0 = dc-coupled operation, 1 = ac-coupled operation */
-};
-
-
     
 #define ADXL345_DEVID_VAL (0xE5)
 
 #define ADXL345_SPI_READ_CMD_BIT      (0x80)
 #define ADXL345_SPI_MULTIBYTE_CMD_BIT (0x40)
-
-#define ADXL345_INT_OVERRUN_BIT     0x1
-#define ADXL345_INT_WATERMARK_BIT   0x2
-#define ADXL345_INT_FREEFALL_BIT    0x4
-#define ADXL345_INT_INACTIVITY_BIT  0x8
-#define ADXL345_INT_ACTIVITY_BIT    0x10
-#define ADXL345_INT_DOUBLE_TAP_BIT  0x20
-#define ADXL345_INT_SINGLE_TAP_BIT  0x40
-#define ADXL345_INT_DATA_READY_BIT  0x80
 
     
 int adxl345_i2c_write8(struct sensor_itf *itf, uint8_t reg, uint8_t value);
@@ -98,13 +75,7 @@ int adxl345_spi_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer, ui
 int adxl345_write8(struct sensor_itf *itf, uint8_t reg, uint8_t value);
 int adxl345_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value);
 int adxl345_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer, uint8_t len);
-
-int adxl345_setup_interrupts(struct sensor_itf *itf, uint8_t enables, uint8_t mapping);
-int adxl345_clear_interrupts(struct sensor_itf *itf, uint8_t *int_status);
-
-int adxl345_set_act_inact_enables(struct sensor_itf *itf, struct adxl345_act_inact_enables cfg);
-int adxl345_get_act_inact_enables(struct sensor_itf *itf, struct adxl345_act_inact_enables *cfg);  
-    
+ 
 #ifdef __cplusplus
 }
 #endif
