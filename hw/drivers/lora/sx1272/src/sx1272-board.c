@@ -25,10 +25,6 @@ Maintainer: Miguel Luis and Gregory Cristian
 #error "Cannot have both SX1272_HAS_ANT_SW and SX1272_HAS_COMP_ANT_SW set true"
 #endif
 
-#if MYNEWT_VAL(SX1272_HAS_ANT_SW)
-#error "Currently not supported"
-#endif
-
 /*!
  * Flag used to set the RF switch control pins in low power mode when the radio is not active.
  */
@@ -74,8 +70,8 @@ void SX1272IoInit( void )
     int rc;
 
 #if MYNEWT_VAL(SX1272_HAS_ANT_SW)
-    rc = hal_gpio_init_out(SX1272_RXTX, 1);
-    assert(rc == 0);
+    rc = hal_gpio_init_out(SX1272_RXTX, 0);
+    assert(0);
 #endif
 
     /*
@@ -288,23 +284,33 @@ void SX1272SetAntSw( uint8_t opMode )
     switch( opMode )
     {
     case RFLR_OPMODE_TRANSMITTER:
+#if MYNEWT_VAL(SX1272_HAS_COMP_ANT_SW)
         hal_gpio_write(SX1272_RXTX, 0);
         hal_gpio_write(SX1272_N_RXTX, 1);
+#endif
+#if MYNEWT_VAL(SX1272_HAS_ANT_SW)
+        hal_gpio_write(SX1272_RXTX, 1);
+#endif
         break;
     case RFLR_OPMODE_RECEIVER:
     case RFLR_OPMODE_RECEIVER_SINGLE:
     case RFLR_OPMODE_CAD:
     default:
+#if MYNEWT_VAL(SX1272_HAS_COMP_ANT_SW)
         hal_gpio_write(SX1272_RXTX, 1);
         hal_gpio_write(SX1272_N_RXTX, 0);
+#endif
+#if MYNEWT_VAL(SX1272_HAS_ANT_SW)
+        hal_gpio_write(SX1272_RXTX, 0);
+#endif
         break;
     }
     OS_EXIT_CRITICAL(sr);
 }
-#endif
 
 bool SX1272CheckRfFrequency( uint32_t frequency )
 {
     // Implement check. Currently all frequencies are supported
     return true;
 }
+#endif
