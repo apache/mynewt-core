@@ -501,7 +501,7 @@ exponential_int_out(int32_t step, int32_t max_steps, int32_t max_val)
                                      (float) max_val);
 }
 int32_t
-exponential_int_int_io(int32_t step, int32_t max_steps, int32_t max_val)
+exponential_int_io(int32_t step, int32_t max_steps, int32_t max_val)
 {
     return (int32_t) exponential_io((float) step,
                                     (float) max_steps,
@@ -547,7 +547,7 @@ cubic_int_out(int32_t step, int32_t max_steps, int32_t max_val)
                                (float) max_val);
 }
 int32_t
-cubic_int_int_io(int32_t step, int32_t max_steps, int32_t max_val)
+cubic_int_io(int32_t step, int32_t max_steps, int32_t max_val)
 {
     return (int32_t) cubic_io((float) step,
                               (float) max_steps,
