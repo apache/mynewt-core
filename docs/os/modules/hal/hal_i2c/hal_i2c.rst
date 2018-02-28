@@ -1,4 +1,4 @@
-hal\_i2c
+I2C
 ========
 
 The hardware independent interface to I2C Devices.
@@ -15,11 +15,6 @@ I2C is often though of as a 2-wire protocol because it uses two wires
 
 For a detailed description of I2C, see the `I²C wikipedia
 page <https://en.wikipedia.org/wiki/I²C>`__
-
-Definition
-~~~~~~~~~~
-
-`hal\_i2c.h <https://github.com/apache/incubator-mynewt-core/blob/master/hw/hal/include/hal/hal_i2c.h>`__
 
 HAL\_I2C Theory Of Operation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -94,3 +89,11 @@ In the HAL\_I2C API you would communicate with this device with address
 ``0b1000110``, which is hex 0x46 or decimal 70. The I²C drive would add
 the R/W bit and transmit it as hex 0x8C (binary 10001100) or 0x8D
 (binary 10001101) depending whether it was a read or write command.
+
+
+API
+~~~~~~~~~~
+
+.. doxygengroup:: HALI2c
+    :content-only:
+    :members:

@@ -1,4 +1,4 @@
-hal\_spi
+SPI
 ========
 
 SPI (Serial Peripheral Interface) is a synchronous 4-wire serial
@@ -14,12 +14,8 @@ The Mynewt HAL interface supports the SPI master functionality with both
 blocking and non-blocking interface. SPI slave functionality is
 supported in non-blocking mode.
 
-Definition
-~~~~~~~~~~
 
-`hal\_spi.h <https://github.com/apache/incubator-mynewt-core/blob/master/hw/hal/include/hal/hal_spi.h>`__
-
-HAL\_SPI Theory Of Operation
+Theory Of Operation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 SPI is called a 4-wire interface because of the 4 signals, MISO, MOSI,
@@ -63,3 +59,12 @@ The SPI settings consist of the following:
 The Mynewt SPI HAL does not include built-in SS (Slave Select)
 signaling. It's up to the hal\_spi user to control their own SS pins.
 Typically applications will do this with GPIO.
+
+API
+~~~~~~~~~~
+
+.. doxygengroup:: HALSpi
+    :content-only:
+    :members:
+
+

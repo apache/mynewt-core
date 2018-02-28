@@ -4,10 +4,11 @@ OS User Guide
 .. toctree::
    :hidden:
 
-   OS Core <core_os/mynewt_os>
-   core_os/porting/port_os
-   modules/console/console
-   modules/sysinitconfig/sysinitconfig
+   Kernel <core_os/mynewt_os>
+   Hardware Abstraction <modules/hal/hal>
+   Porting Guide <core_os/porting/port_os>
+   System Configuration <modules/sysinitconfig/sysinitconfig>
+   Console <modules/console/console>
 
 This guide provides comprehensive information about Mynewt OS, the
 real-time operating system for embedded systems. It is intended both for

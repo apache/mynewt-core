@@ -17,6 +17,14 @@
  * under the License.
  */
 
+
+/**
+ * @addtogroup HAL
+ * @{
+ *   @defgroup HALGpio HAL GPIO
+ *   @{
+ */
+
 #ifndef H_HAL_GPIO_
 #define H_HAL_GPIO_
 
@@ -24,13 +32,16 @@
 extern "C" {
 #endif
 
-/*
+/**
  * The "mode" of the gpio. The gpio is either an input, output, or it is
  * "not connected" (the pin specified is not functioning as a gpio)
  */
 enum hal_gpio_mode_e {
+    /** Not connected */
     HAL_GPIO_MODE_NC = -1,
+    /** Input */
     HAL_GPIO_MODE_IN = 0,
+    /** Output */
     HAL_GPIO_MODE_OUT = 1
 };
 typedef enum hal_gpio_mode_e hal_gpio_mode_t;
@@ -39,9 +50,12 @@ typedef enum hal_gpio_mode_e hal_gpio_mode_t;
  * The "pull" of the gpio. This is either an input or an output.
  */
 enum hal_gpio_pull {
-    HAL_GPIO_PULL_NONE = 0,     /* pull-up/down not enabled */
-    HAL_GPIO_PULL_UP = 1,       /* pull-up enabled */
-    HAL_GPIO_PULL_DOWN = 2      /* pull-down enabled */
+    /** Pull-up/down not enabled */
+    HAL_GPIO_PULL_NONE = 0,
+    /** Pull-up enabled */
+    HAL_GPIO_PULL_UP = 1,
+    /** Pull-down enabled */
+    HAL_GPIO_PULL_DOWN = 2
 };
 typedef enum hal_gpio_pull hal_gpio_pull_t;
 
@@ -50,11 +64,16 @@ typedef enum hal_gpio_pull hal_gpio_pull_t;
  */
 enum hal_gpio_irq_trigger {
     HAL_GPIO_TRIG_NONE = 0,
-    HAL_GPIO_TRIG_RISING = 1,   /* IRQ occurs on rising edge */
-    HAL_GPIO_TRIG_FALLING = 2,  /* IRQ occurs on falling edge */
-    HAL_GPIO_TRIG_BOTH = 3,     /* IRQ occurs on either edge */
-    HAL_GPIO_TRIG_LOW = 4,      /* IRQ occurs when line is low */
-    HAL_GPIO_TRIG_HIGH = 5      /* IRQ occurs when line is high */
+    /** IRQ occurs on rising edge */
+    HAL_GPIO_TRIG_RISING = 1,
+    /** IRQ occurs on falling edge */
+    HAL_GPIO_TRIG_FALLING = 2,
+    /** IRQ occurs on either edge */
+    HAL_GPIO_TRIG_BOTH = 3,
+    /** IRQ occurs when line is low */
+    HAL_GPIO_TRIG_LOW = 4,
+    /** IRQ occurs when line is high */
+    HAL_GPIO_TRIG_HIGH = 5
 };
 typedef enum hal_gpio_irq_trigger hal_gpio_irq_trig_t;
 
@@ -62,8 +81,6 @@ typedef enum hal_gpio_irq_trigger hal_gpio_irq_trig_t;
 typedef void (*hal_gpio_irq_handler_t)(void *arg);
 
 /**
- * gpio init in
- *
  * Initializes the specified pin as an input
  *
  * @param pin   Pin number to set as input
@@ -74,8 +91,6 @@ typedef void (*hal_gpio_irq_handler_t)(void *arg);
 int hal_gpio_init_in(int pin, hal_gpio_pull_t pull);
 
 /**
- * gpio init out
- *
  * Initialize the specified pin as an output, setting the pin to the specified
  * value.
  *
@@ -87,8 +102,6 @@ int hal_gpio_init_in(int pin, hal_gpio_pull_t pull);
 int hal_gpio_init_out(int pin, int val);
 
 /**
- * gpio write
- *
  * Write a value (either high or low) to the specified pin.
  *
  * @param pin Pin to set
@@ -97,10 +110,7 @@ int hal_gpio_init_out(int pin, int val);
 void hal_gpio_write(int pin, int val);
 
 /**
- * gpio read
- *
  * Reads the specified pin.
- *
  *
  * @param pin Pin number to read
  *
@@ -109,8 +119,6 @@ void hal_gpio_write(int pin, int val);
 int hal_gpio_read(int pin);
 
 /**
- * gpio toggle
- *
  * Toggles the specified pin
  *
  * @param pin Pin number to toggle
@@ -119,10 +127,39 @@ int hal_gpio_read(int pin);
  */
 int hal_gpio_toggle(int pin);
 
+/**
+ * Initialize a given pin to trigger a GPIO IRQ callback.
+ *
+ * @param pin     The pin to trigger GPIO interrupt on
+ * @param handler The handler function to call
+ * @param arg     The argument to provide to the IRQ handler
+ * @param trig    The trigger mode (e.g. rising, falling)
+ * @param pull    The mode of the pin (e.g. pullup, pulldown)
+ *
+ * @return 0 on success, non-zero error code on failure.
+ */
 int hal_gpio_irq_init(int pin, hal_gpio_irq_handler_t handler, void *arg,
                       hal_gpio_irq_trig_t trig, hal_gpio_pull_t pull);
+
+/**
+ * Release a pin from being configured to trigger IRQ on state change.
+ *
+ * @param pin The pin to release
+ */
 void hal_gpio_irq_release(int pin);
+
+/**
+ * Enable IRQs on the passed pin
+ *
+ * @param pin The pin to enable IRQs on
+ */
 void hal_gpio_irq_enable(int pin);
+
+/**
+ * Disable IRQs on the passed pin
+ *
+ * @param pin The pin to disable IRQs on
+ */
 void hal_gpio_irq_disable(int pin);
 
 
@@ -131,3 +168,8 @@ void hal_gpio_irq_disable(int pin);
 #endif
 
 #endif /* H_HAL_GPIO_ */
+
+/**
+ *   @} HALGpio
+ * @} HAL
+ */

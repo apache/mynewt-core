@@ -1,5 +1,5 @@
-Mynewt Core OS
-==============
+Apache Mynewt Operating System Kernel
+======================================
 
 .. toctree::
    :hidden:
