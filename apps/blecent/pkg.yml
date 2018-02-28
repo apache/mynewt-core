@@ -26,6 +26,7 @@ pkg.deps:
     - kernel/os 
     - net/nimble/controller
     - net/nimble/host
+    - net/nimble/host/util
     - net/nimble/host/services/gap
     - net/nimble/host/services/gatt
     - net/nimble/host/store/ram
