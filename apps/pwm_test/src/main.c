@@ -22,19 +22,22 @@
 #include <pwm/pwm.h>
 #include <bsp/bsp.h>
 #include <easing/easing.h>
+#include <console/console.h>
 
 struct pwm_dev *pwm;
 static uint32_t pwm_freq = 1000;
-static uint32_t max_steps = 2000; /* two seconds motion up/down */
+static uint32_t max_steps = 500; /* two seconds motion up/down */
 static uint16_t top_val;
 static volatile uint32_t step = 0;
 static volatile bool up = false;
+static volatile int func_num = 1;
+static easing_int_func_t easing_funct = sine_int_io;
 
 static void
-pwm_handler(void* unused)
+pwm_cycle_handler(void* unused)
 {
     int16_t eased;
-    eased = sine_int_io(step, max_steps, top_val);
+    eased = easing_funct(step, max_steps, top_val);
     pwm_enable_duty_cycle(pwm, 0, eased);
     if (step >= max_steps || step <= 0) {
         up = !up;
@@ -43,18 +46,70 @@ pwm_handler(void* unused)
     step += (up) ? 1 : -1;
 }
 
+static void
+pwm_end_seq_handler(void* chan_conf)
+{
+    int rc;
+    step = 0;
+    up = false;
+
+    switch (func_num)
+    {
+    case 0:
+        easing_funct = sine_int_io;
+        console_printf ("Easing: sine io\n");
+        break;
+    case 1:
+        easing_funct = bounce_int_io;
+        console_printf ("Easing: bounce io\n");
+        break;
+    case 2:
+        easing_funct = circular_int_io;
+        console_printf ("Easing: circular io\n");
+        break;
+    case 3:
+        easing_funct = quadratic_int_io;
+        console_printf ("Easing: quadratic io\n");
+        break;
+    case 4:
+        easing_funct = cubic_int_io;
+        console_printf ("Easing: cubic io\n");
+        break;
+    case 5:
+        easing_funct = quartic_int_io;
+        console_printf ("Easing: quartic io\n");
+        break;
+    default:
+        easing_funct = quintic_int_io;
+        console_printf ("Easing: quintic io\n");
+    }
+
+    if (func_num > 5) {
+        func_num = 0;
+    } else {
+        func_num++;
+    }
+    rc = pwm_enable_duty_cycle(pwm, 0, top_val);
+    assert(rc == 0);
+}
+
 int
 pwm_init(void)
 {
     struct pwm_chan_cfg chan_conf = {
         .pin = LED_BLINK_PIN,
         .inverted = true,
-        .cycle_handler = pwm_handler, /* this won't work on soft_pwm */
-        .cycle_int_prio = 3,
-        .data = NULL
+        .int_prio = 3,
+        .n_cycles = pwm_freq * 5, /* 5 seconds */
+        .cycle_handler = pwm_cycle_handler, /* this won't work on soft_pwm */
+        .cycle_data = NULL,
+        .seq_end_handler = pwm_end_seq_handler, /* this won't work on soft_pwm */
+        .seq_end_data = NULL
     };
     uint32_t base_freq;
     int rc;
+
+    chan_conf.seq_end_data = &chan_conf;
 
 #if MYNEWT_VAL(SOFT_PWM)
     pwm = (struct pwm_dev *) os_dev_open("spwm", 0, NULL);
@@ -67,10 +122,12 @@ pwm_init(void)
     base_freq = pwm_get_clock_freq(pwm);
     top_val = (uint16_t) (base_freq / pwm_freq);
 
-    /* setup led 1 - 100% duty cycle*/
+    /* setup led 1 */
     rc = pwm_chan_config(pwm, 0, &chan_conf);
     assert(rc == 0);
 
+    console_printf ("Easing: sine io\n");
+    
     rc = pwm_enable_duty_cycle(pwm, 0, top_val);
     assert(rc == 0);
 
