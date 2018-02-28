@@ -1,4 +1,4 @@
-hal\_system
+System
 ===========
 
 A hardware independent interface for starting and resetting the system.
@@ -13,10 +13,10 @@ implemented in the MCU specific directories e.g. ``hal_reset_cause.c``,
 ``/hw/mcu/nordic/nrf52xxx/src/`` directory for Nordic nRF52 series of
 chips.
 
-Definition
+API
 ~~~~~~~~~~
 
-`hal\_system.h <https://github.com/apache/incubator-mynewt-core/blob/master/hw/hal/include/hal/hal_system.h>`__
+.. doxygengroup:: HALSystem
+    :content-only:
+    :members:
 
-Examples
-~~~~~~~~

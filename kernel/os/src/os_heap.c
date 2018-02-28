@@ -22,13 +22,6 @@
 #include "os/os_mutex.h"
 #include "os/os_heap.h"
 
-/**
- * @addtogroup OSKernel
- * @{
- *   @defgroup OSGeneral
- *   @{
- */
-
 #if MYNEWT_VAL(OS_SCHEDULING)
 static struct os_mutex os_malloc_mutex;
 #endif
@@ -59,16 +52,6 @@ os_malloc_unlock(void)
 #endif
 }
 
-/**
- * Operating system level malloc().   This ensures that a safe malloc occurs
- * within the context of the OS.  Depending on platform, the OS may rely on
- * libc's malloc() implementation, which is not guaranteed to be thread-safe.
- * This malloc() will always be thread-safe.
- *
- * @param size The number of bytes to allocate
- *
- * @return A pointer to the memory region allocated.
- */
 void *
 os_malloc(size_t size)
 {
@@ -81,13 +64,6 @@ os_malloc(size_t size)
     return ptr;
 }
 
-/**
- * Operating system level free().  See description of os_malloc() for reasoning.
- *
- * Free's memory allocated by malloc.
- *
- * @param mem The memory to free.
- */
 void
 os_free(void *mem)
 {
@@ -96,16 +72,6 @@ os_free(void *mem)
     os_malloc_unlock();
 }
 
-/**
- * Operating system level realloc(). See description of os_malloc() for reasoning.
- *
- * Reallocates the memory at ptr, to be size contiguouos bytes.
- *
- * @param ptr A pointer to the memory to allocate
- * @param size The number of contiguouos bytes to allocate at that location
- *
- * @return A pointer to memory of size, or NULL on failure to allocate
- */
 void *
 os_realloc(void *ptr, size_t size)
 {
@@ -118,7 +84,3 @@ os_realloc(void *ptr, size_t size)
     return new_ptr;
 }
 
-/**
- *   @} OSGeneral
- * @} OS Kernel
- */

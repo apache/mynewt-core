@@ -28,15 +28,7 @@ _exit(int status)
     hal_system_reset();
 }
 
-/**
- * Extracts CPOL and CPHA values from a data-mode constant.
- *
- * @param data_mode             The HAL_SPI_MODE value to convert.
- * @param out_cpol              The CPOL gets written here on success.
- * @param out_cpha              The CPHA gets written here on success.
- *
- * @return                      0 on success; nonzero on invalid input.
- */
+
 int
 hal_spi_data_mode_breakout(uint8_t data_mode, int *out_cpol, int *out_cpha)
 {

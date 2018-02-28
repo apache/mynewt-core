@@ -16,6 +16,14 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
+/**
+ * @addtogroup HAL
+ * @{
+ *   @defgroup HALOsTick HAL OS Tick
+ *   @{
+ */
+
 #ifndef H_HAL_OS_TICK_
 #define H_HAL_OS_TICK_
 
@@ -25,14 +33,19 @@ extern "C" {
 
 #include <os/os_time.h>
 
-/*
+/**
  * Set up the periodic timer to interrupt at a frequency of 'os_ticks_per_sec'.
  * 'prio' is the cpu-specific priority of the periodic timer interrupt.
+ *
+ * @param os_ticks_per_sec Frequency of the OS tick timer
+ * @param prio             Priority of the OS tick timer
  */
 void os_tick_init(uint32_t os_ticks_per_sec, int prio);
 
-/*
+/**
  * Halt CPU for up to 'n' ticks.
+ *
+ * @param n The number of ticks to halt the CPU for
  */
 void os_tick_idle(os_time_t n);
 
@@ -42,3 +55,8 @@ void os_tick_idle(os_time_t n);
 #endif
 
 #endif /* H_HAL_OS_TICK_ */
+
+/**
+ *   @} HALOsTick
+ * @} HAL
+ */
