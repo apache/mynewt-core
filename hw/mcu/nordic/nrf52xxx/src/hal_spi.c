@@ -402,25 +402,33 @@ hal_spi_init_master(struct nrf52_hal_spi *spi,
                     nrf52_spi_irq_handler_t handler)
 {
     NRF_SPIM_Type *spim;
+    NRF_GPIO_Type *port;
+    uint32_t pin;
 
     /* Configure SCK */
+    port = HAL_GPIO_PORT(cfg->sck_pin);
+    pin = HAL_GPIO_INDEX(cfg->sck_pin);
     if (spi->spi_cfg.data_mode <= HAL_SPI_MODE1) {
-        NRF_P0->OUTCLR = (1UL << cfg->sck_pin);
+        port->OUTCLR = (1UL << pin);
     } else {
-        NRF_P0->OUTSET = (1UL << cfg->sck_pin);
+        port->OUTSET = (1UL << pin);
     }
-    NRF_P0->PIN_CNF[cfg->sck_pin] =
+    port->PIN_CNF[pin] =
         (GPIO_PIN_CNF_DIR_Output << GPIO_PIN_CNF_DIR_Pos) |
         (GPIO_PIN_CNF_INPUT_Connect << GPIO_PIN_CNF_INPUT_Pos);
 
     /*  Configure MOSI */
-    NRF_P0->OUTCLR = (1UL << cfg->mosi_pin);
-    NRF_P0->PIN_CNF[cfg->mosi_pin] =
+    port = HAL_GPIO_PORT(cfg->mosi_pin);
+    pin = HAL_GPIO_INDEX(cfg->mosi_pin);
+    port->OUTCLR = (1UL << pin);
+    port->PIN_CNF[pin] =
         ((uint32_t)GPIO_PIN_CNF_DIR_Output << GPIO_PIN_CNF_DIR_Pos) |
         ((uint32_t)GPIO_PIN_CNF_INPUT_Disconnect << GPIO_PIN_CNF_INPUT_Pos);
 
     /* Configure MISO */
-    NRF_P0->PIN_CNF[cfg->miso_pin] =
+    port = HAL_GPIO_PORT(cfg->miso_pin);
+    pin = HAL_GPIO_INDEX(cfg->miso_pin);
+    port->PIN_CNF[pin] =
         ((uint32_t)GPIO_PIN_CNF_DIR_Input << GPIO_PIN_CNF_DIR_Pos) |
         ((uint32_t)GPIO_PIN_CNF_INPUT_Connect << GPIO_PIN_CNF_INPUT_Pos);
 
@@ -444,21 +452,32 @@ hal_spi_init_slave(struct nrf52_hal_spi *spi,
                    nrf52_spi_irq_handler_t handler)
 {
     NRF_SPIS_Type *spis;
+    NRF_GPIO_Type *port;
+    uint32_t pin;
 
-    NRF_P0->PIN_CNF[cfg->miso_pin] =
+    /* NOTE: making this pin an input is correct! See datasheet */
+    port = HAL_GPIO_PORT(cfg->miso_pin);
+    pin = HAL_GPIO_INDEX(cfg->miso_pin);
+    port->PIN_CNF[pin] =
         ((uint32_t)GPIO_PIN_CNF_DIR_Input << GPIO_PIN_CNF_DIR_Pos) |
         ((uint32_t)GPIO_PIN_CNF_INPUT_Connect << GPIO_PIN_CNF_INPUT_Pos);
 
-    NRF_P0->PIN_CNF[cfg->mosi_pin] =
+    port = HAL_GPIO_PORT(cfg->mosi_pin);
+    pin = HAL_GPIO_INDEX(cfg->mosi_pin);
+    port->PIN_CNF[pin] =
         ((uint32_t)GPIO_PIN_CNF_DIR_Input << GPIO_PIN_CNF_DIR_Pos) |
         ((uint32_t)GPIO_PIN_CNF_INPUT_Connect << GPIO_PIN_CNF_INPUT_Pos);
 
-    NRF_P0->PIN_CNF[cfg->ss_pin] =
+    port = HAL_GPIO_PORT(cfg->ss_pin);
+    pin = HAL_GPIO_INDEX(cfg->ss_pin);
+    port->PIN_CNF[pin] =
         ((uint32_t)GPIO_PIN_CNF_DIR_Input << GPIO_PIN_CNF_DIR_Pos) |
         ((uint32_t)GPIO_PIN_CNF_PULL_Pullup  << GPIO_PIN_CNF_PULL_Pos) |
         ((uint32_t)GPIO_PIN_CNF_INPUT_Connect << GPIO_PIN_CNF_INPUT_Pos);
 
-    NRF_P0->PIN_CNF[cfg->sck_pin] =
+    port = HAL_GPIO_PORT(cfg->sck_pin);
+    pin = HAL_GPIO_INDEX(cfg->sck_pin);
+    port->PIN_CNF[pin] =
         ((uint32_t)GPIO_PIN_CNF_DIR_Input << GPIO_PIN_CNF_DIR_Pos) |
         ((uint32_t)GPIO_PIN_CNF_INPUT_Connect << GPIO_PIN_CNF_INPUT_Pos);
 
@@ -730,7 +749,6 @@ uint16_t hal_spi_tx_val(int spi_num, uint16_t val)
         while (!spi->EVENTS_READY) {}
         spi->EVENTS_READY = 0;
         retval = (uint16_t)spi->RXD;
-
     } else {
         retval = 0xFFFF;
     }
