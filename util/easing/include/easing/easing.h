@@ -85,7 +85,7 @@ int32_t quadratic_int_io(int32_t step, int32_t max_steps, int32_t max_val);
 /* Cubic */
 int32_t cubic_int_in(int32_t step, int32_t max_steps, int32_t max_val);
 int32_t cubic_int_out(int32_t step, int32_t max_steps, int32_t max_val);
-int32_t cubic_int_int_io(int32_t step, int32_t max_steps, int32_t max_val);
+int32_t cubic_int_io(int32_t step, int32_t max_steps, int32_t max_val);
 
 /* Quartic */
 int32_t quartic_int_in(int32_t step, int32_t max_steps, int32_t max_val);
@@ -93,9 +93,9 @@ int32_t quartic_int_out(int32_t step, int32_t max_steps, int32_t max_val);
 int32_t quartic_int_io(int32_t step, int32_t max_steps, int32_t max_val);
 
 /* Qintic */
-int32_t qintic_int_in(int32_t step, int32_t max_steps, int32_t max_val);
-int32_t qintic_int_out(int32_t step, int32_t max_steps, int32_t max_val);
-int32_t qintic_int_io(int32_t step, int32_t max_steps, int32_t max_val);
+int32_t quintic_int_in(int32_t step, int32_t max_steps, int32_t max_val);
+int32_t quintic_int_out(int32_t step, int32_t max_steps, int32_t max_val);
+int32_t quintic_int_io(int32_t step, int32_t max_steps, int32_t max_val);
 
 /* Circular */
 int32_t circular_int_in(int32_t step, int32_t max_steps, int32_t max_val);
