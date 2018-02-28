@@ -45,6 +45,7 @@
 #include "stm32_eth/stm32_eth.h"
 #include "stm32_eth/stm32_eth_cfg.h"
 #endif
+#include "mcu/stm32_hal.h"
 #include "mcu/stm32f4_bsp.h"
 #include "mcu/stm32f4xx_mynewt_hal.h"
 
@@ -267,7 +268,7 @@ static struct stm32f4_hal_i2c_cfg i2c_cfg0 = {
 #endif
 
 #if MYNEWT_VAL(SPI_0_SLAVE) || MYNEWT_VAL(SPI_0_MASTER)
-struct stm32f4_hal_spi_cfg spi0_cfg = {
+struct stm32_hal_spi_cfg spi0_cfg = {
     .ss_pin = MCU_GPIO_PORTA(4),		/* PA4 */
     .sck_pin  = MCU_GPIO_PORTA(5),		/* PA5 */
     .miso_pin = MCU_GPIO_PORTA(6),		/* PA6 */
