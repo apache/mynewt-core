@@ -21,25 +21,6 @@
 #include "os/os_trace_api.h"
 #include <assert.h>
 
-/**
- * @addtogroup OSKernel
- * @{
- *   @defgroup OSMutex Mutexes
- *   @{
- */
-
-
-/**
- * os mutex create
- *
- * Create a mutex and initialize it.
- *
- * @param mu Pointer to mutex
- *
- * @return os_error_t
- *      OS_INVALID_PARM     Mutex passed in was NULL.
- *      OS_OK               no error.
- */
 os_error_t
 os_mutex_init(struct os_mutex *mu)
 {
@@ -58,18 +39,6 @@ os_mutex_init(struct os_mutex *mu)
     return OS_OK;
 }
 
-/**
- * os mutex release
- *
- * Release a mutex.
- *
- * @param mu Pointer to the mutex to be released
- *
- * @return os_error_t
- *      OS_INVALID_PARM Mutex passed in was NULL.
- *      OS_BAD_MUTEX    Mutex was not granted to current task (not owner).
- *      OS_OK           No error
- */
 os_error_t
 os_mutex_release(struct os_mutex *mu)
 {
@@ -145,22 +114,6 @@ os_mutex_release(struct os_mutex *mu)
     return OS_OK;
 }
 
-/**
- * os mutex pend
- *
- * Pend (wait) for a mutex.
- *
- * @param mu Pointer to mutex.
- * @param timeout Timeout, in os ticks. A timeout of 0 means do
- *                not wait if not available. A timeout of
- *                0xFFFFFFFF means wait forever.
- *
- *
- * @return os_error_t
- *      OS_INVALID_PARM     Mutex passed in was NULL.
- *      OS_TIMEOUT          Mutex was owned by another task and timeout=0
- *      OS_OK               no error.
- */
 os_error_t
 os_mutex_pend(struct os_mutex *mu, uint32_t timeout)
 {
@@ -255,8 +208,3 @@ os_mutex_pend(struct os_mutex *mu, uint32_t timeout)
     return rc;
 }
 
-
-/**
- *   @} OSMutex
- * @} OSKernel
- */

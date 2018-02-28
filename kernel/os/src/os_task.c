@@ -25,12 +25,6 @@
 #include <assert.h>
 #include <string.h>
 
-/**
- * @addtogroup OSKernel
- * @{
- *   @defgroup OSTask Tasks
- *   @{
- */
 
 uint8_t g_task_id;
 
@@ -60,38 +54,12 @@ os_task_next_id(void)
     return (rc);
 }
 
-/**
- * Return the number of tasks initialized.
- *
- * @return number of tasks initialized
- */
 uint8_t
 os_task_count(void)
 {
     return (g_task_id);
 }
 
-/**
- * Initialize a task.
- *
- * This function initializes the task structure pointed to by t,
- * clearing and setting it's stack pointer, provides sane defaults
- * and sets the task as ready to run, and inserts it into the operating
- * system scheduler.
- *
- * @param t The task to initialize
- * @param name The name of the task to initialize
- * @param func The task function to call
- * @param arg The argument to pass to this task function
- * @param prio The priority at which to run this task
- * @param sanity_itvl The time at which this task should check in with the
- *                    sanity task.  OS_WAIT_FOREVER means never check in
- *                    here.
- * @param stack_bottom A pointer to the bottom of a task's stack
- * @param stack_size The overall size of the task's stack.
- *
- * @return 0 on success, non-zero on failure.
- */
 int
 os_task_init(struct os_task *t, const char *name, os_task_func_t func,
         void *arg, uint8_t prio, os_time_t sanity_itvl,
@@ -154,11 +122,6 @@ err:
     return (rc);
 }
 
-/*
- * Removes specified task
- * XXX
- * NOTE: This interface is currently experimental and not ready for common use
- */
 int
 os_task_remove(struct os_task *t)
 {
@@ -203,36 +166,7 @@ os_task_remove(struct os_task *t)
     return rc;
 }
 
-/**
- * Iterate through tasks, and return the following information about them:
- *
- * - Priority
- * - Task ID
- * - State (ACTIVE, SLEEP)
- * - Total Stack Usage
- * - Stack Size
- * - Context Switch Count
- * - Runtime
- * - Last & Next Sanity checkin
- * - Task Name
- *
- * To get the first task in the list, call os_task_info_get_next() with a
- * NULL pointer in the prev argument, and os_task_info_get_next() will
- * return a pointer to the task structure, and fill out the os_task_info
- * structure pointed to by oti.
- *
- * To get the next task in the list, provide the task structure returned
- * by the previous call to os_task_info_get_next(), and os_task_info_get_next()
- * will fill out the task structure pointed to by oti again, and return
- * the next task in the list.
- *
- * @param prev The previous task returned by os_task_info_get_next(), or NULL
- *             to begin iteration.
- * @param oti  The OS task info structure to fill out.
- *
- * @return A pointer to the OS task that has been read, or NULL when finished
- *         iterating through all tasks.
- */
+
 struct os_task *
 os_task_info_get_next(const struct os_task *prev, struct os_task_info *oti)
 {
@@ -278,7 +212,3 @@ os_task_info_get_next(const struct os_task *prev, struct os_task_info *oti)
     return (next);
 }
 
-/**
- *   @} OSTask
- * @} OSKernel
- */

@@ -1,24 +1,21 @@
-Mynewt Core OS
-==============
+Apache Mynewt Operating System Kernel
+======================================
 
 .. toctree::
    :hidden:
 
    context_switch/context_switch
+   task/task
+   mutex/mutex
+   semaphore/semaphore
+   event_queue/event_queue
+   callout/callout
+   heap/heap
+   memory_pool/memory_pool
+   mbuf/mbuf
    cputime/os_cputime
    time/os_time
-   task/task
-   event_queue/event_queue
-   semaphore/semaphore
-   mutex/mutex
-   memory_pool/memory_pool
-   heap/heap
-   mbuf/mbuf
-   msys/msys
-   mqueue/mqueue
    sanity/sanity
-   callout/callout
-   API <API>
 
 The Mynewt Core OS is a multitasking, preemptive real-time operating
 system combining a scheduler with typical RTOS features such as mutexes,
@@ -123,7 +120,7 @@ initialization" function, and dispatches events from the default event
 queue. The application task initialization function is responsible for
 initializing all the data objects that each task exposes to the other
 tasks. The tasks themselves are also initialized at this time (by
-calling ``os_task_init()``).
+calling :c:func:`os_task_init()`).
 
 In the example, each task works in a ping-pong like fashion: task 1
 wakes up, adds a token to semaphore 1 and then waits for a token from
@@ -131,8 +128,8 @@ semaphore 2. Task 2 waits for a token on semaphore 1 and once it gets
 it, adds a token to semaphore 2. Notice that the semaphores are
 initialized by the application specific task initialization functions
 and not inside the task handler functions. If task 2 (being lower in
-priority than task 1) had called os_sem_init() for task2_sem inside
-task2_handler(), task 1 would have called os_sem_pend() using
+priority than task 1) had called :c:func:`os_sem_init()` for task2_sem inside
+task2_handler(), task 1 would have called :c:func:`os_sem_pend()` using
 task2_sem before task2_sem was initialized.
 
 .. code:: c

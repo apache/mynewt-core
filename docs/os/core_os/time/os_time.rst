@@ -68,7 +68,7 @@ Functions
 Function            	          Description
 =============================== ====================
 :c:func:`os_time_advance()`	    Increments the OS time tick for the system.
-:c:func:`os_time_delay()`	      Put the current task to sleep for the given number of ticks.
+:c:func:`os_time_delay()`	    Put the current task to sleep for the given number of ticks.
 :c:func:`os_time_get()`	        Get the current value of OS time.
 :c:func:`os_time_ms_to_ticks()`	Converts milliseconds to os ticks.
 :c:func:`os_get_uptime_usec()`	Gets the time duration since boot.
@@ -117,3 +117,11 @@ the OS time epoch is 49.7 days.
 If two times are more than 1/2 the OS time epoch apart, any time
 comparison will be incorrect. Ensure at design time that comparisons
 will not occur between times that are more than half the OS time epoch.
+
+
+API
+-----
+
+.. doxygengroup:: OSTime
+    :content-only:
+    :members:

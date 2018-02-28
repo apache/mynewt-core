@@ -23,13 +23,6 @@
 #include <assert.h>
 #include <stdbool.h>
 
-/**
- * @addtogroup OSKernel
- * @{
- *   @defgroup OSMempool Memory Pools
- *   @{
- */
-
 #define OS_MEM_TRUE_BLOCK_SIZE(bsize)   OS_ALIGN(bsize, OS_ALIGNMENT)
 #define OS_MEMPOOL_TRUE_BLOCK_SIZE(mp) OS_MEM_TRUE_BLOCK_SIZE(mp->mp_block_size)
 
@@ -68,19 +61,6 @@ os_mempool_poison_check(void *start, int sz)
 #define os_mempool_poison_check(start, sz)
 #endif
 
-/**
- * os mempool init
- *
- * Initialize a memory pool.
- *
- * @param mp            Pointer to a pointer to a mempool
- * @param blocks        The number of blocks in the pool
- * @param blocks_size   The size of the block, in bytes.
- * @param membuf        Pointer to memory to contain blocks.
- * @param name          Name of the pool.
- *
- * @return os_error_t
- */
 os_error_t
 os_mempool_init(struct os_mempool *mp, uint16_t blocks, uint32_t block_size,
                 void *membuf, char *name)
@@ -138,19 +118,6 @@ os_mempool_init(struct os_mempool *mp, uint16_t blocks, uint32_t block_size,
     return OS_OK;
 }
 
-/**
- * Initializes an extended memory pool.  Extended attributes (e.g., callbacks)
- * are not specified when this function is called; they are assigned manually
- * after initialization.
- *
- * @param mpe           The extended memory pool to initialize.
- * @param blocks        The number of blocks in the pool.
- * @param block_size    The size of each block, in bytes.
- * @param membuf        Pointer to memory to contain blocks.
- * @param name          Name of the pool.
- *
- * @return os_error_t
- */
 os_error_t
 os_mempool_ext_init(struct os_mempool_ext *mpe, uint16_t blocks,
                     uint32_t block_size, void *membuf, char *name)
@@ -169,16 +136,6 @@ os_mempool_ext_init(struct os_mempool_ext *mpe, uint16_t blocks,
     return 0;
 }
 
-/**
- * Performs an integrity check of the specified mempool.  This function
- * attempts to detect memory corruption in the specified memory pool.
- *
- * @param mp                    The mempool to check.
- *
- * @return                      true if the memory pool passes the integrity
- *                                  check;
- *                              false if the memory pool is corrupt.
- */
 bool
 os_mempool_is_sane(const struct os_mempool *mp)
 {
@@ -195,15 +152,6 @@ os_mempool_is_sane(const struct os_mempool *mp)
     return true;
 }
 
-/**
- * Checks if a memory block was allocated from the specified mempool.
- *
- * @param mp                    The mempool to check as parent.
- * @param block_addr            The memory block to check as child.
- *
- * @return                      0 if the block does not belong to the mempool;
- *                              1 if the block does belong to the mempool.
- */
 int
 os_memblock_from(const struct os_mempool *mp, const void *block_addr)
 {
@@ -231,15 +179,6 @@ os_memblock_from(const struct os_mempool *mp, const void *block_addr)
     return 1;
 }
 
-/**
- * os memblock get
- *
- * Get a memory block from a memory pool
- *
- * @param mp Pointer to the memory pool
- *
- * @return void* Pointer to block if available; NULL otherwise
- */
 void *
 os_memblock_get(struct os_mempool *mp)
 {
@@ -272,18 +211,6 @@ os_memblock_get(struct os_mempool *mp)
     return (void *)block;
 }
 
-/**
- * os memblock put from cb
- *
- * Puts the memory block back into the pool, ignoring the put callback, if any.
- * This function should only be called from a put callback to free a block
- * without causing infinite recursion.
- *
- * @param mp Pointer to memory pool
- * @param block_addr Pointer to memory block
- *
- * @return os_error_t
- */
 os_error_t
 os_memblock_put_from_cb(struct os_mempool *mp, void *block_addr)
 {
@@ -308,16 +235,6 @@ os_memblock_put_from_cb(struct os_mempool *mp, void *block_addr)
     return OS_OK;
 }
 
-/**
- * os memblock put
- *
- * Puts the memory block back into the pool
- *
- * @param mp Pointer to memory pool
- * @param block_addr Pointer to memory block
- *
- * @return os_error_t
- */
 os_error_t
 os_memblock_put(struct os_mempool *mp, void *block_addr)
 {
@@ -384,7 +301,3 @@ os_mempool_info_get_next(struct os_mempool *mp, struct os_mempool_info *omi)
 }
 
 
-/**
- *   @} OSMempool
- * @} OSKernel
- */

@@ -23,31 +23,8 @@
 #include "os/os.h"
 #include "os_priv.h"
 
-/**
- * @addtogroup OSKernel
- * @{
- *   @defgroup OSCallouts Event Timers (Callouts)
- *   @{
- */
 struct os_callout_list g_callout_list;
 
-/**
- * Initialize a callout.
- *
- * Callouts are used to schedule events in the future onto a task's event
- * queue.  Callout timers are scheduled using the os_callout_reset()
- * function.  When the timer expires, an event is posted to the event
- * queue specified in os_callout_init().  The event argument given here
- * is posted in the ev_arg field of that event.
- *
- * @param c The callout to initialize
- * @param evq The event queue to post an OS_EVENT_T_TIMER event to
- * @param timo_func The function to call on this callout for the host task
- *                  used to provide multiple timer events to a task
- *                  (this can be NULL.)
- * @param ev_arg The argument to provide to the event when posting the
- *               timer.
- */
 void os_callout_init(struct os_callout *c, struct os_eventq *evq,
                      os_event_fn *ev_cb, void *ev_arg)
 {
@@ -57,11 +34,6 @@ void os_callout_init(struct os_callout *c, struct os_eventq *evq,
     c->c_evq = evq;
 }
 
-/**
- * Stop the callout from firing off, any pending events will be cleared.
- *
- * @param c The callout to stop
- */
 void
 os_callout_stop(struct os_callout *c)
 {
@@ -81,14 +53,6 @@ os_callout_stop(struct os_callout *c)
     OS_EXIT_CRITICAL(sr);
 }
 
-/**
- * Reset the callout to fire off in 'ticks' ticks.
- *
- * @param c The callout to reset
- * @param ticks The number of ticks to wait before posting an event
- *
- * @return 0 on success, non-zero on failure
- */
 int
 os_callout_reset(struct os_callout *c, int32_t ticks)
 {
@@ -130,6 +94,7 @@ os_callout_reset(struct os_callout *c, int32_t ticks)
 err:
     return (rc);
 }
+
 
 /**
  * This function is called by the OS in the time tick.  It searches the list
@@ -201,15 +166,9 @@ os_callout_wakeup_ticks(os_time_t now)
     return (rt);
 }
 
-/*
- * Returns the number of ticks which remains to callout..
- *
- * @param c callout
- * @param now The time now
- *
- * @return Number of ticks to first pending callout
- */
-os_time_t os_callout_remaining_ticks(struct os_callout *c, os_time_t now)
+
+os_time_t
+os_callout_remaining_ticks(struct os_callout *c, os_time_t now)
 {
     os_time_t rt;
 
@@ -224,7 +183,3 @@ os_time_t os_callout_remaining_ticks(struct os_callout *c, os_time_t now)
     return rt;
 }
 
-/**
- *   @} Callout Timers
- * @} OS Kernel
- */

@@ -20,32 +20,12 @@
 #include "os/os.h"
 #include <assert.h>
 
-
-/**
- * @addtogroup OSKernel
- * @{
- *   @defgroup OSSem Semaphores
- *   @{
- */
-
 /* XXX:
  * 1) Should I check to see if we are within an ISR for some of these?
  * 2) Would I do anything different for os_sem_release() if we were in an
  *    ISR when this was called?
  */
 
-/**
- * os sem initialize
- *
- * Initialize a semaphore
- *
- * @param sem Pointer to semaphore
- *        tokens: # of tokens the semaphore should contain initially.
- *
- * @return os_error_t
- *      OS_INVALID_PARM     Semaphore passed in was NULL.
- *      OS_OK               no error.
- */
 os_error_t
 os_sem_init(struct os_sem *sem, uint16_t tokens)
 {
@@ -59,17 +39,6 @@ os_sem_init(struct os_sem *sem, uint16_t tokens)
     return OS_OK;
 }
 
-/**
- * os sem release
- *
- * Release a semaphore.
- *
- * @param sem Pointer to the semaphore to be released
- *
- * @return os_error_t
- *      OS_INVALID_PARM Semaphore passed in was NULL.
- *      OS_OK No error
- */
 os_error_t
 os_sem_release(struct os_sem *sem)
 {
@@ -120,22 +89,6 @@ os_sem_release(struct os_sem *sem)
     return OS_OK;
 }
 
-/**
- * os sem pend
- *
- * Pend (wait) for a semaphore.
- *
- * @param mu Pointer to semaphore.
- * @param timeout Timeout, in os ticks. A timeout of 0 means do
- *                not wait if not available. A timeout of
- *                0xFFFFFFFF means wait forever.
- *
- *
- * @return os_error_t
- *      OS_INVALID_PARM     Semaphore passed in was NULL.
- *      OS_TIMEOUT          Semaphore was owned by another task and timeout=0
- *      OS_OK               no error.
- */
 os_error_t
 os_sem_pend(struct os_sem *sem, uint32_t timeout)
 {
@@ -219,7 +172,3 @@ os_sem_pend(struct os_sem *sem, uint32_t timeout)
 }
 
 
-/**
- *   @} OSSem
- * @} OSKernel
- */

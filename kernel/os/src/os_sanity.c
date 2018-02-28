@@ -22,25 +22,11 @@
 
 #include "os/os.h"
 
-/**
- * @addtogroup OSKernel
- * @{
- *   @defgroup OSSanity Sanity
- *   @{
- */
-
 SLIST_HEAD(, os_sanity_check) g_os_sanity_check_list =
     SLIST_HEAD_INITIALIZER(os_sanity_check_list);
 
 struct os_mutex g_os_sanity_check_mu;
 
-/**
- * Initialize a sanity check
- *
- * @param sc The sanity check to initialize
- *
- * @return 0 on success, error code on failure.
- */
 int
 os_sanity_check_init(struct os_sanity_check *sc)
 {
@@ -97,13 +83,6 @@ err:
     return (rc);
 }
 
-/**
- * Provide a "task checkin" for the sanity task.
- *
- * @param t The task to check in
- *
- * @return 0 on success, error code on failure
- */
 int
 os_sanity_task_checkin(struct os_task *t)
 {
@@ -124,13 +103,6 @@ err:
 }
 
 
-/**
- * Register a sanity check
- *
- * @param sc The sanity check to register
- *
- * @return 0 on success, error code on failure
- */
 int
 os_sanity_check_register(struct os_sanity_check *sc)
 {
@@ -154,14 +126,6 @@ err:
 }
 
 
-/**
- * Reset the os sanity check, so that it doesn't trip up the
- * sanity timer.
- *
- * @param sc The sanity check to reset
- *
- * @return 0 on success, error code on failure
- */
 int
 os_sanity_check_reset(struct os_sanity_check *sc)
 {
@@ -224,11 +188,6 @@ os_sanity_run(void)
     }
 }
 
-/**
- * Initialize the sanity task and mutex.
- *
- * @return 0 on success, error code on failure
- */
 int
 os_sanity_init(void)
 {
@@ -244,7 +203,3 @@ err:
     return (rc);
 }
 
-/**
- *   @} OSSanity
- * @} OSKernel
- */

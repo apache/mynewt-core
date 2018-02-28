@@ -17,6 +17,13 @@
  * under the License.
  */
 
+/**
+ * @addtogroup HAL
+ * @{
+ *   @defgroup HALFlash HAL Flash
+ *   @{
+ */
+
 #ifndef H_HAL_FLASH_
 #define H_HAL_FLASH_
 
@@ -41,3 +48,8 @@ int hal_flash_init(void);
 #endif
 
 #endif /* H_HAL_FLASH_ */
+
+/**
+ *   @} HALFlash
+ * @} HAL
+ */

@@ -1,4 +1,4 @@
-hal\_watchdog
+Watchdog
 =============
 
 The hardware independent interface to enable internal hardware
@@ -18,15 +18,9 @@ Watchdog needs to be then started with a call to
 ``hal_watchdog_enable()``. Watchdog should be tickled periodically with
 a frequency smaller than 'expire\_secs' using ``hal_watchdog_tickle()``.
 
-Definition
-~~~~~~~~~~
-
-`hal\_watchdog <https://github.com/apache/incubator-mynewt-core/blob/master/hw/hal/include/hal/hal_watchdog.h>`__
-
-Examples
+API
 ~~~~~~~~
 
-The OS initializes and starts a watchdog timer and tickles it
-periodically to check that the OS is running properly. This can be seen
-in
-`/kernel/os/src/os.c <https://github.com/apache/incubator-mynewt-core/blob/master/kernel/os/src/os.c>`__.
+.. doxygengroup:: HALWatchdog
+    :content-only:
+    :members:

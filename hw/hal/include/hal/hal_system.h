@@ -17,6 +17,14 @@
  * under the License.
  */
 
+
+/**
+ * @addtogroup HAL
+ * @{
+ *   @defgroup HALSystem HAL System
+ *   @{
+ */
+
 #ifndef H_HAL_SYSTEM_
 #define H_HAL_SYSTEM_
 
@@ -24,40 +32,54 @@
 extern "C" {
 #endif
 
-/*
+/**
  * System reset.
  */
 void hal_system_reset(void) __attribute((noreturn));
 
-/*
+/**
  * Called by bootloader to start loaded program.
  */
 void hal_system_start(void *img_start) __attribute((noreturn));
 
-/*
+/**
  * Called by split app loader to start the app program.
  */
 void hal_system_restart(void *img_start) __attribute((noreturn));
 
-/*
+/**
  * Returns non-zero if there is a HW debugger attached.
  */
 int hal_debugger_connected(void);
 
-/*
+/**
  * Reboot reason
  */
 enum hal_reset_reason {
-    HAL_RESET_POR = 1,          /* power on reset */
-    HAL_RESET_PIN = 2,          /* caused by reset pin */
-    HAL_RESET_WATCHDOG = 3,     /* watchdog */
-    HAL_RESET_SOFT = 4,         /* system_reset() or equiv */
-    HAL_RESET_BROWNOUT = 5,     /* low supply voltage */
-    HAL_RESET_REQUESTED = 6,    /* restart due to user request */
+    /** Power on Reset */
+    HAL_RESET_POR = 1,
+    /** Caused by Reset Pin */
+    HAL_RESET_PIN = 2,
+    /** Caused by Watchdog */
+    HAL_RESET_WATCHDOG = 3,
+    /** Soft reset, either system reset or crash */
+    HAL_RESET_SOFT = 4,
+    /** Low supply voltage */
+    HAL_RESET_BROWNOUT = 5,
+    /** Restart due to user request */
+    HAL_RESET_REQUESTED = 6,
 };
+
+/**
+ * Return the reboot reason
+ *
+ * @return A reboot reason
+ */
 enum hal_reset_reason hal_reset_cause(void);
 
-/* Starts clocks needed by system */
+/**
+ * Starts clocks needed by system
+ */
 void hal_system_clock_start(void);
 
 #ifdef __cplusplus
@@ -65,3 +87,8 @@ void hal_system_clock_start(void);
 #endif
 
 #endif /* H_HAL_SYSTEM_ */
+
+/**
+ *   @} HALSystem
+ * @} HAL
+ */
