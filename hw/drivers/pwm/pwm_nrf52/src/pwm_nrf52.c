@@ -40,9 +40,13 @@ struct nrf52_pwm_dev_global {
     nrfx_pwm_t drv_instance;
     nrfx_pwm_config_t config;
     nrf_pwm_values_individual_t duty_cycles;
+    uint32_t n_cycles;
+    nrfx_pwm_flag_t flags;
     nrfx_pwm_handler_t internal_handler;
-    user_handler_t user_handler;
-    void* user_data;
+    user_handler_t cycle_handler;
+    user_handler_t seq_end_handler;
+    void* cycle_data;
+    void* seq_end_data;
 };
 
 static struct nrf52_pwm_dev_global instances[] =
@@ -52,10 +56,14 @@ static struct nrf52_pwm_dev_global instances[] =
     [0].playing = false,
     [0].drv_instance = NRFX_PWM_INSTANCE(0),
     [0].config = NRFX_PWM_DEFAULT_CONFIG,
+    [0].flags = NRFX_PWM_FLAG_LOOP,
     [0].duty_cycles = {0},
+    [0].n_cycles = 1,
     [0].internal_handler = NULL,
-    [0].user_handler = NULL,
-    [0].user_data = NULL
+    [0].cycle_handler = NULL,
+    [0].cycle_data = NULL,
+    [0].seq_end_handler = NULL,
+    [0].seq_end_data = NULL
 #endif
 #if MYNEWT_VAL(PWM_1)
     ,
@@ -63,10 +71,14 @@ static struct nrf52_pwm_dev_global instances[] =
     [1].playing = false,
     [1].drv_instance = NRFX_PWM_INSTANCE(1),
     [1].config = NRFX_PWM_DEFAULT_CONFIG,
+    [1].flags = NRFX_PWM_FLAG_LOOP,
     [1].duty_cycles = {0},
+    [1].n_cycles = 1,
     [1].internal_handler = NULL,
-    [1].user_handler = NULL,
-    [1].user_data = NULL
+    [1].cycle_handler = NULL,
+    [1].cycle_data = NULL,
+    [1].seq_end_handler = NULL,
+    [1].seq_end_data = NULL
 #endif
 #if MYNEWT_VAL(PWM_2)
     ,
@@ -74,10 +86,14 @@ static struct nrf52_pwm_dev_global instances[] =
     [2].playing = false,
     [2].drv_instance = NRFX_PWM_INSTANCE(2),
     [2].config = NRFX_PWM_DEFAULT_CONFIG,
+    [2].flags = NRFX_PWM_FLAG_LOOP,
     [2].duty_cycles = {0},
+    [2].n_cycles = 1,
     [2].internal_handler = NULL,
-    [2].user_handler = NULL,
-    [2].user_data = NULL
+    [2].cycle_handler = NULL,
+    [2].cycle_data = NULL,
+    [2].seq_end_handler = NULL,
+    [2].seq_end_data = NULL
 #endif
 #if MYNEWT_VAL(PWM_3)
     ,
@@ -85,19 +101,35 @@ static struct nrf52_pwm_dev_global instances[] =
     [3].playing = false,
     [3].drv_instance = NRFX_PWM_INSTANCE(3),
     [3].config = NRFX_PWM_DEFAULT_CONFIG,
+    [3].flags = NRFX_PWM_FLAG_LOOP,
     [3].duty_cycles = {0},
+    [3].n_cycles = 1,
     [3].internal_handler = NULL,
-    [3].user_handler = NULL,
-    [3].user_data = NULL
+    [3].cycle_handler = NULL,
+    [3].cycle_data = NULL,
+    [3].seq_end_handler = NULL,
+    [3].seq_end_data = NULL
 #endif
 };
 
 #if MYNEWT_VAL(PWM_0)
 static void handler_0(nrfx_pwm_evt_type_t event_type)
 {
-    if (event_type == NRFX_PWM_EVT_FINISHED)
+    switch (event_type)
     {
-        instances[0].user_handler(instances[0].user_data);
+    case NRFX_PWM_EVT_END_SEQ0 :
+    case NRFX_PWM_EVT_END_SEQ1 :
+        instances[0].cycle_handler(instances[0].cycle_data);
+        break;
+
+    case NRFX_PWM_EVT_FINISHED :
+        instances[0].playing = false;
+        nrfx_pwm_uninit(&instances[0].drv_instance);
+        instances[0].seq_end_handler(instances[0].seq_end_data);
+        break;
+
+    default:
+        assert(0);
     }
 }
 #endif
@@ -105,9 +137,21 @@ static void handler_0(nrfx_pwm_evt_type_t event_type)
 #if MYNEWT_VAL(PWM_1)
 static void handler_1(nrfx_pwm_evt_type_t event_type)
 {
-    if (event_type == NRFX_PWM_EVT_FINISHED)
+    switch (event_type)
     {
-        instances[1].user_handler(instances[1].user_data);
+    case NRF_DRV_PWM_EVT_SIGNAL_END_SEQ0 :
+    case NRF_DRV_PWM_EVT_SIGNAL_END_SEQ1 :
+        instances[1].cycle_handler(instances[1].cycle_data);
+        break;
+
+    case NRFX_PWM_EVT_FINISHED :
+        instances[1].playing = false;
+        nrfx_pwm_uninit(&instances[1].drv_instance);
+        instances[1].seq_end_handler(instances[1].seq_end_data);
+        break;
+
+    default:
+        assert(0);
     }
 }
 #endif
@@ -115,19 +159,44 @@ static void handler_1(nrfx_pwm_evt_type_t event_type)
 #if MYNEWT_VAL(PWM_2)
 static void handler_2(nrfx_pwm_evt_type_t event_type)
 {
-    if (event_type == NRFX_PWM_EVT_FINISHED)
+    switch (event_type)
     {
-        instances[2].user_handler(instances[2].user_data);
+    case NRF_DRV_PWM_EVT_SIGNAL_END_SEQ0 :
+    case NRF_DRV_PWM_EVT_SIGNAL_END_SEQ1 :
+        instances[2].cycle_handler(instances[2].cycle_data);
+        break;
+
+    case NRFX_PWM_EVT_FINISHED :
+        instances[2].playing = false;
+        nrfx_pwm_uninit(&instances[2].drv_instance);
+        instances[2].seq_end_handler(instances[2].seq_end_data);
+        break;
+
+    default:
+        assert(0);
     }
+
 }
 #endif
 
 #if MYNEWT_VAL(PWM_3)
 static void handler_3(nrfx_pwm_evt_type_t event_type)
 {
-    if (event_type == NRFX_PWM_EVT_FINISHED)
+    switch (event_type)
     {
-        instances[3].user_handler(instances[3].user_data);
+    case NRF_DRV_PWM_EVT_SIGNAL_END_SEQ0 :
+    case NRF_DRV_PWM_EVT_SIGNAL_END_SEQ1 :
+        instances[3].cycle_handler(instances[3].cycle_data);
+        break;
+
+    case NRFX_PWM_EVT_FINISHED :
+        instances[3].playing = false;
+        nrfx_pwm_uninit(&instances[3].drv_instance);
+        instances[3].seq_end_handler(instances[3].seq_end_data);
+        break;
+
+    default:
+        assert(0);
     }
 }
 #endif
@@ -185,7 +254,10 @@ cleanup_instance(int inst_id)
     instances[inst_id].in_use = false;
     instances[inst_id].playing = false;
     instances[inst_id].internal_handler = NULL;
-    instances[inst_id].user_handler = NULL;
+    instances[inst_id].cycle_handler = NULL;
+    instances[inst_id].seq_end_handler = NULL;
+    instances[inst_id].cycle_data = NULL;
+    instances[inst_id].seq_end_data = NULL;
     memset((uint16_t *) &instances[inst_id].duty_cycles,
            0x00,
            4 * sizeof(uint16_t));
@@ -289,8 +361,8 @@ play_current_config(struct nrf52_pwm_dev_global *instance)
 
     nrfx_pwm_simple_playback(&instance->drv_instance,
                              &seq,
-                             1,
-                             NRFX_PWM_FLAG_LOOP);
+                             instance->n_cycles,
+                             instance->flags);
 }
 
 /**
@@ -308,32 +380,47 @@ nrf52_pwm_configure_channel(struct pwm_dev *dev,
                             struct pwm_chan_cfg *cfg)
 {
     int inst_id = dev->pwm_instance_id;
-    nrfx_pwm_config_t *config = &instances[inst_id].config;
+    struct nrf52_pwm_dev_global *instance = &instances[inst_id];
+    nrfx_pwm_config_t *config = &instance->config;
 
-    if (!instances[inst_id].in_use) {
+    if (!instance->in_use) {
         return (EINVAL);
     }
 
     config->output_pins[cnum] = cfg->pin;
     config->output_pins[cnum] |= (cfg->inverted) ?
         NRFX_PWM_PIN_INVERTED : config->output_pins[cnum];
+    instance->n_cycles = (cfg->n_cycles) ? cfg->n_cycles : 1;
 
-    config->irq_priority = cfg->cycle_int_prio;
-    instances[inst_id].user_handler = (user_handler_t) cfg->cycle_handler;
-    instances[inst_id].internal_handler = (cfg->cycle_handler) ?
-        internal_handlers[inst_id] :
-        NULL;
-    instances[inst_id].user_data = cfg->data;
-
-    if (instances[inst_id].playing) {
-        nrfx_pwm_uninit(&instances[inst_id].drv_instance);
-        nrfx_pwm_init(&instances[inst_id].drv_instance,
-                         &instances[inst_id].config,
-                         instances[inst_id].internal_handler);
-
-        play_current_config(&instances[inst_id]);
+    if (cfg->cycle_handler || cfg->cycle_handler) {
+        config->irq_priority = cfg->int_prio;
+        instance->internal_handler = internal_handlers[inst_id];
+        instance->cycle_handler = (user_handler_t) cfg->cycle_handler;
+        instance->seq_end_handler = (user_handler_t) cfg->seq_end_handler;
+        instance->cycle_data = cfg->cycle_data;
+        instance->seq_end_data = cfg->seq_end_data;
+    } else {
+        instance->internal_handler = NULL;
     }
 
+    instance->flags = (instance->n_cycles > 1) ?
+        0 :
+        NRFX_PWM_FLAG_LOOP;
+    instance->flags |= (cfg->cycle_handler) ?
+        (NRFX_PWM_FLAG_SIGNAL_END_SEQ0 | NRFX_PWM_FLAG_SIGNAL_END_SEQ0) :
+        0;
+    instance->flags |= (cfg->seq_end_handler) ?
+        0 :
+        NRFX_PWM_FLAG_NO_EVT_FINISHED;
+
+    if (instance->playing) {
+        nrfx_pwm_uninit(&instance->drv_instance);
+        nrfx_pwm_init(&instance->drv_instance,
+                         &instance->config,
+                         instance->internal_handler);
+
+        play_current_config(instance);
+    }
     return (0);
 }
 
