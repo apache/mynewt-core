@@ -207,7 +207,7 @@ spim_task_handler(void *arg)
     uint8_t spi_nb_cntr;
     uint8_t spi_b_cntr;
 
-    /* Set the led pin for the E407 devboard */
+    /* Set the led pin */
     g_led_pin = LED_BLINK_PIN;
     hal_gpio_init_out(g_led_pin, 1);
 
