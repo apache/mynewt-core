@@ -56,18 +56,18 @@ static const struct nrf51_uart_cfg os_bsp_uart0_cfg = {
  * and is handled outside the SPI routines.
  */
 static const struct nrf51_hal_spi_cfg os_bsp_spi0m_cfg = {
-    .sck_pin      = 29,
-    .mosi_pin     = 25,
-    .miso_pin     = 28
+    .sck_pin      = MYNEWT_VAL(SPI_0_MASTER_PIN_SCK),
+    .mosi_pin     = MYNEWT_VAL(SPI_0_MASTER_PIN_MOSI),
+    .miso_pin     = MYNEWT_VAL(SPI_0_MASTER_PIN_MISO),
 };
 #endif
 
 #if MYNEWT_VAL(SPI_1_SLAVE)
 static const struct nrf51_hal_spi_cfg os_bsp_spi1s_cfg = {
-    .sck_pin      = 29,
-    .mosi_pin     = 25,
-    .miso_pin     = 28,
-    .ss_pin       = 24
+    .sck_pin      = MYNEWT_VAL(SPI_1_SLAVE_PIN_SCK),
+    .mosi_pin     = MYNEWT_VAL(SPI_1_SLAVE_PIN_MOSI),
+    .miso_pin     = MYNEWT_VAL(SPI_1_SLAVE_PIN_MISO),
+    .ss_pin       = MYNEWT_VAL(SPI_1_SLAVE_PIN_SS),
 };
 #endif
 

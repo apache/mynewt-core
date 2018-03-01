@@ -39,6 +39,66 @@ syscfg.defs:
         description: 'CTS pin for UART0'
         value: 38
 
+    SPI_0_MASTER_PIN_SCK:
+        description: 'SCK pin for SPI_0_MASTER'
+        value:  5
+    SPI_0_MASTER_PIN_MOSI:
+        description: 'MOSI pin for SPI_0_MASTER'
+        value:  7
+    SPI_0_MASTER_PIN_MISO:
+        description: 'MISO pin for SPI_0_MASTER'
+        value:  6
+
+    SPI_1_MASTER_PIN_SCK:
+        description: 'SCK pin for SPI_1_MASTER'
+        value:  8
+    SPI_1_MASTER_PIN_MOSI:
+        description: 'MOSI pin for SPI_1_MASTER'
+        value:  10
+    SPI_1_MASTER_PIN_MISO:
+        description: 'MISO pin for SPI_1_MASTER'
+        value:  9
+
+    SPI_2_MASTER_PIN_SCK:
+        description: 'SCK pin for SPI_2_MASTER'
+        value:  0
+    SPI_2_MASTER_PIN_MOSI:
+        description: 'MOSI pin for SPI_2_MASTER'
+        value:  1
+    SPI_2_MASTER_PIN_MISO:
+        description: 'MISO pin for SPI_2_MASTER'
+        value:  2
+
+    SPI_3_MASTER_PIN_SCK:
+        description: 'SCK pin for SPI_3_MASTER'
+        value:  42
+    SPI_3_MASTER_PIN_MOSI:
+        description: 'MOSI pin for SPI_3_MASTER'
+        value:  38
+    SPI_3_MASTER_PIN_MISO:
+        description: 'MISO pin for SPI_3_MASTER'
+        value:  43
+
+    SPI_4_MASTER_PIN_SCK:
+        description: 'SCK pin for SPI_4_MASTER'
+        value:  39
+    SPI_4_MASTER_PIN_MOSI:
+        description: 'MOSI pin for SPI_4_MASTER'
+        value:  44
+    SPI_4_MASTER_PIN_MISO:
+        description: 'MISO pin for SPI_4_MASTER'
+        value:  40
+
+    SPI_5_MASTER_PIN_SCK:
+        description: 'SCK pin for SPI_5_MASTER'
+        value:  48
+    SPI_5_MASTER_PIN_MOSI:
+        description: 'MOSI pin for SPI_5_MASTER'
+        value:  47
+    SPI_5_MASTER_PIN_MISO:
+        description: 'MISO pin for SPI_5_MASTER'
+        value:  49
+
 syscfg.vals:
     CONFIG_FCB_FLASH_AREA: FLASH_AREA_NFFS
     REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG

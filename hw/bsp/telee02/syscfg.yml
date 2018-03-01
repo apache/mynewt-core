@@ -49,6 +49,16 @@ syscfg.defs:
         description: 'RX pin for UART1'
         value:  -1
 
+    SPI_0_MASTER_PIN_SCK:
+        description: 'SCK pin for SPI_0_MASTER'
+        value:  25
+    SPI_0_MASTER_PIN_MOSI:
+        description: 'MOSI pin for SPI_0_MASTER'
+        value:  23
+    SPI_0_MASTER_PIN_MISO:
+        description: 'MISO pin for SPI_0_MASTER'
+        value:  24
+
     TIMER_0:
         description: 'NRF52 Timer 0'
         value:  1

@@ -57,49 +57,49 @@ static const struct hal_bsp_mem_dump dump_cfg[] = {
 
 #if MYNEWT_VAL(SPI_0_MASTER)
 static const struct apollo2_spi_cfg hal_bsp_spi0m_cfg = {
-    .sck_pin      = 5,
-    .mosi_pin     = 7,
-    .miso_pin     = 6,
+    .sck_pin      = MYNEWT_VAL(SPI_0_MASTER_PIN_SCK),
+    .mosi_pin     = MYNEWT_VAL(SPI_0_MASTER_PIN_MOSI),
+    .miso_pin     = MYNEWT_VAL(SPI_0_MASTER_PIN_MISO),
 };
 #endif
 
 #if MYNEWT_VAL(SPI_1_MASTER)
 static const struct apollo2_spi_cfg hal_bsp_spi1m_cfg = {
-    .sck_pin      = 8,
-    .mosi_pin     = 10,
-    .miso_pin     = 9,
+    .sck_pin      = MYNEWT_VAL(SPI_1_MASTER_PIN_SCK),
+    .mosi_pin     = MYNEWT_VAL(SPI_1_MASTER_PIN_MOSI),
+    .miso_pin     = MYNEWT_VAL(SPI_1_MASTER_PIN_MISO),
 };
 #endif
 
 #if MYNEWT_VAL(SPI_2_MASTER)
 static const struct apollo2_spi_cfg hal_bsp_spi2m_cfg = {
-    .sck_pin      = 0,
-    .mosi_pin     = 1,
-    .miso_pin     = 2,
+    .sck_pin      = MYNEWT_VAL(SPI_2_MASTER_PIN_SCK),
+    .mosi_pin     = MYNEWT_VAL(SPI_2_MASTER_PIN_MOSI),
+    .miso_pin     = MYNEWT_VAL(SPI_2_MASTER_PIN_MISO),
 };
 #endif
 
 #if MYNEWT_VAL(SPI_3_MASTER)
 static const struct apollo2_spi_cfg hal_bsp_spi3m_cfg = {
-    .sck_pin      = 42,
-    .mosi_pin     = 38,
-    .miso_pin     = 43,
+    .sck_pin      = MYNEWT_VAL(SPI_3_MASTER_PIN_SCK),
+    .mosi_pin     = MYNEWT_VAL(SPI_3_MASTER_PIN_MOSI),
+    .miso_pin     = MYNEWT_VAL(SPI_3_MASTER_PIN_MISO),
 };
 #endif
 
 #if MYNEWT_VAL(SPI_4_MASTER)
 static const struct apollo2_spi_cfg hal_bsp_spi4m_cfg = {
-    .sck_pin      = 39,
-    .mosi_pin     = 44,
-    .miso_pin     = 40,
+    .sck_pin      = MYNEWT_VAL(SPI_4_MASTER_PIN_SCK),
+    .mosi_pin     = MYNEWT_VAL(SPI_4_MASTER_PIN_MOSI),
+    .miso_pin     = MYNEWT_VAL(SPI_4_MASTER_PIN_MISO),
 };
 #endif
 
 #if MYNEWT_VAL(SPI_5_MASTER)
 static const struct apollo2_spi_cfg hal_bsp_spi5m_cfg = {
-    .sck_pin      = 48,
-    .mosi_pin     = 47,
-    .miso_pin     = 49,
+    .sck_pin      = MYNEWT_VAL(SPI_5_MASTER_PIN_SCK),
+    .mosi_pin     = MYNEWT_VAL(SPI_5_MASTER_PIN_MOSI),
+    .miso_pin     = MYNEWT_VAL(SPI_5_MASTER_PIN_MISO),
 };
 #endif
 
