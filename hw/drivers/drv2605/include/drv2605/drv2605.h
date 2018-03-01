@@ -80,7 +80,8 @@ drv2605_config(struct drv2605 *drv2605, struct drv2605_cfg *cfg);
 
 
 #if MYNEWT_VAL(DRV2605_CLI)
-int drv2605_shell_init(void);
+int
+drv2605_shell_init(void);
 #endif
 
 
