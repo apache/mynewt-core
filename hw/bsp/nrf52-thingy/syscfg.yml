@@ -49,6 +49,39 @@ syscfg.defs:
         description: 'RX pin for UART1'
         value:  -1
 
+    SPI_0_MASTER_PIN_SCK:
+        description: 'SCK pin for SPI_0_MASTER'
+        value:  23
+    SPI_0_MASTER_PIN_MOSI:
+        description: 'MOSI pin for SPI_0_MASTER'
+        value:  24
+    SPI_0_MASTER_PIN_MISO:
+        description: 'MISO pin for SPI_0_MASTER'
+        value:  25
+
+    SPI_0_SLAVE_PIN_SCK:
+        description: 'SCK pin for SPI_0_SLAVE'
+        value:  23
+    SPI_0_SLAVE_PIN_MOSI:
+        description: 'MOSI pin for SPI_0_SLAVE'
+        value:  24
+    SPI_0_SLAVE_PIN_MISO:
+        description: 'MISO pin for SPI_0_SLAVE'
+        value:  25
+    SPI_0_SLAVE_PIN_SS:
+        description: 'SS pin for SPI_0_SLAVE'
+        value:  22
+
+    I2C_0_PIN_SCL:
+        description: 'SCL pin for I2C_0'
+        value:  15
+    I2C_0_PIN_SDA:
+        description: 'SDA pin for I2C_0'
+        value:  14
+    I2C_0_FREQ_KHZ:
+        description: 'Frequency in khz for I2C_0 bus'
+        value:  400
+
     TIMER_0:
         description: 'NRF52 Timer 0'
         value:  1

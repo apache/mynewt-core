@@ -80,9 +80,9 @@ static const struct uart_bitbang_conf os_bsp_uart1_cfg = {
  * and is handled outside the SPI routines.
  */
 static const struct nrf52_hal_spi_cfg os_bsp_spi0m_cfg = {
-    .sck_pin      = 25,
-    .mosi_pin     = 23,
-    .miso_pin     = 24,
+    .sck_pin      = MYNEWT_VAL(SPI_0_MASTER_PIN_SCK),
+    .mosi_pin     = MYNEWT_VAL(SPI_0_MASTER_PIN_MOSI),
+    .miso_pin     = MYNEWT_VAL(SPI_0_MASTER_PIN_MISO),
 };
 #endif
 

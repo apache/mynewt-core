@@ -92,9 +92,9 @@ static const struct uart_bitbang_conf os_bsp_uart1_cfg = {
  * and is handled outside the SPI routines.
  */
 static const struct nrf52_hal_spi_cfg os_bsp_spi0m_cfg = {
-    .sck_pin      = 29,
-    .mosi_pin     = 25,
-    .miso_pin     = 28,
+    .sck_pin      = MYNEWT_VAL(SPI_0_MASTER_PIN_SCK),
+    .mosi_pin     = MYNEWT_VAL(SPI_0_MASTER_PIN_MOSI),
+    .miso_pin     = MYNEWT_VAL(SPI_0_MASTER_PIN_MISO),
 };
 
 #if MYNEWT_VAL(BME280_ONB)
@@ -118,10 +118,10 @@ static const struct sensor_itf spi_0_itf_lis = {
 
 #if MYNEWT_VAL(SPI_0_SLAVE)
 static const struct nrf52_hal_spi_cfg os_bsp_spi0s_cfg = {
-    .sck_pin      = 29,
-    .mosi_pin     = 25,
-    .miso_pin     = 28,
-    .ss_pin       = 22,
+    .sck_pin      = MYNEWT_VAL(SPI_0_SLAVE_PIN_SCK),
+    .mosi_pin     = MYNEWT_VAL(SPI_0_SLAVE_PIN_MOSI),
+    .miso_pin     = MYNEWT_VAL(SPI_0_SLAVE_PIN_MISO),
+    .ss_pin       = MYNEWT_VAL(SPI_0_SLAVE_PIN_SS),
 };
 #endif
 
@@ -152,9 +152,9 @@ static struct pwm_dev os_bsp_spwm;
 
 #if MYNEWT_VAL(I2C_0)
 static const struct nrf52_hal_i2c_cfg hal_i2c_cfg = {
-    .scl_pin = 27,
-    .sda_pin = 26,
-    .i2c_frequency = 100    /* 100 kHz */
+    .scl_pin = MYNEWT_VAL(I2C_0_PIN_SCL),
+    .sda_pin = MYNEWT_VAL(I2C_0_PIN_SDA),
+    .i2c_frequency = MYNEWT_VAL(I2C_0_FREQ_KHZ),
 };
 #endif
 
