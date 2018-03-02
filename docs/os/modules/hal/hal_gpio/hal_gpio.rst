@@ -1,4 +1,4 @@
-hal\_gpio
+GPIO
 =========
 
 This is the hardware independent GPIO (General Purpose Input Output)
@@ -54,21 +54,11 @@ Said another way, in this specific system we get
 
     SYSTEM_LED --> hal_gpio virtual pin 37 --> port C pin 5 on the stm34F4xx
 
-Definition
+API
 ~~~~~~~~~~
 
-`hal\_gpio.h <https://github.com/apache/incubator-mynewt-core/blob/master/hw/hal/include/hal/hal_gpio.h>`__
+.. doxygengroup:: HALGpio
+    :content-only:
+    :members:
 
-Examples
-~~~~~~~~
 
-Blinky
-^^^^^^
-
-Blinky uses the hal\_gpio to blink the system LED. The blinky source
-code is available in the `blinky
-repo <https://github.com/apache/incubator-mynewt-blinky/blob/master/apps/blinky/src/main.c>`__.
-Examine how ``blinky_task_handler`` initializes and toggles the GPIO to
-control the LED.
-
---------------

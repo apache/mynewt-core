@@ -166,10 +166,6 @@ os_init_idle_task(void)
     assert(rc == 0);
 }
 
-/**
- * Initialize the operating system, calls into the architecture specific
- * support to initialize the operating system.
- */
 void
 os_init(int (*main_fn)(int argc, char **arg))
 {
@@ -201,10 +197,6 @@ os_init(int (*main_fn)(int argc, char **arg))
     assert(err == OS_OK);
 }
 
-/**
- * Start the operating system, calls into the architecture specific support
- * to start the operating system.
- */
 void
 os_start(void)
 {

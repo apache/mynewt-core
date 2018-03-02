@@ -17,6 +17,14 @@
  * under the License.
  */
 
+
+/**
+ * @addtogroup HAL
+ * @{
+ *   @defgroup HALWatchdog HAL Watchdog
+ *   @{
+ */
+
 #ifndef _HAL_WATCHDOG_H_
 #define _HAL_WATCHDOG_H_
 
@@ -25,11 +33,11 @@
 extern "C" {
 #endif
 
-/*
+/**
  * Set a recurring watchdog timer to fire no sooner than in 'expire_secs'
  * seconds. Watchdog should be tickled periodically with a frequency
  * smaller than 'expire_secs'. Watchdog needs to be then started with
- * a call to hal_watchdog_enable().
+ * a call to :c:func:`hal_watchdog_enable()`.
  *
  * @param expire_msecs		Watchdog timer expiration time in msecs
  *
@@ -38,13 +46,14 @@ extern "C" {
  */
 int hal_watchdog_init(uint32_t expire_msecs);
 
-/*
+/**
  * Starts the watchdog.
  */
 void hal_watchdog_enable(void);
 
-/*
- * Tickles the watchdog. Needs to be done before 'expire_secs' fires.
+/**
+ * Tickles the watchdog.   This needs to be done periodically, before
+ * the value configured in :c:func:`hal_watchdog_init()` expires.
  */
 void hal_watchdog_tickle(void);
 
@@ -53,3 +62,8 @@ void hal_watchdog_tickle(void);
 #endif
 
 #endif /* _HAL_WATCHDOG_H_ */
+
+/**
+ *   @} HALWatchdog
+ * @} HAL
+ */

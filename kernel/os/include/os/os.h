@@ -50,6 +50,9 @@ extern "C" {
 
 
 /**
+ * @cond INTERNAL_HIDDEN
+ */
+/**
  * Whether or not the operating system has been started.  Set to
  * 1 right before first task is run.
  */
@@ -57,24 +60,52 @@ extern int g_os_started;
 
 int os_info_init(void);
 
-/**
- * Returns 1 if the OS has been started, 0 if it has not yet been
- * been started.
- */
-int os_started(void);
-
-#define OS_WAIT_FOREVER (-1)
-
-#define OS_IDLE_PRIO (0xff)
-#define OS_MAIN_TASK_PRIO       MYNEWT_VAL(OS_MAIN_TASK_PRIO)
-#define OS_MAIN_STACK_SIZE      MYNEWT_VAL(OS_MAIN_STACK_SIZE)
-
-void os_init(int (*fn)(int argc, char **argv));
-void os_start(void);
-
 /* XXX: Not sure if this should go here; I want to differentiate API that
  * should be called by application developers as those that should not. */
 void os_init_idle_task(void);
+/**
+ * @endcond
+ */
+
+/**
+ * Check whether or not the OS has been started.
+ *
+ * @return 1 if the OS has been started and 0 if it has not yet been started.
+ */
+int os_started(void);
+
+/**
+ * Definition used for functions that take timeouts to specify
+ * waiting indefinitely.
+ */
+#define OS_WAIT_FOREVER (-1)
+
+/**
+ * Priority of the IDLE task.  Always the lowest priority task in teh system.
+ */
+#define OS_IDLE_PRIO (0xff)
+
+/**
+ * Main task priority, defined by sysconfig.
+ */
+#define OS_MAIN_TASK_PRIO       MYNEWT_VAL(OS_MAIN_TASK_PRIO)
+/**
+ * Main task stack size, defined by sysconfig.
+ */
+#define OS_MAIN_STACK_SIZE      MYNEWT_VAL(OS_MAIN_STACK_SIZE)
+
+/**
+ * Initialize the OS, including memory areas and housekeeping functions.
+ * This calls into the architecture specific OS initialization.
+ *
+ * @param fn The system "main" function to start the main task with.
+ */
+void os_init(int (*fn)(int argc, char **argv));
+
+/**
+ * Start the OS and begin processing.
+ */
+void os_start(void);
 
 #include "os/endian.h"
 #include "os/os_arch.h"

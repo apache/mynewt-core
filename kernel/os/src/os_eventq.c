@@ -23,20 +23,8 @@
 
 #include "os/os.h"
 
-/**
- * @addtogroup OSKernel
- * @{
- *   @defgroup OSEvent Event Queues
- *   @{
- */
-
 static struct os_eventq os_eventq_main;
 
-/**
- * Initialize the event queue
- *
- * @param evq The event queue to initialize
- */
 void
 os_eventq_init(struct os_eventq *evq)
 {
@@ -50,12 +38,6 @@ os_eventq_inited(const struct os_eventq *evq)
     return evq->evq_list.stqh_last != NULL;
 }
 
-/**
- * Put an event on the event queue.
- *
- * @param evq The event queue to put an event on
- * @param ev The event to put on the queue
- */
 void
 os_eventq_put(struct os_eventq *evq, struct os_event *ev)
 {
@@ -114,14 +96,6 @@ os_eventq_get_no_wait(struct os_eventq *evq)
     return ev;
 }
 
-/**
- * Pull a single item from an event queue.  This function blocks until there
- * is an item on the event queue to read.
- *
- * @param evq The event queue to pull an event from
- *
- * @return The event from the queue
- */
 struct os_event *
 os_eventq_get(struct os_eventq *evq)
 {
@@ -201,18 +175,6 @@ os_eventq_poll_0timo(struct os_eventq **evq, int nevqs)
     return ev;
 }
 
-/**
- * Poll the list of event queues specified by the evq parameter
- * (size nevqs), and return the "first" event available on any of
- * the queues.  Event queues are searched in the order that they
- * are passed in the array.
- *
- * @param evq Array of event queues
- * @param nevqs Number of event queues in evq
- * @param timo Timeout, forever if OS_WAIT_FOREVER is passed to poll.
- *
- * @return An event, or NULL if no events available
- */
 struct os_event *
 os_eventq_poll(struct os_eventq **evq, int nevqs, os_time_t timo)
 {
@@ -279,12 +241,6 @@ has_event:
     return (ev);
 }
 
-/**
- * Remove an event from the queue.
- *
- * @param evq The event queue to remove the event from
- * @param ev  The event to remove from the queue
- */
 void
 os_eventq_remove(struct os_eventq *evq, struct os_event *ev)
 {
@@ -298,11 +254,6 @@ os_eventq_remove(struct os_eventq *evq, struct os_event *ev)
     OS_EXIT_CRITICAL(sr);
 }
 
-/**
- * Retrieves the default event queue processed by OS main task.
- *
- * @return                      The default event queue.
- */
 struct os_eventq *
 os_eventq_dflt_get(void)
 {
@@ -348,7 +299,3 @@ os_eventq_designate(struct os_eventq **cur_evq,
     }
 }
 
-/**
- *   @} OSEvent
- * @} OSKernel
- */

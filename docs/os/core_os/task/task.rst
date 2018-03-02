@@ -37,7 +37,7 @@ stack size can be a bit tricky; generally developers should not declare
 large local variables on the stack so that task stacks can be of limited
 size. However, all applications are different and the developer must
 choose the stack size accordingly. NOTE: be careful when declaring your
-stack! The stack is in units of ``os_stack_t`` sized elements (generally
+stack! The stack is in units of :c:type:`os_stack_t` sized elements (generally
 32-bits). Looking at the example given below and assuming ``os_stack_t``
 is defined to be a 32-bit unsigned value, "my_task_stack" will use 256
 bytes.
@@ -107,3 +107,11 @@ task. This task simply toggles an LED at a one second interval.
         }
         /* main never returns */
     }
+
+
+API
+----
+
+.. doxygengroup:: OSTask
+    :content-only:
+    :members:

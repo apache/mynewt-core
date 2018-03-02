@@ -32,13 +32,13 @@ Description
 Sanity Task
 -----------
 
-Mynewt OS uses the OS Idle task to check sanity. The ``SANITY_INTERVAL``
+Mynewt OS uses the OS Idle task to check sanity. The :c:macro:`SANITY_INTERVAL`
 syscfg setting specifies the interval in seconds to perform the sanity
 checks.
 
 By default, every operating system task provides the frequency it will
 check in with the sanity task, with the ``sanity_itvl`` parameter in the
-``os_task_init()`` function:
+c:func:`os_task_init()` function:
 
 .. code:: c
 
@@ -46,7 +46,7 @@ check in with the sanity task, with the ``sanity_itvl`` parameter in the
         void *arg, uint8_t prio, os_time_t sanity_itvl, os_stack_t *bottom,
         uint16_t stack_size);
 
-``sanity_itvl`` is the time in OS time ticks that the task being created
+c:var:`sanity_itvl` is the time in OS time ticks that the task being created
 must register in with the sanity task.
 
 Checking in with Sanity Task
@@ -54,7 +54,7 @@ Checking in with Sanity Task
 
 The task must then register in with the sanity task every
 ``sanity_itvl`` seconds. In order to do that, the task should call the
-``os_sanity_task_checkin`` function, which will reset the sanity check
+:c:func:`os_sanity_task_checkin` function, which will reset the sanity check
 associated with this task. Here is an example of a task that uses a
 callout to checkin with the sanity task every 50 seconds:
 
@@ -105,8 +105,8 @@ Registering a Custom Sanity Check
 
 If a particular task wants to further hook into the sanity framework to
 perform other checks during the sanity task's operation, it can do so by
-registering a ``struct os_sanity_check`` using the
-``os_sanity_check_register`` function.
+registering a :c:type:`struct os_sanity_check` using the
+:c:func:`os_sanity_check_register()` function.
 
 .. code:: c
 
@@ -149,8 +149,8 @@ registering a ``struct os_sanity_check`` using the
 
 In the above example, every time the custom sanity check
 ``mymodule_perform_sanity_check`` returns successfully (0), the sanity
-check is reset. In the ``OS_SANITY_CHECK_SETFUNC`` macro, the sanity
-checkin interval is specified as 50 \* SANITY\_TASK\_INTERVAL (which is
+check is reset. In the c:macro:`OS_SANITY_CHECK_SETFUNC` macro, the sanity
+checkin interval is specified as 50 \* :c:macro:`SANITY_TASK_INTERVAL` (which is
 the interval at which the sanity task runs.) This means that the
 ``mymodule_perform_sanity_check()`` function needs to fail 50 times
 consecutively before the sanity task will crash the system.
@@ -160,73 +160,9 @@ temporarily be exhausted, it's a good idea to have the sanity check fail
 multiple consecutive times before crashing the system. This will avoid
 crashing for temporary failures.
 
-Data structures
----------------
-
-OS Sanity Check
-----------------
-
-.. code:: c
-
-    struct os_sanity_check {
-        os_time_t sc_checkin_last;
-        os_time_t sc_checkin_itvl;
-        os_sanity_check_func_t sc_func;
-        void *sc_arg; 
-
-        SLIST_ENTRY(os_sanity_check) sc_next;
-    };
-
-+--------------+----------------+
-| **Element**  | **Description* |
-|              | *              |
-+==============+================+
-| ``sc_checkin | The last time  |
-| _last``      | this sanity    |
-|              | check checked  |
-|              | in with the    |
-|              | sanity task,   |
-|              | in OS time     |
-|              | ticks.         |
-+--------------+----------------+
-| ``sc_checkin | How frequently |
-| _itvl``      | the sanity     |
-|              | check is       |
-|              | supposed to    |
-|              | check in with  |
-|              | the sanity     |
-|              | task, in OS    |
-|              | time ticks.    |
-+--------------+----------------+
-| ``sc_func``  | If not         |
-|              | ``NULL``, call |
-|              | this function  |
-|              | when running   |
-|              | the sanity     |
-|              | task. If the   |
-|              | function       |
-|              | returns 0,     |
-|              | reset the      |
-|              | sanity check.  |
-+--------------+----------------+
-| ``sc_arg``   | Argument to    |
-|              | pass to        |
-|              | ``sc_func``    |
-|              | when calling   |
-|              | it.            |
-+--------------+----------------+
-| ``sc_next``  | Sanity checks  |
-|              | are chained in |
-|              | the sanity     |
-|              | task when      |
-|              | ``os_sanity_ch |
-|              | eck_register() |
-|              | ``             |
-|              | is called.     |
-+--------------+----------------+
-
 API
 -----------------
 
 .. doxygengroup:: OSSanity
     :content-only:
+    :members:
