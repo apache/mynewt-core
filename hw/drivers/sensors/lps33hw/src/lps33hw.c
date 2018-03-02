@@ -27,6 +27,7 @@
 #include "hal/hal_i2c.h"
 #include "sensor/sensor.h"
 #include "sensor/pressure.h"
+#include "sensor/temperature.h"
 #include "lps33hw/lps33hw.h"
 #include "lps33hw_priv.h"
 #include "log/log.h"
@@ -54,6 +55,10 @@ STATS_SECT_DECL(lps33hw_stat_section) g_lps33hwstats;
 #define LPS33HW_ERR(...)      LOG_ERROR(&_log, LOG_MODULE_LPS33HW, __VA_ARGS__)
 static struct log _log;
 
+#define LPS33HW_PRESS_OUT_DIV (4096.0)
+#define LPS33HW_TEMP_OUT_DIV (100.0)
+#define LPS33HW_PRESS_THRESH_DIV (16)
+
 /* Exports for the sensor API */
 static int lps33hw_sensor_read(struct sensor *, sensor_type_t,
         sensor_data_func_t, void *, uint32_t);
@@ -61,9 +66,82 @@ static int lps33hw_sensor_get_config(struct sensor *, sensor_type_t,
         struct sensor_cfg *);
 
 static const struct sensor_driver g_lps33hw_sensor_driver = {
-    lps33hw_sensor_read,
-    lps33hw_sensor_get_config
+    .sd_read                      = lps33hw_sensor_read,
+    .sd_get_config                = lps33hw_sensor_get_config,
+    /*.sd_set_trigger_thresh        = lps33hw_sensor_set trigger_thresh,
+    .sd_set_notification          = lps33hw_sensor_set_notification,
+    .sd_unset_notification        = lps33hw_sensor_unset_notification,
+    .sd_handle_interrupt          = lps33hw_sensor_handle_interrupt,
+    .sd_clear_low_trigger_thresh  = lps33hw_sensor_clear_low_thresh,
+    .sd_clear_high_trigger_thresh = lps33hw_sensor_clear_high_thresh*/
 };
+
+/*
+ * Converts pressure value in hectopascals to a value found in the pressure
+ * threshold register of the device.
+ *
+ * @param Pressure value in hectopascals.
+ *
+ * @return Pressure value to write to the threshold registers.
+ */
+uint16_t
+lps33hw_hpa_to_threshold_reg(float hpa)
+{
+    /* Threshold is unsigned. */
+    if (hpa < 0) {
+        return 0;
+    }
+    return hpa * LPS33HW_PRESS_THRESH_DIV;
+}
+
+/*
+ * Converts pressure value in hectopascals to a value found in the pressure
+ * reference register of the device.
+ *
+ * @param Pressure value in hectopascals.
+ *
+ * @return Pressure value to write to the reference registers.
+ */
+int32_t
+lps33hw_hpa_to_reference_reg(float hpa)
+{
+    return (int32_t)(hpa * LPS33HW_PRESS_OUT_DIV);
+}
+
+/*
+ * Converts pressure read from the device output registers to a value in
+ * hectopascals.
+ *
+ * @param Pressure value read from the output registers.
+ *
+ * @return Pressure value in hectopascals.
+ */
+float
+lps33hw_reg_to_hpa(uint32_t reg)
+{
+    if (reg & 0x00800000) {
+        reg |= 0xff000000;
+    } else {
+        reg &= 0x00ffffff;
+    }
+    return reg / LPS33HW_PRESS_OUT_DIV;
+}
+
+/*
+ * Converts temperature read from the device output registers to a value in
+ * degrees C.
+ *
+ * @param Temperature value read from the output registers.
+ *
+ * @return Temperature value in degrees C.
+ */
+float
+lps33hw_reg_to_degc(int16_t reg)
+{
+
+    return reg / LPS33HW_TEMP_OUT_DIV;
+}
+
 
 /**
  * Writes a single byte to the specified register
@@ -75,7 +153,7 @@ static const struct sensor_driver g_lps33hw_sensor_driver = {
  * @return 0 on success, non-zero error on failure.
  */
 int
-lps33hw_write8(struct sensor_itf *itf, uint8_t reg, uint8_t value)
+lps33hw_set_reg(struct sensor_itf *itf, uint8_t reg, uint8_t value)
 {
     int rc;
     uint8_t payload[2] = { reg, value };
@@ -99,7 +177,7 @@ lps33hw_write8(struct sensor_itf *itf, uint8_t reg, uint8_t value)
 }
 
 /**
- * Reads a single byte from the specified register
+ * Read bytes from the specified register
  *
  * @param The sensor interface
  * @param The register address to read from
@@ -108,7 +186,8 @@ lps33hw_write8(struct sensor_itf *itf, uint8_t reg, uint8_t value)
  * @return 0 on success, non-zero error on failure.
  */
 int
-lps33hw_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
+lps33hw_get_regs(struct sensor_itf *itf, uint8_t reg, uint8_t size,
+    uint8_t *buffer)
 {
     int rc;
 
@@ -127,86 +206,98 @@ lps33hw_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
         return rc;
     }
 
-    /* Read one byte back */
-    data_struct.buffer = value;
+    /* Read */
+    data_struct.len = size;
+    data_struct.buffer = buffer;
     rc = hal_i2c_master_read(itf->si_num, &data_struct,
-                             OS_TICKS_PER_SEC / 10, 1);
+                             (OS_TICKS_PER_SEC / 10) * size, 1);
 
     if (rc) {
          LPS33HW_ERR("Failed to read from 0x%02X:0x%02X\n", itf->si_addr, reg);
          STATS_INC(g_lps33hwstats, read_errors);
     }
+    return rc;
+}
+
+int
+lps33hw_apply_value(struct lps33hw_register_value addr, uint8_t value,
+    uint8_t *reg)
+{
+    value <<= addr.pos;
+
+    if ((value & (~addr.mask)) != 0) {
+        return -1;
+    }
+
+    *reg &= ~addr.mask;
+    *reg |= value;
+
+    return 0;
+}
+
+int
+lps33hw_set_value(struct sensor_itf *itf, struct lps33hw_register_value addr,
+    uint8_t value)
+{
+    int rc;
+    uint8_t reg;
+
+    rc = lps33hw_get_regs(itf, addr.reg, 1, &reg);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = lps33hw_apply_value(addr, value, &reg);
+    if (rc != 0) {
+        return rc;
+    }
+
+    return lps33hw_set_reg(itf, addr.reg, reg);
+}
+
+int
+lps33hw_get_value(struct sensor_itf *itf, struct lps33hw_register_value addr,
+    uint8_t *value)
+{
+    int rc;
+    uint8_t reg;
+
+    rc = lps33hw_get_regs(itf, addr.reg, 1, &reg);
+
+    *value = (reg & addr.mask) >> addr.pos;
+
     return rc;
 }
 
 /**
- * Reads 3 bytes from the specified register
+ * Set the output data rate.
  *
- * @param The sensor interface
- * @param The register address to read from
- * @param Pointer to where the register value should be written
+ * @param The interface object associated with the lps33hw.
+ * @param Data rate value.
  *
  * @return 0 on success, non-zero error on failure.
  */
-int
-lps33hw_read24(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer)
-{
-    int rc;
-
-    struct hal_i2c_master_data data_struct = {
-        .address = itf->si_addr,
-        .len = 1,
-        .buffer = &reg
-    };
-
-    /* Register write */
-    rc = hal_i2c_master_write(itf->si_num, &data_struct,
-                              OS_TICKS_PER_SEC / 10, 1);
-    if (rc) {
-        LPS33HW_ERR("I2C access failed at address 0x%02X\n", itf->si_addr);
-        STATS_INC(g_lps33hwstats, write_errors);
-        return rc;
-    }
-
-    /* Read 3 bytes back */
-    data_struct.len = 3;
-    data_struct.buffer = buffer;
-    rc = hal_i2c_master_read(itf->si_num, &data_struct,
-                             OS_TICKS_PER_SEC / 10, 1);
-
-    if (rc) {
-         LPS33HW_ERR("Failed to read from 0x%02X:0x%02X\n", itf->si_addr, reg);
-         STATS_INC(g_lps33hwstats, read_errors);
-    }
-    return rc;
-}
-
-int
-lps33hw_set_field(struct sensor_itf *itf, uint8_t reg, uint8_t mask,
-    uint8_t value)
-{
-    int rc;
-    unsigned char r;
-
-    rc = lps33hw_read8(itf, reg, &r);
-    if (rc) {
-        return rc;
-    }
-
-    return lps33hw_write8(itf, reg, (r & mask) | value);
-}
 
 int
 lps33hw_set_data_rate(struct sensor_itf *itf,
     enum lps33hw_output_data_rates rate)
 {
-    return lps33hw_set_field(itf, LPS33HW_CTRL_REG1, 0x8f, rate << 4);
+    return lps33hw_set_value(itf, LPS33HW_CTRL_REG1_ODR, rate);
 }
+
+/**
+ * Configure the Low Pass Filter.
+ *
+ * @param The interface object associated with the lps33hw.
+ * @param Low pass filter config value
+ *
+ * @return 0 on success, non-zero error on failure.
+ */
 
 int
 lps33hw_set_lpf(struct sensor_itf *itf, enum lps33hw_low_pass_config lpf)
 {
-    return lps33hw_set_field(itf, LPS33HW_CTRL_REG1, 0xf3, lpf << 2);
+    return lps33hw_set_value(itf, LPS33HW_CTRL_REG1_LPFP_CFG, lpf);
 }
 
 /**
@@ -219,14 +310,121 @@ lps33hw_set_lpf(struct sensor_itf *itf, enum lps33hw_low_pass_config lpf)
 int
 lps33hw_reset(struct sensor_itf *itf)
 {
-    return lps33hw_write8(itf, LPS33HW_CTRL_REG2, 0x04);
+    return lps33hw_set_reg(itf, LPS33HW_CTRL_REG2, 0x04);
+}
+
+int
+lps33hw_get_pressure(struct sensor_itf *itf, uint8_t reg, float *pressure)
+{
+    int rc;
+    uint8_t payload[3];
+    uint32_t int_press;
+
+    rc = lps33hw_get_regs(itf, reg, 3, payload);
+    if (rc) {
+        return rc;
+    }
+
+    int_press = (((uint32_t)payload[2] << 16) |
+        ((uint32_t)payload[1] << 8) | payload[0]);
+
+    *pressure = lps33hw_reg_to_hpa(int_press);
+
+    return 0;
+}
+
+int
+lps33hw_get_temperature(struct sensor_itf *itf, float *temperature)
+{
+    int rc;
+    uint8_t payload[2];
+    uint16_t int_temp;
+
+    rc = lps33hw_get_regs(itf, LPS33HW_TEMP_OUT, 2, payload);
+    if (rc) {
+        return rc;
+    }
+
+    int_temp = (((uint32_t)payload[1] << 8) | payload[0]);
+
+    *temperature = lps33hw_reg_to_degc(int_temp);
+
+    return 0;
+}
+
+/*
+ * Set pressure reference.
+ *
+ * @param The interface object associated with the lps33hw.
+ * @param The pressure reference.
+ *
+ * @return 0 on success, non-zero error on failure.
+ */
+int
+lps33hw_set_reference(struct sensor_itf *itf, float reference)
+{
+    int rc;
+    int32_t int_reference;
+
+    int_reference = lps33hw_hpa_to_reference_reg(reference);
+
+    rc = lps33hw_set_reg(itf, LPS33HW_REF_P, int_reference & 0xff);
+    if (rc) {
+        return rc;
+    }
+    rc = lps33hw_set_reg(itf, LPS33HW_REF_P + 1, (int_reference >> 8) & 0xff);
+    if (rc) {
+        return rc;
+    }
+
+    return lps33hw_set_reg(itf, LPS33HW_REF_P + 2, (int_reference >> 16) &
+        0xff);
+}
+
+/*
+ * Get pressure reference.
+ *
+ * @param The interface object associated with the lps33hw.
+ * @param The pressure reference.
+ *
+ * @return 0 on success, non-zero error on failure.
+ */
+int
+lps33hw_get_reference(struct sensor_itf *itf, float *reference)
+{
+    return lps33hw_get_pressure(itf, LPS33HW_REF_P, reference);
+}
+
+
+/*
+ * Set pressure threshold.
+ *
+ * @param The interface object associated with the lps33hw.
+ * @param The pressure reference.
+ *
+ * @return 0 on success, non-zero error on failure.
+ */
+int
+lps33hw_set_threshold(struct sensor_itf *itf, float threshold)
+{
+    int rc;
+    int32_t int_threshold;
+
+    int_threshold = lps33hw_hpa_to_threshold_reg(threshold);
+
+    rc = lps33hw_set_reg(itf, LPS33HW_THS_P, int_threshold & 0xff);
+    if (rc) {
+        return rc;
+    }
+
+    return lps33hw_set_reg(itf, LPS33HW_THS_P + 1, (int_threshold >> 8) & 0xff);
 }
 
 /**
  * Configure interrupts.
  *
  * @param The device object associated with this lps33hw.
- * @param Argument passed to OS device init, unused.
+ * @param Interrupt config struct
  *
  * @return 0 on success, non-zero error on failure.
  */
@@ -235,10 +433,98 @@ lps33hw_config_interrupt(struct sensor_itf *itf, struct lps33hw_int_cfg cfg)
 {
     int rc;
 
-    rc = 0;
-
+    rc = lps33hw_set_value(itf, LPS33HW_INTERRUPT_CFG_PLE, cfg.pressure_low);
+    if (rc) {
+        return rc;
+    }
+    rc = lps33hw_set_value(itf, LPS33HW_INTERRUPT_CFG_PLE, cfg.pressure_high);
+    if (rc) {
+        return rc;
+    }
+    rc = lps33hw_set_value(itf, LPS33HW_INTERRUPT_CFG_PLE, cfg.enabled);
+    if (rc) {
+        return rc;
+    }
+    rc = lps33hw_set_value(itf, LPS33HW_INTERRUPT_CFG_PLE, cfg.active_low);
+    if (rc) {
+        return rc;
+    }
+    rc = lps33hw_set_value(itf, LPS33HW_INTERRUPT_CFG_PLE, cfg.open_drain);
+    if (rc) {
+        return rc;
+    }
     return rc;
 }
+
+/**
+ * Sets up trigger thresholds and enables interrupts
+ *
+ * @param Pointer to sensor structure
+ * @param type of sensor
+ * @param threshold settings to configure
+ *
+ * @return 0 on success, non-zero on failure
+ */
+// static int
+// lps33hw_sensor_set_trigger_thresh(struct sensor *sensor,
+//                                   sensor_type_t sensor_type,
+//                                   struct sensor_type_traits *stt)
+// {
+//     struct lps33hw *lps33hw;
+//     struct sensor_itf *itf;
+//     int rc;
+//     const struct sensor_press_data *low_thresh;
+//     const struct sensor_press_data *high_thresh;
+//     uint8_t ints_to_enable = 0;
+//     float thresh;
+//
+//     if (sensor_type != SENSOR_TYPE_PRESSURE) {
+//         return SYS_EINVAL;
+//     }
+//
+//     lps33hw = (struct lps33hw *)SENSOR_GET_DEVICE(sensor);
+//     itf = SENSOR_GET_ITF(sensor);
+//
+//     low_thresh  = stt->stt_low_thresh.spd;
+//     high_thresh = stt->stt_high_thresh.spd;
+//
+// /*
+//  * Device only has one threshold which can be set to trigger on positive or
+//  * negative thresholds, set it to the loweer threshold.
+//  */
+//
+//     if (low_thresh->spd_press_is_valid) {
+//         rc = lps33hw_set_low_settings(itf, , 2);
+//         if (rc) {
+//             return rc;
+//         }
+//
+//         ints_to_enable |= LPS33HW_INT_LOW_BIT;
+//     }
+//     if (high_thresh->spd_pres_is_valid) {
+//         rc = lps33hw_set_high_threshold(itf, );
+//         if (rc) {
+//             return rc;
+//         }
+//
+//         ints_to_enable |= LPS33HW_INT_HIGH_BIT;
+//     }
+//
+//     rc = enable_interrupt(sensor, ints_to_enable);
+//     if (rc) {
+//         return rc;
+//     }
+//
+//     rc = lps33hw_set_act_inact_enables(itf, axis_enables);
+//     if (rc) {
+//         return rc;
+//     }
+//
+//     pdd->read_ctx.srec_type |= sensor_type;
+//     pdd->registered_mask |= LPS33HW_READ_MASK;
+//
+//     return 0;
+// }
 
 /**
  * Expects to be called back through os_dev_create().
@@ -283,8 +569,9 @@ lps33hw_init(struct os_dev *dev, void *arg)
     }
 
     /* Add the pressure driver */
-    rc = sensor_set_driver(sensor, SENSOR_TYPE_PRESSURE,
-            (struct sensor_driver *) &g_lps33hw_sensor_driver);
+    rc = sensor_set_driver(sensor, SENSOR_TYPE_PRESSURE |
+        SENSOR_TYPE_TEMPERATURE,
+        (struct sensor_driver *) &g_lps33hw_sensor_driver);
     if (rc) {
         return rc;
     }
@@ -306,7 +593,7 @@ lps33hw_config(struct lps33hw *lps, struct lps33hw_cfg *cfg)
     itf = SENSOR_GET_ITF(&(lps->sensor));
 
     uint8_t val;
-    rc = lps33hw_read8(itf, LPS33HW_WHO_AM_I, &val);
+    rc = lps33hw_get_regs(itf, LPS33HW_WHO_AM_I, 1, &val);
     if (rc) {
         return rc;
     }
@@ -334,38 +621,45 @@ lps33hw_config(struct lps33hw *lps, struct lps33hw_cfg *cfg)
     return 0;
 }
 
+#include "console/console.h"
+
 static int
 lps33hw_sensor_read(struct sensor *sensor, sensor_type_t type,
         sensor_data_func_t data_func, void *data_arg, uint32_t timeout)
 {
     (void)timeout;
     int rc;
-    uint8_t payload[3];
     struct sensor_itf *itf;
-   // struct lps33hw *lps;
-   struct sensor_press_data spd;
-
-
-    /* If the read isn't looking for pressure, don't do anything. */
-    if (!(type & SENSOR_TYPE_PRESSURE)) {
-        return SYS_EINVAL;
-    }
 
     itf = SENSOR_GET_ITF(sensor);
-    // lps = (struct lps33hw *) SENSOR_GET_DEVICE(sensor);
+    if (type & SENSOR_TYPE_PRESSURE) {
+        struct sensor_press_data spd;
 
-    rc = lps33hw_read24(itf, LPS33HW_PRESS_OUT_XL, payload);
-    if (rc) {
-        return rc;
+        rc = lps33hw_get_pressure(itf, LPS33HW_PRESS_OUT, &spd.spd_press);
+        if (rc) {
+            return rc;
+        }
+
+        spd.spd_press_is_valid = 1;
+
+        rc = data_func(sensor, data_arg, &spd,
+                SENSOR_TYPE_PRESSURE);
+    } else if (type & SENSOR_TYPE_TEMPERATURE) {
+        struct sensor_temp_data std;
+
+        rc = lps33hw_get_temperature(itf, &std.std_temp);
+        if (rc) {
+            return rc;
+        }
+
+        std.std_temp_is_valid = 1;
+
+        rc = data_func(sensor, data_arg, &std,
+                SENSOR_TYPE_TEMPERATURE);
+    } else {
+         return SYS_EINVAL;
     }
 
-    spd.spd_press = (((uint32_t)payload[2] << 16) |
-        ((uint32_t)payload[1] << 8) | payload[0]);
-
-    spd.spd_press_is_valid = 1;
-
-    rc = data_func(sensor, data_arg, &spd,
-            SENSOR_TYPE_PRESSURE);
     return rc;
 }
 
@@ -374,7 +668,7 @@ lps33hw_sensor_get_config(struct sensor *sensor, sensor_type_t type,
         struct sensor_cfg *cfg)
 {
     /* If the read isn't looking for pressure, don't do anything. */
-    if (!(type & SENSOR_TYPE_PRESSURE)) {
+    if (!(type & (SENSOR_TYPE_PRESSURE | SENSOR_TYPE_TEMPERATURE))) {
         return SYS_EINVAL;
     }
 

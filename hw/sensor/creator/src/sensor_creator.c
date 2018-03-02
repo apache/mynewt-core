@@ -626,6 +626,7 @@ config_adxl345_sensor(void)
 
     rc = adxl345_config((struct adxl345 *) dev, &cfg);
     assert(rc == 0);
+#endif
 
 /*
  * LPS33HW Sensor default configuration used by the creator package
@@ -640,7 +641,7 @@ config_lps33hw_sensor(void)
     struct os_dev *dev;
     struct lps33hw_cfg cfg;
 
-    cfg.mask = SENSOR_TYPE_PRESSURE;
+    cfg.mask = SENSOR_TYPE_PRESSURE | SENSOR_TYPE_TEMPERATURE;
     cfg.data_rate = LPS33HW_1KHZ;
     cfg.lpf = LPS33HW_LPF_DISABLED;
 

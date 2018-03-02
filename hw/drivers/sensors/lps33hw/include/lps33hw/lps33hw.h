@@ -76,6 +76,9 @@ int lps33hw_config_interrupt(struct sensor_itf *itf,
     struct lps33hw_int_cfg cfg);
 int lps33hw_set_lpf(struct sensor_itf *itf,
     enum lps33hw_low_pass_config lpf);
+int lps33hw_set_reference(struct sensor_itf *itf, float reference);
+int lps33hw_get_reference(struct sensor_itf *itf, float *reference);
+int lps33hw_set_threshold(struct sensor_itf *itf, float threshold);
 
 int lps33hw_init(struct os_dev *, void *);
 int lps33hw_config(struct lps33hw *, struct lps33hw_cfg *);

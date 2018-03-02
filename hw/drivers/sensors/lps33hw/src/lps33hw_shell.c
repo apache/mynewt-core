@@ -47,7 +47,7 @@ static struct sensor_itf g_sensor_itf = {
 static int
 lps33hw_shell_cmd_read(int argc, char **argv)
 {
-	return 0;
+    return 0;
 }
 
 static int
