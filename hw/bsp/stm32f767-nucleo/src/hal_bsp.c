@@ -33,8 +33,13 @@
 #include <hal/hal_system.h>
 #include <hal/hal_timer.h>
 
+#if MYNEWT_VAL(SPI_0_MASTER) || MYNEWT_VAL(SPI_0_SLAVE)
+#include <hal/hal_spi.h>
+#endif
+
 #include <stm32f767xx.h>
 #include <stm32f7xx_hal_gpio_ex.h>
+#include "mcu/stm32_hal.h"
 #include <mcu/stm32f7_bsp.h>
 
 #if MYNEWT_VAL(ETH_0)
@@ -59,6 +64,16 @@ static const struct stm32f7_uart_cfg uart_cfg[UART_CNT] = {
         .suc_pin_af = GPIO_AF7_USART3,
         .suc_irqn = USART3_IRQn,
     }
+};
+#endif
+
+#if MYNEWT_VAL(SPI_0_SLAVE) || MYNEWT_VAL(SPI_0_MASTER)
+struct stm32_hal_spi_cfg spi0_cfg = {
+    .sck_pin  = MCU_GPIO_PORTA(5),           /* D13 on CN7 */
+    .miso_pin = MCU_GPIO_PORTA(6),           /* D12 on CN7 */
+    .mosi_pin = MCU_GPIO_PORTA(7),           /* D11 on CN7 */
+    .ss_pin   = MCU_GPIO_PORTD(14),          /* D10 on CN7 */
+    .irq_prio = 2
 };
 #endif
 
@@ -144,6 +159,16 @@ hal_bsp_init(void)
 #if MYNEWT_VAL(UART_0)
     rc = os_dev_create((struct os_dev *) &hal_uart0, "uart0",
       OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *)&uart_cfg[0]);
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(SPI_0_MASTER)
+    rc = hal_spi_init(0, &spi0_cfg, HAL_SPI_TYPE_MASTER);
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(SPI_0_SLAVE)
+    rc = hal_spi_init(0, &spi0_cfg, HAL_SPI_TYPE_SLAVE);
     assert(rc == 0);
 #endif
 
