@@ -313,3 +313,67 @@ assert(rc == 0);
 #endif
 
 }
+
+#if MYNEWT_VAL(BSP_USE_HAL_SPI)
+void
+bsp_spi_read_buf(uint8_t addr, uint8_t *buf, uint8_t size)
+{
+    int i;
+    uint8_t rxval;
+    NRF_SPI_Type *spi;
+    spi = NRF_SPI0;
+
+    if (size == 0) {
+        return;
+    }
+
+    i = -1;
+    spi->EVENTS_READY = 0;
+    spi->TXD = (uint8_t)addr;
+    while (size != 0) {
+        spi->TXD = 0;
+        while (!spi->EVENTS_READY) {}
+        spi->EVENTS_READY = 0;
+        rxval = (uint8_t)(spi->RXD);
+        if (i >= 0) {
+            buf[i] = rxval;
+        }
+        size -= 1;
+        ++i;
+        if (size == 0) {
+            while (!spi->EVENTS_READY) {}
+            spi->EVENTS_READY = 0;
+            buf[i] = (uint8_t)(spi->RXD);
+        }
+    }
+}
+
+void
+bsp_spi_write_buf(uint8_t addr, uint8_t *buf, uint8_t size)
+{
+    uint8_t i;
+    uint8_t rxval;
+    NRF_SPI_Type *spi;
+
+    if (size == 0) {
+        return;
+    }
+
+    spi = NRF_SPI0;
+
+    spi->EVENTS_READY = 0;
+
+    spi->TXD = (uint8_t)addr;
+    for (i = 0; i < size; ++i) {
+        spi->TXD = buf[i];
+        while (!spi->EVENTS_READY) {}
+        rxval = (uint8_t)(spi->RXD);
+        spi->EVENTS_READY = 0;
+    }
+
+    while (!spi->EVENTS_READY) {}
+    rxval = (uint8_t)(spi->RXD);
+    spi->EVENTS_READY = 0;
+    (void)rxval;
+}
+#endif
