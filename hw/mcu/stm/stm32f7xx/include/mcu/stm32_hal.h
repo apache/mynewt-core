@@ -29,6 +29,8 @@ extern "C" {
 #include "stm32f7xx_hal.h"
 #include "stm32f7xx_hal_def.h"
 
+#include "stm32f7xx_mynewt_hal.h"
+
 /* hal_watchdog */
 #include "stm32f7xx_hal_iwdg.h"
 #define STM32_HAL_WATCHDOG_CUSTOM_INIT(x)           \
