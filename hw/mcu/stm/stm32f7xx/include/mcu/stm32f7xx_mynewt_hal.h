@@ -59,14 +59,6 @@ struct stm32f7_hal_i2c_cfg {
     uint32_t hic_speed;
 };
 
-struct stm32f7_hal_spi_cfg {
-    int ss_pin;                          /* for slave mode */
-    int sck_pin;
-    int miso_pin;
-    int mosi_pin;
-    int irq_prio;
-};
-
 #ifdef __cplusplus
 }
 #endif

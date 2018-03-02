@@ -28,8 +28,6 @@
 
 #include "mcu/stm32_hal.h"
 
-#include "mcu/stm32f4xx_mynewt_hal.h"
-#include "mcu/stm32f4_bsp.h"
 #include "mcu/cmsis_nvic.h"
 
 #define SPI_0_ENABLED (MYNEWT_VAL(SPI_0_MASTER) || MYNEWT_VAL(SPI_0_SLAVE))
