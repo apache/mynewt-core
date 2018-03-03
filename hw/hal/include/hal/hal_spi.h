@@ -16,6 +16,14 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
+/**
+ * @addtogroup HAL
+ * @{
+ *   @defgroup HALSpi HAL SPI
+ *   @{
+ */
+
 #ifndef H_HAL_SPI_
 #define H_HAL_SPI_
 
@@ -25,22 +33,28 @@ extern "C" {
 
 #include <inttypes.h>
 
-/* SPI type */
+/* SPI Type of Master */
 #define HAL_SPI_TYPE_MASTER         (0)
+/* SPI Type of Slave */
 #define HAL_SPI_TYPE_SLAVE          (1)
 
-/* SPI modes */
+/** SPI mode 0 */
 #define HAL_SPI_MODE0               (0)
+/** SPI mode 1 */
 #define HAL_SPI_MODE1               (1)
+/** SPI mode 2 */
 #define HAL_SPI_MODE2               (2)
+/** SPI mode 3 */
 #define HAL_SPI_MODE3               (3)
 
-/* SPI data order */
+/** SPI data order, most significant bit first */
 #define HAL_SPI_MSB_FIRST           (0)
+/** SPI data order, least significant bit first */
 #define HAL_SPI_LSB_FIRST           (1)
 
-/* SPI word size */
+/** SPI word size 8 bit */
 #define HAL_SPI_WORD_SIZE_8BIT      (0)
+/** SPI word size 9 bit */
 #define HAL_SPI_WORD_SIZE_9BIT      (1)
 
 /* Prototype for tx/rx callback */
@@ -51,10 +65,14 @@ typedef void (*hal_spi_txrx_cb)(void *arg, int len);
  * can be changed on the fly from the hal
  */
 struct hal_spi_settings {
+    /** Data mode of SPI driver, defined by HAL_SPI_MODEn */
     uint8_t         data_mode;
+    /** Data order, either HAL_SPI_MSB_FIRST or HAL_SPI_LSB_FIRST */
     uint8_t         data_order;
+    /** The word size of the SPI transaction, either 8-bit or 9-bit */
     uint8_t         word_size;
-    uint32_t        baudrate;		/* baudrate in kHz */
+    /** Baudrate in kHz */
+    uint32_t        baudrate;
 };
 
 /**
@@ -216,7 +234,16 @@ int hal_spi_slave_set_def_tx_val(int spi_num, uint16_t val);
  */
 int hal_spi_abort(int spi_num);
 
-/** Utility functions; defined once for all MCUs. */
+/**
+ * Extracts CPOL and CPHA values from a data-mode constant.
+ * Utility function, defined once for every MCU.
+ *
+ * @param data_mode             The HAL_SPI_MODE value to convert.
+ * @param out_cpol              The CPOL gets written here on success.
+ * @param out_cpha              The CPHA gets written here on success.
+ *
+ * @return                      0 on success; nonzero on invalid input.
+ */
 int hal_spi_data_mode_breakout(uint8_t data_mode,
                                int *out_cpol, int *out_cpha);
 
@@ -226,3 +253,8 @@ int hal_spi_data_mode_breakout(uint8_t data_mode,
 #endif
 
 #endif /* H_HAL_SPI_ */
+
+/**
+ *   @} HALSpi
+ * @} HAL
+ */

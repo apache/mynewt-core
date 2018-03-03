@@ -23,12 +23,6 @@
 
 #include <string.h>
 
-/**
- * @addtogroup OSKernel
- * @{
- *   @defgroup OSDevice Device Framework
- *   @{
- */
 
 static STAILQ_HEAD(, os_dev) g_os_dev_list;
 
@@ -117,21 +111,6 @@ err:
     return rc;
 }
 
-
-/**
- * Create a new device in the kernel.
- *
- * @param dev The device to create.
- * @param name The name of the device to create.
- * @param stage The stage to initialize that device to.
- * @param priority The priority of initializing that device
- * @param od_init The initialization function to call for this
- *                device.
- * @param arg The argument to provide this device initialization
- *            function.
- *
- * @return 0 on success, non-zero on failure.
- */
 int
 os_dev_create(struct os_dev *dev, char *name, uint8_t stage,
         uint8_t priority, os_dev_init_func_t od_init, void *arg)
@@ -155,13 +134,6 @@ err:
     return (rc);
 }
 
-/**
- * Initialize all devices for a given state.
- *
- * @param stage The stage to initialize.
- *
- * @return 0 on success, non-zero on failure.
- */
 int
 os_dev_initialize_all(uint8_t stage)
 {
@@ -180,16 +152,6 @@ os_dev_initialize_all(uint8_t stage)
     return (rc);
 }
 
-/**
- * Suspend all devices.
- *
- * @param dev The device to suspend
- * @param suspend_t The number of ticks to suspend this device for
- * @param force Whether or not to force suspending the device
- *
- * @return 0 on success, or a non-zero error code if one of the devices
- *                       returned it.
- */
 int
 os_dev_suspend_all(os_time_t suspend_t, uint8_t force)
 {
@@ -208,11 +170,6 @@ os_dev_suspend_all(os_time_t suspend_t, uint8_t force)
     return (suspend_failure);
 }
 
-/**
- * Resume all the devices that were suspended.
- *
- * @return 0 on success, -1 if any of the devices have failed to resume.
- */
 int
 os_dev_resume_all(void)
 {
@@ -231,16 +188,6 @@ err:
     return (rc);
 }
 
-/**
- * Lookup a device by name.
- *
- * WARNING: This should be called before any locking on the device is done, or
- * the device list itself is modified in any context.  There is no locking.
- *
- * @param name The name of the device to look up.
- *
- * @return A pointer to the device corresponding to name, or NULL if not found.
- */
 struct os_dev *
 os_dev_lookup(char *name)
 {
@@ -255,15 +202,6 @@ os_dev_lookup(char *name)
     return (dev);
 }
 
-/**
- * Open a device.
- *
- * @param dev The device to open
- * @param timo The timeout to open the device, if not specified.
- * @param arg The argument to the device open() call.
- *
- * @return 0 on success, non-zero on failure.
- */
 struct os_dev *
 os_dev_open(char *devname, uint32_t timo, void *arg)
 {
@@ -298,13 +236,6 @@ err:
     return (NULL);
 }
 
-/**
- * Close a device.
- *
- * @param dev The device to close
- *
- * @return 0 on success, non-zero on failure.
- */
 int
 os_dev_close(struct os_dev *dev)
 {
@@ -329,18 +260,9 @@ err:
     return (rc);
 }
 
-/**
- * Clears the device list.  This function does not close any devices or free
- * any resources; its purpose is to allow a full system reset between unit
- * tests.
- */
 void
 os_dev_reset(void)
 {
     STAILQ_INIT(&g_os_dev_list);
 }
 
-/**
- *   @} OSDevice
- * @} OSKernel
- */
