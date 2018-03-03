@@ -1,6 +1,19 @@
 Hardware Abstraction Layer
 ==========================
 
+.. toctree::
+    :hidden:
+
+    hal_timer/hal_timer
+    hal_gpio/hal_gpio
+    hal_uart/hal_uart
+    hal_spi/hal_spi
+    hal_i2c/hal_i2c
+    hal_flash/hal_flash
+    hal_system/hal_system
+    hal_watchdog/hal_watchdog
+    hal_bsp/hal_bsp
+
 Description
 ~~~~~~~~~~~
 

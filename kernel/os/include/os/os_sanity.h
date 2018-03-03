@@ -17,6 +17,14 @@
  * under the License.
  */
 
+
+/**
+ * @addtogroup OSKernel
+ * @{
+ *   @defgroup OSSanity Sanity
+ *   @{
+ */
+
 #ifndef _OS_SANITY_H
 #define _OS_SANITY_H
 
@@ -33,9 +41,13 @@ struct os_sanity_check;
 typedef int (*os_sanity_check_func_t)(struct os_sanity_check *, void *);
 
 struct os_sanity_check {
+    /** Time this check last ran successfully. */
     os_time_t sc_checkin_last;
+    /** Interval this task should check in at */
     os_time_t sc_checkin_itvl;
+    /** Sanity check to run */
     os_sanity_check_func_t sc_func;
+    /** Argument to pass to sanity check */
     void *sc_arg;
 
     SLIST_ENTRY(os_sanity_check) sc_next;
@@ -47,14 +59,48 @@ struct os_sanity_check {
     (__sc)->sc_arg = (__arg);                              \
     (__sc)->sc_checkin_itvl = (__itvl) * OS_TICKS_PER_SEC;
 
+/** @cond INTERNAL_HIDDEN */
 int os_sanity_init(void);
 void os_sanity_run(void);
+/** @endcond */
 
 struct os_task;
+
+/**
+ * Provide a "task checkin" for the sanity task.
+ *
+ * @param t The task to check in
+ *
+ * @return 0 on success, error code on failure
+ */
 int os_sanity_task_checkin(struct os_task *);
 
+/**
+ * Initialize a sanity check
+ *
+ * @param sc The sanity check to initialize
+ *
+ * @return 0 on success, error code on failure.
+ */
 int os_sanity_check_init(struct os_sanity_check *);
+
+/**
+ * Register a sanity check
+ *
+ * @param sc The sanity check to register
+ *
+ * @return 0 on success, error code on failure
+ */
 int os_sanity_check_register(struct os_sanity_check *);
+
+/**
+ * Reset the os sanity check, so that it doesn't trip up the
+ * sanity timer.
+ *
+ * @param sc The sanity check to reset
+ *
+ * @return 0 on success, error code on failure
+ */
 int os_sanity_check_reset(struct os_sanity_check *);
 
 #ifdef __cplusplus
@@ -62,3 +108,9 @@ int os_sanity_check_reset(struct os_sanity_check *);
 #endif
 
 #endif /* _OS_SANITY_H */
+
+
+/**
+ *   @} OSSanity
+ * @} OSKernel
+ */

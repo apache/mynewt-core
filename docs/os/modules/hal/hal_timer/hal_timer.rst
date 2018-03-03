@@ -1,4 +1,4 @@
-hal\_timer
+Timer
 ==========
 
 The hardware independent timer structure and API to configure,
@@ -27,10 +27,9 @@ structure; the hal timer API should be used.
         TAILQ_ENTRY(hal_timer) link;    /* Queue linked list structure */
     };
 
-Definition
-~~~~~~~~~~
-
-`hal\_timer.h <https://github.com/apache/incubator-mynewt-core/blob/master/hw/hal/include/hal/hal_timer.h>`__
-
-Examples
+API
 ~~~~~~~~
+
+.. doxygengroup:: HALTimer
+    :content-only:
+    :members:

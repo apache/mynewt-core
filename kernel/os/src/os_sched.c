@@ -92,15 +92,6 @@ os_sched_ctx_sw_hook(struct os_task *next_t)
     g_os_last_ctx_sw_time = g_os_time;
 }
 
-/**
- * os sched get current task
- *
- * Returns the currently running task. Note that this task may or may not be
- * the highest priority task ready to run.
- *
- *
- * @return struct os_task*
- */
 struct os_task *
 os_sched_get_current_task(void)
 {

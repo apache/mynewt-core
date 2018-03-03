@@ -49,23 +49,7 @@
 STAILQ_HEAD(, os_mbuf_pool) g_msys_pool_list =
     STAILQ_HEAD_INITIALIZER(g_msys_pool_list);
 
-/**
- * Initializes an mqueue.  An mqueue is a queue of mbufs that ties to a
- * particular task's event queue.  Mqueues form a helper API around a common
- * paradigm: wait on an event queue until at least one packet is available,
- * then process a queue of packets.
- *
- * When mbufs are available on the queue, an event OS_EVENT_T_MQUEUE_DATA
- * will be posted to the task's mbuf queue.
- *
- * @param mq                    The mqueue to initialize
- * @param ev_cb                 The callback to associate with the mqeueue
- *                                  event.  Typically, this callback pulls each
- *                                  packet off the mqueue and processes them.
- * @param arg                   The argument to associate with the mqueue event.
- *
- * @return                      0 on success, non-zero on failure.
- */
+
 int
 os_mqueue_init(struct os_mqueue *mq, os_event_fn *ev_cb, void *arg)
 {
@@ -81,13 +65,6 @@ os_mqueue_init(struct os_mqueue *mq, os_event_fn *ev_cb, void *arg)
     return (0);
 }
 
-/**
- * Remove and return a single mbuf from the mbuf queue.  Does not block.
- *
- * @param mq The mbuf queue to pull an element off of.
- *
- * @return The next mbuf in the queue, or NULL if queue has no mbufs.
- */
 struct os_mbuf *
 os_mqueue_get(struct os_mqueue *mq)
 {
@@ -111,16 +88,6 @@ os_mqueue_get(struct os_mqueue *mq)
     return (m);
 }
 
-/**
- * Adds a packet (i.e. packet header mbuf) to an mqueue. The event associated
- * with the mqueue gets posted to the specified eventq.
- *
- * @param mq                    The mbuf queue to append the mbuf to.
- * @param evq                   The event queue to post an event to.
- * @param m                     The mbuf to append to the mbuf queue.
- *
- * @return 0 on success, non-zero on failure.
- */
 int
 os_mqueue_put(struct os_mqueue *mq, struct os_eventq *evq, struct os_mbuf *m)
 {
@@ -150,35 +117,6 @@ err:
     return (rc);
 }
 
-/**
- *   @} OSMqueue
- * @} OSKernel
- */
-
-
-/**
- * @addtogroup OSKernel
- * @{
- *   @defgroup OSMsys System level mbuf
- *   @{
- */
-
-/**
- * MSYS is a system level mbuf registry.  Allows the system to share
- * packet buffers amongst the various networking stacks that can be running
- * simultaeneously.
- *
- * Mbuf pools are created in the system initialization code, and then when
- * a mbuf is allocated out of msys, it will try and find the best fit based
- * upon estimated mbuf size.
- *
- * os_msys_register() registers a mbuf pool with MSYS, and allows MSYS to
- * allocate mbufs out of it.
- *
- * @param new_pool The pool to register with MSYS
- *
- * @return 0 on success, non-zero on failure
- */
 int
 os_msys_register(struct os_mbuf_pool *new_pool)
 {
@@ -200,9 +138,6 @@ os_msys_register(struct os_mbuf_pool *new_pool)
     return (0);
 }
 
-/**
- * De-registers all mbuf pools from msys.
- */
 void
 os_msys_reset(void)
 {
@@ -228,16 +163,7 @@ _os_msys_find_pool(uint16_t dsize)
     return (pool);
 }
 
-/**
- * Allocate a mbuf from msys.  Based upon the data size requested,
- * os_msys_get() will choose the mbuf pool that has the best fit.
- *
- * @param dsize The estimated size of the data being stored in the mbuf
- * @param leadingspace The amount of leadingspace to allocate in the mbuf
- *
- * @return A freshly allocated mbuf on success, NULL on failure.
- *
- */
+
 struct os_mbuf *
 os_msys_get(uint16_t dsize, uint16_t leadingspace)
 {
@@ -255,15 +181,6 @@ err:
     return (NULL);
 }
 
-/**
- * Allocate a packet header structure from the MSYS pool.  See
- * os_msys_register() for a description of MSYS.
- *
- * @param dsize The estimated size of the data being stored in the mbuf
- * @param user_hdr_len The length to allocate for the packet header structure
- *
- * @return A freshly allocated mbuf on success, NULL on failure.
- */
 struct os_mbuf *
 os_msys_get_pkthdr(uint16_t dsize, uint16_t user_hdr_len)
 {
@@ -311,30 +228,7 @@ os_msys_num_free(void)
     return total;
 }
 
-/**
- *   @} OSMsys
- * @} OSKernel
- */
 
-
-/**
- * @addtogroup OSKernel
- * @{
- *   @defgroup OSMbuf Chained Memory Buffers
- *   @{
- */
-
-
-/**
- * Initialize a pool of mbufs.
- *
- * @param omp     The mbuf pool to initialize
- * @param mp      The memory pool that will hold this mbuf pool
- * @param buf_len The length of the buffer itself.
- * @param nbufs   The number of buffers in the pool
- *
- * @return 0 on success, error code on failure.
- */
 int
 os_mbuf_pool_init(struct os_mbuf_pool *omp, struct os_mempool *mp,
                   uint16_t buf_len, uint16_t nbufs)
@@ -345,16 +239,6 @@ os_mbuf_pool_init(struct os_mbuf_pool *omp, struct os_mempool *mp,
     return (0);
 }
 
-/**
- * Get an mbuf from the mbuf pool.  The mbuf is allocated, and initialized
- * prior to being returned.
- *
- * @param omp The mbuf pool to return the packet from
- * @param leadingspace The amount of leadingspace to put before the data
- *     section by default.
- *
- * @return An initialized mbuf on success, and NULL on failure.
- */
 struct os_mbuf *
 os_mbuf_get(struct os_mbuf_pool *omp, uint16_t leadingspace)
 {
@@ -381,14 +265,6 @@ err:
     return (NULL);
 }
 
-/**
- * Allocate a new packet header mbuf out of the os_mbuf_pool.
- *
- * @param omp The mbuf pool to allocate out of
- * @param user_pkthdr_len The packet header length to reserve for the caller.
- *
- * @return A freshly allocated mbuf on success, NULL on failure.
- */
 struct os_mbuf *
 os_mbuf_get_pkthdr(struct os_mbuf_pool *omp, uint8_t user_pkthdr_len)
 {
@@ -416,14 +292,6 @@ os_mbuf_get_pkthdr(struct os_mbuf_pool *omp, uint8_t user_pkthdr_len)
     return om;
 }
 
-/**
- * Release a mbuf back to the pool
- *
- * @param omp The Mbuf pool to release back to
- * @param om  The Mbuf to release back to the pool
- *
- * @return 0 on success, -1 on failure
- */
 int
 os_mbuf_free(struct os_mbuf *om)
 {
@@ -441,14 +309,6 @@ err:
     return (rc);
 }
 
-/**
- * Free a chain of mbufs
- *
- * @param omp The mbuf pool to free the chain of mbufs into
- * @param om  The starting mbuf of the chain to free back into the pool
- *
- * @return 0 on success, -1 on failure
- */
 int
 os_mbuf_free_chain(struct os_mbuf *om)
 {
@@ -489,15 +349,6 @@ _os_mbuf_copypkthdr(struct os_mbuf *new_buf, struct os_mbuf *old_buf)
     new_buf->om_data = new_buf->om_databuf + old_buf->om_pkthdr_len;
 }
 
-/**
- * Append data onto a mbuf
- *
- * @param om   The mbuf to append the data onto
- * @param data The data to append onto the mbuf
- * @param len  The length of the data to append
- *
- * @return 0 on success, and an error code on failure
- */
 int
 os_mbuf_append(struct os_mbuf *om, const void *data,  uint16_t len)
 {
@@ -572,21 +423,6 @@ err:
     return (rc);
 }
 
-/**
- * Reads data from one mbuf and appends it to another.  On error, the specified
- * data range may be partially appended.  Neither mbuf is required to contain
- * an mbuf packet header.
- *
- * @param dst                   The mbuf to append to.
- * @param src                   The mbuf to copy data from.
- * @param src_off               The absolute offset within the source mbuf
- *                                  chain to read from.
- * @param len                   The number of bytes to append.
- *
- * @return                      0 on success;
- *                              OS_EINVAL if the specified range extends beyond
- *                                  the end of the source mbuf chain.
- */
 int
 os_mbuf_appendfrom(struct os_mbuf *dst, const struct os_mbuf *src,
                    uint16_t src_off, uint16_t len)
@@ -616,14 +452,6 @@ os_mbuf_appendfrom(struct os_mbuf *dst, const struct os_mbuf *src,
     return 0;
 }
 
-/**
- * Duplicate a chain of mbufs.  Return the start of the duplicated chain.
- *
- * @param omp The mbuf pool to duplicate out of
- * @param om  The mbuf chain to duplicate
- *
- * @return A pointer to the new chain of mbufs
- */
 struct os_mbuf *
 os_mbuf_dup(struct os_mbuf *om)
 {
@@ -668,19 +496,6 @@ err:
     return (NULL);
 }
 
-/**
- * Locates the specified absolute offset within an mbuf chain.  The offset
- * can be one past than the total length of the chain, but no greater.
- *
- * @param om                    The start of the mbuf chain to seek within.
- * @param off                   The absolute address to find.
- * @param out_off               On success, this points to the relative offset
- *                                  within the returned mbuf.
- *
- * @return                      The mbuf containing the specified offset on
- *                                  success.
- *                              NULL if the specified offset is out of bounds.
- */
 struct os_mbuf *
 os_mbuf_off(const struct os_mbuf *om, int off, uint16_t *out_off)
 {
@@ -709,18 +524,6 @@ os_mbuf_off(const struct os_mbuf *om, int off, uint16_t *out_off)
     }
 }
 
-/*
- * Copy data from an mbuf chain starting "off" bytes from the beginning,
- * continuing for "len" bytes, into the indicated buffer.
- *
- * @param m The mbuf chain to copy from
- * @param off The offset into the mbuf chain to begin copying from
- * @param len The length of the data to copy
- * @param dst The destination buffer to copy into
- *
- * @return                      0 on success;
- *                              -1 if the mbuf does not contain enough data.
- */
 int
 os_mbuf_copydata(const struct os_mbuf *m, int off, int len, void *dst)
 {
@@ -755,15 +558,6 @@ os_mbuf_copydata(const struct os_mbuf *m, int off, int len, void *dst)
     return (len > 0 ? -1 : 0);
 }
 
-/**
- * Adjust the length of a mbuf, trimming either from the head or the tail
- * of the mbuf.
- *
- * @param mp The mbuf chain to adjust
- * @param req_len The length to trim from the mbuf.  If positive, trims
- *                from the head of the mbuf, if negative, trims from the
- *                tail of the mbuf.
- */
 void
 os_mbuf_adj(struct os_mbuf *mp, int req_len)
 {
@@ -837,20 +631,6 @@ os_mbuf_adj(struct os_mbuf *mp, int req_len)
     }
 }
 
-/**
- * Performs a memory compare of the specified region of an mbuf chain against a
- * flat buffer.
- *
- * @param om                    The start of the mbuf chain to compare.
- * @param off                   The offset within the mbuf chain to start the
- *                                  comparison.
- * @param data                  The flat buffer to compare.
- * @param len                   The length of the flat buffer.
- *
- * @return                      0 if both memory regions are identical;
- *                              A memcmp return code if there is a mismatch;
- *                              INT_MAX if the mbuf is too short.
- */
 int
 os_mbuf_cmpf(const struct os_mbuf *om, int off, const void *data, int len)
 {
@@ -892,25 +672,6 @@ os_mbuf_cmpf(const struct os_mbuf *om, int off, const void *data, int len)
     }
 }
 
-/**
- * Compares the contents of two mbuf chains.  The ranges of the two chains to
- * be compared are specified via the two offset parameters and the len
- * parameter.  Neither mbuf chain is required to contain a packet header.
- *
- * @param om1                   The first mbuf chain to compare.
- * @param offset1               The absolute offset within om1 at which to
- *                                  start the comparison.
- * @param om2                   The second mbuf chain to compare.
- * @param offset2               The absolute offset within om2 at which to
- *                                  start the comparison.
- * @param len                   The number of bytes to compare.
- *
- * @return                      0 if both mbuf segments are identical;
- *                              A memcmp() return code if the segment contents
- *                                  differ;
- *                              INT_MAX if a specified range extends beyond the
- *                                  end of its corresponding mbuf chain.
- */
 int
 os_mbuf_cmpm(const struct os_mbuf *om1, uint16_t offset1,
              const struct os_mbuf *om2, uint16_t offset2,
@@ -967,21 +728,6 @@ os_mbuf_cmpm(const struct os_mbuf *om1, uint16_t offset1,
     }
 }
 
-/**
- * Increases the length of an mbuf chain by adding data to the front.  If there
- * is insufficient room in the leading mbuf, additional mbufs are allocated and
- * prepended as necessary.  If this function fails to allocate an mbuf, the
- * entire chain is freed.
- *
- * The specified mbuf chain does not need to contain a packet header.
- *
- * @param omp                   The mbuf pool to allocate from.
- * @param om                    The head of the mbuf chain.
- * @param len                   The number of bytes to prepend.
- *
- * @return                      The new head of the chain on success;
- *                              NULL on failure.
- */
 struct os_mbuf *
 os_mbuf_prepend(struct os_mbuf *om, int len)
 {
@@ -1035,17 +781,6 @@ os_mbuf_prepend(struct os_mbuf *om, int len)
     return om;
 }
 
-/**
- * Prepends a chunk of empty data to the specified mbuf chain and ensures the
- * chunk is contiguous.  If either operation fails, the specified mbuf chain is
- * freed and NULL is returned.
- *
- * @param om                    The mbuf chain to prepend to.
- * @param len                   The number of bytes to prepend and pullup.
- *
- * @return                      The modified mbuf on success;
- *                              NULL on failure (and the mbuf chain is freed).
- */
 struct os_mbuf *
 os_mbuf_prepend_pullup(struct os_mbuf *om, uint16_t len)
 {
@@ -1062,20 +797,6 @@ os_mbuf_prepend_pullup(struct os_mbuf *om, uint16_t len)
     return om;
 }
 
-/**
- * Copies the contents of a flat buffer into an mbuf chain, starting at the
- * specified destination offset.  If the mbuf is too small for the source data,
- * it is extended as necessary.  If the destination mbuf contains a packet
- * header, the header length is updated.
- *
- * @param omp                   The mbuf pool to allocate from.
- * @param om                    The mbuf chain to copy into.
- * @param off                   The offset within the chain to copy to.
- * @param src                   The source buffer to copy from.
- * @param len                   The number of bytes to copy.
- *
- * @return                      0 on success; nonzero on failure.
- */
 int
 os_mbuf_copyinto(struct os_mbuf *om, int off, const void *src, int len)
 {
@@ -1133,14 +854,6 @@ os_mbuf_copyinto(struct os_mbuf *om, int off, const void *src, int len)
     return 0;
 }
 
-/**
- * Attaches a second mbuf chain onto the end of the first.  If the first chain
- * contains a packet header, the header's length is updated.  If the second
- * chain has a packet header, its header is cleared.
- *
- * @param first                 The mbuf chain being attached to.
- * @param second                The mbuf chain that gets attached.
- */
 void
 os_mbuf_concat(struct os_mbuf *first, struct os_mbuf *second)
 {
@@ -1177,19 +890,6 @@ os_mbuf_concat(struct os_mbuf *first, struct os_mbuf *second)
     second->om_pkthdr_len = 0;
 }
 
-/**
- * Increases the length of an mbuf chain by the specified amount.  If there is
- * not sufficient room in the last buffer, a new buffer is allocated and
- * appended to the chain.  It is an error to request more data than can fit in
- * a single buffer.
- *
- * @param omp
- * @param om                    The head of the chain to extend.
- * @param len                   The number of bytes to extend by.
- *
- * @return                      A pointer to the new data on success;
- *                              NULL on failure.
- */
 void *
 os_mbuf_extend(struct os_mbuf *om, uint16_t len)
 {
@@ -1227,22 +927,7 @@ os_mbuf_extend(struct os_mbuf *om, uint16_t len)
     return data;
 }
 
-/**
- * Rearrange a mbuf chain so that len bytes are contiguous,
- * and in the data area of an mbuf (so that OS_MBUF_DATA() will
- * work on a structure of size len.)  Returns the resulting
- * mbuf chain on success, free's it and returns NULL on failure.
- *
- * If there is room, it will add up to "max_protohdr - len"
- * extra bytes to the contiguous region, in an attempt to avoid being
- * called next time.
- *
- * @param omp The mbuf pool to take the mbufs out of
- * @param om The mbuf chain to make contiguous
- * @param len The number of bytes in the chain to make contiguous
- *
- * @return The contiguous mbuf chain on success, NULL on failure.
- */
+
 struct os_mbuf *
 os_mbuf_pullup(struct os_mbuf *om, uint16_t len)
 {
@@ -1308,14 +993,6 @@ bad:
     return (NULL);
 }
 
-/**
- * Removes and frees empty mbufs from the front of a chain.  If the chain
- * contains a packet header, it is preserved.
- *
- * @param om                    The mbuf chain to trim.
- *
- * @return                      The head of the trimmed mbuf chain.
- */
 struct os_mbuf *
 os_mbuf_trim_front(struct os_mbuf *om)
 {
@@ -1361,7 +1038,3 @@ os_mbuf_trim_front(struct os_mbuf *om)
     return om;
 }
 
-/**
- *   @} OSMbuf
- * @} OSKernel
- */

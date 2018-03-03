@@ -17,6 +17,14 @@
  * under the License.
  */
 
+
+/**
+ * @addtogroup HAL
+ * @{
+ *   @defgroup HALI2c HAL I2c
+ *   @{
+ */
+
 #ifndef H_HAL_I2C_
 #define H_HAL_I2C_
 
@@ -35,11 +43,11 @@ extern "C" {
  * Typical usage of this API is as follows:
  *
  * Initialize an i2c device with:
- *      hal_i2c_init()
+ *      :c:func:`hal_i2c_init()`
  *
  * When you wish to perform an i2c transaction, you call one or both of:
- *      hal_i2c_master_write();
- *      hal_i2c_master_read();
+ *      :c:func:`hal_i2c_master_write()`;
+ *      :c:func:`hal_i2c_master_read()`;
  *
  * These functions will issue a START condition, followed by the device's
  * 7-bit I2C address, and then send or receive the payload based on the data
@@ -50,25 +58,30 @@ extern "C" {
  *
  * For example, in an I2C memory access you might write a register address and
  * then read data back via:
- *      hal_i2c_write(); -- write to a specific register on the device
- *      hal_i2c_read(); --- read back data, setting 'last_op' to '1'
+ *      :c:func:`hal_i2c_write()`; -- write to a specific register on the device
+ *      :c:func:`hal_i2c_read()`; --- read back data, setting 'last_op' to '1'
  */
 
 /**
- * when sending a packet, use this structure to pass the arguments.
+ * When sending a packet, use this structure to pass the arguments.
  */
 struct hal_i2c_master_data {
-    uint8_t  address;   /* destination address */
-            /* An I2C address has 7 bits. In the protocol these
-             * 7 bits are combined with a 1 bit R/W bit to specify read
-             * or write operation in an 8-bit address field sent to
-             * the remote device.  This API accepts the 7-bit
-             * address as its argument in the 7 LSBs of the
-             * address field above.  For example if I2C was
-             * writing a 0x81 in its protocol, you would pass
-             * only the top 7-bits to this function as 0x40 */
-    uint16_t len;       /* number of buffer bytes to transmit or receive */
-    uint8_t *buffer;    /* buffer space to hold the transmit or receive */
+    /**
+     * Destination address
+     * An I2C address has 7 bits. In the protocol these
+     * 7 bits are combined with a 1 bit R/W bit to specify read
+     * or write operation in an 8-bit address field sent to
+     * the remote device.  This API accepts the 7-bit
+     * address as its argument in the 7 LSBs of the
+     * address field above.  For example if I2C was
+     * writing a 0x81 in its protocol, you would pass
+     * only the top 7-bits to this function as 0x40
+     */
+    uint8_t  address
+    /** Number of buffer bytes to transmit or receive */;
+    uint16_t len;
+    /** Buffer space to hold the transmit or receive */
+    uint8_t *buffer;
 };
 
 /**
@@ -137,3 +150,9 @@ int hal_i2c_master_probe(uint8_t i2c_num, uint8_t address,
 #endif
 
 #endif /* H_HAL_I2C_ */
+
+
+/**
+ *   @} HALI2c
+ * @} HAL
+ */

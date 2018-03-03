@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -17,6 +17,15 @@
  * under the License.
  */
 
+
+/**
+ * @addtogroup OSKernel
+ * @{
+ *   @defgroup OSGeneral
+ *   @{
+ */
+
+
 #ifndef H_OS_HEAP_
 #define H_OS_HEAP_
 
@@ -26,8 +35,39 @@
 extern "C" {
 #endif
 
+
+/**
+ * Operating system level malloc().   This ensures that a safe malloc occurs
+ * within the context of the OS.  Depending on platform, the OS may rely on
+ * libc's malloc() implementation, which is not guaranteed to be thread-safe.
+ * This malloc() will always be thread-safe.
+ *
+ * @param size The number of bytes to allocate
+ *
+ * @return A pointer to the memory region allocated.
+ */
 void *os_malloc(size_t size);
+
+
+/**
+ * Operating system level free().  See description of os_malloc() for reasoning.
+ *
+ * Free's memory allocated by malloc.
+ *
+ * @param mem The memory to free.
+ */
 void os_free(void *mem);
+
+/**
+ * Operating system level realloc(). See description of os_malloc() for reasoning.
+ *
+ * Reallocates the memory at ptr, to be size contiguouos bytes.
+ *
+ * @param ptr A pointer to the memory to allocate
+ * @param size The number of contiguouos bytes to allocate at that location
+ *
+ * @return A pointer to memory of size, or NULL on failure to allocate
+ */
 void *os_realloc(void *ptr, size_t size);
 
 #ifdef __cplusplus
@@ -36,3 +76,8 @@ void *os_realloc(void *ptr, size_t size);
 
 #endif
 
+
+/**
+ *   @} OSGeneral
+ * @} OS Kernel
+ */

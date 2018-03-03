@@ -40,7 +40,7 @@ various layers of the networking stack. Any mbufs that are part of the
 packet (i.e. in the mbuf chain but not the first one) are "normal" (i.e.
 non-packet header) mbufs. A normal mbuf does not have any packet header
 or user packet header structures in them; they only contain the basic
-mbuf header (``struct os_mbuf``). Figure 1 illustrates these two types
+mbuf header (:c:type:`struct os_mbuf`). Figure 1 illustrates these two types
 of mbufs. Note that the numbers/text in parentheses denote the size of
 the structures/elements (in bytes) and that MBLEN is the memory block
 length of the memory pool used by the mbuf pool.
@@ -55,35 +55,35 @@ Normal mbuf
 
 Now let's take a deeper dive into the mbuf structure. Figure 2
 illustrates a normal mbuf and breaks out the various fields in the
-``os_mbuf`` structure.
+c:type:`os_mbuf` structure.
 
--  The *om\_data* field is a pointer to where the data starts inside the
+-  The :c:member:`om_data` field is a pointer to where the data starts inside the
    data buffer. Typically, mbufs that are allocated from the mbuf pool
-   (discussed later) have their om\_data pointer set to the start of the
+   (discussed later) have their :c:member:`om_data` pointer set to the start of the
    data buffer but there are cases where this may not be desirable
    (added a protocol header to a packet, for example).
--  The *om\_flags* field is a set of flags used internally by the mbuf
+-  The :c:member:`om_flags` field is a set of flags used internally by the mbuf
    library. Currently, no flags have been defined.
--  The *om\_pkthdr\_len* field is the total length of all packet headers
+-  The :c:member:`om_pkthdr_len` field is the total length of all packet headers
    in the mbuf. For normal mbufs this is set to 0 as there is no packet
    or user packet headers. For packet header mbufs, this would be set to
    the length of the packet header structure (16) plus the size of the
    user packet header (if any). Note that it is this field which
    differentiates packet header mbufs from normal mbufs (i.e. if
-   *om\_pkthdr\_len* is zero, this is a normal mbuf; otherwise it is a
+   :c:member:`om_pkthdr_len` is zero, this is a normal mbuf; otherwise it is a
    packet header mbuf).
--  The *om\_len* field contains the amount of user data in the data
+-  The :c:member:`om_len` field contains the amount of user data in the data
    buffer. When initially allocated, this field is 0 as there is no user
    data in the mbuf.
--  The *omp\_pool* field is a pointer to the pool from which this mbuf
+-  The :c:member:`omp_pool` field is a pointer to the pool from which this mbuf
    has been allocated. This is used internally by the mbuf library.
--  The *omp\_next* field is a linked list element which is used to chain
+-  The :c:member:`omp_next` field is a linked list element which is used to chain
    mbufs.
 
-Figure 2 also shows a normal mbuf with actual values in the ``os_mbuf``
+Figure 2 also shows a normal mbuf with actual values in the :c:type:`os_mbuf`
 structure. This mbuf starts at address 0x1000 and is 256 bytes in total
 length. In this example, the user has copied 33 bytes into the data
-buffer starting at address 0x1010 (this is where om\_data points). Note
+buffer starting at address 0x1010 (this is where :c:member:`om_data` points). Note
 that the packet header length in this mbuf is 0 as it is not a packet
 header mbuf.
 
@@ -95,7 +95,7 @@ header mbuf.
 Figure 3 illustrates the packet header mbuf along with some chained
 mbufs (i.e a "packet"). In this example, the user header structure is
 defined to be 8 bytes. Note that in figure 3 we show a number of
-different mbufs with varying *om\_data* pointers and lengths since we
+different mbufs with varying :c:member:`om_data` pointers and lengths since we
 want to show various examples of valid mbufs. For all the mbufs (both
 packet header and normal ones) the total length of the memory block is
 128 bytes.
@@ -172,18 +172,54 @@ block size required, denoted by the macro *MBUF\_MEMBLOCK\_OVERHEAD*.
         assert(rc == 0);
     }
 
+Msys
+-----
+
+Msys stands for "system mbufs" and is a set of API built on top of the
+mbuf code. The basic idea behind msys is the following. The developer
+can create different size mbuf pools and register them with msys. The
+application then allocates mbufs using the msys API (as opposed to the
+mbuf API). The msys code will choose the mbuf pool with the smallest
+mbufs that can accommodate the requested size.
+
+Let us walk through an example where the user registers three mbuf pools
+with msys: one with 32 byte mbufs, one with 256 and one with 2048. If
+the user requests an mbuf with 10 bytes, the 32-byte mbuf pool is used.
+If the request is for 33 bytes the 256 byte mbuf pool is used. If an
+mbuf data size is requested that is larger than any of the pools (say,
+4000 bytes) the largest pool is used. While this behaviour may not be
+optimal in all cases that is the currently implemented behaviour. All
+this means is that the user is not guaranteed that a single mbuf can
+hold the requested data.
+
+The msys code will not allocate an mbuf from a larger pool if the chosen
+mbuf pool is empty. Similarly, the msys code will not chain together a
+number of smaller mbufs to accommodate the requested size. While this
+behaviour may change in future implementations the current code will
+simply return NULL. Using the above example, say the user requests 250
+bytes. The msys code chooses the appropriate pool (i.e. the 256 byte
+mbuf pool) and attempts to allocate an mbuf from that pool. If that pool
+is empty, NULL is returned even though the 32 and 2048 byte pools are
+not empty.
+
+Note that no added descriptions on how to use the msys API are presented
+here (other than in the API descriptions themselves) as the msys API is
+used in exactly the same manner as the mbuf API. The only difference is
+that mbuf pools are added to msys by calling ``os_msys_register().``
+
+
 Using mbufs
 --------------
 
 The following examples illustrate typical mbuf usage. There are two
-basic mbuf allocation API: ``os_mbuf_get()`` and
-``os_mbuf_get_pkthdr()``. The first API obtains a normal mbuf whereas
+basic mbuf allocation API: c:func:`os_mbuf_get()` and
+:c:func:`os_mbuf_get_pkthdr()`. The first API obtains a normal mbuf whereas
 the latter obtains a packet header mbuf. Typically, application
-developers use ``os_mbuf_get_pkthdr()`` and rarely, if ever, need to
-call ``os_mbuf_get()`` as the rest of the mbuf API (e.g.
-``os_mbuf_append()``, ``os_mbuf_copyinto()``, etc.) typically deal with
-allocating and chaining mbufs. It is recommended to use the provided API
-to copy data into/out of mbuf chains and/or manipulate mbufs.
+developers use :c:func:`os_mbuf_get_pkthdr()` and rarely, if ever, need to
+call :c:func:`os_mbuf_get()` as the rest of the mbuf API (e.g.
+:c:func:`os_mbuf_append()`, :c:func:`os_mbuf_copyinto()`, etc.) typically 
+deal with allocating and chaining mbufs. It is recommended to use the 
+provided API to copy data into/out of mbuf chains and/or manipulate mbufs.
 
 In ``example1``, the developer creates a packet and then sends the
 packet to a networking interface. The code sample also provides an
@@ -293,180 +329,91 @@ definitions used in the first example.
         os_mbuf_free_chain(om);
     }
 
-Data Structures
------------------
+
+Mqueue
+-------
+
+The mqueue construct allows a task to wake up when it receives data.
+Typically, this data is in the form of packets received over a network.
+A common networking stack operation is to put a packet on a queue and
+post an event to the task monitoring that queue. When the task handles
+the event, it processes each packet on the packet queue.
+
+Using Mqueue
+--------------
+
+The following code sample demonstrates how to use an mqueue. In this
+example:
+
+-  packets are put on a receive queue
+-  a task processes each packet on the queue (increments a receive
+   counter)
+
+Not shown in the code example is a call ``my_task_rx_data_func``.
+Presumably, some other code will call this API.
 
 .. code:: c
 
-    struct os_mbuf_pool {
-        uint16_t omp_databuf_len;
-        uint16_t omp_mbuf_count;
-        struct os_mempool *omp_pool;
-        STAILQ_ENTRY(os_mbuf_pool) omp_next;
-    };
+    uint32_t pkts_rxd;
+    struct os_mqueue rxpkt_q;
+    struct os_eventq my_task_evq;
 
-+--------------+----------------+
-| **Element**  | **Description* |
-|              | *              |
-+==============+================+
-| omp\_databuf | The length, in |
-| \_len        | bytes, of the  |
-|              | "data buffer"  |
-|              | of the mbuf.   |
-|              | The data       |
-|              | buffer of the  |
-|              | mbuf is        |
-|              | everything     |
-|              | except the     |
-|              | os\_mbuf       |
-|              | structure      |
-|              | (which is      |
-|              | present in all |
-|              | types of       |
-|              | mbufs)         |
-+--------------+----------------+
-| omp\_mbuf\_c | Total number   |
-| ount         | of mbufs in    |
-|              | the pool when  |
-|              | allocated.     |
-|              | This is NOT    |
-|              | the number of  |
-|              | free mbufs in  |
-|              | the pool!      |
-+--------------+----------------+
-| omp\_pool    | The memory     |
-|              | pool from      |
-|              | which the      |
-|              | mbufs are      |
-|              | allocated      |
-+--------------+----------------+
-| omp\_next    | This is a      |
-|              | linked list    |
-|              | pointer which  |
-|              | chains memory  |
-|              | pools. It is   |
-|              | used by the    |
-|              | system memory  |
-|              | pool library   |
-+--------------+----------------+
+    /**
+     * Removes each packet from the receive queue and processes it.
+     */
+    void
+    process_rx_data_queue(void)
+    {
+        struct os_mbuf *om;
 
-.. code:: c
+        while ((om = os_mqueue_get(&rxpkt_q)) != NULL) {
+            ++pkts_rxd;
+            os_mbuf_free_chain(om);
+        }
+    }
 
-    struct os_mbuf_pkthdr {
-        uint16_t omp_len;
-        uint16_t omp_flags;
-        STAILQ_ENTRY(os_mbuf_pkthdr) omp_next;
-    };
+    /**
+     * Called when a packet is received.
+     */
+    int
+    my_task_rx_data_func(struct os_mbuf *om)
+    {
+        int rc;
 
-+--------------+----------------+
-| **Element**  | **Description* |
-|              | *              |
-+==============+================+
-| omp\_len     | Length, in     |
-|              | bytes, of the  |
-|              | "packet". This |
-|              | is the sum of  |
-|              | the user data  |
-|              | in all the     |
-|              | mbufs chained  |
-|              | to the packet  |
-|              | header mbuf    |
-|              | (including the |
-|              | packet header  |
-|              | mbuf)          |
-+--------------+----------------+
-| omp\_flags   | Packet header  |
-|              | flags.         |
-+--------------+----------------+
-| omp\_next    | Linked list    |
-|              | pointer to     |
-|              | chain          |
-|              | "packets".     |
-|              | This can be    |
-|              | used to add    |
-|              | mbuf chains to |
-|              | a queue or     |
-|              | linked list    |
-|              | and is there   |
-|              | for            |
-|              | convenience.   |
-+--------------+----------------+
+        /* Enqueue the received packet and wake up the listening task. */
+        rc = os_mqueue_put(&rxpkt_q, &my_task_evq, om);
+        if (rc != 0) {
+            return -1;
+        }
 
-.. code:: c
+        return 0;
+    }
 
-    struct os_mbuf {
-        uint8_t *om_data;
-        uint8_t om_flags;
-        uint8_t om_pkthdr_len;
-        uint16_t om_len;
-        struct os_mbuf_pool *om_omp;
-        SLIST_ENTRY(os_mbuf) om_next;
-        uint8_t om_databuf[0];
-    };
+    void
+    my_task_handler(void *arg)
+    {
+        struct os_event *ev;
+        struct os_callout_func *cf;
+        int rc;
 
-+--------------+----------------+
-| **Element**  | **Description* |
-|              | *              |
-+==============+================+
-| om\_data     | Pointer to     |
-|              | start of user  |
-|              | data in mbuf   |
-|              | data buffer    |
-+--------------+----------------+
-| om\_flags    | mbuf flags     |
-|              | field.         |
-|              | Currently all  |
-|              | flags unused.  |
-+--------------+----------------+
-| om\_pkthdr\_ | The total      |
-| len          | length of all  |
-|              | packet headers |
-|              | in the mbuf    |
-|              | (mbuf packet   |
-|              | header plus    |
-|              | user packet    |
-|              | header), in    |
-|              | bytes          |
-+--------------+----------------+
-| om\_len      | The length of  |
-|              | the user data  |
-|              | contained in   |
-|              | this mbuf, in  |
-|              | bytes          |
-+--------------+----------------+
-| om\_omp      | Memory pool    |
-|              | pointer. This  |
-|              | is the mbuf    |
-|              | pool from      |
-|              | which this     |
-|              | mbuf was       |
-|              | allocated.     |
-+--------------+----------------+
-| om\_next     | Pointer to     |
-|              | next mbuf in   |
-|              | packet chain   |
-+--------------+----------------+
-| om\_databuf  | mbuf data      |
-|              | buffer         |
-|              | (accessor to   |
-|              | start of mbuf  |
-|              | data buffer).  |
-|              | Note that the  |
-|              | mbuf data      |
-|              | buffer refers  |
-|              | to the start   |
-|              | of either the  |
-|              | user data in   |
-|              | normal mbufs   |
-|              | or the start   |
-|              | of the os mbuf |
-|              | packet header  |
-|              | for packet     |
-|              | header mbufs   |
-+--------------+----------------+
+        /* Initialize eventq */
+        os_eventq_init(&my_task_evq);
+
+        /* Initialize mqueue */
+        os_mqueue_init(&rxpkt_q, NULL);
+
+        /* Process each event posted to our eventq.  When there are no events to
+         * process, sleep until one arrives.
+         */
+        while (1) {
+            os_eventq_run(&my_task_evq);
+        }
+    }
+
 
 API
 -----------------
 
 .. doxygengroup:: OSMbuf
     :content-only:
+    :members:
