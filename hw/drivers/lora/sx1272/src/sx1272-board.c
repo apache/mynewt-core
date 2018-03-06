@@ -113,42 +113,42 @@ void SX1272IoIrqInit( DioIrqHandler **irqHandlers )
 
     if (irqHandlers[0] != NULL) {
         rc = hal_gpio_irq_init(SX1272_DIO0, irqHandlers[0], NULL,
-                               HAL_GPIO_TRIG_RISING, HAL_GPIO_PULL_NONE);
+                               HAL_GPIO_TRIG_RISING, HAL_GPIO_PULL_DOWN);
         assert(rc == 0);
         hal_gpio_irq_enable(SX1272_DIO0);
     }
 
     if (irqHandlers[1] != NULL) {
         rc = hal_gpio_irq_init(SX1272_DIO1, irqHandlers[1], NULL,
-                               HAL_GPIO_TRIG_RISING, HAL_GPIO_PULL_NONE);
+                               HAL_GPIO_TRIG_RISING, HAL_GPIO_PULL_DOWN);
         assert(rc == 0);
         hal_gpio_irq_enable(SX1272_DIO1);
     }
 
     if (irqHandlers[2] != NULL) {
         rc = hal_gpio_irq_init(SX1272_DIO2, irqHandlers[2], NULL,
-                               HAL_GPIO_TRIG_RISING, HAL_GPIO_PULL_NONE);
+                               HAL_GPIO_TRIG_RISING, HAL_GPIO_PULL_DOWN);
         assert(rc == 0);
         hal_gpio_irq_enable(SX1272_DIO2);
     }
 
     if (irqHandlers[3] != NULL) {
         rc = hal_gpio_irq_init(SX1272_DIO3, irqHandlers[3], NULL,
-                               HAL_GPIO_TRIG_RISING, HAL_GPIO_PULL_NONE);
+                               HAL_GPIO_TRIG_RISING, HAL_GPIO_PULL_DOWN);
         assert(rc == 0);
         hal_gpio_irq_enable(SX1272_DIO3);
     }
 
     if (irqHandlers[4] != NULL) {
         rc = hal_gpio_irq_init(SX1272_DIO4, irqHandlers[4], NULL,
-                               HAL_GPIO_TRIG_RISING, HAL_GPIO_PULL_NONE);
+                               HAL_GPIO_TRIG_RISING, HAL_GPIO_PULL_DOWN);
         assert(rc == 0);
         hal_gpio_irq_enable(SX1272_DIO4);
     }
 
     if (irqHandlers[5] != NULL) {
         rc = hal_gpio_irq_init(SX1272_DIO5, irqHandlers[5], NULL,
-                               HAL_GPIO_TRIG_RISING, HAL_GPIO_PULL_NONE);
+                               HAL_GPIO_TRIG_RISING, HAL_GPIO_PULL_DOWN);
         assert(rc == 0);
         hal_gpio_irq_enable(SX1272_DIO5);
     }
@@ -307,10 +307,36 @@ void SX1272SetAntSw( uint8_t opMode )
     }
     OS_EXIT_CRITICAL(sr);
 }
+#else
+void SX1272SetAntSwLowPower( bool status )
+{
+    (void)status;
+}
+
+void SX1272AntSwInit( void )
+{
+    /*
+     * XXX: consider doing this to save power. Currently the gpio are
+     * set to rx mode automatically in the IO init function.
+     */
+}
+
+void SX1272AntSwDeInit( void )
+{
+    /*
+     * XXX: consider doing this to save power. Currently the gpio are
+     * set to rx mode automatically in the IO init function.
+     */
+}
+
+void SX1272SetAntSw( uint8_t opMode )
+{
+    (void)opMode;
+}
+#endif
 
 bool SX1272CheckRfFrequency( uint32_t frequency )
 {
     // Implement check. Currently all frequencies are supported
     return true;
 }
-#endif

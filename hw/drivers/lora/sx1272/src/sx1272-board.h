@@ -15,12 +15,37 @@ Maintainer: Miguel Luis and Gregory Cristian
 #ifndef __SX1272_ARCH_H__
 #define __SX1272_ARCH_H__
 
-#define RADIO_SPI_IDX               MYNEWT_VAL(SX1272_SPI_IDX)
+#define RADIO_SPI_IDX           MYNEWT_VAL(SX1272_SPI_IDX)
+#if RADIO_SPI_IDX != 0
+#error "Invalid SX1272_SPI_IDX value. Must be zero"
+#endif
 
-#if RADIO_SPI_IDX == 0
-#define RADIO_NSS                   MYNEWT_VAL(SX1272_SPI_CS_PIN)
+#if MYNEWT_VAL(SX1272_SPI_CS_PIN) == -1
+#error "Must set SX1272_SPI_CS_PIN pin (spi slave select)"
 #else
-#error "Invalid SX1272_SPI_IDX value"
+#define RADIO_NSS               MYNEWT_VAL(SX1272_SPI_CS_PIN)
+#endif
+
+#define SX1272_DIO0             MYNEWT_VAL(SX1272_DIO0_PIN)
+#define SX1272_DIO1             MYNEWT_VAL(SX1272_DIO1_PIN)
+#define SX1272_DIO2             MYNEWT_VAL(SX1272_DIO2_PIN)
+#define SX1272_DIO3             MYNEWT_VAL(SX1272_DIO3_PIN)
+#define SX1272_DIO4             MYNEWT_VAL(SX1272_DIO4_PIN)
+#define SX1272_DIO5             MYNEWT_VAL(SX1272_DIO5_PIN)
+
+#if MYNEWT_VAL(SX1272_RESET_PIN) == -1
+#error "Must set SX1272_RESET_PIN pin (spi slave select)"
+#else
+#define SX1272_NRESET           MYNEWT_VAL(SX1272_RESET_PIN)
+#endif
+
+#if MYNEWT_VAL(SX1272_HAS_ANT_SW)
+#define SX1272_RXTX             MYNEWT_VAL(SX1272_RXTX_PIN)
+#endif
+
+#if MYNEWT_VAL(SX1272_HAS_COMP_ANT_SW)
+#define SX1272_RXTX             MYNEWT_VAL(SX1272_RXTX_PIN)
+#define SX1272_N_RXTX           MYNEWT_VAL(SX1272_N_RXTX_PIN)
 #endif
 
 /*!
