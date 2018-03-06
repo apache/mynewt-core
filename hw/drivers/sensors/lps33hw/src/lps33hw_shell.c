@@ -44,11 +44,31 @@ static struct sensor_itf g_sensor_itf = {
 };
 
 static int
+lps33hw_shell_err_too_many_args(char *cmd_name)
+{
+    console_printf("Error: too many arguments for command \"%s\"\n",
+                   cmd_name);
+    return EINVAL;
+}
+
+static int
+lps33hw_shell_err_unknown_arg(char *cmd_name)
+{
+    console_printf("Error: unknown argument \"%s\"\n",
+                   cmd_name);
+    return EINVAL;
+}
+
+static int
 lps33hw_shell_cmd_read_press(int argc, char **argv)
 {
     int rc;
     float press;
     char tmpstr[13];
+
+    if (argc > 2) {
+        return lps33hw_shell_err_too_many_args(argv[1]);
+    }
 
     rc = lps33hw_get_pressure(&g_sensor_itf, &press);
     if (rc) {
@@ -67,6 +87,10 @@ lps33hw_shell_cmd_read_temp(int argc, char **argv)
     float temp;
     char tmpstr[13];
 
+    if (argc > 2) {
+        return lps33hw_shell_err_too_many_args(argv[1]);
+    }
+
     rc = lps33hw_get_temperature(&g_sensor_itf, &temp);
     if (rc) {
         console_printf("Read falied: %d\r\n", rc);
@@ -78,10 +102,21 @@ lps33hw_shell_cmd_read_temp(int argc, char **argv)
 }
 
 static int
+lps33hw_shell_help(void)
+{
+    console_printf("%s cmd [flags...]\n", lps33hw_shell_cmd_struct.sc_cmd);
+    console_printf("cmd:\n");
+    console_printf("\trp\n");
+    console_printf("\trt\n");
+
+    return 0;
+}
+
+static int
 lps33hw_shell_cmd(int argc, char **argv)
 {
     if (argc == 1) {
-        return 0; /*lps33hw_shell_help();*/
+        return lps33hw_shell_help();
     }
 
     /* Read pressure */
@@ -94,7 +129,7 @@ lps33hw_shell_cmd(int argc, char **argv)
         return lps33hw_shell_cmd_read_temp(argc, argv);
     }
 
-    return 0; /*lps33hw_shell_err_unknown_arg(argv[1]);*/
+    return lps33hw_shell_err_unknown_arg(argv[1]);
 }
 
 int

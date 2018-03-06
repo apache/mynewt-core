@@ -68,14 +68,18 @@ static int lps33hw_sensor_get_config(struct sensor *, sensor_type_t,
 static int lps33hw_sensor_set_trigger_thresh(struct sensor *sensor,
         sensor_type_t sensor_type, struct sensor_type_traits *stt);
 static int lps33hw_sensor_handle_interrupt(struct sensor *sensor);
+static int lps33hw_sensor_clear_low_thresh(struct sensor *sensor,
+        sensor_type_t type);
+static int lps33hw_sensor_clear_high_thresh(struct sensor *sensor,
+        sensor_type_t type);
 
 static const struct sensor_driver g_lps33hw_sensor_driver = {
     .sd_read                      = lps33hw_sensor_read,
     .sd_get_config                = lps33hw_sensor_get_config,
     .sd_set_trigger_thresh        = lps33hw_sensor_set_trigger_thresh,
     .sd_handle_interrupt          = lps33hw_sensor_handle_interrupt,
-    /*.sd_clear_low_trigger_thresh  = lps33hw_sensor_clear_low_thresh,
-    .sd_clear_high_trigger_thresh = lps33hw_sensor_clear_high_thresh*/
+    .sd_clear_low_trigger_thresh  = lps33hw_sensor_clear_low_thresh,
+    .sd_clear_high_trigger_thresh = lps33hw_sensor_clear_high_thresh
 };
 
 /*
@@ -461,13 +465,6 @@ lps33hw_sensor_handle_interrupt(struct sensor *sensor)
         return rc;
     }
 
-    /*float press;
-    rc = lps33hw_get_pressure_regs(itf, LPS33HW_PRESS_OUT, &press);
-    if (rc) {
-        return rc;
-    }
-    (void)press;*/
-
     if (int_cfg->data_rdy) {
         sensor_mgr_put_read_evt(&lps33hw->pdd.read_ctx);
     } else if (int_cfg->pressure_low || int_cfg->pressure_high) {
@@ -476,6 +473,62 @@ lps33hw_sensor_handle_interrupt(struct sensor *sensor)
         LPS33HW_ERR("Unhandled interrupt\n");
     }
     return 0;
+}
+
+/**
+ * Clears the low threshold interrupt
+ *
+ * @param Pointer to sensor structure
+ * @param Sensor type
+ *
+ * @return 0 on success, non-zero on failure
+ */
+static int
+lps33hw_sensor_clear_low_thresh(struct sensor *sensor, sensor_type_t type)
+{
+    struct lps33hw *lps33hw;
+    struct sensor_itf *itf;
+    struct lps33hw_int_cfg *int_cfg;
+
+    lps33hw = (struct lps33hw *)SENSOR_GET_DEVICE(sensor);
+    itf = SENSOR_GET_ITF(sensor);
+    int_cfg = &lps33hw->cfg.int_cfg;
+
+    if (type != SENSOR_TYPE_PRESSURE) {
+        return SYS_EINVAL;
+    }
+
+    int_cfg->pressure_low = 0;
+
+    return lps33hw_set_value(itf, LPS33HW_INTERRUPT_CFG_PLE, 0);
+}
+
+/**
+ * Clears the high threshold interrupt
+ *
+ * @param Pointer to sensor structure
+ * @param Sensor type
+ *
+ * @return 0 on success, non-zero on failure
+ */
+static int
+lps33hw_sensor_clear_high_thresh(struct sensor *sensor, sensor_type_t type)
+{
+    struct lps33hw *lps33hw;
+    struct sensor_itf *itf;
+    struct lps33hw_int_cfg *int_cfg;
+
+    lps33hw = (struct lps33hw *)SENSOR_GET_DEVICE(sensor);
+    itf = SENSOR_GET_ITF(sensor);
+    int_cfg = &lps33hw->cfg.int_cfg;
+
+    if (type != SENSOR_TYPE_PRESSURE) {
+        return SYS_EINVAL;
+    }
+
+    int_cfg->pressure_high = 0;
+
+    return lps33hw_set_value(itf, LPS33HW_INTERRUPT_CFG_PHE, 0);
 }
 
 static void
