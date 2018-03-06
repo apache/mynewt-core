@@ -1,4 +1,3 @@
-#
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -17,24 +16,19 @@
 # under the License.
 #
 
-pkg.name: hw/drivers/sensors/lps33hw
-pkg.description: Driver for the lps33hw pressure sensor.
-pkg.author: "Apache Mynewt dev@mynewt.apache.org"
-pkg.homepage: "http://mynewt.apache.org/"
-pkg.keywords:
-    - pressure
-    - i2c
-    - sensor
-    - st
-
-pkg.deps:
-    - "@apache-mynewt-core/hw/hal"
-    - "@apache-mynewt-core/kernel/os"
-    - "@apache-mynewt-core/hw/sensor"
-
-pkg.req_apis:
-    - stats
-    - log
-
-pkg.deps.LPS33HW_CLI:
-    - "@apache-mynewt-core/util/parse"
+syscfg.defs:
+    LPS33HW_SHELL_ITF_NUM:
+        description: 'Shell interface number for the LPS33HW'
+        value: 0
+    LPS33HW_SHELL_ITF_TYPE:
+        description: 'Shell interface type for the LPS33HW'
+        value: 1
+    LPS33HW_SHELL_CSPIN:
+        description: 'CS pin for LPS33HW'
+        value : -1
+    LPS33HW_SHELL_ITF_ADDR:
+        description: 'Slave address for LPS33HW'
+        value : 0x5C
+    LPS33HW_CLI:
+        description: 'Enable shell support for the LPS33HW'
+        value: 0

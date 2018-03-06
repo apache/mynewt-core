@@ -20,6 +20,7 @@
 #include <string.h>
 #include <errno.h>
 #include <assert.h>
+#include <math.h>
 
 #include "defs/error.h"
 #include "os/os.h"
@@ -64,15 +65,16 @@ static int lps33hw_sensor_read(struct sensor *, sensor_type_t,
         sensor_data_func_t, void *, uint32_t);
 static int lps33hw_sensor_get_config(struct sensor *, sensor_type_t,
         struct sensor_cfg *);
+static int lps33hw_sensor_set_trigger_thresh(struct sensor *sensor,
+        sensor_type_t sensor_type, struct sensor_type_traits *stt);
+static int lps33hw_sensor_handle_interrupt(struct sensor *sensor);
 
 static const struct sensor_driver g_lps33hw_sensor_driver = {
     .sd_read                      = lps33hw_sensor_read,
     .sd_get_config                = lps33hw_sensor_get_config,
-    /*.sd_set_trigger_thresh        = lps33hw_sensor_set trigger_thresh,
-    .sd_set_notification          = lps33hw_sensor_set_notification,
-    .sd_unset_notification        = lps33hw_sensor_unset_notification,
+    .sd_set_trigger_thresh        = lps33hw_sensor_set_trigger_thresh,
     .sd_handle_interrupt          = lps33hw_sensor_handle_interrupt,
-    .sd_clear_low_trigger_thresh  = lps33hw_sensor_clear_low_thresh,
+    /*.sd_clear_low_trigger_thresh  = lps33hw_sensor_clear_low_thresh,
     .sd_clear_high_trigger_thresh = lps33hw_sensor_clear_high_thresh*/
 };
 
@@ -84,12 +86,14 @@ static const struct sensor_driver g_lps33hw_sensor_driver = {
  *
  * @return Pressure value to write to the threshold registers.
  */
-uint16_t
+static uint16_t
 lps33hw_hpa_to_threshold_reg(float hpa)
 {
     /* Threshold is unsigned. */
     if (hpa < 0) {
         return 0;
+    } else if (hpa == INFINITY) {
+        return 0xffff;
     }
     return hpa * LPS33HW_PRESS_THRESH_DIV;
 }
@@ -102,9 +106,12 @@ lps33hw_hpa_to_threshold_reg(float hpa)
  *
  * @return Pressure value to write to the reference registers.
  */
-int32_t
-lps33hw_hpa_to_reference_reg(float hpa)
+static int32_t
+lps33hw_hpa_to_reg(float hpa)
 {
+    if (hpa == INFINITY) {
+        return 0x007fffff;
+    }
     return (int32_t)(hpa * LPS33HW_PRESS_OUT_DIV);
 }
 
@@ -116,14 +123,9 @@ lps33hw_hpa_to_reference_reg(float hpa)
  *
  * @return Pressure value in hectopascals.
  */
-float
-lps33hw_reg_to_hpa(uint32_t reg)
+static float
+lps33hw_reg_to_hpa(int32_t reg)
 {
-    if (reg & 0x00800000) {
-        reg |= 0xff000000;
-    } else {
-        reg &= 0x00ffffff;
-    }
     return reg / LPS33HW_PRESS_OUT_DIV;
 }
 
@@ -135,10 +137,9 @@ lps33hw_reg_to_hpa(uint32_t reg)
  *
  * @return Temperature value in degrees C.
  */
-float
+static float
 lps33hw_reg_to_degc(int16_t reg)
 {
-
     return reg / LPS33HW_TEMP_OUT_DIV;
 }
 
@@ -152,7 +153,7 @@ lps33hw_reg_to_degc(int16_t reg)
  *
  * @return 0 on success, non-zero error on failure.
  */
-int
+static int
 lps33hw_set_reg(struct sensor_itf *itf, uint8_t reg, uint8_t value)
 {
     int rc;
@@ -185,7 +186,7 @@ lps33hw_set_reg(struct sensor_itf *itf, uint8_t reg, uint8_t value)
  *
  * @return 0 on success, non-zero error on failure.
  */
-int
+static int
 lps33hw_get_regs(struct sensor_itf *itf, uint8_t reg, uint8_t size,
     uint8_t *buffer)
 {
@@ -219,7 +220,7 @@ lps33hw_get_regs(struct sensor_itf *itf, uint8_t reg, uint8_t size,
     return rc;
 }
 
-int
+static int
 lps33hw_apply_value(struct lps33hw_register_value addr, uint8_t value,
     uint8_t *reg)
 {
@@ -269,15 +270,6 @@ lps33hw_get_value(struct sensor_itf *itf, struct lps33hw_register_value addr,
     return rc;
 }
 
-/**
- * Set the output data rate.
- *
- * @param The interface object associated with the lps33hw.
- * @param Data rate value.
- *
- * @return 0 on success, non-zero error on failure.
- */
-
 int
 lps33hw_set_data_rate(struct sensor_itf *itf,
     enum lps33hw_output_data_rates rate)
@@ -285,52 +277,45 @@ lps33hw_set_data_rate(struct sensor_itf *itf,
     return lps33hw_set_value(itf, LPS33HW_CTRL_REG1_ODR, rate);
 }
 
-/**
- * Configure the Low Pass Filter.
- *
- * @param The interface object associated with the lps33hw.
- * @param Low pass filter config value
- *
- * @return 0 on success, non-zero error on failure.
- */
-
 int
 lps33hw_set_lpf(struct sensor_itf *itf, enum lps33hw_low_pass_config lpf)
 {
     return lps33hw_set_value(itf, LPS33HW_CTRL_REG1_LPFP_CFG, lpf);
 }
 
-/**
- * Software reset.
- *
- * @param The interface object associated with the lps33hw.
- *
- * @return 0 on success, non-zero error on failure.
- */
 int
 lps33hw_reset(struct sensor_itf *itf)
 {
     return lps33hw_set_reg(itf, LPS33HW_CTRL_REG2, 0x04);
 }
 
-int
-lps33hw_get_pressure(struct sensor_itf *itf, uint8_t reg, float *pressure)
+static int
+lps33hw_get_pressure_regs(struct sensor_itf *itf, uint8_t reg, float *pressure)
 {
     int rc;
     uint8_t payload[3];
-    uint32_t int_press;
+    int32_t int_press;
 
     rc = lps33hw_get_regs(itf, reg, 3, payload);
     if (rc) {
         return rc;
     }
 
-    int_press = (((uint32_t)payload[2] << 16) |
-        ((uint32_t)payload[1] << 8) | payload[0]);
+    int_press = (((int32_t)payload[2] << 16) |
+        ((int32_t)payload[1] << 8) | payload[0]);
+
+    if (int_press & 0x00800000) {
+        int_press |= 0xff000000;
+    }
 
     *pressure = lps33hw_reg_to_hpa(int_press);
 
     return 0;
+}
+
+int
+lps33hw_get_pressure(struct sensor_itf *itf, float *pressure) {
+    return lps33hw_get_pressure_regs(itf, LPS33HW_PRESS_OUT, pressure);
 }
 
 int
@@ -352,21 +337,13 @@ lps33hw_get_temperature(struct sensor_itf *itf, float *temperature)
     return 0;
 }
 
-/*
- * Set pressure reference.
- *
- * @param The interface object associated with the lps33hw.
- * @param The pressure reference.
- *
- * @return 0 on success, non-zero error on failure.
- */
 int
 lps33hw_set_reference(struct sensor_itf *itf, float reference)
 {
     int rc;
     int32_t int_reference;
 
-    int_reference = lps33hw_hpa_to_reference_reg(reference);
+    int_reference = lps33hw_hpa_to_reg(reference);
 
     rc = lps33hw_set_reg(itf, LPS33HW_REF_P, int_reference & 0xff);
     if (rc) {
@@ -381,29 +358,6 @@ lps33hw_set_reference(struct sensor_itf *itf, float reference)
         0xff);
 }
 
-/*
- * Get pressure reference.
- *
- * @param The interface object associated with the lps33hw.
- * @param The pressure reference.
- *
- * @return 0 on success, non-zero error on failure.
- */
-int
-lps33hw_get_reference(struct sensor_itf *itf, float *reference)
-{
-    return lps33hw_get_pressure(itf, LPS33HW_REF_P, reference);
-}
-
-
-/*
- * Set pressure threshold.
- *
- * @param The interface object associated with the lps33hw.
- * @param The pressure reference.
- *
- * @return 0 on success, non-zero error on failure.
- */
 int
 lps33hw_set_threshold(struct sensor_itf *itf, float threshold)
 {
@@ -420,39 +374,189 @@ lps33hw_set_threshold(struct sensor_itf *itf, float threshold)
     return lps33hw_set_reg(itf, LPS33HW_THS_P + 1, (int_threshold >> 8) & 0xff);
 }
 
-/**
- * Configure interrupts.
- *
- * @param The device object associated with this lps33hw.
- * @param Interrupt config struct
- *
- * @return 0 on success, non-zero error on failure.
- */
 int
-lps33hw_config_interrupt(struct sensor_itf *itf, struct lps33hw_int_cfg cfg)
+lps33hw_enable_interrupt(struct sensor *sensor, hal_gpio_irq_handler_t handler,
+            void *arg, uint8_t pin)
 {
     int rc;
+    struct lps33hw *lps33hw;
+    struct sensor_itf *itf;
+    hal_gpio_irq_trig_t trig;
+    hal_gpio_pull_t pull;
+    struct lps33hw_int_cfg *int_cfg;
+    float press;
+    uint8_t int_source;
 
-    rc = lps33hw_set_value(itf, LPS33HW_INTERRUPT_CFG_PLE, cfg.pressure_low);
+    lps33hw = (struct lps33hw *)SENSOR_GET_DEVICE(sensor);
+    itf = SENSOR_GET_ITF(sensor);
+    int_cfg = &lps33hw->cfg.int_cfg;
+    trig = (int_cfg->active_low) ? HAL_GPIO_TRIG_FALLING : HAL_GPIO_TRIG_RISING;
+    pull = (int_cfg->open_drain) ? HAL_GPIO_PULL_UP : HAL_GPIO_PULL_NONE;
+    int_cfg->pin = pin;
+
+    rc = hal_gpio_irq_init(pin, handler, arg, trig, pull);
     if (rc) {
         return rc;
     }
-    rc = lps33hw_set_value(itf, LPS33HW_INTERRUPT_CFG_PLE, cfg.pressure_high);
+
+    hal_gpio_irq_enable(pin);
+
+    /* Read pressure and interrupt sources in order to reset the interrupt */
+    rc = lps33hw_get_pressure_regs(itf, LPS33HW_PRESS_OUT, &press);
     if (rc) {
         return rc;
     }
-    rc = lps33hw_set_value(itf, LPS33HW_INTERRUPT_CFG_PLE, cfg.enabled);
+    (void)press;
+
+    rc = lps33hw_get_regs(itf, LPS33HW_INT_SOURCE, 1, &int_source);
     if (rc) {
         return rc;
     }
-    rc = lps33hw_set_value(itf, LPS33HW_INTERRUPT_CFG_PLE, cfg.active_low);
+    (void)int_source;
+
+    return 0;
+}
+
+void
+lps33hw_disable_interrupt(struct sensor *sensor)
+{
+    struct lps33hw *lps33hw;
+    struct lps33hw_int_cfg *int_cfg;
+
+    lps33hw = (struct lps33hw *)SENSOR_GET_DEVICE(sensor);
+    int_cfg = &lps33hw->cfg.int_cfg;
+
+    hal_gpio_irq_release(int_cfg->pin);
+}
+
+/**
+ * Handles and interrupt
+ *
+ * @param Pointer to sensor structure
+ *
+ * @return 0 on success, non-zero on failure
+ */
+static int
+lps33hw_sensor_handle_interrupt(struct sensor *sensor)
+{
+    int rc;
+    struct lps33hw *lps33hw;
+    struct sensor_itf *itf;
+    struct lps33hw_int_cfg *int_cfg;
+    uint8_t int_source;
+    uint8_t p_da;
+
+    lps33hw = (struct lps33hw *)SENSOR_GET_DEVICE(sensor);
+    itf = SENSOR_GET_ITF(sensor);
+    int_cfg = &lps33hw->cfg.int_cfg;
+
+    /* Read interrupt source registers. */
+    rc = lps33hw_get_regs(itf, LPS33HW_INT_SOURCE, 1, &int_source);
     if (rc) {
         return rc;
     }
-    rc = lps33hw_set_value(itf, LPS33HW_INTERRUPT_CFG_PLE, cfg.open_drain);
+
+    rc = lps33hw_get_value(itf, LPS33HW_STATUS_P_DA, &p_da);
     if (rc) {
         return rc;
     }
+
+    /*float press;
+    rc = lps33hw_get_pressure_regs(itf, LPS33HW_PRESS_OUT, &press);
+    if (rc) {
+        return rc;
+    }
+    (void)press;*/
+
+    if (int_cfg->data_rdy) {
+        sensor_mgr_put_read_evt(&lps33hw->pdd.read_ctx);
+    } else if (int_cfg->pressure_low || int_cfg->pressure_high) {
+        sensor_mgr_put_notify_evt(&lps33hw->pdd.notify_ctx);
+    } else {
+        LPS33HW_ERR("Unhandled interrupt\n");
+    }
+    return 0;
+}
+
+static void
+interrupt_handler(void * arg)
+{
+    struct sensor *sensor = arg;
+    sensor_mgr_put_interrupt_evt(sensor);
+}
+
+int
+lps33hw_config_interrupt(struct sensor *sensor, struct lps33hw_int_cfg cfg)
+{
+    int rc;
+    struct lps33hw *lps33hw;
+    struct sensor_itf *itf;
+
+    lps33hw = (struct lps33hw *)SENSOR_GET_DEVICE(sensor);
+    itf = SENSOR_GET_ITF(sensor);
+
+    lps33hw->cfg.int_cfg = cfg;
+
+    if (cfg.data_rdy) {
+        rc = lps33hw_set_value(itf, LPS33HW_INTERRUPT_CFG_PLE, 0);
+        if (rc) {
+            return rc;
+        }
+        rc = lps33hw_set_value(itf, LPS33HW_INTERRUPT_CFG_PHE, 0);
+        if (rc) {
+            return rc;
+        }
+        rc = lps33hw_set_value(itf, LPS33HW_INTERRUPT_CFG_DIFF_EN, 0);
+        if (rc) {
+            return rc;
+        }
+        rc = lps33hw_set_value(itf, LPS33HW_CTRL_REG3_INT_S, 0);
+        if (rc) {
+            return rc;
+        }
+    } else if (cfg.pressure_low || cfg.pressure_high){
+        rc = lps33hw_set_value(itf, LPS33HW_INTERRUPT_CFG_PLE,
+            cfg.pressure_low);
+        if (rc) {
+            return rc;
+        }
+        rc = lps33hw_set_value(itf, LPS33HW_INTERRUPT_CFG_PHE,
+            cfg.pressure_high);
+        if (rc) {
+            return rc;
+        }
+        rc = lps33hw_set_value(itf, LPS33HW_INTERRUPT_CFG_DIFF_EN, 1);
+        if (rc) {
+            return rc;
+        }
+        rc = lps33hw_set_value(itf, LPS33HW_CTRL_REG3_INT_S, cfg.pressure_high |
+            (cfg.pressure_low << 1));
+        if (rc) {
+            return rc;
+        }
+    } else {
+        rc = lps33hw_set_value(itf, LPS33HW_INTERRUPT_CFG_DIFF_EN, 0);
+        if (rc) {
+            return rc;
+        }
+    }
+    rc = lps33hw_set_value(itf, LPS33HW_CTRL_REG3_DRDY, cfg.data_rdy);
+    if (rc) {
+        return rc;
+    }
+    rc = lps33hw_set_value(itf, LPS33HW_CTRL_REG3_INT_H_L, cfg.active_low);
+    if (rc) {
+        return rc;
+    }
+    rc = lps33hw_set_value(itf, LPS33HW_CTRL_REG3_PP_OD, cfg.open_drain);
+    if (rc) {
+        return rc;
+    }
+    rc = lps33hw_set_value(itf, LPS33HW_INTERRUPT_CFG_LIR, cfg.latched);
+    if (rc) {
+        return rc;
+    }
+
     return rc;
 }
 
@@ -465,75 +569,79 @@ lps33hw_config_interrupt(struct sensor_itf *itf, struct lps33hw_int_cfg cfg)
  *
  * @return 0 on success, non-zero on failure
  */
-// static int
-// lps33hw_sensor_set_trigger_thresh(struct sensor *sensor,
-//                                   sensor_type_t sensor_type,
-//                                   struct sensor_type_traits *stt)
-// {
-//     struct lps33hw *lps33hw;
-//     struct sensor_itf *itf;
-//     int rc;
-//     const struct sensor_press_data *low_thresh;
-//     const struct sensor_press_data *high_thresh;
-//     uint8_t ints_to_enable = 0;
-//     float thresh;
-//
-//     if (sensor_type != SENSOR_TYPE_PRESSURE) {
-//         return SYS_EINVAL;
-//     }
-//
-//     lps33hw = (struct lps33hw *)SENSOR_GET_DEVICE(sensor);
-//     itf = SENSOR_GET_ITF(sensor);
-//
-//     low_thresh  = stt->stt_low_thresh.spd;
-//     high_thresh = stt->stt_high_thresh.spd;
-//
-// /*
-//  * Device only has one threshold which can be set to trigger on positive or
-//  * negative thresholds, set it to the loweer threshold.
-//  */
-//
-//     if (low_thresh->spd_press_is_valid) {
-//         rc = lps33hw_set_low_settings(itf, , 2);
-//         if (rc) {
-//             return rc;
-//         }
-//
-//         ints_to_enable |= LPS33HW_INT_LOW_BIT;
-//     }
-//     if (high_thresh->spd_pres_is_valid) {
-//         rc = lps33hw_set_high_threshold(itf, );
-//         if (rc) {
-//             return rc;
-//         }
-//
-//         ints_to_enable |= LPS33HW_INT_HIGH_BIT;
-//     }
-//
-//     rc = enable_interrupt(sensor, ints_to_enable);
-//     if (rc) {
-//         return rc;
-//     }
-//
-//     rc = lps33hw_set_act_inact_enables(itf, axis_enables);
-//     if (rc) {
-//         return rc;
-//     }
-//
-//     pdd->read_ctx.srec_type |= sensor_type;
-//     pdd->registered_mask |= LPS33HW_READ_MASK;
-//
-//     return 0;
-// }
+static int
+lps33hw_sensor_set_trigger_thresh(struct sensor *sensor,
+                                  sensor_type_t sensor_type,
+                                  struct sensor_type_traits *stt)
+{
+    struct lps33hw *lps33hw;
+    struct sensor_itf *itf;
+    int rc;
+    struct sensor_press_data *low_thresh;
+    struct sensor_press_data *high_thresh;
+    struct lps33hw_int_cfg int_cfg;
+    float reference;
+    float threshold;
 
-/**
- * Expects to be called back through os_dev_create().
- *
- * @param The device object associated with this pressure sensor
- * @param Argument passed to OS device init, unused
- *
- * @return 0 on success, non-zero error on failure.
- */
+    if (sensor_type != SENSOR_TYPE_PRESSURE) {
+        return SYS_EINVAL;
+    }
+
+    lps33hw = (struct lps33hw *)SENSOR_GET_DEVICE(sensor);
+    itf = SENSOR_GET_ITF(sensor);
+
+    low_thresh  = stt->stt_low_thresh.spd;
+    high_thresh = stt->stt_high_thresh.spd;
+    int_cfg = lps33hw->cfg.int_cfg;
+
+    /* turn off existing dready interrupt */
+    int_cfg.data_rdy = 0;
+    int_cfg.pressure_low = low_thresh->spd_press_is_valid;
+    int_cfg.pressure_high = high_thresh->spd_press_is_valid;
+
+    threshold = 0;
+    reference = 0;
+
+    /*
+     * Device only has one threshold which can be set to trigger on positive or
+     * negative thresholds, set it to the lower threshold.
+     */
+
+    if (int_cfg.pressure_low) {
+        if (int_cfg.pressure_high) {
+            threshold = (high_thresh->spd_press - low_thresh->spd_press) / 2;
+            reference = low_thresh->spd_press + threshold;
+        } else {
+            reference = low_thresh->spd_press;
+        }
+    } else if (int_cfg.pressure_high) {
+        reference = high_thresh->spd_press;
+    }
+
+    rc = lps33hw_set_reference(itf, reference);
+    if (rc) {
+        return rc;
+    }
+
+    rc = lps33hw_set_threshold(itf, threshold);
+    if (rc) {
+        return rc;
+    }
+
+    rc = lps33hw_config_interrupt(sensor, int_cfg);
+    if (rc) {
+        return rc;
+    }
+
+    rc = lps33hw_enable_interrupt(sensor, interrupt_handler, sensor,
+        int_cfg.pin);
+    if (rc) {
+        return rc;
+    }
+
+    return 0;
+}
+
 int
 lps33hw_init(struct os_dev *dev, void *arg)
 {
@@ -547,11 +655,12 @@ lps33hw_init(struct os_dev *dev, void *arg)
 
     lps = (struct lps33hw *) dev;
 
+    sensor = &lps->sensor;
     lps->cfg.mask = SENSOR_TYPE_ALL;
+    lps->pdd.notify_ctx.snec_sensor = sensor;
+    lps->pdd.read_ctx.srec_sensor = sensor;
 
     log_register(dev->od_name, &_log, &log_console_handler, NULL, LOG_SYSLEVEL);
-
-    sensor = &lps->sensor;
 
     /* Initialise the stats entry */
     rc = stats_init(
@@ -621,8 +730,6 @@ lps33hw_config(struct lps33hw *lps, struct lps33hw_cfg *cfg)
     return 0;
 }
 
-#include "console/console.h"
-
 static int
 lps33hw_sensor_read(struct sensor *sensor, sensor_type_t type,
         sensor_data_func_t data_func, void *data_arg, uint32_t timeout)
@@ -635,7 +742,7 @@ lps33hw_sensor_read(struct sensor *sensor, sensor_type_t type,
     if (type & SENSOR_TYPE_PRESSURE) {
         struct sensor_press_data spd;
 
-        rc = lps33hw_get_pressure(itf, LPS33HW_PRESS_OUT, &spd.spd_press);
+        rc = lps33hw_get_pressure_regs(itf, LPS33HW_PRESS_OUT, &spd.spd_press);
         if (rc) {
             return rc;
         }

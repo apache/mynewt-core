@@ -23,6 +23,7 @@
 #include "os/os.h"
 #include "os/os_dev.h"
 #include "sensor/sensor.h"
+#include "hal/hal_gpio.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -37,25 +38,27 @@ extern "C" {
 
 enum lps33hw_output_data_rates {
     LPS33HW_ONE_SHOT            = 0x00,
-    LPS33HW_1KHZ                = 0x01,
-    LPS33HW_10KHZ               = 0x02,
-    LPS33HW_25KHZ               = 0x03,
-    LPS33HW_50KHZ               = 0x04,
-    LPS33HW_75KHZ               = 0x05,
+    LPS33HW_1HZ                 = 0x01,
+    LPS33HW_10HZ                = 0x02,
+    LPS33HW_25HZ                = 0x03,
+    LPS33HW_50HZ                = 0x04,
+    LPS33HW_75HZ                = 0x05
 };
 
 enum lps33hw_low_pass_config {
     LPS33HW_LPF_DISABLED        = 0x00, /* Bandwidth = data rate / 2 */
     LPS33HW_LPF_ENABLED_LOW_BW  = 0x02, /* Bandwidth = data rate / 9 */
-    LPS33HW_LPF_ENABLED_HIGH_BW = 0x03, /* Bandwidth = data rate / 20 */
+    LPS33HW_LPF_ENABLED_HIGH_BW = 0x03  /* Bandwidth = data rate / 20 */
 };
 
 struct lps33hw_int_cfg {
+    uint8_t pin;
+    unsigned int data_rdy : 1;
     unsigned int pressure_low : 1;
     unsigned int pressure_high : 1;
-    unsigned int enabled : 1;
     unsigned int active_low : 1;
     unsigned int open_drain : 1;
+    unsigned int latched : 1;
 };
 
 struct lps33hw_cfg {
@@ -65,23 +68,138 @@ struct lps33hw_cfg {
     enum lps33hw_low_pass_config lpf;
 };
 
+struct lps33hw_private_driver_data {
+    struct sensor_notify_ev_ctx notify_ctx;
+    struct sensor_read_ev_ctx read_ctx;
+};
+
 struct lps33hw {
     struct os_dev dev;
     struct sensor sensor;
     struct lps33hw_cfg cfg;
     os_time_t last_read_time;
+    struct lps33hw_private_driver_data pdd;
 };
 
-int lps33hw_config_interrupt(struct sensor_itf *itf,
-    struct lps33hw_int_cfg cfg);
+
+/**
+ * Set the output data rate.
+ *
+ * @param The interface object associated with the lps33hw.
+ * @param Data rate value.
+ *
+ * @return 0 on success, non-zero error on failure.
+ */
+int lps33hw_set_data_rate(struct sensor_itf *itf,
+    enum lps33hw_output_data_rates rate);
+
+/**
+ * Configure the Low Pass Filter.
+ *
+ * @param The interface object associated with the lps33hw.
+ * @param Low pass filter config value
+ *
+ * @return 0 on success, non-zero error on failure.
+ */
 int lps33hw_set_lpf(struct sensor_itf *itf,
     enum lps33hw_low_pass_config lpf);
+
+/**
+ * Software reset.
+ *
+ * @param The interface object associated with the lps33hw.
+ *
+ * @return 0 on success, non-zero error on failure.
+ */
+int lps33hw_reset(struct sensor_itf *itf);
+
+/*
+ * Get pressure.
+ *
+ * @param The interface object associated with the lps33hw.
+ * @param Pressure.
+ *
+ * @return 0 on success, non-zero error on failure.
+ */
+int lps33hw_get_pressure(struct sensor_itf *itf, float *pressure);
+
+/*
+ * Get temperature.
+ *
+ * @param The interface object associated with the lps33hw.
+ * @param Temperature.
+ *
+ * @return 0 on success, non-zero error on failure.
+ */
+int lps33hw_get_temperature(struct sensor_itf *itf, float *temperature);
+
+/*
+ * Set pressure reference.
+ *
+ * @param The interface object associated with the lps33hw.
+ * @param The pressure reference.
+ *
+ * @return 0 on success, non-zero error on failure.
+ */
 int lps33hw_set_reference(struct sensor_itf *itf, float reference);
-int lps33hw_get_reference(struct sensor_itf *itf, float *reference);
+
+/*
+ * Set pressure threshold.
+ *
+ * @param The interface object associated with the lps33hw.
+ * @param The pressure reference.
+ *
+ * @return 0 on success, non-zero error on failure.
+ */
 int lps33hw_set_threshold(struct sensor_itf *itf, float threshold);
 
+/**
+ * Initialise gpio interrupt and setup handler. Call lp33hw_config_interrupt
+ * first
+ *
+ * @param The sensor object associated with this lps33hw.
+ * @param Handler, called back in the ISR.
+ * @param Argument to be passed to the handler.
+ * @param GPIO pin to be associated with the interrupt.
+ *
+ * @return 0 on success, non-zero error on failure.
+ */
+int lps33hw_enable_interrupt(struct sensor *sensor,
+    hal_gpio_irq_handler_t handler, void * arg, uint8_t pin);
+
+/**
+ * Disable gpio interrupt.
+ *
+ * @param The sensor object associated with this lps33hw.
+ *
+ * @return 0 on success, non-zero error on failure.
+ */
+void lps33hw_disable_interrupt(struct sensor *sensor);
+
+/**
+ * Configure interrupt.
+ *
+ * @param The device object associated with this lps33hw.
+ * @param Interrupt config struct
+ *
+ * @return 0 on success, non-zero error on failure.
+ */
+int lps33hw_config_interrupt(struct sensor *sensor, struct lps33hw_int_cfg cfg);
+
+/**
+ * Expects to be called back through os_dev_create().
+ *
+ * @param The device object associated with this pressure sensor
+ * @param Argument passed to OS device init, unused
+ *
+ * @return 0 on success, non-zero error on failure.
+ */
 int lps33hw_init(struct os_dev *, void *);
 int lps33hw_config(struct lps33hw *, struct lps33hw_cfg *);
+
+#if MYNEWT_VAL(LPS33HW_CLI)
+int lps33hw_shell_init(void);
+#endif
 
 #ifdef __cplusplus
 }

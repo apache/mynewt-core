@@ -239,10 +239,9 @@ static struct sensor_itf i2c_0_itf_adxl = {
 
 #if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(LPS33HW_OFB)
 static struct sensor_itf i2c_0_itf_lps = {
-    .si_type = SENSOR_ITF_I2C,
-    .si_num  = 0,
-    /* HW I2C address for the LPS33HW */
-    .si_addr = LPS33HW_I2C_ADDR
+    .si_type = MYNEWT_VAL(LPS33HW_SHELL_ITF_TYPE),
+    .si_num  = MYNEWT_VAL(LPS33HW_SHELL_ITF_NUM),
+    .si_addr = MYNEWT_VAL(LPS33HW_SHELL_ITF_ADDR)
 };
 #endif
 
@@ -642,8 +641,15 @@ config_lps33hw_sensor(void)
     struct lps33hw_cfg cfg;
 
     cfg.mask = SENSOR_TYPE_PRESSURE | SENSOR_TYPE_TEMPERATURE;
-    cfg.data_rate = LPS33HW_1KHZ;
+    cfg.data_rate = LPS33HW_1HZ;
     cfg.lpf = LPS33HW_LPF_DISABLED;
+    cfg.int_cfg.pin = 0;
+    cfg.int_cfg.data_rdy = 0;
+    cfg.int_cfg.pressure_low = 0;
+    cfg.int_cfg.pressure_high = 0;
+    cfg.int_cfg.active_low = 0;
+    cfg.int_cfg.open_drain = 0;
+    cfg.int_cfg.latched = 0;
 
     dev = (struct os_dev *) os_dev_open("lps33hw_0", OS_TIMEOUT_NEVER, NULL);
     assert(dev != NULL);

@@ -40,13 +40,40 @@ static struct shell_cmd lps33hw_shell_cmd_struct = {
 static struct sensor_itf g_sensor_itf = {
     .si_type = MYNEWT_VAL(LPS33HW_SHELL_ITF_TYPE),
     .si_num = MYNEWT_VAL(LPS33HW_SHELL_ITF_NUM),
-    .si_cs_pin = MYNEWT_VAL(LPS33HW_SHELL_CSPIN),
     .si_addr = MYNEWT_VAL(LPS33HW_SHELL_ITF_ADDR)
 };
 
 static int
-lps33hw_shell_cmd_read(int argc, char **argv)
+lps33hw_shell_cmd_read_press(int argc, char **argv)
 {
+    int rc;
+    float press;
+    char tmpstr[13];
+
+    rc = lps33hw_get_pressure(&g_sensor_itf, &press);
+    if (rc) {
+        console_printf("Read falied: %d\r\n", rc);
+        return rc;
+    }
+
+    console_printf("Pressure: %s\r\n", sensor_ftostr(press, tmpstr, 13));
+    return 0;
+}
+
+static int
+lps33hw_shell_cmd_read_temp(int argc, char **argv)
+{
+    int rc;
+    float temp;
+    char tmpstr[13];
+
+    rc = lps33hw_get_temperature(&g_sensor_itf, &temp);
+    if (rc) {
+        console_printf("Read falied: %d\r\n", rc);
+        return rc;
+    }
+
+    console_printf("Temperature: %s\r\n", sensor_ftostr(temp, tmpstr, 13));
     return 0;
 }
 
@@ -54,23 +81,26 @@ static int
 lps33hw_shell_cmd(int argc, char **argv)
 {
     if (argc == 1) {
-        return lps33hw_shell_help();
+        return 0; /*lps33hw_shell_help();*/
     }
 
-    /* Read command (get a new data sample) */
-    if (argc > 1 && strcmp(argv[1], "r") == 0) {
-        return lps33hw_shell_cmd_read(argc, argv);
+    /* Read pressure */
+    if (argc > 1 && strcmp(argv[1], "rp") == 0) {
+        return lps33hw_shell_cmd_read_press(argc, argv);
     }
 
+    /* Read temperature */
+    if (argc > 1 && strcmp(argv[1], "rt") == 0) {
+        return lps33hw_shell_cmd_read_temp(argc, argv);
+    }
 
-    return lps33hw_shell_err_unknown_arg(argv[1]);
+    return 0; /*lps33hw_shell_err_unknown_arg(argv[1]);*/
 }
 
 int
 lps33hw_shell_init(void)
 {
     int rc;
-
     rc = shell_cmd_register(&lps33hw_shell_cmd_struct);
     SYSINIT_PANIC_ASSERT(rc == 0);
 

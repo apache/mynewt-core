@@ -101,11 +101,6 @@ LPS33HW_REGISTER_VALUE(LPS33HW_STATUS, LPS33HW_STATUS_P_DA, 5, 0x01);
 
 #define LPS33HW_WHO_AM_I_VAL (0xb1)
 
-int lps33hw_set_reg(struct sensor_itf *itf, uint8_t reg, uint8_t value);
-int lps33hw_get_reg(struct sensor_itf *itf, uint8_t reg, uint8_t *value);
-int lps33hw_get_regs(struct sensor_itf *itf, uint8_t reg, uint8_t size,
-    uint8_t *buffer);
-
 #ifdef __cplusplus
 }
 #endif
