@@ -189,15 +189,16 @@ pushed through https://git.apache.org/.
 ## Filing Bugs
 
 Bugs can be filed on the
-[Apache Mynewt Bug Tracker](https://issues.apache.org/jira/browse/MYNEWT).
+[Apache Mynewt Issues](https://github.com/apache/mynewt-core/issues).
+Please label the issue as a "Bug".
 
 Where possible, please include a self-contained reproduction case!
 
 ## Feature Requests
 
 Feature requests should also be filed on the
-[Apache Mynewt Bug Tracker](https://issues.apache.org/jira/browse/MYNEWT).
-Please introduce it as a ticket type "Wish."
+[Apache Mynewt Bug Tracker](https://github.com/apache/mynewt-core/issues).
+Please label the issue as a "Feature" or "Enhancement" depending on the scope.
 
 ## Writing Tests
 
