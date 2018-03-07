@@ -69,8 +69,9 @@ struct lps33hw_cfg {
 };
 
 struct lps33hw_private_driver_data {
-    struct sensor_notify_ev_ctx notify_ctx;
     struct sensor_read_ev_ctx read_ctx;
+    sensor_data_func_t user_handler;
+    void *user_arg;
 };
 
 struct lps33hw {
@@ -160,12 +161,11 @@ int lps33hw_set_threshold(struct sensor_itf *itf, float threshold);
  * @param The sensor object associated with this lps33hw.
  * @param Handler, called back in the ISR.
  * @param Argument to be passed to the handler.
- * @param GPIO pin to be associated with the interrupt.
  *
  * @return 0 on success, non-zero error on failure.
  */
 int lps33hw_enable_interrupt(struct sensor *sensor,
-    hal_gpio_irq_handler_t handler, void * arg, uint8_t pin);
+    hal_gpio_irq_handler_t handler, void * arg);
 
 /**
  * Disable gpio interrupt.

@@ -380,7 +380,7 @@ lps33hw_set_threshold(struct sensor_itf *itf, float threshold)
 
 int
 lps33hw_enable_interrupt(struct sensor *sensor, hal_gpio_irq_handler_t handler,
-            void *arg, uint8_t pin)
+            void *arg)
 {
     int rc;
     struct lps33hw *lps33hw;
@@ -396,14 +396,13 @@ lps33hw_enable_interrupt(struct sensor *sensor, hal_gpio_irq_handler_t handler,
     int_cfg = &lps33hw->cfg.int_cfg;
     trig = (int_cfg->active_low) ? HAL_GPIO_TRIG_FALLING : HAL_GPIO_TRIG_RISING;
     pull = (int_cfg->open_drain) ? HAL_GPIO_PULL_UP : HAL_GPIO_PULL_NONE;
-    int_cfg->pin = pin;
 
-    rc = hal_gpio_irq_init(pin, handler, arg, trig, pull);
+    rc = hal_gpio_irq_init(int_cfg->pin, handler, arg, trig, pull);
     if (rc) {
         return rc;
     }
 
-    hal_gpio_irq_enable(pin);
+    hal_gpio_irq_enable(int_cfg->pin);
 
     /* Read pressure and interrupt sources in order to reset the interrupt */
     rc = lps33hw_get_pressure_regs(itf, LPS33HW_PRESS_OUT, &press);
@@ -448,27 +447,19 @@ lps33hw_sensor_handle_interrupt(struct sensor *sensor)
     struct sensor_itf *itf;
     struct lps33hw_int_cfg *int_cfg;
     uint8_t int_source;
-    uint8_t p_da;
 
     lps33hw = (struct lps33hw *)SENSOR_GET_DEVICE(sensor);
     itf = SENSOR_GET_ITF(sensor);
     int_cfg = &lps33hw->cfg.int_cfg;
 
-    /* Read interrupt source registers. */
+    /* Read interrupt source register. */
     rc = lps33hw_get_regs(itf, LPS33HW_INT_SOURCE, 1, &int_source);
     if (rc) {
         return rc;
     }
 
-    rc = lps33hw_get_value(itf, LPS33HW_STATUS_P_DA, &p_da);
-    if (rc) {
-        return rc;
-    }
-
-    if (int_cfg->data_rdy) {
+    if (int_cfg->pressure_low || int_cfg->pressure_high) {
         sensor_mgr_put_read_evt(&lps33hw->pdd.read_ctx);
-    } else if (int_cfg->pressure_low || int_cfg->pressure_high) {
-        sensor_mgr_put_notify_evt(&lps33hw->pdd.notify_ctx);
     } else {
         LPS33HW_ERR("Unhandled interrupt\n");
     }
@@ -686,8 +677,7 @@ lps33hw_sensor_set_trigger_thresh(struct sensor *sensor,
         return rc;
     }
 
-    rc = lps33hw_enable_interrupt(sensor, interrupt_handler, sensor,
-        int_cfg.pin);
+    rc = lps33hw_enable_interrupt(sensor, interrupt_handler, sensor);
     if (rc) {
         return rc;
     }
@@ -710,7 +700,6 @@ lps33hw_init(struct os_dev *dev, void *arg)
 
     sensor = &lps->sensor;
     lps->cfg.mask = SENSOR_TYPE_ALL;
-    lps->pdd.notify_ctx.snec_sensor = sensor;
     lps->pdd.read_ctx.srec_sensor = sensor;
 
     log_register(dev->od_name, &_log, &log_console_handler, NULL, LOG_SYSLEVEL);
@@ -730,7 +719,7 @@ lps33hw_init(struct os_dev *dev, void *arg)
         return rc;
     }
 
-    /* Add the pressure driver */
+    /* Add the pressure and temperature driver */
     rc = sensor_set_driver(sensor, SENSOR_TYPE_PRESSURE |
         SENSOR_TYPE_TEMPERATURE,
         (struct sensor_driver *) &g_lps33hw_sensor_driver);
@@ -773,6 +762,11 @@ lps33hw_config(struct lps33hw *lps, struct lps33hw_cfg *cfg)
         return rc;
     }
 
+    rc = lps33hw_config_interrupt(&(lps->sensor), cfg->int_cfg);
+    if (rc) {
+
+    }
+
     rc = sensor_set_type_mask(&(lps->sensor), cfg->mask);
     if (rc) {
         return rc;
@@ -781,6 +775,30 @@ lps33hw_config(struct lps33hw *lps, struct lps33hw_cfg *cfg)
     lps->cfg.mask = cfg->mask;
 
     return 0;
+}
+
+static void
+lps33hw_read_interrupt_handler(void *arg)
+{
+    int rc;
+    struct sensor *sensor;
+    struct lps33hw *lps33hw;
+    struct sensor_itf *itf;
+    struct sensor_press_data spd;
+
+    sensor = (struct sensor *)arg;
+    lps33hw = (struct lps33hw *)SENSOR_GET_DEVICE(sensor);
+    itf = SENSOR_GET_ITF(sensor);
+
+    rc = lps33hw_get_pressure(itf, &spd.spd_press);
+    if (rc) {
+        LPS33HW_ERR("Get pressure failed\n");
+        spd.spd_press_is_valid = 0;
+    } else {
+        spd.spd_press_is_valid = 1;
+        lps33hw->pdd.user_handler(sensor, lps33hw->pdd.user_arg,
+            &spd, SENSOR_TYPE_PRESSURE);
+    }
 }
 
 static int
@@ -793,17 +811,32 @@ lps33hw_sensor_read(struct sensor *sensor, sensor_type_t type,
 
     itf = SENSOR_GET_ITF(sensor);
     if (type & SENSOR_TYPE_PRESSURE) {
-        struct sensor_press_data spd;
+        struct lps33hw *lps33hw;
 
-        rc = lps33hw_get_pressure_regs(itf, LPS33HW_PRESS_OUT, &spd.spd_press);
-        if (rc) {
-            return rc;
+        lps33hw = (struct lps33hw *)SENSOR_GET_DEVICE(sensor);
+        if (lps33hw->cfg.int_cfg.data_rdy) {
+            /* Stream read */
+            lps33hw->pdd.user_handler = data_func;
+            lps33hw->pdd.user_arg = data_arg;
+
+            rc = lps33hw_enable_interrupt(sensor,
+                lps33hw_read_interrupt_handler, sensor);
+            if (rc) {
+                return rc;
+            }
+        } else {
+            /* Read once */
+            struct sensor_press_data spd;
+
+            rc = lps33hw_get_pressure(itf, &spd.spd_press);
+            if (rc) {
+                return rc;
+            }
+
+            spd.spd_press_is_valid = 1;
+
+            rc = data_func(sensor, data_arg, &spd, SENSOR_TYPE_PRESSURE);
         }
-
-        spd.spd_press_is_valid = 1;
-
-        rc = data_func(sensor, data_arg, &spd,
-                SENSOR_TYPE_PRESSURE);
     } else if (type & SENSOR_TYPE_TEMPERATURE) {
         struct sensor_temp_data std;
 
