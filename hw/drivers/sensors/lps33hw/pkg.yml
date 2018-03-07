@@ -18,10 +18,12 @@
 #
 
 pkg.name: hw/drivers/sensors/lps33hw
-pkg.description: Driver for the lps33hw pressure sensor.
+pkg.description: Driver for the lps33hw and lps22hb pressure sensors.
 pkg.author: "Apache Mynewt dev@mynewt.apache.org"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
+    - lps33hw
+    - lps22hb
     - pressure
     - i2c
     - sensor

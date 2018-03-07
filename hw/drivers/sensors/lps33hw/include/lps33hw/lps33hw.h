@@ -66,10 +66,11 @@ struct lps33hw_cfg {
     struct lps33hw_int_cfg int_cfg;
     enum lps33hw_output_data_rates data_rate;
     enum lps33hw_low_pass_config lpf;
+    unsigned int autozero : 1;
+    unsigned int autorifp : 1;
 };
 
 struct lps33hw_private_driver_data {
-    struct sensor_read_ev_ctx read_ctx;
     sensor_data_func_t user_handler;
     void *user_arg;
 };
@@ -81,7 +82,6 @@ struct lps33hw {
     os_time_t last_read_time;
     struct lps33hw_private_driver_data pdd;
 };
-
 
 /**
  * Set the output data rate.
@@ -153,6 +153,16 @@ int lps33hw_set_reference(struct sensor_itf *itf, float reference);
  * @return 0 on success, non-zero error on failure.
  */
 int lps33hw_set_threshold(struct sensor_itf *itf, float threshold);
+
+/*
+ * Set pressure RPDS.
+ *
+ * @param The interface object associated with the lps33hw.
+ * @param The pressure offset, unsure of units.
+ *
+ * @return 0 on success, non-zero error on failure.
+ */
+int lps33hw_set_rpds(struct sensor_itf *itf, uint16_t rpds);
 
 /**
  * Initialise gpio interrupt and setup handler. Call lp33hw_config_interrupt
