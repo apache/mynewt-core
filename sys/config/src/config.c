@@ -104,7 +104,7 @@ conf_parse_name(char *name, int *name_argc, char *name_argv[])
     return 0;
 }
 
-static struct conf_handler *
+struct conf_handler *
 conf_parse_and_lookup(char *name, int *name_argc, char *name_argv[])
 {
     int rc;

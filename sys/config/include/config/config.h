@@ -103,6 +103,15 @@ int conf_load(void);
 int conf_save(void);
 
 /**
+ * Save currently running configuration for configuration subtree.
+ *
+ * @param name Name of the configuration subtree.
+ *
+ * @return 0 on success, non-zero on failure.
+ */
+int conf_save_tree(char *name);
+
+/**
  * Write a single configuration value to persisted storage (if it has
  * changed value).
  *
