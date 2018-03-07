@@ -106,7 +106,7 @@ sys_now(void)
     /*
      * XXX not right when g_os_time rolls over
      */
-    t = os_time_get() * OS_TICKS_PER_SEC / 1000;
+    t = os_time_get() * 1000 / OS_TICKS_PER_SEC;
     return t;
 }
 
