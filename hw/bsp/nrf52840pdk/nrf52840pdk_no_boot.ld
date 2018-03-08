@@ -166,6 +166,7 @@ SECTIONS
     } > RAM
 
     /* Heap starts after BSS */
+    . = ALIGN(8);
     __HeapBase = .;
 
     /* .stack_dummy section doesn't contains any symbols. It is only

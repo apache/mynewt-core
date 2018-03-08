@@ -185,6 +185,7 @@ SECTIONS
         _ebss = .;
     } > SRAM
 
+    . = ALIGN(8);
     __HeapBase = .;
     __HeapLimit = ORIGIN(SRAM) + LENGTH(SRAM);
 

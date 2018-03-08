@@ -111,7 +111,7 @@ SECTIONS
     } > DCCM
 
     /* Allocate remaining RAM (RAM between _e_bss and __StackLimit to heap */
-    . = ALIGN(4);
+    . = ALIGN(8);
     __HeapBase = .;
 
     __StackTop = ORIGIN(DCCM) + LENGTH(DCCM);
