@@ -40,12 +40,12 @@
  */
 
 struct os_task g_idle_task;
-os_stack_t g_idle_task_stack[OS_STACK_ALIGN(OS_IDLE_STACK_SIZE)];
+OS_TASK_STACK_DEFINE(g_idle_task_stack, OS_IDLE_STACK_SIZE);
 
 uint32_t g_os_idle_ctr;
 
 static struct os_task os_main_task;
-static os_stack_t os_main_stack[OS_STACK_ALIGN(OS_MAIN_STACK_SIZE)];
+OS_TASK_STACK_DEFINE(os_main_stack, OS_MAIN_STACK_SIZE);
 
 /* Default zero.  Set by the architecture specific code when os is started.
  */
