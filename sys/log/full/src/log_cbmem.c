@@ -127,5 +127,4 @@ const struct log_handler log_cbmem_handler = {
     .log_append = log_cbmem_append,
     .log_walk = log_cbmem_walk,
     .log_flush = log_cbmem_flush,
-    .log_rtr_erase = NULL,
 };
