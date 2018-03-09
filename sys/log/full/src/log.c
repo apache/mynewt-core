@@ -198,15 +198,16 @@ log_register(char *name, struct log *log, const struct log_handler *lh,
     return (0);
 }
 
-int
-log_append(struct log *log, uint16_t module, uint16_t level, void *data,
-        uint16_t len)
+static int
+log_append_prepare(struct log *log, uint16_t module, uint16_t level,
+                   struct log_entry_hdr *ue)
 {
-    struct log_entry_hdr *ue;
     int rc;
     int sr;
     struct os_timeval tv;
     uint32_t idx;
+
+    rc = 0;
 
     if (log->l_name == NULL || log->l_log == NULL) {
         rc = -1;
@@ -227,8 +228,6 @@ log_append(struct log *log, uint16_t module, uint16_t level, void *data,
         goto err;
     }
 
-    ue = (struct log_entry_hdr *) data;
-
     OS_ENTER_CRITICAL(sr);
     idx = g_log_info.li_next_index++;
     OS_EXIT_CRITICAL(sr);
@@ -245,6 +244,21 @@ log_append(struct log *log, uint16_t module, uint16_t level, void *data,
     ue->ue_module = module;
     ue->ue_index = idx;
 
+err:
+    return (rc);
+}
+
+int
+log_append(struct log *log, uint16_t module, uint16_t level, void *data,
+           uint16_t len)
+{
+    int rc;
+
+    rc = log_append_prepare(log, module, level, (struct log_entry_hdr *)data);
+    if (rc != 0) {
+        goto err;
+    }
+
     rc = log->l_log->log_append(log, data, len + LOG_ENTRY_HDR_SIZE);
     if (rc != 0) {
         goto err;
@@ -252,6 +266,44 @@ log_append(struct log *log, uint16_t module, uint16_t level, void *data,
 
     return (0);
 err:
+    return (rc);
+}
+
+int
+log_append_mbuf(struct log *log, uint16_t module, uint16_t level,
+                struct os_mbuf *om)
+{
+    int rc;
+
+    if (!log->l_log->log_append_mbuf) {
+        rc = -1;
+        goto err;
+    }
+
+    om = os_mbuf_pullup(om, sizeof(struct log_entry_hdr));
+    if (!om) {
+        rc = -1;
+        goto err;
+    }
+
+    rc = log_append_prepare(log, module, level,
+                            (struct log_entry_hdr *)om->om_data);
+    if (rc != 0) {
+        goto err;
+    }
+
+    rc = log->l_log->log_append_mbuf(log, om);
+    if (rc != 0) {
+        goto err;
+    }
+
+    os_mbuf_free_chain(om);
+
+    return (0);
+err:
+    if (om) {
+        os_mbuf_free_chain(om);
+    }
     return (rc);
 }
 

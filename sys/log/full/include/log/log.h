@@ -38,6 +38,7 @@ struct log_info {
 extern struct log_info g_log_info;
 
 struct log;
+struct log_entry_hdr;
 
 /**
  * Used for walks and reads; indicates part of log to access.
@@ -65,6 +66,7 @@ typedef int (*log_walk_func_t)(struct log *, struct log_offset *log_offset,
 typedef int (*lh_read_func_t)(struct log *, void *dptr, void *buf,
         uint16_t offset, uint16_t len);
 typedef int (*lh_append_func_t)(struct log *, void *buf, int len);
+typedef int (*lh_append_mbuf_func_t)(struct log *, struct os_mbuf *om);
 typedef int (*lh_walk_func_t)(struct log *,
         log_walk_func_t walk_func, struct log_offset *log_offset);
 typedef int (*lh_flush_func_t)(struct log *);
@@ -77,6 +79,7 @@ struct log_handler {
     int log_type;
     lh_read_func_t log_read;
     lh_append_func_t log_append;
+    lh_append_mbuf_func_t log_append_mbuf;
     lh_walk_func_t log_walk;
     lh_flush_func_t log_flush;
 };
@@ -205,6 +208,7 @@ struct log *log_list_get_next(struct log *);
 int log_register(char *name, struct log *log, const struct log_handler *,
                  void *arg, uint8_t level);
 int log_append(struct log *, uint16_t, uint16_t, void *, uint16_t);
+int log_append_mbuf(struct log *, uint16_t, uint16_t, struct os_mbuf *);
 
 #define LOG_PRINTF_MAX_ENTRY_LEN (128)
 void log_printf(struct log *log, uint16_t, uint16_t, char *, ...);
