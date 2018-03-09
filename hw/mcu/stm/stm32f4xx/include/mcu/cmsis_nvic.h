@@ -8,12 +8,16 @@
 #define MBED_CMSIS_NVIC_H
 
 #include <stdint.h>
+#include <syscfg/syscfg.h>
 
-/* NOTE: the nrf51 SoC has 26 interrupts. */
+#if MYNEWT_VAL(MCU_NVIC_PERIPH_VECTORS) < 16
+#error "Too few peripheral IRQ vectors, incorrect config?"
+#endif
+
 #define NVIC_USER_IRQ_OFFSET  16
-#define NVIC_NUM_VECTORS      (NVIC_USER_IRQ_OFFSET + 26)
+#define NVIC_NUM_VECTORS      (16 + MYNEWT_VAL(MCU_NVIC_PERIPH_VECTORS))
 
-#include "nrf51.h"
+#include "stm32f4xx.h"
 
 #ifdef __cplusplus
 extern "C" {

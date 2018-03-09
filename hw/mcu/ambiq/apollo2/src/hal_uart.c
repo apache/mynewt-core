@@ -22,7 +22,7 @@
 #include "mcu/hal_apollo2.h"
 #include "defs/error.h"
 #include "hal/hal_uart.h"
-#include "bsp/cmsis_nvic.h"
+#include "mcu/cmsis_nvic.h"
 #include "bsp/bsp.h"
 #include "os/os_trace_api.h"
 

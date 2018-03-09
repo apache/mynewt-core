@@ -18,7 +18,7 @@
  */
 
 #include "hal/hal_uart.h"
-#include "bsp/cmsis_nvic.h"
+#include "mcu/cmsis_nvic.h"
 #include "bsp/bsp.h"
 
 #include "nrf.h"

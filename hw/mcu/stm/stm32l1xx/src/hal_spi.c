@@ -34,7 +34,7 @@
 #include "stm32l1xx_hal_rcc.h"
 #include "mcu/stm32l1xx_mynewt_hal.h"
 #include "mcu/stm32l1_bsp.h"
-#include "bsp/cmsis_nvic.h"
+#include "mcu/cmsis_nvic.h"
 
 #define STM32L1_HAL_SPI_TIMEOUT (1000)
 

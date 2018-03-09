@@ -22,7 +22,7 @@
 #include <adc/adc.h>
 #include <assert.h>
 #include <os/os.h>
-#include <bsp/cmsis_nvic.h>
+#include <mcu/cmsis_nvic.h>
 
 /* Nordic headers */
 #include <nrfx.h>
