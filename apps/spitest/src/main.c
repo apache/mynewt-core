@@ -156,7 +156,7 @@ sblinky_spim_cfg(int spi_num)
     my_spi.data_mode = HAL_SPI_MODE0;
     my_spi.baudrate = SPI_BAUDRATE;
     my_spi.word_size = HAL_SPI_WORD_SIZE_8BIT;
-    hal_spi_config(spi_num, &my_spi);
+    assert(hal_spi_config(spi_num, &my_spi) == 0);
 }
 #endif
 
@@ -191,7 +191,7 @@ sblinky_spis_cfg(int spi_num)
     my_spi.data_mode = HAL_SPI_MODE0;
     my_spi.baudrate =  SPI_BAUDRATE;
     my_spi.word_size = HAL_SPI_WORD_SIZE_8BIT;
-    hal_spi_config(spi_num, &my_spi);
+    assert(hal_spi_config(spi_num, &my_spi) == 0);
     hal_spi_set_txrx_cb(spi_num, sblinky_spi_irqs_handler, spi_cb_arg);
 }
 #endif
