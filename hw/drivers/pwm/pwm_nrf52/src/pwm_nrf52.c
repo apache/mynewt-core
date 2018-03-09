@@ -382,34 +382,40 @@ nrf52_pwm_configure_channel(struct pwm_dev *dev,
     int inst_id = dev->pwm_instance_id;
     struct nrf52_pwm_dev_global *instance = &instances[inst_id];
     nrfx_pwm_config_t *config = &instance->config;
+    struct pwm_dev_interrupt_cfg *int_cfg;
 
     if (!instance->in_use) {
         return (EINVAL);
     }
+
 
     config->output_pins[cnum] = cfg->pin;
     config->output_pins[cnum] |= (cfg->inverted) ?
         NRFX_PWM_PIN_INVERTED : config->output_pins[cnum];
     instance->n_cycles = (cfg->n_cycles) ? cfg->n_cycles : 1;
 
-    if (cfg->cycle_handler || cfg->cycle_handler) {
-        config->irq_priority = cfg->int_prio;
-        instance->internal_handler = internal_handlers[inst_id];
-        instance->cycle_handler = (user_handler_t) cfg->cycle_handler;
-        instance->seq_end_handler = (user_handler_t) cfg->seq_end_handler;
-        instance->cycle_data = cfg->cycle_data;
-        instance->seq_end_data = cfg->seq_end_data;
-    } else {
-        instance->internal_handler = NULL;
+    /* Configure Interrupts  */
+    if (cfg->interrupts_cfg) {
+        int_cfg = (struct pwm_dev_interrupt_cfg*) cfg;
+        if (int_cfg->cycle_handler || int_cfg->seq_end_handler) {
+            config->irq_priority = int_cfg->int_prio;
+            instance->internal_handler = internal_handlers[inst_id];
+            instance->cycle_handler = (user_handler_t) int_cfg->cycle_handler;
+            instance->seq_end_handler = (user_handler_t) int_cfg->seq_end_handler;
+            instance->cycle_data = int_cfg->cycle_data;
+            instance->seq_end_data = int_cfg->seq_end_data;
+        } else {
+            instance->internal_handler = NULL;
+        }
     }
 
     instance->flags = (instance->n_cycles > 1) ?
         0 :
         NRFX_PWM_FLAG_LOOP;
-    instance->flags |= (cfg->cycle_handler) ?
+    instance->flags |= (instance->cycle_handler) ?
         (NRFX_PWM_FLAG_SIGNAL_END_SEQ0 | NRFX_PWM_FLAG_SIGNAL_END_SEQ0) :
         0;
-    instance->flags |= (cfg->seq_end_handler) ?
+    instance->flags |= (instance->seq_end_handler) ?
         0 :
         NRFX_PWM_FLAG_NO_EVT_FINISHED;
 
@@ -604,6 +610,25 @@ nrf52_pwm_get_clock_freq(struct pwm_dev *dev)
 }
 
 /**
+ * Get the top value for the cycle counter, i.e. the value which sets
+ * the duty cycle to 100%.
+ *
+ * @param dev
+ *
+ * @return value in cycles on success, negative on error.
+ */
+int
+nrf52_pwm_get_top_value(struct pwm_dev *dev)
+{
+    int inst_id = dev->pwm_instance_id;
+    if (!instances[inst_id].in_use) {
+        return (-EINVAL);
+    }
+
+    return (instances[inst_id].config.top_value);
+}
+
+/**
  * Get the resolution of the PWM in bits.
  *
  * @param dev The device to query.
@@ -682,6 +707,7 @@ nrf52_pwm_dev_init(struct os_dev *odev, void *arg)
     pwm_funcs->pwm_enable_duty_cycle = nrf52_pwm_enable_duty_cycle;
     pwm_funcs->pwm_set_frequency = nrf52_pwm_set_frequency;
     pwm_funcs->pwm_get_clock_freq = nrf52_pwm_get_clock_freq;
+    pwm_funcs->pwm_get_top_value = nrf52_pwm_get_top_value;
     pwm_funcs->pwm_get_resolution_bits = nrf52_pwm_get_resolution_bits;
     pwm_funcs->pwm_disable = nrf52_pwm_disable;
 

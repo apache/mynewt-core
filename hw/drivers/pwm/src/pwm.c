@@ -101,6 +101,22 @@ pwm_get_clock_freq(struct pwm_dev *dev)
 }
 
 /**
+ * Get the top value for the cycle counter, i.e. the value which sets
+ * the duty cycle to 100%.
+ *
+ * @param dev
+ *
+ * @return value in cycles on success, negative on error.
+ */
+int
+pwm_get_top_value(struct pwm_dev *dev)
+{
+    assert(dev->pwm_funcs.pwm_get_top_value != NULL);
+
+    return (dev->pwm_funcs.pwm_get_top_value(dev));
+}
+
+/**
  * Get the resolution of the PWM in bits.
  *
  * @param dev The device to query.
