@@ -32,8 +32,15 @@
 #include "hal/hal_watchdog.h"
 #include "hal/hal_i2c.h"
 #include "mcu/nrf52_hal.h"
+#if MYNEWT_VAL(UART_0) || MYNEWT_VAL(UART_1)
 #include "uart/uart.h"
+#endif
+#if MYNEWT_VAL(UART_0)
 #include "uart_hal/uart_hal.h"
+#endif
+#if MYNEWT_VAL(UART_1)
+#include "uart_bitbang/uart_bitbang.h"
+#endif
 #include "os/os_dev.h"
 #include "bsp.h"
 #if MYNEWT_VAL(ADC_0)
@@ -191,6 +198,8 @@ void
 hal_bsp_init(void)
 {
     int rc;
+
+    (void)rc;
 
     /* Make sure system clocks have started */
     hal_system_clock_start();

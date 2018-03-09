@@ -33,8 +33,11 @@
 #include "nrf51_bitfields.h"
 #include "hal/hal_spi.h"
 #include "os/os_dev.h"
+
+#if MYNEWT_VAL(UART_0)
 #include "uart/uart.h"
 #include "uart_hal/uart_hal.h"
+#endif
 
 #if MYNEWT_VAL(ADC_0)
 #include <adc_nrf51/adc_nrf51.h>
