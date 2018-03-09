@@ -25,7 +25,7 @@
 
 #include "hal_gpio_stm32.h"
 #include "hal/hal_gpio.h"
-#include "bsp/cmsis_nvic.h"
+#include "mcu/cmsis_nvic.h"
 #include "stm32f3xx.h"
 #include "stm32f3xx_hal_cortex.h"
 #include "stm32f3xx_hal_gpio.h"

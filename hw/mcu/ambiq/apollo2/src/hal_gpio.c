@@ -21,7 +21,7 @@
 #include <os/os.h>
 #include "hal/hal_gpio.h"
 #include "mcu/apollo2.h"
-#include "bsp/cmsis_nvic.h"
+#include "mcu/cmsis_nvic.h"
 #include "os/os_trace_api.h"
 #include "defs/error.h"
 #include "am_mcu_apollo.h"

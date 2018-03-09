@@ -8,11 +8,16 @@
 #define MBED_CMSIS_NVIC_H
 
 #include <stdint.h>
+#include <syscfg/syscfg.h>
 
-#define NVIC_NUM_VECTORS      (16 + 46)   // CORE + MCU Peripherals
+#if MYNEWT_VAL(MCU_NVIC_PERIPH_VECTORS) < 16
+#error "Too few peripheral IRQ vectors, incorrect config?"
+#endif
+
 #define NVIC_USER_IRQ_OFFSET  16
+#define NVIC_NUM_VECTORS      (16 + MYNEWT_VAL(MCU_NVIC_PERIPH_VECTORS))
 
-#include "nrf52840.h"
+#include "stm32f7xx.h"
 
 #ifdef __cplusplus
 extern "C" {

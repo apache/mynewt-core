@@ -22,7 +22,7 @@
 #include <os/os.h>
 #include <hal/hal_os_tick.h>
 
-#include "bsp/cmsis_nvic.h"
+#include "mcu/cmsis_nvic.h"
 
 #include "fsl_pit.h"
 

@@ -21,7 +21,7 @@
 #include "hal/hal_uart.h"
 #include "hal/hal_gpio.h"
 #include "hal/hal_system.h"
-#include "bsp/cmsis_nvic.h"
+#include "mcu/cmsis_nvic.h"
 #include "bsp/bsp.h"
 #include "os/os.h"
 

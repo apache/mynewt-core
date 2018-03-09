@@ -19,7 +19,7 @@
 
 #include <assert.h>
 #include "hal/hal_watchdog.h"
-#include "bsp/cmsis_nvic.h"
+#include "mcu/cmsis_nvic.h"
 #include "os/os_trace_api.h"
 #include "nrf.h"
 

@@ -33,6 +33,10 @@ syscfg.defs:
         description: MCUs are of STM32F4xx family
         value: 1
 
+    MCU_NVIC_PERIPH_VECTORS:
+        description: Number of peripheral IRQ vectors in the model
+        value: 81
+
     SPI_0_MASTER:
         description: 'SPI 0 master'
         value:  0

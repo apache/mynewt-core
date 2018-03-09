@@ -3,7 +3,7 @@
  *
  * CMSIS-style functionality to support dynamic vectors
  */
-#include "bsp/cmsis_nvic.h"
+#include "mcu/cmsis_nvic.h"
 
 #ifndef __CORTEX_M
     #error "Macro __CORTEX_M not defined; must define cortex-m type!"

@@ -67,7 +67,7 @@
 
 #include <stdint.h>
 #include "mcu/fsl_device_registers.h"
-#include "bsp/cmsis_nvic.h"
+#include "mcu/cmsis_nvic.h"
 
 /* ----------------------------------------------------------------------------
    -- Core clock

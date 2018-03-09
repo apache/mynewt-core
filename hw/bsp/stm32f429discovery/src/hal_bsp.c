@@ -20,7 +20,7 @@
 
 #include <syscfg/syscfg.h>
 #include <bsp/bsp.h>
-#include <bsp/cmsis_nvic.h>
+#include <mcu/cmsis_nvic.h>
 #include <flash_map/flash_map.h>
 #include <os/os_dev.h>
 #include <stm32f429xx.h>

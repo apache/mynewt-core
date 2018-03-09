@@ -35,7 +35,7 @@
 #include "uart_hal/uart_hal.h"
 #include "hal/hal_uart.h"
 #endif
-#include "bsp/cmsis_nvic.h"
+#include "mcu/cmsis_nvic.h"
 #include "mcu/frdm-k64f_hal.h"
 #include "fsl_device_registers.h"
 #include "fsl_common.h"
