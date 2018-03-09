@@ -183,6 +183,8 @@ hal_bsp_init(void)
 {
     int rc;
 
+    (void)rc;
+
     /* Make sure system clocks have started */
     hal_system_clock_start();
 
