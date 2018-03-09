@@ -96,38 +96,41 @@ pwm_end_seq_handler(void* chan_conf)
 int
 pwm_init(void)
 {
-    struct pwm_chan_cfg chan_conf = {
-        .pin = LED_BLINK_PIN,
-        .inverted = true,
+    struct pwm_dev_interrupt_cfg chan_conf = {
+        .cfg = {
+            .pin = LED_BLINK_PIN,
+            .inverted = true,
+            .n_cycles = pwm_freq * 5, /* 5 seconds */
+            .interrupts_cfg = true,
+            .data = NULL,
+        },
         .int_prio = 3,
-        .n_cycles = pwm_freq * 5, /* 5 seconds */
         .cycle_handler = pwm_cycle_handler, /* this won't work on soft_pwm */
         .cycle_data = NULL,
         .seq_end_handler = pwm_end_seq_handler, /* this won't work on soft_pwm */
         .seq_end_data = NULL
     };
-    uint32_t base_freq;
     int rc;
 
     chan_conf.seq_end_data = &chan_conf;
 
 #if MYNEWT_VAL(SOFT_PWM)
     pwm = (struct pwm_dev *) os_dev_open("spwm", 0, NULL);
+    chan_conf.cfg.interrupts_cfg = false;
 #else
     pwm = (struct pwm_dev *) os_dev_open("pwm0", 0, NULL);
 #endif
 
     /* set the PWM frequency */
     pwm_set_frequency(pwm, 1000);
-    base_freq = pwm_get_clock_freq(pwm);
-    top_val = (uint16_t) (base_freq / pwm_freq);
+    top_val = (uint16_t) pwm_get_top_value(pwm);
 
     /* setup led 1 */
-    rc = pwm_chan_config(pwm, 0, &chan_conf);
+    rc = pwm_chan_config(pwm, 0, (struct pwm_chan_cfg*) &chan_conf);
     assert(rc == 0);
 
     console_printf ("Easing: sine io\n");
-    
+
     rc = pwm_enable_duty_cycle(pwm, 0, top_val);
     assert(rc == 0);
 
