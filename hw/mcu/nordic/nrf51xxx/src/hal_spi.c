@@ -23,7 +23,7 @@
 #include <errno.h>
 #include <assert.h>
 #include <hal/hal_spi.h>
-#include <bsp/cmsis_nvic.h>
+#include <mcu/cmsis_nvic.h>
 #include "mcu/nrf51_hal.h"
 #include "nrf51_bitfields.h"
 

@@ -30,7 +30,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "bsp/cmsis_nvic.h"
+#include "mcu/cmsis_nvic.h"
 #include "nrf.h"
 #include "system_nrf51.h"
 

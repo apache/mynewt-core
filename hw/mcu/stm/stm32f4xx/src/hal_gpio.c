@@ -17,7 +17,7 @@
  * under the License.
  */
 
-#include "bsp/cmsis_nvic.h"
+#include "mcu/cmsis_nvic.h"
 #include "hal/hal_gpio.h"
 #include "stm32f4xx.h"
 #include "stm32f4xx_hal_gpio.h"

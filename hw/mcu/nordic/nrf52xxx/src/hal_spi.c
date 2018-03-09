@@ -20,7 +20,7 @@
 #include <errno.h>
 #include <assert.h>
 #include <syscfg/syscfg.h>
-#include <bsp/cmsis_nvic.h>
+#include <mcu/cmsis_nvic.h>
 #include <hal/hal_spi.h>
 #include "os/os_trace_api.h"
 #include "mcu/nrf52_hal.h"

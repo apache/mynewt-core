@@ -29,7 +29,7 @@
 #include "syscfg/syscfg.h"
 #include "flash_map/flash_map.h"
 #include "hal/hal_flash.h"
-#include "bsp/cmsis_nvic.h"
+#include "mcu/cmsis_nvic.h"
 #include "nrf51_bitfields.h"
 #include "hal/hal_spi.h"
 #include "os/os_dev.h"

@@ -23,7 +23,7 @@
 
 #include <syscfg/syscfg.h>
 
-#include <bsp/cmsis_nvic.h>
+#include <mcu/cmsis_nvic.h>
 #include <os/queue.h>
 #include <hal/hal_timer.h>
 

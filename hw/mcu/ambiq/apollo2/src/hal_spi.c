@@ -23,7 +23,7 @@
 #include "syscfg/syscfg.h"
 #include "hal/hal_spi.h"
 #include "mcu/hal_apollo2.h"
-#include "bsp/cmsis_nvic.h"
+#include "mcu/cmsis_nvic.h"
 #include "defs/error.h"
 
 #include "am_mcu_apollo.h"

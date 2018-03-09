@@ -21,7 +21,7 @@
 #include <hal/hal_bsp.h>
 #include <assert.h>
 #include <os/os.h>
-#include <bsp/cmsis_nvic.h>
+#include <mcu/cmsis_nvic.h>
 #include "stm32f4xx_hal_dma.h"
 #include "stm32f4xx_hal_adc.h"
 #include "stm32f4xx_hal_rcc.h"

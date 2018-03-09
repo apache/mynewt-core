@@ -19,7 +19,7 @@
 
 #include "hal/hal_uart.h"
 #include "hal/hal_gpio.h"
-#include "bsp/cmsis_nvic.h"
+#include "mcu/cmsis_nvic.h"
 #include "bsp/bsp.h"
 #include "stm32l1xx.h"
 #include "stm32l1xx_hal_dma.h"

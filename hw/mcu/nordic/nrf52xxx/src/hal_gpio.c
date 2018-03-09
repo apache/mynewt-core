@@ -18,7 +18,7 @@
  */
 
 #include "hal/hal_gpio.h"
-#include "bsp/cmsis_nvic.h"
+#include "mcu/cmsis_nvic.h"
 #include "os/os_trace_api.h"
 #include <stdlib.h>
 #include "nrf.h"

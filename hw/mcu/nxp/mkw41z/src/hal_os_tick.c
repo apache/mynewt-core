@@ -20,7 +20,7 @@
 #include <os/os.h>
 #include "syscfg/syscfg.h"
 #include <hal/hal_os_tick.h>
-#include <bsp/cmsis_nvic.h>
+#include <mcu/cmsis_nvic.h>
 //#include <mkw41z4.h>
 #include <mcu/mkw41z_hal.h>
 

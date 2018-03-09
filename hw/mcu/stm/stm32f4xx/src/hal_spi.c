@@ -34,7 +34,7 @@
 #include "stm32f4xx_hal_rcc.h"
 #include "mcu/stm32f4xx_mynewt_hal.h"
 #include "mcu/stm32f4_bsp.h"
-#include "bsp/cmsis_nvic.h"
+#include "mcu/cmsis_nvic.h"
 
 #define SPI_0_ENABLED (MYNEWT_VAL(SPI_0_MASTER) || MYNEWT_VAL(SPI_0_SLAVE))
 #define SPI_1_ENABLED (MYNEWT_VAL(SPI_1_MASTER) || MYNEWT_VAL(SPI_1_SLAVE))
