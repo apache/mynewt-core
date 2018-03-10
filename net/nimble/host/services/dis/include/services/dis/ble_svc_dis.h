@@ -20,6 +20,22 @@
 #ifndef H_BLE_SVC_DIS_
 #define H_BLE_SVC_DIS_
 
+/**
+ * Example:
+ *
+ *    char firmware_revision[20] = '?.?.?';
+ *    struct image_version iv;
+ *    if (!imgr_my_version(&iv)) {
+ *	snprintf(firmware_revision, sizeof(firmware_revision),
+ *		 "%u.%u.%u", iv.iv_major, iv.iv_minor, iv.iv_revision);
+ *    }
+ *    ble_svc_dis_data.manufacturer_name = "MyNewt";
+ *    ble_svc_dis_data.firmware_revision = firmware_revision;
+ *
+ */
+
+
+
 #define BLE_SVC_DIS_UUID16					0x180A
 #define BLE_SVC_DIS_CHR_UUID16_MODEL_NUMBER			0x2A24
 #define BLE_SVC_DIS_CHR_UUID16_SERIAL_NUMBER			0x2A25
@@ -29,15 +45,45 @@
 #define BLE_SVC_DIS_CHR_UUID16_MANUFACTURER_NAME		0x2A29
 
 
+/**
+ * Structure holding data for the main characteristics
+ */
 struct ble_svc_dis_data {
+    /**
+     * Model number.
+     * Represent the model number that is assigned by the device vendor.
+     */
     char *model_number;
+    /**
+     * Serial number.
+     * Represent the serial number for a particular instance of the device.
+     */
     char *serial_number;
+    /**
+     * Firmware revision.
+     * Represent the firmware revision for the firmware within the device.
+     */
     char *firmware_revision; 
+    /**
+     * Hardware revision.
+     * Represent the hardware revision for the hardware within the device.
+     */
     char *hardware_revision;
+    /**
+     * Software revision.
+     * Represent the software revision for the software within the device.
+     */
     char *software_revision;
+    /**
+     * Manufacturer name.
+     * Represent the name of the manufacturer of the device.
+     */
     char *manufacturer_name;
 };
 
+/**
+ * Variable holding data for the main characteristics.
+ */
 extern struct ble_svc_dis_data ble_svc_dis_data;
 
 
