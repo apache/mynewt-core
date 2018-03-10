@@ -29,8 +29,8 @@
  *	snprintf(firmware_revision, sizeof(firmware_revision),
  *		 "%u.%u.%u", iv.iv_major, iv.iv_minor, iv.iv_revision);
  *    }
- *    ble_svc_dis_data.manufacturer_name = "MyNewt";
- *    ble_svc_dis_data.firmware_revision = firmware_revision;
+ *    ble_svc_dis_manufacturer_name_set("MyNewt");
+ *    ble_svc_dis_firmware_revision_set(firmware_revision);
  *
  */
 
@@ -90,8 +90,6 @@ extern struct ble_svc_dis_data ble_svc_dis_data;
  * Automatically called during package initialisation.
  */
 void ble_svc_dis_init(void);
-
-
 
 const char *ble_svc_dis_model_number(void);
 int ble_svc_dis_model_number_set(const char *value);
