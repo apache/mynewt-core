@@ -135,7 +135,7 @@ struct pwm_dev {
  * pin - The pin to be assigned to this pwm channel.
  * inverted - Whether this channel's output polarity is inverted or not.
  * n_cycles - The number of cycles for the channel to play. 0 for loop mode.
- * interrupts - Whether interruptions are to be used or not.
+ * interrupts - Whether interruptions are to be configured or not.
  * data - Driver specific data.
  */
 struct pwm_chan_cfg {
