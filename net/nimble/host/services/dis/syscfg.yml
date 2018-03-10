@@ -19,22 +19,62 @@
 # Package: ble/host/services/dis
 
 syscfg.defs:
-    BLE_SVC_DIS_MODEL_NUMBER:
-        description: Enable Model Number characteristic
-        value: 0
-    BLE_SVC_DIS_SERIAL_NUMBER:
-        description: Enable Serial Number characteristic
-        value: 0
-    BLE_SVC_DIS_HARDWARE_REVISION:
-        description: Enable Hardware Revision characteristic
-        value: 0
-    BLE_SVC_DIS_FIRMWARE_REVISION:
-        description: Enable Firmware Revision characteristic
-        value: 0
-    BLE_SVC_DIS_SOFTWARE_REVISION:
-        description: Enable Software Revision characteristic
-        value: 0
-    BLE_SVC_DIS_MANUFACTURER_NAME:
-        description: Enable Manufacturer Name characteristic
-        value: 0
-
+    BLE_SVC_DIS_MODEL_NUMBER_READ_PERM:
+        description: >
+            Defines permissions for writing "Model Number" characteristics. Can
+            be zero to allow write without extra permissions or combination of:
+                BLE_GATT_CHR_F_READ_ENC
+                BLE_GATT_CHR_F_READ_AUTHEN
+                BLE_GATT_CHR_F_READ_AUTHOR
+            Set to '-1' to remove this characteristic.
+        value: -1
+    BLE_SVC_DIS_SERIAL_NUMBER_READ_PERM:
+        description: >
+            Defines permissions for writing "Serial Number" characteristics.
+            Can be zero to allow write without extra permissions or
+            combination of:
+                BLE_GATT_CHR_F_READ_ENC
+                BLE_GATT_CHR_F_READ_AUTHEN
+                BLE_GATT_CHR_F_READ_AUTHOR
+            Set to '-1' to remove this characteristic.
+        value: -1
+    BLE_SVC_DIS_HARDWARE_REVISION_READ_PERM:
+        description: >
+            Defines permissions for writing "Hardware Revision" characteristics.
+            Can be zero to allow write without extra permissions or
+            combination of:
+                BLE_GATT_CHR_F_READ_ENC
+                BLE_GATT_CHR_F_READ_AUTHEN
+                BLE_GATT_CHR_F_READ_AUTHOR
+            Set to '-1' to remove this characteristic.
+        value: -1
+    BLE_SVC_DIS_FIRMWARE_REVISION_READ_PERM:
+        description: >
+            Defines permissions for writing "Firmware Revision" characteristics.
+            Can be zero to allow write without extra permissions or
+            combination of:
+                BLE_GATT_CHR_F_READ_ENC
+                BLE_GATT_CHR_F_READ_AUTHEN
+                BLE_GATT_CHR_F_READ_AUTHOR
+            Set to '-1' to remove this characteristic.
+        value: -1
+    BLE_SVC_DIS_SOFTWARE_REVISION_READ_PERM:
+        description: >
+            Defines permissions for writing "Software Revision" characteristics.
+            Can be zero to allow write without extra permissions or
+            combination of:
+                BLE_GATT_CHR_F_READ_ENC
+                BLE_GATT_CHR_F_READ_AUTHEN
+                BLE_GATT_CHR_F_READ_AUTHOR
+            Set to '-1' to remove this characteristic.
+        value: -1
+    BLE_SVC_DIS_MANUFACTURER_NAME_READ_PERM:
+        description: >
+            Defines permissions for writing "Manufacturer name" characteristics.
+            Can be zero to allow write without extra permissions or
+            combination of:
+                BLE_GATT_CHR_F_READ_ENC
+                BLE_GATT_CHR_F_READ_AUTHEN
+                BLE_GATT_CHR_F_READ_AUTHOR
+            Set to '-1' to remove this characteristic.
+        value: -1

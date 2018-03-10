@@ -23,20 +23,8 @@
 #include "host/ble_hs.h"
 #include "services/dis/ble_svc_dis.h"
 
-
-#if (MYNEWT_VAL(BLE_SVC_DIS_MODEL_NUMBER     ) == 0) && \
-    (MYNEWT_VAL(BLE_SVC_DIS_SERIAL_NUMBER    ) == 0) && \
-    (MYNEWT_VAL(BLE_SVC_DIS_HARDWARE_REVISION) == 0) && \
-    (MYNEWT_VAL(BLE_SVC_DIS_FIRMWARE_REVISION) == 0) && \
-    (MYNEWT_VAL(BLE_SVC_DIS_SOFTWARE_REVISION) == 0) && \
-    (MYNEWT_VAL(BLE_SVC_DIS_MANUFACTURER_NAME) == 0)
-#error "Remove the ble_svc_dis package or use one of the characteristics"
-#endif
-
-
 /* Device information */
 struct ble_svc_dis_data ble_svc_dis_data = { 0 };
-
 
 /* Access function */
 static int
@@ -48,46 +36,52 @@ static const struct ble_gatt_svc_def ble_svc_dis_defs[] = {
         .type = BLE_GATT_SVC_TYPE_PRIMARY,
         .uuid = BLE_UUID16_DECLARE(BLE_SVC_DIS_UUID16),
         .characteristics = (struct ble_gatt_chr_def[]) { {
-#if (MYNEWT_VAL(BLE_SVC_DIS_MODEL_NUMBER) != 0)
+#if (MYNEWT_VAL(BLE_SVC_DIS_MODEL_NUMBER_READ_PERM) >= 0)
 	    /*** Characteristic: Model Number String */
             .uuid = BLE_UUID16_DECLARE(BLE_SVC_DIS_CHR_UUID16_MODEL_NUMBER),
             .access_cb = ble_svc_dis_access,
-            .flags = BLE_GATT_CHR_F_READ,
+            .flags = BLE_GATT_CHR_F_READ |
+	             MYNEWT_VAL(BLE_SVC_DIS_MODEL_NUMBER_READ_PERM),
         }, {
 #endif
-#if (MYNEWT_VAL(BLE_SVC_DIS_SERIAL_NUMBER) != 0)
+#if (MYNEWT_VAL(BLE_SVC_DIS_SERIAL_NUMBER_READ_PERM) >= 0)
 	    /*** Characteristic: Serial Number String */
             .uuid = BLE_UUID16_DECLARE(BLE_SVC_DIS_CHR_UUID16_SERIAL_NUMBER),
             .access_cb = ble_svc_dis_access,
-            .flags = BLE_GATT_CHR_F_READ,
+            .flags = BLE_GATT_CHR_F_READ |
+	             MYNEWT_VAL(BLE_SVC_DIS_SERIAL_NUMBER_READ_PERM),
         }, {
 #endif
-#if (MYNEWT_VAL(BLE_SVC_DIS_HARDWARE_REVISION) != 0)
+#if (MYNEWT_VAL(BLE_SVC_DIS_HARDWARE_REVISION_READ_PERM) >= 0)
 	    /*** Characteristic: Hardware Revision String */
             .uuid = BLE_UUID16_DECLARE(BLE_SVC_DIS_CHR_UUID16_HARDWARE_REVISION),
             .access_cb = ble_svc_dis_access,
-            .flags = BLE_GATT_CHR_F_READ,
+            .flags = BLE_GATT_CHR_F_READ |
+	             MYNEWT_VAL(BLE_SVC_DIS_HARDWARE_REVISION_READ_PERM),
         }, {
 #endif
-#if (MYNEWT_VAL(BLE_SVC_DIS_FIRMWARE_REVISION) != 0)
+#if (MYNEWT_VAL(BLE_SVC_DIS_FIRMWARE_REVISION_READ_PERM) >= 0)
 	    /*** Characteristic: Firmware Revision String */
             .uuid = BLE_UUID16_DECLARE(BLE_SVC_DIS_CHR_UUID16_FIRMWARE_REVISION),
             .access_cb = ble_svc_dis_access,
-            .flags = BLE_GATT_CHR_F_READ,
+            .flags = BLE_GATT_CHR_F_READ |
+	             MYNEWT_VAL(BLE_SVC_DIS_FIRMWARE_REVISION_READ_PERM),
         }, {
 #endif
-#if (MYNEWT_VAL(BLE_SVC_DIS_SOFTWARE_REVISION) != 0)
+#if (MYNEWT_VAL(BLE_SVC_DIS_SOFTWARE_REVISION_READ_PERM) >= 0)
 	    /*** Characteristic: Software Revision String */
             .uuid = BLE_UUID16_DECLARE(BLE_SVC_DIS_CHR_UUID16_SOFTWARE_REVISION),
             .access_cb = ble_svc_dis_access,
-            .flags = BLE_GATT_CHR_F_READ,
+            .flags = BLE_GATT_CHR_F_READ |
+	             MYNEWT_VAL(BLE_SVC_DIS_SOFTWARE_REVISION_READ_PERM),
         }, {
 #endif
-#if (MYNEWT_VAL(BLE_SVC_DIS_MANUFACTURER_NAME) != 0)
+#if (MYNEWT_VAL(BLE_SVC_DIS_MANUFACTURER_NAME_READ_PERM) >= 0)
 	    /*** Characteristic: Manufacturer Name */
             .uuid = BLE_UUID16_DECLARE(BLE_SVC_DIS_CHR_UUID16_MANUFACTURER_NAME),
             .access_cb = ble_svc_dis_access,
-            .flags = BLE_GATT_CHR_F_READ,
+            .flags = BLE_GATT_CHR_F_READ |
+	             MYNEWT_VAL(BLE_SVC_DIS_MANUFACTURER_NAME_READ_PERM),
         }, {
 #endif
             0, /* No more characteristics in this service */
@@ -99,7 +93,6 @@ static const struct ble_gatt_svc_def ble_svc_dis_defs[] = {
     },
 };
 
-
 /**
  * Simple write access callback for the device information service
  * characteristic.
@@ -108,36 +101,36 @@ static int
 ble_svc_dis_access(uint16_t conn_handle, uint16_t attr_handle,
                    struct ble_gatt_access_ctxt *ctxt, void *arg)
 {
-    uint16_t uuid = ble_uuid_u16(ctxt->chr->uuid);
-    char    *info = NULL;
+    uint16_t uuid    = ble_uuid_u16(ctxt->chr->uuid);
+    const char *info = NULL;
     
     switch(uuid) {
-#if (MYNEWT_VAL(BLE_SVC_DIS_MODEL_NUMBER) != 0)
+#if (MYNEWT_VAL(BLE_SVC_DIS_MODEL_NUMBER_READ_PERM) >= 0)
     case BLE_SVC_DIS_CHR_UUID16_MODEL_NUMBER:
 	info = ble_svc_dis_data.model_number;
 	break;
 #endif	
-#if (MYNEWT_VAL(BLE_SVC_DIS_SERIAL_NUMBER) != 0)
+#if (MYNEWT_VAL(BLE_SVC_DIS_SERIAL_NUMBER_READ_PERM) >= 0)
     case BLE_SVC_DIS_CHR_UUID16_SERIAL_NUMBER:
 	info = ble_svc_dis_data.serial_number;
 	break;
 #endif	
-#if (MYNEWT_VAL(BLE_SVC_DIS_FIRMWARE_REVISION) != 0)
+#if (MYNEWT_VAL(BLE_SVC_DIS_FIRMWARE_REVISION_READ_PERM) >= 0)
     case BLE_SVC_DIS_CHR_UUID16_FIRMWARE_REVISION:
 	info = ble_svc_dis_data.firmware_revision;
 	break;
 #endif	
-#if (MYNEWT_VAL(BLE_SVC_DIS_HARDWARE_REVISION) != 0) 
+#if (MYNEWT_VAL(BLE_SVC_DIS_HARDWARE_REVISION_READ_PERM) >= 0)
     case BLE_SVC_DIS_CHR_UUID16_HARDWARE_REVISION:
 	info = ble_svc_dis_data.hardware_revision;
 	break;
 #endif	
-#if (MYNEWT_VAL(BLE_SVC_DIS_SOFTWARE_REVISION) != 0) 
+#if (MYNEWT_VAL(BLE_SVC_DIS_SOFTWARE_REVISION_READ_PERM) >= 0)
     case BLE_SVC_DIS_CHR_UUID16_SOFTWARE_REVISION:
 	info = ble_svc_dis_data.software_revision;
 	break;
 #endif	
-#if (MYNEWT_VAL(BLE_SVC_DIS_MANUFACTURER_NAME) != 0) 	
+#if (MYNEWT_VAL(BLE_SVC_DIS_MANUFACTURER_NAME_READ_PERM) >= 0)
     case BLE_SVC_DIS_CHR_UUID16_MANUFACTURER_NAME:
 	info = ble_svc_dis_data.manufacturer_name;
 	break;
@@ -148,13 +141,91 @@ ble_svc_dis_access(uint16_t conn_handle, uint16_t attr_handle,
     }
 
     if (info == NULL) {
-	info = "n/a";
+	info = "";
     }
     
     int rc = os_mbuf_append(ctxt->om, info, strlen(info));
     return rc == 0 ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
 }
 
+
+const char *
+ble_svc_dis_model_number(void)
+{
+    return ble_svc_dis_data.model_number;
+}
+
+int
+ble_svc_dis_model_number_set(const char *value)
+{
+    ble_svc_dis_data.model_number = value;
+    return 0;
+}
+
+const char *
+ble_svc_dis_serial_number(void)
+{
+    return ble_svc_dis_data.serial_number;
+}
+
+int
+ble_svc_dis_serial_number_set(const char *value)
+{
+    ble_svc_dis_data.serial_number = value;
+    return 0;
+}
+
+const char *
+ble_svc_dis_firmware_revision(void)
+{
+    return ble_svc_dis_data.firmware_revision;
+}
+
+int
+ble_svc_dis_firmware_revision_set(const char *value)
+{
+    ble_svc_dis_data.firmware_revision = value;
+    return 0;
+}
+
+const char *
+ble_svc_dis_hardware_revision(void)
+{
+    return ble_svc_dis_data.hardware_revision;
+}
+
+int
+ble_svc_dis_hardware_revision_set(const char *value)
+{
+    ble_svc_dis_data.hardware_revision = value;
+    return 0;
+}
+
+const char *
+ble_svc_dis_software_revision(void)
+{
+    return ble_svc_dis_data.software_revision;
+}
+
+int
+ble_svc_dis_software_revision_set(const char *value)
+{
+    ble_svc_dis_data.software_revision = value;
+    return 0;
+}
+
+const char *
+ble_svc_dis_manufacturer_name(void)
+{
+    return ble_svc_dis_data.manufacturer_name;
+}
+
+int
+ble_svc_dis_manufacturer_name_set(const char *value)
+{
+    ble_svc_dis_data.manufacturer_name = value;
+    return 0;
+}
 
 
 
@@ -166,7 +237,7 @@ void
 ble_svc_dis_init(void)
 {
     int rc;
-    
+
     /* Ensure this function only gets called by sysinit. */
     SYSINIT_ASSERT_ACTIVE();
 

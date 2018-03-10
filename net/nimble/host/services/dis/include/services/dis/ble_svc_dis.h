@@ -35,7 +35,6 @@
  */
 
 
-
 #define BLE_SVC_DIS_UUID16					0x180A
 #define BLE_SVC_DIS_CHR_UUID16_MODEL_NUMBER			0x2A24
 #define BLE_SVC_DIS_CHR_UUID16_SERIAL_NUMBER			0x2A25
@@ -53,32 +52,32 @@ struct ble_svc_dis_data {
      * Model number.
      * Represent the model number that is assigned by the device vendor.
      */
-    char *model_number;
+    const char *model_number;
     /**
      * Serial number.
      * Represent the serial number for a particular instance of the device.
      */
-    char *serial_number;
+    const char *serial_number;
     /**
      * Firmware revision.
      * Represent the firmware revision for the firmware within the device.
      */
-    char *firmware_revision; 
+    const char *firmware_revision; 
     /**
      * Hardware revision.
      * Represent the hardware revision for the hardware within the device.
      */
-    char *hardware_revision;
+    const char *hardware_revision;
     /**
      * Software revision.
      * Represent the software revision for the software within the device.
      */
-    char *software_revision;
+    const char *software_revision;
     /**
      * Manufacturer name.
      * Represent the name of the manufacturer of the device.
      */
-    char *manufacturer_name;
+    const char *manufacturer_name;
 };
 
 /**
@@ -86,7 +85,25 @@ struct ble_svc_dis_data {
  */
 extern struct ble_svc_dis_data ble_svc_dis_data;
 
-
+/**
+ * Service initialisation. 
+ * Automatically called during package initialisation.
+ */
 void ble_svc_dis_init(void);
+
+
+
+const char *ble_svc_dis_model_number(void);
+int ble_svc_dis_model_number_set(const char *value);
+const char *ble_svc_dis_serial_number(void);
+int ble_svc_dis_serial_number_set(const char *value);
+const char *ble_svc_dis_firmware_revision(void);
+int ble_svc_dis_firmware_revision_set(const char *value);
+const char *ble_svc_dis_hardware_revision(void);
+int ble_svc_dis_hardware_revision_set(const char *value);
+const char *ble_svc_dis_software_revision(void);
+int ble_svc_dis_software_revision_set(const char *value);
+const char *ble_svc_dis_manufacturer_name(void);
+int ble_svc_dis_manufacturer_name_set(const char *value);
 
 #endif
