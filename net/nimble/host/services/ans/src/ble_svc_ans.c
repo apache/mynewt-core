@@ -349,7 +349,7 @@ ble_svc_ans_unr_alert_add(uint8_t cat_id)
     uint8_t cat_bit_mask; 
     
     if (cat_id < BLE_SVC_ANS_CAT_NUM) {
-        cat_bit_mask = pow(2, cat_id);
+        cat_bit_mask = 1 << cat_id;
     } else {
         return BLE_HS_EINVAL;
     }
