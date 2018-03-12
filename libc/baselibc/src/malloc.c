@@ -7,6 +7,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <stdint.h>
 #include "malloc.h"
 
 /* Both the arena list and the free memory list are double linked
@@ -148,8 +149,9 @@ void *malloc(size_t size)
     void *more_mem;
     extern void *_sbrk(int incr);
 
-    if (size == 0)
+    if (size == 0 || size > (SIZE_MAX - sizeof(struct arena_header))) {
         return NULL;
+    }
 
     /* Add the obligatory arena header, and round up */
     size = (size + 2 * sizeof(struct arena_header) - 1) & ARENA_SIZE_MASK;
