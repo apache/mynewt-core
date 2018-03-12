@@ -18,7 +18,7 @@ void *realloc(void *ptr, size_t size)
 	if (!ptr)
 		return malloc(size);
 
-	if (size == 0) {
+	if (size == 0 || size > (SIZE_MAX - sizeof(struct arena_header))) {
 		free(ptr);
 		return NULL;
 	}
@@ -40,11 +40,12 @@ void *realloc(void *ptr, size_t size)
 		oldsize = ah->a.size - sizeof(struct arena_header);
 
 		newptr = malloc(size);
-                if(newptr) {
+                if (newptr) {
                     memcpy(newptr, ptr, (size < oldsize) ? size : oldsize);
+                    free(ptr);
+                } else {
+                    newptr = ptr;
                 }
-		free(ptr);
-
 		return newptr;
 	}
 }
