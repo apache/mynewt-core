@@ -29,5 +29,5 @@ pkg.type: sdk
 
 pkg.deps:
     - hw/hal
-    - hw/mcu/stm/stm32f3xx
+    - hw/mcu/stm/stm32_common
     - hw/cmsis-core
