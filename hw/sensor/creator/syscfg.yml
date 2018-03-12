@@ -52,3 +52,6 @@ syscfg.defs:
     ADXL345_OFB:
         description: 'ADXL345 is present'
         value : 0
+    LPS33HW_OFB:
+        description: 'LPS33HW is present'
+        value : 0

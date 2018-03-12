@@ -58,8 +58,13 @@
 #include <bma253/bma253.h>
 #endif
 
+
 #if MYNEWT_VAL(ADXL345_OFB)
 #include <adxl345/adxl345.h>
+#endif
+
+#if MYNEWT_VAL(LPS33HW_OFB)
+#include <lps33hw/lps33hw.h>
 #endif
 
 /* Driver definitions */
@@ -105,6 +110,10 @@ static struct bma253 bma253;
 
 #if MYNEWT_VAL(ADXL345_OFB)
 static struct adxl345 adxl345;
+#endif
+
+#if MYNEWT_VAL(LPS33HW_OFB)
+static struct lps33hw lps33hw;
 #endif
 
 /**
@@ -225,6 +234,14 @@ static struct sensor_itf i2c_0_itf_adxl = {
     .si_ints = {
        { MYNEWT_VAL(ADXL345_INT_PIN_HOST), MYNEWT_VAL(ADXL345_INT_PIN_DEVICE),
          MYNEWT_VAL(ADXL345_INT_CFG_ACTIVE)}}
+};
+#endif
+
+#if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(LPS33HW_OFB)
+static struct sensor_itf i2c_0_itf_lps = {
+    .si_type = MYNEWT_VAL(LPS33HW_SHELL_ITF_TYPE),
+    .si_num  = MYNEWT_VAL(LPS33HW_SHELL_ITF_NUM),
+    .si_addr = MYNEWT_VAL(LPS33HW_SHELL_ITF_ADDR)
 };
 #endif
 
@@ -602,13 +619,43 @@ config_adxl345_sensor(void)
     cfg.tap_cfg.suppress = 0;
 
     cfg.freefall_threshold = 0x07; /* 440mg */
-    cfg.freefall_time = 0x14; /* 100ms */ 
+    cfg.freefall_time = 0x14; /* 100ms */
 
     cfg.mask = SENSOR_TYPE_ACCELEROMETER;
 
     rc = adxl345_config((struct adxl345 *) dev, &cfg);
     assert(rc == 0);
-    
+#endif
+
+/*
+ * LPS33HW Sensor default configuration used by the creator package
+ *
+ * @return 0 on success, non-zero on failure
+ */
+#if MYNEWT_VAL(LPS33HW_OFB)
+static int
+config_lps33hw_sensor(void)
+{
+    int rc;
+    struct os_dev *dev;
+    struct lps33hw_cfg cfg;
+
+    cfg.mask = SENSOR_TYPE_PRESSURE | SENSOR_TYPE_TEMPERATURE;
+    cfg.data_rate = LPS33HW_1HZ;
+    cfg.lpf = LPS33HW_LPF_DISABLED;
+    cfg.int_cfg.pin = 0;
+    cfg.int_cfg.data_rdy = 0;
+    cfg.int_cfg.pressure_low = 0;
+    cfg.int_cfg.pressure_high = 0;
+    cfg.int_cfg.active_low = 0;
+    cfg.int_cfg.open_drain = 0;
+    cfg.int_cfg.latched = 0;
+
+    dev = (struct os_dev *) os_dev_open("lps33hw_0", OS_TIMEOUT_NEVER, NULL);
+    assert(dev != NULL);
+
+    rc = lps33hw_config((struct lps33hw *) dev, &cfg);
+
     os_dev_close(dev);
     return rc;
 }
@@ -729,5 +776,13 @@ sensor_dev_create(void)
     assert(rc == 0);
 #endif
 
+#if MYNEWT_VAL(LPS33HW_OFB)
+    rc = os_dev_create((struct os_dev *) &lps33hw, "lps33hw_0",
+      OS_DEV_INIT_PRIMARY, 0, lps33hw_init, (void *)&i2c_0_itf_lps);
+    assert(rc == 0);
+
+    rc = config_lps33hw_sensor();
+    assert(rc == 0);
+#endif
 
 }
