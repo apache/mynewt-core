@@ -36,13 +36,6 @@ extern "C" {
 /* hal_system_start */
 #define STM32_HAL_FLASH_REMAP()
 
-/* stm32_hw_id
- *
- * STM32F1 has a unique 96-bit id at address 0x1FFFF7E8.
- * See ref manual chapter 30.2.
- */
-#define STM32_HW_ID_ADDR 0x1FFFF7E8
-
 #ifdef __cplusplus
 }
 #endif
