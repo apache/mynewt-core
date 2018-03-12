@@ -26,7 +26,3 @@ syscfg.defs:
     MCU_STM32F7:
         description: MCUs are of STM32F7xx family
         value: 1
-
-    MCU_NVIC_PERIPH_VECTORS:
-        description: Number of peripheral IRQ vectors in the model
-        value: 98
