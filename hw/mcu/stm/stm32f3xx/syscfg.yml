@@ -21,7 +21,7 @@ syscfg.defs:
         description: >
             Specifies the required alignment for internal flash writes.
             Used internally by the newt tool.
-        value: 1
+        value: 2
 
     MCU_STM32F3:
         description: MCUs are of STM32F3xx family
