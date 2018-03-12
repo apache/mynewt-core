@@ -44,13 +44,6 @@ extern "C" {
         __DSB();                                 \
     } while (0)
 
-/* stm32_hw_id
- *
- * STM32F7 has a unique 96-bit id at address 0x1FF0F420.
- * See ref manual chapter 45.1.
- */
-#define STM32_HW_ID_ADDR 0x1FF0F420
-
 #ifdef __cplusplus
 }
 #endif

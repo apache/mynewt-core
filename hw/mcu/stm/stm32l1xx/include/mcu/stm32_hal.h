@@ -40,14 +40,6 @@ extern "C" {
         __DSB();                                 \
     } while (0)
 
-/* stm32_hw_id
- *
- * STM32L1 has a unique 96-bit id at address either address
- * 0x1FF80050 or 0x1FF800D0 depending on the specific device.
- * See ref manual chapter 31.2.
- */
-#define STM32_HW_ID_ADDR 0x1FF800D0
-
 #ifdef __cplusplus
 }
 #endif

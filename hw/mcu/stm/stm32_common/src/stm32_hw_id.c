@@ -33,7 +33,7 @@ hal_bsp_hw_id(uint8_t *id, int max_len)
     int cnt;
 
     cnt = min(12, max_len);
-    memcpy(id, (void *)STM32_HW_ID_ADDR, cnt);
+    memcpy(id, (void *)UID_BASE, cnt);
 
     return cnt;
 }
