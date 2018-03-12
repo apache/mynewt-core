@@ -127,7 +127,7 @@ stm32f3_flash_dev()
         stm32f3_flash_dev_.hf_base_addr = FLASH_BASE;
         stm32f3_flash_dev_.hf_size = HAL_FLASH_SIZE;
         stm32f3_flash_dev_.hf_sector_cnt = HAL_FLASH_SIZE / HAL_FLASH_SECTOR_SIZE;
-        stm32f3_flash_dev_.hf_align = FLASH_PAGE_SIZE;
+        stm32f3_flash_dev_.hf_align = 2;
     }
     return &stm32f3_flash_dev_;
 }
