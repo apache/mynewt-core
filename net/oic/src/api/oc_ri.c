@@ -228,8 +228,6 @@ oc_ri_mem_init(void)
 void
 oc_ri_init(void)
 {
-    oc_random_init(0); // Fix: allow user to seed RNG.
-
 #ifdef OC_CLIENT
     SLIST_INIT(&oc_client_cbs);
 #endif
