@@ -76,7 +76,6 @@ const struct log_handler log_console_handler = {
     .log_append = log_console_append,
     .log_walk = log_console_walk,
     .log_flush = log_console_flush,
-    .log_rtr_erase = NULL,
 };
 
 #endif

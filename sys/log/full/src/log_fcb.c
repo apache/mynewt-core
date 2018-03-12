@@ -32,6 +32,8 @@
 
 static struct flash_area sector;
 
+static int log_fcb_rtr_erase(struct log *log, void *arg);
+
 static int
 log_fcb_append(struct log *log, void *buf, int len)
 {
@@ -53,8 +55,8 @@ log_fcb_append(struct log *log, void *buf, int len)
             goto err;
         }
 
-        if (log->l_log->log_rtr_erase && fcb_log->fl_entries) {
-            rc = log->l_log->log_rtr_erase(log, fcb_log);
+        if (fcb_log->fl_entries) {
+            rc = log_fcb_rtr_erase(log, fcb_log);
             if (rc) {
                 goto err;
             }
@@ -278,7 +280,6 @@ const struct log_handler log_fcb_handler = {
     .log_append = log_fcb_append,
     .log_walk = log_fcb_walk,
     .log_flush = log_fcb_flush,
-    .log_rtr_erase = log_fcb_rtr_erase,
 };
 
 #endif
