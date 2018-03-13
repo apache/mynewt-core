@@ -27,7 +27,7 @@
 #include "services/bas/ble_svc_bas.h"
 
 /* Charachteristic value handles */
-#if MYNEWT_VAL(BLE_SVC_BAS_BATTERY_LEVEL_NOTIFY) > 0
+#if MYNEWT_VAL(BLE_SVC_BAS_BATTERY_LEVEL_NOTIFY_ENABLE) > 0
 static uint16_t ble_svc_bas_battery_handle;
 #endif
 
@@ -56,12 +56,14 @@ static const struct ble_gatt_svc_def ble_svc_bas_defs[] = {
 	    /*** Battery level characteristic */
             .uuid = BLE_UUID16_DECLARE(BLE_SVC_BAS_CHR_UUID16_BATTERY_LEVEL),
             .access_cb = ble_svc_bas_access,
-#if MYNEWT_VAL(BLE_SVC_BAS_BATTERY_LEVEL_NOTIFY) > 0
+#if MYNEWT_VAL(BLE_SVC_BAS_BATTERY_LEVEL_NOTIFY_ENABLE) > 0
 	    .val_handle = &ble_svc_bas_battery_handle,
 #endif
             .flags = BLE_GATT_CHR_F_READ |
-	             MYNEWT_VAL(BLE_SVC_BAS_BATTERY_LEVEL_PERM) |
-	             MYNEWT_VAL(BLE_SVC_BAS_BATTERY_LEVEL_NOTIFY),
+#if MYNEWT_VAL(BLE_SVC_BAS_BATTERY_LEVEL_NOTIFY_ENABLE) > 0
+	             BLE_GATT_CHR_F_NOTIFY |
+#endif
+	             MYNEWT_VAL(BLE_SVC_BAS_BATTERY_LEVEL_READ_PERM),
 	    }, {
             0, /* No more characteristics in this service. */
         } },
@@ -116,15 +118,17 @@ ble_svc_bas_on_gap_connect(uint16_t conn_handle)
  */
 int
 ble_svc_bas_battery_level_set(uint8_t level) {
+    int rc = 0;
     if (level > 100)
 	level = 100;
-    ble_svc_bas_battery_level = level;
-#if MYNEWT_VAL(BLE_SVC_BAS_BATTERY_LEVEL_NOTIFY) > 0
-    return ble_gattc_notify(ble_svc_bas_conn_handle, 
-                            ble_svc_bas_battery_handle);
-#else
-    return 0;
+    if (ble_svc_bas_battery_level != level) {
+	ble_svc_bas_battery_level = level;
+#if MYNEWT_VAL(BLE_SVC_BAS_BATTERY_LEVEL_NOTIFY_ENABLE) > 0
+	rc = ble_gattc_notify(ble_svc_bas_conn_handle,
+			      ble_svc_bas_battery_handle);
 #endif
+    }
+    return rc;
 }
 
 /**
