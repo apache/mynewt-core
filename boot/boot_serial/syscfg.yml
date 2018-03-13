@@ -20,9 +20,10 @@ syscfg.defs:
     BOOT_SERIAL_DETECT_PIN:
         description: >
             Start the serial boot loader if this pin is asserted at boot time.
-        value:
+        value: '-1'
         restrictions:
-            - '$notnull'
+            - '(BOOT_SERIAL_DETECT_PIN != -1) ||
+               (BOOT_SERIAL_DETECT_TIMEOUT != 0)'
 
     BOOT_SERIAL_DETECT_PIN_CFG:
         description: >
@@ -34,6 +35,29 @@ syscfg.defs:
             The value the detect pin must be set to for the serial boot loader
             to start.
         value: 0
+
+    BOOT_SERIAL_DETECT_TIMEOUT:
+        description: >
+            The duration, in milliseconds, to listen on the UART for the
+            management string (BOOT_SERIAL_DETECT_STRING).  If the management
+            string is detected during this period, the serial boot loader is
+            started.  If the period expires without the management string being
+            received, the boot loader runs in the normal (non-serial) mode.
+            Specify 0 to disable listening on the UART for the management
+            string.
+        value: 0
+        restrictions:
+            - '(BOOT_SERIAL_DETECT_PIN != -1) ||
+               (BOOT_SERIAL_DETECT_TIMEOUT != 0)'
+
+    BOOT_SERIAL_DETECT_STRING:
+        description: >
+            The string to listen for on the UART.  If this management string is
+            detected during the timeout period, the serial boot loader is
+            started.  If the period expires without this string being received,
+            the boot loader runs in the normal (non-serial) mode.  This setting
+            has no effect if BOOT_SERIAL_DETECT_TIMEOUT is set to 0.
+        value: '"nmgr"'
 
     BOOT_SERIAL_REPORT_PIN:
         description: >
