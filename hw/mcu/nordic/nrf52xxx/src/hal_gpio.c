@@ -58,6 +58,7 @@ hal_gpio_init_in(int pin, hal_gpio_pull_t pull)
 {
     uint32_t conf;
     NRF_GPIO_Type *port;
+    int pin_index = HAL_GPIO_INDEX(pin);
 
     switch (pull) {
     case HAL_GPIO_PULL_UP:
@@ -73,7 +74,7 @@ hal_gpio_init_in(int pin, hal_gpio_pull_t pull)
     }
 
     port = HAL_GPIO_PORT(pin);
-    port->PIN_CNF[pin] = conf;
+    port->PIN_CNF[pin_index] = conf;
     port->DIRCLR = HAL_GPIO_MASK(pin);
 
     return 0;
@@ -94,6 +95,7 @@ int
 hal_gpio_init_out(int pin, int val)
 {
     NRF_GPIO_Type *port;
+    int pin_index = HAL_GPIO_INDEX(pin);
 
     port = HAL_GPIO_PORT(pin);
     if (val) {
@@ -101,7 +103,7 @@ hal_gpio_init_out(int pin, int val)
     } else {
         port->OUTCLR = HAL_GPIO_MASK(pin);
     }
-    port->PIN_CNF[pin] = GPIO_PIN_CNF_DIR_Output;
+    port->PIN_CNF[pin_index] = GPIO_PIN_CNF_DIR_Output;
     port->DIRSET = HAL_GPIO_MASK(pin);
 
     return 0;
