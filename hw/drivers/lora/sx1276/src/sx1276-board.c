@@ -156,13 +156,26 @@ SX1276IoDeInit( void )
     }
 }
 
-uint8_t SX1276GetPaSelect( uint32_t channel )
+uint8_t
+SX1276GetPaSelect(uint32_t channel)
 {
+    uint8_t pacfg;
+
     if (channel < RF_MID_BAND_THRESH) {
-        return RF_PACONFIG_PASELECT_PABOOST;
+#if (MYNEWT_VAL(SX1276_LF_USE_PA_BOOST) == 1)
+        pacfg = RF_PACONFIG_PASELECT_PABOOST;
+#else
+        pacfg = RF_PACONFIG_PASELECT_RFO;
+#endif
     } else {
-        return RF_PACONFIG_PASELECT_RFO;
+#if (MYNEWT_VAL(SX1276_HF_USE_PA_BOOST) == 1)
+        pacfg = RF_PACONFIG_PASELECT_PABOOST;
+#else
+        pacfg = RF_PACONFIG_PASELECT_RFO;
+#endif
     }
+
+    return pacfg;
 }
 
 #if MYNEWT_VAL(SX1276_HAS_ANT_SW)

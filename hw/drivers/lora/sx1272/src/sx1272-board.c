@@ -232,7 +232,11 @@ SX1272SetRfTxPower(int8_t power)
 uint8_t
 SX1272GetPaSelect(uint32_t channel)
 {
+#if (MYNEWT_VAL(SX1272_USE_PA_BOOST) == 1)
     return RF_PACONFIG_PASELECT_PABOOST;
+#else
+    return RF_PACONFIG_PASELECT_RFO;
+#endif
 }
 
 #if (MYNEWT_VAL(SX1272_HAS_ANT_SW) || MYNEWT_VAL(SX1272_HAS_COMP_ANT_SW))

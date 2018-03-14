@@ -30,6 +30,14 @@ syscfg.defs:
         description:
         value: 500
 
+    SX1276_LF_USE_PA_BOOST:
+        description: 'LF transmit path connected to PA_BOOST or RFO (0 = RFO 1 = PABOOST)'
+        value: 0
+
+    SX1276_HF_USE_PA_BOOST:
+        description: 'HF transmit path connected to PA_BOOST or RFO (0 = RFO 1 = PABOOST)'
+        value: 0
+
     SX1276_HAS_ANT_SW:
         description: 'Set to 1 if board has an antenna switch'
         value: 0
