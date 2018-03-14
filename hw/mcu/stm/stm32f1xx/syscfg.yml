@@ -43,3 +43,20 @@ syscfg.defs:
         value:  0
         restrictions:
             - "!SPI_0_MASTER"
+    SPI_0:
+        description: 'SPI 0 enable'
+        value: 'MYNEWT_VAL_SPI_0_MASTER || MYNEWT_VAL_SPI_0_SLAVE'
+
+    SPI_1_MASTER:
+        description: 'SPI 1 master'
+        value:  0
+        restrictions:
+            - "!SPI_1_SLAVE"
+    SPI_1_SLAVE:
+        description: 'SPI 1 slave'
+        value:  0
+        restrictions:
+            - "!SPI_1_MASTER"
+    SPI_1:
+        description: 'SPI 1 enable'
+        value: 'MYNEWT_VAL_SPI_1_MASTER || MYNEWT_VAL_SPI_1_SLAVE'
