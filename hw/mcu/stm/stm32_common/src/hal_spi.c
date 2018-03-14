@@ -314,6 +314,7 @@ spi_ss_isr(void *arg)
              */
 
             spi->handle.State = HAL_SPI_STATE_READY;
+
             HAL_SPI_QueueTransmit(&spi->handle, spi->def_char, 2);
 
             if (spi->tx_in_prog) {
@@ -447,7 +448,7 @@ stm32f4_spi_resolve_prescaler(uint8_t spi_num, uint32_t baudrate, uint32_t *pres
     uint32_t apbfreq;
     int i;
 
-    /* SPIx {1,4,5,6} use PCLK2 on the STM32F4, otherwise use PCKL1.
+    /* SPIx {1,4,5,6} use PCLK2 on the STM32F4/F7, otherwise use PCKL1.
      * The numbers in the switch below are offset by 1, because the HALs index
      * SPI ports from 0.
      */
@@ -568,6 +569,7 @@ hal_spi_config(int spi_num, struct hal_spi_settings *settings)
     struct stm32_hal_spi_cfg *cfg;
     SPI_InitTypeDef *init;
     GPIO_InitTypeDef gpio;
+    uint32_t gpio_speed;
     IRQn_Type irq;
     uint32_t prescaler;
     int rc;
@@ -585,17 +587,20 @@ hal_spi_config(int spi_num, struct hal_spi_settings *settings)
         spi->handle.Init.Mode = SPI_MODE_MASTER;
     } else {
         spi->handle.Init.NSS = SPI_NSS_SOFT;
+        //spi->handle.Init.NSSPMode = SPI_NSS_PULSE_ENABLE;
         spi->handle.Init.Mode = SPI_MODE_SLAVE;
     }
 
     gpio.Mode = GPIO_MODE_AF_PP;
     gpio.Pull = GPIO_NOPULL;
+
+    /* TODO: also VERY_HIGH for STM32L1x */
     if (settings->baudrate <= 2000) {
-        gpio.Speed = GPIO_SPEED_FREQ_LOW;
+        gpio_speed = GPIO_SPEED_FREQ_LOW;
     } else if (settings->baudrate <= 12500) {
-        gpio.Speed = GPIO_SPEED_FREQ_MEDIUM;
+        gpio_speed = GPIO_SPEED_FREQ_MEDIUM;
     } else {
-        gpio.Speed = GPIO_SPEED_FREQ_HIGH;
+        gpio_speed = GPIO_SPEED_FREQ_HIGH;
     }
 
     /* Enable the clocks for this SPI */
@@ -656,10 +661,37 @@ hal_spi_config(int spi_num, struct hal_spi_settings *settings)
             gpio.Pull = GPIO_PULLDOWN;
         }
     }
+
+    /* NOTE: Errata ES0125: STM32L100x6/8/B, STM32L151x6/8/B and
+     * STM32L152x6/8/B ultra-low-power device limitations.
+     *
+     * 2.6.6 - Corrupted last bit of data and or CRC, received in Master
+     * mode with delayed SCK feedback
+     *
+     * This driver is always using very high speed for SCK on STM32L1x
+     */
+
+#if defined(STM32L152xC)
+    if (!spi->slave) {
+        gpio.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+    } else {
+        gpio.Speed = gpio_speed;
+    }
+#else
+    gpio.Speed = gpio_speed;
+#endif
+
     rc = hal_gpio_init_stm(cfg->sck_pin, &gpio);
     if (rc != 0) {
         goto err;
     }
+
+#if defined(STM32L152xC)
+    if (!spi->slave) {
+        gpio.Speed = gpio_speed;
+    }
+#endif
+
     if (!spi->slave) {
         gpio.Pull = GPIO_NOPULL;
     } else {
@@ -726,6 +758,7 @@ hal_spi_config(int spi_num, struct hal_spi_settings *settings)
         goto err;
     }
 
+    /* TODO: rename or move to stm32_hal specific function */
     rc = stm32f4_spi_resolve_prescaler(spi_num, settings->baudrate * 1000,
       &prescaler);
     if (rc != 0) {
@@ -733,6 +766,12 @@ hal_spi_config(int spi_num, struct hal_spi_settings *settings)
     }
 
     init->BaudRatePrescaler = prescaler;
+
+    /* defaults */
+    init->Direction = SPI_DIRECTION_2LINES;
+    init->TIMode = SPI_TIMODE_DISABLE;
+    init->CRCCalculation = SPI_CRCCALCULATION_DISABLE;
+    init->CRCPolynomial = 1;
 
     irq = stm32_resolve_spi_irq(&spi->handle);
     NVIC_SetPriority(irq, cfg->irq_prio);
@@ -748,6 +787,7 @@ hal_spi_config(int spi_num, struct hal_spi_settings *settings)
         hal_spi_slave_set_def_tx_val(spi_num, 0);
         rc = hal_gpio_irq_init(cfg->ss_pin, spi_ss_isr, spi, HAL_GPIO_TRIG_BOTH,
           HAL_GPIO_PULL_UP);
+        /* FIXME */
         spi_ss_isr(spi);
     }
     __HAL_ENABLE_INTERRUPTS(sr);
