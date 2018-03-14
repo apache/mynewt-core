@@ -30,6 +30,17 @@ syscfg.defs:
         description: 'Support logging to FCB.'
         value: 0
 
+    LOG_FCB_SLOT1:
+        description: >
+            Support logging to FCB located in slot 1.
+            This is a thin wrapper over LOG_FCB which should be used if
+            destination FCB is located in slot 1 as it can detect when
+            a new image is uploaded to this slot and stop logging to
+            prevent data corruption.
+        value: 0
+        restrictions:
+            - "LOG_FCB"
+
     LOG_CONSOLE:
         description: 'Support logging to console.'
         value: 1

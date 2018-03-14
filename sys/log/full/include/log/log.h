@@ -260,6 +260,7 @@ extern const struct log_handler log_console_handler;
 extern const struct log_handler log_cbmem_handler;
 #if MYNEWT_VAL(LOG_FCB)
 extern const struct log_handler log_fcb_handler;
+extern const struct log_handler log_fcb_slot1_handler;
 #endif
 
 /* Private */
