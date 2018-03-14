@@ -470,14 +470,14 @@ stm32f4_spi_resolve_prescaler(uint8_t spi_num, uint32_t baudrate, uint32_t *pres
     }
 
     /* Calculate best-fit prescaler: divide the clock by each subsequent
-     * prescalar until we reach the highest prescalar that generates at
+     * prescaler until we reach the highest prescaler that generates at
      * _most_ the baudrate.
      */
     *prescaler = SPI_BAUDRATEPRESCALER_256;
     for (i = 0; i < 8; i++) {
         candidate_br = apbfreq >> (i + 1);
         if (candidate_br <= baudrate) {
-            *prescaler = i << 3;
+            *prescaler = i << SPI_CR1_BR_Pos;
             break;
         }
     }
@@ -608,42 +608,54 @@ hal_spi_config(int spi_num, struct hal_spi_settings *settings)
 #if SPI_0_ENABLED
     case 0:
         __HAL_RCC_SPI1_CLK_ENABLE();
+#if !defined(STM32F1)
         gpio.Alternate = GPIO_AF5_SPI1;
+#endif
         spi->handle.Instance = SPI1;
         break;
 #endif
 #if SPI_1_ENABLED
     case 1:
         __HAL_RCC_SPI2_CLK_ENABLE();
+#if !defined(STM32F1)
         gpio.Alternate = GPIO_AF5_SPI2;
+#endif
         spi->handle.Instance = SPI2;
         break;
 #endif
 #if SPI_2_ENABLED
     case 2:
         __HAL_RCC_SPI3_CLK_ENABLE();
+#if !defined(STM32F1)
         gpio.Alternate = GPIO_AF6_SPI3;
+#endif
         spi->handle.Instance = SPI3;
         break;
 #endif
 #if SPI_3_ENABLED
     case 3:
         __HAL_RCC_SPI4_CLK_ENABLE();
+#if !defined(STM32F1)
         gpio.Alternate = GPIO_AF5_SPI4;
+#endif
         spi->handle.Instance = SPI4;
         break;
 #endif
 #if SPI_4_ENABLED
     case 4:
         __HAL_RCC_SPI5_CLK_ENABLE();
+#if !defined(STM32F1)
         gpio.Alternate = GPIO_AF5_SPI5;
+#endif
         spi->handle.Instance = SPI5;
         break;
 #endif
 #if SPI_5_ENABLED
     case 5:
         __HAL_RCC_SPI6_CLK_ENABLE();
+#if !defined(STM32F1)
         gpio.Alternate = GPIO_AF5_SPI6;
+#endif
         spi->handle.Instance = SPI6;
         break;
 #endif
