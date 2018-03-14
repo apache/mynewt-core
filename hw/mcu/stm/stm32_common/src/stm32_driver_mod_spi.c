@@ -31,6 +31,76 @@
 HAL_StatusTypeDef HAL_SPI_Slave_Queue_TransmitReceive(SPI_HandleTypeDef *hspi, uint8_t *pTxData, uint8_t *pRxData, uint16_t Size);
 HAL_StatusTypeDef HAL_SPI_QueueTransmit(SPI_HandleTypeDef *hspi, uint8_t *pData, uint16_t Size);
 
+/* XXX: This is copied from stm32l1xx_hal_spi_ex.c because it is a __weak
+ * symbol defined in stm32l1xx_hal_spi.c that is overriden but due to our
+ * archive process seems to not link correctly. Copying here enables the
+ * linker to find the correct non-weak symbol.
+ */
+#if defined(STM32L152xC)
+#include "stm32l1xx_hal.h"
+
+HAL_StatusTypeDef HAL_SPI_Init(SPI_HandleTypeDef *hspi)
+{
+  /* Check the SPI handle allocation */
+  if (hspi == NULL)
+  {
+    return HAL_ERROR;
+  }
+
+  /* Check the parameters */
+  assert_param(IS_SPI_ALL_INSTANCE(hspi->Instance));
+  assert_param(IS_SPI_MODE(hspi->Init.Mode));
+  assert_param(IS_SPI_DIRECTION_MODE(hspi->Init.Direction));
+  assert_param(IS_SPI_DATASIZE(hspi->Init.DataSize));
+  assert_param(IS_SPI_CPOL(hspi->Init.CLKPolarity));
+  assert_param(IS_SPI_CPHA(hspi->Init.CLKPhase));
+  assert_param(IS_SPI_NSS(hspi->Init.NSS));
+  assert_param(IS_SPI_BAUDRATE_PRESCALER(hspi->Init.BaudRatePrescaler));
+  assert_param(IS_SPI_FIRST_BIT(hspi->Init.FirstBit));
+  assert_param(IS_SPI_TIMODE(hspi->Init.TIMode));
+  assert_param(IS_SPI_CRC_CALCULATION(hspi->Init.CRCCalculation));
+  assert_param(IS_SPI_CRC_POLYNOMIAL(hspi->Init.CRCPolynomial));
+
+  if (hspi->State == HAL_SPI_STATE_RESET)
+  {
+    /* Allocate lock resource and initialize it */
+    hspi->Lock = HAL_UNLOCKED;
+
+    /* Init the low level hardware : GPIO, CLOCK, NVIC... */
+    HAL_SPI_MspInit(hspi);
+  }
+
+  hspi->State = HAL_SPI_STATE_BUSY;
+
+  /* Disble the selected SPI peripheral */
+  __HAL_SPI_DISABLE(hspi);
+
+  /*----------------------- SPIx CR1 & CR2 Configuration ---------------------*/
+  /* Configure : SPI Mode, Communication Mode, Data size, Clock polarity and phase, NSS management,
+  Communication speed, First bit and CRC calculation state */
+  hspi->Instance->CR1 = (hspi->Init.Mode | hspi->Init.Direction | hspi->Init.DataSize |
+                         hspi->Init.CLKPolarity | hspi->Init.CLKPhase | (hspi->Init.NSS & SPI_CR1_SSM) |
+                         hspi->Init.BaudRatePrescaler | hspi->Init.FirstBit  | hspi->Init.CRCCalculation);
+
+  /* Configure : NSS management */
+  hspi->Instance->CR2 = (((hspi->Init.NSS >> 16U) & SPI_CR2_SSOE) | hspi->Init.TIMode);
+
+  /*---------------------------- SPIx CRCPOLY Configuration ------------------*/
+  /* Configure : CRC Polynomial */
+  hspi->Instance->CRCPR = hspi->Init.CRCPolynomial;
+
+#if defined (STM32L100xC) || defined (STM32L151xC) || defined (STM32L152xC) || defined (STM32L162xC) || defined (STM32L151xCA) || defined (STM32L151xD) || defined (STM32L152xCA) || defined (STM32L152xD) || defined (STM32L162xCA) || defined (STM32L162xD) || defined (STM32L151xE) || defined (STM32L151xDX) || defined (STM32L152xE) || defined (STM32L152xDX) || defined (STM32L162xE) || defined (STM32L162xDX)
+  /* Activate the SPI mode (Make sure that I2SMOD bit in I2SCFGR register is reset) */
+  CLEAR_BIT(hspi->Instance->I2SCFGR, SPI_I2SCFGR_I2SMOD);
+#endif
+
+  hspi->ErrorCode = HAL_SPI_ERROR_NONE;
+  hspi->State = HAL_SPI_STATE_READY;
+
+  return HAL_OK;
+}
+#endif
+
 static HAL_StatusTypeDef
 SPI_WaitFlagStateUntilTimeout(SPI_HandleTypeDef *hspi, uint32_t Flag, uint32_t State, uint32_t Timeout, uint32_t Tickstart)
 {
