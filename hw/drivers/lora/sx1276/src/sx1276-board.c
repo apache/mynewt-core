@@ -57,7 +57,8 @@ const struct Radio_s Radio =
     .SetPublicNetwork = SX1276SetPublicNetwork
 };
 
-void SX1276IoInit( void )
+void
+SX1276IoInit(void)
 {
     struct hal_spi_settings spi_settings;
     int rc;
@@ -84,7 +85,8 @@ void SX1276IoInit( void )
     assert(rc == 0);
 }
 
-void SX1276IoIrqInit( DioIrqHandler **irqHandlers )
+void
+SX1276IoIrqInit(DioIrqHandler **irqHandlers)
 {
     int rc;
 
@@ -131,7 +133,8 @@ void SX1276IoIrqInit( DioIrqHandler **irqHandlers )
     }
 }
 
-void SX1276IoDeInit( void )
+void
+SX1276IoDeInit( void )
 {
     if (DioIrq[0] != NULL) {
         hal_gpio_irq_release(SX1276_DIO0);
@@ -155,12 +158,9 @@ void SX1276IoDeInit( void )
 
 uint8_t SX1276GetPaSelect( uint32_t channel )
 {
-    if( channel < RF_MID_BAND_THRESH )
-    {
+    if (channel < RF_MID_BAND_THRESH) {
         return RF_PACONFIG_PASELECT_PABOOST;
-    }
-    else
-    {
+    } else {
         return RF_PACONFIG_PASELECT_RFO;
     }
 }
@@ -168,46 +168,44 @@ uint8_t SX1276GetPaSelect( uint32_t channel )
 #if MYNEWT_VAL(SX1276_HAS_ANT_SW)
 void SX1276SetAntSwLowPower( bool status )
 {
-    if( RadioIsActive != status )
-    {
+    if (RadioIsActive != status) {
         RadioIsActive = status;
 
-        if( status == false )
-        {
+        if (status == false) {
             SX1276AntSwInit( );
-        }
-        else
-        {
+        } else {
             SX1276AntSwDeInit( );
         }
     }
 }
 
-void SX1276AntSwInit( void )
+void
+SX1276AntSwInit(void)
 {
     // Consider turning off GPIO pins for low power. They are always on right
     // now. GPIOTE library uses 0.5uA max when on, typical 0.1uA.
 }
 
-void SX1276AntSwDeInit( void )
+void
+SX1276AntSwDeInit(void)
 {
     // Consider this for low power - ie turning off GPIO pins
 }
 
-void SX1276SetAntSw( uint8_t rxTx )
+void
+SX1276SetAntSw(uint8_t rxTx)
 {
-    if( rxTx != 0 ) // 1: TX, 0: RX
-    {
+    // 1: TX, 0: RX
+    if (rxTx != 0) {
         hal_gpio_write(SX1276_RXTX, 1);
-    }
-    else
-    {
+    } else {
         hal_gpio_write(SX1276_RXTX, 0);
     }
 }
 #endif
 
-bool SX1276CheckRfFrequency( uint32_t frequency )
+bool
+SX1276CheckRfFrequency(uint32_t frequency)
 {
     // Implement check. Currently all frequencies are supported
     return true;
