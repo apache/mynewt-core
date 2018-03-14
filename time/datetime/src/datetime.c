@@ -58,6 +58,7 @@
  */
 
 #include <os/os_time.h>
+#include <os/os_error.h>
 
 #include <stdio.h>
 #include <ctype.h>
