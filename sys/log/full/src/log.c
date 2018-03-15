@@ -60,7 +60,7 @@ log_init(void)
     log_inited = 1;
     log_written = 0;
 
-    g_log_info.li_version = LOG_VERSION_V2;
+    g_log_info.li_version = MYNEWT_VAL(LOG_VERSION);
     g_log_info.li_next_index = 0;
 
 #if MYNEWT_VAL(LOG_CLI)
@@ -199,7 +199,7 @@ log_register(char *name, struct log *log, const struct log_handler *lh,
 }
 
 static int
-log_append_prepare(struct log *log, uint16_t module, uint16_t level,
+log_append_prepare(struct log *log, uint8_t module, uint8_t level, uint8_t etype,
                    struct log_entry_hdr *ue)
 {
     int rc;
@@ -243,18 +243,24 @@ log_append_prepare(struct log *log, uint16_t module, uint16_t level,
     ue->ue_level = level;
     ue->ue_module = module;
     ue->ue_index = idx;
+#if MYNEWT_VAL(LOG_VERSION) > 2
+    ue->ue_etype = etype;
+#else
+    assert(etype == LOG_ETYPE_STRING);
+#endif
 
 err:
     return (rc);
 }
 
 int
-log_append(struct log *log, uint16_t module, uint16_t level, void *data,
-           uint16_t len)
+log_append_typed(struct log *log, uint8_t module, uint8_t level, uint8_t etype,
+                 void *data, uint16_t len)
 {
     int rc;
 
-    rc = log_append_prepare(log, module, level, (struct log_entry_hdr *)data);
+    rc = log_append_prepare(log, module, level, etype,
+                            (struct log_entry_hdr *)data);
     if (rc != 0) {
         goto err;
     }
@@ -270,8 +276,8 @@ err:
 }
 
 int
-log_append_mbuf(struct log *log, uint16_t module, uint16_t level,
-                struct os_mbuf *om)
+log_append_mbuf_typed(struct log *log, uint8_t module, uint8_t level,
+                      uint8_t etype, struct os_mbuf *om)
 {
     int rc;
 
@@ -286,7 +292,7 @@ log_append_mbuf(struct log *log, uint16_t module, uint16_t level,
         goto err;
     }
 
-    rc = log_append_prepare(log, module, level,
+    rc = log_append_prepare(log, module, level, etype,
                             (struct log_entry_hdr *)om->om_data);
     if (rc != 0) {
         goto err;

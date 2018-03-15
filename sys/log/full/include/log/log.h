@@ -32,6 +32,7 @@ struct log_info {
     uint32_t li_next_index;
     uint8_t li_version;
 };
+#define LOG_VERSION_V3  3
 #define LOG_VERSION_V2  2
 #define LOG_VERSION_V1  1
 
@@ -84,12 +85,25 @@ struct log_handler {
     lh_flush_func_t log_flush;
 };
 
+#if MYNEWT_VAL(LOG_VERSION) == 2
 struct log_entry_hdr {
     int64_t ue_ts;
     uint32_t ue_index;
     uint8_t ue_module;
     uint8_t ue_level;
 }__attribute__((__packed__));
+#elif MYNEWT_VAL(LOG_VERSION) == 3
+struct log_entry_hdr {
+    int64_t ue_ts;
+    uint32_t ue_index;
+    uint8_t ue_module;
+    uint8_t ue_level;
+    uint8_t ue_etype;
+}__attribute__((__packed__));
+#else
+#error "Unsupported log version"
+#endif
+
 #define LOG_ENTRY_HDR_SIZE (sizeof(struct log_entry_hdr))
 
 #define LOG_LEVEL_DEBUG    (0)
@@ -132,6 +146,12 @@ struct log_entry_hdr {
     (LOG_MODULE_IOTIVITY    == module ? "IOTIVITY"    :\
     (LOG_MODULE_TEST        == module ? "TEST"        :\
      "UNKNOWN")))))))))
+
+#define LOG_ETYPE_STRING         (0)
+#if MYNEWT_VAL(LOG_VERSION) > 2
+#define LOG_ETYPE_CBOR           (1)
+#define LOG_ETYPE_BINARY         (2)
+#endif
 
 /* Logging medium */
 #define LOG_STORE_CONSOLE    1
@@ -207,8 +227,23 @@ struct log *log_list_get_next(struct log *);
 /* Log functions, manipulate a single log */
 int log_register(char *name, struct log *log, const struct log_handler *,
                  void *arg, uint8_t level);
-int log_append(struct log *, uint16_t, uint16_t, void *, uint16_t);
-int log_append_mbuf(struct log *, uint16_t, uint16_t, struct os_mbuf *);
+int log_append_typed(struct log *, uint8_t, uint8_t, uint8_t, void *, uint16_t);
+int log_append_mbuf_typed(struct log *, uint8_t, uint8_t, uint8_t,
+                          struct os_mbuf *);
+
+static inline int
+log_append(struct log *log, uint8_t module, uint8_t level, void *data,
+           uint16_t len)
+{
+    return log_append_typed(log, module, level, LOG_ETYPE_STRING, data, len);
+}
+
+static inline int
+log_append_mbuf(struct log *log, uint8_t module, uint8_t level,
+                struct os_mbuf *om)
+{
+    return log_append_mbuf_typed(log, module, level, LOG_ETYPE_STRING, om);
+}
 
 #define LOG_PRINTF_MAX_ENTRY_LEN (128)
 void log_printf(struct log *log, uint16_t, uint16_t, char *, ...);

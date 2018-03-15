@@ -18,6 +18,10 @@
 #
 
 syscfg.defs:
+    LOG_VERSION:
+        description: 'Log entry header version used.'
+        value: 2
+
     LOG_LEVEL:
         description: 'Limits what level log messages are compiled in.'
         value: 0
