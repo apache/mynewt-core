@@ -56,11 +56,7 @@ shell_log_dump_entry(struct log *log, struct log_offset *log_offset,
     }
     data[rc] = 0;
 
-    /* XXX: This is evil.  newlib printf does not like 64-bit
-     * values, and this causes memory to be overwritten.  Cast to a
-     * unsigned 32-bit value for now.
-     */
-    console_printf("[%lu] %s\n", (unsigned long) ueh.ue_ts, data);
+    console_printf("[%llu] %s\n", ueh.ue_ts, data);
 
     return (0);
 err:
