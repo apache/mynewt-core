@@ -106,7 +106,7 @@ leapyear(int year)
 }
 
 int
-clocktime_to_timeval(const struct clocktime *ct, struct os_timeval *tv)
+clocktime_to_timeval(const struct clocktime *ct, const struct os_timezone *tz, struct os_timeval *tv)
 {
     int i, year, days;
 
@@ -140,6 +140,12 @@ clocktime_to_timeval(const struct clocktime *ct, struct os_timeval *tv)
         ct->sec;
     tv->tv_usec = ct->usec;
 
+    /* Convert localtime to utctime */
+    if (tz != NULL) {
+	tv->tv_sec += tz->tz_minuteswest * 60;
+	tv->tv_sec -= tz->tz_dsttime ? 3600 : 0;
+    }
+    
     return (0);
 }
 
@@ -340,13 +346,10 @@ datetime_parse(const char *input, struct os_timeval *tv, struct os_timezone *tz)
         goto err;
     }
 
-    if (clocktime_to_timeval(&ct, tv) != 0) {
+    if (clocktime_to_timeval(&ct, tz, tv) != 0) {
         goto err;
     }
 
-    /* Convert localtime to utctime */
-    tv->tv_sec += tz->tz_minuteswest * 60;
-    tv->tv_sec -= tz->tz_dsttime ? 3600 : 0;
     return (0);
 err:
     return (-1);
