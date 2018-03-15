@@ -20,6 +20,9 @@
 #ifndef __MCU_STM32F4_BSP_H_
 #define __MCU_STM32F4_BSP_H_
 
+#include <hal/hal_gpio.h>
+#include <stdint.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
