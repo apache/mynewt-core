@@ -68,7 +68,7 @@ int datetime_parse(const char *input, struct os_timeval *utctime,
  *
  * Returns 0 on success and OS_EINVAL on invalid input data
  */
-int clocktime_to_timeval(const struct clocktime *ct, struct os_timeval *tv);
+int clocktime_to_timeval(const struct clocktime *ct, const struct os_timezone *tz, struct os_timeval *tv);
 
 /*
  * Converts from struct os_timeval to struct clocktime
