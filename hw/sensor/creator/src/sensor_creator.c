@@ -574,6 +574,7 @@ config_bma253_sensor(void)
     cfg.power_mode = BMA253_POWER_MODE_NORMAL;
     cfg.sleep_duration = BMA253_SLEEP_DURATION_0_5_MS;
     cfg.sensor_mask = SENSOR_TYPE_ACCELEROMETER;
+    cfg.read_mode = BMA253_READ_M_POLL;
 
     rc = bma253_config((struct bma253 *)dev, &cfg);
     assert(rc == 0);
