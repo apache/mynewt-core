@@ -24,7 +24,7 @@
 #include <errno.h>
 #include <pwm/pwm.h>
 #include <string.h>
-#include <bsp/cmsis_nvic.h>
+#include <mcu/cmsis_nvic.h>
 
 /* Nordic headers */
 #include <nrfx.h>
