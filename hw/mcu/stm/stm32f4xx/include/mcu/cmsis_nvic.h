@@ -9,10 +9,8 @@
 
 #include <stdint.h>
 
-#if defined(STM32F407xx)
+#if defined(STM32F401xE) || defined(STM32F407xx)
  #define MCU_NUM_PERIPH_VECTORS 82
-#elif defined(STM32F401xE)
- #define MCU_NUM_PERIPH_VECTORS 85
 #elif defined(STM32F427xx) || defined(STM32F429xx)
  #define MCU_NUM_PERIPH_VECTORS 91
 #elif defined(STM32F413xx)
