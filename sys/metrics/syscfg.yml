@@ -25,3 +25,7 @@ syscfg.defs:
     METRICS_POOL_COUNT:
         description: Block count for metrics' mempool
         value: 100
+
+    METRICS_CLI:
+        description: Enable shell interface
+        value: 0

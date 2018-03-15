@@ -28,6 +28,7 @@
 #include "tinycbor/cbor.h"
 #include "tinycbor/cbor_mbuf_writer.h"
 #include "log/log.h"
+#include "metrics_priv.h"
 
 #define MBUF_MEMBLOCK_OVERHEAD \
     (sizeof(struct os_mbuf))
@@ -555,4 +556,8 @@ metrics_pkg_init(void)
     rc = os_mbuf_pool_init(&event_metric_mbuf_pool, &event_metric_mempool,
                            MEMPOOL_SIZE, MEMPOOL_COUNT);
     assert(rc == 0);
+
+#if MYNEWT_VAL(METRICS_CLI)
+    metrics_cli_init();
+#endif
 }
