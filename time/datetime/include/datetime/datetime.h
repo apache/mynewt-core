@@ -26,6 +26,17 @@ extern "C" {
 struct os_timeval;
 struct os_timezone;
 
+struct clocktime {
+    int year;   /* year (4 digit year) */
+    int mon;    /* month (1 - 12) */
+    int day;    /* day (1 - 31) */
+    int hour;   /* hour (0 - 23) */
+    int min;    /* minute (0 - 59) */
+    int sec;    /* second (0 - 59) */
+    int dow;    /* day of week (0 - 6; 0 = Sunday) */
+    int usec;   /* micro seconds */
+};
+    
 #define DATETIME_BUFSIZE    33
 
 /*
@@ -51,6 +62,17 @@ int datetime_format(const struct os_timeval *utctime,
 int datetime_parse(const char *input, struct os_timeval *utctime,
     struct os_timezone *tz);
 
+
+/*
+ * Convert clocktime structure to timeval structure
+ */
+int clocktime_to_timeval(const struct clocktime *ct, struct os_timeval *tv);
+    
+/*
+ * Convert timeval structure to clocktime structure
+ */
+int timeval_to_clocktime(const struct os_timeval *tv, const struct os_timezone *tz, struct clocktime *ct);
+    
 #ifdef __cplusplus
 }
 #endif

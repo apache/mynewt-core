@@ -64,17 +64,6 @@
 #include <string.h>
 #include <datetime/datetime.h>
 
-struct clocktime {
-    int year;   /* year (4 digit year) */
-    int mon;    /* month (1 - 12) */
-    int day;    /* day (1 - 31) */
-    int hour;   /* hour (0 - 23) */
-    int min;    /* minute (0 - 59) */
-    int sec;    /* second (0 - 59) */
-    int dow;    /* day of week (0 - 6; 0 = Sunday) */
-    int usec;   /* micro seconds */
-};
-
 #define days_in_year(y)     (leapyear(y) ? 366 : 365)
 
 #define    FEBRUARY    2
@@ -115,7 +104,7 @@ leapyear(int year)
     return (rv);
 }
 
-static int
+int
 clocktime_to_timeval(const struct clocktime *ct, struct os_timeval *tv)
 {
     int i, year, days;
@@ -153,7 +142,7 @@ clocktime_to_timeval(const struct clocktime *ct, struct os_timeval *tv)
     return (0);
 }
 
-static int
+int
 timeval_to_clocktime(const struct os_timeval *tv, const struct os_timezone *tz,
     struct clocktime *ct)
 {
