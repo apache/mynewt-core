@@ -365,19 +365,11 @@ Satisfy MCU requirements
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 The MCU package probably requires some build-time configuration. Typically, it is the BSP which provides this configuration.
-For example, many MCU packages depend on the ``cmsis-core`` package, which expects the BSP to provide a header file called
-``bsp/cmsis_nvic.h``. Completing this step will likely involve some trial and error as each unmet requirement gets reported
-as a build error.
+Completing this step will likely involve some trial and error as each unmet requirement gets reported as a build error.
 
 Our example nRF52 BSP requires the following changes:
 
-1.  The nRF52 MCU package uses ``cmsis-core``, so for our example we will copy the nRF52dk BSP's ``cmsis_nvic.h`` file to our BSP:
-
-    .. code-block:: console
-
-        $ cp repos/apache-mynewt-core/hw/bsp/nrf52dk/include/bsp/cmsis_nvic.h hw/bsp/myboard/include/bsp/
-
-2.  Macro indicating MCU type. We add this to our BSP's ``pkg.yml`` file:
+1.  Macro indicating MCU type. We add this to our BSP's ``pkg.yml`` file:
 
     .. code-block:: yaml
        :emphasize-lines: 2
@@ -385,7 +377,7 @@ Our example nRF52 BSP requires the following changes:
         pkg.cflags:
             - '-DNRF52'
 
-3.  Enable exactly one low-frequency timer setting in our BSP's ``syscfg.yml`` file. This is required by the nRF51 and nRF52 MCU packages:
+2.  Enable exactly one low-frequency timer setting in our BSP's ``syscfg.yml`` file. This is required by the nRF51 and nRF52 MCU packages:
 
     .. code-block:: yaml
        :emphasize-lines: 3
