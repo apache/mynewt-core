@@ -40,7 +40,7 @@ typedef void (*nrf52_spi_irq_handler_t)(void);
  */
 
 /* The maximum number of SPI interfaces we will allow */
-#define NRF52_HAL_SPI_MAX (2)
+#define NRF52_HAL_SPI_MAX (3)
 
 /* Used to disable all interrupts */
 #define NRF_SPI_IRQ_DISABLE_ALL 0xFFFFFFFF
@@ -92,6 +92,9 @@ struct nrf52_hal_spi nrf52_hal_spi0;
 #if MYNEWT_VAL(SPI_1_MASTER)  || MYNEWT_VAL(SPI_1_SLAVE)
 struct nrf52_hal_spi nrf52_hal_spi1;
 #endif
+#if MYNEWT_VAL(SPI_2_MASTER)  || MYNEWT_VAL(SPI_2_SLAVE)
+struct nrf52_hal_spi nrf52_hal_spi2;
+#endif
 
 static const struct nrf52_hal_spi *nrf52_hal_spis[NRF52_HAL_SPI_MAX] = {
 #if MYNEWT_VAL(SPI_0_MASTER) || MYNEWT_VAL(SPI_0_SLAVE)
@@ -100,9 +103,14 @@ static const struct nrf52_hal_spi *nrf52_hal_spis[NRF52_HAL_SPI_MAX] = {
     NULL,
 #endif
 #if MYNEWT_VAL(SPI_1_MASTER)  || MYNEWT_VAL(SPI_1_SLAVE)
-    &nrf52_hal_spi1
+    &nrf52_hal_spi1,
 #else
-    NULL
+    NULL,
+#endif
+#if MYNEWT_VAL(SPI_2_MASTER)  || MYNEWT_VAL(SPI_2_SLAVE)
+    &nrf52_hal_spi2,
+#else
+    NULL,
 #endif
 };
 
@@ -117,7 +125,7 @@ static const struct nrf52_hal_spi *nrf52_hal_spis[NRF52_HAL_SPI_MAX] = {
         goto err;                                           \
     }
 
-#if (MYNEWT_VAL(SPI_0_MASTER) || MYNEWT_VAL(SPI_1_MASTER) )
+#if (MYNEWT_VAL(SPI_0_MASTER) || MYNEWT_VAL(SPI_1_MASTER) || MYNEWT_VAL(SPI_2_MASTER))
 static void
 nrf52_irqm_handler(struct nrf52_hal_spi *spi)
 {
@@ -163,7 +171,7 @@ nrf52_irqm_handler(struct nrf52_hal_spi *spi)
 }
 #endif
 
-#if (MYNEWT_VAL(SPI_0_SLAVE)  || MYNEWT_VAL(SPI_1_SLAVE) )
+#if (MYNEWT_VAL(SPI_0_SLAVE)  || MYNEWT_VAL(SPI_1_SLAVE) || MYNEWT_VAL(SPI_2_SLAVE))
 static void
 nrf52_irqs_handler(struct nrf52_hal_spi *spi)
 {
@@ -248,6 +256,24 @@ nrf52_spi1_irq_handler(void)
     } else {
 #if MYNEWT_VAL(SPI_1_SLAVE)
         nrf52_irqs_handler(&nrf52_hal_spi1);
+#endif
+    }
+    os_trace_exit_isr();
+}
+#endif
+
+#if MYNEWT_VAL(SPI_2_MASTER)  || MYNEWT_VAL(SPI_2_SLAVE)
+void
+nrf52_spi2_irq_handler(void)
+{
+    os_trace_enter_isr();
+    if (nrf52_hal_spi2.spi_type == HAL_SPI_TYPE_MASTER) {
+#if MYNEWT_VAL(SPI_2_MASTER)
+        nrf52_irqm_handler(&nrf52_hal_spi2);
+#endif
+    } else {
+#if MYNEWT_VAL(SPI_2_SLAVE)
+        nrf52_irqs_handler(&nrf52_hal_spi2);
 #endif
     }
     os_trace_exit_isr();
@@ -569,6 +595,26 @@ hal_spi_init(int spi_num, void *cfg, uint8_t spi_type)
         } else {
 #if MYNEWT_VAL(SPI_1_SLAVE)
             spi->nhs_spi.spis = NRF_SPIS1;
+#else
+            assert(0);
+#endif
+        }
+#else
+        goto err;
+#endif
+    } else if (spi_num == 2) {
+#if MYNEWT_VAL(SPI_2_MASTER)  || MYNEWT_VAL(SPI_2_SLAVE)
+        spi->irq_num = SPIM2_SPIS2_SPI2_IRQn;
+        irq_handler = nrf52_spi2_irq_handler;
+        if (spi_type == HAL_SPI_TYPE_MASTER) {
+#if MYNEWT_VAL(SPI_2_MASTER)
+            spi->nhs_spi.spim = NRF_SPIM2;
+#else
+            assert(0);
+#endif
+        } else {
+#if MYNEWT_VAL(SPI_2_SLAVE)
+            spi->nhs_spi.spis = NRF_SPIS2;
 #else
             assert(0);
 #endif
