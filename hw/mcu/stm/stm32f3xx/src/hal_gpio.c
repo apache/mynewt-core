@@ -187,69 +187,69 @@ hal_gpio_clk_enable(uint32_t port_idx)
                 __HAL_RCC_GPIOB_CLK_ENABLE();
             }
             break;
+#endif
 #if HAL_GPIO_PORT_COUNT > 2
         case 2:
             if (!__HAL_RCC_GPIOC_IS_CLK_ENABLED()) {
                 __HAL_RCC_GPIOC_CLK_ENABLE();
             }
             break;
+#endif
 #if HAL_GPIO_PORT_COUNT > 3
         case 3:
             if (!__HAL_RCC_GPIOD_IS_CLK_ENABLED()) {
                 __HAL_RCC_GPIOD_CLK_ENABLE();
             }
             break;
+#endif
 #if HAL_GPIO_PORT_COUNT > 4 && defined GPIOE_BASE
         case 4:
             if (!__HAL_RCC_GPIOE_IS_CLK_ENABLED()) {
                 __HAL_RCC_GPIOE_CLK_ENABLE();
             }
             break;
+#endif
 #if HAL_GPIO_PORT_COUNT > 5
         case 5:
             if (!__HAL_RCC_GPIOF_IS_CLK_ENABLED()) {
                 __HAL_RCC_GPIOF_CLK_ENABLE();
             }
             break;
+#endif
 #if HAL_GPIO_PORT_COUNT > 6
         case 6:
             if (!__HAL_RCC_GPIOG_IS_CLK_ENABLED()) {
                 __HAL_RCC_GPIOG_CLK_ENABLE();
             }
             break;
+#endif
 #if HAL_GPIO_PORT_COUNT > 7
         case 7:
             if (!__HAL_RCC_GPIOH_IS_CLK_ENABLED()) {
                 __HAL_RCC_GPIOH_CLK_ENABLE();
             }
             break;
+#endif
 #if HAL_GPIO_PORT_COUNT > 8
         case 8:
             if (!__HAL_RCC_GPIOI_IS_CLK_ENABLED()) {
                 __HAL_RCC_GPIOI_CLK_ENABLE();
             }
             break;
+#endif
 #if HAL_GPIO_PORT_COUNT > 9
         case 9:
             if (!__HAL_RCC_GPIOJ_IS_CLK_ENABLED()) {
                 __HAL_RCC_GPIOJ_CLK_ENABLE();
             }
             break;
+#endif
 #if HAL_GPIO_PORT_COUNT > 10
         case 10:
             if (!__HAL_RCC_GPIOK_IS_CLK_ENABLED()) {
                 __HAL_RCC_GPIOK_CLK_ENABLE();
             }
             break;
-#endif
-#endif
-#endif
-#endif
-#endif
-#endif
-#endif
-#endif
-#endif
 #endif
         default:
             assert(0);
