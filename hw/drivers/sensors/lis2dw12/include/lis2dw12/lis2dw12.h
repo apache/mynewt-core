@@ -106,6 +106,10 @@ enum lis2dw12_tap_priority {
     LIS2DW12_TAP_PRIOR_ZXY = 6
 };
 
+enum lis2dw12_read_mode {
+    LIS2DW12_READ_M_POLL = 0,
+    LIS2DW12_READ_M_STREAM = 1,
+};
     
 struct lis2dw12_tap_settings {
     uint8_t en_x;
@@ -140,16 +144,43 @@ struct lis2dw12_cfg {
     int8_t offset_x;
     int8_t offset_y;
     int8_t offset_z;
+    uint8_t offset_weight;
+    uint8_t offset_en;
 
     struct lis2dw12_tap_settings tap_cfg;
+
+    uint8_t int1_pin_cfg;
+    uint8_t int2_pin_cfg;
+    uint8_t int_enable;
+
+    enum lis2dw12_read_mode read_mode;
     
     sensor_type_t mask;
 };
 
+/* Used to track interrupt state to wake any present waiters */
+struct lis2dw12_int {
+    /* Synchronize access to this structure */
+    os_sr_t lock;
+    /* Sleep waiting for an interrupt to occur */
+    struct os_sem wait;
+    /* Is the interrupt currently active */
+    bool active;
+    /* Is there a waiter currently sleeping */
+    bool asleep;
+    /* Configured interrupts */
+    struct sensor_int *ints;
+};
+
+    
 struct lis2dw12_private_driver_data {
     struct sensor_notify_ev_ctx notify_ctx;
     uint8_t registered_mask;
+
+    struct lis2dw12_int * interrupt;
+    
     uint8_t int_num;
+    uint8_t int_enable;
 };
         
     
@@ -157,6 +188,7 @@ struct lis2dw12 {
     struct os_dev dev;
     struct sensor sensor;
     struct lis2dw12_cfg cfg;
+    struct lis2dw12_int intr;
 
     struct lis2dw12_private_driver_data pdd;
 };
@@ -305,11 +337,12 @@ int lis2dw12_get_filter_cfg(struct sensor_itf *itf, uint8_t *bw, uint8_t *type);
  * @param X offset
  * @param Y offset
  * @param Z offset
+ * @param Value Weight (0 = 977ug/LSB, 1 = 15.6mg/LSB)
  *
  * @return 0 on success, non-zero error on failure.
  */
 int lis2dw12_set_offsets(struct sensor_itf *itf, int8_t offset_x,
-                        int8_t offset_y, int8_t offset_z);
+                         int8_t offset_y, int8_t offset_z, uint8_t weight);
 
 /**
  * Gets the offsets currently set
@@ -318,13 +351,23 @@ int lis2dw12_set_offsets(struct sensor_itf *itf, int8_t offset_x,
  * @param Pointer to location to store X offset
  * @param Pointer to location to store Y offset
  * @param Pointer to location to store Z offset
+ * @param Pointer to value weight
  *
  * @return 0 on success, non-zero error on failure.
  */
 int lis2dw12_get_offsets(struct sensor_itf *itf, int8_t *offset_x,
-                        int8_t *offset_y, int8_t *offset_z);
+                         int8_t *offset_y, int8_t *offset_z, uint8_t * weight);
 
-
+/**
+ * Sets whether offset are enabled (only work when low pass filtering is enabled)
+ *
+ * @param The sensor interface
+ * @param value to set (0 = disabled, 1 = enabled)
+ *
+ * @return 0 on success, non-zero error on failure.
+ */
+int lis2dw12_set_offset_enable(struct sensor_itf *itf, uint8_t enabled);
+   
 /**
  * Set tap detection configuration
  *
@@ -332,7 +375,7 @@ int lis2dw12_get_offsets(struct sensor_itf *itf, int8_t *offset_x,
  * @param the tap settings
  * @return 0 on success, non-zero on failure
  */
-int lis2dw12_set_tap_cfg(struct sensor_itf *itf, struct lis2dw12_tap_settings cfg);
+int lis2dw12_set_tap_cfg(struct sensor_itf *itf, struct lis2dw12_tap_settings *cfg);
 
 /**
  * Get tap detection config
@@ -383,6 +426,15 @@ lis2dw12_set_int1_pin_cfg(struct sensor_itf *itf, uint8_t cfg);
 int lis2dw12_set_int2_pin_cfg(struct sensor_itf *itf, uint8_t cfg);
 
 /**
+ * Set whether interrupts are enabled
+ *
+ * @param the sensor interface
+ * @param value to set (0 = disabled, 1 = enabled)
+ * @return 0 on success, non-zero on failure
+ */
+int lis2dw12_set_int_enable(struct sensor_itf *itf, uint8_t enabled);
+
+/**
  * Clear interrupts
  *
  * @param the sensor interface
@@ -391,6 +443,15 @@ int lis2dw12_set_int2_pin_cfg(struct sensor_itf *itf, uint8_t cfg);
  */
 int lis2dw12_clear_int(struct sensor_itf *itf, uint8_t *src);
 
+/**
+ * Get Interrupt Source
+ *
+ * @param the sensor interface
+ * @param pointer to return interrupt source in
+ * @return 0 on success, non-zero on failure
+ */
+int lis2dw12_get_int_src(struct sensor_itf *itf, uint8_t *status);
+    
 /**
  * Run Self test on sensor
  *
@@ -401,6 +462,39 @@ int lis2dw12_clear_int(struct sensor_itf *itf, uint8_t *src);
  */
 int lis2dw12_run_self_test(struct sensor_itf *itf, int *result);
 
+/**
+ * Provide a continuous stream of accelerometer readings.
+ *
+ * @param The sensor ptr
+ * @param The sensor type
+ * @param The function pointer to invoke for each accelerometer reading.
+ * @param The opaque pointer that will be passed in to the function.
+ * @param If non-zero, how long the stream should run in milliseconds.
+ *
+ * @return 0 on success, non-zero on failure.
+ */
+int lis2dw12_stream_read(struct sensor *sensor,
+                         sensor_type_t sensor_type,
+                         sensor_data_func_t read_func,
+                         void *read_arg,
+                         uint32_t time_ms);
+
+/**
+ * Do accelerometer polling reads
+ *
+ * @param The sensor ptr
+ * @param The sensor type
+ * @param The function pointer to invoke for each accelerometer reading.
+ * @param The opaque pointer that will be passed in to the function.
+ * @param If non-zero, how long the stream should run in milliseconds.
+ *
+ * @return 0 on success, non-zero on failure.
+ */
+int lis2dw12_poll_read(struct sensor * sensor,
+                       sensor_type_t sensor_type,
+                       sensor_data_func_t data_func,
+                       void * data_arg,
+                       uint32_t timeout);
 
 /**
  * Expects to be called back through os_dev_create().

@@ -702,24 +702,27 @@ config_lis2dw12_sensor(void)
     cfg.offset_x = 0;
     cfg.offset_y = 0;
     cfg.offset_z = 0;
+    cfg.offset_weight = 0;
+    cfg.offset_en = 0;
 
     cfg.tap_cfg.en_x = 1;
     cfg.tap_cfg.en_y = 1;
     cfg.tap_cfg.en_z = 1;
-
     cfg.tap_cfg.en_4d = 0;
     cfg.tap_cfg.ths_6d = LIS2DW12_6D_THS_80_DEG;
     cfg.tap_cfg.tap_priority = LIS2DW12_TAP_PRIOR_XYZ;
-
-    cfg.tap_cfg.tap_ths_x = 0x8;
-    cfg.tap_cfg.tap_ths_y = 0x8;
-    cfg.tap_cfg.tap_ths_z = 0x8;
-
+    cfg.tap_cfg.tap_ths_x = 0x3;
+    cfg.tap_cfg.tap_ths_y = 0x3;
+    cfg.tap_cfg.tap_ths_z = 0x3;
     cfg.tap_cfg.latency = 8; /* 640ms */
     cfg.tap_cfg.quiet = 0; /* 10ms */
     cfg.tap_cfg.shock = 3; /* 120ms */
         
-    
+    cfg.int1_pin_cfg = 0;
+    cfg.int2_pin_cfg = 0;
+    cfg.int_enable = 0;
+
+    cfg.read_mode = LIS2DW12_READ_M_POLL;
     cfg.mask = SENSOR_TYPE_ACCELEROMETER;
 
     rc = lis2dw12_config((struct lis2dw12 *) dev, &cfg);

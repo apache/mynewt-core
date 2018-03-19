@@ -788,21 +788,38 @@ err:
  */
 int
 lis2dw12_set_offsets(struct sensor_itf *itf, int8_t offset_x,
-                    int8_t offset_y, int8_t offset_z)
+                     int8_t offset_y, int8_t offset_z, uint8_t weight)
 {
+    uint8_t reg;
     int rc;
   
     rc = lis2dw12_write8(itf, LIS2DW12_REG_X_OFS, offset_x);
-    if (rc){
+    if (rc) {
         return rc;
     }
 
     rc = lis2dw12_write8(itf, LIS2DW12_REG_Y_OFS, offset_y);
-    if (rc){
+    if (rc) {
         return rc;
     }
 
-    return lis2dw12_write8(itf, LIS2DW12_REG_Z_OFS, offset_z);
+    rc = lis2dw12_write8(itf, LIS2DW12_REG_Z_OFS, offset_z);
+    if (rc) {
+        return rc;
+    }
+
+    rc = lis2dw12_read8(itf, LIS2DW12_REG_CTRL_REG7, &reg);
+    if (rc) {
+        return rc;
+    }
+
+    if (weight) {
+        reg |= LIS2DW12_CTRL_REG7_USR_OFF_W;
+    } else {
+        reg &= ~LIS2DW12_CTRL_REG7_USR_OFF_W;
+    }
+
+    return lis2dw12_write8(itf, LIS2DW12_REG_CTRL_REG7, reg);
 }
 
 /**
@@ -817,23 +834,63 @@ lis2dw12_set_offsets(struct sensor_itf *itf, int8_t offset_x,
  */
 int
 lis2dw12_get_offsets(struct sensor_itf *itf, int8_t *offset_x,
-                    int8_t *offset_y, int8_t *offset_z)
+                     int8_t *offset_y, int8_t *offset_z, uint8_t *weight)
 {
-
+    uint8_t reg;
     int rc;
   
     rc = lis2dw12_read8(itf, LIS2DW12_REG_X_OFS, (uint8_t *)offset_x);
-    if (rc){
+    if (rc) {
         return rc;
     }
 
     rc = lis2dw12_read8(itf, LIS2DW12_REG_Y_OFS, (uint8_t *)offset_y);
-    if (rc){
+    if (rc) {
         return rc;
     }
 
-    return lis2dw12_read8(itf, LIS2DW12_REG_Z_OFS, (uint8_t *)offset_z);
+    rc = lis2dw12_read8(itf, LIS2DW12_REG_Z_OFS, (uint8_t *)offset_z);
+    if (rc) {
+        return rc;
+    }
+
+    rc = lis2dw12_read8(itf, LIS2DW12_REG_CTRL_REG7, &reg);
+    if (rc) {
+        return rc;
+    }
+
+    *weight = reg & LIS2DW12_CTRL_REG7_USR_OFF_W ? 1 : 0;
+
+    return 0;
 }
+
+/**
+ * Sets whether offset are enabled (only work when low pass filtering is enabled)
+ *
+ * @param The sensor interface
+ * @param value to set (0 = disabled, 1 = enabled)
+ *
+ * @return 0 on success, non-zero error on failure.
+ */
+int lis2dw12_set_offset_enable(struct sensor_itf *itf, uint8_t enabled)
+{
+    int rc;
+    uint8_t reg;
+
+    rc = lis2dw12_read8(itf, LIS2DW12_REG_CTRL_REG7, &reg);
+    if (rc) {
+        return rc;
+    }
+
+    if (enabled) {
+        reg |= LIS2DW12_CTRL_REG7_USR_OFF_OUT;
+    } else {
+        reg &= ~LIS2DW12_CTRL_REG7_USR_OFF_OUT;
+    }
+
+    return lis2dw12_write8(itf, LIS2DW12_REG_CTRL_REG7, reg);
+}
+
 
 /**
  * Set tap detection configuration
@@ -842,14 +899,14 @@ lis2dw12_get_offsets(struct sensor_itf *itf, int8_t *offset_x,
  * @param the tap settings
  * @return 0 on success, non-zero on failure
  */
-int lis2dw12_set_tap_cfg(struct sensor_itf *itf, struct lis2dw12_tap_settings cfg)
+int lis2dw12_set_tap_cfg(struct sensor_itf *itf, struct lis2dw12_tap_settings *cfg)
 {
     int rc;
     uint8_t reg;
 
-    reg = cfg.en_4d ? LIS2DW12_TAP_THS_X_4D_EN : 0;
-    reg |= (cfg.ths_6d & 0x3) << 5;
-    reg |= cfg.tap_ths_x & LIS2DW12_TAP_THS_X_THS;
+    reg = cfg->en_4d ? LIS2DW12_TAP_THS_X_4D_EN : 0;
+    reg |= (cfg->ths_6d & 0x3) << 5;
+    reg |= cfg->tap_ths_x & LIS2DW12_TAP_THS_X_THS;
 
     rc = lis2dw12_write8(itf, LIS2DW12_REG_TAP_THS_X, reg);
     if (rc) {
@@ -857,8 +914,8 @@ int lis2dw12_set_tap_cfg(struct sensor_itf *itf, struct lis2dw12_tap_settings cf
     }
 
     reg = 0;
-    reg |= (cfg.tap_priority & 0x7) << 5;
-    reg |= cfg.tap_ths_y & LIS2DW12_TAP_THS_Y_THS;
+    reg |= (cfg->tap_priority & 0x7) << 5;
+    reg |= cfg->tap_ths_y & LIS2DW12_TAP_THS_Y_THS;
 
     rc = lis2dw12_write8(itf, LIS2DW12_REG_TAP_THS_Y, reg);
     if (rc) {
@@ -866,10 +923,10 @@ int lis2dw12_set_tap_cfg(struct sensor_itf *itf, struct lis2dw12_tap_settings cf
     }
 
     reg = 0;
-    reg |= cfg.en_x ? LIS2DW12_TAP_THS_Z_X_EN : 0;
-    reg |= cfg.en_y ? LIS2DW12_TAP_THS_Z_Y_EN : 0;
-    reg |= cfg.en_z ? LIS2DW12_TAP_THS_Z_Z_EN : 0;
-    reg |= cfg.tap_ths_z & LIS2DW12_REG_TAP_THS_Z;
+    reg |= cfg->en_x ? LIS2DW12_TAP_THS_Z_X_EN : 0;
+    reg |= cfg->en_y ? LIS2DW12_TAP_THS_Z_Y_EN : 0;
+    reg |= cfg->en_z ? LIS2DW12_TAP_THS_Z_Z_EN : 0;
+    reg |= cfg->tap_ths_z & LIS2DW12_REG_TAP_THS_Z;
     
     rc = lis2dw12_write8(itf, LIS2DW12_REG_TAP_THS_Z, reg);
     if (rc) {
@@ -877,9 +934,9 @@ int lis2dw12_set_tap_cfg(struct sensor_itf *itf, struct lis2dw12_tap_settings cf
     }
 
     reg = 0;
-    reg |= (cfg.latency & LIS2DW12_INT_DUR_LATENCY) << 4;
-    reg |= (cfg.quiet & LIS2DW12_INT_DUR_QUIET) << 2;
-    reg |= cfg.shock & LIS2DW12_INT_DUR_SHOCK;
+    reg |= (cfg->latency & LIS2DW12_INT_DUR_LATENCY) << 4;
+    reg |= (cfg->quiet & LIS2DW12_INT_DUR_QUIET) << 2;
+    reg |= cfg->shock & LIS2DW12_INT_DUR_SHOCK;
 
     return 0;
 }
@@ -1017,6 +1074,44 @@ lis2dw12_clear_int(struct sensor_itf *itf, uint8_t *src)
 }
 
 /**
+ * Get Interrupt Source
+ *
+ * @param the sensor interface
+ * @param pointer to return interrupt source in
+ * @return 0 on success, non-zero on failure
+ */
+int lis2dw12_get_int_src(struct sensor_itf *itf, uint8_t *status)
+{
+    return lis2dw12_read8(itf, LIS2DW12_REG_STATUS_REG, status);
+}
+
+/**
+ * Set whether interrupts are enabled
+ *
+ * @param the sensor interface
+ * @param value to set (0 = disabled, 1 = enabled)
+ * @return 0 on success, non-zero on failure
+ */
+int lis2dw12_set_int_enable(struct sensor_itf *itf, uint8_t enabled)
+{
+    uint8_t reg;
+    int rc;
+
+    rc = lis2dw12_read8(itf, LIS2DW12_REG_CTRL_REG7, &reg);
+    if (rc) {
+        return rc;
+    }
+
+    if (enabled) {
+        reg |= LIS2DW12_CTRL_REG7_INT_EN;
+    } else {
+        reg &= ~LIS2DW12_CTRL_REG7_INT_EN;
+    }
+
+    return lis2dw12_write8(itf, LIS2DW12_REG_CTRL_REG7, reg);
+}
+
+/**
  * Run Self test on sensor
  *
  * @param the sensor interface
@@ -1081,15 +1176,94 @@ int lis2dw12_run_self_test(struct sensor_itf *itf, int *result)
 }
 
 
-/**
- * IRQ handler for interrupts for high/low threshold
- *
- * @param arg
- */
+static void
+init_interrupt(struct lis2dw12_int * interrupt, struct sensor_int *ints)
+{
+    os_error_t error;
+
+    error = os_sem_init(&interrupt->wait, 0);
+    assert(error == OS_OK);
+
+    interrupt->active = false;
+    interrupt->asleep = false;
+    interrupt->ints = ints;
+}
+
+static void
+undo_interrupt(struct lis2dw12_int * interrupt)
+{
+    OS_ENTER_CRITICAL(interrupt->lock);
+    interrupt->active = false;
+    interrupt->asleep = false;
+    OS_EXIT_CRITICAL(interrupt->lock);
+}
+
+static void
+wait_interrupt(struct lis2dw12_int * interrupt, uint8_t int_num)
+{
+    bool wait;
+
+    OS_ENTER_CRITICAL(interrupt->lock);
+
+    /* Check if we did not missed interrupt */
+    if (hal_gpio_read(interrupt->ints[int_num].host_pin) ==
+                                            interrupt->ints[int_num].active) {
+        OS_EXIT_CRITICAL(interrupt->lock);
+        return;
+    }
+
+    if (interrupt->active) {
+        interrupt->active = false;
+        wait = false;
+    } else {
+        interrupt->asleep = true;
+        wait = true;
+    }
+    OS_EXIT_CRITICAL(interrupt->lock);
+
+    if (wait) {
+        os_error_t error;
+
+        error = os_sem_pend(&interrupt->wait, -1);
+        assert(error == OS_OK);
+    }
+}
+
+static void
+wake_interrupt(struct lis2dw12_int * interrupt)
+{
+    bool wake;
+
+    OS_ENTER_CRITICAL(interrupt->lock);
+    if (interrupt->asleep) {
+        interrupt->asleep = false;
+        wake = true;
+    } else {
+        interrupt->active = true;
+        wake = false;
+    }
+    OS_EXIT_CRITICAL(interrupt->lock);
+
+    if (wake) {
+        os_error_t error;
+
+        error = os_sem_release(&interrupt->wait);
+        assert(error == OS_OK);
+    }
+}
+
 static void
 lis2dw12_int_irq_handler(void *arg)
 {
     struct sensor *sensor = arg;
+    struct lis2dw12 *lis2dw12;
+
+    lis2dw12 = (struct lis2dw12 *)SENSOR_GET_DEVICE(sensor);
+
+    if(lis2dw12->pdd.interrupt) {
+        wake_interrupt(lis2dw12->pdd.interrupt);
+    }
+    
     sensor_mgr_put_interrupt_evt(sensor);
 }
 
@@ -1136,45 +1310,78 @@ init_intpin(struct lis2dw12 * lis2dw12, hal_gpio_irq_handler_t handler,
 }
 
 static int
-enable_interrupt(struct sensor * sensor, uint8_t int_cfg)
+enable_interrupt(struct sensor * sensor, uint8_t int_to_enable)
 {
     struct lis2dw12 *lis2dw12;
+    struct lis2dw12_private_driver_data *pdd;
     struct sensor_itf *itf;
     uint8_t reg;
     int rc;
 
     lis2dw12 = (struct lis2dw12 *)SENSOR_GET_DEVICE(sensor);
     itf = SENSOR_GET_ITF(sensor);
- 
-    /* enable int pin */
-    hal_gpio_irq_enable(lis2dw12->sensor.s_itf.si_ints[lis2dw12->pdd.int_num]
-                        .host_pin);
+    pdd = &lis2dw12->pdd;
 
+    rc = lis2dw12_clear_int(itf, &reg);
+    if (rc) {
+        return rc;
+    }
+    
+    /* if no interrupts are currently in use enable int pin */
+    if (pdd->int_enable == 0) {
+        hal_gpio_irq_enable(lis2dw12->sensor.s_itf.si_ints[lis2dw12->pdd.int_num]
+                            .host_pin);
+
+        rc = lis2dw12_set_int_enable(itf, 1);
+        if (rc) {
+            return rc;
+        }
+    }
+
+    /*update which interrupts are enabled */
+    pdd->int_enable |= int_to_enable;
+    
     /* enable interrupt in device */
-    rc = lis2dw12_set_int1_pin_cfg(itf, int_cfg);
+    rc = lis2dw12_set_int1_pin_cfg(itf, pdd->int_enable);
     if (rc) {
         return rc;
     }
 
-    return lis2dw12_clear_int(itf, &reg);
+    return 0;
     
 }
 
 static int
-disable_interrupt(struct sensor * sensor, uint8_t int_cfg)
+disable_interrupt(struct sensor * sensor, uint8_t int_to_disable)
 {
     struct lis2dw12 *lis2dw12;
+    struct lis2dw12_private_driver_data *pdd;
     struct sensor_itf *itf;
+    int rc;
 
+    if (int_to_disable == 0) {
+        return SYS_EINVAL;
+    }
+    
     lis2dw12 = (struct lis2dw12 *)SENSOR_GET_DEVICE(sensor);
     itf = SENSOR_GET_ITF(sensor);
+    pdd = &lis2dw12->pdd;
+
+    pdd->int_enable &= ~int_to_disable;
     
     /* disable int pin */
-    hal_gpio_irq_disable(lis2dw12->sensor.s_itf.si_ints[lis2dw12->pdd.int_num]
-                         .host_pin);
+    if (pdd->int_enable == 0) {
+        hal_gpio_irq_disable(lis2dw12->sensor.s_itf.si_ints[lis2dw12->pdd.int_num]
+                             .host_pin);
+           
+        rc = lis2dw12_set_int_enable(itf, 0);
+        if (rc) {
+            return rc;
+        }
+    }
     
     /* update interrupt setup in device */
-    return lis2dw12_set_int1_pin_cfg(itf, int_cfg);
+    return lis2dw12_set_int1_pin_cfg(itf, pdd->int_enable);
 }
 
 /**
@@ -1239,9 +1446,21 @@ err:
     return rc;
 }
 
-static int
-lis2dw12_sensor_read(struct sensor *sensor, sensor_type_t type,
-        sensor_data_func_t data_func, void *data_arg, uint32_t timeout)
+/**
+ * Do accelerometer polling reads
+ *
+ * @param The sensor ptr
+ * @param The sensor type
+ * @param The function pointer to invoke for each accelerometer reading.
+ * @param The opaque pointer that will be passed in to the function.
+ * @param If non-zero, how long the stream should run in milliseconds.
+ *
+ * @return 0 on success, non-zero on failure.
+ */
+int
+lis2dw12_poll_read(struct sensor * sensor, sensor_type_t sensor_type,
+                 sensor_data_func_t data_func, void * data_arg,
+                 uint32_t timeout)
 {
     struct sensor_accel_data sad;
     struct sensor_itf *itf;
@@ -1249,8 +1468,8 @@ lis2dw12_sensor_read(struct sensor *sensor, sensor_type_t type,
     float fx, fy ,fz;
     int rc;
 
-    /* If the read isn't looking for accel or mag data, don't do anything. */
-    if (!(type & SENSOR_TYPE_ACCELEROMETER)) {
+    /* If the read isn't looking for accel data, don't do anything. */
+    if (!(sensor_type & SENSOR_TYPE_ACCELEROMETER)) {
         rc = SYS_EINVAL;
         goto err;
     }
@@ -1258,27 +1477,6 @@ lis2dw12_sensor_read(struct sensor *sensor, sensor_type_t type,
     itf = SENSOR_GET_ITF(sensor);
 
     x = y = z = 0;
-
-    if (itf->si_type == SENSOR_ITF_SPI) {
-
-        rc = hal_spi_disable(sensor->s_itf.si_num);
-        if (rc) {
-            goto err;
-        }
-
-        rc = hal_spi_config(sensor->s_itf.si_num, &spi_lis2dw12_settings);
-        if (rc == EINVAL) {
-            /* If spi is already enabled, for nrf52, it returns -1, We should not
-             * fail if the spi is already enabled
-             */
-            goto err;
-        }
-
-        rc = hal_spi_enable(sensor->s_itf.si_num);
-        if (rc) {
-            goto err;
-        }
-    }
 
     rc = lis2dw12_get_data(itf, &x, &y, &z);
     if (rc) {
@@ -1305,6 +1503,121 @@ lis2dw12_sensor_read(struct sensor *sensor, sensor_type_t type,
     }
 
     return 0;
+err:
+    return rc;
+}
+
+int
+lis2dw12_stream_read(struct sensor *sensor,
+                   sensor_type_t sensor_type,
+                   sensor_data_func_t read_func,
+                   void *read_arg,
+                   uint32_t time_ms)
+{
+    struct lis2dw12 *lis2dw12;
+    int rc;
+    os_time_t time_ticks;
+    os_time_t stop_ticks = 0;
+    struct lis2dw12_private_driver_data *pdd;
+
+    /* If the read isn't looking for accel data, don't do anything. */
+    if (!(sensor_type & SENSOR_TYPE_ACCELEROMETER)) {
+        return SYS_EINVAL;
+    }
+
+    lis2dw12 = (struct lis2dw12 *)SENSOR_GET_DEVICE(sensor);
+    pdd = &lis2dw12->pdd;
+
+    undo_interrupt(&lis2dw12->intr);
+
+    if (pdd->interrupt) {
+        return SYS_EBUSY;
+    }
+
+    /* enable data ready interrupt */
+    pdd->interrupt = &lis2dw12->intr;
+
+    rc = enable_interrupt(sensor, LIS2DW12_INT1_CFG_DRDY);
+    if (rc) {
+        goto done;
+    }
+
+    if (time_ms != 0) {
+        rc = os_time_ms_to_ticks(time_ms, &time_ticks);
+        if (rc) {
+            goto done;
+        }
+        stop_ticks = os_time_get() + time_ticks;
+    }
+
+    for (;;) {
+        wait_interrupt(&lis2dw12->intr, pdd->int_num);
+
+        rc = lis2dw12_poll_read(sensor, sensor_type, read_func, read_arg, time_ms);
+        if (rc) {
+            goto done;
+        }
+        
+        if (time_ms != 0 && OS_TIME_TICK_GT(os_time_get(), stop_ticks)) {
+                break;
+        }
+    }
+
+done:
+    /* disable data ready interrupt */
+    pdd->interrupt = NULL;
+    rc = disable_interrupt(sensor, LIS2DW12_INT1_CFG_DRDY);
+
+    return rc;
+}
+
+static int
+lis2dw12_sensor_read(struct sensor *sensor, sensor_type_t type,
+        sensor_data_func_t data_func, void *data_arg, uint32_t timeout)
+{
+    int rc;
+    const struct lis2dw12_cfg *cfg;
+    struct lis2dw12 *lis2dw12;
+    struct sensor_itf *itf;
+
+    /* If the read isn't looking for accel data, don't do anything. */
+    if (!(type & SENSOR_TYPE_ACCELEROMETER)) {
+        rc = SYS_EINVAL;
+        goto err;
+    }
+
+    itf = SENSOR_GET_ITF(sensor);
+
+    if (itf->si_type == SENSOR_ITF_SPI) {
+        
+        rc = hal_spi_disable(sensor->s_itf.si_num);
+        if (rc) {
+            goto err;
+        }
+
+        rc = hal_spi_config(sensor->s_itf.si_num, &spi_lis2dw12_settings);
+        if (rc == EINVAL) {
+            /* If spi is already enabled, for nrf52, it returns -1, We should not
+             * fail if the spi is already enabled
+             */
+            goto err;
+        }
+
+        rc = hal_spi_enable(sensor->s_itf.si_num);
+        if (rc) {
+            goto err;
+        }
+    }
+    
+    lis2dw12 = (struct lis2dw12 *)SENSOR_GET_DEVICE(sensor);
+    cfg = &lis2dw12->cfg;
+
+    if (cfg->read_mode == LIS2DW12_READ_M_POLL) {
+        rc = lis2dw12_poll_read(sensor, type, data_func, data_arg, timeout);
+    } else {
+        rc = lis2dw12_stream_read(sensor, type, data_func, data_arg, timeout);
+    }
+
 err:
     return rc;
 }
@@ -1513,8 +1826,12 @@ lis2dw12_init(struct os_dev *dev, void *arg)
         }
     }
 
+
+    init_interrupt(&lis2dw12->intr, lis2dw12->sensor.s_itf.si_ints);
+    
     lis2dw12->pdd.notify_ctx.snec_sensor = sensor;
     lis2dw12->pdd.registered_mask = 0;
+    lis2dw12->pdd.interrupt = NULL;
 
     rc = init_intpin(lis2dw12, lis2dw12_int_irq_handler, sensor);
     if (rc) {
@@ -1589,12 +1906,24 @@ lis2dw12_config(struct lis2dw12 *lis2dw12, struct lis2dw12_cfg *cfg)
     if (rc) {
         goto err;
     }
-
     
-    rc = lis2dw12_set_offsets(itf, cfg->offset_x, cfg->offset_y, cfg->offset_z);
+    rc = lis2dw12_set_offsets(itf, cfg->offset_x, cfg->offset_y, cfg->offset_z,
+                              cfg->offset_weight);
     if (rc) {
         goto err;
     }
+
+    lis2dw12->cfg.offset_x = cfg->offset_x;
+    lis2dw12->cfg.offset_y = cfg->offset_y;
+    lis2dw12->cfg.offset_z = cfg->offset_z;
+    lis2dw12->cfg.offset_weight = cfg->offset_weight;
+
+    rc = lis2dw12_set_offset_enable(itf, cfg->offset_en);
+    if (rc) {
+        goto err;
+    }
+    
+    lis2dw12->cfg.offset_en = cfg->offset_en;
     
     rc = lis2dw12_set_filter_cfg(itf, LIS2DW12_FILTER_BW_ODR_DIV_2, 0);
     if (rc) {
@@ -1630,32 +1959,41 @@ lis2dw12_config(struct lis2dw12 *lis2dw12, struct lis2dw12_cfg *cfg)
         goto err;
     }
 
-    rc = lis2dw12_write8(itf, LIS2DW12_REG_CTRL_REG7, 0x30);
+    rc = lis2dw12_set_int_enable(itf, cfg->int_enable);
     if (rc) {
         goto err;
     }
 
-    rc = lis2dw12_set_int1_pin_cfg(itf, 0);
+    lis2dw12->cfg.int_enable = cfg->int_enable;
+
+    rc = lis2dw12_set_int1_pin_cfg(itf, cfg->int1_pin_cfg);
     if (rc) {
         goto err;
     }
 
-    rc = lis2dw12_set_int2_pin_cfg(itf, 0);
+    lis2dw12->cfg.int1_pin_cfg = cfg->int1_pin_cfg;
+    
+    rc = lis2dw12_set_int2_pin_cfg(itf, cfg->int2_pin_cfg);
     if (rc) {
         goto err;
     }
 
-    rc = lis2dw12_set_tap_cfg(itf, cfg->tap_cfg);
+    lis2dw12->cfg.int2_pin_cfg = cfg->int2_pin_cfg;
+
+    rc = lis2dw12_set_tap_cfg(itf, &cfg->tap_cfg);
     if (rc) {
         goto err;
     }
     lis2dw12->cfg.tap_cfg = cfg->tap_cfg;
+
+    lis2dw12_write8(itf, 0x34, 0x80);
     
     rc = sensor_set_type_mask(&(lis2dw12->sensor), cfg->mask);
     if (rc) {
         goto err;
     }
 
+    lis2dw12->cfg.read_mode = cfg->read_mode;    
     lis2dw12->cfg.mask = cfg->mask;
 
     return 0;
