@@ -76,7 +76,7 @@
 /* #define HAL_SDADC_MODULE_ENABLED */
 /* #define HAL_SMARTCARD_MODULE_ENABLED */
 /* #define HAL_SMBUS_MODULE_ENABLED */
-/* #define HAL_SPI_MODULE_ENABLED */
+#define HAL_SPI_MODULE_ENABLED
 #define HAL_TIM_MODULE_ENABLED
 /* #define HAL_TSC_MODULE_ENABLED */
 /* #define HAL_UART_MODULE_ENABLED */
@@ -164,7 +164,7 @@
 #define  PREFETCH_ENABLE              1U
 #define  INSTRUCTION_CACHE_ENABLE     0U
 #define  DATA_CACHE_ENABLE            0U
-#define  USE_SPI_CRC                  1U
+#define  USE_SPI_CRC                  0U
 
 /* ########################## Assert Selection ############################## */
 /**
