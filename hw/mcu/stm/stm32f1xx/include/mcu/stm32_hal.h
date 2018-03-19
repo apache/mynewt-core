@@ -38,6 +38,22 @@ extern "C" {
 /* hal_system_start */
 #define STM32_HAL_FLASH_REMAP()
 
+/* hal_spi */
+#include "stm32f1xx.h"
+#include "stm32f1xx_hal_dma.h"
+#include "stm32f1xx_hal_spi.h"
+#include "stm32f1xx_hal_gpio.h"
+#include "stm32f1xx_hal_gpio_ex.h"
+#include "stm32f1xx_hal_rcc.h"
+
+struct stm32_hal_spi_cfg {
+    int ss_pin;                     /* for slave mode */
+    int sck_pin;
+    int miso_pin;
+    int mosi_pin;
+    int irq_prio;
+};
+
 #ifdef __cplusplus
 }
 #endif
