@@ -85,6 +85,6 @@ main(int argc, char **argv)
     tu_suite_set_init_cb((void*)mn_socket_test_init, NULL);
     mn_socket_test_all();
 
-    return 0;
+    return tu_any_failed;
 }
 #endif
