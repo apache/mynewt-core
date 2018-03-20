@@ -20,6 +20,10 @@
 #ifndef H_UTIL_PARSE_
 #define H_UTIL_PARSE_
 
+#include <inttypes.h>
+#include <stdbool.h>
+struct mn_in6_addr;
+
 long long
 parse_ll_bounds(const char *sval, long long min, long long max,
                 int *out_status);
@@ -35,13 +39,32 @@ unsigned long long
 parse_ull(const char *sval, int *out_status);
 
 int
+parse_byte_stream_delim_base(const char *sval, const char *delims, int base,
+                             int max_len, uint8_t *dst, int *out_len);
+
+int
 parse_byte_stream_delim(const char *sval, const char *delims, int max_len,
                         uint8_t *dst, int *out_len);
+
+int
+parse_byte_stream_base(const char *sval, int base, int max_len,
+                       uint8_t *dst, int *out_len);
 
 int
 parse_byte_stream(const char *sval, int max_len, uint8_t *dst, int *out_len);
 
 int
+parse_byte_stream_exact_length_base(const char *sval, int base,
+                                    uint8_t *dst, int len);
+
+int
 parse_byte_stream_exact_length(const char *sval, uint8_t *dst, int len);
+
+bool
+parse_bool(const char *sval, int *out_status);
+
+int
+parse_ip6_net(const char *sval,
+              struct mn_in6_addr *out_addr, uint8_t *out_prefix_len);
 
 #endif

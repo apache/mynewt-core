@@ -25,6 +25,8 @@
 #include <errno.h>
 #include <assert.h>
 #include "os/mynewt.h"
+#include "mn_socket/mn_socket.h"
+#include "parse/parse.h"
 
 /**
  * Determines which numeric base the specified string should be parsed with.
@@ -148,29 +150,14 @@ parse_ull(const char *sval, int *out_status)
     return parse_ull_bounds(sval, 0, ULLONG_MAX, out_status);
 }
 
-/**
- * Parses a stream of bytes with the specified delimiter(s).
- *
- * @param sval                  The string to parse.
- * @param delims                String containing delimiters; each character
- *                                  can act as a delimiter.
- * @param max_len               The maximum number of bytes to write.
- * @param dst                   The destination buffer to write bytes to.
- * @param out_len               Written on success; total number of bytes
- *                                  written to the destination buffer.
- *
- * @return                      0 on success;
- *                              SYS_EINVAL on invalid byte stream;
- *                              SYS_ERANGE if result only partially written to
- *                                  buffer due to insufficient space.
- */
 int
-parse_byte_stream_delim(const char *sval, const char *delims, int max_len,
-                        uint8_t *dst, int *out_len)
+parse_byte_stream_delim_base(const char *sval, const char *delims, int base,
+                             int max_len, uint8_t *dst, int *out_len)
 {
     unsigned long ul;
     const char *cur;
     char *endptr;
+    int cur_base;
     int i;
 
     i = 0;
@@ -180,7 +167,13 @@ parse_byte_stream_delim(const char *sval, const char *delims, int max_len,
             return SYS_ERANGE;
         }
 
-        ul = strtoul(cur, &endptr, parse_num_base(cur));
+        if (base == 0) {
+            cur_base = parse_num_base(cur);
+        } else {
+            cur_base = base;
+        }
+
+        ul = strtoul(cur, &endptr, cur_base);
         if (endptr == cur) {
             return SYS_EINVAL;
         }
@@ -211,6 +204,38 @@ parse_byte_stream_delim(const char *sval, const char *delims, int max_len,
 }
 
 /**
+ * Parses a stream of bytes with the specified delimiter(s).
+ *
+ * @param sval                  The string to parse.
+ * @param delims                String containing delimiters; each character
+ *                                  can act as a delimiter.
+ * @param max_len               The maximum number of bytes to write.
+ * @param dst                   The destination buffer to write bytes to.
+ * @param out_len               Written on success; total number of bytes
+ *                                  written to the destination buffer.
+ *
+ * @return                      0 on success;
+ *                              SYS_EINVAL on invalid byte stream;
+ *                              SYS_ERANGE if result only partially written to
+ *                                  buffer due to insufficient space.
+ */
+int
+parse_byte_stream_delim(const char *sval, const char *delims, int max_len,
+                        uint8_t *dst, int *out_len)
+{
+    return parse_byte_stream_delim_base(sval, delims, max_len, 0, dst,
+                                        out_len);
+}
+
+int
+parse_byte_stream_base(const char *sval, int base, int max_len,
+                       uint8_t *dst, int *out_len)
+{
+    return parse_byte_stream_delim_base(sval, ":-", base, max_len, dst,
+                                        out_len);
+}
+
+/**
  * Parses a stream of bytes using ':' or '-' as delimiters.
  *
  * @param sval                  The string to parse.
@@ -227,7 +252,26 @@ parse_byte_stream_delim(const char *sval, const char *delims, int max_len,
 int
 parse_byte_stream(const char *sval, int max_len, uint8_t *dst, int *out_len)
 {
-    return parse_byte_stream_delim(sval, ":-", max_len, dst, out_len);
+    return parse_byte_stream_base(sval, 0, max_len, dst, out_len);
+}
+
+int
+parse_byte_stream_exact_length_base(const char *sval, int base,
+                                    uint8_t *dst, int len)
+{
+    int actual_len;
+    int rc;
+
+    rc = parse_byte_stream_base(sval, base, len, dst, &actual_len);
+    if (rc != 0) {
+        return rc;
+    }
+
+    if (actual_len != len) {
+        return SYS_EINVAL;
+    }
+
+    return 0;
 }
 
 /**
@@ -247,16 +291,62 @@ parse_byte_stream(const char *sval, int max_len, uint8_t *dst, int *out_len)
 int
 parse_byte_stream_exact_length(const char *sval, uint8_t *dst, int len)
 {
-    int actual_len;
+    return parse_byte_stream_exact_length_base(sval, 0, dst, len);
+}
+
+bool
+parse_bool(const char *sval, int *out_status)
+{
+    if (strcasecmp(sval, "false") == 0) {
+        *out_status = 0;
+        return false;
+    } else if (strcasecmp(sval, "true") == 0) {
+        *out_status = 0;
+        return true;
+    } else {
+        return parse_ll_bounds(sval, 0, 1, out_status);
+    }
+}
+
+int
+parse_ip6_net(const char *sval,
+              struct mn_in6_addr *out_addr, uint8_t *out_prefix_len)
+{
+    struct mn_in6_addr addr;
+    const char *slash;
+    uint8_t prefix_len;
+    char buf[MN_INET6_ADDRSTRLEN];
     int rc;
 
-    rc = parse_byte_stream(sval, len, dst, &actual_len);
+    slash = strchr(sval, '/');
+    if (slash == NULL) {
+        return SYS_EINVAL;
+    }
+    if (slash - sval > MN_INET6_ADDRSTRLEN) {
+        return SYS_EINVAL;
+    }
+
+    /* Copy the address portion of the network string so that we can
+     * null-terminate it.
+     */
+    memcpy(buf, sval, slash - sval);
+    buf[slash - sval] = '\0';
+
+    rc = mn_inet_pton(MN_AF_INET6, buf, &addr);
+    if (rc != 1) {
+        return SYS_EINVAL;
+    }
+
+    prefix_len = parse_ull_bounds(slash + 1, 0, 128, &rc);
     if (rc != 0) {
         return rc;
     }
 
-    if (actual_len != len) {
-        return SYS_EINVAL;
+    if (out_addr != NULL) {
+        *out_addr = addr;
+    }
+    if (out_prefix_len != NULL) {
+        *out_prefix_len = prefix_len;
     }
 
     return 0;
