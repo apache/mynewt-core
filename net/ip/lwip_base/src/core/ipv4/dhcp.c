@@ -736,7 +736,7 @@ dhcp_start(struct netif *netif)
 
   /* no DHCP client attached yet? */
   if (dhcp == NULL) {
-    LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_start(): starting new DHCP client\n"));
+    LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_start(): mallocing new DHCP client\n"));
     dhcp = (struct dhcp *)mem_malloc(sizeof(struct dhcp));
     if (dhcp == NULL) {
       LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_start(): could not allocate dhcp\n"));
@@ -1500,7 +1500,7 @@ again:
   offset_max = options_idx_max;
   options = (u8_t*)q->payload;
   /* at least 1 byte to read and no end marker, then at least 3 bytes to read? */
-  while ((q != NULL) && (options[offset] != DHCP_OPTION_END) && (offset < offset_max)) {
+  while ((q != NULL) && (offset < offset_max) && (options[offset] != DHCP_OPTION_END)) {
     u8_t op = options[offset];
     u8_t len;
     u8_t decode_len = 0;
@@ -1617,7 +1617,7 @@ decode_next:
       offset_max -= q->len;
       if ((offset < offset_max) && offset_max) {
         q = q->next;
-        LWIP_ASSERT("next pbuf was null", q);
+        LWIP_ERROR("next pbuf was null", q != NULL, return ERR_VAL;);
         options = (u8_t*)q->payload;
       } else {
         /* We've run out of bytes, probably no end marker. Don't proceed. */
@@ -1832,7 +1832,7 @@ dhcp_create_msg(struct netif *netif, struct dhcp *dhcp, u8_t message_type)
            (dhcp->p_out->len >= sizeof(struct dhcp_msg)));
 
   /* DHCP_REQUEST should reuse 'xid' from DHCPOFFER */
-  if (message_type != DHCP_REQUEST) {
+  if ((message_type != DHCP_REQUEST) || (dhcp->state == DHCP_STATE_REBOOTING)) {
     /* reuse transaction identifier in retransmissions */
     if (dhcp->tries == 0) {
 #if DHCP_CREATE_RAND_XID && defined(LWIP_RAND)
@@ -1942,7 +1942,8 @@ dhcp_supplied_address(const struct netif *netif)
 {
   if ((netif != NULL) && (netif_dhcp_data(netif) != NULL)) {
     struct dhcp* dhcp = netif_dhcp_data(netif);
-    return (dhcp->state == DHCP_STATE_BOUND) || (dhcp->state == DHCP_STATE_RENEWING);
+    return (dhcp->state == DHCP_STATE_BOUND) || (dhcp->state == DHCP_STATE_RENEWING) ||
+           (dhcp->state == DHCP_STATE_REBINDING);
   }
   return 0;
 }
