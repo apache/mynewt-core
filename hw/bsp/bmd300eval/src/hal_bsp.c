@@ -19,9 +19,9 @@
 
 #include <stdint.h>
 #include <stddef.h>
-#include <nrf52.h>
 #include <assert.h>
 #include "os/mynewt.h"
+#include "nrfx.h"
 #include "flash_map/flash_map.h"
 #include "hal/hal_bsp.h"
 #include "hal/hal_system.h"

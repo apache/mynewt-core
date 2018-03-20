@@ -20,8 +20,8 @@
 #include <stddef.h>
 #include <assert.h>
 #include "os/mynewt.h"
+#include "nrfx.h"
 #include "bsp/bsp.h"
-#include <nrf52.h>
 #include "hal/hal_bsp.h"
 #include "hal/hal_system.h"
 #include "hal/hal_flash.h"
