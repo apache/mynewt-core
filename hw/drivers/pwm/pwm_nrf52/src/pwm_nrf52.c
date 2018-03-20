@@ -139,8 +139,8 @@ static void handler_1(nrfx_pwm_evt_type_t event_type)
 {
     switch (event_type)
     {
-    case NRF_DRV_PWM_EVT_SIGNAL_END_SEQ0 :
-    case NRF_DRV_PWM_EVT_SIGNAL_END_SEQ1 :
+    case NRFX_PWM_EVT_END_SEQ0 :
+    case NRFX_PWM_EVT_END_SEQ1 :
         instances[1].cycle_handler(instances[1].cycle_data);
         break;
 
@@ -161,8 +161,8 @@ static void handler_2(nrfx_pwm_evt_type_t event_type)
 {
     switch (event_type)
     {
-    case NRF_DRV_PWM_EVT_SIGNAL_END_SEQ0 :
-    case NRF_DRV_PWM_EVT_SIGNAL_END_SEQ1 :
+    case NRFX_PWM_EVT_END_SEQ0 :
+    case NRFX_PWM_EVT_END_SEQ1 :
         instances[2].cycle_handler(instances[2].cycle_data);
         break;
 
@@ -184,8 +184,8 @@ static void handler_3(nrfx_pwm_evt_type_t event_type)
 {
     switch (event_type)
     {
-    case NRF_DRV_PWM_EVT_SIGNAL_END_SEQ0 :
-    case NRF_DRV_PWM_EVT_SIGNAL_END_SEQ1 :
+    case NRFX_PWM_EVT_END_SEQ0 :
+    case NRFX_PWM_EVT_END_SEQ1 :
         instances[3].cycle_handler(instances[3].cycle_data);
         break;
 

@@ -119,7 +119,7 @@ static struct pwm_dev os_bsp_pwm2;
 int pwm2_idx;
 #endif
 #if MYNEWT_VAL(PWM_3)
-static struct pwm_dev os_bsp_pwm2;
+static struct pwm_dev os_bsp_pwm3;
 int pwm3_idx;
 #endif
 #if MYNEWT_VAL(SOFT_PWM)
@@ -272,7 +272,7 @@ assert(rc == 0);
 #if MYNEWT_VAL(PWM_3)
     pwm3_idx = 3;
     rc = os_dev_create((struct os_dev *) &os_bsp_pwm3,
-                       "pwm2",
+                       "pwm3",
                        OS_DEV_INIT_KERNEL,
                        OS_DEV_INIT_PRIO_DEFAULT,
                        nrf52_pwm_dev_init,
