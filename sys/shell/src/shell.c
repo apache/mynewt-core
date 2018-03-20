@@ -914,6 +914,9 @@ shell_cmd_register(const struct shell_cmd *sc)
 
     compat_commands[num_compat_commands].sc_cmd = sc->sc_cmd;
     compat_commands[num_compat_commands].sc_cmd_func = sc->sc_cmd_func;
+#if MYNEWT_VAL(SHELL_CMD_HELP)
+    compat_commands[num_compat_commands].help = sc->help;
+#endif
     ++num_compat_commands;
     return 0;
 }
