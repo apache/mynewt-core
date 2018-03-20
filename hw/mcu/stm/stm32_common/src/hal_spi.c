@@ -442,7 +442,7 @@ err:
 }
 
 static int
-stm32f4_spi_resolve_prescaler(uint8_t spi_num, uint32_t baudrate, uint32_t *prescaler)
+stm32_spi_resolve_prescaler(uint8_t spi_num, uint32_t baudrate, uint32_t *prescaler)
 {
     uint32_t candidate_br;
     uint32_t apbfreq;
@@ -587,7 +587,6 @@ hal_spi_config(int spi_num, struct hal_spi_settings *settings)
         spi->handle.Init.Mode = SPI_MODE_MASTER;
     } else {
         spi->handle.Init.NSS = SPI_NSS_SOFT;
-        //spi->handle.Init.NSSPMode = SPI_NSS_PULSE_ENABLE;
         spi->handle.Init.Mode = SPI_MODE_SLAVE;
     }
 
@@ -770,20 +769,21 @@ hal_spi_config(int spi_num, struct hal_spi_settings *settings)
         goto err;
     }
 
-    /* TODO: rename or move to stm32_hal specific function */
-    rc = stm32f4_spi_resolve_prescaler(spi_num, settings->baudrate * 1000,
-      &prescaler);
+    rc = stm32_spi_resolve_prescaler(spi_num, settings->baudrate * 1000, &prescaler);
     if (rc != 0) {
         goto err;
     }
 
     init->BaudRatePrescaler = prescaler;
 
-    /* defaults */
+    /* Add default values */
     init->Direction = SPI_DIRECTION_2LINES;
     init->TIMode = SPI_TIMODE_DISABLE;
     init->CRCCalculation = SPI_CRCCALCULATION_DISABLE;
     init->CRCPolynomial = 1;
+#ifdef SPI_NSS_PULSE_DISABLE
+    init->NSSPMode = SPI_NSS_PULSE_DISABLE;
+#endif
 
     irq = stm32_resolve_spi_irq(&spi->handle);
     NVIC_SetPriority(irq, cfg->irq_prio);
@@ -798,8 +798,7 @@ hal_spi_config(int spi_num, struct hal_spi_settings *settings)
     if (spi->slave) {
         hal_spi_slave_set_def_tx_val(spi_num, 0);
         rc = hal_gpio_irq_init(cfg->ss_pin, spi_ss_isr, spi, HAL_GPIO_TRIG_BOTH,
-          HAL_GPIO_PULL_UP);
-        /* FIXME */
+                               HAL_GPIO_PULL_UP);
         spi_ss_isr(spi);
     }
     __HAL_ENABLE_INTERRUPTS(sr);
