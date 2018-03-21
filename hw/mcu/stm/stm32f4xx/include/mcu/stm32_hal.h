@@ -58,6 +58,11 @@ struct stm32_hal_spi_cfg {
     int irq_prio;
 };
 
+/* hal_i2c */
+#include "stm32f4xx_hal_i2c.h"
+#include "mcu/stm32f4xx_mynewt_hal.h"
+#include "mcu/stm32f4_bsp.h"
+
 #ifdef __cplusplus
 }
 #endif
