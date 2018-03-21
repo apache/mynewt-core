@@ -89,6 +89,8 @@ static void tcp_parseopt(struct tcp_pcb *pcb);
 static void tcp_listen_input(struct tcp_pcb_listen *pcb);
 static void tcp_timewait_input(struct tcp_pcb *pcb);
 
+static int tcp_input_delayed_close(struct tcp_pcb *pcb);
+
 /**
  * The initial input processing of TCP. It verifies the TCP header, demultiplexes
  * the segment between the PCBs and passes it on to tcp_process(), which implements
@@ -404,17 +406,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
           }
           recv_acked = 0;
         }
-        if (recv_flags & TF_CLOSED) {
-          /* The connection has been closed and we will deallocate the
-             PCB. */
-          if (!(pcb->flags & TF_RXCLOSED)) {
-            /* Connection closed although the application has only shut down the
-               tx side: call the PCB's err callback and indicate the closure to
-               ensure the application doesn't continue using the PCB. */
-            TCP_EVENT_ERR(pcb->state, pcb->errf, pcb->callback_arg, ERR_CLSD);
-          }
-          tcp_pcb_remove(&tcp_active_pcbs, pcb);
-          memp_free(MEMP_TCP_PCB, pcb);
+        if (tcp_input_delayed_close(pcb)) {
           goto aborted;
         }
 #if TCP_QUEUE_OOSEQ && LWIP_WND_SCALE
@@ -488,6 +480,9 @@ tcp_input(struct pbuf *p, struct netif *inp)
         }
 
         tcp_input_pcb = NULL;
+        if (tcp_input_delayed_close(pcb)) {
+          goto aborted;
+        }
         /* Try to send something out. */
         tcp_output(pcb);
 #if TCP_INPUT_DEBUG
@@ -530,6 +525,30 @@ dropped:
   TCP_STATS_INC(tcp.drop);
   MIB2_STATS_INC(mib2.tcpinerrs);
   pbuf_free(p);
+}
+
+/** Called from tcp_input to check for TF_CLOSED flag. This results in closing
+ * and deallocating a pcb at the correct place to ensure noone references it
+ * any more.
+ * @returns 1 if the pcb has been closed and deallocated, 0 otherwise
+ */
+static int
+tcp_input_delayed_close(struct tcp_pcb *pcb)
+{
+  if (recv_flags & TF_CLOSED) {
+    /* The connection has been closed and we will deallocate the
+        PCB. */
+    if (!(pcb->flags & TF_RXCLOSED)) {
+      /* Connection closed although the application has only shut down the
+          tx side: call the PCB's err callback and indicate the closure to
+          ensure the application doesn't continue using the PCB. */
+      TCP_EVENT_ERR(pcb->state, pcb->errf, pcb->callback_arg, ERR_CLSD);
+    }
+    tcp_pcb_remove(&tcp_active_pcbs, pcb);
+    memp_free(MEMP_TCP_PCB, pcb);
+    return 1;
+  }
+  return 0;
 }
 
 /**
@@ -1749,11 +1768,11 @@ tcp_parseopt(struct tcp_pcb *pcb)
           LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_parseopt: bad length\n"));
           return;
         }
+        /* An WND_SCALE option with the right option length. */
+        data = tcp_getoptbyte();
         /* If syn was received with wnd scale option,
            activate wnd scale opt, but only if this is not a retransmission */
         if ((flags & TCP_SYN) && !(pcb->flags & TF_WND_SCALE)) {
-          /* An WND_SCALE option with the right option length. */
-          data = tcp_getoptbyte();
           pcb->snd_scale = data;
           if (pcb->snd_scale > 14U) {
             pcb->snd_scale = 14U;
