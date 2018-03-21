@@ -1,0 +1,23 @@
+To upgrade lwIP within the apache-mynewt-core repo:
+
+1. Delete the old version of lwIP.  Remove everything in the `net/ip/lwip_base`
+directory, *except* `MYNEWT` (this file) and `pkg.yml`:
+
+    rm -r * && git checkout MYNEWT pkg.yml
+
+2. Copy the lwIP repo contents into this directory (adjust source directory as
+needed).
+
+    cp -r ~/repos/lwip/* .
+
+3. Move the `src/include` directory to the top-level:
+
+    mv src/include .
+
+4. Delete the Windows-only makefsdata app:
+
+    rm -r src/apps/httpd/makefsdata
+
+5. Delete the pppoe files (not Apache-license-compatible):
+
+    rm include/netif/ppp/pppoe.h src/netif/ppp/pppoe.c 
