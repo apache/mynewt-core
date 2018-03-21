@@ -82,6 +82,15 @@ extern "C" {
 #define LIS2DW12_REG_OUT_Z_L                 0x2C
 #define LIS2DW12_REG_OUT_Z_H                 0x2D
 
+#define LIS2DW12_REG_FIFO_CTRL               0x2E
+#define LIS2DW12_FIFO_CTRL_FMODE       (0x7 << 5)
+#define LIS2DW12_FIFO_CTRL_FTH             (0x1F)
+
+#define LIS2DW12_REG_FIFO_SAMPLES            0x2F
+#define LIS2DW12_FIFO_SAMPLES_FTH        (1 << 7)
+#define LIS2DW12_FIFO_SAMPLES_OVR        (1 << 6)
+#define LIS2DW12_FIFO_SAMPLES              (0x3F)
+    
 #define LIS2DW12_REG_TAP_THS_X               0x30
 #define LIS2DW12_TAP_THS_X_4D_EN         (1 << 7)
 #define LIS2DW12_TAP_THS_X_6D_THS      (0x3 << 5)

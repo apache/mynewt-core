@@ -106,6 +106,14 @@ enum lis2dw12_tap_priority {
     LIS2DW12_TAP_PRIOR_ZXY = 6
 };
 
+enum lis2dw12_fifo_mode {
+    LIS2DW12_FIFO_M_BYPASS               = 0,
+    LIS2DW12_FIFO_M_FIFO                 = 1,
+    LIS2DW12_FIFO_M_CONTINUOUS_TO_FIFO   = 3,
+    LIS2DW12_FIFO_M_BYPASS_TO_CONTINUOUS = 4,
+    LIS2DW12_FIFO_M_CONTINUOUS           = 6
+};
+    
 enum lis2dw12_read_mode {
     LIS2DW12_READ_M_POLL = 0,
     LIS2DW12_READ_M_STREAM = 1,
@@ -153,7 +161,11 @@ struct lis2dw12_cfg {
     uint8_t int2_pin_cfg;
     uint8_t int_enable;
 
+    enum lis2dw12_fifo_mode fifo_mode;
+    uint8_t fifo_threshold;
+    
     enum lis2dw12_read_mode read_mode;
+    uint8_t stream_read_interrupt;
     
     sensor_type_t mask;
 };
@@ -451,6 +463,25 @@ int lis2dw12_clear_int(struct sensor_itf *itf, uint8_t *src);
  * @return 0 on success, non-zero on failure
  */
 int lis2dw12_get_int_src(struct sensor_itf *itf, uint8_t *status);
+
+/**
+ * Setup FIFO
+ *
+ * @param the sensor interface
+ * @param FIFO mode to setup
+ * @patam Threshold to set for FIFO
+ * @return 0 on success, non-zero on failure
+ */
+int lis2dw12_set_fifo_cfg(struct sensor_itf *itf, enum lis2dw12_fifo_mode mode, uint8_t fifo_ths);
+
+/**
+ * Get Number of Samples in FIFO
+ *
+ * @param the sensor interface
+ * @patam Pointer to return number of samples in
+ * @return 0 on success, non-zero on failure
+ */
+int lis2dw12_get_fifo_samples(struct sensor_itf *itf, uint8_t *samples);
     
 /**
  * Run Self test on sensor

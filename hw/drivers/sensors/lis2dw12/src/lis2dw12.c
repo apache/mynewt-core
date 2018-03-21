@@ -1035,6 +1035,46 @@ int lis2dw12_get_freefall(struct sensor_itf *itf, uint8_t *dur, uint8_t *ths)
     return 0;
 }
 
+/**
+ * Setup FIFO
+ *
+ * @param the sensor interface
+ * @param FIFO mode to setup
+ * @patam Threshold to set for FIFO
+ * @return 0 on success, non-zero on failure
+ */
+int lis2dw12_set_fifo_cfg(struct sensor_itf *itf, enum lis2dw12_fifo_mode mode, uint8_t fifo_ths)
+{
+    uint8_t reg = 0;
+
+    reg |= fifo_ths & LIS2DW12_FIFO_CTRL_FTH;
+    reg |= (mode & 0x7) << 5;
+
+    return lis2dw12_write8(itf, LIS2DW12_REG_FIFO_CTRL, reg);
+}
+
+/**
+ * Get Number of Samples in FIFO
+ *
+ * @param the sensor interface
+ * @patam Pointer to return number of samples in
+ * @return 0 on success, non-zero on failure
+ */
+int lis2dw12_get_fifo_samples(struct sensor_itf *itf, uint8_t *samples)
+{
+    uint8_t reg;
+    int rc;
+
+    rc = lis2dw12_read8(itf, LIS2DW12_REG_FIFO_SAMPLES, &reg);
+    if (rc) {
+        return rc;
+    }
+
+    *samples = reg & LIS2DW12_FIFO_SAMPLES;
+
+    return 0;
+}
+
 
 /**
  * Set interrupt pin configuration for interrupt 1
@@ -1329,8 +1369,7 @@ enable_interrupt(struct sensor * sensor, uint8_t int_to_enable)
     
     /* if no interrupts are currently in use enable int pin */
     if (pdd->int_enable == 0) {
-        hal_gpio_irq_enable(lis2dw12->sensor.s_itf.si_ints[lis2dw12->pdd.int_num]
-                            .host_pin);
+        hal_gpio_irq_enable(itf->si_ints[pdd->int_num].host_pin);
 
         rc = lis2dw12_set_int_enable(itf, 1);
         if (rc) {
@@ -1371,8 +1410,7 @@ disable_interrupt(struct sensor * sensor, uint8_t int_to_disable)
     
     /* disable int pin */
     if (pdd->int_enable == 0) {
-        hal_gpio_irq_disable(lis2dw12->sensor.s_itf.si_ints[lis2dw12->pdd.int_num]
-                             .host_pin);
+        hal_gpio_irq_disable(itf->si_ints[pdd->int_num].host_pin);
            
         rc = lis2dw12_set_int_enable(itf, 0);
         if (rc) {
@@ -1446,33 +1484,14 @@ err:
     return rc;
 }
 
-/**
- * Do accelerometer polling reads
- *
- * @param The sensor ptr
- * @param The sensor type
- * @param The function pointer to invoke for each accelerometer reading.
- * @param The opaque pointer that will be passed in to the function.
- * @param If non-zero, how long the stream should run in milliseconds.
- *
- * @return 0 on success, non-zero on failure.
- */
-int
-lis2dw12_poll_read(struct sensor * sensor, sensor_type_t sensor_type,
-                 sensor_data_func_t data_func, void * data_arg,
-                 uint32_t timeout)
+static int lis2dw12_do_read(struct sensor *sensor, sensor_data_func_t data_func,
+                            void * data_arg)
 {
     struct sensor_accel_data sad;
     struct sensor_itf *itf;
     int16_t x, y ,z;
     float fx, fy ,fz;
     int rc;
-
-    /* If the read isn't looking for accel data, don't do anything. */
-    if (!(sensor_type & SENSOR_TYPE_ACCELEROMETER)) {
-        rc = SYS_EINVAL;
-        goto err;
-    }
 
     itf = SENSOR_GET_ITF(sensor);
 
@@ -1504,7 +1523,31 @@ lis2dw12_poll_read(struct sensor * sensor, sensor_type_t sensor_type,
 
     return 0;
 err:
-    return rc;
+    return rc;  
+}
+
+/**
+ * Do accelerometer polling reads
+ *
+ * @param The sensor ptr
+ * @param The sensor type
+ * @param The function pointer to invoke for each accelerometer reading.
+ * @param The opaque pointer that will be passed in to the function.
+ * @param If non-zero, how long the stream should run in milliseconds.
+ *
+ * @return 0 on success, non-zero on failure.
+ */
+int
+lis2dw12_poll_read(struct sensor * sensor, sensor_type_t sensor_type,
+                 sensor_data_func_t data_func, void * data_arg,
+                 uint32_t timeout)
+{
+    /* If the read isn't looking for accel data, don't do anything. */
+    if (!(sensor_type & SENSOR_TYPE_ACCELEROMETER)) {
+        return SYS_EINVAL;
+    }
+
+    return lis2dw12_do_read(sensor, data_func, data_arg);
 }
 
 int
@@ -1515,10 +1558,12 @@ lis2dw12_stream_read(struct sensor *sensor,
                    uint32_t time_ms)
 {
     struct lis2dw12 *lis2dw12;
+    struct sensor_itf *itf;
     int rc;
     os_time_t time_ticks;
     os_time_t stop_ticks = 0;
     struct lis2dw12_private_driver_data *pdd;
+    uint8_t fifo_samples;
 
     /* If the read isn't looking for accel data, don't do anything. */
     if (!(sensor_type & SENSOR_TYPE_ACCELEROMETER)) {
@@ -1526,6 +1571,7 @@ lis2dw12_stream_read(struct sensor *sensor,
     }
 
     lis2dw12 = (struct lis2dw12 *)SENSOR_GET_DEVICE(sensor);
+    itf = SENSOR_GET_ITF(sensor);
     pdd = &lis2dw12->pdd;
 
     undo_interrupt(&lis2dw12->intr);
@@ -1534,10 +1580,10 @@ lis2dw12_stream_read(struct sensor *sensor,
         return SYS_EBUSY;
     }
 
-    /* enable data ready interrupt */
+    /* enable interrupt */
     pdd->interrupt = &lis2dw12->intr;
 
-    rc = enable_interrupt(sensor, LIS2DW12_INT1_CFG_DRDY);
+    rc = enable_interrupt(sensor, lis2dw12->cfg.stream_read_interrupt);
     if (rc) {
         goto done;
     }
@@ -1552,10 +1598,18 @@ lis2dw12_stream_read(struct sensor *sensor,
 
     for (;;) {
         wait_interrupt(&lis2dw12->intr, pdd->int_num);
+        fifo_samples = 1;
+        
+        while(fifo_samples > 0) {
+            rc = lis2dw12_do_read(sensor, read_func, read_arg);
+            if (rc) {
+                goto done;
+            }
 
-        rc = lis2dw12_poll_read(sensor, sensor_type, read_func, read_arg, time_ms);
-        if (rc) {
-            goto done;
+            rc = lis2dw12_get_fifo_samples(itf, &fifo_samples);
+            if (rc) {
+                goto done;
+            }
         }
         
         if (time_ms != 0 && OS_TIME_TICK_GT(os_time_get(), stop_ticks)) {
@@ -1564,9 +1618,9 @@ lis2dw12_stream_read(struct sensor *sensor,
     }
 
 done:
-    /* disable data ready interrupt */
+    /* disable interrupt */
     pdd->interrupt = NULL;
-    rc = disable_interrupt(sensor, LIS2DW12_INT1_CFG_DRDY);
+    rc = disable_interrupt(sensor, lis2dw12->cfg.stream_read_interrupt);
 
     return rc;
 }
@@ -1959,6 +2013,14 @@ lis2dw12_config(struct lis2dw12 *lis2dw12, struct lis2dw12_cfg *cfg)
         goto err;
     }
 
+    rc = lis2dw12_set_fifo_cfg(itf, cfg->fifo_mode, cfg->fifo_threshold);
+    if (rc) {
+        goto err;
+    }
+
+    lis2dw12->cfg.fifo_mode = cfg->fifo_mode;
+    lis2dw12->cfg.fifo_threshold = cfg->fifo_threshold;
+    
     rc = lis2dw12_set_int_enable(itf, cfg->int_enable);
     if (rc) {
         goto err;
@@ -1993,6 +2055,7 @@ lis2dw12_config(struct lis2dw12 *lis2dw12, struct lis2dw12_cfg *cfg)
         goto err;
     }
 
+    lis2dw12->cfg.stream_read_interrupt = cfg->stream_read_interrupt;
     lis2dw12->cfg.read_mode = cfg->read_mode;    
     lis2dw12->cfg.mask = cfg->mask;
 
