@@ -43,12 +43,12 @@ static inline float exponential_out(float step, float max_steps, float max_val)
 {
 	return (step == max_steps) ?
         max_val :
-        max_val - pow(max_val, 1.0 - (float)step/max_steps);
+        max_val - pow(max_val, 1.0f - (float)step/max_steps);
 }
 
 static inline float exponential_io(float step, float max_steps, float max_val)
 {
-	float ratio = ( (float)step / (max_steps / 2.0) );
+	float ratio = ( (float)step / (max_steps / 2.0f) );
 
 	if (step == 0)
 		return 0;
@@ -57,10 +57,10 @@ static inline float exponential_io(float step, float max_steps, float max_val)
 		return max_val;
 
 	if (ratio < 1)
-        return powf((float)max_val/2.0, (float)step/(max_steps/2.0));
+        return powf((float)max_val/2.0f, (float)step/(max_steps/2.0f));
 
-	return max_val/2.0 + max_val/2.0 -
-        pow(max_val/2.0, 1.0 - ((float)step - (max_steps / 2)) /
+	return max_val/2.0f + max_val/2.0f -
+        pow(max_val/2.0f, 1.0f - ((float)step - (max_steps / 2)) /
             (max_steps / 2) );
 }
 
@@ -76,18 +76,18 @@ static inline float quadratic_out(float step, float max_steps, float max_val)
 {
     float ratio = step / max_steps;
 
-	return -max_val * ratio * (ratio - 2.0);
+	return -max_val * ratio * (ratio - 2.0f);
 }
 
 static inline float quadratic_io(float step, float max_steps, float max_val)
 {
-	float ratio = step / (max_steps / 2.0);
+	float ratio = step / (max_steps / 2.0f);
 
 	if (ratio < 1)
-		return max_val / 2.0 * pow(ratio, 2);
+		return max_val / 2.0f * pow(ratio, 2);
 
-    ratio = (step - (max_steps/2.0)) / (max_steps/2.0);
-    return (max_val / 2.0) - (max_val / 2.0) * ratio * (ratio - 2.0);
+    ratio = (step - (max_steps/2.0f)) / (max_steps/2.0f);
+    return (max_val / 2.0f) - (max_val / 2.0f) * ratio * (ratio - 2.0f);
 }
 
 /* Cubic */
@@ -100,14 +100,14 @@ static inline float cubic_in(float step, float max_steps, float max_val)
 
 static inline float cubic_out(float step, float max_steps, float max_val)
 {
-	float ratio = step / (max_steps - 1.0);
+	float ratio = step / (max_steps - 1.0f);
 
 	return max_val * (pow(ratio, 3) + 1);
 }
 
 static inline float cubic_io(float step, float max_steps, float max_val)
 {
-	float ratio = step / (max_steps / 2.0);
+	float ratio = step / (max_steps / 2.0f);
 
 	if (ratio < 1)
 		return max_val / 2 * pow(ratio, 3);
@@ -125,14 +125,14 @@ static inline float quartic_in(float step, float max_steps, float max_val)
 
 static inline float quartic_out(float step, float max_steps, float max_val)
 {
-	float ratio = (step / max_steps) - 1.0;
+	float ratio = (step / max_steps) - 1.0f;
 
 	return max_val + max_val * pow(ratio, 5);
 }
 
 static inline float quartic_io(float step, float max_steps, float max_val)
 {
-	float ratio = step / (max_steps / 2.0);
+	float ratio = step / (max_steps / 2.0f);
 
 	if (ratio < 1)
 		return max_val / 2 * pow(ratio, 4);
@@ -150,14 +150,14 @@ static inline float quintic_in(float step, float max_steps, float max_val)
 
 static inline float quintic_out(float step, float max_steps, float max_val)
 {
-	float ratio = (step / max_steps) - 1.0;
+	float ratio = (step / max_steps) - 1.0f;
 
 	return max_val + max_val * pow(ratio, 5);
 }
 
 static inline float quintic_io(float step, float max_steps, float max_val)
 {
-	float ratio = step / (max_steps / 2.0);
+	float ratio = step / (max_steps / 2.0f);
 
 	if (ratio < 1)
 		return max_val / 2 * pow(ratio, 5);
@@ -176,13 +176,13 @@ static inline float circular_in(float step, float max_steps, float max_val)
 
 static inline float circular_out(float step, float max_steps, float max_val)
 {
-	float ratio = (step - max_steps) / (max_steps - 1.0);
+	float ratio = (step - max_steps) / (max_steps - 1.0f);
 	return max_val * sqrt(1 - pow(ratio, 2));
 }
 
 static inline float circular_io(float step, float max_steps, float max_val)
 {
-	float ratio = step / (max_steps / 2.0);
+	float ratio = step / (max_steps / 2.0f);
 
 	if (ratio < 1)
 		return - max_val / 2 * (sqrt(1 - pow(ratio, 2)) - 1);
@@ -211,22 +211,22 @@ static inline float bounce_out(float step, float max_steps, float max_val)
 {
 	float ratio = step / max_steps;
 
-	if (ratio < (1 / 2.75)) {
-		return max_val * (7.5625 * ratio * ratio);
+	if (ratio < (1 / 2.75f)) {
+		return max_val * (7.5625f * ratio * ratio);
 	}
 
-    if (ratio < (2 / 2.75)) {
-        ratio -= 1.5 / 2.75;
-		return max_val * (7.5625 * ratio * ratio + .75);
+    if (ratio < (2 / 2.75f)) {
+        ratio -= 1.5f / 2.75f;
+		return max_val * (7.5625f * ratio * ratio + .75f);
     }
 
-    if (ratio < (2.5 / 2.75)) {
-        ratio -= 2.25 / 2.75;
-		return max_val * (7.5625 * ratio * ratio + .9375);
+    if (ratio < (2.5f / 2.75f)) {
+        ratio -= 2.25f / 2.75f;
+		return max_val * (7.5625f * ratio * ratio + .9375f);
 	}
 
-    ratio -= 2.625 / 2.75;
-    return max_val * (7.5625 * ratio * ratio + .984375);
+    ratio -= 2.625f / 2.75f;
+    return max_val * (7.5625f * ratio * ratio + .984375f);
 }
 
 static inline float bounce_in(float step, float max_steps, float max_val)
@@ -237,10 +237,10 @@ static inline float bounce_in(float step, float max_steps, float max_val)
 static inline float bounce_io(float step, float max_steps, float max_val)
 {
 	if (step < max_steps / 2)
-		return bounce_in(step * 2, max_steps, max_val) * 0.5;
+		return bounce_in(step * 2, max_steps, max_val) * 0.5f;
 	else
 		return bounce_out(step * 2 - max_steps, max_steps, max_val) *
-            0.5 + max_val * 0.5;
+            0.5f + max_val * 0.5f;
 }
 
 /* Back */
@@ -261,7 +261,7 @@ static inline float back_out(float step, float max_steps, float max_val)
 
 static inline float back_io(float step, float max_steps, float max_val)
 {
-    float s = 1.70158f * 1.525;
+    float s = 1.70158f * 1.525f;
     float ratio = step / (max_steps / 2);
 
 	if (ratio < 1)
