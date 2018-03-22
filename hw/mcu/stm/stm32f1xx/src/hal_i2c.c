@@ -76,6 +76,7 @@ hal_i2c_init(uint8_t i2c_num, void *usercfg)
     struct stm32f1_hal_i2c_cfg *cfg = (struct stm32f1_hal_i2c_cfg *)usercfg;
     struct stm32f1_hal_i2c *dev;
     I2C_InitTypeDef *init;
+    GPIO_InitTypeDef gpio;
     int rc;
 
     if (i2c_num >= HAL_I2C_MAX_DEVS || !(dev = hal_i2c_devs[i2c_num])) {
@@ -93,20 +94,35 @@ hal_i2c_init(uint8_t i2c_num, void *usercfg)
     init->OwnAddress1 = I2C_ADDRESS;
     init->OwnAddress2 = 0xFE;
 
+    init->DutyCycle = I2C_DUTYCYCLE_2;
+    init->DualAddressMode = I2C_DUALADDRESS_DISABLE;
+    init->GeneralCallMode = I2C_GENERALCALL_DISABLE;
+    init->NoStretchMode = I2C_NOSTRETCH_DISABLE;
+
     /*
      * Configure GPIO pins for I2C.
      * Enable clock routing for I2C.
      */
-    rc = hal_gpio_init_af(cfg->hic_pin_sda, cfg->hic_pin_af, HAL_GPIO_PULL_UP,
-                          1);
-    if (rc) {
-        goto err;
+    gpio.Speed = GPIO_SPEED_FREQ_HIGH;
+    gpio.Pull = GPIO_NOPULL;
+    gpio.Mode = GPIO_MODE_AF_OD;
+    hal_gpio_init_stm(cfg->hic_pin_scl, &gpio);
+    hal_gpio_init_stm(cfg->hic_pin_sda, &gpio);
+
+#if 0
+    hal_gpio_write(cfg->hic_pin_scl, 0);
+    //for (int i = 0; i < 1000; i++) asm("nop");
+    hal_gpio_write(cfg->hic_pin_scl, 1);
+
+    hal_gpio_write(cfg->hic_pin_sda, 0);
+    //for (int i = 0; i < 1000; i++) asm("nop");
+    hal_gpio_write(cfg->hic_pin_sda, 1);
+#endif
+
+    if (cfg->hic_pin_remap_fn) {
+        cfg->hic_pin_remap_fn();
     }
-    rc = hal_gpio_init_af(cfg->hic_pin_scl, cfg->hic_pin_af, HAL_GPIO_PULL_UP,
-                          1);
-    if (rc) {
-        goto err;
-    }
+
     *cfg->hic_rcc_reg |= cfg->hic_rcc_dev;
     rc = HAL_I2C_Init(&dev->hid_handle);
     if (rc) {
