@@ -159,6 +159,6 @@ hal_i2c_master_probe(uint8_t i2c_num, uint8_t address, uint32_t timo)
         return -1;
     }
 
-    rc = HAL_I2C_IsDeviceReady(&dev->hid_handle, address, 1, timo);
+    rc = HAL_I2C_IsDeviceReady(&dev->hid_handle, address << 1, 1, timo);
     return rc;
 }
