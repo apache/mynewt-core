@@ -77,6 +77,10 @@
 #include <lis2dw12/lis2dw12.h>
 #endif
 
+#if MYNEWT_VAL(LIS2DS12_OFB)
+#include <lis2ds12/lis2ds12.h>
+#endif
+
 /* Driver definitions */
 #if MYNEWT_VAL(DRV2605_OFB)
 static struct drv2605 drv2605;
@@ -136,6 +140,10 @@ static struct lps33hw lps33hw;
 
 #if MYNEWT_VAL(LIS2DW12_OFB)
 static struct lis2dw12 lis2dw12;
+#endif
+
+#if MYNEWT_VAL(LIS2DS12_OFB)
+static struct lis2ds12 lis2ds12;
 #endif
 
 /**
@@ -314,6 +322,17 @@ static struct sensor_itf i2c_0_itf_lis2dw12 = {
     .si_ints = {
         { MYNEWT_VAL(LIS2DW12_INT1_PIN_HOST), MYNEWT_VAL(LIS2DW12_INT1_PIN_DEVICE),
           MYNEWT_VAL(LIS2DW12_INT1_CFG_ACTIVE)}}
+};
+#endif
+
+#if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(LIS2DS12_OFB)
+static struct sensor_itf i2c_0_itf_lis2ds12 = {
+    .si_type = SENSOR_ITF_I2C,
+    .si_num  = 0,
+    .si_addr = 0x1D,
+    .si_ints = {
+        { MYNEWT_VAL(LIS2DS12_INT1_PIN_HOST), MYNEWT_VAL(LIS2DS12_INT1_PIN_DEVICE),
+          MYNEWT_VAL(LIS2DS12_INT1_CFG_ACTIVE)}}
 };
 #endif
 
@@ -847,6 +866,73 @@ config_lis2dw12_sensor(void)
 }
 #endif
 
+/**
+ * LIS2DS12 Sensor default configuration used by the creator package
+ *
+ * @return 0 on success, non-zero on failure
+ */
+#if MYNEWT_VAL(LIS2DS12_OFB)
+static int
+config_lis2ds12_sensor(void)
+{
+    int rc;
+    struct os_dev *dev;
+    struct lis2ds12_cfg cfg;
+
+    dev = (struct os_dev *) os_dev_open("lis2ds12_0", OS_TIMEOUT_NEVER, NULL);
+    assert(dev != NULL);
+
+    /* single and double tap is only meaningful >= LIS2DS12_DATA_RATE_HR_14BIT_400HZ  AN4748 5.6 */
+    cfg.rate = LIS2DS12_DATA_RATE_HR_14BIT_400HZ;
+    cfg.fs = LIS2DS12_FS_2G;
+
+    cfg.high_pass = 0;
+
+    cfg.tap.en_4d = 0;
+    cfg.tap.ths_6d = LIS2DS12_6D_THS_80_DEG;
+
+    cfg.tap.en_x = 1;
+    cfg.tap.en_y = 1;
+    cfg.tap.en_z = 1;
+    cfg.tap.tap_ths = 0xC; /* 750mg = (12 * FS / 32) */
+    cfg.tap.latency = 7; /* 560ms (= 7 * 32 / ODR) */
+    cfg.tap.quiet = 2; /* 20 ms (= 2 * 4 / ODR) */
+    cfg.tap.shock = 2; /* 40 ms (= 2 * 8 / ODR) */
+
+    cfg.double_tap_event_enable = 0;
+
+    cfg.freefall_dur = 6; /* 15ms (= 6/ODR) */
+    cfg.freefall_ths = 3; /* ~312mg (= 31.25 mg * 10) */
+
+    cfg.int1_pin_cfg = 0;
+    cfg.int2_pin_cfg = 0;
+    cfg.map_int2_to_int1 = 0;
+
+    cfg.int_pp_od = 0;
+    cfg.int_latched = 0;
+    cfg.int_active_low = 0;
+
+    cfg.fifo_mode = LIS2DS12_FIFO_M_BYPASS;
+    cfg.fifo_threshold = 32;
+
+    cfg.wake_up_ths = 63;  /* 1.96875 mg (= 63 * FS / 64) */
+    cfg.wake_up_dur = 3; /* 7.5 ms (= 3 * 1 / ODR) */
+    cfg.sleep_duration = 0; /* 0 ms (= 0 * 512 / ODR) */
+
+    cfg.inactivity_sleep_enable = 0;
+
+    cfg.read_mode.mode = LIS2DS12_READ_M_POLL;
+
+    cfg.mask = SENSOR_TYPE_ACCELEROMETER;
+
+    rc = lis2ds12_config((struct lis2ds12 *) dev, &cfg);
+    assert(rc == 0);
+    
+    os_dev_close(dev);
+    return rc;
+}
+#endif
+
 #if MYNEWT_VAL(BMA2XX_OFB)
 /**
  * BMA2XX sensor default configuration
@@ -1040,6 +1126,15 @@ assert(rc == 0);
     assert(rc == 0);
 
     rc = config_lis2dw12_sensor();
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(LIS2DS12_OFB)
+    rc = os_dev_create((struct os_dev *) &lis2ds12, "lis2ds12_0",
+      OS_DEV_INIT_PRIMARY, 0, lis2ds12_init, (void *)&i2c_0_itf_lis2ds12);
+    assert(rc == 0);
+
+    rc = config_lis2ds12_sensor();
     assert(rc == 0);
 #endif
 

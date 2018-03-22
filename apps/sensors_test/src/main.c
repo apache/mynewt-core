@@ -56,7 +56,9 @@
 #if MYNEWT_VAL(DRV2605_CLI)
 #include <drv2605/drv2605.h>
 #endif
-
+#if MYNEWT_VAL(LIS2DS12_CLI)
+#include <lis2ds12/lis2ds12.h>
+#endif
 
 #if MYNEWT_VAL(SENSOR_OIC)
 #include <oic/oc_api.h>
@@ -438,6 +440,10 @@ sensors_dev_shell_init(void)
 
 #if MYNEWT_VAL(DRV2605_CLI)
     drv2605_shell_init();
+#endif
+
+#if MYNEWT_VAL(LIS2DS12_CLI)
+    lis2ds12_shell_init();
 #endif
 }
 

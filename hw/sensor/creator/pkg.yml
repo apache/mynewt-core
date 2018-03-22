@@ -52,5 +52,7 @@ pkg.deps.BMA2XX_OFB:
     - hw/drivers/sensors/bma2xx
 pkg.deps.LIS2DW12_OFB:
     - hw/drivers/sensors/lis2dw12
+pkg.deps.LIS2DS12_OFB:
+    - hw/drivers/sensors/lis2ds12
 pkg.init:
     sensor_dev_create: 500
