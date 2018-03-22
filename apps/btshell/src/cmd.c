@@ -3251,6 +3251,11 @@ static const struct shell_cmd_help l2cap_update_help = {
 
 static const struct shell_param l2cap_create_server_params[] = {
     {"psm", "usage: =<UINT16>"},
+    {"error", "usage: used for PTS testing:"},
+    {"", "0 - always accept"},
+    {"", "1 - reject with insufficient authentication"},
+    {"", "2 - reject with insufficient authorization"},
+    {"", "3 - reject with insufficient key size"},
     {NULL, NULL}
 };
 
