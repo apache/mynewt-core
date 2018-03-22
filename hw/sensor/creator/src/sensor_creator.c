@@ -67,6 +67,10 @@
 #include <lps33hw/lps33hw.h>
 #endif
 
+#if MYNEWT_VAL(LIS2DW12_OFB)
+#include <lis2dw12/lis2dw12.h>
+#endif
+
 /* Driver definitions */
 #if MYNEWT_VAL(DRV2605_OFB)
 static struct drv2605 drv2605;
@@ -114,6 +118,10 @@ static struct adxl345 adxl345;
 
 #if MYNEWT_VAL(LPS33HW_OFB)
 static struct lps33hw lps33hw;
+#endif
+
+#if MYNEWT_VAL(LIS2DW12_OFB)
+static struct lis2dw12 lis2dw12;
 #endif
 
 /**
@@ -242,6 +250,17 @@ static struct sensor_itf i2c_0_itf_lps = {
     .si_type = MYNEWT_VAL(LPS33HW_SHELL_ITF_TYPE),
     .si_num  = MYNEWT_VAL(LPS33HW_SHELL_ITF_NUM),
     .si_addr = MYNEWT_VAL(LPS33HW_SHELL_ITF_ADDR)
+};
+#endif
+
+#if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(LIS2DW12_OFB)
+static struct sensor_itf i2c_0_itf_lis2dw12 = {
+    .si_type = SENSOR_ITF_I2C,
+    .si_num  = 0,
+    .si_addr = 0x18,
+    .si_ints = {
+        { MYNEWT_VAL(LIS2DW12_INT1_PIN_HOST), MYNEWT_VAL(LIS2DW12_INT1_PIN_DEVICE),
+          MYNEWT_VAL(LIS2DW12_INT1_CFG_ACTIVE)}}
 };
 #endif
 
@@ -662,6 +681,63 @@ config_lps33hw_sensor(void)
 }
 #endif
 
+/**
+ * LIS2DW12 Sensor default configuration used by the creator package
+ *
+ * @return 0 on success, non-zero on failure
+ */
+#if MYNEWT_VAL(LIS2DW12_OFB)
+static int
+config_lis2dw12_sensor(void)
+{
+    int rc;
+    struct os_dev *dev;
+    struct lis2dw12_cfg cfg;
+
+    dev = (struct os_dev *) os_dev_open("lis2dw12_0", OS_TIMEOUT_NEVER, NULL);
+    assert(dev != NULL);
+
+    cfg.rate = LIS2DW12_DATA_RATE_200HZ;
+    cfg.fs = LIS2DW12_FS_2G;
+
+    cfg.offset_x = 0;
+    cfg.offset_y = 0;
+    cfg.offset_z = 0;
+    cfg.offset_weight = 0;
+    cfg.offset_en = 0;
+
+    cfg.tap_cfg.en_x = 1;
+    cfg.tap_cfg.en_y = 1;
+    cfg.tap_cfg.en_z = 1;
+    cfg.tap_cfg.en_4d = 0;
+    cfg.tap_cfg.ths_6d = LIS2DW12_6D_THS_80_DEG;
+    cfg.tap_cfg.tap_priority = LIS2DW12_TAP_PRIOR_XYZ;
+    cfg.tap_cfg.tap_ths_x = 0x3;
+    cfg.tap_cfg.tap_ths_y = 0x3;
+    cfg.tap_cfg.tap_ths_z = 0x3;
+    cfg.tap_cfg.latency = 8; /* 640ms */
+    cfg.tap_cfg.quiet = 0; /* 10ms */
+    cfg.tap_cfg.shock = 3; /* 120ms */
+        
+    cfg.int1_pin_cfg = 0;
+    cfg.int2_pin_cfg = 0;
+    cfg.int_enable = 0;
+
+    cfg.fifo_mode = LIS2DW12_FIFO_M_BYPASS;
+    cfg.fifo_threshold = 32;
+    cfg.stream_read_interrupt = LIS2DW12_INT1_CFG_DRDY;
+    
+    cfg.read_mode = LIS2DW12_READ_M_POLL;
+    cfg.mask = SENSOR_TYPE_ACCELEROMETER;
+
+    rc = lis2dw12_config((struct lis2dw12 *) dev, &cfg);
+    assert(rc == 0);
+    
+    os_dev_close(dev);
+    return rc;
+}
+#endif
+
 /* Sensor device creation */
 void
 sensor_dev_create(void)
@@ -783,6 +859,15 @@ sensor_dev_create(void)
     assert(rc == 0);
 
     rc = config_lps33hw_sensor();
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(LIS2DW12_OFB)
+    rc = os_dev_create((struct os_dev *) &lis2dw12, "lis2dw12_0",
+      OS_DEV_INIT_PRIMARY, 0, lis2dw12_init, (void *)&i2c_0_itf_lis2dw12);
+    assert(rc == 0);
+
+    rc = config_lis2dw12_sensor();
     assert(rc == 0);
 #endif
 

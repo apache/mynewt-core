@@ -55,3 +55,7 @@ syscfg.defs:
     LPS33HW_OFB:
         description: 'LPS33HW is present'
         value : 0
+    LIS2DW12_OFB:
+        description: 'LIS2DW12 is present'
+        value : 0
+
