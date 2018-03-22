@@ -32,6 +32,7 @@
 #include <hal/hal_bsp.h>
 #include <hal/hal_flash_int.h>
 #include <hal/hal_gpio.h>
+#include <hal/hal_i2c.h>
 #include <hal/hal_system.h>
 
 #if MYNEWT_VAL(SPI_0_MASTER) || MYNEWT_VAL(SPI_0_SLAVE) || \
@@ -46,6 +47,8 @@
 #include "mcu/stm32_hal.h"
 
 #include "bsp/bsp.h"
+#include "mcu/mcu.h"
+#include "os/os_cputime.h"
 
 #if MYNEWT_VAL(UART_0)
 static struct uart_dev hal_uart[1];
@@ -89,6 +92,19 @@ struct stm32_hal_spi_cfg spi1_cfg = {
     .miso_pin = MCU_GPIO_PORTB(14),
     .mosi_pin = MCU_GPIO_PORTB(15),
     .irq_prio = 2,
+};
+#endif
+
+#if MYNEWT_VAL(I2C_0)
+static struct stm32_hal_i2c_cfg i2c_cfg0 = {
+    .hic_i2c = I2C1,
+    .hic_rcc_reg = &RCC->APB1ENR,
+    .hic_rcc_dev = RCC_APB1ENR_I2C1EN,
+    .hic_pin_sda = MCU_GPIO_PORTB(9),
+    .hic_pin_scl = MCU_GPIO_PORTB(8),
+    .hic_pin_af = GPIO_AF4_I2C1,
+    .hic_10bit = 0,
+    .hic_speed = 100000,
 };
 #endif
 
@@ -150,6 +166,11 @@ hal_bsp_init(void)
 #if MYNEWT_VAL(UART_0)
     rc = os_dev_create((struct os_dev *)&hal_uart[0], UART_DEV_NAME,
             OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *)&uart_cfg[0]);
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(I2C_0)
+    rc = hal_i2c_init(0, &i2c_cfg0);
     assert(rc == 0);
 #endif
 
