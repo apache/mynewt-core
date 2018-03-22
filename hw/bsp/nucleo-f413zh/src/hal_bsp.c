@@ -59,7 +59,7 @@ static const struct stm32f4_uart_cfg uart_cfg[UART_CNT] = {
 #endif
 
 #if MYNEWT_VAL(I2C_0)
-static struct stm32f4_hal_i2c_cfg i2c_cfg0 = {
+static struct stm32_hal_i2c_cfg i2c_cfg0 = {
     .hic_i2c = I2C1,
     .hic_rcc_reg = &RCC->APB1ENR,
     .hic_rcc_dev = RCC_APB1ENR_I2C1EN,

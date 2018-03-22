@@ -73,7 +73,7 @@ static const struct hal_bsp_mem_dump dump_cfg[] = {
  * be removed (they are the default connections) and SB46/SB52 need to
  * be added.
  */
-static struct stm32f4_hal_i2c_cfg i2c_cfg0 = {
+static struct stm32_hal_i2c_cfg i2c_cfg0 = {
     .hic_i2c = I2C1,
     .hic_rcc_reg = &RCC->APB1ENR,
     .hic_rcc_dev = RCC_APB1ENR_I2C1EN,
