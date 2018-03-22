@@ -29,6 +29,8 @@
 #include <mcu/stm32_hal.h>
 #include <syscfg/syscfg.h>
 
+#if !defined(STM32F3) && !defined(STM32F7)
+
 #define I2C_TIMEOUT_BUSY_FLAG     25U         /*!< Timeout 25 ms             */
 #define I2C_NO_OPTION_FRAME       0xFFFF0000U /*!< XferOptions default value */
 
@@ -124,8 +126,6 @@ static HAL_StatusTypeDef I2C_WaitOnMasterAddressFlagUntilTimeout(I2C_HandleTypeD
   }
   return HAL_OK;
 }
-
-
 
 /**
   * @param  hi2c Pointer to a I2C_HandleTypeDef structure that contains
@@ -345,8 +345,6 @@ static HAL_StatusTypeDef I2C_WaitOnRXNEFlagUntilTimeout(I2C_HandleTypeDef *hi2c,
   return HAL_OK;
 }
 
-
-
 /**
   * @brief  Transmits in master mode an amount of data in blocking mode.
   * @param  hi2c Pointer to a I2C_HandleTypeDef structure that contains
@@ -356,6 +354,7 @@ static HAL_StatusTypeDef I2C_WaitOnRXNEFlagUntilTimeout(I2C_HandleTypeDef *hi2c,
   * @param  pData Pointer to data buffer
   * @param  Size Amount of data to be sent
   * @param  Timeout Timeout duration
+  * @param  LastOp If set sends STOP, otherwise no STOP
   * @retval HAL status
   */
 HAL_StatusTypeDef HAL_I2C_Master_Transmit_Custom(I2C_HandleTypeDef *hi2c,
@@ -606,6 +605,7 @@ static HAL_StatusTypeDef I2C_MasterRequestRead(I2C_HandleTypeDef *hi2c, uint16_t
   * @param  pData Pointer to data buffer
   * @param  Size Amount of data to be sent
   * @param  Timeout Timeout duration
+  * @param  LastOp If set sends STOP, otherwise no STOP
   * @retval HAL status
   */
 HAL_StatusTypeDef HAL_I2C_Master_Receive_Custom(I2C_HandleTypeDef *hi2c,
@@ -851,5 +851,7 @@ HAL_StatusTypeDef HAL_I2C_Master_Receive_Custom(I2C_HandleTypeDef *hi2c,
     return HAL_BUSY;
   }
 }
+
+#endif /* !defined(STM32F3) && !defined(STM32F7) */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
