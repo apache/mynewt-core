@@ -71,12 +71,26 @@ static struct stm32_hal_i2c *hal_i2c_devs[HAL_I2C_MAX_DEVS] = {
 #endif
 };
 
+#if defined(STM32F1)
+static void
+i2c_reset(I2C_HandleTypeDef *hi2c)
+{
+    __HAL_I2C_DISABLE(hi2c);
+    hi2c->Instance->CR1 |= I2C_CR1_SWRST;
+    hi2c->Instance->CR1 &= ~I2C_CR1_SWRST;
+    __HAL_I2C_ENABLE(hi2c);
+}
+#endif
+
 int
 hal_i2c_init(uint8_t i2c_num, void *usercfg)
 {
     struct stm32_hal_i2c_cfg *cfg = (struct stm32_hal_i2c_cfg *)usercfg;
     struct stm32_hal_i2c *dev;
     I2C_InitTypeDef *init;
+#if defined(STM32F1)
+    GPIO_InitTypeDef gpio;
+#endif
     int rc;
 
     if (i2c_num >= HAL_I2C_MAX_DEVS || !(dev = hal_i2c_devs[i2c_num])) {
@@ -102,6 +116,7 @@ hal_i2c_init(uint8_t i2c_num, void *usercfg)
      * Configure GPIO pins for I2C.
      * Enable clock routing for I2C.
      */
+#if !defined(STM32F1)
     rc = hal_gpio_init_af(cfg->hic_pin_sda, cfg->hic_pin_af, HAL_GPIO_PULL_UP,
                           1);
     if (rc) {
@@ -112,7 +127,62 @@ hal_i2c_init(uint8_t i2c_num, void *usercfg)
     if (rc) {
         goto err;
     }
+
     *cfg->hic_rcc_reg |= cfg->hic_rcc_dev;
+#else
+    /* For STM32F1x initialize I2C clock before GPIOs */
+    *cfg->hic_rcc_reg |= cfg->hic_rcc_dev;
+
+    if (cfg->hic_pin_remap_fn != NULL) {
+        cfg->hic_pin_remap_fn();
+    }
+
+    /*
+     * The block below applies a workaround described in 2.13.7
+     * of the STM32F103 errata (also described on F105/107 errata).
+     */
+    gpio.Mode = GPIO_MODE_OUTPUT_OD;
+    gpio.Speed = GPIO_SPEED_FREQ_LOW;
+    gpio.Pull = GPIO_NOPULL;
+
+    hal_gpio_init_stm(cfg->hic_pin_sda, &gpio);
+    hal_gpio_write(cfg->hic_pin_sda, 1);
+    hal_gpio_init_stm(cfg->hic_pin_scl, &gpio);
+    hal_gpio_write(cfg->hic_pin_scl, 1);
+
+    assert(hal_gpio_read(cfg->hic_pin_sda) == 1);
+    assert(hal_gpio_read(cfg->hic_pin_scl) == 1);
+
+    hal_gpio_write(cfg->hic_pin_sda, 0);
+    assert(hal_gpio_read(cfg->hic_pin_sda) == 0);
+
+    hal_gpio_write(cfg->hic_pin_scl, 0);
+    assert(hal_gpio_read(cfg->hic_pin_scl) == 0);
+
+    hal_gpio_write(cfg->hic_pin_scl, 1);
+    assert(hal_gpio_read(cfg->hic_pin_scl) == 1);
+
+    hal_gpio_write(cfg->hic_pin_sda, 1);
+    assert(hal_gpio_read(cfg->hic_pin_sda) == 1);
+
+    /*
+     * Normal I2C PIN initialization
+     */
+    gpio.Mode = GPIO_MODE_AF_OD;
+    gpio.Speed = GPIO_SPEED_FREQ_HIGH;
+    /* NOTE: Pull is not used in AF mode */
+    gpio.Pull = GPIO_NOPULL;
+
+    hal_gpio_init_stm(cfg->hic_pin_scl, &gpio);
+    hal_gpio_init_stm(cfg->hic_pin_sda, &gpio);
+
+    /*
+     * Reset I2C
+     */
+    dev->hid_handle.Instance->CR1 = I2C_CR1_SWRST;
+    dev->hid_handle.Instance->CR1 = 0;
+#endif
+
     rc = HAL_I2C_Init(&dev->hid_handle);
     if (rc) {
         goto err;
@@ -163,5 +233,12 @@ hal_i2c_master_probe(uint8_t i2c_num, uint8_t address, uint32_t timo)
     }
 
     rc = HAL_I2C_IsDeviceReady(&dev->hid_handle, address << 1, 1, timo);
+
+#if defined(STM32F1)
+    if (rc == HAL_BUSY) {
+        i2c_reset(&dev->hid_handle);
+    }
+#endif
+
     return rc;
 }
