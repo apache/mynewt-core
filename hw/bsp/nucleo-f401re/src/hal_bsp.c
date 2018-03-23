@@ -68,7 +68,7 @@ static const struct hal_bsp_mem_dump dump_cfg[] = {
 
 #if MYNEWT_VAL(I2C_0)
 /*
- * The PB8 and PB9 pins are connected through jumpers in the board to
+ * NOTE: The PB8 and PB9 pins are connected through jumpers in the board to
  * both AIN and I2C pins. To enable I2C functionality SB51/SB56 need to
  * be removed (they are the default connections) and SB46/SB52 need to
  * be added.
