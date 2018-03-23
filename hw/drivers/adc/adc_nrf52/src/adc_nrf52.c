@@ -38,7 +38,7 @@ struct nrf52_saadc_stats {
 static struct nrf52_saadc_stats nrf52_saadc_stats;
 
 static struct adc_dev *global_adc_dev;
-static nrfx_saadc_config_t *global_adc_config;
+static struct nrf52_adc_dev_cfg *global_adc_config;
 static struct nrf52_adc_dev_cfg *init_adc_config;
 
 static uint8_t nrf52_adc_chans[NRF_SAADC_CHANNEL_COUNT * sizeof(struct adc_chan_config)];
@@ -92,6 +92,7 @@ static int
 nrf52_adc_open(struct os_dev *odev, uint32_t wait, void *arg)
 {
     struct adc_dev *dev;
+    struct nrf52_adc_dev_cfg *cfg = arg;
     int rc;
 
     dev = (struct adc_dev *) odev;
@@ -110,8 +111,7 @@ nrf52_adc_open(struct os_dev *odev, uint32_t wait, void *arg)
     }
 
     /* Initialize the device */
-    rc = nrfx_saadc_init((nrfx_saadc_config_t *) arg,
-            nrf52_saadc_event_handler);
+    rc = nrfx_saadc_init(&cfg->saadc_cfg, nrf52_saadc_event_handler);
     if (rc != NRFX_SUCCESS) {
         goto err;
     }
@@ -181,7 +181,7 @@ nrf52_adc_configure_channel(struct adc_dev *dev, uint8_t cnum,
         /* Set the resolution and reference voltage for this channel to
         * enable conversion functions.
         */
-        switch (global_adc_config->resolution) {
+        switch (global_adc_config->saadc_cfg.resolution) {
             case NRF_SAADC_RESOLUTION_8BIT:
                 res = 8;
                 break;
