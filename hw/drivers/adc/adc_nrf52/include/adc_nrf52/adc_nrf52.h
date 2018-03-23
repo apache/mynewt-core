@@ -21,12 +21,14 @@
 #define __ADC_NRF52_H__
 
 #include <adc/adc.h>
+#include <nrfx_saadc.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 struct nrf52_adc_dev_cfg {
+    nrfx_saadc_config_t saadc_cfg;
     uint16_t nadc_refmv;		/* reference VDD in mV */
 };
 
