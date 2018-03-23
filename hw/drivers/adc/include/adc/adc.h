@@ -183,6 +183,22 @@ adc_sample(struct adc_dev *dev)
 }
 
 /**
+ * Blocking read of an ADC channel.  This is implemented by the HW specific
+ * drivers.
+ *
+ * @param The ADC device to perform the blocking read on
+ * @param The channel to read
+ * @param The result to put the ADC reading into
+ *
+ * @return 0 on success, non-zero error code on failure
+ */
+static inline int
+adc_read_channel(struct adc_dev *dev, uint8_t ch, int *result)
+{
+    return (dev->ad_funcs.af_read_channel(dev, ch, result));
+}
+
+/**
  * Set a result buffer to store data into.  Optionally, provide a
  * second buffer to continue writing data into as the first buffer
  * fills up.  Both buffers must be the same size.
