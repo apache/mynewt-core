@@ -95,6 +95,8 @@ int
 cmd_l2cap_create_server(int argc, char **argv)
 {
     uint16_t psm = 0;
+    int error;
+    int accept_response = 0;
     int rc;
 
     rc = parse_arg_all(argc - 1, argv + 1);
@@ -108,7 +110,25 @@ cmd_l2cap_create_server(int argc, char **argv)
         return rc;
     }
 
-    rc = btshell_l2cap_create_srv(psm);
+    error = parse_arg_uint32_dflt("error", 0, &rc);
+    if (rc != 0) {
+        console_printf("invalid 'error' parameter\n");
+        return rc;
+    }
+
+    switch (error) {
+    case 1:
+        accept_response = BLE_HS_EAUTHEN;
+        break;
+    case 2:
+        accept_response = BLE_HS_EAUTHOR;
+        break;
+    case 3:
+        accept_response = BLE_HS_EENCRYPT_KEY_SZ;
+        break;
+    }
+
+    rc = btshell_l2cap_create_srv(psm, accept_response);
     if (rc) {
         console_printf("Server create error: 0x%02x", rc);
     }
