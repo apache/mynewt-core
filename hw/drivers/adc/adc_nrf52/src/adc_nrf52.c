@@ -110,6 +110,11 @@ nrf52_adc_open(struct os_dev *odev, uint32_t wait, void *arg)
         goto err;
     }
 
+    /* If user did not provide config let us use init */
+    if (!cfg) {
+        cfg = init_adc_config;
+    }
+
     /* Initialize the device */
     rc = nrfx_saadc_init(&cfg->saadc_cfg, nrf52_saadc_event_handler);
     if (rc != NRFX_SUCCESS) {
