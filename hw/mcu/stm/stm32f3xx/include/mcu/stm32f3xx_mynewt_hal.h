@@ -55,7 +55,7 @@ struct stm32_hal_i2c_cfg {
     uint8_t hic_pin_scl;
     uint8_t hic_pin_af;
     uint8_t hic_10bit;
-    uint32_t hic_speed;
+    uint32_t hic_timingr;               /* TIMINGR register */
 };
 
 #ifdef __cplusplus

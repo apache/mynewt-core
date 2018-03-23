@@ -104,7 +104,7 @@ static struct stm32_hal_i2c_cfg i2c_cfg0 = {
     .hic_pin_scl = MCU_GPIO_PORTB(8),
     .hic_pin_af = GPIO_AF4_I2C1,
     .hic_10bit = 0,
-    .hic_speed = 100000,
+    .hic_timingr = 0x10420F13,    /* 100KHz at 8MHz of SysCoreClock */
 };
 #endif
 

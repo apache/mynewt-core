@@ -37,6 +37,7 @@
 #define MAX_NBYTE_SIZE      255U
 
 static const uint8_t HAL_I2C_MODE_MASTER_SEL = 0x11;
+static const uint8_t HAL_NACK = HAL_TIMEOUT + 1;
 
 /**
   * @brief  This function handles I2C Communication Timeout.
@@ -280,6 +281,7 @@ HAL_StatusTypeDef HAL_I2C_Master_Transmit_Custom(I2C_HandleTypeDef *hi2c,
         uint8_t LastOp)
 {
   uint32_t tickstart = 0U;
+  uint8_t prev_mode = 0;
 
   if (hi2c->State == HAL_I2C_STATE_READY)
   {
@@ -289,17 +291,13 @@ HAL_StatusTypeDef HAL_I2C_Master_Transmit_Custom(I2C_HandleTypeDef *hi2c,
     /* Init tickstart for timeout management*/
     tickstart = HAL_GetTick();
 
-    if (hi2c->Mode != HAL_I2C_MODE_MASTER_SEL)
+    prev_mode = hi2c->Mode;
+    if (prev_mode != HAL_I2C_MODE_MASTER_SEL)
     {
       if (I2C_WaitOnFlagUntilTimeout(hi2c, I2C_FLAG_BUSY, SET, I2C_TIMEOUT_BUSY, tickstart) != HAL_OK)
       {
         return HAL_TIMEOUT;
       }
-    }
-    else
-    {
-      /* FIXME: with not stop must wait here! why? timing config? */
-      os_time_delay(1);
     }
 
     hi2c->State     = HAL_I2C_STATE_BUSY_TX;
@@ -327,6 +325,17 @@ HAL_StatusTypeDef HAL_I2C_Master_Transmit_Custom(I2C_HandleTypeDef *hi2c,
     {
       hi2c->XferSize = hi2c->XferCount;
       I2C_TransferConfig(hi2c, DevAddress, hi2c->XferSize, I2C_AUTOEND_MODE, I2C_GENERATE_START_WRITE);
+    }
+
+    /*
+     * Wait RESTART to be accepted
+     */
+    if (prev_mode == HAL_I2C_MODE_MASTER_SEL)
+    {
+      if (I2C_WaitOnFlagUntilTimeout(hi2c, I2C_FLAG_TC, RESET, Timeout, tickstart) != HAL_OK)
+      {
+        return HAL_TIMEOUT;
+      }
     }
 
     while (hi2c->XferCount > 0U)
@@ -435,18 +444,22 @@ HAL_StatusTypeDef HAL_I2C_Master_Transmit_Custom(I2C_HandleTypeDef *hi2c,
   * @param  Tickstart Tick start value
   * @retval HAL status
   */
-static HAL_StatusTypeDef I2C_WaitOnRXNEFlagUntilTimeout(I2C_HandleTypeDef *hi2c, uint32_t Timeout, uint32_t Tickstart)
+static HAL_StatusTypeDef I2C_WaitOnRXNEFlagUntilTimeout(I2C_HandleTypeDef *hi2c, uint32_t Timeout, uint32_t Tickstart, uint8_t prev_mode)
 {
   while (__HAL_I2C_GET_FLAG(hi2c, I2C_FLAG_RXNE) == RESET)
   {
     /* Check if a NACK is detected */
     if (I2C_IsAcknowledgeFailed(hi2c, Timeout, Tickstart) != HAL_OK)
     {
-      return HAL_ERROR;
+      return HAL_NACK;
     }
 
+    /*
+     * FIXME: need to re-check if what is supposed to be a RESTART is not also
+     * triggering a STOP along...
+     */
     /* Check if a STOPF is detected */
-    if (__HAL_I2C_GET_FLAG(hi2c, I2C_FLAG_STOPF) == SET)
+    if (prev_mode != HAL_I2C_MODE_MASTER_SEL && __HAL_I2C_GET_FLAG(hi2c, I2C_FLAG_STOPF) == SET)
     {
       /* Clear STOP Flag */
       __HAL_I2C_CLEAR_FLAG(hi2c, I2C_FLAG_STOPF);
@@ -496,26 +509,24 @@ HAL_StatusTypeDef HAL_I2C_Master_Receive_Custom(I2C_HandleTypeDef *hi2c,
         uint8_t LastOp)
 {
   uint32_t tickstart = 0U;
+  uint8_t prev_mode = 0;
+  HAL_StatusTypeDef rc;
 
   if (hi2c->State == HAL_I2C_STATE_READY)
   {
     /* Process Locked */
     __HAL_LOCK(hi2c);
 
-    /* Init tickstart for timeout management*/
+    /* Init tickstart for timeout management */
     tickstart = HAL_GetTick();
 
-    if (hi2c->Mode != HAL_I2C_MODE_MASTER_SEL)
+    prev_mode = hi2c->Mode;
+    if (prev_mode != HAL_I2C_MODE_MASTER_SEL)
     {
       if (I2C_WaitOnFlagUntilTimeout(hi2c, I2C_FLAG_BUSY, SET, I2C_TIMEOUT_BUSY, tickstart) != HAL_OK)
       {
         return HAL_TIMEOUT;
       }
-    }
-    else
-    {
-      /* FIXME: with not stop must wait here! why? timing config? */
-      os_time_delay(1);
     }
 
     hi2c->State     = HAL_I2C_STATE_BUSY_RX;
@@ -548,7 +559,8 @@ HAL_StatusTypeDef HAL_I2C_Master_Receive_Custom(I2C_HandleTypeDef *hi2c,
     while (hi2c->XferCount > 0U)
     {
       /* Wait until RXNE flag is set */
-      if (I2C_WaitOnRXNEFlagUntilTimeout(hi2c, Timeout, tickstart) != HAL_OK)
+      rc = I2C_WaitOnRXNEFlagUntilTimeout(hi2c, Timeout, tickstart, prev_mode);
+      if (rc != HAL_OK && rc != HAL_NACK)
       {
         if (hi2c->ErrorCode == HAL_I2C_ERROR_AF)
         {
@@ -564,6 +576,11 @@ HAL_StatusTypeDef HAL_I2C_Master_Receive_Custom(I2C_HandleTypeDef *hi2c,
       (*hi2c->pBuffPtr++) = hi2c->Instance->RXDR;
       hi2c->XferSize--;
       hi2c->XferCount--;
+
+      if (rc == HAL_NACK)
+      {
+        break;
+      }
 
       if ((hi2c->XferSize == 0U) && (hi2c->XferCount != 0U))
       {
