@@ -29,6 +29,8 @@ extern "C" {
 #include "stm32f4xx_hal.h"
 #include "stm32f4xx_hal_def.h"
 
+#include "stm32f4xx_mynewt_hal.h"
+
 /* hal_watchdog */
 #include "stm32f4xx_hal_iwdg.h"
 #define STM32_HAL_WATCHDOG_CUSTOM_INIT(x)
@@ -39,6 +41,22 @@ extern "C" {
         SYSCFG->MEMRMP = 0;                      \
         __DSB();                                 \
     } while (0)
+
+/* hal_spi */
+#include "stm32f4xx.h"
+#include "stm32f4xx_hal_dma.h"
+#include "stm32f4xx_hal_spi.h"
+#include "stm32f4xx_hal_gpio.h"
+#include "stm32f4xx_hal_gpio_ex.h"
+#include "stm32f4xx_hal_rcc.h"
+
+struct stm32_hal_spi_cfg {
+    int ss_pin;                     /* for slave mode */
+    int sck_pin;
+    int miso_pin;
+    int mosi_pin;
+    int irq_prio;
+};
 
 #ifdef __cplusplus
 }
