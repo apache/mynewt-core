@@ -71,7 +71,6 @@ static struct stm32_hal_i2c *hal_i2c_devs[HAL_I2C_MAX_DEVS] = {
 #endif
 };
 
-
 int
 hal_i2c_init(uint8_t i2c_num, void *usercfg)
 {
@@ -86,7 +85,11 @@ hal_i2c_init(uint8_t i2c_num, void *usercfg)
 
     init = &dev->hid_handle.Init;
     dev->hid_handle.Instance = cfg->hic_i2c;
+#if defined(STM32F3) || defined(STM32F7)
+    init->Timing = cfg->hic_timingr;
+#else
     init->ClockSpeed = cfg->hic_speed;
+#endif
     if (cfg->hic_10bit) {
         init->AddressingMode = I2C_ADDRESSINGMODE_10BIT;
     } else {
