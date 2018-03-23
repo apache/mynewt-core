@@ -27,6 +27,7 @@
 
 #include <hal/hal_bsp.h>
 #include <hal/hal_gpio.h>
+#include "hal/hal_i2c.h"
 #include <hal/hal_flash_int.h>
 #include <hal/hal_system.h>
 #include <hal/hal_timer.h>
@@ -39,6 +40,7 @@
 #include <stm32f7xx_hal_gpio_ex.h>
 #include "mcu/stm32_hal.h"
 #include <mcu/stm32f7_bsp.h>
+#include <mcu/stm32f7xx_mynewt_hal.h>
 
 #if MYNEWT_VAL(ETH_0)
 #include <stm32_eth/stm32_eth.h>
@@ -71,7 +73,26 @@ struct stm32_hal_spi_cfg spi0_cfg = {
     .miso_pin = MCU_GPIO_PORTA(6),           /* D12 on CN7 */
     .mosi_pin = MCU_GPIO_PORTA(7),           /* D11 on CN7 */
     .ss_pin   = MCU_GPIO_PORTD(14),          /* D10 on CN7 */
-    .irq_prio = 2
+    .irq_prio = 2,
+};
+#endif
+
+#if MYNEWT_VAL(I2C_0)
+/*
+ * The PB8 and PB9 pins are connected through jumpers in the board to
+ * both ADC_IN and I2C pins. To enable I2C functionality SB147/SB157 need
+ * to be removed (they are the default connections) and SB138/SB143 need
+ * to be shorted.
+ */
+static struct stm32_hal_i2c_cfg i2c_cfg0 = {
+    .hic_i2c = I2C1,
+    .hic_rcc_reg = &RCC->APB1ENR,
+    .hic_rcc_dev = RCC_APB1ENR_I2C1EN,
+    .hic_pin_sda = MCU_GPIO_PORTB(9),    /* D14 on CN7 */
+    .hic_pin_scl = MCU_GPIO_PORTB(8),    /* D15 on CN7 */
+    .hic_pin_af = GPIO_AF4_I2C1,
+    .hic_10bit = 0,
+    .hic_timingr = 0x30420F13,    /* 100KHz at 16MHz of SysCoreClock */
 };
 #endif
 
@@ -167,6 +188,11 @@ hal_bsp_init(void)
 
 #if MYNEWT_VAL(SPI_0_SLAVE)
     rc = hal_spi_init(0, &spi0_cfg, HAL_SPI_TYPE_SLAVE);
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(I2C_0)
+    rc = hal_i2c_init(0, &i2c_cfg0);
     assert(rc == 0);
 #endif
 
