@@ -116,6 +116,11 @@ nrf51_adc_open(struct os_dev *odev, uint32_t wait, void *arg)
         }
     }
 
+    if (!cfg) {
+        /* Use initial configuration */
+        cfg = init_adc_config;
+    }
+ 
     /* Initialize the device */
     rc = nrfx_adc_init(&cfg->adc_cfg, nrf51_adc_event_handler);
     if (rc != NRFX_SUCCESS) {
