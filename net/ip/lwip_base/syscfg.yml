@@ -1,0 +1,4 @@
+syscfg.defs:
+    LWIP_IPV6_STATIC_ROUTING:
+        decription: Enables static IPv6 routing tables.
+        value: 0

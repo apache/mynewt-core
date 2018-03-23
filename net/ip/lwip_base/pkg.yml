@@ -30,6 +30,9 @@ pkg.keywords:
 pkg.deps:
     - net/ip
 
+pkg.deps.LWIP_IPV6_STATIC_ROUTING:
+    - '@apache-mynewt-core/net/ip/lwip_contrib/addons/ipv6_static_routing'
+
 pkg.cflags:
     - -Wno-unused
     - -Wno-error=address
