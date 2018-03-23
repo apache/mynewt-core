@@ -934,11 +934,11 @@ int lis2dw12_set_tap_cfg(struct sensor_itf *itf, struct lis2dw12_tap_settings *c
     }
 
     reg = 0;
-    reg |= (cfg->latency & LIS2DW12_INT_DUR_LATENCY) << 4;
-    reg |= (cfg->quiet & LIS2DW12_INT_DUR_QUIET) << 2;
+    reg |= (cfg->latency & 0xf) << 4;
+    reg |= (cfg->quiet & 0x3) << 2;
     reg |= cfg->shock & LIS2DW12_INT_DUR_SHOCK;
 
-    return 0;
+    return lis2dw12_write8(itf, LIS2DW12_REG_INT_DUR, reg);
 }
 
 /**
@@ -1951,12 +1951,7 @@ lis2dw12_config(struct lis2dw12 *lis2dw12, struct lis2dw12_cfg *cfg)
         goto err;
     }
 
-    rc = lis2dw12_write8(itf, LIS2DW12_REG_CTRL_REG2, 0x40);
-    if (rc) {
-        goto err;
-    }
-
-    rc = lis2dw12_write8(itf, LIS2DW12_REG_CTRL_REG3, 0x10);
+    rc = lis2dw12_write8(itf, LIS2DW12_REG_CTRL_REG3, LIS2DW12_CTRL_REG3_LIR);
     if (rc) {
         goto err;
     }
@@ -2047,8 +2042,6 @@ lis2dw12_config(struct lis2dw12 *lis2dw12, struct lis2dw12_cfg *cfg)
         goto err;
     }
     lis2dw12->cfg.tap_cfg = cfg->tap_cfg;
-
-    lis2dw12_write8(itf, 0x34, 0x80);
     
     rc = sensor_set_type_mask(&(lis2dw12->sensor), cfg->mask);
     if (rc) {

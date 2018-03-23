@@ -545,6 +545,10 @@ int lis2dw12_init(struct os_dev *dev, void *arg);
  */
 int lis2dw12_config(struct lis2dw12 *, struct lis2dw12_cfg *);
 
+#if MYNEWT_VAL(LIS2DW12_CLI)
+int lis2dw12_shell_init(void);
+#endif
+   
     
 #ifdef __cplusplus
 }

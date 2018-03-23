@@ -46,5 +46,7 @@ pkg.deps.BMP280_OFB:
     - hw/drivers/sensors/bmp280
 pkg.deps.BMA253_OFB:
     - hw/drivers/sensors/bma253
+pkg.deps.LIS2DW12_OFB:
+    - hw/drivers/sensors/lis2dw12
 pkg.init:
     sensor_dev_create: 500
