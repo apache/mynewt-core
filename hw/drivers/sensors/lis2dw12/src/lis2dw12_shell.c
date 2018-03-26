@@ -29,6 +29,9 @@
 
 #if MYNEWT_VAL(LIS2DW12_CLI)
 
+#define LIS2DW12_CLI_FIRST_REGISTER 0x0D
+#define LIS2DW12_CLI_LAST_REGISTER 0x3F
+
 static int lis2dw12_shell_cmd(int argc, char **argv);
 
 static struct shell_cmd lis2dw12_shell_cmd_struct = {
@@ -47,6 +50,14 @@ static int
 lis2dw12_shell_err_too_many_args(char *cmd_name)
 {
     console_printf("Error: too many arguments for command \"%s\"\n",
+                   cmd_name);
+    return EINVAL;
+}
+
+static int
+lis2dw12_shell_err_too_few_args(char *cmd_name)
+{
+    console_printf("Error: too few arguments for command \"%s\"\n",
                    cmd_name);
     return EINVAL;
 }
@@ -75,7 +86,10 @@ lis2dw12_shell_help(void)
     console_printf("\tr    [n_samples]\n");
     console_printf("\tchipid\n");
     console_printf("\tdump\n");
-
+    console_printf("\tpeek [reg]\n");
+    console_printf("\tpoke [reg value]\n");
+    console_printf("\ttest\n");
+    
     return 0;
 }
 
@@ -214,6 +228,89 @@ lis2dw12_shell_cmd_dump(int argc, char **argv)
 }
 
 static int
+lis2dw12_shell_cmd_peek(int argc, char **argv)
+{
+    int rc;
+    uint8_t value;
+    uint8_t reg;
+
+    if (argc > 3) {
+        return lis2dw12_shell_err_too_many_args(argv[1]);
+    } else if (argc < 3) {
+        return lis2dw12_shell_err_too_few_args(argv[1]);
+    }
+
+    reg = parse_ll_bounds(argv[2], LIS2DW12_CLI_FIRST_REGISTER, LIS2DW12_CLI_LAST_REGISTER, &rc);
+    if (rc != 0) {
+        return lis2dw12_shell_err_invalid_arg(argv[2]);
+    }
+
+    rc = lis2dw12_read8(&g_sensor_itf, reg, &value);
+    if (rc) {
+        console_printf("peek failed %d\n", rc);
+    }else{
+        console_printf("reg 0x%02X(%d) = 0x%02X\n", reg, reg, value);
+    }
+
+    return 0;
+}
+
+static int
+lis2dw12_shell_cmd_poke(int argc, char **argv)
+{
+    int rc;
+    uint8_t reg;
+    uint8_t value;
+
+    if (argc > 4) {
+        return lis2dw12_shell_err_too_many_args(argv[1]);
+    } else if (argc < 4) {
+        return lis2dw12_shell_err_too_few_args(argv[1]);
+    }
+
+    reg = parse_ll_bounds(argv[2], LIS2DW12_CLI_FIRST_REGISTER, LIS2DW12_CLI_LAST_REGISTER, &rc);
+    if (rc != 0) {
+        return lis2dw12_shell_err_invalid_arg(argv[2]);
+   }
+
+    value = parse_ll_bounds(argv[3], 0, 255, &rc);
+    if (rc != 0) {
+        return lis2dw12_shell_err_invalid_arg(argv[3]);
+    }
+
+    rc = lis2dw12_write8(&g_sensor_itf, reg, value);
+    if (rc) {
+        console_printf("poke failed %d\n", rc);
+    }else{
+        console_printf("wrote: 0x%02X(%d) to 0x%02X\n", value, value, reg);
+    }
+
+    return 0;
+}
+
+static int
+lis2dw12_shell_cmd_test(int argc, char **argv)
+{
+    int rc;
+    int result;
+
+    rc = lis2dw12_run_self_test(&g_sensor_itf, &result);
+    if (rc) {
+        goto err;
+    }
+
+    if (result) {
+        console_printf("SELF TEST: FAILED\n");        
+    } else {
+        console_printf("SELF TEST: PASSED\n");        
+    }
+
+    return 0;
+err:
+    return rc;
+}
+
+static int
 lis2dw12_shell_cmd(int argc, char **argv)
 {
     if (argc == 1) {
@@ -234,7 +331,22 @@ lis2dw12_shell_cmd(int argc, char **argv)
     if (argc > 1 && strcmp(argv[1], "dump") == 0) {
         return lis2dw12_shell_cmd_dump(argc, argv);
     }
+    
+    /* Peek */
+    if (argc > 1 && strcmp(argv[1], "peek") == 0) {
+        return lis2dw12_shell_cmd_peek(argc, argv);
+    }
+    
+    /* Poke */
+    if (argc > 1 && strcmp(argv[1], "poke") == 0) {
+        return lis2dw12_shell_cmd_poke(argc, argv);
+    }
 
+    /* Test */
+    if (argc > 1 && strcmp(argv[1], "test") == 0) {
+        return lis2dw12_shell_cmd_test(argc, argv);
+    }
+    
     return lis2dw12_shell_err_unknown_arg(argv[1]);
 }
 
