@@ -726,6 +726,9 @@ config_lis2dw12_sensor(void)
     cfg.fifo_mode = LIS2DW12_FIFO_M_BYPASS;
     cfg.fifo_threshold = 32;
     cfg.stream_read_interrupt = LIS2DW12_INT1_CFG_DRDY;
+
+    cfg.wake_up_ths = 0;
+    cfg.wake_up_dur = 0;
     
     cfg.read_mode = LIS2DW12_READ_M_POLL;
     cfg.mask = SENSOR_TYPE_ACCELEROMETER;

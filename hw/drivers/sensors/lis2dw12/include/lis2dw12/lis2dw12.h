@@ -89,6 +89,38 @@ extern "C" {
 #define LIS2DW12_INT_SRC_WU_IA                  0x02
 #define LIS2DW12_INT_SRC_FF_IA                  0x01
 
+#define LIS2DW12_WAKE_UP_SRC_FF_IA              0x20
+#define LIS2DW12_WAKE_UP_SRC_SLEEP_STATE_IA     0x10
+#define LIS2DW12_WAKE_UP_SRC_WU_IA              0x08
+#define LIS2DW12_WAKE_UP_SRC_X_WU               0x04
+#define LIS2DW12_WAKE_UP_SRC_Y_WU               0x02
+#define LIS2DW12_WAKE_UP_SRC_Z_WU               0x01
+
+#define LIS2DW12_TAP_SRC_TAP_IA                 0x40
+#define LIS2DW12_TAP_SRC_SINGLE_TAP             0x20
+#define LIS2DW12_TAP_SRC_DOUBLE_TAP             0x10
+#define LIS2DW12_TAP_SRC_TAP_SIGN               0x08
+#define LIS2DW12_TAP_SRC_X_TAP                  0x04
+#define LIS2DW12_TAP_SRC_Y_TAP                  0x02
+#define LIS2DW12_TAP_SRC_Z_TAP                  0x01
+
+#define LIS2DW12_SIXD_SRC_6D_IA                 0x40
+#define LIS2DW12_SIXD_SRC_ZH                    0x20
+#define LIS2DW12_SIXD_SRC_ZL                    0x10
+#define LIS2DW12_SIXD_SRC_YH                    0x08
+#define LIS2DW12_SIXD_SRC_YL                    0x04
+#define LIS2DW12_SIXD_SRC_XH                    0x02
+#define LIS2DW12_SIXD_SRC_XL                    0x01
+    
+#define LIS2DW12_WAKE_THS_SINGLE_DOUBLE_TAP     0x80
+#define LIS2DW12_WAKE_THS_SLEEP_ON              0x40
+#define LIS2DW12_WAKE_THS_THS                   0x3F
+
+#define LIS2DW12_WAKE_DUR_FF_DUR                0x80
+#define LIS2DW12_WAKE_DUR_DUR                   0x60
+#define LIS2DW12_WAKE_DUR_STATIONARY            0x10
+#define LIS2DW12_WAKE_DUR_SLEEP_DUR             0x0F
+    
     
 enum lis2dw12_ths_6d {
     LIS2DW12_6D_THS_80_DEG = 0,
@@ -163,6 +195,9 @@ struct lis2dw12_cfg {
 
     enum lis2dw12_fifo_mode fifo_mode;
     uint8_t fifo_threshold;
+
+    uint8_t wake_up_ths;
+    uint8_t wake_up_dur;
     
     enum lis2dw12_read_mode read_mode;
     uint8_t stream_read_interrupt;
@@ -465,6 +500,34 @@ int lis2dw12_clear_int(struct sensor_itf *itf, uint8_t *src);
 int lis2dw12_get_int_src(struct sensor_itf *itf, uint8_t *status);
 
 /**
+ * Get Wake Up Source
+ *
+ * @param the sensor interface
+ * @param pointer to return wake_up_src in
+ * @return 0 on success, non-zero on failure
+ */
+int lis2dw12_get_wake_up_src(struct sensor_itf *itf, uint8_t *status);
+
+/**
+ * Get Tap Source
+ *
+ * @param the sensor interface
+ * @param pointer to return tap_src in
+ * @return 0 on success, non-zero on failure
+ */
+int lis2dw12_get_tap_src(struct sensor_itf *itf, uint8_t *status);
+
+/**
+ * Get 6D Source
+ *
+ * @param the sensor interface
+ * @param pointer to return sixd_src in
+ * @return 0 on success, non-zero on failure
+ */
+int lis2dw12_get_sixd_src(struct sensor_itf *itf, uint8_t *status);
+
+    
+/**
  * Setup FIFO
  *
  * @param the sensor interface
@@ -482,6 +545,42 @@ int lis2dw12_set_fifo_cfg(struct sensor_itf *itf, enum lis2dw12_fifo_mode mode, 
  * @return 0 on success, non-zero on failure
  */
 int lis2dw12_get_fifo_samples(struct sensor_itf *itf, uint8_t *samples);
+
+/**
+ * Set Wake Up Threshold configuration
+ *
+ * @param the sensor interface
+ * @param wake_up_ths value to set
+ * @return 0 on success, non-zero on failure
+ */
+int lis2dw12_set_wake_up_ths(struct sensor_itf *itf, uint8_t reg);
+
+/**
+ * Get Wake Up Threshold config
+ *
+ * @param the sensor interface
+ * @param ptr to store wake_up_ths value
+ * @return 0 on success, non-zero on failure
+ */
+int lis2dw12_get_wake_up_ths(struct sensor_itf *itf, uint8_t *reg);
+
+/**
+ * Set Wake Up Duration configuration
+ *
+ * @param the sensor interface
+ * @param wake_up_dur value to set
+ * @return 0 on success, non-zero on failure
+ */
+int lis2dw12_set_wake_up_dur(struct sensor_itf *itf, uint8_t reg);
+
+/**
+ * Get Wake Up Duration config
+ *
+ * @param the sensor interface
+ * @param ptr to store wake_up_dur value
+ * @return 0 on success, non-zero on failure
+ */
+int lis2dw12_get_wake_up_dur(struct sensor_itf *itf, uint8_t *reg);
     
 /**
  * Run Self test on sensor

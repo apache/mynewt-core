@@ -1105,6 +1105,54 @@ lis2dw12_set_int2_pin_cfg(struct sensor_itf *itf, uint8_t cfg)
 }
 
 /**
+ * Set Wake Up Threshold configuration
+ *
+ * @param the sensor interface
+ * @param wake_up_ths value to set
+ * @return 0 on success, non-zero on failure
+ */
+int lis2dw12_set_wake_up_ths(struct sensor_itf *itf, uint8_t reg)
+{
+    return lis2dw12_write8(itf, LIS2DW12_REG_WAKE_UP_THS, reg);
+}
+
+/**
+ * Get Wake Up Threshold config
+ *
+ * @param the sensor interface
+ * @param ptr to store wake_up_ths value
+ * @return 0 on success, non-zero on failure
+ */
+int lis2dw12_get_wake_up_ths(struct sensor_itf *itf, uint8_t *reg)
+{
+    return lis2dw12_read8(itf, LIS2DW12_REG_WAKE_UP_THS, reg);
+}
+
+/**
+ * Set Wake Up Duration configuration
+ *
+ * @param the sensor interface
+ * @param wake_up_dur value to set
+ * @return 0 on success, non-zero on failure
+ */
+int lis2dw12_set_wake_up_dur(struct sensor_itf *itf, uint8_t reg)
+{
+    return lis2dw12_write8(itf, LIS2DW12_REG_WAKE_UP_DUR, reg);
+}
+
+/**
+ * Get Wake Up Duration config
+ *
+ * @param the sensor interface
+ * @param ptr to store wake_up_dur value
+ * @return 0 on success, non-zero on failure
+ */
+int lis2dw12_get_wake_up_dur(struct sensor_itf *itf, uint8_t *reg)
+{
+    return lis2dw12_read8(itf, LIS2DW12_REG_WAKE_UP_DUR, reg);
+}
+
+/**
  * Clear interrupt 1
  *
  * @param the sensor interface
@@ -1126,6 +1174,43 @@ int lis2dw12_get_int_src(struct sensor_itf *itf, uint8_t *status)
 {
     return lis2dw12_read8(itf, LIS2DW12_REG_STATUS_REG, status);
 }
+
+/**
+ * Get Wake Up Source
+ *
+ * @param the sensor interface
+ * @param pointer to return wake_up_src in
+ * @return 0 on success, non-zero on failure
+ */
+int lis2dw12_get_wake_up_src(struct sensor_itf *itf, uint8_t *status)
+{
+    return lis2dw12_read8(itf, LIS2DW12_REG_WAKE_UP_SRC, status);
+}
+
+/**
+ * Get Tap Source
+ *
+ * @param the sensor interface
+ * @param pointer to return tap_src in
+ * @return 0 on success, non-zero on failure
+ */
+int lis2dw12_get_tap_src(struct sensor_itf *itf, uint8_t *status)
+{
+    return lis2dw12_read8(itf, LIS2DW12_REG_TAP_SRC, status);
+}
+
+/**
+ * Get 6D Source
+ *
+ * @param the sensor interface
+ * @param pointer to return sixd_src in
+ * @return 0 on success, non-zero on failure
+ */
+int lis2dw12_get_sixd_src(struct sensor_itf *itf, uint8_t *status)
+{
+    return lis2dw12_read8(itf, LIS2DW12_REG_SIXD_SRC, status);
+}
+
 
 /**
  * Set whether interrupts are enabled
@@ -1682,7 +1767,9 @@ static int
 lis2dw12_sensor_set_notification(struct sensor *sensor, sensor_event_type_t type)
 {
     struct lis2dw12 * lis2dw12;
+    struct sensor_itf *itf;
     uint8_t int_cfg = 0;
+    uint8_t wake_up_ths;
     struct lis2dw12_private_driver_data *pdd;
     int rc;
 
@@ -1698,6 +1785,7 @@ lis2dw12_sensor_set_notification(struct sensor *sensor, sensor_event_type_t type
     }
 
     lis2dw12 = (struct lis2dw12 *)SENSOR_GET_DEVICE(sensor);
+    itf = SENSOR_GET_ITF(sensor);
     pdd = &lis2dw12->pdd;
 
     if (pdd->registered_mask & LIS2DW12_NOTIFY_MASK) {
@@ -1715,6 +1803,18 @@ lis2dw12_sensor_set_notification(struct sensor *sensor, sensor_event_type_t type
     rc = enable_interrupt(sensor, int_cfg);
     if (rc) {
         return rc;
+    }
+
+    /* enable double tap detection in wake_up_ths */
+    if(type == SENSOR_EVENT_TYPE_DOUBLE_TAP) {
+        wake_up_ths = lis2dw12->cfg.wake_up_ths;
+        wake_up_ths |= LIS2DW12_WAKE_THS_SINGLE_DOUBLE_TAP;
+
+        rc = lis2dw12_set_wake_up_ths(itf, wake_up_ths);
+        if (rc) {
+            return rc;
+        }
+
     }
 
     pdd->notify_ctx.snec_evtype |= type;
@@ -1737,6 +1837,8 @@ static int
 lis2dw12_sensor_unset_notification(struct sensor *sensor, sensor_event_type_t type)
 {
     struct lis2dw12 * lis2dw12;
+    struct sensor_itf *itf;
+    int rc;
     
     if ((type & ~(SENSOR_EVENT_TYPE_DOUBLE_TAP |
                   SENSOR_EVENT_TYPE_SINGLE_TAP)) != 0) {
@@ -1750,9 +1852,15 @@ lis2dw12_sensor_unset_notification(struct sensor *sensor, sensor_event_type_t ty
     }
     
     lis2dw12 = (struct lis2dw12 *)SENSOR_GET_DEVICE(sensor);
-    
+    itf = SENSOR_GET_ITF(sensor);
+
     lis2dw12->pdd.notify_ctx.snec_evtype &= ~type;
     lis2dw12->pdd.registered_mask &= ~LIS2DW12_NOTIFY_MASK;
+
+    rc = lis2dw12_set_wake_up_ths(itf, lis2dw12->cfg.wake_up_ths);
+    if (rc) {
+        return rc;
+    }
     
     return disable_interrupt(sensor, 0);
 }
@@ -2027,7 +2135,19 @@ lis2dw12_config(struct lis2dw12 *lis2dw12, struct lis2dw12_cfg *cfg)
 
     lis2dw12->cfg.fifo_mode = cfg->fifo_mode;
     lis2dw12->cfg.fifo_threshold = cfg->fifo_threshold;
-    
+
+    rc = lis2dw12_set_wake_up_ths(itf, cfg->wake_up_ths);
+    if (rc) {
+        goto err;
+    }
+    lis2dw12->cfg.wake_up_ths = cfg->wake_up_ths;
+
+    rc = lis2dw12_set_wake_up_dur(itf, cfg->wake_up_dur);
+    if (rc) {
+        goto err;
+    }
+    lis2dw12->cfg.wake_up_dur = cfg->wake_up_dur;
+        
     rc = lis2dw12_set_int_enable(itf, cfg->int_enable);
     if (rc) {
         goto err;

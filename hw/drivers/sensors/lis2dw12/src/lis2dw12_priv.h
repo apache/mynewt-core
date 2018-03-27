@@ -111,10 +111,18 @@ extern "C" {
 #define LIS2DW12_INT_DUR_QUIET         (0x3 << 2)
 #define LIS2DW12_INT_DUR_SHOCK         (0x3 << 0)
 
+#define LIS2DW12_REG_WAKE_UP_THS             0x34
+
+#define LIS2DW12_REG_WAKE_UP_DUR             0x35
+    
 #define LIS2DW12_REG_FREEFALL                0x36
 #define LIS2DW12_FREEFALL_DUR         (0x1F << 3)
 #define LIS2DW12_FREEFALL_THS          (0x7 << 0)
 
+#define LIS2DW12_REG_WAKE_UP_SRC             0x38
+#define LIS2DW12_REG_TAP_SRC                 0x39
+#define LIS2DW12_REG_SIXD_SRC                0x3A
+    
 #define LIS2DW12_REG_INT_SRC                 0x3B
 
 #define LIS2DW12_REG_X_OFS                   0x3C
