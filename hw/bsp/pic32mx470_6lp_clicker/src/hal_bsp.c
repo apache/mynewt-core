@@ -16,10 +16,11 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 #include <assert.h>
 
+#include "os/mynewt.h"
 #include <hal/hal_bsp.h>
-#include <syscfg/syscfg.h>
 #include <mcu/mcu.h>
 #include <mcu/mips_bsp.h>
 #include <mcu/mips_hal.h>

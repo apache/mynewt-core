@@ -16,7 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include <os/os.h>
+
+#include "os/mynewt.h"
 #include <cbmem/cbmem.h>
 #include "log/log.h"
 

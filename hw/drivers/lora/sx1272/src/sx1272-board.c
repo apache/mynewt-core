@@ -12,8 +12,9 @@ License: Revised BSD License, see LICENSE.TXT file include in the project
 
 Maintainer: Miguel Luis and Gregory Cristian
 */
+
 #include <assert.h>
-#include "os/os.h"
+#include "os/mynewt.h"
 #include "hal/hal_spi.h"
 #include "hal/hal_gpio.h"
 #include "bsp/bsp.h"

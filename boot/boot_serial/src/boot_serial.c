@@ -16,14 +16,14 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 #include <assert.h>
 #include <stddef.h>
 #include <inttypes.h>
 #include <ctype.h>
 #include <stdio.h>
 
-#include "sysflash/sysflash.h"
-
+#include "os/mynewt.h"
 #include <bsp/bsp.h>
 
 #include <flash_map/flash_map.h>
@@ -31,11 +31,6 @@
 #include <hal/hal_system.h>
 #include <hal/hal_gpio.h>
 #include <hal/hal_watchdog.h>
-
-#include <os/endian.h>
-#include <os/os.h>
-#include <os/os_malloc.h>
-#include <os/os_cputime.h>
 
 #include <tinycbor/cbor.h>
 #include <tinycbor/cbor_buf_reader.h>

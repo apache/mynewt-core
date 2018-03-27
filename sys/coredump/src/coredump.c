@@ -19,8 +19,7 @@
 
 #include <stddef.h>
 #include <limits.h>
-#include "syscfg/syscfg.h"
-#include "sysflash/sysflash.h"
+#include "os/mynewt.h"
 #include "hal/hal_bsp.h"
 #include "flash_map/flash_map.h"
 #include "bootutil/image.h"

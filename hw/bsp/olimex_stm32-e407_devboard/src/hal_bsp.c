@@ -18,14 +18,13 @@
  */
 
 #include <assert.h>
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 #include "bsp/bsp.h"
 #include "stm32f407xx.h"
 #include "stm32f4xx_hal_gpio_ex.h"
 #include "stm32f4xx_hal_dma.h"
 #include "stm32f4xx_hal_adc.h"
 #include "flash_map/flash_map.h"
-#include "os/os_dev.h"
 #if MYNEWT_VAL(UART_0)
 #include "uart/uart.h"
 #include "uart_hal/uart_hal.h"

@@ -18,13 +18,12 @@
  */
 
 #include <string.h>
-#include "sysinit/sysinit.h"
+#include "os/mynewt.h"
 #include "console/console.h"
 #include "shell/shell.h"
 #include "hal/hal_gpio.h"
 #include "tcs34725/tcs34725.h"
 #include "tcs34725_priv.h"
-#include "defs/error.h"
 #include "parse/parse.h"
 
 #if MYNEWT_VAL(TCS34725_CLI)

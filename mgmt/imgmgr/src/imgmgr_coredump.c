@@ -17,13 +17,12 @@
  * under the License.
  */
 
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 
 #if MYNEWT_VAL(IMGMGR_COREDUMP)
 
 #include <limits.h>
 
-#include "sysflash/sysflash.h"
 #include "flash_map/flash_map.h"
 #include "mgmt/mgmt.h"
 #include "coredump/coredump.h"

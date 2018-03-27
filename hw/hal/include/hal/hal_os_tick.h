@@ -31,7 +31,7 @@
 extern "C" {
 #endif
 
-#include <os/os_time.h>
+#include "os/mynewt.h"
 
 /**
  * Set up the periodic timer to interrupt at a frequency of 'os_ticks_per_sec'.

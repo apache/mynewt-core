@@ -17,9 +17,9 @@
  * under the License.
  */
 
-#include "debounce/debounce.h"
-#include "syscfg/syscfg.h"
 #include <string.h>
+#include "os/mynewt.h"
+#include "debounce/debounce.h"
 
 static void
 debounce_check(void *arg)

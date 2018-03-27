@@ -20,7 +20,7 @@
 #ifndef __WIFI_PRIV_H__
 #define __WIFI_PRIV_H__
 
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 
 #ifdef __cplusplus
 extern "C" {

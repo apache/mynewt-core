@@ -17,11 +17,8 @@
  * under the License.
  */
 #include <stddef.h>
-
-#include <syscfg/syscfg.h>
-
-#include <os/os_dev.h>
 #include <assert.h>
+#include "os/mynewt.h"
 
 #if MYNEWT_VAL(UART_0)
 /*
@@ -36,7 +33,6 @@
 #include <hal/hal_flash_int.h>
 #include <hal/hal_gpio.h>
 #include <hal/hal_system.h>
-#include <os/os_cputime.h>
 
 #if MYNEWT_VAL(SPI_0_MASTER) || MYNEWT_VAL(SPI_0_SLAVE) || \
     MYNEWT_VAL(SPI_1_MASTER) || MYNEWT_VAL(SPI_1_SLAVE)

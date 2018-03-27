@@ -51,7 +51,7 @@
 // Includes board dependent definitions such as channels frequencies
 #include "node/mac/LoRaMac-definitions.h"
 #include "node/utilities.h"
-#include "os/os.h"
+#include "os/mynewt.h"
 
 struct lora_pkt_info;
 

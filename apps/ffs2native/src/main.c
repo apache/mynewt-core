@@ -24,17 +24,13 @@
 #include <unistd.h>
 #include <dirent.h>
 #include <string.h>
+#include "os/mynewt.h"
 #include "../src/nffs_priv.h"
-#include <os/queue.h>
 #include <fs/fs.h>
 #include <bsp/bsp.h>
 #include <nffs/nffs.h>
 #include <hal/hal_flash.h>
 #include <flash_map/flash_map.h>
-
-#include <sysinit/sysinit.h>
-#include <syscfg/syscfg.h>
-#include <sysflash/sysflash.h>
 
 #ifdef ARCH_sim
 #include <mcu/mcu_sim.h>

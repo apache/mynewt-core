@@ -17,9 +17,8 @@
  * under the License.
  */
 #include <assert.h>
-#include <os/os.h>
+#include "os/mynewt.h"
 #include "hal/hal_os_tick.h"
-#include "os/os_trace_api.h"
 #include "inc/arc/arc.h"
 #include "inc/arc/arc_exception.h"
 #include "inc/arc/arc_timer.h"

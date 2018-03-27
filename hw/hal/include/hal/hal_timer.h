@@ -29,15 +29,11 @@
 #define H_HAL_TIMER_
 
 #include <inttypes.h>
-#include "os/queue.h"
+#include "os/mynewt.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include <inttypes.h>
-
-#include "os/queue.h"
 
 /* HAL timer callback */
 typedef void (*hal_timer_cb)(void *arg);

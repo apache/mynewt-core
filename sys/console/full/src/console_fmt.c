@@ -18,10 +18,9 @@
  */
 #include <stdarg.h>
 #include <stdio.h>
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 #include "console/console.h"
 #include "console/ticks.h"
-#include "os/os_time.h"
 
 #define CONS_OUTPUT_MAX_LINE    128
 

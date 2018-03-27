@@ -17,11 +17,10 @@
  * under the License.
  */
 
-#include "testutil/testutil.h"
-#include "os/os.h"
-#include "os_test_priv.h"
-
 #include <string.h>
+#include "os/mynewt.h"
+#include "testutil/testutil.h"
+#include "os_test_priv.h"
 
 /* 
  * NOTE: currently, the buffer size cannot be changed as some tests are

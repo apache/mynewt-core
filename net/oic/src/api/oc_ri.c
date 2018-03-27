@@ -18,11 +18,7 @@
 #include <stddef.h>
 #include <strings.h>
 
-#include <syscfg/syscfg.h>
-
-#include <os/os_callout.h>
-#include <os/os_mempool.h>
-#include <os/queue.h>
+#include "os/mynewt.h"
 
 #include "oic/port/mynewt/config.h"
 

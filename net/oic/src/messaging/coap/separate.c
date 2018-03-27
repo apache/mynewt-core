@@ -34,9 +34,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <syscfg/syscfg.h>
-
-#include <os/os_mempool.h>
+#include "os/mynewt.h"
 
 #include "oic/port/mynewt/config.h"
 

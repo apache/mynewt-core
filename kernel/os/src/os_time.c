@@ -16,13 +16,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include "syscfg/syscfg.h"
 
 #include <assert.h>
-
-#include "os/os.h"
-#include "os/queue.h"
-
+#include "os/mynewt.h"
 
 CTASSERT(sizeof(os_time_t) == 4);
 

@@ -21,7 +21,7 @@
 
 #include <assert.h>
 #include <stddef.h>
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 #include "base64/hex.h"
 #include "testutil/testutil.h"
 

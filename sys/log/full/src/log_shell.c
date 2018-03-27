@@ -17,7 +17,7 @@
  * under the License.
  */
 
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 
 /* This whole file is conditionally compiled based on whether the
  * log package is configured to use the shell (MYNEWT_VAL(LOG_CLI)).
@@ -28,7 +28,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "os/os.h"
 #include "cbmem/cbmem.h"
 #include "log/log.h"
 #include "shell/shell.h"

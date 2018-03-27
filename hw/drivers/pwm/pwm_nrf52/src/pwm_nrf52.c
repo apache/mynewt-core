@@ -17,13 +17,13 @@
  * under the License.
  */
 
+#include <assert.h>
+#include <string.h>
+#include <errno.h>
+#include "os/mynewt.h"
 #include <bsp.h>
 #include <hal/hal_bsp.h>
-#include <assert.h>
-#include <os/os.h>
-#include <errno.h>
 #include <pwm/pwm.h>
-#include <string.h>
 #include <mcu/cmsis_nvic.h>
 
 /* Nordic headers */

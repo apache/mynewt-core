@@ -17,14 +17,11 @@
  * under the License.
  */
 
-#include "syscfg/syscfg.h"
-#include "sysflash/sysflash.h"
+#include "os/mynewt.h"
 
 #if MYNEWT_VAL(LOG_FCB)
 
 #include <string.h>
-
-#include "os/os.h"
 
 #include "flash_map/flash_map.h"
 #include "fcb/fcb.h"

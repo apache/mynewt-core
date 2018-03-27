@@ -33,11 +33,10 @@
  *
  */
 
-#include "os/os.h"
-
 #include <assert.h>
 #include <string.h>
 #include <limits.h>
+#include "os/mynewt.h"
 
 /**
  * @addtogroup OSKernel

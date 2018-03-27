@@ -22,7 +22,7 @@
  * and no-signals).
  */
 
-#include "os/os.h"
+#include "os/mynewt.h"
 
 #include <hal/hal_bsp.h>
 

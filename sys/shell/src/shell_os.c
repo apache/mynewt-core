@@ -20,9 +20,7 @@
 #include <assert.h>
 #include <string.h>
 
-#include "syscfg/syscfg.h"
-#include "sysinit/sysinit.h"
-#include "os/os.h"
+#include "os/mynewt.h"
 #include "datetime/datetime.h"
 #include "console/console.h"
 

@@ -20,7 +20,7 @@
 #ifndef __HAL_APOLLO2_H_
 #define __HAL_APOLLO2_H__
 
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 
 #ifdef __cplusplus
 extern "C" {

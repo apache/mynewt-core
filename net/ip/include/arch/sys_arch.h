@@ -26,7 +26,7 @@ extern "C" {
 #endif
 
 #undef LITTLE_ENDIAN
-#include <os/os.h>
+#include "os/mynewt.h"
 #include <ip/os_queue.h>
 
 #define SYS_MBOX_NULL NULL

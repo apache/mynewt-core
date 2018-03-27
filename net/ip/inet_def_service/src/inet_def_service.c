@@ -19,8 +19,7 @@
 #include <assert.h>
 #include <string.h>
 
-#include <os/os.h>
-#include <os/endian.h>
+#include "os/mynewt.h"
 #include <mn_socket/mn_socket.h>
 #include <console/console.h>
 

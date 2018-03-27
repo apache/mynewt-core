@@ -19,8 +19,8 @@
 #ifndef __SYS_CONFIG_H_
 #define __SYS_CONFIG_H_
 
-#include <os/queue.h>
 #include <stdint.h>
+#include "os/mynewt.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -21,11 +21,7 @@
 #include <string.h>
 #include <assert.h>
 
-#include <os/os.h>
-#include "syscfg/syscfg.h"
-#include "sysinit/sysinit.h"
-#include "sysflash/sysflash.h"
-#include "defs/error.h"
+#include "os/mynewt.h"
 #include "hal/hal_bsp.h"
 #include "hal/hal_flash.h"
 #include "hal/hal_flash_int.h"

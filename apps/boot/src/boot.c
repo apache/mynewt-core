@@ -20,16 +20,12 @@
 #include <assert.h>
 #include <stddef.h>
 #include <inttypes.h>
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 #include <flash_map/flash_map.h>
-#include <os/os.h>
 
 #include <hal/hal_bsp.h>
 #include <hal/hal_system.h>
 #include <hal/hal_flash.h>
-#if MYNEWT_VAL(BOOT_SERIAL)
-#include <sysinit/sysinit.h>
-#endif
 #include <console/console.h>
 #include "bootutil/image.h"
 #include "bootutil/bootutil.h"

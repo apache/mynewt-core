@@ -24,8 +24,8 @@
 extern "C" {
 #endif
 
-#include "inttypes.h"
-#include <os/os_eventq.h>
+#include <inttypes.h>
+#include "os/mynewt.h"
 
 /* Define special stackos sections */
 #define sec_data_core   __attribute__((section(".data.core")))

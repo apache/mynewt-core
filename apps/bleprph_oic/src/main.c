@@ -21,9 +21,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <errno.h>
-#include <sysinit/sysinit.h>
-#include <bsp/bsp.h>
-#include <os/os.h>
+#include "os/mynewt.h"
 #include <bsp/bsp.h>
 #include <hal/hal_gpio.h>
 #include <console/console.h>

@@ -19,11 +19,7 @@
 
 #include <string.h>
 
-#include "os/os.h"
-#include "os/os_dev.h"
-#include "defs/error.h"
-#include "syscfg/syscfg.h"
-#include "sysinit/sysinit.h"
+#include "os/mynewt.h"
 #include "charge-control/charge_control.h"
 #include "charge_control_priv.h"
 

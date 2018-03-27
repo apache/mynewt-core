@@ -20,7 +20,7 @@
 #ifndef __PWM_H__
 #define __PWM_H__
 
-#include <os/os_dev.h>
+#include "os/mynewt.h"
 
 #ifdef __cplusplus
 extern "C" {

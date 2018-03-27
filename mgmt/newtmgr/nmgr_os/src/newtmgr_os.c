@@ -16,13 +16,11 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include <syscfg/syscfg.h>
-
-#include <os/os.h>
-#include <os/endian.h>
 
 #include <assert.h>
 #include <string.h>
+
+#include "os/mynewt.h"
 
 #include <hal/hal_system.h>
 #include <hal/hal_watchdog.h>

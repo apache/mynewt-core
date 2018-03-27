@@ -17,12 +17,12 @@
  * under the License.
  */
 
+#include <stdlib.h>
+#include <assert.h>
+#include "os/mynewt.h"
 #include "hal/hal_gpio.h"
 #include "mcu/cmsis_nvic.h"
-#include "os/os_trace_api.h"
-#include <stdlib.h>
 #include "nrf.h"
-#include <assert.h>
 #include "mcu/nrf52_hal.h"
 
 /* XXX:

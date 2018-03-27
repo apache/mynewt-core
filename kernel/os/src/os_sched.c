@@ -17,12 +17,9 @@
  * under the License.
  */
 
-#include "os/os.h"
-#include "os/os_trace_api.h"
-#include "os/queue.h"
-#include "os_priv.h"
-
 #include <assert.h>
+#include "os/mynewt.h"
+#include "os_priv.h"
 
 struct os_task_list g_os_run_list = TAILQ_HEAD_INITIALIZER(g_os_run_list);
 struct os_task_list g_os_sleep_list = TAILQ_HEAD_INITIALIZER(g_os_sleep_list);

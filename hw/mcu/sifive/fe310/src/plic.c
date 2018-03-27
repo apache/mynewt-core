@@ -17,9 +17,9 @@
  * under the License.
  */
 
+#include "os/mynewt.h"
 #include <env/freedom-e300-hifive1/platform.h>
 #include <mcu/plic.h>
-#include <syscfg/syscfg.h>
 
 interrupt_handler_t plic_interrupts[PLIC_NUM_INTERRUPTS];
 

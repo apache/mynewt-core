@@ -22,16 +22,13 @@
 #include <errno.h>
 #include <string.h>
 
-#include "defs/error.h"
-#include "os/os.h"
-#include "sysinit/sysinit.h"
+#include "os/mynewt.h"
 #include "hal/hal_i2c.h"
 #include "sensor/sensor.h"
 #include "ms5837/ms5837.h"
 #include "sensor/temperature.h"
 #include "sensor/pressure.h"
 #include "ms5837_priv.h"
-#include "os/os_cputime.h"
 #include "console/console.h"
 #include "log/log.h"
 #include "stats/stats.h"

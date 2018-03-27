@@ -19,7 +19,7 @@
 
 #include <assert.h>
 #include <string.h>
-#include "os/os_malloc.h"
+#include "os/mynewt.h"
 #include "testutil/testutil.h"
 #include "nffs_priv.h"
 #include "nffs/nffs.h"

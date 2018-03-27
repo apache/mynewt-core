@@ -17,11 +17,10 @@
  * under the License.
  */
 
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 
 #if MYNEWT_VAL(CONFIG_FCB)
 
-#include <os/os.h>
 #include <fcb/fcb.h>
 #include <string.h>
 

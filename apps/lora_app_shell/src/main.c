@@ -20,12 +20,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <limits.h>
-#include "sysinit/sysinit.h"
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 #include "hal/hal_gpio.h"
 #include "hal/hal_spi.h"
 #include "bsp/bsp.h"
-#include "os/os.h"
 #include "console/console.h"
 #include "shell/shell.h"
 #include "parse/parse.h"

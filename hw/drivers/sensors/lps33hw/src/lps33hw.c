@@ -22,9 +22,7 @@
 #include <assert.h>
 #include <math.h>
 
-#include "defs/error.h"
-#include "os/os.h"
-#include "sysinit/sysinit.h"
+#include "os/mynewt.h"
 #include "hal/hal_i2c.h"
 #include "sensor/sensor.h"
 #include "sensor/pressure.h"

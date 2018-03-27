@@ -19,9 +19,7 @@
 #include <assert.h>
 #include <stddef.h>
 #include <inttypes.h>
-
-#include <syscfg/syscfg.h>
-
+#include "os/mynewt.h"
 #include <uart/uart.h>
 
 /*

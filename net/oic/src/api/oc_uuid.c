@@ -19,7 +19,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <syscfg/syscfg.h>
+#include "os/mynewt.h"
 
 #include <hal/hal_bsp.h>
 

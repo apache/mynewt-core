@@ -18,9 +18,7 @@
  */
 
 #include <assert.h>
-#include "sysinit/sysinit.h"
-#include "syscfg/syscfg.h"
-#include "os/os_mempool.h"
+#include "os/mynewt.h"
 #include "mem/mem.h"
 #include "os_priv.h"
 

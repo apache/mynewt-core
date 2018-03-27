@@ -28,9 +28,7 @@
 #ifndef __CHARGE_CONTROL_H__
 #define __CHARGE_CONTROL_H__
 
-#include "os/os.h"
-#include "os/os_dev.h"
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 
 #ifdef __cplusplus
 extern "C" {

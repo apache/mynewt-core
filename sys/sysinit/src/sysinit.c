@@ -20,9 +20,7 @@
 #include <stdio.h>
 #include <stddef.h>
 #include <limits.h>
-#include "os/os_fault.h"
-#include "syscfg/syscfg.h"
-#include "sysinit/sysinit.h"
+#include "os/mynewt.h"
 
 static void
 sysinit_dflt_panic_cb(const char *file, int line, const char *func,

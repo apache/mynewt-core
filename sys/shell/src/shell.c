@@ -21,10 +21,8 @@
 #include <string.h>
 #include <assert.h>
 
-#include "syscfg/syscfg.h"
-#include "os/os.h"
+#include "os/mynewt.h"
 #include "console/console.h"
-#include "sysinit/sysinit.h"
 #include "shell/shell.h"
 #include "shell_priv.h"
 

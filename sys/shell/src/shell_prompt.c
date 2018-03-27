@@ -20,8 +20,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "syscfg/syscfg.h"
-#include "os/os.h"
+#include "os/mynewt.h"
 #include "console/console.h"
 #include "console/ticks.h"
 

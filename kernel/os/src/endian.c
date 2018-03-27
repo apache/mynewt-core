@@ -17,7 +17,7 @@
  * under the License.
  */
 
-#include "os/endian.h"
+#include "os/mynewt.h"
 
 void
 put_le16(void *buf, uint16_t x)

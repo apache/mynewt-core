@@ -19,11 +19,9 @@
 #ifndef __SYS_LOG_FULL_H__
 #define __SYS_LOG_FULL_H__
 
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 #include "log/ignore.h"
 #include "cbmem/cbmem.h"
-
-#include <os/queue.h>
 
 #ifdef __cplusplus
 extern "C" {

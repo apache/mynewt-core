@@ -17,8 +17,7 @@
  * under the License.
  */
 
-#include "sysinit/sysinit.h"
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 #include "testutil/testutil.h"
 #include "test_cborattr.h"
 

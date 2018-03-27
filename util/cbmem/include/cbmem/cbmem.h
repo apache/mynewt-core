@@ -19,7 +19,7 @@
 #ifndef __UTIL_CBMEM_H__ 
 #define __UTIL_CBMEM_H__
 
-#include <os/os.h>
+#include "os/mynewt.h"
 
 #ifdef __cplusplus
 extern "C" {

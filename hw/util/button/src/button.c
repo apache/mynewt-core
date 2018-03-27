@@ -1,5 +1,3 @@
-#include <assert.h>
-#include <syscfg/syscfg.h>
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -19,6 +17,8 @@
  * under the License.
  */
 
+#include <assert.h>
+#include "os/mynewt.h"
 #include "button/button.h"
 
 #define _BUTTON_FSM_INIT			0

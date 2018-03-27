@@ -17,7 +17,6 @@
  * under the License.
  */
 
-#include "syscfg/syscfg.h"
 #include "fs/fs.h"
 #include "fs/fs_if.h"
 #include "fs_priv.h"

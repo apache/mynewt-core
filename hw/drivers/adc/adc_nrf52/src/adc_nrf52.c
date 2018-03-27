@@ -17,11 +17,10 @@
  * under the License.
  */
 
-
+#include <assert.h>
+#include "os/mynewt.h"
 #include <hal/hal_bsp.h>
 #include <adc/adc.h>
-#include <assert.h>
-#include <os/os.h>
 #include <mcu/cmsis_nvic.h>
 
 /* Nordic headers */

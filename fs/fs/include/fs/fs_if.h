@@ -24,7 +24,7 @@
 extern "C" {
 #endif
 
-#include <os/queue.h>
+#include "os/mynewt.h"
 
 /*
  * Common interface filesystem(s) provide.

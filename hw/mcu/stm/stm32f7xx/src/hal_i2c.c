@@ -21,7 +21,7 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#include <syscfg/syscfg.h>
+#include "os/mynewt.h"
 
 #include <hal/hal_i2c.h>
 #include <hal/hal_gpio.h>

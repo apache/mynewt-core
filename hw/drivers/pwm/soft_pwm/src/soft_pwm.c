@@ -18,9 +18,9 @@
  */
 
 #include <assert.h>
-#include <os/os.h>
 #include <errno.h>
 #include <string.h>
+#include "os/mynewt.h"
 #include <pwm/pwm.h>
 #include <hal/hal_bsp.h>
 #include <hal/hal_gpio.h>

@@ -20,8 +20,7 @@
 #ifndef __BMA253_H__
 #define __BMA253_H__
 
-#include "os/os.h"
-#include "os/os_dev.h"
+#include "os/mynewt.h"
 #include "sensor/sensor.h"
 #include "sensor/accel.h"
 #include "sensor/temperature.h"

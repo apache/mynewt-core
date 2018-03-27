@@ -16,16 +16,16 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
+#include <assert.h>
+#include "os/mynewt.h"
 #include <hal/hal_bsp.h>
 #include <adc/adc.h>
-#include <assert.h>
-#include <os/os.h>
 #include <mcu/cmsis_nvic.h>
 
 /* Nordic headers */
 #include <nrfx.h>
 #include <nrfx_adc.h>
-
 
 #include "adc_nrf51/adc_nrf51.h"
 
