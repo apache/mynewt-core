@@ -74,13 +74,15 @@ static int lis2dw12_sensor_set_notification(struct sensor *,
 static int lis2dw12_sensor_unset_notification(struct sensor *,
                                               sensor_event_type_t);
 static int lis2dw12_sensor_handle_interrupt(struct sensor *);
+static int lis2dw12_sensor_set_config(struct sensor *, void *);
 
 static const struct sensor_driver g_lis2dw12_sensor_driver = {
-    .sd_read = lis2dw12_sensor_read,
-    .sd_get_config = lis2dw12_sensor_get_config,
-    .sd_set_notification = lis2dw12_sensor_set_notification,
+    .sd_read               = lis2dw12_sensor_read,
+    .sd_set_config         = lis2dw12_sensor_set_config,
+    .sd_get_config         = lis2dw12_sensor_get_config,
+    .sd_set_notification   = lis2dw12_sensor_set_notification,
     .sd_unset_notification = lis2dw12_sensor_unset_notification,
-    .sd_handle_interrupt = lis2dw12_sensor_handle_interrupt
+    .sd_handle_interrupt   = lis2dw12_sensor_handle_interrupt
 
 };
 
@@ -1719,6 +1721,16 @@ lis2dw12_sensor_set_notification(struct sensor *sensor, sensor_event_type_t type
     pdd->registered_mask |= LIS2DW12_NOTIFY_MASK;
 
     return 0;
+}
+
+static int
+lis2dw12_sensor_set_config(struct sensor *sensor, void *cfg)
+{
+    struct lis2dw12 *lis2dw12;
+
+    lis2dw12 = (struct lis2dw12 *)SENSOR_GET_DEVICE(sensor);
+
+    return lis2dw12_config(lis2dw12, (struct lis2dw12_cfg*)cfg);
 }
 
 static int
