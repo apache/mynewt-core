@@ -42,7 +42,7 @@
 #include <stdint.h>
 #include "mcu/system_apollo2.h"
 #include "mcu/apollo2.h"
-#include "cmsis_nvic.h"
+#include "mcu/cmsis_nvic.h"
 
 //*****************************************************************************
 //
