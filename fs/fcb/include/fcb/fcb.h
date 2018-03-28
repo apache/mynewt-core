@@ -72,6 +72,7 @@ struct fcb {
 #define FCB_ERR_NOMEM	-5
 #define FCB_ERR_CRC	-6
 #define FCB_ERR_MAGIC   -7
+#define FCB_ERR_VERSION -8
 
 int fcb_init(struct fcb *fcb);
 
