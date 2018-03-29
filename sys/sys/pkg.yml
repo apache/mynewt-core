@@ -15,33 +15,10 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-#
 
-pkg.name: kernel/os
-pkg.description: Mynewt operating system core.
+pkg.name: sys/sys
+pkg.description: BSD compatible queue.h
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
-
-pkg.deps:
-    - sys/sysinit
-    - sys/sys
-    - util/mem
-
-pkg.req_apis:
-    - console
-
-pkg.deps.OS_CLI:
-    - sys/shell
-
-pkg.deps.OS_COREDUMP:
-    - sys/coredump
-
-pkg.deps.BSP_SIMULATED:
-    - "@apache-mynewt-core/kernel/sim"
-
-pkg.deps.OS_SYSVIEW:
-    - sys/sysview
-
-pkg.init:
-    os_pkg_init: 0
+    - sys
