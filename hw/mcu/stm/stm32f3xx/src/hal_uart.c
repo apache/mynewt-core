@@ -114,6 +114,9 @@ uart_irq_handler(int num)
         }
         regs->CR1 = cr1;
     }
+    if (isr & USART_ISR_ORE) {
+        regs->ICR |= USART_ICR_ORECF;
+    }
 }
 
 void
