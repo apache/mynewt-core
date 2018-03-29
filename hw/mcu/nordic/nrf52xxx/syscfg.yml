@@ -86,17 +86,9 @@ syscfg.defs:
         description: 'NRF52 ADC 0'
         value:  0
 
-    ADC_0_RESOLUTION:
-        description: 'NRF52 ADC 0 RESOLUTION'
-        value: 'NRFX_SAADC_CONFIG_RESOLUTION'
-
-    ADC_0_OVERSAMPLE:
-        description: 'NRF52 ADC 0 OVERSAMPLE'
-        value: 'NRFX_SAADC_CONFIG_OVERSAMPLE'
-
-    ADC_0_INTERRUPT_PRIORITY:
-        description: 'NRF52 ADC IRQ PRIORITY'
-        value: 'NRFX_SAADC_CONFIG_IRQ_PRIORITY'
+    ADC_0_REFMV_0:
+        description: 'reference mV in AREF0 if used'
+        value: 0
 
     PWM_0:
         description: 'NRF52 PWM 0'

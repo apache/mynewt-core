@@ -75,6 +75,16 @@ syscfg.defs:
         description: 'ADC'
         value:  0
 
+    ADC_0_REFMV_0:
+        description: 'reference mV in AREF0 if used'
+        value: 0
+    ADC_0_REFMV_1:
+        description: 'reference mV in AREF1 if used'
+        value: 0
+    ADC_0_REFMV_VDD:
+        description: 'reference mV in VDD if used'
+        value: 0
+
 # The XTAL_xxx definitions are used to set the clock source used for the low
 # frequency clock. It is required that at least one of these sources is
 # enabled (the bsp should set one of these clock sources).
