@@ -2,13 +2,11 @@
   ******************************************************************************
   * @file    stm32f7xx_ll_rtc.c
   * @author  MCD Application Team
-  * @version V1.2.0
-  * @date    30-December-2016
   * @brief   RTC LL module driver.
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; COPYRIGHT(c) 2016 STMicroelectronics</center></h2>
+  * <h2><center>&copy; COPYRIGHT(c) 2017 STMicroelectronics</center></h2>
   *
   * Redistribution and use in source and binary forms, with or without modification,
   * are permitted provided that the following conditions are met:
@@ -384,7 +382,7 @@ void LL_RTC_TIME_StructInit(LL_RTC_TimeTypeDef *RTC_TimeStruct)
   * @param  RTC_Format This parameter can be one of the following values:
   *         @arg @ref LL_RTC_FORMAT_BIN
   *         @arg @ref LL_RTC_FORMAT_BCD
-  * @param  RTC_DateStruct: pointer to a RTC_DateTypeDef structure that contains
+  * @param  RTC_DateStruct pointer to a RTC_DateTypeDef structure that contains
   *                         the date configuration information for the RTC.
   * @retval An ErrorStatus enumeration value:
   *          - SUCCESS: RTC Day register is configured

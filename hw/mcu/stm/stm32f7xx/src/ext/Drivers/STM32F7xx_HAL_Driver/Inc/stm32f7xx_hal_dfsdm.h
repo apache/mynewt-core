@@ -2,13 +2,11 @@
   ******************************************************************************
   * @file    stm32f7xx_hal_dfsdm.h
   * @author  MCD Application Team
-  * @version V1.2.0
-  * @date    30-December-2016
   * @brief   Header file of DFSDM HAL module.
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; COPYRIGHT(c) 2016 STMicroelectronics</center></h2>
+  * <h2><center>&copy; COPYRIGHT(c) 2017 STMicroelectronics</center></h2>
   *
   * Redistribution and use in source and binary forms, with or without modification,
   * are permitted provided that the following conditions are met:
@@ -462,13 +460,13 @@ typedef struct
  */
 
 /** @brief  Reset DFSDM channel handle state.
-  * @param  __HANDLE__: DFSDM channel handle.
+  * @param  __HANDLE__ DFSDM channel handle.
   * @retval None
   */
 #define __HAL_DFSDM_CHANNEL_RESET_HANDLE_STATE(__HANDLE__) ((__HANDLE__)->State = HAL_DFSDM_CHANNEL_STATE_RESET)
 
 /** @brief  Reset DFSDM filter handle state.
-  * @param  __HANDLE__: DFSDM filter handle.
+  * @param  __HANDLE__ DFSDM filter handle.
   * @retval None
   */
 #define __HAL_DFSDM_FILTER_RESET_HANDLE_STATE(__HANDLE__) ((__HANDLE__)->State = HAL_DFSDM_FILTER_STATE_RESET)

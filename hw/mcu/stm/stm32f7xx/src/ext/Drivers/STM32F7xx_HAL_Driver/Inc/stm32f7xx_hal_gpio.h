@@ -2,13 +2,11 @@
   ******************************************************************************
   * @file    stm32f7xx_hal_gpio.h
   * @author  MCD Application Team
-  * @version V1.2.0
-  * @date    30-December-2016
   * @brief   Header file of GPIO HAL module.
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; COPYRIGHT(c) 2016 STMicroelectronics</center></h2>
+  * <h2><center>&copy; COPYRIGHT(c) 2017 STMicroelectronics</center></h2>
   *
   * Redistribution and use in source and binary forms, with or without modification,
   * are permitted provided that the following conditions are met:
@@ -187,7 +185,7 @@ typedef enum
 
 /**
   * @brief  Checks whether the specified EXTI line flag is set or not.
-  * @param  __EXTI_LINE__: specifies the EXTI line flag to check.
+  * @param  __EXTI_LINE__ specifies the EXTI line flag to check.
   *         This parameter can be GPIO_PIN_x where x can be(0..15)
   * @retval The new state of __EXTI_LINE__ (SET or RESET).
   */
@@ -195,7 +193,7 @@ typedef enum
 
 /**
   * @brief  Clears the EXTI's line pending flags.
-  * @param  __EXTI_LINE__: specifies the EXTI lines flags to clear.
+  * @param  __EXTI_LINE__ specifies the EXTI lines flags to clear.
   *         This parameter can be any combination of GPIO_PIN_x where x can be (0..15)
   * @retval None
   */
@@ -203,7 +201,7 @@ typedef enum
 
 /**
   * @brief  Checks whether the specified EXTI line is asserted or not.
-  * @param  __EXTI_LINE__: specifies the EXTI line to check.
+  * @param  __EXTI_LINE__ specifies the EXTI line to check.
   *          This parameter can be GPIO_PIN_x where x can be(0..15)
   * @retval The new state of __EXTI_LINE__ (SET or RESET).
   */
@@ -211,7 +209,7 @@ typedef enum
 
 /**
   * @brief  Clears the EXTI's line pending bits.
-  * @param  __EXTI_LINE__: specifies the EXTI lines to clear.
+  * @param  __EXTI_LINE__ specifies the EXTI lines to clear.
   *          This parameter can be any combination of GPIO_PIN_x where x can be (0..15)
   * @retval None
   */
@@ -219,7 +217,7 @@ typedef enum
 
 /**
   * @brief  Generates a Software interrupt on selected EXTI line.
-  * @param  __EXTI_LINE__: specifies the EXTI line to check.
+  * @param  __EXTI_LINE__ specifies the EXTI line to check.
   *          This parameter can be GPIO_PIN_x where x can be(0..15)
   * @retval None
   */
