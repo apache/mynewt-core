@@ -19,7 +19,7 @@
 
 #include "os/os.h"
 #include "os/os_trace_api.h"
-#include "os/queue.h"
+#include "sys/queue.h"
 #include "os_priv.h"
 
 #include <assert.h>

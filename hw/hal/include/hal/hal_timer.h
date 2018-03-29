@@ -29,7 +29,7 @@
 #define H_HAL_TIMER_
 
 #include <inttypes.h>
-#include "os/queue.h"
+#include "sys/queue.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -37,7 +37,7 @@ extern "C" {
 
 #include <inttypes.h>
 
-#include "os/queue.h"
+#include "sys/queue.h"
 
 /* HAL timer callback */
 typedef void (*hal_timer_cb)(void *arg);

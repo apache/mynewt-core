@@ -206,7 +206,7 @@ license.  For details, see:
     * util/crc/src/crc16.c
 
 This product bundles queue.h 8.5, which is available under the "3-clause BSD"
-license.  For details, see kernel/os/include/os/queue.h
+license.  For details, see kernel/os/include/sys/queue.h
 
 This product partly derives from FreeBSD, which is available under the
 "3-clause BSD" license.  For details, see:

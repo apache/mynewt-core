@@ -21,7 +21,7 @@
 #include <assert.h>
 
 #include "os/os.h"
-#include "os/queue.h"
+#include "sys/queue.h"
 
 
 CTASSERT(sizeof(os_time_t) == 4);

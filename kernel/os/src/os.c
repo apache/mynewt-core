@@ -19,7 +19,7 @@
 
 #include "sysinit/sysinit.h"
 #include "os/os.h"
-#include "os/queue.h"
+#include "sys/queue.h"
 #include "os/os_dev.h"
 #include "os/os_trace_api.h"
 #include "os_priv.h"

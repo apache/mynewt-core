@@ -20,7 +20,7 @@
 #ifndef H_BSNCENT_
 #define H_BSNCENT_
 
-#include "os/queue.h"
+#include "sys/queue.h"
 #include "log/log.h"
 #ifdef __cplusplus
 extern "C" {

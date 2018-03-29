@@ -25,7 +25,7 @@
 #include <dirent.h>
 #include <string.h>
 #include "../src/nffs_priv.h"
-#include <os/queue.h>
+#include <sys/queue.h>
 #include <fs/fs.h>
 #include <bsp/bsp.h>
 #include <nffs/nffs.h>

@@ -19,7 +19,7 @@
 #ifndef __SYS_CONFIG_H_
 #define __SYS_CONFIG_H_
 
-#include <os/queue.h>
+#include <sys/queue.h>
 #include <stdint.h>
 
 #ifdef __cplusplus

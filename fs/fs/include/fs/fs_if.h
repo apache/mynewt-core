@@ -24,7 +24,7 @@
 extern "C" {
 #endif
 
-#include <os/queue.h>
+#include <sys/queue.h>
 
 /*
  * Common interface filesystem(s) provide.

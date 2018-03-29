@@ -22,7 +22,7 @@
 
 #include <inttypes.h>
 #include "log/log.h"
-#include "os/queue.h"
+#include "sys/queue.h"
 #include "os/os_mempool.h"
 #include "nffs/nffs.h"
 #include "fs/fs.h"

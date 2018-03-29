@@ -24,7 +24,7 @@
 #include <inttypes.h>
 #include <setjmp.h>
 
-#include "os/queue.h"
+#include "sys/queue.h"
 
 #include "syscfg/syscfg.h"
 
