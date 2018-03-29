@@ -111,16 +111,7 @@ extern "C" {
 #define LIS2DW12_SIXD_SRC_YL                    0x04
 #define LIS2DW12_SIXD_SRC_XH                    0x02
 #define LIS2DW12_SIXD_SRC_XL                    0x01
-    
-#define LIS2DW12_WAKE_THS_SINGLE_DOUBLE_TAP     0x80
-#define LIS2DW12_WAKE_THS_SLEEP_ON              0x40
-#define LIS2DW12_WAKE_THS_THS                   0x3F
 
-#define LIS2DW12_WAKE_DUR_FF_DUR                0x80
-#define LIS2DW12_WAKE_DUR_DUR                   0x60
-#define LIS2DW12_WAKE_DUR_STATIONARY            0x10
-#define LIS2DW12_WAKE_DUR_SLEEP_DUR             0x0F
-    
     
 enum lis2dw12_ths_6d {
     LIS2DW12_6D_THS_80_DEG = 0,
@@ -187,8 +178,12 @@ struct lis2dw12_cfg {
     uint8_t offset_weight;
     uint8_t offset_en;
 
-    struct lis2dw12_tap_settings tap_cfg;
+    uint8_t filter_bw;
+    uint8_t high_pass;
 
+    struct lis2dw12_tap_settings tap_cfg;
+    uint8_t double_tap_event_enable;
+    
     uint8_t int1_pin_cfg;
     uint8_t int2_pin_cfg;
     uint8_t int_enable;
@@ -198,6 +193,13 @@ struct lis2dw12_cfg {
 
     uint8_t wake_up_ths;
     uint8_t wake_up_dur;
+    uint8_t sleep_duration;
+
+    uint8_t stationary_detection_enable;
+
+    uint8_t power_mode;
+    uint8_t inactivity_sleep_enable;
+    uint8_t low_noise_enable;
     
     enum lis2dw12_read_mode read_mode;
     uint8_t stream_read_interrupt;
@@ -565,22 +567,94 @@ int lis2dw12_set_wake_up_ths(struct sensor_itf *itf, uint8_t reg);
 int lis2dw12_get_wake_up_ths(struct sensor_itf *itf, uint8_t *reg);
 
 /**
- * Set Wake Up Duration configuration
+ * Set whether sleep on inactivity is enabled
  *
  * @param the sensor interface
- * @param wake_up_dur value to set
+ * @param value to set (0 = disabled, 1 = enabled)
+ * @return 0 on success, non-zero on failure
+ */
+int lis2dw12_set_inactivity_sleep_en(struct sensor_itf *itf, uint8_t en);
+
+/**
+ * Get whether sleep on inactivity is enabled
+ *
+ * @param the sensor interface
+ * @param ptr to store read state (0 = disabled, 1 = enabled)
+ * @return 0 on success, non-zero on failure
+ */
+int lis2dw12_get_inactivity_sleep_en(struct sensor_itf *itf, uint8_t *en);
+
+/**
+ * Set whether double tap event is enabled
+ *
+ * @param the sensor interface
+ * @param value to set (0 = disabled, 1 = enabled)
+ * @return 0 on success, non-zero on failure
+ */
+int lis2dw12_set_double_tap_event_en(struct sensor_itf *itf, uint8_t en);
+
+/**
+ * Get whether double tap event is enabled
+ *
+ * @param the sensor interface
+ * @param ptr to store read state (0 = disabled, 1 = enabled)
+ * @return 0 on success, non-zero on failure
+ */
+int lis2dw12_get_double_tap_event_en(struct sensor_itf *itf, uint8_t *en);
+    
+/**
+ * Set Wake Up Duration
+ *
+ * @param the sensor interface
+ * @param duration to set
  * @return 0 on success, non-zero on failure
  */
 int lis2dw12_set_wake_up_dur(struct sensor_itf *itf, uint8_t reg);
 
 /**
- * Get Wake Up Duration config
+ * Get Wake Up Duration
  *
  * @param the sensor interface
  * @param ptr to store wake_up_dur value
  * @return 0 on success, non-zero on failure
  */
 int lis2dw12_get_wake_up_dur(struct sensor_itf *itf, uint8_t *reg);
+
+/**
+ * Set Sleep Duration
+ *
+ * @param the sensor interface
+ * @param duration to set
+ * @return 0 on success, non-zero on failure
+ */
+int lis2dw12_set_sleep_dur(struct sensor_itf *itf, uint8_t reg);
+
+/**
+ * Get Sleep Duration
+ *
+ * @param the sensor interface
+ * @param ptr to store sleep_dur value
+ * @return 0 on success, non-zero on failure
+ */
+int lis2dw12_get_sleep_dur(struct sensor_itf *itf, uint8_t *reg);
+
+/**
+ * Set Stationary Detection Enable
+ *
+ * @param the sensor interface
+ * @param value to set
+ * @return 0 on success, non-zero on failure
+ */
+int lis2dw12_set_stationary_en(struct sensor_itf *itf, uint8_t en);
+
+/**
+ * Get Stationary Detection Enable
+ *
+ * @param the sensor interface
+ * @param ptr to store sleep_dur value
+ * @return 0 on success, non-zero on failure
+ */
+int lis2dw12_get_stationary_en(struct sensor_itf *itf, uint8_t *en);
     
 /**
  * Run Self test on sensor

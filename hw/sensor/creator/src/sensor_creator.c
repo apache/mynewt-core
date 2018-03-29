@@ -706,6 +706,9 @@ config_lis2dw12_sensor(void)
     cfg.offset_weight = 0;
     cfg.offset_en = 0;
 
+    cfg.filter_bw = LIS2DW12_FILTER_BW_ODR_DIV_2;
+    cfg.high_pass = 0;
+    
     cfg.tap_cfg.en_x = 1;
     cfg.tap_cfg.en_y = 1;
     cfg.tap_cfg.en_z = 1;
@@ -718,7 +721,8 @@ config_lis2dw12_sensor(void)
     cfg.tap_cfg.latency = 8; /* 640ms */
     cfg.tap_cfg.quiet = 0; /* 10ms */
     cfg.tap_cfg.shock = 3; /* 120ms */
-        
+    cfg.double_tap_event_enable = 0;
+    
     cfg.int1_pin_cfg = 0;
     cfg.int2_pin_cfg = 0;
     cfg.int_enable = 0;
@@ -729,6 +733,13 @@ config_lis2dw12_sensor(void)
 
     cfg.wake_up_ths = 0;
     cfg.wake_up_dur = 0;
+    cfg.sleep_duration = 0;
+
+    cfg.stationary_detection_enable = 0;
+
+    cfg.power_mode = LIS2DW12_PM_HIGH_PERF;
+    cfg.inactivity_sleep_enable = 0;
+    cfg.low_noise_enable = 1;
     
     cfg.read_mode = LIS2DW12_READ_M_POLL;
     cfg.mask = SENSOR_TYPE_ACCELEROMETER;
