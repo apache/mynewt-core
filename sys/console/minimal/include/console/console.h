@@ -45,11 +45,7 @@ int console_read(char *str, int cnt, int *newline);
 
 void console_blocking_mode(void);
 void console_non_blocking_mode(void);
-
-static void inline
-console_echo(int on)
-{
-}
+void console_echo(int on);
 
 static int console_printf(const char *fmt, ...)
     __attribute__ ((format (printf, 1, 2)));;
