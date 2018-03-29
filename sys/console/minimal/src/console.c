@@ -64,6 +64,12 @@ console_out(int c)
 }
 
 void
+console_echo(int on)
+{
+    echo = on;
+}
+
+void
 console_write(const char *str, int cnt)
 {
     int i;
