@@ -96,15 +96,6 @@ static const struct nrf52_hal_spi_cfg os_bsp_spi0s_cfg = {
 };
 #endif
 
-#if MYNEWT_VAL(ADC_0)
-static struct adc_dev os_bsp_adc0;
-static struct nrf52_adc_dev_cfg os_bsp_adc0_config = {
-    .saadc_cfg.resolution         = MYNEWT_VAL(ADC_0_RESOLUTION),
-    .saadc_cfg.oversample         = MYNEWT_VAL(ADC_0_OVERSAMPLE),
-    .saadc_cfg.interrupt_priority = MYNEWT_VAL(ADC_0_INTERRUPT_PRIORITY),
-};
-#endif
-
 #if MYNEWT_VAL(PWM_0)
 static struct pwm_dev os_bsp_pwm0;
 int pwm0_idx;

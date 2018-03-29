@@ -42,6 +42,7 @@
 #include "bsp.h"
 #if MYNEWT_VAL(ADC_0)
 #include <adc_nrf52/adc_nrf52.h>
+#include <nrfx_saadc.h>
 #endif
 #if MYNEWT_VAL(PWM_0) || MYNEWT_VAL(PWM_1) || MYNEWT_VAL(PWM_2)
 #include <pwm_nrf52/pwm_nrf52.h>
@@ -92,10 +93,10 @@ static const struct nrf52_hal_spi_cfg os_bsp_spi0s_cfg = {
 
 #if MYNEWT_VAL(ADC_0)
 static struct adc_dev os_bsp_adc0;
-static struct nrf52_adc_dev_cfg os_bsp_adc0_config = {
-    .saadc_cfg.resolution         = MYNEWT_VAL(ADC_0_RESOLUTION),
-    .saadc_cfg.oversample         = MYNEWT_VAL(ADC_0_OVERSAMPLE),
-    .saadc_cfg.interrupt_priority = MYNEWT_VAL(ADC_0_INTERRUPT_PRIORITY),
+static nrfx_saadc_config_t os_bsp_adc0_config = {
+    .resolution         = MYNEWT_VAL(ADC_0_RESOLUTION),
+    .oversample         = MYNEWT_VAL(ADC_0_OVERSAMPLE),
+    .interrupt_priority = MYNEWT_VAL(ADC_0_INTERRUPT_PRIORITY),
 };
 #endif
 
