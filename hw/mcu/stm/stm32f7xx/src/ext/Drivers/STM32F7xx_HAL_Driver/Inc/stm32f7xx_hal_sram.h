@@ -2,13 +2,11 @@
   ******************************************************************************
   * @file    stm32f7xx_hal_sram.h
   * @author  MCD Application Team
-  * @version V1.2.0
-  * @date    30-December-2016
   * @brief   Header file of SRAM HAL module.
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; COPYRIGHT(c) 2016 STMicroelectronics</center></h2>
+  * <h2><center>&copy; COPYRIGHT(c) 2017 STMicroelectronics</center></h2>
   *
   * Redistribution and use in source and binary forms, with or without modification,
   * are permitted provided that the following conditions are met:
@@ -102,7 +100,7 @@ typedef struct
  */
 
 /** @brief Reset SRAM handle state
-  * @param  __HANDLE__: SRAM handle
+  * @param  __HANDLE__ SRAM handle
   * @retval None
   */
 #define __HAL_SRAM_RESET_HANDLE_STATE(__HANDLE__) ((__HANDLE__)->State = HAL_SRAM_STATE_RESET)
