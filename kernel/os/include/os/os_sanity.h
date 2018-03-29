@@ -31,7 +31,7 @@
 #include <stdint.h>
 
 #include "os/os_time.h"
-#include "os/queue.h"
+#include "sys/queue.h"
 
 #ifdef __cplusplus
 extern "C" {

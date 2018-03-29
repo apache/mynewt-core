@@ -24,7 +24,7 @@
 #include <syscfg/syscfg.h>
 
 #include <mcu/cmsis_nvic.h>
-#include <os/queue.h>
+#include <sys/queue.h>
 #include <hal/hal_timer.h>
 
 #include "stm32f4xx.h"

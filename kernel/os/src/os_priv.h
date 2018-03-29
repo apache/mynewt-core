@@ -21,7 +21,7 @@
 #define H_OS_PRIV_
 
 #include "console/console.h"
-#include "os/queue.h"
+#include "sys/queue.h"
 
 #ifdef __cplusplus
 extern "C" {

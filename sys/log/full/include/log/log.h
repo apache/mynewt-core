@@ -23,7 +23,7 @@
 #include "log/ignore.h"
 #include "cbmem/cbmem.h"
 
-#include <os/queue.h>
+#include <sys/queue.h>
 
 #ifdef __cplusplus
 extern "C" {

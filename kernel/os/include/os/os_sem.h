@@ -27,7 +27,7 @@
 #ifndef _OS_SEM_H_
 #define _OS_SEM_H_
 
-#include "os/queue.h"
+#include "sys/queue.h"
 
 #ifdef __cplusplus
 extern "C" {

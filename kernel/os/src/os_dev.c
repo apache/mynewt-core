@@ -18,7 +18,7 @@
  */
 
 #include "os/os.h"
-#include "os/queue.h"
+#include "sys/queue.h"
 #include "os/os_dev.h"
 
 #include <string.h>

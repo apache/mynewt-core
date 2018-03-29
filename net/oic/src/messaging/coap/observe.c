@@ -37,7 +37,7 @@
 #include <syscfg/syscfg.h>
 
 #include <os/os_mempool.h>
-#include <os/queue.h>
+#include <sys/queue.h>
 
 #include "oic/port/mynewt/config.h"
 

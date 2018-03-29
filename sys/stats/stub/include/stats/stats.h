@@ -21,7 +21,7 @@
 
 #include <stdint.h>
 #include "syscfg/syscfg.h"
-#include "os/queue.h"
+#include "sys/queue.h"
 
 #ifdef __cplusplus
 extern "C" {
