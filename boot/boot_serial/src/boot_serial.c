@@ -190,6 +190,7 @@ bs_upload(char *buf, int len)
     uint8_t img_data[512];
     long long int off = UINT_MAX;
     size_t img_blen = 0;
+    uint8_t rem_bytes;
     long long int data_len = UINT_MAX;
     size_t slen;
     char name_str[8];
@@ -313,6 +314,12 @@ bs_upload(char *buf, int len)
     if (off != curr_off) {
         rc = 0;
         goto out;
+    }
+    if (curr_off + img_blen < img_size) {
+        rem_bytes = img_blen % flash_area_align(fap);
+        if (rem_bytes) {
+            img_blen -= rem_bytes;
+        }
     }
     rc = flash_area_write(fap, curr_off, img_data, img_blen);
     if (rc == 0) {
