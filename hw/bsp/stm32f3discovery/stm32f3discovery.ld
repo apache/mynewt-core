@@ -22,7 +22,7 @@ ENTRY(Reset_Handler)
  * Memory map
  */
 MEMORY {
-    FLASH (rx): ORIGIN = 0x08004000, LENGTH = 240K
+    FLASH (rx): ORIGIN = 0x08004000, LENGTH = 88K
     CCRAM (rw): ORIGIN = 0x10000000, LENGTH = 8K
     SRAM  (rw): ORIGIN = 0x20000000, LENGTH = 40K
 }
