@@ -5,7 +5,7 @@
 #ifndef _ASSERT_H
 #define _ASSERT_H
 
-#include "os/mynewt.h"
+#include "syscfg/syscfg.h"
 
 #ifdef __cplusplus
 extern "C" {

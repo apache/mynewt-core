@@ -29,7 +29,7 @@
 #define H_HAL_TIMER_
 
 #include <inttypes.h>
-#include "os/mynewt.h"
+#include "os/queue.h"
 
 #ifdef __cplusplus
 extern "C" {
