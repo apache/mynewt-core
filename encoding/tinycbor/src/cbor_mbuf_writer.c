@@ -17,8 +17,8 @@
  * under the License.
  */
 
+#include "os/mynewt.h"
 #include <tinycbor/cbor.h>
-#include <os/os_mbuf.h>
 #include <tinycbor/cbor.h>
 #include <tinycbor/cbor_mbuf_writer.h>
 

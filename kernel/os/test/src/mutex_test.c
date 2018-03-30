@@ -16,14 +16,13 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
 #include <sys/time.h>
-#include "sysinit/sysinit.h"
+#include "os/mynewt.h"
 #include "testutil/testutil.h"
-#include "os/os.h"
-#include "os/os_test.h"
 #include "os_test_priv.h"
 
 #if MYNEWT_VAL(SELFTEST)

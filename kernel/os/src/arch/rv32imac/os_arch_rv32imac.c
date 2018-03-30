@@ -17,7 +17,7 @@
  * under the License.
  */
 
-#include "os/os.h"
+#include "os/mynewt.h"
 #include "os_priv.h"
 
 #include <hal/hal_bsp.h>

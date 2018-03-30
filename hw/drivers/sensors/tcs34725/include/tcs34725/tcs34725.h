@@ -32,8 +32,7 @@
 #define TCS34725_GAIN_16X               0x02   /* 16x gain */
 #define TCS34725_GAIN_60X               0x03   /* 60x gain */
 
-#include <os/os.h>
-#include "os/os_dev.h"
+#include "os/mynewt.h"
 #include "sensor/sensor.h"
 
 #ifdef __cplusplus

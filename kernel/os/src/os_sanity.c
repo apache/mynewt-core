@@ -19,8 +19,7 @@
 
 #include <assert.h>
 #include <string.h>
-
-#include "os/os.h"
+#include "os/mynewt.h"
 
 SLIST_HEAD(, os_sanity_check) g_os_sanity_check_list =
     SLIST_HEAD_INITIALIZER(os_sanity_check_list);

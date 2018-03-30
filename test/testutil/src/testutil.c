@@ -16,16 +16,15 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 #include <assert.h>
-#include "sysinit/sysinit.h"
-#include "os/os.h"
+#include <errno.h>
+#include <unistd.h>
+#include "os/mynewt.h"
 #include "hal/hal_flash.h"
 #include "hal/hal_system.h"
 #include "testutil/testutil.h"
 #include "testutil_priv.h"
-
-#include <errno.h>
-#include <unistd.h>
 
 struct tc_config tc_config;
 struct tc_config *tc_current_config = &tc_config;

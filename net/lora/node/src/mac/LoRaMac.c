@@ -20,13 +20,13 @@ Maintainer: Miguel Luis ( Semtech ), Gregory Cristian ( Semtech ) and Daniel Jäc
 
 #include <string.h>
 #include <assert.h>
+#include "os/mynewt.h"
 #include "node/lora.h"
 #include "radio/radio.h"
 #include "node/utilities.h"
 #include "node/mac/LoRaMacCrypto.h"
 #include "node/mac/LoRaMac.h"
 #include "node/mac/LoRaMacTest.h"
-#include "os/os.h"
 #include "hal/hal_timer.h"
 #include "node/lora_priv.h"
 

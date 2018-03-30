@@ -19,7 +19,7 @@
 
 #include <stddef.h>
 
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 #include "config/config.h"
 #include "config_priv.h"
 

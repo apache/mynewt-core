@@ -17,11 +17,10 @@
  * under the License.
  */
 
+#include "os/mynewt.h"
 #include "bsp/bsp.h"
 #include "hal/hal_gpio.h"
 #include "host/ble_gap.h"
-#include "os/os_eventq.h"
-#include "syscfg/syscfg.h"
 #include "bleprph.h"
 
 #if MYNEWT_VAL(BLEPRPH_LE_PHY_SUPPORT)

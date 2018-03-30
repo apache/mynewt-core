@@ -22,8 +22,7 @@
 #include <errno.h>
 #include <sys/types.h>
 #include <stdio.h>
-#include "os/os_dev.h"
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 #include "bsp/bsp.h"
 #include "hal/hal_bsp.h"
 #include "hal/hal_flash_int.h"

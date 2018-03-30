@@ -20,8 +20,7 @@
 #ifndef __SENSOR_LPS33HW_H__
 #define __SENSOR_LPS33HW_H__
 
-#include "os/os.h"
-#include "os/os_dev.h"
+#include "os/mynewt.h"
 #include "sensor/sensor.h"
 #include "hal/hal_gpio.h"
 

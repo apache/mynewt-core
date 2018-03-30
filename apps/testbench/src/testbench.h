@@ -19,11 +19,8 @@
 #ifndef _H_TESTBENCH
 #define _H_TESTBENCH
 
-#include "syscfg/syscfg.h"
-#include "sysinit/sysinit.h"
-#include "sysflash/sysflash.h"
+#include "os/mynewt.h"
 
-#include <os/os.h>
 #include <bsp/bsp.h>
 #include <hal/hal_gpio.h>
 #include <hal/hal_flash.h>
@@ -46,7 +43,6 @@
 #include <string.h>
 #include <json/json.h>
 #include <reboot/log_reboot.h>
-#include <os/os_time.h>
 #include <id/id.h>
 
 #include "testutil/testutil.h"
@@ -60,7 +56,6 @@
 #include <fcb/fcb.h>
 #endif
 
-#include "os/os_test.h"
 #include "bootutil/bootutil_test.h"
 
 #include <stddef.h>

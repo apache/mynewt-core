@@ -21,10 +21,10 @@
 #define H_BLETINY_PRIV_
 
 #include <inttypes.h>
+#include "os/mynewt.h"
 #include "nimble/ble.h"
 #include "nimble/nimble_opt.h"
 #include "log/log.h"
-#include "os/queue.h"
 
 #include "host/ble_gatt.h"
 #include "host/ble_gap.h"

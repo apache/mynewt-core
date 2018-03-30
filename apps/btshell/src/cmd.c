@@ -17,12 +17,11 @@
  * under the License.
  */
 
-#include "syscfg/syscfg.h"
-
 #include <assert.h>
 #include <inttypes.h>
 #include <errno.h>
 #include <string.h>
+#include "os/mynewt.h"
 #include "bsp/bsp.h"
 
 #include "nimble/ble.h"

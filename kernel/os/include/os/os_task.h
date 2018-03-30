@@ -30,6 +30,7 @@
 
 #include "os/os.h"
 #include "os/os_sanity.h"
+#include "os/os_arch.h"
 #include "os/queue.h"
 
 #ifdef __cplusplus

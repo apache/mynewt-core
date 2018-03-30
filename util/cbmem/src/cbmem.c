@@ -17,11 +17,9 @@
  * under the License.
  */
 
-#include <os/os.h>
 #include <string.h>
-
+#include "os/mynewt.h"
 #include "cbmem/cbmem.h"
-
 
 int
 cbmem_init(struct cbmem *cbmem, void *buf, uint32_t buf_len)

@@ -24,8 +24,8 @@
   * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   */
 
+#include "os/mynewt.h"
 #include "mcu/stm32_hal.h"
-#include <syscfg/syscfg.h>
 
 #define SPI_DEFAULT_TIMEOUT 100U
 

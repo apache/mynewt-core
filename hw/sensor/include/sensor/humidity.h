@@ -20,8 +20,7 @@
 #ifndef __SENSOR_HUMIDITY_H__
 #define __SENSOR_HUMIDITY_H__
 
-#include "os/os.h"
-#include "os/os_dev.h"
+#include "os/mynewt.h"
 #include "sensor/sensor.h"
 
 #ifdef __cplusplus

@@ -23,14 +23,10 @@
 #include <assert.h>
 #include <getopt.h>
 
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 #include "hal/hal_system.h"
 #include "mcu/mcu_sim.h"
 #include "hal_native_priv.h"
-
-#if MYNEWT_VAL(OS_SCHEDULING)
-#include <os/os.h>
-#endif
 
 void
 hal_system_reset(void)

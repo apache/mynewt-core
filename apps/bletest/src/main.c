@@ -19,9 +19,7 @@
 
 #include <assert.h>
 #include <string.h>
-#include "sysinit/sysinit.h"
-#include "syscfg/syscfg.h"
-#include "os/os.h"
+#include "os/mynewt.h"
 #include "bsp/bsp.h"
 #include "hal/hal_bsp.h"
 #include "hal/hal_gpio.h"

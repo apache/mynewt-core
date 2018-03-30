@@ -17,11 +17,10 @@
  * under the License.
  */
 
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 
 #if MYNEWT_VAL(CRASH_TEST_CLI)
 #include <inttypes.h>
-#include <os/os.h>
 #include <console/console.h>
 #include <shell/shell.h>
 #include <stdio.h>

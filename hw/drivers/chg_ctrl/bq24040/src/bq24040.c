@@ -20,7 +20,7 @@
 #include <assert.h>
 #include <string.h>
 
-#include "defs/error.h"
+#include "os/mynewt.h"
 #include "hal/hal_gpio.h"
 #include "bq24040/bq24040.h"
 #include "console/console.h"

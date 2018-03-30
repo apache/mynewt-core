@@ -20,7 +20,7 @@
 #ifndef __BQ24040_H__
 #define __BQ24040_H__
 
-#include "os/os.h"
+#include "os/mynewt.h"
 #include "hal/hal_gpio.h"
 #include "charge-control/charge_control.h"
 

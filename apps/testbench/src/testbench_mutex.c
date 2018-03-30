@@ -20,10 +20,8 @@
 #include <string.h>
 #include <assert.h>
 #include <sys/time.h>
-#include "sysinit/sysinit.h"
+#include "os/mynewt.h"
 #include "testutil/testutil.h"
-#include "os/os.h"
-#include "os/os_test.h"
 
 #include "testbench.h"
 

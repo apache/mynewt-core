@@ -21,9 +21,9 @@
 #include <math.h>
 #include <string.h>
 
+#include "os/mynewt.h"
 #include "bma253/bma253.h"
 #include "bma253_priv.h"
-#include "defs/error.h"
 #include "hal/hal_gpio.h"
 #include "hal/hal_i2c.h"
 

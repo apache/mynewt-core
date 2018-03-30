@@ -28,12 +28,10 @@ Description: Ping-Pong implementation.  Adapted to run in the MyNewt OS.
 */
 
 #include <string.h>
-#include "sysinit/sysinit.h"
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 #include "hal/hal_gpio.h"
 #include "hal/hal_spi.h"
 #include "bsp/bsp.h"
-#include "os/os.h"
 #include "radio/radio.h"
 #include "loraping.h"
 

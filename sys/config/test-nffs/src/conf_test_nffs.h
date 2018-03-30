@@ -22,9 +22,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 
-#include <os/os.h>
 #include <testutil/testutil.h>
 #include <nffs/nffs.h>
 #include <fs/fs.h>

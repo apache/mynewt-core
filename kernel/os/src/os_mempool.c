@@ -17,11 +17,10 @@
  * under the License.
  */
 
-#include "os/os.h"
-
 #include <string.h>
 #include <assert.h>
 #include <stdbool.h>
+#include "os/mynewt.h"
 
 #define OS_MEM_TRUE_BLOCK_SIZE(bsize)   OS_ALIGN(bsize, OS_ALIGNMENT)
 #define OS_MEMPOOL_TRUE_BLOCK_SIZE(mp) OS_MEM_TRUE_BLOCK_SIZE(mp->mp_block_size)

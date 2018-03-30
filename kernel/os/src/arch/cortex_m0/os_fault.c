@@ -20,13 +20,12 @@
 #include <stdint.h>
 #include <unistd.h>
 
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 #include "console/console.h"
 #include "hal/hal_system.h"
 #if MYNEWT_VAL(OS_COREDUMP)
 #include "coredump/coredump.h"
 #endif
-#include "os/os.h"
 #include "os_priv.h"
 
 struct exception_frame {

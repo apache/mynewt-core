@@ -16,11 +16,11 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 #include <string.h>
-#include "os/os.h"
+#include "os/mynewt.h"
 #include "inc/arc/arc_builtin.h"
 #include "inc/arc/arc_exception.h"
-#include "os/os_arch.h"
 #include <hal/hal_bsp.h>
 #include <hal/hal_os_tick.h>
 #include "os_priv.h"

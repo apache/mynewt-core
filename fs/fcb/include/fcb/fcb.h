@@ -29,9 +29,8 @@ extern "C" {
 #include <inttypes.h>
 #include <limits.h>
 
+#include "os/mynewt.h"
 #include "flash_map/flash_map.h"
-
-#include "os/os_mutex.h"
 
 #define FCB_MAX_LEN	(CHAR_MAX | CHAR_MAX << 7) /* Max length of element */
 

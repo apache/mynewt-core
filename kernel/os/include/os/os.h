@@ -108,14 +108,14 @@ void os_init(int (*fn)(int argc, char **argv));
 void os_start(void);
 
 #include "os/endian.h"
-#include "os/os_arch.h"
 #include "os/os_callout.h"
+#include "os/os_cfg.h"
 #include "os/os_cputime.h"
 #include "os/os_dev.h"
 #include "os/os_error.h"
 #include "os/os_eventq.h"
-#include "os/os_heap.h"
 #include "os/os_fault.h"
+#include "os/os_heap.h"
 #include "os/os_mbuf.h"
 #include "os/os_mempool.h"
 #include "os/os_mutex.h"
@@ -123,7 +123,10 @@ void os_start(void);
 #include "os/os_sched.h"
 #include "os/os_sem.h"
 #include "os/os_task.h"
+#include "os/os_test.h"
 #include "os/os_time.h"
+#include "os/os_trace_api.h"
+#include "os/queue.h"
 
 #ifdef __cplusplus
 }

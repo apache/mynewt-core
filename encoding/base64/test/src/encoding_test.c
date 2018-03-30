@@ -18,8 +18,7 @@
  */
 #include <assert.h>
 #include <stddef.h>
-#include "sysinit/sysinit.h"
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 #include "testutil/testutil.h"
 #include "encoding_test_priv.h"
 

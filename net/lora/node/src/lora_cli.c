@@ -17,14 +17,13 @@
  * under the License.
  */
 
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 
 #if MYNEWT_VAL(LORA_NODE_CLI)
 
 #include <inttypes.h>
 #include <string.h>
 
-#include "sysinit/sysinit.h"
 #include "shell/shell.h"
 #include "console/console.h"
 #include "node/radio.h"

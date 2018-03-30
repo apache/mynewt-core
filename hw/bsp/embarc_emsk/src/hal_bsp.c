@@ -20,9 +20,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <assert.h>
-#include "os/os_cputime.h"
-#include "syscfg/syscfg.h"
-#include "sysflash/sysflash.h"
+#include "os/mynewt.h"
 #include "flash_map/flash_map.h"
 #include "hal/hal_bsp.h"
 #include "hal/hal_system.h"
@@ -39,7 +37,6 @@
 #if MYNEWT_VAL(UART_1)
 #include "uart_bitbang/uart_bitbang.h"
 #endif
-#include "os/os_dev.h"
 #include "bsp/bsp.h"
 
 /*

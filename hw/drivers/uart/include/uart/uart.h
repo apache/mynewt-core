@@ -21,7 +21,7 @@
 #define __DRIVERS_UART_H_
 
 #include <inttypes.h>
-#include <os/os_dev.h>
+#include "os/mynewt.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -16,12 +16,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 #include <assert.h>
-#include <syscfg/syscfg.h>
-#include <sysinit/sysinit.h>
-#include <os/os.h>
-#include <os/endian.h>
 #include <string.h>
+#include "os/mynewt.h"
 #include <log/log.h>
 #include "oic/oc_log.h"
 #include "oic/oc_ri.h"

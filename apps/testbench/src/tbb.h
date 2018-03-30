@@ -20,7 +20,7 @@
 #ifndef H_TBB_
 #define H_TBB_
 
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 
 #if MYNEWT_VAL(TESTBENCH_BLE)
 

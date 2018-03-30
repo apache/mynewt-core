@@ -16,10 +16,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include <stdlib.h>
 
-#include <sysinit/sysinit.h>
-#include <os/os.h>
+#include <stdlib.h>
+#include "os/mynewt.h"
 
 extern int main(int argc, char **argv);
 

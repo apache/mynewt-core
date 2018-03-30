@@ -16,13 +16,13 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 #include <string.h>
 #include <errno.h>
 #include <assert.h>
-#include <syscfg/syscfg.h>
+#include "os/mynewt.h"
 #include <mcu/cmsis_nvic.h>
 #include <hal/hal_spi.h>
-#include "os/os_trace_api.h"
 #include "mcu/nrf52_hal.h"
 #include "nrf.h"
 

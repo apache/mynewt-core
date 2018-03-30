@@ -37,7 +37,7 @@
 #include <stddef.h> /* for size_t */
 #include <stdint.h>
 
-#include <syscfg/syscfg.h>
+#include "os/mynewt.h"
 
 #include <stats/stats.h>
 

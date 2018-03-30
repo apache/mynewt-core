@@ -8,9 +8,8 @@ extern "C" {
 
 /* Time resolution */
 #include <inttypes.h>
-#include <syscfg/syscfg.h>
+#include "os/mynewt.h"
 
-#include <os/os.h>
 #include <log/log.h>
 
 /* rather than change all their source files, just translate the mynewt

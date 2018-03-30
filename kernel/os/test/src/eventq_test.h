@@ -20,11 +20,9 @@
 #define _EVENTQ_TEST_H
  
 #include <string.h>
-#include "sysinit/sysinit.h"
+#include "os/mynewt.h"
 #include "testutil/testutil.h"
-#include "os/os.h"
 #include "os_test_priv.h"
-#include "os/os_eventq.h"
 
 #ifdef __cplusplus
 #extern "C" {

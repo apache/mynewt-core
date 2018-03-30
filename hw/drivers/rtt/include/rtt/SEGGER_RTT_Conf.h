@@ -63,7 +63,7 @@ Revision: $Rev: 4351 $
 #ifndef SEGGER_RTT_CONF_H
 #define SEGGER_RTT_CONF_H
 
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 
 #ifdef __IAR_SYSTEMS_ICC__
   #include <intrinsics.h>

@@ -16,11 +16,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include "syscfg/syscfg.h"
 
 #include <assert.h>
-#include "os/os_mutex.h"
-#include "os/os_heap.h"
+#include "os/mynewt.h"
 
 #if MYNEWT_VAL(OS_SCHEDULING)
 static struct os_mutex os_malloc_mutex;

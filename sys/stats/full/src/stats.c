@@ -21,9 +21,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "sysinit/sysinit.h"
-#include "syscfg/syscfg.h"
-#include "os/os.h"
+#include "os/mynewt.h"
 #include "stats/stats.h"
 
 /**

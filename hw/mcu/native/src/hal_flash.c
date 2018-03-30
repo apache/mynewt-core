@@ -24,7 +24,7 @@
 #include <inttypes.h>
 #include <stdlib.h>
 
-#include <syscfg/syscfg.h>
+#include "os/mynewt.h"
 
 #include "hal/hal_flash_int.h"
 #include "mcu/mcu_sim.h"

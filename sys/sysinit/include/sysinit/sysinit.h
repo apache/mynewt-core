@@ -22,7 +22,7 @@
 
 #include <inttypes.h>
 #include <assert.h>
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 
 #if MYNEWT_VAL(SPLIT_APPLICATION)
 #include "split/split.h"

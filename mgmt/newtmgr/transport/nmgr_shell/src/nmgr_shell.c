@@ -16,10 +16,11 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 #include <inttypes.h>
 #include <assert.h>
 
-#include <sysinit/sysinit.h>
+#include "os/mynewt.h"
 #include <shell/shell.h>
 #include <mgmt/mgmt.h>
 #include <newtmgr/newtmgr.h>

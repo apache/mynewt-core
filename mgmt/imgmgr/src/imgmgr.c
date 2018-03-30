@@ -16,14 +16,12 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include <os/endian.h>
 
 #include <limits.h>
 #include <assert.h>
 #include <string.h>
 
-#include "sysinit/sysinit.h"
-#include "sysflash/sysflash.h"
+#include "os/mynewt.h"
 #include "hal/hal_bsp.h"
 #include "flash_map/flash_map.h"
 #include "cborattr/cborattr.h"

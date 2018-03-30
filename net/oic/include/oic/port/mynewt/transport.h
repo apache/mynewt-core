@@ -20,8 +20,7 @@
 #ifndef __MYNEWT_TRANSPORT_H_
 #define __MYNEWT_TRANSPORT_H_
 
-#include <os/queue.h>
-
+#include "os/mynewt.h"
 #include "oic/oc_ri.h"
 #include "oic/oc_ri_const.h"
 

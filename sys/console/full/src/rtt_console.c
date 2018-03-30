@@ -17,13 +17,11 @@
  * under the License.
  */
 
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 
 #if MYNEWT_VAL(CONSOLE_RTT)
 #include <ctype.h>
 
-#include "os/os.h"
-#include "os/os_cputime.h"
 #include "rtt/SEGGER_RTT.h"
 #include "console/console.h"
 #include "console_priv.h"

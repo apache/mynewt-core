@@ -21,11 +21,8 @@
 #include <stddef.h>
 #include <string.h>
 #include <assert.h>
-#include <sysinit/sysinit.h>
+#include "os/mynewt.h"
 #include <nrf52.h>
-#include "os/os_cputime.h"
-#include "syscfg/syscfg.h"
-#include "sysflash/sysflash.h"
 #include "flash_map/flash_map.h"
 #include "hal/hal_bsp.h"
 #include "hal/hal_system.h"
@@ -43,7 +40,6 @@
 #if MYNEWT_VAL(UART_1)
 #include "uart_bitbang/uart_bitbang.h"
 #endif
-#include "os/os_dev.h"
 #include "bsp.h"
 #if MYNEWT_VAL(ADC_0)
 #include <adc_nrf52/adc_nrf52.h>

@@ -16,9 +16,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
+#include "os/mynewt.h"
 #include "hal/hal_bsp.h"
 #include "bsp/bsp.h"
-#include "syscfg/syscfg.h"
 #include "uart/uart.h"
 #if MYNEWT_VAL(UART_0) || MYNEWT_VAL(UART_1)
 #include "uart_hal/uart_hal.h"

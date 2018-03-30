@@ -17,10 +17,7 @@
  * under the License.
  */
 
-#include "syscfg/syscfg.h"
-#include "sysinit/sysinit.h"
-#include "sysflash/sysflash.h"
-#include <os/os.h>
+#include "os/mynewt.h"
 #include <bsp/bsp.h>
 #include <hal/hal_gpio.h>
 #include <hal/hal_flash.h>
@@ -34,8 +31,6 @@
 #include <string.h>
 #include <reboot/log_reboot.h>
 #include <id/id.h>
-#include <os/os_time.h>
-#include <defs/error.h>
 
 #if MYNEWT_VAL(BNO055_CLI)
 #include <bno055/bno055.h>

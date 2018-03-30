@@ -17,7 +17,7 @@
  * under the License.
  */
 
-#include <os/os.h>
+#include "os/mynewt.h"
 #include <hal/hal_gpio.h>
 #include <mcu/mips_hal.h>
 #include <mcu/p32mx470f512h.h>

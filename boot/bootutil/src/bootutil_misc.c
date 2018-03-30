@@ -21,12 +21,10 @@
 #include <string.h>
 #include <inttypes.h>
 
-#include "syscfg/syscfg.h"
-#include "sysflash/sysflash.h"
+#include "os/mynewt.h"
 #include "hal/hal_bsp.h"
 #include "hal/hal_flash.h"
 #include "flash_map/flash_map.h"
-#include "os/os.h"
 #include "bootutil/image.h"
 #include "bootutil/bootutil.h"
 #include "bootutil_priv.h"

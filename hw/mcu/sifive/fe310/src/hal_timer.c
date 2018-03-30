@@ -20,7 +20,7 @@
 #include <stdint.h>
 #include <errno.h>
 #include <stdbool.h>
-#include <syscfg/syscfg.h>
+#include "os/mynewt.h"
 #include <hal/hal_timer.h>
 #include <mcu/plic.h>
 #include <mcu/fe310_hal.h>

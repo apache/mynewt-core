@@ -17,7 +17,7 @@
  * under the License.
  */
 
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 
 /* Source code is only included if the shell library is enabled.  Otherwise
  * this file is compiled out for code size.
@@ -27,7 +27,6 @@
 #include <string.h>
 #include "shell/shell.h"
 #include "console/console.h"
-#include "os/os.h"
 #include "stats/stats.h"
 
 static int shell_stats_display(int argc, char **argv);

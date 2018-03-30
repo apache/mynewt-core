@@ -17,26 +17,13 @@
  * under the License.
  */
 
-#ifndef CBOR_MBUF_WRITER_H
-#define CBOR_MBUF_WRITER_H
+#ifndef H_OS_MYNEWT_
+#define H_OS_MYNEWT_
 
-#include "os/mynewt.h"
-#include <tinycbor/cbor.h>
+#include "syscfg/syscfg.h"
+#include "sysinit/sysinit.h"
+#include "sysflash/sysflash.h"
+#include "os/os.h"
+#include "defs/error.h"
 
-#ifdef __cplusplus
-extern "C" {
 #endif
-
-struct cbor_mbuf_writer {
-    struct cbor_encoder_writer enc;
-    struct os_mbuf *m;
-};
-
-void cbor_mbuf_writer_init(struct cbor_mbuf_writer *cb, struct os_mbuf *m);
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* CBOR_MBUF_WRITER_H */
-

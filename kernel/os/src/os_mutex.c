@@ -17,9 +17,8 @@
  * under the License.
  */
 
-#include "os/os.h"
-#include "os/os_trace_api.h"
 #include <assert.h>
+#include "os/mynewt.h"
 
 os_error_t
 os_mutex_init(struct os_mutex *mu)

@@ -2,7 +2,7 @@
 #define _BUTTON_H_
 
 #include <stdbool.h>
-#include <os/os.h>
+#include "os/mynewt.h"
 
 /**
  * This library generate events in the default queue to deal 

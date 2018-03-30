@@ -16,9 +16,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 #include <assert.h>
-#include "syscfg/syscfg.h"
-#include "os/os.h"
+#include "os/mynewt.h"
 #include "node/lora.h"
 #include "node/lora_priv.h"
 

@@ -16,6 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 #include <sys/socket.h>
 #include <unistd.h>
 #include <errno.h>
@@ -28,9 +29,7 @@
 #include <sys/un.h>
 #include <stdio.h>
 
-#include <sysinit/sysinit.h>
-#include <os/os.h>
-#include <os/os_mbuf.h>
+#include "os/mynewt.h"
 #include "mn_socket/mn_socket.h"
 #include "mn_socket/mn_socket_ops.h"
 #include "native_sockets/native_sock.h"

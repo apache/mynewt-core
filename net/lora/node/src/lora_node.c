@@ -16,9 +16,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 #include <string.h>
-#include "sysinit/sysinit.h"
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 #include "node/lora_priv.h"
 
 STATS_SECT_DECL(lora_mac_stats) lora_mac_stats;

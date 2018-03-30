@@ -17,12 +17,8 @@
  * under the License.
  */
 
-#include "os/os.h"
-#include "os/queue.h"
-#include "os/os_dev.h"
-
 #include <string.h>
-
+#include "os/mynewt.h"
 
 static STAILQ_HEAD(, os_dev) g_os_dev_list;
 
