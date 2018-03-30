@@ -33,15 +33,15 @@
  * 
  *
  * button_t btns[] = {
- *    { .id       = 1, // optional
+ *    { .id       = 1,
  *      .children = (button_t *[]){ &btns[2], NULL },
  *      .mode     = BUTTON_MODE_MOUSE ,
  *    },
- *    { .id       = 2, // optional
+ *    { .id       = 2,
  *      .children = (button_t *[]){ &btns[2], NULL },
  *      .mode     = BUTTON_MODE_TOUCH | BUTTON_FLG_REPEATING, 
  *    },
- *    { .id       = 3, // optional
+ *    { .id       = 3,
  *      .emulated = (button_t *[]){ &btns[0], &btns[1], NULL },
  *      .mode     = BUTTON_MODE_BUTTON, 
  *    },
@@ -68,15 +68,15 @@
  *
  *
  *
- * void button_callback(button_t *button, uint8_t type, uint8_t flags) {
+ * void button_callback(button_id_t id, uint8_t type, uint8_t flags) {
  *   if (type != BUTTON_ACTION) // Only interested by action
  *	return;
  *
- *   switch(button->id) {
+ *   switch(id) {
  *   case 1:
  *     if (flags & BUTTON_FLG_MISSED)
  *       alert("some action was lost");
- *     console_printf("BUTTON[%d] ", button->id);
+ *     console_printf("BUTTON[%d] ", id);
  *     if (flags & BUTTON_FLG_PRESSED) {
  *	 console_printf("ACTION=");
  *	 if (flags & BUTTON_FLG_LONG)	   console_printf("long ");
@@ -285,7 +285,7 @@ typedef uint8_t button_id_t;
  */
 typedef struct button {
     /**
-     * Button identifier. (For user purpose, not used internaly)
+     * Button identifier.
      */
     button_id_t id;
     /**
@@ -351,7 +351,7 @@ typedef struct button {
  * @param flags		flag indicating the action or state change
  *                      (see BUTTON_FLG_*)
  */
-typedef void (*button_callback_t)(button_t *button, uint8_t type, uint8_t flags);
+typedef void (*button_callback_t)(button_id_t id, uint8_t type, uint8_t flags);
 
 /**
  * Drive the button, by setting the the low level state (pressed / released)

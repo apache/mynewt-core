@@ -50,7 +50,7 @@ button_event_handler(struct os_event *ev)
 
     b_ev   = (struct button_event *)ev;
     button = (button_t *)ev->ev_arg;
-    button_callback(button, b_ev->type, b_ev->flags);
+    button_callback(button->id, b_ev->type, b_ev->flags);
 }
 
 /**
