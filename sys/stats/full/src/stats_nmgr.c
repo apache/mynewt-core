@@ -20,11 +20,10 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 
 #if MYNEWT_VAL(STATS_NEWTMGR)
 
-#include "os/os.h"
 #include "mgmt/mgmt.h"
 #include "cborattr/cborattr.h"
 #include "stats/stats.h"

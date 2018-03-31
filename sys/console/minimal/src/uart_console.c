@@ -17,13 +17,12 @@
  * under the License.
  */
 
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 
 #if MYNEWT_VAL(CONSOLE_UART)
 #include <ctype.h>
 #include <assert.h>
 
-#include "os/os.h"
 #include "uart/uart.h"
 #include "bsp/bsp.h"
 

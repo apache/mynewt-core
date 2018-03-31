@@ -21,11 +21,9 @@
 #include <string.h>
 #include <stdint.h>
 
-#include <syscfg/syscfg.h>
-#if MYNEWT_VAL(OC_TRANSPORT_LORA)
+#include "os/mynewt.h"
 
-#include <os/os.h>
-#include <os/endian.h>
+#if MYNEWT_VAL(OC_TRANSPORT_LORA)
 
 #include <log/log.h>
 #include <stats/stats.h>

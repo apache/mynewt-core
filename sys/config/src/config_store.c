@@ -20,8 +20,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#include <os/os.h>
-
+#include "os/mynewt.h"
 #include "config/config.h"
 #include "config_priv.h"
 

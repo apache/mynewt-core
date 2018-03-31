@@ -16,18 +16,17 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 #include <inttypes.h>
 #include <string.h>
 #include <stdio.h>
 #include <assert.h>
 
+#include "os/mynewt.h"
 #include <hal/hal_gpio.h>
 #include <hal/hal_uart.h>
 #include <hal/hal_timer.h>
 
-#include <os/os.h>
-#include <os/os_dev.h>
-#include <os/os_cputime.h>
 #include <uart/uart.h>
 
 #include "uart_bitbang/uart_bitbang.h"

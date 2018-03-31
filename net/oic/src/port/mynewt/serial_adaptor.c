@@ -20,10 +20,9 @@
 #include <assert.h>
 #include <stdint.h>
 
-#include <syscfg/syscfg.h>
-#if (MYNEWT_VAL(OC_TRANSPORT_SERIAL) == 1)
+#include "os/mynewt.h"
 
-#include <os/os.h>
+#if (MYNEWT_VAL(OC_TRANSPORT_SERIAL) == 1)
 
 #include <shell/shell.h>
 

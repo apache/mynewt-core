@@ -19,7 +19,7 @@
 
 #include <string.h>
 #include <errno.h>
-#include "sysinit/sysinit.h"
+#include "os/mynewt.h"
 #include "console/console.h"
 #include "shell/shell.h"
 #include "sensor/accel.h"
@@ -120,6 +120,7 @@ lis2dw12_shell_cmd_read(int argc, char **argv)
     char tmpstr[13];
     int16_t x,y,z;
     float fx,fy,fz;
+    uint8_t fs;
 
     if (argc > 3) {
         return lis2dw12_shell_err_too_many_args(argv[1]);
@@ -136,7 +137,12 @@ lis2dw12_shell_cmd_read(int argc, char **argv)
 
     while(samples--) {
 
-        rc = lis2dw12_get_data(&g_sensor_itf, &x, &y, &z);
+        rc = lis2dw12_get_fs(&g_sensor_itf, &fs);
+        if (rc) {
+            return rc;
+        }
+        
+        rc = lis2dw12_get_data(&g_sensor_itf, fs,&x, &y, &z);
         if (rc) {
             console_printf("Read failed: %d\n", rc);
             return rc;

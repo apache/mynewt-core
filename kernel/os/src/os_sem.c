@@ -17,8 +17,8 @@
  * under the License.
  */
 
-#include "os/os.h"
 #include <assert.h>
+#include "os/mynewt.h"
 
 /* XXX:
  * 1) Should I check to see if we are within an ISR for some of these?

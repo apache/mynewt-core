@@ -18,7 +18,7 @@
  */
 
 #include "mcu/stm32_hal.h"
-#include <os/os.h>
+#include "os/mynewt.h"
 #include "hal/hal_system.h"
 
 void

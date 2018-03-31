@@ -16,11 +16,12 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 #include <stddef.h>
 #include <string.h>
 #include <assert.h>
 
-#include <os/os.h>
+#include "os/mynewt.h"
 #include <bsp/bsp.h>
 #include <hal/hal_gpio.h>
 #include <shell/shell.h>

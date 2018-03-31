@@ -19,10 +19,7 @@
 
 #include <string.h>
 #include <assert.h>
-#include "sysinit/sysinit.h"
-#include "syscfg/syscfg.h"
-#include "sysflash/sysflash.h"
-#include "os/os.h"
+#include "os/mynewt.h"
 #include "log/log.h"
 #include "bootutil/image.h"
 #include "bootutil/bootutil.h"

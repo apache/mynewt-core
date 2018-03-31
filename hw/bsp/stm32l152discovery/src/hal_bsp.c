@@ -18,9 +18,8 @@
  */
 #include <assert.h>
 
-#include <syscfg/syscfg.h>
+#include "os/mynewt.h"
 
-#include <os/os_dev.h>
 #if MYNEWT_VAL(UART_0)
 #include <uart/uart.h>
 #include <uart_hal/uart_hal.h>
@@ -54,7 +53,7 @@
 #if MYNEWT_VAL(UART_0)
 static struct uart_dev hal_uart0;
 
-static const struct stm32l1_uart_cfg uart_cfg[UART_CNT] = {
+static const struct stm32_uart_cfg uart_cfg[UART_CNT] = {
     [0] = {
         .suc_uart = USART3,
         .suc_rcc_reg = &RCC->APB1ENR,
@@ -70,7 +69,7 @@ static const struct stm32l1_uart_cfg uart_cfg[UART_CNT] = {
 #endif
 
 #if MYNEWT_VAL(I2C_0)
-static struct stm32l1_hal_i2c_cfg i2c_cfg0 = {
+static struct stm32_hal_i2c_cfg i2c_cfg0 = {
     .hic_i2c = I2C1,
     .hic_rcc_reg = &RCC->APB1ENR,
     .hic_rcc_dev = RCC_APB1ENR_I2C1EN,

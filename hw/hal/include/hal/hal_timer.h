@@ -35,10 +35,6 @@
 extern "C" {
 #endif
 
-#include <inttypes.h>
-
-#include "os/queue.h"
-
 /* HAL timer callback */
 typedef void (*hal_timer_cb)(void *arg);
 

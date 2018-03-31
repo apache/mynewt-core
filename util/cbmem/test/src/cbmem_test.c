@@ -16,12 +16,12 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
 #include <stddef.h>
-#include "sysinit/sysinit.h"
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 #include "testutil/testutil.h"
 #include "cbmem/cbmem.h"
 #include "cbmem_test.h"

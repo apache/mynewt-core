@@ -51,6 +51,7 @@ static bool errata_98(void);
 static bool errata_103(void);
 static bool errata_115(void);
 static bool errata_120(void);
+static bool errata_121(void);
 #endif
 
 #ifdef NRF52
@@ -243,6 +244,12 @@ void SystemInit(void)
            for your device located at https://infocenter.nordicsemi.com/  */
         if (errata_120()){
             *(volatile uint32_t *)0x40029640ul = 0x200ul;
+        }
+
+        /* Workaround for Errata 120 "QSPI: Second read and long read commands fail" found at the Errata document
+           for your device located at https://infocenter.nordicsemi.com/  */
+        if (errata_121()){
+            *(volatile uint32_t *)0x40029600ul = 0x00040400ul;
         }
 
         /* Enable the FPU if the compiler used floating point unit instructions. __FPU_USED is a MACRO defined by the
@@ -467,6 +474,16 @@ static bool errata_115(void)
 
 
 static bool errata_120(void)
+{
+	if ((*(uint32_t *)0x10000130ul == 0x8ul) &&
+			(*(uint32_t *)0x10000134ul == 0x0ul)) {
+		return true;
+	}
+
+	return false;
+}
+
+static bool errata_121(void)
 {
 	if ((*(uint32_t *)0x10000130ul == 0x8ul) &&
 			(*(uint32_t *)0x10000134ul == 0x0ul)) {

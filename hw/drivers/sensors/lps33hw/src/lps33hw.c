@@ -22,10 +22,10 @@
 #include <assert.h>
 #include <math.h>
 
-#include "defs/error.h"
-#include "os/os.h"
-#include "sysinit/sysinit.h"
+#include "os/mynewt.h"
 #include "hal/hal_i2c.h"
+#include "hal/hal_spi.h"
+#include "hal/hal_gpio.h"
 #include "sensor/sensor.h"
 #include "sensor/pressure.h"
 #include "sensor/temperature.h"
@@ -34,7 +34,12 @@
 #include "log/log.h"
 #include "stats/stats.h"
 
-#include "lps33hw_priv.h"
+static struct hal_spi_settings spi_lps33hw_settings = {
+    .data_order = HAL_SPI_MSB_FIRST,
+    .data_mode  = HAL_SPI_MODE3,
+    .baudrate   = 4000,
+    .word_size  = HAL_SPI_WORD_SIZE_8BIT,
+};
 
 /* Define the stats section and records */
 STATS_SECT_START(lps33hw_stat_section)
@@ -56,7 +61,7 @@ STATS_SECT_DECL(lps33hw_stat_section) g_lps33hwstats;
 #define LPS33HW_ERR(...)      LOG_ERROR(&_log, LOG_MODULE_LPS33HW, __VA_ARGS__)
 static struct log _log;
 
-#define LPS33HW_PRESS_OUT_DIV (4096.0)
+#define LPS33HW_PRESS_OUT_DIV (40.96)
 #define LPS33HW_TEMP_OUT_DIV (100.0)
 #define LPS33HW_PRESS_THRESH_DIV (16)
 
@@ -65,6 +70,7 @@ static int lps33hw_sensor_read(struct sensor *, sensor_type_t,
         sensor_data_func_t, void *, uint32_t);
 static int lps33hw_sensor_get_config(struct sensor *, sensor_type_t,
         struct sensor_cfg *);
+static int lps33hw_sensor_set_config(struct sensor *, void *);
 static int lps33hw_sensor_set_trigger_thresh(struct sensor *sensor,
         sensor_type_t sensor_type, struct sensor_type_traits *stt);
 static int lps33hw_sensor_handle_interrupt(struct sensor *sensor);
@@ -76,6 +82,7 @@ static int lps33hw_sensor_clear_high_thresh(struct sensor *sensor,
 static const struct sensor_driver g_lps33hw_sensor_driver = {
     .sd_read                      = lps33hw_sensor_read,
     .sd_get_config                = lps33hw_sensor_get_config,
+    .sd_set_config                = lps33hw_sensor_set_config,
     .sd_set_trigger_thresh        = lps33hw_sensor_set_trigger_thresh,
     .sd_handle_interrupt          = lps33hw_sensor_handle_interrupt,
     .sd_clear_low_trigger_thresh  = lps33hw_sensor_clear_low_thresh,
@@ -83,52 +90,52 @@ static const struct sensor_driver g_lps33hw_sensor_driver = {
 };
 
 /*
- * Converts pressure value in hectopascals to a value found in the pressure
+ * Converts pressure value in pascals to a value found in the pressure
  * threshold register of the device.
  *
- * @param Pressure value in hectopascals.
+ * @param Pressure value in pascals.
  *
  * @return Pressure value to write to the threshold registers.
  */
 static uint16_t
-lps33hw_hpa_to_threshold_reg(float hpa)
+lps33hw_pa_to_threshold_reg(float pa)
 {
     /* Threshold is unsigned. */
-    if (hpa < 0) {
+    if (pa < 0) {
         return 0;
-    } else if (hpa == INFINITY) {
+    } else if (pa == INFINITY) {
         return 0xffff;
     }
-    return hpa * LPS33HW_PRESS_THRESH_DIV;
+    return pa * LPS33HW_PRESS_THRESH_DIV;
 }
 
 /*
- * Converts pressure value in hectopascals to a value found in the pressure
+ * Converts pressure value in pascals to a value found in the pressure
  * reference register of the device.
  *
- * @param Pressure value in hectopascals.
+ * @param Pressure value in pascals.
  *
  * @return Pressure value to write to the reference registers.
  */
 static int32_t
-lps33hw_hpa_to_reg(float hpa)
+lps33hw_pa_to_reg(float pa)
 {
-    if (hpa == INFINITY) {
+    if (pa == INFINITY) {
         return 0x007fffff;
     }
-    return (int32_t)(hpa * LPS33HW_PRESS_OUT_DIV);
+    return (int32_t)(pa * LPS33HW_PRESS_OUT_DIV);
 }
 
 /*
  * Converts pressure read from the device output registers to a value in
- * hectopascals.
+ * pascals.
  *
  * @param Pressure value read from the output registers.
  *
- * @return Pressure value in hectopascals.
+ * @return Pressure value in pascals.
  */
 static float
-lps33hw_reg_to_hpa(int32_t reg)
+lps33hw_reg_to_pa(int32_t reg)
 {
     return reg / LPS33HW_PRESS_OUT_DIV;
 }
@@ -147,9 +154,9 @@ lps33hw_reg_to_degc(int16_t reg)
     return reg / LPS33HW_TEMP_OUT_DIV;
 }
 
-
 /**
- * Writes a single byte to the specified register
+ * Writes a single byte to the specified register using i2c
+ * interface
  *
  * @param The sensor interface
  * @param The register address to write to
@@ -158,7 +165,7 @@ lps33hw_reg_to_degc(int16_t reg)
  * @return 0 on success, non-zero error on failure.
  */
 static int
-lps33hw_set_reg(struct sensor_itf *itf, uint8_t reg, uint8_t value)
+lps33hw_i2c_set_reg(struct sensor_itf *itf, uint8_t reg, uint8_t value)
 {
     int rc;
     uint8_t payload[2] = { reg, value };
@@ -182,16 +189,145 @@ lps33hw_set_reg(struct sensor_itf *itf, uint8_t reg, uint8_t value)
 }
 
 /**
- * Read bytes from the specified register
+ * Writes a single byte to the specified register using SPI
+ * interface
+ *
+ * @param The sensor interface
+ * @param The register address to write to
+ * @param The value to write
+ *
+ * @return 0 on success, non-zero error on failure.
+ */
+static int
+lps33hw_spi_set_reg(struct sensor_itf *itf, uint8_t reg, uint8_t value)
+{
+    int rc;
+
+    /* Select the device */
+    hal_gpio_write(itf->si_cs_pin, 0);
+
+    /* Send the register address w/write command */
+    rc = hal_spi_tx_val(itf->si_num, reg & ~LPS33HW_SPI_READ_CMD_BIT);
+    if (rc == 0xFFFF) {
+        rc = SYS_EINVAL;
+        LPS33HW_ERR("SPI_%u register write failed addr:0x%02X\n",
+                   itf->si_num, reg);
+        STATS_INC(g_lps33hwstats, write_errors);
+        goto err;
+    }
+
+    /* Write data */
+    rc = hal_spi_tx_val(itf->si_num, value);
+    if (rc == 0xFFFF) {
+        rc = SYS_EINVAL;
+        LPS33HW_ERR("SPI_%u write failed addr:0x%02X:0x%02X\n",
+                   itf->si_num, reg);
+        STATS_INC(g_lps33hwstats, write_errors);
+        goto err;
+    }
+
+    rc = 0;
+
+err:
+    /* De-select the device */
+    hal_gpio_write(itf->si_cs_pin, 1);
+
+    os_time_delay((OS_TICKS_PER_SEC * 30)/1000 + 1);
+
+    return rc;
+}
+
+/**
+ * Writes a single byte to the specified register using specified
+ * interface
+ *
+ * @param The sensor interface
+ * @param The register address to write to
+ * @param The value to write
+ *
+ * @return 0 on success, non-zero error on failure.
+ */
+static int
+lps33hw_set_reg(struct sensor_itf *itf, uint8_t reg, uint8_t value)
+{
+    int rc;
+
+    if (itf->si_type == SENSOR_ITF_I2C) {
+           rc = lps33hw_i2c_set_reg(itf, reg, value);
+       } else {
+           rc = lps33hw_spi_set_reg(itf, reg, value);
+       }
+
+    return rc;
+}
+
+/**
+ *
+ * Read bytes from the specified register using SPI interface
  *
  * @param The sensor interface
  * @param The register address to read from
+ * @param The number of bytes to read
  * @param Pointer to where the register value should be written
  *
  * @return 0 on success, non-zero error on failure.
  */
 static int
-lps33hw_get_regs(struct sensor_itf *itf, uint8_t reg, uint8_t size,
+lps33hw_spi_get_regs(struct sensor_itf *itf, uint8_t reg, uint8_t size,
+    uint8_t *buffer)
+{
+    int i;
+    uint16_t retval;
+    int rc;
+    rc = 0;
+
+    /* Select the device */
+    hal_gpio_write(itf->si_cs_pin, 0);
+
+    /* Send the address */
+    retval = hal_spi_tx_val(itf->si_num, reg | LPS33HW_SPI_READ_CMD_BIT);
+    if (retval == 0xFFFF) {
+        rc = SYS_EINVAL;
+        LPS33HW_ERR("SPI_%u register write failed addr:0x%02X\n",
+                   itf->si_num, reg);
+        STATS_INC(g_lps33hwstats, read_errors);
+        goto err;
+    }
+
+    for (i = 0; i < size; i++) {
+        /* Read data */
+        retval = hal_spi_tx_val(itf->si_num, 0);
+        if (retval == 0xFFFF) {
+            rc = SYS_EINVAL;
+            LPS33HW_ERR("SPI_%u read failed addr:0x%02X\n",
+                       itf->si_num, reg);
+            STATS_INC(g_lps33hwstats, read_errors);
+            goto err;
+        }
+        buffer[i] = retval;
+    }
+
+    rc = 0;
+
+err:
+    /* De-select the device */
+    hal_gpio_write(itf->si_cs_pin, 1);
+
+    return rc;
+}
+
+/**
+ * Read bytes from the specified register using i2c interface
+ *
+ * @param The sensor interface
+ * @param The register address to read from
+ * @param The number of bytes to read
+ * @param Pointer to where the register value should be written
+ *
+ * @return 0 on success, non-zero error on failure.
+ */
+static int
+lps33hw_i2c_get_regs(struct sensor_itf *itf, uint8_t reg, uint8_t size,
     uint8_t *buffer)
 {
     int rc;
@@ -221,6 +357,31 @@ lps33hw_get_regs(struct sensor_itf *itf, uint8_t reg, uint8_t size,
          LPS33HW_ERR("Failed to read from 0x%02X:0x%02X\n", itf->si_addr, reg);
          STATS_INC(g_lps33hwstats, read_errors);
     }
+    return rc;
+}
+
+/**
+ * Read bytes from the specified register using specified interface
+ *
+ * @param The sensor interface
+ * @param The register address to read from
+ * @param The number of bytes to read
+ * @param Pointer to where the register value should be written
+ *
+ * @return 0 on success, non-zero error on failure.
+ */
+static int
+lps33hw_get_regs(struct sensor_itf *itf, uint8_t reg, uint8_t size,
+    uint8_t *buffer)
+{
+    int rc;
+
+    if (itf->si_type == SENSOR_ITF_I2C) {
+        rc = lps33hw_i2c_get_regs(itf, reg, size, buffer);
+    } else {
+        rc = lps33hw_spi_get_regs(itf, reg, size, buffer);
+    }
+
     return rc;
 }
 
@@ -312,7 +473,7 @@ lps33hw_get_pressure_regs(struct sensor_itf *itf, uint8_t reg, float *pressure)
         int_press |= 0xff000000;
     }
 
-    *pressure = lps33hw_reg_to_hpa(int_press);
+    *pressure = lps33hw_reg_to_pa(int_press);
 
     return 0;
 }
@@ -347,7 +508,7 @@ lps33hw_set_reference(struct sensor_itf *itf, float reference)
     int rc;
     int32_t int_reference;
 
-    int_reference = lps33hw_hpa_to_reg(reference);
+    int_reference = lps33hw_pa_to_reg(reference);
 
     rc = lps33hw_set_reg(itf, LPS33HW_REF_P, int_reference & 0xff);
     if (rc) {
@@ -368,7 +529,7 @@ lps33hw_set_threshold(struct sensor_itf *itf, float threshold)
     int rc;
     int16_t int_threshold;
 
-    int_threshold = lps33hw_hpa_to_threshold_reg(threshold);
+    int_threshold = lps33hw_pa_to_threshold_reg(threshold);
 
     rc = lps33hw_set_reg(itf, LPS33HW_THS_P, int_threshold & 0xff);
     if (rc) {
@@ -725,7 +886,32 @@ lps33hw_init(struct os_dev *dev, void *arg)
         return rc;
     }
 
-    return sensor_mgr_register(sensor);
+    rc = sensor_mgr_register(sensor);
+    if (rc) {
+        return rc;
+    }
+
+    if (sensor->s_itf.si_type == SENSOR_ITF_SPI) {
+        rc = hal_spi_config(sensor->s_itf.si_num, &spi_lps33hw_settings);
+        if (rc == EINVAL) {
+            /* If spi is already enabled, for nrf52, it returns -1, We should not
+             * fail if the spi is already enabled
+             */
+            return rc;
+        }
+
+        rc = hal_spi_enable(sensor->s_itf.si_num);
+        if (rc) {
+            return rc;
+        }
+
+        rc = hal_gpio_init_out(sensor->s_itf.si_cs_pin, 1);
+        if (rc) {
+            return rc;
+        }
+    }
+
+    return rc;
 }
 
 int
@@ -857,6 +1043,14 @@ lps33hw_sensor_read(struct sensor *sensor, sensor_type_t type,
     }
 
     return rc;
+}
+
+static int
+lps33hw_sensor_set_config(struct sensor *sensor, void *cfg)
+{
+    struct lps33hw* lps33hw = (struct lps33hw *)SENSOR_GET_DEVICE(sensor);
+
+    return lps33hw_config(lps33hw, (struct lps33hw_cfg*)cfg);
 }
 
 static int

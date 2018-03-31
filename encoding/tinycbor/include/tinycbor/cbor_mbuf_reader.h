@@ -20,8 +20,8 @@
 #ifndef CBOR_MBUF_READER_H
 #define CBOR_MBUF_READER_H
 
+#include "os/mynewt.h"
 #include <tinycbor/cbor.h>
-#include <os/os_mbuf.h>
 
 #ifdef __cplusplus
 extern "C" {

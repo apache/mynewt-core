@@ -17,8 +17,8 @@
  * under the License.
  */
 
+#include "os/mynewt.h"
 #include <mcu/cortex_m0.h>
-#include "syscfg/syscfg.h"
 #include "hal/hal_system.h"
 #include <nrf51.h>
 #include <nrf51_bitfields.h>

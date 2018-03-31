@@ -16,9 +16,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 #include <assert.h>
-#include "sysinit/sysinit.h"
-#include "os/os.h"
+#include "os/mynewt.h"
 
 int
 main(void)

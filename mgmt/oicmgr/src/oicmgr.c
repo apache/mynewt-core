@@ -17,15 +17,10 @@
  * under the License.
  */
 
-#include <syscfg/syscfg.h>
-#include <sysinit/sysinit.h>
-
-#include <os/os.h>
-#include <os/endian.h>
-#include <defs/error.h>
-
 #include <assert.h>
 #include <string.h>
+
+#include "os/mynewt.h"
 
 #include <mgmt/mgmt.h>
 #include <nmgr_os/nmgr_os.h>

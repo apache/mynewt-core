@@ -22,7 +22,7 @@
 
 #include <stddef.h>
 #include <inttypes.h>
-#include <os/queue.h>
+#include "os/mynewt.h"
 
 #ifdef __cplusplus
 extern "C" {

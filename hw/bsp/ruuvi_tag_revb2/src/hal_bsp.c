@@ -21,11 +21,8 @@
 #include <stddef.h>
 #include <string.h>
 #include <assert.h>
-#include <sysinit/sysinit.h>
-#include <nrf52.h>
-#include "os/os_cputime.h"
-#include "syscfg/syscfg.h"
-#include "sysflash/sysflash.h"
+#include "os/mynewt.h"
+#include "nrfx.h"
 #include "flash_map/flash_map.h"
 #include "hal/hal_bsp.h"
 #include "hal/hal_system.h"
@@ -34,7 +31,6 @@
 #include "hal/hal_watchdog.h"
 #include "hal/hal_i2c.h"
 #include "mcu/nrf52_hal.h"
-#include "defs/error.h"
 #if MYNEWT_VAL(UART_0) || MYNEWT_VAL(UART_1)
 #include "uart/uart.h"
 #endif
@@ -44,10 +40,10 @@
 #if MYNEWT_VAL(UART_1)
 #include "uart_bitbang/uart_bitbang.h"
 #endif
-#include "os/os_dev.h"
 #include "bsp.h"
 #if MYNEWT_VAL(ADC_0)
 #include <adc_nrf52/adc_nrf52.h>
+#include <nrfx_saadc.h>
 #endif
 #if MYNEWT_VAL(PWM_0) || MYNEWT_VAL(PWM_1) || MYNEWT_VAL(PWM_2)
 #include <pwm_nrf52/pwm_nrf52.h>
@@ -127,11 +123,10 @@ static const struct nrf52_hal_spi_cfg os_bsp_spi0s_cfg = {
 #if MYNEWT_VAL(ADC_0)
 static struct adc_dev os_bsp_adc0;
 static struct nrf52_adc_dev_cfg os_bsp_adc0_config = {
-    .saadc_cfg.resolution         = MYNEWT_VAL(ADC_0_RESOLUTION),
-    .saadc_cfg.oversample         = MYNEWT_VAL(ADC_0_OVERSAMPLE),
-    .saadc_cfg.interrupt_priority = MYNEWT_VAL(ADC_0_INTERRUPT_PRIORITY),
+    .nadc_refmv     = MYNEWT_VAL(ADC_0_REFMV_0),
 };
 #endif
+
 
 #if MYNEWT_VAL(PWM_0)
 static struct pwm_dev os_bsp_pwm0;
@@ -342,13 +337,13 @@ hal_bsp_init(void)
 #endif
 
 #if MYNEWT_VAL(ADC_0)
-rc = os_dev_create((struct os_dev *) &os_bsp_adc0,
-                   "adc0",
-                   OS_DEV_INIT_KERNEL,
-                   OS_DEV_INIT_PRIO_DEFAULT,
-                   nrf52_adc_dev_init,
-                   &os_bsp_adc0_config);
-assert(rc == 0);
+    rc = os_dev_create((struct os_dev *) &os_bsp_adc0,
+                       "adc0",
+                       OS_DEV_INIT_KERNEL,
+                       OS_DEV_INIT_PRIO_DEFAULT,
+                       nrf52_adc_dev_init,
+                       &os_bsp_adc0_config);
+    assert(rc == 0);
 #endif
 
 #if MYNEWT_VAL(PWM_0)

@@ -17,17 +17,12 @@
  * under the License.
  */
 
+#include <string.h>
+#include <assert.h>
+#include "os/mynewt.h"
 #include <hal/hal_spi.h>
 #include <hal/hal_gpio.h>
-
-#include <string.h>
-
-#include <assert.h>
-
-#include <syscfg/syscfg.h>
-
 #include "mcu/stm32_hal.h"
-
 #include "mcu/cmsis_nvic.h"
 
 #define SPI_0_ENABLED (MYNEWT_VAL(SPI_0_MASTER) || MYNEWT_VAL(SPI_0_SLAVE))

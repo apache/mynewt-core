@@ -39,8 +39,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <errno.h>
-#include "sysinit/sysinit.h"
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 #include "hal/hal_flash.h"
 #include "testutil/testutil.h"
 #include "fs/fs.h"

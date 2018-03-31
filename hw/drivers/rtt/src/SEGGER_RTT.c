@@ -79,10 +79,9 @@ Additional information:
 ----------------------------------------------------------------------
 */
 
-#include "rtt/SEGGER_RTT.h"
-#include "sysinit/sysinit.h"
-
 #include <string.h>                 // for memcpy
+#include "os/mynewt.h"
+#include "rtt/SEGGER_RTT.h"
 
 /*********************************************************************
 *

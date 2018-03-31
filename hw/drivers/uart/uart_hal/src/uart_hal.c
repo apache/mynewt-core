@@ -21,8 +21,7 @@
 #include <assert.h>
 #include <string.h>
 
-#include <os/os.h>
-#include <os/os_dev.h>
+#include "os/mynewt.h"
 #include <hal/hal_uart.h>
 
 #include <uart/uart.h>

@@ -17,11 +17,10 @@
  * under the License.
  */
 
-#include <syscfg/syscfg.h>
+#include "os/mynewt.h"
 
 #if MYNEWT_VAL(LOG_CONSOLE)
 
-#include <os/os.h>
 #include <cbmem/cbmem.h>
 #include <console/console.h>
 #include "log/log.h"

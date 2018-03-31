@@ -22,8 +22,7 @@
 #include <stdio.h>
 #include <errno.h>
 
-#include "sysinit/sysinit.h"
-#include "os/os.h"
+#include "os/mynewt.h"
 #include "console/console.h"
 #include "config/config.h"
 #include "nimble/ble.h"

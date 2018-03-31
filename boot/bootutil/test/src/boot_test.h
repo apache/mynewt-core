@@ -25,8 +25,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <inttypes.h>
-#include "syscfg/syscfg.h"
-#include "sysflash/sysflash.h"
+#include "os/mynewt.h"
 #include "testutil/testutil.h"
 #include "hal/hal_flash.h"
 #include "flash_map/flash_map.h"

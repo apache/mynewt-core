@@ -19,9 +19,7 @@
 
 #include <assert.h>
 #include <string.h>
-#include "os/os_trace_api.h"
-
-#include "os/os.h"
+#include "os/mynewt.h"
 
 static struct os_eventq os_eventq_main;
 

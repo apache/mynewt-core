@@ -20,8 +20,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <assert.h>
-#include "os/os.h"
-#include "os/os_cputime.h"
+#include "os/mynewt.h"
 
 #if defined(OS_CPUTIME_FREQ_HIGH)
 struct os_cputime_data g_os_cputime;

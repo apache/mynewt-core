@@ -22,8 +22,7 @@
 
 #include <tinycbor/cbor.h>
 #include <inttypes.h>
-#include <os/os.h>
-#include <os/endian.h>
+#include "os/mynewt.h"
 
 #ifdef __cplusplus
 extern "C" {

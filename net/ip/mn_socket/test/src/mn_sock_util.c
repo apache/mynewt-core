@@ -20,9 +20,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "sysinit/sysinit.h"
-#include "syscfg/syscfg.h"
-#include "os/os.h"
+#include "os/mynewt.h"
 #include "testutil/testutil.h"
 
 #include "mn_socket/mn_socket.h"
@@ -89,6 +87,14 @@ stc_writable(void *cb_arg, int err)
     TEST_ASSERT(err == 0);
     i = (int *)cb_arg;
     *i = *i + 1;
+
+    /*
+     * The first instance of writability indicates an established connection.
+     * Unblock the test case.
+     */
+    if (*i == 1) {
+        os_sem_release(&test_sem);
+    }
 }
 
 int
@@ -144,8 +150,14 @@ sock_tcp_connect(void)
     rc = mn_connect(sock, (struct mn_sockaddr *)&msin);
     TEST_ASSERT(rc == 0);
 
+    /*
+     * Wait for both connections to be established.
+     */
     rc = os_sem_pend(&test_sem, OS_TICKS_PER_SEC);
     TEST_ASSERT(rc == 0);
+    rc = os_sem_pend(&test_sem, OS_TICKS_PER_SEC);
+    TEST_ASSERT(rc == 0);
+
     TEST_ASSERT(connected == 1);
     TEST_ASSERT(new_sock != NULL);
 
@@ -271,9 +283,18 @@ std_writable(void *cb_arg, int err)
     int *i;
 
     TEST_ASSERT(err == 0);
+
     i = (int *)cb_arg;
-    if (i) {
-        *i = *i + 1;
+    TEST_ASSERT_FATAL(i != NULL);
+
+    *i = *i + 1;
+
+    /*
+     * The first instance of writability indicates an established connection.
+     * Unblock the test case.
+     */
+    if (*i == 1) {
+        os_sem_release(&test_sem);
     }
 }
 
@@ -341,8 +362,14 @@ sock_tcp_data(void)
     rc = mn_connect(sock, (struct mn_sockaddr *)&msin);
     TEST_ASSERT(rc == 0);
 
+    /*
+     * Wait for both connections to be established.
+     */
     rc = os_sem_pend(&test_sem, OS_TICKS_PER_SEC);
     TEST_ASSERT(rc == 0);
+    rc = os_sem_pend(&test_sem, OS_TICKS_PER_SEC);
+    TEST_ASSERT(rc == 0);
+
     TEST_ASSERT(connected == 1);
     TEST_ASSERT(new_sock != NULL);
 
@@ -548,7 +575,7 @@ sum4_readable(void *cb_arg, int err)
     os_sem_release(&test_sem);
 }
 
-static void
+void
 sock_udp_mcast_v4(void)
 {
     int loop_if_idx;
@@ -648,7 +675,7 @@ sock_udp_mcast_v4(void)
     mn_close(tx_sock);
 }
 
-static void
+void
 sock_udp_mcast_v6(void)
 {
     int loop_if_idx;

@@ -65,7 +65,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdio.h>
 #include <inttypes.h>
 
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 
 struct param {
     unsigned char width; /**< field width */

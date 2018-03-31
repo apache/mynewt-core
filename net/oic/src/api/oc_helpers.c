@@ -17,7 +17,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-#include <syscfg/syscfg.h>
+#include "os/mynewt.h"
 
 #include "oic/port/mynewt/config.h"
 #include "oic/oc_helpers.h"

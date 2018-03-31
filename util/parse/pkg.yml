@@ -18,7 +18,7 @@
 #
 
 pkg.name: util/parse
-pkg.description: Library containing miscellaneous utilities.
+pkg.description: Utility functions for parsing text.
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
@@ -30,3 +30,4 @@ pkg.cflags:
 
 pkg.deps:
     - "@apache-mynewt-core/sys/defs"
+    - "@apache-mynewt-core/net/ip/mn_socket"

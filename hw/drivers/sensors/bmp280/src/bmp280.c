@@ -22,9 +22,7 @@
 #include <errno.h>
 #include <string.h>
 
-#include "defs/error.h"
-#include "os/os.h"
-#include "sysinit/sysinit.h"
+#include "os/mynewt.h"
 #include "hal/hal_spi.h"
 #include "hal/hal_i2c.h"
 #include "sensor/sensor.h"

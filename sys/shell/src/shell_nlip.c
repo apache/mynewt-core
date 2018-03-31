@@ -17,12 +17,10 @@
  * under the License.
  */
 
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 
 #if MYNEWT_VAL(SHELL_NEWTMGR)
 #include <stddef.h>
-#include "os/os.h"
-#include "os/endian.h"
 #include "base64/base64.h"
 #include "crc/crc16.h"
 #include "console/console.h"

@@ -21,9 +21,7 @@
 #include <errno.h>
 #include <assert.h>
 
-#include "defs/error.h"
-#include "os/os.h"
-#include "sysinit/sysinit.h"
+#include "os/mynewt.h"
 #include "hal/hal_i2c.h"
 #include "sensor/sensor.h"
 #include "tcs34725/tcs34725.h"

@@ -16,9 +16,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 #include <string.h>
-#include "sysinit/sysinit.h"
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 #include "node/lora_priv.h"
 
 STATS_SECT_DECL(lora_mac_stats) lora_mac_stats;
@@ -75,17 +75,8 @@ struct lm_join_ev_arg_obj g_lm_join_ev_arg;
 
 /* Debug log */
 #if defined(LORA_NODE_DEBUG_LOG)
-struct lora_node_debug_log_entry
-{
-    uint8_t lnd_id;
-    uint8_t lnd_p8;
-    uint16_t lnd_p16;
-    uint32_t lnd_p32;
-    uint32_t lnd_cputime;
-};
-
-static struct lora_node_debug_log_entry g_lnd_log[LORA_NODE_DEBUG_LOG_ENTRIES];
-static uint8_t g_lnd_log_index;
+struct lora_node_debug_log_entry g_lnd_log[LORA_NODE_DEBUG_LOG_ENTRIES];
+uint16_t g_lnd_log_index;
 
 void
 lora_node_log(uint8_t logid, uint8_t p8, uint16_t p16, uint32_t p32)
@@ -410,7 +401,7 @@ lora_mac_task(void *arg)
  * @return int  LORA_APP_STATUS_ALREADY_JOINED if joined.
  *              LORA_APP_STATUS_NO_NETWORK if not joined
  */
-static int
+int
 lora_node_chk_if_joined(void)
 {
     int rc;
@@ -555,6 +546,67 @@ lora_mac_link_chk_event(struct os_event *ev)
 }
 #endif
 #endif
+
+/**
+ * Helper routine to track measurement averages.
+ *
+ * @param orig State variable
+ * @param sample Latest sample to add to average.
+ */
+static void
+lora_node_calc_avg(int16_t *orig, uint16_t sample)
+{
+    int16_t tmp;
+
+    tmp = *orig;
+    if (tmp) {
+	/*
+	 * The following magic is equivalent to algorithm
+         * avg = sample/16 + avg*15/16 in fixed point.
+	 */
+	tmp += (sample << LORA_DELTA_SHIFT) - (tmp >> LORA_AVG_SHIFT);
+	*orig = tmp;
+    } else {
+	/*
+	 * No measurement yet.
+	 */
+	*orig = sample << (LORA_AVG_SHIFT + LORA_DELTA_SHIFT);
+    }
+}
+
+void
+lora_node_qual_sample(int16_t rssi, int16_t snr)
+{
+    lora_node_calc_avg(&g_lora_mac_data.lm_rssi_avg, rssi);
+    lora_node_calc_avg(&g_lora_mac_data.lm_snr_avg, snr);
+}
+
+/**
+ * Report tracked RSSI/SNR averages
+ *
+ * @param rssi Pointer to where to store RSSI average.
+ * @param snr Pointer to where to store SNR average.
+ *
+ * @return 0 if returned data is valid, non-zero otherwise
+ */
+int
+lora_node_link_qual(int16_t *rssi, int16_t *snr)
+{
+    struct lora_mac_obj *lmo = &g_lora_mac_data;
+
+    if (lmo->lm_rssi_avg || lmo->lm_snr_avg) {
+        /*
+         * Rounds down. XXX
+         */
+        *rssi = g_lora_mac_data.lm_rssi_avg >> (LORA_AVG_SHIFT +
+                                                LORA_DELTA_SHIFT);
+        *snr = g_lora_mac_data.lm_snr_avg >> (LORA_AVG_SHIFT +
+                                              LORA_DELTA_SHIFT);
+        return 0;
+    } else {
+        return -1;
+    }
+}
 
 struct os_eventq *
 lora_node_mac_evq_get(void)

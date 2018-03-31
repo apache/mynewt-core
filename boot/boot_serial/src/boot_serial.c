@@ -16,14 +16,14 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 #include <assert.h>
 #include <stddef.h>
 #include <inttypes.h>
 #include <ctype.h>
 #include <stdio.h>
 
-#include "sysflash/sysflash.h"
-
+#include "os/mynewt.h"
 #include <bsp/bsp.h>
 
 #include <flash_map/flash_map.h>
@@ -31,11 +31,7 @@
 #include <hal/hal_system.h>
 #include <hal/hal_gpio.h>
 #include <hal/hal_watchdog.h>
-
-#include <os/endian.h>
-#include <os/os.h>
-#include <os/os_malloc.h>
-#include <os/os_cputime.h>
+#include <hal/hal_nvreg.h>
 
 #include <tinycbor/cbor.h>
 #include <tinycbor/cbor_buf_reader.h>
@@ -190,6 +186,7 @@ bs_upload(char *buf, int len)
     uint8_t img_data[512];
     long long int off = UINT_MAX;
     size_t img_blen = 0;
+    uint8_t rem_bytes;
     long long int data_len = UINT_MAX;
     size_t slen;
     char name_str[8];
@@ -313,6 +310,12 @@ bs_upload(char *buf, int len)
     if (off != curr_off) {
         rc = 0;
         goto out;
+    }
+    if (curr_off + img_blen < img_size) {
+        rem_bytes = img_blen % flash_area_align(fap);
+        if (rem_bytes) {
+            img_blen -= rem_bytes;
+        }
     }
     rc = flash_area_write(fap, curr_off, img_data, img_blen);
     if (rc == 0) {
@@ -650,13 +653,32 @@ boot_serial_os_dev_init(void)
      * Configure GPIO line as input. This is read later to see if
      * we should stay and keep waiting for input.
      */
+#if MYNEWT_VAL(BOOT_SERIAL_DETECT_PIN) != -1
     hal_gpio_init_in(MYNEWT_VAL(BOOT_SERIAL_DETECT_PIN),
                      MYNEWT_VAL(BOOT_SERIAL_DETECT_PIN_CFG));
+#endif
 }
 
 void
 boot_serial_pkg_init(void)
 {
+
+    /*
+     * Read retained register and compare with expected magic value.
+     * If it matches, await for download commands from serial.
+     */
+#if MYNEWT_VAL(BOOT_SERIAL_NVREG_INDEX) != -1
+    if (hal_nvreg_read(MYNEWT_VAL(BOOT_SERIAL_NVREG_INDEX)) ==
+        MYNEWT_VAL(BOOT_SERIAL_NVREG_MAGIC)) {
+
+        hal_nvreg_write(MYNEWT_VAL(BOOT_SERIAL_NVREG_INDEX), 0);
+
+        boot_serial_start(BOOT_SERIAL_INPUT_MAX);
+        assert(0);
+    }
+
+#endif
+
     /*
      * Configure a GPIO as input, and compare it against expected value.
      * If it matches, await for download commands from serial.

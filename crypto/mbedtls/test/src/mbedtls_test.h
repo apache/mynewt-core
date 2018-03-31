@@ -21,7 +21,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 #include "testutil/testutil.h"
 
 #include "mbedtls/mbedtls_test.h"

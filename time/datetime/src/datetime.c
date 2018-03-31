@@ -57,12 +57,10 @@
  *    from: src/sys/i386/isa/clock.c,v 1.176 2001/09/04
  */
 
-#include <os/os_time.h>
-#include <os/os_error.h>
-
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
+#include "os/mynewt.h"
 #include <datetime/datetime.h>
 
 #define days_in_year(y)     (leapyear(y) ? 366 : 365)

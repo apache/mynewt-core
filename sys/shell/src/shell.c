@@ -21,10 +21,8 @@
 #include <string.h>
 #include <assert.h>
 
-#include "syscfg/syscfg.h"
-#include "os/os.h"
+#include "os/mynewt.h"
 #include "console/console.h"
-#include "sysinit/sysinit.h"
 #include "shell/shell.h"
 #include "shell_priv.h"
 
@@ -175,12 +173,30 @@ get_command_and_module(char *argv[], int *module)
     return argv[0];
 }
 
+static void
+print_command_params(const int module, const int command)
+{
+	const struct shell_module *shell_module = &shell_modules[module];
+	const struct shell_cmd *shell_cmd = &shell_module->commands[command];
+	int i;
+
+	if (!(shell_cmd->help && shell_cmd->help->params)) {
+		return;
+	}
+
+	for (i = 0; shell_cmd->help->params[i].param_name; i++) {
+		console_printf("%-30s%s\n", shell_cmd->help->params[i].param_name,
+			       shell_cmd->help->params[i].help);
+	}
+}
+
 static int
 show_cmd_help(char *argv[])
 {
     const char *command = NULL;
     int module = -1;
     const struct shell_module *shell_module = NULL;
+    const struct shell_cmd *cmd;
     int i;
 
     command = get_command_and_module(argv, &module);
@@ -190,21 +206,30 @@ show_cmd_help(char *argv[])
 
     shell_module = &shell_modules[module];
     for (i = 0; shell_module->commands[i].sc_cmd; i++) {
-        if (!strcmp(command, shell_module->commands[i].sc_cmd)) {
-            console_printf("%s:\n", shell_module->commands[i].sc_cmd);
+        cmd = &shell_module->commands[i];
 
-            if (!shell_module->commands[i].help) {
+        if (!strcmp(command, cmd->sc_cmd)) {
+
+            if (!cmd->help || (!cmd->help->summary &&
+                               !cmd->help->usage &&
+                               !cmd->help->params)) {
                 console_printf("(no help available)\n");
                 return 0;
             }
-            if (shell_module->commands[i].help->usage) {
-                console_printf("%s:\n", shell_module->commands[i].sc_cmd);
-                console_printf("%s\n", shell_module->commands[i].help->usage);
-            } else if (shell_module->commands[i].help->summary) {
-                console_printf("%s:\n", shell_module->commands[i].sc_cmd);
-                console_printf("%s\n", shell_module->commands[i].help->summary);
-            } else {
-                console_printf("(no help available)\n");
+
+            if (cmd->help->summary) {
+                console_printf("Summary:\n");
+                console_printf("%s\n", cmd->help->summary);
+            }
+
+            if (cmd->help->usage) {
+                console_printf("Usage:\n");
+                console_printf("%s\n", cmd->help->usage);
+            }
+
+            if (cmd->help->params) {
+                console_printf("Parameters:\n");
+                print_command_params(module, i);
             }
 
             return 0;
@@ -437,23 +462,6 @@ shell(struct os_event *ev)
 }
 
 #if MYNEWT_VAL(SHELL_COMPLETION)
-static void
-print_command_params(const int module, const int command)
-{
-    const struct shell_module *shell_module = &shell_modules[module];
-    const struct shell_cmd *shell_cmd = &shell_module->commands[command];
-    int i;
-
-    if (!(shell_cmd->help && shell_cmd->help->params)) {
-        return;
-    }
-
-    for (i = 0; shell_cmd->help->params[i].param_name; i++) {
-        console_printf("%-30s%s\n", shell_cmd->help->params[i].param_name,
-                       shell_cmd->help->params[i].help);
-    }
-}
-
 static int
 get_command_from_module(const char *command, int len, int module)
 {

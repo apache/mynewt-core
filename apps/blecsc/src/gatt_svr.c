@@ -20,10 +20,10 @@
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
+#include "os/mynewt.h"
 #include "host/ble_hs.h"
 #include "host/ble_uuid.h"
 #include "blecsc_sens.h"
-#include "os/endian.h"
 
 #define CSC_ERR_CCC_DESC_IMPROPERLY_CONFIGURED  0x81
 

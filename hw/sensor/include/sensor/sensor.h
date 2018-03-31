@@ -21,9 +21,7 @@
 #define __SENSOR_H__
 
 #include <string.h>
-#include "os/os.h"
-#include "os/os_dev.h"
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 
 #if MYNEWT_VAL(SENSOR_OIC)
 #include "oic/oc_ri.h"
@@ -104,6 +102,10 @@ typedef enum {
     SENSOR_EVENT_TYPE_DOUBLE_TAP     = (1 << 0),
     /* Accelerometer single tap event */
     SENSOR_EVENT_TYPE_SINGLE_TAP     = (1 << 1),
+    /* Accelerometer free fall event */
+    SENSOR_EVENT_TYPE_FREE_FALL      = (1 << 2),
+    /* Accelerometer sleep change event */
+    SENSOR_EVENT_TYPE_SLEEP_CHANGE   = (1 << 3),
 } sensor_event_type_t;
 
 
@@ -363,7 +365,7 @@ typedef int (*sensor_read_func_t)(struct sensor *, sensor_type_t,
 typedef int (*sensor_get_config_func_t)(struct sensor *, sensor_type_t,
         struct sensor_cfg *);
 
-/** 
+/**
  * Send a new configuration register set to the sensor.
  *
  * @param ptr to the sensor-specific stucture

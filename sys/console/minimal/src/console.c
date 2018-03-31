@@ -24,9 +24,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "syscfg/syscfg.h"
-#include "os/os.h"
-#include "sysinit/sysinit.h"
+#include "os/mynewt.h"
 #include "console/console.h"
 #include "console_priv.h"
 
@@ -63,6 +61,12 @@ int __attribute__((weak))
 console_out(int c)
 {
     return c;
+}
+
+void
+console_echo(int on)
+{
+    echo = on;
 }
 
 void

@@ -18,7 +18,7 @@
  */
 #include <stdint.h>
 #include <assert.h>
-#include <os/os.h>
+#include "os/mynewt.h"
 
 #include "hal/hal_timer.h"
 

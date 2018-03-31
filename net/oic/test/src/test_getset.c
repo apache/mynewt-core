@@ -16,10 +16,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include "test_oic.h"
 
-#include <os/os.h>
+#include "os/mynewt.h"
 #include <oic/oc_api.h>
+#include "test_oic.h"
 
 static int test_getset_state;
 static volatile int test_getset_done;
@@ -70,7 +70,7 @@ test_getset_rsp1(struct oc_client_response *rsp)
     default:
         break;
     }
-    os_eventq_put(&oic_tapp_evq, &test_getset_next_ev);
+    os_eventq_put(os_eventq_dflt_get(), &test_getset_next_ev);
 }
 
 static void
@@ -116,11 +116,10 @@ test_getset_next_step(struct os_event *ev)
 void
 test_getset(void)
 {
-    os_eventq_put(&oic_tapp_evq, &test_getset_next_ev);
+    os_eventq_put(os_eventq_dflt_get(), &test_getset_next_ev);
+    while (!test_getset_done)
+        ;
 
-    while (!test_getset_done) {
-        os_eventq_run(&oic_tapp_evq);
-    }
     oc_delete_resource(test_res_getset);
 }
 

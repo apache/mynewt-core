@@ -17,11 +17,10 @@
  * under the License.
  */
 
-#include "os/os.h"
-
 #include <string.h>
 #include <assert.h>
 #include <stdbool.h>
+#include "os/mynewt.h"
 
 #define OS_MEM_TRUE_BLOCK_SIZE(bsize)   OS_ALIGN(bsize, OS_ALIGNMENT)
 #define OS_MEMPOOL_TRUE_BLOCK_SIZE(mp) OS_MEM_TRUE_BLOCK_SIZE(mp->mp_block_size)
@@ -134,6 +133,45 @@ os_mempool_ext_init(struct os_mempool_ext *mpe, uint16_t blocks,
     mpe->mpe_put_arg = NULL;
 
     return 0;
+}
+
+os_error_t
+os_mempool_clear(struct os_mempool *mp)
+{
+    struct os_memblock *block_ptr;
+    int true_block_size;
+    uint8_t *block_addr;
+    uint16_t blocks;
+
+    if (!mp) {
+        return OS_INVALID_PARM;
+    }
+
+    true_block_size = OS_MEM_TRUE_BLOCK_SIZE(mp->mp_block_size);
+
+    /* cleanup the memory pool structure */
+    mp->mp_num_free = mp->mp_num_blocks;
+    mp->mp_min_free = mp->mp_num_blocks;
+    os_mempool_poison((void *)mp->mp_membuf_addr, true_block_size);
+    SLIST_FIRST(mp) = (void *)mp->mp_membuf_addr;
+
+    /* Chain the memory blocks to the free list */
+    block_addr = (uint8_t *)mp->mp_membuf_addr;
+    block_ptr = (struct os_memblock *)block_addr;
+    blocks = mp->mp_num_blocks;
+
+    while (blocks > 1) {
+        block_addr += true_block_size;
+        os_mempool_poison(block_addr, true_block_size);
+        SLIST_NEXT(block_ptr, mb_next) = (struct os_memblock *)block_addr;
+        block_ptr = (struct os_memblock *)block_addr;
+        --blocks;
+    }
+
+    /* Last one in the list should be NULL */
+    SLIST_NEXT(block_ptr, mb_next) = NULL;
+
+    return OS_OK;
 }
 
 bool

@@ -15,13 +15,11 @@ Maintainer: Miguel Luis, Gregory Cristian and Wael Guibene
 #include <assert.h>
 #include <math.h>
 #include <string.h>
-#include "sysinit/sysinit.h"
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 #include "hal/hal_gpio.h"
 #include "hal/hal_spi.h"
 #include "hal/hal_timer.h"
 #include "bsp/bsp.h"
-#include "os/os.h"
 #include "radio/radio.h"
 #include "sx1276.h"
 #include "sx1276-board.h"

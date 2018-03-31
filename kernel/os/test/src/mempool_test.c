@@ -18,8 +18,8 @@
  */
 #include <stdio.h>
 #include <string.h>
+#include "os/mynewt.h"
 #include "testutil/testutil.h"
-#include "os/os.h"
 #include "os_test_priv.h"
 
 #if OS_CFG_ALIGNMENT == OS_CFG_ALIGN_4

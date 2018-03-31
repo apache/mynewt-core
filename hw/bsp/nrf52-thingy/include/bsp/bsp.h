@@ -22,7 +22,7 @@
 
 #include <inttypes.h>
 
-#include <syscfg/syscfg.h>
+#include "os/mynewt.h"
 
 #ifdef __cplusplus
 extern "C" {

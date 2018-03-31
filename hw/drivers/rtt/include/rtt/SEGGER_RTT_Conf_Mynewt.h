@@ -1,7 +1,7 @@
 #ifndef SEGGER_RTT_CONF_H
 #define SEGGER_RTT_CONF_H
 
-#include "os/os.h"
+#include "os/mynewt.h"
 
 #define SEGGER_RTT_LOCK()   {                       \
                             int sr;                 \

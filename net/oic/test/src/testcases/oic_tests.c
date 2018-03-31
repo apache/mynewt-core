@@ -16,25 +16,18 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include "test_oic.h"
 
-#include <os/os.h>
+#include "os/mynewt.h"
 #include <oic/oc_api.h>
-
 #include <mn_socket/mn_socket.h>
-
-#define OIC_TAPP_PRIO       9
-#define OIC_TAPP_STACK_SIZE OS_STACK_ALIGN(1024)
+#include "test_oic.h"
 
 /*
  * How long to wait before declaring discovery process failure.
  */
 #define OIC_TEST_FAIL_DLY   (OS_TICKS_PER_SEC * 4)
 
-static struct os_task oic_tapp;
 static const char *oic_test_phase;
-static os_stack_t oic_tapp_stack[OIC_TAPP_STACK_SIZE];
-struct os_eventq oic_tapp_evq;
 static struct os_callout oic_test_timer;
 static struct oc_server_handle oic_tgt;
 
@@ -80,39 +73,14 @@ oic_test_get_endpoint(struct oc_server_handle *ose)
     memcpy(ose, &oic_tgt, sizeof(*ose));
 }
 
-static void
-oic_test_handler(void *arg)
+TEST_CASE_TASK(oic_tests)
 {
+    os_callout_init(&oic_test_timer, os_eventq_dflt_get(), oic_test_timer_cb, NULL);
+    oc_evq_set(os_eventq_dflt_get());
+
     oc_main_init(&test_handler);
     test_discovery();
     test_getset();
     test_observe();
     oc_main_shutdown();
-    tu_restart();
-}
-
-static void
-oic_test_init(void)
-{
-    int rc;
-
-    os_eventq_init(&oic_tapp_evq);
-
-    /*
-     * Starts tests.
-     */
-    os_callout_init(&oic_test_timer, &oic_tapp_evq, oic_test_timer_cb, NULL);
-
-    rc = os_task_init(&oic_tapp, "oic_test", oic_test_handler, NULL,
-                      OIC_TAPP_PRIO, OS_WAIT_FOREVER,
-                      oic_tapp_stack, OIC_TAPP_STACK_SIZE);
-    TEST_ASSERT_FATAL(rc == 0);
-    oc_evq_set(&oic_tapp_evq);
-
-    os_start();
-}
-
-TEST_CASE(oic_tests)
-{
-    oic_test_init();
 }

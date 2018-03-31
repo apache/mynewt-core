@@ -33,7 +33,7 @@
 #define NRFX_GLUE_H__
 
 #include <assert.h>
-#include <os/os.h>
+#include "os/mynewt.h"
 
 #ifdef __cplusplus
 extern "C" {

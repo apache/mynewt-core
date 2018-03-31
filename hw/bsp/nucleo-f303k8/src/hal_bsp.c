@@ -18,7 +18,7 @@
  */
 #include <stddef.h>
 
-#include "os/os_dev.h"
+#include "os/mynewt.h"
 
 #if MYNEWT_VAL(UART_0) || MYNEWT_VAL(UART_1)
 /*
@@ -37,17 +37,15 @@
 #include "hal/hal_system.h"
 #include "mcu/mcu.h"
 #include "mcu/stm32f3_bsp.h"
-#include "os/os_cputime.h"
 #include "stm32f3xx.h"
 #include "stm32f3xx_hal.h"
 #include "stm32f3xx_hal_gpio.h"
 #include "stm32f3xx_hal_rcc.h"
-#include "syscfg/syscfg.h"
 
 #if MYNEWT_VAL(UART_0) || MYNEWT_VAL(UART_1)
 static struct uart_dev hal_uart[2];
 
-static const struct stm32f3_uart_cfg uart_cfg[UART_CNT] = {
+static const struct stm32_uart_cfg uart_cfg[UART_CNT] = {
 #if MYNEWT_VAL(UART_0)
     {
         .suc_uart    = USART2,
@@ -76,7 +74,7 @@ static const struct stm32f3_uart_cfg uart_cfg[UART_CNT] = {
 #endif
 };
 
-const struct stm32f3_uart_cfg *
+const struct stm32_uart_cfg *
 bsp_uart_config(int port)
 {
     assert(port < UART_CNT);

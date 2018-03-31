@@ -16,6 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 #include <sys/socket.h>
 #include <unistd.h>
 #include <errno.h>
@@ -28,9 +29,7 @@
 #include <sys/un.h>
 #include <stdio.h>
 
-#include <sysinit/sysinit.h>
-#include <os/os.h>
-#include <os/os_mbuf.h>
+#include "os/mynewt.h"
 #include "mn_socket/mn_socket.h"
 #include "mn_socket/mn_socket_ops.h"
 #include "native_sockets/native_sock.h"
@@ -58,6 +57,7 @@ static int native_sock_getpeername(struct mn_socket *, struct mn_sockaddr *);
 static struct native_sock {
     struct mn_socket ns_sock;
     int ns_fd;
+    unsigned int ns_connect:1;  /* Non-blocking connect in progress. */
     unsigned int ns_poll:1;
     unsigned int ns_listen:1;
     uint8_t ns_type;
@@ -360,21 +360,34 @@ native_sock_connect(struct mn_socket *s, struct mn_sockaddr *addr)
     struct sockaddr *sa = (struct sockaddr *)&ss;
     int rc;
     int sa_len;
+    int in_progress = 0;
 
     rc = native_sock_mn_addr_to_addr(addr, sa, &sa_len);
     if (rc) {
         return rc;
     }
     os_mutex_pend(&nss->mtx, OS_WAIT_FOREVER);
-    if (connect(ns->ns_fd, sa, sa_len)) {
-        rc = errno;
-        os_mutex_release(&nss->mtx);
-        return native_sock_err_to_mn_err(rc);
+    rc = connect(ns->ns_fd, sa, sa_len);
+    if (rc != 0) {
+        if (errno == EINPROGRESS) {
+            /* Non-blocking connect initiated. */
+            in_progress = 1;
+            ns->ns_connect = 1;
+        } else {
+            rc = errno;
+            os_mutex_release(&nss->mtx);
+            return native_sock_err_to_mn_err(rc);
+        }
     }
     ns->ns_poll = 1;
     native_sock_poll_rebuild(nss);
     os_mutex_release(&nss->mtx);
-    mn_socket_writable(s, 0);
+
+    /* Indicate writability if connection fully established. */
+    if (!in_progress) {
+        mn_socket_writable(s, 0);
+    }
+
     return 0;
 }
 
@@ -742,6 +755,7 @@ socket_task(void *arg)
     int revents;
     int i;
     socklen_t slen;
+    int sock_err;
     int rc;
 
     os_mutex_pend(&nss->mtx, OS_WAIT_FOREVER);
@@ -796,7 +810,23 @@ socket_task(void *arg)
             }
 
             if (revents & POLLOUT) {
-                if (ns->ns_type == SOCK_STREAM && ns->ns_tx) {
+                if (ns->ns_connect) {
+                    /*
+                     * The connection attempt has completed.  Report whether it
+                     * succeeded.
+                     */
+                    ns->ns_connect = 0;
+
+                    slen = sizeof(sock_err);
+                    rc = getsockopt(ns->ns_fd, SOL_SOCKET, SO_ERROR,
+                                    &sock_err, &slen);
+                    if (rc != 0) {
+                        rc = native_sock_err_to_mn_err(errno);
+                    } else if (sock_err != 0) {
+                        rc = native_sock_err_to_mn_err(sock_err);
+                    }
+                    mn_socket_writable(&ns->ns_sock, rc);
+                } else if (ns->ns_type == SOCK_STREAM && ns->ns_tx) {
                     native_sock_stream_tx(ns, 1);
                 }
             }

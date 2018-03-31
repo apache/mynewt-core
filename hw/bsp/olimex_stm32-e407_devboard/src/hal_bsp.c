@@ -18,14 +18,13 @@
  */
 
 #include <assert.h>
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 #include "bsp/bsp.h"
 #include "stm32f407xx.h"
 #include "stm32f4xx_hal_gpio_ex.h"
 #include "stm32f4xx_hal_dma.h"
 #include "stm32f4xx_hal_adc.h"
 #include "flash_map/flash_map.h"
-#include "os/os_dev.h"
 #if MYNEWT_VAL(UART_0)
 #include "uart/uart.h"
 #include "uart_hal/uart_hal.h"
@@ -255,7 +254,7 @@ struct stm32f4_adc_dev_cfg adc3_config = STM32F4_ADC3_DEFAULT_CONFIG;
 #endif
 
 #if MYNEWT_VAL(I2C_0)
-static struct stm32f4_hal_i2c_cfg i2c_cfg0 = {
+static struct stm32_hal_i2c_cfg i2c_cfg0 = {
     .hic_i2c = I2C1,
     .hic_rcc_reg = &RCC->APB1ENR,
     .hic_rcc_dev = RCC_APB1ENR_I2C1EN,
@@ -277,7 +276,7 @@ struct stm32_hal_spi_cfg spi0_cfg = {
 };
 #endif
 #if MYNEWT_VAL(UART_0)
-static const struct stm32f4_uart_cfg uart_cfg0 = {
+static const struct stm32_uart_cfg uart_cfg0 = {
     .suc_uart = USART6,
     .suc_rcc_reg = &RCC->APB2ENR,
     .suc_rcc_dev = RCC_APB2ENR_USART6EN,

@@ -20,13 +20,13 @@ Maintainer: Miguel Luis ( Semtech ), Gregory Cristian ( Semtech ) and Daniel Jäc
 
 #include <string.h>
 #include <assert.h>
+#include "os/mynewt.h"
 #include "node/lora.h"
 #include "radio/radio.h"
 #include "node/utilities.h"
 #include "node/mac/LoRaMacCrypto.h"
 #include "node/mac/LoRaMac.h"
 #include "node/mac/LoRaMacTest.h"
-#include "os/os.h"
 #include "hal/hal_timer.h"
 #include "node/lora_priv.h"
 
@@ -1342,6 +1342,7 @@ lora_mac_process_radio_rx(struct os_event *ev)
                 (g_lora_mac_data.txpkt.pkt_type != MLME_JOIN)) {
                 goto process_rx_done;
             }
+            lora_node_qual_sample(rxi->rxdinfo.rssi, snr);
 
             LoRaMacJoinDecrypt( payload + 1, size - 1, LoRaMacAppKey, LoRaMacRxPayload + 1 );
 
@@ -1404,6 +1405,8 @@ lora_mac_process_radio_rx(struct os_event *ev)
                 LoRaMacParams.ChannelsDatarate = LoRaMacParamsDefaults.ChannelsDatarate;
                 lora_mac_send_join_confirm(LORAMAC_EVENT_INFO_STATUS_OK,
                                            JoinRequestTrials);
+            } else {
+                STATS_INC(lora_mac_stats, rx_mic_failures);
             }
             break;
         case FRAME_TYPE_DATA_CONFIRMED_DOWN:
@@ -1443,6 +1446,7 @@ lora_mac_process_radio_rx(struct os_event *ev)
                 downLinkCounter = DownLinkCounter;
             }
 
+            lora_node_qual_sample(rxi->rxdinfo.rssi, snr);
             fCtrl.Value = payload[hdrlen++];
 
             sequenceCounter = ( uint16_t )payload[hdrlen++];

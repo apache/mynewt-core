@@ -19,8 +19,7 @@
 
 #include <stdlib.h>
 
-#include "syscfg/syscfg.h"
-#include "os/os.h"
+#include "os/mynewt.h"
 #include "node/utilities.h"
 #include "node/lora_priv.h"
 

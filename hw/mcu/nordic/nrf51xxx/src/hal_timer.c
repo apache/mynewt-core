@@ -21,7 +21,7 @@
 #include <stdint.h>
 #include <assert.h>
 #include <errno.h>
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 #include "mcu/cmsis_nvic.h"
 #include "hal/hal_timer.h"
 #include "nrf51.h"

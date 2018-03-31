@@ -2,13 +2,11 @@
   ******************************************************************************
   * @file    stm32f7xx_hal_hash.h
   * @author  MCD Application Team
-  * @version V1.2.0
-  * @date    30-December-2016
   * @brief   Header file of HASH HAL module.
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; COPYRIGHT(c) 2016 STMicroelectronics</center></h2>
+  * <h2><center>&copy; COPYRIGHT(c) 2017 STMicroelectronics</center></h2>
   *
   * Redistribution and use in source and binary forms, with or without modification,
   * are permitted provided that the following conditions are met:
@@ -225,13 +223,13 @@ typedef struct
   */
   
 /** @brief Reset HASH handle state
-  * @param  __HANDLE__: specifies the HASH handle.
+  * @param  __HANDLE__ specifies the HASH handle.
   * @retval None
   */
 #define __HAL_HASH_RESET_HANDLE_STATE(__HANDLE__) ((__HANDLE__)->State = HAL_HASH_STATE_RESET)
 
 /** @brief  Check whether the specified HASH flag is set or not.
-  * @param  __FLAG__: specifies the flag to check.
+  * @param  __FLAG__ specifies the flag to check.
   *         This parameter can be one of the following values:
   *            @arg HASH_FLAG_DINIS: A new block can be entered into the input buffer. 
   *            @arg HASH_FLAG_DCIS: Digest calculation complete
@@ -264,7 +262,7 @@ typedef struct
 
 /**
   * @brief Set the number of valid bits in last word written in Data register
-  * @param  SIZE: size in byte of last data written in Data register.
+  * @param  SIZE size in byte of last data written in Data register.
   * @retval None
 */
 #define __HAL_HASH_SET_NBVALIDBITS(SIZE) do{HASH->STR &= ~(HASH_STR_NBW);\

@@ -21,8 +21,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
-#include "syscfg/syscfg.h"
-#include "os/queue.h"
+#include "os/mynewt.h"
 
 #ifdef __cplusplus
 extern "C" {

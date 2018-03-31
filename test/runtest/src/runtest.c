@@ -21,9 +21,7 @@
 #include <string.h>
 #include <assert.h>
 
-#include "sysinit/sysinit.h"
-#include "syscfg/syscfg.h"
-#include "os/os.h"
+#include "os/mynewt.h"
 #include "console/console.h"
 
 #include "runtest/runtest.h"

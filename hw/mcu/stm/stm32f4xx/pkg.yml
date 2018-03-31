@@ -35,7 +35,6 @@ pkg.type: sdk
 # to be improved.
 pkg.ign_files:
     - ".*template.*"
-    - "stm32f4xx_hal_i2c.c"
 
 pkg.ign_dirs:
     - "Device"

@@ -20,7 +20,7 @@
 #ifndef __ADC_H__
 #define __ADC_H__
 
-#include <os/os_dev.h>
+#include "os/mynewt.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include "syscfg/syscfg.h"
 
+#include "os/mynewt.h"
 #include <lwip/tcpip.h>
 
 #include "ip_priv.h"

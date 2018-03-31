@@ -20,8 +20,7 @@
 #include <ctype.h>
 #include <stdint.h>
 
-#include "os/os.h"
-#include "os/os_trace_api.h"
+#include "os/mynewt.h"
 
 #include "sysview/vendor/SEGGER_SYSVIEW.h"
 #include "sysview/vendor/Global.h"

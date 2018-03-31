@@ -19,11 +19,10 @@
 #ifndef _MBUF_TEST_H
 #define _MBUF_TEST_H
 
-#include "testutil/testutil.h"
-#include "os/os.h"
-#include "os_test_priv.h"
-
 #include <string.h>
+#include "os/mynewt.h"
+#include "testutil/testutil.h"
+#include "os_test_priv.h"
 
 #ifdef __cplusplus
 #extern "C" {

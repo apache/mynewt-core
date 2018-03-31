@@ -17,12 +17,11 @@
  * under the License.
  */
 
-#include "syscfg/syscfg.h"
-
 #include <assert.h>
 #include <inttypes.h>
 #include <errno.h>
 #include <string.h>
+#include "os/mynewt.h"
 #include "bsp/bsp.h"
 
 #include "nimble/ble.h"
@@ -271,12 +270,6 @@ cmd_advertise_configure(int argc, char **argv)
     params.sid = parse_arg_uint8_dflt("sid", 0, &rc);
     if (rc != 0) {
         console_printf("invalid 'sid' parameter\n");
-        return rc;
-    }
-
-    params.high_duty_directed = parse_arg_uint8_dflt("high_duty", 0, &rc);
-    if (rc != 0) {
-        console_printf("invalid 'high_duty' parameter\n");
         return rc;
     }
 

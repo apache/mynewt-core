@@ -50,7 +50,8 @@ extern "C" {
 #define LIS2DW12_CTRL_REG3_PP_OD         (1 << 5)
 #define LIS2DW12_CTRL_REG3_LIR           (1 << 4)
 #define LIS2DW12_CTRL_REG3_H_LACTIVE     (1 << 3)
-#define LIS2DW12_CTRL_REG3_SLP_MODE    (0x3 << 0)
+#define LIS2DW12_CTRL_REG3_SLP_MODE_SEL  (1 << 1)
+#define LIS2DW12_CTRL_REG3_SLP_MODE_1    (1 << 0)
     
 #define LIS2DW12_REG_CTRL_REG4               0x23
 
@@ -111,10 +112,25 @@ extern "C" {
 #define LIS2DW12_INT_DUR_QUIET         (0x3 << 2)
 #define LIS2DW12_INT_DUR_SHOCK         (0x3 << 0)
 
+#define LIS2DW12_REG_WAKE_UP_THS             0x34
+#define LIS2DW12_WAKE_THS_SINGLE_DOUBLE_TAP  0x80
+#define LIS2DW12_WAKE_THS_SLEEP_ON           0x40
+#define LIS2DW12_WAKE_THS_THS                0x3F
+
+#define LIS2DW12_REG_WAKE_UP_DUR             0x35
+#define LIS2DW12_WAKE_DUR_FF_DUR             0x80
+#define LIS2DW12_WAKE_DUR_DUR                0x60
+#define LIS2DW12_WAKE_DUR_STATIONARY         0x10
+#define LIS2DW12_WAKE_DUR_SLEEP_DUR          0x0F
+    
 #define LIS2DW12_REG_FREEFALL                0x36
 #define LIS2DW12_FREEFALL_DUR         (0x1F << 3)
 #define LIS2DW12_FREEFALL_THS          (0x7 << 0)
 
+#define LIS2DW12_REG_WAKE_UP_SRC             0x38
+#define LIS2DW12_REG_TAP_SRC                 0x39
+#define LIS2DW12_REG_SIXD_SRC                0x3A
+    
 #define LIS2DW12_REG_INT_SRC                 0x3B
 
 #define LIS2DW12_REG_X_OFS                   0x3C
@@ -147,8 +163,9 @@ int lis2dw12_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer, uint8
 void lis2dw12_calc_acc_ms2(int16_t raw_acc, float *facc);
 void lis2dw12_calc_acc_mg(float acc_ms2, int16_t *acc_mg);
 
-int lis2dw12_get_data(struct sensor_itf *itf, int16_t *x, int16_t *y, int16_t *z);
+int lis2dw12_get_data(struct sensor_itf *itf, uint8_t fs, int16_t *x, int16_t *y, int16_t *z);
 
+int lis2dw12_get_fs(struct sensor_itf *itf, uint8_t *fs);
     
 #ifdef __cplusplus
 }

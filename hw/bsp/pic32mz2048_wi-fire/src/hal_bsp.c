@@ -18,7 +18,7 @@
  */
 #include <assert.h>
 
-#include <syscfg/syscfg.h>
+#include "os/mynewt.h"
 
 #include <hal/hal_bsp.h>
 #include <mcu/mips_bsp.h>

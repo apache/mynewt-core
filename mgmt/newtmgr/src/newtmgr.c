@@ -20,10 +20,7 @@
 #include <assert.h>
 #include <string.h>
 
-#include "syscfg/syscfg.h"
-#include "sysinit/sysinit.h"
-#include "os/os.h"
-#include "os/endian.h"
+#include "os/mynewt.h"
 
 #include "mem/mem.h"
 

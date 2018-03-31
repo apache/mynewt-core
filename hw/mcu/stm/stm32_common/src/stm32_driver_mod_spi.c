@@ -24,8 +24,8 @@
   * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   */
 
+#include "os/mynewt.h"
 #include "mcu/stm32_hal.h"
-#include <syscfg/syscfg.h>
 
 #define SPI_DEFAULT_TIMEOUT 100U
 
@@ -69,8 +69,8 @@ HAL_StatusTypeDef HAL_SPI_Init(SPI_HandleTypeDef *hspi)
   assert_param(IS_SPI_BAUDRATE_PRESCALER(hspi->Init.BaudRatePrescaler));
   assert_param(IS_SPI_FIRST_BIT(hspi->Init.FirstBit));
 
-  hspi->Init->CRCCalculation = SPI_CRCCALCULATION_DISABLE;
-  hspi->Init->CRCPolynomial = 1;
+  hspi->Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
+  hspi->Init.CRCPolynomial = 1;
 
   if (hspi->State == HAL_SPI_STATE_RESET)
   {

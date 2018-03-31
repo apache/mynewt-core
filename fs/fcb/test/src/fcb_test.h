@@ -22,12 +22,11 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "syscfg/syscfg.h"
-#include "os/os.h"
+#include "os/mynewt.h"
 #include "testutil/testutil.h"
 
 #include "fcb/fcb.h"
-#include "fcb/../../src/fcb_priv.h"
+#include "fcb_priv.h"
 
 #ifdef __cplusplus
 #extern "C" {

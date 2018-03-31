@@ -30,7 +30,7 @@ extern "C" {
 /**
  * BSP specific UART settings.
  */
-struct stm32f1_uart_cfg {
+struct stm32_uart_cfg {
     USART_TypeDef *suc_uart;            /* UART dev registers */
     volatile uint32_t *suc_rcc_reg;     /* RCC register to modify */
     uint32_t suc_rcc_dev;               /* RCC device ID */
@@ -41,6 +41,12 @@ struct stm32f1_uart_cfg {
     void (*suc_pin_remap_fn)(void);     /* AF selection for this */
     IRQn_Type suc_irqn;                 /* NVIC IRQn */
 };
+
+/*
+ * Internal API for stm32f1xx mcu specific code.
+ */
+int hal_gpio_init_af(int pin, uint8_t af_type, enum hal_gpio_pull pull,
+                     uint8_t od);
 
 struct hal_flash;
 extern struct hal_flash stm32f1_flash_dev;

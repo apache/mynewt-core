@@ -18,11 +18,10 @@
  */
 #include <assert.h>
 
-#include <syscfg/syscfg.h>
+#include "os/mynewt.h"
 #include <bsp/bsp.h>
 #include <mcu/cmsis_nvic.h>
 #include <flash_map/flash_map.h>
-#include <os/os_dev.h>
 #include <stm32f429xx.h>
 #include <stm32f4xx_hal_gpio_ex.h>
 
@@ -40,12 +39,10 @@
 
 #include <mcu/stm32f4_bsp.h>
 
-
-
 #if MYNEWT_VAL(UART_0)
 static struct uart_dev hal_uart0;
 
-static const struct stm32f4_uart_cfg uart_cfg[UART_CNT] = {
+static const struct stm32_uart_cfg uart_cfg[UART_CNT] = {
     [0] = {
         .suc_uart = USART2,
         .suc_rcc_reg = &RCC->APB1ENR,

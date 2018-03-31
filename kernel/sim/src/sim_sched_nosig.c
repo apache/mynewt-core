@@ -30,11 +30,9 @@
  * setting.
  */
 
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 
 #if !MYNEWT_VAL(MCU_NATIVE_USE_SIGNALS)
-
-#include "os/os.h"
 
 #include <hal/hal_bsp.h>
 

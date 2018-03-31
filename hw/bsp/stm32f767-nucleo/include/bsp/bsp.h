@@ -45,8 +45,18 @@ extern uint8_t _ram2_start;
 #define ITCMRAM_SIZE    (16 * 1024)
 
 /* LED pins */
-#define LED_BLINK_PIN   MCU_GPIO_PORTB(0)
+#define LED_1           MCU_GPIO_PORTB(0)
 #define LED_2           MCU_GPIO_PORTB(7)
+#define LED_3           MCU_GPIO_PORTB(14)
+
+#define LED_green       LED_1
+#define LED_blue        LED_2
+#define LED_red         LED_3
+
+#define LED_BLINK_PIN   LED_1
+
+/* BUTTON pins */
+#define BTN_USER_1      MCU_GPIO_PORTC(13)
 
 /* UART */
 #define UART_CNT        1

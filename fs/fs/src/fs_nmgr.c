@@ -17,7 +17,7 @@
  * under the License.
  */
 
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 
 #if MYNEWT_VAL(FS_NMGR)
 
@@ -26,8 +26,6 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "os/os.h"
-#include "os/endian.h"
 #include "bootutil/image.h"
 #include "fs/fs.h"
 #include "cborattr/cborattr.h"

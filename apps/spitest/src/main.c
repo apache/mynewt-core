@@ -16,16 +16,15 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include "sysinit/sysinit.h"
-#include "os/os.h"
+
+#include <assert.h>
+#include <string.h>
+#include "os/mynewt.h"
 #include "bsp/bsp.h"
 #include "hal/hal_gpio.h"
 #include "hal/hal_spi.h"
 #include "stats/stats.h"
 #include "config/config.h"
-#include <os/os_dev.h>
-#include <assert.h>
-#include <string.h>
 #include <console/console.h>
 #ifdef ARCH_sim
 #include <mcu/mcu_sim.h>

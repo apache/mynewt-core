@@ -65,7 +65,7 @@ Revision: $Rev: 5626 $
 #ifndef SEGGER_SYSVIEW_CONF_H
 #define SEGGER_SYSVIEW_CONF_H
 
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 
 /*********************************************************************
 *

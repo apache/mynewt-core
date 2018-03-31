@@ -17,18 +17,14 @@
  * under the License.
  */
 
-#include "sysinit/sysinit.h"
-#include "os/os.h"
-#include "os/queue.h"
-#include "os/os_dev.h"
-#include "os/os_trace_api.h"
+#include <assert.h>
+
+#include "os/mynewt.h"
 #include "os_priv.h"
 
 #include "hal/hal_os_tick.h"
 #include "hal/hal_bsp.h"
 #include "hal/hal_watchdog.h"
-
-#include <assert.h>
 
 /**
  * @defgroup OSKernel Operating System Kernel

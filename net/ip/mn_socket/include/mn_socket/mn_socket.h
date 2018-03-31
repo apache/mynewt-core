@@ -187,6 +187,10 @@ int mn_close(struct mn_socket *);
 /*
  * Address conversion
  */
+
+#define MN_INET_ADDRSTRLEN  16
+#define MN_INET6_ADDRSTRLEN 46
+
 int mn_inet_pton(int af, const char *src, void *dst);
 const char *mn_inet_ntop(int af, const void *src, void *dst, int len);
 

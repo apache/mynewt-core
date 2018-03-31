@@ -24,9 +24,7 @@
 #include <inttypes.h>
 #include <setjmp.h>
 
-#include "os/queue.h"
-
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -133,6 +131,7 @@ struct ts_config {
 };
 
 void tu_restart(void);
+void tu_start_os(const char *test_task_name, os_task_func_t test_task_handler);
 
 /*
  * Public declarations - test case configuration
@@ -218,34 +217,49 @@ TEST_SUITE_##suite_name(void);                               \
 #define TEST_CASE_DECL(case_name)                            \
     int case_name(void);
 
-/*
- * Unit test definition.
+#define TEST_CASE_DEFN(case_name, body)                     \
+    int                                                     \
+    case_name(void)                                         \
+    {                                                       \
+        tu_suite_pre_test();                                \
+        tu_case_init(#case_name);                           \
+                                                            \
+        tu_case_pre_test();                                 \
+        if (setjmp(tu_case_jb) == 0) {                      \
+            /* Execute test body. */                        \
+            body;                                           \
+            tu_case_post_test();                            \
+            if (!tu_case_failed) {                          \
+                tu_case_pass();                             \
+            }                                               \
+        }                                                   \
+        tu_case_complete();                                 \
+        tu_suite_post_test();                               \
+                                                            \
+        return tu_case_failed;                              \
+    }                                                       \
+
+/**
+ * Defines a test case that runs without the OS.
  */
-#define TEST_CASE(case_name)                                  \
-    void TEST_CASE_##case_name(void);                         \
-                                                              \
-    int                                                       \
-    case_name(void)                                           \
-    {                                                         \
-        tu_suite_pre_test();                                  \
-        tu_case_init(#case_name);                             \
-                                                              \
-        tu_case_pre_test();                                   \
-        if (setjmp(tu_case_jb) == 0) {                        \
-            TEST_CASE_##case_name();                          \
-            tu_case_post_test();                              \
-            if (!tu_case_failed) {                            \
-                tu_case_pass();                               \
-            }                                                 \
-        }                                                     \
-        tu_case_complete();                                   \
-        tu_suite_post_test();                                 \
-                                                              \
-        return tu_case_failed;                                \
-    }                                                         \
-                                                              \
-    void                                                      \
+#define TEST_CASE(case_name)                                \
+    void TEST_CASE_##case_name(void);                       \
+    TEST_CASE_DEFN(case_name, TEST_CASE_##case_name())      \
+                                                            \
+    void                                                    \
     TEST_CASE_##case_name(void)
+
+/**
+ * Defines a test case that runs in a task in the OS.
+ */
+#define TEST_CASE_TASK(case_name)                           \
+    void TEST_CASE_##case_name(void *arg);                  \
+    TEST_CASE_DEFN(case_name,                               \
+                   tu_start_os(#case_name "_test_task",     \
+                               TEST_CASE_##case_name));     \
+                                                            \
+    void                                                    \
+    TEST_CASE_##case_name(void *TU_UNUSED_arg)
 
 #define FIRST_AUX(first, ...) first
 #define FIRST(...) FIRST_AUX(__VA_ARGS__, _)

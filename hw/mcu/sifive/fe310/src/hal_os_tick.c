@@ -17,8 +17,7 @@
  * under the License.
  */
 #include <assert.h>
-#include <os/os.h>
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 #include "hal/hal_os_tick.h"
 #include <env/encoding.h>
 #include <env/freedom-e300-hifive1/platform.h>

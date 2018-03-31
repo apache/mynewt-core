@@ -20,7 +20,7 @@
 #ifndef H_LORA_BAND_
 #define H_LORA_BAND_
 
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 
 #if   MYNEWT_VAL(LORA_NODE_FREQ_BAND) == 433
 #define USE_BAND_433

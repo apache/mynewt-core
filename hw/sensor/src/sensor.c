@@ -20,17 +20,9 @@
 #include <string.h>
 #include <errno.h>
 #include <assert.h>
-
-#include "os/os.h"
-#include "sysinit/sysinit.h"
-
+#include "os/mynewt.h"
 #include "sensor/sensor.h"
-
 #include "sensor_priv.h"
-#include "os/os_time.h"
-#include "os/os_cputime.h"
-#include "defs/error.h"
-#include "syscfg/syscfg.h"
 #include "sensor/accel.h"
 #include "sensor/mag.h"
 #include "sensor/light.h"
@@ -990,19 +982,13 @@ err:
 }
 
 static int
-sensor_set_notification(struct sensor *sensor)
+sensor_set_notification(struct sensor *sensor, struct sensor_notifier *notifier)
 {
-    sensor_event_type_t event_type;
-    const struct sensor_notifier *notifier;
     int rc;
 
-    event_type = 0;
-    SLIST_FOREACH(notifier, &sensor->s_notifier_list, sn_next) {
-        event_type |= notifier->sn_sensor_event_type;
-    }
-
     if (sensor->s_funcs->sd_set_notification) {
-        rc = sensor->s_funcs->sd_set_notification(sensor, event_type);
+        rc = sensor->s_funcs->sd_set_notification(sensor,
+                 notifier->sn_sensor_event_type);
     } else {
         rc = SYS_ENODEV;
     }
@@ -1041,7 +1027,7 @@ sensor_register_notifier(struct sensor *sensor,
 
     SLIST_INSERT_HEAD(&sensor->s_notifier_list, notifier, sn_next);
 
-    rc = sensor_set_notification(sensor);
+    rc = sensor_set_notification(sensor, notifier);
     if (rc != 0) {
         goto remove;
     }

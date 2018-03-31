@@ -20,8 +20,7 @@
 #define _LOG_TEST_H
 #include <string.h>
 
-#include "syscfg/syscfg.h"
-#include "os/os.h"
+#include "os/mynewt.h"
 #include "testutil/testutil.h"
 #include "fcb/fcb.h"
 #include "log/log.h"

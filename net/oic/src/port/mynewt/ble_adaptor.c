@@ -21,9 +21,9 @@
 #include <string.h>
 #include <stdint.h>
 
-#include <syscfg/syscfg.h>
+#include "os/mynewt.h"
+
 #if (MYNEWT_VAL(OC_TRANSPORT_GATT) == 1)
-#include <os/os.h>
 
 #include <stats/stats.h>
 #include "oic/oc_gatt.h"

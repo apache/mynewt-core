@@ -21,8 +21,7 @@
 #ifndef __MS5837_H__
 #define __MS5837_H__
 
-#include <os/os.h>
-#include "os/os_dev.h"
+#include "os/mynewt.h"
 #include "sensor/sensor.h"
 
 #define MS5837_I2C_ADDRESS		0x76

@@ -16,9 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include "syscfg/syscfg.h"
-#include "sysinit/sysinit.h"
-#include <os/os.h>
+
+#include "os/mynewt.h"
 #include <pwm/pwm.h>
 #include <bsp/bsp.h>
 #include <easing/easing.h>

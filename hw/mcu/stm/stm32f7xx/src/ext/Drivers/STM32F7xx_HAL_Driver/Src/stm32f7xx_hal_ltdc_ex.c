@@ -2,13 +2,11 @@
   ******************************************************************************
   * @file    stm32f7xx_hal_ltdc_ex.c
   * @author  MCD Application Team
-  * @version V1.2.0
-  * @date    30-December-2016
   * @brief   LTDC Extension HAL module driver.
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; COPYRIGHT(c) 2016 STMicroelectronics</center></h2>
+  * <h2><center>&copy; COPYRIGHT(c) 2017 STMicroelectronics</center></h2>
   *
   * Redistribution and use in source and binary forms, with or without modification,
   * are permitted provided that the following conditions are met:
@@ -75,9 +73,9 @@
 #if defined (STM32F769xx) || defined (STM32F779xx)
 /**
   * @brief  Retrieve common parameters from DSI Video mode configuration structure
-  * @param  hltdc: pointer to a LTDC_HandleTypeDef structure that contains
+  * @param  hltdc pointer to a LTDC_HandleTypeDef structure that contains
   *                the configuration information for the LTDC.
-  * @param  VidCfg: pointer to a DSI_VidCfgTypeDef structure that contains
+  * @param  VidCfg pointer to a DSI_VidCfgTypeDef structure that contains
   *                 the DSI video mode configuration parameters
   * @note   The implementation of this function is taking into account the LTDC
   *         polarities inversion as described in the current LTDC specification
@@ -111,9 +109,9 @@ HAL_StatusTypeDef HAL_LTDC_StructInitFromVideoConfig(LTDC_HandleTypeDef* hltdc, 
 
 /**
   * @brief  Retrieve common parameters from DSI Adapted command mode configuration structure
-  * @param  hltdc: pointer to a LTDC_HandleTypeDef structure that contains
+  * @param  hltdc pointer to a LTDC_HandleTypeDef structure that contains
   *                the configuration information for the LTDC.
-  * @param  CmdCfg: pointer to a DSI_CmdCfgTypeDef structure that contains
+  * @param  CmdCfg pointer to a DSI_CmdCfgTypeDef structure that contains
   *                 the DSI command mode configuration parameters
   * @note   The implementation of this function is taking into account the LTDC
   *         polarities inversion as described in the current LTDC specification

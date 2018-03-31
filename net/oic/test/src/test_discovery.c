@@ -16,11 +16,11 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include "test_oic.h"
 
-#include <os/os.h>
+#include "os/mynewt.h"
 #include <oic/oc_api.h>
 #include <oic/port/mynewt/ip.h>
+#include "test_oic.h"
 
 static int test_discovery_state;
 static volatile int test_discovery_done;
@@ -47,7 +47,7 @@ test_discovery_cb(const char *di, const char *uri, oc_string_array_t types,
     case 1:
         TEST_ASSERT(!strcmp(uri, "/oic/p"));
         TEST_ASSERT(interfaces == (OC_IF_BASELINE | OC_IF_R));
-        os_eventq_put(&oic_tapp_evq, &test_discovery_next_ev);
+        os_eventq_put(os_eventq_dflt_get(), &test_discovery_next_ev);
         return OC_STOP_DISCOVERY;
         break;
     case 2: {
@@ -62,7 +62,7 @@ test_discovery_cb(const char *di, const char *uri, oc_string_array_t types,
             TEST_ASSERT(0);
         }
         if (seen_p && seen_d) {
-            os_eventq_put(&oic_tapp_evq, &test_discovery_next_ev);
+            os_eventq_put(os_eventq_dflt_get(), &test_discovery_next_ev);
             return OC_STOP_DISCOVERY;
         } else {
             return OC_CONTINUE_DISCOVERY;
@@ -146,12 +146,9 @@ test_discovery_next_step(struct os_event *ev)
 void
 test_discovery(void)
 {
-    os_eventq_put(&oic_tapp_evq, &test_discovery_next_ev);
+    os_eventq_put(os_eventq_dflt_get(), &test_discovery_next_ev);
+    while (!test_discovery_done)
+        ;
 
-    while (!test_discovery_done) {
-        os_eventq_run(&oic_tapp_evq);
-    }
     oc_delete_resource(test_res_light);
 }
-
-
