@@ -3523,7 +3523,7 @@ __STATIC_INLINE void LL_TIM_EnableBRK(TIM_TypeDef *TIMx)
 
   /* Note: Any write operation to this bit takes a delay of 1 APB clock cycle to become effective. */
   tmpreg = READ_REG(TIMx->BDTR);
-  (void)(tmpreg);
+  (void)tmpreg;
 }
 
 /**
@@ -3542,7 +3542,7 @@ __STATIC_INLINE void LL_TIM_DisableBRK(TIM_TypeDef *TIMx)
 
   /* Note: Any write operation to this bit takes a delay of 1 APB clock cycle to become effective. */
   tmpreg = READ_REG(TIMx->BDTR);
-  (void)(tmpreg);
+  (void)tmpreg;
 }
 
 #if defined(TIM_BDTR_BKF)
