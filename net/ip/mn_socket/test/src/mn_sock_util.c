@@ -546,7 +546,7 @@ sum4_readable(void *cb_arg, int err)
     os_sem_release(&test_sem);
 }
 
-static void
+void
 sock_udp_mcast_v4(void)
 {
     int loop_if_idx;
@@ -646,7 +646,7 @@ sock_udp_mcast_v4(void)
     mn_close(tx_sock);
 }
 
-static void
+void
 sock_udp_mcast_v6(void)
 {
     int loop_if_idx;

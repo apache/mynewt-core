@@ -16,16 +16,20 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 #include "mn_sock_test.h"
 
-TEST_CASE(socket_tests)
+TEST_CASE_TASK(socket_tests)
 {
-    os_init(NULL);
-    sysinit();
-
     os_sem_init(&test_sem, 0);
 
-    os_task_init(&test_task, "mn_socket_test", mn_socket_test_handler, NULL,
-      TEST_PRIO, OS_WAIT_FOREVER, test_stack, TEST_STACK_SIZE);
-    os_start();
+    sock_open_close();
+    sock_listen();
+    sock_tcp_connect();
+    sock_udp_data();
+    sock_tcp_data();
+    sock_itf_list();
+    sock_udp_ll();
+    sock_udp_mcast_v4();
+    sock_udp_mcast_v6();
 }

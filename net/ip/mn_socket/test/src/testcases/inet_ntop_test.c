@@ -16,6 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 #include "mn_sock_test.h"
 
 TEST_CASE(inet_ntop_test)

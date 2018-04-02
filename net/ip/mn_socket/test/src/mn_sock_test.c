@@ -26,11 +26,6 @@
 #include "mn_socket/mn_socket.h"
 #include "mn_sock_test.h"
 
-#define TEST_STACK_SIZE 4096
-#define TEST_PRIO 22
-os_stack_t test_stack[OS_STACK_ALIGN(TEST_STACK_SIZE)];
-struct os_task test_task;
-
 #define MB_CNT 10
 #define MB_SZ  512
 static uint8_t test_mbuf_area[MB_CNT * MB_SZ];
