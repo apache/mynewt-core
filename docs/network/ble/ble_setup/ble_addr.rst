@@ -1,4 +1,4 @@
-Configure device ddress
+Configure device address
 ------------------------
 
 A BLE device needs an address to do just about anything. For information
