@@ -4,7 +4,9 @@ Logging
 Mynewt log package supports logging of information within a Mynewt
 application. It allows packages to define their own log streams with
 separate names. It also allows an application to control the output
-destination of logs. ### Description
+destination of logs. 
+
+### Description
 
 In the Mynewt OS, the log package comes in two versions:
 
