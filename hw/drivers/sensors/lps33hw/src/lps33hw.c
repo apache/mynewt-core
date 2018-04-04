@@ -145,9 +145,7 @@ lps33hw_reg_to_degc(int16_t reg)
     return reg / LPS33HW_TEMP_OUT_DIV;
 }
 
-
 /**
- * Writes a single byte to the specified register
  *
  * @param The sensor interface
  * @param The register address to write to
@@ -156,7 +154,7 @@ lps33hw_reg_to_degc(int16_t reg)
  * @return 0 on success, non-zero error on failure.
  */
 static int
-lps33hw_set_reg(struct sensor_itf *itf, uint8_t reg, uint8_t value)
+lps33hw_i2c_set_reg(struct sensor_itf *itf, uint8_t reg, uint8_t value)
 {
     int rc;
     uint8_t payload[2] = { reg, value };
@@ -180,16 +178,123 @@ lps33hw_set_reg(struct sensor_itf *itf, uint8_t reg, uint8_t value)
 }
 
 /**
- * Read bytes from the specified register
  *
  * @param The sensor interface
- * @param The register address to read from
- * @param Pointer to where the register value should be written
+ * @param The register address to write to
+ * @param The value to write
  *
  * @return 0 on success, non-zero error on failure.
  */
 static int
-lps33hw_get_regs(struct sensor_itf *itf, uint8_t reg, uint8_t size,
+lps33hw_spi_set_reg(struct sensor_itf *itf, uint8_t reg, uint8_t value)
+{
+    int rc;
+    uint8_t payload[2] = { reg, value };
+
+    /* Select the device */
+    hal_gpio_write(itf->si_cs_pin, 0);
+
+    /* Send the register address w/write command */
+    rc = hal_spi_tx_val(itf->si_num, reg & ~LPS33HW_SPI_READ_CMD_BIT);
+    if (rc == 0xFFFF) {
+        rc = SYS_EINVAL;
+        LPS33HW_ERR("SPI_%u register write failed addr:0x%02X\n",
+                   itf->si_num, reg);
+        STATS_INC(g_lps33hwstats, write_errors);
+        goto err;
+    }
+
+    /* Write data */
+    rc = hal_spi_tx_val(itf->si_num, value);
+    if (rc == 0xFFFF) {
+        rc = SYS_EINVAL;
+        LPS33HW_ERR("SPI_%u write failed addr:0x%02X:0x%02X\n",
+                   itf->si_num, reg);
+        STATS_INC(g_lps33hwstats, write_errors);
+        goto err;
+    }
+
+    rc = 0;
+
+err:
+    /* De-select the device */
+    hal_gpio_write(itf->si_cs_pin, 1);
+
+    os_time_delay((OS_TICKS_PER_SEC * 30)/1000 + 1);
+
+    return rc;
+}
+
+/**
+ * Writes a single byte to the specified register using specified
+ * interface
+ *
+ * @param The sensor interface
+ * @param The register address to write to
+ * @param The value to write
+ *
+ * @return 0 on success, non-zero error on failure.
+ */
+static int
+lps33hw_set_reg(struct sensor_itf *itf, uint8_t reg, uint8_t value)
+{
+    int rc;
+
+    if (itf->si_type == SENSOR_ITF_I2C) {
+           rc = lps33hw_i2c_set_reg(itf, reg, value);
+       } else {
+           rc = lps33hw_spi_set_reg(itf, reg, value);
+       }
+
+    return rc;
+}
+
+static int
+lps33hw_spi_get_regs(struct sensor_itf *itf, uint8_t reg, uint8_t size,
+    uint8_t *buffer)
+{
+    int i;
+    uint16_t retval;
+    int rc;
+    rc = 0;
+
+    /* Select the device */
+    hal_gpio_write(itf->si_cs_pin, 0);
+
+    /* Send the address */
+    retval = hal_spi_tx_val(itf->si_num, reg | LPS33HW_SPI_READ_CMD_BIT);
+    if (retval == 0xFFFF) {
+        rc = SYS_EINVAL;
+        LPS33HW_ERR("SPI_%u register write failed addr:0x%02X\n",
+                   itf->si_num, reg);
+        STATS_INC(g_lps33hwstats, read_errors);
+        goto err;
+    }
+
+    for (i = 0; i < size; i++) {
+        /* Read data */
+        retval = hal_spi_tx_val(itf->si_num, 0);
+        if (retval == 0xFFFF) {
+            rc = SYS_EINVAL;
+            LPS33HW_ERR("SPI_%u read failed addr:0x%02X\n",
+                       itf->si_num, reg);
+            STATS_INC(g_lps33hwstats, read_errors);
+            goto err;
+        }
+        buffer[i] = retval;
+    }
+
+    rc = 0;
+
+err:
+    /* De-select the device */
+    hal_gpio_write(itf->si_cs_pin, 1);
+
+    return rc;
+}
+
+static int
+lps33hw_i2c_get_regs(struct sensor_itf *itf, uint8_t reg, uint8_t size,
     uint8_t *buffer)
 {
     int rc;
@@ -219,6 +324,30 @@ lps33hw_get_regs(struct sensor_itf *itf, uint8_t reg, uint8_t size,
          LPS33HW_ERR("Failed to read from 0x%02X:0x%02X\n", itf->si_addr, reg);
          STATS_INC(g_lps33hwstats, read_errors);
     }
+    return rc;
+}
+
+/**
+ * Read bytes from the specified register
+ *
+ * @param The sensor interface
+ * @param The register address to read from
+ * @param Pointer to where the register value should be written
+ *
+ * @return 0 on success, non-zero error on failure.
+ */
+static int
+lps33hw_get_regs(struct sensor_itf *itf, uint8_t reg, uint8_t size,
+    uint8_t *buffer)
+{
+    int rc;
+
+    if (itf->si_type == SENSOR_ITF_I2C) {
+        rc = lps33hw_i2c_get_regs(itf, reg, size, buffer);
+    } else {
+        rc = lps33hw_spi_get_regs(itf, reg, size, buffer);
+    }
+
     return rc;
 }
 

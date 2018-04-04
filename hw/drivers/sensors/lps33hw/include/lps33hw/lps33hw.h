@@ -30,6 +30,8 @@ extern "C" {
 
 #define LPS33HW_I2C_ADDR (0x5C)
 
+#define LPS33HW_SPI_READ_CMD_BIT (0x80)
+
 #define LPS33HW_INT_LEVEL (0x80)
 #define LPS33HW_INT_OPEN (0x40)
 #define LPS33HW_INT_LATCH_EN (0x20)
