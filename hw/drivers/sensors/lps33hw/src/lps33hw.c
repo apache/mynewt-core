@@ -24,6 +24,8 @@
 
 #include "os/mynewt.h"
 #include "hal/hal_i2c.h"
+#include "hal/hal_spi.h"
+#include "hal/hal_gpio.h"
 #include "sensor/sensor.h"
 #include "sensor/pressure.h"
 #include "sensor/temperature.h"
@@ -32,7 +34,12 @@
 #include "log/log.h"
 #include "stats/stats.h"
 
-#include "lps33hw_priv.h"
+static struct hal_spi_settings spi_lps33hw_settings = {
+    .data_order = HAL_SPI_MSB_FIRST,
+    .data_mode  = HAL_SPI_MODE3,
+    .baudrate   = 4000,
+    .word_size  = HAL_SPI_WORD_SIZE_8BIT,
+};
 
 /* Define the stats section and records */
 STATS_SECT_START(lps33hw_stat_section)
@@ -191,7 +198,6 @@ static int
 lps33hw_spi_set_reg(struct sensor_itf *itf, uint8_t reg, uint8_t value)
 {
     int rc;
-    uint8_t payload[2] = { reg, value };
 
     /* Select the device */
     hal_gpio_write(itf->si_cs_pin, 0);
@@ -854,7 +860,32 @@ lps33hw_init(struct os_dev *dev, void *arg)
         return rc;
     }
 
-    return sensor_mgr_register(sensor);
+    rc = sensor_mgr_register(sensor);
+    if (rc) {
+        return rc;
+    }
+
+    if (sensor->s_itf.si_type == SENSOR_ITF_SPI) {
+        rc = hal_spi_config(sensor->s_itf.si_num, &spi_lps33hw_settings);
+        if (rc == EINVAL) {
+            /* If spi is already enabled, for nrf52, it returns -1, We should not
+             * fail if the spi is already enabled
+             */
+            return rc;
+        }
+
+        rc = hal_spi_enable(sensor->s_itf.si_num);
+        if (rc) {
+            return rc;
+        }
+
+        rc = hal_gpio_init_out(sensor->s_itf.si_cs_pin, 1);
+        if (rc) {
+            return rc;
+        }
+    }
+
+    return rc;
 }
 
 int
