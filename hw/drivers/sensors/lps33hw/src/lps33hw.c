@@ -63,6 +63,7 @@ static int lps33hw_sensor_read(struct sensor *, sensor_type_t,
         sensor_data_func_t, void *, uint32_t);
 static int lps33hw_sensor_get_config(struct sensor *, sensor_type_t,
         struct sensor_cfg *);
+static int lps33hw_sensor_set_config(struct sensor *, void *);
 static int lps33hw_sensor_set_trigger_thresh(struct sensor *sensor,
         sensor_type_t sensor_type, struct sensor_type_traits *stt);
 static int lps33hw_sensor_handle_interrupt(struct sensor *sensor);
@@ -74,6 +75,7 @@ static int lps33hw_sensor_clear_high_thresh(struct sensor *sensor,
 static const struct sensor_driver g_lps33hw_sensor_driver = {
     .sd_read                      = lps33hw_sensor_read,
     .sd_get_config                = lps33hw_sensor_get_config,
+    .sd_set_config                = lps33hw_sensor_set_config,
     .sd_set_trigger_thresh        = lps33hw_sensor_set_trigger_thresh,
     .sd_handle_interrupt          = lps33hw_sensor_handle_interrupt,
     .sd_clear_low_trigger_thresh  = lps33hw_sensor_clear_low_thresh,
@@ -984,6 +986,14 @@ lps33hw_sensor_read(struct sensor *sensor, sensor_type_t type,
     }
 
     return rc;
+}
+
+static int
+lps33hw_sensor_set_config(struct sensor *sensor, void *cfg)
+{
+    struct lps33hw* lps33hw = (struct lps33hw *)SENSOR_GET_DEVICE(sensor);
+
+    return lps33hw_config(lps33hw, (struct lps33hw_cfg*)cfg);
 }
 
 static int
