@@ -155,6 +155,8 @@ lps33hw_reg_to_degc(int16_t reg)
 }
 
 /**
+ * Writes a single byte to the specified register using i2c
+ * interface
  *
  * @param The sensor interface
  * @param The register address to write to
@@ -187,6 +189,8 @@ lps33hw_i2c_set_reg(struct sensor_itf *itf, uint8_t reg, uint8_t value)
 }
 
 /**
+ * Writes a single byte to the specified register using SPI
+ * interface
  *
  * @param The sensor interface
  * @param The register address to write to
@@ -257,6 +261,17 @@ lps33hw_set_reg(struct sensor_itf *itf, uint8_t reg, uint8_t value)
     return rc;
 }
 
+/**
+ *
+ * Read bytes from the specified register using SPI interface
+ *
+ * @param The sensor interface
+ * @param The register address to read from
+ * @param The number of bytes to read
+ * @param Pointer to where the register value should be written
+ *
+ * @return 0 on success, non-zero error on failure.
+ */
 static int
 lps33hw_spi_get_regs(struct sensor_itf *itf, uint8_t reg, uint8_t size,
     uint8_t *buffer)
@@ -301,6 +316,16 @@ err:
     return rc;
 }
 
+/**
+ * Read bytes from the specified register using i2c interface
+ *
+ * @param The sensor interface
+ * @param The register address to read from
+ * @param The number of bytes to read
+ * @param Pointer to where the register value should be written
+ *
+ * @return 0 on success, non-zero error on failure.
+ */
 static int
 lps33hw_i2c_get_regs(struct sensor_itf *itf, uint8_t reg, uint8_t size,
     uint8_t *buffer)
@@ -336,10 +361,11 @@ lps33hw_i2c_get_regs(struct sensor_itf *itf, uint8_t reg, uint8_t size,
 }
 
 /**
- * Read bytes from the specified register
+ * Read bytes from the specified register using specified interface
  *
  * @param The sensor interface
  * @param The register address to read from
+ * @param The number of bytes to read
  * @param Pointer to where the register value should be written
  *
  * @return 0 on success, non-zero error on failure.
