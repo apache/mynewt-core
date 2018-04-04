@@ -40,6 +40,24 @@ err:
 }
 
 static int
+log_cbmem_append_mbuf(struct log *log, struct os_mbuf *om)
+{
+    struct cbmem *cbmem;
+    int rc;
+
+    cbmem = (struct cbmem *) log->l_arg;
+
+    rc = cbmem_append_mbuf(cbmem, om);
+    if (rc != 0) {
+        goto err;
+    }
+
+    return (0);
+err:
+    return (rc);
+}
+
+static int
 log_cbmem_read(struct log *log, void *dptr, void *buf, uint16_t offset,
         uint16_t len)
 {
@@ -126,6 +144,7 @@ const struct log_handler log_cbmem_handler = {
     .log_type = LOG_TYPE_MEMORY,
     .log_read = log_cbmem_read,
     .log_append = log_cbmem_append,
+    .log_append_mbuf = log_cbmem_append_mbuf,
     .log_walk = log_cbmem_walk,
     .log_flush = log_cbmem_flush,
 };

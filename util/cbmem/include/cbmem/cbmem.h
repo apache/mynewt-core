@@ -58,6 +58,7 @@ int cbmem_lock_acquire(struct cbmem *cbmem);
 int cbmem_lock_release(struct cbmem *cbmem);
 int cbmem_init(struct cbmem *cbmem, void *buf, uint32_t buf_len);
 int cbmem_append(struct cbmem *cbmem, void *data, uint16_t len);
+int cbmem_append_mbuf(struct cbmem *cbmem, struct os_mbuf *om);
 void cbmem_iter_start(struct cbmem *cbmem, struct cbmem_iter *iter);
 struct cbmem_entry_hdr *cbmem_iter_next(struct cbmem *cbmem, 
         struct cbmem_iter *iter);
