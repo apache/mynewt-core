@@ -57,23 +57,11 @@
  *    from: src/sys/i386/isa/clock.c,v 1.176 2001/09/04
  */
 
-#include <os/os_time.h>
-
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
+#include "os/mynewt.h"
 #include <datetime/datetime.h>
-
-struct clocktime {
-    int year;   /* year (4 digit year) */
-    int mon;    /* month (1 - 12) */
-    int day;    /* day (1 - 31) */
-    int hour;   /* hour (0 - 23) */
-    int min;    /* minute (0 - 59) */
-    int sec;    /* second (0 - 59) */
-    int dow;    /* day of week (0 - 6; 0 = Sunday) */
-    int usec;   /* micro seconds */
-};
 
 #define days_in_year(y)     (leapyear(y) ? 366 : 365)
 
@@ -115,8 +103,8 @@ leapyear(int year)
     return (rv);
 }
 
-static int
-clocktime_to_timeval(const struct clocktime *ct, struct os_timeval *tv)
+int
+clocktime_to_timeval(const struct clocktime *ct, const struct os_timezone *tz, struct os_timeval *tv)
 {
     int i, year, days;
 
@@ -130,7 +118,7 @@ clocktime_to_timeval(const struct clocktime *ct, struct os_timeval *tv)
         ct->min < 0 || ct->min > 59 ||
         ct->sec < 0 || ct->sec > 59 ||
         ct->usec < 0 || ct->usec > 999999) {
-        return (-1);
+        return (OS_EINVAL);
     }
 
     /*
@@ -150,10 +138,16 @@ clocktime_to_timeval(const struct clocktime *ct, struct os_timeval *tv)
         ct->sec;
     tv->tv_usec = ct->usec;
 
+    /* Convert localtime to utctime */
+    if (tz != NULL) {
+	tv->tv_sec += tz->tz_minuteswest * 60;
+	tv->tv_sec -= tz->tz_dsttime ? 3600 : 0;
+    }
+    
     return (0);
 }
 
-static int
+int
 timeval_to_clocktime(const struct os_timeval *tv, const struct os_timezone *tz,
     struct clocktime *ct)
 {
@@ -169,7 +163,7 @@ timeval_to_clocktime(const struct os_timeval *tv, const struct os_timezone *tz,
     }
 
     if (secs < 0 || tv->tv_usec < 0 || tv->tv_usec > 999999) {
-        return (-1);
+        return (OS_EINVAL);
     }
 
     days = secs / SECDAY;
@@ -350,13 +344,10 @@ datetime_parse(const char *input, struct os_timeval *tv, struct os_timezone *tz)
         goto err;
     }
 
-    if (clocktime_to_timeval(&ct, tv) != 0) {
+    if (clocktime_to_timeval(&ct, tz, tv) != 0) {
         goto err;
     }
 
-    /* Convert localtime to utctime */
-    tv->tv_sec += tz->tz_minuteswest * 60;
-    tv->tv_sec -= tz->tz_dsttime ? 3600 : 0;
     return (0);
 err:
     return (-1);

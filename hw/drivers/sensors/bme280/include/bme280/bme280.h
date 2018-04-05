@@ -21,8 +21,7 @@
 #ifndef __BME280_H__
 #define __BME280_H__
 
-#include <os/os.h>
-#include "os/os_dev.h"
+#include "os/mynewt.h"
 #include "sensor/sensor.h"
 
 #define BME280_SPI_READ_CMD_BIT 0x80

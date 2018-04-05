@@ -22,8 +22,7 @@
 #include <errno.h>
 #include <sys/types.h>
 #include <stdio.h>
-#include "os/os_dev.h"
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 #include "bsp/bsp.h"
 #include "hal/hal_bsp.h"
 #include "hal/hal_flash_int.h"
@@ -35,7 +34,7 @@
 #include "uart_hal/uart_hal.h"
 #include "hal/hal_uart.h"
 #endif
-#include "bsp/cmsis_nvic.h"
+#include "mcu/cmsis_nvic.h"
 #include "mcu/frdm-k64f_hal.h"
 #include "fsl_device_registers.h"
 #include "fsl_common.h"

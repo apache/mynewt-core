@@ -20,11 +20,10 @@
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
-#include "sysinit/sysinit.h"
+#include "os/mynewt.h"
 #include "host/ble_hs.h"
 #include "mgmt/mgmt.h"
 #include "newtmgr/newtmgr.h"
-#include "os/endian.h"
 #include "console/console.h"
 
 /* nmgr ble mqueue */

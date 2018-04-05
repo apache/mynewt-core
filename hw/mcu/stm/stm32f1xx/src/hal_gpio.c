@@ -17,7 +17,7 @@
  * under the License.
  */
 
-#include "bsp/cmsis_nvic.h"
+#include "mcu/cmsis_nvic.h"
 #include "hal/hal_gpio.h"
 #include "stm32f1xx.h"
 #include "stm32f1xx_hal_gpio.h"
@@ -486,32 +486,6 @@ int hal_gpio_init_out(int pin, int val)
     HAL_GPIO_Init(portmap[port], &cfg);
 
     return 0;
-}
-
-/**
- * gpio init af
- *
- * Configure the specified pin for AF.
- */
-int
-hal_gpio_init_af(int pin, uint8_t af_type, enum hal_gpio_pull pull, uint8_t od)
-{
-    GPIO_InitTypeDef gpio;
-
-    if (!od) {
-        gpio.Mode = GPIO_MODE_AF_PP;
-    } else {
-        gpio.Mode = GPIO_MODE_AF_OD;
-    }
-    gpio.Speed = GPIO_SPEED_HIGH;
-    gpio.Pull = pull;
-
-    /* TODO: no alternate on STM32F1xx
-     *
-     * gpio.Alternate = af_type;
-     */
-
-    return hal_gpio_init_stm(pin, &gpio);
 }
 
 /**

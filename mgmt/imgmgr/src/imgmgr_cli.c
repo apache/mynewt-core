@@ -17,13 +17,12 @@
  * under the License.
  */
 
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 
 #if MYNEWT_VAL(IMGMGR_CLI)
 
 #include <string.h>
 
-#include <defs/error.h>
 #include <flash_map/flash_map.h>
 #include <hal/hal_bsp.h>
 

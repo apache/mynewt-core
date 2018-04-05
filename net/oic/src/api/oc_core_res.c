@@ -14,9 +14,7 @@
  // limitations under the License.
  */
 
-#include <syscfg/syscfg.h>
-
-#include <os/os_mbuf.h>
+#include "os/mynewt.h"
 
 #include "oic/port/mynewt/config.h"
 #include "oic/oc_core_res.h"

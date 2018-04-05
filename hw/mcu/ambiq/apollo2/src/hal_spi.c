@@ -20,11 +20,10 @@
 #include <errno.h>
 #include <assert.h>
 #include <stdbool.h>
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 #include "hal/hal_spi.h"
 #include "mcu/hal_apollo2.h"
-#include "bsp/cmsis_nvic.h"
-#include "defs/error.h"
+#include "mcu/cmsis_nvic.h"
 
 #include "am_mcu_apollo.h"
 

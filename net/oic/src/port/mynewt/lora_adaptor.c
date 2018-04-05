@@ -21,15 +21,17 @@
 #include <string.h>
 #include <stdint.h>
 
-#include <syscfg/syscfg.h>
-#if MYNEWT_VAL(OC_TRANSPORT_LORA)
+#include "os/mynewt.h"
 
-#include <os/os.h>
-#include <os/endian.h>
+#if MYNEWT_VAL(OC_TRANSPORT_LORA)
 
 #include <log/log.h>
 #include <stats/stats.h>
 #include <crc/crc16.h>
+
+#ifdef OC_DUMP_LORA
+#include <console/console.h>
+#endif
 
 #include <node/lora.h>
 
@@ -69,6 +71,7 @@ STATS_SECT_START(oc_lora_stats)
     STATS_SECT_ENTRY(icsum)
     STATS_SECT_ENTRY(ishort)
     STATS_SECT_ENTRY(ioof)
+    STATS_SECT_ENTRY(idup)
     STATS_SECT_ENTRY(oframe)
     STATS_SECT_ENTRY(obytes)
     STATS_SECT_ENTRY(oerr)
@@ -82,6 +85,7 @@ STATS_NAME_START(oc_lora_stats)
     STATS_NAME(oc_lora_stats, icsum)
     STATS_NAME(oc_lora_stats, ishort)
     STATS_NAME(oc_lora_stats, ioof)
+    STATS_NAME(oc_lora_stats, idup)
     STATS_NAME(oc_lora_stats, oframe)
     STATS_NAME(oc_lora_stats, obytes)
     STATS_NAME(oc_lora_stats, oerr)
@@ -129,6 +133,38 @@ oc_ep_lora_size(const struct oc_endpoint *oe)
 {
     return sizeof(struct oc_endpoint_lora);
 }
+
+#ifdef OC_DUMP_LORA
+static void
+oc_mbuf_dump_chain(struct os_mbuf *m, char *msg)
+{
+    char buf[80];
+    int off;
+    int i, cnt;
+    struct os_mbuf *o;
+
+    off = 0;
+    cnt = 0;
+    console_printf("%s\n", msg);
+    for (o = m; o; o = SLIST_NEXT(o, om_next)) {
+        for (i = 0; i < o->om_len; i++) {
+            off += snprintf(buf + off, sizeof(buf) - off, "%2x ",
+              o->om_data[i]);
+            cnt++;
+            if (cnt == 8) {
+                off = 0;
+                cnt = 0;
+                console_printf("%s\n", buf);
+            }
+        }
+    }
+    if (cnt) {
+        console_printf("%s\n", buf);
+    }
+}
+#else
+#define oc_mbuf_dump_chain(...)
+#endif
 
 void
 oc_send_frag_lora(struct oc_lora_state *os)
@@ -189,6 +225,8 @@ oc_send_frag_lora(struct oc_lora_state *os)
     os_mbuf_adj(m, blk_len);
     STATS_INC(oc_lora_stats, oframe);
     STATS_INCN(oc_lora_stats, obytes, OS_MBUF_PKTLEN(n));
+
+    oc_mbuf_dump_chain(n, "lora frag tx");
     if (lora_app_port_send(oe->port, MCPS_CONFIRMED, n)) {
         STATS_INC(oc_lora_stats, oerr);
         goto err;
@@ -287,7 +325,7 @@ oc_lora_deliver(struct oc_lora_state *os)
     if (OS_MBUF_USRHDR_LEN(m) < sizeof(struct oc_endpoint_lora)) {
         n = os_msys_get_pkthdr(0, sizeof(struct oc_endpoint_lora));
         if (!n) {
-            OC_LOG_ERROR("oc_lora_rx_cb: Could not allocate mbuf\n");
+            OC_LOG_ERROR("oc_lora_deliver: Could not allocate mbuf\n");
             STATS_INC(oc_lora_stats, ierr);
             os_mbuf_free_chain(m);
             return;
@@ -342,6 +380,7 @@ oc_lora_rx_reass(struct os_mbuf *m, uint16_t port)
 
     pkt = OS_MBUF_PKTHDR(m);
 
+reprocess:
     if (os->rx_pkt == NULL) {
         /*
          * If no frame being reassembled, then it must have frag num 0,
@@ -361,10 +400,17 @@ oc_lora_rx_reass(struct os_mbuf *m, uint16_t port)
         /*
          * Subsequent fragments must come in order.
          */
+        if (frag_num == os->rx_frag_num && os->rx_port == port && frag_num) {
+            STATS_INC(oc_lora_stats, idup);
+            goto err;
+        }
         if (frag_num != os->rx_frag_num + 1 || os->rx_port != port) {
             os_mbuf_free_chain(OS_MBUF_PKTHDR_TO_MBUF(os->rx_pkt));
             os->rx_pkt = NULL;
             STATS_INC(oc_lora_stats, ioof);
+            if (frag_num == 0) {
+                goto reprocess;
+            }
             goto err;
         }
         os->rx_frag_num++;
@@ -388,6 +434,7 @@ oc_lora_rx_cb(uint8_t port, LoRaMacEventInfoStatus_t status, Mcps_t pkt_type,
 {
     assert(port == MYNEWT_VAL(OC_LORA_PORT));
     STATS_INC(oc_lora_stats, iframe);
+    oc_mbuf_dump_chain(m, "oc_lora_rx_cb");
     if (status != LORAMAC_EVENT_INFO_STATUS_OK) {
         STATS_INC(oc_lora_stats, ierr);
         os_mbuf_free_chain(m);

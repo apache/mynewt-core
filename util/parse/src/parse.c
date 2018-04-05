@@ -24,7 +24,7 @@
 #include <inttypes.h>
 #include <errno.h>
 #include <assert.h>
-#include "defs/error.h"
+#include "os/mynewt.h"
 
 /**
  * Determines which numeric base the specified string should be parsed with.

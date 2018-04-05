@@ -204,6 +204,9 @@ fcb_sector_hdr_read(struct fcb *fcb, struct flash_area *fap,
     if (fdap->fd_magic != fcb->f_magic) {
         return FCB_ERR_MAGIC;
     }
+    if (fdap->fd_ver != fcb->f_version) {
+        return FCB_ERR_VERSION;
+    }
     return 1;
 }
 

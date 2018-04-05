@@ -18,19 +18,7 @@
 #
 
 pkg.name: net/nimble/transport/emspi
-pkg.description: "HCI transport using EM's HCI SPI protocol."
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
-pkg.keywords:
-    - ble
-    - bluetooth
-
 pkg.deps:
-    - net/nimble
-    - kernel/os
-
-pkg.apis:
-    - ble_transport
-
-pkg.init:
-    ble_hci_emspi_init: 100
+    - "@apache-mynewt-nimble/nimble/transport/emspi"

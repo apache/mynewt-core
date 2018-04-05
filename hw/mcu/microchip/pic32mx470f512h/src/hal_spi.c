@@ -19,6 +19,7 @@
 
 #include <stdbool.h>
 #include <stddef.h>
+#include "os/mynewt.h"
 #include "bsp/bsp.h"
 #include "hal/hal_gpio.h"
 #include "hal/hal_spi.h"
@@ -26,7 +27,6 @@
 #include "mcu/mips_hal.h"
 #include "mcu/p32mx470f512h.h"
 #include "mcu/pps.h"
-#include "syscfg/syscfg.h"
 
 #define SPIxCON(P)          (base_address[P][0x0 / 0x4])
 #define SPIxCONCLR(P)       (base_address[P][0x4 / 0x4])

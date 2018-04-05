@@ -494,8 +494,7 @@ json_internal_read_object(struct json_buffer *jb,
             } else if (c == ',') {
                 state = await_attr;
             } else if (c == '}') {
-                c = jb->jb_read_next(jb);
-                goto good_parse;
+                return 0;
             } else {
                 return JSON_ERR_BADTRAIL;
             }
@@ -503,11 +502,7 @@ json_internal_read_object(struct json_buffer *jb,
         }
     }
 
-  good_parse:
-    /* in case there's another object following, consume trailing WS */
-    while (isspace((unsigned char) jb->jb_read_next(jb))) {
-    }
-    return 0;
+  return 0;
 }
 
 int

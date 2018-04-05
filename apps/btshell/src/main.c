@@ -21,12 +21,10 @@
 #include <string.h>
 #include <stdio.h>
 #include <errno.h>
-#include "syscfg/syscfg.h"
-#include "sysinit/sysinit.h"
+#include "os/mynewt.h"
 #include "bsp/bsp.h"
 #include "log/log.h"
 #include "stats/stats.h"
-#include "os/os.h"
 #include "bsp/bsp.h"
 #include "hal/hal_gpio.h"
 #include "console/console.h"
@@ -71,6 +69,9 @@
 #define BTSHELL_COC_MTU               (256)
 /* We use same pool for incoming and outgoing sdu */
 #define BTSHELL_COC_BUF_COUNT         (3 * MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM))
+
+#define INT_TO_PTR(x)     (void *)((intptr_t)(x))
+#define PTR_TO_INT(x)     (int) ((intptr_t)(x))
 #endif
 
 struct log btshell_log;
@@ -1829,6 +1830,8 @@ btshell_l2cap_coc_accept(uint16_t conn_handle, uint16_t peer_mtu,
 static int
 btshell_l2cap_event(struct ble_l2cap_event *event, void *arg)
 {
+    int accept_response;
+
     switch(event->type) {
         case BLE_L2CAP_EVENT_COC_CONNECTED:
             if (event->connect.status) {
@@ -1852,6 +1855,11 @@ btshell_l2cap_event(struct ble_l2cap_event *event, void *arg)
                                      event->disconnect.chan);
             return 0;
         case BLE_L2CAP_EVENT_COC_ACCEPT:
+            accept_response = PTR_TO_INT(arg);
+            if (accept_response) {
+                return accept_response;
+            }
+
             return btshell_l2cap_coc_accept(event->accept.conn_handle,
                                             event->accept.peer_sdu_size,
                                             event->accept.chan);
@@ -1866,7 +1874,7 @@ btshell_l2cap_event(struct ble_l2cap_event *event, void *arg)
 #endif
 
 int
-btshell_l2cap_create_srv(uint16_t psm)
+btshell_l2cap_create_srv(uint16_t psm, int accept_response)
 {
 #if MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM) == 0
     console_printf("BLE L2CAP LE COC not supported.");
@@ -1875,7 +1883,7 @@ btshell_l2cap_create_srv(uint16_t psm)
 #else
 
     return ble_l2cap_create_server(psm, BTSHELL_COC_MTU, btshell_l2cap_event,
-                                                                       NULL);
+                                   INT_TO_PTR(accept_response));
 #endif
 }
 

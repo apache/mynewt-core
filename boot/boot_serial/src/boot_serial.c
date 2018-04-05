@@ -16,14 +16,14 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 #include <assert.h>
 #include <stddef.h>
 #include <inttypes.h>
 #include <ctype.h>
 #include <stdio.h>
 
-#include "sysflash/sysflash.h"
-
+#include "os/mynewt.h"
 #include <bsp/bsp.h>
 
 #include <flash_map/flash_map.h>
@@ -31,11 +31,6 @@
 #include <hal/hal_system.h>
 #include <hal/hal_gpio.h>
 #include <hal/hal_watchdog.h>
-
-#include <os/endian.h>
-#include <os/os.h>
-#include <os/os_malloc.h>
-#include <os/os_cputime.h>
 
 #include <tinycbor/cbor.h>
 #include <tinycbor/cbor_buf_reader.h>
@@ -190,6 +185,7 @@ bs_upload(char *buf, int len)
     uint8_t img_data[512];
     long long int off = UINT_MAX;
     size_t img_blen = 0;
+    uint8_t rem_bytes;
     long long int data_len = UINT_MAX;
     size_t slen;
     char name_str[8];
@@ -313,6 +309,12 @@ bs_upload(char *buf, int len)
     if (off != curr_off) {
         rc = 0;
         goto out;
+    }
+    if (curr_off + img_blen < img_size) {
+        rem_bytes = img_blen % flash_area_align(fap);
+        if (rem_bytes) {
+            img_blen -= rem_bytes;
+        }
     }
     rc = flash_area_write(fap, curr_off, img_data, img_blen);
     if (rc == 0) {
@@ -491,6 +493,70 @@ boot_serial_in_dec(char *in, int inlen, char *out, int *out_off, int maxout)
     return 0;
 }
 
+#if MYNEWT_VAL(BOOT_SERIAL_DETECT_TIMEOUT) != 0
+
+/** Don't include null-terminator in comparison. */
+#define BOOT_SERIAL_DETECT_STRING_LEN \
+    (sizeof MYNEWT_VAL(BOOT_SERIAL_DETECT_STRING) - 1)
+
+/**
+ * Listens on the UART for the management string.  Blocks for up to
+ * BOOT_SERIAL_DETECT_TIMEOUT milliseconds.
+ *
+ * @return                      true if the management string was received;
+ *                              false if the management string was not received
+ *                                  before the UART listen timeout expired.
+ */
+static bool
+boot_serial_detect_uart_string(void)
+{
+    uint32_t start_tick;
+    char buf[BOOT_SERIAL_DETECT_STRING_LEN] = { 0 };
+    char ch;
+    int newline;
+    int rc;
+
+    /* Calculate the timeout duration in OS cputime ticks. */
+    static const uint32_t timeout_dur =
+        MYNEWT_VAL(BOOT_SERIAL_DETECT_TIMEOUT) /
+        (1000.0 / MYNEWT_VAL(OS_CPUTIME_FREQ));
+
+    rc = boot_serial_uart_open();
+    assert(rc == 0);
+
+    start_tick = os_cputime_get32();
+
+    while (1) {
+        /* Read a single character from the UART. */
+        rc = boot_serial_uart_read(&ch, 1, &newline);
+        if (rc > 0) {
+            /* Eliminate the oldest character in the buffer to make room for
+             * the new one.
+             */
+            memmove(buf, buf + 1, BOOT_SERIAL_DETECT_STRING_LEN - 1);
+            buf[BOOT_SERIAL_DETECT_STRING_LEN - 1] = ch;
+
+            /* If the full management string has been received, indicate that
+             * the serial boot loader should start.
+             */
+            rc = memcmp(buf,
+                        MYNEWT_VAL(BOOT_SERIAL_DETECT_STRING),
+                        BOOT_SERIAL_DETECT_STRING_LEN);
+            if (rc == 0) {
+                boot_serial_uart_close();
+                return true;
+            }
+        }
+
+        /* Abort the listen on timeout. */
+        if (os_cputime_get32() >= start_tick + timeout_dur) {
+            boot_serial_uart_close();
+            return false;
+        }
+    }
+}
+#endif
+
 /*
  * Task which waits reading console, expecting to get image over
  * serial port.
@@ -597,10 +663,23 @@ boot_serial_pkg_init(void)
      * Configure a GPIO as input, and compare it against expected value.
      * If it matches, await for download commands from serial.
      */
+#if MYNEWT_VAL(BOOT_SERIAL_DETECT_PIN) != -1
     if (hal_gpio_read(MYNEWT_VAL(BOOT_SERIAL_DETECT_PIN)) ==
         MYNEWT_VAL(BOOT_SERIAL_DETECT_PIN_VAL)) {
 
         boot_serial_start(BOOT_SERIAL_INPUT_MAX);
         assert(0);
     }
+#endif
+
+    /*
+     * Listen for management pattern in UART input.  If detected, await for
+     * download commands from serial.
+     */
+#if MYNEWT_VAL(BOOT_SERIAL_DETECT_TIMEOUT) != 0
+    if (boot_serial_detect_uart_string()) {
+        boot_serial_start(BOOT_SERIAL_INPUT_MAX);
+        assert(0);
+    }
+#endif
 }

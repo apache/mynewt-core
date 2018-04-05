@@ -19,11 +19,9 @@
 #include <inttypes.h>
 #include <assert.h>
 
-#include <syscfg/syscfg.h>
-#include <sysinit/sysinit.h>
+#include "os/mynewt.h"
 #include <bsp/bsp.h>
 
-#include <os/os.h>
 #include <mgmt/mgmt.h>
 #include <newtmgr/newtmgr.h>
 #include <uart/uart.h>

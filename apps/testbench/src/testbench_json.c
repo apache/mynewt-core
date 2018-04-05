@@ -18,9 +18,8 @@
  */
 #include <stdio.h>
 #include <string.h>
+#include "os/mynewt.h"
 #include "testutil/testutil.h"
-#include "os/os.h"
-
 #include "testbench.h"
 
 #ifndef JSON_BIGBUF_SIZE

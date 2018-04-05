@@ -17,7 +17,7 @@
  * under the License.
  */
 
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 
 #if MYNEWT_VAL(SENSOR_OIC)
 
@@ -25,10 +25,6 @@
 #include <stdio.h>
 #include <errno.h>
 #include <assert.h>
-
-#include "defs/error.h"
-
-#include "os/os.h"
 
 #include "sensor/sensor.h"
 #include "sensor/accel.h"

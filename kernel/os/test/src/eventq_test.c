@@ -18,11 +18,9 @@
  */
  
 #include <string.h>
-#include "sysinit/sysinit.h"
+#include "os/mynewt.h"
 #include "testutil/testutil.h"
-#include "os/os.h"
 #include "os_test_priv.h"
-#include "os/os_eventq.h"
 
 /* Task 1 sending task */
 /* Define task stack and task object */

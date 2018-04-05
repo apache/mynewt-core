@@ -21,11 +21,8 @@
 #include <stddef.h>
 #include <string.h>
 #include <assert.h>
-#include <sysinit/sysinit.h>
+#include "os/mynewt.h"
 #include <nrf52.h>
-#include "os/os_cputime.h"
-#include "syscfg/syscfg.h"
-#include "sysflash/sysflash.h"
 #include "flash_map/flash_map.h"
 #include "hal/hal_bsp.h"
 #include "hal/hal_system.h"
@@ -43,7 +40,6 @@
 #if MYNEWT_VAL(UART_1)
 #include "uart_bitbang/uart_bitbang.h"
 #endif
-#include "os/os_dev.h"
 #include "bsp.h"
 #if MYNEWT_VAL(ADC_0)
 #include <adc_nrf52/adc_nrf52.h>
@@ -97,6 +93,15 @@ static const struct nrf52_hal_spi_cfg os_bsp_spi0s_cfg = {
     .mosi_pin     = MYNEWT_VAL(SPI_0_SLAVE_PIN_MOSI),
     .miso_pin     = MYNEWT_VAL(SPI_0_SLAVE_PIN_MISO),
     .ss_pin       = MYNEWT_VAL(SPI_0_SLAVE_PIN_SS),
+};
+#endif
+
+#if MYNEWT_VAL(ADC_0)
+static struct adc_dev os_bsp_adc0;
+static struct nrf52_adc_dev_cfg os_bsp_adc0_config = {
+    .saadc_cfg.resolution         = MYNEWT_VAL(ADC_0_RESOLUTION),
+    .saadc_cfg.oversample         = MYNEWT_VAL(ADC_0_OVERSAMPLE),
+    .saadc_cfg.interrupt_priority = MYNEWT_VAL(ADC_0_INTERRUPT_PRIORITY),
 };
 #endif
 

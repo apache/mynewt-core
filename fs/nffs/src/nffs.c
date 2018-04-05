@@ -22,14 +22,10 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#include "sysinit/sysinit.h"
-#include "sysflash/sysflash.h"
+#include "os/mynewt.h"
 #include "bsp/bsp.h"
 #include "hal/hal_flash.h"
 #include "flash_map/flash_map.h"
-#include "os/os_mempool.h"
-#include "os/os_mutex.h"
-#include "os/os_malloc.h"
 #include "stats/stats.h"
 #include "nffs_priv.h"
 #include "nffs/nffs.h"

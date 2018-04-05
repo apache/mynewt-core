@@ -18,11 +18,10 @@
  */
 #include <assert.h>
 
-#include <syscfg/syscfg.h>
+#include "os/mynewt.h"
 #include <bsp/bsp.h>
-#include <bsp/cmsis_nvic.h>
+#include <mcu/cmsis_nvic.h>
 #include <flash_map/flash_map.h>
-#include <os/os_dev.h>
 #include <stm32f429xx.h>
 #include <stm32f4xx_hal_gpio_ex.h>
 
@@ -39,8 +38,6 @@
 #include <hal/hal_system.h>
 
 #include <mcu/stm32f4_bsp.h>
-
-
 
 #if MYNEWT_VAL(UART_0)
 static struct uart_dev hal_uart0;

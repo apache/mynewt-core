@@ -19,7 +19,7 @@
 
 #include <assert.h>
 #include <string.h>
-#include <os/os.h>
+#include "os/mynewt.h"
 #include <am_hal_flash.h>
 #include <hal/hal_flash_int.h>
 #include <hal/hal_flash.h>

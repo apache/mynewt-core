@@ -20,9 +20,9 @@
 #include <assert.h>
 #include <string.h>
 #include <stdio.h>
-
 #include <inttypes.h>
-#include <os/os.h>
+
+#include "os/mynewt.h"
 #include <ip/os_queue.h>
 
 /*

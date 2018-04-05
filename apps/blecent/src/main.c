@@ -19,15 +19,14 @@
 
 #include <assert.h>
 #include <string.h>
-#include "syscfg/syscfg.h"
-#include "sysinit/sysinit.h"
+#include "os/mynewt.h"
 #include "bsp/bsp.h"
-#include "os/os.h"
 
 /* BLE */
 #include "nimble/ble.h"
 #include "controller/ble_ll.h"
 #include "host/ble_hs.h"
+#include "host/util/util.h"
 
 /* RAM HCI transport. */
 #include "transport/ram/ble_hci_ram.h"
@@ -223,8 +222,16 @@ blecent_on_disc_complete(const struct peer *peer, int status, void *arg)
 static void
 blecent_scan(void)
 {
+    uint8_t own_addr_type;
     struct ble_gap_disc_params disc_params;
     int rc;
+
+    /* Figure out address to use while advertising (no privacy for now) */
+    rc = ble_hs_id_infer_auto(0, &own_addr_type);
+    if (rc != 0) {
+        BLECENT_LOG(ERROR, "error determining address type; rc=%d\n", rc);
+        return;
+    }
 
     /* Tell the controller to filter duplicates; we don't want to process
      * repeated advertisements from the same device.
@@ -243,7 +250,7 @@ blecent_scan(void)
     disc_params.filter_policy = 0;
     disc_params.limited = 0;
 
-    rc = ble_gap_disc(BLE_OWN_ADDR_PUBLIC, BLE_HS_FOREVER, &disc_params,
+    rc = ble_gap_disc(own_addr_type, BLE_HS_FOREVER, &disc_params,
                       blecent_gap_event, NULL);
     if (rc != 0) {
         BLECENT_LOG(ERROR, "Error initiating GAP discovery procedure; rc=%d\n",
@@ -470,6 +477,12 @@ blecent_on_reset(int reason)
 static void
 blecent_on_sync(void)
 {
+    int rc;
+
+    /* Make sure we have proper identity address set (public preferred) */
+    rc = ble_hs_util_ensure_addr(0);
+    assert(rc == 0);
+
     /* Begin scanning for a peripheral to connect to. */
     blecent_scan();
 }
@@ -485,9 +498,6 @@ int
 main(void)
 {
     int rc;
-
-    /* Set initial BLE device address. */
-    memcpy(g_dev_addr, (uint8_t[6]){0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a}, 6);
 
     /* Initialize OS */
     sysinit();

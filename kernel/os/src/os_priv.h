@@ -20,8 +20,8 @@
 #ifndef H_OS_PRIV_
 #define H_OS_PRIV_
 
+#include "os/mynewt.h"
 #include "console/console.h"
-#include "os/queue.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -15,9 +15,7 @@
 */
 #include <stddef.h>
 
-#include <syscfg/syscfg.h>
-
-#include <os/os_callout.h>
+#include "os/mynewt.h"
 
 #include "oic/port/mynewt/config.h"
 #include "messaging/coap/engine.h"

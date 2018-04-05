@@ -5,9 +5,10 @@ OS User Guide
    :hidden:
 
    Kernel <core_os/mynewt_os>
+   System <modules/system_modules>
    Hardware Abstraction <modules/hal/hal>
    Porting Guide <core_os/porting/port_os>
-   System Configuration <modules/sysinitconfig/sysinitconfig>
+   Compile-Time Configuration <modules/sysinitconfig/sysinitconfig>
    Console <modules/console/console>
 
 This guide provides comprehensive information about Mynewt OS, the

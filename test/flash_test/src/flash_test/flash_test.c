@@ -16,8 +16,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 #include <inttypes.h>
-#include <os/os.h>
+#include "os/mynewt.h"
 #include <console/console.h>
 #include <hal/hal_bsp.h>
 #include <hal/hal_flash.h>

@@ -21,16 +21,14 @@
 #include <assert.h>
 #include <string.h>
 #include <inttypes.h>
+#include "os/mynewt.h"
 #include <bsp/bsp.h>
-#include "sysflash/sysflash.h"
-#include "os/os.h"
 #include "hal/hal_flash_int.h"
 #include "flash_map/flash_map.h"
 #include "uart/uart.h"
 #include "uart_hal/uart_hal.h"
 #include "mcu/native_bsp.h"
 #include "mcu/mcu_hal.h"
-#include "syscfg/syscfg.h"
 
 #if MYNEWT_VAL(SIM_ACCEL_PRESENT)
 #include "sim/sim_accel.h"

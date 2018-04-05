@@ -19,9 +19,7 @@
 
 #include <assert.h>
 
-#include "sysinit/sysinit.h"
-#include "syscfg/syscfg.h"
-#include "sysflash/sysflash.h"
+#include "os/mynewt.h"
 #include "bsp/bsp.h"
 
 #include "config/config.h"

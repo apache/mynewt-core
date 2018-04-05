@@ -21,13 +21,16 @@
 
 # Console
 
-There are two versions of this library;
-  * full - contains actual implemetation
-  * stub - has stubs for the API
+There are three versions of this library;
+  * minimal - contains an implementation which allows for output, optional
+    input, supports UART and RTT, and has support for `newtmgr` protocol.
+  * full - contains all minimal features and adds formatted output through
+    `console_printf`, console editing and BLE monitor.
+  * stub - has stubs for the API.
 
 You can write a package which uses ```console_printf()```, and builder of a
 project can select which one they'll use.
 For the package, list in the pkg.yml console as the required capability.
 Project builder will then include either sys/console/full or
-sys/console/stub as their choice.
+sys/console/minimal or sys/console/stub as their choice.
 

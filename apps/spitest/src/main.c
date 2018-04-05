@@ -16,16 +16,15 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include "sysinit/sysinit.h"
-#include "os/os.h"
+
+#include <assert.h>
+#include <string.h>
+#include "os/mynewt.h"
 #include "bsp/bsp.h"
 #include "hal/hal_gpio.h"
 #include "hal/hal_spi.h"
 #include "stats/stats.h"
 #include "config/config.h"
-#include <os/os_dev.h>
-#include <assert.h>
-#include <string.h>
 #include <console/console.h>
 #ifdef ARCH_sim
 #include <mcu/mcu_sim.h>
@@ -54,16 +53,24 @@ int g_led_pin;
 
 #define SPI_BAUDRATE 500
 
-#if MYNEWT_VAL(SPI_0_MASTER)
+#if MYNEWT_VAL(SPI_0_MASTER) || MYNEWT_VAL(SPI_1_MASTER) || MYNEWT_VAL(SPI_2_MASTER)
 #define SPI_MASTER 1
 #define SPI_SS_PIN  (MYNEWT_VAL(SPITEST_SS_PIN))
 #if SPI_SS_PIN < 0
-#error SPITEST_SS_PIN must be set in the target config.
+#error "SPITEST_SS_PIN must be set in the target config."
 #endif
+#define SPI_M_NUM  (MYNEWT_VAL(SPITEST_M_NUM))
 #endif
 
-#if MYNEWT_VAL(SPI_0_SLAVE)
+#if MYNEWT_VAL(SPI_0_SLAVE) || MYNEWT_VAL(SPI_1_SLAVE) || MYNEWT_VAL(SPI_2_SLAVE)
 #define SPI_SLAVE 1
+#define SPI_S_NUM  (MYNEWT_VAL(SPITEST_S_NUM))
+#endif
+
+#if defined(SPI_MASTER) && defined(SPI_SLAVE)
+#if SPI_M_NUM == SPI_S_NUM
+#error "SPI_M_NUM and SPI_S_NUM cannot be the same."
+#endif
 #endif
 
 #ifdef SPI_MASTER
@@ -140,17 +147,15 @@ sblinky_spi_irqm_handler(void *arg, int len)
 }
 
 void
-sblinky_spi_cfg(int spi_num)
+sblinky_spim_cfg(int spi_num)
 {
-    int spi_id;
     struct hal_spi_settings my_spi;
 
     my_spi.data_order = HAL_SPI_MSB_FIRST;
     my_spi.data_mode = HAL_SPI_MODE0;
     my_spi.baudrate = SPI_BAUDRATE;
     my_spi.word_size = HAL_SPI_WORD_SIZE_8BIT;
-    spi_id = 0;
-    hal_spi_config(spi_id, &my_spi);
+    assert(hal_spi_config(spi_num, &my_spi) == 0);
 }
 #endif
 
@@ -158,13 +163,6 @@ sblinky_spi_cfg(int spi_num)
 uint8_t g_spi_tx_buf[32];
 uint8_t g_spi_rx_buf[32];
 uint32_t g_spi_xfr_num;
-
-/* XXX: This is an ugly hack for now. */
-#ifdef NRF51
-#define SPI_SLAVE_ID    (1)
-#else
-#define SPI_SLAVE_ID    (0)
-#endif
 
 void
 sblinky_spi_irqs_handler(void *arg, int len)
@@ -184,24 +182,22 @@ sblinky_spi_irqs_handler(void *arg, int len)
 }
 
 void
-sblinky_spi_cfg(int spi_num)
+sblinky_spis_cfg(int spi_num)
 {
-    int spi_id;
     struct hal_spi_settings my_spi;
 
     my_spi.data_order = HAL_SPI_MSB_FIRST;
     my_spi.data_mode = HAL_SPI_MODE0;
     my_spi.baudrate =  SPI_BAUDRATE;
     my_spi.word_size = HAL_SPI_WORD_SIZE_8BIT;
-    spi_id = SPI_SLAVE_ID;
-    hal_spi_config(spi_id, &my_spi);
+    assert(hal_spi_config(spi_num, &my_spi) == 0);
     hal_spi_set_txrx_cb(spi_num, sblinky_spi_irqs_handler, spi_cb_arg);
 }
 #endif
 
 #ifdef SPI_MASTER
 void
-task1_handler(void *arg)
+spim_task_handler(void *arg)
 {
     int i;
     int rc;
@@ -210,15 +206,15 @@ task1_handler(void *arg)
     uint8_t spi_nb_cntr;
     uint8_t spi_b_cntr;
 
-    /* Set the led pin for the E407 devboard */
+    /* Set the led pin */
     g_led_pin = LED_BLINK_PIN;
     hal_gpio_init_out(g_led_pin, 1);
 
     /* Use SS pin for testing */
     hal_gpio_init_out(SPI_SS_PIN, 1);
-    sblinky_spi_cfg(0);
-    hal_spi_set_txrx_cb(0, NULL, NULL);
-    hal_spi_enable(0);
+    sblinky_spim_cfg(SPI_M_NUM);
+    hal_spi_set_txrx_cb(SPI_M_NUM, NULL, NULL);
+    hal_spi_enable(SPI_M_NUM);
 
     /*
      * Send some bytes in a non-blocking manner to SPI using tx val. The
@@ -230,7 +226,7 @@ task1_handler(void *arg)
     g_spi_tx_buf[3] = 0xef;
     hal_gpio_write(SPI_SS_PIN, 0);
     for (i = 0; i < 4; ++i) {
-        rxval = hal_spi_tx_val(0, g_spi_tx_buf[i]);
+        rxval = hal_spi_tx_val(SPI_M_NUM, g_spi_tx_buf[i]);
         assert(rxval == 0x77);
         g_spi_rx_buf[i] = (uint8_t)rxval;
     }
@@ -238,11 +234,11 @@ task1_handler(void *arg)
     ++g_spi_xfr_num;
 
     /* Set up the callback to use when non-blocking API used */
-    hal_spi_disable(0);
+    hal_spi_disable(SPI_M_NUM);
     spi_cb_arg = &spi_cb_obj;
     spi_cb_obj.txlen = 32;
-    hal_spi_set_txrx_cb(0, sblinky_spi_irqm_handler, spi_cb_arg);
-    hal_spi_enable(0);
+    hal_spi_set_txrx_cb(SPI_M_NUM, sblinky_spi_irqm_handler, spi_cb_arg);
+    hal_spi_enable(SPI_M_NUM);
     spi_nb_cntr = 0;
     spi_b_cntr = 0;
 
@@ -270,15 +266,15 @@ task1_handler(void *arg)
 #if 0
             if (spi_nb_cntr == 7) {
                 g_spi_null_rx = 1;
-                rc = hal_spi_txrx_noblock(0, g_spi_tx_buf, NULL, 32);
+                rc = hal_spi_txrx_noblock(SPI_M_NUM, g_spi_tx_buf, NULL, 32);
             } else {
                 g_spi_null_rx = 0;
-                rc = hal_spi_txrx_noblock(0, g_spi_tx_buf, g_spi_rx_buf, 32);
+                rc = hal_spi_txrx_noblock(SPI_M_NUM, g_spi_tx_buf, g_spi_rx_buf, 32);
             }
             assert(!rc);
 #else
             g_spi_null_rx = 0;
-            rc = hal_spi_txrx_noblock(0, g_spi_tx_buf, g_spi_rx_buf,
+            rc = hal_spi_txrx_noblock(SPI_M_NUM, g_spi_tx_buf, g_spi_rx_buf,
                                       spi_cb_obj.txlen);
             assert(!rc);
             console_printf("a transmitted: ");
@@ -300,17 +296,17 @@ task1_handler(void *arg)
 #if 0
             if (spi_b_cntr == 7) {
                 g_spi_null_rx = 1;
-                rc = hal_spi_txrx(0, g_spi_tx_buf, NULL, 32);
+                rc = hal_spi_txrx(SPI_M_NUM, g_spi_tx_buf, NULL, 32);
                 spi_b_cntr = 0;
             } else {
                 g_spi_null_rx = 0;
-                rc = hal_spi_txrx(0, g_spi_tx_buf, g_spi_rx_buf, 32);
+                rc = hal_spi_txrx(SPI_M_NUM, g_spi_tx_buf, g_spi_rx_buf, 32);
             }
             assert(!rc);
             hal_gpio_write(SPI_SS_PIN, 1);
             spitest_validate_last(spi_cb_obj.txlen);
 #else
-            rc = hal_spi_txrx(0, g_spi_tx_buf, g_spi_rx_buf, spi_cb_obj.txlen);
+            rc = hal_spi_txrx(SPI_M_NUM, g_spi_tx_buf, g_spi_rx_buf, spi_cb_obj.txlen);
             assert(!rc);
             hal_gpio_write(SPI_SS_PIN, 1);
             console_printf("b transmitted: ");
@@ -336,7 +332,7 @@ int prev_len;
 uint8_t prev_buf[32];
 
 void
-task1_handler(void *arg)
+spis_task_handler(void *arg)
 {
     int rc;
 
@@ -345,19 +341,18 @@ task1_handler(void *arg)
     hal_gpio_init_out(g_led_pin, 1);
 
     spi_cb_arg = &spi_cb_obj;
-    sblinky_spi_cfg(SPI_SLAVE_ID);
-    hal_spi_enable(SPI_SLAVE_ID);
+    sblinky_spis_cfg(SPI_S_NUM);
+    hal_spi_enable(SPI_S_NUM);
 
     /* Make the default character 0x77 */
-    hal_spi_slave_set_def_tx_val(SPI_SLAVE_ID, 0x77);
+    hal_spi_slave_set_def_tx_val(SPI_S_NUM, 0x77);
 
     /*
      * Fill buffer with 0x77 for first transfer. This should be a 0xdeadbeef
      * transfer from master to start things off
      */
     memset(g_spi_tx_buf, 0x77, 32);
-    rc = hal_spi_txrx_noblock(SPI_SLAVE_ID, g_spi_tx_buf, g_spi_rx_buf,
-                              32);
+    rc = hal_spi_txrx_noblock(SPI_S_NUM, g_spi_tx_buf, g_spi_rx_buf, 32);
 
     while (1) {
         /* Wait for semaphore from ISR */
@@ -366,7 +361,7 @@ task1_handler(void *arg)
         if (g_spi_xfr_num == 0) {
             /* Since we dont know what master will send, we fill 0x88 */
             memset(g_spi_tx_buf, 0x88, 32);
-            rc = hal_spi_txrx_noblock(SPI_SLAVE_ID, g_spi_tx_buf, g_spi_rx_buf,
+            rc = hal_spi_txrx_noblock(SPI_S_NUM, g_spi_tx_buf, g_spi_rx_buf,
                                       32);
             assert(rc == 0);
         } else {
@@ -374,7 +369,7 @@ task1_handler(void *arg)
             memcpy(prev_buf, g_spi_tx_buf, 32);
             memset(g_spi_tx_buf, 0xaa, 32);
             memcpy(g_spi_tx_buf, g_spi_rx_buf, spi_cb_obj.txlen);
-            rc = hal_spi_txrx_noblock(SPI_SLAVE_ID, g_spi_tx_buf, g_spi_rx_buf,
+            rc = hal_spi_txrx_noblock(SPI_S_NUM, g_spi_tx_buf, g_spi_rx_buf,
                                       32);
             assert(rc == 0);
         }
@@ -404,11 +399,19 @@ init_tasks(void)
     /* Initialize global test semaphore */
     os_sem_init(&g_test_sem, 0);
 
-#if defined(SPI_SLAVE) || defined(SPI_MASTER)
+#if defined(SPI_MASTER)
     pstack = malloc(sizeof(os_stack_t)*TASK1_STACK_SIZE);
     assert(pstack);
 
-    os_task_init(&task1, "task1", task1_handler, NULL,
+    os_task_init(&task1, "spim", spim_task_handler, NULL,
+            TASK1_PRIO, OS_WAIT_FOREVER, pstack, TASK1_STACK_SIZE);
+#endif
+
+#if defined(SPI_SLAVE)
+    pstack = malloc(sizeof(os_stack_t)*TASK1_STACK_SIZE);
+    assert(pstack);
+
+    os_task_init(&task1, "spis", spis_task_handler, NULL,
             TASK1_PRIO, OS_WAIT_FOREVER, pstack, TASK1_STACK_SIZE);
 #endif
 }

@@ -21,7 +21,7 @@
 #define H_SIM_PRIV_
 
 #include <sys/types.h>
-#include <os/os.h>
+#include "os/mynewt.h"
 
 #ifdef __cplusplus
 extern "C" {

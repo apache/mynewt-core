@@ -16,13 +16,11 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 #include <stdio.h>
 #include <string.h>
 
-#include "sysinit/sysinit.h"
-#include "syscfg/syscfg.h"
-#include "sysflash/sysflash.h"
-#include "os/os.h"
+#include "os/mynewt.h"
 #include "testutil/testutil.h"
 #include "flash_map/flash_map.h"
 #include "hal/hal_bsp.h"

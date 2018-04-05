@@ -164,7 +164,7 @@
 #define  PREFETCH_ENABLE              1U
 #define  INSTRUCTION_CACHE_ENABLE     0U
 #define  DATA_CACHE_ENABLE            0U
-#define  USE_SPI_CRC                  1U
+#define  USE_SPI_CRC                  0U
 
 /* ########################## Assert Selection ############################## */
 /**

@@ -16,11 +16,11 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include "test_oic.h"
 
-#include <os/os.h>
+#include "os/mynewt.h"
 #include <oic/oc_api.h>
 #include <oic/port/mynewt/ip.h>
+#include "test_oic.h"
 
 static int test_discovery_state;
 static volatile int test_discovery_done;

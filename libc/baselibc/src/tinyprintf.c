@@ -65,6 +65,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdio.h>
 #include <inttypes.h>
 
+#include "os/mynewt.h"
+
 struct param {
     unsigned char width; /**< field width */
     char lz;            /**< Leading zeros */
@@ -238,6 +240,10 @@ size_t tfp_format(FILE *putp, const char *fmt, va_list va)
     char ch;
     char lng;
     void *v;
+#if MYNEWT_VAL(FLOAT_USER)
+    double d;
+    int n;
+#endif
 
     p.bf = bf;
 
@@ -337,6 +343,40 @@ size_t tfp_format(FILE *putp, const char *fmt, va_list va)
                 written += putchw(putp, &p);
                 p.bf = bf;
                 break;
+#if MYNEWT_VAL(FLOAT_USER)
+            case 'f':
+                p.base = 10;
+                d = va_arg(va, double);
+                /* Cast to an int to get the integer part of the number */
+                n = d;
+                /* Convert to ascii */
+                i2a(n, &p);
+                /* Ignore left align for integer part */
+                p.left = 0;
+                /* Subtract width for decimal part and decimal point */
+                if (p.width >= 4) {
+                    p.width -= 4;
+                } else {
+                    p.width = 0;
+                }
+                /* Write integer part to console */
+                written += putchw(putp, &p);
+                /* Take the decimal part and multiply by 1000 */
+                n = (d-n)*1000;
+                /* Convert to ascii */
+                i2a(n, &p);
+                /* Set the leading zeros for the next integer output to 3 */
+                p.lz = 3;
+                /* Always use the same decimal width */
+                p.width = 3;
+                /* Ignore sign for decimal part*/
+                p.sign = 0;
+                /* Output a decimal point */
+                putf(putp, '.');
+                /* Output the decimal part. */
+                written += putchw(putp, &p);
+                break;
+#endif
             case '%':
                 written += putf(putp, ch);
                 break;

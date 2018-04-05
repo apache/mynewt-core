@@ -17,11 +17,10 @@
  * under the License.
  */
 
-#include <os/os.h>
 #include <string.h>
 #include <stdio.h>
 
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 
 #if MYNEWT_VAL(LOG_NEWTMGR)
 

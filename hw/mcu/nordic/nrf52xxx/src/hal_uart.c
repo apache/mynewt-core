@@ -17,15 +17,16 @@
  * under the License.
  */
 
+#include <assert.h>
+
+#include "os/mynewt.h"
 #include "hal/hal_uart.h"
-#include "bsp/cmsis_nvic.h"
+#include "mcu/cmsis_nvic.h"
 #include "bsp/bsp.h"
 
 #include "nrf.h"
 #include "mcu/nrf52_hal.h"
-#include "os/os_trace_api.h"
 
-#include <assert.h>
 
 #define UARTE_INT_ENDTX		UARTE_INTEN_ENDTX_Msk
 #define UARTE_INT_ENDRX		UARTE_INTEN_ENDRX_Msk

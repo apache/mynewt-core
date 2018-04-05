@@ -18,9 +18,8 @@
  */
 #include <assert.h>
 
-#include <syscfg/syscfg.h>
+#include "os/mynewt.h"
 
-#include <os/os_dev.h>
 #if MYNEWT_VAL(UART_0)
 #include <uart/uart.h>
 #include <uart_hal/uart_hal.h>
@@ -31,6 +30,14 @@
 #include <hal/hal_flash_int.h>
 #include <hal/hal_timer.h>
 
+/*
+ * Using SPI2 (spi1 in Mynewt parlance) because some SPI1 (spi0) pins are
+ * connected to the onboard LCD.
+ */
+#if MYNEWT_VAL(SPI_1_MASTER) || MYNEWT_VAL(SPI_1_SLAVE)
+#include <hal/hal_spi.h>
+#endif
+
 #include <stm32l152xc.h>
 #include <stm32l1xx_hal_rcc.h>
 #include <stm32l1xx_hal_pwr.h>
@@ -38,6 +45,7 @@
 #include <stm32l1xx_hal_gpio_ex.h>
 #include <mcu/stm32l1_bsp.h>
 #include "mcu/stm32l1xx_mynewt_hal.h"
+#include "mcu/stm32_hal.h"
 #include "hal/hal_i2c.h"
 
 #include "bsp/bsp.h"
@@ -70,6 +78,16 @@ static struct stm32l1_hal_i2c_cfg i2c_cfg0 = {
     .hic_pin_af = GPIO_AF4_I2C1,
     .hic_10bit = 0,
     .hic_speed = 100000                     /* 100kHz */
+};
+#endif
+
+#if MYNEWT_VAL(SPI_1_SLAVE) || MYNEWT_VAL(SPI_1_MASTER)
+struct stm32_hal_spi_cfg spi1_cfg = {
+    .ss_pin   = MCU_GPIO_PORTB(12),
+    .sck_pin  = MCU_GPIO_PORTB(13),
+    .miso_pin = MCU_GPIO_PORTB(14),
+    .mosi_pin = MCU_GPIO_PORTB(15),
+    .irq_prio = 2,
 };
 #endif
 
@@ -155,6 +173,16 @@ hal_bsp_init(void)
 #endif
 #if MYNEWT_VAL(TIMER_0)
     hal_timer_init(0, TIM9);
+#endif
+
+#if MYNEWT_VAL(SPI_1_MASTER)
+    rc = hal_spi_init(1, &spi1_cfg, HAL_SPI_TYPE_MASTER);
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(SPI_1_SLAVE)
+    rc = hal_spi_init(1, &spi1_cfg, HAL_SPI_TYPE_SLAVE);
+    assert(rc == 0);
 #endif
 
 #if MYNEWT_VAL(I2C_0)

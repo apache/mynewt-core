@@ -16,14 +16,15 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 #include <assert.h>
-#include <sysinit/sysinit.h>
-#include <hal/hal_flash.h>
-#include <disk/disk.h>
-#include <flash_map/flash_map.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "os/mynewt.h"
+#include <hal/hal_flash.h>
+#include <disk/disk.h>
+#include <flash_map/flash_map.h>
 
 #include <fatfs/ff.h>
 #include <fatfs/diskio.h>

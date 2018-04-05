@@ -17,7 +17,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include <syscfg/syscfg.h>
+#include "os/mynewt.h"
 
 #include "oic/port/mynewt/config.h"
 #include "port/oc_assert.h"

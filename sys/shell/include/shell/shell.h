@@ -24,7 +24,7 @@
 extern "C" {
 #endif
 
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 
 struct os_eventq;
 

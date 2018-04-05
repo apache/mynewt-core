@@ -20,6 +20,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <assert.h>
+#include "os/mynewt.h"
 #include "hal/hal_system.h"
 #include "bsp/bsp.h"
 #include <nrf51.h>
@@ -27,16 +28,12 @@
 #include "hal/hal_bsp.h"
 #include "hal/hal_gpio.h"
 #include "hal/hal_i2c.h"
-#include "os/os_cputime.h"
-#include "syscfg/syscfg.h"
 #include "flash_map/flash_map.h"
 #include "hal/hal_flash.h"
 #include "hal/hal_spi.h"
-#include "os/os_dev.h"
 
 #if MYNEWT_VAL(ADC_0)
 #include <adc_nrf51/adc_nrf51.h>
-#include <nrfx_adc.h>
 #endif
 
 #if MYNEWT_VAL(UART_0)

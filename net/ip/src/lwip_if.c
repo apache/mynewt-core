@@ -19,8 +19,7 @@
 #include <limits.h>
 #include <string.h>
 
-#include <os/os.h>
-#include <os/os_mbuf.h>
+#include "os/mynewt.h"
 #include <mn_socket/mn_socket.h>
 
 #include <lwip/tcpip.h>

@@ -21,7 +21,7 @@
 #define __IMGMGR_PRIV_H_
 
 #include <stdint.h>
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 
 #ifdef __cplusplus
 extern "C" {

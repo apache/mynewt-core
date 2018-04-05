@@ -20,8 +20,8 @@
 
 #include <hal/hal_bsp.h>
 #include <assert.h>
-#include <os/os.h>
-#include <bsp/cmsis_nvic.h>
+#include "os/mynewt.h"
+#include <mcu/cmsis_nvic.h>
 #include "stm32f4xx_hal_dma.h"
 #include "stm32f4xx_hal_adc.h"
 #include "stm32f4xx_hal_rcc.h"
@@ -30,7 +30,6 @@
 #include "adc_stm32f4/adc_stm32f4.h"
 #include "stm32f4xx_hal_dma.h"
 #include "mcu/stm32f4xx_mynewt_hal.h"
-#include "syscfg/syscfg.h"
 
 #if MYNEWT_VAL(ADC_1)||MYNEWT_VAL(ADC_2)||MYNEWT_VAL(ADC_3)
 #include <adc/adc.h>

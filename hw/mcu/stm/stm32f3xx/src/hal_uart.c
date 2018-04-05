@@ -19,7 +19,7 @@
 
 #include "hal/hal_uart.h"
 #include "hal/hal_gpio.h"
-#include "bsp/cmsis_nvic.h"
+#include "mcu/cmsis_nvic.h"
 #include "bsp/bsp.h"
 #include "stm32f3xx.h"
 #include "stm32f3xx_hal_dma.h"
@@ -113,6 +113,9 @@ uart_irq_handler(int num)
             cr1 &= ~USART_CR1_TCIE;
         }
         regs->CR1 = cr1;
+    }
+    if (isr & USART_ISR_ORE) {
+        regs->ICR |= USART_ICR_ORECF;
     }
 }
 

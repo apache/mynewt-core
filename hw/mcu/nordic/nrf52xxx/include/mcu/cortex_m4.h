@@ -20,7 +20,7 @@
 #ifndef __MCU_CORTEX_M4_H__
 #define __MCU_CORTEX_M4_H__
 
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 
 #ifdef NRF52840_XXAA
 #include "nrf52840.h"

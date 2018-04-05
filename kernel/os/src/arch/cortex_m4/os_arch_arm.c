@@ -16,13 +16,11 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include <syscfg/syscfg.h>
 
-#include "os/os.h"
-#include "os/os_arch.h"
+#include "os/mynewt.h"
 #include <hal/hal_bsp.h>
 #include <hal/hal_os_tick.h>
-#include <bsp/cmsis_nvic.h>
+#include <mcu/cmsis_nvic.h>
 
 #include "os_priv.h"
 

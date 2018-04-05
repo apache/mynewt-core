@@ -71,6 +71,17 @@ syscfg.defs:
             - "!SPI_1_MASTER"
             - "!I2C_1"
 
+    SPI_2_MASTER:
+        description: 'SPI 2 master'
+        value: 0
+        restrictions:
+            - "!SPI_2_SLAVE"
+    SPI_2_SLAVE:
+        description: 'SPI 2 slave'
+        value: 0
+        restrictions:
+            - "!SPI_2_MASTER"
+
     ADC_0:
         description: 'NRF52 ADC 0'
         value:  0

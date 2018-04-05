@@ -21,13 +21,10 @@
 #include <string.h>
 #include <stdio.h>
 #include <errno.h>
-#include "syscfg/syscfg.h"
-#include "sysinit/sysinit.h"
+#include "os/mynewt.h"
 #include "bsp/bsp.h"
 #include "log/log.h"
 #include "stats/stats.h"
-#include "os/os.h"
-#include "bsp/bsp.h"
 #include "hal/hal_gpio.h"
 #include "console/console.h"
 #include "shell/shell.h"

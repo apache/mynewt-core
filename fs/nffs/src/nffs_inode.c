@@ -20,8 +20,8 @@
 #include <stddef.h>
 #include <string.h>
 #include <assert.h>
+#include "os/mynewt.h"
 #include "testutil/testutil.h"
-#include "os/os_mempool.h"
 #include "nffs/nffs.h"
 #include "nffs_priv.h"
 

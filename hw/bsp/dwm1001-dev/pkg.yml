@@ -1,0 +1,133 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+pkg.name: hw/bsp/dwm1001-dev
+pkg.type: bsp
+pkg.description: BSP definition for the DWM1001 Development Kit (DWM1001-DEV).
+pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
+pkg.homepage: "http://mynewt.apache.org/"
+pkg.keywords:
+    - nrf52
+    - dwm1001-dev
+
+pkg.cflags:
+    # Nordic SDK files require these defines.
+     - '-DNRFX_CLOCK_ENABLED=0'
+     - '-DNRFX_COMP_ENABLED=0'
+     - '-DNRFX_GPIOTE_ENABLED=0'
+     - '-DNRFX_I2S_ENABLED=0'
+     - '-DNRFX_LPCOMP_ENABLED=0'
+     - '-DNRF52'
+     - '-DNRFX_PDM_ENABLED=0'
+     - '-DNRFX_POWER_ENABLED=0'
+     - '-DNRFX_PPI_ENABLED=0'
+     - '-DNRFX_PRS_ENABLDE=0'
+     - '-DNRFX_QDEC_ENABLED=0'
+     - '-DNRFX_RNG_ENABLED=0'
+     - '-DNRFX_RTC_ENABLED=0'
+     - '-DNRFX_SPIM_ENABLED=0'
+     - '-DNRFX_SPIS_ENABLED=0'
+     - '-DNRFX_SPI_ENABLED=0'
+     - '-DNRFX_SWI_ENABLED=0'
+     - '-DNRFX_SYSTICK_ENABLED=0'
+     - '-DNRFX_TIMER_ENABLED=0'
+     - '-DNRFX_TWIM_ENABLED=0'
+     - '-DNRFX_TWIS_ENABLED=0'
+     - '-DNRFX_TWI_ENABLED=0'
+     - '-DNRFX_UARTE_ENABLED=0'
+     - '-DNRFX_UART_ENABLED=0'
+     - '-DNRFX_WDT_ENABLED=0'
+
+pkg.cflags.ADC_0:
+     - '-DNRFX_SAADC_ENABLED=1'
+     - '-DNRFX_SAADC_CONFIG_RESOLUTION=1'
+     - '-DNRFX_SAADC_CONFIG_OVERSAMPLE=0'
+     - '-DNRFX_SAADC_CONFIG_LP_MODE=0'
+     - '-DNRFX_SAADC_CONFIG_IRQ_PRIORITY=7'
+
+pkg.cflags.PWM_0:
+     - '-DNRFX_PWM_ENABLED=1'
+     - '-DNRFX_PWM0_ENABLED=1'
+     - '-DNRFX_PWM_DEFAULT_CONFIG_OUT0_PIN=0xff'
+     - '-DNRFX_PWM_DEFAULT_CONFIG_OUT1_PIN=0xff'
+     - '-DNRFX_PWM_DEFAULT_CONFIG_OUT2_PIN=0xff'
+     - '-DNRFX_PWM_DEFAULT_CONFIG_OUT3_PIN=0xff'
+     - '-DNRFX_PWM_DEFAULT_CONFIG_BASE_CLOCK=4'
+     - '-DNRFX_PWM_DEFAULT_CONFIG_COUNT_MODE=0'
+     - '-DNRFX_PWM_DEFAULT_CONFIG_TOP_VALUE=1000'
+     - '-DNRFX_PWM_DEFAULT_CONFIG_LOAD_MODE=0'
+     - '-DNRFX_PWM_DEFAULT_CONFIG_STEP_MODE=0'
+     - '-DNRFX_PWM_DEFAULT_CONFIG_IRQ_PRIORITY=7'
+
+pkg.cflags.PWM_1:
+     - '-DNRFX_PWM1_ENABLED=1'
+     - '-DNRFX_PWM_DEFAULT_CONFIG_OUT0_PIN=0xff'
+     - '-DNRFX_PWM_DEFAULT_CONFIG_OUT1_PIN=0xff'
+     - '-DNRFX_PWM_DEFAULT_CONFIG_OUT2_PIN=0xff'
+     - '-DNRFX_PWM_DEFAULT_CONFIG_OUT3_PIN=0xff'
+     - '-DNRFX_PWM_DEFAULT_CONFIG_BASE_CLOCK=4'
+     - '-DNRFX_PWM_DEFAULT_CONFIG_COUNT_MODE=0'
+     - '-DNRFX_PWM_DEFAULT_CONFIG_TOP_VALUE=1000'
+     - '-DNRFX_PWM_DEFAULT_CONFIG_LOAD_MODE=0'
+     - '-DNRFX_PWM_DEFAULT_CONFIG_STEP_MODE=0'
+     - '-DNRFX_PWM_DEFAULT_CONFIG_IRQ_PRIORITY=7'
+
+pkg.cflags.PWM_2:
+     - '-DNRFX_PWM2_ENABLED=1'
+     - '-DNRFX_PWM_DEFAULT_CONFIG_OUT0_PIN=0xff'
+     - '-DNRFX_PWM_DEFAULT_CONFIG_OUT1_PIN=0xff'
+     - '-DNRFX_PWM_DEFAULT_CONFIG_OUT2_PIN=0xff'
+     - '-DNRFX_PWM_DEFAULT_CONFIG_OUT3_PIN=0xff'
+     - '-DNRFX_PWM_DEFAULT_CONFIG_BASE_CLOCK=4'
+     - '-DNRFX_PWM_DEFAULT_CONFIG_COUNT_MODE=0'
+     - '-DNRFX_PWM_DEFAULT_CONFIG_TOP_VALUE=1000'
+     - '-DNRFX_PWM_DEFAULT_CONFIG_LOAD_MODE=0'
+     - '-DNRFX_PWM_DEFAULT_CONFIG_STEP_MODE=0'
+     - '-DNRFX_PWM_DEFAULT_CONFIG_IRQ_PRIORITY=7'
+
+pkg.cflags.HARDFLOAT:
+    - -mfloat-abi=hard -mfpu=fpv4-sp-d16
+
+pkg.deps:
+    - hw/mcu/nordic/nrf52xxx
+    - libc/baselibc
+
+pkg.deps.BLE_DEVICE:
+    - hw/drivers/nimble/nrf52
+
+pkg.deps.UART_0:
+    - hw/drivers/uart/uart_hal
+
+pkg.deps.UART_1:
+    - hw/drivers/uart/uart_bitbang
+
+pkg.deps.ADC_0:
+    - hw/drivers/adc/adc_nrf52
+
+pkg.deps.PWM_0:
+    - hw/drivers/pwm/pwm_nrf52
+
+pkg.deps.PWM_1:
+    - hw/drivers/pwm/pwm_nrf52
+
+pkg.deps.PWM_2:
+    - hw/drivers/pwm/pwm_nrf52
+
+pkg.deps.SOFT_PWM:
+    - hw/drivers/pwm/soft_pwm

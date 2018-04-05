@@ -26,7 +26,7 @@ extern "C" {
 #endif
 
 #undef LITTLE_ENDIAN
-#include <os/os.h>
+#include "os/mynewt.h"
 #include <ip/os_queue.h>
 
 #define SYS_MBOX_NULL NULL
@@ -101,13 +101,10 @@ sys_mutex_unlock(sys_mutex_t *mutex)
 static inline uint32_t
 sys_now(void)
 {
-    uint32_t t;
+    uint64_t t;
 
-    /*
-     * XXX not right when g_os_time rolls over
-     */
-    t = os_time_get() * OS_TICKS_PER_SEC / 1000;
-    return t;
+    t = os_time_get();
+    return t * 1000 / OS_TICKS_PER_SEC;
 }
 
 static inline err_t

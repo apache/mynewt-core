@@ -17,16 +17,15 @@
  * under the License.
  */
 
-#include "syscfg/syscfg.h"
+#include <assert.h>
+#include <stdlib.h>
+
+#include "os/mynewt.h"
 #include "hal/hal_uart.h"
 #include "hal/hal_gpio.h"
 #include "hal/hal_system.h"
-#include "bsp/cmsis_nvic.h"
+#include "mcu/cmsis_nvic.h"
 #include "bsp/bsp.h"
-#include "os/os.h"
-
-#include <assert.h>
-#include <stdlib.h>
 
 #include "mcu/frdm-k64f_hal.h"
 #include "MK64F12.h"

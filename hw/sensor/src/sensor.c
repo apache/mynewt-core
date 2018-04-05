@@ -20,17 +20,9 @@
 #include <string.h>
 #include <errno.h>
 #include <assert.h>
-
-#include "os/os.h"
-#include "sysinit/sysinit.h"
-
+#include "os/mynewt.h"
 #include "sensor/sensor.h"
-
 #include "sensor_priv.h"
-#include "os/os_time.h"
-#include "os/os_cputime.h"
-#include "defs/error.h"
-#include "syscfg/syscfg.h"
 #include "sensor/accel.h"
 #include "sensor/mag.h"
 #include "sensor/light.h"

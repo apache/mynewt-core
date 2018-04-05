@@ -18,7 +18,7 @@
  */
 
 #include <stdint.h>
-#include <os/os.h>
+#include "os/mynewt.h"
 #include "../oc_clock.h"
 
 void oc_clock_init(void)

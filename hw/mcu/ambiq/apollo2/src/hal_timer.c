@@ -21,12 +21,10 @@
 #include <inttypes.h>
 #include <assert.h>
 
-#include "syscfg/syscfg.h"
-#include "os/os.h"
-#include "bsp/cmsis_nvic.h"
+#include "os/mynewt.h"
+#include "mcu/cmsis_nvic.h"
 #include "mcu/hal_apollo2.h"
 #include "hal/hal_timer.h"
-#include "defs/error.h"
 
 #include "am_mcu_apollo.h"
 

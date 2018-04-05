@@ -69,7 +69,7 @@
 #include "stm32f7xx_hal_rcc.h"
 #include "stm32f7xx_hal_pwr.h"
 #include "stm32f7xx_hal_pwr_ex.h"
-#include "bsp/cmsis_nvic.h"
+#include "mcu/cmsis_nvic.h"
 
 #if !defined  (HSE_VALUE)
   #define HSE_VALUE    ((uint32_t)25000000) /*!< Default value of the External oscillator in Hz */

@@ -17,8 +17,7 @@
  * under the License.
  */
 
-#include <defs/error.h>
-#include <sysinit/sysinit.h>
+#include "os/mynewt.h"
 #include <hal/hal_i2c.h>
 #include <log/log.h>
 #include <stats/stats.h>

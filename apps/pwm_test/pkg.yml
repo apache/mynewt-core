@@ -28,3 +28,4 @@ pkg.deps:
     - kernel/os
     - sys/console/full
     - hw/drivers/pwm
+    - util/easing

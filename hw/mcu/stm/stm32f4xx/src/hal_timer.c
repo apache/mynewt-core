@@ -21,10 +21,9 @@
 #include <inttypes.h>
 #include <assert.h>
 
-#include <syscfg/syscfg.h>
+#include "os/mynewt.h"
 
-#include <bsp/cmsis_nvic.h>
-#include <os/queue.h>
+#include <mcu/cmsis_nvic.h>
 #include <hal/hal_timer.h>
 
 #include "stm32f4xx.h"

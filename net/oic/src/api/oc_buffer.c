@@ -13,14 +13,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 */
+
 #include <stdint.h>
 #include <stdio.h>
 
-#include <syscfg/syscfg.h>
-
-#include <os/os_eventq.h>
-#include <os/os_mempool.h>
-#include <os/os_mbuf.h>
+#include "os/mynewt.h"
 
 #include "oic/port/mynewt/config.h"
 #include "messaging/coap/engine.h"

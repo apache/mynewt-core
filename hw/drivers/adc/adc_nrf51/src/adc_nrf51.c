@@ -16,16 +16,16 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
+#include <assert.h>
+#include "os/mynewt.h"
 #include <hal/hal_bsp.h>
 #include <adc/adc.h>
-#include <assert.h>
-#include <os/os.h>
-#include <bsp/cmsis_nvic.h>
+#include <mcu/cmsis_nvic.h>
 
 /* Nordic headers */
 #include <nrfx.h>
 #include <nrfx_adc.h>
-
 
 #include "adc_nrf51/adc_nrf51.h"
 
@@ -45,7 +45,7 @@ static struct nrf51_adc_stats nrf51_adc_stats;
 
 static struct adc_dev *global_adc_dev;
 
-static nrfx_adc_config_t *global_adc_config;
+static struct nrf51_adc_dev_cfg *global_adc_config;
 static struct nrf51_adc_dev_cfg *init_adc_config;
 
 static struct adc_chan_config nrf51_adc_chans[NRF_ADC_CHANNEL_COUNT];
@@ -99,7 +99,7 @@ static int
 nrf51_adc_open(struct os_dev *odev, uint32_t wait, void *arg)
 {
     struct adc_dev *dev;
-    nrfx_adc_config_t *cfg;
+    struct nrf51_adc_dev_cfg *cfg = arg;
     int rc;
 
     if (arg == NULL) {
@@ -116,9 +116,13 @@ nrf51_adc_open(struct os_dev *odev, uint32_t wait, void *arg)
         }
     }
 
+    if (!cfg) {
+        /* Use initial configuration */
+        cfg = init_adc_config;
+    }
+ 
     /* Initialize the device */
-    cfg = (nrfx_adc_config_t *)arg;
-    rc = nrfx_adc_init(cfg, nrf51_adc_event_handler);
+    rc = nrfx_adc_init(&cfg->adc_cfg, nrf51_adc_event_handler);
     if (rc != NRFX_SUCCESS) {
         goto err;
     }

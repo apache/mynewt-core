@@ -26,9 +26,7 @@ extern "C" {
 
 #include <stdio.h>
 #include <setjmp.h>
-#include "os/os_arch.h"
-#include "os/os_error.h"
-#include "os/os_time.h"
+#include "os/mynewt.h"
 struct os_task;
 struct stack_frame;
 

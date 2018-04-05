@@ -16,14 +16,12 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include <os/endian.h>
 
 #include <limits.h>
 #include <assert.h>
 #include <string.h>
 
-#include "sysinit/sysinit.h"
-#include "sysflash/sysflash.h"
+#include "os/mynewt.h"
 #include "hal/hal_bsp.h"
 #include "flash_map/flash_map.h"
 #include "cborattr/cborattr.h"
@@ -346,6 +344,7 @@ imgr_upload(struct mgmt_cbuf *cb)
     long long unsigned int off = UINT_MAX;
     long long unsigned int size = UINT_MAX;
     size_t data_len = 0;
+    uint8_t rem_bytes = 0;
     const struct cbor_attr_t off_attr[4] = {
         [0] = {
             .attribute = "data",
@@ -435,6 +434,15 @@ imgr_upload(struct mgmt_cbuf *cb)
         return MGMT_ERR_EINVAL;
     }
     if (data_len) {
+        if (imgr_state.upload.off + data_len < imgr_state.upload.size) {
+            /*
+             * Respect flash write alignment if not in the last block
+             */
+            rem_bytes = data_len % flash_area_align(imgr_state.upload.fa);
+            if (rem_bytes) {
+                data_len -= rem_bytes;
+            }
+        }
         rc = flash_area_write(imgr_state.upload.fa, imgr_state.upload.off,
           img_data, data_len);
         if (rc) {

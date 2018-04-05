@@ -16,9 +16,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 #include <string.h>
-#include "sysinit/sysinit.h"
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 #include "node/lora_priv.h"
 
 STATS_SECT_DECL(lora_mac_stats) lora_mac_stats;
@@ -75,17 +75,8 @@ struct lm_join_ev_arg_obj g_lm_join_ev_arg;
 
 /* Debug log */
 #if defined(LORA_NODE_DEBUG_LOG)
-struct lora_node_debug_log_entry
-{
-    uint8_t lnd_id;
-    uint8_t lnd_p8;
-    uint16_t lnd_p16;
-    uint32_t lnd_p32;
-    uint32_t lnd_cputime;
-};
-
-static struct lora_node_debug_log_entry g_lnd_log[LORA_NODE_DEBUG_LOG_ENTRIES];
-static uint8_t g_lnd_log_index;
+struct lora_node_debug_log_entry g_lnd_log[LORA_NODE_DEBUG_LOG_ENTRIES];
+uint16_t g_lnd_log_index;
 
 void
 lora_node_log(uint8_t logid, uint8_t p8, uint16_t p16, uint32_t p32)

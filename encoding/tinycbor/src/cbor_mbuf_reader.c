@@ -17,9 +17,9 @@
  * under the License.
  */
 
+#include "os/mynewt.h"
 #include <tinycbor/cbor_mbuf_reader.h>
 #include <tinycbor/compilersupport_p.h>
-#include <os/os_mbuf.h>
 
 static uint8_t
 cbor_mbuf_reader_get8(struct cbor_decoder_reader *d, int offset)

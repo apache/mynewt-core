@@ -15,12 +15,37 @@ Maintainer: Miguel Luis and Gregory Cristian
 #ifndef __SX1272_ARCH_H__
 #define __SX1272_ARCH_H__
 
-#define RADIO_SPI_IDX               MYNEWT_VAL(SX1272_SPI_IDX)
+#define RADIO_SPI_IDX           MYNEWT_VAL(SX1272_SPI_IDX)
+#if RADIO_SPI_IDX != 0
+#error "Invalid SX1272_SPI_IDX value. Must be zero"
+#endif
 
-#if RADIO_SPI_IDX == 0
-#define RADIO_NSS                   MYNEWT_VAL(SX1272_SPI_CS_PIN)
+#if MYNEWT_VAL(SX1272_SPI_CS_PIN) == -1
+#error "Must set SX1272_SPI_CS_PIN pin (spi slave select)"
 #else
-#error "Invalid SX1272_SPI_IDX value"
+#define RADIO_NSS               MYNEWT_VAL(SX1272_SPI_CS_PIN)
+#endif
+
+#define SX1272_DIO0             MYNEWT_VAL(SX1272_DIO0_PIN)
+#define SX1272_DIO1             MYNEWT_VAL(SX1272_DIO1_PIN)
+#define SX1272_DIO2             MYNEWT_VAL(SX1272_DIO2_PIN)
+#define SX1272_DIO3             MYNEWT_VAL(SX1272_DIO3_PIN)
+#define SX1272_DIO4             MYNEWT_VAL(SX1272_DIO4_PIN)
+#define SX1272_DIO5             MYNEWT_VAL(SX1272_DIO5_PIN)
+
+#if MYNEWT_VAL(SX1272_RESET_PIN) == -1
+#error "Must set SX1272_RESET_PIN pin (spi slave select)"
+#else
+#define SX1272_NRESET           MYNEWT_VAL(SX1272_RESET_PIN)
+#endif
+
+#if MYNEWT_VAL(SX1272_HAS_ANT_SW)
+#define SX1272_RXTX             MYNEWT_VAL(SX1272_RXTX_PIN)
+#endif
+
+#if MYNEWT_VAL(SX1272_HAS_COMP_ANT_SW)
+#define SX1272_RXTX             MYNEWT_VAL(SX1272_RXTX_PIN)
+#define SX1272_N_RXTX           MYNEWT_VAL(SX1272_N_RXTX_PIN)
 #endif
 
 /*!
@@ -52,28 +77,28 @@ Maintainer: Miguel Luis and Gregory Cristian
 /*!
  * \brief Initializes the radio I/Os pins interface
  */
-void SX1272IoInit( void );
+void SX1272IoInit(void);
 
 /*!
  * \brief Initializes DIO IRQ handlers
  *
  * \param [IN] irqHandlers Array containing the IRQ callback functions
  */
-void SX1272IoIrqInit( DioIrqHandler **irqHandlers );
+void SX1272IoIrqInit(DioIrqHandler **irqHandlers);
 
 /*!
  * \brief De-initializes the radio I/Os pins interface.
  *
  * \remark Useful when going in MCU low power modes
  */
-void SX1272IoDeInit( void );
+void SX1272IoDeInit(void);
 
 /*!
  * \brief Sets the radio output power.
  *
  * \param [IN] power Sets the RF output power
  */
-void SX1272SetRfTxPower( int8_t power );
+void SX1272SetRfTxPower(int8_t power);
 
 /*!
  * \brief Gets the board PA selection configuration
@@ -81,26 +106,26 @@ void SX1272SetRfTxPower( int8_t power );
  * \param [IN] channel Channel frequency in Hz
  * \retval PaSelect RegPaConfig PaSelect value
  */
-uint8_t SX1272GetPaSelect( uint32_t channel );
+uint8_t SX1272GetPaSelect(uint32_t channel);
 
 /*!
  * \brief Set the RF Switch I/Os pins in Low Power mode
  *
  * \param [IN] status enable or disable
  */
-void SX1272SetAntSwLowPower( bool status );
+void SX1272SetAntSwLowPower(bool status);
 
 /*!
  * \brief Initializes the RF Switch I/Os pins interface
  */
-void SX1272AntSwInit( void );
+void SX1272AntSwInit(void);
 
 /*!
  * \brief De-initializes the RF Switch I/Os pins interface
  *
  * \remark Needed to decrease the power consumption in MCU low power modes
  */
-void SX1272AntSwDeInit( void );
+void SX1272AntSwDeInit(void);
 
 /*!
  * \brief Controls the antenna switch if necessary.
@@ -109,7 +134,7 @@ void SX1272AntSwDeInit( void );
  *
  * \param [IN] opMode Current radio operating mode
  */
-void SX1272SetAntSw( uint8_t opMode );
+void SX1272SetAntSw(uint8_t opMode);
 
 /*!
  * \brief Checks if the given RF frequency is supported by the hardware
@@ -117,7 +142,7 @@ void SX1272SetAntSw( uint8_t opMode );
  * \param [IN] frequency RF frequency to be checked
  * \retval isSupported [true: supported, false: unsupported]
  */
-bool SX1272CheckRfFrequency( uint32_t frequency );
+bool SX1272CheckRfFrequency(uint32_t frequency);
 
 /*!
  * Radio hardware and global parameters

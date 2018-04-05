@@ -17,7 +17,7 @@
  * under the License.
  */
 
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 
 #if MYNEWT_VAL(CRASH_TEST_NEWTMGR)
 

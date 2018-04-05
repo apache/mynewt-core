@@ -180,6 +180,7 @@ SECTIONS
         __bss_end__ = .;
     } > RAM
 
+    . = ALIGN(8);
     __HeapBase = .;
     __HeapLimit = ORIGIN(RAM) + LENGTH(RAM);
 

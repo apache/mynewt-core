@@ -17,11 +17,10 @@
  * under the License.
  */
 #include <assert.h>
-#include <os/os.h>
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 #include <hal/hal_os_tick.h>
 #include <hal/hal_system.h>
-#include <bsp/cmsis_nvic.h>
+#include <mcu/cmsis_nvic.h>
 #include <nrf51.h>
 #include <nrf51_bitfields.h>
 #include <mcu/nrf51_hal.h>

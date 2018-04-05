@@ -50,13 +50,13 @@ extern FILE* const stderr;
 __extern_inline size_t fread(void *buf, size_t size, size_t nmemb, FILE *stream)
 {
     if (stream->vmt->read == NULL) return 0;
-    return stream->vmt->read(stream, buf, size*nmemb) / size;
+    return stream->vmt->read(stream, (char*)buf, size*nmemb) / size;
 }
 
 __extern_inline size_t fwrite(const void *buf, size_t size, size_t nmemb, FILE *stream)
 {
     if (stream->vmt->write == NULL) return 0;
-    return stream->vmt->write(stream, buf, size*nmemb) / size;
+    return stream->vmt->write(stream, (char*)buf, size*nmemb) / size;
 }
 
 __extern_inline int fputs(const char *s, FILE *f)
@@ -85,7 +85,7 @@ __extern_inline int fgetc(FILE *f)
 __extern int errno;
 __extern_inline char *strerror(int errnum)
 {
-	return "error_str";
+	return (char*)"error_str";
 }
 
 #define putc(c,f)  fputc((c),(f))

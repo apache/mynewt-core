@@ -18,7 +18,7 @@
  */
 
 #include "hal/hal_gpio.h"
-#include "bsp/cmsis_nvic.h"
+#include "mcu/cmsis_nvic.h"
 #include "nrf51.h"
 #include "nrf51_bitfields.h"
 #include <assert.h>
@@ -165,7 +165,7 @@ hal_gpio_irq_handler(void)
     int i;
 
     for (i = 0; i < HAL_GPIO_MAX_IRQ; i++) {
-        if (NRF_GPIOTE->EVENTS_IN[i]) {
+        if (NRF_GPIOTE->EVENTS_IN[i] && (NRF_GPIOTE->INTENSET & (1 << i))) {
             NRF_GPIOTE->EVENTS_IN[i] = 0;
             if (hal_gpio_irqs[i].func) {
                 hal_gpio_irqs[i].func(hal_gpio_irqs[i].arg);

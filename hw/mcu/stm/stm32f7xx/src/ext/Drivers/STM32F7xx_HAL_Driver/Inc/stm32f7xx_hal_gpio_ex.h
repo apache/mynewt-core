@@ -2,13 +2,11 @@
   ******************************************************************************
   * @file    stm32f7xx_hal_gpio_ex.h
   * @author  MCD Application Team
-  * @version V1.2.0
-  * @date    30-December-2016
   * @brief   Header file of GPIO HAL Extension module.
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; COPYRIGHT(c) 2016 STMicroelectronics</center></h2>
+  * <h2><center>&copy; COPYRIGHT(c) 2017 STMicroelectronics</center></h2>
   *
   * Redistribution and use in source and binary forms, with or without modification,
   * are permitted provided that the following conditions are met:
@@ -397,7 +395,7 @@
 #define GPIOI_PIN_AVAILABLE  GPIO_PIN_All
 #define GPIOJ_PIN_AVAILABLE  GPIO_PIN_All
 #define GPIOH_PIN_AVAILABLE  GPIO_PIN_All
-#define GPIOK_PIN_AVAILABLE  (GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_3 | GPIO_PIN_4 | \
+#define GPIOK_PIN_AVAILABLE  (GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3 | GPIO_PIN_4 | \
                               GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7)
 
 /**

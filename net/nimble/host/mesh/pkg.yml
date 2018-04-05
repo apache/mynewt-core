@@ -18,27 +18,7 @@
 #
 
 pkg.name: net/nimble/host/mesh
-pkg.description: Bluetooth Mesh
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
-pkg.keywords:
-    - ble
-    - bluetooth
-    - mesh
-
 pkg.deps:
-    - kernel/os
-    - net/nimble
-    - util/mem
-    - net/nimble/host  
-    - crypto/tinycrypt
-
-pkg.deps.BLE_MESH_SHELL:
-    - sys/shell
-
-pkg.req_apis:
-    - log
-    - stats
-
-pkg.init:
-    ble_mesh_shell_init: 1000
+    - "@apache-mynewt-nimble/nimble/host/mesh"

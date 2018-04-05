@@ -35,5 +35,5 @@ pkg.ign_dirs:
 
 pkg.deps:
     - hw/hal
-    - hw/mcu/stm/stm32f7xx
+    - hw/mcu/stm/stm32_common
     - hw/cmsis-core

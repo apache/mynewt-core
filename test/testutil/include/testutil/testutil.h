@@ -24,9 +24,7 @@
 #include <inttypes.h>
 #include <setjmp.h>
 
-#include "os/queue.h"
-
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -19,7 +19,7 @@
 
 #include <errno.h>
 
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 #include "bma253/bma253.h"
 #include "bma253_priv.h"
 #include "console/console.h"

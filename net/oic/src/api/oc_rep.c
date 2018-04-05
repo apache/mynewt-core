@@ -16,9 +16,7 @@
 
 #include <stddef.h>
 
-#include <os/os_mempool.h>
-
-#include <syscfg/syscfg.h>
+#include "os/mynewt.h"
 
 #include <tinycbor/cbor_mbuf_writer.h>
 #include <tinycbor/cbor_mbuf_reader.h>

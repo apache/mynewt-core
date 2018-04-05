@@ -17,13 +17,13 @@
  * under the License.
  */
 
-#include <hal/hal_spi.h>
-#include <syscfg/syscfg.h>
 #include <string.h>
 #include <errno.h>
 #include <assert.h>
+#include "os/mynewt.h"
 #include <hal/hal_spi.h>
-#include <bsp/cmsis_nvic.h>
+#include <hal/hal_spi.h>
+#include <mcu/cmsis_nvic.h>
 #include "mcu/nrf51_hal.h"
 #include "nrf51_bitfields.h"
 

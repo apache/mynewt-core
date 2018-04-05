@@ -24,7 +24,7 @@
 #include <inttypes.h>
 #include <termios.h>
 
-#include "defs/error.h"
+#include "os/mynewt.h"
 #include "native_uart_cfg_priv.h"
 
 /* uint64 is used here to accommodate speed_t, whatever that is. */

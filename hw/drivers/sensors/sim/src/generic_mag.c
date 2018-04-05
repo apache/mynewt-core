@@ -21,10 +21,7 @@
 #include <errno.h>
 #include <assert.h>
 
-#include "defs/error.h"
-
-#include "os/os.h"
-#include "sysinit/sysinit.h"
+#include "os/mynewt.h"
 
 #include "sensor/sensor.h"
 #include "sensor/mag.h"
