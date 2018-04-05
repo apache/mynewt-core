@@ -31,6 +31,7 @@
 #include <hal/hal_system.h>
 #include <hal/hal_gpio.h>
 #include <hal/hal_watchdog.h>
+#include <hal/hal_nvreg.h>
 
 #include <tinycbor/cbor.h>
 #include <tinycbor/cbor_buf_reader.h>
@@ -652,13 +653,32 @@ boot_serial_os_dev_init(void)
      * Configure GPIO line as input. This is read later to see if
      * we should stay and keep waiting for input.
      */
+#if MYNEWT_VAL(BOOT_SERIAL_DETECT_PIN) != -1
     hal_gpio_init_in(MYNEWT_VAL(BOOT_SERIAL_DETECT_PIN),
                      MYNEWT_VAL(BOOT_SERIAL_DETECT_PIN_CFG));
+#endif
 }
 
 void
 boot_serial_pkg_init(void)
 {
+
+    /*
+     * Read retained register and compare with expected magic value.
+     * If it matches, await for download commands from serial.
+     */
+#if MYNEWT_VAL(BOOT_SERIAL_NVREG_INDEX) != -1
+    if (hal_nvreg_read(MYNEWT_VAL(BOOT_SERIAL_NVREG_INDEX)) ==
+        MYNEWT_VAL(BOOT_SERIAL_NVREG_MAGIC)) {
+
+        hal_nvreg_write(MYNEWT_VAL(BOOT_SERIAL_NVREG_INDEX), 0);
+
+        boot_serial_start(BOOT_SERIAL_INPUT_MAX);
+        assert(0);
+    }
+
+#endif
+
     /*
      * Configure a GPIO as input, and compare it against expected value.
      * If it matches, await for download commands from serial.

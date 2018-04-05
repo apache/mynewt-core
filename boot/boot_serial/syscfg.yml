@@ -69,3 +69,18 @@ syscfg.defs:
         description: >
             The toggle rate, in Hz, of the serial boot loader report pin.
         value: 4
+
+    BOOT_SERIAL_NVREG_MAGIC:
+        description: >
+            Magic number, to be saved in a retained (reset-surviving) register.
+            If the value in the register matches, the serial bootloader will
+            load. Value must not be 0.
+        value: 0xB7
+        restrictions:
+            - '(BOOT_SERIAL_NVREG_MAGIC != 0)'
+
+    BOOT_SERIAL_NVREG_INDEX:
+        description: >
+            Index of retained register to use (using hal_nvreg_read) for reading
+            magic value.
+        value: -1
