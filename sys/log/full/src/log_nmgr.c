@@ -52,6 +52,11 @@ static struct mgmt_handler log_nmgr_group_handlers[] = {
     [LOGS_NMGR_OP_LOGS_LIST] = {log_nmgr_logs_list, NULL}
 };
 
+struct log_encode_data {
+    uint32_t counter;
+    CborEncoder *enc;
+};
+
 /**
  * Log encode entry
  * @param log structure, log_offset, dataptr, len
@@ -67,7 +72,7 @@ log_nmgr_encode_entry(struct log *log, struct log_offset *log_offset,
     int rc;
     int rsp_len;
     CborError g_err = CborNoError;
-    CborEncoder *penc = (CborEncoder*)log_offset->lo_arg;
+    struct log_encode_data *ed = log_offset->lo_arg;
     CborEncoder rsp;
     struct CborCntWriter cnt_writer;
     CborEncoder cnt_encoder;
@@ -180,13 +185,18 @@ log_nmgr_encode_entry(struct log *log, struct log_offset *log_offset,
     g_err |= cbor_encode_uint(&rsp,  ueh.ue_module);
     g_err |= cbor_encoder_close_container(&cnt_encoder, &rsp);
     rsp_len += cbor_encode_bytes_written(&cnt_encoder);
-    if (rsp_len > 400) {
+    /*
+     * Make sure that at least single entry is returned, even in case response
+     * exceeds this magic value. This is to make sure we can read long log
+     * entries, even if they have to be read one by one.
+     */
+    if ((rsp_len > 400) && (ed->counter > 0)) {
         rc = OS_ENOMEM;
         goto err;
     }
     log_offset->lo_data_len = rsp_len;
 
-    g_err |= cbor_encoder_create_map(penc, &rsp, CborIndefiniteLength);
+    g_err |= cbor_encoder_create_map(ed->enc, &rsp, CborIndefiniteLength);
 #if MYNEWT_VAL(LOG_VERSION) > 2
     switch (ueh.ue_etype) {
     case LOG_ETYPE_CBOR:
@@ -228,13 +238,16 @@ log_nmgr_encode_entry(struct log *log, struct log_offset *log_offset,
     g_err |= cbor_encode_uint(&rsp,  ueh.ue_index);
     g_err |= cbor_encode_text_stringz(&rsp, "module");
     g_err |= cbor_encode_uint(&rsp,  ueh.ue_module);
-    g_err |= cbor_encoder_close_container(penc, &rsp);
+    g_err |= cbor_encoder_close_container(ed->enc, &rsp);
+
+    ed->counter++;
 
     if (g_err) {
         return MGMT_ERR_ENOMEM;
     }
     return (0);
 err:
+    ed->counter++;
     return (rc);
 }
 
@@ -254,6 +267,7 @@ log_encode_entries(struct log *log, CborEncoder *cb,
     CborError g_err = CborNoError;
     struct CborCntWriter cnt_writer;
     CborEncoder cnt_encoder;
+    struct log_encode_data ed;
 
     memset(&log_offset, 0, sizeof(log_offset));
 
@@ -275,7 +289,10 @@ log_encode_entries(struct log *log, CborEncoder *cb,
     g_err |= cbor_encode_text_stringz(cb, "entries");
     g_err |= cbor_encoder_create_array(cb, &entries, CborIndefiniteLength);
 
-    log_offset.lo_arg       = &entries;
+    ed.counter = 0;
+    ed.enc = &entries;
+
+    log_offset.lo_arg       = &ed;
     log_offset.lo_index     = index;
     log_offset.lo_ts        = ts;
     log_offset.lo_data_len  = rsp_len;
