@@ -96,20 +96,20 @@ storage (or dump to console).
     static int8 foo_val;
 
     struct conf_handler my_conf = {
-	.ch_name = "foo",
-	.ch_set = foo_conf_set,
-	.ch_export = foo_conf_export
+        .ch_name = "foo",
+        .ch_set = foo_conf_set,
+        .ch_export = foo_conf_export
     }
 
     static int
     foo_conf_set(int argc, char **argv, char *val)
     {
-         if (argc == 1) {
-	      if (!strcmp(argv[0], "bar")) {
-	             return CONF_VALUE_SET(val, CONF_INT8, foo_val);
-	      }
-	 }
-	 return OS_ENOENT;
+        if (argc == 1) {
+            if (!strcmp(argv[0], "bar")) {
+                return CONF_VALUE_SET(val, CONF_INT8, foo_val);
+            }
+        }
+        return OS_ENOENT;
     }
 
     static int
@@ -118,8 +118,8 @@ storage (or dump to console).
         char buf[4];
 
         conf_str_from_value(CONF_INT8, &foo_val, buf, sizeof(buf));
-	func("foo/bar", buf)
-	return 0;
+        func("foo/bar", buf)
+        return 0;
     }
 
 Example: Persist Runtime State
@@ -138,19 +138,19 @@ foo_val will continue counting up from where it was before restart.
     static int8 foo_val;
 
     struct conf_handler my_conf = {
-	.ch_name = "foo",
-	.ch_set = foo_conf_set
+        .ch_name = "foo",
+        .ch_set = foo_conf_set
     }
 
     static int
     foo_conf_set(int argc, char **argv, char *val)
     {
-         if (argc == 1) {
-	      if (!strcmp(argv[0], "bar")) {
-	             return CONF_VALUE_SET(val, CONF_INT8, foo_val);
-	      }
-	 }
-	 return OS_ENOENT;
+        if (argc == 1) {
+            if (!strcmp(argv[0], "bar")) {
+                return CONF_VALUE_SET(val, CONF_INT8, foo_val);
+            }
+        }
+        return OS_ENOENT;
     }
 
     static void
@@ -159,15 +159,16 @@ foo_val will continue counting up from where it was before restart.
         struct os_callout *c = (struct os_callout *)ev;
         char buf[4];
 
-	foo_val++;
+    	foo_val++;
         conf_str_from_value(CONF_INT8, &foo_val, buf, sizeof(buf));
-	conf_save_one("foo/bar", bar);
+        conf_save_one("foo/bar", bar);
 
-	callout_reset(c, OS_TICKS_PER_SEC * 120);
+        callout_reset(c, OS_TICKS_PER_SEC * 120);
     }
 
 API
-~~~
+----------
 
-.. doxygengroup:: sys_config
+.. doxygengroup:: SysConfig
     :content-only:
+    :members:
