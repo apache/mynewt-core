@@ -47,12 +47,12 @@ uint32_t hal_nvreg_read(unsigned int reg);
 /**
  * Get number of available retained registers
  */
-unsigned int hal_nvreg_get_num_regs();
+unsigned int hal_nvreg_get_num_regs(void);
 
 /**
  * Get retained register width (in bytes)
  */
-unsigned int hal_nvreg_get_reg_width();
+unsigned int hal_nvreg_get_reg_width(void);
 
 #ifdef __cplusplus
 }

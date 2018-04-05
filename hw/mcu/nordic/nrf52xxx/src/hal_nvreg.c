@@ -21,10 +21,11 @@
 #include "hal/hal_nvreg.h"
 #include "nrf.h"
 
+/* There are two GPREGRET registers on the NRF52 */
+#define HAL_NVREG_MAX (2)
 
-#define HAL_NVREG_MAX (2) // There are two GPREGRET registers on the NRF52
-
-#define HAL_NVREG_WIDTH_BYTES (1) // GPREGRET registers only save the 8 lsbits
+/* GPREGRET registers only save the 8 lsbits */
+#define HAL_NVREG_WIDTH_BYTES (1)
 
 static volatile uint32_t *regs[HAL_NVREG_MAX] = {
     &NRF_POWER->GPREGRET,
@@ -51,12 +52,12 @@ hal_nvreg_read(unsigned int reg)
     return val;
 }
 
-unsigned int hal_nvreg_get_num_regs()
+unsigned int hal_nvreg_get_num_regs(void)
 {
     return HAL_NVREG_MAX;
 }
 
-unsigned int hal_nvreg_get_reg_width()
+unsigned int hal_nvreg_get_reg_width(void)
 {
     return HAL_NVREG_WIDTH_BYTES;
 }
