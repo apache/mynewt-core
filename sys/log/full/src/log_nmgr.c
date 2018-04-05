@@ -71,6 +71,9 @@ log_nmgr_encode_entry(struct log *log, struct log_offset *log_offset,
     CborEncoder rsp;
     struct CborCntWriter cnt_writer;
     CborEncoder cnt_encoder;
+#if MYNEWT_VAL(LOG_VERSION) > 2
+    int off;
+#endif
 
     rc = log_read(log, dptr, &ueh, 0, sizeof(ueh));
     if (rc != sizeof(ueh)) {
@@ -99,6 +102,35 @@ log_nmgr_encode_entry(struct log *log, struct log_offset *log_offset,
         goto err;
     }
 
+#if MYNEWT_VAL(LOG_VERSION) > 2
+    switch (ueh.ue_etype) {
+    case LOG_ETYPE_STRING:
+        /* Trim string data to 128 characters to keep it consistent with v2 */
+        dlen = min(len-sizeof(ueh), 128);
+
+        rc = log_read(log, dptr, data, sizeof(ueh), dlen);
+        if (rc < 0) {
+            rc = OS_ENOENT;
+            goto err;
+        }
+        data[rc] = 0;
+        break;
+    case LOG_ETYPE_CBOR:
+        /* We can't trim CBOR stream - need to put it complete */
+        dlen = len - sizeof(ueh);
+        break;
+    case LOG_ETYPE_BINARY:
+        /* XXX just some placeholder for now, perhaps should be base64 encoded? */
+        strcpy(data, "<binary>");
+        dlen = strlen(data);
+        break;
+    default:
+        assert(0);
+        strcpy(data, "<??\?>");
+        dlen = strlen(data);
+        break;
+    }
+#else
     dlen = min(len-sizeof(ueh), 128);
 
     rc = log_read(log, dptr, data, sizeof(ueh), dlen);
@@ -107,6 +139,7 @@ log_nmgr_encode_entry(struct log *log, struct log_offset *log_offset,
         goto err;
     }
     data[rc] = 0;
+#endif
 
     /*calculate whether this would fit */
     /* create a counting encoder for cbor */
@@ -114,9 +147,29 @@ log_nmgr_encode_entry(struct log *log, struct log_offset *log_offset,
     cbor_encoder_init(&cnt_encoder, &cnt_writer.enc, 0);
 
     /* NOTE This code should exactly match what is below */
+    rsp_len = log_offset->lo_data_len;
     g_err |= cbor_encoder_create_map(&cnt_encoder, &rsp, CborIndefiniteLength);
+#if MYNEWT_VAL(LOG_VERSION) > 2
+    switch (ueh.ue_etype) {
+    case LOG_ETYPE_CBOR:
+        g_err |= cbor_encode_text_stringz(&rsp, "type");
+        g_err |= cbor_encode_text_stringz(&rsp, "cbor");
+        /* Just encode something short and CBOR stream will be inserted here later */
+        g_err |= cbor_encode_text_stringz(&rsp, "msg");
+        g_err |= cbor_encode_undefined(&rsp);
+        rsp_len += dlen;
+        break;
+    case LOG_ETYPE_STRING:
+    case LOG_ETYPE_BINARY:
+    default:
+        g_err |= cbor_encode_text_stringz(&rsp, "msg");
+        g_err |= cbor_encode_text_stringz(&rsp, data);
+        break;
+    }
+#else
     g_err |= cbor_encode_text_stringz(&rsp, "msg");
     g_err |= cbor_encode_text_stringz(&rsp, data);
+#endif
     g_err |= cbor_encode_text_stringz(&rsp, "ts");
     g_err |= cbor_encode_int(&rsp, ueh.ue_ts);
     g_err |= cbor_encode_text_stringz(&rsp, "level");
@@ -126,7 +179,6 @@ log_nmgr_encode_entry(struct log *log, struct log_offset *log_offset,
     g_err |= cbor_encode_text_stringz(&rsp, "module");
     g_err |= cbor_encode_uint(&rsp,  ueh.ue_module);
     g_err |= cbor_encoder_close_container(&cnt_encoder, &rsp);
-    rsp_len = log_offset->lo_data_len;
     rsp_len += cbor_encode_bytes_written(&cnt_encoder);
     if (rsp_len > 400) {
         rc = OS_ENOMEM;
@@ -135,8 +187,39 @@ log_nmgr_encode_entry(struct log *log, struct log_offset *log_offset,
     log_offset->lo_data_len = rsp_len;
 
     g_err |= cbor_encoder_create_map(penc, &rsp, CborIndefiniteLength);
+#if MYNEWT_VAL(LOG_VERSION) > 2
+    switch (ueh.ue_etype) {
+    case LOG_ETYPE_CBOR:
+        g_err |= cbor_encode_text_stringz(&rsp, "type");
+        g_err |= cbor_encode_text_stringz(&rsp, "cbor");
+        g_err |= cbor_encode_text_stringz(&rsp, "msg");
+        /*
+         * Write CBOR data from log entry directly to CBOR encoder. This will
+         * for a valid CBOR stream assuming log entry is either a primitive
+         * or a container.
+         */
+        for (off = sizeof(ueh); (off < len) && !g_err; ) {
+            rc = log_read(log, dptr, data, off, sizeof(data));
+            if (rc < 0) {
+                g_err |= 1;
+                break;
+            }
+            g_err |= rsp.writer->write(rsp.writer, data, rc);
+
+            off += rc;
+        }
+        break;
+    case LOG_ETYPE_STRING:
+    case LOG_ETYPE_BINARY:
+    default:
+        g_err |= cbor_encode_text_stringz(&rsp, "msg");
+        g_err |= cbor_encode_text_stringz(&rsp, data);
+        break;
+    }
+#else
     g_err |= cbor_encode_text_stringz(&rsp, "msg");
     g_err |= cbor_encode_text_stringz(&rsp, data);
+#endif
     g_err |= cbor_encode_text_stringz(&rsp, "ts");
     g_err |= cbor_encode_int(&rsp, ueh.ue_ts);
     g_err |= cbor_encode_text_stringz(&rsp, "level");
