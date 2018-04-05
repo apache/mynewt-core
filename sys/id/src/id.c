@@ -16,14 +16,14 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 #include <inttypes.h>
 #include <string.h>
 #include <stdio.h>
 #include <assert.h>
 
-#include "sysinit/sysinit.h"
+#include "os/mynewt.h"
 #include "hal/hal_bsp.h"
-#include "os/os.h"
 #include "config/config.h"
 #include "base64/base64.h"
 #include "mfg/mfg.h"

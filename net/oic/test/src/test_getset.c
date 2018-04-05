@@ -16,10 +16,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include "test_oic.h"
 
-#include <os/os.h>
+#include "os/mynewt.h"
 #include <oic/oc_api.h>
+#include "test_oic.h"
 
 static int test_getset_state;
 static volatile int test_getset_done;

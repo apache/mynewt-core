@@ -17,9 +17,7 @@
  * under the License.
  */
 
-#include "os/os.h"
-#include "os/os_arch.h"
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 #include <hal/hal_bsp.h>
 #include <hal/hal_os_tick.h>
 

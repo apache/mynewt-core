@@ -28,6 +28,17 @@ struct os_timezone;
 
 #define DATETIME_BUFSIZE    33
 
+struct clocktime {
+    int year;   /* year (4 digit year) */
+    int mon;    /* month (1 - 12) */
+    int day;    /* day (1 - 31) */
+    int hour;   /* hour (0 - 23) */
+    int min;    /* minute (0 - 59) */
+    int sec;    /* second (0 - 59) */
+    int dow;    /* day of week (0 - 6; 0 = Sunday) */
+    int usec;   /* micro seconds */
+};
+
 /*
  * Format the time specified by 'utctime' and 'tz' as per RFC 3339 in
  * the 'output' string. The size of the buffer pointed to by 'output'
@@ -50,6 +61,22 @@ int datetime_format(const struct os_timeval *utctime,
  */
 int datetime_parse(const char *input, struct os_timeval *utctime,
     struct os_timezone *tz);
+
+
+/*
+ * Converts from struct clocktime to struct os_timeval
+ *
+ * Returns 0 on success and OS_EINVAL on invalid input data
+ */
+int clocktime_to_timeval(const struct clocktime *ct, const struct os_timezone *tz, struct os_timeval *tv);
+
+/*
+ * Converts from struct os_timeval to struct clocktime
+ *
+ * Returns 0 on success and OS_EINVAL on invalid input data
+ */
+int timeval_to_clocktime(const struct os_timeval *tv, const struct os_timezone *tz,
+    struct clocktime *ct);
 
 #ifdef __cplusplus
 }

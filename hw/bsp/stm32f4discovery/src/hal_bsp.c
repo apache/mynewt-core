@@ -18,9 +18,8 @@
  */
 #include <assert.h>
 
-#include <syscfg/syscfg.h>
+#include "os/mynewt.h"
 
-#include <os/os_dev.h>
 #if MYNEWT_VAL(UART_0)
 #include <uart/uart.h>
 #include <uart_hal/uart_hal.h>
@@ -31,10 +30,15 @@
 #include <hal/hal_flash_int.h>
 #include <hal/hal_timer.h>
 
+#if MYNEWT_VAL(SPI_0_MASTER) || MYNEWT_VAL(SPI_0_SLAVE)
+#include <hal/hal_spi.h>
+#endif
+
 #include <stm32f407xx.h>
 #include <stm32f4xx_hal_gpio_ex.h>
 #include <mcu/stm32f4_bsp.h>
 #include "mcu/stm32f4xx_mynewt_hal.h"
+#include "mcu/stm32_hal.h"
 #include "hal/hal_i2c.h"
 
 #include "bsp/bsp.h"
@@ -70,6 +74,15 @@ static struct stm32f4_hal_i2c_cfg i2c_cfg0 = {
 };
 #endif
 
+#if MYNEWT_VAL(SPI_0_SLAVE) || MYNEWT_VAL(SPI_0_MASTER)
+struct stm32_hal_spi_cfg spi0_cfg = {
+    .ss_pin   = MCU_GPIO_PORTA(4),
+    .sck_pin  = MCU_GPIO_PORTA(5),
+    .miso_pin = MCU_GPIO_PORTA(6),
+    .mosi_pin = MCU_GPIO_PORTA(7),
+    .irq_prio = 2,
+};
+#endif
 
 static const struct hal_bsp_mem_dump dump_cfg[] = {
     [0] = {
@@ -113,8 +126,19 @@ hal_bsp_init(void)
       OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *)&uart_cfg[0]);
     assert(rc == 0);
 #endif
+
 #if MYNEWT_VAL(TIMER_0)
     hal_timer_init(0, TIM9);
+#endif
+
+#if MYNEWT_VAL(SPI_0_MASTER)
+    rc = hal_spi_init(0, &spi0_cfg, HAL_SPI_TYPE_MASTER);
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(SPI_0_SLAVE)
+    rc = hal_spi_init(0, &spi0_cfg, HAL_SPI_TYPE_SLAVE);
+    assert(rc == 0);
 #endif
 
 #if MYNEWT_VAL(I2C_0)

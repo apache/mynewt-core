@@ -17,9 +17,7 @@
  * under the License.
  */
 #include <assert.h>
-#include "sysinit/sysinit.h"
-#include <os/os.h>
-#include <sysinit/sysinit.h>
+#include "os/mynewt.h"
 #include <bsp/bsp.h>
 #include <log/log.h>
 #include <oic/oc_api.h>

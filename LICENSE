@@ -260,21 +260,16 @@ This product bundles additional files from CMSIS-CORE, but these files are
 missing licensing information.  The BSD license was subsequently added to
 these files in later releases.  These files are:
     * hw/cmsis-core/src/cmsis_nvic.c
-    * hw/bsp/ada_feather_nrf52/include/bsp/cmsis_nvic.h
-    * hw/bsp/arduino_primo_nrf52/include/bsp/cmsis_nvic.h
-    * hw/bsp/bbc_microbit/include/bsp/cmsis_nvic.h
-    * hw/bsp/bmd200/include/bsp/cmsis_nvic.h
-    * hw/bsp/bmd300eval/include/bsp/cmsis_nvic.h
-    * hw/bsp/nrf51-arduino_101/include/bsp/cmsis_nvic.h
-    * hw/bsp/nrf51-blenano/include/bsp/cmsis_nvic.h
-    * hw/bsp/nrf51dk/include/bsp/cmsis_nvic.h
-    * hw/bsp/nrf51dk-16kbram/include/bsp/cmsis_nvic.h
-    * hw/bsp/nrf52840pdk/include/bsp/cmsis_nvic.h
-    * hw/bsp/nrf52dk/include/bsp/cmsis_nvic.h
-    * hw/bsp/nucleo-f401re/include/bsp/cmsis_nvic.h
-    * hw/bsp/olimex_stm32-e407_devboard/include/bsp/cmsis_nvic.h
-    * hw/bsp/rb-nano2/include/bsp/cmsis_nvic.h
-    * hw/bsp/stm32f4discovery/include/bsp/cmsis_nvic.h
+    * hw/mcu/ambiq/apollo2/include/mcu/cmsis_nvic.h
+    * hw/mcu/nordic/nrf51xxx/include/mcu/cmsis_nvic.h
+    * hw/mcu/nordic/nrf52xxx/include/mcu/cmsis_nvic.h
+    * hw/mcu/nxp/MK64F12/include/mcu/cmsis_nvic.h
+    * hw/mcu/nxp/mkw41z/include/mcu/cmsis_nvic.h
+    * hw/mcu/stm/stm32f1xx/include/mcu/cmsis_nvic.h
+    * hw/mcu/stm/stm32f3xx/include/mcu/cmsis_nvic.h
+    * hw/mcu/stm/stm32f4xx/include/mcu/cmsis_nvic.h
+    * hw/mcu/stm/stm32f7xx/include/mcu/cmsis_nvic.h
+    * hw/mcu/stm/stm32l1xx/include/mcu/cmsis_nvic.h
 
 This product bundles parts of STM32CubeF4 1.5, which is available under the
 "3-clause BSD" license.  Bundled files are:

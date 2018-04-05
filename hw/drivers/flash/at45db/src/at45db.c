@@ -17,15 +17,14 @@
  * under the License.
  */
 
-#include <os/os.h>
+#include <string.h>
 
+#include "os/mynewt.h"
 #include <hal/hal_spi.h>
 #include <hal/hal_gpio.h>
 #include <hal/hal_flash.h>
 #include <hal/hal_flash_int.h>
 #include <at45db/at45db.h>
-
-#include <string.h>
 
 /**
  * Memory Architecture:

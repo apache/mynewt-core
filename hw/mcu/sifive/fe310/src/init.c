@@ -19,7 +19,7 @@
 
 #include <stdint.h>
 
-#include <syscfg/syscfg.h>
+#include "os/mynewt.h"
 
 #include <env/freedom-e300-hifive1/platform.h>
 #include <env/encoding.h>

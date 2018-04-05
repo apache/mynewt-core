@@ -18,7 +18,7 @@
  */
 
 #include <assert.h>
-#include "os/os.h"
+#include "os/mynewt.h"
 #include "testutil/testutil.h"
 #include "testutil_priv.h"
 

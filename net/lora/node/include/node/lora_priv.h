@@ -21,7 +21,7 @@
 #define H_LORA_PRIV_
 
 #include "node/mac/LoRaMac.h"
-#include "os/os.h"
+#include "os/mynewt.h"
 #include "node/lora.h"
 
 /*
@@ -96,10 +96,23 @@ uint8_t lora_mac_cmd_buffer_len(void);
 #define LORA_NODE_DEBUG_LOG
 
 #if defined(LORA_NODE_DEBUG_LOG)
+struct lora_node_debug_log_entry
+{
+    uint8_t lnd_id;
+    uint8_t lnd_p8;
+    uint16_t lnd_p16;
+    uint32_t lnd_p32;
+    uint32_t lnd_cputime;
+};
+
 #define LORA_NODE_DEBUG_LOG_ENTRIES     (128)
 void lora_node_log(uint8_t logid, uint8_t p8, uint16_t p16, uint32_t p32);
 
+extern struct lora_node_debug_log_entry g_lnd_log[LORA_NODE_DEBUG_LOG_ENTRIES];
+extern uint16_t g_lnd_log_index;
+
 /* IDs */
+#define LORA_NODE_LOG_UNUSED            (0)
 #define LORA_NODE_LOG_TX_DONE           (10)
 #define LORA_NODE_LOG_RX_WIN_SETUP      (20)
 #define LORA_NODE_LOG_RX_TIMEOUT        (21)

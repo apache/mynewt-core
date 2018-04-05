@@ -16,13 +16,12 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 #include <assert.h>
-#include <os/os.h>
-#include <os/os_trace_api.h>
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 #include "hal/hal_os_tick.h"
 #include "nrf.h"
-#include "bsp/cmsis_nvic.h"
+#include "mcu/cmsis_nvic.h"
 
 /* The OS scheduler requires a low-frequency timer. */
 #if MYNEWT_VAL(OS_SCHEDULING)       && \

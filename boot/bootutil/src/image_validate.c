@@ -22,7 +22,7 @@
 #include <inttypes.h>
 #include <string.h>
 
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 #include "hal/hal_flash.h"
 #include "hal/hal_watchdog.h"
 #include "flash_map/flash_map.h"

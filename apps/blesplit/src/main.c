@@ -21,9 +21,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <errno.h>
-#include "sysinit/sysinit.h"
-#include "bsp/bsp.h"
-#include "os/os.h"
+#include "os/mynewt.h"
 #include "bsp/bsp.h"
 #include "hal/hal_gpio.h"
 #include "console/console.h"
@@ -34,6 +32,7 @@
 /* BLE */
 #include "nimble/ble.h"
 #include "host/ble_hs.h"
+#include "host/util/util.h"
 #include "services/gap/ble_svc_gap.h"
 
 /* Application-specified header. */
@@ -79,10 +78,18 @@ blesplit_print_conn_desc(struct ble_gap_conn_desc *desc)
 static void
 blesplit_advertise(void)
 {
+    uint8_t own_addr_type;
     struct ble_gap_adv_params adv_params;
     struct ble_hs_adv_fields fields;
     const char *name;
     int rc;
+
+    /* Figure out address to use while advertising (no privacy for now) */
+    rc = ble_hs_id_infer_auto(0, &own_addr_type);
+    if (rc != 0) {
+        BLESPLIT_LOG(ERROR, "error determining address type; rc=%d\n", rc);
+        return;
+    }
 
     /**
      *  Set the advertisement data included in our advertisements:
@@ -129,7 +136,7 @@ blesplit_advertise(void)
     memset(&adv_params, 0, sizeof adv_params);
     adv_params.conn_mode = BLE_GAP_CONN_MODE_UND;
     adv_params.disc_mode = BLE_GAP_DISC_MODE_GEN;
-    rc = ble_gap_adv_start(BLE_OWN_ADDR_PUBLIC, NULL, BLE_HS_FOREVER,
+    rc = ble_gap_adv_start(own_addr_type, NULL, BLE_HS_FOREVER,
                            &adv_params, blesplit_gap_event, NULL);
     if (rc != 0) {
         BLESPLIT_LOG(ERROR, "error enabling advertisement; rc=%d\n", rc);
@@ -261,6 +268,12 @@ blesplit_on_reset(int reason)
 static void
 blesplit_on_sync(void)
 {
+    int rc;
+
+    /* Make sure we have proper identity address set (public preferred) */
+    rc = ble_hs_util_ensure_addr(0);
+    assert(rc == 0);
+
     /* Begin advertising. */
     blesplit_advertise();
 }
@@ -280,9 +293,6 @@ main(void)
 
     /* Initialize OS */
     sysinit();
-
-    /* Set initial BLE device address. */
-    memcpy(g_dev_addr, (uint8_t[6]){0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a}, 6);
 
     /* Initialize the blesplit log. */
     log_register("blesplit", &blesplit_log, &log_console_handler, NULL,

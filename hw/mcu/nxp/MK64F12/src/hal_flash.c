@@ -23,11 +23,12 @@
  * and is divided to 2k sectors throughout.
  * Programming is done 2 bytes at a time.
  */
+
 #include <string.h>
 #include <stdio.h>
 #include <assert.h>
+#include "os/mynewt.h"
 #include <hal/hal_flash_int.h>
-#include <os/os.h>
 
 #include "MK64F12.h"
 #include "fsl_flash.h"

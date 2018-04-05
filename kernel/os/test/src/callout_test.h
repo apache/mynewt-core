@@ -19,9 +19,8 @@
 #ifndef _CALLOUT_TEST_H
 #define _CALLOUT_TEST_H
 
-#include "sysinit/sysinit.h"
+#include "os/mynewt.h"
 #include "testutil/testutil.h"
-#include "os/os.h"
 #include "os_test_priv.h"
 
 #ifdef __cplusplus

@@ -17,13 +17,14 @@
  * under the License.
  */
 
+#include <assert.h>
+#include <string.h>
+#include <errno.h>
+#include "os/mynewt.h"
 #include <bsp.h>
 #include <hal/hal_bsp.h>
-#include <assert.h>
-#include <os/os.h>
-#include <errno.h>
 #include <pwm/pwm.h>
-#include <string.h>
+#include <mcu/cmsis_nvic.h>
 
 /* Nordic headers */
 #include <nrfx.h>
@@ -39,6 +40,13 @@ struct nrf52_pwm_dev_global {
     nrfx_pwm_t drv_instance;
     nrfx_pwm_config_t config;
     nrf_pwm_values_individual_t duty_cycles;
+    uint32_t n_cycles;
+    nrfx_pwm_flag_t flags;
+    nrfx_pwm_handler_t internal_handler;
+    user_handler_t cycle_handler;
+    user_handler_t seq_end_handler;
+    void* cycle_data;
+    void* seq_end_data;
 };
 
 static struct nrf52_pwm_dev_global instances[] =
@@ -48,7 +56,14 @@ static struct nrf52_pwm_dev_global instances[] =
     [0].playing = false,
     [0].drv_instance = NRFX_PWM_INSTANCE(0),
     [0].config = NRFX_PWM_DEFAULT_CONFIG,
-    [0].duty_cycles = {0}
+    [0].flags = NRFX_PWM_FLAG_LOOP,
+    [0].duty_cycles = {0},
+    [0].n_cycles = 1,
+    [0].internal_handler = NULL,
+    [0].cycle_handler = NULL,
+    [0].cycle_data = NULL,
+    [0].seq_end_handler = NULL,
+    [0].seq_end_data = NULL
 #endif
 #if MYNEWT_VAL(PWM_1)
     ,
@@ -56,7 +71,14 @@ static struct nrf52_pwm_dev_global instances[] =
     [1].playing = false,
     [1].drv_instance = NRFX_PWM_INSTANCE(1),
     [1].config = NRFX_PWM_DEFAULT_CONFIG,
-    [1].duty_cycles = {0}
+    [1].flags = NRFX_PWM_FLAG_LOOP,
+    [1].duty_cycles = {0},
+    [1].n_cycles = 1,
+    [1].internal_handler = NULL,
+    [1].cycle_handler = NULL,
+    [1].cycle_data = NULL,
+    [1].seq_end_handler = NULL,
+    [1].seq_end_data = NULL
 #endif
 #if MYNEWT_VAL(PWM_2)
     ,
@@ -64,7 +86,14 @@ static struct nrf52_pwm_dev_global instances[] =
     [2].playing = false,
     [2].drv_instance = NRFX_PWM_INSTANCE(2),
     [2].config = NRFX_PWM_DEFAULT_CONFIG,
-    [2].duty_cycles = {0}
+    [2].flags = NRFX_PWM_FLAG_LOOP,
+    [2].duty_cycles = {0},
+    [2].n_cycles = 1,
+    [2].internal_handler = NULL,
+    [2].cycle_handler = NULL,
+    [2].cycle_data = NULL,
+    [2].seq_end_handler = NULL,
+    [2].seq_end_data = NULL
 #endif
 #if MYNEWT_VAL(PWM_3)
     ,
@@ -72,18 +101,123 @@ static struct nrf52_pwm_dev_global instances[] =
     [3].playing = false,
     [3].drv_instance = NRFX_PWM_INSTANCE(3),
     [3].config = NRFX_PWM_DEFAULT_CONFIG,
-    [3].duty_cycles = {0}
+    [3].flags = NRFX_PWM_FLAG_LOOP,
+    [3].duty_cycles = {0},
+    [3].n_cycles = 1,
+    [3].internal_handler = NULL,
+    [3].cycle_handler = NULL,
+    [3].cycle_data = NULL,
+    [3].seq_end_handler = NULL,
+    [3].seq_end_data = NULL
 #endif
 };
 
-/* /\** */
-/*  * Validate the contents of a given nrf_drv_pwm_config_t structure. */
-/*  *\/ */
-/* static int */
-/* validate_config(nrf_drv_pwm_config_t* config) */
-/* { */
-/*     return 0; */
-/* } */
+#if MYNEWT_VAL(PWM_0)
+static void handler_0(nrfx_pwm_evt_type_t event_type)
+{
+    switch (event_type)
+    {
+    case NRFX_PWM_EVT_END_SEQ0 :
+    case NRFX_PWM_EVT_END_SEQ1 :
+        instances[0].cycle_handler(instances[0].cycle_data);
+        break;
+
+    case NRFX_PWM_EVT_FINISHED :
+        instances[0].playing = false;
+        nrfx_pwm_uninit(&instances[0].drv_instance);
+        instances[0].seq_end_handler(instances[0].seq_end_data);
+        break;
+
+    default:
+        assert(0);
+    }
+}
+#endif
+
+#if MYNEWT_VAL(PWM_1)
+static void handler_1(nrfx_pwm_evt_type_t event_type)
+{
+    switch (event_type)
+    {
+    case NRFX_PWM_EVT_END_SEQ0 :
+    case NRFX_PWM_EVT_END_SEQ1 :
+        instances[1].cycle_handler(instances[1].cycle_data);
+        break;
+
+    case NRFX_PWM_EVT_FINISHED :
+        instances[1].playing = false;
+        nrfx_pwm_uninit(&instances[1].drv_instance);
+        instances[1].seq_end_handler(instances[1].seq_end_data);
+        break;
+
+    default:
+        assert(0);
+    }
+}
+#endif
+
+#if MYNEWT_VAL(PWM_2)
+static void handler_2(nrfx_pwm_evt_type_t event_type)
+{
+    switch (event_type)
+    {
+    case NRFX_PWM_EVT_END_SEQ0 :
+    case NRFX_PWM_EVT_END_SEQ1 :
+        instances[2].cycle_handler(instances[2].cycle_data);
+        break;
+
+    case NRFX_PWM_EVT_FINISHED :
+        instances[2].playing = false;
+        nrfx_pwm_uninit(&instances[2].drv_instance);
+        instances[2].seq_end_handler(instances[2].seq_end_data);
+        break;
+
+    default:
+        assert(0);
+    }
+
+}
+#endif
+
+#if MYNEWT_VAL(PWM_3)
+static void handler_3(nrfx_pwm_evt_type_t event_type)
+{
+    switch (event_type)
+    {
+    case NRFX_PWM_EVT_END_SEQ0 :
+    case NRFX_PWM_EVT_END_SEQ1 :
+        instances[3].cycle_handler(instances[3].cycle_data);
+        break;
+
+    case NRFX_PWM_EVT_FINISHED :
+        instances[3].playing = false;
+        nrfx_pwm_uninit(&instances[3].drv_instance);
+        instances[3].seq_end_handler(instances[3].seq_end_data);
+        break;
+
+    default:
+        assert(0);
+    }
+}
+#endif
+
+static nrfx_pwm_handler_t internal_handlers[] = {
+#if MYNEWT_VAL(PWM_0)
+handler_0
+#endif
+#if MYNEWT_VAL(PWM_1)
+,
+handler_1
+#endif
+#if MYNEWT_VAL(PWM_2)
+,
+handler_2
+#endif
+#if MYNEWT_VAL(PWM_3)
+,
+handler_3
+#endif
+};
 
 /**
  * Initialize a driver instance.
@@ -91,12 +225,7 @@ static struct nrf52_pwm_dev_global instances[] =
 static int
 init_instance(int inst_id, nrfx_pwm_config_t* init_conf)
 {
-    if(!instances[inst_id].in_use) {
-        return (EINVAL);
-    }
     nrfx_pwm_config_t *config;
-    memset(&instances[inst_id].duty_cycles, 0,
-		sizeof(instances[inst_id].duty_cycles));
 
     config = &instances[inst_id].config;
     if (!init_conf) {
@@ -113,8 +242,25 @@ init_instance(int inst_id, nrfx_pwm_config_t* init_conf)
     } else {
         memcpy(config, init_conf, sizeof(nrfx_pwm_config_t));
     }
-
     return (0);
+}
+
+/**
+ * Cleanup a driver instance.
+ */
+static void
+cleanup_instance(int inst_id)
+{
+    instances[inst_id].in_use = false;
+    instances[inst_id].playing = false;
+    instances[inst_id].internal_handler = NULL;
+    instances[inst_id].cycle_handler = NULL;
+    instances[inst_id].seq_end_handler = NULL;
+    instances[inst_id].cycle_data = NULL;
+    instances[inst_id].seq_end_data = NULL;
+    memset((uint16_t *) &instances[inst_id].duty_cycles,
+           0x00,
+           4 * sizeof(uint16_t));
 }
 
 /**
@@ -140,6 +286,11 @@ nrf52_pwm_open(struct os_dev *odev, uint32_t wait, void *arg)
     int inst_id;
     dev = (struct pwm_dev *) odev;
     inst_id = dev->pwm_instance_id;
+
+    if (instances[inst_id].in_use) {
+        return (EINVAL);
+    }
+    instances[inst_id].in_use = true;
 
     if (os_started()) {
         stat = os_mutex_pend(&dev->pwm_lock, wait);
@@ -168,6 +319,8 @@ nrf52_pwm_open(struct os_dev *odev, uint32_t wait, void *arg)
  * This function unlocks the device.
  *
  * @param odev The device to close.
+ *
+ * @return 0 on success, non-zero on failure.
  */
 static int
 nrf52_pwm_close(struct os_dev *odev)
@@ -178,8 +331,12 @@ nrf52_pwm_close(struct os_dev *odev)
     dev = (struct pwm_dev *) odev;
     inst_id = dev->pwm_instance_id;
 
+    if (!instances[inst_id].in_use) {
+        return (EINVAL);
+    }
+
     nrfx_pwm_uninit(&instances[inst_id].drv_instance);
-    instances[inst_id].playing = false;
+    cleanup_instance(inst_id);
 
     if (os_started()) {
         os_mutex_release(&dev->pwm_lock);
@@ -204,8 +361,8 @@ play_current_config(struct nrf52_pwm_dev_global *instance)
 
     nrfx_pwm_simple_playback(&instance->drv_instance,
                              &seq,
-                             1,
-                             NRFX_PWM_FLAG_LOOP);
+                             instance->n_cycles,
+                             instance->flags);
 }
 
 /**
@@ -213,7 +370,7 @@ play_current_config(struct nrf52_pwm_dev_global *instance)
  *
  * @param dev The device to configure.
  * @param cnum The channel number to configure.
- * @param cfg  A pwm_chan_cfg data structure.
+ * @param cfg  A pwm_chan_cfg data structure, where .
  *
  * @return 0 on success, non-zero error code on failure.
  */
@@ -223,30 +380,62 @@ nrf52_pwm_configure_channel(struct pwm_dev *dev,
                             struct pwm_chan_cfg *cfg)
 {
     int inst_id = dev->pwm_instance_id;
-    nrfx_pwm_config_t *config = &instances[inst_id].config;
+    struct nrf52_pwm_dev_global *instance = &instances[inst_id];
+    nrfx_pwm_config_t *config = &instance->config;
+    struct pwm_dev_interrupt_cfg *int_cfg;
+
+    if (!instance->in_use) {
+        return (EINVAL);
+    }
+
 
     config->output_pins[cnum] = cfg->pin;
     config->output_pins[cnum] |= (cfg->inverted) ?
         NRFX_PWM_PIN_INVERTED : config->output_pins[cnum];
+    instance->n_cycles = (cfg->n_cycles) ? cfg->n_cycles : 1;
 
-    if (instances[inst_id].playing) {
-        nrfx_pwm_uninit(&instances[inst_id].drv_instance);
-        nrfx_pwm_init(&instances[inst_id].drv_instance,
-                         &instances[inst_id].config,
-                         NULL);
-
-        play_current_config(&instances[inst_id]);
+    /* Configure Interrupts  */
+    if (cfg->interrupts_cfg) {
+        int_cfg = (struct pwm_dev_interrupt_cfg*) cfg;
+        if (int_cfg->cycle_handler || int_cfg->seq_end_handler) {
+            config->irq_priority = int_cfg->int_prio;
+            instance->internal_handler = internal_handlers[inst_id];
+            instance->cycle_handler = (user_handler_t) int_cfg->cycle_handler;
+            instance->seq_end_handler = (user_handler_t) int_cfg->seq_end_handler;
+            instance->cycle_data = int_cfg->cycle_data;
+            instance->seq_end_data = int_cfg->seq_end_data;
+        } else {
+            instance->internal_handler = NULL;
+        }
     }
 
+    instance->flags = (instance->n_cycles > 1) ?
+        0 :
+        NRFX_PWM_FLAG_LOOP;
+    instance->flags |= (instance->cycle_handler) ?
+        (NRFX_PWM_FLAG_SIGNAL_END_SEQ0 | NRFX_PWM_FLAG_SIGNAL_END_SEQ0) :
+        0;
+    instance->flags |= (instance->seq_end_handler) ?
+        0 :
+        NRFX_PWM_FLAG_NO_EVT_FINISHED;
+
+    if (instance->playing) {
+        nrfx_pwm_uninit(&instance->drv_instance);
+        nrfx_pwm_init(&instance->drv_instance,
+                         &instance->config,
+                         instance->internal_handler);
+
+        play_current_config(instance);
+    }
     return (0);
 }
 
 /**
  * Enable the PWM with specified duty cycle.
  *
- * This duty cycle is a fractional duty cycle where 0 == off, 65535=on,
- * and any value in between is on for fraction clocks and off
- * for 65535-fraction clocks.
+ * This duty cycle is a fractional duty cycle where 0 == off,
+ * base_freq / pwm_freq == on and any value in between is on for fraction clocks
+ * and off for (base_freq / pwm_freq)-fraction clocks.
  *
  * @param dev The device to configure.
  * @param cnum The channel number. The channel should be in use.
@@ -262,8 +451,15 @@ nrf52_pwm_enable_duty_cycle(struct pwm_dev *dev, uint8_t cnum, uint16_t fraction
     nrfx_pwm_config_t *config;
     bool inverted;
 
+    if (!instances[inst_id].in_use) {
+        return (-EINVAL);
+    }
+
     config = &instances[inst_id].config;
-    assert(config->output_pins[cnum] != NRFX_PWM_PIN_NOT_USED);
+    if (config->output_pins[cnum] == NRFX_PWM_PIN_NOT_USED) {
+        return (-EINVAL);
+    }
+
     inverted = ((config->output_pins[cnum] & NRFX_PWM_PIN_INVERTED) != 0);
 
     ((uint16_t *) &instances[inst_id].duty_cycles)[cnum] =
@@ -272,7 +468,7 @@ nrf52_pwm_enable_duty_cycle(struct pwm_dev *dev, uint8_t cnum, uint16_t fraction
     if (!instances[inst_id].playing) {
         stat = nrfx_pwm_init(&instances[inst_id].drv_instance,
                                 &instances[inst_id].config,
-                                NULL);
+                                instances[inst_id].internal_handler);
         if (stat != NRFX_SUCCESS) {
             return (stat);
         }
@@ -294,12 +490,17 @@ static int
 nrf52_pwm_disable(struct pwm_dev *dev, uint8_t cnum)
 {
     int inst_id = dev->pwm_instance_id;
+    if (!instances[inst_id].in_use) {
+        return (-EINVAL);
+    }
+
     instances[inst_id].config.output_pins[cnum] = NRFX_PWM_PIN_NOT_USED;
 
     nrfx_pwm_uninit(&instances[inst_id].drv_instance);
     nrfx_pwm_init(&instances[inst_id].drv_instance,
-                     &instances[inst_id].config,
-                     NULL);
+                  &instances[inst_id].config,
+                  instances[inst_id].internal_handler);
+
     /* check if there is any channel in use */
     if (instances[inst_id].playing) {
         play_current_config(&instances[inst_id]);
@@ -321,6 +522,10 @@ static int
 nrf52_pwm_set_frequency(struct pwm_dev *dev, uint32_t freq_hz)
 {
     int inst_id = dev->pwm_instance_id;
+    if (!instances[inst_id].in_use) {
+        return (-EINVAL);
+    }
+
     nrf_pwm_clk_t *frq = &instances[inst_id].config.base_clock;
     uint16_t *top_value = &instances[inst_id].config.top_value;
     uint32_t base_freq_val;
@@ -359,8 +564,8 @@ nrf52_pwm_set_frequency(struct pwm_dev *dev, uint32_t freq_hz)
     if (instances[inst_id].playing) {
         nrfx_pwm_uninit(&instances[inst_id].drv_instance);
         nrfx_pwm_init(&instances[inst_id].drv_instance,
-                         &instances[inst_id].config,
-                         NULL);
+                      &instances[inst_id].config,
+                      instances[inst_id].internal_handler);
 
         play_current_config(&instances[inst_id]);
     }
@@ -379,7 +584,9 @@ static int
 nrf52_pwm_get_clock_freq(struct pwm_dev *dev)
 {
     int inst_id = dev->pwm_instance_id;
-    assert(instances[inst_id].in_use);
+    if (!instances[inst_id].in_use) {
+        return (-EINVAL);
+    }
 
     switch (instances[inst_id].config.base_clock) {
     case NRF_PWM_CLK_16MHz:
@@ -403,6 +610,25 @@ nrf52_pwm_get_clock_freq(struct pwm_dev *dev)
 }
 
 /**
+ * Get the top value for the cycle counter, i.e. the value which sets
+ * the duty cycle to 100%.
+ *
+ * @param dev
+ *
+ * @return value in cycles on success, negative on error.
+ */
+int
+nrf52_pwm_get_top_value(struct pwm_dev *dev)
+{
+    int inst_id = dev->pwm_instance_id;
+    if (!instances[inst_id].in_use) {
+        return (-EINVAL);
+    }
+
+    return (instances[inst_id].config.top_value);
+}
+
+/**
  * Get the resolution of the PWM in bits.
  *
  * @param dev The device to query.
@@ -413,7 +639,9 @@ static int
 nrf52_pwm_get_resolution_bits(struct pwm_dev *dev)
 {
     int inst_id = dev->pwm_instance_id;
-    assert(instances[inst_id].in_use);
+    if (!instances[inst_id].in_use) {
+        return (-EINVAL);
+    }
 
     uint16_t top_val = instances[inst_id].config.top_value;
     if (top_val >= 32768)
@@ -463,11 +691,11 @@ nrf52_pwm_dev_init(struct os_dev *odev, void *arg)
     struct pwm_dev *dev;
     struct pwm_driver_funcs *pwm_funcs;
 
+    assert(odev);
     dev = (struct pwm_dev *) odev;
 
-    assert(arg != NULL);
+    assert(arg);
     dev->pwm_instance_id = *((int*) arg);
-    instances[dev->pwm_instance_id].in_use = true;
 
     dev->pwm_chan_count = NRF_PWM_CHANNEL_COUNT;
     os_mutex_init(&dev->pwm_lock);
@@ -479,8 +707,35 @@ nrf52_pwm_dev_init(struct os_dev *odev, void *arg)
     pwm_funcs->pwm_enable_duty_cycle = nrf52_pwm_enable_duty_cycle;
     pwm_funcs->pwm_set_frequency = nrf52_pwm_set_frequency;
     pwm_funcs->pwm_get_clock_freq = nrf52_pwm_get_clock_freq;
+    pwm_funcs->pwm_get_top_value = nrf52_pwm_get_top_value;
     pwm_funcs->pwm_get_resolution_bits = nrf52_pwm_get_resolution_bits;
     pwm_funcs->pwm_disable = nrf52_pwm_disable;
+
+    switch (dev->pwm_instance_id) {
+#if MYNEWT_VAL(PWM_0)
+    case 0:
+        NVIC_SetVector(PWM0_IRQn, (uint32_t) nrfx_pwm_0_irq_handler);
+        break;
+#endif
+
+#if MYNEWT_VAL(PWM_1)
+    case 1:
+        NVIC_SetVector(PWM1_IRQn, (uint32_t) nrfx_pwm_1_irq_handler);
+        break;
+#endif
+
+#if MYNEWT_VAL(PWM_2)
+    case 2:
+        NVIC_SetVector(PWM2_IRQn, (uint32_t) nrfx_pwm_2_irq_handler);
+        break;
+#endif
+
+#if MYNEWT_VAL(PWM_3)
+    case 3:
+        NVIC_SetVector(PWM3_IRQn, (uint32_t) nrfx_pwm_3_irq_handler);
+        break;
+#endif
+    }
 
     return (0);
 }

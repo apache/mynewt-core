@@ -22,8 +22,7 @@
 
 #include <inttypes.h>
 #include "log/log.h"
-#include "os/queue.h"
-#include "os/os_mempool.h"
+#include "os/mynewt.h"
 #include "nffs/nffs.h"
 #include "fs/fs.h"
 #include "crc/crc16.h"

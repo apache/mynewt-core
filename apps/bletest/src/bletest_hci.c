@@ -19,9 +19,8 @@
 
 #include <assert.h>
 #include <string.h>
-#include "os/os.h"
+#include "os/mynewt.h"
 #include "bsp/bsp.h"
-#include "syscfg/syscfg.h"
 
 /* BLE */
 #include "nimble/ble.h"

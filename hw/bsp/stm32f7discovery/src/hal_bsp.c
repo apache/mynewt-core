@@ -18,18 +18,17 @@
  */
 #include <assert.h>
 
-#include <syscfg/syscfg.h>
+#include "os/mynewt.h"
 
-#include <os/os_dev.h>
-#include <os/os_cputime.h>
 #if MYNEWT_VAL(UART_0)
 #include <uart/uart.h>
 #include <uart_hal/uart_hal.h>
 #endif
 
 #include <hal/hal_bsp.h>
-#include <hal/hal_gpio.h>
 #include <hal/hal_flash_int.h>
+#include <hal/hal_gpio.h>
+#include <hal/hal_system.h>
 #include <hal/hal_timer.h>
 
 #include <stm32f746xx.h>
@@ -132,6 +131,8 @@ hal_bsp_init(void)
     int rc;
 
     (void)rc;
+
+    hal_system_clock_start();
 
 #if MYNEWT_VAL(UART_0)
     rc = os_dev_create((struct os_dev *) &hal_uart0, "uart0",

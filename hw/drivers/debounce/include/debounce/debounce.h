@@ -36,13 +36,13 @@
  * influence the minimum time a signal is required to remain stable for it
  * to be detected.
  *
- * The API relies on a structure of type \c debounce_t to remain valid for the
+ * The API relies on a structure of type \c debounce_pin_t to remain valid for the
  * lifetime of debouncing a pin. The structure can be dynamically allocated or
  * statically defined.
  *
  * // ---------------------- Example begin --------------------------
  *
- * void buttonPressed(debounce_t *d) {
+ * void buttonPressed(debounce_pin_t *d) {
  *     if (debounce_state(d)) {
  *         ... code to process button press event
  *     } else {
@@ -50,7 +50,7 @@
  *     }
  * }
  *
- * debounce_t button;
+ * debounce_pin_t button;
  *
  * int main(int argc, char *argv[]) {
  *     ...

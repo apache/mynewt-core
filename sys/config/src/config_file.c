@@ -17,14 +17,13 @@
  * under the License.
  */
 
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 
 #if MYNEWT_VAL(CONFIG_NFFS)
 
 #include <string.h>
 #include <assert.h>
 
-#include <os/os.h>
 #include <fs/fs.h>
 
 #include "config/config.h"

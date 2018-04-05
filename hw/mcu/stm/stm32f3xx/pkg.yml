@@ -27,7 +27,13 @@ pkg.keywords:
 
 pkg.type: sdk
 
+pkg.ign_files:
+    - ".*template.*"
+
+pkg.ign_dirs:
+    - "Device"
+
 pkg.deps:
     - hw/hal
-    - hw/mcu/stm/stm32f3xx
+    - hw/mcu/stm/stm32_common
     - hw/cmsis-core

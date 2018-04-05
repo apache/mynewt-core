@@ -20,9 +20,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "sysinit/sysinit.h"
-#include "syscfg/syscfg.h"
-#include "os/os.h"
+#include "os/mynewt.h"
 #include "base64/base64.h"
 
 #include "config/config.h"
@@ -104,7 +102,7 @@ conf_parse_name(char *name, int *name_argc, char *name_argv[])
     return 0;
 }
 
-static struct conf_handler *
+struct conf_handler *
 conf_parse_and_lookup(char *name, int *name_argc, char *name_argv[])
 {
     int rc;

@@ -17,14 +17,11 @@
  * under the License.
  */
 
-#include "syscfg/syscfg.h"
-#include "sysflash/sysflash.h"
+#include "os/mynewt.h"
 
 #if MYNEWT_VAL(LOG_FCB)
 
 #include <string.h>
-
-#include "os/os.h"
 
 #include "flash_map/flash_map.h"
 #include "fcb/fcb.h"
@@ -32,19 +29,20 @@
 
 static struct flash_area sector;
 
+static int log_fcb_rtr_erase(struct log *log, void *arg);
+
 static int
-log_fcb_append(struct log *log, void *buf, int len)
+log_fcb_start_append(struct log *log, int len, struct fcb_entry *loc)
 {
     struct fcb *fcb;
-    struct fcb_entry loc;
     struct fcb_log *fcb_log;
-    int rc;
+    int rc = 0;
 
     fcb_log = (struct fcb_log *)log->l_arg;
     fcb = &fcb_log->fl_fcb;
 
     while (1) {
-        rc = fcb_append(fcb, len, &loc);
+        rc = fcb_append(fcb, len, loc);
         if (rc == 0) {
             break;
         }
@@ -53,8 +51,8 @@ log_fcb_append(struct log *log, void *buf, int len)
             goto err;
         }
 
-        if (log->l_log->log_rtr_erase && fcb_log->fl_entries) {
-            rc = log->l_log->log_rtr_erase(log, fcb_log);
+        if (fcb_log->fl_entries) {
+            rc = log_fcb_rtr_erase(log, fcb_log);
             if (rc) {
                 goto err;
             }
@@ -67,9 +65,72 @@ log_fcb_append(struct log *log, void *buf, int len)
         }
     }
 
+err:
+    return (rc);
+}
+
+static int
+log_fcb_append(struct log *log, void *buf, int len)
+{
+    struct fcb *fcb;
+    struct fcb_entry loc;
+    struct fcb_log *fcb_log;
+    int rc;
+
+    fcb_log = (struct fcb_log *)log->l_arg;
+    fcb = &fcb_log->fl_fcb;
+
+    rc = log_fcb_start_append(log, len, &loc);
+    if (rc) {
+        goto err;
+    }
+
     rc = flash_area_write(loc.fe_area, loc.fe_data_off, buf, len);
     if (rc) {
         goto err;
+    }
+
+    rc = fcb_append_finish(fcb, &loc);
+
+err:
+    return (rc);
+}
+
+static int
+log_fcb_append_mbuf(struct log *log, struct os_mbuf *om)
+{
+    struct fcb *fcb;
+    struct fcb_entry loc;
+    struct fcb_log *fcb_log;
+    struct os_mbuf *om_tmp;
+    int len;
+    int rc;
+
+    fcb_log = (struct fcb_log *)log->l_arg;
+    fcb = &fcb_log->fl_fcb;
+
+    len = 0;
+
+    om_tmp = om;
+    while (om_tmp) {
+        len += om_tmp->om_len;
+        om_tmp = SLIST_NEXT(om_tmp, om_next);
+    }
+
+    rc = log_fcb_start_append(log, len, &loc);
+    if (rc) {
+        goto err;
+    }
+
+    while (om) {
+        rc = flash_area_write(loc.fe_area, loc.fe_data_off, om->om_data,
+                              om->om_len);
+        if (rc) {
+            goto err;
+        }
+
+        loc.fe_data_off += om->om_len;
+        om = SLIST_NEXT(om, om_next);
     }
 
     rc = fcb_append_finish(fcb, &loc);
@@ -276,9 +337,9 @@ const struct log_handler log_fcb_handler = {
     .log_type = LOG_TYPE_STORAGE,
     .log_read = log_fcb_read,
     .log_append = log_fcb_append,
+    .log_append_mbuf = log_fcb_append_mbuf,
     .log_walk = log_fcb_walk,
     .log_flush = log_fcb_flush,
-    .log_rtr_erase = log_fcb_rtr_erase,
 };
 
 #endif

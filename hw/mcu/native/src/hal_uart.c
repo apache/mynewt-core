@@ -17,10 +17,7 @@
  * under the License.
  */
 
-#include <syscfg/syscfg.h>
-
-#include "defs/error.h"
-#include "os/os.h"
+#include "os/mynewt.h"
 #include "hal/hal_uart.h"
 #include "bsp/bsp.h"
 

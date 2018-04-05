@@ -18,7 +18,7 @@
  */
 
 #include <hal/hal_system.h>
-#include "os/os.h"
+#include "os/mynewt.h"
 #include "os_priv.h"
 
 void

@@ -16,12 +16,11 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include "test_oic.h"
 
-#include <os/os.h>
+#include "os/mynewt.h"
 #include <oic/oc_api.h>
-
 #include <mn_socket/mn_socket.h>
+#include "test_oic.h"
 
 #define OIC_TAPP_PRIO       9
 #define OIC_TAPP_STACK_SIZE OS_STACK_ALIGN(1024)

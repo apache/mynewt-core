@@ -16,7 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include <syscfg/syscfg.h>
+
+#include "os/mynewt.h"
 
 #if MYNEWT_VAL(LWIP_CLI)
 #include <string.h>

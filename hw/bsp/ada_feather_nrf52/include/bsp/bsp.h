@@ -22,7 +22,7 @@
 
 #include <inttypes.h>
 
-#include <syscfg/syscfg.h>
+#include "os/mynewt.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -40,8 +40,9 @@ extern uint8_t _ram_start;
 #define RAM_SIZE        0x10000
 
 /* LED pins */
-#define LED_BLINK_PIN   (17)
+#define LED_1           (17)
 #define LED_2           (19)
+#define LED_BLINK_PIN   (LED_1)
 
 #ifdef __cplusplus
 }

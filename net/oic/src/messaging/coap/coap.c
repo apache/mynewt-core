@@ -35,7 +35,7 @@
 #include <string.h>
 #include <assert.h>
 
-#include <syscfg/syscfg.h>
+#include "os/mynewt.h"
 
 #include "oic/port/mynewt/config.h"
 #include "oic/messaging/coap/coap.h"

@@ -21,9 +21,7 @@
 #define __SENSOR_H__
 
 #include <string.h>
-#include "os/os.h"
-#include "os/os_dev.h"
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 
 #if MYNEWT_VAL(SENSOR_OIC)
 #include "oic/oc_ri.h"

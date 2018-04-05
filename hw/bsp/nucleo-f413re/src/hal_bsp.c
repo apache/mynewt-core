@@ -16,11 +16,11 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 #include <assert.h>
 
-#include <syscfg/syscfg.h>
+#include "os/mynewt.h"
 
-#include <os/os_dev.h>
 #if MYNEWT_VAL(UART_0)
 #include <uart/uart.h>
 #include <uart_hal/uart_hal.h>
@@ -32,6 +32,7 @@
 #include <hal/hal_timer.h>
 
 #include <stm32f4xx_hal_gpio_ex.h>
+#include "mcu/stm32_hal.h"
 #include <mcu/stm32f4_bsp.h>
 #include "mcu/stm32f4xx_mynewt_hal.h"
 #include "hal/hal_i2c.h"
@@ -75,7 +76,7 @@ static struct stm32f4_hal_i2c_cfg i2c_cfg0 = {
  * NOTE: Our HAL expects that the SS pin, if used, is treated as a gpio line
  * and is handled outside the SPI routines.
  */
-static const struct stm32f4_hal_spi_cfg os_bsp_spi0m_cfg = {
+static const struct stm32_hal_spi_cfg os_bsp_spi0m_cfg = {
     .sck_pin      = MCU_GPIO_PORTA(5),
     .mosi_pin     = MCU_GPIO_PORTA(7),
     .miso_pin     = MCU_GPIO_PORTA(6),
@@ -84,7 +85,7 @@ static const struct stm32f4_hal_spi_cfg os_bsp_spi0m_cfg = {
 #endif
 
 #if MYNEWT_VAL(SPI_0_SLAVE)
-static const struct stm32f4_hal_spi_cfg os_bsp_spi0s_cfg = {
+static const struct stm32_hal_spi_cfg os_bsp_spi0s_cfg = {
     .sck_pin      = MCU_GPIO_PORTA(5),
     .mosi_pin     = MCU_GPIO_PORTA(7),
     .miso_pin     = MCU_GPIO_PORTA(6),

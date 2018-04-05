@@ -17,13 +17,11 @@
  * under the License.
  */
 
-#include <syscfg/syscfg.h>
+#include "os/mynewt.h"
 
 #include <hal/hal_gpio.h>
 #include <hal/hal_timer.h>
-#include <bsp/cmsis_nvic.h>
-
-#include <os/os_cputime.h>
+#include <mcu/cmsis_nvic.h>
 
 #if MYNEWT_VAL(MCU_STM32F4)
 #include <bsp/stm32f4xx_hal_conf.h>

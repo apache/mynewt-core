@@ -19,7 +19,7 @@
 
 #include <string.h>
 
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 
 #if MYNEWT_VAL(BOOTUTIL_SIGN_EC)
 #include "bootutil/sign_key.h"

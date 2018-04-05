@@ -20,9 +20,8 @@
 #ifndef H_OS_TEST_PRIV_
 #define H_OS_TEST_PRIV_
 
-#include "sysinit/sysinit.h"
+#include "os/mynewt.h"
 #include "testutil/testutil.h"
-#include "os/os.h"
 #include "os_test_priv.h"
 
 #include "callout_test.h"

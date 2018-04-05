@@ -21,8 +21,7 @@
 #define _MGMT_MGMT_H_
 
 #include <inttypes.h>
-
-#include <os/queue.h>
+#include "os/mynewt.h"
 
 #ifdef __cplusplus
 extern "C" {

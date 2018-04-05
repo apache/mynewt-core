@@ -21,12 +21,9 @@
 #include <string.h>
 #include <stdint.h>
 
-#include <syscfg/syscfg.h>
+#include "os/mynewt.h"
 
 #if (MYNEWT_VAL(OC_TRANSPORT_IP) == 1) && (MYNEWT_VAL(OC_TRANSPORT_IPV4) == 1)
-#include <os/os.h>
-#include <os/endian.h>
-
 #include <log/log.h>
 #include <mn_socket/mn_socket.h>
 #include <stats/stats.h>

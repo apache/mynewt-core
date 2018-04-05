@@ -24,7 +24,6 @@
 #include "stm32f4xx_hal_dma.h"
 #include "stm32f4xx_hal_gpio.h"
 #include "stm32f4xx_hal_i2c.h"
-#include "stm32f4xx_hal_spi.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -57,14 +56,6 @@ struct stm32f4_hal_i2c_cfg {
     uint8_t hic_pin_af;
     uint8_t hic_10bit;
     uint32_t hic_speed;
-};
-
-struct stm32f4_hal_spi_cfg {
-    int ss_pin;					/* for slave mode */
-    int sck_pin;
-    int miso_pin;
-    int mosi_pin;
-    int irq_prio;
 };
 
 #ifdef __cplusplus

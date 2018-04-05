@@ -20,8 +20,7 @@
 #ifndef __BMA253_H__
 #define __BMA253_H__
 
-#include "os/os.h"
-#include "os/os_dev.h"
+#include "os/mynewt.h"
 #include "sensor/sensor.h"
 #include "sensor/accel.h"
 #include "sensor/temperature.h"
@@ -129,6 +128,12 @@ enum bma253_sleep_duration {
     BMA253_SLEEP_DURATION_1_S    = 10,
 };
 
+/* Read moe for the sensor */
+enum bma253_read_mode {
+    BMA253_READ_M_POLL = 0,
+    BMA253_READ_M_STREAM = 1,
+};
+
 /* Default configuration values to use with the device */
 struct bma253_cfg {
     /* Accelerometer configuration */
@@ -162,6 +167,8 @@ struct bma253_cfg {
     /* Power management configuration */
     enum bma253_power_mode power_mode;
     enum bma253_sleep_duration sleep_duration;
+    /* Select read mode */
+    enum bma253_read_mode read_mode;
     /* Applicable sensor types supported */
     sensor_type_t sensor_mask;
 };
@@ -305,21 +312,10 @@ bma253_write_offsets(struct bma253 * bma253,
                      float offset_z_g);
 
 /**
- * Callback for handling accelerometer sensor data.
- *
- * @param The opaque pointer passed in to the stream read function.
- * @param The accelerometer data provided by the sensor.
- *
- * @return true to stop streaming data, false to continue.
- */
-typedef bool
-(*bma253_stream_read_func_t)(void *,
-                             struct sensor_accel_data *);
-
-/**
  * Provide a continuous stream of accelerometer readings.
  *
- * @param The device object.
+ * @param The sensor ptr
+ * @param The sensor type
  * @param The function pointer to invoke for each accelerometer reading.
  * @param The opaque pointer that will be passed in to the function.
  * @param If non-zero, how long the stream should run in milliseconds.
@@ -327,10 +323,29 @@ typedef bool
  * @return 0 on success, non-zero on failure.
  */
 int
-bma253_stream_read(struct bma253 * bma253,
-                   bma253_stream_read_func_t read_func,
-                   void * read_arg,
+bma253_stream_read(struct sensor *sensor,
+                   sensor_type_t sensor_type,
+                   sensor_data_func_t read_func,
+                   void *read_arg,
                    uint32_t time_ms);
+
+/**
+ * Do accelerometer polling reads
+ *
+ * @param The sensor ptr
+ * @param The sensor type
+ * @param The function pointer to invoke for each accelerometer reading.
+ * @param The opaque pointer that will be passed in to the function.
+ * @param If non-zero, how long the stream should run in milliseconds.
+ *
+ * @return 0 on success, non-zero on failure.
+ */
+int
+bma253_poll_read(struct sensor * sensor,
+                 sensor_type_t sensor_type,
+                 sensor_data_func_t data_func,
+                 void * data_arg,
+                 uint32_t timeout);
 
 /**
  * Get the current temperature at the device.

@@ -16,9 +16,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include "sysinit/sysinit.h"
+
+#include "os/mynewt.h"
 #include "testutil/testutil.h"
-#include "os/os.h"
 #include "os_test_priv.h"
 
 /* Task 1 for sending */

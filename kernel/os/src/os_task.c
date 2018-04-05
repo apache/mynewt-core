@@ -17,14 +17,10 @@
  * under the License.
  */
 
-
-#include "os/os.h"
-#include "os_priv.h"
-#include "os/os_trace_api.h"
-
 #include <assert.h>
 #include <string.h>
-
+#include "os/mynewt.h"
+#include "os_priv.h"
 
 uint8_t g_task_id;
 

@@ -18,10 +18,10 @@
  */
 
 #include <assert.h>
+#include "os/mynewt.h"
 #include "flash_map/flash_map.h"
 #include "hal/hal_bsp.h"
 #include "hal/hal_flash_int.h"
-#include "os/os_malloc.h"
 #include "nffs/nffs.h"
 #include "nffs_priv.h"
 

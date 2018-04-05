@@ -19,9 +19,7 @@
 #include <assert.h>
 #include <stddef.h>
 #include <inttypes.h>
-
-#include <syscfg/syscfg.h>
-
+#include "os/mynewt.h"
 #include <uart/uart.h>
 
 /*
@@ -71,6 +69,10 @@ boot_serial_uart_open(void)
 void
 boot_serial_uart_close(void)
 {
+    os_dev_close(&bs_uart->ud_dev);
+    bs_uart_rx.head = 0;
+    bs_uart_rx.tail = 0;
+    bs_uart_tx.cnt = 0;
 }
 
 static int

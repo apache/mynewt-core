@@ -19,8 +19,8 @@
 #ifndef __SYS_CONFIG_H_
 #define __SYS_CONFIG_H_
 
-#include <os/queue.h>
 #include <stdint.h>
+#include "os/mynewt.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -101,6 +101,15 @@ int conf_load(void);
  * @return 0 on success, non-zero on failure.
  */
 int conf_save(void);
+
+/**
+ * Save currently running configuration for configuration subtree.
+ *
+ * @param name Name of the configuration subtree.
+ *
+ * @return 0 on success, non-zero on failure.
+ */
+int conf_save_tree(char *name);
 
 /**
  * Write a single configuration value to persisted storage (if it has

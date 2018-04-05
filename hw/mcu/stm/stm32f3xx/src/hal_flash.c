@@ -26,9 +26,8 @@
 /*
  * Flash is organized in FLASH_PAGE_SIZE blocks, which for the
  * STM32F3 family is 2KB.
- * Split entire flash into 16KB sectors.
  * */
-#define HAL_FLASH_SECTOR_SIZE   (FLASH_PAGE_SIZE * 8)
+#define HAL_FLASH_SECTOR_SIZE   FLASH_PAGE_SIZE
 #define HAL_FLASH_SIZE          ((*((uint16_t*)FLASH_SIZE_DATA_REGISTER)) * 1024U)
 
 
@@ -92,7 +91,7 @@ stm32f3_flash_erase_sector(const struct hal_flash *dev, uint32_t sector_address)
 
     erase.TypeErase = FLASH_TYPEERASE_PAGES;
     erase.PageAddress = sector_address;
-    erase.NbPages = HAL_FLASH_SECTOR_SIZE / FLASH_PAGE_SIZE;
+    erase.NbPages = 1;
 
     HAL_FLASH_Unlock();
     if (HAL_OK == HAL_FLASHEx_Erase(&erase, &errorPage)) {
@@ -127,7 +126,7 @@ stm32f3_flash_dev()
         stm32f3_flash_dev_.hf_base_addr = FLASH_BASE;
         stm32f3_flash_dev_.hf_size = HAL_FLASH_SIZE;
         stm32f3_flash_dev_.hf_sector_cnt = HAL_FLASH_SIZE / HAL_FLASH_SECTOR_SIZE;
-        stm32f3_flash_dev_.hf_align = FLASH_PAGE_SIZE;
+        stm32f3_flash_dev_.hf_align = 2;
     }
     return &stm32f3_flash_dev_;
 }

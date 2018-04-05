@@ -18,11 +18,7 @@
 #include <stddef.h>
 #include <strings.h>
 
-#include <syscfg/syscfg.h>
-
-#include <os/os_callout.h>
-#include <os/os_mempool.h>
-#include <os/queue.h>
+#include "os/mynewt.h"
 
 #include "oic/port/mynewt/config.h"
 
@@ -228,8 +224,6 @@ oc_ri_mem_init(void)
 void
 oc_ri_init(void)
 {
-    oc_random_init(0); // Fix: allow user to seed RNG.
-
 #ifdef OC_CLIENT
     SLIST_INIT(&oc_client_cbs);
 #endif

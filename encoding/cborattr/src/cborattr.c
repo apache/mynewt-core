@@ -17,7 +17,7 @@
  * under the License.
  */
 
-#include <syscfg/syscfg.h>
+#include "os/mynewt.h"
 #include <cborattr/cborattr.h>
 #include <tinycbor/cbor.h>
 #include <tinycbor/cbor_buf_reader.h>

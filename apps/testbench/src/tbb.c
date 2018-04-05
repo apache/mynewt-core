@@ -19,7 +19,7 @@
 
 /** tbb - test bench BLE. */
 
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 
 #if MYNEWT_VAL(TESTBENCH_BLE)
 
@@ -27,9 +27,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <errno.h>
-#include "sysinit/sysinit.h"
 #include "bsp/bsp.h"
-#include "os/os.h"
 #include "bsp/bsp.h"
 #include "hal/hal_gpio.h"
 #include "console/console.h"

@@ -18,17 +18,7 @@
 #
 
 pkg.name: net/nimble/host/services/gap
-pkg.description: Implements the GAP Service. 
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
-pkg.keywords:
-    - ble
-    - bluetooth
-    - nimble
-    - gap
-
 pkg.deps:
-    - net/nimble/host
-
-pkg.init:
-    ble_svc_gap_init: 301
+    - "@apache-mynewt-nimble/nimble/host/services/gap"

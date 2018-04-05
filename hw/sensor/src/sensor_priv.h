@@ -20,7 +20,7 @@
 #ifndef __SENSOR_PRIV_H__
 #define __SENSOR_PRIV_H__
 
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 
 #if MYNEWT_VAL(SENSOR_CLI)
 int sensor_shell_register(void);

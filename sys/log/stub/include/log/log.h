@@ -20,7 +20,7 @@
 #define __SYS_LOG_STUB_H__
 
 #include <inttypes.h>
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 #include "log/ignore.h"
 
 #ifdef __cplusplus

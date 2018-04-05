@@ -20,7 +20,7 @@
 #ifndef __MCU_FE310_H__
 #define __MCU_FE310_H__
 
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 
 #ifdef __cplusplus
 extern "C" {

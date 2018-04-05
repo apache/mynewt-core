@@ -19,7 +19,7 @@
 
 #include <string.h>
 #include <errno.h>
-#include "sysinit/sysinit.h"
+#include "os/mynewt.h"
 #include "console/console.h"
 #include "sensor/sensor.h"
 #include "shell/shell.h"

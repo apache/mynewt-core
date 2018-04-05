@@ -40,5 +40,48 @@ syscfg.defs:
         description: 'Set to 1 if board has complementary antenna switch'
         restrictions:
             - "!SX1272_HAS_ANT_SW"
-        value: 1
+        value: 0
 
+    SX1272_RESET_PIN:
+        description: 'SX1272 reset pin number'
+        value:  -1
+
+    SX1272_DIO0_PIN:
+        description: 'DIO0 gpio  pin number'
+        value:  -1
+
+    SX1272_DIO1_PIN:
+        description: 'DIO1 gpio  pin number'
+        value:  -1
+
+    SX1272_DIO2_PIN:
+        description: 'DIO2 gpio  pin number'
+        value:  -1
+
+    SX1272_DIO3_PIN:
+        description: 'DIO3 gpio  pin number'
+        value:  -1
+
+    SX1272_DIO4_PIN:
+        description: 'DIO4 gpio  pin number'
+        value:  -1
+
+    SX1272_DIO5_PIN:
+        description: 'DIO5 gpio pin number'
+        value:  -1
+
+    SX1272_RXTX_PIN:
+        description: 'RxTx switch control pin number'
+        value:  -1
+
+    SX1272_N_RXTX_PIN:
+        description: 'Complement RxTx switch control pin number'
+        value:  -1
+
+    SX1272_USE_PA_BOOST:
+        description: 'Transmit path connected to PA_BOOST or RFO (0 = RFO 1 = PABOOST)'
+        value: 0
+
+    BSP_USE_HAL_SPI:
+        description: 'Use alternate spi read/write buffer routines'
+        value: 0

@@ -20,7 +20,7 @@
 #include <assert.h>
 #include <string.h>
 
-#include "os/os.h"
+#include "os/mynewt.h"
 #include "os_priv.h"
 
 struct os_callout_list g_callout_list;

@@ -24,12 +24,14 @@
 
 #include <nrfx.h>
 #include <nrf_adc.h>
+#include <nrfx_adc.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 struct nrf51_adc_dev_cfg {
+    nrfx_adc_config_t adc_cfg;
     uint16_t nadc_refmv0;	/* reference mV in AREF0 */
     uint16_t nadc_refmv1;	/* reference mV in AREF1 */
     uint16_t nadc_refmv_vdd;	/* reference mV in VDD */

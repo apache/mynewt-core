@@ -27,10 +27,10 @@
  */
 
 #include <assert.h>
-#include <os/os.h>
+#include "os/mynewt.h"
 #include "mcu/system_apollo2.h"
 #include "hal/hal_os_tick.h"
-#include "bsp/cmsis_nvic.h"
+#include "mcu/cmsis_nvic.h"
 
 #include "am_mcu_apollo.h"
 

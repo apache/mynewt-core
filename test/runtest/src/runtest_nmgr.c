@@ -17,7 +17,7 @@
  * under the License.
  */
 
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 
 #if MYNEWT_VAL(RUNTEST_NEWTMGR)
 #include <string.h>
@@ -25,7 +25,6 @@
 #include "mgmt/mgmt.h"
 #include "cborattr/cborattr.h"
 #include "console/console.h"
-#include "os/os_eventq.h"
 
 #include "testutil/testutil.h"
 

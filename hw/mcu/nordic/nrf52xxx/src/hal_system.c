@@ -68,69 +68,57 @@ void
 hal_system_clock_start(void)
 {
 #if MYNEWT_VAL(XTAL_32768) || MYNEWT_VAL(XTAL_RC) || \
-    MYNEWT_VAL(XTAL_32768_SYNTH)
-    uint32_t mask;
-#endif
+                                                 MYNEWT_VAL(XTAL_32768_SYNTH)
+    uint32_t regmsk;
+    uint32_t regval;
+    uint32_t clksrc;
+
+    regmsk = CLOCK_LFCLKSTAT_STATE_Msk | CLOCK_LFCLKSTAT_SRC_Msk;
+    regval = CLOCK_LFCLKSTAT_STATE_Running << CLOCK_LFCLKSTAT_STATE_Pos;
 
 #if MYNEWT_VAL(XTAL_32768)
+    regval |= CLOCK_LFCLKSTAT_SRC_Xtal << CLOCK_LFCLKSTAT_SRC_Pos;
+    clksrc = CLOCK_LFCLKSRC_SRC_Xtal;
+#endif
+
+#if MYNEWT_VAL(XTAL_32768_SYNTH)
+    regval |= CLOCK_LFCLKSTAT_SRC_Synth << CLOCK_LFCLKSTAT_SRC_Pos;
+    clksrc = CLOCK_LFCLKSRC_SRC_Synth;
+#endif
+
+ #if MYNEWT_VAL(XTAL_RC)
+    regval |= CLOCK_LFCLKSTAT_SRC_RC << CLOCK_LFCLKSTAT_SRC_Pos;
+    clksrc = CLOCK_LFCLKSRC_SRC_RC;
+#endif
+
+
+#if MYNEWT_VAL(XTAL_32768_SYNTH)
+    /* Must turn on HFLCK for synthesized 32768 crystal */
+    if ((NRF_CLOCK->HFCLKSTAT & CLOCK_HFCLKSTAT_STATE_Msk) !=
+                (CLOCK_HFCLKSTAT_STATE_Running << CLOCK_HFCLKSTAT_STATE_Pos)) {
+        NRF_CLOCK->EVENTS_HFCLKSTARTED = 0;
+        NRF_CLOCK->TASKS_HFCLKSTART = 1;
+        while (1) {
+            if ((NRF_CLOCK->EVENTS_HFCLKSTARTED) != 0) {
+                break;
+            }
+        }
+    }
+#endif
+
     /* Check if this clock source is already running */
-    mask = CLOCK_LFCLKSTAT_STATE_Msk | CLOCK_LFCLKSTAT_SRC_Xtal;
-    if ((NRF_CLOCK->LFCLKSTAT & mask) != mask) {
+    if ((NRF_CLOCK->LFCLKSTAT & regmsk) != regval) {
         NRF_CLOCK->TASKS_LFCLKSTOP = 1;
         NRF_CLOCK->EVENTS_LFCLKSTARTED = 0;
-        NRF_CLOCK->LFCLKSRC = CLOCK_LFCLKSRC_SRC_Xtal;
+        NRF_CLOCK->LFCLKSRC = clksrc;
         NRF_CLOCK->TASKS_LFCLKSTART = 1;
 
         /* Wait here till started! */
         while (1) {
             if (NRF_CLOCK->EVENTS_LFCLKSTARTED) {
-                if ((NRF_CLOCK->LFCLKSTAT & mask) == mask) {
+                if ((NRF_CLOCK->LFCLKSTAT & regmsk) == regval) {
                     break;
                 }
-            }
-        }
-    }
-#endif
-
-#if MYNEWT_VAL(XTAL_32768_SYNTH)
-    /* Must turn on HFLCK for synthesized 32768 crystal */
-    mask = CLOCK_LFCLKSTAT_STATE_Msk | CLOCK_LFCLKSRC_SRC_Synth;
-    if ((NRF_CLOCK->LFCLKSTAT & mask) != mask) {
-        mask = CLOCK_HFCLKSTAT_STATE_Msk | CLOCK_HFCLKSTAT_SRC_Msk;
-        if ((NRF_CLOCK->HFCLKSTAT & mask) != mask) {
-            NRF_CLOCK->EVENTS_HFCLKSTARTED = 0;
-            NRF_CLOCK->TASKS_HFCLKSTART = 1;
-            while (1) {
-                if ((NRF_CLOCK->EVENTS_HFCLKSTARTED) != 0) {
-                    break;
-                }
-            }
-        }
-
-        NRF_CLOCK->TASKS_LFCLKSTOP = 1;
-        NRF_CLOCK->EVENTS_LFCLKSTARTED = 0;
-        NRF_CLOCK->LFCLKSRC = CLOCK_LFCLKSRC_SRC_Synth;
-        NRF_CLOCK->TASKS_LFCLKSTART = 1;
-        while (1) {
-            if (NRF_CLOCK->EVENTS_LFCLKSTARTED) {
-                mask = CLOCK_LFCLKSTAT_STATE_Msk | CLOCK_LFCLKSRC_SRC_Synth;
-                if ((NRF_CLOCK->LFCLKSTAT & mask) == mask) {
-                    break;
-                }
-            }
-        }
-    }
-#endif
-#if MYNEWT_VAL(XTAL_RC)
-    NRF_CLOCK->TASKS_LFCLKSTOP = 1;
-    NRF_CLOCK->EVENTS_LFCLKSTARTED = 0;
-    NRF_CLOCK->LFCLKSRC = CLOCK_LFCLKSRC_SRC_RC;
-    NRF_CLOCK->TASKS_LFCLKSTART = 1;
-    while (1) {
-        if (NRF_CLOCK->EVENTS_LFCLKSTARTED) {
-            mask = CLOCK_LFCLKSTAT_STATE_Msk | CLOCK_LFCLKSRC_SRC_RC;
-            if ((NRF_CLOCK->LFCLKSTAT & mask) == mask) {
-                break;
             }
         }
     }

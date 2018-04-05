@@ -17,13 +17,13 @@
  * under the License.
  */
 
-#include "hal/hal_uart.h"
-#include "bsp/bsp.h"
-#include "syscfg/syscfg.h"
-#include "mcu/mips_hal.h"
-#include "mcu/pps.h"
 #include <assert.h>
 #include <stdlib.h>
+#include "os/mynewt.h"
+#include "hal/hal_uart.h"
+#include "bsp/bsp.h"
+#include "mcu/mips_hal.h"
+#include "mcu/pps.h"
 
 #include <xc.h>
 

@@ -52,7 +52,7 @@
 
 #include <stdint.h>
 
-#include <syscfg/syscfg.h>
+#include "os/mynewt.h"
 
 #include "oic/port/mynewt/config.h"
 

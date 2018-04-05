@@ -17,8 +17,7 @@
  * under the License.
  */
 
-
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 #include "console/console.h"
 #include "console/prompt.h"
 

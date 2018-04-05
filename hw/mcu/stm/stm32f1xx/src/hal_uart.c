@@ -19,7 +19,7 @@
 
 #include "hal/hal_uart.h"
 #include "hal/hal_gpio.h"
-#include "bsp/cmsis_nvic.h"
+#include "mcu/cmsis_nvic.h"
 #include "bsp/bsp.h"
 #include "stm32f1xx.h"
 #include "stm32f1xx_hal_dma.h"
@@ -233,6 +233,7 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
     struct hal_uart *u;
     const struct stm32f1_uart_cfg *cfg;
     uint32_t cr1, cr2, cr3;
+    GPIO_InitTypeDef gpio;
 
     if (port >= UART_CNT) {
         return -1;
@@ -244,6 +245,25 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
     }
     cfg = u->u_cfg;
     assert(cfg);
+
+    gpio.Mode = GPIO_MODE_AF_PP;
+    gpio.Speed = GPIO_SPEED_FREQ_HIGH;
+
+    gpio.Pull = GPIO_PULLUP;
+    hal_gpio_init_stm(cfg->suc_pin_tx, &gpio);
+    if (flow_ctl == HAL_UART_FLOW_CTL_RTS_CTS) {
+        hal_gpio_init_stm(cfg->suc_pin_rts, &gpio);
+    }
+
+    gpio.Mode = GPIO_MODE_AF_INPUT;
+    hal_gpio_init_stm(cfg->suc_pin_rx, &gpio);
+    if (flow_ctl == HAL_UART_FLOW_CTL_RTS_CTS) {
+        hal_gpio_init_stm(cfg->suc_pin_cts, &gpio);
+    }
+
+    if (cfg->suc_pin_remap_fn) {
+        cfg->suc_pin_remap_fn();
+    }
 
     /*
      * RCC
@@ -313,16 +333,9 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
         break;
     }
 
-    cr1 |= (UART_MODE_RX | UART_MODE_TX | UART_OVERSAMPLING_16);
+    cr1 |= (UART_MODE_TX_RX | UART_OVERSAMPLING_16);
 
     *cfg->suc_rcc_reg |= cfg->suc_rcc_dev;
-
-    hal_gpio_init_af(cfg->suc_pin_tx, cfg->suc_pin_af, 0, 0);
-    hal_gpio_init_af(cfg->suc_pin_rx, cfg->suc_pin_af, 0, 0);
-    if (flow_ctl == HAL_UART_FLOW_CTL_RTS_CTS) {
-        hal_gpio_init_af(cfg->suc_pin_rts, cfg->suc_pin_af, 0, 0);
-        hal_gpio_init_af(cfg->suc_pin_cts, cfg->suc_pin_af, 0, 0);
-    }
 
     u->u_regs = cfg->suc_uart;
     u->u_regs->CR3 = cr3;

@@ -16,20 +16,18 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 #include <assert.h>
 #include <stddef.h>
-#include "sysinit/sysinit.h"
-#include "syscfg/syscfg.h"
-#include "testutil/testutil.h"
-#include "os/os_test.h"
-#include "os_test_priv.h"
-
 #include <stdio.h>
 #include <setjmp.h>
 #include <signal.h>
 #include <string.h>
 #include <sys/time.h>
-#include "os/os.h"
+
+#include "os/mynewt.h"
+#include "testutil/testutil.h"
+#include "os_test_priv.h"
 
 uint32_t stack1_size;
 uint32_t stack2_size;

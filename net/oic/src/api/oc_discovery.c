@@ -14,7 +14,7 @@
 // limitations under the License.
 */
 
-#include <syscfg/syscfg.h>
+#include "os/mynewt.h"
 
 #include "oic/port/mynewt/config.h"
 #ifdef OC_CLIENT

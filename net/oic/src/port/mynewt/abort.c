@@ -17,10 +17,9 @@
  * under the License.
  */
 
-#include <syscfg/syscfg.h>
-
 #include <assert.h>
 
+#include "os/mynewt.h"
 #include "port/oc_assert.h"
 
 #ifndef abort_impl

@@ -20,8 +20,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#include <os/os.h>
-
+#include "os/mynewt.h"
 #include "config/config.h"
 #include "config_priv.h"
 
@@ -138,6 +137,23 @@ static void
 conf_store_one(char *name, char *value)
 {
     conf_save_one(name, value);
+}
+
+int
+conf_save_tree(char *name)
+{
+    int name_argc;
+    char *name_argv[CONF_MAX_DIR_DEPTH];
+    struct conf_handler *ch;
+
+    ch = conf_parse_and_lookup(name, &name_argc, name_argv);
+    if (!ch) {
+        return OS_INVALID_PARM;
+    }
+    if (ch->ch_export) {
+        return ch->ch_export(conf_store_one, CONF_EXPORT_PERSIST);
+    }
+    return OS_OK;
 }
 
 int

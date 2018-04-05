@@ -86,20 +86,6 @@ completely replaces the proprietary SoftDevice on Nordic chipsets.
 For more information on the Mynewt OS, please visit our website [here](https://mynewt.apache.org/).
 If you'd like to get started, visit the [Quick Start Guide](http://mynewt.apache.org/quick-start/).
 
-## Roadmap
-
-Mynewt is being actively developed.  Some of the features we're currently working on:
-
-* Deep sleep: Mynewt OS will coordinate peripherals and processor to put the
-  processor to sleep when all tasks are idle.
-* Sensor API
-* IP Stack
-* Support for different boards and microcontroller architectures, we're working
-  on:
-    - ESP8266
-    - Arduino Uno
-    - Arduino Mega
-
 ## Browsing
 
 If you are browsing around the source tree, and want to see some of the
@@ -203,15 +189,16 @@ pushed through https://git.apache.org/.
 ## Filing Bugs
 
 Bugs can be filed on the
-[Apache Mynewt Bug Tracker](https://issues.apache.org/jira/browse/MYNEWT).
+[Apache Mynewt Issues](https://github.com/apache/mynewt-core/issues).
+Please label the issue as a "Bug".
 
 Where possible, please include a self-contained reproduction case!
 
 ## Feature Requests
 
 Feature requests should also be filed on the
-[Apache Mynewt Bug Tracker](https://issues.apache.org/jira/browse/MYNEWT).
-Please introduce it as a ticket type "Wish."
+[Apache Mynewt Bug Tracker](https://github.com/apache/mynewt-core/issues).
+Please label the issue as a "Feature" or "Enhancement" depending on the scope.
 
 ## Writing Tests
 

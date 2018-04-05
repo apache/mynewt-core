@@ -31,6 +31,6 @@ pkg.deps:
     - net/ip
 
 pkg.cflags:
-    - -Wno-unused-but-set-variable
+    - -Wno-unused
     - -Wno-error=address
     - -DLWIP_HTTPD_STRNSTR_PRIVATE=0

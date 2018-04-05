@@ -18,8 +18,7 @@
  */
 
 #include <assert.h>
-#include "sysinit/sysinit.h"
-#include "defs/error.h"
+#include "os/mynewt.h"
 #include "bootutil/bootutil.h"
 #include "bootutil/image.h"
 #include "split/split.h"

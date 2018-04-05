@@ -17,13 +17,12 @@
  * under the License.
  */
 
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 
 #if MYNEWT_VAL(CONSOLE_UART)
 #include <ctype.h>
 #include <assert.h>
 
-#include "os/os.h"
 #include "uart/uart.h"
 #include "bsp/bsp.h"
 
@@ -138,6 +137,13 @@ uart_console_non_blocking_mode(void)
 int
 console_out(int c)
 {
+    /* Assure that there is a write cb installed; this enables to debug
+     * code that is faulting before the console was initialized.
+     */
+    if (!write_char_cb) {
+        return c;
+    }
+
     if ('\n' == c) {
         write_char_cb(uart_dev, '\r');
         console_is_midline = 0;

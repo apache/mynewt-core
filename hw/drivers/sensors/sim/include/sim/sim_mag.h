@@ -20,8 +20,7 @@
 #ifndef __SIM_MAG_H__
 #define __SIM_MAG_H__
 
-#include "os/os.h"
-#include "os/os_dev.h"
+#include "os/mynewt.h"
 
 #ifdef __cplusplus
 extern "C" {

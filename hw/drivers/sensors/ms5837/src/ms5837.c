@@ -22,16 +22,13 @@
 #include <errno.h>
 #include <string.h>
 
-#include "defs/error.h"
-#include "os/os.h"
-#include "sysinit/sysinit.h"
+#include "os/mynewt.h"
 #include "hal/hal_i2c.h"
 #include "sensor/sensor.h"
 #include "ms5837/ms5837.h"
 #include "sensor/temperature.h"
 #include "sensor/pressure.h"
 #include "ms5837_priv.h"
-#include "os/os_cputime.h"
 #include "console/console.h"
 #include "log/log.h"
 #include "stats/stats.h"
@@ -432,7 +429,8 @@ ms5837_read_eeprom(struct sensor_itf *itf, uint16_t *coeff)
     rc = ms5837_crc_check(payload, (payload[MS5837_IDX_CRC] & 0xF000) >> 12);
     if (rc) {
         rc = SYS_EINVAL;
-        MS5837_ERR("Failure in CRC, 0x%02X\n", payload[idx]);
+        MS5837_ERR("Failure in CRC, 0x%02X\n",
+                   payload[MS5837_IDX_CRC] &  0xF000 >> 12);
         STATS_INC(g_ms5837stats, eeprom_crc_errors);
         goto err;
     }

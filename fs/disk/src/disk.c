@@ -17,10 +17,10 @@
  * under the License.
  */
 
-#include <syscfg/syscfg.h>
-#include <disk/disk.h>
 #include <stdlib.h>
 #include <string.h>
+#include "os/mynewt.h"
+#include <disk/disk.h>
 
 struct disk_info {
     const char *disk_name;

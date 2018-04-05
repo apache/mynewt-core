@@ -17,11 +17,10 @@
  * under the License.
  */
 
-#include <syscfg/syscfg.h>
+#include "os/mynewt.h"
 
 #if MYNEWT_VAL(LOG_CONSOLE)
 
-#include <os/os.h>
 #include <cbmem/cbmem.h>
 #include <console/console.h>
 #include "log/log.h"
@@ -37,9 +36,8 @@ log_console_append(struct log *log, void *buf, int len)
 
     if (!console_is_midline) {
         hdr = (struct log_entry_hdr *) buf;
-        console_printf("[ts=%lussb, mod=%u level=%u] ",
-                (unsigned long) hdr->ue_ts, hdr->ue_module,
-                hdr->ue_level);
+        console_printf("[ts=%llussb, mod=%u level=%u] ",
+                hdr->ue_ts, hdr->ue_module, hdr->ue_level);
     }
 
     console_write((char *) buf + LOG_ENTRY_HDR_SIZE, len - LOG_ENTRY_HDR_SIZE);
@@ -76,7 +74,6 @@ const struct log_handler log_console_handler = {
     .log_append = log_console_append,
     .log_walk = log_console_walk,
     .log_flush = log_console_flush,
-    .log_rtr_erase = NULL,
 };
 
 #endif

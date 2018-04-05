@@ -21,9 +21,7 @@
 #include <stddef.h>
 #include <assert.h>
 
-#include <os/os_cputime.h>
-#include <syscfg/syscfg.h>
-#include <sysflash/sysflash.h>
+#include "os/mynewt.h"
 #include <flash_map/flash_map.h>
 #include <hal/hal_bsp.h>
 #include <hal/hal_flash.h>
@@ -34,7 +32,6 @@
 #include <uart/uart.h>
 #include <uart_hal/uart_hal.h>
 #endif
-#include <os/os_dev.h>
 #include <bsp/bsp.h>
 #include <env/freedom-e300-hifive1/platform.h>
 

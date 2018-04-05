@@ -20,19 +20,20 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <assert.h>
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 #include "hal/hal_bsp.h"
 #include "hal/hal_system.h"
 #include "mcu/nrf51_hal.h"
 #include "bsp/bsp.h"
-#include "os/os_dev.h"
-#include "os/os_cputime.h"
 #include "flash_map/flash_map.h"
 #include "hal/hal_flash.h"
 #include "hal/hal_spi.h"
 #include "hal/hal_i2c.h"
+
+#if MYNEWT_VAL(UART_0)
 #include "uart/uart.h"
 #include "uart_hal/uart_hal.h"
+#endif
 
 #if MYNEWT_VAL(ADC_0)
 #include <adc_nrf51/adc_nrf51.h>

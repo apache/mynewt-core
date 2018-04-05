@@ -21,8 +21,7 @@
 #include <errno.h>
 #include <limits.h>
 #include <assert.h>
-#include <os/os_time.h>
-#include "syscfg/syscfg.h"
+#include "os/mynewt.h"
 #include <hal/hal_i2c.h>
 #include <hal/hal_gpio.h>
 #include <mcu/nrf52_hal.h>
@@ -301,6 +300,7 @@ hal_i2c_master_write(uint8_t i2c_num, struct hal_i2c_master_data *pdata,
 err:
     if (regs && regs->EVENTS_ERROR) {
         rc = regs->ERRORSRC;
+        regs->TASKS_STOP = 1;
         regs->ERRORSRC = rc;
     }
     return (rc);
@@ -348,6 +348,7 @@ hal_i2c_master_read(uint8_t i2c_num, struct hal_i2c_master_data *pdata,
         while (!regs->EVENTS_RXDREADY && !regs->EVENTS_ERROR) {
             if (os_time_get() - start > timo) {
                 regs->SHORTS = TWI_SHORTS_BB_STOP_Msk;
+                regs->TASKS_STOP = 1;
                 goto err;
             }
         }
@@ -366,6 +367,7 @@ hal_i2c_master_read(uint8_t i2c_num, struct hal_i2c_master_data *pdata,
 err:
     if (regs && regs->EVENTS_ERROR) {
         rc = regs->ERRORSRC;
+        regs->TASKS_STOP = 1;
         regs->ERRORSRC = rc;
     }
     return (rc);

@@ -18,11 +18,11 @@
  */
 
 #include <stdlib.h>
+#include "os/mynewt.h"
 #include <env/freedom-e300-hifive1/platform.h>
 #include <env/encoding.h>
 #include <mcu/plic.h>
 #include <mcu/sys_clock.h>
-#include <syscfg/syscfg.h>
 
 #define PLL_DIVR(r) ((r) - 1)
 #define PLL_MULF(f) ((f) / 2 - 1)

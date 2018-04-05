@@ -17,7 +17,7 @@
  * under the License.
  */
 
-#include "os/os_cputime.h"
+#include "os/mynewt.h"
 
 /**
  * This module implements cputime functionality for timers for which:

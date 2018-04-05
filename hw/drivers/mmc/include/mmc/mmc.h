@@ -20,7 +20,7 @@
 #ifndef __MMC_H__
 #define __MMC_H__
 
-#include <os/os_dev.h>
+#include "os/mynewt.h"
 #include <disk/disk.h>
 
 #ifdef __cplusplus

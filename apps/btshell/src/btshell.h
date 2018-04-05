@@ -21,10 +21,10 @@
 #define H_BTSHELL_PRIV_
 
 #include <inttypes.h>
+#include "os/mynewt.h"
 #include "nimble/ble.h"
 #include "nimble/nimble_opt.h"
 #include "log/log.h"
-#include "os/queue.h"
 
 #include "host/ble_gatt.h"
 #include "host/ble_gap.h"
@@ -155,7 +155,7 @@ int btshell_sec_restart(uint16_t conn_handle, uint8_t *ltk, uint16_t ediv,
 int btshell_tx_start(uint16_t handle, uint16_t len, uint16_t rate,
                      uint16_t num);
 int btshell_rssi(uint16_t conn_handle, int8_t *out_rssi);
-int btshell_l2cap_create_srv(uint16_t psm);
+int btshell_l2cap_create_srv(uint16_t psm, int accept_response);
 int btshell_l2cap_connect(uint16_t conn, uint16_t psm);
 int btshell_l2cap_disconnect(uint16_t conn, uint16_t idx);
 int btshell_l2cap_send(uint16_t conn, uint16_t idx, uint16_t bytes);

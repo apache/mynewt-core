@@ -18,7 +18,7 @@
  */
 #include <string.h>
 
-#include <os/os.h>
+#include "os/mynewt.h"
 #include <tinycbor/cbor.h>
 #include "mgmt/mgmt.h"
 

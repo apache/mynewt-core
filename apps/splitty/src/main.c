@@ -16,8 +16,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include "sysinit/sysinit.h"
-#include <os/os.h>
+
+#include <assert.h>
+#include <string.h>
+#include "os/mynewt.h"
 #include <bsp/bsp.h>
 #include <hal/hal_gpio.h>
 #include <hal/hal_flash.h>
@@ -32,10 +34,7 @@
 #include <bootutil/image.h>
 #include <bootutil/bootutil.h>
 #include <imgmgr/imgmgr.h>
-#include <assert.h>
-#include <string.h>
 #include <reboot/log_reboot.h>
-#include <os/os_time.h>
 #include <id/id.h>
 
 #ifdef ARCH_sim
