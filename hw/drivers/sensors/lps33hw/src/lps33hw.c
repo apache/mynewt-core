@@ -1066,3 +1066,11 @@ lps33hw_sensor_get_config(struct sensor *sensor, sensor_type_t type,
 
     return 0;
 }
+
+static int 
+lps33hw_sensor_set_config(struct sensor *sensor, void *cfg)
+{
+    struct lps33hw* lps33hw = (struct lps33hw *)SENSOR_GET_DEVICE(sensor);
+
+    return lps33hw_config(lps33hw, (struct lps33hw_cfg *)cfg);
+}
