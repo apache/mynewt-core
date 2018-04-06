@@ -713,6 +713,229 @@ err:
 }
 
 /**
+ * Sets the interrupt push-pull/open-drain selection
+ *
+ * @param The sensor interface
+ * @param interrupt setting (0 = push-pull, 1 = open-drain)
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+lis2dw12_set_int_pp_od(struct sensor_itf *itf, uint8_t mode)
+{
+    int rc;
+    uint8_t reg;
+
+    rc = lis2dw12_read8(itf, LIS2DW12_REG_CTRL_REG3, &reg);
+    if (rc) {
+        return rc;
+    }
+
+    reg &= ~LIS2DW12_CTRL_REG3_PP_OD;
+    reg |= mode ? LIS2DW12_CTRL_REG3_PP_OD : 0;
+    
+    return lis2dw12_write8(itf, LIS2DW12_REG_CTRL_REG3, reg);
+}
+
+/**
+ * Gets the interrupt push-pull/open-drain selection
+ *
+ * @param The sensor interface
+ * @param ptr to store setting (0 = push-pull, 1 = open-drain)
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+lis2dw12_get_int_pp_od(struct sensor_itf *itf, uint8_t *mode)
+{
+    int rc;
+    uint8_t reg;
+
+    rc = lis2dw12_read8(itf, LIS2DW12_REG_CTRL_REG3, &reg);
+    if (rc) {
+        return rc;
+    }
+
+    *mode = (reg & LIS2DW12_CTRL_REG3_PP_OD) ? 1 : 0;
+
+    return 0;
+}
+
+/**
+ * Sets whether latched interrupts are enabled
+ *
+ * @param The sensor interface
+ * @param value to set (0 = not latched, 1 = latched)
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+lis2dw12_set_latched_int(struct sensor_itf *itf, uint8_t en)
+{
+    int rc;
+    uint8_t reg;
+
+    rc = lis2dw12_read8(itf, LIS2DW12_REG_CTRL_REG3, &reg);
+    if (rc) {
+        return rc;
+    }
+
+    reg &= ~LIS2DW12_CTRL_REG3_LIR;
+    reg |= en ? LIS2DW12_CTRL_REG3_LIR : 0;
+    
+    return lis2dw12_write8(itf, LIS2DW12_REG_CTRL_REG3, reg);
+
+}
+
+/**
+ * Gets whether latched interrupts are enabled
+ *
+ * @param The sensor interface
+ * @param ptr to store value (0 = not latched, 1 = latched)
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+lis2dw12_get_latched_int(struct sensor_itf *itf, uint8_t *en)
+{
+    int rc;
+    uint8_t reg;
+
+    rc = lis2dw12_read8(itf, LIS2DW12_REG_CTRL_REG3, &reg);
+    if (rc) {
+        return rc;
+    }
+
+    *en = (reg & LIS2DW12_CTRL_REG3_LIR) ? 1 : 0;
+
+    return 0;
+}
+
+/**
+ * Sets whether interrupts are active high or low
+ *
+ * @param The sensor interface
+ * @param value to set (0 = active high, 1 = active low)
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+lis2dw12_set_int_active(struct sensor_itf *itf, uint8_t low)
+{
+    int rc;
+    uint8_t reg;
+
+    rc = lis2dw12_read8(itf, LIS2DW12_REG_CTRL_REG3, &reg);
+    if (rc) {
+        return rc;
+    }
+
+    reg &= ~LIS2DW12_CTRL_REG3_H_LACTIVE;
+    reg |= low ? LIS2DW12_CTRL_REG3_H_LACTIVE : 0;
+    
+    return lis2dw12_write8(itf, LIS2DW12_REG_CTRL_REG3, reg);
+
+}
+
+/**
+ * Gets whether interrupts are active high or low
+ *
+ * @param The sensor interface
+ * @param ptr to store value (0 = active high, 1 = active low)
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+lis2dw12_get_int_active(struct sensor_itf *itf, uint8_t *low)
+{
+    int rc;
+    uint8_t reg;
+
+    rc = lis2dw12_read8(itf, LIS2DW12_REG_CTRL_REG3, &reg);
+    if (rc) {
+        return rc;
+    }
+
+    *low = (reg & LIS2DW12_CTRL_REG3_H_LACTIVE) ? 1 : 0;
+
+    return 0;
+
+}
+
+/**
+ * Sets single data conversion mode
+ *
+ * @param The sensor interface
+ * @param value to set (0 = trigger on INT2 pin, 1 = trigger on write to SLP_MODE_1)
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+lis2dw12_set_slp_mode(struct sensor_itf *itf, uint8_t mode)
+{
+    int rc;
+    uint8_t reg;
+
+    rc = lis2dw12_read8(itf, LIS2DW12_REG_CTRL_REG3, &reg);
+    if (rc) {
+        return rc;
+    }
+
+    reg &= ~LIS2DW12_CTRL_REG3_SLP_MODE_SEL;
+    reg |= mode ? LIS2DW12_CTRL_REG3_SLP_MODE_SEL : 0;
+    
+    return lis2dw12_write8(itf, LIS2DW12_REG_CTRL_REG3, reg);
+}
+
+/**
+ * Gets single data conversion mode
+ *
+ * @param The sensor interface
+ * @param ptr to store value (0 = trigger on INT2 pin, 1 = trigger on write to SLP_MODE_1)
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+lis2dw12_get_slp_mode(struct sensor_itf *itf, uint8_t *mode)
+{
+    int rc;
+    uint8_t reg;
+
+    rc = lis2dw12_read8(itf, LIS2DW12_REG_CTRL_REG3, &reg);
+    if (rc) {
+        return rc;
+    }
+
+    *mode = (reg & LIS2DW12_CTRL_REG3_SLP_MODE_SEL) ? 1 : 0;
+
+    return 0;
+}
+
+/**
+ * Starts a data conversion in on demand mode
+ *
+ * @param The sensor interface
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+lis2dw12_start_on_demand_conversion(struct sensor_itf *itf)
+{
+    int rc;
+    uint8_t reg;
+
+    rc = lis2dw12_read8(itf, LIS2DW12_REG_CTRL_REG3, &reg);
+    if (rc) {
+        return rc;
+    }
+
+    reg |= LIS2DW12_CTRL_REG3_SLP_MODE_1;
+    
+    return lis2dw12_write8(itf, LIS2DW12_REG_CTRL_REG3, reg);
+}
+
+
+/**
  * Set filter config
  *
  * @param the sensor interface
@@ -1002,13 +1225,27 @@ int lis2dw12_get_tap_cfg(struct sensor_itf *itf, struct lis2dw12_tap_settings *c
  */
 int lis2dw12_set_freefall(struct sensor_itf *itf, uint8_t dur, uint8_t ths)
 {
+    int rc;
     uint8_t reg;
 
     reg = 0;
     reg |= (dur & 0x1F) << 3;
     reg |= ths & LIS2DW12_FREEFALL_THS;
 
-    return lis2dw12_write8(itf, LIS2DW12_REG_FREEFALL, reg);
+    rc = lis2dw12_write8(itf, LIS2DW12_REG_FREEFALL, reg);
+    if (rc) {
+        return rc;
+    }
+
+    rc = lis2dw12_read8(itf, LIS2DW12_REG_WAKE_UP_DUR, &reg);
+    if (rc) {
+        return rc;
+    }
+
+    reg &= ~LIS2DW12_WAKE_DUR_FF_DUR;
+    reg |= dur & 0x20 ? LIS2DW12_WAKE_DUR_FF_DUR : 0;
+
+    return lis2dw12_write8(itf, LIS2DW12_REG_WAKE_UP_DUR, reg);
 }
 
 /**
@@ -1022,15 +1259,22 @@ int lis2dw12_set_freefall(struct sensor_itf *itf, uint8_t dur, uint8_t ths)
 int lis2dw12_get_freefall(struct sensor_itf *itf, uint8_t *dur, uint8_t *ths)
 {
     int rc;
-    uint8_t reg;
+    uint8_t ff_reg, wake_reg;
     
-    rc = lis2dw12_read8(itf, LIS2DW12_REG_FREEFALL, &reg);
+    rc = lis2dw12_read8(itf, LIS2DW12_REG_FREEFALL, &ff_reg);
     if (rc) {
         return rc;
     }
 
-    *dur = (reg & LIS2DW12_FREEFALL_DUR) >> 3;
-    *ths = reg & LIS2DW12_FREEFALL_THS;
+    rc = lis2dw12_read8(itf, LIS2DW12_REG_WAKE_UP_DUR, &wake_reg);
+    if (rc) {
+        return rc;
+    }
+
+    
+    *dur = (ff_reg & LIS2DW12_FREEFALL_DUR) >> 3;
+    *dur |= wake_reg & LIS2DW12_WAKE_DUR_FF_DUR ? (1 << 5) : 0;
+    *ths = wake_reg & LIS2DW12_FREEFALL_THS;
 
     return 0;
 }
@@ -1470,6 +1714,12 @@ int lis2dw12_run_self_test(struct sensor_itf *itf, int *result)
     int16_t base[3], pos[3];
     int i;
     int16_t change;
+    uint8_t fs;
+
+    rc = lis2dw12_get_fs(itf, &fs);
+    if (rc) {
+        return rc;
+    }
     
     /* ensure self test mode is disabled */
     rc = lis2dw12_set_self_test(itf, LIS2DW12_ST_MODE_DISABLE);
@@ -1480,7 +1730,7 @@ int lis2dw12_run_self_test(struct sensor_itf *itf, int *result)
     os_time_delay(OS_TICKS_PER_SEC / 10);
     
     /* take base reading */
-    rc = lis2dw12_get_data(itf, &(base[0]), &(base[1]), &(base[2]));
+    rc = lis2dw12_get_data(itf, fs, &(base[0]), &(base[1]), &(base[2]));
     if (rc) {
         return rc;
     }
@@ -1494,7 +1744,7 @@ int lis2dw12_run_self_test(struct sensor_itf *itf, int *result)
     os_time_delay(OS_TICKS_PER_SEC / 10);
 
     /* take self test reading */
-    rc = lis2dw12_get_data(itf, &(pos[0]), &(pos[1]), &(pos[2]));
+    rc = lis2dw12_get_data(itf, fs, &(pos[0]), &(pos[1]), &(pos[2]));
     if (rc) {
         return rc;
     }
@@ -1727,6 +1977,31 @@ disable_interrupt(struct sensor * sensor, uint8_t int_to_disable)
     return lis2dw12_set_int1_pin_cfg(itf, pdd->int_enable);
 }
 
+int
+lis2dw12_get_fs(struct sensor_itf *itf, uint8_t *fs)
+{
+    int rc;
+    
+    rc = lis2dw12_get_full_scale(itf, fs);
+    if (rc) {
+        return rc;
+    }
+
+    if (*fs == LIS2DW12_FS_2G) {
+        *fs = 2;
+    } else if (*fs == LIS2DW12_FS_4G) {
+        *fs = 4;
+    } else if (*fs == LIS2DW12_FS_8G) {
+        *fs = 8;
+    } else if (*fs == LIS2DW12_FS_16G) {
+        *fs = 16;
+    } else {
+        return SYS_EINVAL;
+    }
+
+    return 0;
+}
+
 /**
  * Gets a new data sample from the sensor.
  *
@@ -1738,11 +2013,10 @@ disable_interrupt(struct sensor * sensor, uint8_t int_to_disable)
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dw12_get_data(struct sensor_itf *itf, int16_t *x, int16_t *y, int16_t *z)
+lis2dw12_get_data(struct sensor_itf *itf, uint8_t fs, int16_t *x, int16_t *y, int16_t *z)
 {
     int rc;
     uint8_t payload[6] = {0};
-    uint8_t fs;
 
     *x = *y = *z = 0;
 
@@ -1754,24 +2028,6 @@ lis2dw12_get_data(struct sensor_itf *itf, int16_t *x, int16_t *y, int16_t *z)
     *x = payload[0] | (payload[1] << 8);
     *y = payload[2] | (payload[3] << 8);
     *z = payload[4] | (payload[5] << 8);
-
-    rc = lis2dw12_get_full_scale(itf, &fs);
-    if (rc) {
-        goto err;
-    }
-
-    if (fs == LIS2DW12_FS_2G) {
-        fs = 2;
-    } else if (fs == LIS2DW12_FS_4G) {
-        fs = 4;
-    } else if (fs == LIS2DW12_FS_8G) {
-        fs = 8;
-    } else if (fs == LIS2DW12_FS_16G) {
-        fs = 16;
-    } else {
-        rc = SYS_EINVAL;
-        goto err;
-    }
 
     /*
      * Since full scale is +/-(fs)g,
@@ -1790,7 +2046,7 @@ err:
 }
 
 static int lis2dw12_do_read(struct sensor *sensor, sensor_data_func_t data_func,
-                            void * data_arg)
+                            void * data_arg, uint8_t fs)
 {
     struct sensor_accel_data sad;
     struct sensor_itf *itf;
@@ -1802,7 +2058,7 @@ static int lis2dw12_do_read(struct sensor *sensor, sensor_data_func_t data_func,
 
     x = y = z = 0;
 
-    rc = lis2dw12_get_data(itf, &x, &y, &z);
+    rc = lis2dw12_get_data(itf, fs, &x, &y, &z);
     if (rc) {
         goto err;
     }
@@ -1847,12 +2103,23 @@ lis2dw12_poll_read(struct sensor * sensor, sensor_type_t sensor_type,
                  sensor_data_func_t data_func, void * data_arg,
                  uint32_t timeout)
 {
+    int rc;
+    struct sensor_itf *itf;
+    uint8_t fs;
+
+    itf = SENSOR_GET_ITF(sensor);
+    
     /* If the read isn't looking for accel data, don't do anything. */
     if (!(sensor_type & SENSOR_TYPE_ACCELEROMETER)) {
         return SYS_EINVAL;
     }
 
-    return lis2dw12_do_read(sensor, data_func, data_arg);
+    rc = lis2dw12_get_fs(itf, &fs);
+    if (rc) {
+        return rc;
+    }
+
+    return lis2dw12_do_read(sensor, data_func, data_arg, fs);
 }
 
 int
@@ -1869,6 +2136,7 @@ lis2dw12_stream_read(struct sensor *sensor,
     os_time_t stop_ticks = 0;
     struct lis2dw12_private_driver_data *pdd;
     uint8_t fifo_samples;
+    uint8_t fs;
 
     /* If the read isn't looking for accel data, don't do anything. */
     if (!(sensor_type & SENSOR_TYPE_ACCELEROMETER)) {
@@ -1901,25 +2169,42 @@ lis2dw12_stream_read(struct sensor *sensor,
         stop_ticks = os_time_get() + time_ticks;
     }
 
+    
+    rc = lis2dw12_get_fs(itf, &fs);
+    if (rc) {
+        goto done;
+    }
+
     for (;;) {
         wait_interrupt(&lis2dw12->intr, pdd->int_num);
+        
+        /* force at least one read for cases when fifo is disabled */
         fifo_samples = 1;
         
         while(fifo_samples > 0) {
-            rc = lis2dw12_do_read(sensor, read_func, read_arg);
-            if (rc) {
-                goto done;
+
+            /* read all data we beleive is currently in fifo */
+            while(fifo_samples > 0) {
+                rc = lis2dw12_do_read(sensor, read_func, read_arg, fs);
+                if (rc) {
+                    goto done;
+                }
+                fifo_samples--;
+
             }
 
+            /* check if any data is available in fifo */
             rc = lis2dw12_get_fifo_samples(itf, &fifo_samples);
             if (rc) {
                 goto done;
             }
+
         }
-        
+
         if (time_ms != 0 && OS_TIME_TICK_GT(os_time_get(), stop_ticks)) {
-                break;
+            break;
         }
+
     }
 
 done:
@@ -1991,13 +2276,15 @@ lis2dw12_sensor_set_notification(struct sensor *sensor, sensor_event_type_t type
     int rc;
 
     if ((type & ~(SENSOR_EVENT_TYPE_DOUBLE_TAP |
-                  SENSOR_EVENT_TYPE_SINGLE_TAP)) != 0) {
+                  SENSOR_EVENT_TYPE_SINGLE_TAP |
+                  SENSOR_EVENT_TYPE_FREE_FALL)) != 0) {
         return SYS_EINVAL;
     }
 
-    /*XXX for now we do not support registering for both events */
+    /*XXX for now we do not support registering for more than 1 event */
     if (type == (SENSOR_EVENT_TYPE_DOUBLE_TAP |
-                 SENSOR_EVENT_TYPE_SINGLE_TAP)) {
+                 SENSOR_EVENT_TYPE_SINGLE_TAP |
+                 SENSOR_EVENT_TYPE_FREE_FALL)) {
         return SYS_EINVAL;
     }
 
@@ -2016,7 +2303,10 @@ lis2dw12_sensor_set_notification(struct sensor *sensor, sensor_event_type_t type
     if(type == SENSOR_EVENT_TYPE_SINGLE_TAP) {
         int_cfg |= LIS2DW12_INT1_CFG_SINGLE_TAP;
     }
-
+    if(type == SENSOR_EVENT_TYPE_FREE_FALL) {
+        int_cfg |= LIS2DW12_INT1_CFG_FF;
+    }
+    
     rc = enable_interrupt(sensor, int_cfg);
     if (rc) {
         return rc;
@@ -2054,13 +2344,15 @@ lis2dw12_sensor_unset_notification(struct sensor *sensor, sensor_event_type_t ty
     int rc;
     
     if ((type & ~(SENSOR_EVENT_TYPE_DOUBLE_TAP |
-                  SENSOR_EVENT_TYPE_SINGLE_TAP)) != 0) {
+                  SENSOR_EVENT_TYPE_SINGLE_TAP |
+                  SENSOR_EVENT_TYPE_FREE_FALL)) != 0) {
         return SYS_EINVAL;
     }
     
-    /*XXX for now we do not support registering for both events */
+    /*XXX for now we do not support registering for more than one event */
     if (type == (SENSOR_EVENT_TYPE_DOUBLE_TAP |
-                 SENSOR_EVENT_TYPE_SINGLE_TAP)) {
+                 SENSOR_EVENT_TYPE_SINGLE_TAP |
+                 SENSOR_EVENT_TYPE_FREE_FALL)) {
         return SYS_EINVAL;
     }
     
@@ -2101,7 +2393,8 @@ lis2dw12_sensor_handle_interrupt(struct sensor * sensor)
 
     if ((pdd->registered_mask & LIS2DW12_NOTIFY_MASK) &&
         ((int_src & LIS2DW12_INT_SRC_STAP) ||
-         (int_src & LIS2DW12_INT_SRC_DTAP))) {
+         (int_src & LIS2DW12_INT_SRC_DTAP) ||
+         (int_src & LIS2DW12_INT_SRC_FF_IA))) {
         sensor_mgr_put_notify_evt(&pdd->notify_ctx);
     }
 
@@ -2284,10 +2577,30 @@ lis2dw12_config(struct lis2dw12 *lis2dw12, struct lis2dw12_cfg *cfg)
         goto err;
     }
 
-    rc = lis2dw12_write8(itf, LIS2DW12_REG_CTRL_REG3, LIS2DW12_CTRL_REG3_LIR);
+    rc = lis2dw12_set_int_pp_od(itf, cfg->int_pp_od);
     if (rc) {
         goto err;
     }
+    lis2dw12->cfg.int_pp_od = cfg->int_pp_od;
+
+    rc = lis2dw12_set_latched_int(itf, cfg->int_latched);
+    if (rc) {
+        goto err;
+    }
+    lis2dw12->cfg.int_latched = cfg->int_latched;
+
+    rc = lis2dw12_set_int_active(itf, cfg->int_active);
+    if (rc) {
+        goto err;
+    }
+    lis2dw12->cfg.int_active = cfg->int_active;
+
+    rc = lis2dw12_set_slp_mode(itf, cfg->slp_mode);
+    if (rc) {
+        goto err;
+    }
+    lis2dw12->cfg.slp_mode = cfg->slp_mode;
+
     
     rc = lis2dw12_set_offsets(itf, cfg->offset_x, cfg->offset_y, cfg->offset_z,
                               cfg->offset_weight);
@@ -2329,10 +2642,11 @@ lis2dw12_config(struct lis2dw12 *lis2dw12, struct lis2dw12_cfg *cfg)
 
     lis2dw12->cfg.rate = cfg->rate;
 
-    rc = lis2dw12_set_self_test(itf, LIS2DW12_ST_MODE_DISABLE);
+    rc = lis2dw12_set_self_test(itf, cfg->self_test_mode);
     if (rc) {
         goto err;
     }
+    lis2dw12->cfg.self_test_mode = cfg->self_test_mode;
 
     rc = lis2dw12_set_power_mode(itf, cfg->power_mode);
     if (rc) {
@@ -2392,6 +2706,15 @@ lis2dw12_config(struct lis2dw12 *lis2dw12, struct lis2dw12_cfg *cfg)
     }
     lis2dw12->cfg.double_tap_event_enable = cfg->double_tap_event_enable;
     
+    rc = lis2dw12_set_freefall(itf, cfg->freefall_dur, cfg->freefall_ths);
+    if (rc) {
+        goto err;
+    }
+    
+    lis2dw12->cfg.freefall_dur = cfg->freefall_dur;
+    lis2dw12->cfg.freefall_ths = cfg->freefall_ths;
+
+
     rc = lis2dw12_set_int_enable(itf, cfg->int_enable);
     if (rc) {
         goto err;
