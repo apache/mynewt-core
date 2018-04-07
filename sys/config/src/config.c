@@ -295,7 +295,7 @@ conf_commit(char *name)
         SLIST_FOREACH(ch, &conf_handlers, ch_list) {
             if (ch->ch_commit) {
                 rc2 = ch->ch_commit();
-                if (!rc) {
+                if (!rc2) {
                     rc = rc2;
                 }
             }
