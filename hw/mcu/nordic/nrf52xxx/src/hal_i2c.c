@@ -163,12 +163,12 @@ __ASM volatile (
     : "+r" (delay));
 }
 
-/*
- * Special version of hal_gpio_read_in which reads the in buffer
- * regardless of what direction the pin is set to.
+/**
+ * Reads the input buffer of the specified pin regardless
+ * of if it is set as output or input
  */
 static int
-hal_gpio_read_in(int pin)
+read_gpio_inbuffer(int pin)
 {
     NRF_GPIO_Type *port;
     port = HAL_GPIO_PORT(pin);
@@ -202,7 +202,7 @@ hal_i2c_clear_bus(const struct nrf52_hal_i2c_cfg *cfg)
     hal_i2c_delay_us(4);
 
     for (i = 0; i < 9; i++) {
-        if (hal_gpio_read_in(cfg->sda_pin)) {
+        if (read_gpio_inbuffer(cfg->sda_pin)) {
             if (i == 0) {
                 /*
                  * Nothing to do here.
