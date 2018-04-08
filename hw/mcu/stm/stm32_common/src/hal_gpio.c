@@ -531,7 +531,9 @@ int hal_gpio_init_out(int pin, int val)
 #else
     cfg.Speed = GPIO_SPEED_FREQ_HIGH;
 #endif
+#if !MYNEWT_VAL(MCU_STM32F1)
     cfg.Alternate = 0;
+#endif
 
     /* Initialize pin as an output, setting proper mode */
     HAL_GPIO_Init(portmap[port], &cfg);
@@ -554,6 +556,7 @@ hal_gpio_init_af(int pin, uint8_t af_type, enum hal_gpio_pull pull, uint8_t od)
     } else {
         gpio.Mode = GPIO_MODE_AF_OD;
     }
+    gpio.Pull = pull;
 #if (defined GPIO_SPEED_FREQ_VERY_HIGH)
     gpio.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
 #elif (defined GPIO_SPEED_HIGH)
@@ -561,8 +564,9 @@ hal_gpio_init_af(int pin, uint8_t af_type, enum hal_gpio_pull pull, uint8_t od)
 #else
     gpio.Speed = GPIO_SPEED_FREQ_HIGH;
 #endif
-    gpio.Pull = pull;
+#if !MYNEWT_VAL(MCU_STM32F1)
     gpio.Alternate = af_type;
+#endif
 
     return hal_gpio_init_stm(pin, &gpio);
 }
