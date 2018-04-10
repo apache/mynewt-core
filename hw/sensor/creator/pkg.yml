@@ -40,6 +40,8 @@ pkg.deps.TCS34725_OFB:
     - hw/drivers/sensors/tcs34725
 pkg.deps.MS5837_OFB:
     - hw/drivers/sensors/ms5837
+pkg.deps.MS5840_OFB:
+    - hw/drivers/sensors/ms5840
 pkg.deps.MCU_NATIVE:
     - hw/drivers/sensors/sim
 pkg.deps.BMP280_OFB:

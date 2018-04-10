@@ -48,6 +48,10 @@
 #include <ms5837/ms5837.h>
 #endif
 
+#if MYNEWT_VAL(MS5840_OFB)
+#include <ms5840/ms5840.h>
+#endif
+
 #if MYNEWT_VAL(BMP280_OFB)
 #include <bmp280/bmp280.h>
 #endif
@@ -100,6 +104,10 @@ static struct bme280 bme280;
 
 #if MYNEWT_VAL(MS5837_OFB)
 static struct ms5837 ms5837;
+#endif
+
+#if MYNEWT_VAL(MS5840_OFB)
+static struct ms5840 ms5840;
 #endif
 
 #if MYNEWT_VAL(BMP280_OFB)
@@ -218,6 +226,16 @@ static struct sensor_itf i2c_0_itf_ms = {
 };
 #endif
 
+#if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(MS5840_OFB)
+static struct sensor_itf i2c_0_itf_ms = {
+    .si_type = SENSOR_ITF_I2C,
+    .si_num  = 0,
+    /* HW I2C address for the MS5840 */
+    .si_addr = 0x76
+};
+#endif
+
+
 #if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(BMA253_OFB)
 static struct sensor_itf i2c_0_itf_lis = {
     .si_type = SENSOR_ITF_I2C,
@@ -292,6 +310,38 @@ config_ms5837_sensor(void)
     return rc;
 }
 #endif
+
+/**
+ * MS5840 Sensor default configuration used by the creator package
+ *
+ * @return 0 on success, non-zero on failure
+ */
+#if MYNEWT_VAL(MS5840_OFB)
+static int
+config_ms5840_sensor(void)
+{
+    int rc;
+    struct os_dev *dev;
+    struct ms5840_cfg mscfg;
+
+    dev = (struct os_dev *) os_dev_open("ms5840_0", OS_TIMEOUT_NEVER, NULL);
+    assert(dev != NULL);
+
+    memset(&mscfg, 0, sizeof(mscfg));
+
+
+    mscfg.mc_s_temp_res_osr  = MS5840_RES_OSR_256;
+    mscfg.mc_s_press_res_osr = MS5840_RES_OSR_256;
+    mscfg.mc_s_mask = SENSOR_TYPE_AMBIENT_TEMPERATURE|
+                      SENSOR_TYPE_PRESSURE;
+
+    rc = ms5840_config((struct ms5840 *)dev, &mscfg);
+
+    os_dev_close(dev);
+    return rc;
+}
+#endif
+
 
 /* Sensor default configuration used by the creator package */
 
@@ -835,6 +885,15 @@ sensor_dev_create(void)
     assert(rc == 0);
 
     rc = config_ms5837_sensor();
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(MS5840_OFB)
+    rc = os_dev_create((struct os_dev *) &ms5840, "ms5840_0",
+      OS_DEV_INIT_PRIMARY, 0, ms5840_init, (void *)&i2c_0_itf_ms);
+    assert(rc == 0);
+
+    rc = config_ms5840_sensor();
     assert(rc == 0);
 #endif
 
