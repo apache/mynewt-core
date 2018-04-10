@@ -61,7 +61,7 @@ STATS_SECT_DECL(lps33hw_stat_section) g_lps33hwstats;
 #define LPS33HW_ERR(...)      LOG_ERROR(&_log, LOG_MODULE_LPS33HW, __VA_ARGS__)
 static struct log _log;
 
-#define LPS33HW_PRESS_OUT_DIV (4096.0)
+#define LPS33HW_PRESS_OUT_DIV (40.96)
 #define LPS33HW_TEMP_OUT_DIV (100.0)
 #define LPS33HW_PRESS_THRESH_DIV (16)
 
@@ -90,52 +90,52 @@ static const struct sensor_driver g_lps33hw_sensor_driver = {
 };
 
 /*
- * Converts pressure value in hectopascals to a value found in the pressure
+ * Converts pressure value in pascals to a value found in the pressure
  * threshold register of the device.
  *
- * @param Pressure value in hectopascals.
+ * @param Pressure value in pascals.
  *
  * @return Pressure value to write to the threshold registers.
  */
 static uint16_t
-lps33hw_hpa_to_threshold_reg(float hpa)
+lps33hw_pa_to_threshold_reg(float pa)
 {
     /* Threshold is unsigned. */
-    if (hpa < 0) {
+    if (pa < 0) {
         return 0;
-    } else if (hpa == INFINITY) {
+    } else if (pa == INFINITY) {
         return 0xffff;
     }
-    return hpa * LPS33HW_PRESS_THRESH_DIV;
+    return pa * LPS33HW_PRESS_THRESH_DIV;
 }
 
 /*
- * Converts pressure value in hectopascals to a value found in the pressure
+ * Converts pressure value in pascals to a value found in the pressure
  * reference register of the device.
  *
- * @param Pressure value in hectopascals.
+ * @param Pressure value in pascals.
  *
  * @return Pressure value to write to the reference registers.
  */
 static int32_t
-lps33hw_hpa_to_reg(float hpa)
+lps33hw_pa_to_reg(float pa)
 {
-    if (hpa == INFINITY) {
+    if (pa == INFINITY) {
         return 0x007fffff;
     }
-    return (int32_t)(hpa * LPS33HW_PRESS_OUT_DIV);
+    return (int32_t)(pa * LPS33HW_PRESS_OUT_DIV);
 }
 
 /*
  * Converts pressure read from the device output registers to a value in
- * hectopascals.
+ * pascals.
  *
  * @param Pressure value read from the output registers.
  *
- * @return Pressure value in hectopascals.
+ * @return Pressure value in pascals.
  */
 static float
-lps33hw_reg_to_hpa(int32_t reg)
+lps33hw_reg_to_pa(int32_t reg)
 {
     return reg / LPS33HW_PRESS_OUT_DIV;
 }
@@ -473,7 +473,7 @@ lps33hw_get_pressure_regs(struct sensor_itf *itf, uint8_t reg, float *pressure)
         int_press |= 0xff000000;
     }
 
-    *pressure = lps33hw_reg_to_hpa(int_press);
+    *pressure = lps33hw_reg_to_pa(int_press);
 
     return 0;
 }
@@ -508,7 +508,7 @@ lps33hw_set_reference(struct sensor_itf *itf, float reference)
     int rc;
     int32_t int_reference;
 
-    int_reference = lps33hw_hpa_to_reg(reference);
+    int_reference = lps33hw_pa_to_reg(reference);
 
     rc = lps33hw_set_reg(itf, LPS33HW_REF_P, int_reference & 0xff);
     if (rc) {
@@ -529,7 +529,7 @@ lps33hw_set_threshold(struct sensor_itf *itf, float threshold)
     int rc;
     int16_t int_threshold;
 
-    int_threshold = lps33hw_hpa_to_threshold_reg(threshold);
+    int_threshold = lps33hw_pa_to_threshold_reg(threshold);
 
     rc = lps33hw_set_reg(itf, LPS33HW_THS_P, int_threshold & 0xff);
     if (rc) {
