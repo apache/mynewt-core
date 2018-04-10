@@ -44,7 +44,7 @@
  * "Re-purposing" means changing a gpio from input to output, or calling
  * gpio_init_in and expecting previously enabled interrupts to be stopped.
  *
- * 5) Possbily add access to HAL_GPIO_DeInit.
+ * 5) Possibly add access to HAL_GPIO_DeInit.
  */
 
 /*
