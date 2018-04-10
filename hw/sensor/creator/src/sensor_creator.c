@@ -720,11 +720,20 @@ config_lis2dw12_sensor(void)
     cfg.tap_cfg.quiet = 0; /* 10ms */
     cfg.tap_cfg.shock = 3; /* 120ms */
     cfg.double_tap_event_enable = 0;
+
+    cfg.freefall_dur = 6; 
+    cfg.freefall_ths = 3; /* ~312mg */
     
     cfg.int1_pin_cfg = 0;
     cfg.int2_pin_cfg = 0;
     cfg.int_enable = 0;
 
+    cfg.int_pp_od = 0;
+    cfg.int_latched = 0;
+    cfg.int_active = 0;
+    cfg.slp_mode = 0;
+    cfg.self_test_mode = LIS2DW12_ST_MODE_DISABLE;
+    
     cfg.fifo_mode = LIS2DW12_FIFO_M_BYPASS;
     cfg.fifo_threshold = 32;
     cfg.stream_read_interrupt = LIS2DW12_INT1_CFG_DRDY;

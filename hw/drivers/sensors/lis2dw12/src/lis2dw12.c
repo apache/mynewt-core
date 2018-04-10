@@ -2275,16 +2275,17 @@ lis2dw12_sensor_set_notification(struct sensor *sensor, sensor_event_type_t type
     struct lis2dw12_private_driver_data *pdd;
     int rc;
 
-    if ((type & ~(SENSOR_EVENT_TYPE_DOUBLE_TAP |
-                  SENSOR_EVENT_TYPE_SINGLE_TAP |
-                  SENSOR_EVENT_TYPE_FREE_FALL)) != 0) {
-        return SYS_EINVAL;
+    if(type == SENSOR_EVENT_TYPE_DOUBLE_TAP) {
+        int_cfg |= LIS2DW12_INT1_CFG_DOUBLE_TAP;
     }
-
-    /*XXX for now we do not support registering for more than 1 event */
-    if (type == (SENSOR_EVENT_TYPE_DOUBLE_TAP |
-                 SENSOR_EVENT_TYPE_SINGLE_TAP |
-                 SENSOR_EVENT_TYPE_FREE_FALL)) {
+    else if(type == SENSOR_EVENT_TYPE_SINGLE_TAP) {
+        int_cfg |= LIS2DW12_INT1_CFG_SINGLE_TAP;
+    }
+    else if(type == SENSOR_EVENT_TYPE_FREE_FALL) {
+        int_cfg |= LIS2DW12_INT1_CFG_FF;
+    } else {
+        /* here if type is set to no valid event or more than one event */
+        /* we do not currently support registering for more than one event */
         return SYS_EINVAL;
     }
 
@@ -2294,17 +2295,6 @@ lis2dw12_sensor_set_notification(struct sensor *sensor, sensor_event_type_t type
 
     if (pdd->registered_mask & LIS2DW12_NOTIFY_MASK) {
         return SYS_EBUSY;
-    }
-
-    /* Enable tap interrupt */
-    if(type == SENSOR_EVENT_TYPE_DOUBLE_TAP) {
-        int_cfg |= LIS2DW12_INT1_CFG_DOUBLE_TAP;
-    }
-    if(type == SENSOR_EVENT_TYPE_SINGLE_TAP) {
-        int_cfg |= LIS2DW12_INT1_CFG_SINGLE_TAP;
-    }
-    if(type == SENSOR_EVENT_TYPE_FREE_FALL) {
-        int_cfg |= LIS2DW12_INT1_CFG_FF;
     }
     
     rc = enable_interrupt(sensor, int_cfg);
@@ -2342,20 +2332,22 @@ lis2dw12_sensor_unset_notification(struct sensor *sensor, sensor_event_type_t ty
     struct lis2dw12 * lis2dw12;
     struct sensor_itf *itf;
     int rc;
+    uint8_t int_cfg = 0;
     
-    if ((type & ~(SENSOR_EVENT_TYPE_DOUBLE_TAP |
-                  SENSOR_EVENT_TYPE_SINGLE_TAP |
-                  SENSOR_EVENT_TYPE_FREE_FALL)) != 0) {
+    if(type == SENSOR_EVENT_TYPE_DOUBLE_TAP) {
+        int_cfg |= LIS2DW12_INT1_CFG_DOUBLE_TAP;
+    }
+    else if(type == SENSOR_EVENT_TYPE_SINGLE_TAP) {
+        int_cfg |= LIS2DW12_INT1_CFG_SINGLE_TAP;
+    }
+    else if(type == SENSOR_EVENT_TYPE_FREE_FALL) {
+        int_cfg |= LIS2DW12_INT1_CFG_FF;
+    } else {
+        /* here if type is set to no valid event or more than one event */
+        /* we do not currently support registering for more than one event */
         return SYS_EINVAL;
     }
-    
-    /*XXX for now we do not support registering for more than one event */
-    if (type == (SENSOR_EVENT_TYPE_DOUBLE_TAP |
-                 SENSOR_EVENT_TYPE_SINGLE_TAP |
-                 SENSOR_EVENT_TYPE_FREE_FALL)) {
-        return SYS_EINVAL;
-    }
-    
+        
     lis2dw12 = (struct lis2dw12 *)SENSOR_GET_DEVICE(sensor);
     itf = SENSOR_GET_ITF(sensor);
 
@@ -2367,7 +2359,7 @@ lis2dw12_sensor_unset_notification(struct sensor *sensor, sensor_event_type_t ty
         return rc;
     }
     
-    return disable_interrupt(sensor, 0);
+    return disable_interrupt(sensor, int_cfg);
 }
 
 static int

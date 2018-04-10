@@ -102,6 +102,8 @@ typedef enum {
     SENSOR_EVENT_TYPE_DOUBLE_TAP     = (1 << 0),
     /* Accelerometer single tap event */
     SENSOR_EVENT_TYPE_SINGLE_TAP     = (1 << 1),
+    /* Accelerometer free fall event */
+    SENSOR_EVENT_TYPE_FREE_FALL      = (1 << 2)
 } sensor_event_type_t;
 
 
