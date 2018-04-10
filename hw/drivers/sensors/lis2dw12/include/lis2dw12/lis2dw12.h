@@ -185,6 +185,7 @@ struct lis2dw12_cfg {
     
     uint8_t int1_pin_cfg;
     uint8_t int2_pin_cfg;
+    bool map_int2_to_int1;
     uint8_t int_enable;
 
     enum lis2dw12_fifo_mode fifo_mode;
@@ -654,7 +655,25 @@ int lis2dw12_set_stationary_en(struct sensor_itf *itf, uint8_t en);
  * @return 0 on success, non-zero on failure
  */
 int lis2dw12_get_stationary_en(struct sensor_itf *itf, uint8_t *en);
-    
+
+/**
+ * Set whether interrupts are enabled
+ *
+ * @param the sensor interface
+ * @param value to set (0 = disabled, 1 = enabled)
+ * @return 0 on success, non-zero on failure
+ */
+int lis2dw12_set_int1_on_int2_map(struct sensor_itf *itf, bool enable);
+
+/**
+ * Get whether interrupt 1 signals is mapped onto interrupt 2 pin
+ *
+ * @param the sensor interface
+ * @param value to set (0 = disabled, 1 = enabled)
+ * @return 0 on success, non-zero on failure
+ */
+int lis2dw12_get_int1_on_int2_map(struct sensor_itf *itf, uint8_t *val);
+
 /**
  * Run Self test on sensor
  *

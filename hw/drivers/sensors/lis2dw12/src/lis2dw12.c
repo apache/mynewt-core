@@ -1457,6 +1457,53 @@ int lis2dw12_set_int_enable(struct sensor_itf *itf, uint8_t enabled)
 }
 
 /**
+ * Set whether interrupt 1 signals is mapped onto interrupt 2 pin
+ *
+ * @param the sensor interface
+ * @param value to set (false = disabled, true = enabled)
+ * @return 0 on success, non-zero on failure
+ */
+int lis2dw12_set_int1_on_int2_map(struct sensor_itf *itf, bool enable)
+{
+    uint8_t reg;
+    int rc;
+
+    rc = lis2dw12_read8(itf, LIS2DW12_REG_CTRL_REG7, &reg);
+    if (rc) {
+        return rc;
+    }
+
+    if (enable) {
+        reg |= LIS2DW12_CTRL_REG7_INT2_ON_INT1;
+    } else {
+        reg &= ~LIS2DW12_CTRL_REG7_INT2_ON_INT1;
+    }
+
+    return lis2dw12_write8(itf, LIS2DW12_REG_CTRL_REG7, reg);
+}
+
+/**
+ * Get whether interrupt 1 signals is mapped onto interrupt 2 pin
+ *
+ * @param the sensor interface
+ * @param value to set (0 = disabled, 1 = enabled)
+ * @return 0 on success, non-zero on failure
+ */
+int lis2dw12_get_int1_on_int2_map(struct sensor_itf *itf, uint8_t *val)
+{
+    uint8_t reg;
+    int rc;
+
+    rc = lis2dw12_read8(itf, LIS2DW12_REG_CTRL_REG7, &reg);
+    if (rc) {
+        return rc;
+    }
+
+    *val = (reg & LIS2DW12_CTRL_REG7_INT2_ON_INT1) >> 5;
+    return 0;
+}
+
+/**
  * Run Self test on sensor
  *
  * @param the sensor interface
@@ -1608,7 +1655,7 @@ lis2dw12_int_irq_handler(void *arg)
     if(lis2dw12->pdd.interrupt) {
         wake_interrupt(lis2dw12->pdd.interrupt);
     }
-    
+
     sensor_mgr_put_interrupt_evt(sensor);
 }
 
@@ -2418,7 +2465,13 @@ lis2dw12_config(struct lis2dw12 *lis2dw12, struct lis2dw12_cfg *cfg)
         goto err;
     }
     lis2dw12->cfg.tap_cfg = cfg->tap_cfg;
-    
+
+    rc = lis2dw12_set_int1_on_int2_map(itf, cfg->map_int2_to_int1);
+    if(rc) {
+        goto err;
+    }
+    lis2dw12->cfg.map_int2_to_int1 = cfg->map_int2_to_int1;
+
     rc = sensor_set_type_mask(&(lis2dw12->sensor), cfg->mask);
     if (rc) {
         goto err;
