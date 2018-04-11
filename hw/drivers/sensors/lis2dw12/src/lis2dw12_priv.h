@@ -50,7 +50,8 @@ extern "C" {
 #define LIS2DW12_CTRL_REG3_PP_OD         (1 << 5)
 #define LIS2DW12_CTRL_REG3_LIR           (1 << 4)
 #define LIS2DW12_CTRL_REG3_H_LACTIVE     (1 << 3)
-#define LIS2DW12_CTRL_REG3_SLP_MODE    (0x3 << 0)
+#define LIS2DW12_CTRL_REG3_SLP_MODE_SEL  (1 << 1)
+#define LIS2DW12_CTRL_REG3_SLP_MODE_1    (1 << 0)
     
 #define LIS2DW12_REG_CTRL_REG4               0x23
 
@@ -162,8 +163,9 @@ int lis2dw12_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer, uint8
 void lis2dw12_calc_acc_ms2(int16_t raw_acc, float *facc);
 void lis2dw12_calc_acc_mg(float acc_ms2, int16_t *acc_mg);
 
-int lis2dw12_get_data(struct sensor_itf *itf, int16_t *x, int16_t *y, int16_t *z);
+int lis2dw12_get_data(struct sensor_itf *itf, uint8_t fs, int16_t *x, int16_t *y, int16_t *z);
 
+int lis2dw12_get_fs(struct sensor_itf *itf, uint8_t *fs);
     
 #ifdef __cplusplus
 }

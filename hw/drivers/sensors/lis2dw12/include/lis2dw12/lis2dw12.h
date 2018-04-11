@@ -32,6 +32,7 @@ extern "C" {
 #define LIS2DW12_PM_LP_MODE3                    0x02
 #define LIS2DW12_PM_LP_MODE4                    0x03
 #define LIS2DW12_PM_HIGH_PERF                   0x04
+#define LIS2DW12_PM_ON_DEMAND                   0x08
     
 #define LIS2DW12_DATA_RATE_0HZ                  0x00
 #define LIS2DW12_DATA_RATE_1_6HZ                0x10
@@ -182,11 +183,20 @@ struct lis2dw12_cfg {
 
     struct lis2dw12_tap_settings tap_cfg;
     uint8_t double_tap_event_enable;
+
+    uint8_t freefall_dur;
+    uint8_t freefall_ths;
     
     uint8_t int1_pin_cfg;
     uint8_t int2_pin_cfg;
     bool map_int2_to_int1;
     uint8_t int_enable;
+
+    uint8_t int_pp_od;
+    uint8_t int_latched;
+    uint8_t int_active;
+    uint8_t slp_mode;
+    uint8_t self_test_mode;
 
     enum lis2dw12_fifo_mode fifo_mode;
     uint8_t fifo_threshold;
@@ -350,7 +360,7 @@ int lis2dw12_get_power_mode(struct sensor_itf *itf, uint8_t *mode);
 int lis2dw12_set_self_test(struct sensor_itf *itf, uint8_t mode);
 
 /**
- * Gets the power mode of the sensor
+ * Gets the self test mode of the sensor
  *
  * @param The sensor interface
  * @param ptr to self test mode read from sensor
@@ -359,6 +369,96 @@ int lis2dw12_set_self_test(struct sensor_itf *itf, uint8_t mode);
  */
 int lis2dw12_get_self_test(struct sensor_itf *itf, uint8_t *mode);
 
+/**
+ * Sets the interrupt push-pull/open-drain selection
+ *
+ * @param The sensor interface
+ * @param interrupt setting (0 = push-pull, 1 = open-drain)
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int lis2dw12_set_int_pp_od(struct sensor_itf *itf, uint8_t mode);
+
+/**
+ * Gets the interrupt push-pull/open-drain selection
+ *
+ * @param The sensor interface
+ * @param ptr to store setting (0 = push-pull, 1 = open-drain)
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int lis2dw12_get_int_pp_od(struct sensor_itf *itf, uint8_t *mode);
+
+/**
+ * Sets whether latched interrupts are enabled
+ *
+ * @param The sensor interface
+ * @param value to set (0 = not latched, 1 = latched)
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int lis2dw12_set_latched_int(struct sensor_itf *itf, uint8_t en);
+
+/**
+ * Gets whether latched interrupts are enabled
+ *
+ * @param The sensor interface
+ * @param ptr to store value (0 = not latched, 1 = latched)
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int lis2dw12_get_latched_int(struct sensor_itf *itf, uint8_t *en);
+
+/**
+ * Sets whether interrupts are active high or low
+ *
+ * @param The sensor interface
+ * @param value to set (0 = active high, 1 = active low)
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int lis2dw12_set_int_active(struct sensor_itf *itf, uint8_t low);
+
+/**
+ * Gets whether interrupts are active high or low
+ *
+ * @param The sensor interface
+ * @param ptr to store value (0 = active high, 1 = active low)
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int lis2dw12_get_int_active(struct sensor_itf *itf, uint8_t *low);
+
+/**
+ * Sets single data conversion mode
+ *
+ * @param The sensor interface
+ * @param value to set (0 = trigger on INT2 pin, 1 = trigger on write to SLP_MODE_1)
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int lis2dw12_set_slp_mode(struct sensor_itf *itf, uint8_t mode);
+
+/**
+ * Gets single data conversion mode
+ *
+ * @param The sensor interface
+ * @param ptr to store value (0 = trigger on INT2 pin, 1 = trigger on write to SLP_MODE_1)
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int lis2dw12_get_slp_mode(struct sensor_itf *itf, uint8_t *mode);
+
+/**
+ * Starts a data conversion in on demand mode
+ *
+ * @param The sensor interface
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int lis2dw12_start_on_demand_conversion(struct sensor_itf *itf);
+
+    
 /**
  * Set filter config
  *
