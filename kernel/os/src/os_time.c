@@ -203,3 +203,22 @@ os_time_ms_to_ticks(uint32_t ms, uint32_t *out_ticks)
     return 0;
 }
 
+int
+os_time_ticks_to_ms(uint32_t ticks, uint32_t *out_ms)
+{
+    uint64_t ms;
+
+#if OS_TICKS_PER_SEC == 1000
+    *out_ms = ticks;
+    return 0;
+#endif
+
+    ms = ((uint64_t)ticks * 1000) / OS_TICKS_PER_SEC;
+    if (ms > UINT32_MAX) {
+        return OS_EINVAL;
+    }
+
+    *out_ms = ms;
+
+    return 0;
+}
