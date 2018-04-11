@@ -273,12 +273,6 @@ cmd_advertise_configure(int argc, char **argv)
         return rc;
     }
 
-    params.high_duty_directed = parse_arg_uint8_dflt("high_duty", 0, &rc);
-    if (rc != 0) {
-        console_printf("invalid 'high_duty' parameter\n");
-        return rc;
-    }
-
     rc = btshell_ext_adv_configure(instance, &params, &selected_tx_power);
     if (rc) {
         console_printf("failed to configure advertising instance\n");
