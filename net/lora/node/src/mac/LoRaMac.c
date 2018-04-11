@@ -1404,6 +1404,8 @@ lora_mac_process_radio_rx(struct os_event *ev)
                 LoRaMacParams.ChannelsDatarate = LoRaMacParamsDefaults.ChannelsDatarate;
                 lora_mac_send_join_confirm(LORAMAC_EVENT_INFO_STATUS_OK,
                                            JoinRequestTrials);
+            } else {
+                STATS_INC(lora_mac_stats, rx_mic_failures);
             }
             break;
         case FRAME_TYPE_DATA_CONFIRMED_DOWN:
