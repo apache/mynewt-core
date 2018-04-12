@@ -401,7 +401,7 @@ lora_mac_task(void *arg)
  * @return int  LORA_APP_STATUS_ALREADY_JOINED if joined.
  *              LORA_APP_STATUS_NO_NETWORK if not joined
  */
-static int
+int
 lora_node_chk_if_joined(void)
 {
     int rc;
@@ -546,6 +546,67 @@ lora_mac_link_chk_event(struct os_event *ev)
 }
 #endif
 #endif
+
+/**
+ * Helper routine to track measurement averages.
+ *
+ * @param orig State variable
+ * @param sample Latest sample to add to average.
+ */
+static void
+lora_node_calc_avg(int16_t *orig, uint16_t sample)
+{
+    int16_t tmp;
+
+    tmp = *orig;
+    if (tmp) {
+	/*
+	 * avg is stored as fixed point with 5 bits after the
+	 * binary point (i.e., scaled by 8). The following magic
+	 * is equivalent to algorithm avg = sample/8 + avg*7/8 in fixed
+	 * point.
+	 */
+	tmp += (sample << 2) - (tmp >> LORA_AVG_SHIFT);
+	*orig = tmp;
+    } else {
+	/*
+	 * No measurement yet.
+	 */
+	*orig = sample << (LORA_AVG_SHIFT + 2);
+    }
+}
+
+void
+lora_node_qual_sample(int16_t rssi, int16_t snr)
+{
+    lora_node_calc_avg(&g_lora_mac_data.lm_rssi_avg, rssi);
+    lora_node_calc_avg(&g_lora_mac_data.lm_snr_avg, snr);
+}
+
+/**
+ * Report tracked RSSI/SNR averages
+ *
+ * @param rssi Pointer to where to store RSSI average.
+ * @param snr Pointer to where to store SNR average.
+ *
+ * @return 0 if returned data is valid, non-zero otherwise
+ */
+int
+lora_node_link_qual(int16_t *rssi, int16_t *snr)
+{
+    struct lora_mac_obj *lmo = &g_lora_mac_data;
+
+    if (lmo->lm_rssi_avg || lmo->lm_snr_avg) {
+        /*
+         * Rounds down. XXX
+         */
+        *rssi = g_lora_mac_data.lm_rssi_avg >> (LORA_AVG_SHIFT + 2);
+        *snr = g_lora_mac_data.lm_snr_avg >> (LORA_AVG_SHIFT + 2);
+        return 0;
+    } else {
+        return -1;
+    }
+}
 
 struct os_eventq *
 lora_node_mac_evq_get(void)

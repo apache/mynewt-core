@@ -277,8 +277,26 @@ extern lora_link_chk_cb lora_link_chk_cb_func;
 int lora_app_join(uint8_t *dev_eui, uint8_t *app_eui, uint8_t *app_key,
                   uint8_t trials);
 
+/**
+ * Tells whether we have successfully joined a LoRa network or not.
+ *
+ * @return LORA_APP_STATUS_ALREADY_JOINED if joined.
+ */
+int lora_node_chk_if_joined(void);
+
 /* Performs a link check */
 int lora_app_link_check(void);
+
+/**
+ * Query RSSI and SNR average for data received over LoRA.
+ *
+ * @param rssi Pointer to where to store the RSSI.
+ * @param snr Pointer to where to store the SNR.
+ *
+ * @return 0 if we have collected samples. non-zero if not.
+ */
+int lora_node_link_qual(int16_t *rssi, int16_t *snr);
+
 
 /*
  * Maximum payload that can be sent in the next frame.
