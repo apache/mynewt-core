@@ -956,7 +956,7 @@ lis2dw12_set_filter_cfg(struct sensor_itf *itf, uint8_t bw, uint8_t type)
 
     reg &= ~LIS2DW12_CTRL_REG6_BW_FILT;
     reg &= ~LIS2DW12_CTRL_REG6_FDS;
-    reg |= (bw & LIS2DW12_CTRL_REG6_BW_FILT);
+    reg |= (bw & 0x3) << 6;
     if (type) {
         reg |= LIS2DW12_CTRL_REG6_FDS;
     }
@@ -991,7 +991,7 @@ lis2dw12_get_filter_cfg(struct sensor_itf *itf, uint8_t *bw, uint8_t *type)
         goto err;
     }
 
-    *bw = reg & LIS2DW12_CTRL_REG6_BW_FILT;
+    *bw = (reg & LIS2DW12_CTRL_REG6_BW_FILT) >> 6;
     *type = (reg & LIS2DW12_CTRL_REG6_FDS) > 0;
 
     return 0;
@@ -1743,7 +1743,7 @@ int lis2dw12_get_int1_on_int2_map(struct sensor_itf *itf, uint8_t *val)
         return rc;
     }
 
-    *val = (reg & LIS2DW12_CTRL_REG7_INT2_ON_INT1) >> 5;
+    *val = (reg & LIS2DW12_CTRL_REG7_INT2_ON_INT1) >> 6;
     return 0;
 }
 
@@ -2324,11 +2324,9 @@ lis2dw12_sensor_set_notification(struct sensor *sensor, sensor_event_type_t type
 
     if(type == SENSOR_EVENT_TYPE_DOUBLE_TAP) {
         int_cfg |= LIS2DW12_INT1_CFG_DOUBLE_TAP;
-    }
-    else if(type == SENSOR_EVENT_TYPE_SINGLE_TAP) {
+    } else if(type == SENSOR_EVENT_TYPE_SINGLE_TAP) {
         int_cfg |= LIS2DW12_INT1_CFG_SINGLE_TAP;
-    }
-    else if(type == SENSOR_EVENT_TYPE_FREE_FALL) {
+    } else if(type == SENSOR_EVENT_TYPE_FREE_FALL) {
         int_cfg |= LIS2DW12_INT1_CFG_FF;
     } else {
         /* here if type is set to no valid event or more than one event */

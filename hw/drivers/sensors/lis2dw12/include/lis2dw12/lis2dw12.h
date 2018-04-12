@@ -49,15 +49,10 @@ extern "C" {
 #define LIS2DW12_ST_MODE_MODE1                  0x40
 #define LIS2DW12_ST_MODE_MODE2                  0x80
 
-#define LIS2DW12_HPF_M_NORMAL0                  0x00
-#define LIS2DW12_HPF_M_REF                      0x01
-#define LIS2DW12_HPF_M_NORMAL1                  0x02
-#define LIS2DW12_HPF_M_AIE                      0x03
-
 #define LIS2DW12_FILTER_BW_ODR_DIV_2            0x00
-#define LIS2DW12_FILTER_BW_ODR_DIV_4            0x40
-#define LIS2DW12_FILTER_BW_ODR_DIV_10           0x80
-#define LIS2DW12_FILTER_BW_ODR_DIV_20           0xC0
+#define LIS2DW12_FILTER_BW_ODR_DIV_4            0x01
+#define LIS2DW12_FILTER_BW_ODR_DIV_10           0x02
+#define LIS2DW12_FILTER_BW_ODR_DIV_20           0x03
 
 #define LIS2DW12_FS_2G                          0x00
 #define LIS2DW12_FS_4G                          0x10
@@ -176,13 +171,8 @@ struct lis2dw12_cfg {
     int8_t offset_y;
     int8_t offset_z;
     uint8_t offset_weight;
-    uint8_t offset_en;
-
-    uint8_t filter_bw;
-    uint8_t high_pass;
 
     struct lis2dw12_tap_settings tap_cfg;
-    uint8_t double_tap_event_enable;
 
     uint8_t freefall_dur;
     uint8_t freefall_ths;
@@ -190,27 +180,33 @@ struct lis2dw12_cfg {
     uint8_t int1_pin_cfg;
     uint8_t int2_pin_cfg;
     bool map_int2_to_int1;
-    uint8_t int_enable;
 
-    uint8_t int_pp_od;
-    uint8_t int_latched;
-    uint8_t int_active;
-    uint8_t slp_mode;
-    uint8_t self_test_mode;
+    uint8_t offset_en : 1;
 
+    uint8_t filter_bw : 2;
+    uint8_t high_pass : 1;
+    
+    uint8_t int_enable : 1;
+    uint8_t int_pp_od : 1;
+    uint8_t int_latched : 1;
+    uint8_t int_active : 1;
+    uint8_t inactivity_sleep_enable : 1;
+    uint8_t low_noise_enable : 1;
+    uint8_t stationary_detection_enable : 1;
+    uint8_t double_tap_event_enable : 1;
+
+    uint8_t slp_mode : 1;
+    uint8_t self_test_mode : 3;
+
+    uint8_t power_mode : 4;
+    
     enum lis2dw12_fifo_mode fifo_mode;
     uint8_t fifo_threshold;
 
     uint8_t wake_up_ths;
     uint8_t wake_up_dur;
     uint8_t sleep_duration;
-
-    uint8_t stationary_detection_enable;
-
-    uint8_t power_mode;
-    uint8_t inactivity_sleep_enable;
-    uint8_t low_noise_enable;
-    
+   
     enum lis2dw12_read_mode read_mode;
     uint8_t stream_read_interrupt;
     
