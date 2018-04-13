@@ -58,6 +58,15 @@ typedef int (*pwm_configure_channel_func_t)(struct pwm_dev *,
 typedef int (*pwm_enable_duty_cycle_func_t)(struct pwm_dev *,
                                             uint8_t,
                                             uint16_t);
+/**
+ * Check whether a PWM channel is enabled on a given device.
+ *
+ * @param dev The device which the channel belongs to.
+ * @param cnum The channel being queried.
+ *
+ * @return true if enabled, false if not.
+ */
+typedef bool (*pwm_is_enabled_func_t)(struct pwm_dev *, uint8_t);
 
 /**
  * Set the frequency for the device's clock.
@@ -114,6 +123,7 @@ typedef void (*user_handler_t) (void*);
 struct pwm_driver_funcs {
     pwm_configure_channel_func_t pwm_configure_channel;
     pwm_enable_duty_cycle_func_t pwm_enable_duty_cycle;
+    pwm_is_enabled_func_t pwm_is_enabled;
     pwm_set_frequency_func_t pwm_set_frequency;
     pwm_get_clock_freq_func_t pwm_get_clock_freq;
     pwm_get_top_value_funct_t pwm_get_top_value;
@@ -168,6 +178,7 @@ struct pwm_dev_interrupt_cfg {
 
 int pwm_chan_config(struct pwm_dev *dev, uint8_t cnum, struct pwm_chan_cfg *cfg);
 int pwm_enable_duty_cycle(struct pwm_dev *pwm_d, uint8_t cnum, uint16_t fraction);
+bool pwm_is_enabled(struct pwm_dev *pwm_d, uint8_t cnum);
 int pwm_set_frequency(struct pwm_dev *dev, uint32_t freq_hz);
 int pwm_get_clock_freq(struct pwm_dev *dev);
 int pwm_get_top_value(struct pwm_dev *dev);

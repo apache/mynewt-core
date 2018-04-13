@@ -245,6 +245,20 @@ soft_pwm_enable_duty_cycle(struct pwm_dev *dev, uint8_t cnum, uint16_t fraction)
 }
 
 /**
+ * Check whether a PWM channel is enabled on a given device.
+ *
+ * @param dev The device which the channel belongs to.
+ * @param cnum The channel being queried.
+ *
+ * @return true if enabled, false if not.
+ */
+static bool
+soft_pwm_is_enabled(struct pwm_dev *dev, uint8_t cnum)
+{
+    return soft_pwm_dev.chans[cnum].playing;
+}
+
+/**
  * Disable the PWM channel, it will be marked as unconfigured.
  *
  * @param dev The device to configure.
@@ -338,6 +352,7 @@ soft_pwm_dev_init(struct os_dev *odev, void *arg)
     pwm_funcs = &dev->pwm_funcs;
     pwm_funcs->pwm_configure_channel = soft_pwm_configure_channel;
     pwm_funcs->pwm_enable_duty_cycle = soft_pwm_enable_duty_cycle;
+    pwm_funcs->pwm_is_enabled = soft_pwm_is_enabled;
     pwm_funcs->pwm_set_frequency = soft_pwm_set_frequency;
     pwm_funcs->pwm_get_clock_freq = soft_pwm_get_clock_freq;
     pwm_funcs->pwm_get_resolution_bits = soft_pwm_get_resolution_bits;

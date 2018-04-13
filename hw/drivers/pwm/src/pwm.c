@@ -68,6 +68,24 @@ pwm_enable_duty_cycle(struct pwm_dev *dev, uint8_t cnum, uint16_t fraction)
 }
 
 /**
+ * Check whether a PWM channel is enabled on a given device.
+ *
+ * @param dev The device which the channel belongs to.
+ * @param cnum The channel being queried.
+ *
+ * @return true if enabled, false if not.
+ */
+bool
+pwm_is_enabled(struct pwm_dev *dev, uint8_t cnum)
+{
+    assert(dev->pwm_funcs.pwm_is_enabled != NULL);
+    if (cnum >= dev->pwm_chan_count) {
+        return false;
+    }
+
+    return (dev->pwm_funcs.pwm_is_enabled(dev, cnum));
+}
+/**
  * Set the frequency for the device's clock.
  * This frequency must be between 1/2 the clock frequency and
  * the clock divided by the resolution.
