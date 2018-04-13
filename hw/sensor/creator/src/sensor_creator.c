@@ -272,6 +272,8 @@ static struct sensor_itf spi2c_0_itf_bma2xx = {
 };
 #endif
 #if MYNEWT_VAL(SPI_0_MASTER) && MYNEWT_VAL(BMA2XX_OFB)
+//TODO:  Make INT pin nums configurable.  Leaving hardcoded
+//to handle multiple bma2xx sensor interface examples
 static struct sensor_itf spi2c_0_itf_bma2xx = {
     .si_type = SENSOR_ITF_SPI,
     .si_num = 0,

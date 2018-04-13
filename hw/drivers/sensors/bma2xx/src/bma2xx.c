@@ -423,9 +423,10 @@ compute_accel_data(struct accel_data * accel_data,
     accel_data->new_data = raw_data[0] & 0x01;
 }
 
-static int get_accel_scale(enum bma2xx_model model,
-                            enum bma2xx_g_range g_range,
-                            float *accel_scale)
+static int
+get_accel_scale(enum bma2xx_model model,
+                enum bma2xx_g_range g_range,
+                float *accel_scale)
 {
     switch (g_range) {
         case BMA2XX_G_RANGE_2:
