@@ -513,9 +513,13 @@ console_handle_char(uint8_t byte)
             break;
         case '\t':
             if (completion && !end) {
+#if MYNEWT_VAL(CONSOLE_UART_RX_BUF_SIZE) == 0
                 console_blocking_mode();
+#endif
                 completion(input->line, console_append_char);
+#if MYNEWT_VAL(CONSOLE_UART_RX_BUF_SIZE) == 0
                 console_non_blocking_mode();
+#endif
             }
             break;
         }
