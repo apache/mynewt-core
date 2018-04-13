@@ -66,6 +66,8 @@ typedef int (*log_walk_func_t)(struct log *, struct log_offset *log_offset,
 
 typedef int (*lh_read_func_t)(struct log *, void *dptr, void *buf,
         uint16_t offset, uint16_t len);
+typedef int (*lh_read_mbuf_func_t)(struct log *, void *dptr, struct os_mbuf *om,
+                                   uint16_t offset, uint16_t len);
 typedef int (*lh_append_func_t)(struct log *, void *buf, int len);
 typedef int (*lh_append_mbuf_func_t)(struct log *, struct os_mbuf *om);
 typedef int (*lh_walk_func_t)(struct log *,
@@ -79,6 +81,7 @@ typedef int (*lh_flush_func_t)(struct log *);
 struct log_handler {
     int log_type;
     lh_read_func_t log_read;
+    lh_read_mbuf_func_t log_read_mbuf;
     lh_append_func_t log_append;
     lh_append_mbuf_func_t log_append_mbuf;
     lh_walk_func_t log_walk;
@@ -249,6 +252,8 @@ log_append_mbuf(struct log *log, uint8_t module, uint8_t level,
 void log_printf(struct log *log, uint16_t, uint16_t, char *, ...);
 int log_read(struct log *log, void *dptr, void *buf, uint16_t off,
         uint16_t len);
+int log_read_mbuf(struct log *log, void *dptr, struct os_mbuf *om, uint16_t off,
+                  uint16_t len);
 int log_walk(struct log *log, log_walk_func_t walk_func,
         struct log_offset *log_offset);
 int log_flush(struct log *log);

@@ -363,6 +363,20 @@ log_read(struct log *log, void *dptr, void *buf, uint16_t off,
     return (rc);
 }
 
+int log_read_mbuf(struct log *log, void *dptr, struct os_mbuf *om, uint16_t off,
+                  uint16_t len)
+{
+    int rc;
+
+    if (!om || !log->l_log->log_read_mbuf) {
+        return 0;
+    }
+
+    rc = log->l_log->log_read_mbuf(log, dptr, om, off, len);
+
+    return (rc);
+}
+
 int
 log_flush(struct log *log)
 {
