@@ -74,6 +74,22 @@ log_cbmem_read(struct log *log, void *dptr, void *buf, uint16_t offset,
 }
 
 static int
+log_cbmem_read_mbuf(struct log *log, void *dptr, struct os_mbuf *om,
+                    uint16_t offset, uint16_t len)
+{
+    struct cbmem *cbmem;
+    struct cbmem_entry_hdr *hdr;
+    int rc;
+
+    cbmem = (struct cbmem *) log->l_arg;
+    hdr = (struct cbmem_entry_hdr *) dptr;
+
+    rc = cbmem_read_mbuf(cbmem, hdr, om, offset, len);
+
+    return (rc);
+}
+
+static int
 log_cbmem_walk(struct log *log, log_walk_func_t walk_func,
                struct log_offset *log_offset)
 {
@@ -143,6 +159,7 @@ err:
 const struct log_handler log_cbmem_handler = {
     .log_type = LOG_TYPE_MEMORY,
     .log_read = log_cbmem_read,
+    .log_read_mbuf = log_cbmem_read_mbuf,
     .log_append = log_cbmem_append,
     .log_append_mbuf = log_cbmem_append_mbuf,
     .log_walk = log_cbmem_walk,
