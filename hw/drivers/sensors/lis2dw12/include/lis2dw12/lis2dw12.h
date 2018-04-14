@@ -33,7 +33,7 @@ extern "C" {
 #define LIS2DW12_PM_LP_MODE4                    0x03
 #define LIS2DW12_PM_HIGH_PERF                   0x04
 #define LIS2DW12_PM_ON_DEMAND                   0x08
-    
+
 #define LIS2DW12_DATA_RATE_0HZ                  0x00
 #define LIS2DW12_DATA_RATE_1_6HZ                0x10
 #define LIS2DW12_DATA_RATE_12_5HZ               0x20
@@ -107,7 +107,6 @@ extern "C" {
 #define LIS2DW12_SIXD_SRC_XH                    0x02
 #define LIS2DW12_SIXD_SRC_XL                    0x01
 
-    
 enum lis2dw12_ths_6d {
     LIS2DW12_6D_THS_80_DEG = 0,
     LIS2DW12_6D_THS_70_DEG = 1,
@@ -131,19 +130,17 @@ enum lis2dw12_fifo_mode {
     LIS2DW12_FIFO_M_BYPASS_TO_CONTINUOUS = 4,
     LIS2DW12_FIFO_M_CONTINUOUS           = 6
 };
-    
+
 enum lis2dw12_read_mode {
     LIS2DW12_READ_M_POLL = 0,
     LIS2DW12_READ_M_STREAM = 1,
 };
-    
+
 struct lis2dw12_tap_settings {
-    uint8_t en_x;
-    uint8_t en_y; 
-    uint8_t en_z;
-    
-    uint8_t en_4d;
-    enum lis2dw12_ths_6d ths_6d;
+    uint8_t en_x  : 1;
+    uint8_t en_y  : 1;
+    uint8_t en_z  : 1;
+    uint8_t en_4d : 1;
     enum lis2dw12_tap_priority tap_priority;
 
     /* ths data is 5 bits, fs = +-2g */
@@ -151,65 +148,81 @@ struct lis2dw12_tap_settings {
     int8_t tap_ths_y;
     int8_t tap_ths_z;
 
+    enum lis2dw12_ths_6d ths_6d;
+
     /* latency is time between taps in double tap, 0 = 16 *1/ODR, LSB = 32*1/ODR */
     uint8_t latency;
-    /* quiet is time after tap data bust be below threshold
+    /* quiet is time after tap data is just below threshold
        0 = 2*1/ODR, LSB = 4*1/ODR */
     uint8_t quiet;
     /* shock is maximum time data can be over threshold to register as tap
        0 = 2*1/ODR, LSB = 4*1/ODR */
     uint8_t shock;
-    
+
 };
 
-    
+/* Read mode configuration */
+struct lis2dw12_read_mode_cfg {
+    enum lis2dw12_read_mode mode;
+    uint8_t int_num:1;
+    uint8_t int_cfg;
+};
+
 struct lis2dw12_cfg {
     uint8_t rate;
     uint8_t fs;
 
+    /* Offset config */
     int8_t offset_x;
     int8_t offset_y;
     int8_t offset_z;
     uint8_t offset_weight;
 
-    struct lis2dw12_tap_settings tap_cfg;
+    /* Tap config */
+    struct lis2dw12_tap_settings tap;
 
+    /* Read mode config */
+    struct lis2dw12_read_mode_cfg read_mode;
+
+    /* Freefall config */
     uint8_t freefall_dur;
     uint8_t freefall_ths;
-    
+
+    /* interrupt config */
     uint8_t int1_pin_cfg;
     uint8_t int2_pin_cfg;
-    bool map_int2_to_int1;
+    uint8_t map_int2_to_int1 : 1;
 
-    uint8_t offset_en : 1;
+    uint8_t offset_en   : 1;
 
-    uint8_t filter_bw : 2;
-    uint8_t high_pass : 1;
-    
-    uint8_t int_enable : 1;
-    uint8_t int_pp_od : 1;
+    uint8_t filter_bw   : 2;
+    uint8_t high_pass   : 1;
+
+    uint8_t int_enable  : 1;
+    uint8_t int_pp_od   : 1;
     uint8_t int_latched : 1;
-    uint8_t int_active : 1;
-    uint8_t inactivity_sleep_enable : 1;
-    uint8_t low_noise_enable : 1;
+    uint8_t int_active  : 1;
+    uint8_t inactivity_sleep_enable     : 1;
+    uint8_t low_noise_enable            : 1;
     uint8_t stationary_detection_enable : 1;
-    uint8_t double_tap_event_enable : 1;
+    uint8_t double_tap_event_enable     : 1;
 
-    uint8_t slp_mode : 1;
+    uint8_t slp_mode       : 1;
     uint8_t self_test_mode : 3;
 
-    uint8_t power_mode : 4;
-    
+    /* Power mode */
+    uint8_t power_mode     : 4;
+
+    /* fifo  config */
     enum lis2dw12_fifo_mode fifo_mode;
     uint8_t fifo_threshold;
 
+    /* sleep/wakeup settings */
     uint8_t wake_up_ths;
     uint8_t wake_up_dur;
     uint8_t sleep_duration;
-   
-    enum lis2dw12_read_mode read_mode;
-    uint8_t stream_read_interrupt;
-    
+
+    /* Sensor type mask to track enabled sensors */
     sensor_type_t mask;
 };
 
@@ -227,25 +240,22 @@ struct lis2dw12_int {
     struct sensor_int *ints;
 };
 
-    
-struct lis2dw12_private_driver_data {
+/* Private per driver data */
+struct lis2dw12_pdd {
+    /* Notification event context */
     struct sensor_notify_ev_ctx notify_ctx;
-    uint8_t registered_mask;
-
-    struct lis2dw12_int * interrupt;
-    
-    uint8_t int_num;
+    /* Inetrrupt state */
+    struct lis2dw12_int *interrupt;
+    /* Interrupt enabled flag */
     uint8_t int_enable;
 };
-        
-    
+
 struct lis2dw12 {
     struct os_dev dev;
     struct sensor sensor;
     struct lis2dw12_cfg cfg;
     struct lis2dw12_int intr;
-
-    struct lis2dw12_private_driver_data pdd;
+    struct lis2dw12_pdd pdd;
 };
 
 /**
@@ -264,7 +274,7 @@ int lis2dw12_reset(struct sensor_itf *itf);
  * @param ptr to chip id to be filled up
  */
 int lis2dw12_get_chip_id(struct sensor_itf *itf, uint8_t *chip_id);
-    
+
 /**
  * Sets the full scale selection
  *
@@ -454,7 +464,6 @@ int lis2dw12_get_slp_mode(struct sensor_itf *itf, uint8_t *mode);
  */
 int lis2dw12_start_on_demand_conversion(struct sensor_itf *itf);
 
-    
 /**
  * Set filter config
  *
@@ -474,7 +483,7 @@ int lis2dw12_set_filter_cfg(struct sensor_itf *itf, uint8_t bw, uint8_t type);
  * @return 0 on success, non-zero on failure
  */
 int lis2dw12_get_filter_cfg(struct sensor_itf *itf, uint8_t *bw, uint8_t *type);
-    
+
 /**
  * Sets new offsets in sensor
  *
@@ -512,7 +521,7 @@ int lis2dw12_get_offsets(struct sensor_itf *itf, int8_t *offset_x,
  * @return 0 on success, non-zero error on failure.
  */
 int lis2dw12_set_offset_enable(struct sensor_itf *itf, uint8_t enabled);
-   
+
 /**
  * Set tap detection configuration
  *
@@ -550,7 +559,7 @@ int lis2dw12_set_freefall(struct sensor_itf *itf, uint8_t dur, uint8_t ths);
  * @return 0 on success, non-zero on failure
  */
 int lis2dw12_get_freefall(struct sensor_itf *itf, uint8_t *dur, uint8_t *ths);
-    
+
 /**
  * Set interrupt pin configuration for interrupt 1
  *
@@ -624,7 +633,6 @@ int lis2dw12_get_tap_src(struct sensor_itf *itf, uint8_t *status);
  */
 int lis2dw12_get_sixd_src(struct sensor_itf *itf, uint8_t *status);
 
-    
 /**
  * Setup FIFO
  *
@@ -697,7 +705,7 @@ int lis2dw12_set_double_tap_event_en(struct sensor_itf *itf, uint8_t en);
  * @return 0 on success, non-zero on failure
  */
 int lis2dw12_get_double_tap_event_en(struct sensor_itf *itf, uint8_t *en);
-    
+
 /**
  * Set Wake Up Duration
  *
@@ -835,8 +843,8 @@ int lis2dw12_config(struct lis2dw12 *, struct lis2dw12_cfg *);
 #if MYNEWT_VAL(LIS2DW12_CLI)
 int lis2dw12_shell_init(void);
 #endif
-   
-    
+
+
 #ifdef __cplusplus
 }
 #endif
