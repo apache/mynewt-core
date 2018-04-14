@@ -138,6 +138,9 @@ imgr_read_info(int image_slot, struct image_version *ver, uint8_t *hash,
     uint32_t data_off, data_end;
     int area_id;
 
+    /* Silence spurious warning. */
+    data_end = 0;
+
     area_id = flash_area_id_from_image_slot(image_slot);
 
     hdr = (struct image_header *)data;
