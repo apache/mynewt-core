@@ -36,25 +36,23 @@
 #include <stm32f4xx_hal_gpio_ex.h>
 #include <mcu/mcu.h>
 #include "mcu/stm32_hal.h"
-#include <mcu/stm32f4_bsp.h>
-#include <mcu/stm32f4xx_mynewt_hal.h>
 #include "bsp/bsp.h"
 #include <assert.h>
 
 #if MYNEWT_VAL(UART_0)
 static struct uart_dev hal_uart0;
 
-static const struct stm32f4_uart_cfg uart_cfg[UART_CNT] = {
+static const struct stm32_uart_cfg uart_cfg[UART_CNT] = {
     [0] = {
-        .suc_uart = USART2,
+        .suc_uart    = USART2,
         .suc_rcc_reg = &RCC->APB1ENR,
         .suc_rcc_dev = RCC_APB1ENR_USART2EN,
-        .suc_pin_tx = MCU_GPIO_PORTA(2),    /* PA2 */
-        .suc_pin_rx = MCU_GPIO_PORTA(3),    /* PA3 */
-        .suc_pin_rts = MCU_GPIO_PORTA(1),   /* PA1 */
-        .suc_pin_cts = MCU_GPIO_PORTA(0),   /* PA0 */
-        .suc_pin_af = GPIO_AF7_USART2,
-        .suc_irqn = USART2_IRQn
+        .suc_pin_tx  = MCU_GPIO_PORTA(2),
+        .suc_pin_rx  = MCU_GPIO_PORTA(3),
+        .suc_pin_rts = MCU_GPIO_PORTA(1),
+        .suc_pin_cts = MCU_GPIO_PORTA(0),
+        .suc_pin_af  = GPIO_AF7_USART2,
+        .suc_irqn    = USART2_IRQn
     }
 };
 #endif
