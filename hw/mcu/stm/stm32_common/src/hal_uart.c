@@ -43,7 +43,34 @@ struct hal_uart_irq {
     struct hal_uart *ui_uart;
     volatile uint32_t ui_cnt;
 };
+
+#if defined(USART6_BASE)
 static struct hal_uart_irq uart_irqs[6];
+#elif defined(USART5_BASE)
+static struct hal_uart_irq uart_irqs[5];
+#elif defined(USART4_BASE)
+static struct hal_uart_irq uart_irqs[4];
+#else
+static struct hal_uart_irq uart_irqs[3];
+#endif
+
+#if defined(STM32F3) || defined(STM32F7)
+#  define STATUS(x)     ((x)->ISR)
+#  define RXNE          USART_ISR_RXNE
+#  define TXE           USART_ISR_TXE
+#  define TC            USART_ISR_TC
+#  define RXDR(x)       ((x)->RDR)
+#  define TXDR(x)       ((x)->TDR)
+#  define BAUD(x,y)     UART_DIV_SAMPLING16((x), (y))
+#else
+#  define STATUS(x)     ((x)->SR)
+#  define RXNE          USART_SR_RXNE
+#  define TXE           USART_SR_TXE
+#  define TC            USART_SR_TC
+#  define RXDR(x)       ((x)->DR)
+#  define TXDR(x)       ((x)->DR)
+#  define BAUD(x,y)     UART_BRR_SAMPLING16((x), (y))
+#endif
 
 int
 hal_uart_init_cbs(int port, hal_uart_tx_char tx_func, hal_uart_tx_done tx_done,
@@ -78,9 +105,9 @@ uart_irq_handler(int num)
     u = ui->ui_uart;
     regs = u->u_regs;
 
-    isr = regs->SR;
-    if (isr & USART_SR_RXNE) {
-        data = regs->DR;
+    isr = STATUS(regs);
+    if (isr & RXNE) {
+        data = RXDR(regs);
         rc = u->u_rx_func(u->u_func_arg, data);
         if (rc < 0) {
             regs->CR1 &= ~USART_CR1_RXNEIE;
@@ -88,19 +115,19 @@ uart_irq_handler(int num)
             u->u_rx_stall = 1;
         }
     }
-    if (isr & (USART_SR_TXE | USART_SR_TC)) {
+    if (isr & (TXE | TC)) {
         cr1 = regs->CR1;
-        if (isr & USART_SR_TXE) {
+        if (isr & TXE) {
             data = u->u_tx_func(u->u_func_arg);
             if (data < 0) {
                 cr1 &= ~USART_CR1_TXEIE;
                 cr1 |= USART_CR1_TCIE;
                 u->u_tx_end = 1;
             } else {
-                regs->DR = data;
+                TXDR(regs) = data;
             }
         }
-        if (u->u_tx_end == 1 && isr & USART_SR_TC) {
+        if (u->u_tx_end == 1 && isr & TC) {
             if (u->u_tx_done) {
                 u->u_tx_done(u->u_func_arg);
             }
@@ -109,6 +136,12 @@ uart_irq_handler(int num)
         }
         regs->CR1 = cr1;
     }
+#if defined(STM32F3) || defined(STM32F7)
+    /* clear overrun */
+    if (isr & USART_ISR_ORE) {
+        regs->ICR |= USART_ICR_ORECF;
+    }
+#endif
 }
 
 void
@@ -156,14 +189,14 @@ hal_uart_blocking_tx(int port, uint8_t data)
     }
     regs = u->u_regs;
 
-    while (!(regs->SR & USART_SR_TXE));
+    while (!(STATUS(regs) & TXE));
 
-    regs->DR = data;
+    TXDR(regs) = data;
 
     /*
      * Waits for TX to complete.
      */
-    while (!(regs->SR & USART_SR_TC));
+    while (!(STATUS(regs) & TC));
 }
 
 static void
@@ -374,13 +407,13 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
 #else
     if (cfg->suc_uart == USART1) {
 #endif
-        u->u_regs->BRR = UART_BRR_SAMPLING16(HAL_RCC_GetPCLK2Freq(), baudrate);
+        u->u_regs->BRR = BAUD(HAL_RCC_GetPCLK2Freq(), baudrate);
     } else {
-        u->u_regs->BRR = UART_BRR_SAMPLING16(HAL_RCC_GetPCLK1Freq(), baudrate);
+        u->u_regs->BRR = BAUD(HAL_RCC_GetPCLK1Freq(), baudrate);
     }
 
-    (void)u->u_regs->DR;
-    (void)u->u_regs->SR;
+    (void)RXDR(u->u_regs);
+    (void)STATUS(u->u_regs);
     hal_uart_set_nvic(cfg->suc_irqn, u);
 
     u->u_regs->CR1 |= (USART_CR1_RXNEIE | USART_CR1_UE);
