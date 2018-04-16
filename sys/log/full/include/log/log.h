@@ -73,6 +73,7 @@ typedef int (*lh_append_mbuf_func_t)(struct log *, struct os_mbuf *om);
 typedef int (*lh_walk_func_t)(struct log *,
         log_walk_func_t walk_func, struct log_offset *log_offset);
 typedef int (*lh_flush_func_t)(struct log *);
+typedef int (*lh_registered_func_t)(struct log *);
 
 #define LOG_TYPE_STREAM  (0)
 #define LOG_TYPE_MEMORY  (1)
@@ -86,6 +87,8 @@ struct log_handler {
     lh_append_mbuf_func_t log_append_mbuf;
     lh_walk_func_t log_walk;
     lh_flush_func_t log_flush;
+    /* Functions called only internally (no API for apps) */
+    lh_registered_func_t log_registered;
 };
 
 #if MYNEWT_VAL(LOG_VERSION) == 2

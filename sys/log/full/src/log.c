@@ -180,6 +180,11 @@ log_register(char *name, struct log *log, const struct log_handler *lh,
         STAILQ_INSERT_TAIL(&g_log_list, log, l_next);
     }
 
+    /* Call registered handler now - log structure is set and put on list */
+    if (log->l_log->log_registered) {
+        log->l_log->log_registered(log);
+    }
+
     /* If this is a persisted log, read the index from its most recent entry.
      * We need to ensure the index of all subseqently written entries is
      * monotonically increasing.
