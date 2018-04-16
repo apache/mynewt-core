@@ -339,6 +339,9 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
     struct hal_uart *u;
     const struct stm32_uart_cfg *cfg;
     uint32_t cr1, cr2, cr3;
+#if defined(STM32F1)
+    GPIO_InitTypeDef gpio;
+#endif
 
     if (port >= UART_CNT) {
         return -1;
@@ -351,6 +354,27 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
     cfg = u->u_cfg;
     assert(cfg);
 
+#if defined(STM32F1)
+    gpio.Mode = GPIO_MODE_AF_PP;
+    gpio.Speed = GPIO_SPEED_FREQ_HIGH;
+
+    gpio.Pull = GPIO_PULLUP;
+    hal_gpio_init_stm(cfg->suc_pin_tx, &gpio);
+    if (flow_ctl == HAL_UART_FLOW_CTL_RTS_CTS) {
+        hal_gpio_init_stm(cfg->suc_pin_rts, &gpio);
+    }
+
+    gpio.Mode = GPIO_MODE_AF_INPUT;
+    hal_gpio_init_stm(cfg->suc_pin_rx, &gpio);
+    if (flow_ctl == HAL_UART_FLOW_CTL_RTS_CTS) {
+        hal_gpio_init_stm(cfg->suc_pin_cts, &gpio);
+    }
+
+    if (cfg->suc_pin_remap_fn) {
+        cfg->suc_pin_remap_fn();
+    }
+#endif
+
     /*
      * RCC
      * pin config
@@ -362,8 +386,10 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
     cr2 = cfg->suc_uart->CR2;
     cr3 = cfg->suc_uart->CR3;
 
-    cr1 &= ~(USART_CR1_M | USART_CR1_PCE | USART_CR1_PS | USART_CR1_RE |
-      USART_CR1_OVER8);
+    cr1 &= ~(USART_CR1_M | USART_CR1_PCE | USART_CR1_PS | USART_CR1_RE);
+#if !defined(STM32F1)
+    cr1 &= ~(USART_CR1_OVER8);
+#endif
     cr2 &= ~(USART_CR2_STOP);
     cr3 &= ~(USART_CR3_RTSE | USART_CR3_CTSE);
 
@@ -419,16 +445,22 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
         break;
     }
 
+#if !defined(STM32F1)
     cr1 |= (UART_MODE_RX | UART_MODE_TX | UART_OVERSAMPLING_16);
+#else
+    cr1 |= (UART_MODE_TX_RX | UART_OVERSAMPLING_16);
+#endif
 
     *cfg->suc_rcc_reg |= cfg->suc_rcc_dev;
 
+#if !defined(STM32F1)
     hal_gpio_init_af(cfg->suc_pin_tx, cfg->suc_pin_af, 0, 0);
     hal_gpio_init_af(cfg->suc_pin_rx, cfg->suc_pin_af, 0, 0);
     if (flow_ctl == HAL_UART_FLOW_CTL_RTS_CTS) {
         hal_gpio_init_af(cfg->suc_pin_rts, cfg->suc_pin_af, 0, 0);
         hal_gpio_init_af(cfg->suc_pin_cts, cfg->suc_pin_af, 0, 0);
     }
+#endif
 
     u->u_regs = cfg->suc_uart;
     u->u_regs->CR3 = cr3;
