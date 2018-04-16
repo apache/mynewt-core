@@ -44,15 +44,15 @@ struct hal_uart_irq {
     volatile uint32_t ui_cnt;
 };
 
-#if defined(USART8_BASE)
+#if defined(UART8_BASE)
 static struct hal_uart_irq uart_irqs[8];
-#elif defined(USART7_BASE)
+#elif defined(UART7_BASE)
 static struct hal_uart_irq uart_irqs[7];
 #elif defined(USART6_BASE)
 static struct hal_uart_irq uart_irqs[6];
-#elif defined(USART5_BASE)
+#elif defined(UART5_BASE)
 static struct hal_uart_irq uart_irqs[5];
-#elif defined(USART4_BASE)
+#elif defined(UART4_BASE)
 static struct hal_uart_irq uart_irqs[4];
 #else
 static struct hal_uart_irq uart_irqs[3];
@@ -224,7 +224,7 @@ uart_irq3(void)
 }
 #endif
 
-#ifdef USART4_BASE
+#ifdef UART4_BASE
 static void
 uart_irq4(void)
 {
@@ -232,7 +232,7 @@ uart_irq4(void)
 }
 #endif
 
-#ifdef USART5_BASE
+#ifdef UART5_BASE
 static void
 uart_irq5(void)
 {
@@ -248,7 +248,7 @@ uart_irq6(void)
 }
 #endif
 
-#ifdef USART7_BASE
+#ifdef UART7_BASE
 static void
 uart_irq7(void)
 {
@@ -256,7 +256,7 @@ uart_irq7(void)
 }
 #endif
 
-#ifdef USART8_BASE
+#ifdef UART8_BASE
 static void
 uart_irq8(void)
 {
@@ -285,13 +285,13 @@ hal_uart_set_nvic(IRQn_Type irqn, struct hal_uart *uart)
         ui = &uart_irqs[2];
         break;
 #endif
-#ifdef USART4_BASE
+#ifdef UART4_BASE
     case UART4_IRQn:
         isr = (uint32_t)&uart_irq4;
         ui = &uart_irqs[3];
         break;
 #endif
-#ifdef USART5_BASE
+#ifdef UART5_BASE
     case UART5_IRQn:
         isr = (uint32_t)&uart_irq5;
         ui = &uart_irqs[4];
@@ -303,13 +303,13 @@ hal_uart_set_nvic(IRQn_Type irqn, struct hal_uart *uart)
         ui = &uart_irqs[5];
         break;
 #endif
-#ifdef USART7_BASE
+#ifdef UART7_BASE
     case UART7_IRQn:
         isr = (uint32_t)&uart_irq7;
         ui = &uart_irqs[6];
         break;
 #endif
-#ifdef USART8_BASE
+#ifdef UART8_BASE
     case UART8_IRQn:
         isr = (uint32_t)&uart_irq8;
         ui = &uart_irqs[7];
@@ -319,11 +319,7 @@ hal_uart_set_nvic(IRQn_Type irqn, struct hal_uart *uart)
         assert(0);
         break;
     }
-/*
-  XXX need somehow to detect where these exist or not
-    case UART4_IRQn:
-    case UART5_IRQn:
-*/
+
     if (ui) {
         ui->ui_uart = uart;
 
