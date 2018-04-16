@@ -53,7 +53,7 @@
 #if MYNEWT_VAL(UART_0)
 static struct uart_dev hal_uart[1];
 
-static const struct stm32f3_uart_cfg uart_cfg[1] = {
+static const struct stm32_uart_cfg uart_cfg[1] = {
     {
         .suc_uart    = USART1,
         .suc_rcc_reg = &RCC->APB2ENR,
@@ -67,7 +67,7 @@ static const struct stm32f3_uart_cfg uart_cfg[1] = {
     },
 };
 
-const struct stm32f3_uart_cfg *
+const struct stm32_uart_cfg *
 bsp_uart_config(int port)
 {
     assert(port == 0);
