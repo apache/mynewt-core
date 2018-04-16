@@ -27,6 +27,7 @@
 #include "mgmt/mgmt.h"
 #include "imgmgr/imgmgr.h"
 #include "imgmgr_priv.h"
+#include "log/log_fcb_slot1.h"
 
 uint8_t
 imgmgr_state_flags(int query_slot)
@@ -222,6 +223,11 @@ imgmgr_state_confirm(void)
         if (rc != 0) {
             return MGMT_ERR_EUNKNOWN;
         }
+
+#if MYNEWT_VAL(LOG_FCB_SLOT1)
+        /* If logging to slot1 is enabled, we can unlock slot1 here. */
+        log_fcb_slot1_unlock();
+#endif
     }
 
     return 0;

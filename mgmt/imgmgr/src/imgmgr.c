@@ -28,6 +28,9 @@
 #include "bootutil/image.h"
 #include "bootutil/bootutil.h"
 #include "mgmt/mgmt.h"
+#if MYNEWT_VAL(LOG_FCB_SLOT1)
+#include "log/log_fcb_slot1.h"
+#endif
 
 #include "imgmgr/imgmgr.h"
 #include "imgmgr_priv.h"
@@ -312,6 +315,16 @@ imgr_erase(struct mgmt_cbuf *cb)
 
     area_id = imgmgr_find_best_area_id();
     if (area_id >= 0) {
+#if MYNEWT_VAL(LOG_FCB_SLOT1)
+        /*
+         * If logging to slot1 is enabled, make sure it's locked before erasing
+         * so log handler does not corrupt our data.
+         */
+        if (area_id == FLASH_AREA_IMAGE_1) {
+            log_fcb_slot1_lock();
+        }
+#endif
+
         if (imgr_state.upload.fa) {
             flash_area_close(imgr_state.upload.fa);
             imgr_state.upload.fa = NULL;
@@ -415,6 +428,16 @@ imgr_upload(struct mgmt_cbuf *cb)
                 return MGMT_ERR_EINVAL;
             }
 
+#if MYNEWT_VAL(LOG_FCB_SLOT1)
+            /*
+             * If logging to slot1 is enabled, make sure it's locked before
+             * erasing so log handler does not corrupt our data.
+             */
+            if (area_id == FLASH_AREA_IMAGE_1) {
+                log_fcb_slot1_lock();
+            }
+#endif
+
             if(!empty) {
                 rc = flash_area_erase(imgr_state.upload.fa, 0,
                   imgr_state.upload.fa->fa_size);
@@ -490,5 +513,15 @@ imgmgr_module_init(void)
 #if MYNEWT_VAL(IMGMGR_CLI)
     rc = imgr_cli_register();
     SYSINIT_PANIC_ASSERT(rc == 0);
+#endif
+
+#if MYNEWT_VAL(LOG_FCB_SLOT1)
+    /*
+     * If logging to slot1 is enabled, make sure we lock it if slot1 is in use
+     * to prevent data corruption.
+     */
+    if (imgmgr_state_slot_in_use(1)) {
+        log_fcb_slot1_lock();
+    }
 #endif
 }
