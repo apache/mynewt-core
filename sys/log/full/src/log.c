@@ -42,6 +42,14 @@ struct shell_cmd g_shell_log_cmd = {
     .sc_cmd = "log",
     .sc_cmd_func = shell_log_dump_all_cmd
 };
+
+#if MYNEWT_VAL(LOG_FCB_SLOT1)
+int shell_log_slot1_cmd(int, char **);
+struct shell_cmd g_shell_slot1_cmd = {
+    .sc_cmd = "slot1",
+    .sc_cmd_func = shell_log_slot1_cmd,
+};
+#endif
 #endif
 
 void
@@ -65,6 +73,9 @@ log_init(void)
 
 #if MYNEWT_VAL(LOG_CLI)
     shell_cmd_register(&g_shell_log_cmd);
+#if MYNEWT_VAL(LOG_FCB_SLOT1)
+    shell_cmd_register(&g_shell_slot1_cmd);
+#endif
 #endif
 
 #if MYNEWT_VAL(LOG_NEWTMGR)

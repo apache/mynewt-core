@@ -30,6 +30,7 @@
 
 #include "cbmem/cbmem.h"
 #include "log/log.h"
+#include "log/log_fcb_slot1.h"
 #include "shell/shell.h"
 #include "console/console.h"
 
@@ -96,6 +97,39 @@ shell_log_dump_all_cmd(int argc, char **argv)
     return (0);
 err:
     return (rc);
+}
+
+int
+shell_log_slot1_cmd(int argc, char **argv)
+{
+    const struct flash_area *fa;
+    int rc;
+
+    if (argc == 1) {
+        console_printf("slot1 state is: %s\n",
+                       log_fcb_slot1_is_locked() ? "locked" : "unlocked");
+    } else {
+        if (!strcasecmp(argv[1], "lock")) {
+            log_fcb_slot1_lock();
+            console_printf("slot1 locked\n");
+        } else if (!strcasecmp(argv[1], "unlock")) {
+            log_fcb_slot1_unlock();
+            console_printf("slot1 unlocked\n");
+        } else if (!strcasecmp(argv[1], "erase")) {
+            rc = flash_area_open(FLASH_AREA_IMAGE_1, &fa);
+            if (rc) {
+                return -1;
+            }
+
+            flash_area_erase(fa, 0, fa->fa_size);
+
+            console_printf("slot1 erased\n");
+        } else {
+            return -1;
+        }
+    }
+
+    return 0;
 }
 
 #endif
