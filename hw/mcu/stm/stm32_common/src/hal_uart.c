@@ -179,19 +179,23 @@ uart_irq2(void)
 
 }
 
-#if !defined(STM32F401xE)
+#ifdef USART3_BASE
 static void
 uart_irq3(void)
 {
     uart_irq_handler(2);
 }
+#endif
 
+#ifdef USART4_BASE
 static void
 uart_irq4(void)
 {
     uart_irq_handler(3);
 }
+#endif
 
+#ifdef USART5_BASE
 static void
 uart_irq5(void)
 {
@@ -199,11 +203,13 @@ uart_irq5(void)
 }
 #endif
 
+#ifdef USART6_BASE
 static void
 uart_irq6(void)
 {
     uart_irq_handler(5);
 }
+#endif
 
 static void
 hal_uart_set_nvic(IRQn_Type irqn, struct hal_uart *uart)
@@ -220,24 +226,30 @@ hal_uart_set_nvic(IRQn_Type irqn, struct hal_uart *uart)
         isr = (uint32_t)&uart_irq2;
         ui = &uart_irqs[1];
         break;
-#if !defined(STM32F401xE)
+#ifdef USART3_BASE
     case USART3_IRQn:
         isr = (uint32_t)&uart_irq3;
         ui = &uart_irqs[2];
         break;
+#endif
+#ifdef USART4_BASE
     case UART4_IRQn:
         isr = (uint32_t)&uart_irq4;
         ui = &uart_irqs[3];
         break;
+#endif
+#ifdef USART5_BASE
     case UART5_IRQn:
         isr = (uint32_t)&uart_irq5;
         ui = &uart_irqs[4];
         break;
 #endif
+#ifdef USART6_BASE
     case USART6_IRQn:
         isr = (uint32_t)&uart_irq6;
         ui = &uart_irqs[5];
         break;
+#endif
     default:
         assert(0);
         break;
@@ -357,7 +369,11 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
     u->u_regs->CR3 = cr3;
     u->u_regs->CR2 = cr2;
     u->u_regs->CR1 = cr1;
+#ifdef USART6_BASE
     if (cfg->suc_uart == USART1 || cfg->suc_uart == USART6) {
+#else
+    if (cfg->suc_uart == USART1) {
+#endif
         u->u_regs->BRR = UART_BRR_SAMPLING16(HAL_RCC_GetPCLK2Freq(), baudrate);
     } else {
         u->u_regs->BRR = UART_BRR_SAMPLING16(HAL_RCC_GetPCLK1Freq(), baudrate);
