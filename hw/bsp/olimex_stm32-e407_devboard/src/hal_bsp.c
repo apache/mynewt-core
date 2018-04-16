@@ -276,7 +276,7 @@ struct stm32_hal_spi_cfg spi0_cfg = {
 };
 #endif
 #if MYNEWT_VAL(UART_0)
-static const struct stm32f4_uart_cfg uart_cfg0 = {
+static const struct stm32_uart_cfg uart_cfg0 = {
     .suc_uart = USART6,
     .suc_rcc_reg = &RCC->APB2ENR,
     .suc_rcc_dev = RCC_APB2ENR_USART6EN,

@@ -36,8 +36,6 @@
 
 #include <stm32f407xx.h>
 #include <stm32f4xx_hal_gpio_ex.h>
-#include <mcu/stm32f4_bsp.h>
-#include "mcu/stm32f4xx_mynewt_hal.h"
 #include "mcu/stm32_hal.h"
 #include "hal/hal_i2c.h"
 
@@ -46,13 +44,13 @@
 #if MYNEWT_VAL(UART_0)
 static struct uart_dev hal_uart0;
 
-static const struct stm32f4_uart_cfg uart_cfg[UART_CNT] = {
+static const struct stm32_uart_cfg uart_cfg[UART_CNT] = {
     [0] = {
         .suc_uart = USART6,
         .suc_rcc_reg = &RCC->APB2ENR,
         .suc_rcc_dev = RCC_APB2ENR_USART6EN,
-        .suc_pin_tx = MCU_GPIO_PORTC(6),	/* PC6 */
-        .suc_pin_rx = MCU_GPIO_PORTC(7),	/* PC7 */
+        .suc_pin_tx = MCU_GPIO_PORTC(6),
+        .suc_pin_rx = MCU_GPIO_PORTC(7),
         .suc_pin_rts = -1,
         .suc_pin_cts = -1,
         .suc_pin_af = GPIO_AF8_USART6,

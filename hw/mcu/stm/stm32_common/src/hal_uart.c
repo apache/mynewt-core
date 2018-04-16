@@ -20,13 +20,8 @@
 #include "hal/hal_uart.h"
 #include "hal/hal_gpio.h"
 #include "mcu/cmsis_nvic.h"
+#include "mcu/stm32_hal.h"
 #include "bsp/bsp.h"
-#include "stm32f4xx.h"
-#include "stm32f4xx_hal_dma.h"
-#include "stm32f4xx_hal_uart.h"
-#include "stm32f4xx_hal_rcc.h"
-#include "mcu/stm32f4_bsp.h"
-#include "mcu/stm32f4xx_mynewt_hal.h"
 #include <assert.h>
 #include <stdlib.h>
 
@@ -40,7 +35,7 @@ struct hal_uart {
     hal_uart_tx_char u_tx_func;
     hal_uart_tx_done u_tx_done;
     void *u_func_arg;
-    const struct stm32f4_uart_cfg *u_cfg;
+    const struct stm32_uart_cfg *u_cfg;
 };
 static struct hal_uart uarts[UART_CNT];
 
@@ -265,7 +260,7 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
   enum hal_uart_parity parity, enum hal_uart_flow_ctl flow_ctl)
 {
     struct hal_uart *u;
-    const struct stm32f4_uart_cfg *cfg;
+    const struct stm32_uart_cfg *cfg;
     uint32_t cr1, cr2, cr3;
 
     if (port >= UART_CNT) {
@@ -387,7 +382,7 @@ hal_uart_init(int port, void *arg)
         return -1;
     }
     u = &uarts[port];
-    u->u_cfg = (const struct stm32f4_uart_cfg *)arg;
+    u->u_cfg = (const struct stm32_uart_cfg *)arg;
 
     return 0;
 }
