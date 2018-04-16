@@ -209,7 +209,7 @@ struct log_entry_hdr {
 
 struct log {
     char *l_name;
-    struct log_handler *l_log;
+    const struct log_handler *l_log;
     void *l_arg;
     STAILQ_ENTRY(log) l_next;
     uint8_t l_level;

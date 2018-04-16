@@ -172,7 +172,7 @@ log_register(char *name, struct log *log, const struct log_handler *lh,
     assert(!log_written);
 
     log->l_name = name;
-    log->l_log = (struct log_handler *)lh;
+    log->l_log = lh;
     log->l_arg = arg;
     log->l_level = level;
 
