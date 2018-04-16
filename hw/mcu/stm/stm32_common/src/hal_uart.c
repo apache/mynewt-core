@@ -44,7 +44,11 @@ struct hal_uart_irq {
     volatile uint32_t ui_cnt;
 };
 
-#if defined(USART6_BASE)
+#if defined(USART8_BASE)
+static struct hal_uart_irq uart_irqs[8];
+#elif defined(USART7_BASE)
+static struct hal_uart_irq uart_irqs[7];
+#elif defined(USART6_BASE)
 static struct hal_uart_irq uart_irqs[6];
 #elif defined(USART5_BASE)
 static struct hal_uart_irq uart_irqs[5];
@@ -244,6 +248,22 @@ uart_irq6(void)
 }
 #endif
 
+#ifdef USART7_BASE
+static void
+uart_irq7(void)
+{
+    uart_irq_handler(6);
+}
+#endif
+
+#ifdef USART8_BASE
+static void
+uart_irq8(void)
+{
+    uart_irq_handler(7);
+}
+#endif
+
 static void
 hal_uart_set_nvic(IRQn_Type irqn, struct hal_uart *uart)
 {
@@ -281,6 +301,18 @@ hal_uart_set_nvic(IRQn_Type irqn, struct hal_uart *uart)
     case USART6_IRQn:
         isr = (uint32_t)&uart_irq6;
         ui = &uart_irqs[5];
+        break;
+#endif
+#ifdef USART7_BASE
+    case UART7_IRQn:
+        isr = (uint32_t)&uart_irq7;
+        ui = &uart_irqs[6];
+        break;
+#endif
+#ifdef USART8_BASE
+    case UART8_IRQn:
+        isr = (uint32_t)&uart_irq8;
+        ui = &uart_irqs[7];
         break;
 #endif
     default:

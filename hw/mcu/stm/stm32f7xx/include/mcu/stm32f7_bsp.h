@@ -30,7 +30,7 @@ extern "C" {
 /**
  * BSP specific UART settings.
  */
-struct stm32f7_uart_cfg {
+struct stm32_uart_cfg {
     USART_TypeDef *suc_uart;            /* UART dev registers */
     volatile uint32_t *suc_rcc_reg;     /* RCC register to modify */
     uint32_t suc_rcc_dev;               /* RCC device ID */
