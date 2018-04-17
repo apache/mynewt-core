@@ -129,6 +129,14 @@ hal_bsp_init(void)
     hal_timer_init(0, TIM9);
 #endif
 
+#if MYNEWT_VAL(TIMER_1)
+    hal_timer_init(1, TIM10);
+#endif
+
+#if MYNEWT_VAL(TIMER_2)
+    hal_timer_init(2, TIM11);
+#endif
+
 #if MYNEWT_VAL(SPI_0_MASTER)
     rc = hal_spi_init(0, &spi0_cfg, HAL_SPI_TYPE_MASTER);
     assert(rc == 0);
