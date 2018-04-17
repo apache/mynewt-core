@@ -141,17 +141,7 @@ struct log_entry_hdr {
 #define LOG_MODULE_PERUSER          (64)
 #define LOG_MODULE_MAX              (255)
 
-#define LOG_MODULE_STR(module) \
-    (LOG_MODULE_DEFAULT     == module ? "DEFAULT"     :\
-    (LOG_MODULE_OS          == module ? "OS"          :\
-    (LOG_MODULE_NEWTMGR     == module ? "NEWTMGR"     :\
-    (LOG_MODULE_NIMBLE_CTLR == module ? "NIMBLE_CTLR" :\
-    (LOG_MODULE_NIMBLE_HOST == module ? "NIMBLE_HOST" :\
-    (LOG_MODULE_NFFS        == module ? "NFFS"        :\
-    (LOG_MODULE_REBOOT      == module ? "REBOOT"      :\
-    (LOG_MODULE_IOTIVITY    == module ? "IOTIVITY"    :\
-    (LOG_MODULE_TEST        == module ? "TEST"        :\
-     "UNKNOWN")))))))))
+#define LOG_MODULE_STR(module)      log_module_get_name(module)
 
 #define LOG_ETYPE_STRING         (0)
 #if MYNEWT_VAL(LOG_VERSION) > 2
@@ -229,6 +219,35 @@ struct log {
 /* Log system level functions (for all logs.) */
 void log_init(void);
 struct log *log_list_get_next(struct log *);
+
+/*
+ * Register per-user log module
+ *
+ * This function associates user log module with given name.
+ *
+ * If \p id is non-zero, module is registered with selected id.
+ * If \p id is zero, module id is selected automatically (first available).
+ *
+ * Up to `LOG_MAX_USER_MODULES` (syscfg) modules can be registered with ids
+ * starting from `LOG_MODULE_PERUSER`.
+ *
+ * @param id    Selected module id
+ * @param name  Module name
+ *
+ * @return  module id on success, 0 on failure
+ */
+uint8_t log_module_register(uint8_t id, const char *name);
+
+/*
+ * Get name for module id
+ *
+ * This works for both system and user registered modules.
+ *
+ * @param id  Module id
+ *
+ * @return  module name or NULL if not a valid module
+ */
+const char *log_module_get_name(uint8_t id);
 
 /* Log functions, manipulate a single log */
 int log_register(char *name, struct log *log, const struct log_handler *,

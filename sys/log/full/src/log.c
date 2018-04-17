@@ -33,6 +33,7 @@
 struct log_info g_log_info;
 
 static STAILQ_HEAD(, log) g_log_list = STAILQ_HEAD_INITIALIZER(g_log_list);
+static const char *g_log_module_list[ MYNEWT_VAL(LOG_MAX_USER_MODULES) ];
 static uint8_t log_inited;
 static uint8_t log_written;
 
@@ -96,6 +97,73 @@ log_list_get_next(struct log *log)
     }
 
     return (next);
+}
+
+uint8_t
+log_module_register(uint8_t id, const char *name)
+{
+    uint8_t idx;
+
+    if (id == 0) {
+        /* Find free idx */
+        for (idx = 0;
+             idx < MYNEWT_VAL(LOG_MAX_USER_MODULES) && g_log_module_list[idx];
+             idx++) {
+        }
+
+        if (idx == MYNEWT_VAL(LOG_MAX_USER_MODULES)) {
+            /* No free idx */
+            return 0;
+        }
+    } else {
+        if ((id < LOG_MODULE_PERUSER) ||
+                (id >= LOG_MODULE_PERUSER + MYNEWT_VAL(LOG_MAX_USER_MODULES))) {
+            /* Invalid id */
+            return 0;
+        }
+
+        idx = id - LOG_MODULE_PERUSER;
+    }
+
+    if (g_log_module_list[idx]) {
+        /* Already registered with selected id */
+        return 0;
+    }
+
+    g_log_module_list[idx] = name;
+
+    return idx + LOG_MODULE_PERUSER;
+}
+
+const char *
+log_module_get_name(uint8_t module)
+{
+    if (module < LOG_MODULE_PERUSER) {
+        switch (module) {
+        case LOG_MODULE_DEFAULT:
+            return "DEFAULT";
+        case LOG_MODULE_OS:
+            return "OS";
+        case LOG_MODULE_NEWTMGR:
+            return "NEWTMGR";
+        case LOG_MODULE_NIMBLE_CTLR:
+            return "NIMBLE_CTLR";
+        case LOG_MODULE_NIMBLE_HOST:
+            return "NIMBLE_HOST";
+        case LOG_MODULE_NFFS:
+            return "NFFS";
+        case LOG_MODULE_REBOOT:
+            return "REBOOT";
+        case LOG_MODULE_IOTIVITY:
+            return "IOTIVITY";
+        case LOG_MODULE_TEST:
+            return "TEST";
+        }
+    } else if (module - LOG_MODULE_PERUSER < MYNEWT_VAL(LOG_MAX_USER_MODULES)) {
+        return g_log_module_list[module - LOG_MODULE_PERUSER];
+    }
+
+    return NULL;
 }
 
 /**
