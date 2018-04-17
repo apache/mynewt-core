@@ -2267,7 +2267,7 @@ lis2dw12_poll_read(struct sensor *sensor, sensor_type_t sensor_type,
         goto err;
     }
 
-    if (cfg->read_mode.mode != LIS2DW12_READ_M_STREAM) {
+    if (cfg->read_mode.mode != LIS2DW12_READ_M_POLL) {
         rc = SYS_EINVAL;
         goto err;
     }
