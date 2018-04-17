@@ -68,6 +68,13 @@ struct stm32_hal_spi_cfg {
 #include "stm32f3xx_hal_uart.h"
 #include "mcu/stm32f3_bsp.h"
 
+/* hal_timer */
+#include "stm32f3xx_hal_tim.h"
+
+#define STM32_HAL_TIMER_MAX     (3)
+#define STM32_OFLOW_VALUE       (0x10000UL)
+#define STM32_NSEC_PER_SEC      (1000000000UL)
+
 #ifdef __cplusplus
 }
 #endif

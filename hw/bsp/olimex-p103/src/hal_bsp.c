@@ -180,7 +180,15 @@ hal_bsp_init(void)
 #endif
 
 #if MYNEWT_VAL(TIMER_0)
-    hal_timer_init(0, TIM9);
+    hal_timer_init(0, TIM2);
+#endif
+
+#if MYNEWT_VAL(TIMER_1)
+    hal_timer_init(1, TIM3);
+#endif
+
+#if MYNEWT_VAL(TIMER_2)
+    hal_timer_init(2, TIM4);
 #endif
 
 #if MYNEWT_VAL(SPI_0_MASTER)

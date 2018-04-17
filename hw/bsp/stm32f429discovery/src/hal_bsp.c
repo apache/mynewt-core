@@ -42,17 +42,18 @@
 #if MYNEWT_VAL(UART_0)
 static struct uart_dev hal_uart0;
 
+/* UART connected to st-link */
 static const struct stm32_uart_cfg uart_cfg[UART_CNT] = {
     [0] = {
-        .suc_uart = USART2,
-        .suc_rcc_reg = &RCC->APB1ENR,
-        .suc_rcc_dev = RCC_APB1ENR_USART2EN,
-        .suc_pin_tx = MCU_GPIO_PORTD(5),	/* PD5 */
-        .suc_pin_rx = MCU_GPIO_PORTD(6),	/* PD6 */
+        .suc_uart = USART1,
+        .suc_rcc_reg = &RCC->APB2ENR,
+        .suc_rcc_dev = RCC_APB2ENR_USART1EN,
+        .suc_pin_tx = MCU_GPIO_PORTA(9),
+        .suc_pin_rx = MCU_GPIO_PORTA(10),
         .suc_pin_rts = -1,
         .suc_pin_cts = -1,
-        .suc_pin_af = GPIO_AF7_USART2,
-        .suc_irqn = USART2_IRQn
+        .suc_pin_af = GPIO_AF7_USART1,
+        .suc_irqn = USART1_IRQn
     }
 };
 #endif
@@ -99,11 +100,17 @@ hal_bsp_init(void)
       OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *)&uart_cfg[0]);
     assert(rc == 0);
 #endif
+
 #if MYNEWT_VAL(TIMER_0)
-    hal_timer_init(0, TIM1);
+    hal_timer_init(0, TIM9);
 #endif
+
 #if MYNEWT_VAL(TIMER_1)
-    hal_timer_init(1, TIM9);
+    hal_timer_init(1, TIM10);
+#endif
+
+#if MYNEWT_VAL(TIMER_2)
+    hal_timer_init(2, TIM11);
 #endif
 }
 

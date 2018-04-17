@@ -21,12 +21,15 @@ syscfg.defs:
     UART_0:
         description: 'Uart 0'
         value:  1
+
     TIMER_0:
         description: 'Timer 0'
         value:  1
+
     TIMER_1:
         description: 'Timer 1'
         value: 1
+
     TIMER_2:
         description: 'Timer 2'
         value: 1

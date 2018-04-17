@@ -171,8 +171,17 @@ hal_bsp_init(void)
       OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *)&uart_cfg[0]);
     assert(rc == 0);
 #endif
+
 #if MYNEWT_VAL(TIMER_0)
     hal_timer_init(0, TIM9);
+#endif
+
+#if MYNEWT_VAL(TIMER_1)
+    hal_timer_init(1, TIM10);
+#endif
+
+#if MYNEWT_VAL(TIMER_2)
+    hal_timer_init(2, TIM11);
 #endif
 
 #if MYNEWT_VAL(SPI_1_MASTER)

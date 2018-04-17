@@ -25,58 +25,50 @@
 
 #include <mcu/cmsis_nvic.h>
 #include <hal/hal_timer.h>
+#include "mcu/stm32_hal.h"
 
-#include "stm32f7xx.h"
-#include "stm32f7xx_hal_dma.h"
-#include "stm32f7xx_hal_tim.h"
-#include "stm32f7xx_hal_rcc.h"
-
-#include "mcu/stm32f7xx_mynewt_hal.h"
-
-#define STM32F7_HAL_TIMER_MAX     (3)
-
-struct stm32f7_hal_tmr {
-    TIM_TypeDef *sht_regs;	/* Pointer to timer registers */
-    uint32_t sht_oflow;		/* 16 bits of overflow to make timer 32bits */
+struct stm32_hal_tmr {
+    TIM_TypeDef *sht_regs;   /* Pointer to timer registers */
+    uint32_t sht_oflow;      /* 16 bits of overflow to make timer 32bits */
     TAILQ_HEAD(hal_timer_qhead, hal_timer) sht_timers;
 };
 
 #if MYNEWT_VAL(TIMER_0)
-struct stm32f7_hal_tmr stm32f7_tmr0;
+struct stm32_hal_tmr stm32_tmr0;
 #endif
 #if MYNEWT_VAL(TIMER_1)
-struct stm32f7_hal_tmr stm32f7_tmr1;
+struct stm32_hal_tmr stm32_tmr1;
 #endif
 #if MYNEWT_VAL(TIMER_2)
-struct stm32f7_hal_tmr stm32f7_tmr2;
+struct stm32_hal_tmr stm32_tmr2;
 #endif
 
-static struct stm32f7_hal_tmr *stm32f7_tmr_devs[STM32F7_HAL_TIMER_MAX] = {
+static struct stm32_hal_tmr *stm32_tmr_devs[STM32_HAL_TIMER_MAX] = {
 #if MYNEWT_VAL(TIMER_0)
-    &stm32f7_tmr0,
+    &stm32_tmr0,
 #else
     NULL,
 #endif
 #if MYNEWT_VAL(TIMER_1)
-    &stm32f7_tmr1,
+    &stm32_tmr1,
 #else
     NULL,
 #endif
 #if MYNEWT_VAL(TIMER_2)
-    &stm32f7_tmr2,
+    &stm32_tmr2,
 #else
     NULL,
 #endif
 };
 
-static uint32_t hal_timer_cnt(struct stm32f7_hal_tmr *tmr);
+static uint32_t hal_timer_cnt(struct stm32_hal_tmr *tmr);
 
 #if (MYNEWT_VAL(TIMER_0) || MYNEWT_VAL(TIMER_1) || MYNEWT_VAL(TIMER_2))
 /*
  * Call expired timer callbacks, and reprogram timer with new expiry time.
  */
 static void
-stm32f7_tmr_cbs(struct stm32f7_hal_tmr *tmr)
+stm32_tmr_cbs(struct stm32_hal_tmr *tmr)
 {
     uint32_t cnt;
     struct hal_timer *ht;
@@ -108,7 +100,7 @@ stm32f7_tmr_cbs(struct stm32f7_hal_tmr *tmr)
  * @param tmr
  */
 static void
-stm32f7_tmr_irq(struct stm32f7_hal_tmr *tmr)
+stm32_tmr_irq(struct stm32_hal_tmr *tmr)
 {
     uint32_t sr;
     uint32_t clr = 0;
@@ -118,7 +110,7 @@ stm32f7_tmr_irq(struct stm32f7_hal_tmr *tmr)
         /*
          * Overflow interrupt
          */
-        tmr->sht_oflow += 0x10000;
+        tmr->sht_oflow += STM32_OFLOW_VALUE;
         clr |= TIM_SR_UIF;
     }
     if (sr & TIM_SR_CC1IF) {
@@ -126,7 +118,7 @@ stm32f7_tmr_irq(struct stm32f7_hal_tmr *tmr)
          * Capture event
          */
         clr |= TIM_SR_CC1IF;
-        stm32f7_tmr_cbs(tmr);
+        stm32_tmr_cbs(tmr);
     }
 
     tmr->sht_regs->SR = ~clr;
@@ -135,30 +127,30 @@ stm32f7_tmr_irq(struct stm32f7_hal_tmr *tmr)
 
 #if MYNEWT_VAL(TIMER_0)
 static void
-stm32f7_tmr0_irq(void)
+stm32_tmr0_irq(void)
 {
-    stm32f7_tmr_irq(&stm32f7_tmr0);
+    stm32_tmr_irq(&stm32_tmr0);
 }
 #endif
 
 #if MYNEWT_VAL(TIMER_1)
 static void
-stm32f7_tmr1_irq(void)
+stm32_tmr1_irq(void)
 {
-    stm32f7_tmr_irq(&stm32f7_tmr1);
+    stm32_tmr_irq(&stm32_tmr1);
 }
 #endif
 
 #if MYNEWT_VAL(TIMER_2)
 static void
-stm32f7_tmr2_irq(void)
+stm32_tmr2_irq(void)
 {
-    stm32f7_tmr_irq(&stm32f7_tmr2);
+    stm32_tmr_irq(&stm32_tmr2);
 }
 #endif
 
 static void
-stm32f7_tmr_reg_irq(IRQn_Type irqn, uint32_t func)
+stm32_tmr_reg_irq(IRQn_Type irqn, uint32_t func)
 {
     NVIC_SetPriority(irqn, (1 << __NVIC_PRIO_BITS) - 1);
     NVIC_SetVector(irqn, func);
@@ -166,7 +158,7 @@ stm32f7_tmr_reg_irq(IRQn_Type irqn, uint32_t func)
 }
 
 static uint32_t
-stm32f7_base_freq(TIM_TypeDef *regs)
+stm32_base_freq(TIM_TypeDef *regs)
 {
     RCC_ClkInitTypeDef clocks;
     uint32_t fl;
@@ -194,8 +186,31 @@ stm32f7_base_freq(TIM_TypeDef *regs)
 #ifdef TIM11
     case (uint32_t)TIM11:
 #endif
+#ifdef TIM15
+    case (uint32_t)TIM15:
+#endif
+#ifdef TIM16
+    case (uint32_t)TIM16:
+#endif
+#ifdef TIM17
+    case (uint32_t)TIM17:
+#endif
         freq = HAL_RCC_GetPCLK2Freq();
         if (clocks.APB2CLKDivider) {
+            freq *= 2;
+        }
+        break;
+#ifdef TIM2
+    case (uint32_t)TIM2:
+#endif
+#ifdef TIM3
+    case (uint32_t)TIM3:
+#endif
+#ifdef TIM4
+    case (uint32_t)TIM4:
+#endif
+        freq = HAL_RCC_GetPCLK1Freq();
+        if (clocks.APB1CLKDivider) {
             freq *= 2;
         }
         break;
@@ -206,24 +221,24 @@ stm32f7_base_freq(TIM_TypeDef *regs)
 }
 
 static void
-stm32f7_hw_setup(int num, TIM_TypeDef *regs)
+stm32_hw_setup(int num, TIM_TypeDef *regs)
 {
     uint32_t func;
 
     switch (num) {
 #if MYNEWT_VAL(TIMER_0)
     case 0:
-        func = (uint32_t)stm32f7_tmr0_irq;
+        func = (uint32_t)stm32_tmr0_irq;
         break;
 #endif
 #if MYNEWT_VAL(TIMER_1)
     case 1:
-        func = (uint32_t)stm32f7_tmr1_irq;
+        func = (uint32_t)stm32_tmr1_irq;
         break;
 #endif
 #if MYNEWT_VAL(TIMER_2)
     case 2:
-        func = (uint32_t)stm32f7_tmr2_irq;
+        func = (uint32_t)stm32_tmr2_irq;
         break;
 #endif
     default:
@@ -233,44 +248,115 @@ stm32f7_hw_setup(int num, TIM_TypeDef *regs)
 
 #ifdef TIM1
     if (regs == TIM1) {
-        stm32f7_tmr_reg_irq(TIM1_CC_IRQn, func);
-        stm32f7_tmr_reg_irq(TIM1_UP_TIM10_IRQn, func);
+        stm32_tmr_reg_irq(TIM1_CC_IRQn, func);
+#if defined(STM32F3)
+        stm32_tmr_reg_irq(TIM1_UP_TIM16_IRQn, func);
+#else
+        stm32_tmr_reg_irq(TIM1_UP_TIM10_IRQn, func);
+#endif
         __HAL_RCC_TIM1_CLK_ENABLE();
+    }
+#endif
+#ifdef TIM2
+    if (regs == TIM2) {
+        stm32_tmr_reg_irq(TIM2_IRQn, func);
+        __HAL_RCC_TIM2_CLK_ENABLE();
+    }
+#endif
+#ifdef TIM3
+    if (regs == TIM3) {
+        stm32_tmr_reg_irq(TIM3_IRQn, func);
+        __HAL_RCC_TIM3_CLK_ENABLE();
+    }
+#endif
+#ifdef TIM4
+    if (regs == TIM4) {
+        stm32_tmr_reg_irq(TIM4_IRQn, func);
+        __HAL_RCC_TIM4_CLK_ENABLE();
     }
 #endif
 #ifdef TIM8
     if (regs == TIM8) {
-        stm32f7_tmr_reg_irq(TIM8_CC_IRQn, func);
-        stm32f7_tmr_reg_irq(TIM8_UP_TIM13_IRQn, func);
+        stm32_tmr_reg_irq(TIM8_CC_IRQn, func);
+#if defined(STM32F3)
+        stm32_tmr_reg_irq(TIM8_UP_IRQn, func);
+#else
+        stm32_tmr_reg_irq(TIM8_UP_TIM13_IRQn, func);
+#endif
         __HAL_RCC_TIM8_CLK_ENABLE();
     }
 #endif
 #ifdef TIM9
     if (regs == TIM9) {
-        stm32f7_tmr_reg_irq(TIM1_BRK_TIM9_IRQn, func);
+#if defined(STM32L1)
+        stm32_tmr_reg_irq(TIM9_IRQn, func);
+#else
+        stm32_tmr_reg_irq(TIM1_BRK_TIM9_IRQn, func);
+#endif
         __HAL_RCC_TIM9_CLK_ENABLE();
     }
 #endif
 #ifdef TIM10
     if (regs == TIM10) {
-        stm32f7_tmr_reg_irq(TIM1_UP_TIM10_IRQn, func);
+#if defined(STM32L1)
+        stm32_tmr_reg_irq(TIM10_IRQn, func);
+#else
+        stm32_tmr_reg_irq(TIM1_UP_TIM10_IRQn, func);
+#endif
         __HAL_RCC_TIM10_CLK_ENABLE();
     }
 #endif
 #ifdef TIM11
     if (regs == TIM11) {
-        stm32f7_tmr_reg_irq(TIM1_TRG_COM_TIM11_IRQn, func);
+#if defined(STM32L1)
+        stm32_tmr_reg_irq(TIM11_IRQn, func);
+#else
+        stm32_tmr_reg_irq(TIM1_TRG_COM_TIM11_IRQn, func);
+#endif
         __HAL_RCC_TIM11_CLK_ENABLE();
+    }
+#endif
+#ifdef TIM15
+    if (regs == TIM15) {
+        stm32_tmr_reg_irq(TIM1_BRK_TIM15_IRQn, func);
+        __HAL_RCC_TIM15_CLK_ENABLE();
+    }
+#endif
+#ifdef TIM16
+    if (regs == TIM16) {
+        stm32_tmr_reg_irq(TIM1_UP_TIM16_IRQn, func);
+        __HAL_RCC_TIM16_CLK_ENABLE();
+    }
+#endif
+#ifdef TIM17
+    if (regs == TIM17) {
+        stm32_tmr_reg_irq(TIM1_TRG_COM_TIM17_IRQn, func);
+        __HAL_RCC_TIM17_CLK_ENABLE();
     }
 #endif
 }
 
 static void
-stm32f7_hw_setdown(TIM_TypeDef *regs)
+stm32_hw_setdown(TIM_TypeDef *regs)
 {
 #ifdef TIM1
     if (regs == TIM1) {
         __HAL_RCC_TIM1_CLK_DISABLE();
+    }
+#endif
+#ifdef TIM2
+    if (regs == TIM2) {
+        __HAL_RCC_TIM2_CLK_DISABLE();
+    }
+#endif
+#ifdef TIM3
+    if (regs == TIM3) {
+        __HAL_RCC_TIM3_CLK_DISABLE();
+    }
+#endif
+#ifdef TIM4
+    if (regs == TIM4) {
+        __HAL_RCC_TIM4_CLK_DISABLE();
     }
 #endif
 #ifdef TIM8
@@ -293,6 +379,21 @@ stm32f7_hw_setdown(TIM_TypeDef *regs)
         __HAL_RCC_TIM11_CLK_DISABLE();
     }
 #endif
+#ifdef TIM15
+    if (regs == TIM15) {
+        __HAL_RCC_TIM15_CLK_DISABLE();
+    }
+#endif
+#ifdef TIM16
+    if (regs == TIM16) {
+        __HAL_RCC_TIM16_CLK_DISABLE();
+    }
+#endif
+#ifdef TIM17
+    if (regs == TIM17) {
+        __HAL_RCC_TIM17_CLK_DISABLE();
+    }
+#endif
 }
 
 /**
@@ -308,26 +409,80 @@ stm32f7_hw_setdown(TIM_TypeDef *regs)
 int
 hal_timer_init(int num, void *cfg)
 {
-    struct stm32f7_hal_tmr *tmr;
+    struct stm32_hal_tmr *tmr;
+    TIM_TypeDef *regs;
 
-    if (num >= STM32F7_HAL_TIMER_MAX || !(tmr = stm32f7_tmr_devs[num]) ||
+    if (num >= STM32_HAL_TIMER_MAX || !(tmr = stm32_tmr_devs[num]) ||
         (cfg == NULL)) {
         return -1;
     }
 
-    tmr->sht_regs = (TIM_TypeDef *)cfg;
+    regs = tmr->sht_regs = (TIM_TypeDef *)cfg;
 
-    if (!IS_TIM_CC1_INSTANCE(tmr->sht_regs)) {
+    if (!IS_TIM_CC1_INSTANCE(regs)) {
         return -1;
     }
 
-    stm32f7_hw_setup(num, tmr->sht_regs);
+    stm32_hw_setup(num, regs);
 
     /*
-     * Stop the timers at debugger. XXX Which TIM?
+     * Stop the timers at debugger.
      */
-    DBGMCU->APB1FZ |= 0x1ff; /* TIM2 - TIM7, TIM12-TIM14 */
-    DBGMCU->APB2FZ |= 0x70003; /* TIM1, TIM8-TIM11 */
+#ifdef TIM1
+    if (regs == TIM1) {
+        __HAL_DBGMCU_FREEZE_TIM1();
+    }
+#endif
+#ifdef TIM2
+    if (regs == TIM2) {
+        __HAL_DBGMCU_FREEZE_TIM2();
+    }
+#endif
+#ifdef TIM3
+    if (regs == TIM3) {
+        __HAL_DBGMCU_FREEZE_TIM3();
+    }
+#endif
+#ifdef TIM4
+    if (regs == TIM4) {
+        __HAL_DBGMCU_FREEZE_TIM4();
+    }
+#endif
+#ifdef TIM8
+    if (regs == TIM8) {
+        __HAL_DBGMCU_FREEZE_TIM8();
+    }
+#endif
+#ifdef TIM9
+    if (regs == TIM9) {
+        __HAL_DBGMCU_FREEZE_TIM9();
+    }
+#endif
+#ifdef TIM10
+    if (regs == TIM10) {
+        __HAL_DBGMCU_FREEZE_TIM10();
+    }
+#endif
+#ifdef TIM11
+    if (regs == TIM11) {
+        __HAL_DBGMCU_FREEZE_TIM11();
+    }
+#endif
+#ifdef TIM15
+    if (regs == TIM15) {
+        __HAL_DBGMCU_FREEZE_TIM15();
+    }
+#endif
+#ifdef TIM16
+    if (regs == TIM16) {
+        __HAL_DBGMCU_FREEZE_TIM16();
+    }
+#endif
+#ifdef TIM17
+    if (regs == TIM17) {
+        __HAL_DBGMCU_FREEZE_TIM17();
+    }
+#endif
 
     return 0;
 }
@@ -345,18 +500,18 @@ hal_timer_init(int num, void *cfg)
 int
 hal_timer_config(int num, uint32_t freq_hz)
 {
-    struct stm32f7_hal_tmr *tmr;
+    struct stm32_hal_tmr *tmr;
     TIM_Base_InitTypeDef init;
     uint32_t prescaler;
 
-    if (num >= STM32F7_HAL_TIMER_MAX || !(tmr = stm32f7_tmr_devs[num])) {
+    if (num >= STM32_HAL_TIMER_MAX || !(tmr = stm32_tmr_devs[num])) {
         return -1;
     }
     if (!IS_TIM_CC1_INSTANCE(tmr->sht_regs)) {
         return -1;
     }
 
-    prescaler = stm32f7_base_freq(tmr->sht_regs) / freq_hz;
+    prescaler = stm32_base_freq(tmr->sht_regs) / freq_hz;
     if (prescaler > 0xffff) {
         return -1;
     }
@@ -393,10 +548,10 @@ hal_timer_config(int num, uint32_t freq_hz)
 int
 hal_timer_deinit(int num)
 {
-    struct stm32f7_hal_tmr *tmr;
+    struct stm32_hal_tmr *tmr;
     int sr;
 
-    if (num >= STM32F7_HAL_TIMER_MAX || !(tmr = stm32f7_tmr_devs[num])) {
+    if (num >= STM32_HAL_TIMER_MAX || !(tmr = stm32_tmr_devs[num])) {
         return -1;
     }
 
@@ -408,7 +563,7 @@ hal_timer_deinit(int num)
     tmr->sht_regs->DIER &= ~TIM_DIER_CC1IE;
     TIM_CCxChannelCmd(tmr->sht_regs, TIM_CHANNEL_1, TIM_CCx_DISABLE);
     __HAL_ENABLE_INTERRUPTS(sr);
-    stm32f7_hw_setdown(tmr->sht_regs);
+    stm32_hw_setdown(tmr->sht_regs);
 
     return 0;
 }
@@ -425,28 +580,29 @@ hal_timer_deinit(int num)
 uint32_t
 hal_timer_get_resolution(int num)
 {
-    struct stm32f7_hal_tmr *tmr;
+    struct stm32_hal_tmr *tmr;
 
-    if (num >= STM32F7_HAL_TIMER_MAX || !(tmr = stm32f7_tmr_devs[num])) {
+    if (num >= STM32_HAL_TIMER_MAX || !(tmr = stm32_tmr_devs[num])) {
         return -1;
     }
-    return (1000000000 / (SystemCoreClock / tmr->sht_regs->PSC));
+    return (STM32_NSEC_PER_SEC / (SystemCoreClock / tmr->sht_regs->PSC));
 }
 
 static uint32_t
-hal_timer_cnt(struct stm32f7_hal_tmr *tmr)
+hal_timer_cnt(struct stm32_hal_tmr *tmr)
 {
     uint32_t cnt;
     int sr;
 
     __HAL_DISABLE_INTERRUPTS(sr);
-    cnt = tmr->sht_oflow + tmr->sht_regs->CNT;
     if (tmr->sht_regs->SR & TIM_SR_UIF) {
         /*
          * Just overflowed
          */
-        cnt = tmr->sht_oflow + tmr->sht_regs->CNT + 0x10000;
+        tmr->sht_oflow += STM32_OFLOW_VALUE;
+        tmr->sht_regs->SR &= ~TIM_SR_UIF;
     }
+    cnt = tmr->sht_oflow + tmr->sht_regs->CNT;
     __HAL_ENABLE_INTERRUPTS(sr);
 
     return cnt;
@@ -464,9 +620,9 @@ hal_timer_cnt(struct stm32f7_hal_tmr *tmr)
 uint32_t
 hal_timer_read(int num)
 {
-    struct stm32f7_hal_tmr *tmr;
+    struct stm32_hal_tmr *tmr;
 
-    if (num >= STM32F7_HAL_TIMER_MAX || !(tmr = stm32f7_tmr_devs[num])) {
+    if (num >= STM32_HAL_TIMER_MAX || !(tmr = stm32_tmr_devs[num])) {
         return -1;
     }
     return hal_timer_cnt(tmr);
@@ -485,10 +641,10 @@ hal_timer_read(int num)
 int
 hal_timer_delay(int num, uint32_t ticks)
 {
-    struct stm32f7_hal_tmr *tmr;
+    struct stm32_hal_tmr *tmr;
     uint32_t until;
 
-    if (num >= STM32F7_HAL_TIMER_MAX || !(tmr = stm32f7_tmr_devs[num])) {
+    if (num >= STM32_HAL_TIMER_MAX || !(tmr = stm32_tmr_devs[num])) {
         return -1;
     }
 
@@ -512,9 +668,9 @@ int
 hal_timer_set_cb(int num, struct hal_timer *timer, hal_timer_cb cb_func,
                  void *arg)
 {
-    struct stm32f7_hal_tmr *tmr;
+    struct stm32_hal_tmr *tmr;
 
-    if (num >= STM32F7_HAL_TIMER_MAX || !(tmr = stm32f7_tmr_devs[num])) {
+    if (num >= STM32_HAL_TIMER_MAX || !(tmr = stm32_tmr_devs[num])) {
         return -1;
     }
     timer->cb_func = cb_func;
@@ -538,10 +694,10 @@ hal_timer_set_cb(int num, struct hal_timer *timer, hal_timer_cb cb_func,
 int
 hal_timer_start(struct hal_timer *timer, uint32_t ticks)
 {
-    struct stm32f7_hal_tmr *tmr;
+    struct stm32_hal_tmr *tmr;
     uint32_t tick;
 
-    tmr = (struct stm32f7_hal_tmr *)timer->bsp_timer;
+    tmr = (struct stm32_hal_tmr *)timer->bsp_timer;
 
     tick = ticks + hal_timer_cnt(tmr);
     return hal_timer_start_at(timer, tick);
@@ -560,11 +716,11 @@ hal_timer_start(struct hal_timer *timer, uint32_t ticks)
 int
 hal_timer_start_at(struct hal_timer *timer, uint32_t tick)
 {
-    struct stm32f7_hal_tmr *tmr;
+    struct stm32_hal_tmr *tmr;
     struct hal_timer *ht;
     int sr;
 
-    tmr = (struct stm32f7_hal_tmr *)timer->bsp_timer;
+    tmr = (struct stm32_hal_tmr *)timer->bsp_timer;
 
     timer->expiry = tick;
 
@@ -614,14 +770,14 @@ hal_timer_start_at(struct hal_timer *timer, uint32_t tick)
 int
 hal_timer_stop(struct hal_timer *timer)
 {
-    struct stm32f7_hal_tmr *tmr;
+    struct stm32_hal_tmr *tmr;
     struct hal_timer *ht;
     int sr;
     int reset_ocmp;
 
     __HAL_DISABLE_INTERRUPTS(sr);
 
-    tmr = (struct stm32f7_hal_tmr *)timer->bsp_timer;
+    tmr = (struct stm32_hal_tmr *)timer->bsp_timer;
     if (timer->link.tqe_prev != NULL) {
         reset_ocmp = 0;
         if (timer == TAILQ_FIRST(&tmr->sht_timers)) {
