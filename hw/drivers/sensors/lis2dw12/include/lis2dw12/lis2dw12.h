@@ -247,7 +247,7 @@ struct lis2dw12_pdd {
     /* Inetrrupt state */
     struct lis2dw12_int *interrupt;
     /* Interrupt enabled flag */
-    uint8_t int_enable;
+    uint16_t int_enable;
 };
 
 struct lis2dw12 {
