@@ -2049,7 +2049,7 @@ disable_interrupt(struct sensor *sensor, uint8_t int_to_disable, uint8_t int_num
     itf = SENSOR_GET_ITF(sensor);
     pdd = &lis2dw12->pdd;
 
-    pdd->int_enable &= (~int_to_disable >> (int_num * 8));
+    pdd->int_enable &= ~(int_to_disable << (int_num * 8));
 
     /* disable int pin */
     if (!pdd->int_enable) {
@@ -2057,7 +2057,7 @@ disable_interrupt(struct sensor *sensor, uint8_t int_to_disable, uint8_t int_num
         /* disable interrupt in device */
         rc = lis2dw12_set_int_enable(itf, 0);
         if (rc) {
-            pdd->int_enable |= (int_to_disable >> (int_num * 8));
+            pdd->int_enable |= (int_to_disable << (int_num * 8));
             return rc;
         }
     }
@@ -2106,7 +2106,7 @@ enable_interrupt(struct sensor *sensor, uint8_t int_to_enable, uint8_t int_num)
         }
     }
 
-    pdd->int_enable |= (int_to_enable >> (int_num * 8));
+    pdd->int_enable |= (int_to_enable << (int_num * 8));
 
     /* enable interrupt in device */
     if (int_num == 0) {
