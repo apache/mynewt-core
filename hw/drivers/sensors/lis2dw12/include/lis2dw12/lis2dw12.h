@@ -201,7 +201,7 @@ struct lis2dw12_cfg {
     uint8_t int_enable  : 1;
     uint8_t int_pp_od   : 1;
     uint8_t int_latched : 1;
-    uint8_t int_active  : 1;
+    uint8_t int_active_low  : 1;
     uint8_t inactivity_sleep_enable     : 1;
     uint8_t low_noise_enable            : 1;
     uint8_t stationary_detection_enable : 1;
@@ -423,7 +423,7 @@ int lis2dw12_get_latched_int(struct sensor_itf *itf, uint8_t *en);
  *
  * @return 0 on success, non-zero on failure
  */
-int lis2dw12_set_int_active(struct sensor_itf *itf, uint8_t low);
+int lis2dw12_set_int_active_low(struct sensor_itf *itf, uint8_t low);
 
 /**
  * Gets whether interrupts are active high or low
@@ -433,7 +433,7 @@ int lis2dw12_set_int_active(struct sensor_itf *itf, uint8_t low);
  *
  * @return 0 on success, non-zero on failure
  */
-int lis2dw12_get_int_active(struct sensor_itf *itf, uint8_t *low);
+int lis2dw12_get_int_active_low(struct sensor_itf *itf, uint8_t *low);
 
 /**
  * Sets single data conversion mode
@@ -578,6 +578,26 @@ lis2dw12_set_int1_pin_cfg(struct sensor_itf *itf, uint8_t cfg);
  * @return 0 on success, non-zero on failure
  */
 int lis2dw12_set_int2_pin_cfg(struct sensor_itf *itf, uint8_t cfg);
+
+/**
+ * Clear interrupt pin configuration for interrupt 1
+ *
+ * @param the sensor interface
+ * @param config
+ * @return 0 on success, non-zero on failure
+ */
+int
+lis2dw12_clear_int1_pin_cfg(struct sensor_itf *itf, uint8_t cfg);
+
+/**
+ * Clear interrupt pin configuration for interrupt 2
+ *
+ * @param the sensor interface
+ * @param config
+ * @return 0 on success, non-zero on failure
+ */
+int
+lis2dw12_clear_int2_pin_cfg(struct sensor_itf *itf, uint8_t cfg);
 
 /**
  * Set whether interrupts are enabled
