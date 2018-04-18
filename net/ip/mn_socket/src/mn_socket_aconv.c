@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include "os/mynewt.h"
 #include "mn_socket/mn_socket.h"
 
 /**
