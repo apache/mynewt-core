@@ -1,5 +1,5 @@
-System Configuration and Initialization
----------------------------------------
+Compile-Time Configuration and Initialization
+-----------------------------------------------
 
 .. toctree::
    :hidden:
