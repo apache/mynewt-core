@@ -145,8 +145,7 @@ host-only implementation, such as Linux's BlueZ, can interface with this
 application via HCI over UART.
 * [bleprph](https://github.com/apache/mynewt-core/tree/master/apps/bleprph): An
   implementation of a minimal BLE peripheral.
-* [bletiny](https://github.com/apache/mynewt-core/tree/master/apps/bletiny): A
-  stripped down interface to the Apache Mynewt Bluetooth stack.
+* [btshell](https://github.com/apache/mynewt-core/tree/master/apps/btshell): Shell interface to the Apache Mynewt Bluetooth stack.
 * [bleuart](https://github.com/apache/mynewt-core/tree/master/apps/bleuart):
 Implements a simple BLE peripheral that supports the Nordic
 UART / Serial Port Emulation service
