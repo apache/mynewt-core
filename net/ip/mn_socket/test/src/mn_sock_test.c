@@ -33,6 +33,7 @@ static struct os_mempool test_mbuf_mpool;
 static struct os_mbuf_pool test_mbuf_pool;
 
 TEST_CASE_DECL(inet_pton_test)
+TEST_CASE_DECL(inet6_pton_test)
 TEST_CASE_DECL(inet_ntop_test)
 TEST_CASE_DECL(socket_tests)
 
@@ -50,6 +51,7 @@ TEST_SUITE(mn_socket_test_all)
     TEST_ASSERT(rc == 0);
 
     inet_pton_test();
+    inet6_pton_test();
     inet_ntop_test();
     socket_tests();
 }
