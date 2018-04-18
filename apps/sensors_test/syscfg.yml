@@ -46,6 +46,7 @@ syscfg.vals:
     BNO055_CLI: 0
     TCS34725_CLI: 0
     BME280_CLI: 0
+    BMA2XX_CLI: 0
 
     # Setup Sensor BLE OIC GATT Server
     SENSOR_OIC: 1
