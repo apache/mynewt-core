@@ -30,6 +30,11 @@
 #include "hal/hal_watchdog.h"
 #include "hal/hal_i2c.h"
 #include "mcu/nrf52_hal.h"
+
+#if MYNEWT_VAL(TRNG)
+#include "trng/trng.h"
+#include "trng_nrf52/trng_nrf52.h"
+#endif
 #if MYNEWT_VAL(UART_0) || MYNEWT_VAL(UART_1)
 #include "uart/uart.h"
 #endif
@@ -49,6 +54,10 @@
 #endif
 #if MYNEWT_VAL(SOFT_PWM)
 #include <soft_pwm/soft_pwm.h>
+#endif
+
+#if MYNEWT_VAL(TRNG)
+static struct trng_dev os_bsp_trng;
 #endif
 
 #if MYNEWT_VAL(UART_0)
@@ -201,6 +210,13 @@ hal_bsp_init(void)
 
     /* Make sure system clocks have started */
     hal_system_clock_start();
+
+#if MYNEWT_VAL(TRNG)
+    rc = os_dev_create(&os_bsp_trng.dev, "trng",
+                       OS_DEV_INIT_KERNEL, OS_DEV_INIT_PRIO_DEFAULT,
+                       nrf52_trng_dev_init, NULL);
+    assert(rc == 0);
+#endif
 
 #if MYNEWT_VAL(TIMER_0)
     rc = hal_timer_init(0, NULL);
