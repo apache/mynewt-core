@@ -26,20 +26,11 @@ TEST_SUITE(oic_test_all)
     oic_tests();
 }
 
-void
-oic_test_init(void)
-{
-}
-
 #if MYNEWT_VAL(SELFTEST)
 int
 main(int argc, char **argv)
 {
-    sysinit();
-
-    tu_suite_set_init_cb((void *)oic_test_init, NULL);
     oic_test_all();
-
     return tu_any_failed;
 }
 #endif
