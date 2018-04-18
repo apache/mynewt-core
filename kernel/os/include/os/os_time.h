@@ -185,6 +185,13 @@ int os_gettimeofday(struct os_timeval *utctime, struct os_timezone *tz);
 int64_t os_get_uptime_usec(void);
 
 /**
+ * Get time since boot as os_timeval.
+ *
+ * @param tv Structure to put the time since boot.
+ */
+void os_get_uptime(struct os_timeval *tvp);
+
+/**
  * Converts milliseconds to OS ticks.
  *
  * @param ms                    The milliseconds input.
