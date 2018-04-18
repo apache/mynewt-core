@@ -757,18 +757,18 @@ config_lis2dw12_sensor(void)
     cfg.filter_bw = LIS2DW12_FILTER_BW_ODR_DIV_2;
     cfg.high_pass = 0;
     
-    cfg.tap_cfg.en_x = 1;
-    cfg.tap_cfg.en_y = 1;
-    cfg.tap_cfg.en_z = 1;
-    cfg.tap_cfg.en_4d = 0;
-    cfg.tap_cfg.ths_6d = LIS2DW12_6D_THS_80_DEG;
-    cfg.tap_cfg.tap_priority = LIS2DW12_TAP_PRIOR_XYZ;
-    cfg.tap_cfg.tap_ths_x = 0x3;
-    cfg.tap_cfg.tap_ths_y = 0x3;
-    cfg.tap_cfg.tap_ths_z = 0x3;
-    cfg.tap_cfg.latency = 8; /* 640ms */
-    cfg.tap_cfg.quiet = 0; /* 10ms */
-    cfg.tap_cfg.shock = 3; /* 120ms */
+    cfg.tap.en_x = 1;
+    cfg.tap.en_y = 1;
+    cfg.tap.en_z = 1;
+    cfg.tap.en_4d = 0;
+    cfg.tap.ths_6d = LIS2DW12_6D_THS_80_DEG;
+    cfg.tap.tap_priority = LIS2DW12_TAP_PRIOR_XYZ;
+    cfg.tap.tap_ths_x = 0x3;
+    cfg.tap.tap_ths_y = 0x3;
+    cfg.tap.tap_ths_z = 0x3;
+    cfg.tap.latency = 8; /* 640ms */
+    cfg.tap.quiet = 0; /* 10ms */
+    cfg.tap.shock = 3; /* 120ms */
     cfg.double_tap_event_enable = 0;
 
     cfg.freefall_dur = 6; 
@@ -780,13 +780,12 @@ config_lis2dw12_sensor(void)
 
     cfg.int_pp_od = 0;
     cfg.int_latched = 0;
-    cfg.int_active = 0;
+    cfg.int_active_low = 0;
     cfg.slp_mode = 0;
     cfg.self_test_mode = LIS2DW12_ST_MODE_DISABLE;
     
     cfg.fifo_mode = LIS2DW12_FIFO_M_BYPASS;
     cfg.fifo_threshold = 32;
-    cfg.stream_read_interrupt = LIS2DW12_INT1_CFG_DRDY;
 
     cfg.wake_up_ths = 0;
     cfg.wake_up_dur = 0;
@@ -798,7 +797,7 @@ config_lis2dw12_sensor(void)
     cfg.inactivity_sleep_enable = 0;
     cfg.low_noise_enable = 1;
     
-    cfg.read_mode = LIS2DW12_READ_M_POLL;
+    cfg.read_mode.mode = LIS2DW12_READ_M_POLL;
     cfg.mask = SENSOR_TYPE_ACCELEROMETER;
 
     rc = lis2dw12_config((struct lis2dw12 *) dev, &cfg);
