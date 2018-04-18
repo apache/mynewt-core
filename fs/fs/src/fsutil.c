@@ -49,7 +49,7 @@ fsutil_write_file(const char *path, const void *data, uint32_t len)
     struct fs_file *file;
     int rc;
 
-    rc = fs_open(path, FS_ACCESS_WRITE, &file);
+    rc = fs_open(path, FS_ACCESS_WRITE | FS_ACCESS_TRUNCATE, &file);
     if (rc != 0) {
         return rc;
     }
