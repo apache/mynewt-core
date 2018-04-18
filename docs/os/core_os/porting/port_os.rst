@@ -71,7 +71,7 @@ the UART to be mapped to several different pins. For these MCUs, the BSP
 must specify if and where the UART pins should appear to match the
 hardware layout of your system.
 
--  If your BSP is already supported my Mynewt, there is no additional
+-  If your BSP is already supported by Mynewt, there is no additional
    BSP work involved in porting to your platform. You need only to set
    the ``bsp`` attribute in your Mynewt target using the :doc:`newt command
    tool <../../../newt/index>`.
@@ -85,7 +85,7 @@ Some OS code depends on the MCU or SoC that the system contains. For
 example, the MCU may specify the potential memory map of the system -
 where code and data can reside.
 
--  If your MCU is already supported my Mynewt, there is no additional
+-  If your MCU is already supported by Mynewt, there is no additional
    MCU work involved in porting to your platform. You need only to set
    the ``arch`` attribute in your Mynewt target using the :doc:`newt command
    tool <../../../newt/index>`.
@@ -110,7 +110,7 @@ example, a given CPU core has a specific assembly language instruction
 set, and may require special cross compiler or compiler settings to use
 the appropriate instruction set.
 
--  If your CPU architecture is already supported my Mynewt, there is no
+-  If your CPU architecture is already supported by Mynewt, there is no
    CPU core work involved in porting to your platform. You need only to
    set the ``arch`` and ``compiler`` attributes in your Mynewt target
    using the :doc:`newt command tool <../../../newt/index>`.
