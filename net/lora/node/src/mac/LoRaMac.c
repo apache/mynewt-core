@@ -1342,6 +1342,7 @@ lora_mac_process_radio_rx(struct os_event *ev)
                 (g_lora_mac_data.txpkt.pkt_type != MLME_JOIN)) {
                 goto process_rx_done;
             }
+            lora_node_qual_sample(rxi->rxdinfo.rssi, snr);
 
             LoRaMacJoinDecrypt( payload + 1, size - 1, LoRaMacAppKey, LoRaMacRxPayload + 1 );
 
@@ -1445,6 +1446,7 @@ lora_mac_process_radio_rx(struct os_event *ev)
                 downLinkCounter = DownLinkCounter;
             }
 
+            lora_node_qual_sample(rxi->rxdinfo.rssi, snr);
             fCtrl.Value = payload[hdrlen++];
 
             sequenceCounter = ( uint16_t )payload[hdrlen++];
