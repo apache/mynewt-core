@@ -161,14 +161,13 @@ os_gettimeofday(struct os_timeval *tv, struct os_timezone *tz)
     return (0);
 }
 
-int64_t
-os_get_uptime_usec(void)
+void
+os_get_uptime(struct os_timeval *tvp)
 {
   struct os_timeval tv;
   os_time_t delta;
   os_sr_t sr;
   os_time_t ostime;
-
 
   OS_ENTER_CRITICAL(sr);
   tv = basetod.uptime;
@@ -176,9 +175,17 @@ os_get_uptime_usec(void)
   delta = os_time_get() - ostime;
   OS_EXIT_CRITICAL(sr);
 
-  os_deltatime(delta, &tv, &tv);
+  os_deltatime(delta, &tv, tvp);
+}
 
-  return(tv.tv_sec * 1000000 + tv.tv_usec);
+int64_t
+os_get_uptime_usec(void)
+{
+  struct os_timeval tv;
+
+  os_get_uptime(&tv);
+
+  return (tv.tv_sec * 1000000 + tv.tv_usec);
 }
 
 int
