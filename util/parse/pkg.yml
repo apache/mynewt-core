@@ -30,4 +30,4 @@ pkg.cflags:
 
 pkg.deps:
     - "@apache-mynewt-core/sys/defs"
-    - "@apache-mynewt-core/net/ip/socket"
+    - "@apache-mynewt-core/net/ip/mn_socket"
