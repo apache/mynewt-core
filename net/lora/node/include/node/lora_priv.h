@@ -41,7 +41,8 @@ struct lora_mac_obj
     /* Link check event */
     struct os_event lm_link_chk_ev;
 
-#define LORA_AVG_SHIFT	3
+#define LORA_DELTA_SHIFT        3
+#define LORA_AVG_SHIFT	        4
     /* Averaging of RSSI/SNR for received frames */
     int16_t lm_rssi_avg;
     int16_t lm_snr_avg;

@@ -561,18 +561,16 @@ lora_node_calc_avg(int16_t *orig, uint16_t sample)
     tmp = *orig;
     if (tmp) {
 	/*
-	 * avg is stored as fixed point with 5 bits after the
-	 * binary point (i.e., scaled by 8). The following magic
-	 * is equivalent to algorithm avg = sample/8 + avg*7/8 in fixed
-	 * point.
+	 * The following magic is equivalent to algorithm
+         * avg = sample/16 + avg*15/16 in fixed point.
 	 */
-	tmp += (sample << 2) - (tmp >> LORA_AVG_SHIFT);
+	tmp += (sample << LORA_DELTA_SHIFT) - (tmp >> LORA_AVG_SHIFT);
 	*orig = tmp;
     } else {
 	/*
 	 * No measurement yet.
 	 */
-	*orig = sample << (LORA_AVG_SHIFT + 2);
+	*orig = sample << (LORA_AVG_SHIFT + LORA_DELTA_SHIFT);
     }
 }
 
@@ -600,8 +598,10 @@ lora_node_link_qual(int16_t *rssi, int16_t *snr)
         /*
          * Rounds down. XXX
          */
-        *rssi = g_lora_mac_data.lm_rssi_avg >> (LORA_AVG_SHIFT + 2);
-        *snr = g_lora_mac_data.lm_snr_avg >> (LORA_AVG_SHIFT + 2);
+        *rssi = g_lora_mac_data.lm_rssi_avg >> (LORA_AVG_SHIFT +
+                                                LORA_DELTA_SHIFT);
+        *snr = g_lora_mac_data.lm_snr_avg >> (LORA_AVG_SHIFT +
+                                              LORA_DELTA_SHIFT);
         return 0;
     } else {
         return -1;
