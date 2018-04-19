@@ -524,9 +524,9 @@ int hal_gpio_init_out(int pin, int val)
     cfg.Pin = GPIO_MASK(pin);
     cfg.Mode = GPIO_MODE_OUTPUT_PP;
     cfg.Pull = GPIO_NOPULL;
-#if (defined GPIO_SPEED_FREQ_VERY_HIGH)
+#if defined(GPIO_SPEED_FREQ_VERY_HIGH)
     cfg.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-#elif (defined GPIO_SPEED_HIGH)
+#elif defined(GPIO_SPEED_HIGH)
     cfg.Speed = GPIO_SPEED_HIGH;
 #else
     cfg.Speed = GPIO_SPEED_FREQ_HIGH;
@@ -557,9 +557,9 @@ hal_gpio_init_af(int pin, uint8_t af_type, enum hal_gpio_pull pull, uint8_t od)
         gpio.Mode = GPIO_MODE_AF_OD;
     }
     gpio.Pull = pull;
-#if (defined GPIO_SPEED_FREQ_VERY_HIGH)
+#if defined(GPIO_SPEED_FREQ_VERY_HIGH)
     gpio.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-#elif (defined GPIO_SPEED_HIGH)
+#elif defined(GPIO_SPEED_HIGH)
     gpio.Speed = GPIO_SPEED_HIGH;
 #else
     gpio.Speed = GPIO_SPEED_FREQ_HIGH;
