@@ -195,6 +195,17 @@ int64_t os_get_uptime_usec(void);
  */
 int os_time_ms_to_ticks(uint32_t ms, uint32_t *out_ticks);
 
+/**
+ * Converts OS ticks to milliseconds.
+ *
+ * @param ticks                 The OS ticks input.
+ * @param out_ms                The milliseconds output.
+ *
+ * @return                      0 on success; OS_EINVAL if the result is too
+ *                                  large to fit in a uint32_t.
+ */
+int os_time_ticks_to_ms(uint32_t ticks, uint32_t *out_ms);
+
 #ifdef __cplusplus
 }
 #endif
