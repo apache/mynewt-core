@@ -370,14 +370,31 @@ lis2dw12_reset(struct sensor_itf *itf)
         goto err;
     }
 
-    reg |= LIS2DW12_CTRL_REG2_SOFT_RESET | LIS2DW12_CTRL_REG2_BOOT;
+    reg |= LIS2DW12_CTRL_REG2_SOFT_RESET;
 
     rc = lis2dw12_write8(itf, LIS2DW12_REG_CTRL_REG2, reg);
     if (rc) {
         goto err;
     }
 
-    os_time_delay((OS_TICKS_PER_SEC * 6/1000) + 1);
+    os_cputime_delay_usecs(5);
+
+    while(reg & LIS2DW12_CTRL_REG2_SOFT_RESET)
+    {
+        rc = lis2dw12_read8(itf, LIS2DW12_REG_CTRL_REG2, &reg);
+        if (rc) {
+            goto err;
+        }
+    }
+
+    reg |= LIS2DW12_CTRL_REG2_BOOT;
+
+    rc = lis2dw12_write8(itf, LIS2DW12_REG_CTRL_REG2, reg);
+    if (rc) {
+        goto err;
+    }
+
+    os_time_delay((OS_TICKS_PER_SEC * 20/1000) + 1);
 
 err:
     return rc;
