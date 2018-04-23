@@ -1,0 +1,15 @@
+language: c
+dist: trusty
+sudo: required
+
+before_install:
+  - sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
+  - sudo apt-get -qq update
+  - sudo apt-get install libc6-dev-i386 gcc-5-multilib g++-5-multilib
+  - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-5 60 --slave /usr/bin/g++ g++ /usr/bin/g++-5
+
+script:
+  - set -e
+  - git clone https://github.com/apache/mynewt-newt
+  - cd mynewt-newt && ./build.sh && cd ..
+  - mynewt-newt/newt/newt test all
