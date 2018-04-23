@@ -12,4 +12,4 @@ script:
   - set -e
   - git clone https://github.com/apache/mynewt-newt
   - cd mynewt-newt && ./build.sh && cd ..
-  - mynewt-newt/newt/newt test all
+  - mynewt-newt/newt/newt test all -e net/ip/mn_socket,net/oic
