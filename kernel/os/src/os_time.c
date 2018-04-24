@@ -229,3 +229,23 @@ os_time_ticks_to_ms(uint32_t ticks, uint32_t *out_ms)
 
     return 0;
 }
+
+uint32_t
+os_time_ms_to_ticks32(uint32_t ms)
+{
+#if OS_TICKS_PER_SEC == 1000
+    return ms;
+#else
+    return ((uint64_t)ms * OS_TICKS_PER_SEC) / 1000;
+#endif
+}
+
+uint32_t
+os_time_ticks_to_ms32(uint32_t ticks)
+{
+#if OS_TICKS_PER_SEC == 1000
+    return ticks;
+#else
+    return ((uint64_t)ticks * 1000) / OS_TICKS_PER_SEC;
+#endif
+}
