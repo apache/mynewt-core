@@ -21,7 +21,7 @@
 #include <stddef.h>
 #include <assert.h>
 #include "os/mynewt.h"
-#include <nrf51.h>
+#include "nrfx.h"
 #include <mcu/nrf51_hal.h>
 #include <hal/hal_bsp.h>
 #include "hal/hal_system.h"
