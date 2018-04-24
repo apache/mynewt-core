@@ -630,14 +630,14 @@ int lis2dw12_set_int_enable(struct sensor_itf *itf, uint8_t enabled);
 int lis2dw12_clear_int(struct sensor_itf *itf, uint8_t *src);
 
 /**
- * Get Interrupt Source
+ * Get Interrupt Status
  *
  * @param itf The sensor interface
- * @param status Ptr to return interrupt source in
+ * @param status Ptr to return interrupt status in
  *
  * @return 0 on success, non-zero on failure
  */
-int lis2dw12_get_int_src(struct sensor_itf *itf, uint8_t *status);
+int lis2dw12_get_int_status(struct sensor_itf *itf, uint8_t *status);
 
 /**
  * Get Wake Up Source
