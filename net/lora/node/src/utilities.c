@@ -29,14 +29,20 @@ randr(int32_t min, int32_t max)
     return rand() % (max - min + 1) + min;
 }
 
-uint32_t
-TimerGetElapsedTime(uint32_t savedTime)
+TimerTime_t
+TimerGetCurrentTime(void)
+{
+    return hal_timer_read(MYNEWT_VAL(LORA_MAC_TIMER_NUM));
+}
+
+TimerTime_t
+TimerGetElapsedTime(TimerTime_t savedTime)
 {
     return hal_timer_read(MYNEWT_VAL(LORA_MAC_TIMER_NUM)) - savedTime;
 }
 
-uint32_t
-TimerGetFutureTime(uint32_t eventInFuture)
+TimerTime_t
+TimerGetFutureTime(TimerTime_t eventInFuture)
 {
     return hal_timer_read(MYNEWT_VAL(LORA_MAC_TIMER_NUM)) + eventInFuture;
 }

@@ -179,7 +179,8 @@ void SX1272SetChannel(uint32_t freq);
  *
  * \retval isFree         [true: Channel is free, false: Channel is not free]
  */
-bool SX1272IsChannelFree(RadioModems_t modem, uint32_t freq, int16_t rssiThresh);
+bool SX1272IsChannelFree(RadioModems_t modem, uint32_t freq, int16_t rssiThresh,
+                         uint32_t maxCarrierSenseTime);
 
 /*!
  * \brief Generates a 32 bits random value based on the RSSI readings
@@ -345,7 +346,7 @@ int16_t SX1272ReadRssi(RadioModems_t modem);
  * \param [IN]: addr Register address
  * \param [IN]: data New register value
  */
-void SX1272Write(uint8_t addr, uint8_t data);
+void SX1272Write(uint16_t addr, uint8_t data);
 
 /*!
  * \brief Reads the radio register at the specified address
@@ -353,7 +354,7 @@ void SX1272Write(uint8_t addr, uint8_t data);
  * \param [IN]: addr Register address
  * \retval data Register value
  */
-uint8_t SX1272Read(uint8_t addr);
+uint8_t SX1272Read(uint16_t addr);
 
 /*!
  * \brief Writes multiple radio registers starting at address
@@ -362,7 +363,7 @@ uint8_t SX1272Read(uint8_t addr);
  * \param [IN] buffer Buffer containing the new register's values
  * \param [IN] size   Number of registers to be written
  */
-void SX1272WriteBuffer(uint8_t addr, uint8_t *buffer, uint8_t size);
+void SX1272WriteBuffer(uint16_t addr, uint8_t *buffer, uint8_t size);
 
 /*!
  * \brief Reads multiple radio registers starting at address
@@ -371,7 +372,7 @@ void SX1272WriteBuffer(uint8_t addr, uint8_t *buffer, uint8_t size);
  * \param [OUT] buffer Buffer where to copy the registers data
  * \param [IN] size Number of registers to be read
  */
-void SX1272ReadBuffer(uint8_t addr, uint8_t *buffer, uint8_t size);
+void SX1272ReadBuffer(uint16_t addr, uint8_t *buffer, uint8_t size);
 
 /*!
  * \brief Sets the maximum payload length.
@@ -389,5 +390,12 @@ void SX1272SetMaxPayloadLength(RadioModems_t modem, uint8_t max);
  * \param [IN] enable if true, it enables a public network
  */
 void SX1272SetPublicNetwork(bool enable);
+
+/*!
+ * \brief Gets the time required for the board plus radio to get out of sleep.[ms]
+ *
+ * \retval time Radio plus board wakeup time in ms.
+ */
+uint32_t SX1272GetWakeupTime(void);
 
 #endif // __SX1272_H__

@@ -175,15 +175,22 @@ las_cmd_disp_byte_str(uint8_t *bytes, int len)
 static void
 las_cmd_disp_chan_mask(uint16_t *mask)
 {
-    int i;
-    int len;
+    uint16_t i;
+    uint16_t len;
+    uint16_t max_chans;
+    PhyParam_t phy_param;
+    GetPhyParams_t getPhy;
 
     if (!mask) {
         return;
     }
 
-    len = LORA_MAX_NB_CHANNELS / 16;
-    if ((len * 16) != LORA_MAX_NB_CHANNELS) {
+    getPhy.Attribute = PHY_MAX_NB_CHANNELS;
+    phy_param = RegionGetPhyParam(LORA_NODE_REGION, &getPhy);
+    max_chans = phy_param.Value;
+
+    len = max_chans / 16;
+    if ((len * 16) != max_chans) {
         len += 1;
     }
 
@@ -271,8 +278,26 @@ las_cmd_ln_log(int argc, char **argv)
             console_printf("TX_DONE chan=%u done_time=%lu",
                            g_lnd_log[i].lnd_p8, g_lnd_log[i].lnd_p32);
             break;
-        case LORA_NODE_LOG_RX_WIN_SETUP:
-            console_printf("RX_WIN_SETUP dr=%u timeout=%u freq=%lu",
+        case LORA_NODE_LOG_TX_SETUP:
+            console_printf("TX_SETUP phytxpwr=%d sf=%u bw=%u freq=%lu",
+                           (int8_t)g_lnd_log[i].lnd_p8,
+                           (uint8_t)(g_lnd_log[i].lnd_p16 >> 8),
+                           (uint8_t)g_lnd_log[i].lnd_p16,
+                           g_lnd_log[i].lnd_p32);
+            break;
+        case LORA_NODE_LOG_TX_START:
+            console_printf("TX_START pwr=%d dr=%u chan=%u airtime=%lu",
+                           (int8_t)g_lnd_log[i].lnd_p8,
+                           (uint8_t)(g_lnd_log[i].lnd_p16 >> 8),
+                           (uint8_t)g_lnd_log[i].lnd_p16,
+                           g_lnd_log[i].lnd_p32);
+            break;
+        case LORA_NODE_LOG_TX_DELAY:
+            console_printf("TX_DELAY dc=%u delay_usecs=%lu",
+                           (int8_t)g_lnd_log[i].lnd_p8, g_lnd_log[i].lnd_p32);
+            break;
+        case LORA_NODE_LOG_RX_WIN1_SETUP:
+            console_printf("RX_WIN1_SETUP dr=%u chan=%u timeout=%lu",
                            g_lnd_log[i].lnd_p8, g_lnd_log[i].lnd_p16,
                            g_lnd_log[i].lnd_p32);
             break;
@@ -281,27 +306,35 @@ las_cmd_ln_log(int argc, char **argv)
                            g_lnd_log[i].lnd_p8, g_lnd_log[i].lnd_p16);
             break;
         case LORA_NODE_LOG_RX_DONE:
-            console_printf("RX_DONE chan=%u size=%u slot=%lu",
+            console_printf("RX_DONE chan=%u size=%u slot=%u machdr=%x",
                            g_lnd_log[i].lnd_p8, g_lnd_log[i].lnd_p16,
-                           g_lnd_log[i].lnd_p32);
-            break;
-        case LORA_NODE_LOG_RX_SYNC_TIMEOUT:
+                           (uint8_t)(g_lnd_log[i].lnd_p32 >> 8),
+                           (uint8_t)g_lnd_log[i].lnd_p32);
             break;
         case LORA_NODE_LOG_RADIO_TIMEOUT_IRQ:
+            break;
+        case LORA_NODE_LOG_RX_CFG:
+            console_printf("RX_CFG bw=%u dr=%u sf=%u freq=%lu",
+                           (int8_t)g_lnd_log[i].lnd_p8,
+                           (uint8_t)(g_lnd_log[i].lnd_p16 >> 8),
+                           (uint8_t)g_lnd_log[i].lnd_p16,
+                           g_lnd_log[i].lnd_p32);
             break;
         case LORA_NODE_LOG_RX_PORT:
             console_printf("RX_PORT port=%u len=%u",
                            g_lnd_log[i].lnd_p8, g_lnd_log[i].lnd_p16);
             break;
         case LORA_NODE_LOG_RX_WIN2:
-            console_printf("RX_WIN2 rxslot=%u continuous=%lu",
-                           g_lnd_log[i].lnd_p8, g_lnd_log[i].lnd_p32);
-            break;
-        case LORA_NODE_LOG_RX_WIN_SETUP_FAIL:
+            console_printf("RX_WIN2 rxslot=%u cont=%u freq=%lu",
+                           g_lnd_log[i].lnd_p8, g_lnd_log[i].lnd_p16,
+                           g_lnd_log[i].lnd_p32);
             break;
         case LORA_NODE_LOG_APP_TX:
             console_printf("APP_TX pktlen=%u om=%lx",
                            g_lnd_log[i].lnd_p16, g_lnd_log[i].lnd_p32);
+            break;
+        case LORA_NODE_LOG_RTX_TIMEOUT:
+            console_printf("RTX_TIMEOUT macflags=%x", g_lnd_log[i].lnd_p8);
             break;
         case LORA_NODE_LOG_RX_ADR_REQ:
             console_printf("RX_ADR_REQ dr=%u txpwr=%u chmassk=%u nbrep=%u",
@@ -345,10 +378,12 @@ las_cmd_wr_mib(int argc, char **argv)
     int rc;
     int plen;
     uint8_t key[LORA_KEY_LEN];
-    uint16_t mask[6];
+    uint16_t mask[16];
     int mask_len;
     struct mib_pair *mp;
     MibRequestConfirm_t mib;
+    GetPhyParams_t getPhy;
+    PhyParam_t phy_param;
 
     if (argc < 3) {
         console_printf("Invalid # of arguments\n");
@@ -467,8 +502,11 @@ las_cmd_wr_mib(int argc, char **argv)
             /* NOTE: fall-through intentional */
         case MIB_CHANNELS_MASK:
             memset(mask, 0, sizeof(mask));
-            mask_len = LORA_MAX_NB_CHANNELS / 8;
-            if ((mask_len * 8) != LORA_MAX_NB_CHANNELS) {
+
+            getPhy.Attribute = PHY_MAX_NB_CHANNELS;
+            phy_param = RegionGetPhyParam(LORA_NODE_REGION, &getPhy);
+            mask_len = phy_param.Value / 8;
+            if ((mask_len * 8) != phy_param.Value) {
                 mask_len += 1;
             }
 

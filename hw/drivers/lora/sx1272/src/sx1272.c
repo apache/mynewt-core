@@ -23,6 +23,7 @@ Maintainer: Miguel Luis and Gregory Cristian
 #include "radio/radio.h"
 #include "sx1272.h"
 #include "sx1272-board.h"
+#include "node/utilities.h"
 
 #if MYNEWT_VAL(LORA_MAC_TIMER_NUM) == -1
 #error "Must define a Lora MAC timer number"
@@ -300,9 +301,12 @@ SX1272SetChannel(uint32_t freq)
 }
 
 bool
-SX1272IsChannelFree(RadioModems_t modem, uint32_t freq, int16_t rssiThresh)
+SX1272IsChannelFree(RadioModems_t modem, uint32_t freq, int16_t rssiThresh,
+                    uint32_t maxCarrierSenseTime)
 {
+    bool status = true;
     int16_t rssi;
+    uint32_t carrierSenseTime;
 
     SX1272SetModem(modem);
 
@@ -313,14 +317,18 @@ SX1272IsChannelFree(RadioModems_t modem, uint32_t freq, int16_t rssiThresh)
     /* Delay for 1 msec */
     hal_timer_delay(SX1272_TIMER_NUM, 1000);
 
-    rssi = SX1272ReadRssi(modem);
+    carrierSenseTime = TimerGetCurrentTime( );
 
-    SX1272SetSleep();
-
-    if (rssi > rssiThresh) {
-        return false;
+    // Perform carrier sense for maxCarrierSenseTime
+    while (TimerGetElapsedTime( carrierSenseTime ) < maxCarrierSenseTime) {
+        rssi = SX1272ReadRssi(modem);
+        if (rssi > rssiThresh) {
+            status = false;
+            break;
+        }
     }
-    return true;
+    SX1272SetSleep();
+    return status;
 }
 
 uint32_t
@@ -1046,13 +1054,13 @@ SX1272SetModem(RadioModems_t modem)
 }
 
 void
-SX1272Write(uint8_t addr, uint8_t data)
+SX1272Write(uint16_t addr, uint8_t data)
 {
     SX1272WriteBuffer(addr, &data, 1);
 }
 
 uint8_t
-SX1272Read(uint8_t addr)
+SX1272Read(uint16_t addr)
 {
     uint8_t data;
     SX1272ReadBuffer(addr, &data, 1);
@@ -1060,7 +1068,7 @@ SX1272Read(uint8_t addr)
 }
 
 void
-SX1272WriteBuffer(uint8_t addr, uint8_t *buffer, uint8_t size)
+SX1272WriteBuffer(uint16_t addr, uint8_t *buffer, uint8_t size)
 {
 #if MYNEWT_VAL(BSP_USE_HAL_SPI) == 1
     hal_gpio_write(RADIO_NSS, 0);
@@ -1079,7 +1087,7 @@ SX1272WriteBuffer(uint8_t addr, uint8_t *buffer, uint8_t size)
 }
 
 void
-SX1272ReadBuffer(uint8_t addr, uint8_t *buffer, uint8_t size)
+SX1272ReadBuffer(uint16_t addr, uint8_t *buffer, uint8_t size)
 {
 #if MYNEWT_VAL(BSP_USE_HAL_SPI) == 1
     hal_gpio_write(RADIO_NSS, 0);
@@ -1138,6 +1146,11 @@ SX1272SetPublicNetwork(bool enable)
         // Change LoRa modem SyncWord
         SX1272Write(REG_LR_SYNCWORD, LORA_MAC_PRIVATE_SYNCWORD);
     }
+}
+
+uint32_t SX1272GetWakeupTime( void )
+{
+    return SX1272GetBoardTcxoWakeupTime( ) + RADIO_WAKEUP_TIME;
 }
 
 void

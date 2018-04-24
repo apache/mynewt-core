@@ -41,6 +41,10 @@ STATS_SECT_START(lora_mac_stats)
     STATS_SECT_ENTRY(rx_mic_failures)
     STATS_SECT_ENTRY(rx_mlme)
     STATS_SECT_ENTRY(rx_mcps)
+    STATS_SECT_ENTRY(rx_dups)
+    STATS_SECT_ENTRY(rx_invalid)
+    STATS_SECT_ENTRY(no_bufs)
+    STATS_SECT_ENTRY(already_joined)
 STATS_SECT_END
 extern STATS_SECT_DECL(lora_mac_stats) lora_mac_stats;
 
@@ -156,7 +160,7 @@ struct lora_txd_info
     uint8_t ack_rxd: 1;
 
     /*!
-     * The transmission time on air of the frame
+     * The transmission time on air of the frame (in msecs)
      */
     uint32_t tx_time_on_air;
 
@@ -166,9 +170,9 @@ struct lora_txd_info
     uint32_t uplink_cntr;
 
     /*!
-     * The uplink frequency related to the frame
+     * The uplink channel related to the frame
      */
-    uint32_t uplink_freq;
+    uint32_t uplink_chan;
 };
 
 /*
