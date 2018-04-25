@@ -5,6 +5,8 @@
 #include "nrfx52_config.h"
 #elif NRF52840_XXAA
 #include "nrfx52840_config.h"
+#else
+#error Unsupported chip selected
 #endif
 
 #endif // NRFX_CONFIG_H__

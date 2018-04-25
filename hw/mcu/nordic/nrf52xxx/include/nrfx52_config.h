@@ -1,5 +1,5 @@
-#ifndef NRFX_CONFIG_H__
-#define NRFX_CONFIG_H__
+#ifndef NRFX52_CONFIG_H__
+#define NRFX52_CONFIG_H__
 
 #include "syscfg/syscfg.h"
 
@@ -62,4 +62,4 @@
 #define NRFX_PWM2_ENABLED 1
 #endif
 
-#endif // NRFX_CONFIG_H__
+#endif // NRFX52_CONFIG_H__
