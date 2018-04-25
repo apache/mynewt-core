@@ -37,6 +37,9 @@ struct button_event {
     uint8_t flags;
 };
 
+static struct os_eventq *button_internal_evq = NULL;
+static struct os_eventq *button_callback_default_evq = NULL;
+
 #define BUTTON_POST_STATE_EVENT(button, flags)	\
     button_post_event(button, BUTTON_STATE_CHANGED, flags)
 
@@ -49,9 +52,14 @@ static button_callback_t button_callback = NULL;
 static struct button_event *
 button_alloc_event(void)
 {
-    for (int i = 0 ; i < MYNEWT_VAL(BUTTON_EVENT_MAX) ; i++) 
-	if (!OS_EVENT_QUEUED(&button_event[i].os_event))
+    int i;
+
+    for (i = 0 ; i < MYNEWT_VAL(BUTTON_EVENT_MAX) ; i++) {
+	if (!OS_EVENT_QUEUED(&button_event[i].os_event)) {
 	    return &button_event[i];
+	}
+    }
+
     return NULL;
 }
 
@@ -109,12 +117,17 @@ button_post_event(button_t *button, uint8_t type, uint8_t flags)
 #endif
 
     evt = button_alloc_event();
-    if (evt) {
+    if (evt) {	
 	evt->os_event.ev_cb  = button_event_handler;
 	evt->os_event.ev_arg = button;
 	evt->type            = type;
 	evt->flags           = flags;
-	os_eventq_put(os_eventq_dflt_get(), &evt->os_event);
+	
+#if MYNEWT_VAL(BUTTON_USE_PER_BUTTON_CALLBACK_EVENTQ) > 0
+	os_eventq_put(button->eventq,              &evt->os_event);
+#else
+	os_eventq_put(button_callback_default_evq, &evt->os_event);
+#endif
 	return 0;
     } else {
 	button->state |= BUTTON_FLG_MISSED;
@@ -486,15 +499,38 @@ button_fsm_callout(struct os_event *ev)
 void
 button_init(button_t *buttons, unsigned int count, button_callback_t cb)
 {
-    button_callback = cb;
+#if MYNEWT_VAL(BUTTON_USE_DOUBLE) ||				\
+    MYNEWT_VAL(BUTTON_USE_LONG  ) ||				\
+    MYNEWT_VAL(BUTTON_USE_REPEAT) ||				\
+    MYNEWT_VAL(BUTTON_USE_PER_BUTTON_CALLBACK_EVENTQ) > 0
+    unsigned int i;
+#endif
     
+    if (button_internal_evq == NULL) {
+	button_internal_evq = os_eventq_dflt_get();
+    }
+    if (button_callback_default_evq == NULL) {
+	button_callback_default_evq = os_eventq_dflt_get();
+    }
+    
+    button_callback = cb;
+
 #if MYNEWT_VAL(BUTTON_USE_DOUBLE) || \
     MYNEWT_VAL(BUTTON_USE_LONG  ) || \
     MYNEWT_VAL(BUTTON_USE_REPEAT)
+    for (i = 0 ; i < count ; i++) {
+	button_t *button = &buttons[i];
+	os_callout_init(&button->callout, button_internal_evq,
+			button_fsm_callout, button);
+    }
+#endif
+
+#if MYNEWT_VAL(BUTTON_USE_PER_BUTTON_CALLBACK_EVENTQ) > 0
     for (unsigned int i = 0 ; i < count ; i++) {
 	button_t *button = &buttons[i];
-	os_callout_init(&button->callout, os_eventq_dflt_get(),
-			button_fsm_callout, button);
+	if (button->eventq == NULL) {
+	    button->eventq = button_callback_default_evq;
+	}
     }
 #endif
 }
@@ -516,4 +552,16 @@ button_set_low_level_state(button_t *button, bool pressed)
 #else
     button_exec_simple(button, action);
 #endif
+}
+
+void
+button_internal_evq_set(struct os_eventq *evq)
+{
+    button_internal_evq = evq;
+}
+
+void
+button_callback_default_evq_set(struct os_eventq *evq)
+{
+    button_callback_default_evq = evq;
 }

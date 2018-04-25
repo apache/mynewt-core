@@ -293,6 +293,14 @@ typedef struct button {
      * Type of state changed or action that should be taken into account.
      */
     uint8_t mode;
+#if MYNEWT_VAL(BUTTON_USE_PER_BUTTON_CALLBACK_EVENTQ) > 0
+    /**
+     * Specific Event queue for this button callback.
+     * If not defined (ie: is NULL), the default event queue
+     * specified by syscfg BUTTON_EVENTQ_DEFAULT is used.
+     */
+    struct os_eventq *eventq;
+#endif
     /*
      * Current button state
      */
@@ -361,6 +369,26 @@ typedef void (*button_callback_t)(button_id_t id, uint8_t type, uint8_t flags);
  * @param pressed	low level button state
  */
 void button_set_low_level_state(button_t *button, bool pressed);
+
+/**
+ * Specify an alternate queue for the buttons internal management.
+ *
+ * @note If not called, the default OS eventq will be used: os_eventq_dflt_get()
+ *
+ * @note Calling this function afer button initialisation has been done
+ *       will result in an undefined behaviour.
+ */
+void button_internal_evq_set(struct os_eventq *evq);
+
+/**
+ * Specify an alternate default queue for processing button callback.
+ *
+ * @note If not called, the default OS eventq will be used: os_eventq_dflt_get()
+ *
+ * @note Calling this function afer button initialisation has been done
+ *       will result in an undefined behaviour.
+ */
+void button_callback_default_evq_set(struct os_eventq *evq);
 
 /**
  * Initialisation of the buttons
