@@ -70,3 +70,8 @@ syscfg.defs:
         description: >
             Include code for generation of state changed event.
         value: 0
+    BUTTON_USE_PER_BUTTON_CALLBACK_EVENTQ:
+        description: >
+            Allow to specify per button event queue for callback processing.
+            By default os_eventq_dflt_get()
+        value: 0
