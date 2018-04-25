@@ -32,6 +32,7 @@
 
 #if MYNEWT_VAL(ADC_0)
 #include <adc_nrf51/adc_nrf51.h>
+#include <nrfx_adc.h>
 #endif
 
 #if MYNEWT_VAL(UART_0) || MYNEWT_VAL(UART_1)
