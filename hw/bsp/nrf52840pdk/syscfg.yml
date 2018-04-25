@@ -40,7 +40,7 @@ syscfg.defs:
         value: 7
 
     UART_1:
-        description: 'Bitbanger UART'
+        description: 'Whether to enable UART1'
         value:  0
     UART_1_PIN_TX:
         description: 'TX pin for UART1'
@@ -48,6 +48,12 @@ syscfg.defs:
     UART_1_PIN_RX:
         description: 'RX pin for UART1'
         value:  -1
+    UART_1_PIN_RTS:
+        description: 'RTS pin for UART1'
+        value:  -1
+    UART_1_PIN_CTS:
+        description: 'CTS pin for UART1'
+        value: -1
 
     SPI_0_MASTER_PIN_SCK:
         description: 'SCK pin for SPI_0_MASTER'
