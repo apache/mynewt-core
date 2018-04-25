@@ -74,4 +74,4 @@ syscfg.defs:
         description: >
             Allow to specify per button event queue for callback processing.
             By default os_eventq_dflt_get()
-        value: 1
+        value: 0
