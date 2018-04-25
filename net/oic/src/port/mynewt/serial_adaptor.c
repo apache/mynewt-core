@@ -48,7 +48,7 @@ static const struct oc_transport oc_serial_transport = {
     .ot_shutdown = oc_connectivity_shutdown_serial
 };
 
-static uint8_t oc_serial_transport_id;
+uint8_t oc_serial_transport_id;
 static struct os_mqueue oc_serial_mqueue;
 static struct os_mbuf *oc_attempt_rx_serial(void);
 

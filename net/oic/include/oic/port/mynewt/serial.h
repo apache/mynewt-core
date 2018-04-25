@@ -17,25 +17,17 @@
  * under the License.
  */
 
-#ifndef __OIC_MYNEWT_LORA_H_
-#define __OIC_MYNEWT_LORA_H_
+#ifndef __OIC_MYNEWT_SERIAL_H_
+#define __OIC_MYNEWT_SERIAL_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/*
- * oc_endpoint for LORA.
- */
-struct oc_endpoint_lora {
-    struct oc_ep_hdr ep;
-    uint8_t port;
-};
-
-extern uint8_t oc_lora_transport_id;
+extern uint8_t oc_serial_transport_id;
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __OIC_MYNEWT_LORA_H_ */
+#endif /* __OIC_MYNEWT_SERIAL_H_ */
