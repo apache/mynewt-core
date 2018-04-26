@@ -37,7 +37,7 @@ pwm_cycle_handler(void* unused)
 {
     int16_t eased;
     eased = easing_funct(step, max_steps, top_val);
-    pwm_enable_duty_cycle(pwm, 0, eased);
+    pwm_set_duty_cycle(pwm, 0, eased);
     if (step >= max_steps || step <= 0) {
         up = !up;
     }
@@ -88,49 +88,50 @@ pwm_end_seq_handler(void* chan_conf)
     } else {
         func_num++;
     }
-    rc = pwm_enable_duty_cycle(pwm, 0, top_val);
+    rc = pwm_enable(pwm);
     assert(rc == 0);
 }
 
 int
 pwm_init(void)
 {
-    struct pwm_dev_interrupt_cfg chan_conf = {
-        .cfg = {
-            .pin = LED_BLINK_PIN,
-            .inverted = true,
-            .n_cycles = pwm_freq * 5, /* 5 seconds */
-            .interrupts_cfg = true,
-            .data = NULL,
-        },
+    struct pwm_chan_cfg chan_conf = {
+        .pin = LED_BLINK_PIN,
+        .inverted = true,
+        .data = NULL,
+    };
+    struct pwm_dev_cfg dev_conf = {
+        .n_cycles = pwm_freq * 5, /* 5 seconds */
         .int_prio = 3,
         .cycle_handler = pwm_cycle_handler, /* this won't work on soft_pwm */
-        .cycle_data = NULL,
         .seq_end_handler = pwm_end_seq_handler, /* this won't work on soft_pwm */
-        .seq_end_data = NULL
+        .cycle_data = NULL,
+        .seq_end_data = NULL,
+        .data = NULL
     };
     int rc;
 
-    chan_conf.seq_end_data = &chan_conf;
+    /* chan_conf.seq_end_data = &chan_conf; */
 
 #if MYNEWT_VAL(SOFT_PWM)
     pwm = (struct pwm_dev *) os_dev_open("spwm", 0, NULL);
-    chan_conf.cfg.interrupts_cfg = false;
 #else
     pwm = (struct pwm_dev *) os_dev_open("pwm0", 0, NULL);
 #endif
+
+    pwm_configure_device(pwm, &dev_conf);
 
     /* set the PWM frequency */
     pwm_set_frequency(pwm, 1000);
     top_val = (uint16_t) pwm_get_top_value(pwm);
 
     /* setup led 1 */
-    rc = pwm_chan_config(pwm, 0, (struct pwm_chan_cfg*) &chan_conf);
+    rc = pwm_configure_channel(pwm, 0, &chan_conf);
     assert(rc == 0);
 
-    console_printf ("Easing: sine io\n");
-
-    rc = pwm_enable_duty_cycle(pwm, 0, top_val);
+    /* console_printf ("Easing: sine io\n"); */
+    rc = pwm_set_duty_cycle(pwm, 0, top_val);
+    rc = pwm_enable(pwm);
     assert(rc == 0);
 
     return rc;
