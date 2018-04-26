@@ -27,6 +27,9 @@
 #include <hal/hal_timer.h>
 #include "mcu/stm32_hal.h"
 
+#define STM32_OFLOW_VALUE       (0x10000UL)
+#define STM32_NSEC_PER_SEC      (1000000000UL)
+
 struct stm32_hal_tmr {
     TIM_TypeDef *sht_regs;   /* Pointer to timer registers */
     uint32_t sht_oflow;      /* 16 bits of overflow to make timer 32bits */
