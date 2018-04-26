@@ -92,4 +92,4 @@ syscfg.defs:
         description: >
                 Sets public or private lora network. A value of 1 means
                 the network is public; private otherwise
-        value: 1
+        value: 0
