@@ -1997,16 +1997,26 @@ ScheduleTx(void)
 static void
 CalculateBackOff(uint8_t channel)
 {
+    uint32_t elapsed_msecs;
     uint32_t tx_ticks;
     CalcBackOffParams_t calc_backoff;
 
     /* Convert the tx time on air (which is in msecs) to lora mac timer ticks */
     tx_ticks = g_lora_mac_data.tx_time_on_air * 1000;
 
+    /*
+     * Calculcate the elasped time (in msecs) from when we started the
+     * join process. We do not ever expect this to wrap.
+     */
+    elapsed_msecs = (uint32_t)(os_time_get() - g_lora_mac_data.init_time);
+    if (os_time_ticks_to_ms(elapsed_msecs, &elapsed_msecs)) {
+        elapsed_msecs = 0xFFFFFFFF;
+    }
+
     calc_backoff.Joined = LM_F_IS_JOINED();
     calc_backoff.DutyCycleEnabled = DutyCycleOn;
     calc_backoff.Channel = channel;
-    calc_backoff.ElapsedTime = TimerGetElapsedTime(g_lora_mac_data.init_time);
+    calc_backoff.ElapsedTime =  elapsed_msecs;
     calc_backoff.TxTimeOnAir = tx_ticks;
     calc_backoff.LastTxIsJoinRequest = (bool)LM_F_LAST_TX_IS_JOIN_REQ();
 
@@ -2028,7 +2038,7 @@ ResetMacParameters(void)
     uint8_t repeater;
 
     // Store the current initialization time
-    g_lora_mac_data.init_time = os_get_uptime_usec();
+    g_lora_mac_data.init_time = os_time_get();
 
     // Counters
     g_lora_mac_data.uplink_cntr = 0;

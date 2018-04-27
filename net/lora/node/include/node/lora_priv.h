@@ -184,11 +184,11 @@ struct lora_mac_obj
     /*!
      * Stores the time at LoRaMac initialization.
      *
-     * NOTE: units of this variable are in usecs.
+     * NOTE: units of this variable are in os time ticks
      *
      * \remark Used for the BACKOFF_DC computation.
      */
-    uint64_t init_time;
+    os_time_t init_time;
 };
 
 extern struct lora_mac_obj g_lora_mac_data;
