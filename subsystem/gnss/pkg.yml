@@ -1,0 +1,27 @@
+#
+
+pkg.name: subsystem/gnss
+pkg.description: Global Navigation Satellite System
+pkg.author: "Stephane D'Alu <sdalu@sdalu.com>"
+pkg.homepage: "https://github.com/sdalu/"
+pkg.keywords:
+    - hw
+    - gnss
+    - nmea
+    - mediatek
+    - ublox
+
+pkg.deps:
+#   - net/ip
+
+pkg.cflags:
+#   - -Wno-unused
+#   - -Wno-error=address
+#   - -DLWIP_HTTPD_STRNSTR_PRIVATE=0
+
+pkg.cflags:
+    - -mfp16-format=ieee
+
+pkg.init:
+    gnss_pkg_init: 500
+    
