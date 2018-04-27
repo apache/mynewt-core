@@ -136,6 +136,12 @@ enum lis2dw12_read_mode {
     LIS2DW12_READ_M_STREAM = 1,
 };
 
+struct lis2dw12_notif_cfg {
+    sensor_event_type_t event;
+    uint8_t int_num:1;
+    uint8_t int_cfg;
+};
+
 struct lis2dw12_tap_settings {
     uint8_t en_x  : 1;
     uint8_t en_y  : 1;
@@ -183,6 +189,10 @@ struct lis2dw12_cfg {
 
     /* Read mode config */
     struct lis2dw12_read_mode_cfg read_mode;
+
+    /* Notif config */
+    struct lis2dw12_notif_cfg *notif_cfg;
+    uint8_t max_num_notif;
 
     /* Freefall config */
     uint8_t freefall_dur;

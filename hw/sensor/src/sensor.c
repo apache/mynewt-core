@@ -72,10 +72,6 @@ static void sensor_notify_ev_cb(struct os_event * ev);
 static void sensor_read_ev_cb(struct os_event *ev);
 static void sensor_interrupt_ev_cb(struct os_event *ev);
 
-static struct os_event sensor_interrupt_event = {
-    .ev_cb = sensor_interrupt_ev_cb,
-};
-
 /** OS event - for doing a sensor read */
 static struct os_event sensor_read_event = {
     .ev_cb = sensor_read_ev_cb,
@@ -83,7 +79,7 @@ static struct os_event sensor_read_event = {
 
 static struct os_mempool sensor_notify_evt_pool;
 static uint8_t sensor_notify_evt_area[OS_MEMPOOL_BYTES(MYNEWT_VAL(SENSOR_NOTIF_EVENTS_MAX),
-      sizeof(struct os_event))];
+      sizeof(struct sensor_notify_os_ev))];
 
 /**
  * Lock sensor manager to access the list of sensors
@@ -1123,8 +1119,9 @@ sensor_read_data_func(struct sensor *sensor, void *arg, void *data,
 void
 sensor_mgr_put_interrupt_evt(struct sensor *sensor)
 {
-    sensor_interrupt_event.ev_arg = sensor;
-    os_eventq_put(sensor_mgr_evq_get(), &sensor_interrupt_event);
+    sensor->s_interrupt_evt.ev_arg = sensor;
+    sensor->s_interrupt_evt.ev_cb  = sensor_interrupt_ev_cb;
+    os_eventq_put(sensor_mgr_evq_get(), &sensor->s_interrupt_evt);
 }
 
 /**
@@ -1189,10 +1186,6 @@ sensor_notify_ev_cb(struct os_event * ev)
 
     snoe = ev->ev_arg;
 
-    if (!snoe) {
-        return;
-    }
-
     SLIST_FOREACH(notifier, &snoe->snoe_sensor->s_notifier_list, sn_next) {
         if (notifier->sn_sensor_event_type & snoe->snoe_evtype) {
             notifier->sn_func(snoe->snoe_sensor,
@@ -1202,7 +1195,7 @@ sensor_notify_ev_cb(struct os_event * ev)
         }
     }
 
-    /* Remove notify os event from pool */
+    /* Put notify os event back into the pool */
     os_memblock_put(&sensor_notify_evt_pool, snoe);
 }
 

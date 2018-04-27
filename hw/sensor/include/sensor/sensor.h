@@ -559,6 +559,9 @@ struct sensor {
     /* Sensor interface structure */
     struct sensor_itf s_itf;
 
+    /* OS event for interrupt handling */
+    struct os_event s_interrupt_evt;
+
     /* A list of listeners that are registered to receive data off of this
      * sensor
      */
