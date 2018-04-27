@@ -31,7 +31,8 @@
 extern "C" {
 #endif
 
-/* Package init function.  Remove when we have post-kernel init stages.
+/**
+ * Package init function. Remove when we have post-kernel init stages.
  */
 void sensor_pkg_init(void);
 
@@ -106,6 +107,10 @@ typedef enum {
     SENSOR_EVENT_TYPE_FREE_FALL      = (1 << 2),
     /* Accelerometer sleep change event */
     SENSOR_EVENT_TYPE_SLEEP_CHANGE   = (1 << 3),
+    /* Wake up Event */
+    SENSOR_EVENT_TYPE_WAKEUP         = (1 << 4),
+    /* Sleep Event */
+    SENSOR_EVENT_TYPE_SLEEP          = (1 << 5),
 } sensor_event_type_t;
 
 
@@ -188,10 +193,10 @@ typedef union {
 /**
  * Callback for handling sensor data, specified in a sensor listener.
  *
- * @param The sensor for which data is being returned
- * @param The argument provided to sensor_read() function.
- * @param A single sensor reading for that sensor listener
- * @param The sensor type for the data function
+ * @param sensor The sensor for which data is being returned
+ * @param arg The argument provided to sensor_read() function.
+ * @param data A single sensor reading for that sensor listener
+ * @param type The sensor type for the data function
  *
  * @return 0 on success, non-zero error code on failure.
  */
@@ -201,9 +206,9 @@ typedef int (*sensor_data_func_t)(struct sensor *, void *, void *,
 /**
  * Callback for sending trigger notification.
  *
- * @param ptr to the sensor
- * @param ptr to sensor data
- * @param the sensor type
+ * @param sensor Ptr to the sensor
+ * @param data Ptr to sensor data
+ * @param type The sensor type
  */
 typedef int
 (*sensor_trigger_notify_func_t)(struct sensor *, void *, sensor_type_t);
@@ -211,10 +216,10 @@ typedef int
 /**
  * Callback for trigger compare functions.
  *
- * @param type of sensor
- * @param the sensor low threshold
- * @param the sensor high threshold
- * @param ptr to data
+ * @param type Type of sensor
+ * @param low_thresh The sensor low threshold
+ * @param high_thresh The sensor high threshold
+ * @param arg Ptr to data
  */
 
 typedef int
@@ -224,9 +229,9 @@ typedef int
 /**
  * Callback for event notifications.
  *
- * @param The sensor that observed the event
- * @param The opaque argument provided during registration
- * @param The sensor event type that was observed
+ * @param sensor The sensor that observed the event
+ * @param arg The opaque argument provided during registration
+ * @param event The sensor event type that was observed
  */
 typedef int
 (*sensor_notifier_func_t)(struct sensor *, void *, sensor_event_type_t);
@@ -330,22 +335,31 @@ struct sensor_type_traits {
 
 struct sensor_notify_ev_ctx {
     /* The sensor for which the ev cb should be called */
-    struct sensor * snec_sensor;
-    /* The event type */
+    struct sensor *snec_sensor;
+    /* The registered event type bit map */
     sensor_event_type_t snec_evtype;
+};
+
+struct sensor_notify_os_ev {
+    /* OS event to put on the eventq for event type */
+    struct os_event snoe_evt;
+    /* The sensor event type for the event */
+    sensor_event_type_t snoe_evtype;
+    /* The sensor for which the ev cb should be called */
+    struct sensor *snoe_sensor;
 };
 
 /**
  * Read a single value from a sensor, given a specific sensor type
  * (e.g. SENSOR_TYPE_PROXIMITY).
  *
- * @param The sensor to read from
- * @param The type(s) of sensor values to read.  Mask containing that type, provide
+ * @param sensor The sensor to read from
+ * @param type The type(s) of sensor values to read.  Mask containing that type, provide
  *        all, to get all values.
- * @param The function to call with each value read.  If NULL, it calls all
+ * @param data_func The function to call with each value read.  If NULL, it calls all
  *        sensor listeners associated with this function.
- * @param The argument to pass to the read callback.
- * @param Timeout.  If block until result, specify OS_TIMEOUT_NEVER, 0 returns
+ * @param arg The argument to pass to the read callback.
+ * @param timeout Timeout. If block until result, specify OS_TIMEOUT_NEVER, 0 returns
  *        immediately (no wait.)
  *
  * @return 0 on success, non-zero error code on failure.
@@ -357,8 +371,9 @@ typedef int (*sensor_read_func_t)(struct sensor *, sensor_type_t,
  * Get the configuration of the sensor for the sensor type.  This includes
  * the value type of the sensor.
  *
- * @param The type of sensor value to get configuration for
- * @param A pointer to the sensor value to place the returned result into.
+ * @param sensor Ptr to the sensor
+ * @param type The type of sensor value to get configuration for
+ * @param cfg A pointer to the sensor value to place the returned result into.
  *
  * @return 0 on success, non-zero error code on failure.
  */
@@ -368,8 +383,8 @@ typedef int (*sensor_get_config_func_t)(struct sensor *, sensor_type_t,
 /**
  * Send a new configuration register set to the sensor.
  *
- * @param ptr to the sensor-specific stucture
- * @param ptr to the sensor-specific configuration structure
+ * @param sensor Ptr to the sensor-specific stucture
+ * @param arg Ptr to the sensor-specific configuration structure
  *
  * @return 0 on success, non-zero error code on failure.
  */
@@ -379,10 +394,9 @@ typedef int (*sensor_set_config_func_t)(struct sensor *, void *);
  * Set the trigger and threshold values for a specific sensor for the sensor
  * type.
  *
- * @param ptr to the sensor
- * @param type of sensor
- * @param low threshold
- * @param high threshold
+ * @param sensor Ptr to the sensor
+ * @param type type of sensor
+ * @param stt Ptr to teh sensor traits
  *
  * @return 0 on success, non-zero error code on failure.
  */
@@ -393,20 +407,20 @@ typedef int (*sensor_set_trigger_thresh_t)(struct sensor *, sensor_type_t,
  * Clear the high/low threshold values for a specific sensor for the sensor
  * type.
  *
- * @param ptr to the sensor
- * @param type of sensor
+ * @param sensor Ptr to the sensor
+ * @param type Type of sensor
  *
  * @return 0 on success, non-zero error code on failure.
  */
-typedef int (*sensor_clear_trigger_thresh_t)(struct sensor *, sensor_type_t);
+typedef int (*sensor_clear_trigger_thresh_t)(struct sensor *sensor, sensor_type_t type);
 
 /**
  * Set the notification expectation for a targeted set of events for the
  * specific sensor. After this function returns successfully, the implementer
  * shall post corresponding event notifications to the sensor manager.
  *
- * @param The sensor to expect notifications from.
- * @param The mask of event types to expect notifications from.
+ * @param sensor The sensor to expect notifications from.
+ * @param event The mask of event types to expect notifications from.
  *
  * @return 0 on success, non-zero error code on failure.
  */
@@ -417,8 +431,8 @@ typedef int (*sensor_set_notification_t)(struct sensor *,
  * Unset the notification expectation for a targeted set of events for the
  * specific sensor.
  *
- * @param The sensor.
- * @param The mask of event types.
+ * @param sensor The sensor.
+ * @param event The mask of event types.
  *
  * @return 0 on success, non-zero error code on failure.
  */
@@ -428,12 +442,11 @@ typedef int (*sensor_unset_notification_t)(struct sensor *,
 /**
  * Let driver handle interrupt in the sensor context
  *
- * @param The sensor.
- * @param Interrupt argument
+ * @param sensor Ptr to the sensor
  *
  * @return 0 on success, non-zero error code on failure.
  */
-typedef int (*sensor_handle_interrupt_t)(struct sensor *);
+typedef int (*sensor_handle_interrupt_t)(struct sensor *sensor);
 
 struct sensor_driver {
     sensor_read_func_t sd_read;
@@ -495,9 +508,17 @@ struct sensor_itf {
  */
 #define SENSOR_GET_ITF(__s) (&((__s)->s_itf))
 
+/*
+ * Checks if the sensor data is valid and then compares if it is greater than
+ * the data that is specified
+ */
 #define SENSOR_DATA_CMP_GT(__d, __t, __f) (\
     ((__d->__f##_is_valid) && (__t->__f##_is_valid)) ? (__d->__f > __t->__f) : (0))
 
+/*
+ * Checks if the sensor data is valid and then compares if it is less than
+ * the data that is specified
+ */
 #define SENSOR_DATA_CMP_LT(__d, __t, __f) (\
     ((__d->__f##_is_valid) && (__t->__f##_is_valid)) ? (__d->__f < __t->__f) : (0))
 
@@ -538,6 +559,9 @@ struct sensor {
     /* Sensor interface structure */
     struct sensor_itf s_itf;
 
+    /* OS event for interrupt handling */
+    struct os_event s_interrupt_evt;
+
     /* A list of listeners that are registered to receive data off of this
      * sensor
      */
@@ -555,9 +579,31 @@ struct sensor {
     SLIST_ENTRY(sensor) s_next;
 };
 
-int sensor_init(struct sensor *, struct os_dev *);
-int sensor_lock(struct sensor *);
-void sensor_unlock(struct sensor *);
+/**
+ * Initialize a sensor
+ *
+ * @param sensor The sensor to initialize
+ * @param The device to associate with this sensor.
+ *
+ * @return 0 on success, non-zero error code on failure.
+ */
+int sensor_init(struct sensor *sensor, struct os_dev *dev);
+
+/**
+ * Lock access to the sensor specified by sensor.  Blocks until lock acquired.
+ *
+ * @param sensor The sensor to lock
+ *
+ * @return 0 on success, non-zero on failure.
+ */
+int sensor_lock(struct sensor *sensor);
+
+/**
+ * Unlock access to the sensor specified by sensor.
+ *
+ * @param The sensor to unlock access to.
+ */
+void sensor_unlock(struct sensor *sensor);
 
 /**
  * Register a sensor listener. This allows a calling application to receive
@@ -566,57 +612,70 @@ void sensor_unlock(struct sensor *);
  * For more information on the type of callbacks available, see the documentation
  * for the sensor listener structure.
  *
- * @param The sensor to register a listener on
- * @param The listener to register onto the sensor
+ * @param sensor The sensor to register a listener on
+ * @param listener The listener to register onto the sensor
  *
  * @return 0 on success, non-zero error code on failure.
  */
-int sensor_register_listener(struct sensor *, struct sensor_listener *);
+int sensor_register_listener(struct sensor *sensor, struct sensor_listener *listener);
 
 /**
  * Un-register a sensor listener. This allows a calling application to clear
  * callbacks for a given sensor object.
  *
- * @param The sensor object
- * @param The listener to remove from the sensor listener list
+ * @param sensor The sensor object
+ * @param listener The listener to remove from the sensor listener list
  *
  * @return 0 on success, non-zero error code on failure.
  */
 
-int sensor_unregister_listener(struct sensor *, struct sensor_listener *);
+int sensor_unregister_listener(struct sensor *sensor, struct sensor_listener *listener);
 
 /**
  * Register a sensor notifier. This allows a calling application to receive
  * callbacks any time a requested event is observed.
  *
- * @param The sensor to register the notifier on
- * @param The notifier to register
+ * @param sensor The sensor to register the notifier on
+ * @param notifier The notifier to register
  *
  * @return 0 on success, non-zero error code on failure.
  */
-int sensor_register_notifier(struct sensor *, struct sensor_notifier *);
+int sensor_register_notifier(struct sensor *sensor, struct sensor_notifier *notifier);
 
 /**
  * Un-register a sensor notifier. This allows a calling application to stop
  * receiving callbacks for events on the sensor object.
  *
- * @param The sensor object to un-register the notifier on
- * @param The notifier to remove from the notification list
+ * @param sensor The sensor object to un-register the notifier on
+ * @param notifier The notifier to remove from the notification list
  *
  * @return 0 on success, non-zero error code on failure.
  */
-int sensor_unregister_notifier(struct sensor *, struct sensor_notifier *);
+int sensor_unregister_notifier(struct sensor *sensor, struct sensor_notifier *notifier);
 
-int sensor_read(struct sensor *, sensor_type_t, sensor_data_func_t, void *,
-        uint32_t);
+/**
+ * Read the data for sensor type "type," from the given sensor and
+ * return the result into the "value" parameter.
+ *
+ * @param sensor The sensor to read data from
+ * @param type The type of sensor data to read from the sensor
+ * @param data_func The callback to call for data returned from that sensor
+ * @param arg The argument to pass to this callback.
+ * @param timeout Timeout before aborting sensor read
+ *
+ * @return 0 on success, non-zero on failure.
+ */
+int sensor_read(struct sensor *sensor, sensor_type_t type,
+                sensor_data_func_t data_func, void *arg,
+                uint32_t timeout);
 
 /**
  * Set the driver functions for this sensor, along with the type of sensor
  * data available for the given sensor.
  *
- * @param The sensor to set the driver information for
- * @param The types of sensor data available for this sensor
- * @param The driver functions for this sensor
+ * @param sensor The sensor to set the driver information for
+ * @param type The types of sensor data available for this sensor
+ * @param driver The driver functions for this sensor
  *
  * @return 0 on success, non-zero error code on failure
  */
@@ -635,8 +694,8 @@ sensor_set_driver(struct sensor *sensor, sensor_type_t type,
  * sensor tells the sensor framework which sensor data to send back to
  * the user
  *
- * @param The sensor to set the mask for
- * @param The mask
+ * @param sensor The sensor to set the mask for
+ * @param mask The mask
  */
 static inline int
 sensor_set_type_mask(struct sensor *sensor, sensor_type_t mask)
@@ -649,8 +708,9 @@ sensor_set_type_mask(struct sensor *sensor, sensor_type_t mask)
 /**
  * Check if sensor type is supported by the sensor device
  *
- * @param sensor object
- * @param Type to be checked
+ * @param sensor The sensor object
+ * @param type Type to be checked
+ *
  * @return type bitfield, if supported, 0 if not supported
  */
 static inline sensor_type_t
@@ -662,9 +722,8 @@ sensor_check_type(struct sensor *sensor, sensor_type_t type)
 /**
  * Set interface type and number
  *
- * @param The sensor to set the interface for
- * @param The interface type to set
- * @param The interface number to set
+ * @param sensor The sensor to set the interface for
+ * @param s_itf The interface type to set
  */
 static inline int
 sensor_set_interface(struct sensor *sensor, struct sensor_itf *s_itf)
@@ -700,12 +759,35 @@ sensor_get_config(struct sensor *sensor, sensor_type_t type,
  * be triggered instead.
  */
 
+/**
+ * Lock sensor manager to access the list of sensors
+ */
 int sensor_mgr_lock(void);
+
+/**
+ * Unlock sensor manager once the list of sensors has been accessed
+ */
 void sensor_mgr_unlock(void);
-int sensor_mgr_register(struct sensor *);
+
+/**
+ * Register the sensor with the global sensor list. This makes the sensor
+ * searchable by other packages, who may want to look it up by type.
+ *
+ * @param sensor The sensor to register
+ *
+ * @return 0 on success, non-zero error code on failure.
+ */
+int sensor_mgr_register(struct sensor *sensor);
+
+/**
+ * Get the current eventq, the system is misconfigured if there is still
+ * no parent eventq.
+ *
+ * @return Ptr OS eventq that the sensor mgr is set to
+ */
 struct os_eventq *sensor_mgr_evq_get(void);
 
-
+/* Compare function pointer to get called for each sensor */
 typedef int (*sensor_mgr_compare_func_t)(struct sensor *, void *);
 
 /**
@@ -718,9 +800,9 @@ typedef int (*sensor_mgr_compare_func_t)(struct sensor *, void *);
  * to iterate through sensors (as opposed to just finding one.)  As the
  * "prev_cursor" may be resorted in the sensor list, in between calls.
  *
- * @param The comparison function to use against sensors in the list.
- * @param The argument to provide to that comparison function
- * @param The previous sensor in the sensor manager list, in case of
+ * @param compare_func The comparison function to use against sensors in the list.
+ * @param arg The argument to provide to that comparison function
+ * @param prev_cursor The previous sensor in the sensor manager list, in case of
  *        iteration.  If desire is to find first matching sensor, provide a
  *        NULL value.
  *
@@ -737,95 +819,94 @@ struct sensor *sensor_mgr_find_next(sensor_mgr_compare_func_t, void *,
  * If the sensor parameter, is present find the next entry from that
  * parameter.  Otherwise, find the first matching sensor.
  *
- * @param The type of sensor to search for
- * @param The cursor to search from, or NULL to start from the beginning.
+ * @param type The type of sensor to search for
+ * @param sensor The cursor to search from, or NULL to start from the beginning.
  *
  * @return A pointer to the sensor object matching that sensor type, or NULL if
  *         none found.
  */
-struct sensor *sensor_mgr_find_next_bytype(sensor_type_t, struct sensor *);
+struct sensor *sensor_mgr_find_next_bytype(sensor_type_t type, struct sensor *sensor);
 
 /**
  * Search the sensor list and find the next sensor that corresponds
  * to a given device name.
  *
- * @param The device name to search for
- * @param The previous sensor found with this device name
+ * @param devname The device name to search for
+ * @param sensor The previous sensor found with this device name
  *
  * @return 0 on success, non-zero error code on failure
  */
-struct sensor *sensor_mgr_find_next_bydevname(char *, struct sensor *);
+struct sensor *sensor_mgr_find_next_bydevname(char *devname, struct sensor *prev_cursor);
 
 /**
  * Check if sensor type matches
  *
- * @param The sensor object
- * @param The type to check
+ * @param sensor The sensor object
+ * @param arg type to check
  *
  * @return 1 if matches, 0 if it doesn't match.
  */
-int sensor_mgr_match_bytype(struct sensor *, void *);
+int sensor_mgr_match_bytype(struct sensor *sensor, void *);
 
 /**
  * Set the sensor poll rate
  *
- * @param The devname
- * @param The poll rate in milli seconds
+ * @param devname Name of the sensor
+ * @param poll_rate The poll rate in milli seconds
  */
 int
-sensor_set_poll_rate_ms(char *, uint32_t);
+sensor_set_poll_rate_ms(char *devname, uint32_t poll_rate);
 
 /**
  * Set the sensor poll rate multiple based on the device name, sensor type
  *
- * @param The devname
- * @param The sensor type trait
- * @param The multiple of the poll rate
+ * @param devname Name of the sensor
+ * @param stt The sensor type trait
  */
 int
-sensor_set_n_poll_rate(char *, struct sensor_type_traits *);
+sensor_set_n_poll_rate(char *devname, struct sensor_type_traits *stt);
 
 /**
  * Transmit OIC trigger
  *
- * @param ptr to the sensor
- * @param ptr to sensor data
- * @param The sensor type
+ * @param sensor Ptr to the sensor
+ * @param arg Ptr to sensor data
+ * @param type The sensor type
  *
  * @return 0 on sucess, non-zero on failure
  */
 int
-sensor_oic_tx_trigger(struct sensor *, void *, sensor_type_t);
+sensor_oic_tx_trigger(struct sensor *sensor, void *arg, sensor_type_t type);
 
 /**
  * Sensor trigger initialization
  *
- * @param ptr to the sensor sturucture
- * @param sensor type to enable trigger for
- * @param the function to call if the trigger condition is satisfied
+ * @param sensor Ptr to the sensor
+ * @param type Sensor type to enable trigger for
+ * @param notify the function to call if the trigger condition is satisfied
  */
 void
-sensor_trigger_init(struct sensor *, sensor_type_t,
-                    sensor_trigger_notify_func_t);
+sensor_trigger_init(struct sensor *sensor, sensor_type_t type,
+                    sensor_trigger_notify_func_t notify);
 
 /**
  * Search the sensor type traits list for specific type of sensor
  *
- * @param The sensor type to search for
- * @param Ptr to a sensor
+ * @param type The sensor type to search for
+ * @param sensor Ptr to a sensor
  *
  * @return NULL when no sensor type is found, ptr to sensor_type_traits structure
  * when found
  */
 struct sensor_type_traits *
-sensor_get_type_traits_bytype(sensor_type_t, struct sensor *);
+sensor_get_type_traits_bytype(sensor_type_t type, struct sensor *sensor);
 
 /**
  * Get the type traits for a sensor
  *
- * @param name of the sensor
- * @param Ptr to sensor types trait struct
- * @param type of sensor
+ * @param devname Name of the sensor
+ * @param stt Ptr to sensor types trait struct
+ * @param type The sensor type
  *
  * @return NULL on failure, sensor struct on success
  */
@@ -836,77 +917,80 @@ sensor_get_type_traits_byname(char *, struct sensor_type_traits **,
 /**
  * Set the thresholds along with the comparison algo for a sensor
  *
- * @param name of the sensor
- * @param Ptr to sensor type traits containing thresholds
+ * @param devname Name of the sensor
+ * @param stt Ptr to sensor type traits containing thresholds
  *
  * @return 0 on success, non-zero on failure
  */
 int
-sensor_set_thresh(char *, struct sensor_type_traits *);
+sensor_set_thresh(char *devname, struct sensor_type_traits *stt);
 
 /**
  * Clears the low threshold for a sensor
  *
- * @param name of the sensor
- * @param sensor type
+ * @param devname Name of the sensor
+ * @param type The sensor type
  *
  * @return 0 on success, non-zero on failure
  */
 int
-sensor_clear_low_thresh(char *, sensor_type_t);
+sensor_clear_low_thresh(char *devname, sensor_type_t type);
 
 /**
  * Clears the high threshold for a sensor
  *
- * @param name of the sensor
- * @param sensor type
+ * @param devname Name of the sensor
+ * @param type The sensor type
  *
  * @return 0 on success, non-zero on failure
  */
 int
-sensor_clear_high_thresh(char *, sensor_type_t);
-
-/**
- * Set the watermark thresholds for a sensor
- *
- * @param name of the sensor
- * @param Ptr to sensor type traits containing thresholds
- *
- * @return 0 on success, non-zero on failure
- */
-int
-sensor_set_watermark_thresh(char *, struct sensor_type_traits *);
+sensor_clear_high_thresh(char *devname, sensor_type_t type);
 
 /**
  * Puts a notification event on the sensor manager evq
  *
- * @param notification event context
+ * @param ctx Notification event context
+ * @param evtype The notification event type
  */
 void
-sensor_mgr_put_notify_evt(struct sensor_notify_ev_ctx *);
+sensor_mgr_put_notify_evt(struct sensor_notify_ev_ctx *ctx,
+                          sensor_event_type_t evtype);
 
 /**
  * Puts a interrupt event on the sensor manager evq
  *
- * @param interrupt event context
+ * @param sensor Sensor Ptr as interrupt event context
  */
 void
-sensor_mgr_put_interrupt_evt(struct sensor *);
+sensor_mgr_put_interrupt_evt(struct sensor *sensor);
 
 /**
  * Puts read event on the sensor manager evq
  *
- * @param arg
+ * @param arg Argument
  */
 void
-sensor_mgr_put_read_evt(void *);
+sensor_mgr_put_read_evt(void *arg);
 
 #if MYNEWT_VAL(SENSOR_CLI)
+/**
+ * Convinience API to convert floats to strings,
+ * might loose some precision due to rounding
+ *
+ * @param num Floating point number to print
+ * @param fltstr Output float string
+ * @param len Length of the string to print
+ */
 char*
 sensor_ftostr(float, char *, int);
 #endif
 
 #if MYNEWT_VAL(SENSOR_OIC)
+/**
+ * Iterates through the sensor list and initializes OIC resources
+ * based on each sensor type
+ */
 void sensor_oic_init(void);
 #endif
 

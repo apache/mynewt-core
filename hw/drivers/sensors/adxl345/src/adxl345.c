@@ -1490,10 +1490,14 @@ adxl345_sensor_handle_interrupt(struct sensor * sensor)
         return rc;
     }
 
-    if ((pdd->registered_mask & ADXL345_NOTIFY_MASK) &&
-        ((int_status & ADXL345_INT_SINGLE_TAP_BIT) ||
-         (int_status & ADXL345_INT_DOUBLE_TAP_BIT))) {
-        sensor_mgr_put_notify_evt(&pdd->notify_ctx);
+    if (pdd->registered_mask & ADXL345_NOTIFY_MASK) {
+        if (int_status & ADXL345_INT_SINGLE_TAP_BIT) {
+            sensor_mgr_put_notify_evt(&pdd->notify_ctx, SENSOR_EVENT_TYPE_SINGLE_TAP);
+        }
+
+        if (int_status & ADXL345_INT_DOUBLE_TAP_BIT) {
+            sensor_mgr_put_notify_evt(&pdd->notify_ctx, SENSOR_EVENT_TYPE_DOUBLE_TAP);
+        }
     }
 
     if ((pdd->registered_mask & ADXL345_READ_MASK) &&

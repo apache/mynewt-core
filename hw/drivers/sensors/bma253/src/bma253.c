@@ -4616,9 +4616,14 @@ sensor_driver_handle_interrupt(struct sensor * sensor)
         return rc;
     }
 
-    if ((pdd->registered_mask & BMA253_NOTIFY_MASK) &&
-            (int_status.s_tap_int_active || int_status.d_tap_int_active)) {
-        sensor_mgr_put_notify_evt(&pdd->notify_ctx);
+    if (pdd->registered_mask & BMA253_NOTIFY_MASK) {
+        if (int_status.s_tap_int_active) {
+            sensor_mgr_put_notify_evt(&pdd->notify_ctx, SENSOR_EVENT_TYPE_SINGLE_TAP);
+        }
+
+        if (int_status.d_tap_int_active) {
+            sensor_mgr_put_notify_evt(&pdd->notify_ctx, SENSOR_EVENT_TYPE_DOUBLE_TAP);
+        }
     }
 
     if ((pdd->registered_mask & BMA253_READ_MASK) &&

@@ -33,6 +33,15 @@
 #include "log/log.h"
 #include "stats/stats.h"
 
+const struct lis2dw12_notif_cfg dflt_notif_cfg[] = {
+    { SENSOR_EVENT_TYPE_SINGLE_TAP,   0, LIS2DW12_INT1_CFG_SINGLE_TAP  },
+    { SENSOR_EVENT_TYPE_DOUBLE_TAP,   0, LIS2DW12_INT1_CFG_DOUBLE_TAP  },
+    { SENSOR_EVENT_TYPE_SLEEP,        1, LIS2DW12_INT2_CFG_SLEEP_STATE },
+    { SENSOR_EVENT_TYPE_FREE_FALL,    0, LIS2DW12_INT1_CFG_FF          },
+    { SENSOR_EVENT_TYPE_WAKEUP,       0, LIS2DW12_INT1_CFG_WU          },
+    { SENSOR_EVENT_TYPE_SLEEP_CHANGE, 1, LIS2DW12_INT2_CFG_SLEEP_CHG   }
+};
+
 static struct hal_spi_settings spi_lis2dw12_settings = {
     .data_order = HAL_SPI_MSB_FIRST,
     .data_mode  = HAL_SPI_MODE3,
@@ -44,12 +53,24 @@ static struct hal_spi_settings spi_lis2dw12_settings = {
 STATS_SECT_START(lis2dw12_stat_section)
     STATS_SECT_ENTRY(write_errors)
     STATS_SECT_ENTRY(read_errors)
+    STATS_SECT_ENTRY(single_tap_notify)
+    STATS_SECT_ENTRY(double_tap_notify)
+    STATS_SECT_ENTRY(free_fall_notify)
+    STATS_SECT_ENTRY(sleep_notify)
+    STATS_SECT_ENTRY(wakeup_notify)
+    STATS_SECT_ENTRY(sleep_chg_notify)
 STATS_SECT_END
 
 /* Define stat names for querying */
 STATS_NAME_START(lis2dw12_stat_section)
     STATS_NAME(lis2dw12_stat_section, write_errors)
     STATS_NAME(lis2dw12_stat_section, read_errors)
+    STATS_NAME(lis2dw12_stat_section, single_tap_notify)
+    STATS_NAME(lis2dw12_stat_section, double_tap_notify)
+    STATS_NAME(lis2dw12_stat_section, free_fall_notify)
+    STATS_NAME(lis2dw12_stat_section, sleep_notify)
+    STATS_NAME(lis2dw12_stat_section, wakeup_notify)
+    STATS_NAME(lis2dw12_stat_section, sleep_chg_notify)
 STATS_NAME_END(lis2dw12_stat_section)
 
 /* Global variable used to hold stats data */
@@ -1710,13 +1731,13 @@ lis2dw12_clear_int(struct sensor_itf *itf, uint8_t *src)
 }
 
 /**
- * Get Interrupt Source
+ * Get Interrupt Status
  *
  * @param the sensor interface
- * @param pointer to return interrupt source in
+ * @param pointer to return interrupt status in
  * @return 0 on success, non-zero on failure
  */
-int lis2dw12_get_int_src(struct sensor_itf *itf, uint8_t *status)
+int lis2dw12_get_int_status(struct sensor_itf *itf, uint8_t *status)
 {
     return lis2dw12_read8(itf, LIS2DW12_REG_STATUS_REG, status);
 }
@@ -2440,29 +2461,40 @@ err:
 
 static int
 lis2dw12_find_int_by_event(sensor_event_type_t event, uint8_t *int_cfg,
-                           uint8_t *int_num)
+                           uint8_t *int_num, struct lis2dw12_cfg *cfg)
 {
-    if (event == SENSOR_EVENT_TYPE_DOUBLE_TAP) {
-        *int_cfg = LIS2DW12_INT1_CFG_DOUBLE_TAP;
-        *int_num = 0;
-    } else if (event == SENSOR_EVENT_TYPE_SINGLE_TAP) {
-        *int_cfg = LIS2DW12_INT1_CFG_SINGLE_TAP;
-        *int_num = 0;
-    } else if (event == SENSOR_EVENT_TYPE_FREE_FALL) {
-        *int_cfg = LIS2DW12_INT1_CFG_FF;
-        *int_num = 0;
-    } else if (event == SENSOR_EVENT_TYPE_SLEEP_CHANGE) {
-        *int_cfg = LIS2DW12_INT2_CFG_SLEEP_CHG;
-        *int_num = 1;
-    } else {
-        /* here if type is set to a non valid event or more than one event
-         * we do not currently support registering for more than one event
-         * per notification
-         */
-        return SYS_EINVAL;
+    int i;
+    int rc;
+
+    rc = SYS_EINVAL;
+    *int_num = 0;
+    *int_cfg = 0;
+
+    if (!cfg) {
+        rc = SYS_EINVAL;
+        goto err;
+    }
+
+    for (i = 0; i < cfg->max_num_notif; i++) {
+        if (event == cfg->notif_cfg[i].event) {
+            *int_cfg = cfg->notif_cfg[i].int_cfg;
+            *int_num = cfg->notif_cfg[i].int_num;
+            break;
+        }
+    }
+
+    if (i == cfg->max_num_notif) {
+       /* here if type is set to a non valid event or more than one event
+        * we do not currently support registering for more than one event
+        * per notification
+        */
+        rc = SYS_EINVAL;
+        goto err;
     }
 
     return 0;
+err:
+    return rc;
 }
 
 static int
@@ -2479,12 +2511,12 @@ lis2dw12_sensor_set_notification(struct sensor *sensor, sensor_event_type_t even
     itf = SENSOR_GET_ITF(sensor);
     pdd = &lis2dw12->pdd;
 
-    rc = lis2dw12_find_int_by_event(event, &int_cfg, &int_num);
+    rc = lis2dw12_find_int_by_event(event, &int_cfg, &int_num, &lis2dw12->cfg);
     if (rc) {
         goto err;
     }
 
-    rc = enable_interrupt(sensor,  int_cfg, int_num);
+    rc = enable_interrupt(sensor, int_cfg, int_num);
     if (rc) {
         goto err;
     }
@@ -2525,7 +2557,7 @@ lis2dw12_sensor_unset_notification(struct sensor *sensor, sensor_event_type_t ev
         }
     }
 
-    rc = lis2dw12_find_int_by_event(event, &int_cfg, &int_num);
+    rc = lis2dw12_find_int_by_event(event, &int_cfg, &int_num, &lis2dw12->cfg);
     if (rc) {
         goto err;
     }
@@ -2552,22 +2584,70 @@ lis2dw12_sensor_handle_interrupt(struct sensor *sensor)
     struct lis2dw12 *lis2dw12;
     struct sensor_itf *itf;
     uint8_t int_src;
+    uint8_t int_status;
     int rc;
 
     lis2dw12 = (struct lis2dw12 *)SENSOR_GET_DEVICE(sensor);
     itf = SENSOR_GET_ITF(sensor);
 
+    if (lis2dw12->pdd.notify_ctx.snec_evtype & SENSOR_EVENT_TYPE_SLEEP) {
+        /*
+         * We need to read this register only if we are
+         * interested in the sleep event
+         */
+         rc = lis2dw12_get_int_status(itf, &int_status);
+         if (rc) {
+             LIS2DW12_ERR("Could not read int status err=0x%02x\n", rc);
+             return rc;
+         }
+
+         if (int_status & LIS2DW12_STATUS_SLEEP_STATE) {
+             /* Sleep state detected */
+             sensor_mgr_put_notify_evt(&lis2dw12->pdd.notify_ctx,
+                                       SENSOR_EVENT_TYPE_SLEEP);
+             STATS_INC(g_lis2dw12stats, sleep_notify);
+         }
+    }
+
     rc = lis2dw12_clear_int(itf, &int_src);
     if (rc) {
-        LIS2DW12_ERR("Cound not read int status err=0x%02x\n", rc);
+        LIS2DW12_ERR("Could not read int src err=0x%02x\n", rc);
         return rc;
     }
 
-    if ((int_src & LIS2DW12_INT_SRC_STAP) ||
-        (int_src & LIS2DW12_INT_SRC_DTAP) ||
-        (int_src & LIS2DW12_INT_SRC_FF_IA)||
-        (int_src & LIS2DW12_INT_SRC_SLP_CHG)) {
-        sensor_mgr_put_notify_evt(&lis2dw12->pdd.notify_ctx);
+    if (int_src & LIS2DW12_INT_SRC_STAP) {
+        /* Single tap is detected */
+        sensor_mgr_put_notify_evt(&lis2dw12->pdd.notify_ctx,
+                                  SENSOR_EVENT_TYPE_SINGLE_TAP);
+        STATS_INC(g_lis2dw12stats, single_tap_notify);
+    }
+
+    if (int_src & LIS2DW12_INT_SRC_DTAP) {
+        /* Double tap is detected */
+        sensor_mgr_put_notify_evt(&lis2dw12->pdd.notify_ctx,
+                                  SENSOR_EVENT_TYPE_DOUBLE_TAP);
+        STATS_INC(g_lis2dw12stats, double_tap_notify);
+    }
+
+    if (int_src & LIS2DW12_INT_SRC_FF_IA) {
+        /* Freefall is detected */
+        sensor_mgr_put_notify_evt(&lis2dw12->pdd.notify_ctx,
+                                  SENSOR_EVENT_TYPE_FREE_FALL);
+        STATS_INC(g_lis2dw12stats, free_fall_notify);
+    }
+
+    if (int_src & LIS2DW12_INT_SRC_WU_IA) {
+        /* Wake up is detected */
+        sensor_mgr_put_notify_evt(&lis2dw12->pdd.notify_ctx,
+                                  SENSOR_EVENT_TYPE_WAKEUP);
+        STATS_INC(g_lis2dw12stats, wakeup_notify);
+    }
+
+    if (int_src & LIS2DW12_INT_SRC_SLP_CHG) {
+        /* Sleep change detected, either wakeup or sleep */
+        sensor_mgr_put_notify_evt(&lis2dw12->pdd.notify_ctx,
+                                  SENSOR_EVENT_TYPE_SLEEP_CHANGE);
+        STATS_INC(g_lis2dw12stats, sleep_chg_notify);
     }
 
     return 0;
@@ -2926,6 +3006,15 @@ lis2dw12_config(struct lis2dw12 *lis2dw12, struct lis2dw12_cfg *cfg)
     lis2dw12->cfg.read_mode.int_cfg = cfg->read_mode.int_cfg;
     lis2dw12->cfg.read_mode.int_num = cfg->read_mode.int_num;
     lis2dw12->cfg.read_mode.mode = cfg->read_mode.mode;
+
+    if (!cfg->notif_cfg) {
+        lis2dw12->cfg.notif_cfg = (struct lis2dw12_notif_cfg *)dflt_notif_cfg;
+        lis2dw12->cfg.max_num_notif = sizeof(dflt_notif_cfg)/sizeof(*dflt_notif_cfg);
+    } else {
+        lis2dw12->cfg.notif_cfg = cfg->notif_cfg;
+        lis2dw12->cfg.max_num_notif = cfg->max_num_notif;
+    }
+
     lis2dw12->cfg.mask = cfg->mask;
 
     return 0;
