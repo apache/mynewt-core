@@ -197,6 +197,9 @@ conf_file_compress(struct conf_file *cf)
         if (rc) {
             continue;
         }
+        if (!val1) {
+            continue;
+        }
         loc2 = loc1;
         copy = 1;
         while ((len2 = conf_getnext_line(rf, buf2, sizeof(buf2), &loc2)) > 0) {
