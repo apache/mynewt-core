@@ -62,7 +62,7 @@ static const struct oc_transport oc_lora_transport = {
     .ot_shutdown = oc_connectivity_shutdown_lora
 };
 
-static uint8_t oc_lora_transport_id;
+uint8_t oc_lora_transport_id;
 
 STATS_SECT_START(oc_lora_stats)
     STATS_SECT_ENTRY(iframe)
