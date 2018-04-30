@@ -43,6 +43,12 @@ syscfg.defs:
     CONSOLE_MAX_INPUT_LEN:
         description: 'Maximum input line length'
         value: 256
+    CONSOLE_HISTORY:
+        description: 'Enable history functionality'
+        value: 0
+    CONSOLE_HISTORY_SIZE:
+        description: 'Number of lines in history'
+        value: 16
 
     CONSOLE_UART_BAUD:
         description: 'Console UART baud rate.'

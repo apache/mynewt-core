@@ -172,6 +172,14 @@ cursor_backward(unsigned int count)
 }
 
 static inline void
+cursor_clear_line(void)
+{
+    console_out(ESC);
+    console_out('[');
+    console_out('K');
+}
+
+static inline void
 cursor_save(void)
 {
     console_out(ESC);
@@ -248,6 +256,179 @@ del_char(char *pos, uint16_t end)
     cursor_restore();
 }
 
+#if MYNEWT_VAL(CONSOLE_HISTORY)
+struct console_hist {
+    struct console_input buffer[MYNEWT_VAL(CONSOLE_HISTORY_SIZE)];
+    uint8_t head;
+    uint8_t tail;
+    uint8_t size;
+    uint8_t curr;
+} console_hist;
+
+static void
+console_hist_init(void)
+{
+    struct console_hist *sh = &console_hist;
+
+    sh->head = 0;
+    sh->tail = 0;
+    sh->curr = 0;
+    sh->size = MYNEWT_VAL(CONSOLE_HISTORY_SIZE);
+}
+
+static size_t
+trim_whitespace(const char *str, size_t len, char *out)
+{
+    const char *end;
+    size_t out_size;
+
+    if (len == 0) {
+        return 0;
+    }
+
+    /* Trim leading space */
+    while (isspace((unsigned char)*str)) {
+        str++;
+    }
+
+    if (*str == 0) { /* All spaces? */
+        *out = 0;
+        return 0;
+    }
+
+    /* Trim trailing space */
+    end = str + strlen(str) - 1;
+    while (end > str && isspace((unsigned char)*end)) {
+        end--;
+    }
+
+    end++;
+
+    /* Set output size to minimum of trimmed string length and buffer size minus 1 */
+    out_size = min(end - str, len - 1);
+
+    /* Copy trimmed string and add null terminator */
+    memcpy(out, str, out_size);
+    out[out_size] = 0;
+
+    return out_size;
+}
+
+static uint8_t
+ring_buf_next(uint8_t i, uint8_t size)
+{
+    return (uint8_t) ((i + 1) % size);
+}
+
+static uint8_t
+ring_buf_prev(uint8_t i, uint8_t size)
+{
+    return (uint8_t) ((i - 1) % size);
+}
+
+static bool
+console_hist_full(void)
+{
+    struct console_hist *sh = &console_hist;
+
+    return sh->head == sh->tail;
+}
+
+static void
+console_hist_next(void)
+{
+    struct console_hist *sh = &console_hist;
+
+    sh->head = (uint8_t) ring_buf_next(sh->head, sh->size);
+
+    /* buffer full, start overwriting old history */
+    if (console_hist_full()) {
+        sh->tail = (uint8_t) ring_buf_next(sh->tail, sh->size);
+    }
+}
+
+static bool
+console_hist_find(char *line)
+{
+    struct console_hist *sh = &console_hist;
+    uint8_t curr;
+
+    curr = sh->tail;
+    while (curr != sh->head) {
+        if (strcmp(sh->buffer[curr].line, line) == 0) {
+            return true;
+        }
+
+        curr = ring_buf_next(curr, sh->size);
+    }
+
+    return false;
+}
+
+static void
+console_hist_add(char *line)
+{
+    struct console_hist *sh = &console_hist;
+    char buf[MYNEWT_VAL(CONSOLE_MAX_INPUT_LEN)];
+    size_t len;
+
+    /* Reset current pointer */
+    sh->curr = sh->head;
+
+    len = trim_whitespace(line, sizeof(buf), buf);
+    if (!len) {
+        return;
+    }
+
+    if (console_hist_find(buf)) {
+        return;
+    }
+
+    strcpy(sh->buffer[sh->head].line, buf);
+    console_hist_next();
+    /* Reset current pointer */
+    sh->curr = sh->head;
+}
+
+static void
+console_clear_line(void)
+{
+    if (cur) {
+        cursor_backward(cur);
+    }
+    cur = 0;
+    end = 0;
+
+    cursor_clear_line();
+}
+
+static void
+console_hist_move(char *line, uint8_t direction)
+{
+    struct console_hist *sh = &console_hist;
+    char *str = NULL;
+    uint8_t limit = direction ==  ANSI_UP ? sh->tail : sh->head;
+
+    /* no more history to return in this direction */
+    if (sh->curr == limit) {
+        return;
+    }
+
+    if (direction == ANSI_UP) {
+        sh->curr = ring_buf_prev(sh->curr, sh->size);
+    } else {
+        sh->curr = ring_buf_next(sh->curr, sh->size);
+    }
+
+    console_clear_line();
+    str = sh->buffer[sh->curr].line;
+    while (*str != '\0') {
+        insert_char(&line[cur], *str, end);
+        ++str;
+    }
+}
+#endif
+
 static void
 handle_ansi(uint8_t byte, char *line)
 {
@@ -288,6 +469,14 @@ handle_ansi(uint8_t byte, char *line)
 
 ansi_cmd:
     switch (byte) {
+#if MYNEWT_VAL(CONSOLE_HISTORY)
+    case ANSI_UP:
+    case ANSI_DOWN:
+        console_blocking_mode();
+        console_hist_move(line, byte);
+        console_non_blocking_mode();
+        break;
+#endif
     case ANSI_BACKWARD:
         if (ansi_val > cur) {
             break;
@@ -501,6 +690,9 @@ console_handle_char(uint8_t byte)
             cur = 0;
             end = 0;
             os_eventq_put(lines_queue, ev);
+#if MYNEWT_VAL(CONSOLE_HISTORY)
+            console_hist_add(input->line);
+#endif
 
 #if MYNEWT_VAL(CONSOLE_COMPAT)
             if (console_compat_rx_cb) {
@@ -585,6 +777,10 @@ console_pkg_init(void)
 
     /* Ensure this function only gets called by sysinit. */
     SYSINIT_ASSERT_ACTIVE();
+
+#if MYNEWT_VAL(CONSOLE_HISTORY)
+    console_hist_init();
+#endif
 
 #if MYNEWT_VAL(CONSOLE_UART)
     rc = uart_console_init();
