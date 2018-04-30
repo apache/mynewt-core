@@ -1,0 +1,58 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+syscfg.defs:
+    SPIFLASH:
+        description: "SpiFlash enable"
+        value:  0
+    SPIFLASH_SPI_NUM:
+        description: 'SPI interface to use'
+        value:  0
+
+    SPIFLASH_SPI_CS_PIN:
+        description: 'SPI interface CS pin'
+        value:  -1
+
+    SPIFLASH_SECTOR_COUNT:
+        description: 'Number of sectors'
+        value:  0
+
+    SPIFLASH_SECTOR_SIZE:
+        description: 'Number of bytes that can be erased at a time'
+        value:  0
+
+    SPIFLASH_PAGE_SIZE:
+        description: 'Number of bytes that can be written at a time'
+        value:  0
+
+    SPIFLASH_BAUDRATE:
+        description: 'Requested baudrate, value must be supported by SPI driver'
+        value: 0
+
+    SPIFLASH_MANUFACTURER:
+        description: >
+            Expected SpiFlash manufacturer as read by Read JEDEC ID command 9FH
+        value: 0
+    SPIFLASH_MEMORY_TYPE:
+        description: >
+            Expected SpiFlash memory type as read by Read JEDEC ID command 9FH
+        value: 0
+    SPIFLASH_MEMORY_CAPACITY:
+        description: >
+            Expected SpiFlash memory capactity as read by Read JEDEC ID command 9FH
+        value: 0
