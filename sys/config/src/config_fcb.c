@@ -173,6 +173,9 @@ conf_fcb_compress(struct conf_fcb *cf)
         if (rc) {
             continue;
         }
+        if (!val1) {
+            continue;
+        }
         loc2 = loc1;
         copy = 1;
         while (fcb_getnext(&cf->cf_fcb, &loc2) == 0) {
