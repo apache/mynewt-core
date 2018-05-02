@@ -54,7 +54,8 @@ const struct Radio_s Radio =
     .WriteBuffer = SX1276WriteBuffer,
     .ReadBuffer = SX1276ReadBuffer,
     .SetMaxPayloadLength = SX1276SetMaxPayloadLength,
-    .SetPublicNetwork = SX1276SetPublicNetwork
+    .SetPublicNetwork = SX1276SetPublicNetwork,
+    .GetWakeupTime = SX1276GetWakeupTime
 };
 
 void
@@ -223,3 +224,10 @@ SX1276CheckRfFrequency(uint32_t frequency)
     // Implement check. Currently all frequencies are supported
     return true;
 }
+
+uint32_t
+SX1276GetBoardTcxoWakeupTime(void)
+{
+    return 0;
+}
+

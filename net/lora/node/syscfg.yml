@@ -24,16 +24,23 @@ syscfg.defs:
             drivers.
         value: 1
 
-    LORA_NODE_FREQ_BAND:
+    LORA_NODE_REGION:
         description: >
-            Which frequency band to use.  Valid values are:
-                o 433
-                o 470
-                o 780
-                o 868
-                o 915
-                o 916 Hybrid 915 band
-        value: 915
+            The operating region of the device. These values map to
+            enumerated regions in the stack. User must override the
+            region or compilation error will occur.
+                0: No region
+                1: AS band on 923MHz
+                2: Australian band on 915MHz
+                3: Chinese band on 470MHz
+                4: Chinese band on 779MHz
+                5: European band on 433MHz
+                6: European band on 868MHz
+                7: South korean band on 920MHz
+                8: India band on 865MHz
+                9: North american band on 915MHz
+                10: North american band on 915MHz with a maximum of 16 channels
+        value: 0
 
     LORA_NODE_DEFAULT_DATARATE:
         description: >
@@ -48,6 +55,10 @@ syscfg.defs:
     LORA_NODE_CLI:
         description: "Include shell commands for LoRa operations"
         value: 0
+
+    LORA_NODE_LOG_CLI:
+        description: "Include shell commands for lora node debug log"
+        value: 1
 
     LORA_APP_NUM_PORTS:
         description: "The number of unique LoRa application ports"
@@ -80,3 +91,9 @@ syscfg.defs:
     LORA_MAC_TIMER_NUM:
         description: Timer number used for lora mac and radio
         value: -1
+
+    LORA_NODE_PUBLIC_NWK:
+        description: >
+                Sets public or private lora network. A value of 1 means
+                the network is public; private otherwise
+        value: 0

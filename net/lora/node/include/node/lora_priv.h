@@ -23,12 +23,108 @@
 #include "node/mac/LoRaMac.h"
 #include "os/mynewt.h"
 #include "node/lora.h"
+#include "node/lora_band.h"
+
+/* Connection state machine flags. */
+union lora_mac_flags {
+    struct {
+        uint8_t gw_ack_req: 1;
+        uint8_t node_ack_req: 1;
+        uint8_t last_tx_join: 1;
+        uint8_t is_joined: 1;
+        uint8_t is_joining: 1;
+        uint8_t is_public_nwk: 1;
+        uint8_t is_mcps_req: 1;
+        uint8_t repeater_supp: 1;
+    } lmfbit;
+    uint8_t lmf_all;
+} __attribute__((packed));
 
 /*
  * Lora MAC data object
  */
 struct lora_mac_obj
 {
+    /* To limit # of join attempts */
+    uint8_t cur_join_attempt;
+    uint8_t max_join_attempt;
+
+    /* Current tx payload (N) */
+    uint8_t cur_tx_pyld;
+
+    /* current and last transmit channel used */
+    uint8_t cur_chan;
+    uint8_t last_tx_chan;
+
+    /*!
+     * Maximum duty cycle
+     * \remark Possibility to shutdown the device.
+     */
+    uint8_t max_dc;
+
+    /*!
+     * Number of trials to get a frame acknowledged
+     */
+    uint8_t ack_timeout_retries;
+
+    /*!
+     * Number of trials to get a frame acknowledged
+     */
+    uint8_t ack_timeout_retries_cntr;
+
+    /*!
+     * Uplink messages repetitions counter
+     */
+    uint8_t nb_rep_cntr;
+
+    /*!
+     * Device nonce is a random value extracted by issuing a sequence of RSSI
+     * measurements
+     */
+    uint16_t dev_nonce;
+
+    /*!
+     * Aggregated duty cycle management
+     */
+    uint16_t aggr_dc;
+    uint32_t aggr_last_tx_done_time;
+    uint32_t aggr_time_off;
+
+    /*!
+     * LoRaMac reception windows delay
+     * \remark normal frame: RxWindowXDelay = ReceiveDelayX - RADIO_WAKEUP_TIME
+     *         join frame  : RxWindowXDelay = JoinAcceptDelayX - RADIO_WAKEUP_TIME
+     */
+    uint32_t rx_win1_delay;
+    uint32_t rx_win2_delay;
+
+    /* uplink and downlink counters */
+    uint32_t uplink_cntr;
+    uint32_t downlink_cntr;
+
+    /*!
+     * Last transmission time on air (in msecs)
+     */
+    uint32_t tx_time_on_air;
+
+    /* Counts the number of missed ADR acknowledgements */
+    uint32_t adr_ack_cntr;
+
+    /*!
+     * Network ID ( 3 bytes )
+     */
+    uint32_t netid;
+
+    /*!
+     * Mote Address
+     */
+    uint32_t dev_addr;
+
+    /*!
+     * Holds the current rx window slot
+     */
+    LoRaMacRxSlot_t rx_slot;
+
     /* Task event queue */
     struct os_eventq lm_evq;
 
@@ -66,6 +162,14 @@ struct lora_mac_obj
     /* Pointer to current transmit mbuf. Can be NULL and still txing */
     struct os_mbuf *cur_tx_mbuf;
 
+    /*!
+     * Retransmission timer. This is used for confirmed frames on both class
+     * A and C devices and for unconfirmed transmissions on class C devices
+     * (so that a class C device will not transmit before listening on the
+     * second receive window).
+     */
+    struct hal_timer rtx_timer;
+
     /*
      * Global lora rx packet info structure. Used when receiving and prior to
      * obtaining a mbuf.
@@ -73,9 +177,31 @@ struct lora_mac_obj
     uint16_t rxbufsize;
     uint8_t *rxbuf;
     struct lora_pkt_info rxpkt;
+
+    /* Flags */
+    union lora_mac_flags lmflags;
+
+    /*!
+     * Stores the time at LoRaMac initialization.
+     *
+     * NOTE: units of this variable are in os time ticks
+     *
+     * \remark Used for the BACKOFF_DC computation.
+     */
+    os_time_t init_time;
 };
 
 extern struct lora_mac_obj g_lora_mac_data;
+
+/* Flag macros */
+#define LM_F_GW_ACK_REQ()       (g_lora_mac_data.lmflags.lmfbit.gw_ack_req)
+#define LM_F_NODE_ACK_REQ()     (g_lora_mac_data.lmflags.lmfbit.node_ack_req)
+#define LM_F_IS_JOINED()        (g_lora_mac_data.lmflags.lmfbit.is_joined)
+#define LM_F_IS_JOINING()       (g_lora_mac_data.lmflags.lmfbit.is_joining)
+#define LM_F_IS_PUBLIC_NWK()    (g_lora_mac_data.lmflags.lmfbit.is_public_nwk)
+#define LM_F_IS_MCPS_REQ()      (g_lora_mac_data.lmflags.lmfbit.is_mcps_req)
+#define LM_F_REPEATER_SUPP()    (g_lora_mac_data.lmflags.lmfbit.repeater_supp)
+#define LM_F_LAST_TX_IS_JOIN_REQ() (g_lora_mac_data.lmflags.lmfbit.last_tx_join)
 
 void lora_cli_init(void);
 void lora_app_init(void);
@@ -121,15 +247,19 @@ extern uint16_t g_lnd_log_index;
 /* IDs */
 #define LORA_NODE_LOG_UNUSED            (0)
 #define LORA_NODE_LOG_TX_DONE           (10)
-#define LORA_NODE_LOG_RX_WIN_SETUP      (20)
+#define LORA_NODE_LOG_TX_SETUP          (11)
+#define LORA_NODE_LOG_TX_START          (12)
+#define LORA_NODE_LOG_TX_DELAY          (15)
+#define LORA_NODE_LOG_TX_PREP_FRAME     (16)
+#define LORA_NODE_LOG_RX_WIN1_SETUP     (20)
 #define LORA_NODE_LOG_RX_TIMEOUT        (21)
 #define LORA_NODE_LOG_RX_DONE           (22)
-#define LORA_NODE_LOG_RX_SYNC_TIMEOUT   (23)
 #define LORA_NODE_LOG_RADIO_TIMEOUT_IRQ (24)
 #define LORA_NODE_LOG_RX_PORT           (25)
 #define LORA_NODE_LOG_RX_WIN2           (26)
-#define LORA_NODE_LOG_RX_WIN_SETUP_FAIL (27)
+#define LORA_NODE_LOG_RX_CFG            (27)
 #define LORA_NODE_LOG_APP_TX            (40)
+#define LORA_NODE_LOG_RTX_TIMEOUT       (50)
 #define LORA_NODE_LOG_RX_ADR_REQ        (80)
 #define LORA_NODE_LOG_PROC_MAC_CMD      (85)
 #define LORA_NODE_LOG_LINK_CHK          (90)

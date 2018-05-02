@@ -20,6 +20,7 @@
 #include <string.h>
 #include "os/mynewt.h"
 #include "node/lora_priv.h"
+#include "node/lora_band.h"
 
 STATS_SECT_DECL(lora_mac_stats) lora_mac_stats;
 STATS_NAME_START(lora_mac_stats)
@@ -39,6 +40,10 @@ STATS_NAME_START(lora_mac_stats)
     STATS_NAME(lora_mac_stats, rx_mic_failures)
     STATS_NAME(lora_mac_stats, rx_mlme)
     STATS_NAME(lora_mac_stats, rx_mcps)
+    STATS_NAME(lora_mac_stats, rx_dups)
+    STATS_NAME(lora_mac_stats, rx_invalid)
+    STATS_NAME(lora_mac_stats, no_bufs)
+    STATS_NAME(lora_mac_stats, already_joined)
 STATS_NAME_END(lora_mac_stats)
 
 /* Device EUI */
@@ -214,6 +219,7 @@ lora_node_mac_mcps_indicate(void)
         lora_app_mcps_indicate(om);
     } else {
         /* XXX: cant do anything until the lower stack gets modified */
+        STATS_INC(lora_mac_stats, no_bufs);
     }
 }
 
@@ -635,6 +641,10 @@ lora_node_init(void)
     /* Init app */
     lora_app_init();
 
+#if MYNEWT_VAL(LORA_NODE_LOG_CLI) == 1
+    lora_cli_init();
+#endif
+
     /*--- MAC INIT ---*/
     /* Initialize eventq */
     os_eventq_init(&g_lora_mac_data.lm_evq);
@@ -661,7 +671,7 @@ lora_node_init(void)
     /* Initialize the LoRa mac */
     lora_cb.GetBatteryLevel = lora_node_get_batt_status;
 
-    lms = LoRaMacInitialization(&lora_cb);
+    lms = LoRaMacInitialization(&lora_cb, LORA_NODE_REGION);
     assert(lms == LORAMAC_STATUS_OK);
 #endif
 }
