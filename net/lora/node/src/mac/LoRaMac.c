@@ -857,7 +857,8 @@ lora_mac_process_radio_tx(struct os_event *ev)
         g_lora_mac_data.nb_rep_cntr++;
     }
 
-    lora_node_log(LORA_NODE_LOG_TX_DONE, g_lora_mac_data.cur_chan, 0, curTime);
+    lora_node_log(LORA_NODE_LOG_TX_DONE, g_lora_mac_data.cur_chan,
+                  LoRaMacBufferPktLen, curTime);
 }
 
 /**
@@ -1974,6 +1975,8 @@ ScheduleTx(void)
                                      LoRaMacParams.SystemMaxRxError,
                                      &RxWindow2Config );
 
+    /* XXX: Thi should be based on whether or not the transmission is a
+       join request! */
     if (!LM_F_IS_JOINED()) {
         g_lora_mac_data.rx_win1_delay = LoRaMacParams.JoinAcceptDelay1 +
             RxWindow1Config.WindowOffset;
@@ -2147,11 +2150,6 @@ PrepareFrame(LoRaMacHeader_t *macHdr, LoRaMacFrameCtrl_t *fCtrl, uint8_t fPort,
             LM_F_NODE_ACK_REQ() = 1;
             //Intentional fallthrough
         case FRAME_TYPE_DATA_UNCONFIRMED_UP:
-            // No network has been joined yet
-            if (!LM_F_IS_JOINED()) {
-                return LORAMAC_STATUS_NO_NETWORK_JOINED;
-            }
-
             // Adr next request
             adrNext.UpdateChanMask = true;
             adrNext.AdrEnabled = fCtrl->Bits.Adr;
@@ -2295,6 +2293,10 @@ PrepareFrame(LoRaMacHeader_t *macHdr, LoRaMacFrameCtrl_t *fCtrl, uint8_t fPort,
             LoRaMacBuffer[LoRaMacBufferPktLen + 3] = ( mic >> 24 ) & 0xFF;
 
             LoRaMacBufferPktLen += LORAMAC_MFR_LEN;
+
+            lora_node_log(LORA_NODE_LOG_TX_PREP_FRAME, cmd_bytes_txd,
+                          (uint16_t)g_lora_mac_data.uplink_cntr,
+                          macHdr->Value);
             break;
         case FRAME_TYPE_PROPRIETARY:
             if ((om != NULL) && (pyld_len > 0)) {
@@ -2339,7 +2341,7 @@ SendFrameOnChannel(uint8_t channel)
     LoRaMacState |= LORAMAC_TX_RUNNING;
 
     lora_node_log(LORA_NODE_LOG_TX_START, txPower,
-                  ((uint16_t)LoRaMacParams.ChannelsDatarate << 16) | channel,
+                  ((uint16_t)LoRaMacParams.ChannelsDatarate << 8) | channel,
                   g_lora_mac_data.tx_time_on_air);
 
     return LORAMAC_STATUS_OK;
@@ -3045,11 +3047,14 @@ LoRaMacMlmeRequest(MlmeReq_t *mlmeRequest)
             LoRaMacParams.ChannelsDatarate =
                 RegionAlternateDr(LoRaMacRegion,LoRaMacParams.ChannelsDatarate);
 
+            /* Set flag to denote we are trying to join */
+            LM_F_IS_JOINING() = 1;
+
             macHdr.Value = 0;
             macHdr.Bits.MType  = FRAME_TYPE_JOIN_REQ;
             status = Send(&macHdr, 0, NULL);
-            if (status == LORAMAC_STATUS_OK) {
-                LM_F_IS_JOINING() = 1;
+            if (status != LORAMAC_STATUS_OK) {
+                LM_F_IS_JOINING() = 0;
             }
             break;
         case MLME_LINK_CHECK:
@@ -3140,11 +3145,14 @@ LoRaMacMcpsRequest(struct os_mbuf *om, struct lora_pkt_info *txi)
     memset(&txi->txdinfo, 0, sizeof(struct lora_txd_info));
     txi->txdinfo.uplink_cntr = g_lora_mac_data.uplink_cntr;
 
+    /* Set flag denoting we are sending a MCPS data packet */
+    LM_F_IS_MCPS_REQ() = 1;
+
+    /* Attempt to send. If failed clear flags */
     status = Send(&macHdr, txi->port, om);
-    if (status == LORAMAC_STATUS_OK) {
-        LM_F_IS_MCPS_REQ() = 1;
-    } else {
+    if (status != LORAMAC_STATUS_OK) {
         LM_F_NODE_ACK_REQ() = 0;
+        LM_F_IS_MCPS_REQ() = 0;
     }
 
     return status;

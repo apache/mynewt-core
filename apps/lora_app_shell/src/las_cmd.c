@@ -94,7 +94,6 @@ static int las_cmd_app_port(int argc, char **argv);
 static int las_cmd_app_tx(int argc, char **argv);
 static int las_cmd_join(int argc, char **argv);
 static int las_cmd_link_chk(int argc, char **argv);
-static int las_cmd_ln_log(int argc, char **argv);
 
 static struct shell_cmd las_cmds[] = {
     {
@@ -144,10 +143,6 @@ static struct shell_cmd las_cmds[] = {
     {
         .sc_cmd = "las_link_chk",
         .sc_cmd_func = las_cmd_link_chk,
-    },
-    {
-        .sc_cmd = "las_ln_log",
-        .sc_cmd_func = las_cmd_ln_log,
     },
     {
         NULL, NULL,
@@ -254,122 +249,6 @@ las_parse_bool(char *str)
     }
 
     return rc;
-}
-
-static int
-las_cmd_ln_log(int argc, char **argv)
-{
-    uint16_t i;
-    uint16_t lines_logged;
-
-#ifdef LORA_NODE_DEBUG_LOG
-    console_printf("Lora node log\n");
-    i = g_lnd_log_index;
-    lines_logged = 0;
-    while (lines_logged != LORA_NODE_DEBUG_LOG_ENTRIES) {
-        /* Do not display empty log lines */
-        if (g_lnd_log[i].lnd_id == 0) {
-            goto next_entry;
-        }
-
-        console_printf("index=%u ", i);
-        switch (g_lnd_log[i].lnd_id) {
-        case LORA_NODE_LOG_TX_DONE:
-            console_printf("TX_DONE chan=%u done_time=%lu",
-                           g_lnd_log[i].lnd_p8, g_lnd_log[i].lnd_p32);
-            break;
-        case LORA_NODE_LOG_TX_SETUP:
-            console_printf("TX_SETUP phytxpwr=%d sf=%u bw=%u freq=%lu",
-                           (int8_t)g_lnd_log[i].lnd_p8,
-                           (uint8_t)(g_lnd_log[i].lnd_p16 >> 8),
-                           (uint8_t)g_lnd_log[i].lnd_p16,
-                           g_lnd_log[i].lnd_p32);
-            break;
-        case LORA_NODE_LOG_TX_START:
-            console_printf("TX_START pwr=%d dr=%u chan=%u airtime=%lu",
-                           (int8_t)g_lnd_log[i].lnd_p8,
-                           (uint8_t)(g_lnd_log[i].lnd_p16 >> 8),
-                           (uint8_t)g_lnd_log[i].lnd_p16,
-                           g_lnd_log[i].lnd_p32);
-            break;
-        case LORA_NODE_LOG_TX_DELAY:
-            console_printf("TX_DELAY dc=%u delay_usecs=%lu",
-                           (int8_t)g_lnd_log[i].lnd_p8, g_lnd_log[i].lnd_p32);
-            break;
-        case LORA_NODE_LOG_RX_WIN1_SETUP:
-            console_printf("RX_WIN1_SETUP dr=%u chan=%u timeout=%lu",
-                           g_lnd_log[i].lnd_p8, g_lnd_log[i].lnd_p16,
-                           g_lnd_log[i].lnd_p32);
-            break;
-        case LORA_NODE_LOG_RX_TIMEOUT:
-            console_printf("RX_TIMEOUT chan=%u rxslot=%u",
-                           g_lnd_log[i].lnd_p8, g_lnd_log[i].lnd_p16);
-            break;
-        case LORA_NODE_LOG_RX_DONE:
-            console_printf("RX_DONE chan=%u size=%u slot=%u machdr=%x",
-                           g_lnd_log[i].lnd_p8, g_lnd_log[i].lnd_p16,
-                           (uint8_t)(g_lnd_log[i].lnd_p32 >> 8),
-                           (uint8_t)g_lnd_log[i].lnd_p32);
-            break;
-        case LORA_NODE_LOG_RADIO_TIMEOUT_IRQ:
-            break;
-        case LORA_NODE_LOG_RX_CFG:
-            console_printf("RX_CFG bw=%u dr=%u sf=%u freq=%lu",
-                           (int8_t)g_lnd_log[i].lnd_p8,
-                           (uint8_t)(g_lnd_log[i].lnd_p16 >> 8),
-                           (uint8_t)g_lnd_log[i].lnd_p16,
-                           g_lnd_log[i].lnd_p32);
-            break;
-        case LORA_NODE_LOG_RX_PORT:
-            console_printf("RX_PORT port=%u len=%u",
-                           g_lnd_log[i].lnd_p8, g_lnd_log[i].lnd_p16);
-            break;
-        case LORA_NODE_LOG_RX_WIN2:
-            console_printf("RX_WIN2 rxslot=%u cont=%u freq=%lu",
-                           g_lnd_log[i].lnd_p8, g_lnd_log[i].lnd_p16,
-                           g_lnd_log[i].lnd_p32);
-            break;
-        case LORA_NODE_LOG_APP_TX:
-            console_printf("APP_TX pktlen=%u om=%lx",
-                           g_lnd_log[i].lnd_p16, g_lnd_log[i].lnd_p32);
-            break;
-        case LORA_NODE_LOG_RTX_TIMEOUT:
-            console_printf("RTX_TIMEOUT macflags=%x", g_lnd_log[i].lnd_p8);
-            break;
-        case LORA_NODE_LOG_RX_ADR_REQ:
-            console_printf("RX_ADR_REQ dr=%u txpwr=%u chmassk=%u nbrep=%u",
-                           g_lnd_log[i].lnd_p8, g_lnd_log[i].lnd_p16,
-                           (uint16_t)(g_lnd_log[i].lnd_p32 >> 16),
-                           (uint16_t)g_lnd_log[i].lnd_p32);
-            break;
-        case LORA_NODE_LOG_PROC_MAC_CMD:
-            console_printf("PROC_MAC_CMD index=%u snr=%u cmd_size=%lu",
-                           g_lnd_log[i].lnd_p8, g_lnd_log[i].lnd_p16,
-                           g_lnd_log[i].lnd_p32);
-            break;
-        case LORA_NODE_LOG_LINK_CHK:
-            console_printf("LINK_CHK status=%lu", g_lnd_log[i].lnd_p32);
-            break;
-        default:
-            console_printf("id=%u p8=%u p16=%u p32=%lu",
-                           g_lnd_log[i].lnd_id, g_lnd_log[i].lnd_p8,
-                           g_lnd_log[i].lnd_p16, g_lnd_log[i].lnd_p32);
-            break;
-        }
-
-        console_printf(" cputime=%lu\n", g_lnd_log[i].lnd_cputime);
-
-next_entry:
-        ++i;
-        if (i == LORA_NODE_DEBUG_LOG_ENTRIES) {
-            i = 0;
-        }
-        ++lines_logged;
-    }
-#else
-    console_printf("No Lora node log available\n");
-#endif
-    return 0;
 }
 
 static int

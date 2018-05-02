@@ -250,6 +250,7 @@ extern uint16_t g_lnd_log_index;
 #define LORA_NODE_LOG_TX_SETUP          (11)
 #define LORA_NODE_LOG_TX_START          (12)
 #define LORA_NODE_LOG_TX_DELAY          (15)
+#define LORA_NODE_LOG_TX_PREP_FRAME     (16)
 #define LORA_NODE_LOG_RX_WIN1_SETUP     (20)
 #define LORA_NODE_LOG_RX_TIMEOUT        (21)
 #define LORA_NODE_LOG_RX_DONE           (22)

@@ -56,6 +56,10 @@ syscfg.defs:
         description: "Include shell commands for LoRa operations"
         value: 0
 
+    LORA_NODE_LOG_CLI:
+        description: "Include shell commands for lora node debug log"
+        value: 1
+
     LORA_APP_NUM_PORTS:
         description: "The number of unique LoRa application ports"
         value: 4

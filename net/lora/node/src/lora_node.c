@@ -641,6 +641,10 @@ lora_node_init(void)
     /* Init app */
     lora_app_init();
 
+#if MYNEWT_VAL(LORA_NODE_LOG_CLI) == 1
+    lora_cli_init();
+#endif
+
     /*--- MAC INIT ---*/
     /* Initialize eventq */
     os_eventq_init(&g_lora_mac_data.lm_evq);
