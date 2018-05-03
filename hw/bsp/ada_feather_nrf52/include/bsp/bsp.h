@@ -44,6 +44,9 @@ extern uint8_t _ram_start;
 #define LED_2           (19)
 #define LED_BLINK_PIN   (LED_1)
 
+/* Buttons */
+#define BUTTON_1        (20)  /* Labelled DFU on the board */
+
 #ifdef __cplusplus
 }
 #endif
