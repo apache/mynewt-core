@@ -39,11 +39,11 @@ static int id_conf_export(void (*export_func)(char *name, char *val),
 #define STAMP_STR1(str) #str
 
 #ifdef BSP_NAME
-static const char *bsp_str = STAMP_STR(BSP_NAME);
-static const char *app_str = STAMP_STR(APP_NAME);
+const char *id_bsp_str = STAMP_STR(BSP_NAME);
+const char *id_app_str = STAMP_STR(APP_NAME);
 #else
-static const char *bsp_str = "";
-static const char *app_str = "";
+const char *id_bsp_str = "";
+const char *id_app_str = "";
 #endif
 
 char id_serial[ID_SERIAL_MAX_LEN];
@@ -71,9 +71,9 @@ id_conf_get(int argc, char **argv, char *val, int val_len_max)
                 return conf_str_from_bytes(src_buf, len, val, val_len_max);
             }
         } else if (!strcmp(argv[0], "bsp")) {
-            return (char *)bsp_str;
+            return (char *)id_bsp_str;
         } else if (!strcmp(argv[0], "app")) {
-            return (char *)app_str;
+            return (char *)id_app_str;
         } else if (!strcmp(argv[0], "serial")) {
             return id_serial;
         } else if (!strcmp(argv[0], "mfghash")) {
@@ -108,8 +108,8 @@ id_conf_export(void (*export_func)(char *name, char *val),
             conf_str_from_bytes(src_buf, len, str, sizeof(str));
         }
         export_func("id/hwid", str);
-        export_func("id/bsp", (char *)bsp_str);
-        export_func("id/app", (char *)app_str);
+        export_func("id/bsp", (char *)id_bsp_str);
+        export_func("id/app", (char *)id_app_str);
         export_func("id/mfghash", (char *)id_mfghash);
     }
     export_func("id/serial", id_serial);
