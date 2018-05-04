@@ -21,7 +21,7 @@
 syscfg.defs:
     CHARGE_CONTROL_CLI:
         description: 'Whether or not to enable the charge control shell support'
-        value: 1
+        value: 0
 
     CHARGE_CONTROL_MGR_EVQ:
         description: >

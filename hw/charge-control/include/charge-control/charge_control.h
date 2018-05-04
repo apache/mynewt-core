@@ -379,6 +379,7 @@ struct charge_control {
 /* =================================================================
  * ====================== CHARGE CONTROL ===========================
  * =================================================================
+ */
 
 /**
  * Initialize charge control structure data and mutex and associate it with an
