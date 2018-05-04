@@ -357,7 +357,7 @@ mpu6050_config_interrupt(struct sensor_itf *itf, uint8_t cfg)
 /**
  * Expects to be called back through os_dev_create().
  *
- * @param The device object associated with this accellerometer
+ * @param The device object associated with this accelerometer
  * @param Argument passed to OS device init, unused
  *
  * @return 0 on success, non-zero error on failure.
