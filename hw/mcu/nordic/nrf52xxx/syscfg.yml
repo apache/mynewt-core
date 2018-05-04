@@ -106,6 +106,10 @@ syscfg.defs:
         description: 'SOFT PWM'
         value: 0
 
+    TRNG:
+        description: 'True Random Number Generator (RNG)'
+        value: 0
+
     QSPI_ENABLE:
         description: 'NRF52 QSPI'
         value: 0
