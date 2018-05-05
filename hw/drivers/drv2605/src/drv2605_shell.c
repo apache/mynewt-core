@@ -76,7 +76,6 @@ drv2605_shell_help(void)
     console_printf("\tchip_id\n");
     console_printf("\tload_cal [brake_factor loop_gain lra_sample_time lra_blanking_time lra_idiss_time auto_cal_time lra_zc_det_time]\n");
     console_printf("\tload_rom [up to 8 uint8_t]\n");
-    console_printf("\tload_rtp [uint8_t]\n");
     console_printf("\top_mode [reset | rom | pwm | analog | rtp | diag | cal]\n");
     console_printf("\tpower_mode [deep | standby | active]\n");
     console_printf("\ttrigger\n");
