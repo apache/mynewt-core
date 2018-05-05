@@ -64,7 +64,7 @@ static struct log _log;
 /**
  * Writes a single byte to the specified register
  *
- * @param The Sesnsor interface
+ * @param The Sensor interface
  * @param The register address to write to
  * @param The value to write
  *
@@ -95,9 +95,9 @@ drv2605_write8(struct sensor_itf *itf, uint8_t reg, uint8_t value)
 }
 
 /**
- * Writes a multiple bytes to the specified register (MAX: 8 bytes)
+ * Writes multiple bytes starting at the specified register (MAX: 8 bytes)
  *
- * @param The Sesnsor interface
+ * @param The Sensor interface
  * @param The register address to write to
  * @param The data buffer to write from
  *
