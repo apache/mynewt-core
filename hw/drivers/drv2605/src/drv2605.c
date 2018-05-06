@@ -191,7 +191,7 @@ err:
  *
  * @param The Sensor interface
  * @param Register to read from
- * @param Bufer to read into
+ * @param Buffer to read into
  * @param Length of the buffer
  *
  * @return 0 on success and non-zero on failure
