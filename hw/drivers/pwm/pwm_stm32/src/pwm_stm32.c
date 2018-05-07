@@ -37,8 +37,7 @@
 #elif MYNEWT_VAL(MCU_STM32F7)
 #   include "mcu/stm32f7_bsp.h"
 #   include "stm32f7xx.h"
-#   include "stm32f7xx_hal.h"
-#   include "stm32f7xx_hal_tim.h"
+#   include "stm32f7xx_ll_bus.h"
 #   include "stm32f7xx_ll_tim.h"
 #else
 #   error "MCU not yet supported."
@@ -73,7 +72,7 @@ typedef struct {
 } stm32_pwm_ch_t;
 
 typedef struct {
-    TIM_HandleTypeDef timx;
+    TIM_TypeDef       *timx;
     stm32_pwm_ch_t    ch[STM32_PWM_CH_MAX];
 } stm32_pwm_dev_t;
 
@@ -83,13 +82,32 @@ static uint32_t
 stm32_pwm_ch(int ch)
 {
     switch (ch) {
-        case 0: return TIM_CHANNEL_1;
-        case 1: return TIM_CHANNEL_2;
-        case 2: return TIM_CHANNEL_3;
-        case 3: return TIM_CHANNEL_4;
+        case 0: return LL_TIM_CHANNEL_CH1;
+        case 1: return LL_TIM_CHANNEL_CH2;
+        case 2: return LL_TIM_CHANNEL_CH3;
+        case 3: return LL_TIM_CHANNEL_CH4;
     }
     assert(0);
     return 0;
+}
+
+static void
+stm32_pwm_ch_set_compare(TIM_TypeDef *tim, int ch, uint32_t value)
+{
+    switch (ch) {
+        case 0:
+            LL_TIM_OC_SetCompareCH1(tim, value);
+            break;
+        case 1:
+            LL_TIM_OC_SetCompareCH2(tim, value);
+            break;
+        case 2:
+            LL_TIM_OC_SetCompareCH3(tim, value);
+            break;
+        case 3:
+            LL_TIM_OC_SetCompareCH4(tim, value);
+            break;
+    }
 }
 
 static inline bool
@@ -101,12 +119,7 @@ stm32_pwm_has_assigned_pin(const stm32_pwm_ch_t *ch)
 static int
 stm32_pwm_disable_ch(stm32_pwm_dev_t *pwm, uint8_t cnum)
 {
-    if (HAL_OK != HAL_TIMEx_PWMN_Stop(&pwm->timx, stm32_pwm_ch(cnum))) {
-        return STM32_PWM_ERR_HAL;
-    }
-    if (HAL_OK != HAL_TIM_PWM_Stop(&pwm->timx, stm32_pwm_ch(cnum))) {
-        return STM32_PWM_ERR_HAL;
-    }
+    LL_TIM_CC_DisableChannel(pwm->timx, stm32_pwm_ch(cnum));
 
     if (stm32_pwm_has_assigned_pin(&pwm->ch[cnum])) {
         /* unconfigure the previously used pin */
@@ -120,13 +133,6 @@ stm32_pwm_disable_ch(stm32_pwm_dev_t *pwm, uint8_t cnum)
 
     pwm->ch[cnum].config = STM32_PWM_CH_DISABLED;
 
-    for (int i=0; i<STM32_PWM_CH_MAX; ++i) {
-        if (pwm->ch[i].enabled) {
-            return STM32_PWM_ERR_OK;
-        }
-    }
-
-    __HAL_TIM_DISABLE_IT(&pwm->timx, TIM_IT_UPDATE);
     return STM32_PWM_ERR_OK;
 }
 
@@ -141,10 +147,10 @@ stm32_pwm_isr()
 {
     for (int i=0; i<PWM_COUNT; ++i) {
         stm32_pwm_dev_t *pwm = &stm32_pwm_dev[i];
-        uint32_t sr = pwm->timx.Instance->SR;
-        pwm->timx.Instance->SR = ~sr;
+        uint32_t sr = pwm->timx->SR;
+        pwm->timx->SR = ~sr;
 
-        if (sr & TIM_IT_UPDATE) {
+        if (sr & TIM_SR_UIF) {
             for (int j=0; j<STM32_PWM_CH_MAX; ++j) {
                 stm32_pwm_ch_t *ch = &pwm->ch[j];
                 if (ch->enabled) {
@@ -213,48 +219,44 @@ stm32_pwm_close(struct os_dev *odev)
 static int
 stm32_pwm_update_channels(stm32_pwm_dev_t *pwm, bool update_all)
 {
-    TIM_OC_InitTypeDef cfg;
-    int rc = STM32_PWM_ERR_OK;
-
-    cfg.OCMode        = TIM_OCMODE_PWM1;
-    cfg.OCFastMode    = TIM_OCFAST_DISABLE;
-    cfg.OCNIdleState  = TIM_OCNIDLESTATE_RESET;
-    cfg.OCIdleState   = TIM_OCIDLESTATE_RESET;
+    int configured = 0;
+    int enabled = 0;
 
     for (int i=0; i<STM32_PWM_CH_MAX; ++i) {
         if (STM32_PWM_CH_DISABLED != pwm->ch[i].config) {
+            ++enabled;
             if (pwm->ch[i].enabled && (update_all || pwm->ch[i].update)) {
-                cfg.Pulse = pwm->ch[i].duty;
                 if (pwm->ch[i].configure) {
-                    if (pwm->ch[i].invert) {
-                        cfg.OCPolarity  = TIM_OCPOLARITY_LOW;
-                        cfg.OCNPolarity = TIM_OCNPOLARITY_HIGH;
-                    } else {
-                        cfg.OCPolarity  = TIM_OCPOLARITY_HIGH;
-                        cfg.OCNPolarity = TIM_OCNPOLARITY_LOW;
-                    }
+                    ++configured;
+                    uint32_t channelID = stm32_pwm_ch(i);
+                    LL_TIM_OC_SetMode(pwm->timx, channelID, LL_TIM_OCMODE_PWM1);
+                    LL_TIM_OC_SetPolarity(pwm->timx, channelID, pwm->ch[i].invert ? LL_TIM_OCPOLARITY_HIGH : LL_TIM_OCPOLARITY_LOW);
+                    LL_TIM_OC_EnablePreload(pwm->timx,  channelID);
 
-                    if (HAL_OK != HAL_TIM_PWM_ConfigChannel(&pwm->timx, &cfg, stm32_pwm_ch(i))) {
-                        rc = STM32_PWM_ERR_HAL;
-                    }
+                    stm32_pwm_ch_set_compare(pwm->timx, i, pwm->ch[i].duty);
 
-                    if (HAL_OK != HAL_TIM_PWM_Start(&pwm->timx, stm32_pwm_ch(i))) {
-                        rc = STM32_PWM_ERR_HAL;
-                    }
-                    if (HAL_OK != HAL_TIMEx_PWMN_Start(&pwm->timx, stm32_pwm_ch(i))) {
-                        rc = STM32_PWM_ERR_HAL;
-                    }
+                    LL_TIM_CC_EnableChannel(pwm->timx, channelID);
 
                     pwm->ch[i].configure = false;
                 } else {
-                    __HAL_TIM_SET_COMPARE(&pwm->timx, stm32_pwm_ch(i), cfg.Pulse);
+                    stm32_pwm_ch_set_compare(pwm->timx, i, pwm->ch[i].duty);
                 }
 
                 pwm->ch[i].update = false;
             }
         }
     }
-    return rc;
+
+    if (0 == enabled) {
+        LL_TIM_DisableCounter(pwm->timx);
+    } else {
+        if (enabled == configured) {
+            LL_TIM_SetCounter(pwm->timx, 0);
+            LL_TIM_GenerateEvent_UPDATE(pwm->timx);
+            LL_TIM_EnableCounter(pwm->timx);
+        }
+    }
+    return STM32_PWM_ERR_OK;
 }
 
 
@@ -313,10 +315,6 @@ stm32_pwm_configure_channel(struct pwm_dev *dev, uint8_t cnum, struct pwm_chan_c
         ch->sequence_data     = 0;
     }
 
-    if (cfg->interrupts_cfg || cfg->n_cycles) {
-        __HAL_TIM_ENABLE_IT(&pwm->timx, TIM_IT_UPDATE);
-    }
-
     return stm32_pwm_update_channels(pwm, false);
 }
 
@@ -362,7 +360,7 @@ stm32_pwm_set_frequency(struct pwm_dev *dev, uint32_t freq_hz)
     stm32_pwm_dev_t *pwm;
     uint32_t id;
     uint32_t timer_clock;
-    uint32_t freq_base;
+    uint32_t div, div1, div2;
 
     assert(dev);
     assert(dev->pwm_instance_id < PWM_COUNT);
@@ -374,32 +372,26 @@ stm32_pwm_set_frequency(struct pwm_dev *dev, uint32_t freq_hz)
     id = dev->pwm_instance_id;
     pwm = &stm32_pwm_dev[id];
 
-    timer_clock = stm32_hal_timer_get_freq(pwm->timx.Instance);
+    timer_clock = stm32_hal_timer_get_freq(pwm->timx);
     assert(timer_clock);
 
-    if (freq_hz > timer_clock) {
-      pwm->timx.Init.Prescaler = 0;
-      pwm->timx.Init.Period = 1;
-    } else {
-      if (freq_hz > 0xFFFFu) {
-          pwm->timx.Init.Prescaler = 0;
-      } else {
-          pwm->timx.Init.Prescaler = timer_clock / (0x10000 * freq_hz);
-          if (0x10000 * freq_hz * pwm->timx.Init.Prescaler == timer_clock) {
-              pwm->timx.Init.Prescaler -= 1;
-          }
-      }
-      freq_base = timer_clock / (pwm->timx.Init.Prescaler + 1);
-      pwm->timx.Init.Period            = freq_base / freq_hz - 1;
+    div  = timer_clock / freq_hz;
+    if (!div) {
+        return STM32_PWM_ERR_FREQ;
     }
-    pwm->timx.Init.ClockDivision     = 0;
-    pwm->timx.Init.CounterMode       = TIM_COUNTERMODE_UP;
-    pwm->timx.Init.RepetitionCounter = 0;
-    pwm->timx.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
 
-    if (HAL_OK != HAL_TIM_PWM_Init(&pwm->timx)) {
-        return STM32_PWM_ERR_HAL;
+    div1 = div >> 16;
+    div2 = div / (div1 + 1);
+
+    if (div1 > div2) {
+        uint32_t tmp = div1;
+        div1 = div2;
+        div2 = tmp;
     }
+    div2 -= 1;
+
+    LL_TIM_SetPrescaler(pwm->timx, div1);
+    LL_TIM_SetAutoReload(pwm->timx, div2);
 
     return stm32_pwm_update_channels(pwm, true);
 }
@@ -413,7 +405,7 @@ stm32_pwm_get_clock_freq(struct pwm_dev *dev)
     assert(dev->pwm_instance_id < PWM_COUNT);
 
     pwm = &stm32_pwm_dev[dev->pwm_instance_id];
-    return stm32_hal_timer_get_freq(pwm->timx.Instance) / (pwm->timx.Init.Prescaler + 1);
+    return stm32_hal_timer_get_freq(pwm->timx) / (LL_TIM_GetPrescaler(pwm->timx) + 1);
 }
 
 static int
@@ -425,7 +417,7 @@ stm32_pwm_get_top_value(struct pwm_dev *dev)
     assert(dev->pwm_instance_id < PWM_COUNT);
 
     pwm = &stm32_pwm_dev[dev->pwm_instance_id];
-    return LL_TIM_GetAutoReload(pwm->timx.Instance) + 1;
+    return LL_TIM_GetAutoReload(pwm->timx) + 1;
 }
 
 static int
@@ -453,7 +445,7 @@ stm32_pwm_dev_init(struct os_dev *odev, void *arg)
 
     for (id = 0; id < PWM_COUNT; ++id) {
         pwm = &stm32_pwm_dev[id];
-        if (!pwm->timx.Instance) {
+        if (!pwm->timx) {
             break;
         }
     }
@@ -467,8 +459,10 @@ stm32_pwm_dev_init(struct os_dev *odev, void *arg)
 
     cfg = (stm32_pwm_conf_t*)arg;
 
-    pwm->timx.Instance = cfg->tim;
-    pwm->timx.Init.Period = 0;
+    pwm->timx = cfg->tim;
+
+    LL_TIM_SetPrescaler(cfg->tim, 0xffff);
+    LL_TIM_SetAutoReload(cfg->tim, 0);
 
     dev = (struct pwm_dev *)odev;
     dev->pwm_instance_id = id;
@@ -476,31 +470,31 @@ stm32_pwm_dev_init(struct os_dev *odev, void *arg)
     switch ((uintptr_t)cfg->tim) {
 #ifdef TIM1
       case (uintptr_t)TIM1:
-          __HAL_RCC_TIM1_CLK_ENABLE();
+          LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_TIM1);
           dev->pwm_chan_count = 4;
           break;
 #endif
 #ifdef TIM2
       case (uintptr_t)TIM2:
-          __HAL_RCC_TIM2_CLK_ENABLE();
+          LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_TIM2);
           dev->pwm_chan_count = 4;
           break;
 #endif
 #ifdef TIM3
       case (uintptr_t)TIM3:
-          __HAL_RCC_TIM3_CLK_ENABLE();
+          LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_TIM3);
           dev->pwm_chan_count = 4;
           break;
 #endif
 #ifdef TIM4
       case (uintptr_t)TIM4:
-          __HAL_RCC_TIM4_CLK_ENABLE();
+          LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_TIM4);
           dev->pwm_chan_count = 4;
           break;
 #endif
 #ifdef TIM5
       case (uintptr_t)TIM5:
-          __HAL_RCC_TIM5_CLK_ENABLE();
+          LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_TIM5);
           dev->pwm_chan_count = 4;
           break;
 #endif
@@ -509,61 +503,61 @@ stm32_pwm_dev_init(struct os_dev *odev, void *arg)
 
 #ifdef TIM8
       case (uintptr_t)TIM8:
-          __HAL_RCC_TIM8_CLK_ENABLE();
+          LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_TIM8);
           dev->pwm_chan_count = 4;
           break;
 #endif
 #ifdef TIM9
       case (uintptr_t)TIM9:
-          __HAL_RCC_TIM9_CLK_ENABLE();
+          LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_TIM9);
           dev->pwm_chan_count = 2;
           break;
 #endif
 #ifdef TIM10
       case (uintptr_t)TIM10:
-          __HAL_RCC_TIM10_CLK_ENABLE();
+          LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_TIM10);
           dev->pwm_chan_count = 1;
           break;
 #endif
 #ifdef TIM11
       case (uintptr_t)TIM11:
-          __HAL_RCC_TIM11_CLK_ENABLE();
+          LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_TIM11);
           dev->pwm_chan_count = 1;
           break;
 #endif
 #ifdef TIM12
       case (uintptr_t)TIM12:
-          __HAL_RCC_TIM12_CLK_ENABLE();
+          LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_TIM12);
           dev->pwm_chan_count = 2;
           break;
 #endif
 #ifdef TIM13
       case (uintptr_t)TIM13:
-          __HAL_RCC_TIM13_CLK_ENABLE();
+          LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_TIM13);
           dev->pwm_chan_count = 1;
           break;
 #endif
 #ifdef TIM14
       case (uintptr_t)TIM14:
-          __HAL_RCC_TIM14_CLK_ENABLE();
+          LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_TIM14);
           dev->pwm_chan_count = 1;
           break;
 #endif
 #ifdef TIM15
       case (uintptr_t)TIM15:
-          __HAL_RCC_TIM15_CLK_ENABLE();
+          LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_TIM15);
           dev->pwm_chan_count = 2;
           break;
 #endif
 #ifdef TIM16
       case (uintptr_t)TIM16:
-          __HAL_RCC_TIM16_CLK_ENABLE();
+          LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_TIM16);
           dev->pwm_chan_count = 1;
           break;
 #endif
 #ifdef TIM17
       case (uintptr_t)TIM17:
-          __HAL_RCC_TIM17_CLK_ENABLE();
+          LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_TIM17);
           dev->pwm_chan_count = 1;
           break;
 #endif
@@ -572,13 +566,13 @@ stm32_pwm_dev_init(struct os_dev *odev, void *arg)
 
 #ifdef TIM19
       case (uintptr_t)TIM19:
-          __HAL_RCC_TIM19_CLK_ENABLE();
+          LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_TIM19);
           dev->pwm_chan_count = 4;
           break;
 #endif
 #ifdef TIM20
       case (uintptr_t)TIM20:
-          __HAL_RCC_TIM20_CLK_ENABLE();
+          LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_TIM20);
           dev->pwm_chan_count = 4;
           break;
 #endif
@@ -601,6 +595,10 @@ stm32_pwm_dev_init(struct os_dev *odev, void *arg)
 
     os_mutex_init(&dev->pwm_lock);
     OS_DEV_SETHANDLERS(odev, stm32_pwm_open, stm32_pwm_close);
+
+    LL_TIM_EnableARRPreload(cfg->tim);
+    LL_TIM_EnableIT_UPDATE(cfg->tim);
+    LL_TIM_CC_EnablePreload(cfg->tim);
 
     NVIC_SetPriority(cfg->irq, (1 << __NVIC_PRIO_BITS) - 1);
     NVIC_SetVector(cfg->irq, (uintptr_t)stm32_pwm_isr);
