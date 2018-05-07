@@ -724,7 +724,8 @@ lora_mac_unconfirmed_tx_done(struct lora_pkt_info *txi, int stop_tx)
      */
 
     /* Unconfirmed frames get repeated N times. */
-    if ((g_lora_mac_data.nb_rep_cntr >= LoRaMacParams.ChannelsNbRep) ||
+    if (stop_tx ||
+        (g_lora_mac_data.nb_rep_cntr >= LoRaMacParams.ChannelsNbRep) ||
         (ScheduleTx() != LORAMAC_STATUS_OK)) {
         txi->txdinfo.retries = g_lora_mac_data.nb_rep_cntr;
         g_lora_mac_data.nb_rep_cntr = 0;
@@ -1226,7 +1227,15 @@ lora_mac_process_radio_rx(struct os_event *ev)
                      * 1 will make sure no more retransmissions occur.
                      */
                     lora_mac_tx_service_done(1);
-                    goto chk_send_indicate;
+
+                    /*
+                     * This check is so that we do not attempt to end
+                     * the transmit service in the process rx done case.
+                     */
+                    if ((LoRaMacDeviceClass == CLASS_A) &&
+                        (entry_rx_slot == RX_SLOT_WIN_2)) {
+                        goto chk_send_indicate;
+                    }
                 }
             }
             break;
