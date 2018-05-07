@@ -1185,6 +1185,8 @@ cmd_scan(int argc, char **argv)
             console_printf("error scanning; rc=%d\n", rc);
             return rc;
         }
+
+        return 0;
     }
 
     /* Copy above parameters to uncoded params */
