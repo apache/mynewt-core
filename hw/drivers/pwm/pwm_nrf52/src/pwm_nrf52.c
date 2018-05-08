@@ -780,6 +780,8 @@ nrf52_pwm_dev_init(struct os_dev *odev, void *arg)
         NVIC_SetVector(PWM3_IRQn, (uint32_t) nrfx_pwm_3_irq_handler);
         break;
 #endif
+    default:
+        assert(0);
     }
 
     return (0);

@@ -120,6 +120,7 @@ int pwm3_idx;
 #endif
 #if MYNEWT_VAL(SOFT_PWM)
 static struct pwm_dev os_bsp_spwm;
+int spwm0_idx;
 #endif
 
 #if MYNEWT_VAL(I2C_0)
@@ -276,12 +277,13 @@ assert(rc == 0);
     assert(rc == 0);
 #endif
 #if MYNEWT_VAL(SOFT_PWM)
+    spwm0_idx = 0;
     rc = os_dev_create((struct os_dev *) &os_bsp_spwm,
-                       "spwm",
+                       "spwm0",
                        OS_DEV_INIT_KERNEL,
                        OS_DEV_INIT_PRIO_DEFAULT,
                        soft_pwm_dev_init,
-                       NULL);
+                       &spwm0_idx);
     assert(rc == 0);
 #endif
 

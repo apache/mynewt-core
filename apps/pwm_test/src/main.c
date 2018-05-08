@@ -24,8 +24,8 @@
 #include <console/console.h>
 
 struct pwm_dev *pwm;
-static uint32_t pwm_freq = 1000;
-static uint32_t max_steps = 500; /* two seconds motion up/down */
+static uint32_t pwm_freq = 500;
+static uint32_t max_steps = 1000; /* two seconds motion up/down */
 static uint16_t top_val;
 static volatile uint32_t step = 0;
 static volatile bool up = false;
@@ -46,7 +46,7 @@ pwm_cycle_handler(void* unused)
 }
 
 static void
-pwm_end_seq_handler(void* chan_conf)
+pwm_end_seq_handler(void* unused)
 {
     int rc;
     step = 0;
@@ -101,7 +101,7 @@ pwm_init(void)
         .data = NULL,
     };
     struct pwm_dev_cfg dev_conf = {
-        .n_cycles = pwm_freq * 5, /* 5 seconds */
+        .n_cycles = pwm_freq * 5, /* 5 seconds cycles */
         .int_prio = 3,
         .cycle_handler = pwm_cycle_handler, /* this won't work on soft_pwm */
         .seq_end_handler = pwm_end_seq_handler, /* this won't work on soft_pwm */
@@ -110,8 +110,6 @@ pwm_init(void)
         .data = NULL
     };
     int rc;
-
-    /* chan_conf.seq_end_data = &chan_conf; */
 
 #if MYNEWT_VAL(SOFT_PWM)
     pwm = (struct pwm_dev *) os_dev_open("spwm", 0, NULL);
@@ -122,7 +120,7 @@ pwm_init(void)
     pwm_configure_device(pwm, &dev_conf);
 
     /* set the PWM frequency */
-    pwm_set_frequency(pwm, 1000);
+    pwm_set_frequency(pwm, pwm_freq);
     top_val = (uint16_t) pwm_get_top_value(pwm);
 
     /* setup led 1 */

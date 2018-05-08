@@ -161,7 +161,7 @@ struct pwm_dev {
     struct os_mutex pwm_lock;
     struct pwm_driver_funcs pwm_funcs;
     uint32_t pwm_chan_count;
-    int pwm_instance_id;
+    uint8_t pwm_instance_id;
 };
 
 /**
