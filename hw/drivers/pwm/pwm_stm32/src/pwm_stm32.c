@@ -29,20 +29,6 @@
 #include <stdint.h>
 #include <string.h>
 
-#if MYNEWT_VAL(MCU_STM32F3)
-#   include "mcu/stm32f3_bsp.h"
-#   include "stm32f3xx.h"
-#   include "stm32f3xx_hal.h"
-#   include "stm32f3xx_hal_tim.h"
-#elif MYNEWT_VAL(MCU_STM32F7)
-#   include "mcu/stm32f7_bsp.h"
-#   include "stm32f7xx.h"
-#   include "stm32f7xx_ll_bus.h"
-#   include "stm32f7xx_ll_tim.h"
-#else
-#   error "MCU not yet supported."
-#endif
-
 #define STM32_PWM_CH_MAX      4
 #define STM32_PWM_CH_DISABLED 0x0FFFFFFF
 #define STM32_PWM_CH_NOPIN    0xFF
@@ -136,12 +122,6 @@ stm32_pwm_disable_ch(stm32_pwm_dev_t *pwm, uint8_t cnum)
     return STM32_PWM_ERR_OK;
 }
 
-/*
- * This could be more efficient by using different implementations of ISRS for the
- * individual timers. But some timers share the interrupt anyway so we would still
- * have to go and look for the trigger. And, the number of PWM peripherals is most
- * likely rather low.
- */
 static void
 stm32_pwm_isr()
 {

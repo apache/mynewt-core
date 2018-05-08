@@ -23,6 +23,8 @@
 extern "C" {
 #endif
 
+#include <mcu/stm32_hal.h>
+
 uint32_t
 stm32_hal_timer_get_freq(void *timx);
 
