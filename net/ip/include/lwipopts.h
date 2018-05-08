@@ -49,6 +49,7 @@ extern "C" {
 #define LWIP_DHCP_AUTOIP_COOP           0
 
 #define LWIP_IPV6                       1
+#define LWIP_ND6                        0
 #define MEMP_NUM_ND6_QUEUE              4
 
 #ifndef LWIP_DEBUG

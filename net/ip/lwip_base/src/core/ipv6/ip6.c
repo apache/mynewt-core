@@ -148,10 +148,12 @@ ip6_route(const ip6_addr_t *src, const ip6_addr_t *dest)
   }
 
   /* Get the netif for a suitable router. */
+#if LWIP_ND6
   netif = nd6_find_route(dest);
   if ((netif != NULL) && netif_is_up(netif) && netif_is_link_up(netif)) {
     return netif;
   }
+#endif
 
   /* try with the netif that matches the source address. */
   if (!ip6_addr_isany(src)) {

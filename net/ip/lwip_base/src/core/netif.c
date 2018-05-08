@@ -691,7 +691,7 @@ netif_set_down(struct netif *netif)
     }
 #endif /* LWIP_IPV4 && LWIP_ARP */
 
-#if LWIP_IPV6
+#if LWIP_IPV6 && LWIP_ND6
     nd6_cleanup_netif(netif);
 #endif /* LWIP_IPV6 */
 
@@ -1098,7 +1098,7 @@ netif_ip6_addr_set_state(struct netif* netif, s8_t addr_idx, u8_t state)
     u8_t new_valid = state & IP6_ADDR_VALID;
     LWIP_DEBUGF(NETIF_DEBUG | LWIP_DBG_STATE, ("netif_ip6_addr_set_state: netif address state being changed\n"));
 
-#if LWIP_IPV6_MLD
+#if LWIP_ND6 && LWIP_IPV6_MLD
     /* Reevaluate solicited-node multicast group membership. */
     if (netif->flags & NETIF_FLAG_MLD6) {
       nd6_adjust_mld_membership(netif, addr_idx, state);

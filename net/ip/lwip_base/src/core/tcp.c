@@ -1924,6 +1924,7 @@ tcp_eff_send_mss_impl(u16_t sendmss, const ip_addr_t *dest
   s16_t mtu;
 
   outif = ip_route(src, dest);
+#if LWIP_ND6
 #if LWIP_IPV6
 #if LWIP_IPV4
   if (IP_IS_V6(dest))
@@ -1936,6 +1937,7 @@ tcp_eff_send_mss_impl(u16_t sendmss, const ip_addr_t *dest
   else
 #endif /* LWIP_IPV4 */
 #endif /* LWIP_IPV6 */
+#endif /* LWIP_ND6 */
 #if LWIP_IPV4
   {
     if (outif == NULL) {
