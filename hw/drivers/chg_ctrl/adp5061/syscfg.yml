@@ -18,6 +18,9 @@
 #
 
 syscfg.defs:
+    ADP5061_CLI:
+        description: 'Enable shell support for the ADP5061'
+        value: 0
     ADP5061_I2C_NUM:
         description: 'I2C interface to use'
         value: 0

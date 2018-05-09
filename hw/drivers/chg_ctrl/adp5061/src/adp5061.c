@@ -29,6 +29,7 @@
 #include <adp5061/adp5061.h>
 #include <bsp/bsp.h>
 #include <charge-control/charge_control.h>
+#include "adp5061_priv.h"
 
 /**
 * Default driver configuration
@@ -570,6 +571,9 @@ adp5061_init(struct os_dev *dev, void *arg)
     if (rc) {
         goto err;
     }
+#if MYNEWT_VAL(ADP5061_CLI)
+    adp5061_shell_init(adp5061);
+#endif
 
     return 0;
 err:
