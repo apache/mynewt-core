@@ -24,8 +24,8 @@
 #include <console/console.h>
 
 struct pwm_dev *pwm;
-static uint32_t pwm_freq = 500;
-static uint32_t max_steps = 1000; /* two seconds motion up/down */
+static uint32_t pwm_freq = 200;
+static uint32_t max_steps = 200; /* two seconds motion up/down */
 static uint16_t top_val;
 static volatile uint32_t step = 0;
 static volatile bool up = false;
@@ -101,7 +101,7 @@ pwm_init(void)
         .data = NULL,
     };
     struct pwm_dev_cfg dev_conf = {
-        .n_cycles = pwm_freq * 5, /* 5 seconds cycles */
+        .n_cycles = pwm_freq * 6, /* 6 seconds cycles */
         .int_prio = 3,
         .cycle_handler = pwm_cycle_handler, /* this won't work on soft_pwm */
         .seq_end_handler = pwm_end_seq_handler, /* this won't work on soft_pwm */
@@ -112,7 +112,7 @@ pwm_init(void)
     int rc;
 
 #if MYNEWT_VAL(SOFT_PWM)
-    pwm = (struct pwm_dev *) os_dev_open("spwm", 0, NULL);
+    pwm = (struct pwm_dev *) os_dev_open("spwm0", 0, NULL);
 #else
     pwm = (struct pwm_dev *) os_dev_open("pwm0", 0, NULL);
 #endif
