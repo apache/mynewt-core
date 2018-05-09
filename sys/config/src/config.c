@@ -30,6 +30,13 @@ struct conf_handler_head conf_handlers;
 
 static uint8_t conf_cmd_inited;
 
+static os_event_fn conf_ev_fn_load;
+
+/* OS event - causes persisted config values to be loaded at startup. */
+static struct os_event conf_ev_load = {
+    .ev_cb = conf_ev_fn_load,
+};
+
 void
 conf_init(void)
 {
@@ -53,6 +60,12 @@ conf_init(void)
     SYSINIT_PANIC_ASSERT(rc == 0);
 #endif
 
+    /* Delay loading the configuration until the default event queue is
+     * processed.  This gives main() a chance to configure the underlying
+     * storage first.
+     */
+    os_eventq_put(os_eventq_dflt_get(), &conf_ev_load);
+
     conf_cmd_inited = 1;
 }
 
@@ -61,6 +74,12 @@ conf_register(struct conf_handler *handler)
 {
     SLIST_INSERT_HEAD(&conf_handlers, handler, ch_list);
     return 0;
+}
+
+static void
+conf_ev_fn_load(struct os_event *ev)
+{
+    conf_load();
 }
 
 /*
