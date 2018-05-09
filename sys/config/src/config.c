@@ -28,8 +28,6 @@
 
 struct conf_handler_head conf_handlers;
 
-static uint8_t conf_cmd_inited;
-
 static os_event_fn conf_ev_fn_load;
 
 /* OS event - causes persisted config values to be loaded at startup. */
@@ -44,10 +42,6 @@ conf_init(void)
 
     SLIST_INIT(&conf_handlers);
     conf_store_init();
-
-    if (conf_cmd_inited) {
-        return;
-    }
 
     (void)rc;
 
@@ -65,8 +59,6 @@ conf_init(void)
      * storage first.
      */
     os_eventq_put(os_eventq_dflt_get(), &conf_ev_load);
-
-    conf_cmd_inited = 1;
 }
 
 int
