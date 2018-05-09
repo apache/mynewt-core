@@ -351,8 +351,6 @@ main(void)
     rc = ble_svc_gap_device_name_set(MYNEWT_VAL(BSNPRPH_BLE_NAME));
     assert(rc == 0);
 
-    conf_load();
-
     /* If this app is acting as the loader in a split image setup, jump into
      * the second stage application instead of starting the OS.
      */

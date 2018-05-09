@@ -511,9 +511,6 @@ main(int argc, char **argv)
     /* Initialize BLE and OIC logs */
     ble_oic_log_init();
 
-    /* Load config */
-    conf_load();
-
     /* Initialize tasks */
     init_tasks();
 

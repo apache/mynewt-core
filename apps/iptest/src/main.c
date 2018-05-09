@@ -424,8 +424,6 @@ main(int argc, char **argv)
     cbmem_init(&cbmem, cbmem_buf, MAX_CBMEM_BUF);
     log_register("log", &my_log, &log_cbmem_handler, &cbmem, LOG_SYSLEVEL);
 
-    conf_load();
-
     shell_cmd_register(&net_test_cmd);
 
     /*
