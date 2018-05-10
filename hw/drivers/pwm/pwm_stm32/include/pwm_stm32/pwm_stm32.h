@@ -32,11 +32,10 @@ extern "C" {
 #define STM32_PWM_ERR_CHAN    -3
 #define STM32_PWM_ERR_FREQ    -4
 #define STM32_PWM_ERR_GPIO    -5
-#define STM32_PWM_ERR_HAL     -6
 
 typedef struct stm32_pwm_conf {
-  TIM_TypeDef   *tim;
-  uint32_t       irq;
+    TIM_TypeDef   *tim;
+    uint32_t       irq;
 } stm32_pwm_conf_t;
 
 /**
