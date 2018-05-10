@@ -427,7 +427,6 @@ main(int argc, char **argv)
 
     hal_gpio_init_out(LED_2, 0);
 
-    bt_mesh_register_gatt();
     health_pub_init();
 
     while (1) {
