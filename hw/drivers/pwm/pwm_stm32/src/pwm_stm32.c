@@ -40,6 +40,7 @@ typedef void (*stm32_pwm_isr_t)(void);
 
 typedef struct {
     TIM_TypeDef       *timx;
+    uint8_t            ch_pin[STM32_PWM_CH_MAX];
 } stm32_pwm_dev_t;
 
 static stm32_pwm_dev_t stm32_pwm_dev[PWM_COUNT];
@@ -106,6 +107,19 @@ stm32_pwm_disable(struct pwm_dev *dev)
     return STM32_PWM_ERR_OK;
 }
 
+static bool
+stm32_pwm_is_enabled(struct pwm_dev *dev)
+{
+    stm32_pwm_dev_t *pwm;
+
+    assert(dev);
+    assert(dev->pwm_instance_id < PWM_COUNT);
+
+    pwm = &stm32_pwm_dev[dev->pwm_instance_id];
+
+    return LL_TIM_IsEnabledCounter(pwm->timx);
+}
+
 static int
 stm32_pwm_open(struct os_dev *odev, uint32_t wait, void *arg)
 {
@@ -135,9 +149,26 @@ static int
 stm32_pwm_close(struct os_dev *odev)
 {
     struct pwm_dev *dev;
+    stm32_pwm_dev_t *pwm;
 
     dev = (struct pwm_dev *)odev;
     assert(dev);
+
+    stm32_pwm_disable(dev);
+    pwm = &stm32_pwm_dev[dev->pwm_instance_id];
+
+    for (int i = 0; i < STM32_PWM_CH_MAX; ++i) {
+        uint32_t ch = stm32_pwm_ch(i);
+        stm32_pwm_ch_set_compare(pwm->timx, i, STM32_PWM_CH_IDLE);
+        if (STM32_PWM_CH_NOPIN != pwm->ch_pin[i]) {
+            hal_gpio_init_af(pwm->ch_pin[i], 0, HAL_GPIO_PULL_NONE, 0);
+            pwm->ch_pin[i] = STM32_PWM_CH_NOPIN;
+        }
+        LL_TIM_CC_DisableChannel(pwm->timx, ch);
+        LL_TIM_OC_SetMode(pwm->timx, ch, 0);
+        LL_TIM_OC_SetPolarity(pwm->timx, ch, 0);
+        LL_TIM_OC_DisablePreload(pwm->timx,  ch);
+    }
 
     if (os_started()) {
         os_mutex_release(&dev->pwm_lock);
@@ -154,6 +185,7 @@ stm32_pwm_configure_channel(struct pwm_dev *dev, uint8_t cnum, struct pwm_chan_c
 
     assert(dev);
     assert(dev->pwm_instance_id < PWM_COUNT);
+    assert(dev->pwm_chan_count <= STM32_PWM_CH_MAX);
     if (cnum >= dev->pwm_chan_count) {
         return STM32_PWM_ERR_CHAN;
     }
@@ -166,12 +198,10 @@ stm32_pwm_configure_channel(struct pwm_dev *dev, uint8_t cnum, struct pwm_chan_c
     LL_TIM_OC_SetPolarity(pwm->timx, channelID, cfg->inverted ? LL_TIM_OCPOLARITY_HIGH : LL_TIM_OCPOLARITY_LOW);
     LL_TIM_OC_EnablePreload(pwm->timx,  channelID);
 
-    stm32_pwm_ch_set_compare(pwm->timx, cnum, STM32_PWM_CH_IDLE);
-
     if (STM32_PWM_CH_NOPIN != cfg->pin && STM32_PWM_CH_NOAF != af) {
-      if (hal_gpio_init_af(cfg->pin, af, HAL_GPIO_PULL_NONE, 0)) {
-        return STM32_PWM_ERR_GPIO;
-      }
+        if (hal_gpio_init_af(cfg->pin, af, HAL_GPIO_PULL_NONE, 0)) {
+            return STM32_PWM_ERR_GPIO;
+        }
     }
 
     LL_TIM_CC_EnableChannel(pwm->timx, channelID);
@@ -426,6 +456,7 @@ stm32_pwm_dev_init(struct os_dev *odev, void *arg)
 
     for (int i=0; i<STM32_PWM_CH_MAX; ++i) {
         stm32_pwm_ch_set_compare(pwm->timx, i, STM32_PWM_CH_IDLE);
+        pwm->ch_pin[i] = STM32_PWM_CH_NOPIN;
     }
 
     dev->pwm_funcs.pwm_configure_channel = stm32_pwm_configure_channel;
@@ -436,6 +467,7 @@ stm32_pwm_dev_init(struct os_dev *odev, void *arg)
     dev->pwm_funcs.pwm_get_top_value = stm32_pwm_get_top_value;
     dev->pwm_funcs.pwm_enable = stm32_pwm_enable;
     dev->pwm_funcs.pwm_disable = stm32_pwm_disable;
+    dev->pwm_funcs.pwm_is_enabled = stm32_pwm_is_enabled;
 
     os_mutex_init(&dev->pwm_lock);
     OS_DEV_SETHANDLERS(odev, stm32_pwm_open, stm32_pwm_close);
