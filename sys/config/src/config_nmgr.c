@@ -87,21 +87,57 @@ conf_nmgr_write(struct mgmt_cbuf *cb)
     int rc;
     char name_str[CONF_MAX_NAME_LEN];
     char val_str[CONF_MAX_VAL_LEN];
+    bool do_save = false;
+    const struct cbor_attr_t val_attr[] = {
+        [0] = {
+            .attribute = "name",
+            .type = CborAttrTextStringType,
+            .addr.string = name_str,
+            .len = sizeof(name_str)
+        },
+        [1] = {
+            .attribute = "val",
+            .type = CborAttrTextStringType,
+            .addr.string = val_str,
+            .len = sizeof(val_str)
+        },
+        [2] = {
+            .attribute = "save",
+            .type = CborAttrBooleanType,
+            .addr.boolean = &do_save
+        },
+        [3] = {
+            .attribute = NULL
+        }
+    };
 
-    rc = conf_cbor_line(cb, name_str, sizeof(name_str), val_str,
-      sizeof(val_str));
+    name_str[0] = '\0';
+    val_str[0] = '\0';
+
+    rc = cbor_read_object(&cb->it, val_attr);
     if (rc) {
         return MGMT_ERR_EINVAL;
     }
 
-    rc = conf_set_value(name_str, val_str);
-    if (rc) {
-        return MGMT_ERR_EINVAL;
+    if (name_str[0] != '\0') {
+        if (val_str[0] != '\0') {
+            rc = conf_set_value(name_str, val_str);
+        } else {
+            rc = conf_set_value(name_str, NULL);
+        }
+        if (rc) {
+            return MGMT_ERR_EINVAL;
+        }
     }
-
     rc = conf_commit(NULL);
     if (rc) {
         return MGMT_ERR_EINVAL;
+    }
+    if (do_save) {
+        rc = conf_save();
+        if (rc) {
+            return MGMT_ERR_EINVAL;
+        }
     }
     return 0;
 }
