@@ -110,7 +110,7 @@ pwm_enable(struct pwm_dev *dev)
  * @return true if enabled, false if not.
  */
 bool
-pwm_is_enabled(struct pwm_dev *dev, uint8_t cnum)
+pwm_is_enabled(struct pwm_dev *dev)
 {
     assert(dev->pwm_funcs.pwm_is_enabled != NULL);
 

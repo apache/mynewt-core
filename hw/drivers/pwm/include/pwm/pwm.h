@@ -174,7 +174,7 @@ struct pwm_dev {
  * data - Driver specific data.
  */
 struct pwm_chan_cfg {
-    uint8_t pin;
+    uint32_t pin;
     bool inverted;
     void* data;
 };
@@ -206,7 +206,7 @@ int pwm_configure_device(struct pwm_dev *dev, struct pwm_dev_cfg *cfg);
 int pwm_configure_channel(struct pwm_dev *dev, uint8_t cnum, struct pwm_chan_cfg *cfg);
 int pwm_set_duty_cycle(struct pwm_dev *pwm_d, uint8_t cnum, uint16_t fraction);
 int pwm_enable(struct pwm_dev *dev);
-bool pwm_is_enabled(struct pwm_dev *pwm_d, uint8_t cnum);
+bool pwm_is_enabled(struct pwm_dev *pwm_d);
 int pwm_set_frequency(struct pwm_dev *dev, uint32_t freq_hz);
 int pwm_get_clock_freq(struct pwm_dev *dev);
 int pwm_get_top_value(struct pwm_dev *dev);

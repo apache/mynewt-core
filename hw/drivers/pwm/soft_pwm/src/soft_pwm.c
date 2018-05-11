@@ -32,7 +32,7 @@
 #define NO_PIN 0xff
 
 struct soft_pwm_channel {
-    uint16_t pin;
+    uint8_t pin;
     bool inverted;
     uint16_t fraction;
     bool running;
@@ -103,7 +103,7 @@ static void cycle_cb(void* arg)
  */
 static void toggle_cb(void* arg)
 {
-    uint16_t *pin = (uint16_t *) arg;
+    uint32_t *pin = (uint32_t *) arg;
     hal_gpio_toggle(*pin);
 }
 
@@ -237,7 +237,7 @@ soft_pwm_configure_channel(struct pwm_dev *dev,
                            uint8_t cnum,
                            struct pwm_chan_cfg *cfg)
 {
-    uint16_t last_pin;
+    uint32_t last_pin;
     struct soft_pwm_dev *instance = &instances[dev->pwm_instance_id];
     struct soft_pwm_channel *chan = &instance->chans[cnum];
 

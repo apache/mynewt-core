@@ -439,7 +439,7 @@ nrf52_pwm_configure_channel(struct pwm_dev *dev,
         return (EINVAL);
     }
 
-    config->output_pins[cnum] = cfg->pin;
+    config->output_pins[cnum] = (uint8_t) cfg->pin;
     config->output_pins[cnum] |= (cfg->inverted) ?
         NRFX_PWM_PIN_INVERTED : config->output_pins[cnum];
 
