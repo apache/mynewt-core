@@ -107,8 +107,6 @@ main(void)
 
     hal_gpio_init_out(LED_2, 0);
 
-    bt_mesh_register_gatt();
-
     while (1) {
         os_eventq_run(os_eventq_dflt_get());
     }
