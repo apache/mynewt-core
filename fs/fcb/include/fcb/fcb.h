@@ -84,8 +84,6 @@ struct fcb_log {
     uint8_t fl_entries;
 };
 
-int log_fcb_init(struct fcb_log *fcblog, struct fcb *fcb, uint16_t entries);
-
 /*
  * fcb_append() appends an entry to circular buffer. When writing the
  * contents for the entry, use loc->fl_area and loc->fl_data_off with
