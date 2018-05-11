@@ -30,17 +30,27 @@
 #include <string.h>
 
 #define STM32_PWM_CH_MAX      4
-#define STM32_PWM_CH_DISABLED 0x0FFFFFFF
 #define STM32_PWM_CH_NOPIN    0xFF
 #define STM32_PWM_CH_NOAF     0x0F
-
 #define STM32_PWM_CH_IDLE     0x0000
 
-typedef void (*stm32_pwm_isr_t)(void);
+#define STM32_PWM_STATE_INIT  0x00000000
+#define STM32_PWM_STATE_NCYCL 0x00000001
 
 typedef struct {
-    TIM_TypeDef       *timx;
-    uint8_t            ch_pin[STM32_PWM_CH_MAX];
+    uint32_t           n_cycles;
+    user_handler_t     cycle_handler;
+    user_handler_t     seq_end_handler;
+    void              *cycle_data;
+    void              *seq_end_data;
+} stm32_pwm_dev_cfg_t;
+
+typedef struct {
+    TIM_TypeDef         *timx;
+    uint16_t             irq;
+    uint16_t             state;
+    uint8_t              ch_pin[STM32_PWM_CH_MAX];
+    stm32_pwm_dev_cfg_t  cfg;
 } stm32_pwm_dev_t;
 
 static stm32_pwm_dev_t stm32_pwm_dev[PWM_COUNT];
@@ -56,6 +66,15 @@ stm32_pwm_ch(int ch)
     }
     assert(0);
     return 0;
+}
+
+static void
+stm32_pwm_active_ch_set_mode(stm32_pwm_dev_t *pwm, uint32_t mode) {
+    for (int i = 0; i < STM32_PWM_CH_MAX; ++i) {
+        if (STM32_PWM_CH_NOPIN != pwm->ch_pin[i]) {
+            LL_TIM_OC_SetMode(pwm->timx, stm32_pwm_ch(i), mode);
+        }
+    }
 }
 
 static void
@@ -198,10 +217,12 @@ stm32_pwm_configure_channel(struct pwm_dev *dev, uint8_t cnum, struct pwm_chan_c
     LL_TIM_OC_SetPolarity(pwm->timx, channelID, cfg->inverted ? LL_TIM_OCPOLARITY_HIGH : LL_TIM_OCPOLARITY_LOW);
     LL_TIM_OC_EnablePreload(pwm->timx,  channelID);
 
+    pwm->ch_pin[cnum] = STM32_PWM_CH_NOPIN;
     if (STM32_PWM_CH_NOPIN != cfg->pin && STM32_PWM_CH_NOAF != af) {
         if (hal_gpio_init_af(cfg->pin, af, HAL_GPIO_PULL_NONE, 0)) {
             return STM32_PWM_ERR_GPIO;
         }
+        pwm->ch_pin[cnum] = cfg->pin;
     }
 
     LL_TIM_CC_EnableChannel(pwm->timx, channelID);
@@ -269,6 +290,106 @@ stm32_pwm_set_frequency(struct pwm_dev *dev, uint32_t freq_hz)
     return STM32_PWM_ERR_OK;
 }
 
+static void
+stm32_pwm_isr(stm32_pwm_dev_t *pwm)
+{
+    hal_gpio_toggle(LED_red);
+
+    uint32_t sr = pwm->timx->SR;
+    pwm->timx->SR = ~sr;
+
+    if (pwm->cfg.cycle_handler) {
+        pwm->cfg.cycle_handler(pwm->cfg.cycle_data);
+    }
+
+    if (STM32_PWM_STATE_NCYCL & pwm->state) {
+        if (!pwm->cfg.n_cycles) {
+
+            LL_TIM_DisableCounter(pwm->timx);
+            LL_TIM_SetCounter(pwm->timx, 0);
+
+            pwm->state &= ~STM32_PWM_STATE_NCYCL;
+            if (pwm->cfg.seq_end_handler) {
+                pwm->cfg.seq_end_handler(pwm->cfg.seq_end_data);
+            }
+        } else {
+            if (1 == pwm->cfg.n_cycles) {
+                /* prep output pins for shutdown */
+                stm32_pwm_active_ch_set_mode(pwm, LL_TIM_OCMODE_ACTIVE);
+            }
+            --pwm->cfg.n_cycles;
+        }
+    }
+}
+
+static void
+stm32_pwm_isr_0(void)
+{
+    stm32_pwm_isr(&stm32_pwm_dev[0]);
+}
+
+static void
+stm32_pwm_isr_1(void)
+{
+    stm32_pwm_isr(&stm32_pwm_dev[1]);
+}
+
+static void
+stm32_pwm_isr_2(void)
+{
+    stm32_pwm_isr(&stm32_pwm_dev[2]);
+}
+
+static int
+stm32_pwm_configure_device(struct pwm_dev *dev, struct pwm_dev_cfg *cfg)
+{
+    stm32_pwm_dev_t *pwm;
+    uint32_t prio;
+
+    assert(dev);
+    assert(dev->pwm_instance_id < PWM_COUNT);
+
+    pwm = &stm32_pwm_dev[dev->pwm_instance_id];
+
+    prio = cfg->int_prio;
+    if (!prio) {
+        prio = (1 << __NVIC_PRIO_BITS) - 1;
+    }
+
+    NVIC_DisableIRQ(pwm->irq);
+
+    LL_TIM_EnableIT_UPDATE(pwm->timx);
+    NVIC_SetPriority(pwm->irq, prio);
+    switch (dev->pwm_instance_id) {
+        case 0:
+            NVIC_SetVector(pwm->irq, (uintptr_t)stm32_pwm_isr_0);
+            break;
+        case 1:
+            NVIC_SetVector(pwm->irq, (uintptr_t)stm32_pwm_isr_1);
+            break;
+        case 2:
+            NVIC_SetVector(pwm->irq, (uintptr_t)stm32_pwm_isr_2);
+            break;
+        default:
+            return STM32_PWM_ERR_NODEV;
+    }
+
+    pwm->cfg.n_cycles         = cfg->n_cycles;
+    pwm->cfg.cycle_handler    = cfg->cycle_handler;
+    pwm->cfg.seq_end_handler  = cfg->seq_end_handler;
+    pwm->cfg.cycle_data       = cfg->cycle_data;
+    pwm->cfg.seq_end_data     = cfg->seq_end_data;
+
+    if (pwm->cfg.n_cycles) {
+        pwm->state |= STM32_PWM_STATE_NCYCL;
+    }
+
+    stm32_pwm_active_ch_set_mode(pwm, LL_TIM_OCMODE_PWM2);
+
+    NVIC_EnableIRQ(pwm->irq);
+    return STM32_PWM_ERR_OK;
+}
+
 static int
 stm32_pwm_get_clock_freq(struct pwm_dev *dev)
 {
@@ -325,6 +446,7 @@ stm32_pwm_dev_init(struct os_dev *odev, void *arg)
     if (PWM_COUNT <= id) {
         return STM32_PWM_ERR_NODEV;
     }
+    memset(pwm, 0, sizeof(stm32_pwm_dev_t));
 
     if (NULL == arg) {
         return STM32_PWM_ERR_NOTIM;
@@ -333,6 +455,7 @@ stm32_pwm_dev_init(struct os_dev *odev, void *arg)
     cfg = (stm32_pwm_conf_t*)arg;
 
     pwm->timx = cfg->tim;
+    pwm->irq  = cfg->irq;
 
     LL_TIM_SetPrescaler(cfg->tim, 0xffff);
     LL_TIM_SetAutoReload(cfg->tim, 0);
@@ -459,6 +582,7 @@ stm32_pwm_dev_init(struct os_dev *odev, void *arg)
         pwm->ch_pin[i] = STM32_PWM_CH_NOPIN;
     }
 
+    dev->pwm_funcs.pwm_configure_device = stm32_pwm_configure_device;
     dev->pwm_funcs.pwm_configure_channel = stm32_pwm_configure_channel;
     dev->pwm_funcs.pwm_set_duty_cycle = stm32_pwm_set_duty_cycle;
     dev->pwm_funcs.pwm_set_frequency = stm32_pwm_set_frequency;
@@ -475,13 +599,6 @@ stm32_pwm_dev_init(struct os_dev *odev, void *arg)
     LL_TIM_EnableARRPreload(cfg->tim);
     LL_TIM_CC_EnablePreload(cfg->tim);
     LL_TIM_SetCounter(pwm->timx, 0);
-
-#if 0
-    LL_TIM_EnableIT_UPDATE(cfg->tim);
-    NVIC_SetPriority(cfg->irq, (1 << __NVIC_PRIO_BITS) - 1);
-    NVIC_SetVector(cfg->irq, (uintptr_t)stm32_pwm_isr);
-    NVIC_EnableIRQ(cfg->irq);
-#endif
 
     return STM32_PWM_ERR_OK;
 }

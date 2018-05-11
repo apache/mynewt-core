@@ -35,7 +35,7 @@ extern "C" {
 
 typedef struct stm32_pwm_conf {
     TIM_TypeDef   *tim;
-    uint32_t       irq;
+    uint16_t       irq;
 } stm32_pwm_conf_t;
 
 /**
