@@ -34,8 +34,8 @@
 #define STM32_PWM_CH_NOAF     0x0F
 #define STM32_PWM_CH_IDLE     0x0000
 
-#define STM32_PWM_STATE_INIT  0x00000000
-#define STM32_PWM_STATE_NCYCL 0x00000001
+#define STM32_PWM_CH_MODE_ENA     LL_TIM_OCMODE_PWM2
+#define STM32_PWM_CH_MODE_DIS     LL_TIM_OCMODE_ACTIVE
 
 typedef struct {
     uint32_t           n_cycles;
@@ -48,7 +48,7 @@ typedef struct {
 typedef struct {
     TIM_TypeDef         *timx;
     uint16_t             irq;
-    uint16_t             state;
+    uint32_t             cycle;
     uint8_t              ch_pin[STM32_PWM_CH_MAX];
     stm32_pwm_dev_cfg_t  cfg;
 } stm32_pwm_dev_t;
@@ -70,7 +70,7 @@ stm32_pwm_ch(int ch)
 
 static void
 stm32_pwm_active_ch_set_mode(stm32_pwm_dev_t *pwm, uint32_t mode) {
-    for (int i = 0; i < STM32_PWM_CH_MAX; ++i) {
+    for (int i=0; i < STM32_PWM_CH_MAX; ++i) {
         if (STM32_PWM_CH_NOPIN != pwm->ch_pin[i]) {
             LL_TIM_OC_SetMode(pwm->timx, stm32_pwm_ch(i), mode);
         }
@@ -105,6 +105,9 @@ stm32_pwm_enable(struct pwm_dev *dev)
     assert(dev->pwm_instance_id < PWM_COUNT);
 
     pwm = &stm32_pwm_dev[dev->pwm_instance_id];
+    pwm->cycle = pwm->cfg.n_cycles;
+
+    stm32_pwm_active_ch_set_mode(pwm, STM32_PWM_CH_MODE_ENA);
 
     LL_TIM_EnableCounter(pwm->timx);
     return STM32_PWM_ERR_OK;
@@ -176,7 +179,7 @@ stm32_pwm_close(struct os_dev *odev)
     stm32_pwm_disable(dev);
     pwm = &stm32_pwm_dev[dev->pwm_instance_id];
 
-    for (int i = 0; i < STM32_PWM_CH_MAX; ++i) {
+    for (int i=0; i < STM32_PWM_CH_MAX; ++i) {
         uint32_t ch = stm32_pwm_ch(i);
         stm32_pwm_ch_set_compare(pwm->timx, i, STM32_PWM_CH_IDLE);
         if (STM32_PWM_CH_NOPIN != pwm->ch_pin[i]) {
@@ -213,7 +216,7 @@ stm32_pwm_configure_channel(struct pwm_dev *dev, uint8_t cnum, struct pwm_chan_c
     af = (uint8_t)(uintptr_t)cfg->data & 0x0F;
 
     uint32_t channelID = stm32_pwm_ch(cnum);
-    LL_TIM_OC_SetMode(pwm->timx, channelID, LL_TIM_OCMODE_PWM2);
+    LL_TIM_OC_SetMode(pwm->timx, channelID, STM32_PWM_CH_MODE_ENA);
     LL_TIM_OC_SetPolarity(pwm->timx, channelID, cfg->inverted ? LL_TIM_OCPOLARITY_HIGH : LL_TIM_OCPOLARITY_LOW);
     LL_TIM_OC_EnablePreload(pwm->timx,  channelID);
 
@@ -302,22 +305,21 @@ stm32_pwm_isr(stm32_pwm_dev_t *pwm)
         pwm->cfg.cycle_handler(pwm->cfg.cycle_data);
     }
 
-    if (STM32_PWM_STATE_NCYCL & pwm->state) {
-        if (!pwm->cfg.n_cycles) {
+    if (pwm->cfg.n_cycles) {
+        if (!pwm->cycle) {
 
             LL_TIM_DisableCounter(pwm->timx);
             LL_TIM_SetCounter(pwm->timx, 0);
 
-            pwm->state &= ~STM32_PWM_STATE_NCYCL;
             if (pwm->cfg.seq_end_handler) {
                 pwm->cfg.seq_end_handler(pwm->cfg.seq_end_data);
             }
         } else {
-            if (1 == pwm->cfg.n_cycles) {
+            if (1 == pwm->cycle) {
                 /* prep output pins for shutdown */
-                stm32_pwm_active_ch_set_mode(pwm, LL_TIM_OCMODE_ACTIVE);
+                stm32_pwm_active_ch_set_mode(pwm, STM32_PWM_CH_MODE_DIS);
             }
-            --pwm->cfg.n_cycles;
+            --pwm->cycle;
         }
     }
 }
@@ -380,13 +382,8 @@ stm32_pwm_configure_device(struct pwm_dev *dev, struct pwm_dev_cfg *cfg)
     pwm->cfg.cycle_data       = cfg->cycle_data;
     pwm->cfg.seq_end_data     = cfg->seq_end_data;
 
-    if (pwm->cfg.n_cycles) {
-        pwm->state |= STM32_PWM_STATE_NCYCL;
-    }
-
-    stm32_pwm_active_ch_set_mode(pwm, LL_TIM_OCMODE_PWM2);
-
     NVIC_EnableIRQ(pwm->irq);
+
     return STM32_PWM_ERR_OK;
 }
 
@@ -437,7 +434,7 @@ stm32_pwm_dev_init(struct os_dev *odev, void *arg)
     struct pwm_dev *dev;
     uint32_t id;
 
-    for (id = 0; id < PWM_COUNT; ++id) {
+    for (id=0; id < PWM_COUNT; ++id) {
         pwm = &stm32_pwm_dev[id];
         if (!pwm->timx) {
             break;
@@ -577,7 +574,7 @@ stm32_pwm_dev_init(struct os_dev *odev, void *arg)
           assert(0);
     }
 
-    for (int i=0; i<STM32_PWM_CH_MAX; ++i) {
+    for (int i=0; i < STM32_PWM_CH_MAX; ++i) {
         stm32_pwm_ch_set_compare(pwm->timx, i, STM32_PWM_CH_IDLE);
         pwm->ch_pin[i] = STM32_PWM_CH_NOPIN;
     }
