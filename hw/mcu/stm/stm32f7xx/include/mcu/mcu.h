@@ -37,29 +37,28 @@ extern "C" {
 #define MCU_GPIO_PORTH(pin)	((7 * 16) + (pin))
 #define MCU_GPIO_PORTI(pin)	((8 * 16) + (pin))
 #define MCU_GPIO_PORTJ(pin)	((9 * 16) + (pin))
-
 /* NOTE: PORTK only have pins 0, 1, 3, 4, 5, 6, 7 available */
 #define MCU_GPIO_PORTK(pin)	((10 * 16) + (pin))
-
-/*
- * Mapping of alternate function pin descriptors.
- */
-#define MCU_AFIO_PORTA(pin,af) (((0x0F & af) << 12) | 0x0000 | (0x0F & pin))
-#define MCU_AFIO_PORTB(pin,af) (((0x0F & af) << 12) | 0x0010 | (0x0F & pin))
-#define MCU_AFIO_PORTC(pin,af) (((0x0F & af) << 12) | 0x0020 | (0x0F & pin))
-#define MCU_AFIO_PORTD(pin,af) (((0x0F & af) << 12) | 0x0030 | (0x0F & pin))
-#define MCU_AFIO_PORTE(pin,af) (((0x0F & af) << 12) | 0x0040 | (0x0F & pin))
-#define MCU_AFIO_PORTF(pin,af) (((0x0F & af) << 12) | 0x0050 | (0x0F & pin))
-#define MCU_AFIO_PORTG(pin,af) (((0x0F & af) << 12) | 0x0060 | (0x0F & pin))
-#define MCU_AFIO_PORTH(pin,af) (((0x0F & af) << 12) | 0x0070 | (0x0F & pin))
-#define MCU_AFIO_PORTI(pin,af) (((0x0F & af) << 12) | 0x0080 | (0x0F & pin))
-#define MCU_AFIO_PORTJ(pin,af) (((0x0F & af) << 12) | 0x0090 | (0x0F & pin))
-#define MCU_AFIO_PORTK(pin,af) (((0x0F & af) << 12) | 0x00A0 | (0x0F & pin))
 
 /*
  * Mapping of a GPIO pin to an alternate function.
  */
 #define MCU_AFIO_GPIO(pin,af)  (((0x0F & af) << 12) | (0x00FF & pin))
+
+/*
+ * Mapping of alternate function pin descriptors.
+ */
+#define MCU_AFIO_PORTA(pin, af)   MCU_AFIO_GPIO(af, MCU_GPIO_PORTA(pin))
+#define MCU_AFIO_PORTB(pin, af)   MCU_AFIO_GPIO(af, MCU_GPIO_PORTB(pin))
+#define MCU_AFIO_PORTC(pin, af)   MCU_AFIO_GPIO(af, MCU_GPIO_PORTC(pin))
+#define MCU_AFIO_PORTD(pin, af)   MCU_AFIO_GPIO(af, MCU_GPIO_PORTD(pin))
+#define MCU_AFIO_PORTE(pin, af)   MCU_AFIO_GPIO(af, MCU_GPIO_PORTE(pin))
+#define MCU_AFIO_PORTF(pin, af)   MCU_AFIO_GPIO(af, MCU_GPIO_PORTF(pin))
+#define MCU_AFIO_PORTG(pin, af)   MCU_AFIO_GPIO(af, MCU_GPIO_PORTG(pin))
+#define MCU_AFIO_PORTH(pin, af)   MCU_AFIO_GPIO(af, MCU_GPIO_PORTH(pin))
+#define MCU_AFIO_PORTI(pin, af)   MCU_AFIO_GPIO(af, MCU_GPIO_PORTI(pin))
+#define MCU_AFIO_PORTJ(pin, af)   MCU_AFIO_GPIO(af, MCU_GPIO_PORTJ(pin))
+#define MCU_AFIO_PORTK(pin, af)   MCU_AFIO_GPIO(af, MCU_GPIO_PORTK(pin))
 
 /*
  * Helper macros to extract components from a pin descriptor.

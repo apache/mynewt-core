@@ -32,10 +32,8 @@ extern "C" {
  *
  * Currently there is no support for complementary outputs.
  *
- * A pwm channel can be configured with the MCU_AFIO_PIN_NONE as the pin
- * configuration, in which case the output is not routed to a pin but the
- * application has full access to the generated interrupts and can use these
- * for periodic callbacks.
+ * MCU_AFIO_PIN_NONE can be used in pwm_configure_channel in order
+ * 'unconfigure' a previously configured PWM IO pin.
  *
  * The driver can return one of several error codes in order to aid issue
  * tracking.
@@ -65,7 +63,7 @@ typedef struct stm32_pwm_conf {
     uint16_t       irq;
 } stm32_pwm_conf_t;
 
-int stm32_pwm_dev_init(struct os_dev *dev, void *a_struct_stm32_pwm_conf);
+int stm32_pwm_dev_init(struct os_dev *dev, void *struct_stm32_pwm_conf_pointer);
 
 #ifdef __cplusplus
 }

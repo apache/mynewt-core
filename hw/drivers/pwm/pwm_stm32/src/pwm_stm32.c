@@ -34,7 +34,6 @@
 #define STM32_PWM_CH_MODE_ENA     LL_TIM_OCMODE_PWM2
 #define STM32_PWM_CH_MODE_DIS     LL_TIM_OCMODE_ACTIVE
 
-#define STM32_PWM_PIN_NONE        0x0FFF
 
 typedef struct {
     uint32_t           n_cycles;
@@ -54,6 +53,12 @@ typedef struct {
 
 static stm32_pwm_dev_t stm32_pwm_dev[PWM_COUNT];
 
+static inline bool
+stm32_pwm_ch_is_active(const stm32_pwm_dev_t *pwm, int ch)
+{
+    return MCU_AFIO_PIN_NONE != pwm->pin[ch];
+}
+
 static uint32_t
 stm32_pwm_ch(int ch)
 {
@@ -70,7 +75,7 @@ stm32_pwm_ch(int ch)
 static void
 stm32_pwm_active_ch_set_mode(stm32_pwm_dev_t *pwm, uint32_t mode) {
     for (int i=0; i < STM32_PWM_CH_MAX; ++i) {
-        if (MCU_AFIO_PIN_NONE != pwm->pin[i]) {
+        if (stm32_pwm_ch_is_active(pwm, i)) {
             LL_TIM_OC_SetMode(pwm->timx, stm32_pwm_ch(i), mode);
         }
     }
@@ -93,6 +98,64 @@ stm32_pwm_ch_set_compare(TIM_TypeDef *tim, int ch, uint32_t value)
             LL_TIM_OC_SetCompareCH4(tim, value);
             break;
     }
+}
+
+static void
+stm32_pwm_ch_unconfigure(const stm32_pwm_dev_t *pwm, uint32_t id)
+{
+    uint32_t ch = stm32_pwm_ch(id);
+
+    LL_TIM_CC_DisableChannel(pwm->timx, ch);
+    LL_TIM_OC_SetMode(pwm->timx, ch, 0);
+    LL_TIM_OC_SetPolarity(pwm->timx, ch, 0);
+    LL_TIM_OC_DisablePreload(pwm->timx,  ch);
+}
+
+static void
+stm32_pwm_isr(stm32_pwm_dev_t *pwm)
+{
+    uint32_t sr = pwm->timx->SR;
+    pwm->timx->SR = ~sr;
+
+    if (pwm->cfg.cycle_handler) {
+        pwm->cfg.cycle_handler(pwm->cfg.cycle_data);
+    }
+
+    if (pwm->cfg.n_cycles) {
+        if (!pwm->cycle) {
+
+            LL_TIM_DisableCounter(pwm->timx);
+            LL_TIM_SetCounter(pwm->timx, 0);
+
+            if (pwm->cfg.seq_end_handler) {
+                pwm->cfg.seq_end_handler(pwm->cfg.seq_end_data);
+            }
+        } else {
+            if (1 == pwm->cycle) {
+                /* prep output pins for shutdown */
+                stm32_pwm_active_ch_set_mode(pwm, STM32_PWM_CH_MODE_DIS);
+            }
+            --pwm->cycle;
+        }
+    }
+}
+
+static void
+stm32_pwm_isr_0(void)
+{
+    stm32_pwm_isr(&stm32_pwm_dev[0]);
+}
+
+static void
+stm32_pwm_isr_1(void)
+{
+    stm32_pwm_isr(&stm32_pwm_dev[1]);
+}
+
+static void
+stm32_pwm_isr_2(void)
+{
+    stm32_pwm_isr(&stm32_pwm_dev[2]);
 }
 
 static int
@@ -179,16 +242,12 @@ stm32_pwm_close(struct os_dev *odev)
     pwm = &stm32_pwm_dev[dev->pwm_instance_id];
 
     for (int i=0; i < STM32_PWM_CH_MAX; ++i) {
-        uint32_t ch = stm32_pwm_ch(i);
         stm32_pwm_ch_set_compare(pwm->timx, i, STM32_PWM_CH_IDLE);
-        if (MCU_AFIO_PIN_NONE != pwm->pin[i] && STM32_PWM_PIN_NONE != pwm->pin[i]) {
+        if (stm32_pwm_ch_is_active(pwm, i)) {
             hal_gpio_init_af(MCU_AFIO_PIN_PAD(pwm->pin[i]), 0, HAL_GPIO_PULL_NONE, 0);
         }
         pwm->pin[i] = MCU_AFIO_PIN_NONE;
-        LL_TIM_CC_DisableChannel(pwm->timx, ch);
-        LL_TIM_OC_SetMode(pwm->timx, ch, 0);
-        LL_TIM_OC_SetPolarity(pwm->timx, ch, 0);
-        LL_TIM_OC_DisablePreload(pwm->timx,  ch);
+        stm32_pwm_ch_unconfigure(pwm, i);
     }
 
     if (os_started()) {
@@ -199,9 +258,10 @@ stm32_pwm_close(struct os_dev *odev)
 }
 
 static int
-stm32_pwm_configure_channel(struct pwm_dev *dev, uint8_t cnum, struct pwm_chan_cfg *cfg)
+stm32_pwm_ch_confgigure(struct pwm_dev *dev, uint8_t cnum, struct pwm_chan_cfg *cfg)
 {
     stm32_pwm_dev_t *pwm;
+    uint32_t ch;
 
     assert(dev);
     assert(dev->pwm_instance_id < PWM_COUNT);
@@ -211,28 +271,38 @@ stm32_pwm_configure_channel(struct pwm_dev *dev, uint8_t cnum, struct pwm_chan_c
     }
 
     pwm = &stm32_pwm_dev[dev->pwm_instance_id];
+    ch  = stm32_pwm_ch(cnum);
 
-    uint32_t channelID = stm32_pwm_ch(cnum);
-    LL_TIM_OC_SetMode(pwm->timx, channelID, STM32_PWM_CH_MODE_ENA);
-    LL_TIM_OC_SetPolarity(pwm->timx, channelID, cfg->inverted ? LL_TIM_OCPOLARITY_HIGH : LL_TIM_OCPOLARITY_LOW);
-    LL_TIM_OC_EnablePreload(pwm->timx,  channelID);
+    LL_TIM_CC_DisableChannel(pwm->timx, ch);
+
+    if (stm32_pwm_ch_is_active(pwm, cnum)) {
+        if (hal_gpio_init_af(MCU_AFIO_PIN_PAD(cfg->pin), 0, HAL_GPIO_PULL_NONE, 0)) {
+            return STM32_PWM_ERR_GPIO;
+        }
+    }
 
     if (MCU_AFIO_PIN_NONE != cfg->pin ) {
+        LL_TIM_OC_SetMode(pwm->timx, ch, STM32_PWM_CH_MODE_ENA);
+        LL_TIM_OC_SetPolarity(pwm->timx, ch, cfg->inverted ? LL_TIM_OCPOLARITY_HIGH : LL_TIM_OCPOLARITY_LOW);
+        LL_TIM_OC_EnablePreload(pwm->timx,  ch);
+
         if (hal_gpio_init_af(MCU_AFIO_PIN_PAD(cfg->pin), MCU_AFIO_PIN_AF(cfg->pin), HAL_GPIO_PULL_NONE, 0)) {
             return STM32_PWM_ERR_GPIO;
         }
         pwm->pin[cnum] = cfg->pin;
+
+        LL_TIM_CC_EnableChannel(pwm->timx, ch);
     } else {
-        pwm->pin[cnum] = STM32_PWM_PIN_NONE;
+        stm32_pwm_ch_unconfigure(pwm, cnum);
+        pwm->pin[cnum] = MCU_AFIO_PIN_NONE;
     }
 
-    LL_TIM_CC_EnableChannel(pwm->timx, channelID);
     return STM32_PWM_ERR_OK;
 }
 
 
 static int
-stm32_pwm_set_duty_cycle(struct pwm_dev *dev, uint8_t cnum, uint16_t fraction)
+stm32_pwm_ch_set_duty_cycle(struct pwm_dev *dev, uint8_t cnum, uint16_t fraction)
 {
     stm32_pwm_dev_t *pwm;
 
@@ -291,57 +361,8 @@ stm32_pwm_set_frequency(struct pwm_dev *dev, uint32_t freq_hz)
     return STM32_PWM_ERR_OK;
 }
 
-static void
-stm32_pwm_isr(stm32_pwm_dev_t *pwm)
-{
-    hal_gpio_toggle(LED_red);
-
-    uint32_t sr = pwm->timx->SR;
-    pwm->timx->SR = ~sr;
-
-    if (pwm->cfg.cycle_handler) {
-        pwm->cfg.cycle_handler(pwm->cfg.cycle_data);
-    }
-
-    if (pwm->cfg.n_cycles) {
-        if (!pwm->cycle) {
-
-            LL_TIM_DisableCounter(pwm->timx);
-            LL_TIM_SetCounter(pwm->timx, 0);
-
-            if (pwm->cfg.seq_end_handler) {
-                pwm->cfg.seq_end_handler(pwm->cfg.seq_end_data);
-            }
-        } else {
-            if (1 == pwm->cycle) {
-                /* prep output pins for shutdown */
-                stm32_pwm_active_ch_set_mode(pwm, STM32_PWM_CH_MODE_DIS);
-            }
-            --pwm->cycle;
-        }
-    }
-}
-
-static void
-stm32_pwm_isr_0(void)
-{
-    stm32_pwm_isr(&stm32_pwm_dev[0]);
-}
-
-static void
-stm32_pwm_isr_1(void)
-{
-    stm32_pwm_isr(&stm32_pwm_dev[1]);
-}
-
-static void
-stm32_pwm_isr_2(void)
-{
-    stm32_pwm_isr(&stm32_pwm_dev[2]);
-}
-
 static int
-stm32_pwm_configure_device(struct pwm_dev *dev, struct pwm_dev_cfg *cfg)
+stm32_pwm_configure(struct pwm_dev *dev, struct pwm_dev_cfg *cfg)
 {
     stm32_pwm_dev_t *pwm;
     uint32_t prio;
@@ -581,16 +602,16 @@ stm32_pwm_dev_init(struct os_dev *odev, void *arg)
         pwm->pin[i] = MCU_AFIO_PIN_NONE;
     }
 
-    dev->pwm_funcs.pwm_configure_device = stm32_pwm_configure_device;
-    dev->pwm_funcs.pwm_configure_channel = stm32_pwm_configure_channel;
-    dev->pwm_funcs.pwm_set_duty_cycle = stm32_pwm_set_duty_cycle;
-    dev->pwm_funcs.pwm_set_frequency = stm32_pwm_set_frequency;
+    dev->pwm_funcs.pwm_configure_channel = stm32_pwm_ch_confgigure;
+    dev->pwm_funcs.pwm_configure_device = stm32_pwm_configure;
+    dev->pwm_funcs.pwm_disable = stm32_pwm_disable;
+    dev->pwm_funcs.pwm_enable = stm32_pwm_enable;
     dev->pwm_funcs.pwm_get_clock_freq = stm32_pwm_get_clock_freq;
     dev->pwm_funcs.pwm_get_resolution_bits = stm32_pwm_get_resolution_bits;
     dev->pwm_funcs.pwm_get_top_value = stm32_pwm_get_top_value;
-    dev->pwm_funcs.pwm_enable = stm32_pwm_enable;
-    dev->pwm_funcs.pwm_disable = stm32_pwm_disable;
     dev->pwm_funcs.pwm_is_enabled = stm32_pwm_is_enabled;
+    dev->pwm_funcs.pwm_set_duty_cycle = stm32_pwm_ch_set_duty_cycle;
+    dev->pwm_funcs.pwm_set_frequency = stm32_pwm_set_frequency;
 
     os_mutex_init(&dev->pwm_lock);
     OS_DEV_SETHANDLERS(odev, stm32_pwm_open, stm32_pwm_close);
