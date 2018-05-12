@@ -5,9 +5,9 @@
  * See: http://www.catb.org/gpsd/NMEA.html#_gll_geographic_position_latitude_longitude
  */
 
-bool
+int
 gnss_nmea_decoder_gll(struct gnss_nmea_gll *gll, char *field, int fid) {
-    bool success = true;
+    int rc = 1;
     union {
 	char   status;
     } local;
@@ -17,34 +17,35 @@ gnss_nmea_decoder_gll(struct gnss_nmea_gll *gll, char *field, int fid) {
 	break;
 
     case  1:	/* Latitude */
-	success = gnss_nmea_field_parse_latlng(field, &gll->latitude);
+	rc = gnss_nmea_field_parse_latlng(field, &gll->latitude);
 	break;
 	
     case  2: 	/* N/S indicator */
-	success = gnss_nmea_field_parse_and_apply_direction(field, &gll->latitude);
+	rc = gnss_nmea_field_parse_and_apply_direction(field, &gll->latitude);
 	break;
 	
     case  3: 	/* Longitude */
-	success = gnss_nmea_field_parse_latlng(field, &gll->longitude);
+	rc = gnss_nmea_field_parse_latlng(field, &gll->longitude);
 	break;	
 
     case  4: 	/* E/W indicator */
-	success = gnss_nmea_field_parse_and_apply_direction(field, &gll->longitude);
+	rc = gnss_nmea_field_parse_and_apply_direction(field, &gll->longitude);
 	break;
 
     case  5:	/* UTC Time */
-	success = gnss_nmea_field_parse_time(field, &gll->time);
+	rc = gnss_nmea_field_parse_time(field, &gll->time);
 	break;
 
     case  6:	/* Status */
-	success = gnss_nmea_field_parse_char(field, &local.status);
-	if (success) {
-	    gll->valid = local.status == 'A';
+	rc = gnss_nmea_field_parse_char(field, &local.status);
+	if (rc <= 0) {
+	    break;
 	}
+	gll->valid = local.status == 'A';
 	break;
 
     case 7:	/* FAA mode */
-	success = gnss_nmea_field_parse_char(field, &gll->faa_mode);
+	rc = gnss_nmea_field_parse_char(field, &gll->faa_mode);
 	break;
 
     default:
@@ -52,7 +53,7 @@ gnss_nmea_decoder_gll(struct gnss_nmea_gll *gll, char *field, int fid) {
 	break;
     }
 
-    return success;
+    return rc;
 }
 
 

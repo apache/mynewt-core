@@ -123,12 +123,12 @@ gnss_nmea_decode_field(struct gnss_nmea *gn)
      * (ie: started but no crc, no <cr>)
      */
     if (gn->state != GNSS_NMEA_STATE_FLG_STARTED) {
-	return GNSS_BYTE_DECODER_ERROR;
+        return GNSS_BYTE_DECODER_ERROR;
     }
 
     /* Skipping? */
     if (gn->msg == NULL) {
-	return GNSS_BYTE_DECODER_DECODING;
+        return GNSS_BYTE_DECODER_DECODING;
     }
     
     /* Make it a NUL terminated string,
@@ -145,28 +145,24 @@ gnss_nmea_decode_field(struct gnss_nmea *gn)
                                         &gn->msg->talker, &gn->msg->sentence);
         /* If we don't have a field decoder, just skip everything */
         if (gn->field_decoder == NULL) {
-	    gn->msg = NULL;
-	    return GNSS_BYTE_DECODER_DECODING;
+            gn->msg = NULL;
+            return GNSS_BYTE_DECODER_DECODING;
         }
     }
 
     /* Decoder is called
      *  - we don't need to check for field_decoder == NULL
-     *    as when the whole sentence is trashed in case of not decoding
+     *    as we already have skipped in case of not decoding
      *  - we are calling decoder for field 0 (ie: tag), which seems
      *    unecessary but is required for proprietary tag (ex: PMTK001)
      */
     assert(gn->field_decoder != NULL);
-    if (!gn->field_decoder(&gn->msg->data, gn->buffer, gn->fid)) {
-	/* field decoder only return true/false, we can't really
-	 * says what was the exact problem
-	 *  => mark as failed, so it doesn't count when checking
-	 *     for scrambled transport 
-	 */
-        return GNSS_BYTE_DECODER_FAILED;
+    switch(gn->field_decoder(&gn->msg->data, gn->buffer, gn->fid)) {
+    case -1: return GNSS_BYTE_DECODER_ERROR;
+    case  0: return GNSS_BYTE_DECODER_FAILED;
+    default: assert(0);
+    case  1: return GNSS_BYTE_DECODER_DECODING;
     }
-
-    return GNSS_BYTE_DECODER_DECODING;
 }
 
 /*
@@ -199,13 +195,13 @@ gnss_nmea_byte_decoder(gnss_t *ctx, struct gnss_nmea *gn, uint8_t byte)
         gn->fid        = 0;
         gn->crc        = 0;
         gn->bufcnt     = 0;
-	gn->msg        = NULL;
-	
+        gn->msg        = NULL;
+        
         /* Ensure we've got an event */
         evt = (struct gnss_nmea_event *)
             gnss_prepare_event(ctx, GNSS_EVENT_NMEA);
         if (evt != NULL) {
-	    gn->msg = &evt->nmea;
+            gn->msg = &evt->nmea;
         }
 
         break;
@@ -214,10 +210,10 @@ gnss_nmea_byte_decoder(gnss_t *ctx, struct gnss_nmea *gn, uint8_t byte)
     /* Field separator */
     case ',':
         /* Decode current field (will also ensure state is legit) */
-	rc = gnss_nmea_decode_field(gn);
-	if (rc < GNSS_BYTE_DECODER_DECODING) {
-	    goto oops;
-	}
+        rc = gnss_nmea_decode_field(gn);
+        if (rc < GNSS_BYTE_DECODER_DECODING) {
+            goto oops;
+        }
         
         /* Mark field as processed */
         gn->crc     ^= byte; /* Compute CRC (',' is in main part) */
@@ -228,10 +224,10 @@ gnss_nmea_byte_decoder(gnss_t *ctx, struct gnss_nmea *gn, uint8_t byte)
     /* CRC marker */
     case '*':
         /* Decode current field (will also ensure state is legit) */
-	rc = gnss_nmea_decode_field(gn);
-	if (rc < GNSS_BYTE_DECODER_DECODING) {
-	    goto oops;
-	}
+        rc = gnss_nmea_decode_field(gn);
+        if (rc < GNSS_BYTE_DECODER_DECODING) {
+            goto oops;
+        }
         
         /* Mark field as processed, and starting CRC decoding */
         gn->bufcnt = 0;                        /* Reset field buffer    */
@@ -268,10 +264,10 @@ gnss_nmea_byte_decoder(gnss_t *ctx, struct gnss_nmea *gn, uint8_t byte)
             
         } else {
             /* Decode current field (will also ensure state is legit) */
-	    rc = gnss_nmea_decode_field(gn);
-	    if (rc < GNSS_BYTE_DECODER_DECODING) {
-		goto oops;
-	    }
+            rc = gnss_nmea_decode_field(gn);
+            if (rc < GNSS_BYTE_DECODER_DECODING) {
+                goto oops;
+            }
         }
 
         /* Mark state as <CR> acknowledged */
@@ -283,22 +279,22 @@ gnss_nmea_byte_decoder(gnss_t *ctx, struct gnss_nmea *gn, uint8_t byte)
         /* Ensure we've got everything                   */
         /*  (at least started and <cr>, crc is optional) */
         if ((gn->state & (GNSS_NMEA_STATE_FLG_STARTED |
-			  GNSS_NMEA_STATE_FLG_CR      )) !=
+                          GNSS_NMEA_STATE_FLG_CR      )) !=
             (GNSS_NMEA_STATE_FLG_STARTED|GNSS_NMEA_STATE_FLG_CR)) {
             gn->stats.parsing_error++;
             goto oops;
         }
 
-	/* Mark for reset */
+        /* Mark for reset */
         gn->state = GNSS_NMEA_STATE_VIRGIN;
 
-	/* Job's done */
-	if (gn->msg != NULL) {
-	    gnss_emit_event(ctx);
-	    return GNSS_BYTE_DECODER_DECODED;
-	} else {
-	    return GNSS_BYTE_DECODER_UNHANDLED;
-	}
+        /* Job's done */
+        if (gn->msg != NULL) {
+            gnss_emit_event(ctx);
+            return GNSS_BYTE_DECODER_DECODED;
+        } else {
+            return GNSS_BYTE_DECODER_UNHANDLED;
+        }
 
     /* Other chars */
     default:
@@ -310,7 +306,7 @@ gnss_nmea_byte_decoder(gnss_t *ctx, struct gnss_nmea *gn, uint8_t byte)
         /* Check that buffer is not full (keeping 1 byte for NUL-char) */
         if (gn->bufcnt >= (MYNEWT_VAL(GNSS_NMEA_FIELD_BUFSIZE)-1)) {
             gn->stats.buffer_full++;
-	    gn->msg = NULL; /* Our fault, will skip data :( */
+            gn->msg = NULL; /* Our fault, will skip data :( */
         }       
         /* If decoding main part, compute CRC */
         if (gn->state == GNSS_NMEA_STATE_FLG_STARTED) {
@@ -323,10 +319,8 @@ gnss_nmea_byte_decoder(gnss_t *ctx, struct gnss_nmea *gn, uint8_t byte)
 
     return GNSS_BYTE_DECODER_DECODING;
 
-
-    /* -- Reset state -- */
-
  oops:
+    /* Reset state */
     gn->state = GNSS_NMEA_STATE_VIRGIN;
     return rc;
 }
@@ -337,7 +331,7 @@ gnss_nmea_decoder(gnss_t *ctx, uint8_t byte)
     int rc;
 
     rc = gnss_nmea_byte_decoder(ctx,
-		(struct gnss_nmea *)ctx->protocol.conf, byte);
+                (struct gnss_nmea *)ctx->protocol.conf, byte);
 
     rc = gnss_check_scrambled_transport(ctx, rc);
     

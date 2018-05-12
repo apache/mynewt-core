@@ -276,8 +276,12 @@ bool gnss_nmea_send_cmd(gnss_t *ctx, char *cmd);
 
 int gnss_nmea_byte_decoder(gnss_t *ctx, struct gnss_nmea *gn, uint8_t byte);
 
-
-typedef bool (*gnss_nmea_field_decoder_t)(union gnss_nmea_data *, char *field, int fid);
+/*
+ * @retval -1 for syntax error
+ * @retval  0 for semantic error or not handled by parser
+ * @retval  1 for success
+ */
+typedef int (*gnss_nmea_field_decoder_t)(union gnss_nmea_data *, char *field, int fid);
 
 
 
@@ -299,36 +303,36 @@ struct gnss_nmea {
     } stats;
 };
 
-bool gnss_nmea_field_parse_string(const char *str, char *val, uint16_t maxsize);
-bool gnss_nmea_field_parse_char(const char *str, char *val);
-bool gnss_nmea_field_parse_long(const char *str, long *val);
-bool gnss_nmea_field_parse_float(const char *str, gnss_float_t *val);
-bool gnss_nmea_field_parse_and_apply_direction(const char *str, gnss_float_t *val);
-bool gnss_nmea_field_parse_latlng(const char *str, gnss_float_t *val);
-bool gnss_nmea_field_parse_date(const char *str, gnss_date_t *val);
-bool gnss_nmea_field_parse_time(const char *str, gnss_time_t *val);
-bool gnss_nmea_field_parse_crc(const char *str, uint8_t *val);
+int gnss_nmea_field_parse_string(const char *str, char *val, uint16_t maxsize);
+int gnss_nmea_field_parse_char(const char *str, char *val);
+int gnss_nmea_field_parse_long(const char *str, long *val);
+int gnss_nmea_field_parse_float(const char *str, gnss_float_t *val);
+int gnss_nmea_field_parse_and_apply_direction(const char *str, gnss_float_t *val);
+int gnss_nmea_field_parse_latlng(const char *str, gnss_float_t *val);
+int gnss_nmea_field_parse_date(const char *str, gnss_date_t *val);
+int gnss_nmea_field_parse_time(const char *str, gnss_time_t *val);
+int gnss_nmea_field_parse_crc(const char *str, uint8_t *val);
 
 #if MYNEWT_VAL(GNSS_NMEA_USE_GGA) > 0
-bool gnss_nmea_decoder_gga(struct gnss_nmea_gga *gga, char *field, int fid);
+int gnss_nmea_decoder_gga(struct gnss_nmea_gga *gga, char *field, int fid);
 #endif
 #if MYNEWT_VAL(GNSS_NMEA_USE_GLL) > 0
-bool gnss_nmea_decoder_gll(struct gnss_nmea_gll *gll, char *field, int fid);
+int gnss_nmea_decoder_gll(struct gnss_nmea_gll *gll, char *field, int fid);
 #endif
 #if MYNEWT_VAL(GNSS_NMEA_USE_GSA) > 0
-bool gnss_nmea_decoder_gsa(struct gnss_nmea_gsa *gsa, char *field, int fid);
+int gnss_nmea_decoder_gsa(struct gnss_nmea_gsa *gsa, char *field, int fid);
 #endif
 #if MYNEWT_VAL(GNSS_NMEA_USE_GST) > 0
-bool gnss_nmea_decoder_gst(struct gnss_nmea_gst *gst, char *field, int fid);
+int gnss_nmea_decoder_gst(struct gnss_nmea_gst *gst, char *field, int fid);
 #endif
 #if MYNEWT_VAL(GNSS_NMEA_USE_GSV) > 0
-bool gnss_nmea_decoder_gsv(struct gnss_nmea_gsv *gsv, char *field, int fid);
+int gnss_nmea_decoder_gsv(struct gnss_nmea_gsv *gsv, char *field, int fid);
 #endif
 #if MYNEWT_VAL(GNSS_NMEA_USE_RMC) > 0
-bool gnss_nmea_decoder_rmc(struct gnss_nmea_rmc *rmc, char *field, int fid);
+int gnss_nmea_decoder_rmc(struct gnss_nmea_rmc *rmc, char *field, int fid);
 #endif
 #if MYNEWT_VAL(GNSS_NMEA_USE_VTG) > 0
-bool gnss_nmea_decoder_vtg(struct gnss_nmea_vtg *vtg, char *field, int fid);
+int gnss_nmea_decoder_vtg(struct gnss_nmea_vtg *vtg, char *field, int fid);
 #endif
 
 void gnss_nmea_log(struct gnss_nmea_message *nmea);

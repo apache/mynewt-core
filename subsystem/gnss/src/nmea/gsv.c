@@ -5,9 +5,9 @@
  * See: http://www.catb.org/gpsd/NMEA.html#_gsv_satellites_in_view
  */
 
-bool
+int
 gnss_nmea_decoder_gsv(struct gnss_nmea_gsv *gsv, char *field, int fid) {
-    bool success = true;
+    int rc = 1;
     union {
 	long msg_count;
 	long msg_idx;
@@ -23,26 +23,38 @@ gnss_nmea_decoder_gsv(struct gnss_nmea_gsv *gsv, char *field, int fid) {
 	break;
 
     case  1:	/* Total number of messages to be transmitted */
-	success = gnss_nmea_field_parse_long(field, &local.msg_count) &&
-	          (local.msg_count <= 63);
-	if (success) {
+	rc = gnss_nmea_field_parse_long(field, &local.msg_count);
+	if (rc <= 0) {
+	    break;
+	}
+	if (local.msg_count <= 63) {
 	    gsv->msg_count = local.msg_count;
+	} else {
+	    rc = 0;
 	}
 	break;	
 
     case  2: 	/* 1-origin number of this message within current group */
-	success = gnss_nmea_field_parse_long(field, &local.msg_idx) &&
-	          (local.msg_idx <= 63);
-	if (success) {
+	rc = gnss_nmea_field_parse_long(field, &local.msg_idx);
+	if (rc <= 0) {
+	    break;
+	}
+	if (local.msg_idx <= 63) {
 	    gsv->msg_idx = local.msg_idx;
+	} else {
+	    rc = 0;
 	}
 	break;
 
     case  3: 	/* Total number of satellites in view */
-	success = gnss_nmea_field_parse_long(field, &local.total_sats) &&
-	          (local.total_sats <= 255);
-	if (success) {
+	rc = gnss_nmea_field_parse_long(field, &local.total_sats);
+	if (rc <= 0) {
+	    break;
+	}
+	if (local.total_sats <= 255) {
 	    gsv->total_sats = local.total_sats;
+	} else {
+	    rc = 0;
 	}
 	break;
 
@@ -50,10 +62,14 @@ gnss_nmea_decoder_gsv(struct gnss_nmea_gsv *gsv, char *field, int fid) {
     case  8:
     case 12:
     case 16:
-	success = gnss_nmea_field_parse_long(field, &local.prn) &&
-	          (local.prn <= 255);
-	if (success) {
+	rc = gnss_nmea_field_parse_long(field, &local.prn);
+	if (rc <= 0) {
+	    break;
+	}
+	if (local.prn <= 255) {
 	    gsv->sat_info[(fid-4)%4].prn = local.prn;
+	} else {
+	    rc = 0;
 	}
 	break;
 
@@ -61,10 +77,14 @@ gnss_nmea_decoder_gsv(struct gnss_nmea_gsv *gsv, char *field, int fid) {
     case  9:
     case 13:
     case 17:
-	success = gnss_nmea_field_parse_long(field, &local.elevation) &&
-	          (local.elevation <= 90);
-	if (success) {
+	rc = gnss_nmea_field_parse_long(field, &local.elevation);
+	if (rc <= 0) {
+	    break;
+	}
+	if (local.elevation <= 90) {
 	    gsv->sat_info[(fid-4)%4].elevation = local.elevation;
+	} else {
+	    rc = 0;
 	}
 	break;
 
@@ -72,10 +92,14 @@ gnss_nmea_decoder_gsv(struct gnss_nmea_gsv *gsv, char *field, int fid) {
     case 10:
     case 14:
     case 18:
-	success = gnss_nmea_field_parse_long(field, &local.azimuth) &&
-	          (local.azimuth <= 359);
-	if (success) {
+	rc = gnss_nmea_field_parse_long(field, &local.azimuth);
+	if (rc <= 0) {
+	    break;
+	}
+	if (local.azimuth <= 359) {
 	    gsv->sat_info[(fid-4)%4].azimuth = local.azimuth;
+	} else {
+	    rc = 0;
 	}
 	break;
 
@@ -83,10 +107,14 @@ gnss_nmea_decoder_gsv(struct gnss_nmea_gsv *gsv, char *field, int fid) {
     case 11:
     case 15:
     case 19:
-	success = gnss_nmea_field_parse_long(field, &local.azimuth) &&
-	          (local.azimuth <= 100);
-	if (success) {
+	rc = gnss_nmea_field_parse_long(field, &local.azimuth);
+	if (rc <= 0) {
+	    break;
+	}
+	if (local.azimuth <= 100) {
 	    gsv->sat_info[(fid-4)%4].snr = local.snr;
+	} else {
+	    rc = 0;
 	}
 	break;
 
@@ -95,7 +123,7 @@ gnss_nmea_decoder_gsv(struct gnss_nmea_gsv *gsv, char *field, int fid) {
 	break;
     }
 
-    return success;
+    return rc;
 }
 
 void

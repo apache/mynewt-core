@@ -1,12 +1,11 @@
 #include <limits.h>
 #include <stdint.h>
-#include <stdbool.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <syscfg/syscfg.h>
 #include <gnss/nmea.h>
 
-bool
+int
 gnss_nmea_field_parse_string(const char *str, char *val, uint16_t maxsize)
 {
     assert(val != NULL);
@@ -18,52 +17,52 @@ gnss_nmea_field_parse_string(const char *str, char *val, uint16_t maxsize)
     if (maxsize > 0) {
 	*val = '\0';
     }
-    return *str == '\0';
+    return *str == '\0' ? 1 : -1;
 }
 
-bool
+int
 gnss_nmea_field_parse_char(const char *str, char *val)
 {
     char v = *str;
     if (val) { *val = v; }
-    return str[v ? 1 : 0] == '\0';
+    return str[v ? 1 : 0] == '\0' ? 1 : -1;
 }
 
-bool
+int
 gnss_nmea_field_parse_long(const char *str, long *val)
 {
     char *eob;
     long v = strtol(str, &eob, 10);
     if (val) { *val = v; }
-    return *eob == '\0';
+    return *eob == '\0' ? 1 : -1;
 }
 
-bool
+int
 gnss_nmea_field_parse_crc(const char *str, uint8_t *val)
 {
     char *eob;
     long v = strtoul(str, &eob, 16);
-    if (v > 255) return false;
+    if (v > 255) return 0;
     if (val) { *val = v; }
-    return *eob == '\0';
+    return *eob == '\0' ? 1 : -1;
 }
 
-bool
+int
 gnss_nmea_field_parse_float(const char *str, gnss_float_t *val)
 {
     char *eob;
 #if MYNEWT_VAL(GNSS_USE_FLOAT) > 0
     float v = strtod(str, &eob);
     if (val) { *val = v; }
-    return *eob == '\0';
+    return *eob == '\0' ? 1 : -1;
 #else
     gnss_q_t v = gnss_q_parse(str, &eob);
     if (val) { *val = v; }
-    return *eob == '\0';
+    return *eob == '\0' ? 1 : -1;
 #endif
 }
 
-bool
+int
 gnss_nmea_field_parse_and_apply_direction(const char *str, gnss_float_t *val)
 {
     int8_t v = 0;
@@ -71,13 +70,13 @@ gnss_nmea_field_parse_and_apply_direction(const char *str, gnss_float_t *val)
     case 'N': case 'E': v =  1; break;
     case 'S': case 'W': v = -1; break;
     case '\0': break;
-    default: return false;
+    default: return 0;
     }
     if (val) { *val = *val * v; }
-    return str[v ? 1 : 0] == '\0';
+    return str[v ? 1 : 0] == '\0' ? 1 : -1;
 }
 
-bool
+int
 gnss_nmea_field_parse_latlng(const char *str, gnss_float_t *val)
 {
 #if MYNEWT_VAL(GNSS_USE_FLOAT) > 0
@@ -87,11 +86,11 @@ gnss_nmea_field_parse_latlng(const char *str, gnss_float_t *val)
 	int dd  = v / 100;
 	*val = dd + (v - dd * 100) / 60.0f;
     }
-    return *eob == '\0';    
+    return *eob == '\0' ? 1 : -1;
 #else
     gnss_q_t v;
     if (!gnss_nmea_field_parse_float(str, &v)) {
-	return false;
+	return -1;
     }
     if (val) {
 	int32_t dd = gnss_q_to_l(v) / 100;
@@ -99,11 +98,11 @@ gnss_nmea_field_parse_latlng(const char *str, gnss_float_t *val)
 	v = gnss_q_div(v, GNSS_L_TO_Q(60));
 	*val = gnss_q_add_nosat(gnss_l_to_q(dd), v);
     }
-    return true;
+    return 1;
 #endif
 }
 
-bool
+int
 gnss_nmea_field_parse_date(const char *str, gnss_date_t *val)
 {
     char *eob;
@@ -113,10 +112,10 @@ gnss_nmea_field_parse_date(const char *str, gnss_date_t *val)
 	       v.month   = (n / 100) % 100;
 	       v.day     =  n / 10000;
 	       *val = v; }
-    return *eob == '\0';
+    return *eob == '\0' ? 1 : -1;
 }
 
-bool
+int
 gnss_nmea_field_parse_time(const char *str, gnss_time_t *val)
 {
     gnss_time_t v = { .present = *str != '\0' };
@@ -125,12 +124,12 @@ gnss_nmea_field_parse_time(const char *str, gnss_time_t *val)
 
     a = strtoul(str, &eob, 10);
     if (a > 240000) {
-	return false;
+	return 0;
     }
     switch(*eob) {
     case '\0': goto done;
     case '.' : str = eob + 1; break;
-    default  : return false;
+    default  : return -1;
     }
     eob = (char *)(str + 6);
     while ((str < eob) && isdigit(*str)) {
@@ -139,8 +138,9 @@ gnss_nmea_field_parse_time(const char *str, gnss_time_t *val)
     while (isdigit(*str)) {
 	str++;
     }
-    if (*str != '\0')
-	return false;
+    if (*str != '\0') {
+	return -1;
+    }
 
  done:
     if (val) {	
@@ -151,5 +151,5 @@ gnss_nmea_field_parse_time(const char *str, gnss_time_t *val)
 	v.microseconds = b;
 	*val = v;
     }
-    return true;
+    return 1;
 }

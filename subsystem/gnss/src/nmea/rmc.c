@@ -2,9 +2,9 @@
 #include <gnss/nmea.h>
 #include <gnss/log.h>
 
-bool
+int
 gnss_nmea_decoder_rmc(struct gnss_nmea_rmc *rmc, char *field, int fid) {
-    bool success = true;
+    int rc = 1;
     union {
         char   status;
     } local;
@@ -14,56 +14,59 @@ gnss_nmea_decoder_rmc(struct gnss_nmea_rmc *rmc, char *field, int fid) {
         break;
 
     case  1:    /* UTC Time */
-        success = gnss_nmea_field_parse_time(field, &rmc->time);
+        rc = gnss_nmea_field_parse_time(field, &rmc->time);
         break;
 
     case  2:    /* Status */
-        success = gnss_nmea_field_parse_char(field, &local.status);
-        if (success) {
-            rmc->valid = local.status == 'A';
-        }
+        rc = gnss_nmea_field_parse_char(field, &local.status);
+	if (rc <= 0) {
+	    break;
+	}
+	rmc->valid = local.status == 'A';
         break;
 
     case  3:    /* Latitude */
-        success = gnss_nmea_field_parse_latlng(field, &rmc->latitude);
+        rc = gnss_nmea_field_parse_latlng(field, &rmc->latitude);
 	break;
 
     case  4:    /* N/S indicator */
-        success = gnss_nmea_field_parse_and_apply_direction(field, &rmc->latitude);
+        rc = gnss_nmea_field_parse_and_apply_direction(field, &rmc->latitude);
 	break;
 	
     case  5:    /* Longitude */
-        success = gnss_nmea_field_parse_latlng(field, &rmc->longitude);
+        rc = gnss_nmea_field_parse_latlng(field, &rmc->longitude);
         break;  
 
     case  6:    /* E/W indicator */
-        success = gnss_nmea_field_parse_and_apply_direction(field, &rmc->longitude);
+        rc = gnss_nmea_field_parse_and_apply_direction(field, &rmc->longitude);
         break;
 
     case  7:    /* Speed over ground */
-        success = gnss_nmea_field_parse_float(field, &rmc->speed);
-        if (success) {
-            rmc->speed = _gnss_nmea_knot_to_mps(rmc->speed);
-        }
+        rc = gnss_nmea_field_parse_float(field, &rmc->speed);
+	if (rc <= 0) {
+	    break;
+	}
+	rmc->speed = _gnss_nmea_knot_to_mps(rmc->speed);
         break;
 
     case  8:    /* Track over ground */
-        success = gnss_nmea_field_parse_float(field, &rmc->track_true);
+        rc = gnss_nmea_field_parse_float(field, &rmc->track_true);
         break;
 
     case  9:    /* Date */
-        success = gnss_nmea_field_parse_date(field, &rmc->date);
+        rc = gnss_nmea_field_parse_date(field, &rmc->date);
         break;
 
     case 10:    /* Magnetic variation */
-        success = gnss_nmea_field_parse_float(field, &rmc->declination_magnetic);
+        rc = gnss_nmea_field_parse_float(field, &rmc->declination_magnetic);
         break;
 
     case 11:    /* E/W indicator */
-        success = gnss_nmea_field_parse_and_apply_direction(field, &rmc->declination_magnetic);        break;
+        rc = gnss_nmea_field_parse_and_apply_direction(field, &rmc->declination_magnetic);
+        break;
 	
     case 12:    /* FAA mode */
-        success = gnss_nmea_field_parse_char(field, &rmc->faa_mode);
+        rc = gnss_nmea_field_parse_char(field, &rmc->faa_mode);
         break;
 
     default:
@@ -71,7 +74,7 @@ gnss_nmea_decoder_rmc(struct gnss_nmea_rmc *rmc, char *field, int fid) {
         break;
     }
 
-    return success;
+    return rc;
 }
 
 void

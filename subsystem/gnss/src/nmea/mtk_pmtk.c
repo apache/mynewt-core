@@ -2,9 +2,9 @@
 #include <gnss/nmea.h>
 #include <gnss/log.h>
 
-bool
+int
 gnss_nmea_decoder_pmtk(struct gnss_nmea_pmtk *pmtk, char *field, int fid) {
-    bool success = true;
+    int rc = 1;
     union {
 	long sys_msg;
 	long cmd;
@@ -13,25 +13,33 @@ gnss_nmea_decoder_pmtk(struct gnss_nmea_pmtk *pmtk, char *field, int fid) {
 
     if (fid == 0) { /* PMTK */
 	pmtk->type = strtoul(&field[4], NULL, 10);
-	return true;
+	return 1;
     }
 
     switch(pmtk->type) {
     case GNSS_NMEA_PMTK_TYPE_ACK:
 	switch(fid) {
 	case 1:	    /* Cmd */
-	    success = gnss_nmea_field_parse_long(field, &local.cmd) &&
-		      (local.cmd <= 1000);
-	    if (success) {
+	    rc = gnss_nmea_field_parse_long(field, &local.cmd);
+	    if (rc <= 0) {
+		break;
+	    }
+	    if (local.cmd <= 1000) {
 		pmtk->ack.cmd = local.cmd;
+	    } else {
+		rc = 0;
 	    }
 	    break;
 
 	case 2:	    /* Status */
-	    success = gnss_nmea_field_parse_long(field, &local.status) &&
-		      (local.status <= 3);
-	    if (success) {
+	    rc = gnss_nmea_field_parse_long(field, &local.status);
+	    if (rc <= 0) {
+		break;
+	    }
+	    if (local.status <= 3) {
 		pmtk->ack.status = local.status;
+	    } else {
+		rc = 0;
 	    }
 	    break;
 
@@ -44,15 +52,19 @@ gnss_nmea_decoder_pmtk(struct gnss_nmea_pmtk *pmtk, char *field, int fid) {
     case GNSS_NMEA_PMTK_TYPE_SYS_MSG:
 	switch(fid) {
 	case 1:	    /* Systeme message */
-	    success = gnss_nmea_field_parse_long(field, &local.sys_msg) &&
-		      (local.sys_msg <= 3);
-	    if (success) {
+	    rc = gnss_nmea_field_parse_long(field, &local.sys_msg);
+	    if (rc <= 0) {
+		break;
+	    }
+	    if (local.sys_msg <= 3) {
 		pmtk->sys_msg = local.sys_msg;
+	    } else {
+		rc = 0;
 	    }
 	    break;
 
 	default:
-	    success = false;
+	    /* Ignore other fields */
 	    break;
 	}
 
@@ -64,16 +76,16 @@ gnss_nmea_decoder_pmtk(struct gnss_nmea_pmtk *pmtk, char *field, int fid) {
 	    break;
 
 	default:
-	    success = false;
+	    /* Ignore other fields */
 	    break;
 	}
 
     default:
-	success = false;
+	rc = 0;
 	break;
     }
     
-    return success;
+    return rc;
 }
 
 void

@@ -102,11 +102,11 @@ struct gnss_nmea_pmtk {
 
 
 #if MYNEWT_VAL(GNSS_NMEA_USE_PGACK) > 0
-bool gnss_nmea_decoder_pgack(struct gnss_nmea_pgack *pgack, char *field, int fid);
+int gnss_nmea_decoder_pgack(struct gnss_nmea_pgack *pgack, char *field, int fid);
 #endif
 
 #if MYNEWT_VAL(GNSS_NMEA_USE_PMTK) > 0
-bool gnss_nmea_decoder_pmtk(struct gnss_nmea_pmtk *pmtk, char *field, int fid);
+int gnss_nmea_decoder_pmtk(struct gnss_nmea_pmtk *pmtk, char *field, int fid);
 #endif
 
 

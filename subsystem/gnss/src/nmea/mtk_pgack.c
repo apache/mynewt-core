@@ -27,9 +27,9 @@ uint16_t gnss_nmea_pgack_lookup(const char *str) {
     return lookup_table[i].msg;
 }
 
-bool
+int
 gnss_nmea_decoder_pgack(struct gnss_nmea_pgack *pgack, char *field, int fid) {
-    bool success = true;
+    int rc = 1;
     union {
 	long type;
     } local;
@@ -37,7 +37,7 @@ gnss_nmea_decoder_pgack(struct gnss_nmea_pgack *pgack, char *field, int fid) {
     /* Deal with simple cases */
     switch(fid) {
     case  0:	/* PGACK */
-	return true;
+	return 1;
 
     case  1:
 	/*  Estimated Position Error */
@@ -49,7 +49,7 @@ gnss_nmea_decoder_pgack(struct gnss_nmea_pgack *pgack, char *field, int fid) {
 	    if (local.type < 1000) {
 		pgack->type = local.type;
 	    } else {
-		return false;
+		return 0;
 	    }
 
 	/* Assume mesage without id */
@@ -57,13 +57,13 @@ gnss_nmea_decoder_pgack(struct gnss_nmea_pgack *pgack, char *field, int fid) {
 	    pgack->type = 0;
 	    pgack->msg  = gnss_nmea_pgack_lookup(field);
 	}
-	return true;
+	return 1;
 
     case 2:
 	/* If we are in message mode */
 	if (pgack->type < 1000) {
 	    pgack->msg  = gnss_nmea_pgack_lookup(field);
-	    return true;
+	    return 1;
 	}
     }
 
@@ -73,25 +73,25 @@ gnss_nmea_decoder_pgack(struct gnss_nmea_pgack *pgack, char *field, int fid) {
     switch(pgack->type) {
     case GNSS_NMEA_PGACK_TYPE_EPE:
 	if ((field[0] == '\0') || (field[1] != '=')) {
-	    return false;
+	    return -1;
 	}
 	switch(field[0]) {
 	case 'H':
-	    success = gnss_nmea_field_parse_float(&field[2], &pgack->epe.h);
+	    rc = gnss_nmea_field_parse_float(&field[2], &pgack->epe.h);
 	    break;
 	case 'V':
-	    success = gnss_nmea_field_parse_float(&field[2], &pgack->epe.v);
+	    rc = gnss_nmea_field_parse_float(&field[2], &pgack->epe.v);
 	    break;
 	default:
-	    success = false;
+	    rc = 0;
 	}
 	break;
 
     default:
-	success = false;
+	rc = -1;
     }
     
-    return success;
+    return rc;
 }
 
 void

@@ -99,7 +99,7 @@ struct gnss_nmea_pubx {
 };
 
 #if MYNEWT_VAL(GNSS_NMEA_USE_PUBX) > 0
-bool gnss_nmea_decoder_pubx(struct gnss_nmea_pubx *pubx, char *field, int fid);
+int gnss_nmea_decoder_pubx(struct gnss_nmea_pubx *pubx, char *field, int fid);
 #endif
 
 #if MYNEWT_VAL(GNSS_NMEA_USE_PUBX) > 0

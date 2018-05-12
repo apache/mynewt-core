@@ -8,7 +8,7 @@
  */
 
 #define GNSS_Qm    15
-#define GNSS_Qn    17
+#define GNSS_Qn    (32 - GNSS_Qm)
 
 #define GNSS_L_TO_Q(m) ((m) << GNSS_Qm)
 

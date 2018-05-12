@@ -6,9 +6,9 @@
  * See: http://www.catb.org/gpsd/NMEA.html#_vtg_track_made_good_and_ground_speed
  */
 
-bool
+int
 gnss_nmea_decoder_vtg(struct gnss_nmea_vtg *vtg, char *field, int fid) {
-    bool success = true;
+    int rc = 1;
     union {
 	char type;
 	char unit;
@@ -20,59 +20,81 @@ gnss_nmea_decoder_vtg(struct gnss_nmea_vtg *vtg, char *field, int fid) {
 	break;
 
     case  1:	/* Track (True degrees) */
-	success = gnss_nmea_field_parse_float(field, &vtg->track_true);
+	rc = gnss_nmea_field_parse_float(field, &vtg->track_true);
 	break;	
 
     case  2: 	/* True (T) */
 #if MYNEWT_VAL(GNSS_NMEA_PARSER_VALIDATING) >= 3
-	success = gnss_nmea_field_parse_char(field, &local.type) &&
-	          (local.type == 'T');
+	rc = gnss_nmea_field_parse_char(field, &local.type);
+	if (rc <= 0) {
+	    break;
+	}
+	if (local.type != 'T') {
+	    rc = 0;
+	}
 #endif
 	break;
 
     case  3:	/* Track (Magnetic degrees) */
-	success = gnss_nmea_field_parse_float(field, &vtg->track_magnetic);
+	rc = gnss_nmea_field_parse_float(field, &vtg->track_magnetic);
 	break;	
 
     case  4: 	/* Magnetic (M) */
 #if MYNEWT_VAL(GNSS_NMEA_PARSER_VALIDATING) >= 3
-	success = gnss_nmea_field_parse_char(field, &local.type) &&
-	          (local.type == 'M');
+	rc = gnss_nmea_field_parse_char(field, &local.type);
+	if (rc <= 0) {
+	    break;
+	}
+	if (local.type != 'M') {
+	    rc = 0;
+	}
 #endif
 	break;
 
     case  5: 	/* Speed */
-        success = gnss_nmea_field_parse_float(field, &local.speed);
-        if (success) {
-            vtg->speed = _gnss_nmea_knot_to_mps(local.speed);
-        }
+        rc = gnss_nmea_field_parse_float(field, &local.speed);
+	if (rc <= 0) {
+	    break;
+	}
+	vtg->speed = _gnss_nmea_knot_to_mps(local.speed);
         break;
 
     case  6:    /* Knots (N) */
 #if MYNEWT_VAL(GNSS_NMEA_PARSER_VALIDATING) >= 3
-        success = gnss_nmea_field_parse_char(field, &local.unit) &&
-                  (local.unit == 'N');
+        rc = gnss_nmea_field_parse_char(field, &local.unit);
+	if (rc <= 0) {
+	    break;
+	}
+	if (local.unit != 'N') {
+	    rc = 0;
+	}
 #endif
         break;
 
     case  7:    /* Speed */
-        success = gnss_nmea_field_parse_float(field, &local.speed);
-        if (success) {
-            if ((vtg->speed == GNSS_FLOAT_0) && (local.speed != GNSS_FLOAT_0)) {
-                vtg->speed = _gnss_nmea_kmph_to_mps(local.speed);
-            }
-        }
+        rc = gnss_nmea_field_parse_float(field, &local.speed);
+	if (rc <= 0) {
+	    break;
+	}
+	if ((vtg->speed == GNSS_FLOAT_0) && (local.speed != GNSS_FLOAT_0)) {
+	    vtg->speed = _gnss_nmea_kmph_to_mps(local.speed);
+	}
         break;
 
     case  8:    /* Km/h (K) */
 #if MYNEWT_VAL(GNSS_NMEA_PARSER_VALIDATING) >= 3
-	success = gnss_nmea_field_parse_char(field, &local.unit) &&
-	          (local.unit == 'K');
+	rc = gnss_nmea_field_parse_char(field, &local.unit);
+	if (rc <= 0) {
+	    break;
+	}
+	if (local.unit != 'K') {
+	    rc = 0;
+	}
 #endif
 	break;
 
     case  9:	/* FAA mode */
-	success = gnss_nmea_field_parse_char(field, &vtg->faa_mode);
+	rc = gnss_nmea_field_parse_char(field, &vtg->faa_mode);
 	break;
 
     default:
@@ -80,7 +102,7 @@ gnss_nmea_decoder_vtg(struct gnss_nmea_vtg *vtg, char *field, int fid) {
 	break;
     }
 
-    return success;
+    return rc;
 }
 
 void
