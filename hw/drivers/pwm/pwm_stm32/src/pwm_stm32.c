@@ -29,13 +29,12 @@
 #include <stdint.h>
 #include <string.h>
 
-#define STM32_PWM_CH_MAX      4
-#define STM32_PWM_CH_NOPIN    0xFF
-#define STM32_PWM_CH_NOAF     0x0F
-#define STM32_PWM_CH_IDLE     0x0000
-
+#define STM32_PWM_CH_MAX          4
+#define STM32_PWM_CH_IDLE         0x0000
 #define STM32_PWM_CH_MODE_ENA     LL_TIM_OCMODE_PWM2
 #define STM32_PWM_CH_MODE_DIS     LL_TIM_OCMODE_ACTIVE
+
+#define STM32_PWM_PIN_NONE        0x0FFF
 
 typedef struct {
     uint32_t           n_cycles;
@@ -47,9 +46,9 @@ typedef struct {
 
 typedef struct {
     TIM_TypeDef         *timx;
-    uint16_t             irq;
     uint32_t             cycle;
-    uint8_t              ch_pin[STM32_PWM_CH_MAX];
+    uint16_t             pin[STM32_PWM_CH_MAX];
+    uint16_t             irq;
     stm32_pwm_dev_cfg_t  cfg;
 } stm32_pwm_dev_t;
 
@@ -71,7 +70,7 @@ stm32_pwm_ch(int ch)
 static void
 stm32_pwm_active_ch_set_mode(stm32_pwm_dev_t *pwm, uint32_t mode) {
     for (int i=0; i < STM32_PWM_CH_MAX; ++i) {
-        if (STM32_PWM_CH_NOPIN != pwm->ch_pin[i]) {
+        if (MCU_AFIO_PIN_NONE != pwm->pin[i]) {
             LL_TIM_OC_SetMode(pwm->timx, stm32_pwm_ch(i), mode);
         }
     }
@@ -182,10 +181,10 @@ stm32_pwm_close(struct os_dev *odev)
     for (int i=0; i < STM32_PWM_CH_MAX; ++i) {
         uint32_t ch = stm32_pwm_ch(i);
         stm32_pwm_ch_set_compare(pwm->timx, i, STM32_PWM_CH_IDLE);
-        if (STM32_PWM_CH_NOPIN != pwm->ch_pin[i]) {
-            hal_gpio_init_af(pwm->ch_pin[i], 0, HAL_GPIO_PULL_NONE, 0);
-            pwm->ch_pin[i] = STM32_PWM_CH_NOPIN;
+        if (MCU_AFIO_PIN_NONE != pwm->pin[i] && STM32_PWM_PIN_NONE != pwm->pin[i]) {
+            hal_gpio_init_af(MCU_AFIO_PIN_PAD(pwm->pin[i]), 0, HAL_GPIO_PULL_NONE, 0);
         }
+        pwm->pin[i] = MCU_AFIO_PIN_NONE;
         LL_TIM_CC_DisableChannel(pwm->timx, ch);
         LL_TIM_OC_SetMode(pwm->timx, ch, 0);
         LL_TIM_OC_SetPolarity(pwm->timx, ch, 0);
@@ -203,7 +202,6 @@ static int
 stm32_pwm_configure_channel(struct pwm_dev *dev, uint8_t cnum, struct pwm_chan_cfg *cfg)
 {
     stm32_pwm_dev_t *pwm;
-    uint8_t af;
 
     assert(dev);
     assert(dev->pwm_instance_id < PWM_COUNT);
@@ -213,19 +211,19 @@ stm32_pwm_configure_channel(struct pwm_dev *dev, uint8_t cnum, struct pwm_chan_c
     }
 
     pwm = &stm32_pwm_dev[dev->pwm_instance_id];
-    af = (uint8_t)(uintptr_t)cfg->data & 0x0F;
 
     uint32_t channelID = stm32_pwm_ch(cnum);
     LL_TIM_OC_SetMode(pwm->timx, channelID, STM32_PWM_CH_MODE_ENA);
     LL_TIM_OC_SetPolarity(pwm->timx, channelID, cfg->inverted ? LL_TIM_OCPOLARITY_HIGH : LL_TIM_OCPOLARITY_LOW);
     LL_TIM_OC_EnablePreload(pwm->timx,  channelID);
 
-    pwm->ch_pin[cnum] = STM32_PWM_CH_NOPIN;
-    if (STM32_PWM_CH_NOPIN != cfg->pin && STM32_PWM_CH_NOAF != af) {
-        if (hal_gpio_init_af(cfg->pin, af, HAL_GPIO_PULL_NONE, 0)) {
+    if (MCU_AFIO_PIN_NONE != cfg->pin ) {
+        if (hal_gpio_init_af(MCU_AFIO_PIN_PAD(cfg->pin), MCU_AFIO_PIN_AF(cfg->pin), HAL_GPIO_PULL_NONE, 0)) {
             return STM32_PWM_ERR_GPIO;
         }
-        pwm->ch_pin[cnum] = cfg->pin;
+        pwm->pin[cnum] = cfg->pin;
+    } else {
+        pwm->pin[cnum] = STM32_PWM_PIN_NONE;
     }
 
     LL_TIM_CC_EnableChannel(pwm->timx, channelID);
@@ -356,6 +354,10 @@ stm32_pwm_configure_device(struct pwm_dev *dev, struct pwm_dev_cfg *cfg)
     prio = cfg->int_prio;
     if (!prio) {
         prio = (1 << __NVIC_PRIO_BITS) - 1;
+    }
+
+    if (!pwm->irq) {
+        return STM32_PWM_ERR_NOIRQ;
     }
 
     NVIC_DisableIRQ(pwm->irq);
@@ -576,7 +578,7 @@ stm32_pwm_dev_init(struct os_dev *odev, void *arg)
 
     for (int i=0; i < STM32_PWM_CH_MAX; ++i) {
         stm32_pwm_ch_set_compare(pwm->timx, i, STM32_PWM_CH_IDLE);
-        pwm->ch_pin[i] = STM32_PWM_CH_NOPIN;
+        pwm->pin[i] = MCU_AFIO_PIN_NONE;
     }
 
     dev->pwm_funcs.pwm_configure_device = stm32_pwm_configure_device;

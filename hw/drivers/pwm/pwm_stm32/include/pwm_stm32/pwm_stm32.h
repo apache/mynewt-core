@@ -26,22 +26,45 @@
 extern "C" {
 #endif
 
+/*
+ * All HW timers capable of PWM are supported. A maximum of 4 channels per
+ * timer can be configured, depending on the HW timer being used.
+ *
+ * Currently there is no support for complementary outputs.
+ *
+ * A pwm channel can be configured with the MCU_AFIO_PIN_NONE as the pin
+ * configuration, in which case the output is not routed to a pin but the
+ * application has full access to the generated interrupts and can use these
+ * for periodic callbacks.
+ *
+ * The driver can return one of several error codes in order to aid issue
+ * tracking.
+ *
+ * STM32_PWM_ERR_OK      ... no error
+ * STM32_PWM_ERR_NODEV   ... no devices available, depending on configuration
+ *                           up to 3 devices are supported
+ * STM32_PWM_ERR_NOTIM   ... no hw timer was specified for initialization
+ * STM32_PWM_ERR_CHAN    ... specified channel is not valid for device
+ * STM32_PWM_ERR_FREQ    ... either no frequency was specified, or the specified
+ *                           frequency is higher than the clock frequency
+ * STM32_PWM_ERR_GPIO    ... an error occured during IO pin configuration
+ * STM32_PWM_ERR_NOIRQ   ... the device was registered without IRQ support but
+ *                           later cycle and/or sequence support was requested
+ */
+
 #define STM32_PWM_ERR_OK       0
 #define STM32_PWM_ERR_NODEV   -1
 #define STM32_PWM_ERR_NOTIM   -2
 #define STM32_PWM_ERR_CHAN    -3
 #define STM32_PWM_ERR_FREQ    -4
 #define STM32_PWM_ERR_GPIO    -5
+#define STM32_PWM_ERR_NOIRQ   -6
 
 typedef struct stm32_pwm_conf {
     TIM_TypeDef   *tim;
     uint16_t       irq;
 } stm32_pwm_conf_t;
 
-/**
- * All HW timers capable of PWM are supported. A maximum of 4 channels per
- * timer can be configured, depending on the HW timer being used.
- */
 int stm32_pwm_dev_init(struct os_dev *dev, void *a_struct_stm32_pwm_conf);
 
 #ifdef __cplusplus
