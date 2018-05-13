@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <hal/hal_gpio.h>
 #include <gnss/gnss.h>
 #include <gnss/nmea.h>
@@ -209,32 +210,95 @@ gnss_mediatek_init(gnss_t *ctx, struct gnss_mediatek *mtk) {
 
 
 
-#define GNSS_MEDIATEK_GLL  0
-#define GNSS_MEDIATEK_RMC  1
-#define GNSS_MEDIATEK_VTG  2
-#define GNSS_MEDIATEK_GGA  3
-#define GNSS_MEDIATEK_GSA  4
-#define GNSS_MEDIATEK_GDV  5
-#define GNSS_MEDIATEK_ZDA  17
-#define GNSS_MEDIATEK_MCHN 18
+
+int
+gnss_mediatek_nmea_rate(gnss_t *ctx, struct gnss_nmea_rate *rates) {
+    static char *cmd  = "PMTK314,1,1,1,1,1,5,0,0,0,0,0,0,0,0,0,0,0,0,0";
+    uint16_t rate;
+    int idx = 0;
+    
+    if (rates == NULL) {
+	gnss_nmea_send_cmd(ctx, "PMTK314,-1");
+	return 1;
+    }
 
 
+    /* Reset command string */
+    for (idx = 0; idx < 19 ; idx++) {
+	cmd[idx * 2] = '0';
+    }
+	
+    for ( ; rates->sentence != GNSS_NMEA_SENTENCE_NONE ; rates++) {
+	idx       = -1;
+	rate = rates->rate;
+	if (rate > 5) {
+	    rate = 5;
+	}
+	
+	switch(rates->sentence) {
+	case GNSS_NMEA_SENTENCE_GLL:  idx =  0; break;
+	case GNSS_NMEA_SENTENCE_RMC:  idx =  1; break;
+	case GNSS_NMEA_SENTENCE_VTG:  idx =  2; break;
+	case GNSS_NMEA_SENTENCE_GGA:  idx =  3; break;
+	case GNSS_NMEA_SENTENCE_GSA:  idx =  4; break;
+	case GNSS_NMEA_SENTENCE_GSV:  idx =  5; break;
+	case GNSS_NMEA_SENTENCE_ZDA:  idx = 17; break;
+	case GNSS_NMEA_SENTENCE_MCHN: idx = 18; break;
+	}
 
+	if (idx > 0) {
+	    cmd[8 + idx * 2] = '0' + rate;
+	}
+    }
+    
+    gnss_nmea_send_cmd(ctx, cmd);
 
-void
-gnss_nmea_output(void) {
-    /*
-      0 GLL
-      1 RMC
-      2 VTG
-      3 GGA
-      4 GSA
-      5 GDV
-      17 ZDA
-      18 MCHN
-    (void)"PMTK314,1,1,1,1,1,5,0,0,0,0,0,0,0,0,0,0,0,0,0";
-    */
+    return 1;
 }
 
-		 
+int
+gnss_mediatek_gnss(gnss_t *ctx, uint32_t gnss_mask) {
+    char cmd[18]; /* PGCMD,229,x,x,x,x
+		     PMTK353,x,x,x,0,x */
+    uint8_t gps     = 0;
+    uint8_t glonass = 0;
+    uint8_t galileo = 0;
+    uint8_t beidou  = 0;
+    uint8_t sbas    = 0;
+    uint8_t qzss    = 0;
+    
+    if (gnss_mask & (1 << GNSS_GPS    )) { gps     = 1; }
+    if (gnss_mask & (1 << GNSS_GLONASS)) { glonass = 1; }
+    if (gnss_mask & (1 << GNSS_GALILEO)) { galileo = 1; }
+    if (gnss_mask & (1 << GNSS_BEIDOU )) { beidou  = 1; }
+    if (gnss_mask & (1 << GNSS_SBAS   )) { sbas    = 1; }
+    if (gnss_mask & (1 << GNSS_QZSS   )) { qzss    = 1; }
+    
+    /* Switch to SDK mode */
+    gnss_nmea_send_cmd(ctx, "PGCMD,380,7");
+    /* Enable GNSS constellation */
+    snprintf(cmd, sizeof(cmd), "PGCMD,229,%d,%d,%d,%d",
+	     gps, glonass, beidou, galileo);
+    gnss_nmea_send_cmd(ctx, cmd);
+    /* Perform full cold start */
+    gnss_nmea_send_cmd(ctx, "PMTK104");
+
+    /* Wait for the reboot */
+    os_time_delay(100);
+
+    /* Search mode (not available on MT3339) */
+    snprintf(cmd, sizeof(cmd), "PMTK353,%d,%d,%d,0,%d",
+	     gps, glonass, beidou, galileo);
+    gnss_nmea_send_cmd(ctx, cmd);
+
+    /* SBAS */
+    snprintf(cmd, sizeof(cmd), "PMTK513,%d", sbas);
+    gnss_nmea_send_cmd(ctx, cmd);
+
+    /* QZSS */
+    snprintf(cmd, sizeof(cmd), "PMTK352,%d", qzss);
+    gnss_nmea_send_cmd(ctx, cmd);
+    
+    return 1;
+}	 
 // PMTK225

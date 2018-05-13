@@ -4,9 +4,9 @@ Callbacks
 void gnss_callback(int type, void *data) {
     switch(type) {
     case GNSS_EVENT_NMEA: {
-	struct gnss_nmea_message *msg = (struct gnss_nmea_message *)data;
-	gnss_nmea_log(msg);
-	break;
+        struct gnss_nmea_message *msg = (struct gnss_nmea_message *)data;
+        gnss_nmea_log(msg);
+        break;
     }
     }
 }
@@ -15,8 +15,8 @@ void gnss_error_callback(gnss_t *ctx, int error) {
      switch(error) {
      case GNSS_ERROR_WRONG_BAUD_RATE:
          // Low driver uart has been closed (os_dev_close)
-	 //  by the gnss_uart_rx_char helper
-	 // HERE: Need to change baud rate and call os_dev_open
+         //  by the gnss_uart_rx_char helper
+         // HERE: Need to change baud rate and call os_dev_open
          break;
      }
 }
@@ -28,20 +28,29 @@ Initialisation
     gnss_t xa1110;
        
     struct gnss_uart gnss_uart = {
-	.device         = "uart1",
+        .device         = "uart1",
     };
     struct gnss_nmea gnss_nmea = {
     };
     struct gnss_mediatek gnss_mediatek = {
-	.wakeup_pin     = -1,
-	.reset_pin      = -1,
-	.cmd_delay      = 10,
+        .wakeup_pin     = -1,
+        .reset_pin      = -1,
+        .cmd_delay      = 10,
     };
 
     gnss_init(&xa1110, gnss_callback, gnss_error_callback);
-    gnss_uart_init(&xa1110, &gnss_uart);	  /* Transport: UART     */
-    gnss_nmea_init(&xa1110, &gnss_nmea);	  /* Protocol : NMEA     */
-    gnss_mediatek_init(&xa1110, &gnss_mediatek);  /* Driver   : MediaTek */
+    gnss_uart_init(&xa1110, &gnss_uart);           /* Transport: UART      */
+    gnss_nmea_init(&xa1110, &gnss_nmea);           /* Protocol : NMEA      */
+    gnss_mediatek_init(&xa1110, &gnss_mediatek);   /* Driver   : MediaTek  */
+    gnss_mediatek_gnss(&xa1110, 1 << GNS_GPS     | /* GNSS constellation   */
+                                1 << GNS_SBAS    | /*  - usually limited   */ 
+                                1 << GNS_GALILEO | /*    to 1 to 3         */
+                                1 << GNS_GLONASS );
+    gnss_mediatak_nmea_rate(&xa1110, (struct gnss_nmea_rate []) {
+                                     { GNSS_NMEA_SENTENCE_RMC,  5 },
+                                     { GNSS_NMEA_SENTENCE_VTG,  2 },
+                                     { GNSS_NMEA_SENTENCE_NONE, 0 } });
+    
     gnss_start_rx(&xa1110);
 ~~~
 

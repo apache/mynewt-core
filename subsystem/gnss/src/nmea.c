@@ -344,7 +344,7 @@ gnss_nmea_send_cmd(gnss_t *ctx, char *cmd)
 {
     char  crc[3];
     char *msg[5];
-    int   i;    
+    int   i;
     
     /* Generating crc string */
     snprintf(crc, sizeof(crc), "%02X", gnss_nmea_crc(cmd));

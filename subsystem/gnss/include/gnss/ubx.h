@@ -198,6 +198,15 @@
 /* Firmware Update Messages */
 #define GNSS_UBX_MSG_UPD_SOS            0x0914
 
+/* GNSS Identifier */
+#define GNSS_UBX_GPS			0
+#define GNSS_UBX_SBAS			1
+#define GNSS_UBX_GALILEO		2
+#define GNSS_UBX_BEIDOU			3
+#define GNSS_UBX_IMES			4
+#define GNSS_UBX_QZSS			5
+#define GNSS_UBX_GLONASS		6
+
 /**
  * UBX message
  */

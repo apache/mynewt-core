@@ -4,15 +4,15 @@
 #include <gnss/log.h>
 
 int
-gnss_ubx_send_cmd(gnss_t *ctx, uint16_t class_id, uint8_t *bytes, uint16_t size)
+gnss_ubx_send_cmd(gnss_t *ctx, uint16_t msg, uint8_t *bytes, uint16_t size)
 {
     unsigned int i;
     uint8_t hdr[6] = { 0xB5, 0x62 };
     uint8_t crc[2] = { 0x00, 0x00 };
 
     /* Set message (Class / Id) */
-    hdr[2] = class_id >> 8;   /* Class */
-    hdr[3] = class_id & 0xFF; /* Id    */
+    hdr[2] = msg >> 8;   /* Class */
+    hdr[3] = msg & 0xFF; /* Id    */
 
     /* Set Length */
     put_le16(&hdr[4], size);
@@ -30,7 +30,7 @@ gnss_ubx_send_cmd(gnss_t *ctx, uint16_t class_id, uint8_t *bytes, uint16_t size)
     /* Sending command */
     LOG_INFO(&_gnss_log, LOG_MODULE_DEFAULT,
              "UBX Command: class/id=0x%04x, crc=0x%02x%02x, len=%d\n",
-             class_id, crc[0], crc[1], size);
+             msg, crc[0], crc[1], size);
 
     ctx->transport.send(ctx, hdr, 6);
     ctx->transport.send(ctx, bytes, size);
@@ -175,10 +175,54 @@ gnss_ubx_init(gnss_t *ctx, struct gnss_ubx *ubx)
     return true;
 }
 
+struct gnss_ubx_cfg_gnss {
+    uint8_t msgVer;
+    uint8_t numTrkChHw;
+    uint8_t numTrkChUse;
+    uint8_t numConfigBlocks;
+    struct {
+	uint8_t gnssId;
+	uint8_t resTrkCh;
+	uint8_t maxTrkCh;
+	uint8_t _reserved;
+	uint32_t flags;
+    } block[];
+};
+     
+
 void
 gnss_ubx_log(struct gnss_ubx_message *ubx)
 {    
     LOG_INFO(&_gnss_log, LOG_MODULE_DEFAULT,
              "UBX: class=0x%02x, id=0x%02x, len=%d\n",
              ubx->class_id >> 8, ubx->class_id & 0xFF, ubx->len);
+
+    switch(ubx->class_id) {
+    case GNSS_UBX_MSG_MON_VER: {
+	LOG_INFO(&_gnss_log, LOG_MODULE_DEFAULT,
+		 "UBX[MON_VER]: %s\n", (char*)ubx->data);
+	LOG_INFO(&_gnss_log, LOG_MODULE_DEFAULT,
+		 "UBX[MON_VER]: %s\n", (char*)&ubx->data[30]);
+	for (int i = 40 ; i < ubx->len ; i += 30) {
+	LOG_INFO(&_gnss_log, LOG_MODULE_DEFAULT,
+		 "UBX[MON_VER]: %s\n", (char*)&ubx->data[i]);
+	}
+	
+	break;
+    }
+
+    case GNSS_UBX_MSG_CFG_GNSS: {
+	struct gnss_ubx_cfg_gnss *d = (struct gnss_ubx_cfg_gnss *)ubx->data;
+	GNSS_LOG_INFO("UBX[CFG_GNSS]: numTrkChHw=%d, numTrkChUse=%d, numConfigBlocks=%d\n", d->numTrkChHw, d->numTrkChUse, d->numConfigBlocks);
+	for (int i = 0 ; i < d->numConfigBlocks ; i++) {
+	    GNSS_LOG_INFO("UBX[CFG_GNSS]: GNSS=%d, resTrkCh=%d, maxTrkCh=%d, flags=0x%08x\n",
+
+			  d->block[i].gnssId,
+			  d->block[i].resTrkCh,
+			  d->block[i].maxTrkCh,
+			  d->block[i].flags);
+	}
+	break;
+    }
+    }
 }

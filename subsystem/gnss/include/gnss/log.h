@@ -5,5 +5,8 @@
 
 extern struct log _gnss_log;
 
+#define GNSS_LOG_INFO(fmt...) \
+    LOG_INFO(&_gnss_log, LOG_MODULE_DEFAULT, fmt)
+
 #endif
 

@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <hal/hal_gpio.h>
 #include <gnss/gnss.h>
 #include <gnss/nmea.h>
@@ -170,8 +171,7 @@ gnss_ublox_init(gnss_t *ctx, struct gnss_ublox *ubx) {
 }
 
 int
-gnss_ublox_set_bauds(gnss_t *ctx, uint32_t bauds) {
-    
+gnss_ublox_set_bauds(gnss_t *ctx, uint32_t bauds) {    
     uint8_t cfg_prt[20] = { /* Little endian encoded */
 	0x01,                    /*  0 : portID       - UART     */
 	0x00,                    /*  1 : -                       */
@@ -186,5 +186,70 @@ gnss_ublox_set_bauds(gnss_t *ctx, uint32_t bauds) {
 
     put_le32(&cfg_prt[8], bauds);
 
-    return gnss_ubx_send_cmd(ctx, 0x0600, cfg_prt, 20);
+    gnss_ubx_send_cmd(ctx, 0x0600, cfg_prt, 20);
+
+    return 1;
+}
+
+int
+gnss_ublox_nmea_rate(gnss_t *ctx, struct gnss_nmea_rate *rates) { 
+    char cmd[36]; 
+
+    for ( ; rates->sentence != GNSS_NMEA_SENTENCE_NONE ; rates++) {
+	char *snc = NULL;
+	switch(rates->sentence) {
+	case GNSS_NMEA_SENTENCE_RMC: snc = "RMC"; break;
+	case GNSS_NMEA_SENTENCE_GGA: snc = "GGA"; break;
+	case GNSS_NMEA_SENTENCE_GSA: snc = "GSA"; break;
+	case GNSS_NMEA_SENTENCE_GST: snc = "GST"; break;
+	case GNSS_NMEA_SENTENCE_GLL: snc = "GLL"; break;
+	case GNSS_NMEA_SENTENCE_GSV: snc = "GSV"; break;
+	case GNSS_NMEA_SENTENCE_VTG: snc = "VTG"; break;
+	}
+	if (snc != NULL) {
+	    snprintf(cmd, sizeof(cmd), "PUBX,40,%s,%d,%d,0,0,%d,0",
+		     snc, rates->rate, rates->rate, rates->rate);
+	    gnss_nmea_send_cmd(ctx, cmd);
+	}
+    }
+    
+    return 1;
+}
+
+int
+gnss_ublox_gnss(gnss_t *ctx, uint32_t gnss_mask) {
+    struct {
+	uint8_t gnss;
+	uint8_t flags;
+	uint8_t resTrkCh;
+	uint8_t maxTrkCh;
+    } cfg_dflt[] = {
+	[ GNSS_UBX_GPS     ] = { GNSS_GPS,     0x01, 8, 16 },
+	[ GNSS_UBX_SBAS    ] = { GNSS_SBAS,    0x01, 1,  3 },
+	[ GNSS_UBX_GALILEO ] = { GNSS_GALILEO, 0x01, 4,  8 },
+	[ GNSS_UBX_BEIDOU  ] = { GNSS_BEIDOU,  0x01, 8, 16 },
+	[ GNSS_UBX_IMES    ] = { GNSS_IMES,    0x01, 0,  8 },
+	[ GNSS_UBX_QZSS    ] = { GNSS_QZSS,    0x01, 0,  3 },
+	[ GNSS_UBX_GLONASS ] = { GNSS_GLONASS, 0x01, 8, 14 },
+    };
+
+    uint8_t cfg[4 + 8 * (sizeof(cfg_dflt)/sizeof(cfg_dflt[0]))] = {
+	0x00,                                 /* version      : 0           */
+	0x00,                                 /* numTrkChHw   : <Read only> */
+	0xFF,                                 /* numTrkChUse  : <max>       */
+	sizeof(cfg_dflt)/sizeof(cfg_dflt[0]), /* numConfigBlocks            */
+    };
+
+    for (int i = 0 ; i < sizeof(cfg_dflt)/sizeof(cfg_dflt[0]) ; i++) {
+	int offset = 4 + i*8;
+	cfg[offset + 0] = i;
+	cfg[offset + 1] = cfg_dflt[i].resTrkCh;
+	cfg[offset + 2] = cfg_dflt[i].maxTrkCh;
+	cfg[offset + 4] = (gnss_mask & (1 << cfg_dflt[i].gnss)) ? 0x01 : 0x00;
+	cfg[offset + 6] = cfg_dflt[i].flags;
+    }
+
+    gnss_ubx_send_cmd(ctx, GNSS_UBX_MSG_CFG_GNSS, cfg, sizeof(cfg));
+
+    return 1;
 }

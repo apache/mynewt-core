@@ -92,31 +92,38 @@ gnss_nmea_crc(char *str) {
 
 /**
  * Talker Id
+ *  (using base 36 for code between 00 and ZZ)
  */
-#define GNSS_NMEA_TALKER_GP                           601
+#define GNSS_NMEA_TALKER_BD                           409
 #define GNSS_NMEA_TALKER_GA                           586
+#define GNSS_NMEA_TALKER_GB                           587
 #define GNSS_NMEA_TALKER_GL                           597
 #define GNSS_NMEA_TALKER_GN                           599
-#define GNSS_NMEA_TALKER_GB                           587
-#define GNSS_NMEA_TALKER_BD                           409
+#define GNSS_NMEA_TALKER_GP                           601
 #define GNSS_NMEA_TALKER_QZ                           971
-#define GNSS_NMEA_TALKER_UBLOX                      65001
-#define GNSS_NMEA_TALKER_MTK                        65002
+
+#define GNSS_NMEA_TALKER_UBLOX                      60001
+#define GNSS_NMEA_TALKER_MTK                        60002
 
 /**
  * Sentence type
+ *  (using base 36 for code between 000 and ZZZ)
  */
-#define GNSS_NMEA_SENTENCE_RMC                      35796
 #define GNSS_NMEA_SENTENCE_GGA                      21322
+#define GNSS_NMEA_SENTENCE_GLL                      21513
 #define GNSS_NMEA_SENTENCE_GSA                      21754
 #define GNSS_NMEA_SENTENCE_GST                      21773
-#define GNSS_NMEA_SENTENCE_GLL                      21513
 #define GNSS_NMEA_SENTENCE_GSV                      21775
+#define GNSS_NMEA_SENTENCE_RMC                      35796
 #define GNSS_NMEA_SENTENCE_VTG                      41236
+#define GNSS_NMEA_SENTENCE_ZDA                      45838
 
-#define GNSS_NMEA_SENTENCE_PGACK                     1001
-#define GNSS_NMEA_SENTENCE_PMTK                      1002
-#define GNSS_NMEA_SENTENCE_PUBX                      1003
+#define GNSS_NMEA_SENTENCE_PGACK                    60011
+#define GNSS_NMEA_SENTENCE_PMTK                     60012
+#define GNSS_NMEA_SENTENCE_MCHN                     60013
+#define GNSS_NMEA_SENTENCE_PUBX                     60021
+
+#define GNSS_NMEA_SENTENCE_NONE                     65535
 
 /**
  * GGA - Global Positioning System Fix Data
@@ -265,11 +272,19 @@ typedef struct gnss_nmea_event {
 
 
 /**
+ */
+struct gnss_nmea_rate {
+    uint16_t sentence;
+    uint16_t rate;
+};
+
+
+/**
  * Send a command using NMEA protocol.
  * Header and checksum are automatically added.
  *
  * @param ctx           GNSS context
- * @param cmd           Data to be send
+ * @param cmd           Command to send
  */
 bool gnss_nmea_send_cmd(gnss_t *ctx, char *cmd);
 

@@ -1,7 +1,6 @@
 #include <string.h>
 #include <gnss/gnss.h>
 #include <gnss/ubx_nmea.h>
-#include <console/console.h>
 
 /*
  * Decoding of UBX/NMEA sentence
