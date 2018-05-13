@@ -81,37 +81,31 @@ void
 gnss_nmea_log_rmc(struct gnss_nmea_rmc *rmc)
 {
     if (rmc->date.present) {
-        LOG_INFO(&_gnss_log, LOG_MODULE_DEFAULT,
-                 "RMC: Date = %2d-%02d-%02d\n",
-                 rmc->date.year,
-                 rmc->date.month,
-                 rmc->date.day);
+        GNSS_LOG_INFO("RMC: Date = %2d-%02d-%02d\n",
+		      rmc->date.year,
+		      rmc->date.month,
+		      rmc->date.day);
     }
     if (rmc->time.present) {
-        LOG_INFO(&_gnss_log, LOG_MODULE_DEFAULT,
-                 "RMC: Time = %2d:%02d:%02d.%03d\n",
-                       rmc->time.hours,
-                       rmc->time.minutes,
-                       rmc->time.seconds,
-                       rmc->time.microseconds / 1000);
+        GNSS_LOG_INFO("RMC: Time = %2d:%02d:%02d.%03d\n",
+		      rmc->time.hours,
+		      rmc->time.minutes,
+		      rmc->time.seconds,
+		      rmc->time.microseconds / 1000);
     }
     if (rmc->valid) {
-        LOG_INFO(&_gnss_log, LOG_MODULE_DEFAULT,
-                 "RMC: LatLng = %f, %f\n",
-                 GNSS_SYSFLOAT(rmc->latitude), GNSS_SYSFLOAT(rmc->longitude));
-        LOG_INFO(&_gnss_log, LOG_MODULE_DEFAULT,
-                 "RMC: Speed = %f\n", GNSS_SYSFLOAT(rmc->speed));
-        LOG_INFO(&_gnss_log, LOG_MODULE_DEFAULT,
-                 "RMC: Track = %f°[T], "
-		 "Declination = %f°[M]\n",
-		 GNSS_SYSFLOAT(rmc->track_true),
-		 GNSS_SYSFLOAT(rmc->declination_magnetic));
-        LOG_INFO(&_gnss_log, LOG_MODULE_DEFAULT,
-                 "RMC: FAA mode = %c\n", rmc->faa_mode);
+        GNSS_LOG_INFO("RMC: LatLng = %f, %f\n",
+		      GNSS_SYSFLOAT(rmc->latitude),
+		      GNSS_SYSFLOAT(rmc->longitude));
+        GNSS_LOG_INFO("RMC: Speed = %f\n", GNSS_SYSFLOAT(rmc->speed));
+        GNSS_LOG_INFO("RMC: Track = %f°[T], "
+		      "Declination = %f°[M]\n",
+		      GNSS_SYSFLOAT(rmc->track_true),
+		      GNSS_SYSFLOAT(rmc->declination_magnetic));
+        GNSS_LOG_INFO("RMC: FAA mode = %c\n", rmc->faa_mode);
     }
 
     if (!rmc->date.present && !rmc->time.present && !rmc->valid) {
-        LOG_INFO(&_gnss_log, LOG_MODULE_DEFAULT,
-                 "RMC: <no valid output>\n");
+        GNSS_LOG_INFO("RMC: <no valid output>\n");
     }
 }

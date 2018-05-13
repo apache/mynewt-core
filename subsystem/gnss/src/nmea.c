@@ -357,7 +357,7 @@ gnss_nmea_send_cmd(gnss_t *ctx, char *cmd)
     msg[4] = "\r\n";
 
     /* Sending command */
-    LOG_INFO(&_gnss_log, LOG_MODULE_DEFAULT, "Command: $%s*%s\n", cmd, crc);
+    GNSS_LOG_INFO("Command: $%s*%s\n", cmd, crc);
     
     for (i = 0 ; i < sizeof(msg) / sizeof(*msg) ; i++) {
         gnss_send(ctx, (uint8_t*)msg[i], strlen(msg[i]));

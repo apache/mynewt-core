@@ -129,18 +129,14 @@ gnss_nmea_decoder_gsv(struct gnss_nmea_gsv *gsv, char *field, int fid) {
 void
 gnss_nmea_log_gsv(struct gnss_nmea_gsv *gsv)
 {
-    LOG_INFO(&_gnss_log, LOG_MODULE_DEFAULT,
-	     "GSV: Count = %d\n", gsv->msg_count);
-    LOG_INFO(&_gnss_log, LOG_MODULE_DEFAULT,
-	     "GSV: Idx = %d\n", gsv->msg_idx);
-    LOG_INFO(&_gnss_log, LOG_MODULE_DEFAULT,
-	     "GSV: Total = %d\n", gsv->total_sats);
+    GNSS_LOG_INFO("GSV: Count = %d\n", gsv->msg_count);
+    GNSS_LOG_INFO("GSV: Idx = %d\n", gsv->msg_idx);
+    GNSS_LOG_INFO("GSV: Total = %d\n", gsv->total_sats);
     for (int i = 0 ; i < 4 ; i++) {
-	    LOG_INFO(&_gnss_log, LOG_MODULE_DEFAULT,
-		     "GSV: Satellite  = %d, %d, %d, %d\n",
-		     gsv->sat_info[i].prn,
-		     gsv->sat_info[i].elevation,
-		     gsv->sat_info[i].azimuth,
-		     gsv->sat_info[i].snr);
+	GNSS_LOG_INFO("GSV: Satellite  = %d, %d, %d, %d\n",
+		      gsv->sat_info[i].prn,
+		      gsv->sat_info[i].elevation,
+		      gsv->sat_info[i].azimuth,
+		      gsv->sat_info[i].snr);
     }
 }

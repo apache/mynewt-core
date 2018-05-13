@@ -28,9 +28,8 @@ gnss_ubx_send_cmd(gnss_t *ctx, uint16_t msg, uint8_t *bytes, uint16_t size)
     }
     
     /* Sending command */
-    LOG_INFO(&_gnss_log, LOG_MODULE_DEFAULT,
-             "UBX Command: class/id=0x%04x, crc=0x%02x%02x, len=%d\n",
-             msg, crc[0], crc[1], size);
+    GNSS_LOG_INFO("UBX Command: class/id=0x%04x, crc=0x%02x%02x, len=%d\n",
+		  msg, crc[0], crc[1], size);
 
     ctx->transport.send(ctx, hdr, 6);
     ctx->transport.send(ctx, bytes, size);
@@ -193,19 +192,15 @@ struct gnss_ubx_cfg_gnss {
 void
 gnss_ubx_log(struct gnss_ubx_message *ubx)
 {    
-    LOG_INFO(&_gnss_log, LOG_MODULE_DEFAULT,
-             "UBX: class=0x%02x, id=0x%02x, len=%d\n",
-             ubx->class_id >> 8, ubx->class_id & 0xFF, ubx->len);
+    GNSS_LOG_INFO("UBX: class=0x%02x, id=0x%02x, len=%d\n",
+		  ubx->class_id >> 8, ubx->class_id & 0xFF, ubx->len);
 
     switch(ubx->class_id) {
     case GNSS_UBX_MSG_MON_VER: {
-	LOG_INFO(&_gnss_log, LOG_MODULE_DEFAULT,
-		 "UBX[MON_VER]: %s\n", (char*)ubx->data);
-	LOG_INFO(&_gnss_log, LOG_MODULE_DEFAULT,
-		 "UBX[MON_VER]: %s\n", (char*)&ubx->data[30]);
+	GNSS_LOG_INFO("UBX[MON_VER]: %s\n", (char*)ubx->data);
+	GNSS_LOG_INFO("UBX[MON_VER]: %s\n", (char*)&ubx->data[30]);
 	for (int i = 40 ; i < ubx->len ; i += 30) {
-	LOG_INFO(&_gnss_log, LOG_MODULE_DEFAULT,
-		 "UBX[MON_VER]: %s\n", (char*)&ubx->data[i]);
+	    GNSS_LOG_INFO("UBX[MON_VER]: %s\n", (char*)&ubx->data[i]);
 	}
 	
 	break;

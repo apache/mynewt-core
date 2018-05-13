@@ -109,9 +109,8 @@ gnss_nmea_log_pmtk(struct gnss_nmea_pmtk *pmtk)
 	    status = "Successful";
 	    break;
 	}
-	LOG_INFO(&_gnss_log, LOG_MODULE_DEFAULT,
-		 "PMTK[ACK]: Cmd = %d, Status = %s\n",
-		 pmtk->ack.cmd, status);
+	GNSS_LOG_INFO("PMTK[ACK]: Cmd = %d, Status = %s\n",
+		      pmtk->ack.cmd, status);
 	break;
 
     case GNSS_NMEA_PMTK_TYPE_SYS_MSG:
@@ -129,19 +128,16 @@ gnss_nmea_log_pmtk(struct gnss_nmea_pmtk *pmtk)
 	    status = "Normal";
 	    break;
 	}	    
-	LOG_INFO(&_gnss_log, LOG_MODULE_DEFAULT,
-		 "PMTK[SYS_MSG]: Status = %s\n", status);
+	GNSS_LOG_INFO("PMTK[SYS_MSG]: Status = %s\n", status);
 	break;
 
     case GNSS_NMEA_PMTK_TYPE_TXT_MSG:
-	LOG_INFO(&_gnss_log, LOG_MODULE_DEFAULT,
-		 "PMTK[TXT_MSG]: %s\n",
-		 pmtk->txt_msg);
+	GNSS_LOG_INFO("PMTK[TXT_MSG]: %s\n",
+		      pmtk->txt_msg);
 	break;
 
     default:
-	LOG_INFO(&_gnss_log, LOG_MODULE_DEFAULT,
-		 "PMTK: <unknown>\n");
+	GNSS_LOG_INFO("PMTK: <unknown>\n");
 	break;
     }
 }

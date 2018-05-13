@@ -57,25 +57,23 @@ void
 gnss_nmea_log_gst(struct gnss_nmea_gst *gst)
 {
     if (gst->time.present) {
-	LOG_INFO(&_gnss_log, LOG_MODULE_DEFAULT,
-		 "GST: Time = %2d:%02d:%02d.%03d / "
-		 "RMS = %f / "
-		 "SM = %f (%f°) / "
-		 "Sm = %f / "
-		 "Lat = %f / Lng = %f / Alt = %f\n",
-		 gst->time.hours,
-		 gst->time.minutes,
-		 gst->time.seconds,
-		 gst->time.microseconds / 1000,
-		 GNSS_SYSFLOAT(gst->rms_stddev),
-		 GNSS_SYSFLOAT(gst->semi_major_stddev),
-		 GNSS_SYSFLOAT(gst->semi_major_orientation),
-		 GNSS_SYSFLOAT(gst->semi_minor_stddev),
-		 GNSS_SYSFLOAT(gst->latitude_stddev),
-		 GNSS_SYSFLOAT(gst->longitude_stddev),
-		 GNSS_SYSFLOAT(gst->altitude_stddev));
+	GNSS_LOG_INFO("GST: Time = %2d:%02d:%02d.%03d / "
+		      "RMS = %f / "
+		      "SM = %f (%f°) / "
+		      "Sm = %f / "
+		      "Lat = %f / Lng = %f / Alt = %f\n",
+		      gst->time.hours,
+		      gst->time.minutes,
+		      gst->time.seconds,
+		      gst->time.microseconds / 1000,
+		      GNSS_SYSFLOAT(gst->rms_stddev),
+		      GNSS_SYSFLOAT(gst->semi_major_stddev),
+		      GNSS_SYSFLOAT(gst->semi_major_orientation),
+		      GNSS_SYSFLOAT(gst->semi_minor_stddev),
+		      GNSS_SYSFLOAT(gst->latitude_stddev),
+		      GNSS_SYSFLOAT(gst->longitude_stddev),
+		      GNSS_SYSFLOAT(gst->altitude_stddev));
     } else {
-	LOG_INFO(&_gnss_log, LOG_MODULE_DEFAULT,
-		 "GST: <no valid output>\n");
+	GNSS_LOG_INFO("GST: <no valid output>\n");
     }
 }

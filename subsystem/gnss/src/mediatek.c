@@ -236,6 +236,8 @@ gnss_mediatek_set_bauds(gnss_t *ctx, uint32_t bauds) {
 
     /* Wait for the reboot */
     os_time_delay(100);
+
+    return 1;
 }
 
 int

@@ -80,24 +80,18 @@ void
 gnss_nmea_log_gsa(struct gnss_nmea_gsa *gsa)
 {
     if (gsa->fix_mode != 0) {
-	LOG_INFO(&_gnss_log, LOG_MODULE_DEFAULT,
-		 "GSA: PDOP = %f / HDOP = %f / VDOP = %f\n",
-		 GNSS_SYSFLOAT(gsa->pdop),
-		 GNSS_SYSFLOAT(gsa->hdop),
-		 GNSS_SYSFLOAT(gsa->vdop));
-	LOG_INFO(&_gnss_log, LOG_MODULE_DEFAULT,
-		 "GSA: Satellites =");
+	GNSS_LOG_INFO("GSA: PDOP = %f / HDOP = %f / VDOP = %f\n",
+		      GNSS_SYSFLOAT(gsa->pdop),
+		      GNSS_SYSFLOAT(gsa->hdop),
+		      GNSS_SYSFLOAT(gsa->vdop));
+	GNSS_LOG_INFO("GSA: Satellites =");
 	for (int i = 0 ; i < 12 ; i++) {
-	    LOG_INFO(&_gnss_log, LOG_MODULE_DEFAULT,
-		     " %d", gsa->sid[i]);
+	    GNSS_LOG_INFO(" %d", gsa->sid[i]);
 	}
-	LOG_INFO(&_gnss_log, LOG_MODULE_DEFAULT,
-		 " \n");
+	GNSS_LOG_INFO(" \n");
 	
-	LOG_INFO(&_gnss_log, LOG_MODULE_DEFAULT,
-		 "GSA: FIX mode = %d\n", gsa->fix_mode);
+	GNSS_LOG_INFO("GSA: FIX mode = %d\n", gsa->fix_mode);
     } else {
-	LOG_INFO(&_gnss_log, LOG_MODULE_DEFAULT,
-		 "GSA: <no valid output>\n");
+	GNSS_LOG_INFO("GSA: <no valid output>\n");
     }
 }

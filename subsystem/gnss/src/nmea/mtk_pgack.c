@@ -98,15 +98,12 @@ void
 gnss_nmea_log_pgack(struct gnss_nmea_pgack *pgack)
 {
     if (pgack->type < 1000) {
-	LOG_INFO(&_gnss_log, LOG_MODULE_DEFAULT,
-		 "PGACK[%d]: %d\n", pgack->type, pgack->msg);
+	GNSS_LOG_INFO("PGACK[%d]: %d\n", pgack->type, pgack->msg);
     } else if (pgack->type == GNSS_NMEA_PGACK_TYPE_EPE) {
-	LOG_INFO(&_gnss_log, LOG_MODULE_DEFAULT,
-		 "PGACK[EPE]: h=%f, v=%f\n",
-		 GNSS_SYSFLOAT(pgack->epe.h),
-		 GNSS_SYSFLOAT(pgack->epe.v));
+	GNSS_LOG_INFO("PGACK[EPE]: h=%f, v=%f\n",
+		      GNSS_SYSFLOAT(pgack->epe.h),
+		      GNSS_SYSFLOAT(pgack->epe.v));
     } else {
-	LOG_INFO(&_gnss_log, LOG_MODULE_DEFAULT,
-		 "PGACK: <unknown>\n");
+	GNSS_LOG_INFO("PGACK: <unknown>\n");
     }
 }

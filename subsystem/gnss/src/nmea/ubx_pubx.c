@@ -409,89 +409,79 @@ gnss_nmea_log_pubx(struct gnss_nmea_pubx *pubx)
 	break;
 
     case GNSS_NMEA_PUBX_TYPE_POSITION:
-	LOG_INFO(&_gnss_log, LOG_MODULE_DEFAULT,
-		 "PUBX[%02d|position]: "
-		 "Time = %2d:%02d:%02d.%03d\n",
-		 pubx->type,
-		 pubx->position.time.hours,
-		 pubx->position.time.minutes,
-		 pubx->position.time.seconds,
-		 pubx->position.time.microseconds / 1000);
+	GNSS_LOG_INFO("PUBX[%02d|position]: "
+		      "Time = %2d:%02d:%02d.%03d\n",
+		      pubx->type,
+		      pubx->position.time.hours,
+		      pubx->position.time.minutes,
+		      pubx->position.time.seconds,
+		      pubx->position.time.microseconds / 1000);
 	
-	LOG_INFO(&_gnss_log, LOG_MODULE_DEFAULT,
-		 "PUBX[%02d|position]: "
-		 "LatLng = %f, %f; Alt=%f\n",
-		 pubx->type,
-		 GNSS_SYSFLOAT(pubx->position.latitude),
-		 GNSS_SYSFLOAT(pubx->position.longitude),
-		 GNSS_SYSFLOAT(pubx->position.altitude)
-		 );
+	GNSS_LOG_INFO("PUBX[%02d|position]: "
+		      "LatLng = %f, %f; Alt=%f\n",
+		      pubx->type,
+		      GNSS_SYSFLOAT(pubx->position.latitude),
+		      GNSS_SYSFLOAT(pubx->position.longitude),
+		      GNSS_SYSFLOAT(pubx->position.altitude)
+		      );
 	
-	LOG_INFO(&_gnss_log, LOG_MODULE_DEFAULT,
-		 "PUBX[%02d|position]: "
-		 "Track = %f° | %f m/s\n",
-		 pubx->type,
-		 GNSS_SYSFLOAT(pubx->position.track),
-		 GNSS_SYSFLOAT(pubx->position.speed));
+	GNSS_LOG_INFO("PUBX[%02d|position]: "
+		      "Track = %f° | %f m/s\n",
+		      pubx->type,
+		      GNSS_SYSFLOAT(pubx->position.track),
+		      GNSS_SYSFLOAT(pubx->position.speed));
 	
-	LOG_INFO(&_gnss_log, LOG_MODULE_DEFAULT,
-		 "PUBX[%02d|position]: "
-		 "HDOP = %f / VDOP = %f / TDOP = %f\n",
-		 pubx->type,
-		 GNSS_SYSFLOAT(pubx->position.hdop),
-		 GNSS_SYSFLOAT(pubx->position.vdop),
-		 GNSS_SYSFLOAT(pubx->position.tdop));
+	GNSS_LOG_INFO("PUBX[%02d|position]: "
+		      "HDOP = %f / VDOP = %f / TDOP = %f\n",
+		      pubx->type,
+		      GNSS_SYSFLOAT(pubx->position.hdop),
+		      GNSS_SYSFLOAT(pubx->position.vdop),
+		      GNSS_SYSFLOAT(pubx->position.tdop));
 	
-	LOG_INFO(&_gnss_log, LOG_MODULE_DEFAULT,
-		 "PUBX[%02d|position]: "
-		 "HACC = %f / VACC = %f\n",
-		 pubx->type,
-		 GNSS_SYSFLOAT(pubx->position.hacc),
-		 GNSS_SYSFLOAT(pubx->position.vacc));
+	GNSS_LOG_INFO("PUBX[%02d|position]: "
+		      "HACC = %f / VACC = %f\n",
+		      pubx->type,
+		      GNSS_SYSFLOAT(pubx->position.hacc),
+		      GNSS_SYSFLOAT(pubx->position.vacc));
 	break;
 	
     case GNSS_NMEA_PUBX_TYPE_RATE:
-	LOG_INFO(&_gnss_log, LOG_MODULE_DEFAULT,
-		 "PUBX[%02d|rate]: "
-		 "DDC=%d / USART1=%d / USART2=%d / USB=%d / SPI=%d\n",
-		 pubx->type,
-		 pubx->rate.ddc,
-		 pubx->rate.usart1,
-		 pubx->rate.usart2,
-		 pubx->rate.usb,
-		 pubx->rate.spi);
+	GNSS_LOG_INFO("PUBX[%02d|rate]: "
+		      "DDC=%d / USART1=%d / USART2=%d / USB=%d / SPI=%d\n",
+		      pubx->type,
+		      pubx->rate.ddc,
+		      pubx->rate.usart1,
+		      pubx->rate.usart2,
+		      pubx->rate.usb,
+		      pubx->rate.spi);
 	break;
 	
     case GNSS_NMEA_PUBX_TYPE_SVSTATUS:
-	LOG_INFO(&_gnss_log, LOG_MODULE_DEFAULT,
-		 "PUBX[%02d|svstatus]: <not implemented yet>\n");
+	GNSS_LOG_INFO("PUBX[%02d|svstatus]: <not implemented yet>\n");
 	break;
 
     case GNSS_NMEA_PUBX_TYPE_TIME:
 	if (pubx->time.date.present) {
-	    LOG_INFO(&_gnss_log, LOG_MODULE_DEFAULT,
-		     "PUBX[%02d|time]: "
-		     "Date = %2d-%02d-%02d\n",
-		     pubx->type,
-		     pubx->time.date.year,
-		     pubx->time.date.month,
-		     pubx->time.date.day);
+	    GNSS_LOG_INFO("PUBX[%02d|time]: "
+			  "Date = %2d-%02d-%02d\n",
+			  pubx->type,
+			  pubx->time.date.year,
+			  pubx->time.date.month,
+			  pubx->time.date.day);
 	}
 	if (pubx->time.time.present) {
-	    LOG_INFO(&_gnss_log, LOG_MODULE_DEFAULT,
-		     "PUBX[%02d|time]: "
-		     "Time = %2d:%02d:%02d.%03d\n",
-		     pubx->type,
-		     pubx->time.time.hours,
-		     pubx->time.time.minutes,
-		     pubx->time.time.seconds,
-		     pubx->time.time.microseconds / 1000);
+	    GNSS_LOG_INFO("PUBX[%02d|time]: "
+			  "Time = %2d:%02d:%02d.%03d\n",
+			  pubx->type,
+			  pubx->time.time.hours,
+			  pubx->time.time.minutes,
+			  pubx->time.time.seconds,
+			  pubx->time.time.microseconds / 1000);
 	}
 	break;
 	
     default:
-	LOG_INFO(&_gnss_log, LOG_MODULE_DEFAULT,
-		 "PUBX[%02d]: <unknown>\n", pubx->type);
+	GNSS_LOG_INFO("PUBX[%02d]: <unknown>\n", pubx->type);
 	break;
     }
 }

@@ -135,27 +135,19 @@ void
 gnss_nmea_log_gga(struct gnss_nmea_gga *gga)
 {
     if (gga->time.present) {
-	LOG_INFO(&_gnss_log, LOG_MODULE_DEFAULT,
-		 "GGA: Time = %2d:%02d:%02d.%03d\n",
-		 gga->time.hours,
-		 gga->time.minutes,
-		 gga->time.seconds,
-		 gga->time.microseconds / 1000);
+	GNSS_LOG_INFO("GGA: Time = %2d:%02d:%02d.%03d\n",
+		      gga->time.hours,
+		      gga->time.minutes,
+		      gga->time.seconds,
+		      gga->time.microseconds / 1000);
     }
 
-    LOG_INFO(&_gnss_log, LOG_MODULE_DEFAULT,
-	     "GGA: DGPS = %d (%d)\n", gga->dgps_age, gga->dgps_sid);
-    LOG_INFO(&_gnss_log, LOG_MODULE_DEFAULT,
-	     "GGA: Geoid sep. = %f\n", GNSS_SYSFLOAT(gga->geoid_separation));
-    LOG_INFO(&_gnss_log, LOG_MODULE_DEFAULT,
-	     "GGA: LatLng = %f, %f\n",
-	     GNSS_SYSFLOAT(gga->latitude), GNSS_SYSFLOAT(gga->longitude));
-    LOG_INFO(&_gnss_log, LOG_MODULE_DEFAULT,
-	     "GGA: Altitude = %f \n", GNSS_SYSFLOAT(gga->altitude));
-    LOG_INFO(&_gnss_log, LOG_MODULE_DEFAULT,
-	     "GGA: HDOP = %f\n", GNSS_SYSFLOAT(gga->hdop));
-    LOG_INFO(&_gnss_log, LOG_MODULE_DEFAULT,
-	     "GGA: FIX = %d\n", gga->fix_indicator);
-    LOG_INFO(&_gnss_log, LOG_MODULE_DEFAULT,
-	     "GGA: Satellites = %d\n", gga->satellites_in_view);
+    GNSS_LOG_INFO("GGA: DGPS = %d (%d)\n", gga->dgps_age, gga->dgps_sid);
+    GNSS_LOG_INFO("GGA: Geoid sep. = %f\n", GNSS_SYSFLOAT(gga->geoid_separation));
+    GNSS_LOG_INFO("GGA: LatLng = %f, %f\n",
+		  GNSS_SYSFLOAT(gga->latitude), GNSS_SYSFLOAT(gga->longitude));
+    GNSS_LOG_INFO("GGA: Altitude = %f \n", GNSS_SYSFLOAT(gga->altitude));
+    GNSS_LOG_INFO("GGA: HDOP = %f\n", GNSS_SYSFLOAT(gga->hdop));
+    GNSS_LOG_INFO("GGA: FIX = %d\n", gga->fix_indicator);
+    GNSS_LOG_INFO("GGA: Satellites = %d\n", gga->satellites_in_view);
 }

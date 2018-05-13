@@ -61,23 +61,20 @@ void
 gnss_nmea_log_gll(struct gnss_nmea_gll *gll)
 {
     if (gll->time.present) {
-	LOG_INFO(&_gnss_log, LOG_MODULE_DEFAULT,
-		 "GLL: Time = %2d:%02d:%02d.%03d\n",
-		       gll->time.hours,
-		       gll->time.minutes,
-		       gll->time.seconds,
-		       gll->time.microseconds / 1000);
+	GNSS_LOG_INFO("GLL: Time = %2d:%02d:%02d.%03d\n",
+		      gll->time.hours,
+		      gll->time.minutes,
+		      gll->time.seconds,
+		      gll->time.microseconds / 1000);
     }
     if (gll->valid) {
-	LOG_INFO(&_gnss_log, LOG_MODULE_DEFAULT,
-		 "GLL: LatLng = %f, %f\n",
-		 GNSS_SYSFLOAT(gll->latitude), GNSS_SYSFLOAT(gll->longitude));
-	LOG_INFO(&_gnss_log, LOG_MODULE_DEFAULT,
-		 "GLL: FAA mode = %c\n", gll->faa_mode);
+	GNSS_LOG_INFO("GLL: LatLng = %f, %f\n",
+		      GNSS_SYSFLOAT(gll->latitude),
+		      GNSS_SYSFLOAT(gll->longitude));
+	GNSS_LOG_INFO("GLL: FAA mode = %c\n", gll->faa_mode);
     }
 
     if (!gll->time.present && !gll->valid) {
-	LOG_INFO(&_gnss_log, LOG_MODULE_DEFAULT,
-		 "GLL: <no valid output>\n");
+	GNSS_LOG_INFO("GLL: <no valid output>\n");
     }
 }
