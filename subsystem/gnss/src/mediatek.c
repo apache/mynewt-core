@@ -209,7 +209,34 @@ gnss_mediatek_init(gnss_t *ctx, struct gnss_mediatek *mtk) {
 }
 
 
+int
+gnss_mediatek_set_bauds(gnss_t *ctx, uint32_t bauds) {
+    char cmd[12]; /* PGCMD,232,x */
+    int b;
+    
+    /* Convert bauds */
+    switch (bauds) {
+    case   4800: b = 0; break;
+    case   9600: b = 1; break;
+    case  14400: b = 2; break;
+    case  19200: b = 3; break;
+    case  38400: b = 4; break;
+    case  57600: b = 5; break;
+    case 115200: b = 6; break;
+    default: return -1;
+    }
 
+    /* Switch to SDK mode */
+    gnss_nmea_send_cmd(ctx, "PGCMD,380,7");
+    /* Enable GNSS constellation */
+    snprintf(cmd, sizeof(cmd), "PGCMD,232,%d", b);
+    gnss_nmea_send_cmd(ctx, cmd);
+    /* Perform full cold start */
+    gnss_nmea_send_cmd(ctx, "PMTK104");
+
+    /* Wait for the reboot */
+    os_time_delay(100);
+}
 
 int
 gnss_mediatek_nmea_rate(gnss_t *ctx, struct gnss_nmea_rate *rates) {
@@ -221,7 +248,6 @@ gnss_mediatek_nmea_rate(gnss_t *ctx, struct gnss_nmea_rate *rates) {
 	gnss_nmea_send_cmd(ctx, "PMTK314,-1");
 	return 1;
     }
-
 
     /* Reset command string */
     for (idx = 0; idx < 19 ; idx++) {
