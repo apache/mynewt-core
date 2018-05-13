@@ -73,6 +73,13 @@ gnss_nmea_crc(char *str) {
 #define GNNS_NMEA_FIX_TYPE_SIMULATION                   8
 
 /**
+ * Fix mode
+ */
+#define GNSS_NMEA_FIX_MODE_NO                           1
+#define GNSS_NMEA_FIX_MODE_2D                           2
+#define GNSS_NMEA_FIX_MODE_3D                           3
+
+/**
  * FAA modes
  */
 #define GNNS_NMEA_FAA_MODE_AUTONOMOUS                 'A'
@@ -82,13 +89,6 @@ gnss_nmea_crc(char *str) {
 #define GNSS_NMEA_FAA_MODE_SIMULATED                  'S'
 #define GNSS_NMEA_FAA_MODE_NOT_VALID                  'N'
 #define GNSS_NMEA_FAA_MODE_PRECISE                    'P'
-
-/**
- * Fix mode
- */
-#define GNSS_NMEA_FIX_MODE_NO                           1
-#define GNSS_NMEA_FIX_MODE_2D                           2
-#define GNSS_NMEA_FIX_MODE_3D                           3
 
 /**
  * Talker Id
@@ -288,6 +288,7 @@ struct gnss_nmea_rate {
  */
 bool gnss_nmea_send_cmd(gnss_t *ctx, char *cmd);
 
+void gnss_nmea_byte_decoder_reset(struct gnss_nmea *gn);
 
 int gnss_nmea_byte_decoder(gnss_t *ctx, struct gnss_nmea *gn, uint8_t byte);
 

@@ -57,11 +57,13 @@ void
 gnss_nmea_log_gst(struct gnss_nmea_gst *gst)
 {
     if (gst->time.present) {
-	GNSS_LOG_INFO("GST: Time = %2d:%02d:%02d.%03d / "
+	GNSS_LOG_INFO("GST: "
+		      "Time = %2d:%02d:%02d.%03d / "
 		      "RMS = %f / "
-		      "SM = %f (%f°) / "
-		      "Sm = %f / "
-		      "Lat = %f / Lng = %f / Alt = %f\n",
+		      "Semi-Major = %f (%f°) / "
+		      "Semi-minor = %f / "
+		      "LatLng = %f, %f / Alt = %f"
+		      "\n",
 		      gst->time.hours,
 		      gst->time.minutes,
 		      gst->time.seconds,

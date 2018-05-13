@@ -165,6 +165,11 @@ gnss_nmea_decode_field(struct gnss_nmea *gn)
     }
 }
 
+void
+gnss_nmea_byte_decoder_reset(struct gnss_nmea *gn) {
+    gn->state = GNSS_NMEA_STATE_VIRGIN;
+}
+
 /*
  * Decoding of NMEA sentence
  *
@@ -371,7 +376,10 @@ gnss_nmea_send_cmd(gnss_t *ctx, char *cmd)
 
 void
 gnss_nmea_log(struct gnss_nmea_message *nmea)
-{    
+{
+    GNSS_LOG_INFO("Found NMEA [ Talker = %d | Sentence = %d ]\n",
+		  nmea->talker, nmea->sentence);
+    
     switch(nmea->talker) {
     case GNSS_NMEA_TALKER_MTK:
         switch(nmea->sentence) {

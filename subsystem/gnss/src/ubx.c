@@ -39,6 +39,11 @@ gnss_ubx_send_cmd(gnss_t *ctx, uint16_t msg, uint8_t *bytes, uint16_t size)
     return 6 + size + 2;
 }
 
+void
+gnss_ubx_byte_decoder_reset(struct gnss_ubx *gu) {
+    gu->idx = 0;
+}
+
 /*
  * Decoding of UBX sentence
  *

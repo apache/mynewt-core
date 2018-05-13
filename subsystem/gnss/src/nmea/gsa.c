@@ -79,19 +79,23 @@ gnss_nmea_decoder_gsa(struct gnss_nmea_gsa *gsa, char *field, int fid) {
 void
 gnss_nmea_log_gsa(struct gnss_nmea_gsa *gsa)
 {
-    if (gsa->fix_mode != 0) {
-	GNSS_LOG_INFO("GSA: PDOP = %f / HDOP = %f / VDOP = %f\n",
+    if (gsa->fix_mode > GNSS_NMEA_FIX_MODE_NO) {
+	GNSS_LOG_INFO("GSA: "
+		      "FIX = %dD / "
+		      "PDOP = %f / HDOP = %f / VDOP = %f / "
+		      "Sats=%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d"
+		      "\n",
+		      gsa->fix_mode,
 		      GNSS_SYSFLOAT(gsa->pdop),
 		      GNSS_SYSFLOAT(gsa->hdop),
-		      GNSS_SYSFLOAT(gsa->vdop));
-	GNSS_LOG_INFO("GSA: Satellites =");
-	for (int i = 0 ; i < 12 ; i++) {
-	    GNSS_LOG_INFO(" %d", gsa->sid[i]);
-	}
-	GNSS_LOG_INFO(" \n");
-	
-	GNSS_LOG_INFO("GSA: FIX mode = %d\n", gsa->fix_mode);
+		      GNSS_SYSFLOAT(gsa->vdop),
+		      gsa->sid[ 0], gsa->sid[ 1],
+		      gsa->sid[ 2], gsa->sid[ 3],
+		      gsa->sid[ 4], gsa->sid[ 5],
+		      gsa->sid[ 6], gsa->sid[ 7],
+		      gsa->sid[ 8], gsa->sid[ 9],
+		      gsa->sid[10], gsa->sid[11]);
     } else {
-	GNSS_LOG_INFO("GSA: <no valid output>\n");
+	GNSS_LOG_INFO("GSA: <no fix>\n");
     }
 }

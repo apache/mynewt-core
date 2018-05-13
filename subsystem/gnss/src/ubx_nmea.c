@@ -35,7 +35,7 @@ gnss_ubx_nmea_byte_decoder(gnss_t *ctx, struct gnss_ubx_nmea *gun, uint8_t byte)
 		gun->type      = GNSS_EVENT_UBX;/* Switch to UBX decoding  */
 
 		/* Need to reset UBX decoding context */
-		memset(&gun->ubx, 0, sizeof(gun->ubx));
+		gnss_ubx_byte_decoder_reset(&gun->ubx);
 		/* Re-generate swallowed char */
 		gnss_ubx_byte_decoder(ctx, &gun->ubx, 0xB5);
 		/* Go to UBX decoder */
@@ -49,7 +49,7 @@ gnss_ubx_nmea_byte_decoder(gnss_t *ctx, struct gnss_ubx_nmea *gun, uint8_t byte)
 	    gun->type      = GNSS_EVENT_NMEA;	/* Switch to NMEA decoding */
 
 	    /* Need to reset NMEA decoding context */
-	    memset(&gun->nmea, 0, sizeof(gun->nmea));
+	    gnss_nmea_byte_decoder_reset(&gun->nmea);
 	    /* Go to NMEA decoder */
 	    goto nmea;
 	}

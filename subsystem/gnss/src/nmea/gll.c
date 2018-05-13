@@ -68,10 +68,13 @@ gnss_nmea_log_gll(struct gnss_nmea_gll *gll)
 		      gll->time.microseconds / 1000);
     }
     if (gll->valid) {
-	GNSS_LOG_INFO("GLL: LatLng = %f, %f\n",
+	GNSS_LOG_INFO("GLL: "
+		      "LatLng = %f, %f / ",
+		      "FAA mode = %c"
+		      "\n",
 		      GNSS_SYSFLOAT(gll->latitude),
-		      GNSS_SYSFLOAT(gll->longitude));
-	GNSS_LOG_INFO("GLL: FAA mode = %c\n", gll->faa_mode);
+		      GNSS_SYSFLOAT(gll->longitude),
+		      gll->faa_mode);
     }
 
     if (!gll->time.present && !gll->valid) {

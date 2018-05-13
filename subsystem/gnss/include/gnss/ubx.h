@@ -266,6 +266,8 @@ bool gnss_ubx_init(gnss_t *ctx, struct gnss_ubx *ubx);
 int gnss_ubx_send_cmd(gnss_t *ctx, uint16_t msg, uint8_t *bytes, uint16_t size);
 
 /* Byte decoder for UBX protocol */
+
+void gnss_ubx_byte_decoder_reset(struct gnss_ubx *gu);
 int gnss_ubx_byte_decoder(gnss_t *ctx, struct gnss_ubx *gu, uint8_t byte);
 
 void gnss_ubx_log(struct gnss_ubx_message *ubx);

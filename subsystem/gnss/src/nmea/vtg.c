@@ -108,7 +108,11 @@ gnss_nmea_decoder_vtg(struct gnss_nmea_vtg *vtg, char *field, int fid) {
 void
 gnss_nmea_log_vtg(struct gnss_nmea_vtg *vtg)
 {
-    GNSS_LOG_INFO("VTG: Track = %f°[T] | %f°[M] / Speed = %f m/s / FAA = %c\n",
+    GNSS_LOG_INFO("VTG: "
+		  "Track = %f°[T] | %f°[M] / "
+		  "Speed = %f m/s / "
+		  "FAA = %c"
+		  "\n",
 		  GNSS_SYSFLOAT(vtg->track_true),
 		  GNSS_SYSFLOAT(vtg->track_magnetic),
 		  GNSS_SYSFLOAT(vtg->speed),

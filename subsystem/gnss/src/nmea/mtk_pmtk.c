@@ -132,8 +132,7 @@ gnss_nmea_log_pmtk(struct gnss_nmea_pmtk *pmtk)
 	break;
 
     case GNSS_NMEA_PMTK_TYPE_TXT_MSG:
-	GNSS_LOG_INFO("PMTK[TXT_MSG]: %s\n",
-		      pmtk->txt_msg);
+	GNSS_LOG_INFO("PMTK[TXT_MSG]: %s\n", pmtk->txt_msg);
 	break;
 
     default:
