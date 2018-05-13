@@ -88,7 +88,6 @@ gnss_ubx_nmea_decoder(gnss_t *ctx, uint8_t byte)
     struct gnss_ubx_nmea *gun = ctx->protocol.conf;
 
     rc = gnss_ubx_nmea_byte_decoder(ctx, gun, byte);
-    rc = gnss_check_scrambled_transport(ctx, rc);
 
     return rc;
 }

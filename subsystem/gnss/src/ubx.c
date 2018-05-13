@@ -161,7 +161,6 @@ gnss_ubx_decoder(gnss_t *ctx, uint8_t byte)
     struct gnss_ubx *gu = ctx->protocol.conf;
     
     rc = gnss_ubx_byte_decoder(ctx, gu, byte);
-    rc = gnss_check_scrambled_transport(ctx, rc);
 
     return rc;
 }

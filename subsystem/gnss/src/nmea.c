@@ -238,7 +238,6 @@ gnss_nmea_byte_decoder(gnss_t *ctx, struct gnss_nmea *gn, uint8_t byte)
     case '\r':
         /* Ensure that's the first <cr> */
         if (gn->state & GNSS_NMEA_STATE_FLG_CR) {
-            gn->stats.parsing_error++;
             goto oops;
         }
 
@@ -251,14 +250,12 @@ gnss_nmea_byte_decoder(gnss_t *ctx, struct gnss_nmea *gn, uint8_t byte)
             gn->buffer[gn->bufcnt] = '\0';
 
             /* Decode CRC */
-            if (!gnss_nmea_field_parse_crc(gn->buffer, &crc)) {
-                gn->stats.parsing_error++;
+            if (gnss_nmea_field_parse_crc(gn->buffer, &crc) <= 0) {
                 goto oops;
             }
 
             /* Validate CRC */
             if (crc != gn->crc) {
-                gn->stats.crc_error++;
                 goto oops;
             }
             
@@ -281,7 +278,6 @@ gnss_nmea_byte_decoder(gnss_t *ctx, struct gnss_nmea *gn, uint8_t byte)
         if ((gn->state & (GNSS_NMEA_STATE_FLG_STARTED |
                           GNSS_NMEA_STATE_FLG_CR      )) !=
             (GNSS_NMEA_STATE_FLG_STARTED|GNSS_NMEA_STATE_FLG_CR)) {
-            gn->stats.parsing_error++;
             goto oops;
         }
 
@@ -305,7 +301,6 @@ gnss_nmea_byte_decoder(gnss_t *ctx, struct gnss_nmea *gn, uint8_t byte)
         
         /* Check that buffer is not full (keeping 1 byte for NUL-char) */
         if (gn->bufcnt >= (MYNEWT_VAL(GNSS_NMEA_FIELD_BUFSIZE)-1)) {
-            gn->stats.buffer_full++;
             gn->msg = NULL; /* Our fault, will skip data :( */
         }       
         /* If decoding main part, compute CRC */
@@ -329,11 +324,9 @@ static int
 gnss_nmea_decoder(gnss_t *ctx, uint8_t byte)
 {
     int rc;
+    struct gnss_nmea *gn = ctx->protocol.conf;
 
-    rc = gnss_nmea_byte_decoder(ctx,
-                (struct gnss_nmea *)ctx->protocol.conf, byte);
-
-    rc = gnss_check_scrambled_transport(ctx, rc);
+    rc = gnss_nmea_byte_decoder(ctx, gn, byte);
     
     return rc;
 }

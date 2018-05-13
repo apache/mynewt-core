@@ -62,17 +62,20 @@ gnss_uart_stop_rx(gnss_t *ctx)
 static int
 gnss_uart_rx_char(void *arg, uint8_t byte)
 {
+    int rc;
     gnss_t *ctx = (gnss_t *)arg;
     
     assert(ctx->protocol.decoder != NULL);
 
+    rc = ctx->protocol.decoder(ctx, byte);
+    rc = gnss_check_scrambled_transport(ctx, rc);
+    
     /* Stop transport layer if:
      *   - we've got an error event pending
      *   - the decoder aborted
      *   => usually means baud rate need to be fixed
      */
-    if ((ctx->error != 0 ) ||
-	(ctx->protocol.decoder(ctx, byte) == GNSS_BYTE_DECODER_ABORTED)) {
+    if ((ctx->error != 0 ) || (rc == GNSS_BYTE_DECODER_ABORTED)) {
         // XXX: is it safe to close in interrupt context?
 	gnss_uart_stop_rx(ctx); 
 	return 0;

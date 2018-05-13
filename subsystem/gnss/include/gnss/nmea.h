@@ -295,12 +295,6 @@ struct gnss_nmea {
     gnss_nmea_message_t *msg;
     
     char buffer[MYNEWT_VAL(GNSS_NMEA_FIELD_BUFSIZE)];
-    struct {
-        uint32_t parsing_error;
-        uint32_t no_decoder;
-        uint32_t crc_error;
-        uint32_t buffer_full;
-    } stats;
 };
 
 int gnss_nmea_field_parse_string(const char *str, char *val, uint16_t maxsize);
