@@ -26,6 +26,12 @@ syscfg.defs:
         description: 'Stub'
         value: 0
 
+    LOG_FCB_SLOT1:
+        description: 'Stub'
+        value: 0
+        restrictions:
+            - "LOG_FCB"
+
     LOG_CONSOLE:
         description: 'Support logging to console.'
         value: 1
