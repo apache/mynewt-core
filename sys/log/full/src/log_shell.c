@@ -30,7 +30,9 @@
 
 #include "cbmem/cbmem.h"
 #include "log/log.h"
+#if MYNEWT_VAL(LOG_FCB_SLOT1)
 #include "log/log_fcb_slot1.h"
+#endif
 #include "shell/shell.h"
 #include "console/console.h"
 
@@ -99,6 +101,7 @@ err:
     return (rc);
 }
 
+#if MYNEWT_VAL(LOG_FCB_SLOT1)
 int
 shell_log_slot1_cmd(int argc, char **argv)
 {
@@ -131,6 +134,7 @@ shell_log_slot1_cmd(int argc, char **argv)
 
     return 0;
 }
+#endif
 
 #endif
 
