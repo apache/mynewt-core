@@ -118,7 +118,9 @@ static struct pwm_dev os_bsp_pwm2;
 int pwm2_idx;
 #endif
 #if MYNEWT_VAL(SOFT_PWM)
-static struct pwm_dev os_bsp_spwm;
+static struct pwm_dev os_bsp_spwm[MYNEWT_VAL(SOFT_PWM_DEVS)];
+char* spwm_name[MYNEWT_VAL(SOFT_PWM_DEVS)];
+int spwm_idx[MYNEWT_VAL(SOFT_PWM_DEVS)];
 #endif
 
 /*
@@ -185,6 +187,9 @@ void
 hal_bsp_init(void)
 {
     int rc;
+#if MYNEWT_VAL(SOFT_PWM)
+    int idx;
+#endif
 
     (void)rc;
 
@@ -257,13 +262,19 @@ hal_bsp_init(void)
     assert(rc == 0);
 #endif
 #if MYNEWT_VAL(SOFT_PWM)
-    rc = os_dev_create((struct os_dev *) &os_bsp_spwm,
-                       "spwm",
-                       OS_DEV_INIT_KERNEL,
-                       OS_DEV_INIT_PRIO_DEFAULT,
-                       soft_pwm_dev_init,
-                       NULL);
-    assert(rc == 0);
+    for (idx = 0; idx < MYNEWT_VAL(SOFT_PWM_DEVS); idx++)
+    {
+        spwm_name[idx] = "spwm0";
+        spwm_name[idx][4] = '0' + idx;
+        spwm_idx[idx] = idx;
+        rc = os_dev_create((struct os_dev *) &os_bsp_spwm[idx],
+                           spwm_name[idx],
+                           OS_DEV_INIT_KERNEL,
+                           OS_DEV_INIT_PRIO_DEFAULT,
+                           soft_pwm_dev_init,
+                           &spwm_idx[idx]);
+        assert(rc == 0);
+    }
 #endif
 
 #if (MYNEWT_VAL(OS_CPUTIME_TIMER_NUM) >= 0)
