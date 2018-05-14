@@ -232,8 +232,6 @@ os_memblock_get(struct os_mempool *mp)
             /* Get a free block */
             block = SLIST_FIRST(mp);
 
-            os_mempool_poison_check(block, OS_MEMPOOL_TRUE_BLOCK_SIZE(mp));
-
             /* Set new free list head */
             SLIST_FIRST(mp) = SLIST_NEXT(block, mb_next);
 
@@ -244,6 +242,10 @@ os_memblock_get(struct os_mempool *mp)
             }
         }
         OS_EXIT_CRITICAL(sr);
+
+        if (block) {
+            os_mempool_poison_check(block, OS_MEMPOOL_TRUE_BLOCK_SIZE(mp));
+        }
     }
 
     return (void *)block;
