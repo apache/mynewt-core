@@ -33,6 +33,9 @@ pkg.req_apis:
     - newtmgr
     - bootloader
 
+pkg.req_apis.LOG_FCB_SLOT1:
+    - log
+
 pkg.deps.IMGMGR_FS:
     - fs/fs
 

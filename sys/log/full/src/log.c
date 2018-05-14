@@ -33,6 +33,7 @@
 struct log_info g_log_info;
 
 static STAILQ_HEAD(, log) g_log_list = STAILQ_HEAD_INITIALIZER(g_log_list);
+static const char *g_log_module_list[ MYNEWT_VAL(LOG_MAX_USER_MODULES) ];
 static uint8_t log_inited;
 static uint8_t log_written;
 
@@ -42,6 +43,14 @@ struct shell_cmd g_shell_log_cmd = {
     .sc_cmd = "log",
     .sc_cmd_func = shell_log_dump_all_cmd
 };
+
+#if MYNEWT_VAL(LOG_FCB_SLOT1)
+int shell_log_slot1_cmd(int, char **);
+struct shell_cmd g_shell_slot1_cmd = {
+    .sc_cmd = "slot1",
+    .sc_cmd_func = shell_log_slot1_cmd,
+};
+#endif
 #endif
 
 void
@@ -65,6 +74,9 @@ log_init(void)
 
 #if MYNEWT_VAL(LOG_CLI)
     shell_cmd_register(&g_shell_log_cmd);
+#if MYNEWT_VAL(LOG_FCB_SLOT1)
+    shell_cmd_register(&g_shell_slot1_cmd);
+#endif
 #endif
 
 #if MYNEWT_VAL(LOG_NEWTMGR)
@@ -85,6 +97,73 @@ log_list_get_next(struct log *log)
     }
 
     return (next);
+}
+
+uint8_t
+log_module_register(uint8_t id, const char *name)
+{
+    uint8_t idx;
+
+    if (id == 0) {
+        /* Find free idx */
+        for (idx = 0;
+             idx < MYNEWT_VAL(LOG_MAX_USER_MODULES) && g_log_module_list[idx];
+             idx++) {
+        }
+
+        if (idx == MYNEWT_VAL(LOG_MAX_USER_MODULES)) {
+            /* No free idx */
+            return 0;
+        }
+    } else {
+        if ((id < LOG_MODULE_PERUSER) ||
+                (id >= LOG_MODULE_PERUSER + MYNEWT_VAL(LOG_MAX_USER_MODULES))) {
+            /* Invalid id */
+            return 0;
+        }
+
+        idx = id - LOG_MODULE_PERUSER;
+    }
+
+    if (g_log_module_list[idx]) {
+        /* Already registered with selected id */
+        return 0;
+    }
+
+    g_log_module_list[idx] = name;
+
+    return idx + LOG_MODULE_PERUSER;
+}
+
+const char *
+log_module_get_name(uint8_t module)
+{
+    if (module < LOG_MODULE_PERUSER) {
+        switch (module) {
+        case LOG_MODULE_DEFAULT:
+            return "DEFAULT";
+        case LOG_MODULE_OS:
+            return "OS";
+        case LOG_MODULE_NEWTMGR:
+            return "NEWTMGR";
+        case LOG_MODULE_NIMBLE_CTLR:
+            return "NIMBLE_CTLR";
+        case LOG_MODULE_NIMBLE_HOST:
+            return "NIMBLE_HOST";
+        case LOG_MODULE_NFFS:
+            return "NFFS";
+        case LOG_MODULE_REBOOT:
+            return "REBOOT";
+        case LOG_MODULE_IOTIVITY:
+            return "IOTIVITY";
+        case LOG_MODULE_TEST:
+            return "TEST";
+        }
+    } else if (module - LOG_MODULE_PERUSER < MYNEWT_VAL(LOG_MAX_USER_MODULES)) {
+        return g_log_module_list[module - LOG_MODULE_PERUSER];
+    }
+
+    return NULL;
 }
 
 /**
@@ -172,12 +251,17 @@ log_register(char *name, struct log *log, const struct log_handler *lh,
     assert(!log_written);
 
     log->l_name = name;
-    log->l_log = (struct log_handler *)lh;
+    log->l_log = lh;
     log->l_arg = arg;
     log->l_level = level;
 
     if (!log_registered(log)) {
         STAILQ_INSERT_TAIL(&g_log_list, log, l_next);
+    }
+
+    /* Call registered handler now - log structure is set and put on list */
+    if (log->l_log->log_registered) {
+        log->l_log->log_registered(log);
     }
 
     /* If this is a persisted log, read the index from its most recent entry.
@@ -359,6 +443,20 @@ log_read(struct log *log, void *dptr, void *buf, uint16_t off,
     int rc;
 
     rc = log->l_log->log_read(log, dptr, buf, off, len);
+
+    return (rc);
+}
+
+int log_read_mbuf(struct log *log, void *dptr, struct os_mbuf *om, uint16_t off,
+                  uint16_t len)
+{
+    int rc;
+
+    if (!om || !log->l_log->log_read_mbuf) {
+        return 0;
+    }
+
+    rc = log->l_log->log_read_mbuf(log, dptr, om, off, len);
 
     return (rc);
 }

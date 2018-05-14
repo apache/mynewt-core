@@ -44,3 +44,6 @@ pkg.apis:
 
 pkg.init:
     log_init: 100
+
+pkg.init.LOG_FCB_SLOT1:
+    log_init_slot1: 101

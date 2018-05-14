@@ -28,12 +28,16 @@
 #include "bootutil/image.h"
 #include "bootutil/bootutil.h"
 #include "mgmt/mgmt.h"
+#if MYNEWT_VAL(LOG_FCB_SLOT1)
+#include "log/log_fcb_slot1.h"
+#endif
 
 #include "imgmgr/imgmgr.h"
 #include "imgmgr_priv.h"
 
 static int imgr_upload(struct mgmt_cbuf *);
 static int imgr_erase(struct mgmt_cbuf *);
+static int imgr_erase_state(struct mgmt_cbuf *);
 
 static const struct mgmt_handler imgr_nmgr_handlers[] = {
     [IMGMGR_NMGR_ID_STATE] = {
@@ -65,6 +69,10 @@ static const struct mgmt_handler imgr_nmgr_handlers[] = {
         .mh_read = NULL,
         .mh_write = NULL
 #endif
+    },
+    [IMGMGR_NMGR_ID_ERASE_STATE] = {
+            .mh_read = NULL,
+            .mh_write = imgr_erase_state,
     },
 };
 
@@ -312,6 +320,16 @@ imgr_erase(struct mgmt_cbuf *cb)
 
     area_id = imgmgr_find_best_area_id();
     if (area_id >= 0) {
+#if MYNEWT_VAL(LOG_FCB_SLOT1)
+        /*
+         * If logging to slot1 is enabled, make sure it's locked before erasing
+         * so log handler does not corrupt our data.
+         */
+        if (area_id == FLASH_AREA_IMAGE_1) {
+            log_fcb_slot1_lock();
+        }
+#endif
+
         if (imgr_state.upload.fa) {
             flash_area_close(imgr_state.upload.fa);
             imgr_state.upload.fa = NULL;
@@ -321,7 +339,10 @@ imgr_erase(struct mgmt_cbuf *cb)
             return MGMT_ERR_EINVAL;
         }
         rc = flash_area_erase(imgr_state.upload.fa, 0,
-          imgr_state.upload.fa->fa_size);
+                              imgr_state.upload.fa->fa_size);
+        if (rc) {
+            return MGMT_ERR_EINVAL;
+        }
         flash_area_close(imgr_state.upload.fa);
         imgr_state.upload.fa = NULL;
     } else {
@@ -337,6 +358,48 @@ imgr_erase(struct mgmt_cbuf *cb)
     if (g_err) {
         return MGMT_ERR_ENOMEM;
     }
+    return 0;
+}
+
+static int
+imgr_erase_state(struct mgmt_cbuf *cb)
+{
+    const struct flash_area *fa;
+    int area_id;
+    int rc;
+    CborError g_err = CborNoError;
+
+    area_id = imgmgr_find_best_area_id();
+    if (area_id >= 0) {
+        rc = flash_area_open(area_id, &fa);
+        if (rc) {
+            return MGMT_ERR_EINVAL;
+        }
+
+        rc = flash_area_erase(fa, 0, sizeof(struct image_header));
+        if (rc) {
+            return MGMT_ERR_EINVAL;
+        }
+
+        flash_area_close(fa);
+
+#if MYNEWT_VAL(LOG_FCB_SLOT1)
+        /* If logging to slot1 is enabled, we can unlock it now. */
+        if (area_id == FLASH_AREA_IMAGE_1) {
+            log_fcb_slot1_unlock();
+        }
+#endif
+    } else {
+        return MGMT_ERR_ENOMEM;
+    }
+
+    g_err |= cbor_encode_text_stringz(&cb->encoder, "rc");
+    g_err |= cbor_encode_int(&cb->encoder, MGMT_ERR_EOK);
+
+    if (g_err) {
+        return MGMT_ERR_ENOMEM;
+    }
+
     return 0;
 }
 
@@ -415,6 +478,16 @@ imgr_upload(struct mgmt_cbuf *cb)
                 return MGMT_ERR_EINVAL;
             }
 
+#if MYNEWT_VAL(LOG_FCB_SLOT1)
+            /*
+             * If logging to slot1 is enabled, make sure it's locked before
+             * erasing so log handler does not corrupt our data.
+             */
+            if (area_id == FLASH_AREA_IMAGE_1) {
+                log_fcb_slot1_lock();
+            }
+#endif
+
             if(!empty) {
                 rc = flash_area_erase(imgr_state.upload.fa, 0,
                   imgr_state.upload.fa->fa_size);
@@ -490,5 +563,15 @@ imgmgr_module_init(void)
 #if MYNEWT_VAL(IMGMGR_CLI)
     rc = imgr_cli_register();
     SYSINIT_PANIC_ASSERT(rc == 0);
+#endif
+
+#if MYNEWT_VAL(LOG_FCB_SLOT1)
+    /*
+     * If logging to slot1 is enabled, make sure we lock it if slot1 is in use
+     * to prevent data corruption.
+     */
+    if (imgmgr_state_slot_in_use(1)) {
+        log_fcb_slot1_lock();
+    }
 #endif
 }

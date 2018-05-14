@@ -440,7 +440,7 @@ static int
 log_nmgr_module_list(struct mgmt_cbuf *cb)
 {
     int module;
-    char *str;
+    const char *str;
     CborError g_err = CborNoError;
     CborEncoder modules;
 
@@ -454,7 +454,7 @@ log_nmgr_module_list(struct mgmt_cbuf *cb)
     module = LOG_MODULE_DEFAULT;
     while (module < LOG_MODULE_MAX) {
         str = LOG_MODULE_STR(module);
-        if (!strcmp(str, "UNKNOWN")) {
+        if (!str) {
             module++;
             continue;
         }
