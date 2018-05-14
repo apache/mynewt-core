@@ -339,7 +339,10 @@ imgr_erase(struct mgmt_cbuf *cb)
             return MGMT_ERR_EINVAL;
         }
         rc = flash_area_erase(imgr_state.upload.fa, 0,
-          imgr_state.upload.fa->fa_size);
+                              imgr_state.upload.fa->fa_size);
+        if (rc) {
+            return MGMT_ERR_EINVAL;
+        }
         flash_area_close(imgr_state.upload.fa);
         imgr_state.upload.fa = NULL;
     } else {
