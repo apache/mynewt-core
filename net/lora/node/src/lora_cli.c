@@ -646,8 +646,9 @@ lora_cli_log_cmd(int argc, char **argv)
                            g_lnd_log[i].lnd_p32);
             break;
         case LORA_NODE_LOG_RX_PORT:
-            console_printf("RX_PORT port=%u len=%u",
-                           g_lnd_log[i].lnd_p8, g_lnd_log[i].lnd_p16);
+            console_printf("RX_PORT port=%u len=%u dwnlink_cntr=%lu",
+                           g_lnd_log[i].lnd_p8, g_lnd_log[i].lnd_p16,
+                           g_lnd_log[i].lnd_p32);
             break;
         case LORA_NODE_LOG_RX_WIN2:
             console_printf("RX_WIN2 rxslot=%u cont=%u freq=%lu",
