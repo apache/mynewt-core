@@ -45,17 +45,6 @@
 
 #define BTSHELL_MODULE "btshell"
 
-#if MYNEWT_VAL(BLE_EXT_ADV)
-
-#define EXT_ADV_POOL_SIZE (MYNEWT_VAL(BLE_EXT_ADV_MAX_SIZE) + \
-                            sizeof(struct os_mbuf) + sizeof(struct os_mbuf_pkthdr))
-
-/* 1 mbuf is enough for configuring adv data */
-static os_membuf_t ext_adv_mem[OS_MEMPOOL_SIZE(1, EXT_ADV_POOL_SIZE)];
-static struct os_mempool ext_adv_pool;
-static struct os_mbuf_pool ext_adv_mbuf_pool;
-#endif
-
 int
 cmd_parse_conn_start_end(uint16_t *out_conn, uint16_t *out_start,
                          uint16_t *out_end)
@@ -1709,7 +1698,9 @@ cmd_set_adv_data_or_scan_rsp(int argc, char **argv, bool scan_rsp)
                                             eddystone_url_suffix);
     } else {
 #if MYNEWT_VAL(BLE_EXT_ADV)
-        adv_data = os_mbuf_get_pkthdr(&ext_adv_mbuf_pool, 0);
+        /* Default to legacy PDUs size, mbuf chain will be increased if needed
+         */
+        adv_data = os_msys_get_pkthdr(BLE_HCI_MAX_ADV_DATA_LEN, 0);
         if (!adv_data) {
             rc = ENOMEM;
             goto done;
@@ -1771,6 +1762,7 @@ cmd_set_scan_rsp(int argc, char **argv)
 
 #if MYNEWT_VAL(SHELL_CMD_HELP)
 static const struct shell_param set_adv_data_params[] = {
+    {"instance", "default: 0"},
     {"flags", "usage: =[0-UINT8_MAX]"},
     {"uuid16", "usage: =[UINT16]"},
     {"uuid16_is_complete", "usage: =[0-1], default=0"},
@@ -3707,19 +3699,6 @@ static const struct shell_cmd btshell_commands[] = {
 void
 cmd_init(void)
 {
-#if MYNEWT_VAL(BLE_EXT_ADV)
-    int rc;
-
-    rc = os_mempool_init(&ext_adv_pool, 1, EXT_ADV_POOL_SIZE,
-                         ext_adv_mem, "ext_adv_mem");
-    assert(rc == 0);
-
-    rc = os_mbuf_pool_init(&ext_adv_mbuf_pool, &ext_adv_pool,
-                           EXT_ADV_POOL_SIZE, 1);
-
-    assert(rc == 0);
-#endif
-
     shell_register(BTSHELL_MODULE, btshell_commands);
     shell_register_default_module(BTSHELL_MODULE);
 }
