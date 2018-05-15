@@ -30,7 +30,7 @@
 . $CORE_PATH/hw/scripts/openocd.sh
 
 FILE_NAME=$BIN_BASENAME.elf
-CFG="-s $BSP_PATH -f $BSP_PATH/nucleo767.cfg"
+CFG="-s $BSP_PATH -f $BSP_PATH/nucleo-f767zi.cfg"
 # Exit openocd when gdb detaches.
 EXTRA_JTAG_CMD="$EXTRA_JTAG_CMD; stm32f7x.cpu configure -event gdb-detach {if {[stm32f7x.cpu curstate] eq \"halted\"} resume;shutdown}"
 

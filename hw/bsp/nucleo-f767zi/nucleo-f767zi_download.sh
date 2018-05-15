@@ -30,7 +30,7 @@
 #  - BOOT_LOADER is set if downloading a bootloader
 . $CORE_PATH/hw/scripts/openocd.sh
 
-CFG="-s $BSP_PATH -f nucleo767.cfg"
+CFG="-s $BSP_PATH -f nucleo-f767zi.cfg"
 
 if [ "$MFG_IMAGE" ]; then
     FLASH_OFFSET=0x08000000
