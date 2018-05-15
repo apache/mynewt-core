@@ -23,8 +23,18 @@
 #include <easing/easing.h>
 #include <console/console.h>
 
-#if MYNEWT_VAL(MCU_STM32F7)
-#   define  PWM_TEST_CH_CFG_PIN  MCU_AFIO_GPIO(LED_2, 2)
+#if (defined NUCLEO_F767ZI)
+#   define  PWM_TEST_CH_CFG_PIN  MCU_AFIO_GPIO(LED_BLINK_PIN, 2)
+#   define  PWM_TEST_CH_CFG_INV  false 
+#   define  PWM_TEST_CH_NUM      2
+#   define  PWM_TEST_IRQ_PRIO    0
+#elif (defined NUCLEO_F303RE)
+#   define  PWM_TEST_CH_CFG_PIN  MCU_AFIO_GPIO(LED_BLINK_PIN, 1)
+#   define  PWM_TEST_CH_CFG_INV  false 
+#   define  PWM_TEST_CH_NUM      0
+#   define  PWM_TEST_IRQ_PRIO    0
+#elif (defined NUCLEO_F303K8)
+#   define  PWM_TEST_CH_CFG_PIN  MCU_AFIO_GPIO(LED_BLINK_PIN, 1)
 #   define  PWM_TEST_CH_CFG_INV  false 
 #   define  PWM_TEST_CH_NUM      1
 #   define  PWM_TEST_IRQ_PRIO    0

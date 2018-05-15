@@ -51,7 +51,7 @@ typedef struct {
     stm32_pwm_dev_cfg_t  cfg;
 } stm32_pwm_dev_t;
 
-static stm32_pwm_dev_t stm32_pwm_dev[PWM_COUNT];
+static stm32_pwm_dev_t stm32_pwm_dev[PWM_CNT];
 
 static inline bool
 stm32_pwm_ch_is_active(const stm32_pwm_dev_t *pwm, int ch)
@@ -164,14 +164,16 @@ stm32_pwm_enable(struct pwm_dev *dev)
     stm32_pwm_dev_t *pwm;
 
     assert(dev);
-    assert(dev->pwm_instance_id < PWM_COUNT);
+    assert(dev->pwm_instance_id < PWM_CNT);
 
     pwm = &stm32_pwm_dev[dev->pwm_instance_id];
     pwm->cycle = pwm->cfg.n_cycles;
 
     stm32_pwm_active_ch_set_mode(pwm, STM32_PWM_CH_MODE_ENA);
 
+    LL_TIM_GenerateEvent_UPDATE(pwm->timx);
     LL_TIM_EnableCounter(pwm->timx);
+
     return STM32_PWM_ERR_OK;
 }
 
@@ -181,7 +183,7 @@ stm32_pwm_disable(struct pwm_dev *dev)
     stm32_pwm_dev_t *pwm;
 
     assert(dev);
-    assert(dev->pwm_instance_id < PWM_COUNT);
+    assert(dev->pwm_instance_id < PWM_CNT);
 
     pwm = &stm32_pwm_dev[dev->pwm_instance_id];
 
@@ -197,7 +199,7 @@ stm32_pwm_is_enabled(struct pwm_dev *dev)
     stm32_pwm_dev_t *pwm;
 
     assert(dev);
-    assert(dev->pwm_instance_id < PWM_COUNT);
+    assert(dev->pwm_instance_id < PWM_CNT);
 
     pwm = &stm32_pwm_dev[dev->pwm_instance_id];
 
@@ -264,7 +266,7 @@ stm32_pwm_ch_confgigure(struct pwm_dev *dev, uint8_t cnum, struct pwm_chan_cfg *
     uint32_t ch;
 
     assert(dev);
-    assert(dev->pwm_instance_id < PWM_COUNT);
+    assert(dev->pwm_instance_id < PWM_CNT);
     assert(dev->pwm_chan_count <= STM32_PWM_CH_MAX);
     if (cnum >= dev->pwm_chan_count) {
         return STM32_PWM_ERR_CHAN;
@@ -307,7 +309,7 @@ stm32_pwm_ch_set_duty_cycle(struct pwm_dev *dev, uint8_t cnum, uint16_t fraction
     stm32_pwm_dev_t *pwm;
 
     assert(dev);
-    assert(dev->pwm_instance_id < PWM_COUNT);
+    assert(dev->pwm_instance_id < PWM_CNT);
     if (cnum >= dev->pwm_chan_count) {
         return STM32_PWM_ERR_CHAN;
     }
@@ -328,7 +330,7 @@ stm32_pwm_set_frequency(struct pwm_dev *dev, uint32_t freq_hz)
     uint32_t div, div1, div2;
 
     assert(dev);
-    assert(dev->pwm_instance_id < PWM_COUNT);
+    assert(dev->pwm_instance_id < PWM_CNT);
 
     if (!freq_hz) {
         return STM32_PWM_ERR_FREQ;
@@ -368,7 +370,7 @@ stm32_pwm_configure(struct pwm_dev *dev, struct pwm_dev_cfg *cfg)
     uint32_t prio;
 
     assert(dev);
-    assert(dev->pwm_instance_id < PWM_COUNT);
+    assert(dev->pwm_instance_id < PWM_CNT);
 
     pwm = &stm32_pwm_dev[dev->pwm_instance_id];
 
@@ -416,7 +418,7 @@ stm32_pwm_get_clock_freq(struct pwm_dev *dev)
     stm32_pwm_dev_t *pwm;
 
     assert(dev);
-    assert(dev->pwm_instance_id < PWM_COUNT);
+    assert(dev->pwm_instance_id < PWM_CNT);
 
     pwm = &stm32_pwm_dev[dev->pwm_instance_id];
     return stm32_hal_timer_get_freq(pwm->timx) / (LL_TIM_GetPrescaler(pwm->timx) + 1);
@@ -428,7 +430,7 @@ stm32_pwm_get_top_value(struct pwm_dev *dev)
     stm32_pwm_dev_t *pwm;
 
     assert(dev);
-    assert(dev->pwm_instance_id < PWM_COUNT);
+    assert(dev->pwm_instance_id < PWM_CNT);
 
     pwm = &stm32_pwm_dev[dev->pwm_instance_id];
     return LL_TIM_GetAutoReload(pwm->timx) + 1;
@@ -457,13 +459,13 @@ stm32_pwm_dev_init(struct os_dev *odev, void *arg)
     struct pwm_dev *dev;
     uint32_t id;
 
-    for (id=0; id < PWM_COUNT; ++id) {
+    for (id=0; id < PWM_CNT; ++id) {
         pwm = &stm32_pwm_dev[id];
         if (!pwm->timx) {
             break;
         }
     }
-    if (PWM_COUNT <= id) {
+    if (PWM_CNT <= id) {
         return STM32_PWM_ERR_NODEV;
     }
     memset(pwm, 0, sizeof(stm32_pwm_dev_t));

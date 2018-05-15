@@ -53,22 +53,22 @@
 #include <stm32_eth/stm32_eth_cfg.h>
 #endif
 
-#if PWM_COUNT
+#if PWM_CNT
 #include <pwm_stm32/pwm_stm32.h>
-static struct pwm_dev pwm_dev_driver[PWM_COUNT];
-static const char *pwm_dev_name[PWM_COUNT] = {
-#if PWM_COUNT > 0
+static struct pwm_dev stm32_pwm_dev_driver[PWM_CNT];
+static const char *stm32_pwm_dev_name[PWM_CNT] = {
+#if PWM_CNT > 0
     "pwm0",
 #endif
-#if PWM_COUNT > 1
+#if PWM_CNT > 1
     "pwm1",
 #endif
-#if PWM_COUNT > 2
+#if PWM_CNT > 2
     "pwm2",
 #endif
 };
 
-static struct stm32_pwm_conf  stm32_pwm_config[PWM_COUNT] = {
+static struct stm32_pwm_conf  stm32_pwm_config[PWM_CNT] = {
 #if MYNEWT_VAL(PWM_0)
     { TIM3, TIM3_IRQn },
 #endif
@@ -261,8 +261,8 @@ hal_bsp_init(void)
 #endif
 
 #if MYNEWT_VAL(PWM_0)
-    rc = os_dev_create((struct os_dev *) &pwm_dev_driver[PWM_0_DEV_ID],
-        (char*)pwm_dev_name[PWM_0_DEV_ID],
+    rc = os_dev_create((struct os_dev *) &stm32_pwm_dev_driver[PWM_0_DEV_ID],
+        (char*)stm32_pwm_dev_name[PWM_0_DEV_ID],
         OS_DEV_INIT_KERNEL,
         OS_DEV_INIT_PRIO_DEFAULT,
         stm32_pwm_dev_init,
@@ -271,8 +271,8 @@ hal_bsp_init(void)
 #endif
 
 #if MYNEWT_VAL(PWM_1)
-    rc = os_dev_create((struct os_dev *) &pwm_dev_driver[PWM_1_DEV_ID],
-        (char*)pwm_dev_name[PWM_1_DEV_ID],
+    rc = os_dev_create((struct os_dev *) &stm32_pwm_dev_driver[PWM_1_DEV_ID],
+        (char*)stm32_pwm_dev_name[PWM_1_DEV_ID],
         OS_DEV_INIT_KERNEL,
         OS_DEV_INIT_PRIO_DEFAULT,
         stm32_pwm_dev_init,
@@ -281,8 +281,8 @@ hal_bsp_init(void)
 #endif
 
 #if MYNEWT_VAL(PWM_2)
-    rc = os_dev_create((struct os_dev *) &pwm_dev_driver[PWM_2_DEV_ID],
-        (char*)pwm_dev_name[PWM_2_DEV_ID],
+    rc = os_dev_create((struct os_dev *) &stm32_pwm_dev_driver[PWM_2_DEV_ID],
+        (char*)stm32_pwm_dev_name[PWM_2_DEV_ID],
         OS_DEV_INIT_KERNEL,
         OS_DEV_INIT_PRIO_DEFAULT,
         stm32_pwm_dev_init,
