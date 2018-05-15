@@ -1130,7 +1130,8 @@ lora_mac_process_radio_rx(struct os_event *ev)
 
                 rxi->port = port;
 
-                lora_node_log(LORA_NODE_LOG_RX_PORT, port, frameLen, 0);
+                lora_node_log(LORA_NODE_LOG_RX_PORT, port, frameLen,
+                              downLinkCounter);
 
                 /* If port is 0 it means frame has MAC commands in payload */
                 if (port == 0) {
