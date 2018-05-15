@@ -1771,6 +1771,7 @@ cmd_set_scan_rsp(int argc, char **argv)
 
 #if MYNEWT_VAL(SHELL_CMD_HELP)
 static const struct shell_param set_adv_data_params[] = {
+    {"instance", "default: 0"},
     {"flags", "usage: =[0-UINT8_MAX]"},
     {"uuid16", "usage: =[UINT16]"},
     {"uuid16_is_complete", "usage: =[0-1], default=0"},
