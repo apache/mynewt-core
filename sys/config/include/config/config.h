@@ -247,7 +247,7 @@ int conf_set_value(char *name, char *val_str);
  * @param name Name/key of the configuration item.
  * @param val_str Value of the configuration item.
  *
- * @return 0 on success, non-zero on failure.
+ * @return pointer to value on success, NULL on failure.
  */
 char *conf_get_value(char *name, char *buf, int buf_len);
 
