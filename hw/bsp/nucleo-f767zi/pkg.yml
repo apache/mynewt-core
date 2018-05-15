@@ -17,7 +17,7 @@
 # under the License.
 #
 
-pkg.name: hw/bsp/stm32f767-nucleo
+pkg.name: hw/bsp/nucleo-f767zi
 pkg.type: bsp
 pkg.description: BSP definition for the stm32f767-nucleo board.
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
