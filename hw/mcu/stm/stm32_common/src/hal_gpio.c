@@ -20,6 +20,7 @@
 #include "hal/hal_gpio.h"
 #include "mcu/cmsis_nvic.h"
 #include "mcu/stm32_hal.h"
+#include "stm32_common/mcu.h"
 #include <assert.h>
 
  /* XXX: Notes
@@ -43,26 +44,7 @@
  * 5) Possibly add access to HAL_GPIO_DeInit.
  */
 
-/*
- * GPIO pin mapping
- *
- * The stm32Fxxx processors have 16 gpio pins per port. We map the logical pin
- * numbers (from 0 to N) in the following manner:
- *      Port A: PA0-PA15 map to pins 0 - 15.
- *      Port B: PB0-PB15 map to pins 16 - 31.
- *      Port C: PC0-PC15 map to pins 32 - 47.
- *
- *      To convert a gpio to pin number, do the following:
- *          - Convert port label to its numeric value (A=0, B=1, C=2, etc).
- *          - Multiply by 16.
- *          - Add port pin number.
- *
- *      Ex: PD11 = (3 * 16) + 11 = 59.
- *          PA0 = (0 * 16) + 0 = 0
- */
-#define GPIO_INDEX(pin)     ((pin) & 0x0F)
-#define GPIO_PORT(pin)      (((pin) >> 4) & 0x0F)
-#define GPIO_MASK(pin)      (1 << GPIO_INDEX(pin))
+#define GPIO_MASK(pin)      (1 << MCU_GPIO_PIN_NUM(pin))
 
 #ifndef GPIOA
 #   define GPIOA    0
@@ -350,7 +332,7 @@ hal_gpio_pin_to_irq(int pin)
     int index;
     IRQn_Type irqn;
 
-    index = GPIO_INDEX(pin);
+    index = MCU_GPIO_PIN_NUM(pin);
     if (index <= 4) {
         irqn = EXTI0_IRQn + index;
     } else if (index <=  9) {
@@ -422,7 +404,7 @@ hal_gpio_init_stm(int pin, GPIO_InitTypeDef *cfg)
     uint32_t mcu_pin_mask;
 
     /* Is this a valid pin? */
-    port = GPIO_PORT(pin);
+    port = MCU_GPIO_PIN_PORT(pin);
     if (port >= HAL_GPIO_PORT_COUNT) {
         return -1;
     }
@@ -456,7 +438,7 @@ hal_gpio_deinit_stm(int pin, GPIO_InitTypeDef *cfg)
     uint32_t mcu_pin_mask;
 
     /* Is this a valid pin? */
-    port = GPIO_PORT(pin);
+    port = MCU_GPIO_PIN_PORT(pin);
     if (port >= HAL_GPIO_PORT_COUNT) {
         return -1;
     }
@@ -510,7 +492,7 @@ int hal_gpio_init_out(int pin, int val)
     int port;
 
     /* Is this a valid pin? */
-    port = GPIO_PORT(pin);
+    port = MCU_GPIO_PIN_PORT(pin);
     if (port >= HAL_GPIO_PORT_COUNT) {
         return -1;
     }
@@ -585,7 +567,7 @@ void hal_gpio_write(int pin, int val)
     uint32_t mcu_pin_mask;
     GPIO_PinState state;
 
-    port = GPIO_PORT(pin);
+    port = MCU_GPIO_PIN_PORT(pin);
     mcu_pin_mask = GPIO_MASK(pin);
 
     if (val) {
@@ -611,7 +593,7 @@ int hal_gpio_read(int pin)
     int port;
     uint32_t mcu_pin_mask;
 
-    port = GPIO_PORT(pin);
+    port = MCU_GPIO_PIN_PORT(pin);
     mcu_pin_mask = GPIO_MASK(pin);
     return HAL_GPIO_ReadPin(portmap[port], mcu_pin_mask);
 }
@@ -690,7 +672,7 @@ hal_gpio_irq_init(int pin, hal_gpio_irq_handler_t handler, void *arg,
         __HAL_GPIO_EXTI_CLEAR_FLAG(pin_mask);
 
         /* Set the gpio irq handler */
-        index = GPIO_INDEX(pin);
+        index = MCU_GPIO_PIN_NUM(pin);
         gpio_irq_handlers[index].isr = handler;
         gpio_irq_handlers[index].arg = arg;
 
@@ -732,7 +714,7 @@ hal_gpio_irq_release(int pin)
     __HAL_GPIO_EXTI_CLEAR_FLAG(pin_mask);
 
     /* Clear out the irq handler */
-    index = GPIO_INDEX(pin);
+    index = MCU_GPIO_PIN_NUM(pin);
     gpio_irq_handlers[index].arg = NULL;
     gpio_irq_handlers[index].isr = NULL;
 }
