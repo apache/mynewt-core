@@ -20,19 +20,28 @@
 #ifndef OS_TRACE_API_H
 #define OS_TRACE_API_H
 
-#include <stdint.h>
 #include "syscfg/syscfg.h"
 #if MYNEWT_VAL(OS_SYSVIEW)
 #include "sysview/vendor/SEGGER_SYSVIEW.h"
 #endif
+#include "os/os.h"
 
-#define OS_TRACE_ID_OFFSET                    (32u)
-
-#define OS_TRACE_ID_EVQ_PUT                   (1u + OS_TRACE_ID_OFFSET)
-#define OS_TRACE_ID_EVQ_GET                   (2u + OS_TRACE_ID_OFFSET)
-#define OS_TRACE_ID_MUTEX_INIT                (3u + OS_TRACE_ID_OFFSET)
-#define OS_TRACE_ID_MUTEX_RELEASE             (4u + OS_TRACE_ID_OFFSET)
-#define OS_TRACE_ID_MUTEX_PEND                (5u + OS_TRACE_ID_OFFSET)
+#define OS_TRACE_ID_EVENTQ_PUT                  (40)
+#define OS_TRACE_ID_EVENTQ_GET_NO_WAIT          (41)
+#define OS_TRACE_ID_EVENTQ_GET                  (42)
+#define OS_TRACE_ID_EVENTQ_REMOVE               (43)
+#define OS_TRACE_ID_EVENTQ_POLL_0TIMO           (44)
+#define OS_TRACE_ID_EVENTQ_POLL                 (45)
+#define OS_TRACE_ID_MUTEX_INIT                  (50)
+#define OS_TRACE_ID_MUTEX_RELEASE               (51)
+#define OS_TRACE_ID_MUTEX_PEND                  (52)
+#define OS_TRACE_ID_SEM_INIT                    (60)
+#define OS_TRACE_ID_SEM_RELEASE                 (61)
+#define OS_TRACE_ID_SEM_PEND                    (62)
+#define OS_TRACE_ID_CALLOUT_INIT                (70)
+#define OS_TRACE_ID_CALLOUT_STOP                (71)
+#define OS_TRACE_ID_CALLOUT_RESET               (72)
+#define OS_TRACE_ID_CALLOUT_TICK                (73)
 
 #if MYNEWT_VAL(OS_SYSVIEW)
 

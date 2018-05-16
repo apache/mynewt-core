@@ -28,16 +28,22 @@ struct os_callout_list g_callout_list;
 void os_callout_init(struct os_callout *c, struct os_eventq *evq,
                      os_event_fn *ev_cb, void *ev_arg)
 {
+    os_trace_api_u32x2(OS_TRACE_ID_CALLOUT_INIT, (uint32_t)c, (uint32_t)evq);
+
     memset(c, 0, sizeof(*c));
     c->c_ev.ev_cb = ev_cb;
     c->c_ev.ev_arg = ev_arg;
     c->c_evq = evq;
+
+    os_trace_api_ret(OS_TRACE_ID_CALLOUT_INIT);
 }
 
 void
 os_callout_stop(struct os_callout *c)
 {
     os_sr_t sr;
+
+    os_trace_api_u32(OS_TRACE_ID_CALLOUT_STOP, (uint32_t)c);
 
     OS_ENTER_CRITICAL(sr);
 
@@ -51,6 +57,8 @@ os_callout_stop(struct os_callout *c)
     }
 
     OS_EXIT_CRITICAL(sr);
+
+    os_trace_api_ret(OS_TRACE_ID_CALLOUT_STOP);
 }
 
 int
@@ -58,10 +66,12 @@ os_callout_reset(struct os_callout *c, int32_t ticks)
 {
     struct os_callout *entry;
     os_sr_t sr;
-    int rc;
+    int ret;
+
+    os_trace_api_u32x2(OS_TRACE_ID_CALLOUT_RESET, (uint32_t)c, (uint32_t)ticks);
 
     if (ticks < 0) {
-        rc = OS_EINVAL;
+        ret = OS_EINVAL;
         goto err;
     }
 
@@ -90,9 +100,11 @@ os_callout_reset(struct os_callout *c, int32_t ticks)
 
     OS_EXIT_CRITICAL(sr);
 
-    return (0);
+    ret = OS_OK;
+
 err:
-    return (rc);
+    os_trace_api_ret_u32(OS_TRACE_ID_CALLOUT_RESET, (uint32_t)ret);
+    return ret;
 }
 
 
@@ -108,6 +120,8 @@ os_callout_tick(void)
     os_sr_t sr;
     struct os_callout *c;
     uint32_t now;
+
+    os_trace_api_void(OS_TRACE_ID_CALLOUT_TICK);
 
     now = os_time_get();
 
@@ -134,6 +148,8 @@ os_callout_tick(void)
             break;
         }
     }
+
+    os_trace_api_ret(OS_TRACE_ID_CALLOUT_TICK);
 }
 
 /*

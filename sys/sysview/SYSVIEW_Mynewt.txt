@@ -1,5 +1,19 @@
-33	EVQ_PUT
-34	EVQ_GET
-35	MUTEX_INIT
-36	MUTEX_RELEASE
-37	MUTEX_PEND
+40	os_eventq_put			evq=%p ev=%p
+41	os_eventq_get_no_wait		evq=%p | returns ev=%p
+42	os_eventq_get			evq=%p | returns ev=%p
+43	os_eventq_remove		evq=%p | returns ev=%p
+44	os_eventq_poll_0timo		evq[0]=%p nevqs=%d timo=%u | returns ev=%p
+45	os_eventq_poll			evq[0]=%p nevqs=%d | returns ev=%p
+
+50	os_mutex_init			mu=%p | returns %d
+51	os_mutex_release		mu=%p | returns %d
+52	os_mutex_pend			mu=%p timeout=%u | returns %d
+
+60	os_sem_init			sem=%p tokens=%u | returns %d
+61	os_sem_release			sem=%p | returns %d
+62	os_sem_pend			sem=%p timeout=%u | returns %d
+
+70	os_callout_init			c/ev=%p evq=%p
+71	os_callout_stop			c=%p
+72	os_callout_reset		c=%p ticks=%d | returns %d
+73	os_callout_tick

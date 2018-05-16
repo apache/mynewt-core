@@ -42,15 +42,16 @@ os_eventq_put(struct os_eventq *evq, struct os_event *ev)
     int resched;
     os_sr_t sr;
 
+    os_trace_api_u32x2(OS_TRACE_ID_EVENTQ_PUT, (uint32_t)evq, (uint32_t)ev);
+
     OS_ENTER_CRITICAL(sr);
 
     /* Do not queue if already queued */
     if (OS_EVENT_QUEUED(ev)) {
         OS_EXIT_CRITICAL(sr);
+        os_trace_api_ret(OS_TRACE_ID_EVENTQ_PUT);
         return;
     }
-
-    os_trace_api_void(OS_TRACE_ID_EVQ_PUT);
 
     /* Queue the event */
     ev->ev_queued = 1;
@@ -72,12 +73,13 @@ os_eventq_put(struct os_eventq *evq, struct os_event *ev)
         evq->evq_task = NULL;
     }
 
-    os_trace_api_ret(OS_TRACE_ID_EVQ_PUT);
     OS_EXIT_CRITICAL(sr);
 
     if (resched) {
         os_sched(NULL);
     }
+
+    os_trace_api_ret(OS_TRACE_ID_EVENTQ_PUT);
 }
 
 struct os_event *
@@ -85,11 +87,15 @@ os_eventq_get_no_wait(struct os_eventq *evq)
 {
     struct os_event *ev;
 
+    os_trace_api_u32(OS_TRACE_ID_EVENTQ_GET_NO_WAIT, (uint32_t)evq);
+
     ev = STAILQ_FIRST(&evq->evq_list);
     if (ev) {
         STAILQ_REMOVE(&evq->evq_list, ev, os_event, ev_next);
         ev->ev_queued = 0;
     }
+
+    os_trace_api_ret_u32(OS_TRACE_ID_EVENTQ_GET_NO_WAIT, (uint32_t)ev);
 
     return ev;
 }
@@ -100,6 +106,8 @@ os_eventq_get(struct os_eventq *evq)
     struct os_event *ev;
     os_sr_t sr;
     struct os_task *t;
+
+    os_trace_api_u32(OS_TRACE_ID_EVENTQ_GET, (uint32_t)evq);
 
     t = os_sched_get_current_task();
     if (evq->evq_owner != t) {
@@ -114,7 +122,6 @@ os_eventq_get(struct os_eventq *evq)
         }
     }
     OS_ENTER_CRITICAL(sr);
-    os_trace_api_void(OS_TRACE_ID_EVQ_GET);
 pull_one:
     ev = STAILQ_FIRST(&evq->evq_list);
     if (ev) {
@@ -133,8 +140,9 @@ pull_one:
         evq->evq_task = NULL;
         goto pull_one;
     }
-    os_trace_api_ret(OS_TRACE_ID_EVQ_GET);
     OS_EXIT_CRITICAL(sr);
+
+    os_trace_api_ret_u32(OS_TRACE_ID_EVENTQ_GET, (uint32_t)ev);
 
     return (ev);
 }
@@ -157,6 +165,9 @@ os_eventq_poll_0timo(struct os_eventq **evq, int nevqs)
     os_sr_t sr;
     int i;
 
+    os_trace_api_u32x2(OS_TRACE_ID_EVENTQ_POLL_0TIMO, (uint32_t)evq[0],
+                   (uint32_t)nevqs);
+
     ev = NULL;
 
     OS_ENTER_CRITICAL(sr);
@@ -169,6 +180,8 @@ os_eventq_poll_0timo(struct os_eventq **evq, int nevqs)
         }
     }
     OS_EXIT_CRITICAL(sr);
+
+    os_trace_api_ret_u32(OS_TRACE_ID_EVENTQ_POLL_0TIMO, (uint32_t)ev);
 
     return ev;
 }
@@ -187,6 +200,9 @@ os_eventq_poll(struct os_eventq **evq, int nevqs, os_time_t timo)
     if (timo == 0) {
         return os_eventq_poll_0timo(evq, nevqs);
     }
+
+    os_trace_api_u32x3(OS_TRACE_ID_EVENTQ_POLL, (uint32_t)evq[0], (uint32_t)nevqs,
+                   (uint32_t)timo);
 
     ev = NULL;
 
@@ -236,6 +252,8 @@ os_eventq_poll(struct os_eventq **evq, int nevqs, os_time_t timo)
     OS_EXIT_CRITICAL(sr);
 
 has_event:
+    os_trace_api_ret_u32(OS_TRACE_ID_EVENTQ_POLL, (uint32_t)ev);
+
     return (ev);
 }
 
@@ -244,12 +262,16 @@ os_eventq_remove(struct os_eventq *evq, struct os_event *ev)
 {
     os_sr_t sr;
 
+    os_trace_api_u32x2(OS_TRACE_ID_EVENTQ_REMOVE, (uint32_t)evq, (uint32_t)ev);
+
     OS_ENTER_CRITICAL(sr);
     if (OS_EVENT_QUEUED(ev)) {
         STAILQ_REMOVE(&evq->evq_list, ev, os_event, ev_next);
     }
     ev->ev_queued = 0;
     OS_EXIT_CRITICAL(sr);
+
+    os_trace_api_ret(OS_TRACE_ID_EVENTQ_REMOVE);
 }
 
 struct os_eventq *
