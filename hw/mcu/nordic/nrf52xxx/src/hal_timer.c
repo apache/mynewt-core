@@ -357,6 +357,8 @@ hal_rtc_timer_irq_handler(struct nrf52_hal_timer *bsptimer)
     uint32_t compare;
     NRF_RTC_Type *rtctimer;
 
+    os_trace_isr_enter();
+
     /* Check interrupt source. If set, clear them */
     rtctimer = (NRF_RTC_Type *)bsptimer->tmr_reg;
     compare = rtctimer->EVENTS_COMPARE[NRF_RTC_TIMER_CC_INT];
@@ -386,6 +388,8 @@ hal_rtc_timer_irq_handler(struct nrf52_hal_timer *bsptimer)
 
     /* Recommended by nordic to make sure interrupts are cleared */
     compare = rtctimer->EVENTS_COMPARE[NRF_RTC_TIMER_CC_INT];
+
+    os_trace_isr_exit();
 }
 #endif
 
