@@ -68,10 +68,12 @@ This repository contains the core packages of the Apache Mynewt OS, including:
 * A Pre-emptive, Real Time OS Kernel
 * A open-source Bluetooth 5.0 stack (both Host & Controller), NimBLE, that
 completely replaces the proprietary SoftDevice on Nordic chipsets.
+<span style="color:red">**NOTE** NimBLE sources were moved to separate [repository](https://github.com/apache/mynewt-nimble).</span>
     - Support for 251 byte packet size
     - Support for all 4 roles concurrently - Broadcaster, Observer, Peripheral and Central
     - Support for up to 32 simultaneous connections.
     - Legacy and SC (secure connections) SMP support (pairing and bonding).
+    - Advertising Extensions.
 * A flash filesystem, NFFS, which is designed for tiny (128KB->16MB) flashes.
 * FatFS
 * Flash Circular Buffer
@@ -100,9 +102,10 @@ shell ([sys/shell](https://github.com/apache/mynewt-core/tree/master/sys/shell))
 - mgmt: Contains the management libraries for newtmgr [mgmt/newtmgr](https://github.com/apache/mynewt-core/tree/master/sys/newtmgr)), which supports software upgrade and remote fetching of logs and statistics.
 
 - net: Contains the networking packages.  Highlights of the net directory are the NimBLE and IP packages.
-[Nimble](https://github.com/apache/mynewt-core/tree/master/net/nimble)
+[Nimble](https://github.com/apache/mynewt-nimble)
 is a full Bluetooth host and controller implementation, that is written
-from the ground up for the Apache Mynewt Operating System.
+from the ground up for the Apache Mynewt Operating System (due to code moved to
+separate repo this folder contains only compatibility package files).
 [ip](https://github.com/apache/mynewt-core/tree/master/net/ip) is a port of LWIP, a complete IPv4 and IPv6 implementation.
 
 - hw: Contains the HW specific support packages.  Board Support Packages
