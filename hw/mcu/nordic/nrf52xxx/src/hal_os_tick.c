@@ -116,7 +116,7 @@ nrf52_timer_handler(void)
     os_sr_t sr;
     uint32_t counter;
 
-    os_trace_enter_isr();
+    os_trace_isr_enter();
     OS_ENTER_CRITICAL(sr);
 
     /* Calculate elapsed ticks and advance OS time. */
@@ -137,7 +137,7 @@ nrf52_timer_handler(void)
     nrf52_os_tick_set_ocmp(g_hal_os_tick.lastocmp + g_hal_os_tick.ticks_per_ostick);
 
     OS_EXIT_CRITICAL(sr);
-    os_trace_exit_isr();
+    os_trace_isr_exit();
 }
 
 void

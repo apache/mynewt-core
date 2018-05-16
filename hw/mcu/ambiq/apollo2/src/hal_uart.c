@@ -191,7 +191,7 @@ apollo2_uart_irqh_x(int num)
     int data;
     int rc;
 
-    os_trace_enter_isr();
+    os_trace_isr_enter();
 
     u = &uarts[num];
 
@@ -232,7 +232,7 @@ apollo2_uart_irqh_x(int num)
         }
     }
 
-    os_trace_exit_isr();
+    os_trace_isr_exit();
 }
 
 #if MYNEWT_VAL(UART_0)

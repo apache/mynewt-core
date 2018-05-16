@@ -27,13 +27,13 @@ os_mutex_init(struct os_mutex *mu)
         return OS_INVALID_PARM;
     }
 
-    os_trace_void(OS_TRACE_ID_MUTEX_INIT);
+    os_trace_api_void(OS_TRACE_ID_MUTEX_INIT);
     /* Initialize to 0 */
     mu->mu_prio = 0;
     mu->mu_level = 0;
     mu->mu_owner = NULL;
     SLIST_FIRST(&mu->mu_head) = NULL;
-    os_trace_end_call(OS_TRACE_ID_MUTEX_INIT);
+    os_trace_api_ret(OS_TRACE_ID_MUTEX_INIT);
 
     return OS_OK;
 }
@@ -69,7 +69,7 @@ os_mutex_release(struct os_mutex *mu)
     }
 
     OS_ENTER_CRITICAL(sr);
-    os_trace_void(OS_TRACE_ID_MUTEX_RELEASE);
+    os_trace_api_void(OS_TRACE_ID_MUTEX_RELEASE);
 
     /* Restore owner task's priority; resort list if different  */
     if (current->t_prio != mu->mu_prio) {
@@ -108,7 +108,7 @@ os_mutex_release(struct os_mutex *mu)
     if (resched) {
         os_sched(rdy);
     }
-    os_trace_end_call(OS_TRACE_ID_MUTEX_RELEASE);
+    os_trace_api_ret(OS_TRACE_ID_MUTEX_RELEASE);
 
     return OS_OK;
 }
@@ -158,7 +158,7 @@ os_mutex_pend(struct os_mutex *mu, uint32_t timeout)
         return OS_TIMEOUT;
     }
 
-    os_trace_void(OS_TRACE_ID_MUTEX_PEND);
+    os_trace_api_void(OS_TRACE_ID_MUTEX_PEND);
 
     /* Change priority of owner if needed */
     if (mu->mu_owner->t_prio > current->t_prio) {
@@ -202,7 +202,7 @@ os_mutex_pend(struct os_mutex *mu, uint32_t timeout)
     } else {
         rc = OS_TIMEOUT;
     }
-    os_trace_end_call(OS_TRACE_ID_MUTEX_PEND);
+    os_trace_api_ret(OS_TRACE_ID_MUTEX_PEND);
 
     return rc;
 }
