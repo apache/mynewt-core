@@ -41,19 +41,19 @@ static void light_set_lightness(u8_t percentage)
 	uint16_t pwm_val = (uint16_t) (percentage * top_val / 100);
 
 #if MYNEWT_VAL(PWM_0)
-	rc = pwm_enable_duty_cycle(pwm0, 0, pwm_val);
+	rc = pwm_set_duty_cycle(pwm0, 0, pwm_val);
 	assert(rc == 0);
 #endif
 #if MYNEWT_VAL(PWM_1)
-	rc = pwm_enable_duty_cycle(pwm1, 0, pwm_val);
+	rc = pwm_set_duty_cycle(pwm1, 0, pwm_val);
 	assert(rc == 0);
 #endif
 #if MYNEWT_VAL(PWM_2)
-	rc = pwm_enable_duty_cycle(pwm2, 0, pwm_val);
+	rc = pwm_set_duty_cycle(pwm2, 0, pwm_val);
 	assert(rc == 0);
 #endif
 #if MYNEWT_VAL(PWM_3)
-	rc = pwm_enable_duty_cycle(pwm3, 0, pwm_val);
+	rc = pwm_set_duty_cycle(pwm3, 0, pwm_val);
 	assert(rc == 0);
 #endif
 #else
@@ -124,94 +124,72 @@ int light_model_light_lightness_set(struct bt_mesh_model *model, s16_t lightness
 }
 
 #if (!MYNEWT_VAL(USE_NEOPIXEL))
-#if MYNEWT_VAL(PWM_0)
-static struct pwm_dev_interrupt_cfg led1_conf = {
-	.cfg = {
-		.pin = LED_1,
-		.inverted = true,
-		.n_cycles = 0,
-		.interrupts_cfg = true,
-	},
+struct pwm_dev_cfg dev_conf = {
+	.n_cycles = 0,
 	.int_prio = 3,
+};
+
+#if MYNEWT_VAL(PWM_0)
+static struct pwm_chan_cfg led1_conf = {
+	.pin = LED_1,
+	.inverted = true,
 };
 #endif
 
 #if MYNEWT_VAL(PWM_1)
-static struct pwm_dev_interrupt_cfg led2_conf = {
-	.cfg = {
-		.pin = LED_2,
-		.inverted = true,
-		.n_cycles = 0,
-		.interrupts_cfg = true,
-	},
-	.int_prio = 3,
+static struct pwm_chan_cfg led2_conf = {
+	.pin = LED_2,
+	.inverted = true,
 };
 #endif
 
 #if MYNEWT_VAL(PWM_2)
-static struct pwm_dev_interrupt_cfg led3_conf = {
-	.cfg = {
-		.pin = LED_3,
-		.inverted = true,
-		.n_cycles = 0,
-		.interrupts_cfg = true,
-	},
-	.int_prio = 3,
+static struct pwm_chan_cfg led3_conf = {
+	.pin = LED_3,
+	.inverted = true,
 };
 #endif
 #endif
 
 #if MYNEWT_VAL(PWM_3)
-static struct pwm_dev_interrupt_cfg led4_conf = {
-	.cfg = {
-		.pin = LED_4,
-		.inverted = true,
-		.n_cycles = 0,
-		.interrupts_cfg = true,
-	},
-	.int_prio = 3,
+static struct pwm_chan_cfg led4_conf = {
+	.pin = LED_4,
+	.inverted = true,
 };
 #endif
 
 #if (!MYNEWT_VAL(USE_NEOPIXEL))
-int pwm_init(void)
+void init_pwm_dev(struct pwm_dev **pwm, char *dev_name, struct pwm_chan_cfg *chan_cfg)
 {
 	int rc = 0;
 
-#if MYNEWT_VAL(PWM_0)
-	led1_conf.seq_end_data = &led1_conf;
-	pwm0 = (struct pwm_dev *) os_dev_open("pwm0", 0, NULL);
-	assert(pwm0);
-	pwm_set_frequency(pwm0, 1000);
-	rc = pwm_chan_config(pwm0, 0, (struct pwm_chan_cfg*) &led1_conf);
+	*pwm = (struct pwm_dev *) os_dev_open(dev_name, 0, NULL);
+	assert(pwm);
+	rc = pwm_configure_device(*pwm, &dev_conf);
 	assert(rc == 0);
+	rc = pwm_configure_channel(*pwm, 0, chan_cfg);
+	assert(rc == 0);
+	rc = pwm_enable(*pwm);
+	assert(rc == 0);
+}
+
+int pwm_init(void)
+{
+
+#if MYNEWT_VAL(PWM_0)
+	init_pwm_dev(&pwm0, "pwm0", &led1_conf);
 #endif
 
 #if MYNEWT_VAL(PWM_1)
-	led2_conf.seq_end_data = &led2_conf;
-	pwm1 = (struct pwm_dev *) os_dev_open("pwm1", 0, NULL);
-	assert(pwm1);
-	pwm_set_frequency(pwm1, 1000);
-	rc = pwm_chan_config(pwm1, 0, (struct pwm_chan_cfg*) &led2_conf);
-	assert(rc == 0);
+	init_pwm_dev(&pwm1, "pwm1", &led2_conf);
 #endif
 
 #if MYNEWT_VAL(PWM_2)
-	led3_conf.seq_end_data = &led3_conf;
-	pwm2 = (struct pwm_dev *) os_dev_open("pwm2", 0, NULL);
-	assert(pwm2);
-	pwm_set_frequency(pwm2, 1000);
-	rc = pwm_chan_config(pwm2, 0, (struct pwm_chan_cfg*) &led3_conf);
-	assert(rc == 0);
+	init_pwm_dev(&pwm2, "pwm2", &led3_conf);
 #endif
 
 #if MYNEWT_VAL(PWM_3)
-	led4_conf.seq_end_data = &led4_conf;
-	pwm3 = (struct pwm_dev *) os_dev_open("pwm3", 0, NULL);
-	assert(pwm3);
-	pwm_set_frequency(pwm3, 1000);
-	rc = pwm_chan_config(pwm3, 0, (struct pwm_chan_cfg*) &led4_conf);
-	assert(rc == 0);
+	init_pwm_dev(&pwm3, "pwm3", &led4_conf);
 #endif
 
 	if (!pwm0) {
@@ -221,7 +199,7 @@ int pwm_init(void)
 	top_val = (uint16_t) pwm_get_top_value(pwm0);
 	update_light_state();
 
-	return rc;
+	return 0;
 }
 #endif
 #endif
