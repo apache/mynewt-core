@@ -20,6 +20,12 @@
 #ifndef OS_TRACE_API_H
 #define OS_TRACE_API_H
 
+#ifdef __ASSEMBLER__
+
+#define os_trace_task_start_exec        SEGGER_SYSVIEW_OnTaskStartExec
+
+#else
+
 #include "syscfg/syscfg.h"
 #if MYNEWT_VAL(OS_SYSVIEW)
 #include "sysview/vendor/SEGGER_SYSVIEW.h"
@@ -220,6 +226,8 @@ os_trace_api_ret_u32(unsigned id, uint32_t return_value)
 {
 }
 
-#endif
+#endif /* MYNEWT_VAL(OS_SYSVIEW) */
 
-#endif
+#endif /* __ASSEMBLER__ */
+
+#endif /* OS_TRACE_API_H */

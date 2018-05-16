@@ -24,6 +24,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *---------------------------------------------------------------------------*/
+#include <syscfg/syscfg.h>
+#include "os/os_trace_api.h"
 
         .file   "HAL_CM0.S"
         .syntax unified
@@ -175,7 +177,15 @@ context_switch:
         MSR     PSP,R0              /* Write PSP */
         SUBS    R0,R0,#32
         LDMIA   R0!,{R4-R7}         /* Restore New Context */
+
+#if MYNEWT_VAL(OS_SYSVIEW)
+        PUSH    {R4,LR}
+        MOV     R0, R2
+        BL      os_trace_task_start_exec
+        POP     {R4,PC}
+#else
         BX      LR                  /* Return to Thread Mode */
+#endif
 
         .fnend
         .size   PendSV_Handler, .-PendSV_Handler

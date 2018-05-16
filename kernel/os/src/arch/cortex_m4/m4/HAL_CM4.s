@@ -25,6 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *---------------------------------------------------------------------------*/
 #include <syscfg/syscfg.h>
+#include "os/os_trace_api.h"
 
         .syntax unified
 
@@ -178,6 +179,14 @@ PendSV_Handler:
         LDMIA   R12!,{R4-R11}           /* Restore New Context */
 #endif
         MSR     PSP,R12                 /* Write PSP */
+
+#if MYNEWT_VAL(OS_SYSVIEW)
+        PUSH    {R4,LR}
+        MOV     R0, R2
+        BL      os_trace_task_start_exec
+        POP     {R4,LR}
+#endif
+
         BX      LR                      /* Return to Thread Mode */
 
         .fnend
