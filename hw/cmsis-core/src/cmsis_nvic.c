@@ -45,29 +45,3 @@ NVIC_Relocate(void)
     SCB->VTOR = (uint32_t)&__vector_tbl_reloc__;
 #endif
 }
-
-void
-NVIC_SetVector(IRQn_Type IRQn, uint32_t vector)
-{
-    uint32_t *vectors;
-#if ((__CORTEX_M == 0) && (__VTOR_PRESENT == 0))
-    vectors = (uint32_t *)&__vector_tbl_reloc__;
-#else
-    vectors = (uint32_t *)SCB->VTOR;
-#endif
-    vectors[IRQn + NVIC_USER_IRQ_OFFSET] = vector;
-    __DMB();
-}
-
-uint32_t
-NVIC_GetVector(IRQn_Type IRQn)
-{
-    uint32_t *vectors;
-#if (__CORTEX_M == 0)
-    vectors = (uint32_t *)&__vector_tbl_reloc__;
-#else
-    vectors = (uint32_t*)SCB->VTOR;
-#endif
-    return vectors[IRQn + NVIC_USER_IRQ_OFFSET];
-}
-
