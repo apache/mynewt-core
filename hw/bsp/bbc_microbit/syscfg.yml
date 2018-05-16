@@ -40,16 +40,6 @@ syscfg.defs:
         description: 'CTS pin for UART0'
         value: 0
 
-    ADC_0_REFMV_0:
-        description: 'reference mV in AREF0 if used'
-        value: 0
-    ADC_0_REFMV_1:
-        description: 'reference mV in AREF1 if used'
-        value: 0
-    ADC_0_REFMV_VDD:
-        description: 'reference mV in VDD if used'
-        value: 0
-
     SPI_0_MASTER_PIN_SCK:
         description: 'SCK pin for SPI_0_MASTER'
         value:  29
