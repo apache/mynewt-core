@@ -27,7 +27,7 @@ pkg.apis:
     - PWM_HW_IMPL
 
 pkg.deps:
-   - hw/drivers/pwm
+    - hw/drivers/pwm
 
 pkg.deps.MCU_STM32F3:
     - hw/mcu/stm/stm32f3xx

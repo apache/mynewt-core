@@ -26,7 +26,7 @@
 #include <mcu/cmsis_nvic.h>
 #include <hal/hal_timer.h>
 #include "mcu/stm32_hal.h"
-#include "stm32/stm32_hal.h"
+#include "stm32_common/stm32_hal.h"
 
 #define STM32_OFLOW_VALUE       (0x10000UL)
 #define STM32_NSEC_PER_SEC      (1000000000UL)

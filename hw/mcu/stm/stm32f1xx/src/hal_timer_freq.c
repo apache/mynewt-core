@@ -24,7 +24,7 @@
 
 #include <hal/hal_timer.h>
 #include "mcu/stm32_hal.h"
-#include "stm32/stm32_hal.h"
+#include "stm32_common/stm32_hal.h"
 
 
 /*
@@ -45,30 +45,30 @@ stm32_hal_timer_get_freq(void *regs)
      * Assuming RCC_DCKCFGR->TIMPRE is 0.
      * There's just APB2 timers here.
      */
-    switch ((uint32_t)regs) {
+    switch ((uintptr_t)regs) {
 #ifdef TIM1
-    case (uint32_t)TIM1:
+    case (uintptr_t)TIM1:
 #endif
 #ifdef TIM8
-    case (uint32_t)TIM8:
+    case (uintptr_t)TIM8:
 #endif
 #ifdef TIM9
-    case (uint32_t)TIM9:
+    case (uuintptr_t)TIM9:
 #endif
 #ifdef TIM10
-    case (uint32_t)TIM10:
+    case (uintptr_t)TIM10:
 #endif
 #ifdef TIM11
-    case (uint32_t)TIM11:
+    case (uintptr_t)TIM11:
 #endif
 #ifdef TIM15
-    case (uint32_t)TIM15:
+    case (uintptr_t)TIM15:
 #endif
 #ifdef TIM16
-    case (uint32_t)TIM16:
+    case (uintptr_t)TIM16:
 #endif
 #ifdef TIM17
-    case (uint32_t)TIM17:
+    case (uintptr_t)TIM17:
 #endif
         freq = HAL_RCC_GetPCLK2Freq();
         if (clocks.APB2CLKDivider) {
@@ -76,13 +76,13 @@ stm32_hal_timer_get_freq(void *regs)
         }
         break;
 #ifdef TIM2
-    case (uint32_t)TIM2:
+    case (uintptr_t)TIM2:
 #endif
 #ifdef TIM3
-    case (uint32_t)TIM3:
+    case (uintptr_t)TIM3:
 #endif
 #ifdef TIM4
-    case (uint32_t)TIM4:
+    case (uintptr_t)TIM4:
 #endif
         freq = HAL_RCC_GetPCLK1Freq();
         if (clocks.APB1CLKDivider) {
