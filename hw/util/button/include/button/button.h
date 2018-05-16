@@ -62,7 +62,7 @@
  * debounce_init(&dbtn_2, BUTTON_2, HAL_GPIO_PULL_UP, 5);
  *
  * debounce_start(&dbtn_1, DEBOUNCE_CALLBACK_EVENT_ANY,
- *		  button_debounce_handler, &btns[0]);
+ *                button_debounce_handler, &btns[0]);
  * debounce_start(&dbtn_2, DEBOUNCE_CALLBACK_EVENT_ANY,
  *                button_debounce_handler, &btns[1]);
  *
@@ -70,7 +70,7 @@
  *
  * void button_callback(button_id_t id, uint8_t type, uint8_t flags) {
  *   if (type != BUTTON_ACTION) // Only interested by action
- *	return;
+ *      return;
  *
  *   switch(id) {
  *   case 1:
@@ -78,11 +78,11 @@
  *       alert("some action was lost");
  *     console_printf("BUTTON[%d] ", id);
  *     if (flags & BUTTON_FLG_PRESSED) {
- *	 console_printf("ACTION=");
- *	 if (flags & BUTTON_FLG_LONG)	   console_printf("long ");
+ *       console_printf("ACTION=");
+ *       if (flags & BUTTON_FLG_LONG)      console_printf("long ");
  *       if (flags & BUTTON_FLG_DOUBLED)   console_printf("double ");
  *       console_printf("click");
- *	 if (flags & BUTTON_FLG_REPEATING) console_printf(" repeated");
+ *       if (flags & BUTTON_FLG_REPEATING) console_printf(" repeated");
  *       console_printf("\n");
  *     }
  *     break;
@@ -118,40 +118,40 @@
 /**
  * Pressed state/action
  */
-#define BUTTON_FLG_PRESSED		0x01
+#define BUTTON_FLG_PRESSED              0x01
 #if MYNEWT_VAL(BUTTON_USE_DOUBLE)
 /**
  * Doubled pressed state/action
  */
-#define BUTTON_FLG_DOUBLED		0x02
+#define BUTTON_FLG_DOUBLED              0x02
 #endif
 #if MYNEWT_VAL(BUTTON_USE_LONG)
 /**
  * Long pressed state/action
  */
-#define BUTTON_FLG_LONG			0x04
+#define BUTTON_FLG_LONG                 0x04
 #endif
 #if MYNEWT_VAL(BUTTON_USE_REPEAT)
 /**
  * Repeating state, continuously repeating last action
  */
-#define BUTTON_FLG_REPEATING		0x08
+#define BUTTON_FLG_REPEATING            0x08
 #endif
 /**
  * Some event have been missed (not enough buffer event, 
  *  increase BUTTON_EVENT_MAX)
  */
-#define BUTTON_FLG_MISSED		0x40
+#define BUTTON_FLG_MISSED               0x40
 
 
 /**
  * Indicate State Changed
  */
-#define BUTTON_STATE_CHANGED  		0x01
+#define BUTTON_STATE_CHANGED            0x01
 /**
  * Indicate Action
  */
-#define BUTTON_ACTION 			0x02
+#define BUTTON_ACTION                   0x02
 
 
 /**
@@ -293,6 +293,14 @@ typedef struct button {
      * Type of state changed or action that should be taken into account.
      */
     uint8_t mode;
+#if MYNEWT_VAL(BUTTON_USE_PER_BUTTON_CALLBACK_EVENTQ) > 0
+    /**
+     * Specific Event queue for this button callback.
+     * If not defined (ie: is NULL), the default event queue
+     * specified by button_callback_default_evq_set() will be used.
+     */
+    struct os_eventq *eventq;
+#endif
     /*
      * Current button state
      */
@@ -327,18 +335,18 @@ typedef struct button {
 #endif
 #if MYNEWT_VAL(BUTTON_USE_FILTERING)
     struct {
-	/**
-	 * Enable filtering (reducing number of events emited)
-	 */
-	bool enabled;
-	/**
-	 * List of state change to emit, based on BUTTON_FLG_*
-	 */
-	uint8_t state;
-	/**
-	 * List of action to emit, base on BUTTON_FLG_*
-	 */
-	uint8_t action;
+        /**
+         * Enable filtering (reducing number of events emited)
+         */
+        bool enabled;
+        /**
+         * List of state change to emit, based on BUTTON_FLG_*
+         */
+        uint8_t state;
+        /**
+         * List of action to emit, base on BUTTON_FLG_*
+         */
+        uint8_t action;
     } filter;
 #endif
 } button_t;
@@ -346,9 +354,9 @@ typedef struct button {
 /**
  * Definition of the callback use to notify of action or state change.
  *
- * @param button	concerned button
- * @param type		type of event (BUTTON_STATE_CHANGED or BUTTON_ACTION)
- * @param flags		flag indicating the action or state change
+ * @param button        concerned button
+ * @param type          type of event (BUTTON_STATE_CHANGED or BUTTON_ACTION)
+ * @param flags         flag indicating the action or state change
  *                      (see BUTTON_FLG_*)
  */
 typedef void (*button_callback_t)(button_id_t id, uint8_t type, uint8_t flags);
@@ -357,17 +365,37 @@ typedef void (*button_callback_t)(button_id_t id, uint8_t type, uint8_t flags);
  * Drive the button, by setting the the low level state (pressed / released)
  * when it happens.
  *
- * @param button	button
- * @param pressed	low level button state
+ * @param button        button
+ * @param pressed       low level button state
  */
 void button_set_low_level_state(button_t *button, bool pressed);
 
 /**
+ * Specify an alternate queue for the buttons internal management.
+ *
+ * @note If not called, the default OS eventq will be used: os_eventq_dflt_get()
+ *
+ * @note Calling this function afer button initialisation has been done
+ *       will result in an undefined behaviour.
+ */
+void button_internal_evq_set(struct os_eventq *evq);
+
+/**
+ * Specify an alternate default queue for processing button callback.
+ *
+ * @note If not called, the default OS eventq will be used: os_eventq_dflt_get()
+ *
+ * @note Calling this function afer button initialisation has been done
+ *       will result in an undefined behaviour.
+ */
+void button_callback_default_evq_set(struct os_eventq *evq);
+
+/**
  * Initialisation of the buttons
  *
- * @param buttons	buttons definition
- * @param count		number of defined buttons
- * @param cb		callback used to notify of state change or action
+ * @param buttons       buttons definition
+ * @param count         number of defined buttons
+ * @param cb            callback used to notify of state change or action
  */
 void button_init(button_t *buttons, unsigned int count, button_callback_t cb);
 
