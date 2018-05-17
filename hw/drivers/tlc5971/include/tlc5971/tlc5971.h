@@ -33,17 +33,19 @@
 
 #define TLC5971_WRITE_COMMAND               0x25
 
-#define TLC5971_DATA_BYTE27(ctrl)           (TLC5971_WRITE_COMMAND << 2 | \
-    (ctrl & (TLC5971_CTRL_MASK_LOW)))
+#define TLC5971_DATA_BYTE27(ctrl)           \
+    (TLC5971_WRITE_COMMAND << 2 | (ctrl & (TLC5971_CTRL_MASK_LOW)))
 
-#define TLC5971_DATA_BYTE26(ctrl, bc_blu)   ((ctrl & TLC5971_CTRL_MASK_HIGH) \
-    | (bc_blu >> 2 & TLC5971_BC_BLU_BYTE_26_MASK))
+#define TLC5971_DATA_BYTE26(ctrl, bc_blu)   \
+    ((ctrl & TLC5971_CTRL_MASK_HIGH) |      \
+    (bc_blu >> 2 & TLC5971_BC_BLU_BYTE_26_MASK))
 
-#define TLC5971_DATA_BYTE25(bc_blu, bc_grn) (((bc_blu << 6) & \
-    TLC5971_BC_BLU_BYTE_25_MASK) | ((bc_grn >> 1) & TLC5971_BC_GRN_BYTE_25_MASK))
+#define TLC5971_DATA_BYTE25(bc_blu, bc_grn) \
+    (((bc_blu << 6) & TLC5971_BC_BLU_BYTE_25_MASK) | \
+    ((bc_grn >> 1) & TLC5971_BC_GRN_BYTE_25_MASK))
 
-#define TLC5971_DATA_BYTE24(bc_grn, bc_red) (((bc_grn << 7) & \
-    TLC5971_BC_GRN_BYTE_24_MASK) | (bc_red))
+#define TLC5971_DATA_BYTE24(bc_grn, bc_red) \
+    (((bc_grn << 7) & TLC5971_BC_GRN_BYTE_24_MASK) | (bc_red))
 
 #define TLC5971_DATA_GS_H(gs_value)         (gs_value >> 8)
 
@@ -198,8 +200,9 @@ int tlc5971_write(struct tlc5971_dev *dev);
 void tlc5971_set_cfg(struct tlc5971_dev *dev, struct tlc5971_cfg *cfg);
 void tlc5971_get_cfg(struct tlc5971_dev *dev, struct tlc5971_cfg *cfg);
 void tlc5971_set_global_brightness(struct tlc5971_dev *dev,
-                                   tlc5971_bc_channel_t, uint8_t brightness);
+                                   tlc5971_bc_channel_t bc_channel,
+                                   uint8_t brightness);
 void tlc5971_set_channel_rgb(struct tlc5971_dev *dev, tlc5971_channel_t,
                              uint16_t red, uint16_t green, uint16_t blue);
 
-#endif //__TLC5971_H__
+#endif /* __TLC5971_H__ */

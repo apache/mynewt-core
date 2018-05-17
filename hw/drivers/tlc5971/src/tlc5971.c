@@ -19,7 +19,6 @@
 #include <string.h>
 #include "os/mynewt.h"
 #include "tlc5971/tlc5971.h"
-#include "hal/hal_gpio.h"
 #include "hal/hal_spi.h"
 
 /**
@@ -31,7 +30,7 @@
  * @param wait The amount of time to wait to open (if needed).
  * @param arg device open arg (not used)
  *
- * @return int
+ * @return int 0:success; error code otherwise
  */
 static int
 tlc5971_open(struct os_dev *odev, uint32_t wait, void *arg)
@@ -61,6 +60,15 @@ tlc5971_open(struct os_dev *odev, uint32_t wait, void *arg)
     return 0;
 }
 
+/**
+ * tlc5971 close
+ *
+ * os device close function
+ *
+ * @param odev Pointer to os device to close
+ *
+ * @return int 0: success (does not fail).
+ */
 static int
 tlc5971_close(struct os_dev *odev)
 {
@@ -101,7 +109,7 @@ tlc5971_is_enabled(struct tlc5971_dev *dev)
  * spi, we construct the data packet in reverse order. On other words, byte 27
  * gets placed into packet location 0, byte in location 1, etc.
  *
- * @param dev
+ * @param dev Pointer to tlc5971 device
  */
 static void
 tlc5971_construct_packet(struct tlc5971_dev *dev)
@@ -118,7 +126,7 @@ tlc5971_construct_packet(struct tlc5971_dev *dev)
     dptr[3] = TLC5971_DATA_BYTE24(dev->bc.bc_green, dev->bc.bc_red);
     dptr += 4;
 
-    /* Now place 16-bit values into buffer*/
+    /* Now place 16-bit values into buffer */
     i = 3;
     while (i >= 0) {
         dptr[0] = (uint8_t)(dev->gs[i].gs_blue >> 8);
@@ -181,7 +189,7 @@ tlc5971_set_global_brightness(struct tlc5971_dev *dev,
                               tlc5971_bc_channel_t bc_channel,
                               uint8_t brightness)
 {
-    switch(bc_channel) {
+    switch (bc_channel) {
     case TLC5971_BC_CHANNEL_RED:
         dev->bc.bc_red = brightness;
         break;
@@ -201,6 +209,17 @@ tlc5971_set_global_brightness(struct tlc5971_dev *dev,
     }
 }
 
+/**
+ * tlc5971 set channel rgb
+ *
+ * Sets the RBG 16-bit grayscale values for a LED channel (or all channels)
+ *
+ * @param dev Pointer to tlc5971 device
+ * @param channel The RGB channel to set (or all).
+ * @param red The 16-bit PWM grayscale value (0 - 65535) for the red led
+ * @param green The 16-bit PWM grayscale value (0 - 65535) for the green led
+ * @param blue The 16-bit PWM grayscale value (0 - 65535) for the blue led
+ */
 void
 tlc5971_set_channel_rgb(struct tlc5971_dev *dev, tlc5971_channel_t channel,
                         uint16_t red, uint16_t green, uint16_t blue)
@@ -220,12 +239,28 @@ tlc5971_set_channel_rgb(struct tlc5971_dev *dev, tlc5971_channel_t channel,
     }
 }
 
+/**
+ * tlc5971 set cfg
+ *
+ * Sets the device configuration
+ *
+ * @param dev Pointer to tlc5971 device
+ * @param cfg Pointer to config structure
+ */
 void
 tlc5971_set_cfg(struct tlc5971_dev *dev, struct tlc5971_cfg *cfg)
 {
     dev->control_data = cfg->tlc_ctrl_data;
 }
 
+/**
+ * tlc get cfg
+ *
+ * Returns the current config structure.
+ *
+ * @param dev Pointer to tlc5971 device
+ * @param cfg Pointer to config structure
+ */
 void
 tlc5971_get_cfg(struct tlc5971_dev *dev, struct tlc5971_cfg *cfg)
 {
