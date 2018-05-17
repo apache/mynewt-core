@@ -35,8 +35,6 @@ pkg.ign_files.BSP_NRF52:
 pkg.ign_files.BSP_NRF52810:
     - "nrfx_power.c"
     - "nrfx_power_clock.c"
-    - "hal_spi.c"
-    - "hal_i2c.c"
 
 pkg.ign_files.BSP_NRF52840:
     - "nrfx_power.c"

@@ -29,3 +29,9 @@ pkg.deps:
     - hw/mcu/nordic
     - hw/cmsis-core 
     - hw/hal 
+
+# NRF52810 doesn't support SPI/I2C (Use SPIM/I2CM instead)
+pkg.ign_files.BSP_NRF52810:
+    - "hal_spi.c"
+    - "hal_i2c.c"
+
