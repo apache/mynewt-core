@@ -75,6 +75,9 @@ struct stm32_hal_spi_cfg {
 
 #define STM32_HAL_TIMER_MAX     (3)
 
+/* hal_trng */
+#include "stm32f7xx_hal_rng.h"
+
 #ifdef __cplusplus
 }
 #endif

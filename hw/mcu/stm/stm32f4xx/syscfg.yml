@@ -43,3 +43,7 @@ syscfg.defs:
         value:  0
         restrictions:
             - "!SPI_0_MASTER"
+
+    TRNG:
+        description: 'True Random Number Generator (RNG)'
+        value: 0
