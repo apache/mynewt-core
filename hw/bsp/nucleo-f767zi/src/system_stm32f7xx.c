@@ -64,6 +64,11 @@
   */
 
 #include "stm32f7xx.h"
+#include "stm32f7xx_hal_gpio_ex.h"
+#include "stm32f7xx_hal_flash.h"
+#include "stm32f7xx_hal_rcc.h"
+#include "stm32f7xx_hal_pwr.h"
+#include "stm32f7xx_hal_pwr_ex.h"
 #include "mcu/cmsis_nvic.h"
 
 #if !defined  (HSE_VALUE) 
@@ -134,6 +139,7 @@
 /** @addtogroup STM32F7xx_System_Private_FunctionPrototypes
   * @{
   */
+static void SystemClock_Config(void);
 
 /**
   * @}
@@ -174,6 +180,9 @@ void SystemInit(void)
 
   /* Disable all interrupts */
   RCC->CIR = 0x00000000;
+
+  /* Configure System Clock */
+  SystemClock_Config();
 
   /* Relocate the vector table */
   NVIC_Relocate();
@@ -261,6 +270,56 @@ void SystemCoreClockUpdate(void)
   tmp = AHBPrescTable[((RCC->CFGR & RCC_CFGR_HPRE) >> 4)];
   /* HCLK frequency */
   SystemCoreClock >>= tmp;
+}
+
+/** System Clock Configuration.
+ *
+ * Configures CPU to run at 168 MHz.
+ *
+ * ((16 MHz / 10) * 210) / 2 = 168 MHz
+ */
+void SystemClock_Config(void)
+{
+
+    RCC_OscInitTypeDef RCC_OscInitStruct;
+    RCC_ClkInitTypeDef RCC_ClkInitStruct;
+
+    SCB_EnableICache();
+
+    /**Configure the main internal regulator output voltage
+    */
+    __HAL_RCC_PWR_CLK_ENABLE();
+
+    __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE2);
+
+    /* Initializes the CPU, AHB and APB busses clocks */
+    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+    RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+    RCC_OscInitStruct.HSICalibrationValue = 16;
+    RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+    RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
+    RCC_OscInitStruct.PLL.PLLM = 10;
+    RCC_OscInitStruct.PLL.PLLN = 210;
+    RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
+    RCC_OscInitStruct.PLL.PLLQ = 2;
+    if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+    {
+        /* TODO: Throw error */
+    }
+
+    /* Initializes the CPU, AHB and APB busses clocks */
+    RCC_ClkInitStruct.ClockType = \
+        RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_PCLK1 | \
+        RCC_CLOCKTYPE_PCLK2;
+    RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+    RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+    RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
+    RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
+
+    if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_5) != HAL_OK)
+    {
+        /* TODO: Throw error */
+    }
 }
 
 /**
