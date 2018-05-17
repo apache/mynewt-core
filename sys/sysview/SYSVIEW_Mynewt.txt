@@ -17,3 +17,12 @@
 71	os_callout_stop			c=%p
 72	os_callout_reset		c=%p ticks=%d | returns %d
 73	os_callout_tick
+
+80	os_memblock_get			mp=%p | returns %p
+81	os_memblock_put_from_cb		mp=%p block_addr=%p | returns %d
+82	os_memblock_put			mp=%p block_addr=%p | returns %d
+
+90	os_mbuf_get			omp=%p leadingspace=%u | returns %p
+91	os_mbuf_get_pkthdr		omp=%p user_pkthdr_len=%u | returns %p
+92	os_mbuf_free			om=%p | returns %d
+93	os_mbuf_free_chain		om=%p | returns %d

@@ -50,6 +50,13 @@
 #define OS_TRACE_ID_CALLOUT_STOP                (71)
 #define OS_TRACE_ID_CALLOUT_RESET               (72)
 #define OS_TRACE_ID_CALLOUT_TICK                (73)
+#define OS_TRACE_ID_MEMBLOCK_GET                (80)
+#define OS_TRACE_ID_MEMBLOCK_PUT_FROM_CB        (81)
+#define OS_TRACE_ID_MEMBLOCK_PUT                (82)
+#define OS_TRACE_ID_MBUF_GET                    (90)
+#define OS_TRACE_ID_MBUF_GET_PKTHDR             (91)
+#define OS_TRACE_ID_MBUF_FREE                   (92)
+#define OS_TRACE_ID_MBUF_FREE_CHAIN             (93)
 
 #if MYNEWT_VAL(OS_SYSVIEW)
 

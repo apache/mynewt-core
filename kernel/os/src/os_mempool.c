@@ -20,6 +20,10 @@
 #include <string.h>
 #include <assert.h>
 #include <stdbool.h>
+#include "syscfg/syscfg.h"
+#if !MYNEWT_VAL(OS_SYSVIEW_TRACE_MEMPOOL)
+#define OS_TRACE_DISABLE_FILE_API
+#endif
 #include "os/mynewt.h"
 
 #define OS_MEM_TRUE_BLOCK_SIZE(bsize)   OS_ALIGN(bsize, OS_ALIGNMENT)
@@ -223,6 +227,8 @@ os_memblock_get(struct os_mempool *mp)
     os_sr_t sr;
     struct os_memblock *block;
 
+    os_trace_api_u32(OS_TRACE_ID_MEMBLOCK_GET, (uint32_t)mp);
+
     /* Check to make sure they passed in a memory pool (or something) */
     block = NULL;
     if (mp) {
@@ -248,6 +254,8 @@ os_memblock_get(struct os_mempool *mp)
         }
     }
 
+    os_trace_api_ret_u32(OS_TRACE_ID_MEMBLOCK_GET, (uint32_t)block);
+
     return (void *)block;
 }
 
@@ -256,6 +264,9 @@ os_memblock_put_from_cb(struct os_mempool *mp, void *block_addr)
 {
     os_sr_t sr;
     struct os_memblock *block;
+
+    os_trace_api_u32x2(OS_TRACE_ID_MEMBLOCK_PUT_FROM_CB, (uint32_t)mp,
+                       (uint32_t)block_addr);
 
     os_mempool_poison(block_addr, OS_MEMPOOL_TRUE_BLOCK_SIZE(mp));
 
@@ -272,6 +283,8 @@ os_memblock_put_from_cb(struct os_mempool *mp, void *block_addr)
 
     OS_EXIT_CRITICAL(sr);
 
+    os_trace_api_ret_u32(OS_TRACE_ID_MEMBLOCK_PUT_FROM_CB, (uint32_t)OS_OK);
+
     return OS_OK;
 }
 
@@ -279,14 +292,18 @@ os_error_t
 os_memblock_put(struct os_mempool *mp, void *block_addr)
 {
     struct os_mempool_ext *mpe;
-    int rc;
+    os_error_t ret;
 #if MYNEWT_VAL(OS_MEMPOOL_CHECK)
     struct os_memblock *block;
 #endif
 
+    os_trace_api_u32x2(OS_TRACE_ID_MEMBLOCK_PUT, (uint32_t)mp,
+                       (uint32_t)block_addr);
+
     /* Make sure parameters are valid */
     if ((mp == NULL) || (block_addr == NULL)) {
-        return OS_INVALID_PARM;
+        ret = OS_INVALID_PARM;
+        goto done;
     }
 
 #if MYNEWT_VAL(OS_MEMPOOL_CHECK)
@@ -307,13 +324,17 @@ os_memblock_put(struct os_mempool *mp, void *block_addr)
     if (mp->mp_flags & OS_MEMPOOL_F_EXT) {
         mpe = (struct os_mempool_ext *)mp;
         if (mpe->mpe_put_cb != NULL) {
-            rc = mpe->mpe_put_cb(mpe, block_addr, mpe->mpe_put_arg);
-            return rc;
+            ret = mpe->mpe_put_cb(mpe, block_addr, mpe->mpe_put_arg);
+            goto done;
         }
     }
 
     /* No callback; free the block. */
-    return os_memblock_put_from_cb(mp, block_addr);
+    ret = os_memblock_put_from_cb(mp, block_addr);
+
+done:
+    os_trace_api_ret_u32(OS_TRACE_ID_MEMBLOCK_PUT, (uint32_t)ret);
+    return ret;
 }
 
 struct os_mempool *

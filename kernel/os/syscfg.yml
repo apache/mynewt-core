@@ -88,6 +88,14 @@ syscfg.defs:
         description: >
             Enable tracing os_eventq APIs by SystemView
         value: 1
+    OS_SYSVIEW_TRACE_MBUF:
+        description: >
+            Enable tracing os_mbuf APIs by SystemView
+        value: 0
+    OS_SYSVIEW_TRACE_MEMPOOL:
+        description: >
+            Enable tracing os_mempool APIs by SystemView
+        value: 0
     OS_SYSVIEW_TRACE_MUTEX:
         description: >
             Enable tracing os_mutex APIs by SystemView
