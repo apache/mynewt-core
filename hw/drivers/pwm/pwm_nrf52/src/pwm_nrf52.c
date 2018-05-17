@@ -722,6 +722,54 @@ nrf52_pwm_get_resolution_bits(struct pwm_dev *dev)
     return (-EINVAL);
 }
 
+#if MYNEWT_VAL(OS_SYSVIEW)
+#if MYNEWT_VAL(PWM_0)
+static void
+pwm_0_irq_handler(void)
+{
+    os_trace_isr_enter();
+    nrfx_pwm_0_irq_handler();
+    os_trace_isr_exit();
+}
+#endif
+
+#if MYNEWT_VAL(PWM_1)
+static void
+pwm_1_irq_handler(void)
+{
+    os_trace_isr_enter();
+    nrfx_pwm_1_irq_handler();
+    os_trace_isr_exit();
+}
+#endif
+
+#if MYNEWT_VAL(PWM_2)
+static void
+pwm_2_irq_handler(void)
+{
+    os_trace_isr_enter();
+    nrfx_pwm_2_irq_handler();
+    os_trace_isr_exit();
+}
+#endif
+
+#if MYNEWT_VAL(PWM_3)
+static void
+pwm_3_irq_handler(void)
+{
+    os_trace_isr_enter();
+    nrfx_pwm_3_irq_handler();
+    os_trace_isr_exit();
+}
+#endif
+
+#define PWM_IRQ_HANDLER(_pwm_no) \
+                            (uint32_t) pwm_ ## _pwm_no ## _irq_handler
+#else
+#define PWM_IRQ_HANDLER(_pwm_no) \
+                            (uint32_t) nrfx_pwm_ ## _pwm_no ## _irq_handler
+#endif
+
 /**
  * Callback to initialize an adc_dev structure from the os device
  * initialization callback.  This sets up a nrf52_pwm_device(), so
@@ -732,6 +780,8 @@ nrf52_pwm_dev_init(struct os_dev *odev, void *arg)
 {
     struct pwm_dev *dev;
     struct pwm_driver_funcs *pwm_funcs;
+    IRQn_Type irqn;
+    uint32_t irqh;
 
     assert(odev);
     dev = (struct pwm_dev *) odev;
@@ -759,30 +809,37 @@ nrf52_pwm_dev_init(struct os_dev *odev, void *arg)
     switch (dev->pwm_instance_id) {
 #if MYNEWT_VAL(PWM_0)
     case 0:
-        NVIC_SetVector(PWM0_IRQn, (uint32_t) nrfx_pwm_0_irq_handler);
+        irqn = PWM0_IRQn;
+        irqh = PWM_IRQ_HANDLER(0);
         break;
 #endif
 
 #if MYNEWT_VAL(PWM_1)
     case 1:
-        NVIC_SetVector(PWM1_IRQn, (uint32_t) nrfx_pwm_1_irq_handler);
+        irqn = PWM1_IRQn;
+        irqh = PWM_IRQ_HANDLER(1);
         break;
 #endif
 
 #if MYNEWT_VAL(PWM_2)
     case 2:
-        NVIC_SetVector(PWM2_IRQn, (uint32_t) nrfx_pwm_2_irq_handler);
+        irqn = PWM2_IRQn;
+        irqh = PWM_IRQ_HANDLER(2);
         break;
 #endif
 
 #if MYNEWT_VAL(PWM_3)
     case 3:
-        NVIC_SetVector(PWM3_IRQn, (uint32_t) nrfx_pwm_3_irq_handler);
+        irqn = PWM3_IRQn;
+        irqh = PWM_IRQ_HANDLER(3);
         break;
 #endif
     default:
         assert(0);
+        return 0;
     }
+
+    NVIC_SetVector(irqn, irqh);
 
     return (0);
 }
