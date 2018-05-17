@@ -25,6 +25,10 @@
 #include "stm32f4xx_hal_dma.h"
 #include "stm32f4xx_hal_adc.h"
 #include "flash_map/flash_map.h"
+#if MYNEWT_VAL(TRNG)
+#include "trng/trng.h"
+#include "trng_stm32/trng_stm32.h"
+#endif
 #if MYNEWT_VAL(UART_0)
 #include "uart/uart.h"
 #include "uart_hal/uart_hal.h"
@@ -47,6 +51,10 @@
 #include "mcu/stm32_hal.h"
 #include "mcu/stm32f4_bsp.h"
 #include "mcu/stm32f4xx_mynewt_hal.h"
+
+#if MYNEWT_VAL(TRNG)
+static struct trng_dev os_bsp_trng;
+#endif
 
 #if MYNEWT_VAL(UART_0)
 struct uart_dev hal_uart0;
@@ -376,6 +384,13 @@ hal_bsp_init(void)
     int rc;
 
     (void)rc;
+
+#if MYNEWT_VAL(TRNG)
+    rc = os_dev_create(&os_bsp_trng.dev, "trng", OS_DEV_INIT_KERNEL,
+                       OS_DEV_INIT_PRIO_DEFAULT, stm32_trng_dev_init, NULL);
+    assert(rc == 0);
+#endif
+
 #if MYNEWT_VAL(SPI_0_MASTER)
     rc = hal_spi_init(0, &spi0_cfg, HAL_SPI_TYPE_MASTER);
     assert(rc == 0);
