@@ -20,6 +20,11 @@
 
 #include "os/mynewt.h"
 
+#if MYNEWT_VAL(TRNG)
+#include "trng/trng.h"
+#include "trng_stm32/trng_stm32.h"
+#endif
+
 #if MYNEWT_VAL(UART_0)
 #include <uart/uart.h>
 #include <uart_hal/uart_hal.h>
@@ -48,6 +53,10 @@
 #endif
 
 #include "bsp/bsp.h"
+
+#if MYNEWT_VAL(TRNG)
+static struct trng_dev os_bsp_trng;
+#endif
 
 #if MYNEWT_VAL(UART_0)
 static struct uart_dev hal_uart0;
@@ -174,6 +183,12 @@ hal_bsp_init(void)
     (void)rc;
 
     hal_system_clock_start();
+
+#if MYNEWT_VAL(TRNG)
+    rc = os_dev_create(&os_bsp_trng.dev, "trng", OS_DEV_INIT_KERNEL,
+                       OS_DEV_INIT_PRIO_DEFAULT, stm32_trng_dev_init, NULL);
+    assert(rc == 0);
+#endif
 
 #if MYNEWT_VAL(UART_0)
     rc = os_dev_create((struct os_dev *) &hal_uart0, "uart0",
