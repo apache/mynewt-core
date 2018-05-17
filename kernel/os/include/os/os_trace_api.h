@@ -22,6 +22,8 @@
 
 #ifdef __ASSEMBLER__
 
+#define os_trace_isr_enter              SEGGER_SYSVIEW_RecordEnterISR
+#define os_trace_isr_exit               SEGGER_SYSVIEW_RecordExitISR
 #define os_trace_task_start_exec        SEGGER_SYSVIEW_OnTaskStartExec
 
 #else

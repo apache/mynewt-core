@@ -98,6 +98,12 @@ SVC_Handler:
         .fnstart
         .cantunwind
 
+#if MYNEWT_VAL(OS_SYSVIEW)
+        PUSH    {R4,LR}
+        BL      os_trace_isr_enter
+        POP     {R4,LR}
+#endif
+
         MRS     R0,PSP                  /* Read PSP */
         LDR     R1,[R0,#24]             /* Read Saved PC from Stack */
         LDRB    R1,[R1,#-2]             /* Load SVC Number */
@@ -110,6 +116,13 @@ SVC_Handler:
 
         MRS     R12,PSP                 /* Read PSP */
         STM     R12,{R0-R2}             /* Store return values */
+
+#if MYNEWT_VAL(OS_SYSVIEW)
+        PUSH    {R4,LR}
+        BL      os_trace_isr_exit
+        POP     {R4,LR}
+#endif
+
         BX      LR                      /* Return from interrupt */
 
         /*------------------- User SVC ------------------------------*/
@@ -129,6 +142,9 @@ SVC_User:
         MRS     R12,PSP
         STM     R12,{R0-R3}             /* Function return values */
 SVC_Done:
+#if MYNEWT_VAL(OS_SYSVIEW)
+        BL      os_trace_isr_exit
+#endif
         POP     {R4,LR}                 /* Restore EXC_RETURN */
         BX      LR                      /* Return from interrupt */
 
@@ -204,7 +220,13 @@ SysTick_Handler:
         .cantunwind
 
         PUSH    {R4,LR}                 /* Save EXC_RETURN */
+#if MYNEWT_VAL(OS_SYSVIEW)
+        BL      os_trace_isr_enter
+#endif
         BL      timer_handler
+#if MYNEWT_VAL(OS_SYSVIEW)
+        BL      os_trace_isr_exit
+#endif
         POP     {R4,LR}                 /* Restore EXC_RETURN */
         BX      LR
 
@@ -219,6 +241,12 @@ os_default_irq_asm:
         .fnstart
         .cantunwind
 
+#if MYNEWT_VAL(OS_SYSVIEW)
+        PUSH    {R4,LR}
+        BL      os_trace_isr_enter
+        POP     {R4,LR}
+#endif
+
         /*
          * LR = 0xfffffff9 if we were using MSP as SP
          * LR = 0xfffffffd if we were using PSP as SP
@@ -231,6 +259,13 @@ os_default_irq_asm:
         MOV     R0, SP
         BL      os_default_irq
         POP     {R3-R11,LR}                 /* Restore EXC_RETURN */
+
+#if MYNEWT_VAL(OS_SYSVIEW)
+        PUSH    {R4,LR}
+        BL      os_trace_isr_exit
+        POP     {R4,LR}
+#endif
+
         BX      LR
 
         .fnend
