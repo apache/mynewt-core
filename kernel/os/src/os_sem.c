@@ -18,6 +18,10 @@
  */
 
 #include <assert.h>
+#include "syscfg/syscfg.h"
+#if !MYNEWT_VAL(OS_SYSVIEW_TRACE_SEM)
+#define OS_TRACE_DISABLE_FILE_API
+#endif
 #include "os/mynewt.h"
 
 /* XXX:

@@ -115,6 +115,10 @@ os_trace_idle(void)
     SEGGER_SYSVIEW_OnIdle();
 }
 
+#endif /* MYNEWT_VAL(OS_SYSVIEW) */
+
+#if MYNEWT_VAL(OS_SYSVIEW) && !defined(OS_TRACE_DISABLE_FILE_API)
+
 static inline void
 os_trace_api_void(unsigned id)
 {
@@ -151,7 +155,9 @@ os_trace_api_ret_u32(unsigned id, uint32_t ret)
     SEGGER_SYSVIEW_RecordEndCallU32(id, ret);
 }
 
-#else
+#endif /* MYNEWT_VAL(OS_SYSVIEW) && !defined(OS_TRACE_DISABLE_FILE_API) */
+
+#if !MYNEWT_VAL(OS_SYSVIEW)
 
 static inline void
 os_trace_isr_enter(void)
@@ -198,6 +204,10 @@ os_trace_idle(void)
 {
 }
 
+#endif /* !MYNEWT_VAL(OS_SYSVIEW) */
+
+#if !MYNEWT_VAL(OS_SYSVIEW) || defined(OS_TRACE_DISABLE_FILE_API)
+
 static inline void
 os_trace_api_void(unsigned id)
 {
@@ -228,7 +238,7 @@ os_trace_api_ret_u32(unsigned id, uint32_t return_value)
 {
 }
 
-#endif /* MYNEWT_VAL(OS_SYSVIEW) */
+#endif /* !MYNEWT_VAL(OS_SYSVIEW) || defined(OS_TRACE_DISABLE_FILE_API) */
 
 #endif /* __ASSEMBLER__ */
 

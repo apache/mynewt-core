@@ -79,3 +79,20 @@ syscfg.defs:
     FLOAT_USER:
         descriptiong: 'Enable float support for users'
         value: 0
+
+    OS_SYSVIEW_TRACE_CALLOUT:
+        description: >
+            Enable tracing os_callout APIs by SystemView
+        value: 1
+    OS_SYSVIEW_TRACE_EVENTQ:
+        description: >
+            Enable tracing os_eventq APIs by SystemView
+        value: 1
+    OS_SYSVIEW_TRACE_MUTEX:
+        description: >
+            Enable tracing os_mutex APIs by SystemView
+        value: 1
+    OS_SYSVIEW_TRACE_SEM:
+        description: >
+            Enable tracing os_sem APIs by SystemView
+        value: 1

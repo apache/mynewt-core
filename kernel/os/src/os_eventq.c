@@ -19,6 +19,10 @@
 
 #include <assert.h>
 #include <string.h>
+#include "syscfg/syscfg.h"
+#if !MYNEWT_VAL(OS_SYSVIEW_TRACE_EVENTQ)
+#define OS_TRACE_DISABLE_FILE_API
+#endif
 #include "os/mynewt.h"
 
 static struct os_eventq os_eventq_main;
