@@ -1168,7 +1168,7 @@ int lis2dw12_set_tap_cfg(struct sensor_itf *itf, struct lis2dw12_tap_settings *c
     reg |= cfg->en_x ? LIS2DW12_TAP_THS_Z_X_EN : 0;
     reg |= cfg->en_y ? LIS2DW12_TAP_THS_Z_Y_EN : 0;
     reg |= cfg->en_z ? LIS2DW12_TAP_THS_Z_Z_EN : 0;
-    reg |= cfg->tap_ths_z & LIS2DW12_REG_TAP_THS_Z;
+    reg |= cfg->tap_ths_z & LIS2DW12_TAP_THS_Z_THS;
 
     rc = lis2dw12_write8(itf, LIS2DW12_REG_TAP_THS_Z, reg);
     if (rc) {
