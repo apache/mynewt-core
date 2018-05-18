@@ -108,7 +108,7 @@ lsm303dlhc_write8(struct sensor_itf *itf, uint8_t addr, uint8_t reg,
     rc = hal_i2c_master_write(itf->si_num, &data_struct,
                               OS_TICKS_PER_SEC / 10, 1);
     if (rc) {
-        LSM303DLHC_ERR("Failed to write to 0x%02X:0x%02X with value 0x%02X\n",
+        LSM303DLHC_ERR("Failed to write to 0x%02X:0x%02X with value 0x%02lX\n",
                        addr, reg, value);
         STATS_INC(g_lsm303dlhcstats, errors);
     }
