@@ -889,7 +889,7 @@ bno055_find_reg(sensor_type_t type, uint8_t *reg)
             *reg = BNO055_GRAVITY_DATA_X_LSB_ADDR;
             break;
         default:
-            BNO055_ERR("Not supported sensor type: %d\n", type);
+            BNO055_ERR("Not supported sensor type: %d\n", (int)type);
             rc = SYS_EINVAL;
             break;
     }
