@@ -34,6 +34,7 @@
 int
 pwm_configure_device(struct pwm_dev *dev, struct pwm_dev_cfg *cfg)
 {
+    assert(dev);
     assert(dev->pwm_funcs.pwm_configure_device != NULL);
 
     return (dev->pwm_funcs.pwm_configure_device(dev, cfg));
@@ -54,6 +55,7 @@ pwm_configure_channel(struct pwm_dev *dev,
                       uint8_t cnum,
                       struct pwm_chan_cfg *cfg)
 {
+    assert(dev);
     assert(dev->pwm_funcs.pwm_configure_channel != NULL);
     if (cnum >= dev->pwm_chan_count) {
         return (EINVAL);
@@ -78,6 +80,7 @@ pwm_configure_channel(struct pwm_dev *dev,
 int
 pwm_set_duty_cycle(struct pwm_dev *dev, uint8_t cnum, uint16_t fraction)
 {
+    assert(dev);
     assert(dev->pwm_funcs.pwm_set_duty_cycle != NULL);
     if (cnum >= dev->pwm_chan_count) {
         return (EINVAL);
@@ -97,6 +100,7 @@ pwm_set_duty_cycle(struct pwm_dev *dev, uint8_t cnum, uint16_t fraction)
 int
 pwm_enable(struct pwm_dev *dev)
 {
+    assert(dev);
     assert(dev->pwm_funcs.pwm_enable != NULL);
 
     return (dev->pwm_funcs.pwm_enable(dev));
@@ -112,6 +116,7 @@ pwm_enable(struct pwm_dev *dev)
 bool
 pwm_is_enabled(struct pwm_dev *dev)
 {
+    assert(dev);
     assert(dev->pwm_funcs.pwm_is_enabled != NULL);
 
     return (dev->pwm_funcs.pwm_is_enabled(dev));
@@ -130,6 +135,7 @@ pwm_is_enabled(struct pwm_dev *dev)
 int
 pwm_set_frequency(struct pwm_dev *dev, uint32_t freq_hz)
 {
+    assert(dev);
     assert(dev->pwm_funcs.pwm_set_frequency != NULL);
 
     return (dev->pwm_funcs.pwm_set_frequency(dev, freq_hz));
@@ -145,6 +151,7 @@ pwm_set_frequency(struct pwm_dev *dev, uint32_t freq_hz)
 int
 pwm_get_clock_freq(struct pwm_dev *dev)
 {
+    assert(dev);
     assert(dev->pwm_funcs.pwm_get_clock_freq != NULL);
 
     return (dev->pwm_funcs.pwm_get_clock_freq(dev));
@@ -161,6 +168,7 @@ pwm_get_clock_freq(struct pwm_dev *dev)
 int
 pwm_get_top_value(struct pwm_dev *dev)
 {
+    assert(dev);
     assert(dev->pwm_funcs.pwm_get_top_value != NULL);
 
     return (dev->pwm_funcs.pwm_get_top_value(dev));
@@ -176,6 +184,7 @@ pwm_get_top_value(struct pwm_dev *dev)
 int
 pwm_get_resolution_bits(struct pwm_dev *dev)
 {
+    assert(dev);
     assert(dev->pwm_funcs.pwm_get_resolution_bits != NULL);
 
     return (dev->pwm_funcs.pwm_get_resolution_bits(dev));
@@ -191,6 +200,7 @@ pwm_get_resolution_bits(struct pwm_dev *dev)
 int
 pwm_disable(struct pwm_dev *dev)
 {
+    assert(dev);
     assert(dev->pwm_funcs.pwm_disable != NULL);
 
     return (dev->pwm_funcs.pwm_disable(dev));
