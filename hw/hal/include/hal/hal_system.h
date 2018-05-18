@@ -78,6 +78,13 @@ enum hal_reset_reason {
 enum hal_reset_reason hal_reset_cause(void);
 
 /**
+ * Return the reboot reason as a string
+ *
+ * @return String describing previous reset reason
+ */
+const char *hal_reset_cause_str(void);
+
+/**
  * Starts clocks needed by system
  */
 void hal_system_clock_start(void);
