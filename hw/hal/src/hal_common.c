@@ -57,3 +57,27 @@ hal_spi_data_mode_breakout(uint8_t data_mode, int *out_cpol, int *out_cpha)
         return -1;
     }
 }
+
+const char *
+hal_reset_cause_str(void)
+{
+    enum hal_reset_reason cause;
+
+    cause = hal_reset_cause();
+    switch (cause) {
+    case HAL_RESET_POR:
+        return "Power on Reset";
+    case HAL_RESET_PIN:
+        return "Reset Pin";
+    case HAL_RESET_WATCHDOG:
+        return "Watchdog";
+    case HAL_RESET_SOFT:
+        return "Soft Reset";
+    case HAL_RESET_BROWNOUT:
+        return "Low Voltage";
+    case HAL_RESET_REQUESTED:
+        return "User Requested";
+    default:
+        return "Unknown";
+    }
+}
