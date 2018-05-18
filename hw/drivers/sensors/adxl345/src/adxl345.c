@@ -251,7 +251,7 @@ adxl345_spi_write8(struct sensor_itf *itf, uint8_t reg, uint8_t value)
     rc = hal_spi_tx_val(itf->si_num, value);
     if (rc == 0xFFFF) {
         rc = SYS_EINVAL;
-        ADXL345_ERR("SPI_%u write failed addr:0x%02X:0x%02X\n",
+        ADXL345_ERR("SPI_%u write failed addr:0x%02X\n",
                    itf->si_num, reg);
         STATS_INC(g_adxl345stats, write_errors);
         goto err;
