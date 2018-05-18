@@ -1065,6 +1065,54 @@ static const struct shell_cmd_help disconnect_help = {
 #endif
 
 /*****************************************************************************
+ * $set-scan-opts                                                            *
+ *****************************************************************************/
+
+static struct btshell_scan_opts g_scan_opts = {
+        .limit = UINT16_MAX,
+        .ignore_legacy = 0,
+};
+
+static int
+cmd_set_scan_opts(int argc, char **argv)
+{
+    int rc;
+
+    rc = parse_arg_all(argc - 1, argv + 1);
+    if (rc != 0) {
+        return rc;
+    }
+
+    g_scan_opts.limit = parse_arg_uint16_dflt("decode_limit", UINT16_MAX, &rc);
+    if (rc != 0) {
+        console_printf("invalid 'decode_limit' parameter\n");
+        return rc;
+    }
+
+    g_scan_opts.ignore_legacy = parse_arg_bool_dflt("ignore_legacy", 0, &rc);
+    if (rc != 0) {
+        console_printf("invalid 'ignore_legacy' parameter\n");
+        return rc;
+    }
+
+    return rc;
+}
+
+#if MYNEWT_VAL(SHELL_CMD_HELP)
+static const struct shell_param set_scan_opts_params[] = {
+    {"decode_limit", "usage: =[0-UINT16_MAX], default: UINT16_MAX"},
+    {"ignore_legacy", "usage: =[0-1], default: 0"},
+    {NULL, NULL}
+};
+
+static const struct shell_cmd_help set_scan_opts_help = {
+    .summary = "set scan options",
+    .usage = NULL,
+    .params = set_scan_opts_params,
+};
+#endif
+
+/*****************************************************************************
  * $scan                                                                     *
  *****************************************************************************/
 
@@ -1083,6 +1131,8 @@ static struct kv_pair cmd_scan_ext_types[] = {
     { "both",       0x03 },
     { NULL }
 };
+
+static struct btshell_scan_opts g_scan_opts;
 
 static int
 cmd_scan(int argc, char **argv)
@@ -1169,7 +1219,7 @@ cmd_scan(int argc, char **argv)
     }
 
     if (extended == 0) {
-        rc = btshell_scan(own_addr_type, duration_ms, &params);
+        rc = btshell_scan(own_addr_type, duration_ms, &params, &g_scan_opts);
         if (rc != 0) {
             console_printf("error scanning; rc=%d\n", rc);
             return rc;
@@ -1217,17 +1267,20 @@ cmd_scan(int argc, char **argv)
     case 0x01:
         rc = btshell_ext_scan(own_addr_type, duration, period,
                               params.filter_duplicates, params.filter_policy,
-                              params.limited, &uncoded, NULL);
+                              params.limited, &uncoded, NULL,
+                              &g_scan_opts);
         break;
     case 0x02:
         rc = btshell_ext_scan(own_addr_type, duration, period,
                               params.filter_duplicates, params.filter_policy,
-                              params.limited, NULL, &coded);
+                              params.limited, NULL, &coded,
+                              &g_scan_opts);
         break;
     case 0x03:
         rc = btshell_ext_scan(own_addr_type, duration, period,
                               params.filter_duplicates, params.filter_policy,
-                              params.limited, &uncoded, &coded);
+                              params.limited, &uncoded, &coded,
+                              &g_scan_opts);
         break;
     default:
         rc = -1;
@@ -3404,6 +3457,13 @@ static const struct shell_cmd btshell_commands[] = {
         .sc_cmd_func = cmd_show_conn,
 #if MYNEWT_VAL(SHELL_CMD_HELP)
         .help = &gatt_show_conn_help,
+#endif
+    },
+    {
+        .sc_cmd = "set-scan-opts",
+        .sc_cmd_func = cmd_set_scan_opts,
+#if MYNEWT_VAL(SHELL_CMD_HELP)
+        .help = &set_scan_opts_help,
 #endif
     },
     {

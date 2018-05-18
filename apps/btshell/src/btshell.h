@@ -81,6 +81,11 @@ struct btshell_conn {
     struct btshell_l2cap_coc_list coc_list;
 };
 
+struct btshell_scan_opts {
+    uint16_t limit;
+    uint8_t ignore_legacy:1;
+};
+
 extern struct btshell_conn btshell_conns[MYNEWT_VAL(BLE_MAX_CONNECTIONS)];
 extern int btshell_num_conns;
 
@@ -134,12 +139,13 @@ int btshell_conn_cancel(void);
 int btshell_term_conn(uint16_t conn_handle, uint8_t reason);
 int btshell_wl_set(ble_addr_t *addrs, int addrs_count);
 int btshell_scan(uint8_t own_addr_type, int32_t duration_ms,
-                 const struct ble_gap_disc_params *disc_params);
+                 const struct ble_gap_disc_params *disc_params, void *cb_args);
 int btshell_ext_scan(uint8_t own_addr_type, uint16_t duration, uint16_t period,
                      uint8_t filter_duplicates, uint8_t filter_policy,
                      uint8_t limited,
                      const struct ble_gap_ext_disc_params *uncoded_params,
-                     const struct ble_gap_ext_disc_params *coded_params);
+                     const struct ble_gap_ext_disc_params *coded_params,
+                     void *cb_args);
 int btshell_scan_cancel(void);
 int btshell_update_conn(uint16_t conn_handle,
                          struct ble_gap_upd_params *params);
