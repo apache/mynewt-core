@@ -26,3 +26,5 @@
 91	os_mbuf_get_pkthdr		omp=%p user_pkthdr_len=%u | returns %p
 92	os_mbuf_free			om=%p | returns %d
 93	os_mbuf_free_chain		om=%p | returns %d
+
+Option ReversePriority
