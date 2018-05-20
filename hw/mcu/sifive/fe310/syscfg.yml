@@ -48,3 +48,9 @@ syscfg.defs:
         description: >
             Default divider used when high frequency oscillator is starting.
         value: 4
+    SPI_1:
+        description: 'SPI 1 master'
+        value: 0
+    SPI_2:
+        description: 'SPI 2 master'
+        value: 0
