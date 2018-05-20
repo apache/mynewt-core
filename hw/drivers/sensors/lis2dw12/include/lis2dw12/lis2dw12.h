@@ -106,6 +106,8 @@ extern "C" {
 #define LIS2DW12_SIXD_SRC_YL                    0x04
 #define LIS2DW12_SIXD_SRC_XH                    0x02
 #define LIS2DW12_SIXD_SRC_XL                    0x01
+#define LIS2DW12_ST_MAX                         1500
+#define LIS2DW12_ST_MIN                         70
 
 enum lis2dw12_ths_6d {
     LIS2DW12_6D_THS_80_DEG = 0,
