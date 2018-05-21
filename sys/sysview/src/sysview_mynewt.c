@@ -20,15 +20,29 @@
 #include "os/mynewt.h"
 #include "mcu/mcu.h"
 #include "bsp/bsp.h"
+#include "hal/hal_timer.h"
 #include "sysview/vendor/SEGGER_SYSVIEW.h"
 #include "sysview/vendor/SEGGER_SYSVIEW_Conf.h"
 
 #define STRX(x)         #x
 #define STR(x)          STRX(x)
 
-#if SEGGER_SYSVIEW_CORE == SEGGER_SYSVIEW_CORE_CM3
+#if MYNEWT_VAL(SYSVIEW_TIMESTAMP_USE_TIMER)
+
+#define SYSVIEW_TIMESTAMP_FREQ          (MYNEWT_VAL(SYSVIEW_TIMESTAMP_TIMER_FREQ))
+
+U32
+SEGGER_SYSVIEW_X_GetTimestamp(void)
+{
+    return hal_timer_read(MYNEWT_VAL(SYSVIEW_TIMESTAMP_TIMER_NUM));
+}
+
+#elif SEGGER_SYSVIEW_CORE == SEGGER_SYSVIEW_CORE_CM3
+
 #define SYSVIEW_TIMESTAMP_FREQ          (SystemCoreClock)
+
 #else
+
 #define SYSVIEW_TIMESTAMP_FREQ          (OS_TICKS_PER_SEC)
 
 U32
@@ -37,6 +51,7 @@ SEGGER_SYSVIEW_X_GetTimestamp(void)
     /* XXX Just need to return some kind of timestamp... */
     return os_time_get();
 }
+
 #endif
 
 #define SYSVIEW_CPU_FREQ                (SystemCoreClock)
@@ -114,7 +129,10 @@ sysview_os_api_send_sys_desc_func(void)
 void
 sysview_init(void)
 {
-#if SEGGER_SYSVIEW_CORE == SEGGER_SYSVIEW_CORE_CM3
+#if MYNEWT_VAL(SYSVIEW_TIMESTAMP_USE_TIMER)
+    hal_timer_config(MYNEWT_VAL(SYSVIEW_TIMESTAMP_TIMER_NUM),
+                     MYNEWT_VAL(SYSVIEW_TIMESTAMP_TIMER_FREQ));
+#elif SEGGER_SYSVIEW_CORE == SEGGER_SYSVIEW_CORE_CM3
     /* Enable Cycle Counter on Cortex-M3/M4 to get accurate timestamps */
     DWT->CTRL |= (1 << DWT_CTRL_CYCCNTENA_Pos);
 #endif
