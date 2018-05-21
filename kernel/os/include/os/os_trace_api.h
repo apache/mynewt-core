@@ -28,6 +28,8 @@
 
 #else
 
+#include <stdio.h>
+#include <string.h>
 #include "syscfg/syscfg.h"
 #if MYNEWT_VAL(OS_SYSVIEW)
 #include "sysview/vendor/SEGGER_SYSVIEW.h"
@@ -59,6 +61,32 @@
 #define OS_TRACE_ID_MBUF_FREE_CHAIN             (93)
 
 #if MYNEWT_VAL(OS_SYSVIEW)
+
+typedef struct SEGGER_SYSVIEW_MODULE_STRUCT os_trace_module_t;
+
+static inline uint32_t
+os_trace_module_register(os_trace_module_t *m, const char *name,
+                         uint32_t num_events, void (* send_desc_func)(void))
+{
+    char *desc = "M=???";
+
+    asprintf(&desc, "M=%s", name);
+
+    memset(m, 0, sizeof(*m));
+    m->sModule = desc;
+    m->NumEvents = num_events;
+    m->pfSendModuleDesc = send_desc_func;
+
+    SEGGER_SYSVIEW_RegisterModule(m);
+
+    return m->EventOffset;
+}
+
+static inline void
+os_trace_module_desc(const os_trace_module_t *m, const char *desc)
+{
+    SEGGER_SYSVIEW_RecordModuleDescription(m, desc);
+}
 
 static inline void
 os_trace_isr_enter(void)
