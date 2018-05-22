@@ -22,11 +22,7 @@
 
 #include "os/mynewt.h"
 
-#ifdef NRF52840_XXAA
-#include "nrf52840.h"
-#else
-#include "nrf52.h"
-#endif
+#include "nrf.h"
 
 #ifdef __cplusplus
 extern "C" {
