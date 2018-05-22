@@ -27,13 +27,16 @@
 
 #include "mn_socket/mn_socket.h"
 
-#define TEST_STACK_SIZE 4096
-#define TEST_PRIO 22
-extern os_stack_t test_stack[];
-struct os_task test_task;
+extern struct os_sem test_sem;
 
-struct os_sem test_sem;
-
-void mn_socket_test_handler(void *arg);
+void sock_open_close(void);
+void sock_listen(void);
+void sock_tcp_connect(void);
+void sock_udp_data(void);
+void sock_tcp_data(void);
+void sock_itf_list(void);
+void sock_udp_ll(void);
+void sock_udp_mcast_v4(void);
+void sock_udp_mcast_v6(void);
 
 #endif /* _MN_SOCK_TEST_H */

@@ -286,7 +286,7 @@ drv2605_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value);
  *
  * @param The Sensor interface
  * @param Register to read from
- * @param Bufer to read into
+ * @param Buffer to read into
  * @param Length of the buffer
  *
  * @return 0 on success and non-zero on failure

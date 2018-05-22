@@ -30,6 +30,8 @@ extern "C" {
 #define ID_SERIAL_MAX_LEN       64
 extern char id_serial[];
 extern char id_mfghash[];
+extern const char *id_bsp_str;
+extern const char *id_app_str;
 
 /*
  * Initialize manufacturing info storage/reporting.

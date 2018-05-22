@@ -54,7 +54,7 @@ lora_app_shell_txd_func(uint8_t port, LoRaMacEventInfoStatus_t status,
     console_printf("\tack_rxd:%u\n", lpkt->txdinfo.ack_rxd);
     console_printf("\ttx_time_on_air:%lu\n", lpkt->txdinfo.tx_time_on_air);
     console_printf("\tuplink_cntr:%lu\n", lpkt->txdinfo.uplink_cntr);
-    console_printf("\tuplink_freq:%lu\n", lpkt->txdinfo.uplink_freq);
+    console_printf("\tuplink_chan:%lu\n", lpkt->txdinfo.uplink_chan);
 
     os_mbuf_free_chain(om);
 }

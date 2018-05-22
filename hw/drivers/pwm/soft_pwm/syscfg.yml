@@ -19,8 +19,10 @@
 # Package: hw/drivers/pwm/soft_pwm
 
 syscfg.defs:
+    SOFT_PWM_DEVS:
+        description: 'NUMBER OF SOFT PWM DEVICES'
+        value: 1
+
     SOFT_PWM_CHANS:
-        description: >
-                     The number on the Soft PWM device.
-                     High values may affect accuracy.
-        value: 6
+        description: 'NUMBER OF SOFT PWM CHANNELS PER DEVICE'
+        value: 4

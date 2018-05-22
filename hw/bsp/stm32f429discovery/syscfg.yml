@@ -20,13 +20,16 @@
 syscfg.defs:
     UART_0:
         description: 'UART 0'
-        value:  1
+        value: 1
     TIMER_0:
         description: 'Timer 0'
-        value:  1
+        value: 1
     TIMER_1:
         description: 'Timer 1'
-        value: 1
+        value: 0
+    TIMER_2:
+        description: 'Timer 2'
+        value: 0
 
 syscfg.vals:
     REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG

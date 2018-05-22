@@ -23,19 +23,40 @@
 #include <assert.h>
 
 /**
- * Configure a channel on the PWM device.
+ * Configure a PWM device.
  *
  * @param dev The device to configure.
- * @param cnum The channel number to configure.
- * @param cfg Configuration data for this channel.
+ * @param cfg Configuration data for this device. If NULL the device will be
+ * given default configuration values.
  *
  * @return 0 on success, non-zero error code on failure.
  */
 int
-pwm_chan_config(struct pwm_dev *dev, uint8_t cnum, struct pwm_chan_cfg *cfg)
+pwm_configure_device(struct pwm_dev *dev, struct pwm_dev_cfg *cfg)
 {
-    assert(dev->pwm_funcs.pwm_configure_channel != NULL);
+    assert(dev);
+    assert(dev->pwm_funcs.pwm_configure_device != NULL);
 
+    return (dev->pwm_funcs.pwm_configure_device(dev, cfg));
+}
+
+/**
+ * Configure a channel on the PWM device.
+ *
+ * @param dev The device to configure.
+ * @param cnum The channel number to configure.
+ * @param cfg Configuration data for this channel. If NULL the channel will be
+ * disabled or given default configuration values.
+ *
+ * @return 0 on success, non-zero error code on failure.
+ */
+int
+pwm_configure_channel(struct pwm_dev *dev,
+                      uint8_t cnum,
+                      struct pwm_chan_cfg *cfg)
+{
+    assert(dev);
+    assert(dev->pwm_funcs.pwm_configure_channel != NULL);
     if (cnum >= dev->pwm_chan_count) {
         return (EINVAL);
     }
@@ -44,27 +65,61 @@ pwm_chan_config(struct pwm_dev *dev, uint8_t cnum, struct pwm_chan_cfg *cfg)
 }
 
 /**
- * Enable the PWM with specified duty cycle.
+ * Set the specified duty cycle on a PWM Channel.
  *
- * This duty cycle is a fractional duty cycle where 0 == off, 65535=on,
- * and any value in between is on for fraction clocks and off
- * for 65535-fraction clocks.
+ * This duty cycle is a fractional duty cycle where 0 == off,
+ * base_freq / pwm_freq == 100% and any value in between is on for fraction clock
+ * cycles and off for (base_freq / pwm_freq)-fraction clock cycles.
  *
- * @param dev The device to configure.
- * @param cnum The channel number.
+ * @param dev The device which the channel belongs to.
+ * @param cnum The channel number. This channel should be already configured.
  * @param fraction The fraction value.
  *
  * @return 0 on success, negative on error.
  */
 int
-pwm_enable_duty_cycle(struct pwm_dev *dev, uint8_t cnum, uint16_t fraction)
+pwm_set_duty_cycle(struct pwm_dev *dev, uint8_t cnum, uint16_t fraction)
 {
-    assert(dev->pwm_funcs.pwm_enable_duty_cycle != NULL);
+    assert(dev);
+    assert(dev->pwm_funcs.pwm_set_duty_cycle != NULL);
     if (cnum >= dev->pwm_chan_count) {
         return (EINVAL);
     }
 
-    return (dev->pwm_funcs.pwm_enable_duty_cycle(dev, cnum, fraction));
+    return (dev->pwm_funcs.pwm_set_duty_cycle(dev, cnum, fraction));
+}
+
+/**
+ * Enable a given PWM device.
+ * This device should start playing on its previously configured channels.
+ *
+ * @param dev The PWM device to be enabled.
+ *
+ * @return 0 on success, negative on error.
+ */
+int
+pwm_enable(struct pwm_dev *dev)
+{
+    assert(dev);
+    assert(dev->pwm_funcs.pwm_enable != NULL);
+
+    return (dev->pwm_funcs.pwm_enable(dev));
+}
+
+/**
+ * Check whether a PWM device is enabled.
+ *
+ * @param dev The device which the channel belongs to.
+ *
+ * @return true if enabled, false if not.
+ */
+bool
+pwm_is_enabled(struct pwm_dev *dev)
+{
+    assert(dev);
+    assert(dev->pwm_funcs.pwm_is_enabled != NULL);
+
+    return (dev->pwm_funcs.pwm_is_enabled(dev));
 }
 
 /**
@@ -80,6 +135,7 @@ pwm_enable_duty_cycle(struct pwm_dev *dev, uint8_t cnum, uint16_t fraction)
 int
 pwm_set_frequency(struct pwm_dev *dev, uint32_t freq_hz)
 {
+    assert(dev);
     assert(dev->pwm_funcs.pwm_set_frequency != NULL);
 
     return (dev->pwm_funcs.pwm_set_frequency(dev, freq_hz));
@@ -95,6 +151,7 @@ pwm_set_frequency(struct pwm_dev *dev, uint32_t freq_hz)
 int
 pwm_get_clock_freq(struct pwm_dev *dev)
 {
+    assert(dev);
     assert(dev->pwm_funcs.pwm_get_clock_freq != NULL);
 
     return (dev->pwm_funcs.pwm_get_clock_freq(dev));
@@ -111,6 +168,7 @@ pwm_get_clock_freq(struct pwm_dev *dev)
 int
 pwm_get_top_value(struct pwm_dev *dev)
 {
+    assert(dev);
     assert(dev->pwm_funcs.pwm_get_top_value != NULL);
 
     return (dev->pwm_funcs.pwm_get_top_value(dev));
@@ -126,27 +184,24 @@ pwm_get_top_value(struct pwm_dev *dev)
 int
 pwm_get_resolution_bits(struct pwm_dev *dev)
 {
+    assert(dev);
     assert(dev->pwm_funcs.pwm_get_resolution_bits != NULL);
 
     return (dev->pwm_funcs.pwm_get_resolution_bits(dev));
 }
 
 /**
- * Disable the PWM channel, it will be marked as unconfigured.
+ * Disable the PWM device, the device will stop playing while remaining configured.
  *
- * @param dev The device to configure.
- * @param cnum The channel number.
+ * @param dev The device to disable.
  *
- * @return 0 success, negative on error.
+ * @return 0 on success, negative on error.
  */
 int
-pwm_disable(struct pwm_dev *dev, uint8_t cnum)
+pwm_disable(struct pwm_dev *dev)
 {
+    assert(dev);
     assert(dev->pwm_funcs.pwm_disable != NULL);
 
-    if (cnum > dev->pwm_chan_count) {
-        return (EINVAL);
-    }
-
-    return (dev->pwm_funcs.pwm_disable(dev, cnum));
+    return (dev->pwm_funcs.pwm_disable(dev));
 }

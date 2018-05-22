@@ -235,9 +235,8 @@ fcb_offset_last_n(struct fcb *fcb, uint8_t entries,
         if (i == 0) {
             /* Start from the beginning of fcb entries */
             *last_n_entry = loc;
-        }
-        /* Update last_n_entry after n entries and keep updating */
-        else if (i > (entries - 1)) {
+        } else if (i > (entries - 1)) {
+            /* Update last_n_entry after n entries and keep updating */
             fcb_getnext(fcb, last_n_entry);
         }
         i++;

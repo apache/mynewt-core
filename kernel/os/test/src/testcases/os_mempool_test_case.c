@@ -26,7 +26,7 @@
  * @return int
  */
 void
-mempool_test(int num_blocks, int block_size)
+mempool_test(int num_blocks, int block_size, bool clear)
 {
     int cnt;
     int true_block_size;
@@ -43,6 +43,7 @@ mempool_test(int num_blocks, int block_size)
                          &TstMembuf[0], "TestMemPool");
     TEST_ASSERT_FATAL(rc == 0, "Error creating memory pool %d", rc);
 
+retest:
     TEST_ASSERT(g_TstMempool.mp_num_free == num_blocks,
                 "Number of free blocks not equal to total blocks!");
 
@@ -134,6 +135,15 @@ mempool_test(int num_blocks, int block_size)
                 "Got all blocks but number free not zero! (%d)",
                 g_TstMempool.mp_num_free);
 
+    /* clear mempool and rerun tests */
+    if (clear) {
+        clear = false;
+        rc = os_mempool_clear(&g_TstMempool);
+        TEST_ASSERT_FATAL(rc == 0, "Error reseting memory pool %d", rc);
+
+        goto retest;
+    }
+
     /* Now put them all back */
     for (cnt = 0; cnt < g_TstMempool.mp_num_blocks; ++cnt) {
         rc = os_memblock_put(&g_TstMempool, block_array[cnt]);
@@ -161,5 +171,6 @@ mempool_test(int num_blocks, int block_size)
 
 TEST_CASE(os_mempool_test_case)
 {
-    mempool_test(NUM_MEM_BLOCKS, MEM_BLOCK_SIZE);
+    mempool_test(NUM_MEM_BLOCKS, MEM_BLOCK_SIZE, false);
+    mempool_test(NUM_MEM_BLOCKS, MEM_BLOCK_SIZE, true);
 }

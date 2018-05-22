@@ -32,6 +32,7 @@
 #include <hal/hal_bsp.h>
 #include <hal/hal_flash_int.h>
 #include <hal/hal_gpio.h>
+#include <hal/hal_i2c.h>
 #include <hal/hal_system.h>
 
 #if MYNEWT_VAL(SPI_0_MASTER) || MYNEWT_VAL(SPI_0_SLAVE) || \
@@ -46,11 +47,13 @@
 #include "mcu/stm32_hal.h"
 
 #include "bsp/bsp.h"
+#include "mcu/mcu.h"
+#include "os/os_cputime.h"
 
 #if MYNEWT_VAL(UART_0)
 static struct uart_dev hal_uart[1];
 
-static const struct stm32f3_uart_cfg uart_cfg[1] = {
+static const struct stm32_uart_cfg uart_cfg[1] = {
     {
         .suc_uart    = USART1,
         .suc_rcc_reg = &RCC->APB2ENR,
@@ -64,7 +67,7 @@ static const struct stm32f3_uart_cfg uart_cfg[1] = {
     },
 };
 
-const struct stm32f3_uart_cfg *
+const struct stm32_uart_cfg *
 bsp_uart_config(int port)
 {
     assert(port == 0);
@@ -89,6 +92,19 @@ struct stm32_hal_spi_cfg spi1_cfg = {
     .miso_pin = MCU_GPIO_PORTB(14),
     .mosi_pin = MCU_GPIO_PORTB(15),
     .irq_prio = 2,
+};
+#endif
+
+#if MYNEWT_VAL(I2C_0)
+static struct stm32_hal_i2c_cfg i2c_cfg0 = {
+    .hic_i2c = I2C1,
+    .hic_rcc_reg = &RCC->APB1ENR,
+    .hic_rcc_dev = RCC_APB1ENR_I2C1EN,
+    .hic_pin_sda = MCU_GPIO_PORTB(9),
+    .hic_pin_scl = MCU_GPIO_PORTB(8),
+    .hic_pin_af = GPIO_AF4_I2C1,
+    .hic_10bit = 0,
+    .hic_timingr = 0x10420F13,    /* 100KHz at 8MHz of SysCoreClock */
 };
 #endif
 
@@ -153,8 +169,23 @@ hal_bsp_init(void)
     assert(rc == 0);
 #endif
 
+#if MYNEWT_VAL(I2C_0)
+    rc = hal_i2c_init(0, &i2c_cfg0);
+    assert(rc == 0);
+#endif
+
 #if MYNEWT_VAL(TIMER_0)
     rc = hal_timer_init(0, TIM15);
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(TIMER_1)
+    rc = hal_timer_init(1, TIM16);
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(TIMER_2)
+    rc = hal_timer_init(2, TIM17);
     assert(rc == 0);
 #endif
 

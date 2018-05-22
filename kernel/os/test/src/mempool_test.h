@@ -59,7 +59,7 @@ extern int verbose;
 
 int mempool_test_get_pool_size(int num_blocks, int block_size);
 
-void mempool_test(int num_blocks, int block_size);
+void mempool_test(int num_blocks, int block_size, bool clear);
 
 #ifdef __cplusplus
 }

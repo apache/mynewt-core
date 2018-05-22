@@ -34,6 +34,7 @@ extern "C" {
 #define OS_CALLOUT_F_QUEUED (0x01)
 
 #include "os/os_eventq.h"
+#include <stddef.h>
 
 /**
  * Structure containing the definition of a callout, initialized

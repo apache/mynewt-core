@@ -36,10 +36,10 @@ extern "C" {
 #define MCU_GPIO_PORTG(pin)	((6 * 16) + (pin))
 #define MCU_GPIO_PORTH(pin)	((7 * 16) + (pin))
 #define MCU_GPIO_PORTI(pin)	((8 * 16) + (pin))
-#define MCU_GPIO_PORTJ(pin)	((8 * 16) + (pin))
+#define MCU_GPIO_PORTJ(pin)	((9 * 16) + (pin))
 
 /* NOTE: PORTK only have pins 0, 1, 3, 4, 5, 6, 7 available */
-#define MCU_GPIO_PORTK(pin)	((8 * 16) + (pin))
+#define MCU_GPIO_PORTK(pin)	((10 * 16) + (pin))
 
 #ifdef __cplusplus
 }

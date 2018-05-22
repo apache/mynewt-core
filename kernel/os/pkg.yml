@@ -25,6 +25,7 @@ pkg.keywords:
 
 pkg.deps:
     - sys/sysinit
+    - sys/sys
     - util/mem
 
 pkg.req_apis:

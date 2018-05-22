@@ -87,7 +87,7 @@ mpu6050_write8(struct sensor_itf *itf, uint8_t reg, uint32_t value)
                               OS_TICKS_PER_SEC / 10, 1);
 
     if (rc) {
-        MPU6050_ERR("Failed to write to 0x%02X:0x%02X with value 0x%02X\n",
+        MPU6050_ERR("Failed to write to 0x%02X:0x%02X with value 0x%02lX\n",
                        itf->si_addr, reg, value);
         STATS_INC(g_mpu6050stats, read_errors);
     }
@@ -357,7 +357,7 @@ mpu6050_config_interrupt(struct sensor_itf *itf, uint8_t cfg)
 /**
  * Expects to be called back through os_dev_create().
  *
- * @param The device object associated with this accellerometer
+ * @param The device object associated with this accelerometer
  * @param Argument passed to OS device init, unused
  *
  * @return 0 on success, non-zero error on failure.

@@ -94,7 +94,7 @@ tsl2561_write8(struct sensor_itf *itf, uint8_t reg, uint32_t value)
     rc = hal_i2c_master_write(itf->si_num, &data_struct,
                               OS_TICKS_PER_SEC / 10, 1);
     if (rc) {
-        TSL2561_ERR("Failed to write 0x%02X:0x%02X with value 0x%02X\n",
+        TSL2561_ERR("Failed to write 0x%02X:0x%02X with value 0x%02lX\n",
                     data_struct.address, reg, value);
         STATS_INC(g_tsl2561stats, errors);
     }
@@ -541,7 +541,7 @@ err:
 /**
  * Expects to be called back through os_dev_create().
  *
- * @param The device object associated with this accellerometer
+ * @param The device object associated with this luminosity sensor
  * @param Argument passed to OS device init, unused
  *
  * @return 0 on success, non-zero error on failure.

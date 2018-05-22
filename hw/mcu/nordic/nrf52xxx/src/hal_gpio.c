@@ -32,6 +32,35 @@
  *
  */
 
+/*
+ * GPIO pin mapping
+ *
+ * The logical GPIO pin numbers (0 to N) are mapped to ports in the following
+ * manner:
+ *  pins 0 - 31: Port 0
+ *  pins 32 - 48: Port 1.
+ *
+ *  The nrf52832 has only one port with 32 pins. The nrf52840 has 48 pins and
+ *  uses two ports.
+ *
+ *  NOTE: in order to save code space, there is no checking done to see if the
+ *  user specifies a pin that is not used by the processor. If an invalid pin
+ *  number is used unexpected and/or erroneous behavior will result.
+ */
+#if defined(NRF52832_XXAA) || defined(NRF52810_XXAA)
+#define HAL_GPIO_INDEX(pin)     (pin)
+#define HAL_GPIO_PORT(pin)      (NRF_P0)
+#define HAL_GPIO_MASK(pin)      (1 << pin)
+#define HAL_GPIOTE_PIN_MASK     GPIOTE_CONFIG_PSEL_Msk
+#endif
+
+#ifdef NRF52840_XXAA
+#define HAL_GPIO_INDEX(pin)     ((pin) & 0x1F)
+#define HAL_GPIO_PORT(pin)      ((pin) > 31 ? NRF_P1 : NRF_P0)
+#define HAL_GPIO_MASK(pin)      (1 << HAL_GPIO_INDEX(pin))
+#define HAL_GPIOTE_PIN_MASK     (0x3FUL << GPIOTE_CONFIG_PSEL_Pos)
+#endif
+
 /* GPIO interrupts */
 #define HAL_GPIO_MAX_IRQ        8
 

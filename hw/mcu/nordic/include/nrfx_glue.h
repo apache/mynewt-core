@@ -84,7 +84,7 @@ extern "C" {
  * @retval true  If the IRQ is enabled.
  * @retval false Otherwise.
  */
-#define NRFX_IRQ_IS_ENABLED(irq_number) (NVIC_GetEnableIRQ(irq_number) == 1);
+#define NRFX_IRQ_IS_ENABLED(irq_number) (NVIC_GetEnableIRQ(irq_number) == 1)
 
 /**
  * @brief Macro for disabling a specific IRQ.

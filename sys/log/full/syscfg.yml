@@ -54,3 +54,7 @@ syscfg.defs:
     LOG_NEWTMGR:
         description: 'Expose "log" command in newtmgr.'
         value: 0
+
+    LOG_MAX_USER_MODULES:
+        description: 'Maximum number of user modules to register'
+        value: 1

@@ -73,6 +73,13 @@ syscfg.defs:
         description: 'SS pin for SPI_0_SLAVE'
         value:  22
 
+    I2C_0_PIN_CLK:
+        description: 'Pin Number for I2C Clock'
+        value: 15
+    I2C_0_PIN_SDA:
+        description: 'Pin Number for I2C SDA'
+        value: 14
+
     TIMER_0:
         description: 'NRF52 Timer 0'
         value:  1

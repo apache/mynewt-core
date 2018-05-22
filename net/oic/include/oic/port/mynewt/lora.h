@@ -32,6 +32,8 @@ struct oc_endpoint_lora {
     uint8_t port;
 };
 
+extern uint8_t oc_lora_transport_id;
+
 #ifdef __cplusplus
 }
 #endif

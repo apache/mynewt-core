@@ -44,6 +44,9 @@
 #if MYNEWT_VAL(BMA253_CLI)
 #include <bma253/bma253.h>
 #endif
+#if MYNEWT_VAL(BMA2XX_CLI)
+#include <bma2xx/bma2xx.h>
+#endif
 #if MYNEWT_VAL(BME280_CLI)
 #include <bme280/bme280.h>
 #endif
@@ -420,6 +423,9 @@ sensors_dev_shell_init(void)
 
 #if MYNEWT_VAL(BMA253_CLI)
     bma253_shell_init();
+#endif
+#if MYNEWT_VAL(BMA2XX_CLI)
+    bma2xx_shell_init();
 #endif
 
 #if MYNEWT_VAL(BME280_CLI)

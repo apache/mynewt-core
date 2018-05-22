@@ -94,7 +94,6 @@ static int las_cmd_app_port(int argc, char **argv);
 static int las_cmd_app_tx(int argc, char **argv);
 static int las_cmd_join(int argc, char **argv);
 static int las_cmd_link_chk(int argc, char **argv);
-static int las_cmd_ln_log(int argc, char **argv);
 
 static struct shell_cmd las_cmds[] = {
     {
@@ -146,10 +145,6 @@ static struct shell_cmd las_cmds[] = {
         .sc_cmd_func = las_cmd_link_chk,
     },
     {
-        .sc_cmd = "las_ln_log",
-        .sc_cmd_func = las_cmd_ln_log,
-    },
-    {
         NULL, NULL,
 #if MYNEWT_VAL(SHELL_CMD_HELP)
         NULL
@@ -175,15 +170,22 @@ las_cmd_disp_byte_str(uint8_t *bytes, int len)
 static void
 las_cmd_disp_chan_mask(uint16_t *mask)
 {
-    int i;
-    int len;
+    uint16_t i;
+    uint16_t len;
+    uint16_t max_chans;
+    PhyParam_t phy_param;
+    GetPhyParams_t getPhy;
 
     if (!mask) {
         return;
     }
 
-    len = LORA_MAX_NB_CHANNELS / 16;
-    if ((len * 16) != LORA_MAX_NB_CHANNELS) {
+    getPhy.Attribute = PHY_MAX_NB_CHANNELS;
+    phy_param = RegionGetPhyParam(LORA_NODE_REGION, &getPhy);
+    max_chans = phy_param.Value;
+
+    len = max_chans / 16;
+    if ((len * 16) != max_chans) {
         len += 1;
     }
 
@@ -250,105 +252,17 @@ las_parse_bool(char *str)
 }
 
 static int
-las_cmd_ln_log(int argc, char **argv)
-{
-    uint16_t i;
-    uint16_t lines_logged;
-
-#ifdef LORA_NODE_DEBUG_LOG
-    console_printf("Lora node log\n");
-    i = g_lnd_log_index;
-    lines_logged = 0;
-    while (lines_logged != LORA_NODE_DEBUG_LOG_ENTRIES) {
-        /* Do not display empty log lines */
-        if (g_lnd_log[i].lnd_id == 0) {
-            goto next_entry;
-        }
-
-        console_printf("index=%u ", i);
-        switch (g_lnd_log[i].lnd_id) {
-        case LORA_NODE_LOG_TX_DONE:
-            console_printf("TX_DONE chan=%u done_time=%lu",
-                           g_lnd_log[i].lnd_p8, g_lnd_log[i].lnd_p32);
-            break;
-        case LORA_NODE_LOG_RX_WIN_SETUP:
-            console_printf("RX_WIN_SETUP dr=%u timeout=%u freq=%lu",
-                           g_lnd_log[i].lnd_p8, g_lnd_log[i].lnd_p16,
-                           g_lnd_log[i].lnd_p32);
-            break;
-        case LORA_NODE_LOG_RX_TIMEOUT:
-            console_printf("RX_TIMEOUT chan=%u rxslot=%u",
-                           g_lnd_log[i].lnd_p8, g_lnd_log[i].lnd_p16);
-            break;
-        case LORA_NODE_LOG_RX_DONE:
-            console_printf("RX_DONE chan=%u size=%u slot=%lu",
-                           g_lnd_log[i].lnd_p8, g_lnd_log[i].lnd_p16,
-                           g_lnd_log[i].lnd_p32);
-            break;
-        case LORA_NODE_LOG_RX_SYNC_TIMEOUT:
-            break;
-        case LORA_NODE_LOG_RADIO_TIMEOUT_IRQ:
-            break;
-        case LORA_NODE_LOG_RX_PORT:
-            console_printf("RX_PORT port=%u len=%u",
-                           g_lnd_log[i].lnd_p8, g_lnd_log[i].lnd_p16);
-            break;
-        case LORA_NODE_LOG_RX_WIN2:
-            console_printf("RX_WIN2 rxslot=%u continuous=%lu",
-                           g_lnd_log[i].lnd_p8, g_lnd_log[i].lnd_p32);
-            break;
-        case LORA_NODE_LOG_RX_WIN_SETUP_FAIL:
-            break;
-        case LORA_NODE_LOG_APP_TX:
-            console_printf("APP_TX pktlen=%u om=%lx",
-                           g_lnd_log[i].lnd_p16, g_lnd_log[i].lnd_p32);
-            break;
-        case LORA_NODE_LOG_RX_ADR_REQ:
-            console_printf("RX_ADR_REQ dr=%u txpwr=%u chmassk=%u nbrep=%u",
-                           g_lnd_log[i].lnd_p8, g_lnd_log[i].lnd_p16,
-                           (uint16_t)(g_lnd_log[i].lnd_p32 >> 16),
-                           (uint16_t)g_lnd_log[i].lnd_p32);
-            break;
-        case LORA_NODE_LOG_PROC_MAC_CMD:
-            console_printf("PROC_MAC_CMD index=%u snr=%u cmd_size=%lu",
-                           g_lnd_log[i].lnd_p8, g_lnd_log[i].lnd_p16,
-                           g_lnd_log[i].lnd_p32);
-            break;
-        case LORA_NODE_LOG_LINK_CHK:
-            console_printf("LINK_CHK status=%lu", g_lnd_log[i].lnd_p32);
-            break;
-        default:
-            console_printf("id=%u p8=%u p16=%u p32=%lu",
-                           g_lnd_log[i].lnd_id, g_lnd_log[i].lnd_p8,
-                           g_lnd_log[i].lnd_p16, g_lnd_log[i].lnd_p32);
-            break;
-        }
-
-        console_printf(" cputime=%lu\n", g_lnd_log[i].lnd_cputime);
-
-next_entry:
-        ++i;
-        if (i == LORA_NODE_DEBUG_LOG_ENTRIES) {
-            i = 0;
-        }
-        ++lines_logged;
-    }
-#else
-    console_printf("No Lora node log available\n");
-#endif
-    return 0;
-}
-
-static int
 las_cmd_wr_mib(int argc, char **argv)
 {
     int rc;
     int plen;
     uint8_t key[LORA_KEY_LEN];
-    uint16_t mask[6];
+    uint16_t mask[16];
     int mask_len;
     struct mib_pair *mp;
     MibRequestConfirm_t mib;
+    GetPhyParams_t getPhy;
+    PhyParam_t phy_param;
 
     if (argc < 3) {
         console_printf("Invalid # of arguments\n");
@@ -467,8 +381,11 @@ las_cmd_wr_mib(int argc, char **argv)
             /* NOTE: fall-through intentional */
         case MIB_CHANNELS_MASK:
             memset(mask, 0, sizeof(mask));
-            mask_len = LORA_MAX_NB_CHANNELS / 8;
-            if ((mask_len * 8) != LORA_MAX_NB_CHANNELS) {
+
+            getPhy.Attribute = PHY_MAX_NB_CHANNELS;
+            phy_param = RegionGetPhyParam(LORA_NODE_REGION, &getPhy);
+            mask_len = phy_param.Value / 8;
+            if ((mask_len * 8) != phy_param.Value) {
                 mask_len += 1;
             }
 

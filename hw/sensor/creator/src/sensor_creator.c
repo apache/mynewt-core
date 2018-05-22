@@ -48,12 +48,20 @@
 #include <ms5837/ms5837.h>
 #endif
 
+#if MYNEWT_VAL(MS5840_OFB)
+#include <ms5840/ms5840.h>
+#endif
+
 #if MYNEWT_VAL(BMP280_OFB)
 #include <bmp280/bmp280.h>
 #endif
 
 #if MYNEWT_VAL(BMA253_OFB)
 #include <bma253/bma253.h>
+#endif
+
+#if MYNEWT_VAL(BMA2XX_OFB)
+#include <bma2xx/bma2xx.h>
 #endif
 
 
@@ -102,12 +110,20 @@ static struct bme280 bme280;
 static struct ms5837 ms5837;
 #endif
 
+#if MYNEWT_VAL(MS5840_OFB)
+static struct ms5840 ms5840;
+#endif
+
 #if MYNEWT_VAL(BMP280_OFB)
 static struct bmp280 bmp280;
 #endif
 
 #if MYNEWT_VAL(BMA253_OFB)
 static struct bma253 bma253;
+#endif
+
+#if MYNEWT_VAL(BMA2XX_OFB)
+static struct bma2xx bma2xx;
 #endif
 
 #if MYNEWT_VAL(ADXL345_OFB)
@@ -218,16 +234,55 @@ static struct sensor_itf i2c_0_itf_ms = {
 };
 #endif
 
+#if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(MS5840_OFB)
+static struct sensor_itf i2c_0_itf_ms = {
+    .si_type = SENSOR_ITF_I2C,
+    .si_num  = 0,
+    /* HW I2C address for the MS5840 */
+    .si_addr = 0x76
+};
+#endif
+
+
 #if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(BMA253_OFB)
 static struct sensor_itf i2c_0_itf_lis = {
     .si_type = SENSOR_ITF_I2C,
     .si_num  = 0,
     .si_addr = 0x18,
     .si_ints = {
-       { MYNEWT_VAL(BMA253_INT_PIN_HOST), MYNEWT_VAL(BMA253_INT_PIN_DEVICE),
-                                         MYNEWT_VAL(BMA253_INT_CFG_ACTIVE)},
-       { MYNEWT_VAL(BMA253_INT2_PIN_HOST), MYNEWT_VAL(BMA253_INT2_PIN_DEVICE),
-                                       MYNEWT_VAL(BMA253_INT_CFG_ACTIVE)}
+        { 26, MYNEWT_VAL(BMA2XX_INT_PIN_DEVICE),
+            MYNEWT_VAL(BMA2XX_INT_CFG_ACTIVE)},
+        { 25, MYNEWT_VAL(BMA2XX_INT2_PIN_DEVICE),
+            MYNEWT_VAL(BMA2XX_INT_CFG_ACTIVE)}
+    },
+};
+#endif
+
+#if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(BMA2XX_OFB)
+static struct sensor_itf spi2c_0_itf_bma2xx = {
+    .si_type = SENSOR_ITF_I2C,
+    .si_num  = 0,
+    .si_addr = 0x18,
+    .si_ints = {
+        { 26, MYNEWT_VAL(BMA2XX_INT_PIN_DEVICE),
+            MYNEWT_VAL(BMA2XX_INT_CFG_ACTIVE)},
+        { 25, MYNEWT_VAL(BMA2XX_INT2_PIN_DEVICE),
+            MYNEWT_VAL(BMA2XX_INT_CFG_ACTIVE)}
+    },
+};
+#endif
+#if MYNEWT_VAL(SPI_0_MASTER) && MYNEWT_VAL(BMA2XX_OFB)
+//TODO:  Make INT pin nums configurable.  Leaving hardcoded
+//to handle multiple bma2xx sensor interface examples
+static struct sensor_itf spi2c_0_itf_bma2xx = {
+    .si_type = SENSOR_ITF_SPI,
+    .si_num = 0,
+    .si_cs_pin = 21,
+    .si_ints = {
+        { 26, MYNEWT_VAL(BMA2XX_INT_PIN_DEVICE),
+            MYNEWT_VAL(BMA2XX_INT_CFG_ACTIVE)},
+        { 25, MYNEWT_VAL(BMA2XX_INT2_PIN_DEVICE),
+            MYNEWT_VAL(BMA2XX_INT_CFG_ACTIVE)}
     },
 };
 #endif
@@ -292,6 +347,38 @@ config_ms5837_sensor(void)
     return rc;
 }
 #endif
+
+/**
+ * MS5840 Sensor default configuration used by the creator package
+ *
+ * @return 0 on success, non-zero on failure
+ */
+#if MYNEWT_VAL(MS5840_OFB)
+static int
+config_ms5840_sensor(void)
+{
+    int rc;
+    struct os_dev *dev;
+    struct ms5840_cfg mscfg;
+
+    dev = (struct os_dev *) os_dev_open("ms5840_0", OS_TIMEOUT_NEVER, NULL);
+    assert(dev != NULL);
+
+    memset(&mscfg, 0, sizeof(mscfg));
+
+
+    mscfg.mc_s_temp_res_osr  = MS5840_RES_OSR_256;
+    mscfg.mc_s_press_res_osr = MS5840_RES_OSR_256;
+    mscfg.mc_s_mask = SENSOR_TYPE_AMBIENT_TEMPERATURE|
+                      SENSOR_TYPE_PRESSURE;
+
+    rc = ms5840_config((struct ms5840 *)dev, &mscfg);
+
+    os_dev_close(dev);
+    return rc;
+}
+#endif
+
 
 /* Sensor default configuration used by the creator package */
 
@@ -707,27 +794,36 @@ config_lis2dw12_sensor(void)
     cfg.filter_bw = LIS2DW12_FILTER_BW_ODR_DIV_2;
     cfg.high_pass = 0;
     
-    cfg.tap_cfg.en_x = 1;
-    cfg.tap_cfg.en_y = 1;
-    cfg.tap_cfg.en_z = 1;
-    cfg.tap_cfg.en_4d = 0;
-    cfg.tap_cfg.ths_6d = LIS2DW12_6D_THS_80_DEG;
-    cfg.tap_cfg.tap_priority = LIS2DW12_TAP_PRIOR_XYZ;
-    cfg.tap_cfg.tap_ths_x = 0x3;
-    cfg.tap_cfg.tap_ths_y = 0x3;
-    cfg.tap_cfg.tap_ths_z = 0x3;
-    cfg.tap_cfg.latency = 8; /* 640ms */
-    cfg.tap_cfg.quiet = 0; /* 10ms */
-    cfg.tap_cfg.shock = 3; /* 120ms */
+    cfg.tap.en_x = 1;
+    cfg.tap.en_y = 1;
+    cfg.tap.en_z = 1;
+    cfg.tap.en_4d = 0;
+    cfg.tap.ths_6d = LIS2DW12_6D_THS_80_DEG;
+    cfg.tap.tap_priority = LIS2DW12_TAP_PRIOR_XYZ;
+    cfg.tap.tap_ths_x = 0x3;
+    cfg.tap.tap_ths_y = 0x3;
+    cfg.tap.tap_ths_z = 0x3;
+    cfg.tap.latency = 8; /* 640ms */
+    cfg.tap.quiet = 0; /* 10ms */
+    cfg.tap.shock = 3; /* 120ms */
+
     cfg.double_tap_event_enable = 0;
-    
+
+    cfg.freefall_dur = 6;
+    cfg.freefall_ths = 3; /* ~312mg */
+
     cfg.int1_pin_cfg = 0;
     cfg.int2_pin_cfg = 0;
     cfg.int_enable = 0;
 
+    cfg.int_pp_od = 0;
+    cfg.int_latched = 0;
+    cfg.int_active_low = 0;
+    cfg.slp_mode = 0;
+    cfg.self_test_mode = LIS2DW12_ST_MODE_DISABLE;
+
     cfg.fifo_mode = LIS2DW12_FIFO_M_BYPASS;
     cfg.fifo_threshold = 32;
-    cfg.stream_read_interrupt = LIS2DW12_INT1_CFG_DRDY;
 
     cfg.wake_up_ths = 0;
     cfg.wake_up_dur = 0;
@@ -739,14 +835,60 @@ config_lis2dw12_sensor(void)
     cfg.inactivity_sleep_enable = 0;
     cfg.low_noise_enable = 1;
     
-    cfg.read_mode = LIS2DW12_READ_M_POLL;
+    cfg.read_mode.mode = LIS2DW12_READ_M_POLL;
+
     cfg.mask = SENSOR_TYPE_ACCELEROMETER;
 
     rc = lis2dw12_config((struct lis2dw12 *) dev, &cfg);
     assert(rc == 0);
-    
+
     os_dev_close(dev);
     return rc;
+}
+#endif
+
+#if MYNEWT_VAL(BMA2XX_OFB)
+/**
+ * BMA2XX sensor default configuration
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+config_bma2xx_sensor(void)
+{
+    struct os_dev * dev;
+    struct bma2xx_cfg cfg;
+    int rc;
+
+    dev = os_dev_open("bma2xx_0", OS_TIMEOUT_NEVER, NULL);
+    assert(dev != NULL);
+
+    cfg.model = BMA2XX_BMA280;
+    cfg.low_g_delay_ms = BMA2XX_LOW_G_DELAY_MS_DEFAULT;
+    cfg.high_g_delay_ms = BMA2XX_HIGH_G_DELAY_MS_DEFAULT;
+    cfg.g_range = BMA2XX_G_RANGE_2;
+    cfg.filter_bandwidth = BMA2XX_FILTER_BANDWIDTH_500_HZ;
+    cfg.use_unfiltered_data = false;
+    cfg.tap_quiet = BMA2XX_TAP_QUIET_30_MS;
+    cfg.tap_shock = BMA2XX_TAP_SHOCK_50_MS;
+    cfg.d_tap_window = BMA2XX_D_TAP_WINDOW_250_MS;
+    cfg.tap_wake_samples = BMA2XX_TAP_WAKE_SAMPLES_16;
+    cfg.tap_thresh_g = 1.0;
+    cfg.offset_x_g = 0.0;
+    cfg.offset_y_g = 0.0;
+    cfg.offset_z_g = 0.0;
+    cfg.orient_blocking = BMA2XX_ORIENT_BLOCKING_NONE;
+    cfg.orient_mode = BMA2XX_ORIENT_MODE_SYMMETRICAL;
+    cfg.power_mode = BMA2XX_POWER_MODE_NORMAL;
+    cfg.sleep_duration = BMA2XX_SLEEP_DURATION_0_5_MS;
+    cfg.sensor_mask = SENSOR_TYPE_ACCELEROMETER;
+
+    rc = bma2xx_config((struct bma2xx *)dev, &cfg);
+    assert(rc == 0);
+
+    os_dev_close(dev);
+
+    return 0;
 }
 #endif
 
@@ -838,6 +980,15 @@ sensor_dev_create(void)
     assert(rc == 0);
 #endif
 
+#if MYNEWT_VAL(MS5840_OFB)
+    rc = os_dev_create((struct os_dev *) &ms5840, "ms5840_0",
+      OS_DEV_INIT_PRIMARY, 0, ms5840_init, (void *)&i2c_0_itf_ms);
+    assert(rc == 0);
+
+    rc = config_ms5840_sensor();
+    assert(rc == 0);
+#endif
+
 #if MYNEWT_VAL(BMP280_OFB)
     rc = os_dev_create((struct os_dev *) &bmp280, "bmp280_0",
       OS_DEV_INIT_PRIMARY, 0, bmp280_init, (void *)&i2c_0_itf_bmp);
@@ -854,6 +1005,15 @@ sensor_dev_create(void)
 
     rc = config_bma253_sensor();
     assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(BMA2XX_OFB)
+rc = os_dev_create((struct os_dev *)&bma2xx, "bma2xx_0",
+  OS_DEV_INIT_PRIMARY, 0, bma2xx_init, &spi2c_0_itf_bma2xx);
+assert(rc == 0);
+
+rc = config_bma2xx_sensor();
+assert(rc == 0);
 #endif
 
 #if MYNEWT_VAL(ADXL345_OFB)

@@ -53,3 +53,10 @@ syscfg.defs:
          desecrition: 'Max number of interupts configuration for the sensor.
                 This should be max from all the sensors attached to the system'
          value: 2
+
+    SENSOR_NOTIF_EVENTS_MAX:
+         description: 'Max number of events configuration for sensor
+                       notifications, this setting creates a pool of
+                       notification events so that multiple events can be put
+                       on the eventq for processing'
+         value: 5

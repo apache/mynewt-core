@@ -53,7 +53,7 @@
 #if MYNEWT_VAL(UART_0)
 static struct uart_dev hal_uart0;
 
-static const struct stm32l1_uart_cfg uart_cfg[UART_CNT] = {
+static const struct stm32_uart_cfg uart_cfg[UART_CNT] = {
     [0] = {
         .suc_uart = USART3,
         .suc_rcc_reg = &RCC->APB1ENR,
@@ -69,7 +69,7 @@ static const struct stm32l1_uart_cfg uart_cfg[UART_CNT] = {
 #endif
 
 #if MYNEWT_VAL(I2C_0)
-static struct stm32l1_hal_i2c_cfg i2c_cfg0 = {
+static struct stm32_hal_i2c_cfg i2c_cfg0 = {
     .hic_i2c = I2C1,
     .hic_rcc_reg = &RCC->APB1ENR,
     .hic_rcc_dev = RCC_APB1ENR_I2C1EN,
@@ -171,8 +171,17 @@ hal_bsp_init(void)
       OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *)&uart_cfg[0]);
     assert(rc == 0);
 #endif
+
 #if MYNEWT_VAL(TIMER_0)
     hal_timer_init(0, TIM9);
+#endif
+
+#if MYNEWT_VAL(TIMER_1)
+    hal_timer_init(1, TIM10);
+#endif
+
+#if MYNEWT_VAL(TIMER_2)
+    hal_timer_init(2, TIM11);
 #endif
 
 #if MYNEWT_VAL(SPI_1_MASTER)
