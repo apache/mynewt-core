@@ -409,8 +409,8 @@ nrf52_pwm_configure_device(struct pwm_dev *dev, struct pwm_dev_cfg *cfg)
     if (instance->playing) {
         nrfx_pwm_uninit(&instance->drv_instance);
         nrfx_pwm_init(&instance->drv_instance,
-                         &instance->config,
-                         instance->internal_handler);
+                      &instance->config,
+                      instance->internal_handler);
 
         play_current_config(instance);
     }
@@ -446,8 +446,8 @@ nrf52_pwm_configure_channel(struct pwm_dev *dev,
     if (instance->playing) {
         nrfx_pwm_uninit(&instance->drv_instance);
         nrfx_pwm_init(&instance->drv_instance,
-                         &instance->config,
-                         instance->internal_handler);
+                      &instance->config,
+                      instance->internal_handler);
 
         play_current_config(instance);
     }
@@ -509,6 +509,7 @@ nrf52_pwm_enable(struct pwm_dev *dev)
                   &instance->config,
                   instance->internal_handler);
     play_current_config(instance);
+    instance->playing = true;
 
     return (0);
 }
@@ -545,6 +546,7 @@ nrf52_pwm_disable(struct pwm_dev *dev)
     if (!nrfx_pwm_stop(&instances[inst_id].drv_instance, true)) {
         return (-EINVAL);
     }
+    instances[inst_id].playing = false;
 
     nrfx_pwm_uninit(&instances[inst_id].drv_instance);
     return (0);
