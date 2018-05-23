@@ -290,12 +290,14 @@ hal_i2c_master_write(uint8_t i2c_num, struct hal_i2c_master_data *pdata,
     int rc = -1;
     int i;
     uint32_t start;
+    int retry_once = 1;
 
     NRF52_HAL_I2C_RESOLVE(i2c_num, i2c);
     regs = i2c->nhi_regs;
 
     regs->ADDRESS = pdata->address;
 
+retry:
     regs->EVENTS_ERROR = 0;
     regs->EVENTS_STOPPED = 0;
     regs->EVENTS_SUSPENDED = 0;
@@ -311,7 +313,19 @@ hal_i2c_master_write(uint8_t i2c_num, struct hal_i2c_master_data *pdata,
         while (!regs->EVENTS_TXDSENT && !regs->EVENTS_ERROR) {
             if (os_time_get() - start > timo) {
                 regs->TASKS_STOP = 1;
-                goto err;
+                if (retry_once) {
+                   /* 
+                    * Some I2C slave peripherals cause a glitch on the bus when
+                    * they reset which puts the TWI in an unresponsive state.
+                    * Disabling and re-enabling the TWI returns it to normal operation.
+                    */
+                    retry_once = 0;
+                    regs->ENABLE = TWI_ENABLE_ENABLE_Disabled;
+                    regs->ENABLE = TWI_ENABLE_ENABLE_Enabled;
+                    goto retry;
+                } else {
+                    goto err;
+                }
             }
         }
         if (regs->EVENTS_ERROR) {
@@ -350,10 +364,12 @@ hal_i2c_master_read(uint8_t i2c_num, struct hal_i2c_master_data *pdata,
     int rc = -1;
     int i;
     uint32_t start;
+    int retry_once = 1;
 
     NRF52_HAL_I2C_RESOLVE(i2c_num, i2c);
     regs = i2c->nhi_regs;
 
+retry:
     start = os_time_get();
 
     if (regs->EVENTS_RXDREADY) {
@@ -379,12 +395,23 @@ hal_i2c_master_read(uint8_t i2c_num, struct hal_i2c_master_data *pdata,
 
     for (i = 0; i < pdata->len; i++) {
         regs->TASKS_RESUME = 1;
-
         while (!regs->EVENTS_RXDREADY && !regs->EVENTS_ERROR) {
             if (os_time_get() - start > timo) {
                 regs->SHORTS = TWI_SHORTS_BB_STOP_Msk;
                 regs->TASKS_STOP = 1;
-                goto err;
+                if (retry_once) {
+                   /* 
+                    * Some I2C slave peripherals cause a glitch on the bus when
+                    * they reset which puts the TWI in an unresponsive state.
+                    * Disabling and re-enabling the TWI returns it to normal operation.
+                    */
+                    retry_once = 0;
+                    regs->ENABLE = TWI_ENABLE_ENABLE_Disabled;
+                    regs->ENABLE = TWI_ENABLE_ENABLE_Enabled;
+                    goto retry;
+                } else {
+                    goto err;
+                }
             }
         }
         if (regs->EVENTS_ERROR) {
