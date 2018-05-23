@@ -25,7 +25,10 @@ extern "C" {
 #endif
 
 #include <sensor/sensor.h>
+
+#if MYNEWT_VAL(LED_ENABLE_ABSTRACTION)
 #include <led/led.h>
+#endif
 
 #define LP5523_I2C_BASE_ADDR (0x32)
 
@@ -101,9 +104,31 @@ struct lp5523_cfg {
 
 struct lp5523 {
     struct os_dev dev;
+#if MYNEWT_VAL(LED_ENABLE_ABSTRACTION)
     struct led_dev led_dev;
+#endif
     struct lp5523_cfg cfg;
 };
+
+#if MYNEWT_VAL(LED_ENABLE_ABSTRACTION) == 0
+/*
+ * LED interface
+ */
+struct led_itf {
+
+    /* LED interface type */
+    uint8_t li_type;
+
+    /* interface number */
+    uint8_t li_num;
+
+    /* CS pin - optional, only needed for SPI */
+    uint8_t li_cs_pin;
+
+    /* LED chip address, only needed for I2C */
+    uint16_t li_addr;
+};
+#endif
 
 /**** Config Values ****/
 #define LP5523_ASEL00_ADDR_32h            0x00

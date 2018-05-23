@@ -23,7 +23,10 @@
 #include <stats/stats.h>
 
 #include "lp5523/lp5523.h"
+
+#if MYNEWT_VAL(LED_ABSTRACTION_LAYER)
 #include "led/led.h"
+#endif
 
 /* Define the stats section and records */
 STATS_SECT_START(lp5523_stat_section)
@@ -106,21 +109,19 @@ err:
 }
 
 static int
-lp5523_set_2_regs(struct led_itf *itf, enum lp5523_registers addr,
-    uint8_t vals[2])
+lp5523_set_n_regs(struct led_itf *itf, enum lp5523_registers addr,
+    uint8_t *vals, uint8_t len)
 {
     int rc;
-    uint8_t regs[3];
-
-    regs[0] = addr ;
-    regs[1] = vals[0];
-    regs[2] = vals[1];
+    uint8_t regs[10] = {addr, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
     struct hal_i2c_master_data data_struct = {
         .address = itf->li_addr,
-        .len = 3,
+        .len = len + 1,
         .buffer = regs
     };
+
+    memcpy(regs, vals, len + 1);
 
     rc = hal_i2c_master_write(itf->li_num, &data_struct,
                               (OS_TICKS_PER_SEC / 5), 1);
@@ -135,8 +136,8 @@ lp5523_set_2_regs(struct led_itf *itf, enum lp5523_registers addr,
 
 /* XXX: Not sure if ai-read is supported, seems to work for reads of length 2 */
 static int
-lp5523_get_2_regs(struct led_itf *itf, enum lp5523_registers addr,
-    uint8_t vals[2])
+lp5523_get_n_regs(struct led_itf *itf, enum lp5523_registers addr,
+    uint8_t *vals, uint8_t len)
 {
     int rc;
     uint8_t addr_b = (uint8_t) addr;
@@ -156,7 +157,7 @@ lp5523_get_2_regs(struct led_itf *itf, enum lp5523_registers addr,
         return rc;
     }
 
-    data_struct.len = 2;
+    data_struct.len = len;
     data_struct.buffer = vals;
     rc = hal_i2c_master_read(itf->li_num, &data_struct,
         OS_TICKS_PER_SEC / 5, 1);
@@ -250,7 +251,7 @@ lp5523_set_bitfield(struct led_itf *itf, enum lp5523_bitfield_registers addr,
 {
     uint8_t vals[2] = { (outputs >> 8) & 0x01, outputs & 0xff };
 
-    return lp5523_set_2_regs(itf, addr, vals);
+    return lp5523_set_n_regs(itf, addr, vals, 2);
 }
 
 int
@@ -260,7 +261,7 @@ lp5523_get_bitfield(struct led_itf *itf, enum lp5523_bitfield_registers addr,
     int rc;
     uint8_t vals[2];
 
-    rc = lp5523_get_2_regs(itf, addr, vals);
+    rc = lp5523_get_n_regs(itf, addr, vals, 2);
 
     *outputs = ((vals[0] & 0x01) << 8) | vals[1];
 
@@ -558,7 +559,7 @@ lp5523_set_pr_instruction(struct led_itf *itf, uint8_t addr, uint16_t *ins)
 {
     uint8_t mem[2] = { ((*ins) >> 8) & 0x00ff, (*ins) & 0x00ff };
 
-    return lp5523_set_2_regs(itf, LP5523_PROGRAM_MEMORY + (addr << 1), mem);
+    return lp5523_set_n_regs(itf, LP5523_PROGRAM_MEMORY + (addr << 1), mem, 2);
 }
 
 static int
@@ -567,7 +568,7 @@ lp5523_get_pr_instruction(struct led_itf *itf, uint8_t addr, uint16_t *ins)
     int rc;
     uint8_t mem[2];
 
-    rc = lp5523_get_2_regs(itf, LP5523_PROGRAM_MEMORY + (addr << 1), mem);
+    rc = lp5523_get_n_regs(itf, LP5523_PROGRAM_MEMORY + (addr << 1), mem, 2);
 
     *ins = (((uint16_t)mem[0]) << 8) | mem[1];
 
@@ -582,7 +583,7 @@ lp5523_verify_pr_instruction(struct led_itf *itf, uint8_t addr,
     uint8_t mem[2];
     uint16_t ver;
 
-    rc = lp5523_get_2_regs(itf, LP5523_PROGRAM_MEMORY + (addr << 1), mem);
+    rc = lp5523_get_n_regs(itf, LP5523_PROGRAM_MEMORY + (addr << 1), mem, 2);
     if (rc) {
         return rc;
     }
@@ -891,6 +892,10 @@ int
 lp5523_init(struct os_dev *dev, void *arg)
 {
     int rc;
+
+    if (!arg || !dev) {
+        return SYS_ENODEV;
+    }
 
     log_register(dev->od_name, &_log, &log_console_handler, NULL,
         LOG_SYSLEVEL);
