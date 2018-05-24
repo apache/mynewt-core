@@ -67,8 +67,7 @@ log_nmgr_encode_entry(struct log *log, struct log_offset *log_offset,
                       void *dptr, uint16_t len)
 {
     struct log_entry_hdr ueh;
-    char data[128];
-    int dlen;
+    uint8_t data[128];
     int rc;
     int rsp_len;
     CborError g_err = CborNoError;
@@ -77,6 +76,7 @@ log_nmgr_encode_entry(struct log *log, struct log_offset *log_offset,
     struct CborCntWriter cnt_writer;
     CborEncoder cnt_encoder;
 #if MYNEWT_VAL(LOG_VERSION) > 2
+    CborEncoder str_encoder;
     int off;
 #endif
 
@@ -107,38 +107,8 @@ log_nmgr_encode_entry(struct log *log, struct log_offset *log_offset,
         goto err;
     }
 
-#if MYNEWT_VAL(LOG_VERSION) > 2
-    switch (ueh.ue_etype) {
-    case LOG_ETYPE_STRING:
-        /* Trim string data to 128 characters to keep it consistent with v2 */
-        dlen = min(len-sizeof(ueh), 128);
-
-        rc = log_read(log, dptr, data, sizeof(ueh), dlen);
-        if (rc < 0) {
-            rc = OS_ENOENT;
-            goto err;
-        }
-        data[rc] = 0;
-        break;
-    case LOG_ETYPE_CBOR:
-        /* We can't trim CBOR stream - need to put it complete */
-        dlen = len - sizeof(ueh);
-        break;
-    case LOG_ETYPE_BINARY:
-        /* XXX just some placeholder for now, perhaps should be base64 encoded? */
-        strcpy(data, "<binary>");
-        dlen = strlen(data);
-        break;
-    default:
-        assert(0);
-        strcpy(data, "<??\?>");
-        dlen = strlen(data);
-        break;
-    }
-#else
-    dlen = min(len-sizeof(ueh), 128);
-
-    rc = log_read(log, dptr, data, sizeof(ueh), dlen);
+#if MYNEWT_VAL(LOG_VERSION) < 3
+    rc = log_read(log, dptr, data, sizeof(ueh), min(len - sizeof(ueh), 128));
     if (rc < 0) {
         rc = OS_ENOENT;
         goto err;
@@ -159,21 +129,41 @@ log_nmgr_encode_entry(struct log *log, struct log_offset *log_offset,
     case LOG_ETYPE_CBOR:
         g_err |= cbor_encode_text_stringz(&rsp, "type");
         g_err |= cbor_encode_text_stringz(&rsp, "cbor");
-        /* Just encode something short and CBOR stream will be inserted here later */
-        g_err |= cbor_encode_text_stringz(&rsp, "msg");
-        g_err |= cbor_encode_undefined(&rsp);
-        rsp_len += dlen;
+        break;
+    case LOG_ETYPE_BINARY:
+        g_err |= cbor_encode_text_stringz(&rsp, "type");
+        g_err |= cbor_encode_text_stringz(&rsp, "bin");
         break;
     case LOG_ETYPE_STRING:
-    case LOG_ETYPE_BINARY:
     default:
-        g_err |= cbor_encode_text_stringz(&rsp, "msg");
-        g_err |= cbor_encode_text_stringz(&rsp, data);
+        /* no need for type here */
+        g_err |= cbor_encode_text_stringz(&rsp, "type");
+        g_err |= cbor_encode_text_stringz(&rsp, "str");
         break;
     }
+
+    g_err |= cbor_encode_text_stringz(&rsp, "msg");
+
+    /*
+     * Write entry data as byte string. Since this may not fit into single
+     * chunk of data we will write as indefinite-length byte string which is
+     * basically a indefinite-length container with definite-length strings
+     * inside.
+     */
+    g_err |= cbor_encoder_create_indef_byte_string(&rsp, &str_encoder);
+    for (off = sizeof(ueh); (off < len) && !g_err; ) {
+        rc = log_read(log, dptr, data, off, sizeof(data));
+        if (rc < 0) {
+            g_err |= 1;
+            break;
+        }
+        g_err |= cbor_encode_byte_string(&str_encoder, data, rc);
+        off += rc;
+    }
+    g_err |= cbor_encoder_close_container(&rsp, &str_encoder);
 #else
     g_err |= cbor_encode_text_stringz(&rsp, "msg");
-    g_err |= cbor_encode_text_stringz(&rsp, data);
+    g_err |= cbor_encode_text_stringz(&rsp, (char *)data);
 #endif
     g_err |= cbor_encode_text_stringz(&rsp, "ts");
     g_err |= cbor_encode_int(&rsp, ueh.ue_ts);
@@ -202,33 +192,41 @@ log_nmgr_encode_entry(struct log *log, struct log_offset *log_offset,
     case LOG_ETYPE_CBOR:
         g_err |= cbor_encode_text_stringz(&rsp, "type");
         g_err |= cbor_encode_text_stringz(&rsp, "cbor");
-        g_err |= cbor_encode_text_stringz(&rsp, "msg");
-        /*
-         * Write CBOR data from log entry directly to CBOR encoder. This will
-         * for a valid CBOR stream assuming log entry is either a primitive
-         * or a container.
-         */
-        for (off = sizeof(ueh); (off < len) && !g_err; ) {
-            rc = log_read(log, dptr, data, off, sizeof(data));
-            if (rc < 0) {
-                g_err |= 1;
-                break;
-            }
-            g_err |= rsp.writer->write(rsp.writer, data, rc);
-
-            off += rc;
-        }
+        break;
+    case LOG_ETYPE_BINARY:
+        g_err |= cbor_encode_text_stringz(&rsp, "type");
+        g_err |= cbor_encode_text_stringz(&rsp, "bin");
         break;
     case LOG_ETYPE_STRING:
-    case LOG_ETYPE_BINARY:
     default:
-        g_err |= cbor_encode_text_stringz(&rsp, "msg");
-        g_err |= cbor_encode_text_stringz(&rsp, data);
+        /* no need for type here */
+        g_err |= cbor_encode_text_stringz(&rsp, "type");
+        g_err |= cbor_encode_text_stringz(&rsp, "str");
         break;
     }
+
+    g_err |= cbor_encode_text_stringz(&rsp, "msg");
+
+    /*
+     * Write entry data as byte string. Since this may not fit into single
+     * chunk of data we will write as indefinite-length byte string which is
+     * basically a indefinite-length container with definite-length strings
+     * inside.
+     */
+    g_err |= cbor_encoder_create_indef_byte_string(&rsp, &str_encoder);
+    for (off = sizeof(ueh); (off < len) && !g_err; ) {
+        rc = log_read(log, dptr, data, off, sizeof(data));
+        if (rc < 0) {
+            g_err |= 1;
+            break;
+        }
+        g_err |= cbor_encode_byte_string(&str_encoder, data, rc);
+        off += rc;
+    }
+    g_err |= cbor_encoder_close_container(&rsp, &str_encoder);
 #else
     g_err |= cbor_encode_text_stringz(&rsp, "msg");
-    g_err |= cbor_encode_text_stringz(&rsp, data);
+    g_err |= cbor_encode_text_stringz(&rsp, (char *)data);
 #endif
     g_err |= cbor_encode_text_stringz(&rsp, "ts");
     g_err |= cbor_encode_int(&rsp, ueh.ue_ts);
