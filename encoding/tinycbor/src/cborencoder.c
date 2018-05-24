@@ -492,10 +492,24 @@ CborError cbor_encoder_create_map(CborEncoder *encoder, CborEncoder *mapEncoder,
 }
 
 /**
- * Closes the CBOR container (array or map) provided by \a containerEncoder and
- * updates the CBOR stream provided by \a encoder. Both parameters must be the
- * same as were passed to cbor_encoder_create_array() or
- * cbor_encoder_create_map().
+ * Creates a indefinite-length byte string in the CBOR stream provided by
+ * \a encoder and initializes \a stringEncoder so that chunks of original string
+ * can be added using the CborEncoder functions. The string must be terminated by
+ * calling cbor_encoder_close_container() with the same \a encoder and
+ * \a stringEncoder parameters.
+ *
+ * \sa cbor_encoder_create_array
+ */
+CborError cbor_encoder_create_indef_byte_string(CborEncoder *encoder, CborEncoder *stringEncoder)
+{
+    return create_container(encoder, stringEncoder, CborIndefiniteLength, ByteStringType << MajorTypeShift);
+}
+
+/**
+ * Closes the CBOR container (array, map or indefinite-length string) provided
+ * by \a containerEncoder and updates the CBOR stream provided by \a encoder.
+ * Both parameters must be the same as were passed to cbor_encoder_create_array() or
+ * cbor_encoder_create_map() or cbor_encoder_create_indef_byte_string().
  *
  * This function does not verify that the number of items (or pair of items, in
  * the case of a map) was correct. To execute that verification, call
