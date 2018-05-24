@@ -10,15 +10,11 @@ tags
 RELEASE_NOTES.md
 repository.yml
 .gitignore
-pts-gap.txt
-pts-gatt.txt
-pts-l2cap.txt
-pts-sm.txt
-94654-20170317-085122560.tpg
-94654-20170317-085441153.pts
 00readme.txt
 uncrustify.cfg
 README.md
+.mailmap
+version.txt
 
 # unit tests executables
 bin
@@ -113,6 +109,11 @@ vbluno51_no_boot.ld
 # VBLUno52 board - BSD License
 split-vbluno52.ld
 vbluno52_no_boot.ld
+
+# STM32 HAL - BSD License
+stm32_driver_mod_i2c_v1.c
+stm32_driver_mod_i2c_v2.c
+stm32_driver_mod_spi.c
 
 # STM32CubeF4  - BSD License.
 stm32f4xx_hal_conf.h
@@ -212,6 +213,7 @@ core_cmInstr.h
 cmsis_nvic.c
 cmsis_nvic.h
 HAL_CM0.s
+HAL_CM3.s
 HAL_CM4.s
 SVC_Table.s
 arm_common_tables.h
@@ -331,8 +333,16 @@ stm32f7xx_hal_conf.h
 system_stm32f7xx.c
 startup_stm32f746xx.s
 
+# STM32F3 Discovery BSP - BSD License
+startup_stm32f303xc.s
+
 # STM32F429 BSP - BSD License
 startup_STM32F429x.s
+
+# STM32L152C BSP - BSD License
+stm32l1xx_hal_conf.h
+system_stm32l1xx.c
+startup_stm32l152xc.s
 
 # NUCLEO-F767 BSP - BSD License
 startup_stm32f767xx.s
@@ -386,3 +396,31 @@ stm32f3xx_hal_conf.h
 
 # Ignore documentation folder
 docs
+
+# nrfX - BSD License
+nrfx
+nrfx_glue.h
+
+# cmsis-core - Apache License
+cmsis-core
+
+# stm32l1xx - BSD License
+stm32l1xx
+
+# stm32f1xx - BSD License
+stm32f1xx
+
+# ARC - BSD License
+arc
+embarc_emsk
+
+# DWM1001 - BSD Licence
+dwm1001-dev_no_boot.ld
+split-dwm1001-dev.ld
+
+# olimex-p103 - BSD and APL 2.0 License
+olimex-p103
+
+# puckjs - BSD License
+puckjs_no_boot.ld
+split_puckjs.ld
