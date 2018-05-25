@@ -205,6 +205,9 @@ extern "C" {
 #if MYNEWT_VAL(MBEDTLS_CIPHER_MODE_CTR) == 0
 #undef MBEDTLS_CIPHER_MODE_CTR
 #endif
+#if MYNEWT_VAL(MBEDTLS_CCM_C) == 0
+#undef MBEDTLS_CCM_C
+#endif
 
 #ifdef __cplusplus
 }

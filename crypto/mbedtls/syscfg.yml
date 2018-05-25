@@ -65,4 +65,5 @@ syscfg.defs:
     value: 0
   MBEDTLS_CIPHER_MODE_CTR:
     value: 0
-
+  MBEDTLS_CCM_C:
+    value: 0
