@@ -840,10 +840,10 @@ lp5523_config(struct lp5523 *lp, struct lp5523_cfg *cfg)
 
     itf->si_addr = LP5523_I2C_BASE_ADDR + cfg->asel;
 
-    rc = lp5523_reset(itf);
-    if (rc != 0) {
-        return rc;
-    }
+//    rc = lp5523_reset(itf);
+//    if (rc != 0) {
+//        return rc;
+//    }
 
     /* chip enable */
     rc = lp5523_set_enable(itf, 1);
