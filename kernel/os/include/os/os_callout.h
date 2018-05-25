@@ -31,9 +31,8 @@
 extern "C" {
 #endif
 
-#define OS_CALLOUT_F_QUEUED (0x01)
-
 #include "os/os_eventq.h"
+#include <stddef.h>
 
 /**
  * Structure containing the definition of a callout, initialized
@@ -100,8 +99,8 @@ void os_callout_stop(struct os_callout *);
  */
 int os_callout_reset(struct os_callout *, int32_t);
 
-/*
- * Returns the number of ticks which remains to callout..
+/**
+ * Returns the number of ticks which remains to callout.
  *
  * @param c The callout to check
  * @param now The current time in OS ticks
@@ -110,10 +109,8 @@ int os_callout_reset(struct os_callout *, int32_t);
  */
 os_time_t os_callout_remaining_ticks(struct os_callout *, os_time_t);
 
-
 /**
- * Returned whether or not the callout has been posted to it's
- * event queue.
+ * Returns whether the callout is pending or not.
  *
  * @param c The callout to check
  *

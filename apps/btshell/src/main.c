@@ -898,11 +898,17 @@ btshell_on_write_reliable(uint16_t conn_handle,
 }
 
 static void
-btshell_decode_adv_data(uint8_t *adv_data, uint8_t adv_data_len)
+btshell_decode_adv_data(uint8_t *adv_data, uint8_t adv_data_len, void *arg)
 {
+    struct btshell_scan_opts *scan_opts = arg;
     struct ble_hs_adv_fields fields;
 
     console_printf(" length_data=%d data=", adv_data_len);
+
+    if (scan_opts) {
+        adv_data_len = min(adv_data_len, scan_opts->limit);
+    }
+
     print_bytes(adv_data, adv_data_len);
     console_printf(" fields:\n");
     ble_hs_adv_parse_fields(&fields, adv_data, adv_data_len);
@@ -912,11 +918,16 @@ btshell_decode_adv_data(uint8_t *adv_data, uint8_t adv_data_len)
 
 #if MYNEWT_VAL(BLE_EXT_ADV)
 static void
-btshell_decode_event_type(struct ble_gap_ext_disc_desc *desc)
+btshell_decode_event_type(struct ble_gap_ext_disc_desc *desc, void *arg)
 {
+    struct btshell_scan_opts *scan_opts = arg;
     uint8_t directed = 0;
 
     if (desc->props & BLE_HCI_ADV_LEGACY_MASK) {
+        if (scan_opts && scan_opts->ignore_legacy) {
+            return;
+        }
+
         console_printf("Legacy PDU type %d", desc->legacy_event_type);
         if (desc->legacy_event_type == BLE_HCI_ADV_RPT_EVTYPE_DIR_IND) {
             directed = 1;
@@ -941,13 +952,13 @@ btshell_decode_event_type(struct ble_gap_ext_disc_desc *desc)
     }
 
     switch(desc->data_status) {
-    case BLE_HCI_ADV_DATA_STATUS_COMPLETE:
+    case BLE_GAP_EXT_ADV_DATA_STATUS_COMPLETE:
         console_printf("complete");
         break;
-    case BLE_HCI_ADV_DATA_STATUS_INCOMPLETE:
+    case BLE_GAP_EXT_ADV_DATA_STATUS_INCOMPLETE:
         console_printf("incomplete");
         break;
-    case BLE_HCI_ADV_DATA_STATUS_TRUNCATED:
+    case BLE_GAP_EXT_ADV_DATA_STATUS_TRUNCATED:
         console_printf("truncated");
         break;
     default:
@@ -972,7 +983,7 @@ common_data:
         return;
     }
 
-    btshell_decode_adv_data(desc->data, desc->length_data);
+    btshell_decode_adv_data(desc->data, desc->length_data, arg);
 }
 #endif
 
@@ -1008,7 +1019,7 @@ btshell_gap_event(struct ble_gap_event *event, void *arg)
         return 0;
 #if MYNEWT_VAL(BLE_EXT_ADV)
     case BLE_GAP_EVENT_EXT_DISC:
-        btshell_decode_event_type(&event->ext_disc);
+        btshell_decode_event_type(&event->ext_disc, arg);
         return 0;
 #endif
     case BLE_GAP_EVENT_DISC:
@@ -1026,7 +1037,7 @@ btshell_gap_event(struct ble_gap_event *event, void *arg)
                 return 0;
         }
 
-        btshell_decode_adv_data(event->disc.data, event->disc.length_data);
+        btshell_decode_adv_data(event->disc.data, event->disc.length_data, arg);
 
         return 0;
 
@@ -1528,12 +1539,12 @@ btshell_wl_set(ble_addr_t *addrs, int addrs_count)
 
 int
 btshell_scan(uint8_t own_addr_type, int32_t duration_ms,
-             const struct ble_gap_disc_params *disc_params)
+             const struct ble_gap_disc_params *disc_params, void *cb_args)
 {
     int rc;
 
     rc = ble_gap_disc(own_addr_type, duration_ms, disc_params,
-                      btshell_gap_event, NULL);
+                      btshell_gap_event, cb_args);
     return rc;
 }
 
@@ -1542,7 +1553,8 @@ btshell_ext_scan(uint8_t own_addr_type, uint16_t duration, uint16_t period,
                  uint8_t filter_duplicates, uint8_t filter_policy,
                  uint8_t limited,
                  const struct ble_gap_ext_disc_params *uncoded_params,
-                 const struct ble_gap_ext_disc_params *coded_params)
+                 const struct ble_gap_ext_disc_params *coded_params,
+                 void *cb_args)
 {
 #if !MYNEWT_VAL(BLE_EXT_ADV)
     console_printf("BLE extended advertising not supported.");
@@ -1553,7 +1565,7 @@ btshell_ext_scan(uint8_t own_addr_type, uint16_t duration, uint16_t period,
 
     rc = ble_gap_ext_disc(own_addr_type, duration, period, filter_duplicates,
                           filter_policy, limited, uncoded_params, coded_params,
-                          btshell_gap_event, NULL);
+                          btshell_gap_event, cb_args);
     return rc;
 #endif
 }

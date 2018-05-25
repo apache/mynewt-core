@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -18,16 +18,14 @@
  */
 
 #include "os/mynewt.h"
-
-#if MYNEWT_VAL(LORA_NODE_CLI)
-
 #include <inttypes.h>
 #include <string.h>
-
 #include "shell/shell.h"
 #include "console/console.h"
-#include "node/radio.h"
 #include "parse/parse.h"
+#include "node/lora_priv.h"
+
+#if MYNEWT_VAL(LORA_NODE_CLI)
 
 static int lora_cli_cmd_fn(int argc, char **argv);
 static int lora_cli_set_freq(int argc, char **argv);
@@ -566,3 +564,146 @@ lora_cli_init(void)
 }
 
 #endif /* MYNEWT_VAL(LORA_NODE_CLI) */
+
+#if MYNEWT_VAL(LORA_NODE_LOG_CLI) == 1
+
+#if MYNEWT_VAL(LORA_NODE_LOG_CLI) == 1
+static int lora_cli_log_cmd(int argc, char **argv);
+
+static struct shell_cmd lora_node_log_cmd = {
+    .sc_cmd = "ln_log",
+    .sc_cmd_func = lora_cli_log_cmd
+};
+#endif
+
+int
+lora_cli_log_cmd(int argc, char **argv)
+{
+#ifdef LORA_NODE_DEBUG_LOG
+    uint16_t i;
+    uint16_t lines_logged;
+
+    console_printf("Lora node log\n");
+    i = g_lnd_log_index;
+    lines_logged = 0;
+    while (lines_logged != LORA_NODE_DEBUG_LOG_ENTRIES) {
+        /* Do not display empty log lines */
+        if (g_lnd_log[i].lnd_id == 0) {
+            goto next_entry;
+        }
+
+        console_printf("index=%u ", i);
+        switch (g_lnd_log[i].lnd_id) {
+        case LORA_NODE_LOG_TX_DONE:
+            console_printf("TX_DONE chan=%u done_time=%lu",
+                           g_lnd_log[i].lnd_p8, g_lnd_log[i].lnd_p32);
+            break;
+        case LORA_NODE_LOG_TX_SETUP:
+            console_printf("TX_SETUP phytxpwr=%d sf=%u bw=%u freq=%lu",
+                           (int8_t)g_lnd_log[i].lnd_p8,
+                           (uint8_t)(g_lnd_log[i].lnd_p16 >> 8),
+                           (uint8_t)g_lnd_log[i].lnd_p16,
+                           g_lnd_log[i].lnd_p32);
+            break;
+        case LORA_NODE_LOG_TX_START:
+            console_printf("TX_START pwr=%d dr=%u chan=%u airtime=%lu",
+                           (int8_t)g_lnd_log[i].lnd_p8,
+                           (uint8_t)(g_lnd_log[i].lnd_p16 >> 8),
+                           (uint8_t)g_lnd_log[i].lnd_p16,
+                           g_lnd_log[i].lnd_p32);
+            break;
+        case LORA_NODE_LOG_TX_DELAY:
+            console_printf("TX_DELAY dc=%u delay_usecs=%lu",
+                           (int8_t)g_lnd_log[i].lnd_p8, g_lnd_log[i].lnd_p32);
+            break;
+       case LORA_NODE_LOG_TX_PREP_FRAME:
+            console_printf("TX_PREP_FRAME cmdbytes=%u uplink=%u mhdr=%x",
+                           g_lnd_log[i].lnd_p8, g_lnd_log[i].lnd_p16,
+                           (uint8_t)g_lnd_log[i].lnd_p32);
+            break;
+        case LORA_NODE_LOG_RX_WIN1_SETUP:
+            console_printf("RX_WIN1_SETUP dr=%u chan=%u timeout=%lu",
+                           g_lnd_log[i].lnd_p8, g_lnd_log[i].lnd_p16,
+                           g_lnd_log[i].lnd_p32);
+            break;
+        case LORA_NODE_LOG_RX_TIMEOUT:
+            console_printf("RX_TIMEOUT chan=%u rxslot=%u",
+                           g_lnd_log[i].lnd_p8, g_lnd_log[i].lnd_p16);
+            break;
+        case LORA_NODE_LOG_RX_DONE:
+            console_printf("RX_DONE chan=%u size=%u slot=%u machdr=%x",
+                           g_lnd_log[i].lnd_p8, g_lnd_log[i].lnd_p16,
+                           (uint8_t)(g_lnd_log[i].lnd_p32 >> 8),
+                           (uint8_t)g_lnd_log[i].lnd_p32);
+            break;
+        case LORA_NODE_LOG_RADIO_TIMEOUT_IRQ:
+            break;
+        case LORA_NODE_LOG_RX_CFG:
+            console_printf("RX_CFG bw=%u dr=%u sf=%u freq=%lu",
+                           (int8_t)g_lnd_log[i].lnd_p8,
+                           (uint8_t)(g_lnd_log[i].lnd_p16 >> 8),
+                           (uint8_t)g_lnd_log[i].lnd_p16,
+                           g_lnd_log[i].lnd_p32);
+            break;
+        case LORA_NODE_LOG_RX_PORT:
+            console_printf("RX_PORT port=%u len=%u dwnlink_cntr=%lu",
+                           g_lnd_log[i].lnd_p8, g_lnd_log[i].lnd_p16,
+                           g_lnd_log[i].lnd_p32);
+            break;
+        case LORA_NODE_LOG_RX_WIN2:
+            console_printf("RX_WIN2 rxslot=%u cont=%u freq=%lu",
+                           g_lnd_log[i].lnd_p8, g_lnd_log[i].lnd_p16,
+                           g_lnd_log[i].lnd_p32);
+            break;
+        case LORA_NODE_LOG_APP_TX:
+            console_printf("APP_TX pktlen=%u om=%lx",
+                           g_lnd_log[i].lnd_p16, g_lnd_log[i].lnd_p32);
+            break;
+        case LORA_NODE_LOG_RTX_TIMEOUT:
+            console_printf("RTX_TIMEOUT macflags=%x", g_lnd_log[i].lnd_p8);
+            break;
+        case LORA_NODE_LOG_RX_ADR_REQ:
+            console_printf("RX_ADR_REQ dr=%u txpwr=%u chmassk=%u nbrep=%u",
+                           g_lnd_log[i].lnd_p8, g_lnd_log[i].lnd_p16,
+                           (uint16_t)(g_lnd_log[i].lnd_p32 >> 16),
+                           (uint16_t)g_lnd_log[i].lnd_p32);
+            break;
+        case LORA_NODE_LOG_PROC_MAC_CMD:
+            console_printf("PROC_MAC_CMD index=%u snr=%u cmd_size=%lu",
+                           g_lnd_log[i].lnd_p8, g_lnd_log[i].lnd_p16,
+                           g_lnd_log[i].lnd_p32);
+            break;
+        case LORA_NODE_LOG_LINK_CHK:
+            console_printf("LINK_CHK status=%lu", g_lnd_log[i].lnd_p32);
+            break;
+        default:
+            console_printf("id=%u p8=%u p16=%u p32=%lu",
+                           g_lnd_log[i].lnd_id, g_lnd_log[i].lnd_p8,
+                           g_lnd_log[i].lnd_p16, g_lnd_log[i].lnd_p32);
+            break;
+        }
+
+        console_printf(" cputime=%lu\n", g_lnd_log[i].lnd_cputime);
+
+next_entry:
+        ++i;
+        if (i == LORA_NODE_DEBUG_LOG_ENTRIES) {
+            i = 0;
+        }
+        ++lines_logged;
+    }
+#else
+    console_printf("No Lora node log available\n");
+#endif
+    return 0;
+}
+
+
+void
+lora_cli_init(void)
+{
+    int rc;
+    rc = shell_cmd_register(&lora_node_log_cmd);
+    assert(rc == 0);
+}
+#endif /* MYNEWT_VAL(LORA_NODE_LOG_CLI) */

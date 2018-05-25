@@ -160,6 +160,45 @@ log_fcb_read(struct log *log, void *dptr, void *buf, uint16_t offset,
 }
 
 static int
+log_fcb_read_mbuf(struct log *log, void *dptr, struct os_mbuf *om,
+                  uint16_t offset, uint16_t len)
+{
+    struct fcb_entry *loc;
+    uint8_t data[128];
+    uint16_t read_len;
+    uint16_t rem_len;
+    int rc;
+
+    loc = (struct fcb_entry *)dptr;
+
+    if (offset + len > loc->fe_data_len) {
+        len = loc->fe_data_len - offset;
+    }
+
+    rem_len = len;
+
+    while (rem_len > 0) {
+        read_len = min(rem_len, sizeof(data));
+        rc = flash_area_read(loc->fe_area, loc->fe_data_off + offset, data,
+                             read_len);
+        if (rc) {
+            goto done;
+        }
+
+        rc = os_mbuf_append(om, data, read_len);
+        if (rc) {
+            goto done;
+        }
+
+        rem_len -= read_len;
+        offset += read_len;
+    }
+
+done:
+    return len - rem_len;
+}
+
+static int
 log_fcb_walk(struct log *log, log_walk_func_t walk_func,
              struct log_offset *log_offset)
 {
@@ -336,6 +375,7 @@ err:
 const struct log_handler log_fcb_handler = {
     .log_type = LOG_TYPE_STORAGE,
     .log_read = log_fcb_read,
+    .log_read_mbuf = log_fcb_read_mbuf,
     .log_append = log_fcb_append,
     .log_append_mbuf = log_fcb_append_mbuf,
     .log_walk = log_fcb_walk,

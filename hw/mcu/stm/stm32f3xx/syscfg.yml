@@ -58,3 +58,7 @@ syscfg.defs:
     SPI_1:
         description: 'SPI 1 enable'
         value: 'MYNEWT_VAL_SPI_1_MASTER || MYNEWT_VAL_SPI_1_SLAVE'
+
+    I2C_0:
+        description: 'I2C (TWI) interface 0'
+        value:  0

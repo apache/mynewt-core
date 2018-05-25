@@ -64,7 +64,7 @@ static struct log _log;
 /**
  * Writes a single byte to the specified register
  *
- * @param The Sesnsor interface
+ * @param The Sensor interface
  * @param The register address to write to
  * @param The value to write
  *
@@ -95,9 +95,9 @@ drv2605_write8(struct sensor_itf *itf, uint8_t reg, uint8_t value)
 }
 
 /**
- * Writes a multiple bytes to the specified register (MAX: 8 bytes)
+ * Writes multiple bytes starting at the specified register (MAX: 8 bytes)
  *
- * @param The Sesnsor interface
+ * @param The Sensor interface
  * @param The register address to write to
  * @param The data buffer to write from
  *
@@ -191,7 +191,7 @@ err:
  *
  * @param The Sensor interface
  * @param Register to read from
- * @param Bufer to read into
+ * @param Buffer to read into
  * @param Length of the buffer
  *
  * @return 0 on success and non-zero on failure
@@ -262,7 +262,7 @@ drv2605_default_cal(struct drv2605_cal *cal)
 /**
  * Expects to be called back through os_dev_create().
  *
- * @param The device object associated with this accellerometer
+ * @param The device object associated with this haptic feedback controller
  * @param Argument passed to OS device init, unused
  *
  * @return 0 on success, non-zero error on failure.
@@ -314,6 +314,7 @@ drv2605_init(struct os_dev *dev, void *arg)
     /* Check if we can read the chip address */
     rc = drv2605_get_chip_id(arg, &id);
     if (rc) {
+        DRV2605_ERR("unable to get chip id [1]: %d\n", rc);
         goto err;
     }
 
@@ -322,17 +323,21 @@ drv2605_init(struct os_dev *dev, void *arg)
 
         rc = drv2605_get_chip_id(arg, &id);
         if (rc) {
+            DRV2605_ERR("unable to get chip id [2]: %d\n", rc);
             goto err;
         }
 
         if (id != DRV2605_STATUS_DEVICE_ID_2605 && id != DRV2605_STATUS_DEVICE_ID_2605L) {
             rc = SYS_EINVAL;
+            DRV2605_ERR("id not as expected: got: %d, expected %d or %d\n", id,
+                        DRV2605_STATUS_DEVICE_ID_2605, DRV2605_STATUS_DEVICE_ID_2605L);
             goto err;
         }
     }
 
     return (0);
 err:
+    DRV2605_ERR("Error initializing DRV2605: %d\n", rc);
     return (rc);
 }
 
@@ -363,8 +368,9 @@ err:
 }
 
 
-// NOTE diagnistics (and frankly all operation) will in all likelyhood fail if your motor is not SECURED to a mass
-// it cant be floating on your desk even for prototyping
+// NOTE diagnostics (and frankly all operation) will in all likelihood fail
+// if your motor is not SECURED to a mass.  It can't be floating on your desk
+// even for prototyping
 int
 drv2605_mode_diagnostic(struct sensor_itf *itf)
 {
@@ -421,7 +427,7 @@ err:
 
 
 int
-drv2605_send_defaults(struct sensor_itf *itf)
+drv2605_send_defaults(struct sensor_itf *itf, struct drv2605_cfg *cfg)
 {
     int rc;
 
@@ -435,8 +441,14 @@ drv2605_send_defaults(struct sensor_itf *itf)
         goto err;
     }
 
-    // TODO: Support ERM?
-    rc = drv2605_write8(itf, DRV2605_FEEDBACK_CONTROL_ADDR, ((MYNEWT_VAL(DRV2605_CALIBRATED_BEMF_GAIN) & DRV2605_FEEDBACK_CONTROL_BEMF_GAIN_MAX) << DRV2605_FEEDBACK_CONTROL_BEMF_GAIN_POS) | DRV2605_FEEDBACK_CONTROL_N_LRA );
+    uint8_t motor_mask = 0;
+    if (cfg->motor_type == DRV2605_MOTOR_LRA) {
+        motor_mask = DRV2605_FEEDBACK_CONTROL_N_LRA;
+    }
+    else {
+        motor_mask = DRV2605_FEEDBACK_CONTROL_N_ERM;
+    }
+    rc = drv2605_write8(itf, DRV2605_FEEDBACK_CONTROL_ADDR, ((MYNEWT_VAL(DRV2605_CALIBRATED_BEMF_GAIN) & DRV2605_FEEDBACK_CONTROL_BEMF_GAIN_MAX) << DRV2605_FEEDBACK_CONTROL_BEMF_GAIN_POS) | motor_mask );
     if (rc) {
         goto err;
     }
@@ -447,8 +459,14 @@ drv2605_send_defaults(struct sensor_itf *itf)
         goto err;
     }
 
-    // TODO: Support ERM?
-    rc = drv2605_write8(itf, DRV2605_CONTROL3_ADDR, DRV2605_CONTROL3_LRA_DRIVE_MODE_ONCE | DRV2605_CONTROL3_LRA_OPEN_LOOP_CLOSED);
+    // TODO: the selection of LRA vs ERM could also include open vs. closed loop, allowing the
+    // full matrix of possibilities
+    if (cfg->motor_type == DRV2605_MOTOR_LRA) {
+        rc = drv2605_write8(itf, DRV2605_CONTROL3_ADDR, DRV2605_CONTROL3_LRA_DRIVE_MODE_ONCE | DRV2605_CONTROL3_LRA_OPEN_LOOP_CLOSED);
+    }
+    else {
+        rc = drv2605_write8(itf, DRV2605_CONTROL3_ADDR, DRV2605_CONTROL3_ERM_OPEN_LOOP_ENABLED);
+    }
     if (rc) {
         goto err;
     }
@@ -463,9 +481,18 @@ drv2605_send_defaults(struct sensor_itf *itf)
         goto err;
     }
 
-    // TODO: Support ERM?
-    // Library 6 is a closed-loop library tuned for LRAs. The library selection occurs through register 0x03 (see the (Address: 0x03) section).
-    rc = drv2605_write8(itf, DRV2605_WAVEFORM_CONTROL_ADDR, DRV2605_WAVEFORM_CONTROL_LIBRARY_SEL_LRA);
+    // Library selection occurs through register 0x03 (see the (Address: 0x03) section).
+    uint8_t library_selection;
+    if (cfg->motor_type == DRV2605_MOTOR_LRA) {
+        // Library 6 is a closed-loop library tuned for LRAs.
+        library_selection = DRV2605_WAVEFORM_CONTROL_LIBRARY_SEL_LRA;
+    }
+    else {
+        // TODO: there could be a setter function for the ERM library choices
+        // Library B is an open-loop ERM set for 3V
+        library_selection = DRV2605_WAVEFORM_CONTROL_LIBRARY_SEL_B;
+    }
+    rc = drv2605_write8(itf, DRV2605_WAVEFORM_CONTROL_ADDR, library_selection);
     if (rc) {
         goto err;
     }
@@ -773,9 +800,10 @@ err:
     return rc;
 }
 
-// note device MSUT be reconfigured for an operational state after a an error or after succsessful diag and calibration and reset
-// upon success the device is always left in DRV2605_POWER_STANDBY state
-// no device state is guaranteed for error returns
+// note device MUST be reconfigured for an operational state after a an
+// error or after succsessful diag and calibration and reset upon success
+// the device is always left in DRV2605_POWER_STANDBY state no device state
+// is guaranteed for error returns
 int
 drv2605_config(struct drv2605 *drv2605, struct drv2605_cfg *cfg)
 {
@@ -789,7 +817,7 @@ drv2605_config(struct drv2605 *drv2605, struct drv2605_cfg *cfg)
         return rc;
     }
 
-    rc = drv2605_send_defaults(itf);
+    rc = drv2605_send_defaults(itf, cfg);
     if (rc) {
         return rc;
     }

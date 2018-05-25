@@ -32,6 +32,10 @@ pkg.ign_files.BSP_NRF52:
     - "nrfx_power.c"
     - "nrfx_power_clock.c"
 
+pkg.ign_files.BSP_NRF52810:
+    - "nrfx_power.c"
+    - "nrfx_power_clock.c"
+
 pkg.ign_files.BSP_NRF52840:
     - "nrfx_power.c"
     - "nrfx_power_clock.c"

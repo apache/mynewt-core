@@ -221,6 +221,10 @@ sensor_cmd_list_sensors(void)
     sensor_mgr_unlock();
 }
 
+/*
+ * Convenience API to convert floats to strings,
+ * might loose some precision due to rounding
+ */
 char*
 sensor_ftostr(float num, char *fltstr, int len)
 {

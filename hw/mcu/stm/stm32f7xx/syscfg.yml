@@ -41,3 +41,10 @@ syscfg.defs:
         value:  0
         restrictions:
             - "!SPI_0_MASTER"
+    I2C_0:
+        description: 'I2C (TWI) interface 0'
+        value:  0
+
+    TRNG:
+        description: 'True Random Number Generator (RNG)'
+        value: 0

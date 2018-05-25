@@ -68,22 +68,16 @@ fcb_getnext_nolock(struct fcb *fcb, struct fcb_entry *loc)
          */
         loc->fe_elem_off = sizeof(struct fcb_disk_area);
         rc = fcb_elem_info(fcb, loc);
-        switch (rc) {
-        case 0:
-            return 0;
-        case FCB_ERR_CRC:
-            break;
-        default:
-            goto next_sector;
-        }
     } else {
         rc = fcb_getnext_in_area(fcb, loc);
-        if (rc == 0) {
-            return 0;
-        }
-        if (rc == FCB_ERR_NOVAR) {
-            goto next_sector;
-        }
+    }
+    switch (rc) {
+    case 0:
+        return 0;
+    case FCB_ERR_CRC:
+        break;
+    default:
+        goto next_sector;
     }
     while (rc == FCB_ERR_CRC) {
         rc = fcb_getnext_in_area(fcb, loc);

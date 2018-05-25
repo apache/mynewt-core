@@ -26,11 +26,6 @@
 #include "mn_socket/mn_socket.h"
 #include "mn_sock_test.h"
 
-#define TEST_STACK_SIZE 4096
-#define TEST_PRIO 22
-os_stack_t test_stack[OS_STACK_ALIGN(TEST_STACK_SIZE)];
-struct os_task test_task;
-
 #define MB_CNT 10
 #define MB_SZ  512
 static uint8_t test_mbuf_area[MB_CNT * MB_SZ];
@@ -38,6 +33,7 @@ static struct os_mempool test_mbuf_mpool;
 static struct os_mbuf_pool test_mbuf_pool;
 
 TEST_CASE_DECL(inet_pton_test)
+TEST_CASE_DECL(inet6_pton_test)
 TEST_CASE_DECL(inet_ntop_test)
 TEST_CASE_DECL(socket_tests)
 
@@ -55,6 +51,7 @@ TEST_SUITE(mn_socket_test_all)
     TEST_ASSERT(rc == 0);
 
     inet_pton_test();
+    inet6_pton_test();
     inet_ntop_test();
     socket_tests();
 }
@@ -83,6 +80,6 @@ main(int argc, char **argv)
     tu_suite_set_init_cb((void*)mn_socket_test_init, NULL);
     mn_socket_test_all();
 
-    return 0;
+    return tu_any_failed;
 }
 #endif

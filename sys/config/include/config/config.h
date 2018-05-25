@@ -19,17 +19,19 @@
 #ifndef __SYS_CONFIG_H_
 #define __SYS_CONFIG_H_
 
+/**
+ * @addtogroup SysConfig Configuration of Apache Mynewt System
+ * @{
+ */
+
+#include <os/queue.h>
 #include <stdint.h>
-#include "os/mynewt.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/**
- * @defgroup sys_config sys/config package
- * @{
- */
+/** @cond INTERNAL_HIDDEN */
 
 #define CONF_MAX_DIR_DEPTH	8	/* max depth of config tree */
 #define CONF_MAX_NAME_LEN	(8 * CONF_MAX_DIR_DEPTH)
@@ -38,39 +40,131 @@ extern "C" {
 
 #define CONF_NMGR_OP		0
 
+/** @endcond */
+
 /**
  * Type of configuration value.
  */
-enum conf_type {
+typedef enum conf_type {
     CONF_NONE = 0,
     CONF_DIR,
+    /** 8-bit signed integer */
     CONF_INT8,
+    /** 16-bit signed integer */
     CONF_INT16,
+    /** 32-bit signed integer */
     CONF_INT32,
+    /** 64-bit signed integer */
     CONF_INT64,
+    /** String */
     CONF_STRING,
+    /** Bytes */
     CONF_BYTES,
+    /** Floating point */
     CONF_FLOAT,
+    /** Double precision */
     CONF_DOUBLE,
+    /** Boolean */
     CONF_BOOL,
-} __attribute__((__packed__));
+} __attribute__((__packed__)) conf_type_t;
 
 /**
  * Parameter to commit handler describing where data is going to.
  */
 enum conf_export_tgt {
-    CONF_EXPORT_PERSIST,        /* Value is to be persisted. */
-    CONF_EXPORT_SHOW            /* Value is to be displayed. */
+    /** Value is to be persisted */
+    CONF_EXPORT_PERSIST,
+    /** Value is to be display */
+    CONF_EXPORT_SHOW
 };
 
+typedef enum conf_export_tgt conf_export_tgt_t;
+
+/**
+ * Handler for getting configuration items, this handler is called
+ * per-configuration section.  Configuration sections are delimited
+ * by '/', for example:
+ *
+ *  - section/name/value
+ *
+ * Would be passed as:
+ *
+ *  - argc = 3
+ *  - argv[0] = section
+ *  - argv[1] = name
+ *  - argv[2] = value
+ *
+ * The handler returns the value into val, null terminated, up to
+ * val_len_max.
+ *
+ * @param argc          The number of sections in the configuration variable
+ * @param argv          The array of configuration sections
+ * @param val           A pointer to the buffer to return the configuration
+ *                      value into.
+ * @param val_len_max   The maximum length of the val buffer to copy into.
+ *
+ * @return A pointer to val or NULL if error.
+ */
+typedef char *(*conf_get_handler_t)(int argc, char **argv, char *val, int val_len_max);
+
+/**
+ * Set the configuration variable pointed to by argc and argv.  See
+ * description of ch_get_handler_t for format of these variables.  This sets the
+ * configuration variable to the shadow value, but does not apply the configuration
+ * change.  In order to apply the change, call the ch_commit() handler.
+ *
+ * @param argc   The number of sections in the configuration variable.
+ * @param argv   The array of configuration sections
+ * @param val    The value to configure that variable to
+ *
+ * @return 0 on success, non-zero error code on failure.
+ */
+typedef int (*conf_set_handler_t)(int argc, char **argv, char *val);
+
+/**
+ * Commit shadow configuration state to the active configuration.
+ *
+ * @return 0 on success, non-zero error code on failure.
+ */
+typedef int (*conf_commit_handler_t)(void);
+
+/**
+ * Called per-configuration variable being exported.
+ *
+ * @param name The name of the variable to export
+ * @param val  The value of the variable to export
+ */
+typedef void (*conf_export_func_t)(char *name, char *val);
+
+/**
+ * Export all of the configuration variables, calling the export_func
+ * per variable being exported.
+ *
+ * @param export_func  The export function to call.
+ * @param tgt          The target of the export, either for persistence or display.
+ *
+ * @return 0 on success, non-zero error code on failure.
+ */
+typedef int (*conf_export_handler_t)(conf_export_func_t export_func,
+        conf_export_tgt_t tgt);
+
+/**
+ * Configuration handler, used to register a config item/subtree.
+ */
 struct conf_handler {
     SLIST_ENTRY(conf_handler) ch_list;
+    /**
+     * The name of the conifguration item/subtree
+     */
     char *ch_name;
-    char *(*ch_get)(int argc, char **argv, char *val, int val_len_max);
-    int (*ch_set)(int argc, char **argv, char *val);
-    int (*ch_commit)(void);
-    int (*ch_export)(void (*export_func)(char *name, char *val),
-      enum conf_export_tgt tgt);
+    /** Get configuration value */
+    conf_get_handler_t ch_get;
+    /** Set configuration value */
+    conf_set_handler_t ch_set;
+    /** Commit configuration value */
+    conf_commit_handler_t ch_commit;
+    /** Export configuration value */
+    conf_export_handler_t ch_export;
 };
 
 void conf_init(void);
@@ -153,7 +247,7 @@ int conf_set_value(char *name, char *val_str);
  * @param name Name/key of the configuration item.
  * @param val_str Value of the configuration item.
  *
- * @return 0 on success, non-zero on failure.
+ * @return pointer to value on success, NULL on failure.
  */
 char *conf_get_value(char *name, char *buf, int buf_len);
 
@@ -205,6 +299,8 @@ int conf_bytes_from_str(char *val_str, void *vp, int *len);
  */
 char *conf_str_from_value(enum conf_type type, void *vp, char *buf,
   int buf_len);
+
+/** Return the length of a configuration string from buffer length. */
 #define CONF_STR_FROM_BYTES_LEN(len) (((len) * 4 / 3) + 4)
 
 /**
@@ -220,12 +316,11 @@ char *conf_str_from_value(enum conf_type type, void *vp, char *buf,
  */
 char *conf_str_from_bytes(void *vp, int vp_len, char *buf, int buf_len);
 
+/**
+ * Convert a string into a value of type
+ */
 #define CONF_VALUE_SET(str, type, val)                                  \
     conf_value_from_str((str), (type), &(val), sizeof(val))
-
-/**
- * @} sys_config
- */
 
 /*
  * Config storage
@@ -239,5 +334,10 @@ struct conf_store {
 #ifdef __cplusplus
 }
 #endif
+
+/**
+ * @} SysConfig
+ */
+
 
 #endif /* __SYS_CONFIG_H_ */

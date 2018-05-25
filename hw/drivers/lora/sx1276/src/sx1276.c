@@ -23,6 +23,7 @@ Maintainer: Miguel Luis, Gregory Cristian and Wael Guibene
 #include "radio/radio.h"
 #include "sx1276.h"
 #include "sx1276-board.h"
+#include "node/utilities.h"
 
 #if MYNEWT_VAL(LORA_MAC_TIMER_NUM) == -1
 #error "Must define a Lora MAC timer number"
@@ -338,9 +339,12 @@ SX1276SetChannel(uint32_t freq)
 }
 
 bool
-SX1276IsChannelFree(RadioModems_t modem, uint32_t freq, int16_t rssiThresh)
+SX1276IsChannelFree(RadioModems_t modem, uint32_t freq, int16_t rssiThresh,
+                    uint32_t maxCarrierSenseTime)
 {
+    bool status = true;
     int16_t rssi;
+    uint32_t carrierSenseTime;
 
     SX1276SetModem(modem);
 
@@ -351,14 +355,18 @@ SX1276IsChannelFree(RadioModems_t modem, uint32_t freq, int16_t rssiThresh)
     /* Delay for 1 msec */
     hal_timer_delay(SX1276_TIMER_NUM, 1000);
 
-    rssi = SX1276ReadRssi(modem);
+    carrierSenseTime = TimerGetCurrentTime();
 
-    SX1276SetSleep();
-
-    if (rssi > rssiThresh) {
-        return false;
+    // Perform carrier sense for maxCarrierSenseTime
+    while (TimerGetElapsedTime(carrierSenseTime) < maxCarrierSenseTime) {
+        rssi = SX1276ReadRssi(modem);
+        if (rssi > rssiThresh) {
+            status = false;
+            break;
+        }
     }
-    return true;
+    SX1276SetSleep();
+    return status;
 }
 
 uint32_t
@@ -1241,13 +1249,13 @@ SX1276SetModem(RadioModems_t modem)
 }
 
 void
-SX1276Write(uint8_t addr, uint8_t data)
+SX1276Write(uint16_t addr, uint8_t data)
 {
     SX1276WriteBuffer(addr, &data, 1);
 }
 
 uint8_t
-SX1276Read(uint8_t addr)
+SX1276Read(uint16_t addr)
 {
     uint8_t data;
     SX1276ReadBuffer(addr, &data, 1);
@@ -1255,7 +1263,7 @@ SX1276Read(uint8_t addr)
 }
 
 void
-SX1276WriteBuffer(uint8_t addr, uint8_t *buffer, uint8_t size)
+SX1276WriteBuffer(uint16_t addr, uint8_t *buffer, uint8_t size)
 {
     uint8_t i;
 
@@ -1270,7 +1278,7 @@ SX1276WriteBuffer(uint8_t addr, uint8_t *buffer, uint8_t size)
 }
 
 void
-SX1276ReadBuffer(uint8_t addr, uint8_t *buffer, uint8_t size)
+SX1276ReadBuffer(uint16_t addr, uint8_t *buffer, uint8_t size)
 {
     uint8_t i;
 
@@ -1325,6 +1333,12 @@ SX1276SetPublicNetwork(bool enable)
         // Change LoRa modem SyncWord
         SX1276Write(REG_LR_SYNCWORD, LORA_MAC_PRIVATE_SYNCWORD);
     }
+}
+
+uint32_t
+SX1276GetWakeupTime(void)
+{
+    return SX1276GetBoardTcxoWakeupTime( ) + RADIO_WAKEUP_TIME;
 }
 
 void

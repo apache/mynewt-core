@@ -251,7 +251,7 @@ adxl345_spi_write8(struct sensor_itf *itf, uint8_t reg, uint8_t value)
     rc = hal_spi_tx_val(itf->si_num, value);
     if (rc == 0xFFFF) {
         rc = SYS_EINVAL;
-        ADXL345_ERR("SPI_%u write failed addr:0x%02X:0x%02X\n",
+        ADXL345_ERR("SPI_%u write failed addr:0x%02X\n",
                    itf->si_num, reg);
         STATS_INC(g_adxl345stats, write_errors);
         goto err;
@@ -996,7 +996,7 @@ int adxl345_clear_interrupts(struct sensor_itf *itf, uint8_t *int_status)
 /**
  * Expects to be called back through os_dev_create().
  *
- * @param The device object associated with this accellerometer
+ * @param The device object associated with this accelerometer
  * @param Argument passed to OS device init, unused
  *
  * @return 0 on success, non-zero error on failure.
@@ -1490,10 +1490,14 @@ adxl345_sensor_handle_interrupt(struct sensor * sensor)
         return rc;
     }
 
-    if ((pdd->registered_mask & ADXL345_NOTIFY_MASK) &&
-        ((int_status & ADXL345_INT_SINGLE_TAP_BIT) ||
-         (int_status & ADXL345_INT_DOUBLE_TAP_BIT))) {
-        sensor_mgr_put_notify_evt(&pdd->notify_ctx);
+    if (pdd->registered_mask & ADXL345_NOTIFY_MASK) {
+        if (int_status & ADXL345_INT_SINGLE_TAP_BIT) {
+            sensor_mgr_put_notify_evt(&pdd->notify_ctx, SENSOR_EVENT_TYPE_SINGLE_TAP);
+        }
+
+        if (int_status & ADXL345_INT_DOUBLE_TAP_BIT) {
+            sensor_mgr_put_notify_evt(&pdd->notify_ctx, SENSOR_EVENT_TYPE_DOUBLE_TAP);
+        }
     }
 
     if ((pdd->registered_mask & ADXL345_READ_MASK) &&

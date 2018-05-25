@@ -34,7 +34,6 @@ pkg.deps:
     - util/crc
 
 pkg.req_apis:
-    - console
     - bootloader
 
 pkg.cflags.SELFTEST:

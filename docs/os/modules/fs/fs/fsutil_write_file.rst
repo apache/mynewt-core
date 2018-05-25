@@ -51,7 +51,7 @@ This example creates a 4-byte file.
 
         /* Create the parent directory. */
         rc = fs_mkdir("/cfg");
-        if (rc != 0 && rc != FS_EALREADY) {
+        if (rc != 0 && rc != FS_EEXIST) {
             return -1;
         }
 

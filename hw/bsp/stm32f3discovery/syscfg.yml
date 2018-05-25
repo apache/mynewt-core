@@ -30,8 +30,19 @@ syscfg.defs:
         description: 'Support for timer 0'
         value: 1
 
+    TIMER_1:
+        description: 'Support for timer 1'
+        value: 0
+
+    TIMER_2:
+        description: 'Support for timer 2'
+        value: 0
+
 syscfg.vals:
     REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG
     CONFIG_FCB_FLASH_AREA: FLASH_AREA_NFFS
     NFFS_FLASH_AREA: FLASH_AREA_NFFS
     COREDUMP_FLASH_AREA: FLASH_AREA_IMAGE_1
+    BOOT_SERIAL_DETECT_PIN: 0  # USER button
+    BOOT_SERIAL_DETECT_PIN_CFG: 'HAL_GPIO_PULL_NONE'
+    BOOT_SERIAL_DETECT_PIN_VAL: 1

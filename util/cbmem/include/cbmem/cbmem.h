@@ -64,6 +64,8 @@ struct cbmem_entry_hdr *cbmem_iter_next(struct cbmem *cbmem,
         struct cbmem_iter *iter);
 int cbmem_read(struct cbmem *cbmem, struct cbmem_entry_hdr *hdr, void *buf, 
         uint16_t off, uint16_t len);
+int cbmem_read_mbuf(struct cbmem *cbmem, struct cbmem_entry_hdr *hdr,
+                    struct os_mbuf *om, uint16_t off, uint16_t len);
 int cbmem_walk(struct cbmem *cbmem, cbmem_walk_func_t walk_func, void *arg);
 
 int cbmem_flush(struct cbmem *);

@@ -5,10 +5,19 @@ OS User Guide
    :hidden:
 
    Kernel <core_os/mynewt_os>
+   System <modules/system_modules>
    Hardware Abstraction <modules/hal/hal>
+   Secure Bootloader <modules/bootloader/bootloader>
+   Split Images <modules/split/split>
    Porting Guide <core_os/porting/port_os>
-   System Configuration <modules/sysinitconfig/sysinitconfig>
+   Compile-Time Configuration <modules/sysinitconfig/sysinitconfig>
    Console <modules/console/console>
+   Shell <modules/shell/shell>
+   Test Utilities <modules/testutil/testutil>
+   JSON <modules/json/json>
+   Statistics <modules/stats/stats>
+   Logs <modules/logs/logs>
+   System Configuration and Initialization <modules/sysinitconfig/sysinitconfig>
 
 This guide provides comprehensive information about Mynewt OS, the
 real-time operating system for embedded systems. It is intended both for

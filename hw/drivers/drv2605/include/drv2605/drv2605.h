@@ -54,8 +54,14 @@ enum drv2605_op_mode {
     DRV2605_OP_RESET
 };
 
+enum drv2605_motor_type {
+    DRV2605_MOTOR_LRA = 0x00,
+    DRV2605_MOTOR_ERM = 0x01
+};
+
 struct drv2605_cfg {
     enum drv2605_op_mode op_mode;
+    enum drv2605_motor_type motor_type;
     struct drv2605_cal cal;
 };
 
@@ -67,13 +73,25 @@ struct drv2605 {
 
 
 /**
- * Initialize the drv2605. This function is normally called by sysinit.
+ * Initialize the drv2605. This is normally used as an os_dev_create initialization function
  *
  * @param dev  Pointer to the drv2605_dev device descriptor
+ * @param arg  Pointer to the sensor interface
+ *
+ * @return 0 on success, non-zero on failure
  */
 int
 drv2605_init(struct os_dev *dev, void *arg);
 
+
+/**
+ * Set up  the drv2605 with the configuration parameters given
+ *
+ * @param dev  Pointer to the drv2605_dev device descriptor
+ * @param cfg  Pointer to the drv2605_cfg settings for mode, type, calibration
+ *
+ * @return 0 on success, non-zero on failure
+ */
 int
 drv2605_config(struct drv2605 *drv2605, struct drv2605_cfg *cfg);
 
@@ -87,7 +105,6 @@ drv2605_shell_init(void);
 /**
  * Get a best effort defaults for the drv2605_cal
  *
- * @param The sensor interface
  * @param Pointer to the drv2605_cal struct
  * @return 0 on success, non-zero on failure
  */

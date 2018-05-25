@@ -21,7 +21,7 @@
 #include <stddef.h>
 #include <assert.h>
 #include "os/mynewt.h"
-#include <nrf51.h>
+#include "nrfx.h"
 #include <mcu/nrf51_hal.h>
 #include <hal/hal_bsp.h>
 #include "hal/hal_system.h"
@@ -39,6 +39,7 @@
 
 #if MYNEWT_VAL(ADC_0)
 #include <adc_nrf51/adc_nrf51.h>
+#include <nrfx_adc.h>
 #endif
 
 #if MYNEWT_VAL(UART_0)

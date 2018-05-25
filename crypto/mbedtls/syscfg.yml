@@ -19,28 +19,51 @@
 # Package: crypto/mbedtls
 
 syscfg.defs:
-    # Enabled curves
-    MBEDTLS_ECP_DP_SECP192R1:
-        value: 0
-    MBEDTLS_ECP_DP_SECP224R1:
-        value: 1
-    MBEDTLS_ECP_DP_SECP256R1:
-        value: 0
-    MBEDTLS_ECP_DP_SECP384R1:
-        value: 0
-    MBEDTLS_ECP_DP_SECP521R1:
-        value: 0
-    MBEDTLS_ECP_DP_SECP192K1:
-        value: 0
-    MBEDTLS_ECP_DP_SECP224K1:
-        value: 0
-    MBEDTLS_ECP_DP_SECP256K1:
-        value: 0
-    MBEDTLS_ECP_DP_BP256R1:
-        value: 0
-    MBEDTLS_ECP_DP_BP384R1:
-        value: 0
-    MBEDTLS_ECP_DP_BP512R1:
-        value: 0
-    MBEDTLS_ECP_DP_CURVE25519:
-         value: 0
+  # Enabled curves
+  MBEDTLS_ECP_DP_SECP192R1:
+    value: 0
+  MBEDTLS_ECP_DP_SECP224R1:
+    value: 1
+  MBEDTLS_ECP_DP_SECP256R1:
+    value: 0
+  MBEDTLS_ECP_DP_SECP384R1:
+    value: 0
+  MBEDTLS_ECP_DP_SECP521R1:
+    value: 0
+  MBEDTLS_ECP_DP_SECP192K1:
+    value: 0
+  MBEDTLS_ECP_DP_SECP224K1:
+    value: 0
+  MBEDTLS_ECP_DP_SECP256K1:
+    value: 0
+  MBEDTLS_ECP_DP_BP256R1:
+    value: 0
+  MBEDTLS_ECP_DP_BP384R1:
+    value: 0
+  MBEDTLS_ECP_DP_BP512R1:
+    value: 0
+  MBEDTLS_ECP_DP_CURVE25519:
+    value: 0
+
+  # Ciphers
+  MBEDTLS_AES_C:
+    value: 1
+  MBEDTLS_ARC4_C:
+    value: 0
+  MBEDTLS_BLOWFISH_C:
+    value: 0
+  MBEDTLS_CAMELLIA_C:
+    value: 0
+  MBEDTLS_DES_C:
+    description: '3DES'
+    value: 0
+
+  # Cipher modes
+  MBEDTLS_CIPHER_MODE_CBC:
+    value: 0
+  MBEDTLS_CIPHER_MODE_CFB:
+    value: 0
+  MBEDTLS_CIPHER_MODE_CTR:
+    value: 0
+  MBEDTLS_CCM_C:
+    value: 0

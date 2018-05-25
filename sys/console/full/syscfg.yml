@@ -43,6 +43,12 @@ syscfg.defs:
     CONSOLE_MAX_INPUT_LEN:
         description: 'Maximum input line length'
         value: 256
+    CONSOLE_HISTORY:
+        description: 'Enable history functionality'
+        value: 0
+    CONSOLE_HISTORY_SIZE:
+        description: 'Number of lines in history'
+        value: 16
 
     CONSOLE_UART_BAUD:
         description: 'Console UART baud rate.'
@@ -52,6 +58,15 @@ syscfg.defs:
         value: 'UART_FLOW_CTL_NONE'
     CONSOLE_UART_TX_BUF_SIZE:
         description: 'UART console transmit buffer size; must be power of 2.'
+        value: 32
+    CONSOLE_UART_RX_BUF_SIZE:
+        description: >
+            UART console receive buffer size; must be power of 2.
+            When enabled, data are received to intermediate ringbuffer and
+            processed in task context instead of interrupt. This prevents
+            from possible deadlocking when trying to output large amount of
+            data directly from RX handler (e.g. when echoing data back).
+            Set to 0 to disable (received data are handled in interrupt context)
         value: 32
 
     CONSOLE_UART_DEV:

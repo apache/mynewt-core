@@ -39,7 +39,7 @@ Use an Existing Project
 
 We assume that you have worked through at least some of the other
 tutorials and have an existing project. In this example, we modify the
-``bletiny`` app to enable Newt Manager support. We call our target
+``btshell`` app to enable Newt Manager support. We call our target
 ``myble``. You can create the target using any name you choose.
 
 Modify Package Dependencies and Configurations
@@ -165,8 +165,8 @@ version number you choose.
 ::
 
     $ newt create-image myble 1.0.0
-    App image successfully generated: ./bin/makerbeacon/apps/bletiny/bletiny.img
-    Build manifest: ./bin/makerbeacon/apps/bletiny/manifest.json
+    App image successfully generated: ./bin/makerbeacon/apps/btshell/btshell.img
+    Build manifest: ./bin/makerbeacon/apps/btshell/manifest.json
 
 Load the Image
 ~~~~~~~~~~~~~~

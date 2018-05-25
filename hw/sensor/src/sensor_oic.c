@@ -703,6 +703,10 @@ sensor_oic_add_resource(struct sensor *sensor, sensor_type_t type)
     return 0;
 }
 
+/*
+ * Iterates through the sensor list and initializes OIC resources
+ * based on each sensor type
+ */
 void
 sensor_oic_init(void)
 {

@@ -47,7 +47,7 @@ extern "C" {
 int hal_gpio_init_stm(int pin, GPIO_InitTypeDef *cfg);
 int hal_gpio_deinit_stm(int pin, GPIO_InitTypeDef *cfg);
 
-struct stm32f4_hal_i2c_cfg {
+struct stm32_hal_i2c_cfg {
     I2C_TypeDef *hic_i2c;
     volatile uint32_t *hic_rcc_reg;		/* RCC register to modify */
     uint32_t hic_rcc_dev;			/* RCC device ID */

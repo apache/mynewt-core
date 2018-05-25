@@ -72,18 +72,14 @@ static void sensor_notify_ev_cb(struct os_event * ev);
 static void sensor_read_ev_cb(struct os_event *ev);
 static void sensor_interrupt_ev_cb(struct os_event *ev);
 
-static struct os_event sensor_interrupt_event = {
-    .ev_cb = sensor_interrupt_ev_cb,
-};
-
-static struct os_event sensor_notify_event = {
-    .ev_cb = sensor_notify_ev_cb,
-};
-
-  /** OS event - for doing a sensor read */
+/** OS event - for doing a sensor read */
 static struct os_event sensor_read_event = {
     .ev_cb = sensor_read_ev_cb,
 };
+
+static struct os_mempool sensor_notify_evt_pool;
+static uint8_t sensor_notify_evt_area[OS_MEMPOOL_BYTES(MYNEWT_VAL(SENSOR_NOTIF_EVENTS_MAX),
+      sizeof(struct sensor_notify_os_ev))];
 
 /**
  * Lock sensor manager to access the list of sensors
@@ -239,7 +235,6 @@ err:
  *
  * @param The devname
  * @param The sensor type trait
- * @param The multiple of the poll rate
  */
 int
 sensor_set_n_poll_rate(char *devname, struct sensor_type_traits *stt)
@@ -657,6 +652,11 @@ sensor_mgr_init(void)
     sensor_mgr_evq_set(os_eventq_dflt_get());
 #endif
 
+    os_mempool_init(&sensor_notify_evt_pool,
+                    MYNEWT_VAL(SENSOR_NOTIF_EVENTS_MAX),
+                    sizeof(struct sensor_notify_os_ev), sensor_notify_evt_area,
+                    "sensor_notif_evts");
+
     /**
      * Initialize sensor polling callout and set it to fire on boot.
      */
@@ -982,19 +982,13 @@ err:
 }
 
 static int
-sensor_set_notification(struct sensor *sensor)
+sensor_set_notification(struct sensor *sensor, struct sensor_notifier *notifier)
 {
-    sensor_event_type_t event_type;
-    const struct sensor_notifier *notifier;
     int rc;
 
-    event_type = 0;
-    SLIST_FOREACH(notifier, &sensor->s_notifier_list, sn_next) {
-        event_type |= notifier->sn_sensor_event_type;
-    }
-
     if (sensor->s_funcs->sd_set_notification) {
-        rc = sensor->s_funcs->sd_set_notification(sensor, event_type);
+        rc = sensor->s_funcs->sd_set_notification(sensor,
+                 notifier->sn_sensor_event_type);
     } else {
         rc = SYS_ENODEV;
     }
@@ -1033,7 +1027,7 @@ sensor_register_notifier(struct sensor *sensor,
 
     SLIST_INSERT_HEAD(&sensor->s_notifier_list, notifier, sn_next);
 
-    rc = sensor_set_notification(sensor);
+    rc = sensor_set_notification(sensor, notifier);
     if (rc != 0) {
         goto remove;
     }
@@ -1125,26 +1119,45 @@ sensor_read_data_func(struct sensor *sensor, void *arg, void *data,
 void
 sensor_mgr_put_interrupt_evt(struct sensor *sensor)
 {
-    sensor_interrupt_event.ev_arg = sensor;
-    os_eventq_put(sensor_mgr_evq_get(), &sensor_interrupt_event);
+    sensor->s_interrupt_evt.ev_arg = sensor;
+    sensor->s_interrupt_evt.ev_cb  = sensor_interrupt_ev_cb;
+    os_eventq_put(sensor_mgr_evq_get(), &sensor->s_interrupt_evt);
 }
 
 /**
  * Puts a notification event on the sensor manager evq
  *
- * @param notification event context
+ * @param ctx notification event context
+ * @param evtype The notification event type
  */
 void
-sensor_mgr_put_notify_evt(struct sensor_notify_ev_ctx *ctx)
+sensor_mgr_put_notify_evt(struct sensor_notify_ev_ctx *ctx,
+                          sensor_event_type_t evtype)
 {
-    sensor_notify_event.ev_arg = ctx;
-    os_eventq_put(sensor_mgr_evq_get(), &sensor_notify_event);
+    struct sensor_notify_os_ev *snoe = os_memblock_get(&sensor_notify_evt_pool);
+
+    if (!snoe) {
+        /* no free events */
+        return;
+    }
+
+    *snoe = (struct sensor_notify_os_ev) {
+        .snoe_evt = {
+            .ev_arg = snoe,
+            .ev_cb = sensor_notify_ev_cb,
+        },
+
+        .snoe_evtype = evtype,
+        .snoe_sensor = ctx->snec_sensor,
+    };
+
+    os_eventq_put(sensor_mgr_evq_get(), &(snoe->snoe_evt));
 }
 
 /**
  * Puts read event on the sensor manager evq
  *
- * @param arg
+ * @param arg Event argument
  */
 void
 sensor_mgr_put_read_evt(void *arg)
@@ -1168,18 +1181,22 @@ sensor_interrupt_ev_cb(struct os_event *ev)
 static void
 sensor_notify_ev_cb(struct os_event * ev)
 {
-    const struct sensor_notify_ev_ctx *ctx;
+    struct sensor_notify_os_ev *snoe;
     const struct sensor_notifier *notifier;
 
-    ctx = ev->ev_arg;
+    snoe = ev->ev_arg;
 
-    SLIST_FOREACH(notifier, &ctx->snec_sensor->s_notifier_list, sn_next) {
-        if (notifier->sn_sensor_event_type & ctx->snec_evtype) {
-            notifier->sn_func(ctx->snec_sensor,
+    SLIST_FOREACH(notifier, &snoe->snoe_sensor->s_notifier_list, sn_next) {
+        if (notifier->sn_sensor_event_type & snoe->snoe_evtype) {
+            notifier->sn_func(snoe->snoe_sensor,
                               notifier->sn_arg,
-                              ctx->snec_evtype);
+                              snoe->snoe_evtype);
+            break;
         }
     }
+
+    /* Put notify os event back into the pool */
+    os_memblock_put(&sensor_notify_evt_pool, snoe);
 }
 
 static void
@@ -1861,8 +1878,8 @@ sensor_set_trigger_cmp_algo(struct sensor *sensor, struct sensor_type_traits *st
 /**
  * Set the thresholds along with comparison algo for a sensor
  *
- * @param name of the sensor
- * @param Ptr to sensor threshold
+ * @param devname Name of the sensor
+ * @param stt Ptr to sensor threshold
  *
  * @return 0 on success, non-zero on failure
  */

@@ -408,8 +408,13 @@ blemesh_on_sync(void)
 }
 
 int
-main(void)
+main(int argc, char **argv)
 {
+
+#ifdef ARCH_sim
+    mcu_sim_parse_args(argc, argv);
+#endif
+
     /* Initialize OS */
     sysinit();
 
@@ -422,7 +427,6 @@ main(void)
 
     hal_gpio_init_out(LED_2, 0);
 
-    bt_mesh_register_gatt();
     health_pub_init();
 
     while (1) {

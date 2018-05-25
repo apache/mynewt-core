@@ -36,25 +36,23 @@
 #include <stm32f4xx_hal_gpio_ex.h>
 #include <mcu/mcu.h>
 #include "mcu/stm32_hal.h"
-#include <mcu/stm32f4_bsp.h>
-#include <mcu/stm32f4xx_mynewt_hal.h>
 #include "bsp/bsp.h"
 #include <assert.h>
 
 #if MYNEWT_VAL(UART_0)
 static struct uart_dev hal_uart0;
 
-static const struct stm32f4_uart_cfg uart_cfg[UART_CNT] = {
+static const struct stm32_uart_cfg uart_cfg[UART_CNT] = {
     [0] = {
-        .suc_uart = USART2,
+        .suc_uart    = USART2,
         .suc_rcc_reg = &RCC->APB1ENR,
         .suc_rcc_dev = RCC_APB1ENR_USART2EN,
-        .suc_pin_tx = MCU_GPIO_PORTA(2),	/* PA2 */
-        .suc_pin_rx = MCU_GPIO_PORTA(3),	/* PA3 */
-        .suc_pin_rts = MCU_GPIO_PORTA(1),	/* PA1 */
-        .suc_pin_cts = MCU_GPIO_PORTA(0),	/* PA0 */
-        .suc_pin_af = GPIO_AF7_USART2,
-        .suc_irqn = USART2_IRQn
+        .suc_pin_tx  = MCU_GPIO_PORTA(2),
+        .suc_pin_rx  = MCU_GPIO_PORTA(3),
+        .suc_pin_rts = MCU_GPIO_PORTA(1),
+        .suc_pin_cts = MCU_GPIO_PORTA(0),
+        .suc_pin_af  = GPIO_AF7_USART2,
+        .suc_irqn    = USART2_IRQn
     }
 };
 #endif
@@ -67,24 +65,30 @@ static const struct hal_bsp_mem_dump dump_cfg[] = {
 };
 
 #if MYNEWT_VAL(I2C_0)
-static struct stm32f4_hal_i2c_cfg i2c_cfg0 = {
+/*
+ * NOTE: The PB8 and PB9 pins are connected through jumpers in the board to
+ * both AIN and I2C pins. To enable I2C functionality SB51/SB56 need to
+ * be removed (they are the default connections) and SB46/SB52 need to
+ * be added.
+ */
+static struct stm32_hal_i2c_cfg i2c_cfg0 = {
     .hic_i2c = I2C1,
     .hic_rcc_reg = &RCC->APB1ENR,
     .hic_rcc_dev = RCC_APB1ENR_I2C1EN,
-    .hic_pin_sda = MCU_GPIO_PORTB(9),		/* PB9 */
-    .hic_pin_scl = MCU_GPIO_PORTB(8),		/* PB8 */
+    .hic_pin_sda = MCU_GPIO_PORTB(9),       /* PB9 - D14 on CN5 */
+    .hic_pin_scl = MCU_GPIO_PORTB(8),       /* PB8 - D15 on CN5 */
     .hic_pin_af = GPIO_AF4_I2C1,
     .hic_10bit = 0,
-    .hic_speed = 100000				/* 100kHz */
+    .hic_speed = 100000,                    /* 100kHz */
 };
 #endif
 
 #if MYNEWT_VAL(SPI_0_SLAVE) || MYNEWT_VAL(SPI_0_MASTER)
 struct stm32_hal_spi_cfg spi0_cfg = {
-    .ss_pin = MCU_GPIO_PORTA(4),		/* PA4 */
-    .sck_pin  = MCU_GPIO_PORTA(5),		/* PA5 */
-    .miso_pin = MCU_GPIO_PORTA(6),		/* PA6 */
-    .mosi_pin = MCU_GPIO_PORTA(7),		/* PA7 */
+    .ss_pin = MCU_GPIO_PORTA(4),            /* PA4 */
+    .sck_pin  = MCU_GPIO_PORTA(5),          /* PA5 */
+    .miso_pin = MCU_GPIO_PORTA(6),          /* PA6 */
+    .mosi_pin = MCU_GPIO_PORTB(5),          /* PB5 */
     .irq_prio = 2
 };
 #endif

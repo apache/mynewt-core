@@ -30,6 +30,8 @@ extern "C" {
 #include "stm32f4xx_hal_def.h"
 
 #include "stm32f4xx_mynewt_hal.h"
+#include "stm32f4xx.h"
+#include "stm32f4xx_hal_dma.h"
 
 /* hal_watchdog */
 #include "stm32f4xx_hal_iwdg.h"
@@ -43,8 +45,6 @@ extern "C" {
     } while (0)
 
 /* hal_spi */
-#include "stm32f4xx.h"
-#include "stm32f4xx_hal_dma.h"
 #include "stm32f4xx_hal_spi.h"
 #include "stm32f4xx_hal_gpio.h"
 #include "stm32f4xx_hal_gpio_ex.h"
@@ -57,6 +57,22 @@ struct stm32_hal_spi_cfg {
     int mosi_pin;
     int irq_prio;
 };
+
+/* hal_i2c */
+#include "stm32f4xx_hal_i2c.h"
+#include "mcu/stm32f4xx_mynewt_hal.h"
+
+/* hal_uart */
+#include "stm32f4xx_hal_uart.h"
+#include "mcu/stm32f4_bsp.h"
+
+/* hal_timer */
+#include "stm32f4xx_hal_tim.h"
+
+#define STM32_HAL_TIMER_MAX     (3)
+
+/* hal_trng */
+#include "stm32f4xx_hal_rng.h"
 
 #ifdef __cplusplus
 }

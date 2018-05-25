@@ -121,7 +121,7 @@ bool SX1276CheckRfFrequency(uint32_t frequency);
 
 void SX1276SetPublicNetwork(bool enable);
 
-void hal_pin_rxtx (int val);
+uint32_t SX1276GetBoardTcxoWakeupTime(void);
 
 /*!
  * Radio hardware and global parameters

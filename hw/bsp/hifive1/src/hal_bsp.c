@@ -106,6 +106,16 @@ hal_bsp_init(void)
     assert(rc == 0);
 #endif
 
+#if MYNEWT_VAL(SPI_1)
+    rc = hal_spi_init(1, NULL, HAL_SPI_TYPE_MASTER);
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(SPI_2)
+    rc = hal_spi_init(2, NULL, HAL_SPI_TYPE_MASTER);
+    assert(rc == 0);
+#endif
+
 #if MYNEWT_VAL(UART_0)
     rc = os_dev_create((struct os_dev *) &os_bsp_uart0, "uart0",
       OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *)&os_bsp_uart0_cfg);

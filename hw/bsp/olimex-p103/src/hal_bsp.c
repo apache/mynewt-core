@@ -52,7 +52,7 @@
 #if MYNEWT_VAL(UART_0)
 static struct uart_dev hal_uart0;
 
-static const struct stm32f1_uart_cfg uart_cfg[UART_CNT] = {
+static const struct stm32_uart_cfg uart_cfg[UART_CNT] = {
     [0] = {
         .suc_uart = USART2,
         .suc_rcc_reg = &RCC->APB1ENR,
@@ -90,16 +90,15 @@ struct stm32_hal_spi_cfg spi1_cfg = {
 #endif
 
 #if MYNEWT_VAL(I2C_0)
-/* TODO */
-static struct stm32f1_hal_i2c_cfg i2c_cfg0 = {
+static struct stm32_hal_i2c_cfg i2c_cfg0 = {
     .hic_i2c = I2C1,
     .hic_rcc_reg = &RCC->APB1ENR,
     .hic_rcc_dev = RCC_APB1ENR_I2C1EN,
-    .hic_pin_sda = MCU_GPIO_PORTB(9),       /* PB9 */
-    .hic_pin_scl = MCU_GPIO_PORTB(8),       /* PB8 */
-    .hic_pin_af = GPIO_AF4_I2C1,
+    .hic_pin_sda = MCU_GPIO_PORTB(7),
+    .hic_pin_scl = MCU_GPIO_PORTB(6),
+    .hic_pin_remap_fn = LL_GPIO_AF_DisableRemap_I2C1,
     .hic_10bit = 0,
-    .hic_speed = 100000                     /* 100kHz */
+    .hic_speed = 100000,
 };
 #endif
 
@@ -181,7 +180,15 @@ hal_bsp_init(void)
 #endif
 
 #if MYNEWT_VAL(TIMER_0)
-    hal_timer_init(0, TIM9);
+    hal_timer_init(0, TIM2);
+#endif
+
+#if MYNEWT_VAL(TIMER_1)
+    hal_timer_init(1, TIM3);
+#endif
+
+#if MYNEWT_VAL(TIMER_2)
+    hal_timer_init(2, TIM4);
 #endif
 
 #if MYNEWT_VAL(SPI_0_MASTER)

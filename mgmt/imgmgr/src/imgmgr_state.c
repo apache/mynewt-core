@@ -27,6 +27,7 @@
 #include "mgmt/mgmt.h"
 #include "imgmgr/imgmgr.h"
 #include "imgmgr_priv.h"
+#include "log/log_fcb_slot1.h"
 
 uint8_t
 imgmgr_state_flags(int query_slot)
@@ -121,8 +122,8 @@ imgmgr_state_flags(int query_slot)
 static int
 imgmgr_state_any_pending(void)
 {
-    return imgmgr_state_flags(0) & IMGMGR_STATE_F_PENDING ||
-           imgmgr_state_flags(1) & IMGMGR_STATE_F_PENDING;
+    return (imgmgr_state_flags(0) & IMGMGR_STATE_F_PENDING) ||
+           (imgmgr_state_flags(1) & IMGMGR_STATE_F_PENDING);
 }
 
 int
@@ -131,9 +132,9 @@ imgmgr_state_slot_in_use(int slot)
     uint8_t state_flags;
 
     state_flags = imgmgr_state_flags(slot);
-    return state_flags & IMGMGR_STATE_F_ACTIVE       ||
-           state_flags & IMGMGR_STATE_F_CONFIRMED    ||
-           state_flags & IMGMGR_STATE_F_PENDING;
+    return (state_flags & IMGMGR_STATE_F_ACTIVE)       ||
+           (state_flags & IMGMGR_STATE_F_CONFIRMED)    ||
+           (state_flags & IMGMGR_STATE_F_PENDING);
 }
 
 int
@@ -150,7 +151,7 @@ imgmgr_state_set_pending(int slot, int permanent)
     /* Unconfirmed slots are always runable.  A confirmed slot can only be
      * run if it is a loader in a split image setup.
      */
-    if (state_flags & IMGMGR_STATE_F_CONFIRMED &&
+    if ((state_flags & IMGMGR_STATE_F_CONFIRMED) &&
         (slot != 0 || !split_app_active)) {
 
         return MGMT_ERR_EBADSTATE;
@@ -222,6 +223,11 @@ imgmgr_state_confirm(void)
         if (rc != 0) {
             return MGMT_ERR_EUNKNOWN;
         }
+
+#if MYNEWT_VAL(LOG_FCB_SLOT1)
+        /* If logging to slot1 is enabled, we can unlock slot1 here. */
+        log_fcb_slot1_unlock();
+#endif
     }
 
     return 0;

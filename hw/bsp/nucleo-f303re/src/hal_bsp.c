@@ -45,7 +45,7 @@
 #if MYNEWT_VAL(UART_0) || MYNEWT_VAL(UART_1)
 static struct uart_dev hal_uart[2];
 
-static const struct stm32f3_uart_cfg uart_cfg[UART_CNT] = {
+static const struct stm32_uart_cfg uart_cfg[UART_CNT] = {
 #if MYNEWT_VAL(UART_0)
     {
         .suc_uart    = USART2,
@@ -74,7 +74,7 @@ static const struct stm32f3_uart_cfg uart_cfg[UART_CNT] = {
 #endif
 };
 
-const struct stm32f3_uart_cfg *
+const struct stm32_uart_cfg *
 bsp_uart_config(int port)
 {
     assert(port < UART_CNT);

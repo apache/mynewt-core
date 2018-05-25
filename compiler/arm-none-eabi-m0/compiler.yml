@@ -25,7 +25,7 @@ compiler.path.objdump: arm-none-eabi-objdump
 compiler.path.objsize: arm-none-eabi-size
 compiler.path.objcopy: arm-none-eabi-objcopy
 
-compiler.flags.default: -mcpu=cortex-m0 -mthumb-interwork -mthumb -Wall -Werror -fno-exceptions -fomit-frame-pointer -ffunction-sections -fdata-sections
+compiler.flags.default: -mcpu=cortex-m0 -mthumb-interwork -mthumb -Wall -Werror -fno-exceptions -fomit-frame-pointer -ffunction-sections -fdata-sections -DCMSIS_VECTAB_VIRTUAL -DCMSIS_VECTAB_VIRTUAL_HEADER_FILE="mynewt_cm0_vectab.h"
 compiler.flags.optimized: [compiler.flags.default, -Os -ggdb]
 compiler.flags.debug: [compiler.flags.default, -Og -ggdb]
 

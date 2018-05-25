@@ -277,6 +277,43 @@ err:
     return (-1);
 }
 
+int cbmem_read_mbuf(struct cbmem *cbmem, struct cbmem_entry_hdr *hdr,
+                    struct os_mbuf *om, uint16_t off, uint16_t len)
+{
+    int rc;
+
+    rc = cbmem_lock_acquire(cbmem);
+    if (rc != 0) {
+        goto err;
+    }
+
+    /* Only read the maximum number of bytes, if we exceed that,
+     * truncate the read.
+     */
+    if (off + len > hdr->ceh_len) {
+        len = hdr->ceh_len - off;
+    }
+
+    if (off > hdr->ceh_len) {
+        rc = -1;
+        cbmem_lock_release(cbmem);
+        goto err;
+    }
+
+    rc = os_mbuf_append(om, (uint8_t *) hdr + sizeof(*hdr) + off, len);
+    if (rc != 0) {
+        cbmem_lock_release(cbmem);
+        goto err;
+    }
+
+    cbmem_lock_release(cbmem);
+
+    return (len);
+err:
+    return (-1);
+
+}
+
 int
 cbmem_walk(struct cbmem *cbmem, cbmem_walk_func_t walk_func, void *arg)
 {
