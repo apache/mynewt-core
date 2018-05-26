@@ -6,6 +6,10 @@ specifying test cases and recording test results.
 
 You would use it to build regression tests for your library.
 
+.. contents::
+  :local:
+  :depth: 2
+
 Description
 ~~~~~~~~~~~
 
@@ -68,7 +72,7 @@ or by including a call to your test suite from
 Example
 ~~~~~~~
 
-`This Tutorial <../../tutorials/unit_test.html>`__ shows how to create a
+`This Tutorial </tutorials/other/unit_test.html>`_ shows how to create a
 test suite for a Mynewt package.
 
 Data structures
@@ -100,58 +104,9 @@ Data structures
 The global ``tu_config`` struct contains all the testutil package's
 settings. This should be populated before ``tu_init()`` is called.
 
-List of Functions
-~~~~~~~~~~~~~~~~~
+API
+~~~~
 
-The functions, and macros available in ``testutil`` are:
-
-+------------+----------------+
-| Function   | Description    |
-+============+================+
-| `tu\_init  | Initializes    |
-| <tu_init.m | the test       |
-| d>`__      | framework      |
-|            | according to   |
-|            | the contents   |
-|            | of the         |
-|            | tu\_config     |
-|            | struct.        |
-+------------+----------------+
-| `TEST\_ASS | Asserts that   |
-| ERT <test_ | the specified  |
-| assert.html> | condition is   |
-| `__        | true.          |
-+------------+----------------+
-| `TEST\_PAS | Reports a      |
-| S <test_pa | success result |
-| ss.html>`__  | for the        |
-|            | current test.  |
-+------------+----------------+
-| `TEST\_SUI | Declares a     |
-| TE <test_s | test suite     |
-| uite.html>`_ | function.      |
-| _          |                |
-+------------+----------------+
-| `TEST\_CAS | Defines a test |
-| E <test_ca | case function. |
-| se.html>`__  |                |
-+------------+----------------+
-| `TEST\_CAS | Declares a     |
-| E\_DECL <t | test case      |
-| est_decl.m | function. his  |
-| d>`__      | is only        |
-|            | required if    |
-|            | the test case  |
-|            | function       |
-|            | exists in a    |
-|            | different file |
-|            | than the test  |
-|            | suite.         |
-+------------+----------------+
-| `tu\_resta | This function  |
-| rt <tu_res | is used when a |
-| tart.html>`_ | system reset   |
-| _          | is necessary   |
-|            | to proceed     |
-|            | with testing.  |
-+------------+----------------+
+.. doxygengroup:: OSTestutil
+    :members:
+    :content-only:

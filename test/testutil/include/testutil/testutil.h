@@ -30,6 +30,13 @@
 extern "C" {
 #endif
 
+/**
+  * @addtogroup OSSystem
+  * @{
+  *   @defgroup OSTestutil Test Utilities
+  *   @{
+  */
+
 /*
  * General execution flow of test suites and callbacks (more to come XXX)
  *
@@ -315,3 +322,9 @@ TEST_SUITE_##suite_name(void);                               \
 #endif
 
 #endif
+
+/**
+ *   @} OSTestutil
+ * @} OSSys
+ */
+

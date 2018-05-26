@@ -17,7 +17,6 @@ OS User Guide
    JSON <modules/json/json>
    Statistics <modules/stats/stats>
    Logs <modules/logs/logs>
-   System Configuration and Initialization <modules/sysinitconfig/sysinitconfig>
 
 This guide provides comprehensive information about Mynewt OS, the
 real-time operating system for embedded systems. It is intended both for
