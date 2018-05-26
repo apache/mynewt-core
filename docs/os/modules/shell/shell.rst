@@ -13,6 +13,10 @@ The shell uses the OS default event queue for shell events and runs in
 the context of the main task. An application can, optionally, specify a
 dedicated event queue for the shell to use.
 
+.. contents::
+  :local:
+  :depth: 2
+
 The ``sys/shell`` package implements the shell. To use the shell you
 must:
 
@@ -372,3 +376,8 @@ The functions available in this OS feature are:
 | dule.html>`_ |                |
 | _          |                |
 +------------+----------------+
+
+API
+---
+
+.. doxygenfile:: sys/shell/include/shell/shell.h

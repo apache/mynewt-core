@@ -12,11 +12,17 @@ underway and manage the progress of the process.
 
 The bootloader in the Apache Mynewt project verifies the cryptographic
 signature of the firmware image before running it. It maintains a
-detailed status log for each stage of the boot process. For verification
-of the authenticity of the OS image, it:
+detailed status log for each stage of the boot process. 
 
 The "secure bootloader" should be placed in protected memory on a given
 microcontroller.
+
+The Apache Mynewt bootloader is the foundation of `MCUboot <https://github.com/runtimeco/mcuboot/>`_, 
+a secure bootloader for 32-bit MCUs that has been ported to other Operating Systems as well. 
+
+.. contents::
+  :local:
+  :depth: 2
 
 The Mynewt bootloader comprises two packages:
 
@@ -592,31 +598,5 @@ the key that is has been signed with. The boot loader uses this index to
 identify the corresponding public key.
 
 For information on embedding public keys in the boot loader, as well as
-producing signed images, see: boot/bootutil/signed\_images.md
+producing signed images, see `here <https://github.com/apache/mynewt-core/blob/master/boot/bootutil/signed_images.md>`_.
 
--  `boot\_build\_status <boot_build_status.html>`__
--  `boot\_build\_status\_one <boot_build_status_one.html>`__
--  `boot\_clear\_status <boot_clear_status.html>`__
--  `boot\_copy\_area <boot_copy_area.html>`__
--  `boot\_copy\_image <boot_copy_image.html>`__
--  `boot\_erase\_area <boot_erase_area.html>`__
--  `boot\_fill\_slot <boot_fill_slot.html>`__
--  `boot\_find\_image\_area\_idx <boot_find_image_area_idx.html>`__
--  `boot\_find\_image\_part <boot_find_image_part.html>`__
--  `boot\_find\_image\_slot <boot_find_image_slot.html>`__
--  `boot\_go <boot_go.html>`__
--  `boot\_init\_flash <boot_init_flash.html>`__
--  `boot\_move\_area <boot_move_area.html>`__
--  `boot\_read\_image\_header <boot_read_image_header.html>`__
--  `boot\_read\_image\_headers <boot_read_image_headers.html>`__
--  `boot\_read\_status <boot_read_status.html>`__
--  `boot\_select\_image\_slot <boot_select_image_slot.html>`__
--  `boot\_slot\_addr <boot_slot_addr.html>`__
--  `boot\_slot\_to\_area\_idx <boot_slot_to_area_idx.html>`__
--  `boot\_swap\_areas <boot_swap_areas.html>`__
--  `boot\_vect\_delete\_main <boot_vect_delete_main.html>`__
--  `boot\_vect\_delete\_test <boot_vect_delete_test.html>`__
--  `boot\_vect\_read\_main <boot_vect_read_main.html>`__
--  `boot\_vect\_read\_one <boot_vect_read_one.html>`__
--  `boot\_vect\_read\_test <boot_vect_read_test.html>`__
--  `boot\_write\_status <boot_write_status.html>`__

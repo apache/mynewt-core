@@ -4,6 +4,10 @@ JSON
 JSON is a data interchange format. The description of this format can be
 found from IETF RFC 4627.
 
+.. contents::
+  :local:
+  :depth: 2
+
 Description
 -----------
 
@@ -135,59 +139,7 @@ Structure must be filled in before calling the decoder routine
 | nodefault   | If set, default value is not copied name              |
 +-------------+-------------------------------------------------------+
 
-List of Functions
------------------
+API
+---
 
-Functions for encoding:
-
-+------------+----------------+
-| Function   | Description    |
-+============+================+
-| `json\_enc | This function  |
-| ode\_objec | starts the     |
-| t\_start < | encoded JSON   |
-| json_encod | object.        |
-| e_object_s |                |
-| tart.html>`_ |                |
-| _          |                |
-+------------+----------------+
-| `json\_enc | This function  |
-| ode\_objec | writes out a   |
-| t\_key <js | name for a     |
-| on_encode_ | field,         |
-| object_key | followed by    |
-| .html>`__    | ":" character. |
-+------------+----------------+
-| `json\_enc | This function  |
-| ode\_objec | writes out a   |
-| t\_entry < | name for a     |
-| json_encod | field,         |
-| e_object_e | followed by    |
-| ntry.html>`_ | ":" character, |
-| _          | and the value  |
-|            | itself.        |
-+------------+----------------+
-| `json\_enc | This function  |
-| ode\_objec | finalizes the  |
-| t\_finish  | encoded JSON   |
-| <json_enco | object.        |
-| de_object_ |                |
-| finish.html> |                |
-| `__        |                |
-+------------+----------------+
-
-Functions for decoding:
-
-+------------+----------------+
-| Function   | Description    |
-+============+================+
-| `json\_rea | This function  |
-| d\_object  | reads in JSON  |
-| <json_read | data stream,   |
-| _object.md | while looking  |
-| >`__       | for name/value |
-|            | pairs          |
-|            | described in   |
-|            | given          |
-|            | attribites.    |
-+------------+----------------+
+.. doxygenfile:: json/include/json/json.h

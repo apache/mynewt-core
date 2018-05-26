@@ -38,9 +38,6 @@ extern "C" {
 #define JSON_VALUE_TYPE_ARRAY  (4)
 #define JSON_VALUE_TYPE_OBJECT (5)
 
-/**
- * For encode.  The contents of a JSON value to encode.
- */
 struct json_value {
     uint8_t jv_pad1;
     uint8_t jv_type;
@@ -251,3 +248,9 @@ int json_read_array(struct json_buffer *, const struct json_array_t *);
 #endif
 
 #endif /* _JSON_H_ */
+
+/**
+ *   @} OSEncoding
+ * @} OSJSON
+ */
+
