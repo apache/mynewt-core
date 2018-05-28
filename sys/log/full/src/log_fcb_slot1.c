@@ -126,6 +126,10 @@ log_fcb_slot1_registered(struct log *log)
         s1->l_current = NULL;
     }
 
+    if (s1->l_current && s1->l_current->l_log->log_registered) {
+        s1->l_current->l_log->log_registered(s1->l_current);
+    }
+
     os_mutex_release(&g_log_slot1_mutex);
 
     return 0;
@@ -205,6 +209,10 @@ log_fcb_slot1_lock(void)
             log_flush(s1->l_current);
         } else {
             s1->l_current = NULL;
+        }
+
+        if (s1->l_current && s1->l_current->l_log->log_registered) {
+            s1->l_current->l_log->log_registered(s1->l_current);
         }
 
         os_mutex_release(&s1->mutex);
@@ -292,6 +300,9 @@ log_fcb_slot1_unlock(void)
         }
 
         s1->l_current = &s1->l_fcb;
+        if (s1->l_current->l_log->log_registered) {
+            s1->l_current->l_log->log_registered(s1->l_current);
+        }
 
         os_mutex_release(&s1->mutex);
     }
