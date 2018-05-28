@@ -30,6 +30,8 @@ extern "C" {
 #include <led/led.h>
 #endif
 
+#define LP5523_MAX_PAYLOAD   (10)
+
 #define LP5523_I2C_BASE_ADDR (0x32)
 
 /* Engine control mask */

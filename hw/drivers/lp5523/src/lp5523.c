@@ -113,7 +113,7 @@ lp5523_set_n_regs(struct led_itf *itf, enum lp5523_registers addr,
     uint8_t *vals, uint8_t len)
 {
     int rc;
-    uint8_t regs[10] = {addr, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    uint8_t regs[LP5523_MAX_PAYLOAD] = {0};
 
     struct hal_i2c_master_data data_struct = {
         .address = itf->li_addr,
@@ -122,6 +122,8 @@ lp5523_set_n_regs(struct led_itf *itf, enum lp5523_registers addr,
     };
 
     memcpy(regs, vals, len + 1);
+
+    regs[0] = addr;
 
     rc = hal_i2c_master_write(itf->li_num, &data_struct,
                               (OS_TICKS_PER_SEC / 5), 1);
