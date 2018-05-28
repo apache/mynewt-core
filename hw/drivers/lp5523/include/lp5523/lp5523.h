@@ -26,6 +26,12 @@ extern "C" {
 
 #include <sensor/sensor.h>
 
+#if MYNEWT_VAL(LED_ENABLE_ABSTRACTION)
+#include <led/led.h>
+#endif
+
+#define LP5523_MAX_PAYLOAD   (10)
+
 #define LP5523_I2C_BASE_ADDR (0x32)
 
 /* Engine control mask */
@@ -49,26 +55,109 @@ extern "C" {
 #define LP5523_LED2 (2)
 #define LP5523_LED1 (1)
 
+struct per_led_cfg {
+    /* Mapping */
+    uint8_t mapping:2;
+    /* Enable Log dimming */
+    uint8_t log_dim_en:1;
+    /* Enable temperature compensation */
+    uint8_t temp_comp:5;
+    /* Output On/Off */
+    uint8_t output_on:1;
+    /* In steps of 100 microamps */
+    uint8_t current_ctrl;
+};
+
 struct lp5523_cfg {
     /* The 2 LSBs of this represent ASEL1 and ASEL0 */
-    uint8_t asel;
-    uint8_t clk_det_en;
-    uint8_t int_clk_en;
-    uint8_t cp_mode;
-    uint8_t int_conf;
+    uint8_t asel:2;
+    /* Enable clock detect enable */
+    uint8_t clk_det_en:1;
+    /* Enable Int clock */
+    uint8_t int_clk_en:1;
+    /* Select CP Mode */
+    uint8_t cp_mode:2;
+    /* Enable VAR_D_SEL */
+    uint8_t var_d_sel:1;
+    /* Enable Power Save */
+    uint8_t ps_en:1;
+    /* Enable PWM power save */
+    uint8_t pwm_ps_en:1;
+    /* Enable auto increment */
+    uint8_t auto_inc_en:1;
+    /* INT conf */
+    uint8_t int_conf:1;
+    /* INT GPO */
+
+    /****** Gain change control settings ******/
+    uint8_t int_gpo:1;
+    /* Threshold Voltage */
+    uint8_t thresh_volt:2;
+    /* Enable adaptive threshold */
+    uint8_t adapt_thresh_en:1;
+    /* Timer value */
+    uint8_t timer:2;
+    /* Force_1x enbale */
+    uint8_t force_1x:1;
+
+    /* All per LED configs go here - 0: D1 8: D9 */
+    struct per_led_cfg per_led_cfg[MYNEWT_VAL(LP5523_LEDS_PER_DRIVER)];
 };
 
 struct lp5523 {
     struct os_dev dev;
-    struct sensor sensor;
+#if MYNEWT_VAL(LED_ENABLE_ABSTRACTION)
+    struct led_dev led_dev;
+#endif
     struct lp5523_cfg cfg;
 };
+
+#if MYNEWT_VAL(LED_ENABLE_ABSTRACTION) == 0
+/*
+ * LED interface
+ */
+struct led_itf {
+
+    /* LED interface type */
+    uint8_t li_type;
+
+    /* interface number */
+    uint8_t li_num;
+
+    /* CS pin - optional, only needed for SPI */
+    uint8_t li_cs_pin;
+
+    /* LED chip address, only needed for I2C */
+    uint16_t li_addr;
+};
+#endif
+
+/**** Config Values ****/
+#define LP5523_ASEL00_ADDR_32h            0x00
+#define LP5523_ASEL01_ADDR_33h            0x01
+#define LP5523_ASEL10_ADDR_34h            0x02
+#define LP5523_ASEL11_ADDR_35h            0x03
+
+#define LP5523_CP_MODE_OFF                0x00
+#define LP5523_CP_MODE_FORCE_TO_BYPASS    0x01
+#define LP5523_CP_MODE_FORCE_TO_1_5X      0x02
+#define LP5523_CP_MODE_AUTO               0x03
+
+#define LP5523_THRESH_VOLT_400MV          0x00
+#define LP5523_THRESH_VOLT_300MV          0x01
+#define LP5523_THRESH_VOLT_200MV          0x02
+#define LP5523_THRESH_VOLT_100MV          0x03
+
+#define LP5523_TIMER_5MS                  0x00
+#define LP5523_TIMER_10MS                 0x01
+#define LP5523_TIMER_50MS                 0x02
+#define LP5523_TIMER_INF                  0x03
 
 /* register addresses */
 
 enum lp5523_bitfield_registers {
     LP5523_OUTPUT_RATIOMETRIC = 0x02,
-    LP5523_OUTPUT_CONTROL = 0x04,
+    LP5523_OUTPUT_CTRL_MSB = 0x04,
     LP5523_ENG_MAPPING = 0x70
 };
 
@@ -92,7 +181,7 @@ enum lp5523_engine_control_registers {
 
 enum lp5523_registers {
     LP5523_ENABLE = 0x00,
-    LP5523_LED_OUTPUT_CTRL = 0x05,
+    LP5523_OUTPUT_CTRL_LSB = 0x05,
     LP5523_LED_CONTROL_BASE = 0x06,
     LP5523_PWM_BASE = 0x16,
     LP5523_MISC = 0x36,
@@ -227,7 +316,7 @@ LP5523_REGISTER_VALUE(LP5523_GAIN_CHANGE_CTRL, LP5523_FORCE_1X, 2, 0x04);
  *
  * @return 0 on success, non-zero error on failure.
  */
-int lp5523_set_reg(struct sensor_itf *itf, enum lp5523_registers addr,
+int lp5523_set_reg(struct led_itf *itf, enum lp5523_registers addr,
     uint8_t value);
 
 /**
@@ -239,7 +328,7 @@ int lp5523_set_reg(struct sensor_itf *itf, enum lp5523_registers addr,
  *
  * @return 0 on success, non-zero error on failure.
  */
-int lp5523_get_reg(struct sensor_itf *itf, enum lp5523_registers addr,
+int lp5523_get_reg(struct led_itf *itf, enum lp5523_registers addr,
     uint8_t *value);
 
 /**
@@ -264,7 +353,7 @@ int lp5523_apply_value(struct lp5523_register_value addr, uint8_t value,
  *
  * @return 0 on success, non-zero error on failure.
  */
-int lp5523_set_value(struct sensor_itf *itf, struct lp5523_register_value addr,
+int lp5523_set_value(struct led_itf *itf, struct lp5523_register_value addr,
     uint8_t value);
 
 /**
@@ -277,7 +366,7 @@ int lp5523_set_value(struct sensor_itf *itf, struct lp5523_register_value addr,
  *
  * @return 0 on success, non-zero error on failure.
  */
-int lp5523_get_value(struct sensor_itf *itf, struct lp5523_register_value addr,
+int lp5523_get_value(struct led_itf *itf, struct lp5523_register_value addr,
     uint8_t *value);
 
 /**
@@ -294,7 +383,7 @@ int lp5523_get_value(struct sensor_itf *itf, struct lp5523_register_value addr,
  *
  * @return 0 on success, non-zero error on failure.
  */
-int lp5523_set_bitfield(struct sensor_itf *itf,
+int lp5523_set_bitfield(struct led_itf *itf,
     enum lp5523_bitfield_registers addr, uint16_t outputs);
 
 /**
@@ -310,7 +399,7 @@ int lp5523_set_bitfield(struct sensor_itf *itf,
  *
  * @return 0 on success, non-zero error on failure.
  */
-int lp5523_get_bitfield(struct sensor_itf *itf,
+int lp5523_get_bitfield(struct led_itf *itf,
     enum lp5523_bitfield_registers addr, uint16_t* outputs);
 
 /**
@@ -320,14 +409,14 @@ int lp5523_get_bitfield(struct sensor_itf *itf,
  * LP5523_PWM
  * LP5523_CURRENT_CONTROL
  *
- * @param The sensor interface.
+ * @param The LED interface.
  * @param The register address to write to (the MSB register).
  * @param Output ID 1-9.
  * @param Value to write.
  *
  * @return 0 on success, non-zero error on failure.
  */
-int lp5523_set_output_reg(struct sensor_itf *itf,
+int lp5523_set_output_reg(struct led_itf *itf,
     enum lp5523_output_registers addr, uint8_t output, uint8_t value);
 
 /**
@@ -344,7 +433,7 @@ int lp5523_set_output_reg(struct sensor_itf *itf,
  *
  * @return 0 on success, non-zero error on failure.
  */
-int lp5523_get_output_reg(struct sensor_itf *itf,
+int lp5523_get_output_reg(struct led_itf *itf,
     enum lp5523_output_registers addr, uint8_t output, uint8_t *value);
 
 /**
@@ -361,7 +450,7 @@ int lp5523_get_output_reg(struct sensor_itf *itf,
  *
  * @return 0 on success, non-zero error on failure.
  */
-int lp5523_set_engine_reg(struct sensor_itf *itf,
+int lp5523_set_engine_reg(struct led_itf *itf,
     enum lp5523_engine_registers addr, uint8_t engine, uint8_t value);
 
 /**
@@ -378,7 +467,7 @@ int lp5523_set_engine_reg(struct sensor_itf *itf,
  *
  * @return 0 on success, non-zero error on failure.
  */
-int lp5523_get_engine_reg(struct sensor_itf *itf,
+int lp5523_get_engine_reg(struct led_itf *itf,
     enum lp5523_engine_registers addr, uint8_t engine, uint8_t *value);
 
 /**
@@ -389,7 +478,7 @@ int lp5523_get_engine_reg(struct sensor_itf *itf,
  *
  * @return 0 on success, non-zero error on failure.
  */
-int lp5523_set_enable(struct sensor_itf *itf, uint8_t enable);
+int lp5523_set_enable(struct led_itf *itf, uint8_t enable);
 
 /**
  * Sets the ENGINEX_MODE and ENGINEX_EXEC bits in the ENGINE CNTRLX registers.
@@ -403,7 +492,7 @@ int lp5523_set_enable(struct sensor_itf *itf, uint8_t enable);
  *
  * @return 0 on success, non-zero error on failure.
  */
-int lp5523_set_engine_control(struct sensor_itf *itf,
+int lp5523_set_engine_control(struct led_itf *itf,
     enum lp5523_engine_control_registers addr, uint8_t engine_mask,
     uint8_t values);
 
@@ -416,7 +505,7 @@ int lp5523_set_engine_control(struct sensor_itf *itf,
  *
  * @return 0 on success, non-zero error on failure.
  */
-int lp5523_set_output_mapping(struct sensor_itf *itf, uint8_t output,
+int lp5523_set_output_mapping(struct led_itf *itf, uint8_t output,
     uint8_t mapping);
 
 /**
@@ -428,7 +517,7 @@ int lp5523_set_output_mapping(struct sensor_itf *itf, uint8_t output,
  *
  * @return 0 on success, non-zero error on failure.
  */
-int lp5523_get_output_mapping(struct sensor_itf *itf, uint8_t output,
+int lp5523_get_output_mapping(struct led_itf *itf, uint8_t output,
     uint8_t *mapping);
 
 /**
@@ -440,7 +529,7 @@ int lp5523_get_output_mapping(struct sensor_itf *itf, uint8_t output,
  *
  * @return 0 on success, non-zero error on failure.
  */
-int lp5523_set_output_log_dim(struct sensor_itf *itf, uint8_t output,
+int lp5523_set_output_log_dim(struct led_itf *itf, uint8_t output,
     uint8_t enable);
 
 /**
@@ -452,7 +541,7 @@ int lp5523_set_output_log_dim(struct sensor_itf *itf, uint8_t output,
  *
  * @return 0 on success, non-zero error on failure.
  */
-int lp5523_get_output_log_dim(struct sensor_itf *itf, uint8_t output,
+int lp5523_get_output_log_dim(struct led_itf *itf, uint8_t output,
     uint8_t *enable);
 
 /**
@@ -464,7 +553,7 @@ int lp5523_get_output_log_dim(struct sensor_itf *itf, uint8_t output,
  *
  * @return 0 on success, non-zero error on failure.
  */
-int lp5523_set_output_temp_comp(struct sensor_itf *itf, uint8_t output,
+int lp5523_set_output_temp_comp(struct led_itf *itf, uint8_t output,
     uint8_t value);
 
 /**
@@ -476,7 +565,7 @@ int lp5523_set_output_temp_comp(struct sensor_itf *itf, uint8_t output,
  *
  * @return 0 on success, non-zero error on failure.
  */
-int lp5523_get_output_temp_comp(struct sensor_itf *itf, uint8_t output,
+int lp5523_get_output_temp_comp(struct led_itf *itf, uint8_t output,
     uint8_t *value);
 
 /**
@@ -488,7 +577,7 @@ int lp5523_get_output_temp_comp(struct sensor_itf *itf, uint8_t output,
  *
  * @return 0 on success, non-zero error on failure.
  */
-int lp5523_get_engine_int(struct sensor_itf *itf, uint8_t engine,
+int lp5523_get_engine_int(struct led_itf *itf, uint8_t engine,
     uint8_t *flag);
 
 /**
@@ -498,7 +587,7 @@ int lp5523_get_engine_int(struct sensor_itf *itf, uint8_t engine,
  *
  * @return 0 on success, non-zero error on failure.
  */
-int lp5523_reset(struct sensor_itf *itf);
+int lp5523_reset(struct led_itf *itf);
 
 /**
  * Sets the page used for program memory reads and writes.
@@ -508,7 +597,7 @@ int lp5523_reset(struct sensor_itf *itf);
  *
  * @return 0 on success, non-zero error on failure.
  */
-int lp5523_set_page_sel(struct sensor_itf *itf, uint8_t page);
+int lp5523_set_page_sel(struct led_itf *itf, uint8_t page);
 
 /**
  * Sets or clears the relevant DX bit in the ENGX MAPPING registers.
@@ -520,7 +609,7 @@ int lp5523_set_page_sel(struct sensor_itf *itf, uint8_t page);
  *
  * @return 0 on success, non-zero error on failure.
  */
-int lp5523_set_engine_mapping(struct sensor_itf *itf, uint8_t engine,
+int lp5523_set_engine_mapping(struct led_itf *itf, uint8_t engine,
     uint16_t output);
 
 /**
@@ -534,7 +623,7 @@ int lp5523_set_engine_mapping(struct sensor_itf *itf, uint8_t engine,
  *
  * @return 0 on success, non-zero error on failure.
  */
-int lp5523_get_engine_mapping(struct sensor_itf *itf, uint8_t engine,
+int lp5523_get_engine_mapping(struct led_itf *itf, uint8_t engine,
     uint16_t *output);
 
 /**
@@ -546,7 +635,7 @@ int lp5523_get_engine_mapping(struct sensor_itf *itf, uint8_t engine,
  *
  * @return 0 on success, non-zero error on failure.
  */
-int lp5523_set_instruction(struct sensor_itf *itf, uint8_t addr, uint16_t ins);
+int lp5523_set_instruction(struct led_itf *itf, uint8_t addr, uint16_t ins);
 
 /**
  * gets an instruction from program memory.
@@ -557,7 +646,7 @@ int lp5523_set_instruction(struct sensor_itf *itf, uint8_t addr, uint16_t ins);
  *
  * @return 0 on success, non-zero error on failure.
  */
-int lp5523_get_instruction(struct sensor_itf *itf, uint8_t addr, uint16_t *ins);
+int lp5523_get_instruction(struct led_itf *itf, uint8_t addr, uint16_t *ins);
 
 /**
  * Writes a program to memory.
@@ -571,7 +660,7 @@ int lp5523_get_instruction(struct sensor_itf *itf, uint8_t addr, uint16_t *ins);
  *
  * @return 0 on success, non-zero error on failure.
  */
-int lp5523_set_program(struct sensor_itf *itf, uint8_t engines, uint16_t *pgm,
+int lp5523_set_program(struct led_itf *itf, uint8_t engines, uint16_t *pgm,
     uint8_t start, uint8_t size);
 
 /**
@@ -584,7 +673,7 @@ int lp5523_set_program(struct sensor_itf *itf, uint8_t engines, uint16_t *pgm,
  *
  * @return 0 on success, non-zero error on failure.
  */
-int lp5523_get_program(struct sensor_itf *itf, uint16_t *pgm, uint8_t start,
+int lp5523_get_program(struct led_itf *itf, uint16_t *pgm, uint8_t start,
     uint8_t size);
 
 /**
@@ -598,7 +687,7 @@ int lp5523_get_program(struct sensor_itf *itf, uint16_t *pgm, uint8_t start,
  * @return 0 on success, 1 on verify failure, other non-zero error on other
  * failure.
  */
-int lp5523_verify_program(struct sensor_itf *itf, uint16_t *pgm, uint8_t start,
+int lp5523_verify_program(struct led_itf *itf, uint16_t *pgm, uint8_t start,
     uint8_t size);
 
 /**
@@ -610,7 +699,7 @@ int lp5523_verify_program(struct sensor_itf *itf, uint16_t *pgm, uint8_t start,
  *
  * @return 0 on success, non-zero error on failure.
  */
-int lp5523_engines_run(struct sensor_itf *itf, uint8_t engines);
+int lp5523_engines_run(struct led_itf *itf, uint8_t engines);
 
 /**
  * Sets the specified engines to hold execution of their respective programs.
@@ -621,7 +710,7 @@ int lp5523_engines_run(struct sensor_itf *itf, uint8_t engines);
  *
  * @return 0 on success, non-zero error on failure.
  */
-int lp5523_engines_hold(struct sensor_itf *itf, uint8_t engines);
+int lp5523_engines_hold(struct led_itf *itf, uint8_t engines);
 
 /**
  * Sets the specified engines to execute the next instruction of their
@@ -633,7 +722,7 @@ int lp5523_engines_hold(struct sensor_itf *itf, uint8_t engines);
  *
  * @return 0 on success, non-zero error on failure.
  */
-int lp5523_engines_step(struct sensor_itf *itf, uint8_t engines);
+int lp5523_engines_step(struct led_itf *itf, uint8_t engines);
 
 /**
  * Disables the specified engines.
@@ -644,7 +733,7 @@ int lp5523_engines_step(struct sensor_itf *itf, uint8_t engines);
  *
  * @return 0 on success, non-zero error on failure.
  */
-int lp5523_engines_disable(struct sensor_itf *itf, uint8_t engines);
+int lp5523_engines_disable(struct led_itf *itf, uint8_t engines);
 
 /**
  * Reads the ADC on a pin.
@@ -655,7 +744,7 @@ int lp5523_engines_disable(struct sensor_itf *itf, uint8_t engines);
  *
  * @return 0 on success, non-zero error on failure.
  */
-int lp5523_read_adc(struct sensor_itf *itf, uint8_t pin, uint8_t *v);
+int lp5523_read_adc(struct led_itf *itf, uint8_t pin, uint8_t *v);
 
 /**
  * Tests the Device, checks for a clock if necessary and checks the ADC values
@@ -665,7 +754,7 @@ int lp5523_read_adc(struct sensor_itf *itf, uint8_t pin, uint8_t *v);
  *
  * @return 0 on success, non-zero error on failure.
  */
-int lp5523_self_test(struct sensor_itf *itf);
+int lp5523_self_test(struct led_itf *itf);
 
 /**
  * Expects to be called back through os_dev_create().
@@ -677,6 +766,76 @@ int lp5523_self_test(struct sensor_itf *itf);
  */
 int lp5523_init(struct os_dev *dev, void *arg);
 int lp5523_config(struct lp5523 *lp, struct lp5523_cfg *cfg);
+
+/**
+ * Calculate Temp comp bits from correction factor
+ *
+ * @param corr_factor Correction factor -1.5 < corr_factor < +1.5
+ * @param temp_comp Temperature compensation bits 5 bits 11111 - 01111
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+lp5523_calc_temp_comp(float corr_factor, uint8_t *temp_comp);
+
+/**
+ * Set output ON for particular output
+ *
+ * @param itf Ptr to LED itf
+ * @param output Number of the output
+ * @param on Output 1-ON/0-OFF
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+lp5523_set_output_on(struct led_itf *itf, uint8_t output, uint8_t on);
+
+/**
+ * Get output ON for particular output
+ *
+ * @param itf Ptr to LED itf
+ * @param output Number of the output
+ * @param on Ptr to output variable Output 1-ON/0-OFF
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+lp5523_get_output_on(struct led_itf *itf, uint8_t output, uint8_t *on);
+
+/**
+ *
+ * Get status
+ *
+ * @param LED interface
+ * @param Ptr to status
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+lp5523_get_status(struct led_itf *itf, uint8_t *status);
+
+/**
+ * Get Output Current control
+ *
+ * @param itf LED interface
+ * @param output Number of the output
+ * @param curr_ctrl Ptr to Current control
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+lp5523_get_output_curr_ctrl(struct led_itf *itf, uint8_t output, uint8_t *curr_ctrl);
+
+/**
+ *
+ * Set output Current control
+ *
+ * @param itf LED interface
+ * @param output Number of the output
+ * @param curr_ctrl Current control value to set
+ */
+int
+lp5523_set_output_curr_ctrl(struct led_itf *itf, uint8_t output, uint8_t curr_ctrl);
 
 #if MYNEWT_VAL(LP5523_CLI)
 int lp5523_shell_init(void);

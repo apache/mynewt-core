@@ -36,10 +36,10 @@ static struct shell_cmd lp5523_shell_cmd_struct = {
     .sc_cmd_func = lp5523_shell_cmd
 };
 
-static struct sensor_itf lp5523_itf = {
-    .si_type = MYNEWT_VAL(LP5523_SHELL_ITF_TYPE),
-    .si_num = MYNEWT_VAL(LP5523_SHELL_ITF_NUM),
-    .si_addr = MYNEWT_VAL(LP5523_SHELL_ITF_ADDR)
+static struct led_itf lp5523_itf = {
+    .li_type = MYNEWT_VAL(LP5523_SHELL_ITF_TYPE),
+    .li_num = MYNEWT_VAL(LP5523_SHELL_ITF_NUM),
+    .li_addr = MYNEWT_VAL(LP5523_SHELL_ITF_ADDR)
 };
 
 static int

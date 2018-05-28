@@ -30,3 +30,6 @@ syscfg.defs:
     LP5523_SHELL_ITF_ADDR:
         description: 'LP5523 I2C Address'
         value: 0x32
+    LP5523_LEDS_PER_DRIVER:
+        description: 'LP5523 LEDs per driver'
+        value: 5
