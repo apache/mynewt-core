@@ -83,7 +83,6 @@ os_sched_ctx_sw_hook(struct os_task *next_t)
         assert(top[i] == OS_STACK_PATTERN);
     }
 #endif
-    os_trace_task_start_exec(next_t->t_taskid);
     next_t->t_ctx_sw_cnt++;
     g_current_task->t_run_time += g_os_time - g_os_last_ctx_sw_time;
     g_os_last_ctx_sw_time = g_os_time;
@@ -166,7 +165,7 @@ os_sched_sleep(struct os_task *t, os_time_t nticks)
         }
     }
 
-    os_trace_task_stop_ready(t->t_taskid, OS_TASK_SLEEP);
+    os_trace_task_stop_ready(t, OS_TASK_SLEEP);
     return (0);
 }
 
@@ -236,6 +235,8 @@ os_sched_wakeup(struct os_task *t)
     TAILQ_REMOVE(&g_os_sleep_list, t, t_os_list);
     os_sched_insert(t);
 
+    os_trace_task_start_ready(t);
+
     return (0);
 }
 
@@ -271,7 +272,6 @@ os_sched_os_timer_exp(void)
         }
         next = TAILQ_NEXT(t, t_os_list);
         if (OS_TIME_TICK_GEQ(now, t->t_next_wakeup)) {
-            os_trace_task_start_ready(t->t_taskid);
             os_sched_wakeup(t);
         } else {
             break;

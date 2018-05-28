@@ -57,6 +57,8 @@ nrf52_rng_stop(void)
 static void
 nrf52_rng_irq_handler(void)
 {
+    os_trace_isr_enter();
+
     if (NRF_RNG->EVENTS_VALRDY) {
         NRF_RNG->EVENTS_VALRDY = 0;
         rng_cache[rng_cache_in] = NRF_RNG->VALUE;
@@ -69,6 +71,8 @@ nrf52_rng_irq_handler(void)
     if ((rng_cache_in + 1) % sizeof(rng_cache) == rng_cache_out) {
         nrf52_rng_stop();
     }
+
+    os_trace_isr_exit();
 }
 
 static size_t

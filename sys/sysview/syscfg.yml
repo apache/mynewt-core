@@ -22,3 +22,17 @@ syscfg.defs:
     SYSVIEW_BUFFER_SIZE:
         description: Size of the RTT buffer that sysview uses
         value: 1024
+    SYSVIEW_TIMESTAMP_USE_TIMER:
+        description: >
+            Use hal_timer for timestamp.
+            It is recommended to leave this disabled unless using MCU without
+            built-in cycle counter (e.g. Cortex-M0).
+        value: 0
+    SYSVIEW_TIMESTAMP_TIMER_NUM:
+        description: >
+            Timestamp timer number.
+        value: 0
+    SYSVIEW_TIMESTAMP_TIMER_FREQ:
+        description: >
+            Timestamp timer frequency.
+        value: 1000000

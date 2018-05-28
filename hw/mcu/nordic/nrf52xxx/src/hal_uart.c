@@ -235,7 +235,7 @@ uart_irq_handler(NRF_UARTE_Type *nrf_uart, struct hal_uart *u)
 {
     int rc;
 
-    os_trace_enter_isr();
+    os_trace_isr_enter();
 
     if (nrf_uart->EVENTS_ENDTX) {
         nrf_uart->EVENTS_ENDTX = 0;
@@ -262,7 +262,7 @@ uart_irq_handler(NRF_UARTE_Type *nrf_uart, struct hal_uart *u)
             nrf_uart->TASKS_STARTRX = 1;
         }
     }
-    os_trace_exit_isr();
+    os_trace_isr_exit();
 }
 
 static void

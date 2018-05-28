@@ -24,6 +24,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *---------------------------------------------------------------------------*/
+#include <syscfg/syscfg.h>
+#include "os/os_trace_api.h"
 
         .file   "HAL_CM0.S"
         .syntax unified
@@ -100,6 +102,12 @@ os_arch_init_task_stack:
 SVC_Handler:
         .fnstart
         .cantunwind
+
+        PUSH    {R4,LR}
+#if MYNEWT_VAL(OS_SYSVIEW)
+        BL      os_trace_isr_enter
+#endif
+
         MRS     R0,PSP                  /* Read PSP */
         LDR     R1,[R0,#24]             /* Read Saved PC from Stack */
         SUBS    R1,R1,#2                /* Point to SVC Instruction */
@@ -109,15 +117,16 @@ SVC_Handler:
         LDR     R1,[R0,#16]             /* Read saved R12 from Stack */
         MOV     R12, R1                 /* Store in R12 */
         LDMIA   R0,{R0-R3}              /* Read R0-R3 from stack */
-        PUSH    {LR}                    /* Save LR */
         BLX     R12                     /* Call SVC Function */
         MRS     R3,PSP                  /* Read PSP */
         STMIA   R3!,{R0-R2}             /* Store return values */
-        POP     {PC}                    /* RETI */
+#if MYNEWT_VAL(OS_SYSVIEW)
+        BL      os_trace_isr_exit
+#endif
+        POP     {R4,PC}                 /* RETI */
 
         /*------------------- User SVC ------------------------------*/
 SVC_User:
-        PUSH    {R4,LR}                 /* Save Registers */
         LDR     R2,=SVC_Count
         LDR     R2,[R2]
         CMP     R1,R2
@@ -132,6 +141,9 @@ SVC_User:
         MRS     R4,PSP                  /* Read PSP */
         STMIA   R4!,{R0-R3}             /* Function return values */
 SVC_Done:
+#if MYNEWT_VAL(OS_SYSVIEW)
+        BL      os_trace_isr_exit
+#endif
         POP     {R4,PC}                 /* RETI */
         .fnend
         .size   SVC_Handler, .-SVC_Handler
@@ -175,7 +187,15 @@ context_switch:
         MSR     PSP,R0              /* Write PSP */
         SUBS    R0,R0,#32
         LDMIA   R0!,{R4-R7}         /* Restore New Context */
+
+#if MYNEWT_VAL(OS_SYSVIEW)
+        PUSH    {R4,LR}
+        MOV     R0, R2
+        BL      os_trace_task_start_exec
+        POP     {R4,PC}
+#else
         BX      LR                  /* Return to Thread Mode */
+#endif
 
         .fnend
         .size   PendSV_Handler, .-PendSV_Handler
@@ -193,7 +213,13 @@ SysTick_Handler:
         .cantunwind
 
         PUSH    {R4,LR}                 /* Save EXC_RETURN */
+#if MYNEWT_VAL(OS_SYSVIEW)
+        BL      os_trace_isr_enter
+#endif
         BL      timer_handler
+#if MYNEWT_VAL(OS_SYSVIEW)
+        BL      os_trace_isr_exit
+#endif
         POP     {R4,PC}                 /* Restore EXC_RETURN */
 
         .fnend
@@ -224,6 +250,11 @@ os_default_irq_asm:
         .fnstart
         .cantunwind
 
+#if MYNEWT_VAL(OS_SYSVIEW)
+        PUSH    {R4,LR}
+        BL      os_trace_isr_enter
+#endif
+
         /*
          * LR = 0xfffffff9 if we were using MSP as SP
          * LR = 0xfffffffd if we were using PSP as SP
@@ -244,7 +275,11 @@ using_msp_as_sp:
         MOV     R1,R9
         MOV     R2,R10
         MOV     R3,R11
+#if MYNEWT_VAL(OS_SYSVIEW)
+        PUSH    {R0-R3}
+#else
         PUSH    {R0-R3, LR}
+#endif
         /* Now push r3 - r7. R3 is the lowest memory address. */
         MOV     R3,R12
         PUSH    {R3-R7}
@@ -256,7 +291,12 @@ using_msp_as_sp:
         MOV     R9,R1
         MOV     R10,R2
         MOV     R11,R3
+#if MYNEWT_VAL(OS_SYSVIEW)
+        BL      os_trace_isr_exit
+        POP     {R4,PC}
+#else
         POP     {PC}                 /* Restore EXC_RETURN */
+#endif
 
         .fnend
         .size   os_default_irq_asm, .-os_default_irq_asm

@@ -208,7 +208,7 @@ hal_gpio_irq_handler(void)
 {
     int i;
 
-    os_trace_enter_isr();
+    os_trace_isr_enter();
 
     for (i = 0; i < HAL_GPIO_MAX_IRQ; i++) {
         if (NRF_GPIOTE->EVENTS_IN[i] && (NRF_GPIOTE->INTENSET & (1 << i))) {
@@ -219,7 +219,7 @@ hal_gpio_irq_handler(void)
         }
     }
 
-    os_trace_exit_isr();
+    os_trace_isr_exit();
 }
 
 /*
