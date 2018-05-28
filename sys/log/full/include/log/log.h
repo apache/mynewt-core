@@ -50,6 +50,16 @@ struct log_offset {
     void *lo_arg;
 };
 
+#if MYNEWT_VAL(LOG_STORAGE_INFO)
+/**
+ * Log storage information
+ */
+struct log_storage_info {
+    uint32_t size;
+    uint32_t used;
+};
+#endif
+
 typedef int (*log_walk_func_t)(struct log *, struct log_offset *log_offset,
         void *dptr, uint16_t len);
 
@@ -72,6 +82,9 @@ typedef int (*lh_append_mbuf_body_func_t)(struct log *log,
 typedef int (*lh_walk_func_t)(struct log *,
         log_walk_func_t walk_func, struct log_offset *log_offset);
 typedef int (*lh_flush_func_t)(struct log *);
+#if MYNEWT_VAL(LOG_STORAGE_INFO)
+typedef int (*lh_storage_info_func_t)(struct log *, struct log_storage_info *);
+#endif
 typedef int (*lh_registered_func_t)(struct log *);
 
 struct log_handler {
@@ -84,6 +97,9 @@ struct log_handler {
     lh_append_mbuf_body_func_t log_append_mbuf_body;
     lh_walk_func_t log_walk;
     lh_flush_func_t log_flush;
+#if MYNEWT_VAL(LOG_STORAGE_INFO)
+    lh_storage_info_func_t log_storage_info;
+#endif
     /* Functions called only internally (no API for apps) */
     lh_registered_func_t log_registered;
 };
@@ -542,6 +558,9 @@ log_level_set(uint8_t module, uint8_t level)
 }
 #endif
 
+#if MYNEWT_VAL(LOG_STORAGE_INFO)
+int log_storage_info(struct log *log, struct log_storage_info *info);
+#endif
 
 /* Handler exports */
 #if MYNEWT_VAL(LOG_CONSOLE)

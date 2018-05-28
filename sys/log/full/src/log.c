@@ -654,3 +654,25 @@ log_flush(struct log *log)
 err:
     return (rc);
 }
+
+#if MYNEWT_VAL(LOG_STORAGE_INFO)
+int
+log_storage_info(struct log *log, struct log_storage_info *info)
+{
+    int rc;
+
+    if (!log->l_log->log_storage_info) {
+        rc = OS_ENOENT;
+        goto err;
+    }
+
+    rc = log->l_log->log_storage_info(log, info);
+    if (rc != 0) {
+        goto err;
+    }
+
+    return (0);
+err:
+    return (rc);
+}
+#endif
