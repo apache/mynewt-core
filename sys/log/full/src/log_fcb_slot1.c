@@ -103,6 +103,12 @@ log_fcb_slot1_flush(struct log *log)
 }
 
 static int
+log_fcb_slot1_storage_info(struct log *log, struct log_storage_info *info)
+{
+    return LOG_FCB_SLOT1_CALL(log, log_storage_info, info);
+}
+
+static int
 log_fcb_slot1_registered(struct log *log)
 {
     struct log_fcb_slot1 *s1 = log->l_arg;
@@ -145,6 +151,9 @@ const struct log_handler log_fcb_slot1_handler = {
     .log_append_mbuf_body = log_fcb_slot1_append_mbuf_body,
     .log_walk = log_fcb_slot1_walk,
     .log_flush = log_fcb_slot1_flush,
+#if MYNEWT_VAL(LOG_STORAGE_INFO)
+    .log_storage_info = log_fcb_slot1_storage_info,
+#endif
     .log_registered = log_fcb_slot1_registered,
 };
 
