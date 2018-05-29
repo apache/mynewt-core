@@ -902,7 +902,7 @@ shell_register(const char *module_name, const struct shell_cmd *commands)
 
 #if MYNEWT_VAL(SHELL_COMPAT)
 #define SHELL_COMPAT_MODULE_NAME "compat"
-static struct shell_cmd compat_commands[MYNEWT_VAL(SHELL_MAX_COMPAT_COMMANDS)];
+static struct shell_cmd compat_commands[MYNEWT_VAL(SHELL_MAX_COMPAT_COMMANDS) + 1];
 static int num_compat_commands;
 static int module_registered;
 
