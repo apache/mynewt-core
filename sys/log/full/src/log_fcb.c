@@ -386,6 +386,63 @@ log_fcb_flush(struct log *log)
     return fcb_clear(&((struct fcb_log *)log->l_arg)->fl_fcb);
 }
 
+#if MYNEWT_VAL(LOG_STORAGE_INFO)
+static int
+log_fcb_storage_info(struct log *log, struct log_storage_info *info)
+{
+    struct fcb_log *fl;
+    struct fcb *fcb;
+    struct flash_area *fa;
+    uint32_t el_min;
+    uint32_t el_max;
+    uint32_t fa_min;
+    uint32_t fa_max;
+    uint32_t fa_size;
+    uint32_t fa_used;
+    int rc;
+
+    fl = (struct fcb_log *)log->l_arg;
+    fcb = &fl->fl_fcb;
+
+    rc = os_mutex_pend(&fcb->f_mtx, OS_WAIT_FOREVER);
+    if (rc && rc != OS_NOT_STARTED) {
+        return FCB_ERR_ARGS;
+    }
+
+    /*
+     * Calculate location of 1st entry.
+     * We assume 1st log entry starts at beginning of oldest sector in FCB.
+     * This is because even if 1st entry is in the middle of sector (is this
+     * even possible?) we will never use free space before it thus that space
+     * can be also considered used.
+     */
+    el_min = fcb->f_oldest->fa_off;
+
+    /* Calculate end location of last entry */
+    el_max = fcb->f_active.fe_area->fa_off + fcb->f_active.fe_elem_off;
+
+    /* Sectors assigned to FCB are guaranteed to be contiguous */
+    fa = &fcb->f_sectors[0];
+    fa_min = fa->fa_off;
+    fa = &fcb->f_sectors[fcb->f_sector_cnt - 1];
+    fa_max = fa->fa_off + fa->fa_size;
+    fa_size = fa_max - fa_min;
+
+    /* Calculate used size */
+    fa_used = el_max - el_min;
+    if ((int32_t)fa_used < 0) {
+        fa_used += fa_size;
+    }
+
+    info->size = fa_size;
+    info->used = fa_used;
+
+    os_mutex_release(&fcb->f_mtx);
+
+    return 0;
+}
+#endif
+
 /**
  * Copies one log entry from source fcb to destination fcb
  * @param src_fcb, dst_fcb
@@ -533,6 +590,9 @@ const struct log_handler log_fcb_handler = {
     .log_append_mbuf_body = log_fcb_append_mbuf_body,
     .log_walk = log_fcb_walk,
     .log_flush = log_fcb_flush,
+#if MYNEWT_VAL(LOG_STORAGE_INFO)
+    .log_storage_info = log_fcb_storage_info,
+#endif
 };
 
 #endif
