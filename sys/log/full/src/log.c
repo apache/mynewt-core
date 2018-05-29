@@ -50,6 +50,14 @@ struct shell_cmd g_shell_slot1_cmd = {
     .sc_cmd_func = shell_log_slot1_cmd,
 };
 #endif
+
+#if MYNEWT_VAL(LOG_STORAGE_INFO)
+int shell_log_storage_cmd(int, char **);
+struct shell_cmd g_shell_storage_cmd = {
+    .sc_cmd = "log-storage",
+    .sc_cmd_func = shell_log_storage_cmd,
+};
+#endif
 #endif
 
 void
@@ -72,6 +80,9 @@ log_init(void)
     shell_cmd_register(&g_shell_log_cmd);
 #if MYNEWT_VAL(LOG_FCB_SLOT1)
     shell_cmd_register(&g_shell_slot1_cmd);
+#endif
+#if MYNEWT_VAL(LOG_STORAGE_INFO)
+    shell_cmd_register(&g_shell_storage_cmd);
 #endif
 #endif
 
