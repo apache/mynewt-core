@@ -57,6 +57,9 @@ struct log_offset {
 struct log_storage_info {
     uint32_t size;
     uint32_t used;
+#if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
+    uint32_t used_unread;
+#endif
 };
 #endif
 
@@ -85,6 +88,9 @@ typedef int (*lh_flush_func_t)(struct log *);
 #if MYNEWT_VAL(LOG_STORAGE_INFO)
 typedef int (*lh_storage_info_func_t)(struct log *, struct log_storage_info *);
 #endif
+#if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
+typedef int (*lh_set_watermark_func_t)(struct log *, uint32_t);
+#endif
 typedef int (*lh_registered_func_t)(struct log *);
 
 struct log_handler {
@@ -99,6 +105,9 @@ struct log_handler {
     lh_flush_func_t log_flush;
 #if MYNEWT_VAL(LOG_STORAGE_INFO)
     lh_storage_info_func_t log_storage_info;
+#endif
+#if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
+    lh_set_watermark_func_t log_set_watermark;
 #endif
     /* Functions called only internally (no API for apps) */
     lh_registered_func_t log_registered;
@@ -560,6 +569,9 @@ log_level_set(uint8_t module, uint8_t level)
 
 #if MYNEWT_VAL(LOG_STORAGE_INFO)
 int log_storage_info(struct log *log, struct log_storage_info *info);
+#endif
+#if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
+int log_set_watermark(struct log *log, uint32_t index);
 #endif
 
 /* Handler exports */
