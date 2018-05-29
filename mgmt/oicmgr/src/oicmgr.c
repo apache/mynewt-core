@@ -37,16 +37,11 @@ struct omgr_cbuf {
 
 struct omgr_state {
     struct os_eventq *os_evq;
-    struct os_event os_event;
     struct os_task os_task;
     struct omgr_cbuf os_cbuf;		/* CBOR buffer for NMGR task */
 };
 
-static void omgr_event_start(struct os_event *ev);
-
-static struct omgr_state omgr_state = {
-    .os_event.ev_cb = omgr_event_start,
-};
+static struct omgr_state omgr_state;
 
 struct os_eventq *
 mgmt_evq_get(void)
@@ -255,31 +250,12 @@ done:
     oc_send_response(req, rc);
 }
 
-static void
-omgr_event_start(struct os_event *ev)
-{
-    uint8_t mode;
-    oc_resource_t *res = NULL;
-    char name[12];
-
-    /*
-     * net/oic must be initialized before now.
-     */
-    snprintf(name, sizeof(name), "/omgr");
-    res = oc_new_resource(name, 1, 0);
-    oc_resource_bind_resource_type(res, "x.mynewt.nmgr");
-    mode = OC_IF_RW;
-    oc_resource_bind_resource_interface(res, mode);
-    oc_resource_set_default_interface(res, mode);
-    oc_resource_set_discoverable(res);
-    oc_resource_set_request_handler(res, OC_PUT, omgr_oic_put);
-    oc_add_resource(res);
-}
-
 int
 oicmgr_init(void)
 {
     int rc;
+    uint8_t mode;
+    oc_resource_t *res = NULL;
 
     /* Ensure this function only gets called by sysinit. */
     SYSINIT_ASSERT_ACTIVE();
@@ -291,11 +267,18 @@ oicmgr_init(void)
 
     mgmt_evq_set(os_eventq_dflt_get());
 
-    /* Enqueue the start event to the default event queue.  Using the default
-     * queue ensures the event won't run until the end of main().  This allows
-     * the application to configure this package in the meantime.
+    /*
+     * net/oic must be initialized before now.
      */
-    os_eventq_put(os_eventq_dflt_get(), &omgr_state.os_event);
+    res = oc_new_resource("/omgr", 1, 0);
+    oc_resource_bind_resource_type(res, "x.mynewt.nmgr");
+    mode = OC_IF_RW;
+    oc_resource_bind_resource_interface(res, mode);
+    oc_resource_set_default_interface(res, mode);
+    oc_resource_set_discoverable(res);
+    oc_resource_set_request_handler(res, OC_PUT, omgr_oic_put);
+    res->properties |= MYNEWT_VAL(OICMGR_TRANS_SECURITY);
+    oc_add_resource(res);
 
     return (0);
 err:
