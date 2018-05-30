@@ -39,6 +39,7 @@ log_fcb_start_append(struct log *log, int len, struct fcb_entry *loc)
 {
     struct fcb *fcb;
     struct fcb_log *fcb_log;
+    struct flash_area *old_fa;
     int rc = 0;
 
     fcb_log = (struct fcb_log *)log->l_arg;
@@ -62,10 +63,27 @@ log_fcb_start_append(struct log *log, int len, struct fcb_entry *loc)
             continue;
         }
 
+        old_fa = fcb->f_oldest;
+        (void)old_fa; /* to avoid #ifdefs everywhere... */
+
         rc = fcb_rotate(fcb);
         if (rc) {
             goto err;
         }
+
+#if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
+        /*
+         * FCB was rotated successfully so let's check if watermark was within
+         * oldest flash area which was erased. If yes, then move watermark to
+         * beginning of current oldest area.
+         */
+        if ((fcb_log->fl_watermark_off >= old_fa->fa_off) &&
+            (fcb_log->fl_watermark_off < old_fa->fa_off + old_fa->fa_size)) {
+            fcb_log->fl_watermark_off = fcb->f_oldest->fa_off;
+        }
+#endif
+
+
     }
 
 err:
@@ -386,6 +404,28 @@ log_fcb_flush(struct log *log)
     return fcb_clear(&((struct fcb_log *)log->l_arg)->fl_fcb);
 }
 
+static int
+log_fcb_registered(struct log *log)
+{
+#if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
+    struct fcb_log *fl;
+    struct fcb *fcb;
+    struct fcb_entry loc;
+
+    fl = (struct fcb_log *)log->l_arg;
+    fcb = &fl->fl_fcb;
+
+    /* Set watermark to first element */
+    memset(&loc, 0, sizeof(loc));
+    if (fcb_getnext(fcb, &loc)) {
+        fl->fl_watermark_off = loc.fe_area->fa_off + loc.fe_elem_off;
+    } else {
+        fl->fl_watermark_off = fcb->f_oldest->fa_off;
+    }
+#endif
+    return 0;
+}
+
 #if MYNEWT_VAL(LOG_STORAGE_INFO)
 static int
 log_fcb_storage_info(struct log *log, struct log_storage_info *info)
@@ -437,9 +477,58 @@ log_fcb_storage_info(struct log *log, struct log_storage_info *info)
     info->size = fa_size;
     info->used = fa_used;
 
+#if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
+    /* Calculate used size */
+    fa_used = el_max - fl->fl_watermark_off;
+    if ((int32_t)fa_used < 0) {
+        fa_used += fa_size;
+    }
+    info->used_unread = fa_used;
+#endif
+
     os_mutex_release(&fcb->f_mtx);
 
     return 0;
+}
+#endif
+
+#if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
+static int
+log_fcb_set_watermark(struct log *log, uint32_t index)
+{
+    struct fcb_log *fl;
+    struct fcb *fcb;
+    struct log_entry_hdr ueh;
+    struct fcb_entry loc;
+    uint32_t end_off;
+    int rc;
+
+    fl = (struct fcb_log *)log->l_arg;
+    fcb = &fl->fl_fcb;
+
+    memset(&loc, 0, sizeof(loc));
+    end_off = fcb->f_oldest->fa_off;
+    rc = 0;
+
+    while (fcb_getnext(fcb, &loc) == 0) {
+        rc = log_fcb_read(log, &loc, &ueh, 0, sizeof(ueh));
+
+        if (rc != sizeof(ueh)) {
+            break;
+        }
+
+        if (ueh.ue_index > index) {
+            break;
+        }
+
+        /* Move end offset max pointer to end of this element */
+        end_off = loc.fe_area->fa_off + loc.fe_data_off + loc.fe_data_len;
+    }
+
+    /* End of last element found is now our watermark */
+    fl->fl_watermark_off = end_off;
+
+    return rc;
 }
 #endif
 
@@ -593,6 +682,10 @@ const struct log_handler log_fcb_handler = {
 #if MYNEWT_VAL(LOG_STORAGE_INFO)
     .log_storage_info = log_fcb_storage_info,
 #endif
+#if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
+    .log_set_watermark = log_fcb_set_watermark,
+#endif
+    .log_registered = log_fcb_registered,
 };
 
 #endif
