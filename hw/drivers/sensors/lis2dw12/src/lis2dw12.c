@@ -1929,7 +1929,7 @@ int lis2dw12_run_self_test(struct sensor_itf *itf, int *result)
     int i;
     uint8_t prev_config[6];
     /* set config per datasheet, with positive self test mode enabled. */
-    uint8_t st_config[] = {0x44, 0x08, 0x40, 0x00, 0x00, 0x10};
+    uint8_t st_config[] = {0x44, 0x04, 0x40, 0x00, 0x00, 0x10};
 
     rc = lis2dw12_readlen(itf, LIS2DW12_REG_CTRL_REG1, prev_config, 6);
     if (rc) {
