@@ -93,11 +93,11 @@ static void
 flash_native_file_open(char *name)
 {
     int created = 0;
-    extern char *tmpnam(char *s);
     extern int ftruncate(int fd, off_t length);
 
     if (!name) {
-        name = tmpnam(NULL);
+        char tmpl[] = "/tmp/native_flash.XXXXXX";
+        name = mktemp(tmpl);
     }
     file = open(name, O_RDWR);
     if (file < 0) {
