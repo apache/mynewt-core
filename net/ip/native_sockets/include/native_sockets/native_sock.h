@@ -21,6 +21,8 @@
 #define H_NATIVE_SOCKETS_
 
 #include <sys/socket.h>
+struct mn_socket;
+struct mn_sockaddr;
 
 #define MN_AF_LOCAL         255
 #define MN_PF_LOCAL         MN_AF_LOCAL
@@ -30,5 +32,22 @@ struct mn_sockaddr_un {
     uint8_t msun_family;
     char msun_path[104];
 };
+
+int native_sock_create(struct mn_socket **sp, uint8_t domain,
+  uint8_t type, uint8_t proto);
+int native_sock_close(struct mn_socket *);
+int native_sock_connect(struct mn_socket *, struct mn_sockaddr *);
+int native_sock_bind(struct mn_socket *, struct mn_sockaddr *);
+int native_sock_listen(struct mn_socket *, uint8_t qlen);
+int native_sock_sendto(struct mn_socket *, struct os_mbuf *,
+  struct mn_sockaddr *);
+int native_sock_recvfrom(struct mn_socket *, struct os_mbuf **,
+  struct mn_sockaddr *);
+int native_sock_getsockopt(struct mn_socket *, uint8_t level,
+  uint8_t name, void *val);
+int native_sock_setsockopt(struct mn_socket *, uint8_t level,
+  uint8_t name, void *val);
+int native_sock_getsockname(struct mn_socket *, struct mn_sockaddr *);
+int native_sock_getpeername(struct mn_socket *, struct mn_sockaddr *);
 
 #endif

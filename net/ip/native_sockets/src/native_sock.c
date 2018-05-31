@@ -36,24 +36,6 @@
 
 #include "native_sock_priv.h"
 
-static int native_sock_create(struct mn_socket **sp, uint8_t domain,
-  uint8_t type, uint8_t proto);
-static int native_sock_close(struct mn_socket *);
-static int native_sock_connect(struct mn_socket *, struct mn_sockaddr *);
-static int native_sock_bind(struct mn_socket *, struct mn_sockaddr *);
-static int native_sock_listen(struct mn_socket *, uint8_t qlen);
-static int native_sock_sendto(struct mn_socket *, struct os_mbuf *,
-  struct mn_sockaddr *);
-static int native_sock_recvfrom(struct mn_socket *, struct os_mbuf **,
-  struct mn_sockaddr *);
-static int native_sock_getsockopt(struct mn_socket *, uint8_t level,
-  uint8_t name, void *val);
-static int native_sock_setsockopt(struct mn_socket *, uint8_t level,
-  uint8_t name, void *val);
-
-static int native_sock_getsockname(struct mn_socket *, struct mn_sockaddr *);
-static int native_sock_getpeername(struct mn_socket *, struct mn_sockaddr *);
-
 static struct native_sock {
     struct mn_socket ns_sock;
     int ns_fd;
@@ -266,7 +248,7 @@ native_sock_addr_to_mn_addr(struct sockaddr *sa, struct mn_sockaddr *ms)
     return 0;
 }
 
-static int
+int
 native_sock_create(struct mn_socket **sp, uint8_t domain,
   uint8_t type, uint8_t proto)
 {
@@ -326,7 +308,7 @@ native_sock_create(struct mn_socket **sp, uint8_t domain,
     return 0;
 }
 
-static int
+int
 native_sock_close(struct mn_socket *s)
 {
     struct native_sock_state *nss = &native_sock_state;
@@ -351,7 +333,7 @@ native_sock_close(struct mn_socket *s)
     return 0;
 }
 
-static int
+int
 native_sock_connect(struct mn_socket *s, struct mn_sockaddr *addr)
 {
     struct native_sock_state *nss = &native_sock_state;
@@ -391,7 +373,7 @@ native_sock_connect(struct mn_socket *s, struct mn_sockaddr *addr)
     return 0;
 }
 
-static int
+int
 native_sock_bind(struct mn_socket *s, struct mn_sockaddr *addr)
 {
     struct native_sock_state *nss = &native_sock_state;
@@ -434,7 +416,7 @@ err:
     return native_sock_err_to_mn_err(rc);
 }
 
-static int
+int
 native_sock_listen(struct mn_socket *s, uint8_t qlen)
 {
     struct native_sock_state *nss = &native_sock_state;
@@ -527,7 +509,7 @@ native_sock_set_tx_buf(struct native_sock *ns, struct os_mbuf *om)
     return rc;
 }
 
-static int
+int
 native_sock_sendto(struct mn_socket *s, struct os_mbuf *m,
   struct mn_sockaddr *addr)
 {
@@ -570,7 +552,7 @@ native_sock_sendto(struct mn_socket *s, struct os_mbuf *m,
     }
 }
 
-static int
+int
 native_sock_recvfrom(struct mn_socket *s, struct os_mbuf **mp,
   struct mn_sockaddr *addr)
 {
@@ -613,14 +595,14 @@ native_sock_recvfrom(struct mn_socket *s, struct os_mbuf **mp,
     return 0;
 }
 
-static int
+int
 native_sock_getsockopt(struct mn_socket *s, uint8_t level, uint8_t name,
   void *val)
 {
     return MN_EPROTONOSUPPORT;
 }
 
-static int
+int
 native_sock_setsockopt(struct mn_socket *s, uint8_t level, uint8_t name,
   void *val)
 {
@@ -700,7 +682,7 @@ native_sock_setsockopt(struct mn_socket *s, uint8_t level, uint8_t name,
     return MN_EPROTONOSUPPORT;
 }
 
-static int
+int
 native_sock_getsockname(struct mn_socket *s, struct mn_sockaddr *addr)
 {
     struct native_sock *ns = (struct native_sock *)s;
@@ -721,7 +703,7 @@ native_sock_getsockname(struct mn_socket *s, struct mn_sockaddr *addr)
     return 0;
 }
 
-static int
+int
 native_sock_getpeername(struct mn_socket *s, struct mn_sockaddr *addr)
 {
     struct native_sock *ns = (struct native_sock *)s;
