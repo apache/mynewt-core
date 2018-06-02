@@ -839,7 +839,6 @@ config_lis2dw12_sensor(void)
     cfg.int_latched = 0;
     cfg.int_active_low = 0;
     cfg.slp_mode = 0;
-    cfg.self_test_mode = LIS2DW12_ST_MODE_DISABLE;
 
     cfg.fifo_mode = LIS2DW12_FIFO_M_BYPASS;
     cfg.fifo_threshold = 32;

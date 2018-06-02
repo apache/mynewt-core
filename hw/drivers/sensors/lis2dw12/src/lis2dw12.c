@@ -2992,12 +2992,6 @@ lis2dw12_config(struct lis2dw12 *lis2dw12, struct lis2dw12_cfg *cfg)
 
     lis2dw12->cfg.rate = cfg->rate;
 
-    rc = lis2dw12_set_self_test(itf, cfg->self_test_mode);
-    if (rc) {
-        goto err;
-    }
-    lis2dw12->cfg.self_test_mode = cfg->self_test_mode;
-
     rc = lis2dw12_set_power_mode(itf, cfg->power_mode);
     if (rc) {
         goto err;

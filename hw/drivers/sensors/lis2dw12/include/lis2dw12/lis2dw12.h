@@ -220,7 +220,6 @@ struct lis2dw12_cfg {
     uint8_t double_tap_event_enable     : 1;
 
     uint8_t slp_mode       : 1;
-    uint8_t self_test_mode : 3;
 
     /* Power mode */
     uint8_t power_mode     : 4;
