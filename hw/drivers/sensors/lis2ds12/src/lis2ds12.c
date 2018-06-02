@@ -38,6 +38,8 @@
  */
 #define LIS2DS12_MAX_INT_WAIT (4 * OS_TICKS_PER_SEC)
 
+#define LIS2DS12_ST_NUM_READINGS 5
+
 //SLEEP_CHG and SLEEP_STATE interrupts aren't available on int1 or int2 so dont need to be enabled
 const struct lis2ds12_notif_cfg dflt_notif_cfg[] = {
     { SENSOR_EVENT_TYPE_SINGLE_TAP,   0, LIS2DS12_INT1_CFG_SINGLE_TAP  },
@@ -1531,14 +1533,14 @@ int lis2ds12_get_int2_on_int1_map(struct sensor_itf *itf, uint8_t *val)
 int lis2ds12_run_self_test(struct sensor_itf *itf, int *result)
 {
     int rc;
-    /*configure min and max values for reading 5 samples, and accounting for
-     * both negative and positive offset */
-    int min = LIS2DS12_ST_MIN*5*2;
-    int max = LIS2DS12_ST_MAX*5*2;
 
-    int16_t data[3], diff[3] = {0,0,0};
+    int16_t no_st[3], st[3], data[3] = {0,0,0};
+    int32_t scratch[3] = {0,0,0};
     int i;
     uint8_t prev_config[6];
+    *result = 0;
+    uint8_t fs;
+
 
     rc = lis2ds12_readlen(itf, LIS2DS12_REG_CTRL_REG1, prev_config, 6);
     if (rc) {
@@ -1551,31 +1553,92 @@ int lis2ds12_run_self_test(struct sensor_itf *itf, int *result)
         return rc;
     }
 
+    /* wait 200ms */
+    os_time_delay(OS_TICKS_PER_SEC / 200);
+
+    rc = lis2ds12_get_fs(itf, &fs);
+    if (rc) {
+        return rc;
+    }
+
+    //discard
+    //TODO poll DRDY in STATUS (27h
+    rc = lis2ds12_get_data(itf, fs, &(data[0]), &(data[1]), &(data[2]));
+    if (rc) {
+        return rc;
+    }
+
+    /* take no st offset reading */
+    for(i=0; i<LIS2DS12_ST_NUM_READINGS; i++) {
+
+        // TODO poll DRDY in STATUS (27h) instead
+        /* wait at least 20 ms */
+        os_time_delay(OS_TICKS_PER_SEC / 50 + 1);
+
+        rc = lis2ds12_get_data(itf, fs, &(data[0]), &(data[1]), &(data[2]));
+        if (rc) {
+            return rc;
+        }
+        scratch[0] += data[0];
+        scratch[1] += data[1];
+        scratch[2] += data[2];
+    }
+
+    //average
+    no_st[0] = scratch[0]/LIS2DS12_ST_NUM_READINGS;
+    no_st[1] = scratch[1]/LIS2DS12_ST_NUM_READINGS;
+    no_st[2] = scratch[2]/LIS2DS12_ST_NUM_READINGS;
+
+    //clean scratch
+    memset(&scratch, 0, sizeof scratch);
+
     /* go into self test mode 1 */
     rc = lis2ds12_set_self_test(itf, LIS2DS12_ST_MODE_MODE1);
     if (rc) {
         return rc;
     }
 
-    /* wait 100ms */
-    os_time_delay(OS_TICKS_PER_SEC / 100);
-    rc = lis2ds12_get_data(itf, 2, &(data[0]), &(data[1]), &(data[2]));
+    /* wait 200ms */
+    os_time_delay(OS_TICKS_PER_SEC / 200);
+
+    //discard
+    //TODO poll DRDY in STATUS (27h
+    rc = lis2ds12_get_data(itf, fs, &(data[0]), &(data[1]), &(data[2]));
     if (rc) {
         return rc;
     }
 
     /* take positive offset reading */
-    for(i=0; i<5; i++) {
+    for(i=0; i<LIS2DS12_ST_NUM_READINGS; i++) {
 
-        rc = lis2ds12_get_data(itf, 2, &(data[0]), &(data[1]), &(data[2]));
+        // TODO poll DRDY in STATUS (27h) instead
+        /* wait at least 20 ms */
+        os_time_delay(OS_TICKS_PER_SEC / 50 + 1);
+
+        rc = lis2ds12_get_data(itf, fs, &(data[0]), &(data[1]), &(data[2]));
         if (rc) {
             return rc;
         }
-        diff[0] += data[0];
-        diff[1] += data[1];
-        diff[2] += data[2];
-        /* wait at least 20 ms */
-        os_time_delay(OS_TICKS_PER_SEC / 50 + 1);
+        scratch[0] += data[0];
+        scratch[1] += data[1];
+        scratch[2] += data[2];
+    }
+
+    //average
+    st[0] = scratch[0]/LIS2DS12_ST_NUM_READINGS;
+    st[1] = scratch[1]/LIS2DS12_ST_NUM_READINGS;
+    st[2] = scratch[2]/LIS2DS12_ST_NUM_READINGS;
+
+    //clean scratch
+    memset(&scratch, 0, sizeof scratch);
+
+    // |Min(ST_X)| <=|OUTX_AVG_ST - OUTX_AVG_NO_ST| <= |Max(ST_X)|
+    /* compare values to thresholds */
+    for (i = 0; i < 3; i++) {
+        int16_t diff = abs(st[i] - no_st[i]);
+        if (diff < LIS2DS12_ST_MIN || diff > LIS2DS12_ST_MAX) {
+            *result -= 1;
+        }
     }
 
     /* go into self test mode 2 */
@@ -1584,25 +1647,43 @@ int lis2ds12_run_self_test(struct sensor_itf *itf, int *result)
         return rc;
     }
 
-    os_time_delay(OS_TICKS_PER_SEC / 50 + 1);
-    rc = lis2ds12_get_data(itf, 2, &(data[0]), &(data[1]), &(data[2]));
+    /* wait 200ms */
+    os_time_delay(OS_TICKS_PER_SEC / 200);
+
+    //discard
+    rc = lis2ds12_get_data(itf, fs, &(data[0]), &(data[1]), &(data[2]));
     if (rc) {
         return rc;
     }
 
     /* take negative offset reading */
-    for (i=0; i<5; i++) {
+    for(i=0; i<LIS2DS12_ST_NUM_READINGS; i++) {
 
-            rc = lis2ds12_get_data(itf, 2, &(data[0]), &(data[1]), &(data[2]));
-            if (rc) {
-                return rc;
-            }
-            diff[0] -= data[0];
-            diff[1] -= data[1];
-            diff[2] -= data[2];
-            /* wait at least 20 ms */
-            os_time_delay(OS_TICKS_PER_SEC / 50 + 1);
+        // TODO poll DRDY in STATUS (27h) instead
+        /* wait at least 20 ms */
+        os_time_delay(OS_TICKS_PER_SEC / 50 + 1);
+
+        rc = lis2ds12_get_data(itf, fs, &(data[0]), &(data[1]), &(data[2]));
+        if (rc) {
+            return rc;
         }
+        scratch[0] += data[0];
+        scratch[1] += data[1];
+        scratch[2] += data[2];
+    }
+
+    //average
+    st[0] = scratch[0]/LIS2DS12_ST_NUM_READINGS;
+    st[1] = scratch[1]/LIS2DS12_ST_NUM_READINGS;
+    st[2] = scratch[2]/LIS2DS12_ST_NUM_READINGS;
+
+    /* compare values to thresholds */
+    for (i = 0; i < 3; i++) {
+        int16_t diff = abs(st[i] - no_st[i]);
+        if (diff < LIS2DS12_ST_MIN || diff > LIS2DS12_ST_MAX) {
+            *result -= 1;
+        }
+    }
 
     /* disable self test mode */
     rc = lis2ds12_writelen(itf, LIS2DS12_REG_CTRL_REG1, prev_config, 6);
@@ -1610,13 +1691,8 @@ int lis2ds12_run_self_test(struct sensor_itf *itf, int *result)
         return rc;
     }
 
-    /* compare values to thresholds */
-    *result = 0;
-    for (i = 0; i < 3; i++) {
-        if ((diff[i] < min) || (diff[i] > max)) {
-            *result -= 1;
-        }
-    }
+    /* wait 200ms */
+    os_time_delay(OS_TICKS_PER_SEC / 200);
 
     return 0;
 }
