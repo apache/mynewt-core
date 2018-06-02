@@ -801,7 +801,8 @@ config_lis2dw12_sensor(void)
     dev = (struct os_dev *) os_dev_open("lis2dw12_0", OS_TIMEOUT_NEVER, NULL);
     assert(dev != NULL);
 
-    cfg.rate = LIS2DW12_DATA_RATE_200HZ;
+    /* Valid Tap ODRs are 400 Hz, 800 Hz and 1600 Hz  AN5038 5.6.3 */
+    cfg.rate = LIS2DW12_DATA_RATE_400HZ;
     cfg.fs = LIS2DW12_FS_2G;
 
     cfg.offset_x = 0;
@@ -819,12 +820,12 @@ config_lis2dw12_sensor(void)
     cfg.tap.en_4d = 0;
     cfg.tap.ths_6d = LIS2DW12_6D_THS_80_DEG;
     cfg.tap.tap_priority = LIS2DW12_TAP_PRIOR_XYZ;
-    cfg.tap.tap_ths_x = 0x3;
-    cfg.tap.tap_ths_y = 0x3;
-    cfg.tap.tap_ths_z = 0x3;
-    cfg.tap.latency = 8; /* 640ms */
-    cfg.tap.quiet = 0; /* 10ms */
-    cfg.tap.shock = 3; /* 120ms */
+    cfg.tap.tap_ths_x = 0x3; /* 1875mg = (3 * FS / 32) */
+    cfg.tap.tap_ths_y = 0x3; /* 1875mg = (3 * FS / 32) */
+    cfg.tap.tap_ths_z = 0x3; /* 1875mg = (3 * FS / 32) */
+    cfg.tap.latency = 8; /* 640ms (= 8 * 32 / ODR) */
+    cfg.tap.quiet = 0; /* 5 ms  (= 2 / ODR */
+    cfg.tap.shock = 3; /* 60 ms (= 3 * 8 / ODR) */
 
     cfg.double_tap_event_enable = 0;
 
