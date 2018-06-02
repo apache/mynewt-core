@@ -33,6 +33,11 @@
 #include "log/log.h"
 #include "stats/stats.h"
 
+/*
+ * Max time to wait for interrupt.
+ */
+#define LIS2DS12_MAX_INT_WAIT (4 * OS_TICKS_PER_SEC)
+
 //SLEEP_CHG and SLEEP_STATE interrupts aren't available on int1 or int2 so dont need to be enabled
 const struct lis2ds12_notif_cfg dflt_notif_cfg[] = {
     { SENSOR_EVENT_TYPE_SINGLE_TAP,   0, LIS2DS12_INT1_CFG_SINGLE_TAP  },
@@ -1638,10 +1643,11 @@ undo_interrupt(struct lis2ds12_int * interrupt)
     OS_EXIT_CRITICAL(interrupt->lock);
 }
 
-static void
+static int
 wait_interrupt(struct lis2ds12_int *interrupt, uint8_t int_num)
 {
     bool wait;
+    os_error_t error;
 
     OS_ENTER_CRITICAL(interrupt->lock);
 
@@ -1649,7 +1655,7 @@ wait_interrupt(struct lis2ds12_int *interrupt, uint8_t int_num)
     if (hal_gpio_read(interrupt->ints[int_num].host_pin) ==
                                             interrupt->ints[int_num].active) {
         OS_EXIT_CRITICAL(interrupt->lock);
-        return;
+        return OS_OK;
     }
 
     if (interrupt->active) {
@@ -1662,11 +1668,13 @@ wait_interrupt(struct lis2ds12_int *interrupt, uint8_t int_num)
     OS_EXIT_CRITICAL(interrupt->lock);
 
     if (wait) {
-        os_error_t error;
-
-        error = os_sem_pend(&interrupt->wait, -1);
+        error = os_sem_pend(&interrupt->wait, LIS2DS12_MAX_INT_WAIT);
+        if (error == OS_TIMEOUT) {
+            return error;
+        }
         assert(error == OS_OK);
     }
+    return OS_OK;
 }
 
 static void
@@ -2005,7 +2013,7 @@ lis2ds12_stream_read(struct sensor *sensor,
     os_time_t stop_ticks = 0;
     uint16_t fifo_samples;
     uint8_t fs;
-    int rc;
+    int rc, rc2;
 
     /* If the read isn't looking for accel data, don't do anything. */
     if (!(sensor_type & SENSOR_TYPE_ACCELEROMETER)) {
@@ -2051,7 +2059,10 @@ lis2ds12_stream_read(struct sensor *sensor,
 
     for (;;) {
         /* force at least one read for cases when fifo is disabled */
-        wait_interrupt(&lis2ds12->intr, cfg->read_mode.int_num);
+        rc = wait_interrupt(&lis2ds12->intr, cfg->read_mode.int_num);
+        if (rc) {
+            goto err;
+        }
         fifo_samples = 1;
 
         while(fifo_samples > 0) {
@@ -2083,10 +2094,14 @@ lis2ds12_stream_read(struct sensor *sensor,
 err:
     /* disable interrupt */
     pdd->interrupt = NULL;
-    rc = disable_interrupt(sensor, cfg->read_mode.int_cfg,
+    rc2 = disable_interrupt(sensor, cfg->read_mode.int_cfg,
                            cfg->read_mode.int_num);
 
-    return rc;
+    if (rc) {
+        return rc;
+    } else {
+        return rc2;
+    }
 }
 
 static int
@@ -2135,10 +2150,12 @@ lis2ds12_sensor_read(struct sensor *sensor, sensor_type_t type,
     } else {
         rc = lis2ds12_stream_read(sensor, type, data_func, data_arg, timeout);
     }
-
-    return 0;
 err:
-    return rc;
+    if (rc) {
+        return SYS_EINVAL; /* XXX */
+    } else {
+        return SYS_EOK;
+    }
 }
 
 static int
