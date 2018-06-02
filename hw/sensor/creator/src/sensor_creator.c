@@ -829,8 +829,8 @@ config_lis2dw12_sensor(void)
 
     cfg.double_tap_event_enable = 0;
 
-    cfg.freefall_dur = 6;
-    cfg.freefall_ths = 3; /* ~312mg */
+    cfg.freefall_dur = 6; /* 15ms (= 6/ODR) */
+    cfg.freefall_ths = 3; /* ~312mg (= 31.25 mg * 10) */
 
     cfg.int1_pin_cfg = 0;
     cfg.int2_pin_cfg = 0;
@@ -844,9 +844,9 @@ config_lis2dw12_sensor(void)
     cfg.fifo_mode = LIS2DW12_FIFO_M_BYPASS;
     cfg.fifo_threshold = 32;
 
-    cfg.wake_up_ths = 0;
-    cfg.wake_up_dur = 0;
-    cfg.sleep_duration = 0;
+    cfg.wake_up_ths = 0; /* 0 mg (= 0 * FS / 64) */
+    cfg.wake_up_dur = 0; /* 0 ms (= 0 * 1 / ODR) */
+    cfg.sleep_duration = 0; /* 0 ms (= 0 * 512 / ODR) */
 
     cfg.stationary_detection_enable = 0;
 
