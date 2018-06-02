@@ -510,7 +510,8 @@ lis2dw12_set_full_scale(struct sensor_itf *itf, uint8_t fs)
         goto err;
     }
 
-    reg = (reg & ~LIS2DW12_CTRL_REG6_FS) | fs;
+    reg &= ~LIS2DW12_CTRL_REG6_FS;
+    reg |= (fs & LIS2DW12_CTRL_REG6_FS);
 
     rc = lis2dw12_write8(itf, LIS2DW12_REG_CTRL_REG6, reg);
     if (rc) {
@@ -573,7 +574,8 @@ lis2dw12_set_rate(struct sensor_itf *itf, uint8_t rate)
         goto err;
     }
 
-    reg = (reg & ~LIS2DW12_CTRL_REG1_ODR) | rate;
+    reg &= ~LIS2DW12_CTRL_REG1_ODR;
+    reg |= (rate & LIS2DW12_CTRL_REG1_ODR);
 
     rc = lis2dw12_write8(itf, LIS2DW12_REG_CTRL_REG1, reg);
     if (rc) {
