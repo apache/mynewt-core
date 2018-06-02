@@ -1295,7 +1295,7 @@ int lis2dw12_get_tap_cfg(struct sensor_itf *itf, struct lis2dw12_tap_settings *c
  * Set freefall detection configuration
  *
  * @param the sensor interface
- * @param freefall duration (5 bits LSB = 1/ODR)
+ * @param freefall duration (6 bits LSB = 1/ODR)
  * @param freefall threshold (3 bits)
  * @return 0 on success, non-zero on failure
  */
@@ -1359,7 +1359,7 @@ int lis2dw12_get_freefall(struct sensor_itf *itf, uint8_t *dur, uint8_t *ths)
  *
  * @param the sensor interface
  * @param FIFO mode to setup
- * @patam Threshold to set for FIFO
+ * @param Threshold to set for FIFO
  * @return 0 on success, non-zero on failure
  */
 int lis2dw12_set_fifo_cfg(struct sensor_itf *itf, enum lis2dw12_fifo_mode mode, uint8_t fifo_ths)
@@ -1376,7 +1376,7 @@ int lis2dw12_set_fifo_cfg(struct sensor_itf *itf, enum lis2dw12_fifo_mode mode, 
  * Get Number of Samples in FIFO
  *
  * @param the sensor interface
- * @patam Pointer to return number of samples in
+ * @param Pointer to return number of samples in
  * @return 0 on success, non-zero on failure
  */
 int lis2dw12_get_fifo_samples(struct sensor_itf *itf, uint8_t *samples)
@@ -1397,8 +1397,8 @@ int lis2dw12_get_fifo_samples(struct sensor_itf *itf, uint8_t *samples)
 /**
  * Clear interrupt pin configuration for interrupt 1
  *
- * @param the sensor interface
- * @param config
+ * @param itf The sensor interface
+ * @param cfg int1 config
  * @return 0 on success, non-zero on failure
  */
 int
@@ -1425,8 +1425,8 @@ err:
 /**
  * Clear interrupt pin configuration for interrupt 2
  *
- * @param the sensor interface
- * @param config
+ * @param itf The sensor interface
+ * @param cfg int2 config
  * @return 0 on success, non-zero on failure
  */
 int
