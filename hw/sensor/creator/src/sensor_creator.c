@@ -796,7 +796,7 @@ config_lis2dw12_sensor(void)
 {
     int rc;
     struct os_dev *dev;
-    struct lis2dw12_cfg cfg;
+    struct lis2dw12_cfg cfg = {0};
 
     dev = (struct os_dev *) os_dev_open("lis2dw12_0", OS_TIMEOUT_NEVER, NULL);
     assert(dev != NULL);
