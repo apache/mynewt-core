@@ -1474,13 +1474,13 @@ int lis2ds12_get_sixd_src(struct sensor_itf *itf, uint8_t *status)
 }
 
 /**
- * Set whether interrupt 1 signals is mapped onto interrupt 2 pin
+ * Set whether interrupt 2 signals is mapped onto interrupt 1 pin
  *
  * @param the sensor interface
  * @param value to set (false = disabled, true = enabled)
  * @return 0 on success, non-zero on failure
  */
-int lis2ds12_set_int1_on_int2_map(struct sensor_itf *itf, bool enable)
+int lis2ds12_set_int2_on_int1_map(struct sensor_itf *itf, bool enable)
 {
     uint8_t reg;
     int rc;
@@ -1500,13 +1500,13 @@ int lis2ds12_set_int1_on_int2_map(struct sensor_itf *itf, bool enable)
 }
 
 /**
- * Get whether interrupt 1 signals is mapped onto interrupt 2 pin
+ * Get whether interrupt 2 signals is mapped onto interrupt 1 pin
  *
  * @param the sensor interface
  * @param value to set (0 = disabled, 1 = enabled)
  * @return 0 on success, non-zero on failure
  */
-int lis2ds12_get_int1_on_int2_map(struct sensor_itf *itf, uint8_t *val)
+int lis2ds12_get_int2_on_int1_map(struct sensor_itf *itf, uint8_t *val)
 {
     uint8_t reg;
     int rc;
@@ -2612,7 +2612,7 @@ lis2ds12_config(struct lis2ds12 *lis2ds12, struct lis2ds12_cfg *cfg)
     }
     lis2ds12->cfg.tap = cfg->tap;
 
-    rc = lis2ds12_set_int1_on_int2_map(itf, cfg->map_int2_to_int1);
+    rc = lis2ds12_set_int2_on_int1_map(itf, cfg->map_int2_to_int1);
     if(rc) {
         goto err;
     }
