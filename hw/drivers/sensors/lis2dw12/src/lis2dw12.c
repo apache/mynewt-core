@@ -1351,7 +1351,7 @@ int lis2dw12_get_freefall(struct sensor_itf *itf, uint8_t *dur, uint8_t *ths)
 
     *dur = (ff_reg & LIS2DW12_FREEFALL_DUR) >> 3;
     *dur |= wake_reg & LIS2DW12_WAKE_DUR_FF_DUR ? (1 << 5) : 0;
-    *ths = wake_reg & LIS2DW12_FREEFALL_THS;
+    *ths = ff_reg & LIS2DW12_FREEFALL_THS;
 
     return 0;
 }
