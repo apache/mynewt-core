@@ -1863,13 +1863,13 @@ int lis2dw12_set_int_enable(struct sensor_itf *itf, uint8_t enabled)
 }
 
 /**
- * Set whether interrupt 1 signals is mapped onto interrupt 2 pin
+ * Set whether interrupt 2 signals is mapped onto interrupt 1 pin
  *
  * @param the sensor interface
  * @param value to set (false = disabled, true = enabled)
  * @return 0 on success, non-zero on failure
  */
-int lis2dw12_set_int1_on_int2_map(struct sensor_itf *itf, bool enable)
+int lis2dw12_set_int2_on_int1_map(struct sensor_itf *itf, bool enable)
 {
     uint8_t reg;
     int rc;
@@ -3092,7 +3092,7 @@ lis2dw12_config(struct lis2dw12 *lis2dw12, struct lis2dw12_cfg *cfg)
     }
     lis2dw12->cfg.tap = cfg->tap;
 
-    rc = lis2dw12_set_int1_on_int2_map(itf, cfg->map_int2_to_int1);
+    rc = lis2dw12_set_int2_on_int1_map(itf, cfg->map_int2_to_int1);
     if(rc) {
         goto err;
     }

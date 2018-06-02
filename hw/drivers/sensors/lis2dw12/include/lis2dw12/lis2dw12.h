@@ -823,24 +823,24 @@ int lis2dw12_set_stationary_en(struct sensor_itf *itf, uint8_t en);
 int lis2dw12_get_stationary_en(struct sensor_itf *itf, uint8_t *en);
 
 /**
- * Set whether interrupts are enabled
+ * Set whether interrupt 2 signals is mapped onto interrupt 1 pin
  *
  * @param itf The sensor interface
  * @param enable Value to set (0 = disabled, 1 = enabled)
  *
  * @return 0 on success, non-zero on failure
  */
-int lis2dw12_set_int1_on_int2_map(struct sensor_itf *itf, bool enable);
+int lis2dw12_set_int2_on_int1_map(struct sensor_itf *itf, bool enable);
 
 /**
- * Get whether interrupt 1 signals is mapped onto interrupt 2 pin
+ * Get whether interrupt 2 signals is mapped onto interrupt 1 pin
  *
  * @param itf The sensor interface
  * @param val Value to set (0 = disabled, 1 = enabled)
  *
  * @return 0 on success, non-zero on failure
  */
-int lis2dw12_get_int1_on_int2_map(struct sensor_itf *itf, uint8_t *val);
+int lis2dw12_get_int2_on_int1_map(struct sensor_itf *itf, uint8_t *val);
 
 /**
  * Run Self test on sensor
