@@ -1539,16 +1539,20 @@ int lis2ds12_run_self_test(struct sensor_itf *itf, int *result)
     int i;
     uint8_t prev_config[6];
     *result = 0;
+    uint8_t config[6] = { LIS2DS12_DATA_RATE_HR_14BIT_50HZ | LIS2DS12_FS_2G | LIS2DS12_CTRL_REG1_BDU, LIS2DS12_CTRL_REG2_IF_ADD_INC, 0, 0, 0, 0};
     uint8_t fs;
-
 
     rc = lis2ds12_readlen(itf, LIS2DS12_REG_CTRL_REG1, prev_config, 6);
     if (rc) {
         return rc;
     }
 
-    // ODR_HR_50HZ | FS_2G | BDU
-    rc = lis2ds12_write8(itf, LIS2DS12_REG_CTRL_REG1, 0x31);
+    rc = lis2ds12_writelen(itf, LIS2DS12_REG_CTRL_REG2, &config[1], 5);
+    if (rc) {
+        return rc;
+    }
+
+    rc = lis2ds12_write8(itf, LIS2DS12_REG_CTRL_REG1, config[0]);
     if (rc) {
         return rc;
     }
