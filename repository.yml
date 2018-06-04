@@ -32,7 +32,6 @@ repo.versions:
     "1.2.0": "mynewt_1_2_0_tag"
     "1.3.0": "mynewt_1_3_0_tag"
     "1.4.0": "mynewt_1_4_0_tag"
-    "1.4.1": "mynewt_1_4_1_tag"
 
     "0-latest": "1.4.1"
     "1-latest": "1.4.1"
@@ -44,7 +43,7 @@ repo.versions:
     "1.1-latest": "1.1.0"
     "1.2-latest": "1.2.0"
     "1.3-latest": "1.3.0"
-    "1.4-latest": "1.4.1"
+    "1.4-latest": "1.4.0"
 
 repo.newt_compatibility:
     # Allow all versions for 0.0.0.  This is a workaround to prevent a warning
@@ -71,5 +70,4 @@ repo.deps:
         repo: mynewt-nimble
         vers:
             master: 0-dev
-            mynewt_1_4_0_tag: 1.0.0
-            mynewt_1_4_1_tag: 1.0.0
+            1.4.0: 1.0.0
