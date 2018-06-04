@@ -24,6 +24,8 @@
 #include "datetime/datetime.h"
 #include "console/console.h"
 
+#include "hal/hal_system.h"
+#include "hal/hal_nvreg.h"
 #include "shell/shell.h"
 #include "shell_priv.h"
 
@@ -157,6 +159,20 @@ shell_os_date_cmd(int argc, char **argv)
     return rc;
 }
 
+int
+shell_os_reset_cmd(int argc, char **argv)
+{
+#if MYNEWT_VAL(SHELL_OS_SERIAL_BOOT_NVREG)
+    if (argc == 2 && !strcmp(argv[1], "serial_boot")) {
+        hal_nvreg_write(MYNEWT_VAL(BOOT_SERIAL_NVREG_INDEX),
+                        MYNEWT_VAL(BOOT_SERIAL_NVREG_MAGIC));
+        console_printf("serial_boot mode\n");
+    }
+#endif
+    os_time_delay(OS_TICKS_PER_SEC / 10);
+    hal_system_reset();
+}
+
 #if MYNEWT_VAL(SHELL_CMD_HELP)
 static const struct shell_param tasks_params[] = {
     {"", "task name"},
@@ -190,6 +206,19 @@ static const struct shell_cmd_help date_help = {
     .usage = NULL,
     .params = date_params,
 };
+
+static const struct shell_param reset_params[] = {
+#if MYNEWT_VAL(SHELL_OS_SERIAL_BOOT_NVREG)
+    {"serial_boot", "NVREG write to request serial bootloader entry"},
+#endif
+    {NULL, NULL}
+};
+
+static const struct shell_cmd_help reset_help = {
+    .summary = "reset system",
+    .usage = NULL,
+    .params = reset_params,
+};
 #endif
 
 static const struct shell_cmd os_commands[] = {
@@ -212,6 +241,13 @@ static const struct shell_cmd os_commands[] = {
         .sc_cmd_func = shell_os_date_cmd,
 #if MYNEWT_VAL(SHELL_CMD_HELP)
         .help = &date_help,
+#endif
+    },
+    {
+        .sc_cmd = "reset",
+        .sc_cmd_func = shell_os_reset_cmd,
+#if MYNEWT_VAL(SHELL_CMD_HELP)
+        .help = &reset_help,
 #endif
     },
     { NULL, NULL, NULL },
