@@ -31,6 +31,9 @@ pkg.deps.SHELL_NEWTMGR:
     - encoding/base64
     - util/crc
 
+pkg.deps.SHELL_OS_SERIAL_BOOT_NVREG:
+    - boot/boot_serial
+
 pkg.req_apis:
     - console
 
