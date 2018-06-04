@@ -291,32 +291,27 @@ This product bundles parts of STM32CubeF7, which is available under the
     * hw/bsp/stm32f767-nucleo/src/system_stm32f7xx.c
     * hw/bsp/stm32f767-nucleo/src/arch/cortex_m7/startup_stm32f767xx.s
 
-This product bundles parts of mbed, which is available under the
+This product bundles parts of STM32CubeF3, which is available under the
 "3-clause BSD" license.  Bundled files are:
-    * hw/mcu/nordic/nrf51xxx/include/mcu/cortex_m0.h
-    * hw/mcu/nordic/nrf52xxx/include/mcu/cortex_m4.h
-    * hw/mcu/nordic/src/ext/nRF5_SDK_11.0.0_89a8197/components/device/compiler_abstraction.h
-    * hw/mcu/nordic/src/ext/nRF5_SDK_11.0.0_89a8197/components/device/nrf.h
-    * hw/mcu/nordic/src/ext/nRF5_SDK_11.0.0_89a8197/components/device/nrf51.h
-    * hw/mcu/nordic/src/ext/nRF5_SDK_11.0.0_89a8197/components/device/nrf52.h
-    * hw/mcu/nordic/src/ext/nRF5_SDK_11.0.0_89a8197/components/device/nrf52840.h
-    * hw/mcu/nordic/src/ext/nRF5_SDK_11.0.0_89a8197/components/device/nrf51_to_nrf52.h
-    * hw/mcu/nordic/src/ext/nRF5_SDK_11.0.0_89a8197/components/device/nrf51_to_nrf52840.h
-    * hw/mcu/nordic/src/ext/nRF5_SDK_11.0.0_89a8197/components/device/nrf52_to_nrf52840.h
-    * hw/mcu/nordic/src/ext/nRF5_SDK_11.0.0_89a8197/components/device/nrf51_bitfields.h
-    * hw/mcu/nordic/src/ext/nRF5_SDK_11.0.0_89a8197/components/device/nrf52_bitfields.h
-    * hw/mcu/nordic/src/ext/nRF5_SDK_11.0.0_89a8197/components/device/nrf52840_bitfields.h
-    * hw/mcu/nordic/src/ext/nRF5_SDK_11.0.0_89a8197/components/device/nrf52840_peripherals.h
-    * hw/mcu/nordic/src/ext/nRF5_SDK_11.0.0_89a8197/components/device/nrf51_deprecated.h
-    * hw/mcu/nordic/src/ext/nRF5_SDK_11.0.0_89a8197/components/toolchain/system_nrf51.c
-    * hw/mcu/nordic/src/ext/nRF5_SDK_11.0.0_89a8197/components/toolchain/system_nrf51.h
-    * hw/mcu/nordic/src/ext/nRF5_SDK_11.0.0_89a8197/components/toolchain/system_nrf51422.h
-    * hw/mcu/nordic/src/ext/nRF5_SDK_11.0.0_89a8197/components/toolchain/system_nrf51422.c
-    * hw/mcu/nordic/src/ext/nRF5_SDK_11.0.0_89a8197/components/toolchain/system_nrf52.c
-    * hw/mcu/nordic/src/ext/nRF5_SDK_11.0.0_89a8197/components/toolchain/system_nrf52.h
-    * hw/mcu/nordic/src/ext/nRF5_SDK_11.0.0_89a8197/components/toolchain/system_nrf52840.c
-    * hw/mcu/nordic/src/ext/nRF5_SDK_11.0.0_89a8197/components/toolchain/system_nrf52840.h
-    * hw/mcu/nordic/src/ext/nRF5_SDK_11.0.0_89a8197/components/device/nrf52_name_change.h
+    * hw/mcu/stm/stm32f3xx/src/ext
+    * hw/bsp/stm32f3discovery
+
+This product bundles parts of stm32l1xx, which is available under the
+"3-clause BSD" license.  Bundled files are:
+    * hw/bsp/stm32l152discovery/src/system_stm32l1xx.c
+    * hw/bsp/stm32l152discovery/include/bsp/stm32l1xx_hal_conf.h
+    * hw/bsp/stm32l152discovery/src/system_stm32l1xx.c
+    * hw/mcu/stm/stm32l1xx/src/ext/
+
+This product bundles parts of stm32f1xx, which is available under the
+"3-clause BSD" license.  Bundled files are:
+    * hw/bsp/olimex-p103/include/bsp/stm32f1xx_hal_conf.h
+    * hw/bsp/olimex-p103/src/system_stm32f1xx.c
+    * hw/mcu/stm/stm32f1xx/src/ext/
+
+This product bundles parts of nrfx, which is available under the
+"3-clause BSD" license.  For detalils see:
+    * hw/mcu/nordic/src/ext/nrfx/LICENSE
 
 This product bundles FATFS, which is available under a
 "1-clause BSD" style license.  Bundled files are:
