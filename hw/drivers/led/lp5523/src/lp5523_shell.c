@@ -20,14 +20,13 @@
 #include <string.h>
 #include <errno.h>
 #include "os/mynewt.h"
+#if MYNEWT_VAL(LP5523_CLI)
 #include "console/console.h"
-#include "sensor/sensor.h"
 #include "shell/shell.h"
 #include "hal/hal_gpio.h"
 #include "lp5523/lp5523.h"
 #include "parse/parse.h"
 
-#if MYNEWT_VAL(LP5523_CLI)
 
 static int lp5523_shell_cmd(int argc, char **argv);
 
