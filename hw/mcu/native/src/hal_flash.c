@@ -93,21 +93,28 @@ static void
 flash_native_file_open(char *name)
 {
     int created = 0;
-    extern char *tmpnam(char *s);
     extern int ftruncate(int fd, off_t length);
 
-    if (!name) {
-        name = tmpnam(NULL);
-    }
-    file = open(name, O_RDWR);
-    if (file < 0) {
-        file = open(name, O_RDWR | O_CREAT, 0660);
+    if (name) {
+        file = open(name, O_RDWR);
+        if (file < 0) {
+            file = open(name, O_RDWR | O_CREAT, 0660);
+            assert(file > 0);
+            created = 1;
+        }
+    } else {
+        char tmpl[] = "/tmp/native_flash.XXXXXX";
+        file = mkstemp(tmpl);
         assert(file > 0);
         created = 1;
+    }
+
+    if (created) {
         if (ftruncate(file, native_flash_dev.hf_size) < 0) {
             assert(0);
         }
     }
+
     file_loc = mmap(0, native_flash_dev.hf_size,
           PROT_READ | PROT_WRITE, MAP_SHARED, file, 0);
     assert(file_loc != MAP_FAILED);
