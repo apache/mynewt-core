@@ -180,7 +180,7 @@ syscfg.defs:
     QSPI_PIN_DIO3:
         description: 'DIO3 pin for QSPI'
         value: -1
-        
+
     NFC_PINS_AS_GPIO:
         description: 'Use NFC pins as GPIOs instead of NFC functionality'
         value: 0
