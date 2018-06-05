@@ -183,7 +183,7 @@ syscfg.defs:
 
     NFC_PINS_AS_GPIO:
         description: 'Use NFC pins as GPIOs instead of NFC functionality'
-        value: 0
+        value: 1
 
 
 # The XTAL_xxx definitions are used to set the clock source used for the low
