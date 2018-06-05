@@ -17,23 +17,14 @@
 # under the License.
 #
 
-pkg.name: hw/drivers/lp5523
-pkg.description: Driver for the TI LP5523
+pkg.name: hw/drivers/led/tlc5971
+pkg.description: Driver for the TI TLC5971
 pkg.author: "Apache Mynewt dev@mynewt.apache.org"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
     - led
-    - texas
-    - lp5523
+    - tlc5971
         
 pkg.deps:
     - "@apache-mynewt-core/kernel/os"
     - "@apache-mynewt-core/hw/hal"
-    - "@apache-mynewt-core/hw/sensor"
-
-pkg.deps.LP5523_CLI:
-    - "@apache-mynewt-core/util/parse"
-
-pkg.req_apis:
-    - stats
-    - log

@@ -24,7 +24,9 @@
 extern "C" {
 #endif
 
-#include <sensor/sensor.h>
+#include <led/led_itf.h>
+
+#define LP5523_MAX_PAYLOAD   (10)
 
 #if MYNEWT_VAL(LED_ENABLE_ABSTRACTION)
 #include <led/led.h>
@@ -106,31 +108,8 @@ struct lp5523_cfg {
 
 struct lp5523 {
     struct os_dev dev;
-#if MYNEWT_VAL(LED_ENABLE_ABSTRACTION)
-    struct led_dev led_dev;
-#endif
     struct lp5523_cfg cfg;
 };
-
-#if MYNEWT_VAL(LED_ENABLE_ABSTRACTION) == 0
-/*
- * LED interface
- */
-struct led_itf {
-
-    /* LED interface type */
-    uint8_t li_type;
-
-    /* interface number */
-    uint8_t li_num;
-
-    /* CS pin - optional, only needed for SPI */
-    uint8_t li_cs_pin;
-
-    /* LED chip address, only needed for I2C */
-    uint16_t li_addr;
-};
-#endif
 
 /**** Config Values ****/
 #define LP5523_ASEL00_ADDR_32h            0x00
@@ -765,7 +744,77 @@ int lp5523_self_test(struct led_itf *itf);
  * @return 0 on success, non-zero error on failure.
  */
 int lp5523_init(struct os_dev *dev, void *arg);
-int lp5523_config(struct lp5523 *lp, struct lp5523_cfg *cfg);
+int lp5523_config(struct led_itf *itf, struct lp5523_cfg *cfg);
+
+/**
+ * Calculate Temp comp bits from correction factor
+ *
+ * @param corr_factor Correction factor -1.5 < corr_factor < +1.5
+ * @param temp_comp Temperature compensation bits 5 bits 11111 - 01111
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+lp5523_calc_temp_comp(float corr_factor, uint8_t *temp_comp);
+
+/**
+ * Set output ON for particular output
+ *
+ * @param itf Ptr to LED itf
+ * @param output Number of the output
+ * @param on Output 1-ON/0-OFF
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+lp5523_set_output_on(struct led_itf *itf, uint8_t output, uint8_t on);
+
+/**
+ * Get output ON for particular output
+ *
+ * @param itf Ptr to LED itf
+ * @param output Number of the output
+ * @param on Ptr to output variable Output 1-ON/0-OFF
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+lp5523_get_output_on(struct led_itf *itf, uint8_t output, uint8_t *on);
+
+/**
+ *
+ * Get status
+ *
+ * @param LED interface
+ * @param Ptr to status
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+lp5523_get_status(struct led_itf *itf, uint8_t *status);
+
+/**
+ * Get Output Current control
+ *
+ * @param itf LED interface
+ * @param output Number of the output
+ * @param curr_ctrl Ptr to Current control
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+lp5523_get_output_curr_ctrl(struct led_itf *itf, uint8_t output, uint8_t *curr_ctrl);
+
+/**
+ *
+ * Set output Current control
+ *
+ * @param itf LED interface
+ * @param output Number of the output
+ * @param curr_ctrl Current control value to set
+ */
+int
+lp5523_set_output_curr_ctrl(struct led_itf *itf, uint8_t output, uint8_t curr_ctrl);
 
 /**
  * Calculate Temp comp bits from correction factor

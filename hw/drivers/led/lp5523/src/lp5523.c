@@ -21,6 +21,7 @@
 #include <hal/hal_i2c.h>
 #include <log/log.h>
 #include <stats/stats.h>
+#include <string.h>
 
 #include "lp5523/lp5523.h"
 
@@ -939,14 +940,11 @@ lp5523_set_output_curr_ctrl(struct led_itf *itf, uint8_t output, uint8_t curr_ct
 }
 
 int
-lp5523_config(struct lp5523 *lp5523, struct lp5523_cfg *cfg)
+lp5523_config(struct led_itf *itf, struct lp5523_cfg *cfg)
 {
     int rc;
     int i;
-    struct led_itf *itf;
     uint8_t misc_val;
-
-    itf = LED_GET_ITF(&(lp5523->led_dev));
 
     itf->li_addr = LP5523_I2C_BASE_ADDR + cfg->asel;
 
@@ -1013,7 +1011,7 @@ lp5523_config(struct lp5523 *lp5523, struct lp5523_cfg *cfg)
         goto err;
     }
 
-    for (i = 1; i <= MYNEWT_VAL(LEDS_PER_DRIVER); i++) {
+    for (i = 1; i <= MYNEWT_VAL(LP5523_LEDS_PER_DRIVER); i++) {
         rc = lp5523_set_output_curr_ctrl(itf, i, cfg->per_led_cfg[i - 1].current_ctrl);
         if (rc) {
             goto err;
