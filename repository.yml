@@ -70,3 +70,4 @@ repo.deps:
         repo: mynewt-nimble
         vers:
             master: 0-dev
+            1.4.0: 1.0.0
