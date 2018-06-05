@@ -245,7 +245,6 @@ log_nmgr_encode_entry(struct log *log, struct log_offset *log_offset,
     }
     return (0);
 err:
-    ed->counter++;
     return (rc);
 }
 
