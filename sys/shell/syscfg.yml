@@ -45,7 +45,7 @@ syscfg.defs:
         value: 1
     SHELL_MAX_COMPAT_COMMANDS:
         description: 'Max number of compatibility commands'
-        value: 10
+        value: 20
     SHELL_COMPLETION:
         description: 'Include completion functionality'
         value: 1
