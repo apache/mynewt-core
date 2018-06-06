@@ -1202,7 +1202,7 @@ tcp_receive(struct tcp_pcb *pcb)
 
       pcb->polltmr = 0;
 
-#if LWIP_IPV6 && LWIP_ND6_TCP_REACHABILITY_HINTS
+#if LWIP_IPV6 && LWIP_ND6 && LWIP_ND6_TCP_REACHABILITY_HINTS
       if (ip_current_is_v6()) {
         /* Inform neighbor reachability of forward progress. */
         nd6_reachability_hint(ip6_current_src_addr());
@@ -1534,7 +1534,7 @@ tcp_receive(struct tcp_pcb *pcb)
         /* Acknowledge the segment(s). */
         tcp_ack(pcb);
 
-#if LWIP_IPV6 && LWIP_ND6_TCP_REACHABILITY_HINTS
+#if LWIP_IPV6 && LWIP_ND6 && LWIP_ND6_TCP_REACHABILITY_HINTS
         if (ip_current_is_v6()) {
           /* Inform neighbor reachability of forward progress. */
           nd6_reachability_hint(ip6_current_src_addr());
