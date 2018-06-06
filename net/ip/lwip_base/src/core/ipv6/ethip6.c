@@ -99,11 +99,16 @@ ethip6_output(struct netif *netif, struct pbuf *q, const ip6_addr_t *ip6addr)
   /* We have a unicast destination IP address */
   /* @todo anycast? */
 
+#if !LWIP_ND6
+   /* Neighbor discovery disabled; indicate no router. */
+   return ERR_RTE;
+#else
   /* Ask ND6 what to do with the packet. */
   result = nd6_get_next_hop_addr_or_queue(netif, q, ip6addr, &hwaddr);
   if (result != ERR_OK) {
     return result;
   }
+
 
   /* If no hardware address is returned, nd6 has queued the packet for later. */
   if (hwaddr == NULL) {
@@ -113,6 +118,7 @@ ethip6_output(struct netif *netif, struct pbuf *q, const ip6_addr_t *ip6addr)
   /* Send out the packet using the returned hardware address. */
   SMEMCPY(dest.addr, hwaddr, 6);
   return ethernet_output(netif, q, (const struct eth_addr*)(netif->hwaddr), &dest, ETHTYPE_IPV6);
+#endif
 }
 
 #endif /* LWIP_IPV6 && LWIP_ETHERNET */
