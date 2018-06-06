@@ -17,23 +17,13 @@
 # under the License.
 #
 
-pkg.name: net/ip/lwip_base
-pkg.description: LwIP
+pkg.name: net/ip/lwip_contrib/addons/ipv6_static_routing
+pkg.description: LwIP 
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://savannah.nongnu.org/git/?group=lwip"
 pkg.keywords:
-    - ip
     - ipv6
-    - tcp
-    - udp
+    - static route
 
 pkg.deps:
-    - net/ip
-
-pkg.deps.LWIP_IPV6_STATIC_ROUTING:
-    - '@apache-mynewt-core/net/ip/lwip_contrib/addons/ipv6_static_routing'
-
-pkg.cflags:
-    - -Wno-unused
-    - -Wno-error=address
-    - -DLWIP_HTTPD_STRNSTR_PRIVATE=0
+    - '@apache-mynewt-core/net/ip/lwip_base'

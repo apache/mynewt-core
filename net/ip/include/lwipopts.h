@@ -19,6 +19,8 @@
 #ifndef __LWIP_LWIPOPTS_H__
 #define __LWIP_LWIPOPTS_H__
 
+#include "syscfg/syscfg.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -182,7 +184,7 @@ extern "C" {
 
 /* ---------- Statistics options ---------- */
 /* XXX hook into sys/stats */
-#define LWIP_STATS                           0
+#define LWIP_STATS                      0
 
 #if LWIP_STATS
 #define LINK_STATS                      1
@@ -199,6 +201,21 @@ extern "C" {
 #define LWIP_PROVIDE_ERRNO 1
 #define LWIP_DONT_PROVIDE_BYTEORDER_FUNCTIONS 1
 #define ERRNO                     0
+
+
+/* -------------- Hooks -------------- */
+
+#if MYNEWT_VAL(LWIP_IPV6_STATIC_ROUTING)
+
+#define LWIP_HOOK_IP6_ROUTE             ip6_static_route
+
+struct netif;
+struct ip6_addr;
+
+struct netif *ip6_static_route(const struct ip6_addr *src,
+                               const struct ip6_addr *dest);
+
+#endif
 
 #ifdef __cplusplus
 }
