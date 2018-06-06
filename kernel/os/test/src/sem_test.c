@@ -117,6 +117,11 @@ sem_test_basic_handler(void *arg)
     struct os_sem *sem;
     os_error_t err;
 
+    /* Prevent unused-but-set-variable warning when system assert is
+     * enabled.
+     */
+    (void)t;
+
     sem = &g_sem1;
     t = os_sched_get_current_task();
 
