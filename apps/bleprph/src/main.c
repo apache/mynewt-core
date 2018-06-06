@@ -331,8 +331,6 @@ main(void)
     phy_init();
 #endif
 
-    conf_load();
-
     /* If this app is acting as the loader in a split image setup, jump into
      * the second stage application instead of starting the OS.
      */

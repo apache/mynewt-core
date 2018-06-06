@@ -309,8 +309,6 @@ main(void)
     rc = ble_svc_gap_device_name_set("nimble-blesplit");
     assert(rc == 0);
 
-    conf_load();
-
     /*
      * As the last thing, process events from default event queue.
      */
