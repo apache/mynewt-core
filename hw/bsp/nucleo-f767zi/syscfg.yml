@@ -6,7 +6,7 @@
 # to you under the Apache License, Version 2.0 (the
 # "License"); you may not use this file except in compliance
 # with the License.  You may obtain a copy of the License at
-# 
+#
 #  http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing,
@@ -25,17 +25,25 @@ syscfg.defs:
     TIMER_0:
         description: 'Timer 0'
         value:  1
-
     TIMER_1:
         description: 'Timer 1'
         value: 1
-
     TIMER_2:
         description: 'Timer 2'
         value: 1
 
     ETH_0:
         description: 'Ethernet driver for LwIP'
+        value: 0
+
+    PWM_0:
+        description: 'Support for PWM 0'
+        value: 0
+    PWM_1:
+        description: 'Support for PWM 1'
+        value: 0
+    PWM_2:
+        description: 'Support for PWM 2'
         value: 0
 
 syscfg.vals:

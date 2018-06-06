@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -48,25 +48,17 @@ extern uint8_t _ccram_start;
 #define LED_BLINK_PIN_1   MCU_GPIO_PORTB(3)
     
 #define LED_BLINK_PIN LED_BLINK_PIN_1
-    
-
+   
 /* UART ports */
-#if (MYNEWT_VAL(UART_0) && MYNEWT_VAL(UART_1))
-#   define  UART_CNT      2
-#   define  UART_0_DEV_ID 0
-#   define  UART_1_DEV_ID 1
-#elif MYNEWT_VAL(UART_0)
-#   define  UART_CNT      1
-#   define  UART_0_DEV_ID 0
-#elif MYNEWT_VAL(UART_1)
-#   define UART_CNT       1
-#   define  UART_1_DEV_ID 0
-#else
-#   define UART_CNT       0
-#endif
+#define UART_CNT (MYNEWT_VAL(UART_0) + MYNEWT_VAL(UART_1))
+#define UART_0_DEV_ID   0
+#define UART_1_DEV_ID   (UART_0_DEV_ID + MYNEWT_VAL(UART_0))
 
-#define _UART_DEV_NAME(id) ("uart" #id)
-#define UART_DEV_NAME(id) _UART_DEV_NAME(id)
+/* PWM */
+#define PWM_CNT (MYNEWT_VAL(PWM_0) + MYNEWT_VAL(PWM_1) + MYNEWT_VAL(PWM_2))
+#define PWM_0_DEV_ID    0
+#define PWM_1_DEV_ID    (PWM_0_DEV_ID + MYNEWT_VAL(PWM_0))
+#define PWM_2_DEV_ID    (PWM_1_DEV_ID + MYNEWT_VAL(PWM_1))
 
 #ifdef __cplusplus
 }

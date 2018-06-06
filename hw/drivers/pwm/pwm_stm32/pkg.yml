@@ -6,7 +6,7 @@
 # to you under the Apache License, Version 2.0 (the
 # "License"); you may not use this file except in compliance
 # with the License.  You may obtain a copy of the License at
-# 
+#
 #  http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing,
@@ -17,37 +17,20 @@
 # under the License.
 #
 
-pkg.name: "hw/bsp/nucleo-f303k8"
-pkg.type: bsp
-pkg.description: BSP definition for the Nucleo-F303K8 board.
-pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
+pkg.name: hw/drivers/pwm/pwm_stm32
+pkg.description: PWM driver for the STM32
+pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
-    - stm32
-    - stm32f3
-    - nucleo
 
-pkg.cflags: -DSTM32F303x8 -DNUCLEO_F303K8
-
-pkg.cflags.HARDFLOAT:
-    - -mfloat-abi=hard -mfpu=fpv4-sp-d16
+pkg.apis:
+    - PWM_HW_IMPL
 
 pkg.deps:
+    - hw/drivers/pwm
+
+pkg.deps.MCU_STM32F3:
     - hw/mcu/stm/stm32f3xx
-    - libc/baselibc
 
-pkg.deps.UART_0:
-    - hw/drivers/uart/uart_hal
-
-pkg.deps.UART_1:
-    - hw/drivers/uart/uart_hal
-
-pkg.deps.PWM_0:
-    - hw/drivers/pwm/pwm_stm32
-
-pkg.deps.PWM_1:
-    - hw/drivers/pwm/pwm_stm32
-
-pkg.deps.PWM_2:
-    - hw/drivers/pwm/pwm_stm32
-
+pkg.deps.MCU_STM32F7:
+    - hw/mcu/stm/stm32f7xx

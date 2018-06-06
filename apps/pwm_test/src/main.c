@@ -23,6 +23,34 @@
 #include <easing/easing.h>
 #include <console/console.h>
 
+#if (defined NUCLEO_F767ZI)
+#   define  PWM_TEST_CH_CFG_PIN  MCU_AFIO_GPIO(LED_BLINK_PIN, 2)
+#   define  PWM_TEST_CH_CFG_INV  false 
+#   define  PWM_TEST_CH_NUM      2
+#   define  PWM_TEST_IRQ_PRIO    0
+#elif (defined NUCLEO_F303RE)
+#   define  PWM_TEST_CH_CFG_PIN  MCU_AFIO_GPIO(LED_BLINK_PIN, 1)
+#   define  PWM_TEST_CH_CFG_INV  false 
+#   define  PWM_TEST_CH_NUM      0
+#   define  PWM_TEST_IRQ_PRIO    0
+#elif (defined NUCLEO_F303K8)
+#   define  PWM_TEST_CH_CFG_PIN  MCU_AFIO_GPIO(LED_BLINK_PIN, 1)
+#   define  PWM_TEST_CH_CFG_INV  false 
+#   define  PWM_TEST_CH_NUM      1
+#   define  PWM_TEST_IRQ_PRIO    0
+#else
+#   define  PWM_TEST_CH_CFG_PIN  LED_BLINK_PIN
+#   define  PWM_TEST_CH_CFG_INV  true 
+#   define  PWM_TEST_CH_NUM      0
+#   define  PWM_TEST_IRQ_PRIO    3
+#endif
+
+#if MYNEWT_VAL(SOFT_PWM)
+#   define PWM_TEST_DEV   "spwm0"
+#else
+#   define PWM_TEST_DEV   "pwm0"
+#endif
+
 struct pwm_dev *pwm;
 static uint32_t pwm_freq = 200;
 static uint32_t max_steps = 200; /* two seconds motion up/down */
@@ -37,7 +65,7 @@ pwm_cycle_handler(void* unused)
 {
     int16_t eased;
     eased = easing_funct(step, max_steps, top_val);
-    pwm_set_duty_cycle(pwm, 0, eased);
+    pwm_set_duty_cycle(pwm, PWM_TEST_CH_NUM, eased);
     if (step >= max_steps || step <= 0) {
         up = !up;
     }
@@ -96,13 +124,13 @@ int
 pwm_init(void)
 {
     struct pwm_chan_cfg chan_conf = {
-        .pin = LED_BLINK_PIN,
-        .inverted = true,
+        .pin = PWM_TEST_CH_CFG_PIN,
+        .inverted = PWM_TEST_CH_CFG_INV,
         .data = NULL,
     };
     struct pwm_dev_cfg dev_conf = {
         .n_cycles = pwm_freq * 6, /* 6 seconds cycles */
-        .int_prio = 3,
+        .int_prio = PWM_TEST_IRQ_PRIO,
         .cycle_handler = pwm_cycle_handler, /* this won't work on soft_pwm */
         .seq_end_handler = pwm_end_seq_handler, /* this won't work on soft_pwm */
         .cycle_data = NULL,
@@ -111,11 +139,7 @@ pwm_init(void)
     };
     int rc;
 
-#if MYNEWT_VAL(SOFT_PWM)
-    pwm = (struct pwm_dev *) os_dev_open("spwm0", 0, NULL);
-#else
-    pwm = (struct pwm_dev *) os_dev_open("pwm0", 0, NULL);
-#endif
+    pwm = (struct pwm_dev *) os_dev_open(PWM_TEST_DEV, 0, NULL);
 
     pwm_configure_device(pwm, &dev_conf);
 
@@ -123,12 +147,12 @@ pwm_init(void)
     pwm_set_frequency(pwm, pwm_freq);
     top_val = (uint16_t) pwm_get_top_value(pwm);
 
-    /* setup led 1 */
-    rc = pwm_configure_channel(pwm, 0, &chan_conf);
+    /* setup led */
+    rc = pwm_configure_channel(pwm, PWM_TEST_CH_NUM, &chan_conf);
     assert(rc == 0);
 
     /* console_printf ("Easing: sine io\n"); */
-    rc = pwm_set_duty_cycle(pwm, 0, top_val);
+    rc = pwm_set_duty_cycle(pwm, PWM_TEST_CH_NUM, top_val);
     rc = pwm_enable(pwm);
     assert(rc == 0);
 

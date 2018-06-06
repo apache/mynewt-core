@@ -18,6 +18,7 @@
  */
 #include <assert.h>
 
+#include "bsp/bsp.h"
 #include "os/mynewt.h"
 
 #if MYNEWT_VAL(TRNG)
@@ -52,7 +53,35 @@
 #include <stm32_eth/stm32_eth_cfg.h>
 #endif
 
-#include "bsp/bsp.h"
+#if PWM_CNT
+#include <pwm_stm32/pwm_stm32.h>
+static struct pwm_dev stm32_pwm_dev_driver[PWM_CNT];
+static const char *stm32_pwm_dev_name[PWM_CNT] = {
+#if PWM_CNT > 0
+    "pwm0",
+#endif
+#if PWM_CNT > 1
+    "pwm1",
+#endif
+#if PWM_CNT > 2
+    "pwm2",
+#endif
+};
+
+static struct stm32_pwm_conf  stm32_pwm_config[PWM_CNT] = {
+#if MYNEWT_VAL(PWM_0)
+    { TIM3, TIM3_IRQn },
+#endif
+#if MYNEWT_VAL(PWM_1)
+    { TIM4, TIM4_IRQn },
+#endif
+#if MYNEWT_VAL(PWM_2)
+    { TIM11, TIM1_TRG_COM_TIM11_IRQn },
+#endif
+};
+
+
+#endif
 
 #if MYNEWT_VAL(TRNG)
 static struct trng_dev os_bsp_trng;
@@ -179,7 +208,6 @@ void
 hal_bsp_init(void)
 {
     int rc;
-
     (void)rc;
 
     hal_system_clock_start();
@@ -230,6 +258,36 @@ hal_bsp_init(void)
 
 #if MYNEWT_VAL(ETH_0)
     stm32_eth_init(&eth_cfg);
+#endif
+
+#if MYNEWT_VAL(PWM_0)
+    rc = os_dev_create((struct os_dev *) &stm32_pwm_dev_driver[PWM_0_DEV_ID],
+        (char*)stm32_pwm_dev_name[PWM_0_DEV_ID],
+        OS_DEV_INIT_KERNEL,
+        OS_DEV_INIT_PRIO_DEFAULT,
+        stm32_pwm_dev_init,
+        &stm32_pwm_config[PWM_0_DEV_ID]);
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(PWM_1)
+    rc = os_dev_create((struct os_dev *) &stm32_pwm_dev_driver[PWM_1_DEV_ID],
+        (char*)stm32_pwm_dev_name[PWM_1_DEV_ID],
+        OS_DEV_INIT_KERNEL,
+        OS_DEV_INIT_PRIO_DEFAULT,
+        stm32_pwm_dev_init,
+        &stm32_pwm_config[PWM_1_DEV_ID]);
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(PWM_2)
+    rc = os_dev_create((struct os_dev *) &stm32_pwm_dev_driver[PWM_2_DEV_ID],
+        (char*)stm32_pwm_dev_name[PWM_2_DEV_ID],
+        OS_DEV_INIT_KERNEL,
+        OS_DEV_INIT_PRIO_DEFAULT,
+        stm32_pwm_dev_init,
+        &stm32_pwm_config[PWM_2_DEV_ID]);
+    assert(rc == 0);
 #endif
 }
 
