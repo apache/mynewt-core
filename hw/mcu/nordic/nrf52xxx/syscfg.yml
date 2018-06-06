@@ -181,6 +181,10 @@ syscfg.defs:
         description: 'DIO3 pin for QSPI'
         value: -1
 
+    NFC_PINS_AS_GPIO:
+        description: 'Use NFC pins as GPIOs instead of NFC functionality'
+        value: 1
+
 
 # The XTAL_xxx definitions are used to set the clock source used for the low
 # frequency clock. It is required that at least one of these sources is

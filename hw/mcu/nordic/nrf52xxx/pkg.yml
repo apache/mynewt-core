@@ -35,3 +35,5 @@ pkg.ign_files.BSP_NRF52810:
     - "hal_spi.c"
     - "hal_i2c.c"
 
+pkg.cflags.NFC_PINS_AS_GPIO: 
+    - '-DCONFIG_NFCT_PINS_AS_GPIOS=1'
