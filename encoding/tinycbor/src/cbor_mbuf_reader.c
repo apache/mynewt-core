@@ -66,7 +66,7 @@ cbor_mbuf_reader_cmp(struct cbor_decoder_reader *d, char *buf, int offset,
                      size_t len)
 {
     struct cbor_mbuf_reader *cb = (struct cbor_mbuf_reader *) d;
-    return os_mbuf_cmpf(cb->m, offset + cb->init_off, buf, len);
+    return os_mbuf_cmpf(cb->m, offset + cb->init_off, buf, len) == 0;
 }
 
 static uintptr_t

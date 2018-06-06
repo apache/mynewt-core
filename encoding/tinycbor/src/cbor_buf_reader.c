@@ -55,7 +55,7 @@ cbor_buf_reader_cmp(struct cbor_decoder_reader *d, char *dst, int src_offset,
                     size_t len)
 {
     struct cbor_buf_reader *cb = (struct cbor_buf_reader *) d;
-    return memcmp(dst, cb->buffer + src_offset, len);
+    return memcmp(dst, cb->buffer + src_offset, len) == 0;
 }
 
 static uintptr_t
