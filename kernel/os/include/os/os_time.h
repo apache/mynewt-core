@@ -71,9 +71,14 @@ extern "C" {
 #define UINT32_MAX  0xFFFFFFFFU
 #endif
 
+#ifndef INT32_MAX
+#define INT32_MAX   0x7FFFFFFF
+#endif
+
 typedef uint32_t os_time_t;
 typedef int32_t os_stime_t;
 #define OS_TIME_MAX UINT32_MAX
+#define OS_STIME_MAX INT32_MAX
 
 /* Used to wait forever for events and mutexs */
 #define OS_TIMEOUT_NEVER    (UINT32_MAX)
