@@ -1059,3 +1059,89 @@ os_mbuf_trim_front(struct os_mbuf *om)
     return om;
 }
 
+int
+os_mbuf_widen(struct os_mbuf *om, uint16_t off, uint16_t len)
+{
+    struct os_mbuf *first_new;
+    struct os_mbuf *edge_om;
+    struct os_mbuf *prev;
+    struct os_mbuf *cur;
+    uint16_t rem_len;
+    uint16_t sub_off;
+    int rc;
+
+    /* Locate the mbuf and offset within the chain where the gap will be
+     * inserted.
+     */
+    edge_om = os_mbuf_off(om, off, &sub_off);
+    if (edge_om == NULL) {
+        return SYS_EINVAL;
+    }
+
+    /* If the mbuf has sufficient capacity for the gap, just make room within
+     * the mbuf.
+     */
+    if (OS_MBUF_TRAILINGSPACE(edge_om) >= len) {
+        memmove(edge_om->om_data + sub_off + len,
+                edge_om->om_data + sub_off,
+                edge_om->om_len - sub_off);
+        edge_om->om_len += len;
+        if (OS_MBUF_IS_PKTHDR(om)) {
+            OS_MBUF_PKTHDR(om)->omp_len += len;
+        }
+        return 0;
+    }
+
+    /* Otherwise, allocate new mbufs until the chain has sufficient capacity
+     * for the gap.
+     */
+    rem_len = len;
+    first_new = NULL;
+    prev = NULL;
+    while (rem_len > 0) {
+        cur = os_mbuf_get(om->om_omp, 0);
+        if (cur == NULL) {
+            /* Free only the mbufs that this function allocated. */
+            os_mbuf_free_chain(first_new);
+            return SYS_ENOMEM;
+        }
+
+        /* Remember the start of the chain of new mbufs. */
+        if (first_new == NULL) {
+            first_new = cur;
+        }
+
+        if (rem_len > OS_MBUF_TRAILINGSPACE(cur)) {
+            cur->om_len = OS_MBUF_TRAILINGSPACE(cur);
+        } else {
+            cur->om_len = rem_len;
+        }
+        rem_len -= cur->om_len;
+
+        if (prev != NULL) {
+            SLIST_NEXT(prev, om_next) = cur;
+        }
+        prev = cur;
+    }
+
+    /* Move the misplaced data from the edge mbuf over to the right side of the
+     * gap.
+     */
+    rc = os_mbuf_append(prev, edge_om->om_data + sub_off,
+                        edge_om->om_len - sub_off);
+    if (rc != 0) {
+        os_mbuf_free_chain(first_new);
+        return SYS_ENOMEM;
+    }
+    edge_om->om_len = sub_off;
+
+    /* Insert the gap into the chain. */
+    SLIST_NEXT(prev, om_next) = SLIST_NEXT(edge_om, om_next);
+    SLIST_NEXT(edge_om, om_next) = first_new;
+
+    if (OS_MBUF_IS_PKTHDR(om)) {
+        OS_MBUF_PKTHDR(om)->omp_len += len;
+    }
+
+    return 0;
+}
