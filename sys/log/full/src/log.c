@@ -34,7 +34,6 @@ struct log_info g_log_info;
 
 static STAILQ_HEAD(, log) g_log_list = STAILQ_HEAD_INITIALIZER(g_log_list);
 static const char *g_log_module_list[ MYNEWT_VAL(LOG_MAX_USER_MODULES) ];
-static uint8_t log_inited;
 static uint8_t log_written;
 
 #if MYNEWT_VAL(LOG_CLI)
@@ -63,12 +62,9 @@ log_init(void)
 
     (void)rc;
 
-    if (log_inited) {
-        return;
-    }
-    log_inited = 1;
     log_written = 0;
 
+    STAILQ_INIT(&g_log_list);
     g_log_info.li_version = MYNEWT_VAL(LOG_VERSION);
     g_log_info.li_next_index = 0;
 
