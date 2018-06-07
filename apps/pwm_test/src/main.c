@@ -116,6 +116,9 @@ pwm_end_seq_handler(void* unused)
     } else {
         func_num++;
     }
+    rc = pwm_disable(pwm); /* Not needed but used for testing purposes. */
+    assert(rc == 0);
+
     rc = pwm_enable(pwm);
     assert(rc == 0);
 }
