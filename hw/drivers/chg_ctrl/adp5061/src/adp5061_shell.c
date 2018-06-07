@@ -20,13 +20,14 @@
 #include <string.h>
 #include <errno.h>
 #include <os/mynewt.h>
+
+#if MYNEWT_VAL(ADP5061_CLI)
+
 #include <console/console.h>
 #include <shell/shell.h>
 #include <adp5061/adp5061.h>
 #include <parse/parse.h>
 #include "adp5061_priv.h"
-
-#if MYNEWT_VAL(ADP5061_CLI)
 
 static struct adp5061_dev *adp5061_dev;
 
