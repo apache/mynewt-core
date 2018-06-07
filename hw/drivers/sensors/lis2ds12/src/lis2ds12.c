@@ -1558,7 +1558,7 @@ int lis2ds12_run_self_test(struct sensor_itf *itf, int *result)
     }
 
     /* wait 200ms */
-    os_time_delay(OS_TICKS_PER_SEC / 200);
+    os_time_delay(OS_TICKS_PER_SEC / 5 + 1);
 
     rc = lis2ds12_get_fs(itf, &fs);
     if (rc) {
@@ -1566,7 +1566,7 @@ int lis2ds12_run_self_test(struct sensor_itf *itf, int *result)
     }
 
     //discard
-    //TODO poll DRDY in STATUS (27h
+    //TODO poll DRDY in STATUS (27h) instead?
     rc = lis2ds12_get_data(itf, fs, &(data[0]), &(data[1]), &(data[2]));
     if (rc) {
         return rc;
@@ -1575,7 +1575,7 @@ int lis2ds12_run_self_test(struct sensor_itf *itf, int *result)
     /* take no st offset reading */
     for(i=0; i<LIS2DS12_ST_NUM_READINGS; i++) {
 
-        // TODO poll DRDY in STATUS (27h) instead
+        // TODO poll DRDY in STATUS (27h) instead?
         /* wait at least 20 ms */
         os_time_delay(OS_TICKS_PER_SEC / 50 + 1);
 
@@ -1603,10 +1603,10 @@ int lis2ds12_run_self_test(struct sensor_itf *itf, int *result)
     }
 
     /* wait 200ms */
-    os_time_delay(OS_TICKS_PER_SEC / 200);
+    os_time_delay(OS_TICKS_PER_SEC / 5 + 1);
 
     //discard
-    //TODO poll DRDY in STATUS (27h
+    //TODO poll DRDY in STATUS (27h) instead?
     rc = lis2ds12_get_data(itf, fs, &(data[0]), &(data[1]), &(data[2]));
     if (rc) {
         return rc;
@@ -1615,7 +1615,7 @@ int lis2ds12_run_self_test(struct sensor_itf *itf, int *result)
     /* take positive offset reading */
     for(i=0; i<LIS2DS12_ST_NUM_READINGS; i++) {
 
-        // TODO poll DRDY in STATUS (27h) instead
+        // TODO poll DRDY in STATUS (27h) instead?
         /* wait at least 20 ms */
         os_time_delay(OS_TICKS_PER_SEC / 50 + 1);
 
@@ -1652,7 +1652,7 @@ int lis2ds12_run_self_test(struct sensor_itf *itf, int *result)
     }
 
     /* wait 200ms */
-    os_time_delay(OS_TICKS_PER_SEC / 200);
+    os_time_delay(OS_TICKS_PER_SEC / 5 + 1);
 
     //discard
     rc = lis2ds12_get_data(itf, fs, &(data[0]), &(data[1]), &(data[2]));
@@ -1663,7 +1663,7 @@ int lis2ds12_run_self_test(struct sensor_itf *itf, int *result)
     /* take negative offset reading */
     for(i=0; i<LIS2DS12_ST_NUM_READINGS; i++) {
 
-        // TODO poll DRDY in STATUS (27h) instead
+        // TODO poll DRDY in STATUS (27h) instead?
         /* wait at least 20 ms */
         os_time_delay(OS_TICKS_PER_SEC / 50 + 1);
 
@@ -1696,7 +1696,7 @@ int lis2ds12_run_self_test(struct sensor_itf *itf, int *result)
     }
 
     /* wait 200ms */
-    os_time_delay(OS_TICKS_PER_SEC / 200);
+    os_time_delay(OS_TICKS_PER_SEC / 5 + 1);
 
     return 0;
 }
