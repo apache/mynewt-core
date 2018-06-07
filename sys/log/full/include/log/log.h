@@ -154,7 +154,7 @@ struct log_entry_hdr {
 #define LOG_STORE_CBMEM      2
 #define LOG_STORE_FCB        3
 
-/* UTC Timestamnp for Jan 2016 00:00:00 */
+/* UTC Timestamp for Jan 2016 00:00:00 */
 #define UTC01_01_2016    1451606400
 
 #define LOG_NAME_MAX_LEN    (64)
@@ -253,8 +253,50 @@ const char *log_module_get_name(uint8_t id);
 int log_register(char *name, struct log *log, const struct log_handler *,
                  void *arg, uint8_t level);
 int log_append_typed(struct log *, uint8_t, uint8_t, uint8_t, void *, uint16_t);
-int log_append_mbuf_typed(struct log *, uint8_t, uint8_t, uint8_t,
-                          struct os_mbuf *);
+
+/**
+ * @brief Logs the contents of the provided mbuf, only freeing the mbuf on
+ * failure.
+ *
+ * Logs the contents of the provided mbuf, only freeing the mbuf on failure.
+ * On success, the mbuf remains allocated, but its structure may have been
+ * modified by pullup operations.  The updated mbuf address is passed back to
+ * the caller via a write to the supplied mbuf pointer-to-pointer.
+ *
+ * @param log                   The log to write to.
+ * @param module                The module ID of the entry to write.
+ * @param level                 The severity of the entry to write; one of the
+ *                                  `LOG_LEVEL_[...]` constants.
+ * @param etype                 The type of data to write; one of the
+ *                                  `LOG_ETYPE_[...]` constants.
+ * @param om_ptr                Indirectly points to the mbuf to write.  This
+ *                                  function updates the mbuf address if it
+ *                                  changes.
+ *
+ * @return                      0 on success; nonzero on failure.
+ */
+int log_append_mbuf_typed_no_free(struct log *log, uint8_t module,
+                                  uint8_t level, uint8_t etype,
+                                  struct os_mbuf **om_ptr);
+
+/**
+ * @brief Logs the contents of the provided mbuf.
+ *
+ * Logs the contents of the provided mbuf.  This function always frees the mbuf
+ * regardless of the outcome.
+ *
+ * @param log                   The log to write to.
+ * @param module                The module ID of the entry to write.
+ * @param level                 The severity of the entry to write; one of the
+ *                                  `LOG_LEVEL_[...]` constants.
+ * @param etype                 The type of data to write; one of the
+ *                                  `LOG_ETYPE_[...]` constants.
+ * @param om                    The mbuf to write.
+ *
+ * @return                      0 on success; nonzero on failure.
+ */
+int log_append_mbuf_typed(struct log *log, uint8_t module, uint8_t level,
+                          uint8_t etype, struct os_mbuf *om);
 
 #if MYNEWT_VAL(LOG_CONSOLE)
 struct log *log_console_get(void);
@@ -266,6 +308,14 @@ log_append(struct log *log, uint8_t module, uint8_t level, void *data,
            uint16_t len)
 {
     return log_append_typed(log, module, level, LOG_ETYPE_STRING, data, len);
+}
+
+static inline int
+log_append_mbuf_no_free(struct log *log, uint8_t module, uint8_t level,
+                        struct os_mbuf **om)
+{
+    return log_append_mbuf_typed_no_free(log, module, level, LOG_ETYPE_STRING,
+                                         om);
 }
 
 static inline int
