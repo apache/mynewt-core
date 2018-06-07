@@ -256,6 +256,11 @@ int log_append_typed(struct log *, uint8_t, uint8_t, uint8_t, void *, uint16_t);
 int log_append_mbuf_typed(struct log *, uint8_t, uint8_t, uint8_t,
                           struct os_mbuf *);
 
+#if MYNEWT_VAL(LOG_CONSOLE)
+struct log *log_console_get(void);
+void log_console_init(void);
+#endif
+
 static inline int
 log_append(struct log *log, uint8_t module, uint8_t level, void *data,
            uint16_t len)
