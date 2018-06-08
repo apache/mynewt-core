@@ -47,11 +47,13 @@ conf_dump_running(void)
 {
     struct conf_handler *ch;
 
+    conf_lock();
     SLIST_FOREACH(ch, &conf_handlers, ch_list) {
         if (ch->ch_export) {
             ch->ch_export(conf_running_one, CONF_EXPORT_SHOW);
         }
     }
+    conf_unlock();
 }
 
 #if MYNEWT_VAL(CONFIG_CLI_DEBUG)
@@ -66,9 +68,11 @@ conf_dump_saved(void)
 {
     struct conf_store *cs;
 
+    conf_lock();
     SLIST_FOREACH(cs, &conf_load_srcs, cs_next) {
         cs->cs_itf->csi_load(cs, conf_saved_one, NULL);
     }
+    conf_unlock();
 }
 #endif
 
