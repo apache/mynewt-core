@@ -13,6 +13,7 @@ OS User Guide
    Compile-Time Configuration <modules/sysinitconfig/sysinitconfig>
    Console <modules/console/console>
    Shell <modules/shell/shell>
+   File System <modules/fs/fs>
    Test Utilities <modules/testutil/testutil>
    JSON <modules/json/json>
    Statistics <modules/stats/stats>
