@@ -339,7 +339,10 @@ nrf52_pwm_close(struct os_dev *odev)
         return (EINVAL);
     }
 
-    nrfx_pwm_uninit(&instances[inst_id].drv_instance);
+    if(instances[inst_id].playing) {
+        nrfx_pwm_uninit(&instances[inst_id].drv_instance);
+    }
+
     cleanup_instance(inst_id);
 
     if (os_started()) {
@@ -545,8 +548,13 @@ nrf52_pwm_disable(struct pwm_dev *dev)
         return (-EINVAL);
     }
 
+    if (!instances[inst_id].playing) {
+        return (-EINVAL);
+    }
+
     nrfx_pwm_uninit(&instances[inst_id].drv_instance);
     instances[inst_id].playing = false;
+
     return (0);
 }
 
