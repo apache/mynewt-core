@@ -27,7 +27,7 @@
 extern "C" {
 #endif
 
-/*
+/**
  * Common interface to access files.
  */
 struct fs_file;
@@ -53,7 +53,7 @@ int fs_dirent_name(const struct fs_dirent *, size_t max_len,
   char *out_name, uint8_t *out_name_len);
 int fs_dirent_is_dir(const struct fs_dirent *);
 
-/*
+/**
  * File access flags.
  */
 #define FS_ACCESS_READ          0x01
@@ -61,7 +61,7 @@ int fs_dirent_is_dir(const struct fs_dirent *);
 #define FS_ACCESS_APPEND        0x04
 #define FS_ACCESS_TRUNCATE      0x08
 
-/*
+/**
  * File access return codes.
  */
 #define FS_EOK          0  /* Success */
