@@ -138,6 +138,7 @@ struct ts_config {
 };
 
 void tu_restart(void);
+void tu_time_advance(os_time_t ticks);
 void tu_start_os(const char *test_task_name, os_task_func_t test_task_handler);
 
 /*

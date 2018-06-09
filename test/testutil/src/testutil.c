@@ -44,6 +44,9 @@ int tu_any_failed;
 
 struct ts_testsuite_list *ts_suites;
 
+/* XXX: No bueno. */
+extern struct os_callout_list g_callout_list;
+
 void
 tu_init(void)
 {
@@ -128,4 +131,31 @@ tu_start_os(const char *test_task_name, os_task_func_t test_task_handler)
     tu_create_test_task(test_task_name, test_task_handler);
 
     os_start();
+}
+
+void
+tu_time_advance(os_time_t ticks)
+{
+    const struct os_callout *c;
+    os_stime_t until;
+    os_stime_t rem;
+    os_time_t end;
+
+    end = os_time_get() + ticks;
+
+    /* Advance time in chunks until the total requested time has elapsed.
+     * Chunk length is based on the time of the next scheduled event.
+     */
+    while ((rem = end - os_time_get()) > 0) {
+        c = TAILQ_FIRST(&g_callout_list);
+        if (c != NULL) {
+            until = min(c->c_ticks - os_time_get(), rem);
+        } else {
+            until = rem;
+        }
+
+        /* XXX: Account for mutex, semaphore, and eventq timeouts. */
+
+        os_time_advance(until);
+    }
 }
