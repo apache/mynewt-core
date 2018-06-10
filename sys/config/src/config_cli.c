@@ -129,7 +129,7 @@ shell_conf_command(int argc, char **argv)
     } else {
         rc = conf_set_value(name, val);
         if (rc) {
-            console_printf("Failed to set\n");
+            console_printf("Failed to set, err: %d\n", rc);
             goto err;
         }
     }
