@@ -1099,7 +1099,7 @@ SX1272ReadBuffer(uint16_t addr, uint8_t *buffer, uint8_t size)
     hal_gpio_write(RADIO_NSS, 0);
     hal_spi_tx_val(RADIO_SPI_IDX, addr & 0x7f);
     for(i = 0; i < size; i++) {
-        hal_spi_tx_val(RADIO_SPI_IDX, buffer[i]);
+        buffer[i] = hal_spi_tx_val(RADIO_SPI_IDX, 0);
     }
     hal_gpio_write(RADIO_NSS, 1);
 #endif
