@@ -44,6 +44,8 @@
  */
 #define LIS2DW12_MAX_INT_WAIT (4 * OS_TICKS_PER_SEC)
 
+#define LIS2DW12_ST_NUM_READINGS 5
+
 const struct lis2dw12_notif_cfg dflt_notif_cfg[] = {
     {
       .event     = SENSOR_EVENT_TYPE_SINGLE_TAP,
@@ -2055,26 +2057,67 @@ int lis2dw12_get_int1_on_int2_map(struct sensor_itf *itf, uint8_t *val)
 int lis2dw12_run_self_test(struct sensor_itf *itf, int *result)
 {
     int rc;
-    /*configure min and max values for reading 5 samples, and accounting for
-     * both negative and positive offset */
-    int min = LIS2DW12_ST_MIN*5*2;
-    int max = LIS2DW12_ST_MAX*5*2;
-
-    int16_t data[3], diff[3] = {0,0,0};
+    int16_t no_st[3], st[3], data[3] = {0,0,0};
+    int32_t scratch[3] = {0,0,0};
     int i;
     uint8_t prev_config[6];
-    /* set config per datasheet, with positive self test mode enabled. */
-    uint8_t st_config[] = {0x44, 0x04, 0x40, 0x00, 0x00, 0x10};
+    *result = 0;
+    uint8_t config[6] = { LIS2DW12_DATA_RATE_50HZ | LIS2DW12_PM_HIGH_PERF, LIS2DW12_CTRL_REG2_IF_ADD_INC | LIS2DW12_CTRL_REG2_BDU, 0x00, 0x00, 0x00, LIS2DW12_FS_4G};
+    uint8_t fs;
 
     rc = lis2dw12_readlen(itf, LIS2DW12_REG_CTRL_REG1, prev_config, 6);
     if (rc) {
         return rc;
     }
-    rc = lis2dw12_writelen(itf, LIS2DW12_REG_CTRL_REG2, &st_config[1], 5);
-    rc = lis2dw12_writelen(itf, LIS2DW12_REG_CTRL_REG1, st_config, 1);
+
+    rc = lis2dw12_writelen(itf, LIS2DW12_REG_CTRL_REG2, &config[1], 5);
     if (rc) {
         return rc;
     }
+
+    rc = lis2dw12_write8(itf, LIS2DW12_REG_CTRL_REG1, config[0]);
+    if (rc) {
+        return rc;
+    }
+
+    /* wait 200ms */
+    os_time_delay(OS_TICKS_PER_SEC / 5 + 1);
+
+    rc = lis2dw12_get_fs(itf, &fs);
+    if (rc) {
+        return rc;
+    }
+
+    //discard
+    //TODO poll DRDY in STATUS (27h) instead?
+    rc = lis2dw12_get_data(itf, fs, &(data[0]), &(data[1]), &(data[2]));
+    if (rc) {
+        return rc;
+    }
+
+    /* take no st offset reading */
+    for(i=0; i<LIS2DW12_ST_NUM_READINGS; i++) {
+
+        // TODO poll DRDY in STATUS (27h) instead?
+        /* wait at least 20 ms */
+        os_time_delay(OS_TICKS_PER_SEC / 50 + 1);
+
+        rc = lis2dw12_get_data(itf, fs, &(data[0]), &(data[1]), &(data[2]));
+        if (rc) {
+            return rc;
+        }
+        scratch[0] += data[0];
+        scratch[1] += data[1];
+        scratch[2] += data[2];
+    }
+
+    //average
+    no_st[0] = scratch[0]/LIS2DW12_ST_NUM_READINGS;
+    no_st[1] = scratch[1]/LIS2DW12_ST_NUM_READINGS;
+    no_st[2] = scratch[2]/LIS2DW12_ST_NUM_READINGS;
+
+    //clean scratch
+    memset(&scratch, 0, sizeof scratch);
 
     /* go into self test mode 1 */
     rc = lis2dw12_set_self_test(itf, LIS2DW12_ST_MODE_MODE1);
@@ -2082,25 +2125,47 @@ int lis2dw12_run_self_test(struct sensor_itf *itf, int *result)
         return rc;
     }
 
-    /* wait 100ms */
-    os_time_delay(OS_TICKS_PER_SEC / 100);
-    rc = lis2dw12_get_data(itf, 2, &(data[0]), &(data[1]), &(data[2]));
+    /* wait 200ms */
+    os_time_delay(OS_TICKS_PER_SEC / 5 + 1);
+
+    //discard
+    //TODO poll DRDY in STATUS (27h) instead?
+    rc = lis2dw12_get_data(itf, fs, &(data[0]), &(data[1]), &(data[2]));
     if (rc) {
         return rc;
     }
 
     /* take positive offset reading */
-    for(i=0; i<5; i++) {
+    for(i=0; i<LIS2DW12_ST_NUM_READINGS; i++) {
 
-        rc = lis2dw12_get_data(itf, 2, &(data[0]), &(data[1]), &(data[2]));
+        // TODO poll DRDY in STATUS (27h) instead?
+        /* wait at least 20 ms */
+        os_time_delay(OS_TICKS_PER_SEC / 50 + 1);
+
+        rc = lis2dw12_get_data(itf, fs, &(data[0]), &(data[1]), &(data[2]));
         if (rc) {
             return rc;
         }
-        diff[0] += data[0];
-        diff[1] += data[1];
-        diff[2] += data[2];
-        /* wait at least 20 ms */
-        os_time_delay(OS_TICKS_PER_SEC / 50 + 1);
+        scratch[0] += data[0];
+        scratch[1] += data[1];
+        scratch[2] += data[2];
+    }
+
+    //average
+    st[0] = scratch[0]/LIS2DW12_ST_NUM_READINGS;
+    st[1] = scratch[1]/LIS2DW12_ST_NUM_READINGS;
+    st[2] = scratch[2]/LIS2DW12_ST_NUM_READINGS;
+
+    //clean scratch
+    memset(&scratch, 0, sizeof scratch);
+
+    // |Min(ST_X)| <=|OUTX_AVG_ST - OUTX_AVG_NO_ST| <= |Max(ST_X)|
+    /* compare values to thresholds */
+    for (i = 0; i < 3; i++) {
+        int16_t diff = abs(st[i] - no_st[i]);
+        if (diff < LIS2DW12_ST_MIN || diff > LIS2DW12_ST_MAX) {
+            *result -= 1;
+        }
     }
 
     /* go into self test mode 2 */
@@ -2109,43 +2174,55 @@ int lis2dw12_run_self_test(struct sensor_itf *itf, int *result)
         return rc;
     }
 
-    os_time_delay(OS_TICKS_PER_SEC / 50 + 1);
-    rc = lis2dw12_get_data(itf, 2, &(data[0]), &(data[1]), &(data[2]));
+    /* wait 200ms */
+    os_time_delay(OS_TICKS_PER_SEC / 5 + 1);
+
+    //discard
+    rc = lis2dw12_get_data(itf, fs, &(data[0]), &(data[1]), &(data[2]));
     if (rc) {
         return rc;
     }
 
     /* take negative offset reading */
-    for (i=0; i<5; i++) {
+    for(i=0; i<LIS2DW12_ST_NUM_READINGS; i++) {
 
-            rc = lis2dw12_get_data(itf, 2, &(data[0]), &(data[1]), &(data[2]));
-            if (rc) {
-                return rc;
-            }
-            diff[0] -= data[0];
-            diff[1] -= data[1];
-            diff[2] -= data[2];
-            /* wait at least 20 ms */
-            os_time_delay(OS_TICKS_PER_SEC / 50 + 1);
-        }
+        // TODO poll DRDY in STATUS (27h) instead?
+        /* wait at least 20 ms */
+        os_time_delay(OS_TICKS_PER_SEC / 50 + 1);
 
-    /* disable self test mod */
-    rc = lis2dw12_writelen(itf, LIS2DW12_REG_CTRL_REG1, prev_config, 6);
+        rc = lis2dw12_get_data(itf, fs, &(data[0]), &(data[1]), &(data[2]));
         if (rc) {
             return rc;
         }
+        scratch[0] += data[0];
+        scratch[1] += data[1];
+        scratch[2] += data[2];
+    }
+
+    //average
+    st[0] = scratch[0]/LIS2DW12_ST_NUM_READINGS;
+    st[1] = scratch[1]/LIS2DW12_ST_NUM_READINGS;
+    st[2] = scratch[2]/LIS2DW12_ST_NUM_READINGS;
 
     /* compare values to thresholds */
-    *result = 0;
     for (i = 0; i < 3; i++) {
-        if ((diff[i] < min) || (diff[i] > max)) {
+        int16_t diff = abs(st[i] - no_st[i]);
+        if (diff < LIS2DW12_ST_MIN || diff > LIS2DW12_ST_MAX) {
             *result -= 1;
         }
     }
 
+    /* disable self test mode */
+    rc = lis2dw12_writelen(itf, LIS2DW12_REG_CTRL_REG1, prev_config, 6);
+    if (rc) {
+        return rc;
+    }
+
+    /* wait 200ms */
+    os_time_delay(OS_TICKS_PER_SEC / 5 + 1);
+
     return 0;
 }
-
 
 static void
 init_interrupt(struct lis2dw12_int *interrupt, struct sensor_int *ints)
