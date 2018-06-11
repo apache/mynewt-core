@@ -62,7 +62,7 @@ struct log_offset {
 };
 
 typedef int (*log_walk_func_t)(struct log *, struct log_offset *log_offset,
-        void *offset, uint16_t len);
+        void *dptr, uint16_t len);
 
 typedef int (*lh_read_func_t)(struct log *, void *dptr, void *buf,
         uint16_t offset, uint16_t len);
@@ -279,6 +279,47 @@ int log_read_mbuf(struct log *log, void *dptr, struct os_mbuf *om, uint16_t off,
 int log_walk(struct log *log, log_walk_func_t walk_func,
         struct log_offset *log_offset);
 int log_flush(struct log *log);
+
+#if MYNEWT_VAL(LOG_MODULE_LEVELS)
+/**
+ * @brief Retrieves the globally configured minimum log level for the specified
+ * module ID.
+ *
+ * Writes with a level less than the module's minimum level are discarded.
+ *
+ * @param module                The module whose level should be retrieved.
+ *
+ * @return                      The configured minimum level, or 0
+ *                                  (LOG_LEVEL_DEBUG) if unconfigured.
+ */
+uint8_t log_level_get(uint8_t module);
+
+/**
+ * @brief Sets the globally configured minimum log level for the specified
+ * module ID.
+ *
+ * Writes with a level less than the module's minimum level are discarded.
+ *
+ * @param module                The module to configure.
+ * @param level                 The minimum level to assign to the module
+ *                                  (0-15, inclusive).
+ */
+int log_level_set(uint8_t module, uint8_t level);
+#else
+static inline uint8_t
+log_level_get(uint8_t module)
+{
+    /* All levels enabled. */
+    return 0;
+}
+
+static inline int
+log_level_set(uint8_t module, uint8_t level)
+{
+    return SYS_ENOTSUP;
+}
+#endif
+
 
 /* Handler exports */
 #if MYNEWT_VAL(LOG_CONSOLE)
