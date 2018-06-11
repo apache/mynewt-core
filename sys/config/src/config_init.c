@@ -25,6 +25,8 @@
 #include "config/config.h"
 #include "config/config_file.h"
 
+#if MYNEWT_VAL(CONFIG_AUTO_INIT)
+
 #if MYNEWT_VAL(CONFIG_NFFS)
 #include "fs/fs.h"
 
@@ -87,6 +89,7 @@ config_init_fcb(void)
 }
 
 #endif
+#endif
 
 void
 config_pkg_init(void)
@@ -96,20 +99,24 @@ config_pkg_init(void)
 
     conf_init();
 
+#if MYNEWT_VAL(CONFIG_AUTO_INIT)
 #if MYNEWT_VAL(CONFIG_NFFS)
     config_init_fs();
 #elif MYNEWT_VAL(CONFIG_FCB)
     config_init_fcb();
+#endif
 #endif
 }
 
 void
 config_pkg_init_stage2(void)
 {
+#if MYNEWT_VAL(CONFIG_AUTO_INIT)
     /*
      * Must be called after root FS has been initialized.
      */
 #if MYNEWT_VAL(CONFIG_NFFS)
     fs_mkdir(MYNEWT_VAL(CONFIG_NFFS_DIR));
+#endif
 #endif
 }
