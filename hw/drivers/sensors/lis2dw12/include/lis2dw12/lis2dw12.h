@@ -109,6 +109,15 @@ extern "C" {
 #define LIS2DW12_ST_MAX                         1500
 #define LIS2DW12_ST_MIN                         70
 
+#define LIS2DW12_STATUS_FIFO_THS            (1 << 7)
+#define LIS2DW12_STATUS_WU_IA               (1 << 6)
+#define LIS2DW12_STATUS_SLEEP_STATE         (1 << 5)
+#define LIS2DW12_STATUS_DOUBLE_TAP          (1 << 4)
+#define LIS2DW12_STATUS_SINGLE_TAP          (1 << 3)
+#define LIS2DW12_STATUS_6D_IA               (1 << 2)
+#define LIS2DW12_STATUS_FF_IA               (1 << 1)
+#define LIS2DW12_STATUS_DRDY                (1 << 0)
+
 enum lis2dw12_ths_6d {
     LIS2DW12_6D_THS_80_DEG = 0,
     LIS2DW12_6D_THS_70_DEG = 1,
@@ -141,6 +150,7 @@ enum lis2dw12_read_mode {
 struct lis2dw12_notif_cfg {
     sensor_event_type_t event;
     uint8_t int_num:1;
+    uint8_t notif_src:7;
     uint8_t int_cfg;
 };
 
