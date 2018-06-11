@@ -989,7 +989,7 @@ int lis2ds12_set_freefall(struct sensor_itf *itf, uint8_t dur, uint8_t ths)
     }
 
     reg &= ~LIS2DS12_WAKE_DUR_FF_DUR;
-    reg |= dur & 0x10 ? LIS2DS12_WAKE_DUR_FF_DUR : 0;
+    reg |= dur & 0x20 ? LIS2DS12_WAKE_DUR_FF_DUR : 0;
 
     return lis2ds12_write8(itf, LIS2DS12_REG_WAKE_UP_DUR, reg);
 }
