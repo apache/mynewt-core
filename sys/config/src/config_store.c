@@ -75,6 +75,9 @@ conf_load(void)
     conf_lock();
     SLIST_FOREACH(cs, &conf_load_srcs, cs_next) {
         cs->cs_itf->csi_load(cs, conf_load_cb, NULL);
+        if (SLIST_NEXT(cs, cs_next)) {
+            conf_commit(NULL);
+        }
     }
     conf_unlock();
     return conf_commit(NULL);

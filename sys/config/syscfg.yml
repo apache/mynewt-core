@@ -24,7 +24,7 @@ syscfg.defs:
         value: 0
         restrictions:
             - '!CONFIG_NFFS'
-            - '(CONFIG_AUTO_INIT == 0) || CONFIG_FCB_FLASH_AREA'
+            - 'CONFIG_FCB_FLASH_AREA'
     CONFIG_NFFS:
         description: 'Config default storage is in NFFS'
         value: 0
