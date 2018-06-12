@@ -65,7 +65,7 @@ os_callout_stop(struct os_callout *c)
 }
 
 int
-os_callout_reset(struct os_callout *c, int32_t ticks)
+os_callout_reset(struct os_callout *c, os_time_t ticks)
 {
     struct os_callout *entry;
     os_sr_t sr;

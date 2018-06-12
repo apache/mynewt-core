@@ -104,7 +104,7 @@ os_time_advance(int ticks)
 #endif
 
 void
-os_time_delay(int32_t osticks)
+os_time_delay(os_time_t osticks)
 {
     os_sr_t sr;
 
@@ -189,7 +189,7 @@ os_get_uptime_usec(void)
 }
 
 int
-os_time_ms_to_ticks(uint32_t ms, uint32_t *out_ticks)
+os_time_ms_to_ticks(uint32_t ms, os_time_t *out_ticks)
 {
     uint64_t ticks;
 
@@ -211,7 +211,7 @@ os_time_ms_to_ticks(uint32_t ms, uint32_t *out_ticks)
 }
 
 int
-os_time_ticks_to_ms(uint32_t ticks, uint32_t *out_ms)
+os_time_ticks_to_ms(os_time_t ticks, uint32_t *out_ms)
 {
     uint64_t ms;
 
@@ -230,7 +230,7 @@ os_time_ticks_to_ms(uint32_t ticks, uint32_t *out_ms)
     return 0;
 }
 
-uint32_t
+os_time_t
 os_time_ms_to_ticks32(uint32_t ms)
 {
 #if OS_TICKS_PER_SEC == 1000
@@ -241,7 +241,7 @@ os_time_ms_to_ticks32(uint32_t ms)
 }
 
 uint32_t
-os_time_ticks_to_ms32(uint32_t ticks)
+os_time_ticks_to_ms32(os_time_t ticks)
 {
 #if OS_TICKS_PER_SEC == 1000
     return ticks;

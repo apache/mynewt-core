@@ -81,7 +81,7 @@ typedef int32_t os_stime_t;
 #define OS_STIME_MAX INT32_MAX
 
 /* Used to wait forever for events and mutexs */
-#define OS_TIMEOUT_NEVER    (UINT32_MAX)
+#define OS_TIMEOUT_NEVER    (OS_TIME_MAX)
 
 
 /**
@@ -100,11 +100,11 @@ void os_time_advance(int ticks);
 
 /**
  * Puts the current task to sleep for the specified number of os ticks. There
- * is no delay if ticks is <= 0.
+ * is no delay if ticks is 0.
  *
- * @param osticks Number of ticks to delay (<= 0 means no delay).
+ * @param osticks Number of ticks to delay (0 means no delay).
  */
-void os_time_delay(int32_t osticks);
+void os_time_delay(os_time_t osticks);
 
 #define OS_TIME_TICK_LT(__t1, __t2) ((os_stime_t) ((__t1) - (__t2)) < 0)
 #define OS_TIME_TICK_GT(__t1, __t2) ((os_stime_t) ((__t1) - (__t2)) > 0)
@@ -205,7 +205,7 @@ void os_get_uptime(struct os_timeval *tvp);
  * @return                      0 on success; OS_EINVAL if the result is too
  *                                  large to fit in a uint32_t.
  */
-int os_time_ms_to_ticks(uint32_t ms, uint32_t *out_ticks);
+int os_time_ms_to_ticks(uint32_t ms, os_time_t *out_ticks);
 
 /**
  * Converts OS ticks to milliseconds.
@@ -216,7 +216,7 @@ int os_time_ms_to_ticks(uint32_t ms, uint32_t *out_ticks);
  * @return                      0 on success; OS_EINVAL if the result is too
  *                                  large to fit in a uint32_t.
  */
-int os_time_ticks_to_ms(uint32_t ticks, uint32_t *out_ms);
+int os_time_ticks_to_ms(os_time_t ticks, uint32_t *out_ms);
 
 
 /**
@@ -229,7 +229,7 @@ int os_time_ticks_to_ms(uint32_t ticks, uint32_t *out_ms);
  *
  * @return                      result on success
  */
-uint32_t os_time_ms_to_ticks32(uint32_t ms);
+os_time_t os_time_ms_to_ticks32(uint32_t ms);
 
 /**
  * Converts OS ticks to milliseconds.
@@ -241,7 +241,7 @@ uint32_t os_time_ms_to_ticks32(uint32_t ms);
  *
  * @return                      result on success
  */
-uint32_t os_time_ticks_to_ms32(uint32_t ticks);
+uint32_t os_time_ticks_to_ms32(os_time_t ticks);
 
 #ifdef __cplusplus
 }

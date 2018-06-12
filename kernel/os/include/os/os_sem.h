@@ -83,9 +83,9 @@ os_error_t os_sem_release(struct os_sem *sem);
  * Pend (wait) for a semaphore.
  *
  * @param mu Pointer to semaphore.
- * @param timeout Timeout, in os ticks. A timeout of 0 means do
- *                not wait if not available. A timeout of
- *                0xFFFFFFFF means wait forever.
+ * @param timeout Timeout, in os ticks.
+ *                A timeout of 0 means do not wait if not available.
+ *                A timeout of OS_TIMEOUT_NEVER means wait forever.
  *
  *
  * @return os_error_t
@@ -93,7 +93,7 @@ os_error_t os_sem_release(struct os_sem *sem);
  *      OS_TIMEOUT          Semaphore was owned by another task and timeout=0
  *      OS_OK               no error.
  */
-os_error_t os_sem_pend(struct os_sem *sem, uint32_t timeout);
+os_error_t os_sem_pend(struct os_sem *sem, os_time_t timeout);
 
 /**
  * Get current semaphore's count
