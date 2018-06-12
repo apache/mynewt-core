@@ -5,7 +5,11 @@ System Modules
    :hidden:
 
    Config <config/config>
-
+   Logs <logs/logs>
+   Statistics <stats/stats>
+   Console <console/console>
+   Shell <shell/shell>
+   
 This section covers the core system functionality of the Apache Mynewt 
 Operating System outside of the Kernel itself.  This includes how you 
 count statistics, log data and manage configuration of a device in the 

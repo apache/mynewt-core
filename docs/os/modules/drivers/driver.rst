@@ -135,15 +135,15 @@ includes:
 +----------------------------------------+--------------------------+
 | Driver                                 | Description              |
 +========================================+==========================+
-| `adc <adc.html>`__                       | TODO: ADC driver.        |
+| `adc <adc.html>`__                     | TODO: ADC driver.        |
 +----------------------------------------+--------------------------+
-| `flash <flash.html>`__                   | SPI/I2C flash drivers.   |
+| `flash <flash.html>`__                 | SPI/I2C flash drivers.   |
 +----------------------------------------+--------------------------+
-| `lwip <lwip.html>`__                     | TODO: LWIP.              |
+| `lwip <lwip.html>`__                   | TODO: LWIP.              |
 +----------------------------------------+--------------------------+
-| `mmc <mmc.html>`__                       | MMC/SD card driver.      |
+| `mmc <mmc.html>`__                     | MMC/SD card driver.      |
 +----------------------------------------+--------------------------+
-| `sensors <sensors.html>`__               | TODO: sensors.           |
+| `sensors <sensors.html>`__             | TODO: sensors.           |
 +----------------------------------------+--------------------------+
-| `uart <uart.html>`__                     | TODO: UART driver.       |
+| `uart <uart.html>`__                   | TODO: UART driver.       |
 +----------------------------------------+--------------------------+

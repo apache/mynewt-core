@@ -84,9 +84,9 @@ Each setting definition consists of the following key-value mapping:
    ``type``, and ``restrictions``. They are described in following
    table:
 
-   ============  ===========
+   ============  ================================================================================
    Field         Description
-   ============  ===========
+   ============  ================================================================================
    description   Describes the usage for the setting. This field is optional.
 
    value         Specifies the default value for the setting. This field is required. The
@@ -136,7 +136,7 @@ Each setting definition consists of the following key-value mapping:
                    ``restrictions: LOG_FCB if 0`` - When this setting is disabled, ``LOG_FCB``
                    must be enabled.
 
-   ============  ===========
+   ============  ================================================================================
 
 
 Examples of Configuration Settings

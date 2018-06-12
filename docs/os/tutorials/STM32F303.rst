@@ -82,7 +82,7 @@ In the same file, add the following highlighted line to the
 ``project.repositories`` variable. This tells newt to download the
 repository contents into your project.
 
-.. code:: hl_lines="3"
+::
 
     project.repositories:
         - apache-mynewt-core

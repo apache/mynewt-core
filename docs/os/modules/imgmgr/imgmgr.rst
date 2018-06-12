@@ -38,28 +38,28 @@ List of Functions
 
 The functions available in imgmgr are:
 
-+------------+----------------+
-| Function   | Description    |
-+============+================+
-| `imgr\_ver | Parses         |
-| \_parse <i | character      |
-| mgr_ver_pa | string         |
-| rse.html>`__ | containing     |
-|            | specified      |
-|            | image version  |
-|            | number and     |
-|            | writes that to |
-|            | given          |
-|            | image\_version |
-|            | struct.        |
-+------------+----------------+
-| `imgr\_ver | Takes version  |
-| \_str <img | string from    |
-| r_ver_str. | specified      |
-| md>`__     | image\_version |
-|            | struct and     |
-|            | formats it     |
-|            | into a         |
-|            | printable      |
-|            | string.        |
-+------------+----------------+
++-------------+----------------+
+| Function    | Description    |
++=============+================+
+| `imgr\_ver  | Parses         |
+| \_parse <i  | character      |
+| mgr_ver_pa  | string         |
+| rse.html>`__| containing     |
+|             | specified      |
+|             | image version  |
+|             | number and     |
+|             | writes that to |
+|             | given          |
+|             | image\_version |
+|             | struct.        |
++-------------+----------------+
+| `imgr\_ver  | Takes version  |
+| \_str <img  | string from    |
+| r_ver_str.  | specified      |
+| md>`__      | image\_version |
+|             | struct and     |
+|             | formats it     |
+|             | into a         |
+|             | printable      |
+|             | string.        |
++-------------+----------------+
