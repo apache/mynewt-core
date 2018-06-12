@@ -22,7 +22,7 @@
 /**
  * @addtogroup OSKernel
  * @{
- *   @defgroup OSCallouts Event Timers (Callouts)
+ *   @defgroup OSCallouts 
  *   @{
  */
 
@@ -140,7 +140,7 @@ os_time_t os_callout_wakeup_ticks(os_time_t now);
 #endif /* _OS_CALLOUT_H */
 
 /**
- *   @} Callout Timers
+ *   @} OSCallouts
  * @} OS Kernel
  */
 

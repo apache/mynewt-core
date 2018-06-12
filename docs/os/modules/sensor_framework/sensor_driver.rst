@@ -19,7 +19,7 @@ driver for the sensor named ``SENSORNAME``.
 package.
 
 Initializing and Configuring a Sensor Device
-~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 A driver package for a sensor named ``SENSORNAME`` must define and
@@ -149,7 +149,7 @@ For example:
     };
 
 Registering the Sensor in the Sensor Framework
-~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 The device driver must initialize and register a ``struct sensor``
@@ -183,61 +183,64 @@ registers a sensor object as follows:
 
 For example:
 
-\`\`\`hl\_lines="13 20 25 31 32 33 34 35 41 46"
+.. code:: c
 
-int bno055\_init(struct os\_dev *dev, void *\ arg) { struct bno055
-*bno055; struct sensor *\ sensor; int rc;
+    int 
+    bno055_init(struct os_dev *dev, void *arg) 
+    { 
+        struct bno055 *bno055; 
+        struct sensor *sensor; 
+        int rc;
 
-::
-
-    if (!arg || !dev) {
-        rc = SYS_ENODEV;
-        goto err;
+        if (!arg || !dev) {
+            rc = SYS_ENODEV;
+            goto err;
+        }
+    
+        bno055 = (struct bno055 *) dev;
+    
+        rc = bno055_default_cfg(&bno055->cfg);
+        if (rc) {
+            goto err;
+        }
+    
+        sensor = &bno055->sensor;
+    
+        /* Code to setup logging and stats may go here */
+        .... 
+    
+        rc = sensor_init(sensor, dev);
+        if (rc != 0) {
+            goto err;
+        }
+    
+        /* Add the accelerometer/magnetometer driver */
+        rc = sensor_set_driver(sensor, SENSOR_TYPE_ACCELEROMETER         |
+                SENSOR_TYPE_MAGNETIC_FIELD | SENSOR_TYPE_GYROSCOPE       |
+                SENSOR_TYPE_TEMPERATURE    | SENSOR_TYPE_ROTATION_VECTOR |
+                SENSOR_TYPE_GRAVITY        | SENSOR_TYPE_LINEAR_ACCEL    |
+                SENSOR_TYPE_EULER, (struct sensor_driver *) &g_bno055_sensor_driver);
+        if (rc != 0) {
+            goto err;
+        }
+    
+        /* Set the interface */
+        rc = sensor_set_interface(sensor, arg);
+        if (rc) {
+            goto err;
+        }
+    
+        rc = sensor_mgr_register(sensor);
+        if (rc != 0) {
+            goto err;
+        }
+    
+        return (0);
+    
+    err: 
+        return (rc); 
     }
 
-    bno055 = (struct bno055 *) dev;
-
-    rc = bno055_default_cfg(&bno055->cfg);
-    if (rc) {
-        goto err;
-    }
-
-    sensor = &bno055->sensor;
-
-    /* Code to setup logging and stats may go here */
-    .... 
-
-    rc = sensor_init(sensor, dev);
-    if (rc != 0) {
-        goto err;
-    }
-
-    /* Add the accelerometer/magnetometer driver */
-    rc = sensor_set_driver(sensor, SENSOR_TYPE_ACCELEROMETER         |
-            SENSOR_TYPE_MAGNETIC_FIELD | SENSOR_TYPE_GYROSCOPE       |
-            SENSOR_TYPE_TEMPERATURE    | SENSOR_TYPE_ROTATION_VECTOR |
-            SENSOR_TYPE_GRAVITY        | SENSOR_TYPE_LINEAR_ACCEL    |
-            SENSOR_TYPE_EULER, (struct sensor_driver *) &g_bno055_sensor_driver);
-    if (rc != 0) {
-        goto err;
-    }
-
-    /* Set the interface */
-    rc = sensor_set_interface(sensor, arg);
-    if (rc) {
-        goto err;
-    }
-
-    rc = sensor_mgr_register(sensor);
-    if (rc != 0) {
-        goto err;
-    }
-
-    return (0);
-
-err: return (rc); }
-
-\`\`\`
 
 Configuring the Sensor Device and Setting the Configured Sensor Types
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -267,57 +270,60 @@ configured sensor types.
 
 For example:
 
-\`\`\`hl\_lines="7 9 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27
-28 29 37 38 39 40 41 42"
+.. code:: c
 
-int bno055\_config(struct bno055 *bno055, struct bno055\_cfg *\ cfg) {
-int rc; uint8\_t id; uint8\_t mode; struct sensor\_itf \*itf;
-
-::
-
-    itf = SENSOR_GET_ITF(&(bno055->sensor));
-
-    /* Check if we can read the chip address */
-    rc = bno055_get_chip_id(itf, &id);
-    if (rc) {
-        goto err;
-    }
-
-    if (id != BNO055_ID) {
-        os_time_delay((OS_TICKS_PER_SEC * 100)/1000 + 1);
-
+    int 
+    bno055_config(struct bno055 *bno055, struct bno055_cfg *cfg) 
+    {
+        int rc; 
+        uint8_t id; 
+        uint8_t mode; 
+        struct sensor_itf *itf;
+    
+        itf = SENSOR_GET_ITF(&(bno055->sensor));
+    
+        /* Check if we can read the chip address */
         rc = bno055_get_chip_id(itf, &id);
         if (rc) {
             goto err;
         }
-
-        if(id != BNO055_ID) {
-            rc = SYS_EINVAL;
-            goto err;
+    
+        if (id != BNO055_ID) {
+            os_time_delay((OS_TICKS_PER_SEC * 100)/1000 + 1);
+    
+            rc = bno055_get_chip_id(itf, &id);
+            if (rc) {
+                goto err;
+            }
+    
+            if(id != BNO055_ID) {
+                rc = SYS_EINVAL;
+                goto err;
+            }
         }
-    }
-
+    
            ....
 
     /* Other code to set the configuration on the sensor device. */
-
+    
            .... 
-
-    rc = sensor_set_type_mask(&(bno055->sensor), cfg->bc_mask);
-    if (rc) {
-        goto err;
+    
+        rc = sensor_set_type_mask(&(bno055->sensor), cfg->bc_mask);
+        if (rc) {
+            goto err;
+        }
+    
+        bno055->cfg.bc_mask = cfg->bc_mask;
+    
+        return 0;
+    
+    err: 
+        return rc; 
     }
 
-    bno055->cfg.bc_mask = cfg->bc_mask;
-
-    return 0;
-
-err: return rc; }
-
-\`\`\`
 
 Implementing a Sensor Device Shell Command
-~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 A sensor device driver package may optionally implement a sensor device
@@ -364,55 +370,43 @@ default.
 
 Here is an example from the BNO055 sensor driver package:
 
-\`\`\`hl\_lines="1 2 3 5 6 7 8 9 10 11 12 13 14 28 29 30"
-
-if MYNEWT\_VAL(BNO055\_LOG)
-===========================
-
-include "log/log.h"
-===================
-
-endif
-=====
-
-if MYNEWT\_VAL(BNO055\_LOG) #define LOG\_MODULE\_BNO055 (305) #define
-BNO055\_INFO(...) LOG\_INFO(&\_log, LOG\_MODULE\_BNO055, **VA\_ARGS**)
-#define BNO055\_ERR(...) LOG\_ERROR(&\_log, LOG\_MODULE\_BNO055,
-**VA\_ARGS**) static struct log \_log; #else #define BNO055\_INFO(...)
-#define BNO055\_ERR(...) #endif
-
-::
+.. code:: c
+    
+    #if MYNEWT_VAL(BNO055_LOG)
+    #include "log/log.h"
+    #endif
+    
+    #if MYNEWT_VAL(BNO055_LOG) 
+    #define LOG_MODULE_BNO055 (305) 
+    #define BNO055_INFO(...) LOG_INFO(&_log, LOG_MODULE_BNO055, _VA_ARGS_)
+    #define BNO055_ERR(...) LOG_ERROR(&_log, LOG_MODULE_BNO055,_VA_ARGS_) 
+    static struct log _log; 
+    #else 
+    #define BNO055_INFO(...)
+    #define BNO055_ERR(...) 
+    #endif
 
      ...
 
-int bno055\_init(struct os\_dev *dev, void *\ arg) {
+    int 
+    bno055_init(struct os_dev *dev, void *arg) 
+    {
+          
+     ...
+    
+        rc = bno055_default_cfg(&bno055->cfg);
+        if (rc) {
+            goto err;
+        }
 
-::
-
+    #if MYNEWT_VAL(BNO055_LOG)
+        log_register(dev->od_name, &_log, &log_console_handler, NULL, LOG_SYSLEVEL);
+    #endif
+    
       ...
-
-    rc = bno055_default_cfg(&bno055->cfg);
-    if (rc) {
-        goto err;
+    
     }
 
-if MYNEWT\_VAL(BNO055\_LOG)
-===========================
-
-::
-
-    log_register(dev->od_name, &_log, &log_console_handler, NULL, LOG_SYSLEVEL);
-
-endif
-=====
-
-::
-
-      ...
-
-}
-
-\`\`\`
 
 Defining Stats
 ~~~~~~~~~~~~~~~
@@ -426,63 +420,51 @@ default.
 
 Here is an example from the BNO055 sensor driver package:
 
-\`\`\`hl\_lines="1 2 3 5 6 7 8 9 11 12 13 14 16 17 18 29 30 31 32 33 34
-35 36 37 38 39 "
+.. code:: c
+    
+    #if MYNEWT_VAL(BNO055_STATS)
+    #include "stats/stats.h"
+    #endif
+    
+    #if MYNEWT_VAL(BNO055_STATS)
+    
+    /* Define the stats section and records */
+    STATS_SECT_START(bno055_stat_section) 
+    STATS_SECT_ENTRY(errors)
+    STATS_SECT_END
+    
+    /* Define stat names for querying */
+    STATS_NAME_START(bno055_stat_section)
+    STATS_NAME(bno055_stat_section, errors)
+    STATS_NAME_END(bno055_stat_section)
+    
+    /* Global variable used to hold stats data */
+    STATS_SECT_DECL(bno055_stat_section) g_bno055stats; 
+    #endif
+    
+    ...
+    
+    int 
+    bno055_init(struct os_dev *dev, void *arg) 
+    {
 
-if MYNEWT\_VAL(BNO055\_STATS)
-=============================
-
-include "stats/stats.h"
-=======================
-
-endif
-=====
-
-if MYNEWT\_VAL(BNO055\_STATS)
-=============================
-
-/\* Define the stats section and records \*/
-STATS\_SECT\_START(bno055\_stat\_section) STATS\_SECT\_ENTRY(errors)
-STATS\_SECT\_END
-
-/\* Define stat names for querying \*/
-STATS\_NAME\_START(bno055\_stat\_section)
-STATS\_NAME(bno055\_stat\_section, errors)
-STATS\_NAME\_END(bno055\_stat\_section)
-
-/\* Global variable used to hold stats data \*/
-STATS\_SECT\_DECL(bno055\_stat\_section) g\_bno055stats; #endif
-
-...
-
-int bno055\_init(struct os\_dev *dev, void *\ arg) {
-
-::
+      ...
+    
+    #if MYNEWT\_VAL(BNO055\_STATS)
+    
+        /* Initialise the stats entry */
+        rc = stats_init(
+            STATS_HDR(g_bno055stats),
+            STATS_SIZE_INIT_PARMS(g_bno055stats, STATS_SIZE_32),
+            STATS_NAME_INIT_PARMS(bno055_stat_section));
+        SYSINIT_PANIC_ASSERT(rc == 0);
+        /* Register the entry with the stats registry */
+        rc = stats_register(dev->od_name, STATS_HDR(g_bno055stats));
+        SYSINIT_PANIC_ASSERT(rc == 0);
+    
+    #endif
 
       ...
 
-if MYNEWT\_VAL(BNO055\_STATS)
-=============================
+    }
 
-::
-
-    /* Initialise the stats entry */
-    rc = stats_init(
-        STATS_HDR(g_bno055stats),
-        STATS_SIZE_INIT_PARMS(g_bno055stats, STATS_SIZE_32),
-        STATS_NAME_INIT_PARMS(bno055_stat_section));
-    SYSINIT_PANIC_ASSERT(rc == 0);
-    /* Register the entry with the stats registry */
-    rc = stats_register(dev->od_name, STATS_HDR(g_bno055stats));
-    SYSINIT_PANIC_ASSERT(rc == 0);
-
-endif
-=====
-
-::
-
-      ...
-
-}
-
-\`\`\`

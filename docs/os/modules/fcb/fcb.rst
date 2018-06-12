@@ -5,6 +5,10 @@ Flash circular buffer provides an abstration through which you can treat
 flash like a FIFO. You append entries to the end, and read data from the
 beginning.
 
+.. contents::
+  :local:
+  :depth: 2
+
 Description
 ~~~~~~~~~~~
 
@@ -215,73 +219,9 @@ used by FCB for its internal bookkeeping.
 |            | flash here.    |
 +------------+----------------+
 
-List of Functions
-~~~~~~~~~~~~~~~~~
+API
+~~~
 
-The functions available in this OS feature are:
-
-+------------+----------------+
-| Function   | Description    |
-+============+================+
-| `fcb\_init | Initializes    |
-|  <fcb_init | the FCB. After |
-| .html>`__    | calling this,  |
-|            | you can start  |
-|            | reading/writin |
-|            | g              |
-|            | data from FCB. |
-+------------+----------------+
-| `fcb\_appe | Start writing  |
-| nd <fcb_ap | a new element  |
-| pend.html>`_ | to flash.      |
-| _          |                |
-+------------+----------------+
-| `fcb\_appe | Finalizes the  |
-| nd\_finish | write of new   |
-|  <fcb_appe | element. FCB   |
-| nd_finish. | computes the   |
-| md>`__     | checksum over  |
-|            | the element    |
-|            | and updates it |
-|            | in flash.      |
-+------------+----------------+
-| `fcb\_walk | Walks over all |
-|  <fcb_walk | log entries in |
-| .html>`__    | FCB.           |
-+------------+----------------+
-| `fcb\_getn | Fills given    |
-| ext <fcb_g | FCB location   |
-| etnext.html> | with           |
-| `__        | information    |
-|            | about next     |
-|            | element.       |
-+------------+----------------+
-| `fcb\_rota | Erase the      |
-| te <fcb_ro | oldest sector  |
-| tate.html>`_ | in FCB.        |
-| _          |                |
-+------------+----------------+
-| `fcb\_appe | If FCB uses    |
-| nd\_to\_sc | scratch        |
-| ratch <fcb | blocks, use    |
-| _append_to | reserve blocks |
-| _scratch.m | when FCB is    |
-| d>`__      | filled.        |
-+------------+----------------+
-| `fcb\_is\_ | Returns 1 if   |
-| empty <fcb | there are no   |
-| _is_empty. | elements       |
-| md>`__     | stored in FCB, |
-|            | otherwise      |
-|            | returns 0.     |
-+------------+----------------+
-| `fcb\_offs | Returns the    |
-| et\_last\_ | offset of n-th |
-| n <fcb_off | last element.  |
-| set_last_n |                |
-| .html>`__    |                |
-+------------+----------------+
-| `fcb\_clea | Wipes out all  |
-| r <fcb_cle | data in FCB.   |
-| ar.html>`__  |                |
-+------------+----------------+
+.. doxygengroup:: FCB 
+    :content-only:
+    :members:

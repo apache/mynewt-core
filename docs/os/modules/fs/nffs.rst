@@ -74,9 +74,9 @@ The ``fs/nffs`` package exposes the following data structures:
 +---------------------------------------------------+--------------------------------------+
 | Struct                                            | Description                          |
 +===================================================+======================================+
-| `struct nffs\_area\_desc <nffs_area_desc.html>`__   | Descriptor for a single nffs area.   |
+| `struct nffs\_area\_desc <nffs_area_desc.html>`__ | Descriptor for a single nffs area.   |
 +---------------------------------------------------+--------------------------------------+
-| `struct nffs\_config <nffs_config.html>`__          | Configuration struct for nffs.       |
+| `struct nffs\_config <nffs_config.html>`__        | Configuration struct for nffs.       |
 +---------------------------------------------------+--------------------------------------+
 
 Miscellaneous measures
@@ -90,7 +90,7 @@ Miscellaneous measures
    -  32 bytes per data block cache entry
 
 -  Maximum filename size: 256 characters (no null terminator required)
--  Disallowed filename characters: '/' and ':raw-latex:`\0`'
+-  Disallowed filename characters: ``/`` and ``\0``
 
 Internals
 ~~~~~~~~~

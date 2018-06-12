@@ -12,7 +12,7 @@ create an off-board sensor. We also discuss how an application can
 change the default configuration for a sensor device.
 
 Creating an Onboard Sensor
-~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To create and initialize a sensor device named ``SENSORNAME``, the BSP implements the following in the
 ``hal_bsp.c`` file.
@@ -76,37 +76,32 @@ following to the function:
 
 For example:
 
-\`\`\`hl\_lines="7 8 9 10 11"
-
-static void sensor\_dev\_create(void) { int rc; (void)rc;
-
-if MYNEWT\_VAL(LIS2DH12\_ONB)
-=============================
-
 ::
-
-    rc = os_dev_create((struct os_dev *) &lis2dh12, "lis2dh12_0",
-      OS_DEV_INIT_PRIMARY, 0, lis2dh12_init, (void *)&i2c_0_itf_lis);
-    assert(rc == 0);
-
-endif
-=====
-
-}
-
-void hal\_bsp\_init(void) { int rc;
-
-::
+    
+    static void sensor\_dev\_create(void) 
+    { 
+        int rc; 
+        (void)rc;
+    
+        #if MYNEWT\_VAL(LIS2DH12\_ONB)
+    
+        rc = os_dev_create((struct os_dev *) &lis2dh12, "lis2dh12_0",
+          OS_DEV_INIT_PRIMARY, 0, lis2dh12_init, (void *)&i2c_0_itf_lis);
+        assert(rc == 0);
+    
+        #endif
+        }
+    
+    void hal_bsp_init(void) { int rc;
 
       ...
 
 
     sensor_dev_create();
+    
+    }
 
-}
-
-\`\`\ ``<br> 6. Define a``\ config\_\_sensor()\ ``function to set the default configuration for the sensor. This function opens the OS device for the sensor device, initializes the a``\ cfg\ ``variable of type``\ struct
-\_cfg\ ``with the default settings, calls the``\ \_config()\` driver
+6. Define a ``config_<sensorname>_sensor()`` function to set the default configuration for the sensor. This function opens the OS device for the sensor device, initializes the a``cfg`` variable of type``struct <sensorname>_cfg `` with the default settings, calls the ``<sensorname>_config()`` driver
 function to configure the device, and closes the device. This function
 is called when the BSP is initialized during sysinit(). For example:
 
@@ -160,7 +155,7 @@ For example:
         config_lis2dh12_sensor: 400
 
 Creating an Off-Board Sensor
-~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 The steps to create an off-board sensor is very similar to the steps for

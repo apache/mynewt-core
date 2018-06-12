@@ -65,24 +65,9 @@ to pass to the callback before you call the
         SLIST_ENTRY(sensor_listener) sl_next;
     };
 
-List of Functions:
-~~~~~~~~~~~~~~~~~~
+API
+~~~~
 
-These are the functions defined by the sensor listener API. Please see
-the
-`sensor.h <https://github.com/apache/mynewt-core/blob/master/hw/sensor/include/sensor/sensor.h>`__
-include file for details.
-
-+------------+----------------+
-| Function   | Description    |
-+============+================+
-| sensor\_re | Registers the  |
-| gister\_li | specified      |
-| stener     | listener for a |
-|            | given sensor.  |
-+------------+----------------+
-| sensor\_un | Unregisters    |
-| register\_ | the specified  |
-| listener   | listener for a |
-|            | given sensor.  |
-+------------+----------------+
+.. doxygengroup:: SensorListenerAPI 
+    :content-only:
+    :members:

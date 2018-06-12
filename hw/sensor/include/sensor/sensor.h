@@ -31,6 +31,11 @@
 extern "C" {
 #endif
 
+/**  
+ * @defgroup SensorAPI 
+ * @{
+ */
+
 /**
  * Package init function. Remove when we have post-kernel init stages.
  */
@@ -39,10 +44,6 @@ void sensor_pkg_init(void);
 
 /* Forward declare sensor structure defined below. */
 struct sensor;
-
-/**
- * @{ Sensor API
- */
 
 typedef enum {
  /* No sensor type, used for queries */
@@ -606,6 +607,15 @@ int sensor_lock(struct sensor *sensor);
 void sensor_unlock(struct sensor *sensor);
 
 /**
+ * @} SensorAPI
+ */
+
+/**
+ * @defgroup SensorListenerAPI
+ * @{
+ */
+
+/**
  * Register a sensor listener. This allows a calling application to receive
  * callbacks for data from a given sensor object.
  *
@@ -632,6 +642,15 @@ int sensor_register_listener(struct sensor *sensor, struct sensor_listener *list
 int sensor_unregister_listener(struct sensor *sensor, struct sensor_listener *listener);
 
 /**
+ * @} SensorListenerAPI
+ */
+
+/**
+ * @defgroup SensorNotifierAPI
+ * @{
+ */
+
+/**
  * Register a sensor notifier. This allows a calling application to receive
  * callbacks any time a requested event is observed.
  *
@@ -640,6 +659,7 @@ int sensor_unregister_listener(struct sensor *sensor, struct sensor_listener *li
  *
  * @return 0 on success, non-zero error code on failure.
  */
+
 int sensor_register_notifier(struct sensor *sensor, struct sensor_notifier *notifier);
 
 /**
@@ -652,6 +672,15 @@ int sensor_register_notifier(struct sensor *sensor, struct sensor_notifier *noti
  * @return 0 on success, non-zero error code on failure.
  */
 int sensor_unregister_notifier(struct sensor *sensor, struct sensor_notifier *notifier);
+
+/**
+ * @} SensorNotifierAPI
+ */
+
+/**
+ * @defgroup SensorAPI
+ * @{
+ */
 
 /**
  * Read the data for sensor type "type," from the given sensor and
@@ -750,7 +779,13 @@ sensor_get_config(struct sensor *sensor, sensor_type_t type,
 }
 
 /**
- * @{ Sensor Manager API
+ *   @} SensorAPI
+ */
+
+
+/**
+ *   @defgroup SensorManagerAPI
+     @{
  */
 
 
@@ -995,14 +1030,9 @@ void sensor_oic_init(void);
 #endif
 
 /**
- * }@
+ *    @} SensorManagerAPI
  */
 
-
-
-/**
- * @}
- */
 
 #ifdef __cplusplus
 }

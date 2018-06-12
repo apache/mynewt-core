@@ -11,13 +11,11 @@ OS User Guide
    Split Images <modules/split/split>
    Porting Guide <core_os/porting/port_os>
    Compile-Time Configuration <modules/sysinitconfig/sysinitconfig>
-   Console <modules/console/console>
-   Shell <modules/shell/shell>
    File System <modules/fs/fs>
+   Flash Circular Buffer <modules/fcb/fcb>
+   Sensor Framework <modules/sensor_framework/sensor_framework>
    Test Utilities <modules/testutil/testutil>
    JSON <modules/json/json>
-   Statistics <modules/stats/stats>
-   Logs <modules/logs/logs>
 
 This guide provides comprehensive information about Mynewt OS, the
 real-time operating system for embedded systems. It is intended both for
