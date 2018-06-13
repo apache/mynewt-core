@@ -21,7 +21,7 @@
 #include "os/mynewt.h"
 #include "cbmem/cbmem.h"
 
-typedef void (copy_data_func_t) (void *dst, void *data, uint16_t len);
+typedef void (copy_data_func_t) (void *dst, const void *data, uint16_t len);
 
 int
 cbmem_init(struct cbmem *cbmem, void *buf, uint32_t buf_len)
@@ -75,7 +75,7 @@ err:
 
 
 static int
-cbmem_append_internal(struct cbmem *cbmem, void *data, uint16_t len,
+cbmem_append_internal(struct cbmem *cbmem, const void *data, uint16_t len,
                       copy_data_func_t *copy_func)
 {
     struct cbmem_entry_hdr *dst;
@@ -145,15 +145,15 @@ err:
 }
 
 static void
-copy_data_from_flat(void *dst, void *data, uint16_t len)
+copy_data_from_flat(void *dst, const void *data, uint16_t len)
 {
     memcpy(dst, data, len);
 }
 
 static void
-copy_data_from_mbuf(void *dst, void *data, uint16_t len)
+copy_data_from_mbuf(void *dst, const void *data, uint16_t len)
 {
-    struct os_mbuf *om = data;
+    const struct os_mbuf *om = data;
 
     os_mbuf_copydata(om, 0, len, dst);
 }
