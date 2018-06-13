@@ -39,6 +39,49 @@
 
 #include <mcu/stm32f4_bsp.h>
 
+const uint32_t stm32f4_flash_sectors[] = {
+    /* Bank 1 */
+    0x08000000,     /* 16kB */
+    0x08004000,     /* 16kB */
+    0x08008000,     /* 16kB */
+    0x0800c000,     /* 16kB */
+    0x08010000,     /* 64kB */
+    0x08020000,     /* 128kB */
+    0x08040000,     /* 128kB */
+    0x08060000,     /* 128kB */
+    0x08080000,     /* 128kB */
+    0x080a0000,     /* 128kB */
+    0x080c0000,     /* 128kB */
+    0x080e0000,     /* 128kB */
+    /* Bank 2 */
+    0x08100000,     /* 16kB */
+    0x08104000,     /* 16kB */
+    0x08108000,     /* 16kB */
+    0x0810c000,     /* 16kB */
+    0x08110000,     /* 64kB */
+    0x08120000,     /* 128kB */
+    0x08140000,     /* 128kB */
+    0x08160000,     /* 128kB */
+    0x08180000,     /* 128kB */
+    0x081a0000,     /* 128kB */
+    0x081c0000,     /* 128kB */
+    0x081e0000,     /* 128kB */
+    0x08200000,     /* End of flash */
+};
+
+const uint32_t STM32F4_FLASH_NUM_AREAS =
+    sizeof(stm32f4_flash_sectors) / sizeof(stm32f4_flash_sectors[0]);
+
+extern const struct hal_flash_funcs stm32f4_flash_funcs;
+
+const struct hal_flash stm32f4_flash_dev = {
+    .hf_itf = &stm32f4_flash_funcs,
+    .hf_base_addr = 0x08000000,
+    .hf_size = 2048 * 1024,
+    .hf_sector_cnt = STM32F4_FLASH_NUM_AREAS - 1,
+    .hf_align = 1
+};
+
 #if MYNEWT_VAL(UART_0)
 static struct uart_dev hal_uart0;
 
