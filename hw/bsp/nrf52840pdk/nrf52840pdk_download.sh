@@ -34,7 +34,7 @@ if [ "$MFG_IMAGE" ]; then
     FLASH_OFFSET=0x0
 fi
 
-JLINK_DEV="nRF52"
+JLINK_DEV="nrf52840_xxaa"
 
 common_file_to_load
 jlink_load

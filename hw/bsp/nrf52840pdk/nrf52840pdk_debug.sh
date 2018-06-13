@@ -40,7 +40,7 @@ if [ $# -gt 2 ]; then
     EXTRA_GDB_CMDS="add-symbol-file $SPLIT_ELF_NAME 0xc000 -readnow"
 fi
 
-JLINK_DEV="nRF52"
+JLINK_DEV="nrf52840_xxaa"
 
 jlink_debug
 
