@@ -46,6 +46,27 @@ struct cbmem_iter {
     struct cbmem_entry_hdr *ci_end;
 };
 
+/**
+ * An individual data chunk within a scatter-gather write.  An entry can point
+ * to a flat buffer or an mbuf, but not both.
+ */
+struct cbmem_scat_gath_entry {
+    /* Valid if mbuf (null if flat buf). */
+    const struct os_mbuf *om;
+
+    /* Valid if flat buffer. */
+    const void *flat_buf;
+    uint16_t flat_len;
+};
+
+/**
+ * Represents a scatter-gather write to a cbmem.
+ */
+struct cbmem_scat_gath {
+    struct cbmem_scat_gath_entry *entries;
+    int count;
+};
+
 #define CBMEM_ENTRY_SIZE(__p) (sizeof(struct cbmem_entry_hdr) \
         + ((struct cbmem_entry_hdr *) (__p))->ceh_len)
 #define CBMEM_ENTRY_NEXT(__p) ((struct cbmem_entry_hdr *) \
@@ -58,7 +79,19 @@ int cbmem_lock_acquire(struct cbmem *cbmem);
 int cbmem_lock_release(struct cbmem *cbmem);
 int cbmem_init(struct cbmem *cbmem, void *buf, uint32_t buf_len);
 int cbmem_append(struct cbmem *cbmem, void *data, uint16_t len);
-int cbmem_append_mbuf(struct cbmem *cbmem, struct os_mbuf *om);
+int cbmem_append_mbuf(struct cbmem *cbmem, const struct os_mbuf *om);
+
+/**
+ * @brief Performs a scatter-gather write to the provided cbmem.
+ *
+ * @param cbmem                 The cbmem to write to.
+ * @param sg                    Describes the write operation to apply.
+ *
+ * @return                      0 on success; nonzero on failure.
+ */
+int cbmem_append_scat_gath(struct cbmem *cbmem,
+                           const struct cbmem_scat_gath *sg);
+
 void cbmem_iter_start(struct cbmem *cbmem, struct cbmem_iter *iter);
 struct cbmem_entry_hdr *cbmem_iter_next(struct cbmem *cbmem, 
         struct cbmem_iter *iter);
