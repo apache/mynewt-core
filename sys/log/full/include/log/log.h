@@ -69,7 +69,7 @@ typedef int (*lh_read_func_t)(struct log *, void *dptr, void *buf,
 typedef int (*lh_read_mbuf_func_t)(struct log *, void *dptr, struct os_mbuf *om,
                                    uint16_t offset, uint16_t len);
 typedef int (*lh_append_func_t)(struct log *, void *buf, int len);
-typedef int (*lh_append_mbuf_func_t)(struct log *, struct os_mbuf *om);
+typedef int (*lh_append_mbuf_func_t)(struct log *, const struct os_mbuf *om);
 typedef int (*lh_walk_func_t)(struct log *,
         log_walk_func_t walk_func, struct log_offset *log_offset);
 typedef int (*lh_flush_func_t)(struct log *);

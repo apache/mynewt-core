@@ -40,7 +40,7 @@ err:
 }
 
 static int
-log_cbmem_append_mbuf(struct log *log, struct os_mbuf *om)
+log_cbmem_append_mbuf(struct log *log, const struct os_mbuf *om)
 {
     struct cbmem *cbmem;
     int rc;

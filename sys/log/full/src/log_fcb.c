@@ -97,7 +97,7 @@ err:
 }
 
 static int
-log_fcb_append_mbuf(struct log *log, struct os_mbuf *om)
+log_fcb_append_mbuf(struct log *log, const struct os_mbuf *om)
 {
     struct fcb *fcb;
     struct fcb_entry loc;
