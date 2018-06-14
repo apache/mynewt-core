@@ -370,6 +370,20 @@ _os_mbuf_copypkthdr(struct os_mbuf *new_buf, struct os_mbuf *old_buf)
     new_buf->om_data = new_buf->om_databuf + old_buf->om_pkthdr_len;
 }
 
+uint16_t
+os_mbuf_len(const struct os_mbuf *om)
+{
+    uint16_t len;
+
+    len = 0;
+    while (om != NULL) {
+        len += om->om_len;
+        om = SLIST_NEXT(om, om_next);
+    }
+
+    return len;
+}
+
 int
 os_mbuf_append(struct os_mbuf *om, const void *data,  uint16_t len)
 {

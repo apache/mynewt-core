@@ -415,6 +415,20 @@ struct os_mbuf *os_mbuf_off(const struct os_mbuf *om, int off,
 int os_mbuf_copydata(const struct os_mbuf *m, int off, int len, void *dst);
 
 /**
+ * @brief Calculates the length of an mbuf chain.
+ *
+ * Calculates the length of an mbuf chain.  If the mbuf contains a packet
+ * header, you should use `OS_MBUF_PKTLEN()` as a more efficient alternative to
+ * this function.
+ *
+ * @param om                    The mbuf to measure.
+ *
+ * @return                      The length, in bytes, of the provided mbuf
+ *                                  chain.
+ */
+uint16_t os_mbuf_len(const struct os_mbuf *om);
+
+/**
  * Append data onto a mbuf
  *
  * @param om   The mbuf to append the data onto
