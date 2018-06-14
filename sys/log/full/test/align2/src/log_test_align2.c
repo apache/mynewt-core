@@ -16,16 +16,24 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include "log_test.h"
 
-TEST_CASE(log_flush_fcb)
+#include "os/mynewt.h"
+#include "log_test_util/log_test_util.h"
+
+#if MYNEWT_VAL(SELFTEST)
+
+int
+main(int argc, char **argv)
 {
-    struct log_offset log_offset = { 0 };
-    int rc;
+    log_test_suite_fcb_flat();
 
-    rc = log_flush(&my_log);
-    TEST_ASSERT(rc == 0);
+    /* XXX: The current fcb mbuf implementation requires flash-alignment=1. */
+#if 0
+    log_test_suite_fcb_mbuf();
+#endif
 
-    rc = log_walk(&my_log, log_test_walk2, &log_offset);
-    TEST_ASSERT(rc == 0);
+    return tu_any_failed;
 }
+
+#endif
+

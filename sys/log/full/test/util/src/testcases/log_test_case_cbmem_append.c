@@ -16,18 +16,30 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include "log_test.h"
 
-TEST_CASE(log_append_fcb)
+#include "log_test_util/log_test_util.h"
+
+TEST_CASE(log_test_case_cbmem_append)
 {
+    struct cbmem cbmem;
+    struct log log;
+    uint8_t buf[256];
     char *str;
+    int body_len;
+    int i;
 
-    while (1) {
-        str = str_logs[str_max_idx];
+    ltu_setup_cbmem(&cbmem, &log);
+
+    for (i = 0; ; i++) {
+        str = ltu_str_logs[i];
         if (!str) {
             break;
         }
-        log_printf(&my_log, 0, 0, str, strlen(str));
-        str_max_idx++;
+
+        body_len = strlen(str);
+        memcpy(buf + LOG_ENTRY_HDR_SIZE, str, body_len);
+        log_append_typed(&log, 0, 0, LOG_ETYPE_STRING, buf, body_len);
     }
+
+    ltu_verify_contents(&log);
 }

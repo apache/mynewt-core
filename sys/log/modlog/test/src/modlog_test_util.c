@@ -47,7 +47,7 @@ mltu_log_append(struct log *log, void *buf, int len)
 }
 
 static int
-mltu_log_append_mbuf(struct log *log, struct os_mbuf *om)
+mltu_log_append_mbuf(struct log *log, const struct os_mbuf *om)
 {
     struct mltu_log_entry *entry;
     struct mltu_log_arg *mla;

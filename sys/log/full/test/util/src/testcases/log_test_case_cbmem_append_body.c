@@ -16,24 +16,26 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include "log_test.h"
 
-TEST_CASE(log_setup_fcb)
+#include "log_test_util/log_test_util.h"
+
+TEST_CASE(log_test_case_cbmem_append_body)
 {
-    int rc;
+    struct cbmem cbmem;
+    struct log log;
+    char *str;
     int i;
 
-    log_fcb.f_sectors = fcb_areas;
-    log_fcb.f_sector_cnt = sizeof(fcb_areas) / sizeof(fcb_areas[0]);
-    log_fcb.f_magic = 0x7EADBADF;
-    log_fcb.f_version = 0;
+    ltu_setup_cbmem(&cbmem, &log);
 
-    for (i = 0; i < log_fcb.f_sector_cnt; i++) {
-        rc = flash_area_erase(&fcb_areas[i], 0, fcb_areas[i].fa_size);
-        TEST_ASSERT(rc == 0);
+    for (i = 0; ; i++) {
+        str = ltu_str_logs[i];
+        if (!str) {
+            break;
+        }
+
+        log_append_body(&log, 0, 0, LOG_ETYPE_STRING, str, strlen(str));
     }
-    rc = fcb_init(&log_fcb);
-    TEST_ASSERT(rc == 0);
 
-    log_register("log", &my_log, &log_fcb_handler, &log_fcb, LOG_SYSLEVEL);
+    ltu_verify_contents(&log);
 }

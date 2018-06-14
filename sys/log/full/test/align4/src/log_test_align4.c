@@ -16,40 +16,24 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#ifndef _LOG_TEST_H
-#define _LOG_TEST_H
-#include <string.h>
 
 #include "os/mynewt.h"
-#include "testutil/testutil.h"
-#include "fcb/fcb.h"
-#include "log/log.h"
+#include "log_test_util/log_test_util.h"
 
-#ifdef __cplusplus
-extern "C" {
+#if MYNEWT_VAL(SELFTEST)
+
+int
+main(int argc, char **argv)
+{
+    log_test_suite_fcb_flat();
+
+    /* XXX: The current fcb mbuf implementation requires flash-alignment=1. */
+#if 0
+    log_test_suite_fcb_mbuf();
 #endif
 
-#define FCB_FLASH_AREAS 2
-
-extern struct flash_area fcb_areas[FCB_FLASH_AREAS];
-
-extern struct fcb log_fcb;
-extern struct log my_log;
-
-#define FCB_STR_LOGS_CNT 3
-
-extern char *str_logs[FCB_STR_LOGS_CNT];
-
-extern int str_idx;
-extern int str_max_idx;
-
-int log_test_walk1(struct log *log, struct log_offset *log_offset,
-                   void *dptr, uint16_t len);
-int log_test_walk2(struct log *log, struct log_offset *log_offset,
-                   void *dptr, uint16_t len);
-
-#ifdef __cplusplus
+    return tu_any_failed;
 }
+
 #endif
 
-#endif /* _LOG_TEST_H */
