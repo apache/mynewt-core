@@ -615,6 +615,21 @@ struct os_mbuf *os_mbuf_pullup(struct os_mbuf *om, uint16_t len);
  */
 struct os_mbuf *os_mbuf_trim_front(struct os_mbuf *om);
 
+/**
+ * Increases the length of an mbuf chain by inserting a gap at the specified
+ * offset.  The contents of the gap are indeterminate.  If the mbuf chain
+ * contains a packet header, its total length is increased accordingly.
+ *
+ * This function never frees the provided mbuf chain.
+ *
+ * @param om                    The mbuf chain to widen.
+ * @param off                   The offset at which to insert the gap.
+ * @param len                   The size of the gap to insert.
+ *
+ * @return                      0 on success; SYS_[...] error code on failure.
+ */
+int os_mbuf_widen(struct os_mbuf *om, uint16_t off, uint16_t len);
+
 #ifdef __cplusplus
 }
 #endif
