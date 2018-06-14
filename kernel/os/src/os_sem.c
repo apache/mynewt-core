@@ -112,7 +112,7 @@ done:
 }
 
 os_error_t
-os_sem_pend(struct os_sem *sem, uint32_t timeout)
+os_sem_pend(struct os_sem *sem, os_time_t timeout)
 {
     os_sr_t sr;
     int sched;

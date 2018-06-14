@@ -134,7 +134,7 @@ done:
 }
 
 os_error_t
-os_mutex_pend(struct os_mutex *mu, uint32_t timeout)
+os_mutex_pend(struct os_mutex *mu, os_time_t timeout)
 {
     os_sr_t sr;
     os_error_t ret;
