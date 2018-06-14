@@ -22,7 +22,7 @@ syscfg.defs:
     MCU_FLASH_MIN_WRITE_SIZE:
         description: >
             Specifies the required alignment for internal flash writes.
-            Used internally by the newt tool.
+            Used internally by the newt tool and in unit tests.
         value: 1
 
     MCU_NATIVE_USE_SIGNALS:
