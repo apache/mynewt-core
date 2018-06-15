@@ -57,8 +57,7 @@ const uint32_t stm32f4_flash_sectors[] = {
     0x08100000,     /* End of flash */
 };
 
-const uint32_t STM32F4_FLASH_NUM_AREAS =
-    sizeof(stm32f4_flash_sectors) / sizeof(stm32f4_flash_sectors[0]);
+#define NAREAS (sizeof(stm32f4_flash_sectors) / sizeof(stm32f4_flash_sectors[0]))
 
 extern const struct hal_flash_funcs stm32f4_flash_funcs;
 
@@ -66,7 +65,7 @@ const struct hal_flash stm32f4_flash_dev = {
     .hf_itf = &stm32f4_flash_funcs,
     .hf_base_addr = 0x08000000,
     .hf_size = 1024 * 1024,
-    .hf_sector_cnt = STM32F4_FLASH_NUM_AREAS - 1,
+    .hf_sector_cnt = NAREAS - 1,
     .hf_align = 1
 };
 
