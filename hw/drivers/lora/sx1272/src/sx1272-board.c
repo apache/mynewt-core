@@ -63,7 +63,8 @@ const struct Radio_s Radio =
     SX1272ReadBuffer,
     SX1272SetMaxPayloadLength,
     SX1272SetPublicNetwork,
-    SX1272GetWakeupTime
+    SX1272GetWakeupTime,
+    SX1272RxDisable
 };
 
 void
@@ -348,4 +349,3 @@ SX1272GetBoardTcxoWakeupTime(void)
 {
     return 0;
 }
-

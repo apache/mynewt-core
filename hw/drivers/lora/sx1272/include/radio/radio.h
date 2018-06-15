@@ -339,31 +339,13 @@ struct Radio_s
      * \retval time Radio plus board wakeup time in ms.
      */
     uint32_t  ( *GetWakeupTime )( void );
+
     /*!
-     * \brief Process radio irq
-     */
-    void ( *IrqProcess )( void );
-    /*
-     * The next functions are available only on SX126x radios.
-     */
-    /*!
-     * \brief Sets the radio in reception mode with Max LNA gain for the given time
+     * \brief Disables receive irq, puts chip in standby and clears any pending
+     * rx interrupts
      *
-     * \remark Available on SX126x radios only.
-     *
-     * \param [IN] timeout Reception timeout [ms]
-     *                     [0: continuous, others timeout]
      */
-    void    ( *RxBoosted )( uint32_t timeout );
-    /*!
-     * \brief Sets the Rx duty cycle management parameters
-     *
-     * \remark Available on SX126x radios only.
-     *
-     * \param [in]  rxTime        Structure describing reception timeout value
-     * \param [in]  sleepTime     Structure describing sleep timeout value
-     */
-    void ( *SetRxDutyCycle ) ( uint32_t rxTime, uint32_t sleepTime );
+    void  ( *RxDisable )( void );
 };
 
 /*!
