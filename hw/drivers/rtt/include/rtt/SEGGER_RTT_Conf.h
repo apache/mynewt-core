@@ -23,18 +23,33 @@
 #include "syscfg/syscfg.h"
 #include "os/os.h"
 
+#if MYNEWT_VAL(OS_SYSVIEW)
+#define NUM_BUFFERS_OS_SYSVIEW          1
+#else
+#define NUM_BUFFERS_OS_SYSVIEW          0
+#endif
+
+#if MYNEWT_VAL(BLE_MONITOR_RTT)
+#define NUM_BUFFERS_BLE_MONITOR         1
+#else
+#define NUM_BUFFERS_BLE_MONITOR         0
+#endif
+
 /* Maximum number of up-buffers (target -> host) available */
-#define SEGGER_RTT_MAX_NUM_UP_BUFFERS           (3)
+#define SEGGER_RTT_MAX_NUM_UP_BUFFERS   \
+    (1 + (NUM_BUFFERS_OS_SYSVIEW) + (NUM_BUFFERS_BLE_MONITOR) + \
+     (MYNEWT_VAL(RTT_NUM_BUFFERS_UP)))
 /* Maximum number of down-buffers (host -> target) available */
-#define SEGGER_RTT_MAX_NUM_DOWN_BUFFERS         (3)
+#define SEGGER_RTT_MAX_NUM_DOWN_BUFFERS \
+    (1 + (NUM_BUFFERS_OS_SYSVIEW) + (MYNEWT_VAL(RTT_NUM_BUFFERS_DOWN)))
 
 /* Size of up-buffer for Terminal (console output) */
-#define BUFFER_SIZE_UP                          (MYNEWT_VAL(RTT_BUFFER_SIZE_UP))
+#define BUFFER_SIZE_UP                  (MYNEWT_VAL(RTT_BUFFER_SIZE_UP))
 /* Size of down-buffer for Terminal (console input) */
-#define BUFFER_SIZE_DOWN                        (MYNEWT_VAL(RTT_BUFFER_SIZE_DOWN))
+#define BUFFER_SIZE_DOWN                (MYNEWT_VAL(RTT_BUFFER_SIZE_DOWN))
 
 /* Mode for default channel (Terminal) */
-#define SEGGER_RTT_MODE_DEFAULT                 SEGGER_RTT_MODE_NO_BLOCK_SKIP
+#define SEGGER_RTT_MODE_DEFAULT         SEGGER_RTT_MODE_NO_BLOCK_SKIP
 
 /* RTT locking functions */
 #define SEGGER_RTT_LOCK()               \
