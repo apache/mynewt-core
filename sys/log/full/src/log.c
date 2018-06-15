@@ -522,8 +522,29 @@ log_read(struct log *log, void *dptr, void *buf, uint16_t off,
     return (rc);
 }
 
-int log_read_mbuf(struct log *log, void *dptr, struct os_mbuf *om, uint16_t off,
-                  uint16_t len)
+int
+log_read_hdr(struct log *log, void *dptr, struct log_entry_hdr *hdr)
+{
+    int bytes_read;
+
+    bytes_read = log_read(log, dptr, hdr, 0, LOG_ENTRY_HDR_SIZE);
+    if (bytes_read != LOG_ENTRY_HDR_SIZE) {
+        return SYS_EIO;
+    }
+
+    return 0;
+}
+
+int
+log_read_body(struct log *log, void *dptr, void *buf, uint16_t off,
+              uint16_t len)
+{
+    return log_read(log, dptr, buf, LOG_ENTRY_HDR_SIZE + off, len);
+}
+
+int
+log_read_mbuf(struct log *log, void *dptr, struct os_mbuf *om, uint16_t off,
+              uint16_t len)
 {
     int rc;
 
@@ -534,6 +555,13 @@ int log_read_mbuf(struct log *log, void *dptr, struct os_mbuf *om, uint16_t off,
     rc = log->l_log->log_read_mbuf(log, dptr, om, off, len);
 
     return (rc);
+}
+
+int
+log_read_mbuf_body(struct log *log, void *dptr, struct os_mbuf *om,
+                   uint16_t off, uint16_t len)
+{
+    return log_read_mbuf(log, dptr, om, LOG_ENTRY_HDR_SIZE + off, len);
 }
 
 int

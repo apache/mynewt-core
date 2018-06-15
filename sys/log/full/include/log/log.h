@@ -342,8 +342,56 @@ log_append_mbuf(struct log *log, uint8_t module, uint8_t level,
 void log_printf(struct log *log, uint16_t, uint16_t, char *, ...);
 int log_read(struct log *log, void *dptr, void *buf, uint16_t off,
         uint16_t len);
+
+/**
+ * @brief Reads a single log entry header.
+ *
+ * @param log                   The log to read from.
+ * @param dptr                  Medium-specific data describing the area to
+ *                                  read from; typically obtained by a call to
+ *                                  `log_walk`.
+ * @param hdr                   The destination header to read into.
+ *
+ * @return                      0 on success; nonzero on failure.
+ */
+int log_read_hdr(struct log *log, void *dptr, struct log_entry_hdr *hdr);
+
+/**
+ * @brief Reads data from the body of a log entry into a flat buffer.
+ *
+ * @param log                   The log to read from.
+ * @param dptr                  Medium-specific data describing the area to
+ *                                  read from; typically obtained by a call to
+ *                                  `log_walk`.
+ * @param buf                   The destination buffer to read into.
+ * @param off                   The offset within the log entry at which to
+ *                                  start the read.
+ * @param len                   The number of bytes to read.
+ *
+ * @return                      The number of bytes actually read on success;
+ *                              -1 on failure.
+ */
+int log_read_body(struct log *log, void *dptr, void *buf, uint16_t off,
+                  uint16_t len);
 int log_read_mbuf(struct log *log, void *dptr, struct os_mbuf *om, uint16_t off,
                   uint16_t len);
+/**
+ * @brief Reads data from the body of a log entry into an mbuf.
+ *
+ * @param log                   The log to read from.
+ * @param dptr                  Medium-specific data describing the area to
+ *                                  read from; typically obtained by a call to
+ *                                  `log_walk`.
+ * @param om                    The destination mbuf to read into.
+ * @param off                   The offset within the log entry at which to
+ *                                  start the read.
+ * @param len                   The number of bytes to read.
+ *
+ * @return                      The number of bytes actually read on success;
+ *                              -1 on failure.
+ */
+int log_read_mbuf_body(struct log *log, void *dptr, struct os_mbuf *om,
+                       uint16_t off, uint16_t len);
 int log_walk(struct log *log, log_walk_func_t walk_func,
         struct log_offset *log_offset);
 int log_flush(struct log *log);
