@@ -19,6 +19,12 @@
 # Package: hw/drivers/rtt
 
 syscfg.defs:
+    RTT:
+        description: >
+            Static value indicating that RTT is present in the system.
+            Do not override this value.
+        value: 1
+
     RTT_BUFFER_SIZE_UP:
         description: 'Size of the output buffer'
         value: 1024

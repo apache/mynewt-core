@@ -108,6 +108,14 @@ SECTIONS
         . = ALIGN(4);
     } > RAM
 
+    /* This section will be zeroed by RTT package init */
+    .rtt (NOLOAD):
+    {
+        . = ALIGN(4);
+        *(.rtt)
+        . = ALIGN(4);
+    } > RAM
+
     .data :
     {
         __data_start__ = .;

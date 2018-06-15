@@ -24,5 +24,6 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 pkg.deps:
 pkg.req_apis: 
-pkg.init:
-    rtt_pkg_init: 19
+
+pkg.cflags:
+    - -DSEGGER_RTT_SECTION=".rtt"
