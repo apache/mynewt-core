@@ -26,6 +26,8 @@
 #include "hal/hal_gpio.h"
 #include "hal/hal_i2c.h"
 
+#include "battery/battery_prop.h"
+
 #if MYNEWT_VAL(BQ27Z561_LOG)
 #include "log/log.h"
 #endif
@@ -597,10 +599,123 @@ bq27z561_config(struct bq27z561 *dev, struct bq27z561_cfg *cfg)
     return 0;
 }
 
+/* Battery manager interface functions */
+
+static int
+bq27z561_battery_property_get(struct battery_driver *driver,
+                          struct battery_property *property, uint32_t timeout)
+{
+    int rc = 0;
+
+    battery_property_value_t val;
+    if (property->bp_type == BATTERY_PROP_VOLTAGE_NOW &&
+        property->bp_flags == 0) {
+        rc = bq27z561_get_voltage((struct bq27z561 *) driver->bd_driver_data,
+                                  &val.bpv_u16);
+        property->bp_value.bpv_voltage = val.bpv_u16;
+    } else if (property->bp_type == BATTERY_PROP_STATUS &&
+               property->bp_flags == 0) {
+        rc = bq27z561_get_batt_status((struct bq27z561 *) driver->bd_driver_data,
+                                      &val.bpv_u16);
+        if (val.bpv_u16 & BQ27Z561_BATTERY_STATUS_DSG) {
+            property->bp_value.bpv_status = BATTERY_STATUS_DISCHARGING;
+        } else if (val.bpv_u16 & BQ27Z561_BATTERY_STATUS_FC) {
+            property->bp_value.bpv_status = BATTERY_STATUS_FULL;
+        } else {
+            property->bp_value.bpv_status = BATTERY_STATUS_CHARGING;
+        }
+    } else if (property->bp_type == BATTERY_PROP_CURRENT_NOW &&
+               property->bp_flags == 0) {
+        rc = bq27z561_get_current((struct bq27z561 *) driver->bd_driver_data,
+                                  &val.bpv_i16);
+        property->bp_value.bpv_current = val.bpv_i16;
+    } else if (property->bp_type == BATTERY_PROP_CAPACITY &&
+               property->bp_flags == 0) {
+        rc = bq27z561_get_rem_capacity((struct bq27z561 *) driver->bd_driver_data,
+                                  &val.bpv_u16);
+        property->bp_value.bpv_capacity = val.bpv_u16;
+    } else if (property->bp_type == BATTERY_PROP_SOC &&
+               property->bp_flags == 0) {
+        rc = bq27z561_get_relative_state_of_charge(
+                (struct bq27z561 *) driver->bd_driver_data, &val.bpv_u8);
+        property->bp_value.bpv_soc = val.bpv_u8;
+    } else if (property->bp_type == BATTERY_PROP_CYCLE_COUNT &&
+               property->bp_flags == 0) {
+        rc = bq27z561_get_discharge_cycles(
+                (struct bq27z561 *) driver->bd_driver_data, &val.bpv_u16);
+        property->bp_value.bpv_cycle_count = val.bpv_u16;
+    } else if (property->bp_type == BATTERY_PROP_TIME_TO_EMPTY_NOW &&
+               property->bp_flags == 0) {
+        rc = bq27z561_get_time_to_empty(
+                (struct bq27z561 *) driver->bd_driver_data, &val.bpv_u16);
+        property->bp_value.bpv_time_in_s = (uint8_t)val.bpv_u16 * 60;
+    } else if (property->bp_type == BATTERY_PROP_TIME_TO_FULL_NOW &&
+               property->bp_flags == 0) {
+        rc = bq27z561_get_avg_time_to_full(
+                (struct bq27z561 *) driver->bd_driver_data, &val.bpv_u16);
+        property->bp_value.bpv_time_in_s = val.bpv_u16 * 60;
+    } else if (property->bp_type == BATTERY_PROP_TEMP_NOW &&
+               property->bp_flags == 0) {
+        rc = bq27z561_get_temp(
+                (struct bq27z561 *) driver->bd_driver_data, &val.bpv_flt);
+        property->bp_value.bpv_temperature = val.bpv_flt;
+    } else {
+        rc = -1;
+        assert(0);
+    }
+
+    return rc;
+}
+
+static int
+bq27z561_battery_property_set(struct battery_driver *driver,
+                          struct battery_property *property)
+{
+    int rc = 0;
+
+    /* TODO: Not yet implemented */
+    return rc;
+}
+
+static int
+bq27z561_enable(struct battery *battery)
+{
+    return 0;
+}
+
+static int
+bq27z561_disable(struct battery *battery)
+{
+    return 0;
+}
+
+static const struct battery_driver_functions bq27z561_drv_funcs = {
+    .bdf_property_get     = bq27z561_battery_property_get,
+    .bdf_property_set     = bq27z561_battery_property_set,
+
+    .bdf_enable           = bq27z561_enable,
+    .bdf_disable          = bq27z561_disable,
+};
+
+static const struct battery_driver_property bq27z561_battery_properties[] = {
+    { BATTERY_PROP_STATUS, 0, "Status" },
+    { BATTERY_PROP_CAPACITY, 0, "Capacity" },
+    { BATTERY_PROP_TEMP_NOW, 0, "Temperature" },
+    { BATTERY_PROP_VOLTAGE_NOW, 0, "Voltage" },
+    { BATTERY_PROP_CURRENT_NOW, 0, "Current" },
+    { BATTERY_PROP_SOC, 0, "SOC" },
+    { BATTERY_PROP_TIME_TO_EMPTY_NOW, 0, "TimeToEmpty" },
+    { BATTERY_PROP_TIME_TO_FULL_NOW, 0, "TimeToFull" },
+    { BATTERY_PROP_CYCLE_COUNT, 0, "CycleCount" },
+    /* TODO: Add threshold properties supported by fuel gauge in hardware */
+    { BATTERY_PROP_NONE },
+};
+
 int
 bq27z561_init(struct os_dev *dev, void *arg)
 {
     struct bq27z561 *bq27;
+    struct bq27z561_init_arg *init_arg = (struct bq27z561_init_arg *)arg;
 
     if (!dev || !arg) {
         return SYS_ENODEV;
@@ -608,9 +723,22 @@ bq27z561_init(struct os_dev *dev, void *arg)
 
     OS_DEV_SETHANDLERS(dev, bq27z561_open, bq27z561_close);
 
-    /* Copy the interface struct */
     bq27 = (struct bq27z561 *)dev;
-    memcpy(&bq27->bq27_itf, arg, sizeof(struct bq27z561_itf));
+    /* Copy the interface struct */
+    bq27->bq27_itf = init_arg->itf;
+
+    bq27->dev.bd_funcs = &bq27z561_drv_funcs;
+    bq27->dev.bd_driver_properties = bq27z561_battery_properties;
+    bq27->dev.bd_driver_data = bq27;
+
+    battery_add_driver(init_arg->battery, &bq27->dev);
 
     return 0;
+}
+
+int bq27z561_pkg_init(void)
+{
+#if MYNEWT_VAL(BQ27Z561_CLI)
+    return bq27z561_shell_init();
+#endif
 }

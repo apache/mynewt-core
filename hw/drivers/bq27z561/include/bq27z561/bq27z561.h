@@ -21,6 +21,7 @@
 #define __BQ27Z561_H__
 
 #include "os/mynewt.h"
+#include "battery/battery_drv.h"
 
 #ifdef __cplusplus
 #extern "C" {
@@ -116,6 +117,14 @@
 #define BQ27Z561_CMD_OUT_CC_ADC_CAL         (0xF081)
 #define BQ27Z561_CMD_OUT_SHORT_CC_ADC_CAL   (0xF082)
 
+#define BQ27Z561_BATTERY_STATUS_TCA         (1 << 14)
+#define BQ27Z561_BATTERY_STATUS_TDA         (1 << 11)
+#define BQ27Z561_BATTERY_STATUS_RCA         (1 << 9)
+#define BQ27Z561_BATTERY_STATUS_INIT        (1 << 7)
+#define BQ27Z561_BATTERY_STATUS_DSG         (1 << 6)
+#define BQ27Z561_BATTERY_STATUS_FC          (1 << 5)
+#define BQ27Z561_BATTERY_STATUS_FD          (1 << 4)
+
 /* Errors returned from some commands */
 typedef enum
 {
@@ -144,11 +153,17 @@ struct bq27z561_itf
     uint8_t itf_addr;
 };
 
+struct bq27z561_init_arg
+{
+    struct bq27z561_itf itf;
+    struct os_dev *battery;
+};
+
 /* BQ27Z561 device */
 struct bq27z561
 {
     /* Underlying OS device */
-    struct os_dev dev;
+    struct battery_driver dev;
 
     /* Configuration values */
     struct bq27z561_cfg bq27_cfg;
