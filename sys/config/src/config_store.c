@@ -117,8 +117,7 @@ conf_save_one(const char *name, char *value)
     int rc;
 
     conf_lock();
-    cs = conf_save_dst;
-    if (!cs) {
+    if (!conf_save_dst) {
         rc = OS_ENOENT;
         goto out;
     }
@@ -129,11 +128,14 @@ conf_save_one(const char *name, char *value)
     cdca.name = name;
     cdca.val = value;
     cdca.is_dup = 0;
-    cs->cs_itf->csi_load(cs, conf_dup_check_cb, &cdca);
+    SLIST_FOREACH(cs, &conf_load_srcs, cs_next) {
+        cs->cs_itf->csi_load(cs, conf_dup_check_cb, &cdca);
+    }
     if (cdca.is_dup == 1) {
         rc = 0;
         goto out;
     }
+    cs = conf_save_dst;
     rc = cs->cs_itf->csi_save(cs, name, value);
 out:
     conf_unlock();
