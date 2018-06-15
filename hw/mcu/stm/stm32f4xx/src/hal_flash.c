@@ -98,7 +98,7 @@ stm32f4_flash_erase_sector(const struct hal_flash *dev, uint32_t sector_address)
 {
     int i;
 
-    for (i = 0; i < STM32F4_FLASH_NUM_AREAS - 1; i++) {
+    for (i = 0; i < dev->hf_sector_cnt; i++) {
         if (stm32f4_flash_sectors[i] == sector_address) {
             stm32f4_flash_erase_sector_id(i);
             return 0;
