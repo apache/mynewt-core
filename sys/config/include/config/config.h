@@ -189,6 +189,13 @@ int conf_register(struct conf_handler *cf);
 int conf_load(void);
 
 /**
+ * @brief Loads the configuration if it hasn't been loaded since reboot.
+ *
+ * @return 0 on success, non-zero on failure.
+ */
+int conf_ensure_loaded(void);
+
+/**
  * Save currently running configuration. All configuration which is different
  * from currently persisted values will be saved.
  *

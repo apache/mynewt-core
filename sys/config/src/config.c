@@ -89,7 +89,7 @@ conf_register(struct conf_handler *handler)
 static void
 conf_ev_fn_load(struct os_event *ev)
 {
-    conf_load();
+    conf_ensure_loaded();
 }
 
 /*
