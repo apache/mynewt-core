@@ -60,17 +60,21 @@ conf_dump_running(void)
 static void
 conf_saved_one(char *name, char *val, void *cb_arg)
 {
-    console_printf("%s = %s\n", name, val ? val : "<del>");
+    int *ip = cb_arg;
+
+    console_printf("%d - %s = %s\n", *ip, name, val ? val : "<del>");
 }
 
 static void
 conf_dump_saved(void)
 {
     struct conf_store *cs;
+    int i = 0;
 
     conf_lock();
     SLIST_FOREACH(cs, &conf_load_srcs, cs_next) {
-        cs->cs_itf->csi_load(cs, conf_saved_one, NULL);
+        cs->cs_itf->csi_load(cs, conf_saved_one, &i);
+        i++;
     }
     conf_unlock();
 }
