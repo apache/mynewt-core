@@ -280,7 +280,7 @@ cleanup_instance(int inst_id)
  *             it can be a nrf_drv_pwm_config_t, to override the default
  *             configuration.
  *
- * @return 0 on success, non-zero on failure.
+ * @return 0 on success, non-zero error code on failure.
  */
 static int
 nrf52_pwm_open(struct os_dev *odev, uint32_t wait, void *arg)
@@ -324,7 +324,7 @@ nrf52_pwm_open(struct os_dev *odev, uint32_t wait, void *arg)
  *
  * @param odev The device to close.
  *
- * @return 0 on success, non-zero on failure.
+ * @return 0 on success, non-zero error code on failure.
  */
 static int
 nrf52_pwm_close(struct os_dev *odev)
@@ -470,7 +470,7 @@ nrf52_pwm_configure_channel(struct pwm_dev *dev,
  * @param cnum The channel number. This channel should be already configured.
  * @param fraction The fraction value.
  *
- * @return 0 on success, negative on error.
+ * @return 0 on success, non-zero error code on failure.
  */
 static int
 nrf52_pwm_set_duty_cycle(struct pwm_dev *dev, uint8_t cnum, uint16_t fraction)
@@ -480,12 +480,12 @@ nrf52_pwm_set_duty_cycle(struct pwm_dev *dev, uint8_t cnum, uint16_t fraction)
     bool inverted;
 
     if (!instances[inst_id].in_use) {
-        return (-EINVAL);
+        return (EINVAL);
     }
 
     config = &instances[inst_id].config;
     if (config->output_pins[cnum] == NRFX_PWM_PIN_NOT_USED) {
-        return (-EINVAL);
+        return (EINVAL);
     }
 
     inverted = ((config->output_pins[cnum] & NRFX_PWM_PIN_INVERTED) != 0);
@@ -502,7 +502,7 @@ nrf52_pwm_set_duty_cycle(struct pwm_dev *dev, uint8_t cnum, uint16_t fraction)
  *
  * @param dev The PWM device to be enabled.
  *
- * @return 0 on success, negative on error.
+ * @return 0 on success, non-zero error code on failure.
  */
 int
 nrf52_pwm_enable(struct pwm_dev *dev)
@@ -538,18 +538,18 @@ nrf52_pwm_is_enabled(struct pwm_dev *dev)
  *
  * @param dev The device to disable.
  *
- * @return 0 on success, negative on error.
+ * @return 0 on success, non-zero error code on failure.
  */
 static int
 nrf52_pwm_disable(struct pwm_dev *dev)
 {
     int inst_id = dev->pwm_instance_id;
     if (!instances[inst_id].in_use) {
-        return (-EINVAL);
+        return (EINVAL);
     }
 
     if (!instances[inst_id].playing) {
-        return (-EINVAL);
+        return (EINVAL);
     }
 
     nrfx_pwm_uninit(&instances[inst_id].drv_instance);
@@ -559,14 +559,15 @@ nrf52_pwm_disable(struct pwm_dev *dev)
 }
 
 /**
+ * Set the frequency for the device's clock.
  * This frequency must be between 1/2 the clock frequency and
- * the clock divided by the resolution. NOTE: This may affect
- * other PWM channels.
+ * the clock divided by the resolution. NOTE: This will affect
+ * all PWM channels belonging to the device.
  *
  * @param dev The device to configure.
  * @param freq_hz The frequency value in Hz.
  *
- * @return A value is in Hz on success, negative on error.
+ * @return A value is in Hz on success, negative error code on failure.
  */
 static int
 nrf52_pwm_set_frequency(struct pwm_dev *dev, uint32_t freq_hz)
@@ -628,7 +629,7 @@ nrf52_pwm_set_frequency(struct pwm_dev *dev, uint32_t freq_hz)
  *
  * @param dev
  *
- * @return value is in Hz on success, negative on error.
+ * @return value is in Hz on success, error code on failure.
  */
 static int
 nrf52_pwm_get_clock_freq(struct pwm_dev *dev)
@@ -665,7 +666,7 @@ nrf52_pwm_get_clock_freq(struct pwm_dev *dev)
  *
  * @param dev
  *
- * @return value in cycles on success, negative on error.
+ * @return value in cycles on success, negative error code on failure.
  */
 int
 nrf52_pwm_get_top_value(struct pwm_dev *dev)
@@ -683,7 +684,7 @@ nrf52_pwm_get_top_value(struct pwm_dev *dev)
  *
  * @param dev The device to query.
  *
- * @return The value in bits on success, negative on error.
+ * @return The value in bits on success, negative error code on failure.
  */
 static int
 nrf52_pwm_get_resolution_bits(struct pwm_dev *dev)

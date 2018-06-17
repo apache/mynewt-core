@@ -67,7 +67,7 @@ typedef int (*pwm_config_channel_func_t)(struct pwm_dev *,
  * @param cnum The channel to configure.
  * @param fraction The fraction value.
  *
- * @return 0 on success, negative on error.
+ * @return 0 on success, non-zero error code on failure.
  */
 typedef int (*pwm_set_duty_cycle_func_t)(struct pwm_dev *,
                                          uint8_t,
@@ -79,7 +79,7 @@ typedef int (*pwm_set_duty_cycle_func_t)(struct pwm_dev *,
  *
  * @param dev The PWM device to be enabled.
  *
- * @return 0 on success, negative on error.
+ * @return 0 on success, non-zero error code on failure.
  */
 typedef int (*pwm_enable_func_t)(struct pwm_dev *dev);
 
@@ -100,7 +100,7 @@ typedef bool (*pwm_is_enabled_func_t)(struct pwm_dev *);
  * @param dev The device to configure.
  * @param freq_hz The frequency value in Hz.
  *
- * @return 0 on success, negative on error.
+ * @return A value is in Hz on success, negative error code on failure.
  */
 typedef int (*pwm_set_frequency_func_t) (struct pwm_dev *, uint32_t);
 
@@ -109,7 +109,7 @@ typedef int (*pwm_set_frequency_func_t) (struct pwm_dev *, uint32_t);
  *
  * @param dev
  *
- * @return value is in Hz on success, negative on error.
+ * @return value is in Hz on success, negative error code on failure.
  */
 typedef int (*pwm_get_clock_freq_func_t) (struct pwm_dev *);
 
@@ -119,7 +119,7 @@ typedef int (*pwm_get_clock_freq_func_t) (struct pwm_dev *);
  *
  * @param dev
  *
- * @return value in cycles on success, negative on error.
+ * @return value in cycles on success, negative error code on failure.
  */
 typedef int (*pwm_get_top_value_funct_t) (struct pwm_dev *dev);
 
@@ -128,7 +128,7 @@ typedef int (*pwm_get_top_value_funct_t) (struct pwm_dev *dev);
  *
  * @param dev The device to query.
  *
- * @return The value in bits on success, negative on error.
+ * @return The value in bits on success, negative error code on failure.
  */
 typedef int (*pwm_get_resolution_bits_func_t) (struct pwm_dev *);
 
@@ -137,7 +137,7 @@ typedef int (*pwm_get_resolution_bits_func_t) (struct pwm_dev *);
  *
  * @param dev The device to disable.
  *
- * @return 0 on success, negative on error.
+ * @return 0 on success, non-zero error code on failure.
  */
 typedef int (*pwm_disable_func_t) (struct pwm_dev *);
 
