@@ -72,3 +72,12 @@ syscfg.defs:
     CONSOLE_UART_DEV:
         description: 'Console UART device.'
         value: '"uart0"'
+
+    CONSOLE_RTT_INPUT_POLL_INTERVAL_MAX:
+        description: >
+            Maximum interval (milliseconds) to poll for RTT input.
+            With no new data on RTT input, interval to poll for new data will
+            be gradually increased up to specified value. Using high interval
+            value may affect RTT console responsiveness, using small value may
+            affect device performance due to more frequent polling.
+        value: 250

@@ -50,27 +50,30 @@ console_out(int character)
 }
 
 #if MYNEWT_VAL(CONSOLE_INPUT)
+
+#define RTT_INPUT_POLL_INTERVAL_MIN     10 /* ms */
+#define RTT_INPUT_POLL_INTERVAL_STEP    10 /* ms */
+#define RTT_INPUT_POLL_INTERVAL_MAX     MYNEWT_VAL(CONSOLE_RTT_INPUT_POLL_INTERVAL_MAX)
+
 void
 rtt(void *arg)
 {
+    static uint32_t itvl_ms = RTT_INPUT_POLL_INTERVAL_MIN;
     int key;
-    int i = 0;
-    uint32_t timeout;
 
     key = SEGGER_RTT_GetKey();
-    if (key >= 0) {
-        console_handle_char((char)key);
-        i = 0;
+    if (key < 0) {
+        itvl_ms += RTT_INPUT_POLL_INTERVAL_STEP;
+        itvl_ms = min(itvl_ms, RTT_INPUT_POLL_INTERVAL_MAX);
+    } else {
+        while (key >= 0) {
+            console_handle_char((char)key);
+            key = SEGGER_RTT_GetKey();
+        }
+        itvl_ms = RTT_INPUT_POLL_INTERVAL_MIN;
     }
-    /* These values were selected to keep the shell responsive
-     * and at the same time reduce context switches.
-     * Min sleep is 50ms and max is 250ms.
-     */
-    if (i < 5) {
-        ++i;
-    }
-    timeout = 50000 * i;
-    os_cputime_timer_relative(&rtt_timer, timeout);
+
+    os_cputime_timer_relative(&rtt_timer, itvl_ms * 1000);
 }
 #endif
 
