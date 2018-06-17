@@ -51,12 +51,12 @@ extern "C" {
  */
 
 #define STM32_PWM_ERR_OK       0
-#define STM32_PWM_ERR_NODEV   -1
-#define STM32_PWM_ERR_NOTIM   -2
-#define STM32_PWM_ERR_CHAN    -3
-#define STM32_PWM_ERR_FREQ    -4
-#define STM32_PWM_ERR_GPIO    -5
-#define STM32_PWM_ERR_NOIRQ   -6
+#define STM32_PWM_ERR_NODEV    1
+#define STM32_PWM_ERR_NOTIM    2
+#define STM32_PWM_ERR_CHAN     3
+#define STM32_PWM_ERR_FREQ     4
+#define STM32_PWM_ERR_GPIO     5
+#define STM32_PWM_ERR_NOIRQ    6
 
 typedef struct stm32_pwm_conf {
     TIM_TypeDef   *tim;
