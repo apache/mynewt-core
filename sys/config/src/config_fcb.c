@@ -50,8 +50,11 @@ conf_fcb_src(struct conf_fcb *cf)
     int rc;
 
     cf->cf_fcb.f_version = CONF_FCB_VERS;
-    cf->cf_fcb.f_scratch_cnt = 1;
-
+    if (cf->cf_fcb.f_sector_cnt > 1) {
+        cf->cf_fcb.f_scratch_cnt = 1;
+    } else {
+        cf->cf_fcb.f_scratch_cnt = 0;
+    }
     while (1) {
         rc = fcb_init(&cf->cf_fcb);
         if (rc) {
@@ -62,7 +65,8 @@ conf_fcb_src(struct conf_fcb *cf)
          * Check if system was reset in middle of emptying a sector. This
          * situation is recognized by checking if the scratch block is missing.
          */
-        if (fcb_free_sector_cnt(&cf->cf_fcb) < 1) {
+        if (cf->cf_fcb.f_scratch_cnt &&
+            fcb_free_sector_cnt(&cf->cf_fcb) < 1) {
             flash_area_erase(cf->cf_fcb.f_active.fe_area, 0,
               cf->cf_fcb.f_active.fe_area->fa_size);
         } else {
@@ -229,6 +233,9 @@ conf_fcb_append(struct conf_fcb *cf, char *buf, int len)
         rc = fcb_append(&cf->cf_fcb, len, &loc);
         if (rc != FCB_ERR_NOSPACE) {
             break;
+        }
+        if (cf->cf_fcb.f_scratch_cnt == 0) {
+            return OS_ENOMEM;
         }
         conf_fcb_compress(cf);
     }
