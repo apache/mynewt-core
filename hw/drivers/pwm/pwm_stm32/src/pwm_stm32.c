@@ -318,7 +318,7 @@ stm32_pwm_set_frequency(struct pwm_dev *dev, uint32_t freq_hz)
     uint32_t div, div1, div2;
 
     if (!freq_hz) {
-        return STM32_PWM_ERR_FREQ;
+        return -STM32_PWM_ERR_FREQ;
     }
 
     id = dev->pwm_instance_id;
@@ -329,7 +329,7 @@ stm32_pwm_set_frequency(struct pwm_dev *dev, uint32_t freq_hz)
 
     div  = timer_clock / freq_hz;
     if (!div) {
-        return STM32_PWM_ERR_FREQ;
+        return -STM32_PWM_ERR_FREQ;
     }
 
     div1 = div >> 16;
