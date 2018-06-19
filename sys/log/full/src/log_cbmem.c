@@ -40,6 +40,31 @@ err:
 }
 
 static int
+log_cbmem_append_body(struct log *log, const struct log_entry_hdr *hdr,
+                      const void *body, int body_len)
+{
+    struct cbmem *cbmem;
+
+    struct cbmem_scat_gath sg = {
+        .entries = (struct cbmem_scat_gath_entry[2]) {
+            {
+                .flat_buf = hdr,
+                .flat_len = sizeof *hdr,
+            },
+            {
+                .flat_buf = body,
+                .flat_len = body_len,
+            },
+        },
+        .count = 2,
+    };
+
+    cbmem = (struct cbmem *) log->l_arg;
+
+    return cbmem_append_scat_gath(cbmem, &sg);
+}
+
+static int
 log_cbmem_append_mbuf(struct log *log, const struct os_mbuf *om)
 {
     struct cbmem *cbmem;
@@ -53,8 +78,33 @@ log_cbmem_append_mbuf(struct log *log, const struct os_mbuf *om)
     }
 
     return (0);
+
 err:
     return (rc);
+}
+
+static int
+log_cbmem_append_mbuf_body(struct log *log, const struct log_entry_hdr *hdr,
+                           const struct os_mbuf *om)
+{
+    struct cbmem *cbmem;
+
+    struct cbmem_scat_gath sg = {
+        .entries = (struct cbmem_scat_gath_entry[2]) {
+            {
+                .flat_buf = hdr,
+                .flat_len = sizeof *hdr,
+            },
+            {
+                .om = om,
+            },
+        },
+        .count = 2,
+    };
+
+    cbmem = (struct cbmem *) log->l_arg;
+
+    return cbmem_append_scat_gath(cbmem, &sg);
 }
 
 static int
@@ -161,7 +211,9 @@ const struct log_handler log_cbmem_handler = {
     .log_read = log_cbmem_read,
     .log_read_mbuf = log_cbmem_read_mbuf,
     .log_append = log_cbmem_append,
+    .log_append_body = log_cbmem_append_body,
     .log_append_mbuf = log_cbmem_append_mbuf,
+    .log_append_mbuf_body = log_cbmem_append_mbuf_body,
     .log_walk = log_cbmem_walk,
     .log_flush = log_cbmem_flush,
 };

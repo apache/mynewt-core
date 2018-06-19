@@ -69,7 +69,13 @@ typedef int (*lh_read_func_t)(struct log *, void *dptr, void *buf,
 typedef int (*lh_read_mbuf_func_t)(struct log *, void *dptr, struct os_mbuf *om,
                                    uint16_t offset, uint16_t len);
 typedef int (*lh_append_func_t)(struct log *, void *buf, int len);
+typedef int (*lh_append_body_func_t)(struct log *log,
+                                     const struct log_entry_hdr *hdr,
+                                     const void *body, int body_len);
 typedef int (*lh_append_mbuf_func_t)(struct log *, const struct os_mbuf *om);
+typedef int (*lh_append_mbuf_body_func_t)(struct log *log,
+                                          const struct log_entry_hdr *hdr,
+                                          const struct os_mbuf *om);
 typedef int (*lh_walk_func_t)(struct log *,
         log_walk_func_t walk_func, struct log_offset *log_offset);
 typedef int (*lh_flush_func_t)(struct log *);
@@ -84,7 +90,9 @@ struct log_handler {
     lh_read_func_t log_read;
     lh_read_mbuf_func_t log_read_mbuf;
     lh_append_func_t log_append;
+    lh_append_body_func_t log_append_body;
     lh_append_mbuf_func_t log_append_mbuf;
+    lh_append_mbuf_body_func_t log_append_mbuf_body;
     lh_walk_func_t log_walk;
     lh_flush_func_t log_flush;
     /* Functions called only internally (no API for apps) */
@@ -297,6 +305,11 @@ int log_append_mbuf_typed_no_free(struct log *log, uint8_t module,
  */
 int log_append_mbuf_typed(struct log *log, uint8_t module, uint8_t level,
                           uint8_t etype, struct os_mbuf *om);
+
+int log_append_body(struct log *log, uint8_t module, uint8_t level,
+                    uint8_t etype, const void *body, uint16_t body_len);
+int log_append_mbuf_body(struct log *log, uint8_t module, uint8_t level,
+                         uint8_t etype, struct os_mbuf *om);
 
 #if MYNEWT_VAL(LOG_CONSOLE)
 struct log *log_console_get(void);
