@@ -476,18 +476,17 @@ void
 log_printf(struct log *log, uint16_t module, uint16_t level, char *msg, ...)
 {
     va_list args;
-    char buf[LOG_ENTRY_HDR_SIZE + LOG_PRINTF_MAX_ENTRY_LEN];
+    char buf[LOG_PRINTF_MAX_ENTRY_LEN];
     int len;
 
     va_start(args, msg);
-    len = vsnprintf(&buf[LOG_ENTRY_HDR_SIZE], LOG_PRINTF_MAX_ENTRY_LEN, msg,
-            args);
+    len = vsnprintf(buf, LOG_PRINTF_MAX_ENTRY_LEN, msg, args);
     va_end(args);
     if (len >= LOG_PRINTF_MAX_ENTRY_LEN) {
         len = LOG_PRINTF_MAX_ENTRY_LEN-1;
     }
 
-    log_append(log, module, level, (uint8_t *) buf, len);
+    log_append_body(log, module, level, LOG_ETYPE_STRING, buf, len);
 }
 
 int
