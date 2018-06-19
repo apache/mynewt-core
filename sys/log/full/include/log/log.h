@@ -64,6 +64,10 @@ struct log_offset {
 typedef int (*log_walk_func_t)(struct log *, struct log_offset *log_offset,
         void *dptr, uint16_t len);
 
+typedef int (*log_walk_body_func_t)(struct log *log,
+        struct log_offset *log_offset, const struct log_entry_hdr *hdr,
+        void *dptr, uint16_t len);
+
 typedef int (*lh_read_func_t)(struct log *, void *dptr, void *buf,
         uint16_t offset, uint16_t len);
 typedef int (*lh_read_mbuf_func_t)(struct log *, void *dptr, struct os_mbuf *om,
@@ -393,6 +397,24 @@ int log_read_mbuf(struct log *log, void *dptr, struct os_mbuf *om, uint16_t off,
 int log_read_mbuf_body(struct log *log, void *dptr, struct os_mbuf *om,
                        uint16_t off, uint16_t len);
 int log_walk(struct log *log, log_walk_func_t walk_func,
+        struct log_offset *log_offset);
+
+/**
+ * @brief Applies a callback to each message in the specified log.
+ *
+ * Similar to `log_walk`, except it passes the message header and body
+ * separately to the callback.
+ *
+ * @param log                   The log to iterate.
+ * @param walk_body_func        The function to apply to each log entry.
+ * @param log_offset            Specifies the range of entries to process.
+ *                                  Entries not matching these criteria are
+ *                                  skipped during the walk.
+ *
+ * @return                      0 if the walk completed successfully;
+ *                              nonzero on error or if the walk was aborted.
+ */
+int log_walk_body(struct log *log, log_walk_body_func_t walk_body_func,
         struct log_offset *log_offset);
 int log_flush(struct log *log);
 

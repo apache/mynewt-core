@@ -507,13 +507,80 @@ err:
 }
 
 /**
+ * Argument passed to `log_walk` to perform a log body walk.  Wraps the
+ * original walk argument and the body walk callback in a single object.
+ */
+struct log_walk_body_arg {
+    /** The body walk function to call on each entry. */
+    log_walk_body_func_t fn;
+
+    /** The original argument passed to `log_walk`. */
+    void *arg;
+};
+
+/**
+ * Performs a body walk on a single log entry.  This function reads the entry
+ * header, subtracts the header length from the total entry length, and
+ * forwards the data to the body walk callback.
+ */
+static int
+log_walk_body_fn(struct log *log, struct log_offset *log_offset, void *dptr,
+                 uint16_t len)
+{
+    struct log_walk_body_arg *lwba;
+    struct log_entry_hdr ueh;
+    int rc;
+
+    lwba = log_offset->lo_arg;
+
+    /* Read the log entry header.  This gets passed to the body walk
+     * callback.
+     */
+    rc = log_read_hdr(log, dptr, &ueh);
+    if (rc != 0) {
+        return rc;
+    }
+    len -= sizeof ueh;
+
+    /* Pass the wrapped callback argument to the body walk function. */
+    log_offset->lo_arg = lwba->arg;
+    rc = lwba->fn(log, log_offset, &ueh, dptr, len);
+
+    /* Restore the original body walk argument. */
+    log_offset->lo_arg = lwba;
+
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
+}
+
+int
+log_walk_body(struct log *log, log_walk_body_func_t walk_body_func,
+              struct log_offset *log_offset)
+{
+    struct log_walk_body_arg lwba = {
+        .fn = walk_body_func,
+        .arg = log_offset->lo_arg,
+    };
+    int rc;
+
+    log_offset->lo_arg = &lwba;
+    rc = log->l_log->log_walk(log, log_walk_body_fn, log_offset);
+    log_offset->lo_arg = lwba.arg;
+
+    return rc;
+}
+
+/**
  * Reads from the specified log.
  *
  * @return                      The number of bytes read; 0 on failure.
  */
 int
 log_read(struct log *log, void *dptr, void *buf, uint16_t off,
-        uint16_t len)
+         uint16_t len)
 {
     int rc;
 
