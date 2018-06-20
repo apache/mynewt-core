@@ -62,6 +62,14 @@ struct hal_bsp_mem_dump {
 const struct hal_bsp_mem_dump *hal_bsp_core_dump(int *area_cnt);
 
 #define HAL_BSP_MAX_ID_LEN  32
+
+/**
+ * Retrieves the length, in bytes, of the hardware ID.
+ *
+ * @return                      The length of the hardware ID.
+ */
+int hal_bsp_hw_id_len(void);
+
 /**
  * Get unique HW identifier/serial number for platform.
  * Returns the number of bytes filled in.

@@ -28,6 +28,12 @@
 #define min(a, b) ((a)<(b)?(a):(b))
 #endif
 
+int
+hal_bsp_hw_id_len(void)
+{
+    return sizeof(NRF_FICR->DEVICEID) + sizeof(NRF_FICR->DEVICEADDR);
+}
+
 /*
  * These values are generated at random.
  * DEVICEID[0-1] and DEVICEADDR[0-1].
