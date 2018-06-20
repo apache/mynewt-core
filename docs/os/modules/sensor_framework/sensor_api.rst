@@ -50,7 +50,7 @@ object:
 -  The ``<sensorname>_init()`` function must also call the
    ``sensor_mgr_register()`` function to register the sensor with the
    sensor manager. See the :doc:`Sensor Manager
-   API <../os/modules/sensor_framework/sensor_manager_api>` for
+   API <../os/modules/sensor_framework/sensor_mgr_api>` for
    details.
 
 Setting the Configured Sensor Types
@@ -172,7 +172,7 @@ configured for. Only sensor data for a configured sensor type can be
 read.
 
 Sensor Types
-^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^
 
 
 The ``sensor_type_t`` type is an enumeration of a bit mask of sensor
