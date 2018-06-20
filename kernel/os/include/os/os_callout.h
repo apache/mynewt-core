@@ -22,7 +22,7 @@
 /**
  * @addtogroup OSKernel
  * @{
- *   @defgroup OSCallouts Event Timers (Callouts)
+ *   @defgroup OSCallouts 
  *   @{
  */
 
@@ -44,7 +44,7 @@ struct os_callout {
     /** Pointer to the event queue to post the event to */
     struct os_eventq *c_evq;
     /** Number of ticks in the future to expire the callout */
-    uint32_t c_ticks;
+    os_time_t c_ticks;
 
 
     TAILQ_ENTRY(os_callout) c_next;
@@ -97,7 +97,7 @@ void os_callout_stop(struct os_callout *);
  *
  * @return 0 on success, non-zero on failure
  */
-int os_callout_reset(struct os_callout *, int32_t);
+int os_callout_reset(struct os_callout *, os_time_t);
 
 /**
  * Returns the number of ticks which remains to callout.
@@ -140,7 +140,7 @@ os_time_t os_callout_wakeup_ticks(os_time_t now);
 #endif /* _OS_CALLOUT_H */
 
 /**
- *   @} Callout Timers
+ *   @} OSCallouts
  * @} OS Kernel
  */
 

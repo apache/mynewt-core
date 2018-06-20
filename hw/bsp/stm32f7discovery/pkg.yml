@@ -41,3 +41,12 @@ pkg.deps.UART_0:
 
 pkg.deps.ETH_0:
     - hw/drivers/lwip/stm32_eth
+
+pkg.deps.PWM_0:
+    - hw/drivers/pwm/pwm_stm32
+
+pkg.deps.PWM_1:
+    - hw/drivers/pwm/pwm_stm32
+
+pkg.deps.PWM_2:
+    - hw/drivers/pwm/pwm_stm32

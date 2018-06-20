@@ -53,7 +53,7 @@ jlink_load () {
     # downloading somewhere in the flash. So need to figure out how to tell it
     # not to do that, or report failure if gdb fails to write this file
     #
-    echo "shell sh -c \"trap '' 2; $JLINK_GDB_SERVER $EXTRA_JTAG_CMD -device $JLINK_DEV -speed 4000 -if SWD -port 3333 -singlerun &\" " > $GDB_CMD_FILE
+    echo "shell sh -c \"trap '' 2; $JLINK_GDB_SERVER -device $JLINK_DEV -speed 1000 -if SWD -port 3333 -singlerun $EXTRA_JTAG_CMD  &\" " > $GDB_CMD_FILE
     echo "target remote localhost:3333" >> $GDB_CMD_FILE
     echo "mon reset" >> $GDB_CMD_FILE
     echo "restore $FILE_NAME binary $FLASH_OFFSET" >> $GDB_CMD_FILE
@@ -129,13 +129,13 @@ jlink_debug() {
             # Launch jlink server in a separate command interpreter, to make
             # sure it doesn't get killed by Ctrl-C signal from bash.
             #
-            $COMSPEC /C "start $COMSPEC /C $JLINK_GDB_SERVER $EXTRA_JTAG_CMD -device $JLINK_DEV -speed 4000 -if SWD -port 3333 -singlerun"
+            $COMSPEC /C "start $COMSPEC /C $JLINK_GDB_SERVER -device $JLINK_DEV -speed 4000 -if SWD -port 3333 -singlerun $EXTRA_JTAG_CMD"
         else
             #
             # Block Ctrl-C from getting passed to jlink server.
             #
             set -m
-            $JLINK_GDB_SERVER $EXTRA_JTAG_CMD -device $JLINK_DEV -speed 4000 -if SWD -port 3333 -singlerun > /dev/null &
+            $JLINK_GDB_SERVER -device $JLINK_DEV -speed 4000 -if SWD -port 3333 -singlerun $EXTRA_JTAG_CMD  > /dev/null &
             set +m
         fi
 
@@ -155,7 +155,7 @@ jlink_debug() {
             rm $GDB_CMD_FILE
 	fi
     else
-        $JLINK_GDB_SERVER $EXTRA_JTAG_CMD -device $JLINK_DEV -speed 4000 -if SWD -port 3333 -singlerun
+        $JLINK_GDB_SERVER -device $JLINK_DEV -speed 4000 -if SWD -port 3333 -singlerun $EXTRA_JTAG_CMD
     fi
     return 0
 }

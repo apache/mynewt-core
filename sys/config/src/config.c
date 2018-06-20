@@ -28,19 +28,24 @@
 
 struct conf_handler_head conf_handlers;
 
-static uint8_t conf_cmd_inited;
+static os_event_fn conf_ev_fn_load;
+
+static struct os_mutex conf_mtx;
+
+/* OS event - causes persisted config values to be loaded at startup. */
+static struct os_event conf_ev_load = {
+    .ev_cb = conf_ev_fn_load,
+};
 
 void
 conf_init(void)
 {
     int rc;
 
+    os_mutex_init(&conf_mtx);
+
     SLIST_INIT(&conf_handlers);
     conf_store_init();
-
-    if (conf_cmd_inited) {
-        return;
-    }
 
     (void)rc;
 
@@ -53,14 +58,38 @@ conf_init(void)
     SYSINIT_PANIC_ASSERT(rc == 0);
 #endif
 
-    conf_cmd_inited = 1;
+    /* Delay loading the configuration until the default event queue is
+     * processed.  This gives main() a chance to configure the underlying
+     * storage first.
+     */
+    os_eventq_put(os_eventq_dflt_get(), &conf_ev_load);
+}
+
+void
+conf_lock(void)
+{
+    os_mutex_pend(&conf_mtx, 0xFFFFFFFF);
+}
+
+void
+conf_unlock(void)
+{
+    os_mutex_release(&conf_mtx);
 }
 
 int
 conf_register(struct conf_handler *handler)
 {
+    conf_lock();
     SLIST_INSERT_HEAD(&conf_handlers, handler, ch_list);
+    conf_unlock();
     return 0;
+}
+
+static void
+conf_ev_fn_load(struct os_event *ev)
+{
+    conf_ensure_loaded();
 }
 
 /*
@@ -238,13 +267,18 @@ conf_set_value(char *name, char *val_str)
     int name_argc;
     char *name_argv[CONF_MAX_DIR_DEPTH];
     struct conf_handler *ch;
+    int rc;
 
+    conf_lock();
     ch = conf_parse_and_lookup(name, &name_argc, name_argv);
     if (!ch) {
-        return OS_INVALID_PARM;
+        rc = OS_INVALID_PARM;
+        goto out;
     }
-
-    return ch->ch_set(name_argc - 1, &name_argv[1], val_str);
+    rc = ch->ch_set(name_argc - 1, &name_argv[1], val_str);
+out:
+    conf_unlock();
+    return rc;
 }
 
 /*
@@ -259,16 +293,21 @@ conf_get_value(char *name, char *buf, int buf_len)
     int name_argc;
     char *name_argv[CONF_MAX_DIR_DEPTH];
     struct conf_handler *ch;
+    char *rval = NULL;
 
+    conf_lock();
     ch = conf_parse_and_lookup(name, &name_argc, name_argv);
     if (!ch) {
-        return NULL;
+        goto out;
     }
 
     if (!ch->ch_get) {
-        return NULL;
+        goto out;
     }
-    return ch->ch_get(name_argc - 1, &name_argv[1], buf, buf_len);
+    rval = ch->ch_get(name_argc - 1, &name_argv[1], buf, buf_len);
+out:
+    conf_unlock();
+    return rval;
 }
 
 int
@@ -280,15 +319,17 @@ conf_commit(char *name)
     int rc;
     int rc2;
 
+    conf_lock();
     if (name) {
         ch = conf_parse_and_lookup(name, &name_argc, name_argv);
         if (!ch) {
-            return OS_INVALID_PARM;
+            rc = OS_INVALID_PARM;
+            goto out;
         }
         if (ch->ch_commit) {
-            return ch->ch_commit();
+            rc = ch->ch_commit();
         } else {
-            return 0;
+            rc = 0;
         }
     } else {
         rc = 0;
@@ -300,6 +341,8 @@ conf_commit(char *name)
                 }
             }
         }
-        return rc;
     }
+out:
+    conf_unlock();
+    return rc;
 }

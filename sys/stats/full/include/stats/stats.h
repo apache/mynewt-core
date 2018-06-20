@@ -74,14 +74,17 @@ STATS_SECT_DECL(__name) {                   \
     (__size),                                                               \
     ((sizeof (__sectvarname)) - sizeof (struct stats_hdr)) / (__size)
 
+#define STATS_GET(__sectvarname, __var)        \
+    ((__sectvarname).STATS_SECT_VAR(__var))
+
 #define STATS_INC(__sectvarname, __var)        \
-    ((__sectvarname).STATS_SECT_VAR(__var)++)
+    (STATS_GET(__sectvarname, __var)++)
 
 #define STATS_INCN(__sectvarname, __var, __n)  \
-    ((__sectvarname).STATS_SECT_VAR(__var) += (__n))
+    (STATS_GET(__sectvarname, __var) += (__n))
 
 #define STATS_CLEAR(__sectvarname, __var)        \
-    ((__sectvarname).STATS_SECT_VAR(__var) = 0)
+    (STATS_GET(__sectvarname, __var) = 0)
 
 #if MYNEWT_VAL(STATS_NAMES)
 

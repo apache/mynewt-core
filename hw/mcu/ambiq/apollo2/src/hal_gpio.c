@@ -109,7 +109,7 @@ hal_gpio_irq_handler(void)
     uint64_t status;
     int i;
 
-    os_trace_enter_isr();
+    os_trace_isr_enter();
 
     /* Read and clear the GPIO interrupt status. */
     status = am_hal_gpio_int_status_get(false);
@@ -124,7 +124,7 @@ hal_gpio_irq_handler(void)
         }
     }
 
-    os_trace_exit_isr();
+    os_trace_isr_exit();
 }
 
 /*

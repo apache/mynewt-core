@@ -75,7 +75,7 @@ pwm_configure_channel(struct pwm_dev *dev,
  * @param cnum The channel number. This channel should be already configured.
  * @param fraction The fraction value.
  *
- * @return 0 on success, negative on error.
+ * @return 0 on success, non-zero error code on failure.
  */
 int
 pwm_set_duty_cycle(struct pwm_dev *dev, uint8_t cnum, uint16_t fraction)
@@ -95,7 +95,7 @@ pwm_set_duty_cycle(struct pwm_dev *dev, uint8_t cnum, uint16_t fraction)
  *
  * @param dev The PWM device to be enabled.
  *
- * @return 0 on success, negative on error.
+ * @return 0 on success, non-zero error code on failure.
  */
 int
 pwm_enable(struct pwm_dev *dev)
@@ -130,7 +130,7 @@ pwm_is_enabled(struct pwm_dev *dev)
  * @param dev The device to configure.
  * @param freq_hz The frequency value in Hz.
  *
- * @return A value is in Hz on success, negative on error.
+ * @return A value is in Hz on success, negative error code on failure.
  */
 int
 pwm_set_frequency(struct pwm_dev *dev, uint32_t freq_hz)
@@ -146,7 +146,7 @@ pwm_set_frequency(struct pwm_dev *dev, uint32_t freq_hz)
  *
  * @param dev
  *
- * @return value is in Hz on success, negative on error.
+ * @return value is in Hz on success, negative error code on failure.
  */
 int
 pwm_get_clock_freq(struct pwm_dev *dev)
@@ -163,7 +163,7 @@ pwm_get_clock_freq(struct pwm_dev *dev)
  *
  * @param dev
  *
- * @return value in cycles on success, negative on error.
+ * @return value in cycles on success, negative error code on failure.
  */
 int
 pwm_get_top_value(struct pwm_dev *dev)
@@ -179,7 +179,7 @@ pwm_get_top_value(struct pwm_dev *dev)
  *
  * @param dev The device to query.
  *
- * @return The value in bits on success, negative on error.
+ * @return The value in bits on success, negative error code on failure.
  */
 int
 pwm_get_resolution_bits(struct pwm_dev *dev)
@@ -195,7 +195,7 @@ pwm_get_resolution_bits(struct pwm_dev *dev)
  *
  * @param dev The device to disable.
  *
- * @return 0 on success, negative on error.
+ * @return 0 on success, negative error code on failure.
  */
 int
 pwm_disable(struct pwm_dev *dev)

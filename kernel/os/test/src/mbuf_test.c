@@ -101,6 +101,7 @@ TEST_CASE_DECL(os_mbuf_test_pullup)
 TEST_CASE_DECL(os_mbuf_test_extend)
 TEST_CASE_DECL(os_mbuf_test_adj)
 TEST_CASE_DECL(os_mbuf_test_get_pkthdr)
+TEST_CASE_DECL(os_mbuf_test_widen)
 
 TEST_SUITE(os_mbuf_test_suite)
 {
@@ -111,4 +112,5 @@ TEST_SUITE(os_mbuf_test_suite)
     os_mbuf_test_extend();
     os_mbuf_test_adj();
     os_mbuf_test_get_pkthdr();
+    os_mbuf_test_widen();
 }

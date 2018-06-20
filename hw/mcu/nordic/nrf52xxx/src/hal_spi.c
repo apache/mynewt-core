@@ -230,7 +230,7 @@ nrf52_irqs_handler(struct nrf52_hal_spi *spi)
 void
 nrf52_spi0_irq_handler(void)
 {
-    os_trace_enter_isr();
+    os_trace_isr_enter();
     if (nrf52_hal_spi0.spi_type == HAL_SPI_TYPE_MASTER) {
 #if MYNEWT_VAL(SPI_0_MASTER)
         nrf52_irqm_handler(&nrf52_hal_spi0);
@@ -240,7 +240,7 @@ nrf52_spi0_irq_handler(void)
         nrf52_irqs_handler(&nrf52_hal_spi0);
 #endif
     }
-    os_trace_exit_isr();
+    os_trace_isr_exit();
 }
 #endif
 
@@ -248,7 +248,7 @@ nrf52_spi0_irq_handler(void)
 void
 nrf52_spi1_irq_handler(void)
 {
-    os_trace_enter_isr();
+    os_trace_isr_enter();
     if (nrf52_hal_spi1.spi_type == HAL_SPI_TYPE_MASTER) {
 #if MYNEWT_VAL(SPI_1_MASTER)
         nrf52_irqm_handler(&nrf52_hal_spi1);
@@ -258,7 +258,7 @@ nrf52_spi1_irq_handler(void)
         nrf52_irqs_handler(&nrf52_hal_spi1);
 #endif
     }
-    os_trace_exit_isr();
+    os_trace_isr_exit();
 }
 #endif
 
@@ -266,7 +266,7 @@ nrf52_spi1_irq_handler(void)
 void
 nrf52_spi2_irq_handler(void)
 {
-    os_trace_enter_isr();
+    os_trace_isr_enter();
     if (nrf52_hal_spi2.spi_type == HAL_SPI_TYPE_MASTER) {
 #if MYNEWT_VAL(SPI_2_MASTER)
         nrf52_irqm_handler(&nrf52_hal_spi2);
@@ -276,7 +276,7 @@ nrf52_spi2_irq_handler(void)
         nrf52_irqs_handler(&nrf52_hal_spi2);
 #endif
     }
-    os_trace_exit_isr();
+    os_trace_isr_exit();
 }
 #endif
 

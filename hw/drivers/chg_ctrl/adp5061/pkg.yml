@@ -31,3 +31,4 @@ pkg.deps:
 
 pkg.deps.ADP5061_CLI:
     - '@apache-mynewt-core/sys/shell'
+    - '@apache-mynewt-core/util/parse'

@@ -89,6 +89,10 @@ console_queue_char(struct uart_dev *uart_dev, uint8_t ch)
 {
     int sr;
 
+    if ((uart_dev->ud_dev.od_flags & OS_DEV_F_STATUS_OPEN) == 0) {
+        return;
+    }
+
     OS_ENTER_CRITICAL(sr);
     while (console_ring_is_full(&cr_tx)) {
         /* TX needs to drain */

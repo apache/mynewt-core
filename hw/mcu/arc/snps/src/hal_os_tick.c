@@ -45,7 +45,7 @@ arc_timer_handler(void *arg)
 {
     uint32_t sr;
 
-    os_trace_enter_isr();
+    os_trace_isr_enter();
     arc_timer_int_clear(g_hal_os_tick.timer_num);
 
     OS_ENTER_CRITICAL(sr);
@@ -54,7 +54,7 @@ arc_timer_handler(void *arg)
     os_time_advance(1);
 
     OS_EXIT_CRITICAL(sr);
-    os_trace_exit_isr();
+    os_trace_isr_exit();
 }
 
 void

@@ -21,6 +21,7 @@
 #include "os/mynewt.h"
 #include "bootutil/bootutil.h"
 #include "bootutil/image.h"
+#include "config/config.h"
 #include "split/split.h"
 #include "split_priv.h"
 
@@ -111,6 +112,11 @@ split_app_go(void **entry, int toboot)
     split_mode_t split_mode;
     int run_app;
     int rc;
+
+    /* Make sure the configuration has been loaded.  We need the persisted
+     * `split/status` value to proceed.
+     */
+    conf_ensure_loaded();
 
     if (toboot) {
         split_mode = split_mode_get();

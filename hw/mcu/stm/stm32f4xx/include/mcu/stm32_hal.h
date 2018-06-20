@@ -68,6 +68,8 @@ struct stm32_hal_spi_cfg {
 
 /* hal_timer */
 #include "stm32f4xx_hal_tim.h"
+#include "stm32f4xx_ll_bus.h"
+#include "stm32f4xx_ll_tim.h"
 
 #define STM32_HAL_TIMER_MAX     (3)
 

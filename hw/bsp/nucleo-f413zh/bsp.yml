@@ -21,10 +21,10 @@ bsp.arch: cortex_m4
 bsp.compiler: compiler/arm-none-eabi-m4
 bsp.linkerscript:
     - "hw/bsp/nucleo-f413zh/nucleo-f413zh.ld"
-    - "hw/mcu/stm/stm32f4xx/stm32f407.ld"
+    - "hw/mcu/stm/stm32f4xx/stm32f413.ld"
 bsp.linkerscript.BOOT_LOADER.OVERWRITE:
     - "hw/bsp/nucleo-f413zh/boot-nucleo-f413zh.ld"
-    - "hw/mcu/stm/stm32f4xx/stm32f407.ld"
+    - "hw/mcu/stm/stm32f4xx/stm32f413.ld"
 bsp.downloadscript: "hw/bsp/nucleo-f413zh/nucleo-f413zh_download.sh"
 bsp.debugscript: "hw/bsp/nucleo-f413zh/nucleo-f413zh_debug.sh"
 bsp.downloadscript.WINDOWS.OVERWRITE: "hw/bsp/nucleo-f413zh/nucleo-f413zh_download.cmd"
@@ -36,28 +36,28 @@ bsp.flash_map:
         FLASH_AREA_BOOTLOADER:
             device: 0
             offset: 0x08000000
-            size: 16kB
+            size: 32kB
         FLASH_AREA_IMAGE_0:
             device: 0
             offset: 0x08020000
-            size: 384kB
+            size: 640kB
         FLASH_AREA_IMAGE_1:
             device: 0
-            offset: 0x08080000
-            size: 384kB
+            offset: 0x080C0000
+            size: 640kB
         FLASH_AREA_IMAGE_SCRATCH:
             device: 0
-            offset: 0x080e0000
+            offset: 0x08160000
             size: 128kB
 
         # User areas.
         FLASH_AREA_REBOOT_LOG:
             user_id: 0
             device: 0
-            offset: 0x08004000
+            offset: 0x08008000
             size: 16kB
         FLASH_AREA_NFFS:
             user_id: 1
             device: 0
-            offset: 0x08008000
-            size: 32kB
+            offset: 0x0800C000
+            size: 80kB

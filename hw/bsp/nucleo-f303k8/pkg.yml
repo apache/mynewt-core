@@ -27,7 +27,7 @@ pkg.keywords:
     - stm32f3
     - nucleo
 
-pkg.cflags: -DSTM32F303x8
+pkg.cflags: -DSTM32F303x8 -DNUCLEO_F303K8
 
 pkg.cflags.HARDFLOAT:
     - -mfloat-abi=hard -mfpu=fpv4-sp-d16
@@ -41,4 +41,13 @@ pkg.deps.UART_0:
 
 pkg.deps.UART_1:
     - hw/drivers/uart/uart_hal
+
+pkg.deps.PWM_0:
+    - hw/drivers/pwm/pwm_stm32
+
+pkg.deps.PWM_1:
+    - hw/drivers/pwm/pwm_stm32
+
+pkg.deps.PWM_2:
+    - hw/drivers/pwm/pwm_stm32
 

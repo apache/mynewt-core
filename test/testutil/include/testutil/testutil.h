@@ -30,6 +30,13 @@
 extern "C" {
 #endif
 
+/**
+  * @addtogroup OSSystem
+  * @{
+  *   @defgroup OSTestutil Test Utilities
+  *   @{
+  */
+
 /*
  * General execution flow of test suites and callbacks (more to come XXX)
  *
@@ -188,7 +195,7 @@ extern int tu_case_failed;
 extern int tu_case_idx;
 extern jmp_buf tu_case_jb;
 
-#define TEST_SUITE_DECL(suite_name) extern void suite_name()
+#define TEST_SUITE_DECL(suite_name) extern int suite_name(void)
 
 #define TEST_SUITE_REGISTER(suite_name)                      \
   tu_suite_register((tu_testsuite_fn_t*)suite_name, ((const char *)#suite_name));
@@ -315,3 +322,9 @@ TEST_SUITE_##suite_name(void);                               \
 #endif
 
 #endif
+
+/**
+ *   @} OSTestutil
+ * @} OSSys
+ */
+

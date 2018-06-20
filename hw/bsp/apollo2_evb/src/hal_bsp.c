@@ -182,6 +182,12 @@ hal_bsp_init(void)
 }
 
 int
+hal_bsp_hw_id_len(void)
+{
+    return 0;
+}
+
+int
 hal_bsp_hw_id(uint8_t *id, int max_len)
 {
 #if 0

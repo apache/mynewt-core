@@ -35,6 +35,9 @@ extern "C" {
 #define SYS_EBUSY    (-8)
 #define SYS_ENODEV   (-9)
 #define SYS_ERANGE   (-10)
+#define SYS_EALREADY (-11)
+#define SYS_ENOTSUP  (-12)
+#define SYS_EUNKNOWN (-13)
 
 #define SYS_EPERUSER (-65535)
 

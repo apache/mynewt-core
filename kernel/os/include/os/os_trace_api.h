@@ -20,65 +20,261 @@
 #ifndef OS_TRACE_API_H
 #define OS_TRACE_API_H
 
-#include <stdint.h>
+#ifdef __ASSEMBLER__
 
-#include "syscfg/syscfg.h"
-#include "os/os.h"
-
-#define OS_TRACE_ID_OFFSET                    (32u)
-
-#define OS_TRACE_ID_EVQ_PUT                   (1u + OS_TRACE_ID_OFFSET)
-#define OS_TRACE_ID_EVQ_GET                   (2u + OS_TRACE_ID_OFFSET)
-#define OS_TRACE_ID_MUTEX_INIT                (3u + OS_TRACE_ID_OFFSET)
-#define OS_TRACE_ID_MUTEX_RELEASE             (4u + OS_TRACE_ID_OFFSET)
-#define OS_TRACE_ID_MUTEX_PEND                (5u + OS_TRACE_ID_OFFSET)
-
-#if MYNEWT_VAL(OS_SYSVIEW)
-void os_trace_enter_isr(void);
-void os_trace_exit_isr(void);
-void os_trace_exit_isr_to_scheduler(void);
-void os_trace_task_info(const struct os_task *p_task);
-void os_trace_task_create(uint32_t task_id);
-void os_trace_task_start_exec(uint32_t task_id);
-void os_trace_task_stop_exec(void);
-void os_trace_task_start_ready(uint32_t task_id);
-void os_trace_task_stop_ready(uint32_t task_id, unsigned reason);
-void os_trace_idle(void);
-
-void os_trace_void(unsigned id);
-void os_trace_u32(unsigned id, uint32_t para0);
-void os_trace_u32x2(unsigned id, uint32_t para0, uint32_t para1);
-void os_trace_u32x3(unsigned id, uint32_t para0, uint32_t para1, uint32_t para2);
-void os_trace_u32x4(unsigned id, uint32_t para0, uint32_t para1, uint32_t para2, uint32_t para3);
-void os_trace_u32x5(unsigned id, uint32_t para0, uint32_t para1, uint32_t para2, uint32_t para3, uint32_t para4);
-void os_trace_enter_timer(uint32_t timer_id);
-void os_trace_exit_timer(void);
-
-void os_trace_end_call(unsigned id);
-void os_trace_end_call_return_value(unsigned id, uint32_t return_value);
+#define os_trace_isr_enter              SEGGER_SYSVIEW_RecordEnterISR
+#define os_trace_isr_exit               SEGGER_SYSVIEW_RecordExitISR
+#define os_trace_task_start_exec        SEGGER_SYSVIEW_OnTaskStartExec
 
 #else
 
-static inline void os_trace_enter_isr(void){}
-static inline void os_trace_exit_isr(void){}
-static inline void os_trace_exit_isr_to_scheduler(void){}
-static inline void os_trace_task_info(const struct os_task *p_task){}
-static inline void os_trace_task_create(uint32_t task_id){}
-static inline void os_trace_task_start_exec(uint32_t task_id){}
-static inline void os_trace_task_stop_exec(void){}
-static inline void os_trace_task_start_ready(uint32_t task_id){}
-static inline void os_trace_task_stop_ready(uint32_t task_id, unsigned reason){}
-static inline void os_trace_idle(void){}
-static inline void os_trace_void(unsigned id){}
-static inline void os_trace_u32(unsigned id, uint32_t para0){}
-static inline void os_trace_u32x2(unsigned id, uint32_t para0, uint32_t para1){}
-static inline void os_trace_u32x3(unsigned id, uint32_t para0, uint32_t para1, uint32_t para2){}
-static inline void os_trace_u32x4(unsigned id, uint32_t para0, uint32_t para1, uint32_t para2, uint32_t para3){}
-static inline void os_trace_u32x5(unsigned id, uint32_t para0, uint32_t para1, uint32_t para2, uint32_t para3, uint32_t para4){}
-static inline void os_trace_enter_timer(uint32_t timer_id){}
-static inline void os_trace_exit_timer(void){}
-static inline void os_trace_end_call(unsigned id){}
-static inline void os_trace_end_call_return_value(unsigned id, uint32_t return_value){}
+#include <stdio.h>
+#include <string.h>
+#include "syscfg/syscfg.h"
+#if MYNEWT_VAL(OS_SYSVIEW)
+#include "sysview/vendor/SEGGER_SYSVIEW.h"
 #endif
+#include "os/os.h"
 
-#endif
+#define OS_TRACE_ID_EVENTQ_PUT                  (40)
+#define OS_TRACE_ID_EVENTQ_GET_NO_WAIT          (41)
+#define OS_TRACE_ID_EVENTQ_GET                  (42)
+#define OS_TRACE_ID_EVENTQ_REMOVE               (43)
+#define OS_TRACE_ID_EVENTQ_POLL_0TIMO           (44)
+#define OS_TRACE_ID_EVENTQ_POLL                 (45)
+#define OS_TRACE_ID_MUTEX_INIT                  (50)
+#define OS_TRACE_ID_MUTEX_RELEASE               (51)
+#define OS_TRACE_ID_MUTEX_PEND                  (52)
+#define OS_TRACE_ID_SEM_INIT                    (60)
+#define OS_TRACE_ID_SEM_RELEASE                 (61)
+#define OS_TRACE_ID_SEM_PEND                    (62)
+#define OS_TRACE_ID_CALLOUT_INIT                (70)
+#define OS_TRACE_ID_CALLOUT_STOP                (71)
+#define OS_TRACE_ID_CALLOUT_RESET               (72)
+#define OS_TRACE_ID_CALLOUT_TICK                (73)
+#define OS_TRACE_ID_MEMBLOCK_GET                (80)
+#define OS_TRACE_ID_MEMBLOCK_PUT_FROM_CB        (81)
+#define OS_TRACE_ID_MEMBLOCK_PUT                (82)
+#define OS_TRACE_ID_MBUF_GET                    (90)
+#define OS_TRACE_ID_MBUF_GET_PKTHDR             (91)
+#define OS_TRACE_ID_MBUF_FREE                   (92)
+#define OS_TRACE_ID_MBUF_FREE_CHAIN             (93)
+
+#if MYNEWT_VAL(OS_SYSVIEW)
+
+typedef struct SEGGER_SYSVIEW_MODULE_STRUCT os_trace_module_t;
+
+static inline uint32_t
+os_trace_module_register(os_trace_module_t *m, const char *name,
+                         uint32_t num_events, void (* send_desc_func)(void))
+{
+    char *desc = "M=???";
+
+    asprintf(&desc, "M=%s", name);
+
+    memset(m, 0, sizeof(*m));
+    m->sModule = desc;
+    m->NumEvents = num_events;
+    m->pfSendModuleDesc = send_desc_func;
+
+    SEGGER_SYSVIEW_RegisterModule(m);
+
+    return m->EventOffset;
+}
+
+static inline void
+os_trace_module_desc(const os_trace_module_t *m, const char *desc)
+{
+    SEGGER_SYSVIEW_RecordModuleDescription(m, desc);
+}
+
+static inline void
+os_trace_isr_enter(void)
+{
+    SEGGER_SYSVIEW_RecordEnterISR();
+}
+
+static inline void
+os_trace_isr_exit(void)
+{
+    SEGGER_SYSVIEW_RecordExitISR();
+}
+
+static inline void
+os_trace_task_info(const struct os_task *t)
+{
+    SEGGER_SYSVIEW_TASKINFO ti;
+
+    ti.TaskID = (uint32_t)t;
+    ti.sName = t->t_name;
+    ti.Prio = t->t_prio;
+    ti.StackBase = (uint32_t)&t->t_stacktop;
+    ti.StackSize = t->t_stacksize * sizeof(os_stack_t);
+
+    SEGGER_SYSVIEW_SendTaskInfo(&ti);
+}
+
+static inline void
+os_trace_task_create(const struct os_task *t)
+{
+    SEGGER_SYSVIEW_OnTaskCreate((uint32_t)t);
+}
+
+static inline void
+os_trace_task_start_exec(const struct os_task *t)
+{
+    SEGGER_SYSVIEW_OnTaskStartExec((uint32_t)t);
+}
+
+static inline void
+os_trace_task_stop_exec(void)
+{
+    SEGGER_SYSVIEW_OnTaskStopExec();
+}
+
+static inline void
+os_trace_task_start_ready(const struct os_task *t)
+{
+    SEGGER_SYSVIEW_OnTaskStartReady((uint32_t)t);
+}
+
+static inline void
+os_trace_task_stop_ready(const struct os_task *t, unsigned reason)
+{
+    SEGGER_SYSVIEW_OnTaskStopReady((uint32_t)t, reason);
+}
+
+static inline void
+os_trace_idle(void)
+{
+    SEGGER_SYSVIEW_OnIdle();
+}
+
+#endif /* MYNEWT_VAL(OS_SYSVIEW) */
+
+#if MYNEWT_VAL(OS_SYSVIEW) && !defined(OS_TRACE_DISABLE_FILE_API)
+
+static inline void
+os_trace_api_void(unsigned id)
+{
+    SEGGER_SYSVIEW_RecordVoid(id);
+}
+
+static inline void
+os_trace_api_u32(unsigned id, uint32_t p0)
+{
+    SEGGER_SYSVIEW_RecordU32(id, p0);
+}
+
+static inline void
+os_trace_api_u32x2(unsigned id, uint32_t p0, uint32_t p1)
+{
+    SEGGER_SYSVIEW_RecordU32x2(id, p0, p1);
+}
+
+static inline void
+os_trace_api_u32x3(unsigned id, uint32_t p0, uint32_t p1, uint32_t p2)
+{
+    SEGGER_SYSVIEW_RecordU32x3(id, p0, p1, p2);
+}
+
+static inline void
+os_trace_api_ret(unsigned id)
+{
+    SEGGER_SYSVIEW_RecordEndCall(id);
+}
+
+static inline void
+os_trace_api_ret_u32(unsigned id, uint32_t ret)
+{
+    SEGGER_SYSVIEW_RecordEndCallU32(id, ret);
+}
+
+#endif /* MYNEWT_VAL(OS_SYSVIEW) && !defined(OS_TRACE_DISABLE_FILE_API) */
+
+#if !MYNEWT_VAL(OS_SYSVIEW)
+
+static inline void
+os_trace_isr_enter(void)
+{
+}
+
+static inline void
+os_trace_isr_exit(void)
+{
+}
+
+static inline void
+os_trace_task_info(const struct os_task *t)
+{
+}
+
+static inline void
+os_trace_task_create(const struct os_task *t)
+{
+}
+
+static inline void
+os_trace_task_start_exec(const struct os_task *t)
+{
+}
+
+static inline void
+os_trace_task_stop_exec(void)
+{
+}
+
+static inline void
+os_trace_task_start_ready(const struct os_task *t)
+{
+}
+
+static inline void
+os_trace_task_stop_ready(const struct os_task *t, unsigned reason)
+{
+}
+
+static inline void
+os_trace_idle(void)
+{
+}
+
+#endif /* !MYNEWT_VAL(OS_SYSVIEW) */
+
+#if !MYNEWT_VAL(OS_SYSVIEW) || defined(OS_TRACE_DISABLE_FILE_API)
+
+static inline void
+os_trace_api_void(unsigned id)
+{
+}
+
+static inline void
+os_trace_api_u32(unsigned id, uint32_t p0)
+{
+}
+
+static inline void
+os_trace_api_u32x2(unsigned id, uint32_t p0, uint32_t p1)
+{
+}
+
+static inline void
+os_trace_api_u32x3(unsigned id, uint32_t p0, uint32_t p1, uint32_t p2)
+{
+}
+
+static inline void
+os_trace_api_ret(unsigned id)
+{
+}
+
+static inline void
+os_trace_api_ret_u32(unsigned id, uint32_t return_value)
+{
+}
+
+#endif /* !MYNEWT_VAL(OS_SYSVIEW) || defined(OS_TRACE_DISABLE_FILE_API) */
+
+#endif /* __ASSEMBLER__ */
+
+#endif /* OS_TRACE_API_H */

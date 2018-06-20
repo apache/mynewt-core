@@ -54,7 +54,7 @@ object:
    details.
 
 Setting the Configured Sensor Types
-^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
 The BSP, or the sensor creator package, also calls the
@@ -291,7 +291,7 @@ value type of the sensor data. The valid value types are:
     #define SENSOR_VALUE_TYPE_FLOAT_TRIPLET (4)
 
 Sensor Driver Functions
-^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 
 The ``struct sensor_device`` data structure represents the device driver
@@ -305,98 +305,9 @@ up the function pointers.
         sensor_get_config_func_t sd_get_config;
     };
 
-List of Functions:
-~~~~~~~~~~~~~~~
+API
+~~~
 
-
-These are the functions defined by the sensor API. Please see the
-`sensor.h <https://github.com/apache/mynewt-core/blob/master/hw/sensor/include/sensor/sensor.h>`__
-include file for details.
-
-+------------+----------------+
-| Function   | Description    |
-+============+================+
-| sensor\_in | Initializes a  |
-| it         | sensor. A      |
-|            | sensor device  |
-|            | driver uses    |
-|            | this function. |
-+------------+----------------+
-| sensor\_se | Sets the       |
-| t\_driver  | sensor types   |
-|            | that the       |
-|            | sensor device  |
-|            | supports, and  |
-|            | the driver     |
-|            | functions to   |
-|            | read data and  |
-|            | to get value   |
-|            | type for a     |
-|            | sensor type. A |
-|            | sensor device  |
-|            | driver uses    |
-|            | this function. |
-+------------+----------------+
-| sensor\_se | Sets the       |
-| t\_interfa | sensor         |
-| ce         | interface to   |
-|            | use to         |
-|            | communicate    |
-|            | with the       |
-|            | sensor device. |
-|            | A sensor       |
-|            | device driver  |
-|            | uses this      |
-|            | function.      |
-+------------+----------------+
-| sensor\_se | Specifies the  |
-| t\_type\_m | sensor types   |
-| ask        | that a sensor  |
-|            | device is      |
-|            | configured     |
-|            | for. A sensor  |
-|            | device driver  |
-|            | uses this      |
-|            | function.      |
-+------------+----------------+
-| sensor\_re | Reads sensor   |
-| ad         | data for the   |
-|            | specified      |
-|            | sensor types.  |
-|            | An application |
-|            | uses this      |
-|            | function.      |
-+------------+----------------+
-| sensor\_se | Sets poll rate |
-| t\_poll\_r | for the sensor |
-| ate\_ms    | manager to     |
-|            | poll the       |
-|            | sensor device. |
-|            | An application |
-|            | uses this      |
-|            | function.      |
-+------------+----------------+
-| sensor\_lo | Locks the      |
-| ck         | sensor object  |
-|            | for exclusive  |
-|            | access.        |
-+------------+----------------+
-| sensor\_un | Unlocks the    |
-| lock       | sensor object. |
-+------------+----------------+
-| SENSOR\_GE | Macro that the |
-| T\_DEV     | sensor device  |
-|            | driver uses to |
-|            | retrieve the   |
-|            | os\_dev from   |
-|            | the sensor     |
-|            | object.        |
-+------------+----------------+
-| SENSOR\_GE | Macro that the |
-| T\_ITF     | sensor device  |
-|            | driver uses to |
-|            | retrieve the   |
-|            | sensor\_itf    |
-|            | from the       |
-|            | sensor object. |
-+------------+----------------+
+.. doxygengroup:: SensorAPI 
+    :content-only:
+    :members:

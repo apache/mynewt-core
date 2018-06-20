@@ -299,3 +299,25 @@ err:
     os_mbuf_free_chain(frag);
     return NULL;
 }
+
+/**
+ * Applies a pullup operation to the supplied mbuf and returns a pointer to the
+ * start of the mbuf data.  This is simply a convenience function which allows
+ * the user to access the mbuf data without a cast.  On failure, the provided
+ * mbuf is freed.
+ *
+ * @param om                    The mbuf to pull up.
+ * @param len                   The size of the object to pull up.
+ *
+ * @return                      The start of the pulled-up mbuf data.
+ */
+void *
+mem_pullup_obj(struct os_mbuf **om, uint16_t len)
+{
+    *om = os_mbuf_pullup(*om, len);
+    if (*om == NULL) {
+        return NULL;
+    }
+
+    return (*om)->om_data;
+}

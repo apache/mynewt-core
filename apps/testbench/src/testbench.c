@@ -399,8 +399,6 @@ main(int argc, char **argv)
     oc_ble_coap_gatt_srv_init();
 #endif
 
-    conf_load();
-
     reboot_start(hal_reset_cause());
 
     /*

@@ -23,9 +23,11 @@
 extern "C" {
 #endif
 
-/*
- * Flash circular buffer.
+/**
+ * \defgroup FCB Flash circular buffer.
+ * @{
  */
+
 #include <inttypes.h>
 #include <limits.h>
 
@@ -34,7 +36,7 @@ extern "C" {
 
 #define FCB_MAX_LEN	(CHAR_MAX | CHAR_MAX << 7) /* Max length of element */
 
-/*
+/**
  * Entry location is pointer to area (within fcb->f_sectors), and offset
  * within that area.
  */
@@ -61,7 +63,7 @@ struct fcb {
     uint8_t f_align;		/* writes to flash have to aligned to this */
 };
 
-/*
+/**
  * Error codes.
  */
 #define FCB_OK		0
@@ -76,7 +78,7 @@ struct fcb {
 
 int fcb_init(struct fcb *fcb);
 
-/*
+/**
  * fcb_log is needed as the number of entries in a log
  */
 struct fcb_log {
@@ -84,7 +86,7 @@ struct fcb_log {
     uint8_t fl_entries;
 };
 
-/*
+/**
  * fcb_append() appends an entry to circular buffer. When writing the
  * contents for the entry, use loc->fl_area and loc->fl_data_off with
  * flash_area_write(). When you're finished, call fcb_append_finish() with
@@ -93,7 +95,7 @@ struct fcb_log {
 int fcb_append(struct fcb *, uint16_t len, struct fcb_entry *loc);
 int fcb_append_finish(struct fcb *, struct fcb_entry *append_loc);
 
-/*
+/**
  * Walk over all log entries in FCB, or entries in a given flash_area.
  * cb gets called for every entry. If cb wants to stop the walk, it should
  * return non-zero value.
@@ -105,40 +107,45 @@ typedef int (*fcb_walk_cb)(struct fcb_entry *loc, void *arg);
 int fcb_walk(struct fcb *, struct flash_area *, fcb_walk_cb cb, void *cb_arg);
 int fcb_getnext(struct fcb *, struct fcb_entry *loc);
 
-/*
+/**
  * Erases the data from oldest sector.
  */
 int fcb_rotate(struct fcb *);
 
-/*
+/**
  * Start using the scratch block.
  */
 int fcb_append_to_scratch(struct fcb *);
 
-/*
+/**
  * How many sectors are unused.
  */
 int fcb_free_sector_cnt(struct fcb *fcb);
 
-/*
+/**
  * Whether FCB has any data.
  */
 int fcb_is_empty(struct fcb *fcb);
 
-/*
+/**
  * Element at offset *entries* from last position (backwards).
  */
 int
 fcb_offset_last_n(struct fcb *fcb, uint8_t entries,
         struct fcb_entry *last_n_entry);
 
-/*
+/**
  * Clears FCB passed to it
  */
 int fcb_clear(struct fcb *fcb);
 
 #ifdef __cplusplus
 }
+
+/**
+ * @} FCB
+ */
+
 #endif
 
 #endif /* __SYS_FLASHVAR_H_ */

@@ -32,6 +32,7 @@ struct conf_dup_check_arg {
 
 struct conf_store_head conf_load_srcs;
 struct conf_store *conf_save_dst;
+static bool conf_loaded;
 
 void
 conf_src_register(struct conf_store *cs)
@@ -72,11 +73,26 @@ conf_load(void)
      *    apply config
      *    commit all
      */
-
+    conf_lock();
+    conf_loaded = true;
     SLIST_FOREACH(cs, &conf_load_srcs, cs_next) {
         cs->cs_itf->csi_load(cs, conf_load_cb, NULL);
+        if (SLIST_NEXT(cs, cs_next)) {
+            conf_commit(NULL);
+        }
     }
+    conf_unlock();
     return conf_commit(NULL);
+}
+
+int
+conf_ensure_loaded(void)
+{
+    if (conf_loaded) {
+        return 0;
+    }
+
+    return conf_load();
 }
 
 static void
@@ -110,10 +126,12 @@ conf_save_one(const char *name, char *value)
 {
     struct conf_store *cs;
     struct conf_dup_check_arg cdca;
+    int rc;
 
-    cs = conf_save_dst;
-    if (!cs) {
-        return OS_ENOENT;
+    conf_lock();
+    if (!conf_save_dst) {
+        rc = OS_ENOENT;
+        goto out;
     }
 
     /*
@@ -122,11 +140,18 @@ conf_save_one(const char *name, char *value)
     cdca.name = name;
     cdca.val = value;
     cdca.is_dup = 0;
-    cs->cs_itf->csi_load(cs, conf_dup_check_cb, &cdca);
-    if (cdca.is_dup == 1) {
-        return 0;
+    SLIST_FOREACH(cs, &conf_load_srcs, cs_next) {
+        cs->cs_itf->csi_load(cs, conf_dup_check_cb, &cdca);
     }
-    return cs->cs_itf->csi_save(cs, name, value);
+    if (cdca.is_dup == 1) {
+        rc = 0;
+        goto out;
+    }
+    cs = conf_save_dst;
+    rc = cs->cs_itf->csi_save(cs, name, value);
+out:
+    conf_unlock();
+    return rc;
 }
 
 /*
@@ -145,15 +170,23 @@ conf_save_tree(char *name)
     int name_argc;
     char *name_argv[CONF_MAX_DIR_DEPTH];
     struct conf_handler *ch;
+    int rc;
 
+    conf_lock();
     ch = conf_parse_and_lookup(name, &name_argc, name_argv);
     if (!ch) {
-        return OS_INVALID_PARM;
+        rc = OS_INVALID_PARM;
+        goto out;
     }
     if (ch->ch_export) {
-        return ch->ch_export(conf_store_one, CONF_EXPORT_PERSIST);
+        rc = ch->ch_export(conf_store_one, CONF_EXPORT_PERSIST);
+    } else {
+        rc = 0;
     }
-    return OS_OK;
+out:
+    conf_unlock();
+    return rc;
+
 }
 
 int
@@ -164,9 +197,11 @@ conf_save(void)
     int rc;
     int rc2;
 
+    conf_lock();
     cs = conf_save_dst;
     if (!cs) {
-        return OS_ENOENT;
+        rc = OS_ENOENT;
+        goto out;
     }
 
     if (cs->cs_itf->csi_save_start) {
@@ -184,11 +219,14 @@ conf_save(void)
     if (cs->cs_itf->csi_save_end) {
         cs->cs_itf->csi_save_end(cs);
     }
+out:
+    conf_unlock();
     return rc;
 }
 
 void
 conf_store_init(void)
 {
+    conf_loaded = false;
     SLIST_INIT(&conf_load_srcs);
 }

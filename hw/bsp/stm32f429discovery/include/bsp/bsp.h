@@ -37,7 +37,7 @@ extern "C" {
 extern uint8_t _ram_start;
 extern uint8_t _ccram_start;
 
-#define RAM_SIZE        (128 * 1024)
+#define RAM_SIZE        (256 * 1024)
 #define CCRAM_SIZE      (64 * 1024)
 
 /* LED pins */

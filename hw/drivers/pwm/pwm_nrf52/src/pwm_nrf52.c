@@ -123,9 +123,10 @@ static void handler_0(nrfx_pwm_evt_type_t event_type)
         break;
 
     case NRFX_PWM_EVT_FINISHED :
-        instances[0].playing = false;
-        nrfx_pwm_uninit(&instances[0].drv_instance);
         instances[0].seq_end_handler(instances[0].seq_end_data);
+        break;
+
+    case NRFX_PWM_EVT_STOPPED :
         break;
 
     default:
@@ -145,9 +146,10 @@ static void handler_1(nrfx_pwm_evt_type_t event_type)
         break;
 
     case NRFX_PWM_EVT_FINISHED :
-        instances[1].playing = false;
-        nrfx_pwm_uninit(&instances[1].drv_instance);
         instances[1].seq_end_handler(instances[1].seq_end_data);
+        break;
+
+    case NRFX_PWM_EVT_STOPPED :
         break;
 
     default:
@@ -167,9 +169,10 @@ static void handler_2(nrfx_pwm_evt_type_t event_type)
         break;
 
     case NRFX_PWM_EVT_FINISHED :
-        instances[2].playing = false;
-        nrfx_pwm_uninit(&instances[2].drv_instance);
         instances[2].seq_end_handler(instances[2].seq_end_data);
+        break;
+
+    case NRFX_PWM_EVT_STOPPED :
         break;
 
     default:
@@ -190,9 +193,10 @@ static void handler_3(nrfx_pwm_evt_type_t event_type)
         break;
 
     case NRFX_PWM_EVT_FINISHED :
-        instances[3].playing = false;
-        nrfx_pwm_uninit(&instances[3].drv_instance);
         instances[3].seq_end_handler(instances[3].seq_end_data);
+        break;
+
+    case NRFX_PWM_EVT_STOPPED :
         break;
 
     default:
@@ -276,7 +280,7 @@ cleanup_instance(int inst_id)
  *             it can be a nrf_drv_pwm_config_t, to override the default
  *             configuration.
  *
- * @return 0 on success, non-zero on failure.
+ * @return 0 on success, non-zero error code on failure.
  */
 static int
 nrf52_pwm_open(struct os_dev *odev, uint32_t wait, void *arg)
@@ -320,7 +324,7 @@ nrf52_pwm_open(struct os_dev *odev, uint32_t wait, void *arg)
  *
  * @param odev The device to close.
  *
- * @return 0 on success, non-zero on failure.
+ * @return 0 on success, non-zero error code on failure.
  */
 static int
 nrf52_pwm_close(struct os_dev *odev)
@@ -335,9 +339,10 @@ nrf52_pwm_close(struct os_dev *odev)
         return (EINVAL);
     }
 
-    if (!instances[inst_id].playing) {
+    if(instances[inst_id].playing) {
         nrfx_pwm_uninit(&instances[inst_id].drv_instance);
     }
+
     cleanup_instance(inst_id);
 
     if (os_started()) {
@@ -409,8 +414,8 @@ nrf52_pwm_configure_device(struct pwm_dev *dev, struct pwm_dev_cfg *cfg)
     if (instance->playing) {
         nrfx_pwm_uninit(&instance->drv_instance);
         nrfx_pwm_init(&instance->drv_instance,
-                         &instance->config,
-                         instance->internal_handler);
+                      &instance->config,
+                      instance->internal_handler);
 
         play_current_config(instance);
     }
@@ -446,8 +451,8 @@ nrf52_pwm_configure_channel(struct pwm_dev *dev,
     if (instance->playing) {
         nrfx_pwm_uninit(&instance->drv_instance);
         nrfx_pwm_init(&instance->drv_instance,
-                         &instance->config,
-                         instance->internal_handler);
+                      &instance->config,
+                      instance->internal_handler);
 
         play_current_config(instance);
     }
@@ -465,7 +470,7 @@ nrf52_pwm_configure_channel(struct pwm_dev *dev,
  * @param cnum The channel number. This channel should be already configured.
  * @param fraction The fraction value.
  *
- * @return 0 on success, negative on error.
+ * @return 0 on success, non-zero error code on failure.
  */
 static int
 nrf52_pwm_set_duty_cycle(struct pwm_dev *dev, uint8_t cnum, uint16_t fraction)
@@ -475,12 +480,12 @@ nrf52_pwm_set_duty_cycle(struct pwm_dev *dev, uint8_t cnum, uint16_t fraction)
     bool inverted;
 
     if (!instances[inst_id].in_use) {
-        return (-EINVAL);
+        return (EINVAL);
     }
 
     config = &instances[inst_id].config;
     if (config->output_pins[cnum] == NRFX_PWM_PIN_NOT_USED) {
-        return (-EINVAL);
+        return (EINVAL);
     }
 
     inverted = ((config->output_pins[cnum] & NRFX_PWM_PIN_INVERTED) != 0);
@@ -497,7 +502,7 @@ nrf52_pwm_set_duty_cycle(struct pwm_dev *dev, uint8_t cnum, uint16_t fraction)
  *
  * @param dev The PWM device to be enabled.
  *
- * @return 0 on success, negative on error.
+ * @return 0 on success, non-zero error code on failure.
  */
 int
 nrf52_pwm_enable(struct pwm_dev *dev)
@@ -509,6 +514,7 @@ nrf52_pwm_enable(struct pwm_dev *dev)
                   &instance->config,
                   instance->internal_handler);
     play_current_config(instance);
+    instance->playing = true;
 
     return (0);
 }
@@ -532,33 +538,36 @@ nrf52_pwm_is_enabled(struct pwm_dev *dev)
  *
  * @param dev The device to disable.
  *
- * @return 0 on success, negative on error.
+ * @return 0 on success, non-zero error code on failure.
  */
 static int
 nrf52_pwm_disable(struct pwm_dev *dev)
 {
     int inst_id = dev->pwm_instance_id;
     if (!instances[inst_id].in_use) {
-        return (-EINVAL);
+        return (EINVAL);
     }
 
-    if (!nrfx_pwm_stop(&instances[inst_id].drv_instance, true)) {
-        return (-EINVAL);
+    if (!instances[inst_id].playing) {
+        return (EINVAL);
     }
 
     nrfx_pwm_uninit(&instances[inst_id].drv_instance);
+    instances[inst_id].playing = false;
+
     return (0);
 }
 
 /**
+ * Set the frequency for the device's clock.
  * This frequency must be between 1/2 the clock frequency and
- * the clock divided by the resolution. NOTE: This may affect
- * other PWM channels.
+ * the clock divided by the resolution. NOTE: This will affect
+ * all PWM channels belonging to the device.
  *
  * @param dev The device to configure.
  * @param freq_hz The frequency value in Hz.
  *
- * @return A value is in Hz on success, negative on error.
+ * @return A value is in Hz on success, negative error code on failure.
  */
 static int
 nrf52_pwm_set_frequency(struct pwm_dev *dev, uint32_t freq_hz)
@@ -620,7 +629,7 @@ nrf52_pwm_set_frequency(struct pwm_dev *dev, uint32_t freq_hz)
  *
  * @param dev
  *
- * @return value is in Hz on success, negative on error.
+ * @return value is in Hz on success, error code on failure.
  */
 static int
 nrf52_pwm_get_clock_freq(struct pwm_dev *dev)
@@ -657,7 +666,7 @@ nrf52_pwm_get_clock_freq(struct pwm_dev *dev)
  *
  * @param dev
  *
- * @return value in cycles on success, negative on error.
+ * @return value in cycles on success, negative error code on failure.
  */
 int
 nrf52_pwm_get_top_value(struct pwm_dev *dev)
@@ -675,7 +684,7 @@ nrf52_pwm_get_top_value(struct pwm_dev *dev)
  *
  * @param dev The device to query.
  *
- * @return The value in bits on success, negative on error.
+ * @return The value in bits on success, negative error code on failure.
  */
 static int
 nrf52_pwm_get_resolution_bits(struct pwm_dev *dev)
@@ -722,6 +731,54 @@ nrf52_pwm_get_resolution_bits(struct pwm_dev *dev)
     return (-EINVAL);
 }
 
+#if MYNEWT_VAL(OS_SYSVIEW)
+#if MYNEWT_VAL(PWM_0)
+static void
+pwm_0_irq_handler(void)
+{
+    os_trace_isr_enter();
+    nrfx_pwm_0_irq_handler();
+    os_trace_isr_exit();
+}
+#endif
+
+#if MYNEWT_VAL(PWM_1)
+static void
+pwm_1_irq_handler(void)
+{
+    os_trace_isr_enter();
+    nrfx_pwm_1_irq_handler();
+    os_trace_isr_exit();
+}
+#endif
+
+#if MYNEWT_VAL(PWM_2)
+static void
+pwm_2_irq_handler(void)
+{
+    os_trace_isr_enter();
+    nrfx_pwm_2_irq_handler();
+    os_trace_isr_exit();
+}
+#endif
+
+#if MYNEWT_VAL(PWM_3)
+static void
+pwm_3_irq_handler(void)
+{
+    os_trace_isr_enter();
+    nrfx_pwm_3_irq_handler();
+    os_trace_isr_exit();
+}
+#endif
+
+#define PWM_IRQ_HANDLER(_pwm_no) \
+                            (uint32_t) pwm_ ## _pwm_no ## _irq_handler
+#else
+#define PWM_IRQ_HANDLER(_pwm_no) \
+                            (uint32_t) nrfx_pwm_ ## _pwm_no ## _irq_handler
+#endif
+
 /**
  * Callback to initialize an adc_dev structure from the os device
  * initialization callback.  This sets up a nrf52_pwm_device(), so
@@ -732,6 +789,8 @@ nrf52_pwm_dev_init(struct os_dev *odev, void *arg)
 {
     struct pwm_dev *dev;
     struct pwm_driver_funcs *pwm_funcs;
+    IRQn_Type irqn;
+    uint32_t irqh;
 
     assert(odev);
     dev = (struct pwm_dev *) odev;
@@ -759,30 +818,37 @@ nrf52_pwm_dev_init(struct os_dev *odev, void *arg)
     switch (dev->pwm_instance_id) {
 #if MYNEWT_VAL(PWM_0)
     case 0:
-        NVIC_SetVector(PWM0_IRQn, (uint32_t) nrfx_pwm_0_irq_handler);
+        irqn = PWM0_IRQn;
+        irqh = PWM_IRQ_HANDLER(0);
         break;
 #endif
 
 #if MYNEWT_VAL(PWM_1)
     case 1:
-        NVIC_SetVector(PWM1_IRQn, (uint32_t) nrfx_pwm_1_irq_handler);
+        irqn = PWM1_IRQn;
+        irqh = PWM_IRQ_HANDLER(1);
         break;
 #endif
 
 #if MYNEWT_VAL(PWM_2)
     case 2:
-        NVIC_SetVector(PWM2_IRQn, (uint32_t) nrfx_pwm_2_irq_handler);
+        irqn = PWM2_IRQn;
+        irqh = PWM_IRQ_HANDLER(2);
         break;
 #endif
 
 #if MYNEWT_VAL(PWM_3)
     case 3:
-        NVIC_SetVector(PWM3_IRQn, (uint32_t) nrfx_pwm_3_irq_handler);
+        irqn = PWM3_IRQn;
+        irqh = PWM_IRQ_HANDLER(3);
         break;
 #endif
     default:
         assert(0);
+        return 0;
     }
+
+    NVIC_SetVector(irqn, irqh);
 
     return (0);
 }

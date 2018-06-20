@@ -45,7 +45,7 @@ syscfg.defs:
         value: 1
     SHELL_MAX_COMPAT_COMMANDS:
         description: 'Max number of compatibility commands'
-        value: 10
+        value: 20
     SHELL_COMPLETION:
         description: 'Include completion functionality'
         value: 1
@@ -56,6 +56,27 @@ syscfg.defs:
     SHELL_OS_MODULE:
         description: 'Include shell os module'
         value: 1
+    SHELL_OS_SERIAL_BOOT_NVREG:
+        description: 'Include "reset serial_boot" option'
+        value: 0
+        restrictions:
+            - (BOOT_SERIAL_NVREG_INDEX != -1)
     SHELL_PROMPT_MODULE:
         description: 'Include shell prompt module'
         value: 0
+
+## duplicated from boot/boot_serial
+    BOOT_SERIAL_NVREG_MAGIC:
+        description: >
+            Magic number, to be saved in a retained (reset-surviving) register.
+            If the value in the register matches, the serial bootloader will
+            load. Value must not be 0.
+        value: 0xB7
+        restrictions:
+            - '(BOOT_SERIAL_NVREG_MAGIC != 0)'
+
+    BOOT_SERIAL_NVREG_INDEX:
+        description: >
+            Index of retained register to use (using hal_nvreg_read) for reading
+            magic value.
+        value: -1

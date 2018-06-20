@@ -2269,6 +2269,13 @@
  * @{
  */
 /**
+ * XXX
+ */
+#if !defined LWIP_ND6 || defined __DOXYGEN__
+#define LWIP_ND6                        (LWIP_IPV6)
+#endif
+
+/**
  * LWIP_ND6_QUEUEING==1: queue outgoing IPv6 packets while MAC address
  * is being resolved.
  */

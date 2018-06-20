@@ -354,6 +354,15 @@ nrf52_adc_size_buffer(struct adc_dev *dev, int chans, int samples)
     return (sizeof(nrf_saadc_value_t) * chans * samples);
 }
 
+#if MYNEWT_VAL(OS_SYSVIEW)
+static void
+saadc_irq_handler(void)
+{
+    os_trace_isr_enter();
+    nrfx_saadc_irq_handler();
+    os_trace_isr_exit();
+}
+#endif
 
 /**
  * Callback to initialize an adc_dev structure from the os device
@@ -388,7 +397,11 @@ nrf52_adc_dev_init(struct os_dev *odev, void *arg)
     af->af_read_buffer = nrf52_adc_read_buffer;
     af->af_size_buffer = nrf52_adc_size_buffer;
 
+#if MYNEWT_VAL(OS_SYSVIEW)
+    NVIC_SetVector(SAADC_IRQn, (uint32_t) saadc_irq_handler);
+#else
     NVIC_SetVector(SAADC_IRQn, (uint32_t) nrfx_saadc_irq_handler);
+#endif
 
     return (0);
 }

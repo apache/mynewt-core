@@ -136,3 +136,8 @@ mcu_sim_parse_args(int argc, char **argv)
     os_start();
 #endif
 }
+
+int hal_debugger_connected(void)
+{
+    return 0;
+}

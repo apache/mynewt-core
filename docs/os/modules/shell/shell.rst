@@ -13,6 +13,10 @@ The shell uses the OS default event queue for shell events and runs in
 the context of the main task. An application can, optionally, specify a
 dedicated event queue for the shell to use.
 
+.. contents::
+  :local:
+  :depth: 2
+
 The ``sys/shell`` package implements the shell. To use the shell you
 must:
 
@@ -106,7 +110,7 @@ There are two methods to register command handlers in Mynewt 1.1:
       the packages it includes register more than the default value.
 
 Enabling Help Information for Shell Commands
-^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
 The shell supports command help. A package that supports command help
@@ -136,7 +140,7 @@ whether to print the current os ticks in the prompt. The
 The module is disabled by default.
 
 Enabling Command Name Completion
-^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
 The shell supports command name completion. The ``SHELL_COMPLETION``
@@ -144,7 +148,7 @@ syscfg setting enables or disables the feature. The feature is enabled
 by default.
 
 Processing Newtmgr Line Protocol Over Serial Transport
-~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 The shell's second job is to handle packet framing, encoding, and
@@ -218,32 +222,31 @@ module.
         const struct shell_cmd *commands;
     };
 
-+------------+----------------+
-| Element    | Description    |
-+============+================+
-| ``name``   | Character      |
-|            | string of the  |
-|            | module name.   |
-+------------+----------------+
-| ``commands | Array of       |
-| ``         | ``shell_cmd``  |
-|            | structures     |
-|            | that specify   |
-|            | the commands   |
-|            | for the        |
-|            | module. The    |
-|            | ``sc_cmd``,    |
-|            | ``sc_cmd_func` |
-|            | `,             |
-|            | and ``help``   |
-|            | fields in the  |
-|            | last entry     |
-|            | must be set to |
-|            | NULL to        |
-|            | indicate the   |
-|            | last entry in  |
-|            | the array.     |
-+------------+----------------+
++---------------+----------------+
+| Eleme   nt    | Description    |
++===============+================+
+| ``name``      | Character      |
+|               | string of the  |
+|               | module name.   |
++---------------+----------------+
+| ``commands``  | Array of       |
+|               | ``shell_cmd``  |
+|               | structures     |
+|               | that specify   |
+|               | the commands   |
+|               | for the        |
+|               | module. The    |
+|               | ``sc_cmd``,    |
+|               | ``sc_cmd_func``|
+|               | , and ``help`` |
+|               | fields in the  |
+|               | last entry     |
+|               | must be set to |
+|               | NULL to        |
+|               | indicate the   |
+|               | last entry in  |
+|               | the array.     |
++---------------+----------------+
 
 **Note**: A command handler registered via the ``shell_cmd_register()``
 function is automatically added to the ``compat`` module.
@@ -277,8 +280,8 @@ structures hold help texts for a shell command.
 +------------+----------------+
 | Element    | Description    |
 +============+================+
-| ``summary` | Character      |
-| `          | string of a    |
+| ``summary``| Character      |
+|            | string of a    |
 |            | short          |
 |            | description of |
 |            | the command.   |
@@ -312,63 +315,7 @@ structures hold help texts for a shell command.
 |            | the array.     |
 +------------+----------------+
 
- ##List of Functions
+API
+---
 
-The functions available in this OS feature are:
-
-+------------+----------------+
-| Function   | Description    |
-+============+================+
-| `shell\_cm | Registers a    |
-| d\_registe | handler for    |
-| r <shell_c | incoming       |
-| md_registe | console        |
-| r.html>`__   | commands.      |
-+------------+----------------+
-| `shell\_ev | Specifies a    |
-| q\_set <sh | dedicated      |
-| ell_evq_se | event queue    |
-| t.html>`__   | for shell      |
-|            | events.        |
-+------------+----------------+
-| `shell\_nl | Registers a    |
-| ip\_input\ | handler for    |
-| _register  | incoming       |
-| <shell_nli | newtmgr        |
-| p_input_re | messages.      |
-| gister.html> |                |
-| `__        |                |
-+------------+----------------+
-| `shell\_nl | Queue outgoing |
-| ip\_output | newtmgr        |
-|  <shell_nl | message for    |
-| ip_output. | transmission.  |
-| md>`__     |                |
-+------------+----------------+
-| `shell\_re | Registers a    |
-| gister <sh | shell module   |
-| ell_regist | and the        |
-| er.html>`__  | commands for   |
-|            | the module.    |
-+------------+----------------+
-| `shell\_re | Registers a    |
-| gister\_ap | command        |
-| p\_cmd\_ha | handler as an  |
-| ndler <she | application    |
-| ll_registe | handler. The   |
-| r_app_cmd_ | shell calls    |
-| handler.md | this handler   |
-| >`__       | when a command |
-|            | does not have  |
-|            | a handler      |
-|            | registered.    |
-+------------+----------------+
-| `shell\_re | Registers a    |
-| gister\_de | module with a  |
-| fault\_mod | specified name |
-| ule <shell | as the default |
-| _register_ | module.        |
-| default_mo |                |
-| dule.html>`_ |                |
-| _          |                |
-+------------+----------------+
+.. doxygenfile:: sys/shell/include/shell/shell.h

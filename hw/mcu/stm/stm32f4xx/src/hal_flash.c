@@ -33,7 +33,7 @@ static int stm32f4_flash_sector_info(const struct hal_flash *dev, int idx,
         uint32_t *address, uint32_t *sz);
 static int stm32f4_flash_init(const struct hal_flash *dev);
 
-static const struct hal_flash_funcs stm32f4_flash_funcs = {
+const struct hal_flash_funcs stm32f4_flash_funcs = {
     .hff_read = stm32f4_flash_read,
     .hff_write = stm32f4_flash_write,
     .hff_erase_sector = stm32f4_flash_erase_sector,
@@ -41,33 +41,8 @@ static const struct hal_flash_funcs stm32f4_flash_funcs = {
     .hff_init = stm32f4_flash_init
 };
 
-static const uint32_t stm32f4_flash_sectors[] = {
-    0x08000000,     /* 16kB */
-    0x08004000,     /* 16kB */
-    0x08008000,     /* 16kB */
-    0x0800c000,     /* 16kB */
-    0x08010000,     /* 64kB */
-    0x08020000,     /* 128kB */
-    0x08040000,     /* 128kB */
-    0x08060000,     /* 128kB */
-    0x08080000,     /* 128kB */
-    0x080a0000,     /* 128kB */
-    0x080c0000,     /* 128kB */
-    0x080e0000,     /* 128kB */
-    0x08100000      /* End of flash */
-};
-
-#define STM32F4_FLASH_NUM_AREAS                                         \
-    (int)(sizeof(stm32f4_flash_sectors) /                               \
-      sizeof(stm32f4_flash_sectors[0]))
-
-const struct hal_flash stm32f4_flash_dev = {
-    .hf_itf = &stm32f4_flash_funcs,
-    .hf_base_addr = 0x08000000,
-    .hf_size = 1024 * 1024,
-    .hf_sector_cnt = STM32F4_FLASH_NUM_AREAS - 1,
-    .hf_align = 1
-};
+extern const uint32_t stm32f4_flash_sectors[];
+extern const uint32_t STM32F4_FLASH_NUM_AREAS;
 
 static int
 stm32f4_flash_read(const struct hal_flash *dev, uint32_t address, void *dst,
@@ -108,12 +83,12 @@ stm32f4_flash_erase_sector_id(int sector_id)
 {
     FLASH_EraseInitTypeDef eraseinit;
     uint32_t SectorError;
-    
+
     eraseinit.TypeErase = FLASH_TYPEERASE_SECTORS;
     eraseinit.Banks = 0;
     eraseinit.Sector = sector_id;
     eraseinit.NbSectors = 1;
-    eraseinit.VoltageRange = FLASH_VOLTAGE_RANGE_1; 
+    eraseinit.VoltageRange = FLASH_VOLTAGE_RANGE_1;
 
     HAL_FLASHEx_Erase(&eraseinit, &SectorError);
 }
@@ -123,7 +98,7 @@ stm32f4_flash_erase_sector(const struct hal_flash *dev, uint32_t sector_address)
 {
     int i;
 
-    for (i = 0; i < STM32F4_FLASH_NUM_AREAS - 1; i++) {
+    for (i = 0; i < dev->hf_sector_cnt; i++) {
         if (stm32f4_flash_sectors[i] == sector_address) {
             stm32f4_flash_erase_sector_id(i);
             return 0;

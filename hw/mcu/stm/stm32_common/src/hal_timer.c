@@ -26,6 +26,7 @@
 #include <mcu/cmsis_nvic.h>
 #include <hal/hal_timer.h>
 #include "mcu/stm32_hal.h"
+#include "stm32_common/stm32_hal.h"
 
 #define STM32_OFLOW_VALUE       (0x10000UL)
 #define STM32_NSEC_PER_SEC      (1000000000UL)
@@ -158,69 +159,6 @@ stm32_tmr_reg_irq(IRQn_Type irqn, uint32_t func)
     NVIC_SetPriority(irqn, (1 << __NVIC_PRIO_BITS) - 1);
     NVIC_SetVector(irqn, func);
     NVIC_EnableIRQ(irqn);
-}
-
-static uint32_t
-stm32_base_freq(TIM_TypeDef *regs)
-{
-    RCC_ClkInitTypeDef clocks;
-    uint32_t fl;
-    uint32_t freq;
-
-    HAL_RCC_GetClockConfig(&clocks, &fl);
-
-    /*
-     * Assuming RCC_DCKCFGR->TIMPRE is 0.
-     * There's just APB2 timers here.
-     */
-    switch ((uint32_t)regs) {
-#ifdef TIM1
-    case (uint32_t)TIM1:
-#endif
-#ifdef TIM8
-    case (uint32_t)TIM8:
-#endif
-#ifdef TIM9
-    case (uint32_t)TIM9:
-#endif
-#ifdef TIM10
-    case (uint32_t)TIM10:
-#endif
-#ifdef TIM11
-    case (uint32_t)TIM11:
-#endif
-#ifdef TIM15
-    case (uint32_t)TIM15:
-#endif
-#ifdef TIM16
-    case (uint32_t)TIM16:
-#endif
-#ifdef TIM17
-    case (uint32_t)TIM17:
-#endif
-        freq = HAL_RCC_GetPCLK2Freq();
-        if (clocks.APB2CLKDivider) {
-            freq *= 2;
-        }
-        break;
-#ifdef TIM2
-    case (uint32_t)TIM2:
-#endif
-#ifdef TIM3
-    case (uint32_t)TIM3:
-#endif
-#ifdef TIM4
-    case (uint32_t)TIM4:
-#endif
-        freq = HAL_RCC_GetPCLK1Freq();
-        if (clocks.APB1CLKDivider) {
-            freq *= 2;
-        }
-        break;
-    default:
-        return 0;
-    }
-    return freq;
 }
 
 static void
@@ -514,7 +452,7 @@ hal_timer_config(int num, uint32_t freq_hz)
         return -1;
     }
 
-    prescaler = stm32_base_freq(tmr->sht_regs) / freq_hz;
+    prescaler = stm32_hal_timer_get_freq(tmr->sht_regs) / freq_hz;
     if (prescaler > 0xffff) {
         return -1;
     }

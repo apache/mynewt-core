@@ -47,6 +47,10 @@ syscfg.defs:
             - 'SHELL_TASK'
             - 'CONFIG_CLI'
 
+    CONFIG_AUTO_INIT:
+        description: 'Automatically configure a single config region at bootup'
+        value: 1
+
 syscfg.defs.CONFIG_FCB:
     CONFIG_FCB_FLASH_AREA:
         description: 'BSP flash area for config'

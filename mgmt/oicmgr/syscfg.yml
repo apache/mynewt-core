@@ -17,3 +17,11 @@
 # under the License.
 #
 syscfg.defs:
+   OICMGR_TRANS_SECURITY:
+      description: >
+          Configure transport security for oicmgr resource.
+          Can be OC_TRANS_ENC | OC_TRANS_AUTH, OC_TRANS_ENC or OC_TRANS_AUTH.
+          0 means no security checing.
+      value: 0
+      restrictions:
+         - OC_TRANS_SECURITY

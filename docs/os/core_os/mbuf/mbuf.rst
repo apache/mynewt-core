@@ -142,7 +142,7 @@ to denote the amount of payload that the application requires (aligned
 on a 32-bit boundary in this case). All this leads to the total memory
 block size required, denoted by the macro *MBUF\_MEMBLOCK\_OVERHEAD*.
 
-.. code:: c
+.. code-block:: c
 
 
     #define MBUF_PKTHDR_OVERHEAD    sizeof(struct os_mbuf_pkthdr) + sizeof(struct user_hdr)
@@ -226,7 +226,7 @@ packet to a networking interface. The code sample also provides an
 example of copying data out of an mbuf as well as use of the "pullup"
 api (another very common mbuf api).
 
-.. code:: c
+.. code-block:: c
 
 
     void
@@ -290,7 +290,7 @@ data to/from mbufs and flat buffers!
 A final note: these examples assume the same mbuf struture and
 definitions used in the first example.
 
-.. code:: c
+.. code-block:: c
 
     void
     mbuf_usage_example2(struct mbuf *rxpkt)
@@ -352,7 +352,7 @@ example:
 Not shown in the code example is a call ``my_task_rx_data_func``.
 Presumably, some other code will call this API.
 
-.. code:: c
+.. code-block:: c
 
     uint32_t pkts_rxd;
     struct os_mqueue rxpkt_q;

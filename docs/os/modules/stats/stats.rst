@@ -10,6 +10,10 @@ maintenance, and usage monitoring.
 By creating and registering your statistics, they are automatically
 included in the Newtmgr shell and console APIs.
 
+.. contents::
+  :local:
+  :depth: 2
+
 Implementation Details
 ~~~~~~~~~~~~~~~~~~~~~~
 
@@ -281,3 +285,8 @@ each device separately.
 This works identically to the example above, except you would need to
 register each one separately with a unique name. The stats system will
 not let two sections be entered with the same name.
+
+API
+~~~
+
+.. doxygenfile:: full/include/stats/stats.h

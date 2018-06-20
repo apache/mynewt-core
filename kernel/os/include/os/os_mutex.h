@@ -90,9 +90,9 @@ os_error_t os_mutex_release(struct os_mutex *mu);
  * Pend (wait) for a mutex.
  *
  * @param mu Pointer to mutex.
- * @param timeout Timeout, in os ticks. A timeout of 0 means do
- *                not wait if not available. A timeout of
- *                0xFFFFFFFF means wait forever.
+ * @param timeout Timeout, in os ticks.
+ *                A timeout of 0 means do not wait if not available.
+ *                A timeout of OS_TIMEOUT_NEVER means wait forever.
  *
  *
  * @return os_error_t
@@ -100,7 +100,7 @@ os_error_t os_mutex_release(struct os_mutex *mu);
  *      OS_TIMEOUT          Mutex was owned by another task and timeout=0
  *      OS_OK               no error.
  */
-os_error_t os_mutex_pend(struct os_mutex *mu, uint32_t timeout);
+os_error_t os_mutex_pend(struct os_mutex *mu, os_time_t timeout);
 
 #ifdef __cplusplus
 }

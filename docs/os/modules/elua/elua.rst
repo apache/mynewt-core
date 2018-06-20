@@ -27,11 +27,11 @@ List of Functions
 +============+================+
 | `lua\_init | Registers      |
 |  <lua_init | 'lua' command  |
-| .html>`__    | with shell.    |
+| .html>`__  | with shell.    |
 +------------+----------------+
 | `lua\_main | Executes lua   |
 |  <lua_main | script in      |
-| .html>`__    | current task's |
+| .html>`__  | current task's |
 |            | context.       |
 |            | Arguments      |
 |            | given are      |

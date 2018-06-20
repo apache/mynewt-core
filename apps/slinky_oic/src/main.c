@@ -277,8 +277,6 @@ main(int argc, char **argv)
 
     stats_register("gpio_toggle", STATS_HDR(g_stats_gpio_toggle));
 
-    conf_load();
-
     reboot_start(hal_reset_cause());
 
 #if MYNEWT_VAL(SPLIT_LOADER)

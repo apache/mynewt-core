@@ -111,6 +111,7 @@ icmp6_input(struct pbuf *p, struct netif *inp)
 #endif /* CHECKSUM_CHECK_ICMP6 */
 
   switch (icmp6hdr->type) {
+#if LWIP_ND6
   case ICMP6_TYPE_NA: /* Neighbor advertisement */
   case ICMP6_TYPE_NS: /* Neighbor solicitation */
   case ICMP6_TYPE_RA: /* Router advertisement */
@@ -119,6 +120,7 @@ icmp6_input(struct pbuf *p, struct netif *inp)
     nd6_input(p, inp);
     return;
     break;
+#endif
   case ICMP6_TYPE_RS:
 #if LWIP_IPV6_FORWARD
     /* @todo implement router functionality */
