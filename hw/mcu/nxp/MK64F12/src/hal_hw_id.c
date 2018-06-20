@@ -28,12 +28,20 @@
 #define min(a, b) ((a)<(b)?(a):(b))
 #endif
 
+#define MK64F12_HW_ID_LEN     7
+
+int
+hal_bsp_hw_id_len(void)
+{
+    return MK64F12_HW_ID_LEN;
+}
+
 /*
  * TODO: Use serial# registers
  */
 int hal_bsp_hw_id(uint8_t *id, int max_len)
 {
-    memcpy(id, (void *)"ABCDEFG", 8);
+    memcpy(id, (void *)"ABCDEFG", MK64F12_HW_ID_LEN + 1);
 
-    return 7;
+    return MK64F12_HW_ID_LEN;
 }

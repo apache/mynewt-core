@@ -31,6 +31,16 @@
 static uint8_t hal_hw_id[HAL_BSP_MAX_ID_LEN];
 static uint8_t hal_hw_id_len;
 
+int
+hal_bsp_hw_id_len(void)
+{
+    if (hal_hw_id_len != 0) {
+        return hal_hw_id_len;
+    } else {
+        return HAL_BSP_MAX_ID_LEN;
+    }
+}
+
 /*
  * This can be used as the unique hardware identifier for the platform, as
  * it's supposed to be unique for this particular MCU.

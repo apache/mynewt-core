@@ -275,6 +275,12 @@ hal_bsp_init(void)
 }
 
 int
+hal_bsp_hw_id_len(void)
+{
+    return sizeof(DEVID);
+}
+
+int
 hal_bsp_hw_id(uint8_t *id, int max_len)
 {
     if (max_len > sizeof(DEVID)) {
