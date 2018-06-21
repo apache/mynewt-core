@@ -73,6 +73,8 @@ SECTIONS
     . = . + 0x20;
   } > m_interrupts
 
+  __text = .;    /* define a global symbol for start of the code */
+
   /* The startup code goes first into internal flash */
   .interrupts :
   {
