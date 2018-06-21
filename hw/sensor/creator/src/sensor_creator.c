@@ -796,12 +796,13 @@ config_lis2dw12_sensor(void)
 {
     int rc;
     struct os_dev *dev;
-    struct lis2dw12_cfg cfg;
+    struct lis2dw12_cfg cfg = {0};
 
     dev = (struct os_dev *) os_dev_open("lis2dw12_0", OS_TIMEOUT_NEVER, NULL);
     assert(dev != NULL);
 
-    cfg.rate = LIS2DW12_DATA_RATE_200HZ;
+    /* Valid Tap ODRs are 400 Hz, 800 Hz and 1600 Hz  AN5038 5.6.3 */
+    cfg.rate = LIS2DW12_DATA_RATE_400HZ;
     cfg.fs = LIS2DW12_FS_2G;
 
     cfg.offset_x = 0;
@@ -819,17 +820,17 @@ config_lis2dw12_sensor(void)
     cfg.tap.en_4d = 0;
     cfg.tap.ths_6d = LIS2DW12_6D_THS_80_DEG;
     cfg.tap.tap_priority = LIS2DW12_TAP_PRIOR_XYZ;
-    cfg.tap.tap_ths_x = 0x3;
-    cfg.tap.tap_ths_y = 0x3;
-    cfg.tap.tap_ths_z = 0x3;
-    cfg.tap.latency = 8; /* 640ms */
-    cfg.tap.quiet = 0; /* 10ms */
-    cfg.tap.shock = 3; /* 120ms */
+    cfg.tap.tap_ths_x = 0x3; /* 1875mg = (3 * FS / 32) */
+    cfg.tap.tap_ths_y = 0x3; /* 1875mg = (3 * FS / 32) */
+    cfg.tap.tap_ths_z = 0x3; /* 1875mg = (3 * FS / 32) */
+    cfg.tap.latency = 8; /* 640ms (= 8 * 32 / ODR) */
+    cfg.tap.quiet = 0; /* 5 ms  (= 2 / ODR */
+    cfg.tap.shock = 3; /* 60 ms (= 3 * 8 / ODR) */
 
     cfg.double_tap_event_enable = 0;
 
-    cfg.freefall_dur = 6;
-    cfg.freefall_ths = 3; /* ~312mg */
+    cfg.freefall_dur = 6; /* 15ms (= 6/ODR) */
+    cfg.freefall_ths = 3; /* ~312mg (= 31.25 mg * 10) */
 
     cfg.int1_pin_cfg = 0;
     cfg.int2_pin_cfg = 0;
@@ -839,14 +840,13 @@ config_lis2dw12_sensor(void)
     cfg.int_latched = 0;
     cfg.int_active_low = 0;
     cfg.slp_mode = 0;
-    cfg.self_test_mode = LIS2DW12_ST_MODE_DISABLE;
 
     cfg.fifo_mode = LIS2DW12_FIFO_M_BYPASS;
     cfg.fifo_threshold = 32;
 
-    cfg.wake_up_ths = 0;
-    cfg.wake_up_dur = 0;
-    cfg.sleep_duration = 0;
+    cfg.wake_up_ths = 0; /* 0 mg (= 0 * FS / 64) */
+    cfg.wake_up_dur = 0; /* 0 ms (= 0 * 1 / ODR) */
+    cfg.sleep_duration = 0; /* 0 ms (= 0 * 512 / ODR) */
 
     cfg.stationary_detection_enable = 0;
 

@@ -220,7 +220,6 @@ struct lis2dw12_cfg {
     uint8_t double_tap_event_enable     : 1;
 
     uint8_t slp_mode       : 1;
-    uint8_t self_test_mode : 3;
 
     /* Power mode */
     uint8_t power_mode     : 4;
@@ -560,7 +559,7 @@ int lis2dw12_get_tap_cfg(struct sensor_itf *itf, struct lis2dw12_tap_settings *c
  * Set freefall detection configuration
  *
  * @param itf The sensor interface
- * @param dur Freefall duration (5 bits LSB = 1/ODR)
+ * @param dur Freefall duration (6 bits LSB = 1/ODR)
  * @param ths Freefall threshold (3 bits)
  *
  * @return 0 on success, non-zero on failure
@@ -686,7 +685,7 @@ int lis2dw12_get_sixd_src(struct sensor_itf *itf, uint8_t *status);
  *
  * @param itf The sensor interface
  * @param mode FIFO mode to setup
- * @patam fifo_ths Threshold to set for FIFO
+ * @param fifo_ths Threshold to set for FIFO
  *
  * @return 0 on success, non-zero on failure
  */
@@ -696,7 +695,7 @@ int lis2dw12_set_fifo_cfg(struct sensor_itf *itf, enum lis2dw12_fifo_mode mode, 
  * Get Number of Samples in FIFO
  *
  * @param itf The sensor interface
- * @patam samples Ptr to return number of samples in
+ * @param samples Ptr to return number of samples in
  *
  * @return 0 on success, non-zero on failure
  */
@@ -823,24 +822,24 @@ int lis2dw12_set_stationary_en(struct sensor_itf *itf, uint8_t en);
 int lis2dw12_get_stationary_en(struct sensor_itf *itf, uint8_t *en);
 
 /**
- * Set whether interrupts are enabled
+ * Set whether interrupt 2 signals is mapped onto interrupt 1 pin
  *
  * @param itf The sensor interface
  * @param enable Value to set (0 = disabled, 1 = enabled)
  *
  * @return 0 on success, non-zero on failure
  */
-int lis2dw12_set_int1_on_int2_map(struct sensor_itf *itf, bool enable);
+int lis2dw12_set_int2_on_int1_map(struct sensor_itf *itf, bool enable);
 
 /**
- * Get whether interrupt 1 signals is mapped onto interrupt 2 pin
+ * Get whether interrupt 2 signals is mapped onto interrupt 1 pin
  *
  * @param itf The sensor interface
  * @param val Value to set (0 = disabled, 1 = enabled)
  *
  * @return 0 on success, non-zero on failure
  */
-int lis2dw12_get_int1_on_int2_map(struct sensor_itf *itf, uint8_t *val);
+int lis2dw12_get_int2_on_int1_map(struct sensor_itf *itf, uint8_t *val);
 
 /**
  * Run Self test on sensor

@@ -510,7 +510,8 @@ lis2dw12_set_full_scale(struct sensor_itf *itf, uint8_t fs)
         goto err;
     }
 
-    reg = (reg & ~LIS2DW12_CTRL_REG6_FS) | fs;
+    reg &= ~LIS2DW12_CTRL_REG6_FS;
+    reg |= (fs & LIS2DW12_CTRL_REG6_FS);
 
     rc = lis2dw12_write8(itf, LIS2DW12_REG_CTRL_REG6, reg);
     if (rc) {
@@ -573,7 +574,8 @@ lis2dw12_set_rate(struct sensor_itf *itf, uint8_t rate)
         goto err;
     }
 
-    reg = (reg & ~LIS2DW12_CTRL_REG1_ODR) | rate;
+    reg &= ~LIS2DW12_CTRL_REG1_ODR;
+    reg |= (rate & LIS2DW12_CTRL_REG1_ODR);
 
     rc = lis2dw12_write8(itf, LIS2DW12_REG_CTRL_REG1, reg);
     if (rc) {
@@ -1295,7 +1297,7 @@ int lis2dw12_get_tap_cfg(struct sensor_itf *itf, struct lis2dw12_tap_settings *c
  * Set freefall detection configuration
  *
  * @param the sensor interface
- * @param freefall duration (5 bits LSB = 1/ODR)
+ * @param freefall duration (6 bits LSB = 1/ODR)
  * @param freefall threshold (3 bits)
  * @return 0 on success, non-zero on failure
  */
@@ -1349,7 +1351,7 @@ int lis2dw12_get_freefall(struct sensor_itf *itf, uint8_t *dur, uint8_t *ths)
 
     *dur = (ff_reg & LIS2DW12_FREEFALL_DUR) >> 3;
     *dur |= wake_reg & LIS2DW12_WAKE_DUR_FF_DUR ? (1 << 5) : 0;
-    *ths = wake_reg & LIS2DW12_FREEFALL_THS;
+    *ths = ff_reg & LIS2DW12_FREEFALL_THS;
 
     return 0;
 }
@@ -1359,7 +1361,7 @@ int lis2dw12_get_freefall(struct sensor_itf *itf, uint8_t *dur, uint8_t *ths)
  *
  * @param the sensor interface
  * @param FIFO mode to setup
- * @patam Threshold to set for FIFO
+ * @param Threshold to set for FIFO
  * @return 0 on success, non-zero on failure
  */
 int lis2dw12_set_fifo_cfg(struct sensor_itf *itf, enum lis2dw12_fifo_mode mode, uint8_t fifo_ths)
@@ -1376,7 +1378,7 @@ int lis2dw12_set_fifo_cfg(struct sensor_itf *itf, enum lis2dw12_fifo_mode mode, 
  * Get Number of Samples in FIFO
  *
  * @param the sensor interface
- * @patam Pointer to return number of samples in
+ * @param Pointer to return number of samples in
  * @return 0 on success, non-zero on failure
  */
 int lis2dw12_get_fifo_samples(struct sensor_itf *itf, uint8_t *samples)
@@ -1397,8 +1399,8 @@ int lis2dw12_get_fifo_samples(struct sensor_itf *itf, uint8_t *samples)
 /**
  * Clear interrupt pin configuration for interrupt 1
  *
- * @param the sensor interface
- * @param config
+ * @param itf The sensor interface
+ * @param cfg int1 config
  * @return 0 on success, non-zero on failure
  */
 int
@@ -1425,8 +1427,8 @@ err:
 /**
  * Clear interrupt pin configuration for interrupt 2
  *
- * @param the sensor interface
- * @param config
+ * @param itf The sensor interface
+ * @param cfg int2 config
  * @return 0 on success, non-zero on failure
  */
 int
@@ -1863,13 +1865,13 @@ int lis2dw12_set_int_enable(struct sensor_itf *itf, uint8_t enabled)
 }
 
 /**
- * Set whether interrupt 1 signals is mapped onto interrupt 2 pin
+ * Set whether interrupt 2 signals is mapped onto interrupt 1 pin
  *
  * @param the sensor interface
  * @param value to set (false = disabled, true = enabled)
  * @return 0 on success, non-zero on failure
  */
-int lis2dw12_set_int1_on_int2_map(struct sensor_itf *itf, bool enable)
+int lis2dw12_set_int2_on_int1_map(struct sensor_itf *itf, bool enable)
 {
     uint8_t reg;
     int rc;
@@ -2992,12 +2994,6 @@ lis2dw12_config(struct lis2dw12 *lis2dw12, struct lis2dw12_cfg *cfg)
 
     lis2dw12->cfg.rate = cfg->rate;
 
-    rc = lis2dw12_set_self_test(itf, cfg->self_test_mode);
-    if (rc) {
-        goto err;
-    }
-    lis2dw12->cfg.self_test_mode = cfg->self_test_mode;
-
     rc = lis2dw12_set_power_mode(itf, cfg->power_mode);
     if (rc) {
         goto err;
@@ -3092,7 +3088,7 @@ lis2dw12_config(struct lis2dw12 *lis2dw12, struct lis2dw12_cfg *cfg)
     }
     lis2dw12->cfg.tap = cfg->tap;
 
-    rc = lis2dw12_set_int1_on_int2_map(itf, cfg->map_int2_to_int1);
+    rc = lis2dw12_set_int2_on_int1_map(itf, cfg->map_int2_to_int1);
     if(rc) {
         goto err;
     }
