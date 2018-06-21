@@ -30,6 +30,6 @@ initialization handler. The ``sensor_oic_init()`` function creates all
 the OIC resources for the sensors and registers request callbacks to
 process CoAP GET requests for the sensor OIC resources.
 
-See the `Enabling OIC Sensor Data Monitoring
-Tutorials </os/tutorials/sensors/sensor_oic_overview.html>`__ to run and
+See the :doc:`Enabling OIC Sensor Data Monitoring
+Tutorials <../../../tutorials/sensors/sensor_oic_overview>` to run and
 develop sample OIC sensor server applications.
