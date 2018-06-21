@@ -59,11 +59,10 @@ void os_msys_init(void);
  * the amount of stack it walks.
  *
  * @param sp Pointer to where stack starts.
- * @param sp Pointer to where stack ends.
  */
-void os_stacktrace(uintptr_t sp, uintptr_t end);
+void os_stacktrace(uintptr_t sp);
 #else
-#define os_stacktrace(sp, end)
+#define os_stacktrace(sp)
 #endif
 
 #ifdef __cplusplus

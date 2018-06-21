@@ -163,7 +163,7 @@ os_default_irq(struct trap_frame *tf)
       SCB->ICSR, SCB->HFSR, SCB->CFSR);
     console_printf("BFAR:0x%08lx MMFAR:0x%08lx\n", SCB->BFAR, SCB->MMFAR);
 
-    os_stacktrace((uintptr_t)(tf->ef + 1), 0xffffffff);
+    os_stacktrace((uintptr_t)(tf->ef + 1));
 #if MYNEWT_VAL(OS_COREDUMP)
     trap_to_coredump(tf, &regs);
     coredump_dump(&regs, sizeof(regs));

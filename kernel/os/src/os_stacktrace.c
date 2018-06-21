@@ -73,18 +73,24 @@ os_addr_is_ram(uintptr_t addr)
  * pointers.
  */
 void
-os_stacktrace(uintptr_t sp, uintptr_t end)
+os_stacktrace(uintptr_t sp)
 {
     uintptr_t addr;
+    uintptr_t end;
+    struct os_task *t;
 
     sp &= ~(sizeof(uintptr_t) - 1);
-    if (end > sp + OS_STACK_DEPTH_MAX) {
-        /*
-         * Limit this, in case SP/end of stack are not right.
-         */
-        end = sp + OS_STACK_DEPTH_MAX;
+    end = sp + OS_STACK_DEPTH_MAX;
+
+    if (g_os_started && g_current_task) {
+        t = g_current_task;
+        if (sp > (uintptr_t)t->t_stacktop && end > (uintptr_t)t->t_stacktop) {
+            end = (uintptr_t)t->t_stacktop;
+        }
+    } else {
+        t = NULL;
     }
-    console_printf("Stack\n");
+    console_printf("task:%s\n", t ? t->t_name : "NA");
     for ( ; sp < end; sp += sizeof(uintptr_t)) {
         if (os_addr_is_ram(sp)) {
             addr = *(uintptr_t *)sp;
