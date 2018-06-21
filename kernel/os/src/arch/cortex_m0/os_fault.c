@@ -147,6 +147,8 @@ os_default_irq(struct trap_frame *tf)
     console_printf("r12:0x%08lx  lr:0x%08lx  pc:0x%08lx psr:0x%08lx\n",
       tf->ef->r12, tf->ef->lr, tf->ef->pc, tf->ef->psr);
     console_printf("ICSR:0x%08lx\n", SCB->ICSR);
+
+    os_stacktrace((uintptr_t)(tf->ef + 1), 0xffffffff);
 #if MYNEWT_VAL(OS_COREDUMP)
     trap_to_coredump(tf, &regs);
     coredump_dump(&regs, sizeof(regs));
