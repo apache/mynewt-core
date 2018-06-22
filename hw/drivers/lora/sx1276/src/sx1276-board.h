@@ -124,6 +124,16 @@ void SX1276SetPublicNetwork(bool enable);
 uint32_t SX1276GetBoardTcxoWakeupTime(void);
 
 /*!
+ * \brief Disables all receive related IO Irqs
+ */
+void SX1276RxIoIrqDisable( void );
+
+/*!
+ * \brief Enables all receive related IO Irqs
+ */
+void SX1276RxIoIrqEnable( void );
+
+/*!
  * Radio hardware and global parameters
  */
 extern SX1276_t SX1276;
