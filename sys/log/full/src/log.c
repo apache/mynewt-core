@@ -34,7 +34,6 @@ struct log_info g_log_info;
 
 static STAILQ_HEAD(, log) g_log_list = STAILQ_HEAD_INITIALIZER(g_log_list);
 static const char *g_log_module_list[ MYNEWT_VAL(LOG_MAX_USER_MODULES) ];
-static uint8_t log_inited;
 static uint8_t log_written;
 
 #if MYNEWT_VAL(LOG_CLI)
@@ -63,12 +62,9 @@ log_init(void)
 
     (void)rc;
 
-    if (log_inited) {
-        return;
-    }
-    log_inited = 1;
     log_written = 0;
 
+    STAILQ_INIT(&g_log_list);
     g_log_info.li_version = MYNEWT_VAL(LOG_VERSION);
     g_log_info.li_next_index = 0;
 
@@ -82,6 +78,10 @@ log_init(void)
 #if MYNEWT_VAL(LOG_NEWTMGR)
     rc = log_nmgr_register_group();
     SYSINIT_PANIC_ASSERT(rc == 0);
+#endif
+
+#if MYNEWT_VAL(LOG_CONSOLE)
+    log_console_init();
 #endif
 }
 
@@ -360,10 +360,14 @@ err:
 }
 
 int
-log_append_mbuf_typed(struct log *log, uint8_t module, uint8_t level,
-                      uint8_t etype, struct os_mbuf *om)
+log_append_mbuf_typed_no_free(struct log *log, uint8_t module, uint8_t level,
+                              uint8_t etype, struct os_mbuf **om_ptr)
 {
+    struct os_mbuf *om;
     int rc;
+
+    /* Remove a loyer of indirection for convenience. */
+    om = *om_ptr;
 
     if (!log->l_log->log_append_mbuf) {
         rc = -1;
@@ -387,14 +391,32 @@ log_append_mbuf_typed(struct log *log, uint8_t module, uint8_t level,
         goto err;
     }
 
-    os_mbuf_free_chain(om);
+    *om_ptr = om;
 
-    return (0);
+    return 0;
+
 err:
     if (om) {
         os_mbuf_free_chain(om);
+        *om_ptr = NULL;
     }
-    return (rc);
+    return rc;
+}
+
+int
+log_append_mbuf_typed(struct log *log, uint8_t module, uint8_t level,
+                      uint8_t etype, struct os_mbuf *om)
+{
+    int rc;
+
+    rc = log_append_mbuf_typed_no_free(log, module, level, etype, &om);
+    if (rc != 0) {
+        return rc;
+    }
+
+    os_mbuf_free_chain(om);
+
+    return 0;
 }
 
 void
