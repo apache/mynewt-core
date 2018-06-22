@@ -312,6 +312,12 @@ log_append_prepare(struct log *log, uint8_t module, uint8_t level, uint8_t etype
         goto err;
     }
 
+    /* Check if this module has a minimum level. */
+    if (level < log_level_get(module)) {
+        rc = -1;
+        goto err;
+    }
+
     OS_ENTER_CRITICAL(sr);
     idx = g_log_info.li_next_index++;
     OS_EXIT_CRITICAL(sr);

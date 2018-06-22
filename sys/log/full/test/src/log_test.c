@@ -85,6 +85,7 @@ TEST_CASE_DECL(log_setup_fcb)
 TEST_CASE_DECL(log_append_fcb)
 TEST_CASE_DECL(log_walk_fcb)
 TEST_CASE_DECL(log_flush_fcb)
+TEST_CASE_DECL(log_level);
 
 TEST_SUITE(log_test_all)
 {
@@ -92,6 +93,7 @@ TEST_SUITE(log_test_all)
     log_append_fcb();
     log_walk_fcb();
     log_flush_fcb();
+    log_level();
 }
 
 #if MYNEWT_VAL(SELFTEST)

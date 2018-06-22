@@ -58,3 +58,10 @@ syscfg.defs:
     LOG_MAX_USER_MODULES:
         description: 'Maximum number of user modules to register'
         value: 1
+
+    LOG_MODULE_LEVELS:
+        description: >
+            Enables global configuration of minimum log level by module ID.
+            Writes with a level less than the module's minimum level are
+            discarded.  Enabling this setting requires 128 bytes of bss.
+        value: 1
