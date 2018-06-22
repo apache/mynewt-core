@@ -349,3 +349,21 @@ SX1272GetBoardTcxoWakeupTime(void)
 {
     return 0;
 }
+
+void
+SX1272RxIoIrqDisable(void)
+{
+    hal_gpio_irq_disable(SX1272_DIO0);
+    hal_gpio_irq_disable(SX1272_DIO1);
+    hal_gpio_irq_disable(SX1272_DIO2);
+    hal_gpio_irq_disable(SX1272_DIO3);
+}
+
+void
+SX1272RxIoIrqEnable(void)
+{
+    hal_gpio_irq_enable(SX1272_DIO0);
+    hal_gpio_irq_enable(SX1272_DIO1);
+    hal_gpio_irq_enable(SX1272_DIO2);
+    hal_gpio_irq_enable(SX1272_DIO3);
+}
