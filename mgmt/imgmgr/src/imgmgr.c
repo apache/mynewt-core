@@ -438,7 +438,7 @@ imgr_upload(struct mgmt_cbuf *cb)
             .type = CborAttrByteStringType,
             .addr.bytestring.data = data_hash,
             .addr.bytestring.len = &data_hash_len,
-            .len = sizeof(img_data)
+            .len = sizeof(data_hash)
         },
         [4] = { 0 },
     };
