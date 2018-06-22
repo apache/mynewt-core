@@ -407,11 +407,13 @@ static int
 imgr_upload(struct mgmt_cbuf *cb)
 {
     uint8_t img_data[MYNEWT_VAL(IMGMGR_MAX_CHUNK_SIZE)];
+    uint8_t data_hash[IMGMGR_DATA_HASH_LEN];
     long long unsigned int off = UINT_MAX;
     long long unsigned int size = UINT_MAX;
     size_t data_len = 0;
+    size_t data_hash_len = 0;
     uint8_t rem_bytes = 0;
-    const struct cbor_attr_t off_attr[4] = {
+    const struct cbor_attr_t off_attr[5] = {
         [0] = {
             .attribute = "data",
             .type = CborAttrByteStringType,
@@ -431,7 +433,14 @@ imgr_upload(struct mgmt_cbuf *cb)
             .addr.uinteger = &off,
             .nodefault = true
         },
-        [3] = { 0 },
+        [3] = {
+            .attribute = "datahash",
+            .type = CborAttrByteStringType,
+            .addr.bytestring.data = data_hash,
+            .addr.bytestring.len = &data_hash_len,
+            .len = sizeof(img_data)
+        },
+        [4] = { 0 },
     };
     struct image_header *hdr;
     int area_id;
@@ -457,10 +466,27 @@ imgr_upload(struct mgmt_cbuf *cb)
         }
 
         /*
+         * If request includes proper data hash we can check whether there is
+         * upload in progress (interrupted due to e.g. link disconnection) so
+         * we can just resume it by simply including current upload offset
+         * in response.
+         */
+        if ((data_hash_len == IMGMGR_DATA_HASH_LEN) && imgr_state.upload.fa) {
+            if (!memcmp(imgr_state.upload.data_hash, data_hash, data_hash_len)) {
+                goto out;
+            }
+        }
+
+        /*
          * New upload.
          */
         imgr_state.upload.off = 0;
         imgr_state.upload.size = size;
+        if (data_hash_len == IMGMGR_DATA_HASH_LEN) {
+            memcpy(imgr_state.upload.data_hash, data_hash, IMGMGR_DATA_HASH_LEN);
+        } else {
+            memset(imgr_state.upload.data_hash, 0, IMGMGR_DATA_HASH_LEN);
+        }
 
         area_id = imgmgr_find_best_area_id();
         if (area_id >= 0) {
