@@ -19,9 +19,9 @@
 # Package: hw/battery
 
 syscfg.defs:
-    BATTERY_CLI:
+    BATTERY_SHELL:
         description: 'Whether or not to enable the battery shell support'
-        value: 1
+        value: 0
 
     BATTERY_MGR_EVQ:
         description: >
