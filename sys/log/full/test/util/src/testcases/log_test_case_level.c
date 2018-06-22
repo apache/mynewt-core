@@ -17,7 +17,7 @@
  * under the License.
  */
 
-#include "log_test.h"
+#include "log_test_util/log_test_util.h"
 
 static int
 log_last_walk(struct log *log, struct log_offset *log_offset,
@@ -45,11 +45,15 @@ log_last(struct log *log)
     return idx;
 }
 
-TEST_CASE(log_level)
+TEST_CASE(log_test_case_level)
 {
+    struct cbmem cbmem;
+    struct log log;
     uint32_t idx;
     int rc;
     int i;
+
+    ltu_setup_cbmem(&cbmem, &log);
 
     /* Ensure all modules initialized to 0. */
     for (i = 0; i < 256; i++) {
@@ -73,11 +77,11 @@ TEST_CASE(log_level)
     rc = log_level_set(100, 4);
     TEST_ASSERT(rc == 0);
 
-    idx = log_last(&my_log);
-    log_printf(&my_log, 100, 1, "hello");
-    TEST_ASSERT(log_last(&my_log) == idx);
+    idx = log_last(&log);
+    log_printf(&log, 100, 1, "hello");
+    TEST_ASSERT(log_last(&log) == idx);
 
     /* Ensure log write when level is equal. */
-    log_printf(&my_log, 100, 4, "hello");
-    TEST_ASSERT(log_last(&my_log) > idx);
+    log_printf(&log, 100, 4, "hello");
+    TEST_ASSERT(log_last(&log) > idx);
 }

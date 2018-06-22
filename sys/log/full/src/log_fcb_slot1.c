@@ -55,9 +55,24 @@ log_fcb_slot1_append(struct log *log, void *buf, int len)
 }
 
 static int
+log_fcb_slot1_append_body(struct log *log, const struct log_entry_hdr *hdr,
+                          const void *body, int body_len)
+{
+    return LOG_FCB_SLOT1_CALL(log, log_append_body, buf, len);
+}
+
+static int
 log_fcb_slot1_append_mbuf(struct log *log, struct os_mbuf *om)
 {
     return LOG_FCB_SLOT1_CALL(log, log_append_mbuf, om);
+}
+
+static int
+log_fcb_slot1_append_mbuf_body(struct log *log,
+                               const struct log_entry_hdr *hdr,
+                               const struct os_mbuf *om)
+{
+    return LOG_FCB_SLOT1_CALL(log, log_append_mbuf_body, om);
 }
 
 static int
@@ -121,7 +136,9 @@ const struct log_handler log_fcb_slot1_handler = {
     .log_read = log_fcb_slot1_read,
     .log_read_mbuf = log_fcb_slot1_read_mbuf,
     .log_append = log_fcb_slot1_append,
+    .log_append_body = log_fcb_slot1_append_body,
     .log_append_mbuf = log_fcb_slot1_append_mbuf,
+    .log_append_mbuf_body = log_fcb_slot1_append_mbuf_body,
     .log_walk = log_fcb_slot1_walk,
     .log_flush = log_fcb_slot1_flush,
     .log_registered = log_fcb_slot1_registered,

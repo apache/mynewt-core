@@ -27,6 +27,9 @@
 #include "fcb/fcb.h"
 #include "log/log.h"
 
+/* Assume the flash alignment requirement is no stricter than 8. */
+#define LOG_FCB_MAX_ALIGN   8
+
 static struct flash_area sector;
 
 static int log_fcb_rtr_erase(struct log *log, void *arg);
@@ -96,47 +99,195 @@ err:
     return (rc);
 }
 
+/**
+ * Calculates the number of message body bytes that should be included after
+ * the entry header in the first write.  Inclusion of body bytes is necessary
+ * to satisfy the flash hardware's write alignment restrictions.
+ */
 static int
-log_fcb_append_mbuf(struct log *log, struct os_mbuf *om)
+log_fcb_hdr_body_bytes(uint8_t align)
+{
+    uint8_t mod;
+
+    /* Assume power-of-two alignment for faster modulo calculation. */
+    assert((align & (align - 1)) == 0);
+
+    mod = sizeof (struct log_entry_hdr) & (align - 1);
+    if (mod == 0) {
+        return 0;
+    }
+
+    return align - mod;
+}
+
+static int
+log_fcb_append_body(struct log *log, const struct log_entry_hdr *hdr,
+                    const void *body, int body_len)
+{
+    uint8_t buf[sizeof (struct log_entry_hdr) + LOG_FCB_MAX_ALIGN - 1];
+    struct fcb *fcb;
+    struct fcb_entry loc;
+    struct fcb_log *fcb_log;
+    const uint8_t *u8p;
+    int hdr_alignment;
+    int chunk_sz;
+    int rc;
+
+    fcb_log = (struct fcb_log *)log->l_arg;
+    fcb = &fcb_log->fl_fcb;
+
+    if (fcb->f_align > LOG_FCB_MAX_ALIGN) {
+        return SYS_ENOTSUP;
+    }
+
+    rc = log_fcb_start_append(log, sizeof *hdr + body_len, &loc);
+    if (rc != 0) {
+        return rc;
+    }
+
+    /* Append the first chunk (header + x-bytes of body, where x is however
+     * many bytes are required to increase the chunk size up to a multiple of
+     * the flash alignment).
+     */
+    hdr_alignment = log_fcb_hdr_body_bytes(fcb->f_align);
+    if (hdr_alignment > body_len) {
+        chunk_sz = sizeof *hdr + body_len;
+    } else {
+        chunk_sz = sizeof *hdr + hdr_alignment;
+    }
+
+    u8p = body;
+
+    memcpy(buf, hdr, sizeof *hdr);
+    memcpy(buf + sizeof *hdr, u8p, hdr_alignment);
+
+    rc = flash_area_write(loc.fe_area, loc.fe_data_off, buf, chunk_sz);
+    if (rc != 0) {
+        return rc;
+    }
+
+    /* Append the remainder of the message body. */
+
+    u8p += hdr_alignment;
+    body_len -= hdr_alignment;
+
+    if (body_len > 0) {
+        rc = flash_area_write(loc.fe_area, loc.fe_data_off + chunk_sz, u8p,
+                              body_len);
+        if (rc != 0) {
+            return rc;
+        }
+    }
+
+    rc = fcb_append_finish(fcb, &loc);
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
+}
+
+static int
+log_fcb_write_mbuf(struct fcb_entry *loc, const struct os_mbuf *om)
+{
+    int rc;
+
+    while (om) {
+        rc = flash_area_write(loc->fe_area, loc->fe_data_off,
+                              om->om_data, om->om_len);
+        if (rc != 0) {
+            return SYS_EIO;
+        }
+
+        loc->fe_data_off += om->om_len;
+        om = SLIST_NEXT(om, om_next);
+    }
+
+    return 0;
+}
+
+static int
+log_fcb_append_mbuf(struct log *log, const struct os_mbuf *om)
 {
     struct fcb *fcb;
     struct fcb_entry loc;
     struct fcb_log *fcb_log;
-    struct os_mbuf *om_tmp;
     int len;
     int rc;
 
     fcb_log = (struct fcb_log *)log->l_arg;
     fcb = &fcb_log->fl_fcb;
 
-    len = 0;
-
-    om_tmp = om;
-    while (om_tmp) {
-        len += om_tmp->om_len;
-        om_tmp = SLIST_NEXT(om_tmp, om_next);
+    /* This function expects to be able to write each mbuf without any
+     * buffering.
+     */
+    /* XXX: Fix this; buffer mbuf writes to satisfy flash alignment. */
+    if (fcb->f_align != 1) {
+        return SYS_ENOTSUP;
     }
 
+    len = os_mbuf_len(om);
     rc = log_fcb_start_append(log, len, &loc);
-    if (rc) {
-        goto err;
+    if (rc != 0) {
+        return rc;
     }
 
-    while (om) {
-        rc = flash_area_write(loc.fe_area, loc.fe_data_off, om->om_data,
-                              om->om_len);
-        if (rc) {
-            goto err;
-        }
-
-        loc.fe_data_off += om->om_len;
-        om = SLIST_NEXT(om, om_next);
+    rc = log_fcb_write_mbuf(&loc, om);
+    if (rc != 0) {
+        return rc;
     }
 
     rc = fcb_append_finish(fcb, &loc);
+    if (rc != 0) {
+        return rc;
+    }
 
-err:
-    return (rc);
+    return 0;
+}
+
+static int
+log_fcb_append_mbuf_body(struct log *log, const struct log_entry_hdr *hdr,
+                         const struct os_mbuf *om)
+{
+    struct fcb *fcb;
+    struct fcb_entry loc;
+    struct fcb_log *fcb_log;
+    int len;
+    int rc;
+
+    fcb_log = (struct fcb_log *)log->l_arg;
+    fcb = &fcb_log->fl_fcb;
+
+    /* This function expects to be able to write each mbuf without any
+     * buffering.
+     */
+    if (fcb->f_align != 1) {
+        return SYS_ENOTSUP;
+    }
+
+    len = sizeof *hdr + os_mbuf_len(om);
+    rc = log_fcb_start_append(log, len, &loc);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = flash_area_write(loc.fe_area, loc.fe_data_off, hdr, sizeof *hdr);
+    if (rc != 0) {
+        return rc;
+    }
+    loc.fe_data_off += sizeof *hdr;
+
+    rc = log_fcb_write_mbuf(&loc, om);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = fcb_append_finish(fcb, &loc);
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
 }
 
 static int
@@ -377,7 +528,9 @@ const struct log_handler log_fcb_handler = {
     .log_read = log_fcb_read,
     .log_read_mbuf = log_fcb_read_mbuf,
     .log_append = log_fcb_append,
+    .log_append_body = log_fcb_append_body,
     .log_append_mbuf = log_fcb_append_mbuf,
+    .log_append_mbuf_body = log_fcb_append_mbuf_body,
     .log_walk = log_fcb_walk,
     .log_flush = log_fcb_flush,
 };

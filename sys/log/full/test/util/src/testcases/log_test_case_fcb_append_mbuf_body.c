@@ -16,15 +16,32 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include "log_test.h"
 
-TEST_CASE(log_walk_fcb)
+#include "log_test_util/log_test_util.h"
+
+TEST_CASE(log_test_case_fcb_append_mbuf_body)
 {
-    struct log_offset log_offset = { 0 };
+    struct fcb_log fcb_log;
+    struct os_mbuf *om;
+    struct log log;
+    char *str;
     int rc;
+    int i;
 
-    str_idx = 0;
+    ltu_setup_fcb(&fcb_log, &log);
 
-    rc = log_walk(&my_log, log_test_walk1, &log_offset);
-    TEST_ASSERT(rc == 0);
+    for (i = 0; ; i++) {
+        str = ltu_str_logs[i];
+        if (!str) {
+            break;
+        }
+
+        /* Split chain into several mbufs. */
+        om = ltu_flat_to_fragged_mbuf(str, strlen(str), 2);
+
+        rc = log_append_mbuf_body(&log, 0, 0, LOG_ETYPE_STRING, om);
+        TEST_ASSERT_FATAL(rc == 0);
+    }
+
+    ltu_verify_contents(&log);
 }

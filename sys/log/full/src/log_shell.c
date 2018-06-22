@@ -38,31 +38,23 @@
 
 static int
 shell_log_dump_entry(struct log *log, struct log_offset *log_offset,
-                     void *dptr, uint16_t len)
+                     const struct log_entry_hdr *ueh, void *dptr, uint16_t len)
 {
-    struct log_entry_hdr ueh;
     char data[128];
     int dlen;
     int rc;
 
-    rc = log_read(log, dptr, &ueh, 0, sizeof(ueh));
-    if (rc != sizeof(ueh)) {
-        goto err;
-    }
+    dlen = min(len, 128);
 
-    dlen = min(len-sizeof(ueh), 128);
-
-    rc = log_read(log, dptr, data, sizeof(ueh), dlen);
+    rc = log_read_body(log, dptr, data, 0, dlen);
     if (rc < 0) {
-        goto err;
+        return rc;
     }
     data[rc] = 0;
 
-    console_printf("[%llu] %s\n", ueh.ue_ts, data);
+    console_printf("[%llu] %s\n", ueh->ue_ts, data);
 
-    return (0);
-err:
-    return (rc);
+    return 0;
 }
 
 int
@@ -90,7 +82,7 @@ shell_log_dump_all_cmd(int argc, char **argv)
         log_offset.lo_index = 0;
         log_offset.lo_data_len = 0;
 
-        rc = log_walk(log, shell_log_dump_entry, &log_offset);
+        rc = log_walk_body(log, shell_log_dump_entry, &log_offset);
         if (rc != 0) {
             goto err;
         }
