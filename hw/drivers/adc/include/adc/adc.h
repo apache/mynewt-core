@@ -159,6 +159,8 @@ struct adc_dev {
     const struct adc_driver_funcs *ad_funcs;
     struct adc_chan_config *ad_chans;
     int ad_chan_count;
+    /* Open reference count */
+    uint8_t ad_ref_cnt;
     adc_event_handler_func_t ad_event_handler_func;
     void *ad_event_handler_arg;
 };
