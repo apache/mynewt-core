@@ -112,6 +112,14 @@ typedef enum {
     SENSOR_EVENT_TYPE_WAKEUP         = (1 << 4),
     /* Sleep Event */
     SENSOR_EVENT_TYPE_SLEEP          = (1 << 5),
+    /* Orientation Change Event */
+    SENSOR_EVENT_TYPE_ORIENT_CHANGE  = (1 << 6),
+    /* Orientation Change Event in the X direction */
+    SENSOR_EVENT_TYPE_ORIENT_X_CHANGE  = (1 << 7),
+    /* Orientation Change Event in the Y direction */
+    SENSOR_EVENT_TYPE_ORIENT_Y_CHANGE  = (1 << 8),
+    /* Orientation Change Event in the Z direction */
+    SENSOR_EVENT_TYPE_ORIENT_Z_CHANGE  = (1 << 9),
 } sensor_event_type_t;
 
 
