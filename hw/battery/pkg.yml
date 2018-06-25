@@ -17,24 +17,15 @@
 # under the License.
 #
 
-pkg.name: hw/drivers/bq27z561
-pkg.description: Driver for the BQ27Z561 fuel gauge
+pkg.name: hw/battery
+pkg.description: Battery/Fuel Gauge Controller IC Interface
 pkg.keywords:
-    - bq27z561
-    - i2c
-    - fuel_gauge
 
 pkg.deps:
-    - "@apache-mynewt-core/kernel/os"
-    - "@apache-mynewt-core/hw/hal"
-    - "@apache-mynewt-core/hw/battery"
+    - kernel/os
 
 pkg.req_apis:
-    - stats
-    - log
-
-pkg.deps.BQ27Z561_CLI:
-    - "@apache-mynewt-core/util/parse"
+    - console
 
 pkg.init:
-    bq27z561_pkg_init: 500
+    battery_pkg_init: 501

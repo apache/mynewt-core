@@ -1,4 +1,3 @@
-#
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -17,24 +16,20 @@
 # under the License.
 #
 
-pkg.name: hw/drivers/bq27z561
-pkg.description: Driver for the BQ27Z561 fuel gauge
-pkg.keywords:
-    - bq27z561
-    - i2c
-    - fuel_gauge
+# Package: hw/battery
 
-pkg.deps:
-    - "@apache-mynewt-core/kernel/os"
-    - "@apache-mynewt-core/hw/hal"
-    - "@apache-mynewt-core/hw/battery"
+syscfg.defs:
+    BATTERY_CLI:
+        description: 'Whether or not to enable the battery shell support'
+        value: 1
 
-pkg.req_apis:
-    - stats
-    - log
+    BATTERY_MGR_EVQ:
+        description: >
+            Specify the eventq to be used by the battery manager
+        value:
 
-pkg.deps.BQ27Z561_CLI:
-    - "@apache-mynewt-core/util/parse"
-
-pkg.init:
-    bq27z561_pkg_init: 500
+    BATTERY_MAX_PROPERTY_COUNT:
+        description: >
+            Maximum number of supported battery properties. Number should
+            be a minimum multiple of 32 that is grater of supported properties.
+        value: 32
