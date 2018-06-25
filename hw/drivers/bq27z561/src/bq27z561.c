@@ -663,6 +663,11 @@ bq27z561_battery_property_get(struct battery_driver *driver,
         rc = -1;
         assert(0);
     }
+    if (rc == 0) {
+        property->bp_valid = 1;
+    } else {
+        property->bp_valid = 0;
+    }
 
     return rc;
 }
