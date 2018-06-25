@@ -44,9 +44,9 @@
     (1 + (NUM_BUFFERS_OS_SYSVIEW) + (MYNEWT_VAL(RTT_NUM_BUFFERS_DOWN)))
 
 /* Size of up-buffer for Terminal (console output) */
-#define BUFFER_SIZE_UP                  (MYNEWT_VAL(RTT_BUFFER_SIZE_UP))
+#define BUFFER_SIZE_UP                  (MYNEWT_VAL(RTT_TERMINAL_BUFFER_SIZE_UP))
 /* Size of down-buffer for Terminal (console input) */
-#define BUFFER_SIZE_DOWN                (MYNEWT_VAL(RTT_BUFFER_SIZE_DOWN))
+#define BUFFER_SIZE_DOWN                (MYNEWT_VAL(RTT_TERMINAL_BUFFER_SIZE_DOWN))
 
 /* Mode for default channel (Terminal) */
 #define SEGGER_RTT_MODE_DEFAULT         SEGGER_RTT_MODE_NO_BLOCK_SKIP
