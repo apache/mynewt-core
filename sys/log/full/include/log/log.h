@@ -568,9 +568,33 @@ log_level_set(uint8_t module, uint8_t level)
 #endif
 
 #if MYNEWT_VAL(LOG_STORAGE_INFO)
+/**
+ * Return information about log storage
+ *
+ * This return information about size and usage of storage on top of which log
+ * instance is created.
+ *
+ * @param log   The log to query.
+ * @param info  The destination to write information to.
+ *
+ * @return 0 on success, error code otherwise
+ *
+ */
 int log_storage_info(struct log *log, struct log_storage_info *info);
 #endif
 #if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
+/**
+ * Set watermark on log
+ *
+ * This sets watermark on log item with given index. This information is used
+ * to calculate size of entries which were logged after watermark item, i.e.
+ * unread items. The watermark is stored persistently for each log.
+ *
+ * @param log    The log to set watermark on.
+ * @param index  The index of a watermarked item.
+ *
+ * @return 0 on success, error code otherwise.
+ */
 int log_set_watermark(struct log *log, uint32_t index);
 #endif
 
