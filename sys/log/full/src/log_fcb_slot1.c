@@ -58,11 +58,11 @@ static int
 log_fcb_slot1_append_body(struct log *log, const struct log_entry_hdr *hdr,
                           const void *body, int body_len)
 {
-    return LOG_FCB_SLOT1_CALL(log, log_append_body, buf, len);
+    return LOG_FCB_SLOT1_CALL(log, log_append_body, hdr, body, body_len);
 }
 
 static int
-log_fcb_slot1_append_mbuf(struct log *log, struct os_mbuf *om)
+log_fcb_slot1_append_mbuf(struct log *log, const struct os_mbuf *om)
 {
     return LOG_FCB_SLOT1_CALL(log, log_append_mbuf, om);
 }
@@ -72,7 +72,7 @@ log_fcb_slot1_append_mbuf_body(struct log *log,
                                const struct log_entry_hdr *hdr,
                                const struct os_mbuf *om)
 {
-    return LOG_FCB_SLOT1_CALL(log, log_append_mbuf_body, om);
+    return LOG_FCB_SLOT1_CALL(log, log_append_mbuf_body, hdr, om);
 }
 
 static int
