@@ -734,12 +734,36 @@ battery_prop_poll_unsubscribe(struct battery_prop_listener *listener,
 static int
 battery_open(struct os_dev *dev, uint32_t timeout, void *arg)
 {
-    return 0;
+    struct battery *bat = (struct battery *)dev;
+    struct os_dev *drv_dev;
+    int rollback = -1;
+    int i;
+    int rc = 0;
+
+    for (i = 0; i < BATTERY_DRIVERS_MAX && bat->b_drivers[i]; ++i) {
+        drv_dev = os_dev_open(bat->b_drivers[i]->dev.od_name, 0, NULL);
+        assert(drv_dev == &bat->b_drivers[i]->dev);
+        if (drv_dev != &bat->b_drivers[i]->dev) {
+            rollback = i - 1;
+            rc = -1;
+            break;
+        }
+    }
+    for (i = rollback; i >= 0; --i) {
+        os_dev_close(&bat->b_drivers[i]->dev);
+    }
+    return rc;
 }
 
 static int
 battery_close(struct os_dev *dev)
 {
+    struct battery *bat = (struct battery *)dev;
+    int i;
+
+    for (i = 0; i < BATTERY_DRIVERS_MAX && bat->b_drivers[i]; ++i) {
+        os_dev_close(&bat->b_drivers[i]->dev);
+    }
     return 0;
 }
 
