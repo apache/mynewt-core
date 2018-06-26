@@ -30,9 +30,8 @@ POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-/* This file is deprecated */
-#ifndef _NRF51802_PERIPHERALS_H
-#define _NRF51802_PERIPHERALS_H
+#ifndef _NRF51_PERIPHERALS_H
+#define _NRF51_PERIPHERALS_H
 
 
 /* Power Peripheral */
@@ -153,4 +152,4 @@ POSSIBILITY OF SUCH DAMAGE.
 #define LPCOMP_REFSEL_RESOLUTION 8
 
 
-#endif      // _NRF51802_PERIPHERALS_H
+#endif      // _NRF51_PERIPHERALS_H

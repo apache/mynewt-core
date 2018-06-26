@@ -1,4 +1,4 @@
-/* Linker script for Nordic Semiconductor nRF5x devices
+/* Linker script for Nordic Semiconductor nRF devices
  *
  * Version: Sourcery G++ 4.5-1
  * Support: https://support.codesourcery.com/GNUToolchain/

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017, Nordic Semiconductor ASA
+ * Copyright (c) 2017 - 2018, Nordic Semiconductor ASA
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -12,14 +12,14 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  *
- * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
+ * 3. Neither the name of the copyright holder nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY, AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL NORDIC SEMICONDUCTOR ASA OR CONTRIBUTORS BE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
  * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -48,33 +48,42 @@ extern "C" {
  *        the needs of the host environment into which @em nrfx is integrated.
  */
 
+// Uncomment this line to use the standard MDK way of binding IRQ handlers
+// at linking time.
+//#include <soc/nrfx_irqs.h>
+
+//------------------------------------------------------------------------------
+
 /**
  * @brief Macro for placing a runtime assertion.
  *
  * @param expression  Expression to evaluate.
  */
-#define NRFX_ASSERT(expression) assert(expression);
+#define NRFX_ASSERT(expression) assert(expression)
 
 /**
  * @brief Macro for placing a compile time assertion.
  *
  * @param expression  Expression to evaluate.
  */
-#define NRFX_STATIC_ASSERT(expression) STATIC_ASSERT(expression);
+#define NRFX_STATIC_ASSERT(expression) STATIC_ASSERT(expression)
+
+//------------------------------------------------------------------------------
 
 /**
  * @brief Macro for setting the priority of a specific IRQ.
+ *
  * @param irq_number  IRQ number.
  * @param priority    Priority to set.
  */
-#define NRFX_IRQ_PRIORITY_SET(irq_number, priority) NVIC_SetPriority(irq_number, priority);
+#define NRFX_IRQ_PRIORITY_SET(irq_number, priority) NVIC_SetPriority(irq_number, priority)
 
 /**
  * @brief Macro for enabling a specific IRQ.
  *
  * @param irq_number  IRQ number.
  */
-#define NRFX_IRQ_ENABLE(irq_number) NVIC_EnableIRQ(irq_number);
+#define NRFX_IRQ_ENABLE(irq_number) NVIC_EnableIRQ(irq_number)
 
 /**
  * @brief Macro for checking if a specific IRQ is enabled.
@@ -91,20 +100,60 @@ extern "C" {
  *
  * @param irq_number  IRQ number.
  */
-#define NRFX_IRQ_DISABLE(irq_number) NVIC_DisableIRQ(irq_number);
+#define NRFX_IRQ_DISABLE(irq_number) NVIC_DisableIRQ(irq_number)
 
+/**
+ * @brief Macro for setting a specific IRQ as pending.
+ *
+ * @param irq_number  IRQ number.
+ */
+#define NRFX_IRQ_PENDING_SET(irq_number) NVIC_SetPendingIRQ(irq_number)
+
+/**
+ * @brief Macro for clearing the pending status of a specific IRQ.
+ *
+ * @param irq_number  IRQ number.
+ */
+#define NRFX_IRQ_PENDING_CLEAR(irq_number) NVIC_ClearPendingIRQ(irq_number)
+
+/**
+ * @brief Macro for checking the pending status of a specific IRQ.
+ *
+ * @retval true  If the IRQ is pending.
+ * @retval false Otherwise.
+ */
+#define NRFX_IRQ_IS_PENDING(irq_number) (NVIC_GetPendingIRQ(irq_number) == 1)
 
 /**
  * @brief Macro for entering into a critical section.
  */
 static os_sr_t sr_from_macro __attribute__((unused));
 
-#define NRFX_CRITICAL_SECTION_ENTER() OS_ENTER_CRITICAL(sr_from_macro);
+#define NRFX_CRITICAL_SECTION_ENTER() OS_ENTER_CRITICAL(sr_from_macro)
 
 /**
  * @brief Macro for exiting from a critical section.
  */
-#define NRFX_CRITICAL_SECTION_EXIT() OS_EXIT_CRITICAL(sr_from_macro);
+#define NRFX_CRITICAL_SECTION_EXIT() OS_EXIT_CRITICAL(sr_from_macro)
+
+//------------------------------------------------------------------------------
+
+/**
+ * @brief When set to a non-zero value, this macro specifies that
+ *        @ref nrfx_coredep_delay_us uses a precise DWT-based solution.
+ *        A compilation error is generated if the DWT unit is not present
+ *        in the SoC used.
+ */
+#define NRFX_DELAY_DWT_BASED    0
+
+/**
+ * @brief Macro for delaying the code execution for at least the specified time.
+ *
+ * @param us_time Number of microseconds to wait.
+ */
+#define NRFX_DELAY_US(us_time) os_cputime_delay_usecs(us_time)
+
+//------------------------------------------------------------------------------
 
 /**
  * @brief When set to a non-zero value, this macro specifies that the
@@ -113,6 +162,8 @@ static os_sr_t sr_from_macro __attribute__((unused));
  *        should not be used.
  */
 #define NRFX_CUSTOM_ERROR_CODES 0
+
+//------------------------------------------------------------------------------
 
 /**
  * @brief Bitmask defining PPI channels reserved to be used outside of nrfx.

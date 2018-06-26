@@ -1,4 +1,6 @@
-/* Linker script for Nordic Semiconductor nRF51 devices
+/* Deprecated linker script for Nordic Semiconductor nRF51 devices
+ * please use nrfx_common.ld. This version exists for backwards 
+ * compatibility.
  *
  * Version: Sourcery G++ 4.5-1
  * Support: https://support.codesourcery.com/GNUToolchain/

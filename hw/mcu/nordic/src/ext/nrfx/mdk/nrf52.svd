@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <!-- File naming: <vendor>_<part/series name>_svd.xml -->
 <device schemaVersion="1.1" xmlns:xs="http://www.w3.org/2001/XMLSchema-instance" noNamespaceSchemaLocation="CMSIS-SVD.xsd">
   <vendor>Nordic Semiconductor</vendor>
@@ -6,9 +6,9 @@
   <name>nrf52</name>
   <series>nrf52</series>
   <version>1</version>
-  <description>nRF52 reference description for radio MCU with ARM 32-bit Cortex-M4 Microcontroller </description>
+  <description>nRF52832 reference description for radio MCU with ARM 32-bit Cortex-M4 Microcontroller </description>
   <licenseText>
-Copyright (c) 2010 - 2017, Nordic Semiconductor ASA All rights reserved.\n
+Copyright (c) 2010 - 2018, Nordic Semiconductor ASA All rights reserved.\n
 \n
 Redistribution and use in source and binary forms, with or without\n
 modification, are permitted provided that the following conditions are met:\n
@@ -23996,7 +23996,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
         </register>
         <register>
           <name>REFSEL</name>
-          <description>Reference source select</description>
+          <description>Reference source select for single-ended mode</description>
           <addressOffset>0x508</addressOffset>
           <access>read-write</access>
           <resetValue>0x00000004</resetValue>
@@ -24046,7 +24046,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
               <name>EXTREFSEL</name>
               <description>External analog reference select</description>
               <lsb>0</lsb>
-              <msb>0</msb>
+              <msb>2</msb>
               <enumeratedValues>
                 <enumeratedValue>
                   <name>AnalogReference0</name>
@@ -24057,6 +24057,36 @@ POSSIBILITY OF SUCH DAMAGE.\n
                   <name>AnalogReference1</name>
                   <description>Use AIN1 as external analog reference</description>
                   <value>1</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>AnalogReference2</name>
+                  <description>Use AIN2 as external analog reference</description>
+                  <value>2</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>AnalogReference3</name>
+                  <description>Use AIN3 as external analog reference</description>
+                  <value>3</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>AnalogReference4</name>
+                  <description>Use AIN4 as external analog reference</description>
+                  <value>4</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>AnalogReference5</name>
+                  <description>Use AIN5 as external analog reference</description>
+                  <value>5</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>AnalogReference6</name>
+                  <description>Use AIN6 as external analog reference</description>
+                  <value>6</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>AnalogReference7</name>
+                  <description>Use AIN7 as external analog reference</description>
+                  <value>7</value>
                 </enumeratedValue>
               </enumeratedValues>
             </field>
@@ -24091,13 +24121,13 @@ POSSIBILITY OF SUCH DAMAGE.\n
           <fields>
             <field>
               <name>SP</name>
-              <description>Speed and power mode</description>
+              <description>Speed and power modes</description>
               <lsb>0</lsb>
               <msb>1</msb>
               <enumeratedValues>
                 <enumeratedValue>
                   <name>Low</name>
-                  <description>Low power mode</description>
+                  <description>Low-power mode</description>
                   <value>0</value>
                 </enumeratedValue>
                 <enumeratedValue>
@@ -24107,20 +24137,20 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>High</name>
-                  <description>High speed mode</description>
+                  <description>High-speed mode</description>
                   <value>2</value>
                 </enumeratedValue>
               </enumeratedValues>
             </field>
             <field>
               <name>MAIN</name>
-              <description>Main operation mode</description>
+              <description>Main operation modes</description>
               <lsb>8</lsb>
               <msb>8</msb>
               <enumeratedValues>
                 <enumeratedValue>
                   <name>SE</name>
-                  <description>Single ended mode</description>
+                  <description>Single-ended mode</description>
                   <value>0</value>
                 </enumeratedValue>
                 <enumeratedValue>
