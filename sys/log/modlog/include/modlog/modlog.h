@@ -201,7 +201,7 @@ int modlog_foreach(modlog_foreach_fn *fn, void *arg);
  * @param level                 The severity of the log entry to write.
  * @param msg                   The "printf" formatted string to write.
  */
-void modlog_printf(uint16_t module, uint16_t level, const char *msg, ...);
+void modlog_printf(uint8_t module, uint8_t level, const char *msg, ...);
 
 #else /* LOG_FULL */
 

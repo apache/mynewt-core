@@ -473,7 +473,8 @@ done:
 }
 
 void
-log_printf(struct log *log, uint16_t module, uint16_t level, char *msg, ...)
+log_printf(struct log *log, uint8_t module, uint8_t level,
+           const char *msg, ...)
 {
     va_list args;
     char buf[LOG_PRINTF_MAX_ENTRY_LEN];

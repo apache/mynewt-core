@@ -343,7 +343,8 @@ log_append_mbuf(struct log *log, uint8_t module, uint8_t level,
 }
 
 #define LOG_PRINTF_MAX_ENTRY_LEN (128)
-void log_printf(struct log *log, uint16_t, uint16_t, char *, ...);
+void log_printf(struct log *log, uint8_t module, uint8_t level,
+        const char *msg, ...);
 int log_read(struct log *log, void *dptr, void *buf, uint16_t off,
         uint16_t len);
 

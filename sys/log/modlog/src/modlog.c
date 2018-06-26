@@ -452,7 +452,7 @@ modlog_foreach(modlog_foreach_fn *fn, void *arg)
 }
 
 void
-modlog_printf(uint16_t module, uint16_t level, const char *msg, ...)
+modlog_printf(uint8_t module, uint8_t level, const char *msg, ...)
 {
     va_list args;
     char buf[LOG_ENTRY_HDR_SIZE + MYNEWT_VAL(MODLOG_MAX_PRINTF_LEN)];
