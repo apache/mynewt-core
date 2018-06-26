@@ -24,7 +24,6 @@
 #include <hal/hal_flash.h>
 #include <console/console.h>
 
-#include <log/log.h>
 #include <config/config.h>
 #include <hal/hal_system.h>
 
@@ -48,13 +47,6 @@
 #ifdef ARCH_sim
 #include <mcu/mcu_sim.h>
 #endif
-
-static struct log my_log;
-
-#define MAX_CBMEM_BUF 2048
-
-static uint32_t cbmem_buf[MAX_CBMEM_BUF];
-static struct cbmem cbmem;
 
 static int net_cli(int argc, char **argv);
 struct shell_cmd net_test_cmd = {
@@ -420,9 +412,6 @@ main(int argc, char **argv)
     sysinit();
 
     console_printf("iptest\n");
-
-    cbmem_init(&cbmem, cbmem_buf, MAX_CBMEM_BUF);
-    log_register("log", &my_log, &log_cbmem_handler, &cbmem, LOG_SYSLEVEL);
 
     shell_cmd_register(&net_test_cmd);
 
