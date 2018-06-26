@@ -23,9 +23,10 @@
 #include "bma253/bma253.h"
 #include "bma253_priv.h"
 #include "console/console.h"
-#include "shell/shell.h"
 
 #if MYNEWT_VAL(BMA253_CLI)
+
+#include "shell/shell.h"
 
 struct self_test_mode {
     const char * name;
