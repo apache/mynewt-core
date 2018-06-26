@@ -21,13 +21,14 @@
 #include <errno.h>
 #include "os/mynewt.h"
 #include "console/console.h"
-#include "shell/shell.h"
 #include "hal/hal_gpio.h"
 #include "bmp280/bmp280.h"
 #include "bmp280_priv.h"
-#include "parse/parse.h"
 
 #if MYNEWT_VAL(BMP280_CLI)
+
+#include "shell/shell.h"
+#include "parse/parse.h"
 
 static int bmp280_shell_cmd(int argc, char **argv);
 
