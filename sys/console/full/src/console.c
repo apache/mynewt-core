@@ -171,6 +171,7 @@ cursor_backward(unsigned int count)
     console_printf("\x1b[%uD", count);
 }
 
+#if MYNEWT_VAL(CONSOLE_HISTORY)
 static inline void
 cursor_clear_line(void)
 {
@@ -178,6 +179,7 @@ cursor_clear_line(void)
     console_out('[');
     console_out('K');
 }
+#endif
 
 static inline void
 cursor_save(void)
