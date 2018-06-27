@@ -36,8 +36,8 @@ struct oc_ep_hdr {
     uint8_t oe_flags:5;         /* OC_ENDPOINT flags */
 };
 
-#define OC_ENDPOINT_MULTICAST   1 << 0
-#define OC_ENDPOINT_SECURED     1 << 1
+#define OC_ENDPOINT_MULTICAST   (1 << 0)
+#define OC_ENDPOINT_SECURED     (1 << 1)
 
 /*
  * Use this when reserving memory for oc_endpoint of unknown type.
