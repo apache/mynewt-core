@@ -365,6 +365,19 @@ saadc_irq_handler(void)
 #endif
 
 /**
+ * ADC device driver functions
+ */
+static const struct adc_driver_funcs nrf52_adc_funcs = {
+        .af_configure_channel = nrf52_adc_configure_channel,
+        .af_sample = nrf52_adc_sample,
+        .af_read_channel = nrf52_adc_read_channel,
+        .af_set_buffer = nrf52_adc_set_buffer,
+        .af_release_buffer = nrf52_adc_release_buffer,
+        .af_read_buffer = nrf52_adc_read_buffer,
+        .af_size_buffer = nrf52_adc_size_buffer,
+};
+
+/**
  * Callback to initialize an adc_dev structure from the os device
  * initialization callback.  This sets up a nrf52_adc_device(), so
  * that subsequent lookups to this device allow us to manipulate it.
@@ -373,7 +386,6 @@ int
 nrf52_adc_dev_init(struct os_dev *odev, void *arg)
 {
     struct adc_dev *dev;
-    struct adc_driver_funcs *af;
 
     dev = (struct adc_dev *) odev;
 
@@ -387,15 +399,7 @@ nrf52_adc_dev_init(struct os_dev *odev, void *arg)
     assert(init_adc_config == NULL || init_adc_config == arg);
     init_adc_config = arg;
 
-    af = &dev->ad_funcs;
-
-    af->af_configure_channel = nrf52_adc_configure_channel;
-    af->af_sample = nrf52_adc_sample;
-    af->af_read_channel = nrf52_adc_read_channel;
-    af->af_set_buffer = nrf52_adc_set_buffer;
-    af->af_release_buffer = nrf52_adc_release_buffer;
-    af->af_read_buffer = nrf52_adc_read_buffer;
-    af->af_size_buffer = nrf52_adc_size_buffer;
+    dev->ad_funcs = &nrf52_adc_funcs;
 
 #if MYNEWT_VAL(OS_SYSVIEW)
     NVIC_SetVector(SAADC_IRQn, (uint32_t) saadc_irq_handler);
