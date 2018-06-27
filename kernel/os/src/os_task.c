@@ -114,6 +114,13 @@ os_task_init(struct os_task *t, const char *name, os_task_func_t func,
     os_trace_task_create(t);
     os_trace_task_info(t);
 
+    /* Allow a preemption in case the new task has a higher priority than the
+     * current one.
+     */
+    if (os_started()) {
+        os_sched(NULL);
+    }
+
     return (0);
 err:
     return (rc);
