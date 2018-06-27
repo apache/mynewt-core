@@ -59,15 +59,21 @@ stm32f4_adc_clk_enable(ADC_HandleTypeDef *hadc)
     uintptr_t adc_addr = (uintptr_t)hadc->Instance;
 
     switch (adc_addr) {
+#if defined(ADC1)
         case (uintptr_t)ADC1:
             __HAL_RCC_ADC1_CLK_ENABLE();
             break;
+#endif
+#if defined(ADC2)
         case (uintptr_t)ADC2:
             __HAL_RCC_ADC2_CLK_ENABLE();
             break;
+#endif
+#if defined(ADC3)
         case (uintptr_t)ADC3:
             __HAL_RCC_ADC3_CLK_ENABLE();
             break;
+#endif
         default:
             assert(0);
     }
@@ -79,15 +85,21 @@ stm32f4_adc_clk_disable(ADC_HandleTypeDef *hadc)
     uintptr_t adc_addr = (uintptr_t)hadc->Instance;
 
     switch (adc_addr) {
+#if defined(ADC1)
         case (uintptr_t)ADC1:
             __HAL_RCC_ADC1_CLK_DISABLE();
             break;
+#endif
+#if defined(ADC2)
         case (uintptr_t)ADC2:
             __HAL_RCC_ADC2_CLK_DISABLE();
             break;
+#endif
+#if defined(ADC3)
         case (uintptr_t)ADC3:
             __HAL_RCC_ADC3_CLK_DISABLE();
             break;
+#endif
         default:
             assert(0);
     }
@@ -103,8 +115,13 @@ stm32f4_resolve_adc_gpio(ADC_HandleTypeDef *adc, uint8_t cnum,
 
     rc = OS_OK;
     switch (adc_addr) {
+#if defined(ADC1) || defined(ADC2)
+#if defined(ADC1)
         case (uintptr_t)ADC1:
+#endif
+#if defined(ADC2)
         case (uintptr_t)ADC2:
+#endif
             switch(cnum) {
                 case ADC_CHANNEL_4:
                     pin = ADC12_CH4_PIN;
@@ -131,10 +148,12 @@ stm32f4_resolve_adc_gpio(ADC_HandleTypeDef *adc, uint8_t cnum,
                     pin = ADC12_CH15_PIN;
                     goto done;
             }
+#endif
         /*
          * Falling through intentionally as ADC_3 contains seperate pins for
          * Channels that ADC_1 and ADC_2 contain as well.
          */
+#if defined(ADC3)
         case (uintptr_t)ADC3:
             switch(cnum) {
                 case ADC_CHANNEL_0:
@@ -186,6 +205,7 @@ stm32f4_resolve_adc_gpio(ADC_HandleTypeDef *adc, uint8_t cnum,
                     pin = ADC3_CH15_PIN;
                     goto done;
             }
+#endif
         default:
             rc = OS_EINVAL;
             return rc;
