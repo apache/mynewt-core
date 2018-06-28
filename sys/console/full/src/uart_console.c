@@ -29,6 +29,13 @@
 #include "console/console.h"
 #include "console_priv.h"
 
+struct console_ring {
+    uint8_t head;
+    uint8_t tail;
+    uint16_t size;
+    uint8_t *buf;
+};
+
 static struct uart_dev *uart_dev;
 static struct console_ring cr_tx;
 static uint8_t cr_tx_buf[MYNEWT_VAL(CONSOLE_UART_TX_BUF_SIZE)];
@@ -41,13 +48,6 @@ static uint8_t cr_rx_buf[MYNEWT_VAL(CONSOLE_UART_RX_BUF_SIZE)];
 
 struct os_event rx_ev;
 #endif
-
-struct console_ring {
-    uint8_t head;
-    uint8_t tail;
-    uint16_t size;
-    uint8_t *buf;
-};
 
 static inline int
 inc_and_wrap(int i, int max)
