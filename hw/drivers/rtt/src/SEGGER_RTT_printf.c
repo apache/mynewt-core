@@ -1,9 +1,9 @@
 /*********************************************************************
-*               SEGGER MICROCONTROLLER GmbH & Co. KG                 *
+*                    SEGGER Microcontroller GmbH                     *
 *       Solutions for real time microcontroller applications         *
 **********************************************************************
 *                                                                    *
-*       (c) 2014 - 2016  SEGGER Microcontroller GmbH & Co. KG        *
+*            (c) 1995 - 2018 SEGGER Microcontroller GmbH             *
 *                                                                    *
 *       www.segger.com     Support: support@segger.com               *
 *                                                                    *
@@ -31,7 +31,7 @@
 *   disclaimer in the documentation and/or other materials provided  *
 *   with the distribution.                                           *
 *                                                                    *
-* o Neither the name of SEGGER Microcontroller GmbH & Co. KG         *
+* o Neither the name of SEGGER Microcontroller GmbH         *
 *   nor the names of its contributors may be used to endorse or      *
 *   promote products derived from this software without specific     *
 *   prior written permission.                                        *
@@ -54,7 +54,7 @@
 ---------------------------END-OF-HEADER------------------------------
 File    : SEGGER_RTT_printf.c
 Purpose : Replacement for printf to write formatted data via RTT
-Revision: $Rev: 4351 $
+Revision: $Rev: 9599 $
 ----------------------------------------------------------------------
 */
 #include "rtt/SEGGER_RTT.h"

@@ -55,8 +55,8 @@ console_out(int character)
 #define RTT_INPUT_POLL_INTERVAL_STEP    10 /* ms */
 #define RTT_INPUT_POLL_INTERVAL_MAX     MYNEWT_VAL(CONSOLE_RTT_INPUT_POLL_INTERVAL_MAX)
 
-void
-rtt(void *arg)
+static void
+rtt_console_poll_func(void *arg)
 {
     static uint32_t itvl_ms = RTT_INPUT_POLL_INTERVAL_MIN;
     int key;
@@ -87,7 +87,7 @@ int
 rtt_console_init(void)
 {
 #if MYNEWT_VAL(CONSOLE_INPUT)
-    os_cputime_timer_init(&rtt_timer, rtt, NULL);
+    os_cputime_timer_init(&rtt_timer, rtt_console_poll_func, NULL);
     /* start after a second */
     os_cputime_timer_relative(&rtt_timer, 1000000);
 #endif
