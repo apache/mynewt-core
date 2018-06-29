@@ -128,6 +128,9 @@ static struct {
     uint8_t data_hash[IMGMGR_DATA_HASH_LEN];
 } imgr_state;
 
+static imgr_upload_fn *imgr_upload_cb;
+static void *imgr_upload_arg;
+
 #if MYNEWT_VAL(BOOTUTIL_IMAGE_FORMAT_V2)
 static int
 imgr_img_tlvs(const struct flash_area *fa, struct image_header *hdr,
@@ -637,6 +640,16 @@ imgr_upload(struct mgmt_cbuf *cb)
         return imgr_upload_good_rsp(cb);
     }
 
+    /* Request is valid.  Give the application a chance to reject this upload
+     * request.
+     */
+    if (imgr_upload_cb != NULL) {
+        rc = imgr_upload_cb(req.off, action.size, imgr_upload_arg);
+        if (rc != 0) {
+            return rc;
+        }
+    }
+
     /* Remember flash area ID and image size for subsequent upload requests. */
     imgr_state.area_id = action.area_id;
     imgr_state.size = action.size;
@@ -697,6 +710,13 @@ imgr_upload(struct mgmt_cbuf *cb)
     }
 
     return imgr_upload_good_rsp(cb);
+}
+
+void
+imgr_set_upload_cb(imgr_upload_fn *cb, void *arg)
+{
+    imgr_upload_cb = cb;
+    imgr_upload_arg = arg;
 }
 
 void
