@@ -42,6 +42,8 @@ SECTIONS
          _e_vector = .;
     } > ICCM
 
+    __text = .;
+
     .init :
     {
         _f_init = .;
@@ -56,6 +58,8 @@ SECTIONS
         *(.text .text.* .gnu.linkonce.t.*)
         _e_text = .;
     } > ICCM
+
+    __etext = .;
 
     .rodata : ALIGN(4)
     {

@@ -176,6 +176,8 @@ SECTIONS
     . = ALIGN(8);
   } = 0
 
+  __text = .;
+
   .text : {
      _ftext = . ;
     PROVIDE (eprol  =  .);

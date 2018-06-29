@@ -54,6 +54,8 @@ ENTRY(Reset_Handler)
 
 SECTIONS
 {
+    __text = .;
+
     .text :
     {
         __isr_vector_start = .;

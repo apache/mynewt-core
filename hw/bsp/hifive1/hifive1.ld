@@ -29,6 +29,8 @@ SECTIONS
       . = . + _imghdr_size;
   } >flash
 
+  __text = .;
+
   .init           :
   {
     KEEP (*(SORT_NONE(.init)))
