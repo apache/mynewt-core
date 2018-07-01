@@ -27,3 +27,4 @@ pkg.req_apis:
 
 pkg.cflags:
     - -DSEGGER_RTT_SECTION=".rtt"
+    - -Wno-array-bounds
