@@ -17,17 +17,17 @@
  * under the License.
  */
 
+#include "os/mynewt.h"
+
+#if MYNEWT_VAL(BME280_CLI)
 #include <string.h>
 #include <errno.h>
-#include "os/mynewt.h"
 #include "console/console.h"
 #include "shell/shell.h"
 #include "hal/hal_gpio.h"
 #include "bme280/bme280.h"
 #include "bme280_priv.h"
 #include "parse/parse.h"
-
-#if MYNEWT_VAL(BME280_CLI)
 
 static int bme280_shell_cmd(int argc, char **argv);
 
