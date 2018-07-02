@@ -56,14 +56,14 @@ inc_and_wrap(int i, int max)
 }
 
 static void
-console_ring_add_char(struct console_ring *cr, char ch)
+uart_console_ring_add_char(struct console_ring *cr, char ch)
 {
     cr->buf[cr->head] = ch;
     cr->head = inc_and_wrap(cr->head, cr->size);
 }
 
 static uint8_t
-console_ring_pull_char(struct console_ring *cr)
+uart_console_ring_pull_char(struct console_ring *cr)
 {
     uint8_t ch;
 
@@ -73,19 +73,19 @@ console_ring_pull_char(struct console_ring *cr)
 }
 
 static bool
-console_ring_is_full(const struct console_ring *cr)
+uart_console_ring_is_full(const struct console_ring *cr)
 {
     return inc_and_wrap(cr->head, cr->size) == cr->tail;
 }
 
 static bool
-console_ring_is_empty(const struct console_ring *cr)
+uart_console_ring_is_empty(const struct console_ring *cr)
 {
     return cr->head == cr->tail;
 }
 
 static void
-console_queue_char(struct uart_dev *uart_dev, uint8_t ch)
+uart_console_queue_char(struct uart_dev *uart_dev, uint8_t ch)
 {
     int sr;
 
@@ -94,7 +94,7 @@ console_queue_char(struct uart_dev *uart_dev, uint8_t ch)
     }
 
     OS_ENTER_CRITICAL(sr);
-    while (console_ring_is_full(&cr_tx)) {
+    while (uart_console_ring_is_full(&cr_tx)) {
         /* TX needs to drain */
         uart_start_tx(uart_dev);
         OS_EXIT_CRITICAL(sr);
@@ -103,7 +103,7 @@ console_queue_char(struct uart_dev *uart_dev, uint8_t ch)
         }
         OS_ENTER_CRITICAL(sr);
     }
-    console_ring_add_char(&cr_tx, ch);
+    uart_console_ring_add_char(&cr_tx, ch);
     OS_EXIT_CRITICAL(sr);
 }
 
@@ -111,16 +111,16 @@ console_queue_char(struct uart_dev *uart_dev, uint8_t ch)
  * Flush cnt characters from console output queue.
  */
 static void
-console_tx_flush(int cnt)
+uart_console_tx_flush(int cnt)
 {
     int i;
     uint8_t byte;
 
     for (i = 0; i < cnt; i++) {
-        if (console_ring_is_empty(&cr_tx)) {
+        if (uart_console_ring_is_empty(&cr_tx)) {
             break;
         }
-        byte = console_ring_pull_char(&cr_tx);
+        byte = uart_console_ring_pull_char(&cr_tx);
         uart_blocking_tx(uart_dev, byte);
     }
 }
@@ -134,7 +134,7 @@ uart_console_blocking_mode(void)
     if (write_char_cb) {
         write_char_cb = uart_blocking_tx;
 
-        console_tx_flush(MYNEWT_VAL(CONSOLE_UART_TX_BUF_SIZE));
+        uart_console_tx_flush(MYNEWT_VAL(CONSOLE_UART_TX_BUF_SIZE));
     }
     OS_EXIT_CRITICAL(sr);
 }
@@ -146,7 +146,7 @@ uart_console_non_blocking_mode(void)
 
     OS_ENTER_CRITICAL(sr);
     if (write_char_cb) {
-        write_char_cb = console_queue_char;
+        write_char_cb = uart_console_queue_char;
     }
     OS_EXIT_CRITICAL(sr);
 }
@@ -178,26 +178,26 @@ console_out(int c)
  * Characters sent only in blocking mode.
  */
 static int
-console_tx_char(void *arg)
+uart_console_tx_char(void *arg)
 {
-    if (console_ring_is_empty(&cr_tx)) {
+    if (uart_console_ring_is_empty(&cr_tx)) {
         return -1;
     }
-    return console_ring_pull_char(&cr_tx);
+    return uart_console_ring_pull_char(&cr_tx);
 }
 
 /*
  * Interrupts disabled when console_tx_char/console_rx_char are called.
  */
 static int
-console_rx_char(void *arg, uint8_t byte)
+uart_console_rx_char(void *arg, uint8_t byte)
 {
 #if MYNEWT_VAL(CONSOLE_UART_RX_BUF_SIZE) > 0
-    if (console_ring_is_full(&cr_rx)) {
-        console_ring_pull_char(&cr_rx);
+    if (uart_console_ring_is_full(&cr_rx)) {
+        uart_console_ring_pull_char(&cr_rx);
     }
 
-    console_ring_add_char(&cr_rx, byte);
+    uart_console_ring_add_char(&cr_rx, byte);
 
     if (!rx_ev.ev_queued) {
         os_eventq_put(os_eventq_dflt_get(), &rx_ev);
@@ -211,14 +211,14 @@ console_rx_char(void *arg, uint8_t byte)
 
 #if MYNEWT_VAL(CONSOLE_UART_RX_BUF_SIZE) > 0
 static void
-console_rx_char_event(struct os_event *ev)
+uart_console_rx_char_event(struct os_event *ev)
 {
     uint8_t b;
     int sr;
 
-    while (!console_ring_is_empty(&cr_rx)) {
+    while (!uart_console_ring_is_empty(&cr_rx)) {
         OS_ENTER_CRITICAL(sr);
-        b = console_ring_pull_char(&cr_rx);
+        b = uart_console_ring_pull_char(&cr_rx);
         OS_EXIT_CRITICAL(sr);
         console_handle_char(b);
     }
@@ -240,19 +240,19 @@ uart_console_init(void)
         .uc_stopbits = 1,
         .uc_parity = UART_PARITY_NONE,
         .uc_flow_ctl = MYNEWT_VAL(CONSOLE_UART_FLOW_CONTROL),
-        .uc_tx_char = console_tx_char,
-        .uc_rx_char = console_rx_char,
+        .uc_tx_char = uart_console_tx_char,
+        .uc_rx_char = uart_console_rx_char,
     };
 
     cr_tx.size = MYNEWT_VAL(CONSOLE_UART_TX_BUF_SIZE);
     cr_tx.buf = cr_tx_buf;
-    write_char_cb = console_queue_char;
+    write_char_cb = uart_console_queue_char;
 
 #if MYNEWT_VAL(CONSOLE_UART_RX_BUF_SIZE) > 0
     cr_rx.size = MYNEWT_VAL(CONSOLE_UART_RX_BUF_SIZE);
     cr_rx.buf = cr_rx_buf;
 
-    rx_ev.ev_cb = console_rx_char_event;
+    rx_ev.ev_cb = uart_console_rx_char_event;
 #endif
 
     if (!uart_dev) {
