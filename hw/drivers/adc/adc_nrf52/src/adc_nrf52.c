@@ -91,7 +91,8 @@ static int
 nrf52_adc_open(struct os_dev *odev, uint32_t wait, void *arg)
 {
     struct adc_dev *dev;
-    int rc;
+    int rc = 0;
+    int unlock = 0;
 
     dev = (struct adc_dev *) odev;
 
@@ -100,26 +101,25 @@ nrf52_adc_open(struct os_dev *odev, uint32_t wait, void *arg)
         if (rc != OS_OK) {
             goto err;
         }
+        unlock = 1;
     }
 
-    if (odev->od_flags & OS_DEV_F_STATUS_OPEN) {
-        os_mutex_release(&dev->ad_lock);
-        rc = OS_EBUSY;
-        goto err;
+    if (++(dev->ad_ref_cnt) == 1) {
+        /* Initialize the device */
+        rc = nrfx_saadc_init((nrfx_saadc_config_t *) arg,
+                nrf52_saadc_event_handler);
+        if (rc != NRFX_SUCCESS) {
+            goto err;
+        }
+        rc = 0;
+
+        global_adc_dev = dev;
+        global_adc_config = arg;
     }
-
-    /* Initialize the device */
-    rc = nrfx_saadc_init((nrfx_saadc_config_t *) arg,
-            nrf52_saadc_event_handler);
-    if (rc != NRFX_SUCCESS) {
-        goto err;
-    }
-
-    global_adc_dev = dev;
-    global_adc_config = arg;
-
-    return (0);
 err:
+    if (unlock) {
+        os_mutex_release(&dev->ad_lock);
+    }
     return (rc);
 }
 
@@ -135,19 +135,31 @@ static int
 nrf52_adc_close(struct os_dev *odev)
 {
     struct adc_dev *dev;
+    int rc = 0;
+    int unlock = 0;
 
     dev = (struct adc_dev *) odev;
 
-    nrfx_saadc_uninit();
-
-    global_adc_dev = NULL;
-    global_adc_config = NULL;
-
     if (os_started()) {
+        rc = os_mutex_pend(&dev->ad_lock, OS_TIMEOUT_NEVER);
+        if (rc != OS_OK) {
+            goto err;
+        }
+        unlock = 1;
+    }
+    if (--(dev->ad_ref_cnt) == 0) {
+        nrfx_saadc_uninit();
+
+        global_adc_dev = NULL;
+        global_adc_config = NULL;
+    }
+
+err:
+    if (unlock) {
         os_mutex_release(&dev->ad_lock);
     }
 
-    return (0);
+    return rc;
 }
 
 /**
@@ -319,16 +331,27 @@ nrf52_adc_read_channel(struct adc_dev *dev, uint8_t cnum, int *result)
 {
     nrf_saadc_value_t adc_value;
     int rc;
+    int unlock = 0;
 
+    if (os_started()) {
+        rc = os_mutex_pend(&dev->ad_lock, OS_TIMEOUT_NEVER);
+        if (rc != OS_OK) {
+            goto err;
+        }
+        unlock = 1;
+    }
     rc = nrfx_saadc_sample_convert(cnum, &adc_value);
     if (rc != NRFX_SUCCESS) {
         goto err;
     }
 
     *result = (int) adc_value;
+    rc = 0;
 
-    return (0);
 err:
+    if (unlock) {
+        os_mutex_release(&dev->ad_lock);
+    }
     return (rc);
 }
 
