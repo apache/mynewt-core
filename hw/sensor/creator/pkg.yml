@@ -54,5 +54,7 @@ pkg.deps.LIS2DW12_OFB:
     - hw/drivers/sensors/lis2dw12
 pkg.deps.LIS2DS12_OFB:
     - hw/drivers/sensors/lis2ds12
+pkg.deps.TSL2591_OFB:
+    - hw/drivers/sensors/tsl2591
 pkg.init:
     sensor_dev_create: 500
