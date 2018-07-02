@@ -173,6 +173,16 @@ console_out(int c)
     return c;
 }
 
+void
+console_rx_restart(void)
+{
+#if MYNEWT_VAL(CONSOLE_UART_RX_BUF_SIZE) > 0
+    os_eventq_put(os_eventq_dflt_get(), &rx_ev);
+#else
+    uart_start_rx(uart_dev);
+#endif
+}
+
 /*
  * Interrupts disabled when console_tx_char/console_rx_char are called.
  * Characters sent only in blocking mode.
@@ -194,7 +204,7 @@ uart_console_rx_char(void *arg, uint8_t byte)
 {
 #if MYNEWT_VAL(CONSOLE_UART_RX_BUF_SIZE) > 0
     if (uart_console_ring_is_full(&cr_rx)) {
-        uart_console_ring_pull_char(&cr_rx);
+        return -1;
     }
 
     uart_console_ring_add_char(&cr_rx, byte);
@@ -213,15 +223,36 @@ uart_console_rx_char(void *arg, uint8_t byte)
 static void
 uart_console_rx_char_event(struct os_event *ev)
 {
-    uint8_t b;
+    static int b = -1;
     int sr;
+    int ret;
+
+    /* We may have unhandled character - try it first */
+    if (b >= 0) {
+        ret = console_handle_char(b);
+        if (ret < 0) {
+            return;
+        }
+
+        /*
+         * It is possible that UART RX was stalled in the meantime since we were
+         * not consuming data from ring buffer - make sure RX is started.
+         */
+        uart_start_rx(uart_dev);
+    }
 
     while (!uart_console_ring_is_empty(&cr_rx)) {
         OS_ENTER_CRITICAL(sr);
         b = uart_console_ring_pull_char(&cr_rx);
         OS_EXIT_CRITICAL(sr);
-        console_handle_char(b);
+
+        ret = console_handle_char(b);
+        if (ret < 0) {
+            return;
+        }
     }
+
+    b = -1;
 }
 #endif
 
