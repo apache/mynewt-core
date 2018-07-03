@@ -327,7 +327,7 @@ ring_buf_next(uint8_t i, uint8_t size)
 static uint8_t
 ring_buf_prev(uint8_t i, uint8_t size)
 {
-    return (uint8_t) ((i - 1) % size);
+    return i == 0 ? i = size - 1 : --i;
 }
 
 static bool
