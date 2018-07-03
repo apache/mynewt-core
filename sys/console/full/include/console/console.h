@@ -58,13 +58,17 @@ void console_echo(int on);
 int console_printf(const char *fmt, ...)
     __attribute__ ((format (printf, 1, 2)));;
 
-void console_set_queues(struct os_eventq *avail_queue,
-                        struct os_eventq *cmd_queue);
 void console_set_completion_cb(completion_cb cb);
 int console_handle_char(uint8_t byte);
 
+/* Set queue to send console line events to */
+void console_line_queue_set(struct os_eventq *evq);
+/* Put (handled) line event to console */
+void console_line_event_put(struct os_event *ev);
+
 extern int console_is_midline;
 extern int console_out(int character);
+extern void console_rx_restart(void);
 
 #ifdef __cplusplus
 }

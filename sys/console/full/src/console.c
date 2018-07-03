@@ -76,9 +76,10 @@ static int esc_state;
 static int nlip_state;
 static int echo = MYNEWT_VAL(CONSOLE_ECHO);
 static unsigned int ansi_val, ansi_val_2;
+static bool rx_stalled;
 
 static uint16_t cur, end;
-static struct os_eventq *avail_queue;
+static struct os_eventq avail_queue;
 static struct os_eventq *lines_queue;
 static completion_cb completion;
 
@@ -137,7 +138,8 @@ console_read(char *str, int cnt, int *newline)
         str[0] = cmd->line[0];
     }
 
-    os_eventq_put(avail_queue, ev);
+    console_line_event_put(ev);
+
     *newline = 1;
     return len;
 }
@@ -587,14 +589,16 @@ console_handle_char(uint8_t byte)
     static struct console_input *input;
     static char prev_endl = '\0';
 
-    if (!avail_queue || !lines_queue) {
+    if (!lines_queue) {
         return 0;
     }
 
     if (!ev) {
-        ev = os_eventq_get_no_wait(avail_queue);
-        if (!ev)
-            return 0;
+        ev = os_eventq_get_no_wait(&avail_queue);
+        if (!ev) {
+            rx_stalled = true;
+            return -1;
+        }
         input = ev->ev_arg;
     }
 
@@ -741,10 +745,20 @@ console_is_init(void)
 }
 
 void
-console_set_queues(struct os_eventq *avail, struct os_eventq *lines)
+console_line_queue_set(struct os_eventq *evq)
 {
-    avail_queue = avail;
-    lines_queue = lines;
+    lines_queue = evq;
+}
+
+void
+console_line_event_put(struct os_event *ev)
+{
+    os_eventq_put(&avail_queue, ev);
+
+    if (rx_stalled) {
+        rx_stalled = false;
+        console_rx_restart();
+    }
 }
 
 void
@@ -761,11 +775,11 @@ console_init(console_rx_cb rx_cb)
 
     os_eventq_init(&compat_lines_queue);
     os_eventq_init(&compat_avail_queue);
-    console_set_queues(&compat_avail_queue, &compat_lines_queue);
+    console_line_queue_set(&compat_lines_queue);
 
     for (i = 0; i < CONSOLE_COMPAT_MAX_CMD_QUEUED; i++) {
         shell_console_ev[i].ev_arg = &buf[i];
-        os_eventq_put(avail_queue, &shell_console_ev[i]);
+        console_line_event_put(&shell_console_ev[i]);
     }
     console_compat_rx_cb = rx_cb;
     return 0;
@@ -779,6 +793,8 @@ console_pkg_init(void)
 
     /* Ensure this function only gets called by sysinit. */
     SYSINIT_ASSERT_ACTIVE();
+
+    os_eventq_init(&avail_queue);
 
 #if MYNEWT_VAL(CONSOLE_HISTORY)
     console_hist_init();

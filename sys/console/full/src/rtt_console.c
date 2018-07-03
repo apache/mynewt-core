@@ -49,6 +49,12 @@ console_out(int character)
     return character;
 }
 
+void
+console_rx_restart(void)
+{
+    os_cputime_timer_relative(&rtt_timer, 0);
+}
+
 #if MYNEWT_VAL(CONSOLE_INPUT)
 
 #define RTT_INPUT_POLL_INTERVAL_MIN     10 /* ms */
@@ -59,15 +65,22 @@ static void
 rtt_console_poll_func(void *arg)
 {
     static uint32_t itvl_ms = RTT_INPUT_POLL_INTERVAL_MIN;
-    int key;
+    static int key = -1;
+    int ret;
 
-    key = SEGGER_RTT_GetKey();
+    if (key < 0) {
+        key = SEGGER_RTT_GetKey();
+    }
+
     if (key < 0) {
         itvl_ms += RTT_INPUT_POLL_INTERVAL_STEP;
         itvl_ms = min(itvl_ms, RTT_INPUT_POLL_INTERVAL_MAX);
     } else {
         while (key >= 0) {
-            console_handle_char((char)key);
+            ret = console_handle_char((char)key);
+            if (ret < 0) {
+                return;
+            }
             key = SEGGER_RTT_GetKey();
         }
         itvl_ms = RTT_INPUT_POLL_INTERVAL_MIN;
