@@ -25,6 +25,7 @@
 extern "C" {
 #endif
 
+struct os_event;
 struct os_eventq;
 
 struct console_input {
