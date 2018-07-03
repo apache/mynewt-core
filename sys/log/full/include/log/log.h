@@ -607,6 +607,9 @@ extern const struct log_handler log_cbmem_handler;
 extern const struct log_handler log_fcb_handler;
 extern const struct log_handler log_fcb_slot1_handler;
 #endif
+#if MYNEWT_VAL(LOG_STDOUT)
+extern const struct log_handler log_stdout_handler;
+#endif
 
 /* Private */
 #if MYNEWT_VAL(LOG_NEWTMGR)

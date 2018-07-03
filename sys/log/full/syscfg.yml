@@ -6,7 +6,7 @@
 # to you under the Apache License, Version 2.0 (the
 # "License"); you may not use this file except in compliance
 # with the License.  You may obtain a copy of the License at
-# 
+#
 #  http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing,
@@ -56,6 +56,10 @@ syscfg.defs:
         value: 0
         restrictions:
             - SHELL_TASK
+
+    LOG_STDOUT:
+        description: 'Support logging to stdout.'
+        value: 1
 
     LOG_NEWTMGR:
         description: 'Expose "log" command in newtmgr.'
