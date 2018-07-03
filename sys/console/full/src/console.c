@@ -268,7 +268,7 @@ static struct console_hist {
     uint8_t tail;
     uint8_t size;
     uint8_t curr;
-    char *lines[ MYNEWT_VAL(CONSOLE_HISTORY_SIZE) ];
+    char *lines[ MYNEWT_VAL(CONSOLE_HISTORY_SIZE) + 1 ];
 } console_hist;
 
 static void
@@ -280,9 +280,9 @@ console_hist_init(void)
     memset(console_hist_lines, 0, sizeof(console_hist_lines));
     memset(&console_hist, 0, sizeof(console_hist));
 
-    sh->size = MYNEWT_VAL(CONSOLE_HISTORY_SIZE);
+    sh->size = MYNEWT_VAL(CONSOLE_HISTORY_SIZE) + 1;
 
-    for (i = 0; i < sh->size; i++) {
+    for (i = 0; i < sh->size - 1; i++) {
         sh->lines[i] = console_hist_lines[i];
     }
 }
@@ -338,42 +338,44 @@ ring_buf_prev(uint8_t i, uint8_t size)
 }
 
 static bool
-console_hist_full(void)
+console_hist_is_full(void)
 {
     struct console_hist *sh = &console_hist;
 
-    return sh->head == sh->tail;
-}
-
-static void
-console_hist_next(void)
-{
-    struct console_hist *sh = &console_hist;
-
-    sh->head = (uint8_t) ring_buf_next(sh->head, sh->size);
-
-    /* buffer full, start overwriting old history */
-    if (console_hist_full()) {
-        sh->tail = (uint8_t) ring_buf_next(sh->tail, sh->size);
-    }
+    return ring_buf_next(sh->head, sh->size) == sh->tail;
 }
 
 static bool
-console_hist_find(char *line)
+console_hist_move_to_head(char *line)
 {
     struct console_hist *sh = &console_hist;
-    uint8_t curr;
+    char *match = NULL;
+    uint8_t prev, curr;
 
     curr = sh->tail;
     while (curr != sh->head) {
         if (strcmp(sh->lines[curr], line) == 0) {
-            return true;
+            match = sh->lines[curr];
+            break;
         }
-
         curr = ring_buf_next(curr, sh->size);
     }
 
-    return false;
+    if (!match) {
+        return false;
+    }
+
+    prev = curr;
+    curr = ring_buf_next(curr, sh->size);
+    while (curr != sh->head) {
+        sh->lines[prev] = sh->lines[curr];
+        prev = curr;
+        curr = ring_buf_next(curr, sh->size);
+    }
+
+    sh->lines[prev] = match;
+
+    return true;
 }
 
 static void
@@ -391,12 +393,25 @@ console_hist_add(char *line)
         return;
     }
 
-    if (console_hist_find(buf)) {
+    if (console_hist_move_to_head(buf)) {
         return;
     }
 
+    if (console_hist_is_full()) {
+        /*
+         * We have N buffers, but there are N+1 items in queue so one element is
+         * always empty. If queue is full we need to move buffer from oldest
+         * entry to current head and trim queue tail.
+         */
+        assert(sh->lines[sh->head] == NULL);
+        sh->lines[sh->head] = sh->lines[sh->tail];
+        sh->lines[sh->tail] = NULL;
+        sh->tail = ring_buf_next(sh->tail, sh->size);
+    }
+
     strcpy(sh->lines[sh->head], buf);
-    console_hist_next();
+    sh->head = ring_buf_next(sh->head, sh->size);
+
     /* Reset current pointer */
     sh->curr = sh->head;
 }
@@ -433,7 +448,7 @@ console_hist_move(char *line, uint8_t direction)
 
     console_clear_line();
     str = sh->lines[sh->curr];
-    while (*str != '\0') {
+    while (str && *str != '\0') {
         insert_char(&line[cur], *str, end);
         ++str;
     }
