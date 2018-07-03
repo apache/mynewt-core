@@ -40,7 +40,6 @@
 
 #if MYNEWT_VAL(BUILD_WITH_OIC)
 #include <oic/oc_api.h>
-#include <oic/oc_log.h>
 #include <cborattr/cborattr.h>
 #endif
 

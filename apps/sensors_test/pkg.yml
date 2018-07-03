@@ -30,6 +30,7 @@ pkg.deps:
     - boot/bootutil
     - sys/console/full
     - sys/log/full
+    - sys/log/modlog
     - sys/stats/full
     - hw/sensor/creator
     - sys/reboot

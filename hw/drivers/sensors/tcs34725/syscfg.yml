@@ -33,4 +33,6 @@ syscfg.defs:
     TCS34725_ITF_LOCK_TMO:
         description: 'TCS34725 interface lock timeout in milliseconds'
         value: 1000
-
+    TCS34725_LOG_MODULE:
+        description: 'Numeric module ID to use for TCS34725 log messages'
+        value: 254

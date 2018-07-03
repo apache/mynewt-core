@@ -20,22 +20,14 @@
 #ifndef H_BLESPLIT_
 #define H_BLESPLIT_
 
-#include "log/log.h"
+#include "os/mynewt.h"
+#include "modlog/modlog.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 struct ble_hs_cfg;
 struct ble_gatt_register_ctxt;
-
-extern struct log blesplit_log;
-
-/* blesplit uses the first "peruser" log module. */
-#define BLESPLIT_LOG_MODULE  (LOG_MODULE_PERUSER + 0)
-
-/* Convenience macro for logging to the blesplit module. */
-#define BLESPLIT_LOG(lvl, ...) \
-    LOG_ ## lvl(&blesplit_log, BLESPLIT_LOG_MODULE, __VA_ARGS__)
 
 /** GATT server. */
 #define GATT_SVR_SVC_ALERT_UUID               0x1811

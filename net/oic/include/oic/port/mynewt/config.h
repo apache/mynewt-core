@@ -26,8 +26,6 @@ extern "C" {
 #define DEBUG 1
 #endif
 
-extern struct log oc_log;
-
 typedef os_time_t oc_clock_time_t;
 #define OC_CLOCK_CONF_TICKS_PER_SECOND (OS_TICKS_PER_SEC)
 #ifdef ARCH_sim

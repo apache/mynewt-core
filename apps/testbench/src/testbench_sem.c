@@ -20,8 +20,8 @@
 #include <stdio.h>
 #include <string.h>
 #include "os/mynewt.h"
+#include "modlog/modlog.h"
 #include "testutil/testutil.h"
-
 #include "testbench.h"
 
 #define SEM_TEST_STACK_SIZE     256
@@ -31,8 +31,7 @@ struct os_sem g_sem1;
 void
 testbench_sem_ts_init(void *arg)
 {
-    LOG_DEBUG(&testlog, LOG_MODULE_TEST,
-             "%s starting %s", buildID, tu_case_name);
+    MODLOG_DFLT(DEBUG, "%s starting %s", buildID, tu_case_name);
 }
 
 void sem_test_basic_handler(void* arg);
@@ -72,8 +71,8 @@ testbench_sem_init(void *arg)
     tu_case_idx = 0;
     tu_case_failed = 0;
 
-    LOG_DEBUG(&testlog, LOG_MODULE_TEST, "%s testbench_sem suite init",
-              buildID);
+    MODLOG_DFLT(DEBUG, "%s testbench_sem suite init",
+                buildID);
 
     tu_suite_set_pass_cb(testbench_ts_pass, NULL);
     tu_suite_set_fail_cb(testbench_ts_fail, NULL);
@@ -133,8 +132,7 @@ testbench_sem()
     tu_suite_set_init_cb(testbench_sem_init, NULL);
     testbench_sem_suite();
 
-    LOG_DEBUG(&testlog, LOG_MODULE_TEST,
-             "%s testbench_sem suite complete", buildID);
+    MODLOG_DFLT(DEBUG, "%s testbench_sem suite complete", buildID);
 
     return;
 }

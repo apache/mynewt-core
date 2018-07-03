@@ -32,4 +32,5 @@ pkg.deps:
     - net/nimble/transport/ram
     - sys/console/full
     - sys/log/full
+    - sys/log/modlog
     - sys/stats/full

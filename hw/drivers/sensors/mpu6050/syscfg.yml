@@ -1,4 +1,3 @@
-#
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -21,3 +20,6 @@ syscfg.defs:
     MPU6050_ITF_LOCK_TMO:
         description: 'MPU6050 interface lock timeout in milliseconds'
         value: 1000
+    MPU6050_LOG_MODULE:
+        description: 'Numeric module ID to use for MPU6050 log messages'
+        value: 115

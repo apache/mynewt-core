@@ -45,7 +45,7 @@
 #include "sensor/light.h"
 #include "tsl2561/tsl2561.h"
 #include "tsl2561_priv.h"
-#include "log/log.h"
+#include "modlog/modlog.h"
 #include "stats/stats.h"
 #include <syscfg/syscfg.h>
 
@@ -64,10 +64,11 @@ STATS_NAME_END(tsl2561_stat_section)
 /* Global variable used to hold stats data */
 STATS_SECT_DECL(tsl2561_stat_section) g_tsl2561stats;
 
-#define LOG_MODULE_TSL2561    (2561)
-#define TSL2561_INFO(...)     LOG_INFO(&_log, LOG_MODULE_TSL2561, __VA_ARGS__)
-#define TSL2561_ERR(...)      LOG_ERROR(&_log, LOG_MODULE_TSL2561, __VA_ARGS__)
-static struct log _log;
+#define TSL2561_LOG(lvl_, ...) \
+    MODLOG_ ## lvl_(MYNEWT_VAL(TSL2561_LOG_MODULE), __VA_ARGS__)
+#else
+#define TSL2561_LOG(lvl_, ...)
+#endif
 
 /* Exports for the sensor API */
 static int tsl2561_sensor_read(struct sensor *, sensor_type_t,
@@ -100,7 +101,8 @@ tsl2561_write8(struct sensor_itf *itf, uint8_t reg, uint32_t value)
     rc = hal_i2c_master_write(itf->si_num, &data_struct,
                               OS_TICKS_PER_SEC / 10, 1);
     if (rc) {
-        TSL2561_ERR("Failed to write 0x%02X:0x%02X with value 0x%02lX\n",
+        TSL2561_LOG(ERROR,
+                    "Failed to write 0x%02X:0x%02X with value 0x%02lX\n",
                     data_struct.address, reg, value);
         STATS_INC(g_tsl2561stats, errors);
     }
@@ -130,7 +132,8 @@ tsl2561_write16(struct sensor_itf *itf, uint8_t reg, uint16_t value)
     rc = hal_i2c_master_write(itf->si_num, &data_struct,
                               OS_TICKS_PER_SEC / 10, 1);
     if (rc) {
-        TSL2561_ERR("Failed to write @0x%02X with value 0x%02X 0x%02X\n",
+        TSL2561_LOG(ERROR,
+                    "Failed to write @0x%02X with value 0x%02X 0x%02X\n",
                     reg, payload[0], payload[1]);
     }
 
@@ -161,7 +164,7 @@ tsl2561_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
     rc = hal_i2c_master_write(itf->si_num, &data_struct,
                               OS_TICKS_PER_SEC / 10, 1);
     if (rc) {
-        TSL2561_ERR("Failed to address sensor\n");
+        TSL2561_LOG(ERROR, "Failed to address sensor\n");
         goto err;
     }
 
@@ -171,7 +174,7 @@ tsl2561_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
                              OS_TICKS_PER_SEC / 10, 1);
     *value = payload;
     if (rc) {
-        TSL2561_ERR("Failed to read @0x%02X\n", reg);
+        TSL2561_LOG(ERROR, "Failed to read @0x%02X\n", reg);
     }
 
 err:
@@ -201,7 +204,7 @@ tsl2561_read16(struct sensor_itf *itf, uint8_t reg, uint16_t *value)
     rc = hal_i2c_master_write(itf->si_num, &data_struct,
                               OS_TICKS_PER_SEC / 10, 1);
     if (rc) {
-        TSL2561_ERR("Failed to address sensor\n");
+        TSL2561_LOG(ERROR, "Failed to address sensor\n");
         goto err;
     }
 
@@ -212,7 +215,7 @@ tsl2561_read16(struct sensor_itf *itf, uint8_t reg, uint16_t *value)
                              OS_TICKS_PER_SEC / 10, 1);
     *value = (uint16_t)payload[0] | ((uint16_t)payload[1] << 8);
     if (rc) {
-        TSL2561_ERR("Failed to read @0x%02X\n", reg);
+        TSL2561_LOG(ERROR, "Failed to read @0x%02X\n", reg);
         goto err;
     }
 
@@ -347,7 +350,7 @@ tsl2561_set_gain(struct sensor_itf *itf, uint8_t gain)
     uint8_t int_time;
 
     if ((gain != TSL2561_LIGHT_GAIN_1X) && (gain != TSL2561_LIGHT_GAIN_16X)) {
-        TSL2561_ERR("Invalid gain value\n");
+        TSL2561_LOG(ERROR, "Invalid gain value\n");
         rc = SYS_EINVAL;
         goto err;
     }
@@ -508,7 +511,8 @@ tsl2561_enable_interrupt(struct sensor_itf *itf, uint8_t enable)
     uint8_t persist_val;
 
     if (enable > 1) {
-        TSL2561_ERR("Invalid value 0x%02X in tsl2561_enable_interrupt\n",
+        TSL2561_LOG(ERROR,
+                    "Invalid value 0x%02X in tsl2561_enable_interrupt\n",
                     enable);
         rc = SYS_EINVAL;
         goto err;
@@ -588,8 +592,6 @@ tsl2561_init(struct os_dev *dev, void *arg)
     tsl2561 = (struct tsl2561 *) dev;
 
     tsl2561->cfg.mask = SENSOR_TYPE_ALL;
-
-    log_register(dev->od_name, &_log, &log_console_handler, NULL, LOG_SYSLEVEL);
 
     sensor = &tsl2561->sensor;
 

@@ -42,5 +42,6 @@ pkg.deps:
     - sys/console/full
     - sys/id
     - sys/log/full
+    - sys/log/modlog
     - sys/shell
     - sys/stats/full

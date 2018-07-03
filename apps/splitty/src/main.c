@@ -25,7 +25,7 @@
 #include <hal/hal_flash.h>
 #include <console/console.h>
 #include <shell/shell.h>
-#include <log/log.h>
+#include <modlog/modlog.h>
 #include <stats/stats.h>
 #include <config/config.h>
 #include <flash_map/flash_map.h>
@@ -107,8 +107,8 @@ task1_handler(void *arg)
         /* Toggle the LED */
         prev_pin_state = hal_gpio_read(g_led_pin);
         curr_pin_state = hal_gpio_toggle(g_led_pin);
-        LOG_INFO(&my_log, LOG_MODULE_DEFAULT, "GPIO toggle from %u to %u",
-            prev_pin_state, curr_pin_state);
+        MODLOG_INFO(LOG_MODULE_DEFAULT, "GPIO toggle from %u to %u",
+                    prev_pin_state, curr_pin_state);
         STATS_INC(g_stats_gpio_toggle, toggles);
 
         /* Release semaphore to task 2 */
@@ -186,6 +186,9 @@ main(int argc, char **argv)
 
     cbmem_init(&cbmem, cbmem_buf, MAX_CBMEM_BUF);
     log_register("log", &my_log, &log_cbmem_handler, &cbmem, LOG_SYSLEVEL);
+
+    rc = modlog_register(LOG_MODULE_DEFAULT, &my_log, LOG_LEVEL_DEBUG, NULL);
+    assert(rc == 0);
 
     stats_init(STATS_HDR(g_stats_gpio_toggle),
                STATS_SIZE_INIT_PARMS(g_stats_gpio_toggle, STATS_SIZE_32),

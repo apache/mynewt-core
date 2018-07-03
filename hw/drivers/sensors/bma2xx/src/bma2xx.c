@@ -32,17 +32,13 @@
 #include <syscfg/syscfg.h>
 
 #if MYNEWT_VAL(BMA2XX_LOG)
-#include "log/log.h"
+#include "modlog/modlog.h"
 #endif
 
-#if MYNEWT_VAL(BMA2XX_LOG)
-static struct log bma2xx_log;
-#define LOG_MODULE_BMA2XX (200)
-#define BMA2XX_ERROR(...) LOG_ERROR(&bma2xx_log, LOG_MODULE_BMA2XX, __VA_ARGS__)
-#define BMA2XX_INFO(...)  LOG_INFO(&bma2xx_log, LOG_MODULE_BMA2XX, __VA_ARGS__)
+#define BMA2XX_LOG(lvl_, ...) \
+    MODLOG_ ## lvl_(MYNEWT_VAL(BMA2XX_LOG_MODULE), __VA_ARGS__)
 #else
-#define BMA2XX_ERROR(...)
-#define BMA2XX_INFO(...)
+#define BMA2XX_LOG(lvl_, ...)
 #endif
 
 #define BMA2XX_NOTIFY_MASK  0x01
@@ -183,8 +179,8 @@ spi_readlen(struct sensor_itf * itf, uint8_t addr, uint8_t *payload,
     retval = hal_spi_tx_val(itf->si_num, addr | BMA2XX_SPI_READ_CMD_BIT);
     if (retval == 0xFFFF) {
         rc = SYS_EINVAL;
-        BMA2XX_ERROR("SPI_%u register write failed addr:0x%02X\n",
-                     itf->si_num, addr);
+        BMA2XX_LOG(ERROR, "SPI_%u register write failed addr:0x%02X\n",
+                   itf->si_num, addr);
         goto err;
     }
 
@@ -193,8 +189,8 @@ spi_readlen(struct sensor_itf * itf, uint8_t addr, uint8_t *payload,
         retval = hal_spi_tx_val(itf->si_num, 0);
         if (retval == 0xFFFF) {
             rc = SYS_EINVAL;
-            BMA2XX_ERROR("SPI_%u read failed addr:0x%02X\n",
-                         itf->si_num, addr);
+            BMA2XX_LOG(ERROR, "SPI_%u read failed addr:0x%02X\n",
+                       itf->si_num, addr);
             goto err;
         }
         payload[i] = retval;
@@ -232,8 +228,8 @@ spi_writereg(struct sensor_itf * itf, uint8_t addr, uint8_t payload,
     rc = hal_spi_tx_val(itf->si_num, addr);
     if (rc == 0xFFFF) {
         rc = SYS_EINVAL;
-        BMA2XX_ERROR("SPI_%u register write failed addr:0x%02X\n",
-                     itf->si_num, addr);
+        BMA2XX_LOG(ERROR, "SPI_%u register write failed addr:0x%02X\n",
+                   itf->si_num, addr);
         goto err;
     }
 
@@ -242,8 +238,8 @@ spi_writereg(struct sensor_itf * itf, uint8_t addr, uint8_t payload,
         rc = hal_spi_tx_val(itf->si_num, payload);
         if (rc == 0xFFFF) {
             rc = SYS_EINVAL;
-            BMA2XX_ERROR("SPI_%u write failed addr:0x%02X:0x%02X\n",
-                         itf->si_num, addr);
+            BMA2XX_LOG(ERROR, "SPI_%u write failed addr:0x%02X:0x%02X\n",
+                       itf->si_num, addr);
             goto err;
         }
     }
@@ -274,8 +270,7 @@ i2c_readlen(struct sensor_itf * itf, uint8_t addr, uint8_t *payload,
     rc = hal_i2c_master_write(itf->si_num, &oper,
                               OS_TICKS_PER_SEC / 10, 1);
     if (rc != 0) {
-        BMA2XX_ERROR("I2C access failed at address 0x%02X\n",
-                     addr);
+        BMA2XX_LOG(ERROR, "I2C access failed at address 0x%02X\n", addr);
         return rc;
     }
 
@@ -286,8 +281,8 @@ i2c_readlen(struct sensor_itf * itf, uint8_t addr, uint8_t *payload,
     rc = hal_i2c_master_read(itf->si_num, &oper,
                              OS_TICKS_PER_SEC / 10, 1);
     if (rc != 0) {
-        BMA2XX_ERROR("I2C read failed at address 0x%02X length %u\n",
-                     addr, len);
+        BMA2XX_LOG(ERROR, "I2C read failed at address 0x%02X length %u\n",
+                   addr, len);
         return rc;
     }
 
@@ -311,8 +306,8 @@ i2c_writereg(struct sensor_itf * itf, uint8_t addr, uint8_t data)
     rc = hal_i2c_master_write(itf->si_num, &oper,
                               OS_TICKS_PER_SEC / 10, 1);
     if (rc != 0) {
-        BMA2XX_ERROR("I2C write failed at address 0x%02X single byte\n",
-                     addr);
+        BMA2XX_LOG(ERROR, "I2C write failed at address 0x%02X single byte\n",
+                   addr);
         return rc;
     }
 
@@ -572,8 +567,8 @@ quad_to_axis_trigger(struct axis_trigger * axis_trigger,
     axis_trigger->sign = (quad_bits >> 3) & 0x01;
     switch (quad_bits & 0x07) {
     default:
-        BMA2XX_ERROR("unknown %s quad bits 0x%02X\n",
-                     name_bits, quad_bits);
+        BMA2XX_LOG(ERROR, "unknown %s quad bits 0x%02X\n",
+                   name_bits, quad_bits);
     case 0x00:
         axis_trigger->axis = -1;
         axis_trigger->axis_known = false;
@@ -663,7 +658,7 @@ bma2xx_get_g_range(struct bma2xx *bma2xx,
 
     switch (data & 0x0F) {
     default:
-        BMA2XX_ERROR("unknown PMU_RANGE reg value 0x%02X\n", data);
+        BMA2XX_LOG(ERROR, "unknown PMU_RANGE reg value 0x%02X\n", data);
         *g_range = BMA2XX_G_RANGE_16;
         break;
     case 0x03:
@@ -823,7 +818,7 @@ bma2xx_get_power_settings(struct bma2xx *bma2xx,
 
     switch ((data[0] >> 5) & 0x07) {
     default:
-        BMA2XX_ERROR("unknown PMU_LPW reg value 0x%02X\n", data[0]);
+        BMA2XX_LOG(ERROR, "unknown PMU_LPW reg value 0x%02X\n", data[0]);
         power_settings->power_mode = BMA2XX_POWER_MODE_NORMAL;
         break;
     case 0x00:
@@ -2835,7 +2830,7 @@ bma2xx_get_fifo_cfg(struct bma2xx *bma2xx,
 
     switch ((data >> 6) & 0x03) {
     case 0x03:
-        BMA2XX_ERROR("unknown FIFO_CONFIG_1 reg value 0x%02X\n", data);
+        BMA2XX_LOG(ERROR, "unknown FIFO_CONFIG_1 reg value 0x%02X\n", data);
     case 0x00:
         fifo_cfg->fifo_mode = FIFO_MODE_BYPASS;
         break;
@@ -3271,7 +3266,7 @@ init_intpin(struct bma2xx *bma2xx,
     }
 
     if (pin < 0) {
-        BMA2XX_ERROR("Interrupt pin not configured\n");
+        BMA2XX_LOG(ERROR, "Interrupt pin not configured\n");
         return SYS_EINVAL;
     }
 
@@ -3287,7 +3282,7 @@ init_intpin(struct bma2xx *bma2xx,
     } else if (bma2xx->sensor.s_itf.si_ints[pdd->int_num].device_pin == 2) {
         pdd->int_route = INT_ROUTE_PIN_2;
     } else {
-        BMA2XX_ERROR("Route not configured\n");
+        BMA2XX_LOG(ERROR, "Route not configured\n");
         return SYS_EINVAL;
     }
 
@@ -3571,7 +3566,7 @@ axis_offset_compensation(struct bma2xx *bma2xx,
     }
 
     if (!ready) {
-        BMA2XX_ERROR("offset compensation already in progress\n");
+        BMA2XX_LOG(ERROR, "offset compensation already in progress\n");
         return SYS_ETIMEOUT;
     }
 
@@ -3596,7 +3591,7 @@ axis_offset_compensation(struct bma2xx *bma2xx,
     }
 
     if (count == 0) {
-        BMA2XX_ERROR("offset compensation did not complete\n");
+        BMA2XX_LOG(ERROR, "offset compensation did not complete\n");
         return SYS_ETIMEOUT;
     }
 
@@ -3715,15 +3710,15 @@ bma2xx_query_offsets(struct bma2xx *bma2xx,
 
     mismatch = false;
     if (cfg->offset_x_g != val_offset_x_g) {
-        BMA2XX_ERROR("X compensation offset value mismatch\n");
+        BMA2XX_LOG(ERROR, "X compensation offset value mismatch\n");
         mismatch = true;
     }
     if (cfg->offset_y_g != val_offset_y_g) {
-        BMA2XX_ERROR("Y compensation offset value mismatch\n");
+        BMA2XX_LOG(ERROR, "Y compensation offset value mismatch\n");
         mismatch = true;
     }
     if (cfg->offset_z_g != val_offset_z_g) {
-        BMA2XX_ERROR("Z compensation offset value mismatch\n");
+        BMA2XX_LOG(ERROR, "Z compensation offset value mismatch\n");
         mismatch = true;
     }
 
@@ -4029,7 +4024,7 @@ bma2xx_wait_for_orient(struct bma2xx *bma2xx,
     pdd = &bma2xx->pdd;
 
     if (pdd->interrupt) {
-        BMA2XX_ERROR("Interrupt used\n");
+        BMA2XX_LOG(ERROR, "Interrupt used\n");
         return SYS_EINVAL;
     }
 
@@ -4106,7 +4101,7 @@ bma2xx_wait_for_high_g(struct bma2xx *bma2xx)
     pdd = &bma2xx->pdd;
 
     if (pdd->interrupt) {
-        BMA2XX_ERROR("Interrupt used\n");
+        BMA2XX_LOG(ERROR, "Interrupt used\n");
         return SYS_EINVAL;
     }
 
@@ -4178,7 +4173,7 @@ bma2xx_wait_for_low_g(struct bma2xx *bma2xx)
     pdd = &bma2xx->pdd;
 
     if (pdd->interrupt) {
-        BMA2XX_ERROR("Interrupt used\n");
+        BMA2XX_LOG(ERROR, "Interrupt used\n");
         return SYS_EINVAL;
     }
 
@@ -4281,7 +4276,7 @@ bma2xx_wait_for_tap(struct bma2xx *bma2xx,
     }
 
     if (pdd->interrupt) {
-        BMA2XX_ERROR("Interrupt used\n");
+        BMA2XX_LOG(ERROR, "Interrupt used\n");
         return SYS_EINVAL;
     }
 
@@ -4791,7 +4786,7 @@ sensor_driver_handle_interrupt(struct sensor * sensor)
 
     rc = bma2xx_get_int_status(bma2xx, &int_status);
     if (rc != 0) {
-        BMA2XX_ERROR("Cound not read int status err=0x%02x\n", rc);
+        BMA2XX_LOG(ERROR, "Cound not read int status err=0x%02x\n", rc);
         return rc;
     }
 
@@ -4853,7 +4848,7 @@ bma2xx_config(struct bma2xx *bma2xx, struct bma2xx_cfg *cfg)
     }
 
     if (chip_id != model_chip_id) {
-        BMA2XX_ERROR("received incorrect chip ID 0x%02X\n", chip_id);
+        BMA2XX_LOG(ERROR, "received incorrect chip ID 0x%02X\n", chip_id);
         return SYS_EINVAL;
     }
 
@@ -4888,17 +4883,6 @@ bma2xx_init(struct os_dev * dev, void * arg)
     if (!dev || !arg) {
         return SYS_ENODEV;
     }
-
-#if MYNEWT_VAL(BMA2XX_LOG)
-    rc = log_register(dev->od_name,
-                      &bma2xx_log,
-                      &log_console_handler,
-                      NULL,
-                      LOG_SYSLEVEL);
-    if (rc != 0) {
-        return rc;
-    }
-#endif
 
     bma2xx = (struct bma2xx *)dev;
     sensor = &bma2xx->sensor;
