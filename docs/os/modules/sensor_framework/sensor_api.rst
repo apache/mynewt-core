@@ -42,15 +42,15 @@ object:
 
 **Notes**:
 
--  See the `Sensor Device
-   Driver </os/modules/sensor_framework/sensor_driver.html>`__ page for
+-  See the :doc:`Sensor Device
+   Driver <../os/modules/sensor_framework/sensor_driver>` page for
    the functions and data structures that a sensor driver package
    exports.
 
 -  The ``<sensorname>_init()`` function must also call the
    ``sensor_mgr_register()`` function to register the sensor with the
-   sensor manager. See the `Sensor Manager
-   API </os/modules/sensor_framework/sensor_manager_api.html>`__ for
+   sensor manager. See the :doc:`Sensor Manager
+   API <../os/modules/sensor_framework/sensor_mgr_api>` for
    details.
 
 Setting the Configured Sensor Types
@@ -94,8 +94,8 @@ sensor at specified poll intervals. An application must call the
 ``sensor_set_poll_rate_ms()`` function to set the poll rate for a sensor
 in order for poller to poll the sensor.
 
-**Note:** An application needs to register a `sensor
-listener </os/modules/sensor_framework/sensor_listener_api.html>`__ to
+**Note:** An application needs to register a :doc:`sensor
+listener <../os/modules/sensor_framework/sensor_listener_api>` to
 receive the sensor data that the sensor manager poller reads from a
 sensor.
 
@@ -111,9 +111,9 @@ Sensor Object
 ^^^^^^^^^^^^^
 
 The ``struct sensor`` data structure represents the sensor device. The
-sensor API, the `sensor manager
-API </os/modules/sensor_framework/sensor_mgr_api.html>`__, and the `sensor
-listener API </os/modules/sensor_framework/sensor_listener_api.html>`__
+sensor API, the :doc:`sensor manager
+API <../os/modules/sensor_framework/sensor_mgr_api>`, and the :doc:`sensor
+listener API <../os/modules/sensor_framework/sensor_listener_api>`
 all operate on the ``sensor`` object abstraction. A sensor is maintained
 in the sensor manager global sensors list.
 
@@ -172,7 +172,7 @@ configured for. Only sensor data for a configured sensor type can be
 read.
 
 Sensor Types
-^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^
 
 
 The ``sensor_type_t`` type is an enumeration of a bit mask of sensor

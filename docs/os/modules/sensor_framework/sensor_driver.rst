@@ -9,8 +9,8 @@ device.
 
 This guide describes what a sensor device driver must implement to
 enable a sensor device within the sensor framework. For information on
-using the HAL API to communicate with a sensor device, see the `Hardware
-Layer Abstraction Guide </os/modules/hal/hal.html>`__.
+using the HAL API to communicate with a sensor device, see the :doc:`Hardware
+Layer Abstraction Guide <../os/modules/hal/hal>`.
 
 The ``hw/drivers/sensors/<sensorname>`` package implements the device
 driver for the sensor named ``SENSORNAME``.
@@ -81,8 +81,8 @@ configure a device:
    -  A pointer to a ``struct sensor_itf`` variable that specifies the
       interface the driver uses to communicate with the sensor device.
 
-   See the `Creating Sensor
-   Devices </os/modules/sensor_framework/sensor_create.html>`__ page for
+   See the :doc:`Creating Sensor
+   Devices <../os/modules/sensor_framework/sensor_create>` page for
    more details.
 
    The ``os_dev_create()`` function calls the ``<sensorname>_init()``
@@ -153,9 +153,9 @@ Registering the Sensor in the Sensor Framework
 
 
 The device driver must initialize and register a ``struct sensor``
-object with the sensor manager. See the `Sensor
-API </os/modules/sensor_framework/sensor_api.html>`__ and the `Sensor
-Manager API </os/modules/sensor_framework/sensor_manager_api.html>`__
+object with the sensor manager. See the :doc:`Sensor
+API <../os/modules/sensor_framework/sensor_api>` and the :doc:`Sensor
+Manager API <../os/modules/sensor_framework/sensor_mgr_api>`
 pages for more details.
 
 The device driver ``<sensorname>_init()`` function initializes and
@@ -328,8 +328,8 @@ Implementing a Sensor Device Shell Command
 
 A sensor device driver package may optionally implement a sensor device
 shell command that retrieves and sets sensor device information to aid
-in testing and debugging. While the sensor framework `sensor shell
-command </os/modules/sensor_framework/sensor_shell.html>`__ reads sensor
+in testing and debugging. While the sensor framework :doc:`sensor shell
+command <../os/modules/sensor_framework/sensor_shell>` reads sensor
 data for configured sensor types and is useful for testing an
 application, it does not access low level device information, such as
 reading register values and setting hardware configurations, that might
@@ -355,15 +355,15 @@ The package should:
 For an example on how to implement a sensor device shell command, see
 the `bno055 shell
 command <https://github.com/apache/mynewt-core/blob/master/hw/drivers/sensors/bno055/src/bno055_shell.c>`__
-source code. See the `Enabling an Off-Board Sensor in an Existing
-Application Tutorial </os/tutorials/sensors/sensor_nrf52_bno055.html>`__
+source code. See the :doc:`Enabling an Off-Board Sensor in an Existing
+Application Tutorial <../../../tutorials/sensors/sensor_nrf52_bno055>`
 for examples of the bno055 shell command.
 
 Defining Logs
 ~~~~~~~~~~~~~
 
 A sensor device driver should define logs for testing purposes. See the
-`Log OS Guide <os/modules/logs/logs.html>`__ for more details on how to
+:doc:`Log OS Guide <../os/modules/logs/logs>` for more details on how to
 add logs. The driver should define a ``<SENSORNAME>_LOG`` syscfg setting
 to specify whether logging is enabled and disable the setting by
 default.
@@ -413,7 +413,7 @@ Defining Stats
 
 
 A sensor device driver may also define stats for the sensor. See the
-`Stats OS Guide <os/modules/stats/stats.html>`__ for more details on how
+:doc:`Stats OS Guide <../os/modules/stats/stats>` for more details on how
 to add stats. The driver should define a ``<SENSORNAME>_STATS`` syscfg
 setting to specify whether stats is enabled and disable the setting by
 default.

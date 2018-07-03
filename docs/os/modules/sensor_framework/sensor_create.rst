@@ -36,8 +36,8 @@ application. For example:
 
 2. Include the "<sensorname>/<sensorname>.h" header file. The BSP uses
 the functions and data structures that a device driver package exports.
-See the `Sensor Device
-Driver </os/modules/sensor_framework/sensor_driver.html>`__ page for
+See the :doc:`Sensor Device
+Driver <../os/modules/sensor_framework/sensor_driver>` page for
 details.
 
 3. Declare a variable named ``sensorname`` of type
@@ -245,7 +245,7 @@ and change the desired settings. Note that you must keep all the fields
 in the ``<sensorname>_cfg`` structure initialized with the default
 values for the settings that you do not want to change.
 
-See the `Changing the Default Configuration for a Sensor
-Tutorial </os/tutorials/sensors/sensor_offboard_config/>`__ for more
+See the :doc:`Changing the Default Configuration for a Sensor
+Tutorial <../../../tutorials/sensors/sensor_offboard_config>` for more
 details on how to change the default sensor configuration from an
 application.
