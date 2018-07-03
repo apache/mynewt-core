@@ -41,8 +41,8 @@ static int imgr_erase_state(struct mgmt_cbuf *);
 
 /** Represents an individual upload request. */
 struct imgr_upload_req {
-    unsigned long long int off;
-    unsigned long long int size;
+    unsigned long long int off;     /* -1 if unspecified */
+    unsigned long long int size;    /* -1 if unspecified */
     size_t data_len;
     size_t data_hash_len;
     uint8_t img_data[MYNEWT_VAL(IMGMGR_MAX_CHUNK_SIZE)];
@@ -468,7 +468,7 @@ imgr_upload_inspect(const struct imgr_upload_req *req,
 
     memset(action, 0, sizeof *action);
 
-    if (req->off == ULLONG_MAX) {
+    if (req->off == -1) {
         /* Request did not include an `off` field. */
         return MGMT_ERR_EINVAL;
     }
@@ -482,7 +482,7 @@ imgr_upload_inspect(const struct imgr_upload_req *req,
             return MGMT_ERR_EINVAL;
         }
 
-        if (req->size == ULLONG_MAX) {
+        if (req->size == -1) {
             /* Request did not include a `len` field. */
             return MGMT_ERR_EINVAL;
         }
@@ -584,8 +584,8 @@ static int
 imgr_upload(struct mgmt_cbuf *cb)
 {
     struct imgr_upload_req req = {
-        .off = ULLONG_MAX,
-        .size = ULLONG_MAX,
+        .off = -1,
+        .size = -1,
         .data_len = 0,
         .data_hash_len = 0,
     };
