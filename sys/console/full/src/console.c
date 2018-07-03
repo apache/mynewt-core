@@ -261,23 +261,30 @@ del_char(char *pos, uint16_t end)
 }
 
 #if MYNEWT_VAL(CONSOLE_HISTORY)
-struct console_hist {
-    struct console_input buffer[MYNEWT_VAL(CONSOLE_HISTORY_SIZE)];
+static char console_hist_lines[ MYNEWT_VAL(CONSOLE_HISTORY_SIZE) ][ MYNEWT_VAL(CONSOLE_MAX_INPUT_LEN) ];
+
+static struct console_hist {
     uint8_t head;
     uint8_t tail;
     uint8_t size;
     uint8_t curr;
+    char *lines[ MYNEWT_VAL(CONSOLE_HISTORY_SIZE) ];
 } console_hist;
 
 static void
 console_hist_init(void)
 {
     struct console_hist *sh = &console_hist;
+    int i;
 
-    sh->head = 0;
-    sh->tail = 0;
-    sh->curr = 0;
+    memset(console_hist_lines, 0, sizeof(console_hist_lines));
+    memset(&console_hist, 0, sizeof(console_hist));
+
     sh->size = MYNEWT_VAL(CONSOLE_HISTORY_SIZE);
+
+    for (i = 0; i < sh->size; i++) {
+        sh->lines[i] = console_hist_lines[i];
+    }
 }
 
 static size_t
@@ -359,7 +366,7 @@ console_hist_find(char *line)
 
     curr = sh->tail;
     while (curr != sh->head) {
-        if (strcmp(sh->buffer[curr].line, line) == 0) {
+        if (strcmp(sh->lines[curr], line) == 0) {
             return true;
         }
 
@@ -388,7 +395,7 @@ console_hist_add(char *line)
         return;
     }
 
-    strcpy(sh->buffer[sh->head].line, buf);
+    strcpy(sh->lines[sh->head], buf);
     console_hist_next();
     /* Reset current pointer */
     sh->curr = sh->head;
@@ -425,7 +432,7 @@ console_hist_move(char *line, uint8_t direction)
     }
 
     console_clear_line();
-    str = sh->buffer[sh->curr].line;
+    str = sh->lines[sh->curr];
     while (*str != '\0') {
         insert_char(&line[cur], *str, end);
         ++str;
