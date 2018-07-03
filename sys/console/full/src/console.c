@@ -173,7 +173,7 @@ cursor_backward(unsigned int count)
     console_printf("\x1b[%uD", count);
 }
 
-#if MYNEWT_VAL(CONSOLE_HISTORY)
+#if MYNEWT_VAL(CONSOLE_HISTORY_SIZE) > 0
 static inline void
 cursor_clear_line(void)
 {
@@ -260,7 +260,7 @@ del_char(char *pos, uint16_t end)
     cursor_restore();
 }
 
-#if MYNEWT_VAL(CONSOLE_HISTORY)
+#if MYNEWT_VAL(CONSOLE_HISTORY_SIZE) > 0
 static char console_hist_lines[ MYNEWT_VAL(CONSOLE_HISTORY_SIZE) ][ MYNEWT_VAL(CONSOLE_MAX_INPUT_LEN) ];
 
 static struct console_hist {
@@ -495,7 +495,7 @@ handle_ansi(uint8_t byte, char *line)
 
 ansi_cmd:
     switch (byte) {
-#if MYNEWT_VAL(CONSOLE_HISTORY)
+#if MYNEWT_VAL(CONSOLE_HISTORY_SIZE) > 0
     case ANSI_UP:
     case ANSI_DOWN:
         console_blocking_mode();
@@ -718,7 +718,7 @@ console_handle_char(uint8_t byte)
             cur = 0;
             end = 0;
             os_eventq_put(lines_queue, ev);
-#if MYNEWT_VAL(CONSOLE_HISTORY)
+#if MYNEWT_VAL(CONSOLE_HISTORY_SIZE) > 0
             console_hist_add(input->line);
 #endif
 
@@ -818,7 +818,7 @@ console_pkg_init(void)
 
     os_eventq_init(&avail_queue);
 
-#if MYNEWT_VAL(CONSOLE_HISTORY)
+#if MYNEWT_VAL(CONSOLE_HISTORY_SIZE) > 0
     console_hist_init();
 #endif
 
