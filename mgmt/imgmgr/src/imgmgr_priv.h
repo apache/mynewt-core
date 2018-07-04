@@ -31,7 +31,7 @@ extern "C" {
 
 #define IMGMGR_HASH_STR		48
 
-#define IMGMGR_DATA_HASH_LEN    32 /* SHA256 */
+#define IMGMGR_DATA_SHA_LEN     32 /* SHA256 */
 
 /*
  * When accompanied by image, it's this structure followed by data.

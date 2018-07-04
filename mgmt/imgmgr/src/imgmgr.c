@@ -44,9 +44,9 @@ struct imgr_upload_req {
     unsigned long long int off;
     unsigned long long int size;
     size_t data_len;
-    size_t data_hash_len;
+    size_t data_sha_len;
     uint8_t img_data[MYNEWT_VAL(IMGMGR_MAX_CHUNK_SIZE)];
-    uint8_t data_hash[IMGMGR_DATA_HASH_LEN];
+    uint8_t data_sha[IMGMGR_DATA_SHA_LEN];
 };
 
 /** Describes what to do during processing of an upload request. */
@@ -125,7 +125,7 @@ static struct {
     uint32_t size;
 
     /** Hash of image data; used for resumption of a partial upload. */
-    uint8_t data_hash[IMGMGR_DATA_HASH_LEN];
+    uint8_t data_sha[IMGMGR_DATA_SHA_LEN];
 } imgr_state;
 
 static imgr_upload_fn *imgr_upload_cb;
@@ -499,11 +499,11 @@ imgr_upload_inspect(const struct imgr_upload_req *req,
          * we can just resume it by simply including current upload offset
          * in response.
          */
-        if ((req->data_hash_len == IMGMGR_DATA_HASH_LEN) &&
+        if ((req->data_sha_len == IMGMGR_DATA_SHA_LEN) &&
              imgr_state.area_id != -1) {
 
-            if (!memcmp(imgr_state.data_hash, req->data_hash,
-                        req->data_hash_len)) {
+            if (!memcmp(imgr_state.data_sha, req->data_sha,
+                        req->data_sha_len)) {
                 return 0;
             }
         }
@@ -587,7 +587,7 @@ imgr_upload(struct mgmt_cbuf *cb)
         .off = ULLONG_MAX,
         .size = ULLONG_MAX,
         .data_len = 0,
-        .data_hash_len = 0,
+        .data_sha_len = 0,
     };
     const struct cbor_attr_t off_attr[5] = {
         [0] = {
@@ -610,11 +610,11 @@ imgr_upload(struct mgmt_cbuf *cb)
             .nodefault = true
         },
         [3] = {
-            .attribute = "datahash",
+            .attribute = "sha",
             .type = CborAttrByteStringType,
-            .addr.bytestring.data = req.data_hash,
-            .addr.bytestring.len = &req.data_hash_len,
-            .len = sizeof(req.data_hash)
+            .addr.bytestring.data = req.data_sha,
+            .addr.bytestring.len = &req.data_sha_len,
+            .len = sizeof(req.data_sha)
         },
         [4] = { 0 },
     };
@@ -665,10 +665,10 @@ imgr_upload(struct mgmt_cbuf *cb)
          */
         imgr_state.off = 0;
 
-        if (req.data_hash_len == IMGMGR_DATA_HASH_LEN) {
-            memcpy(imgr_state.data_hash, req.data_hash, IMGMGR_DATA_HASH_LEN);
+        if (req.data_sha_len == IMGMGR_DATA_SHA_LEN) {
+            memcpy(imgr_state.data_sha, req.data_sha, IMGMGR_DATA_SHA_LEN);
         } else {
-            memset(imgr_state.data_hash, 0, IMGMGR_DATA_HASH_LEN);
+            memset(imgr_state.data_sha, 0, IMGMGR_DATA_SHA_LEN);
         }
 
 #if MYNEWT_VAL(LOG_FCB_SLOT1)
