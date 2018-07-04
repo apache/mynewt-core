@@ -125,6 +125,7 @@ static struct {
     uint32_t size;
 
     /** Hash of image data; used for resumption of a partial upload. */
+    uint8_t data_sha_len;
     uint8_t data_sha[IMGMGR_DATA_SHA_LEN];
 } imgr_state;
 
@@ -495,15 +496,14 @@ imgr_upload_inspect(const struct imgr_upload_req *req,
 
         /*
          * If request includes proper data hash we can check whether there is
-         * upload in progress (interrupted due to e.g. link disconnection) so
-         * we can just resume it by simply including current upload offset
-         * in response.
+         * upload in progress (interrupted due to e.g. link disconnection) with
+         * the same data hash so we can just resume it by simply including
+         * current upload offset in response.
          */
-        if ((req->data_sha_len == IMGMGR_DATA_SHA_LEN) &&
-             imgr_state.area_id != -1) {
-
-            if (!memcmp(imgr_state.data_sha, req->data_sha,
-                        req->data_sha_len)) {
+        if ((req->data_sha_len > 0) && (imgr_state.area_id != -1)) {
+            if ((imgr_state.data_sha_len == req->data_sha_len) &&
+                            !memcmp(imgr_state.data_sha, req->data_sha,
+                                                        req->data_sha_len)) {
                 return 0;
             }
         }
@@ -665,11 +665,15 @@ imgr_upload(struct mgmt_cbuf *cb)
          */
         imgr_state.off = 0;
 
-        if (req.data_sha_len == IMGMGR_DATA_SHA_LEN) {
-            memcpy(imgr_state.data_sha, req.data_sha, IMGMGR_DATA_SHA_LEN);
-        } else {
-            memset(imgr_state.data_sha, 0, IMGMGR_DATA_SHA_LEN);
-        }
+        /*
+         * We accept SHA trimmed to any length by client since it's up to client
+         * to make sure provided data are good enough to avoid collisions when
+         * resuming upload.
+         */
+        imgr_state.data_sha_len = req.data_sha_len;
+        memcpy(imgr_state.data_sha, req.data_sha, req.data_sha_len);
+        memset(&imgr_state.data_sha[req.data_sha_len], 0,
+               IMGMGR_DATA_SHA_LEN - req.data_sha_len);
 
 #if MYNEWT_VAL(LOG_FCB_SLOT1)
         /*
