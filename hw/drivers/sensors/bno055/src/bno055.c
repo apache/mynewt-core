@@ -34,6 +34,7 @@
 #include "bno055_priv.h"
 #include "log/log.h"
 #include "stats/stats.h"
+#include <syscfg/syscfg.h>
 
 /* Define the stats section and records */
 STATS_SECT_START(bno055_stat_section)
@@ -126,6 +127,11 @@ bno055_writelen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
 
     memcpy(&payload[1], buffer, len);
 
+    rc = sensor_itf_lock(itf, MYNEWT_VAL(BNO055_ITF_LOCK_TMO));
+    if (rc) {
+        goto err;
+    }
+
     /* Register write */
     rc = hal_i2c_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1);
     if (rc) {
@@ -142,6 +148,8 @@ bno055_writelen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
         STATS_INC(g_bno055stats, errors);
         goto err;
     }
+
+    sensor_itf_unlock(itf);
 
     return 0;
 err:
@@ -169,6 +177,11 @@ bno055_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
         .buffer = &payload
     };
 
+    rc = sensor_itf_lock(itf, MYNEWT_VAL(BNO055_ITF_LOCK_TMO));
+    if (rc) {
+        goto err;
+    }
+
     /* Register write */
     payload = reg;
     rc = hal_i2c_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 0);
@@ -187,6 +200,8 @@ bno055_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
         BNO055_ERR("Failed to read from 0x%02X:0x%02X\n", data_struct.address, reg);
         STATS_INC(g_bno055stats, errors);
     }
+
+    sensor_itf_unlock(itf);
 
 err:
     return rc;
@@ -220,6 +235,11 @@ bno055_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
     /* Clear the supplied buffer */
     memset(buffer, 0, len);
 
+    rc = sensor_itf_lock(itf, MYNEWT_VAL(BNO055_ITF_LOCK_TMO));
+    if (rc) {
+        goto err;
+    }
+
     /* Register write */
     rc = hal_i2c_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1);
     if (rc) {
@@ -240,6 +260,8 @@ bno055_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
 
     /* Copy the I2C results into the supplied buffer */
     memcpy(buffer, payload, len);
+
+    sensor_itf_unlock(itf);
 
     return 0;
 err:
@@ -483,6 +505,11 @@ bno055_init(struct os_dev *dev, void *arg)
 
     /* Set the interface */
     rc = sensor_set_interface(sensor, arg);
+    if (rc) {
+        goto err;
+    }
+
+    rc = sensor_itf_lock_init(arg);
     if (rc) {
         goto err;
     }

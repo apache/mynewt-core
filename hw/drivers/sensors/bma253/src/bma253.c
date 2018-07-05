@@ -26,6 +26,7 @@
 #include "bma253_priv.h"
 #include "hal/hal_gpio.h"
 #include "hal/hal_i2c.h"
+#include <syscfg/syscfg.h>
 
 #if MYNEWT_VAL(BMA253_LOG)
 #include "log/log.h"
@@ -145,15 +146,20 @@ interrupt_handler(void * arg)
 #endif
 
 static int
-get_register(const struct bma253 * bma253,
+get_register(struct bma253 * bma253,
              uint8_t addr,
              uint8_t * data)
 {
-    const struct sensor_itf * itf;
+    struct sensor_itf *itf;
     struct hal_i2c_master_data oper;
     int rc;
 
     itf = SENSOR_GET_ITF(&bma253->sensor);
+
+    rc = sensor_itf_lock(itf, MYNEWT_VAL(BMA253_ITF_LOCK_TMO));
+    if (rc) {
+        goto err;
+    }
 
     oper.address = itf->si_addr;
     oper.len     = 1;
@@ -178,16 +184,20 @@ get_register(const struct bma253 * bma253,
         return rc;
     }
 
+    sensor_itf_unlock(itf);
+
     return 0;
+err:
+    return rc;
 }
 
 static int
-get_registers(const struct bma253 * bma253,
+get_registers(struct bma253 * bma253,
               uint8_t addr,
               uint8_t * data,
               uint8_t size)
 {
-    const struct sensor_itf * itf;
+    struct sensor_itf *itf;
     struct hal_i2c_master_data oper;
     int rc;
 
@@ -197,12 +207,17 @@ get_registers(const struct bma253 * bma253,
     oper.len     = 1;
     oper.buffer  = &addr;
 
+    rc = sensor_itf_lock(itf, MYNEWT_VAL(BMA253_ITF_LOCK_TMO));
+    if (rc) {
+        goto err;
+    }
+
     rc = hal_i2c_master_write(itf->si_num, &oper,
                               OS_TICKS_PER_SEC / 10, 1);
     if (rc != 0) {
         BMA253_ERROR("I2C access failed at address 0x%02X\n",
                      addr);
-        return rc;
+        goto err;
     }
 
     oper.address = itf->si_addr;
@@ -214,23 +229,32 @@ get_registers(const struct bma253 * bma253,
     if (rc != 0) {
         BMA253_ERROR("I2C read failed at address 0x%02X length %u\n",
                      addr, size);
-        return rc;
+        goto err;
     }
 
+    sensor_itf_unlock(itf);
+
     return 0;
+err:
+    return rc;
 }
 
 static int
-set_register(const struct bma253 * bma253,
+set_register(struct bma253 * bma253,
              uint8_t addr,
              uint8_t data)
 {
-    const struct sensor_itf * itf;
+    struct sensor_itf * itf;
     uint8_t tuple[2];
     struct hal_i2c_master_data oper;
     int rc;
 
     itf = SENSOR_GET_ITF(&bma253->sensor);
+
+    rc = sensor_itf_lock(itf, MYNEWT_VAL(BMA253_ITF_LOCK_TMO));
+    if (rc) {
+        goto err;
+    }
 
     tuple[0] = addr;
     tuple[1] = data;
@@ -256,14 +280,18 @@ set_register(const struct bma253 * bma253,
         break;
     }
 
+    sensor_itf_unlock(itf);
+
     return 0;
+err:
+    return rc;
 }
 
 int
 bma253_get_chip_id(const struct bma253 * bma253,
                    uint8_t * chip_id)
 {
-    return get_register(bma253, REG_ADDR_BGW_CHIPID, chip_id);
+    return get_register((struct bma253 *)bma253, REG_ADDR_BGW_CHIPID, chip_id);
 }
 
 static void
@@ -323,7 +351,7 @@ bma253_get_accel(const struct bma253 * bma253,
         return SYS_EINVAL;
     }
 
-    rc = get_registers(bma253, base_addr,
+    rc = get_registers((struct bma253 *)bma253, base_addr,
                        data, sizeof(data) / sizeof(*data));
     if (rc != 0) {
         return rc;
@@ -341,7 +369,7 @@ bma253_get_temp(const struct bma253 * bma253,
     uint8_t data;
     int rc;
 
-    rc = get_register(bma253, REG_ADDR_ACCD_TEMP, &data);
+    rc = get_register((struct bma253 *)bma253, REG_ADDR_ACCD_TEMP, &data);
     if (rc != 0) {
         return rc;
     }
@@ -387,7 +415,7 @@ bma253_get_int_status(const struct bma253 * bma253,
     uint8_t data[4];
     int rc;
 
-    rc = get_registers(bma253, REG_ADDR_INT_STATUS_0,
+    rc = get_registers((struct bma253 *)bma253, REG_ADDR_INT_STATUS_0,
                        data, sizeof(data) / sizeof(*data));
     if (rc != 0) {
         return rc;
@@ -425,7 +453,7 @@ bma253_get_fifo_status(const struct bma253 * bma253,
     uint8_t data;
     int rc;
 
-    rc = get_register(bma253, REG_ADDR_FIFO_STATUS, &data);
+    rc = get_register((struct bma253 *)bma253, REG_ADDR_FIFO_STATUS, &data);
     if (rc != 0) {
         return rc;
     }
@@ -443,7 +471,7 @@ bma253_get_g_range(const struct bma253 * bma253,
     uint8_t data;
     int rc;
 
-    rc = get_register(bma253, REG_ADDR_PMU_RANGE, &data);
+    rc = get_register((struct bma253 *)bma253, REG_ADDR_PMU_RANGE, &data);
     if (rc != 0) {
         return rc;
     }
@@ -493,7 +521,7 @@ bma253_set_g_range(const struct bma253 * bma253,
         return SYS_EINVAL;
     }
 
-    return set_register(bma253, REG_ADDR_PMU_RANGE, data);
+    return set_register((struct bma253 *)bma253, REG_ADDR_PMU_RANGE, data);
 }
 
 int
@@ -503,7 +531,7 @@ bma253_get_filter_bandwidth(const struct bma253 * bma253,
     uint8_t data;
     int rc;
 
-    rc = get_register(bma253, REG_ADDR_PMU_BW, &data);
+    rc = get_register((struct bma253 *)bma253, REG_ADDR_PMU_BW, &data);
     if (rc != 0) {
         return rc;
     }
@@ -573,7 +601,7 @@ bma253_set_filter_bandwidth(const struct bma253 * bma253,
         return SYS_EINVAL;
     }
 
-    return set_register(bma253, REG_ADDR_PMU_BW, data);
+    return set_register((struct bma253 *)bma253, REG_ADDR_PMU_BW, data);
 }
 
 int
@@ -583,7 +611,7 @@ bma253_get_power_settings(const struct bma253 * bma253,
     uint8_t data[2];
     int rc;
 
-    rc = get_registers(bma253, REG_ADDR_PMU_LPW,
+    rc = get_registers((struct bma253 *)bma253, REG_ADDR_PMU_LPW,
                        data, sizeof(data) / sizeof(*data));
     if (rc != 0) {
         return rc;
@@ -747,11 +775,11 @@ bma253_set_power_settings(const struct bma253 * bma253,
         return SYS_EINVAL;
     }
 
-    rc = set_register(bma253, REG_ADDR_PMU_LOW_POWER, data[1]);
+    rc = set_register((struct bma253 *)bma253, REG_ADDR_PMU_LOW_POWER, data[1]);
     if (rc != 0) {
         return rc;
     }
-    rc = set_register(bma253, REG_ADDR_PMU_LPW, data[0]);
+    rc = set_register((struct bma253 *)bma253, REG_ADDR_PMU_LPW, data[0]);
     if (rc != 0) {
         return rc;
     }
@@ -767,7 +795,7 @@ bma253_get_data_acquisition(const struct bma253 * bma253,
     uint8_t data;
     int rc;
 
-    rc = get_register(bma253, REG_ADDR_ACCD_HBW, &data);
+    rc = get_register((struct bma253 *)bma253, REG_ADDR_ACCD_HBW, &data);
     if (rc != 0) {
         return rc;
     }
@@ -788,7 +816,7 @@ bma253_set_data_acquisition(const struct bma253 * bma253,
     data = (unfiltered_reg_data << 7) |
            (disable_reg_shadow << 6);
 
-    return set_register(bma253, REG_ADDR_ACCD_HBW, data);
+    return set_register((struct bma253 *)bma253, REG_ADDR_ACCD_HBW, data);
 }
 
 int
@@ -796,7 +824,7 @@ bma253_set_softreset(const struct bma253 * bma253)
 {
     int rc;
 
-    rc = set_register(bma253, REG_ADDR_BGW_SOFTRESET, REG_VALUE_SOFT_RESET);
+    rc = set_register((struct bma253 *)bma253, REG_ADDR_BGW_SOFTRESET, REG_VALUE_SOFT_RESET);
     if (rc != 0) {
         return rc;
     }
@@ -813,7 +841,7 @@ bma253_get_int_enable(const struct bma253 * bma253,
     uint8_t data[3];
     int rc;
 
-    rc = get_registers(bma253, REG_ADDR_INT_EN_0,
+    rc = get_registers((struct bma253 *)bma253, REG_ADDR_INT_EN_0,
                        data, sizeof(data) / sizeof(*data));
     if (rc != 0) {
         return rc;
@@ -869,15 +897,15 @@ bma253_set_int_enable(const struct bma253 * bma253,
               (int_enable->slow_no_mot_y_int_enable << 1) |
               (int_enable->slow_no_mot_x_int_enable << 0);
 
-    rc = set_register(bma253, REG_ADDR_INT_EN_0, data[0]);
+    rc = set_register((struct bma253 *)bma253, REG_ADDR_INT_EN_0, data[0]);
     if (rc != 0) {
         return rc;
     }
-    rc = set_register(bma253, REG_ADDR_INT_EN_1, data[1]);
+    rc = set_register((struct bma253 *)bma253, REG_ADDR_INT_EN_1, data[1]);
     if (rc != 0) {
         return rc;
     }
-    rc = set_register(bma253, REG_ADDR_INT_EN_2, data[2]);
+    rc = set_register((struct bma253 *)bma253, REG_ADDR_INT_EN_2, data[2]);
     if (rc != 0) {
         return rc;
     }
@@ -892,7 +920,7 @@ bma253_get_int_routes(const struct bma253 * bma253,
     uint8_t data[3];
     int rc;
 
-    rc = get_registers(bma253, REG_ADDR_INT_MAP_0,
+    rc = get_registers((struct bma253 *)bma253, REG_ADDR_INT_MAP_0,
                        data, sizeof(data) / sizeof(*data));
     if (rc != 0) {
         return rc;
@@ -1021,15 +1049,15 @@ bma253_set_int_routes(const struct bma253 * bma253,
               (((int_routes->high_g_int_route & INT_ROUTE_PIN_2) != 0) << 1) |
               (((int_routes->low_g_int_route & INT_ROUTE_PIN_2) != 0) << 0);
 
-    rc = set_register(bma253, REG_ADDR_INT_MAP_0, data[0]);
+    rc = set_register((struct bma253 *)bma253, REG_ADDR_INT_MAP_0, data[0]);
     if (rc != 0) {
         return rc;
     }
-    rc = set_register(bma253, REG_ADDR_INT_MAP_1, data[1]);
+    rc = set_register((struct bma253 *)bma253, REG_ADDR_INT_MAP_1, data[1]);
     if (rc != 0) {
         return rc;
     }
-    rc = set_register(bma253, REG_ADDR_INT_MAP_2, data[2]);
+    rc = set_register((struct bma253 *)bma253, REG_ADDR_INT_MAP_2, data[2]);
     if (rc != 0) {
         return rc;
     }
@@ -1044,7 +1072,7 @@ bma253_get_int_filters(const struct bma253 * bma253,
     uint8_t data;
     int rc;
 
-    rc = get_register(bma253, REG_ADDR_INT_SRC, &data);
+    rc = get_register((struct bma253 *)bma253, REG_ADDR_INT_SRC, &data);
     if (rc != 0) {
         return rc;
     }
@@ -1072,7 +1100,7 @@ bma253_set_int_filters(const struct bma253 * bma253,
            (int_filters->unfiltered_high_g_int << 1) |
            (int_filters->unfiltered_low_g_int << 0);
 
-    return set_register(bma253, REG_ADDR_INT_SRC, data);
+    return set_register((struct bma253 *)bma253, REG_ADDR_INT_SRC, data);
 }
 
 int
@@ -1082,7 +1110,7 @@ bma253_get_int_pin_electrical(const struct bma253 * bma253,
     uint8_t data;
     int rc;
 
-    rc = get_register(bma253, REG_ADDR_INT_OUT_CTRL, &data);
+    rc = get_register((struct bma253 *)bma253, REG_ADDR_INT_OUT_CTRL, &data);
     if (rc != 0) {
         return rc;
     }
@@ -1163,7 +1191,7 @@ bma253_set_int_pin_electrical(const struct bma253 * bma253,
         return SYS_EINVAL;
     }
 
-    return set_register(bma253, REG_ADDR_INT_OUT_CTRL, data);
+    return set_register((struct bma253 *)bma253, REG_ADDR_INT_OUT_CTRL, data);
 }
 
 int
@@ -1173,7 +1201,7 @@ bma253_get_int_latch(const struct bma253 * bma253,
     uint8_t data;
     int rc;
 
-    rc = get_register(bma253, REG_ADDR_INT_RST_LATCH, &data);
+    rc = get_register((struct bma253 *)bma253, REG_ADDR_INT_RST_LATCH, &data);
     if (rc != 0) {
         return rc;
     }
@@ -1289,7 +1317,7 @@ bma253_set_int_latch(const struct bma253 * bma253,
         return SYS_EINVAL;
     }
 
-    return set_register(bma253, REG_ADDR_INT_RST_LATCH, data);
+    return set_register((struct bma253 *)bma253, REG_ADDR_INT_RST_LATCH, data);
 }
 
 int
@@ -1299,7 +1327,7 @@ bma253_get_low_g_int_cfg(const struct bma253 * bma253,
     uint8_t data[3];
     int rc;
 
-    rc = get_registers(bma253, REG_ADDR_INT_0,
+    rc = get_registers((struct bma253 *)bma253, REG_ADDR_INT_0,
                        data, sizeof(data) / sizeof(*data));
     if (rc != 0) {
         return rc;
@@ -1338,15 +1366,15 @@ bma253_set_low_g_int_cfg(const struct bma253 * bma253,
     data[2] = (low_g_int_cfg->axis_summing << 2) |
               (((uint8_t)(low_g_int_cfg->hyster_g / 0.125) & 0x03) << 0);
 
-    rc = set_register(bma253, REG_ADDR_INT_0, data[0]);
+    rc = set_register((struct bma253 *)bma253, REG_ADDR_INT_0, data[0]);
     if (rc != 0) {
         return rc;
     }
-    rc = set_register(bma253, REG_ADDR_INT_1, data[1]);
+    rc = set_register((struct bma253 *)bma253, REG_ADDR_INT_1, data[1]);
     if (rc != 0) {
         return rc;
     }
-    rc = set_register(bma253, REG_ADDR_INT_2, data[2]);
+    rc = set_register((struct bma253 *)bma253, REG_ADDR_INT_2, data[2]);
     if (rc != 0) {
         return rc;
     }
@@ -1385,7 +1413,7 @@ bma253_get_high_g_int_cfg(const struct bma253 * bma253,
         return SYS_EINVAL;
     }
 
-    rc = get_registers(bma253, REG_ADDR_INT_2,
+    rc = get_registers((struct bma253 *)bma253, REG_ADDR_INT_2,
                        data, sizeof(data) / sizeof(*data));
     if (rc != 0) {
         return rc;
@@ -1446,15 +1474,15 @@ bma253_set_high_g_int_cfg(const struct bma253 * bma253,
     data[1] = (high_g_int_cfg->delay_ms >> 1) - 1;
     data[2] = high_g_int_cfg->thresh_g / thresh_scale;
 
-    rc = set_register(bma253, REG_ADDR_INT_2, data[0]);
+    rc = set_register((struct bma253 *)bma253, REG_ADDR_INT_2, data[0]);
     if (rc != 0) {
         return rc;
     }
-    rc = set_register(bma253, REG_ADDR_INT_3, data[1]);
+    rc = set_register((struct bma253 *)bma253, REG_ADDR_INT_3, data[1]);
     if (rc != 0) {
         return rc;
     }
-    rc = set_register(bma253, REG_ADDR_INT_4, data[2]);
+    rc = set_register((struct bma253 *)bma253, REG_ADDR_INT_4, data[2]);
     if (rc != 0) {
         return rc;
     }
@@ -1489,11 +1517,11 @@ bma253_get_slow_no_mot_int_cfg(const struct bma253 * bma253,
         return SYS_EINVAL;
     }
 
-    rc = get_register(bma253, REG_ADDR_INT_5, data + 0);
+    rc = get_register((struct bma253 *)bma253, REG_ADDR_INT_5, data + 0);
     if (rc != 0) {
         return rc;
     }
-    rc = get_register(bma253, REG_ADDR_INT_7, data + 1);
+    rc = get_register((struct bma253 *)bma253, REG_ADDR_INT_7, data + 1);
     if (rc != 0) {
         return rc;
     }
@@ -1584,11 +1612,11 @@ bma253_set_slow_no_mot_int_cfg(const struct bma253 * bma253,
     }
     data[1] = slow_no_mot_int_cfg->thresh_g / thresh_scale;
 
-    rc = set_register(bma253, REG_ADDR_INT_5, data[0]);
+    rc = set_register((struct bma253 *)bma253, REG_ADDR_INT_5, data[0]);
     if (rc != 0) {
         return rc;
     }
-    rc = set_register(bma253, REG_ADDR_INT_7, data[1]);
+    rc = set_register((struct bma253 *)bma253, REG_ADDR_INT_7, data[1]);
     if (rc != 0) {
         return rc;
     }
@@ -1622,7 +1650,7 @@ bma253_get_slope_int_cfg(const struct bma253 * bma253,
         return SYS_EINVAL;
     }
 
-    rc = get_registers(bma253, REG_ADDR_INT_5,
+    rc = get_registers((struct bma253 *)bma253, REG_ADDR_INT_5,
                        data, sizeof(data) / sizeof(*data));
     if (rc != 0) {
         return rc;
@@ -1672,11 +1700,11 @@ bma253_set_slope_int_cfg(const struct bma253 * bma253,
     data[0] = (slope_int_cfg->duration_p - 1) & 0x03;
     data[1] = slope_int_cfg->thresh_g / thresh_scale;
 
-    rc = set_register(bma253, REG_ADDR_INT_5, data[0]);
+    rc = set_register((struct bma253 *)bma253, REG_ADDR_INT_5, data[0]);
     if (rc != 0) {
         return rc;
     }
-    rc = set_register(bma253, REG_ADDR_INT_6, data[1]);
+    rc = set_register((struct bma253 *)bma253, REG_ADDR_INT_6, data[1]);
     if (rc != 0) {
         return rc;
     }
@@ -1710,7 +1738,7 @@ bma253_get_tap_int_cfg(const struct bma253 * bma253,
         return SYS_EINVAL;
     }
 
-    rc = get_registers(bma253, REG_ADDR_INT_8,
+    rc = get_registers((struct bma253 *)bma253, REG_ADDR_INT_8,
                        data, sizeof(data) / sizeof(*data));
     if (rc != 0) {
         return rc;
@@ -1878,11 +1906,11 @@ bma253_set_tap_int_cfg(const struct bma253 * bma253,
 
     data[1] |= (uint8_t)(tap_int_cfg->thresh_g / thresh_scale) & 0x1F;
 
-    rc = set_register(bma253, REG_ADDR_INT_8, data[0]);
+    rc = set_register((struct bma253 *)bma253, REG_ADDR_INT_8, data[0]);
     if (rc != 0) {
         return rc;
     }
-    rc = set_register(bma253, REG_ADDR_INT_9, data[1]);
+    rc = set_register((struct bma253 *)bma253, REG_ADDR_INT_9, data[1]);
     if (rc != 0) {
         return rc;
     }
@@ -1897,7 +1925,7 @@ bma253_get_orient_int_cfg(const struct bma253 * bma253,
     uint8_t data[2];
     int rc;
 
-    rc = get_registers(bma253, REG_ADDR_INT_A,
+    rc = get_registers((struct bma253 *)bma253, REG_ADDR_INT_A,
                        data, sizeof(data) / sizeof(*data));
     if (rc != 0) {
         return rc;
@@ -2000,11 +2028,11 @@ bma253_set_orient_int_cfg(const struct bma253 * bma253,
     data[1] = (orient_int_cfg->signal_up_dn << 6) |
               ((orient_int_cfg->blocking_angle & 0x3F) << 0);
 
-    rc = set_register(bma253, REG_ADDR_INT_A, data[0]);
+    rc = set_register((struct bma253 *)bma253, REG_ADDR_INT_A, data[0]);
     if (rc != 0) {
         return rc;
     }
-    rc = set_register(bma253, REG_ADDR_INT_B, data[1]);
+    rc = set_register((struct bma253 *)bma253, REG_ADDR_INT_B, data[1]);
     if (rc != 0) {
         return rc;
     }
@@ -2019,7 +2047,7 @@ bma253_get_flat_int_cfg(const struct bma253 * bma253,
     uint8_t data[2];
     int rc;
 
-    rc = get_registers(bma253, REG_ADDR_INT_C,
+    rc = get_registers((struct bma253 *)bma253, REG_ADDR_INT_C,
                        data, sizeof(data) / sizeof(*data));
     if (rc != 0) {
         return rc;
@@ -2085,11 +2113,11 @@ bma253_set_flat_int_cfg(const struct bma253 * bma253,
         data[1] |= flat_int_cfg->flat_hyster & 0x07;
     }
 
-    rc = set_register(bma253, REG_ADDR_INT_C, data[0]);
+    rc = set_register((struct bma253 *)bma253, REG_ADDR_INT_C, data[0]);
     if (rc != 0) {
         return rc;
     }
-    rc = set_register(bma253, REG_ADDR_INT_D, data[1]);
+    rc = set_register((struct bma253 *)bma253, REG_ADDR_INT_D, data[1]);
     if (rc != 0) {
         return rc;
     }
@@ -2104,7 +2132,7 @@ bma253_get_fifo_wmark_level(const struct bma253 * bma253,
     uint8_t data;
     int rc;
 
-    rc = get_register(bma253, REG_ADDR_FIFO_CONFIG_0, &data);
+    rc = get_register((struct bma253 *)bma253, REG_ADDR_FIFO_CONFIG_0, &data);
     if (rc != 0) {
         return rc;
     }
@@ -2126,7 +2154,7 @@ bma253_set_fifo_wmark_level(const struct bma253 * bma253,
 
     data = wmark_level & 0x3F;
 
-    return set_register(bma253, REG_ADDR_FIFO_CONFIG_0, data);
+    return set_register((struct bma253 *)bma253, REG_ADDR_FIFO_CONFIG_0, data);
 }
 
 int
@@ -2136,7 +2164,7 @@ bma253_get_self_test_cfg(const struct bma253 * bma253,
     uint8_t data;
     int rc;
 
-    rc = get_register(bma253, REG_ADDR_PMU_SELF_TEST, &data);
+    rc = get_register((struct bma253 *)bma253, REG_ADDR_PMU_SELF_TEST, &data);
     if (rc != 0) {
         return rc;
     }
@@ -2220,7 +2248,7 @@ bma253_set_self_test_cfg(const struct bma253 * bma253,
         }
     }
 
-    return set_register(bma253, REG_ADDR_PMU_SELF_TEST, data);
+    return set_register((struct bma253 *)bma253, REG_ADDR_PMU_SELF_TEST, data);
 }
 
 int
@@ -2233,7 +2261,7 @@ bma253_get_nvm_control(const struct bma253 * bma253,
     uint8_t data;
     int rc;
 
-    rc = get_register(bma253, REG_ADDR_TRIM_NVM_CTRL, &data);
+    rc = get_register((struct bma253 *)bma253, REG_ADDR_TRIM_NVM_CTRL, &data);
     if (rc != 0) {
         return rc;
     }
@@ -2258,7 +2286,7 @@ bma253_set_nvm_control(const struct bma253 * bma253,
            (store_into_nvm << 1) |
            (nvm_unlocked << 0);
 
-    return set_register(bma253, REG_ADDR_TRIM_NVM_CTRL, data);
+    return set_register((struct bma253 *)bma253, REG_ADDR_TRIM_NVM_CTRL, data);
 }
 
 int
@@ -2268,7 +2296,7 @@ bma253_get_i2c_watchdog(const struct bma253 * bma253,
     uint8_t data;
     int rc;
 
-    rc = get_register(bma253, REG_ADDR_BGW_SPI3_WDT, &data);
+    rc = get_register((struct bma253 *)bma253, REG_ADDR_BGW_SPI3_WDT, &data);
     if (rc != 0) {
         return rc;
     }
@@ -2306,7 +2334,7 @@ bma253_set_i2c_watchdog(const struct bma253 * bma253,
         return SYS_EINVAL;
     }
 
-    return set_register(bma253, REG_ADDR_BGW_SPI3_WDT, data);
+    return set_register((struct bma253 *)bma253, REG_ADDR_BGW_SPI3_WDT, data);
 }
 
 int
@@ -2319,7 +2347,7 @@ bma253_get_fast_ofc_cfg(const struct bma253 * bma253,
     uint8_t data[2];
     int rc;
 
-    rc = get_registers(bma253, REG_ADDR_OFC_CTRL,
+    rc = get_registers((struct bma253 *)bma253, REG_ADDR_OFC_CTRL,
                        data, sizeof(data) / sizeof(*data));
     if (rc != 0) {
         return rc;
@@ -2424,11 +2452,11 @@ bma253_set_fast_ofc_cfg(const struct bma253 * bma253,
         data[0] |= axis_value << 5;
     }
 
-    rc = set_register(bma253, REG_ADDR_OFC_SETTING, data[1]);
+    rc = set_register((struct bma253 *)bma253, REG_ADDR_OFC_SETTING, data[1]);
     if (rc != 0) {
         return rc;
     }
-    rc = set_register(bma253, REG_ADDR_OFC_CTRL, data[0]);
+    rc = set_register((struct bma253 *)bma253, REG_ADDR_OFC_CTRL, data[0]);
     if (rc != 0) {
         return rc;
     }
@@ -2443,7 +2471,7 @@ bma253_get_slow_ofc_cfg(const struct bma253 * bma253,
     uint8_t data[2];
     int rc;
 
-    rc = get_registers(bma253, REG_ADDR_OFC_CTRL,
+    rc = get_registers((struct bma253 *)bma253, REG_ADDR_OFC_CTRL,
                        data, sizeof(data) / sizeof(*data));
     if (rc != 0) {
         return rc;
@@ -2469,11 +2497,11 @@ bma253_set_slow_ofc_cfg(const struct bma253 * bma253,
               (slow_ofc_cfg->ofc_x_enabled << 0);
     data[1] = slow_ofc_cfg->high_bw_cut_off << 0;
 
-    rc = set_register(bma253, REG_ADDR_OFC_SETTING, data[1]);
+    rc = set_register((struct bma253 *)bma253, REG_ADDR_OFC_SETTING, data[1]);
     if (rc != 0) {
         return rc;
     }
-    rc = set_register(bma253, REG_ADDR_OFC_CTRL, data[0]);
+    rc = set_register((struct bma253 *)bma253, REG_ADDR_OFC_CTRL, data[0]);
     if (rc != 0) {
         return rc;
     }
@@ -2484,7 +2512,7 @@ bma253_set_slow_ofc_cfg(const struct bma253 * bma253,
 int
 bma253_set_ofc_reset(const struct bma253 * bma253)
 {
-    return set_register(bma253, REG_ADDR_OFC_CTRL, 0x80);
+    return set_register((struct bma253 *)bma253, REG_ADDR_OFC_CTRL, 0x80);
 }
 
 int
@@ -2510,7 +2538,7 @@ bma253_get_ofc_offset(const struct bma253 * bma253,
         return SYS_EINVAL;
     }
 
-    rc = get_register(bma253, reg_addr, &data);
+    rc = get_register((struct bma253 *)bma253, reg_addr, &data);
     if (rc != 0) {
         return rc;
     }
@@ -2544,7 +2572,7 @@ bma253_set_ofc_offset(const struct bma253 * bma253,
 
     data = (int8_t)(offset_g / 0.00781);
 
-    return set_register(bma253, reg_addr, data);
+    return set_register((struct bma253 *)bma253, reg_addr, data);
 }
 
 int
@@ -2565,7 +2593,7 @@ bma253_get_saved_data(const struct bma253 * bma253,
         return SYS_EINVAL;
     }
 
-    return get_register(bma253, reg_addr, saved_data_val);
+    return get_register((struct bma253 *)bma253, reg_addr, saved_data_val);
 }
 
 int
@@ -2586,7 +2614,7 @@ bma253_set_saved_data(const struct bma253 * bma253,
         return SYS_EINVAL;
     }
 
-    return set_register(bma253, reg_addr, saved_data_val);
+    return set_register((struct bma253 *)bma253, reg_addr, saved_data_val);
 }
 
 int
@@ -2596,7 +2624,7 @@ bma253_get_fifo_cfg(const struct bma253 * bma253,
     uint8_t data;
     int rc;
 
-    rc = get_register(bma253, REG_ADDR_FIFO_CONFIG_1, &data);
+    rc = get_register((struct bma253 *)bma253, REG_ADDR_FIFO_CONFIG_1, &data);
     if (rc != 0) {
         return rc;
     }
@@ -2670,7 +2698,7 @@ bma253_set_fifo_cfg(const struct bma253 * bma253,
         break;
     }
 
-    return set_register(bma253, REG_ADDR_FIFO_CONFIG_1, data);
+    return set_register((struct bma253 *)bma253, REG_ADDR_FIFO_CONFIG_1, data);
 }
 
 int
@@ -2714,7 +2742,7 @@ bma253_get_fifo(const struct bma253 * bma253,
         return SYS_EINVAL;
     }
 
-    rc = get_registers(bma253, REG_ADDR_FIFO_DATA, data, size);
+    rc = get_registers((struct bma253 *)bma253, REG_ADDR_FIFO_DATA, data, size);
     if (rc != 0) {
         return rc;
     }
@@ -4731,6 +4759,11 @@ bma253_init(struct os_dev * dev, void * arg)
         return rc;
     }
 
+    rc = sensor_itf_lock_init(arg);
+    if (rc) {
+        goto err;
+    }
+
     sensor->s_next_run = OS_TIMEOUT_NEVER;
 
     rc = sensor_mgr_register(sensor);
@@ -4754,5 +4787,6 @@ bma253_init(struct os_dev * dev, void * arg)
 
     bma253->power = BMA253_POWER_MODE_NORMAL;
 
-    return 0;
+err:
+    return rc;
 }

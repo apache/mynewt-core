@@ -30,6 +30,7 @@
 #include "mpu6050_priv.h"
 #include "log/log.h"
 #include "stats/stats.h"
+#include <syscfg/syscfg.h>
 
 /* Define the stats section and records */
 STATS_SECT_START(mpu6050_stat_section)
@@ -83,6 +84,11 @@ mpu6050_write8(struct sensor_itf *itf, uint8_t reg, uint32_t value)
         .buffer = payload
     };
 
+    rc = sensor_itf_lock(itf, MYNEWT_VAL(MPU6050_ITF_LOCK_TMO));
+    if (rc) {
+        return rc;
+    }
+
     rc = hal_i2c_master_write(itf->si_num, &data_struct,
                               OS_TICKS_PER_SEC / 10, 1);
 
@@ -91,6 +97,8 @@ mpu6050_write8(struct sensor_itf *itf, uint8_t reg, uint32_t value)
                        itf->si_addr, reg, value);
         STATS_INC(g_mpu6050stats, read_errors);
     }
+
+    sensor_itf_unlock(itf);
 
     return rc;
 }
@@ -115,6 +123,11 @@ mpu6050_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
         .buffer = &reg
     };
 
+    rc = sensor_itf_lock(itf, MYNEWT_VAL(MPU6050_ITF_LOCK_TMO));
+    if (rc) {
+        return rc;
+    }
+
     /* Register write */
     rc = hal_i2c_master_write(itf->si_num, &data_struct,
                               OS_TICKS_PER_SEC / 10, 0);
@@ -133,6 +146,9 @@ mpu6050_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
          MPU6050_ERR("Failed to read from 0x%02X:0x%02X\n", itf->si_addr, reg);
          STATS_INC(g_mpu6050stats, read_errors);
     }
+
+    sensor_itf_unlock(itf);
+
     return rc;
 }
 
@@ -156,6 +172,11 @@ mpu6050_read48(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer)
         .buffer = &reg
     };
 
+    rc = sensor_itf_lock(itf, MYNEWT_VAL(MPU6050_ITF_LOCK_TMO));
+    if (rc) {
+        return rc;
+    }
+
     /* Register write */
     rc = hal_i2c_master_write(itf->si_num, &data_struct,
                               OS_TICKS_PER_SEC / 10, 0);
@@ -175,6 +196,9 @@ mpu6050_read48(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer)
          MPU6050_ERR("Failed to read from 0x%02X:0x%02X\n", itf->si_addr, reg);
          STATS_INC(g_mpu6050stats, read_errors);
     }
+
+    sensor_itf_unlock(itf);
+
     return rc;
 }
 
@@ -405,6 +429,11 @@ mpu6050_init(struct os_dev *dev, void *arg)
     }
 
     rc = sensor_set_interface(sensor, arg);
+    if (rc) {
+        return rc;
+    }
+
+    rc = sensor_itf_lock_init(arg);
     if (rc) {
         return rc;
     }

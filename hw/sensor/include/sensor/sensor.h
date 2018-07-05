@@ -501,6 +501,9 @@ struct sensor_itf {
     /* Sensor interface high int pin */
     uint8_t si_high_pin;
 
+    /* Mutex for interface access */
+    struct os_mutex si_lock;
+
     /* Sensor interface interrupts pins */
     /* XXX We should probably remove low/high pins and replace it with those
      */
@@ -587,6 +590,37 @@ struct sensor {
     /* The next sensor in the global sensor list. */
     SLIST_ENTRY(sensor) s_next;
 };
+
+/**
+ * Initializes a sensor_itf lock
+ *
+ * @param si The sensor_itf to initialize lock for
+ *
+ * @return 0 on success, non-zero error code on failure.
+ */
+int
+sensor_itf_lock_init(struct sensor_itf *si);
+
+/**
+ * Lock access to the sensor_itf specified by si.  Blocks until lock acquired.
+ *
+ * @param si The sensor_itf to lock
+ * @param timeout The timeout
+ *
+ * @return 0 on success, non-zero on failure.
+ */
+int
+sensor_itf_lock(struct sensor_itf *si, os_time_t timeout);
+
+/**
+ * Unlock access to the sensor_itf specified by si.
+ *
+ * @param si The sensor_itf to unlock access to
+ *
+ * @return 0 on success, non-zero on failure.
+ */
+void
+sensor_itf_unlock(struct sensor_itf *si);
 
 /**
  * Initialize a sensor

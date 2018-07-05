@@ -30,3 +30,6 @@ syscfg.defs:
     BNO055_SHELL_ITF_ADDR:
         description: 'BNO055 I2C Address'
         value: 0x28
+    BNO055_ITF_LOCK_TMO:
+        description: 'BNO055 interface lock timeout in milliseconds'
+        value: 30

@@ -33,6 +33,7 @@
 #include "hal/hal_gpio.h"
 #include "log/log.h"
 #include "stats/stats.h"
+#include <syscfg/syscfg.h>
 
 #ifndef MATHLIB_SUPPORT
 static double NAN = 0.0/0.0;
@@ -151,6 +152,11 @@ bmp280_init(struct os_dev *dev, void *arg)
 
     /* Set the interface */
     rc = sensor_set_interface(sensor, arg);
+    if (rc) {
+        goto err;
+    }
+
+    rc = sensor_itf_lock_init(arg);
     if (rc) {
         goto err;
     }

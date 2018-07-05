@@ -33,3 +33,6 @@ syscfg.defs:
     TSL2561_SHELL_ITF_ADDR:
         description: 'TSL2561 I2C Addresss'
         value: 0x39
+    TSL2561_ITF_LOCK_TMO:
+        description: 'TSL2561 interface lock timeout in milliseconds'
+        value: 30

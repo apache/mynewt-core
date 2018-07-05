@@ -47,6 +47,38 @@ struct led_itf {
 
     /* LED chip address, only needed for I2C */
     uint16_t li_addr;
+
+    /* Mutex for shared interface access */
+    struct os_mutex li_lock;
 };
+
+static inline int
+led_itf_lock_init(struct led_itf *li)
+{
+    return os_mutex_init(&li->li_lock);
+}
+
+static inline int
+led_itf_lock(struct led_itf *li, uint32_t timeout)
+{
+
+    int rc;
+    os_time_t ticks;
+
+    os_time_ms_to_ticks(timeout, &ticks);
+
+    rc = os_mutex_pend(&li->li_lock, ticks);
+    if (rc == 0 || rc == OS_NOT_STARTED) {
+        return (0);
+    }
+
+    return (rc);
+}
+
+static inline void
+led_itf_unlock(struct led_itf *li)
+{
+    os_mutex_release(&li->li_lock);
+}
 
 #endif

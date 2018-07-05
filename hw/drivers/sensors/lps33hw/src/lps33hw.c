@@ -33,6 +33,7 @@
 #include "lps33hw_priv.h"
 #include "log/log.h"
 #include "stats/stats.h"
+#include <syscfg/syscfg.h>
 
 static struct hal_spi_settings spi_lps33hw_settings = {
     .data_order = HAL_SPI_MSB_FIRST,
@@ -252,12 +253,19 @@ lps33hw_set_reg(struct sensor_itf *itf, uint8_t reg, uint8_t value)
 {
     int rc;
 
-    if (itf->si_type == SENSOR_ITF_I2C) {
-           rc = lps33hw_i2c_set_reg(itf, reg, value);
-       } else {
-           rc = lps33hw_spi_set_reg(itf, reg, value);
-       }
+    rc = sensor_itf_lock(itf, MYNEWT_VAL(LPS33HW_ITF_LOCK_TMO));
+    if (rc) {
+        goto err;
+    }
 
+    if (itf->si_type == SENSOR_ITF_I2C) {
+        rc = lps33hw_i2c_set_reg(itf, reg, value);
+    } else {
+        rc = lps33hw_spi_set_reg(itf, reg, value);
+    }
+
+    sensor_itf_unlock(itf);
+err:
     return rc;
 }
 
@@ -376,12 +384,20 @@ lps33hw_get_regs(struct sensor_itf *itf, uint8_t reg, uint8_t size,
 {
     int rc;
 
+    rc = sensor_itf_lock(itf, MYNEWT_VAL(LPS33HW_ITF_LOCK_TMO));
+    if (rc) {
+        goto err;
+    }
+
     if (itf->si_type == SENSOR_ITF_I2C) {
         rc = lps33hw_i2c_get_regs(itf, reg, size, buffer);
     } else {
         rc = lps33hw_spi_get_regs(itf, reg, size, buffer);
     }
 
+    sensor_itf_unlock(itf);
+
+err:
     return rc;
 }
 
@@ -882,6 +898,11 @@ lps33hw_init(struct os_dev *dev, void *arg)
     }
 
     rc = sensor_set_interface(sensor, arg);
+    if (rc) {
+        return rc;
+    }
+
+    rc = sensor_itf_lock_init(arg);
     if (rc) {
         return rc;
     }

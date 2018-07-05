@@ -47,6 +47,7 @@
 #include "tsl2561_priv.h"
 #include "log/log.h"
 #include "stats/stats.h"
+#include <syscfg/syscfg.h>
 
 /* Define the stats section and records */
 STATS_SECT_START(tsl2561_stat_section)
@@ -91,6 +92,11 @@ tsl2561_write8(struct sensor_itf *itf, uint8_t reg, uint32_t value)
         .buffer = payload
     };
 
+    rc = sensor_itf_lock(itf, MYNEWT_VAL(TSL2561_ITF_LOCK_TMO));
+    if (rc) {
+        goto err;
+    }
+
     rc = hal_i2c_master_write(itf->si_num, &data_struct,
                               OS_TICKS_PER_SEC / 10, 1);
     if (rc) {
@@ -99,6 +105,9 @@ tsl2561_write8(struct sensor_itf *itf, uint8_t reg, uint32_t value)
         STATS_INC(g_tsl2561stats, errors);
     }
 
+    sensor_itf_unlock(itf);
+
+err:
     return rc;
 }
 
@@ -114,6 +123,11 @@ tsl2561_write16(struct sensor_itf *itf, uint8_t reg, uint16_t value)
         .buffer = payload
     };
 
+    rc = sensor_itf_lock(itf, MYNEWT_VAL(TSL2561_ITF_LOCK_TMO));
+    if (rc) {
+        goto err;
+    }
+
     rc = hal_i2c_master_write(itf->si_num, &data_struct,
                               OS_TICKS_PER_SEC / 10, 1);
     if (rc) {
@@ -121,6 +135,9 @@ tsl2561_write16(struct sensor_itf *itf, uint8_t reg, uint16_t value)
                     reg, payload[0], payload[1]);
     }
 
+    sensor_itf_unlock(itf);
+
+err:
     return rc;
 }
 
@@ -135,6 +152,11 @@ tsl2561_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
         .len = 1,
         .buffer = &payload
     };
+
+    rc = sensor_itf_lock(itf, MYNEWT_VAL(TSL2561_ITF_LOCK_TMO));
+    if (rc) {
+        goto err;
+    }
 
     /* Register write */
     payload = reg;
@@ -154,6 +176,8 @@ tsl2561_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
         TSL2561_ERR("Failed to read @0x%02X\n", reg);
     }
 
+    sensor_itf_unlock(itf);
+
     return 0;
 err:
     return rc;
@@ -170,6 +194,11 @@ tsl2561_read16(struct sensor_itf *itf, uint8_t reg, uint16_t *value)
         .len = 1,
         .buffer = payload
     };
+
+    rc = sensor_itf_lock(itf, MYNEWT_VAL(TSL2561_ITF_LOCK_TMO));
+    if (rc) {
+        goto err;
+    }
 
     /* Register write */
     rc = hal_i2c_master_write(itf->si_num, &data_struct,
@@ -189,6 +218,8 @@ tsl2561_read16(struct sensor_itf *itf, uint8_t reg, uint16_t *value)
         TSL2561_ERR("Failed to read @0x%02X\n", reg);
         goto err;
     }
+
+    sensor_itf_unlock(itf);
 
     return 0;
 err:
@@ -590,6 +621,11 @@ tsl2561_init(struct os_dev *dev, void *arg)
 
     /* Set the interface */
     rc = sensor_set_interface(sensor, arg);
+    if (rc) {
+        goto err;
+    }
+
+    rc = sensor_itf_lock_init(arg);
     if (rc) {
         goto err;
     }
