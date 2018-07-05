@@ -586,11 +586,180 @@ bq27z561_get_temp(struct bq27z561 *dev, float *temp_c)
 }
 
 int
+bq27z561_get_temp_lo_set_threshold(struct bq27z561 *dev, int8_t *temp_c)
+{
+    int rc;
+
+    rc = bq27z561_rd_std_reg_byte(dev, BQ27Z561_REG_TEMP_LO_SET_TH,
+            (uint8_t *)temp_c);
+
+    return rc;
+}
+
+int
+bq27z561_set_temp_lo_set_threshold(struct bq27z561 *dev, int8_t temp_c)
+{
+    int rc;
+    uint8_t temp = (uint8_t)(temp_c);
+
+    rc = bq27z561_wr_std_reg_byte(dev, BQ27Z561_REG_TEMP_LO_SET_TH, temp);
+
+    return rc;
+}
+
+int
+bq27z561_get_temp_lo_clr_threshold(struct bq27z561 *dev, int8_t *temp_c)
+{
+    int rc;
+
+    rc = bq27z561_rd_std_reg_byte(dev, BQ27Z561_REG_TEMP_LO_CLR_TH,
+            (uint8_t *)temp_c);
+
+    return rc;
+}
+
+int
+bq27z561_set_temp_lo_clr_threshold(struct bq27z561 *dev, int8_t temp_c)
+{
+    int rc;
+
+    rc = bq27z561_wr_std_reg_byte(dev, BQ27Z561_REG_TEMP_LO_CLR_TH,
+            (uint8_t)temp_c);
+
+    return rc;
+}
+
+int
+bq27z561_get_temp_hi_set_threshold(struct bq27z561 *dev, int8_t *temp_c)
+{
+    int rc;
+
+    rc = bq27z561_rd_std_reg_byte(dev, BQ27Z561_REG_TEMP_HI_SET_TH,
+            (uint8_t *)temp_c);
+
+    return rc;
+}
+
+int
+bq27z561_set_temp_hi_set_threshold(struct bq27z561 *dev, int8_t temp_c)
+{
+    int rc;
+
+    rc = bq27z561_wr_std_reg_byte(dev, BQ27Z561_REG_TEMP_HI_SET_TH,
+            (uint8_t)temp_c);
+
+    return rc;
+}
+
+int
+bq27z561_get_temp_hi_clr_threshold(struct bq27z561 *dev, int8_t *temp_c)
+{
+    int rc;
+
+    rc = bq27z561_rd_std_reg_byte(dev, BQ27Z561_REG_TEMP_HI_CLR_TH,
+            (uint8_t *)temp_c);
+
+    return rc;
+}
+
+int
+bq27z561_set_temp_hi_clr_threshold(struct bq27z561 *dev, int8_t temp_c)
+{
+    int rc;
+
+    rc = bq27z561_wr_std_reg_byte(dev, BQ27Z561_REG_TEMP_HI_CLR_TH,
+            (uint8_t)temp_c);
+
+    return rc;
+}
+
+int
 bq27z561_get_voltage(struct bq27z561 *dev, uint16_t *voltage)
 {
     int rc;
 
     rc = bq27z561_rd_std_reg_word(dev, BQ27Z561_REG_VOLT, voltage);
+
+    return rc;
+}
+
+int
+bq27z561_get_voltage_lo_set_threshold(struct bq27z561 *dev, uint16_t *voltage)
+{
+    int rc;
+
+    rc = bq27z561_rd_std_reg_word(dev, BQ27Z561_REG_VOLT_LO_SET_TH, voltage);
+
+    return rc;
+}
+
+int
+bq27z561_set_voltage_lo_set_threshold(struct bq27z561 *dev, uint16_t voltage)
+{
+    int rc;
+
+    rc = bq27z561_wr_std_reg_word(dev, BQ27Z561_REG_VOLT_LO_SET_TH, voltage);
+
+    return rc;
+}
+
+int
+bq27z561_get_voltage_lo_clr_threshold(struct bq27z561 *dev, uint16_t *voltage)
+{
+    int rc;
+
+    rc = bq27z561_rd_std_reg_word(dev, BQ27Z561_REG_VOLT_LO_CLR_TH, voltage);
+
+    return rc;
+}
+
+int
+bq27z561_set_voltage_lo_clr_threshold(struct bq27z561 *dev, uint16_t voltage)
+{
+    int rc;
+
+    rc = bq27z561_wr_std_reg_word(dev, BQ27Z561_REG_VOLT_LO_CLR_TH, voltage);
+
+    return rc;
+}
+
+int
+bq27z561_get_voltage_hi_set_threshold(struct bq27z561 *dev, uint16_t *voltage)
+{
+    int rc;
+
+    rc = bq27z561_rd_std_reg_word(dev, BQ27Z561_REG_VOLT_HI_SET_TH, voltage);
+
+    return rc;
+}
+
+int
+bq27z561_set_voltage_hi_set_threshold(struct bq27z561 *dev, uint16_t voltage)
+{
+    int rc;
+
+    rc = bq27z561_rd_std_reg_word(dev, BQ27Z561_REG_VOLT_HI_SET_TH, &voltage);
+
+    return rc;
+}
+
+int
+bq27z561_get_voltage_hi_clr_threshold(struct bq27z561 *dev, uint16_t *voltage)
+{
+    int rc;
+
+    rc = bq27z561_rd_std_reg_word(dev, BQ27Z561_REG_VOLT_HI_CLR_TH, voltage);
+
+    return rc;
+}
+
+int
+bq27z561_set_voltage_hi_clr_threshold(struct bq27z561 *dev, uint16_t voltage)
+{
+    int rc;
+
+    rc = bq27z561_wr_std_reg_word(dev, BQ27Z561_REG_VOLT_HI_CLR_TH, voltage);
+
     return rc;
 }
 
