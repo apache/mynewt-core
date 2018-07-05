@@ -23,6 +23,9 @@
 #include "log/log.h"
 #include "modlog/modlog.h"
 
+/* Only enable modlog if logging is also enabled. */
+#if MYNEWT_VAL(LOG_FULL)
+
 struct modlog_mapping {
     SLIST_ENTRY(modlog_mapping) next;
     struct modlog_desc desc;
@@ -493,3 +496,11 @@ modlog_init(void)
     SYSINIT_PANIC_ASSERT(rc == 0);
 #endif
 }
+
+#else /* LOG_FULL */
+
+void
+modlog_init(void)
+{ }
+
+#endif /* LOG_FULL */
