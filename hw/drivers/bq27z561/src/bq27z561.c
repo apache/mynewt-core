@@ -927,6 +927,26 @@ bq27z561_battery_property_get(struct battery_driver *driver,
         rc = bq27z561_get_voltage((struct bq27z561 *) driver->bd_driver_data,
                                   &val.bpv_u16);
         property->bp_value.bpv_voltage = val.bpv_u16;
+    } else if (property->bp_type == BATTERY_PROP_VOLTAGE_NOW &&
+            property->bp_flags == BATTERY_PROPERTY_FLAGS_LOW_ALARM_SET_THRESHOLD) {
+            rc = bq27z561_get_voltage_lo_set_threshold(
+                    (struct bq27z561 *) driver->bd_driver_data, &val.bpv_u16);
+            property->bp_value.bpv_voltage = val.bpv_u16;
+    } else if (property->bp_type == BATTERY_PROP_VOLTAGE_NOW &&
+            property->bp_flags == BATTERY_PROPERTY_FLAGS_LOW_ALARM_CLEAR_THRESHOLD) {
+            rc = bq27z561_get_voltage_lo_clr_threshold(
+                    (struct bq27z561 *) driver->bd_driver_data, &val.bpv_u16);
+            property->bp_value.bpv_voltage = val.bpv_u16;
+    } else if (property->bp_type == BATTERY_PROP_VOLTAGE_NOW &&
+            property->bp_flags == BATTERY_PROPERTY_FLAGS_HIGH_ALARM_SET_THRESHOLD) {
+            rc = bq27z561_get_voltage_hi_set_threshold(
+                    (struct bq27z561 *) driver->bd_driver_data, &val.bpv_u16);
+            property->bp_value.bpv_voltage = val.bpv_u16;
+    } else if (property->bp_type == BATTERY_PROP_VOLTAGE_NOW &&
+            property->bp_flags == BATTERY_PROPERTY_FLAGS_HIGH_ALARM_CLEAR_THRESHOLD) {
+            rc = bq27z561_get_voltage_hi_clr_threshold(
+                    (struct bq27z561 *) driver->bd_driver_data, &val.bpv_u16);
+            property->bp_value.bpv_voltage = val.bpv_u16;
     } else if (property->bp_type == BATTERY_PROP_STATUS &&
                property->bp_flags == 0) {
         rc = bq27z561_get_batt_status((struct bq27z561 *) driver->bd_driver_data,
@@ -973,6 +993,26 @@ bq27z561_battery_property_get(struct battery_driver *driver,
         rc = bq27z561_get_temp(
                 (struct bq27z561 *) driver->bd_driver_data, &val.bpv_flt);
         property->bp_value.bpv_temperature = val.bpv_flt;
+    } else if (property->bp_type == BATTERY_PROP_TEMP_NOW &&
+            property->bp_flags == BATTERY_PROPERTY_FLAGS_LOW_ALARM_SET_THRESHOLD) {
+            rc = bq27z561_get_temp_lo_set_threshold(
+                    (struct bq27z561 *) driver->bd_driver_data, &val.bpv_i8);
+            property->bp_value.bpv_temperature = val.bpv_i8;
+    } else if (property->bp_type == BATTERY_PROP_TEMP_NOW &&
+            property->bp_flags == BATTERY_PROPERTY_FLAGS_LOW_ALARM_CLEAR_THRESHOLD) {
+            rc = bq27z561_get_temp_lo_clr_threshold(
+                    (struct bq27z561 *) driver->bd_driver_data, &val.bpv_i8);
+            property->bp_value.bpv_temperature = val.bpv_i8;
+    } else if (property->bp_type == BATTERY_PROP_TEMP_NOW &&
+            property->bp_flags == BATTERY_PROPERTY_FLAGS_HIGH_ALARM_SET_THRESHOLD) {
+            rc = bq27z561_get_temp_hi_set_threshold(
+                    (struct bq27z561 *) driver->bd_driver_data, &val.bpv_i8);
+            property->bp_value.bpv_temperature = val.bpv_i8;
+    } else if (property->bp_type == BATTERY_PROP_TEMP_NOW &&
+            property->bp_flags == BATTERY_PROPERTY_FLAGS_HIGH_ALARM_CLEAR_THRESHOLD) {
+            rc = bq27z561_get_temp_hi_clr_threshold(
+                    (struct bq27z561 *) driver->bd_driver_data, &val.bpv_i8);
+            property->bp_value.bpv_temperature = val.bpv_i8;
     } else {
         rc = -1;
         assert(0);
@@ -992,7 +1032,50 @@ bq27z561_battery_property_set(struct battery_driver *driver,
 {
     int rc = 0;
 
-    /* TODO: Not yet implemented */
+    if (property->bp_type == BATTERY_PROP_VOLTAGE_NOW &&
+        property->bp_flags == BATTERY_PROPERTY_FLAGS_LOW_ALARM_SET_THRESHOLD) {
+        rc = bq27z561_set_voltage_lo_set_threshold(
+                (struct bq27z561 *)driver->bd_driver_data,
+                property->bp_value.bpv_voltage);
+    } else if (property->bp_type == BATTERY_PROP_VOLTAGE_NOW &&
+               property->bp_flags == BATTERY_PROPERTY_FLAGS_LOW_ALARM_CLEAR_THRESHOLD) {
+        rc = bq27z561_set_voltage_lo_clr_threshold(
+                (struct bq27z561 *)driver->bd_driver_data,
+                property->bp_value.bpv_voltage);
+    } else if (property->bp_type == BATTERY_PROP_VOLTAGE_NOW &&
+               property->bp_flags == BATTERY_PROPERTY_FLAGS_HIGH_ALARM_SET_THRESHOLD) {
+        rc = bq27z561_set_voltage_hi_set_threshold(
+                (struct bq27z561 *)driver->bd_driver_data,
+                property->bp_value.bpv_voltage);
+    } else if (property->bp_type == BATTERY_PROP_VOLTAGE_NOW &&
+               property->bp_flags == BATTERY_PROPERTY_FLAGS_HIGH_ALARM_CLEAR_THRESHOLD) {
+        rc = bq27z561_set_voltage_hi_clr_threshold(
+                (struct bq27z561 *)driver->bd_driver_data,
+                property->bp_value.bpv_voltage);
+    } else if (property->bp_type == BATTERY_PROP_TEMP_NOW &&
+            property->bp_flags == BATTERY_PROPERTY_FLAGS_LOW_ALARM_SET_THRESHOLD) {
+            rc = bq27z561_set_temp_lo_set_threshold(
+                    (struct bq27z561 *) driver->bd_driver_data,
+                    (int8_t)property->bp_value.bpv_temperature);
+    } else if (property->bp_type == BATTERY_PROP_TEMP_NOW &&
+                   property->bp_flags == BATTERY_PROPERTY_FLAGS_LOW_ALARM_CLEAR_THRESHOLD) {
+            rc = bq27z561_set_temp_lo_clr_threshold(
+                    (struct bq27z561 *) driver->bd_driver_data,
+                    (int16_t)property->bp_value.bpv_temperature);
+    } else if (property->bp_type == BATTERY_PROP_TEMP_NOW &&
+                   property->bp_flags == BATTERY_PROPERTY_FLAGS_HIGH_ALARM_SET_THRESHOLD) {
+            rc = bq27z561_set_temp_hi_set_threshold(
+                    (struct bq27z561 *) driver->bd_driver_data,
+                    (int16_t)property->bp_value.bpv_temperature);
+    } else if (property->bp_type == BATTERY_PROP_TEMP_NOW &&
+                   property->bp_flags == BATTERY_PROPERTY_FLAGS_HIGH_ALARM_CLEAR_THRESHOLD) {
+            rc = bq27z561_set_temp_hi_clr_threshold(
+                    (struct bq27z561 *) driver->bd_driver_data,
+                    (int16_t)property->bp_value.bpv_temperature);
+    } else {
+        rc = -1;
+        assert(0);
+    }
     return rc;
 }
 
@@ -1026,7 +1109,22 @@ static const struct battery_driver_property bq27z561_battery_properties[] = {
     { BATTERY_PROP_TIME_TO_EMPTY_NOW, 0, "TimeToEmpty" },
     { BATTERY_PROP_TIME_TO_FULL_NOW, 0, "TimeToFull" },
     { BATTERY_PROP_CYCLE_COUNT, 0, "CycleCount" },
-    /* TODO: Add threshold properties supported by fuel gauge in hardware */
+    { BATTERY_PROP_VOLTAGE_NOW,
+            BATTERY_PROPERTY_FLAGS_LOW_ALARM_SET_THRESHOLD, "LoVoltAlarmSet" },
+    { BATTERY_PROP_VOLTAGE_NOW,
+            BATTERY_PROPERTY_FLAGS_LOW_ALARM_CLEAR_THRESHOLD, "LoVoltAlarmClear" },
+    { BATTERY_PROP_VOLTAGE_NOW,
+            BATTERY_PROPERTY_FLAGS_HIGH_ALARM_SET_THRESHOLD, "HiVoltAlarmSet" },
+    { BATTERY_PROP_VOLTAGE_NOW,
+            BATTERY_PROPERTY_FLAGS_HIGH_ALARM_CLEAR_THRESHOLD, "HiVoltAlarmClear" },
+    { BATTERY_PROP_TEMP_NOW,
+            BATTERY_PROPERTY_FLAGS_LOW_ALARM_SET_THRESHOLD, "LoTempAlarmSet" },
+    { BATTERY_PROP_TEMP_NOW,
+            BATTERY_PROPERTY_FLAGS_LOW_ALARM_CLEAR_THRESHOLD, "LoTempAlarmClear" },
+    { BATTERY_PROP_TEMP_NOW,
+            BATTERY_PROPERTY_FLAGS_HIGH_ALARM_SET_THRESHOLD, "LoTempAlarmSet" },
+    { BATTERY_PROP_TEMP_NOW,
+            BATTERY_PROPERTY_FLAGS_HIGH_ALARM_CLEAR_THRESHOLD, "HiTempAlarmClear" },
     { BATTERY_PROP_NONE },
 };
 
