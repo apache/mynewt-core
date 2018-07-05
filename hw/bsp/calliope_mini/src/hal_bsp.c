@@ -76,7 +76,7 @@ static const nrf_drv_spis_config_t os_bsp_spi1s_cfg = {
 static const struct nrf51_hal_i2c_cfg hal_i2c_cfg = {
     .scl_pin = MYNEWT_VAL(I2C_0_PIN_SCL), 
     .sda_pin = MYNEWT_VAL(I2C_0_PIN_SDA), 
-    .i2c_frequency = MYNEWT_VAL(I2C_0_FREQ) // 100    /* 100 kHz */
+    .i2c_frequency = MYNEWT_VAL(I2C_0_FREQ_KHZ) // 100    /* 100 kHz */
 };
 #endif
 
