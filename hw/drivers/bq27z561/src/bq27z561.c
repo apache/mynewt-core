@@ -129,6 +129,33 @@ bq27z561_itf_unlock(struct bq27z561_itf *bi)
 }
 
 int
+bq27z561_rd_std_reg_byte(struct bq27z561 *dev, uint8_t reg, uint8_t *val)
+{
+    int rc;
+    struct hal_i2c_master_data i2c;
+
+    i2c.address = dev->bq27_itf.itf_addr;
+    i2c.len = 1;
+    i2c.buffer = &reg;
+
+    rc = hal_i2c_master_write(dev->bq27_itf.itf_num, &i2c, OS_TICKS_PER_SEC, 0);
+    if (rc != 0) {
+        BQ27Z561_ERROR("I2C reg read (wr) failed 0x%02X\n", reg);
+        return rc;
+    }
+
+    i2c.len = 1;
+    i2c.buffer = (uint8_t *)val;
+    rc = hal_i2c_master_read(dev->bq27_itf.itf_num, &i2c, OS_TICKS_PER_SEC, 1);
+    if (rc != 0) {
+        BQ27Z561_ERROR("I2C reg read (rd) failed 0x%02X\n", reg);
+        return rc;
+    }
+
+    return 0;
+}
+
+int
 bq27z561_rd_std_reg_word(struct bq27z561 *dev, uint8_t reg, uint16_t *val)
 {
     int rc;
@@ -163,6 +190,29 @@ err:
     /* XXX: add big-endian support */
 
     return rc;
+}
+
+static int
+bq27z561_wr_std_reg_byte(struct bq27z561 *dev, uint8_t reg, uint8_t val)
+{
+    int rc;
+    uint8_t buf[2];
+    struct hal_i2c_master_data i2c;
+
+    buf[0] = reg;
+    buf[1] = val;
+
+    i2c.address = dev->bq27_itf.itf_num;
+    i2c.len     = 2;
+    i2c.buffer  = buf;
+
+    rc = hal_i2c_master_write(dev->bq27_itf.itf_num, &i2c, OS_TICKS_PER_SEC, 1);
+    if (rc != 0) {
+        BQ27Z561_ERROR("I2C reg write 0x%02X failed\n", reg);
+        return rc;
+    }
+
+    return 0;
 }
 
 static int
