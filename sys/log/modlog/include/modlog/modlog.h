@@ -84,6 +84,9 @@ struct modlog_desc {
  */
 typedef int modlog_foreach_fn(const struct modlog_desc *desc, void *arg);
 
+/* Only enable modlog if logging is also enabled. */
+#if MYNEWT_VAL(LOG_FULL) || defined(__DOXYGEN__)
+
 /**
  * @brief Retrieves the modlog mapping with the specified handle.
  *
@@ -199,6 +202,58 @@ int modlog_foreach(modlog_foreach_fn *fn, void *arg);
  * @param msg                   The "printf" formatted string to write.
  */
 void modlog_printf(uint16_t module, uint16_t level, const char *msg, ...);
+
+#else /* LOG_FULL */
+
+static inline int
+modlog_get(uint8_t handle, struct modlog_desc *out_desc)
+{
+    return SYS_ENOTSUP;
+}
+
+static inline int
+modlog_register(uint8_t module, struct log *log, uint8_t min_level,
+                uint8_t *out_handle)
+{
+    return 0;
+}
+
+static inline int
+modlog_delete(uint8_t handle)
+{
+    return SYS_ENOTSUP;
+}
+
+static inline void
+modlog_clear(void)
+{ }
+
+static inline int
+modlog_append(uint8_t module, uint8_t level, uint8_t etype, void *data,
+              uint16_t len)
+{
+    return 0;
+}
+
+static inline int
+modlog_append_mbuf(uint8_t module, uint8_t level, uint8_t etype,
+                   struct os_mbuf *om)
+{
+    os_mbuf_free_chain(om);
+    return 0;
+}
+
+static inline int
+modlog_foreach(modlog_foreach_fn *fn, void *arg)
+{
+    return SYS_ENOTSUP;
+}
+
+static inline void
+modlog_printf(uint8_t module, uint8_t level, const char *msg, ...)
+{ }
+
+#endif
 
 #if MYNEWT_VAL(LOG_LEVEL) <= LOG_LEVEL_DEBUG || defined __DOXYGEN__
 /**

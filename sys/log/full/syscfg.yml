@@ -18,6 +18,12 @@
 #
 
 syscfg.defs:
+    LOG_FULL:
+        description: >
+            Indicates that the full logging facility (not the stub) is present.
+            This setting should not be overridden.
+        value: 1
+
     LOG_VERSION:
         description: 'Log entry header version used.'
         value: 2
