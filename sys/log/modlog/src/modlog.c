@@ -19,6 +19,7 @@
 
 #include <stdarg.h>
 #include "os/mynewt.h"
+#include "rwlock/rwlock.h"
 #include "log/log.h"
 #include "modlog/modlog.h"
 
@@ -33,7 +34,7 @@ static os_membuf_t modlog_mapping_buf[
                     sizeof (struct modlog_mapping))
 ];
 
-static struct os_mutex modlog_mtx;
+static struct rwlock modlog_rwl;
 
 SLIST_HEAD(modlog_list, modlog_mapping);
 
@@ -46,24 +47,6 @@ static struct modlog_list modlog_mappings =
  * module, the default mappings are guaranteed to come last.
  */
 static struct modlog_mapping *modlog_first_dflt;
-
-static void
-modlog_lock(void)
-{
-    int rc;
-
-    rc = os_mutex_pend(&modlog_mtx, OS_TIMEOUT_NEVER);
-    assert(rc == 0 || rc == OS_NOT_STARTED);
-}
-
-static void
-modlog_unlock(void)
-{
-    int rc;
-
-    rc = os_mutex_release(&modlog_mtx);
-    assert(rc == 0 || rc == OS_NOT_STARTED);
-}
 
 static struct modlog_mapping *
 modlog_alloc(void)
@@ -370,7 +353,7 @@ modlog_get(uint8_t handle, struct modlog_desc *out_desc)
     struct modlog_mapping *mm;
     int rc;
 
-    modlog_lock();
+    rwlock_acquire_read(&modlog_rwl);
 
     mm = modlog_find(handle, NULL);
     if (mm == NULL) {
@@ -382,7 +365,7 @@ modlog_get(uint8_t handle, struct modlog_desc *out_desc)
         rc = 0;
     }
 
-    modlog_unlock();
+    rwlock_release_read(&modlog_rwl);
 
     return rc;
 }
@@ -393,9 +376,9 @@ modlog_register(uint8_t module, struct log *log, uint8_t min_level,
 {
     int rc;
 
-    modlog_lock();
+    rwlock_acquire_write(&modlog_rwl);
     rc = modlog_register_no_lock(module, log, min_level, out_handle);
-    modlog_unlock();
+    rwlock_release_write(&modlog_rwl);
 
     return rc;
 }
@@ -405,9 +388,9 @@ modlog_delete(uint8_t handle)
 {
     int rc;
 
-    modlog_lock();
+    rwlock_acquire_write(&modlog_rwl);
     rc = modlog_delete_no_lock(handle);
-    modlog_unlock();
+    rwlock_release_write(&modlog_rwl);
 
     return rc;
 }
@@ -417,14 +400,14 @@ modlog_clear(void)
 {
     struct modlog_mapping *mm;
 
-    modlog_lock();
+    rwlock_acquire_write(&modlog_rwl);
 
     while ((mm = SLIST_FIRST(&modlog_mappings)) != NULL) {
         modlog_remove(mm, NULL);
         modlog_free(mm);
     }
 
-    modlog_unlock();
+    rwlock_release_write(&modlog_rwl);
 }
 
 int
@@ -433,9 +416,9 @@ modlog_append(uint8_t module, uint8_t level, uint8_t etype,
 {
     int rc;
 
-    modlog_lock();
+    rwlock_acquire_read(&modlog_rwl);
     rc = modlog_append_no_lock(module, level, etype, data, len);
-    modlog_unlock();
+    rwlock_release_read(&modlog_rwl);
 
     return rc;
 }
@@ -446,9 +429,9 @@ modlog_append_mbuf(uint8_t module, uint8_t level, uint8_t etype,
 {
     int rc;
 
-    modlog_lock();
+    rwlock_acquire_read(&modlog_rwl);
     rc = modlog_append_mbuf_no_lock(module, level, etype, om);
-    modlog_unlock();
+    rwlock_release_read(&modlog_rwl);
 
     return rc;
 }
@@ -458,9 +441,9 @@ modlog_foreach(modlog_foreach_fn *fn, void *arg)
 {
     int rc;
 
-    modlog_lock();
+    rwlock_acquire_read(&modlog_rwl);
     rc = modlog_foreach_no_lock(fn, arg);
-    modlog_unlock();
+    rwlock_release_read(&modlog_rwl);
 
     return rc;
 }
@@ -499,6 +482,9 @@ modlog_init(void)
 
     SLIST_INIT(&modlog_mappings);
     modlog_first_dflt = NULL;
+
+    rc = rwlock_init(&modlog_rwl);
+    SYSINIT_PANIC_ASSERT(rc == 0);
 
     /* Register the default console mapping if configured. */
 #if MYNEWT_VAL(MODLOG_CONSOLE_DFLT)
