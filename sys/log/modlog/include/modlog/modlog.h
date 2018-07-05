@@ -266,7 +266,7 @@ modlog_printf(uint8_t module, uint8_t level, const char *msg, ...)
  * @param ml_msg_               The "printf" formatted string to write.
  */
 #define MODLOG_DEBUG(ml_mod_, ml_msg_, ...) \
-    modlog_printf(ml_mod_, LOG_LEVEL_DEBUG, ml_msg_, ##__VA_ARGS__)
+    modlog_printf((ml_mod_), LOG_LEVEL_DEBUG, (ml_msg_), ##__VA_ARGS__)
 #else
 #define MODLOG_DEBUG(ml_mod_, ...) IGNORE(__VA_ARGS__)
 #endif
@@ -282,7 +282,7 @@ modlog_printf(uint8_t module, uint8_t level, const char *msg, ...)
  * @param ml_msg_               The "printf" formatted string to write.
  */
 #define MODLOG_INFO(ml_mod_, ml_msg_, ...) \
-    modlog_printf(ml_mod_, LOG_LEVEL_INFO, ml_msg_, ##__VA_ARGS__)
+    modlog_printf((ml_mod_), LOG_LEVEL_INFO, (ml_msg_), ##__VA_ARGS__)
 #else
 #define MODLOG_INFO(ml_mod_, ...) IGNORE(__VA_ARGS__)
 #endif
@@ -298,7 +298,7 @@ modlog_printf(uint8_t module, uint8_t level, const char *msg, ...)
  * @param ml_msg_               The "printf" formatted string to write.
  */
 #define MODLOG_WARN(ml_mod_, ml_msg_, ...) \
-    modlog_printf(ml_mod_, LOG_LEVEL_WARN, ml_msg_, ##__VA_ARGS__)
+    modlog_printf((ml_mod_), LOG_LEVEL_WARN, (ml_msg_), ##__VA_ARGS__)
 #else
 #define MODLOG_WARN(ml_mod_, ...) IGNORE(__VA_ARGS__)
 #endif
@@ -314,7 +314,7 @@ modlog_printf(uint8_t module, uint8_t level, const char *msg, ...)
  * @param ml_msg_               The "printf" formatted string to write.
  */
 #define MODLOG_ERROR(ml_mod_, ml_msg_, ...) \
-    modlog_printf(ml_mod_, LOG_LEVEL_ERROR, ml_msg_, ##__VA_ARGS__)
+    modlog_printf((ml_mod_), LOG_LEVEL_ERROR, (ml_msg_), ##__VA_ARGS__)
 #else
 #define MODLOG_ERROR(ml_mod_, ...) IGNORE(__VA_ARGS__)
 #endif
@@ -330,9 +330,48 @@ modlog_printf(uint8_t module, uint8_t level, const char *msg, ...)
  * @param ml_msg_               The "printf" formatted string to write.
  */
 #define MODLOG_CRITICAL(ml_mod_, ml_msg_, ...) \
-    modlog_printf(ml_mod_, LOG_LEVEL_CRITICAL, ml_msg_, ##__VA_ARGS__)
+    modlog_printf((ml_mod_), LOG_LEVEL_CRITICAL, (ml_msg_), ##__VA_ARGS__)
 #else
 #define MODLOG_CRITICAL(ml_mod_, ...) IGNORE(__VA_ARGS__)
 #endif
+
+/**
+ * @brief Writes a formatted text entry with the specified level to the
+ * specified log module.
+ *
+ * The provided log level must be one of the following tokens:
+ *     o CRITICAL
+ *     o ERROR
+ *     o WARN
+ *     o INFO
+ *     o DEBUG
+ *
+ * This expands to nothing if the global log level is greater than
+ * the specified level.
+ *
+ * @param ml_lvl_               The log level of the entry to write.
+ * @param ml_mod_               The log module to write to.
+ */
+#define MODLOG(ml_lvl_, ml_mod_, ...) \
+    MODLOG_ ## ml_lvl_((ml_mod_), __VA_ARGS__)
+
+/**
+ * @brief Writes a formatted text entry with the specified level to the
+ * default log module.
+ *
+ * The provided log level must be one of the following tokens:
+ *     o CRITICAL
+ *     o ERROR
+ *     o WARN
+ *     o INFO
+ *     o DEBUG
+ *
+ * This expands to nothing if the global log level is greater than
+ * the specified level.
+ *
+ * @param ml_lvl_               The log level of the entry to write.
+ */
+#define MODLOG_DFLT(ml_lvl_, ...) \
+    MODLOG(ml_lvl_, LOG_MODULE_DEFAULT, __VA_ARGS__)
 
 #endif
