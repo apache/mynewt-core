@@ -67,6 +67,16 @@ syscfg.defs:
         description: 'Frequency in khz for I2C_0 bus'
         value:  100
 
+    I2C_1_PIN_SCL:
+        description: 'SCL pin for I2C_1'
+        value:  13
+    I2C_1_PIN_SDA:
+        description: 'SDA pin for I2C_1'
+        value:  12
+    I2C_1_FREQ_KHZ:
+        description: 'Frequency in khz for I2C_1 bus'
+        value:  100
+
     BUTTON_A:
         description: 'enable Button A'
         value: 0
