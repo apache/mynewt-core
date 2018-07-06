@@ -223,8 +223,7 @@ modlog_append_one(struct modlog_mapping *mm, uint8_t module, uint8_t level,
     int rc;
 
     if (level >= mm->desc.min_level) {
-        rc = log_append_typed(mm->desc.log, module,
-                              level, etype, data, len);
+        rc = log_append_body(mm->desc.log, module, level, etype, data, len);
         if (rc != 0) {
             return SYS_EIO;
         }
@@ -273,13 +272,13 @@ modlog_append_no_lock(uint8_t module, uint8_t level, uint8_t etype,
 
 static int
 modlog_append_mbuf_one(struct modlog_mapping *mm, uint8_t module,
-                       uint8_t level, uint8_t etype, struct os_mbuf **om)
+                       uint8_t level, uint8_t etype, struct os_mbuf *om)
 {
     int rc;
 
     if (level >= mm->desc.min_level) {
-        rc = log_append_mbuf_typed_no_free(mm->desc.log, module,
-                                           level, etype, om);
+        rc = log_append_mbuf_body_no_free(mm->desc.log, module,
+                                          level, etype, om);
         if (rc != 0) {
             return SYS_EIO;
         }
@@ -301,7 +300,7 @@ modlog_append_mbuf_no_lock(uint8_t module, uint8_t level, uint8_t etype,
         if (mm->desc.module == module) {
             found = true;
 
-            rc = modlog_append_mbuf_one(mm, module, level, etype, &om);
+            rc = modlog_append_mbuf_one(mm, module, level, etype, om);
             if (rc != 0) {
                 return rc;
             }
@@ -316,7 +315,7 @@ modlog_append_mbuf_no_lock(uint8_t module, uint8_t level, uint8_t etype,
              mm != NULL;
              mm = SLIST_NEXT(mm, next)) {
 
-            rc = modlog_append_mbuf_one(mm, module, level, etype, &om);
+            rc = modlog_append_mbuf_one(mm, module, level, etype, om);
             if (rc != 0) {
                 return rc;
             }
@@ -455,13 +454,11 @@ void
 modlog_printf(uint8_t module, uint8_t level, const char *msg, ...)
 {
     va_list args;
-    char buf[LOG_ENTRY_HDR_SIZE + MYNEWT_VAL(MODLOG_MAX_PRINTF_LEN)];
+    char buf[MYNEWT_VAL(MODLOG_MAX_PRINTF_LEN)];
     int len;
 
     va_start(args, msg);
-    len = vsnprintf(buf + LOG_ENTRY_HDR_SIZE,
-                    MYNEWT_VAL(MODLOG_MAX_PRINTF_LEN),
-                    msg, args);
+    len = vsnprintf(buf, MYNEWT_VAL(MODLOG_MAX_PRINTF_LEN), msg, args);
     va_end(args);
 
     if (len >= MYNEWT_VAL(MODLOG_MAX_PRINTF_LEN)) {

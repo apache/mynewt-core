@@ -22,52 +22,43 @@
 #include "modlog_test.h"
 
 static int
-mltu_log_append(struct log *log, void *buf, int len)
+mltu_log_append_body(struct log *log, const struct log_entry_hdr *hdr,
+                     const void *buf, int len)
 {
     struct mltu_log_entry *entry;
-    struct log_entry_hdr *hdr;
     struct mltu_log_arg *mla;
-    int body_len;
 
     mla = log->l_arg;
 
-    body_len = len - sizeof *hdr;
-
     TEST_ASSERT_FATAL(mla->num_entries < MLTU_LOG_ARG_MAX_ENTRIES);
-    TEST_ASSERT_FATAL(body_len <= MLTU_LOG_ENTRY_MAX_LEN);
+    TEST_ASSERT_FATAL(len <= MLTU_LOG_ENTRY_MAX_LEN);
 
     entry = mla->entries + mla->num_entries++;
-
-    hdr = buf;
     entry->hdr = *hdr;
-    entry->len = body_len;
-    memcpy(entry->body, hdr + 1, body_len);
+    entry->len = len;
+    memcpy(entry->body, buf, len);
 
     return 0;
 }
 
 static int
-mltu_log_append_mbuf(struct log *log, const struct os_mbuf *om)
+mltu_log_append_mbuf_body(struct log *log, const struct log_entry_hdr *hdr,
+                          const struct os_mbuf *om)
 {
     struct mltu_log_entry *entry;
     struct mltu_log_arg *mla;
-    int body_len;
     int rc;
 
     mla = log->l_arg;
 
-    body_len = OS_MBUF_PKTLEN(om) - sizeof entry->hdr;
-
     TEST_ASSERT_FATAL(mla->num_entries < MLTU_LOG_ARG_MAX_ENTRIES);
-    TEST_ASSERT_FATAL(body_len <= MLTU_LOG_ENTRY_MAX_LEN);
+    TEST_ASSERT_FATAL(OS_MBUF_PKTLEN(om) <= MLTU_LOG_ENTRY_MAX_LEN);
 
     entry = mla->entries + mla->num_entries++;
+    entry->hdr = *hdr;
+    entry->len = OS_MBUF_PKTLEN(om);
 
-    rc = os_mbuf_copydata(om, 0, sizeof entry->hdr, &entry->hdr);
-    TEST_ASSERT_FATAL(rc == 0);
-
-    entry->len = body_len;
-    rc = os_mbuf_copydata(om, sizeof entry->hdr, body_len, entry->body);
+    rc = os_mbuf_copydata(om, 0, OS_MBUF_PKTLEN(om), entry->body);
     TEST_ASSERT_FATAL(rc == 0);
 
     return 0;
@@ -75,8 +66,8 @@ mltu_log_append_mbuf(struct log *log, const struct os_mbuf *om)
 
 static const struct log_handler mltu_handler = {
     .log_type = LOG_TYPE_MEMORY,
-    .log_append = mltu_log_append,
-    .log_append_mbuf = mltu_log_append_mbuf,
+    .log_append_body = mltu_log_append_body,
+    .log_append_mbuf_body = mltu_log_append_mbuf_body,
 };
 
 void
@@ -89,36 +80,19 @@ mltu_register_log(struct log *lg, struct mltu_log_arg *arg, const char *name,
     TEST_ASSERT_FATAL(rc == 0);
 }
 
-struct os_mbuf *
-mltu_alloc_buf(void)
-{
-    struct os_mbuf *om;
-    uint8_t *u8p;
-
-    om = os_msys_get_pkthdr(0, 0);
-    TEST_ASSERT_FATAL(om != NULL);
-
-    u8p = os_mbuf_extend(om, sizeof (struct log_entry_hdr));
-    TEST_ASSERT_FATAL(u8p != NULL);
-
-    return om;
-}
-
 void
 mltu_append(uint8_t module, uint8_t level, uint8_t etype, void *data,
             int len, bool mbuf)
 {
-    uint8_t buf[1024];
     struct os_mbuf *om;
     int rc;
 
     if (!mbuf) {
-        TEST_ASSERT_FATAL(len + sizeof (struct log_entry_hdr) <= sizeof buf);
-        memcpy(buf + sizeof (struct log_entry_hdr), data, len);
-
-        rc = modlog_append(module, level, etype, buf, len);
+        rc = modlog_append(module, level, etype, data, len);
     } else {
-        om = mltu_alloc_buf();
+        om = os_msys_get_pkthdr(0, 0);
+        TEST_ASSERT_FATAL(om != NULL);
+
         rc = os_mbuf_append(om, data, len);
         TEST_ASSERT_FATAL(rc == 0);
 

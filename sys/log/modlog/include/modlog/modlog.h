@@ -139,14 +139,6 @@ void modlog_clear(void);
 /**
  * @brief Writes the contents of a flat buffer to the specified log module.
  *
- * NOTE: The flat buffer must have an initial padding of length
- * `LOG_ENTRY_HDR_SIZE`.  This padding is *not* reflected in the specified
- * length.  So, to log the string "abc", you should pass the following
- * arguments to this function:
- *
- *     data: <padding>abc   (total of `LOG_ENTRY_HDR_SIZE`+3 bytes.)
- *     len: 3
- *
  * @param module                The log module to write to.
  * @param level                 The severity of the log entry to write.
  * @param etype                 The type of data being written; one of the
@@ -161,13 +153,6 @@ int modlog_append(uint8_t module, uint8_t level, uint8_t etype,
 
 /**
  * @brief Writes the contents of an mbuf to the specified log module.
- *
- * NOTE: The mbuf must have an initial padding of length
- * `LOG_ENTRY_HDR_SIZE`.  So, to log the string "abc", you should pass an mbuf
- * with the following characteristics:
- *
- *     om_data: <padding>abc
- *     om_len: `LOG_ENTRY_HDR_SIZE` + 3
  *
  * @param module                The log module to write to.
  * @param level                 The severity of the log entry to write.

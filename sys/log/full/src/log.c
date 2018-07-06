@@ -446,29 +446,38 @@ log_append_mbuf_typed(struct log *log, uint8_t module, uint8_t level,
 }
 
 int
-log_append_mbuf_body(struct log *log, uint8_t module, uint8_t level,
-                     uint8_t etype, struct os_mbuf *om)
+log_append_mbuf_body_no_free(struct log *log, uint8_t module, uint8_t level,
+                             uint8_t etype, struct os_mbuf *om)
 {
     struct log_entry_hdr hdr;
     int rc;
 
     if (!log->l_log->log_append_mbuf_body) {
-        rc = SYS_ENOTSUP;
-        goto done;
+        return SYS_ENOTSUP;
     }
 
     rc = log_append_prepare(log, module, level, etype, &hdr);
     if (rc != 0) {
-        goto done;
+        return rc;
     }
 
     rc = log->l_log->log_append_mbuf_body(log, &hdr, om);
     if (rc != 0) {
-        goto done;
+        return rc;
     }
 
-done:
+    return 0;
+}
+
+int
+log_append_mbuf_body(struct log *log, uint8_t module, uint8_t level,
+                     uint8_t etype, struct os_mbuf *om)
+{
+    int rc;
+
+    rc = log_append_mbuf_body_no_free(log, module, level, etype, om);
     os_mbuf_free_chain(om);
+
     return rc;
 }
 
