@@ -21,14 +21,14 @@
 static int unique_val_cnt;
 
 static int
-config_test_custom_compress_filter1(const char *val, const char *name)
+test_custom_compress_filter1(const char *val, const char *name, void *arg)
 {
     unique_val_cnt++;
     return 0;
 }
 
 static int
-config_test_custom_compress_filter2(const char *val, const char *name)
+test_custom_compress_filter2(const char *val, const char *name, void *arg)
 {
     if (!strcmp(val, "myfoo/mybar")) {
         return 0;
@@ -84,7 +84,7 @@ TEST_CASE(config_test_custom_compress)
     }
 
     for (i = 0; i < cf.cf_fcb.f_sector_cnt - 1; i++) {
-        conf_fcb_compress(&cf, config_test_custom_compress_filter1);
+        conf_fcb_compress(&cf, test_custom_compress_filter1, NULL);
     }
     TEST_ASSERT(unique_val_cnt == 4); /* c2, c3 and ctest together */
 
@@ -106,7 +106,7 @@ TEST_CASE(config_test_custom_compress)
      * Only leave one var.
      */
     for (i = 0; i < cf.cf_fcb.f_sector_cnt - 1; i++) {
-        conf_fcb_compress(&cf, config_test_custom_compress_filter2);
+        conf_fcb_compress(&cf, test_custom_compress_filter2, NULL);
     }
 
     memset(val_string, 0, sizeof(val_string));

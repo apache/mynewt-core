@@ -60,7 +60,9 @@ int conf_fcb_dst(struct conf_fcb *cf);
  *                    should be skipped.
  */
 void conf_fcb_compress(struct conf_fcb *cf,
-                       int (*copy_or_not)(const char *name, const char *val));
+                       int (*copy_or_not)(const char *name, const char *val,
+                                          void *con_arg),
+                       void *con_arg);
 
 #ifdef __cplusplus
 }
