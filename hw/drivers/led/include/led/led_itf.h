@@ -49,15 +49,17 @@ struct led_itf {
     uint16_t li_addr;
 
     /* Mutex for shared interface access */
-    struct os_mutex li_lock;
+    struct os_mutex *li_lock;
 };
 
-static inline int
-led_itf_lock_init(struct led_itf *li)
-{
-    return os_mutex_init(&li->li_lock);
-}
-
+/**
+ * Lock access to the led_itf specified by li.  Blocks until lock acquired.
+ *
+ * @param li The led_itf to lock
+ * @param timeout The timeout in milliseconds
+ *
+ * @return 0 on success, non-zero on failure.
+ */
 static inline int
 led_itf_lock(struct led_itf *li, uint32_t timeout)
 {
@@ -65,9 +67,13 @@ led_itf_lock(struct led_itf *li, uint32_t timeout)
     int rc;
     os_time_t ticks;
 
+    if (!li->li_lock) {
+        return 0;
+    }
+
     os_time_ms_to_ticks(timeout, &ticks);
 
-    rc = os_mutex_pend(&li->li_lock, ticks);
+    rc = os_mutex_pend(li->li_lock, ticks);
     if (rc == 0 || rc == OS_NOT_STARTED) {
         return (0);
     }
@@ -75,10 +81,21 @@ led_itf_lock(struct led_itf *li, uint32_t timeout)
     return (rc);
 }
 
+/**
+ * Unlock access to the led_itf specified by li.
+ *
+ * @param li The led_itf to unlock access to
+ *
+ * @return 0 on success, non-zero on failure.
+ */
 static inline void
 led_itf_unlock(struct led_itf *li)
 {
-    os_mutex_release(&li->li_lock);
+    if (!li->li_lock) {
+        return;
+    }
+
+    os_mutex_release(li->li_lock);
 }
 
 #endif

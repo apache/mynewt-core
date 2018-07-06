@@ -853,22 +853,7 @@ sensor_pkg_init(void)
 }
 
 /**
- * Initializes a sensor_itf lock
- *
- * @param The sensor_itf to initialize lock for
- *
- * @return 0 on success, non-zero error code on failure.
- */
-int
-sensor_itf_lock_init(struct sensor_itf *si)
-{
-    return os_mutex_init(&si->si_lock);
-
-}
-
-
-/**
- * Lock access to the sensor_itf specified by si.  Blocks until lock acquired.
+ * Lock access to the sensor_itf specified by si. Blocks until lock acquired.
  *
  * @param The sensor_itf to lock
  * @param The timeout
@@ -883,7 +868,7 @@ sensor_itf_lock(struct sensor_itf *si, uint32_t timeout)
 
     os_time_ms_to_ticks(timeout, &ticks);
 
-    rc = os_mutex_pend(&si->si_lock, ticks);
+    rc = os_mutex_pend(si->si_lock, ticks);
     if (rc == 0 || rc == OS_NOT_STARTED) {
         return (0);
     }
@@ -901,7 +886,7 @@ sensor_itf_lock(struct sensor_itf *si, uint32_t timeout)
 void
 sensor_itf_unlock(struct sensor_itf *si)
 {
-    os_mutex_release(&si->si_lock);
+    os_mutex_release(si->si_lock);
 }
 
 

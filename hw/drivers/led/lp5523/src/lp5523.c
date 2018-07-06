@@ -949,8 +949,6 @@ lp5523_init(struct os_dev *dev, void *arg)
 
     itf = (struct led_itf *)arg;
 
-    rc = led_itf_lock_init(itf);
-
     return rc;
 }
 

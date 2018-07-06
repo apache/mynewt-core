@@ -4759,11 +4759,6 @@ bma253_init(struct os_dev * dev, void * arg)
         return rc;
     }
 
-    rc = sensor_itf_lock_init(arg);
-    if (rc) {
-        goto err;
-    }
-
     sensor->s_next_run = OS_TIMEOUT_NEVER;
 
     rc = sensor_mgr_register(sensor);

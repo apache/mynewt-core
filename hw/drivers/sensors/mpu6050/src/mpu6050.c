@@ -433,11 +433,6 @@ mpu6050_init(struct os_dev *dev, void *arg)
         return rc;
     }
 
-    rc = sensor_itf_lock_init(arg);
-    if (rc) {
-        return rc;
-    }
-
     return sensor_mgr_register(sensor);
 }
 

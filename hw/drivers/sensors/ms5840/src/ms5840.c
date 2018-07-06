@@ -139,11 +139,6 @@ ms5840_init(struct os_dev *dev, void *arg)
         goto err;
     }
 
-    rc = sensor_itf_lock_init(arg);
-    if (rc) {
-        goto err;
-    }
-
     rc = sensor_mgr_register(sensor);
     if (rc) {
         goto err;

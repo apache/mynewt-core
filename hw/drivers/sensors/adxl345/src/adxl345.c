@@ -1071,11 +1071,6 @@ adxl345_init(struct os_dev *dev, void *arg)
         return rc;
     }
 
-    rc = sensor_itf_lock_init(arg);
-    if (rc) {
-        return rc;
-    }
-
     rc = sensor_mgr_register(sensor);
     if (rc) {
         return rc;
