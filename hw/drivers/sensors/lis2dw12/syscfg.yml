@@ -46,4 +46,4 @@ syscfg.defs:
         value: 1
     LIS2DW12_ITF_LOCK_TMO:
         description: 'LIS2DW12 interface lock timeout in milliseconds'
-        value: 30
+        value: 1000

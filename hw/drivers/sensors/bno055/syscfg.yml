@@ -32,4 +32,4 @@ syscfg.defs:
         value: 0x28
     BNO055_ITF_LOCK_TMO:
         description: 'BNO055 interface lock timeout in milliseconds'
-        value: 30
+        value: 1000

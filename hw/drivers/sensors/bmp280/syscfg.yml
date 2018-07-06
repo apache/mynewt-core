@@ -41,4 +41,4 @@ syscfg.defs:
         value : 1
     BMP280_ITF_LOCK_TMO:
         description: 'BMP280 interface lock timeout in milliseconds'
-        value: 30
+        value: 1000

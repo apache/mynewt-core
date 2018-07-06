@@ -53,4 +53,4 @@ syscfg.defs:
         value: "\"bma253_0\""
     BMA253_ITF_LOCK_TMO:
         description: 'BMA253 interface lock timeout in milliseconds'
-        value: 30
+        value: 1000

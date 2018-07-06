@@ -928,7 +928,6 @@ int
 lp5523_init(struct os_dev *dev, void *arg)
 {
     int rc;
-    struct led_itf *itf;
 
     if (!arg || !dev) {
         return SYS_ENODEV;
@@ -946,8 +945,6 @@ lp5523_init(struct os_dev *dev, void *arg)
     /* Register the entry with the stats registry */
     rc = stats_register(dev->od_name, STATS_HDR(g_lp5523stats));
     SYSINIT_PANIC_ASSERT(rc == 0);
-
-    itf = (struct led_itf *)arg;
 
     return rc;
 }

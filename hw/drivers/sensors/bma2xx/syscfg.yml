@@ -47,4 +47,4 @@ syscfg.defs:
         value: "\"bma2xx_0\""
     BMA2XX_ITF_LOCK_TMO:
         description: 'BMA2XX interface lock timeout in milliseconds'
-        value: 30
+        value: 1000

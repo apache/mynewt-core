@@ -34,4 +34,4 @@ syscfg.defs:
         value: 0
     LPS33HW_ITF_LOCK_TMO:
         description: 'LPS33HW interface lock timeout in milliseconds'
-        value: 30
+        value: 1000

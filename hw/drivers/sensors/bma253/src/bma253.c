@@ -4782,6 +4782,5 @@ bma253_init(struct os_dev * dev, void * arg)
 
     bma253->power = BMA253_POWER_MODE_NORMAL;
 
-err:
     return rc;
 }

@@ -151,6 +151,7 @@ struct bq27z561_itf
 {
     uint8_t itf_num;
     uint8_t itf_addr;
+    struct os_mutex *itf_lock;
 };
 
 struct bq27z561_init_arg

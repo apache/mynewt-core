@@ -32,5 +32,5 @@ syscfg.defs:
         value : 0x29
     TCS34725_ITF_LOCK_TMO:
         description: 'TCS34725 interface lock timeout in milliseconds'
-        value: 30
+        value: 1000
 

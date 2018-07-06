@@ -35,4 +35,4 @@ syscfg.defs:
         value: 5
     LP5523_ITF_LOCK_TMO:
         description: 'LP5523 interface lock timeout in milliseconds'
-        value: 30
+        value: 1000

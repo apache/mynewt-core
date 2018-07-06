@@ -20,4 +20,4 @@
 syscfg.defs:
     MS5837_ITF_LOCK_TMO:
         description: 'MS5837 interface lock timeout in milliseconds'
-        value: 30
+        value: 1000

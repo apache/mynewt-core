@@ -20,4 +20,4 @@
 syscfg.defs:
     MPU6050_ITF_LOCK_TMO:
         description: 'MPU6050 interface lock timeout in milliseconds'
-        value: 30
+        value: 1000
