@@ -17,17 +17,17 @@
  * under the License.
  */
 
+#include "os/mynewt.h"
+
+#if MYNEWT_VAL(DRV2605_CLI)
 #include <string.h>
 #include <errno.h>
-#include "os/mynewt.h"
 #include "console/console.h"
 #include "shell/shell.h"
 #include "drv2605_priv.h"
 #include "drv2605/drv2605.h"
 #include "sensor/sensor.h"
 #include "parse/parse.h"
-
-#if MYNEWT_VAL(DRV2605_CLI)
 
 static int drv2605_shell_cmd(int argc, char **argv);
 
