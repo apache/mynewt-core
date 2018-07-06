@@ -71,7 +71,10 @@ led_itf_lock(struct led_itf *li, uint32_t timeout)
         return 0;
     }
 
-    os_time_ms_to_ticks(timeout, &ticks);
+    rc = os_time_ms_to_ticks(timeout, &ticks);
+    if (rc) {
+        return rc;
+    }
 
     rc = os_mutex_pend(li->li_lock, ticks);
     if (rc == 0 || rc == OS_NOT_STARTED) {
