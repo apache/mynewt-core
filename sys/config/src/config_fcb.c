@@ -150,8 +150,11 @@ conf_fcb_var_read(struct fcb_entry *loc, char *buf, char **name, char **val)
     return rc;
 }
 
-static void
-conf_fcb_compress(struct conf_fcb *cf)
+void
+conf_fcb_compress(struct conf_fcb *cf,
+                  int (*copy_or_not)(const char *name, const char *val,
+                                     void *cn_arg),
+                  void *cn_arg)
 {
     int rc;
     char buf1[CONF_MAX_NAME_LEN + CONF_MAX_VAL_LEN + 32];
@@ -196,6 +199,12 @@ conf_fcb_compress(struct conf_fcb *cf)
             continue;
         }
 
+        if (copy_or_not) {
+            if (copy_or_not(name1, val1, cn_arg)) {
+                /* Copy rejected */
+                continue;
+            }
+        }
         /*
          * Can't find one. Must copy.
          */
@@ -237,7 +246,7 @@ conf_fcb_append(struct conf_fcb *cf, char *buf, int len)
         if (cf->cf_fcb.f_scratch_cnt == 0) {
             return OS_ENOMEM;
         }
-        conf_fcb_compress(cf);
+        conf_fcb_compress(cf, NULL, NULL);
     }
     if (rc) {
         return OS_EINVAL;
