@@ -385,7 +385,7 @@ adxl345_write8(struct sensor_itf *itf, uint8_t reg, uint8_t value)
 
     rc = sensor_itf_lock(itf, MYNEWT_VAL(ADXL345_ITF_LOCK_TMO));
     if (rc) {
-        goto err;
+        return rc;
     }
 
     if (itf->si_type == SENSOR_ITF_I2C) {
@@ -395,7 +395,7 @@ adxl345_write8(struct sensor_itf *itf, uint8_t reg, uint8_t value)
     }
 
     sensor_itf_unlock(itf);
-err:
+
     return rc;
 }
 
@@ -415,7 +415,7 @@ adxl345_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
 
     rc = sensor_itf_lock(itf, MYNEWT_VAL(ADXL345_ITF_LOCK_TMO));
     if (rc) {
-        goto err;
+        return rc;
     }
 
     if (itf->si_type == SENSOR_ITF_I2C) {
@@ -426,7 +426,6 @@ adxl345_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
 
     sensor_itf_unlock(itf);
 
-err:
     return rc;
 }
 
@@ -448,7 +447,7 @@ adxl345_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
 
     rc = sensor_itf_lock(itf, MYNEWT_VAL(ADXL345_ITF_LOCK_TMO));
     if (rc) {
-        goto err;
+        return rc;
     }
 
     if (itf->si_type == SENSOR_ITF_I2C) {
@@ -459,7 +458,6 @@ adxl345_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
 
     sensor_itf_unlock(itf);
 
-err:
     return rc;
 }
 

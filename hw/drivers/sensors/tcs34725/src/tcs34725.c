@@ -97,7 +97,7 @@ tcs34725_write8(struct sensor_itf *itf, uint8_t reg, uint32_t value)
 
     rc = sensor_itf_lock(itf, MYNEWT_VAL(TCS34725_ITF_LOCK_TMO));
     if (rc) {
-        goto err;
+        return rc;
     }
 
     rc = hal_i2c_master_write(itf->si_num, &data_struct,
@@ -110,7 +110,6 @@ tcs34725_write8(struct sensor_itf *itf, uint8_t reg, uint32_t value)
 
     sensor_itf_unlock(itf);
 
-err:
     return rc;
 }
 
@@ -137,7 +136,7 @@ tcs34725_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
 
     rc = sensor_itf_lock(itf, MYNEWT_VAL(TCS34725_ITF_LOCK_TMO));
     if (rc) {
-        goto err;
+        return rc;
     }
 
     /* Register write */
@@ -158,9 +157,9 @@ tcs34725_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
         STATS_INC(g_tcs34725stats, errors);
     }
 
+err:
     sensor_itf_unlock(itf);
 
-err:
     return rc;
 }
 
@@ -190,7 +189,7 @@ tcs34725_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer, uint8_t l
 
     rc = sensor_itf_lock(itf, MYNEWT_VAL(TCS34725_ITF_LOCK_TMO));
     if (rc) {
-        goto err;
+        return rc;
     }
 
     /* Register write */
@@ -217,10 +216,9 @@ tcs34725_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer, uint8_t l
     /* Copy the I2C results into the supplied buffer */
     memcpy(buffer, payload, len);
 
+err:
     sensor_itf_unlock(itf);
 
-    return 0;
-err:
     return rc;
 }
 
@@ -254,7 +252,7 @@ tcs34725_writelen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer, uint8_t 
 
     rc = sensor_itf_lock(itf, MYNEWT_VAL(TCS34725_ITF_LOCK_TMO));
     if (rc) {
-        goto err;
+        return rc;
     }
 
     /* Register write */
@@ -277,10 +275,9 @@ tcs34725_writelen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer, uint8_t 
         goto err;
     }
 
+err:
     sensor_itf_unlock(itf);
 
-    return 0;
-err:
     return rc;
 }
 

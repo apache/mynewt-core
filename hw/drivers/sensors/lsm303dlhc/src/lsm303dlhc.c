@@ -105,6 +105,11 @@ lsm303dlhc_write8(struct sensor_itf *itf, uint8_t addr, uint8_t reg,
         .buffer = payload
     };
 
+    rc = sensor_itf_lock(itf, MYNEWT_VAL(LSM303DLHC_ITF_LOCK_TMO));
+    if (rc) {
+        return rc;
+    }
+
     rc = hal_i2c_master_write(itf->si_num, &data_struct,
                               OS_TICKS_PER_SEC / 10, 1);
     if (rc) {
@@ -112,6 +117,8 @@ lsm303dlhc_write8(struct sensor_itf *itf, uint8_t addr, uint8_t reg,
                        addr, reg, value);
         STATS_INC(g_lsm303dlhcstats, errors);
     }
+
+    sensor_itf_unlock(itf);
 
     return rc;
 }
@@ -139,6 +146,11 @@ lsm303dlhc_read8(struct sensor_itf *itf, uint8_t addr, uint8_t reg,
         .buffer = &payload
     };
 
+    rc = sensor_itf_lock(itf, MYNEWT_VAL(LSM303DLHC_ITF_LOCK_TMO));
+    if (rc) {
+        return rc;
+    }
+
     /* Register write */
     payload = reg;
     rc = hal_i2c_master_write(itf->si_num, &data_struct,
@@ -160,6 +172,8 @@ lsm303dlhc_read8(struct sensor_itf *itf, uint8_t addr, uint8_t reg,
     }
 
 err:
+    sensor_itf_unlock(itf);
+
     return rc;
 }
 
@@ -189,6 +203,11 @@ lsm303dlhc_read48(struct sensor_itf *itf, uint8_t addr, uint8_t reg,
     /* Clear the supplied buffer */
     memset(buffer, 0, 6);
 
+    rc = sensor_itf_lock(itf, MYNEWT_VAL(LSM303DLHC_ITF_LOCK_TMO));
+    if (rc) {
+        return rc;
+    }
+
     /* Register write */
     rc = hal_i2c_master_write(itf->si_num, &data_struct,
                               OS_TICKS_PER_SEC / 10, 1);
@@ -207,13 +226,14 @@ lsm303dlhc_read48(struct sensor_itf *itf, uint8_t addr, uint8_t reg,
     if (rc) {
         LSM303DLHC_ERR("Failed to read from 0x%02X:0x%02X\n", addr, reg);
         STATS_INC(g_lsm303dlhcstats, errors);
-        goto err;
     }
 
     /* Copy the I2C results into the supplied buffer */
     memcpy(buffer, payload, 6);
 
 err:
+    sensor_itf_unlock(itf);
+
     return rc;
 }
 

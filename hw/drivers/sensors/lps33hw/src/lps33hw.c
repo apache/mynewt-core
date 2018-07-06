@@ -255,7 +255,7 @@ lps33hw_set_reg(struct sensor_itf *itf, uint8_t reg, uint8_t value)
 
     rc = sensor_itf_lock(itf, MYNEWT_VAL(LPS33HW_ITF_LOCK_TMO));
     if (rc) {
-        goto err;
+        return rc;
     }
 
     if (itf->si_type == SENSOR_ITF_I2C) {
@@ -265,7 +265,7 @@ lps33hw_set_reg(struct sensor_itf *itf, uint8_t reg, uint8_t value)
     }
 
     sensor_itf_unlock(itf);
-err:
+
     return rc;
 }
 
@@ -386,7 +386,7 @@ lps33hw_get_regs(struct sensor_itf *itf, uint8_t reg, uint8_t size,
 
     rc = sensor_itf_lock(itf, MYNEWT_VAL(LPS33HW_ITF_LOCK_TMO));
     if (rc) {
-        goto err;
+        return rc;
     }
 
     if (itf->si_type == SENSOR_ITF_I2C) {
@@ -397,7 +397,6 @@ lps33hw_get_regs(struct sensor_itf *itf, uint8_t reg, uint8_t size,
 
     sensor_itf_unlock(itf);
 
-err:
     return rc;
 }
 

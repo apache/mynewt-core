@@ -135,7 +135,7 @@ bq27z561_rd_std_reg_word(struct bq27z561 *dev, uint8_t reg, uint16_t *val)
     rc = hal_i2c_master_write(dev->bq27_itf.itf_num, &i2c, OS_TICKS_PER_SEC, 0);
     if (rc != 0) {
         BQ27Z561_ERROR("I2C reg read (wr) failed 0x%02X\n", reg);
-        return rc;
+        goto err;
     }
 
     i2c.len = 2;
@@ -143,14 +143,15 @@ bq27z561_rd_std_reg_word(struct bq27z561 *dev, uint8_t reg, uint16_t *val)
     rc = hal_i2c_master_read(dev->bq27_itf.itf_num, &i2c, OS_TICKS_PER_SEC, 1);
     if (rc != 0) {
         BQ27Z561_ERROR("I2C reg read (rd) failed 0x%02X\n", reg);
-        return rc;
+        goto err;
     }
 
+err:
     bq27z561_itf_unlock(&dev->bq27_itf);
 
     /* XXX: add big-endian support */
 
-    return 0;
+    return rc;
 }
 
 static int
@@ -176,12 +177,13 @@ bq27z561_wr_std_reg_word(struct bq27z561 *dev, uint8_t reg, uint16_t val)
     rc = hal_i2c_master_write(dev->bq27_itf.itf_num, &i2c, OS_TICKS_PER_SEC, 1);
     if (rc != 0) {
         BQ27Z561_ERROR("I2C reg write 0x%02X failed\n", reg);
-        return rc;
+        goto err;
     }
 
+err:
     bq27z561_itf_unlock(&dev->bq27_itf);
 
-    return 0;
+    return rc;
 }
 
 bq27z561_err_t
@@ -222,12 +224,12 @@ bq27x561_wr_alt_mfg_cmd(struct bq27z561 *dev, uint16_t cmd, uint8_t *buf,
     rc = hal_i2c_master_write(dev->bq27_itf.itf_num, &i2c, OS_TICKS_PER_SEC, 1);
     if (rc != 0) {
         BQ27Z561_ERROR("I2C reg read (wr) failed 0x%02X\n", reg);
-        return BQ27Z561_ERR_I2C_ERR;
+        rc = BQ27Z561_ERR_I2C_ERR;
     }
 
     bq27z561_itf_unlock(&dev->bq27_itf);
 
-    return BQ27Z561_OK;
+    return rc;
 }
 
 bq27z561_err_t
@@ -273,6 +275,7 @@ bq27x561_rd_alt_mfg_cmd(struct bq27z561 *dev, uint16_t cmd, uint8_t *val,
     if (rc != 0) {
         BQ27Z561_ERROR("I2C reg read (wr) failed 0x%02X\n", reg);
         rc = BQ27Z561_ERR_I2C_ERR;
+        bq27z561_itf_unlock(&dev->bq27_itf);
         goto err;
     }
 
@@ -282,6 +285,7 @@ bq27x561_rd_alt_mfg_cmd(struct bq27z561 *dev, uint16_t cmd, uint8_t *val,
     if (rc != 0) {
         BQ27Z561_ERROR("I2C reg read (rd) failed 0x%02X\n", reg);
         rc = BQ27Z561_ERR_I2C_ERR;
+        bq27z561_itf_unlock(&dev->bq27_itf);
         goto err;
     }
 
@@ -373,6 +377,7 @@ bq27x561_rd_flash(struct bq27z561 *dev, uint16_t addr, uint8_t *buf, int buflen)
     if (rc != 0) {
         BQ27Z561_ERROR("I2C reg read (wr) failed 0x%02X\n", reg);
         rc = BQ27Z561_ERR_I2C_ERR;
+        bq27z561_itf_unlock(&dev->bq27_itf);
         goto err;
     }
 
@@ -382,6 +387,7 @@ bq27x561_rd_flash(struct bq27z561 *dev, uint16_t addr, uint8_t *buf, int buflen)
     if (rc != 0) {
         BQ27Z561_ERROR("I2C reg read (rd) failed 0x%02X\n", reg);
         rc = BQ27Z561_ERR_I2C_ERR;
+        bq27z561_itf_unlock(&dev->bq27_itf);
         goto err;
     }
 
@@ -460,11 +466,11 @@ bq27x561_wr_flash(struct bq27z561 *dev, uint16_t addr, uint8_t *buf, int buflen)
         goto err;
     }
 
-    bq27z561_itf_unlock(&dev->bq27_itf);
-
     rc = BQ27Z561_OK;
 
 err:
+    bq27z561_itf_unlock(&dev->bq27_itf);
+
     return rc;
 }
 
@@ -824,5 +830,7 @@ int bq27z561_pkg_init(void)
 {
 #if MYNEWT_VAL(BQ27Z561_CLI)
     return bq27z561_shell_init();
+#else
+    return 0;
 #endif
 }

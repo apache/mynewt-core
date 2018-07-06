@@ -329,7 +329,7 @@ lis2dh12_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
 
     rc = sensor_itf_lock(itf, MYNEWT_VAL(LIS2DH12_ITF_LOCK_TMO));
     if (rc) {
-        goto err;
+        return rc;
     }
 
     if (itf->si_type == SENSOR_ITF_I2C) {
@@ -340,7 +340,6 @@ lis2dh12_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
 
     sensor_itf_unlock(itf);
 
-err:
     return rc;
 }
 
@@ -361,7 +360,7 @@ lis2dh12_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
 
     rc = sensor_itf_lock(itf, MYNEWT_VAL(LIS2DH12_ITF_LOCK_TMO));
     if (rc) {
-        goto err;
+        return rc;
     }
 
     if (itf->si_type == SENSOR_ITF_I2C) {
@@ -372,7 +371,6 @@ lis2dh12_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
 
     sensor_itf_unlock(itf);
 
-err:
     return rc;
 }
 

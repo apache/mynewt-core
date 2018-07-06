@@ -32,6 +32,10 @@
 #include <reboot/log_reboot.h>
 #include <id/id.h>
 
+#ifndef LED_BLINK_PIN
+#define LED_BLINK_PIN 15
+#endif
+
 #if MYNEWT_VAL(BNO055_CLI)
 #include <bno055/bno055.h>
 #endif

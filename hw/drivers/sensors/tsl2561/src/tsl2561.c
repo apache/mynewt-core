@@ -94,7 +94,7 @@ tsl2561_write8(struct sensor_itf *itf, uint8_t reg, uint32_t value)
 
     rc = sensor_itf_lock(itf, MYNEWT_VAL(TSL2561_ITF_LOCK_TMO));
     if (rc) {
-        goto err;
+        return rc;
     }
 
     rc = hal_i2c_master_write(itf->si_num, &data_struct,
@@ -107,7 +107,6 @@ tsl2561_write8(struct sensor_itf *itf, uint8_t reg, uint32_t value)
 
     sensor_itf_unlock(itf);
 
-err:
     return rc;
 }
 
@@ -125,7 +124,7 @@ tsl2561_write16(struct sensor_itf *itf, uint8_t reg, uint16_t value)
 
     rc = sensor_itf_lock(itf, MYNEWT_VAL(TSL2561_ITF_LOCK_TMO));
     if (rc) {
-        goto err;
+        return rc;
     }
 
     rc = hal_i2c_master_write(itf->si_num, &data_struct,
@@ -137,7 +136,6 @@ tsl2561_write16(struct sensor_itf *itf, uint8_t reg, uint16_t value)
 
     sensor_itf_unlock(itf);
 
-err:
     return rc;
 }
 
@@ -155,7 +153,7 @@ tsl2561_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
 
     rc = sensor_itf_lock(itf, MYNEWT_VAL(TSL2561_ITF_LOCK_TMO));
     if (rc) {
-        goto err;
+        return rc;
     }
 
     /* Register write */
@@ -176,10 +174,9 @@ tsl2561_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
         TSL2561_ERR("Failed to read @0x%02X\n", reg);
     }
 
+err:
     sensor_itf_unlock(itf);
 
-    return 0;
-err:
     return rc;
 }
 
@@ -197,7 +194,7 @@ tsl2561_read16(struct sensor_itf *itf, uint8_t reg, uint16_t *value)
 
     rc = sensor_itf_lock(itf, MYNEWT_VAL(TSL2561_ITF_LOCK_TMO));
     if (rc) {
-        goto err;
+        return rc;
     }
 
     /* Register write */
@@ -219,10 +216,9 @@ tsl2561_read16(struct sensor_itf *itf, uint8_t reg, uint16_t *value)
         goto err;
     }
 
+err:
     sensor_itf_unlock(itf);
 
-    return 0;
-err:
     return rc;
 }
 

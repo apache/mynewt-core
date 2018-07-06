@@ -335,7 +335,7 @@ ms5837_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
 
     rc = sensor_itf_lock(itf, MYNEWT_VAL(MS5837_ITF_LOCK_TMO));
     if (rc) {
-        goto err;
+        return rc;
     }
 
     /* Register write */
@@ -344,13 +344,10 @@ ms5837_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
         MS5837_ERR("I2C write command write failed at address 0x%02X\n",
                    data_struct.address);
         STATS_INC(g_ms5837stats, write_errors);
-        goto err;
     }
 
     sensor_itf_unlock(itf);
 
-    return 0;
-err:
     return rc;
 }
 
@@ -382,7 +379,7 @@ ms5837_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
 
     rc = sensor_itf_lock(itf, MYNEWT_VAL(MS5837_ITF_LOCK_TMO));
     if (rc) {
-        goto err;
+        return rc;
     }
 
     /* Command write */
@@ -404,13 +401,12 @@ ms5837_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
         goto err;
     }
 
-    sensor_itf_unlock(itf);
-
     /* Copy the I2C results into the supplied buffer */
     memcpy(buffer, payload, len);
 
-    return 0;
 err:
+    sensor_itf_unlock(itf);
+
     return rc;
 }
 

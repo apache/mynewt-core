@@ -158,7 +158,7 @@ get_register(struct bma253 * bma253,
 
     rc = sensor_itf_lock(itf, MYNEWT_VAL(BMA253_ITF_LOCK_TMO));
     if (rc) {
-        goto err;
+        return rc;
     }
 
     oper.address = itf->si_addr;
@@ -169,7 +169,7 @@ get_register(struct bma253 * bma253,
                               OS_TICKS_PER_SEC / 10, 1);
     if (rc != 0) {
         BMA253_ERROR("I2C access failed at address 0x%02X\n", addr);
-        return rc;
+        goto err;
     }
 
     oper.address = itf->si_addr;
@@ -181,13 +181,11 @@ get_register(struct bma253 * bma253,
     if (rc != 0) {
         BMA253_ERROR("I2C read failed at address 0x%02X single byte\n",
                      addr);
-        return rc;
     }
 
+err:
     sensor_itf_unlock(itf);
 
-    return 0;
-err:
     return rc;
 }
 
@@ -209,7 +207,7 @@ get_registers(struct bma253 * bma253,
 
     rc = sensor_itf_lock(itf, MYNEWT_VAL(BMA253_ITF_LOCK_TMO));
     if (rc) {
-        goto err;
+        return rc;
     }
 
     rc = hal_i2c_master_write(itf->si_num, &oper,
@@ -229,13 +227,11 @@ get_registers(struct bma253 * bma253,
     if (rc != 0) {
         BMA253_ERROR("I2C read failed at address 0x%02X length %u\n",
                      addr, size);
-        goto err;
     }
 
+err:
     sensor_itf_unlock(itf);
 
-    return 0;
-err:
     return rc;
 }
 
@@ -253,7 +249,7 @@ set_register(struct bma253 * bma253,
 
     rc = sensor_itf_lock(itf, MYNEWT_VAL(BMA253_ITF_LOCK_TMO));
     if (rc) {
-        goto err;
+        return rc;
     }
 
     tuple[0] = addr;
@@ -268,7 +264,6 @@ set_register(struct bma253 * bma253,
     if (rc != 0) {
         BMA253_ERROR("I2C write failed at address 0x%02X single byte\n",
                      addr);
-        return rc;
     }
 
     switch (bma253->power) {
@@ -280,10 +275,9 @@ set_register(struct bma253 * bma253,
         break;
     }
 
+err:
     sensor_itf_unlock(itf);
 
-    return 0;
-err:
     return rc;
 }
 

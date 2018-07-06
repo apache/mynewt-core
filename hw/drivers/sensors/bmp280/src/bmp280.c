@@ -902,11 +902,18 @@ bmp280_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
 {
     int rc;
 
+    rc = sensor_itf_lock(itf, MYNEWT_VAL(BMP280_ITF_LOCK_TMO));
+    if (rc) {
+        return rc;
+    }
+
     if (itf->si_type == SENSOR_ITF_I2C) {
         rc = bmp280_i2c_writelen(itf, addr, payload, len);
     } else {
         rc = bmp280_spi_writelen(itf, addr, payload, len);
     }
+
+    sensor_itf_unlock(itf);
 
     return rc;
 }
@@ -926,11 +933,18 @@ bmp280_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
 {
     int rc;
 
+    rc = sensor_itf_lock(itf, MYNEWT_VAL(BMP280_ITF_LOCK_TMO));
+    if (rc) {
+        return rc;
+    }
+
     if (itf->si_type == SENSOR_ITF_I2C) {
         rc = bmp280_i2c_readlen(itf, addr, payload, len);
     } else {
         rc = bmp280_spi_readlen(itf, addr, payload, len);
     }
+
+    sensor_itf_unlock(itf);
 
     return rc;
 }

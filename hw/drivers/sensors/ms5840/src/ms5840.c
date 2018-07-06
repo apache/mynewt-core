@@ -336,7 +336,7 @@ ms5840_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
 
     rc = sensor_itf_lock(itf, MYNEWT_VAL(MS5840_ITF_LOCK_TMO));
     if (rc) {
-        goto err;
+        return rc;
     }
 
     /* Register write */
@@ -345,13 +345,10 @@ ms5840_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
         MS5840_ERR("I2C write command write failed at address 0x%02X\n",
                    data_struct.address);
         STATS_INC(g_ms5840stats, write_errors);
-        goto err;
     }
 
     sensor_itf_unlock(itf);
 
-    return 0;
-err:
     return rc;
 }
 
@@ -383,7 +380,7 @@ ms5840_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
 
     rc = sensor_itf_lock(itf, MYNEWT_VAL(MS5840_ITF_LOCK_TMO));
     if (rc) {
-        goto err;
+        return rc;
     }
 
     /* Command write */

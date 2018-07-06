@@ -330,7 +330,7 @@ get_register(struct bma2xx *bma2xx,
 
     rc = sensor_itf_lock(itf, MYNEWT_VAL(BMA2XX_ITF_LOCK_TMO));
     if (rc) {
-        goto err;
+        return rc;
     }
 
     if (itf->si_type == SENSOR_ITF_SPI) {
@@ -343,7 +343,6 @@ get_register(struct bma2xx *bma2xx,
 
     sensor_itf_unlock(itf);
 
-err:
     return rc;
 }
 
@@ -359,7 +358,7 @@ get_registers(struct bma2xx *bma2xx,
 
     rc = sensor_itf_lock(itf, MYNEWT_VAL(BMA2XX_ITF_LOCK_TMO));
     if (rc) {
-        goto err;
+        return rc;
     }
 
     if (itf->si_type == SENSOR_ITF_SPI) {
@@ -372,7 +371,6 @@ get_registers(struct bma2xx *bma2xx,
 
     sensor_itf_unlock(itf);
 
-err:
     return rc;
 }
 
@@ -388,7 +386,7 @@ set_register(struct bma2xx *bma2xx,
 
     rc = sensor_itf_lock(itf, MYNEWT_VAL(BMA2XX_ITF_LOCK_TMO));
     if (rc) {
-        goto err;
+        return rc;
     }
 
     if (itf->si_type == SENSOR_ITF_SPI) {
@@ -409,7 +407,7 @@ set_register(struct bma2xx *bma2xx,
     }
 
     sensor_itf_unlock(itf);
-err:
+
     return rc;
 }
 
