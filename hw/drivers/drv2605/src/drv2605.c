@@ -26,6 +26,7 @@
 #include "hal/hal_gpio.h"
 #include "drv2605/drv2605.h"
 #include "drv2605_priv.h"
+#include <syscfg/syscfg.h>
 
 #if MYNEWT_VAL(DRV2605_LOG)
 #include "modlog/modlog.h"
@@ -78,6 +79,11 @@ drv2605_write8(struct sensor_itf *itf, uint8_t reg, uint8_t value)
         .buffer = payload
     };
 
+    rc = sensor_itf_lock(itf, MYNEWT_VAL(DRV2605_ITF_LOCK_TMO));
+    if (rc) {
+        return rc;
+    }
+
     rc = hal_i2c_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC, 1);
     if (rc) {
         DRV2605_LOG(ERROR,
@@ -86,8 +92,11 @@ drv2605_write8(struct sensor_itf *itf, uint8_t reg, uint8_t value)
 #if MYNEWT_VAL(DRV2605_STATS)
         STATS_INC(g_drv2605stats, errors);
 #endif
+        goto err;
     }
 
+err:
+    sensor_itf_unlock(itf);
     return rc;
 }
 
@@ -120,6 +129,11 @@ drv2605_writelen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
 
     memcpy(&payload[1], buffer, len);
 
+    rc = sensor_itf_lock(itf, MYNEWT_VAL(DRV2605_ITF_LOCK_TMO));
+    if (rc) {
+        return rc;
+    }
+
     /* Register write */
     rc = hal_i2c_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1);
     if (rc) {
@@ -131,8 +145,8 @@ drv2605_writelen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
         goto err;
     }
 
-    return 0;
 err:
+    sensor_itf_unlock(itf);
     return rc;
 }
 
@@ -159,6 +173,12 @@ drv2605_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
 
     /* Register write */
     payload = reg;
+
+    rc = sensor_itf_lock(itf, MYNEWT_VAL(DRV2605_ITF_LOCK_TMO));
+    if (rc) {
+        return rc;
+    }
+
     rc = hal_i2c_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 0);
     if (rc) {
         DRV2605_LOG(ERROR,
@@ -180,9 +200,11 @@ drv2605_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
 #if MYNEWT_VAL(DRV2605_STATS)
         STATS_INC(g_drv2605stats, errors);
 #endif
+        goto err;
     }
 
 err:
+    sensor_itf_unlock(itf);
     return rc;
 }
 
@@ -214,6 +236,11 @@ drv2605_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
     /* Clear the supplied buffer */
     memset(buffer, 0, len);
 
+    rc = sensor_itf_lock(itf, MYNEWT_VAL(DRV2605_ITF_LOCK_TMO));
+    if (rc) {
+        return rc;
+    }
+
     /* Register write */
     rc = hal_i2c_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 0);
     if (rc) {
@@ -241,8 +268,8 @@ drv2605_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
     /* Copy the I2C results into the supplied buffer */
     memcpy(buffer, payload, len);
 
-    return 0;
 err:
+    sensor_itf_unlock(itf);
     return rc;
 }
 

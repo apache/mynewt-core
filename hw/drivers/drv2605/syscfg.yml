@@ -39,6 +39,9 @@ syscfg.defs:
     DRV2605_SHELL_ITF_ADDR:
         description: 'DRV2605 I2C Address'
         value: 0x5A
+    DRV2605_ITF_LOCK_TMO:
+        description: 'DRV2605 interface lock timeout in milliseconds'
+        value: 1000
 
     DRV2605_EN_PIN:
         description: 'EN pin'
