@@ -63,15 +63,25 @@ syscfg.defs:
         description: 'SS pin for SPI_1_SLAVE'
         value:  24
 
-    I2C_0_SDA_PIN:
-        description: 'Data pin for I2C0'
-        value: 30
-    I2C_0_SCL_PIN:
-        description: 'Clock pin for I2C0'
-        value: 7
-    I2C_0_FREQUENCY:
-        description: 'Bus frequency in KHz for I2C0'
-        value: 100
+    I2C_0_PIN_SCL:
+        description: 'SCL pin for I2C_0'
+        value:  7
+    I2C_0_PIN_SDA:
+        description: 'SDA pin for I2C_0'
+        value:  30
+    I2C_0_FREQ_KHZ:
+        description: 'Frequency in khz for I2C_0 bus'
+        value:  100
+
+    I2C_1_PIN_SCL:
+        description: 'SCL pin for I2C_1'
+        value:  13
+    I2C_1_PIN_SDA:
+        description: 'SDA pin for I2C_1'
+        value:  12
+    I2C_1_FREQ_KHZ:
+        description: 'Frequency in khz for I2C_1 bus'
+        value:  100
 
     TIMER_0:
         description: 'NRF51 Timer 0'
