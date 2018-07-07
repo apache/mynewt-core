@@ -36,6 +36,3 @@ syscfg.defs:
     BME280_SPEC_CALC:
         description: 'BME280 Spec calculation insetad of built in one'
         value : 1
-    BME280_ITF_LOCK_TMO:
-        description: 'BME280 interface lock timeout in milliseconds'
-        value: 1000
