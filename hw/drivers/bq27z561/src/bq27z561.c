@@ -94,6 +94,10 @@ bq27z561_itf_lock(struct bq27z561_itf *bi, uint32_t timeout)
     int rc;
     os_time_t ticks;
 
+    if (!bi->bi_lock) {
+        return 0;
+    }
+
     rc = os_time_ms_to_ticks(timeout, &ticks);
     if (rc) {
         return rc;
@@ -117,6 +121,10 @@ bq27z561_itf_lock(struct bq27z561_itf *bi, uint32_t timeout)
 static void
 bq27z561_itf_unlock(struct bq27z561_itf *bi)
 {
+    if (!bi->bi_lock) {
+        return;
+    }
+
     os_mutex_release(bi->itf_lock);
 }
 

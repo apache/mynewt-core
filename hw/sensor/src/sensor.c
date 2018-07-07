@@ -866,6 +866,10 @@ sensor_itf_lock(struct sensor_itf *si, uint32_t timeout)
     int rc;
     os_time_t ticks;
 
+    if (!si->si_lock) {
+        return 0;
+    }
+
     rc = os_time_ms_to_ticks(timeout, &ticks);
     if (rc) {
         return rc;
@@ -889,6 +893,10 @@ sensor_itf_lock(struct sensor_itf *si, uint32_t timeout)
 void
 sensor_itf_unlock(struct sensor_itf *si)
 {
+    if (!si->si_lock) {
+        return;
+    }
+
     os_mutex_release(si->si_lock);
 }
 
