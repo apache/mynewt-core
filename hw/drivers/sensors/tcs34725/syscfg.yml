@@ -30,4 +30,7 @@ syscfg.defs:
     TCS34725_SHELL_ITF_ADDR:
         description: 'TCS34725 I2C address'
         value : 0x29
+    TCS34725_ITF_LOCK_TMO:
+        description: 'TCS34725 interface lock timeout in milliseconds'
+        value: 1000
 

@@ -32,6 +32,7 @@
 #include "adxl345_priv.h"
 #include "log/log.h"
 #include "stats/stats.h"
+#include <syscfg/syscfg.h>
 
 static struct hal_spi_settings spi_adxl345_settings = {
     .data_order = HAL_SPI_MSB_FIRST,
@@ -382,11 +383,18 @@ adxl345_write8(struct sensor_itf *itf, uint8_t reg, uint8_t value)
 {
     int rc;
 
+    rc = sensor_itf_lock(itf, MYNEWT_VAL(ADXL345_ITF_LOCK_TMO));
+    if (rc) {
+        return rc;
+    }
+
     if (itf->si_type == SENSOR_ITF_I2C) {
         rc = adxl345_i2c_write8(itf, reg, value);
     } else {
         rc = adxl345_spi_write8(itf, reg, value);
     }
+
+    sensor_itf_unlock(itf);
 
     return rc;
 }
@@ -405,11 +413,18 @@ adxl345_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
 {
     int rc;
 
+    rc = sensor_itf_lock(itf, MYNEWT_VAL(ADXL345_ITF_LOCK_TMO));
+    if (rc) {
+        return rc;
+    }
+
     if (itf->si_type == SENSOR_ITF_I2C) {
         rc = adxl345_i2c_read8(itf, reg, value);
     } else {
         rc = adxl345_spi_read8(itf, reg, value);
     }
+
+    sensor_itf_unlock(itf);
 
     return rc;
 }
@@ -430,11 +445,18 @@ adxl345_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
 {
     int rc;
 
+    rc = sensor_itf_lock(itf, MYNEWT_VAL(ADXL345_ITF_LOCK_TMO));
+    if (rc) {
+        return rc;
+    }
+
     if (itf->si_type == SENSOR_ITF_I2C) {
         rc = adxl345_i2c_readlen(itf, reg, buffer, len);
     } else {
         rc = adxl345_spi_readlen(itf, reg, buffer, len);
     }
+
+    sensor_itf_unlock(itf);
 
     return rc;
 }
@@ -1057,12 +1079,12 @@ adxl345_init(struct os_dev *dev, void *arg)
         if (rc == EINVAL) {
             return rc;
         }
-        
+
         rc = hal_spi_enable(sensor->s_itf.si_num);
         if (rc) {
             return rc;
         }
-        
+
         rc = hal_gpio_init_out(sensor->s_itf.si_cs_pin, 1);
         if (rc) {
             return rc;

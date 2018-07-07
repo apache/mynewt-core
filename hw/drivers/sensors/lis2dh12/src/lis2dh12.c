@@ -32,6 +32,7 @@
 #include "hal/hal_gpio.h"
 #include "log/log.h"
 #include "stats/stats.h"
+#include <syscfg/syscfg.h>
 
 static struct hal_spi_settings spi_lis2dh12_settings = {
     .data_order = HAL_SPI_MSB_FIRST,
@@ -326,11 +327,18 @@ lis2dh12_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
 {
     int rc;
 
+    rc = sensor_itf_lock(itf, MYNEWT_VAL(LIS2DH12_ITF_LOCK_TMO));
+    if (rc) {
+        return rc;
+    }
+
     if (itf->si_type == SENSOR_ITF_I2C) {
         rc = lis2dh12_i2c_writelen(itf, addr, payload, len);
     } else {
         rc = lis2dh12_spi_writelen(itf, addr, payload, len);
     }
+
+    sensor_itf_unlock(itf);
 
     return rc;
 }
@@ -350,11 +358,18 @@ lis2dh12_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
 {
     int rc;
 
+    rc = sensor_itf_lock(itf, MYNEWT_VAL(LIS2DH12_ITF_LOCK_TMO));
+    if (rc) {
+        return rc;
+    }
+
     if (itf->si_type == SENSOR_ITF_I2C) {
         rc = lis2dh12_i2c_readlen(itf, addr, payload, len);
     } else {
         rc = lis2dh12_spi_readlen(itf, addr, payload, len);
     }
+
+    sensor_itf_unlock(itf);
 
     return rc;
 }

@@ -234,7 +234,7 @@ static struct sensor_itf i2c_0_itf_tcs = {
 #endif
 
 #if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(MS5837_OFB)
-static struct sensor_itf i2c_0_itf_ms = {
+static struct sensor_itf i2c_0_itf_ms37 = {
     .si_type = SENSOR_ITF_I2C,
     .si_num  = 0,
     /* HW I2C address for the MS5837 */
@@ -243,7 +243,7 @@ static struct sensor_itf i2c_0_itf_ms = {
 #endif
 
 #if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(MS5840_OFB)
-static struct sensor_itf i2c_0_itf_ms = {
+static struct sensor_itf i2c_0_itf_ms40 = {
     .si_type = SENSOR_ITF_I2C,
     .si_num  = 0,
     /* HW I2C address for the MS5840 */
@@ -1059,7 +1059,7 @@ sensor_dev_create(void)
 
 #if MYNEWT_VAL(MS5837_OFB)
     rc = os_dev_create((struct os_dev *) &ms5837, "ms5837_0",
-      OS_DEV_INIT_PRIMARY, 0, ms5837_init, (void *)&i2c_0_itf_ms);
+      OS_DEV_INIT_PRIMARY, 0, ms5837_init, (void *)&i2c_0_itf_ms37);
     assert(rc == 0);
 
     rc = config_ms5837_sensor();
@@ -1068,7 +1068,7 @@ sensor_dev_create(void)
 
 #if MYNEWT_VAL(MS5840_OFB)
     rc = os_dev_create((struct os_dev *) &ms5840, "ms5840_0",
-      OS_DEV_INIT_PRIMARY, 0, ms5840_init, (void *)&i2c_0_itf_ms);
+      OS_DEV_INIT_PRIMARY, 0, ms5840_init, (void *)&i2c_0_itf_ms40);
     assert(rc == 0);
 
     rc = config_ms5840_sensor();

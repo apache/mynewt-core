@@ -32,6 +32,7 @@
 #include "hal/hal_gpio.h"
 #include "log/log.h"
 #include "stats/stats.h"
+#include <syscfg/syscfg.h>
 
 /*
  * Max time to wait for interrupt.
@@ -296,11 +297,18 @@ lis2dw12_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
 {
     int rc;
 
+    rc = sensor_itf_lock(itf, MYNEWT_VAL(LIS2DW12_ITF_LOCK_TMO));
+    if (rc) {
+        return rc;
+    }
+
     if (itf->si_type == SENSOR_ITF_I2C) {
         rc = lis2dw12_i2c_writelen(itf, addr, payload, len);
     } else {
         rc = lis2dw12_spi_writelen(itf, addr, payload, len);
     }
+
+    sensor_itf_unlock(itf);
 
     return rc;
 }
@@ -416,11 +424,18 @@ lis2dw12_write8(struct sensor_itf *itf, uint8_t reg, uint8_t value)
 {
     int rc;
 
+    rc = sensor_itf_lock(itf, MYNEWT_VAL(LIS2DW12_ITF_LOCK_TMO));
+    if (rc) {
+        return rc;
+    }
+
     if (itf->si_type == SENSOR_ITF_I2C) {
         rc = lis2dw12_i2c_writelen(itf, reg, &value, 1);
     } else {
         rc = lis2dw12_spi_writelen(itf, reg, &value, 1);
     }
+
+    sensor_itf_unlock(itf);
 
     return rc;
 }
@@ -439,11 +454,18 @@ lis2dw12_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
 {
     int rc;
 
+    rc = sensor_itf_lock(itf, MYNEWT_VAL(LIS2DW12_ITF_LOCK_TMO));
+    if (rc) {
+        return rc;
+    }
+
     if (itf->si_type == SENSOR_ITF_I2C) {
         rc = lis2dw12_i2c_readlen(itf, reg, value, 1);
     } else {
         rc = lis2dw12_spi_readlen(itf, reg, value, 1);
     }
+
+    sensor_itf_unlock(itf);
 
     return rc;
 }
@@ -464,11 +486,18 @@ lis2dw12_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
 {
     int rc;
 
+    rc = sensor_itf_lock(itf, MYNEWT_VAL(LIS2DW12_ITF_LOCK_TMO));
+    if (rc) {
+        return rc;
+    }
+
     if (itf->si_type == SENSOR_ITF_I2C) {
         rc = lis2dw12_i2c_readlen(itf, reg, buffer, len);
     } else {
         rc = lis2dw12_spi_readlen(itf, reg, buffer, len);
     }
+
+    sensor_itf_unlock(itf);
 
     return rc;
 }

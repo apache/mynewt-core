@@ -18,21 +18,6 @@
 #
 
 syscfg.defs:
-    LP5523_CLI:
-        description: 'Enable shell support for the LP5523'
-        value: 0
-    LP5523_SHELL_ITF_TYPE:
-        description: 'LP5523 interface type'
-        value: 1
-    LP5523_SHELL_ITF_NUM:
-        description: 'LP5523 interface number'
-        value: 0
-    LP5523_SHELL_ITF_ADDR:
-        description: 'LP5523 I2C Address'
-        value: 0x32
-    LP5523_LEDS_PER_DRIVER:
-        description: 'LP5523 LEDs per driver'
-        value: 5
-    LP5523_ITF_LOCK_TMO:
-        description: 'LP5523 interface lock timeout in milliseconds'
+    MS5837_ITF_LOCK_TMO:
+        description: 'MS5837 interface lock timeout in milliseconds'
         value: 1000

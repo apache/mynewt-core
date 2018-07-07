@@ -24,6 +24,7 @@
 #include <string.h>
 
 #include "lp5523/lp5523.h"
+#include <syscfg/syscfg.h>
 
 #if MYNEWT_VAL(LED_ABSTRACTION_LAYER)
 #include "led/led.h"
@@ -62,6 +63,11 @@ lp5523_set_reg(struct led_itf *itf, enum lp5523_registers addr,
         .buffer = payload
     };
 
+    rc = led_itf_lock(itf, MYNEWT_VAL(LP5523_ITF_LOCK_TMO));
+    if (rc) {
+        return rc;
+    }
+
     rc = hal_i2c_master_write(itf->li_num, &data_struct,
                               OS_TICKS_PER_SEC / 10, 1);
 
@@ -70,6 +76,8 @@ lp5523_set_reg(struct led_itf *itf, enum lp5523_registers addr,
                        itf->li_addr, addr, value);
         STATS_INC(g_lp5523stats, read_errors);
     }
+
+    led_itf_unlock(itf);
 
     return rc;
 }
@@ -85,6 +93,11 @@ lp5523_get_reg(struct led_itf *itf, enum lp5523_registers addr,
         .len = 1,
         .buffer = &addr
     };
+
+    rc = led_itf_lock(itf, MYNEWT_VAL(LP5523_ITF_LOCK_TMO));
+    if (rc) {
+        goto err;
+    }
 
     /* Register write */
     rc = hal_i2c_master_write(itf->li_num, &data_struct,
@@ -106,6 +119,8 @@ lp5523_get_reg(struct led_itf *itf, enum lp5523_registers addr,
     }
 
 err:
+    led_itf_unlock(itf);
+
     return rc;
 }
 
@@ -126,6 +141,11 @@ lp5523_set_n_regs(struct led_itf *itf, enum lp5523_registers addr,
 
     regs[0] = addr;
 
+    rc = led_itf_lock(itf, MYNEWT_VAL(LP5523_ITF_LOCK_TMO));
+    if (rc) {
+        return rc;
+    }
+
     rc = hal_i2c_master_write(itf->li_num, &data_struct,
                               (OS_TICKS_PER_SEC / 5), 1);
 
@@ -133,6 +153,8 @@ lp5523_set_n_regs(struct led_itf *itf, enum lp5523_registers addr,
         LP5523_ERR("Failed to write to 0x%02X:0x%02X\n", itf->li_addr, regs[0]);
         STATS_INC(g_lp5523stats, read_errors);
     }
+
+    led_itf_unlock(itf);
 
     return rc;
 }
@@ -151,13 +173,18 @@ lp5523_get_n_regs(struct led_itf *itf, enum lp5523_registers addr,
         .buffer = &addr_b
     };
 
+    rc = led_itf_lock(itf, MYNEWT_VAL(LP5523_ITF_LOCK_TMO));
+    if (rc) {
+        return rc;
+    }
+
     rc = hal_i2c_master_write(itf->li_num, &data_struct,
         (OS_TICKS_PER_SEC / 10), 0);
 
     if (rc) {
         LP5523_ERR("Failed to write to 0x%02X:0x%02X\n", itf->li_addr, addr_b);
         STATS_INC(g_lp5523stats, read_errors);
-        return rc;
+        goto err;
     }
 
     data_struct.len = len;
@@ -170,6 +197,10 @@ lp5523_get_n_regs(struct led_itf *itf, enum lp5523_registers addr,
             addr_b);
          STATS_INC(g_lp5523stats, read_errors);
     }
+
+err:
+    led_itf_unlock(itf);
+
     return rc;
 }
 
@@ -913,7 +944,7 @@ lp5523_init(struct os_dev *dev, void *arg)
     rc = stats_register(dev->od_name, STATS_HDR(g_lp5523stats));
     SYSINIT_PANIC_ASSERT(rc == 0);
 
-    return 0;
+    return rc;
 }
 
 int
