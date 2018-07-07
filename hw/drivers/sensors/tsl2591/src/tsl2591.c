@@ -41,8 +41,14 @@
 #include "tsl2591/tsl2591.h"
 #include "tsl2591_priv.h"
 #include "log/log.h"
+#if MYNEWT_VAL(TSL2591_STATS)
 #include "stats/stats.h"
+#endif
+#if MYNEWT_VAL(TSL2591_CONFIG)
+#include "config/config.h"
+#endif
 
+#if MYNEWT_VAL(TSL2591_STATS)
 /* Define the stats section and records */
 STATS_SECT_START(tsl2591_stat_section)
     STATS_SECT_ENTRY(polled)
@@ -63,6 +69,7 @@ STATS_NAME_END(tsl2591_stat_section)
 
 /* Global variable used to hold stats data */
 STATS_SECT_DECL(tsl2591_stat_section) g_tsl2591stats;
+#endif
 
 #define LOG_MODULE_TSL2591    (2591)
 #define TSL2591_INFO(...)     LOG_INFO(&_log, LOG_MODULE_TSL2591, __VA_ARGS__)
@@ -101,7 +108,9 @@ tsl2591_write8(struct sensor_itf *itf, uint8_t reg, uint32_t value)
     if (rc) {
         TSL2591_ERR("Failed to write 0x%02X:0x%02X with value 0x%02lX\n",
                     data_struct.address, reg, value);
+#if MYNEWT_VAL(TSL2591_STATS)
         STATS_INC(g_tsl2591stats, errors);
+#endif
     }
 
     return rc;
@@ -257,7 +266,9 @@ tsl2591_set_integration_time(struct sensor_itf *itf,
     #endif
 
     /* Increment the timing changed counter */
+#if MYNEWT_VAL(TSL2591_STATS)
     STATS_INC(g_tsl2591stats, timing_changed);
+#endif
 
     return 0;
 err:
@@ -310,7 +321,9 @@ tsl2591_set_gain(struct sensor_itf *itf, uint8_t gain)
     }
 
     /* Increment the gain change counter */
+#if MYNEWT_VAL(TSL2591_STATS)
     STATS_INC(g_tsl2591stats, gain_changed);
+#endif
 
     return 0;
 err:
@@ -361,7 +374,9 @@ tsl2591_get_data(struct sensor_itf *itf, uint16_t *broadband, uint16_t *ir)
     }
 
     /* Increment the polling counter */
+#if MYNEWT_VAL(TSL2591_STATS)
     STATS_INC(g_tsl2591stats, polled);
+#endif
 
     return 0;
 err:
@@ -388,6 +403,7 @@ tsl2591_init(struct os_dev *dev, void *arg)
 
     sensor = &tsl2591->sensor;
 
+#if MYNEWT_VAL(TSL2591_STATS)
     /* Initialise the stats entry */
     rc = stats_init(
         STATS_HDR(g_tsl2591stats),
@@ -397,6 +413,7 @@ tsl2591_init(struct os_dev *dev, void *arg)
     /* Register the entry with the stats registry */
     rc = stats_register(dev->od_name, STATS_HDR(g_tsl2591stats));
     SYSINIT_PANIC_ASSERT(rc == 0);
+#endif
 
     rc = sensor_init(sensor, dev);
     if (rc) {

@@ -24,6 +24,12 @@ syscfg.defs:
     TSL2591_CLI:
         description: 'Enable shell support for the TSL2591'
         value: 0
+    TSL2591_CONFIG:
+        description: 'Persist TSL2591 settings using sys/config'
+        value: 0
+    TSL2591_STATS:
+        description: 'Enable stats collection for TSL2591'
+        value: 0
     TSL2591_SHELL_ITF_TYPE:
         description: 'Select interface type'
         value: 1
