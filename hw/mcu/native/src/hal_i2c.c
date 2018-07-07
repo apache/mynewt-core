@@ -30,6 +30,15 @@ int
 hal_i2c_master_write(uint8_t i2c_num, struct hal_i2c_master_data *pdata,
                      uint32_t timeout, uint8_t last_op)
 {
+    uint16_t i;
+
+    printf("hal_i2c wrote %d byte(s) on device 0x%02X (I2C_%d):",
+           pdata->len, pdata->address, i2c_num);
+    for (i=0; i<pdata->len; i++) {
+        printf(" %02X", pdata->buffer[i]);
+    }
+    printf("\n");
+    fflush(stdout);
     return 0;
 }
 
@@ -37,6 +46,16 @@ int
 hal_i2c_master_read(uint8_t i2c_num, struct hal_i2c_master_data *pdata,
                     uint32_t timeout, uint8_t last_op)
 {
+    uint16_t i;
+
+    printf("hal_i2c read  %d byte(s) on device 0x%02X (I2C_%d):",
+           pdata->len, pdata->address, i2c_num);
+    for (i=0; i<pdata->len; i++) {
+        printf(" %02X", pdata->buffer[i]);
+    }
+    printf("\n");
+    fflush(stdout);
+
     return 0;
 }
 
@@ -44,8 +63,13 @@ int
 hal_i2c_master_probe(uint8_t i2c_num, uint8_t address,
                      uint32_t timeout)
 {
-    /* printf("I2C_%d probe at 0x%02X\n", i2c_num, address); */
-    /* fflush(stdout); */
+    int val;
 
-    return -1;
+    /* ToDo: return '0' on any I2C address(es) you wish to match */
+    switch (address) {
+        default:
+          val = -1;
+    }
+
+    return val;
 }
