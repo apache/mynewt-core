@@ -275,7 +275,6 @@ set_register(struct bma253 * bma253,
         break;
     }
 
-err:
     sensor_itf_unlock(itf);
 
     return rc;
