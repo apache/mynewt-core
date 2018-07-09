@@ -97,7 +97,8 @@ hal_gpio_init_out(int pin, int val)
     } else {
         NRF_GPIO->OUTCLR = HAL_GPIO_MASK(pin);
     }
-    NRF_GPIO->PIN_CNF[pin] = GPIO_PIN_CNF_DIR_Output;
+    NRF_GPIO->PIN_CNF[pin] = GPIO_PIN_CNF_DIR_Output |
+        (GPIO_PIN_CNF_INPUT_Disconnect << GPIO_PIN_CNF_INPUT_Pos);
     NRF_GPIO->DIRSET = HAL_GPIO_MASK(pin);
     return 0;
 }

@@ -132,7 +132,8 @@ hal_gpio_init_out(int pin, int val)
     } else {
         port->OUTCLR = HAL_GPIO_MASK(pin);
     }
-    port->PIN_CNF[pin_index] = GPIO_PIN_CNF_DIR_Output;
+    port->PIN_CNF[pin_index] = GPIO_PIN_CNF_DIR_Output |
+        (GPIO_PIN_CNF_INPUT_Disconnect << GPIO_PIN_CNF_INPUT_Pos);
     port->DIRSET = HAL_GPIO_MASK(pin);
 
     return 0;
