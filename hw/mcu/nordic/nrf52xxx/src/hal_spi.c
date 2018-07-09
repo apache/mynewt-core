@@ -30,6 +30,12 @@
 #define min(a, b) ((a)<(b)?(a):(b))
 #endif
 
+#ifdef NRF52840_XXAA
+#define SPIM_TXD_MAXCNT_MAX             65535
+#else
+#define SPIM_TXD_MAXCNT_MAX             255
+#endif
+
 /* IRQ handler type */
 typedef void (*nrf52_spi_irq_handler_t)(void);
 
@@ -128,9 +134,9 @@ static const struct nrf52_hal_spi *nrf52_hal_spis[NRF52_HAL_SPI_MAX] = {
 static void
 nrf52_irqm_handler(struct nrf52_hal_spi *spi)
 {
-    uint8_t xfr_bytes;
     NRF_SPIM_Type *spim;
-    uint8_t next_len;
+    uint16_t xfr_bytes;
+    uint16_t next_len;
 
     spim = spi->nhs_spi.spim;
 
@@ -148,7 +154,8 @@ nrf52_irqm_handler(struct nrf52_hal_spi *spi)
         if (spi->nhs_bytes_txq < spi->nhs_buflen) {
             spi->nhs_txbuf += xfr_bytes;
 
-            next_len = min(255, spi->nhs_buflen - spi->nhs_bytes_txq);
+            next_len = min(SPIM_TXD_MAXCNT_MAX,
+                           spi->nhs_buflen - spi->nhs_bytes_txq);
 
             spim->TXD.PTR = (uint32_t)spi->nhs_txbuf;
             spim->TXD.MAXCNT = next_len;
@@ -1031,7 +1038,7 @@ hal_spi_txrx_noblock(int spi_num, void *txbuf, void *rxbuf, int len)
         spi->nhs_buflen = len;
         spi->nhs_txbuf = txbuf;
 
-        len = min(255, len);
+        len = min(SPIM_TXD_MAXCNT_MAX, len);
 
         /* Set chip registers */
         spim->TXD.PTR = (uint32_t)txbuf;
