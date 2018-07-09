@@ -49,7 +49,7 @@ crash_device(char *how)
     } else if (!strcmp(how, "jump0")) {
         ((void (*)(void))0)();
     } else if (!strcmp(how, "ref0")) {
-        val1 = *(int *)0;
+        val1 = *(volatile int *)0;
     } else if (!strcmp(how, "assert")) {
         assert(0);
     } else if (!strcmp(how, "wdog")) {

@@ -196,6 +196,13 @@ int conf_load(void);
 int conf_ensure_loaded(void);
 
 /**
+ * Config setting comes as a result of conf_load().
+ *
+ * @return 1 if yes, 0 if not.
+ */
+int conf_set_from_storage(void);
+
+/**
  * Save currently running configuration. All configuration which is different
  * from currently persisted values will be saved.
  *
@@ -222,12 +229,6 @@ int conf_save_tree(char *name);
  * @return 0 on success, non-zero on failure.
  */
 int conf_save_one(const char *name, char *var);
-
-/*
-  XXXX for later
-  int conf_save_lib(char *name);
-  int conf_save_var(char *name, char *var);
-*/
 
 /**
  * Set configuration item identified by @p name to be value @p val_str.

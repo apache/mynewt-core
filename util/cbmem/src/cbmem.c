@@ -21,7 +21,7 @@
 #include "os/mynewt.h"
 #include "cbmem/cbmem.h"
 
-typedef void (copy_data_func_t) (void *dst, void *data, uint16_t len);
+typedef void (copy_data_func_t) (void *dst, const void *data, uint16_t len);
 
 int
 cbmem_init(struct cbmem *cbmem, void *buf, uint32_t buf_len)
@@ -75,7 +75,7 @@ err:
 
 
 static int
-cbmem_append_internal(struct cbmem *cbmem, void *data, uint16_t len,
+cbmem_append_internal(struct cbmem *cbmem, const void *data, uint16_t len,
                       copy_data_func_t *copy_func)
 {
     struct cbmem_entry_hdr *dst;
@@ -145,17 +145,53 @@ err:
 }
 
 static void
-copy_data_from_flat(void *dst, void *data, uint16_t len)
+copy_data_from_flat(void *dst, const void *data, uint16_t len)
 {
     memcpy(dst, data, len);
 }
 
 static void
-copy_data_from_mbuf(void *dst, void *data, uint16_t len)
+copy_data_from_mbuf(void *dst, const void *data, uint16_t len)
 {
-    struct os_mbuf *om = data;
+    const struct os_mbuf *om = data;
 
     os_mbuf_copydata(om, 0, len, dst);
+}
+
+static uint16_t
+cbmem_scat_gath_entry_len(const struct cbmem_scat_gath_entry *entry)
+{
+    if (entry->om != NULL) {
+        return os_mbuf_len(entry->om);
+    } else {
+        return entry->flat_len;
+    }
+}
+
+static void
+copy_data_from_scat_gath(void *dst, const void *data, uint16_t len)
+{
+    const struct cbmem_scat_gath_entry *entry;
+    const struct cbmem_scat_gath *sg;
+    uint8_t *u8p;
+    uint16_t entry_len;
+    int i;
+
+    u8p = dst;
+
+    sg = data;
+    for (i = 0; i < sg->count; i++) {
+        entry = sg->entries + i;
+
+        entry_len = cbmem_scat_gath_entry_len(entry);
+        if (entry->om != NULL) {
+            os_mbuf_copydata(entry->om, 0, entry_len, u8p);
+        } else {
+            memcpy(u8p, entry->flat_buf, entry_len);
+        }
+
+        u8p += entry_len;
+    }
 }
 
 int
@@ -165,18 +201,26 @@ cbmem_append(struct cbmem *cbmem, void *data, uint16_t len)
 }
 
 int
-cbmem_append_mbuf(struct cbmem *cbmem, struct os_mbuf *om)
+cbmem_append_mbuf(struct cbmem *cbmem, const struct os_mbuf *om)
 {
-    struct os_mbuf *om_tmp;
-    uint16_t len = 0;
+    return cbmem_append_internal(cbmem, om, os_mbuf_len(om),
+                                 copy_data_from_mbuf);
+}
 
-    om_tmp = om;
-    while (om_tmp) {
-        len += om_tmp->om_len;
-        om_tmp = SLIST_NEXT(om_tmp, om_next);
+int
+cbmem_append_scat_gath(struct cbmem *cbmem, const struct cbmem_scat_gath *sg)
+{
+    const struct cbmem_scat_gath_entry *entry;
+    uint16_t len;
+    int i;
+
+    len = 0;
+    for (i = 0; i < sg->count; i++) {
+        entry = sg->entries + i;
+        len += cbmem_scat_gath_entry_len(entry);
     }
 
-    return cbmem_append_internal(cbmem, om, len, copy_data_from_mbuf);
+    return cbmem_append_internal(cbmem, sg, len, copy_data_from_scat_gath);
 }
 
 void

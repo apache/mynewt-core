@@ -76,9 +76,10 @@ static int esc_state;
 static int nlip_state;
 static int echo = MYNEWT_VAL(CONSOLE_ECHO);
 static unsigned int ansi_val, ansi_val_2;
+static bool rx_stalled;
 
 static uint16_t cur, end;
-static struct os_eventq *avail_queue;
+static struct os_eventq avail_queue;
 static struct os_eventq *lines_queue;
 static completion_cb completion;
 
@@ -137,7 +138,8 @@ console_read(char *str, int cnt, int *newline)
         str[0] = cmd->line[0];
     }
 
-    os_eventq_put(avail_queue, ev);
+    console_line_event_put(ev);
+
     *newline = 1;
     return len;
 }
@@ -171,6 +173,7 @@ cursor_backward(unsigned int count)
     console_printf("\x1b[%uD", count);
 }
 
+#if MYNEWT_VAL(CONSOLE_HISTORY_SIZE) > 0
 static inline void
 cursor_clear_line(void)
 {
@@ -178,6 +181,7 @@ cursor_clear_line(void)
     console_out('[');
     console_out('K');
 }
+#endif
 
 static inline void
 cursor_save(void)
@@ -256,24 +260,31 @@ del_char(char *pos, uint16_t end)
     cursor_restore();
 }
 
-#if MYNEWT_VAL(CONSOLE_HISTORY)
-struct console_hist {
-    struct console_input buffer[MYNEWT_VAL(CONSOLE_HISTORY_SIZE)];
+#if MYNEWT_VAL(CONSOLE_HISTORY_SIZE) > 0
+static char console_hist_lines[ MYNEWT_VAL(CONSOLE_HISTORY_SIZE) ][ MYNEWT_VAL(CONSOLE_MAX_INPUT_LEN) ];
+
+static struct console_hist {
     uint8_t head;
     uint8_t tail;
     uint8_t size;
     uint8_t curr;
+    char *lines[ MYNEWT_VAL(CONSOLE_HISTORY_SIZE) + 1 ];
 } console_hist;
 
 static void
 console_hist_init(void)
 {
     struct console_hist *sh = &console_hist;
+    int i;
 
-    sh->head = 0;
-    sh->tail = 0;
-    sh->curr = 0;
-    sh->size = MYNEWT_VAL(CONSOLE_HISTORY_SIZE);
+    memset(console_hist_lines, 0, sizeof(console_hist_lines));
+    memset(&console_hist, 0, sizeof(console_hist));
+
+    sh->size = MYNEWT_VAL(CONSOLE_HISTORY_SIZE) + 1;
+
+    for (i = 0; i < sh->size - 1; i++) {
+        sh->lines[i] = console_hist_lines[i];
+    }
 }
 
 static size_t
@@ -323,46 +334,48 @@ ring_buf_next(uint8_t i, uint8_t size)
 static uint8_t
 ring_buf_prev(uint8_t i, uint8_t size)
 {
-    return (uint8_t) ((i - 1) % size);
+    return i == 0 ? i = size - 1 : --i;
 }
 
 static bool
-console_hist_full(void)
+console_hist_is_full(void)
 {
     struct console_hist *sh = &console_hist;
 
-    return sh->head == sh->tail;
-}
-
-static void
-console_hist_next(void)
-{
-    struct console_hist *sh = &console_hist;
-
-    sh->head = (uint8_t) ring_buf_next(sh->head, sh->size);
-
-    /* buffer full, start overwriting old history */
-    if (console_hist_full()) {
-        sh->tail = (uint8_t) ring_buf_next(sh->tail, sh->size);
-    }
+    return ring_buf_next(sh->head, sh->size) == sh->tail;
 }
 
 static bool
-console_hist_find(char *line)
+console_hist_move_to_head(char *line)
 {
     struct console_hist *sh = &console_hist;
-    uint8_t curr;
+    char *match = NULL;
+    uint8_t prev, curr;
 
     curr = sh->tail;
     while (curr != sh->head) {
-        if (strcmp(sh->buffer[curr].line, line) == 0) {
-            return true;
+        if (strcmp(sh->lines[curr], line) == 0) {
+            match = sh->lines[curr];
+            break;
         }
-
         curr = ring_buf_next(curr, sh->size);
     }
 
-    return false;
+    if (!match) {
+        return false;
+    }
+
+    prev = curr;
+    curr = ring_buf_next(curr, sh->size);
+    while (curr != sh->head) {
+        sh->lines[prev] = sh->lines[curr];
+        prev = curr;
+        curr = ring_buf_next(curr, sh->size);
+    }
+
+    sh->lines[prev] = match;
+
+    return true;
 }
 
 static void
@@ -380,12 +393,25 @@ console_hist_add(char *line)
         return;
     }
 
-    if (console_hist_find(buf)) {
+    if (console_hist_move_to_head(buf)) {
         return;
     }
 
-    strcpy(sh->buffer[sh->head].line, buf);
-    console_hist_next();
+    if (console_hist_is_full()) {
+        /*
+         * We have N buffers, but there are N+1 items in queue so one element is
+         * always empty. If queue is full we need to move buffer from oldest
+         * entry to current head and trim queue tail.
+         */
+        assert(sh->lines[sh->head] == NULL);
+        sh->lines[sh->head] = sh->lines[sh->tail];
+        sh->lines[sh->tail] = NULL;
+        sh->tail = ring_buf_next(sh->tail, sh->size);
+    }
+
+    strcpy(sh->lines[sh->head], buf);
+    sh->head = ring_buf_next(sh->head, sh->size);
+
     /* Reset current pointer */
     sh->curr = sh->head;
 }
@@ -421,8 +447,8 @@ console_hist_move(char *line, uint8_t direction)
     }
 
     console_clear_line();
-    str = sh->buffer[sh->curr].line;
-    while (*str != '\0') {
+    str = sh->lines[sh->curr];
+    while (str && *str != '\0') {
         insert_char(&line[cur], *str, end);
         ++str;
     }
@@ -469,7 +495,7 @@ handle_ansi(uint8_t byte, char *line)
 
 ansi_cmd:
     switch (byte) {
-#if MYNEWT_VAL(CONSOLE_HISTORY)
+#if MYNEWT_VAL(CONSOLE_HISTORY_SIZE) > 0
     case ANSI_UP:
     case ANSI_DOWN:
         console_blocking_mode();
@@ -585,14 +611,16 @@ console_handle_char(uint8_t byte)
     static struct console_input *input;
     static char prev_endl = '\0';
 
-    if (!avail_queue || !lines_queue) {
+    if (!lines_queue) {
         return 0;
     }
 
     if (!ev) {
-        ev = os_eventq_get_no_wait(avail_queue);
-        if (!ev)
-            return 0;
+        ev = os_eventq_get_no_wait(&avail_queue);
+        if (!ev) {
+            rx_stalled = true;
+            return -1;
+        }
         input = ev->ev_arg;
     }
 
@@ -690,7 +718,7 @@ console_handle_char(uint8_t byte)
             cur = 0;
             end = 0;
             os_eventq_put(lines_queue, ev);
-#if MYNEWT_VAL(CONSOLE_HISTORY)
+#if MYNEWT_VAL(CONSOLE_HISTORY_SIZE) > 0
             console_hist_add(input->line);
 #endif
 
@@ -739,10 +767,20 @@ console_is_init(void)
 }
 
 void
-console_set_queues(struct os_eventq *avail, struct os_eventq *lines)
+console_line_queue_set(struct os_eventq *evq)
 {
-    avail_queue = avail;
-    lines_queue = lines;
+    lines_queue = evq;
+}
+
+void
+console_line_event_put(struct os_event *ev)
+{
+    os_eventq_put(&avail_queue, ev);
+
+    if (rx_stalled) {
+        rx_stalled = false;
+        console_rx_restart();
+    }
 }
 
 void
@@ -759,11 +797,11 @@ console_init(console_rx_cb rx_cb)
 
     os_eventq_init(&compat_lines_queue);
     os_eventq_init(&compat_avail_queue);
-    console_set_queues(&compat_avail_queue, &compat_lines_queue);
+    console_line_queue_set(&compat_lines_queue);
 
     for (i = 0; i < CONSOLE_COMPAT_MAX_CMD_QUEUED; i++) {
         shell_console_ev[i].ev_arg = &buf[i];
-        os_eventq_put(avail_queue, &shell_console_ev[i]);
+        console_line_event_put(&shell_console_ev[i]);
     }
     console_compat_rx_cb = rx_cb;
     return 0;
@@ -778,7 +816,9 @@ console_pkg_init(void)
     /* Ensure this function only gets called by sysinit. */
     SYSINIT_ASSERT_ACTIVE();
 
-#if MYNEWT_VAL(CONSOLE_HISTORY)
+    os_eventq_init(&avail_queue);
+
+#if MYNEWT_VAL(CONSOLE_HISTORY_SIZE) > 0
     console_hist_init();
 #endif
 

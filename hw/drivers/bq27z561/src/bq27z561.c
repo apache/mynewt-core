@@ -26,6 +26,8 @@
 #include "hal/hal_gpio.h"
 #include "hal/hal_i2c.h"
 
+#include "battery/battery_prop.h"
+
 #if MYNEWT_VAL(BQ27Z561_LOG)
 #include "log/log.h"
 #endif
@@ -78,6 +80,54 @@ bq27z561_close(struct os_dev *dev)
     return 0;
 }
 
+/**
+ * Lock access to the bq27z561_itf specified by si. Blocks until lock acquired.
+ *
+ * @param The bq27z561_itf to lock
+ * @param The timeout
+ *
+ * @return 0 on success, non-zero on failure.
+ */
+static int
+bq27z561_itf_lock(struct bq27z561_itf *bi, uint32_t timeout)
+{
+    int rc;
+    os_time_t ticks;
+
+    if (!bi->bi_lock) {
+        return 0;
+    }
+
+    rc = os_time_ms_to_ticks(timeout, &ticks);
+    if (rc) {
+        return rc;
+    }
+
+    rc = os_mutex_pend(bi->itf_lock, ticks);
+    if (rc == 0 || rc == OS_NOT_STARTED) {
+        return (0);
+    }
+
+    return (rc);
+}
+
+/**
+ * Unlock access to the bq27z561_itf specified by bi.
+ *
+ * @param The bq27z561_itf to unlock access to
+ *
+ * @return 0 on success, non-zero on failure.
+ */
+static void
+bq27z561_itf_unlock(struct bq27z561_itf *bi)
+{
+    if (!bi->bi_lock) {
+        return;
+    }
+
+    os_mutex_release(bi->itf_lock);
+}
+
 int
 bq27z561_rd_std_reg_word(struct bq27z561 *dev, uint8_t reg, uint16_t *val)
 {
@@ -88,10 +138,15 @@ bq27z561_rd_std_reg_word(struct bq27z561 *dev, uint8_t reg, uint16_t *val)
     i2c.len = 1;
     i2c.buffer = &reg;
 
+    rc = bq27z561_itf_lock(&dev->bq27_itf, MYNEWT_VAL(BQ27Z561_ITF_LOCK_TMO));
+    if (rc) {
+        return rc;
+    }
+
     rc = hal_i2c_master_write(dev->bq27_itf.itf_num, &i2c, OS_TICKS_PER_SEC, 0);
     if (rc != 0) {
         BQ27Z561_ERROR("I2C reg read (wr) failed 0x%02X\n", reg);
-        return rc;
+        goto err;
     }
 
     i2c.len = 2;
@@ -99,12 +154,15 @@ bq27z561_rd_std_reg_word(struct bq27z561 *dev, uint8_t reg, uint16_t *val)
     rc = hal_i2c_master_read(dev->bq27_itf.itf_num, &i2c, OS_TICKS_PER_SEC, 1);
     if (rc != 0) {
         BQ27Z561_ERROR("I2C reg read (rd) failed 0x%02X\n", reg);
-        return rc;
+        goto err;
     }
+
+err:
+    bq27z561_itf_unlock(&dev->bq27_itf);
 
     /* XXX: add big-endian support */
 
-    return 0;
+    return rc;
 }
 
 static int
@@ -122,13 +180,21 @@ bq27z561_wr_std_reg_word(struct bq27z561 *dev, uint8_t reg, uint16_t val)
     i2c.len     = 3;
     i2c.buffer  = buf;
 
-    rc = hal_i2c_master_write(dev->bq27_itf.itf_num, &i2c, OS_TICKS_PER_SEC, 1);
-    if (rc != 0) {
-        BQ27Z561_ERROR("I2C reg write 0x%02X failed\n", reg);
+    rc = bq27z561_itf_lock(&dev->bq27_itf, MYNEWT_VAL(BQ27Z561_ITF_LOCK_TMO));
+    if (rc) {
         return rc;
     }
 
-    return 0;
+    rc = hal_i2c_master_write(dev->bq27_itf.itf_num, &i2c, OS_TICKS_PER_SEC, 1);
+    if (rc != 0) {
+        BQ27Z561_ERROR("I2C reg write 0x%02X failed\n", reg);
+        goto err;
+    }
+
+err:
+    bq27z561_itf_unlock(&dev->bq27_itf);
+
+    return rc;
 }
 
 bq27z561_err_t
@@ -161,13 +227,20 @@ bq27x561_wr_alt_mfg_cmd(struct bq27z561 *dev, uint16_t cmd, uint8_t *buf,
     i2c.address = dev->bq27_itf.itf_addr;
     i2c.buffer = tmpbuf;
 
+    rc = bq27z561_itf_lock(&dev->bq27_itf, MYNEWT_VAL(BQ27Z561_ITF_LOCK_TMO));
+    if (rc) {
+        return rc;
+    }
+
     rc = hal_i2c_master_write(dev->bq27_itf.itf_num, &i2c, OS_TICKS_PER_SEC, 1);
     if (rc != 0) {
         BQ27Z561_ERROR("I2C reg read (wr) failed 0x%02X\n", reg);
-        return BQ27Z561_ERR_I2C_ERR;
+        rc = BQ27Z561_ERR_I2C_ERR;
     }
 
-    return BQ27Z561_OK;
+    bq27z561_itf_unlock(&dev->bq27_itf);
+
+    return rc;
 }
 
 bq27z561_err_t
@@ -193,10 +266,16 @@ bq27x561_rd_alt_mfg_cmd(struct bq27z561 *dev, uint16_t cmd, uint8_t *val,
     i2c.address = dev->bq27_itf.itf_addr;
     i2c.buffer = tmpbuf;
 
+    rc = bq27z561_itf_lock(&dev->bq27_itf, MYNEWT_VAL(BQ27Z561_ITF_LOCK_TMO));
+    if (rc) {
+        return rc;
+    }
+
     rc = hal_i2c_master_write(dev->bq27_itf.itf_num, &i2c, OS_TICKS_PER_SEC, 1);
     if (rc != 0) {
         BQ27Z561_ERROR("I2C reg read (wr) failed 0x%02X\n", reg);
         rc = BQ27Z561_ERR_I2C_ERR;
+        bq27z561_itf_unlock(&dev->bq27_itf);
         goto err;
     }
 
@@ -208,6 +287,7 @@ bq27x561_rd_alt_mfg_cmd(struct bq27z561 *dev, uint16_t cmd, uint8_t *val,
     if (rc != 0) {
         BQ27Z561_ERROR("I2C reg read (wr) failed 0x%02X\n", reg);
         rc = BQ27Z561_ERR_I2C_ERR;
+        bq27z561_itf_unlock(&dev->bq27_itf);
         goto err;
     }
 
@@ -217,8 +297,11 @@ bq27x561_rd_alt_mfg_cmd(struct bq27z561 *dev, uint16_t cmd, uint8_t *val,
     if (rc != 0) {
         BQ27Z561_ERROR("I2C reg read (rd) failed 0x%02X\n", reg);
         rc = BQ27Z561_ERR_I2C_ERR;
+        bq27z561_itf_unlock(&dev->bq27_itf);
         goto err;
     }
+
+    bq27z561_itf_unlock(&dev->bq27_itf);
 
     /* Verify that first two bytes are the command */
     cmd_read = tmpbuf[0];
@@ -286,10 +369,16 @@ bq27x561_rd_flash(struct bq27z561 *dev, uint16_t addr, uint8_t *buf, int buflen)
     i2c.address = dev->bq27_itf.itf_addr;
     i2c.buffer = tmpbuf;
 
+    rc = bq27z561_itf_lock(&dev->bq27_itf, MYNEWT_VAL(BQ27Z561_ITF_LOCK_TMO));
+    if (rc) {
+        return rc;
+    }
+
     rc = hal_i2c_master_write(dev->bq27_itf.itf_num, &i2c, OS_TICKS_PER_SEC, 1);
     if (rc != 0) {
         BQ27Z561_ERROR("I2C reg read (wr) failed 0x%02X\n", reg);
         rc = BQ27Z561_ERR_I2C_ERR;
+        bq27z561_itf_unlock(&dev->bq27_itf);
         goto err;
     }
 
@@ -301,6 +390,7 @@ bq27x561_rd_flash(struct bq27z561 *dev, uint16_t addr, uint8_t *buf, int buflen)
     if (rc != 0) {
         BQ27Z561_ERROR("I2C reg read (wr) failed 0x%02X\n", reg);
         rc = BQ27Z561_ERR_I2C_ERR;
+        bq27z561_itf_unlock(&dev->bq27_itf);
         goto err;
     }
 
@@ -310,8 +400,11 @@ bq27x561_rd_flash(struct bq27z561 *dev, uint16_t addr, uint8_t *buf, int buflen)
     if (rc != 0) {
         BQ27Z561_ERROR("I2C reg read (rd) failed 0x%02X\n", reg);
         rc = BQ27Z561_ERR_I2C_ERR;
+        bq27z561_itf_unlock(&dev->bq27_itf);
         goto err;
     }
+
+    bq27z561_itf_unlock(&dev->bq27_itf);
 
     /* Verify that first two bytes are the address*/
     addr_read = tmpbuf[0];
@@ -357,6 +450,11 @@ bq27x561_wr_flash(struct bq27z561 *dev, uint16_t addr, uint8_t *buf, int buflen)
     i2c.address = dev->bq27_itf.itf_addr;
     i2c.buffer = tmpbuf;
 
+    rc = bq27z561_itf_lock(&dev->bq27_itf, MYNEWT_VAL(BQ27Z561_ITF_LOCK_TMO));
+    if (rc) {
+        return rc;
+    }
+
     rc = hal_i2c_master_write(dev->bq27_itf.itf_num, &i2c, OS_TICKS_PER_SEC, 1);
     if (rc != 0) {
         BQ27Z561_ERROR("I2C reg read (wr) failed 0x%02X\n", reg);
@@ -378,12 +476,11 @@ bq27x561_wr_flash(struct bq27z561 *dev, uint16_t addr, uint8_t *buf, int buflen)
     if (rc != 0) {
         BQ27Z561_ERROR("I2C reg read (wr) failed 0x%02X\n", reg);
         rc = BQ27Z561_ERR_I2C_ERR;
-        goto err;
     }
 
-    rc = BQ27Z561_OK;
-
 err:
+    bq27z561_itf_unlock(&dev->bq27_itf);
+
     return rc;
 }
 
@@ -597,10 +694,128 @@ bq27z561_config(struct bq27z561 *dev, struct bq27z561_cfg *cfg)
     return 0;
 }
 
+/* Battery manager interface functions */
+
+static int
+bq27z561_battery_property_get(struct battery_driver *driver,
+                          struct battery_property *property, uint32_t timeout)
+{
+    int rc = 0;
+
+    battery_property_value_t val;
+    if (property->bp_type == BATTERY_PROP_VOLTAGE_NOW &&
+        property->bp_flags == 0) {
+        rc = bq27z561_get_voltage((struct bq27z561 *) driver->bd_driver_data,
+                                  &val.bpv_u16);
+        property->bp_value.bpv_voltage = val.bpv_u16;
+    } else if (property->bp_type == BATTERY_PROP_STATUS &&
+               property->bp_flags == 0) {
+        rc = bq27z561_get_batt_status((struct bq27z561 *) driver->bd_driver_data,
+                                      &val.bpv_u16);
+        if (val.bpv_u16 & BQ27Z561_BATTERY_STATUS_DSG) {
+            property->bp_value.bpv_status = BATTERY_STATUS_DISCHARGING;
+        } else if (val.bpv_u16 & BQ27Z561_BATTERY_STATUS_FC) {
+            property->bp_value.bpv_status = BATTERY_STATUS_FULL;
+        } else {
+            property->bp_value.bpv_status = BATTERY_STATUS_CHARGING;
+        }
+    } else if (property->bp_type == BATTERY_PROP_CURRENT_NOW &&
+               property->bp_flags == 0) {
+        rc = bq27z561_get_current((struct bq27z561 *) driver->bd_driver_data,
+                                  &val.bpv_i16);
+        property->bp_value.bpv_current = val.bpv_i16;
+    } else if (property->bp_type == BATTERY_PROP_CAPACITY &&
+               property->bp_flags == 0) {
+        rc = bq27z561_get_rem_capacity((struct bq27z561 *) driver->bd_driver_data,
+                                  &val.bpv_u16);
+        property->bp_value.bpv_capacity = val.bpv_u16;
+    } else if (property->bp_type == BATTERY_PROP_SOC &&
+               property->bp_flags == 0) {
+        rc = bq27z561_get_relative_state_of_charge(
+                (struct bq27z561 *) driver->bd_driver_data, &val.bpv_u8);
+        property->bp_value.bpv_soc = val.bpv_u8;
+    } else if (property->bp_type == BATTERY_PROP_CYCLE_COUNT &&
+               property->bp_flags == 0) {
+        rc = bq27z561_get_discharge_cycles(
+                (struct bq27z561 *) driver->bd_driver_data, &val.bpv_u16);
+        property->bp_value.bpv_cycle_count = val.bpv_u16;
+    } else if (property->bp_type == BATTERY_PROP_TIME_TO_EMPTY_NOW &&
+               property->bp_flags == 0) {
+        rc = bq27z561_get_time_to_empty(
+                (struct bq27z561 *) driver->bd_driver_data, &val.bpv_u16);
+        property->bp_value.bpv_time_in_s = (uint8_t)val.bpv_u16 * 60;
+    } else if (property->bp_type == BATTERY_PROP_TIME_TO_FULL_NOW &&
+               property->bp_flags == 0) {
+        rc = bq27z561_get_avg_time_to_full(
+                (struct bq27z561 *) driver->bd_driver_data, &val.bpv_u16);
+        property->bp_value.bpv_time_in_s = val.bpv_u16 * 60;
+    } else if (property->bp_type == BATTERY_PROP_TEMP_NOW &&
+               property->bp_flags == 0) {
+        rc = bq27z561_get_temp(
+                (struct bq27z561 *) driver->bd_driver_data, &val.bpv_flt);
+        property->bp_value.bpv_temperature = val.bpv_flt;
+    } else {
+        rc = -1;
+        assert(0);
+    }
+    if (rc == 0) {
+        property->bp_valid = 1;
+    } else {
+        property->bp_valid = 0;
+    }
+
+    return rc;
+}
+
+static int
+bq27z561_battery_property_set(struct battery_driver *driver,
+                          struct battery_property *property)
+{
+    int rc = 0;
+
+    /* TODO: Not yet implemented */
+    return rc;
+}
+
+static int
+bq27z561_enable(struct battery *battery)
+{
+    return 0;
+}
+
+static int
+bq27z561_disable(struct battery *battery)
+{
+    return 0;
+}
+
+static const struct battery_driver_functions bq27z561_drv_funcs = {
+    .bdf_property_get     = bq27z561_battery_property_get,
+    .bdf_property_set     = bq27z561_battery_property_set,
+
+    .bdf_enable           = bq27z561_enable,
+    .bdf_disable          = bq27z561_disable,
+};
+
+static const struct battery_driver_property bq27z561_battery_properties[] = {
+    { BATTERY_PROP_STATUS, 0, "Status" },
+    { BATTERY_PROP_CAPACITY, 0, "Capacity" },
+    { BATTERY_PROP_TEMP_NOW, 0, "Temperature" },
+    { BATTERY_PROP_VOLTAGE_NOW, 0, "Voltage" },
+    { BATTERY_PROP_CURRENT_NOW, 0, "Current" },
+    { BATTERY_PROP_SOC, 0, "SOC" },
+    { BATTERY_PROP_TIME_TO_EMPTY_NOW, 0, "TimeToEmpty" },
+    { BATTERY_PROP_TIME_TO_FULL_NOW, 0, "TimeToFull" },
+    { BATTERY_PROP_CYCLE_COUNT, 0, "CycleCount" },
+    /* TODO: Add threshold properties supported by fuel gauge in hardware */
+    { BATTERY_PROP_NONE },
+};
+
 int
 bq27z561_init(struct os_dev *dev, void *arg)
 {
     struct bq27z561 *bq27;
+    struct bq27z561_init_arg *init_arg = (struct bq27z561_init_arg *)arg;
 
     if (!dev || !arg) {
         return SYS_ENODEV;
@@ -608,9 +823,24 @@ bq27z561_init(struct os_dev *dev, void *arg)
 
     OS_DEV_SETHANDLERS(dev, bq27z561_open, bq27z561_close);
 
-    /* Copy the interface struct */
     bq27 = (struct bq27z561 *)dev;
-    memcpy(&bq27->bq27_itf, arg, sizeof(struct bq27z561_itf));
+    /* Copy the interface struct */
+    bq27->bq27_itf = init_arg->itf;
+
+    bq27->dev.bd_funcs = &bq27z561_drv_funcs;
+    bq27->dev.bd_driver_properties = bq27z561_battery_properties;
+    bq27->dev.bd_driver_data = bq27;
+
+    battery_add_driver(init_arg->battery, &bq27->dev);
 
     return 0;
+}
+
+int bq27z561_pkg_init(void)
+{
+#if MYNEWT_VAL(BQ27Z561_CLI)
+    return bq27z561_shell_init();
+#else
+    return 0;
+#endif
 }

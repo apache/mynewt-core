@@ -75,17 +75,17 @@ static const struct nrf51_hal_spi_cfg os_bsp_spi1s_cfg = {
 
 #if MYNEWT_VAL(I2C_0)
 static const struct nrf51_hal_i2c_cfg os_bsp_i2c0_cfg = {
-    .sda_pin = MYNEWT_VAL(I2C_0_SDA_PIN),
-    .scl_pin = MYNEWT_VAL(I2C_0_SCL_PIN),
-    .i2c_frequency = MYNEWT_VAL(I2C_0_FREQUENCY),
+    .sda_pin = MYNEWT_VAL(I2C_0_PIN_SDA),
+    .scl_pin = MYNEWT_VAL(I2C_0_PIN_SCL),
+    .i2c_frequency = MYNEWT_VAL(I2C_0_FREQ_KHZ),
 };
 #endif
 
 #if MYNEWT_VAL(I2C_1)
 static const struct nrf51_hal_i2c_cfg os_bsp_i2c1_cfg = {
-    .sda_pin = MYNEWT_VAL(I2C_1_SDA_PIN),
-    .scl_pin = MYNEWT_VAL(I2C_1_SCL_PIN),
-    .i2c_frequency = MYNEWT_VAL(I2C_1_FREQUENCY),
+    .sda_pin = MYNEWT_VAL(I2C_1_PIN_SDA),
+    .scl_pin = MYNEWT_VAL(I2C_1_PIN_SCL),
+    .i2c_frequency = MYNEWT_VAL(I2C_1_FREQ_KHZ),
 };
 #endif
 

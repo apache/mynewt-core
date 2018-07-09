@@ -33,3 +33,6 @@ syscfg.defs:
     LP5523_LEDS_PER_DRIVER:
         description: 'LP5523 LEDs per driver'
         value: 5
+    LP5523_ITF_LOCK_TMO:
+        description: 'LP5523 interface lock timeout in milliseconds'
+        value: 1000

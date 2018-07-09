@@ -51,3 +51,6 @@ syscfg.defs:
     BMA253_SHELL_DEV_NAME:
         description: 'BMA253 Shell device name'
         value: "\"bma253_0\""
+    BMA253_ITF_LOCK_TMO:
+        description: 'BMA253 interface lock timeout in milliseconds'
+        value: 1000

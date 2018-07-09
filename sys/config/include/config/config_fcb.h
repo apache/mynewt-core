@@ -30,8 +30,39 @@ struct conf_fcb {
     struct fcb cf_fcb;
 };
 
-extern int conf_fcb_src(struct conf_fcb *cf);
-extern int conf_fcb_dst(struct conf_fcb *cf);
+/**
+ * Add FCB as a sourced of persisted configation
+ *
+ * @param cf Information regarding FCB area to add.
+ *
+ * @return 0 on success, non-zero on failure.
+ */
+int conf_fcb_src(struct conf_fcb *cf);
+
+/**
+ * Set FCB as the destination for persisting configation
+ *
+ * @param cf Information regarding FCB area to add. This FCB area should have
+ *           been added using conf_fcb_src() previously.
+ *
+ * @return 0 on success, non-zero on failure.
+ */
+int conf_fcb_dst(struct conf_fcb *cf);
+
+/**
+ * Do a custom compression cycle. Caller provides a callback function which
+ * returns whether value should be copied or not. Note that compression
+ * automatically filters out old configuration values.
+ *
+ * @param cf FCB source to compress.
+ * @param copy_or_not Function which gets called with key/value pair.
+ *                    Returns 0 if copy should happen, 1 if key/value pair
+ *                    should be skipped.
+ */
+void conf_fcb_compress(struct conf_fcb *cf,
+                       int (*copy_or_not)(const char *name, const char *val,
+                                          void *con_arg),
+                       void *con_arg);
 
 #ifdef __cplusplus
 }

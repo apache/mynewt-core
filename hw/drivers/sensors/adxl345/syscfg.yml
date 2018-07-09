@@ -47,3 +47,6 @@ syscfg.defs:
     ADXL345_INT_PIN_DEVICE:
         description: 'Interrupt pin number 1 or 2 on accelerometer device'
         value: 1
+    ADXL345_ITF_LOCK_TMO:
+        description: 'ADXL345 interface lock timeout in milliseconds'
+        value: 1000

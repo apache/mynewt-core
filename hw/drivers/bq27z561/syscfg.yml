@@ -30,3 +30,6 @@ syscfg.defs:
     BQ27Z561_SHELL_DEV_NAME:
         description: 'BQ27Z561 Shell device name'
         value: "\"bq27z561_0\""
+    BQ27Z561_ITF_LOCK_TMO:
+        description: 'BQ27Z561 interface lock timeout in milliseconds'
+        value: 1000

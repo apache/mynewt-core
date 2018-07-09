@@ -350,8 +350,8 @@ hal_timer_stop(struct hal_timer *timer)
         if (reset_ocmp) {
             if (ht) {
                 os_callout_reset(&nt->callout,
-                  (ht->expiry - hal_timer_read(nt->num) /
-                    nt->ticks_per_ostick));
+                  (ht->expiry - hal_timer_read(nt->num)) /
+                    nt->ticks_per_ostick);
             } else {
                 os_callout_stop(&nt->callout);
             }

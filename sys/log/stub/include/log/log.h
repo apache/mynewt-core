@@ -85,6 +85,14 @@ const struct log_handler log_fcb_handler;
 const struct log_handler log_fcb_slot1_handler;
 #endif
 
+#if MYNEWT_VAL(LOG_CONSOLE)
+static inline struct log *
+log_console_get(void)
+{
+    return NULL;
+}
+#endif
+
 #ifdef __cplusplus
 }
 #endif

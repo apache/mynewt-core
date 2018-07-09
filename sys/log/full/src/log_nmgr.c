@@ -64,9 +64,9 @@ struct log_encode_data {
  */
 static int
 log_nmgr_encode_entry(struct log *log, struct log_offset *log_offset,
-                      void *dptr, uint16_t len)
+                      const struct log_entry_hdr *ueh, void *dptr,
+                      uint16_t len)
 {
-    struct log_entry_hdr ueh;
     uint8_t data[128];
     int rc;
     int rsp_len;
@@ -79,12 +79,6 @@ log_nmgr_encode_entry(struct log *log, struct log_offset *log_offset,
     CborEncoder str_encoder;
     int off;
 #endif
-
-    rc = log_read(log, dptr, &ueh, 0, sizeof(ueh));
-    if (rc != sizeof(ueh)) {
-        rc = OS_ENOENT;
-        goto err;
-    }
     rc = OS_OK;
 
     /* If specified timestamp is nonzero, it is the primary criterion, and the
@@ -98,17 +92,17 @@ log_nmgr_encode_entry(struct log *log, struct log_offset *log_offset,
      */
 
     if (log_offset->lo_ts == 0) {
-        if (log_offset->lo_index > ueh.ue_index) {
+        if (log_offset->lo_index > ueh->ue_index) {
             goto err;
         }
-    } else if (ueh.ue_ts < log_offset->lo_ts   ||
-               (ueh.ue_ts == log_offset->lo_ts &&
-                ueh.ue_index < log_offset->lo_index)) {
+    } else if (ueh->ue_ts < log_offset->lo_ts   ||
+               (ueh->ue_ts == log_offset->lo_ts &&
+                ueh->ue_index < log_offset->lo_index)) {
         goto err;
     }
 
 #if MYNEWT_VAL(LOG_VERSION) < 3
-    rc = log_read(log, dptr, data, sizeof(ueh), min(len - sizeof(ueh), 128));
+    rc = log_read_body(log, dptr, data, 0, min(len, 128));
     if (rc < 0) {
         rc = OS_ENOENT;
         goto err;
@@ -125,7 +119,7 @@ log_nmgr_encode_entry(struct log *log, struct log_offset *log_offset,
     rsp_len = log_offset->lo_data_len;
     g_err |= cbor_encoder_create_map(&cnt_encoder, &rsp, CborIndefiniteLength);
 #if MYNEWT_VAL(LOG_VERSION) > 2
-    switch (ueh.ue_etype) {
+    switch (ueh->ue_etype) {
     case LOG_ETYPE_CBOR:
         g_err |= cbor_encode_text_stringz(&rsp, "type");
         g_err |= cbor_encode_text_stringz(&rsp, "cbor");
@@ -151,8 +145,8 @@ log_nmgr_encode_entry(struct log *log, struct log_offset *log_offset,
      * inside.
      */
     g_err |= cbor_encoder_create_indef_byte_string(&rsp, &str_encoder);
-    for (off = sizeof(ueh); (off < len) && !g_err; ) {
-        rc = log_read(log, dptr, data, off, sizeof(data));
+    for (off = 0; off < len && !g_err; ) {
+        rc = log_read_body(log, dptr, data, off, sizeof(data));
         if (rc < 0) {
             g_err |= 1;
             break;
@@ -166,13 +160,13 @@ log_nmgr_encode_entry(struct log *log, struct log_offset *log_offset,
     g_err |= cbor_encode_text_stringz(&rsp, (char *)data);
 #endif
     g_err |= cbor_encode_text_stringz(&rsp, "ts");
-    g_err |= cbor_encode_int(&rsp, ueh.ue_ts);
+    g_err |= cbor_encode_int(&rsp, ueh->ue_ts);
     g_err |= cbor_encode_text_stringz(&rsp, "level");
-    g_err |= cbor_encode_uint(&rsp, ueh.ue_level);
+    g_err |= cbor_encode_uint(&rsp, ueh->ue_level);
     g_err |= cbor_encode_text_stringz(&rsp, "index");
-    g_err |= cbor_encode_uint(&rsp,  ueh.ue_index);
+    g_err |= cbor_encode_uint(&rsp,  ueh->ue_index);
     g_err |= cbor_encode_text_stringz(&rsp, "module");
-    g_err |= cbor_encode_uint(&rsp,  ueh.ue_module);
+    g_err |= cbor_encode_uint(&rsp,  ueh->ue_module);
     g_err |= cbor_encoder_close_container(&cnt_encoder, &rsp);
     rsp_len += cbor_encode_bytes_written(&cnt_encoder);
     /*
@@ -188,7 +182,7 @@ log_nmgr_encode_entry(struct log *log, struct log_offset *log_offset,
 
     g_err |= cbor_encoder_create_map(ed->enc, &rsp, CborIndefiniteLength);
 #if MYNEWT_VAL(LOG_VERSION) > 2
-    switch (ueh.ue_etype) {
+    switch (ueh->ue_etype) {
     case LOG_ETYPE_CBOR:
         g_err |= cbor_encode_text_stringz(&rsp, "type");
         g_err |= cbor_encode_text_stringz(&rsp, "cbor");
@@ -214,8 +208,8 @@ log_nmgr_encode_entry(struct log *log, struct log_offset *log_offset,
      * inside.
      */
     g_err |= cbor_encoder_create_indef_byte_string(&rsp, &str_encoder);
-    for (off = sizeof(ueh); (off < len) && !g_err; ) {
-        rc = log_read(log, dptr, data, off, sizeof(data));
+    for (off = 0; off < len && !g_err; ) {
+        rc = log_read_body(log, dptr, data, off, sizeof(data));
         if (rc < 0) {
             g_err |= 1;
             break;
@@ -229,13 +223,13 @@ log_nmgr_encode_entry(struct log *log, struct log_offset *log_offset,
     g_err |= cbor_encode_text_stringz(&rsp, (char *)data);
 #endif
     g_err |= cbor_encode_text_stringz(&rsp, "ts");
-    g_err |= cbor_encode_int(&rsp, ueh.ue_ts);
+    g_err |= cbor_encode_int(&rsp, ueh->ue_ts);
     g_err |= cbor_encode_text_stringz(&rsp, "level");
-    g_err |= cbor_encode_uint(&rsp, ueh.ue_level);
+    g_err |= cbor_encode_uint(&rsp, ueh->ue_level);
     g_err |= cbor_encode_text_stringz(&rsp, "index");
-    g_err |= cbor_encode_uint(&rsp,  ueh.ue_index);
+    g_err |= cbor_encode_uint(&rsp,  ueh->ue_index);
     g_err |= cbor_encode_text_stringz(&rsp, "module");
-    g_err |= cbor_encode_uint(&rsp,  ueh.ue_module);
+    g_err |= cbor_encode_uint(&rsp,  ueh->ue_module);
     g_err |= cbor_encoder_close_container(ed->enc, &rsp);
 
     ed->counter++;
@@ -294,7 +288,7 @@ log_encode_entries(struct log *log, CborEncoder *cb,
     log_offset.lo_ts        = ts;
     log_offset.lo_data_len  = rsp_len;
 
-    rc = log_walk(log, log_nmgr_encode_entry, &log_offset);
+    rc = log_walk_body(log, log_nmgr_encode_entry, &log_offset);
 
     g_err |= cbor_encoder_close_container(cb, &entries);
 

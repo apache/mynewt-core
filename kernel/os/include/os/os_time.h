@@ -110,6 +110,19 @@ void os_time_delay(os_time_t osticks);
 #define OS_TIME_TICK_GT(__t1, __t2) ((os_stime_t) ((__t1) - (__t2)) > 0)
 #define OS_TIME_TICK_GEQ(__t1, __t2) ((os_stime_t) ((__t1) - (__t2)) >= 0)
 
+#define OS_TIMEVAL_LT(__t1, __t2) \
+    (((__t1).tv_sec < (__t2).tv_sec) || \
+     (((__t1).tv_sec == (__t2).tv_sec) && ((__t1).tv_usec < (__t2).tv_usec)))
+#define OS_TIMEVAL_LEQ(__t1, __t2) \
+    (((__t1).tv_sec < (__t2).tv_sec) || \
+     (((__t1).tv_sec == (__t2).tv_sec) && ((__t1).tv_usec <= (__t2).tv_usec)))
+#define OS_TIMEVAL_GT(__t1, __t2) \
+    (((__t1).tv_sec > (__t2).tv_sec) || \
+     (((__t1).tv_sec == (__t2).tv_sec) && ((__t1).tv_usec > (__t2).tv_usec)))
+#define OS_TIMEVAL_GEQ(__t1, __t2) \
+    (((__t1).tv_sec > (__t2).tv_sec) || \
+     (((__t1).tv_sec == (__t2).tv_sec) && ((__t1).tv_usec >= (__t2).tv_usec)))
+
 /**
  * Structure representing time since Jan 1 1970 with microsecond
  * granularity

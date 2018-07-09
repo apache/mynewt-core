@@ -32,6 +32,7 @@
 #include "console/console.h"
 #include "log/log.h"
 #include "stats/stats.h"
+#include <syscfg/syscfg.h>
 
 static uint16_t cnv_time[6] = {
     MS5837_CNV_TIME_OSR_256,
@@ -332,17 +333,21 @@ ms5837_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
         .buffer = &addr
     };
 
+    rc = sensor_itf_lock(itf, MYNEWT_VAL(MS5837_ITF_LOCK_TMO));
+    if (rc) {
+        return rc;
+    }
+
     /* Register write */
     rc = hal_i2c_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1);
     if (rc) {
         MS5837_ERR("I2C write command write failed at address 0x%02X\n",
                    data_struct.address);
         STATS_INC(g_ms5837stats, write_errors);
-        goto err;
     }
 
-    return 0;
-err:
+    sensor_itf_unlock(itf);
+
     return rc;
 }
 
@@ -372,6 +377,11 @@ ms5837_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
     /* Clear the supplied buffer */
     memset(buffer, 0, len);
 
+    rc = sensor_itf_lock(itf, MYNEWT_VAL(MS5837_ITF_LOCK_TMO));
+    if (rc) {
+        return rc;
+    }
+
     /* Command write */
     rc = hal_i2c_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1);
     if (rc) {
@@ -394,8 +404,9 @@ ms5837_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
     /* Copy the I2C results into the supplied buffer */
     memcpy(buffer, payload, len);
 
-    return 0;
 err:
+    sensor_itf_unlock(itf);
+
     return rc;
 }
 

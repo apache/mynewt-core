@@ -60,6 +60,8 @@ MEMORY
 /* Define output sections */
 SECTIONS
 {
+    __text = .;
+
     .interrupts :
     {
         __isr_vector_start = .;

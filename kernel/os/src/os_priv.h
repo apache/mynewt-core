@@ -52,6 +52,19 @@ void os_msys_init(void);
     }                                                                       \
 } while (0)
 
+#if MYNEWT_VAL(OS_CRASH_STACKTRACE)
+/**
+ * Print addresses from stack which look like they might be instruction
+ * pointers. Expects to be called from assert/fault handler. Function limits
+ * the amount of stack it walks.
+ *
+ * @param sp Pointer to where stack starts.
+ */
+void os_stacktrace(uintptr_t sp);
+#else
+#define os_stacktrace(sp)
+#endif
+
 #ifdef __cplusplus
 }
 #endif

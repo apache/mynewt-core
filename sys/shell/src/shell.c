@@ -40,7 +40,6 @@ static shell_prompt_function_t app_prompt_handler;
 /* Shared queue for shell events to be processed */
 static struct os_eventq *shell_evq;
 /* Queue for available shell events */
-static struct os_eventq avail_queue;
 static struct os_event shell_console_ev[MYNEWT_VAL(SHELL_MAX_CMD_QUEUED)];
 static struct console_input buf[MYNEWT_VAL(SHELL_MAX_CMD_QUEUED)];
 
@@ -48,7 +47,7 @@ void
 shell_evq_set(struct os_eventq *evq)
 {
     shell_evq = evq;
-    console_set_queues(&avail_queue, shell_evq);
+    console_line_queue_set(shell_evq);
 }
 
 static const char *
@@ -458,7 +457,8 @@ shell(struct os_event *ev)
 #else
     shell_process_command(cmd->line);
 #endif
-    os_eventq_put(&avail_queue, ev);
+
+    console_line_event_put(ev);
 }
 
 #if MYNEWT_VAL(SHELL_COMPLETION)
@@ -876,12 +876,10 @@ shell_avail_queue_init(void)
 {
     int i;
 
-    os_eventq_init(&avail_queue);
-
     for (i = 0; i < MYNEWT_VAL(SHELL_MAX_CMD_QUEUED); i++) {
         shell_console_ev[i].ev_cb = shell;
         shell_console_ev[i].ev_arg = &buf[i];
-        os_eventq_put(&avail_queue, &shell_console_ev[i]);
+        console_line_event_put(&shell_console_ev[i]);
     }
 }
 

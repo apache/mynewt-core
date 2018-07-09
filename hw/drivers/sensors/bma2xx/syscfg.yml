@@ -45,3 +45,6 @@ syscfg.defs:
     BMA2XX_SHELL_DEV_NAME:
         description: 'BMA2XX Shell device name'
         value: "\"bma2xx_0\""
+    BMA2XX_ITF_LOCK_TMO:
+        description: 'BMA2XX interface lock timeout in milliseconds'
+        value: 1000

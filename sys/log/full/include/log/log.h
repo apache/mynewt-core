@@ -62,14 +62,24 @@ struct log_offset {
 };
 
 typedef int (*log_walk_func_t)(struct log *, struct log_offset *log_offset,
-        void *offset, uint16_t len);
+        void *dptr, uint16_t len);
+
+typedef int (*log_walk_body_func_t)(struct log *log,
+        struct log_offset *log_offset, const struct log_entry_hdr *hdr,
+        void *dptr, uint16_t len);
 
 typedef int (*lh_read_func_t)(struct log *, void *dptr, void *buf,
         uint16_t offset, uint16_t len);
 typedef int (*lh_read_mbuf_func_t)(struct log *, void *dptr, struct os_mbuf *om,
                                    uint16_t offset, uint16_t len);
 typedef int (*lh_append_func_t)(struct log *, void *buf, int len);
-typedef int (*lh_append_mbuf_func_t)(struct log *, struct os_mbuf *om);
+typedef int (*lh_append_body_func_t)(struct log *log,
+                                     const struct log_entry_hdr *hdr,
+                                     const void *body, int body_len);
+typedef int (*lh_append_mbuf_func_t)(struct log *, const struct os_mbuf *om);
+typedef int (*lh_append_mbuf_body_func_t)(struct log *log,
+                                          const struct log_entry_hdr *hdr,
+                                          const struct os_mbuf *om);
 typedef int (*lh_walk_func_t)(struct log *,
         log_walk_func_t walk_func, struct log_offset *log_offset);
 typedef int (*lh_flush_func_t)(struct log *);
@@ -84,7 +94,9 @@ struct log_handler {
     lh_read_func_t log_read;
     lh_read_mbuf_func_t log_read_mbuf;
     lh_append_func_t log_append;
+    lh_append_body_func_t log_append_body;
     lh_append_mbuf_func_t log_append_mbuf;
+    lh_append_mbuf_body_func_t log_append_mbuf_body;
     lh_walk_func_t log_walk;
     lh_flush_func_t log_flush;
     /* Functions called only internally (no API for apps) */
@@ -154,7 +166,7 @@ struct log_entry_hdr {
 #define LOG_STORE_CBMEM      2
 #define LOG_STORE_FCB        3
 
-/* UTC Timestamnp for Jan 2016 00:00:00 */
+/* UTC Timestamp for Jan 2016 00:00:00 */
 #define UTC01_01_2016    1451606400
 
 #define LOG_NAME_MAX_LEN    (64)
@@ -253,14 +265,74 @@ const char *log_module_get_name(uint8_t id);
 int log_register(char *name, struct log *log, const struct log_handler *,
                  void *arg, uint8_t level);
 int log_append_typed(struct log *, uint8_t, uint8_t, uint8_t, void *, uint16_t);
-int log_append_mbuf_typed(struct log *, uint8_t, uint8_t, uint8_t,
-                          struct os_mbuf *);
+
+/**
+ * @brief Logs the contents of the provided mbuf, only freeing the mbuf on
+ * failure.
+ *
+ * Logs the contents of the provided mbuf, only freeing the mbuf on failure.
+ * On success, the mbuf remains allocated, but its structure may have been
+ * modified by pullup operations.  The updated mbuf address is passed back to
+ * the caller via a write to the supplied mbuf pointer-to-pointer.
+ *
+ * @param log                   The log to write to.
+ * @param module                The module ID of the entry to write.
+ * @param level                 The severity of the entry to write; one of the
+ *                                  `LOG_LEVEL_[...]` constants.
+ * @param etype                 The type of data to write; one of the
+ *                                  `LOG_ETYPE_[...]` constants.
+ * @param om_ptr                Indirectly points to the mbuf to write.  This
+ *                                  function updates the mbuf address if it
+ *                                  changes.
+ *
+ * @return                      0 on success; nonzero on failure.
+ */
+int log_append_mbuf_typed_no_free(struct log *log, uint8_t module,
+                                  uint8_t level, uint8_t etype,
+                                  struct os_mbuf **om_ptr);
+
+/**
+ * @brief Logs the contents of the provided mbuf.
+ *
+ * Logs the contents of the provided mbuf.  This function always frees the mbuf
+ * regardless of the outcome.
+ *
+ * @param log                   The log to write to.
+ * @param module                The module ID of the entry to write.
+ * @param level                 The severity of the entry to write; one of the
+ *                                  `LOG_LEVEL_[...]` constants.
+ * @param etype                 The type of data to write; one of the
+ *                                  `LOG_ETYPE_[...]` constants.
+ * @param om                    The mbuf to write.
+ *
+ * @return                      0 on success; nonzero on failure.
+ */
+int log_append_mbuf_typed(struct log *log, uint8_t module, uint8_t level,
+                          uint8_t etype, struct os_mbuf *om);
+
+int log_append_body(struct log *log, uint8_t module, uint8_t level,
+                    uint8_t etype, const void *body, uint16_t body_len);
+int log_append_mbuf_body(struct log *log, uint8_t module, uint8_t level,
+                         uint8_t etype, struct os_mbuf *om);
+
+#if MYNEWT_VAL(LOG_CONSOLE)
+struct log *log_console_get(void);
+void log_console_init(void);
+#endif
 
 static inline int
 log_append(struct log *log, uint8_t module, uint8_t level, void *data,
            uint16_t len)
 {
     return log_append_typed(log, module, level, LOG_ETYPE_STRING, data, len);
+}
+
+static inline int
+log_append_mbuf_no_free(struct log *log, uint8_t module, uint8_t level,
+                        struct os_mbuf **om)
+{
+    return log_append_mbuf_typed_no_free(log, module, level, LOG_ETYPE_STRING,
+                                         om);
 }
 
 static inline int
@@ -274,11 +346,118 @@ log_append_mbuf(struct log *log, uint8_t module, uint8_t level,
 void log_printf(struct log *log, uint16_t, uint16_t, char *, ...);
 int log_read(struct log *log, void *dptr, void *buf, uint16_t off,
         uint16_t len);
+
+/**
+ * @brief Reads a single log entry header.
+ *
+ * @param log                   The log to read from.
+ * @param dptr                  Medium-specific data describing the area to
+ *                                  read from; typically obtained by a call to
+ *                                  `log_walk`.
+ * @param hdr                   The destination header to read into.
+ *
+ * @return                      0 on success; nonzero on failure.
+ */
+int log_read_hdr(struct log *log, void *dptr, struct log_entry_hdr *hdr);
+
+/**
+ * @brief Reads data from the body of a log entry into a flat buffer.
+ *
+ * @param log                   The log to read from.
+ * @param dptr                  Medium-specific data describing the area to
+ *                                  read from; typically obtained by a call to
+ *                                  `log_walk`.
+ * @param buf                   The destination buffer to read into.
+ * @param off                   The offset within the log entry at which to
+ *                                  start the read.
+ * @param len                   The number of bytes to read.
+ *
+ * @return                      The number of bytes actually read on success;
+ *                              -1 on failure.
+ */
+int log_read_body(struct log *log, void *dptr, void *buf, uint16_t off,
+                  uint16_t len);
 int log_read_mbuf(struct log *log, void *dptr, struct os_mbuf *om, uint16_t off,
                   uint16_t len);
+/**
+ * @brief Reads data from the body of a log entry into an mbuf.
+ *
+ * @param log                   The log to read from.
+ * @param dptr                  Medium-specific data describing the area to
+ *                                  read from; typically obtained by a call to
+ *                                  `log_walk`.
+ * @param om                    The destination mbuf to read into.
+ * @param off                   The offset within the log entry at which to
+ *                                  start the read.
+ * @param len                   The number of bytes to read.
+ *
+ * @return                      The number of bytes actually read on success;
+ *                              -1 on failure.
+ */
+int log_read_mbuf_body(struct log *log, void *dptr, struct os_mbuf *om,
+                       uint16_t off, uint16_t len);
 int log_walk(struct log *log, log_walk_func_t walk_func,
         struct log_offset *log_offset);
+
+/**
+ * @brief Applies a callback to each message in the specified log.
+ *
+ * Similar to `log_walk`, except it passes the message header and body
+ * separately to the callback.
+ *
+ * @param log                   The log to iterate.
+ * @param walk_body_func        The function to apply to each log entry.
+ * @param log_offset            Specifies the range of entries to process.
+ *                                  Entries not matching these criteria are
+ *                                  skipped during the walk.
+ *
+ * @return                      0 if the walk completed successfully;
+ *                              nonzero on error or if the walk was aborted.
+ */
+int log_walk_body(struct log *log, log_walk_body_func_t walk_body_func,
+        struct log_offset *log_offset);
 int log_flush(struct log *log);
+
+#if MYNEWT_VAL(LOG_MODULE_LEVELS)
+/**
+ * @brief Retrieves the globally configured minimum log level for the specified
+ * module ID.
+ *
+ * Writes with a level less than the module's minimum level are discarded.
+ *
+ * @param module                The module whose level should be retrieved.
+ *
+ * @return                      The configured minimum level, or 0
+ *                                  (LOG_LEVEL_DEBUG) if unconfigured.
+ */
+uint8_t log_level_get(uint8_t module);
+
+/**
+ * @brief Sets the globally configured minimum log level for the specified
+ * module ID.
+ *
+ * Writes with a level less than the module's minimum level are discarded.
+ *
+ * @param module                The module to configure.
+ * @param level                 The minimum level to assign to the module
+ *                                  (0-15, inclusive).
+ */
+int log_level_set(uint8_t module, uint8_t level);
+#else
+static inline uint8_t
+log_level_get(uint8_t module)
+{
+    /* All levels enabled. */
+    return 0;
+}
+
+static inline int
+log_level_set(uint8_t module, uint8_t level)
+{
+    return SYS_ENOTSUP;
+}
+#endif
+
 
 /* Handler exports */
 #if MYNEWT_VAL(LOG_CONSOLE)

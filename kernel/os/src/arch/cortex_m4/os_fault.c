@@ -17,6 +17,9 @@
  * under the License.
  */
 
+#include <stdint.h>
+#include <unistd.h>
+
 #include "os/mynewt.h"
 #include "console/console.h"
 #include "hal/hal_system.h"
@@ -25,9 +28,6 @@
 #if MYNEWT_VAL(OS_COREDUMP)
 #include "coredump/coredump.h"
 #endif
-
-#include <stdint.h>
-#include <unistd.h>
 
 struct exception_frame {
     uint32_t r0;
@@ -163,6 +163,7 @@ os_default_irq(struct trap_frame *tf)
       SCB->ICSR, SCB->HFSR, SCB->CFSR);
     console_printf("BFAR:0x%08lx MMFAR:0x%08lx\n", SCB->BFAR, SCB->MMFAR);
 
+    os_stacktrace((uintptr_t)(tf->ef + 1));
 #if MYNEWT_VAL(OS_COREDUMP)
     trap_to_coredump(tf, &regs);
     coredump_dump(&regs, sizeof(regs));

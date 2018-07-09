@@ -12,7 +12,7 @@
 #ifndef __nRFxxx_h
 #define __nRFxxx_h
 
-#if defined(NRF51) || defined(NRF52) || defined(NRF52832_XXAB) || defined(NRF52840_XXAA) || defined(NRF52810_XXAA)
+#if defined(NRF51) || defined(NRF51) || defined(NRF51) || defined(NRF51) || defined(NRF51) || defined(NRF51) || defined(NRF51) || defined(NRF51) || defined(NRF52) || defined(NRF52832_XXAB) || defined(NRF52840_XXAA)
 
 #include "nrf.h"
 

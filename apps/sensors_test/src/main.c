@@ -32,6 +32,10 @@
 #include <reboot/log_reboot.h>
 #include <id/id.h>
 
+#ifndef LED_BLINK_PIN
+#define LED_BLINK_PIN 15
+#endif
+
 #if MYNEWT_VAL(BNO055_CLI)
 #include <bno055/bno055.h>
 #endif
@@ -58,6 +62,9 @@
 #endif
 #if MYNEWT_VAL(LIS2DS12_CLI)
 #include <lis2ds12/lis2ds12.h>
+#endif
+#if MYNEWT_VAL(LIS2DW12_CLI)
+#include <lis2dw12/lis2dw12.h>
 #endif
 
 #if MYNEWT_VAL(SENSOR_OIC)
@@ -444,6 +451,10 @@ sensors_dev_shell_init(void)
 
 #if MYNEWT_VAL(LIS2DS12_CLI)
     lis2ds12_shell_init();
+#endif
+
+#if MYNEWT_VAL(LIS2DW12_CLI)
+    lis2dw12_shell_init();
 #endif
 }
 

@@ -112,7 +112,7 @@ char buildID[TESTBENCH_BUILDID_SZ];
 struct runtest_evq_arg test_event_arg;
 char runtest_token[RUNTEST_REQ_SIZE];
 static int testbench_runtests(struct os_event *ev);
-static void testbench_test_complete();
+static void testbench_test_complete(void);
 
 extern uint32_t stack1_size;
 extern uint32_t stack2_size;
@@ -188,14 +188,12 @@ testbench_ts_fail(char *msg, void *arg)
 }
 
 void
-testbench_test_init()
+testbench_test_init(void)
 {
     total_tests = 0;
     total_fails = 0;
     forcefail = 0;
     blinky_blink = BLINKY_DUTYCYCLE_SUCCESS;
-
-    return;
 }
 
 static int
@@ -260,7 +258,7 @@ testbench_runtests(struct os_event *ev)
  * determine success or failure
  */
 static void
-testbench_test_complete()
+testbench_test_complete(void)
 {
     LOG_INFO(&testlog, LOG_MODULE_TEST, "%s Done", runtest_token);
     LOG_INFO(&testlog, LOG_MODULE_TEST,
@@ -348,7 +346,7 @@ init_tasks(void)
  * build infrastructure. testbench.h sets default values if not.
  */
 void
-getBuildID()
+getBuildID(void)
 {
     sprintf(buildID, "%s Build %s:", BUILD_TARGET, BUILD_ID);
 }
@@ -410,6 +408,8 @@ main(int argc, char **argv)
     TEST_SUITE_REGISTER(testbench_sem);
     TEST_SUITE_REGISTER(testbench_json);
 
+    testbench_test_init(); /* initialize globals include blink duty cycle */
+
     rc = init_tasks();
 
     /*
@@ -417,8 +417,6 @@ main(int argc, char **argv)
      * generated from newtmanager.
      */
     run_evcb_set((os_event_fn*) testbench_runtests);
-
-    testbench_test_init(); /* initialize globals include blink duty cycle */
 
     LOG_INFO(&testlog, LOG_MODULE_TEST, "testbench app initialized");
 

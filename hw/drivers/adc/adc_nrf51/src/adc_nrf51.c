@@ -367,6 +367,18 @@ nrf51_adc_size_buffer(struct adc_dev *dev, int chans, int samples)
     return (sizeof(nrf_adc_value_t) * chans * samples);
 }
 
+/**
+ * ADC device driver functions
+ */
+static const struct adc_driver_funcs nrf51_adc_funcs = {
+        .af_configure_channel = nrf51_adc_configure_channel,
+        .af_sample = nrf51_adc_sample,
+        .af_read_channel = nrf51_adc_read_channel,
+        .af_set_buffer = nrf51_adc_set_buffer,
+        .af_release_buffer = nrf51_adc_release_buffer,
+        .af_read_buffer = nrf51_adc_read_buffer,
+        .af_size_buffer = nrf51_adc_size_buffer,
+};
 
 /**
  * Callback to initialize an adc_dev structure from the os device
@@ -377,7 +389,6 @@ int
 nrf51_adc_dev_init(struct os_dev *odev, void *arg)
 {
     struct adc_dev *dev;
-    struct adc_driver_funcs *af;
 
     dev = (struct adc_dev *) odev;
 
@@ -391,15 +402,7 @@ nrf51_adc_dev_init(struct os_dev *odev, void *arg)
     assert(init_adc_config == NULL || init_adc_config == arg);
     init_adc_config = arg;
 
-    af = &dev->ad_funcs;
-
-    af->af_configure_channel = nrf51_adc_configure_channel;
-    af->af_sample = nrf51_adc_sample;
-    af->af_read_channel = nrf51_adc_read_channel;
-    af->af_set_buffer = nrf51_adc_set_buffer;
-    af->af_release_buffer = nrf51_adc_release_buffer;
-    af->af_read_buffer = nrf51_adc_read_buffer;
-    af->af_size_buffer = nrf51_adc_size_buffer;
+    dev->ad_funcs = &nrf51_adc_funcs;
 
     NVIC_SetVector(ADC_IRQn, (uint32_t) nrfx_adc_irq_handler);
 
