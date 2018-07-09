@@ -69,6 +69,14 @@
 #define BQ27Z561_REG_DCAP       (0x3C)
 #define BQ27Z561_REG_MFRG_ACC   (0x3E)
 #define BQ27Z561_REG_CHKSUM     (0x60)
+#define BQ27Z561_REG_VOLT_HI_SET_TH (0x62)
+#define BQ27Z561_REG_VOLT_HI_CLR_TH (0x64)
+#define BQ27Z561_REG_VOLT_LO_SET_TH (0x66)
+#define BQ27Z561_REG_VOLT_LO_CLR_TH (0x68)
+#define BQ27Z561_REG_TEMP_HI_SET_TH (0x6A)
+#define BQ27Z561_REG_TEMP_HI_CLR_TH (0x6B)
+#define BQ27Z561_REG_TEMP_LO_SET_TH (0x6C)
+#define BQ27Z561_REG_TEMP_LO_CLR_TH (0x6D)
 
 
 /* Alt Manufacturer Command List */
@@ -222,6 +230,60 @@ int bq27z561_get_time_to_empty(struct bq27z561 *dev, uint16_t *tte);
 int bq27z561_get_temp(struct bq27z561 *dev, float *temp_c);
 
 /**
+ * bq27z561 set low temperature set threshold
+ *
+ * Sets low temperature value that triggers interrupt
+ *
+ * @param dev pointer to device
+ * @param temp_c temperature, in C
+ *
+ * @return int 0: success, -1 error
+ */
+int bq27z561_set_temp_lo_set_threshold(struct bq27z561 *dev,
+        int8_t temp_c);
+
+/**
+ * bq27z561 set low temperature clear threshold
+ *
+ * When interrupt is active and temperature goes above this threshold interrupt
+ * is cleared.
+ *
+ * @param dev pointer to device
+ * @param temp_c temperature, in C
+ *
+ * @return int 0: success, -1 error
+ */
+int bq27z561_set_temp_lo_clear_threshold(struct bq27z561 *dev,
+        int16_t temp_c);
+
+/**
+ * bq27z561 set high temperature set threshold
+ *
+ * Sets high temperature value that triggers interrupt
+ *
+ * @param dev pointer to device
+ * @param voltage voltage, in mV
+ *
+ * @return int 0: success, -1 error
+ */
+int bq27z561_set_temp_hi_set_threshold(struct bq27z561 *dev,
+        int8_t temp_c);
+
+/**
+ * bq27z561 set high temperature clear threshold
+ *
+ * When interrupt is active and temperature goes below this threshold interrupt
+ * is cleared.
+ *
+ * @param dev pointer to device
+ * @param voltage voltage, in mV
+ *
+ * @return int 0: success, -1 error
+ */
+int bq27z561_set_temp_hi_clear_threshold(struct bq27z561 *dev,
+        int16_t temp_c);
+
+/**
  * bq27z561 get voltage
  *
  * Gets the measured cell voltage
@@ -232,6 +294,60 @@ int bq27z561_get_temp(struct bq27z561 *dev, float *temp_c);
  * @return int 0: success, -1 error
  */
 int bq27z561_get_voltage(struct bq27z561 *dev, uint16_t *voltage);
+
+/**
+ * bq27z561 set low voltage set threshold
+ *
+ * Sets low voltage value that triggers interrupt
+ *
+ * @param dev pointer to device
+ * @param voltage voltage, in mV
+ *
+ * @return int 0: success, -1 error
+ */
+int bq27z561_set_voltage_lo_set_threshold(struct bq27z561 *dev,
+        uint16_t voltage);
+
+/**
+ * bq27z561 set low voltage clear threshold
+ *
+ * When interrupt is active and voltage goes above this threshold interrupt
+ * is cleared.
+ *
+ * @param dev pointer to device
+ * @param voltage voltage, in mV
+ *
+ * @return int 0: success, -1 error
+ */
+int bq27z561_set_voltage_lo_clr_threshold(struct bq27z561 *dev,
+        uint16_t voltage);
+
+/**
+ * bq27z561 set high voltage set threshold
+ *
+ * Sets high voltage value that triggers interrupt
+ *
+ * @param dev pointer to device
+ * @param voltage voltage, in mV
+ *
+ * @return int 0: success, -1 error
+ */
+int bq27z561_set_voltage_hi_set_threshold(struct bq27z561 *dev,
+        uint16_t voltage);
+
+/**
+ * bq27z561 set high voltage clear threshold
+ *
+ * When interrupt is active and voltage goes below this threshold interrupt
+ * is cleared.
+ *
+ * @param dev pointer to device
+ * @param voltage voltage, in mV
+ *
+ * @return int 0: success, -1 error
+ */
+int bq27z561_set_voltage_hi_clr_threshold(struct bq27z561 *dev,
+        uint16_t voltage);
 
 /**
  * bq27z561 get batt status
