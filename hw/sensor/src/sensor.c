@@ -1028,6 +1028,54 @@ err:
     return (rc);
 }
 
+int
+sensor_register_err_listener(struct sensor *sensor,
+        struct sensor_err_listener *err_listener)
+{
+    int rc;
+
+    rc = sensor_lock(sensor);
+    if (rc != 0) {
+        goto err;
+    }
+
+    SLIST_INSERT_HEAD(&sensor->s_err_listener_list, err_listener, sel_next);
+
+    sensor_unlock(sensor);
+
+    return (0);
+err:
+    return (rc);
+}
+
+int
+sensor_unregister_err_listener(struct sensor *sensor,
+        struct sensor_err_listener *err_listener)
+{
+    struct sensor_err_listener *cur;
+    int rc;
+
+    rc = sensor_lock(sensor);
+    if (rc != 0) {
+        goto err;
+    }
+
+    SLIST_FOREACH(cur, &sensor->s_err_listener_list, sel_next) {
+        if (cur == err_listener) {
+            /* Remove this entry from the list */
+            SLIST_REMOVE(&sensor->s_err_listener_list, cur,
+                         sensor_err_listener, sel_next);
+            break;
+        }
+    }
+
+    sensor_unlock(sensor);
+
+    return (0);
+err:
+    return (rc);
+}
+
 static int
 sensor_set_notification(struct sensor *sensor, struct sensor_notifier *notifier)
 {
@@ -1156,6 +1204,27 @@ sensor_read_data_func(struct sensor *sensor, void *arg, void *data,
     }
 
     return (0);
+}
+
+/**
+ * Reports a read error for the specified sensor and data type.
+ *
+ * @param sensor The sensor for which a read failed.
+ * @param status The status code to pass to error listeners.  This should be
+ *               the error reported by the underlying driver.
+ * @param type The data type being read when the failure occurred.
+ */
+static void
+sensor_read_error_func(struct sensor *sensor, int status, sensor_type_t type)
+{
+    struct sensor_err_listener *err_listener;
+
+    SLIST_FOREACH(err_listener, &sensor->s_err_listener_list, sel_next) {
+        if (err_listener->sel_sensor_type & type) {
+            err_listener->sel_func(sensor, err_listener->sel_arg, status,
+                                   type);
+        }
+    }
 }
 
 /**
@@ -2163,6 +2232,7 @@ sensor_read(struct sensor *sensor, sensor_type_t type,
     rc = sensor->s_funcs->sd_read(sensor, type, sensor_read_data_func, &src,
                                   timeout);
     if (rc) {
+        sensor_read_error_func(sensor, rc, type);
         goto err;
     }
 
