@@ -441,7 +441,7 @@ hal_spi_init_master(struct nrf52_hal_spi *spi,
     }
     port->PIN_CNF[pin] =
         (GPIO_PIN_CNF_DIR_Output << GPIO_PIN_CNF_DIR_Pos) |
-        (GPIO_PIN_CNF_INPUT_Connect << GPIO_PIN_CNF_INPUT_Pos);
+        (GPIO_PIN_CNF_INPUT_Disconnect << GPIO_PIN_CNF_INPUT_Pos);
 
     /*  Configure MOSI */
     port = HAL_GPIO_PORT(cfg->mosi_pin);
