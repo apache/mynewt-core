@@ -58,7 +58,7 @@ static struct hal_uart_irq uart_irqs[4];
 static struct hal_uart_irq uart_irqs[3];
 #endif
 
-#if defined(STM32F3) || defined(STM32F7)
+#if MYNEWT_VAL(MCU_STM32F3) || MYNEWT_VAL(MCU_STM32F7) || MYNEWT_VAL(MCU_STM32L4)
 #  define STATUS(x)     ((x)->ISR)
 #  define RXNE          USART_ISR_RXNE
 #  define TXE           USART_ISR_TXE
@@ -140,7 +140,7 @@ uart_irq_handler(int num)
         }
         regs->CR1 = cr1;
     }
-#if defined(STM32F3) || defined(STM32F7)
+#if MYNEWT_VAL(MCU_STM32F3) || MYNEWT_VAL(MCU_STM32F7) || MYNEWT_VAL(MCU_STM32L4)
     /* clear overrun */
     if (isr & USART_ISR_ORE) {
         regs->ICR |= USART_ICR_ORECF;
