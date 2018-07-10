@@ -17,3 +17,4 @@
 
 syscfg.vals:
     SENSOR_OIC: 0
+    SENSOR_CLI: 0
