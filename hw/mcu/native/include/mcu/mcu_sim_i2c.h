@@ -18,15 +18,8 @@
  */
 
 
-/**
- * @addtogroup HAL
- * @{
- *   @defgroup HALI2cSim HAL I2c sim
- *   @{
- */
-
-#ifndef H_HAL_I2C_SIM_
-#define H_HAL_I2C_SIM_
+#ifndef H_MCU_SIM_I2C_
+#define H_MCU_SIM_I2C_
 
 #include <inttypes.h>
 #include <hal/hal_i2c.h>
@@ -100,9 +93,4 @@ int hal_i2c_sim_register(struct hal_i2c_sim_driver *drv);
 }
 #endif
 
-#endif /* H_HAL_I2C_SIM_ */
-
-/**
- *   @} HALI2cSim
- * @} HAL
- */
+#endif /* H_MCU_SIM_I2C_ */

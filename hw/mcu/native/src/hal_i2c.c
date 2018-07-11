@@ -20,7 +20,7 @@
 #include <stdio.h>
 #include "os/mynewt.h"
 #include "hal/hal_i2c.h"
-#include "hal/hal_i2c_sim.h"
+#include "mcu/mcu_sim_i2c.h"
 
 struct {
     struct os_mutex mgr_lock;
@@ -115,18 +115,7 @@ hal_i2c_sim_mgr_unlock(void)
 static void
 hal_i2c_sim_mgr_insert(struct hal_i2c_sim_driver *driver)
 {
-    struct hal_i2c_sim_driver *cursor, *prev;
-
-    prev = cursor = NULL;
-    SLIST_FOREACH(cursor, &hal_i2c_sim_mgr.mgr_sim_list, s_next) {
-        prev = cursor;
-    }
-
-    if (prev == NULL) {
-        SLIST_INSERT_HEAD(&hal_i2c_sim_mgr.mgr_sim_list, driver, s_next);
-    } else {
-        SLIST_INSERT_AFTER(prev, driver, s_next);
-    }
+    SLIST_INSERT_HEAD(&hal_i2c_sim_mgr.mgr_sim_list, driver, s_next);
 }
 
 int
