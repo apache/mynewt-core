@@ -304,9 +304,28 @@ err:
 }
 
 static int
-tsl2591_shell_cmd_dump(int argc, char **argv)
+tsl2591_shell_print_reg(int reg, char *name)
 {
     uint8_t val;
+    int rc;
+
+    val = 0;
+    rc = tsl2591_read8(&g_sensor_itf,
+                      TSL2591_COMMAND_BIT | reg,
+                      &val);
+    if (rc) {
+       goto err;
+    }
+    console_printf("0x%02X (%s): 0x%02X\n", reg, name, val);
+
+    return 0;
+err:
+    return rc;
+}
+
+static int
+tsl2591_shell_cmd_dump(int argc, char **argv)
+{
     int rc;
 
     if (argc > 3) {
@@ -314,52 +333,78 @@ tsl2591_shell_cmd_dump(int argc, char **argv)
     }
 
     /* Dump all the register values for debug purposes */
-    val = 0;
-
-    rc = tsl2591_read8(&g_sensor_itf,
-                       TSL2591_COMMAND_BIT | TSL2591_REGISTER_ENABLE,
-                       &val);
-    if (rc) {
-        goto err;
-    }
-    console_printf("0x%02X (ENABLE):  0x%02X\n",
-                   TSL2591_REGISTER_ENABLE, val);
-
-    rc = tsl2591_read8(&g_sensor_itf,
-                       TSL2591_COMMAND_BIT | TSL2591_REGISTER_CONTROL,
-                       &val);
-    if (rc) {
-        goto err;
-    }
-    console_printf("0x%02X (CONTROL): 0x%02X\n",
-                   TSL2591_REGISTER_CONTROL, val);
-
-    rc = tsl2591_read8(&g_sensor_itf,
-                      TSL2591_COMMAND_BIT | TSL2591_REGISTER_PACKAGE_PID,
-                      &val);
+    rc = tsl2591_shell_print_reg(TSL2591_REGISTER_ENABLE, "ENABLE");
     if (rc) {
        goto err;
     }
-    console_printf("0x%02X (PACKAGE): 0x%02X\n",
-                TSL2591_REGISTER_PACKAGE_PID, val);
-
-    rc = tsl2591_read8(&g_sensor_itf,
-                       TSL2591_COMMAND_BIT | TSL2591_REGISTER_DEVICE_ID,
-                       &val);
-    if (rc) {
-        goto err;
-    }
-    console_printf("0x%02X (ID):      0x%02X\n",
-                 TSL2591_REGISTER_DEVICE_ID, val);
-
-    rc = tsl2591_read8(&g_sensor_itf,
-                      TSL2591_COMMAND_BIT | TSL2591_REGISTER_DEVICE_STATUS,
-                      &val);
+    rc = tsl2591_shell_print_reg(TSL2591_REGISTER_CONTROL, "CONTROL");
     if (rc) {
        goto err;
     }
-    console_printf("0x%02X (STATUS):  0x%02X\n",
-                TSL2591_REGISTER_DEVICE_STATUS, val);
+    rc = tsl2591_shell_print_reg(TSL2591_REGISTER_THRESHOLD_AILTL, "AILTL");
+    if (rc) {
+       goto err;
+    }
+    rc = tsl2591_shell_print_reg(TSL2591_REGISTER_THRESHOLD_AILTH, "AILTH");
+    if (rc) {
+       goto err;
+    }
+    rc = tsl2591_shell_print_reg(TSL2591_REGISTER_THRESHOLD_AIHTL, "AIHTL");
+    if (rc) {
+       goto err;
+    }
+    rc = tsl2591_shell_print_reg(TSL2591_REGISTER_THRESHOLD_AIHTH, "AIHTH");
+    if (rc) {
+       goto err;
+    }
+    rc = tsl2591_shell_print_reg(TSL2591_REGISTER_THRESHOLD_NPAILTL, "NPAILTL");
+    if (rc) {
+       goto err;
+    }
+    rc = tsl2591_shell_print_reg(TSL2591_REGISTER_THRESHOLD_NPAILTH, "NPAILTH");
+    if (rc) {
+       goto err;
+    }
+    rc = tsl2591_shell_print_reg(TSL2591_REGISTER_THRESHOLD_NPAIHTL, "NPAIHTL");
+    if (rc) {
+       goto err;
+    }
+    rc = tsl2591_shell_print_reg(TSL2591_REGISTER_THRESHOLD_NPAIHTH, "NPAIHTH");
+    if (rc) {
+       goto err;
+    }
+    rc = tsl2591_shell_print_reg(TSL2591_REGISTER_PERSIST_FILTER, "FILTER");
+    if (rc) {
+       goto err;
+    }
+    rc = tsl2591_shell_print_reg(TSL2591_REGISTER_PACKAGE_PID, "PACKAGEID");
+    if (rc) {
+       goto err;
+    }
+    rc = tsl2591_shell_print_reg(TSL2591_REGISTER_DEVICE_ID, "DEVICEID");
+    if (rc) {
+       goto err;
+    }
+    rc = tsl2591_shell_print_reg(TSL2591_REGISTER_DEVICE_STATUS, "STATUS");
+    if (rc) {
+       goto err;
+    }
+    rc = tsl2591_shell_print_reg(TSL2591_REGISTER_CHAN0_LOW, "CHAN0_LOW");
+    if (rc) {
+       goto err;
+    }
+    rc = tsl2591_shell_print_reg(TSL2591_REGISTER_CHAN0_HIGH, "CHAN0_HIGH");
+    if (rc) {
+       goto err;
+    }
+    rc = tsl2591_shell_print_reg(TSL2591_REGISTER_CHAN1_LOW, "CHAN1_LOW");
+    if (rc) {
+       goto err;
+    }
+    rc = tsl2591_shell_print_reg(TSL2591_REGISTER_CHAN1_HIGH, "CHAN1_HIGH");
+    if (rc) {
+       goto err;
+    }
 
     return 0;
 err:

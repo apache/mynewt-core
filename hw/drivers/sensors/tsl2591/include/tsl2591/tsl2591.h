@@ -178,13 +178,41 @@ int tsl2591_get_gain(struct sensor_itf *itf, uint8_t *gain);
  *
  * @param ptr to sensor driver
  * @param ptr to sensor driver config
+ *
+ * @return 0 on success, non-zero on failure
  */
 int tsl2591_config(struct tsl2591 *, struct tsl2591_cfg *);
+
+/**
+ * Calculate light level in lux based on the full spectrum and IR readings
+ *
+ * NOTE: This function assumes that the gain and integration time used when
+ *       reading the full spectrum and IR readings are the same as when this
+ *       function gets called. If gain or integration time have changed, a
+ *       fresh sample should be read before calling this function.
+ *
+ * @param ptr to sensor driver
+ * @param Full spectrum (broadband) light reading
+ * @param IR light reading
+ * @param ptr to the sensor driver config
+ *
+ * @return 0 on failure, otherwise the converted light level in lux
+ */
+uint32_t tsl2591_calculate_lux(struct sensor_itf *itf, uint16_t broadband,
+  uint16_t ir, struct tsl2591_cfg *cfg);
 
 #if MYNEWT_VAL(TSL2591_CLI)
 int tsl2591_shell_init(void);
 #endif
 
+#ifdef ARCH_sim
+/**
+ * Registers the sim driver with the hal_i2c simulation layer
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int tsl2591_sim_init(void);
+#endif
 
 #ifdef __cplusplus
 }

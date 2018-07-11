@@ -415,6 +415,11 @@ tsl2591_init(struct os_dev *dev, void *arg)
     SYSINIT_PANIC_ASSERT(rc == 0);
 #endif
 
+#ifdef ARCH_sim
+    /* Register the sim driver */
+    tsl2591_sim_init();
+#endif
+
     rc = sensor_init(sensor, dev);
     if (rc) {
         goto err;
@@ -443,7 +448,7 @@ err:
     return rc;
 }
 
-static uint32_t
+uint32_t
 tsl2591_calculate_lux(struct sensor_itf *itf, uint16_t broadband, uint16_t ir,
   struct tsl2591_cfg *cfg)
 {
