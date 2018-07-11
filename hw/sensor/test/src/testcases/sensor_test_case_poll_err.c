@@ -39,8 +39,7 @@ static int stcpe_sensor_read_status;
  * `stcpe_error_recs` array.
  */
 static void
-stcpe_sensor_err(struct sensor *sensor, void *arg, int status,
-                 sensor_type_t type)
+stcpe_sensor_err(struct sensor *sensor, void *arg, int status)
 {
     struct stcpe_error_rec *rec;
 
@@ -50,7 +49,6 @@ stcpe_sensor_err(struct sensor *sensor, void *arg, int status,
     rec->sensor = sensor;
     rec->arg = arg;
     rec->status = status;
-    rec->type = type;
 }
 
 /**
@@ -69,17 +67,15 @@ TEST_CASE(sensor_test_case_poll_err)
         .sd_read = stcpe_sensor_read,
     };
 
-    struct sensor_err_listener sel1;
-    struct sensor_err_listener sel2;
     struct sensor sn;
     int rc;
 
     sysinit();
 
     /***
-     * Register the sensor and error listeners.
-     * Listener 1: light
-     * Listener 2: all types
+     * Register the sensor and an error callback.  Arbitrarily specify
+     * `&stcpe_sensor_read_status` as the callback argument, just so we can
+     * test that the argument is properly passed.
      */
 
     rc = sensor_init(&sn, NULL);
@@ -95,19 +91,11 @@ TEST_CASE(sensor_test_case_poll_err)
     rc = sensor_mgr_register(&sn);
     TEST_ASSERT_FATAL(rc == 0);
 
-    sel1.sel_sensor_type = SENSOR_TYPE_LIGHT;
-    sel1.sel_func = stcpe_sensor_err;
-    sel1.sel_arg = NULL;
-    rc = sensor_register_err_listener(&sn, &sel1);
+    rc = sensor_register_err_func(&sn, stcpe_sensor_err,
+                                  &stcpe_sensor_read_status);
     TEST_ASSERT_FATAL(rc == 0);
 
-    sel2.sel_sensor_type = SENSOR_TYPE_ALL;
-    sel2.sel_func = stcpe_sensor_err;
-    sel2.sel_arg = NULL;
-    rc = sensor_register_err_listener(&sn, &sel2);
-    TEST_ASSERT_FATAL(rc == 0);
-
-    /*** Successful accelerometer read; ensure no error. */
+    /*** Successful read; ensure no error. */
 
     stcpe_sensor_read_status = 0;
     rc = sensor_read(&sn, SENSOR_TYPE_ACCELEROMETER, NULL, NULL,
@@ -115,30 +103,32 @@ TEST_CASE(sensor_test_case_poll_err)
     TEST_ASSERT_FATAL(rc == 0);
     TEST_ASSERT_FATAL(stcpe_num_error_recs == 0);
 
-    /*** Failed acceleromter read; ensure one error record. */
+    /*** Three failed reads; ensure three error record. */
 
     stcpe_sensor_read_status = 1;
     rc = sensor_read(&sn, SENSOR_TYPE_ACCELEROMETER, NULL, NULL,
                      OS_TIMEOUT_NEVER);
     TEST_ASSERT_FATAL(rc == 1);
-    TEST_ASSERT_FATAL(stcpe_num_error_recs == 1);
-    TEST_ASSERT_FATAL(stcpe_error_recs[0].sensor == &sn);
-    TEST_ASSERT_FATAL(stcpe_error_recs[0].arg == NULL);
-    TEST_ASSERT_FATAL(stcpe_error_recs[0].status == 1);
-    TEST_ASSERT_FATAL(stcpe_error_recs[0].type == SENSOR_TYPE_ACCELEROMETER);
-
-    /** Failed light read; ensure two additional error records. */
 
     stcpe_sensor_read_status = 2;
-    rc = sensor_read(&sn, SENSOR_TYPE_LIGHT, NULL, NULL, OS_TIMEOUT_NEVER);
+    rc = sensor_read(&sn, SENSOR_TYPE_ACCELEROMETER, NULL, NULL,
+                     OS_TIMEOUT_NEVER);
     TEST_ASSERT_FATAL(rc == 2);
+
+    stcpe_sensor_read_status = 3;
+    rc = sensor_read(&sn, SENSOR_TYPE_ACCELEROMETER, NULL, NULL,
+                     OS_TIMEOUT_NEVER);
+    TEST_ASSERT_FATAL(rc == 3);
+
     TEST_ASSERT_FATAL(stcpe_num_error_recs == 3);
+
+    TEST_ASSERT_FATAL(stcpe_error_recs[0].sensor == &sn);
+    TEST_ASSERT_FATAL(stcpe_error_recs[0].arg == &stcpe_sensor_read_status);
+    TEST_ASSERT_FATAL(stcpe_error_recs[0].status == 1);
     TEST_ASSERT_FATAL(stcpe_error_recs[1].sensor == &sn);
-    TEST_ASSERT_FATAL(stcpe_error_recs[1].arg == NULL);
+    TEST_ASSERT_FATAL(stcpe_error_recs[1].arg == &stcpe_sensor_read_status);
     TEST_ASSERT_FATAL(stcpe_error_recs[1].status == 2);
-    TEST_ASSERT_FATAL(stcpe_error_recs[1].type == SENSOR_TYPE_LIGHT);
     TEST_ASSERT_FATAL(stcpe_error_recs[2].sensor == &sn);
-    TEST_ASSERT_FATAL(stcpe_error_recs[2].arg == NULL);
-    TEST_ASSERT_FATAL(stcpe_error_recs[2].status == 2);
-    TEST_ASSERT_FATAL(stcpe_error_recs[2].type == SENSOR_TYPE_LIGHT);
+    TEST_ASSERT_FATAL(stcpe_error_recs[2].arg == &stcpe_sensor_read_status);
+    TEST_ASSERT_FATAL(stcpe_error_recs[2].status == 3);
 }

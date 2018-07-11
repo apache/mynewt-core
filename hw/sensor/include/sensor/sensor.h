@@ -246,18 +246,15 @@ typedef int
 (*sensor_notifier_func_t)(struct sensor *, void *, sensor_event_type_t);
 
 /**
- * Callback for reporting a sensor read error.  Specified in a sensor error
- * listener.
+ * Callback for reporting a sensor read error.
  *
  * @param sensor The sensor for which a read failed.
- * @param arg The optional argument associated with the error listener.
+ * @param arg The optional argument registered with the callback.
  * @param status Indicates the cause of the read failure.  Determined by the
  *               underlying sensor driver.
- * @param type The type of sensor data for which a read was attempted.
  */
 typedef void
-(*sensor_error_func_t)(struct sensor *sensor, void *arg, int status,
-                       sensor_type_t type);
+(*sensor_error_func_t)(struct sensor *sensor, void *arg, int status);
 
 /**
  *
@@ -279,29 +276,6 @@ struct sensor_listener {
      * contained within the sensor object.
      */
     SLIST_ENTRY(sensor_listener) sl_next;
-};
-
-/**
- * Reports failed reads of specific kinds of sensor data.
- */
-struct sensor_err_listener {
-
-    /* The type of sensor reads to report errors for.  This is interpreted as a
-     * mask; this listener is called for failed reads of all sensor types on
-     * this sensor that match the mask.
-     */
-    sensor_type_t sel_sensor_type;
-
-    /* Sensor error handler function.  Called when a read fails. */
-    sensor_error_func_t sel_func;
-
-    /* Optional argument for the error callback. */
-    void *sel_arg;
-
-    /* Next item in the sensor error listener list.  The head of this list is
-     * contained within the sensor object.
-     */
-    SLIST_ENTRY(sensor_err_listener) sel_next;
 };
 
 /**
@@ -616,10 +590,9 @@ struct sensor {
      */
     SLIST_HEAD(, sensor_listener) s_listener_list;
 
-    /* A list of listeners that are registered to report read errors for this
-     * sensor
-     */
-    SLIST_HEAD(, sensor_err_listener) s_err_listener_list;
+    /* A callback that reports read errors for this sensor */
+    sensor_error_func_t s_err_fn;
+    void *s_err_arg;
 
     /* A list of notifiers that are registered to receive events from this
      * sensor
@@ -715,28 +688,17 @@ int sensor_register_listener(struct sensor *sensor, struct sensor_listener *list
 int sensor_unregister_listener(struct sensor *sensor, struct sensor_listener *listener);
 
 /**
- * Register a sensor error listener.  The listener is executed when the sensor
+ * Register a sensor error callback.  The callback is executed when the sensor
  * manager fails to read from the given sensor.
  *
- * @param sensor The sensor to register an error listener on.
- * @param err_listener The error listener to register.
+ * @param sensor The sensor to register an error callback on.
+ * @param err_fn The function to execute when a read fails.
+ * @param arg Optional argument to pass to the callback.
  *
  * @return 0 on success, non-zero error code on failure.
  */
-int sensor_register_err_listener(struct sensor *sensor,
-        struct sensor_err_listener *err_listener);
-
-/**
- * Un-register a sensor error listener. This allows a calling application to
- * clear error callbacks for a given sensor object.
- *
- * @param sensor The sensor object.
- * @param err_listener The error listener to remove from the sensor.
- *
- * @return 0 on success, non-zero error code on failure.
- */
-int sensor_unregister_err_listener(struct sensor *sensor,
-        struct sensor_err_listener *err_listener);
+int sensor_register_err_func(struct sensor *sensor,
+        sensor_error_func_t err_fn, void *arg);
 
 /**
  * @} SensorListenerAPI
