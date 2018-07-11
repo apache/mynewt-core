@@ -29,6 +29,7 @@
 #include "uart_hal/uart_hal.h"
 #include "mcu/native_bsp.h"
 #include "mcu/mcu_hal.h"
+#include "hal/hal_i2c.h"
 
 #if MYNEWT_VAL(SIM_ACCEL_PRESENT)
 #include "sim/sim_accel.h"
@@ -77,6 +78,11 @@ hal_bsp_init(void)
             OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *) NULL);
     assert(rc == 0);
 
+#if MYNEWT_VAL(I2C_0)
+    rc = hal_i2c_init(0, NULL);
+    assert(rc == 0);
+#endif
+    
 #if MYNEWT_VAL(SIM_ACCEL_PRESENT)
     rc = os_dev_create((struct os_dev *) &os_bsp_accel0, "simaccel0",
             OS_DEV_INIT_PRIMARY, 0, simaccel_init, (void *) NULL);

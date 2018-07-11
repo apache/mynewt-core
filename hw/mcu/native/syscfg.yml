@@ -19,6 +19,10 @@
 # Package: hw/bsp/nrf52dk
 
 syscfg.defs:
+    I2C_0:
+        description: 'I2C interface 0'
+        value:  0
+
     MCU_FLASH_MIN_WRITE_SIZE:
         description: >
             Specifies the required alignment for internal flash writes.
