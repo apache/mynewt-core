@@ -94,7 +94,7 @@ bq27z561_itf_lock(struct bq27z561_itf *bi, uint32_t timeout)
     int rc;
     os_time_t ticks;
 
-    if (!bi->bi_lock) {
+    if (!bi->itf_lock) {
         return 0;
     }
 
@@ -121,7 +121,7 @@ bq27z561_itf_lock(struct bq27z561_itf *bi, uint32_t timeout)
 static void
 bq27z561_itf_unlock(struct bq27z561_itf *bi)
 {
-    if (!bi->bi_lock) {
+    if (!bi->itf_lock) {
         return;
     }
 
@@ -973,6 +973,11 @@ bq27z561_battery_property_get(struct battery_driver *driver,
         rc = bq27z561_get_relative_state_of_charge(
                 (struct bq27z561 *) driver->bd_driver_data, &val.bpv_u8);
         property->bp_value.bpv_soc = val.bpv_u8;
+    } else if (property->bp_type == BATTERY_PROP_SOH &&
+               property->bp_flags == 0) {
+        rc = bq27z561_get_state_of_health(
+                (struct bq27z561 *) driver->bd_driver_data, &val.bpv_u8);
+        property->bp_value.bpv_soh = val.bpv_u8;
     } else if (property->bp_type == BATTERY_PROP_CYCLE_COUNT &&
                property->bp_flags == 0) {
         rc = bq27z561_get_discharge_cycles(
@@ -1106,6 +1111,7 @@ static const struct battery_driver_property bq27z561_battery_properties[] = {
     { BATTERY_PROP_VOLTAGE_NOW, 0, "Voltage" },
     { BATTERY_PROP_CURRENT_NOW, 0, "Current" },
     { BATTERY_PROP_SOC, 0, "SOC" },
+    { BATTERY_PROP_SOH, 0, "SOH" },
     { BATTERY_PROP_TIME_TO_EMPTY_NOW, 0, "TimeToEmpty" },
     { BATTERY_PROP_TIME_TO_FULL_NOW, 0, "TimeToFull" },
     { BATTERY_PROP_CYCLE_COUNT, 0, "CycleCount" },

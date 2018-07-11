@@ -161,7 +161,8 @@ static void print_property(const struct battery_property *prop)
         console_printf(" %s %ld s\n", name, prop->bp_value.bpv_time_in_s);
         break;
     case BATTERY_PROP_SOC:
-        console_printf(" %s %d %%\n", name, prop->bp_value.bpv_soc);
+    case BATTERY_PROP_SOH:
+        console_printf(" %s %d %%\n", name, prop->bp_value.bpv_u8);
         break;
     case BATTERY_PROP_STATUS:
         console_printf(" %s %s\n", name,
