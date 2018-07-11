@@ -1,4 +1,3 @@
-#
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -21,3 +20,6 @@ syscfg.defs:
     MS5840_ITF_LOCK_TMO:
         description: 'MS5840 interface lock timeout in milliseconds'
         value: 1000
+    MS5840_LOG_MODULE:
+        description: 'Numeric module ID to use for MS5840 log messages'
+        value: 170

@@ -33,3 +33,6 @@ syscfg.defs:
     BNO055_ITF_LOCK_TMO:
         description: 'BNO055 interface lock timeout in milliseconds'
         value: 1000
+    BNO055_LOG_MODULE:
+        description: 'Numeric module ID to use for BNO055 log messages'
+        value: 85

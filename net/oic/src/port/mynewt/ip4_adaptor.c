@@ -163,7 +163,7 @@ oc_send_buffer_ip4_int(struct os_mbuf *m, int is_mcast)
             }
             rc = mn_sendto(oc_ucast4, n, (struct mn_sockaddr *)&to);
             if (rc != 0) {
-                OC_LOG_ERROR("Failed to send buffer %u on %x\n",
+                OC_LOG(ERROR, "Failed to send buffer %u on %x\n",
                              OS_MBUF_PKTHDR(m)->omp_len, if2_idx);
                 STATS_INC(oc_ip4_stats, oerr);
                 os_mbuf_free_chain(n);
@@ -178,7 +178,7 @@ oc_send_buffer_ip4_int(struct os_mbuf *m, int is_mcast)
             } else {
                 rc = mn_sendto(oc_ucast4, m, (struct mn_sockaddr *) &to);
                 if (rc != 0) {
-                    OC_LOG_ERROR("Failed sending buffer %u on itf %x\n",
+                    OC_LOG(ERROR, "Failed sending buffer %u on itf %x\n",
                                  OS_MBUF_PKTHDR(m)->omp_len, if2_idx);
                     STATS_INC(oc_ip4_stats, oerr);
                     os_mbuf_free_chain(m);
@@ -190,7 +190,7 @@ oc_send_buffer_ip4_int(struct os_mbuf *m, int is_mcast)
     } else {
         rc = mn_sendto(oc_ucast4, m, (struct mn_sockaddr *) &to);
         if (rc != 0) {
-            OC_LOG_ERROR("Failed to send buffer %u ucast\n",
+            OC_LOG(ERROR, "Failed to send buffer %u ucast\n",
                          OS_MBUF_PKTHDR(m)->omp_len);
             STATS_INC(oc_ip4_stats, oerr);
             os_mbuf_free_chain(m);
@@ -230,7 +230,7 @@ oc_attempt_rx_ip4_sock(struct mn_socket *rxsock)
     STATS_INCN(oc_ip4_stats, ibytes, OS_MBUF_PKTLEN(n));
     m = os_msys_get_pkthdr(0, sizeof(struct oc_endpoint_ip));
     if (!m) {
-        OC_LOG_ERROR("Could not allocate RX buffer\n");
+        OC_LOG(ERROR, "Could not allocate RX buffer\n");
         goto rx_attempt_err;
     }
     OS_MBUF_PKTHDR(m)->omp_len = OS_MBUF_PKTHDR(n)->omp_len;
@@ -314,7 +314,7 @@ oc_connectivity_init_ip4(void)
 
     rc = mn_socket(&oc_ucast4, MN_PF_INET, MN_SOCK_DGRAM, 0);
     if (rc != 0 || !oc_ucast4) {
-        OC_LOG_ERROR("Could not create oc unicast v4 socket\n");
+        OC_LOG(ERROR, "Could not create oc unicast v4 socket\n");
         return rc;
     }
     mn_socket_set_cbs(oc_ucast4, oc_ucast4, &oc_sock4_cbs);
@@ -323,7 +323,7 @@ oc_connectivity_init_ip4(void)
     rc = mn_socket(&oc_mcast4, MN_PF_INET, MN_SOCK_DGRAM, 0);
     if (rc != 0 || !oc_mcast4) {
         mn_close(oc_ucast4);
-        OC_LOG_ERROR("Could not create oc multicast v4 socket\n");
+        OC_LOG(ERROR, "Could not create oc multicast v4 socket\n");
         return rc;
     }
     mn_socket_set_cbs(oc_mcast4, oc_mcast4, &oc_sock4_cbs);
@@ -336,7 +336,7 @@ oc_connectivity_init_ip4(void)
 
     rc = mn_bind(oc_ucast4, (struct mn_sockaddr *)&sin);
     if (rc != 0) {
-        OC_LOG_ERROR("Could not bind oc unicast v4 socket\n");
+        OC_LOG(ERROR, "Could not bind oc unicast v4 socket\n");
         goto oc_connectivity_init_err;
     }
 
@@ -364,13 +364,13 @@ oc_connectivity_init_ip4(void)
             continue;
         }
 
-        OC_LOG_DEBUG("Joined Coap v4 mcast group on %s\n", itf.mif_name);
+        OC_LOG(DEBUG, "Joined Coap v4 mcast group on %s\n", itf.mif_name);
     }
 
     sin.msin_port = htons(COAP_PORT_UNSECURED);
     rc = mn_bind(oc_mcast4, (struct mn_sockaddr *)&sin);
     if (rc != 0) {
-        OC_LOG_ERROR("Could not bind oc v4 multicast socket\n");
+        OC_LOG(ERROR, "Could not bind oc v4 multicast socket\n");
         goto oc_connectivity_init_err;
     }
 #endif

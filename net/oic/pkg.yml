@@ -27,8 +27,9 @@ pkg.deps:
     - encoding/cborattr
     - encoding/tinycbor
     - kernel/os
+    - sys/log/modlog
+
 pkg.req_apis:
-    - log
     - stats
 
 pkg.deps.OC_TRANSPORT_GATT:

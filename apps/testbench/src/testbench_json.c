@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "os/mynewt.h"
+#include "modlog/modlog.h"
 #include "testutil/testutil.h"
 #include "testbench.h"
 
@@ -31,12 +32,7 @@ extern char *bigbuf;
 void
 testbench_json_init(void *arg)
 {
-    /*
-     * Lorem ipsum dolor sit amet, consectetur adipiscing elit,
-     * sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-     */
-    LOG_DEBUG(&testlog, LOG_MODULE_TEST,
-             "%s testbench json_init", buildID);
+    MODLOG_DFLT(DEBUG, "%s testbench json_init", buildID);
 
     bigbuf = os_malloc(JSON_BIGBUF_SIZE);
 
@@ -55,7 +51,7 @@ TEST_CASE_DECL(test_json_simple_decode);
 
 TEST_SUITE(testbench_json_suite)
 {
-    LOG_DEBUG(&testlog, LOG_MODULE_TEST, "%s testbench_json", buildID);
+    MODLOG_DFLT(DEBUG, "%s testbench_json", buildID);
 
     tu_suite_set_init_cb(testbench_json_init, NULL);
     tu_suite_set_complete_cb(testbench_json_complete, NULL);
@@ -69,7 +65,7 @@ testbench_json()
 {
     tu_suite_set_init_cb(testbench_json_init, NULL);
     tu_suite_set_complete_cb(testbench_json_complete, NULL);
-    LOG_DEBUG(&testlog, LOG_MODULE_TEST, "%s testbench_json", buildID);
+    MODLOG_DFLT(DEBUG, "%s testbench_json", buildID);
     testbench_json_suite();
 
     return tu_any_failed;

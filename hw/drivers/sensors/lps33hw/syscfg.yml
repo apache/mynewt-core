@@ -35,3 +35,6 @@ syscfg.defs:
     LPS33HW_ITF_LOCK_TMO:
         description: 'LPS33HW interface lock timeout in milliseconds'
         value: 1000
+    LPS33HW_LOG_MODULE:
+        description: 'Numeric module ID to use for LPS33HW log messages'
+        value: 133

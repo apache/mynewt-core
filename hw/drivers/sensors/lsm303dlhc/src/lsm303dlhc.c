@@ -28,7 +28,7 @@
 #include "sensor/mag.h"
 #include "lsm303dlhc/lsm303dlhc.h"
 #include "lsm303dlhc_priv.h"
-#include "log/log.h"
+#include "modlog/modlog.h"
 #include "stats/stats.h"
 
 /* Define the stats section and records */
@@ -66,10 +66,11 @@ STATS_NAME_END(lsm303dlhc_stat_section)
 /* Global variable used to hold stats data */
 STATS_SECT_DECL(lsm303dlhc_stat_section) g_lsm303dlhcstats;
 
-#define LOG_MODULE_LSM303DLHC (303)
-#define LSM303DLHC_INFO(...)  LOG_INFO(&_log, LOG_MODULE_LSM303DLHC, __VA_ARGS__)
-#define LSM303DLHC_ERR(...)   LOG_ERROR(&_log, LOG_MODULE_LSM303DLHC, __VA_ARGS__)
-static struct log _log;
+#define LSM303DLHC_LOG(lvl_, ...) \
+    MODLOG_ ## lvl_(MYNEWT_VAL(LSM303DLHC_LOG_MODULE), __VA_ARGS__)
+#else
+#define LSM303DLHC_LOG(lvl_, ...)
+#endif
 
 /* Exports for the sensor API */
 static int lsm303dlhc_sensor_read(struct sensor *, sensor_type_t,
@@ -113,7 +114,8 @@ lsm303dlhc_write8(struct sensor_itf *itf, uint8_t addr, uint8_t reg,
     rc = hal_i2c_master_write(itf->si_num, &data_struct,
                               OS_TICKS_PER_SEC / 10, 1);
     if (rc) {
-        LSM303DLHC_ERR("Failed to write to 0x%02X:0x%02X with value 0x%02lX\n",
+        LSM303DLHC_LOG(ERROR,
+                       "Failed to write to 0x%02X:0x%02X with value 0x%02lX\n",
                        addr, reg, value);
         STATS_INC(g_lsm303dlhcstats, errors);
     }
@@ -156,7 +158,7 @@ lsm303dlhc_read8(struct sensor_itf *itf, uint8_t addr, uint8_t reg,
     rc = hal_i2c_master_write(itf->si_num, &data_struct,
                               OS_TICKS_PER_SEC / 10, 1);
     if (rc) {
-        LSM303DLHC_ERR("I2C access failed at address 0x%02X\n", addr);
+        LSM303DLHC_LOG(ERROR, "I2C access failed at address 0x%02X\n", addr);
         STATS_INC(g_lsm303dlhcstats, errors);
         goto err;
     }
@@ -167,7 +169,8 @@ lsm303dlhc_read8(struct sensor_itf *itf, uint8_t addr, uint8_t reg,
                              OS_TICKS_PER_SEC / 10, 1);
     *value = payload;
     if (rc) {
-        LSM303DLHC_ERR("Failed to read from 0x%02X:0x%02X\n", addr, reg);
+        LSM303DLHC_LOG(ERROR, "Failed to read from 0x%02X:0x%02X\n",
+                       addr, reg);
         STATS_INC(g_lsm303dlhcstats, errors);
     }
 
@@ -212,7 +215,7 @@ lsm303dlhc_read48(struct sensor_itf *itf, uint8_t addr, uint8_t reg,
     rc = hal_i2c_master_write(itf->si_num, &data_struct,
                               OS_TICKS_PER_SEC / 10, 1);
     if (rc) {
-        LSM303DLHC_ERR("I2C access failed at address 0x%02X\n", addr);
+        LSM303DLHC_LOG(ERROR, "I2C access failed at address 0x%02X\n", addr);
         STATS_INC(g_lsm303dlhcstats, errors);
         goto err;
     }
@@ -224,7 +227,8 @@ lsm303dlhc_read48(struct sensor_itf *itf, uint8_t addr, uint8_t reg,
                              OS_TICKS_PER_SEC / 10, 1);
 
     if (rc) {
-        LSM303DLHC_ERR("Failed to read from 0x%02X:0x%02X\n", addr, reg);
+        LSM303DLHC_LOG(ERROR, "Failed to read from 0x%02X:0x%02X\n",
+                       addr, reg);
         STATS_INC(g_lsm303dlhcstats, errors);
     }
 
@@ -260,8 +264,6 @@ lsm303dlhc_init(struct os_dev *dev, void *arg)
     lsm = (struct lsm303dlhc *) dev;
 
     lsm->cfg.mask = SENSOR_TYPE_ALL;
-
-    log_register(dev->od_name, &_log, &log_console_handler, NULL, LOG_SYSLEVEL);
 
     sensor = &lsm->sensor;
 
@@ -442,7 +444,8 @@ lsm303dlhc_sensor_read(struct sensor *sensor, sensor_type_t type,
                 mg_lsb = 0.012F;
                 break;
             default:
-                LSM303DLHC_ERR("Unknown accel range: 0x%02X. Assuming +/-2G.\n",
+                LSM303DLHC_LOG(
+                    ERROR, "Unknown accel range: 0x%02X. Assuming +/-2G.\n",
                     lsm->cfg.accel_range);
                 mg_lsb = 0.001F;
                 break;
@@ -517,8 +520,9 @@ lsm303dlhc_sensor_read(struct sensor *sensor, sensor_type_t type,
                 gauss_lsb_z = 205;
                 break;
             default:
-                LSM303DLHC_ERR("Unknown mag gain: 0x%02X. Assuming +/-1.3g.\n",
-                    lsm->cfg.mag_gain);
+                LSM303DLHC_LOG(ERROR,
+                               "Unknown mag gain: 0x%02X. Assuming +/-1.3g.\n",
+                               lsm->cfg.mag_gain);
                 gauss_lsb_xy = 1100;
                 gauss_lsb_z = 980;
                 break;

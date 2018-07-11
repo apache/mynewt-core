@@ -24,6 +24,9 @@ syscfg.defs:
     DRV2605_LOG:
         description: 'Enable DRV2605 logging'
         value: 0
+    DRV2605_LOG_MODULE:
+        description: 'Numeric module ID to use for DRV2605 log messages'
+        value: 205
     DRV2605_STATS:
         description: 'Enable DRV2605 statistics'
         value: 0

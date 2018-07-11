@@ -47,3 +47,6 @@ syscfg.defs:
     LIS2DW12_ITF_LOCK_TMO:
         description: 'LIS2DW12 interface lock timeout in milliseconds'
         value: 1000
+    LIS2DW12_LOG_MODULE:
+        description: 'Numeric module ID to use for LIS2DW12 log messages'
+        value: 213

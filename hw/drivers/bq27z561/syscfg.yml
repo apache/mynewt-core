@@ -27,6 +27,9 @@ syscfg.defs:
     BQ27Z561_LOG:
         description: 'Enable BQ27Z561 logging'
         value: 0
+    BQ27Z561_LOG_MODULE:
+        description: 'Numeric module ID to use for BQ27Z561 log messages'
+        value: 111
     BQ27Z561_SHELL_DEV_NAME:
         description: 'BQ27Z561 Shell device name'
         value: "\"bq27z561_0\""

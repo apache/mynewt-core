@@ -39,6 +39,7 @@
 #include <string.h>
 #include <reboot/log_reboot.h>
 #include <id/id.h>
+#include "modlog/modlog.h"
 
 #ifdef ARCH_sim
 #include <mcu/mcu_sim.h>
@@ -172,8 +173,8 @@ task1_handler(void *arg)
         /* Toggle the LED */
         prev_pin_state = hal_gpio_read(g_led_pin);
         curr_pin_state = hal_gpio_toggle(g_led_pin);
-        LOG_INFO(&my_log, LOG_MODULE_DEFAULT, "GPIO toggle from %u to %u",
-            prev_pin_state, curr_pin_state);
+        MODLOG_DFLT(INFO, "GPIO toggle from %u to %u",
+                    prev_pin_state, curr_pin_state);
         STATS_INC(g_stats_gpio_toggle, toggles);
 
         /* Release semaphore to task 2 */
@@ -253,6 +254,10 @@ main(int argc, char **argv)
 
     cbmem_init(&cbmem, cbmem_buf, MAX_CBMEM_BUF);
     log_register("log", &my_log, &log_cbmem_handler, &cbmem, LOG_SYSLEVEL);
+
+    /* Point the default module at the cbmem log just registered. */
+    rc = modlog_register(LOG_MODULE_DEFAULT, &my_log, LOG_LEVEL_DEBUG, NULL);
+    assert(rc == 0);
 
     stats_init(STATS_HDR(g_stats_gpio_toggle),
                STATS_SIZE_INIT_PARMS(g_stats_gpio_toggle, STATS_SIZE_32),

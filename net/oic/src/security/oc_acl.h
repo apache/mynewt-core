@@ -19,7 +19,6 @@
 
 #include "oc_ri.h"
 #include "oc_uuid.h"
-#include "port/oc_log.h"
 #include "util/oc_list.h"
 #include "util/oc_memb.h"
 #include <stdbool.h>

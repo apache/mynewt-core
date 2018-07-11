@@ -29,17 +29,15 @@
 #include <syscfg/syscfg.h>
 
 #if MYNEWT_VAL(BMA253_LOG)
-#include "log/log.h"
+#include "modlog/modlog.h"
 #endif
 
 #if MYNEWT_VAL(BMA253_LOG)
-static struct log bma253_log;
-#define LOG_MODULE_BMA253 (253)
-#define BMA253_ERROR(...) LOG_ERROR(&bma253_log, LOG_MODULE_BMA253, __VA_ARGS__)
-#define BMA253_INFO(...)  LOG_INFO(&bma253_log, LOG_MODULE_BMA253, __VA_ARGS__)
+
+#define BMA253_LOG(lvl_, ...) \
+    MODLOG_ ## lvl_(MYNEWT_VAL(BMA253_LOG_MODULE), __VA_ARGS__)
 #else
-#define BMA253_ERROR(...)
-#define BMA253_INFO(...)
+#define BMA253_LOG(lvl_, ...)
 #endif
 
 #define BMA253_NOTIFY_MASK  0x01
@@ -168,7 +166,7 @@ get_register(struct bma253 * bma253,
     rc = hal_i2c_master_write(itf->si_num, &oper,
                               OS_TICKS_PER_SEC / 10, 1);
     if (rc != 0) {
-        BMA253_ERROR("I2C access failed at address 0x%02X\n", addr);
+        BMA253_LOG(ERROR, "I2C access failed at address 0x%02X\n", addr);
         goto err;
     }
 
@@ -179,8 +177,8 @@ get_register(struct bma253 * bma253,
     rc = hal_i2c_master_read(itf->si_num, &oper,
                              OS_TICKS_PER_SEC / 10, 1);
     if (rc != 0) {
-        BMA253_ERROR("I2C read failed at address 0x%02X single byte\n",
-                     addr);
+        BMA253_LOG(ERROR, "I2C read failed at address 0x%02X single byte\n",
+                   addr);
     }
 
 err:
@@ -213,8 +211,8 @@ get_registers(struct bma253 * bma253,
     rc = hal_i2c_master_write(itf->si_num, &oper,
                               OS_TICKS_PER_SEC / 10, 1);
     if (rc != 0) {
-        BMA253_ERROR("I2C access failed at address 0x%02X\n",
-                     addr);
+        BMA253_LOG(ERROR, "I2C access failed at address 0x%02X\n",
+                   addr);
         goto err;
     }
 
@@ -225,8 +223,8 @@ get_registers(struct bma253 * bma253,
     rc = hal_i2c_master_read(itf->si_num, &oper,
                              OS_TICKS_PER_SEC / 10, 1);
     if (rc != 0) {
-        BMA253_ERROR("I2C read failed at address 0x%02X length %u\n",
-                     addr, size);
+        BMA253_LOG(ERROR, "I2C read failed at address 0x%02X length %u\n",
+                   addr, size);
     }
 
 err:
@@ -262,8 +260,8 @@ set_register(struct bma253 * bma253,
     rc = hal_i2c_master_write(itf->si_num, &oper,
                               OS_TICKS_PER_SEC / 10, 1);
     if (rc != 0) {
-        BMA253_ERROR("I2C write failed at address 0x%02X single byte\n",
-                     addr);
+        BMA253_LOG(ERROR, "I2C write failed at address 0x%02X single byte\n",
+                   addr);
     }
 
     switch (bma253->power) {
@@ -380,8 +378,8 @@ quad_to_axis_trigger(struct axis_trigger * axis_trigger,
     axis_trigger->sign = (quad_bits >> 3) & 0x01;
     switch (quad_bits & 0x07) {
     default:
-        BMA253_ERROR("unknown %s quad bits 0x%02X\n",
-                     name_bits, quad_bits);
+        BMA253_LOG(ERROR, "unknown %s quad bits 0x%02X\n",
+                   name_bits, quad_bits);
     case 0x00:
         axis_trigger->axis = -1;
         axis_trigger->axis_known = false;
@@ -471,7 +469,7 @@ bma253_get_g_range(const struct bma253 * bma253,
 
     switch (data & 0x0F) {
     default:
-        BMA253_ERROR("unknown PMU_RANGE reg value 0x%02X\n", data);
+        BMA253_LOG(ERROR, "unknown PMU_RANGE reg value 0x%02X\n", data);
         *g_range = BMA253_G_RANGE_16;
         break;
     case 0x03:
@@ -612,7 +610,7 @@ bma253_get_power_settings(const struct bma253 * bma253,
 
     switch ((data[0] >> 5) & 0x07) {
     default:
-        BMA253_ERROR("unknown PMU_LPW reg value 0x%02X\n", data[0]);
+        BMA253_LOG(ERROR, "unknown PMU_LPW reg value 0x%02X\n", data[0]);
         power_settings->power_mode = BMA253_POWER_MODE_NORMAL;
         break;
     case 0x00:
@@ -2624,7 +2622,7 @@ bma253_get_fifo_cfg(const struct bma253 * bma253,
 
     switch ((data >> 6) & 0x03) {
     case 0x03:
-        BMA253_ERROR("unknown FIFO_CONFIG_1 reg value 0x%02X\n", data);
+        BMA253_LOG(ERROR, "unknown FIFO_CONFIG_1 reg value 0x%02X\n", data);
     case 0x00:
         fifo_cfg->fifo_mode = FIFO_MODE_BYPASS;
         break;
@@ -3071,7 +3069,7 @@ init_intpin(struct bma253 * bma253,
     }
 
     if (pin < 0) {
-        BMA253_ERROR("Interrupt pin not configured\n");
+        BMA253_LOG(ERROR, "Interrupt pin not configured\n");
         return SYS_EINVAL;
     }
 
@@ -3087,7 +3085,7 @@ init_intpin(struct bma253 * bma253,
     } else if (bma253->sensor.s_itf.si_ints[pdd->int_num].device_pin == 2) {
         pdd->int_route = INT_ROUTE_PIN_2;
     } else {
-        BMA253_ERROR("Route not configured\n");
+        BMA253_LOG(ERROR, "Route not configured\n");
         return SYS_EINVAL;
     }
 
@@ -3371,7 +3369,7 @@ axis_offset_compensation(const struct bma253 * bma253,
     }
 
     if (!ready) {
-        BMA253_ERROR("offset compensation already in progress\n");
+        BMA253_LOG(ERROR, "offset compensation already in progress\n");
         return SYS_ETIMEOUT;
     }
 
@@ -3396,7 +3394,7 @@ axis_offset_compensation(const struct bma253 * bma253,
     }
 
     if (count == 0) {
-        BMA253_ERROR("offset compensation did not complete\n");
+        BMA253_LOG(ERROR, "offset compensation did not complete\n");
         return SYS_ETIMEOUT;
     }
 
@@ -3515,15 +3513,15 @@ bma253_query_offsets(struct bma253 * bma253,
 
     mismatch = false;
     if (cfg->offset_x_g != val_offset_x_g) {
-        BMA253_ERROR("X compensation offset value mismatch\n");
+        BMA253_LOG(ERROR, "X compensation offset value mismatch\n");
         mismatch = true;
     }
     if (cfg->offset_y_g != val_offset_y_g) {
-        BMA253_ERROR("Y compensation offset value mismatch\n");
+        BMA253_LOG(ERROR, "Y compensation offset value mismatch\n");
         mismatch = true;
     }
     if (cfg->offset_z_g != val_offset_z_g) {
-        BMA253_ERROR("Z compensation offset value mismatch\n");
+        BMA253_LOG(ERROR, "Z compensation offset value mismatch\n");
         mismatch = true;
     }
 
@@ -3837,7 +3835,7 @@ bma253_wait_for_orient(struct bma253 * bma253,
     pdd = &bma253->pdd;
 
     if (pdd->interrupt) {
-        BMA253_ERROR("Interrupt used\n");
+        BMA253_LOG(ERROR, "Interrupt used\n");
         return SYS_EINVAL;
     }
 
@@ -3914,7 +3912,7 @@ bma253_wait_for_high_g(struct bma253 * bma253)
     pdd = &bma253->pdd;
 
     if (pdd->interrupt) {
-        BMA253_ERROR("Interrupt used\n");
+        BMA253_LOG(ERROR, "Interrupt used\n");
         return SYS_EINVAL;
     }
 
@@ -3986,7 +3984,7 @@ bma253_wait_for_low_g(struct bma253 * bma253)
     pdd = &bma253->pdd;
 
     if (pdd->interrupt) {
-        BMA253_ERROR("Interrupt used\n");
+        BMA253_LOG(ERROR, "Interrupt used\n");
         return SYS_EINVAL;
     }
 
@@ -4089,7 +4087,7 @@ bma253_wait_for_tap(struct bma253 * bma253,
     }
 
     if (pdd->interrupt) {
-        BMA253_ERROR("Interrupt used\n");
+        BMA253_LOG(ERROR, "Interrupt used\n");
         return SYS_EINVAL;
     }
 
@@ -4633,7 +4631,7 @@ sensor_driver_handle_interrupt(struct sensor * sensor)
 
     rc = bma253_get_int_status(bma253, &int_status);
     if (rc != 0) {
-        BMA253_ERROR("Cound not read int status err=0x%02x\n", rc);
+        BMA253_LOG(ERROR, "Cound not read int status err=0x%02x\n", rc);
         return rc;
     }
 
@@ -4684,7 +4682,7 @@ bma253_config(struct bma253 * bma253, struct bma253_cfg * cfg)
         return rc;
     }
     if (chip_id != REG_VALUE_CHIP_ID) {
-        BMA253_ERROR("received incorrect chip ID 0x%02X\n", chip_id);
+        BMA253_LOG(ERROR, "received incorrect chip ID 0x%02X\n", chip_id);
         return SYS_EINVAL;
     }
 
@@ -4719,17 +4717,6 @@ bma253_init(struct os_dev * dev, void * arg)
     if (!dev || !arg) {
         return SYS_ENODEV;
     }
-
-#if MYNEWT_VAL(BMA253_LOG)
-    rc = log_register(dev->od_name,
-                      &bma253_log,
-                      &log_console_handler,
-                      NULL,
-                      LOG_SYSLEVEL);
-    if (rc != 0) {
-        return rc;
-    }
-#endif
 
     bma253 = (struct bma253 *)dev;
     sensor = &bma253->sensor;

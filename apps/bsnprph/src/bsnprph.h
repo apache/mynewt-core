@@ -20,7 +20,8 @@
 #ifndef H_BSNPRPH_
 #define H_BSNPRPH_
 
-#include "log/log.h"
+#include "os/mynewt.h"
+#include "modlog/modlog.h"
 #include "nimble/ble.h"
 #ifdef __cplusplus
 extern "C" {
@@ -28,15 +29,6 @@ extern "C" {
 
 struct ble_hs_cfg;
 struct ble_gatt_register_ctxt;
-
-extern struct log bsnprph_log;
-
-/* bsnprph uses the first "peruser" log module. */
-#define BSNPRPH_LOG_MODULE  (LOG_MODULE_PERUSER + 0)
-
-/* Convenience macro for logging to the bsnprph module. */
-#define BSNPRPH_LOG(lvl, ...) \
-    LOG_ ## lvl(&bsnprph_log, BSNPRPH_LOG_MODULE, __VA_ARGS__)
 
 /** GATT server. */
 #define GATT_SVR_SVC_ALERT_UUID               0x1811

@@ -38,6 +38,7 @@ pkg.deps:
     - net/nimble/transport
     - sys/console/full
     - sys/log/full
+    - sys/log/modlog
     - sys/stats/full
     - sys/sysinit
     - sys/id
