@@ -25,5 +25,7 @@ pkg.keywords:
     - logging
 
 pkg.deps:
+    - sys/log/common
+
 pkg.apis:
     - log

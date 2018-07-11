@@ -20,23 +20,12 @@
 #define __SYS_LOG_FULL_H__
 
 #include "os/mynewt.h"
-#include "log/ignore.h"
 #include "cbmem/cbmem.h"
+#include "log_common/log_common.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-/* Global log info */
-struct log_info {
-    uint32_t li_next_index;
-    uint8_t li_version;
-};
-#define LOG_VERSION_V3  3
-#define LOG_VERSION_V2  2
-#define LOG_VERSION_V1  1
-
-extern struct log_info g_log_info;
 
 struct log;
 struct log_entry_hdr;
@@ -85,10 +74,6 @@ typedef int (*lh_walk_func_t)(struct log *,
 typedef int (*lh_flush_func_t)(struct log *);
 typedef int (*lh_registered_func_t)(struct log *);
 
-#define LOG_TYPE_STREAM  (0)
-#define LOG_TYPE_MEMORY  (1)
-#define LOG_TYPE_STORAGE (2)
-
 struct log_handler {
     int log_type;
     lh_read_func_t log_read;
@@ -124,52 +109,7 @@ struct log_entry_hdr {
 
 #define LOG_ENTRY_HDR_SIZE (sizeof(struct log_entry_hdr))
 
-#define LOG_LEVEL_DEBUG    (0)
-#define LOG_LEVEL_INFO     (1)
-#define LOG_LEVEL_WARN     (2)
-#define LOG_LEVEL_ERROR    (3)
-#define LOG_LEVEL_CRITICAL (4)
-/* Up to 7 custom log levels. */
-#define LOG_LEVEL_MAX      (UINT8_MAX)
-
-#define LOG_LEVEL_STR(level) \
-    (LOG_LEVEL_DEBUG    == level ? "DEBUG"    :\
-    (LOG_LEVEL_INFO     == level ? "INFO"     :\
-    (LOG_LEVEL_WARN     == level ? "WARN"     :\
-    (LOG_LEVEL_ERROR    == level ? "ERROR"    :\
-    (LOG_LEVEL_CRITICAL == level ? "CRITICAL" :\
-     "UNKNOWN")))))
-
-/* Log module, eventually this can be a part of the filter. */
-#define LOG_MODULE_DEFAULT          (0)
-#define LOG_MODULE_OS               (1)
-#define LOG_MODULE_NEWTMGR          (2)
-#define LOG_MODULE_NIMBLE_CTLR      (3)
-#define LOG_MODULE_NIMBLE_HOST      (4)
-#define LOG_MODULE_NFFS             (5)
-#define LOG_MODULE_REBOOT           (6)
-#define LOG_MODULE_IOTIVITY         (7)
-#define LOG_MODULE_TEST             (8)
-#define LOG_MODULE_PERUSER          (64)
-#define LOG_MODULE_MAX              (255)
-
 #define LOG_MODULE_STR(module)      log_module_get_name(module)
-
-#define LOG_ETYPE_STRING         (0)
-#if MYNEWT_VAL(LOG_VERSION) > 2
-#define LOG_ETYPE_CBOR           (1)
-#define LOG_ETYPE_BINARY         (2)
-#endif
-
-/* Logging medium */
-#define LOG_STORE_CONSOLE    1
-#define LOG_STORE_CBMEM      2
-#define LOG_STORE_FCB        3
-
-/* UTC Timestamp for Jan 2016 00:00:00 */
-#define UTC01_01_2016    1451606400
-
-#define LOG_NAME_MAX_LEN    (64)
 
 #if MYNEWT_VAL(LOG_LEVEL) <= LOG_LEVEL_DEBUG
 #define LOG_DEBUG(__l, __mod, __msg, ...) log_printf(__l, __mod, \
@@ -206,12 +146,6 @@ struct log_entry_hdr {
 #define LOG_CRITICAL(__l, __mod, ...) IGNORE(__VA_ARGS__)
 #endif
 
-#ifndef MYNEWT_VAL_LOG_LEVEL
-#define LOG_SYSLEVEL    ((uint8_t)0xff)
-#else
-#define LOG_SYSLEVEL    ((uint8_t)MYNEWT_VAL_LOG_LEVEL)
-#endif
-
 struct log {
     char *l_name;
     const struct log_handler *l_log;
@@ -219,14 +153,6 @@ struct log {
     STAILQ_ENTRY(log) l_next;
     uint8_t l_level;
 };
-
-/* Newtmgr Log opcodes */
-#define LOGS_NMGR_OP_READ         (0)
-#define LOGS_NMGR_OP_CLEAR        (1)
-#define LOGS_NMGR_OP_APPEND       (2)
-#define LOGS_NMGR_OP_MODULE_LIST  (3)
-#define LOGS_NMGR_OP_LEVEL_LIST   (4)
-#define LOGS_NMGR_OP_LOGS_LIST    (5)
 
 /* Log system level functions (for all logs.) */
 void log_init(void);
@@ -500,7 +426,6 @@ log_append_mbuf(struct log *log, uint8_t module, uint8_t level,
     return log_append_mbuf_typed(log, module, level, LOG_ETYPE_STRING, om);
 }
 
-#define LOG_PRINTF_MAX_ENTRY_LEN (128)
 void log_printf(struct log *log, uint8_t module, uint8_t level,
         const char *msg, ...);
 int log_read(struct log *log, void *dptr, void *buf, uint16_t off,
