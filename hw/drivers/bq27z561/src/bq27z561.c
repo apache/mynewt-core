@@ -94,7 +94,7 @@ bq27z561_itf_lock(struct bq27z561_itf *bi, uint32_t timeout)
     int rc;
     os_time_t ticks;
 
-    if (!bi->bi_lock) {
+    if (!bi->itf_lock) {
         return 0;
     }
 
@@ -121,7 +121,7 @@ bq27z561_itf_lock(struct bq27z561_itf *bi, uint32_t timeout)
 static void
 bq27z561_itf_unlock(struct bq27z561_itf *bi)
 {
-    if (!bi->bi_lock) {
+    if (!bi->itf_lock) {
         return;
     }
 
