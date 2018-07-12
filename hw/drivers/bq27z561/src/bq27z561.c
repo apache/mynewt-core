@@ -170,7 +170,7 @@ bq27z561_rd_std_reg_word(struct bq27z561 *dev, uint8_t reg, uint16_t *val)
 
     rc = hal_i2c_master_write(dev->bq27_itf.itf_num, &i2c, OS_TICKS_PER_SEC, 0);
     if (rc != 0) {
-        BQ27Z561_ERROR("I2C reg read (wr) failed 0x%02X\n", reg);
+        BQ27Z561_LOG(ERROR, "I2C reg read (wr) failed 0x%02X\n", reg);
         goto err;
     }
 
@@ -178,7 +178,7 @@ bq27z561_rd_std_reg_word(struct bq27z561 *dev, uint8_t reg, uint16_t *val)
     i2c.buffer = (uint8_t *)val;
     rc = hal_i2c_master_read(dev->bq27_itf.itf_num, &i2c, OS_TICKS_PER_SEC, 1);
     if (rc != 0) {
-        BQ27Z561_ERROR("I2C reg read (rd) failed 0x%02X\n", reg);
+        BQ27Z561_LOG(ERROR, "I2C reg read (rd) failed 0x%02X\n", reg);
         goto err;
     }
 
@@ -206,7 +206,7 @@ bq27z561_wr_std_reg_byte(struct bq27z561 *dev, uint8_t reg, uint8_t val)
 
     rc = hal_i2c_master_write(dev->bq27_itf.itf_num, &i2c, OS_TICKS_PER_SEC, 1);
     if (rc != 0) {
-        BQ27Z561_ERROR("I2C reg write 0x%02X failed\n", reg);
+        BQ27Z561_LOG(ERROR, "I2C reg write 0x%02X failed\n", reg);
         return rc;
     }
 
