@@ -45,6 +45,12 @@ struct battery_adc_cfg
     int mul;
     /* divider for ADC reading */
     int div;
+    /* GPIO pin to activate for measurement */
+    int activation_pin;
+    /* GPIO activation needed for measurement */
+    uint8_t activation_pin_needed:1;
+    /* GPIO value needed for measurement */
+    uint8_t activation_pin_level:1;
 };
 
 /* battery_adc device */
