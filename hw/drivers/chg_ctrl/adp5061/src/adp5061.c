@@ -586,6 +586,7 @@ adp5061_init(struct os_dev *dev, void *arg)
 {
     struct adp5061_dev *adp5061 = (struct adp5061_dev *)dev;
     struct charge_control *cc;
+    struct charge_control_itf *cci;
     const struct adp5061_config *cfg;
     uint8_t device_id;
     int rc;
@@ -597,13 +598,14 @@ adp5061_init(struct os_dev *dev, void *arg)
 
     cc = &adp5061->a_chg_ctrl;
 
+    cci = (struct charge_control_itf *)arg;
+
     rc = charge_control_init(cc, dev);
     if (rc) {
         goto err;
     }
-    cc->cc_itf.cci_addr = ADP5061_ADDR;
-    cc->cc_itf.cci_num = MYNEWT_VAL(ADP5061_I2C_NUM);
-    cc->cc_itf.cci_type = CHARGE_CONTROL_ITF_I2C;
+
+    charge_control_set_interface(cc, cci);
 
     /* Add the driver with all the supported types */
     rc = charge_control_set_driver(cc, CHARGE_CONTROL_TYPE_STATUS,
@@ -614,11 +616,8 @@ adp5061_init(struct os_dev *dev, void *arg)
 
     charge_control_set_type_mask(cc,
             CHARGE_CONTROL_TYPE_STATUS | CHARGE_CONTROL_TYPE_FAULT);
-    if (arg) {
-        cfg = (struct adp5061_config *)(arg);
-    } else {
-        cfg = &default_config;
-    }
+
+    cfg = &default_config;
 
     rc = adp5061_get_device_id(adp5061, &device_id);
     if (rc) {
