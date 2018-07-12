@@ -178,6 +178,9 @@ struct charge_control_itf {
 
     /* Charge control interface address (for I2C interface type) */
     uint16_t cci_addr;
+
+    /* OS lock for shared access */
+    struct os_mutex *cci_lock;
 };
 
 // ---------------------- LISTENER ---------------------------------
