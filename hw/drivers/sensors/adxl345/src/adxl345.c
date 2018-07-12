@@ -59,9 +59,6 @@ STATS_SECT_DECL(adxl345_stat_section) g_adxl345stats;
 
 #define ADXL345_LOG(lvl_, ...) \
     MODLOG_ ## lvl_(MYNEWT_VAL(ADXL345_LOG_MODULE), __VA_ARGS__)
-#else
-#define ADXL345_LOG(lvl_, ...)
-#endif
 
 #define ADXL345_NOTIFY_MASK  0x01
 #define ADXL345_READ_MASK    0x02

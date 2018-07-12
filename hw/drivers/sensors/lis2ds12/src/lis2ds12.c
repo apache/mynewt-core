@@ -83,9 +83,6 @@ STATS_SECT_DECL(lis2ds12_stat_section) g_lis2ds12stats;
 
 #define LIS2DS12_LOG(lvl_, ...) \
     MODLOG_ ## lvl_(MYNEWT_VAL(LIS2DS12_LOG_MODULE), __VA_ARGS__)
-#else
-#define LIS2DS12_LOG(lvl_, ...)
-#endif
 
 /* Exports for the sensor API */
 static int lis2ds12_sensor_read(struct sensor *, sensor_type_t,

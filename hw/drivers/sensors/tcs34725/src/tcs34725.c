@@ -60,9 +60,6 @@ STATS_SECT_DECL(tcs34725_stat_section) g_tcs34725stats;
 
 #define TCS34725_LOG(lvl_, ...) \
     MODLOG_ ## lvl_(MYNEWT_VAL(TCS34725_LOG_MODULE), __VA_ARGS__)
-#else
-#define TCS34725_LOG(lvl_, ...)
-#endif
 
 /* Exports for the sensor API */
 static int tcs34725_sensor_read(struct sensor *, sensor_type_t,

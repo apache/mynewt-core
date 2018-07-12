@@ -51,9 +51,6 @@ STATS_SECT_DECL(bno055_stat_section) g_bno055stats;
 
 #define BNO055_LOG(lvl_, ...) \
     MODLOG_ ## lvl_(MYNEWT_VAL(BNO055_LOG_MODULE), __VA_ARGS__)
-#else
-#define BNO055_LOG(lvl_, ...)
-#endif
 
 /* Exports for the sensor API.*/
 static int bno055_sensor_read(struct sensor *, sensor_type_t,

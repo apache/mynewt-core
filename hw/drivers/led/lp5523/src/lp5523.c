@@ -47,9 +47,6 @@ STATS_SECT_DECL(lp5523_stat_section) g_lp5523stats;
 
 #define LP5523_LOG(lvl_, ...) \
     MODLOG_ ## lvl_(MYNEWT_VAL(LP5523_LOG_MODULE), __VA_ARGS__)
-#else
-#define LP5523_LOG(lvl_, ...)
-#endif
 
 int
 lp5523_set_reg(struct led_itf *itf, enum lp5523_registers addr,
