@@ -429,6 +429,8 @@ bq27z561_err_t bq27x561_rd_flash(struct bq27z561 *dev, uint16_t addr,
 bq27z561_err_t bq27x561_rd_alt_mfg_cmd(struct bq27z561 *dev, uint16_t cmd,
                                        uint8_t *val, int val_len);
 
+bq27z561_err_t bq27x561_wr_alt_mfg_cmd(struct bq27z561 *dev, uint16_t cmd,
+                                       uint8_t *buf, int len);
 /**
  * bq27z561 rd std reg word
  *
