@@ -64,9 +64,6 @@ STATS_SECT_DECL(bme280_stat_section) g_bme280stats;
 
 #define BME280_LOG(lvl_, ...) \
     MODLOG_ ## lvl_(MYNEWT_VAL(BME280_LOG_MODULE), __VA_ARGS__)
-#else
-#define BME280_LOG(lvl_, ...)
-#endif
 
 /* Exports for the sensor API */
 static int bme280_sensor_read(struct sensor *, sensor_type_t,

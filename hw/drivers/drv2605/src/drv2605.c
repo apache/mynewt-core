@@ -50,6 +50,7 @@ STATS_NAME_END(drv2605_stat_section)
 STATS_SECT_DECL(drv2605_stat_section) g_drv2605stats;
 #endif
 
+#if MYNEWT_VAL(DRV2605_LOG)
 #define DRV2605_LOG(lvl_, ...) \
     MODLOG_ ## lvl_(MYNEWT_VAL(DRV2605_LOG_MODULE), __VA_ARGS__)
 #else

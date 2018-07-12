@@ -66,9 +66,6 @@ STATS_SECT_DECL(tsl2561_stat_section) g_tsl2561stats;
 
 #define TSL2561_LOG(lvl_, ...) \
     MODLOG_ ## lvl_(MYNEWT_VAL(TSL2561_LOG_MODULE), __VA_ARGS__)
-#else
-#define TSL2561_LOG(lvl_, ...)
-#endif
 
 /* Exports for the sensor API */
 static int tsl2561_sensor_read(struct sensor *, sensor_type_t,

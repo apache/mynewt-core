@@ -59,9 +59,6 @@ STATS_SECT_DECL(lps33hw_stat_section) g_lps33hwstats;
 
 #define LPS33HW_LOG(lvl_, ...) \
     MODLOG_ ## lvl_(MYNEWT_VAL(LPS33HW_LOG_MODULE), __VA_ARGS__)
-#else
-#define LPS33HW_LOG(lvl_, ...)
-#endif
 
 #define LPS33HW_PRESS_OUT_DIV (40.96)
 #define LPS33HW_TEMP_OUT_DIV (100.0)

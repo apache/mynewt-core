@@ -49,9 +49,6 @@ STATS_SECT_DECL(mpu6050_stat_section) g_mpu6050stats;
 
 #define MPU6050_LOG(lvl_, ...) \
     MODLOG_ ## lvl_(MYNEWT_VAL(MPU6050_LOG_MODULE), __VA_ARGS__)
-#else
-#define MPU6050_LOG(lvl_, ...)
-#endif
 
 /* Exports for the sensor API */
 static int mpu6050_sensor_read(struct sensor *, sensor_type_t,

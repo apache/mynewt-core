@@ -68,9 +68,6 @@ STATS_SECT_DECL(lsm303dlhc_stat_section) g_lsm303dlhcstats;
 
 #define LSM303DLHC_LOG(lvl_, ...) \
     MODLOG_ ## lvl_(MYNEWT_VAL(LSM303DLHC_LOG_MODULE), __VA_ARGS__)
-#else
-#define LSM303DLHC_LOG(lvl_, ...)
-#endif
 
 /* Exports for the sensor API */
 static int lsm303dlhc_sensor_read(struct sensor *, sensor_type_t,

@@ -65,9 +65,6 @@ STATS_SECT_DECL(ms5840_stat_section) g_ms5840stats;
 
 #define MS5840_LOG(lvl_, ...) \
     MODLOG_ ## lvl_(MYNEWT_VAL(MS5840_LOG_MODULE), __VA_ARGS__)
-#else
-#define MS5840_LOG(lvl_, ...)
-#endif
 
 /* Exports for the sensor API */
 static int ms5840_sensor_read(struct sensor *, sensor_type_t,
