@@ -217,9 +217,10 @@ adp5061_get_reg(struct adp5061_dev *dev, uint8_t addr, uint8_t *value)
             OS_TICKS_PER_SEC / 10, 1);
     *value = payload;
 
-    adp5061_itf_unlock(&dev->a_chg_ctrl.cc_itf);
 
 err:
+    adp5061_itf_unlock(&dev->a_chg_ctrl.cc_itf);
+
     return rc;
 }
 
