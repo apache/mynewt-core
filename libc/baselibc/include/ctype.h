@@ -77,6 +77,11 @@ __extern_inline int isprint(int __c)
 	return (__c >= 0x20 && __c <= 0x7e);
 }
 
+__extern_inline int isgraph(int __c)
+{
+	return (__c > 0x20 && __c < 0x7f);
+}
+
 __extern_inline int toupper(int __c)
 {
 	return islower(__c) ? (__c & ~32) : __c;
