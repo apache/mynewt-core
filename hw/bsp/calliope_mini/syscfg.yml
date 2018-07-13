@@ -68,7 +68,8 @@ syscfg.defs:
         value:  100
     I2C_0_FREQ:
         description: 'Use I2C_0_FREQ_KHZ instead'
-        deprecated: 1
+        defunct: 1
+        value:  100
 
     I2C_1_PIN_SCL:
         description: 'SCL pin for I2C_1'
