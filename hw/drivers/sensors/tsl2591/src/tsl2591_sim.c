@@ -29,7 +29,7 @@
 */
 /**************************************************************************/
 
-#if ARCH_sim
+#ifdef ARCH_sim
 
 #include <string.h>
 #include <errno.h>
