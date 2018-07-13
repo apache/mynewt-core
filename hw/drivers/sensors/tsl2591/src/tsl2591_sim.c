@@ -29,6 +29,8 @@
 */
 /**************************************************************************/
 
+#if ARCH_sim
+
 #include <string.h>
 #include <errno.h>
 #include "os/mynewt.h"
@@ -128,3 +130,5 @@ tsl2591_sim_init(void)
 
     return 0;
 }
+
+#endif /* ARCH_sim */
