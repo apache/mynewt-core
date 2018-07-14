@@ -72,3 +72,4 @@ repo.deps:
         vers:
             master: 0-dev
             mynewt_1_4_0_tag: 1.0.0
+            mynewt_1_4_1_tag: 1.0.0
