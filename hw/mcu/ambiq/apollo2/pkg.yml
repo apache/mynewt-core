@@ -26,7 +26,7 @@ pkg.keywords:
     - apollo2
 
 pkg.deps:
-    - hw/hal
-    - hw/mcu/ambiq 
-    - hw/cmsis-core
-    - compiler/arm-none-eabi-m4 
+    - "@apache-mynewt-core/hw/hal"
+    - "@apache-mynewt-core/hw/mcu/ambiq"
+    - "@apache-mynewt-core/hw/cmsis-core"
+    - "@apache-mynewt-core/compiler/arm-none-eabi-m4"

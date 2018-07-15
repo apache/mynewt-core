@@ -25,7 +25,7 @@ pkg.keywords:
     - logging
 
 pkg.deps:
-    - sys/log/common
+    - "@apache-mynewt-core/sys/log/common"
 
 pkg.apis:
     - log

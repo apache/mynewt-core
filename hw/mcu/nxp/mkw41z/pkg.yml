@@ -26,5 +26,5 @@ pkg.keywords:
     - nxp
 
 pkg.deps:
-    - hw/cmsis-core
-    - hw/hal
+    - "@apache-mynewt-core/hw/cmsis-core"
+    - "@apache-mynewt-core/hw/hal"

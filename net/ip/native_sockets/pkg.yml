@@ -26,8 +26,8 @@ pkg.keywords:
     - IP
 
 pkg.deps:
-    - kernel/os
-    - net/ip/mn_socket
+    - "@apache-mynewt-core/kernel/os"
+    - "@apache-mynewt-core/net/ip/mn_socket"
 
 pkg.init:
     native_sock_init: 200

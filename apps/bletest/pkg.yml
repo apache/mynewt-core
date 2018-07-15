@@ -25,14 +25,14 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps:
-    - net/nimble/controller
-    - net/nimble/host
-    - net/nimble/transport/ram
-    - kernel/os
-    - sys/console/full
-    - sys/shell
-    - sys/config
-    - sys/log/full
-    - sys/log/modlog
-    - sys/stats/full
+    - "@apache-mynewt-core/net/nimble/controller"
+    - "@apache-mynewt-core/net/nimble/host"
+    - "@apache-mynewt-core/net/nimble/transport/ram"
+    - "@apache-mynewt-core/kernel/os"
+    - "@apache-mynewt-core/sys/console/full"
+    - "@apache-mynewt-core/sys/shell"
+    - "@apache-mynewt-core/sys/config"
+    - "@apache-mynewt-core/sys/log/full"
+    - "@apache-mynewt-core/sys/log/modlog"
+    - "@apache-mynewt-core/sys/stats/full"
 pkg.cflags: -DBLETEST

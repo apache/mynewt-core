@@ -24,12 +24,12 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps:
-    - hw/hal
-    - kernel/os
+    - "@apache-mynewt-core/hw/hal"
+    - "@apache-mynewt-core/kernel/os"
 pkg.deps.CONSOLE_UART:
-    - hw/drivers/uart
+    - "@apache-mynewt-core/hw/drivers/uart"
 pkg.deps.CONSOLE_RTT:
-    - hw/drivers/rtt
+    - "@apache-mynewt-core/hw/drivers/rtt"
 pkg.apis: console
 
 pkg.init:

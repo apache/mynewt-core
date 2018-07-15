@@ -25,8 +25,8 @@ pkg.keywords:
     - manufacturing
 
 pkg.deps:
-    - kernel/os
-    - sys/flash_map
+    - "@apache-mynewt-core/kernel/os"
+    - "@apache-mynewt-core/sys/flash_map"
 
 # sys/flash_map must get initialized before sys/mfg.
 pkg.init:

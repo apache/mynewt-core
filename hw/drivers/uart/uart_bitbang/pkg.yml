@@ -24,5 +24,5 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 pkg.apis:
 pkg.deps:
-   - hw/hal
-   - hw/drivers/uart
+    - "@apache-mynewt-core/hw/hal"
+    - "@apache-mynewt-core/hw/drivers/uart"

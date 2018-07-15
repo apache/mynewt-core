@@ -33,17 +33,17 @@ pkg.lflags:
     - -Wl,--defsym=_min_heap_size=0x400
 
 pkg.deps:
-    - hw/mcu/microchip/pic32mx470f512h
-    - libc/baselibc
+    - "@apache-mynewt-core/hw/mcu/microchip/pic32mx470f512h"
+    - "@apache-mynewt-core/libc/baselibc"
 
 pkg.deps.UART_0:
-    - hw/drivers/uart/uart_hal
+    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
 
 pkg.deps.UART_1:
-    - hw/drivers/uart/uart_hal
+    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
 
 pkg.deps.UART_2:
-    - hw/drivers/uart/uart_hal
+    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
 
 pkg.deps.UART_3:
-    - hw/drivers/uart/uart_hal
+    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"

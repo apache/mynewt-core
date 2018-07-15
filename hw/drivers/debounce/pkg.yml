@@ -23,4 +23,4 @@ pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 pkg.deps:
-    - "hw/hal"
+    - "@apache-mynewt-core/hw/hal"

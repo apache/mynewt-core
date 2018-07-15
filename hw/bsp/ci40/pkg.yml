@@ -30,14 +30,14 @@ pkg.keywords:
 
 pkg.cflags:
 pkg.deps:
-    - hw/mcu/mips/danube
-    - libc/baselibc
-    - hw/mips-hal
+    - "@apache-mynewt-core/hw/mcu/mips/danube"
+    - "@apache-mynewt-core/libc/baselibc"
+    - "@apache-mynewt-core/hw/mips-hal"
 
 pkg.arch: mips
 
 pkg.deps.UART_0:
-    - hw/drivers/uart/uart_hal
+    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
 
 pkg.deps.UART_1:
-    - hw/drivers/uart/uart_hal
+    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"

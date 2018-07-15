@@ -26,4 +26,4 @@ pkg.keywords:
     - danube
 
 pkg.deps:
-    - hw/hal
+    - "@apache-mynewt-core/hw/hal"

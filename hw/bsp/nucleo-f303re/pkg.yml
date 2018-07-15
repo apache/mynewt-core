@@ -33,20 +33,20 @@ pkg.cflags.HARDFLOAT:
     - -mfloat-abi=hard -mfpu=fpv4-sp-d16
 
 pkg.deps:
-    - hw/mcu/stm/stm32f3xx
-    - libc/baselibc
+    - "@apache-mynewt-core/hw/mcu/stm/stm32f3xx"
+    - "@apache-mynewt-core/libc/baselibc"
 
 pkg.deps.UART_0:
-    - hw/drivers/uart/uart_hal
+    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
 
 pkg.deps.UART_1:
-    - hw/drivers/uart/uart_hal
+    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
 
 pkg.deps.PWM_0:
-    - hw/drivers/pwm/pwm_stm32
+    - "@apache-mynewt-core/hw/drivers/pwm/pwm_stm32"
 
 pkg.deps.PWM_1:
-    - hw/drivers/pwm/pwm_stm32
+    - "@apache-mynewt-core/hw/drivers/pwm/pwm_stm32"
 
 pkg.deps.PWM_2:
-    - hw/drivers/pwm/pwm_stm32
+    - "@apache-mynewt-core/hw/drivers/pwm/pwm_stm32"
