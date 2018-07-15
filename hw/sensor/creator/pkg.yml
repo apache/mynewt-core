@@ -34,6 +34,8 @@ pkg.deps.MPU6050_OFB:
     - hw/drivers/sensors/mpu6050
 pkg.deps.TSL2561_OFB:
     - hw/drivers/sensors/tsl2561
+pkg.deps.TSL2591_OFB:
+    - hw/drivers/sensors/tsl2591
 pkg.deps.BNO055_OFB:
     - hw/drivers/sensors/bno055
 pkg.deps.TCS34725_OFB:

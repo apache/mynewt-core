@@ -27,9 +27,6 @@ syscfg.defs:
     TSL2591_CONFIG:
         description: 'Persist TSL2591 settings using sys/config'
         value: 0
-    TSL2591_STATS:
-        description: 'Enable stats collection for TSL2591'
-        value: 0
     TSL2591_SHELL_ITF_TYPE:
         description: 'Select interface type'
         value: 1
@@ -39,6 +36,12 @@ syscfg.defs:
     TSL2591_SHELL_ITF_ADDR:
         description: 'TSL2591 I2C Addresss'
         value: 0x29
+    TSL2591_ITF_LOCK_TMO:
+        description: 'TSL2591 interface lock timeout in milliseconds'
+        value: 1000
     TSL2591_ITIME_DELAY:
         description: 'Enable an internal read delay based on integration time'
         value: 0
+    TSL2591_LOG_MODULE:
+        description: 'Numeric module ID to use for TSL2591 log messages'
+        value: 108
