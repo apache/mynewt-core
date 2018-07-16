@@ -21,10 +21,10 @@ bsp.arch: cortex_m0
 bsp.compiler: compiler/arm-none-eabi-m0
 bsp.linkerscript:
     - "hw/bsp/nrf51-blenano/nrf51xxac.ld"
-    - "hw/mcu/nordic/nrf51xxx/nrf51.ld"
+    - "@apache-mynewt-core/hw/mcu/nordic/nrf51xxx/nrf51.ld"
 bsp.linkerscript.BOOT_LOADER.OVERWRITE:
     - "hw/bsp/nrf51-blenano/boot-nrf51xxac.ld"
-    - "hw/mcu/nordic/nrf51xxx/nrf51.ld"
+    - "@apache-mynewt-core/hw/mcu/nordic/nrf51xxx/nrf51.ld"
 bsp.part2linkerscript: "hw/bsp/nrf51-blenano/split-nrf51dk.ld"
 bsp.downloadscript: "hw/bsp/nrf51-blenano/nrf51dk_download.sh"
 bsp.debugscript: "hw/bsp/nrf51-blenano/nrf51dk_debug.sh"

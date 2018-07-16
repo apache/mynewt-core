@@ -21,10 +21,10 @@ bsp.arch: cortex_m0
 bsp.compiler: compiler/arm-none-eabi-m0
 bsp.linkerscript:
     - "hw/bsp/bbc_microbit/nrf51xxac.ld"
-    - "hw/mcu/nordic/nrf51xxx/nrf51.ld"
+    - "@apache-mynewt-core/hw/mcu/nordic/nrf51xxx/nrf51.ld"
 bsp.linkerscript.BOOT_LOADER.OVERWRITE:
     - "hw/bsp/bbc_microbit/boot-nrf51xxac.ld"
-    - "hw/mcu/nordic/nrf51xxx/nrf51.ld"
+    - "@apache-mynewt-core/hw/mcu/nordic/nrf51xxx/nrf51.ld"
 bsp.part2linkerscript: "hw/bsp/bbc_microbit/split-microbit.ld"
 bsp.downloadscript: hw/bsp/bbc_microbit/microbit_download.sh
 bsp.debugscript: hw/bsp/bbc_microbit/microbit_debug.sh
