@@ -41,7 +41,7 @@ pkg.deps.LOG_NEWTMGR:
     - "@apache-mynewt-core/encoding/tinycbor"
 
 pkg.apis:
-    - "@apache-mynewt-core/log"
+    - log
 
 pkg.init:
     log_init: 100
