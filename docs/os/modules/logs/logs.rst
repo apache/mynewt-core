@@ -36,7 +36,7 @@ file:
 .. code-block:: console
 
     pkg.deps:
-        - sys/log/full
+        - "@apache-mynewt-core/sys/log/full"
 
 You can use the ``sys/log/stub`` package if you want to build your
 application without logging to reduce code size.

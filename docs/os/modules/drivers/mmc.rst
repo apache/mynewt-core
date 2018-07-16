@@ -28,7 +28,7 @@ dependency in your pkg.yml:
 ::
 
     pkg.deps:
-        - hw/drivers/mmc
+        - "@apache-mynewt-core/hw/drivers/mmc"
 
 Returned values
 ^^^^^^^^^^^^^^^

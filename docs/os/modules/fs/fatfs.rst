@@ -40,7 +40,7 @@ your project:
 ::
 
     pkg.deps:
-        - fs/fatfs
+        - "@apache-mynewt-core/fs/fatfs"
 
 It can now be used through the standard file system abstraction
 functions as described in `FS API </os/modules/fs/fs/fs#API>`__.
