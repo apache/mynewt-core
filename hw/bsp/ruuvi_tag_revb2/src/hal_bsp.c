@@ -232,15 +232,15 @@ config_bme280_sensor(void)
 
     memset(&bmecfg, 0, sizeof(bmecfg));
 
-    bmecfg.bc_mode = BME280_MODE_NORMAL;
-    bmecfg.bc_iir = BME280_FILTER_X16;
+    bmecfg.bc_mode = BME280_MODE_FORCED;
+    bmecfg.bc_iir = BME280_FILTER_OFF;
     bmecfg.bc_sby_dur = BME280_STANDBY_MS_0_5;
     bmecfg.bc_boc[0].boc_type = SENSOR_TYPE_RELATIVE_HUMIDITY;
     bmecfg.bc_boc[1].boc_type = SENSOR_TYPE_PRESSURE;
     bmecfg.bc_boc[2].boc_type = SENSOR_TYPE_AMBIENT_TEMPERATURE;
     bmecfg.bc_boc[0].boc_oversample = BME280_SAMPLING_X1;
-    bmecfg.bc_boc[1].boc_oversample = BME280_SAMPLING_X16;
-    bmecfg.bc_boc[2].boc_oversample = BME280_SAMPLING_X2;
+    bmecfg.bc_boc[1].boc_oversample = BME280_SAMPLING_X1;
+    bmecfg.bc_boc[2].boc_oversample = BME280_SAMPLING_X1;
     bmecfg.bc_s_mask = SENSOR_TYPE_AMBIENT_TEMPERATURE|
                        SENSOR_TYPE_PRESSURE|
                        SENSOR_TYPE_RELATIVE_HUMIDITY;
