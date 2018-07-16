@@ -166,10 +166,13 @@ typedef struct cbor_encoder_writer {
     int                 bytes_written;
 } cbor_encoder_writer;
 
+struct cbor_iovec {
+    void   *iov_base;
+    size_t iov_len;
+};
 
 /* Encoder API */
-struct CborEncoder
-{
+struct CborEncoder {
     cbor_encoder_writer *writer;
     void *writer_arg;
     size_t added;
@@ -190,6 +193,9 @@ CBOR_API CborError cbor_encode_text_string(CborEncoder *encoder, const char *str
 CBOR_INLINE_API CborError cbor_encode_text_stringz(CborEncoder *encoder, const char *string)
 { return cbor_encode_text_string(encoder, string, strlen(string)); }
 CBOR_API CborError cbor_encode_byte_string(CborEncoder *encoder, const uint8_t *string, size_t length);
+CBOR_API CborError cbor_encode_byte_iovec(CborEncoder *encoder,
+                                          const struct cbor_iovec iov[],
+                                          int iov_len);
 CBOR_API CborError cbor_encode_floating_point(CborEncoder *encoder, CborType fpType, const void *value);
 CBOR_INLINE_API CborError cbor_encode_bytes_written(CborEncoder *encoder)
 {   return encoder->writer->bytes_written; }

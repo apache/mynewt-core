@@ -411,6 +411,36 @@ CborError cbor_encode_byte_string(CborEncoder *encoder, const uint8_t *string, s
 }
 
 /**
+ * Appends the byte string passed as \a iov and \a iov_len to the CBOR
+ * stream provided by \a encoder. CBOR byte strings are arbitrary raw data.
+ *
+ * \sa CborError cbor_encode_text_stringz, cbor_encode_byte_string
+ */
+CborError cbor_encode_byte_iovec(CborEncoder *encoder,
+                                 const struct cbor_iovec iov[], int iov_len)
+{
+    CborError err;
+    size_t length;
+    int i;
+
+    length = 0;
+    for (i = 0; i < iov_len; i++) {
+        length += iov[i].iov_len;
+    }
+    err = encode_number(encoder, length, ByteStringType << MajorTypeShift);
+    if (err && !isOomError(err)) {
+        return err;
+    }
+    for (i = 0; i < iov_len; i++) {
+        err = append_to_buffer(encoder, iov[i].iov_base, iov[i].iov_len);
+        if (err && !isOomError(err)) {
+            return err;
+        }
+    }
+    return 0;
+}
+
+/**
  * Appends the byte string \a string of length \a length to the CBOR stream
  * provided by \a encoder. CBOR byte strings are arbitrary raw data.
  *
