@@ -25,5 +25,5 @@ pkg.keywords:
     - arc
 
 pkg.deps: 
-    - hw/hal 
-    - hw/mcu/arc 
+    - "@apache-mynewt-core/hw/hal"
+    - "@apache-mynewt-core/hw/mcu/arc"

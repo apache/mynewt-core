@@ -36,4 +36,4 @@ pkg.src_dirs:
     - "src/ext/sdk/"
 
 pkg.deps: 
-    - hw/hal 
+    - "@apache-mynewt-core/hw/hal"
