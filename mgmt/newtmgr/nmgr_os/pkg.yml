@@ -32,7 +32,7 @@ pkg.deps:
     - "@apache-mynewt-core/encoding/cborattr"
 
 pkg.deps.LOG_SOFT_RESET:
-    - sys/reboot
+    - "@apache-mynewt-core/sys/reboot"
 
 pkg.req_apis:
     - newtmgr
