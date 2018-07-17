@@ -26,8 +26,8 @@ pkg.keywords:
     - flash map
 
 pkg.deps:
-    - sys/defs
-    - sys/mfg
+    - "@apache-mynewt-core/sys/defs"
+    - "@apache-mynewt-core/sys/mfg"
 
 pkg.init:
     flash_map_init: 2

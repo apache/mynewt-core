@@ -40,8 +40,8 @@ used.
 
     pkg.name: repos/apache-mynewt-core/apps/slinky
     pkg.deps:
-        - fs/fs         # include the file operations interfaces
-        - fs/nffs       # include the NFFS filesystem implementation
+        - "@apache-mynewt-core/fs/fs"         # include the file operations interfaces
+        - "@apache-mynewt-core/fs/nffs"       # include the NFFS filesystem implementation
 
 ::
 
@@ -70,7 +70,7 @@ package.
     # repos/apache-mynewt-core/libs/imgmgr/pkg.yml
     pkg.name: libs/imgmgr
     pkg.deps:
-        - fs/fs
+        - "@apache-mynewt-core/fs/fs"
 
     # [...]
 

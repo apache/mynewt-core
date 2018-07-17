@@ -26,5 +26,5 @@ pkg.keywords:
     - circular buffer
 
 pkg.deps:
-    - hw/hal
-    - kernel/os
+    - "@apache-mynewt-core/hw/hal"
+    - "@apache-mynewt-core/kernel/os"

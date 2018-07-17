@@ -24,5 +24,5 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps:
-    - kernel/os
-    - encoding/tinycbor
+    - "@apache-mynewt-core/kernel/os"
+    - "@apache-mynewt-core/encoding/tinycbor"

@@ -27,7 +27,7 @@ pkg.keywords:
     - riscv64
 
 pkg.deps:
-    - hw/hal
+    - "@apache-mynewt-core/hw/hal"
 
 pkg.src_dirs:
     - "src/ext/freedom-e-sdk_3235929/bsp"

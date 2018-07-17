@@ -25,13 +25,13 @@ pkg.keywords:
     - statistics
 
 pkg.deps:
-    - kernel/os
+    - "@apache-mynewt-core/kernel/os"
 pkg.apis:
     - stats
 pkg.deps.STATS_CLI:
-    - sys/shell
+    - "@apache-mynewt-core/sys/shell"
 pkg.deps.STATS_NEWTMGR:
-    - mgmt/mgmt
+    - "@apache-mynewt-core/mgmt/mgmt"
 
 pkg.init:
     stats_module_init: 10

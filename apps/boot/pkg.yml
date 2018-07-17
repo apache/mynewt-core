@@ -26,9 +26,9 @@ pkg.keywords:
     - loader
 
 pkg.deps:
-    - boot/bootutil
-    - kernel/os
-    - sys/console/stub
+    - "@apache-mynewt-core/boot/bootutil"
+    - "@apache-mynewt-core/kernel/os"
+    - "@apache-mynewt-core/sys/console/stub"
 
 pkg.deps.BOOT_SERIAL:
-    - boot/boot_serial
+    - "@apache-mynewt-core/boot/boot_serial"

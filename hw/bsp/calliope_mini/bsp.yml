@@ -21,10 +21,10 @@ bsp.arch: cortex_m0
 bsp.compiler: "@apache-mynewt-core/compiler/arm-none-eabi-m0"
 bsp.linkerscript:
     - hw/bsp/calliope_mini/nrf51xxac.ld
-    - hw/mcu/nordic/nrf51xxx/nrf51.ld
+    - "@apache-mynewt-core/hw/mcu/nordic/nrf51xxx/nrf51.ld"
 bsp.linkerscript.BOOT_LOADER.OVERWRITE:
     - hw/bsp/calliope_mini/boot-nrf51xxac.ld
-    - hw/mcu/nordic/nrf51xxx/nrf51.ld
+    - "@apache-mynewt-core/hw/mcu/nordic/nrf51xxx/nrf51.ld"
 bsp.part2linkerscript: hw/bsp/calliope_mini/split-calliope_mini.ld
 bsp.downloadscript: hw/bsp/calliope_mini/calliope_mini_download.sh
 bsp.debugscript: hw/bsp/calliope_mini/calliope_mini_debug.sh

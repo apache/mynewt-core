@@ -23,8 +23,8 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps: 
-    - test/testutil
-    - encoding/base64
+    - "@apache-mynewt-core/test/testutil"
+    - "@apache-mynewt-core/encoding/base64"
 
 pkg.deps.SELFTEST:
-    - sys/console/stub
+    - "@apache-mynewt-core/sys/console/stub"

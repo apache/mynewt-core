@@ -27,4 +27,4 @@ pkg.keywords:
     - compiler
 
 pkg.deps:
-    - libc/baselibc
+    - "@apache-mynewt-core/libc/baselibc"

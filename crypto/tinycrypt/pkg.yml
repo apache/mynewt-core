@@ -27,7 +27,7 @@ pkg.cflags:
     - "-std=c99"
 
 pkg.deps.TINYCRYPT_UECC_RNG_USE_TRNG:
-    - hw/drivers/trng
+    - "@apache-mynewt-core/hw/drivers/trng"
 
 pkg.init.TINYCRYPT_UECC_RNG_USE_TRNG:
     mynewt_tinycrypt_pkg_init: 200

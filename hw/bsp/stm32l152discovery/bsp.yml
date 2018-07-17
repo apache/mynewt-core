@@ -21,10 +21,10 @@ bsp.arch: cortex_m3
 bsp.compiler: compiler/arm-none-eabi-m3
 bsp.linkerscript:
     - "hw/bsp/stm32l152discovery/stm32l152discovery.ld"
-    - "hw/mcu/stm/stm32l1xx/stm32l152.ld"
+    - "@apache-mynewt-core/hw/mcu/stm/stm32l1xx/stm32l152.ld"
 bsp.linkerscript.BOOT_LOADER.OVERWRITE:
     - "hw/bsp/stm32l152discovery/boot-stm32l152discovery.ld"
-    - "hw/mcu/stm/stm32l1xx/stm32l152.ld"
+    - "@apache-mynewt-core/hw/mcu/stm/stm32l1xx/stm32l152.ld"
 bsp.downloadscript: "hw/bsp/stm32l152discovery/stm32l152discovery_download.sh"
 bsp.debugscript: "hw/bsp/stm32l152discovery/stm32l152discovery_debug.sh"
 bsp.downloadscript.WINDOWS.OVERWRITE: "hw/bsp/stm32l152discovery/stm32l152discovery_download.cmd"

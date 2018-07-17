@@ -28,7 +28,7 @@ pkg.keywords:
     - udp
 
 pkg.deps:
-    - net/ip
+    - "@apache-mynewt-core/net/ip"
 
 pkg.cflags:
     - -Wno-unused

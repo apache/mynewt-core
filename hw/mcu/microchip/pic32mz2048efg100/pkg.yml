@@ -25,4 +25,4 @@ pkg.keywords:
     - pic32
 
 pkg.deps:
-    - hw/hal
+    - "@apache-mynewt-core/hw/hal"

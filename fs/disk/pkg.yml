@@ -24,4 +24,4 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps:
-    - kernel/os
+    - "@apache-mynewt-core/kernel/os"

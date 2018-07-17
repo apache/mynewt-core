@@ -21,10 +21,10 @@ bsp.arch: cortex_m7
 bsp.compiler: compiler/arm-none-eabi-m7
 bsp.linkerscript:
     - "hw/bsp/stm32f7discovery/stm32f7discovery.ld"
-    - "hw/mcu/stm/stm32f7xx/stm32f746.ld"
+    - "@apache-mynewt-core/hw/mcu/stm/stm32f7xx/stm32f746.ld"
 bsp.linkerscript.BOOT_LOADER.OVERWRITE:
     - "hw/bsp/stm32f7discovery/boot-stm32f7discovery.ld"
-    - "hw/mcu/stm/stm32f7xx/stm32f746.ld"
+    - "@apache-mynewt-core/hw/mcu/stm/stm32f7xx/stm32f746.ld"
 bsp.downloadscript: "hw/bsp/stm32f7discovery/stm32f7discovery_download.sh"
 bsp.debugscript: "hw/bsp/stm32f7discovery/stm32f7discovery_debug.sh"
 

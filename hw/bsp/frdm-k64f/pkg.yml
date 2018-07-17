@@ -42,23 +42,23 @@ pkg.cflags.HARDFLOAT:
     - -mfloat-abi=hard -mfpu=fpv4-sp-d16
 
 pkg.deps:
-    - hw/mcu/nxp/MK64F12
-    - libc/baselibc
+    - "@apache-mynewt-core/hw/mcu/nxp/MK64F12"
+    - "@apache-mynewt-core/libc/baselibc"
 
 pkg.deps.UART_0:
-    - hw/drivers/uart/uart_hal
+    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
 
 pkg.deps.UART_1:
-    - hw/drivers/uart/uart_hal
+    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
 
 pkg.deps.UART_2:
-    - hw/drivers/uart/uart_hal
+    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
 
 pkg.deps.UART_3:
-    - hw/drivers/uart/uart_hal
+    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
 
 pkg.deps.UART_4:
-    - hw/drivers/uart/uart_hal
+    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
 
 pkg.deps.UART_5:
-    - hw/drivers/uart/uart_hal
+    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"

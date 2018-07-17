@@ -149,7 +149,7 @@ For example:
 
 
     pkg.deps.LIS2DH12_ONB:
-        - hw/drivers/sensors/lis2dh12
+        - "@apache-mynewt-core/hw/drivers/sensors/lis2dh12"
 
     pkg.init:
         config_lis2dh12_sensor: 400
@@ -225,7 +225,7 @@ For example:
 
 
     pkg.deps.BNO055_OFB:
-        - hw/drivers/sensors/bno055
+        - "@apache-mynewt-core/hw/drivers/sensors/bno055"
 
 Reconfiguring A Sensor Device by an Application
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

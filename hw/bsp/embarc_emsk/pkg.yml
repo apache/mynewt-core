@@ -27,7 +27,7 @@ pkg.keywords:
     - embarc_emsk
 
 pkg.deps:
-    - hw/mcu/arc/snps
-    - libc/baselibc
+    - "@apache-mynewt-core/hw/mcu/arc/snps"
+    - "@apache-mynewt-core/libc/baselibc"
 
 pkg.cflags: -mcpu=em4_dmips -mlittle-endian -mcode-density -mdiv-rem -mswap -mbarrel-shifter

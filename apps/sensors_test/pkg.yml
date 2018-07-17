@@ -25,34 +25,34 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps:
-    - kernel/os
-    - hw/sensor
-    - boot/bootutil
-    - sys/console/full
-    - sys/log/full
-    - sys/log/modlog
-    - sys/stats/full
-    - hw/sensor/creator
-    - sys/reboot
-    - mgmt/newtmgr/transport/ble
-    - sys/id
-    - mgmt/imgmgr
-    - test/flash_test
-    - test/i2c_scan
+    - "@apache-mynewt-core/kernel/os"
+    - "@apache-mynewt-core/hw/sensor"
+    - "@apache-mynewt-core/boot/bootutil"
+    - "@apache-mynewt-core/sys/console/full"
+    - "@apache-mynewt-core/sys/log/full"
+    - "@apache-mynewt-core/sys/log/modlog"
+    - "@apache-mynewt-core/sys/stats/full"
+    - "@apache-mynewt-core/hw/sensor/creator"
+    - "@apache-mynewt-core/sys/reboot"
+    - "@apache-mynewt-core/mgmt/newtmgr/transport/ble"
+    - "@apache-mynewt-core/sys/id"
+    - "@apache-mynewt-core/mgmt/imgmgr"
+    - "@apache-mynewt-core/test/flash_test"
+    - "@apache-mynewt-core/test/i2c_scan"
 
 pkg.deps.SENSOR_OIC:
    #- mgmt/oicmgr
 
 pkg.deps.SENSOR_BLE:
-    - net/nimble/controller
-    - net/nimble/host
-    - net/nimble/host/services/gap
-    - net/nimble/host/services/gatt
-    - net/nimble/host/store/ram
-    - net/nimble/transport/ram
+    - "@apache-mynewt-core/net/nimble/controller"
+    - "@apache-mynewt-core/net/nimble/host"
+    - "@apache-mynewt-core/net/nimble/host/services/gap"
+    - "@apache-mynewt-core/net/nimble/host/services/gatt"
+    - "@apache-mynewt-core/net/nimble/host/store/ram"
+    - "@apache-mynewt-core/net/nimble/transport/ram"
 
 pkg.deps.CONFIG_NFFS:
-    - fs/nffs
+    - "@apache-mynewt-core/fs/nffs"
 
 pkg.deps.CONFIG_FCB:
-    - fs/fcb
+    - "@apache-mynewt-core/fs/fcb"

@@ -26,14 +26,14 @@ pkg.keywords:
     - logging
 
 pkg.deps:
-    - kernel/os
-    - mgmt/imgmgr
-    - sys/config
-    - sys/flash_map
-    - sys/log/modlog
+    - "@apache-mynewt-core/kernel/os"
+    - "@apache-mynewt-core/mgmt/imgmgr"
+    - "@apache-mynewt-core/sys/config"
+    - "@apache-mynewt-core/sys/flash_map"
+    - "@apache-mynewt-core/sys/log/modlog"
 
 pkg.deps.REBOOT_LOG_FCB:
-    - fs/fcb
+    - "@apache-mynewt-core/fs/fcb"
 
 pkg.init:
     log_reboot_pkg_init: 200

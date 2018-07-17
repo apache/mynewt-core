@@ -23,5 +23,5 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps: 
-    - test/testutil
-    - sys/log/full
+    - "@apache-mynewt-core/test/testutil"
+    - "@apache-mynewt-core/sys/log/full"

@@ -21,10 +21,10 @@ bsp.arch: cortex_m4
 bsp.compiler: compiler/arm-none-eabi-m4
 bsp.linkerscript:
     - "hw/bsp/arduino_primo_nrf52/nrf52xxaa.ld"
-    - "hw/mcu/nordic/nrf52xxx/nrf52.ld"
+    - "@apache-mynewt-core/hw/mcu/nordic/nrf52xxx/nrf52.ld"
 bsp.linkerscript.BOOT_LOADER.OVERWRITE:
     - "hw/bsp/arduino_primo_nrf52/boot-nrf52xxaa.ld"
-    - "hw/mcu/nordic/nrf52xxx/nrf52.ld"
+    - "@apache-mynewt-core/hw/mcu/nordic/nrf52xxx/nrf52.ld"
 bsp.part2linkerscript: "hw/bsp/arduino_primo_nrf52/split-primo.ld"
 bsp.downloadscript: "hw/bsp/arduino_primo_nrf52/primo_download.sh"
 bsp.debugscript: "hw/bsp/arduino_primo_nrf52/primo_debug.sh"

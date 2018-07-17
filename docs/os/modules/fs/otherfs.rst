@@ -19,11 +19,11 @@ the first item in the ``pkg.deps`` list.
 
     pkg.name: fs/nffs
     pkg.deps:
-        - fs/fs
-        - hw/hal
-        - libs/os
-        - libs/testutil
-        - sys/log
+        - "@apache-mynewt-core/fs/fs"
+        - "@apache-mynewt-core/hw/hal"
+        - "@apache-mynewt-core/libs/os"
+        - "@apache-mynewt-core/libs/testutil"
+        - "@apache-mynewt-core/sys/log"
 
 2. Register your package's API with the ``fs/fs`` interface.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

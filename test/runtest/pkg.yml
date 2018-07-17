@@ -23,13 +23,13 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps.RUNTEST_CLI:
-    - sys/shell
+    - "@apache-mynewt-core/sys/shell"
 pkg.req_apis.RUNTEST_CLI:
     - console
 pkg.deps.RUNTEST_NEWTMGR:
-    - mgmt/mgmt
-    - encoding/json
-    - test/testutil
+    - "@apache-mynewt-core/mgmt/mgmt"
+    - "@apache-mynewt-core/encoding/json"
+    - "@apache-mynewt-core/test/testutil"
 
 pkg.init:
     runtest_init: 500

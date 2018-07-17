@@ -54,5 +54,5 @@ pkg.src_dirs:
 pkg.cflags: -std=gnu99 -DNRF52_PAN_28
 
 pkg.deps:
-    - hw/hal
-    - hw/cmsis-core
+    - "@apache-mynewt-core/hw/hal"
+    - "@apache-mynewt-core/hw/cmsis-core"

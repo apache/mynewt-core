@@ -70,7 +70,7 @@ dependency in your pkg.yml:
 ::
 
     pkg.deps:
-        - hw/drivers/flash/at45db
+        - "@apache-mynewt-core/hw/drivers/flash/at45db"
 
 Header file
 ^^^^^^^^^^^
