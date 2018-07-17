@@ -62,6 +62,8 @@ SECTIONS
         . = . + _imghdr_size;
     } > FLASH
 
+    __text = .;
+
     .text :
     {
         __isr_vector = .;

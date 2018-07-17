@@ -39,3 +39,9 @@ syscfg.defs:
     BMP280_SPEC_CALC:
         description: 'BMP280 Spec calculation instead of built in one'
         value : 1
+    BMP280_ITF_LOCK_TMO:
+        description: 'BMP280 interface lock timeout in milliseconds'
+        value: 1000
+    BMP280_LOG_MODULE:
+        description: 'Numeric module ID to use for BMP280 log messages'
+        value: 209

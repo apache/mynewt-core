@@ -49,7 +49,7 @@ setting to enable the log command in the shell:
 
     # sys/log/full pkg.yml
     pkg.deps.LOG_CLI:
-        - sys/shell
+        - "@apache-mynewt-core/sys/shell"
 
 Description
 -----------

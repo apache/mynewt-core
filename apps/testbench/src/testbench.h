@@ -63,7 +63,7 @@
 #include "mbedtls/mbedtls_test.h"
 
 #ifdef __cplusplus
-#extern "C" {
+extern "C" {
 #endif
 
 #ifndef IMGMGR_HASH_LEN
@@ -81,7 +81,6 @@ int g_led_pin;
  */
 int testbench_nffs();
 extern struct nffs_area_desc *nffs_current_area_descs;
-extern struct log nffs_log; /* defined in the OS module */
 #endif
 
 /*

@@ -27,4 +27,4 @@ pkg.apis:
     - TRNG_HW_IMPL
 
 pkg.deps:
-   - hw/drivers/trng
+    - "@apache-mynewt-core/hw/drivers/trng"

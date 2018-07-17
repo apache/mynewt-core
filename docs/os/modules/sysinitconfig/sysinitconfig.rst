@@ -660,11 +660,11 @@ value is non-zero. Here is an example from the ``libs/os`` package
 .. code-block:: yaml
 
     pkg.deps:
-        - sys/sysinit
-        - util/mem
+        - "@apache-mynewt-core/sys/sysinit"
+        - "@apache-mynewt-core/util/mem"
 
     pkg.deps.OS_CLI
-        - sys/shell
+        - "@apache-mynewt-core/sys/shell"
 
 This example specifies that the ``os`` package depends on the
 ``sysinit`` and ``mem`` packages, and also depends on the ``shell``

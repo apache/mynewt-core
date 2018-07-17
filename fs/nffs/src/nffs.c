@@ -57,8 +57,6 @@ struct nffs_inode_entry *nffs_lost_found_dir;
 
 static struct os_mutex nffs_mutex;
 
-struct log nffs_log;
-
 static int nffs_open(const char *path, uint8_t access_flags,
   struct fs_file **out_file);
 static int nffs_close(struct fs_file *fs_file);

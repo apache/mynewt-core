@@ -31,6 +31,8 @@ extern "C" {
 
 #define IMGMGR_HASH_STR		48
 
+#define IMGMGR_DATA_SHA_LEN     32 /* SHA256 */
+
 /*
  * When accompanied by image, it's this structure followed by data.
  * Response contains just the offset.
@@ -83,22 +85,7 @@ struct imgmgr_upload_cmd {
  * }
  */
 
-struct nmgr_hdr;
-struct os_mbuf;
-struct fs_file;
 struct mgmt_cbuf;
-
-struct imgr_state {
-    struct {
-        uint32_t off;
-        uint32_t size;
-        const struct flash_area *fa;
-    } upload;
-};
-
-extern struct imgr_state imgr_state;
-
-struct nmgr_jbuf;
 
 int imgr_core_list(struct mgmt_cbuf *);
 int imgr_core_load(struct mgmt_cbuf *);

@@ -60,11 +60,7 @@ i2c_scan_cli_cmd(int argc, char **argv)
 
     /* Scan all valid I2C addresses (0x08..0x77) */
     for (addr = 0x08; addr < 0x78; addr++) {
-#ifndef ARCH_sim
         rc = hal_i2c_master_probe(i2cnum, addr, timeout);
-#else
-        (void)timeout;
-#endif
         /* Print addr header every 16 bytes */
         if (!(addr % 16)) {
             console_printf("\n%02x: ", addr);

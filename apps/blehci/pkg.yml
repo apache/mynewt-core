@@ -23,8 +23,8 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps:
-    - sys/console/stub
-    - sys/stats/full
-    - kernel/os
-    - net/nimble/controller
-    - net/nimble/transport/uart
+    - "@apache-mynewt-core/sys/console/stub"
+    - "@apache-mynewt-core/sys/stats/full"
+    - "@apache-mynewt-core/kernel/os"
+    - "@apache-mynewt-core/net/nimble/controller"
+    - "@apache-mynewt-core/net/nimble/transport/uart"

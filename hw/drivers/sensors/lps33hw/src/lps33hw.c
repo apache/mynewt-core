@@ -31,8 +31,9 @@
 #include "sensor/temperature.h"
 #include "lps33hw/lps33hw.h"
 #include "lps33hw_priv.h"
-#include "log/log.h"
+#include "modlog/modlog.h"
 #include "stats/stats.h"
+#include <syscfg/syscfg.h>
 
 static struct hal_spi_settings spi_lps33hw_settings = {
     .data_order = HAL_SPI_MSB_FIRST,
@@ -56,10 +57,8 @@ STATS_NAME_END(lps33hw_stat_section)
 /* Global variable used to hold stats data */
 STATS_SECT_DECL(lps33hw_stat_section) g_lps33hwstats;
 
-#define LOG_MODULE_LPS33HW    (33)
-#define LPS33HW_INFO(...)     LOG_INFO(&_log, LOG_MODULE_LPS33HW, __VA_ARGS__)
-#define LPS33HW_ERR(...)      LOG_ERROR(&_log, LOG_MODULE_LPS33HW, __VA_ARGS__)
-static struct log _log;
+#define LPS33HW_LOG(lvl_, ...) \
+    MODLOG_ ## lvl_(MYNEWT_VAL(LPS33HW_LOG_MODULE), __VA_ARGS__)
 
 #define LPS33HW_PRESS_OUT_DIV (40.96)
 #define LPS33HW_TEMP_OUT_DIV (100.0)
@@ -180,8 +179,9 @@ lps33hw_i2c_set_reg(struct sensor_itf *itf, uint8_t reg, uint8_t value)
                               OS_TICKS_PER_SEC / 10, 1);
 
     if (rc) {
-        LPS33HW_ERR("Failed to write to 0x%02X:0x%02X with value 0x%02X\n",
-                       itf->si_addr, reg, value);
+        LPS33HW_LOG(ERROR,
+                    "Failed to write to 0x%02X:0x%02X with value 0x%02X\n",
+                    itf->si_addr, reg, value);
         STATS_INC(g_lps33hwstats, read_errors);
     }
 
@@ -210,8 +210,8 @@ lps33hw_spi_set_reg(struct sensor_itf *itf, uint8_t reg, uint8_t value)
     rc = hal_spi_tx_val(itf->si_num, reg & ~LPS33HW_SPI_READ_CMD_BIT);
     if (rc == 0xFFFF) {
         rc = SYS_EINVAL;
-        LPS33HW_ERR("SPI_%u register write failed addr:0x%02X\n",
-                   itf->si_num, reg);
+        LPS33HW_LOG(ERROR, "SPI_%u register write failed addr:0x%02X\n",
+                    itf->si_num, reg);
         STATS_INC(g_lps33hwstats, write_errors);
         goto err;
     }
@@ -220,8 +220,8 @@ lps33hw_spi_set_reg(struct sensor_itf *itf, uint8_t reg, uint8_t value)
     rc = hal_spi_tx_val(itf->si_num, value);
     if (rc == 0xFFFF) {
         rc = SYS_EINVAL;
-        LPS33HW_ERR("SPI_%u write failed addr:0x%02X\n",
-                   itf->si_num, reg);
+        LPS33HW_LOG(ERROR, "SPI_%u write failed addr:0x%02X\n",
+                    itf->si_num, reg);
         STATS_INC(g_lps33hwstats, write_errors);
         goto err;
     }
@@ -252,11 +252,18 @@ lps33hw_set_reg(struct sensor_itf *itf, uint8_t reg, uint8_t value)
 {
     int rc;
 
+    rc = sensor_itf_lock(itf, MYNEWT_VAL(LPS33HW_ITF_LOCK_TMO));
+    if (rc) {
+        return rc;
+    }
+
     if (itf->si_type == SENSOR_ITF_I2C) {
-           rc = lps33hw_i2c_set_reg(itf, reg, value);
-       } else {
-           rc = lps33hw_spi_set_reg(itf, reg, value);
-       }
+        rc = lps33hw_i2c_set_reg(itf, reg, value);
+    } else {
+        rc = lps33hw_spi_set_reg(itf, reg, value);
+    }
+
+    sensor_itf_unlock(itf);
 
     return rc;
 }
@@ -288,8 +295,8 @@ lps33hw_spi_get_regs(struct sensor_itf *itf, uint8_t reg, uint8_t size,
     retval = hal_spi_tx_val(itf->si_num, reg | LPS33HW_SPI_READ_CMD_BIT);
     if (retval == 0xFFFF) {
         rc = SYS_EINVAL;
-        LPS33HW_ERR("SPI_%u register write failed addr:0x%02X\n",
-                   itf->si_num, reg);
+        LPS33HW_LOG(ERROR, "SPI_%u register write failed addr:0x%02X\n",
+                    itf->si_num, reg);
         STATS_INC(g_lps33hwstats, read_errors);
         goto err;
     }
@@ -299,8 +306,8 @@ lps33hw_spi_get_regs(struct sensor_itf *itf, uint8_t reg, uint8_t size,
         retval = hal_spi_tx_val(itf->si_num, 0);
         if (retval == 0xFFFF) {
             rc = SYS_EINVAL;
-            LPS33HW_ERR("SPI_%u read failed addr:0x%02X\n",
-                       itf->si_num, reg);
+            LPS33HW_LOG(ERROR, "SPI_%u read failed addr:0x%02X\n",
+                        itf->si_num, reg);
             STATS_INC(g_lps33hwstats, read_errors);
             goto err;
         }
@@ -342,7 +349,8 @@ lps33hw_i2c_get_regs(struct sensor_itf *itf, uint8_t reg, uint8_t size,
     rc = hal_i2c_master_write(itf->si_num, &data_struct,
                               OS_TICKS_PER_SEC / 10, 1);
     if (rc) {
-        LPS33HW_ERR("I2C access failed at address 0x%02X\n", itf->si_addr);
+        LPS33HW_LOG(ERROR, "I2C access failed at address 0x%02X\n",
+                    itf->si_addr);
         STATS_INC(g_lps33hwstats, write_errors);
         return rc;
     }
@@ -354,8 +362,9 @@ lps33hw_i2c_get_regs(struct sensor_itf *itf, uint8_t reg, uint8_t size,
                              (OS_TICKS_PER_SEC / 10) * size, 1);
 
     if (rc) {
-         LPS33HW_ERR("Failed to read from 0x%02X:0x%02X\n", itf->si_addr, reg);
-         STATS_INC(g_lps33hwstats, read_errors);
+        LPS33HW_LOG(ERROR, "Failed to read from 0x%02X:0x%02X\n",
+                    itf->si_addr, reg);
+        STATS_INC(g_lps33hwstats, read_errors);
     }
     return rc;
 }
@@ -376,11 +385,18 @@ lps33hw_get_regs(struct sensor_itf *itf, uint8_t reg, uint8_t size,
 {
     int rc;
 
+    rc = sensor_itf_lock(itf, MYNEWT_VAL(LPS33HW_ITF_LOCK_TMO));
+    if (rc) {
+        return rc;
+    }
+
     if (itf->si_type == SENSOR_ITF_I2C) {
         rc = lps33hw_i2c_get_regs(itf, reg, size, buffer);
     } else {
         rc = lps33hw_spi_get_regs(itf, reg, size, buffer);
     }
+
+    sensor_itf_unlock(itf);
 
     return rc;
 }
@@ -616,7 +632,7 @@ lps33hw_disable_interrupt(struct sensor *sensor)
 static int
 lps33hw_sensor_handle_interrupt(struct sensor *sensor)
 {
-    LPS33HW_ERR("Unhandled interrupt\n");
+    LPS33HW_LOG(ERROR, "Unhandled interrupt\n");
     return 0;
 }
 
@@ -856,8 +872,6 @@ lps33hw_init(struct os_dev *dev, void *arg)
     sensor = &lps->sensor;
     lps->cfg.mask = SENSOR_TYPE_ALL;
 
-    log_register(dev->od_name, &_log, &log_console_handler, NULL, LOG_SYSLEVEL);
-
     /* Initialise the stats entry */
     rc = stats_init(
         STATS_HDR(g_lps33hwstats),
@@ -981,7 +995,7 @@ lps33hw_read_interrupt_handler(void *arg)
 
     rc = lps33hw_get_pressure(itf, &spd.spd_press);
     if (rc) {
-        LPS33HW_ERR("Get pressure failed\n");
+        LPS33HW_LOG(ERROR, "Get pressure failed\n");
         spd.spd_press_is_valid = 0;
     } else {
         spd.spd_press_is_valid = 1;

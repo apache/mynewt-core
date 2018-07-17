@@ -25,20 +25,21 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps:
-    - mgmt/imgmgr
-    - mgmt/oicmgr
-    - kernel/os
-    - boot/bootutil
-    - sys/shell
-    - sys/config
-    - sys/console/full
-    - sys/id
-    - sys/log/full
-    - sys/stats/full
-    - boot/split
+    - "@apache-mynewt-core/mgmt/imgmgr"
+    - "@apache-mynewt-core/mgmt/oicmgr"
+    - "@apache-mynewt-core/kernel/os"
+    - "@apache-mynewt-core/boot/bootutil"
+    - "@apache-mynewt-core/sys/shell"
+    - "@apache-mynewt-core/sys/config"
+    - "@apache-mynewt-core/sys/console/full"
+    - "@apache-mynewt-core/sys/id"
+    - "@apache-mynewt-core/sys/log/full"
+    - "@apache-mynewt-core/sys/log/modlog"
+    - "@apache-mynewt-core/sys/stats/full"
+    - "@apache-mynewt-core/boot/split"
 
 pkg.deps.CONFIG_NFFS:
-    - fs/nffs
+    - "@apache-mynewt-core/fs/nffs"
 
 pkg.deps.CONFIG_FCB:
-    - fs/fcb
+    - "@apache-mynewt-core/fs/fcb"

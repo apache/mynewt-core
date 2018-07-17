@@ -26,9 +26,9 @@ pkg.keywords:
     - shell
 
 pkg.deps:
-    - kernel/os
-    - sys/shell
-    - mgmt/newtmgr
+    - "@apache-mynewt-core/kernel/os"
+    - "@apache-mynewt-core/sys/shell"
+    - "@apache-mynewt-core/mgmt/newtmgr"
 
 pkg.init:
     nmgr_shell_pkg_init: 501

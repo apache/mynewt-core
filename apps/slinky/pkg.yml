@@ -25,26 +25,27 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps:
-    - test/flash_test
-    - mgmt/imgmgr
-    - mgmt/newtmgr
-    - mgmt/newtmgr/transport/nmgr_shell
-    - kernel/os
-    - boot/bootutil
-    - sys/shell
-    - sys/config
-    - sys/console/full
-    - sys/id
-    - sys/log/full
-    - sys/stats/full
-    - boot/split
+    - "@apache-mynewt-core/test/flash_test"
+    - "@apache-mynewt-core/mgmt/imgmgr"
+    - "@apache-mynewt-core/mgmt/newtmgr"
+    - "@apache-mynewt-core/mgmt/newtmgr/transport/nmgr_shell"
+    - "@apache-mynewt-core/kernel/os"
+    - "@apache-mynewt-core/boot/bootutil"
+    - "@apache-mynewt-core/sys/shell"
+    - "@apache-mynewt-core/sys/config"
+    - "@apache-mynewt-core/sys/console/full"
+    - "@apache-mynewt-core/sys/id"
+    - "@apache-mynewt-core/sys/log/full"
+    - "@apache-mynewt-core/sys/log/modlog"
+    - "@apache-mynewt-core/sys/stats/full"
+    - "@apache-mynewt-core/boot/split"
 
 pkg.deps.I2C_0: test/i2c_scan
 pkg.deps.I2C_1: test/i2c_scan
 pkg.deps.I2C_2: test/i2c_scan
 
 pkg.deps.CONFIG_NFFS:
-    - fs/nffs
+    - "@apache-mynewt-core/fs/nffs"
 
 pkg.deps.CONFIG_FCB:
-    - fs/fcb
+    - "@apache-mynewt-core/fs/fcb"

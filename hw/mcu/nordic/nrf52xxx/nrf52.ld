@@ -53,6 +53,8 @@ SECTIONS
         . = . + _imghdr_size;
     } > FLASH
 
+    __text = .;
+
     .text :
     {
         __isr_vector_start = .;
@@ -105,6 +107,14 @@ SECTIONS
         . = ALIGN(4);
         __vector_tbl_reloc__ = .;
         . = . + (__isr_vector_end - __isr_vector_start);
+        . = ALIGN(4);
+    } > RAM
+
+    /* This section will be zeroed by RTT package init */
+    .rtt (NOLOAD):
+    {
+        . = ALIGN(4);
+        *(.rtt)
         . = ALIGN(4);
     } > RAM
 

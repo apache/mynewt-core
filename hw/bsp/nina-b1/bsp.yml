@@ -21,10 +21,10 @@ bsp.arch: cortex_m4
 bsp.compiler: compiler/arm-none-eabi-m4
 bsp.linkerscript:
     - "hw/bsp/nina-b1/nrf52xxaa.ld"
-    - "hw/mcu/nordic/nrf52xxx/nrf52.ld"
+    - "@apache-mynewt-core/hw/mcu/nordic/nrf52xxx/nrf52.ld"
 bsp.linkerscript.BOOT_LOADER.OVERWRITE:
     - "hw/bsp/nina-b1/boot-nrf52xxaa.ld"
-    - "hw/mcu/nordic/nrf52xxx/nrf52.ld"
+    - "@apache-mynewt-core/hw/mcu/nordic/nrf52xxx/nrf52.ld"
 bsp.part2linkerscript: "hw/bsp/nina-b1/split-nrf52dk.ld"
 bsp.downloadscript: "hw/bsp/nina-b1/nrf52dk_download.sh"
 bsp.debugscript: "hw/bsp/nina-b1/nrf52dk_debug.sh"

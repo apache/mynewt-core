@@ -112,6 +112,14 @@ typedef enum {
     SENSOR_EVENT_TYPE_WAKEUP         = (1 << 4),
     /* Sleep Event */
     SENSOR_EVENT_TYPE_SLEEP          = (1 << 5),
+    /* Orientation Change Event */
+    SENSOR_EVENT_TYPE_ORIENT_CHANGE  = (1 << 6),
+    /* Orientation Change Event in the X direction */
+    SENSOR_EVENT_TYPE_ORIENT_X_CHANGE  = (1 << 7),
+    /* Orientation Change Event in the Y direction */
+    SENSOR_EVENT_TYPE_ORIENT_Y_CHANGE  = (1 << 8),
+    /* Orientation Change Event in the Z direction */
+    SENSOR_EVENT_TYPE_ORIENT_Z_CHANGE  = (1 << 9),
 } sensor_event_type_t;
 
 
@@ -236,6 +244,17 @@ typedef int
  */
 typedef int
 (*sensor_notifier_func_t)(struct sensor *, void *, sensor_event_type_t);
+
+/**
+ * Callback for reporting a sensor read error.
+ *
+ * @param sensor The sensor for which a read failed.
+ * @param arg The optional argument registered with the callback.
+ * @param status Indicates the cause of the read failure.  Determined by the
+ *               underlying sensor driver.
+ */
+typedef void
+(*sensor_error_func_t)(struct sensor *sensor, void *arg, int status);
 
 /**
  *
@@ -493,6 +512,9 @@ struct sensor_itf {
     /* Sensor interface high int pin */
     uint8_t si_high_pin;
 
+    /* Mutex for interface access */
+    struct os_mutex *si_lock;
+
     /* Sensor interface interrupts pins */
     /* XXX We should probably remove low/high pins and replace it with those
      */
@@ -568,6 +590,10 @@ struct sensor {
      */
     SLIST_HEAD(, sensor_listener) s_listener_list;
 
+    /* A callback that reports read errors for this sensor */
+    sensor_error_func_t s_err_fn;
+    void *s_err_arg;
+
     /* A list of notifiers that are registered to receive events from this
      * sensor
      */
@@ -581,10 +607,31 @@ struct sensor {
 };
 
 /**
+ * Lock access to the sensor_itf specified by si.  Blocks until lock acquired.
+ *
+ * @param si The sensor_itf to lock
+ * @param timeout The timeout
+ *
+ * @return 0 on success, non-zero on failure.
+ */
+int
+sensor_itf_lock(struct sensor_itf *si, os_time_t timeout);
+
+/**
+ * Unlock access to the sensor_itf specified by si.
+ *
+ * @param si The sensor_itf to unlock access to
+ *
+ * @return 0 on success, non-zero on failure.
+ */
+void
+sensor_itf_unlock(struct sensor_itf *si);
+
+/**
  * Initialize a sensor
  *
  * @param sensor The sensor to initialize
- * @param The device to associate with this sensor.
+ * @param dev The device to associate with this sensor.
  *
  * @return 0 on success, non-zero error code on failure.
  */
@@ -602,7 +649,7 @@ int sensor_lock(struct sensor *sensor);
 /**
  * Unlock access to the sensor specified by sensor.
  *
- * @param The sensor to unlock access to.
+ * @param sensor The sensor to unlock access to.
  */
 void sensor_unlock(struct sensor *sensor);
 
@@ -638,8 +685,20 @@ int sensor_register_listener(struct sensor *sensor, struct sensor_listener *list
  *
  * @return 0 on success, non-zero error code on failure.
  */
-
 int sensor_unregister_listener(struct sensor *sensor, struct sensor_listener *listener);
+
+/**
+ * Register a sensor error callback.  The callback is executed when the sensor
+ * manager fails to read from the given sensor.
+ *
+ * @param sensor The sensor to register an error callback on.
+ * @param err_fn The function to execute when a read fails.
+ * @param arg Optional argument to pass to the callback.
+ *
+ * @return 0 on success, non-zero error code on failure.
+ */
+int sensor_register_err_func(struct sensor *sensor,
+        sensor_error_func_t err_fn, void *arg);
 
 /**
  * @} SensorListenerAPI

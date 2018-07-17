@@ -26,6 +26,10 @@
 #include "hal/hal_bsp.h"
 #include "hal/hal_watchdog.h"
 
+#if MYNEWT_VAL(RTT)
+#include "rtt/SEGGER_RTT.h"
+#endif
+
 /**
  * @defgroup OSKernel Operating System Kernel
  * @brief This section contains documentation for the core operating system kernel
@@ -166,6 +170,11 @@ void
 os_init(int (*main_fn)(int argc, char **arg))
 {
     os_error_t err;
+
+#if MYNEWT_VAL(RTT)
+    memset(&_SEGGER_RTT, 0, sizeof(_SEGGER_RTT));
+    SEGGER_RTT_Init();
+#endif
 
     TAILQ_INIT(&g_callout_list);
     STAILQ_INIT(&g_os_task_list);

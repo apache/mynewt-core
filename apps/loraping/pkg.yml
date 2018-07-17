@@ -40,7 +40,7 @@ pkg.deps:
     - "@apache-mynewt-core/test/flash_test"
 
 pkg.deps.CONFIG_NFFS:
-    - fs/nffs
+    - "@apache-mynewt-core/fs/nffs"
 
 pkg.deps.CONFIG_FCB:
-    - fs/fcb
+    - "@apache-mynewt-core/fs/fcb"

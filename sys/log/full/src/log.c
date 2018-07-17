@@ -34,7 +34,6 @@ struct log_info g_log_info;
 
 static STAILQ_HEAD(, log) g_log_list = STAILQ_HEAD_INITIALIZER(g_log_list);
 static const char *g_log_module_list[ MYNEWT_VAL(LOG_MAX_USER_MODULES) ];
-static uint8_t log_inited;
 static uint8_t log_written;
 
 #if MYNEWT_VAL(LOG_CLI)
@@ -63,12 +62,9 @@ log_init(void)
 
     (void)rc;
 
-    if (log_inited) {
-        return;
-    }
-    log_inited = 1;
     log_written = 0;
 
+    STAILQ_INIT(&g_log_list);
     g_log_info.li_version = MYNEWT_VAL(LOG_VERSION);
     g_log_info.li_next_index = 0;
 
@@ -82,6 +78,10 @@ log_init(void)
 #if MYNEWT_VAL(LOG_NEWTMGR)
     rc = log_nmgr_register_group();
     SYSINIT_PANIC_ASSERT(rc == 0);
+#endif
+
+#if MYNEWT_VAL(LOG_CONSOLE)
+    log_console_init();
 #endif
 }
 
@@ -283,8 +283,8 @@ log_register(char *name, struct log *log, const struct log_handler *lh,
 }
 
 static int
-log_append_prepare(struct log *log, uint8_t module, uint8_t level, uint8_t etype,
-                   struct log_entry_hdr *ue)
+log_append_prepare(struct log *log, uint8_t module, uint8_t level,
+                   uint8_t etype, struct log_entry_hdr *ue)
 {
     int rc;
     int sr;
@@ -308,6 +308,12 @@ log_append_prepare(struct log *log, uint8_t module, uint8_t level, uint8_t etype
      * configured to accept, then just drop it.
      */
     if (level < log->l_level) {
+        rc = -1;
+        goto err;
+    }
+
+    /* Check if this module has a minimum level. */
+    if (level < log_level_get(module)) {
         rc = -1;
         goto err;
     }
@@ -360,10 +366,34 @@ err:
 }
 
 int
-log_append_mbuf_typed(struct log *log, uint8_t module, uint8_t level,
-                      uint8_t etype, struct os_mbuf *om)
+log_append_body(struct log *log, uint8_t module, uint8_t level, uint8_t etype,
+                const void *body, uint16_t body_len)
 {
+    struct log_entry_hdr hdr;
     int rc;
+
+    rc = log_append_prepare(log, module, level, etype, &hdr);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = log->l_log->log_append_body(log, &hdr, body, body_len);
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
+}
+
+int
+log_append_mbuf_typed_no_free(struct log *log, uint8_t module, uint8_t level,
+                              uint8_t etype, struct os_mbuf **om_ptr)
+{
+    struct os_mbuf *om;
+    int rc;
+
+    /* Remove a loyer of indirection for convenience. */
+    om = *om_ptr;
 
     if (!log->l_log->log_append_mbuf) {
         rc = -1;
@@ -387,32 +417,86 @@ log_append_mbuf_typed(struct log *log, uint8_t module, uint8_t level,
         goto err;
     }
 
-    os_mbuf_free_chain(om);
+    *om_ptr = om;
 
-    return (0);
+    return 0;
+
 err:
     if (om) {
         os_mbuf_free_chain(om);
+        *om_ptr = NULL;
     }
-    return (rc);
+    return rc;
+}
+
+int
+log_append_mbuf_typed(struct log *log, uint8_t module, uint8_t level,
+                      uint8_t etype, struct os_mbuf *om)
+{
+    int rc;
+
+    rc = log_append_mbuf_typed_no_free(log, module, level, etype, &om);
+    if (rc != 0) {
+        return rc;
+    }
+
+    os_mbuf_free_chain(om);
+
+    return 0;
+}
+
+int
+log_append_mbuf_body_no_free(struct log *log, uint8_t module, uint8_t level,
+                             uint8_t etype, struct os_mbuf *om)
+{
+    struct log_entry_hdr hdr;
+    int rc;
+
+    if (!log->l_log->log_append_mbuf_body) {
+        return SYS_ENOTSUP;
+    }
+
+    rc = log_append_prepare(log, module, level, etype, &hdr);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = log->l_log->log_append_mbuf_body(log, &hdr, om);
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
+}
+
+int
+log_append_mbuf_body(struct log *log, uint8_t module, uint8_t level,
+                     uint8_t etype, struct os_mbuf *om)
+{
+    int rc;
+
+    rc = log_append_mbuf_body_no_free(log, module, level, etype, om);
+    os_mbuf_free_chain(om);
+
+    return rc;
 }
 
 void
-log_printf(struct log *log, uint16_t module, uint16_t level, char *msg, ...)
+log_printf(struct log *log, uint8_t module, uint8_t level,
+           const char *msg, ...)
 {
     va_list args;
-    char buf[LOG_ENTRY_HDR_SIZE + LOG_PRINTF_MAX_ENTRY_LEN];
+    char buf[LOG_PRINTF_MAX_ENTRY_LEN];
     int len;
 
     va_start(args, msg);
-    len = vsnprintf(&buf[LOG_ENTRY_HDR_SIZE], LOG_PRINTF_MAX_ENTRY_LEN, msg,
-            args);
+    len = vsnprintf(buf, LOG_PRINTF_MAX_ENTRY_LEN, msg, args);
     va_end(args);
     if (len >= LOG_PRINTF_MAX_ENTRY_LEN) {
         len = LOG_PRINTF_MAX_ENTRY_LEN-1;
     }
 
-    log_append(log, module, level, (uint8_t *) buf, len);
+    log_append_body(log, module, level, LOG_ETYPE_STRING, buf, len);
 }
 
 int
@@ -432,13 +516,80 @@ err:
 }
 
 /**
+ * Argument passed to `log_walk` to perform a log body walk.  Wraps the
+ * original walk argument and the body walk callback in a single object.
+ */
+struct log_walk_body_arg {
+    /** The body walk function to call on each entry. */
+    log_walk_body_func_t fn;
+
+    /** The original argument passed to `log_walk`. */
+    void *arg;
+};
+
+/**
+ * Performs a body walk on a single log entry.  This function reads the entry
+ * header, subtracts the header length from the total entry length, and
+ * forwards the data to the body walk callback.
+ */
+static int
+log_walk_body_fn(struct log *log, struct log_offset *log_offset, void *dptr,
+                 uint16_t len)
+{
+    struct log_walk_body_arg *lwba;
+    struct log_entry_hdr ueh;
+    int rc;
+
+    lwba = log_offset->lo_arg;
+
+    /* Read the log entry header.  This gets passed to the body walk
+     * callback.
+     */
+    rc = log_read_hdr(log, dptr, &ueh);
+    if (rc != 0) {
+        return rc;
+    }
+    len -= sizeof ueh;
+
+    /* Pass the wrapped callback argument to the body walk function. */
+    log_offset->lo_arg = lwba->arg;
+    rc = lwba->fn(log, log_offset, &ueh, dptr, len);
+
+    /* Restore the original body walk argument. */
+    log_offset->lo_arg = lwba;
+
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
+}
+
+int
+log_walk_body(struct log *log, log_walk_body_func_t walk_body_func,
+              struct log_offset *log_offset)
+{
+    struct log_walk_body_arg lwba = {
+        .fn = walk_body_func,
+        .arg = log_offset->lo_arg,
+    };
+    int rc;
+
+    log_offset->lo_arg = &lwba;
+    rc = log->l_log->log_walk(log, log_walk_body_fn, log_offset);
+    log_offset->lo_arg = lwba.arg;
+
+    return rc;
+}
+
+/**
  * Reads from the specified log.
  *
  * @return                      The number of bytes read; 0 on failure.
  */
 int
 log_read(struct log *log, void *dptr, void *buf, uint16_t off,
-        uint16_t len)
+         uint16_t len)
 {
     int rc;
 
@@ -447,8 +598,29 @@ log_read(struct log *log, void *dptr, void *buf, uint16_t off,
     return (rc);
 }
 
-int log_read_mbuf(struct log *log, void *dptr, struct os_mbuf *om, uint16_t off,
-                  uint16_t len)
+int
+log_read_hdr(struct log *log, void *dptr, struct log_entry_hdr *hdr)
+{
+    int bytes_read;
+
+    bytes_read = log_read(log, dptr, hdr, 0, LOG_ENTRY_HDR_SIZE);
+    if (bytes_read != LOG_ENTRY_HDR_SIZE) {
+        return SYS_EIO;
+    }
+
+    return 0;
+}
+
+int
+log_read_body(struct log *log, void *dptr, void *buf, uint16_t off,
+              uint16_t len)
+{
+    return log_read(log, dptr, buf, LOG_ENTRY_HDR_SIZE + off, len);
+}
+
+int
+log_read_mbuf(struct log *log, void *dptr, struct os_mbuf *om, uint16_t off,
+              uint16_t len)
 {
     int rc;
 
@@ -459,6 +631,13 @@ int log_read_mbuf(struct log *log, void *dptr, struct os_mbuf *om, uint16_t off,
     rc = log->l_log->log_read_mbuf(log, dptr, om, off, len);
 
     return (rc);
+}
+
+int
+log_read_mbuf_body(struct log *log, void *dptr, struct os_mbuf *om,
+                   uint16_t off, uint16_t len)
+{
+    return log_read_mbuf(log, dptr, om, LOG_ENTRY_HDR_SIZE + off, len);
 }
 
 int

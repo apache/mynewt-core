@@ -25,7 +25,7 @@ pkg.keywords:
     - split
 
 pkg.deps:
-    - sys/config
+    - "@apache-mynewt-core/sys/config"
 
 pkg.req_apis:
     - bootloader

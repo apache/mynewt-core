@@ -24,7 +24,6 @@
 #include "oc_doxm.h"
 #include "oc_pstat.h"
 #include "oc_ri.h"
-#include "port/oc_log.h"
 
 // Multiple devices?
 // What methods do sec resources support

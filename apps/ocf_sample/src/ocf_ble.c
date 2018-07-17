@@ -24,7 +24,7 @@
 #include <assert.h>
 #include <string.h>
 
-#include "log/log.h"
+#include "modlog/modlog.h"
 
 #include "oic/oc_gatt.h"
 
@@ -32,15 +32,6 @@
 #include "nimble/ble.h"
 #include "host/ble_hs.h"
 #include "services/gap/ble_svc_gap.h"
-
-struct log ocf_ble_log;
-
-/* ocf_ble uses the first "peruser" log module. */
-#define OCF_BLE_LOG_MODULE  (LOG_MODULE_PERUSER + 0)
-
-/* Convenience macro for logging to the ocf_ble module. */
-#define OCF_BLE_LOG(lvl, ...) \
-    LOG_ ## lvl(&ocf_ble_log, OCF_BLE_LOG_MODULE, __VA_ARGS__)
 
 static int ocf_ble_gap_event(struct ble_gap_event *event, void *arg);
 
@@ -53,7 +44,7 @@ print_bytes(const uint8_t *bytes, int len)
     int i;
 
     for (i = 0; i < len; i++) {
-        OCF_BLE_LOG(INFO, "%s0x%02x", i != 0 ? ":" : "", bytes[i]);
+        MODLOG_DFLT(INFO, "%s0x%02x", i != 0 ? ":" : "", bytes[i]);
     }
 }
 
@@ -63,7 +54,7 @@ print_addr(const void *addr)
     const uint8_t *u8p;
 
     u8p = addr;
-    OCF_BLE_LOG(INFO, "%02x:%02x:%02x:%02x:%02x:%02x",
+    MODLOG_DFLT(INFO, "%02x:%02x:%02x:%02x:%02x:%02x",
                 u8p[5], u8p[4], u8p[3], u8p[2], u8p[1], u8p[0]);
 }
 
@@ -73,20 +64,20 @@ print_addr(const void *addr)
 static void
 ocf_ble_print_conn_desc(struct ble_gap_conn_desc *desc)
 {
-    OCF_BLE_LOG(INFO, "handle=%d our_ota_addr_type=%d our_ota_addr=",
+    MODLOG_DFLT(INFO, "handle=%d our_ota_addr_type=%d our_ota_addr=",
                 desc->conn_handle, desc->our_ota_addr.type);
     print_addr(desc->our_ota_addr.val);
-    OCF_BLE_LOG(INFO, " our_id_addr_type=%d our_id_addr=",
+    MODLOG_DFLT(INFO, " our_id_addr_type=%d our_id_addr=",
                 desc->our_id_addr.type);
     print_addr(desc->our_id_addr.val);
-    OCF_BLE_LOG(INFO, " peer_ota_addr_type=%d peer_ota_addr=",
+    MODLOG_DFLT(INFO, " peer_ota_addr_type=%d peer_ota_addr=",
                 desc->peer_ota_addr.type);
     print_addr(desc->peer_ota_addr.val);
-    OCF_BLE_LOG(INFO, " peer_id_addr_type=%d peer_id_addr=",
+    MODLOG_DFLT(INFO, " peer_id_addr_type=%d peer_id_addr=",
                 desc->peer_id_addr.type);
     print_addr(desc->peer_id_addr.val);
-    OCF_BLE_LOG(INFO, " conn_itvl=%d conn_latency=%d supervision_timeout=%d "
-                "encrypted=%d authenticated=%d bonded=%d\n",
+    MODLOG_DFLT(INFO, " conn_itvl=%d conn_latency=%d supervision_timeout=%d "
+                      "encrypted=%d authenticated=%d bonded=%d\n",
                 desc->conn_itvl, desc->conn_latency,
                 desc->supervision_timeout,
                 desc->sec_state.encrypted,
@@ -137,7 +128,7 @@ ocf_ble_advertise(void)
 
     rc = ble_gap_adv_set_fields(&fields);
     if (rc != 0) {
-        OCF_BLE_LOG(ERROR, "error setting advertisement data; rc=%d\n", rc);
+        MODLOG_DFLT(ERROR, "error setting advertisement data; rc=%d\n", rc);
         return;
     }
 
@@ -148,7 +139,7 @@ ocf_ble_advertise(void)
     rc = ble_gap_adv_start(BLE_OWN_ADDR_PUBLIC, NULL, BLE_HS_FOREVER,
                            &adv_params, ocf_ble_gap_event, NULL);
     if (rc != 0) {
-        OCF_BLE_LOG(ERROR, "error enabling advertisement; rc=%d\n", rc);
+        MODLOG_DFLT(ERROR, "error enabling advertisement; rc=%d\n", rc);
         return;
     }
 }
@@ -184,15 +175,15 @@ ocf_ble_gap_event(struct ble_gap_event *event, void *arg)
     switch (event->type) {
     case BLE_GAP_EVENT_CONNECT:
         /* A new connection was established or a connection attempt failed. */
-        OCF_BLE_LOG(INFO, "connection %s; status=%d ",
-                       event->connect.status == 0 ? "established" : "failed",
-                       event->connect.status);
+        MODLOG_DFLT(INFO, "connection %s; status=%d ",
+                    event->connect.status == 0 ? "established" : "failed",
+                    event->connect.status);
         if (event->connect.status == 0) {
             rc = ble_gap_conn_find(event->connect.conn_handle, &desc);
             assert(rc == 0);
             ocf_ble_print_conn_desc(&desc);
         }
-        OCF_BLE_LOG(INFO, "\n");
+        MODLOG_DFLT(INFO, "\n");
 
         if (event->connect.status != 0) {
             /* Connection failed; resume advertising. */
@@ -201,9 +192,9 @@ ocf_ble_gap_event(struct ble_gap_event *event, void *arg)
         return 0;
 
     case BLE_GAP_EVENT_DISCONNECT:
-        OCF_BLE_LOG(INFO, "disconnect; reason=%d ", event->disconnect.reason);
+        MODLOG_DFLT(INFO, "disconnect; reason=%d ", event->disconnect.reason);
         ocf_ble_print_conn_desc(&event->disconnect.conn);
-        OCF_BLE_LOG(INFO, "\n");
+        MODLOG_DFLT(INFO, "\n");
 
         /* Connection terminated; resume advertising. */
         ocf_ble_advertise();
@@ -211,32 +202,32 @@ ocf_ble_gap_event(struct ble_gap_event *event, void *arg)
 
     case BLE_GAP_EVENT_CONN_UPDATE:
         /* The central has updated the connection parameters. */
-        OCF_BLE_LOG(INFO, "connection updated; status=%d ",
+        MODLOG_DFLT(INFO, "connection updated; status=%d ",
                     event->conn_update.status);
         rc = ble_gap_conn_find(event->connect.conn_handle, &desc);
         assert(rc == 0);
         ocf_ble_print_conn_desc(&desc);
-        OCF_BLE_LOG(INFO, "\n");
+        MODLOG_DFLT(INFO, "\n");
         return 0;
 
     case BLE_GAP_EVENT_ADV_COMPLETE:
-        OCF_BLE_LOG(INFO, "advertise complete; reason=%d\n",
+        MODLOG_DFLT(INFO, "advertise complete; reason=%d\n",
                     event->adv_complete.reason);
         ocf_ble_advertise();
         return 0;
 
     case BLE_GAP_EVENT_ENC_CHANGE:
         /* Encryption has been enabled or disabled for this connection. */
-        OCF_BLE_LOG(INFO, "encryption change event; status=%d ",
+        MODLOG_DFLT(INFO, "encryption change event; status=%d ",
                     event->enc_change.status);
         rc = ble_gap_conn_find(event->connect.conn_handle, &desc);
         assert(rc == 0);
         ocf_ble_print_conn_desc(&desc);
-        OCF_BLE_LOG(INFO, "\n");
+        MODLOG_DFLT(INFO, "\n");
         return 0;
 
     case BLE_GAP_EVENT_SUBSCRIBE:
-        OCF_BLE_LOG(INFO, "subscribe event; conn_handle=%d attr_handle=%d "
+        MODLOG_DFLT(INFO, "subscribe event; conn_handle=%d attr_handle=%d "
                           "reason=%d prevn=%d curn=%d previ=%d curi=%d\n",
                     event->subscribe.conn_handle,
                     event->subscribe.attr_handle,
@@ -248,7 +239,7 @@ ocf_ble_gap_event(struct ble_gap_event *event, void *arg)
         return 0;
 
     case BLE_GAP_EVENT_MTU:
-        OCF_BLE_LOG(INFO, "mtu update event; conn_handle=%d cid=%d mtu=%d\n",
+        MODLOG_DFLT(INFO, "mtu update event; conn_handle=%d cid=%d mtu=%d\n",
                     event->mtu.conn_handle,
                     event->mtu.channel_id,
                     event->mtu.value);
@@ -263,16 +254,9 @@ static const uint8_t ocf_ble_addr[6] = {1,2,3,4,5,6};
 void
 ocf_ble_init(void)
 {
-    /* Initialize the ocf_ble log. */
-    log_register("ocf_ble", &ocf_ble_log, &log_console_handler, NULL,
-                 LOG_SYSLEVEL);
-
     memcpy(g_dev_addr, ocf_ble_addr, sizeof(g_dev_addr));
 
     /* Initialize the BLE host. */
-    log_register("ble_hs", &ble_hs_log, &log_console_handler, NULL,
-                 LOG_SYSLEVEL);
-
     ble_hs_cfg.sync_cb = ocf_ble_on_sync;
 }
 

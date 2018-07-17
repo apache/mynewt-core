@@ -32,6 +32,10 @@
 #include <reboot/log_reboot.h>
 #include <id/id.h>
 
+#ifndef LED_BLINK_PIN
+#define LED_BLINK_PIN 15
+#endif
+
 #if MYNEWT_VAL(BNO055_CLI)
 #include <bno055/bno055.h>
 #endif
@@ -59,6 +63,9 @@
 #if MYNEWT_VAL(LIS2DS12_CLI)
 #include <lis2ds12/lis2ds12.h>
 #endif
+#if MYNEWT_VAL(LIS2DW12_CLI)
+#include <lis2dw12/lis2dw12.h>
+#endif
 
 #if MYNEWT_VAL(SENSOR_OIC)
 #include <oic/oc_api.h>
@@ -83,9 +90,6 @@ static const oc_handler_t sensor_oic_handler = {
 #if MYNEWT_VAL(SENSOR_OIC)
 static int sensor_oic_gap_event(struct ble_gap_event *event, void *arg);
 #endif
-
-/** Log data. */
-struct log bleprph_log;
 
 #endif
 
@@ -120,20 +124,20 @@ static int g_led_pin;
 static void
 sensor_oic_print_conn_desc(struct ble_gap_conn_desc *desc)
 {
-    BLEPRPH_LOG(INFO, "handle=%d our_ota_addr_type=%d our_ota_addr=",
+    MODLOG_DFLT(INFO, "handle=%d our_ota_addr_type=%d our_ota_addr=",
                 desc->conn_handle, desc->our_ota_addr.type);
     print_addr(desc->our_ota_addr.val);
-    BLEPRPH_LOG(INFO, " our_id_addr_type=%d our_id_addr=",
+    MODLOG_DFLT(INFO, " our_id_addr_type=%d our_id_addr=",
                 desc->our_id_addr.type);
     print_addr(desc->our_id_addr.val);
-    BLEPRPH_LOG(INFO, " peer_ota_addr_type=%d peer_ota_addr=",
+    MODLOG_DFLT(INFO, " peer_ota_addr_type=%d peer_ota_addr=",
                 desc->peer_ota_addr.type);
     print_addr(desc->peer_ota_addr.val);
-    BLEPRPH_LOG(INFO, " peer_id_addr_type=%d peer_id_addr=",
+    MODLOG_DFLT(INFO, " peer_id_addr_type=%d peer_id_addr=",
                 desc->peer_id_addr.type);
     print_addr(desc->peer_id_addr.val);
-    BLEPRPH_LOG(INFO, " conn_itvl=%d conn_latency=%d supervision_timeout=%d "
-                "encrypted=%d authenticated=%d bonded=%d\n",
+    MODLOG_DFLT(INFO, " conn_itvl=%d conn_latency=%d supervision_timeout=%d "
+                      "encrypted=%d authenticated=%d bonded=%d\n",
                 desc->conn_itvl, desc->conn_latency,
                 desc->supervision_timeout,
                 desc->sec_state.encrypted,
@@ -193,7 +197,7 @@ sensor_oic_advertise(void)
 
     rc = ble_gap_adv_set_fields(&fields);
     if (rc != 0) {
-        BLEPRPH_LOG(ERROR, "error setting advertisement data; rc=%d\n", rc);
+        MODLOG_DFLT(ERROR, "error setting advertisement data; rc=%d\n", rc);
         return;
     }
 
@@ -204,7 +208,7 @@ sensor_oic_advertise(void)
     rc = ble_gap_adv_start(BLE_OWN_ADDR_PUBLIC, NULL, BLE_HS_FOREVER,
                            &adv_params, sensor_oic_gap_event, NULL);
     if (rc != 0) {
-        BLEPRPH_LOG(ERROR, "error enabling advertisement; rc=%d\n", rc);
+        MODLOG_DFLT(ERROR, "error enabling advertisement; rc=%d\n", rc);
         return;
     }
 }
@@ -213,7 +217,7 @@ sensor_oic_advertise(void)
 static void
 sensor_oic_on_reset(int reason)
 {
-    BLEPRPH_LOG(ERROR, "Resetting state; reason=%d\n", reason);
+    MODLOG_DFLT(ERROR, "Resetting state; reason=%d\n", reason);
 }
 
 static void
@@ -247,15 +251,15 @@ sensor_oic_gap_event(struct ble_gap_event *event, void *arg)
     switch (event->type) {
     case BLE_GAP_EVENT_CONNECT:
         /* A new connection was established or a connection attempt failed. */
-        BLEPRPH_LOG(INFO, "connection %s; status=%d ",
-                       event->connect.status == 0 ? "established" : "failed",
-                       event->connect.status);
+        MODLOG_DFLT(INFO, "connection %s; status=%d ",
+                    event->connect.status == 0 ? "established" : "failed",
+                    event->connect.status);
         if (event->connect.status == 0) {
             rc = ble_gap_conn_find(event->connect.conn_handle, &desc);
             assert(rc == 0);
             sensor_oic_print_conn_desc(&desc);
         }
-        BLEPRPH_LOG(INFO, "\n");
+        MODLOG_DFLT(INFO, "\n");
 
         if (event->connect.status != 0) {
             /* Connection failed; resume advertising. */
@@ -266,9 +270,9 @@ sensor_oic_gap_event(struct ble_gap_event *event, void *arg)
         return 0;
 
     case BLE_GAP_EVENT_DISCONNECT:
-        BLEPRPH_LOG(INFO, "disconnect; reason=%d ", event->disconnect.reason);
+        MODLOG_DFLT(INFO, "disconnect; reason=%d ", event->disconnect.reason);
         sensor_oic_print_conn_desc(&event->disconnect.conn);
-        BLEPRPH_LOG(INFO, "\n");
+        MODLOG_DFLT(INFO, "\n");
 
         oc_ble_coap_conn_del(event->disconnect.conn.conn_handle);
 
@@ -278,38 +282,38 @@ sensor_oic_gap_event(struct ble_gap_event *event, void *arg)
 
     case BLE_GAP_EVENT_CONN_UPDATE:
         /* The central has updated the connection parameters. */
-        BLEPRPH_LOG(INFO, "connection updated; status=%d ",
+        MODLOG_DFLT(INFO, "connection updated; status=%d ",
                     event->conn_update.status);
         rc = ble_gap_conn_find(event->connect.conn_handle, &desc);
         assert(rc == 0);
         sensor_oic_print_conn_desc(&desc);
-        BLEPRPH_LOG(INFO, "\n");
+        MODLOG_DFLT(INFO, "\n");
         return 0;
 
 
     case BLE_GAP_EVENT_DISC_COMPLETE:
-        BLEPRPH_LOG(INFO, "discovery complete; reason=%d\n",
+        MODLOG_DFLT(INFO, "discovery complete; reason=%d\n",
                     event->disc_complete.reason);
         return 0;
 
     case BLE_GAP_EVENT_ADV_COMPLETE:
-        BLEPRPH_LOG(INFO, "advertise complete; reason=%d\n",
+        MODLOG_DFLT(INFO, "advertise complete; reason=%d\n",
                     event->adv_complete.reason);
         sensor_oic_advertise();
         return 0;
 
     case BLE_GAP_EVENT_ENC_CHANGE:
         /* Encryption has been enabled or disabled for this connection. */
-        BLEPRPH_LOG(INFO, "encryption change event; status=%d ",
+        MODLOG_DFLT(INFO, "encryption change event; status=%d ",
                     event->enc_change.status);
         rc = ble_gap_conn_find(event->connect.conn_handle, &desc);
         assert(rc == 0);
         sensor_oic_print_conn_desc(&desc);
-        BLEPRPH_LOG(INFO, "\n");
+        MODLOG_DFLT(INFO, "\n");
         return 0;
 
     case BLE_GAP_EVENT_SUBSCRIBE:
-        BLEPRPH_LOG(INFO, "subscribe event; conn_handle=%d attr_handle=%d "
+        MODLOG_DFLT(INFO, "subscribe event; conn_handle=%d attr_handle=%d "
                           "reason=%d prevn=%d curn=%d previ=%d curi=%d\n",
                     event->subscribe.conn_handle,
                     event->subscribe.attr_handle,
@@ -321,7 +325,7 @@ sensor_oic_gap_event(struct ble_gap_event *event, void *arg)
         return 0;
 
     case BLE_GAP_EVENT_MTU:
-        BLEPRPH_LOG(INFO, "mtu update event; conn_handle=%d cid=%d mtu=%d\n",
+        MODLOG_DFLT(INFO, "mtu update event; conn_handle=%d cid=%d mtu=%d\n",
                     event->mtu.conn_handle,
                     event->mtu.channel_id,
                     event->mtu.value);
@@ -445,6 +449,10 @@ sensors_dev_shell_init(void)
 #if MYNEWT_VAL(LIS2DS12_CLI)
     lis2ds12_shell_init();
 #endif
+
+#if MYNEWT_VAL(LIS2DW12_CLI)
+    lis2dw12_shell_init();
+#endif
 }
 
 static void
@@ -476,25 +484,6 @@ sensor_ble_oic_server_init(void)
 #endif
 }
 
-static void
-ble_oic_log_init(void)
-{
-#if MYNEWT_VAL(SENSOR_BLE)
-    /* Initialize the bleprph log. */
-    log_register("bleprph", &bleprph_log, &log_console_handler, NULL,
-                 LOG_SYSLEVEL);
-
-    /* Initialize the NimBLE host configuration. */
-    log_register("ble_hs", &ble_hs_log, &log_console_handler, NULL,
-                 LOG_SYSLEVEL);
-#endif
-
-#if MYNEWT_VAL(SENSOR_OIC)
-    /* Initialize the OIC  */
-    log_register("oic", &oc_log, &log_console_handler, NULL, LOG_SYSLEVEL);
-#endif
-}
-
 /**
  * main
  *
@@ -513,9 +502,6 @@ main(int argc, char **argv)
 #endif
     /* Initialize OS */
     sysinit();
-
-    /* Initialize BLE and OIC logs */
-    ble_oic_log_init();
 
     /* Initialize tasks */
     init_tasks();

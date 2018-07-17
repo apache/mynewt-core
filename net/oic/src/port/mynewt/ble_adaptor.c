@@ -220,7 +220,7 @@ oc_ble_reass(struct os_mbuf *om1, uint16_t conn_handle, uint8_t srv_idx)
     STATS_INC(oc_ble_stats, iseg);
     STATS_INCN(oc_ble_stats, ibytes, pkt1->omp_len);
 
-    OC_LOG_DEBUG("oc_gatt rx seg %u-%x-%u\n", conn_handle,
+    OC_LOG(DEBUG, "oc_gatt rx seg %u-%x-%u\n", conn_handle,
                  (unsigned)pkt1, pkt1->omp_len);
 
     STAILQ_FOREACH(pkt2, &oc_ble_reass_q, omp_next) {
@@ -251,7 +251,7 @@ oc_ble_reass(struct os_mbuf *om1, uint16_t conn_handle, uint8_t srv_idx)
         if (OS_MBUF_USRHDR_LEN(om1) < sizeof(struct oc_endpoint_ble)) {
             om2 = os_msys_get_pkthdr(0, sizeof(struct oc_endpoint_ble));
             if (!om2) {
-                OC_LOG_ERROR("oc_gatt_rx: Could not allocate mbuf\n");
+                OC_LOG(ERROR, "oc_gatt_rx: Could not allocate mbuf\n");
                 STATS_INC(oc_ble_stats, ierr);
                 return -1;
             }
@@ -330,7 +330,7 @@ oc_ble_coap_gatt_srv_init(void)
 void
 oc_ble_coap_conn_new(uint16_t conn_handle)
 {
-    OC_LOG_DEBUG("oc_gatt newconn %x\n", conn_handle);
+    OC_LOG(DEBUG, "oc_gatt newconn %x\n", conn_handle);
 }
 
 void
@@ -340,7 +340,7 @@ oc_ble_coap_conn_del(uint16_t conn_handle)
     struct os_mbuf *m;
     struct oc_endpoint_ble *oe_ble;
 
-    OC_LOG_DEBUG("oc_gatt endconn %x\n", conn_handle);
+    OC_LOG(DEBUG, "oc_gatt endconn %x\n", conn_handle);
     STAILQ_FOREACH(pkt, &oc_ble_reass_q, omp_next) {
         m = OS_MBUF_PKTHDR_TO_MBUF(pkt);
         oe_ble = (struct oc_endpoint_ble *)OC_MBUF_ENDPOINT(m);
@@ -422,7 +422,7 @@ oc_send_buffer_gatt(struct os_mbuf *m)
 #endif
 
 #if (MYNEWT_VAL(OC_CLIENT) == 1)
-    OC_LOG_ERROR("oc_gatt send not supported on client");
+    OC_LOG(ERROR, "oc_gatt send not supported on client");
 #endif
 
 #if (MYNEWT_VAL(OC_SERVER) == 1)

@@ -25,16 +25,17 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps:
-    - boot/bootutil
-    - boot/split
-    - boot/split_app
-    - kernel/os
-    - mgmt/imgmgr
-    - mgmt/newtmgr
-    - mgmt/newtmgr/transport/nmgr_shell
-    - sys/config
-    - sys/console/full
-    - sys/id
-    - sys/log/full
-    - sys/shell
-    - sys/stats/full
+    - "@apache-mynewt-core/boot/bootutil"
+    - "@apache-mynewt-core/boot/split"
+    - "@apache-mynewt-core/boot/split_app"
+    - "@apache-mynewt-core/kernel/os"
+    - "@apache-mynewt-core/mgmt/imgmgr"
+    - "@apache-mynewt-core/mgmt/newtmgr"
+    - "@apache-mynewt-core/mgmt/newtmgr/transport/nmgr_shell"
+    - "@apache-mynewt-core/sys/config"
+    - "@apache-mynewt-core/sys/console/full"
+    - "@apache-mynewt-core/sys/id"
+    - "@apache-mynewt-core/sys/log/full"
+    - "@apache-mynewt-core/sys/log/modlog"
+    - "@apache-mynewt-core/sys/shell"
+    - "@apache-mynewt-core/sys/stats/full"

@@ -21,7 +21,7 @@
 #define H_BSNCENT_
 
 #include "os/mynewt.h"
-#include "log/log.h"
+#include "modlog/modlog.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -31,15 +31,6 @@ struct ble_gap_conn_desc;
 struct ble_hs_cfg;
 union ble_store_value;
 union ble_store_key;
-
-extern struct log bsncent_log;
-
-/* bsncent uses the first "peruser" log module. */
-#define BSNCENT_LOG_MODULE  (LOG_MODULE_PERUSER + 0)
-
-/* Convenience macro for logging to the bsncent module. */
-#define BSNCENT_LOG(lvl, ...) \
-    LOG_ ## lvl(&bsncent_log, BSNCENT_LOG_MODULE, __VA_ARGS__)
 
 #define BSNCENT_SVC_GENDATA                 0x1811
 #define BSNCENT_CHR_SUP_NEW_ALERT_CAT_UUID  0x2A47

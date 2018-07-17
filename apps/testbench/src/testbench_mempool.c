@@ -16,9 +16,11 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 #include <stdio.h>
 #include <string.h>
 #include "os/mynewt.h"
+#include "modlog/modlog.h"
 #include "testutil/testutil.h"
 #include "testbench.h"
 
@@ -47,12 +49,7 @@ void *block_array[MEMPOOL_TEST_MAX_BLOCKS];
 void
 testbench_mempool_init(void *arg)
 {
-    /*
-     * Lorem ipsum dolor sit amet, consectetur adipiscing elit,
-     * sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-     */
-    LOG_DEBUG(&testlog, LOG_MODULE_TEST,
-             "%s testbench mempool_init", buildID);
+    MODLOG_DFLT(DEBUG, "%s testbench mempool_init", buildID);
 
     TstMembufSz = (sizeof(os_membuf_t) *
                    OS_MEMPOOL_SIZE(NUM_MEM_BLOCKS, MEM_BLOCK_SIZE));
@@ -72,7 +69,7 @@ TEST_CASE_DECL(os_mempool_test_case)
 
 TEST_SUITE(testbench_mempool_suite)
 {
-    LOG_DEBUG(&testlog, LOG_MODULE_TEST, "%s testbench_mempool", buildID);
+    MODLOG_DFLT(DEBUG, "%s testbench_mempool", buildID);
 
     tu_suite_set_init_cb(testbench_mempool_init, NULL);
     tu_suite_set_complete_cb(testbench_mempool_complete, NULL);
@@ -85,7 +82,7 @@ testbench_mempool()
 {
     tu_suite_set_init_cb(testbench_mempool_init, NULL);
     tu_suite_set_complete_cb(testbench_mempool_complete, NULL);
-    LOG_DEBUG(&testlog, LOG_MODULE_TEST, "%s testbench_mempool", buildID);
+    MODLOG_DFLT(DEBUG, "%s testbench_mempool", buildID);
     testbench_mempool_suite();
 
     return tu_any_failed;

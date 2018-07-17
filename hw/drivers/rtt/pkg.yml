@@ -18,11 +18,13 @@
 #
 
 pkg.name: hw/drivers/rtt
-pkg.description: Segger RTT driver
+pkg.description: SEGGER RTT target implementation
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 pkg.deps:
 pkg.req_apis: 
-pkg.init:
-    rtt_pkg_init: 19
+
+pkg.cflags:
+    - -DSEGGER_RTT_SECTION=".rtt"
+    - -Wno-array-bounds

@@ -24,10 +24,10 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps:
-    - boot/split
-    - encoding/base64
-    - mgmt/mgmt
-    - sys/flash_map
+    - "@apache-mynewt-core/boot/split"
+    - "@apache-mynewt-core/encoding/base64"
+    - "@apache-mynewt-core/mgmt/mgmt"
+    - "@apache-mynewt-core/sys/flash_map"
 
 pkg.req_apis:
     - newtmgr
@@ -37,13 +37,13 @@ pkg.req_apis.LOG_FCB_SLOT1:
     - log
 
 pkg.deps.IMGMGR_FS:
-    - fs/fs
+    - "@apache-mynewt-core/fs/fs"
 
 pkg.deps.IMGMGR_COREDUMP:
-    - sys/coredump
+    - "@apache-mynewt-core/sys/coredump"
 
 pkg.deps.IMGMGR_SHELL:
-    - sys/shell
+    - "@apache-mynewt-core/sys/shell"
 
 pkg.init:
     imgmgr_module_init: 500

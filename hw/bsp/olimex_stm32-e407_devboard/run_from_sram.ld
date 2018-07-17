@@ -64,6 +64,8 @@ ENTRY(Reset_Handler)
 
 SECTIONS
 {
+    __text = .;
+
     .text :
     {
         __vector_tbl_reloc__ = .;

@@ -30,7 +30,7 @@
 #include <mcu/stm32_hal.h>
 #include <syscfg/syscfg.h>
 
-#if defined(STM32F3) || defined(STM32F7)
+#if MYNEWT_VAL(MCU_STM32F3) || MYNEWT_VAL(MCU_STM32F7) || MYNEWT_VAL(MCU_STM32L4)
 
 #define I2C_TIMEOUT_BUSY    (25U)          /*!< 25 ms */
 

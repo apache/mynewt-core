@@ -23,10 +23,10 @@ bsp.arch: cortex_m4
 bsp.compiler: compiler/arm-none-eabi-m4 
 bsp.linkerscript:
     - "hw/bsp/apollo2_evb/apollo2.ld"
-    - "hw/mcu/ambiq/apollo2/apollo2.ld"
+    - "@apache-mynewt-core/hw/mcu/ambiq/apollo2/apollo2.ld"
 bsp.linkerscript.BOOT_LOADER.OVERWRITE:
     - "hw/bsp/apollo2_evb/boot-apollo2.ld"
-    - "hw/mcu/ambiq/apollo2/apollo2.ld"
+    - "@apache-mynewt-core/hw/mcu/ambiq/apollo2/apollo2.ld"
 bsp.downloadscript: "hw/bsp/apollo2_evb/apollo2_evb_download.sh"
 bsp.debugscript: "hw/bsp/apollo2_evb/apollo2_evb_debug.sh"
 

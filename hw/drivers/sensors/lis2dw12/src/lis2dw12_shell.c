@@ -21,13 +21,14 @@
 #include <errno.h>
 #include "os/mynewt.h"
 #include "console/console.h"
-#include "shell/shell.h"
 #include "sensor/accel.h"
 #include "lis2dw12/lis2dw12.h"
 #include "lis2dw12_priv.h"
-#include "parse/parse.h"
 
 #if MYNEWT_VAL(LIS2DW12_CLI)
+
+#include "shell/shell.h"
+#include "parse/parse.h"
 
 #define LIS2DW12_CLI_FIRST_REGISTER 0x0D
 #define LIS2DW12_CLI_LAST_REGISTER 0x3F

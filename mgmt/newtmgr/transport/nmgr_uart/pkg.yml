@@ -26,10 +26,10 @@ pkg.keywords:
     - uart
 
 pkg.deps:
-    - kernel/os
-    - hw/drivers/uart
-    - mgmt/newtmgr
-    - util/crc
+    - "@apache-mynewt-core/kernel/os"
+    - "@apache-mynewt-core/hw/drivers/uart"
+    - "@apache-mynewt-core/mgmt/newtmgr"
+    - "@apache-mynewt-core/util/crc"
 
 pkg.init:
     nmgr_uart_pkg_init: 501

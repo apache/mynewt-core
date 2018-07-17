@@ -73,7 +73,7 @@ os_callout_reset(struct os_callout *c, os_time_t ticks)
 
     os_trace_api_u32x2(OS_TRACE_ID_CALLOUT_RESET, (uint32_t)c, (uint32_t)ticks);
 
-    if (ticks < 0) {
+    if (ticks > INT32_MAX) {
         ret = OS_EINVAL;
         goto err;
     }

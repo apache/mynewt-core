@@ -23,6 +23,7 @@
     .p2align 4, 0x90    /* align on 16-byte boundary and fill with NOPs */
 
     .globl os_arch_frame_init
+    .type  os_arch_frame_init, %function
     /*
      * void os_arch_frame_init(struct stack_frame *sf)
      */

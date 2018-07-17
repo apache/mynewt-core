@@ -18,28 +18,25 @@
 #define OC_LOG_H
 
 #include <stdio.h>
-#include <log/log.h>
+#include <modlog/modlog.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-extern struct log oc_log;
-
 /*
- * XXXX, this should not be needed.
+ * XXX, this should not be needed.
  * Figure out why logging takes so much space even with LOG_LEVEL set to 4
  */
 #if MYNEWT_VAL(OC_LOGGING)
-#define OC_LOG_DEBUG(...) LOG_DEBUG(&oc_log, LOG_MODULE_IOTIVITY,__VA_ARGS__)
-#define OC_LOG_INFO(...) LOG_INFO(&oc_log, LOG_MODULE_IOTIVITY,__VA_ARGS__)
-#define OC_LOG_ERROR(...) LOG_ERROR(&oc_log, LOG_MODULE_IOTIVITY,__VA_ARGS__)
+
+#define OC_LOG(lvl_, ...) MODLOG_ ## lvl_(LOG_MODULE_IOTIVITY, __VA_ARGS__)
 
 struct oc_endpoint;
-void oc_log_endpoint(uint16_t lvl, struct oc_endpoint *);
-void oc_log_bytes(uint16_t lvl, void *addr, int len, int print_char);
+void oc_log_endpoint(uint8_t lvl, struct oc_endpoint *);
+void oc_log_bytes(uint8_t lvl, void *addr, int len, int print_char);
 struct os_mbuf;
-void oc_log_bytes_mbuf(uint16_t lvl, struct os_mbuf *, int off, int len,
+void oc_log_bytes_mbuf(uint8_t lvl, struct os_mbuf *, int off, int len,
                        int print_char);
 
 #define OC_LOG_ENDPOINT(lvl, ep)                                        \
@@ -79,9 +76,7 @@ void oc_log_bytes_mbuf(uint16_t lvl, struct os_mbuf *, int off, int len,
 
 #else
 
-#define OC_LOG_DEBUG(...)
-#define OC_LOG_INFO(...)
-#define OC_LOG_ERROR(...)
+#define OC_LOG(lvl_, ...)
 #define OC_LOG_ENDPOINT(...)
 #define OC_LOG_STR(...)
 #define OC_LOG_STR_MBUF(...)

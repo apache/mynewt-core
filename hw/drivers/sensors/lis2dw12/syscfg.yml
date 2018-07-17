@@ -41,3 +41,12 @@ syscfg.defs:
     LIS2DW12_CLI:
         description: 'Enable shell support for the LIS2DW12'
         value: 0
+    LIS2DW12_NOTIF_STATS:
+        description: 'Enable notification stats'
+        value: 1
+    LIS2DW12_ITF_LOCK_TMO:
+        description: 'LIS2DW12 interface lock timeout in milliseconds'
+        value: 1000
+    LIS2DW12_LOG_MODULE:
+        description: 'Numeric module ID to use for LIS2DW12 log messages'
+        value: 213

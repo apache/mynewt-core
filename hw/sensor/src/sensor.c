@@ -852,6 +852,54 @@ sensor_pkg_init(void)
 #endif
 }
 
+/**
+ * Lock access to the sensor_itf specified by si. Blocks until lock acquired.
+ *
+ * @param The sensor_itf to lock
+ * @param The timeout
+ *
+ * @return 0 on success, non-zero on failure.
+ */
+int
+sensor_itf_lock(struct sensor_itf *si, uint32_t timeout)
+{
+    int rc;
+    os_time_t ticks;
+
+    if (!si->si_lock) {
+        return 0;
+    }
+
+    rc = os_time_ms_to_ticks(timeout, &ticks);
+    if (rc) {
+        return rc;
+    }
+
+    rc = os_mutex_pend(si->si_lock, ticks);
+    if (rc == 0 || rc == OS_NOT_STARTED) {
+        return (0);
+    }
+
+    return (rc);
+}
+
+/**
+ * Unlock access to the sensor_itf specified by si.
+ *
+ * @param The sensor_itf to unlock access to
+ *
+ * @return 0 on success, non-zero on failure.
+ */
+void
+sensor_itf_unlock(struct sensor_itf *si)
+{
+    if (!si->si_lock) {
+        return;
+    }
+
+    os_mutex_release(si->si_lock);
+}
+
 
 /**
  * Lock access to the sensor specified by sensor.  Blocks until lock acquired.
@@ -882,7 +930,6 @@ sensor_unlock(struct sensor *sensor)
 {
     os_mutex_release(&sensor->s_lock);
 }
-
 
 /**
  * Initialize a sensor
@@ -973,6 +1020,27 @@ sensor_unregister_listener(struct sensor *sensor,
             break;
         }
     }
+
+    sensor_unlock(sensor);
+
+    return (0);
+err:
+    return (rc);
+}
+
+int
+sensor_register_err_func(struct sensor *sensor, sensor_error_func_t err_fn,
+                         void *arg)
+{
+    int rc;
+
+    rc = sensor_lock(sensor);
+    if (rc != 0) {
+        goto err;
+    }
+
+    sensor->s_err_fn = err_fn;
+    sensor->s_err_arg = arg;
 
     sensor_unlock(sensor);
 
@@ -2116,6 +2184,9 @@ sensor_read(struct sensor *sensor, sensor_type_t type,
     rc = sensor->s_funcs->sd_read(sensor, type, sensor_read_data_func, &src,
                                   timeout);
     if (rc) {
+        if (sensor->s_err_fn != NULL) {
+            sensor->s_err_fn(sensor, sensor->s_err_arg, rc);
+        }
         goto err;
     }
 

@@ -26,4 +26,5 @@ syscfg.vals:
     STATS_NAMES: 1
 
     # Log reboot messages to a flash circular buffer.
+    LOG_FCB: 1
     REBOOT_LOG_FCB: 1

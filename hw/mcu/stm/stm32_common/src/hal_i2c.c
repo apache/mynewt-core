@@ -99,7 +99,7 @@ hal_i2c_init(uint8_t i2c_num, void *usercfg)
 
     init = &dev->hid_handle.Init;
     dev->hid_handle.Instance = cfg->hic_i2c;
-#if defined(STM32F3) || defined(STM32F7)
+#if MYNEWT_VAL(MCU_STM32F3) || MYNEWT_VAL(MCU_STM32F7) || MYNEWT_VAL(MCU_STM32L4)
     init->Timing = cfg->hic_timingr;
 #else
     init->ClockSpeed = cfg->hic_speed;

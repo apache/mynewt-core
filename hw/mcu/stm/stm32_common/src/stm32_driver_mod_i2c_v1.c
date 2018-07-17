@@ -29,7 +29,7 @@
 #include <mcu/stm32_hal.h>
 #include <syscfg/syscfg.h>
 
-#if !defined(STM32F3) && !defined(STM32F7)
+#if !MYNEWT_VAL(MCU_STM32F3) && !MYNEWT_VAL(MCU_STM32F7) && !MYNEWT_VAL(MCU_STM32L4)
 
 #define I2C_TIMEOUT_BUSY_FLAG     25U         /*!< Timeout 25 ms             */
 #define I2C_NO_OPTION_FRAME       0xFFFF0000U /*!< XferOptions default value */

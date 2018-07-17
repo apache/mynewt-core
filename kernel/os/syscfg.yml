@@ -34,6 +34,9 @@ syscfg.defs:
     OS_COREDUMP:
         description: 'Attempt to dump corefile when system crashes'
         value: 0
+    OS_CRASH_STACKTRACE:
+        description: 'Attempt to print stack trace when system crashes.'
+        value: 0
     OS_SYSVIEW:
         description: 'Enable OS sysview tracing'
         value: 0

@@ -25,4 +25,4 @@ pkg.keywords:
     - mempool
 
 pkg.deps:
-    - kernel/os
+    - "@apache-mynewt-core/kernel/os"

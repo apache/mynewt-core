@@ -44,6 +44,26 @@ extern "C" {
 #define IMGMGR_STATE_F_ACTIVE           0x04
 #define IMGMGR_STATE_F_PERMANENT        0x08
 
+/** @typedef imgr_upload_fn
+ * @brief Application callback that is executed when an image upload request is
+ * received.
+ *
+ * The callback's return code determines whether the upload request is accepted
+ * or rejected.  If the callback returns 0, processing of the upload request
+ * proceeds.  If the callback returns nonzero, the request is rejected with a
+ * response containing an `rc` value equal to the return code.
+ *
+ * @param offset                The offset specified by the incoming request.
+ * @param size                  The total size of the image being uploaded.
+ * @param arg                   Optional argument specified when the callback
+ *                                  was configured.
+ *
+ * @return                      0 if the upload request should be accepted;
+ *                              nonzero to reject the request with the
+ *                                  specified status.
+ */
+typedef int imgr_upload_fn(uint32_t offset, uint32_t size, void *arg);
+
 extern int boot_current_slot;
 
 void imgmgr_module_init(void);
@@ -69,6 +89,22 @@ int imgr_read_info(int area_id, struct image_version *ver, uint8_t *hash, uint32
  * Returns version number of current image (if available).
  */
 int imgr_my_version(struct image_version *ver);
+
+/**
+ * @brief Configures a callback that gets called whenever a valid image upload
+ * request is received.
+ *
+ * The callback's return code determines whether the upload request is accepted
+ * or rejected.  If the callback returns 0, processing of the upload request
+ * proceeds.  If the callback returns nonzero, the request is rejected with a
+ * response containing an `rc` value equal to the return code.
+ *
+ * @param cb                    The callback to execute on rx of an upload
+ *                                  request.
+ * @param arg                   Optional argument that gets passed to the
+ *                                  callback.
+ */
+void imgr_set_upload_cb(imgr_upload_fn *cb, void *arg);
 
 uint8_t imgmgr_state_flags(int query_slot);
 int imgmgr_state_slot_in_use(int slot);

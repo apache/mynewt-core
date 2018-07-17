@@ -27,10 +27,10 @@ pkg.apis:
     - PWM_HW_IMPL
 
 pkg.deps:
-    - hw/drivers/pwm
+    - "@apache-mynewt-core/hw/drivers/pwm"
 
 pkg.deps.MCU_STM32F3:
-    - hw/mcu/stm/stm32f3xx
+    - "@apache-mynewt-core/hw/mcu/stm/stm32f3xx"
 
 pkg.deps.MCU_STM32F7:
-    - hw/mcu/stm/stm32f7xx
+    - "@apache-mynewt-core/hw/mcu/stm/stm32f7xx"

@@ -24,15 +24,15 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps:
-    - hw/hal
-    - time/datetime
-    - kernel/os
-    - mgmt/mgmt
-    - encoding/tinycbor
-    - encoding/cborattr
+    - "@apache-mynewt-core/hw/hal"
+    - "@apache-mynewt-core/time/datetime"
+    - "@apache-mynewt-core/kernel/os"
+    - "@apache-mynewt-core/mgmt/mgmt"
+    - "@apache-mynewt-core/encoding/tinycbor"
+    - "@apache-mynewt-core/encoding/cborattr"
 
 pkg.deps.LOG_SOFT_RESET:
-    - sys/reboot
+    - "@apache-mynewt-core/sys/reboot"
 
 pkg.req_apis:
     - newtmgr

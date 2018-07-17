@@ -32,6 +32,7 @@ struct conf_dup_check_arg {
 
 struct conf_store_head conf_load_srcs;
 struct conf_store *conf_save_dst;
+static bool conf_loading;
 static bool conf_loaded;
 
 void
@@ -75,12 +76,14 @@ conf_load(void)
      */
     conf_lock();
     conf_loaded = true;
+    conf_loading = true;
     SLIST_FOREACH(cs, &conf_load_srcs, cs_next) {
         cs->cs_itf->csi_load(cs, conf_load_cb, NULL);
         if (SLIST_NEXT(cs, cs_next)) {
             conf_commit(NULL);
         }
     }
+    conf_loading = false;
     conf_unlock();
     return conf_commit(NULL);
 }
@@ -93,6 +96,12 @@ conf_ensure_loaded(void)
     }
 
     return conf_load();
+}
+
+int
+conf_set_from_storage(void)
+{
+    return conf_loading;
 }
 
 static void

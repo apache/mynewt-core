@@ -34,13 +34,13 @@
 int
 adc_chan_config(struct adc_dev *dev, uint8_t cnum, void *data)
 {
-    assert(dev->ad_funcs.af_configure_channel != NULL);
+    assert(dev->ad_funcs->af_configure_channel != NULL);
 
     if (cnum >= dev->ad_chan_count) {
         return (EINVAL);
     }
 
-    return (dev->ad_funcs.af_configure_channel(dev, cnum, data));
+    return (dev->ad_funcs->af_configure_channel(dev, cnum, data));
 }
 
 /**
@@ -55,7 +55,7 @@ adc_chan_config(struct adc_dev *dev, uint8_t cnum, void *data)
 int
 adc_chan_read(struct adc_dev *dev, uint8_t cnum, int *result)
 {
-    assert(dev->ad_funcs.af_read_channel != NULL);
+    assert(dev->ad_funcs->af_read_channel != NULL);
 
     if (cnum >= dev->ad_chan_count) {
         return (EINVAL);
@@ -65,7 +65,7 @@ adc_chan_read(struct adc_dev *dev, uint8_t cnum, int *result)
         return (EINVAL);
     }
 
-    return (dev->ad_funcs.af_read_channel(dev, cnum, result));
+    return (dev->ad_funcs->af_read_channel(dev, cnum, result));
 }
 
 /**

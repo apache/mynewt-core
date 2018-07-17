@@ -156,9 +156,11 @@ struct adc_chan_config {
 struct adc_dev {
     struct os_dev ad_dev;
     struct os_mutex ad_lock;
-    struct adc_driver_funcs ad_funcs;
+    const struct adc_driver_funcs *ad_funcs;
     struct adc_chan_config *ad_chans;
     int ad_chan_count;
+    /* Open reference count */
+    uint8_t ad_ref_cnt;
     adc_event_handler_func_t ad_event_handler_func;
     void *ad_event_handler_arg;
 };
@@ -179,7 +181,7 @@ int adc_event_handler_set(struct adc_dev *, adc_event_handler_func_t,
 static inline int
 adc_sample(struct adc_dev *dev)
 {
-    return (dev->ad_funcs.af_sample(dev));
+    return (dev->ad_funcs->af_sample(dev));
 }
 
 /**
@@ -195,7 +197,7 @@ adc_sample(struct adc_dev *dev)
 static inline int
 adc_read_channel(struct adc_dev *dev, uint8_t ch, int *result)
 {
-    return (dev->ad_funcs.af_read_channel(dev, ch, result));
+    return (dev->ad_funcs->af_read_channel(dev, ch, result));
 }
 
 /**
@@ -216,7 +218,7 @@ static inline int
 adc_buf_set(struct adc_dev *dev, void *buf1, void *buf2,
         int buf_len)
 {
-    return (dev->ad_funcs.af_set_buffer(dev, buf1, buf2, buf_len));
+    return (dev->ad_funcs->af_set_buffer(dev, buf1, buf2, buf_len));
 }
 
 /**
@@ -232,7 +234,7 @@ adc_buf_set(struct adc_dev *dev, void *buf1, void *buf2,
 static inline int
 adc_buf_release(struct adc_dev *dev, void *buf, int buf_len)
 {
-    return (dev->ad_funcs.af_release_buffer(dev, buf, buf_len));
+    return (dev->ad_funcs->af_release_buffer(dev, buf, buf_len));
 }
 
 /**
@@ -250,7 +252,7 @@ static inline int
 adc_buf_read(struct adc_dev *dev, void *buf, int buf_len, int entry,
         int *result)
 {
-    return (dev->ad_funcs.af_read_buffer(dev, buf, buf_len, entry, result));
+    return (dev->ad_funcs->af_read_buffer(dev, buf, buf_len, entry, result));
 }
 
 /**
@@ -265,7 +267,7 @@ adc_buf_read(struct adc_dev *dev, void *buf, int buf_len, int entry,
 static inline int
 adc_buf_size(struct adc_dev *dev, int chans, int samples)
 {
-    return (dev->ad_funcs.af_size_buffer(dev, chans, samples));
+    return (dev->ad_funcs->af_size_buffer(dev, chans, samples));
 }
 
 /**
