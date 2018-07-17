@@ -97,9 +97,12 @@ tsl2591_shell_cmd_read(int argc, char **argv)
 {
     uint16_t full;
     uint16_t ir;
-    uint16_t samples = 1;
+    uint32_t lux;
+    uint16_t samples;
     uint16_t val;
     int rc;
+
+    samples = 1;
 
     if (argc > 3) {
         return tsl2591_shell_err_too_many_args(argv[1]);
@@ -115,13 +118,17 @@ tsl2591_shell_cmd_read(int argc, char **argv)
     }
 
     while(samples--) {
+        /* Get raw broadband and IR readings */
         rc = tsl2591_get_data(&g_sensor_itf, &full, &ir);
         if (rc) {
             console_printf("Read failed: %d\n", rc);
             return rc;
         }
+        /* Get lux estimation */
+        lux = tsl2591_calculate_lux(&g_sensor_itf, full, ir, NULL);
         console_printf("Full:  %u\n", full);
         console_printf("IR:    %u\n", ir);
+        console_printf("Lux:   %lu\n", lux);
     }
 
     return 0;
