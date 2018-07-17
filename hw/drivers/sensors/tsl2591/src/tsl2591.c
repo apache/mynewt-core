@@ -282,8 +282,8 @@ tsl2591_set_integration_time(struct sensor_itf *itf,
     }
 
     #if MYNEWT_VAL(TSL2591_ITIME_DELAY)
-    /* Assume a +/-1% margin of error in timing values */
-    tsl2591_itime_delay_ms = (int_time + 1) * 101;
+    /* Assume a +2% margin of error in timing values */
+    tsl2591_itime_delay_ms = (int_time + 1) * 102;
     #endif
 
     /* Increment the timing changed counter */
@@ -380,12 +380,12 @@ tsl2591_get_data(struct sensor_itf *itf, uint16_t *broadband, uint16_t *ir)
     /* See: https://forums.adafruit.com/viewtopic.php?f=19&t=124176 */
     *broadband = *ir = 0;
     rc = tsl2591_read16(itf, TSL2591_COMMAND_BIT |
-                        TSL2591_REGISTER_CHAN1_LOW, ir);
+                        TSL2591_REGISTER_CHAN0_LOW, broadband);
     if (rc) {
         goto err;
     }
     rc = tsl2591_read16(itf, TSL2591_COMMAND_BIT |
-                        TSL2591_REGISTER_CHAN0_LOW, broadband);
+                        TSL2591_REGISTER_CHAN1_LOW, ir);
     if (rc) {
         goto err;
     }
