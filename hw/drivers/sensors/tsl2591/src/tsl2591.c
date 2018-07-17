@@ -459,9 +459,8 @@ err:
     return rc;
 }
 
-uint32_t
-tsl2591_calculate_lux(struct sensor_itf *itf, uint16_t broadband, uint16_t ir,
-  struct tsl2591_cfg *cfg)
+float tsl2591_calculate_lux_f(struct sensor_itf *itf, uint16_t broadband,
+  uint16_t ir, struct tsl2591_cfg *cfg)
 {
     int      rc;
     uint8_t  itime;
@@ -508,7 +507,14 @@ tsl2591_calculate_lux(struct sensor_itf *itf, uint16_t broadband, uint16_t ir,
       (1.0F - ((float)ir/(float)broadband)) / cpl;
 
     /* Note that this implementation will truncate values < 1.0 lux! */
-    return (uint32_t)lux;
+    return lux;
+}
+
+uint32_t
+tsl2591_calculate_lux(struct sensor_itf *itf, uint16_t broadband, uint16_t ir,
+  struct tsl2591_cfg *cfg)
+{
+    return (uint32_t)tsl2591_calculate_lux_f(itf, broadband, ir, cfg);
 }
 
 static int
