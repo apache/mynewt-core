@@ -97,9 +97,9 @@ tsl2591_shell_cmd_read(int argc, char **argv)
 {
     uint16_t full;
     uint16_t ir;
-    uint32_t lux;
     uint16_t samples;
     uint16_t val;
+    float lux;
     int rc;
 
     samples = 1;
@@ -125,10 +125,11 @@ tsl2591_shell_cmd_read(int argc, char **argv)
             return rc;
         }
         /* Get lux estimation */
-        lux = tsl2591_calculate_lux(&g_sensor_itf, full, ir, NULL);
+        lux = tsl2591_calculate_lux_f(&g_sensor_itf, full, ir, NULL);
+        console_printf("Lux:   %lu.%lu\n", (uint32_t)lux,
+                       (uint32_t)(lux*100)%100);
         console_printf("Full:  %u\n", full);
         console_printf("IR:    %u\n", ir);
-        console_printf("Lux:   %lu\n", lux);
     }
 
     return 0;
