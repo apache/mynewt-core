@@ -16,7 +16,7 @@
 # under the License.
 #
 
-# Package: hw/mcu/stm32l4xx
+# Package: hw/mcu/stm/stm32l4xx
 
 syscfg.defs:
     I2C_0:
@@ -32,6 +32,18 @@ syscfg.defs:
     MCU_STM32L4:
         description: MCUs are of STM32L4xx family
         value: 1
+
+    STM32_HAL_SPI_HAS_FIFO:
+        description: This MCU has a SPI with FIFO
+        value: 1
+
+    STM32_HAL_I2C_HAS_CLOCKSPEED:
+        description: This MCU's I2C has no clock speed register (has TIMINGR)
+        value: 0
+
+    STM32_HAL_UART_HAS_SR:
+        description: This MCU's UART uses ISR register (not SR) for status.
+        value: 0
 
     SPI_0_MASTER:
         description: 'SPI 0 master'
