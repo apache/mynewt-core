@@ -30,7 +30,7 @@
 #include "lis2ds12/lis2ds12.h"
 #include "lis2ds12_priv.h"
 #include "hal/hal_gpio.h"
-#include "log/log.h"
+#include "modlog/modlog.h"
 #include "stats/stats.h"
 #include <syscfg/syscfg.h>
 
