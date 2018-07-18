@@ -35,8 +35,15 @@ docs/html
 docs/latex
 cscope.*
 *.tags
-stlink.log 
+stlink.log
+openocd.log
+*.pem
 
 # Prevent accidental checkins of personal targets.  If you need to commit a
 # target, specify the -f option for "git add".
 targets
+
+# Generated directories - pubkey sources, coverity data, etc
+/keys/
+/repos/
+/cov-int/
