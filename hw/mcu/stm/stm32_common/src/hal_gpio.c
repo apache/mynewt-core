@@ -274,63 +274,63 @@ hal_gpio_clk_enable(uint32_t port_idx)
 {
     switch (port_idx) {
 #if defined GPIOA_BASE
-        case 0:
-            __HAL_RCC_GPIOA_CLK_ENABLE();
-            break;
+    case 0:
+        __HAL_RCC_GPIOA_CLK_ENABLE();
+        break;
 #endif
 #if defined GPIOB_BASE
-        case 1:
-            __HAL_RCC_GPIOB_CLK_ENABLE();
-            break;
+    case 1:
+        __HAL_RCC_GPIOB_CLK_ENABLE();
+        break;
 #endif
 #if defined GPIOC_BASE
-        case 2:
-            __HAL_RCC_GPIOC_CLK_ENABLE();
-            break;
+    case 2:
+        __HAL_RCC_GPIOC_CLK_ENABLE();
+        break;
 #endif
 #if defined GPIOD_BASE
-        case 3:
-            __HAL_RCC_GPIOD_CLK_ENABLE();
-            break;
+    case 3:
+        __HAL_RCC_GPIOD_CLK_ENABLE();
+        break;
 #endif
 #if defined GPIOE_BASE
-        case 4:
-            __HAL_RCC_GPIOE_CLK_ENABLE();
-            break;
+    case 4:
+        __HAL_RCC_GPIOE_CLK_ENABLE();
+        break;
 #endif
 #if defined GPIOF_BASE
-        case 5:
-            __HAL_RCC_GPIOF_CLK_ENABLE();
-            break;
+    case 5:
+        __HAL_RCC_GPIOF_CLK_ENABLE();
+        break;
 #endif
 #if defined GPIOG_BASE
-        case 6:
-            __HAL_RCC_GPIOG_CLK_ENABLE();
-            break;
+    case 6:
+        __HAL_RCC_GPIOG_CLK_ENABLE();
+        break;
 #endif
 #if defined GPIOH_BASE
-        case 7:
-            __HAL_RCC_GPIOH_CLK_ENABLE();
-            break;
+    case 7:
+        __HAL_RCC_GPIOH_CLK_ENABLE();
+        break;
 #endif
 #if defined GPIOI_BASE
-        case 8:
-            __HAL_RCC_GPIOI_CLK_ENABLE();
-            break;
+    case 8:
+        __HAL_RCC_GPIOI_CLK_ENABLE();
+        break;
 #endif
 #if defined GPIOJ_BASE
-        case 9:
-            __HAL_RCC_GPIOJ_CLK_ENABLE();
-            break;
+    case 9:
+        __HAL_RCC_GPIOJ_CLK_ENABLE();
+        break;
 #endif
 #if defined GPIOK_BASE
-        case 10:
-            __HAL_RCC_GPIOK_CLK_ENABLE();
-            break;
+    case 10:
+        __HAL_RCC_GPIOK_CLK_ENABLE();
+        break;
 #endif
-        default:
-            assert(0);
-            break;
+    default:
+        assert(0);
+        break;
     }
 }
 
