@@ -266,7 +266,7 @@ extern "C" {
 #define DRV2605_VBAT_VOLTAGE_MONITOR_ADDR                       0x21
 #define DRV2605_LRA_RESONANCE_PERIOD_ADDR                       0x22
 
-struct sensor_itf;
+struct driver_itf;
 
 /**
  * Reads a single byte from the specified register
@@ -278,7 +278,7 @@ struct sensor_itf;
  * @return 0 on success, non-zero error on failure.
  */
 int
-drv2605_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value);
+drv2605_read8(struct driver_itf *itf, uint8_t reg, uint8_t *value);
 
 
 /**
@@ -292,7 +292,7 @@ drv2605_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value);
  * @return 0 on success and non-zero on failure
  */
 int
-drv2605_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
+drv2605_readlen(struct driver_itf *itf, uint8_t reg, uint8_t *buffer,
                uint8_t len);
 
 /**
@@ -305,7 +305,7 @@ drv2605_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
  * @return 0 on success, non-zero error on failure.
  */
 int
-drv2605_write8(struct sensor_itf *itf, uint8_t reg, uint8_t value);
+drv2605_write8(struct driver_itf *itf, uint8_t reg, uint8_t value);
 
 /**
  * Writes a multiple bytes to the specified register
@@ -317,7 +317,7 @@ drv2605_write8(struct sensor_itf *itf, uint8_t reg, uint8_t value);
  * @return 0 on success, non-zero error on failure.
  */
 int
-drv2605_writelen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
+drv2605_writelen(struct driver_itf *itf, uint8_t reg, uint8_t *buffer,
                 uint8_t len);
 
 #ifdef __cplusplus

@@ -36,6 +36,13 @@ static struct shell_cmd drv2605_shell_cmd_struct = {
     .sc_cmd_func = drv2605_shell_cmd
 };
 
+static struct driver_itf g_drv2605_itf = {
+    .si_type = MYNEWT_VAL(DRV2605_SHELL_ITF_TYPE),
+    .si_num = MYNEWT_VAL(DRV2605_SHELL_ITF_NUM),
+    .si_cs_pin = MYNEWT_VAL(LIS2DS12_SHELL_CSPIN),
+    .si_addr = MYNEWT_VAL(LIS2DS12_SHELL_ITF_ADDR)
+};
+
 static int
 drv2605_shell_err_too_many_args(char *cmd_name)
 {
@@ -93,7 +100,6 @@ drv2605_shell_cmd_load_rom(int argc, char **argv, struct drv2605 *drv2605)
     uint8_t waveform[8] = {0};
     uint8_t len = argc-2;
     uint8_t i;
-    struct sensor_itf *itf;
 
     if (argc > 10) {
         return drv2605_shell_err_too_many_args(argv[1]);
@@ -108,9 +114,7 @@ drv2605_shell_cmd_load_rom(int argc, char **argv, struct drv2605 *drv2605)
         }
     }
 
-    itf = SENSOR_GET_ITF(&(drv2605->sensor));
-
-    rc = drv2605_load_rom(itf, waveform, len);
+    rc = drv2605_load_rom(g_drv2605_itf, waveform, len);
     if (rc) {
         console_printf("load failed %d\n", rc);
     }else{
@@ -126,15 +130,12 @@ static int
 drv2605_shell_cmd_trigger_rom(int argc, char **argv, struct drv2605 *drv2605)
 {
     int rc;
-    struct sensor_itf *itf;
 
     if (argc > 3) {
         return drv2605_shell_err_too_many_args(argv[1]);
     }
 
-    itf = SENSOR_GET_ITF(&(drv2605->sensor));
-
-    rc = drv2605_trigger_rom(itf);
+    rc = drv2605_trigger_rom(g_drv2605_itf);
     if (rc) {
         console_printf("trigger failed %d\n", rc);
     }else{
@@ -149,17 +150,14 @@ drv2605_shell_cmd_get_chip_id(int argc, char **argv, struct drv2605 *drv2605)
 {
     uint8_t id;
     int rc;
-    struct sensor_itf *itf;
 
     if (argc > 3) {
         return drv2605_shell_err_too_many_args(argv[1]);
     }
 
-    itf = SENSOR_GET_ITF(&(drv2605->sensor));
-
     /* Display the chip id */
     if (argc == 2) {
-        rc = drv2605_get_chip_id(itf, &id);
+        rc = drv2605_get_chip_id(g_drv2605_itf, &id);
         if (rc) {
             console_printf("chipid failed %d\n", rc);
         }else{
@@ -175,15 +173,12 @@ drv2605_shell_cmd_dump_cal(int argc, char **argv, struct drv2605 *drv2605)
 {
     int rc;
     uint8_t tmp[3];
-    struct sensor_itf *itf;
 
     if (argc > 3) {
         return drv2605_shell_err_too_many_args(argv[1]);
     }
 
-    itf = SENSOR_GET_ITF(&(drv2605->sensor));
-
-    rc = drv2605_readlen(itf, DRV2605_AUTO_CALIBRATION_COMPENSATION_RESULT_ADDR, &tmp[0], sizeof(tmp));
+    rc = drv2605_readlen(g_drv2605_itf, DRV2605_AUTO_CALIBRATION_COMPENSATION_RESULT_ADDR, &tmp[0], sizeof(tmp));
     if (rc) {
         console_printf("dump failed %d\n", rc);
         goto err;
@@ -201,7 +196,6 @@ drv2605_shell_cmd_peek(int argc, char **argv, struct drv2605 *drv2605)
     int rc;
     uint8_t value;
     uint8_t reg;
-    struct sensor_itf *itf;
 
     if (argc > 3) {
         return drv2605_shell_err_too_many_args(argv[1]);
@@ -214,9 +208,7 @@ drv2605_shell_cmd_peek(int argc, char **argv, struct drv2605 *drv2605)
         return drv2605_shell_err_invalid_arg(argv[2]);
     }
 
-    itf = SENSOR_GET_ITF(&(drv2605->sensor));
-
-    rc = drv2605_read8(itf, reg, &value);
+    rc = drv2605_read8(g_drv2605_itf, reg, &value);
     if (rc) {
         console_printf("peek failed %d\n", rc);
     }else{
@@ -232,7 +224,6 @@ drv2605_shell_cmd_poke(int argc, char **argv, struct drv2605 *drv2605)
     int rc;
     uint8_t reg;
     uint8_t value;
-    struct sensor_itf *itf;
 
     if (argc > 4) {
         return drv2605_shell_err_too_many_args(argv[1]);
@@ -250,9 +241,7 @@ drv2605_shell_cmd_poke(int argc, char **argv, struct drv2605 *drv2605)
         return drv2605_shell_err_invalid_arg(argv[3]);
     }
 
-    itf = SENSOR_GET_ITF(&(drv2605->sensor));
-
-    rc = drv2605_write8(itf, reg, value);
+    rc = drv2605_write8(g_drv2605_itf, reg, value);
     if (rc) {
         console_printf("poke failed %d\n", rc);
     }else{
@@ -268,16 +257,13 @@ drv2605_shell_cmd_dump_all(int argc, char **argv, struct drv2605 *drv2605)
     int rc;
     uint8_t value;
     int i;
-    struct sensor_itf *itf;
 
     if (argc > 3) {
         return drv2605_shell_err_too_many_args(argv[1]);
     }
 
-    itf = SENSOR_GET_ITF(&(drv2605->sensor));
-
     for (i=0; i<=34; i++){
-        rc = drv2605_read8(itf, i, &value);
+        rc = drv2605_read8(g_drv2605_itf, i, &value);
         if (rc) {
             console_printf("dump failed %d\n", rc);
             goto err;
@@ -365,7 +351,6 @@ drv2605_shell_cmd_power_mode(int argc, char **argv, struct drv2605 *drv2605)
 {
     int rc;
     enum drv2605_power_mode mode;
-    struct sensor_itf *itf;
 
     if(strcmp(argv[2],"off") == 0) {
         mode = DRV2605_POWER_OFF;
@@ -377,9 +362,7 @@ drv2605_shell_cmd_power_mode(int argc, char **argv, struct drv2605 *drv2605)
         return drv2605_shell_err_unknown_arg(argv[2]);
     }
 
-    itf = SENSOR_GET_ITF(&(drv2605->sensor));
-
-    rc = drv2605_set_power_mode(itf, mode);
+    rc = drv2605_set_power_mode(g_drv2605_itf, mode);
     if (rc) {
         console_printf("power_mode failed %d\n", rc);
         goto err;

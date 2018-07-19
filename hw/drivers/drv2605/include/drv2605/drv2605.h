@@ -21,7 +21,7 @@
 #define __DRV2605_H__
 
 #include "os/mynewt.h"
-#include "sensor/sensor.h"
+#include "driver/driver.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -67,7 +67,6 @@ struct drv2605_cfg {
 
 struct drv2605 {
     struct os_dev dev;
-    struct sensor sensor;
     struct drv2605_cfg cfg;
 };
 
@@ -76,7 +75,7 @@ struct drv2605 {
  * Initialize the drv2605. This is normally used as an os_dev_create initialization function
  *
  * @param dev  Pointer to the drv2605_dev device descriptor
- * @param arg  Pointer to the sensor interface
+ * @param arg  Pointer to the driver interface
  *
  * @return 0 on success, non-zero on failure
  */
@@ -87,13 +86,13 @@ drv2605_init(struct os_dev *dev, void *arg);
 /**
  * Set up  the drv2605 with the configuration parameters given
  *
- * @param dev  Pointer to the drv2605_dev device descriptor
- * @param cfg  Pointer to the drv2605_cfg settings for mode, type, calibration
+ * @param itf The device interface
+ * @param cfg Pointer to the drv2605_cfg settings for mode, type, calibration
  *
  * @return 0 on success, non-zero on failure
  */
 int
-drv2605_config(struct drv2605 *drv2605, struct drv2605_cfg *cfg);
+drv2605_config(struct driver_itf *itf, struct drv2605_cfg *cfg);
 
 
 #if MYNEWT_VAL(DRV2605_CLI)
@@ -112,74 +111,74 @@ int
 drv2605_default_cal(struct drv2605_cal *cal);
 
 /**
- * Get chip ID from the sensor
+ * Get chip ID from the device
  *
- * @param The sensor interface
+ * @param itf The device interface
  * @param Pointer to the variable to fill up chip ID in
  * @return 0 on success, non-zero on failure
  */
 int
-drv2605_get_chip_id(struct sensor_itf *itf, uint8_t *id);
+drv2605_get_chip_id(struct driver_itf *itf, uint8_t *id);
 
 /**
- * Get chip ID from the sensor
+ * Get chip ID from the device
  *
- * @param The sensor interface
+ * @param itf The device interface
  * @param Pointer to the buffer of rom library selections
  * @param Size of the rom buffer (max 8)
  * @return 0 on success, non-zero on failure
  */
 int
-drv2605_load_rom(struct sensor_itf *itf, uint8_t *buffer, size_t length);
+drv2605_load_rom(struct driver_itf *itf, uint8_t *buffer, size_t length);
 
 /**
  * Load value for rtp playback to device
  *
- * @param The sensor interface
+ * @param itf The device interface
  * @param Value to load
  * @return 0 on success, non-zero on failure
  */
 int
-drv2605_load_rtp(struct sensor_itf *itf, uint8_t value);
+drv2605_load_rtp(struct driver_itf *itf, uint8_t value);
 
 /**
  * Trigger preloaded rom selections
  *
- * @param The sensor interface
+ * @param itf The device interface
  * @return 0 on success, non-zero on failure
  */
 int
-drv2605_trigger_rom(struct sensor_itf *itf);
+drv2605_trigger_rom(struct driver_itf *itf);
 
 /**
  * Get rom playback status from device
  *
- * @param The sensor interface
+ * @param itf The device interface
  * @param Pointer to the variable to fill up status in
  * @return 0 on success, non-zero on failure
  */
 int
-drv2605_rom_busy(struct sensor_itf *itf, bool *status);
+drv2605_rom_busy(struct driver_itf *itf, bool *status);
 
 /**
  * Set the current power mode from device.
  *
- * @param The sensor interface
+ * @param itf The device interface
  * @param drv2605_power_mode to send to device
  * @return 0 on success, non-zero on failure
  */
 int
-drv2605_set_power_mode(struct sensor_itf *itf, enum drv2605_power_mode power_mode);
+drv2605_set_power_mode(struct driver_itf *itf, enum drv2605_power_mode power_mode);
 
 /**
  * Get the current power mode from device
  *
- * @param The sensor interface
+ * @param itf The device interface
  * @param Pointer to drv2605_power_mode enum
  * @return 0 on success, non-zero on failure
  */
 int
-drv2605_get_power_mode(struct sensor_itf *itf, enum drv2605_power_mode *power_mode);
+drv2605_get_power_mode(struct driver_itf *itf, enum drv2605_power_mode *power_mode);
 
 #ifdef __cplusplus
 }

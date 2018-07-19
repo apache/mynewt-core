@@ -60,14 +60,14 @@ STATS_SECT_DECL(drv2605_stat_section) g_drv2605stats;
 /**
  * Writes a single byte to the specified register
  *
- * @param The Sensor interface
- * @param The register address to write to
- * @param The value to write
+ * @param itf The device interface
+ * @param reg The register address to write to
+ * @param value The value to write
  *
  * @return 0 on success, non-zero error on failure.
  */
 int
-drv2605_write8(struct sensor_itf *itf, uint8_t reg, uint8_t value)
+drv2605_write8(struct driver_itf *itf, uint8_t reg, uint8_t value)
 {
     int rc;
     uint8_t payload[2] = { reg, value};
@@ -94,14 +94,15 @@ drv2605_write8(struct sensor_itf *itf, uint8_t reg, uint8_t value)
 /**
  * Writes multiple bytes starting at the specified register (MAX: 8 bytes)
  *
- * @param The Sensor interface
- * @param The register address to write to
- * @param The data buffer to write from
- *
+ * @param itf The device interface
+ * @param reg The register address to write to
+ * @param buffer The data buffer to write from
+ * @param len Length of the buffer
+ * 
  * @return 0 on success, non-zero error on failure.
  */
 int
-drv2605_writelen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
+drv2605_writelen(struct driver_itf *itf, uint8_t reg, uint8_t *buffer,
                       uint8_t len)
 {
     int rc;
@@ -139,14 +140,14 @@ err:
 /**
  * Reads a single byte from the specified register
  *
- * @param The Sensor interface
- * @param The register address to read from
- * @param Pointer to where the register value should be written
+ * @param itf The device interface
+ * @param reg The register address to read from
+ * @param value Pointer to where the register value should be written
  *
  * @return 0 on success, non-zero error on failure.
  */
 int
-drv2605_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
+drv2605_read8(struct driver_itf *itf, uint8_t reg, uint8_t *value)
 {
     int rc;
     uint8_t payload;
@@ -187,17 +188,17 @@ err:
 }
 
 /**
- * Read data from the sensor of variable length (MAX: 8 bytes)
+ * Read data from the device of variable length (MAX: 8 bytes)
  *
- * @param The Sensor interface
- * @param Register to read from
- * @param Buffer to read into
- * @param Length of the buffer
+ * @param itf The device interface
+ * @param reg Register to read from
+ * @param buffer Buffer to read into
+ * @param len Length of the buffer
  *
  * @return 0 on success and non-zero on failure
  */
 int
-drv2605_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
+drv2605_readlen(struct driver_itf *itf, uint8_t reg, uint8_t *buffer,
                uint8_t len)
 {
     int rc;
@@ -272,8 +273,6 @@ drv2605_default_cal(struct drv2605_cal *cal)
 int
 drv2605_init(struct os_dev *dev, void *arg)
 {
-    struct drv2605 *drv2605;
-    struct sensor *sensor;
     uint8_t id;
     int rc;
 
@@ -281,10 +280,6 @@ drv2605_init(struct os_dev *dev, void *arg)
         rc = SYS_ENODEV;
         goto err;
     }
-
-    drv2605 = (struct drv2605 *) dev;
-
-    sensor = &drv2605->sensor;
 
 #if MYNEWT_VAL(DRV2605_STATS)
     /* Initialise the stats entry */
@@ -297,17 +292,6 @@ drv2605_init(struct os_dev *dev, void *arg)
     rc = stats_register(dev->od_name, STATS_HDR(g_drv2605stats));
     SYSINIT_PANIC_ASSERT(rc == 0);
 #endif
-
-    rc = sensor_init(sensor, dev);
-    if (rc != 0) {
-        goto err;
-    }
-
-    /* Set the interface */
-    rc = sensor_set_interface(sensor, arg);
-    if (rc) {
-        goto err;
-    }
 
     /* Check if we can read the chip address */
     rc = drv2605_get_chip_id(arg, &id);
@@ -342,14 +326,14 @@ err:
 }
 
 /**
- * Get chip ID from the sensor
+ * Get chip ID from the device
  *
- * @param The sensor interface
+ * @param The driver interface
  * @param Pointer to the variable to fill up chip ID in
  * @return 0 on success, non-zero on failure
  */
 int
-drv2605_get_chip_id(struct sensor_itf *itf, uint8_t *id)
+drv2605_get_chip_id(struct driver_itf *itf, uint8_t *id)
 {
     int rc;
     uint8_t idtmp;
@@ -372,7 +356,7 @@ err:
 // if your motor is not SECURED to a mass.  It can't be floating on your desk
 // even for prototyping
 int
-drv2605_mode_diagnostic(struct sensor_itf *itf)
+drv2605_mode_diagnostic(struct driver_itf *itf)
 {
     int rc;
     uint8_t temp;
@@ -427,7 +411,7 @@ err:
 
 
 int
-drv2605_send_defaults(struct sensor_itf *itf, struct drv2605_cfg *cfg)
+drv2605_send_defaults(struct driver_itf *itf, struct drv2605_cfg *cfg)
 {
     int rc;
 
@@ -503,7 +487,7 @@ err:
 }
 
 int
-drv2605_get_power_mode(struct sensor_itf *itf, enum drv2605_power_mode *power_mode)
+drv2605_get_power_mode(struct driver_itf *itf, enum drv2605_power_mode *power_mode)
 {
     int rc;
     uint8_t last_mode;
@@ -533,7 +517,7 @@ err:
 }
 
 int
-drv2605_set_standby(struct sensor_itf *itf, bool standby)
+drv2605_set_standby(struct driver_itf *itf, bool standby)
 {
     int rc;
     uint8_t last_mode;
@@ -561,7 +545,7 @@ err:
 }
 
 int
-drv2605_set_power_mode(struct sensor_itf *itf, enum drv2605_power_mode power_mode)
+drv2605_set_power_mode(struct driver_itf *itf, enum drv2605_power_mode power_mode)
 {
     // TODO: any hiccup in writing enable if already active? dont like the idea of reading it first though..
     switch(power_mode) {
@@ -626,7 +610,7 @@ err:
 
 // if succesful calibration overrites DRV2605_BEMF_GAIN, DRV2605_CALIBRATED_COMP and DRV2605_CALIBRATED_BEMF
 int
-drv2605_mode_calibrate(struct sensor_itf *itf, struct drv2605_cal *cal)
+drv2605_mode_calibrate(struct driver_itf *itf, struct drv2605_cal *cal)
 {
     int rc;
     uint8_t temp;
@@ -720,7 +704,7 @@ err:
 }
 
 int
-drv2605_mode_rom(struct sensor_itf *itf)
+drv2605_mode_rom(struct driver_itf *itf)
 {
     int rc;
 
@@ -735,7 +719,7 @@ err:
 }
 
 int
-drv2605_mode_rtp(struct sensor_itf *itf)
+drv2605_mode_rtp(struct driver_itf *itf)
 {
     int rc;
 
@@ -750,7 +734,7 @@ err:
 }
 
 int
-drv2605_mode_pwm(struct sensor_itf *itf)
+drv2605_mode_pwm(struct driver_itf *itf)
 {
     int rc;
 
@@ -772,7 +756,7 @@ err:
 // NOTE reset sets mode back to standby
 // obviously you must _configure again after a reset
 int
-drv2605_mode_reset(struct sensor_itf *itf)
+drv2605_mode_reset(struct driver_itf *itf)
 {
     int rc;
     uint8_t temp;
@@ -805,12 +789,9 @@ err:
 // the device is always left in DRV2605_POWER_STANDBY state no device state
 // is guaranteed for error returns
 int
-drv2605_config(struct drv2605 *drv2605, struct drv2605_cfg *cfg)
+drv2605_config(struct driver_itf *itf, struct drv2605_cfg *cfg)
 {
     int rc;
-    struct sensor_itf *itf;
-
-    itf = SENSOR_GET_ITF(&(drv2605->sensor));
 
     rc = hal_gpio_init_out(itf->si_cs_pin, 1);
     if (rc) {
@@ -843,7 +824,7 @@ drv2605_config(struct drv2605 *drv2605, struct drv2605_cfg *cfg)
 }
 
 int
-drv2605_load_rom(struct sensor_itf *itf, uint8_t* wav_ids, size_t len)
+drv2605_load_rom(struct driver_itf *itf, uint8_t* wav_ids, size_t len)
 {
     int rc;
 
@@ -863,7 +844,7 @@ err:
 }
 
 int
-drv2605_trigger_rom(struct sensor_itf *itf)
+drv2605_trigger_rom(struct driver_itf *itf)
 {
     return drv2605_write8(itf, DRV2605_GO_ADDR, DRV2605_GO_GO);
 }
@@ -871,7 +852,7 @@ drv2605_trigger_rom(struct sensor_itf *itf)
 // theres sadly no interrupt for knowing when long running roms are finished, youll need to block on this or set a callout
 // to poll for completion
 int
-drv2605_rom_busy(struct sensor_itf *itf, bool *status)
+drv2605_rom_busy(struct driver_itf *itf, bool *status)
 {
     int rc;
     uint8_t temp;
@@ -888,7 +869,7 @@ err:
 }
 
 int
-drv2605_load_rtp(struct sensor_itf *itf, uint8_t value)
+drv2605_load_rtp(struct driver_itf *itf, uint8_t value)
 {
     int rc;
 

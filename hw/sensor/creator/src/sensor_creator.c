@@ -183,9 +183,9 @@ static struct sensor_itf spi_0_itf_bme = {
 #endif
 
 #if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(DRV2605_OFB)
-static struct sensor_itf i2c_0_itf_drv = {
-    .si_type = SENSOR_ITF_I2C,
-    .si_num  = 0,
+static struct driver_itf i2c_0_itf_drv = {
+    .si_type = DRIVER_ITF_I2C,
+    .si_num  = MYNEWT_VAL(DRV2605_SHELL_ITF_NUM),
     .si_addr = MYNEWT_VAL(DRV2605_SHELL_ITF_ADDR),
     .si_cs_pin = MYNEWT_VAL(DRV2605_EN_PIN)
 };
