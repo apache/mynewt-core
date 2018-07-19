@@ -1,4 +1,3 @@
-#
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -17,26 +16,11 @@
 # under the License.
 #
 
-pkg.name: hw/sensor
-pkg.description: Sensor Interface
-pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
-pkg.homepage: "http://mynewt.apache.org/"
-pkg.keywords:
+# Package: hw/driver
 
-pkg.deps:
-    - "@apache-mynewt-core/kernel/os"
-    - "@apache-mynewt-core/hw/driver"
+syscfg.defs:
 
-pkg.deps.SENSOR_OIC:
-    - "@apache-mynewt-core/net/oic"
-
-pkg.deps.SENSOR_CLI:
-    - "@apache-mynewt-core/sys/shell"
-    - "@apache-mynewt-core/util/parse"
-
-pkg.req_apis:
-    - console
-
-pkg.init:
-    sensor_pkg_init: 501
-
+    DRIVER_MAX_INTERRUPTS_PINS:
+         desecrition: 'Max number of interupts configuration for the driver.
+                This should be max from all the sensors attached to the system'
+         value: 2

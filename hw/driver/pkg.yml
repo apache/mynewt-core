@@ -17,26 +17,11 @@
 # under the License.
 #
 
-pkg.name: hw/sensor
-pkg.description: Sensor Interface
+pkg.name: hw/driver
+pkg.description: Driver Interface
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps:
     - "@apache-mynewt-core/kernel/os"
-    - "@apache-mynewt-core/hw/driver"
-
-pkg.deps.SENSOR_OIC:
-    - "@apache-mynewt-core/net/oic"
-
-pkg.deps.SENSOR_CLI:
-    - "@apache-mynewt-core/sys/shell"
-    - "@apache-mynewt-core/util/parse"
-
-pkg.req_apis:
-    - console
-
-pkg.init:
-    sensor_pkg_init: 501
-

@@ -22,6 +22,7 @@
 
 #include <string.h>
 #include "os/mynewt.h"
+#include "driver/driver.h"
 
 #if MYNEWT_VAL(SENSOR_OIC)
 #include "oic/oc_ri.h"
@@ -144,13 +145,6 @@ typedef enum {
  * 32-bit floating point number triplet.
  */
 #define SENSOR_VALUE_TYPE_FLOAT_TRIPLET (4)
-
-/**
- * Sensor interfaces
- */
-#define SENSOR_ITF_SPI    (0)
-#define SENSOR_ITF_I2C    (1)
-#define SENSOR_ITF_UART   (2)
 
 /**
  * Sensor threshold constants
@@ -486,41 +480,6 @@ struct sensor_timestamp {
     uint32_t st_cputime;
 };
 
-struct sensor_int {
-    uint8_t host_pin;
-    uint8_t device_pin;
-    uint8_t active;
-};
-
-struct sensor_itf {
-
-    /* Sensor interface type */
-    uint8_t si_type;
-
-    /* Sensor interface number */
-    uint8_t si_num;
-
-    /* Sensor CS pin */
-    uint8_t si_cs_pin;
-
-    /* Sensor address */
-    uint16_t si_addr;
-
-    /* Sensor interface low int pin */
-    uint8_t si_low_pin;
-
-    /* Sensor interface high int pin */
-    uint8_t si_high_pin;
-
-    /* Mutex for interface access */
-    struct os_mutex *si_lock;
-
-    /* Sensor interface interrupts pins */
-    /* XXX We should probably remove low/high pins and replace it with those
-     */
-    struct sensor_int si_ints[MYNEWT_VAL(SENSOR_MAX_INTERRUPTS_PINS)];
-};
-
 /*
  * Return the OS device structure corresponding to this sensor
  */
@@ -579,8 +538,8 @@ struct sensor {
     /* Sensor last reading timestamp */
     struct sensor_timestamp s_sts;
 
-    /* Sensor interface structure */
-    struct sensor_itf s_itf;
+    /* Driver interface structure */
+    struct driver_itf s_itf;
 
     /* OS event for interrupt handling */
     struct os_event s_interrupt_evt;
@@ -606,26 +565,6 @@ struct sensor {
     SLIST_ENTRY(sensor) s_next;
 };
 
-/**
- * Lock access to the sensor_itf specified by si.  Blocks until lock acquired.
- *
- * @param si The sensor_itf to lock
- * @param timeout The timeout
- *
- * @return 0 on success, non-zero on failure.
- */
-int
-sensor_itf_lock(struct sensor_itf *si, os_time_t timeout);
-
-/**
- * Unlock access to the sensor_itf specified by si.
- *
- * @param si The sensor_itf to unlock access to
- *
- * @return 0 on success, non-zero on failure.
- */
-void
-sensor_itf_unlock(struct sensor_itf *si);
 
 /**
  * Initialize a sensor
@@ -814,7 +753,7 @@ sensor_check_type(struct sensor *sensor, sensor_type_t type)
  * @param s_itf The interface type to set
  */
 static inline int
-sensor_set_interface(struct sensor *sensor, struct sensor_itf *s_itf)
+sensor_set_interface(struct sensor *sensor, struct driver_itf *s_itf)
 {
     memcpy(&sensor->s_itf, s_itf, sizeof(*s_itf));
     return (0);
