@@ -93,7 +93,7 @@ static const struct sensor_driver g_lis2dh12_sensor_driver = {
  * @return 0 on success, non-zero on failure
  */
 static int
-lis2dh12_i2c_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
+lis2dh12_i2c_readlen(struct driver_itf *itf, uint8_t addr, uint8_t *buffer,
                      uint8_t len)
 {
     int rc;
@@ -150,7 +150,7 @@ err:
  * @return 0 on success, non-zero on failure
  */
 static int
-lis2dh12_spi_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
+lis2dh12_spi_readlen(struct driver_itf *itf, uint8_t addr, uint8_t *payload,
                      uint8_t len)
 {
     int i;
@@ -216,7 +216,7 @@ err:
  * @return 0 on success, non-zero on failure
  */
 static int
-lis2dh12_i2c_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
+lis2dh12_i2c_writelen(struct driver_itf *itf, uint8_t addr, uint8_t *buffer,
                       uint8_t len)
 {
     int rc;
@@ -262,7 +262,7 @@ err:
  * @return 0 on success, non-zero on failure
  */
 static int
-lis2dh12_spi_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
+lis2dh12_spi_writelen(struct driver_itf *itf, uint8_t addr, uint8_t *payload,
                       uint8_t len)
 {
     int i;
@@ -323,23 +323,23 @@ err:
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dh12_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
+lis2dh12_writelen(struct driver_itf *itf, uint8_t addr, uint8_t *payload,
                   uint8_t len)
 {
     int rc;
 
-    rc = sensor_itf_lock(itf, MYNEWT_VAL(LIS2DH12_ITF_LOCK_TMO));
+    rc = driver_itf_lock(itf, MYNEWT_VAL(LIS2DH12_ITF_LOCK_TMO));
     if (rc) {
         return rc;
     }
 
-    if (itf->si_type == SENSOR_ITF_I2C) {
+    if (itf->si_type == DRIVER_ITF_I2C) {
         rc = lis2dh12_i2c_writelen(itf, addr, payload, len);
     } else {
         rc = lis2dh12_spi_writelen(itf, addr, payload, len);
     }
 
-    sensor_itf_unlock(itf);
+    driver_itf_unlock(itf);
 
     return rc;
 }
@@ -354,23 +354,23 @@ lis2dh12_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dh12_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
+lis2dh12_readlen(struct driver_itf *itf, uint8_t addr, uint8_t *payload,
                  uint8_t len)
 {
     int rc;
 
-    rc = sensor_itf_lock(itf, MYNEWT_VAL(LIS2DH12_ITF_LOCK_TMO));
+    rc = driver_itf_lock(itf, MYNEWT_VAL(LIS2DH12_ITF_LOCK_TMO));
     if (rc) {
         return rc;
     }
 
-    if (itf->si_type == SENSOR_ITF_I2C) {
+    if (itf->si_type == DRIVER_ITF_I2C) {
         rc = lis2dh12_i2c_readlen(itf, addr, payload, len);
     } else {
         rc = lis2dh12_spi_readlen(itf, addr, payload, len);
     }
 
-    sensor_itf_unlock(itf);
+    driver_itf_unlock(itf);
 
     return rc;
 }
@@ -381,7 +381,7 @@ lis2dh12_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
  * @param The sensor interface
  */
 int
-lis2dh12_reset(struct sensor_itf *itf)
+lis2dh12_reset(struct driver_itf *itf)
 {
     int rc;
     uint8_t reg;
@@ -412,7 +412,7 @@ err:
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dh12_pull_up_disc(struct sensor_itf *itf, uint8_t disconnect)
+lis2dh12_pull_up_disc(struct driver_itf *itf, uint8_t disconnect)
 {
     uint8_t reg;
 
@@ -432,7 +432,7 @@ lis2dh12_pull_up_disc(struct sensor_itf *itf, uint8_t disconnect)
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dh12_chan_enable(struct sensor_itf *itf, uint8_t chan)
+lis2dh12_chan_enable(struct driver_itf *itf, uint8_t chan)
 {
     uint8_t reg;
     int rc;
@@ -458,7 +458,7 @@ err:
  * @param ptr to chip id to be filled up
  */
 int
-lis2dh12_get_chip_id(struct sensor_itf *itf, uint8_t *chip_id)
+lis2dh12_get_chip_id(struct driver_itf *itf, uint8_t *chip_id)
 {
     uint8_t reg;
     int rc;
@@ -484,7 +484,7 @@ err:
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dh12_set_full_scale(struct sensor_itf *itf, uint8_t fs)
+lis2dh12_set_full_scale(struct driver_itf *itf, uint8_t fs)
 {
     int rc;
     uint8_t reg;
@@ -523,7 +523,7 @@ err:
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dh12_get_full_scale(struct sensor_itf *itf, uint8_t *fs)
+lis2dh12_get_full_scale(struct driver_itf *itf, uint8_t *fs)
 {
     int rc;
     uint8_t reg;
@@ -574,7 +574,7 @@ lis2dh12_calc_acc_mg(float acc_ms2, int16_t *acc_mg)
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dh12_set_rate(struct sensor_itf *itf, uint8_t rate)
+lis2dh12_set_rate(struct driver_itf *itf, uint8_t rate)
 {
     int rc;
     uint8_t reg;
@@ -625,7 +625,7 @@ err:
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dh12_get_rate(struct sensor_itf *itf, uint8_t *rate)
+lis2dh12_get_rate(struct driver_itf *itf, uint8_t *rate)
 {
     int rc;
     uint8_t reg;
@@ -650,7 +650,7 @@ err:
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dh12_set_fifo_mode(struct sensor_itf *itf, uint8_t mode)
+lis2dh12_set_fifo_mode(struct driver_itf *itf, uint8_t mode)
 {
     int rc;
     uint8_t reg;
@@ -704,7 +704,7 @@ err:
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dh12_get_op_mode(struct sensor_itf *itf, uint8_t *mode)
+lis2dh12_get_op_mode(struct driver_itf *itf, uint8_t *mode)
 {
     int rc;
     uint8_t reg1;
@@ -739,7 +739,7 @@ err:
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dh12_hpf_cfg(struct sensor_itf *itf, uint8_t reg)
+lis2dh12_hpf_cfg(struct driver_itf *itf, uint8_t reg)
 {
     return lis2dh12_writelen(itf, LIS2DH12_REG_CTRL_REG2, &reg, 1);
 }
@@ -753,7 +753,7 @@ lis2dh12_hpf_cfg(struct sensor_itf *itf, uint8_t reg)
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dh12_set_op_mode(struct sensor_itf *itf, uint8_t mode)
+lis2dh12_set_op_mode(struct driver_itf *itf, uint8_t mode)
 {
     int rc;
     uint8_t reg;
@@ -802,7 +802,7 @@ err:
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dh12_get_data(struct sensor_itf *itf, int16_t *x, int16_t *y, int16_t *z)
+lis2dh12_get_data(struct driver_itf *itf, int16_t *x, int16_t *y, int16_t *z)
 {
     int rc;
     uint8_t payload[6] = {0};
@@ -919,7 +919,7 @@ lis2dh12_init(struct os_dev *dev, void *arg)
         goto err;
     }
 
-    if (sensor->s_itf.si_type == SENSOR_ITF_SPI) {
+    if (sensor->s_itf.si_type == DRIVER_ITF_SPI) {
 
         rc = hal_spi_disable(sensor->s_itf.si_num);
         if (rc) {
@@ -959,7 +959,7 @@ err:
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dh12_set_self_test_mode(struct sensor_itf *itf, uint8_t mode)
+lis2dh12_set_self_test_mode(struct driver_itf *itf, uint8_t mode)
 {
     uint8_t reg;
     int rc;
@@ -984,7 +984,7 @@ lis2dh12_sensor_read(struct sensor *sensor, sensor_type_t type,
         sensor_data_func_t data_func, void *data_arg, uint32_t timeout)
 {
     struct sensor_accel_data sad;
-    struct sensor_itf *itf;
+    struct driver_itf *itf;
     int16_t x, y ,z;
     float fx, fy ,fz;
     int rc;
@@ -999,7 +999,7 @@ lis2dh12_sensor_read(struct sensor *sensor, sensor_type_t type,
 
     x = y = z = 0;
 
-    if (itf->si_type == SENSOR_ITF_SPI) {
+    if (itf->si_type == DRIVER_ITF_SPI) {
 
         rc = hal_spi_disable(sensor->s_itf.si_num);
         if (rc) {
@@ -1076,7 +1076,7 @@ err:
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dh12_set_int2_thresh(struct sensor_itf *itf, uint8_t ths)
+lis2dh12_set_int2_thresh(struct driver_itf *itf, uint8_t ths)
 {
     int rc;
 
@@ -1099,7 +1099,7 @@ err:
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dh12_set_int1_thresh(struct sensor_itf *itf, uint8_t ths)
+lis2dh12_set_int1_thresh(struct driver_itf *itf, uint8_t ths)
 {
 
     int rc;
@@ -1120,7 +1120,7 @@ err:
  * @param the sensor interface
  */
 int
-lis2dh12_clear_int2(struct sensor_itf *itf)
+lis2dh12_clear_int2(struct driver_itf *itf)
 {
     uint8_t reg;
 
@@ -1133,7 +1133,7 @@ lis2dh12_clear_int2(struct sensor_itf *itf)
  * @param the sensor interface
  */
 int
-lis2dh12_clear_int1(struct sensor_itf *itf)
+lis2dh12_clear_int1(struct driver_itf *itf)
 {
     uint8_t reg;
 
@@ -1147,7 +1147,7 @@ lis2dh12_clear_int1(struct sensor_itf *itf)
  * @param events to enable int for
  */
 int
-lis2dh12_enable_int2(struct sensor_itf *itf, uint8_t *reg)
+lis2dh12_enable_int2(struct driver_itf *itf, uint8_t *reg)
 {
     return lis2dh12_writelen(itf, LIS2DH12_REG_INT2_CFG, reg, 1);
 }
@@ -1158,7 +1158,7 @@ lis2dh12_enable_int2(struct sensor_itf *itf, uint8_t *reg)
  * @param the sensor interface
  */
 int
-lis2dh12_latch_int1(struct sensor_itf *itf)
+lis2dh12_latch_int1(struct driver_itf *itf)
 {
     uint8_t reg;
     int rc;
@@ -1186,7 +1186,7 @@ err:
  * @param the sensor interface
  */
 int
-lis2dh12_latch_int2(struct sensor_itf *itf)
+lis2dh12_latch_int2(struct driver_itf *itf)
 {
     uint8_t reg;
     int rc;
@@ -1216,7 +1216,7 @@ err:
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dh12_set_int1_pin_cfg(struct sensor_itf *itf, uint8_t cfg)
+lis2dh12_set_int1_pin_cfg(struct driver_itf *itf, uint8_t cfg)
 {
     uint8_t reg;
 
@@ -1232,7 +1232,7 @@ lis2dh12_set_int1_pin_cfg(struct sensor_itf *itf, uint8_t cfg)
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dh12_set_int1_duration(struct sensor_itf *itf, uint8_t dur)
+lis2dh12_set_int1_duration(struct driver_itf *itf, uint8_t dur)
 {
     return lis2dh12_writelen(itf, LIS2DH12_REG_INT1_DURATION, &dur, 1);
 }
@@ -1244,7 +1244,7 @@ lis2dh12_set_int1_duration(struct sensor_itf *itf, uint8_t dur)
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dh12_set_int2_duration(struct sensor_itf *itf, uint8_t dur)
+lis2dh12_set_int2_duration(struct driver_itf *itf, uint8_t dur)
 {
     return lis2dh12_writelen(itf, LIS2DH12_REG_INT2_DURATION, &dur, 1);
 }
@@ -1257,7 +1257,7 @@ lis2dh12_set_int2_duration(struct sensor_itf *itf, uint8_t dur)
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dh12_set_int2_pin_cfg(struct sensor_itf *itf, uint8_t cfg)
+lis2dh12_set_int2_pin_cfg(struct driver_itf *itf, uint8_t cfg)
 {
     return lis2dh12_writelen(itf, LIS2DH12_REG_CTRL_REG6, &cfg, 1);
 }
@@ -1269,7 +1269,7 @@ lis2dh12_set_int2_pin_cfg(struct sensor_itf *itf, uint8_t cfg)
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dh12_disable_int1(struct sensor_itf *itf)
+lis2dh12_disable_int1(struct driver_itf *itf)
 {
     uint8_t reg;
     int rc;
@@ -1296,7 +1296,7 @@ err:
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dh12_disable_int2(struct sensor_itf *itf)
+lis2dh12_disable_int2(struct driver_itf *itf)
 {
     uint8_t reg;
     int rc;
@@ -1323,7 +1323,7 @@ err:
  * @param events to enable int for
  */
 int
-lis2dh12_enable_int1(struct sensor_itf *itf, uint8_t *reg)
+lis2dh12_enable_int1(struct driver_itf *itf, uint8_t *reg)
 {
     return lis2dh12_writelen(itf, LIS2DH12_REG_INT1_CFG, reg, 1);
 }
@@ -1353,7 +1353,7 @@ lis2dh12_sensor_clear_low_thresh(struct sensor *sensor,
                                  sensor_type_t type)
 {
     int rc;
-    struct sensor_itf *itf;
+    struct driver_itf *itf;
 
     itf = SENSOR_GET_ITF(sensor);
 
@@ -1388,7 +1388,7 @@ lis2dh12_sensor_clear_high_thresh(struct sensor *sensor,
                                   sensor_type_t type)
 {
     int rc;
-    struct sensor_itf *itf;
+    struct driver_itf *itf;
 
     itf = SENSOR_GET_ITF(sensor);
 
@@ -1410,7 +1410,7 @@ err:
 }
 
 static int
-lis2dh12_set_low_thresh(struct sensor_itf *itf,
+lis2dh12_set_low_thresh(struct driver_itf *itf,
                         sensor_data_t low_thresh,
                         uint8_t fs,
                         struct sensor_type_traits *stt)
@@ -1495,7 +1495,7 @@ err:
 }
 
 static int
-lis2dh12_set_high_thresh(struct sensor_itf *itf,
+lis2dh12_set_high_thresh(struct driver_itf *itf,
                          sensor_data_t high_thresh,
                          uint8_t fs,
                          struct sensor_type_traits *stt)
@@ -1594,7 +1594,7 @@ lis2dh12_sensor_set_trigger_thresh(struct sensor *sensor,
 {
     int rc;
     uint8_t fs;
-    struct sensor_itf *itf;
+    struct driver_itf *itf;
     sensor_data_t low_thresh;
     sensor_data_t high_thresh;
 
@@ -1654,14 +1654,14 @@ int
 lis2dh12_config(struct lis2dh12 *lis2dh12, struct lis2dh12_cfg *cfg)
 {
     int rc;
-    struct sensor_itf *itf;
+    struct driver_itf *itf;
     uint8_t chip_id;
     struct sensor *sensor;
 
     itf = SENSOR_GET_ITF(&(lis2dh12->sensor));
     sensor = &(lis2dh12->sensor);
 
-    if (itf->si_type == SENSOR_ITF_SPI) {
+    if (itf->si_type == DRIVER_ITF_SPI) {
 
         rc = hal_spi_disable(sensor->s_itf.si_num);
         if (rc) {

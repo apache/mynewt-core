@@ -40,7 +40,7 @@ static struct shell_cmd lis2dw12_shell_cmd_struct = {
     .sc_cmd_func = lis2dw12_shell_cmd
 };
 
-static struct sensor_itf g_sensor_itf = {
+static struct driver_itf g_driver_itf = {
     .si_type = MYNEWT_VAL(LIS2DW12_SHELL_ITF_TYPE),
     .si_num = MYNEWT_VAL(LIS2DW12_SHELL_ITF_NUM),
     .si_cs_pin = MYNEWT_VAL(LIS2DW12_SHELL_CSPIN),
@@ -100,7 +100,7 @@ lis2dw12_shell_cmd_read_chipid(int argc, char **argv)
     int rc;
     uint8_t chipid;
 
-    rc = lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_WHO_AM_I, &chipid);
+    rc = lis2dw12_read8(&g_driver_itf, LIS2DW12_REG_WHO_AM_I, &chipid);
     if (rc) {
         goto err;
     }
@@ -138,12 +138,12 @@ lis2dw12_shell_cmd_read(int argc, char **argv)
 
     while(samples--) {
 
-        rc = lis2dw12_get_fs(&g_sensor_itf, &fs);
+        rc = lis2dw12_get_fs(&g_driver_itf, &fs);
         if (rc) {
             return rc;
         }
         
-        rc = lis2dw12_get_data(&g_sensor_itf, fs,&x, &y, &z);
+        rc = lis2dw12_get_data(&g_driver_itf, fs,&x, &y, &z);
         if (rc) {
             console_printf("Read failed: %d\n", rc);
             return rc;
@@ -172,63 +172,63 @@ lis2dw12_shell_cmd_dump(int argc, char **argv)
     
     /* Dump all the register values for debug purposes */
     val = 0;
-    assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_OUT_TEMP_L, &val));
+    assert(0 == lis2dw12_read8(&g_driver_itf, LIS2DW12_REG_OUT_TEMP_L, &val));
     console_printf("0x%02X (OUT_TEMP_L): 0x%02X\n", LIS2DW12_REG_OUT_TEMP_L, val);
-    assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_OUT_TEMP_H, &val));
+    assert(0 == lis2dw12_read8(&g_driver_itf, LIS2DW12_REG_OUT_TEMP_H, &val));
     console_printf("0x%02X (OUT_TEMP_H): 0x%02X\n", LIS2DW12_REG_OUT_TEMP_H, val);
-    assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_WHO_AM_I, &val));
+    assert(0 == lis2dw12_read8(&g_driver_itf, LIS2DW12_REG_WHO_AM_I, &val));
     console_printf("0x%02X (WHO_AM_I): 0x%02X\n", LIS2DW12_REG_WHO_AM_I, val);
-    assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_CTRL_REG1, &val));
+    assert(0 == lis2dw12_read8(&g_driver_itf, LIS2DW12_REG_CTRL_REG1, &val));
     console_printf("0x%02X (CTRL1): 0x%02X\n", LIS2DW12_REG_CTRL_REG1, val);
-    assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_CTRL_REG2, &val));
+    assert(0 == lis2dw12_read8(&g_driver_itf, LIS2DW12_REG_CTRL_REG2, &val));
     console_printf("0x%02X (CTRL2): 0x%02X\n", LIS2DW12_REG_CTRL_REG2, val);
-    assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_CTRL_REG3, &val));
+    assert(0 == lis2dw12_read8(&g_driver_itf, LIS2DW12_REG_CTRL_REG3, &val));
     console_printf("0x%02X (CTRL3): 0x%02X\n", LIS2DW12_REG_CTRL_REG3, val);
-    assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_CTRL_REG4, &val));
+    assert(0 == lis2dw12_read8(&g_driver_itf, LIS2DW12_REG_CTRL_REG4, &val));
     console_printf("0x%02X (CTRL4): 0x%02X\n", LIS2DW12_REG_CTRL_REG4, val);
-    assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_CTRL_REG5, &val));
+    assert(0 == lis2dw12_read8(&g_driver_itf, LIS2DW12_REG_CTRL_REG5, &val));
     console_printf("0x%02X (CTRL5): 0x%02X\n", LIS2DW12_REG_CTRL_REG5, val);
-    assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_CTRL_REG6, &val));
+    assert(0 == lis2dw12_read8(&g_driver_itf, LIS2DW12_REG_CTRL_REG6, &val));
     console_printf("0x%02X (CTRL6): 0x%02X\n", LIS2DW12_REG_CTRL_REG6, val);
-    assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_TEMP_OUT, &val));
+    assert(0 == lis2dw12_read8(&g_driver_itf, LIS2DW12_REG_TEMP_OUT, &val));
     console_printf("0x%02X (TEMP_OUT): 0x%02X\n", LIS2DW12_REG_TEMP_OUT, val);
-    assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_STATUS_REG, &val));
+    assert(0 == lis2dw12_read8(&g_driver_itf, LIS2DW12_REG_STATUS_REG, &val));
     console_printf("0x%02X (STATUS): 0x%02X\n", LIS2DW12_REG_STATUS_REG, val);
-    assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_OUT_X_L, &val));
+    assert(0 == lis2dw12_read8(&g_driver_itf, LIS2DW12_REG_OUT_X_L, &val));
     console_printf("0x%02X (OUT_X_L): 0x%02X\n", LIS2DW12_REG_OUT_X_L, val);
-    assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_OUT_X_H, &val));
+    assert(0 == lis2dw12_read8(&g_driver_itf, LIS2DW12_REG_OUT_X_H, &val));
     console_printf("0x%02X (OUT_X_H): 0x%02X\n", LIS2DW12_REG_OUT_X_H, val);
-    assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_OUT_Y_L, &val));
+    assert(0 == lis2dw12_read8(&g_driver_itf, LIS2DW12_REG_OUT_Y_L, &val));
     console_printf("0x%02X (OUT_Y_L): 0x%02X\n", LIS2DW12_REG_OUT_Y_L, val);
-    assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_OUT_Y_H, &val));
+    assert(0 == lis2dw12_read8(&g_driver_itf, LIS2DW12_REG_OUT_Y_H, &val));
     console_printf("0x%02X (OUT_Y_H): 0x%02X\n", LIS2DW12_REG_OUT_Y_H, val);
-    assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_OUT_Z_L, &val));
+    assert(0 == lis2dw12_read8(&g_driver_itf, LIS2DW12_REG_OUT_Z_L, &val));
     console_printf("0x%02X (OUT_Z_L): 0x%02X\n", LIS2DW12_REG_OUT_Z_L, val);
-    assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_OUT_Z_H, &val));
+    assert(0 == lis2dw12_read8(&g_driver_itf, LIS2DW12_REG_OUT_Z_H, &val));
     console_printf("0x%02X (OUT_Z_H): 0x%02X\n", LIS2DW12_REG_OUT_Z_H, val);
-    assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_FIFO_CTRL, &val));
+    assert(0 == lis2dw12_read8(&g_driver_itf, LIS2DW12_REG_FIFO_CTRL, &val));
     console_printf("0x%02X (FIFO_CTRL): 0x%02X\n", LIS2DW12_REG_FIFO_CTRL, val);
-    assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_FIFO_SAMPLES, &val));
+    assert(0 == lis2dw12_read8(&g_driver_itf, LIS2DW12_REG_FIFO_SAMPLES, &val));
     console_printf("0x%02X (FIFO_SAMPLES): 0x%02X\n", LIS2DW12_REG_FIFO_SAMPLES, val);
-    assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_TAP_THS_X, &val));
+    assert(0 == lis2dw12_read8(&g_driver_itf, LIS2DW12_REG_TAP_THS_X, &val));
     console_printf("0x%02X (TAP_THS_X): 0x%02X\n", LIS2DW12_REG_TAP_THS_X, val);
-    assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_TAP_THS_Y, &val));
+    assert(0 == lis2dw12_read8(&g_driver_itf, LIS2DW12_REG_TAP_THS_Y, &val));
     console_printf("0x%02X (TAP_THS_Y): 0x%02X\n", LIS2DW12_REG_TAP_THS_Y, val);
-    assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_TAP_THS_Z, &val));
+    assert(0 == lis2dw12_read8(&g_driver_itf, LIS2DW12_REG_TAP_THS_Z, &val));
     console_printf("0x%02X (TAP_THS_Z): 0x%02X\n", LIS2DW12_REG_TAP_THS_Z, val);
-    assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_INT_DUR, &val));
+    assert(0 == lis2dw12_read8(&g_driver_itf, LIS2DW12_REG_INT_DUR, &val));
     console_printf("0x%02X (INT_DUR): 0x%02X\n", LIS2DW12_REG_INT_DUR, val);
-    assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_FREEFALL, &val));
+    assert(0 == lis2dw12_read8(&g_driver_itf, LIS2DW12_REG_FREEFALL, &val));
     console_printf("0x%02X (FREEFALL): 0x%02X\n", LIS2DW12_REG_FREEFALL, val);
-    assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_INT_SRC, &val));
+    assert(0 == lis2dw12_read8(&g_driver_itf, LIS2DW12_REG_INT_SRC, &val));
     console_printf("0x%02X (INT_SRC): 0x%02X\n", LIS2DW12_REG_INT_SRC, val);
-    assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_X_OFS, &val));
+    assert(0 == lis2dw12_read8(&g_driver_itf, LIS2DW12_REG_X_OFS, &val));
     console_printf("0x%02X (X_OFS): 0x%02X\n", LIS2DW12_REG_X_OFS, val);
-    assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_Y_OFS, &val));
+    assert(0 == lis2dw12_read8(&g_driver_itf, LIS2DW12_REG_Y_OFS, &val));
     console_printf("0x%02X (Y_OFS): 0x%02X\n", LIS2DW12_REG_Y_OFS, val);
-    assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_Z_OFS, &val));
+    assert(0 == lis2dw12_read8(&g_driver_itf, LIS2DW12_REG_Z_OFS, &val));
     console_printf("0x%02X (Z_OFS): 0x%02X\n", LIS2DW12_REG_Z_OFS, val);    
-    assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_CTRL_REG7, &val));
+    assert(0 == lis2dw12_read8(&g_driver_itf, LIS2DW12_REG_CTRL_REG7, &val));
     console_printf("0x%02X (CTRL7): 0x%02X\n", LIS2DW12_REG_CTRL_REG7, val);
     
     return 0;
@@ -252,7 +252,7 @@ lis2dw12_shell_cmd_peek(int argc, char **argv)
         return lis2dw12_shell_err_invalid_arg(argv[2]);
     }
 
-    rc = lis2dw12_read8(&g_sensor_itf, reg, &value);
+    rc = lis2dw12_read8(&g_driver_itf, reg, &value);
     if (rc) {
         console_printf("peek failed %d\n", rc);
     }else{
@@ -285,7 +285,7 @@ lis2dw12_shell_cmd_poke(int argc, char **argv)
         return lis2dw12_shell_err_invalid_arg(argv[3]);
     }
 
-    rc = lis2dw12_write8(&g_sensor_itf, reg, value);
+    rc = lis2dw12_write8(&g_driver_itf, reg, value);
     if (rc) {
         console_printf("poke failed %d\n", rc);
     }else{
@@ -301,7 +301,7 @@ lis2dw12_shell_cmd_test(int argc, char **argv)
     int rc;
     int result;
 
-    rc = lis2dw12_run_self_test(&g_sensor_itf, &result);
+    rc = lis2dw12_run_self_test(&g_driver_itf, &result);
     if (rc) {
         goto err;
     }

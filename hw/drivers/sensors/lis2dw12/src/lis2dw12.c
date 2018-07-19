@@ -184,7 +184,7 @@ static const struct sensor_driver g_lis2dw12_sensor_driver = {
  * @return 0 on success, non-zero on failure
  */
 static int
-lis2dw12_i2c_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
+lis2dw12_i2c_writelen(struct driver_itf *itf, uint8_t addr, uint8_t *buffer,
                       uint8_t len)
 {
     int rc;
@@ -230,7 +230,7 @@ err:
  * @return 0 on success, non-zero on failure
  */
 static int
-lis2dw12_spi_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
+lis2dw12_spi_writelen(struct driver_itf *itf, uint8_t addr, uint8_t *payload,
                       uint8_t len)
 {
     int i;
@@ -291,23 +291,23 @@ err:
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dw12_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
+lis2dw12_writelen(struct driver_itf *itf, uint8_t addr, uint8_t *payload,
                   uint8_t len)
 {
     int rc;
 
-    rc = sensor_itf_lock(itf, MYNEWT_VAL(LIS2DW12_ITF_LOCK_TMO));
+    rc = driver_itf_lock(itf, MYNEWT_VAL(LIS2DW12_ITF_LOCK_TMO));
     if (rc) {
         return rc;
     }
 
-    if (itf->si_type == SENSOR_ITF_I2C) {
+    if (itf->si_type == DRIVER_ITF_I2C) {
         rc = lis2dw12_i2c_writelen(itf, addr, payload, len);
     } else {
         rc = lis2dw12_spi_writelen(itf, addr, payload, len);
     }
 
-    sensor_itf_unlock(itf);
+    driver_itf_unlock(itf);
 
     return rc;
 }
@@ -323,7 +323,7 @@ lis2dw12_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
  * @return 0 on success, non-zero error on failure.
  */
 int
-lis2dw12_i2c_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer, uint8_t len)
+lis2dw12_i2c_readlen(struct driver_itf *itf, uint8_t reg, uint8_t *buffer, uint8_t len)
 {
     int rc;
 
@@ -369,7 +369,7 @@ lis2dw12_i2c_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer, uint8
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dw12_spi_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
+lis2dw12_spi_readlen(struct driver_itf *itf, uint8_t reg, uint8_t *buffer,
                     uint8_t len)
 {
     int i;
@@ -421,22 +421,22 @@ err:
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dw12_write8(struct sensor_itf *itf, uint8_t reg, uint8_t value)
+lis2dw12_write8(struct driver_itf *itf, uint8_t reg, uint8_t value)
 {
     int rc;
 
-    rc = sensor_itf_lock(itf, MYNEWT_VAL(LIS2DW12_ITF_LOCK_TMO));
+    rc = driver_itf_lock(itf, MYNEWT_VAL(LIS2DW12_ITF_LOCK_TMO));
     if (rc) {
         return rc;
     }
 
-    if (itf->si_type == SENSOR_ITF_I2C) {
+    if (itf->si_type == DRIVER_ITF_I2C) {
         rc = lis2dw12_i2c_writelen(itf, reg, &value, 1);
     } else {
         rc = lis2dw12_spi_writelen(itf, reg, &value, 1);
     }
 
-    sensor_itf_unlock(itf);
+    driver_itf_unlock(itf);
 
     return rc;
 }
@@ -451,22 +451,22 @@ lis2dw12_write8(struct sensor_itf *itf, uint8_t reg, uint8_t value)
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dw12_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
+lis2dw12_read8(struct driver_itf *itf, uint8_t reg, uint8_t *value)
 {
     int rc;
 
-    rc = sensor_itf_lock(itf, MYNEWT_VAL(LIS2DW12_ITF_LOCK_TMO));
+    rc = driver_itf_lock(itf, MYNEWT_VAL(LIS2DW12_ITF_LOCK_TMO));
     if (rc) {
         return rc;
     }
 
-    if (itf->si_type == SENSOR_ITF_I2C) {
+    if (itf->si_type == DRIVER_ITF_I2C) {
         rc = lis2dw12_i2c_readlen(itf, reg, value, 1);
     } else {
         rc = lis2dw12_spi_readlen(itf, reg, value, 1);
     }
 
-    sensor_itf_unlock(itf);
+    driver_itf_unlock(itf);
 
     return rc;
 }
@@ -482,23 +482,23 @@ lis2dw12_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dw12_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
+lis2dw12_readlen(struct driver_itf *itf, uint8_t reg, uint8_t *buffer,
                 uint8_t len)
 {
     int rc;
 
-    rc = sensor_itf_lock(itf, MYNEWT_VAL(LIS2DW12_ITF_LOCK_TMO));
+    rc = driver_itf_lock(itf, MYNEWT_VAL(LIS2DW12_ITF_LOCK_TMO));
     if (rc) {
         return rc;
     }
 
-    if (itf->si_type == SENSOR_ITF_I2C) {
+    if (itf->si_type == DRIVER_ITF_I2C) {
         rc = lis2dw12_i2c_readlen(itf, reg, buffer, len);
     } else {
         rc = lis2dw12_spi_readlen(itf, reg, buffer, len);
     }
 
-    sensor_itf_unlock(itf);
+    driver_itf_unlock(itf);
 
     return rc;
 }
@@ -534,7 +534,7 @@ lis2dw12_calc_acc_mg(float acc_ms2, int16_t *acc_mg)
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dw12_reset(struct sensor_itf *itf)
+lis2dw12_reset(struct driver_itf *itf)
 {
     int rc;
     uint8_t reg;
@@ -564,7 +564,7 @@ err:
  * @param ptr to chip id to be filled up
  */
 int
-lis2dw12_get_chip_id(struct sensor_itf *itf, uint8_t *chip_id)
+lis2dw12_get_chip_id(struct driver_itf *itf, uint8_t *chip_id)
 {
     uint8_t reg;
     int rc;
@@ -590,7 +590,7 @@ err:
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dw12_set_full_scale(struct sensor_itf *itf, uint8_t fs)
+lis2dw12_set_full_scale(struct driver_itf *itf, uint8_t fs)
 {
     int rc;
     uint8_t reg;
@@ -628,7 +628,7 @@ err:
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dw12_get_full_scale(struct sensor_itf *itf, uint8_t *fs)
+lis2dw12_get_full_scale(struct driver_itf *itf, uint8_t *fs)
 {
     int rc;
     uint8_t reg;
@@ -654,7 +654,7 @@ err:
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dw12_set_rate(struct sensor_itf *itf, uint8_t rate)
+lis2dw12_set_rate(struct driver_itf *itf, uint8_t rate)
 {
     int rc;
     uint8_t reg;
@@ -691,7 +691,7 @@ err:
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dw12_get_rate(struct sensor_itf *itf, uint8_t *rate)
+lis2dw12_get_rate(struct driver_itf *itf, uint8_t *rate)
 {
     int rc;
     uint8_t reg;
@@ -717,7 +717,7 @@ err:
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dw12_set_low_noise(struct sensor_itf *itf, uint8_t en)
+lis2dw12_set_low_noise(struct driver_itf *itf, uint8_t en)
 {
     int rc;
     uint8_t reg;
@@ -752,7 +752,7 @@ err:
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dw12_get_low_noise(struct sensor_itf *itf, uint8_t *en)
+lis2dw12_get_low_noise(struct driver_itf *itf, uint8_t *en)
 {
     int rc;
     uint8_t reg;
@@ -778,7 +778,7 @@ err:
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dw12_set_power_mode(struct sensor_itf *itf, uint8_t mode)
+lis2dw12_set_power_mode(struct driver_itf *itf, uint8_t mode)
 {
     int rc;
     uint8_t reg;
@@ -811,7 +811,7 @@ err:
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dw12_get_power_mode(struct sensor_itf *itf, uint8_t *mode)
+lis2dw12_get_power_mode(struct driver_itf *itf, uint8_t *mode)
 {
     int rc;
     uint8_t reg;
@@ -837,7 +837,7 @@ err:
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dw12_set_self_test(struct sensor_itf *itf, uint8_t mode)
+lis2dw12_set_self_test(struct driver_itf *itf, uint8_t mode)
 {
     int rc;
     uint8_t reg;
@@ -869,7 +869,7 @@ err:
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dw12_get_self_test(struct sensor_itf *itf, uint8_t *mode)
+lis2dw12_get_self_test(struct driver_itf *itf, uint8_t *mode)
 {
     int rc;
     uint8_t reg;
@@ -895,7 +895,7 @@ err:
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dw12_set_int_pp_od(struct sensor_itf *itf, uint8_t mode)
+lis2dw12_set_int_pp_od(struct driver_itf *itf, uint8_t mode)
 {
     int rc;
     uint8_t reg;
@@ -920,7 +920,7 @@ lis2dw12_set_int_pp_od(struct sensor_itf *itf, uint8_t mode)
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dw12_get_int_pp_od(struct sensor_itf *itf, uint8_t *mode)
+lis2dw12_get_int_pp_od(struct driver_itf *itf, uint8_t *mode)
 {
     int rc;
     uint8_t reg;
@@ -944,7 +944,7 @@ lis2dw12_get_int_pp_od(struct sensor_itf *itf, uint8_t *mode)
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dw12_set_latched_int(struct sensor_itf *itf, uint8_t en)
+lis2dw12_set_latched_int(struct driver_itf *itf, uint8_t en)
 {
     int rc;
     uint8_t reg;
@@ -970,7 +970,7 @@ lis2dw12_set_latched_int(struct sensor_itf *itf, uint8_t en)
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dw12_get_latched_int(struct sensor_itf *itf, uint8_t *en)
+lis2dw12_get_latched_int(struct driver_itf *itf, uint8_t *en)
 {
     int rc;
     uint8_t reg;
@@ -994,7 +994,7 @@ lis2dw12_get_latched_int(struct sensor_itf *itf, uint8_t *en)
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dw12_set_int_active_low(struct sensor_itf *itf, uint8_t low)
+lis2dw12_set_int_active_low(struct driver_itf *itf, uint8_t low)
 {
     int rc;
     uint8_t reg;
@@ -1020,7 +1020,7 @@ lis2dw12_set_int_active_low(struct sensor_itf *itf, uint8_t low)
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dw12_get_int_active_low(struct sensor_itf *itf, uint8_t *low)
+lis2dw12_get_int_active_low(struct driver_itf *itf, uint8_t *low)
 {
     int rc;
     uint8_t reg;
@@ -1045,7 +1045,7 @@ lis2dw12_get_int_active_low(struct sensor_itf *itf, uint8_t *low)
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dw12_set_slp_mode(struct sensor_itf *itf, uint8_t mode)
+lis2dw12_set_slp_mode(struct driver_itf *itf, uint8_t mode)
 {
     int rc;
     uint8_t reg;
@@ -1070,7 +1070,7 @@ lis2dw12_set_slp_mode(struct sensor_itf *itf, uint8_t mode)
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dw12_get_slp_mode(struct sensor_itf *itf, uint8_t *mode)
+lis2dw12_get_slp_mode(struct driver_itf *itf, uint8_t *mode)
 {
     int rc;
     uint8_t reg;
@@ -1093,7 +1093,7 @@ lis2dw12_get_slp_mode(struct sensor_itf *itf, uint8_t *mode)
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dw12_start_on_demand_conversion(struct sensor_itf *itf)
+lis2dw12_start_on_demand_conversion(struct driver_itf *itf)
 {
     int rc;
     uint8_t reg;
@@ -1118,7 +1118,7 @@ lis2dw12_start_on_demand_conversion(struct sensor_itf *itf)
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dw12_set_filter_cfg(struct sensor_itf *itf, uint8_t bw, uint8_t type)
+lis2dw12_set_filter_cfg(struct driver_itf *itf, uint8_t bw, uint8_t type)
 {
     int rc;
     uint8_t reg;
@@ -1155,7 +1155,7 @@ err:
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dw12_get_filter_cfg(struct sensor_itf *itf, uint8_t *bw, uint8_t *type)
+lis2dw12_get_filter_cfg(struct driver_itf *itf, uint8_t *bw, uint8_t *type)
 {
     int rc;
     uint8_t reg;
@@ -1184,7 +1184,7 @@ err:
  * @return 0 on success, non-zero error on failure.
  */
 int
-lis2dw12_set_offsets(struct sensor_itf *itf, int8_t offset_x,
+lis2dw12_set_offsets(struct driver_itf *itf, int8_t offset_x,
                      int8_t offset_y, int8_t offset_z, uint8_t weight)
 {
     uint8_t reg;
@@ -1230,7 +1230,7 @@ lis2dw12_set_offsets(struct sensor_itf *itf, int8_t offset_x,
  * @return 0 on success, non-zero error on failure.
  */
 int
-lis2dw12_get_offsets(struct sensor_itf *itf, int8_t *offset_x,
+lis2dw12_get_offsets(struct driver_itf *itf, int8_t *offset_x,
                      int8_t *offset_y, int8_t *offset_z, uint8_t *weight)
 {
     uint8_t reg;
@@ -1269,7 +1269,7 @@ lis2dw12_get_offsets(struct sensor_itf *itf, int8_t *offset_x,
  *
  * @return 0 on success, non-zero error on failure.
  */
-int lis2dw12_set_offset_enable(struct sensor_itf *itf, uint8_t enabled)
+int lis2dw12_set_offset_enable(struct driver_itf *itf, uint8_t enabled)
 {
     int rc;
     uint8_t reg;
@@ -1296,7 +1296,7 @@ int lis2dw12_set_offset_enable(struct sensor_itf *itf, uint8_t enabled)
  * @param the tap settings
  * @return 0 on success, non-zero on failure
  */
-int lis2dw12_set_tap_cfg(struct sensor_itf *itf, struct lis2dw12_tap_settings *cfg)
+int lis2dw12_set_tap_cfg(struct driver_itf *itf, struct lis2dw12_tap_settings *cfg)
 {
     int rc;
     uint8_t reg;
@@ -1345,7 +1345,7 @@ int lis2dw12_set_tap_cfg(struct sensor_itf *itf, struct lis2dw12_tap_settings *c
  * @param ptr to the tap settings
  * @return 0 on success, non-zero on failure
  */
-int lis2dw12_get_tap_cfg(struct sensor_itf *itf, struct lis2dw12_tap_settings *cfg)
+int lis2dw12_get_tap_cfg(struct driver_itf *itf, struct lis2dw12_tap_settings *cfg)
 {
     int rc;
     uint8_t reg;
@@ -1397,7 +1397,7 @@ int lis2dw12_get_tap_cfg(struct sensor_itf *itf, struct lis2dw12_tap_settings *c
  * @param freefall threshold (3 bits)
  * @return 0 on success, non-zero on failure
  */
-int lis2dw12_set_freefall(struct sensor_itf *itf, uint8_t dur, uint8_t ths)
+int lis2dw12_set_freefall(struct driver_itf *itf, uint8_t dur, uint8_t ths)
 {
     int rc;
     uint8_t reg;
@@ -1430,7 +1430,7 @@ int lis2dw12_set_freefall(struct sensor_itf *itf, uint8_t dur, uint8_t ths)
  * @param ptr to freefall threshold
  * @return 0 on success, non-zero on failure
  */
-int lis2dw12_get_freefall(struct sensor_itf *itf, uint8_t *dur, uint8_t *ths)
+int lis2dw12_get_freefall(struct driver_itf *itf, uint8_t *dur, uint8_t *ths)
 {
     int rc;
     uint8_t ff_reg, wake_reg;
@@ -1460,7 +1460,7 @@ int lis2dw12_get_freefall(struct sensor_itf *itf, uint8_t *dur, uint8_t *ths)
  * @param Threshold to set for FIFO
  * @return 0 on success, non-zero on failure
  */
-int lis2dw12_set_fifo_cfg(struct sensor_itf *itf, enum lis2dw12_fifo_mode mode, uint8_t fifo_ths)
+int lis2dw12_set_fifo_cfg(struct driver_itf *itf, enum lis2dw12_fifo_mode mode, uint8_t fifo_ths)
 {
     uint8_t reg = 0;
 
@@ -1477,7 +1477,7 @@ int lis2dw12_set_fifo_cfg(struct sensor_itf *itf, enum lis2dw12_fifo_mode mode, 
  * @param Pointer to return number of samples in
  * @return 0 on success, non-zero on failure
  */
-int lis2dw12_get_fifo_samples(struct sensor_itf *itf, uint8_t *samples)
+int lis2dw12_get_fifo_samples(struct driver_itf *itf, uint8_t *samples)
 {
     uint8_t reg;
     int rc;
@@ -1500,7 +1500,7 @@ int lis2dw12_get_fifo_samples(struct sensor_itf *itf, uint8_t *samples)
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dw12_clear_int1_pin_cfg(struct sensor_itf *itf, uint8_t cfg)
+lis2dw12_clear_int1_pin_cfg(struct driver_itf *itf, uint8_t cfg)
 {
     int rc;
     uint8_t reg;
@@ -1528,7 +1528,7 @@ err:
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dw12_clear_int2_pin_cfg(struct sensor_itf *itf, uint8_t cfg)
+lis2dw12_clear_int2_pin_cfg(struct driver_itf *itf, uint8_t cfg)
 {
     int rc;
     uint8_t reg;
@@ -1558,7 +1558,7 @@ err:
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dw12_set_int1_pin_cfg(struct sensor_itf *itf, uint8_t cfg)
+lis2dw12_set_int1_pin_cfg(struct driver_itf *itf, uint8_t cfg)
 {
     int rc;
     uint8_t reg;
@@ -1586,7 +1586,7 @@ err:
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dw12_set_int2_pin_cfg(struct sensor_itf *itf, uint8_t cfg)
+lis2dw12_set_int2_pin_cfg(struct driver_itf *itf, uint8_t cfg)
 {
     int rc;
     uint8_t reg;
@@ -1613,7 +1613,7 @@ err:
  * @param wake_up_ths value to set
  * @return 0 on success, non-zero on failure
  */
-int lis2dw12_set_wake_up_ths(struct sensor_itf *itf, uint8_t val)
+int lis2dw12_set_wake_up_ths(struct driver_itf *itf, uint8_t val)
 {
     int rc;
     uint8_t reg;
@@ -1636,7 +1636,7 @@ int lis2dw12_set_wake_up_ths(struct sensor_itf *itf, uint8_t val)
  * @param ptr to store wake_up_ths value
  * @return 0 on success, non-zero on failure
  */
-int lis2dw12_get_wake_up_ths(struct sensor_itf *itf, uint8_t *val)
+int lis2dw12_get_wake_up_ths(struct driver_itf *itf, uint8_t *val)
 {
     int rc;
     uint8_t reg;
@@ -1657,7 +1657,7 @@ int lis2dw12_get_wake_up_ths(struct sensor_itf *itf, uint8_t *val)
  * @param value to set (0 = disabled, 1 = enabled)
  * @return 0 on success, non-zero on failure
  */
-int lis2dw12_set_inactivity_sleep_en(struct sensor_itf *itf, uint8_t en)
+int lis2dw12_set_inactivity_sleep_en(struct driver_itf *itf, uint8_t en)
 {
     int rc;
     uint8_t reg;
@@ -1680,7 +1680,7 @@ int lis2dw12_set_inactivity_sleep_en(struct sensor_itf *itf, uint8_t en)
  * @param ptr to store read state (0 = disabled, 1 = enabled)
  * @return 0 on success, non-zero on failure
  */
-int lis2dw12_get_inactivity_sleep_en(struct sensor_itf *itf, uint8_t *en)
+int lis2dw12_get_inactivity_sleep_en(struct driver_itf *itf, uint8_t *en)
 {
     int rc;
     uint8_t reg;
@@ -1702,7 +1702,7 @@ int lis2dw12_get_inactivity_sleep_en(struct sensor_itf *itf, uint8_t *en)
  * @param value to set (0 = disabled, 1 = enabled)
  * @return 0 on success, non-zero on failure
  */
-int lis2dw12_set_double_tap_event_en(struct sensor_itf *itf, uint8_t en)
+int lis2dw12_set_double_tap_event_en(struct driver_itf *itf, uint8_t en)
 {
     int rc;
     uint8_t reg;
@@ -1725,7 +1725,7 @@ int lis2dw12_set_double_tap_event_en(struct sensor_itf *itf, uint8_t en)
  * @param ptr to store read state (0 = disabled, 1 = enabled)
  * @return 0 on success, non-zero on failure
  */
-int lis2dw12_get_double_tap_event_en(struct sensor_itf *itf, uint8_t *en)
+int lis2dw12_get_double_tap_event_en(struct driver_itf *itf, uint8_t *en)
 {
     int rc;
     uint8_t reg;
@@ -1747,7 +1747,7 @@ int lis2dw12_get_double_tap_event_en(struct sensor_itf *itf, uint8_t *en)
  * @param value to set
  * @return 0 on success, non-zero on failure
  */
-int lis2dw12_set_wake_up_dur(struct sensor_itf *itf, uint8_t val)
+int lis2dw12_set_wake_up_dur(struct driver_itf *itf, uint8_t val)
 {
     int rc;
     uint8_t reg;
@@ -1771,7 +1771,7 @@ int lis2dw12_set_wake_up_dur(struct sensor_itf *itf, uint8_t val)
  * @param ptr to store wake_up_dur value
  * @return 0 on success, non-zero on failure
  */
-int lis2dw12_get_wake_up_dur(struct sensor_itf *itf, uint8_t *val)
+int lis2dw12_get_wake_up_dur(struct driver_itf *itf, uint8_t *val)
 {
     int rc;
     uint8_t reg;
@@ -1792,7 +1792,7 @@ int lis2dw12_get_wake_up_dur(struct sensor_itf *itf, uint8_t *val)
  * @param value to set
  * @return 0 on success, non-zero on failure
  */
-int lis2dw12_set_sleep_dur(struct sensor_itf *itf, uint8_t val)
+int lis2dw12_set_sleep_dur(struct driver_itf *itf, uint8_t val)
 {
     int rc;
     uint8_t reg;
@@ -1815,7 +1815,7 @@ int lis2dw12_set_sleep_dur(struct sensor_itf *itf, uint8_t val)
  * @param ptr to store sleep_dur value
  * @return 0 on success, non-zero on failure
  */
-int lis2dw12_get_sleep_dur(struct sensor_itf *itf, uint8_t *val)
+int lis2dw12_get_sleep_dur(struct driver_itf *itf, uint8_t *val)
 {
     int rc;
     uint8_t reg;
@@ -1836,7 +1836,7 @@ int lis2dw12_get_sleep_dur(struct sensor_itf *itf, uint8_t *val)
  * @param value to set
  * @return 0 on success, non-zero on failure
  */
-int lis2dw12_set_stationary_en(struct sensor_itf *itf, uint8_t en)
+int lis2dw12_set_stationary_en(struct driver_itf *itf, uint8_t en)
 {
     int rc;
     uint8_t reg;
@@ -1860,7 +1860,7 @@ int lis2dw12_set_stationary_en(struct sensor_itf *itf, uint8_t en)
  * @param ptr to store sleep_dur value
  * @return 0 on success, non-zero on failure
  */
-int lis2dw12_get_stationary_en(struct sensor_itf *itf, uint8_t *en)
+int lis2dw12_get_stationary_en(struct driver_itf *itf, uint8_t *en)
 {
     int rc;
     uint8_t reg;
@@ -1880,7 +1880,7 @@ int lis2dw12_get_stationary_en(struct sensor_itf *itf, uint8_t *en)
  * @param the sensor interface
  */
 int
-lis2dw12_clear_int(struct sensor_itf *itf, uint8_t *src)
+lis2dw12_clear_int(struct driver_itf *itf, uint8_t *src)
 {
     return lis2dw12_read8(itf, LIS2DW12_REG_INT_SRC, src);
 }
@@ -1892,7 +1892,7 @@ lis2dw12_clear_int(struct sensor_itf *itf, uint8_t *src)
  * @param pointer to return interrupt status in
  * @return 0 on success, non-zero on failure
  */
-int lis2dw12_get_int_status(struct sensor_itf *itf, uint8_t *status)
+int lis2dw12_get_int_status(struct driver_itf *itf, uint8_t *status)
 {
     return lis2dw12_read8(itf, LIS2DW12_REG_STATUS_REG, status);
 }
@@ -1904,7 +1904,7 @@ int lis2dw12_get_int_status(struct sensor_itf *itf, uint8_t *status)
  * @param pointer to return wake_up_src in
  * @return 0 on success, non-zero on failure
  */
-int lis2dw12_get_wake_up_src(struct sensor_itf *itf, uint8_t *status)
+int lis2dw12_get_wake_up_src(struct driver_itf *itf, uint8_t *status)
 {
     return lis2dw12_read8(itf, LIS2DW12_REG_WAKE_UP_SRC, status);
 }
@@ -1916,7 +1916,7 @@ int lis2dw12_get_wake_up_src(struct sensor_itf *itf, uint8_t *status)
  * @param pointer to return tap_src in
  * @return 0 on success, non-zero on failure
  */
-int lis2dw12_get_tap_src(struct sensor_itf *itf, uint8_t *status)
+int lis2dw12_get_tap_src(struct driver_itf *itf, uint8_t *status)
 {
     return lis2dw12_read8(itf, LIS2DW12_REG_TAP_SRC, status);
 }
@@ -1928,7 +1928,7 @@ int lis2dw12_get_tap_src(struct sensor_itf *itf, uint8_t *status)
  * @param pointer to return sixd_src in
  * @return 0 on success, non-zero on failure
  */
-int lis2dw12_get_sixd_src(struct sensor_itf *itf, uint8_t *status)
+int lis2dw12_get_sixd_src(struct driver_itf *itf, uint8_t *status)
 {
     return lis2dw12_read8(itf, LIS2DW12_REG_SIXD_SRC, status);
 }
@@ -1941,7 +1941,7 @@ int lis2dw12_get_sixd_src(struct sensor_itf *itf, uint8_t *status)
  * @param value to set (0 = disabled, 1 = enabled)
  * @return 0 on success, non-zero on failure
  */
-int lis2dw12_set_int_enable(struct sensor_itf *itf, uint8_t enabled)
+int lis2dw12_set_int_enable(struct driver_itf *itf, uint8_t enabled)
 {
     uint8_t reg;
     int rc;
@@ -1967,7 +1967,7 @@ int lis2dw12_set_int_enable(struct sensor_itf *itf, uint8_t enabled)
  * @param value to set (false = disabled, true = enabled)
  * @return 0 on success, non-zero on failure
  */
-int lis2dw12_set_int2_on_int1_map(struct sensor_itf *itf, bool enable)
+int lis2dw12_set_int2_on_int1_map(struct driver_itf *itf, bool enable)
 {
     uint8_t reg;
     int rc;
@@ -1993,7 +1993,7 @@ int lis2dw12_set_int2_on_int1_map(struct sensor_itf *itf, bool enable)
  * @param value to set (0 = disabled, 1 = enabled)
  * @return 0 on success, non-zero on failure
  */
-int lis2dw12_get_int1_on_int2_map(struct sensor_itf *itf, uint8_t *val)
+int lis2dw12_get_int1_on_int2_map(struct driver_itf *itf, uint8_t *val)
 {
     uint8_t reg;
     int rc;
@@ -2015,7 +2015,7 @@ int lis2dw12_get_int1_on_int2_map(struct sensor_itf *itf, uint8_t *val)
  *
  * @return 0 on sucess, non-zero on failure
  */
-int lis2dw12_run_self_test(struct sensor_itf *itf, int *result)
+int lis2dw12_run_self_test(struct driver_itf *itf, int *result)
 {
     int rc;
     /*configure min and max values for reading 5 samples, and accounting for
@@ -2111,7 +2111,7 @@ int lis2dw12_run_self_test(struct sensor_itf *itf, int *result)
 
 
 static void
-init_interrupt(struct lis2dw12_int *interrupt, struct sensor_int *ints)
+init_interrupt(struct lis2dw12_int *interrupt, struct driver_int *ints)
 {
     os_error_t error;
 
@@ -2249,7 +2249,7 @@ disable_interrupt(struct sensor *sensor, uint8_t int_to_disable, uint8_t int_num
 {
     struct lis2dw12 *lis2dw12;
     struct lis2dw12_pdd *pdd;
-    struct sensor_itf *itf;
+    struct driver_itf *itf;
     int rc;
 
     if (int_to_disable == 0) {
@@ -2289,7 +2289,7 @@ enable_interrupt(struct sensor *sensor, uint8_t int_to_enable, uint8_t int_num)
 {
     struct lis2dw12 *lis2dw12;
     struct lis2dw12_pdd *pdd;
-    struct sensor_itf *itf;
+    struct driver_itf *itf;
     uint8_t reg;
     int rc;
 
@@ -2337,7 +2337,7 @@ err:
 }
 
 int
-lis2dw12_get_fs(struct sensor_itf *itf, uint8_t *fs)
+lis2dw12_get_fs(struct driver_itf *itf, uint8_t *fs)
 {
     int rc;
 
@@ -2372,7 +2372,7 @@ lis2dw12_get_fs(struct sensor_itf *itf, uint8_t *fs)
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dw12_get_data(struct sensor_itf *itf, uint8_t fs, int16_t *x, int16_t *y, int16_t *z)
+lis2dw12_get_data(struct driver_itf *itf, uint8_t fs, int16_t *x, int16_t *y, int16_t *z)
 {
     int rc;
     uint8_t payload[6] = {0};
@@ -2408,7 +2408,7 @@ static int lis2dw12_do_read(struct sensor *sensor, sensor_data_func_t data_func,
                             void * data_arg, uint8_t fs)
 {
     struct sensor_accel_data sad;
-    struct sensor_itf *itf;
+    struct driver_itf *itf;
     int16_t x, y ,z;
     float fx, fy ,fz;
     int rc;
@@ -2464,7 +2464,7 @@ lis2dw12_poll_read(struct sensor *sensor, sensor_type_t sensor_type,
 {
     struct lis2dw12 *lis2dw12;
     struct lis2dw12_cfg *cfg;
-    struct sensor_itf *itf;
+    struct driver_itf *itf;
     uint8_t fs;
     int rc;
 
@@ -2507,7 +2507,7 @@ lis2dw12_stream_read(struct sensor *sensor,
 {
     struct lis2dw12_pdd *pdd;
     struct lis2dw12 *lis2dw12;
-    struct sensor_itf *itf;
+    struct driver_itf *itf;
     struct lis2dw12_cfg *cfg;
     os_time_t time_ticks;
     os_time_t stop_ticks = 0;
@@ -2610,7 +2610,7 @@ lis2dw12_sensor_read(struct sensor *sensor, sensor_type_t type,
     int rc;
     const struct lis2dw12_cfg *cfg;
     struct lis2dw12 *lis2dw12;
-    struct sensor_itf *itf;
+    struct driver_itf *itf;
 
     /* If the read isn't looking for accel data, don't do anything. */
     if (!(type & SENSOR_TYPE_ACCELEROMETER)) {
@@ -2620,7 +2620,7 @@ lis2dw12_sensor_read(struct sensor *sensor, sensor_type_t type,
 
     itf = SENSOR_GET_ITF(sensor);
 
-    if (itf->si_type == SENSOR_ITF_SPI) {
+    if (itf->si_type == DRIVER_ITF_SPI) {
 
         rc = hal_spi_disable(sensor->s_itf.si_num);
         if (rc) {
@@ -2693,7 +2693,7 @@ lis2dw12_sensor_set_notification(struct sensor *sensor, sensor_event_type_t even
 {
     struct lis2dw12 *lis2dw12;
     struct lis2dw12_pdd *pdd;
-    struct sensor_itf *itf;
+    struct driver_itf *itf;
     struct lis2dw12_notif_cfg *notif_cfg;
     int rc;
 
@@ -2732,7 +2732,7 @@ lis2dw12_sensor_unset_notification(struct sensor *sensor, sensor_event_type_t ev
 {
     struct lis2dw12_notif_cfg *notif_cfg;
     struct lis2dw12 *lis2dw12;
-    struct sensor_itf *itf;
+    struct driver_itf *itf;
     int rc;
 
     lis2dw12 = (struct lis2dw12 *)SENSOR_GET_DEVICE(sensor);
@@ -2815,7 +2815,7 @@ static int
 lis2dw12_sensor_handle_interrupt(struct sensor *sensor)
 {
     struct lis2dw12 *lis2dw12;
-    struct sensor_itf *itf;
+    struct driver_itf *itf;
     uint8_t int_src;
     uint8_t int_status;
     uint8_t sixd_src;
@@ -3091,7 +3091,7 @@ lis2dw12_init(struct os_dev *dev, void *arg)
         goto err;
     }
 
-    if (sensor->s_itf.si_type == SENSOR_ITF_SPI) {
+    if (sensor->s_itf.si_type == DRIVER_ITF_SPI) {
 
         rc = hal_spi_disable(sensor->s_itf.si_num);
         if (rc) {
@@ -3144,14 +3144,14 @@ int
 lis2dw12_config(struct lis2dw12 *lis2dw12, struct lis2dw12_cfg *cfg)
 {
     int rc;
-    struct sensor_itf *itf;
+    struct driver_itf *itf;
     uint8_t chip_id;
     struct sensor *sensor;
 
     itf = SENSOR_GET_ITF(&(lis2dw12->sensor));
     sensor = &(lis2dw12->sensor);
 
-    if (itf->si_type == SENSOR_ITF_SPI) {
+    if (itf->si_type == DRIVER_ITF_SPI) {
 
         rc = hal_spi_disable(sensor->s_itf.si_num);
         if (rc) {

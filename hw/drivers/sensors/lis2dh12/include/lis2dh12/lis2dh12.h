@@ -111,7 +111,7 @@ int lis2dh12_init(struct os_dev *dev, void *arg);
  */
 
 int
-lis2dh12_set_full_scale(struct sensor_itf *itf, uint8_t fs);
+lis2dh12_set_full_scale(struct driver_itf *itf, uint8_t fs);
 
 /**
  * Gets the full scale selection
@@ -122,7 +122,7 @@ lis2dh12_set_full_scale(struct sensor_itf *itf, uint8_t fs);
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dh12_get_full_scale(struct sensor_itf *itf, uint8_t *fs);
+lis2dh12_get_full_scale(struct driver_itf *itf, uint8_t *fs);
 
 /**
  * Sets the rate
@@ -132,7 +132,7 @@ lis2dh12_get_full_scale(struct sensor_itf *itf, uint8_t *fs);
  *
  * @return 0 on success, non-zero on failure
  */
-int lis2dh12_set_rate(struct sensor_itf *itf, uint8_t rate);
+int lis2dh12_set_rate(struct driver_itf *itf, uint8_t rate);
 
 /**
  * Gets the current rate
@@ -142,7 +142,7 @@ int lis2dh12_set_rate(struct sensor_itf *itf, uint8_t rate);
  *
  * @return 0 on success, non-zero on failure
  */
-int lis2dh12_get_rate(struct sensor_itf *itf, uint8_t *rate);
+int lis2dh12_get_rate(struct driver_itf *itf, uint8_t *rate);
 
 /**
  * Enable channels
@@ -152,7 +152,7 @@ int lis2dh12_get_rate(struct sensor_itf *itf, uint8_t *rate);
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dh12_chan_enable(struct sensor_itf *itf, uint8_t chan);
+lis2dh12_chan_enable(struct driver_itf *itf, uint8_t chan);
 
 /**
  * Get chip ID
@@ -161,7 +161,7 @@ lis2dh12_chan_enable(struct sensor_itf *itf, uint8_t chan);
  * @param ptr to chip id to be filled up
  */
 int
-lis2dh12_get_chip_id(struct sensor_itf *itf, uint8_t *chip_id);
+lis2dh12_get_chip_id(struct driver_itf *itf, uint8_t *chip_id);
 
 /**
  * Configure the sensor
@@ -189,7 +189,7 @@ lis2dh12_calc_acc_ms2(int16_t raw_acc, float *facc);
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dh12_pull_up_disc(struct sensor_itf *itf, uint8_t disconnect);
+lis2dh12_pull_up_disc(struct driver_itf *itf, uint8_t disconnect);
 
 /**
  * Reset lis2dh12
@@ -197,7 +197,7 @@ lis2dh12_pull_up_disc(struct sensor_itf *itf, uint8_t disconnect);
  * @param The sensor interface
  */
 int
-lis2dh12_reset(struct sensor_itf *itf);
+lis2dh12_reset(struct driver_itf *itf);
 
 /**
  * Enable interrupt 2
@@ -206,7 +206,7 @@ lis2dh12_reset(struct sensor_itf *itf);
  * @param events to enable int for
  */
 int
-lis2dh12_enable_int2(struct sensor_itf *itf, uint8_t *reg);
+lis2dh12_enable_int2(struct driver_itf *itf, uint8_t *reg);
 
 /**
  * Enable interrupt 1
@@ -215,7 +215,7 @@ lis2dh12_enable_int2(struct sensor_itf *itf, uint8_t *reg);
  * @param events to enable int for
  */
 int
-lis2dh12_enable_int1(struct sensor_itf *itf, uint8_t *reg);
+lis2dh12_enable_int1(struct driver_itf *itf, uint8_t *reg);
 
 /**
  * Set interrupt threshold for int 1
@@ -226,7 +226,7 @@ lis2dh12_enable_int1(struct sensor_itf *itf, uint8_t *reg);
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dh12_set_int1_thresh(struct sensor_itf *itf, uint8_t ths);
+lis2dh12_set_int1_thresh(struct driver_itf *itf, uint8_t ths);
 
 /**
  * Set interrupt threshold for int 2
@@ -237,7 +237,7 @@ lis2dh12_set_int1_thresh(struct sensor_itf *itf, uint8_t ths);
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dh12_set_int2_thresh(struct sensor_itf *itf, uint8_t ths);
+lis2dh12_set_int2_thresh(struct driver_itf *itf, uint8_t ths);
 
 /**
  * Clear interrupt 1
@@ -245,7 +245,7 @@ lis2dh12_set_int2_thresh(struct sensor_itf *itf, uint8_t ths);
  * @param the sensor interface
  */
 int
-lis2dh12_clear_int1(struct sensor_itf *itf);
+lis2dh12_clear_int1(struct driver_itf *itf);
 
 /**
  * Clear interrupt 2
@@ -253,7 +253,7 @@ lis2dh12_clear_int1(struct sensor_itf *itf);
  * @param the sensor interface
  */
 int
-lis2dh12_clear_int2(struct sensor_itf *itf);
+lis2dh12_clear_int2(struct driver_itf *itf);
 
 /**
  * Set interrupt pin configuration for interrupt 1
@@ -263,7 +263,7 @@ lis2dh12_clear_int2(struct sensor_itf *itf);
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dh12_set_int1_pin_cfg(struct sensor_itf *itf, uint8_t cfg);
+lis2dh12_set_int1_pin_cfg(struct driver_itf *itf, uint8_t cfg);
 
 /**
  * Set interrupt pin configuration for interrupt 2
@@ -273,7 +273,7 @@ lis2dh12_set_int1_pin_cfg(struct sensor_itf *itf, uint8_t cfg);
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dh12_set_int2_pin_cfg(struct sensor_itf *itf, uint8_t cfg);
+lis2dh12_set_int2_pin_cfg(struct driver_itf *itf, uint8_t cfg);
 
 /**
  * Set interrupt 1 duration
@@ -282,7 +282,7 @@ lis2dh12_set_int2_pin_cfg(struct sensor_itf *itf, uint8_t cfg);
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dh12_set_int1_duration(struct sensor_itf *itf, uint8_t dur);
+lis2dh12_set_int1_duration(struct driver_itf *itf, uint8_t dur);
 
 /**
  * Set interrupt 2 duration
@@ -291,7 +291,7 @@ lis2dh12_set_int1_duration(struct sensor_itf *itf, uint8_t dur);
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dh12_set_int2_duration(struct sensor_itf *itf, uint8_t dur);
+lis2dh12_set_int2_duration(struct driver_itf *itf, uint8_t dur);
 
 /**
  * Disable interrupt 1
@@ -300,7 +300,7 @@ lis2dh12_set_int2_duration(struct sensor_itf *itf, uint8_t dur);
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dh12_disable_int1(struct sensor_itf *itf);
+lis2dh12_disable_int1(struct driver_itf *itf);
 
 /**
  * Disable interrupt 2
@@ -309,7 +309,7 @@ lis2dh12_disable_int1(struct sensor_itf *itf);
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dh12_disable_int2(struct sensor_itf *itf);
+lis2dh12_disable_int2(struct driver_itf *itf);
 
 /**
  * Set high pass filter cfg
@@ -319,7 +319,7 @@ lis2dh12_disable_int2(struct sensor_itf *itf);
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dh12_hpf_cfg(struct sensor_itf *itf, uint8_t reg);
+lis2dh12_hpf_cfg(struct driver_itf *itf, uint8_t reg);
 
 #ifdef __cplusplus
 }

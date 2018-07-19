@@ -39,7 +39,7 @@ static struct shell_cmd lis2ds12_shell_cmd_struct = {
     .sc_cmd_func = lis2ds12_shell_cmd
 };
 
-static struct sensor_itf g_sensor_itf = {
+static struct driver_itf g_driver_itf = {
     .si_type = MYNEWT_VAL(LIS2DS12_SHELL_ITF_TYPE),
     .si_num = MYNEWT_VAL(LIS2DS12_SHELL_ITF_NUM),
     .si_cs_pin = MYNEWT_VAL(LIS2DS12_SHELL_CSPIN),
@@ -99,7 +99,7 @@ lis2ds12_shell_cmd_read_chipid(int argc, char **argv)
     int rc;
     uint8_t chipid;
 
-    rc = lis2ds12_read8(&g_sensor_itf, LIS2DS12_REG_WHO_AM_I, &chipid);
+    rc = lis2ds12_read8(&g_driver_itf, LIS2DS12_REG_WHO_AM_I, &chipid);
     if (rc) {
         goto err;
     }
@@ -137,12 +137,12 @@ lis2ds12_shell_cmd_read(int argc, char **argv)
 
     while(samples--) {
 
-        rc = lis2ds12_get_fs(&g_sensor_itf, &fs);
+        rc = lis2ds12_get_fs(&g_driver_itf, &fs);
         if (rc) {
             return rc;
         }
 
-        rc = lis2ds12_get_data(&g_sensor_itf, fs,&x, &y, &z);
+        rc = lis2ds12_get_data(&g_driver_itf, fs,&x, &y, &z);
         if (rc) {
             console_printf("Read failed: %d\n", rc);
             return rc;
@@ -172,7 +172,7 @@ lis2ds12_shell_cmd_dump(int argc, char **argv)
     }
 
     for (i=LIS2DS12_CLI_FIRST_REGISTER; i<=LIS2DS12_CLI_LAST_REGISTER; i++){
-        rc = lis2ds12_read8(&g_sensor_itf, i, &value);
+        rc = lis2ds12_read8(&g_driver_itf, i, &value);
         if (rc) {
             console_printf("dump failed %d\n", rc);
             goto err;
@@ -204,7 +204,7 @@ lis2ds12_shell_cmd_peek(int argc, char **argv)
         return lis2ds12_shell_err_invalid_arg(argv[2]);
     }
 
-    rc = lis2ds12_read8(&g_sensor_itf, reg, &value);
+    rc = lis2ds12_read8(&g_driver_itf, reg, &value);
     if (rc) {
         console_printf("peek failed %d\n", rc);
     }else{
@@ -237,7 +237,7 @@ lis2ds12_shell_cmd_poke(int argc, char **argv)
         return lis2ds12_shell_err_invalid_arg(argv[3]);
     }
 
-    rc = lis2ds12_write8(&g_sensor_itf, reg, value);
+    rc = lis2ds12_write8(&g_driver_itf, reg, value);
     if (rc) {
         console_printf("poke failed %d\n", rc);
     }else{
@@ -253,7 +253,7 @@ lis2ds12_shell_cmd_test(int argc, char **argv)
     int rc;
     int result;
 
-    rc = lis2ds12_run_self_test(&g_sensor_itf, &result);
+    rc = lis2ds12_run_self_test(&g_driver_itf, &result);
     if (rc) {
         goto err;
     }

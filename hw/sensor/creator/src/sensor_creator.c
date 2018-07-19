@@ -20,6 +20,7 @@
 #include <assert.h>
 #include <string.h>
 #include "os/mynewt.h"
+#include "driver/driver.h"
 
 #if MYNEWT_VAL(DRV2605_OFB)
 #include "hal/hal_gpio.h"
@@ -315,8 +316,8 @@ static struct sensor_itf i2c_0_itf_lps = {
 #endif
 
 #if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(LIS2DW12_OFB)
-static struct sensor_itf i2c_0_itf_lis2dw12 = {
-    .si_type = SENSOR_ITF_I2C,
+static struct driver_itf i2c_0_itf_lis2dw12 = {
+    .si_type = DRIVER_ITF_I2C,
     .si_num  = 0,
     .si_addr = 0x18,
     .si_ints = {
@@ -326,8 +327,8 @@ static struct sensor_itf i2c_0_itf_lis2dw12 = {
 #endif
 
 #if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(LIS2DS12_OFB)
-static struct sensor_itf i2c_0_itf_lis2ds12 = {
-    .si_type = SENSOR_ITF_I2C,
+static struct driver_itf i2c_0_itf_lis2ds12 = {
+    .si_type = DRIVER_ITF_I2C,
     .si_num  = 0,
     .si_addr = 0x1D,
     .si_ints = {

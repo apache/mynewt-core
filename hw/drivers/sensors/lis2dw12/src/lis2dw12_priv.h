@@ -142,22 +142,22 @@ extern "C" {
 #define LIS2DW12_SPI_READ_CMD_BIT            0x80
 
 
-int lis2dw12_i2c_write8(struct sensor_itf *itf, uint8_t reg, uint8_t value);
-int lis2dw12_i2c_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer, uint8_t len);
+int lis2dw12_i2c_write8(struct driver_itf *itf, uint8_t reg, uint8_t value);
+int lis2dw12_i2c_readlen(struct driver_itf *itf, uint8_t reg, uint8_t *buffer, uint8_t len);
 
-int lis2dw12_spi_write8(struct sensor_itf *itf, uint8_t reg, uint8_t value);
-int lis2dw12_spi_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer, uint8_t len);
+int lis2dw12_spi_write8(struct driver_itf *itf, uint8_t reg, uint8_t value);
+int lis2dw12_spi_readlen(struct driver_itf *itf, uint8_t reg, uint8_t *buffer, uint8_t len);
 
-int lis2dw12_write8(struct sensor_itf *itf, uint8_t reg, uint8_t value);
-int lis2dw12_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value);
-int lis2dw12_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer, uint8_t len);
+int lis2dw12_write8(struct driver_itf *itf, uint8_t reg, uint8_t value);
+int lis2dw12_read8(struct driver_itf *itf, uint8_t reg, uint8_t *value);
+int lis2dw12_readlen(struct driver_itf *itf, uint8_t reg, uint8_t *buffer, uint8_t len);
 
 void lis2dw12_calc_acc_ms2(int16_t raw_acc, float *facc);
 void lis2dw12_calc_acc_mg(float acc_ms2, int16_t *acc_mg);
 
-int lis2dw12_get_data(struct sensor_itf *itf, uint8_t fs, int16_t *x, int16_t *y, int16_t *z);
+int lis2dw12_get_data(struct driver_itf *itf, uint8_t fs, int16_t *x, int16_t *y, int16_t *z);
 
-int lis2dw12_get_fs(struct sensor_itf *itf, uint8_t *fs);
+int lis2dw12_get_fs(struct driver_itf *itf, uint8_t *fs);
     
 #ifdef __cplusplus
 }

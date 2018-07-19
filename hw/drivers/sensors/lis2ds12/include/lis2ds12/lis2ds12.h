@@ -260,7 +260,7 @@ struct lis2ds12_int {
     /* Is there a waiter currently sleeping */
     bool asleep;
     /* Configured interrupts */
-    struct sensor_int *ints;
+    struct driver_int *ints;
 };
 
 /* Private per driver data */
@@ -290,7 +290,7 @@ struct lis2ds12 {
  *
  * @return 0 on success, non-zero on failure
  */
-int lis2ds12_reset(struct sensor_itf *itf);
+int lis2ds12_reset(struct driver_itf *itf);
 
 /**
  * Get chip ID
@@ -298,7 +298,7 @@ int lis2ds12_reset(struct sensor_itf *itf);
  * @param itf The sensor interface
  * @param chip_id Ptr to chip id to be filled up
  */
-int lis2ds12_get_chip_id(struct sensor_itf *itf, uint8_t *chip_id);
+int lis2ds12_get_chip_id(struct driver_itf *itf, uint8_t *chip_id);
     
 /**
  * Sets the full scale selection
@@ -308,7 +308,7 @@ int lis2ds12_get_chip_id(struct sensor_itf *itf, uint8_t *chip_id);
  *
  * @return 0 on success, non-zero on failure
  */
-int lis2ds12_set_full_scale(struct sensor_itf *itf, uint8_t fs);
+int lis2ds12_set_full_scale(struct driver_itf *itf, uint8_t fs);
 
 /**
  * Gets the full scale selection
@@ -318,7 +318,7 @@ int lis2ds12_set_full_scale(struct sensor_itf *itf, uint8_t fs);
  *
  * @return 0 on success, non-zero on failure
  */
-int lis2ds12_get_full_scale(struct sensor_itf *itf, uint8_t *fs);
+int lis2ds12_get_full_scale(struct driver_itf *itf, uint8_t *fs);
 
 /**
  * Sets the rate
@@ -328,7 +328,7 @@ int lis2ds12_get_full_scale(struct sensor_itf *itf, uint8_t *fs);
  *
  * @return 0 on success, non-zero on failure
  */
-int lis2ds12_set_rate(struct sensor_itf *itf, uint8_t rate);
+int lis2ds12_set_rate(struct driver_itf *itf, uint8_t rate);
 
 /**
  * Gets the current rate
@@ -338,7 +338,7 @@ int lis2ds12_set_rate(struct sensor_itf *itf, uint8_t rate);
  *
  * @return 0 on success, non-zero on failure
  */
-int lis2ds12_get_rate(struct sensor_itf *itf, uint8_t *rate);
+int lis2ds12_get_rate(struct driver_itf *itf, uint8_t *rate);
 
 /**
  * Sets the self test mode of the sensor
@@ -348,7 +348,7 @@ int lis2ds12_get_rate(struct sensor_itf *itf, uint8_t *rate);
  *
  * @return 0 on success, non-zero on failure
  */
-int lis2ds12_set_self_test(struct sensor_itf *itf, uint8_t mode);
+int lis2ds12_set_self_test(struct driver_itf *itf, uint8_t mode);
 
 /**
  * Gets the power mode of the sensor
@@ -358,7 +358,7 @@ int lis2ds12_set_self_test(struct sensor_itf *itf, uint8_t mode);
  *
  * @return 0 on success, non-zero on failure
  */
-int lis2ds12_get_self_test(struct sensor_itf *itf, uint8_t *mode);
+int lis2ds12_get_self_test(struct driver_itf *itf, uint8_t *mode);
 
 /**
  * Sets the interrupt push-pull/open-drain selection
@@ -368,7 +368,7 @@ int lis2ds12_get_self_test(struct sensor_itf *itf, uint8_t *mode);
  *
  * @return 0 on success, non-zero on failure
  */
-int lis2ds12_set_int_pp_od(struct sensor_itf *itf, uint8_t mode);
+int lis2ds12_set_int_pp_od(struct driver_itf *itf, uint8_t mode);
 
 /**
  * Gets the interrupt push-pull/open-drain selection
@@ -378,7 +378,7 @@ int lis2ds12_set_int_pp_od(struct sensor_itf *itf, uint8_t mode);
  *
  * @return 0 on success, non-zero on failure
  */
-int lis2ds12_get_int_pp_od(struct sensor_itf *itf, uint8_t *mode);
+int lis2ds12_get_int_pp_od(struct driver_itf *itf, uint8_t *mode);
 
 /**
  * Sets whether latched interrupts are enabled
@@ -388,7 +388,7 @@ int lis2ds12_get_int_pp_od(struct sensor_itf *itf, uint8_t *mode);
  *
  * @return 0 on success, non-zero on failure
  */
-int lis2ds12_set_latched_int(struct sensor_itf *itf, uint8_t en);
+int lis2ds12_set_latched_int(struct driver_itf *itf, uint8_t en);
 
 /**
  * Gets whether latched interrupts are enabled
@@ -398,7 +398,7 @@ int lis2ds12_set_latched_int(struct sensor_itf *itf, uint8_t en);
  *
  * @return 0 on success, non-zero on failure
  */
-int lis2ds12_get_latched_int(struct sensor_itf *itf, uint8_t *en);
+int lis2ds12_get_latched_int(struct driver_itf *itf, uint8_t *en);
 
 /**
  * Sets whether interrupts are active high or low
@@ -408,7 +408,7 @@ int lis2ds12_get_latched_int(struct sensor_itf *itf, uint8_t *en);
  *
  * @return 0 on success, non-zero on failure
  */
-int lis2sw12_set_int_active_low(struct sensor_itf *itf, uint8_t low);
+int lis2sw12_set_int_active_low(struct driver_itf *itf, uint8_t low);
 
 /**
  * Gets whether interrupts are active high or low
@@ -418,7 +418,7 @@ int lis2sw12_set_int_active_low(struct sensor_itf *itf, uint8_t low);
  *
  * @return 0 on success, non-zero on failure
  */
-int lis2ds12_get_int_active_low(struct sensor_itf *itf, uint8_t *low);
+int lis2ds12_get_int_active_low(struct driver_itf *itf, uint8_t *low);
 
 /**
  * Set filter config
@@ -428,7 +428,7 @@ int lis2ds12_get_int_active_low(struct sensor_itf *itf, uint8_t *low);
  *
  * @return 0 on success, non-zero on failure
  */
-int lis2ds12_set_filter_cfg(struct sensor_itf *itf, uint8_t type);
+int lis2ds12_set_filter_cfg(struct driver_itf *itf, uint8_t type);
 
 /**
  * Get filter config
@@ -438,7 +438,7 @@ int lis2ds12_set_filter_cfg(struct sensor_itf *itf, uint8_t type);
  *
  * @return 0 on success, non-zero on failure
  */
-int lis2ds12_get_filter_cfg(struct sensor_itf *itf, uint8_t *type);
+int lis2ds12_get_filter_cfg(struct driver_itf *itf, uint8_t *type);
 
 /**
  * Set tap detection configuration
@@ -448,7 +448,7 @@ int lis2ds12_get_filter_cfg(struct sensor_itf *itf, uint8_t *type);
  *
  * @return 0 on success, non-zero on failure
  */
-int lis2ds12_set_tap_cfg(struct sensor_itf *itf, struct lis2ds12_tap_settings *cfg);
+int lis2ds12_set_tap_cfg(struct driver_itf *itf, struct lis2ds12_tap_settings *cfg);
 
 /**
  * Get tap detection config
@@ -458,7 +458,7 @@ int lis2ds12_set_tap_cfg(struct sensor_itf *itf, struct lis2ds12_tap_settings *c
  *
  * @return 0 on success, non-zero on failure
  */
-int lis2ds12_get_tap_cfg(struct sensor_itf *itf, struct lis2ds12_tap_settings *cfg);
+int lis2ds12_get_tap_cfg(struct driver_itf *itf, struct lis2ds12_tap_settings *cfg);
 
 /**
  * Set freefall detection configuration
@@ -469,7 +469,7 @@ int lis2ds12_get_tap_cfg(struct sensor_itf *itf, struct lis2ds12_tap_settings *c
  *
  * @return 0 on success, non-zero on failure
  */
-int lis2ds12_set_freefall(struct sensor_itf *itf, uint8_t dur, uint8_t ths);
+int lis2ds12_set_freefall(struct driver_itf *itf, uint8_t dur, uint8_t ths);
 
 /**
  * Get freefall detection config
@@ -480,7 +480,7 @@ int lis2ds12_set_freefall(struct sensor_itf *itf, uint8_t dur, uint8_t ths);
  *
  * @return 0 on success, non-zero on failure
  */
-int lis2ds12_get_freefall(struct sensor_itf *itf, uint8_t *dur, uint8_t *ths);
+int lis2ds12_get_freefall(struct driver_itf *itf, uint8_t *dur, uint8_t *ths);
     
 /**
  * Set interrupt pin configuration for interrupt 1
@@ -491,7 +491,7 @@ int lis2ds12_get_freefall(struct sensor_itf *itf, uint8_t *dur, uint8_t *ths);
  * @return 0 on success, non-zero on failure
  */
 int
-lis2ds12_set_int1_pin_cfg(struct sensor_itf *itf, uint8_t cfg);
+lis2ds12_set_int1_pin_cfg(struct driver_itf *itf, uint8_t cfg);
 
 /**
  * Set interrupt pin configuration for interrupt 2
@@ -501,7 +501,7 @@ lis2ds12_set_int1_pin_cfg(struct sensor_itf *itf, uint8_t cfg);
  *
  * @return 0 on success, non-zero on failure
  */
-int lis2ds12_set_int2_pin_cfg(struct sensor_itf *itf, uint8_t cfg);
+int lis2ds12_set_int2_pin_cfg(struct driver_itf *itf, uint8_t cfg);
 
 /**
  * Clear interrupt pin configuration for interrupt 1
@@ -512,7 +512,7 @@ int lis2ds12_set_int2_pin_cfg(struct sensor_itf *itf, uint8_t cfg);
  * @return 0 on success, non-zero on failure
  */
 int
-lis2ds12_clear_int1_pin_cfg(struct sensor_itf *itf, uint8_t cfg);
+lis2ds12_clear_int1_pin_cfg(struct driver_itf *itf, uint8_t cfg);
 
 /**
  * Clear interrupt pin configuration for interrupt 2
@@ -523,7 +523,7 @@ lis2ds12_clear_int1_pin_cfg(struct sensor_itf *itf, uint8_t cfg);
  * @return 0 on success, non-zero on failure
  */
 int
-lis2ds12_clear_int2_pin_cfg(struct sensor_itf *itf, uint8_t cfg);
+lis2ds12_clear_int2_pin_cfg(struct driver_itf *itf, uint8_t cfg);
 
 /**
  * Set whether interrupts are enabled
@@ -534,7 +534,7 @@ lis2ds12_clear_int2_pin_cfg(struct sensor_itf *itf, uint8_t cfg);
  * @return 0 on success, non-zero on failure
  *
  */
-int lis2ds12_set_int_enable(struct sensor_itf *itf, uint8_t enabled);
+int lis2ds12_set_int_enable(struct driver_itf *itf, uint8_t enabled);
 
 /**
  * Clear all interrupts by reading all four interrupt registers status
@@ -544,7 +544,7 @@ int lis2ds12_set_int_enable(struct sensor_itf *itf, uint8_t enabled);
  *
  * @return 0 on success, non-zero on failure
  */
-int lis2ds12_clear_int(struct sensor_itf *itf, uint8_t *int_src);
+int lis2ds12_clear_int(struct driver_itf *itf, uint8_t *int_src);
 
 /**
  * Get Interrupt Status
@@ -554,7 +554,7 @@ int lis2ds12_clear_int(struct sensor_itf *itf, uint8_t *int_src);
  *
  * @return 0 on success, non-zero on failure
  */
-int lis2ds12_get_int_status(struct sensor_itf *itf, uint8_t *status);
+int lis2ds12_get_int_status(struct driver_itf *itf, uint8_t *status);
 
 /**
  * Get Wake Up Source
@@ -564,7 +564,7 @@ int lis2ds12_get_int_status(struct sensor_itf *itf, uint8_t *status);
  *
  * @return 0 on success, non-zero on failure
  */
-int lis2ds12_get_wake_up_src(struct sensor_itf *itf, uint8_t *status);
+int lis2ds12_get_wake_up_src(struct driver_itf *itf, uint8_t *status);
 
 /**
  * Get Tap Source
@@ -574,7 +574,7 @@ int lis2ds12_get_wake_up_src(struct sensor_itf *itf, uint8_t *status);
  *
  * @return 0 on success, non-zero on failure
  */
-int lis2ds12_get_tap_src(struct sensor_itf *itf, uint8_t *status);
+int lis2ds12_get_tap_src(struct driver_itf *itf, uint8_t *status);
 
 /**
  * Get 6D Source
@@ -584,7 +584,7 @@ int lis2ds12_get_tap_src(struct sensor_itf *itf, uint8_t *status);
  *
  * @return 0 on success, non-zero on failure
  */
-int lis2ds12_get_sixd_src(struct sensor_itf *itf, uint8_t *status);
+int lis2ds12_get_sixd_src(struct driver_itf *itf, uint8_t *status);
 
 /**
  * Setup FIFO
@@ -595,7 +595,7 @@ int lis2ds12_get_sixd_src(struct sensor_itf *itf, uint8_t *status);
  *
  * @return 0 on success, non-zero on failure
  */
-int lis2ds12_set_fifo_cfg(struct sensor_itf *itf, enum lis2ds12_fifo_mode mode, uint8_t fifo_ths);
+int lis2ds12_set_fifo_cfg(struct driver_itf *itf, enum lis2ds12_fifo_mode mode, uint8_t fifo_ths);
 
 /**
  * Get Number of Samples in FIFO
@@ -605,7 +605,7 @@ int lis2ds12_set_fifo_cfg(struct sensor_itf *itf, enum lis2ds12_fifo_mode mode, 
  *
  * @return 0 on success, non-zero on failure
  */
-int lis2ds12_get_fifo_samples(struct sensor_itf *itf, uint16_t *samples);
+int lis2ds12_get_fifo_samples(struct driver_itf *itf, uint16_t *samples);
 
 /**
  * Set Wake Up Threshold configuration
@@ -615,7 +615,7 @@ int lis2ds12_get_fifo_samples(struct sensor_itf *itf, uint16_t *samples);
  *
  * @return 0 on success, non-zero on failure
  */
-int lis2ds12_set_wake_up_ths(struct sensor_itf *itf, uint8_t reg);
+int lis2ds12_set_wake_up_ths(struct driver_itf *itf, uint8_t reg);
 
 /**
  * Get Wake Up Threshold config
@@ -625,7 +625,7 @@ int lis2ds12_set_wake_up_ths(struct sensor_itf *itf, uint8_t reg);
  *
  * @return 0 on success, non-zero on failure
  */
-int lis2ds12_get_wake_up_ths(struct sensor_itf *itf, uint8_t *reg);
+int lis2ds12_get_wake_up_ths(struct driver_itf *itf, uint8_t *reg);
 
 /**
  * Set whether sleep on inactivity is enabled
@@ -635,7 +635,7 @@ int lis2ds12_get_wake_up_ths(struct sensor_itf *itf, uint8_t *reg);
  *
  * @return 0 on success, non-zero on failure
  */
-int lis2ds12_set_inactivity_sleep_en(struct sensor_itf *itf, uint8_t en);
+int lis2ds12_set_inactivity_sleep_en(struct driver_itf *itf, uint8_t en);
 
 /**
  * Get whether sleep on inactivity is enabled
@@ -645,7 +645,7 @@ int lis2ds12_set_inactivity_sleep_en(struct sensor_itf *itf, uint8_t en);
  *
  * @return 0 on success, non-zero on failure
  */
-int lis2ds12_get_inactivity_sleep_en(struct sensor_itf *itf, uint8_t *en);
+int lis2ds12_get_inactivity_sleep_en(struct driver_itf *itf, uint8_t *en);
 
 /**
  * Set whether double tap event is enabled
@@ -655,7 +655,7 @@ int lis2ds12_get_inactivity_sleep_en(struct sensor_itf *itf, uint8_t *en);
  *
  * @return 0 on success, non-zero on failure
  */
-int lis2ds12_set_double_tap_event_en(struct sensor_itf *itf, uint8_t en);
+int lis2ds12_set_double_tap_event_en(struct driver_itf *itf, uint8_t en);
 
 /**
  * Get whether double tap event is enabled
@@ -665,7 +665,7 @@ int lis2ds12_set_double_tap_event_en(struct sensor_itf *itf, uint8_t en);
  *
  * @return 0 on success, non-zero on failure
  */
-int lis2ds12_get_double_tap_event_en(struct sensor_itf *itf, uint8_t *en);
+int lis2ds12_get_double_tap_event_en(struct driver_itf *itf, uint8_t *en);
 
 /**
  * Set Wake Up Duration
@@ -675,7 +675,7 @@ int lis2ds12_get_double_tap_event_en(struct sensor_itf *itf, uint8_t *en);
  *
  * @return 0 on success, non-zero on failure
  */
-int lis2ds12_set_wake_up_dur(struct sensor_itf *itf, uint8_t reg);
+int lis2ds12_set_wake_up_dur(struct driver_itf *itf, uint8_t reg);
 
 /**
  * Get Wake Up Duration
@@ -685,7 +685,7 @@ int lis2ds12_set_wake_up_dur(struct sensor_itf *itf, uint8_t reg);
  *
  * @return 0 on success, non-zero on failure
  */
-int lis2ds12_get_wake_up_dur(struct sensor_itf *itf, uint8_t *reg);
+int lis2ds12_get_wake_up_dur(struct driver_itf *itf, uint8_t *reg);
 
 /**
  * Set Sleep Duration
@@ -695,7 +695,7 @@ int lis2ds12_get_wake_up_dur(struct sensor_itf *itf, uint8_t *reg);
  *
  * @return 0 on success, non-zero on failure
  */
-int lis2ds12_set_sleep_dur(struct sensor_itf *itf, uint8_t reg);
+int lis2ds12_set_sleep_dur(struct driver_itf *itf, uint8_t reg);
 
 /**
  * Get Sleep Duration
@@ -705,7 +705,7 @@ int lis2ds12_set_sleep_dur(struct sensor_itf *itf, uint8_t reg);
  *
  * @return 0 on success, non-zero on failure
  */
-int lis2ds12_get_sleep_dur(struct sensor_itf *itf, uint8_t *reg);
+int lis2ds12_get_sleep_dur(struct driver_itf *itf, uint8_t *reg);
 
 /**
 * Set whether interrupt 2 signals is mapped onto interrupt 1 pin
@@ -715,7 +715,7 @@ int lis2ds12_get_sleep_dur(struct sensor_itf *itf, uint8_t *reg);
 *
 * @return 0 on success, non-zero on failure
 */
-int lis2ds12_set_int2_on_int1_map(struct sensor_itf *itf, bool enable);
+int lis2ds12_set_int2_on_int1_map(struct driver_itf *itf, bool enable);
 
 /**
 * Get whether interrupt 2 signals is mapped onto interrupt 1 pin
@@ -725,7 +725,7 @@ int lis2ds12_set_int2_on_int1_map(struct sensor_itf *itf, bool enable);
 *
 * @return 0 on success, non-zero on failure
 */
-int lis2ds12_get_int2_on_int1_map(struct sensor_itf *itf, uint8_t *val);
+int lis2ds12_get_int2_on_int1_map(struct driver_itf *itf, uint8_t *val);
 
 /**
  * Run Self test on sensor
@@ -735,7 +735,7 @@ int lis2ds12_get_int2_on_int1_map(struct sensor_itf *itf, uint8_t *val);
  *
  * @return 0 on sucess, non-zero on failure
  */
-int lis2ds12_run_self_test(struct sensor_itf *itf, int *result);
+int lis2ds12_run_self_test(struct driver_itf *itf, int *result);
 
 /**
  * Provide a continuous stream of accelerometer readings.
