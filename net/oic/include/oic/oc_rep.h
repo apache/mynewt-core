@@ -76,6 +76,12 @@ int oc_rep_finalize(void);
     g_err |= cbor_encode_byte_string(&object##_map, value, length);            \
   } while (0)
 
+#define oc_rep_set_byte_string_iov(object, key, iov, iov_len)                  \
+  do {                                                                         \
+    g_err |= cbor_encode_text_string(&object##_map, #key, strlen(#key));       \
+    g_err |= cbor_encode_byte_iovec(&object##_map, iov, iov_len);              \
+  } while (0)
+
 #define oc_rep_start_array(parent, key)                                        \
   do {                                                                         \
     CborEncoder key##_array;                                                   \
