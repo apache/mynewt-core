@@ -18,7 +18,7 @@
 
 pkg.name: hw/drivers/sensors/bme680
 pkg.description: Driver for the Bosch BME680 environmental sensor
-pkg.author: "Amr Bekhit <amrbekhit@gmail.com>"
+pkg.author: "Amr Bekhit"
 pkg.homepage: "https://mynewt.apache.org"
 pkg.keywords:
     - bme680
