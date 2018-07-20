@@ -342,6 +342,7 @@ static struct sensor_itf i2c_0_itf_lis2ds12 = {
     .si_ints = {
         { MYNEWT_VAL(LIS2DS12_INT1_PIN_HOST), MYNEWT_VAL(LIS2DS12_INT1_PIN_DEVICE),
           MYNEWT_VAL(LIS2DS12_INT1_CFG_ACTIVE)}}
+};
 #endif
 
 #if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(BME680_OFB)
