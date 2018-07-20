@@ -294,7 +294,7 @@ tsl2591_shell_cmd_en(int argc, char **argv)
     /* Update the enable state */
     if (argc == 3) {
         lval = strtol(argv[2], &endptr, 10); /* Base 10 */
-        if (argv[2] != '\0' && *endptr == '\0' &&
+        if (argv[2][0] != '\0' && *endptr == '\0' &&
             lval >= 0 && lval <= 1) {
             rc = tsl2591_enable(&g_sensor_itf, lval);
             if (rc) {
