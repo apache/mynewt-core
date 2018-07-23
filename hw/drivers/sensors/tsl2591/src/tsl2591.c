@@ -31,9 +31,6 @@
 #include "modlog/modlog.h"
 #include "syscfg/syscfg.h"
 #include "stats/stats.h"
-#if MYNEWT_VAL(TSL2591_CONFIG)
-#include "config/config.h"
-#endif
 
 /* Define the stats section and records */
 STATS_SECT_START(tsl2591_stat_section)

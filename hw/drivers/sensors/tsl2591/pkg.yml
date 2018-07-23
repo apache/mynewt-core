@@ -38,6 +38,3 @@ pkg.req_apis:
 
 pkg.deps.TSL2591_CLI:
     - "@apache-mynewt-core/util/parse"
-
-pkg.deps.TSL2591_CONFIG:
-    - '@apache-mynewt-core/sys/config'

@@ -24,9 +24,6 @@ syscfg.defs:
     TSL2591_AUTO_GAIN:
         description: 'Enable auto gain adjustements when reading samples'
         value: 0
-    TSL2591_CONFIG:
-        description: 'Persist TSL2591 settings using sys/config'
-        value: 0
     TSL2591_SHELL_ITF_TYPE:
         description: 'Select interface type'
         value: 1
