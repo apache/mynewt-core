@@ -72,7 +72,7 @@ STATS_SECT_DECL(tsl2591_stat_section) g_tsl2591stats;
     MODLOG_ ## lvl_(MYNEWT_VAL(TSL2591_LOG_MODULE), __VA_ARGS__)
 
 #if MYNEWT_VAL(TSL2591_ITIME_DELAY)
-static int tsl2591_itime_delay_ms;
+static int g_tsl2591_itime_delay_ms;
 #endif
 
 /* Exports for the sensor API */
@@ -282,8 +282,8 @@ tsl2591_set_integration_time(struct sensor_itf *itf,
     }
 
     #if MYNEWT_VAL(TSL2591_ITIME_DELAY)
-    /* Assume a +2% margin of error in timing values */
-    tsl2591_itime_delay_ms = (int_time + 1) * 102;
+    /* Set the intergration time delay value in ms (+8% margin of error) */
+    g_tsl2591_itime_delay_ms = (int_time + 1) * 108;
     #endif
 
     /* Increment the timing changed counter */
@@ -367,13 +367,13 @@ err:
 }
 
 int
-tsl2591_get_data(struct sensor_itf *itf, uint16_t *broadband, uint16_t *ir)
+tsl2591_get_data_r(struct sensor_itf *itf, uint16_t *broadband, uint16_t *ir)
 {
     int rc;
 
     #if MYNEWT_VAL(TSL2591_ITIME_DELAY)
-    /* Insert a delay of integration time + 1% to ensure valid sample */
-    os_time_delay((OS_TICKS_PER_SEC / 1000) * tsl2591_itime_delay_ms);
+    /* Insert a delay of integration time to ensure valid sample */
+    os_time_delay((OS_TICKS_PER_SEC * g_tsl2591_itime_delay_ms) / 1000);
     #endif
 
     /* CHAN0 must be read before CHAN1 */
@@ -392,6 +392,86 @@ tsl2591_get_data(struct sensor_itf *itf, uint16_t *broadband, uint16_t *ir)
 
     /* Increment the polling counter */
     STATS_INC(g_tsl2591stats, polled);
+
+    return 0;
+err:
+    return rc;
+}
+
+int
+tsl2591_get_data(struct sensor_itf *itf, uint16_t *broadband, uint16_t *ir)
+{
+    int rc;
+    uint8_t itime;
+    uint16_t igain;
+    uint16_t maxval;
+
+    #if !(MYNEWT_VAL(TSL2591_AUTO_GAIN))
+      return tsl2591_get_data_r(itf, broadband, ir);
+    #endif
+
+    /* Use auto-gain algorithm for better range at the expensive of */
+    /* unpredictable conversion times */
+
+    /* Get the integration time to determine max raw value */
+    rc = tsl2591_get_integration_time(itf, &itime);
+    if (rc) {
+        goto err;
+    }
+    /* Max value for 100ms = 37888, otherwise 65535 */
+    maxval = itime ? 65535 : 37888;
+
+    /* Set gain to 1x for the baseline conversion */
+    rc = tsl2591_set_gain(itf, TSL2591_LIGHT_GAIN_LOW);
+    if (rc) {
+        goto err;
+    }
+
+    /* Get the baseline conversion values */
+    /* Note: double-read required to empty cached values with prev gain */
+    rc = tsl2591_get_data_r(itf, broadband, ir);
+    rc = tsl2591_get_data_r(itf, broadband, ir);
+    if (rc) {
+        goto err;
+    }
+
+    /* Determine the ideal gain setting */
+    igain = maxval / (*broadband > *ir ? *broadband : *ir);
+
+    /* Find the closest gain <= igain */
+    if (igain < 25) {
+        /* Gain 1x, return the current sample */
+        return 0;
+    }
+    else if (igain < 428) {
+        /* Set gain to ~25x */
+        rc = tsl2591_set_gain(itf, TSL2591_LIGHT_GAIN_MED);
+        if (rc) {
+            goto err;
+        }
+    }
+    else if (igain < 9876) {
+        /* Set gain to ~428x */
+        rc = tsl2591_set_gain(itf, TSL2591_LIGHT_GAIN_HIGH);
+        if (rc) {
+            goto err;
+        }
+    }
+    else {
+        /* Set gain to ~9876x */
+        rc = tsl2591_set_gain(itf, TSL2591_LIGHT_GAIN_MAX);
+        if (rc) {
+            goto err;
+        }
+    }
+
+    /* Get a new data sample */
+    /* Note: double-read required to empty cached values with prev gain */
+    rc = tsl2591_get_data_r(itf, broadband, ir);
+    rc = tsl2591_get_data_r(itf, broadband, ir);
+    if (rc) {
+        goto err;
+    }
 
     return 0;
 err:
