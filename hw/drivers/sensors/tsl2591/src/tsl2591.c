@@ -393,6 +393,7 @@ tsl2591_get_data(struct sensor_itf *itf, uint16_t *broadband, uint16_t *ir)
     uint8_t itime;
     uint16_t igain;
     uint16_t maxval;
+    uint16_t divisor;
 
 #if !(MYNEWT_VAL(TSL2591_AUTO_GAIN))
     return tsl2591_get_data_r(itf, broadband, ir);
@@ -424,7 +425,10 @@ tsl2591_get_data(struct sensor_itf *itf, uint16_t *broadband, uint16_t *ir)
     }
 
     /* Determine the ideal gain setting */
-    igain = maxval / (*broadband > *ir ? *broadband : *ir);
+    divisor = *broadband > *ir ? *broadband : *ir;
+    /* Avoid potential divide by 0 errors in low light */
+    igain = maxval / (divisor == 0 ? 1 : divisor);
+
 
     /* Find the closest gain <= igain */
     if (igain < 25) {
