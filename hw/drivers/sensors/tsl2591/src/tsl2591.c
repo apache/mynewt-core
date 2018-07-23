@@ -281,10 +281,10 @@ tsl2591_set_integration_time(struct sensor_itf *itf,
         goto err;
     }
 
-    #if MYNEWT_VAL(TSL2591_ITIME_DELAY)
+#if MYNEWT_VAL(TSL2591_ITIME_DELAY)
     /* Set the intergration time delay value in ms (+8% margin of error) */
     g_tsl2591_itime_delay_ms = (int_time + 1) * 108;
-    #endif
+#endif
 
     /* Increment the timing changed counter */
     STATS_INC(g_tsl2591stats, timing_changed);
@@ -371,10 +371,10 @@ tsl2591_get_data_r(struct sensor_itf *itf, uint16_t *broadband, uint16_t *ir)
 {
     int rc;
 
-    #if MYNEWT_VAL(TSL2591_ITIME_DELAY)
+#if MYNEWT_VAL(TSL2591_ITIME_DELAY)
     /* Insert a delay of integration time to ensure valid sample */
     os_time_delay((OS_TICKS_PER_SEC * g_tsl2591_itime_delay_ms) / 1000);
-    #endif
+#endif
 
     /* CHAN0 must be read before CHAN1 */
     /* See: https://forums.adafruit.com/viewtopic.php?f=19&t=124176 */
@@ -406,9 +406,9 @@ tsl2591_get_data(struct sensor_itf *itf, uint16_t *broadband, uint16_t *ir)
     uint16_t igain;
     uint16_t maxval;
 
-    #if !(MYNEWT_VAL(TSL2591_AUTO_GAIN))
-      return tsl2591_get_data_r(itf, broadband, ir);
-    #endif
+#if !(MYNEWT_VAL(TSL2591_AUTO_GAIN))
+    return tsl2591_get_data_r(itf, broadband, ir);
+#endif
 
     /* Use auto-gain algorithm for better range at the expensive of */
     /* unpredictable conversion times */
@@ -442,22 +442,19 @@ tsl2591_get_data(struct sensor_itf *itf, uint16_t *broadband, uint16_t *ir)
     if (igain < 25) {
         /* Gain 1x, return the current sample */
         return 0;
-    }
-    else if (igain < 428) {
+    } else if (igain < 428) {
         /* Set gain to ~25x */
         rc = tsl2591_set_gain(itf, TSL2591_LIGHT_GAIN_MED);
         if (rc) {
             goto err;
         }
-    }
-    else if (igain < 9876) {
+    } else if (igain < 9876) {
         /* Set gain to ~428x */
         rc = tsl2591_set_gain(itf, TSL2591_LIGHT_GAIN_HIGH);
         if (rc) {
             goto err;
         }
-    }
-    else {
+    } else {
         /* Set gain to ~9876x */
         rc = tsl2591_set_gain(itf, TSL2591_LIGHT_GAIN_MAX);
         if (rc) {
