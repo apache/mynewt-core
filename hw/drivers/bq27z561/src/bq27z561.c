@@ -540,6 +540,24 @@ bq27z561_get_chip_id(struct bq27z561 *dev, uint8_t *chip_id)
 }
 #endif
 
+/* Check if bq27z561 is initialized and sets bq27z561 initialized flag */
+int
+bq27z561_get_init_status(struct bq27z561 *dev, uint8_t *init_flag)
+{
+    int rc;
+    uint16_t init;
+    rc = bq27z561_rd_std_reg_word(dev, BQ27Z561_REG_FLAGS, &init);
+    if (init & BQ27Z561_BATTERY_STATUS_INIT)
+    {
+    	    *init_flag = 1;
+    }
+    else
+    {
+	    *init_flag = 0;
+    }
+    return rc;
+}
+
 /* XXX: no support for control register yet */
 
 int
@@ -918,6 +936,16 @@ bq27z561_battery_property_get(struct battery_driver *driver,
                           struct battery_property *property, uint32_t timeout)
 {
     int rc = 0;
+    struct bq27z561 * bq_dev;
+    bq_dev = (struct bq27z561 *)&driver->dev;
+    rc = bq27z561_get_init_status((struct bq27z561 *) driver->bd_driver_data,
+                                      &bq_dev->bq27_initialized);
+    if (!bq_dev->bq27_initialized)
+    {
+        rc = -2;
+        property->bp_valid = 0;
+        return rc;
+    }
 
     battery_property_value_t val;
     if (property->bp_type == BATTERY_PROP_VOLTAGE_NOW &&
