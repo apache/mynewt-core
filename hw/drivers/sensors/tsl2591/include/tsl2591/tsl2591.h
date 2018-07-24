@@ -179,7 +179,8 @@ int tsl2591_config(struct tsl2591 *, struct tsl2591_cfg *);
  * @param IR light reading
  * @param ptr to the sensor driver config
  *
- * @return 0 on failure, otherwise the converted light level in lux
+ * @return 0 on failure, otherwise the converted light level in lux as an
+ *         unsigned 32-bit integer.
  */
 uint32_t tsl2591_calculate_lux(struct sensor_itf *itf, uint16_t broadband,
   uint16_t ir, struct tsl2591_cfg *cfg);
@@ -197,7 +198,8 @@ uint32_t tsl2591_calculate_lux(struct sensor_itf *itf, uint16_t broadband,
  * @param IR light reading
  * @param ptr to the sensor driver config
  *
- * @return 0 on failure, otherwise the converted light level in lux
+ * @return 0 on failure, otherwise the converted light level in lux as a
+ *         single precision float.
  */
 float tsl2591_calculate_lux_f(struct sensor_itf *itf, uint16_t broadband,
   uint16_t ir, struct tsl2591_cfg *cfg);
