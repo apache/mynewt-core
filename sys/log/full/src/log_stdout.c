@@ -39,6 +39,16 @@ log_stdout_append(struct log *log, void *buf, int len)
 }
 
 static int
+log_stdout_append_body(struct log *log, const struct log_entry_hdr *hdr,
+                        const void *body, int body_len)
+{
+
+
+    fwrite(body, body_len, 1, stdout);
+    return (0);
+}
+
+static int
 log_stdout_read(struct log *log, void *dptr, void *buf, uint16_t offset,
         uint16_t len)
 {
@@ -65,6 +75,7 @@ const struct log_handler log_stdout_handler = {
     .log_type = LOG_TYPE_STREAM,
     .log_read = log_stdout_read,
     .log_append = log_stdout_append,
+    .log_append_body = log_stdout_append_body,
     .log_walk = log_stdout_walk,
     .log_flush = log_stdout_flush,
 };
