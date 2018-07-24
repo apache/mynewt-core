@@ -125,6 +125,7 @@ tsl2591_write16(struct sensor_itf *itf, uint8_t reg, uint16_t value)
         TSL2591_LOG(ERROR,
                     "Failed to write @0x%02X with value 0x%02X 0x%02X\n",
                     reg, payload[0], payload[1]);
+        STATS_INC(g_tsl2591stats, errors);
     }
 
     sensor_itf_unlock(itf);
@@ -155,6 +156,7 @@ tsl2591_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
                               OS_TICKS_PER_SEC / 10, 1);
     if (rc) {
         TSL2591_LOG(ERROR, "Failed to address sensor\n");
+        STATS_INC(g_tsl2591stats, errors);
         goto err;
     }
 
@@ -165,6 +167,7 @@ tsl2591_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
     *value = payload;
     if (rc) {
         TSL2591_LOG(ERROR, "Failed to read @0x%02X\n", reg);
+        STATS_INC(g_tsl2591stats, errors);
     }
 
 err:
@@ -195,6 +198,7 @@ tsl2591_read16(struct sensor_itf *itf, uint8_t reg, uint16_t *value)
                               OS_TICKS_PER_SEC / 10, 1);
     if (rc) {
         TSL2591_LOG(ERROR, "Failed to address sensor\n");
+        STATS_INC(g_tsl2591stats, errors);
         goto err;
     }
 
@@ -206,6 +210,7 @@ tsl2591_read16(struct sensor_itf *itf, uint8_t reg, uint16_t *value)
     *value = (uint16_t)payload[0] | ((uint16_t)payload[1] << 8);
     if (rc) {
         TSL2591_LOG(ERROR, "Failed to read @0x%02X\n", reg);
+        STATS_INC(g_tsl2591stats, errors);
         goto err;
     }
 
@@ -375,9 +380,6 @@ tsl2591_get_data_r(struct sensor_itf *itf, uint16_t *broadband, uint16_t *ir)
         goto err;
     }
 
-    /* Increment the polling counter */
-    STATS_INC(g_tsl2591stats, polled);
-
     return 0;
 err:
     return rc;
@@ -393,7 +395,15 @@ tsl2591_get_data(struct sensor_itf *itf, uint16_t *broadband, uint16_t *ir)
     uint16_t divisor;
 
 #if !(MYNEWT_VAL(TSL2591_AUTO_GAIN))
-    return tsl2591_get_data_r(itf, broadband, ir);
+    rc = tsl2591_get_data_r(itf, broadband, ir);
+    if (rc) {
+        goto err;
+    }
+
+    /* Increment the polling counter */
+    STATS_INC(g_tsl2591stats, polled);
+
+    return rc;
 #endif
 
     /* Use auto-gain algorithm for better range at the expensive of */
@@ -459,6 +469,9 @@ tsl2591_get_data(struct sensor_itf *itf, uint16_t *broadband, uint16_t *ir)
         goto err;
     }
 
+    /* Increment the polling counter */
+    STATS_INC(g_tsl2591stats, polled);
+
     return 0;
 err:
     return rc;
@@ -522,6 +535,7 @@ tsl2591_init(struct os_dev *dev, void *arg)
 
     return 0;
 err:
+    STATS_INC(g_tsl2591stats, errors);
     return rc;
 }
 
