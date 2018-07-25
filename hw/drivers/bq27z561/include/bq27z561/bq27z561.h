@@ -352,7 +352,6 @@ int bq27z561_set_voltage_hi_set_threshold(struct bq27z561 *dev,
 int bq27z561_set_voltage_hi_clr_threshold(struct bq27z561 *dev,
         uint16_t voltage);
 
-/* Check if bq27z561 is initialized and sets bq27z561 initialized flag */
 /**
  * Check if bq27z561 is initialized and sets bq27z561 initialized flag
  * @param dev pointer to device
