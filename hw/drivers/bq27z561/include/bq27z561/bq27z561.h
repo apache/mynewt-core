@@ -179,6 +179,9 @@ struct bq27z561
 
     /* Interface */
     struct bq27z561_itf bq27_itf;
+
+    /* Device initialization complete flag */
+    uint8_t bq27_initialized;
 };
 
 /**
@@ -349,6 +352,14 @@ int bq27z561_set_voltage_hi_set_threshold(struct bq27z561 *dev,
 int bq27z561_set_voltage_hi_clr_threshold(struct bq27z561 *dev,
         uint16_t voltage);
 
+/**
+ * Check if bq27z561 is initialized and sets bq27z561 initialized flag
+ * @param dev pointer to device
+ * @param initialized device initialized flag
+ * @return int 0: success, -1 error
+ */
+int
+bq27z561_get_init_status(struct bq27z561 *dev, uint8_t *initialized);
 /**
  * bq27z561 get batt status
  *
