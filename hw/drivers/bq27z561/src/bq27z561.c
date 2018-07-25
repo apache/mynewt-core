@@ -938,13 +938,17 @@ bq27z561_battery_property_get(struct battery_driver *driver,
     int rc = 0;
     struct bq27z561 * bq_dev;
     bq_dev = (struct bq27z561 *)&driver->dev;
-    rc = bq27z561_get_init_status((struct bq27z561 *) driver->bd_driver_data,
-                                      &bq_dev->bq27_initialized);
+
     if (!bq_dev->bq27_initialized)
     {
-        rc = -2;
-        property->bp_valid = 0;
-        return rc;
+        rc = bq27z561_get_init_status((struct bq27z561 *) driver->bd_driver_data,
+                                          &bq_dev->bq27_initialized);
+        if (!bq_dev->bq27_initialized)
+        {
+            rc = -2;
+            property->bp_valid = 0;
+            return rc;
+        }
     }
 
     battery_property_value_t val;
@@ -1173,6 +1177,9 @@ bq27z561_init(struct os_dev *dev, void *arg)
     OS_DEV_SETHANDLERS(dev, bq27z561_open, bq27z561_close);
 
     bq27 = (struct bq27z561 *)dev;
+
+    bq27->bq27_initialized = 0;
+
     /* Copy the interface struct */
     bq27->bq27_itf = init_arg->itf;
 
