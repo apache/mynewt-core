@@ -118,16 +118,16 @@ extern "C" {
 #define BME680_CHIP_ID  UINT8_C(0x61)
 
 /** BME680 coefficients related defines */
-#define BME680_COEFF_SIZE		UINT8_C(41)
+#define BME680_COEFF_SIZE			UINT8_C(41)
 #define BME680_COEFF_ADDR1_LEN		UINT8_C(25)
 #define BME680_COEFF_ADDR2_LEN		UINT8_C(16)
 
 /** BME680 field_x related defines */
-#define BME680_FIELD_LENGTH		UINT8_C(15)
+#define BME680_FIELD_LENGTH			UINT8_C(15)
 #define BME680_FIELD_ADDR_OFFSET	UINT8_C(17)
 
 /** Soft reset command */
-#define BME680_SOFT_RESET_CMD   UINT8_C(0xb6)
+#define BME680_SOFT_RESET_CMD   	UINT8_C(0xb6)
 
 /** Error code definitions */
 #define BME680_OK		INT8_C(0)
@@ -150,23 +150,23 @@ extern "C" {
 #define BME680_ADDR_RES_HEAT_VAL_ADDR	UINT8_C(0x00)
 #define BME680_ADDR_RES_HEAT_RANGE_ADDR	UINT8_C(0x02)
 #define BME680_ADDR_RANGE_SW_ERR_ADDR	UINT8_C(0x04)
-#define BME680_ADDR_SENS_CONF_START	UINT8_C(0x5A)
-#define BME680_ADDR_GAS_CONF_START	UINT8_C(0x64)
+#define BME680_ADDR_SENS_CONF_START		UINT8_C(0x5A)
+#define BME680_ADDR_GAS_CONF_START		UINT8_C(0x64)
 
 /** Field settings */
-#define BME680_FIELD0_ADDR		UINT8_C(0x1d)
+#define BME680_FIELD0_ADDR			UINT8_C(0x1d)
 
 /** Heater settings */
 #define BME680_RES_HEAT0_ADDR		UINT8_C(0x5a)
 #define BME680_GAS_WAIT0_ADDR		UINT8_C(0x64)
 
 /** Sensor configuration registers */
-#define BME680_CONF_HEAT_CTRL_ADDR		UINT8_C(0x70)
+#define BME680_CONF_HEAT_CTRL_ADDR			UINT8_C(0x70)
 #define BME680_CONF_ODR_RUN_GAS_NBC_ADDR	UINT8_C(0x71)
-#define BME680_CONF_OS_H_ADDR			UINT8_C(0x72)
-#define BME680_MEM_PAGE_ADDR			UINT8_C(0xf3)
-#define BME680_CONF_T_P_MODE_ADDR		UINT8_C(0x74)
-#define BME680_CONF_ODR_FILT_ADDR		UINT8_C(0x75)
+#define BME680_CONF_OS_H_ADDR				UINT8_C(0x72)
+#define BME680_MEM_PAGE_ADDR				UINT8_C(0xf3)
+#define BME680_CONF_T_P_MODE_ADDR			UINT8_C(0x74)
+#define BME680_CONF_ODR_FILT_ADDR			UINT8_C(0x75)
 
 /** Coefficient's address */
 #define BME680_COEFF_ADDR1	UINT8_C(0x89)
@@ -237,7 +237,8 @@ extern "C" {
 #define BME680_HCNTRL_SEL		UINT16_C(32)
 #define BME680_RUN_GAS_SEL		UINT16_C(64)
 #define BME680_NBCONV_SEL		UINT16_C(128)
-#define BME680_GAS_SENSOR_SEL		(BME680_GAS_MEAS_SEL | BME680_RUN_GAS_SEL | BME680_NBCONV_SEL)
+#define BME680_GAS_SENSOR_SEL	\
+				(BME680_GAS_MEAS_SEL | BME680_RUN_GAS_SEL | BME680_NBCONV_SEL)
 
 /** Number of conversion settings*/
 #define BME680_NBCONV_MIN		UINT8_C(0)
@@ -353,7 +354,8 @@ extern "C" {
  * @param[in/out] reg_data: Data array to read/write
  * @param[in] len: Length of the data array
  */
-typedef int8_t (*bme680_com_fptr_t)(struct sensor *sensor, uint8_t dev_id, uint8_t reg_addr, uint8_t *data, uint16_t len);
+typedef int8_t (*bme680_com_fptr_t)(struct sensor *sensor, uint8_t dev_id, 
+								uint8_t reg_addr, uint8_t *data, uint16_t len);
 
 /*!
  * Delay function pointer
