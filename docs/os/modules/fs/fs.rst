@@ -31,7 +31,7 @@ packages should only depend on ``fs/fs``.
 
 Applications wanting to access a filesystem are required to include the
 necessary packages in their applications pkg.yml file. In the following
-example, the ```Newtron Flash File System`` <../nffs/nffs.html>`__ is
+example, the :doc:`Newtron Flash File System <nffs>` is
 used.
 
 .. code-block:: console
@@ -55,7 +55,7 @@ used.
 
     # [...]
 
-Consult the documentation for ```nffs`` <../nffs/nffs.html>`__ for a more
+Consult the ``nffs`` :doc:`documentation  <nffs>` for a more
 detailed explanation of NFFS\_DETECT\_FAIL
 
 Code which uses the file system after the system has been initialized

@@ -10,7 +10,8 @@ destination of logs.
   :local:
   :depth: 2
 
-### Description
+Description
+^^^^^^^^^^^
 
 In the Mynewt OS, the log package comes in two versions:
 
@@ -78,8 +79,8 @@ required. The log package comes with three pre-built log handlers:
    support walking and reading.
 -  cbmem -- writes/reads log events to a circular buffer. Supports
    walking and reading for access by newtmgr and shell commands.
--  fcb -- writes/reads log events to a `flash circular
-   buffer </os/modules/fcb/fcb.html>`__. Supports walking and reading for
+-  fcb -- writes/reads log events to a :doc:`flash circular
+   buffer </../../fcb/fcb>`. Supports walking and reading for
    access by newtmgr and shell commands.
 
 In addition, it is possible to create custom log handlers for other

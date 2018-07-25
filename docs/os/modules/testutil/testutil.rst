@@ -72,7 +72,7 @@ or by including a call to your test suite from
 Example
 ~~~~~~~
 
-`This Tutorial </tutorials/other/unit_test.html>`_ shows how to create a
+:doc:`This Tutorial <../../../tutorials/other/unit_test>` shows how to create a
 test suite for a Mynewt package.
 
 Data structures
