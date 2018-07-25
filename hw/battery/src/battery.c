@@ -76,31 +76,34 @@ static void
 battery_poll_event_cb(struct os_event *ev)
 {
     int i;
-    os_time_t next_poll = 0xFFFFFFFF;
+    int pflag;
+    os_time_t next_poll;
     os_time_t now = os_time_get();
     struct battery *bat;
-    int ticks;
+    os_stime_t ticks;
 
+    pflag = 0;
     for (i = 0; i < BATTERY_MAX_COUNT; ++i) {
         bat = battery_manager.bm_batteries[i];
         if (bat) {
-            if (now > bat->b_next_run) {
+            if (OS_TIME_TICK_GEQ(now, bat->b_next_run)) {
                 bat->b_last_read_time = now;
                 battery_mgr_poll_battery(battery_manager.bm_batteries[i]);
                 bat->b_next_run = now + os_time_ms_to_ticks32(bat->b_poll_rate);
             }
-            if (bat->b_next_run < next_poll) {
+            if ((pflag == 0) || OS_TIME_TICK_LT(bat->b_next_run, next_poll)) {
+                pflag = 1;
                 next_poll = bat->b_next_run;
             }
         }
     }
 
-    if (next_poll != 0xFFFFFFFF) {
-        ticks = next_poll - os_time_get();
+    if (pflag) {
+        ticks = (os_stime_t)(next_poll - os_time_get());
         if (ticks < 0) {
             ticks = 1;
         }
-        os_callout_reset(&battery_manager.bm_poll_callout, ticks);
+        os_callout_reset(&battery_manager.bm_poll_callout, (os_time_t)ticks);
     }
 }
 
@@ -494,15 +497,14 @@ int
 battery_set_poll_rate_ms(struct os_dev *battery, uint32_t poll_rate)
 {
     struct battery *bat = (struct battery *)battery;
-    bat->b_poll_rate = poll_rate;
 
-    if (bat->b_last_read_time == 0 ||
-        os_time_ms_to_ticks32(bat->b_last_read_time + poll_rate) < os_time_get()) {
-        os_callout_reset(&battery_manager.bm_poll_callout, 0);
-    } else {
-        os_callout_reset(&battery_manager.bm_poll_callout,
-            os_time_ms_to_ticks32(bat->b_last_read_time + poll_rate) - os_time_get());
+    if ((poll_rate == 0) || (bat == NULL)) {
+        return -1;
     }
+
+    bat->b_poll_rate = poll_rate;
+    bat->b_next_run = os_time_get();
+    os_callout_reset(&battery_manager.bm_poll_callout, 0);
 
     return 0;
 }
