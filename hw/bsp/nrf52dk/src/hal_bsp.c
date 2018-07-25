@@ -50,6 +50,9 @@
 #if MYNEWT_VAL(SOFT_PWM)
 #include <soft_pwm/soft_pwm.h>
 #endif
+#if MYNEWT_VAL(ENC_FLASH_DEV)
+#include <ef_nrf5x/ef_nrf5x.h>
+#endif
 
 #if MYNEWT_VAL(UART_0)
 static struct uart_dev os_bsp_uart0;
@@ -134,16 +137,33 @@ static const struct hal_bsp_mem_dump dump_cfg[] = {
     }
 };
 
+#if MYNEWT_VAL(ENC_FLASH_DEV)
+struct eflash_nrf5x_dev enc_flash_dev0 = {
+    .end_dev = {
+        .efd_hal = {
+            .hf_itf = &enc_flash_funcs,
+        },
+        .efd_hwdev = &nrf52k_flash_dev
+    }
+};
+
+#endif
+
 const struct hal_flash *
 hal_bsp_flash_dev(uint8_t id)
 {
     /*
      * Internal flash mapped to id 0.
      */
-    if (id != 0) {
-        return NULL;
+    if (id == 0) {
+        return &nrf52k_flash_dev;
     }
-    return &nrf52k_flash_dev;
+#if MYNEWT_VAL(ENC_FLASH_DEV)
+    if (id == 1) {
+        return &enc_flash_dev0.end_dev.efd_hal;
+    }
+#endif
+    return NULL;
 }
 
 const struct hal_bsp_mem_dump *
