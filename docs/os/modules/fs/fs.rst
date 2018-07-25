@@ -55,7 +55,7 @@ used.
 
     # [...]
 
-Consult the ``nffs`` :doc:`documentation  <nffs>` for a more
+Consult the ``nffs`` :doc:`documentation <nffs>` for a more
 detailed explanation of NFFS\_DETECT\_FAIL
 
 Code which uses the file system after the system has been initialized
