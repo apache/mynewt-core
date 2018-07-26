@@ -17,24 +17,24 @@
 # under the License.
 #
 
-pkg.name: hw/sensor
-pkg.description: Sensor Interface
-pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
-pkg.homepage: "http://mynewt.apache.org/"
+pkg.name: hw/drivers/sensors/tsl2591
+pkg.description: Driver for the TSL2591 light to digital sensor
+pkg.author: "Kevin Townsend"
+pkg.homepage: "https://www.adafruit.com/product/1980"
 pkg.keywords:
+    - adafruit
+    - tsl2591
+    - i2c
+    - sensor
 
 pkg.deps:
     - "@apache-mynewt-core/kernel/os"
-
-pkg.deps.SENSOR_OIC:
-    - "@apache-mynewt-core/net/oic"
-
-pkg.deps.SENSOR_CLI:
-    - "@apache-mynewt-core/sys/shell"
-    - "@apache-mynewt-core/util/parse"
+    - "@apache-mynewt-core/hw/hal"
+    - "@apache-mynewt-core/hw/sensor"
+    - "@apache-mynewt-core/sys/log/modlog"
 
 pkg.req_apis:
-    - console
-    
-pkg.init:
-    sensor_pkg_init: 501
+    - stats
+
+pkg.deps.TSL2591_CLI:
+    - "@apache-mynewt-core/util/parse"
