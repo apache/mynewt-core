@@ -1712,3 +1712,31 @@ SX1276OnDio5Irq(void *unused)
         break;
     }
 }
+
+void
+SX1276RxDisable(void)
+{
+    if (SX1276.Settings.Modem == MODEM_LORA) {
+        /* Disable GPIO interrupts */
+        SX1276RxIoIrqDisable();
+
+        /* Disable RX interrupts */
+        SX1276Write(REG_LR_IRQFLAGSMASK, RFLR_IRQFLAGS_RXTIMEOUT_MASK       |
+                                         RFLR_IRQFLAGS_RXDONE_MASK          |
+                                         RFLR_IRQFLAGS_PAYLOADCRCERROR_MASK |
+                                         RFLR_IRQFLAGS_CADDONE_MASK         |
+                                         RFLR_IRQFLAGS_CADDETECTED_MASK);
+
+        /* Put radio into standby */
+        SX1276SetStby();
+
+        /* Clear any pending interrupts */
+        SX1276Write(REG_LR_IRQFLAGS, RFLR_IRQFLAGS_RXTIMEOUT            |
+                                     RFLR_IRQFLAGS_RXDONE               |
+                                     RFLR_IRQFLAGS_PAYLOADCRCERROR_MASK |
+                                     RFLR_IRQFLAGS_CADDONE_MASK         |
+                                     RFLR_IRQFLAGS_CADDETECTED_MASK);
+        /* Enable GPIO interrupts */
+        SX1276RxIoIrqEnable();
+    }
+}

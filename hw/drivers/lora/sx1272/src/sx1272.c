@@ -1564,3 +1564,31 @@ SX1272OnDio5Irq(void *unused)
         break;
     }
 }
+
+void
+SX1272RxDisable(void)
+{
+    if (SX1272.Settings.Modem == MODEM_LORA) {
+        /* Disable GPIO interrupts */
+        SX1272RxIoIrqDisable();
+
+        /* Disable RX interrupts */
+        SX1272Write(REG_LR_IRQFLAGSMASK, RFLR_IRQFLAGS_RXTIMEOUT_MASK       |
+                                         RFLR_IRQFLAGS_RXDONE_MASK          |
+                                         RFLR_IRQFLAGS_PAYLOADCRCERROR_MASK |
+                                         RFLR_IRQFLAGS_CADDONE_MASK         |
+                                         RFLR_IRQFLAGS_CADDETECTED_MASK);
+
+        /* Put radio into standby */
+        SX1272SetStby();
+
+        /* Clear any pending interrupts */
+        SX1272Write(REG_LR_IRQFLAGS, RFLR_IRQFLAGS_RXTIMEOUT            |
+                                     RFLR_IRQFLAGS_RXDONE               |
+                                     RFLR_IRQFLAGS_PAYLOADCRCERROR_MASK |
+                                     RFLR_IRQFLAGS_CADDONE_MASK         |
+                                     RFLR_IRQFLAGS_CADDETECTED_MASK);
+        /* Enable GPIO interrupts */
+        SX1272RxIoIrqEnable();
+    }
+}

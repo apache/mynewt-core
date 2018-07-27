@@ -55,7 +55,8 @@ const struct Radio_s Radio =
     .ReadBuffer = SX1276ReadBuffer,
     .SetMaxPayloadLength = SX1276SetMaxPayloadLength,
     .SetPublicNetwork = SX1276SetPublicNetwork,
-    .GetWakeupTime = SX1276GetWakeupTime
+    .GetWakeupTime = SX1276GetWakeupTime,
+    .RxDisable = SX1276RxDisable
 };
 
 void
@@ -231,3 +232,20 @@ SX1276GetBoardTcxoWakeupTime(void)
     return 0;
 }
 
+void
+SX1276RxIoIrqDisable(void)
+{
+    hal_gpio_irq_disable(SX1276_DIO0);
+    hal_gpio_irq_disable(SX1276_DIO1);
+    hal_gpio_irq_disable(SX1276_DIO2);
+    hal_gpio_irq_disable(SX1276_DIO3);
+}
+
+void
+SX1276RxIoIrqEnable(void)
+{
+    hal_gpio_irq_enable(SX1276_DIO0);
+    hal_gpio_irq_enable(SX1276_DIO1);
+    hal_gpio_irq_enable(SX1276_DIO2);
+    hal_gpio_irq_enable(SX1276_DIO3);
+}

@@ -152,6 +152,17 @@ bool SX1272CheckRfFrequency(uint32_t frequency);
 uint32_t SX1272GetBoardTcxoWakeupTime( void );
 
 /*!
+ * \brief Disables all receive related IO Irqs
+ */
+void SX1272RxIoIrqDisable( void );
+
+/*!
+ * \brief Enables all receive related IO Irqs
+ */
+void SX1272RxIoIrqEnable( void );
+
+
+/*!
  * Radio hardware and global parameters
  */
 extern SX1272_t SX1272;
