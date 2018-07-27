@@ -16,23 +16,55 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+#include <syscfg/syscfg.h>
 
+#if MYNEWT_VAL(FCB_CRC_8)
 #include <crc/crc8.h>
+#endif
+#if MYNEWT_VAL(FCB_CRC_16)
+#include <crc/crc16.h>
+#endif
 
 #include "fcb/fcb.h"
 #include "fcb_priv.h"
+
+#if MYNEWT_VAL(FCB_CRC_8) && MYNEWT_VAL(FCB_CRC_16)
+/*
+ * Need to check from FCB structure which mode it is operating at.
+ */
+#define FCB_CRC_INIT(fcb)                                               \
+    ((fcb)->f_crc_actual == FCB_CRC_8 ? crc8_init() : CRC16_INITIAL_CRC)
+#define FCB_CRC(fcb, crc, data, len)                                    \
+    ((fcb)->f_crc_actual == FCB_CRC_8 ?                                 \
+      crc8_calc(crc, data, len) :                                       \
+      crc16_ccitt(crc, data, len))
+#elif MYNEWT_VAL(FCB_CRC_8)
+/*
+ * crc8
+ */
+#define FCB_CRC_INIT(fcb) crc8_init()
+#define FCB_CRC(fcb, crc, data, len)                                    \
+    crc8_calc(crc, data, len)
+#elif MYNEWT_VAL(FCB_CRC_16)
+/*
+ * crc16
+ */
+#define FCB_CRC_INIT(fcb) CRC16_INITIAL_CRC
+#define FCB_CRC(fcb, crc, data, len)                                    \
+    crc16_ccitt(crc, data, len)
+#endif
 
 /*
  * Given offset in flash area, fill in rest of the fcb_entry, and crc8 over
  * the data.
  */
 int
-fcb_elem_crc8(struct fcb *fcb, struct fcb_entry *loc, uint8_t *c8p)
+fcb_elem_crc(struct fcb *fcb, struct fcb_entry *loc, uint16_t *cp)
 {
     uint8_t tmp_str[FCB_TMP_BUF_SZ];
     int cnt;
     int blk_sz;
-    uint8_t crc8;
+    uint16_t crc;
     uint16_t len;
     uint32_t off;
     uint32_t end;
@@ -53,8 +85,8 @@ fcb_elem_crc8(struct fcb *fcb, struct fcb_entry *loc, uint8_t *c8p)
     loc->fe_data_off = loc->fe_elem_off + fcb_len_in_flash(fcb, cnt);
     loc->fe_data_len = len;
 
-    crc8 = crc8_init();
-    crc8 = crc8_calc(crc8, tmp_str, cnt);
+    crc = FCB_CRC_INIT(fcb);
+    crc = FCB_CRC(fcb, crc, tmp_str, cnt);
 
     off = loc->fe_data_off;
     end = loc->fe_data_off + len;
@@ -68,9 +100,12 @@ fcb_elem_crc8(struct fcb *fcb, struct fcb_entry *loc, uint8_t *c8p)
         if (rc) {
             return FCB_ERR_FLASH;
         }
-        crc8 = crc8_calc(crc8, tmp_str, blk_sz);
+        crc = FCB_CRC(fcb, crc, tmp_str, blk_sz);
     }
-    *c8p = crc8;
+    if (fcb->f_crc_actual == FCB_CRC_8) {
+        crc = htole16(crc);
+    }
+    *cp = crc;
 
     return 0;
 }
@@ -79,22 +114,22 @@ int
 fcb_elem_info(struct fcb *fcb, struct fcb_entry *loc)
 {
     int rc;
-    uint8_t crc8;
-    uint8_t fl_crc8;
+    uint16_t crc;
+    uint16_t fl_crc = 0;
     uint32_t off;
 
-    rc = fcb_elem_crc8(fcb, loc, &crc8);
+    rc = fcb_elem_crc(fcb, loc, &crc);
     if (rc) {
         return rc;
     }
     off = loc->fe_data_off + fcb_len_in_flash(fcb, loc->fe_data_len);
 
-    rc = flash_area_read(loc->fe_area, off, &fl_crc8, sizeof(fl_crc8));
+    rc = flash_area_read(loc->fe_area, off, &fl_crc, fcb->f_crc_actual);
     if (rc) {
         return FCB_ERR_FLASH;
     }
 
-    if (fl_crc8 != crc8) {
+    if (fl_crc != crc) {
         return FCB_ERR_CRC;
     }
     return 0;

@@ -28,6 +28,7 @@ TEST_CASE(config_test_save_1_fcb)
     cf.cf_fcb.f_magic = MYNEWT_VAL(CONFIG_FCB_MAGIC);
     cf.cf_fcb.f_sectors = fcb_areas;
     cf.cf_fcb.f_sector_cnt = sizeof(fcb_areas) / sizeof(fcb_areas[0]);
+    cf.cf_fcb.f_crc = FCB_CRC_INHERIT;
 
     rc = conf_fcb_src(&cf);
     TEST_ASSERT(rc == 0);

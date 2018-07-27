@@ -31,7 +31,7 @@ fcb_getnext_in_area(struct fcb *fcb, struct fcb_entry *loc)
         do {
             loc->fe_elem_off = loc->fe_data_off +
               fcb_len_in_flash(fcb, loc->fe_data_len) +
-              fcb_len_in_flash(fcb, FCB_CRC_SZ);
+              fcb_len_in_flash(fcb, fcb->f_crc_actual);
             rc = fcb_elem_info(fcb, loc);
             if (rc != FCB_ERR_CRC) {
                 break;

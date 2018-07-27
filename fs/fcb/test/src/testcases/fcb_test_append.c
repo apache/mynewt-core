@@ -28,17 +28,6 @@ TEST_CASE(fcb_test_append)
     int j;
     int var_cnt;
 
-#if 0
-    fcb_test_wipe();
-    fcb = &test_fcb;
-    memset(fcb, 0, sizeof(*fcb));
-    fcb->f_sector_cnt = 2;
-    fcb->f_sectors = test_fcb_area;
-
-    rc = fcb_init(fcb);
-    TEST_ASSERT(rc == 0);
-#endif
-
     fcb = &test_fcb;
 
     for (i = 0; i < sizeof(test_data); i++) {
