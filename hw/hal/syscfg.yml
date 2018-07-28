@@ -33,3 +33,7 @@ syscfg.defs:
             buffers of this size are allocated on the stack during erase
             verifies; one buffer during write verifies.
         value: 16
+
+syscfg.vals.OS_DEBUG_MODE:
+    HAL_FLASH_VERIFY_WRITES: 1
+    HAL_FLASH_VERIFY_ERASES: 1
