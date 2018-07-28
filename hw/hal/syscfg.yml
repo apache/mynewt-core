@@ -29,9 +29,9 @@ syscfg.defs:
         value: 0
     HAL_FLASH_VERIFY_BUF_SZ:
         description: >
-            The buffer size to use when verifying writes and erases.  Two
-            buffers of this size are allocated on the stack during erase
-            verifies; one buffer during write verifies.
+            The buffer size to use when verifying writes and erases.  One
+            buffer of this size is allocated on the stack during verify
+            operations.
         value: 16
 
 syscfg.vals.OS_DEBUG_MODE:

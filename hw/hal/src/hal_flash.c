@@ -104,15 +104,13 @@ static int
 hal_flash_cmp_erased(const struct hal_flash *hf, uint32_t address,
   uint32_t num_bytes)
 {
-    uint8_t empty[MYNEWT_VAL(HAL_FLASH_VERIFY_BUF_SZ)];
     uint8_t buf[MYNEWT_VAL(HAL_FLASH_VERIFY_BUF_SZ)];
 
     uint32_t off;
     uint32_t rem;
     int chunk_sz;
     int rc;
-
-    memset(empty, 0xff, sizeof empty);
+    int i;
 
     for (off = 0; off < num_bytes; off += sizeof buf) {
         rem = num_bytes - off;
@@ -127,8 +125,10 @@ hal_flash_cmp_erased(const struct hal_flash *hf, uint32_t address,
             return rc;
         }
 
-        if (memcmp(buf, empty, chunk_sz) != 0) {
-            return -1;
+        for (i = 0; i < chunk_sz; i++) {
+            if (buf[i] != 0xff) {
+                return -1;
+            }
         }
     }
 
