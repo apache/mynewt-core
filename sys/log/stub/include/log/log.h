@@ -56,11 +56,11 @@ log_init(void)
 /*
  * Dummy handler exports.
  */
-const struct log_handler log_console_handler;
-const struct log_handler log_cbmem_handler;
-const struct log_handler log_fcb_handler;
+extern const struct log_handler log_console_handler;
+extern const struct log_handler log_cbmem_handler;
+extern const struct log_handler log_fcb_handler;
 #if MYNEWT_VAL(LOG_FCB_SLOT1)
-const struct log_handler log_fcb_slot1_handler;
+extern const struct log_handler log_fcb_slot1_handler;
 #endif
 
 #if MYNEWT_VAL(LOG_CONSOLE)
