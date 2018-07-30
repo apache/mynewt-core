@@ -21,6 +21,7 @@
 #include <assert.h>
 #include <string.h>
 
+#include "os/mynewt.h"
 #include "hal/hal_bsp.h"
 #include "hal/hal_flash.h"
 #include "hal/hal_flash_int.h"
