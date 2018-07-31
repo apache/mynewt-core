@@ -35,6 +35,8 @@ static int enc_flash_erase_sector(const struct hal_flash *h_dev,
                                   uint32_t addr);
 static int enc_flash_sector_info(const struct hal_flash *h_dev, int idx,
                                  uint32_t *addr, uint32_t *sz);
+static int enc_flash_is_empty(const struct hal_flash *h_dev, uint32_t addr,
+                              uint32_t len);
 static int enc_flash_init(const struct hal_flash *h_dev);
 
 const struct hal_flash_funcs enc_flash_funcs = {
@@ -42,6 +44,7 @@ const struct hal_flash_funcs enc_flash_funcs = {
     .hff_write        = enc_flash_write,
     .hff_erase_sector = enc_flash_erase_sector,
     .hff_sector_info  = enc_flash_sector_info,
+    .hff_is_empty     = enc_flash_is_empty,
     .hff_init         = enc_flash_init,
 };
 
@@ -147,6 +150,20 @@ enc_flash_sector_info(const struct hal_flash *h_dev, int idx,
     h_dev = dev->efd_hwdev;
 
     return h_dev->hf_itf->hff_sector_info(h_dev, idx, addr, sz);
+}
+
+static int
+enc_flash_is_empty(const struct hal_flash *h_dev, uint32_t addr, uint32_t len)
+{
+    struct enc_flash_dev *dev = HAL_TO_ENC(h_dev);
+
+    h_dev = dev->efd_hwdev;
+
+    if (h_dev->hf_itf->hff_is_empty) {
+        return h_dev->hf_itf->hff_is_empty(h_dev, addr, len);
+    } else {
+        return hal_flash_is_ones(h_dev, addr, len);
+    }
 }
 
 void
