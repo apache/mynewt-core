@@ -359,4 +359,29 @@ modlog_printf(uint8_t module, uint8_t level, const char *msg, ...)
 #define MODLOG_DFLT(ml_lvl_, ...) \
     MODLOG(ml_lvl_, LOG_MODULE_DEFAULT, __VA_ARGS__)
 
+/* If `MODLOG_LOG_MACROS` in enabled, retire the old `LOG_[...]` macros and
+ * redefine them to use modlog.
+ */
+#if MYNEWT_VAL(MODLOG_LOG_MACROS)
+
+#undef LOG_DEBUG
+#define LOG_DEBUG       MODLOG_DEBUG
+
+#undef LOG_INFO
+#define LOG_INFO        MODLOG_INFO
+
+#undef LOG_WARN
+#define LOG_WARN        MODLOG_WARN
+
+#undef LOG_ERROR
+#define LOG_ERROR       MODLOG_ERROR
+
+#undef LOG_CRITICAL
+#define LOG_CRITICAL    MODLOG_CRITICAL
+
+#undef LOG_DFLT
+#define LOG_DFLT        MODLOG_DFLT
+
+#endif
+
 #endif

@@ -31,3 +31,13 @@ syscfg.defs:
         description: >
             Automatically create a default mapping to the console log.
         value: 1
+    MODLOG_LOG_MACROS:
+        description: >
+            Retires the old `LOG_[...]` macros and redefines them to use
+            modlog.  That is, if enabled, this setting allows the following
+            code:
+                LOG_DEBUG(LOG_MODULE_DFLT, "hello");
+            This line logs the string "hello" to the default module using
+            modlog.  This setting will be enabled by default in a future
+            release.
+        value: 0
