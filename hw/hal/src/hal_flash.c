@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -296,6 +296,66 @@ hal_flash_erase(uint8_t id, uint32_t address, uint32_t num_bytes)
         }
     }
     return 0;
+}
+
+static int
+hal_flash_is_setto(const struct hal_flash *hf, uint32_t address,
+                   uint32_t num_bytes, uint8_t val)
+{
+    uint8_t buf[32];
+    uint32_t blksz;
+    int i;
+
+    while (num_bytes) {
+        blksz = sizeof(buf);
+        if (blksz > num_bytes) {
+            blksz = num_bytes;
+        }
+        if (hf->hf_itf->hff_read(hf, address, buf, blksz)) {
+            return -1;
+        }
+        for (i = 0; i < blksz; i++) {
+            if (buf[i] != val) {
+                return 0;
+            }
+        }
+        num_bytes -= blksz;
+    }
+    return 1;
+}
+
+int
+hal_flash_is_ones(const struct hal_flash *hf, uint32_t address,
+                   uint32_t num_bytes)
+{
+    return hal_flash_is_setto(hf, address, num_bytes, 0xff);
+}
+
+int
+hal_flash_is_zeroes(const struct hal_flash *hf, uint32_t address,
+                   uint32_t num_bytes)
+{
+    return hal_flash_is_setto(hf, address, num_bytes, 0);
+}
+
+int
+hal_flash_isempty(uint8_t id, uint32_t address, uint32_t num_bytes)
+{
+    const struct hal_flash *hf;
+
+    hf = hal_bsp_flash_dev(id);
+    if (!hf) {
+        return -1;
+    }
+    if (hal_flash_check_addr(hf, address) ||
+      hal_flash_check_addr(hf, address + num_bytes)) {
+        return -1;
+    }
+    if (hf->hf_itf->hff_is_empty) {
+        return hf->hf_itf->hff_is_empty(hf, address, num_bytes);
+    } else {
+        return hal_flash_is_ones(hf, address, num_bytes);
+    }
 }
 
 int
