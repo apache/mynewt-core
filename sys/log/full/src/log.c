@@ -62,6 +62,7 @@ log_init(void)
 
     (void)rc;
 
+    memset(g_log_module_list, 0, sizeof(g_log_module_list));
     log_written = 0;
 
     STAILQ_INIT(&g_log_list);
