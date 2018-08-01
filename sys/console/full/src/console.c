@@ -65,23 +65,23 @@ int console_is_midline;
 
 #if MYNEWT_VAL(CONSOLE_COMPAT)
 #define CONSOLE_COMPAT_MAX_CMD_QUEUED 1
-static struct console_input buf[CONSOLE_COMPAT_MAX_CMD_QUEUED];
-static struct os_event shell_console_ev[CONSOLE_COMPAT_MAX_CMD_QUEUED];
-static console_rx_cb console_compat_rx_cb; /* callback that input is ready */
+static struct console_input cons_buf[CONSOLE_COMPAT_MAX_CMD_QUEUED];
+static struct os_event cons_shell_ev[CONSOLE_COMPAT_MAX_CMD_QUEUED];
+static console_rx_cb cons_compat_rx_cb; /* callback that input is ready */
 static struct os_eventq compat_avail_queue;
 static struct os_eventq compat_lines_queue;
 #endif
 
-static int esc_state;
-static int nlip_state;
-static int echo = MYNEWT_VAL(CONSOLE_ECHO);
-static unsigned int ansi_val, ansi_val_2;
-static bool rx_stalled;
+static int cons_esc_state;
+static int cons_nlip_state;
+static int cons_echo = MYNEWT_VAL(CONSOLE_ECHO);
+static unsigned int cons_ansi_val, cons_ansi_val_2;
+static bool cons_rx_stalled;
 
-static uint16_t cur, end;
-static struct os_eventq avail_queue;
-static struct os_eventq *lines_queue;
-static completion_cb completion;
+static uint16_t cons_cur, cons_end;
+static struct os_eventq cons_avail_queue;
+static struct os_eventq *cons_lines_queue;
+static console_completion_cb cons_completion;
 
 /*
  * Default implementation in case all consoles are disabled - we just ignore any
@@ -96,7 +96,7 @@ console_out(int c)
 void
 console_echo(int on)
 {
-    echo = on;
+    cons_echo = on;
 }
 
 void
@@ -120,7 +120,7 @@ console_read(char *str, int cnt, int *newline)
     size_t len;
 
     *newline = 0;
-    ev = os_eventq_get_no_wait(lines_queue);
+    ev = os_eventq_get_no_wait(cons_lines_queue);
     if (!ev) {
         return 0;
     }
@@ -204,16 +204,16 @@ insert_char(char *pos, char c, uint16_t end)
 {
     char tmp;
 
-    if (cur + end >= MYNEWT_VAL(CONSOLE_MAX_INPUT_LEN) - 1) {
+    if (cons_cur + end >= MYNEWT_VAL(CONSOLE_MAX_INPUT_LEN) - 1) {
         return;
     }
 
-    if (echo) {
+    if (cons_echo) {
         /* Echo back to console */
         console_out(c);
     }
 
-    ++cur;
+    ++cons_cur;
 
     if (end == 0) {
         *pos = c;
@@ -419,11 +419,11 @@ console_hist_add(char *line)
 static void
 console_clear_line(void)
 {
-    if (cur) {
-        cursor_backward(cur);
+    if (cons_cur) {
+        cursor_backward(cons_cur);
     }
-    cur = 0;
-    end = 0;
+    cons_cur = 0;
+    cons_end = 0;
 
     cursor_clear_line();
 }
@@ -449,7 +449,7 @@ console_hist_move(char *line, uint8_t direction)
     console_clear_line();
     str = sh->lines[sh->curr];
     while (str && *str != '\0') {
-        insert_char(&line[cur], *str, end);
+        insert_char(&line[cons_cur], *str, cons_end);
         ++str;
     }
 }
@@ -458,39 +458,39 @@ console_hist_move(char *line, uint8_t direction)
 static void
 handle_ansi(uint8_t byte, char *line)
 {
-    if (esc_state & ESC_ANSI_FIRST) {
-        esc_state &= ~ESC_ANSI_FIRST;
+    if (cons_esc_state & ESC_ANSI_FIRST) {
+        cons_esc_state &= ~ESC_ANSI_FIRST;
         if (!isdigit(byte)) {
-            ansi_val = 1;
+            cons_ansi_val = 1;
             goto ansi_cmd;
         }
 
-        esc_state |= ESC_ANSI_VAL;
-        ansi_val = byte - '0';
-        ansi_val_2 = 0;
+        cons_esc_state |= ESC_ANSI_VAL;
+        cons_ansi_val = byte - '0';
+        cons_ansi_val_2 = 0;
         return;
     }
 
-    if (esc_state & ESC_ANSI_VAL) {
+    if (cons_esc_state & ESC_ANSI_VAL) {
         if (isdigit(byte)) {
-            if (esc_state & ESC_ANSI_VAL_2) {
-                ansi_val_2 *= 10;
-                ansi_val_2 += byte - '0';
+            if (cons_esc_state & ESC_ANSI_VAL_2) {
+                cons_ansi_val_2 *= 10;
+                cons_ansi_val_2 += byte - '0';
             } else {
-                ansi_val *= 10;
-                ansi_val += byte - '0';
+                cons_ansi_val *= 10;
+                cons_ansi_val += byte - '0';
             }
             return;
         }
 
         /* Multi value sequence, e.g. Esc[Line;ColumnH */
-        if (byte == ';' && !(esc_state & ESC_ANSI_VAL_2)) {
-            esc_state |= ESC_ANSI_VAL_2;
+        if (byte == ';' && !(cons_esc_state & ESC_ANSI_VAL_2)) {
+            cons_esc_state |= ESC_ANSI_VAL_2;
             return;
         }
 
-        esc_state &= ~ESC_ANSI_VAL;
-        esc_state &= ~ESC_ANSI_VAL_2;
+        cons_esc_state &= ~ESC_ANSI_VAL;
+        cons_esc_state &= ~ESC_ANSI_VAL_2;
     }
 
 ansi_cmd:
@@ -504,77 +504,77 @@ ansi_cmd:
         break;
 #endif
     case ANSI_BACKWARD:
-        if (ansi_val > cur) {
+        if (cons_ansi_val > cons_cur) {
             break;
         }
 
-        end += ansi_val;
-        cur -= ansi_val;
-        cursor_backward(ansi_val);
+        cons_end += cons_ansi_val;
+        cons_cur -= cons_ansi_val;
+        cursor_backward(cons_ansi_val);
         break;
     case ANSI_FORWARD:
-        if (ansi_val > end) {
+        if (cons_ansi_val > cons_end) {
             break;
         }
 
-        end -= ansi_val;
-        cur += ansi_val;
-        cursor_forward(ansi_val);
+        cons_end -= cons_ansi_val;
+        cons_cur += cons_ansi_val;
+        cursor_forward(cons_ansi_val);
         break;
     case ANSI_HOME:
-        if (!cur) {
+        if (!cons_cur) {
             break;
         }
 
-        cursor_backward(cur);
-        end += cur;
-        cur = 0;
+        cursor_backward(cons_cur);
+        cons_end += cons_cur;
+        cons_cur = 0;
         break;
     case ANSI_END:
-        if (!end) {
+        if (!cons_end) {
             break;
         }
 
-        cursor_forward(end);
-        cur += end;
-        end = 0;
+        cursor_forward(cons_end);
+        cons_cur += cons_end;
+        cons_end = 0;
         break;
     case ANSI_DEL:
-        if (!end) {
+        if (!cons_end) {
             break;
         }
 
         cursor_forward(1);
-        del_char(&line[cur], --end);
+        del_char(&line[cons_cur], --cons_end);
         break;
     default:
         break;
     }
 
-    esc_state &= ~ESC_ANSI;
+    cons_esc_state &= ~ESC_ANSI;
 }
 
 static int
 handle_nlip(uint8_t byte)
 {
-    if (((nlip_state & NLIP_PKT_START1) &&
-         (nlip_state & NLIP_PKT_START2)) ||
-        ((nlip_state & NLIP_DATA_START1) &&
-         (nlip_state & NLIP_DATA_START2)))
+    if (((cons_nlip_state & NLIP_PKT_START1) &&
+         (cons_nlip_state & NLIP_PKT_START2)) ||
+        ((cons_nlip_state & NLIP_DATA_START1) &&
+         (cons_nlip_state & NLIP_DATA_START2)))
     {
         return 1;
     }
 
-    if ((nlip_state & NLIP_PKT_START1) &&
+    if ((cons_nlip_state & NLIP_PKT_START1) &&
         (byte == CONSOLE_NLIP_PKT_START2)) {
-        nlip_state |= NLIP_PKT_START2;
+        cons_nlip_state |= NLIP_PKT_START2;
         return 1;
-    } else if ((nlip_state & NLIP_DATA_START1) &&
+    } else if ((cons_nlip_state & NLIP_DATA_START1) &&
                (byte == CONSOLE_NLIP_DATA_START2)) {
-        nlip_state |= NLIP_DATA_START2;
+        cons_nlip_state |= NLIP_DATA_START2;
         return 1;
     } else {
-        nlip_state = 0;
+        cons_nlip_state = 0;
         return 0;
     }
 }
@@ -582,21 +582,21 @@ handle_nlip(uint8_t byte)
 static int
 console_append_char(char *line, uint8_t byte)
 {
-    if (cur + end >= MYNEWT_VAL(CONSOLE_MAX_INPUT_LEN) - 1) {
+    if (cons_cur + cons_end >= MYNEWT_VAL(CONSOLE_MAX_INPUT_LEN) - 1) {
         return 0;
     }
 
-    line[cur + end] = byte;
+    line[cons_cur + cons_end] = byte;
 
     if (byte == '\0') {
         return 1;
     }
 
-    if (echo) {
+    if (cons_echo) {
         /* Echo back to console */
         console_out(byte);
     }
-    ++cur;
+    ++cons_cur;
     return 1;
 }
 
@@ -611,14 +611,14 @@ console_handle_char(uint8_t byte)
     static struct console_input *input;
     static char prev_endl = '\0';
 
-    if (!lines_queue) {
+    if (!cons_lines_queue) {
         return 0;
     }
 
     if (!ev) {
-        ev = os_eventq_get_no_wait(&avail_queue);
+        ev = os_eventq_get_no_wait(&cons_avail_queue);
         if (!ev) {
-            rx_stalled = true;
+            cons_rx_stalled = true;
             return -1;
         }
         input = ev->ev_arg;
@@ -626,16 +626,16 @@ console_handle_char(uint8_t byte)
 
     if (handle_nlip(byte))  {
         if (byte == '\n') {
-            insert_char(&input->line[cur], byte, end);
-            input->line[cur] = '\0';
-            cur = 0;
-            end = 0;
-            os_eventq_put(lines_queue, ev);
-            nlip_state = 0;
+            insert_char(&input->line[cons_cur], byte, cons_end);
+            input->line[cons_cur] = '\0';
+            cons_cur = 0;
+            cons_end = 0;
+            os_eventq_put(cons_lines_queue, ev);
+            cons_nlip_state = 0;
 
 #if MYNEWT_VAL(CONSOLE_COMPAT)
-            if (console_compat_rx_cb) {
-                console_compat_rx_cb();
+            if (cons_compat_rx_cb) {
+                cons_compat_rx_cb();
             }
 #endif
 
@@ -647,32 +647,32 @@ console_handle_char(uint8_t byte)
         } else if (byte == CONSOLE_NLIP_PKT_START2) {
             /* Disable echo to not flood the UART */
             console_echo(0);
-            insert_char(&input->line[cur], CONSOLE_NLIP_PKT_START1, end);
+            insert_char(&input->line[cons_cur], CONSOLE_NLIP_PKT_START1, cons_end);
         } else if (byte == CONSOLE_NLIP_DATA_START2) {
             /* Disable echo to not flood the UART */
             console_echo(0);
-            insert_char(&input->line[cur], CONSOLE_NLIP_DATA_START1, end);
+            insert_char(&input->line[cons_cur], CONSOLE_NLIP_DATA_START1, cons_end);
         }
 
-        insert_char(&input->line[cur], byte, end);
+        insert_char(&input->line[cons_cur], byte, cons_end);
 
         return 0;
     }
 
     /* Handle ANSI escape mode */
-    if (esc_state & ESC_ANSI) {
+    if (cons_esc_state & ESC_ANSI) {
         handle_ansi(byte, input->line);
         return 0;
     }
 
     /* Handle escape mode */
-    if (esc_state & ESC_ESC) {
-        esc_state &= ~ESC_ESC;
+    if (cons_esc_state & ESC_ESC) {
+        cons_esc_state &= ~ESC_ESC;
         handle_ansi(byte, input->line);
         switch (byte) {
         case ANSI_ESC:
-            esc_state |= ESC_ANSI;
-            esc_state |= ESC_ANSI_FIRST;
+            cons_esc_state |= ESC_ANSI;
+            cons_esc_state |= ESC_ANSI_FIRST;
             break;
         default:
             break;
@@ -686,22 +686,22 @@ console_handle_char(uint8_t byte)
         handle_ansi(byte, input->line);
         switch (byte) {
         case CONSOLE_NLIP_PKT_START1:
-            nlip_state |= NLIP_PKT_START1;
+            cons_nlip_state |= NLIP_PKT_START1;
             break;
         case CONSOLE_NLIP_DATA_START1:
-            nlip_state |= NLIP_DATA_START1;
+            cons_nlip_state |= NLIP_DATA_START1;
             break;
         case DEL:
         case BS:
-            if (cur > 0) {
-                del_char(&input->line[--cur], end);
+            if (cons_cur > 0) {
+                del_char(&input->line[--cons_cur], cons_end);
             }
             break;
         case ESC:
-            esc_state |= ESC_ESC;
+            cons_esc_state |= ESC_ESC;
             break;
         default:
-            insert_char(&input->line[cur], byte, end);
+            insert_char(&input->line[cons_cur], byte, cons_end);
             /* Falls through. */
         case '\r':
             /* Falls through. */
@@ -712,19 +712,19 @@ console_handle_char(uint8_t byte)
                 break;
             }
             prev_endl = byte;
-            input->line[cur + end] = '\0';
+            input->line[cons_cur + cons_end] = '\0';
             console_out('\r');
             console_out('\n');
-            cur = 0;
-            end = 0;
-            os_eventq_put(lines_queue, ev);
+            cons_cur = 0;
+            cons_end = 0;
+            os_eventq_put(cons_lines_queue, ev);
 #if MYNEWT_VAL(CONSOLE_HISTORY_SIZE) > 0
             console_hist_add(input->line);
 #endif
 
 #if MYNEWT_VAL(CONSOLE_COMPAT)
-            if (console_compat_rx_cb) {
-                console_compat_rx_cb();
+            if (cons_compat_rx_cb) {
+                cons_compat_rx_cb();
             }
 #endif
 
@@ -732,11 +732,11 @@ console_handle_char(uint8_t byte)
             ev = NULL;
             break;
         case '\t':
-            if (completion && !end) {
+            if (cons_completion && !cons_end) {
 #if MYNEWT_VAL(CONSOLE_UART_RX_BUF_SIZE) == 0
                 console_blocking_mode();
 #endif
-                completion(input->line, console_append_char);
+                cons_completion(input->line, console_append_char);
 #if MYNEWT_VAL(CONSOLE_UART_RX_BUF_SIZE) == 0
                 console_non_blocking_mode();
 #endif
@@ -747,7 +747,7 @@ console_handle_char(uint8_t byte)
         return 0;
     }
 
-    insert_char(&input->line[cur], byte, end);
+    insert_char(&input->line[cons_cur], byte, cons_end);
     return 0;
 }
 
@@ -769,24 +769,24 @@ console_is_init(void)
 void
 console_line_queue_set(struct os_eventq *evq)
 {
-    lines_queue = evq;
+    cons_lines_queue = evq;
 }
 
 void
 console_line_event_put(struct os_event *ev)
 {
-    os_eventq_put(&avail_queue, ev);
+    os_eventq_put(&cons_avail_queue, ev);
 
-    if (rx_stalled) {
-        rx_stalled = false;
+    if (cons_rx_stalled) {
+        cons_rx_stalled = false;
         console_rx_restart();
     }
 }
 
 void
-console_set_completion_cb(completion_cb cb)
+console_set_completion_cb(console_completion_cb cb)
 {
-    completion = cb;
+    cons_completion = cb;
 }
 
 #if MYNEWT_VAL(CONSOLE_COMPAT)
@@ -800,10 +800,10 @@ console_init(console_rx_cb rx_cb)
     console_line_queue_set(&compat_lines_queue);
 
     for (i = 0; i < CONSOLE_COMPAT_MAX_CMD_QUEUED; i++) {
-        shell_console_ev[i].ev_arg = &buf[i];
-        console_line_event_put(&shell_console_ev[i]);
+        cons_shell_ev[i].ev_arg = &cons_buf[i];
+        console_line_event_put(&cons_shell_ev[i]);
     }
-    console_compat_rx_cb = rx_cb;
+    cons_compat_rx_cb = rx_cb;
     return 0;
 }
 #endif
@@ -816,7 +816,7 @@ console_pkg_init(void)
     /* Ensure this function only gets called by sysinit. */
     SYSINIT_ASSERT_ACTIVE();
 
-    os_eventq_init(&avail_queue);
+    os_eventq_init(&cons_avail_queue);
 
 #if MYNEWT_VAL(CONSOLE_HISTORY_SIZE) > 0
     console_hist_init();
