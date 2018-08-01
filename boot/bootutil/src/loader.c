@@ -328,6 +328,11 @@ boot_read_sectors(void)
     if (rc != 0) {
         return BOOT_EFLASH;
     }
+    /*
+     * Make sure that BSP specific number of sectors will not result in
+     * random memory clobber
+     */
+    assert(num_sectors_slot0 <= BOOT_MAX_IMG_SECTORS);
     boot_data.imgs[0].num_sectors = num_sectors_slot0;
 
     num_sectors_slot1 = BOOT_MAX_IMG_SECTORS;
@@ -336,6 +341,11 @@ boot_read_sectors(void)
     if (rc != 0) {
         return BOOT_EFLASH;
     }
+    /*
+     * Make sure that BSP specific number of sectors will not result in
+     * random memory clobber
+     */
+    assert(num_sectors_slot1 <= BOOT_MAX_IMG_SECTORS);
     boot_data.imgs[1].num_sectors = num_sectors_slot1;
 
     rc = flash_area_open(FLASH_AREA_IMAGE_SCRATCH, &scratch);
