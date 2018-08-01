@@ -39,10 +39,10 @@
 #error "At the moment CCM/ECB use cannot coexist"
 #endif
 #if MYNEWT_VAL(BLE_LL_CFG_FEAT_LL_PRIVACY)
-#errof "At the moment AAR/ECB use cannot coexist"
+#error "At the moment AAR/ECB use cannot coexist"
 #endif
 
-#define EDEV_TO_NRF5X(dev) (struct eflash_nrf5x_dev *)(edev)
+#define EDEV_TO_NRF5X(dev) (struct eflash_nrf5x_dev *)(dev)
 #define ENC_FLASH_NONCE "mynewtencfla"
 
 static uint8_t *

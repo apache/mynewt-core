@@ -33,7 +33,7 @@ struct enc_flash_dev {
     const struct hal_flash *efd_hwdev; /* pointer to underlying hw dev */
 };
 
-const struct hal_flash_funcs enc_flash_funcs;
+extern const struct hal_flash_funcs enc_flash_funcs;
 
 void enc_flash_setkey(struct hal_flash *dev, uint8_t *key);
 
