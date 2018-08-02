@@ -17,40 +17,37 @@
  * under the License.
  */
 
-/**
- * @addtogroup HAL
- * @{
- *   @defgroup HALFlash HAL Flash
- *   @{
- */
+#ifndef __EF_NRF5X_H__
+#define __EF_NRF5X_H__
 
-#ifndef H_HAL_FLASH_
-#define H_HAL_FLASH_
+/*
+ * Encrypting flash driver for nrf51/nrf52
+ */
+#include <enc_flash/enc_flash.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include <inttypes.h>
+/*
+ * Structure used by ECB of nrf52 (and nrf51).
+ */
+struct eflash_nrf5x_ecb {
+    uint8_t ene_key[ENC_FLASH_BLK];
+    uint8_t ene_plain[ENC_FLASH_BLK];
+    uint8_t ene_cipher[ENC_FLASH_BLK];
+};
 
-int hal_flash_ioctl(uint8_t flash_id, uint32_t cmd, void *args);
-int hal_flash_read(uint8_t flash_id, uint32_t address, void *dst,
-  uint32_t num_bytes);
-int hal_flash_write(uint8_t flash_id, uint32_t address, const void *src,
-  uint32_t num_bytes);
-int hal_flash_erase_sector(uint8_t flash_id, uint32_t sector_address);
-int hal_flash_erase(uint8_t flash_id, uint32_t address, uint32_t num_bytes);
-int hal_flash_isempty(uint8_t flash_id, uint32_t address, uint32_t num_bytes);
-uint8_t hal_flash_align(uint8_t flash_id);
-int hal_flash_init(void);
+/*
+ * NRF51/52 specific version of the flash device.
+ */
+struct eflash_nrf5x_dev {
+    struct enc_flash_dev end_dev;
+    struct eflash_nrf5x_ecb end_ecb;
+};
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* H_HAL_FLASH_ */
-
-/**
- *   @} HALFlash
- * @} HAL
- */
+#endif /* __ENC_FLASH_NRF5X_H__ */

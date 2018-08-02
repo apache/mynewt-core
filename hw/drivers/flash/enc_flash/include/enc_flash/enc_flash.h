@@ -17,40 +17,28 @@
  * under the License.
  */
 
-/**
- * @addtogroup HAL
- * @{
- *   @defgroup HALFlash HAL Flash
- *   @{
- */
+#ifndef __ENC_FLASH_H__
+#define __ENC_FLASH_H__
 
-#ifndef H_HAL_FLASH_
-#define H_HAL_FLASH_
+#include <hal/hal_flash_int.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include <inttypes.h>
+#define ENC_FLASH_BLK  16 /* AES128 */
 
-int hal_flash_ioctl(uint8_t flash_id, uint32_t cmd, void *args);
-int hal_flash_read(uint8_t flash_id, uint32_t address, void *dst,
-  uint32_t num_bytes);
-int hal_flash_write(uint8_t flash_id, uint32_t address, const void *src,
-  uint32_t num_bytes);
-int hal_flash_erase_sector(uint8_t flash_id, uint32_t sector_address);
-int hal_flash_erase(uint8_t flash_id, uint32_t address, uint32_t num_bytes);
-int hal_flash_isempty(uint8_t flash_id, uint32_t address, uint32_t num_bytes);
-uint8_t hal_flash_align(uint8_t flash_id);
-int hal_flash_init(void);
+struct enc_flash_dev {
+    struct hal_flash efd_hal;
+    const struct hal_flash *efd_hwdev; /* pointer to underlying hw dev */
+};
+
+extern const struct hal_flash_funcs enc_flash_funcs;
+
+void enc_flash_setkey(struct hal_flash *dev, uint8_t *key);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* H_HAL_FLASH_ */
-
-/**
- *   @} HALFlash
- * @} HAL
- */
+#endif /* __ENC_FLASH_H__ */

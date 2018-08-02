@@ -16,41 +16,23 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+#ifndef __ENC_FLASH_INT_H_
+#define __ENC_FLASH_INT_H_
 
 /**
- * @addtogroup HAL
- * @{
- *   @defgroup HALFlash HAL Flash
- *   @{
+ * Platform specific driver init.
  */
-
-#ifndef H_HAL_FLASH_
-#define H_HAL_FLASH_
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#include <inttypes.h>
-
-int hal_flash_ioctl(uint8_t flash_id, uint32_t cmd, void *args);
-int hal_flash_read(uint8_t flash_id, uint32_t address, void *dst,
-  uint32_t num_bytes);
-int hal_flash_write(uint8_t flash_id, uint32_t address, const void *src,
-  uint32_t num_bytes);
-int hal_flash_erase_sector(uint8_t flash_id, uint32_t sector_address);
-int hal_flash_erase(uint8_t flash_id, uint32_t address, uint32_t num_bytes);
-int hal_flash_isempty(uint8_t flash_id, uint32_t address, uint32_t num_bytes);
-uint8_t hal_flash_align(uint8_t flash_id);
-int hal_flash_init(void);
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* H_HAL_FLASH_ */
+int enc_flash_init_arch(struct enc_flash_dev *edev);
 
 /**
- *   @} HALFlash
- * @} HAL
+ * Platform specific key setup.
  */
+void enc_flash_setkey_arch(struct enc_flash_dev *edev, uint8_t *key);
+
+/*
+ * Platform specific encrypt/decrypt function.
+ */
+void enc_flash_crypt_arch(struct enc_flash_dev *edev, uint32_t blk_addr,
+                          const uint8_t *src, uint8_t *tgt, int off, int cnt);
+
+#endif

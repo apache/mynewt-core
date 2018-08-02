@@ -17,40 +17,28 @@
  * under the License.
  */
 
-/**
- * @addtogroup HAL
- * @{
- *   @defgroup HALFlash HAL Flash
- *   @{
- */
+#ifndef __EF_TINYCRYPT_H__
+#define __EF_TINYCRYPT_H__
 
-#ifndef H_HAL_FLASH_
-#define H_HAL_FLASH_
+/*
+ * Encrypting flash driver using AES from Tinycrypt
+ */
+#include <enc_flash/enc_flash.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include <inttypes.h>
-
-int hal_flash_ioctl(uint8_t flash_id, uint32_t cmd, void *args);
-int hal_flash_read(uint8_t flash_id, uint32_t address, void *dst,
-  uint32_t num_bytes);
-int hal_flash_write(uint8_t flash_id, uint32_t address, const void *src,
-  uint32_t num_bytes);
-int hal_flash_erase_sector(uint8_t flash_id, uint32_t sector_address);
-int hal_flash_erase(uint8_t flash_id, uint32_t address, uint32_t num_bytes);
-int hal_flash_isempty(uint8_t flash_id, uint32_t address, uint32_t num_bytes);
-uint8_t hal_flash_align(uint8_t flash_id);
-int hal_flash_init(void);
+/*
+ * Tinycrypt specific version of the flash device.
+ */
+struct eflash_tinycrypt_dev {
+    struct enc_flash_dev etd_dev;
+    uint8_t etd_key[ENC_FLASH_BLK];
+};
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* H_HAL_FLASH_ */
-
-/**
- *   @} HALFlash
- * @} HAL
- */
+#endif /* __ENC_FLASH_TINYCRYPT_H__ */

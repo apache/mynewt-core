@@ -6,7 +6,7 @@
 # to you under the Apache License, Version 2.0 (the
 # "License"); you may not use this file except in compliance
 # with the License.  You may obtain a copy of the License at
-# 
+#
 #  http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing,
@@ -17,11 +17,16 @@
 # under the License.
 #
 
-pkg.name: hw/hal
-pkg.description: Hardware Abstraction Layer.
+pkg.name: hw/drivers/flash/enc_flash/ef_nrf5x
+pkg.description: Encrypting flash driver for nrf52/nrf51.
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
+    - security
+    - encrypt
+    - flash
 
 pkg.deps:
-    - "@apache-mynewt-core/kernel/os"
+    - "@apache-mynewt-core/hw/drivers/flash/enc_flash"
+    - "@apache-mynewt-core/hw/mcu/nordic"
+
