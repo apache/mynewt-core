@@ -6,7 +6,7 @@
 # to you under the Apache License, Version 2.0 (the
 # "License"); you may not use this file except in compliance
 # with the License.  You may obtain a copy of the License at
-#
+# 
 #  http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing,
@@ -17,46 +17,26 @@
 # under the License.
 #
 
-pkg.name: hw/bsp/puckjs
-pkg.type: bsp
-pkg.description: BSP definition for the Espruino puckjs.
+pkg.name: hw/mcu/nordic/nrf52xxx-compat
+pkg.description: MCU definition for Nordic nRF52 ARM Cortex-M4 chips.
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
-    - Espruino
-    - puck
     - nrf52
+    - nrfx
 
-pkg.cflags:
-    - '-DNRF52'
+pkg.deps: 
+    - "@apache-mynewt-core/hw/mcu/nordic"
+    - "@apache-mynewt-core/hw/cmsis-core"
+    - "@apache-mynewt-core/hw/hal"
 
-pkg.cflags.HARDFLOAT:
-    - -mfloat-abi=hard -mfpu=fpv4-sp-d16
+# NRF52810 doesn't support SPI/I2C (Use SPIM/I2CM instead)
+pkg.ign_files.BSP_NRF52810:
+    - "hal_spi.c"
+    - "hal_i2c.c"
 
-pkg.deps:
-    - "@apache-mynewt-core/hw/mcu/nordic/nrf52xxx-compat"
-    - "@apache-mynewt-core/libc/baselibc"
+pkg.cflags.NFC_PINS_AS_GPIO: 
+    - '-DCONFIG_NFCT_PINS_AS_GPIOS=1'
 
-pkg.deps.BLE_DEVICE:
-    - "@apache-mynewt-core/hw/drivers/nimble/nrf52"
-
-pkg.deps.UART_0:
-    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
-
-pkg.deps.UART_1:
-    - "@apache-mynewt-core/hw/drivers/uart/uart_bitbang"
-
-pkg.deps.ADC_0:
-    - "@apache-mynewt-core/hw/drivers/adc/adc_nrf52"
-
-pkg.deps.PWM_0:
-    - "@apache-mynewt-core/hw/drivers/pwm/pwm_nrf52"
-
-pkg.deps.PWM_1:
-    - "@apache-mynewt-core/hw/drivers/pwm/pwm_nrf52"
-
-pkg.deps.PWM_2:
-    - "@apache-mynewt-core/hw/drivers/pwm/pwm_nrf52"
-
-pkg.deps.SOFT_PWM:
-    - "@apache-mynewt-core/hw/drivers/pwm/soft_pwm"
+pkg.cflags.GPIO_AS_PIN_RESET: 
+    - '-DCONFIG_GPIO_AS_PINRESET=1'

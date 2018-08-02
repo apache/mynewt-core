@@ -1,0 +1,215 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+# Package: hw/bsp/nrf52dk
+
+syscfg.defs:
+    I2C_0:
+        description: 'I2C (TWI) interface 0'
+        value:  0
+        restrictions:
+            - "!SPI_0_MASTER"
+            - "!SPI_0_SLAVE"
+    I2C_1:
+        description: 'I2C (TWI) interface 1'
+        value:  0
+        restrictions:
+            - "!SPI_1_MASTER"
+            - "!SPI_1_SLAVE"
+
+    MCU_FLASH_MIN_WRITE_SIZE:
+        description: >
+            Specifies the required alignment for internal flash writes.
+            Used internally by the newt tool.
+        value: 1
+
+    MCU_DCDC_ENABLED:
+        description: >
+            Specifies whether or not to enable DC/DC regulator. This requires
+            external circuitry so is defined to be zero by default and
+            expected to be overridden by the BSP.
+        value: 0
+
+    SPI_0_MASTER:
+        description: 'SPI 0 master'
+        value:  0
+        restrictions:
+            - "!SPI_0_SLAVE"
+            - "!I2C_0"
+    SPI_0_SLAVE:
+        description: 'SPI 0 slave'
+        value:  0
+        restrictions:
+            - "!SPI_0_MASTER"
+            - "!I2C_0"
+
+    SPI_1_MASTER:
+        description: 'SPI 1 master'
+        value:  0
+        restrictions:
+            - "!SPI_1_SLAVE"
+            - "!I2C_1"
+    SPI_1_SLAVE:
+        description: 'SPI 1 slave'
+        value:  0
+        restrictions:
+            - "!SPI_1_MASTER"
+            - "!I2C_1"
+
+    SPI_2_MASTER:
+        description: 'SPI 2 master'
+        value: 0
+        restrictions:
+            - "!SPI_2_SLAVE"
+    SPI_2_SLAVE:
+        description: 'SPI 2 slave'
+        value: 0
+        restrictions:
+            - "!SPI_2_MASTER"
+
+    ADC_0:
+        description: 'NRF52 ADC 0'
+        value:  0
+
+    ADC_0_REFMV_0:
+        description: 'reference mV in AREF0 if used'
+        value: 0
+
+    PWM_0:
+        description: 'NRF52 PWM 0'
+        value: 0
+
+    PWM_1:
+        description: 'NRF52 PWM 1'
+        value: 0
+
+    PWM_2:
+        description: 'NRF52 PWM 2'
+        value: 0
+
+    SOFT_PWM:
+        description: 'SOFT PWM'
+        value: 0
+
+    TRNG:
+        description: 'True Random Number Generator (RNG)'
+        value: 0
+
+    QSPI_ENABLE:
+        description: 'NRF52 QSPI'
+        value: 0
+
+    QSPI_READOC:
+        description: >
+            QSPI Command to use
+            0 - 0x09 Fast Read
+            1 - 0x3B Fast Read Dual Output
+            2 - 0xBB Fast Read Dual I/O
+            3 - 0x6B Fast Read Quad Output
+            4 - 0xEB Fast Read Quad I/O
+        value: 0
+    QSPI_WRITEOC:
+        description: >
+            QSPI Command to use
+            0 - 0x02 Page program
+            1 - 0xA2 Page program Dual Data
+            2 - 0x32 Page program Quad Data
+            3 - 0x38 Page program Quad I/O
+        value: 0
+    QSPI_ADDRMODE:
+        description: 'Address lentgh 0=24 bits, 1=32 bits'
+        value: 0
+    QSPI_DPMCONFIG:
+        description: 'Deep power mode enable'
+        value: 0
+    QSPI_SCK_DELAY:
+        description: >
+            Minimum amount of time that the CSN pin must stay high
+            before it can go low again. Value is specified in number of 16
+            MHz periods (62.5 ns).
+        value: 0
+    QSPI_SCK_FREQ:
+        description: '32MHz clock divider (0-31). Clock = 32MHz / (1+divider)'
+        value: 0
+    QSPI_SPI_MODE:
+        description: 'SPI 0=Mode0 or 1=Mode3'
+        value: 0
+
+    QSPI_FLASH_SECTOR_SIZE:
+        description: 'QSPI sector size. In most cases it should be 4096.'
+        value: 0
+    QSPI_FLASH_PAGE_SIZE:
+        description: >
+            QSPI page size. Writes can only be perfrmed to one page at a time.
+            In most cases it should be 256.
+        value: 0
+
+    QSPI_FLASH_SECTOR_COUNT:
+        description: 'QSPI sector count'
+        value: -1
+    QSPI_PIN_CS:
+        description: 'CS pin for QSPI'
+        value: -1
+    QSPI_PIN_SCK:
+        description: 'SCK pin for QSPI'
+        value: -1
+    QSPI_PIN_DIO0:
+        description: 'DIO0 pin for QSPI'
+        value: -1
+    QSPI_PIN_DIO1:
+        description: 'DIO1 pin for QSPI'
+        value: -1
+    QSPI_PIN_DIO2:
+        description: 'DIO2 pin for QSPI'
+        value: -1
+    QSPI_PIN_DIO3:
+        description: 'DIO3 pin for QSPI'
+        value: -1
+
+    NFC_PINS_AS_GPIO:
+        description: 'Use NFC pins as GPIOs instead of NFC functionality'
+        value: 1
+
+    GPIO_AS_PIN_RESET:
+        description: 'Enable pin reset'
+        value: 0
+
+
+# The XTAL_xxx definitions are used to set the clock source used for the low
+# frequency clock. It is required that at least one of these sources is
+# enabled (the bsp should set one of these clock sources).
+    XTAL_32768:
+        description: 'External 32k oscillator LF clock source.'
+        value: 0
+        restrictions:
+            - "!XTAL_32768_SYNTH"
+            - "!XTAL_RC"
+
+    XTAL_RC:
+        description: 'internal RC LF clock source'
+        value: 0
+        restrictions:
+            - "!XTAL_32768_SYNTH"
+            - "!XTAL_32768"
+
+    XTAL_32768_SYNTH:
+        description: 'Synthesized 32k LF clock source.'
+        value: 0
+        restrictions:
+            - "!XTAL_RC"
+            - "!XTAL_32768"
