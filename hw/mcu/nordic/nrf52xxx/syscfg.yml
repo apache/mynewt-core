@@ -19,6 +19,13 @@
 # Package: hw/bsp/nrf52dk
 
 syscfg.defs:
+    MCU_NRF52832:
+        description: Shall be set to 1 by BSP if using nRF52832
+        value: 0
+    MCU_NRF52840:
+        description: Shall be set to 1 by BSP if using nRF52840
+        value: 0
+
     I2C_0:
         description: 'I2C (TWI) interface 0'
         value:  0
@@ -213,3 +220,6 @@ syscfg.defs:
         restrictions:
             - "!XTAL_RC"
             - "!XTAL_32768"
+
+syscfg.restrictions:
+    - "MCU_NRF52832 ^^ MCU_NRF52840"
