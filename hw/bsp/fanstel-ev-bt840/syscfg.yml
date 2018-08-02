@@ -1,0 +1,47 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+# Package: hw/bsp/fanstel-ev-bt840
+
+syscfg.defs:
+    BSP_NRF52840:
+        description: 'Set to indicate that BSP has nRF52840'
+        value: 1
+
+syscfg.vals:
+    MCU_NRF52840: 1
+    CONFIG_FCB_FLASH_AREA: FLASH_AREA_NFFS
+    REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG
+    NFFS_FLASH_AREA: FLASH_AREA_NFFS
+    COREDUMP_FLASH_AREA: FLASH_AREA_IMAGE_1
+    MCU_DCDC_ENABLED: 1
+    XTAL_32768: 1
+    UART_0_PIN_TX: 34
+    UART_0_PIN_RX: 33
+    I2C_0_PIN_SCL: 27
+    I2C_0_PIN_SDA: 28
+    SPI_0_MASTER_PIN_SCK: 25
+    SPI_0_MASTER_PIN_MOSI: 23
+    SPI_0_MASTER_PIN_MISO: 24
+
+syscfg.vals.BLE_LP_CLOCK:
+    TIMER_0: 0
+    TIMER_5: 1
+    OS_CPUTIME_FREQ: 32768
+    OS_CPUTIME_TIMER_NUM: 5
+    BLE_XTAL_SETTLE_TIME: 1500
