@@ -44,13 +44,14 @@ nrf52_wdt_irq_handler(void)
 int
 hal_watchdog_init(uint32_t expire_msecs)
 {
-    uint64_t expiration;
-
     NRF_WDT->CONFIG = WDT_CONFIG_SLEEP_Msk;
 
-    /* Convert msec timeout to counts of a 32768 crystal */
-    expiration = ((uint64_t)expire_msecs * 32768) / 1000;
-    NRF_WDT->CRV = (uint32_t)expiration;
+    if (expire_msecs >= 44739243) {
+        /* maximum allowed time is near 12.5 hours! */
+        assert(0);
+    } else {
+        NRF_WDT->CRV = (expire_msecs * 32) + ((expire_msecs * 96) / 125);
+    }
 
     NVIC_SetVector(WDT_IRQn, (uint32_t) nrf52_wdt_irq_handler);
     NVIC_SetPriority(WDT_IRQn, (1 << __NVIC_PRIO_BITS) - 1);

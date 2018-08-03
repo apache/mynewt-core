@@ -100,6 +100,9 @@ syscfg.defs:
     TIMER_5:
         description: 'NRF52 RTC 0'
         value:  0
+    ENC_FLASH_DEV:
+        description: 'Encrypting flash driver over interal flash for testing'
+        value: 0
 
 syscfg.defs.BLE_LP_CLOCK:
     TIMER_0:
