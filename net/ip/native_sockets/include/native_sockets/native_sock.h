@@ -50,4 +50,8 @@ int native_sock_setsockopt(struct mn_socket *, uint8_t level,
 int native_sock_getsockname(struct mn_socket *, struct mn_sockaddr *);
 int native_sock_getpeername(struct mn_socket *, struct mn_sockaddr *);
 
+int native_sock_itf_getnext(struct mn_itf *);
+int native_sock_itf_addr_getnext(struct mn_itf *, struct mn_itf_addr *);
+int native_sock_itf_addr(int idx, uint32_t *addr);
+
 #endif
