@@ -19,30 +19,23 @@
 
 #include <stdlib.h>
 
-#include "node/utilities.h"
+#include "os/mynewt.h"
 #include "lora/utilities.h"
-#include "node/lora_priv.h"
 
-int32_t
-randr(int32_t min, int32_t max)
+uint32_t
+timer_get_current_time(void)
 {
-    return rand() % (max - min + 1) + min;
+    return hal_timer_read(MYNEWT_VAL(LORA_MAC_TIMER_NUM));
 }
 
-TimerTime_t
-TimerGetCurrentTime(void)
+uint32_t
+timer_get_elapsed_time(uint32_t saved_time)
 {
-    return timer_get_current_time();
+    return hal_timer_read(MYNEWT_VAL(LORA_MAC_TIMER_NUM)) - saved_time;
 }
 
-TimerTime_t
-TimerGetElapsedTime(TimerTime_t savedTime)
+uint32_t
+timer_get_future_time(uint32_t event_in_future)
 {
-    return timer_get_elapsed_time(savedTime);
-}
-
-TimerTime_t
-TimerGetFutureTime(TimerTime_t eventInFuture)
-{
-    return timer_get_future_time(eventInFuture);
+    return hal_timer_read(MYNEWT_VAL(LORA_MAC_TIMER_NUM)) + event_in_future;
 }

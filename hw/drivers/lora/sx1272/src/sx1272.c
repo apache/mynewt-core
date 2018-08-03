@@ -23,7 +23,7 @@ Maintainer: Miguel Luis and Gregory Cristian
 #include "radio/radio.h"
 #include "sx1272.h"
 #include "sx1272-board.h"
-#include "node/utilities.h"
+#include "lora/utilities.h"
 
 #if MYNEWT_VAL(LORA_MAC_TIMER_NUM) == -1
 #error "Must define a Lora MAC timer number"
@@ -317,10 +317,10 @@ SX1272IsChannelFree(RadioModems_t modem, uint32_t freq, int16_t rssiThresh,
     /* Delay for 1 msec */
     hal_timer_delay(SX1272_TIMER_NUM, 1000);
 
-    carrierSenseTime = TimerGetCurrentTime( );
+    carrierSenseTime = timer_get_current_time( );
 
     // Perform carrier sense for maxCarrierSenseTime
-    while (TimerGetElapsedTime( carrierSenseTime ) < maxCarrierSenseTime) {
+    while (timer_get_elapsed_time( carrierSenseTime ) < maxCarrierSenseTime) {
         rssi = SX1272ReadRssi(modem);
         if (rssi > rssiThresh) {
             status = false;
