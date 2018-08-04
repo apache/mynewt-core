@@ -30,7 +30,7 @@
 . $CORE_PATH/hw/scripts/openocd.sh
 
 FILE_NAME=$BIN_BASENAME.elf
-CFG="-f board/st_nucleo_l4.cfg"
+CFG="-f board/st_nucleo_l476rg.cfg"
 # Exit openocd when gdb detaches.
 EXTRA_JTAG_CMD="$EXTRA_JTAG_CMD; stm32l4x.cpu configure -event gdb-detach {if {[stm32l4x.cpu curstate] eq \"halted\"} resume;shutdown}"
 

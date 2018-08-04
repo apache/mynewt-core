@@ -31,7 +31,7 @@
 
 . $CORE_PATH/hw/scripts/openocd.sh
 
-CFG="-f board/st_nucleo_l4.cfg"
+CFG="-f board/st_nucleo_l476rg.cfg"
 
 if [ "$MFG_IMAGE" ]; then
     FLASH_OFFSET=0x08000000
