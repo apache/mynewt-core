@@ -77,7 +77,7 @@ battery_poll_event_cb(struct os_event *ev)
 {
     int i;
     int pflag;
-    os_time_t next_poll;
+    os_time_t next_poll = 0;
     os_time_t now = os_time_get();
     struct battery *bat;
     os_stime_t ticks;
