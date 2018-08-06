@@ -50,7 +50,8 @@ const struct hal_flash nrf51_flash_dev = {
     .hf_base_addr = 0x00000000,
     .hf_size = 256 * 1024,	/* XXX read from factory info? */
     .hf_sector_cnt = 256,	/* XXX read from factory info? */
-    .hf_align = 1
+    .hf_align = 1,
+    .hf_erased_val = 0xff,
 };
 
 #define NRF51_FLASH_READY() (NRF_NVMC->READY == NVMC_READY_READY_Ready)

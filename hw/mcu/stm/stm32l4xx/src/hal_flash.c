@@ -51,6 +51,7 @@ const struct hal_flash stm32l4_flash_dev = {
     .hf_size = _FLASH_SIZE,
     .hf_sector_cnt = _FLASH_SIZE / _FLASH_SECTOR_SIZE,
     .hf_align = 8,
+    .hf_erased_val = 0xff,
 };
 
 static int
