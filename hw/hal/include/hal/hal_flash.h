@@ -42,6 +42,7 @@ int hal_flash_erase_sector(uint8_t flash_id, uint32_t sector_address);
 int hal_flash_erase(uint8_t flash_id, uint32_t address, uint32_t num_bytes);
 int hal_flash_isempty(uint8_t flash_id, uint32_t address, uint32_t num_bytes);
 uint8_t hal_flash_align(uint8_t flash_id);
+uint8_t hal_flash_erased_val(uint8_t flash_id);
 int hal_flash_init(void);
 
 #ifdef __cplusplus
