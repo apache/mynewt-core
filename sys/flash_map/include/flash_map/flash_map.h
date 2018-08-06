@@ -94,6 +94,11 @@ int flash_area_isempty_at(const struct flash_area *, uint32_t off,
 uint8_t flash_area_align(const struct flash_area *);
 
 /*
+ * Value read from flash when it is erased.
+ */
+uint32_t flash_area_erased_val(const struct flash_area *fa);
+
+/*
  * Given flash map index, return info about sectors within the area.
  */
 int flash_area_to_sectors(int idx, int *cnt, struct flash_area *ret);
