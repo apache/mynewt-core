@@ -65,7 +65,9 @@ nrf52_saadc_event_handler(const nrfx_saadc_evt_t *event)
                                        done_ev->size * sizeof(nrf_saadc_value_t));
             break;
         case NRFX_SAADC_EVT_CALIBRATEDONE:
-            /*TODO Expose to the user? */
+            rc = global_adc_dev->ad_event_handler_func(global_adc_dev,
+                                       global_adc_dev->ad_event_handler_arg,
+                                       ADC_EVENT_CALIBRATED, NULL, 0);
             break;
         default:
             assert(0);
