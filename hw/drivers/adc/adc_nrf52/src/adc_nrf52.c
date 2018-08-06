@@ -48,7 +48,7 @@ nrf52_saadc_event_handler(const nrfx_saadc_evt_t *event)
     nrfx_saadc_done_evt_t *done_ev;
     int rc;
 
-    if (global_adc_dev == NULL) {
+    if (global_adc_dev == NULL || !global_adc_dev->ad_event_handler_func) {
         ++nrf52_saadc_stats.saadc_events_failed;
         return;
     }
