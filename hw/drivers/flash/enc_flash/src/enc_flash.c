@@ -162,7 +162,7 @@ enc_flash_is_empty(const struct hal_flash *h_dev, uint32_t addr, uint32_t len)
     if (h_dev->hf_itf->hff_is_empty) {
         return h_dev->hf_itf->hff_is_empty(h_dev, addr, len);
     } else {
-        return hal_flash_is_ones(h_dev, addr, len);
+        return hal_flash_is_erased(h_dev, addr, len);
     }
 }
 
@@ -183,6 +183,7 @@ enc_flash_init(const struct hal_flash *h_dev)
     dev->efd_hal.hf_size =  h_dev->hf_size;
     dev->efd_hal.hf_sector_cnt = h_dev->hf_sector_cnt;
     dev->efd_hal.hf_align = h_dev->hf_align;
+    dev->efd_hal.hf_erased_val = h_dev->hf_erased_val;
 
     enc_flash_init_arch(dev);
 
