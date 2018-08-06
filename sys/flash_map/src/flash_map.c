@@ -167,9 +167,16 @@ flash_area_align(const struct flash_area *fa)
     return hal_flash_align(fa->fa_device_id);
 }
 
+uint32_t
+flash_area_erased_val(const struct flash_area *fa)
+{
+    return hal_flash_erased_val(fa->fa_device_id);
+}
+
+
 /**
  * Checks if a flash area has been erased. Returns false if there are any
- * non 0xFFFFFFFF bytes.
+ * non non-erased bytes.
  *
  * @param fa                    An opened flash area to iterate.
  *                                  the count of flash area TLVs in the meta
