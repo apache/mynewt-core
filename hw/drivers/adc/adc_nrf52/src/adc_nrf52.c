@@ -55,17 +55,23 @@ nrf52_saadc_event_handler(const nrfx_saadc_evt_t *event)
 
     ++nrf52_saadc_stats.saadc_events;
 
-    /* Right now only data reads supported, assert for unknown event
-     * type.
-     */
-    assert(event->type == NRFX_SAADC_EVT_DONE);
+    switch (event->type) {
+        case NRFX_SAADC_EVT_DONE:
+            done_ev = (nrfx_saadc_done_evt_t * const) &event->data.done;
 
-    done_ev = (nrfx_saadc_done_evt_t * const) &event->data.done;
+            rc = global_adc_dev->ad_event_handler_func(global_adc_dev,
+                                       global_adc_dev->ad_event_handler_arg,
+                                       ADC_EVENT_RESULT, done_ev->p_buffer,
+                                       done_ev->size * sizeof(nrf_saadc_value_t));
+            break;
+        case NRFX_SAADC_EVT_CALIBRATEDONE:
+            /*TODO Expose to the user? */
+            break;
+        default:
+            assert(0);
+            break;
+    }
 
-    rc = global_adc_dev->ad_event_handler_func(global_adc_dev,
-            global_adc_dev->ad_event_handler_arg,
-            ADC_EVENT_RESULT, done_ev->p_buffer,
-            done_ev->size * sizeof(nrf_saadc_value_t));
     if (rc != 0) {
         ++nrf52_saadc_stats.saadc_events_failed;
     }
