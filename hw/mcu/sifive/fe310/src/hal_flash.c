@@ -50,7 +50,8 @@ const struct hal_flash fe310_flash_dev = {
     .hf_base_addr = 0x20000000,
     .hf_size = 8 * 1024 * 1024,  /* XXX read from factory info? */
     .hf_sector_cnt = 4096,       /* XXX read from factory info? */
-    .hf_align = 1
+    .hf_align = 1,
+    .hf_erased_val = 0xff,
 };
 
 #define FLASH_CMD_READ_STATUS_REGISTER 0x05

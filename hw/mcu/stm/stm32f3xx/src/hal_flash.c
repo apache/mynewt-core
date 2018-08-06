@@ -127,6 +127,7 @@ stm32f3_flash_dev()
         stm32f3_flash_dev_.hf_size = HAL_FLASH_SIZE;
         stm32f3_flash_dev_.hf_sector_cnt = HAL_FLASH_SIZE / HAL_FLASH_SECTOR_SIZE;
         stm32f3_flash_dev_.hf_align = 2;
+        stm32f3_flash_dev_.hf_erased_val = 0xff;
     }
     return &stm32f3_flash_dev_;
 }

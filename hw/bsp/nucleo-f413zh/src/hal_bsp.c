@@ -69,7 +69,8 @@ const struct hal_flash stm32f4_flash_dev = {
     .hf_base_addr = 0x08000000,
     .hf_size = 1536 * 1024,
     .hf_sector_cnt = NAREAS - 1,
-    .hf_align = 1
+    .hf_align = 1,
+    .hf_erased_val = 0xff,
 };
 
 #if MYNEWT_VAL(UART_0)

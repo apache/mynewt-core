@@ -49,7 +49,8 @@ const struct hal_flash nrf52k_flash_dev = {
     .hf_base_addr = 0x00000000,
     .hf_size = 1024 * 1024,	/* XXX read from factory info? */
     .hf_sector_cnt = 256,	/* XXX read from factory info? */
-    .hf_align = 1
+    .hf_align = 1,
+    .hf_erased_val = 0xff,
 };
 #elif defined(NRF52810_XXAA)
 const struct hal_flash nrf52k_flash_dev = {

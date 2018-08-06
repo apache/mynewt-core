@@ -81,6 +81,7 @@ const struct hal_flash native_flash_dev = {
     .hf_size = 1024 * 1024,
     .hf_sector_cnt = FLASH_NUM_AREAS,
     .hf_align = MYNEWT_VAL(MCU_FLASH_MIN_WRITE_SIZE),
+    .hf_erased_val = 0xff,
 };
 
 static void
