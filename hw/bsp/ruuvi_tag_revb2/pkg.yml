@@ -35,7 +35,7 @@ pkg.cflags.HARDFLOAT:
     - -mfloat-abi=hard -mfpu=fpv4-sp-d16
 
 pkg.deps:
-    - "@apache-mynewt-core/hw/mcu/nordic/nrf52xxx"
+    - "@apache-mynewt-core/hw/mcu/nordic/nrf52xxx-compat"
     - "@apache-mynewt-core/libc/baselibc"
 
 pkg.deps.BLE_DEVICE:

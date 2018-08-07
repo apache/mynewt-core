@@ -17,7 +17,7 @@
 # under the License.
 #
 
-pkg.name: hw/mcu/nordic/nrf52xxx
+pkg.name: hw/mcu/nordic/nrf52xxx-compat
 pkg.description: MCU definition for Nordic nRF52 ARM Cortex-M4 chips.
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
@@ -40,30 +40,3 @@ pkg.cflags.NFC_PINS_AS_GPIO:
 
 pkg.cflags.GPIO_AS_PIN_RESET: 
     - '-DCONFIG_GPIO_AS_PINRESET=1'
-
-pkg.deps.BLE_DEVICE:
-    - "@apache-mynewt-core/hw/drivers/nimble/nrf52"
-
-pkg.deps.TRNG:
-    - "@apache-mynewt-core/hw/drivers/trng/trng_nrf52"
-
-pkg.deps.UART_0:
-    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
-
-pkg.deps.UART_1:
-    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
-
-pkg.deps.ADC_0:
-    - "@apache-mynewt-core/hw/drivers/adc/adc_nrf52"
-
-pkg.deps.PWM_0:
-    - "@apache-mynewt-core/hw/drivers/pwm/pwm_nrf52"
-
-pkg.deps.PWM_1:
-    - "@apache-mynewt-core/hw/drivers/pwm/pwm_nrf52"
-
-pkg.deps.PWM_2:
-    - "@apache-mynewt-core/hw/drivers/pwm/pwm_nrf52"
-
-pkg.deps.PWM_3:
-    - "@apache-mynewt-core/hw/drivers/pwm/pwm_nrf52"
