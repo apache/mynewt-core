@@ -285,14 +285,10 @@ nrf52_periph_create_i2c(void)
     (void)rc;
 
 #if MYNEWT_VAL(I2C_0)
-    assert(hal_i2c0_cfg.scl_pin >= 0);
-    assert(hal_i2c0_cfg.sda_pin >= 0);
     rc = hal_i2c_init(0, (void *)&hal_i2c0_cfg);
     assert(rc == 0);
 #endif
 #if MYNEWT_VAL(I2C_1)
-    assert(hal_i2c1_cfg.scl_pin >= 0);
-    assert(hal_i2c1_cfg.sda_pin >= 0);
     rc = hal_i2c_init(1, (void *)&hal_i2c1_cfg);
     assert(rc == 0);
 #endif
