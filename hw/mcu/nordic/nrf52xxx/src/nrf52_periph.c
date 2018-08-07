@@ -194,7 +194,7 @@ nrf52_periph_create_adc(void)
     (void)rc;
 
 #if MYNEWT_VAL(ADC_0)
-    rc = os_dev_create((struct os_dev *)&os_bsp_adc0, "adc0",
+    rc = os_dev_create(&os_bsp_adc0.ad_dev, "adc0",
                        OS_DEV_INIT_KERNEL, OS_DEV_INIT_PRIO_DEFAULT,
                        nrf52_adc_dev_init, &os_bsp_adc0_config);
     assert(rc == 0);
@@ -212,7 +212,7 @@ nrf52_periph_create_pwm(void)
 
 #if MYNEWT_VAL(PWM_0)
     idx = 0;
-    rc = os_dev_create((struct os_dev *) &os_bsp_pwm0, "pwm0",
+    rc = os_dev_create(&os_bsp_pwm0.pwm_os_dev, "pwm0",
                        OS_DEV_INIT_KERNEL, OS_DEV_INIT_PRIO_DEFAULT,
                        nrf52_pwm_dev_init, &idx);
     assert(rc == 0);
