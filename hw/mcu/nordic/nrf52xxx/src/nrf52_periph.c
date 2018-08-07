@@ -23,6 +23,7 @@
 #include "mcu/nrf52_hal.h"
 #include "hal/hal_i2c.h"
 #include "hal/hal_spi.h"
+#include "bsp/bsp.h"
 #include "nrfx.h"
 #if MYNEWT_VAL(ADC_0)
 #include "adc/adc.h"
