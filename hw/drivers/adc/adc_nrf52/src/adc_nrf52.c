@@ -48,24 +48,32 @@ nrf52_saadc_event_handler(const nrfx_saadc_evt_t *event)
     nrfx_saadc_done_evt_t *done_ev;
     int rc;
 
-    if (global_adc_dev == NULL) {
+    if (global_adc_dev == NULL || !global_adc_dev->ad_event_handler_func) {
         ++nrf52_saadc_stats.saadc_events_failed;
         return;
     }
 
     ++nrf52_saadc_stats.saadc_events;
 
-    /* Right now only data reads supported, assert for unknown event
-     * type.
-     */
-    assert(event->type == NRFX_SAADC_EVT_DONE);
+    switch (event->type) {
+        case NRFX_SAADC_EVT_DONE:
+            done_ev = (nrfx_saadc_done_evt_t * const) &event->data.done;
 
-    done_ev = (nrfx_saadc_done_evt_t * const) &event->data.done;
+            rc = global_adc_dev->ad_event_handler_func(global_adc_dev,
+                                       global_adc_dev->ad_event_handler_arg,
+                                       ADC_EVENT_RESULT, done_ev->p_buffer,
+                                       done_ev->size * sizeof(nrf_saadc_value_t));
+            break;
+        case NRFX_SAADC_EVT_CALIBRATEDONE:
+            rc = global_adc_dev->ad_event_handler_func(global_adc_dev,
+                                       global_adc_dev->ad_event_handler_arg,
+                                       ADC_EVENT_CALIBRATED, NULL, 0);
+            break;
+        default:
+            assert(0);
+            break;
+    }
 
-    rc = global_adc_dev->ad_event_handler_func(global_adc_dev,
-            global_adc_dev->ad_event_handler_arg,
-            ADC_EVENT_RESULT, done_ev->p_buffer,
-            done_ev->size * sizeof(nrf_saadc_value_t));
     if (rc != 0) {
         ++nrf52_saadc_stats.saadc_events_failed;
     }
