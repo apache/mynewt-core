@@ -123,7 +123,7 @@ hal_bsp_init(void)
         asprintf(&spwm_name, "spwm%d", idx);
         rc = os_dev_create(&os_bsp_spwm[idx].pwm_os_dev, spwm_name,
                            OS_DEV_INIT_KERNEL, OS_DEV_INIT_PRIO_DEFAULT,
-                           soft_pwm_dev_init, &idx);
+                           soft_pwm_dev_init, UINT_TO_POINTER(idx));
         assert(rc == 0);
     }
 #endif
