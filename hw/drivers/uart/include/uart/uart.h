@@ -72,12 +72,6 @@ struct uart_driver_funcs {
     void (*uf_blocking_tx)(struct uart_dev *, uint8_t);
 };
 
-struct uart_dev {
-    struct os_dev ud_dev;
-    struct uart_driver_funcs ud_funcs;
-    void *ud_priv;
-};
-
 /*
  * ***Note that these enum values must match what hw/hal/hal_uart.h***
  */
@@ -92,6 +86,14 @@ enum uart_flow_ctl {
     UART_FLOW_CTL_RTS_CTS = 1   /* RTS/CTS */
 };
 
+struct uart_conf_port {
+    uint32_t uc_speed;          /* baudrate in bps */
+    uint8_t uc_databits;        /* number of data bits */
+    uint8_t uc_stopbits;        /* number of stop bits */
+    enum uart_parity uc_parity;
+    enum uart_flow_ctl uc_flow_ctl;
+};
+
 struct uart_conf {
     uint32_t uc_speed;          /* baudrate in bps */
     uint8_t uc_databits;        /* number of data bits */
@@ -102,6 +104,13 @@ struct uart_conf {
     uart_rx_char uc_rx_char;
     uart_tx_done uc_tx_done;
     void *uc_cb_arg;
+};
+
+struct uart_dev {
+    struct os_dev ud_dev;
+    struct uart_driver_funcs ud_funcs;
+    struct uart_conf_port ud_conf_port;
+    void *ud_priv;
 };
 
 /*
