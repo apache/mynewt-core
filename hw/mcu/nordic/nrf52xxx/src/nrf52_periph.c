@@ -23,6 +23,7 @@
 #include "mcu/nrf52_hal.h"
 #include "hal/hal_i2c.h"
 #include "hal/hal_spi.h"
+#include "bsp/bsp.h"
 #include "nrfx.h"
 #if MYNEWT_VAL(ADC_0)
 #include "adc/adc.h"
@@ -194,7 +195,7 @@ nrf52_periph_create_adc(void)
     (void)rc;
 
 #if MYNEWT_VAL(ADC_0)
-    rc = os_dev_create((struct os_dev *)&os_bsp_adc0, "adc0",
+    rc = os_dev_create(&os_bsp_adc0.ad_dev, "adc0",
                        OS_DEV_INIT_KERNEL, OS_DEV_INIT_PRIO_DEFAULT,
                        nrf52_adc_dev_init, &os_bsp_adc0_config);
     assert(rc == 0);
@@ -212,7 +213,7 @@ nrf52_periph_create_pwm(void)
 
 #if MYNEWT_VAL(PWM_0)
     idx = 0;
-    rc = os_dev_create((struct os_dev *) &os_bsp_pwm0, "pwm0",
+    rc = os_dev_create(&os_bsp_pwm0.pwm_os_dev, "pwm0",
                        OS_DEV_INIT_KERNEL, OS_DEV_INIT_PRIO_DEFAULT,
                        nrf52_pwm_dev_init, &idx);
     assert(rc == 0);
@@ -284,14 +285,10 @@ nrf52_periph_create_i2c(void)
     (void)rc;
 
 #if MYNEWT_VAL(I2C_0)
-    assert(hal_i2c0_cfg.scl_pin >= 0);
-    assert(hal_i2c0_cfg.sda_pin >= 0);
     rc = hal_i2c_init(0, (void *)&hal_i2c0_cfg);
     assert(rc == 0);
 #endif
 #if MYNEWT_VAL(I2C_1)
-    assert(hal_i2c1_cfg.scl_pin >= 0);
-    assert(hal_i2c1_cfg.sda_pin >= 0);
     rc = hal_i2c_init(1, (void *)&hal_i2c1_cfg);
     assert(rc == 0);
 #endif

@@ -48,10 +48,10 @@ syscfg.defs:
             - "!SPI_0_SLAVE"
     I2C_0_PIN_SCL:
         description: 'SCL pin for I2C_0'
-        value: -1
+        value: ''
     I2C_0_PIN_SDA:
         description: 'SDA pin for I2C_0'
-        value: -1
+        value: ''
     I2C_0_FREQ_KHZ:
         description: 'Frequency [kHz] for I2C_0'
         value: 100
@@ -64,10 +64,10 @@ syscfg.defs:
             - "!SPI_1_SLAVE"
     I2C_1_PIN_SCL:
         description: 'SCL pin for I2C_1'
-        value: -1
+        value: ''
     I2C_1_PIN_SDA:
         description: 'SDA pin for I2C_1'
-        value: -1
+        value: ''
     I2C_1_FREQ_KHZ:
         description: 'Frequency [kHz] for I2C_1'
         value: 100
@@ -80,13 +80,13 @@ syscfg.defs:
             - "!I2C_0"
     SPI_0_MASTER_PIN_SCK:
         description: 'SCK pin for SPI_0_MASTER'
-        value: -1
+        value: ''
     SPI_0_MASTER_PIN_MOSI:
         description: 'MOSI pin for SPI_0_MASTER'
-        value: -1
+        value: ''
     SPI_0_MASTER_PIN_MISO:
         description: 'MISO pin for SPI_0_MASTER'
-        value: -1
+        value: ''
 
     SPI_0_SLAVE:
         description: 'Enable nRF52xxx SPI Slave 0'
@@ -96,16 +96,16 @@ syscfg.defs:
             - "!I2C_0"
     SPI_0_SLAVE_PIN_SCK:
         description: 'SCK pin for SPI_0_SLAVE'
-        value: -1
+        value: ''
     SPI_0_SLAVE_PIN_MOSI:
         description: 'MOSI pin for SPI_0_SLAVE'
-        value: -1
+        value: ''
     SPI_0_SLAVE_PIN_MISO:
         description: 'MISO pin for SPI_0_SLAVE'
-        value: -1
+        value: ''
     SPI_0_SLAVE_PIN_SS:
         description: 'SS pin for SPI_0_SLAVE'
-        value: -1
+        value: ''
 
     SPI_1_MASTER:
         description: 'Enable nRF52xxx SPI Master 1'
@@ -115,13 +115,13 @@ syscfg.defs:
             - "!I2C_1"
     SPI_1_MASTER_PIN_SCK:
         description: 'SCK pin for SPI_1_MASTER'
-        value: -1
+        value: ''
     SPI_1_MASTER_PIN_MOSI:
         description: 'MOSI pin for SPI_1_MASTER'
-        value: -1
+        value: ''
     SPI_1_MASTER_PIN_MISO:
         description: 'MISO pin for SPI_1_MASTER'
-        value: -1
+        value: ''
 
     SPI_1_SLAVE:
         description: 'Enable nRF52xxx SPI Slave 1'
@@ -131,16 +131,16 @@ syscfg.defs:
             - "!I2C_1"
     SPI_1_SLAVE_PIN_SCK:
         description: 'SCK pin for SPI_1_SLAVE'
-        value: -1
+        value: ''
     SPI_1_SLAVE_PIN_MOSI:
         description: 'MOSI pin for SPI_1_SLAVE'
-        value: -1
+        value: ''
     SPI_1_SLAVE_PIN_MISO:
         description: 'MISO pin for SPI_1_SLAVE'
-        value: -1
+        value: ''
     SPI_1_SLAVE_PIN_SS:
         description: 'SS pin for SPI_1_SLAVE'
-        value: -1
+        value: ''
 
     SPI_2_MASTER:
         description: 'Enable nRF52xxx SPI Master 2'
@@ -150,13 +150,13 @@ syscfg.defs:
             - "MCU_NRF52840"
     SPI_2_MASTER_PIN_SCK:
         description: 'SCK pin for SPI_2_MASTER'
-        value: -1
+        value: ''
     SPI_2_MASTER_PIN_MOSI:
         description: 'MOSI pin for SPI_2_MASTER'
-        value: -1
+        value: ''
     SPI_2_MASTER_PIN_MISO:
         description: 'MISO pin for SPI_2_MASTER'
-        value: -1
+        value: ''
 
     SPI_2_SLAVE:
         description: 'Enable nRF52xxx SPI Slave 2'
@@ -166,16 +166,16 @@ syscfg.defs:
             - "MCU_NRF52840"
     SPI_2_SLAVE_PIN_SCK:
         description: 'SCK pin for SPI_2_SLAVE'
-        value: -1
+        value: ''
     SPI_2_SLAVE_PIN_MOSI:
         description: 'MOSI pin for SPI_2_SLAVE'
-        value: -1
+        value: ''
     SPI_2_SLAVE_PIN_MISO:
         description: 'MISO pin for SPI_2_SLAVE'
-        value: -1
+        value: ''
     SPI_2_SLAVE_PIN_SS:
         description: 'SS pin for SPI_2_SLAVE'
-        value: -1
+        value: ''
 
     ADC_0:
         description: 'Enable nRF52xxx ADC 0'
@@ -209,10 +209,10 @@ syscfg.defs:
         value: 1
     UART_0_PIN_TX:
         description: 'TX pin for UART0'
-        value: -1
+        value: ''
     UART_0_PIN_RX:
         description: 'RX pin for UART0'
-        value: -1
+        value: ''
     UART_0_PIN_RTS:
         description: 'RTS pin for UART0'
         value: -1
@@ -227,10 +227,10 @@ syscfg.defs:
             - "MCU_NRF52840"
     UART_1_PIN_TX:
         description: 'TX pin for UART1'
-        value: -1
+        value: ''
     UART_1_PIN_RX:
         description: 'RX pin for UART1'
-        value: -1
+        value: ''
     UART_1_PIN_RTS:
         description: 'RTS pin for UART1'
         value: -1
@@ -363,13 +363,13 @@ syscfg.defs:
 
 syscfg.restrictions:
     - "MCU_NRF52832 ^^ MCU_NRF52840"
-    - "!I2C_0 || (I2C_0_PIN_SCL >= 0 && I2C_0_PIN_SDA >= 0)"
-    - "!I2C_1 || (I2C_1_PIN_SCL >= 0 && I2C_1_PIN_SDA >= 0)"
-    - "!SPI_0_MASTER || (SPI_0_MASTER_PIN_SCK >= 0 && SPI_0_MASTER_PIN_MOSI >=0 && SPI_0_MASTER_PIN_MISO >= 0)"
-    - "!SPI_1_MASTER || (SPI_1_MASTER_PIN_SCK >= 0 && SPI_1_MASTER_PIN_MOSI >=0 && SPI_1_MASTER_PIN_MISO >= 0)"
-    - "!SPI_2_MASTER || (SPI_2_MASTER_PIN_SCK >= 0 && SPI_2_MASTER_PIN_MOSI >=0 && SPI_2_MASTER_PIN_MISO >= 0)"
-    - "!SPI_0_SLAVE || (SPI_0_SLAVE_PIN_SCK >= 0 && SPI_0_SLAVE_PIN_MOSI >=0 && SPI_0_SLAVE_PIN_MISO >= 0 && SPI_0_SLAVE_PIN_SS >= 0)"
-    - "!SPI_1_SLAVE || (SPI_1_SLAVE_PIN_SCK >= 0 && SPI_1_SLAVE_PIN_MOSI >=0 && SPI_1_SLAVE_PIN_MISO >= 0 && SPI_1_SLAVE_PIN_SS >= 0)"
-    - "!SPI_2_SLAVE || (SPI_2_SLAVE_PIN_SCK >= 0 && SPI_2_SLAVE_PIN_MOSI >=0 && SPI_2_SLAVE_PIN_MISO >= 0 && SPI_2_SLAVE_PIN_SS >= 0)"
-    - "!UART_0 || (UART_0_PIN_TX >= 0 && UART_0_PIN_RX >= 0)"
-    - "!UART_1 || (UART_1_PIN_TX >= 0 && UART_1_PIN_RX >= 0)"
+    - "!I2C_0 || (I2C_0_PIN_SCL && I2C_0_PIN_SDA)"
+    - "!I2C_1 || (I2C_1_PIN_SCL && I2C_1_PIN_SDA)"
+    - "!SPI_0_MASTER || (SPI_0_MASTER_PIN_SCK && SPI_0_MASTER_PIN_MOSI && SPI_0_MASTER_PIN_MISO)"
+    - "!SPI_1_MASTER || (SPI_1_MASTER_PIN_SCK && SPI_1_MASTER_PIN_MOSI && SPI_1_MASTER_PIN_MISO)"
+    - "!SPI_2_MASTER || (SPI_2_MASTER_PIN_SCK && SPI_2_MASTER_PIN_MOSI && SPI_2_MASTER_PIN_MISO)"
+    - "!SPI_0_SLAVE || (SPI_0_SLAVE_PIN_SCK && SPI_0_SLAVE_PIN_MOSI && SPI_0_SLAVE_PIN_MISO && SPI_0_SLAVE_PIN_SS)"
+    - "!SPI_1_SLAVE || (SPI_1_SLAVE_PIN_SCK && SPI_1_SLAVE_PIN_MOSI && SPI_1_SLAVE_PIN_MISO && SPI_1_SLAVE_PIN_SS)"
+    - "!SPI_2_SLAVE || (SPI_2_SLAVE_PIN_SCK && SPI_2_SLAVE_PIN_MOSI && SPI_2_SLAVE_PIN_MISO && SPI_2_SLAVE_PIN_SS)"
+    - "!UART_0 || (UART_0_PIN_TX && UART_0_PIN_RX)"
+    - "!UART_1 || (UART_1_PIN_TX && UART_1_PIN_RX)"
