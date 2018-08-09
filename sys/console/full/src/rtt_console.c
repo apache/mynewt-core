@@ -30,7 +30,7 @@
 static struct hal_timer rtt_timer;
 #endif
 
-static const char CR = '\r';
+static const char rtt_CR = '\r';
 
 int
 console_out(int character)
@@ -38,7 +38,7 @@ console_out(int character)
     char c = (char)character;
 
     if ('\n' == c) {
-        SEGGER_RTT_WriteWithOverwriteNoLock(0, &CR, 1);
+        SEGGER_RTT_WriteWithOverwriteNoLock(0, &rtt_CR, 1);
         console_is_midline = 0;
     } else {
         console_is_midline = 1;

@@ -43,7 +43,7 @@ struct console_input {
 
 typedef void (*console_rx_cb)(void);
 typedef int (*console_append_char_cb)(char *line, uint8_t byte);
-typedef void (*completion_cb)(char *str, console_append_char_cb cb);
+typedef void (*console_completion_cb)(char *str, console_append_char_cb cb);
 
 int console_init(console_rx_cb rx_cb);
 int console_is_init(void);
@@ -58,7 +58,7 @@ void console_echo(int on);
 int console_printf(const char *fmt, ...)
     __attribute__ ((format (printf, 1, 2)));;
 
-void console_set_completion_cb(completion_cb cb);
+void console_set_completion_cb(console_completion_cb cb);
 int console_handle_char(uint8_t byte);
 
 /* Set queue to send console line events to */

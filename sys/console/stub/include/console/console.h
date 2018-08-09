@@ -34,7 +34,7 @@ struct console_input {
 
 typedef void (*console_rx_cb)(void);
 typedef int (*console_append_char_cb)(char *line, uint8_t byte);
-typedef void (*completion_cb)(char *str, console_append_char_cb cb);
+typedef void (*console_completion_cb)(char *str, console_append_char_cb cb);
 
 static int inline
 console_is_init(void)
