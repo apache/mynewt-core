@@ -808,7 +808,7 @@
  * LWIP_RAW==1: Enable application layer to hook into the IP layer itself.
  */
 #if !defined LWIP_RAW || defined __DOXYGEN__
-#define LWIP_RAW                        0
+#define LWIP_RAW                        1
 #endif
 
 /**
@@ -2571,8 +2571,8 @@
  * - src: source eth address
  * - dst: destination eth address
  * - eth_type: ethernet type to packet to be sent\n
- * 
- * 
+ *
+ *
  * Return values:
  * - &lt;0: Packet shall not contain VLAN header.
  * - 0 &lt;= return value &lt;= 0xFFFF: Packet shall contain VLAN header. Return value is prio_vid in host byte order.
