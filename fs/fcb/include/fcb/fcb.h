@@ -37,6 +37,14 @@ extern "C" {
 #define FCB_MAX_LEN	(CHAR_MAX | CHAR_MAX << 7) /* Max length of element */
 
 /**
+ * Select which policy to follow for CRC for this FCB. Note that there's
+ * a syscfg knobs controlling whether algorithm is referenced from within code.
+ */
+#define FCB_CRC_INHERIT 0       /* use what was used here before */
+#define FCB_CRC_8       1       /* always CRC8 */
+#define FCB_CRC_16      2       /* always CRC16 */
+
+/**
  * Entry location is pointer to area (within fcb->f_sectors), and offset
  * within that area.
  */
@@ -53,6 +61,7 @@ struct fcb {
     uint8_t f_version;  	/* Current version number of the data */
     uint8_t f_sector_cnt;	/* Number of elements in sector array */
     uint8_t f_scratch_cnt;	/* How many sectors should be kept empty */
+    uint8_t f_crc:2;            /* FCB_CRC_XX */
     struct flash_area *f_sectors; /* Array of sectors, must be contiguous */
 
     /* Flash circular buffer internal state */
@@ -61,6 +70,7 @@ struct fcb {
     struct fcb_entry f_active;
     uint16_t f_active_id;
     uint8_t f_align;		/* writes to flash have to aligned to this */
+    uint8_t f_crc_actual;	/* CRC length used within this FCB */
 };
 
 /**

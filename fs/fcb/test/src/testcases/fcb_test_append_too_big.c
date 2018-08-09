@@ -25,17 +25,6 @@ TEST_CASE(fcb_test_append_too_big)
     int len;
     struct fcb_entry elem_loc;
 
-#if 0
-    fcb_test_wipe();
-    fcb = &test_fcb;
-    memset(fcb, 0, sizeof(*fcb));
-    fcb->f_sector_cnt = 2;
-    fcb->f_sectors = test_fcb_area;
-
-    rc = fcb_init(fcb);
-    TEST_ASSERT(rc == 0);
-#endif
-
     fcb = &test_fcb;
 
     /*
@@ -56,7 +45,7 @@ TEST_CASE(fcb_test_append_too_big)
     TEST_ASSERT(rc != 0);
 
     len = fcb->f_active.fe_area->fa_size -
-      (sizeof(struct fcb_disk_area) + 1 + 2);
+      (sizeof(struct fcb_disk_area) + fcb->f_crc_actual + 2);
     rc = fcb_append(fcb, len, &elem_loc);
     TEST_ASSERT(rc == 0);
 

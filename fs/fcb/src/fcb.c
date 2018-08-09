@@ -31,6 +31,7 @@ fcb_init(struct fcb *fcb)
     int i;
     int max_align = 1;
     int align;
+    uint8_t crc_sz = 0;
     int oldest = -1, newest = -1;
     struct flash_area *oldest_fap = NULL, *newest_fap = NULL;
     struct fcb_disk_area fda;
@@ -56,6 +57,11 @@ fcb_init(struct fcb *fcb)
         if (oldest < 0) {
             oldest = newest = fda.fd_id;
             oldest_fap = newest_fap = fap;
+            if (fda.fd_crc == 0) {
+                crc_sz = FCB_CRC_16;
+            } else {
+                crc_sz = FCB_CRC_8;
+            }
             continue;
         }
         if (FCB_ID_GT(fda.fd_id, newest)) {
@@ -66,6 +72,41 @@ fcb_init(struct fcb *fcb)
             oldest_fap = fap;
         }
     }
+    if (fcb->f_crc) {
+        if (crc_sz && crc_sz != fcb->f_crc) {
+            /*
+             * If asking to use specific CRC, and that's not present in flash.
+             */
+            return FCB_ERR_CRC;
+        }
+        crc_sz = fcb->f_crc;
+    } else {
+        if (!crc_sz) {
+#if MYNEWT_VAL(FCB_CRC_16)
+            crc_sz = FCB_CRC_16;
+#elif MYNEWT_VAL(FCB_CRC_8)
+            crc_sz = FCB_CRC_8;
+#else
+#error "Need to include either FCB_CRC_8 or FCB_CRC_16"
+#endif
+        }
+    }
+
+    /*
+     * If asking for CRC not included in the build.
+     */
+#if !MYNEWT_VAL(FCB_CRC_8)
+    if (crc_sz == FCB_CRC_8) {
+        return FCB_ERR_ARGS;
+    }
+#endif
+#if !MYNEWT_VAL(FCB_CRC_16)
+    if (crc_sz == FCB_CRC_16) {
+        return FCB_ERR_ARGS;
+    }
+#endif
+    fcb->f_crc_actual = crc_sz;
+
     if (oldest < 0) {
         /*
          * No initialized areas.
@@ -170,7 +211,12 @@ fcb_sector_hdr_init(struct fcb *fcb, struct flash_area *fap, uint16_t id)
 
     fda.fd_magic = fcb->f_magic;
     fda.fd_ver = fcb->f_version;
-    fda._pad = 0xff;
+    if (fcb->f_crc_actual == FCB_CRC_16) {
+        fda.fd_crc = 0;
+    } else {
+        fda.fd_crc = 1;
+    }
+    fda._pad = 0x7f;
     fda.fd_id = id;
 
     rc = flash_area_write(fap, 0, &fda, sizeof(fda));

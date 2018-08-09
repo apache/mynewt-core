@@ -30,6 +30,7 @@
 
 #include "flash_map/flash_map.h"
 
+uint8_t crc_mode;
 #if MYNEWT_VAL(SELFTEST)
 
 struct fcb test_fcb;
@@ -131,12 +132,16 @@ fcb_tc_pretest(void* arg)
     memset(fcb, 0, sizeof(*fcb));
     fcb->f_sector_cnt = (int)arg;
     fcb->f_sectors = test_fcb_area; /* XXX */
+    fcb->f_crc = crc_mode;
 
     rc = 0;
     rc = fcb_init(fcb);
     if (rc != 0) {
         printf("fcb_tc_pretest rc == %x, %d\n", rc, rc);
         TEST_ASSERT(rc == 0);
+    }
+    if (fcb->f_crc) {
+        TEST_ASSERT(fcb->f_crc == fcb->f_crc_actual);
     }
 
     return;
@@ -159,14 +164,9 @@ TEST_CASE_DECL(fcb_test_rotate)
 TEST_CASE_DECL(fcb_test_multiple_scratch)
 TEST_CASE_DECL(fcb_test_last_of_n)
 
-TEST_SUITE(fcb_test_all)
+void
+fcb_run_em(void)
 {
-    tu_case_set_pre_cb(fcb_tc_pretest, (void*)2);
-    fcb_test_len();
-
-    /* pretest not needed */
-    fcb_test_init();
-
     tu_case_set_pre_cb(fcb_tc_pretest, (void*)2);
     fcb_test_empty_walk();
 
@@ -190,6 +190,23 @@ TEST_SUITE(fcb_test_all)
 
     tu_case_set_pre_cb(fcb_tc_pretest, (void*)4);
     fcb_test_last_of_n();
+}
+
+TEST_SUITE(fcb_test_all)
+{
+    tu_case_set_pre_cb(fcb_tc_pretest, (void*)2);
+    fcb_test_len();
+
+    /* pretest not needed */
+    fcb_test_init();
+
+    fcb_run_em();
+
+    crc_mode = FCB_CRC_8;
+    fcb_run_em();
+
+    crc_mode = FCB_CRC_16;
+    fcb_run_em();
 }
 
 #if MYNEWT_VAL(SELFTEST)

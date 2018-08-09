@@ -80,7 +80,7 @@ fcb_append(struct fcb *fcb, uint16_t len, struct fcb_entry *append_loc)
         return cnt;
     }
     cnt = fcb_len_in_flash(fcb, cnt);
-    len = fcb_len_in_flash(fcb, len) + fcb_len_in_flash(fcb, FCB_CRC_SZ);
+    len = fcb_len_in_flash(fcb, len) + fcb_len_in_flash(fcb, fcb->f_crc_actual);
 
     rc = os_mutex_pend(&fcb->f_mtx, OS_WAIT_FOREVER);
     if (rc && rc != OS_NOT_STARTED) {
@@ -126,16 +126,16 @@ int
 fcb_append_finish(struct fcb *fcb, struct fcb_entry *loc)
 {
     int rc;
-    uint8_t crc8;
+    uint16_t crc;
     uint32_t off;
 
-    rc = fcb_elem_crc8(fcb, loc, &crc8);
+    rc = fcb_elem_crc(fcb, loc, &crc);
     if (rc) {
         return rc;
     }
     off = loc->fe_data_off + fcb_len_in_flash(fcb, loc->fe_data_len);
 
-    rc = flash_area_write(loc->fe_area, off, &crc8, sizeof(crc8));
+    rc = flash_area_write(loc->fe_area, off, &crc, fcb->f_crc_actual);
     if (rc) {
         return FCB_ERR_FLASH;
     }
