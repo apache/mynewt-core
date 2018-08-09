@@ -184,10 +184,9 @@ tbb_gap_event(struct ble_gap_event *event, void *arg)
         }
         MODLOG_DFLT(INFO, "\n");
 
-        if (event->connect.status != 0) {
-            /* Connection failed; resume advertising. */
-            tbb_advertise();
-        }
+        /* Try to advertise again. */
+        tbb_advertise();
+
         return 0;
 
     case BLE_GAP_EVENT_DISCONNECT:
