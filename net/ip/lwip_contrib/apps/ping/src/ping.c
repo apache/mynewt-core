@@ -94,22 +94,31 @@
 
 /* ping variables */
 static const ip_addr_t* ping_target;
+static ip_addr_t g_ping_target;
 static u16_t ping_seq_num;
-#ifdef LWIP_DEBUG
+static int g_ping_cnt;
+static int g_ping_delay;
+static int g_ping_size;
+static ping_send_cb *g_ping_send;
+static ping_recv_cb *g_ping_recv;
 static u32_t ping_time;
-#endif /* LWIP_DEBUG */
+
 #if !PING_USE_SOCKETS
 static struct raw_pcb *ping_pcb;
 #endif /* PING_USE_SOCKETS */
 
 /** Prepare a echo ICMP request */
 static void
-ping_prepare_echo( struct icmp_echo_hdr *iecho, u16_t len)
+ping_prepare_echo( struct icmp_echo_hdr *iecho, u16_t len, int v6)
 {
   size_t i;
   size_t data_len = len - sizeof(struct icmp_echo_hdr);
 
-  ICMPH_TYPE_SET(iecho, ICMP_ECHO);
+  if(v6) {
+    ICMPH_TYPE_SET(iecho, ICMP6_TYPE_EREQ);
+  } else {
+    ICMPH_TYPE_SET(iecho, ICMP_ECHO);
+  }
   ICMPH_CODE_SET(iecho, 0);
   iecho->chksum = 0;
   iecho->id     = PING_ID;
@@ -120,7 +129,9 @@ ping_prepare_echo( struct icmp_echo_hdr *iecho, u16_t len)
     ((char*)iecho)[sizeof(struct icmp_echo_hdr) + i] = (char)i;
   }
 
-  iecho->chksum = inet_chksum(iecho, len);
+  if(!v6) {
+    iecho->chksum = inet_chksum(iecho, len);
+  }
 }
 
 #if PING_USE_SOCKETS
@@ -132,7 +143,7 @@ ping_send(int s, const ip_addr_t *addr)
   int err;
   struct icmp_echo_hdr *iecho;
   struct sockaddr_storage to;
-  size_t ping_size = sizeof(struct icmp_echo_hdr) + PING_DATA_SIZE;
+  size_t ping_size = sizeof(struct icmp_echo_hdr) + g_ping_size;
   LWIP_ASSERT("ping_size is too big", ping_size <= 0xffff);
 
 #if LWIP_IPV6
@@ -147,7 +158,7 @@ ping_send(int s, const ip_addr_t *addr)
     return ERR_MEM;
   }
 
-  ping_prepare_echo(iecho, (u16_t)ping_size);
+  ping_prepare_echo(iecho, (u16_t)ping_size, IP_IS_V6(addr));
 
 #if LWIP_IPV4
   if(IP_IS_V4(addr)) {
@@ -283,7 +294,7 @@ ping_thread(void *arg)
       ip_addr_debug_print(PING_DEBUG, ping_target);
       LWIP_DEBUGF( PING_DEBUG, (" - error\n"));
     }
-    sys_msleep(PING_DELAY);
+    sys_msleep(g_ping_delay);
   }
 }
 
@@ -310,6 +321,10 @@ ping_recv(void *arg, struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *addr)
 
       /* do some ping result processing */
       PING_RESULT(1);
+
+      if(g_ping_recv) {
+        g_ping_recv(lwip_ntohs(iecho->seqno), (sys_now() - ping_time));
+      }
       pbuf_free(p);
       return 1; /* eat the packet */
     }
@@ -325,7 +340,7 @@ ping_send(struct raw_pcb *raw, const ip_addr_t *addr)
 {
   struct pbuf *p;
   struct icmp_echo_hdr *iecho;
-  size_t ping_size = sizeof(struct icmp_echo_hdr) + PING_DATA_SIZE;
+  size_t ping_size = sizeof(struct icmp_echo_hdr) + g_ping_size;
 
   LWIP_DEBUGF( PING_DEBUG, ("ping: send "));
   ip_addr_debug_print(PING_DEBUG, addr);
@@ -339,12 +354,13 @@ ping_send(struct raw_pcb *raw, const ip_addr_t *addr)
   if ((p->len == p->tot_len) && (p->next == NULL)) {
     iecho = (struct icmp_echo_hdr *)p->payload;
 
-    ping_prepare_echo(iecho, (u16_t)ping_size);
+    ping_prepare_echo(iecho, (u16_t)ping_size, IP_IS_V6(addr));
 
+    if(g_ping_send) {
+      g_ping_send(ping_seq_num);
+    }
     raw_sendto(raw, p, addr);
-#ifdef LWIP_DEBUG
     ping_time = sys_now();
-#endif /* LWIP_DEBUG */
   }
   pbuf_free(p);
 }
@@ -353,40 +369,52 @@ static void
 ping_timeout(void *arg)
 {
   struct raw_pcb *pcb = (struct raw_pcb*)arg;
-
+  (void) pcb;
   LWIP_ASSERT("ping_timeout: no pcb given!", pcb != NULL);
 
-  ping_send(pcb, ping_target);
-
-  sys_timeout(PING_DELAY, ping_timeout, pcb);
+  if(g_ping_cnt) {
+    g_ping_cnt--;
+    ping_send(ping_pcb, ping_target);
+    sys_timeout(g_ping_delay, ping_timeout, ping_pcb);
+  }
 }
 
 static void
 ping_raw_init(void)
 {
   if(NULL == ping_pcb) {
-    ping_pcb = raw_new(IP_PROTO_ICMP);
+    ping_pcb = raw_new(IP6_NEXTH_ICMP6);
   }
   LWIP_ASSERT("ping_pcb != NULL", ping_pcb != NULL);
 
   raw_recv(ping_pcb, ping_recv, NULL);
   raw_bind(ping_pcb, IP6_ADDR_ANY);
-  sys_timeout(PING_DELAY, ping_timeout, ping_pcb);
+  ping_pcb->chksum_reqd = 1;
+  ping_pcb->chksum_offset = 2;
 }
 
 void
 ping_send_now(void)
 {
   LWIP_ASSERT("ping_pcb != NULL", ping_pcb != NULL);
-  ping_send(ping_pcb, ping_target);
+  if(g_ping_cnt) {
+    g_ping_cnt--;
+    ping_send(ping_pcb, ping_target);
+    sys_timeout(g_ping_delay, ping_timeout, ping_pcb);
+  }
 }
 
 #endif /* PING_USE_SOCKETS */
 
 void
-ping_init(const ip_addr_t* ping_addr)
+ping_init(const ip_addr_t* ping_addr, int ping_cnt, int size, int delay)
 {
-  ping_target = ping_addr;
+  g_ping_target = *ping_addr;
+  ping_target = &g_ping_target;
+  g_ping_cnt = ping_cnt;
+  g_ping_delay = delay;
+  g_ping_size = size;
+  ping_seq_num = 0;
 
 #if PING_USE_SOCKETS
   sys_thread_new("ping_thread", ping_thread, NULL, DEFAULT_THREAD_STACKSIZE, DEFAULT_THREAD_PRIO);
@@ -394,5 +422,11 @@ ping_init(const ip_addr_t* ping_addr)
   ping_raw_init();
 #endif /* PING_USE_SOCKETS */
 }
+
+void ping_set_cbs(ping_send_cb *send, ping_recv_cb *recv) {
+  g_ping_send = send;
+  g_ping_recv = recv;
+}
+
 
 #endif /* LWIP_RAW */
