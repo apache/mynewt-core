@@ -37,9 +37,12 @@
 extern "C" {
 #endif
 
+#define OS_TASK_STACK_DEFINE_NOSTATIC(__name, __size) \
+    os_stack_t __name [OS_STACK_ALIGN(__size)] \
+    __attribute__((aligned(OS_STACK_ALIGNMENT)))
+
 #define OS_TASK_STACK_DEFINE(__name, __size) \
-    static os_stack_t __name [OS_STACK_ALIGN(__size)] \
-        __attribute__((aligned(OS_STACK_ALIGNMENT)));
+    static OS_TASK_STACK_DEFINE_NOSTATIC(__name, __size);
 
 /** Highest priority task */
 #define OS_TASK_PRI_HIGHEST (0)
