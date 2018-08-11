@@ -23,26 +23,7 @@
 #include "testutil/testutil.h"
 #include "os_test_priv.h"
 
-#if MYNEWT_VAL(SELFTEST)
-
-#ifdef ARCH_sim
-#define SEM_TEST_STACK_SIZE     OS_STACK_ALIGN(1024)
-#endif
-
-struct os_task task1;
-os_stack_t *stack1;
-
-struct os_task task2;
-os_stack_t *stack2;
-
-struct os_task task3;
-os_stack_t *stack3;
-
-struct os_task task4;
-os_stack_t *stack4;
-
 struct os_sem g_sem1;
-#endif /* MYNEWT_VAL(SELFTEST) */
 
 /*
  * TEST NUMBERS:
@@ -280,48 +261,6 @@ sem_test_4_task4_handler(void *arg)
     sem_test_pend_release_loop(0, 2000, 2000);
 }
 
-void
-os_sem_tc_pretest(void* arg)
-{
-#if MYNEWT_VAL(SELFTEST)
-    os_init(NULL);
-    sysinit();
-#endif
-    return;
-}
-
-void
-os_sem_tc_posttest(void* arg)
-{
-#if MYNEWT_VAL(SELFTEST)
-    os_start();
-#endif
-    return;
-}
-
-void
-os_sem_test_init(void *arg)
-{
-    /*
-     * Only allocate stacks here for selftest running in sim environment.
-     * Testing apps should allocate stacks for BSP environments
-     */
-#if MYNEWT_VAL(SELFTEST)
-    stack1 = malloc(sizeof(os_stack_t) * SEM_TEST_STACK_SIZE);
-    assert(stack1);
-    stack1_size = SEM_TEST_STACK_SIZE;
-    stack2 = malloc(sizeof(os_stack_t) * SEM_TEST_STACK_SIZE);
-    assert(stack2);
-    stack2_size = SEM_TEST_STACK_SIZE;
-    stack3 = malloc(sizeof(os_stack_t) * SEM_TEST_STACK_SIZE);
-    assert(stack3);
-    stack3_size = SEM_TEST_STACK_SIZE;
-    stack4 = malloc(sizeof(os_stack_t) * SEM_TEST_STACK_SIZE);
-    assert(stack4);
-    stack4_size = SEM_TEST_STACK_SIZE;
-#endif
-}
-
 TEST_CASE_DECL(os_sem_test_basic)
 TEST_CASE_DECL(os_sem_test_case_1)
 TEST_CASE_DECL(os_sem_test_case_2)
@@ -330,23 +269,9 @@ TEST_CASE_DECL(os_sem_test_case_4)
 
 TEST_SUITE(os_sem_test_suite)
 {
-    tu_case_set_pre_cb(os_sem_tc_pretest, NULL);
-    tu_case_set_post_cb(os_sem_tc_posttest, NULL);
     os_sem_test_basic();
-
-    tu_case_set_pre_cb(os_sem_tc_pretest, NULL);
-    tu_case_set_post_cb(os_sem_tc_posttest, NULL);
     os_sem_test_case_1();
-
-    tu_case_set_pre_cb(os_sem_tc_pretest, NULL);
-    tu_case_set_post_cb(os_sem_tc_posttest, NULL);
     os_sem_test_case_2();
-
-    tu_case_set_pre_cb(os_sem_tc_pretest, NULL);
-    tu_case_set_post_cb(os_sem_tc_posttest, NULL);
     os_sem_test_case_3();
-
-    tu_case_set_pre_cb(os_sem_tc_pretest, NULL);
-    tu_case_set_post_cb(os_sem_tc_posttest, NULL);
     os_sem_test_case_4();
 }

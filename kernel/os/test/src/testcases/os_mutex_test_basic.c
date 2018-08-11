@@ -16,12 +16,17 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
+#include "runtest/runtest.h"
 #include "os_test_priv.h"
 
 TEST_CASE(os_mutex_test_basic)
 {
-    os_mutex_init(&g_mutex1);
+#if MYNEWT_VAL(SELFTEST)
+    sysinit();
+#endif
 
-    os_task_init(&task1, "task1", mutex_test_basic_handler, NULL,
-                 TASK1_PRIO, OS_WAIT_FOREVER, stack1, stack1_size);
+    os_mutex_init(&g_mutex1);
+    runtest_init_task(mutex_test_basic_handler,
+                      MYNEWT_VAL(OS_MAIN_TASK_PRIO) + 1);
 }

@@ -16,15 +16,23 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
+#include "os/mynewt.h"
+#include "runtest/runtest.h"
 #include "os_test_priv.h"
+#include "sem_test.h"
 
 TEST_CASE(os_sem_test_basic)
 {
     os_error_t err;
 
+#if MYNEWT_VAL(SELFTEST)
+    sysinit();
+#endif
+
     err = os_sem_init(&g_sem1, 1);
     TEST_ASSERT(err == OS_OK);
 
-    os_task_init(&task1, "task1", sem_test_basic_handler, NULL,
-                 TASK1_PRIO, OS_WAIT_FOREVER, stack1, stack1_size);
+    runtest_init_task(sem_test_basic_handler,
+                      MYNEWT_VAL(OS_MAIN_TASK_PRIO) + 1);
 }

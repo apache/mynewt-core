@@ -20,10 +20,15 @@
 #ifndef H_OS_TEST_
 #define H_OS_TEST_
 
+#include "testutil/testutil.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+TEST_SUITE_DECL(os_mutex_test_suite);
+TEST_SUITE_DECL(os_sem_test_suite);
+TEST_SUITE_DECL(os_mempool_test_suite);
 int os_test_all(void);
 
 #ifdef __cplusplus
