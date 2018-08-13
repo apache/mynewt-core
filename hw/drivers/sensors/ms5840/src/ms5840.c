@@ -336,7 +336,8 @@ ms5840_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
     }
 
     /* Register write */
-    rc = hal_i2c_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1);
+    rc = hal_i2c_master_write(itf->si_num, &data_struct,
+                              OS_TICKS_PER_SEC / 10, 1);
     if (rc) {
         MS5840_LOG(ERROR, "I2C write command write failed at address 0x%02X\n",
                    data_struct.address);
@@ -380,7 +381,8 @@ ms5840_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
     }
 
     /* Command write */
-    rc = hal_i2c_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1);
+    rc = hal_i2c_master_write(itf->si_num, &data_struct,
+                              OS_TICKS_PER_SEC / 10, 1);
     if (rc) {
         MS5840_LOG(ERROR, "I2C read command write failed at address 0x%02X\n",
                    data_struct.address);
@@ -391,7 +393,8 @@ ms5840_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
     /* Read len bytes back */
     memset(payload, 0, sizeof(payload));
     data_struct.len = len;
-    rc = hal_i2c_master_read(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1);
+    rc = hal_i2c_master_read(itf->si_num, &data_struct,
+                             OS_TICKS_PER_SEC / 10, 1);
     if (rc) {
         MS5840_LOG(ERROR, "Failed to read from 0x%02X:0x%02X\n",
                    data_struct.address, addr);
@@ -399,13 +402,11 @@ ms5840_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
         goto err;
     }
 
-    sensor_itf_unlock(itf);
-
     /* Copy the I2C results into the supplied buffer */
     memcpy(buffer, payload, len);
 
-    return 0;
 err:
+    sensor_itf_unlock(itf);
     return rc;
 }
 

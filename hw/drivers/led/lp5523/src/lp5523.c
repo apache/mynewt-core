@@ -95,12 +95,13 @@ lp5523_get_reg(struct led_itf *itf, enum lp5523_registers addr,
 
     rc = led_itf_lock(itf, MYNEWT_VAL(LP5523_ITF_LOCK_TMO));
     if (rc) {
-        goto err;
+        return rc;
     }
 
     /* Register write */
     rc = hal_i2c_master_write(itf->li_num, &data_struct,
                               OS_TICKS_PER_SEC / 10, 0);
+
     if (rc) {
         LP5523_LOG(ERROR, "I2C access failed at address 0x%02X\n",
                    itf->li_addr);
