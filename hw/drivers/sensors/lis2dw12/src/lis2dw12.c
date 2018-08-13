@@ -206,7 +206,8 @@ lis2dw12_i2c_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
     memcpy(&payload[1], buffer, len);
 
     /* Register write */
-    rc = hal_i2c_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1);
+    rc = hal_i2c_master_write(itf->si_num, &data_struct,
+                              OS_TICKS_PER_SEC / 10, 1);
     if (rc) {
         LIS2DW12_LOG(ERROR, "I2C access failed at address 0x%02X\n",
                      data_struct.address);
@@ -323,7 +324,8 @@ lis2dw12_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
  * @return 0 on success, non-zero error on failure.
  */
 int
-lis2dw12_i2c_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer, uint8_t len)
+lis2dw12_i2c_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
+                     uint8_t len)
 {
     int rc;
 
