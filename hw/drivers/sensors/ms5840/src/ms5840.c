@@ -399,13 +399,11 @@ ms5840_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
         goto err;
     }
 
-    sensor_itf_unlock(itf);
-
     /* Copy the I2C results into the supplied buffer */
     memcpy(buffer, payload, len);
 
-    return 0;
 err:
+    sensor_itf_unlock(itf);
     return rc;
 }
 
