@@ -35,28 +35,44 @@ STAILQ_HEAD(, os_mempool) g_os_mempool_list =
 #if MYNEWT_VAL(OS_MEMPOOL_POISON)
 static uint32_t os_mem_poison = 0xde7ec7ed;
 
+_Static_assert(sizeof(struct os_memblock) % 4 == 0, "sizeof(struct os_memblock) shall be aligned to 4");
+_Static_assert(sizeof(os_mem_poison) == 4, "sizeof(os_mem_poison) shall be 4");
+
 static void
 os_mempool_poison(void *start, int sz)
 {
-    int i;
-    char *p = start;
+    uint32_t *p;
+    uint32_t *end;
 
-    for (i = sizeof(struct os_memblock); i < sz;
-         i = i + sizeof(os_mem_poison)) {
-        memcpy(p + i, &os_mem_poison, min(sizeof(os_mem_poison), sz - i));
+    assert(((uintptr_t)start & 0x03) == 0);
+    assert((sz & 0x03) == 0);
+
+    p = start;
+    end = p + sz / 4;
+    p += sizeof(struct os_memblock) / 4;
+
+    while (p < end) {
+        *p = os_mem_poison;
+        p++;
     }
 }
 
 static void
 os_mempool_poison_check(void *start, int sz)
 {
-    int i;
-    char *p = start;
+    uint32_t *p;
+    uint32_t *end;
 
-    for (i = sizeof(struct os_memblock); i < sz;
-         i = i + sizeof(os_mem_poison)) {
-        assert(!memcmp(p + i, &os_mem_poison,
-               min(sizeof(os_mem_poison), sz - i)));
+    assert(((uintptr_t)start & 0x03) == 0);
+    assert((sz & 0x03) == 0);
+
+    p = start;
+    end = p + sz / 4;
+    p += sizeof(struct os_memblock) / 4;
+
+    while (p < end) {
+        assert(*p == os_mem_poison);
+        p++;
     }
 }
 #else
