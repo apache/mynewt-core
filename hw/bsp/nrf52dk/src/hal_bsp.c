@@ -29,6 +29,7 @@
 #include "mcu/nrf52_hal.h"
 #include "mcu/nrf52_periph.h"
 #include "bsp/bsp.h"
+#include "defs/sections.h"
 #if MYNEWT_VAL(SOFT_PWM)
 #include "pwm/pwm.h"
 #include "soft_pwm/soft_pwm.h"
@@ -63,7 +64,7 @@ static const struct hal_bsp_mem_dump dump_cfg[] = {
 };
 
 #if MYNEWT_VAL(ENC_FLASH_DEV)
-struct eflash_nrf5x_dev enc_flash_dev0 = {
+static sec_data_secret struct eflash_nrf5x_dev enc_flash_dev0 = {
     .end_dev = {
         .efd_hal = {
             .hf_itf = &enc_flash_funcs,

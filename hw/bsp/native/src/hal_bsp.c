@@ -30,6 +30,7 @@
 #include "mcu/native_bsp.h"
 #include "mcu/mcu_hal.h"
 #include "hal/hal_i2c.h"
+#include "defs/sections.h"
 #include "ef_tinycrypt/ef_tinycrypt.h"
 
 #if MYNEWT_VAL(SIM_ACCEL_PRESENT)
@@ -40,7 +41,7 @@ static struct sim_accel os_bsp_accel0;
 static struct uart_dev os_bsp_uart0;
 static struct uart_dev os_bsp_uart1;
 
-static struct eflash_tinycrypt_dev ef_dev0 = {
+static sec_data_secret struct eflash_tinycrypt_dev ef_dev0 = {
     .etd_dev = {
         .efd_hal = {
             .hf_itf = &enc_flash_funcs,
