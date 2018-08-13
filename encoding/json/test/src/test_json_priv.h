@@ -22,7 +22,6 @@
 #include <assert.h>
 #include <string.h>
 #include "testutil/testutil.h"
-#include "test_json.h"
 #include "json/json.h"
 
 #ifdef __cplusplus
@@ -34,12 +33,8 @@ char *output1;
 char *outputboolspace;
 char *outputboolempty;
 
-#if MYNEWT_VAL(SELFTEST)
 #define JSON_BIGBUF_SIZE    192
-char bigbuf[JSON_BIGBUF_SIZE];
-#else
 char *bigbuf;
-#endif
 int buf_index;
 
 /* a test structure to hold the json flat buffer and pass bytes
@@ -63,4 +58,3 @@ void test_buf_init(struct test_jbuf *ptjb, char *string);
 #endif
 
 #endif /* TEST_JSON_H */
-

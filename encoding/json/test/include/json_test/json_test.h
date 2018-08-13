@@ -17,32 +17,12 @@
  * under the License.
  */
 
+#ifndef H_JSON_TEST_
+#define H_JSON_TEST_
+
 #include "os/mynewt.h"
 #include "testutil/testutil.h"
-#include "test_json_priv.h"
 
-TEST_CASE_DECL(test_json_simple_encode);
-TEST_CASE_DECL(test_json_simple_decode);
+TEST_SUITE_DECL(test_json_suite);
 
-TEST_SUITE(test_json_suite)
-{
-    bigbuf = malloc(JSON_BIGBUF_SIZE);
-    TEST_ASSERT_FATAL(bigbuf != NULL);
-
-    test_json_simple_encode();
-    test_json_simple_decode();
-
-    free(bigbuf);
-}
-
-#if MYNEWT_VAL(SELFTEST)
-int
-main(int argc, char **argv)
-{
-    sysinit();
-
-    test_json_suite();
-
-    return tu_any_failed;
-}
 #endif
