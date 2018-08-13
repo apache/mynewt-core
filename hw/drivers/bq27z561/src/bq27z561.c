@@ -126,7 +126,7 @@ bq27z561_itf_unlock(struct bq27z561_itf *bi)
     os_mutex_release(bi->itf_lock);
 }
 
-int
+static int
 bq27z561_rd_std_reg_byte(struct bq27z561 *dev, uint8_t reg, uint8_t *val)
 {
     int rc;
