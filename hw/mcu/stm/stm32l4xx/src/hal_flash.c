@@ -78,16 +78,7 @@ stm32l4_flash_write(const struct hal_flash *dev, uint32_t address,
     align = dev->hf_align;
     num_dwords = ((num_bytes - 1) / align) + 1;
 
-    /* clear previous errors */
-    __HAL_FLASH_CLEAR_FLAG(FLASH_FLAG_SR_ERRORS);
-
     for (i = 0; i < num_dwords; i++) {
-        /*
-         * FIXME: need to check why PGSERR gets set in this loop
-         *        no obvious reason so far...
-         */
-        __HAL_FLASH_CLEAR_FLAG(FLASH_FLAG_PGSERR);
-
         if (num_bytes < 8) {
             memcpy(&val, &((uint8_t *)src)[i * align], num_bytes);
             memset((uint64_t *)&val + num_bytes, 0xff, align - num_bytes);
@@ -127,11 +118,6 @@ stm32l4_flash_erase_sector(const struct hal_flash *dev, uint32_t sector_address)
     (void)PageError;
 
     if (!(sector_address & (_FLASH_SECTOR_SIZE - 1))) {
-        /* FIXME: why is an err flag set? */
-
-        /* Clear status of previous operation. */
-        __HAL_FLASH_CLEAR_FLAG(FLASH_FLAG_SR_ERRORS);
-
         eraseinit.TypeErase = FLASH_TYPEERASE_PAGES;
         if ((sector_address - dev->hf_base_addr) < (_FLASH_SIZE / 2)) {
             eraseinit.Banks = FLASH_BANK_1;
