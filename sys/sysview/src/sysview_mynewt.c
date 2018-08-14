@@ -140,5 +140,4 @@ sysview_init(void)
     SEGGER_SYSVIEW_Init(SYSVIEW_TIMESTAMP_FREQ, SYSVIEW_CPU_FREQ,
                         &sysview_os_api, sysview_os_api_send_sys_desc_func);
     SEGGER_SYSVIEW_SetRAMBase(SYSVIEW_RAM_BASE);
-    SEGGER_SYSVIEW_Start();
 }
