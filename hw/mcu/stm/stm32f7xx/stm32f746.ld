@@ -52,7 +52,7 @@
  */
 ENTRY(Reset_Handler)
 
-_estack = 0x20040000;
+_estack = ORIGIN(DTCM) + LENGTH(DTCM);
 
 SECTIONS
 {
