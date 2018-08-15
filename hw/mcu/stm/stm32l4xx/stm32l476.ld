@@ -52,7 +52,7 @@
  */
 ENTRY(Reset_Handler)
 
-_estack = 0x20007FFF;
+_estack = ORIGIN(RAM) + LENGTH(RAM);
 
 SECTIONS
 {
