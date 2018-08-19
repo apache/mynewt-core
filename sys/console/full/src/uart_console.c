@@ -30,8 +30,8 @@
 #include "console_priv.h"
 
 struct console_ring {
-    uint8_t head;
-    uint8_t tail;
+    uint16_t head;
+    uint16_t tail;
     uint16_t size;
     uint8_t *buf;
 };
@@ -68,6 +68,7 @@ uart_console_ring_pull_char(struct console_ring *cr)
     uint8_t ch;
 
     ch = cr->buf[cr->tail];
+    cr->buf[cr->tail] = 0xee;
     cr->tail = inc_and_wrap(cr->tail, cr->size);
     return ch;
 }
