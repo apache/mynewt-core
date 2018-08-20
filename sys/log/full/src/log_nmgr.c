@@ -38,7 +38,9 @@ static int log_nmgr_clear(struct mgmt_cbuf *njb);
 static int log_nmgr_module_list(struct mgmt_cbuf *njb);
 static int log_nmgr_level_list(struct mgmt_cbuf *njb);
 static int log_nmgr_logs_list(struct mgmt_cbuf *njb);
+#if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
 static int log_nmgr_set_watermark(struct mgmt_cbuf *njb);
+#endif
 static struct mgmt_group log_nmgr_group;
 
 
@@ -51,7 +53,9 @@ static struct mgmt_handler log_nmgr_group_handlers[] = {
     [LOGS_NMGR_OP_MODULE_LIST] = {log_nmgr_module_list, NULL},
     [LOGS_NMGR_OP_LEVEL_LIST] = {log_nmgr_level_list, NULL},
     [LOGS_NMGR_OP_LOGS_LIST] = {log_nmgr_logs_list, NULL},
+#if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
     [LOGS_NMGR_OP_SET_WATERMARK] = {log_nmgr_set_watermark, NULL},
+#endif
 };
 
 struct log_encode_data {
@@ -583,6 +587,7 @@ log_nmgr_clear(struct mgmt_cbuf *cb)
     return 0;
 }
 
+#if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
 static int
 log_nmgr_set_watermark(struct mgmt_cbuf *cb)
 {
@@ -655,6 +660,7 @@ err:
 
     return (rc);
 }
+#endif
 
 /**
  * Register nmgr group handlers.
