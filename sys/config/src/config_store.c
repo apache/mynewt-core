@@ -163,10 +163,6 @@ out:
     return rc;
 }
 
-/*
- * Walk through all registered subsystems, and ask them to export their
- * config variables. Persist these settings.
- */
 static void
 conf_store_one(char *name, char *value)
 {
@@ -198,6 +194,10 @@ out:
 
 }
 
+/*
+ * Walk through all registered subsystems, and ask them to export their
+ * config variables. Persist these settings.
+ */
 int
 conf_save(void)
 {
