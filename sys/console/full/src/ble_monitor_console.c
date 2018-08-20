@@ -27,6 +27,10 @@
 int
 console_out(int c)
 {
+    if (g_silence_console) {
+        return 0;
+    }
+
     console_is_midline = (c != '\n');
 
     return ble_monitor_out(c);

@@ -62,6 +62,13 @@ parse_ll_bounds(const char *sval, long long min, long long max,
         return llval;
     }
 
+    if (llval < min || llval > max)
+    {
+        *out_status = SYS_ERANGE;
+
+        return 0;
+    }
+
     *out_status = SYS_EINVAL;
     return 0;
 }
@@ -80,6 +87,13 @@ parse_ull_bounds(const char *sval,
 
         *out_status = 0;
         return ullval;
+    }
+
+    if (ullval < min || ullval > max)
+    {
+        *out_status = SYS_ERANGE;
+
+        return 0;
     }
 
     *out_status = SYS_EINVAL;

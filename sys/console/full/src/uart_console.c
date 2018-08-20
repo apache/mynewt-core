@@ -154,6 +154,10 @@ uart_console_non_blocking_mode(void)
 int
 console_out(int c)
 {
+    if (g_silence_console) {
+        return 0;
+    }
+
     /* Assure that there is a write cb installed; this enables to debug
      * code that is faulting before the console was initialized.
      */

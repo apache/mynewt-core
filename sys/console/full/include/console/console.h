@@ -66,6 +66,14 @@ void console_line_queue_set(struct os_eventq *evq);
 /* Put (handled) line event to console */
 void console_line_event_put(struct os_event *ev);
 
+extern bool g_silence_console;
+
+static void inline
+console_silence(bool silent)
+{
+    g_silence_console = silent;
+}
+
 extern int console_is_midline;
 extern int console_out(int character);
 extern void console_rx_restart(void);

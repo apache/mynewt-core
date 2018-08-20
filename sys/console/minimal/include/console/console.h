@@ -63,6 +63,14 @@ console_set_completion_cb(uint8_t (*completion)(char *str, uint8_t len))
 {
 }
 
+extern bool g_silence_console;
+
+static void inline
+console_silence(bool silent)
+{
+    g_silence_console = silent;
+}
+
 int console_handle_char(uint8_t byte);
 
 extern int console_is_midline;

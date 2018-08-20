@@ -56,6 +56,7 @@ static int echo = MYNEWT_VAL(CONSOLE_ECHO);
 static uint8_t cur, end;
 static struct os_eventq *avail_queue;
 static struct os_eventq *lines_queue;
+bool g_silence_console;
 
 int __attribute__((weak))
 console_out(int c)

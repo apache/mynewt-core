@@ -132,6 +132,10 @@ uart_console_non_blocking_mode(void)
 int
 console_out(int c)
 {
+    if (g_silence_console) {
+        return 0;
+    }
+
     if ('\n' == c) {
         write_char_cb(uart_dev, '\r');
         console_is_midline = 0;
