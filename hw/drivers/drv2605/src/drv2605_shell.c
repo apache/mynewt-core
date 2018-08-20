@@ -470,7 +470,7 @@ drv2605_shell_cmd(int argc, char **argv)
         return drv2605_shell_cmd_power_mode(argc, argv, drv2605);
     }
 
-    if (argc > 1 && strcmp(argv[1], "load") == 0) {
+    if (argc > 1 && strcmp(argv[1], "load_rom") == 0) {
         return drv2605_shell_cmd_load_rom(argc, argv, drv2605);
     }
 
