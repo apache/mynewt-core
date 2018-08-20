@@ -71,3 +71,19 @@ syscfg.defs:
             Writes with a level less than the module's minimum level are
             discarded.  Enabling this setting requires 128 bytes of bss.
         value: 1
+
+    LOG_STORAGE_INFO:
+        description: >
+            Enable "storage_info" API which keeps track of log storage usage and
+            can return total number of bytes available for log and number of
+            bytes used by entries in log.
+        value: 0
+
+    LOG_STORAGE_WATERMARK:
+        description: >
+            Enable "set_watermark" API which can watermark log by entry index and
+            thus allow to e.g. keep track of read items in log e.g. (via newtmgr).
+            This also extends information returned by "storage_info" to number of
+            bytes used by entries above watermark.
+        value: 0
+        restrictions: LOG_STORAGE_INFO

@@ -25,6 +25,9 @@
 #include "os/mynewt.h"
 #include "cbmem/cbmem.h"
 #include "log/log.h"
+#if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
+#include "config/config.h"
+#endif
 
 #if MYNEWT_VAL(LOG_CLI)
 #include "shell/shell.h"
@@ -50,6 +53,59 @@ struct shell_cmd g_shell_slot1_cmd = {
     .sc_cmd_func = shell_log_slot1_cmd,
 };
 #endif
+
+#if MYNEWT_VAL(LOG_STORAGE_INFO)
+int shell_log_storage_cmd(int, char **);
+struct shell_cmd g_shell_storage_cmd = {
+    .sc_cmd = "log-storage",
+    .sc_cmd_func = shell_log_storage_cmd,
+};
+#endif
+#endif
+
+#if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
+static int log_conf_set(int argc, char **argv, char *val);
+
+static struct conf_handler log_conf = {
+    .ch_name = "log",
+    .ch_get = NULL,
+    .ch_set = log_conf_set,
+    .ch_commit = NULL,
+    .ch_export = NULL,
+};
+
+static int
+log_conf_set(int argc, char **argv, char *val)
+{
+    struct log *cur;
+
+    if (argc < 2) {
+        return -1;
+    }
+
+    /* Only support log/<name>/mark entries for now */
+    if (strcmp("mark", argv[1])) {
+        return -1;
+    }
+
+    /* Find proper log */
+    STAILQ_FOREACH(cur, &g_log_list, l_next) {
+        if (!strcmp(argv[0], cur->l_name)) {
+            break;
+        }
+    }
+
+    if (!cur) {
+        return -1;
+    }
+
+    /* Set watermark if supported */
+    if (cur->l_log->log_set_watermark) {
+        cur->l_log->log_set_watermark(cur, atoi(val));
+    }
+
+    return 0;
+}
 #endif
 
 void
@@ -74,6 +130,9 @@ log_init(void)
 #if MYNEWT_VAL(LOG_FCB_SLOT1)
     shell_cmd_register(&g_shell_slot1_cmd);
 #endif
+#if MYNEWT_VAL(LOG_STORAGE_INFO)
+    shell_cmd_register(&g_shell_storage_cmd);
+#endif
 #endif
 
 #if MYNEWT_VAL(LOG_NEWTMGR)
@@ -83,6 +142,11 @@ log_init(void)
 
 #if MYNEWT_VAL(LOG_CONSOLE)
     log_console_init();
+#endif
+
+#if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
+    rc = conf_register(&log_conf);
+    SYSINIT_PANIC_ASSERT(rc == 0);
 #endif
 }
 
@@ -655,3 +719,56 @@ log_flush(struct log *log)
 err:
     return (rc);
 }
+
+#if MYNEWT_VAL(LOG_STORAGE_INFO)
+int
+log_storage_info(struct log *log, struct log_storage_info *info)
+{
+    int rc;
+
+    if (!log->l_log->log_storage_info) {
+        rc = OS_ENOENT;
+        goto err;
+    }
+
+    rc = log->l_log->log_storage_info(log, info);
+    if (rc != 0) {
+        goto err;
+    }
+
+    return (0);
+err:
+    return (rc);
+}
+#endif
+
+#if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
+int
+log_set_watermark(struct log *log, uint32_t index)
+{
+    char log_path[CONF_MAX_NAME_LEN];
+    char mark_val[10]; /* fits uint32_t + \0 */
+    int rc;
+
+    if (!log->l_log->log_set_watermark) {
+        rc = OS_ENOENT;
+        goto err;
+    }
+
+    rc = log->l_log->log_set_watermark(log, index);
+    if (rc != 0) {
+        goto err;
+    }
+
+    snprintf(log_path, CONF_MAX_NAME_LEN, "log/%s/mark", log->l_name);
+    log_path[CONF_MAX_NAME_LEN - 1] = '\0';
+
+    sprintf(mark_val, "%u", (unsigned)index);
+
+    conf_save_one(log_path, mark_val);
+
+    return (0);
+err:
+    return (rc);
+}
+#endif

@@ -40,6 +40,9 @@ pkg.deps.LOG_NEWTMGR:
     - "@apache-mynewt-core/encoding/cborattr"
     - "@apache-mynewt-core/encoding/tinycbor"
 
+pkg.deps.LOG_STORAGE_WATERMARK:
+    - sys/config
+
 pkg.apis:
     - log
 
