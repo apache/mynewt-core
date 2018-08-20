@@ -194,6 +194,9 @@ flash_speed_test(int flash_dev, uint32_t addr, int sz, int move)
     void *data_buf;
 
     data_buf = malloc(sz);
+    if (!data_buf) {
+        return -1;
+    }
 
     /*
      * Catch start of a tick.
@@ -244,7 +247,7 @@ flash_speed_test_cli(int argc, char **argv)
     int i;
 
     if (argc < 4) {
-        console_printf("flash_speed <flash_id> <address> <size> [move]\n");
+        console_printf("flash_speed <flash_id> <addr> <rd_sz>|range [move]\n");
         return 0;
     }
 
@@ -260,27 +263,27 @@ flash_speed_test_cli(int argc, char **argv)
         return 0;
     }
 
-    sz = strtoul(argv[3], &ep, 0);
-    if (*ep != '\0') {
-        console_printf("Invalid read size: %s\n", argv[3]);
-        return 0;
+    if (!strcmp(argv[3], "range")) {
+        i = 1;
+    } else {
+        i = 0;
+        sz = strtoul(argv[3], &ep, 0);
+        if (*ep != '\0') {
+            console_printf("Invalid read size: %s\n", argv[3]);
+            return 0;
+        }
     }
     if (argc > 4 && !strcmp(argv[4], "move")) {
         move = 1;
     } else {
         move = 0;
     }
-    if (argc > 5) {
-        i = 1;
-    } else {
-        i = 0;
-    }
 
     if (i == 0) {
         console_printf("Speed test, hal_flash_read(%d, 0x%x%s, %d)\n",
           flash_dev, (unsigned int)addr, move?"..":"", (unsigned int)sz);
         cnt = flash_speed_test(flash_dev, addr, sz, move);
-        console_printf("%d\n", cnt);
+        console_printf("%d\n", cnt >> 1);
     } else {
         uint32_t sizes[] = {
             1, 2, 4, 8, 16, 24, 32, 48, 64, 96, 128, 192, 256
