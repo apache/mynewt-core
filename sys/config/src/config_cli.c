@@ -21,6 +21,7 @@
 
 #include "os/mynewt.h"
 #include "config/config.h"
+#include "config/config_store.h"
 #include "config_priv.h"
 
 #if MYNEWT_VAL(CONFIG_CLI)

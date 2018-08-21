@@ -330,15 +330,6 @@ char *conf_str_from_bytes(void *vp, int vp_len, char *buf, int buf_len);
 #define CONF_VALUE_SET(str, type, val)                                  \
     conf_value_from_str((str), (type), &(val), sizeof(val))
 
-/*
- * Config storage
- */
-struct conf_store_itf;
-struct conf_store {
-    SLIST_ENTRY(conf_store) cs_next;
-    const struct conf_store_itf *cs_itf;
-};
-
 #ifdef __cplusplus
 }
 #endif

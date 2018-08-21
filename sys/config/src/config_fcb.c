@@ -25,6 +25,7 @@
 #include <string.h>
 
 #include "config/config.h"
+#include "config/config_store.h"
 #include "config/config_fcb.h"
 #include "config/config_generic_kv.h"
 #include "config_priv.h"
@@ -32,7 +33,7 @@
 #define CONF_FCB_VERS		1
 
 struct conf_fcb_load_cb_arg {
-    load_cb cb;
+    conf_store_load_cb cb;
     void *cb_arg;
 };
 
@@ -42,9 +43,10 @@ struct conf_kv_load_cb_arg {
     size_t len;
 };
 
-static int conf_fcb_load(struct conf_store *, load_cb cb, void *cb_arg);
+static int conf_fcb_load(struct conf_store *, conf_store_load_cb cb,
+                         void *cb_arg);
 static int conf_fcb_save(struct conf_store *, const char *name,
-  const char *value);
+                         const char *value);
 
 static struct conf_store_itf conf_fcb_itf = {
     .csi_load = conf_fcb_load,
@@ -128,7 +130,7 @@ conf_fcb_load_cb(struct fcb_entry *loc, void *arg)
 }
 
 static int
-conf_fcb_load(struct conf_store *cs, load_cb cb, void *cb_arg)
+conf_fcb_load(struct conf_store *cs, conf_store_load_cb cb, void *cb_arg)
 {
     struct conf_fcb *cf = (struct conf_fcb *)cs;
     struct conf_fcb_load_cb_arg arg;
