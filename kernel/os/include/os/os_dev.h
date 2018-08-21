@@ -157,16 +157,7 @@ struct os_dev {
  *
  * @return 0 on success, non-zero error code on failure.
  */
-static inline int
-os_dev_suspend(struct os_dev *dev, os_time_t suspend_t, uint8_t force)
-{
-    if (dev->od_handlers.od_suspend == NULL) {
-        return (0);
-    } else {
-        return (dev->od_handlers.od_suspend(dev, suspend_t, force));
-    }
-}
-
+int os_dev_suspend(struct os_dev *dev, os_time_t suspend_t, uint8_t force);
 
 /**
  * Resume the device operation.
@@ -175,15 +166,7 @@ os_dev_suspend(struct os_dev *dev, os_time_t suspend_t, uint8_t force)
  *
  * @return 0 on success, non-zero error code on failure.
  */
-static inline int
-os_dev_resume(struct os_dev *dev)
-{
-    if (dev->od_handlers.od_resume == NULL) {
-        return (0);
-    } else {
-        return (dev->od_handlers.od_resume(dev));
-    }
-}
+int os_dev_resume(struct os_dev *dev);
 
 /**
  * Create a new device in the kernel.
