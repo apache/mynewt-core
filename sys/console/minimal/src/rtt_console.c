@@ -37,6 +37,10 @@ console_out(int character)
 {
     char c = (char)character;
 
+    if (g_silence_console) {
+        return c;
+    }
+
     if ('\n' == c) {
         SEGGER_RTT_WriteWithOverwriteNoLock(0, &CR, 1);
         console_is_midline = 0;
