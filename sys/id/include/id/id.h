@@ -24,14 +24,12 @@
 extern "C" {
 #endif
 
-#if MYNEWT_VAL(ID_SERIAL_LOCAL)
+#if MYNEWT_VAL(ID_SERIAL_PRESENT)
 /*
  * Maximum expected serial number string length.
  */
-#define ID_SERIAL_MAX_LEN       64
+#define ID_SERIAL_MAX_LEN       MYNEWT_VAL(ID_SERIAL_MAX_LEN)
 extern char id_serial[];
-#elif MYNEWT_VAL(ID_SERIAL_PRESENT)
-extern const char id_serial[];
 #endif
 
 #if MYNEWT_VAL(ID_MANUFACTURER_LOCAL)

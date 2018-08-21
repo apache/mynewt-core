@@ -22,13 +22,9 @@ syscfg.defs:
     ID_SERIAL_PRESENT:
         description: 'Device serial number exported as sys/id/serial.'
         value: 1
-    ID_SERIAL_LOCAL:
-        description: >
-            If set, device serial number stored in sys/config. Otherwise
-            must be exported by some other package.
-        value: 1
-        restrictions:
-            - 'ID_SERIAL_PRESENT'
+    ID_SERIAL_MAX_LEN:
+        description: Maximum length of id/serial value
+        value: 64
 
     ID_MANUFACTURER_PRESENT:
         description: 'Device manufacturer string exported as sys/id/mfger.'
