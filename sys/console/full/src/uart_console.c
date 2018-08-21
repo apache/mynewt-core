@@ -155,7 +155,7 @@ int
 console_out(int c)
 {
     if (g_silence_console) {
-        return 0;
+        return c;
     }
 
     /* Assure that there is a write cb installed; this enables to debug

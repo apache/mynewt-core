@@ -28,7 +28,7 @@ int
 console_out(int c)
 {
     if (g_silence_console) {
-        return 0;
+        return c;
     }
 
     console_is_midline = (c != '\n');

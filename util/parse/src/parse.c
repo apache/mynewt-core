@@ -54,19 +54,14 @@ parse_ll_bounds(const char *sval, long long min, long long max,
     char *endptr;
     long long llval;
 
+    *out_status = SYS_EOK;
+
     llval = strtoll(sval, &endptr, parse_num_base(sval));
-    if (sval[0] != '\0' && *endptr == '\0' &&
-        llval >= min && llval <= max) {
-
-        *out_status = 0;
+    if (sval[0] != '\0' && *endptr == '\0') {
+        if (llval < min || llval > max) {
+            *out_status = SYS_ERANGE;
+        }
         return llval;
-    }
-
-    if (llval < min || llval > max)
-    {
-        *out_status = SYS_ERANGE;
-
-        return 0;
     }
 
     *out_status = SYS_EINVAL;
@@ -81,19 +76,14 @@ parse_ull_bounds(const char *sval,
     char *endptr;
     unsigned long long ullval;
 
+    *out_status = SYS_EOK;
+
     ullval = strtoull(sval, &endptr, parse_num_base(sval));
-    if (sval[0] != '\0' && *endptr == '\0' &&
-        ullval >= min && ullval <= max) {
-
-        *out_status = 0;
+    if (sval[0] != '\0' && *endptr == '\0') {
+        if (ullval < min || ullval > max) {
+            *out_status = SYS_ERANGE;
+        }
         return ullval;
-    }
-
-    if (ullval < min || ullval > max)
-    {
-        *out_status = SYS_ERANGE;
-
-        return 0;
     }
 
     *out_status = SYS_EINVAL;

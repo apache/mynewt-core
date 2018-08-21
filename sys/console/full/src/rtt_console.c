@@ -38,7 +38,7 @@ console_out(int character)
     char c = (char)character;
 
     if (g_silence_console) {
-        return 0;
+        return c;
     }
 
     if ('\n' == c) {
