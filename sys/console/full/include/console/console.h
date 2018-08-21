@@ -65,9 +65,17 @@ int console_handle_char(uint8_t byte);
 void console_line_queue_set(struct os_eventq *evq);
 /* Put (handled) line event to console */
 void console_line_event_put(struct os_event *ev);
-
+/**
+ * Global indicating whether console is silent or not
+ */
 extern bool g_silence_console;
 
+/**
+ * Silences console output, input is still active
+ *
+ * @param silent Let console know if it needs to be silent,
+ *        true for silence, false otherwise
+ */
 static void inline
 console_silence(bool silent)
 {
