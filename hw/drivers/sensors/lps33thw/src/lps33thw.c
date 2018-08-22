@@ -471,12 +471,6 @@ lps33thw_reset(struct sensor_itf *itf)
 }
 
 int
-lps33thw_low_noise_en(struct sensor_itf *itf)
-{
-    return lps33thw_set_reg(itf, LPS33THW_CTRL_REG2, 0x02);
-}
-
-int
 lps33thw_get_pressure_regs(struct sensor_itf *itf, uint8_t reg, float *pressure)
 {
     int rc;
@@ -967,6 +961,11 @@ lps33thw_config(struct lps33thw *lps, struct lps33thw_cfg *cfg)
     }
 
     rc = lps33thw_set_lpf(itf, cfg->lpf);
+    if (rc) {
+        return rc;
+    }
+
+    rc = lps33thw_set_value(itf, LPS33THW_CTRL_REG2_LOW_NOISE_EN, cfg->low_noise_en);
     if (rc) {
         return rc;
     }

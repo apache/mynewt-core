@@ -71,6 +71,7 @@ struct lps33thw_cfg {
     enum lps33thw_low_pass_config lpf;
     unsigned int autozero : 1;
     unsigned int autorifp : 1;
+    unsigned int low_noise_en: 1;
 };
 
 struct lps33thw_private_driver_data {
