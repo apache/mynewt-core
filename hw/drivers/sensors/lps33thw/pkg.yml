@@ -22,5 +22,21 @@ pkg.description: "Description of your package"
 pkg.author: "You <you@you.org>"
 pkg.homepage: "http://your-url.org/"
 pkg.keywords:
+    - lps33thw
+    - lps22hb
+    - pressure
+    - i2c
+    - sensor
+    - st
 
 pkg.deps:
+    - "@apache-mynewt-core/hw/hal"
+    - "@apache-mynewt-core/kernel/os"
+    - "@apache-mynewt-core/hw/sensor"
+    - "@apache-mynewt-core/sys/log/modlog"
+
+pkg.req_apis:
+    - stats
+
+pkg.deps.LPS33HW_CLI:
+    - "@apache-mynewt-core/util/parse"
