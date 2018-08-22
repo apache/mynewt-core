@@ -120,7 +120,7 @@ static int32_t
 lps33thw_pa_to_reg(float pa)
 {
     if (pa == INFINITY) {
-        return 0x007fff;
+        return 0x007fffff;
     }
     return (int32_t)(pa * LPS33THW_PRESS_OUT_DIV);
 }
