@@ -474,18 +474,19 @@ int
 lps33thw_get_pressure_regs(struct sensor_itf *itf, uint8_t reg, float *pressure)
 {
     int rc;
-    uint8_t payload[2];
+    uint8_t payload[3];
     int32_t int_press;
 
-    rc = lps33thw_get_regs(itf, reg, 2, payload);
+    rc = lps33thw_get_regs(itf, reg, 3, payload);
     if (rc) {
         return rc;
     }
 
-    int_press = (((int32_t)payload[1] << 8) | payload[0]);
+    int_press = (((int32_t)payload[2] << 16) |
+        ((int32_t)payload[1] << 8) | payload[0]);
 
-    if (int_press & 0x8000) {
-        int_press |= 0xff0000;
+    if (int_press & 0x00800000) {
+        int_press |= 0xff000000;
     }
 
     *pressure = lps33thw_reg_to_pa(int_press);
