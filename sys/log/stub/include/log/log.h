@@ -46,6 +46,20 @@ log_register(char *name, struct log *log, const struct log_handler *h,
     return 0;
 }
 
+static inline int
+log_append_typed(struct log *log, uint8_t module, uint8_t level, uint8_t etype,
+                 void *data, uint16_t len)
+{
+    return 0;
+}
+
+static inline int
+log_append_mbuf_typed_no_free(struct log *log, uint8_t module, uint8_t level,
+                              uint8_t etype, struct os_mbuf **om_ptr)
+{
+    return 0;
+}
+
 static inline void
 log_init(void)
 {
