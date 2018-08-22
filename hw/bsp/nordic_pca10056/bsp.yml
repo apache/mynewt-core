@@ -17,19 +17,19 @@
 # under the License.
 #
 
-bsp.arch: cortex_m0
-bsp.compiler: compiler/arm-none-eabi-m0
+bsp.arch: cortex_m4
+bsp.compiler: compiler/arm-none-eabi-m4
 bsp.linkerscript:
-    - "hw/bsp/nrf51dk/nrf51xxac.ld"
-    - "@apache-mynewt-core/hw/mcu/nordic/nrf51xxx/nrf51.ld"
+    - "hw/bsp/nordic_pca10056/nrf52840aa.ld"
+    - "@apache-mynewt-core/hw/mcu/nordic/nrf52xxx/nrf52.ld"
 bsp.linkerscript.BOOT_LOADER.OVERWRITE:
-    - "hw/bsp/nrf51dk/boot-nrf51xxac.ld"
-    - "@apache-mynewt-core/hw/mcu/nordic/nrf51xxx/nrf51.ld"
-bsp.part2linkerscript: "hw/bsp/nrf51dk/split-nrf51dk.ld"
-bsp.downloadscript: "hw/bsp/nrf51dk/nrf51dk_download.sh"
-bsp.debugscript: "hw/bsp/nrf51dk/nrf51dk_debug.sh"
-bsp.downloadscript.WINDOWS.OVERWRITE: "hw/bsp/nrf51dk/nrf51dk_download.cmd"
-bsp.debugscript.WINDOWS.OVERWRITE: "hw/bsp/nrf51dk/nrf51dk_debug.cmd"
+    - "hw/bsp/nordic_pca10056/boot-nrf52840aa.ld"
+    - "@apache-mynewt-core/hw/mcu/nordic/nrf52xxx/nrf52.ld"
+bsp.part2linkerscript: "hw/bsp/nordic_pca10056/split-nordic_pca10056.ld"
+bsp.downloadscript: "hw/bsp/nordic_pca10056/nordic_pca10056_download.sh"
+bsp.debugscript: "hw/bsp/nordic_pca10056/nordic_pca10056_debug.sh"
+bsp.downloadscript.WINDOWS.OVERWRITE: "hw/bsp/nordic_pca10056/nordic_pca10056_download.cmd"
+bsp.debugscript.WINDOWS.OVERWRITE: "hw/bsp/nordic_pca10056/nordic_pca10056_debug.cmd"
 
 bsp.flash_map:
     areas:
@@ -37,28 +37,28 @@ bsp.flash_map:
         FLASH_AREA_BOOTLOADER:
             device: 0
             offset: 0x00000000
-            size: 16kB
+            size: 32kB
         FLASH_AREA_IMAGE_0:
             device: 0
-            offset: 0x00008000
-            size: 110kB
+            offset: 0x0000c000
+            size: 472kB
         FLASH_AREA_IMAGE_1:
             device: 0
-            offset: 0x00023800
-            size: 110kB
+            offset: 0x00082000
+            size: 472kB
         FLASH_AREA_IMAGE_SCRATCH:
             device: 0
-            offset: 0x0003f000
-            size: 2kB
+            offset: 0x000f8000
+            size: 16kB
 
         # User areas.
         FLASH_AREA_REBOOT_LOG:
             user_id: 0
             device: 0
-            offset: 0x00004000
+            offset: 0x00008000
             size: 16kB
         FLASH_AREA_NFFS:
             user_id: 1
             device: 0
-            offset: 0x0003f800
-            size: 2kB
+            offset: 0x000fc000
+            size: 16kB

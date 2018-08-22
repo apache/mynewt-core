@@ -20,16 +20,16 @@
 bsp.arch: cortex_m0
 bsp.compiler: compiler/arm-none-eabi-m0
 bsp.linkerscript:
-    - "hw/bsp/nrf51dk-16kbram/nrf51xxaa.ld"
+    - "hw/bsp/nordic_pca10028-16k/nrf51xxaa.ld"
     - "@apache-mynewt-core/hw/mcu/nordic/nrf51xxx/nrf51.ld"
 bsp.linkerscript.BOOT_LOADER.OVERWRITE:
-    - "hw/bsp/nrf51dk-16kbram/boot-nrf51xxaa.ld"
+    - "hw/bsp/nordic_pca10028-16k/boot-nrf51xxaa.ld"
     - "@apache-mynewt-core/hw/mcu/nordic/nrf51xxx/nrf51.ld"
-bsp.part2linkerscript: "hw/bsp/nrf51dk-16kbram/split-nrf51dk-16kbram.ld"
-bsp.downloadscript: "hw/bsp/nrf51dk-16kbram/nrf51dk-16kbram_download.sh"
-bsp.debugscript: "hw/bsp/nrf51dk-16kbram/nrf51dk-16kbram_debug.sh"
-bsp.downloadscript.WINDOWS.OVERWRITE: "hw/bsp/nrf51dk-16kbram/nrf51dk-16kbram_download.cmd"
-bsp.debugscript.WINDOWS.OVERWRITE: "hw/bsp/nrf51dk-16kbram/nrf51dk-16kbram_debug.cmd"
+bsp.part2linkerscript: "hw/bsp/nordic_pca10028-16k/split-nordic_pca10028-16k.ld"
+bsp.downloadscript: "hw/bsp/nordic_pca10028-16k/nordic_pca10028-16k_download.sh"
+bsp.debugscript: "hw/bsp/nordic_pca10028-16k/nordic_pca10028-16k_debug.sh"
+bsp.downloadscript.WINDOWS.OVERWRITE: "hw/bsp/nordic_pca10028-16k/nordic_pca10028-16k_download.cmd"
+bsp.debugscript.WINDOWS.OVERWRITE: "hw/bsp/nordic_pca10028-16k/nordic_pca10028-16k_debug.cmd"
 
 bsp.flash_map:
     areas:

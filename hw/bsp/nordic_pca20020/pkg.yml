@@ -17,6 +17,31 @@
 # under the License.
 #
 
-pkg.name: hw/bsp/nrf52-thingy
-pkg.type: transient
-pkg.link: "@apache-mynewt-core/hw/bsp/nordic_pca20020"
+pkg.name: hw/bsp/nordic_pca20020
+pkg.type: bsp
+pkg.description: BSP definition for the Nordic PCA20020 (Thingy:52)
+pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
+pkg.homepage: "http://mynewt.apache.org/"
+pkg.keywords:
+    - nrf52
+    - thingy
+    - nrf52-thingy
+
+pkg.cflags:
+    - '-DNRF52'
+
+pkg.cflags.HARDFLOAT:
+    - -mfloat-abi=hard -mfpu=fpv4-sp-d16
+
+pkg.deps:
+    - "@apache-mynewt-core/hw/mcu/nordic/nrf52xxx"
+    - "@apache-mynewt-core/libc/baselibc"
+
+pkg.deps.SOFT_PWM:
+    - "@apache-mynewt-core/hw/drivers/pwm/soft_pwm"
+
+pkg.deps.LIS2DH12_ONB:
+    - "@apache-mynewt-core/hw/drivers/sensors/lis2dh12"
+
+pkg.init:
+    config_lis2dh12_sensor: 400

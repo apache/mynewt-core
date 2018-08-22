@@ -18,29 +18,6 @@
 #
 
 pkg.name: hw/bsp/nrf51dk
-pkg.type: bsp
-pkg.description: BSP definition for the Nordic nRF51 DK SoC.
-pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
-pkg.homepage: "http://mynewt.apache.org/"
-pkg.keywords:
-    - nrf51
-    - nrf51dk
+pkg.type: transient
+pkg.link: "@apache-mynewt-core/hw/bsp/nordic_pca10028"
 
-pkg.cflags:
-    - '-DNRF51'
-
-pkg.deps:
-    - "@apache-mynewt-core/hw/mcu/nordic/nrf51xxx"
-    - "@apache-mynewt-core/libc/baselibc"
-
-pkg.deps.BLE_DEVICE:
-    - "@apache-mynewt-core/hw/drivers/nimble/nrf51"
-
-pkg.deps.UART_0:
-    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
-
-pkg.deps.UART_1:
-    - "@apache-mynewt-core/hw/drivers/uart/uart_bitbang"
-
-pkg.deps.ADC_0:
-    - "@apache-mynewt-core/hw/drivers/adc/adc_nrf51"
