@@ -1,0 +1,22 @@
+syscfg.defs:
+    LPS33THW_SHELL_ITF_NUM:
+        description: 'Shell interface number for the LPS33THW'
+        value: 0
+    LPS33THW_SHELL_ITF_TYPE:
+        description: 'Shell interface type for the LPS33THW'
+        value: 1
+    LPS33THW_SHELL_CSPIN:
+        description: 'CS pin for LPS33THW'
+        value : -1
+    LPS33THW_SHELL_ITF_ADDR:
+        description: 'Slave address for LPS33THW'
+        value : 0x5C
+    LPS33THW_CLI:
+        description: 'Enable shell support for the LPS33THW'
+        value: 0
+    LPS33THW_ITF_LOCK_TMO:
+        description: 'LPS33THW interface lock timeout in milliseconds'
+        value: 1000
+    LPS33THW_LOG_MODULE:
+        description: 'Numeric module ID to use for LPS33THW log messages'
+        value: 233
