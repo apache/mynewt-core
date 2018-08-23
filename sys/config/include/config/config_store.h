@@ -16,38 +16,50 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+#ifndef __SYS_CONFIG_STORE_H_
+#define __SYS_CONFIG_STORE_H_
 
-#ifndef __CONFIG_PRIV_H_
-#define __CONFIG_PRIV_H_
+/**
+ * @addtogroup SysConfig Configuration of Apache Mynewt System
+ * @{
+ */
+
+#include <os/queue.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int conf_cli_register(void);
-int conf_nmgr_register(void);
+struct conf_store;
 
 /*
- * Lock config subsystem.
+ * API for config storage.
  */
-void conf_lock(void);
-void conf_unlock(void);
+typedef void (*conf_store_load_cb)(char *name, char *val, void *cb_arg);
+struct conf_store_itf {
+    int (*csi_load)(struct conf_store *cs, conf_store_load_cb cb, void *cb_arg);
+    int (*csi_save_start)(struct conf_store *cs);
+    int (*csi_save)(struct conf_store *cs, const char *name, const char *value);
+    int (*csi_save_end)(struct conf_store *cs);
+};
 
-struct mgmt_cbuf;
-int conf_line_parse(char *buf, char **namep, char **valp);
-int conf_line_make(char *dst, int dlen, const char *name, const char *val);
-int conf_line_make2(char *dst, int dlen, const char *name, const char *value);
-struct conf_handler *conf_parse_and_lookup(char *name, int *name_argc,
-                                           char *name_argv[]);
+struct conf_store {
+    SLIST_ENTRY(conf_store) cs_next;
+    const struct conf_store_itf *cs_itf;
+};
 
-SLIST_HEAD(conf_store_head, conf_store);
-extern struct conf_store_head conf_load_srcs;
-SLIST_HEAD(conf_handler_head, conf_handler);
-extern struct conf_handler_head conf_handlers;
-extern struct conf_store *conf_save_dst;
+void conf_src_register(struct conf_store *cs);
+void conf_dst_register(struct conf_store *cs);
+
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __CONFIG_PRIV_H_ */
+/**
+ * @} SysConfig
+ */
+
+
+#endif /* __SYS_CONFIG_H_ */

@@ -22,6 +22,7 @@
 
 #include "os/mynewt.h"
 #include "config/config.h"
+#include "config/config_store.h"
 #include "config_priv.h"
 
 struct conf_dup_check_arg {

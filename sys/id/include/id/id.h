@@ -24,11 +24,34 @@
 extern "C" {
 #endif
 
+#if MYNEWT_VAL(ID_SERIAL_PRESENT)
 /*
- * Maximum configurable serial number.
+ * Maximum expected serial number string length.
  */
-#define ID_SERIAL_MAX_LEN       64
+#define ID_SERIAL_MAX_LEN       MYNEWT_VAL(ID_SERIAL_MAX_LEN)
 extern char id_serial[];
+#endif
+
+#if MYNEWT_VAL(ID_MANUFACTURER_LOCAL)
+/*
+ * Maximum expected manufacturer string length.
+ */
+#define ID_MANUFACTURER_MAX_LEN 64
+extern char id_manufacturer[];
+#else
+extern const char id_manufacturer[];
+#endif
+
+#if MYNEWT_VAL(ID_MODEL_LOCAL)
+/*
+ * Maximum expected model name string length.
+ */
+#define ID_MODEL_MAX_LEN        64
+extern char id_model[];
+#elif MYNEWT_VAL(ID_MODEL_PRESENT)
+extern const char id_model[];
+#endif
+
 extern char id_mfghash[];
 extern const char *id_bsp_str;
 extern const char *id_app_str;
