@@ -63,13 +63,13 @@ extern "C" {
  */
 struct conf_mmap_kv {
     const char *cmk_key;  /* key (string) */
-    uint16_t cmk_off;     /* offset from conf_mmap.cm_base */
+    uint16_t cmk_off;     /* offset of value from conf_mmap.cm_base */
     uint16_t cmk_maxlen;  /* maximum length of value */
 };
 
 struct conf_mmap {
     struct conf_store cm_store;
-    uintptr_t cm_base;
+    uintptr_t cm_base;    /* base address */
     int cm_kv_cnt;        /* number of key/value array elements */
     const struct conf_mmap_kv *cm_kv; /* key/value array */
 };
