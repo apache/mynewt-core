@@ -396,7 +396,14 @@ native_sock_bind(struct mn_socket *s, struct mn_sockaddr *addr)
         if (rc) {
             goto err;
         }
+    } else {
+         rc = setsockopt(ns->ns_fd, SOL_SOCKET, SO_REUSEPORT, &val,
+           sizeof(val));
+         if (rc) {
+             goto err;
+         }
     }
+
     rc = ioctl(ns->ns_fd, FIONBIO, (char *)&val);
     if (rc) {
         goto err;
