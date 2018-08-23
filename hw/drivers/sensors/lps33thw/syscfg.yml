@@ -10,7 +10,7 @@ syscfg.defs:
         value : -1
     LPS33THW_SHELL_ITF_ADDR:
         description: 'Slave address for LPS33THW'
-        value : 0x5D
+        value : 0x5C
     LPS33THW_CLI:
         description: 'Enable shell support for the LPS33THW'
         value: 0
