@@ -1,8 +1,20 @@
 /*
- * lps33thw_priv.h
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- *  Created on: Aug 21, 2018
- *      Author: justine
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
  */
 
 #ifndef REPOS_APACHE_MYNEWT_CORE_HW_DRIVERS_SENSORS_LPS33THW_SRC_LPS33THW_PRIV_H_
@@ -15,23 +27,23 @@ extern "C" {
 enum lps33thw_registers {
     LPS33THW_INTERRUPT_CFG = 0x0b,
     LPS33THW_THS_P = 0x0c,
-    LPS33THW_IF_CTRL = 0x0e, //added
+    LPS33THW_IF_CTRL = 0x0e,
     LPS33THW_WHO_AM_I = 0x0f,
     LPS33THW_CTRL_REG1 = 0x10,
     LPS33THW_CTRL_REG2 = 0x11,
     LPS33THW_CTRL_REG3 = 0x12,
-    LPS33THW_FIFO_CTRL = 0x13, //diff reg add
-    LPS33THW_FIFO_WTM = 0x14, //added
-    LPS33THW_REF_P = 0x15,  //no ref_p_h
+    LPS33THW_FIFO_CTRL = 0x13,
+    LPS33THW_FIFO_WTM = 0x14,
+    LPS33THW_REF_P = 0x15,
     LPS33THW_RPDS = 0x18,
-    LPS33THW_INT_SOURCE = 0x24, //diff reg add
-    LPS33THW_FIFO_STATUS1 = 0x25, //diff reg add
-    LPS33THW_FIFO_STATUS2 = 0x26, //added
+    LPS33THW_INT_SOURCE = 0x24,
+    LPS33THW_FIFO_STATUS1 = 0x25,
+    LPS33THW_FIFO_STATUS2 = 0x26,
     LPS33THW_STATUS = 0x27,
     LPS33THW_PRESS_OUT = 0x28,
     LPS33THW_TEMP_OUT = 0x2b,
-    LPS33THW_FIFO_SDATA_OUT_PRESS = 0x78, //added
-    LPS33THW_FIFO_SDATA_OUT_TEMP = 0x7b, //added
+    LPS33THW_FIFO_SDATA_OUT_PRESS = 0x78,
+    LPS33THW_FIFO_SDATA_OUT_TEMP = 0x7b,
 };
 
 /* registers */

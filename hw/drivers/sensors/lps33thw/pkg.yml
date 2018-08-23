@@ -18,12 +18,11 @@
 #
 
 pkg.name: "hw/drivers/sensors/lps33thw"
-pkg.description: "Description of your package"
-pkg.author: "You <you@you.org>"
-pkg.homepage: "http://your-url.org/"
+pkg.description: "Driver for the lps33thw pressure sensors."
+pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
+pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
     - lps33thw
-    - lps22hb
     - pressure
     - i2c
     - sensor

@@ -54,7 +54,9 @@ pkg.deps.BMA2XX_OFB:
     - "@apache-mynewt-core/hw/drivers/sensors/bma2xx"
 pkg.deps.LIS2DW12_OFB:
     - "@apache-mynewt-core/hw/drivers/sensors/lis2dw12"
-pkg.deps.LIS2DS12_OFB:
-    - "@apache-mynewt-core/hw/drivers/sensors/lis2ds12"
+pkg.deps.LPS33HW_OFB:
+    - "@apache-mynewt-core/hw/drivers/sensors/lps33hw"
+pkg.deps.LPS33THW_OFB:
+    - "@apache-mynewt-core/hw/drivers/sensors/lps33thw"
 pkg.init:
     sensor_dev_create: 500
