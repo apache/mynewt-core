@@ -107,6 +107,7 @@ void os_time_advance(int ticks);
 void os_time_delay(os_time_t osticks);
 
 #define OS_TIME_TICK_LT(__t1, __t2) ((os_stime_t) ((__t1) - (__t2)) < 0)
+#define OS_TIME_TICK_LEQ(__t1, __t2) ((os_stime_t) ((__t1) - (__t2)) <= 0)
 #define OS_TIME_TICK_GT(__t1, __t2) ((os_stime_t) ((__t1) - (__t2)) > 0)
 #define OS_TIME_TICK_GEQ(__t1, __t2) ((os_stime_t) ((__t1) - (__t2)) >= 0)
 
