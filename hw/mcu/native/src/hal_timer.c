@@ -25,7 +25,6 @@
 /*
  * For native cpu implementation.
  */
-static uint8_t native_timer_task_started;
 #define NATIVE_TIMER_STACK_SIZE   (1024)
 static os_stack_t native_timer_stack[NATIVE_TIMER_STACK_SIZE];
 static struct os_task native_timer_task_struct;
@@ -80,6 +79,16 @@ native_timer_task(void *arg)
     }
 }
 
+void
+ native_timer_init(void) {
+     /* Initialize the eventq and task */
+     os_eventq_init(&native_timer_evq);
+
+     os_task_init(&native_timer_task_struct, "native_timer",
+       native_timer_task, NULL, MYNEWT_VAL(MCU_NATIVE_TIMER_PRIO),
+       OS_WAIT_FOREVER, native_timer_stack, NATIVE_TIMER_STACK_SIZE);
+ }
+
 int
 hal_timer_init(int num, void *cfg)
 {
@@ -104,16 +113,6 @@ hal_timer_config(int num, uint32_t clock_freq)
     nt->num = num;
     nt->cnt = 0;
     nt->last_ostime = os_time_get();
-    if (!native_timer_task_started) {
-        os_task_init(&native_timer_task_struct, "native_timer",
-          native_timer_task, NULL, OS_TASK_PRI_HIGHEST, OS_WAIT_FOREVER,
-          native_timer_stack, NATIVE_TIMER_STACK_SIZE);
-
-        /* Initialize the eventq and task */
-        os_eventq_init(&native_timer_evq);
-        native_timer_task_started = 1;
-    }
-
     /* Initialize the callout function */
     os_callout_init(&nt->callout, &native_timer_evq, native_timer_cb, nt);
 

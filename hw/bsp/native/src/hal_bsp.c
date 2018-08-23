@@ -94,7 +94,12 @@ hal_bsp_init(void)
     rc = hal_i2c_init(0, NULL);
     assert(rc == 0);
 #endif
-    
+
+#if (MYNEWT_VAL(OS_CPUTIME_TIMER_NUM) >= 0)
+     rc = os_cputime_init(MYNEWT_VAL(OS_CPUTIME_FREQ));
+     assert(rc == 0);
+ #endif
+
 #if MYNEWT_VAL(SIM_ACCEL_PRESENT)
     rc = os_dev_create((struct os_dev *) &os_bsp_accel0, "simaccel0",
             OS_DEV_INIT_PRIMARY, 0, simaccel_init, (void *) NULL);

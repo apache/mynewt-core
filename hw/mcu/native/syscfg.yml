@@ -68,3 +68,10 @@ syscfg.defs:
         description: 'Priority of native UART poller task.'
         type: task_priority
         value: 0
+
+    MCU_NATIVE_TIMER_PRIO:
+         description: 'Priority of native Timer task.'
+         type: task_priority
+         value: 3
+
+
