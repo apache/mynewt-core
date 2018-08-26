@@ -17,6 +17,5 @@
 #
 pkg.name: net/nimble/controller/test
 pkg.description: "NimBLE controller unit tests."
-pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
-pkg.deps:
-    - "@apache-mynewt-nimble/nimble/controller/test"
+pkg.type: transient
+pkg.link: "@apache-mynewt-nimble/nimble/controller/test"
