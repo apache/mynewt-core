@@ -189,6 +189,17 @@ os_error_t os_mempool_ext_init(struct os_mempool_ext *mpe, uint16_t blocks,
                                uint32_t block_size, void *membuf, char *name);
 
 /**
+ * Removes the specified mempool from the list of initialized mempools.
+ *
+ * @param mp                    The mempool to unregister.
+ *
+ * @return                      0 on success;
+ *                              OS_INVALID_PARM if the mempool is not
+ *                                  registered.
+ */
+os_error_t os_mempool_unregister(struct os_mempool *mp);
+
+/**
  * Clears a memory pool.
  *
  * @param mp            The mempool to clear.

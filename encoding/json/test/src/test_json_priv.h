@@ -16,21 +16,45 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#ifndef __RUNTEST_PRIV_H__
-#define __RUNTEST_PRIV_H__
+#ifndef TEST_JSON_H
+#define TEST_JSON_H
+
+#include <assert.h>
+#include <string.h>
+#include "testutil/testutil.h"
+#include "json/json.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#if MYNEWT_VAL(RUNTEST_CLI)
-extern struct shell_cmd runtest_cmd_struct;
-#endif
+char *output;
+char *output1;
+char *outputboolspace;
+char *outputboolempty;
 
-int runtest_nmgr_register_group(void);
+#define JSON_BIGBUF_SIZE    192
+char *bigbuf;
+int buf_index;
+
+/* a test structure to hold the json flat buffer and pass bytes
+ * to the decoder */
+struct test_jbuf {
+    /* json_buffer must be first element in the structure */
+    struct json_buffer json_buf;
+    char * start_buf;
+    char * end_buf;
+    int current_position;
+};
+
+char test_jbuf_read_next(struct json_buffer *jb);
+char test_jbuf_read_prev(struct json_buffer *jb);
+int test_jbuf_readn(struct json_buffer *jb, char *buf, int size);
+int test_write(void *buf, char* data, int len);
+void test_buf_init(struct test_jbuf *ptjb, char *string);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __RUNTEST_PRIV_H__ */
+#endif /* TEST_JSON_H */

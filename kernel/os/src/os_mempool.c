@@ -156,6 +156,44 @@ os_mempool_ext_init(struct os_mempool_ext *mpe, uint16_t blocks,
 }
 
 os_error_t
+os_mempool_unregister(struct os_mempool *mp)
+{
+    struct os_mempool *prev;
+    struct os_mempool *next;
+    struct os_mempool *cur;
+
+    /* Remove the mempool from the global stailq.  This is done manually rather
+     * than with `STAILQ_REMOVE` to allow for a graceful failure if the mempool
+     * isn't found.
+     */
+
+    prev = NULL;
+    STAILQ_FOREACH(cur, &g_os_mempool_list, mp_list) {
+        if (cur == mp) {
+            break;
+        }
+        prev = cur;
+    }
+
+    if (cur == NULL) {
+        return OS_INVALID_PARM;
+    }
+
+    if (prev == NULL) {
+        STAILQ_REMOVE_HEAD(&g_os_mempool_list, mp_list);
+    } else {
+        next = STAILQ_NEXT(cur, mp_list);
+        if (next == NULL) {
+            *g_os_mempool_list.stqh_last = next;
+        }
+
+        STAILQ_NEXT(prev, mp_list) = next;
+    }
+
+    return 0;
+}
+
+os_error_t
 os_mempool_clear(struct os_mempool *mp)
 {
     struct os_memblock *block_ptr;

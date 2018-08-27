@@ -28,7 +28,6 @@ int alignment = 4;
 int alignment = 8;
 #endif
 
-#if MYNEWT_VAL(SELFTEST)
 /* Test memory pool structure */
 struct os_mempool g_TstMempool;
 
@@ -37,7 +36,6 @@ void *block_array[MEMPOOL_TEST_MAX_BLOCKS];
 
 /* Test memory pool buffer */
 os_membuf_t *TstMembuf;
-#endif
 
 uint32_t TstMembufSz;
 
@@ -57,37 +55,22 @@ mempool_test_get_pool_size(int num_blocks, int block_size)
     return mem_pool_size;
 }
 
-void
-os_mempool_ts_pretest(void* arg)
-{
-    os_init(NULL);
-    sysinit();
-}
-
-void
-os_mempool_ts_posttest(void* arg)
-{
-    return;
-}
-
-void
-os_mempool_test_init(void *arg)
-{
-    TstMembufSz = (sizeof(os_membuf_t) *
-                 OS_MEMPOOL_SIZE(NUM_MEM_BLOCKS, MEM_BLOCK_SIZE));
-    TstMembuf = malloc(TstMembufSz);
-
-    tu_suite_set_pre_test_cb(os_mempool_ts_pretest, NULL);
-    tu_suite_set_post_test_cb(os_mempool_ts_posttest, NULL);
-}
-
 TEST_CASE_DECL(os_mempool_test_case)
 TEST_CASE_DECL(os_mempool_test_ext_basic)
 TEST_CASE_DECL(os_mempool_test_ext_nested)
 
 TEST_SUITE(os_mempool_test_suite)
 {
+    TstMembufSz = (sizeof(os_membuf_t) *
+                 OS_MEMPOOL_SIZE(NUM_MEM_BLOCKS, MEM_BLOCK_SIZE));
+    TstMembuf = malloc(TstMembufSz);
+    TEST_ASSERT_FATAL(TstMembuf != NULL);
+
     os_mempool_test_case();
     os_mempool_test_ext_basic();
     os_mempool_test_ext_nested();
+
+    free(TstMembuf);
+    TstMembufSz = 0;
+    TstMembuf = NULL;
 }

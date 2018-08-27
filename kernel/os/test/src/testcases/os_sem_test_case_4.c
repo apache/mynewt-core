@@ -16,24 +16,28 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
+#include "os/mynewt.h"
+#include "runtest/runtest.h"
 #include "os_test_priv.h"
 
 TEST_CASE(os_sem_test_case_4)
 {
     os_error_t err;
 
+#if MYNEWT_VAL(SELFTEST)
+    sysinit();
+#endif
+
     err = os_sem_init(&g_sem1, 1);
     TEST_ASSERT(err == OS_OK);
 
-    os_task_init(&task1, "task1", sem_test_sleep_task_handler, NULL,
-                 TASK1_PRIO, OS_WAIT_FOREVER, stack1, stack1_size);
-
-    os_task_init(&task2, "task2", sem_test_4_task2_handler, NULL,
-                 TASK2_PRIO, OS_WAIT_FOREVER, stack2, stack2_size);
-
-    os_task_init(&task3, "task3", sem_test_4_task3_handler, NULL,
-                 TASK3_PRIO, OS_WAIT_FOREVER, stack3, stack3_size);
-
-    os_task_init(&task4, "task4", sem_test_4_task4_handler, NULL,
-                 TASK4_PRIO, OS_WAIT_FOREVER, stack4, stack4_size);
+    runtest_init_task(sem_test_sleep_task_handler,
+                      MYNEWT_VAL(OS_MAIN_TASK_PRIO) + 1);
+    runtest_init_task(sem_test_4_task2_handler,
+                      MYNEWT_VAL(OS_MAIN_TASK_PRIO) + 2);
+    runtest_init_task(sem_test_4_task4_handler,
+                      MYNEWT_VAL(OS_MAIN_TASK_PRIO) + 3);
+    runtest_init_task(sem_test_4_task4_handler,
+                      MYNEWT_VAL(OS_MAIN_TASK_PRIO) + 4);
 }

@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include "test_json.h"
+#include "test_json_priv.h"
 
 TEST_CASE(test_json_simple_encode)
 {
