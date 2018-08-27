@@ -90,4 +90,8 @@ TEST_SUITE(os_mempool_test_suite)
     os_mempool_test_case();
     os_mempool_test_ext_basic();
     os_mempool_test_ext_nested();
+
+    free(TstMembuf);
+    TstMembufSz = 0;
+    TstMembuf = NULL;
 }

@@ -54,6 +54,7 @@ syscfg.vals:
     LOG_NEWTMGR: 1
     CONFIG_NEWTMGR: 1
 
+    RUNTEST_LOG: 1
     RUNTEST_CLI: 1
     RUNTEST_NEWTMGR: 1
 

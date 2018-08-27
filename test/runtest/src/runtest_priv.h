@@ -26,11 +26,8 @@ extern "C" {
 #if MYNEWT_VAL(RUNTEST_CLI)
 extern struct shell_cmd runtest_cmd_struct;
 #endif
-#if MYNEWT_VAL(RUNTEST_NEWTMGR)
-extern struct mgmt_group runtest_nmgr_group;
-#endif
 
-int runtest();
+int runtest_nmgr_register_group(void);
 
 #ifdef __cplusplus
 }
