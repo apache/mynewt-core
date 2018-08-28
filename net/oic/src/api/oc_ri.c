@@ -795,11 +795,17 @@ oc_ri_invoke_client_cb(struct coap_packet_rx *rsp, oc_endpoint_t *endpoint)
         */
         if (rsp->payload_len) {
             if (cb->discovery) {
+#if MYNEWT_VAL(OC_CLIENT_DISCOVERY_ENABLE)
                 if (oc_ri_process_discovery_payload(rsp, cb->handler,
                                               endpoint) == OC_STOP_DISCOVERY) {
                     free_client_cb(cb);
                     return true;
                 }
+#else
+                /* XXX should never be here */
+                free_client_cb(cb);
+                return true;
+#endif
             } else {
                 client_response.packet = rsp;
                 client_response.origin = endpoint;
