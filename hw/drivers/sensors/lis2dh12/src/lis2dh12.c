@@ -1184,11 +1184,9 @@ err:
  * @param the sensor interface
  */
 int
-lis2dh12_clear_int2(struct sensor_itf *itf)
+lis2dh12_clear_int2(struct sensor_itf *itf, uint8_t *src)
 {
-    uint8_t reg;
-
-    return lis2dh12_readlen(itf, LIS2DH12_REG_INT2_SRC, &reg, 1);
+    return lis2dh12_readlen(itf, LIS2DH12_REG_INT2_SRC, src, 1);
 }
 
 /**
@@ -1197,11 +1195,9 @@ lis2dh12_clear_int2(struct sensor_itf *itf)
  * @param the sensor interface
  */
 int
-lis2dh12_clear_int1(struct sensor_itf *itf)
+lis2dh12_clear_int1(struct sensor_itf *itf, uint8_t *src)
 {
-    uint8_t reg;
-
-    return lis2dh12_readlen(itf, LIS2DH12_REG_INT1_SRC, &reg, 1);
+    return lis2dh12_readlen(itf, LIS2DH12_REG_INT1_SRC, src, 1);
 }
 
 /**
@@ -1211,9 +1207,9 @@ lis2dh12_clear_int1(struct sensor_itf *itf)
  * @param events to enable int for
  */
 int
-lis2dh12_enable_int2(struct sensor_itf *itf, uint8_t *reg)
+lis2dh12_enable_int2(struct sensor_itf *itf, uint8_t reg)
 {
-    return lis2dh12_writelen(itf, LIS2DH12_REG_INT2_CFG, reg, 1);
+    return lis2dh12_write8(itf, LIS2DH12_REG_INT2_CFG, reg);
 }
 
 /**
@@ -1338,12 +1334,12 @@ lis2dh12_disable_int1(struct sensor_itf *itf)
     uint8_t reg;
     int rc;
 
-    reg = 0;
-
-    rc = lis2dh12_clear_int1(itf);
+    rc = lis2dh12_clear_int1(itf, &reg);
     if (rc) {
         goto err;
     }
+
+    reg = 0;
 
     os_time_delay((OS_TICKS_PER_SEC * 20)/1000 + 1);
 
@@ -1365,12 +1361,12 @@ lis2dh12_disable_int2(struct sensor_itf *itf)
     uint8_t reg;
     int rc;
 
-    reg = 0;
-
-    rc = lis2dh12_clear_int2(itf);
+    rc = lis2dh12_clear_int2(itf, &reg);
     if (rc) {
         goto err;
     }
+
+    reg = 0;
 
     os_time_delay((OS_TICKS_PER_SEC * 20)/1000 + 1);
 
@@ -1387,9 +1383,9 @@ err:
  * @param events to enable int for
  */
 int
-lis2dh12_enable_int1(struct sensor_itf *itf, uint8_t *reg)
+lis2dh12_enable_int1(struct sensor_itf *itf, uint8_t reg)
 {
-    return lis2dh12_writelen(itf, LIS2DH12_REG_INT1_CFG, reg, 1);
+    return lis2dh12_write8(itf, LIS2DH12_REG_INT1_CFG, reg);
 }
 
 /**
@@ -1480,7 +1476,8 @@ lis2dh12_set_low_thresh(struct sensor_itf *itf,
                         struct sensor_type_traits *stt)
 {
     int16_t acc_mg;
-    uint8_t reg;
+    uint8_t reg = 0xFF;
+    uint8_t int_src;
     int rc;
 
     rc = 0;
@@ -1538,7 +1535,7 @@ lis2dh12_set_low_thresh(struct sensor_itf *itf,
         reg |= low_thresh.sad->sad_y_is_valid ? LIS2DH12_INT2_CFG_YLIE : 0;
         reg |= low_thresh.sad->sad_z_is_valid ? LIS2DH12_INT2_CFG_ZLIE : 0;
 
-        rc = lis2dh12_clear_int1(itf);
+        rc = lis2dh12_clear_int1(itf, &int_src);
         if (rc) {
             goto err;
         }
@@ -1547,7 +1544,7 @@ lis2dh12_set_low_thresh(struct sensor_itf *itf,
 
         hal_gpio_irq_enable(itf->si_low_pin);
 
-        rc = lis2dh12_enable_int1(itf, &reg);
+        rc = lis2dh12_enable_int1(itf, reg);
         if (rc) {
             goto err;
         }
@@ -1565,7 +1562,8 @@ lis2dh12_set_high_thresh(struct sensor_itf *itf,
                          struct sensor_type_traits *stt)
 {
     int16_t acc_mg;
-    uint8_t reg;
+    uint8_t reg = 0;
+    uint8_t int_src;
     int rc;
 
     rc = 0;
@@ -1623,14 +1621,14 @@ lis2dh12_set_high_thresh(struct sensor_itf *itf,
         reg |= high_thresh.sad->sad_y_is_valid ? LIS2DH12_INT2_CFG_YHIE : 0;
         reg |= high_thresh.sad->sad_z_is_valid ? LIS2DH12_INT2_CFG_ZHIE : 0;
 
-        rc = lis2dh12_clear_int2(itf);
+        rc = lis2dh12_clear_int2(itf, &int_src);
         if (rc) {
             goto err;
         }
 
         hal_gpio_irq_enable(itf->si_high_pin);
 
-        rc = lis2dh12_enable_int2(itf, &reg);
+        rc = lis2dh12_enable_int2(itf, reg);
         if (rc) {
             goto err;
         }
