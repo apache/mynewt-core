@@ -759,6 +759,27 @@ err:
 }
 
 /**
+ * Get Number of Samples in FIFO
+ *
+ * @param the sensor interface
+ * @param Pointer to return number of samples in
+ * @return 0 on success, non-zero on failure
+ */
+int
+lis2dh12_get_fifo_samples(struct sensor_itf *itf, uint8_t *samples)
+{
+    uint8_t reg;
+    int rc;
+
+    rc = lis2dh12_read8(itf, LIS2DH12_REG_FIFO_SRC_REG, &reg);
+    if (rc == 0) {
+        *samples = reg & LIS2DH12_FIFO_SRC_FSS;
+    }
+
+    return rc;
+}
+
+/**
  *
  * Get operating mode
  *
@@ -1111,6 +1132,54 @@ lis2dh12_sensor_read(struct sensor *sensor, sensor_type_t type,
     return 0;
 err:
     return rc;
+}
+
+int
+lis2dh12_clear_click(struct sensor_itf *itf, uint8_t *src)
+{
+    return lis2dh12_read8(itf, LIS2DH12_REG_CLICK_SRC, src);
+}
+
+int
+lis2dh12_set_click_cfg(struct sensor_itf *itf, uint8_t cfg)
+{
+    return lis2dh12_write8(itf, LIS2DH12_REG_CLICK_CFG, cfg);
+}
+
+int
+lis2dh12_set_click_threshold(struct sensor_itf *itf, uint8_t cfg)
+{
+    return lis2dh12_write8(itf, LIS2DH12_REG_CLICK_THS, cfg);
+}
+
+int
+lis2dh12_set_click_time_limit(struct sensor_itf *itf, uint8_t limit)
+{
+    return lis2dh12_write8(itf, LIS2DH12_REG_TIME_LIMIT, limit);
+}
+
+int
+lis2dh12_set_click_time_latency(struct sensor_itf *itf, uint8_t latency)
+{
+    return lis2dh12_write8(itf, LIS2DH12_REG_TIME_LATENCY, latency);
+}
+
+int
+lis2dh12_set_click_time_window(struct sensor_itf *itf, uint8_t window)
+{
+    return lis2dh12_write8(itf, LIS2DH12_REG_TIME_WINDOW, window);
+}
+
+int
+lis2dh12_set_activity_threshold(struct sensor_itf *itf, uint8_t threshold)
+{
+    return lis2dh12_write8(itf, LIS2DH12_REG_ACT_THS, threshold);
+}
+
+int
+lis2dh12_set_activity_duration(struct sensor_itf *itf, uint8_t duration)
+{
+    return lis2dh12_write8(itf, LIS2DH12_REG_ACT_DUR, duration);
 }
 
 static int

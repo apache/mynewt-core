@@ -365,6 +365,109 @@ lis2dh12_disable_int2(struct sensor_itf *itf);
 int
 lis2dh12_hpf_cfg(struct sensor_itf *itf, uint8_t reg);
 
+/**
+ * Clear click interrupt
+ *
+ * @param the sensor interface
+ * @param src pointer for active interrupts
+ */
+int
+lis2dh12_clear_click(struct sensor_itf *itf, uint8_t *src);
+
+/**
+ * Set click configuration register
+ *
+ * @param the sensor interface
+ * @param value to put in CLICK_CFG register
+ */
+int
+lis2dh12_set_click_cfg(struct sensor_itf *itf, uint8_t cfg);
+
+/**
+ * Set click threshold value
+ *
+ * @param the sensor interface
+ * @param value click threshold value
+ */
+int
+lis2dh12_set_click_threshold(struct sensor_itf *itf, uint8_t cfg);
+
+/**
+ * Set click time limit register
+ *
+ * This sets maximum time interval that can elapse between the start of
+ * the click-detection procedure and when the acceleration falls below
+ * thhreshold. 1 LSB = 1/ODR
+ *
+ * @param the sensor interface
+ * @param value to put in TIME_LIMIT register
+ */
+int
+lis2dh12_set_click_time_limit(struct sensor_itf *itf, uint8_t limit);
+
+/**
+ * Set click time latency register
+ *
+ * This function sets time interval that starts after the first click detection
+ * where the click-detection procedure is disabled. This is relevant for
+ * double click detection only.
+ *
+ * 1 LSB = 1/ODR
+ *
+ * @param the sensor interface
+ * @param value to put in TIME_LATENCY register
+ */
+int
+lis2dh12_set_click_time_latency(struct sensor_itf *itf, uint8_t latency);
+
+/**
+ * Set click time window register
+ *
+ * This function sets the maximum interval of time that can elapse after end of
+ * the latency interval in which click-detection procedure can start.
+ * This is relevant for double click detection only.
+ *
+ * 1 LSB = 1/ODR
+ *
+ * @param the sensor interface
+ * @param value to put in TIME_WINDOW register
+ */
+int
+lis2dh12_set_click_time_window(struct sensor_itf *itf, uint8_t window);
+
+/**
+ * Set activity threshold
+ *
+ * @param the sensor interface
+ * @param threshold 0..127 threshold value for activity/sleep detection
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+lis2dh12_set_activity_threshold(struct sensor_itf *itf, uint8_t threshold);
+
+/**
+ * Set activity duration
+ *
+ * @param the sensor interface
+ * @param duration Sleep-to-wake, return-to-sleep duration.
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+lis2dh12_set_activity_duration(struct sensor_itf *itf, uint8_t duration);
+
+/**
+ * Get number of samples in FIFO
+ *
+ * @param the sensor interface
+ * @param Pointer to return number of samples
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+lis2dh12_get_fifo_samples(struct sensor_itf *itf, uint8_t *samples);
+
 #ifdef __cplusplus
 }
 #endif
