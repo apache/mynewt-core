@@ -1197,12 +1197,12 @@ sensor_dev_create(void)
 #endif
 
 #if MYNEWT_VAL(BMA2XX_OFB)
-rc = os_dev_create((struct os_dev *)&bma2xx, "bma2xx_0",
-  OS_DEV_INIT_PRIMARY, 0, bma2xx_init, &spi2c_0_itf_bma2xx);
-assert(rc == 0);
+    rc = os_dev_create((struct os_dev *)&bma2xx, "bma2xx_0",
+      OS_DEV_INIT_PRIMARY, 0, bma2xx_init, &spi2c_0_itf_bma2xx);
+    assert(rc == 0);
 
-rc = config_bma2xx_sensor();
-assert(rc == 0);
+    rc = config_bma2xx_sensor();
+    assert(rc == 0);
 #endif
 
 #if MYNEWT_VAL(ADXL345_OFB)
@@ -1229,7 +1229,8 @@ assert(rc == 0);
     assert(rc == 0);
 
     rc = config_lps33thw_sensor();
-    assert
+    assert(rc == 0);
+#endif
 
 #if MYNEWT_VAL(LIS2DW12_OFB)
     rc = os_dev_create((struct os_dev *) &lis2dw12, "lis2dw12_0",
