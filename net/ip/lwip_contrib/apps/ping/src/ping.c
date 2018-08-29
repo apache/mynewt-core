@@ -314,7 +314,10 @@ ping_recv(void *arg, struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *addr)
       pbuf_header(p, -PBUF_IP_HLEN) == 0) {
     iecho = (struct icmp_echo_hdr *)p->payload;
 
-    if ((iecho->id == PING_ID) && (iecho->seqno == lwip_htons(ping_seq_num))) {
+    /* the echo requests are handled within the icmp stack. we are only
+     * grabbing the response (Echo reply) here */
+    if ((iecho->type == ICMP6_TYPE_EREP) && (iecho->id == PING_ID)
+      && (iecho->seqno == lwip_htons(ping_seq_num))) {
       LWIP_DEBUGF( PING_DEBUG, ("ping: recv "));
       ip_addr_debug_print(PING_DEBUG, addr);
       LWIP_DEBUGF( PING_DEBUG, (" %"U32_F" ms\n", (sys_now()-ping_time)));
