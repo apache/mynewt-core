@@ -244,7 +244,7 @@ lis2dh12_reset(struct sensor_itf *itf);
  * @param events to enable int for
  */
 int
-lis2dh12_enable_int2(struct sensor_itf *itf, uint8_t *reg);
+lis2dh12_enable_int2(struct sensor_itf *itf, uint8_t reg);
 
 /**
  * Enable interrupt 1
@@ -253,7 +253,7 @@ lis2dh12_enable_int2(struct sensor_itf *itf, uint8_t *reg);
  * @param events to enable int for
  */
 int
-lis2dh12_enable_int1(struct sensor_itf *itf, uint8_t *reg);
+lis2dh12_enable_int1(struct sensor_itf *itf, uint8_t reg);
 
 /**
  * Set interrupt threshold for int 1
@@ -281,17 +281,23 @@ lis2dh12_set_int2_thresh(struct sensor_itf *itf, uint8_t ths);
  * Clear interrupt 1
  *
  * @param the sensor interface
+ * @param src pointer to return interrupt source in
+ *
+ * @return 0 on success, non-zero on failure
  */
 int
-lis2dh12_clear_int1(struct sensor_itf *itf);
+lis2dh12_clear_int1(struct sensor_itf *itf, uint8_t *src);
 
 /**
  * Clear interrupt 2
  *
  * @param the sensor interface
+ * @param src pointer to return interrupt source in
+ *
+ * @return 0 on success, non-zero on failure
  */
 int
-lis2dh12_clear_int2(struct sensor_itf *itf);
+lis2dh12_clear_int2(struct sensor_itf *itf, uint8_t *src);
 
 /**
  * Set interrupt pin configuration for interrupt 1
