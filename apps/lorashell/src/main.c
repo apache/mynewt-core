@@ -63,7 +63,7 @@
 #include "hal/hal_gpio.h"
 #include "hal/hal_spi.h"
 #include "bsp/bsp.h"
-#include "node/radio.h"
+#include "radio/radio.h"
 #include "console/console.h"
 #include "shell/shell.h"
 #include "parse/parse.h"
