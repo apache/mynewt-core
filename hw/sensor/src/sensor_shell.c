@@ -59,9 +59,7 @@ struct sensor_poll_data {
     int spd_poll_delay;
 };
 
-struct sensor_shell_read_ctx {
-    int num_entries;
-};
+static int g_sensor_shell_num_entries;
 
 static void
 sensor_display_help(void)
@@ -239,7 +237,6 @@ static int
 sensor_shell_read_listener(struct sensor *sensor, void *arg, void *data,
                            sensor_type_t type)
 {
-    struct sensor_shell_read_ctx *ctx;
     struct sensor_accel_data *sad;
     struct sensor_mag_data *smd;
     struct sensor_light_data *sld;
@@ -252,9 +249,7 @@ sensor_shell_read_listener(struct sensor *sensor, void *arg, void *data,
     struct sensor_gyro_data *sgd;
     char tmpstr[13];
 
-    ctx = (struct sensor_shell_read_ctx *) arg;
-
-    ++ctx->num_entries;
+    ++g_sensor_shell_num_entries;
 
     console_printf("ts: [ secs: %ld usecs: %d cputime: %u ]\n",
                    (long int)sensor->s_sts.st_ostv.tv_sec,
@@ -448,11 +443,10 @@ sensor_shell_config_timer(struct sensor_poll_data *spd)
 
 /* Check for number of samples */
 static int
-sensor_shell_chk_nsamples(struct sensor_poll_data *spd,
-                          struct sensor_shell_read_ctx *ctx)
+sensor_shell_chk_nsamples(struct sensor_poll_data *spd)
 {
     /* Condition for number of samples */
-    if (spd->spd_nsamples && ctx->num_entries >= spd->spd_nsamples) {
+    if (spd->spd_nsamples && g_sensor_shell_num_entries >= spd->spd_nsamples) {
         os_cputime_timer_stop(&g_sensor_shell_timer);
         return 0;
     }
@@ -515,8 +509,6 @@ static int
 sensor_cmd_read(char *name, sensor_type_t type, struct sensor_poll_data *spd)
 {
     struct sensor *sensor;
-    struct sensor_listener listener;
-    struct sensor_shell_read_ctx ctx;
     int rc;
     int64_t duration;
     int64_t start_ts;
@@ -527,23 +519,11 @@ sensor_cmd_read(char *name, sensor_type_t type, struct sensor_poll_data *spd)
         console_printf("Sensor %s not found!\n", name);
     }
 
-    /* Register a listener and then trigger/read a bunch of samples */
-    memset(&ctx, 0, sizeof(ctx));
-
     if (!(type & sensor->s_types)) {
         rc = SYS_EINVAL;
         /* Directly return without trying to unregister */
         console_printf("Read req for wrng type 0x%x from selected sensor: %s\n",
                        (int)type, name);
-        return rc;
-    }
-
-    listener.sl_sensor_type = type;
-    listener.sl_func = sensor_shell_read_listener;
-    listener.sl_arg = &ctx;
-
-    rc = sensor_register_listener(sensor, &listener);
-    if (rc != 0) {
         return rc;
     }
 
@@ -566,14 +546,15 @@ sensor_cmd_read(char *name, sensor_type_t type, struct sensor_poll_data *spd)
             os_sem_pend(&g_sensor_shell_sem, OS_TIMEOUT_NEVER);
         }
 
-        rc = sensor_read(sensor, type, NULL, NULL, OS_TIMEOUT_NEVER);
+        rc = sensor_read(sensor, type, sensor_shell_read_listener,
+                         (void *)SENSOR_IGN_LISTENER, OS_TIMEOUT_NEVER);
         if (rc) {
             console_printf("Cannot read sensor %s\n", name);
             goto err;
         }
 
         /* Check number of samples if provided */
-        if (!sensor_shell_chk_nsamples(spd, &ctx)) {
+        if (!sensor_shell_chk_nsamples(spd)) {
             break;
         }
 
@@ -591,7 +572,7 @@ sensor_cmd_read(char *name, sensor_type_t type, struct sensor_poll_data *spd)
 err:
     os_sem_release(&g_sensor_shell_sem);
 
-    sensor_unregister_listener(sensor, &listener);
+    g_sensor_shell_num_entries = 0;
 
     return rc;
 }
