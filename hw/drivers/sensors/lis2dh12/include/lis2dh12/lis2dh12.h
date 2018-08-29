@@ -92,7 +92,7 @@ extern "C" {
 #define LIS2DH12_CTRL_REG6_I2_ACT           (1 << 3)
 #define LIS2DH12_CTRL_REG6_INT_POLARITY     (1 << 1)
 
-#define LIS2DH12_INT1_IA                    (1 << 5)
+#define LIS2DH12_INT1_IA                    (1 << 6)
 #define LIS2DH12_INT1_ZH                    (1 << 5)
 #define LIS2DH12_INT1_ZL                    (1 << 4)
 #define LIS2DH12_INT1_YH                    (1 << 3)
@@ -100,13 +100,28 @@ extern "C" {
 #define LIS2DH12_INT1_XH                    (1 << 1)
 #define LIS2DH12_INT1_XL                    (1 << 0)
 
-#define LIS2DH12_INT2_IA                    (1 << 5)
+#define LIS2DH12_INT2_IA                    (1 << 6)
 #define LIS2DH12_INT2_ZH                    (1 << 5)
 #define LIS2DH12_INT2_ZL                    (1 << 4)
 #define LIS2DH12_INT2_YH                    (1 << 3)
 #define LIS2DH12_INT2_YL                    (1 << 2)
 #define LIS2DH12_INT2_XH                    (1 << 1)
 #define LIS2DH12_INT2_XL                    (1 << 0)
+
+#define LIS2DH12_NOTIF_SRC_INT1_IA          (LIS2DH12_INT1_IA)
+#define LIS2DH12_NOTIF_SRC_INT1_ZH          (LIS2DH12_INT1_ZH)
+#define LIS2DH12_NOTIF_SRC_INT1_ZL          (LIS2DH12_INT1_ZL)
+#define LIS2DH12_NOTIF_SRC_INT1_YH          (LIS2DH12_INT1_YH)
+#define LIS2DH12_NOTIF_SRC_INT1_YL          (LIS2DH12_INT1_YL)
+#define LIS2DH12_NOTIF_SRC_INT1_XH          (LIS2DH12_INT1_XH)
+#define LIS2DH12_NOTIF_SRC_INT1_XL          (LIS2DH12_INT1_XL)
+#define LIS2DH12_NOTIF_SRC_INT2_IA          (LIS2DH12_INT2_IA << 8)
+#define LIS2DH12_NOTIF_SRC_INT2_ZH          (LIS2DH12_INT2_ZH << 8)
+#define LIS2DH12_NOTIF_SRC_INT2_ZL          (LIS2DH12_INT2_ZL << 8)
+#define LIS2DH12_NOTIF_SRC_INT2_YH          (LIS2DH12_INT2_YH << 8)
+#define LIS2DH12_NOTIF_SRC_INT2_YL          (LIS2DH12_INT2_YL << 8)
+#define LIS2DH12_NOTIF_SRC_INT2_XH          (LIS2DH12_INT2_XH << 8)
+#define LIS2DH12_NOTIF_SRC_INT2_XL          (LIS2DH12_INT2_XL << 8)
 
 #define LIS2DH12_CTRL_REG3_I1_CLICK         (1 << 7)
 #define LIS2DH12_CTRL_REG3_I1_IA1           (1 << 6)
@@ -115,18 +130,133 @@ extern "C" {
 #define LIS2DH12_CTRL_REG3_I1_WTM           (1 << 2)
 #define LIS2DH12_CTRL_REG3_I1_OVERRUN       (1 << 1)
 
+enum lis2dh12_read_mode {
+    LIS2DH12_READ_M_POLL = 0,
+    LIS2DH12_READ_M_STREAM = 1,
+};
+
+struct lis2dh12_notif_cfg {
+    sensor_event_type_t event;
+    uint8_t int_num;
+    uint16_t notif_src;
+    uint8_t int_cfg;
+};
+
+struct lis2dh12_tap_settings {
+    uint8_t en_xs  : 1; // Interrupt on X single tap
+    uint8_t en_ys  : 1; // Interrupt on Y single tap
+    uint8_t en_zs  : 1; // Interrupt on Z single tap
+    uint8_t en_xd  : 1; // Interrupt on X double tap
+    uint8_t en_yd  : 1; // Interrupt on Y double tap
+    uint8_t en_zd  : 1; // Interrupt on Z double tap
+    uint8_t hpf    : 1; // High pass filter enable
+
+    /* ths data is 7 bits, fs = +-2g */
+    int8_t click_ths;
+    /* shock is maximum time data can be over threshold to register as tap
+       LSB = 1/ODR */
+    int8_t time_limit;
+
+    /* latency is time between taps in double tap, LSB = 1/ODR */
+    uint8_t time_latency;
+    /* quiet is time after tap data is just below threshold
+       LSB = 1/ODR */
+    uint8_t time_window;
+};
+
+struct lis2dh12_int_cfg {
+	uint8_t cfg;
+	uint8_t ths;
+	uint8_t dur;
+};
+
+/* Read mode configuration */
+struct lis2dh12_read_mode_cfg {
+    enum lis2dh12_read_mode mode;
+    uint8_t int_num:1;
+    uint8_t int_cfg;
+};
+
 struct lis2dh12_cfg {
     uint8_t lc_rate;
     uint8_t lc_fs;
+
+    uint8_t reference;
+    /* Tap config */
+    struct lis2dh12_tap_settings tap;
+
+    /* Read mode config */
+    struct lis2dh12_read_mode_cfg read_mode;
+
+    /* Notif config */
+    struct lis2dh12_notif_cfg *notif_cfg;
+    uint8_t max_num_notif;
+
+    struct lis2dh12_int_cfg int_cfg[2];
+
+    uint8_t xen           : 1;
+    uint8_t yen           : 1;
+    uint8_t zen           : 1;
+    uint8_t hp_mode       : 2;
+    uint8_t hp_cut_off    : 2;
+    uint8_t hp_fds        : 1;
+    uint8_t hp_click      : 1;
+    uint8_t hp_ia1        : 1;
+    uint8_t hp_ia2        : 1;
+    uint8_t bdu           : 1;
+    uint8_t latch_int1    : 1;
+    uint8_t latch_int2    : 1;
+    uint8_t d4d_int1      : 1;
+    uint8_t d4d_int2      : 1;
+
+    /* Power mode */
+    uint8_t power_mode;
+
+    /* Fifo config */
+    uint8_t fifo_mode;
+    uint8_t fifo_watermark;
+
+    /* Sleep/wakeup settings */
+    uint8_t act_ths;
+    uint8_t act_dur;
+
     uint8_t lc_pull_up_disc;
     sensor_type_t lc_s_mask;
+};
+
+/* Used to track interrupt state to wake any present waiters */
+struct lis2dh12_int {
+    /* Synchronize access to this structure */
+    os_sr_t lock;
+    /* Sleep waiting for an interrupt to occur */
+    struct os_sem wait;
+    /* Is the interrupt currently active */
+    bool active;
+    /* Is there a waiter currently sleeping */
+    bool asleep;
+    /* Configured interrupts */
+    struct sensor_int *ints;
+};
+
+/* Private per driver data */
+struct lis2dh12_pdd {
+    /* Notification event context */
+    struct sensor_notify_ev_ctx notify_ctx;
+    /* Inetrrupt state */
+    struct lis2dh12_int *interrupt;
+    /* Interrupt enabled on INT1 and INT2 pin (CTRL_REG3 and CTRL_REG6) */
+    uint8_t int_enable[2];
+    /* State of pin for sleep/wake up handling */
+    uint8_t int2_pin_state;
 };
 
 struct lis2dh12 {
     struct os_dev dev;
     struct sensor sensor;
     struct lis2dh12_cfg cfg;
+    struct lis2dh12_int intr;
     os_time_t last_read_time;
+    struct lis2dh12_pdd pdd;
 };
 
 /**
