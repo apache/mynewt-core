@@ -29,3 +29,18 @@ syscfg.defs:
             Number of retries to use for failed I2C communication.  A retry is
             used when the LIS2DH12 sends an unexpected NACK.
         value: 2
+    LIS2DH12_SHELL_ITF_NUM:
+        description: 'Shell interface number for the LIS2DH12'
+        value: 0
+    LIS2DH12_SHELL_ITF_TYPE:
+        description: 'Shell interface type for the LIS2DH12'
+        value: 1
+    LIS2DH12_SHELL_CSPIN:
+        description: 'CS pin for LIS2DH12'
+        value : -1
+    LIS2DH12_SHELL_ITF_ADDR:
+        description: 'Slave address for LIS2DH12'
+        value : 0x19
+    LIS2DH12_CLI:
+        description: 'Enable shell support for the LIS2DH12'
+        value: 0

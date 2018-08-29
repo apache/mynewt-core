@@ -468,6 +468,10 @@ lis2dh12_set_activity_duration(struct sensor_itf *itf, uint8_t duration);
 int
 lis2dh12_get_fifo_samples(struct sensor_itf *itf, uint8_t *samples);
 
+#if MYNEWT_VAL(LIS2DH12_CLI)
+int lis2dh12_shell_init(void);
+#endif
+
 #ifdef __cplusplus
 }
 #endif
