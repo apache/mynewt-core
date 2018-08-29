@@ -176,6 +176,8 @@ extern "C" {
 
 int lis2dh12_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload, uint8_t len);
 int lis2dh12_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload, uint8_t len);
+int lis2dh12_write8(struct sensor_itf *itf, uint8_t reg, uint8_t value);
+int lis2dh12_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value);
 
 #ifdef __cplusplus
 }
