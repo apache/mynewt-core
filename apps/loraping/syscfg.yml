@@ -23,10 +23,6 @@ syscfg.defs:
             Used by package management system to include mfrg firmware.
         value: 1
 
-    LORA_MAC_TIMER_NUM:
-        description: Timer number used for lora mac and radio
-        value: -1
-
 syscfg.vals:
     STATS_CLI: 1
     STATS_NAMES: 1
