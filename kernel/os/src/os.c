@@ -51,13 +51,8 @@ OS_TASK_STACK_DEFINE(os_main_stack, OS_MAIN_STACK_SIZE);
  */
 int g_os_started;
 
-#ifdef ARCH_sim
-#define MIN_IDLE_TICKS  1
-#else
-#define MIN_IDLE_TICKS  (100 * OS_TICKS_PER_SEC / 1000) /* 100 msec */
-#endif
-#define MAX_IDLE_TICKS  (600 * OS_TICKS_PER_SEC)        /* 10 minutes */
-
+#define MIN_IDLE_TICKS  (MYNEWT_VAL(OS_IDLE_TICKLESS_MS_MIN) * OS_TICKS_PER_SEC / 1000)
+#define MAX_IDLE_TICKS  (MYNEWT_VAL(OS_IDLE_TICKLESS_MS_MAX) * OS_TICKS_PER_SEC / 1000)
 
 /**
  * Idle operating system task, runs when no other tasks are running.
