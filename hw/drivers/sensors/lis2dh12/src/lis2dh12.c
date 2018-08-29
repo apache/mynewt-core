@@ -380,6 +380,66 @@ lis2dh12_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
 }
 
 /**
+ * Write byte to sensor over different interfaces
+ *
+ * @param The sensor interface
+ * @param The register address to write to
+ * @param The value to write
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+lis2dh12_write8(struct sensor_itf *itf, uint8_t reg, uint8_t value)
+{
+    int rc;
+
+    rc = sensor_itf_lock(itf, MYNEWT_VAL(LIS2DH12_ITF_LOCK_TMO));
+    if (rc) {
+        return rc;
+    }
+
+    if (itf->si_type == SENSOR_ITF_I2C) {
+        rc = lis2dh12_i2c_writelen(itf, reg, &value, 1);
+    } else {
+        rc = lis2dh12_spi_writelen(itf, reg, &value, 1);
+    }
+
+    sensor_itf_unlock(itf);
+
+    return rc;
+}
+
+/**
+ * Read single register from LIS2DH12 sensor over different interfaces
+ *
+ * @param interface to use
+ * @param register address
+ * @param pinter to register data
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+lis2dh12_read8(struct sensor_itf *itf, uint8_t addr, uint8_t *reg)
+{
+    int rc;
+
+    rc = sensor_itf_lock(itf, MYNEWT_VAL(LIS2DH12_ITF_LOCK_TMO));
+    if (rc) {
+        return rc;
+    }
+
+    if (itf->si_type == SENSOR_ITF_I2C) {
+        rc = lis2dh12_i2c_readlen(itf, addr, reg, 1);
+    } else {
+        rc = lis2dh12_spi_readlen(itf, addr, reg, 1);
+    }
+
+    sensor_itf_unlock(itf);
+
+    return rc;
+}
+
+/**
  * Reset lis2dh12
  *
  * @param The sensor interface
