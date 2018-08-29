@@ -44,3 +44,6 @@ syscfg.defs:
     LIS2DH12_CLI:
         description: 'Enable shell support for the LIS2DH12'
         value: 0
+    LIS2DH12_NOTIF_STATS:
+        description: 'Enable notification stats'
+        value: 1

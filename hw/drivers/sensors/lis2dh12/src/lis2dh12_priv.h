@@ -178,6 +178,8 @@ int lis2dh12_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload, ui
 int lis2dh12_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload, uint8_t len);
 int lis2dh12_write8(struct sensor_itf *itf, uint8_t reg, uint8_t value);
 int lis2dh12_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value);
+int lis2dh12_get_data(struct sensor_itf *itf, uint8_t fs, int16_t *x, int16_t *y, int16_t *z);
+int lis2dh12_get_fs(struct sensor_itf *itf, uint8_t *fs);
 
 #ifdef __cplusplus
 }
