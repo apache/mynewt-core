@@ -77,6 +77,44 @@ extern "C" {
 #define LIS2DH12_FS_8G                          0x20
 #define LIS2DH12_FS_16G                         0x30
 
+#define LIS2DH12_CLICK_SRC_IA               (1 << 6)
+#define LIS2DH12_CLICK_SRC_DCLICK           (1 << 5)
+#define LIS2DH12_CLICK_SRC_SCLICK           (1 << 4)
+#define LIS2DH12_CLICK_SRC_SIGN             (1 << 3)
+#define LIS2DH12_CLICK_SRC_Z                (1 << 2)
+#define LIS2DH12_CLICK_SRC_Y                (1 << 1)
+#define LIS2DH12_CLICK_SRC_X                (1 << 0)
+
+#define LIS2DH12_CTRL_REG6_I2_CLICK         (1 << 7)
+#define LIS2DH12_CTRL_REG6_I2_IA1           (1 << 6)
+#define LIS2DH12_CTRL_REG6_I2_IA2           (1 << 5)
+#define LIS2DH12_CTRL_REG6_I2_BOOT          (1 << 4)
+#define LIS2DH12_CTRL_REG6_I2_ACT           (1 << 3)
+#define LIS2DH12_CTRL_REG6_INT_POLARITY     (1 << 1)
+
+#define LIS2DH12_INT1_IA                    (1 << 5)
+#define LIS2DH12_INT1_ZH                    (1 << 5)
+#define LIS2DH12_INT1_ZL                    (1 << 4)
+#define LIS2DH12_INT1_YH                    (1 << 3)
+#define LIS2DH12_INT1_YL                    (1 << 2)
+#define LIS2DH12_INT1_XH                    (1 << 1)
+#define LIS2DH12_INT1_XL                    (1 << 0)
+
+#define LIS2DH12_INT2_IA                    (1 << 5)
+#define LIS2DH12_INT2_ZH                    (1 << 5)
+#define LIS2DH12_INT2_ZL                    (1 << 4)
+#define LIS2DH12_INT2_YH                    (1 << 3)
+#define LIS2DH12_INT2_YL                    (1 << 2)
+#define LIS2DH12_INT2_XH                    (1 << 1)
+#define LIS2DH12_INT2_XL                    (1 << 0)
+
+#define LIS2DH12_CTRL_REG3_I1_CLICK         (1 << 7)
+#define LIS2DH12_CTRL_REG3_I1_IA1           (1 << 6)
+#define LIS2DH12_CTRL_REG3_I1_IA2           (1 << 5)
+#define LIS2DH12_CTRL_REG3_I1_ZYXDA         (1 << 4)
+#define LIS2DH12_CTRL_REG3_I1_WTM           (1 << 2)
+#define LIS2DH12_CTRL_REG3_I1_OVERRUN       (1 << 1)
+
 struct lis2dh12_cfg {
     uint8_t lc_rate;
     uint8_t lc_fs;
