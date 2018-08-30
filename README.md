@@ -23,6 +23,10 @@
 
 ## Overview
 
+[![Build/Test](https://img.shields.io/travis/apache/mynewt-core/master.svg?label=travis-ci)][travis]
+
+[travis]: https://travis-ci.org/apache/mynewt-core
+
 Apache Mynewt is an open-source operating system for tiny embedded devices.
 Its goal is to make it easy to develop applications for microcontroller
 environments where power and cost are driving factors.
