@@ -37,6 +37,10 @@ syscfg.defs:
     OS_CRASH_STACKTRACE:
         description: 'Attempt to print stack trace when system crashes.'
         value: 0
+    OS_WATCHDOG_MONITOR:
+        description: >
+            'Attempt to capture state of stuck system before HW watchdog fires.'
+        value: 0
     OS_SYSVIEW:
         description: 'Enable OS sysview tracing'
         value: 0

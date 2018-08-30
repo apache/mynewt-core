@@ -47,6 +47,17 @@ uint32_t g_os_idle_ctr;
 static struct os_task os_main_task;
 OS_TASK_STACK_DEFINE(os_main_stack, OS_MAIN_STACK_SIZE);
 
+#if MYNEWT_VAL(OS_WATCHDOG_MONITOR)
+
+/*
+ * This should fire just before hal watchdog would.
+ * The timer fires 2 seconds before hardware watchdog; adjust this if
+ * more time is needed to write the corefile.
+ */
+#define OS_WDOG_MONITOR_TMO     ((MYNEWT_VAL(WATCHDOG_INTERVAL) - 2000) * 1000)
+static struct hal_timer os_wdog_monitor;
+#endif
+
 /* Default zero.  Set by the architecture specific code when os is started.
  */
 int g_os_started;
@@ -75,6 +86,10 @@ os_idle_task(void *arg)
     sanity_last = 0;
 
     hal_watchdog_tickle();
+#if MYNEWT_VAL(OS_WATCHDOG_MONITOR)
+    os_cputime_timer_stop(&os_wdog_monitor);
+    os_cputime_timer_relative(&os_wdog_monitor, OS_WDOG_MONITOR_TMO);
+#endif
 
     while (1) {
         ++g_os_idle_ctr;
@@ -84,6 +99,10 @@ os_idle_task(void *arg)
             os_sanity_run();
             /* Tickle the watchdog after successfully running sanity */
             hal_watchdog_tickle();
+#if MYNEWT_VAL(OS_WATCHDOG_MONITOR)
+            os_cputime_timer_stop(&os_wdog_monitor);
+            os_cputime_timer_relative(&os_wdog_monitor, OS_WDOG_MONITOR_TMO);
+#endif
             sanity_last = now;
         }
 
@@ -141,6 +160,19 @@ os_main(void *arg)
     assert(0);
 }
 
+#if MYNEWT_VAL(OS_WATCHDOG_MONITOR)
+static void
+os_wdog_monitor_tmo(void *arg)
+{
+    /*
+     * Hardware watchdog about to fire.
+     * Stop in debugger/coredump/fault printout.
+     */
+    assert(0);
+    while(1);
+}
+#endif
+
 void
 os_init_idle_task(void)
 {
@@ -159,6 +191,11 @@ os_init_idle_task(void)
 
     rc = hal_watchdog_init(MYNEWT_VAL(WATCHDOG_INTERVAL));
     assert(rc == 0);
+
+#if MYNEWT_VAL(OS_WATCHDOG_MONITOR)
+    os_cputime_timer_init(&os_wdog_monitor, os_wdog_monitor_tmo, NULL);
+    os_cputime_timer_relative(&os_wdog_monitor, OS_WDOG_MONITOR_TMO);
+#endif
 }
 
 void
