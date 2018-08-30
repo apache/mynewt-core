@@ -648,6 +648,7 @@ sensor_mgr_init(void)
 {
     struct os_timeval ostv;
     struct os_timezone ostz;
+    int rc;
 
 #ifdef MYNEWT_VAL_SENSOR_MGR_EVQ
     sensor_mgr_evq_set(MYNEWT_VAL(SENSOR_MGR_EVQ));
@@ -655,10 +656,11 @@ sensor_mgr_init(void)
     sensor_mgr_evq_set(os_eventq_dflt_get());
 #endif
 
-    os_mempool_init(&sensor_notify_evt_pool,
-                    MYNEWT_VAL(SENSOR_NOTIF_EVENTS_MAX),
-                    sizeof(struct sensor_notify_os_ev), sensor_notify_evt_area,
-                    "sensor_notif_evts");
+    rc = os_mempool_init(&sensor_notify_evt_pool,
+                         MYNEWT_VAL(SENSOR_NOTIF_EVENTS_MAX),
+                         sizeof(struct sensor_notify_os_ev), sensor_notify_evt_area,
+                         "sensor_notif_evts");
+    assert(rc == OS_OK);
 
     /**
      * Initialize sensor polling callout and set it to fire on boot.
