@@ -570,7 +570,6 @@ sensor_cmd_read(char *name, sensor_type_t type, struct sensor_poll_data *spd)
     }
 
 err:
-    os_sem_release(&g_sensor_shell_sem);
 
     g_sensor_shell_num_entries = 0;
 
