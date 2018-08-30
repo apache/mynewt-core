@@ -29,7 +29,7 @@ pkg.deps:
     - "@apache-mynewt-core/kernel/os"
     - "@apache-mynewt-core/mgmt/mgmt"
     - "@apache-mynewt-core/mgmt/newtmgr"
-    - "@apache-mynewt-core/net/nimble/host"
+    - "@apache-mynewt-nimble/nimble/host"
 
 pkg.init:
     newtmgr_ble_pkg_init: 501
