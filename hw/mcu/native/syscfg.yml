@@ -68,6 +68,3 @@ syscfg.defs:
         description: 'Priority of native UART poller task.'
         type: task_priority
         value: 0
-
-syscfg.vals:
-    OS_IDLE_TICKLESS_MS_MIN: 1
