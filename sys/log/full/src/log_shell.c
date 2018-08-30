@@ -35,6 +35,9 @@
 #endif
 #include "shell/shell.h"
 #include "console/console.h"
+#if MYNEWT_VAL(LOG_VERSION) > 2
+#include "tinycbor/cbor_mbuf_reader.h"
+#endif
 
 static int
 shell_log_dump_entry(struct log *log, struct log_offset *log_offset,
@@ -43,9 +46,47 @@ shell_log_dump_entry(struct log *log, struct log_offset *log_offset,
     char data[128];
     int dlen;
     int rc;
+#if MYNEWT_VAL(LOG_VERSION) > 2
+    struct cbor_mbuf_reader reader;
+    struct CborParser parser;
+    struct CborValue value;
+    struct os_mbuf *om;
+#endif
 
     dlen = min(len, 128);
 
+#if MYNEWT_VAL(LOG_VERSION) > 2
+    /* Type defined log */
+    switch (ueh.ue_etype) {
+    case LOG_ETYPE_STRING:
+        rc = log_read(log, dptr, data, sizeof(ueh), dlen);
+        if (rc < 0) {
+            return rc;
+        }
+
+        data[rc] = 0;
+
+        console_printf("[%llu] %s\n", ueh.ue_ts, data);
+
+        break;
+    case LOG_ETYPE_CBOR:
+        om = os_msys_get_pkthdr(0, 0);
+
+        log_read_mbuf(log, dptr, om, sizeof(ueh), dlen);
+        if (rc < 0) {
+            return rc;
+        }
+
+        cbor_mbuf_reader_init(&reader, om, 0);
+        cbor_parser_init(&reader.r, 0, &parser, &value);
+        cbor_value_to_pretty(stdout, &value);
+        console_printf("\n");
+        os_mbuf_free_chain(om);
+
+        break;
+    }
+#else
+    /* String type log */
     rc = log_read_body(log, dptr, data, 0, dlen);
     if (rc < 0) {
         return rc;
@@ -53,6 +94,7 @@ shell_log_dump_entry(struct log *log, struct log_offset *log_offset,
     data[rc] = 0;
 
     console_printf("[%llu] %s\n", ueh->ue_ts, data);
+#endif
 
     return 0;
 }
