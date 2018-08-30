@@ -94,8 +94,13 @@ struct hal_i2c_master_data {
      * writing a 0x81 in its protocol, you would pass
      * only the top 7-bits to this function as 0x40
      */
-    uint8_t  address
-    /** Number of buffer bytes to transmit or receive */;
+    uint8_t  address;
+    /**
+     * Total number of times to attempt the I2C operation.  A retry is
+     * attempted when an unexpected NACK is received.
+     */
+    uint8_t  retries;
+    /** Number of buffer bytes to transmit or receive */
     uint16_t len;
     /** Buffer space to hold the transmit or receive */
     uint8_t *buffer;
@@ -146,7 +151,7 @@ int hal_i2c_master_write(uint8_t i2c_num, struct hal_i2c_master_data *pdata,
  * @return 0 on success, and non-zero error code on failure
  */
 int hal_i2c_master_read(uint8_t i2c_num, struct hal_i2c_master_data *pdata,
-                         uint32_t timeout, uint8_t last_op);
+                        uint32_t timeout, uint8_t last_op);
 
 /**
  * Probes the i2c bus for a device with this address.  THIS API
