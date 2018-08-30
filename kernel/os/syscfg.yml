@@ -114,6 +114,15 @@ syscfg.defs:
             on error detection.  Enabling this setting increases stack usage.
         value: 0
 
+    OS_IDLE_TICKLESS_MS_MIN:
+        description: >
+            Minimum duration of tickless idle period in miliseconds.
+        value: 100
+    OS_IDLE_TICKLESS_MS_MAX:
+        description: >
+            Maximum duration of tickless idle period in miliseconds.
+        value: 600000
+
 syscfg.vals.OS_DEBUG_MODE:
     OS_CRASH_STACKTRACE: 1
     OS_CTX_SW_STACK_CHECK: 1
