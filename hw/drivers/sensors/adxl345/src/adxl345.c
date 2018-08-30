@@ -118,6 +118,7 @@ adxl345_i2c_write8(struct sensor_itf *itf, uint8_t reg, uint8_t value)
     
     struct hal_i2c_master_data data_struct = {
         .address = itf->si_addr,
+        .retries = MYNEWT_VAL(ADXL345_I2C_RETRIES),
         .len = 2,
         .buffer = payload
     };
@@ -151,6 +152,7 @@ adxl345_i2c_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
 
     struct hal_i2c_master_data data_struct = {
         .address = itf->si_addr,
+        .retries = MYNEWT_VAL(ADXL345_I2C_RETRIES),
         .len = 1,
         .buffer = &reg
     };
@@ -196,6 +198,7 @@ adxl345_i2c_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer, uint8_
 
     struct hal_i2c_master_data data_struct = {
         .address = itf->si_addr,
+        .retries = MYNEWT_VAL(ADXL345_I2C_RETRIES),
         .len = 1,
         .buffer = &reg
     };

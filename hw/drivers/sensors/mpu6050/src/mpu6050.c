@@ -78,6 +78,7 @@ mpu6050_write8(struct sensor_itf *itf, uint8_t reg, uint32_t value)
 
     struct hal_i2c_master_data data_struct = {
         .address = itf->si_addr,
+        .retries = MYNEWT_VAL(MPU6050_I2C_RETRIES),
         .len = 2,
         .buffer = payload
     };
@@ -118,6 +119,7 @@ mpu6050_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
 
     struct hal_i2c_master_data data_struct = {
         .address = itf->si_addr,
+        .retries = MYNEWT_VAL(MPU6050_I2C_RETRIES),
         .len = 1,
         .buffer = &reg
     };
@@ -169,6 +171,7 @@ mpu6050_read48(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer)
 
     struct hal_i2c_master_data data_struct = {
         .address = itf->si_addr,
+        .retries = MYNEWT_VAL(MPU6050_I2C_RETRIES),
         .len = 1,
         .buffer = &reg
     };

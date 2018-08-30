@@ -75,6 +75,7 @@ drv2605_write8(struct sensor_itf *itf, uint8_t reg, uint8_t value)
 
     struct hal_i2c_master_data data_struct = {
         .address = itf->si_addr,
+        .retries = MYNEWT_VAL(DRV2605_I2C_RETRIES),
         .len = 2,
         .buffer = payload
     };
@@ -118,6 +119,7 @@ drv2605_writelen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
 
     struct hal_i2c_master_data data_struct = {
         .address = itf->si_addr,
+        .retries = MYNEWT_VAL(DRV2605_I2C_RETRIES),
         .len = len + 1,
         .buffer = payload
     };
@@ -167,6 +169,7 @@ drv2605_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
 
     struct hal_i2c_master_data data_struct = {
         .address = itf->si_addr,
+        .retries = MYNEWT_VAL(DRV2605_I2C_RETRIES),
         .len = 1,
         .buffer = &payload
     };
@@ -229,6 +232,7 @@ drv2605_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
 
     struct hal_i2c_master_data data_struct = {
         .address = itf->si_addr,
+        .retries = MYNEWT_VAL(DRV2605_I2C_RETRIES),
         .len = 1,
         .buffer = payload
     };

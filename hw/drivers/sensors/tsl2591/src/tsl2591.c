@@ -79,6 +79,7 @@ tsl2591_write8(struct sensor_itf *itf, uint8_t reg, uint32_t value)
 
     struct hal_i2c_master_data data_struct = {
         .address = itf->si_addr,
+        .retries = MYNEWT_VAL(TSL2591_I2C_RETRIES),
         .len = 2,
         .buffer = payload
     };
@@ -110,6 +111,7 @@ tsl2591_write16(struct sensor_itf *itf, uint8_t reg, uint16_t value)
 
     struct hal_i2c_master_data data_struct = {
         .address = itf->si_addr,
+        .retries = MYNEWT_VAL(TSL2591_I2C_RETRIES),
         .len = 3,
         .buffer = payload
     };
@@ -141,6 +143,7 @@ tsl2591_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
 
     struct hal_i2c_master_data data_struct = {
         .address = itf->si_addr,
+        .retries = MYNEWT_VAL(TSL2591_I2C_RETRIES),
         .len = 1,
         .buffer = &payload
     };
@@ -184,6 +187,7 @@ tsl2591_read16(struct sensor_itf *itf, uint8_t reg, uint16_t *value)
 
     struct hal_i2c_master_data data_struct = {
         .address = itf->si_addr,
+        .retries = MYNEWT_VAL(TSL2591_I2C_RETRIES),
         .len = 1,
         .buffer = payload
     };

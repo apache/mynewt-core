@@ -80,6 +80,7 @@ bno055_write8(struct sensor_itf *itf, uint8_t reg, uint8_t value)
 
     struct hal_i2c_master_data data_struct = {
         .address = itf->si_addr,
+        .retries = MYNEWT_VAL(BNO055_I2C_RETRIES),
         .len = 2,
         .buffer = payload
     };
@@ -115,6 +116,7 @@ bno055_writelen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
 
     struct hal_i2c_master_data data_struct = {
         .address = itf->si_addr,
+        .retries = MYNEWT_VAL(BNO055_I2C_RETRIES),
         .len = 1,
         .buffer = payload
     };
@@ -171,6 +173,7 @@ bno055_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
 
     struct hal_i2c_master_data data_struct = {
         .address = itf->si_addr,
+        .retries = MYNEWT_VAL(BNO055_I2C_RETRIES),
         .len = 1,
         .buffer = &payload
     };
@@ -228,6 +231,7 @@ bno055_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
 
     struct hal_i2c_master_data data_struct = {
         .address = itf->si_addr,
+        .retries = MYNEWT_VAL(BNO055_I2C_RETRIES),
         .len = 1,
         .buffer = payload
     };

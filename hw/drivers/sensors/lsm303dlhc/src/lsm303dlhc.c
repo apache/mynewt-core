@@ -99,6 +99,7 @@ lsm303dlhc_write8(struct sensor_itf *itf, uint8_t addr, uint8_t reg,
 
     struct hal_i2c_master_data data_struct = {
         .address = addr,
+        .retries = MYNEWT_VAL(LSM303DLHC_I2C_RETRIES),
         .len = 2,
         .buffer = payload
     };
@@ -141,6 +142,7 @@ lsm303dlhc_read8(struct sensor_itf *itf, uint8_t addr, uint8_t reg,
 
     struct hal_i2c_master_data data_struct = {
         .address = addr,
+        .retries = MYNEWT_VAL(LSM303DLHC_I2C_RETRIES),
         .len = 1,
         .buffer = &payload
     };
@@ -196,6 +198,7 @@ lsm303dlhc_read48(struct sensor_itf *itf, uint8_t addr, uint8_t reg,
 
     struct hal_i2c_master_data data_struct = {
         .address = addr,
+        .retries = MYNEWT_VAL(LSM303DLHC_I2C_RETRIES),
         .len = 1,
         .buffer = payload
     };

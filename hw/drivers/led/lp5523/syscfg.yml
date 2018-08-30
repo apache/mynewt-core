@@ -39,3 +39,8 @@ syscfg.defs:
     LP5523_LOG_MODULE:
         description: 'Numeric module ID to use for LP5523 log messages'
         value: 105
+    LP5523_I2C_RETRIES:
+        description: >
+            Number of retries to use for failed I2C communication.  A retry is
+            used when the LP5523 sends an unexpected NACK.
+        value: 2

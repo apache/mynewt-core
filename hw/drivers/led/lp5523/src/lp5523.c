@@ -57,6 +57,7 @@ lp5523_set_reg(struct led_itf *itf, enum lp5523_registers addr,
 
     struct hal_i2c_master_data data_struct = {
         .address = itf->li_addr,
+        .retries = MYNEWT_VAL(LP5523_I2C_RETRIES),
         .len = 2,
         .buffer = payload
     };
@@ -71,8 +72,9 @@ lp5523_set_reg(struct led_itf *itf, enum lp5523_registers addr,
 
     if (rc) {
         LP5523_LOG(ERROR,
-                   "Failed to write to 0x%02X:0x%02X with value 0x%02X\n",
-                   itf->li_addr, addr, value);
+                   "Failed to write to 0x%02X:0x%02X with value 0x%02X "
+                   "(rc=%d)\n",
+                   itf->li_addr, addr, value, rc);
         STATS_INC(g_lp5523stats, read_errors);
     }
 
@@ -89,6 +91,7 @@ lp5523_get_reg(struct led_itf *itf, enum lp5523_registers addr,
 
     struct hal_i2c_master_data data_struct = {
         .address = itf->li_addr,
+        .retries = MYNEWT_VAL(LP5523_I2C_RETRIES),
         .len = 1,
         .buffer = &addr
     };
@@ -135,6 +138,7 @@ lp5523_set_n_regs(struct led_itf *itf, enum lp5523_registers addr,
 
     struct hal_i2c_master_data data_struct = {
         .address = itf->li_addr,
+        .retries = MYNEWT_VAL(LP5523_I2C_RETRIES),
         .len = len + 1,
         .buffer = regs
     };
@@ -172,6 +176,7 @@ lp5523_get_n_regs(struct led_itf *itf, enum lp5523_registers addr,
 
     struct hal_i2c_master_data data_struct = {
         .address = itf->li_addr,
+        .retries = MYNEWT_VAL(LP5523_I2C_RETRIES),
         .len = 1,
         .buffer = &addr_b
     };

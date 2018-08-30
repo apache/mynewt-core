@@ -326,6 +326,7 @@ ms5840_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
 
     struct hal_i2c_master_data data_struct = {
         .address = itf->si_addr,
+        .retries = MYNEWT_VAL(MS5840_I2C_RETRIES),
         .len = 1,
         .buffer = &addr
     };
@@ -368,6 +369,7 @@ ms5840_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
 
     struct hal_i2c_master_data data_struct = {
         .address = itf->si_addr,
+        .retries = MYNEWT_VAL(MS5840_I2C_RETRIES),
         .len = 1,
         .buffer = payload
     };
