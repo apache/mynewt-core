@@ -62,6 +62,23 @@ extern "C" {
  *      :c:func:`hal_i2c_read()`; --- read back data, setting 'last_op' to '1'
  */
 
+/*** I2C status codes (0=success). */
+
+/** Unknown error. */
+#define HAL_I2C_ERR_UNKNOWN             1
+
+/** Invalid argument. */
+#define HAL_I2C_ERR_INVAL               2
+
+/** MCU failed to report result of I2C operation. */
+#define HAL_I2C_ERR_TIMEOUT             3
+
+/** Slave responded to address with NACK. */
+#define HAL_I2C_ERR_ADDR_NACK           4
+
+/** Slave responded to data byte with NACK. */
+#define HAL_I2C_ERR_DATA_NACK           5
+
 /**
  * When sending a packet, use this structure to pass the arguments.
  */
