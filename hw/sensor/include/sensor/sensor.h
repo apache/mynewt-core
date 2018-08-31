@@ -1078,6 +1078,13 @@ sensor_mgr_put_read_evt(void *arg);
  */
 char*
 sensor_ftostr(float, char *, int);
+
+/**
+ * API to register sensor shell
+ */
+int
+sensor_shell_register(void);
+
 #endif
 
 #if MYNEWT_VAL(SENSOR_OIC)
