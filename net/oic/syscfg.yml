@@ -52,6 +52,10 @@ syscfg.defs:
         description: 'Enables OIC client support'
         value: '0'
 
+    OC_CLIENT_DISCOVERY_ENABLE:
+        description: 'Enables OIC discovery from client side'
+        value: '1'
+
     OC_SERVER:
         description: 'Enables OIC server support'
         value: '0'
