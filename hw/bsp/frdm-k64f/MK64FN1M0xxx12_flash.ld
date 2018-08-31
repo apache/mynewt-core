@@ -60,9 +60,8 @@ MEMORY
 {
   m_interrupts          (RX)  : ORIGIN = 0x00008000, LENGTH = 0x00000420
   m_flash_config        (RX)  : ORIGIN = 0x00008420, LENGTH = 0x00000010
-  m_text                (RX)  : ORIGIN = 0x00008430, LENGTH = 0x00100000-0x8430
-  m_data                (RW)  : ORIGIN = 0x1FFF0000, LENGTH = 0x00010000
-  m_data_2              (RW)  : ORIGIN = 0x20000000, LENGTH = 0x00030000
+  FLASH                 (RX)  : ORIGIN = 0x00008430, LENGTH = 0x00100000-0x8430
+  RAM                   (RW)  : ORIGIN = 0x1FFF0000, LENGTH = 0x00040000
 }
 
 /* Define output sections */
@@ -105,19 +104,19 @@ SECTIONS
     KEEP (*(.init))
     KEEP (*(.fini))
     . = ALIGN(4);
-  } > m_text
+  } > FLASH
 
   .ARM.extab :
   {
     *(.ARM.extab* .gnu.linkonce.armextab.*)
-  } > m_text
+  } > FLASH
 
   .ARM :
   {
     __exidx_start = .;
     *(.ARM.exidx*)
     __exidx_end = .;
-  } > m_text
+  } > FLASH
 
  .ctors :
   {
@@ -141,7 +140,7 @@ SECTIONS
     KEEP (*(SORT(.ctors.*)))
     KEEP (*(.ctors))
     __CTOR_END__ = .;
-  } > m_text
+  } > FLASH
 
   .dtors :
   {
@@ -152,14 +151,14 @@ SECTIONS
     KEEP (*(SORT(.dtors.*)))
     KEEP (*(.dtors))
     __DTOR_END__ = .;
-  } > m_text
+  } > FLASH
 
   .preinit_array :
   {
     PROVIDE_HIDDEN (__preinit_array_start = .);
     KEEP (*(.preinit_array*))
     PROVIDE_HIDDEN (__preinit_array_end = .);
-  } > m_text
+  } > FLASH
 
   .init_array :
   {
@@ -167,7 +166,7 @@ SECTIONS
     KEEP (*(SORT(.init_array.*)))
     KEEP (*(.init_array*))
     PROVIDE_HIDDEN (__init_array_end = .);
-  } > m_text
+  } > FLASH
 
   .fini_array :
   {
@@ -175,7 +174,7 @@ SECTIONS
     KEEP (*(SORT(.fini_array.*)))
     KEEP (*(.fini_array*))
     PROVIDE_HIDDEN (__fini_array_end = .);
-  } > m_text
+  } > FLASH
 
   __etext = .;    /* define a global symbol at end of code */
   __DATA_ROM = .; /* Symbol is used by startup for data initialization */
@@ -189,7 +188,7 @@ SECTIONS
     . += M_VECTOR_RAM_SIZE;
     . = ALIGN(4);
     __interrupts_ram_end__ = .; /* Define a global symbol at data end */
-  } > m_data
+  } > RAM
 
   __VECTOR_RAM = DEFINED(__ram_vector_table__) ? __VECTOR_RAM__ : ORIGIN(m_interrupts);
   __RAM_VECTOR_TABLE_SIZE_BYTES = DEFINED(__ram_vector_table__) ? (__interrupts_ram_end__ - __interrupts_ram_start__) : 0x0;
@@ -204,11 +203,11 @@ SECTIONS
     KEEP(*(.jcr*))
     . = ALIGN(4);
     __data_end__ = .;        /* define a global symbol at data end */
-  } > m_data
+  } > RAM
 
   __DATA_END = __DATA_ROM + (__data_end__ - __data_start__);
-  text_end = ORIGIN(m_text) + LENGTH(m_text);
-  ASSERT(__DATA_END <= text_end, "region m_text overflowed with text and data")
+  text_end = ORIGIN(FLASH) + LENGTH(FLASH);
+  ASSERT(__DATA_END <= text_end, "region FLASH overflowed with text and data")
 
   USB_RAM_GAP = DEFINED(__usb_ram_size__) ? __usb_ram_size__ : 0x800;
   /* Uninitialized data section */
@@ -227,7 +226,7 @@ SECTIONS
     . = ALIGN(4);
     __bss_end__ = .;
     __END_BSS = .;
-  } > m_data
+  } > RAM
 
   .heap :
   {
@@ -239,13 +238,13 @@ SECTIONS
     . += HEAP_SIZE;
     __HeapLimit = .;
     __heap_limit = .; /* Add for _sbrk */
-  } > m_data_2
+  } > RAM
 
   .stack :
   {
     . = ALIGN(8);
     . += STACK_SIZE;
-  } > m_data_2
+  } > RAM
 
   m_usb_bdt USB_RAM_START (NOLOAD) :
   {
@@ -259,11 +258,11 @@ SECTIONS
   }
 
   /* Initializes stack on the end of block */
-  __StackTop   = ORIGIN(m_data_2) + LENGTH(m_data_2);
+  __StackTop   = ORIGIN(RAM) + LENGTH(RAM);
   __StackLimit = __StackTop - STACK_SIZE;
   PROVIDE(__stack = __StackTop);
 
   .ARM.attributes 0 : { *(.ARM.attributes) }
 
-  ASSERT(__StackLimit >= __HeapLimit, "region m_data_2 overflowed with stack and heap")
+  ASSERT(__StackLimit >= __HeapLimit, "region RAM overflowed")
 }
