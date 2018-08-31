@@ -472,6 +472,11 @@ hal_uart_close(int port)
 #endif
 
     u->u_open = 0;
+    if (u->u_tx_started) {
+        while (nrf_uart->EVENTS_ENDTX == 0) {
+            /* Wait here until the dma is finished */
+        }
+    }
     nrf_uart->ENABLE = 0;
     nrf_uart->INTENCLR = 0xffffffff;
     return 0;
