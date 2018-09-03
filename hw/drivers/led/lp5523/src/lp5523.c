@@ -310,26 +310,35 @@ int
 lp5523_set_output_on(struct led_itf *itf, uint8_t output, uint8_t on)
 {
     int rc;
-    uint16_t outputs;
+    uint8_t reg_addr;
+    uint8_t reg;
+    uint8_t shamt;
 
     if ((output < 1) || (output > 9)) {
         rc = -1;
         goto err;
     }
 
-    rc = lp5523_get_bitfield(itf, LP5523_OUTPUT_CTRL_MSB,
-                             &outputs);
+    if (output < 9) {
+        reg_addr = LP5523_OUTPUT_CTRL_LSB;
+        shamt = output - 1;
+    } else {
+        reg_addr = LP5523_OUTPUT_CTRL_MSB;
+        shamt = output - 9;
+    }
+
+    rc = lp5523_get_reg(itf, reg_addr, &reg);
     if (rc) {
         goto err;
     }
 
     if (!on) {
-        outputs &= ~(0x1 << (output - 1));
+        reg &= ~(0x01 << (shamt));
     } else {
-        outputs |= (0x1 << (output - 1));
+        reg |= (0x01 << (shamt));
     }
 
-    rc = lp5523_set_bitfield(itf, LP5523_OUTPUT_CTRL_MSB, outputs);
+    rc = lp5523_set_reg(itf, reg_addr, reg);
     if (rc) {
         goto err;
     }
