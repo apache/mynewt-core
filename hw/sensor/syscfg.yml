@@ -25,7 +25,7 @@ syscfg.defs:
 
     SENSOR_OIC:
         description: 'Enable/Disable the OIC sensor server'
-        value: 1
+        value: 0
         restrictions:
             - OC_SERVER
 
