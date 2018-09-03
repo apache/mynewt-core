@@ -139,7 +139,7 @@ lp5523_set_n_regs(struct led_itf *itf, enum lp5523_registers addr,
         .buffer = regs
     };
 
-    memcpy(regs, vals, len + 1);
+    memcpy(regs + 1, vals, len);
 
     regs[0] = addr;
 
