@@ -295,7 +295,7 @@ bq27x561_wr_alt_mfg_cmd(struct bq27z561 *dev, uint16_t cmd, uint8_t *buf,
 
     rc = hal_i2c_master_write(dev->bq27_itf.itf_num, &i2c, OS_TICKS_PER_SEC, 1);
     if (rc != 0) {
-        BQ27Z561_LOG(ERROR, "I2C reg read (wr) failed 0x%02X\n", reg);
+        BQ27Z561_LOG(ERROR, "I2C reg read (wr) failed 0x%02X\n", tmpbuf[0]);
         rc = BQ27Z561_ERR_I2C_ERR;
     }
 
@@ -334,7 +334,7 @@ bq27x561_rd_alt_mfg_cmd(struct bq27z561 *dev, uint16_t cmd, uint8_t *val,
 
     rc = hal_i2c_master_write(dev->bq27_itf.itf_num, &i2c, OS_TICKS_PER_SEC, 1);
     if (rc != 0) {
-        BQ27Z561_LOG(ERROR, "I2C reg read (wr) failed 0x%02X\n", reg);
+        BQ27Z561_LOG(ERROR, "I2C reg read (wr) failed 0x%02X\n", tmpbuf[0]);
         rc = BQ27Z561_ERR_I2C_ERR;
         bq27z561_itf_unlock(&dev->bq27_itf);
         goto err;
@@ -346,7 +346,7 @@ bq27x561_rd_alt_mfg_cmd(struct bq27z561 *dev, uint16_t cmd, uint8_t *val,
 
     rc = hal_i2c_master_write(dev->bq27_itf.itf_num, &i2c, OS_TICKS_PER_SEC, 0);
     if (rc != 0) {
-        BQ27Z561_LOG(ERROR, "I2C reg read (wr) failed 0x%02X\n", reg);
+        BQ27Z561_LOG(ERROR, "I2C reg read (wr) failed 0x%02X\n", tmpbuf[0]);
         rc = BQ27Z561_ERR_I2C_ERR;
         bq27z561_itf_unlock(&dev->bq27_itf);
         goto err;
@@ -356,7 +356,7 @@ bq27x561_rd_alt_mfg_cmd(struct bq27z561 *dev, uint16_t cmd, uint8_t *val,
     i2c.buffer = tmpbuf;
     rc = hal_i2c_master_read(dev->bq27_itf.itf_num, &i2c, OS_TICKS_PER_SEC, 1);
     if (rc != 0) {
-        BQ27Z561_LOG(ERROR, "I2C reg read (rd) failed 0x%02X\n", reg);
+        BQ27Z561_LOG(ERROR, "I2C reg read (rd) failed 0x%02X\n", tmpbuf[0]);
         rc = BQ27Z561_ERR_I2C_ERR;
         bq27z561_itf_unlock(&dev->bq27_itf);
         goto err;
@@ -437,7 +437,7 @@ bq27x561_rd_flash(struct bq27z561 *dev, uint16_t addr, uint8_t *buf, int buflen)
 
     rc = hal_i2c_master_write(dev->bq27_itf.itf_num, &i2c, OS_TICKS_PER_SEC, 1);
     if (rc != 0) {
-        BQ27Z561_LOG(ERROR, "I2C reg read (wr) failed 0x%02X\n", reg);
+        BQ27Z561_LOG(ERROR, "I2C reg read (wr) failed 0x%02X\n", tmpbuf[0]);
         rc = BQ27Z561_ERR_I2C_ERR;
         bq27z561_itf_unlock(&dev->bq27_itf);
         goto err;
@@ -449,7 +449,7 @@ bq27x561_rd_flash(struct bq27z561 *dev, uint16_t addr, uint8_t *buf, int buflen)
 
     rc = hal_i2c_master_write(dev->bq27_itf.itf_num, &i2c, OS_TICKS_PER_SEC, 0);
     if (rc != 0) {
-        BQ27Z561_LOG(ERROR, "I2C reg read (wr) failed 0x%02X\n", reg);
+        BQ27Z561_LOG(ERROR, "I2C reg read (wr) failed 0x%02X\n", tmpbuf[0]);
         rc = BQ27Z561_ERR_I2C_ERR;
         bq27z561_itf_unlock(&dev->bq27_itf);
         goto err;
@@ -459,7 +459,7 @@ bq27x561_rd_flash(struct bq27z561 *dev, uint16_t addr, uint8_t *buf, int buflen)
     i2c.buffer = tmpbuf;
     rc = hal_i2c_master_read(dev->bq27_itf.itf_num, &i2c, OS_TICKS_PER_SEC, 1);
     if (rc != 0) {
-        BQ27Z561_LOG(ERROR, "I2C reg read (rd) failed 0x%02X\n", reg);
+        BQ27Z561_LOG(ERROR, "I2C reg read (rd) failed 0x%02X\n", tmpbuf[0]);
         rc = BQ27Z561_ERR_I2C_ERR;
         bq27z561_itf_unlock(&dev->bq27_itf);
         goto err;
@@ -471,8 +471,8 @@ bq27x561_rd_flash(struct bq27z561 *dev, uint16_t addr, uint8_t *buf, int buflen)
     addr_read = tmpbuf[0];
     addr_read |= ((uint16_t)tmpbuf[1]) << 8;
     if (addr_read != addr) {
-        BQ27Z561_LOG(ERROR, "addr mismatch (addr_read=%x addr_ret=%x\n", cmd,
-                        cmd_read);
+        BQ27Z561_LOG(ERROR, "addr mismatch (addr_read=%x addr_ret=%x\n", addr_read,
+                        addr);
         rc = BQ27Z561_ERR_FLASH_ADDR_MISMATCH;
         goto err;
     }
@@ -518,7 +518,7 @@ bq27x561_wr_flash(struct bq27z561 *dev, uint16_t addr, uint8_t *buf, int buflen)
 
     rc = hal_i2c_master_write(dev->bq27_itf.itf_num, &i2c, OS_TICKS_PER_SEC, 1);
     if (rc != 0) {
-        BQ27Z561_LOG(ERROR, "I2C reg read (wr) failed 0x%02X\n", reg);
+        BQ27Z561_LOG(ERROR, "I2C reg read (wr) failed 0x%02X\n", tmpbuf[0]);
         rc = BQ27Z561_ERR_I2C_ERR;
         goto err;
     }
@@ -535,7 +535,7 @@ bq27x561_wr_flash(struct bq27z561 *dev, uint16_t addr, uint8_t *buf, int buflen)
 
     rc = hal_i2c_master_write(dev->bq27_itf.itf_num, &i2c, OS_TICKS_PER_SEC, 1);
     if (rc != 0) {
-        BQ27Z561_LOG(ERROR, "I2C reg read (wr) failed 0x%02X\n", reg);
+        BQ27Z561_LOG(ERROR, "I2C reg read (wr) failed 0x%02X\n", tmpbuf[0]);
         rc = BQ27Z561_ERR_I2C_ERR;
     }
 
