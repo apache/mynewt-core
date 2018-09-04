@@ -41,6 +41,28 @@ syscfg.defs:
         restrictions:
             - "LOG_FCB"
 
+    LOG_ASYNC_TASK_STACK_SIZE:
+        description: 'stack size for log task'
+        value: 'OS_STACK_ALIGN(128)'
+
+    LOG_ASYNC_TASK_PRIORITY:
+        description: 'newt os priority level for log task.'
+        value: '200'
+
+    LOG_ASYNC_SYNC_LOG_HANDLER:
+        description: 'Syschronous log handler to use for asynchronous logs'
+        value: log_fcb_handler
+        restrictions:
+            - $notnull
+
+    LOG_ASYNC_MEMPOL_NUM_BLOCKS:
+        description: 'Number of blocks used for asynchornous logging'
+        value: 100
+
+    LOG_ASYNC_MEMPOL_BLOCK_SIZE:
+        description: 'Blocks size used for asynchonous logging'
+        value: 64
+
     LOG_CONSOLE:
         description: 'Support logging to console.'
         value: 1
