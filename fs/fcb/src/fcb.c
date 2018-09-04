@@ -269,3 +269,50 @@ fcb_clear(struct fcb *fcb)
     }
     return rc;
 }
+
+int
+fcb_init_flash_area(struct fcb *fcb, int flash_area_id, uint8_t version)
+{
+    const struct flash_area *fa;
+    struct flash_area *fa_sectors;
+    int fa_sectors_cnt;
+    int rc;
+
+    /*
+     * We don't know how big the area is so need to check how many sectors are
+     * there and then read information about all sectors - this is needed to
+     * properly initialize FCB. Critical log is somewhat important and shall be
+     * created, so we just assert on any error.
+     *
+     * XXX Should we do something else here?
+     */
+    rc = flash_area_to_sectors(flash_area_id, &fa_sectors_cnt, NULL);
+    assert(rc == 0 && fa_sectors_cnt > 0);
+    fa_sectors = malloc(sizeof(struct flash_area) * fa_sectors_cnt);
+    assert(fa_sectors);
+    rc = flash_area_to_sectors(flash_area_id, &fa_sectors_cnt, fa_sectors);
+    assert(rc == 0 && fa_sectors_cnt > 0);
+
+    fcb->f_sectors = fa_sectors;
+    fcb->f_sector_cnt = fa_sectors_cnt;
+    fcb->f_magic = 0xDEADBEEF; /* XXX any cool value here? */
+    fcb->f_version = version;
+
+    /*
+     * Initialize log in dedicated flash area. This has to succeed since it
+     * should be in dedicated flash area and nothing should prevent us from
+     * creating log there.
+     */
+    rc = fcb_init(fcb);
+    if (rc) {
+        /* Need to erase full area here */
+        rc = flash_area_open(flash_area_id, &fa);
+        assert(rc == 0);
+
+        flash_area_erase(fa, 0, fa->fa_size);
+        rc = fcb_init(fcb);
+        assert(rc == 0);
+    }
+
+    return rc;
+}
