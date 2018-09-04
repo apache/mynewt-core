@@ -103,6 +103,7 @@ lis2dh12_i2c_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
 
     struct hal_i2c_master_data data_struct = {
         .address = itf->si_addr,
+        .retries = MYNEWT_VAL(LIS2DH12_I2C_RETRIES),
         .len = 1,
         .buffer = payload
     };
@@ -226,6 +227,7 @@ lis2dh12_i2c_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
 
     struct hal_i2c_master_data data_struct = {
         .address = itf->si_addr,
+        .retries = MYNEWT_VAL(LIS2DH12_I2C_RETRIES),
         .len = len + 1,
         .buffer = payload
     };

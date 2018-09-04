@@ -57,10 +57,9 @@ static const struct adp5061_config default_config = {
     .iend = 0x01,
 };
 
-
 #if MYNEWT_VAL(ADP5061_INT_PIN) >= 0
 /**
-* ADP5061 interrupt hanlder CB
+* ADP5061 interrupt handler CB
 * gets interrupt status and prints to console
 */
 
@@ -81,7 +80,7 @@ adp5061_event(struct os_event *ev)
 /**
 * ADP5061 interrupt handler structure
 */
-static struct os_event interrup_handler = {
+static struct os_event interrupt_handler = {
     .ev_cb = adp5061_event,
 };
 
@@ -91,7 +90,7 @@ static struct os_event interrup_handler = {
 */
 static void
 adp5061_isr(void *arg){
-    os_eventq_put(os_eventq_dflt_get(), &interrup_handler);
+    os_eventq_put(os_eventq_dflt_get(), &interrupt_handler);
 }
 #endif
 
@@ -194,6 +193,7 @@ adp5061_get_reg(struct adp5061_dev *dev, uint8_t addr, uint8_t *value)
     uint8_t payload;
     struct hal_i2c_master_data data_struct = {
         .address = dev->a_chg_ctrl.cc_itf.cci_addr,
+        .retries = MYNEWT_VAL(ADP5061_I2C_RETRIES),
         .len = 1,
         .buffer = &payload
     };
@@ -230,6 +230,7 @@ adp5061_set_reg(struct adp5061_dev *dev, uint8_t addr, uint8_t value)
     uint8_t payload[2] = { addr, value };
     struct hal_i2c_master_data data_struct = {
         .address = dev->a_chg_ctrl.cc_itf.cci_addr,
+        .retries = MYNEWT_VAL(ADP5061_I2C_RETRIES),
         .len = 2,
         .buffer = payload
     };
@@ -256,6 +257,7 @@ adp5061_set_regs(struct adp5061_dev *dev, uint8_t addr,
     uint8_t payload[1 + count];
     struct hal_i2c_master_data data_struct = {
         .address = dev->a_chg_ctrl.cc_itf.cci_addr,
+        .retries = MYNEWT_VAL(ADP5061_I2C_RETRIES),
         .len = count + 1,
         .buffer = payload
     };

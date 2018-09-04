@@ -171,6 +171,7 @@ lps33thw_i2c_set_reg(struct sensor_itf *itf, uint8_t reg, uint8_t value)
 
     struct hal_i2c_master_data data_struct = {
         .address = itf->si_addr,
+        .retries = MYNEWT_VAL(LPS33THW_I2C_RETRIES),
         .len = 2,
         .buffer = payload
     };
@@ -341,6 +342,7 @@ lps33thw_i2c_get_regs(struct sensor_itf *itf, uint8_t reg, uint8_t size,
 
     struct hal_i2c_master_data data_struct = {
         .address = itf->si_addr,
+        .retries = MYNEWT_VAL(LPS33THW_I2C_RETRIES),
         .len = 1,
         .buffer = &reg
     };

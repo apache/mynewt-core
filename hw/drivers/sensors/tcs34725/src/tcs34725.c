@@ -89,6 +89,7 @@ tcs34725_write8(struct sensor_itf *itf, uint8_t reg, uint32_t value)
 
     struct hal_i2c_master_data data_struct = {
         .address = itf->si_addr,
+        .retries = MYNEWT_VAL(TCS34725_I2C_RETRIES),
         .len = 2,
         .buffer = payload
     };
@@ -129,6 +130,7 @@ tcs34725_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
 
     struct hal_i2c_master_data data_struct = {
         .address = itf->si_addr,
+        .retries = MYNEWT_VAL(TCS34725_I2C_RETRIES),
         .len = 1,
         .buffer = &payload
     };
@@ -181,6 +183,7 @@ tcs34725_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer, uint8_t l
 
     struct hal_i2c_master_data data_struct = {
         .address = itf->si_addr,
+        .retries = MYNEWT_VAL(TCS34725_I2C_RETRIES),
         .len = 1,
         .buffer = payload
     };
@@ -242,6 +245,7 @@ tcs34725_writelen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer, uint8_t 
 
     struct hal_i2c_master_data data_struct = {
         .address = itf->si_addr,
+        .retries = MYNEWT_VAL(TCS34725_I2C_RETRIES),
         .len = 1,
         .buffer = payload
     };
@@ -973,6 +977,7 @@ tcs34725_clear_interrupt(struct sensor_itf *itf)
 
     struct hal_i2c_master_data data_struct = {
         .address = itf->si_addr,
+        .retries = MYNEWT_VAL(TCS34725_I2C_RETRIES),
         .len = 0,
         .buffer = &payload
     };

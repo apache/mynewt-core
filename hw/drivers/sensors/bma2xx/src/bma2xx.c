@@ -264,6 +264,7 @@ i2c_readlen(struct sensor_itf * itf, uint8_t addr, uint8_t *payload,
     int rc;
 
     oper.address = itf->si_addr;
+    oper.retries = MYNEWT_VAL(BMA2XX_I2C_RETRIES);
     oper.len     = 1;
     oper.buffer  = &addr;
 
@@ -275,6 +276,7 @@ i2c_readlen(struct sensor_itf * itf, uint8_t addr, uint8_t *payload,
     }
 
     oper.address = itf->si_addr;
+    oper.retries = MYNEWT_VAL(BMA2XX_I2C_RETRIES);
     oper.len     = len;
     oper.buffer  = payload;
 
@@ -300,6 +302,7 @@ i2c_writereg(struct sensor_itf * itf, uint8_t addr, uint8_t data)
     tuple[1] = data;
 
     oper.address = itf->si_addr;
+    oper.retries = MYNEWT_VAL(BMA2XX_I2C_RETRIES);
     oper.len     = 2;
     oper.buffer  = tuple;
 

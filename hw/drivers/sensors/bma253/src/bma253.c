@@ -160,6 +160,7 @@ get_register(struct bma253 * bma253,
     }
 
     oper.address = itf->si_addr;
+    oper.retries = MYNEWT_VAL(BMA253_I2C_RETRIES);
     oper.len     = 1;
     oper.buffer  = &addr;
 
@@ -171,6 +172,7 @@ get_register(struct bma253 * bma253,
     }
 
     oper.address = itf->si_addr;
+    oper.retries = MYNEWT_VAL(BMA253_I2C_RETRIES);
     oper.len     = 1;
     oper.buffer  = data;
 
@@ -200,6 +202,7 @@ get_registers(struct bma253 * bma253,
     itf = SENSOR_GET_ITF(&bma253->sensor);
 
     oper.address = itf->si_addr;
+    oper.retries = MYNEWT_VAL(BMA253_I2C_RETRIES);
     oper.len     = 1;
     oper.buffer  = &addr;
 
@@ -217,6 +220,7 @@ get_registers(struct bma253 * bma253,
     }
 
     oper.address = itf->si_addr;
+    oper.retries = MYNEWT_VAL(BMA253_I2C_RETRIES);
     oper.len     = size;
     oper.buffer  = data;
 
@@ -254,6 +258,7 @@ set_register(struct bma253 * bma253,
     tuple[1] = data;
 
     oper.address = itf->si_addr;
+    oper.retries = MYNEWT_VAL(BMA253_I2C_RETRIES);
     oper.len     = 2;
     oper.buffer  = tuple;
 
