@@ -101,7 +101,8 @@ struct lp5523_cfg {
     uint8_t timer:2;
     /* Force_1x enbale */
     uint8_t force_1x:1;
-
+    /* Optional reset */
+    bool prereset;
     /* All per LED configs go here - 0: D1 8: D9 */
     struct per_led_cfg per_led_cfg[MYNEWT_VAL(LP5523_LEDS_PER_DRIVER)];
 };
