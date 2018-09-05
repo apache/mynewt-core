@@ -982,9 +982,11 @@ lp5523_config(struct led_itf *itf, struct lp5523_cfg *cfg)
 
     itf->li_addr = LP5523_I2C_BASE_ADDR + cfg->asel;
 
-    rc = lp5523_reset(itf);
-    if (rc) {
-        return rc;
+    if (cfg->prereset) {
+        rc = lp5523_reset(itf);
+        if (rc) {
+            goto err;
+        }
     }
 
     /* chip enable */
