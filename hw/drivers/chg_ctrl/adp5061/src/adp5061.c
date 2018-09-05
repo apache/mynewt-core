@@ -29,6 +29,7 @@
 #include <adp5061/adp5061.h>
 #include <bsp/bsp.h>
 #include <charge-control/charge_control.h>
+#include <i2cn/i2cn.h>
 #include "adp5061_priv.h"
 
 /**
@@ -57,10 +58,9 @@ static const struct adp5061_config default_config = {
     .iend = 0x01,
 };
 
-
 #if MYNEWT_VAL(ADP5061_INT_PIN) >= 0
 /**
-* ADP5061 interrupt hanlder CB
+* ADP5061 interrupt handler CB
 * gets interrupt status and prints to console
 */
 
@@ -81,7 +81,7 @@ adp5061_event(struct os_event *ev)
 /**
 * ADP5061 interrupt handler structure
 */
-static struct os_event interrup_handler = {
+static struct os_event interrupt_handler = {
     .ev_cb = adp5061_event,
 };
 
@@ -91,7 +91,7 @@ static struct os_event interrup_handler = {
 */
 static void
 adp5061_isr(void *arg){
-    os_eventq_put(os_eventq_dflt_get(), &interrup_handler);
+    os_eventq_put(os_eventq_dflt_get(), &interrupt_handler);
 }
 #endif
 
@@ -205,16 +205,16 @@ adp5061_get_reg(struct adp5061_dev *dev, uint8_t addr, uint8_t *value)
 
     /* Register write */
     payload = addr;
-    rc = hal_i2c_master_write(dev->a_chg_ctrl.cc_itf.cci_num, &data_struct,
-            OS_TICKS_PER_SEC / 10, 1);
+    rc = i2cn_master_write(dev->a_chg_ctrl.cc_itf.cci_num, &data_struct,
+            OS_TICKS_PER_SEC / 10, 1, MYNEWT_VAL(ADP5061_I2C_RETRIES));
     if (rc) {
         goto err;
     }
 
     /* Read one byte back */
     payload = addr;
-    rc = hal_i2c_master_read(dev->a_chg_ctrl.cc_itf.cci_num, &data_struct,
-            OS_TICKS_PER_SEC / 10, 1);
+    rc = i2cn_master_read(dev->a_chg_ctrl.cc_itf.cci_num, &data_struct,
+            OS_TICKS_PER_SEC / 10, 1, MYNEWT_VAL(ADP5061_I2C_RETRIES));
     *value = payload;
 
 err:
@@ -239,8 +239,8 @@ adp5061_set_reg(struct adp5061_dev *dev, uint8_t addr, uint8_t value)
         return rc;
     }
 
-    rc = hal_i2c_master_write(dev->a_chg_ctrl.cc_itf.cci_num, &data_struct,
-            OS_TICKS_PER_SEC / 10, 1);
+    rc = i2cn_master_write(dev->a_chg_ctrl.cc_itf.cci_num, &data_struct,
+            OS_TICKS_PER_SEC / 10, 1, MYNEWT_VAL(ADP5061_I2C_RETRIES));
 
     adp5061_itf_unlock(&dev->a_chg_ctrl.cc_itf);
 
@@ -270,8 +270,8 @@ adp5061_set_regs(struct adp5061_dev *dev, uint8_t addr,
         return rc;
     }
 
-    rc = hal_i2c_master_write(dev->a_chg_ctrl.cc_itf.cci_num, &data_struct,
-            OS_TICKS_PER_SEC / 10, 1);
+    rc = i2cn_master_write(dev->a_chg_ctrl.cc_itf.cci_num, &data_struct,
+            OS_TICKS_PER_SEC / 10, 1, MYNEWT_VAL(ADP5061_I2C_RETRIES));
 
     adp5061_itf_unlock(&dev->a_chg_ctrl.cc_itf);
 

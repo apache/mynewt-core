@@ -62,6 +62,23 @@ extern "C" {
  *      :c:func:`hal_i2c_read()`; --- read back data, setting 'last_op' to '1'
  */
 
+/*** I2C status codes (0=success). */
+
+/** Unknown error. */
+#define HAL_I2C_ERR_UNKNOWN             1
+
+/** Invalid argument. */
+#define HAL_I2C_ERR_INVAL               2
+
+/** MCU failed to report result of I2C operation. */
+#define HAL_I2C_ERR_TIMEOUT             3
+
+/** Slave responded to address with NACK. */
+#define HAL_I2C_ERR_ADDR_NACK           4
+
+/** Slave responded to data byte with NACK. */
+#define HAL_I2C_ERR_DATA_NACK           5
+
 /**
  * When sending a packet, use this structure to pass the arguments.
  */
@@ -77,8 +94,8 @@ struct hal_i2c_master_data {
      * writing a 0x81 in its protocol, you would pass
      * only the top 7-bits to this function as 0x40
      */
-    uint8_t  address
-    /** Number of buffer bytes to transmit or receive */;
+    uint8_t  address;
+    /** Number of buffer bytes to transmit or receive */
     uint16_t len;
     /** Buffer space to hold the transmit or receive */
     uint8_t *buffer;
@@ -129,7 +146,7 @@ int hal_i2c_master_write(uint8_t i2c_num, struct hal_i2c_master_data *pdata,
  * @return 0 on success, and non-zero error code on failure
  */
 int hal_i2c_master_read(uint8_t i2c_num, struct hal_i2c_master_data *pdata,
-                         uint32_t timeout, uint8_t last_op);
+                        uint32_t timeout, uint8_t last_op);
 
 /**
  * Probes the i2c bus for a device with this address.  THIS API

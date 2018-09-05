@@ -38,3 +38,8 @@ syscfg.defs:
     LPS33THW_LOG_MODULE:
         description: 'Numeric module ID to use for LPS33THW log messages'
         value: 233
+    LPS33THW_I2C_RETRIES:
+        description: >
+            Number of retries to use for failed I2C communication.  A retry is
+            used when the LPS33THW sends an unexpected NACK.
+        value: 2
