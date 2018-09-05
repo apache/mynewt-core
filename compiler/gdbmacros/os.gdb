@@ -38,6 +38,7 @@ Displays os tasks
 end
 
 define os_callouts
+	set $c = g_callout_list.tqh_first
 	printf "Callouts:\n"
 	printf " %8s %10s %10s\n", "tick", "callout", "func"
 	while $c != 0
@@ -61,7 +62,6 @@ define os_sleep_list
 end
 
 define os_wakeups
-	set $c = g_callout_list.tqh_first
 	printf " Now is %d\n", g_os_time
 	os_callouts
 	os_sleep_list
