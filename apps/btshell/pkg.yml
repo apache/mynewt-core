@@ -16,24 +16,5 @@
 # under the License.
 #
 pkg.name: apps/btshell
-pkg.type: app
-pkg.description: Shell application exposing the nimble GAP and GATT.
-pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
-pkg.homepage: "http://mynewt.apache.org/"
-pkg.keywords:
-
-pkg.deps:
-    - "@apache-mynewt-core/kernel/os"
-    - "@apache-mynewt-core/net/nimble/host"
-    - "@apache-mynewt-core/net/nimble/host/services/gap"
-    - "@apache-mynewt-core/net/nimble/host/services/gatt"
-    - "@apache-mynewt-core/net/nimble/host/store/ram"
-    - "@apache-mynewt-core/net/nimble/transport"
-    - "@apache-mynewt-core/sys/log/full"
-    - "@apache-mynewt-core/sys/log/modlog"
-    - "@apache-mynewt-core/sys/stats/full"
-    - "@apache-mynewt-core/sys/console/full"
-    - "@apache-mynewt-core/sys/shell"
-
-pkg.deps.BTSHELL_ANS:
-    - "@apache-mynewt-core/net/nimble/host/services/ans"
+pkg.type: transient
+pkg.link: "@apache-mynewt-nimble/apps/btshell"

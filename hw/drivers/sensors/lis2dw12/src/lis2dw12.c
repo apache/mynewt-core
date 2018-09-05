@@ -25,6 +25,7 @@
 #include "os/mynewt.h"
 #include "hal/hal_spi.h"
 #include "hal/hal_i2c.h"
+#include "i2cn/i2cn.h"
 #include "sensor/sensor.h"
 #include "sensor/accel.h"
 #include "lis2dw12/lis2dw12.h"
@@ -206,7 +207,8 @@ lis2dw12_i2c_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
     memcpy(&payload[1], buffer, len);
 
     /* Register write */
-    rc = hal_i2c_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1);
+    rc = i2cn_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1,
+                           MYNEWT_VAL(LIS2DW12_I2C_RETRIES));
     if (rc) {
         LIS2DW12_LOG(ERROR, "I2C access failed at address 0x%02X\n",
                      data_struct.address);
@@ -323,7 +325,8 @@ lis2dw12_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
  * @return 0 on success, non-zero error on failure.
  */
 int
-lis2dw12_i2c_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer, uint8_t len)
+lis2dw12_i2c_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
+                     uint8_t len)
 {
     int rc;
 
@@ -334,8 +337,8 @@ lis2dw12_i2c_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer, uint8
     };
 
     /* Register write */
-    rc = hal_i2c_master_write(itf->si_num, &data_struct,
-                              OS_TICKS_PER_SEC / 10, 1);
+    rc = i2cn_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1,
+                           MYNEWT_VAL(LIS2DW12_I2C_RETRIES));
     if (rc) {
         LIS2DW12_LOG(ERROR, "I2C access failed at address 0x%02X\n",
                      itf->si_addr);
@@ -346,8 +349,8 @@ lis2dw12_i2c_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer, uint8
     /* Read data */
     data_struct.len = len;
     data_struct.buffer = buffer;
-    rc = hal_i2c_master_read(itf->si_num, &data_struct,
-                             OS_TICKS_PER_SEC / 10, 1);
+    rc = i2cn_master_read(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1,
+                          MYNEWT_VAL(LIS2DW12_I2C_RETRIES));
 
     if (rc) {
         LIS2DW12_LOG(ERROR, "Failed to read from 0x%02X:0x%02X\n",

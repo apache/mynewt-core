@@ -18,7 +18,5 @@
 #
 
 pkg.name: net/nimble/transport
-pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
-pkg.homepage: "http://mynewt.apache.org/"
-pkg.deps:
-    - "@apache-mynewt-nimble/nimble/transport"
+pkg.type: transient
+pkg.link: "@apache-mynewt-nimble/nimble/transport"

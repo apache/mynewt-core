@@ -40,20 +40,6 @@ int conf_line_make2(char *dst, int dlen, const char *name, const char *value);
 struct conf_handler *conf_parse_and_lookup(char *name, int *name_argc,
                                            char *name_argv[]);
 
-/*
- * API for config storage.
- */
-typedef void (*load_cb)(char *name, char *val, void *cb_arg);
-struct conf_store_itf {
-    int (*csi_load)(struct conf_store *cs, load_cb cb, void *cb_arg);
-    int (*csi_save_start)(struct conf_store *cs);
-    int (*csi_save)(struct conf_store *cs, const char *name, const char *value);
-    int (*csi_save_end)(struct conf_store *cs);
-};
-
-void conf_src_register(struct conf_store *cs);
-void conf_dst_register(struct conf_store *cs);
-
 SLIST_HEAD(conf_store_head, conf_store);
 extern struct conf_store_head conf_load_srcs;
 SLIST_HEAD(conf_handler_head, conf_handler);

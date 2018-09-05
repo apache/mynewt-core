@@ -17,17 +17,17 @@
  * under the License.
  */
 
+#include "os/mynewt.h"
+
+#if MYNEWT_VAL(DRV2605_CLI)
 #include <string.h>
 #include <errno.h>
-#include "os/mynewt.h"
 #include "console/console.h"
 #include "shell/shell.h"
 #include "drv2605_priv.h"
 #include "drv2605/drv2605.h"
 #include "sensor/sensor.h"
 #include "parse/parse.h"
-
-#if MYNEWT_VAL(DRV2605_CLI)
 
 static int drv2605_shell_cmd(int argc, char **argv);
 
@@ -470,7 +470,7 @@ drv2605_shell_cmd(int argc, char **argv)
         return drv2605_shell_cmd_power_mode(argc, argv, drv2605);
     }
 
-    if (argc > 1 && strcmp(argv[1], "load") == 0) {
+    if (argc > 1 && strcmp(argv[1], "load_rom") == 0) {
         return drv2605_shell_cmd_load_rom(argc, argv, drv2605);
     }
 

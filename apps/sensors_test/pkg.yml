@@ -44,12 +44,12 @@ pkg.deps.SENSOR_OIC:
    #- mgmt/oicmgr
 
 pkg.deps.SENSOR_BLE:
-    - "@apache-mynewt-core/net/nimble/controller"
-    - "@apache-mynewt-core/net/nimble/host"
-    - "@apache-mynewt-core/net/nimble/host/services/gap"
-    - "@apache-mynewt-core/net/nimble/host/services/gatt"
-    - "@apache-mynewt-core/net/nimble/host/store/ram"
-    - "@apache-mynewt-core/net/nimble/transport/ram"
+    - "@apache-mynewt-nimble/nimble/controller"
+    - "@apache-mynewt-nimble/nimble/host"
+    - "@apache-mynewt-nimble/nimble/host/services/gap"
+    - "@apache-mynewt-nimble/nimble/host/services/gatt"
+    - "@apache-mynewt-nimble/nimble/host/store/ram"
+    - "@apache-mynewt-nimble/nimble/transport/ram"
 
 pkg.deps.CONFIG_NFFS:
     - "@apache-mynewt-core/fs/nffs"

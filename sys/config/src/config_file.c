@@ -30,7 +30,8 @@
 #include "config/config_file.h"
 #include "config_priv.h"
 
-static int conf_file_load(struct conf_store *, load_cb cb, void *cb_arg);
+static int conf_file_load(struct conf_store *, conf_store_load_cb cb,
+                          void *cb_arg);
 static int conf_file_save(struct conf_store *, const char *name,
   const char *value);
 
@@ -104,7 +105,7 @@ conf_getnext_line(struct fs_file *file, char *buf, int blen, uint32_t *loc)
  * item found.
  */
 static int
-conf_file_load(struct conf_store *cs, load_cb cb, void *cb_arg)
+conf_file_load(struct conf_store *cs, conf_store_load_cb cb, void *cb_arg)
 {
     struct conf_file *cf = (struct conf_file *)cs;
     struct fs_file *file;

@@ -27,3 +27,8 @@ syscfg.defs:
     ADP5061_INT_PIN:
         description: 'ADP5061 interrupt pin'
         value: -1
+    ADP5061_I2C_RETRIES:
+        description: >
+            Number of retries to use for failed I2C communication.  A retry is
+            used when the ADP5061 sends an unexpected NACK.
+        value: 2

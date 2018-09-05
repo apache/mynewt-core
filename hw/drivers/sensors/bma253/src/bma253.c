@@ -26,7 +26,7 @@
 #include "bma253_priv.h"
 #include "hal/hal_gpio.h"
 #include "hal/hal_i2c.h"
-#include <syscfg/syscfg.h>
+#include "i2cn/i2cn.h"
 
 #if MYNEWT_VAL(BMA253_LOG)
 #include "modlog/modlog.h"
@@ -163,8 +163,8 @@ get_register(struct bma253 * bma253,
     oper.len     = 1;
     oper.buffer  = &addr;
 
-    rc = hal_i2c_master_write(itf->si_num, &oper,
-                              OS_TICKS_PER_SEC / 10, 1);
+    rc = i2cn_master_write(itf->si_num, &oper, OS_TICKS_PER_SEC / 10, 1,
+                           MYNEWT_VAL(BMA253_I2C_RETRIES));
     if (rc != 0) {
         BMA253_LOG(ERROR, "I2C access failed at address 0x%02X\n", addr);
         goto err;
@@ -174,8 +174,8 @@ get_register(struct bma253 * bma253,
     oper.len     = 1;
     oper.buffer  = data;
 
-    rc = hal_i2c_master_read(itf->si_num, &oper,
-                             OS_TICKS_PER_SEC / 10, 1);
+    rc = i2cn_master_read(itf->si_num, &oper, OS_TICKS_PER_SEC / 10, 1,
+                          MYNEWT_VAL(BMA253_I2C_RETRIES));
     if (rc != 0) {
         BMA253_LOG(ERROR, "I2C read failed at address 0x%02X single byte\n",
                    addr);
@@ -208,11 +208,10 @@ get_registers(struct bma253 * bma253,
         return rc;
     }
 
-    rc = hal_i2c_master_write(itf->si_num, &oper,
-                              OS_TICKS_PER_SEC / 10, 1);
+    rc = i2cn_master_write(itf->si_num, &oper, OS_TICKS_PER_SEC / 10, 1,
+                           MYNEWT_VAL(BMA253_I2C_RETRIES));
     if (rc != 0) {
-        BMA253_LOG(ERROR, "I2C access failed at address 0x%02X\n",
-                   addr);
+        BMA253_LOG(ERROR, "I2C access failed at address 0x%02X\n", addr);
         goto err;
     }
 
@@ -220,8 +219,8 @@ get_registers(struct bma253 * bma253,
     oper.len     = size;
     oper.buffer  = data;
 
-    rc = hal_i2c_master_read(itf->si_num, &oper,
-                             OS_TICKS_PER_SEC / 10, 1);
+    rc = i2cn_master_read(itf->si_num, &oper, OS_TICKS_PER_SEC / 10, 1,
+                          MYNEWT_VAL(BMA253_I2C_RETRIES));
     if (rc != 0) {
         BMA253_LOG(ERROR, "I2C read failed at address 0x%02X length %u\n",
                    addr, size);
@@ -257,8 +256,8 @@ set_register(struct bma253 * bma253,
     oper.len     = 2;
     oper.buffer  = tuple;
 
-    rc = hal_i2c_master_write(itf->si_num, &oper,
-                              OS_TICKS_PER_SEC / 10, 1);
+    rc = i2cn_master_write(itf->si_num, &oper, OS_TICKS_PER_SEC / 10, 1,
+                           MYNEWT_VAL(BMA253_I2C_RETRIES));
     if (rc != 0) {
         BMA253_LOG(ERROR, "I2C write failed at address 0x%02X single byte\n",
                    addr);

@@ -31,33 +31,15 @@
 #include "runtest/runtest.h"
 #include "runtest_priv.h"
 
-static int run_nmgr_test(struct mgmt_cbuf *);
-static int run_nmgr_list(struct mgmt_cbuf *);
+static int runtest_nmgr_test(struct mgmt_cbuf *);
+static int runtest_nmgr_list(struct mgmt_cbuf *);
 
-struct mgmt_group run_nmgr_group;
+static struct mgmt_group runtest_nmgr_group;
 
-#define RUN_NMGR_OP_TEST    0
-#define RUN_NMGR_OP_LIST    1
-
-const struct mgmt_handler run_nmgr_handlers[] = {
-    [RUN_NMGR_OP_TEST] = {NULL, run_nmgr_test},
-    [RUN_NMGR_OP_LIST] = {run_nmgr_list, NULL}
+static const struct mgmt_handler runtest_nmgr_handlers[] = {
+    [RUNTEST_NMGR_OP_TEST] = { NULL, runtest_nmgr_test },
+    [RUNTEST_NMGR_OP_LIST] = { runtest_nmgr_list, NULL }
 };
-
-extern void sanity_start_test();
-struct os_event run_test_event;
-
-char run_testname[RUNTEST_REQ_SIZE];
-char run_token[RUNTEST_REQ_SIZE];
-
-struct runtest_evq_arg runtest_arg;
-os_event_fn *run_callback;
-
-void
-run_evcb_set(os_event_fn *cb)
-{
-    run_callback = cb;
-}
 
 /*
  * package "run test" request from newtmgr and enqueue on default queue
@@ -65,22 +47,24 @@ run_evcb_set(os_event_fn *cb)
  * Application callback was initialized by call to run_evb_set() above.
  */
 static int
-run_nmgr_test(struct mgmt_cbuf *cb)
+runtest_nmgr_test(struct mgmt_cbuf *cb)
 {
+    char testname[MYNEWT_VAL(RUNTEST_MAX_TEST_NAME_LEN)] = "";
+    char token[MYNEWT_VAL(RUNTEST_MAX_TOKEN_LEN)];
     int rc;
 
-    const struct cbor_attr_t attr[3] = {
+    const struct cbor_attr_t attr[] = {
         [0] = {
             .attribute = "testname",
             .type = CborAttrTextStringType,
-            .addr.string = run_testname,
-            .len = sizeof(run_testname)
+            .addr.string = testname,
+            .len = sizeof(testname)
         },
         [1] = {
             .attribute = "token",
             .type = CborAttrTextStringType,
-            .addr.string = run_token,
-            .len = sizeof(run_token)
+            .addr.string = token,
+            .len = sizeof(token)
         },
         [2] = {
             .attribute = NULL
@@ -88,30 +72,39 @@ run_nmgr_test(struct mgmt_cbuf *cb)
     };
 
     rc = cbor_read_object(&cb->it, attr);
-    if (rc) {
-        return rc;
+    if (rc != 0) {
+        return MGMT_ERR_EINVAL;
     }
 
     /*
-     * testname is either a specific test or newtmgr passed "all".
-     * token is appened to log messages.
+     * testname is one of:
+     * a) a specific test suite name
+     * b) "all".
+     * c) "" (empty string); equivalent to "all".
+     *
+     * token is appended to log messages.
      */
-    runtest_arg.run_testname = run_testname;
-    runtest_arg.run_token = run_token;
+    rc = runtest_run(testname, token);
+    switch (rc) {
+    case 0:
+        return 0;
 
-    run_test_event.ev_arg = &runtest_arg;
-    run_test_event.ev_cb = run_callback;
+    case SYS_EAGAIN:
+        return MGMT_ERR_EBADSTATE;
 
-    os_eventq_put(run_evq_get(), &run_test_event);
-            
-    return 0;
+    case SYS_ENOENT:
+        return MGMT_ERR_ENOENT;
+
+    default:
+        return MGMT_ERR_EUNKNOWN;
+    }
 }
 
 /*
  * List all register tests
  */
 static int
-run_nmgr_list(struct mgmt_cbuf *cb)
+runtest_nmgr_list(struct mgmt_cbuf *cb)
 {
     CborError g_err = CborNoError;
     CborEncoder run_list;
@@ -140,20 +133,12 @@ run_nmgr_list(struct mgmt_cbuf *cb)
  * Register nmgr group handlers
  */
 int
-run_nmgr_register_group(void)
+runtest_nmgr_register_group(void)
 {
-    int rc;
+    MGMT_GROUP_SET_HANDLERS(&runtest_nmgr_group, runtest_nmgr_handlers);
+    runtest_nmgr_group.mg_group_id = MGMT_GROUP_ID_RUN;
 
-    MGMT_GROUP_SET_HANDLERS(&run_nmgr_group, run_nmgr_handlers);
-    run_nmgr_group.mg_group_id = MGMT_GROUP_ID_RUN;
-
-    rc = mgmt_group_register(&run_nmgr_group);
-    if (rc != 0) {
-        goto err;
-    }
-    return (0);
-
-err:
-    return (rc);
+    return mgmt_group_register(&runtest_nmgr_group);
 }
-#endif /* MYNEWT_VAL(RUN_NEWTMGR) */
+
+#endif /* MYNEWT_VAL(RUNTEST_NEWTMGR) */

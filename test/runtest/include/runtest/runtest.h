@@ -19,39 +19,68 @@
 #ifndef __RUNTEST_H__
 #define __RUNTEST_H__
 
+#include "os/mynewt.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/*
- * Adds the run test commands to your shell/newtmgr.
- */
-void runtest_init(void);
+#define RUNTEST_NMGR_OP_TEST    0
+#define RUNTEST_NMGR_OP_LIST    1
 
-/*
+/* Define the prefix to to add to all test log messages.  If the user's syscfg
+ * specifies the `RUNTEST_PREFIX` setting, use that value.  Otherwise, generate
+ * the prefix from some legacy cflags (`BUILD_TARGET` and `BUILD_ID`).
+ */
+
+#if MYNEWT_VAL(RUNTEST_PREFIX)
+
+#define RUNTEST_PREFIX  MYNEWT_VAL(RUNTEST_PREFIX)
+
+#else
+
+#ifndef BUILD_ID
+#define BUILD_ID        "UNKNOWN_ID"
+#endif
+
+#ifndef BUILD_TARGET
+#define BUILD_TARGET    "UNKNOWN_TARGET"
+#endif
+
+#define RUNTEST_PREFIX  BUILD_TARGET " Build " BUILD_ID
+
+#endif
+
+/**
  * Retrieves the event queue used by the runtest package.
  */
-struct os_eventq *run_evq_get(void);
+struct os_eventq *runtest_evq_get(void);
 
-/*
- * Callback for runtest events - newtmgr uses this to add
- * run test requests to default queue for test application (e.g., mynewtsanity)
+/**
+ * Designates the event queue that runtest should use.
  */
-void run_evcb_set(os_event_fn *cb);
+void runtest_evq_set(struct os_eventq *evq);
 
-/*
- * Token is append to log messages - for use by ci gateway
+/**
+ * Initializes a new task from the runtest task pool.
  */
-#define RUNTEST_REQ_SIZE  32
-extern char runtest_test_token[RUNTEST_REQ_SIZE];
+struct os_task *runtest_init_task(os_task_func_t task_handler, uint8_t prio);
 
-/*
- * Argument struct passed in from "run" requests via newtmgr
+/**
+ * Enqueues a single test for immediate execution.
+ *
+ * @param test_name             The name of the test to run.
+ * @param token                 Optional string to include in test results.
+ *
+ * @return                      0 on success;
+ *                              SYS_EAGAIN if a test is already in progress.
  */
-struct runtest_evq_arg {
-    char* run_testname;
-    char* run_token;
-};
+int runtest_run(const char *test_name, const char *token);
+
+/**
+ * Retrieves the total number of test failures.
+ */
+int runtest_total_fails_get(void);
 
 #ifdef __cplusplus
 }

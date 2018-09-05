@@ -82,6 +82,7 @@ static uint16_t cur, end;
 static struct os_eventq avail_queue;
 static struct os_eventq *lines_queue;
 static completion_cb completion;
+bool g_silence_console;
 
 /*
  * Default implementation in case all consoles are disabled - we just ignore any

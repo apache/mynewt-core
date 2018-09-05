@@ -23,6 +23,7 @@ syscfg.defs:
         value: 1
 
 syscfg.vals:
+    OS_IDLE_TICKLESS_MS_MIN: 1
     # Sim isn't flash constrained, so include filename, line number, and
     # message in asserts and sysinit panic messages.
     BASELIBC_ASSERT_FILE_LINE: 1

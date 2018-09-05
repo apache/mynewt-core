@@ -421,10 +421,6 @@ oc_send_buffer_gatt(struct os_mbuf *m)
     uint16_t attr_handle;
 #endif
 
-#if (MYNEWT_VAL(OC_CLIENT) == 1)
-    OC_LOG(ERROR, "oc_gatt send not supported on client");
-#endif
-
 #if (MYNEWT_VAL(OC_SERVER) == 1)
 
     assert(OS_MBUF_USRHDR_LEN(m) >= sizeof(struct oc_endpoint_ble));

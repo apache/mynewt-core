@@ -76,7 +76,17 @@ int flash_area_read(const struct flash_area *, uint32_t off, void *dst,
 int flash_area_write(const struct flash_area *, uint32_t off, const void *src,
   uint32_t len);
 int flash_area_erase(const struct flash_area *, uint32_t off, uint32_t len);
+
+/*
+ * Whether the whole area is empty.
+ */
 int flash_area_is_empty(const struct flash_area *, bool *);
+
+/*
+ * Whether a region of flash_area is empty
+ */
+int flash_area_isempty_at(const struct flash_area *, uint32_t off,
+  uint32_t len);
 
 /*
  * Alignment restriction for flash writes.

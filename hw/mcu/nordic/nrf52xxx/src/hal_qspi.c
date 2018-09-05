@@ -270,6 +270,8 @@ nrf52k_qspi_init(const struct hal_flash *dev)
     nrf_qspi_ifconfig0_set(NRF_QSPI, &config0);
     nrf_qspi_ifconfig1_set(NRF_QSPI, &config1);
 
+    NRF_QSPI->XIPOFFSET = 0x12000000;
+
     NRF_QSPI->ENABLE = 1;
     NRF_QSPI->TASKS_ACTIVATE = 1;
     while (NRF_QSPI->EVENTS_READY == 0)

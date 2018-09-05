@@ -17,11 +17,12 @@
  * under the License.
  */
 
+#include <string.h>
 #include "os/mynewt.h"
 #include <hal/hal_i2c.h>
+#include <i2cn/i2cn.h>
 #include <modlog/modlog.h>
 #include <stats/stats.h>
-#include <string.h>
 
 #include "lp5523/lp5523.h"
 #include <syscfg/syscfg.h>
@@ -66,13 +67,14 @@ lp5523_set_reg(struct led_itf *itf, enum lp5523_registers addr,
         return rc;
     }
 
-    rc = hal_i2c_master_write(itf->li_num, &data_struct,
-                              OS_TICKS_PER_SEC / 10, 1);
+    rc = i2cn_master_write(itf->li_num, &data_struct, OS_TICKS_PER_SEC / 10, 1,
+                           MYNEWT_VAL(LP5523_I2C_RETRIES));
 
     if (rc) {
         LP5523_LOG(ERROR,
-                   "Failed to write to 0x%02X:0x%02X with value 0x%02X\n",
-                   itf->li_addr, addr, value);
+                   "Failed to write to 0x%02X:0x%02X with value 0x%02X "
+                   "(rc=%d)\n",
+                   itf->li_addr, addr, value, rc);
         STATS_INC(g_lp5523stats, read_errors);
     }
 
@@ -95,12 +97,13 @@ lp5523_get_reg(struct led_itf *itf, enum lp5523_registers addr,
 
     rc = led_itf_lock(itf, MYNEWT_VAL(LP5523_ITF_LOCK_TMO));
     if (rc) {
-        goto err;
+        return rc;
     }
 
     /* Register write */
-    rc = hal_i2c_master_write(itf->li_num, &data_struct,
-                              OS_TICKS_PER_SEC / 10, 0);
+    rc = i2cn_master_write(itf->li_num, &data_struct, OS_TICKS_PER_SEC / 10, 0,
+                           MYNEWT_VAL(LP5523_I2C_RETRIES));
+
     if (rc) {
         LP5523_LOG(ERROR, "I2C access failed at address 0x%02X\n",
                    itf->li_addr);
@@ -110,8 +113,8 @@ lp5523_get_reg(struct led_itf *itf, enum lp5523_registers addr,
 
     /* Read one byte back */
     data_struct.buffer = value;
-    rc = hal_i2c_master_read(itf->li_num, &data_struct,
-                             OS_TICKS_PER_SEC / 10, 1);
+    rc = i2cn_master_read(itf->li_num, &data_struct, OS_TICKS_PER_SEC / 10, 1,
+                          MYNEWT_VAL(LP5523_I2C_RETRIES));
 
     if (rc) {
          LP5523_LOG(ERROR, "Failed to read from 0x%02X:0x%02X\n",
@@ -147,8 +150,8 @@ lp5523_set_n_regs(struct led_itf *itf, enum lp5523_registers addr,
         return rc;
     }
 
-    rc = hal_i2c_master_write(itf->li_num, &data_struct,
-                              (OS_TICKS_PER_SEC / 5), 1);
+    rc = i2cn_master_write(itf->li_num, &data_struct, (OS_TICKS_PER_SEC / 5),
+                           1, MYNEWT_VAL(LP5523_I2C_RETRIES));
 
     if (rc) {
         LP5523_LOG(ERROR, "Failed to write to 0x%02X:0x%02X\n", itf->li_addr,
@@ -180,8 +183,8 @@ lp5523_get_n_regs(struct led_itf *itf, enum lp5523_registers addr,
         return rc;
     }
 
-    rc = hal_i2c_master_write(itf->li_num, &data_struct,
-        (OS_TICKS_PER_SEC / 10), 0);
+    rc = i2cn_master_write(itf->li_num, &data_struct, (OS_TICKS_PER_SEC / 10),
+                           0, MYNEWT_VAL(LP5523_I2C_RETRIES));
 
     if (rc) {
         LP5523_LOG(ERROR, "Failed to write to 0x%02X:0x%02X\n", itf->li_addr,
@@ -192,8 +195,8 @@ lp5523_get_n_regs(struct led_itf *itf, enum lp5523_registers addr,
 
     data_struct.len = len;
     data_struct.buffer = vals;
-    rc = hal_i2c_master_read(itf->li_num, &data_struct,
-        OS_TICKS_PER_SEC / 5, 1);
+    rc = i2cn_master_read(itf->li_num, &data_struct, OS_TICKS_PER_SEC / 5, 1,
+                          MYNEWT_VAL(LP5523_I2C_RETRIES));
 
     if (rc) {
          LP5523_LOG(ERROR, "Failed to read from 0x%02X:0x%02X\n", itf->li_addr,
@@ -979,9 +982,11 @@ lp5523_config(struct led_itf *itf, struct lp5523_cfg *cfg)
 
     itf->li_addr = LP5523_I2C_BASE_ADDR + cfg->asel;
 
-    rc = lp5523_reset(itf);
-    if (rc) {
-        return rc;
+    if (cfg->prereset) {
+        rc = lp5523_reset(itf);
+        if (rc) {
+            goto err;
+        }
     }
 
     /* chip enable */

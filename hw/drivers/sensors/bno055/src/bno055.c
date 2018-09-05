@@ -23,6 +23,7 @@
 
 #include "os/mynewt.h"
 #include "hal/hal_i2c.h"
+#include "i2cn/i2cn.h"
 #include "sensor/sensor.h"
 #include "sensor/accel.h"
 #include "sensor/mag.h"
@@ -84,7 +85,8 @@ bno055_write8(struct sensor_itf *itf, uint8_t reg, uint8_t value)
         .buffer = payload
     };
 
-    rc = hal_i2c_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC, 1);
+    rc = i2cn_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC, 1,
+                           MYNEWT_VAL(BNO055_I2C_RETRIES));
     if (rc) {
         BNO055_LOG(ERROR,
                    "Failed to write to 0x%02X:0x%02X with value 0x%02X\n",
@@ -131,7 +133,8 @@ bno055_writelen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
     }
 
     /* Register write */
-    rc = hal_i2c_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1);
+    rc = i2cn_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1,
+                           MYNEWT_VAL(BNO055_I2C_RETRIES));
     if (rc) {
         BNO055_LOG(ERROR, "I2C access failed at address 0x%02X\n",
                    data_struct.address);
@@ -141,7 +144,8 @@ bno055_writelen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
 
     memset(payload, 0, sizeof(payload));
     data_struct.len = len;
-    rc = hal_i2c_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, len);
+    rc = i2cn_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10,
+                           len, MYNEWT_VAL(BNO055_I2C_RETRIES));
     if (rc) {
         BNO055_LOG(ERROR, "Failed to read from 0x%02X:0x%02X\n",
                    data_struct.address, reg);
@@ -182,7 +186,8 @@ bno055_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
 
     /* Register write */
     payload = reg;
-    rc = hal_i2c_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 0);
+    rc = i2cn_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 0,
+                           MYNEWT_VAL(BNO055_I2C_RETRIES));
     if (rc) {
         BNO055_LOG(ERROR,
                    "I2C register write failed at address 0x%02X:0x%02X\n",
@@ -193,7 +198,8 @@ bno055_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
 
     /* Read one byte back */
     payload = 0;
-    rc = hal_i2c_master_read(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1);
+    rc = i2cn_master_read(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1,
+                          MYNEWT_VAL(BNO055_I2C_RETRIES));
     *value = payload;
     if (rc) {
         BNO055_LOG(ERROR, "Failed to read from 0x%02X:0x%02X\n",
@@ -241,7 +247,8 @@ bno055_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
     }
 
     /* Register write */
-    rc = hal_i2c_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1);
+    rc = i2cn_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1,
+                           MYNEWT_VAL(BNO055_I2C_RETRIES));
     if (rc) {
         BNO055_LOG(ERROR, "I2C access failed at address 0x%02X\n",
                    data_struct.address);
@@ -252,7 +259,8 @@ bno055_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
     /* Read len bytes back */
     memset(payload, 0, sizeof(payload));
     data_struct.len = len;
-    rc = hal_i2c_master_read(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1);
+    rc = i2cn_master_read(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1,
+                          MYNEWT_VAL(BNO055_I2C_RETRIES));
     if (rc) {
         BNO055_LOG(ERROR, "Failed to read from 0x%02X:0x%02X\n",
                    data_struct.address, reg);

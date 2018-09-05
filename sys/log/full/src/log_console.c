@@ -36,7 +36,7 @@ log_console_get(void)
 static void
 log_console_print_hdr(const struct log_entry_hdr *hdr)
 {
-    console_printf("[ts=%llussb, mod=%u level=%u] ",
+    console_printf("[ts=%lluus, mod=%u level=%u] ",
                    hdr->ue_ts, hdr->ue_module, hdr->ue_level);
 }
 

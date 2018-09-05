@@ -46,6 +46,20 @@ log_register(char *name, struct log *log, const struct log_handler *h,
     return 0;
 }
 
+static inline int
+log_append_typed(struct log *log, uint8_t module, uint8_t level, uint8_t etype,
+                 void *data, uint16_t len)
+{
+    return 0;
+}
+
+static inline int
+log_append_mbuf_typed_no_free(struct log *log, uint8_t module, uint8_t level,
+                              uint8_t etype, struct os_mbuf **om_ptr)
+{
+    return 0;
+}
+
 static inline void
 log_init(void)
 {
@@ -56,11 +70,11 @@ log_init(void)
 /*
  * Dummy handler exports.
  */
-const struct log_handler log_console_handler;
-const struct log_handler log_cbmem_handler;
-const struct log_handler log_fcb_handler;
+extern const struct log_handler log_console_handler;
+extern const struct log_handler log_cbmem_handler;
+extern const struct log_handler log_fcb_handler;
 #if MYNEWT_VAL(LOG_FCB_SLOT1)
-const struct log_handler log_fcb_slot1_handler;
+extern const struct log_handler log_fcb_slot1_handler;
 #endif
 
 #if MYNEWT_VAL(LOG_CONSOLE)

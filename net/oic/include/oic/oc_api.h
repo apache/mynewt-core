@@ -122,7 +122,9 @@ int oc_notify_observers(oc_resource_t *resource);
 /** Client side */
 #include "oc_client_state.h"
 
+#if MYNEWT_VAL(OC_CLIENT_DISCOVERY_ENABLE)
 bool oc_do_ip_discovery(const char *rt, oc_discovery_cb_t handler);
+#endif
 
 bool oc_do_get(const char *uri, oc_server_handle_t *server, const char *query,
                oc_response_handler_t handler, oc_qos_t qos);

@@ -19,7 +19,7 @@
 
 pkg.name: hw/bsp/nrf52-thingy
 pkg.type: bsp
-pkg.description: BSP definition for the Nordic nRF52 Development Kit (PCA 10040).
+pkg.description: BSP definition for the Nordic Thingy:52
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
@@ -36,27 +36,6 @@ pkg.cflags.HARDFLOAT:
 pkg.deps:
     - "@apache-mynewt-core/hw/mcu/nordic/nrf52xxx"
     - "@apache-mynewt-core/libc/baselibc"
-
-pkg.deps.BLE_DEVICE:
-    - "@apache-mynewt-core/hw/drivers/nimble/nrf52"
-
-pkg.deps.UART_0:
-    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
-
-pkg.deps.UART_1:
-    - "@apache-mynewt-core/hw/drivers/uart/uart_bitbang"
-
-pkg.deps.ADC_0:
-    - "@apache-mynewt-core/hw/drivers/adc/adc_nrf52"
-
-pkg.deps.PWM_0:
-    - "@apache-mynewt-core/hw/drivers/pwm/pwm_nrf52"
-
-pkg.deps.PWM_1:
-    - "@apache-mynewt-core/hw/drivers/pwm/pwm_nrf52"
-
-pkg.deps.PWM_2:
-    - "@apache-mynewt-core/hw/drivers/pwm/pwm_nrf52"
 
 pkg.deps.SOFT_PWM:
     - "@apache-mynewt-core/hw/drivers/pwm/soft_pwm"

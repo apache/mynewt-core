@@ -123,10 +123,10 @@ void os_start(void);
 #include "os/os_sched.h"
 #include "os/os_sem.h"
 #include "os/os_task.h"
-#include "os/os_test.h"
 #include "os/os_time.h"
 #include "os/os_trace_api.h"
 #include "os/queue.h"
+#include "os/util.h"
 
 #ifdef __cplusplus
 }

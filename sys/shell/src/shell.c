@@ -470,6 +470,11 @@ get_command_from_module(const char *command, int len, int module)
 
     shell_module = &shell_modules[module];
     for (i = 0; shell_module->commands[i].sc_cmd; i++) {
+
+        if (strlen(shell_module->commands[i].sc_cmd) != len) {
+            continue;
+        }
+
         if (!strncmp(command, shell_module->commands[i].sc_cmd, len)) {
             return i;
         }

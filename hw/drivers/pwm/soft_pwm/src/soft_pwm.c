@@ -472,9 +472,20 @@ soft_pwm_dev_init(struct os_dev *odev, void *arg)
     assert(odev);
     dev = (struct pwm_dev *) odev;
 
-    assert(arg);
-    dev->pwm_instance_id = *((uint8_t *) arg);
-    assert(dev->pwm_instance_id < DEV_COUNT);
+    /*
+     * Originally arg was expected to be a pointer to int with pwm_instance_id,
+     * however this wastes sizeof(int) of memory only to keep a simple number
+     * which is used only once. Instead, instance_id can be passed as int casted
+     * to pointer using helper macro so let's handle both versions here:
+     * - if number is valid instance_id, let's use it directly
+     * - otherwise assume it's a valid pointer
+     */
+    if (POINTER_TO_UINT(arg) < DEV_COUNT) {
+        dev->pwm_instance_id = POINTER_TO_UINT(arg);
+    } else {
+        dev->pwm_instance_id = *((int*) arg);
+        assert(dev->pwm_instance_id < DEV_COUNT);
+    }
 
     dev->pwm_chan_count = CHAN_COUNT;
     os_mutex_init(&dev->pwm_lock);

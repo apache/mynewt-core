@@ -30,6 +30,7 @@ pkg.deps:
     - "@apache-mynewt-core/kernel/os"
     - "@apache-mynewt-core/hw/hal"
     - "@apache-mynewt-core/hw/drivers/led"
+    - "@apache-mynewt-core/hw/util/i2cn"
     - "@apache-mynewt-core/sys/log/modlog"
 
 pkg.deps.LP5523_CLI:

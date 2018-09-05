@@ -50,3 +50,8 @@ syscfg.defs:
     LIS2DW12_LOG_MODULE:
         description: 'Numeric module ID to use for LIS2DW12 log messages'
         value: 213
+    LIS2DW12_I2C_RETRIES:
+        description: >
+            Number of retries to use for failed I2C communication.  A retry is
+            used when the LIS2DW12 sends an unexpected NACK.
+        value: 2

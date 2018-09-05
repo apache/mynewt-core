@@ -51,3 +51,8 @@ syscfg.defs:
     BMA2XX_ITF_LOCK_TMO:
         description: 'BMA2XX interface lock timeout in milliseconds'
         value: 1000
+    BMA2XX_I2C_RETRIES:
+        description: >
+            Number of retries to use for failed I2C communication.  A retry is
+            used when the BMA2XX sends an unexpected NACK.
+        value: 2

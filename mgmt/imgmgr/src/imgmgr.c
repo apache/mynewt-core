@@ -132,6 +132,24 @@ static struct {
 static imgr_upload_fn *imgr_upload_cb;
 static void *imgr_upload_arg;
 
+#if MYNEWT_VAL(IMGMGR_VERBOSE_ERR)
+static const char *imgmgr_err_str_app_reject = "app reject";
+static const char *imgmgr_err_str_hdr_malformed = "header malformed";
+static const char *imgmgr_err_str_magic_mismatch = "magic mismatch";
+static const char *imgmgr_err_str_no_slot = "no slot";
+static const char *imgmgr_err_str_flash_open_failed = "fa open fail";
+static const char *imgmgr_err_str_flash_erase_failed = "fa erase fail";
+static const char *imgmgr_err_str_flash_write_failed = "fa write fail";
+#else
+#define imgmgr_err_str_app_reject                   NULL
+#define imgmgr_err_str_hdr_malformed                NULL
+#define imgmgr_err_str_magic_mismatch               NULL
+#define imgmgr_err_str_no_slot                      NULL
+#define imgmgr_err_str_flash_open_failed            NULL
+#define imgmgr_err_str_flash_erase_failed           NULL
+#define imgmgr_err_str_flash_write_failed           NULL
+#endif
+
 #if MYNEWT_VAL(BOOTUTIL_IMAGE_FORMAT_V2)
 static int
 imgr_img_tlvs(const struct flash_area *fa, struct image_header *hdr,
@@ -356,6 +374,24 @@ imgmgr_find_best_area_id(void)
     return best;
 }
 
+#if MYNEWT_VAL(IMGMGR_VERBOSE_ERR)
+static int
+imgr_error_rsp(struct mgmt_cbuf *cb, int rc, const char *rsn)
+{
+    /*
+     * This is an error response so returning a different error when failed to
+     * encode other error probably does not make much sense - just ignore errors
+     * here.
+     */
+    cbor_encode_text_stringz(&cb->encoder, "rsn");
+    cbor_encode_text_stringz(&cb->encoder, rsn);
+
+    return rc;
+}
+#else
+#define imgr_error_rsp(cb, rc, rsn)         (rc)
+#endif
+
 static int
 imgr_erase(struct mgmt_cbuf *cb)
 {
@@ -378,18 +414,20 @@ imgr_erase(struct mgmt_cbuf *cb)
 
         rc = flash_area_open(area_id, &fa);
         if (rc) {
-            return MGMT_ERR_EINVAL;
+            return imgr_error_rsp(cb, MGMT_ERR_EINVAL,
+                                  imgmgr_err_str_flash_open_failed);
         }
         rc = flash_area_erase(fa, 0, fa->fa_size);
         flash_area_close(fa);
         if (rc) {
-            return MGMT_ERR_EINVAL;
+            return imgr_error_rsp(cb, MGMT_ERR_EINVAL,
+                                  imgmgr_err_str_flash_erase_failed);
         }
     } else {
         /*
          * No slot where to erase!
          */
-        return MGMT_ERR_ENOMEM;
+        return imgr_error_rsp(cb, MGMT_ERR_ENOMEM, imgmgr_err_str_no_slot);
     }
 
     g_err |= cbor_encode_text_stringz(&cb->encoder, "rc");
@@ -413,12 +451,14 @@ imgr_erase_state(struct mgmt_cbuf *cb)
     if (area_id >= 0) {
         rc = flash_area_open(area_id, &fa);
         if (rc) {
-            return MGMT_ERR_EINVAL;
+            return imgr_error_rsp(cb, MGMT_ERR_EINVAL,
+                                  imgmgr_err_str_flash_open_failed);
         }
 
         rc = flash_area_erase(fa, 0, sizeof(struct image_header));
         if (rc) {
-            return MGMT_ERR_EINVAL;
+            return imgr_error_rsp(cb, MGMT_ERR_EINVAL,
+                                  imgmgr_err_str_flash_erase_failed);
         }
 
         flash_area_close(fa);
@@ -430,7 +470,7 @@ imgr_erase_state(struct mgmt_cbuf *cb)
         }
 #endif
     } else {
-        return MGMT_ERR_ENOMEM;
+        return imgr_error_rsp(cb, MGMT_ERR_ENOMEM, imgmgr_err_str_no_slot);
     }
 
     g_err |= cbor_encode_text_stringz(&cb->encoder, "rc");
@@ -459,7 +499,7 @@ imgr_erase_state(struct mgmt_cbuf *cb)
  */
 static int
 imgr_upload_inspect(const struct imgr_upload_req *req,
-                    struct imgr_upload_action *action)
+                    struct imgr_upload_action *action, const char **errstr)
 {
     const struct image_header *hdr;
     const struct flash_area *fa;
@@ -471,6 +511,7 @@ imgr_upload_inspect(const struct imgr_upload_req *req,
 
     if (req->off == -1) {
         /* Request did not include an `off` field. */
+        *errstr = imgmgr_err_str_hdr_malformed;
         return MGMT_ERR_EINVAL;
     }
 
@@ -480,17 +521,20 @@ imgr_upload_inspect(const struct imgr_upload_req *req,
             /*
              * Image header is the first thing in the image.
              */
+            *errstr = imgmgr_err_str_hdr_malformed;
             return MGMT_ERR_EINVAL;
         }
 
         if (req->size == -1) {
             /* Request did not include a `len` field. */
+            *errstr = imgmgr_err_str_hdr_malformed;
             return MGMT_ERR_EINVAL;
         }
         action->size = req->size;
 
         hdr = (struct image_header *)req->img_data;
         if (hdr->ih_magic != IMAGE_MAGIC) {
+            *errstr = imgmgr_err_str_magic_mismatch;
             return MGMT_ERR_EINVAL;
         }
 
@@ -511,11 +555,13 @@ imgr_upload_inspect(const struct imgr_upload_req *req,
         action->area_id = imgmgr_find_best_area_id();
         if (action->area_id < 0) {
             /* No slot where to upload! */
+            *errstr = imgmgr_err_str_no_slot;
             return MGMT_ERR_ENOMEM;
         }
 
         rc = flash_area_open(action->area_id, &fa);
         if (rc) {
+            *errstr = imgmgr_err_str_flash_open_failed;
             return MGMT_ERR_EUNKNOWN;
         }
 
@@ -548,6 +594,7 @@ imgr_upload_inspect(const struct imgr_upload_req *req,
          */
         rc = flash_area_open(action->area_id, &fa);
         if (rc) {
+            *errstr = imgmgr_err_str_flash_open_failed;
             return MGMT_ERR_EUNKNOWN;
         }
 
@@ -619,6 +666,7 @@ imgr_upload(struct mgmt_cbuf *cb)
         [4] = { 0 },
     };
     int rc;
+    const char *errstr = NULL;
     struct imgr_upload_action action;
     const struct flash_area *fa = NULL;
 
@@ -628,7 +676,7 @@ imgr_upload(struct mgmt_cbuf *cb)
     }
 
     /* Determine what actions to take as a result of this request. */
-    rc = imgr_upload_inspect(&req, &action);
+    rc = imgr_upload_inspect(&req, &action, &errstr);
     if (rc != 0) {
         return rc;
     }
@@ -646,7 +694,7 @@ imgr_upload(struct mgmt_cbuf *cb)
     if (imgr_upload_cb != NULL) {
         rc = imgr_upload_cb(req.off, action.size, imgr_upload_arg);
         if (rc != 0) {
-            return rc;
+            return imgr_error_rsp(cb, rc, imgmgr_err_str_app_reject);
         }
     }
 
@@ -656,7 +704,8 @@ imgr_upload(struct mgmt_cbuf *cb)
 
     rc = flash_area_open(imgr_state.area_id, &fa);
     if (rc != 0) {
-        return MGMT_ERR_EUNKNOWN;
+        return imgr_error_rsp(cb, MGMT_ERR_EUNKNOWN,
+                              imgmgr_err_str_flash_open_failed);
     }
 
     if (req.off == 0) {
@@ -689,6 +738,7 @@ imgr_upload(struct mgmt_cbuf *cb)
             rc = flash_area_erase(fa, 0, req.size);
             if (rc != 0) {
                 rc = MGMT_ERR_EUNKNOWN;
+                errstr = imgmgr_err_str_flash_erase_failed;
             }
         }
     }
@@ -698,6 +748,7 @@ imgr_upload(struct mgmt_cbuf *cb)
         rc = flash_area_write(fa, req.off, req.img_data, action.write_bytes);
         if (rc != 0) {
             rc = MGMT_ERR_EUNKNOWN;
+            errstr = imgmgr_err_str_flash_write_failed;
         } else {
             imgr_state.off += action.write_bytes;
             if (imgr_state.off == imgr_state.size) {
@@ -710,7 +761,7 @@ imgr_upload(struct mgmt_cbuf *cb)
     flash_area_close(fa);
 
     if (rc != 0) {
-        return rc;
+        return imgr_error_rsp(cb, rc, errstr);
     }
 
     return imgr_upload_good_rsp(cb);
