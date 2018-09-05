@@ -10,6 +10,10 @@ OS User Guide
    Secure Bootloader <modules/bootloader/bootloader>
    Split Images <modules/split/split>
    Porting Guide <core_os/porting/port_os>
+   Baselibc <modules/baselibc>
+   Drivers <modules/drivers/driver>
+   Device Management with Newt Manager <modules/devmgmt/newtmgr>
+   Image Manager <modules/imgmgr/imgmgr>
    Compile-Time Configuration <modules/sysinitconfig/sysinitconfig>
    File System <modules/fs/fs>
    Flash Circular Buffer <modules/fcb/fcb>
@@ -28,4 +32,4 @@ application. The guide covers all the features and services available in
 the OS and contains several examples showing how they can be used.
 **Send us an email on the dev@ mailing list if you have comments or
 suggestions!** If you haven't joined the mailing list, you will find the
-links `here </community.html>`__.
+links `here <https://mynewt.apache.org/community/>`_.
