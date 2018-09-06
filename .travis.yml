@@ -17,17 +17,14 @@ matrix:
       addons: *addon_conf
       env: 
         - TEST=BUILD_TARGETS
-        - ARMGCC_VERSION=7.2.1
     - os: linux
       addons: *addon_conf
       env: 
         - TEST=BUILD_BLINKY
-        - ARMGCC_VERSION=7.2.1
     - os: linux
       addons: *addon_conf
       env: 
         - TEST=TEST_ALL
-        - ARMGCC_VERSION=7.2.1
     - os: osx
       osx_image: xcode9.2
       env: 
@@ -49,10 +46,6 @@ install:
 - git clone https://github.com/michal-narajowski/mynewt-travis-ci ci
 - chmod +x ci/*.sh
 - ci/${TRAVIS_OS_NAME}_travis_install.sh
-- mkdir -p $HOME/latest-gcc-symlinks
-- ln -s /usr/bin/gcc-7 $HOME/latest-gcc-symlinks/gcc
-- ln -s /usr/bin/g++-7 $HOME/latest-gcc-symlinks/g++
-- export PATH=$HOME/latest-gcc-symlinks:$PATH
 
 - newt version
 - gcc --version
@@ -63,12 +56,8 @@ script:
 - cd project/
 - newt install
 
-- cd repos/apache-mynewt-core/
-- git checkout master
-- cd ../../
-- cd repos/apache-mynewt-nimble/
-- git checkout master
-- cd ../../
+- pushd repos/apache-mynewt-core && git checkout master && popd
+- pushd repos/apache-mynewt-nimble && git checkout master && popd
 
 - cp -R ${TRAVIS_BUILD_DIR}/ci/targets .
 
@@ -76,4 +65,4 @@ script:
 
 cache:
   directories:
-  - $HOME/TC
+  - $HOME/TOOLCHAIN
