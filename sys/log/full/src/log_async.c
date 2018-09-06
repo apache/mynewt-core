@@ -26,7 +26,6 @@
 #include <log/log.h>
 #include <bsp/bsp.h>
 #include <log/log.h>
-#include <fcb/fcb.h>
 #include <log/log_async.h>
 
 static os_stack_t log_task_stack[MYNEWT_VAL(LOG_ASYNC_TASK_STACK_SIZE)] __attribute__ ((aligned (8)));
