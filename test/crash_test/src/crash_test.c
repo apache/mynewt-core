@@ -55,6 +55,9 @@ crash_device(char *how)
     } else if (!strcmp(how, "wdog")) {
         OS_ENTER_CRITICAL(val1);
         while(1);
+    } else if (!strcmp(how, "wdog2")) {
+        /* no interrupt block */
+        while(1);
     } else {
         return -1;
     }
