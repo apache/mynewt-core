@@ -69,12 +69,8 @@ install:
 - arm-none-eabi-gcc --version
 
 script:
-- newt new project
-- cd project/
+- cp -R ${TRAVIS_BUILD_DIR}/ci/mynewt-core-project.yml project.yml
 - newt install
-
-- pushd repos/apache-mynewt-core && git checkout master && popd
-- pushd repos/apache-mynewt-nimble && git checkout master && popd
 
 - cp -R ${TRAVIS_BUILD_DIR}/ci/targets .
 
