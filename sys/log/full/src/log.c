@@ -614,17 +614,19 @@ log_walk_body_fn(struct log *log, struct log_offset *log_offset, void *dptr,
     if (rc != 0) {
         return rc;
     }
-    len -= sizeof ueh;
+    if (log_offset->lo_index <= ueh.ue_index) {
+        len -= sizeof ueh;
 
-    /* Pass the wrapped callback argument to the body walk function. */
-    log_offset->lo_arg = lwba->arg;
-    rc = lwba->fn(log, log_offset, &ueh, dptr, len);
+        /* Pass the wrapped callback argument to the body walk function. */
+        log_offset->lo_arg = lwba->arg;
+        rc = lwba->fn(log, log_offset, &ueh, dptr, len);
 
-    /* Restore the original body walk argument. */
-    log_offset->lo_arg = lwba;
+        /* Restore the original body walk argument. */
+        log_offset->lo_arg = lwba;
 
-    if (rc != 0) {
-        return rc;
+        if (rc != 0) {
+            return rc;
+        }
     }
 
     return 0;
