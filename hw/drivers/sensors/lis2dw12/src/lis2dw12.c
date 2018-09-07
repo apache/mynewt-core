@@ -2842,10 +2842,31 @@ lis2dw12_inc_notif_stats(sensor_event_type_t event)
         case SENSOR_EVENT_TYPE_FREE_FALL:
             STATS_INC(g_lis2dw12stats, free_fall_notify);
             break;
+        default:
+            break;
     }
 #endif
 
     return;
+}
+
+static int
+lis2dw12_notify(struct lis2dw12 *lis2dw12, uint8_t src,
+                    sensor_event_type_t event_type)
+{
+    struct lis2dw12_notif_cfg *notif_cfg;
+
+    notif_cfg = lis2dw12_find_notif_cfg_by_event(event_type, &lis2dw12->cfg);
+    if (!notif_cfg) {
+        return SYS_EINVAL;
+    }
+
+    if (src & notif_cfg->notif_src) {
+        sensor_mgr_put_notify_evt(&lis2dw12->pdd.notify_ctx, event_type);
+        lis2dw12_inc_notif_stats(event_type);
+    }
+
+    return 0;
 }
 
 static int
@@ -2856,7 +2877,6 @@ lis2dw12_sensor_handle_interrupt(struct sensor *sensor)
     uint8_t int_src;
     uint8_t int_status;
     uint8_t sixd_src;
-    struct lis2dw12_notif_cfg *notif_cfg;
     int rc;
 
     lis2dw12 = (struct lis2dw12 *)SENSOR_GET_DEVICE(sensor);
@@ -2873,18 +2893,9 @@ lis2dw12_sensor_handle_interrupt(struct sensor *sensor)
             return rc;
         }
 
-        notif_cfg = lis2dw12_find_notif_cfg_by_event(SENSOR_EVENT_TYPE_SLEEP,
-                                                     &lis2dw12->cfg);
-        if (!notif_cfg) {
-            rc = SYS_EINVAL;
+        rc = lis2dw12_notify(lis2dw12, int_status, SENSOR_EVENT_TYPE_SLEEP);
+        if (rc) {
             goto err;
-        }
-
-        if (int_status & notif_cfg->notif_src) {
-            /* Sleep state detected */
-            sensor_mgr_put_notify_evt(&lis2dw12->pdd.notify_ctx,
-                                      SENSOR_EVENT_TYPE_SLEEP);
-            lis2dw12_inc_notif_stats(SENSOR_EVENT_TYPE_SLEEP);
         }
     }
 
@@ -2894,137 +2905,39 @@ lis2dw12_sensor_handle_interrupt(struct sensor *sensor)
         goto err;
     }
 
-    notif_cfg = lis2dw12_find_notif_cfg_by_event(SENSOR_EVENT_TYPE_ORIENT_CHANGE,
-                                                 &lis2dw12->cfg);
-    if (!notif_cfg) {
-        rc = SYS_EINVAL;
+    rc = lis2dw12_notify(lis2dw12, sixd_src, SENSOR_EVENT_TYPE_ORIENT_CHANGE);
+    if (rc) {
         goto err;
     }
 
-    if (sixd_src & notif_cfg->notif_src) {
-
-        /* Orientation change detected, can be a combination of ZH, ZL, YH,
-         * YL, XH and XL
-         */
-
-        sensor_mgr_put_notify_evt(&lis2dw12->pdd.notify_ctx,
-                                  SENSOR_EVENT_TYPE_ORIENT_CHANGE);
-
-        lis2dw12_inc_notif_stats(SENSOR_EVENT_TYPE_ORIENT_CHANGE);
-    }
-
-    notif_cfg = lis2dw12_find_notif_cfg_by_event(SENSOR_EVENT_TYPE_ORIENT_X_L_CHANGE,
-                                                 &lis2dw12->cfg);
-    if (!notif_cfg) {
-        rc = SYS_EINVAL;
+    rc = lis2dw12_notify(lis2dw12, sixd_src, SENSOR_EVENT_TYPE_ORIENT_X_L_CHANGE);
+    if (rc) {
         goto err;
     }
 
-    if (sixd_src & notif_cfg->notif_src) {
-
-        /* Orientation change detected, can be a combination of ZH, ZL, YH,
-         * YL, XH and XL
-         */
-
-        sensor_mgr_put_notify_evt(&lis2dw12->pdd.notify_ctx,
-                                  SENSOR_EVENT_TYPE_ORIENT_X_L_CHANGE);
-
-        lis2dw12_inc_notif_stats(SENSOR_EVENT_TYPE_ORIENT_X_L_CHANGE);
-    }
-
-    notif_cfg = lis2dw12_find_notif_cfg_by_event(SENSOR_EVENT_TYPE_ORIENT_Y_L_CHANGE,
-                                                 &lis2dw12->cfg);
-    if (!notif_cfg) {
-        rc = SYS_EINVAL;
+    rc = lis2dw12_notify(lis2dw12, sixd_src, SENSOR_EVENT_TYPE_ORIENT_Y_L_CHANGE);
+    if (rc) {
         goto err;
     }
 
-    if (sixd_src & notif_cfg->notif_src) {
-
-        /* Orientation change detected, can be a combination of ZH, ZL, YH,
-         * YL, XH and XL
-         */
-
-        sensor_mgr_put_notify_evt(&lis2dw12->pdd.notify_ctx,
-                                  SENSOR_EVENT_TYPE_ORIENT_Y_L_CHANGE);
-
-        lis2dw12_inc_notif_stats(SENSOR_EVENT_TYPE_ORIENT_Y_L_CHANGE);
-    }
-
-    notif_cfg = lis2dw12_find_notif_cfg_by_event(SENSOR_EVENT_TYPE_ORIENT_Z_L_CHANGE,
-                                                 &lis2dw12->cfg);
-    if (!notif_cfg) {
-        rc = SYS_EINVAL;
+    rc = lis2dw12_notify(lis2dw12, sixd_src, SENSOR_EVENT_TYPE_ORIENT_Z_L_CHANGE);
+    if (rc) {
         goto err;
     }
 
-    if (sixd_src & notif_cfg->notif_src) {
-
-        /* Orientation change detected, can be a combination of ZH, ZL, YH,
-         * YL, XH and XL
-         */
-
-        sensor_mgr_put_notify_evt(&lis2dw12->pdd.notify_ctx,
-                                  SENSOR_EVENT_TYPE_ORIENT_Z_L_CHANGE);
-
-        lis2dw12_inc_notif_stats(SENSOR_EVENT_TYPE_ORIENT_Z_L_CHANGE);
-    }
-
-    notif_cfg = lis2dw12_find_notif_cfg_by_event(SENSOR_EVENT_TYPE_ORIENT_X_H_CHANGE,
-                                                 &lis2dw12->cfg);
-    if (!notif_cfg) {
-        rc = SYS_EINVAL;
+    rc = lis2dw12_notify(lis2dw12, sixd_src, SENSOR_EVENT_TYPE_ORIENT_X_H_CHANGE);
+    if (rc) {
         goto err;
     }
 
-    if (sixd_src & notif_cfg->notif_src) {
-
-        /* Orientation change detected, can be a combination of ZH, ZL, YH,
-         * YL, XH and XL
-         */
-
-        sensor_mgr_put_notify_evt(&lis2dw12->pdd.notify_ctx,
-                                  SENSOR_EVENT_TYPE_ORIENT_X_H_CHANGE);
-
-        lis2dw12_inc_notif_stats(SENSOR_EVENT_TYPE_ORIENT_X_H_CHANGE);
-    }
-
-    notif_cfg = lis2dw12_find_notif_cfg_by_event(SENSOR_EVENT_TYPE_ORIENT_Y_H_CHANGE,
-                                                 &lis2dw12->cfg);
-    if (!notif_cfg) {
-        rc = SYS_EINVAL;
+    rc = lis2dw12_notify(lis2dw12, sixd_src, SENSOR_EVENT_TYPE_ORIENT_Y_H_CHANGE);
+    if (rc) {
         goto err;
     }
 
-    if (sixd_src & notif_cfg->notif_src) {
-
-        /* Orientation change detected, can be a combination of ZH, ZL, YH,
-         * YL, XH and XL
-         */
-
-        sensor_mgr_put_notify_evt(&lis2dw12->pdd.notify_ctx,
-                                  SENSOR_EVENT_TYPE_ORIENT_Y_H_CHANGE);
-
-        lis2dw12_inc_notif_stats(SENSOR_EVENT_TYPE_ORIENT_Y_H_CHANGE);
-    }
-
-    notif_cfg = lis2dw12_find_notif_cfg_by_event(SENSOR_EVENT_TYPE_ORIENT_Z_H_CHANGE,
-                                                 &lis2dw12->cfg);
-    if (!notif_cfg) {
-        rc = SYS_EINVAL;
+    rc = lis2dw12_notify(lis2dw12, sixd_src, SENSOR_EVENT_TYPE_ORIENT_Z_H_CHANGE);
+    if (rc) {
         goto err;
-    }
-
-    if (sixd_src & notif_cfg->notif_src) {
-
-        /* Orientation change detected, can be a combination of ZH, ZL, YH,
-         * YL, XH and XL
-         */
-
-        sensor_mgr_put_notify_evt(&lis2dw12->pdd.notify_ctx,
-                                  SENSOR_EVENT_TYPE_ORIENT_Z_H_CHANGE);
-
-        lis2dw12_inc_notif_stats(SENSOR_EVENT_TYPE_ORIENT_Z_H_CHANGE);
     }
 
     rc = lis2dw12_clear_int(itf, &int_src);
@@ -3033,74 +2946,29 @@ lis2dw12_sensor_handle_interrupt(struct sensor *sensor)
         return rc;
     }
 
-    notif_cfg = lis2dw12_find_notif_cfg_by_event(SENSOR_EVENT_TYPE_SINGLE_TAP,
-                                                 &lis2dw12->cfg);
-    if (!notif_cfg) {
-        rc = SYS_EINVAL;
+    rc = lis2dw12_notify(lis2dw12, int_src, SENSOR_EVENT_TYPE_SINGLE_TAP);
+    if (rc) {
         goto err;
     }
 
-    if (int_src & notif_cfg->notif_src) {
-        /* Single tap is detected */
-        sensor_mgr_put_notify_evt(&lis2dw12->pdd.notify_ctx,
-                                  SENSOR_EVENT_TYPE_SINGLE_TAP);
-        lis2dw12_inc_notif_stats(SENSOR_EVENT_TYPE_SINGLE_TAP);
-    }
-
-    notif_cfg = lis2dw12_find_notif_cfg_by_event(SENSOR_EVENT_TYPE_DOUBLE_TAP,
-                                                 &lis2dw12->cfg);
-    if (!notif_cfg) {
-        rc = SYS_EINVAL;
+    rc = lis2dw12_notify(lis2dw12, int_src, SENSOR_EVENT_TYPE_DOUBLE_TAP);
+    if (rc) {
         goto err;
     }
 
-    if (int_src & notif_cfg->notif_src) {
-        /* Double tap is detected */
-        sensor_mgr_put_notify_evt(&lis2dw12->pdd.notify_ctx,
-                                  SENSOR_EVENT_TYPE_DOUBLE_TAP);
-        lis2dw12_inc_notif_stats(SENSOR_EVENT_TYPE_DOUBLE_TAP);
-    }
-
-    notif_cfg = lis2dw12_find_notif_cfg_by_event(SENSOR_EVENT_TYPE_FREE_FALL,
-                                                 &lis2dw12->cfg);
-    if (!notif_cfg) {
-        rc = SYS_EINVAL;
+    rc = lis2dw12_notify(lis2dw12, int_src, SENSOR_EVENT_TYPE_FREE_FALL);
+    if (rc) {
         goto err;
     }
 
-    if (int_src & notif_cfg->notif_src) {
-        /* Freefall is detected */
-        sensor_mgr_put_notify_evt(&lis2dw12->pdd.notify_ctx,
-                                  SENSOR_EVENT_TYPE_FREE_FALL);
-        lis2dw12_inc_notif_stats(SENSOR_EVENT_TYPE_FREE_FALL);
-    }
-
-    notif_cfg = lis2dw12_find_notif_cfg_by_event(SENSOR_EVENT_TYPE_WAKEUP,
-                                                 &lis2dw12->cfg);
-    if (!notif_cfg) {
-        rc = SYS_EINVAL;
+    rc = lis2dw12_notify(lis2dw12, int_src, SENSOR_EVENT_TYPE_WAKEUP);
+    if (rc) {
         goto err;
     }
 
-    if (int_src & notif_cfg->notif_src) {
-        /* Wake up is detected */
-        sensor_mgr_put_notify_evt(&lis2dw12->pdd.notify_ctx,
-                                  SENSOR_EVENT_TYPE_WAKEUP);
-        lis2dw12_inc_notif_stats(SENSOR_EVENT_TYPE_WAKEUP);
-    }
-
-    notif_cfg = lis2dw12_find_notif_cfg_by_event(SENSOR_EVENT_TYPE_SLEEP_CHANGE,
-                                                 &lis2dw12->cfg);
-    if (!notif_cfg) {
-        rc = SYS_EINVAL;
+    rc = lis2dw12_notify(lis2dw12, int_src, SENSOR_EVENT_TYPE_SLEEP_CHANGE);
+    if (rc) {
         goto err;
-    }
-
-    if (int_src & notif_cfg->notif_src) {
-        /* Sleep change detected, either wakeup or sleep */
-        sensor_mgr_put_notify_evt(&lis2dw12->pdd.notify_ctx,
-                                  SENSOR_EVENT_TYPE_SLEEP_CHANGE);
-        lis2dw12_inc_notif_stats(SENSOR_EVENT_TYPE_SLEEP_CHANGE);
     }
 
     return 0;
