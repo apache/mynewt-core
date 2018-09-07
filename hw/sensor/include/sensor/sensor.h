@@ -114,12 +114,18 @@ typedef enum {
     SENSOR_EVENT_TYPE_SLEEP          = (1 << 5),
     /* Orientation Change Event */
     SENSOR_EVENT_TYPE_ORIENT_CHANGE  = (1 << 6),
-    /* Orientation Change Event in the X direction */
-    SENSOR_EVENT_TYPE_ORIENT_X_CHANGE  = (1 << 7),
-    /* Orientation Change Event in the Y direction */
-    SENSOR_EVENT_TYPE_ORIENT_Y_CHANGE  = (1 << 8),
-    /* Orientation Change Event in the Z direction */
-    SENSOR_EVENT_TYPE_ORIENT_Z_CHANGE  = (1 << 9),
+    /* Orientation Change Event in the X L direction */
+    SENSOR_EVENT_TYPE_ORIENT_X_L_CHANGE  = (1 << 7),
+    /* Orientation Change Event in the Y L direction */
+    SENSOR_EVENT_TYPE_ORIENT_Y_L_CHANGE  = (1 << 8),
+    /* Orientation Change Event in the Z L direction */
+    SENSOR_EVENT_TYPE_ORIENT_Z_L_CHANGE  = (1 << 9),
+    /* Orientation Change Event in the X H direction */
+    SENSOR_EVENT_TYPE_ORIENT_X_H_CHANGE  = (1 << 10),
+    /* Orientation Change Event in the Y H direction */
+    SENSOR_EVENT_TYPE_ORIENT_Y_H_CHANGE  = (1 << 11),
+    /* Orientation Change Event in the Z H direction */
+    SENSOR_EVENT_TYPE_ORIENT_Z_H_CHANGE  = (1 << 12),
 } sensor_event_type_t;
 
 

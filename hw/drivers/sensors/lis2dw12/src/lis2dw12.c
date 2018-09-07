@@ -84,23 +84,42 @@ const struct lis2dw12_notif_cfg dflt_notif_cfg[] = {
       .int_cfg   = LIS2DW12_INT1_CFG_6D
     },
     {
-      .event     = SENSOR_EVENT_TYPE_ORIENT_X_CHANGE,
+      .event     = SENSOR_EVENT_TYPE_ORIENT_X_L_CHANGE,
       .int_num   = 0,
-      .notif_src = LIS2DW12_SIXD_SRC_XL|LIS2DW12_SIXD_SRC_XH,
+      .notif_src = LIS2DW12_SIXD_SRC_XL,
       .int_cfg   = LIS2DW12_INT1_CFG_6D
     },
     {
-      .event     = SENSOR_EVENT_TYPE_ORIENT_Y_CHANGE,
+      .event     = SENSOR_EVENT_TYPE_ORIENT_Y_L_CHANGE,
       .int_num   = 0,
-      .notif_src = LIS2DW12_SIXD_SRC_YL|LIS2DW12_SIXD_SRC_YH,
+      .notif_src = LIS2DW12_SIXD_SRC_YL,
       .int_cfg   = LIS2DW12_INT1_CFG_6D
     },
     {
-      .event     = SENSOR_EVENT_TYPE_ORIENT_Z_CHANGE,
+      .event     = SENSOR_EVENT_TYPE_ORIENT_Z_L_CHANGE,
       .int_num   = 0,
-      .notif_src = LIS2DW12_SIXD_SRC_ZL|LIS2DW12_SIXD_SRC_ZH,
+      .notif_src = LIS2DW12_SIXD_SRC_ZL,
+      .int_cfg   = LIS2DW12_INT1_CFG_6D
+    },
+    {
+      .event     = SENSOR_EVENT_TYPE_ORIENT_X_H_CHANGE,
+      .int_num   = 0,
+      .notif_src = LIS2DW12_SIXD_SRC_XH,
+      .int_cfg   = LIS2DW12_INT1_CFG_6D
+    },
+    {
+      .event     = SENSOR_EVENT_TYPE_ORIENT_Y_H_CHANGE,
+      .int_num   = 0,
+      .notif_src = LIS2DW12_SIXD_SRC_YH,
+      .int_cfg   = LIS2DW12_INT1_CFG_6D
+    },
+    {
+      .event     = SENSOR_EVENT_TYPE_ORIENT_Z_H_CHANGE,
+      .int_num   = 0,
+      .notif_src = LIS2DW12_SIXD_SRC_ZH,
       .int_cfg   = LIS2DW12_INT1_CFG_6D
     }
+
 };
 
 static struct hal_spi_settings spi_lis2dw12_settings = {
@@ -122,9 +141,12 @@ STATS_SECT_START(lis2dw12_stat_section)
     STATS_SECT_ENTRY(wakeup_notify)
     STATS_SECT_ENTRY(sleep_chg_notify)
     STATS_SECT_ENTRY(orient_chg_notify)
-    STATS_SECT_ENTRY(orient_chg_x_notify)
-    STATS_SECT_ENTRY(orient_chg_y_notify)
-    STATS_SECT_ENTRY(orient_chg_z_notify)
+    STATS_SECT_ENTRY(orient_chg_x_l_notify)
+    STATS_SECT_ENTRY(orient_chg_y_l_notify)
+    STATS_SECT_ENTRY(orient_chg_z_l_notify)
+    STATS_SECT_ENTRY(orient_chg_x_h_notify)
+    STATS_SECT_ENTRY(orient_chg_y_h_notify)
+    STATS_SECT_ENTRY(orient_chg_z_h_notify)
 #endif
 STATS_SECT_END
 
@@ -140,9 +162,12 @@ STATS_NAME_START(lis2dw12_stat_section)
     STATS_NAME(lis2dw12_stat_section, wakeup_notify)
     STATS_NAME(lis2dw12_stat_section, sleep_chg_notify)
     STATS_NAME(lis2dw12_stat_section, orient_chg_notify)
-    STATS_NAME(lis2dw12_stat_section, orient_chg_x_notify)
-    STATS_NAME(lis2dw12_stat_section, orient_chg_y_notify)
-    STATS_NAME(lis2dw12_stat_section, orient_chg_z_notify)
+    STATS_NAME(lis2dw12_stat_section, orient_chg_x_l_notify)
+    STATS_NAME(lis2dw12_stat_section, orient_chg_y_l_notify)
+    STATS_NAME(lis2dw12_stat_section, orient_chg_z_l_notify)
+    STATS_NAME(lis2dw12_stat_section, orient_chg_x_h_notify)
+    STATS_NAME(lis2dw12_stat_section, orient_chg_y_h_notify)
+    STATS_NAME(lis2dw12_stat_section, orient_chg_z_h_notify)
 #endif
 STATS_NAME_END(lis2dw12_stat_section)
 
@@ -2790,14 +2815,23 @@ lis2dw12_inc_notif_stats(sensor_event_type_t event)
         case SENSOR_EVENT_TYPE_ORIENT_CHANGE:
             STATS_INC(g_lis2dw12stats, orient_chg_notify);
             break;
-        case SENSOR_EVENT_TYPE_ORIENT_X_CHANGE:
-            STATS_INC(g_lis2dw12stats, orient_chg_x_notify);
+        case SENSOR_EVENT_TYPE_ORIENT_X_L_CHANGE:
+            STATS_INC(g_lis2dw12stats, orient_chg_x_l_notify);
             break;
-        case SENSOR_EVENT_TYPE_ORIENT_Y_CHANGE:
-            STATS_INC(g_lis2dw12stats, orient_chg_y_notify);
+        case SENSOR_EVENT_TYPE_ORIENT_Y_L_CHANGE:
+            STATS_INC(g_lis2dw12stats, orient_chg_y_l_notify);
             break;
-        case SENSOR_EVENT_TYPE_ORIENT_Z_CHANGE:
-            STATS_INC(g_lis2dw12stats, orient_chg_z_notify);
+        case SENSOR_EVENT_TYPE_ORIENT_Z_L_CHANGE:
+            STATS_INC(g_lis2dw12stats, orient_chg_z_l_notify);
+            break;
+        case SENSOR_EVENT_TYPE_ORIENT_X_H_CHANGE:
+            STATS_INC(g_lis2dw12stats, orient_chg_x_h_notify);
+            break;
+        case SENSOR_EVENT_TYPE_ORIENT_Y_H_CHANGE:
+            STATS_INC(g_lis2dw12stats, orient_chg_y_h_notify);
+            break;
+        case SENSOR_EVENT_TYPE_ORIENT_Z_H_CHANGE:
+            STATS_INC(g_lis2dw12stats, orient_chg_z_h_notify);
             break;
         case SENSOR_EVENT_TYPE_SLEEP_CHANGE:
             STATS_INC(g_lis2dw12stats, sleep_chg_notify);
@@ -2879,7 +2913,7 @@ lis2dw12_sensor_handle_interrupt(struct sensor *sensor)
         lis2dw12_inc_notif_stats(SENSOR_EVENT_TYPE_ORIENT_CHANGE);
     }
 
-    notif_cfg = lis2dw12_find_notif_cfg_by_event(SENSOR_EVENT_TYPE_ORIENT_X_CHANGE,
+    notif_cfg = lis2dw12_find_notif_cfg_by_event(SENSOR_EVENT_TYPE_ORIENT_X_L_CHANGE,
                                                  &lis2dw12->cfg);
     if (!notif_cfg) {
         rc = SYS_EINVAL;
@@ -2893,12 +2927,12 @@ lis2dw12_sensor_handle_interrupt(struct sensor *sensor)
          */
 
         sensor_mgr_put_notify_evt(&lis2dw12->pdd.notify_ctx,
-                                  SENSOR_EVENT_TYPE_ORIENT_X_CHANGE);
+                                  SENSOR_EVENT_TYPE_ORIENT_X_L_CHANGE);
 
-        lis2dw12_inc_notif_stats(SENSOR_EVENT_TYPE_ORIENT_X_CHANGE);
+        lis2dw12_inc_notif_stats(SENSOR_EVENT_TYPE_ORIENT_X_L_CHANGE);
     }
 
-    notif_cfg = lis2dw12_find_notif_cfg_by_event(SENSOR_EVENT_TYPE_ORIENT_Y_CHANGE,
+    notif_cfg = lis2dw12_find_notif_cfg_by_event(SENSOR_EVENT_TYPE_ORIENT_Y_L_CHANGE,
                                                  &lis2dw12->cfg);
     if (!notif_cfg) {
         rc = SYS_EINVAL;
@@ -2912,12 +2946,12 @@ lis2dw12_sensor_handle_interrupt(struct sensor *sensor)
          */
 
         sensor_mgr_put_notify_evt(&lis2dw12->pdd.notify_ctx,
-                                  SENSOR_EVENT_TYPE_ORIENT_Y_CHANGE);
+                                  SENSOR_EVENT_TYPE_ORIENT_Y_L_CHANGE);
 
-        lis2dw12_inc_notif_stats(SENSOR_EVENT_TYPE_ORIENT_Y_CHANGE);
+        lis2dw12_inc_notif_stats(SENSOR_EVENT_TYPE_ORIENT_Y_L_CHANGE);
     }
 
-    notif_cfg = lis2dw12_find_notif_cfg_by_event(SENSOR_EVENT_TYPE_ORIENT_Z_CHANGE,
+    notif_cfg = lis2dw12_find_notif_cfg_by_event(SENSOR_EVENT_TYPE_ORIENT_Z_L_CHANGE,
                                                  &lis2dw12->cfg);
     if (!notif_cfg) {
         rc = SYS_EINVAL;
@@ -2931,9 +2965,66 @@ lis2dw12_sensor_handle_interrupt(struct sensor *sensor)
          */
 
         sensor_mgr_put_notify_evt(&lis2dw12->pdd.notify_ctx,
-                                  SENSOR_EVENT_TYPE_ORIENT_Z_CHANGE);
+                                  SENSOR_EVENT_TYPE_ORIENT_Z_L_CHANGE);
 
-        lis2dw12_inc_notif_stats(SENSOR_EVENT_TYPE_ORIENT_Z_CHANGE);
+        lis2dw12_inc_notif_stats(SENSOR_EVENT_TYPE_ORIENT_Z_L_CHANGE);
+    }
+
+    notif_cfg = lis2dw12_find_notif_cfg_by_event(SENSOR_EVENT_TYPE_ORIENT_X_H_CHANGE,
+                                                 &lis2dw12->cfg);
+    if (!notif_cfg) {
+        rc = SYS_EINVAL;
+        goto err;
+    }
+
+    if (sixd_src & notif_cfg->notif_src) {
+
+        /* Orientation change detected, can be a combination of ZH, ZL, YH,
+         * YL, XH and XL
+         */
+
+        sensor_mgr_put_notify_evt(&lis2dw12->pdd.notify_ctx,
+                                  SENSOR_EVENT_TYPE_ORIENT_X_H_CHANGE);
+
+        lis2dw12_inc_notif_stats(SENSOR_EVENT_TYPE_ORIENT_X_H_CHANGE);
+    }
+
+    notif_cfg = lis2dw12_find_notif_cfg_by_event(SENSOR_EVENT_TYPE_ORIENT_Y_H_CHANGE,
+                                                 &lis2dw12->cfg);
+    if (!notif_cfg) {
+        rc = SYS_EINVAL;
+        goto err;
+    }
+
+    if (sixd_src & notif_cfg->notif_src) {
+
+        /* Orientation change detected, can be a combination of ZH, ZL, YH,
+         * YL, XH and XL
+         */
+
+        sensor_mgr_put_notify_evt(&lis2dw12->pdd.notify_ctx,
+                                  SENSOR_EVENT_TYPE_ORIENT_Y_H_CHANGE);
+
+        lis2dw12_inc_notif_stats(SENSOR_EVENT_TYPE_ORIENT_Y_H_CHANGE);
+    }
+
+    notif_cfg = lis2dw12_find_notif_cfg_by_event(SENSOR_EVENT_TYPE_ORIENT_Z_H_CHANGE,
+                                                 &lis2dw12->cfg);
+    if (!notif_cfg) {
+        rc = SYS_EINVAL;
+        goto err;
+    }
+
+    if (sixd_src & notif_cfg->notif_src) {
+
+        /* Orientation change detected, can be a combination of ZH, ZL, YH,
+         * YL, XH and XL
+         */
+
+        sensor_mgr_put_notify_evt(&lis2dw12->pdd.notify_ctx,
+                                  SENSOR_EVENT_TYPE_ORIENT_Z_H_CHANGE);
+
+        lis2dw12_inc_notif_stats(SENSOR_EVENT_TYPE_ORIENT_Z_H_CHANGE);
     }
 
     rc = lis2dw12_clear_int(itf, &int_src);
