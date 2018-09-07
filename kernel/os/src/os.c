@@ -55,8 +55,17 @@ OS_TASK_STACK_DEFINE(os_main_stack, OS_MAIN_STACK_SIZE);
  * more time is needed to write the corefile.
  */
 #define OS_WDOG_MONITOR_TMO     ((MYNEWT_VAL(WATCHDOG_INTERVAL) - 2000) * 1000)
+#if MYNEWT_VAL(WATCHDOG_INTERVAL) < 4000
+#error "Watchdog interval too small, must be at least 4000m"
+#endif
+
 static struct hal_timer os_wdog_monitor;
 #endif
+
+#if MYNEWT_VAL(WATCHDOG_INTERVAL) - 200 < MYNEWT_VAL(SANITY_INTERVAL)
+#error "Watchdog interval - 200 < sanity interval"
+#endif
+
 
 /* Default zero.  Set by the architecture specific code when os is started.
  */
@@ -186,8 +195,6 @@ os_init_idle_task(void)
     /* Initialize sanity */
     rc = os_sanity_init();
     assert(rc == 0);
-
-    assert(MYNEWT_VAL(WATCHDOG_INTERVAL) - 200 > MYNEWT_VAL(SANITY_INTERVAL));
 
     rc = hal_watchdog_init(MYNEWT_VAL(WATCHDOG_INTERVAL));
     assert(rc == 0);
