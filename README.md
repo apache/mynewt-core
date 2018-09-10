@@ -23,7 +23,7 @@
 
 ## Overview
 
-[![Build/Test](https://img.shields.io/travis/apache/mynewt-core/master.svg?label=travis-ci)][travis]
+[![Build/Test](https://travis-ci.org/apache/mynewt-core.svg?branch=master)][travis]
 
 [travis]: https://travis-ci.org/apache/mynewt-core
 
