@@ -24,7 +24,7 @@
 #ifndef MBEDTLS_HMAC_DRBG_H
 #define MBEDTLS_HMAC_DRBG_H
 
-#include "md.h"
+#include "mbedtls/md.h"
 
 #if defined(MBEDTLS_THREADING_C)
 #include "mbedtls/threading.h"

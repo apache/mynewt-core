@@ -1,7 +1,7 @@
 /**
  * \file net.h
  *
- * \brief Deprecated header file that includes mbedtls/net_sockets.h
+ * \brief Deprecated header file that includes net_sockets.h
  *
  * \deprecated Superseded by mbedtls/net_sockets.h
  */
