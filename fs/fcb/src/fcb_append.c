@@ -113,6 +113,7 @@ fcb_append(struct fcb *fcb, uint16_t len, struct fcb_entry *append_loc)
     append_loc->fe_data_off = active->fe_elem_off + cnt;
 
     active->fe_elem_off = append_loc->fe_data_off + len;
+    active->fe_data_off = append_loc->fe_data_off;
 
     os_mutex_release(&fcb->f_mtx);
 
