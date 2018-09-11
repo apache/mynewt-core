@@ -110,7 +110,7 @@ syscfg.defs:
 
   # Timing interface - FIXME: better disable by default?
   MBEDTLS_TIMING_C:
-    value: 1
+    value: 0
 
   MBEDTLS_ENTROPY_C:
     value: 1
