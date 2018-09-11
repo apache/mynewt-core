@@ -18,16 +18,10 @@
  */
 #include "mbedtls_test.h"
 
-TEST_CASE(entropy_test)
+TEST_CASE(timing_test)
 {
-#if 0 /* XXX fix this later, no strong entropy source atm */
     int rc;
 
-    rc = mbedtls_entropy_self_test(1);
+    rc = mbedtls_timing_self_test(0);
     TEST_ASSERT(rc == 0);
-
-    /* This tests a HW (_ALT) entropy source */
-    rc = mbedtls_entropy_source_self_test(0);
-    TEST_ASSERT(rc == 0);
-#endif
 }
