@@ -95,6 +95,8 @@ typedef union battery_property_value {
     uint32_t bpv_capacity;
     /* SOC in % 0..100 */
     uint8_t bpv_soc;
+    /* SOH in % 0..100 */
+    uint8_t bpv_soh;
     /* Temperature in deg C */
     float bpv_temperature;
     /* Time in s */
@@ -144,6 +146,8 @@ typedef enum {
     BATTERY_PROP_CURRENT_AVG,
     /* State-Of-Charge, current capacity 0-100 % */
     BATTERY_PROP_SOC,
+    /* State-Of-Health, current battery state of health 0-100 % */
+    BATTERY_PROP_SOH,
     /* Predicted time to complete discharge in seconds */
     BATTERY_PROP_TIME_TO_EMPTY_NOW,
     /* Predicted time to full capacity when charging in seconds */

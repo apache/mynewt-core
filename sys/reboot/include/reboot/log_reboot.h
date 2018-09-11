@@ -33,7 +33,6 @@ extern "C" {
               (reason == HAL_RESET_REQUESTED ? "REQUESTED" :            \
                 "UNKNOWN"))))))
 
-int reboot_init_handler(int log_store_type, uint8_t entries);
 int log_reboot(enum hal_reset_reason);
 void reboot_start(enum hal_reset_reason reason);
 

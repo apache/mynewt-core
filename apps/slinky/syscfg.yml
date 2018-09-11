@@ -17,6 +17,10 @@
 #
 
 # Package: apps/slinky
+syscfg.defs:
+    SLINKY_LOG_MODULE_GPIO:
+        description: The log module to use for slinky GPIO messages.
+        value: 64
 
 syscfg.vals:
     # Enable the shell task.

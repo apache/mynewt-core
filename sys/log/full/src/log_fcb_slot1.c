@@ -103,6 +103,18 @@ log_fcb_slot1_flush(struct log *log)
 }
 
 static int
+log_fcb_slot1_storage_info(struct log *log, struct log_storage_info *info)
+{
+    return LOG_FCB_SLOT1_CALL(log, log_storage_info, info);
+}
+
+static int
+log_fcb_slot1_set_watermark(struct log *log, uint32_t index)
+{
+    return LOG_FCB_SLOT1_CALL(log, log_set_watermark, index);
+}
+
+static int
 log_fcb_slot1_registered(struct log *log)
 {
     struct log_fcb_slot1 *s1 = log->l_arg;
@@ -126,6 +138,10 @@ log_fcb_slot1_registered(struct log *log)
         s1->l_current = NULL;
     }
 
+    if (s1->l_current && s1->l_current->l_log->log_registered) {
+        s1->l_current->l_log->log_registered(s1->l_current);
+    }
+
     os_mutex_release(&g_log_slot1_mutex);
 
     return 0;
@@ -141,6 +157,12 @@ const struct log_handler log_fcb_slot1_handler = {
     .log_append_mbuf_body = log_fcb_slot1_append_mbuf_body,
     .log_walk = log_fcb_slot1_walk,
     .log_flush = log_fcb_slot1_flush,
+#if MYNEWT_VAL(LOG_STORAGE_INFO)
+    .log_storage_info = log_fcb_slot1_storage_info,
+#endif
+#if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
+    .log_set_watermark = log_fcb_slot1_set_watermark,
+#endif
     .log_registered = log_fcb_slot1_registered,
 };
 
@@ -205,6 +227,10 @@ log_fcb_slot1_lock(void)
             log_flush(s1->l_current);
         } else {
             s1->l_current = NULL;
+        }
+
+        if (s1->l_current && s1->l_current->l_log->log_registered) {
+            s1->l_current->l_log->log_registered(s1->l_current);
         }
 
         os_mutex_release(&s1->mutex);
@@ -292,6 +318,9 @@ log_fcb_slot1_unlock(void)
         }
 
         s1->l_current = &s1->l_fcb;
+        if (s1->l_current->l_log->log_registered) {
+            s1->l_current->l_log->log_registered(s1->l_current);
+        }
 
         os_mutex_release(&s1->mutex);
     }

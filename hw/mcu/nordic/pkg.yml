@@ -29,7 +29,6 @@ pkg.keywords:
 pkg.type: sdk
 
 pkg.ign_files.BSP_NRF52:
-    - "nrfx_power.c"
     - "nrfx_power_clock.c"
 
 pkg.ign_files.BSP_NRF52810:
@@ -54,5 +53,5 @@ pkg.src_dirs:
 pkg.cflags: -std=gnu99 -DNRF52_PAN_28
 
 pkg.deps:
-    - hw/hal
-    - hw/cmsis-core
+    - "@apache-mynewt-core/hw/hal"
+    - "@apache-mynewt-core/hw/cmsis-core"

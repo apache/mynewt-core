@@ -25,5 +25,5 @@ pkg.keywords:
 pkg.apis:
     - ADC_HW_IMPL
 pkg.deps:
-   - hw/drivers/adc
-   - hw/mcu/nordic
+    - "@apache-mynewt-core/hw/drivers/adc"
+    - "@apache-mynewt-core/hw/mcu/nordic"

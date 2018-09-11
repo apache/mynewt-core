@@ -41,15 +41,15 @@ fcb_elem_crc8(struct fcb *fcb, struct fcb_entry *loc, uint8_t *c8p)
     if (loc->fe_elem_off + 2 > loc->fe_area->fa_size) {
         return FCB_ERR_NOVAR;
     }
+    if (flash_area_isempty_at(loc->fe_area, loc->fe_elem_off, 2)) {
+        return FCB_ERR_NOVAR;
+    }
     rc = flash_area_read(loc->fe_area, loc->fe_elem_off, tmp_str, 2);
     if (rc) {
         return FCB_ERR_FLASH;
     }
 
     cnt = fcb_get_len(tmp_str, &len);
-    if (cnt < 0) {
-        return cnt;
-    }
     loc->fe_data_off = loc->fe_elem_off + fcb_len_in_flash(fcb, cnt);
     loc->fe_data_len = len;
 

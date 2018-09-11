@@ -30,7 +30,7 @@
 #include <mcu/stm32_hal.h>
 #include <syscfg/syscfg.h>
 
-#if defined(STM32F3) || defined(STM32F7)
+#if !MYNEWT_VAL(STM32_HAL_I2C_HAS_CLOCKSPEED)
 
 #define I2C_TIMEOUT_BUSY    (25U)          /*!< 25 ms */
 
@@ -661,4 +661,4 @@ HAL_StatusTypeDef HAL_I2C_Master_Receive_Custom(I2C_HandleTypeDef *hi2c,
   }
 }
 
-#endif /* defined(STM32F3) || defined(STM32F7) */
+#endif /* !MYNEWT_VAL(STM32_HAL_I2C_HAS_CLOCKSPEED) */

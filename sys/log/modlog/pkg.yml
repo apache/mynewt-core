@@ -25,8 +25,8 @@ pkg.keywords:
     - logging
 
 pkg.deps:
-    - kernel/os
-    - util/rwlock
+    - "@apache-mynewt-core/kernel/os"
+    - "@apache-mynewt-core/util/rwlock"
 
 pkg.req_apis:
     - log

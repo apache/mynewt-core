@@ -34,6 +34,7 @@
 #include "hal/hal_system.h"
 #include "config/config.h"
 #include "split/split.h"
+#include "modlog/modlog.h"
 
 /* BLE */
 #include "nimble/ble.h"
@@ -46,23 +47,14 @@
 
 static int tbb_gap_event(struct ble_gap_event *event, void *arg);
 
-static struct log tbb_log;
-
-/* tbb uses the first "peruser" log module. */
-#define TBB_LOG_MODULE  (LOG_MODULE_PERUSER + 0)
-
-/* Convenience macro for logging to the tbb module. */
-#define TBB_LOG(lvl, ...) \
-    LOG_ ## lvl(&tbb_log, TBB_LOG_MODULE, __VA_ARGS__)
-
 void
 tbb_print_addr(const void *addr)
 {
     const uint8_t *u8p;
 
     u8p = addr;
-    TBB_LOG(INFO, "%02x:%02x:%02x:%02x:%02x:%02x",
-            u8p[5], u8p[4], u8p[3], u8p[2], u8p[1], u8p[0]);
+    MODLOG_DFLT(INFO, "%02x:%02x:%02x:%02x:%02x:%02x",
+                u8p[5], u8p[4], u8p[3], u8p[2], u8p[1], u8p[0]);
 }
 
 /**
@@ -71,20 +63,20 @@ tbb_print_addr(const void *addr)
 static void
 tbb_print_conn_desc(struct ble_gap_conn_desc *desc)
 {
-    TBB_LOG(INFO, "handle=%d our_ota_addr_type=%d our_ota_addr=",
+    MODLOG_DFLT(INFO, "handle=%d our_ota_addr_type=%d our_ota_addr=",
                 desc->conn_handle, desc->our_ota_addr.type);
     tbb_print_addr(desc->our_ota_addr.val);
-    TBB_LOG(INFO, " our_id_addr_type=%d our_id_addr=",
+    MODLOG_DFLT(INFO, " our_id_addr_type=%d our_id_addr=",
                 desc->our_id_addr.type);
     tbb_print_addr(desc->our_id_addr.val);
-    TBB_LOG(INFO, " peer_ota_addr_type=%d peer_ota_addr=",
+    MODLOG_DFLT(INFO, " peer_ota_addr_type=%d peer_ota_addr=",
                 desc->peer_ota_addr.type);
     tbb_print_addr(desc->peer_ota_addr.val);
-    TBB_LOG(INFO, " peer_id_addr_type=%d peer_id_addr=",
+    MODLOG_DFLT(INFO, " peer_id_addr_type=%d peer_id_addr=",
                 desc->peer_id_addr.type);
     tbb_print_addr(desc->peer_id_addr.val);
-    TBB_LOG(INFO, " conn_itvl=%d conn_latency=%d supervision_timeout=%d "
-                "encrypted=%d authenticated=%d bonded=%d\n",
+    MODLOG_DFLT(INFO, " conn_itvl=%d conn_latency=%d supervision_timeout=%d "
+                      "encrypted=%d authenticated=%d bonded=%d\n",
                 desc->conn_itvl, desc->conn_latency,
                 desc->supervision_timeout,
                 desc->sec_state.encrypted,
@@ -142,7 +134,7 @@ tbb_advertise(void)
 
     rc = ble_gap_adv_set_fields(&fields);
     if (rc != 0) {
-        TBB_LOG(ERROR, "error setting advertisement data; rc=%d\n", rc);
+        MODLOG_DFLT(ERROR, "error setting advertisement data; rc=%d\n", rc);
         return;
     }
 
@@ -153,7 +145,7 @@ tbb_advertise(void)
     rc = ble_gap_adv_start(BLE_OWN_ADDR_PUBLIC, NULL, BLE_HS_FOREVER,
                            &adv_params, tbb_gap_event, NULL);
     if (rc != 0) {
-        TBB_LOG(ERROR, "error enabling advertisement; rc=%d\n", rc);
+        MODLOG_DFLT(ERROR, "error enabling advertisement; rc=%d\n", rc);
         return;
     }
 }
@@ -182,15 +174,15 @@ tbb_gap_event(struct ble_gap_event *event, void *arg)
     switch (event->type) {
     case BLE_GAP_EVENT_CONNECT:
         /* A new connection was established or a connection attempt failed. */
-        TBB_LOG(INFO, "connection %s; status=%d ",
-                       event->connect.status == 0 ? "established" : "failed",
-                       event->connect.status);
+        MODLOG_DFLT(INFO, "connection %s; status=%d ",
+                    event->connect.status == 0 ? "established" : "failed",
+                    event->connect.status);
         if (event->connect.status == 0) {
             rc = ble_gap_conn_find(event->connect.conn_handle, &desc);
             assert(rc == 0);
             tbb_print_conn_desc(&desc);
         }
-        TBB_LOG(INFO, "\n");
+        MODLOG_DFLT(INFO, "\n");
 
         if (event->connect.status != 0) {
             /* Connection failed; resume advertising. */
@@ -199,9 +191,9 @@ tbb_gap_event(struct ble_gap_event *event, void *arg)
         return 0;
 
     case BLE_GAP_EVENT_DISCONNECT:
-        TBB_LOG(INFO, "disconnect; reason=%d ", event->disconnect.reason);
+        MODLOG_DFLT(INFO, "disconnect; reason=%d ", event->disconnect.reason);
         tbb_print_conn_desc(&event->disconnect.conn);
-        TBB_LOG(INFO, "\n");
+        MODLOG_DFLT(INFO, "\n");
 
         /* Connection terminated; resume advertising. */
         tbb_advertise();
@@ -209,32 +201,32 @@ tbb_gap_event(struct ble_gap_event *event, void *arg)
 
     case BLE_GAP_EVENT_CONN_UPDATE:
         /* The central has updated the connection parameters. */
-        TBB_LOG(INFO, "connection updated; status=%d ",
+        MODLOG_DFLT(INFO, "connection updated; status=%d ",
                     event->conn_update.status);
         rc = ble_gap_conn_find(event->connect.conn_handle, &desc);
         assert(rc == 0);
         tbb_print_conn_desc(&desc);
-        TBB_LOG(INFO, "\n");
+        MODLOG_DFLT(INFO, "\n");
         return 0;
 
     case BLE_GAP_EVENT_ADV_COMPLETE:
-        TBB_LOG(INFO, "advertise complete; reason=%d\n",
-                event->adv_complete.reason);
+        MODLOG_DFLT(INFO, "advertise complete; reason=%d\n",
+                    event->adv_complete.reason);
         tbb_advertise();
         return 0;
 
     case BLE_GAP_EVENT_ENC_CHANGE:
         /* Encryption has been enabled or disabled for this connection. */
-        TBB_LOG(INFO, "encryption change event; status=%d ",
+        MODLOG_DFLT(INFO, "encryption change event; status=%d ",
                     event->enc_change.status);
         rc = ble_gap_conn_find(event->connect.conn_handle, &desc);
         assert(rc == 0);
         tbb_print_conn_desc(&desc);
-        TBB_LOG(INFO, "\n");
+        MODLOG_DFLT(INFO, "\n");
         return 0;
 
     case BLE_GAP_EVENT_SUBSCRIBE:
-        TBB_LOG(INFO, "subscribe event; conn_handle=%d attr_handle=%d "
+        MODLOG_DFLT(INFO, "subscribe event; conn_handle=%d attr_handle=%d "
                           "reason=%d prevn=%d curn=%d previ=%d curi=%d\n",
                     event->subscribe.conn_handle,
                     event->subscribe.attr_handle,
@@ -246,7 +238,7 @@ tbb_gap_event(struct ble_gap_event *event, void *arg)
         return 0;
 
     case BLE_GAP_EVENT_MTU:
-        TBB_LOG(INFO, "mtu update event; conn_handle=%d cid=%d mtu=%d\n",
+        MODLOG_DFLT(INFO, "mtu update event; conn_handle=%d cid=%d mtu=%d\n",
                     event->mtu.conn_handle,
                     event->mtu.channel_id,
                     event->mtu.value);
@@ -259,7 +251,7 @@ tbb_gap_event(struct ble_gap_event *event, void *arg)
 static void
 tbb_on_reset(int reason)
 {
-    TBB_LOG(ERROR, "Resetting state; reason=%d\n", reason);
+    MODLOG_DFLT(ERROR, "Resetting state; reason=%d\n", reason);
 }
 
 static void
@@ -274,13 +266,7 @@ tbb_init(void)
 {
     int rc;
 
-    /* Initialize the tbb log. */
-    log_register("tbb", &tbb_log, &log_console_handler, NULL,
-                 LOG_SYSLEVEL);
-
     /* Initialize the NimBLE host configuration. */
-    log_register("ble_hs", &ble_hs_log, &log_console_handler, NULL,
-                 LOG_SYSLEVEL);
     ble_hs_cfg.reset_cb = tbb_on_reset;
     ble_hs_cfg.sync_cb = tbb_on_sync;
 

@@ -84,6 +84,9 @@ struct modlog_desc {
  */
 typedef int modlog_foreach_fn(const struct modlog_desc *desc, void *arg);
 
+/* Only enable modlog if logging is also enabled. */
+#if MYNEWT_VAL(LOG_FULL) || defined(__DOXYGEN__)
+
 /**
  * @brief Retrieves the modlog mapping with the specified handle.
  *
@@ -136,14 +139,6 @@ void modlog_clear(void);
 /**
  * @brief Writes the contents of a flat buffer to the specified log module.
  *
- * NOTE: The flat buffer must have an initial padding of length
- * `LOG_ENTRY_HDR_SIZE`.  This padding is *not* reflected in the specified
- * length.  So, to log the string "abc", you should pass the following
- * arguments to this function:
- *
- *     data: <padding>abc   (total of `LOG_ENTRY_HDR_SIZE`+3 bytes.)
- *     len: 3
- *
  * @param module                The log module to write to.
  * @param level                 The severity of the log entry to write.
  * @param etype                 The type of data being written; one of the
@@ -158,13 +153,6 @@ int modlog_append(uint8_t module, uint8_t level, uint8_t etype,
 
 /**
  * @brief Writes the contents of an mbuf to the specified log module.
- *
- * NOTE: The mbuf must have an initial padding of length
- * `LOG_ENTRY_HDR_SIZE`.  So, to log the string "abc", you should pass an mbuf
- * with the following characteristics:
- *
- *     om_data: <padding>abc
- *     om_len: `LOG_ENTRY_HDR_SIZE` + 3
  *
  * @param module                The log module to write to.
  * @param level                 The severity of the log entry to write.
@@ -198,7 +186,59 @@ int modlog_foreach(modlog_foreach_fn *fn, void *arg);
  * @param level                 The severity of the log entry to write.
  * @param msg                   The "printf" formatted string to write.
  */
-void modlog_printf(uint16_t module, uint16_t level, const char *msg, ...);
+void modlog_printf(uint8_t module, uint8_t level, const char *msg, ...);
+
+#else /* LOG_FULL */
+
+static inline int
+modlog_get(uint8_t handle, struct modlog_desc *out_desc)
+{
+    return SYS_ENOTSUP;
+}
+
+static inline int
+modlog_register(uint8_t module, struct log *log, uint8_t min_level,
+                uint8_t *out_handle)
+{
+    return 0;
+}
+
+static inline int
+modlog_delete(uint8_t handle)
+{
+    return SYS_ENOTSUP;
+}
+
+static inline void
+modlog_clear(void)
+{ }
+
+static inline int
+modlog_append(uint8_t module, uint8_t level, uint8_t etype, void *data,
+              uint16_t len)
+{
+    return 0;
+}
+
+static inline int
+modlog_append_mbuf(uint8_t module, uint8_t level, uint8_t etype,
+                   struct os_mbuf *om)
+{
+    os_mbuf_free_chain(om);
+    return 0;
+}
+
+static inline int
+modlog_foreach(modlog_foreach_fn *fn, void *arg)
+{
+    return SYS_ENOTSUP;
+}
+
+static inline void
+modlog_printf(uint8_t module, uint8_t level, const char *msg, ...)
+{ }
+
+#endif
 
 #if MYNEWT_VAL(LOG_LEVEL) <= LOG_LEVEL_DEBUG || defined __DOXYGEN__
 /**
@@ -211,7 +251,7 @@ void modlog_printf(uint16_t module, uint16_t level, const char *msg, ...);
  * @param ml_msg_               The "printf" formatted string to write.
  */
 #define MODLOG_DEBUG(ml_mod_, ml_msg_, ...) \
-    modlog_printf(ml_mod_, LOG_LEVEL_DEBUG, ml_msg_, ##__VA_ARGS__)
+    modlog_printf((ml_mod_), LOG_LEVEL_DEBUG, (ml_msg_), ##__VA_ARGS__)
 #else
 #define MODLOG_DEBUG(ml_mod_, ...) IGNORE(__VA_ARGS__)
 #endif
@@ -227,7 +267,7 @@ void modlog_printf(uint16_t module, uint16_t level, const char *msg, ...);
  * @param ml_msg_               The "printf" formatted string to write.
  */
 #define MODLOG_INFO(ml_mod_, ml_msg_, ...) \
-    modlog_printf(ml_mod_, LOG_LEVEL_INFO, ml_msg_, ##__VA_ARGS__)
+    modlog_printf((ml_mod_), LOG_LEVEL_INFO, (ml_msg_), ##__VA_ARGS__)
 #else
 #define MODLOG_INFO(ml_mod_, ...) IGNORE(__VA_ARGS__)
 #endif
@@ -243,7 +283,7 @@ void modlog_printf(uint16_t module, uint16_t level, const char *msg, ...);
  * @param ml_msg_               The "printf" formatted string to write.
  */
 #define MODLOG_WARN(ml_mod_, ml_msg_, ...) \
-    modlog_printf(ml_mod_, LOG_LEVEL_WARN, ml_msg_, ##__VA_ARGS__)
+    modlog_printf((ml_mod_), LOG_LEVEL_WARN, (ml_msg_), ##__VA_ARGS__)
 #else
 #define MODLOG_WARN(ml_mod_, ...) IGNORE(__VA_ARGS__)
 #endif
@@ -259,7 +299,7 @@ void modlog_printf(uint16_t module, uint16_t level, const char *msg, ...);
  * @param ml_msg_               The "printf" formatted string to write.
  */
 #define MODLOG_ERROR(ml_mod_, ml_msg_, ...) \
-    modlog_printf(ml_mod_, LOG_LEVEL_ERROR, ml_msg_, ##__VA_ARGS__)
+    modlog_printf((ml_mod_), LOG_LEVEL_ERROR, (ml_msg_), ##__VA_ARGS__)
 #else
 #define MODLOG_ERROR(ml_mod_, ...) IGNORE(__VA_ARGS__)
 #endif
@@ -275,9 +315,73 @@ void modlog_printf(uint16_t module, uint16_t level, const char *msg, ...);
  * @param ml_msg_               The "printf" formatted string to write.
  */
 #define MODLOG_CRITICAL(ml_mod_, ml_msg_, ...) \
-    modlog_printf(ml_mod_, LOG_LEVEL_CRITICAL, ml_msg_, ##__VA_ARGS__)
+    modlog_printf((ml_mod_), LOG_LEVEL_CRITICAL, (ml_msg_), ##__VA_ARGS__)
 #else
 #define MODLOG_CRITICAL(ml_mod_, ...) IGNORE(__VA_ARGS__)
+#endif
+
+/**
+ * @brief Writes a formatted text entry with the specified level to the
+ * specified log module.
+ *
+ * The provided log level must be one of the following tokens:
+ *     o CRITICAL
+ *     o ERROR
+ *     o WARN
+ *     o INFO
+ *     o DEBUG
+ *
+ * This expands to nothing if the global log level is greater than
+ * the specified level.
+ *
+ * @param ml_lvl_               The log level of the entry to write.
+ * @param ml_mod_               The log module to write to.
+ */
+#define MODLOG(ml_lvl_, ml_mod_, ...) \
+    MODLOG_ ## ml_lvl_((ml_mod_), __VA_ARGS__)
+
+/**
+ * @brief Writes a formatted text entry with the specified level to the
+ * default log module.
+ *
+ * The provided log level must be one of the following tokens:
+ *     o CRITICAL
+ *     o ERROR
+ *     o WARN
+ *     o INFO
+ *     o DEBUG
+ *
+ * This expands to nothing if the global log level is greater than
+ * the specified level.
+ *
+ * @param ml_lvl_               The log level of the entry to write.
+ */
+#define MODLOG_DFLT(ml_lvl_, ...) \
+    MODLOG(ml_lvl_, LOG_MODULE_DEFAULT, __VA_ARGS__)
+
+/* If `MODLOG_LOG_MACROS` in enabled, retire the old `LOG_[...]` macros and
+ * redefine them to use modlog.
+ */
+#if MYNEWT_VAL(MODLOG_LOG_MACROS)
+
+#undef LOG_DEBUG
+#define LOG_DEBUG       MODLOG_DEBUG
+
+#undef LOG_INFO
+#define LOG_INFO        MODLOG_INFO
+
+#undef LOG_WARN
+#define LOG_WARN        MODLOG_WARN
+
+#undef LOG_ERROR
+#define LOG_ERROR       MODLOG_ERROR
+
+#undef LOG_CRITICAL
+#define LOG_CRITICAL    MODLOG_CRITICAL
+
+#undef LOG_DFLT
+#define LOG_DFLT        MODLOG_DFLT
+
 #endif
 
 #endif

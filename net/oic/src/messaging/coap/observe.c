@@ -81,7 +81,7 @@ add_observer(oc_resource_t *resource, oc_endpoint_t *endpoint,
         o->obs_counter = observe_counter;
         o->resource = resource;
         resource->num_observers++;
-        OC_LOG_DEBUG("Adding observer (%u/%u) for /%s [0x%02X%02X]\n",
+        OC_LOG(DEBUG, "Adding observer (%u/%u) for /%s [0x%02X%02X]\n",
           coap_observer_pool.mp_num_blocks - coap_observer_pool.mp_num_free,
           coap_observer_pool.mp_num_blocks, o->url, o->token[0], o->token[1]);
         SLIST_INSERT_HEAD(&oc_observers, o, next);
@@ -95,7 +95,7 @@ add_observer(oc_resource_t *resource, oc_endpoint_t *endpoint,
 void
 coap_remove_observer(coap_observer_t *o)
 {
-    OC_LOG_DEBUG("Removing observer for /%s [0x%02X%02X]\n",
+    OC_LOG(DEBUG, "Removing observer for /%s [0x%02X%02X]\n",
                  o->url, o->token[0], o->token[1]);
     SLIST_REMOVE(&oc_observers, o, coap_observer, next);
     os_memblock_put(&coap_observer_pool, o);
@@ -200,14 +200,14 @@ coap_notify_observers(oc_resource_t *resource,
 
     if (resource) {
         if (!resource->num_observers) {
-            OC_LOG_DEBUG("coap_notify_observers: no observers left\n");
+            OC_LOG(DEBUG, "coap_notify_observers: no observers left\n");
             return 0;
         }
         num_observers = resource->num_observers;
     }
     response.separate_response = 0;
     if (!response_buf && resource) {
-        OC_LOG_DEBUG("coap_notify_observers: Issue GET request to resource\n");
+        OC_LOG(DEBUG, "coap_notify_observers: Issue GET request to resource\n");
         /* performing GET on the resource */
         m = os_msys_get_pkthdr(0, 0);
         if (!m) {
@@ -223,7 +223,7 @@ coap_notify_observers(oc_resource_t *resource,
         resource->get_handler(&request, resource->default_interface);
         response_buf = &response_buffer;
         if (response_buf->code == OC_IGNORE) {
-            OC_LOG_ERROR("coap_notify_observers: Resource ignored request\n");
+            OC_LOG(ERROR, "coap_notify_observers: Resource ignored request\n");
             os_mbuf_free_chain(m);
             return num_observers;
         }
@@ -255,14 +255,14 @@ coap_notify_observers(oc_resource_t *resource,
             req->mid = 0;
             memcpy(req->token, obs->token, obs->token_len);
             req->token_len = obs->token_len;
-            OC_LOG_DEBUG("Resource is SLOW; creating separate response\n");
+            OC_LOG(DEBUG, "Resource is SLOW; creating separate response\n");
             if (coap_separate_accept(req, response.separate_response,
                 &obs->endpoint, 0) == 1) {
                 response.separate_response->active = 1;
             }
         } else {
 #endif /* OC_SEPARATE_RESPONSES */
-            OC_LOG_DEBUG("coap_notify_observers: notifying observer\n");
+            OC_LOG(DEBUG, "coap_notify_observers: notifying observer\n");
             coap_transaction_t *transaction = NULL;
             if (response_buf && (transaction = coap_new_transaction(
                   coap_get_mid(), &obs->endpoint))) {
@@ -279,7 +279,7 @@ coap_notify_observers(oc_resource_t *resource,
                 notification->mid = transaction->mid;
                 if (!oc_endpoint_use_tcp(&obs->endpoint) &&
                     obs->obs_counter % COAP_OBSERVE_REFRESH_INTERVAL == 0) {
-                    OC_LOG_DEBUG("coap_observe_notify: forcing CON "
+                    OC_LOG(DEBUG, "coap_observe_notify: forcing CON "
                                  "notification to check for client liveness\n");
                     notification->type = COAP_TYPE_CON;
                 }

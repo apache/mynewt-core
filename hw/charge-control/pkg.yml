@@ -22,11 +22,11 @@ pkg.description: Battery Charge Controller IC Interface
 pkg.keywords:
 
 pkg.deps:
-    - kernel/os
+    - "@apache-mynewt-core/kernel/os"
 
 pkg.deps.CHARGE_CONTROL_CLI:
-    - sys/shell
-    - util/parse
+    - "@apache-mynewt-core/sys/shell"
+    - "@apache-mynewt-core/util/parse"
 
 pkg.req_apis:
     - console

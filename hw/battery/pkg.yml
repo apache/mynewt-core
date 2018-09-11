@@ -22,7 +22,7 @@ pkg.description: Battery/Fuel Gauge Controller IC Interface
 pkg.keywords:
 
 pkg.deps:
-    - kernel/os
+    - "@apache-mynewt-core/kernel/os"
 
 pkg.req_apis:
     - console

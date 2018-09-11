@@ -29,11 +29,11 @@ pkg.apis:
     - bootloader
 
 pkg.deps: 
-    - hw/hal
-    - crypto/mbedtls
-    - kernel/os 
-    - sys/defs
-    - sys/flash_map
+    - "@apache-mynewt-core/hw/hal"
+    - "@apache-mynewt-core/crypto/mbedtls"
+    - "@apache-mynewt-core/kernel/os"
+    - "@apache-mynewt-core/sys/defs"
+    - "@apache-mynewt-core/sys/flash_map"
 
 pkg.deps.BOOTUTIL_SIGN_EC256:
-    - crypto/tinycrypt
+    - "@apache-mynewt-core/crypto/tinycrypt"

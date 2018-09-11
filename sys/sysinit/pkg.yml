@@ -25,5 +25,5 @@ pkg.keywords:
     - init
 
 pkg.deps:
-    - kernel/os
-    - sys/flash_map
+    - "@apache-mynewt-core/kernel/os"
+    - "@apache-mynewt-core/sys/flash_map"

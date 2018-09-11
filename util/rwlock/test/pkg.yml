@@ -23,9 +23,9 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps: 
-    - kernel/os
-    - test/testutil
-    - util/rwlock
+    - "@apache-mynewt-core/kernel/os"
+    - "@apache-mynewt-core/test/testutil"
+    - "@apache-mynewt-core/util/rwlock"
 
 pkg.deps.SELFTEST:
-    - sys/console/stub
+    - "@apache-mynewt-core/sys/console/stub"

@@ -20,23 +20,12 @@
 #define __SYS_LOG_FULL_H__
 
 #include "os/mynewt.h"
-#include "log/ignore.h"
 #include "cbmem/cbmem.h"
+#include "log_common/log_common.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-/* Global log info */
-struct log_info {
-    uint32_t li_next_index;
-    uint8_t li_version;
-};
-#define LOG_VERSION_V3  3
-#define LOG_VERSION_V2  2
-#define LOG_VERSION_V1  1
-
-extern struct log_info g_log_info;
 
 struct log;
 struct log_entry_hdr;
@@ -61,6 +50,19 @@ struct log_offset {
     void *lo_arg;
 };
 
+#if MYNEWT_VAL(LOG_STORAGE_INFO)
+/**
+ * Log storage information
+ */
+struct log_storage_info {
+    uint32_t size;
+    uint32_t used;
+#if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
+    uint32_t used_unread;
+#endif
+};
+#endif
+
 typedef int (*log_walk_func_t)(struct log *, struct log_offset *log_offset,
         void *dptr, uint16_t len);
 
@@ -83,11 +85,13 @@ typedef int (*lh_append_mbuf_body_func_t)(struct log *log,
 typedef int (*lh_walk_func_t)(struct log *,
         log_walk_func_t walk_func, struct log_offset *log_offset);
 typedef int (*lh_flush_func_t)(struct log *);
+#if MYNEWT_VAL(LOG_STORAGE_INFO)
+typedef int (*lh_storage_info_func_t)(struct log *, struct log_storage_info *);
+#endif
+#if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
+typedef int (*lh_set_watermark_func_t)(struct log *, uint32_t);
+#endif
 typedef int (*lh_registered_func_t)(struct log *);
-
-#define LOG_TYPE_STREAM  (0)
-#define LOG_TYPE_MEMORY  (1)
-#define LOG_TYPE_STORAGE (2)
 
 struct log_handler {
     int log_type;
@@ -99,6 +103,12 @@ struct log_handler {
     lh_append_mbuf_body_func_t log_append_mbuf_body;
     lh_walk_func_t log_walk;
     lh_flush_func_t log_flush;
+#if MYNEWT_VAL(LOG_STORAGE_INFO)
+    lh_storage_info_func_t log_storage_info;
+#endif
+#if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
+    lh_set_watermark_func_t log_set_watermark;
+#endif
     /* Functions called only internally (no API for apps) */
     lh_registered_func_t log_registered;
 };
@@ -124,52 +134,7 @@ struct log_entry_hdr {
 
 #define LOG_ENTRY_HDR_SIZE (sizeof(struct log_entry_hdr))
 
-#define LOG_LEVEL_DEBUG    (0)
-#define LOG_LEVEL_INFO     (1)
-#define LOG_LEVEL_WARN     (2)
-#define LOG_LEVEL_ERROR    (3)
-#define LOG_LEVEL_CRITICAL (4)
-/* Up to 7 custom log levels. */
-#define LOG_LEVEL_MAX      (UINT8_MAX)
-
-#define LOG_LEVEL_STR(level) \
-    (LOG_LEVEL_DEBUG    == level ? "DEBUG"    :\
-    (LOG_LEVEL_INFO     == level ? "INFO"     :\
-    (LOG_LEVEL_WARN     == level ? "WARN"     :\
-    (LOG_LEVEL_ERROR    == level ? "ERROR"    :\
-    (LOG_LEVEL_CRITICAL == level ? "CRITICAL" :\
-     "UNKNOWN")))))
-
-/* Log module, eventually this can be a part of the filter. */
-#define LOG_MODULE_DEFAULT          (0)
-#define LOG_MODULE_OS               (1)
-#define LOG_MODULE_NEWTMGR          (2)
-#define LOG_MODULE_NIMBLE_CTLR      (3)
-#define LOG_MODULE_NIMBLE_HOST      (4)
-#define LOG_MODULE_NFFS             (5)
-#define LOG_MODULE_REBOOT           (6)
-#define LOG_MODULE_IOTIVITY         (7)
-#define LOG_MODULE_TEST             (8)
-#define LOG_MODULE_PERUSER          (64)
-#define LOG_MODULE_MAX              (255)
-
 #define LOG_MODULE_STR(module)      log_module_get_name(module)
-
-#define LOG_ETYPE_STRING         (0)
-#if MYNEWT_VAL(LOG_VERSION) > 2
-#define LOG_ETYPE_CBOR           (1)
-#define LOG_ETYPE_BINARY         (2)
-#endif
-
-/* Logging medium */
-#define LOG_STORE_CONSOLE    1
-#define LOG_STORE_CBMEM      2
-#define LOG_STORE_FCB        3
-
-/* UTC Timestamp for Jan 2016 00:00:00 */
-#define UTC01_01_2016    1451606400
-
-#define LOG_NAME_MAX_LEN    (64)
 
 #if MYNEWT_VAL(LOG_LEVEL) <= LOG_LEVEL_DEBUG
 #define LOG_DEBUG(__l, __mod, __msg, ...) log_printf(__l, __mod, \
@@ -206,12 +171,6 @@ struct log_entry_hdr {
 #define LOG_CRITICAL(__l, __mod, ...) IGNORE(__VA_ARGS__)
 #endif
 
-#ifndef MYNEWT_VAL_LOG_LEVEL
-#define LOG_SYSLEVEL    ((uint8_t)0xff)
-#else
-#define LOG_SYSLEVEL    ((uint8_t)MYNEWT_VAL_LOG_LEVEL)
-#endif
-
 struct log {
     char *l_name;
     const struct log_handler *l_log;
@@ -219,14 +178,6 @@ struct log {
     STAILQ_ENTRY(log) l_next;
     uint8_t l_level;
 };
-
-/* Newtmgr Log opcodes */
-#define LOGS_NMGR_OP_READ         (0)
-#define LOGS_NMGR_OP_CLEAR        (1)
-#define LOGS_NMGR_OP_APPEND       (2)
-#define LOGS_NMGR_OP_MODULE_LIST  (3)
-#define LOGS_NMGR_OP_LEVEL_LIST   (4)
-#define LOGS_NMGR_OP_LOGS_LIST    (5)
 
 /* Log system level functions (for all logs.) */
 void log_init(void);
@@ -264,7 +215,30 @@ const char *log_module_get_name(uint8_t id);
 /* Log functions, manipulate a single log */
 int log_register(char *name, struct log *log, const struct log_handler *,
                  void *arg, uint8_t level);
-int log_append_typed(struct log *, uint8_t, uint8_t, uint8_t, void *, uint16_t);
+
+/**
+ * @brief Writes the raw contents of a flat buffer to the specified log.
+ *
+ * NOTE: The flat buffer must have an initial padding of length
+ * `LOG_ENTRY_HDR_SIZE`.  This padding is *not* reflected in the specified
+ * length.  So, to log the string "abc", you should pass the following
+ * arguments to this function:
+ *
+ *     data: <padding>abc   (total of `LOG_ENTRY_HDR_SIZE`+3 bytes.)
+ *     len: 3
+ *
+ * @param log                   The log to write to.
+ * @param module                The log module of the entry to write.
+ * @param level                 The severity of the log entry to write.
+ * @param etype                 The type of data being written; one of the
+ *                                  `LOG_ETYPE_[...]` constants.
+ * @param data                  The flat buffer to write.
+ * @param len                   The number of bytes in the *message body*.
+ *
+ * @return                      0 on success; nonzero on failure.
+ */
+int log_append_typed(struct log *log, uint8_t module, uint8_t level,
+                     uint8_t etype, void *data, uint16_t len);
 
 /**
  * @brief Logs the contents of the provided mbuf, only freeing the mbuf on
@@ -274,6 +248,13 @@ int log_append_typed(struct log *, uint8_t, uint8_t, uint8_t, void *, uint16_t);
  * On success, the mbuf remains allocated, but its structure may have been
  * modified by pullup operations.  The updated mbuf address is passed back to
  * the caller via a write to the supplied mbuf pointer-to-pointer.
+ *
+ * NOTE: The mbuf must have an initial padding of length
+ * `LOG_ENTRY_HDR_SIZE`.  So, to log the string "abc", you should pass an mbuf
+ * with the following characteristics:
+ *
+ *     om_data: <padding>abc
+ *     om_len: `LOG_ENTRY_HDR_SIZE` + 3
  *
  * @param log                   The log to write to.
  * @param module                The module ID of the entry to write.
@@ -297,6 +278,13 @@ int log_append_mbuf_typed_no_free(struct log *log, uint8_t module,
  * Logs the contents of the provided mbuf.  This function always frees the mbuf
  * regardless of the outcome.
  *
+ * NOTE: The mbuf must have an initial padding of length
+ * `LOG_ENTRY_HDR_SIZE`.  So, to log the string "abc", you should pass an mbuf
+ * with the following characteristics:
+ *
+ *     om_data: <padding>abc
+ *     om_len: `LOG_ENTRY_HDR_SIZE` + 3
+ *
  * @param log                   The log to write to.
  * @param module                The module ID of the entry to write.
  * @param level                 The severity of the entry to write; one of the
@@ -310,8 +298,63 @@ int log_append_mbuf_typed_no_free(struct log *log, uint8_t module,
 int log_append_mbuf_typed(struct log *log, uint8_t module, uint8_t level,
                           uint8_t etype, struct os_mbuf *om);
 
+/**
+ * @brief Writes the contents of a flat buffer to the specified log.
+ *
+ * @param log                   The log to write to.
+ * @param module                The log module of the entry to write.
+ * @param level                 The severity of the log entry to write.
+ * @param etype                 The type of data being written; one of the
+ *                                  `LOG_ETYPE_[...]` constants.
+ * @param data                  The flat buffer to write.
+ * @param len                   The number of bytes in the message body.
+ *
+ * @return                      0 on success; nonzero on failure.
+ */
 int log_append_body(struct log *log, uint8_t module, uint8_t level,
                     uint8_t etype, const void *body, uint16_t body_len);
+
+/**
+ * @brief Logs the contents of the provided mbuf, only freeing the mbuf on
+ * failure.
+ *
+ * Logs the contents of the provided mbuf, only freeing the mbuf on failure.
+ * On success, the mbuf remains allocated, but its structure may have been
+ * modified by pullup operations.  The updated mbuf address is passed back to
+ * the caller via a write to the supplied mbuf pointer-to-pointer.
+ *
+ * @param log                   The log to write to.
+ * @param module                The module ID of the entry to write.
+ * @param level                 The severity of the entry to write; one of the
+ *                                  `LOG_LEVEL_[...]` constants.
+ * @param etype                 The type of data to write; one of the
+ *                                  `LOG_ETYPE_[...]` constants.
+ * @param om_ptr                Indirectly points to the mbuf to write.  This
+ *                                  function updates the mbuf address if it
+ *                                  changes.
+ *
+ * @return                      0 on success; nonzero on failure.
+ */
+int log_append_mbuf_body_no_free(struct log *log, uint8_t module,
+                                 uint8_t level, uint8_t etype,
+                                 struct os_mbuf *om);
+
+/**
+ * @brief Logs the contents of the provided mbuf.
+ *
+ * Logs the contents of the provided mbuf.  This function always frees the mbuf
+ * regardless of the outcome.
+ *
+ * @param log                   The log to write to.
+ * @param module                The module ID of the entry to write.
+ * @param level                 The severity of the entry to write; one of the
+ *                                  `LOG_LEVEL_[...]` constants.
+ * @param etype                 The type of data to write; one of the
+ *                                  `LOG_ETYPE_[...]` constants.
+ * @param om                    The mbuf to write.
+ *
+ * @return                      0 on success; nonzero on failure.
+ */
 int log_append_mbuf_body(struct log *log, uint8_t module, uint8_t level,
                          uint8_t etype, struct os_mbuf *om);
 
@@ -320,6 +363,25 @@ struct log *log_console_get(void);
 void log_console_init(void);
 #endif
 
+/**
+ * @brief Writes the raw contents of a flat buffer to the specified log.
+ *
+ * NOTE: The flat buffer must have an initial padding of length
+ * `LOG_ENTRY_HDR_SIZE`.  This padding is *not* reflected in the specified
+ * length.  So, to log the string "abc", you should pass the following
+ * arguments to this function:
+ *
+ *     data: <padding>abc   (total of `LOG_ENTRY_HDR_SIZE`+3 bytes.)
+ *     len: 3
+ *
+ * @param log                   The log to write to.
+ * @param module                The log module of the entry to write.
+ * @param level                 The severity of the log entry to write.
+ * @param data                  The flat buffer to write.
+ * @param len                   The number of byte in the *message body*.
+ *
+ * @return                      0 on success; nonzero on failure.
+ */
 static inline int
 log_append(struct log *log, uint8_t module, uint8_t level, void *data,
            uint16_t len)
@@ -327,6 +389,32 @@ log_append(struct log *log, uint8_t module, uint8_t level, void *data,
     return log_append_typed(log, module, level, LOG_ETYPE_STRING, data, len);
 }
 
+/**
+ * @brief Logs the contents of the provided mbuf, only freeing the mbuf on
+ * failure.
+ *
+ * Logs the contents of the provided mbuf, only freeing the mbuf on failure.
+ * On success, the mbuf remains allocated, but its structure may have been
+ * modified by pullup operations.  The updated mbuf address is passed back to
+ * the caller via a write to the supplied mbuf pointer-to-pointer.
+ *
+ * NOTE: The mbuf must have an initial padding of length
+ * `LOG_ENTRY_HDR_SIZE`.  So, to log the string "abc", you should pass an mbuf
+ * with the following characteristics:
+ *
+ *     om_data: <padding>abc
+ *     om_len: `LOG_ENTRY_HDR_SIZE` + 3
+ *
+ * @param log                   The log to write to.
+ * @param module                The module ID of the entry to write.
+ * @param level                 The severity of the entry to write; one of the
+ *                                  `LOG_LEVEL_[...]` constants.
+ * @param om_ptr                Indirectly points to the mbuf to write.  This
+ *                                  function updates the mbuf address if it
+ *                                  changes.
+ *
+ * @return                      0 on success; nonzero on failure.
+ */
 static inline int
 log_append_mbuf_no_free(struct log *log, uint8_t module, uint8_t level,
                         struct os_mbuf **om)
@@ -335,6 +423,27 @@ log_append_mbuf_no_free(struct log *log, uint8_t module, uint8_t level,
                                          om);
 }
 
+/**
+ * @brief Logs the contents of the provided mbuf.
+ *
+ * Logs the contents of the provided mbuf.  This function always frees the mbuf
+ * regardless of the outcome.
+ *
+ * NOTE: The mbuf must have an initial padding of length
+ * `LOG_ENTRY_HDR_SIZE`.  So, to log the string "abc", you should pass an mbuf
+ * with the following characteristics:
+ *
+ *     om_data: <padding>abc
+ *     om_len: `LOG_ENTRY_HDR_SIZE` + 3
+ *
+ * @param log                   The log to write to.
+ * @param module                The module ID of the entry to write.
+ * @param level                 The severity of the entry to write; one of the
+ *                                  `LOG_LEVEL_[...]` constants.
+ * @param om                    The mbuf to write.
+ *
+ * @return                      0 on success; nonzero on failure.
+ */
 static inline int
 log_append_mbuf(struct log *log, uint8_t module, uint8_t level,
                 struct os_mbuf *om)
@@ -342,8 +451,8 @@ log_append_mbuf(struct log *log, uint8_t module, uint8_t level,
     return log_append_mbuf_typed(log, module, level, LOG_ETYPE_STRING, om);
 }
 
-#define LOG_PRINTF_MAX_ENTRY_LEN (128)
-void log_printf(struct log *log, uint16_t, uint16_t, char *, ...);
+void log_printf(struct log *log, uint8_t module, uint8_t level,
+        const char *msg, ...);
 int log_read(struct log *log, void *dptr, void *buf, uint16_t off,
         uint16_t len);
 
@@ -458,6 +567,36 @@ log_level_set(uint8_t module, uint8_t level)
 }
 #endif
 
+#if MYNEWT_VAL(LOG_STORAGE_INFO)
+/**
+ * Return information about log storage
+ *
+ * This return information about size and usage of storage on top of which log
+ * instance is created.
+ *
+ * @param log   The log to query.
+ * @param info  The destination to write information to.
+ *
+ * @return 0 on success, error code otherwise
+ *
+ */
+int log_storage_info(struct log *log, struct log_storage_info *info);
+#endif
+#if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
+/**
+ * Set watermark on log
+ *
+ * This sets watermark on log item with given index. This information is used
+ * to calculate size of entries which were logged after watermark item, i.e.
+ * unread items. The watermark is stored persistently for each log.
+ *
+ * @param log    The log to set watermark on.
+ * @param index  The index of a watermarked item.
+ *
+ * @return 0 on success, error code otherwise.
+ */
+int log_set_watermark(struct log *log, uint32_t index);
+#endif
 
 /* Handler exports */
 #if MYNEWT_VAL(LOG_CONSOLE)

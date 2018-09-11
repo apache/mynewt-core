@@ -23,6 +23,9 @@
 #include "log/log.h"
 #include "modlog/modlog.h"
 
+/* Only enable modlog if logging is also enabled. */
+#if MYNEWT_VAL(LOG_FULL)
+
 struct modlog_mapping {
     SLIST_ENTRY(modlog_mapping) next;
     struct modlog_desc desc;
@@ -220,8 +223,7 @@ modlog_append_one(struct modlog_mapping *mm, uint8_t module, uint8_t level,
     int rc;
 
     if (level >= mm->desc.min_level) {
-        rc = log_append_typed(mm->desc.log, module,
-                              level, etype, data, len);
+        rc = log_append_body(mm->desc.log, module, level, etype, data, len);
         if (rc != 0) {
             return SYS_EIO;
         }
@@ -270,13 +272,13 @@ modlog_append_no_lock(uint8_t module, uint8_t level, uint8_t etype,
 
 static int
 modlog_append_mbuf_one(struct modlog_mapping *mm, uint8_t module,
-                       uint8_t level, uint8_t etype, struct os_mbuf **om)
+                       uint8_t level, uint8_t etype, struct os_mbuf *om)
 {
     int rc;
 
     if (level >= mm->desc.min_level) {
-        rc = log_append_mbuf_typed_no_free(mm->desc.log, module,
-                                           level, etype, om);
+        rc = log_append_mbuf_body_no_free(mm->desc.log, module,
+                                          level, etype, om);
         if (rc != 0) {
             return SYS_EIO;
         }
@@ -298,7 +300,7 @@ modlog_append_mbuf_no_lock(uint8_t module, uint8_t level, uint8_t etype,
         if (mm->desc.module == module) {
             found = true;
 
-            rc = modlog_append_mbuf_one(mm, module, level, etype, &om);
+            rc = modlog_append_mbuf_one(mm, module, level, etype, om);
             if (rc != 0) {
                 return rc;
             }
@@ -313,7 +315,7 @@ modlog_append_mbuf_no_lock(uint8_t module, uint8_t level, uint8_t etype,
              mm != NULL;
              mm = SLIST_NEXT(mm, next)) {
 
-            rc = modlog_append_mbuf_one(mm, module, level, etype, &om);
+            rc = modlog_append_mbuf_one(mm, module, level, etype, om);
             if (rc != 0) {
                 return rc;
             }
@@ -449,16 +451,14 @@ modlog_foreach(modlog_foreach_fn *fn, void *arg)
 }
 
 void
-modlog_printf(uint16_t module, uint16_t level, const char *msg, ...)
+modlog_printf(uint8_t module, uint8_t level, const char *msg, ...)
 {
     va_list args;
-    char buf[LOG_ENTRY_HDR_SIZE + MYNEWT_VAL(MODLOG_MAX_PRINTF_LEN)];
+    char buf[MYNEWT_VAL(MODLOG_MAX_PRINTF_LEN)];
     int len;
 
     va_start(args, msg);
-    len = vsnprintf(buf + LOG_ENTRY_HDR_SIZE,
-                    MYNEWT_VAL(MODLOG_MAX_PRINTF_LEN),
-                    msg, args);
+    len = vsnprintf(buf, MYNEWT_VAL(MODLOG_MAX_PRINTF_LEN), msg, args);
     va_end(args);
 
     if (len >= MYNEWT_VAL(MODLOG_MAX_PRINTF_LEN)) {
@@ -493,3 +493,11 @@ modlog_init(void)
     SYSINIT_PANIC_ASSERT(rc == 0);
 #endif
 }
+
+#else /* LOG_FULL */
+
+void
+modlog_init(void)
+{ }
+
+#endif /* LOG_FULL */

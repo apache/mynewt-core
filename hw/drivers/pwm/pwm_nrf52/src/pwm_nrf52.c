@@ -34,6 +34,9 @@
 /* Mynewt Nordic driver */
 #include "pwm_nrf52/pwm_nrf52.h"
 
+/* Max number on PWM instances on existing nRF52xxx MCUs */
+#define NRF52_PWM_MAX_INSTANCES     4
+
 struct nrf52_pwm_dev_global {
     bool in_use;
     bool playing;
@@ -795,8 +798,20 @@ nrf52_pwm_dev_init(struct os_dev *odev, void *arg)
     assert(odev);
     dev = (struct pwm_dev *) odev;
 
-    assert(arg);
-    dev->pwm_instance_id = *((int*) arg);
+    /*
+     * Originally arg was expected to be a pointer to int with pwm_instance_id,
+     * however this wastes sizeof(int) of memory only to keep a simple number
+     * which is used only once. Instead, instance_id can be passed as int casted
+     * to pointer using helper macro so let's handle both versions here:
+     * - if number is valid instance_id, let's use it directly
+     * - otherwise assume it's a valid pointer
+     */
+    if (POINTER_TO_UINT(arg) < NRF52_PWM_MAX_INSTANCES) {
+        dev->pwm_instance_id = POINTER_TO_UINT(arg);
+    } else {
+        dev->pwm_instance_id = *((int*) arg);
+        assert(dev->pwm_instance_id < NRF52_PWM_MAX_INSTANCES);
+    }
 
     dev->pwm_chan_count = NRF_PWM_CHANNEL_COUNT;
     os_mutex_init(&dev->pwm_lock);

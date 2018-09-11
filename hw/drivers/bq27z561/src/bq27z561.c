@@ -29,17 +29,15 @@
 #include "battery/battery_prop.h"
 
 #if MYNEWT_VAL(BQ27Z561_LOG)
-#include "log/log.h"
+#include "modlog/modlog.h"
 #endif
 
 #if MYNEWT_VAL(BQ27Z561_LOG)
-static struct log bq27z561_log;
-#define LOG_MODULE_BQ27Z561 (253)
-#define BQ27Z561_ERROR(...) LOG_ERROR(&bq27z561_log, LOG_MODULE_BQ27Z561, __VA_ARGS__)
-#define BQ27Z561_INFO(...)  LOG_INFO(&bq27z561_log, LOG_MODULE_BQ27Z561, __VA_ARGS__)
+
+#define BQ27Z561_LOG(lvl_, ...) \
+    MODLOG_ ## lvl_(MYNEWT_VAL(BQ27Z561_LOG_MODULE), __VA_ARGS__)
 #else
-#define BQ27Z561_ERROR(...)
-#define BQ27Z561_INFO(...)
+#define BQ27Z561_LOG(lvl_, ...)
 #endif
 
 static uint8_t
@@ -80,6 +78,88 @@ bq27z561_close(struct os_dev *dev)
     return 0;
 }
 
+/**
+ * Lock access to the bq27z561_itf specified by si. Blocks until lock acquired.
+ *
+ * @param The bq27z561_itf to lock
+ * @param The timeout
+ *
+ * @return 0 on success, non-zero on failure.
+ */
+static int
+bq27z561_itf_lock(struct bq27z561_itf *bi, uint32_t timeout)
+{
+    int rc;
+    os_time_t ticks;
+
+    if (!bi->itf_lock) {
+        return 0;
+    }
+
+    rc = os_time_ms_to_ticks(timeout, &ticks);
+    if (rc) {
+        return rc;
+    }
+
+    rc = os_mutex_pend(bi->itf_lock, ticks);
+    if (rc == 0 || rc == OS_NOT_STARTED) {
+        return (0);
+    }
+
+    return (rc);
+}
+
+/**
+ * Unlock access to the bq27z561_itf specified by bi.
+ *
+ * @param The bq27z561_itf to unlock access to
+ *
+ * @return 0 on success, non-zero on failure.
+ */
+static void
+bq27z561_itf_unlock(struct bq27z561_itf *bi)
+{
+    if (!bi->itf_lock) {
+        return;
+    }
+
+    os_mutex_release(bi->itf_lock);
+}
+
+static int
+bq27z561_rd_std_reg_byte(struct bq27z561 *dev, uint8_t reg, uint8_t *val)
+{
+    int rc;
+    struct hal_i2c_master_data i2c;
+
+    i2c.address = dev->bq27_itf.itf_addr;
+    i2c.len = 1;
+    i2c.buffer = &reg;
+
+    rc = bq27z561_itf_lock(&dev->bq27_itf, MYNEWT_VAL(BQ27Z561_ITF_LOCK_TMO));
+    if (rc) {
+        return rc;
+    }
+
+    rc = hal_i2c_master_write(dev->bq27_itf.itf_num, &i2c, OS_TICKS_PER_SEC, 0);
+    if (rc != 0) {
+        BQ27Z561_LOG(ERROR, "I2C reg read (wr) failed 0x%02X\n", reg);
+        goto err;
+    }
+
+    i2c.len = 1;
+    i2c.buffer = (uint8_t *)val;
+    rc = hal_i2c_master_read(dev->bq27_itf.itf_num, &i2c, OS_TICKS_PER_SEC, 1);
+    if (rc != 0) {
+        BQ27Z561_LOG(ERROR, "I2C reg read (rd) failed 0x%02X\n", reg);
+        goto err;
+    }
+
+err:
+    bq27z561_itf_unlock(&dev->bq27_itf);
+    return rc;
+}
+
 int
 bq27z561_rd_std_reg_word(struct bq27z561 *dev, uint8_t reg, uint16_t *val)
 {
@@ -90,23 +170,60 @@ bq27z561_rd_std_reg_word(struct bq27z561 *dev, uint8_t reg, uint16_t *val)
     i2c.len = 1;
     i2c.buffer = &reg;
 
+    rc = bq27z561_itf_lock(&dev->bq27_itf, MYNEWT_VAL(BQ27Z561_ITF_LOCK_TMO));
+    if (rc) {
+        return rc;
+    }
+
     rc = hal_i2c_master_write(dev->bq27_itf.itf_num, &i2c, OS_TICKS_PER_SEC, 0);
     if (rc != 0) {
-        BQ27Z561_ERROR("I2C reg read (wr) failed 0x%02X\n", reg);
-        return rc;
+        BQ27Z561_LOG(ERROR, "I2C reg read (wr) failed 0x%02X\n", reg);
+        goto err;
     }
 
     i2c.len = 2;
     i2c.buffer = (uint8_t *)val;
     rc = hal_i2c_master_read(dev->bq27_itf.itf_num, &i2c, OS_TICKS_PER_SEC, 1);
     if (rc != 0) {
-        BQ27Z561_ERROR("I2C reg read (rd) failed 0x%02X\n", reg);
-        return rc;
+        BQ27Z561_LOG(ERROR, "I2C reg read (rd) failed 0x%02X\n", reg);
+        goto err;
     }
+
+err:
+    bq27z561_itf_unlock(&dev->bq27_itf);
 
     /* XXX: add big-endian support */
 
-    return 0;
+    return rc;
+}
+
+static int
+bq27z561_wr_std_reg_byte(struct bq27z561 *dev, uint8_t reg, uint8_t val)
+{
+    int rc;
+    uint8_t buf[2];
+    struct hal_i2c_master_data i2c;
+
+    buf[0] = reg;
+    buf[1] = val;
+
+    i2c.address = dev->bq27_itf.itf_num;
+    i2c.len     = 2;
+    i2c.buffer  = buf;
+
+    rc = bq27z561_itf_lock(&dev->bq27_itf, MYNEWT_VAL(BQ27Z561_ITF_LOCK_TMO));
+    if (rc) {
+        return rc;
+    }
+
+    rc = hal_i2c_master_write(dev->bq27_itf.itf_num, &i2c, OS_TICKS_PER_SEC, 1);
+    if (rc != 0) {
+        BQ27Z561_LOG(ERROR, "I2C reg write 0x%02X failed\n", reg);
+    }
+
+    bq27z561_itf_unlock(&dev->bq27_itf);
+
+    return rc;
 }
 
 static int
@@ -124,13 +241,21 @@ bq27z561_wr_std_reg_word(struct bq27z561 *dev, uint8_t reg, uint16_t val)
     i2c.len     = 3;
     i2c.buffer  = buf;
 
-    rc = hal_i2c_master_write(dev->bq27_itf.itf_num, &i2c, OS_TICKS_PER_SEC, 1);
-    if (rc != 0) {
-        BQ27Z561_ERROR("I2C reg write 0x%02X failed\n", reg);
+    rc = bq27z561_itf_lock(&dev->bq27_itf, MYNEWT_VAL(BQ27Z561_ITF_LOCK_TMO));
+    if (rc) {
         return rc;
     }
 
-    return 0;
+    rc = hal_i2c_master_write(dev->bq27_itf.itf_num, &i2c, OS_TICKS_PER_SEC, 1);
+    if (rc != 0) {
+        BQ27Z561_LOG(ERROR, "I2C reg write 0x%02X failed\n", reg);
+        goto err;
+    }
+
+err:
+    bq27z561_itf_unlock(&dev->bq27_itf);
+
+    return rc;
 }
 
 bq27z561_err_t
@@ -163,13 +288,20 @@ bq27x561_wr_alt_mfg_cmd(struct bq27z561 *dev, uint16_t cmd, uint8_t *buf,
     i2c.address = dev->bq27_itf.itf_addr;
     i2c.buffer = tmpbuf;
 
-    rc = hal_i2c_master_write(dev->bq27_itf.itf_num, &i2c, OS_TICKS_PER_SEC, 1);
-    if (rc != 0) {
-        BQ27Z561_ERROR("I2C reg read (wr) failed 0x%02X\n", reg);
-        return BQ27Z561_ERR_I2C_ERR;
+    rc = bq27z561_itf_lock(&dev->bq27_itf, MYNEWT_VAL(BQ27Z561_ITF_LOCK_TMO));
+    if (rc) {
+        return rc;
     }
 
-    return BQ27Z561_OK;
+    rc = hal_i2c_master_write(dev->bq27_itf.itf_num, &i2c, OS_TICKS_PER_SEC, 1);
+    if (rc != 0) {
+        BQ27Z561_LOG(ERROR, "I2C reg read (wr) failed 0x%02X\n", reg);
+        rc = BQ27Z561_ERR_I2C_ERR;
+    }
+
+    bq27z561_itf_unlock(&dev->bq27_itf);
+
+    return rc;
 }
 
 bq27z561_err_t
@@ -195,10 +327,16 @@ bq27x561_rd_alt_mfg_cmd(struct bq27z561 *dev, uint16_t cmd, uint8_t *val,
     i2c.address = dev->bq27_itf.itf_addr;
     i2c.buffer = tmpbuf;
 
+    rc = bq27z561_itf_lock(&dev->bq27_itf, MYNEWT_VAL(BQ27Z561_ITF_LOCK_TMO));
+    if (rc) {
+        return rc;
+    }
+
     rc = hal_i2c_master_write(dev->bq27_itf.itf_num, &i2c, OS_TICKS_PER_SEC, 1);
     if (rc != 0) {
-        BQ27Z561_ERROR("I2C reg read (wr) failed 0x%02X\n", reg);
+        BQ27Z561_LOG(ERROR, "I2C reg read (wr) failed 0x%02X\n", reg);
         rc = BQ27Z561_ERR_I2C_ERR;
+        bq27z561_itf_unlock(&dev->bq27_itf);
         goto err;
     }
 
@@ -208,8 +346,9 @@ bq27x561_rd_alt_mfg_cmd(struct bq27z561 *dev, uint16_t cmd, uint8_t *val,
 
     rc = hal_i2c_master_write(dev->bq27_itf.itf_num, &i2c, OS_TICKS_PER_SEC, 0);
     if (rc != 0) {
-        BQ27Z561_ERROR("I2C reg read (wr) failed 0x%02X\n", reg);
+        BQ27Z561_LOG(ERROR, "I2C reg read (wr) failed 0x%02X\n", reg);
         rc = BQ27Z561_ERR_I2C_ERR;
+        bq27z561_itf_unlock(&dev->bq27_itf);
         goto err;
     }
 
@@ -217,16 +356,19 @@ bq27x561_rd_alt_mfg_cmd(struct bq27z561 *dev, uint16_t cmd, uint8_t *val,
     i2c.buffer = tmpbuf;
     rc = hal_i2c_master_read(dev->bq27_itf.itf_num, &i2c, OS_TICKS_PER_SEC, 1);
     if (rc != 0) {
-        BQ27Z561_ERROR("I2C reg read (rd) failed 0x%02X\n", reg);
+        BQ27Z561_LOG(ERROR, "I2C reg read (rd) failed 0x%02X\n", reg);
         rc = BQ27Z561_ERR_I2C_ERR;
+        bq27z561_itf_unlock(&dev->bq27_itf);
         goto err;
     }
+
+    bq27z561_itf_unlock(&dev->bq27_itf);
 
     /* Verify that first two bytes are the command */
     cmd_read = tmpbuf[0];
     cmd_read |= ((uint16_t)tmpbuf[1]) << 8;
     if (cmd_read != cmd) {
-        BQ27Z561_ERROR("cmd mismatch (cmd=%x cmd_ret=%x\n", cmd, cmd_read);
+        BQ27Z561_LOG(ERROR, "cmd mismatch (cmd=%x cmd_ret=%x\n", cmd, cmd_read);
         rc = BQ27Z561_ERR_CMD_MISMATCH;
         goto err;
     }
@@ -246,7 +388,7 @@ bq27x561_rd_alt_mfg_cmd(struct bq27z561 *dev, uint16_t cmd, uint8_t *val,
     len -= 2;
     chksum = bq27z561_calc_chksum(tmpbuf, len);
     if (chksum != tmpbuf[34]) {
-        BQ27Z561_ERROR("chksum failure for cmd %u (calc=%u read=%u)", cmd,
+        BQ27Z561_LOG(ERROR, "chksum failure for cmd %u (calc=%u read=%u)", cmd,
                        chksum, tmpbuf[34]);
         rc = BQ27Z561_ERR_CHKSUM_FAIL;
     }
@@ -288,10 +430,16 @@ bq27x561_rd_flash(struct bq27z561 *dev, uint16_t addr, uint8_t *buf, int buflen)
     i2c.address = dev->bq27_itf.itf_addr;
     i2c.buffer = tmpbuf;
 
+    rc = bq27z561_itf_lock(&dev->bq27_itf, MYNEWT_VAL(BQ27Z561_ITF_LOCK_TMO));
+    if (rc) {
+        return rc;
+    }
+
     rc = hal_i2c_master_write(dev->bq27_itf.itf_num, &i2c, OS_TICKS_PER_SEC, 1);
     if (rc != 0) {
-        BQ27Z561_ERROR("I2C reg read (wr) failed 0x%02X\n", reg);
+        BQ27Z561_LOG(ERROR, "I2C reg read (wr) failed 0x%02X\n", reg);
         rc = BQ27Z561_ERR_I2C_ERR;
+        bq27z561_itf_unlock(&dev->bq27_itf);
         goto err;
     }
 
@@ -301,8 +449,9 @@ bq27x561_rd_flash(struct bq27z561 *dev, uint16_t addr, uint8_t *buf, int buflen)
 
     rc = hal_i2c_master_write(dev->bq27_itf.itf_num, &i2c, OS_TICKS_PER_SEC, 0);
     if (rc != 0) {
-        BQ27Z561_ERROR("I2C reg read (wr) failed 0x%02X\n", reg);
+        BQ27Z561_LOG(ERROR, "I2C reg read (wr) failed 0x%02X\n", reg);
         rc = BQ27Z561_ERR_I2C_ERR;
+        bq27z561_itf_unlock(&dev->bq27_itf);
         goto err;
     }
 
@@ -310,16 +459,19 @@ bq27x561_rd_flash(struct bq27z561 *dev, uint16_t addr, uint8_t *buf, int buflen)
     i2c.buffer = tmpbuf;
     rc = hal_i2c_master_read(dev->bq27_itf.itf_num, &i2c, OS_TICKS_PER_SEC, 1);
     if (rc != 0) {
-        BQ27Z561_ERROR("I2C reg read (rd) failed 0x%02X\n", reg);
+        BQ27Z561_LOG(ERROR, "I2C reg read (rd) failed 0x%02X\n", reg);
         rc = BQ27Z561_ERR_I2C_ERR;
+        bq27z561_itf_unlock(&dev->bq27_itf);
         goto err;
     }
+
+    bq27z561_itf_unlock(&dev->bq27_itf);
 
     /* Verify that first two bytes are the address*/
     addr_read = tmpbuf[0];
     addr_read |= ((uint16_t)tmpbuf[1]) << 8;
     if (addr_read != addr) {
-        BQ27Z561_ERROR("addr mismatch (addr_read=%x addr_ret=%x\n", cmd,
+        BQ27Z561_LOG(ERROR, "addr mismatch (addr_read=%x addr_ret=%x\n", cmd,
                         cmd_read);
         rc = BQ27Z561_ERR_FLASH_ADDR_MISMATCH;
         goto err;
@@ -359,9 +511,14 @@ bq27x561_wr_flash(struct bq27z561 *dev, uint16_t addr, uint8_t *buf, int buflen)
     i2c.address = dev->bq27_itf.itf_addr;
     i2c.buffer = tmpbuf;
 
+    rc = bq27z561_itf_lock(&dev->bq27_itf, MYNEWT_VAL(BQ27Z561_ITF_LOCK_TMO));
+    if (rc) {
+        return rc;
+    }
+
     rc = hal_i2c_master_write(dev->bq27_itf.itf_num, &i2c, OS_TICKS_PER_SEC, 1);
     if (rc != 0) {
-        BQ27Z561_ERROR("I2C reg read (wr) failed 0x%02X\n", reg);
+        BQ27Z561_LOG(ERROR, "I2C reg read (wr) failed 0x%02X\n", reg);
         rc = BQ27Z561_ERR_I2C_ERR;
         goto err;
     }
@@ -378,14 +535,13 @@ bq27x561_wr_flash(struct bq27z561 *dev, uint16_t addr, uint8_t *buf, int buflen)
 
     rc = hal_i2c_master_write(dev->bq27_itf.itf_num, &i2c, OS_TICKS_PER_SEC, 1);
     if (rc != 0) {
-        BQ27Z561_ERROR("I2C reg read (wr) failed 0x%02X\n", reg);
+        BQ27Z561_LOG(ERROR, "I2C reg read (wr) failed 0x%02X\n", reg);
         rc = BQ27Z561_ERR_I2C_ERR;
-        goto err;
     }
 
-    rc = BQ27Z561_OK;
-
 err:
+    bq27z561_itf_unlock(&dev->bq27_itf);
+
     return rc;
 }
 
@@ -396,6 +552,24 @@ bq27z561_get_chip_id(struct bq27z561 *dev, uint8_t *chip_id)
     return 0;
 }
 #endif
+
+/* Check if bq27z561 is initialized and sets bq27z561 initialized flag */
+int
+bq27z561_get_init_status(struct bq27z561 *dev, uint8_t *init_flag)
+{
+    int rc;
+    uint16_t init;
+    rc = bq27z561_rd_std_reg_word(dev, BQ27Z561_REG_FLAGS, &init);
+    if (init & BQ27Z561_BATTERY_STATUS_INIT)
+    {
+    	    *init_flag = 1;
+    }
+    else
+    {
+	    *init_flag = 0;
+    }
+    return rc;
+}
 
 /* XXX: no support for control register yet */
 
@@ -441,11 +615,180 @@ bq27z561_get_temp(struct bq27z561 *dev, float *temp_c)
 }
 
 int
+bq27z561_get_temp_lo_set_threshold(struct bq27z561 *dev, int8_t *temp_c)
+{
+    int rc;
+
+    rc = bq27z561_rd_std_reg_byte(dev, BQ27Z561_REG_TEMP_LO_SET_TH,
+            (uint8_t *)temp_c);
+
+    return rc;
+}
+
+int
+bq27z561_set_temp_lo_set_threshold(struct bq27z561 *dev, int8_t temp_c)
+{
+    int rc;
+    uint8_t temp = (uint8_t)(temp_c);
+
+    rc = bq27z561_wr_std_reg_byte(dev, BQ27Z561_REG_TEMP_LO_SET_TH, temp);
+
+    return rc;
+}
+
+int
+bq27z561_get_temp_lo_clr_threshold(struct bq27z561 *dev, int8_t *temp_c)
+{
+    int rc;
+
+    rc = bq27z561_rd_std_reg_byte(dev, BQ27Z561_REG_TEMP_LO_CLR_TH,
+            (uint8_t *)temp_c);
+
+    return rc;
+}
+
+int
+bq27z561_set_temp_lo_clr_threshold(struct bq27z561 *dev, int8_t temp_c)
+{
+    int rc;
+
+    rc = bq27z561_wr_std_reg_byte(dev, BQ27Z561_REG_TEMP_LO_CLR_TH,
+            (uint8_t)temp_c);
+
+    return rc;
+}
+
+int
+bq27z561_get_temp_hi_set_threshold(struct bq27z561 *dev, int8_t *temp_c)
+{
+    int rc;
+
+    rc = bq27z561_rd_std_reg_byte(dev, BQ27Z561_REG_TEMP_HI_SET_TH,
+            (uint8_t *)temp_c);
+
+    return rc;
+}
+
+int
+bq27z561_set_temp_hi_set_threshold(struct bq27z561 *dev, int8_t temp_c)
+{
+    int rc;
+
+    rc = bq27z561_wr_std_reg_byte(dev, BQ27Z561_REG_TEMP_HI_SET_TH,
+            (uint8_t)temp_c);
+
+    return rc;
+}
+
+int
+bq27z561_get_temp_hi_clr_threshold(struct bq27z561 *dev, int8_t *temp_c)
+{
+    int rc;
+
+    rc = bq27z561_rd_std_reg_byte(dev, BQ27Z561_REG_TEMP_HI_CLR_TH,
+            (uint8_t *)temp_c);
+
+    return rc;
+}
+
+int
+bq27z561_set_temp_hi_clr_threshold(struct bq27z561 *dev, int8_t temp_c)
+{
+    int rc;
+
+    rc = bq27z561_wr_std_reg_byte(dev, BQ27Z561_REG_TEMP_HI_CLR_TH,
+            (uint8_t)temp_c);
+
+    return rc;
+}
+
+int
 bq27z561_get_voltage(struct bq27z561 *dev, uint16_t *voltage)
 {
     int rc;
 
     rc = bq27z561_rd_std_reg_word(dev, BQ27Z561_REG_VOLT, voltage);
+
+    return rc;
+}
+
+int
+bq27z561_get_voltage_lo_set_threshold(struct bq27z561 *dev, uint16_t *voltage)
+{
+    int rc;
+
+    rc = bq27z561_rd_std_reg_word(dev, BQ27Z561_REG_VOLT_LO_SET_TH, voltage);
+
+    return rc;
+}
+
+int
+bq27z561_set_voltage_lo_set_threshold(struct bq27z561 *dev, uint16_t voltage)
+{
+    int rc;
+
+    rc = bq27z561_wr_std_reg_word(dev, BQ27Z561_REG_VOLT_LO_SET_TH, voltage);
+
+    return rc;
+}
+
+int
+bq27z561_get_voltage_lo_clr_threshold(struct bq27z561 *dev, uint16_t *voltage)
+{
+    int rc;
+
+    rc = bq27z561_rd_std_reg_word(dev, BQ27Z561_REG_VOLT_LO_CLR_TH, voltage);
+
+    return rc;
+}
+
+int
+bq27z561_set_voltage_lo_clr_threshold(struct bq27z561 *dev, uint16_t voltage)
+{
+    int rc;
+
+    rc = bq27z561_wr_std_reg_word(dev, BQ27Z561_REG_VOLT_LO_CLR_TH, voltage);
+
+    return rc;
+}
+
+int
+bq27z561_get_voltage_hi_set_threshold(struct bq27z561 *dev, uint16_t *voltage)
+{
+    int rc;
+
+    rc = bq27z561_rd_std_reg_word(dev, BQ27Z561_REG_VOLT_HI_SET_TH, voltage);
+
+    return rc;
+}
+
+int
+bq27z561_set_voltage_hi_set_threshold(struct bq27z561 *dev, uint16_t voltage)
+{
+    int rc;
+
+    rc = bq27z561_rd_std_reg_word(dev, BQ27Z561_REG_VOLT_HI_SET_TH, &voltage);
+
+    return rc;
+}
+
+int
+bq27z561_get_voltage_hi_clr_threshold(struct bq27z561 *dev, uint16_t *voltage)
+{
+    int rc;
+
+    rc = bq27z561_rd_std_reg_word(dev, BQ27Z561_REG_VOLT_HI_CLR_TH, voltage);
+
+    return rc;
+}
+
+int
+bq27z561_set_voltage_hi_clr_threshold(struct bq27z561 *dev, uint16_t voltage)
+{
+    int rc;
+
+    rc = bq27z561_wr_std_reg_word(dev, BQ27Z561_REG_VOLT_HI_CLR_TH, voltage);
+
     return rc;
 }
 
@@ -606,6 +949,20 @@ bq27z561_battery_property_get(struct battery_driver *driver,
                           struct battery_property *property, uint32_t timeout)
 {
     int rc = 0;
+    struct bq27z561 * bq_dev;
+    bq_dev = (struct bq27z561 *)&driver->dev;
+
+    if (!bq_dev->bq27_initialized)
+    {
+        rc = bq27z561_get_init_status((struct bq27z561 *) driver->bd_driver_data,
+                                          &bq_dev->bq27_initialized);
+        if (!bq_dev->bq27_initialized)
+        {
+            rc = -2;
+            property->bp_valid = 0;
+            return rc;
+        }
+    }
 
     battery_property_value_t val;
     if (property->bp_type == BATTERY_PROP_VOLTAGE_NOW &&
@@ -613,6 +970,26 @@ bq27z561_battery_property_get(struct battery_driver *driver,
         rc = bq27z561_get_voltage((struct bq27z561 *) driver->bd_driver_data,
                                   &val.bpv_u16);
         property->bp_value.bpv_voltage = val.bpv_u16;
+    } else if (property->bp_type == BATTERY_PROP_VOLTAGE_NOW &&
+            property->bp_flags == BATTERY_PROPERTY_FLAGS_LOW_ALARM_SET_THRESHOLD) {
+            rc = bq27z561_get_voltage_lo_set_threshold(
+                    (struct bq27z561 *) driver->bd_driver_data, &val.bpv_u16);
+            property->bp_value.bpv_voltage = val.bpv_u16;
+    } else if (property->bp_type == BATTERY_PROP_VOLTAGE_NOW &&
+            property->bp_flags == BATTERY_PROPERTY_FLAGS_LOW_ALARM_CLEAR_THRESHOLD) {
+            rc = bq27z561_get_voltage_lo_clr_threshold(
+                    (struct bq27z561 *) driver->bd_driver_data, &val.bpv_u16);
+            property->bp_value.bpv_voltage = val.bpv_u16;
+    } else if (property->bp_type == BATTERY_PROP_VOLTAGE_NOW &&
+            property->bp_flags == BATTERY_PROPERTY_FLAGS_HIGH_ALARM_SET_THRESHOLD) {
+            rc = bq27z561_get_voltage_hi_set_threshold(
+                    (struct bq27z561 *) driver->bd_driver_data, &val.bpv_u16);
+            property->bp_value.bpv_voltage = val.bpv_u16;
+    } else if (property->bp_type == BATTERY_PROP_VOLTAGE_NOW &&
+            property->bp_flags == BATTERY_PROPERTY_FLAGS_HIGH_ALARM_CLEAR_THRESHOLD) {
+            rc = bq27z561_get_voltage_hi_clr_threshold(
+                    (struct bq27z561 *) driver->bd_driver_data, &val.bpv_u16);
+            property->bp_value.bpv_voltage = val.bpv_u16;
     } else if (property->bp_type == BATTERY_PROP_STATUS &&
                property->bp_flags == 0) {
         rc = bq27z561_get_batt_status((struct bq27z561 *) driver->bd_driver_data,
@@ -639,6 +1016,11 @@ bq27z561_battery_property_get(struct battery_driver *driver,
         rc = bq27z561_get_relative_state_of_charge(
                 (struct bq27z561 *) driver->bd_driver_data, &val.bpv_u8);
         property->bp_value.bpv_soc = val.bpv_u8;
+    } else if (property->bp_type == BATTERY_PROP_SOH &&
+               property->bp_flags == 0) {
+        rc = bq27z561_get_state_of_health(
+                (struct bq27z561 *) driver->bd_driver_data, &val.bpv_u8);
+        property->bp_value.bpv_soh = val.bpv_u8;
     } else if (property->bp_type == BATTERY_PROP_CYCLE_COUNT &&
                property->bp_flags == 0) {
         rc = bq27z561_get_discharge_cycles(
@@ -659,6 +1041,26 @@ bq27z561_battery_property_get(struct battery_driver *driver,
         rc = bq27z561_get_temp(
                 (struct bq27z561 *) driver->bd_driver_data, &val.bpv_flt);
         property->bp_value.bpv_temperature = val.bpv_flt;
+    } else if (property->bp_type == BATTERY_PROP_TEMP_NOW &&
+            property->bp_flags == BATTERY_PROPERTY_FLAGS_LOW_ALARM_SET_THRESHOLD) {
+            rc = bq27z561_get_temp_lo_set_threshold(
+                    (struct bq27z561 *) driver->bd_driver_data, &val.bpv_i8);
+            property->bp_value.bpv_temperature = val.bpv_i8;
+    } else if (property->bp_type == BATTERY_PROP_TEMP_NOW &&
+            property->bp_flags == BATTERY_PROPERTY_FLAGS_LOW_ALARM_CLEAR_THRESHOLD) {
+            rc = bq27z561_get_temp_lo_clr_threshold(
+                    (struct bq27z561 *) driver->bd_driver_data, &val.bpv_i8);
+            property->bp_value.bpv_temperature = val.bpv_i8;
+    } else if (property->bp_type == BATTERY_PROP_TEMP_NOW &&
+            property->bp_flags == BATTERY_PROPERTY_FLAGS_HIGH_ALARM_SET_THRESHOLD) {
+            rc = bq27z561_get_temp_hi_set_threshold(
+                    (struct bq27z561 *) driver->bd_driver_data, &val.bpv_i8);
+            property->bp_value.bpv_temperature = val.bpv_i8;
+    } else if (property->bp_type == BATTERY_PROP_TEMP_NOW &&
+            property->bp_flags == BATTERY_PROPERTY_FLAGS_HIGH_ALARM_CLEAR_THRESHOLD) {
+            rc = bq27z561_get_temp_hi_clr_threshold(
+                    (struct bq27z561 *) driver->bd_driver_data, &val.bpv_i8);
+            property->bp_value.bpv_temperature = val.bpv_i8;
     } else {
         rc = -1;
         assert(0);
@@ -678,7 +1080,50 @@ bq27z561_battery_property_set(struct battery_driver *driver,
 {
     int rc = 0;
 
-    /* TODO: Not yet implemented */
+    if (property->bp_type == BATTERY_PROP_VOLTAGE_NOW &&
+        property->bp_flags == BATTERY_PROPERTY_FLAGS_LOW_ALARM_SET_THRESHOLD) {
+        rc = bq27z561_set_voltage_lo_set_threshold(
+                (struct bq27z561 *)driver->bd_driver_data,
+                property->bp_value.bpv_voltage);
+    } else if (property->bp_type == BATTERY_PROP_VOLTAGE_NOW &&
+               property->bp_flags == BATTERY_PROPERTY_FLAGS_LOW_ALARM_CLEAR_THRESHOLD) {
+        rc = bq27z561_set_voltage_lo_clr_threshold(
+                (struct bq27z561 *)driver->bd_driver_data,
+                property->bp_value.bpv_voltage);
+    } else if (property->bp_type == BATTERY_PROP_VOLTAGE_NOW &&
+               property->bp_flags == BATTERY_PROPERTY_FLAGS_HIGH_ALARM_SET_THRESHOLD) {
+        rc = bq27z561_set_voltage_hi_set_threshold(
+                (struct bq27z561 *)driver->bd_driver_data,
+                property->bp_value.bpv_voltage);
+    } else if (property->bp_type == BATTERY_PROP_VOLTAGE_NOW &&
+               property->bp_flags == BATTERY_PROPERTY_FLAGS_HIGH_ALARM_CLEAR_THRESHOLD) {
+        rc = bq27z561_set_voltage_hi_clr_threshold(
+                (struct bq27z561 *)driver->bd_driver_data,
+                property->bp_value.bpv_voltage);
+    } else if (property->bp_type == BATTERY_PROP_TEMP_NOW &&
+            property->bp_flags == BATTERY_PROPERTY_FLAGS_LOW_ALARM_SET_THRESHOLD) {
+            rc = bq27z561_set_temp_lo_set_threshold(
+                    (struct bq27z561 *) driver->bd_driver_data,
+                    (int8_t)property->bp_value.bpv_temperature);
+    } else if (property->bp_type == BATTERY_PROP_TEMP_NOW &&
+                   property->bp_flags == BATTERY_PROPERTY_FLAGS_LOW_ALARM_CLEAR_THRESHOLD) {
+            rc = bq27z561_set_temp_lo_clr_threshold(
+                    (struct bq27z561 *) driver->bd_driver_data,
+                    (int16_t)property->bp_value.bpv_temperature);
+    } else if (property->bp_type == BATTERY_PROP_TEMP_NOW &&
+                   property->bp_flags == BATTERY_PROPERTY_FLAGS_HIGH_ALARM_SET_THRESHOLD) {
+            rc = bq27z561_set_temp_hi_set_threshold(
+                    (struct bq27z561 *) driver->bd_driver_data,
+                    (int16_t)property->bp_value.bpv_temperature);
+    } else if (property->bp_type == BATTERY_PROP_TEMP_NOW &&
+                   property->bp_flags == BATTERY_PROPERTY_FLAGS_HIGH_ALARM_CLEAR_THRESHOLD) {
+            rc = bq27z561_set_temp_hi_clr_threshold(
+                    (struct bq27z561 *) driver->bd_driver_data,
+                    (int16_t)property->bp_value.bpv_temperature);
+    } else {
+        rc = -1;
+        assert(0);
+    }
     return rc;
 }
 
@@ -709,10 +1154,26 @@ static const struct battery_driver_property bq27z561_battery_properties[] = {
     { BATTERY_PROP_VOLTAGE_NOW, 0, "Voltage" },
     { BATTERY_PROP_CURRENT_NOW, 0, "Current" },
     { BATTERY_PROP_SOC, 0, "SOC" },
+    { BATTERY_PROP_SOH, 0, "SOH" },
     { BATTERY_PROP_TIME_TO_EMPTY_NOW, 0, "TimeToEmpty" },
     { BATTERY_PROP_TIME_TO_FULL_NOW, 0, "TimeToFull" },
     { BATTERY_PROP_CYCLE_COUNT, 0, "CycleCount" },
-    /* TODO: Add threshold properties supported by fuel gauge in hardware */
+    { BATTERY_PROP_VOLTAGE_NOW,
+            BATTERY_PROPERTY_FLAGS_LOW_ALARM_SET_THRESHOLD, "LoVoltAlarmSet" },
+    { BATTERY_PROP_VOLTAGE_NOW,
+            BATTERY_PROPERTY_FLAGS_LOW_ALARM_CLEAR_THRESHOLD, "LoVoltAlarmClear" },
+    { BATTERY_PROP_VOLTAGE_NOW,
+            BATTERY_PROPERTY_FLAGS_HIGH_ALARM_SET_THRESHOLD, "HiVoltAlarmSet" },
+    { BATTERY_PROP_VOLTAGE_NOW,
+            BATTERY_PROPERTY_FLAGS_HIGH_ALARM_CLEAR_THRESHOLD, "HiVoltAlarmClear" },
+    { BATTERY_PROP_TEMP_NOW,
+            BATTERY_PROPERTY_FLAGS_LOW_ALARM_SET_THRESHOLD, "LoTempAlarmSet" },
+    { BATTERY_PROP_TEMP_NOW,
+            BATTERY_PROPERTY_FLAGS_LOW_ALARM_CLEAR_THRESHOLD, "LoTempAlarmClear" },
+    { BATTERY_PROP_TEMP_NOW,
+            BATTERY_PROPERTY_FLAGS_HIGH_ALARM_SET_THRESHOLD, "LoTempAlarmSet" },
+    { BATTERY_PROP_TEMP_NOW,
+            BATTERY_PROPERTY_FLAGS_HIGH_ALARM_CLEAR_THRESHOLD, "HiTempAlarmClear" },
     { BATTERY_PROP_NONE },
 };
 
@@ -729,6 +1190,9 @@ bq27z561_init(struct os_dev *dev, void *arg)
     OS_DEV_SETHANDLERS(dev, bq27z561_open, bq27z561_close);
 
     bq27 = (struct bq27z561 *)dev;
+
+    bq27->bq27_initialized = 0;
+
     /* Copy the interface struct */
     bq27->bq27_itf = init_arg->itf;
 
@@ -745,5 +1209,7 @@ int bq27z561_pkg_init(void)
 {
 #if MYNEWT_VAL(BQ27Z561_CLI)
     return bq27z561_shell_init();
+#else
+    return 0;
 #endif
 }

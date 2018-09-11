@@ -60,10 +60,10 @@ file:
 
     pkg.name: sys/shell
     pkg.deps:
-        - kernel/os
-        - encoding/base64
-        - time/datetime
-        - util/crc
+        - "@apache-mynewt-core/kernel/os"
+        - "@apache-mynewt-core/encoding/base64"
+        - "@apache-mynewt-core/time/datetime"
+        - "@apache-mynewt-core/util/crc"
     pkg.req_apis:
         - console
 
@@ -83,16 +83,16 @@ capability and has the following ``pkg.yml`` file:
 
     pkg.name: apps/slinky
     pkg.deps:
-        - test/flash_test
-        - mgmt/imgmgr
-        - mgmt/newtmgr
-        - mgmt/newtmgr/transport/nmgr_shell
-        - kernel/os
-        - boot/bootutil
-        - sys/shell
-        - sys/console/full
+        - "@apache-mynewt-core/test/flash_test"
+        - "@apache-mynewt-core/mgmt/imgmgr"
+        - "@apache-mynewt-core/mgmt/newtmgr"
+        - "@apache-mynewt-core/mgmt/newtmgr/transport/nmgr_shell"
+        - "@apache-mynewt-core/kernel/os"
+        - "@apache-mynewt-core/boot/bootutil"
+        - "@apache-mynewt-core/sys/shell"
+        - "@apache-mynewt-core/sys/console/full"
            ...
-        - sys/id
+        - "@apache-mynewt-core/sys/id"
 
 Using the Stub Console Package
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -127,9 +127,9 @@ project boot pkg looks like the following:
 
     pkg.name: apps/boot
     pkg.deps:
-        - boot/bootutil
-        - kernel/os
-        - sys/console/stub
+        - "@apache-mynewt-core/boot/bootutil"
+        - "@apache-mynewt-core/kernel/os"
+        - "@apache-mynewt-core/sys/console/stub"
 
 Using the Minimal Console Package
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -151,13 +151,13 @@ has the following ``pkg.yml`` file:
         - loader
 
     pkg.deps:
-        - boot/bootutil
-        - kernel/os
-        - sys/console/stub
+        - "@apache-mynewt-core/boot/bootutil"
+        - "@apache-mynewt-core/kernel/os"
+        - "@apache-mynewt-core/sys/console/stub"
 
     pkg.deps.BOOT_SERIAL.OVERWRITE:
-        - sys/console/minimal
-        - boot/boot_serial
+        - "@apache-mynewt-core/sys/console/minimal"
+        - "@apache-mynewt-core/boot/boot_serial"
 
 Output to the Console
 ^^^^^^^^^^^^^^^^^^^^^

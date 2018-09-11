@@ -29,19 +29,16 @@
 #include "hal/hal_gpio.h"
 #include "hal/hal_i2c.h"
 #include "hal/hal_spi.h"
+#include <syscfg/syscfg.h>
 
 #if MYNEWT_VAL(BMA2XX_LOG)
-#include "log/log.h"
+#include "modlog/modlog.h"
 #endif
 
-#if MYNEWT_VAL(BMA2XX_LOG)
-static struct log bma2xx_log;
-#define LOG_MODULE_BMA2XX (200)
-#define BMA2XX_ERROR(...) LOG_ERROR(&bma2xx_log, LOG_MODULE_BMA2XX, __VA_ARGS__)
-#define BMA2XX_INFO(...)  LOG_INFO(&bma2xx_log, LOG_MODULE_BMA2XX, __VA_ARGS__)
+#define BMA2XX_LOG(lvl_, ...) \
+    MODLOG_ ## lvl_(MYNEWT_VAL(BMA2XX_LOG_MODULE), __VA_ARGS__)
 #else
-#define BMA2XX_ERROR(...)
-#define BMA2XX_INFO(...)
+#define BMA2XX_LOG(lvl_, ...)
 #endif
 
 #define BMA2XX_NOTIFY_MASK  0x01
@@ -166,7 +163,7 @@ interrupt_handler(void * arg)
  * @return 0 on success, non-zero on failure
  */
 int
-spi_readlen(const struct sensor_itf * itf, uint8_t addr, uint8_t *payload,
+spi_readlen(struct sensor_itf * itf, uint8_t addr, uint8_t *payload,
             uint8_t len)
 {
     int i;
@@ -182,8 +179,8 @@ spi_readlen(const struct sensor_itf * itf, uint8_t addr, uint8_t *payload,
     retval = hal_spi_tx_val(itf->si_num, addr | BMA2XX_SPI_READ_CMD_BIT);
     if (retval == 0xFFFF) {
         rc = SYS_EINVAL;
-        BMA2XX_ERROR("SPI_%u register write failed addr:0x%02X\n",
-                     itf->si_num, addr);
+        BMA2XX_LOG(ERROR, "SPI_%u register write failed addr:0x%02X\n",
+                   itf->si_num, addr);
         goto err;
     }
 
@@ -192,8 +189,8 @@ spi_readlen(const struct sensor_itf * itf, uint8_t addr, uint8_t *payload,
         retval = hal_spi_tx_val(itf->si_num, 0);
         if (retval == 0xFFFF) {
             rc = SYS_EINVAL;
-            BMA2XX_ERROR("SPI_%u read failed addr:0x%02X\n",
-                         itf->si_num, addr);
+            BMA2XX_LOG(ERROR, "SPI_%u read failed addr:0x%02X\n",
+                       itf->si_num, addr);
             goto err;
         }
         payload[i] = retval;
@@ -218,7 +215,7 @@ spi_readlen(const struct sensor_itf * itf, uint8_t addr, uint8_t *payload,
  * @return 0 on success, non-zero on failure
  */
 int
-spi_writereg(const struct sensor_itf * itf, uint8_t addr, uint8_t payload,
+spi_writereg(struct sensor_itf * itf, uint8_t addr, uint8_t payload,
              uint8_t len)
 {
     int i;
@@ -231,8 +228,8 @@ spi_writereg(const struct sensor_itf * itf, uint8_t addr, uint8_t payload,
     rc = hal_spi_tx_val(itf->si_num, addr);
     if (rc == 0xFFFF) {
         rc = SYS_EINVAL;
-        BMA2XX_ERROR("SPI_%u register write failed addr:0x%02X\n",
-                     itf->si_num, addr);
+        BMA2XX_LOG(ERROR, "SPI_%u register write failed addr:0x%02X\n",
+                   itf->si_num, addr);
         goto err;
     }
 
@@ -241,8 +238,8 @@ spi_writereg(const struct sensor_itf * itf, uint8_t addr, uint8_t payload,
         rc = hal_spi_tx_val(itf->si_num, payload);
         if (rc == 0xFFFF) {
             rc = SYS_EINVAL;
-            BMA2XX_ERROR("SPI_%u write failed addr:0x%02X:0x%02X\n",
-                         itf->si_num, addr);
+            BMA2XX_LOG(ERROR, "SPI_%u write failed addr:0x%02X:0x%02X\n",
+                       itf->si_num, addr);
             goto err;
         }
     }
@@ -260,7 +257,7 @@ spi_writereg(const struct sensor_itf * itf, uint8_t addr, uint8_t payload,
 }
 
 int
-i2c_readlen(const struct sensor_itf * itf, uint8_t addr, uint8_t *payload,
+i2c_readlen(struct sensor_itf * itf, uint8_t addr, uint8_t *payload,
             uint8_t len)
 {
     struct hal_i2c_master_data oper;
@@ -273,8 +270,7 @@ i2c_readlen(const struct sensor_itf * itf, uint8_t addr, uint8_t *payload,
     rc = hal_i2c_master_write(itf->si_num, &oper,
                               OS_TICKS_PER_SEC / 10, 1);
     if (rc != 0) {
-        BMA2XX_ERROR("I2C access failed at address 0x%02X\n",
-                     addr);
+        BMA2XX_LOG(ERROR, "I2C access failed at address 0x%02X\n", addr);
         return rc;
     }
 
@@ -285,8 +281,8 @@ i2c_readlen(const struct sensor_itf * itf, uint8_t addr, uint8_t *payload,
     rc = hal_i2c_master_read(itf->si_num, &oper,
                              OS_TICKS_PER_SEC / 10, 1);
     if (rc != 0) {
-        BMA2XX_ERROR("I2C read failed at address 0x%02X length %u\n",
-                     addr, len);
+        BMA2XX_LOG(ERROR, "I2C read failed at address 0x%02X length %u\n",
+                   addr, len);
         return rc;
     }
 
@@ -294,7 +290,7 @@ i2c_readlen(const struct sensor_itf * itf, uint8_t addr, uint8_t *payload,
 }
 
 int
-i2c_writereg(const struct sensor_itf * itf, uint8_t addr, uint8_t data)
+i2c_writereg(struct sensor_itf * itf, uint8_t addr, uint8_t data)
 {
     uint8_t tuple[2];
     struct hal_i2c_master_data oper;
@@ -310,8 +306,8 @@ i2c_writereg(const struct sensor_itf * itf, uint8_t addr, uint8_t data)
     rc = hal_i2c_master_write(itf->si_num, &oper,
                               OS_TICKS_PER_SEC / 10, 1);
     if (rc != 0) {
-        BMA2XX_ERROR("I2C write failed at address 0x%02X single byte\n",
-                     addr);
+        BMA2XX_LOG(ERROR, "I2C write failed at address 0x%02X single byte\n",
+                   addr);
         return rc;
     }
 
@@ -319,13 +315,18 @@ i2c_writereg(const struct sensor_itf * itf, uint8_t addr, uint8_t data)
 }
 
 static int
-get_register(const struct bma2xx * bma2xx,
+get_register(struct bma2xx *bma2xx,
              uint8_t addr,
              uint8_t * data)
 {
     int rc;
-    const struct sensor_itf * itf;
+    struct sensor_itf * itf;
     itf = SENSOR_GET_ITF(&bma2xx->sensor);
+
+    rc = sensor_itf_lock(itf, MYNEWT_VAL(BMA2XX_ITF_LOCK_TMO));
+    if (rc) {
+        return rc;
+    }
 
     if (itf->si_type == SENSOR_ITF_SPI) {
         rc = spi_readlen(itf, addr, data, 1);
@@ -335,18 +336,25 @@ get_register(const struct bma2xx * bma2xx,
         rc = SYS_EINVAL;
     }
 
+    sensor_itf_unlock(itf);
+
     return rc;
 }
 
 static int
-get_registers(const struct bma2xx * bma2xx,
+get_registers(struct bma2xx *bma2xx,
               uint8_t addr,
               uint8_t * data,
               uint8_t size)
 {
     int rc;
-    const struct sensor_itf * itf;
+    struct sensor_itf * itf;
     itf = SENSOR_GET_ITF(&bma2xx->sensor);
+
+    rc = sensor_itf_lock(itf, MYNEWT_VAL(BMA2XX_ITF_LOCK_TMO));
+    if (rc) {
+        return rc;
+    }
 
     if (itf->si_type == SENSOR_ITF_SPI) {
         rc = spi_readlen(itf, addr, data, size);
@@ -356,18 +364,25 @@ get_registers(const struct bma2xx * bma2xx,
         rc = SYS_EINVAL;
     }
 
+    sensor_itf_unlock(itf);
+
     return rc;
 }
 
 static int
-set_register(const struct bma2xx * bma2xx,
+set_register(struct bma2xx *bma2xx,
              uint8_t addr,
              uint8_t data)
 {
     int rc;
-    const struct sensor_itf * itf;
+    struct sensor_itf * itf;
 
     itf = SENSOR_GET_ITF(&bma2xx->sensor);
+
+    rc = sensor_itf_lock(itf, MYNEWT_VAL(BMA2XX_ITF_LOCK_TMO));
+    if (rc) {
+        return rc;
+    }
 
     if (itf->si_type == SENSOR_ITF_SPI) {
         rc = spi_writereg(itf, addr, data, 1);
@@ -386,14 +401,16 @@ set_register(const struct bma2xx * bma2xx,
         break;
     }
 
+    sensor_itf_unlock(itf);
+
     return rc;
 }
 
 int
-bma2xx_get_chip_id(const struct bma2xx * bma2xx,
+bma2xx_get_chip_id(struct bma2xx *bma2xx,
                    uint8_t * chip_id)
 {
-    return get_register(bma2xx, REG_ADDR_BGW_CHIPID, chip_id);
+    return get_register((struct bma2xx *)bma2xx, REG_ADDR_BGW_CHIPID, chip_id);
 }
 
 static void
@@ -485,7 +502,7 @@ get_accel_scale(enum bma2xx_model model,
 }
 
 int
-bma2xx_get_accel(const struct bma2xx * bma2xx,
+bma2xx_get_accel(struct bma2xx *bma2xx,
                  enum bma2xx_g_range g_range,
                  enum axis axis,
                  struct accel_data * accel_data)
@@ -514,7 +531,7 @@ bma2xx_get_accel(const struct bma2xx * bma2xx,
         return SYS_EINVAL;
     }
 
-    rc = get_registers(bma2xx, base_addr,
+    rc = get_registers((struct bma2xx *)bma2xx, base_addr,
                        data, sizeof(data) / sizeof(*data));
     if (rc != 0) {
         return rc;
@@ -526,13 +543,13 @@ bma2xx_get_accel(const struct bma2xx * bma2xx,
 }
 
 int
-bma2xx_get_temp(const struct bma2xx * bma2xx,
+bma2xx_get_temp(struct bma2xx *bma2xx,
                 float * temp_c)
 {
     uint8_t data;
     int rc;
 
-    rc = get_register(bma2xx, REG_ADDR_ACCD_TEMP, &data);
+    rc = get_register((struct bma2xx *)bma2xx, REG_ADDR_ACCD_TEMP, &data);
     if (rc != 0) {
         return rc;
     }
@@ -550,8 +567,8 @@ quad_to_axis_trigger(struct axis_trigger * axis_trigger,
     axis_trigger->sign = (quad_bits >> 3) & 0x01;
     switch (quad_bits & 0x07) {
     default:
-        BMA2XX_ERROR("unknown %s quad bits 0x%02X\n",
-                     name_bits, quad_bits);
+        BMA2XX_LOG(ERROR, "unknown %s quad bits 0x%02X\n",
+                   name_bits, quad_bits);
     case 0x00:
         axis_trigger->axis = -1;
         axis_trigger->axis_known = false;
@@ -572,13 +589,13 @@ quad_to_axis_trigger(struct axis_trigger * axis_trigger,
 }
 
 int
-bma2xx_get_int_status(const struct bma2xx * bma2xx,
+bma2xx_get_int_status(struct bma2xx *bma2xx,
                       struct int_status * int_status)
 {
     uint8_t data[4];
     int rc;
 
-    rc = get_registers(bma2xx, REG_ADDR_INT_STATUS_0,
+    rc = get_registers((struct bma2xx *)bma2xx, REG_ADDR_INT_STATUS_0,
                        data, sizeof(data) / sizeof(*data));
     if (rc != 0) {
         return rc;
@@ -609,14 +626,14 @@ bma2xx_get_int_status(const struct bma2xx * bma2xx,
 }
 
 int
-bma2xx_get_fifo_status(const struct bma2xx * bma2xx,
+bma2xx_get_fifo_status(struct bma2xx *bma2xx,
                        bool * overrun,
                        uint8_t * frame_counter)
 {
     uint8_t data;
     int rc;
 
-    rc = get_register(bma2xx, REG_ADDR_FIFO_STATUS, &data);
+    rc = get_register((struct bma2xx *)bma2xx, REG_ADDR_FIFO_STATUS, &data);
     if (rc != 0) {
         return rc;
     }
@@ -628,20 +645,20 @@ bma2xx_get_fifo_status(const struct bma2xx * bma2xx,
 }
 
 int
-bma2xx_get_g_range(const struct bma2xx * bma2xx,
+bma2xx_get_g_range(struct bma2xx *bma2xx,
                    enum bma2xx_g_range * g_range)
 {
     uint8_t data;
     int rc;
 
-    rc = get_register(bma2xx, REG_ADDR_PMU_RANGE, &data);
+    rc = get_register((struct bma2xx *)bma2xx, REG_ADDR_PMU_RANGE, &data);
     if (rc != 0) {
         return rc;
     }
 
     switch (data & 0x0F) {
     default:
-        BMA2XX_ERROR("unknown PMU_RANGE reg value 0x%02X\n", data);
+        BMA2XX_LOG(ERROR, "unknown PMU_RANGE reg value 0x%02X\n", data);
         *g_range = BMA2XX_G_RANGE_16;
         break;
     case 0x03:
@@ -662,7 +679,7 @@ bma2xx_get_g_range(const struct bma2xx * bma2xx,
 }
 
 int
-bma2xx_set_g_range(const struct bma2xx * bma2xx,
+bma2xx_set_g_range(struct bma2xx *bma2xx,
                    enum bma2xx_g_range g_range)
 {
     uint8_t data;
@@ -684,17 +701,17 @@ bma2xx_set_g_range(const struct bma2xx * bma2xx,
         return SYS_EINVAL;
     }
 
-    return set_register(bma2xx, REG_ADDR_PMU_RANGE, data);
+    return set_register((struct bma2xx *)bma2xx, REG_ADDR_PMU_RANGE, data);
 }
 
 int
-bma2xx_get_filter_bandwidth(const struct bma2xx * bma2xx,
+bma2xx_get_filter_bandwidth(struct bma2xx *bma2xx,
                             enum bma2xx_filter_bandwidth * filter_bandwidth)
 {
     uint8_t data;
     int rc;
 
-    rc = get_register(bma2xx, REG_ADDR_PMU_BW, &data);
+    rc = get_register((struct bma2xx *)bma2xx, REG_ADDR_PMU_BW, &data);
     if (rc != 0) {
         return rc;
     }
@@ -730,7 +747,7 @@ bma2xx_get_filter_bandwidth(const struct bma2xx * bma2xx,
 }
 
 int
-bma2xx_set_filter_bandwidth(const struct bma2xx * bma2xx,
+bma2xx_set_filter_bandwidth(struct bma2xx *bma2xx,
                             enum bma2xx_filter_bandwidth filter_bandwidth)
 {
     uint8_t data;
@@ -783,17 +800,17 @@ bma2xx_set_filter_bandwidth(const struct bma2xx * bma2xx,
         return SYS_EINVAL;
     }
 
-    return set_register(bma2xx, REG_ADDR_PMU_BW, data);
+    return set_register((struct bma2xx *)bma2xx, REG_ADDR_PMU_BW, data);
 }
 
 int
-bma2xx_get_power_settings(const struct bma2xx * bma2xx,
+bma2xx_get_power_settings(struct bma2xx *bma2xx,
                           struct power_settings * power_settings)
 {
     uint8_t data[2];
     int rc;
 
-    rc = get_registers(bma2xx, REG_ADDR_PMU_LPW,
+    rc = get_registers((struct bma2xx *)bma2xx, REG_ADDR_PMU_LPW,
                        data, sizeof(data) / sizeof(*data));
     if (rc != 0) {
         return rc;
@@ -801,7 +818,7 @@ bma2xx_get_power_settings(const struct bma2xx * bma2xx,
 
     switch ((data[0] >> 5) & 0x07) {
     default:
-        BMA2XX_ERROR("unknown PMU_LPW reg value 0x%02X\n", data[0]);
+        BMA2XX_LOG(ERROR, "unknown PMU_LPW reg value 0x%02X\n", data[0]);
         power_settings->power_mode = BMA2XX_POWER_MODE_NORMAL;
         break;
     case 0x00:
@@ -872,8 +889,8 @@ bma2xx_get_power_settings(const struct bma2xx * bma2xx,
 }
 
 int
-bma2xx_set_power_settings(const struct bma2xx * bma2xx,
-                          const struct power_settings * power_settings)
+bma2xx_set_power_settings(struct bma2xx *bma2xx,
+                          struct power_settings * power_settings)
 {
     uint8_t data[2];
     int rc;
@@ -957,11 +974,11 @@ bma2xx_set_power_settings(const struct bma2xx * bma2xx,
         return SYS_EINVAL;
     }
 
-    rc = set_register(bma2xx, REG_ADDR_PMU_LOW_POWER, data[1]);
+    rc = set_register((struct bma2xx *)bma2xx, REG_ADDR_PMU_LOW_POWER, data[1]);
     if (rc != 0) {
         return rc;
     }
-    rc = set_register(bma2xx, REG_ADDR_PMU_LPW, data[0]);
+    rc = set_register((struct bma2xx *)bma2xx, REG_ADDR_PMU_LPW, data[0]);
     if (rc != 0) {
         return rc;
     }
@@ -970,14 +987,14 @@ bma2xx_set_power_settings(const struct bma2xx * bma2xx,
 }
 
 int
-bma2xx_get_data_acquisition(const struct bma2xx * bma2xx,
+bma2xx_get_data_acquisition(struct bma2xx *bma2xx,
                             bool * unfiltered_reg_data,
                             bool * disable_reg_shadow)
 {
     uint8_t data;
     int rc;
 
-    rc = get_register(bma2xx, REG_ADDR_ACCD_HBW, &data);
+    rc = get_register((struct bma2xx *)bma2xx, REG_ADDR_ACCD_HBW, &data);
     if (rc != 0) {
         return rc;
     }
@@ -989,7 +1006,7 @@ bma2xx_get_data_acquisition(const struct bma2xx * bma2xx,
 }
 
 int
-bma2xx_set_data_acquisition(const struct bma2xx * bma2xx,
+bma2xx_set_data_acquisition(struct bma2xx *bma2xx,
                             bool unfiltered_reg_data,
                             bool disable_reg_shadow)
 {
@@ -998,15 +1015,15 @@ bma2xx_set_data_acquisition(const struct bma2xx * bma2xx,
     data = (unfiltered_reg_data << 7) |
            (disable_reg_shadow << 6);
 
-    return set_register(bma2xx, REG_ADDR_ACCD_HBW, data);
+    return set_register((struct bma2xx *)bma2xx, REG_ADDR_ACCD_HBW, data);
 }
 
 int
-bma2xx_set_softreset(const struct bma2xx * bma2xx)
+bma2xx_set_softreset(struct bma2xx *bma2xx)
 {
     int rc;
 
-    rc = set_register(bma2xx, REG_ADDR_BGW_SOFTRESET, REG_VALUE_SOFT_RESET);
+    rc = set_register((struct bma2xx *)bma2xx, REG_ADDR_BGW_SOFTRESET, REG_VALUE_SOFT_RESET);
     if (rc != 0) {
         return rc;
     }
@@ -1017,13 +1034,13 @@ bma2xx_set_softreset(const struct bma2xx * bma2xx)
 }
 
 int
-bma2xx_get_int_enable(const struct bma2xx * bma2xx,
+bma2xx_get_int_enable(struct bma2xx *bma2xx,
                       struct int_enable * int_enable)
 {
     uint8_t data[3];
     int rc;
 
-    rc = get_registers(bma2xx, REG_ADDR_INT_EN_0,
+    rc = get_registers((struct bma2xx *)bma2xx, REG_ADDR_INT_EN_0,
                        data, sizeof(data) / sizeof(*data));
     if (rc != 0) {
         return rc;
@@ -1052,8 +1069,8 @@ bma2xx_get_int_enable(const struct bma2xx * bma2xx,
 }
 
 int
-bma2xx_set_int_enable(const struct bma2xx * bma2xx,
-                      const struct int_enable * int_enable)
+bma2xx_set_int_enable(struct bma2xx *bma2xx,
+                      struct int_enable * int_enable)
 {
     uint8_t data[3];
     int rc;
@@ -1079,15 +1096,15 @@ bma2xx_set_int_enable(const struct bma2xx * bma2xx,
               (int_enable->slow_no_mot_y_int_enable << 1) |
               (int_enable->slow_no_mot_x_int_enable << 0);
 
-    rc = set_register(bma2xx, REG_ADDR_INT_EN_0, data[0]);
+    rc = set_register((struct bma2xx *)bma2xx, REG_ADDR_INT_EN_0, data[0]);
     if (rc != 0) {
         return rc;
     }
-    rc = set_register(bma2xx, REG_ADDR_INT_EN_1, data[1]);
+    rc = set_register((struct bma2xx *)bma2xx, REG_ADDR_INT_EN_1, data[1]);
     if (rc != 0) {
         return rc;
     }
-    rc = set_register(bma2xx, REG_ADDR_INT_EN_2, data[2]);
+    rc = set_register((struct bma2xx *)bma2xx, REG_ADDR_INT_EN_2, data[2]);
     if (rc != 0) {
         return rc;
     }
@@ -1096,13 +1113,13 @@ bma2xx_set_int_enable(const struct bma2xx * bma2xx,
 }
 
 int
-bma2xx_get_int_routes(const struct bma2xx * bma2xx,
+bma2xx_get_int_routes(struct bma2xx *bma2xx,
                       struct int_routes * int_routes)
 {
     uint8_t data[3];
     int rc;
 
-    rc = get_registers(bma2xx, REG_ADDR_INT_MAP_0,
+    rc = get_registers((struct bma2xx *)bma2xx, REG_ADDR_INT_MAP_0,
                        data, sizeof(data) / sizeof(*data));
     if (rc != 0) {
         return rc;
@@ -1200,8 +1217,8 @@ bma2xx_get_int_routes(const struct bma2xx * bma2xx,
 }
 
 int
-bma2xx_set_int_routes(const struct bma2xx * bma2xx,
-                      const struct int_routes * int_routes)
+bma2xx_set_int_routes(struct bma2xx *bma2xx,
+                      struct int_routes * int_routes)
 {
     uint8_t data[3];
     int rc;
@@ -1231,15 +1248,15 @@ bma2xx_set_int_routes(const struct bma2xx * bma2xx,
               (((int_routes->high_g_int_route & INT_ROUTE_PIN_2) != 0) << 1) |
               (((int_routes->low_g_int_route & INT_ROUTE_PIN_2) != 0) << 0);
 
-    rc = set_register(bma2xx, REG_ADDR_INT_MAP_0, data[0]);
+    rc = set_register((struct bma2xx *)bma2xx, REG_ADDR_INT_MAP_0, data[0]);
     if (rc != 0) {
         return rc;
     }
-    rc = set_register(bma2xx, REG_ADDR_INT_MAP_1, data[1]);
+    rc = set_register((struct bma2xx *)bma2xx, REG_ADDR_INT_MAP_1, data[1]);
     if (rc != 0) {
         return rc;
     }
-    rc = set_register(bma2xx, REG_ADDR_INT_MAP_2, data[2]);
+    rc = set_register((struct bma2xx *)bma2xx, REG_ADDR_INT_MAP_2, data[2]);
     if (rc != 0) {
         return rc;
     }
@@ -1248,13 +1265,13 @@ bma2xx_set_int_routes(const struct bma2xx * bma2xx,
 }
 
 int
-bma2xx_get_int_filters(const struct bma2xx * bma2xx,
+bma2xx_get_int_filters(struct bma2xx *bma2xx,
                        struct int_filters * int_filters)
 {
     uint8_t data;
     int rc;
 
-    rc = get_register(bma2xx, REG_ADDR_INT_SRC, &data);
+    rc = get_register((struct bma2xx *)bma2xx, REG_ADDR_INT_SRC, &data);
     if (rc != 0) {
         return rc;
     }
@@ -1270,8 +1287,8 @@ bma2xx_get_int_filters(const struct bma2xx * bma2xx,
 }
 
 int
-bma2xx_set_int_filters(const struct bma2xx * bma2xx,
-                       const struct int_filters * int_filters)
+bma2xx_set_int_filters(struct bma2xx *bma2xx,
+                       struct int_filters * int_filters)
 {
     uint8_t data;
 
@@ -1282,17 +1299,17 @@ bma2xx_set_int_filters(const struct bma2xx * bma2xx,
            (int_filters->unfiltered_high_g_int << 1) |
            (int_filters->unfiltered_low_g_int << 0);
 
-    return set_register(bma2xx, REG_ADDR_INT_SRC, data);
+    return set_register((struct bma2xx *)bma2xx, REG_ADDR_INT_SRC, data);
 }
 
 int
-bma2xx_get_int_pin_electrical(const struct bma2xx * bma2xx,
+bma2xx_get_int_pin_electrical(struct bma2xx *bma2xx,
                               struct int_pin_electrical * electrical)
 {
     uint8_t data;
     int rc;
 
-    rc = get_register(bma2xx, REG_ADDR_INT_OUT_CTRL, &data);
+    rc = get_register((struct bma2xx *)bma2xx, REG_ADDR_INT_OUT_CTRL, &data);
     if (rc != 0) {
         return rc;
     }
@@ -1322,8 +1339,8 @@ bma2xx_get_int_pin_electrical(const struct bma2xx * bma2xx,
 }
 
 int
-bma2xx_set_int_pin_electrical(const struct bma2xx * bma2xx,
-                              const struct int_pin_electrical * electrical)
+bma2xx_set_int_pin_electrical(struct bma2xx *bma2xx,
+                              struct int_pin_electrical * electrical)
 {
     uint8_t data;
 
@@ -1373,17 +1390,17 @@ bma2xx_set_int_pin_electrical(const struct bma2xx * bma2xx,
         return SYS_EINVAL;
     }
 
-    return set_register(bma2xx, REG_ADDR_INT_OUT_CTRL, data);
+    return set_register((struct bma2xx *)bma2xx, REG_ADDR_INT_OUT_CTRL, data);
 }
 
 int
-bma2xx_get_int_latch(const struct bma2xx * bma2xx,
+bma2xx_get_int_latch(struct bma2xx *bma2xx,
                      enum int_latch * int_latch)
 {
     uint8_t data;
     int rc;
 
-    rc = get_register(bma2xx, REG_ADDR_INT_RST_LATCH, &data);
+    rc = get_register((struct bma2xx *)bma2xx, REG_ADDR_INT_RST_LATCH, &data);
     if (rc != 0) {
         return rc;
     }
@@ -1443,7 +1460,7 @@ bma2xx_get_int_latch(const struct bma2xx * bma2xx,
 }
 
 int
-bma2xx_set_int_latch(const struct bma2xx * bma2xx,
+bma2xx_set_int_latch(struct bma2xx *bma2xx,
                      bool reset_ints,
                      enum int_latch int_latch)
 {
@@ -1499,17 +1516,17 @@ bma2xx_set_int_latch(const struct bma2xx * bma2xx,
         return SYS_EINVAL;
     }
 
-    return set_register(bma2xx, REG_ADDR_INT_RST_LATCH, data);
+    return set_register((struct bma2xx *)bma2xx, REG_ADDR_INT_RST_LATCH, data);
 }
 
 int
-bma2xx_get_low_g_int_cfg(const struct bma2xx * bma2xx,
+bma2xx_get_low_g_int_cfg(struct bma2xx *bma2xx,
                          struct low_g_int_cfg * low_g_int_cfg)
 {
     uint8_t data[3];
     int rc;
 
-    rc = get_registers(bma2xx, REG_ADDR_INT_0,
+    rc = get_registers((struct bma2xx *)bma2xx, REG_ADDR_INT_0,
                        data, sizeof(data) / sizeof(*data));
     if (rc != 0) {
         return rc;
@@ -1524,8 +1541,8 @@ bma2xx_get_low_g_int_cfg(const struct bma2xx * bma2xx,
 }
 
 int
-bma2xx_set_low_g_int_cfg(const struct bma2xx * bma2xx,
-                         const struct low_g_int_cfg * low_g_int_cfg)
+bma2xx_set_low_g_int_cfg(struct bma2xx *bma2xx,
+                         struct low_g_int_cfg * low_g_int_cfg)
 {
     uint8_t data[3];
     int rc;
@@ -1548,15 +1565,15 @@ bma2xx_set_low_g_int_cfg(const struct bma2xx * bma2xx,
     data[2] = (low_g_int_cfg->axis_summing << 2) |
               (((uint8_t)(low_g_int_cfg->hyster_g / 0.125) & 0x03) << 0);
 
-    rc = set_register(bma2xx, REG_ADDR_INT_0, data[0]);
+    rc = set_register((struct bma2xx *)bma2xx, REG_ADDR_INT_0, data[0]);
     if (rc != 0) {
         return rc;
     }
-    rc = set_register(bma2xx, REG_ADDR_INT_1, data[1]);
+    rc = set_register((struct bma2xx *)bma2xx, REG_ADDR_INT_1, data[1]);
     if (rc != 0) {
         return rc;
     }
-    rc = set_register(bma2xx, REG_ADDR_INT_2, data[2]);
+    rc = set_register((struct bma2xx *)bma2xx, REG_ADDR_INT_2, data[2]);
     if (rc != 0) {
         return rc;
     }
@@ -1565,7 +1582,7 @@ bma2xx_set_low_g_int_cfg(const struct bma2xx * bma2xx,
 }
 
 int
-bma2xx_get_high_g_int_cfg(const struct bma2xx * bma2xx,
+bma2xx_get_high_g_int_cfg(struct bma2xx *bma2xx,
                           enum bma2xx_g_range g_range,
                           struct high_g_int_cfg * high_g_int_cfg)
 {
@@ -1595,7 +1612,7 @@ bma2xx_get_high_g_int_cfg(const struct bma2xx * bma2xx,
         return SYS_EINVAL;
     }
 
-    rc = get_registers(bma2xx, REG_ADDR_INT_2,
+    rc = get_registers((struct bma2xx *)bma2xx, REG_ADDR_INT_2,
                        data, sizeof(data) / sizeof(*data));
     if (rc != 0) {
         return rc;
@@ -1609,9 +1626,9 @@ bma2xx_get_high_g_int_cfg(const struct bma2xx * bma2xx,
 }
 
 int
-bma2xx_set_high_g_int_cfg(const struct bma2xx * bma2xx,
+bma2xx_set_high_g_int_cfg(struct bma2xx *bma2xx,
                           enum bma2xx_g_range g_range,
-                          const struct high_g_int_cfg * high_g_int_cfg)
+                          struct high_g_int_cfg * high_g_int_cfg)
 {
     float hyster_scale;
     float thresh_scale;
@@ -1656,15 +1673,15 @@ bma2xx_set_high_g_int_cfg(const struct bma2xx * bma2xx,
     data[1] = (high_g_int_cfg->delay_ms >> 1) - 1;
     data[2] = high_g_int_cfg->thresh_g / thresh_scale;
 
-    rc = set_register(bma2xx, REG_ADDR_INT_2, data[0]);
+    rc = set_register((struct bma2xx *)bma2xx, REG_ADDR_INT_2, data[0]);
     if (rc != 0) {
         return rc;
     }
-    rc = set_register(bma2xx, REG_ADDR_INT_3, data[1]);
+    rc = set_register((struct bma2xx *)bma2xx, REG_ADDR_INT_3, data[1]);
     if (rc != 0) {
         return rc;
     }
-    rc = set_register(bma2xx, REG_ADDR_INT_4, data[2]);
+    rc = set_register((struct bma2xx *)bma2xx, REG_ADDR_INT_4, data[2]);
     if (rc != 0) {
         return rc;
     }
@@ -1673,7 +1690,7 @@ bma2xx_set_high_g_int_cfg(const struct bma2xx * bma2xx,
 }
 
 int
-bma2xx_get_slow_no_mot_int_cfg(const struct bma2xx * bma2xx,
+bma2xx_get_slow_no_mot_int_cfg(struct bma2xx *bma2xx,
                                bool no_motion_select,
                                enum bma2xx_g_range g_range,
                                struct slow_no_mot_int_cfg * slow_no_mot_int_cfg)
@@ -1699,11 +1716,11 @@ bma2xx_get_slow_no_mot_int_cfg(const struct bma2xx * bma2xx,
         return SYS_EINVAL;
     }
 
-    rc = get_register(bma2xx, REG_ADDR_INT_5, data + 0);
+    rc = get_register((struct bma2xx *)bma2xx, REG_ADDR_INT_5, data + 0);
     if (rc != 0) {
         return rc;
     }
-    rc = get_register(bma2xx, REG_ADDR_INT_7, data + 1);
+    rc = get_register((struct bma2xx *)bma2xx, REG_ADDR_INT_7, data + 1);
     if (rc != 0) {
         return rc;
     }
@@ -1731,10 +1748,10 @@ bma2xx_get_slow_no_mot_int_cfg(const struct bma2xx * bma2xx,
 }
 
 int
-bma2xx_set_slow_no_mot_int_cfg(const struct bma2xx * bma2xx,
+bma2xx_set_slow_no_mot_int_cfg(struct bma2xx *bma2xx,
                                bool no_motion_select,
                                enum bma2xx_g_range g_range,
-                               const struct slow_no_mot_int_cfg * slow_no_mot_int_cfg)
+                               struct slow_no_mot_int_cfg * slow_no_mot_int_cfg)
 {
     float thresh_scale;
     uint8_t data[2];
@@ -1794,11 +1811,11 @@ bma2xx_set_slow_no_mot_int_cfg(const struct bma2xx * bma2xx,
     }
     data[1] = slow_no_mot_int_cfg->thresh_g / thresh_scale;
 
-    rc = set_register(bma2xx, REG_ADDR_INT_5, data[0]);
+    rc = set_register((struct bma2xx *)bma2xx, REG_ADDR_INT_5, data[0]);
     if (rc != 0) {
         return rc;
     }
-    rc = set_register(bma2xx, REG_ADDR_INT_7, data[1]);
+    rc = set_register((struct bma2xx *)bma2xx, REG_ADDR_INT_7, data[1]);
     if (rc != 0) {
         return rc;
     }
@@ -1807,7 +1824,7 @@ bma2xx_set_slow_no_mot_int_cfg(const struct bma2xx * bma2xx,
 }
 
 int
-bma2xx_get_slope_int_cfg(const struct bma2xx * bma2xx,
+bma2xx_get_slope_int_cfg(struct bma2xx *bma2xx,
                          enum bma2xx_g_range g_range,
                          struct slope_int_cfg * slope_int_cfg)
 {
@@ -1832,7 +1849,7 @@ bma2xx_get_slope_int_cfg(const struct bma2xx * bma2xx,
         return SYS_EINVAL;
     }
 
-    rc = get_registers(bma2xx, REG_ADDR_INT_5,
+    rc = get_registers((struct bma2xx *)bma2xx, REG_ADDR_INT_5,
                        data, sizeof(data) / sizeof(*data));
     if (rc != 0) {
         return rc;
@@ -1845,9 +1862,9 @@ bma2xx_get_slope_int_cfg(const struct bma2xx * bma2xx,
 }
 
 int
-bma2xx_set_slope_int_cfg(const struct bma2xx * bma2xx,
+bma2xx_set_slope_int_cfg(struct bma2xx *bma2xx,
                          enum bma2xx_g_range g_range,
-                         const struct slope_int_cfg * slope_int_cfg)
+                         struct slope_int_cfg * slope_int_cfg)
 {
     float thresh_scale;
     uint8_t data[2];
@@ -1882,11 +1899,11 @@ bma2xx_set_slope_int_cfg(const struct bma2xx * bma2xx,
     data[0] = (slope_int_cfg->duration_p - 1) & 0x03;
     data[1] = slope_int_cfg->thresh_g / thresh_scale;
 
-    rc = set_register(bma2xx, REG_ADDR_INT_5, data[0]);
+    rc = set_register((struct bma2xx *)bma2xx, REG_ADDR_INT_5, data[0]);
     if (rc != 0) {
         return rc;
     }
-    rc = set_register(bma2xx, REG_ADDR_INT_6, data[1]);
+    rc = set_register((struct bma2xx *)bma2xx, REG_ADDR_INT_6, data[1]);
     if (rc != 0) {
         return rc;
     }
@@ -1895,7 +1912,7 @@ bma2xx_set_slope_int_cfg(const struct bma2xx * bma2xx,
 }
 
 int
-bma2xx_get_tap_int_cfg(const struct bma2xx * bma2xx,
+bma2xx_get_tap_int_cfg(struct bma2xx *bma2xx,
                        enum bma2xx_g_range g_range,
                        struct tap_int_cfg * tap_int_cfg)
 {
@@ -1920,7 +1937,7 @@ bma2xx_get_tap_int_cfg(const struct bma2xx * bma2xx,
         return SYS_EINVAL;
     }
 
-    rc = get_registers(bma2xx, REG_ADDR_INT_8,
+    rc = get_registers((struct bma2xx *)bma2xx, REG_ADDR_INT_8,
                        data, sizeof(data) / sizeof(*data));
     if (rc != 0) {
         return rc;
@@ -1985,9 +2002,9 @@ bma2xx_get_tap_int_cfg(const struct bma2xx * bma2xx,
 }
 
 int
-bma2xx_set_tap_int_cfg(const struct bma2xx * bma2xx,
+bma2xx_set_tap_int_cfg(struct bma2xx *bma2xx,
                        enum bma2xx_g_range g_range,
-                       const struct tap_int_cfg * tap_int_cfg)
+                       struct tap_int_cfg * tap_int_cfg)
 {
     float thresh_scale;
     uint8_t data[2];
@@ -2088,11 +2105,11 @@ bma2xx_set_tap_int_cfg(const struct bma2xx * bma2xx,
 
     data[1] |= (uint8_t)(tap_int_cfg->thresh_g / thresh_scale) & 0x1F;
 
-    rc = set_register(bma2xx, REG_ADDR_INT_8, data[0]);
+    rc = set_register((struct bma2xx *)bma2xx, REG_ADDR_INT_8, data[0]);
     if (rc != 0) {
         return rc;
     }
-    rc = set_register(bma2xx, REG_ADDR_INT_9, data[1]);
+    rc = set_register((struct bma2xx *)bma2xx, REG_ADDR_INT_9, data[1]);
     if (rc != 0) {
         return rc;
     }
@@ -2101,13 +2118,13 @@ bma2xx_set_tap_int_cfg(const struct bma2xx * bma2xx,
 }
 
 int
-bma2xx_get_orient_int_cfg(const struct bma2xx * bma2xx,
+bma2xx_get_orient_int_cfg(struct bma2xx *bma2xx,
                           struct orient_int_cfg * orient_int_cfg)
 {
     uint8_t data[2];
     int rc;
 
-    rc = get_registers(bma2xx, REG_ADDR_INT_A,
+    rc = get_registers((struct bma2xx *)bma2xx, REG_ADDR_INT_A,
                        data, sizeof(data) / sizeof(*data));
     if (rc != 0) {
         return rc;
@@ -2160,8 +2177,8 @@ bma2xx_get_orient_int_cfg(const struct bma2xx * bma2xx,
 }
 
 int
-bma2xx_set_orient_int_cfg(const struct bma2xx * bma2xx,
-                          const struct orient_int_cfg * orient_int_cfg)
+bma2xx_set_orient_int_cfg(struct bma2xx *bma2xx,
+                          struct orient_int_cfg * orient_int_cfg)
 {
     uint8_t data[2];
     int rc;
@@ -2210,11 +2227,11 @@ bma2xx_set_orient_int_cfg(const struct bma2xx * bma2xx,
     data[1] = (orient_int_cfg->signal_up_dn << 6) |
               ((orient_int_cfg->blocking_angle & 0x3F) << 0);
 
-    rc = set_register(bma2xx, REG_ADDR_INT_A, data[0]);
+    rc = set_register((struct bma2xx *)bma2xx, REG_ADDR_INT_A, data[0]);
     if (rc != 0) {
         return rc;
     }
-    rc = set_register(bma2xx, REG_ADDR_INT_B, data[1]);
+    rc = set_register((struct bma2xx *)bma2xx, REG_ADDR_INT_B, data[1]);
     if (rc != 0) {
         return rc;
     }
@@ -2223,13 +2240,13 @@ bma2xx_set_orient_int_cfg(const struct bma2xx * bma2xx,
 }
 
 int
-bma2xx_get_flat_int_cfg(const struct bma2xx * bma2xx,
+bma2xx_get_flat_int_cfg(struct bma2xx *bma2xx,
                         struct flat_int_cfg * flat_int_cfg)
 {
     uint8_t data[2];
     int rc;
 
-    rc = get_registers(bma2xx, REG_ADDR_INT_C,
+    rc = get_registers((struct bma2xx *)bma2xx, REG_ADDR_INT_C,
                        data, sizeof(data) / sizeof(*data));
     if (rc != 0) {
         return rc;
@@ -2259,8 +2276,8 @@ bma2xx_get_flat_int_cfg(const struct bma2xx * bma2xx,
 }
 
 int
-bma2xx_set_flat_int_cfg(const struct bma2xx * bma2xx,
-                        const struct flat_int_cfg * flat_int_cfg)
+bma2xx_set_flat_int_cfg(struct bma2xx *bma2xx,
+                        struct flat_int_cfg * flat_int_cfg)
 {
     uint8_t data[2];
     int rc;
@@ -2295,11 +2312,11 @@ bma2xx_set_flat_int_cfg(const struct bma2xx * bma2xx,
         data[1] |= flat_int_cfg->flat_hyster & 0x07;
     }
 
-    rc = set_register(bma2xx, REG_ADDR_INT_C, data[0]);
+    rc = set_register((struct bma2xx *)bma2xx, REG_ADDR_INT_C, data[0]);
     if (rc != 0) {
         return rc;
     }
-    rc = set_register(bma2xx, REG_ADDR_INT_D, data[1]);
+    rc = set_register((struct bma2xx *)bma2xx, REG_ADDR_INT_D, data[1]);
     if (rc != 0) {
         return rc;
     }
@@ -2308,13 +2325,13 @@ bma2xx_set_flat_int_cfg(const struct bma2xx * bma2xx,
 }
 
 int
-bma2xx_get_fifo_wmark_level(const struct bma2xx * bma2xx,
+bma2xx_get_fifo_wmark_level(struct bma2xx *bma2xx,
                             uint8_t * wmark_level)
 {
     uint8_t data;
     int rc;
 
-    rc = get_register(bma2xx, REG_ADDR_FIFO_CONFIG_0, &data);
+    rc = get_register((struct bma2xx *)bma2xx, REG_ADDR_FIFO_CONFIG_0, &data);
     if (rc != 0) {
         return rc;
     }
@@ -2325,7 +2342,7 @@ bma2xx_get_fifo_wmark_level(const struct bma2xx * bma2xx,
 }
 
 int
-bma2xx_set_fifo_wmark_level(const struct bma2xx * bma2xx,
+bma2xx_set_fifo_wmark_level(struct bma2xx *bma2xx,
                             uint8_t wmark_level)
 {
     uint8_t data;
@@ -2336,17 +2353,17 @@ bma2xx_set_fifo_wmark_level(const struct bma2xx * bma2xx,
 
     data = wmark_level & 0x3F;
 
-    return set_register(bma2xx, REG_ADDR_FIFO_CONFIG_0, data);
+    return set_register((struct bma2xx *)bma2xx, REG_ADDR_FIFO_CONFIG_0, data);
 }
 
 int
-bma2xx_get_self_test_cfg(const struct bma2xx * bma2xx,
+bma2xx_get_self_test_cfg(struct bma2xx *bma2xx,
                          struct self_test_cfg * self_test_cfg)
 {
     uint8_t data;
     int rc;
 
-    rc = get_register(bma2xx, REG_ADDR_PMU_SELF_TEST, &data);
+    rc = get_register((struct bma2xx *)bma2xx, REG_ADDR_PMU_SELF_TEST, &data);
     if (rc != 0) {
         return rc;
     }
@@ -2385,8 +2402,8 @@ bma2xx_get_self_test_cfg(const struct bma2xx * bma2xx,
 }
 
 int
-bma2xx_set_self_test_cfg(const struct bma2xx * bma2xx,
-                         const struct self_test_cfg * self_test_cfg)
+bma2xx_set_self_test_cfg(struct bma2xx *bma2xx,
+                         struct self_test_cfg * self_test_cfg)
 {
     uint8_t data;
 
@@ -2430,11 +2447,11 @@ bma2xx_set_self_test_cfg(const struct bma2xx * bma2xx,
         }
     }
 
-    return set_register(bma2xx, REG_ADDR_PMU_SELF_TEST, data);
+    return set_register((struct bma2xx *)bma2xx, REG_ADDR_PMU_SELF_TEST, data);
 }
 
 int
-bma2xx_get_nvm_control(const struct bma2xx * bma2xx,
+bma2xx_get_nvm_control(struct bma2xx *bma2xx,
                        uint8_t * remaining_cycles,
                        bool * load_from_nvm,
                        bool * nvm_is_ready,
@@ -2443,7 +2460,7 @@ bma2xx_get_nvm_control(const struct bma2xx * bma2xx,
     uint8_t data;
     int rc;
 
-    rc = get_register(bma2xx, REG_ADDR_TRIM_NVM_CTRL, &data);
+    rc = get_register((struct bma2xx *)bma2xx, REG_ADDR_TRIM_NVM_CTRL, &data);
     if (rc != 0) {
         return rc;
     }
@@ -2457,7 +2474,7 @@ bma2xx_get_nvm_control(const struct bma2xx * bma2xx,
 }
 
 int
-bma2xx_set_nvm_control(const struct bma2xx * bma2xx,
+bma2xx_set_nvm_control(struct bma2xx *bma2xx,
                        bool load_from_nvm,
                        bool store_into_nvm,
                        bool nvm_unlocked)
@@ -2468,17 +2485,17 @@ bma2xx_set_nvm_control(const struct bma2xx * bma2xx,
            (store_into_nvm << 1) |
            (nvm_unlocked << 0);
 
-    return set_register(bma2xx, REG_ADDR_TRIM_NVM_CTRL, data);
+    return set_register((struct bma2xx *)bma2xx, REG_ADDR_TRIM_NVM_CTRL, data);
 }
 
 int
-bma2xx_get_i2c_watchdog(const struct bma2xx * bma2xx,
+bma2xx_get_i2c_watchdog(struct bma2xx *bma2xx,
                         enum i2c_watchdog * i2c_watchdog)
 {
     uint8_t data;
     int rc;
 
-    rc = get_register(bma2xx, REG_ADDR_BGW_SPI3_WDT, &data);
+    rc = get_register((struct bma2xx *)bma2xx, REG_ADDR_BGW_SPI3_WDT, &data);
     if (rc != 0) {
         return rc;
     }
@@ -2497,7 +2514,7 @@ bma2xx_get_i2c_watchdog(const struct bma2xx * bma2xx,
 }
 
 int
-bma2xx_set_i2c_watchdog(const struct bma2xx * bma2xx,
+bma2xx_set_i2c_watchdog(struct bma2xx *bma2xx,
                         enum i2c_watchdog i2c_watchdog)
 {
     uint8_t data;
@@ -2516,11 +2533,11 @@ bma2xx_set_i2c_watchdog(const struct bma2xx * bma2xx,
         return SYS_EINVAL;
     }
 
-    return set_register(bma2xx, REG_ADDR_BGW_SPI3_WDT, data);
+    return set_register((struct bma2xx *)bma2xx, REG_ADDR_BGW_SPI3_WDT, data);
 }
 
 int
-bma2xx_get_fast_ofc_cfg(const struct bma2xx * bma2xx,
+bma2xx_get_fast_ofc_cfg(struct bma2xx *bma2xx,
                         bool * fast_ofc_ready,
                         enum bma2xx_offset_comp_target * ofc_target_z,
                         enum bma2xx_offset_comp_target * ofc_target_y,
@@ -2529,7 +2546,7 @@ bma2xx_get_fast_ofc_cfg(const struct bma2xx * bma2xx,
     uint8_t data[2];
     int rc;
 
-    rc = get_registers(bma2xx, REG_ADDR_OFC_CTRL,
+    rc = get_registers((struct bma2xx *)bma2xx, REG_ADDR_OFC_CTRL,
                        data, sizeof(data) / sizeof(*data));
     if (rc != 0) {
         return rc;
@@ -2586,7 +2603,7 @@ bma2xx_get_fast_ofc_cfg(const struct bma2xx * bma2xx,
 }
 
 int
-bma2xx_set_fast_ofc_cfg(const struct bma2xx * bma2xx,
+bma2xx_set_fast_ofc_cfg(struct bma2xx *bma2xx,
                         enum axis fast_ofc_axis,
                         enum bma2xx_offset_comp_target fast_ofc_target,
                         bool trigger_fast_ofc)
@@ -2634,11 +2651,11 @@ bma2xx_set_fast_ofc_cfg(const struct bma2xx * bma2xx,
         data[0] |= axis_value << 5;
     }
 
-    rc = set_register(bma2xx, REG_ADDR_OFC_SETTING, data[1]);
+    rc = set_register((struct bma2xx *)bma2xx, REG_ADDR_OFC_SETTING, data[1]);
     if (rc != 0) {
         return rc;
     }
-    rc = set_register(bma2xx, REG_ADDR_OFC_CTRL, data[0]);
+    rc = set_register((struct bma2xx *)bma2xx, REG_ADDR_OFC_CTRL, data[0]);
     if (rc != 0) {
         return rc;
     }
@@ -2647,13 +2664,13 @@ bma2xx_set_fast_ofc_cfg(const struct bma2xx * bma2xx,
 }
 
 int
-bma2xx_get_slow_ofc_cfg(const struct bma2xx * bma2xx,
+bma2xx_get_slow_ofc_cfg(struct bma2xx *bma2xx,
                         struct slow_ofc_cfg * slow_ofc_cfg)
 {
     uint8_t data[2];
     int rc;
 
-    rc = get_registers(bma2xx, REG_ADDR_OFC_CTRL,
+    rc = get_registers((struct bma2xx *)bma2xx, REG_ADDR_OFC_CTRL,
                        data, sizeof(data) / sizeof(*data));
     if (rc != 0) {
         return rc;
@@ -2668,8 +2685,8 @@ bma2xx_get_slow_ofc_cfg(const struct bma2xx * bma2xx,
 }
 
 int
-bma2xx_set_slow_ofc_cfg(const struct bma2xx * bma2xx,
-                        const struct slow_ofc_cfg * slow_ofc_cfg)
+bma2xx_set_slow_ofc_cfg(struct bma2xx *bma2xx,
+                        struct slow_ofc_cfg * slow_ofc_cfg)
 {
     uint8_t data[2];
     int rc;
@@ -2679,11 +2696,11 @@ bma2xx_set_slow_ofc_cfg(const struct bma2xx * bma2xx,
               (slow_ofc_cfg->ofc_x_enabled << 0);
     data[1] = slow_ofc_cfg->high_bw_cut_off << 0;
 
-    rc = set_register(bma2xx, REG_ADDR_OFC_SETTING, data[1]);
+    rc = set_register((struct bma2xx *)bma2xx, REG_ADDR_OFC_SETTING, data[1]);
     if (rc != 0) {
         return rc;
     }
-    rc = set_register(bma2xx, REG_ADDR_OFC_CTRL, data[0]);
+    rc = set_register((struct bma2xx *)bma2xx, REG_ADDR_OFC_CTRL, data[0]);
     if (rc != 0) {
         return rc;
     }
@@ -2692,13 +2709,13 @@ bma2xx_set_slow_ofc_cfg(const struct bma2xx * bma2xx,
 }
 
 int
-bma2xx_set_ofc_reset(const struct bma2xx * bma2xx)
+bma2xx_set_ofc_reset(struct bma2xx *bma2xx)
 {
-    return set_register(bma2xx, REG_ADDR_OFC_CTRL, 0x80);
+    return set_register((struct bma2xx *)bma2xx, REG_ADDR_OFC_CTRL, 0x80);
 }
 
 int
-bma2xx_get_ofc_offset(const struct bma2xx * bma2xx,
+bma2xx_get_ofc_offset(struct bma2xx *bma2xx,
                       enum axis axis,
                       float * offset_g)
 {
@@ -2720,7 +2737,7 @@ bma2xx_get_ofc_offset(const struct bma2xx * bma2xx,
         return SYS_EINVAL;
     }
 
-    rc = get_register(bma2xx, reg_addr, &data);
+    rc = get_register((struct bma2xx *)bma2xx, reg_addr, &data);
     if (rc != 0) {
         return rc;
     }
@@ -2731,7 +2748,7 @@ bma2xx_get_ofc_offset(const struct bma2xx * bma2xx,
 }
 
 int
-bma2xx_set_ofc_offset(const struct bma2xx * bma2xx,
+bma2xx_set_ofc_offset(struct bma2xx *bma2xx,
                       enum axis axis,
                       float offset_g)
 {
@@ -2754,11 +2771,11 @@ bma2xx_set_ofc_offset(const struct bma2xx * bma2xx,
 
     data = (int8_t)(offset_g / 0.00781);
 
-    return set_register(bma2xx, reg_addr, data);
+    return set_register((struct bma2xx *)bma2xx, reg_addr, data);
 }
 
 int
-bma2xx_get_saved_data(const struct bma2xx * bma2xx,
+bma2xx_get_saved_data(struct bma2xx *bma2xx,
                       enum saved_data_addr saved_data_addr,
                       uint8_t * saved_data_val)
 {
@@ -2775,11 +2792,11 @@ bma2xx_get_saved_data(const struct bma2xx * bma2xx,
         return SYS_EINVAL;
     }
 
-    return get_register(bma2xx, reg_addr, saved_data_val);
+    return get_register((struct bma2xx *)bma2xx, reg_addr, saved_data_val);
 }
 
 int
-bma2xx_set_saved_data(const struct bma2xx * bma2xx,
+bma2xx_set_saved_data(struct bma2xx *bma2xx,
                       enum saved_data_addr saved_data_addr,
                       uint8_t saved_data_val)
 {
@@ -2796,24 +2813,24 @@ bma2xx_set_saved_data(const struct bma2xx * bma2xx,
         return SYS_EINVAL;
     }
 
-    return set_register(bma2xx, reg_addr, saved_data_val);
+    return set_register((struct bma2xx *)bma2xx, reg_addr, saved_data_val);
 }
 
 int
-bma2xx_get_fifo_cfg(const struct bma2xx * bma2xx,
+bma2xx_get_fifo_cfg(struct bma2xx *bma2xx,
                     struct fifo_cfg * fifo_cfg)
 {
     uint8_t data;
     int rc;
 
-    rc = get_register(bma2xx, REG_ADDR_FIFO_CONFIG_1, &data);
+    rc = get_register((struct bma2xx *)bma2xx, REG_ADDR_FIFO_CONFIG_1, &data);
     if (rc != 0) {
         return rc;
     }
 
     switch ((data >> 6) & 0x03) {
     case 0x03:
-        BMA2XX_ERROR("unknown FIFO_CONFIG_1 reg value 0x%02X\n", data);
+        BMA2XX_LOG(ERROR, "unknown FIFO_CONFIG_1 reg value 0x%02X\n", data);
     case 0x00:
         fifo_cfg->fifo_mode = FIFO_MODE_BYPASS;
         break;
@@ -2844,8 +2861,8 @@ bma2xx_get_fifo_cfg(const struct bma2xx * bma2xx,
 }
 
 int
-bma2xx_set_fifo_cfg(const struct bma2xx * bma2xx,
-                    const struct fifo_cfg * fifo_cfg)
+bma2xx_set_fifo_cfg(struct bma2xx *bma2xx,
+                    struct fifo_cfg * fifo_cfg)
 {
     uint8_t data;
 
@@ -2880,11 +2897,11 @@ bma2xx_set_fifo_cfg(const struct bma2xx * bma2xx,
         break;
     }
 
-    return set_register(bma2xx, REG_ADDR_FIFO_CONFIG_1, data);
+    return set_register((struct bma2xx *)bma2xx, REG_ADDR_FIFO_CONFIG_1, data);
 }
 
 int
-bma2xx_get_fifo(const struct bma2xx * bma2xx,
+bma2xx_get_fifo(struct bma2xx *bma2xx,
                 enum bma2xx_g_range g_range,
                 enum fifo_data fifo_data,
                 struct accel_data * accel_data)
@@ -2912,7 +2929,7 @@ bma2xx_get_fifo(const struct bma2xx * bma2xx,
         return SYS_EINVAL;
     }
 
-    rc = get_registers(bma2xx, REG_ADDR_FIFO_DATA, data, size);
+    rc = get_registers((struct bma2xx *)bma2xx, REG_ADDR_FIFO_DATA, data, size);
     if (rc != 0) {
         return rc;
     }
@@ -2928,9 +2945,9 @@ bma2xx_get_fifo(const struct bma2xx * bma2xx,
 }
 
 static int
-reset_and_recfg(struct bma2xx * bma2xx)
+reset_and_recfg(struct bma2xx *bma2xx)
 {
-    const struct bma2xx_cfg * cfg;
+    struct bma2xx_cfg *cfg;
     int rc;
     enum int_route int_route;
     struct int_routes int_routes;
@@ -3109,10 +3126,10 @@ reset_and_recfg(struct bma2xx * bma2xx)
 }
 
 static int
-change_power(struct bma2xx * bma2xx,
+change_power(struct bma2xx *bma2xx,
              enum bma2xx_power_mode target)
 {
-    const struct bma2xx_cfg * cfg;
+    struct bma2xx_cfg *cfg;
     int rc;
     bool step1_move;
     bool step2_move;
@@ -3196,7 +3213,7 @@ change_power(struct bma2xx * bma2xx,
 }
 
 static int
-interim_power(struct bma2xx * bma2xx,
+interim_power(struct bma2xx *bma2xx,
               const enum bma2xx_power_mode * reqs,
               uint8_t size)
 {
@@ -3216,9 +3233,9 @@ interim_power(struct bma2xx * bma2xx,
 }
 
 static int
-default_power(struct bma2xx * bma2xx)
+default_power(struct bma2xx *bma2xx)
 {
-    const struct bma2xx_cfg * cfg;
+    struct bma2xx_cfg *cfg;
 
     cfg = &bma2xx->cfg;
 
@@ -3231,7 +3248,7 @@ default_power(struct bma2xx * bma2xx)
 
 #if MYNEWT_VAL(BMA2XX_INT_ENABLE)
 static int
-init_intpin(struct bma2xx * bma2xx,
+init_intpin(struct bma2xx *bma2xx,
               hal_gpio_irq_handler_t handler,
               void * arg)
 {
@@ -3249,7 +3266,7 @@ init_intpin(struct bma2xx * bma2xx,
     }
 
     if (pin < 0) {
-        BMA2XX_ERROR("Interrupt pin not configured\n");
+        BMA2XX_LOG(ERROR, "Interrupt pin not configured\n");
         return SYS_EINVAL;
     }
 
@@ -3265,7 +3282,7 @@ init_intpin(struct bma2xx * bma2xx,
     } else if (bma2xx->sensor.s_itf.si_ints[pdd->int_num].device_pin == 2) {
         pdd->int_route = INT_ROUTE_PIN_2;
     } else {
-        BMA2XX_ERROR("Route not configured\n");
+        BMA2XX_LOG(ERROR, "Route not configured\n");
         return SYS_EINVAL;
     }
 
@@ -3282,7 +3299,7 @@ init_intpin(struct bma2xx * bma2xx,
 }
 
 static void
-enable_intpin(struct bma2xx * bma2xx)
+enable_intpin(struct bma2xx *bma2xx)
 {
     struct bma2xx_private_driver_data *pdd = &bma2xx->pdd;
     enum bma2xx_int_num int_num = pdd->int_num;
@@ -3295,7 +3312,7 @@ enable_intpin(struct bma2xx * bma2xx)
 }
 
 static void
-disable_intpin(struct bma2xx * bma2xx)
+disable_intpin(struct bma2xx *bma2xx)
 {
     struct bma2xx_private_driver_data *pdd = &bma2xx->pdd;
     enum bma2xx_int_num int_num = pdd->int_num;
@@ -3313,7 +3330,7 @@ disable_intpin(struct bma2xx * bma2xx)
 #endif
 
 static int
-self_test_enable(const struct bma2xx * bma2xx,
+self_test_enable(struct bma2xx *bma2xx,
                  enum self_test_ampl ampl,
                  enum self_test_sign sign,
                  enum axis axis)
@@ -3329,7 +3346,7 @@ self_test_enable(const struct bma2xx * bma2xx,
 }
 
 static int
-self_test_disable(const struct bma2xx * bma2xx)
+self_test_disable(struct bma2xx *bma2xx)
 {
     struct self_test_cfg self_test_cfg;
 
@@ -3342,7 +3359,7 @@ self_test_disable(const struct bma2xx * bma2xx)
 }
 
 static int
-self_test_nudge(const struct bma2xx * bma2xx,
+self_test_nudge(struct bma2xx *bma2xx,
                 enum self_test_ampl ampl,
                 enum self_test_sign sign,
                 enum axis axis,
@@ -3374,7 +3391,7 @@ self_test_nudge(const struct bma2xx * bma2xx,
 }
 
 static int
-self_test_axis(const struct bma2xx * bma2xx,
+self_test_axis(struct bma2xx *bma2xx,
                enum axis axis,
                enum bma2xx_g_range g_range,
                float * delta_hi_g,
@@ -3430,12 +3447,12 @@ self_test_axis(const struct bma2xx * bma2xx,
 }
 
 int
-bma2xx_self_test(struct bma2xx * bma2xx,
+bma2xx_self_test(struct bma2xx *bma2xx,
                  float delta_high_mult,
                  float delta_low_mult,
                  bool * self_test_fail)
 {
-    const struct bma2xx_cfg * cfg;
+    struct bma2xx_cfg *cfg;
     enum bma2xx_power_mode request_power;
     int rc;
     float delta_hi_x_g;
@@ -3528,7 +3545,7 @@ bma2xx_self_test(struct bma2xx * bma2xx,
 }
 
 static int
-axis_offset_compensation(const struct bma2xx * bma2xx,
+axis_offset_compensation(struct bma2xx *bma2xx,
                          enum axis axis,
                          enum bma2xx_offset_comp_target target)
 {
@@ -3549,7 +3566,7 @@ axis_offset_compensation(const struct bma2xx * bma2xx,
     }
 
     if (!ready) {
-        BMA2XX_ERROR("offset compensation already in progress\n");
+        BMA2XX_LOG(ERROR, "offset compensation already in progress\n");
         return SYS_ETIMEOUT;
     }
 
@@ -3574,7 +3591,7 @@ axis_offset_compensation(const struct bma2xx * bma2xx,
     }
 
     if (count == 0) {
-        BMA2XX_ERROR("offset compensation did not complete\n");
+        BMA2XX_LOG(ERROR, "offset compensation did not complete\n");
         return SYS_ETIMEOUT;
     }
 
@@ -3582,12 +3599,12 @@ axis_offset_compensation(const struct bma2xx * bma2xx,
 }
 
 int
-bma2xx_offset_compensation(struct bma2xx * bma2xx,
+bma2xx_offset_compensation(struct bma2xx *bma2xx,
                            enum bma2xx_offset_comp_target target_x,
                            enum bma2xx_offset_comp_target target_y,
                            enum bma2xx_offset_comp_target target_z)
 {
-    const struct bma2xx_cfg * cfg;
+    struct bma2xx_cfg *cfg;
     enum bma2xx_power_mode request_power;
     int rc;
 
@@ -3645,12 +3662,12 @@ bma2xx_offset_compensation(struct bma2xx * bma2xx,
 }
 
 int
-bma2xx_query_offsets(struct bma2xx * bma2xx,
+bma2xx_query_offsets(struct bma2xx *bma2xx,
                      float * offset_x_g,
                      float * offset_y_g,
                      float * offset_z_g)
 {
-    const struct bma2xx_cfg * cfg;
+    struct bma2xx_cfg *cfg;
     enum bma2xx_power_mode request_power[5];
     int rc;
     float val_offset_x_g;
@@ -3693,15 +3710,15 @@ bma2xx_query_offsets(struct bma2xx * bma2xx,
 
     mismatch = false;
     if (cfg->offset_x_g != val_offset_x_g) {
-        BMA2XX_ERROR("X compensation offset value mismatch\n");
+        BMA2XX_LOG(ERROR, "X compensation offset value mismatch\n");
         mismatch = true;
     }
     if (cfg->offset_y_g != val_offset_y_g) {
-        BMA2XX_ERROR("Y compensation offset value mismatch\n");
+        BMA2XX_LOG(ERROR, "Y compensation offset value mismatch\n");
         mismatch = true;
     }
     if (cfg->offset_z_g != val_offset_z_g) {
-        BMA2XX_ERROR("Z compensation offset value mismatch\n");
+        BMA2XX_LOG(ERROR, "Z compensation offset value mismatch\n");
         mismatch = true;
     }
 
@@ -3717,12 +3734,12 @@ bma2xx_query_offsets(struct bma2xx * bma2xx,
 }
 
 int
-bma2xx_write_offsets(struct bma2xx * bma2xx,
+bma2xx_write_offsets(struct bma2xx *bma2xx,
                      float offset_x_g,
                      float offset_y_g,
                      float offset_z_g)
 {
-    struct bma2xx_cfg * cfg;
+    struct bma2xx_cfg *cfg;
     enum bma2xx_power_mode request_power[5];
     int rc;
 
@@ -3762,12 +3779,12 @@ bma2xx_write_offsets(struct bma2xx * bma2xx,
 }
 
 int
-bma2xx_stream_read(struct bma2xx * bma2xx,
+bma2xx_stream_read(struct bma2xx *bma2xx,
                    bma2xx_stream_read_func_t read_func,
                    void * read_arg,
                    uint32_t time_ms)
 {
-    const struct bma2xx_cfg * cfg;
+    struct bma2xx_cfg *cfg;
     int rc;
     enum bma2xx_power_mode request_power;
     struct int_enable int_enable_org;
@@ -3903,7 +3920,7 @@ done:
 }
 
 int
-bma2xx_current_temp(struct bma2xx * bma2xx,
+bma2xx_current_temp(struct bma2xx *bma2xx,
                     float * temp_c)
 {
     enum bma2xx_power_mode request_power[3];
@@ -3934,7 +3951,7 @@ bma2xx_current_temp(struct bma2xx * bma2xx,
 }
 
 int
-bma2xx_current_orient(struct bma2xx * bma2xx,
+bma2xx_current_orient(struct bma2xx *bma2xx,
                       struct bma2xx_orient_xyz * orient_xyz)
 {
     enum bma2xx_power_mode request_power[3];
@@ -3993,7 +4010,7 @@ bma2xx_current_orient(struct bma2xx * bma2xx,
 }
 
 int
-bma2xx_wait_for_orient(struct bma2xx * bma2xx,
+bma2xx_wait_for_orient(struct bma2xx *bma2xx,
                        struct bma2xx_orient_xyz * orient_xyz)
 {
 #if MYNEWT_VAL(BMA2XX_INT_ENABLE)
@@ -4007,7 +4024,7 @@ bma2xx_wait_for_orient(struct bma2xx * bma2xx,
     pdd = &bma2xx->pdd;
 
     if (pdd->interrupt) {
-        BMA2XX_ERROR("Interrupt used\n");
+        BMA2XX_LOG(ERROR, "Interrupt used\n");
         return SYS_EINVAL;
     }
 
@@ -4072,7 +4089,7 @@ done:
 }
 
 int
-bma2xx_wait_for_high_g(struct bma2xx * bma2xx)
+bma2xx_wait_for_high_g(struct bma2xx *bma2xx)
 {
 #if MYNEWT_VAL(BMA2XX_INT_ENABLE)
     int rc;
@@ -4084,7 +4101,7 @@ bma2xx_wait_for_high_g(struct bma2xx * bma2xx)
     pdd = &bma2xx->pdd;
 
     if (pdd->interrupt) {
-        BMA2XX_ERROR("Interrupt used\n");
+        BMA2XX_LOG(ERROR, "Interrupt used\n");
         return SYS_EINVAL;
     }
 
@@ -4144,7 +4161,7 @@ done:
 }
 
 int
-bma2xx_wait_for_low_g(struct bma2xx * bma2xx)
+bma2xx_wait_for_low_g(struct bma2xx *bma2xx)
 {
 #if MYNEWT_VAL(BMA2XX_INT_ENABLE)
     int rc;
@@ -4156,7 +4173,7 @@ bma2xx_wait_for_low_g(struct bma2xx * bma2xx)
     pdd = &bma2xx->pdd;
 
     if (pdd->interrupt) {
-        BMA2XX_ERROR("Interrupt used\n");
+        BMA2XX_LOG(ERROR, "Interrupt used\n");
         return SYS_EINVAL;
     }
 
@@ -4214,7 +4231,7 @@ done:
 }
 
 int
-bma2xx_wait_for_tap(struct bma2xx * bma2xx,
+bma2xx_wait_for_tap(struct bma2xx *bma2xx,
                     enum bma2xx_tap_type tap_type)
 {
 #if MYNEWT_VAL(BMA2XX_INT_ENABLE)
@@ -4259,7 +4276,7 @@ bma2xx_wait_for_tap(struct bma2xx * bma2xx,
     }
 
     if (pdd->interrupt) {
-        BMA2XX_ERROR("Interrupt used\n");
+        BMA2XX_LOG(ERROR, "Interrupt used\n");
         return SYS_EINVAL;
     }
 
@@ -4314,11 +4331,11 @@ done:
 }
 
 int
-bma2xx_power_settings(struct bma2xx * bma2xx,
+bma2xx_power_settings(struct bma2xx *bma2xx,
                       enum bma2xx_power_mode power_mode,
                       enum bma2xx_sleep_duration sleep_duration)
 {
-    struct bma2xx_cfg * cfg;
+    struct bma2xx_cfg *cfg;
 
     cfg = &bma2xx->cfg;
 
@@ -4335,8 +4352,8 @@ sensor_driver_read(struct sensor * sensor,
                    void * data_arg,
                    uint32_t timeout)
 {
-    struct bma2xx * bma2xx;
-    const struct bma2xx_cfg * cfg;
+    struct bma2xx *bma2xx;
+    struct bma2xx_cfg *cfg;
     enum bma2xx_power_mode request_power[3];
     int rc;
     struct accel_data accel_data[AXIS_ALL];
@@ -4457,12 +4474,12 @@ sensor_driver_set_trigger_thresh(struct sensor * sensor,
                                  struct sensor_type_traits * stt)
 {
 #if MYNEWT_VAL(BMA2XX_INT_ENABLE)
-    struct bma2xx * bma2xx;
-    const struct bma2xx_cfg * cfg;
+    struct bma2xx *bma2xx;
+    struct bma2xx_cfg *cfg;
     int rc;
     enum bma2xx_power_mode request_power[3];
-    const struct sensor_accel_data * low_thresh;
-    const struct sensor_accel_data * high_thresh;
+    struct sensor_accel_data * low_thresh;
+    struct sensor_accel_data * high_thresh;
     struct int_enable int_enable;
     float thresh;
     struct low_g_int_cfg low_g_int_cfg;
@@ -4593,7 +4610,7 @@ sensor_driver_unset_notification(struct sensor * sensor,
                                sensor_event_type_t sensor_event_type)
 {
 #if MYNEWT_VAL(BMA2XX_INT_ENABLE)
-    struct bma2xx * bma2xx;
+    struct bma2xx *bma2xx;
     enum bma2xx_power_mode request_power[3];
     struct int_enable int_enable;
     struct int_routes int_routes;
@@ -4670,7 +4687,7 @@ sensor_driver_set_notification(struct sensor * sensor,
                                sensor_event_type_t sensor_event_type)
 {
 #if MYNEWT_VAL(BMA2XX_INT_ENABLE)
-    struct bma2xx * bma2xx;
+    struct bma2xx *bma2xx;
     int rc;
     enum bma2xx_power_mode request_power[3];
     struct int_enable int_enable;
@@ -4759,7 +4776,7 @@ static int
 sensor_driver_handle_interrupt(struct sensor * sensor)
 {
 #if MYNEWT_VAL(BMA2XX_INT_ENABLE)
-    struct bma2xx * bma2xx;
+    struct bma2xx *bma2xx;
     struct bma2xx_private_driver_data *pdd;
     struct int_status int_status;
     int rc;
@@ -4769,7 +4786,7 @@ sensor_driver_handle_interrupt(struct sensor * sensor)
 
     rc = bma2xx_get_int_status(bma2xx, &int_status);
     if (rc != 0) {
-        BMA2XX_ERROR("Cound not read int status err=0x%02x\n", rc);
+        BMA2XX_LOG(ERROR, "Cound not read int status err=0x%02x\n", rc);
         return rc;
     }
 
@@ -4804,7 +4821,7 @@ static struct sensor_driver bma2xx_sensor_driver = {
 };
 
 int
-bma2xx_config(struct bma2xx * bma2xx, struct bma2xx_cfg * cfg)
+bma2xx_config(struct bma2xx *bma2xx, struct bma2xx_cfg *cfg)
 {
     struct sensor * sensor;
     int rc;
@@ -4831,7 +4848,7 @@ bma2xx_config(struct bma2xx * bma2xx, struct bma2xx_cfg * cfg)
     }
 
     if (chip_id != model_chip_id) {
-        BMA2XX_ERROR("received incorrect chip ID 0x%02X\n", chip_id);
+        BMA2XX_LOG(ERROR, "received incorrect chip ID 0x%02X\n", chip_id);
         return SYS_EINVAL;
     }
 
@@ -4856,7 +4873,7 @@ bma2xx_config(struct bma2xx * bma2xx, struct bma2xx_cfg * cfg)
 int
 bma2xx_init(struct os_dev * dev, void * arg)
 {
-    struct bma2xx * bma2xx;
+    struct bma2xx *bma2xx;
     struct sensor * sensor;
 #if MYNEWT_VAL(BMA2XX_INT_ENABLE)
     struct bma2xx_private_driver_data *pdd;
@@ -4866,17 +4883,6 @@ bma2xx_init(struct os_dev * dev, void * arg)
     if (!dev || !arg) {
         return SYS_ENODEV;
     }
-
-#if MYNEWT_VAL(BMA2XX_LOG)
-    rc = log_register(dev->od_name,
-                      &bma2xx_log,
-                      &log_console_handler,
-                      NULL,
-                      LOG_SYSLEVEL);
-    if (rc != 0) {
-        return rc;
-    }
-#endif
 
     bma2xx = (struct bma2xx *)dev;
     sensor = &bma2xx->sensor;

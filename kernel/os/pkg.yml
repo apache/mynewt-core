@@ -24,24 +24,24 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps:
-    - sys/sysinit
-    - sys/sys
-    - util/mem
+    - "@apache-mynewt-core/sys/sysinit"
+    - "@apache-mynewt-core/sys/sys"
+    - "@apache-mynewt-core/util/mem"
 
 pkg.req_apis:
     - console
 
 pkg.deps.OS_CLI:
-    - sys/shell
+    - "@apache-mynewt-core/sys/shell"
 
 pkg.deps.OS_COREDUMP:
-    - sys/coredump
+    - "@apache-mynewt-core/sys/coredump"
 
 pkg.deps.BSP_SIMULATED:
     - "@apache-mynewt-core/kernel/sim"
 
 pkg.deps.OS_SYSVIEW:
-    - sys/sysview
+    - "@apache-mynewt-core/sys/sysview"
 
 pkg.init:
     os_pkg_init: 0

@@ -22,8 +22,8 @@ pkg.description: Required by the application half of a split image.  The split i
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.deps:
-    - kernel/os
+    - "@apache-mynewt-core/kernel/os"
 pkg.keywords:
-    - split
-    - boot
-    - image
+    - "@apache-mynewt-core/split"
+    - "@apache-mynewt-core/boot"
+    - "@apache-mynewt-core/image"

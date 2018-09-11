@@ -40,5 +40,5 @@ pkg.src_dirs:
 pkg.cflags: -std=gnu99 -D__assert_func=__assert_func_nxp
 
 pkg.deps:
-    - hw/hal
-    - hw/cmsis-core
+    - "@apache-mynewt-core/hw/hal"
+    - "@apache-mynewt-core/hw/cmsis-core"

@@ -27,11 +27,11 @@ pkg.keywords:
     - identifier
 
 pkg.deps:
-    - hw/hal
-    - kernel/os
-    - sys/config
-    - sys/mfg
-    - encoding/base64
+    - "@apache-mynewt-core/hw/hal"
+    - "@apache-mynewt-core/kernel/os"
+    - "@apache-mynewt-core/sys/config"
+    - "@apache-mynewt-core/sys/mfg"
+    - "@apache-mynewt-core/encoding/base64"
 
 pkg.init:
     id_init: 500

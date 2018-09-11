@@ -25,18 +25,19 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps:
-    - kernel/os
-    - net/oic
-    - encoding/cborattr
-    - sys/console/full
-    - sys/log/full
-    - sys/stats/full
+    - "@apache-mynewt-core/kernel/os"
+    - "@apache-mynewt-core/net/oic"
+    - "@apache-mynewt-core/encoding/cborattr"
+    - "@apache-mynewt-core/sys/console/full"
+    - "@apache-mynewt-core/sys/log/full"
+    - "@apache-mynewt-core/sys/log/modlog"
+    - "@apache-mynewt-core/sys/stats/full"
 
 pkg.deps.OC_TRANSPORT_SERIAL:
-    - sys/shell
+    - "@apache-mynewt-core/sys/shell"
 
 pkg.deps.OC_TRANSPORT_GATT:
-    - net/nimble/controller
-    - net/nimble/host
-    - net/nimble/host/store/ram
-    - net/nimble/transport/ram
+    - "@apache-mynewt-core/net/nimble/controller"
+    - "@apache-mynewt-core/net/nimble/host"
+    - "@apache-mynewt-core/net/nimble/host/store/ram"
+    - "@apache-mynewt-core/net/nimble/transport/ram"

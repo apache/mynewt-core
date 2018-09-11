@@ -48,6 +48,12 @@ syscfg.defs:
     BMA253_LOG:
         description: 'Enable BMA253 logging'
         value: 0
+    BMA253_LOG_MODULE:
+        description: 'Numeric module ID to use for BMA253 log messages'
+        value: 253
     BMA253_SHELL_DEV_NAME:
         description: 'BMA253 Shell device name'
         value: "\"bma253_0\""
+    BMA253_ITF_LOCK_TMO:
+        description: 'BMA253 interface lock timeout in milliseconds'
+        value: 1000

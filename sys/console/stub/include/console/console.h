@@ -20,6 +20,7 @@
 #define __CONSOLE_H__
 
 #include <inttypes.h>
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -109,6 +110,11 @@ static int inline
 console_out(int character)
 {
     return 0;
+}
+
+static void inline
+console_silence(bool silent)
+{
 }
 
 #define console_is_midline  (0)

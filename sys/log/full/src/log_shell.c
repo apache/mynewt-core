@@ -128,6 +128,40 @@ shell_log_slot1_cmd(int argc, char **argv)
 }
 #endif
 
+#if MYNEWT_VAL(LOG_STORAGE_INFO)
+int
+shell_log_storage_cmd(int argc, char **argv)
+{
+    struct log *log;
+    struct log_storage_info info;
+
+    log = NULL;
+    while (1) {
+        log = log_list_get_next(log);
+        if (log == NULL) {
+            break;
+        }
+
+        if (log->l_log->log_type == LOG_TYPE_STREAM) {
+            continue;
+        }
+
+        if (log_storage_info(log, &info)) {
+            console_printf("Storage info not supported for %s\n", log->l_name);
+        } else {
+            console_printf("%s: %d of %d used\n", log->l_name,
+                           (unsigned)info.used, (unsigned)info.size);
+#if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
+            console_printf("%s: %d of %d used by unread entries\n", log->l_name,
+                           (unsigned)info.used_unread, (unsigned)info.size);
+#endif
+        }
+    }
+
+    return (0);
+}
+#endif
+
 #endif
 
 

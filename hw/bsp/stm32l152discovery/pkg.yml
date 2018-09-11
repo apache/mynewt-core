@@ -30,8 +30,8 @@ pkg.keywords:
 pkg.cflags: -DSTM32L152xC
 
 pkg.deps:
-    - hw/mcu/stm/stm32l1xx
-    - libc/baselibc
+    - "@apache-mynewt-core/hw/mcu/stm/stm32l1xx"
+    - "@apache-mynewt-core/libc/baselibc"
 
 pkg.deps.UART_0:
-    - hw/drivers/uart/uart_hal
+    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"

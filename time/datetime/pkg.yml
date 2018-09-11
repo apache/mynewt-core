@@ -26,4 +26,4 @@ pkg.keywords:
     - datetime
 
 pkg.deps:
-    - kernel/os
+    - "@apache-mynewt-core/kernel/os"

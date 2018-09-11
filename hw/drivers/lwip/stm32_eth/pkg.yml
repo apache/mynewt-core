@@ -26,14 +26,14 @@ pkg.keywords:
     - lwip
     - ethernet
 pkg.deps:
-    - hw/hal
-    - net/ip/lwip_base
+    - "@apache-mynewt-core/hw/hal"
+    - "@apache-mynewt-core/net/ip/lwip_base"
 
 pkg.deps.MCU_STM32F4:
-    - hw/mcu/stm/stm32f4xx
+    - "@apache-mynewt-core/hw/mcu/stm/stm32f4xx"
 
 pkg.deps.MCU_STM32F7:
-    - hw/mcu/stm/stm32f7xx
+    - "@apache-mynewt-core/hw/mcu/stm/stm32f7xx"
 
 pkg.req_apis: 
 

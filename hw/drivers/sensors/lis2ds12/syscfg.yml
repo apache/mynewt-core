@@ -41,3 +41,9 @@ syscfg.defs:
     LIS2DS12_CLI:
         description: 'Enable shell support for the LIS2DS12'
         value: 0
+    LIS2DS12_ITF_LOCK_TMO:
+        description: 'LIS2DS12 interface lock timeout in milliseconds'
+        value: 1000
+    LIS2DS12_LOG_MODULE:
+        description: 'Numeric module ID to use for LIS2DS12 log messages'
+        value: 212

@@ -71,7 +71,7 @@ static struct stm32_hal_i2c *hal_i2c_devs[HAL_I2C_MAX_DEVS] = {
 #endif
 };
 
-#if defined(STM32F1)
+#if MYNEWT_VAL(MCU_STM32F1)
 static void
 i2c_reset(I2C_HandleTypeDef *hi2c)
 {
@@ -88,7 +88,7 @@ hal_i2c_init(uint8_t i2c_num, void *usercfg)
     struct stm32_hal_i2c_cfg *cfg = (struct stm32_hal_i2c_cfg *)usercfg;
     struct stm32_hal_i2c *dev;
     I2C_InitTypeDef *init;
-#if defined(STM32F1)
+#if MYNEWT_VAL(MCU_STM32F1)
     GPIO_InitTypeDef gpio;
 #endif
     int rc;
@@ -99,7 +99,7 @@ hal_i2c_init(uint8_t i2c_num, void *usercfg)
 
     init = &dev->hid_handle.Init;
     dev->hid_handle.Instance = cfg->hic_i2c;
-#if defined(STM32F3) || defined(STM32F7)
+#if !MYNEWT_VAL(STM32_HAL_I2C_HAS_CLOCKSPEED)
     init->Timing = cfg->hic_timingr;
 #else
     init->ClockSpeed = cfg->hic_speed;
@@ -116,7 +116,7 @@ hal_i2c_init(uint8_t i2c_num, void *usercfg)
      * Configure GPIO pins for I2C.
      * Enable clock routing for I2C.
      */
-#if !defined(STM32F1)
+#if !MYNEWT_VAL(MCU_STM32F1)
     rc = hal_gpio_init_af(cfg->hic_pin_sda, cfg->hic_pin_af, HAL_GPIO_PULL_UP,
                           1);
     if (rc) {
@@ -234,7 +234,7 @@ hal_i2c_master_probe(uint8_t i2c_num, uint8_t address, uint32_t timo)
 
     rc = HAL_I2C_IsDeviceReady(&dev->hid_handle, address << 1, 1, timo);
 
-#if defined(STM32F1)
+#if MYNEWT_VAL(MCU_STM32F1)
     if (rc == HAL_BUSY) {
         i2c_reset(&dev->hid_handle);
     }

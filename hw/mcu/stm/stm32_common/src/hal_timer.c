@@ -190,7 +190,7 @@ stm32_hw_setup(int num, TIM_TypeDef *regs)
 #ifdef TIM1
     if (regs == TIM1) {
         stm32_tmr_reg_irq(TIM1_CC_IRQn, func);
-#if defined(STM32F3)
+#if MYNEWT_VAL(MCU_STM32F3) || MYNEWT_VAL(MCU_STM32L4)
         stm32_tmr_reg_irq(TIM1_UP_TIM16_IRQn, func);
 #else
         stm32_tmr_reg_irq(TIM1_UP_TIM10_IRQn, func);
@@ -219,7 +219,7 @@ stm32_hw_setup(int num, TIM_TypeDef *regs)
 #ifdef TIM8
     if (regs == TIM8) {
         stm32_tmr_reg_irq(TIM8_CC_IRQn, func);
-#if defined(STM32F3)
+#if MYNEWT_VAL(MCU_STM32F3) || MYNEWT_VAL(MCU_STM32L4)
         stm32_tmr_reg_irq(TIM8_UP_IRQn, func);
 #else
         stm32_tmr_reg_irq(TIM8_UP_TIM13_IRQn, func);
@@ -229,7 +229,7 @@ stm32_hw_setup(int num, TIM_TypeDef *regs)
 #endif
 #ifdef TIM9
     if (regs == TIM9) {
-#if defined(STM32L1)
+#if MYNEWT_VAL(MCU_STM32L1)
         stm32_tmr_reg_irq(TIM9_IRQn, func);
 #else
         stm32_tmr_reg_irq(TIM1_BRK_TIM9_IRQn, func);
@@ -239,7 +239,7 @@ stm32_hw_setup(int num, TIM_TypeDef *regs)
 #endif
 #ifdef TIM10
     if (regs == TIM10) {
-#if defined(STM32L1)
+#if MYNEWT_VAL(MCU_STM32L1) || MYNEWT_VAL(MCU_STM32L4)
         stm32_tmr_reg_irq(TIM10_IRQn, func);
 #else
         stm32_tmr_reg_irq(TIM1_UP_TIM10_IRQn, func);
@@ -249,7 +249,7 @@ stm32_hw_setup(int num, TIM_TypeDef *regs)
 #endif
 #ifdef TIM11
     if (regs == TIM11) {
-#if defined(STM32L1)
+#if MYNEWT_VAL(MCU_STM32L1)
         stm32_tmr_reg_irq(TIM11_IRQn, func);
 #else
         stm32_tmr_reg_irq(TIM1_TRG_COM_TIM11_IRQn, func);

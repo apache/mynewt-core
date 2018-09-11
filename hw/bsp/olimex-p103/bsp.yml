@@ -21,10 +21,10 @@ bsp.arch: cortex_m3
 bsp.compiler: compiler/arm-none-eabi-m3
 bsp.linkerscript:
     - "hw/bsp/olimex-p103/olimex_p103.ld"
-    - "hw/mcu/stm/stm32f1xx/stm32f103.ld"
+    - "@apache-mynewt-core/hw/mcu/stm/stm32f1xx/stm32f103.ld"
 bsp.linkerscript.BOOT_LOADER.OVERWRITE:
     - "hw/bsp/olimex-p103/boot-olimex_p103.ld"
-    - "hw/mcu/stm/stm32f1xx/stm32f103.ld"
+    - "@apache-mynewt-core/hw/mcu/stm/stm32f1xx/stm32f103.ld"
 bsp.downloadscript: "hw/bsp/olimex-p103/olimex_p103_download.sh"
 bsp.debugscript: "hw/bsp/olimex-p103/olimex_p103_debug.sh"
 bsp.downloadscript.WINDOWS.OVERWRITE: "hw/bsp/olimex-p103/olimex_p103_download.cmd"

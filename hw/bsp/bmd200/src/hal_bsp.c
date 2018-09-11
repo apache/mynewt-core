@@ -79,6 +79,14 @@ static const struct nrf51_hal_i2c_cfg hal_i2c_cfg = {
 };
 #endif
 
+#if MYNEWT_VAL(I2C_1)
+static const struct nrf51_hal_i2c_cfg hal_i2c1_cfg = {
+    .scl_pin = MYNEWT_VAL(I2C_1_PIN_SCL),
+    .sda_pin = MYNEWT_VAL(I2C_1_PIN_SDA),
+    .i2c_frequency = MYNEWT_VAL(I2C_1_FREQ_KHZ),
+};
+#endif
+
 #if MYNEWT_VAL(ADC_0)
 static struct adc_dev os_bsp_adc0;
 static struct nrf51_adc_dev_cfg os_bsp_adc0_config = {
@@ -208,6 +216,11 @@ hal_bsp_init(void)
 
 #if MYNEWT_VAL(I2C_0)
     rc = hal_i2c_init(0, (void *)&hal_i2c_cfg);
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(I2C_1)
+    rc = hal_i2c_init(1, (void *)&hal_i2c1_cfg);
     assert(rc == 0);
 #endif
 }

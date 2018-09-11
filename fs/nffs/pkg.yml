@@ -27,14 +27,15 @@ pkg.keywords:
     - ffs
 
 pkg.deps:
-    - fs/fs
-    - util/crc
-    - hw/hal
-    - kernel/os
-    - test/testutil
-    - sys/flash_map
+    - "@apache-mynewt-core/fs/fs"
+    - "@apache-mynewt-core/util/crc"
+    - "@apache-mynewt-core/hw/hal"
+    - "@apache-mynewt-core/kernel/os"
+    - "@apache-mynewt-core/test/testutil"
+    - "@apache-mynewt-core/sys/flash_map"
+    - "@apache-mynewt-core/sys/log/modlog"
+
 pkg.req_apis:
-    - log
     - stats
 
 pkg.init:

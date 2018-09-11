@@ -58,7 +58,7 @@ static struct hal_uart_irq uart_irqs[4];
 static struct hal_uart_irq uart_irqs[3];
 #endif
 
-#if defined(STM32F3) || defined(STM32F7)
+#if !MYNEWT_VAL(STM32_HAL_UART_HAS_SR)
 #  define STATUS(x)     ((x)->ISR)
 #  define RXNE          USART_ISR_RXNE
 #  define TXE           USART_ISR_TXE
@@ -140,7 +140,7 @@ uart_irq_handler(int num)
         }
         regs->CR1 = cr1;
     }
-#if defined(STM32F3) || defined(STM32F7)
+#if !MYNEWT_VAL(STM32_HAL_UART_HAS_SR)
     /* clear overrun */
     if (isr & USART_ISR_ORE) {
         regs->ICR |= USART_ICR_ORECF;
@@ -335,7 +335,7 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
     struct hal_uart *u;
     const struct stm32_uart_cfg *cfg;
     uint32_t cr1, cr2, cr3;
-#if defined(STM32F1)
+#if MYNEWT_VAL(MCU_STM32F1)
     GPIO_InitTypeDef gpio;
 #endif
 
@@ -350,7 +350,7 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
     cfg = u->u_cfg;
     assert(cfg);
 
-#if defined(STM32F1)
+#if MYNEWT_VAL(MCU_STM32F1)
     gpio.Mode = GPIO_MODE_AF_PP;
     gpio.Speed = GPIO_SPEED_FREQ_HIGH;
 
@@ -383,7 +383,7 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
     cr3 = cfg->suc_uart->CR3;
 
     cr1 &= ~(USART_CR1_M | USART_CR1_PCE | USART_CR1_PS | USART_CR1_RE);
-#if !defined(STM32F1)
+#if !MYNEWT_VAL(MCU_STM32F1)
     cr1 &= ~(USART_CR1_OVER8);
 #endif
     cr2 &= ~(USART_CR2_STOP);
@@ -441,7 +441,7 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
         break;
     }
 
-#if !defined(STM32F1)
+#if !MYNEWT_VAL(MCU_STM32F1)
     cr1 |= (UART_MODE_RX | UART_MODE_TX | UART_OVERSAMPLING_16);
 #else
     cr1 |= (UART_MODE_TX_RX | UART_OVERSAMPLING_16);
@@ -449,7 +449,7 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
 
     *cfg->suc_rcc_reg |= cfg->suc_rcc_dev;
 
-#if !defined(STM32F1)
+#if !MYNEWT_VAL(MCU_STM32F1)
     hal_gpio_init_af(cfg->suc_pin_tx, cfg->suc_pin_af, 0, 0);
     hal_gpio_init_af(cfg->suc_pin_rx, cfg->suc_pin_af, 0, 0);
     if (flow_ctl == HAL_UART_FLOW_CTL_RTS_CTS) {

@@ -139,6 +139,54 @@ adp5061_set_config(struct adp5061_dev *dev,
     return rc;
 }
 
+/**
+ * Lock access to the charge_control_itf specified by cci. Blocks until lock acquired.
+ *
+ * @param The charge_ctrl_itf to lock
+ * @param The timeout
+ *
+ * @return 0 on success, non-zero on failure.
+ */
+static int
+ad5061_itf_lock(struct charge_control_itf *cci, uint32_t timeout)
+{
+    int rc;
+    os_time_t ticks;
+
+    if (!cci->cci_lock) {
+        return 0;
+    }
+
+    rc = os_time_ms_to_ticks(timeout, &ticks);
+    if (rc) {
+        return rc;
+    }
+
+    rc = os_mutex_pend(cci->cci_lock, ticks);
+    if (rc == 0 || rc == OS_NOT_STARTED) {
+        return (0);
+    }
+
+    return (rc);
+}
+
+/**
+ * Unlock access to the charge_control_itf specified by bi.
+ *
+ * @param The charge_control_itf to unlock access to
+ *
+ * @return 0 on success, non-zero on failure.
+ */
+static void
+adp5061_itf_unlock(struct charge_control_itf *cci)
+{
+    if (!cci->cci_lock) {
+        return;
+    }
+
+    os_mutex_release(cci->cci_lock);
+}
+
 int
 adp5061_get_reg(struct adp5061_dev *dev, uint8_t addr, uint8_t *value)
 {
@@ -149,6 +197,12 @@ adp5061_get_reg(struct adp5061_dev *dev, uint8_t addr, uint8_t *value)
         .len = 1,
         .buffer = &payload
     };
+
+    rc = ad5061_itf_lock(&dev->a_chg_ctrl.cc_itf, OS_TIMEOUT_NEVER);
+    if (rc) {
+        return rc;
+    }
+
     /* Register write */
     payload = addr;
     rc = hal_i2c_master_write(dev->a_chg_ctrl.cc_itf.cci_num, &data_struct,
@@ -156,6 +210,7 @@ adp5061_get_reg(struct adp5061_dev *dev, uint8_t addr, uint8_t *value)
     if (rc) {
         goto err;
     }
+
     /* Read one byte back */
     payload = addr;
     rc = hal_i2c_master_read(dev->a_chg_ctrl.cc_itf.cci_num, &data_struct,
@@ -163,6 +218,8 @@ adp5061_get_reg(struct adp5061_dev *dev, uint8_t addr, uint8_t *value)
     *value = payload;
 
 err:
+    adp5061_itf_unlock(&dev->a_chg_ctrl.cc_itf);
+
     return rc;
 }
 
@@ -177,8 +234,15 @@ adp5061_set_reg(struct adp5061_dev *dev, uint8_t addr, uint8_t value)
         .buffer = payload
     };
 
+    rc = ad5061_itf_lock(&dev->a_chg_ctrl.cc_itf, OS_TIMEOUT_NEVER);
+    if (rc) {
+        return rc;
+    }
+
     rc = hal_i2c_master_write(dev->a_chg_ctrl.cc_itf.cci_num, &data_struct,
             OS_TICKS_PER_SEC / 10, 1);
+
+    adp5061_itf_unlock(&dev->a_chg_ctrl.cc_itf);
 
     return rc;
 }
@@ -201,8 +265,15 @@ adp5061_set_regs(struct adp5061_dev *dev, uint8_t addr,
         payload[i + 1] = values[i];
     }
 
+    rc = ad5061_itf_lock(&dev->a_chg_ctrl.cc_itf, OS_TIMEOUT_NEVER);
+    if (rc) {
+        return rc;
+    }
+
     rc = hal_i2c_master_write(dev->a_chg_ctrl.cc_itf.cci_num, &data_struct,
             OS_TICKS_PER_SEC / 10, 1);
+
+    adp5061_itf_unlock(&dev->a_chg_ctrl.cc_itf);
 
     return rc;
 }
@@ -514,6 +585,7 @@ adp5061_init(struct os_dev *dev, void *arg)
 {
     struct adp5061_dev *adp5061 = (struct adp5061_dev *)dev;
     struct charge_control *cc;
+    struct charge_control_itf *cci;
     const struct adp5061_config *cfg;
     uint8_t device_id;
     int rc;
@@ -525,13 +597,14 @@ adp5061_init(struct os_dev *dev, void *arg)
 
     cc = &adp5061->a_chg_ctrl;
 
+    cci = (struct charge_control_itf *)arg;
+
     rc = charge_control_init(cc, dev);
     if (rc) {
         goto err;
     }
-    cc->cc_itf.cci_addr = ADP5061_ADDR;
-    cc->cc_itf.cci_num = MYNEWT_VAL(ADP5061_I2C_NUM);
-    cc->cc_itf.cci_type = CHARGE_CONTROL_ITF_I2C;
+
+    charge_control_set_interface(cc, cci);
 
     /* Add the driver with all the supported types */
     rc = charge_control_set_driver(cc, CHARGE_CONTROL_TYPE_STATUS,
@@ -542,11 +615,8 @@ adp5061_init(struct os_dev *dev, void *arg)
 
     charge_control_set_type_mask(cc,
             CHARGE_CONTROL_TYPE_STATUS | CHARGE_CONTROL_TYPE_FAULT);
-    if (arg) {
-        cfg = (struct adp5061_config *)(arg);
-    } else {
-        cfg = &default_config;
-    }
+
+    cfg = &default_config;
 
     rc = adp5061_get_device_id(adp5061, &device_id);
     if (rc) {

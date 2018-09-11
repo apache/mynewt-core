@@ -25,9 +25,9 @@ pkg.keywords:
     - crash
 
 pkg.deps:
-    - hw/hal
-    - mgmt/imgmgr
-    - sys/flash_map
+    - "@apache-mynewt-core/hw/hal"
+    - "@apache-mynewt-core/mgmt/imgmgr"
+    - "@apache-mynewt-core/sys/flash_map"
 
 pkg.req_apis:
     - bootloader

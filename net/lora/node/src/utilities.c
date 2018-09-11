@@ -19,8 +19,8 @@
 
 #include <stdlib.h>
 
-#include "os/mynewt.h"
 #include "node/utilities.h"
+#include "lora/utilities.h"
 #include "node/lora_priv.h"
 
 int32_t
@@ -32,17 +32,17 @@ randr(int32_t min, int32_t max)
 TimerTime_t
 TimerGetCurrentTime(void)
 {
-    return hal_timer_read(MYNEWT_VAL(LORA_MAC_TIMER_NUM));
+    return timer_get_current_time();
 }
 
 TimerTime_t
 TimerGetElapsedTime(TimerTime_t savedTime)
 {
-    return hal_timer_read(MYNEWT_VAL(LORA_MAC_TIMER_NUM)) - savedTime;
+    return timer_get_elapsed_time(savedTime);
 }
 
 TimerTime_t
 TimerGetFutureTime(TimerTime_t eventInFuture)
 {
-    return hal_timer_read(MYNEWT_VAL(LORA_MAC_TIMER_NUM)) + eventInFuture;
+    return timer_get_future_time(eventInFuture);
 }

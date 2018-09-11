@@ -28,12 +28,12 @@ pkg.keywords:
     - udp
 
 pkg.deps:
-    - kernel/os
-    - net/ip/lwip_base
-    - net/ip/mn_socket
+    - "@apache-mynewt-core/kernel/os"
+    - "@apache-mynewt-core/net/ip/lwip_base"
+    - "@apache-mynewt-core/net/ip/mn_socket"
 
 pkg.deps.LWIP_CLI:
-    - sys/shell
+    - "@apache-mynewt-core/sys/shell"
 
 pkg.init:
     ip_init: 200

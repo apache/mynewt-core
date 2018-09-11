@@ -85,7 +85,7 @@ struct spiflash_dev spiflash_dev = {
         .hf_size       = MYNEWT_VAL(SPIFLASH_SECTOR_COUNT) *
                          MYNEWT_VAL(SPIFLASH_SECTOR_SIZE),
         .hf_sector_cnt = MYNEWT_VAL(SPIFLASH_SECTOR_COUNT),
-        .hf_align      = 0,
+        .hf_align      = 1,
     },
 
     /* SPI settings */
@@ -265,7 +265,7 @@ spiflash_write(const struct hal_flash *hal_flash_dev, uint32_t addr,
 
         spiflash_cs_activate(dev);
         hal_spi_txrx(dev->spi_num, cmd, NULL, sizeof cmd);
-        hal_spi_txrx(dev->spi_num, (void *)buf, NULL, to_write);
+        hal_spi_txrx(dev->spi_num, (void *)u8buf, NULL, to_write);
         spiflash_cs_deactivate(dev);
 
         addr += to_write;
