@@ -2260,7 +2260,7 @@
  *
  * Requires: MBEDTLS_AES_C and MBEDTLS_CIPHER_C
  */
-//#define MBEDTLS_NIST_KW_C
+#define MBEDTLS_NIST_KW_C
 
 /**
  * \def MBEDTLS_MD_C
