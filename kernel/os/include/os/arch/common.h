@@ -59,7 +59,6 @@ struct os_task;
 #endif
 
 os_stack_t *os_arch_task_stack_init(struct os_task *, os_stack_t *, int);
-void timer_handler(void);
 void os_arch_ctx_sw(struct os_task *);
 os_sr_t os_arch_save_sr(void);
 void os_arch_restore_sr(os_sr_t);
