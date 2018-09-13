@@ -35,20 +35,25 @@ static const char CR = '\r';
 int
 console_out(int character)
 {
+    os_sr_t sr;
     char c = (char)character;
 
     if (g_silence_console) {
         return c;
     }
 
+    OS_ENTER_CRITICAL(sr);
+
     if ('\n' == c) {
-        SEGGER_RTT_WriteWithOverwriteNoLock(0, &CR, 1);
+        SEGGER_RTT_WriteNoLock(0, &CR, 1);
         console_is_midline = 0;
     } else {
         console_is_midline = 1;
     }
 
-    SEGGER_RTT_WriteWithOverwriteNoLock(0, &c, 1);
+    SEGGER_RTT_WriteNoLock(0, &c, 1);
+
+    OS_EXIT_CRITICAL(sr);
 
     return character;
 }
