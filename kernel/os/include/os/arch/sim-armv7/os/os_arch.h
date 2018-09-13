@@ -20,28 +20,22 @@
 #ifndef _OS_ARCH_SIM_H
 #define _OS_ARCH_SIM_H
 
-#include <mcu/mcu_sim.h>
-#include "os/os_error.h"
+#include "mcu/mcu_sim.h
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-struct os_task;
-struct stack_frame;
-
 /* CPU status register */
 typedef unsigned int os_sr_t;
-/* Stack type, aligned to a 32-bit word. */
-#define OS_STACK_PATTERN (0xdeadbeef)
 
+/* Stack element */
 typedef unsigned int os_stack_t;
+
 #define OS_ALIGNMENT (4)
 #define OS_STACK_ALIGNMENT (16)
 
-/*
- * Stack sizes for common OS tasks
- */
+/* Stack sizes for common OS tasks */
 #define OS_SANITY_STACK_SIZE (1024)
 #define OS_IDLE_STACK_SIZE (1024)
 
@@ -60,23 +54,15 @@ typedef unsigned int os_stack_t;
 #define OS_STACK_ALIGN(__nmemb) \
     (OS_ALIGN(((__nmemb) * 16), OS_STACK_ALIGNMENT))
 
-/* Enter a critical section, save processor state, and block interrupts */
-#define OS_ENTER_CRITICAL(__os_sr) (__os_sr = os_arch_save_sr())
-/* Exit a critical section, restore processor state and unblock interrupts */
-#define OS_EXIT_CRITICAL(__os_sr) (os_arch_restore_sr(__os_sr))
-#define OS_ASSERT_CRITICAL() (assert(os_arch_in_critical()))
+/* Include common arch definitions and APIs */
+#include "os/arch/common.h"
 
-void _Die(char *file, int line);
-
+/* sim specific */
+struct stack_frame;
 void os_arch_frame_init(struct stack_frame *sf);
-os_stack_t *os_arch_task_stack_init(struct os_task *, os_stack_t *, int);
-void os_arch_ctx_sw(struct os_task *);
-os_sr_t os_arch_save_sr(void);
-void os_arch_restore_sr(os_sr_t sr);
-int os_arch_in_critical(void);
-os_error_t os_arch_os_init(void);
+
+/* for unittests */
 void os_arch_os_stop(void);
-os_error_t os_arch_os_start(void);
 
 #ifdef __cplusplus
 }
