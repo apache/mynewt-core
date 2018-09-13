@@ -93,6 +93,93 @@ flash_area_to_sectors(int id, int *cnt, struct flash_area *ret)
     return 0;
 }
 
+static inline int
+flash_range_end(const struct flash_sector_range *range)
+{
+    return range->fsr_flash_area.fa_off +
+        range->fsr_sector_count * range->fsr_sector_size;
+}
+
+int
+flash_area_to_sector_ranges(int id, int *cnt, struct flash_sector_range *ret)
+{
+    const struct flash_area *fa;
+    const struct hal_flash *hf;
+    struct flash_sector_range sr = { 0 };
+    struct flash_sector_range *current;
+    uint32_t start;      /* Sector start in flash */
+    uint32_t size;       /* Sector size */
+    uint32_t offset = 0; /* Address inside flash area */
+    int rc;
+    int i;
+    int allowed_ranges = UINT16_MAX;
+    int range_count = 0;
+    int sector_in_ranges = 0;
+
+    rc = flash_area_open(id, &fa);
+    if (rc != 0) {
+        return rc;
+    }
+
+    /* Respect maximum number of allowed ranges if specified and
+     * ret was given. Otherwise count required number of sector
+     * ranges.
+     */
+    if (*cnt > 0 && ret != NULL) {
+        allowed_ranges = *cnt;
+    }
+    if (ret) {
+        current = ret;
+    } else {
+        current = &sr;
+    }
+
+    hf = hal_bsp_flash_dev(fa->fa_device_id);
+    for (i = 0; i < hf->hf_sector_cnt; i++) {
+        hf->hf_itf->hff_sector_info(hf, i, &start, &size);
+        if (start >= fa->fa_off && start < fa->fa_off + fa->fa_size) {
+            if (range_count) {
+                /*
+                 * Extend range if sector is adjacent to previous one.
+                 */
+                if (flash_range_end(current) == start &&
+                    current->fsr_sector_size == size) {
+                    current->fsr_flash_area.fa_size += size;
+                    offset += size;
+                    current->fsr_sector_count++;
+                    sector_in_ranges++;
+                    continue;
+                } else if (ret != NULL) {
+                    if (range_count < allowed_ranges) {
+                        current = ++ret;
+                    } else {
+                        /* Found non-adjacent sector, but there is no
+                         * space for it, just stop looking and return
+                         * what was already found.
+                         */
+                        break;
+                    }
+                }
+            }
+            /* New sector range */
+            range_count++;
+            current->fsr_flash_area.fa_device_id = fa->fa_device_id;
+            current->fsr_flash_area.fa_id = id;
+            current->fsr_flash_area.fa_off = start;
+            current->fsr_flash_area.fa_size = size;
+            current->fsr_sector_size = size;
+            current->fsr_sector_count = 1;
+            current->fsr_first_sector = (uint16_t)sector_in_ranges;
+            current->fsr_range_start = offset;
+            current->fsr_align = hal_flash_align(fa->fa_device_id);
+        }
+    }
+    *cnt = range_count;
+
+    flash_area_close(fa);
+    return 0;
+}
+
 int
 flash_area_getnext_sector(int id, int *sec_id, struct flash_area *ret)
 {
