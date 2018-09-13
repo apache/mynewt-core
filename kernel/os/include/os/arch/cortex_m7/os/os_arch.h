@@ -22,6 +22,7 @@
 
 #include <stdint.h>
 #include "syscfg/syscfg.h"
+#include "mcu/cmsis_nvic.h"
 #include "mcu/cortex_m7.h"
 
 #ifdef __cplusplus
@@ -41,6 +42,12 @@ typedef uint32_t os_stack_t;
 #else
 #define OS_IDLE_STACK_SIZE (64)
 #endif
+
+static inline int
+os_arch_in_isr(void)
+{
+    return (SCB->ICSR & SCB_ICSR_VECTACTIVE_Msk) != 0;
+}
 
 /* Include common arch definitions and APIs */
 #include "os/arch/common.h"
