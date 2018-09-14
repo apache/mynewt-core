@@ -40,7 +40,6 @@ flash_cli_cmd(int argc, char **argv)
     uint32_t off = 0;
     uint32_t sz = 1;
     int sec_cnt;
-    int fid = 0;
     int i;
     int devid;
     int soff;
@@ -166,7 +165,7 @@ flash_cli_cmd(int argc, char **argv)
 
         while (off < sz) {
             sec_cnt = min(sizeof(tmp_buf), sz - off);
-            if (hal_flash_write(fid, off, tmp_buf, sec_cnt)) {
+            if (hal_flash_write(devid, off, tmp_buf, sec_cnt)) {
                 console_printf("flash write failure at %lx\n",
                         (long unsigned int) off);
             }
@@ -220,7 +219,6 @@ flash_speed_test(int flash_dev, uint32_t addr, int sz, int move)
               flash_dev, (unsigned int)addr + off, (unsigned int)sz, rc);
             return -1;
         }
-        assert(rc == 0);
         if (move) {
             off++;
             if (off > 16) {
