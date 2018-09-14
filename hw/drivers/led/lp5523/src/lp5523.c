@@ -108,7 +108,8 @@ lp5523_get_reg(struct led_itf *itf, enum lp5523_registers addr,
         LP5523_LOG(ERROR, "I2C access failed at address 0x%02X\n",
                    itf->li_addr);
         STATS_INC(g_lp5523stats, write_errors);
-        goto err;
+        // Allow repeated-start operation to complete
+        //goto err;
     }
 
     /* Read one byte back */
@@ -122,7 +123,7 @@ lp5523_get_reg(struct led_itf *itf, enum lp5523_registers addr,
          STATS_INC(g_lp5523stats, read_errors);
     }
 
-err:
+//err:
     led_itf_unlock(itf);
 
     return rc;
@@ -190,7 +191,8 @@ lp5523_get_n_regs(struct led_itf *itf, enum lp5523_registers addr,
         LP5523_LOG(ERROR, "Failed to write to 0x%02X:0x%02X\n", itf->li_addr,
                    addr_b);
         STATS_INC(g_lp5523stats, read_errors);
-        goto err;
+        // Allow repeated-start operation to complete
+        //goto err;
     }
 
     data_struct.len = len;
@@ -204,7 +206,7 @@ lp5523_get_n_regs(struct led_itf *itf, enum lp5523_registers addr,
          STATS_INC(g_lp5523stats, read_errors);
     }
 
-err:
+//err:
     led_itf_unlock(itf);
 
     return rc;
