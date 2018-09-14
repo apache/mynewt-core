@@ -31,6 +31,12 @@ struct conf_dup_check_arg {
     int is_dup;
 };
 
+struct conf_get_val_arg {
+    const char *name;
+    char val[CONF_MAX_VAL_LEN + 1];
+    int seen;
+};
+
 struct conf_store_head conf_load_srcs;
 struct conf_store *conf_save_dst;
 static bool conf_loading;
@@ -103,6 +109,54 @@ int
 conf_set_from_storage(void)
 {
     return conf_loading;
+}
+
+static void
+conf_get_value_cb(char *name, char *val, void *cb_arg)
+{
+    struct conf_get_val_arg *cgva = (struct conf_get_val_arg *)cb_arg;
+
+    if (strcmp(name, cgva->name)) {
+        return;
+    }
+    cgva->seen = 1;
+    if (!val) {
+        cgva->val[0] = '\0';
+    } else {
+        strncpy(cgva->val, val, sizeof(cgva->val) - 1);
+    }
+}
+
+int
+conf_get_stored_value(char *name, char *buf, int buf_len)
+{
+    struct conf_store *cs;
+    struct conf_get_val_arg cgva;
+    int val_len;
+
+    cgva.name = name;
+    cgva.val[0] = '\0';
+    cgva.val[sizeof(cgva.val) - 1] = '\0';
+    cgva.seen = 0;
+
+    /*
+     * for every config store
+     */
+    conf_lock();
+    SLIST_FOREACH(cs, &conf_load_srcs, cs_next) {
+        cs->cs_itf->csi_load(cs, conf_get_value_cb, &cgva);
+    }
+    conf_unlock();
+
+    if (!cgva.seen) {
+        return OS_ENOENT;
+    }
+    val_len = strlen(cgva.val);
+    if (buf_len < val_len) {
+        return OS_EINVAL;
+    }
+    strcpy(buf, cgva.val);
+    return 0;
 }
 
 static void
