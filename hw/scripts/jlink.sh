@@ -27,6 +27,7 @@ JLINK_GDB_SERVER=JLinkGDBServer
 jlink_load () {
     GDB_CMD_FILE=.gdb_cmds
     GDB_OUT_FILE=.gdb_out
+    PORT=3333
 
     windows_detect
     if [ $WINDOWS -eq 1 ]; then
@@ -46,6 +47,10 @@ jlink_load () {
         echo "Missing flash offset"
         exit 1
     fi
+    if [[ $EXTRA_JTAG_CMD =~ '-port ' ]]; then
+        # ExtraJTagCommand contains PORT - Use that port instead.
+        PORT=$(awk '{for(i=1;i<=NF;i++) if ($i=="-port") print $(i+1)}' <<< $EXTRA_JTAG_CMD)
+    fi
 
     echo "Downloading" $FILE_NAME "to" $FLASH_OFFSET
 
@@ -53,8 +58,8 @@ jlink_load () {
     # downloading somewhere in the flash. So need to figure out how to tell it
     # not to do that, or report failure if gdb fails to write this file
     #
-    echo "shell sh -c \"trap '' 2; $JLINK_GDB_SERVER -device $JLINK_DEV -speed 1000 -if SWD -port 3333 -singlerun $EXTRA_JTAG_CMD  &\" " > $GDB_CMD_FILE
-    echo "target remote localhost:3333" >> $GDB_CMD_FILE
+    echo "shell sh -c \"trap '' 2; $JLINK_GDB_SERVER -device $JLINK_DEV -speed 1000 -if SWD -port $PORT -singlerun $EXTRA_JTAG_CMD  &\" " > $GDB_CMD_FILE
+    echo "target remote localhost:$PORT" >> $GDB_CMD_FILE
     echo "mon reset" >> $GDB_CMD_FILE
     echo "restore $FILE_NAME binary $FLASH_OFFSET" >> $GDB_CMD_FILE
 
