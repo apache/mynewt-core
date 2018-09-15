@@ -42,7 +42,7 @@
 #endif
 
 #define BQ27Z561_I2C_TIMEOUT_TICKS \
-    ((1000 / OS_TICKS_PER_SEC) / MYNEWT_VAL(BQ27Z561_I2C_TIMEOUT_MS))
+    (MYNEWT_VAL(BQ27Z561_I2C_TIMEOUT_MS) * OS_TICKS_PER_SEC / 1000)
 
 static uint8_t
 bq27z561_calc_chksum(uint8_t *tmpbuf, uint8_t len)
