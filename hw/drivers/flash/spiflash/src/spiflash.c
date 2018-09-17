@@ -585,6 +585,7 @@ struct spiflash_dev spiflash_dev = {
                          MYNEWT_VAL(SPIFLASH_SECTOR_SIZE),
         .hf_sector_cnt = MYNEWT_VAL(SPIFLASH_SECTOR_COUNT),
         .hf_align      = 1,
+        .hf_erased_val = 0xff,
     },
 
     /* SPI settings */
