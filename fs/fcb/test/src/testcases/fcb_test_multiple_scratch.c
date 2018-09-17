@@ -56,10 +56,10 @@ TEST_CASE(fcb_test_multiple_scratch)
         if (rc == FCB_ERR_NOSPACE) {
             break;
         }
-        idx = loc.fe_area - &test_fcb_area[0];
+        idx = loc.fe_sector;
         elem_cnts[idx]++;
 
-        rc = flash_area_write(loc.fe_area, loc.fe_data_off, test_data,
+        rc = fcb_write_to_sector(&loc, loc.fe_data_off, test_data,
           sizeof(test_data));
         TEST_ASSERT(rc == 0);
 
@@ -82,10 +82,10 @@ TEST_CASE(fcb_test_multiple_scratch)
         if (rc == FCB_ERR_NOSPACE) {
             break;
         }
-        idx = loc.fe_area - &test_fcb_area[0];
+        idx = loc.fe_sector;
         elem_cnts[idx]++;
 
-        rc = flash_area_write(loc.fe_area, loc.fe_data_off, test_data,
+        rc = fcb_write_to_sector(&loc, loc.fe_data_off, test_data,
           sizeof(test_data));
         TEST_ASSERT(rc == 0);
 
@@ -101,7 +101,7 @@ TEST_CASE(fcb_test_multiple_scratch)
     TEST_ASSERT(rc == 0);
 
     memset(&cnts, 0, sizeof(cnts));
-    rc = fcb_walk(fcb, NULL, fcb_test_cnt_elems_cb, &aa_arg);
+    rc = fcb_walk(fcb, FCB_SECTOR_OLDEST, fcb_test_cnt_elems_cb, &aa_arg);
     TEST_ASSERT(rc == 0);
 
     TEST_ASSERT(cnts[0] == 0);

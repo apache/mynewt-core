@@ -41,26 +41,17 @@ fcb_getnext_in_area(struct fcb *fcb, struct fcb_entry *loc)
     return rc;
 }
 
-struct flash_area *
-fcb_getnext_area(struct fcb *fcb, struct flash_area *fap)
-{
-    fap++;
-    if (fap >= &fcb->f_sectors[fcb->f_sector_cnt]) {
-        fap = &fcb->f_sectors[0];
-    }
-    return fap;
-}
-
 int
 fcb_getnext_nolock(struct fcb *fcb, struct fcb_entry *loc)
 {
     int rc;
 
-    if (loc->fe_area == NULL) {
+    if (loc->fe_range == NULL) {
         /*
          * Find the first one we have in flash.
          */
-        loc->fe_area = fcb->f_oldest;
+        loc->fe_sector = fcb->f_oldest_sec;
+        loc->fe_range = fcb_get_sector_range(fcb, loc->fe_sector);
     }
     if (loc->fe_elem_off == 0) {
         /*
@@ -90,10 +81,11 @@ fcb_getnext_nolock(struct fcb *fcb, struct fcb_entry *loc)
              * Moving to next sector.
              */
 next_sector:
-            if (loc->fe_area == fcb->f_active.fe_area) {
+            if (loc->fe_sector == fcb->f_active.fe_sector) {
                 return FCB_ERR_NOVAR;
             }
-            loc->fe_area = fcb_getnext_area(fcb, loc->fe_area);
+            loc->fe_sector = fcb_getnext_sector(fcb, loc->fe_sector);
+            loc->fe_range = fcb_get_sector_range(fcb, loc->fe_sector);
             loc->fe_elem_off = sizeof(struct fcb_disk_area);
             rc = fcb_elem_info(fcb, loc);
             switch (rc) {

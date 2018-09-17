@@ -36,14 +36,17 @@ extern "C" {
 
 #define FCB_MAX_LEN	(CHAR_MAX | CHAR_MAX << 7) /* Max length of element */
 
+#define FCB_SECTOR_OLDEST UINT16_MAX
+
 /**
- * Entry location is pointer to area (within fcb->f_sectors), and offset
- * within that area.
+ * Entry location point to sector, and offset
+ * within that sector.
  */
 struct fcb_entry {
-    struct flash_area *fe_area;	/* ptr to area within fcb->f_sectors */
-    uint32_t fe_elem_off;	/* start of entry */
-    uint32_t fe_data_off;	/* start of data */
+    struct sector_range *fe_range;  /* ptr to area within fcb->f_ranages */
+    uint16_t fe_sector;     /* sector number in fcb flash */
+    uint16_t fe_elem_off;	/* start of entry in sector */
+    uint16_t fe_data_off;	/* start of data in sector */
     uint16_t fe_data_len;	/* size of data area */
 };
 
@@ -51,16 +54,23 @@ struct fcb {
     /* Caller of fcb_init fills this in */
     uint32_t f_magic;		/* As placed on the disk */
     uint8_t f_version;  	/* Current version number of the data */
-    uint8_t f_sector_cnt;	/* Number of elements in sector array */
     uint8_t f_scratch_cnt;	/* How many sectors should be kept empty */
-    struct flash_area *f_sectors; /* Array of sectors, must be contiguous */
+    uint8_t f_range_cnt;    /* Number of elements in range array */
+    uint16_t f_sector_cnt;	/* Number of sectors used by fcb */
+    struct sector_range *f_ranges;
 
     /* Flash circular buffer internal state */
     struct os_mutex f_mtx;	/* Locking for accessing the FCB data */
-    struct flash_area *f_oldest;
+    uint16_t f_oldest_sec;
     struct fcb_entry f_active;
     uint16_t f_active_id;
     uint8_t f_align;		/* writes to flash have to aligned to this */
+};
+
+struct fcb_sector_info {
+    struct sector_range *si_range;
+    uint32_t si_sector_offset;
+    uint16_t si_sector_in_range;
 };
 
 /**
@@ -109,7 +119,7 @@ int fcb_append_finish(struct fcb *, struct fcb_entry *append_loc);
  * loc->fe_area, loc->fe_data_off, and loc->fe_data_len as arguments.
  */
 typedef int (*fcb_walk_cb)(struct fcb_entry *loc, void *arg);
-int fcb_walk(struct fcb *, struct flash_area *, fcb_walk_cb cb, void *cb_arg);
+int fcb_walk(struct fcb *, int sector, fcb_walk_cb cb, void *cb_arg);
 int fcb_getnext(struct fcb *, struct fcb_entry *loc);
 
 /**
@@ -140,16 +150,56 @@ fcb_offset_last_n(struct fcb *fcb, uint8_t entries,
         struct fcb_entry *last_n_entry);
 
 /**
+ * Finds sector range for given fcb sector.
+ */
+struct sector_range *fcb_get_sector_range(const struct fcb *fcb, int sector);
+
+int fcb_offset_in_sector(const struct fcb *fcb, int offset, int sector);
+
+int fcb_get_sector_info(const struct fcb *fcb, int sector,
+    struct fcb_sector_info *info);
+
+int fcb_get_sector_loc(const struct fcb *fcb, int sector,
+    struct fcb_entry *entry);
+
+int fcb_get_sector_offset(const struct fcb *fcb, int sector);
+int fcb_entry_get_sector_offset(const struct fcb_entry *loc);
+
+int fcb_write_to_sector(struct fcb_entry *loc, int off,
+    const void *buf, int len);
+
+int fcb_read_from_sector(struct fcb_entry *loc, int off, void *buf, int len);
+
+/**
+ * Get total size of FCB
+ *
+ * @param fcb     FCB to use
+ *
+ * return FCB's size in bytes
+ */
+int fcb_get_total_size(const struct fcb *fcb);
+
+/**
+ * Erase sector in FCB
+ *
+ * @param fcb     FCB to use
+ * @param sector  sector number to erase 0..f_sector_cnt
+ *
+ * return 0 on success, error code on failure
+ */
+int fcb_sector_erase(const struct fcb *fcb, int sector);
+
+/**
  * Clears FCB passed to it
  */
 int fcb_clear(struct fcb *fcb);
 
 /**
- * Usage report for a given FCB area. Returns number of elements and the
+ * Usage report for a given FCB sector. Returns number of elements and the
  * number of bytes stored in them.
  */
-int fcb_area_info(struct fcb *fcb, struct flash_area *fa, int *elemsp,
-                  int *bytesp);
+int fcb_area_info(struct fcb *fcb, int sector, int *elemsp,
+                    int *bytesp);
 
 #ifdef __cplusplus
 }

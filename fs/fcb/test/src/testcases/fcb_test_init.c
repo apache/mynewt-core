@@ -29,13 +29,15 @@ TEST_CASE(fcb_test_init)
     rc = fcb_init(fcb);
     TEST_ASSERT(rc == FCB_ERR_ARGS);
 
-    fcb->f_sectors = test_fcb_area;
+    fcb->f_ranges = test_fcb_ranges;
 
     rc = fcb_init(fcb);
     TEST_ASSERT(rc == FCB_ERR_ARGS);
 
     fcb->f_sector_cnt = 2;
     fcb->f_magic = 0x12345678;
+    fcb->f_range_cnt = 1;
+    fcb->f_ranges[0].sr_flash_area.fa_size = 2 * fcb->f_ranges[0].sr_sector_size;
     rc = fcb_init(fcb);
     TEST_ASSERT(rc == FCB_ERR_MAGIC);
 

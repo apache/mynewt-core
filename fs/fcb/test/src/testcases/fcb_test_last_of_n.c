@@ -44,7 +44,7 @@ TEST_CASE(fcb_test_last_of_n)
             break;
         }
 
-        rc = flash_area_write(loc.fe_area, loc.fe_data_off, test_data,
+        rc = fcb_write_to_sector(&loc, loc.fe_data_off, test_data,
           sizeof(test_data));
         TEST_ASSERT(rc == 0);
 
@@ -57,28 +57,28 @@ TEST_CASE(fcb_test_last_of_n)
     /* last entry */
     rc = fcb_offset_last_n(fcb, 1, &loc);
     assert (rc == 0);
-    assert (areas[4].fe_area == loc.fe_area);
+    assert (areas[4].fe_sector == loc.fe_sector);
     assert (areas[4].fe_data_off == loc.fe_data_off);
     assert (areas[4].fe_data_len == loc.fe_data_len);
 
     /* somewhere in the middle */
     rc = fcb_offset_last_n(fcb, 3, &loc);
     assert (rc == 0);
-    assert (areas[2].fe_area == loc.fe_area);
+    assert (areas[2].fe_sector == loc.fe_sector);
     assert (areas[2].fe_data_off == loc.fe_data_off);
     assert (areas[2].fe_data_len == loc.fe_data_len);
 
     /* first entry */
     rc = fcb_offset_last_n(fcb, 5, &loc);
     assert (rc == 0);
-    assert (areas[0].fe_area == loc.fe_area);
+    assert (areas[0].fe_sector == loc.fe_sector);
     assert (areas[0].fe_data_off == loc.fe_data_off);
     assert (areas[0].fe_data_len == loc.fe_data_len);
 
     /* after last valid entry, returns the first one like for 5 */
     rc = fcb_offset_last_n(fcb, 6, &loc);
     assert (rc == 0);
-    assert (areas[0].fe_area == loc.fe_area);
+    assert (areas[0].fe_sector == loc.fe_sector);
     assert (areas[0].fe_data_off == loc.fe_data_off);
     assert (areas[0].fe_data_len == loc.fe_data_len);
 }

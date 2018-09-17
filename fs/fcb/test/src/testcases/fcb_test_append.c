@@ -47,7 +47,7 @@ TEST_CASE(fcb_test_append)
         }
         rc = fcb_append(fcb, i, &loc);
         TEST_ASSERT_FATAL(rc == 0);
-        rc = flash_area_write(loc.fe_area, loc.fe_data_off, test_data, i);
+        rc = fcb_write_to_sector(&loc, loc.fe_data_off, test_data, i);
         TEST_ASSERT(rc == 0);
         rc = fcb_append_finish(fcb, &loc);
         TEST_ASSERT(rc == 0);

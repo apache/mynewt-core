@@ -38,10 +38,11 @@ fcb_elem_crc8(struct fcb *fcb, struct fcb_entry *loc, uint8_t *c8p)
     uint32_t end;
     int rc;
 
-    if (loc->fe_elem_off + 2 > loc->fe_area->fa_size) {
+    if (loc->fe_elem_off + 2 > loc->fe_range->sr_sector_size) {
         return FCB_ERR_NOVAR;
     }
-    rc = flash_area_read_is_empty(loc->fe_area, loc->fe_elem_off, tmp_str, 2);
+    rc = flash_area_read_is_empty(&loc->fe_range->sr_flash_area,
+        fcb_sector_flash_offset(loc) + loc->fe_elem_off, tmp_str, 2);
     if (rc < 0) {
         return FCB_ERR_FLASH;
     } else if (rc == 1) {
@@ -63,7 +64,7 @@ fcb_elem_crc8(struct fcb *fcb, struct fcb_entry *loc, uint8_t *c8p)
             blk_sz = sizeof(tmp_str);
         }
 
-        rc = flash_area_read(loc->fe_area, off, tmp_str, blk_sz);
+        rc = fcb_read_from_sector(loc, off, tmp_str, blk_sz);
         if (rc) {
             return FCB_ERR_FLASH;
         }
@@ -88,7 +89,7 @@ fcb_elem_info(struct fcb *fcb, struct fcb_entry *loc)
     }
     off = loc->fe_data_off + fcb_len_in_flash(fcb, loc->fe_data_len);
 
-    rc = flash_area_read(loc->fe_area, off, &fl_crc8, sizeof(fl_crc8));
+    rc = fcb_read_from_sector(loc, off, &fl_crc8, sizeof(fl_crc8));
     if (rc) {
         return FCB_ERR_FLASH;
     }

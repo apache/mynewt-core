@@ -41,7 +41,7 @@ TEST_CASE(fcb_test_reset)
     fcb = &test_fcb;
 
     var_cnt = 0;
-    rc = fcb_walk(fcb, 0, fcb_test_data_walk_cb, &var_cnt);
+    rc = fcb_walk(fcb, FCB_SECTOR_OLDEST, fcb_test_data_walk_cb, &var_cnt);
     TEST_ASSERT(rc == 0);
     TEST_ASSERT(var_cnt == 0);
 
@@ -52,14 +52,14 @@ TEST_CASE(fcb_test_reset)
      * No ready ones yet. CRC should not match.
      */
     var_cnt = 0;
-    rc = fcb_walk(fcb, 0, fcb_test_data_walk_cb, &var_cnt);
+    rc = fcb_walk(fcb, FCB_SECTOR_OLDEST, fcb_test_data_walk_cb, &var_cnt);
     TEST_ASSERT(rc == 0);
     TEST_ASSERT(var_cnt == 0);
 
     for (i = 0; i < sizeof(test_data); i++) {
         test_data[i] = fcb_test_append_data(32, i);
     }
-    rc = flash_area_write(loc.fe_area, loc.fe_data_off, test_data, 32);
+    rc = fcb_write_to_sector(&loc, loc.fe_data_off, test_data, 32);
     TEST_ASSERT(rc == 0);
 
     rc = fcb_append_finish(fcb, &loc);
@@ -69,7 +69,7 @@ TEST_CASE(fcb_test_reset)
      * one entry
      */
     var_cnt = 32;
-    rc = fcb_walk(fcb, 0, fcb_test_data_walk_cb, &var_cnt);
+    rc = fcb_walk(fcb, FCB_SECTOR_OLDEST, fcb_test_data_walk_cb, &var_cnt);
     TEST_ASSERT(rc == 0);
     TEST_ASSERT(var_cnt == 33);
 
@@ -77,14 +77,15 @@ TEST_CASE(fcb_test_reset)
      * Pretend reset
      */
     memset(fcb, 0, sizeof(*fcb));
+    fcb->f_range_cnt = 1;
     fcb->f_sector_cnt = 2;
-    fcb->f_sectors = test_fcb_area;
+    fcb->f_ranges = test_fcb_ranges;
 
     rc = fcb_init(fcb);
     TEST_ASSERT(rc == 0);
 
     var_cnt = 32;
-    rc = fcb_walk(fcb, 0, fcb_test_data_walk_cb, &var_cnt);
+    rc = fcb_walk(fcb, FCB_SECTOR_OLDEST, fcb_test_data_walk_cb, &var_cnt);
     TEST_ASSERT(rc == 0);
     TEST_ASSERT(var_cnt == 33);
 
@@ -94,14 +95,14 @@ TEST_CASE(fcb_test_reset)
     for (i = 0; i < sizeof(test_data); i++) {
         test_data[i] = fcb_test_append_data(33, i);
     }
-    rc = flash_area_write(loc.fe_area, loc.fe_data_off, test_data, 33);
+    rc = fcb_write_to_sector(&loc, loc.fe_data_off, test_data, 33);
     TEST_ASSERT(rc == 0);
 
     rc = fcb_append_finish(fcb, &loc);
     TEST_ASSERT(rc == 0);
 
     var_cnt = 32;
-    rc = fcb_walk(fcb, 0, fcb_test_data_walk_cb, &var_cnt);
+    rc = fcb_walk(fcb, FCB_SECTOR_OLDEST, fcb_test_data_walk_cb, &var_cnt);
     TEST_ASSERT(rc == 0);
     TEST_ASSERT(var_cnt == 34);
 
@@ -112,8 +113,9 @@ TEST_CASE(fcb_test_reset)
     TEST_ASSERT(rc == 0);
 
     memset(fcb, 0, sizeof(*fcb));
+    fcb->f_range_cnt = 1;
     fcb->f_sector_cnt = 2;
-    fcb->f_sectors = test_fcb_area;
+    fcb->f_ranges = test_fcb_ranges;
 
     rc = fcb_init(fcb);
     TEST_ASSERT(rc == 0);
@@ -122,7 +124,7 @@ TEST_CASE(fcb_test_reset)
      * Walk should skip that.
      */
     var_cnt = 32;
-    rc = fcb_walk(fcb, 0, fcb_test_data_walk_cb, &var_cnt);
+    rc = fcb_walk(fcb, FCB_SECTOR_OLDEST, fcb_test_data_walk_cb, &var_cnt);
     TEST_ASSERT(rc == 0);
     TEST_ASSERT(var_cnt == 34);
 
@@ -133,7 +135,7 @@ TEST_CASE(fcb_test_reset)
     for (i = 0; i < sizeof(test_data); i++) {
         test_data[i] = fcb_test_append_data(34, i);
     }
-    rc = flash_area_write(loc.fe_area, loc.fe_data_off, test_data, 34);
+    rc = fcb_write_to_sector(&loc, loc.fe_data_off, test_data, 34);
     TEST_ASSERT(rc == 0);
 
     rc = fcb_append_finish(fcb, &loc);
@@ -143,7 +145,7 @@ TEST_CASE(fcb_test_reset)
      * Walk should skip corrupt entry, but report the next one.
      */
     var_cnt = 32;
-    rc = fcb_walk(fcb, 0, fcb_test_data_walk_cb, &var_cnt);
+    rc = fcb_walk(fcb, FCB_SECTOR_OLDEST, fcb_test_data_walk_cb, &var_cnt);
     TEST_ASSERT(rc == 0);
     TEST_ASSERT(var_cnt == 35);
 }

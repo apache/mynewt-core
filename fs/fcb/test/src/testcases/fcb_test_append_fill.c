@@ -57,15 +57,15 @@ TEST_CASE(fcb_test_append_fill)
         if (rc == FCB_ERR_NOSPACE) {
             break;
         }
-        if (loc.fe_area == &test_fcb_area[0]) {
+        if (loc.fe_sector == 0) {
             elem_cnts[0]++;
-        } else if (loc.fe_area == &test_fcb_area[1]) {
+        } else if (loc.fe_sector == 1) {
             elem_cnts[1]++;
         } else {
             TEST_ASSERT(0);
         }
 
-        rc = flash_area_write(loc.fe_area, loc.fe_data_off, test_data,
+        rc = fcb_write_to_sector(&loc, loc.fe_data_off, test_data,
           sizeof(test_data));
         TEST_ASSERT(rc == 0);
 
@@ -76,16 +76,16 @@ TEST_CASE(fcb_test_append_fill)
     TEST_ASSERT(elem_cnts[0] == elem_cnts[1]);
 
     memset(&aa_together_cnts, 0, sizeof(aa_together_cnts));
-    rc = fcb_walk(fcb, NULL, fcb_test_cnt_elems_cb, &aa_together);
+    rc = fcb_walk(fcb, FCB_SECTOR_OLDEST, fcb_test_cnt_elems_cb, &aa_together);
     TEST_ASSERT(rc == 0);
     TEST_ASSERT(aa_together.elem_cnts[0] == elem_cnts[0]);
     TEST_ASSERT(aa_together.elem_cnts[1] == elem_cnts[1]);
 
     memset(&aa_separate_cnts, 0, sizeof(aa_separate_cnts));
-    rc = fcb_walk(fcb, &test_fcb_area[0], fcb_test_cnt_elems_cb,
+    rc = fcb_walk(fcb, 0, fcb_test_cnt_elems_cb,
       &aa_separate);
     TEST_ASSERT(rc == 0);
-    rc = fcb_walk(fcb, &test_fcb_area[1], fcb_test_cnt_elems_cb,
+    rc = fcb_walk(fcb, 1, fcb_test_cnt_elems_cb,
       &aa_separate);
     TEST_ASSERT(rc == 0);
     TEST_ASSERT(aa_separate.elem_cnts[0] == elem_cnts[0]);

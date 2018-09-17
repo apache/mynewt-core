@@ -42,7 +42,7 @@ TEST_CASE(fcb_test_append_too_big)
      * Max element which fits inside sector is
      * sector size - (disk header + crc + 1-2 bytes of length).
      */
-    len = fcb->f_active.fe_area->fa_size;
+    len = fcb->f_active.fe_range->sr_sector_size;
 
     rc = fcb_append(fcb, len, &elem_loc);
     TEST_ASSERT(rc != 0);
@@ -55,7 +55,7 @@ TEST_CASE(fcb_test_append_too_big)
     rc = fcb_append(fcb, len, &elem_loc);
     TEST_ASSERT(rc != 0);
 
-    len = fcb->f_active.fe_area->fa_size -
+    len = fcb->f_active.fe_range->sr_sector_size -
       (sizeof(struct fcb_disk_area) + 1 + 2);
     rc = fcb_append(fcb, len, &elem_loc);
     TEST_ASSERT(rc == 0);

@@ -49,13 +49,33 @@ fcb_len_in_flash(struct fcb *fcb, uint16_t len)
 
 int fcb_getnext_in_area(struct fcb *fcb, struct fcb_entry *loc);
 struct flash_area *fcb_getnext_area(struct fcb *fcb, struct flash_area *fap);
+
+static inline int
+fcb_getnext_sector(struct fcb *fcb, int sector)
+{
+    if (++sector >= fcb->f_sector_cnt) {
+        sector = 0;
+    }
+    return sector;
+}
+
+static inline int
+fcb_sector_flash_offset(const struct fcb_entry *loc)
+{
+    return (loc->fe_sector - loc->fe_range->sr_first_sector) *
+        loc->fe_range->sr_sector_size;
+}
+
 int fcb_getnext_nolock(struct fcb *fcb, struct fcb_entry *loc);
 
 int fcb_elem_info(struct fcb *, struct fcb_entry *);
 int fcb_elem_crc8(struct fcb *, struct fcb_entry *loc, uint8_t *crc8p);
 
-int fcb_sector_hdr_init(struct fcb *, struct flash_area *fap, uint16_t id);
-int fcb_sector_hdr_read(struct fcb *, struct flash_area *fap,
+int fcb_sector_hdr_init(struct fcb *fcb, int sector, uint16_t id);
+
+struct sector_range *fcb_get_sector_range(const struct fcb *fcb, int sector);
+
+int fcb_sector_hdr_read(struct fcb *, struct sector_range *srp, uint16_t sec,
   struct fcb_disk_area *fdap);
 
 #ifdef __cplusplus

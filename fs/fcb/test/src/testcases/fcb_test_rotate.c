@@ -57,15 +57,15 @@ TEST_CASE(fcb_test_rotate)
         if (rc == FCB_ERR_NOSPACE) {
             break;
         }
-        if (loc.fe_area == &test_fcb_area[0]) {
+        if (loc.fe_sector == 0) {
             elem_cnts[0]++;
-        } else if (loc.fe_area == &test_fcb_area[1]) {
+        } else if (loc.fe_sector == 1) {
             elem_cnts[1]++;
         } else {
             TEST_ASSERT(0);
         }
 
-        rc = flash_area_write(loc.fe_area, loc.fe_data_off, test_data,
+        rc = fcb_write_to_sector(&loc, loc.fe_data_off, test_data,
           sizeof(test_data));
         TEST_ASSERT(rc == 0);
 
@@ -80,7 +80,7 @@ TEST_CASE(fcb_test_rotate)
     TEST_ASSERT(fcb->f_active_id == old_id); /* no new area created */
 
     memset(cnts, 0, sizeof(cnts));
-    rc = fcb_walk(fcb, NULL, fcb_test_cnt_elems_cb, &aa_arg);
+    rc = fcb_walk(fcb, FCB_SECTOR_OLDEST, fcb_test_cnt_elems_cb, &aa_arg);
     TEST_ASSERT(rc == 0);
     TEST_ASSERT(aa_arg.elem_cnts[0] == elem_cnts[0] ||
       aa_arg.elem_cnts[1] == elem_cnts[1]);
@@ -92,7 +92,7 @@ TEST_CASE(fcb_test_rotate)
     rc = fcb_append(fcb, sizeof(test_data), &loc);
     TEST_ASSERT(rc == 0);
 
-    rc = flash_area_write(loc.fe_area, loc.fe_data_off, test_data,
+    rc = fcb_write_to_sector(&loc, loc.fe_data_off, test_data,
       sizeof(test_data));
     TEST_ASSERT(rc == 0);
 
@@ -105,7 +105,7 @@ TEST_CASE(fcb_test_rotate)
     TEST_ASSERT(fcb->f_active_id == old_id);
 
     memset(cnts, 0, sizeof(cnts));
-    rc = fcb_walk(fcb, NULL, fcb_test_cnt_elems_cb, &aa_arg);
+    rc = fcb_walk(fcb, FCB_SECTOR_OLDEST, fcb_test_cnt_elems_cb, &aa_arg);
     TEST_ASSERT(rc == 0);
     TEST_ASSERT(aa_arg.elem_cnts[0] == 1 || aa_arg.elem_cnts[1] == 1);
     TEST_ASSERT(aa_arg.elem_cnts[0] == 0 || aa_arg.elem_cnts[1] == 0);

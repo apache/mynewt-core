@@ -25,12 +25,12 @@
  * only elements with that flash_area are reported.
  */
 int
-fcb_walk(struct fcb *fcb, struct flash_area *fap, fcb_walk_cb cb, void *cb_arg)
+fcb_walk(struct fcb *fcb, int sector, fcb_walk_cb cb, void *cb_arg)
 {
     struct fcb_entry loc;
     int rc;
 
-    loc.fe_area = fap;
+    fcb_get_sector_loc(fcb, sector, &loc);
     loc.fe_elem_off = 0;
 
     rc = os_mutex_pend(&fcb->f_mtx, OS_WAIT_FOREVER);
@@ -39,7 +39,7 @@ fcb_walk(struct fcb *fcb, struct flash_area *fap, fcb_walk_cb cb, void *cb_arg)
     }
     while ((rc = fcb_getnext_nolock(fcb, &loc)) != FCB_ERR_NOVAR) {
         os_mutex_release(&fcb->f_mtx);
-        if (fap && loc.fe_area != fap) {
+        if (sector != FCB_SECTOR_OLDEST && loc.fe_sector != sector) {
             return 0;
         }
         rc = cb(&loc, cb_arg);

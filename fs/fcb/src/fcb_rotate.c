@@ -23,7 +23,7 @@
 int
 fcb_rotate(struct fcb *fcb)
 {
-    struct flash_area *fap;
+    int sector;
     int rc = 0;
 
     rc = os_mutex_pend(&fcb->f_mtx, OS_WAIT_FOREVER);
@@ -31,25 +31,27 @@ fcb_rotate(struct fcb *fcb)
         return FCB_ERR_ARGS;
     }
 
-    rc = flash_area_erase(fcb->f_oldest, 0, fcb->f_oldest->fa_size);
+    rc = fcb_sector_erase(fcb, fcb->f_oldest_sec);
     if (rc) {
         rc = FCB_ERR_FLASH;
         goto out;
     }
-    if (fcb->f_oldest == fcb->f_active.fe_area) {
+    if (fcb->f_oldest_sec == fcb->f_active.fe_sector) {
         /*
-         * Need to create a new active area, as we're wiping the current.
+         * Need to create a new active sector, as we're wiping the current.
          */
-        fap = fcb_getnext_area(fcb, fcb->f_oldest);
-        rc = fcb_sector_hdr_init(fcb, fap, fcb->f_active_id + 1);
+        sector = fcb_getnext_sector(fcb, fcb->f_oldest_sec);
+
+        rc = fcb_sector_hdr_init(fcb, sector, fcb->f_active_id + 1);
         if (rc) {
             goto out;
         }
-        fcb->f_active.fe_area = fap;
+        fcb->f_active.fe_sector = sector;
+        fcb->f_active.fe_range = fcb_get_sector_range(fcb, sector);
         fcb->f_active.fe_elem_off = sizeof(struct fcb_disk_area);
         fcb->f_active_id++;
     }
-    fcb->f_oldest = fcb_getnext_area(fcb, fcb->f_oldest);
+    fcb->f_oldest_sec = fcb_getnext_sector(fcb, fcb->f_oldest_sec);
 out:
     os_mutex_release(&fcb->f_mtx);
     return rc;

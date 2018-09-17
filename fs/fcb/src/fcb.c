@@ -1,5 +1,4 @@
-/*
- * Licensed to the Apache Software Foundation (ASF) under one
+/* Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
  * regarding copyright ownership.  The ASF licenses this file
@@ -26,27 +25,28 @@
 int
 fcb_init(struct fcb *fcb)
 {
-    struct flash_area *fap;
+    struct sector_range *range;
+    struct sector_range *newest_srp = NULL;
     int rc;
     int i;
     int max_align = 1;
     int align;
     int oldest = -1, newest = -1;
-    struct flash_area *oldest_fap = NULL, *newest_fap = NULL;
+    int oldest_sec = -1, newest_sec = -1;
     struct fcb_disk_area fda;
 
-    if (!fcb->f_sectors || fcb->f_sector_cnt - fcb->f_scratch_cnt < 1) {
+    if (!fcb->f_ranges || fcb->f_sector_cnt - fcb->f_scratch_cnt < 1) {
         return FCB_ERR_ARGS;
     }
 
     /* Fill last used, first used */
     for (i = 0; i < fcb->f_sector_cnt; i++) {
-        fap = &fcb->f_sectors[i];
-        align = flash_area_align(fap);
+        range = fcb_get_sector_range(fcb, i);
+        align = flash_area_align(&range->sr_flash_area);
         if (align > max_align) {
-            max_align = flash_area_align(fap);
+            max_align = align;
         }
-        rc = fcb_sector_hdr_read(fcb, fap, &fda);
+        rc = fcb_sector_hdr_read(fcb, range, i, &fda);
         if (rc < 0) {
             return rc;
         }
@@ -55,31 +55,35 @@ fcb_init(struct fcb *fcb)
         }
         if (oldest < 0) {
             oldest = newest = fda.fd_id;
-            oldest_fap = newest_fap = fap;
+            oldest_sec = newest_sec = i;
+            newest_srp = range;
             continue;
         }
         if (FCB_ID_GT(fda.fd_id, newest)) {
             newest = fda.fd_id;
-            newest_fap = fap;
+            newest_sec = i;
+            newest_srp = range;
         } else if (FCB_ID_GT(oldest, fda.fd_id)) {
             oldest = fda.fd_id;
-            oldest_fap = fap;
+            oldest_sec = i;
         }
     }
     if (oldest < 0) {
         /*
          * No initialized areas.
          */
-        oldest_fap = newest_fap = &fcb->f_sectors[0];
-        rc = fcb_sector_hdr_init(fcb, oldest_fap, 0);
+        oldest_sec = newest_sec = 0;
+        newest_srp = fcb->f_ranges;
+        rc = fcb_sector_hdr_init(fcb, newest_sec, 0);
         if (rc) {
             return rc;
         }
         newest = oldest = 0;
     }
     fcb->f_align = max_align;
-    fcb->f_oldest = oldest_fap;
-    fcb->f_active.fe_area = newest_fap;
+    fcb->f_oldest_sec = oldest_sec;
+    fcb->f_active.fe_range = newest_srp;
+    fcb->f_active.fe_sector = newest_sec;
     fcb->f_active.fe_elem_off = sizeof(struct fcb_disk_area);
     fcb->f_active_id = newest;
 
@@ -106,12 +110,12 @@ int
 fcb_free_sector_cnt(struct fcb *fcb)
 {
     int i;
-    struct flash_area *fa;
+    int sector;
 
-    fa = fcb->f_active.fe_area;
+    sector = fcb->f_active.fe_sector;
     for (i = 0; i < fcb->f_sector_cnt; i++) {
-        fa = fcb_getnext_area(fcb, fa);
-        if (fa == fcb->f_oldest) {
+        sector = fcb_getnext_sector(fcb, sector);
+        if (sector == fcb->f_oldest_sec) {
             break;
         }
     }
@@ -121,8 +125,27 @@ fcb_free_sector_cnt(struct fcb *fcb)
 int
 fcb_is_empty(struct fcb *fcb)
 {
-    return (fcb->f_active.fe_area == fcb->f_oldest &&
+    return (fcb->f_active.fe_sector == fcb->f_oldest_sec &&
       fcb->f_active.fe_elem_off == sizeof(struct fcb_disk_area));
+}
+
+struct sector_range *
+fcb_get_sector_range(const struct fcb *fcb, int sector)
+{
+    int i;
+    struct sector_range *srp = fcb->f_ranges;
+
+    if (FCB_SECTOR_OLDEST == sector) {
+        sector = fcb->f_oldest_sec;
+    }
+    for (i = 0; i < fcb->f_range_cnt; ++i, ++srp) {
+        if (srp->sr_sector_count <= sector) {
+            sector -= srp->sr_sector_count;
+            continue;
+        }
+        return srp;
+    }
+    return NULL;
 }
 
 /**
@@ -163,17 +186,29 @@ fcb_get_len(uint8_t *buf, uint16_t *len)
  * Initialize erased sector for use.
  */
 int
-fcb_sector_hdr_init(struct fcb *fcb, struct flash_area *fap, uint16_t id)
+fcb_sector_hdr_init(struct fcb *fcb, int sector, uint16_t id)
 {
     struct fcb_disk_area fda;
+    struct fcb_sector_info info;
+    struct sector_range *range;
+    int sector_in_range;
     int rc;
+
+    rc = fcb_get_sector_info(fcb, sector, &info);
+    if (rc) {
+        return rc;
+    }
+    range = info.si_range;
+    sector_in_range = sector - range->sr_first_sector;
 
     fda.fd_magic = fcb->f_magic;
     fda.fd_ver = fcb->f_version;
     fda._pad = 0xff;
     fda.fd_id = id;
 
-    rc = flash_area_write(fap, 0, &fda, sizeof(fda));
+    assert(sector_in_range >= 0 && sector_in_range < range->sr_sector_count);
+    rc = flash_area_write(&range->sr_flash_area,
+        sector_in_range * range->sr_sector_size, &fda, sizeof(fda));
     if (rc) {
         return FCB_ERR_FLASH;
     }
@@ -187,16 +222,17 @@ fcb_sector_hdr_init(struct fcb *fcb, struct flash_area *fap, uint16_t id)
  * Returns 1 if sector has data.
  */
 int
-fcb_sector_hdr_read(struct fcb *fcb, struct flash_area *fap,
+fcb_sector_hdr_read(struct fcb *fcb, struct sector_range *srp, uint16_t sec,
   struct fcb_disk_area *fdap)
 {
     struct fcb_disk_area fda;
     int rc;
+    uint32_t off = (sec - srp->sr_first_sector) * srp->sr_sector_size;
 
     if (!fdap) {
         fdap = &fda;
     }
-    rc = flash_area_read_is_empty(fap, 0, fdap, sizeof(*fdap));
+    rc = flash_area_read_is_empty(&srp->sr_flash_area, off, fdap, sizeof(*fdap));
     if (rc < 0) {
         return FCB_ERR_FLASH;
     } else if (rc == 1) {
@@ -263,5 +299,185 @@ fcb_clear(struct fcb *fcb)
             break;
         }
     }
+    return rc;
+}
+
+int
+fcb_init_flash_area(struct fcb *fcb, int flash_area_id, uint8_t version)
+{
+    const struct flash_area *fa;
+    struct sector_range *sector_ranges;
+    int sector_range_cnt = 0;
+    int rc;
+
+    /*
+     * We don't know how big the area is so need to check how many sectors are
+     * there and then read information about all sectors - this is needed to
+     * properly initialize FCB. Critical log is somewhat important and shall be
+     * created, so we just assert on any error.
+     *
+     * XXX Should we do something else here?
+     */
+    rc = flash_area_to_sector_ranges(flash_area_id, &sector_range_cnt, NULL);
+    assert(rc == 0 && sector_range_cnt > 0);
+    sector_ranges = malloc(sizeof(struct sector_range) * sector_range_cnt);
+    assert(sector_ranges);
+    rc = flash_area_to_sector_ranges(flash_area_id, &sector_range_cnt, sector_ranges);
+    assert(rc == 0 && sector_range_cnt > 0);
+
+    fcb->f_ranges = sector_ranges;
+    fcb->f_range_cnt = sector_range_cnt;
+    fcb->f_sector_cnt = sector_ranges[sector_range_cnt - 1].sr_first_sector +
+        sector_ranges[sector_range_cnt - 1].sr_sector_count;
+    fcb->f_magic = 0xDEADBEEF;
+    fcb->f_version = version;
+
+    /*
+     * Initialize log in dedicated flash area. This has to succeed since it
+     * should be in dedicated flash area and nothing should prevent us from
+     * creating log there.
+     */
+    rc = fcb_init(fcb);
+    if (rc) {
+        /* Need to erase full area here */
+        rc = flash_area_open(flash_area_id, &fa);
+        assert(rc == 0);
+
+        flash_area_erase(fa, 0, fa->fa_size);
+        rc = fcb_init(fcb);
+        assert(rc == 0);
+    }
+
+    return rc;
+}
+
+int
+fcb_get_sector_info(const struct fcb *fcb, int sector,
+    struct fcb_sector_info *info)
+{
+    struct sector_range *srp = fcb->f_ranges;
+    int i;
+
+    if (sector == FCB_SECTOR_OLDEST) {
+        sector = fcb->f_oldest_sec;
+    }
+
+    for (i = 0; i < fcb->f_range_cnt; ++i, ++srp) {
+        if (srp->sr_sector_count <= sector) {
+            sector -= srp->sr_sector_count;
+            continue;
+        }
+        info->si_range = srp;
+        info->si_sector_in_range = sector;
+        info->si_sector_offset = srp->sr_range_start +
+            sector * srp->sr_sector_size;
+        return 0;
+    }
+    return FCB_ERR_ARGS;
+}
+
+int
+fcb_get_sector_loc(const struct fcb *fcb, int sector, struct fcb_entry *entry)
+{
+    struct fcb_sector_info info;
+    int rc = 0;
+
+    if (sector == FCB_SECTOR_OLDEST) {
+        sector = fcb->f_oldest_sec;
+    }
+    rc = fcb_get_sector_info(fcb, sector, &info);
+    if (rc == 0) {
+        entry->fe_range = info.si_range;
+        entry->fe_sector = (uint16_t)sector;
+    }
+
+    return rc;
+}
+
+
+int
+fcb_offset_in_sector(const struct fcb *fcb, int offset, int sector)
+{
+    struct sector_range *srp = fcb->f_ranges;
+    int start;
+    int end;
+    int i;
+
+    for (i = 0; i < fcb->f_range_cnt; ++i, ++srp) {
+        if (srp->sr_sector_count * srp->sr_sector_size > offset) {
+            start = (sector - srp->sr_first_sector) * srp->sr_sector_size;
+            end = start + srp->sr_sector_size;
+            if (start <= offset && offset < end)
+                return 0;
+        } else {
+            offset -= srp->sr_sector_count * srp->sr_sector_size;
+        }
+    }
+    return -1;
+}
+
+int
+fcb_get_sector_offset(const struct fcb *fcb, int sector)
+{
+    struct fcb_sector_info info;
+    int rc = fcb_get_sector_info(fcb, sector, &info);
+
+    if (rc == 0) {
+        rc = info.si_sector_offset;
+    }
+    return rc;
+}
+
+int
+fcb_entry_get_sector_offset(const struct fcb_entry *loc)
+{
+    const struct sector_range *srp = loc->fe_range;
+
+    return srp->sr_range_start +
+        (loc->fe_sector - srp->sr_first_sector) * srp->sr_sector_size;
+}
+
+int
+fcb_write_to_sector(struct fcb_entry *loc, int off, const void *buf, int len)
+{
+    return flash_area_write(&loc->fe_range->sr_flash_area,
+        fcb_sector_flash_offset(loc) + off, buf, len);
+}
+
+int
+fcb_read_from_sector(struct fcb_entry *loc, int off, void *buf, int len)
+{
+    return flash_area_read(&loc->fe_range->sr_flash_area,
+        fcb_sector_flash_offset(loc) + off, buf, len);
+}
+
+int
+fcb_get_total_size(const struct fcb *fcb)
+{
+    struct sector_range *srp = fcb->f_ranges;
+    int size = 0;
+    int i;
+
+    for (i = 0; i < fcb->f_range_cnt; ++i, ++srp) {
+        size += srp->sr_sector_count * srp->sr_sector_count;
+    }
+    return size;
+}
+
+int
+fcb_sector_erase(const struct fcb *fcb, int sector)
+{
+    struct fcb_sector_info info;
+    int rc;
+
+    rc = fcb_get_sector_info(fcb, sector, &info);
+    if (rc) {
+        goto end;
+    }
+
+    rc = flash_area_erase(&info.si_range->sr_flash_area,
+        info.si_sector_in_range * info.si_range->sr_sector_size,
+        info.si_range->sr_sector_size);
+end:
     return rc;
 }

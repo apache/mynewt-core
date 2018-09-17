@@ -34,7 +34,8 @@
 
 extern struct fcb test_fcb;
 
-extern struct flash_area test_fcb_area[];
+//extern struct flash_area test_fcb_area[];
+extern struct sector_range test_fcb_ranges[];
 
 struct append_arg {
     int *elem_cnts;

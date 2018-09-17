@@ -30,7 +30,7 @@
 /* Assume the flash alignment requirement is no stricter than 8. */
 #define LOG_FCB_MAX_ALIGN   8
 
-static struct flash_area sector;
+static struct sector_range sector;
 
 static int log_fcb_rtr_erase(struct log *log, void *arg);
 
@@ -39,7 +39,7 @@ log_fcb_start_append(struct log *log, int len, struct fcb_entry *loc)
 {
     struct fcb *fcb;
     struct fcb_log *fcb_log;
-    struct flash_area *old_fa;
+    int old_sec;
     int rc = 0;
 #if MYNEWT_VAL(LOG_STATS)
     int cnt;
@@ -66,8 +66,8 @@ log_fcb_start_append(struct log *log, int len, struct fcb_entry *loc)
             continue;
         }
 
-        old_fa = fcb->f_oldest;
-        (void)old_fa; /* to avoid #ifdefs everywhere... */
+        old_sec = fcb->f_oldest_sec;
+        (void)old_sec; /* to avoid #ifdefs everywhere... */
 
 #if MYNEWT_VAL(LOG_STATS)
         rc = fcb_area_info(fcb, NULL, &cnt, NULL);
@@ -86,9 +86,10 @@ log_fcb_start_append(struct log *log, int len, struct fcb_entry *loc)
          * oldest flash area which was erased. If yes, then move watermark to
          * beginning of current oldest area.
          */
-        if ((fcb_log->fl_watermark_off >= old_fa->fa_off) &&
-            (fcb_log->fl_watermark_off < old_fa->fa_off + old_fa->fa_size)) {
-            fcb_log->fl_watermark_off = fcb->f_oldest->fa_off;
+        if (fcb_offset_in_sector(fcb, fcb_log->fl_watermark_off, old_sec)) {
+            struct fcb_sector_info si;
+            fcb_get_sector_info(fcb, old_sec, &si);
+            fcb_log->fl_watermark_off = si.si_sector_offset;
         }
 #endif
 
@@ -115,7 +116,7 @@ log_fcb_append(struct log *log, void *buf, int len)
         goto err;
     }
 
-    rc = flash_area_write(loc.fe_area, loc.fe_data_off, buf, len);
+    rc = fcb_write_to_sector(&loc, loc.fe_data_off, buf, len);
     if (rc) {
         goto err;
     }
@@ -188,7 +189,7 @@ log_fcb_append_body(struct log *log, const struct log_entry_hdr *hdr,
     memcpy(buf, hdr, sizeof *hdr);
     memcpy(buf + sizeof *hdr, u8p, hdr_alignment);
 
-    rc = flash_area_write(loc.fe_area, loc.fe_data_off, buf, chunk_sz);
+    rc = fcb_write_to_sector(&loc, loc.fe_data_off, buf, chunk_sz);
     if (rc != 0) {
         return rc;
     }
@@ -199,7 +200,7 @@ log_fcb_append_body(struct log *log, const struct log_entry_hdr *hdr,
     body_len -= hdr_alignment;
 
     if (body_len > 0) {
-        rc = flash_area_write(loc.fe_area, loc.fe_data_off + chunk_sz, u8p,
+        rc = fcb_write_to_sector(&loc, loc.fe_data_off + chunk_sz, u8p,
                               body_len);
         if (rc != 0) {
             return rc;
@@ -220,7 +221,7 @@ log_fcb_write_mbuf(struct fcb_entry *loc, const struct os_mbuf *om)
     int rc;
 
     while (om) {
-        rc = flash_area_write(loc->fe_area, loc->fe_data_off,
+        rc = fcb_write_to_sector(loc, loc->fe_data_off,
                               om->om_data, om->om_len);
         if (rc != 0) {
             return SYS_EIO;
@@ -298,7 +299,7 @@ log_fcb_append_mbuf_body(struct log *log, const struct log_entry_hdr *hdr,
         return rc;
     }
 
-    rc = flash_area_write(loc.fe_area, loc.fe_data_off, hdr, sizeof *hdr);
+    rc = fcb_write_to_sector(&loc, loc.fe_data_off, hdr, sizeof *hdr);
     if (rc != 0) {
         return rc;
     }
@@ -329,7 +330,7 @@ log_fcb_read(struct log *log, void *dptr, void *buf, uint16_t offset,
     if (offset + len > loc->fe_data_len) {
         len = loc->fe_data_len - offset;
     }
-    rc = flash_area_read(loc->fe_area, loc->fe_data_off + offset, buf, len);
+    rc = fcb_read_from_sector(loc, loc->fe_data_off + offset, buf, len);
     if (rc == 0) {
         return len;
     } else {
@@ -357,7 +358,7 @@ log_fcb_read_mbuf(struct log *log, void *dptr, struct os_mbuf *om,
 
     while (rem_len > 0) {
         read_len = min(rem_len, sizeof(data));
-        rc = flash_area_read(loc->fe_area, loc->fe_data_off + offset, data,
+        rc = fcb_read_from_sector(loc, loc->fe_data_off + offset, data,
                              read_len);
         if (rc) {
             goto done;
@@ -427,9 +428,10 @@ log_fcb_registered(struct log *log)
     /* Set watermark to first element */
     memset(&loc, 0, sizeof(loc));
     if (fcb_getnext(fcb, &loc)) {
-        fl->fl_watermark_off = loc.fe_area->fa_off + loc.fe_elem_off;
+        fl->fl_watermark_off = fcb_entry_get_sector_offset(&loc) +
+            loc.fe_elem_off;
     } else {
-        fl->fl_watermark_off = fcb->f_oldest->fa_off;
+        fl->fl_watermark_off = fcb_get_sector_offset(fcb, fcb->f_oldest_sec);
     }
 #endif
     return 0;
@@ -441,11 +443,8 @@ log_fcb_storage_info(struct log *log, struct log_storage_info *info)
 {
     struct fcb_log *fl;
     struct fcb *fcb;
-    struct flash_area *fa;
     uint32_t el_min;
     uint32_t el_max;
-    uint32_t fa_min;
-    uint32_t fa_max;
     uint32_t fa_size;
     uint32_t fa_used;
     int rc;
@@ -465,17 +464,12 @@ log_fcb_storage_info(struct log *log, struct log_storage_info *info)
      * even possible?) we will never use free space before it thus that space
      * can be also considered used.
      */
-    el_min = fcb->f_oldest->fa_off;
+    el_min = fcb_get_sector_offset(fcb, fcb->f_oldest_sec);
 
     /* Calculate end location of last entry */
-    el_max = fcb->f_active.fe_area->fa_off + fcb->f_active.fe_elem_off;
+    el_max = fcb_entry_get_sector_offset(&fcb->f_active) + fcb->f_active.fe_elem_off;
 
-    /* Sectors assigned to FCB are guaranteed to be contiguous */
-    fa = &fcb->f_sectors[0];
-    fa_min = fa->fa_off;
-    fa = &fcb->f_sectors[fcb->f_sector_cnt - 1];
-    fa_max = fa->fa_off + fa->fa_size;
-    fa_size = fa_max - fa_min;
+    fa_size = fcb_get_total_size(fcb);
 
     /* Calculate used size */
     fa_used = el_max - el_min;
@@ -516,7 +510,7 @@ log_fcb_set_watermark(struct log *log, uint32_t index)
     fcb = &fl->fl_fcb;
 
     memset(&loc, 0, sizeof(loc));
-    end_off = fcb->f_oldest->fa_off;
+    end_off = fcb_get_sector_offset(fcb, fcb->f_oldest_sec);
     rc = 0;
 
     while (fcb_getnext(fcb, &loc) == 0) {
@@ -531,7 +525,7 @@ log_fcb_set_watermark(struct log *log, uint32_t index)
         }
 
         /* Move end offset max pointer to end of this element */
-        end_off = loc.fe_area->fa_off + loc.fe_data_off + loc.fe_data_len;
+        end_off = fcb_entry_get_sector_offset(&loc) + loc.fe_data_off + loc.fe_data_len;
     }
 
     /* End of last element found is now our watermark */
@@ -623,9 +617,9 @@ log_fcb_rtr_erase(struct log *log, void *arg)
     struct fcb_log *fcb_log;
     struct fcb fcb_scratch;
     struct fcb *fcb;
-    const struct flash_area *ptr;
     struct fcb_entry entry;
     int rc;
+    int cnt;
 
     rc = 0;
     if (!log) {
@@ -638,16 +632,16 @@ log_fcb_rtr_erase(struct log *log, void *arg)
 
     memset(&fcb_scratch, 0, sizeof(fcb_scratch));
 
-    if (flash_area_open(FLASH_AREA_IMAGE_SCRATCH, &ptr)) {
-        goto err;
-    }
-    sector = *ptr;
-    fcb_scratch.f_sectors = &sector;
+    cnt = 1;
+    flash_area_to_sector_ranges(FLASH_AREA_IMAGE_SCRATCH, &cnt, &sector);
+
+    fcb_scratch.f_ranges = &sector;
+    fcb_scratch.f_range_cnt = (uint8_t) cnt;
     fcb_scratch.f_sector_cnt = 1;
     fcb_scratch.f_magic = 0x7EADBADF;
     fcb_scratch.f_version = g_log_info.li_version;
 
-    flash_area_erase(&sector, 0, sector.fa_size);
+    flash_area_erase(&sector.sr_flash_area, 0, sector.sr_sector_size);
     rc = fcb_init(&fcb_scratch);
     if (rc) {
         goto err;

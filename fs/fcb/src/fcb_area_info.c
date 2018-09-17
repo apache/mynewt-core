@@ -21,24 +21,28 @@
 #include "fcb_priv.h"
 
 int
-fcb_area_info(struct fcb *fcb, struct flash_area *fa, int *elemsp, int *bytesp)
+fcb_area_info(struct fcb *fcb, int sector, int *elemsp, int *bytesp)
 {
     struct fcb_entry loc;
+    struct fcb_sector_info info;
     int rc;
     int elems = 0;
     int bytes = 0;
 
-    loc.fe_area = fa;
+    fcb_get_sector_info(fcb, sector, &info);
+    loc.fe_range = info.si_range;
+    loc.fe_sector = info.si_sector_in_range + loc.fe_range->sr_first_sector;
     loc.fe_elem_off = 0;
+    /* In case caller passed oldest, get real sector number */
+    if (sector == FCB_SECTOR_OLDEST)
+        sector =  loc.fe_sector;
 
     while (1) {
         rc = fcb_getnext(fcb, &loc);
         if (rc) {
             break;
         }
-        if (!fa) {
-            fa = loc.fe_area;
-        } else if (fa != loc.fe_area) {
+        if (sector != loc.fe_sector) {
             break;
         }
         elems++;

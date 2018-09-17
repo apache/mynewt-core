@@ -35,7 +35,7 @@
 struct fcb test_fcb;
 
 #if MYNEWT_VAL(SELFTEST)
-struct flash_area test_fcb_area[] = {
+struct flash_area test_fcb_area1[] = {
     [0] = {
         .fa_device_id = 0,
         .fa_off = 0,
@@ -58,6 +58,20 @@ struct flash_area test_fcb_area[] = {
     }
 };
 
+struct sector_range test_fcb_ranges[] = {
+    [0] = {
+        .sr_flash_area = {
+            .fa_device_id = 0,
+            .fa_off = 0,
+            .fa_size = 0x10000, /* 64K */
+        },
+        .sr_range_start = 0,
+        .sr_first_sector = 0,
+        .sr_sector_size = 0x4000, /* 16 K */
+        .sr_sector_count = 4,
+    },
+};
+
 void
 fcb_test_wipe(void)
 {
@@ -65,8 +79,8 @@ fcb_test_wipe(void)
     int rc;
     struct flash_area *fap;
 
-    for (i = 0; i < sizeof(test_fcb_area) / sizeof(test_fcb_area[0]); i++) {
-        fap = &test_fcb_area[i];
+    for (i = 0; i < sizeof(test_fcb_ranges) / sizeof(test_fcb_ranges[0]); i++) {
+        fap = &test_fcb_ranges[i].sr_flash_area;
         rc = flash_area_erase(fap, 0, fap->fa_size);
         TEST_ASSERT(rc == 0);
     }
@@ -99,7 +113,7 @@ fcb_test_data_walk_cb(struct fcb_entry *loc, void *arg)
 
     TEST_ASSERT(len == *var_cnt);
 
-    rc = flash_area_read(loc->fe_area, loc->fe_data_off, test_data, len);
+    rc = fcb_read_from_sector(loc, loc->fe_data_off, test_data, len);
     TEST_ASSERT(rc == 0);
 
     for (i = 0; i < len; i++) {
@@ -115,7 +129,7 @@ fcb_test_cnt_elems_cb(struct fcb_entry *loc, void *arg)
     struct append_arg *aa = (struct append_arg *)arg;
     int idx;
 
-    idx = loc->fe_area - &test_fcb_area[0];
+    idx = loc->fe_sector;
     aa->elem_cnts[idx]++;
     return 0;
 }
@@ -130,9 +144,11 @@ fcb_tc_pretest(void* arg)
     fcb = &test_fcb;
     memset(fcb, 0, sizeof(*fcb));
     fcb->f_sector_cnt = (int)arg;
-    fcb->f_sectors = test_fcb_area; /* XXX */
+    fcb->f_ranges = test_fcb_ranges; /* XXX */
+    fcb->f_range_cnt = 1;
+    test_fcb_ranges[0].sr_sector_count = (int)arg;
+    test_fcb_ranges[0].sr_flash_area.fa_size = test_fcb_ranges[0].sr_sector_size * (int)arg;
 
-    rc = 0;
     rc = fcb_init(fcb);
     if (rc != 0) {
         printf("fcb_tc_pretest rc == %x, %d\n", rc, rc);

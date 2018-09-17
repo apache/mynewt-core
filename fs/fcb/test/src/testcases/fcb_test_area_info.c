@@ -35,7 +35,7 @@ TEST_CASE(fcb_test_area_info)
      * Should be empty, with elem count and byte count zero.
      */
     for (i = 0; i < 2; i++) {
-        rc = fcb_area_info(fcb, &fcb->f_sectors[i], &area_elems[i],
+        rc = fcb_area_info(fcb, 0, &area_elems[i],
                            &area_bytes[i]);
         TEST_ASSERT(rc == 0);
         TEST_ASSERT(area_elems[i] == 0);
@@ -50,15 +50,15 @@ TEST_CASE(fcb_test_area_info)
         if (rc == FCB_ERR_NOSPACE) {
             break;
         }
-        if (loc.fe_area == &test_fcb_area[0]) {
+        if (loc.fe_sector == 0) {
             elem_cnts[0]++;
-        } else if (loc.fe_area == &test_fcb_area[1]) {
+        } else if (loc.fe_sector == 1) {
             elem_cnts[1]++;
         } else {
             TEST_ASSERT(0);
         }
 
-        rc = flash_area_write(loc.fe_area, loc.fe_data_off, test_data,
+        rc = fcb_write_to_sector(&loc, loc.fe_data_off, test_data,
           sizeof(test_data));
         TEST_ASSERT(rc == 0);
 
@@ -66,7 +66,7 @@ TEST_CASE(fcb_test_area_info)
         TEST_ASSERT(rc == 0);
 
         for (i = 0; i < 2; i++) {
-            rc = fcb_area_info(fcb, &fcb->f_sectors[i], &area_elems[i],
+            rc = fcb_area_info(fcb, i, &area_elems[i],
                                &area_bytes[i]);
             TEST_ASSERT(rc == 0);
             TEST_ASSERT(area_elems[i] == elem_cnts[i]);
@@ -80,9 +80,9 @@ TEST_CASE(fcb_test_area_info)
     rc = fcb_rotate(fcb);
     TEST_ASSERT(rc == 0);
 
-    rc = fcb_area_info(fcb, &fcb->f_sectors[0], &area_elems[0], &area_bytes[0]);
+    rc = fcb_area_info(fcb, 0, &area_elems[0], &area_bytes[0]);
     TEST_ASSERT(rc == 0);
-    rc = fcb_area_info(fcb, &fcb->f_sectors[1], &area_elems[1], &area_bytes[1]);
+    rc = fcb_area_info(fcb, 1, &area_elems[1], &area_bytes[1]);
     TEST_ASSERT(rc == 0);
     TEST_ASSERT(area_elems[0] == 0);
     TEST_ASSERT(area_bytes[0] == 0);
@@ -90,9 +90,9 @@ TEST_CASE(fcb_test_area_info)
     TEST_ASSERT(area_bytes[1] == elem_cnts[1] * sizeof(test_data));
 
     /*
-     * If area pointer is NULL, should check the oldest area (area 1).
+     * Test oldest sector should be sector area 1.
      */
-    rc = fcb_area_info(fcb, NULL, &area_elems[0], &area_bytes[0]);
+    rc = fcb_area_info(fcb, FCB_SECTOR_OLDEST, &area_elems[0], &area_bytes[0]);
     TEST_ASSERT(rc == 0);
     TEST_ASSERT(area_elems[0] == elem_cnts[1]);
     TEST_ASSERT(area_bytes[0] == elem_cnts[1] * sizeof(test_data));
