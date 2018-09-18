@@ -30,7 +30,17 @@ baselibc before falling back to libc while creating the executable. For
 example, project ``boot`` uses baselibc. Its project description file
 ``boot.yml`` looks like the following:
 
-``no-highlight    project.name: boot    project.identities: bootloader    project.pkgs:        - libs/os        - libs/bootutil        - libs/nffs        - libs/console/stub        - libs/util        - libs/baselibc``
+.. code-block:: console
+
+	project.name: boot    
+	project.identities: bootloader    
+	project.pkgs:        
+		- libs/os        
+		- libs/bootutil        
+		- libs/nffs        
+		- libs/console/stub        
+		- libs/util        
+		- libs/baselibc
 
 List of Functions
 ~~~~~~~~~~~~~~~~~
@@ -42,5 +52,5 @@ example are the on-line manual pages at
 baselibc supports most libc functionality; malloc(), printf-family,
 string handling, and conversion routines.
 
-There is some functionality which is not available, e.g. support for
-floating point numbers, and limited support for 'long long'.
+There is some limited functionality and support for
+floating point numbers and 'long long', but contributions are always welcome! 

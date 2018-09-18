@@ -1,6 +1,13 @@
 Drivers
 =======
 
+.. toctree::
+   :maxdepth: 1
+
+   flash <flash>
+   mmc <mmc>
+
+
 Description
 ~~~~~~~~~~~
 
@@ -135,15 +142,15 @@ includes:
 +----------------------------------------+--------------------------+
 | Driver                                 | Description              |
 +========================================+==========================+
-| `adc <adc.html>`__                     | TODO: ADC driver.        |
+| ``adc``                                | TODO: ADC driver.        |
 +----------------------------------------+--------------------------+
-| `flash <flash.html>`__                 | SPI/I2C flash drivers.   |
+| ``flash``                              | SPI/I2C flash drivers.   |
 +----------------------------------------+--------------------------+
-| `lwip <lwip.html>`__                   | TODO: LWIP.              |
+| ``lwip``                               | TODO: LWIP.              |
 +----------------------------------------+--------------------------+
-| `mmc <mmc.html>`__                     | MMC/SD card driver.      |
+| ``mmc``                                | MMC/SD card driver.      |
 +----------------------------------------+--------------------------+
-| `sensors <sensors.html>`__             | TODO: sensors.           |
+| ``sensors``                            | TODO: sensors.           |
 +----------------------------------------+--------------------------+
-| `uart <uart.html>`__                   | TODO: UART driver.       |
+| ``uart``                               | TODO: UART driver.       |
 +----------------------------------------+--------------------------+
