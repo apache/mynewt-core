@@ -242,14 +242,12 @@ log_process(struct log *log)
 {
     struct os_mbuf *m;
 
-    while (1) {
+    do {
         m = os_mqueue_get(&log_mqueue);
-        if (!m) {
-            break;
+        if (m) {
+            log_async_handle_log(log, m);
         }
-
-        log_async_handle_log(log, m);
-    }
+    } while (m);
 }
 
 static void
