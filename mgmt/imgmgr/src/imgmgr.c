@@ -219,8 +219,8 @@ imgr_read_info(int image_slot, struct image_version *ver, uint8_t *hash,
     if (rc2) {
         return -1;
     }
-    rc2 = flash_area_read(fa, 0, hdr, sizeof(*hdr));
-    if (rc2) {
+    rc2 = flash_area_isempty_at(fa, 0, hdr, sizeof(*hdr));
+    if (rc2 < 0) {
         goto end;
     }
 
@@ -231,7 +231,8 @@ imgr_read_info(int image_slot, struct image_version *ver, uint8_t *hash,
         if (ver) {
             memcpy(ver, &hdr->ih_ver, sizeof(*ver));
         }
-    } else if (hdr->ih_magic == 0xffffffff) {
+    } else if (rc2 == 1) {
+        /* Area is empty */
         rc = 2;
         goto end;
     } else {
@@ -259,11 +260,11 @@ imgr_read_info(int image_slot, struct image_version *ver, uint8_t *hash,
     }
     tlv = (struct image_tlv *)data;
     while (data_off + sizeof(*tlv) <= data_end) {
-        rc2 = flash_area_read(fa, data_off, tlv, sizeof(*tlv));
-        if (rc2) {
+        rc2 = flash_area_isempty_at(fa, data_off, tlv, sizeof(*tlv));
+        if (rc2 < 0) {
             goto end;
         }
-        if (tlv->it_type == 0xff && tlv->it_len == 0xffff) {
+        if (rc2 == 1) {
             break;
         }
         if (tlv->it_type != IMAGE_TLV_SHA256 ||
