@@ -311,33 +311,27 @@ hal_flash_erase(uint8_t id, uint32_t address, uint32_t num_bytes)
 }
 
 int
-hal_flash_is_erased(const struct hal_flash *hf, uint32_t address,
+hal_flash_is_erased(const struct hal_flash *hf, uint32_t address, void *dst,
         uint32_t num_bytes)
 {
-    uint8_t buf[32];
-    uint32_t blksz;
-    int i;
+    uint32_t i;
+    uint8_t *buf;
 
-    while (num_bytes) {
-        blksz = sizeof(buf);
-        if (blksz > num_bytes) {
-            blksz = num_bytes;
+    buf = dst;
+
+    if (hf->hf_itf->hff_read(hf, address, dst, num_bytes)) {
+        return -1;
+    }
+    for (i = 0; i < num_bytes; i++) {
+        if (buf[i] != hf->hf_erased_val) {
+            return 0;
         }
-        if (hf->hf_itf->hff_read(hf, address, buf, blksz)) {
-            return -1;
-        }
-        for (i = 0; i < blksz; i++) {
-            if (buf[i] != hf->hf_erased_val) {
-                return 0;
-            }
-        }
-        num_bytes -= blksz;
     }
     return 1;
 }
 
 int
-hal_flash_isempty(uint8_t id, uint32_t address, uint32_t num_bytes)
+hal_flash_isempty(uint8_t id, uint32_t address, void *dst, uint32_t num_bytes)
 {
     const struct hal_flash *hf;
 
@@ -350,9 +344,9 @@ hal_flash_isempty(uint8_t id, uint32_t address, uint32_t num_bytes)
         return -1;
     }
     if (hf->hf_itf->hff_is_empty) {
-        return hf->hf_itf->hff_is_empty(hf, address, num_bytes);
+        return hf->hf_itf->hff_is_empty(hf, address, dst, num_bytes);
     } else {
-        return hal_flash_is_erased(hf, address, num_bytes);
+        return hal_flash_is_erased(hf, address, dst, num_bytes);
     }
 }
 

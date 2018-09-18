@@ -41,7 +41,7 @@ struct hal_flash_funcs {
     int (*hff_sector_info)(const struct hal_flash *dev, int idx,
             uint32_t *address, uint32_t *size);
     int (*hff_is_empty)(const struct hal_flash *dev, uint32_t address,
-            uint32_t num_bytes);
+            void *dst, uint32_t num_bytes);
     int (*hff_init)(const struct hal_flash *dev);
 };
 
@@ -59,7 +59,7 @@ struct hal_flash {
  */
 uint32_t hal_flash_sector_size(const struct hal_flash *hf, int sec_idx);
 
-int hal_flash_is_erased(const struct hal_flash *, uint32_t, uint32_t);
+int hal_flash_is_erased(const struct hal_flash *, uint32_t, void *, uint32_t);
 
 #ifdef __cplusplus
 }
