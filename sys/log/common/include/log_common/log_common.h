@@ -27,6 +27,8 @@
 extern "C" {
 #endif
 
+struct log;
+
 #define LOG_VERSION_V3  3
 #define LOG_VERSION_V2  2
 #define LOG_VERSION_V1  1
@@ -104,6 +106,15 @@ struct log_info {
 };
 
 extern struct log_info g_log_info;
+
+/** @typedef log_append_cb
+ * @brief Callback that is executed each time the corresponding log is appended
+ * to.
+ *
+ * @param log                   The log that was just appended to.
+ * @param idx                   The index of newly appended log entry.
+ */
+typedef void log_append_cb(struct log *log, uint32_t idx);
 
 #ifdef __cplusplus
 }

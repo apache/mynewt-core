@@ -49,4 +49,5 @@ TEST_SUITE(log_test_suite_fcb_mbuf)
 TEST_SUITE(log_test_suite_misc)
 {
     log_test_case_level();
+    log_test_case_append_cb();
 }
