@@ -29,6 +29,9 @@
 #include "uart_hal/uart_hal.h"
 #include "mcu/native_bsp.h"
 #include "mcu/mcu_hal.h"
+#include "hal/hal_i2c.h"
+#include "defs/sections.h"
+#include "ef_tinycrypt/ef_tinycrypt.h"
 
 #if MYNEWT_VAL(SIM_ACCEL_PRESENT)
 #include "sim/sim_accel.h"
@@ -38,16 +41,26 @@ static struct sim_accel os_bsp_accel0;
 static struct uart_dev os_bsp_uart0;
 static struct uart_dev os_bsp_uart1;
 
+static sec_data_secret struct eflash_tinycrypt_dev ef_dev0 = {
+    .etd_dev = {
+        .efd_hal = {
+            .hf_itf = &enc_flash_funcs,
+        },
+        .efd_hwdev = &native_flash_dev
+    }
+};
+
 const struct hal_flash *
 hal_bsp_flash_dev(uint8_t id)
 {
-    /*
-     * Just one to start with
-     */
-    if (id != 0) {
+    switch (id) {
+    case 0:
+        return &native_flash_dev;
+    case 1:
+        return &ef_dev0.etd_dev.efd_hal;
+    default:
         return NULL;
     }
-    return &native_flash_dev;
 }
 
 int
@@ -77,6 +90,11 @@ hal_bsp_init(void)
             OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *) NULL);
     assert(rc == 0);
 
+#if MYNEWT_VAL(I2C_0)
+    rc = hal_i2c_init(0, NULL);
+    assert(rc == 0);
+#endif
+    
 #if MYNEWT_VAL(SIM_ACCEL_PRESENT)
     rc = os_dev_create((struct os_dev *) &os_bsp_accel0, "simaccel0",
             OS_DEV_INIT_PRIMARY, 0, simaccel_init, (void *) NULL);

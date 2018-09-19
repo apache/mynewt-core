@@ -150,9 +150,6 @@ fcb_get_len(uint8_t *buf, uint16_t *len)
     int rc;
 
     if (buf[0] & 0x80) {
-        if (buf[0] == 0xff && buf[1] == 0xff) {
-            return FCB_ERR_NOVAR;
-        }
         *len = (buf[0] & 0x7f) | (buf[1] << 7);
         rc = 2;
     } else {
@@ -199,12 +196,12 @@ fcb_sector_hdr_read(struct fcb *fcb, struct flash_area *fap,
     if (!fdap) {
         fdap = &fda;
     }
+    if (flash_area_isempty_at(fap, 0, sizeof(*fdap))) {
+        return 0;
+    }
     rc = flash_area_read(fap, 0, fdap, sizeof(*fdap));
     if (rc) {
         return FCB_ERR_FLASH;
-    }
-    if (fdap->fd_magic == 0xffffffff) {
-        return 0;
     }
     if (fdap->fd_magic != fcb->f_magic) {
         return FCB_ERR_MAGIC;

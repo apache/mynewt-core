@@ -27,8 +27,8 @@ pkg.features:
 pkg.apis:
     - ADC_HW_IMPL
 pkg.deps:
-   - hw/drivers/adc
+    - "@apache-mynewt-core/hw/drivers/adc"
 pkg.deps.TEST:
-   - hw/hal
-   - hw/mcu/stm/stm32f4xx
-   - test/testutil
+    - "@apache-mynewt-core/hw/hal"
+    - "@apache-mynewt-core/hw/mcu/stm/stm32f4xx"
+    - "@apache-mynewt-core/test/testutil"

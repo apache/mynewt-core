@@ -206,6 +206,31 @@ err:
     return (rc);
 }
 
+#if MYNEWT_VAL(LOG_STORAGE_INFO)
+static int
+log_cbmem_storage_info(struct log *log, struct log_storage_info *info)
+{
+    struct cbmem *cbmem;
+    uint32_t size;
+    uint32_t used;
+
+    cbmem = (struct cbmem *)log->l_arg;
+
+    size = cbmem->c_buf_end - cbmem->c_buf;
+
+    used = (uint32_t)cbmem->c_entry_end + cbmem->c_entry_end->ceh_len -
+           (uint32_t)cbmem->c_entry_start;
+    if ((int32_t)used < 0) {
+        used += size;
+    }
+
+    info->size = size;
+    info->used = used;
+
+    return 0;
+}
+#endif
+
 const struct log_handler log_cbmem_handler = {
     .log_type = LOG_TYPE_MEMORY,
     .log_read = log_cbmem_read,
@@ -216,4 +241,7 @@ const struct log_handler log_cbmem_handler = {
     .log_append_mbuf_body = log_cbmem_append_mbuf_body,
     .log_walk = log_cbmem_walk,
     .log_flush = log_cbmem_flush,
+#if MYNEWT_VAL(LOG_STORAGE_INFO)
+    .log_storage_info = log_cbmem_storage_info,
+#endif
 };

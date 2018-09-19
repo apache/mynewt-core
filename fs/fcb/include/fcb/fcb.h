@@ -98,6 +98,11 @@ int fcb_init_flash_area(struct fcb *fcb, int flash_area_id, uint8_t version);
 struct fcb_log {
     struct fcb fl_fcb;
     uint8_t fl_entries;
+
+#if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
+    /* Internal - tracking storage use */
+    uint32_t fl_watermark_off;
+#endif
 };
 
 /**

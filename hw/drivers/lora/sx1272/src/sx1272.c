@@ -23,7 +23,7 @@ Maintainer: Miguel Luis and Gregory Cristian
 #include "radio/radio.h"
 #include "sx1272.h"
 #include "sx1272-board.h"
-#include "node/utilities.h"
+#include "lora/utilities.h"
 
 #if MYNEWT_VAL(LORA_MAC_TIMER_NUM) == -1
 #error "Must define a Lora MAC timer number"
@@ -317,10 +317,10 @@ SX1272IsChannelFree(RadioModems_t modem, uint32_t freq, int16_t rssiThresh,
     /* Delay for 1 msec */
     hal_timer_delay(SX1272_TIMER_NUM, 1000);
 
-    carrierSenseTime = TimerGetCurrentTime( );
+    carrierSenseTime = timer_get_current_time( );
 
     // Perform carrier sense for maxCarrierSenseTime
-    while (TimerGetElapsedTime( carrierSenseTime ) < maxCarrierSenseTime) {
+    while (timer_get_elapsed_time( carrierSenseTime ) < maxCarrierSenseTime) {
         rssi = SX1272ReadRssi(modem);
         if (rssi > rssiThresh) {
             status = false;
@@ -1562,5 +1562,33 @@ SX1272OnDio5Irq(void *unused)
         break;
     default:
         break;
+    }
+}
+
+void
+SX1272RxDisable(void)
+{
+    if (SX1272.Settings.Modem == MODEM_LORA) {
+        /* Disable GPIO interrupts */
+        SX1272RxIoIrqDisable();
+
+        /* Disable RX interrupts */
+        SX1272Write(REG_LR_IRQFLAGSMASK, RFLR_IRQFLAGS_RXTIMEOUT_MASK       |
+                                         RFLR_IRQFLAGS_RXDONE_MASK          |
+                                         RFLR_IRQFLAGS_PAYLOADCRCERROR_MASK |
+                                         RFLR_IRQFLAGS_CADDONE_MASK         |
+                                         RFLR_IRQFLAGS_CADDETECTED_MASK);
+
+        /* Put radio into standby */
+        SX1272SetStby();
+
+        /* Clear any pending interrupts */
+        SX1272Write(REG_LR_IRQFLAGS, RFLR_IRQFLAGS_RXTIMEOUT            |
+                                     RFLR_IRQFLAGS_RXDONE               |
+                                     RFLR_IRQFLAGS_PAYLOADCRCERROR_MASK |
+                                     RFLR_IRQFLAGS_CADDONE_MASK         |
+                                     RFLR_IRQFLAGS_CADDETECTED_MASK);
+        /* Enable GPIO interrupts */
+        SX1272RxIoIrqEnable();
     }
 }

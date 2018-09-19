@@ -16,13 +16,14 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
 #include <sys/time.h>
 #include "os/mynewt.h"
+#include "modlog/modlog.h"
 #include "testutil/testutil.h"
-
 #include "testbench.h"
 
 #ifdef ARCH_sim
@@ -39,8 +40,7 @@ volatile int g_mutex_test;
 void
 testbench_mutex_ts_init(void *arg)
 {
-    LOG_DEBUG(&testlog, LOG_MODULE_TEST,
-             "%s starting %s", buildID, tu_case_name);
+    MODLOG_DFLT(DEBUG, "%s starting %s", buildID, tu_case_name);
 }
 
 /*
@@ -112,8 +112,7 @@ testbench_mutex_init(void *arg)
     tu_case_idx = 0;
     tu_case_failed = 0;
 
-    LOG_DEBUG(&testlog, LOG_MODULE_TEST,
-             "%s testbench test_init", buildID);
+    MODLOG_DFLT(DEBUG, "%s testbench test_init", buildID);
 
     tu_suite_set_pass_cb(testbench_ts_pass, NULL);
     tu_suite_set_fail_cb(testbench_ts_fail, NULL);
@@ -127,8 +126,7 @@ TEST_SUITE(testbench_mutex_suite)
 {
     int taskcount;
 
-    LOG_DEBUG(&testlog, LOG_MODULE_TEST,
-             "%s mutex_suite start", buildID);
+    MODLOG_DFLT(DEBUG, "%s mutex_suite start", buildID);
 
     taskcount = 1;
     tu_case_set_post_cb(testbench_mutex_tc_posttest, (void*)taskcount);

@@ -27,8 +27,8 @@ pkg.keywords:
     - test
 
 pkg.deps:
-    - net/ip/mn_socket
-    - kernel/os
+    - "@apache-mynewt-core/net/ip/mn_socket"
+    - "@apache-mynewt-core/kernel/os"
 
 pkg.reqs:
     - console

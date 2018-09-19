@@ -24,6 +24,6 @@ pkg.homepage: "https://github.com/PetteriAimonen/Baselibc"
 pkg.keywords:
     - libc
 pkg.deps:
-    - kernel/os
+    - "@apache-mynewt-core/kernel/os"
 pkg.req_apis:
     - console

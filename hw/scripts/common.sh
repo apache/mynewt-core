@@ -36,9 +36,9 @@ common_file_to_load () {
 windows_detect() {
     WINDOWS=0
     if [ "$OS" = "Windows_NT" ]; then
-	WINDOWS=1
+        WINDOWS=1
     fi
     if [ $WINDOWS -eq 1 -a -z "$COMSPEC" ]; then
-	COMSPEC=cmd.exe
+        COMSPEC=cmd.exe
     fi
 }

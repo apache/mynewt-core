@@ -25,34 +25,36 @@ pkg.keywords:
     - sensors
 
 pkg.deps.BME280_OFB:
-    - hw/drivers/sensors/bme280
+    - "@apache-mynewt-core/hw/drivers/sensors/bme280"
 pkg.deps.DRV2605_OFB:
-    - hw/drivers/drv2605
+    - "@apache-mynewt-core/hw/drivers/drv2605"
 pkg.deps.LSM303DLHC_OFB:
-    - hw/drivers/sensors/lsm303dlhc
+    - "@apache-mynewt-core/hw/drivers/sensors/lsm303dlhc"
 pkg.deps.MPU6050_OFB:
-    - hw/drivers/sensors/mpu6050
+    - "@apache-mynewt-core/hw/drivers/sensors/mpu6050"
 pkg.deps.TSL2561_OFB:
-    - hw/drivers/sensors/tsl2561
+    - "@apache-mynewt-core/hw/drivers/sensors/tsl2561"
+pkg.deps.TSL2591_OFB:
+    - "@apache-mynewt-core/hw/drivers/sensors/tsl2591"
 pkg.deps.BNO055_OFB:
-    - hw/drivers/sensors/bno055
+    - "@apache-mynewt-core/hw/drivers/sensors/bno055"
 pkg.deps.TCS34725_OFB:
-    - hw/drivers/sensors/tcs34725
+    - "@apache-mynewt-core/hw/drivers/sensors/tcs34725"
 pkg.deps.MS5837_OFB:
-    - hw/drivers/sensors/ms5837
+    - "@apache-mynewt-core/hw/drivers/sensors/ms5837"
 pkg.deps.MS5840_OFB:
-    - hw/drivers/sensors/ms5840
+    - "@apache-mynewt-core/hw/drivers/sensors/ms5840"
 pkg.deps.MCU_NATIVE:
-    - hw/drivers/sensors/sim
+    - "@apache-mynewt-core/hw/drivers/sensors/sim"
 pkg.deps.BMP280_OFB:
-    - hw/drivers/sensors/bmp280
+    - "@apache-mynewt-core/hw/drivers/sensors/bmp280"
 pkg.deps.BMA253_OFB:
-    - hw/drivers/sensors/bma253
+    - "@apache-mynewt-core/hw/drivers/sensors/bma253"
 pkg.deps.BMA2XX_OFB:
-    - hw/drivers/sensors/bma2xx
+    - "@apache-mynewt-core/hw/drivers/sensors/bma2xx"
 pkg.deps.LIS2DW12_OFB:
-    - hw/drivers/sensors/lis2dw12
+    - "@apache-mynewt-core/hw/drivers/sensors/lis2dw12"
 pkg.deps.LIS2DS12_OFB:
-    - hw/drivers/sensors/lis2ds12
+    - "@apache-mynewt-core/hw/drivers/sensors/lis2ds12"
 pkg.init:
     sensor_dev_create: 500

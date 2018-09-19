@@ -21,8 +21,8 @@
 #define H_NFFS_PRIV_
 
 #include <inttypes.h>
-#include "log/log.h"
 #include "os/mynewt.h"
+#include "modlog/modlog.h"
 #include "nffs/nffs.h"
 #include "fs/fs.h"
 #include "crc/crc16.h"
@@ -299,8 +299,6 @@ extern struct nffs_hash_list *nffs_hash;
 extern struct nffs_inode_entry *nffs_root_dir;
 extern struct nffs_inode_entry *nffs_lost_found_dir;
 
-extern struct log nffs_log;
-
 /* @area */
 int nffs_area_magic_is_set(const struct nffs_disk_area *disk_area);
 int nffs_area_is_scratch(const struct nffs_disk_area *disk_area);
@@ -512,19 +510,8 @@ int nffs_write_to_file(struct nffs_file *file, const void *data, int len);
 
 #define NFFS_FLASH_LOC_NONE  nffs_flash_loc(NFFS_AREA_ID_NONE, 0)
 
-#if 0
-#ifdef ARCH_sim
-#include <stdio.h>
 #define NFFS_LOG(lvl, ...) \
-    printf(__VA_ARGS__)
-#else
-#define NFFS_LOG(lvl, ...) \
-    LOG_ ## lvl(&nffs_log, LOG_MODULE_NFFS, __VA_ARGS__)
-#endif
-#endif /* 0 */
-
-#define NFFS_LOG(lvl, ...) \
-    LOG_ ## lvl(&nffs_log, LOG_MODULE_NFFS, __VA_ARGS__)
+    MODLOG_ ## lvl(LOG_MODULE_NFFS, __VA_ARGS__)
 
 #ifdef __cplusplus
 }

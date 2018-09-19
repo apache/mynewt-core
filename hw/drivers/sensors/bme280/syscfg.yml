@@ -36,3 +36,6 @@ syscfg.defs:
     BME280_SPEC_CALC:
         description: 'BME280 Spec calculation insetad of built in one'
         value : 1
+    BME280_LOG_MODULE:
+        description: 'Numeric module ID to use for BME280 log messages'
+        value: 208

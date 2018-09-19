@@ -23,7 +23,6 @@
 
 #include "oic/port/mynewt/config.h"
 #include "oic/oc_rep.h"
-#include "oic/oc_log.h"
 #include "oic/port/mynewt/config.h"
 #include "port/oc_assert.h"
 #include "api/oc_priv.h"

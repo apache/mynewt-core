@@ -29,6 +29,7 @@
 #include "flash_map/flash_map.h"
 #include "hal/hal_flash.h"
 #include "hal/hal_spi.h"
+#include "hal/hal_i2c.h"
 
 #if MYNEWT_VAL(ADC_0)
 #include <adc_nrf51/adc_nrf51.h>
@@ -66,6 +67,22 @@ static const struct nrf51_hal_spi_cfg os_bsp_spi1s_cfg = {
     .mosi_pin     = MYNEWT_VAL(SPI_1_SLAVE_PIN_MOSI),
     .miso_pin     = MYNEWT_VAL(SPI_1_SLAVE_PIN_MISO),
     .ss_pin       = MYNEWT_VAL(SPI_1_SLAVE_PIN_SS),
+};
+#endif
+
+#if MYNEWT_VAL(I2C_0)
+static const struct nrf51_hal_i2c_cfg hal_i2c_cfg = {
+    .scl_pin = MYNEWT_VAL(I2C_0_PIN_SCL),
+    .sda_pin = MYNEWT_VAL(I2C_0_PIN_SDA),
+    .i2c_frequency = MYNEWT_VAL(I2C_0_FREQ_KHZ),
+};
+#endif
+
+#if MYNEWT_VAL(I2C_1)
+static const struct nrf51_hal_i2c_cfg hal_i2c1_cfg = {
+    .scl_pin = MYNEWT_VAL(I2C_1_PIN_SCL),
+    .sda_pin = MYNEWT_VAL(I2C_1_PIN_SDA),
+    .i2c_frequency = MYNEWT_VAL(I2C_1_FREQ_KHZ),
 };
 #endif
 
@@ -192,6 +209,16 @@ hal_bsp_init(void)
 
 #if MYNEWT_VAL(SPI_1_SLAVE)
     rc = hal_spi_init(1, (void *)&os_bsp_spi1s_cfg, HAL_SPI_TYPE_SLAVE);
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(I2C_0)
+    rc = hal_i2c_init(0, (void *)&hal_i2c0_cfg);
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(I2C_1)
+    rc = hal_i2c_init(1, (void *)&hal_i2c1_cfg);
     assert(rc == 0);
 #endif
 }

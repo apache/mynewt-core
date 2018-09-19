@@ -32,7 +32,7 @@
 HAL_StatusTypeDef HAL_SPI_Slave_Queue_TransmitReceive(SPI_HandleTypeDef *hspi, uint8_t *pTxData, uint8_t *pRxData, uint16_t Size);
 HAL_StatusTypeDef HAL_SPI_QueueTransmit(SPI_HandleTypeDef *hspi, uint8_t *pData, uint16_t Size);
 
-#define SPI_HAS_FIFO (defined(STM32F3) || defined(STM32F7))
+#define SPI_HAS_FIFO MYNEWT_VAL(STM32_HAL_SPI_HAS_FIFO)
 
 #if SPI_HAS_FIFO && (MYNEWT_VAL(SPI_0_SLAVE) || \
                      MYNEWT_VAL(SPI_1_SLAVE) || \

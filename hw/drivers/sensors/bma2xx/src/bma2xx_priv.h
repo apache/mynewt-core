@@ -116,7 +116,7 @@
 
 /* Get the chip ID */
 int
-bma2xx_get_chip_id(const struct bma2xx * bma2xx,
+bma2xx_get_chip_id(struct bma2xx * bma2xx,
                    uint8_t * chip_id);
 
 /* All three axis types */
@@ -135,14 +135,14 @@ struct accel_data {
 
 /* Get an accelerometer measurement for a single axis */
 int
-bma2xx_get_accel(const struct bma2xx * bma2xx,
+bma2xx_get_accel(struct bma2xx * bma2xx,
                  enum bma2xx_g_range g_range,
                  enum axis axis,
                  struct accel_data * accel_data);
 
 /* Get a temperature measurement */
 int
-bma2xx_get_temp(const struct bma2xx * bma2xx,
+bma2xx_get_temp(struct bma2xx * bma2xx,
                 float * temp_c);
 
 /* Which direction in an axis was this interrupt triggered on */
@@ -181,29 +181,29 @@ struct int_status {
 
 /* Get the active status of all interrupts */
 int
-bma2xx_get_int_status(const struct bma2xx * bma2xx,
+bma2xx_get_int_status(struct bma2xx * bma2xx,
                       struct int_status * int_status);
 
 /* Get the status and size of the FIFO */
 int
-bma2xx_get_fifo_status(const struct bma2xx * bma2xx,
+bma2xx_get_fifo_status(struct bma2xx * bma2xx,
                        bool * overrun,
                        uint8_t * frame_counter);
 
 /* Get/Set the accelerometer range */
 int
-bma2xx_get_g_range(const struct bma2xx * bma2xx,
+bma2xx_get_g_range(struct bma2xx * bma2xx,
                    enum bma2xx_g_range * g_range);
 int
-bma2xx_set_g_range(const struct bma2xx * bma2xx,
+bma2xx_set_g_range(struct bma2xx * bma2xx,
                    enum bma2xx_g_range g_range);
 
 /* Get/Set the filter output bandwidth */
 int
-bma2xx_get_filter_bandwidth(const struct bma2xx * bma2xx,
+bma2xx_get_filter_bandwidth(struct bma2xx * bma2xx,
                             enum bma2xx_filter_bandwidth * filter_bandwidth);
 int
-bma2xx_set_filter_bandwidth(const struct bma2xx * bma2xx,
+bma2xx_set_filter_bandwidth(struct bma2xx * bma2xx,
                             enum bma2xx_filter_bandwidth filter_bandwidth);
 
 /* Whether the sleep timer is locked to events or to time */
@@ -221,25 +221,25 @@ struct power_settings {
 
 /* Get/Set the power settings of the device */
 int
-bma2xx_get_power_settings(const struct bma2xx * bma2xx,
+bma2xx_get_power_settings(struct bma2xx * bma2xx,
                           struct power_settings * power_settings);
 int
-bma2xx_set_power_settings(const struct bma2xx * bma2xx,
-                          const struct power_settings * power_settings);
+bma2xx_set_power_settings(struct bma2xx * bma2xx,
+                          struct power_settings * power_settings);
 
 /* Get/Set the data register settings */
 int
-bma2xx_get_data_acquisition(const struct bma2xx * bma2xx,
+bma2xx_get_data_acquisition(struct bma2xx * bma2xx,
                             bool * unfiltered_reg_data,
                             bool * disable_reg_shadow);
 int
-bma2xx_set_data_acquisition(const struct bma2xx * bma2xx,
+bma2xx_set_data_acquisition(struct bma2xx * bma2xx,
                             bool unfiltered_reg_data,
                             bool disable_reg_shadow);
 
 /* Kick off a full soft reset of the device */
 int
-bma2xx_set_softreset(const struct bma2xx * bma2xx);
+bma2xx_set_softreset(struct bma2xx * bma2xx);
 
 /* Enable settings of all interupts */
 struct int_enable {
@@ -265,11 +265,11 @@ struct int_enable {
 
 /* Get/Set the enable settings of all interrupts */
 int
-bma2xx_get_int_enable(const struct bma2xx * bma2xx,
+bma2xx_get_int_enable(struct bma2xx * bma2xx,
                       struct int_enable * int_enable);
 int
-bma2xx_set_int_enable(const struct bma2xx * bma2xx,
-                      const struct int_enable * int_enable);
+bma2xx_set_int_enable(struct bma2xx * bma2xx,
+                      struct int_enable * int_enable);
 
 /* Which physical device pin is a given interrupt routed to */
 enum int_route {
@@ -301,11 +301,11 @@ struct int_routes {
 
 /* Get/Set the pin routing settings of all interrupts */
 int
-bma2xx_get_int_routes(const struct bma2xx * bma2xx,
+bma2xx_get_int_routes(struct bma2xx * bma2xx,
                       struct int_routes * int_routes);
 int
-bma2xx_set_int_routes(const struct bma2xx * bma2xx,
-                      const struct int_routes * int_routes);
+bma2xx_set_int_routes(struct bma2xx * bma2xx,
+                      struct int_routes * int_routes);
 
 /* Whether each interrupt uses filtered or unfiltered data */
 struct int_filters {
@@ -319,11 +319,11 @@ struct int_filters {
 
 /* Get/Set the filtered data settings of all interrupts */
 int
-bma2xx_get_int_filters(const struct bma2xx * bma2xx,
+bma2xx_get_int_filters(struct bma2xx * bma2xx,
                        struct int_filters * int_filters);
 int
-bma2xx_set_int_filters(const struct bma2xx * bma2xx,
-                       const struct int_filters * int_filters);
+bma2xx_set_int_filters(struct bma2xx * bma2xx,
+                       struct int_filters * int_filters);
 
 /* Drive mode of the interrupt pins */
 enum int_pin_output {
@@ -347,11 +347,11 @@ struct int_pin_electrical {
 
 /* Get/Set the electrical settings of both interrupt pins */
 int
-bma2xx_get_int_pin_electrical(const struct bma2xx * bma2xx,
+bma2xx_get_int_pin_electrical(struct bma2xx * bma2xx,
                               struct int_pin_electrical * electrical);
 int
-bma2xx_set_int_pin_electrical(const struct bma2xx * bma2xx,
-                              const struct int_pin_electrical * electrical);
+bma2xx_set_int_pin_electrical(struct bma2xx * bma2xx,
+                              struct int_pin_electrical * electrical);
 
 /* Length of time that an interrupt condition should be latched active */
 enum int_latch {
@@ -373,10 +373,10 @@ enum int_latch {
 
 /* Get/Set the interrupt condition latch time */
 int
-bma2xx_get_int_latch(const struct bma2xx * bma2xx,
+bma2xx_get_int_latch(struct bma2xx * bma2xx,
                      enum int_latch * int_latch);
 int
-bma2xx_set_int_latch(const struct bma2xx * bma2xx,
+bma2xx_set_int_latch(struct bma2xx * bma2xx,
                      bool reset_ints,
                      enum int_latch int_latch);
 
@@ -390,11 +390,11 @@ struct low_g_int_cfg {
 
 /* Get/Set the low-g interrupt settings */
 int
-bma2xx_get_low_g_int_cfg(const struct bma2xx * bma2xx,
+bma2xx_get_low_g_int_cfg(struct bma2xx * bma2xx,
                          struct low_g_int_cfg * low_g_int_cfg);
 int
-bma2xx_set_low_g_int_cfg(const struct bma2xx * bma2xx,
-                         const struct low_g_int_cfg * low_g_int_cfg);
+bma2xx_set_low_g_int_cfg(struct bma2xx * bma2xx,
+                         struct low_g_int_cfg * low_g_int_cfg);
 
 /* Settings for the high-g interrupt */
 struct high_g_int_cfg {
@@ -405,13 +405,13 @@ struct high_g_int_cfg {
 
 /* Get/Set the high-g interrupt settings */
 int
-bma2xx_get_high_g_int_cfg(const struct bma2xx * bma2xx,
+bma2xx_get_high_g_int_cfg(struct bma2xx * bma2xx,
                           enum bma2xx_g_range g_range,
                           struct high_g_int_cfg * high_g_int_cfg);
 int
-bma2xx_set_high_g_int_cfg(const struct bma2xx * bma2xx,
+bma2xx_set_high_g_int_cfg(struct bma2xx * bma2xx,
                           enum bma2xx_g_range g_range,
-                          const struct high_g_int_cfg * high_g_int_cfg);
+                          struct high_g_int_cfg * high_g_int_cfg);
 
 /* Settings for the slow/no-motion interrupt */
 struct slow_no_mot_int_cfg {
@@ -421,15 +421,15 @@ struct slow_no_mot_int_cfg {
 
 /* Get/Set the slow/no-motion interrupt settings */
 int
-bma2xx_get_slow_no_mot_int_cfg(const struct bma2xx * bma2xx,
+bma2xx_get_slow_no_mot_int_cfg(struct bma2xx * bma2xx,
                                bool no_motion_select,
                                enum bma2xx_g_range g_range,
                                struct slow_no_mot_int_cfg * slow_no_mot_int_cfg);
 int
-bma2xx_set_slow_no_mot_int_cfg(const struct bma2xx * bma2xx,
+bma2xx_set_slow_no_mot_int_cfg(struct bma2xx * bma2xx,
                                bool no_motion_select,
                                enum bma2xx_g_range g_range,
-                               const struct slow_no_mot_int_cfg * slow_no_mot_int_cfg);
+                               struct slow_no_mot_int_cfg * slow_no_mot_int_cfg);
 
 /* Settings for the slope interrupt */
 struct slope_int_cfg {
@@ -439,13 +439,13 @@ struct slope_int_cfg {
 
 /* Get/Set the slope interrupt settings */
 int
-bma2xx_get_slope_int_cfg(const struct bma2xx * bma2xx,
+bma2xx_get_slope_int_cfg(struct bma2xx * bma2xx,
                          enum bma2xx_g_range g_range,
                          struct slope_int_cfg * slope_int_cfg);
 int
-bma2xx_set_slope_int_cfg(const struct bma2xx * bma2xx,
+bma2xx_set_slope_int_cfg(struct bma2xx * bma2xx,
                          enum bma2xx_g_range g_range,
-                         const struct slope_int_cfg * slope_int_cfg);
+                         struct slope_int_cfg * slope_int_cfg);
 
 /* Settings for the double/single tap interrupt */
 struct tap_int_cfg {
@@ -458,13 +458,13 @@ struct tap_int_cfg {
 
 /* Get/Set the double/single tap interrupt settings */
 int
-bma2xx_get_tap_int_cfg(const struct bma2xx * bma2xx,
+bma2xx_get_tap_int_cfg(struct bma2xx * bma2xx,
                        enum bma2xx_g_range g_range,
                        struct tap_int_cfg * tap_int_cfg);
 int
-bma2xx_set_tap_int_cfg(const struct bma2xx * bma2xx,
+bma2xx_set_tap_int_cfg(struct bma2xx * bma2xx,
                        enum bma2xx_g_range g_range,
-                       const struct tap_int_cfg * tap_int_cfg);
+                       struct tap_int_cfg * tap_int_cfg);
 
 /* Settings for the orientation interrupt */
 struct orient_int_cfg {
@@ -477,11 +477,11 @@ struct orient_int_cfg {
 
 /* Get/Set the orientation interrupt settings */
 int
-bma2xx_get_orient_int_cfg(const struct bma2xx * bma2xx,
+bma2xx_get_orient_int_cfg(struct bma2xx * bma2xx,
                           struct orient_int_cfg * orient_int_cfg);
 int
-bma2xx_set_orient_int_cfg(const struct bma2xx * bma2xx,
-                          const struct orient_int_cfg * orient_int_cfg);
+bma2xx_set_orient_int_cfg(struct bma2xx * bma2xx,
+                          struct orient_int_cfg * orient_int_cfg);
 
 /* Hold time for flat condition */
 enum flat_hold {
@@ -501,18 +501,18 @@ struct flat_int_cfg {
 
 /* Get/Set the flat interrupt settings */
 int
-bma2xx_get_flat_int_cfg(const struct bma2xx * bma2xx,
+bma2xx_get_flat_int_cfg(struct bma2xx * bma2xx,
                         struct flat_int_cfg * flat_int_cfg);
 int
-bma2xx_set_flat_int_cfg(const struct bma2xx * bma2xx,
-                        const struct flat_int_cfg * flat_int_cfg);
+bma2xx_set_flat_int_cfg(struct bma2xx * bma2xx,
+                        struct flat_int_cfg * flat_int_cfg);
 
 /* Get/Set the FIFO watermark level */
 int
-bma2xx_get_fifo_wmark_level(const struct bma2xx * bma2xx,
+bma2xx_get_fifo_wmark_level(struct bma2xx * bma2xx,
                             uint8_t * wmark_level);
 int
-bma2xx_set_fifo_wmark_level(const struct bma2xx * bma2xx,
+bma2xx_set_fifo_wmark_level(struct bma2xx * bma2xx,
                             uint8_t wmark_level);
 
 /* Amplitude of a self-test induced acceleration */
@@ -537,21 +537,21 @@ struct self_test_cfg {
 
 /* Get/Set the self-test settings */
 int
-bma2xx_get_self_test_cfg(const struct bma2xx * bma2xx,
+bma2xx_get_self_test_cfg(struct bma2xx * bma2xx,
                          struct self_test_cfg * self_test_cfg);
 int
-bma2xx_set_self_test_cfg(const struct bma2xx * bma2xx,
-                         const struct self_test_cfg * self_test_cfg);
+bma2xx_set_self_test_cfg(struct bma2xx * bma2xx,
+                         struct self_test_cfg * self_test_cfg);
 
 /* Get/Set the NVM reset/write control values */
 int
-bma2xx_get_nvm_control(const struct bma2xx * bma2xx,
+bma2xx_get_nvm_control(struct bma2xx * bma2xx,
                        uint8_t * remaining_cycles,
                        bool * load_from_nvm,
                        bool * nvm_is_ready,
                        bool * nvm_unlocked);
 int
-bma2xx_set_nvm_control(const struct bma2xx * bma2xx,
+bma2xx_set_nvm_control(struct bma2xx * bma2xx,
                        bool load_from_nvm,
                        bool store_into_nvm,
                        bool nvm_unlocked);
@@ -565,10 +565,10 @@ enum i2c_watchdog {
 
 /* Get/Set the I2C watchdog settings */
 int
-bma2xx_get_i2c_watchdog(const struct bma2xx * bma2xx,
+bma2xx_get_i2c_watchdog(struct bma2xx * bma2xx,
                         enum i2c_watchdog * i2c_watchdog);
 int
-bma2xx_set_i2c_watchdog(const struct bma2xx * bma2xx,
+bma2xx_set_i2c_watchdog(struct bma2xx * bma2xx,
                         enum i2c_watchdog i2c_watchdog);
 
 /* Offset compensation settings used in slow compensation mode */
@@ -582,32 +582,32 @@ struct slow_ofc_cfg {
 /* Get/Set the fast & slow offset compensation mode settings, and reset all
  * offset compensation values back to NVM defaults */
 int
-bma2xx_get_fast_ofc_cfg(const struct bma2xx * bma2xx,
+bma2xx_get_fast_ofc_cfg(struct bma2xx * bma2xx,
                         bool * fast_ofc_ready,
                         enum bma2xx_offset_comp_target * ofc_target_z,
                         enum bma2xx_offset_comp_target * ofc_target_y,
                         enum bma2xx_offset_comp_target * ofc_target_x);
 int
-bma2xx_set_fast_ofc_cfg(const struct bma2xx * bma2xx,
+bma2xx_set_fast_ofc_cfg(struct bma2xx * bma2xx,
                         enum axis fast_ofc_axis,
                         enum bma2xx_offset_comp_target fast_ofc_target,
                         bool trigger_fast_ofc);
 int
-bma2xx_get_slow_ofc_cfg(const struct bma2xx * bma2xx,
+bma2xx_get_slow_ofc_cfg(struct bma2xx * bma2xx,
                         struct slow_ofc_cfg * slow_ofc_cfg);
 int
-bma2xx_set_slow_ofc_cfg(const struct bma2xx * bma2xx,
-                        const struct slow_ofc_cfg * slow_ofc_cfg);
+bma2xx_set_slow_ofc_cfg(struct bma2xx * bma2xx,
+                        struct slow_ofc_cfg * slow_ofc_cfg);
 int
-bma2xx_set_ofc_reset(const struct bma2xx * bma2xx);
+bma2xx_set_ofc_reset(struct bma2xx * bma2xx);
 
 /* Get/Set the offset compensation value for a specific axis */
 int
-bma2xx_get_ofc_offset(const struct bma2xx * bma2xx,
+bma2xx_get_ofc_offset(struct bma2xx * bma2xx,
                       enum axis axis,
                       float * offset_g);
 int
-bma2xx_set_ofc_offset(const struct bma2xx * bma2xx,
+bma2xx_set_ofc_offset(struct bma2xx * bma2xx,
                       enum axis axis,
                       float offset_g);
 
@@ -619,11 +619,11 @@ enum saved_data_addr {
 
 /* Get/Set the data stored in general purpose non-volatile registers */
 int
-bma2xx_get_saved_data(const struct bma2xx * bma2xx,
+bma2xx_get_saved_data(struct bma2xx * bma2xx,
                       enum saved_data_addr saved_data_addr,
                       uint8_t * saved_data_val);
 int
-bma2xx_set_saved_data(const struct bma2xx * bma2xx,
+bma2xx_set_saved_data(struct bma2xx * bma2xx,
                       enum saved_data_addr saved_data_addr,
                       uint8_t saved_data_val);
 
@@ -650,15 +650,15 @@ struct fifo_cfg {
 
 /* Get/Set the FIFO capture and behavior settings */
 int
-bma2xx_get_fifo_cfg(const struct bma2xx * bma2xx,
+bma2xx_get_fifo_cfg(struct bma2xx * bma2xx,
                     struct fifo_cfg * fifo_cfg);
 int
-bma2xx_set_fifo_cfg(const struct bma2xx * bma2xx,
-                    const struct fifo_cfg * fifo_cfg);
+bma2xx_set_fifo_cfg(struct bma2xx * bma2xx,
+                    struct fifo_cfg * fifo_cfg);
 
 /* Read a single multi-axis data frame from the FIFO */
 int
-bma2xx_get_fifo(const struct bma2xx * bma2xx,
+bma2xx_get_fifo(struct bma2xx * bma2xx,
                 enum bma2xx_g_range g_range,
                 enum fifo_data fifo_data,
                 struct accel_data * accel_data);

@@ -31,8 +31,8 @@ pkg.cflags.HARDFLOAT:
     - -mfloat-abi=hard -mfpu=fpv4-sp-d16
 
 pkg.deps:
-    - hw/mcu/ambiq/apollo2
-    - libc/baselibc
+    - "@apache-mynewt-core/hw/mcu/ambiq/apollo2"
+    - "@apache-mynewt-core/libc/baselibc"
 
 pkg.deps.UART_0:
-    - hw/drivers/uart/uart_hal
+    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"

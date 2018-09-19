@@ -27,11 +27,11 @@ pkg.keywords:
     - riscv
 
 pkg.deps:
-    - hw/mcu/sifive/fe310
-    - libc/baselibc
+    - "@apache-mynewt-core/hw/mcu/sifive/fe310"
+    - "@apache-mynewt-core/libc/baselibc"
 
 pkg.deps.UART_0:
-    - hw/drivers/uart/uart_hal
+    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
 
 pkg.cflags: -march=rv32imac -mabi=ilp32
 

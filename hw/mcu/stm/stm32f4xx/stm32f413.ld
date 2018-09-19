@@ -52,7 +52,7 @@
  */
 ENTRY(Reset_Handler)
 
-_estack = 0x20050000;
+_estack = ORIGIN(CCM) + LENGTH(CCM);
 
 SECTIONS
 {

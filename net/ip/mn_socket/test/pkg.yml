@@ -23,8 +23,8 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps: 
-    - test/testutil
-    - net/ip/mn_socket
+    - "@apache-mynewt-core/test/testutil"
+    - "@apache-mynewt-core/net/ip/mn_socket"
 
 pkg.deps.SELFTEST:
-    - sys/console/stub
+    - "@apache-mynewt-core/sys/console/stub"

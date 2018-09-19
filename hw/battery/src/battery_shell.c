@@ -52,6 +52,13 @@ static const struct shell_cmd_help bat_read_help =
         .params = bat_read_params,
 };
 
+static const struct shell_cmd_help bat_write_help =
+{
+        .summary = "write battery properties",
+        .usage = "read <prop> <value>",
+        .params = NULL,
+};
+
 static const struct shell_cmd_help bat_list_help =
 {
         .summary = "list battery properties",
@@ -97,6 +104,7 @@ static void cmd_bat_help(void)
     console_printf("  monitor [<prop>] [off]\n");
     console_printf("  list\n");
     console_printf("  read [<prop>] | all\n");
+    console_printf("  write <prop> <value>\n");
 
     console_printf("Examples:\n");
     console_printf("  list\n");
@@ -104,6 +112,7 @@ static void cmd_bat_help(void)
     console_printf("  monitor off\n");
     console_printf("  read Voltage\n");
     console_printf("  read all\n");
+    console_printf("  write VoltageLoAlarmSet\n");
 }
 
 static const char *bat_status[] = {
@@ -152,7 +161,8 @@ static void print_property(const struct battery_property *prop)
         console_printf(" %s %ld s\n", name, prop->bp_value.bpv_time_in_s);
         break;
     case BATTERY_PROP_SOC:
-        console_printf(" %s %d %%\n", name, prop->bp_value.bpv_soc);
+    case BATTERY_PROP_SOH:
+        console_printf(" %s %d %%\n", name, prop->bp_value.bpv_u8);
         break;
     case BATTERY_PROP_STATUS:
         console_printf(" %s %s\n", name,
@@ -210,6 +220,69 @@ static int cmd_bat_read(int argc, char **argv)
             }
             print_property(prop);
         }
+    }
+err:
+    return rc;
+}
+
+static int
+get_min_max(const struct battery_property *prop, long long *min, long long *max)
+{
+    int rc = 0;
+
+    if (prop->bp_type == BATTERY_PROP_VOLTAGE_NOW) {
+        *min = 0;
+        *max = 10000;
+    } else if (prop->bp_type == BATTERY_PROP_TEMP_NOW) {
+        *min = -128;
+        *max = 127;
+    } else {
+        rc = -1;
+    }
+    return rc;
+}
+
+static int
+cmd_bat_write(int argc, char ** argv)
+{
+    int rc = 0;
+    long long min;
+    long long max;
+    struct battery_property *prop;
+    long long int val;
+
+    if (argc < 3) {
+        console_printf("Invalid number of arguments, use write <prop> <value>\n");
+        goto err;
+    }
+
+    prop = battery_find_property_by_name(bat, argv[1]);
+    if (prop == NULL) {
+        console_printf("Invalid property name %s\n", argv[1]);
+        goto err;
+    }
+    if (get_min_max(prop, &min, &max)) {
+        console_printf("Property %s can not be set\n", argv[1]);
+        goto err;
+    }
+    val = parse_ll_bounds(argv[2], min, max, &rc);
+    if (rc) {
+        console_printf("Property value not in range <%lld, %lld>\n", min, max);
+        rc = 0;
+        goto err;
+    }
+    if (prop->bp_type == BATTERY_PROP_VOLTAGE_NOW &&
+            (prop->bp_flags & BATTERY_PROPERTY_FLAGS_ALARM_THREASH) != 0) {
+        battery_prop_set_value_uint32(prop, (uint32_t)val);
+    } else if (prop->bp_type == BATTERY_PROP_TEMP_NOW &&
+            (prop->bp_flags & BATTERY_PROPERTY_FLAGS_ALARM_THREASH) != 0) {
+        battery_prop_set_value_float(prop, val);
+    } else {
+        console_printf("Property %s can't be written!\n", argv[1]);
+    }
+    if (!prop->bp_valid) {
+        console_printf("Error writing property!\n");
+        goto err;
     }
 err:
     return rc;
@@ -299,6 +372,7 @@ err:
 static const struct shell_cmd bat_cli_commands[] =
 {
         { "read", cmd_bat_read, HELP(bat_read_help) },
+        { "write", cmd_bat_write, HELP(bat_write_help) },
         { "list", cmd_bat_list, HELP(bat_list_help) },
         { "pollrate", cmd_bat_poll_rate, HELP(bat_poll_rate_help) },
         { "monitor", cmd_bat_monitor, HELP(bat_monitor_help) },

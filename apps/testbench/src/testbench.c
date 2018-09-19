@@ -26,6 +26,7 @@
 #include <shell/shell.h>
 #endif
 #include <log/log.h>
+#include <modlog/modlog.h>
 #include <stats/stats.h>
 #include <config/config.h>
 #include "flash_map/flash_map.h"
@@ -170,9 +171,10 @@ testbench_ts_result(char *msg, void *arg, bool passed)
         total_fails++;
     }
 
-    LOG_INFO(&testlog, LOG_MODULE_TEST,
-            "{\"k\":\"%s\",\"n\":\"%s\",\"s\":\"%s\",\"m\":\"%s\",\"r\":%d}",
-             runtest_token, n, s, m, passed);
+    MODLOG_INFO(
+        LOG_MODULE_TEST,
+        "{\"k\":\"%s\",\"n\":\"%s\",\"s\":\"%s\",\"m\":\"%s\",\"r\":%d}",
+        runtest_token, n, s, m, passed);
 }
 
 void
@@ -260,16 +262,15 @@ testbench_runtests(struct os_event *ev)
 static void
 testbench_test_complete(void)
 {
-    LOG_INFO(&testlog, LOG_MODULE_TEST, "%s Done", runtest_token);
-    LOG_INFO(&testlog, LOG_MODULE_TEST,
-             "%s TESTBENCH TEST %s - Tests run:%d pass:%d fail:%d %s",
-             buildID,
-             (total_fails ? "FAILED" : "PASSED"),
-             total_tests,
-             (total_tests-total_fails),
-             total_fails,
-             runtest_token);
-    return;
+    MODLOG_INFO(LOG_MODULE_TEST, "%s Done", runtest_token);
+    MODLOG_INFO(LOG_MODULE_TEST,
+                "%s TESTBENCH TEST %s - Tests run:%d pass:%d fail:%d %s",
+                buildID,
+                (total_fails ? "FAILED" : "PASSED"),
+                total_tests,
+                (total_tests-total_fails),
+                total_fails,
+                runtest_token);
 }
 
 /*
@@ -388,8 +389,10 @@ main(int argc, char **argv)
     cbmem_init(&cbmem, cbmem_buf, MAX_CBMEM_BUF);
     log_register("testlog", &testlog, &log_cbmem_handler, &cbmem, LOG_SYSLEVEL);
 
+    rc = modlog_register(LOG_MODULE_TEST, &testlog, LOG_LEVEL_DEBUG, NULL);
+    assert(rc == 0);
+
     /* Initialize the OIC  */
-    log_register("oic", &oc_log, &log_console_handler, NULL, LOG_SYSLEVEL);
     oc_main_init((oc_handler_t *)&omgr_oc_handler);
 
 #if MYNEWT_VAL(TESTBENCH_BLE)
@@ -418,7 +421,7 @@ main(int argc, char **argv)
      */
     run_evcb_set((os_event_fn*) testbench_runtests);
 
-    LOG_INFO(&testlog, LOG_MODULE_TEST, "testbench app initialized");
+    MODLOG_INFO(LOG_MODULE_TEST, "testbench app initialized");
 
     while (1) {
         os_eventq_run(os_eventq_dflt_get());

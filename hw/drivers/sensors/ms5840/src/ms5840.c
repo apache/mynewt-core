@@ -33,8 +33,9 @@
 #include "ms5840_priv.h"
 #include "os/os_cputime.h"
 #include "console/console.h"
-#include "log/log.h"
+#include "modlog/modlog.h"
 #include "stats/stats.h"
+#include <syscfg/syscfg.h>
 
 static uint16_t cnv_time[6] = {
     MS5840_CNV_TIME_OSR_256,
@@ -62,10 +63,8 @@ STATS_NAME_END(ms5840_stat_section)
 /* Global variable used to hold stats data */
 STATS_SECT_DECL(ms5840_stat_section) g_ms5840stats;
 
-#define LOG_MODULE_MS5840    (5840)
-#define MS5840_INFO(...)     LOG_INFO(&_log, LOG_MODULE_MS5840, __VA_ARGS__)
-#define MS5840_ERR(...)      LOG_ERROR(&_log, LOG_MODULE_MS5840, __VA_ARGS__)
-static struct log _log;
+#define MS5840_LOG(lvl_, ...) \
+    MODLOG_ ## lvl_(MYNEWT_VAL(MS5840_LOG_MODULE), __VA_ARGS__)
 
 /* Exports for the sensor API */
 static int ms5840_sensor_read(struct sensor *, sensor_type_t,
@@ -102,8 +101,6 @@ ms5840_init(struct os_dev *dev, void *arg)
     }
 
     ms5840 = (struct ms5840 *)dev;
-
-    log_register(dev->od_name, &_log, &log_console_handler, NULL, LOG_SYSLEVEL);
 
     sensor = &ms5840->sensor;
 
@@ -333,17 +330,22 @@ ms5840_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
         .buffer = &addr
     };
 
-    /* Register write */
-    rc = hal_i2c_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1);
+    rc = sensor_itf_lock(itf, MYNEWT_VAL(MS5840_ITF_LOCK_TMO));
     if (rc) {
-        MS5840_ERR("I2C write command write failed at address 0x%02X\n",
-                   data_struct.address);
-        STATS_INC(g_ms5840stats, write_errors);
-        goto err;
+        return rc;
     }
 
-    return 0;
-err:
+    /* Register write */
+    rc = hal_i2c_master_write(itf->si_num, &data_struct,
+                              OS_TICKS_PER_SEC / 10, 1);
+    if (rc) {
+        MS5840_LOG(ERROR, "I2C write command write failed at address 0x%02X\n",
+                   data_struct.address);
+        STATS_INC(g_ms5840stats, write_errors);
+    }
+
+    sensor_itf_unlock(itf);
+
     return rc;
 }
 
@@ -373,10 +375,16 @@ ms5840_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
     /* Clear the supplied buffer */
     memset(buffer, 0, len);
 
-    /* Command write */
-    rc = hal_i2c_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1);
+    rc = sensor_itf_lock(itf, MYNEWT_VAL(MS5840_ITF_LOCK_TMO));
     if (rc) {
-        MS5840_ERR("I2C read command write failed at address 0x%02X\n",
+        return rc;
+    }
+
+    /* Command write */
+    rc = hal_i2c_master_write(itf->si_num, &data_struct,
+                              OS_TICKS_PER_SEC / 10, 1);
+    if (rc) {
+        MS5840_LOG(ERROR, "I2C read command write failed at address 0x%02X\n",
                    data_struct.address);
         STATS_INC(g_ms5840stats, write_errors);
         goto err;
@@ -385,9 +393,11 @@ ms5840_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
     /* Read len bytes back */
     memset(payload, 0, sizeof(payload));
     data_struct.len = len;
-    rc = hal_i2c_master_read(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1);
+    rc = hal_i2c_master_read(itf->si_num, &data_struct,
+                             OS_TICKS_PER_SEC / 10, 1);
     if (rc) {
-        MS5840_ERR("Failed to read from 0x%02X:0x%02X\n", data_struct.address, addr);
+        MS5840_LOG(ERROR, "Failed to read from 0x%02X:0x%02X\n",
+                   data_struct.address, addr);
         STATS_INC(g_ms5840stats, read_errors);
         goto err;
     }
@@ -395,8 +405,8 @@ ms5840_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
     /* Copy the I2C results into the supplied buffer */
     memcpy(buffer, payload, len);
 
-    return 0;
 err:
+    sensor_itf_unlock(itf);
     return rc;
 }
 
@@ -430,7 +440,7 @@ ms5840_read_eeprom(struct sensor_itf *itf, uint16_t *coeff)
     rc = ms5840_crc_check(payload, (payload[MS5840_IDX_CRC] & 0xF000) >> 12);
     if (rc) {
         rc = SYS_EINVAL;
-        MS5840_ERR("Failure in CRC, 0x%02X\n",
+        MS5840_LOG(ERROR, "Failure in CRC, 0x%02X\n",
                    payload[MS5840_IDX_CRC] &  0xF000 >> 12);
         STATS_INC(g_ms5840stats, eeprom_crc_errors);
         goto err;

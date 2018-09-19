@@ -37,6 +37,9 @@
 #if MYNEWT_VAL(TSL2561_OFB)
 #include <tsl2561/tsl2561.h>
 #endif
+#if MYNEWT_VAL(TSL2591_OFB)
+#include <tsl2591/tsl2591.h>
+#endif
 #if MYNEWT_VAL(TCS34725_OFB)
 #include <tcs34725/tcs34725.h>
 #endif
@@ -100,6 +103,10 @@ static struct bno055 bno055;
 
 #if MYNEWT_VAL(TSL2561_OFB)
 static struct tsl2561 tsl2561;
+#endif
+
+#if MYNEWT_VAL(TSL2591_OFB)
+static struct tsl2591 tsl2591;
 #endif
 
 #if MYNEWT_VAL(TCS34725_OFB)
@@ -224,6 +231,15 @@ static struct sensor_itf i2c_0_itf_tsl = {
 };
 #endif
 
+#if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(TSL2591_OFB)
+static struct sensor_itf i2c_0_itf_tsl = {
+    .si_type = SENSOR_ITF_I2C,
+    .si_num  = 0,
+    /*  I2C address for the TSL2591 (0x29) */
+    .si_addr = 0x29
+};
+#endif
+
 #if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(TCS34725_OFB)
 static struct sensor_itf i2c_0_itf_tcs = {
     .si_type = SENSOR_ITF_I2C,
@@ -234,7 +250,7 @@ static struct sensor_itf i2c_0_itf_tcs = {
 #endif
 
 #if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(MS5837_OFB)
-static struct sensor_itf i2c_0_itf_ms = {
+static struct sensor_itf i2c_0_itf_ms37 = {
     .si_type = SENSOR_ITF_I2C,
     .si_num  = 0,
     /* HW I2C address for the MS5837 */
@@ -243,7 +259,7 @@ static struct sensor_itf i2c_0_itf_ms = {
 #endif
 
 #if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(MS5840_OFB)
-static struct sensor_itf i2c_0_itf_ms = {
+static struct sensor_itf i2c_0_itf_ms40 = {
     .si_type = SENSOR_ITF_I2C,
     .si_num  = 0,
     /* HW I2C address for the MS5840 */
@@ -532,6 +548,34 @@ config_tsl2561_sensor(void)
 #endif
 
 /**
+ * TSL2591 Sensor default configuration used by the creator package
+ *
+ * @return 0 on success, non-zero on failure
+ */
+#if MYNEWT_VAL(TSL2591_OFB)
+static int
+config_tsl2591_sensor(void)
+{
+    int rc;
+    struct os_dev *dev;
+    struct tsl2591_cfg tslcfg;
+
+    dev = (struct os_dev *) os_dev_open("tsl2591_0", OS_TIMEOUT_NEVER, NULL);
+    assert(dev != NULL);
+
+    /* Gain set to 1X and Inetgration time set to 100ms */
+    tslcfg.gain = TSL2591_LIGHT_GAIN_LOW;
+    tslcfg.integration_time = TSL2591_LIGHT_ITIME_100MS;
+    tslcfg.mask = SENSOR_TYPE_LIGHT;
+
+    rc = tsl2591_config((struct tsl2591 *)dev, &tslcfg);
+
+    os_dev_close(dev);
+    return rc;
+}
+#endif
+
+/**
  * DRV2605 Actuator default configuration used by the creator package
  *
  * @return 0 on success, non-zero on failure
@@ -813,7 +857,7 @@ config_lis2dw12_sensor(void)
 
     cfg.filter_bw = LIS2DW12_FILTER_BW_ODR_DIV_2;
     cfg.high_pass = 0;
-    
+
     cfg.tap.en_x = 1;
     cfg.tap.en_y = 1;
     cfg.tap.en_z = 1;
@@ -853,7 +897,7 @@ config_lis2dw12_sensor(void)
     cfg.power_mode = LIS2DW12_PM_HIGH_PERF;
     cfg.inactivity_sleep_enable = 0;
     cfg.low_noise_enable = 1;
-    
+
     cfg.read_mode.mode = LIS2DW12_READ_M_POLL;
 
     cfg.mask = SENSOR_TYPE_ACCELEROMETER;
@@ -927,7 +971,7 @@ config_lis2ds12_sensor(void)
 
     rc = lis2ds12_config((struct lis2ds12 *) dev, &cfg);
     assert(rc == 0);
-    
+
     os_dev_close(dev);
     return rc;
 }
@@ -1039,6 +1083,15 @@ sensor_dev_create(void)
     assert(rc == 0);
 #endif
 
+#if MYNEWT_VAL(TSL2591_OFB)
+    rc = os_dev_create((struct os_dev *) &tsl2591, "tsl2591_0",
+      OS_DEV_INIT_PRIMARY, 0, tsl2591_init, (void *)&i2c_0_itf_tsl);
+    assert(rc == 0);
+
+    rc = config_tsl2591_sensor();
+    assert(rc == 0);
+#endif
+
 #if MYNEWT_VAL(TCS34725_OFB)
     rc = os_dev_create((struct os_dev *) &tcs34725, "tcs34725_0",
       OS_DEV_INIT_PRIMARY, 0, tcs34725_init, (void *)&i2c_0_itf_tcs);
@@ -1059,7 +1112,7 @@ sensor_dev_create(void)
 
 #if MYNEWT_VAL(MS5837_OFB)
     rc = os_dev_create((struct os_dev *) &ms5837, "ms5837_0",
-      OS_DEV_INIT_PRIMARY, 0, ms5837_init, (void *)&i2c_0_itf_ms);
+      OS_DEV_INIT_PRIMARY, 0, ms5837_init, (void *)&i2c_0_itf_ms37);
     assert(rc == 0);
 
     rc = config_ms5837_sensor();
@@ -1068,7 +1121,7 @@ sensor_dev_create(void)
 
 #if MYNEWT_VAL(MS5840_OFB)
     rc = os_dev_create((struct os_dev *) &ms5840, "ms5840_0",
-      OS_DEV_INIT_PRIMARY, 0, ms5840_init, (void *)&i2c_0_itf_ms);
+      OS_DEV_INIT_PRIMARY, 0, ms5840_init, (void *)&i2c_0_itf_ms40);
     assert(rc == 0);
 
     rc = config_ms5840_sensor();

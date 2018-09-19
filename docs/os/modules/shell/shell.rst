@@ -3,10 +3,10 @@ Shell
 
 The shell runs above the console and provides two functionalities:
 
--  Processes console input. See the `Enabling the Console and Shell
-   tutorial </os/tutorials/blinky_console.html>`__ for example of the
+-  Processes console input. See the :doc:`Enabling the Console and Shell
+   tutorial <../../../tutorials/blinky_console>` for example of the
    shell.
--  Implements the `newtmgr <../../../newtmgr/overview.html>`__ line
+-  Implements the :doc:`newtmgr <../../../newtmgr/index>` line
    protocol over serial transport.
 
 The shell uses the OS default event queue for shell events and runs in
@@ -49,7 +49,7 @@ setting to enable the log command in the shell:
 
     # sys/log/full pkg.yml
     pkg.deps.LOG_CLI:
-        - sys/shell
+        - "@apache-mynewt-core/sys/shell"
 
 Description
 -----------

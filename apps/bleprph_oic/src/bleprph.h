@@ -20,7 +20,8 @@
 #ifndef H_BLEPRPH_
 #define H_BLEPRPH_
 
-#include "log/log.h"
+#include "os/mynewt.h"
+#include "modlog/modlog.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -29,13 +30,6 @@ struct ble_hs_cfg;
 struct ble_gatt_register_ctxt;
 
 extern struct log bleprph_log;
-
-/* bleprph uses the first "peruser" log module. */
-#define BLEPRPH_LOG_MODULE  (LOG_MODULE_PERUSER + 0)
-
-/* Convenience macro for logging to the bleprph module. */
-#define BLEPRPH_LOG(lvl, ...) \
-    LOG_ ## lvl(&bleprph_log, BLEPRPH_LOG_MODULE, __VA_ARGS__)
 
 /** GATT server. */
 #define GATT_SVR_SVC_ALERT_UUID               0x1811

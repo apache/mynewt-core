@@ -33,7 +33,8 @@ struct adc_dev;
  */
 typedef enum {
     /* This event represents the result of an ADC run. */
-    ADC_EVENT_RESULT = 0
+    ADC_EVENT_RESULT = 0,
+    ADC_EVENT_CALIBRATED
 } adc_event_type_t;
 
 /**

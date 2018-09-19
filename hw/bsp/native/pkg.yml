@@ -27,9 +27,10 @@ pkg.keywords:
     - bsp
 
 pkg.deps:
-    - hw/mcu/native
-    - hw/drivers/uart/uart_hal
-    - net/ip/native_sockets
+    - "@apache-mynewt-core/hw/mcu/native"
+    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
+    - "@apache-mynewt-core/hw/drivers/flash/enc_flash/ef_tinycrypt"
+    - "@apache-mynewt-core/net/ip/native_sockets"
 
 pkg.deps.BLE_DEVICE:
-    - hw/drivers/nimble/native
+    - "@apache-mynewt-core/hw/drivers/nimble/native"

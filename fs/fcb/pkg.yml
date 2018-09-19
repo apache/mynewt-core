@@ -25,6 +25,6 @@ pkg.keywords:
     - log
 
 pkg.deps:
-    - kernel/os
-    - util/crc
-    - sys/flash_map
+    - "@apache-mynewt-core/kernel/os"
+    - "@apache-mynewt-core/util/crc"
+    - "@apache-mynewt-core/sys/flash_map"

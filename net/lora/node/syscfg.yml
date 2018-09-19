@@ -87,11 +87,6 @@ syscfg.defs:
                 the transmission of join requests by an end device.
         value: 5000
 
-
-    LORA_MAC_TIMER_NUM:
-        description: Timer number used for lora mac and radio
-        value: -1
-
     LORA_NODE_PUBLIC_NWK:
         description: >
                 Sets public or private lora network. A value of 1 means

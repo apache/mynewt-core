@@ -49,8 +49,6 @@ static const ble_addr_t bsnprph_central_addr = {
     { 0x0a, 0x0b, 0x09, 0x09, 0x09, 0x00 },
 };
 
-struct log bsnprph_log;
-
 /* Sends data to central at 60 Hz. */
 static struct os_callout bsnprph_tx_timer;
 
@@ -65,19 +63,19 @@ static int bsnprph_gap_event(struct ble_gap_event *event, void *arg);
 static void
 bsnprph_print_conn_desc(struct ble_gap_conn_desc *desc)
 {
-    BSNPRPH_LOG(INFO, "handle=%d our_ota_addr_type=%d our_ota_addr=",
+    MODLOG_DFLT(INFO, "handle=%d our_ota_addr_type=%d our_ota_addr=",
                 desc->conn_handle, desc->our_ota_addr.type);
     print_addr(desc->our_ota_addr.val);
-    BSNPRPH_LOG(INFO, " our_id_addr_type=%d our_id_addr=",
+    MODLOG_DFLT(INFO, " our_id_addr_type=%d our_id_addr=",
                 desc->our_id_addr.type);
     print_addr(desc->our_id_addr.val);
-    BSNPRPH_LOG(INFO, " peer_ota_addr_type=%d peer_ota_addr=",
+    MODLOG_DFLT(INFO, " peer_ota_addr_type=%d peer_ota_addr=",
                 desc->peer_ota_addr.type);
     print_addr(desc->peer_ota_addr.val);
-    BSNPRPH_LOG(INFO, " peer_id_addr_type=%d peer_id_addr=",
+    MODLOG_DFLT(INFO, " peer_id_addr_type=%d peer_id_addr=",
                 desc->peer_id_addr.type);
     print_addr(desc->peer_id_addr.val);
-    BSNPRPH_LOG(INFO, " conn_itvl=%d conn_latency=%d supervision_timeout=%d "
+    MODLOG_DFLT(INFO, " conn_itvl=%d conn_latency=%d supervision_timeout=%d "
                 "encrypted=%d authenticated=%d bonded=%d\n",
                 desc->conn_itvl, desc->conn_latency,
                 desc->supervision_timeout,
@@ -136,7 +134,7 @@ bsnprph_advertise(void)
 
     rc = ble_gap_adv_set_fields(&fields);
     if (rc != 0) {
-        BSNPRPH_LOG(ERROR, "error setting advertisement data; rc=%d\n", rc);
+        MODLOG_DFLT(ERROR, "error setting advertisement data; rc=%d\n", rc);
         return;
     }
 
@@ -149,7 +147,7 @@ bsnprph_advertise(void)
                            BLE_HS_FOREVER, &adv_params,
                            bsnprph_gap_event, NULL);
     if (rc != 0) {
-        BSNPRPH_LOG(ERROR, "error enabling advertisement; rc=%d\n", rc);
+        MODLOG_DFLT(ERROR, "error enabling advertisement; rc=%d\n", rc);
         return;
     }
 }
@@ -216,9 +214,9 @@ bsnprph_gap_event(struct ble_gap_event *event, void *arg)
     switch (event->type) {
     case BLE_GAP_EVENT_CONNECT:
         /* A new connection was established or a connection attempt failed. */
-        BSNPRPH_LOG(INFO, "connection %s; status=%d ",
-                       event->connect.status == 0 ? "established" : "failed",
-                       event->connect.status);
+        MODLOG_DFLT(INFO, "connection %s; status=%d ",
+                    event->connect.status == 0 ? "established" : "failed",
+                    event->connect.status);
         if (event->connect.status == 0) {
             rc = ble_gap_conn_find(event->connect.conn_handle, &desc);
             assert(rc == 0);
@@ -226,7 +224,7 @@ bsnprph_gap_event(struct ble_gap_event *event, void *arg)
 
             bsnprph_conn_handle = event->connect.conn_handle;
         }
-        BSNPRPH_LOG(INFO, "\n");
+        MODLOG_DFLT(INFO, "\n");
 
         if (event->connect.status != 0) {
             /* Connection failed; resume advertising. */
@@ -237,9 +235,9 @@ bsnprph_gap_event(struct ble_gap_event *event, void *arg)
     case BLE_GAP_EVENT_DISCONNECT:
         os_callout_stop(&bsnprph_tx_timer);
 
-        BSNPRPH_LOG(INFO, "disconnect; reason=%d ", event->disconnect.reason);
+        MODLOG_DFLT(INFO, "disconnect; reason=%d ", event->disconnect.reason);
         bsnprph_print_conn_desc(&event->disconnect.conn);
-        BSNPRPH_LOG(INFO, "\n");
+        MODLOG_DFLT(INFO, "\n");
 
         /* Connection terminated; resume advertising. */
         bsnprph_advertise();
@@ -247,32 +245,32 @@ bsnprph_gap_event(struct ble_gap_event *event, void *arg)
 
     case BLE_GAP_EVENT_ADV_COMPLETE:
         os_callout_stop(&bsnprph_tx_timer);
-        BSNPRPH_LOG(INFO, "adv complete\n");
+        MODLOG_DFLT(INFO, "adv complete\n");
         bsnprph_advertise();
         return 0;
 
     case BLE_GAP_EVENT_CONN_UPDATE:
         /* The central has updated the connection parameters. */
-        BSNPRPH_LOG(INFO, "connection updated; status=%d ",
+        MODLOG_DFLT(INFO, "connection updated; status=%d ",
                     event->conn_update.status);
         rc = ble_gap_conn_find(event->connect.conn_handle, &desc);
         assert(rc == 0);
         bsnprph_print_conn_desc(&desc);
-        BSNPRPH_LOG(INFO, "\n");
+        MODLOG_DFLT(INFO, "\n");
         return 0;
 
     case BLE_GAP_EVENT_ENC_CHANGE:
         /* Encryption has been enabled or disabled for this connection. */
-        BSNPRPH_LOG(INFO, "encryption change event; status=%d ",
+        MODLOG_DFLT(INFO, "encryption change event; status=%d ",
                     event->enc_change.status);
         rc = ble_gap_conn_find(event->connect.conn_handle, &desc);
         assert(rc == 0);
         bsnprph_print_conn_desc(&desc);
-        BSNPRPH_LOG(INFO, "\n");
+        MODLOG_DFLT(INFO, "\n");
         return 0;
 
     case BLE_GAP_EVENT_SUBSCRIBE:
-        BSNPRPH_LOG(INFO, "subscribe event; conn_handle=%d attr_handle=%d "
+        MODLOG_DFLT(INFO, "subscribe event; conn_handle=%d attr_handle=%d "
                           "reason=%d prevn=%d curn=%d previ=%d curi=%d\n",
                     event->subscribe.conn_handle,
                     event->subscribe.attr_handle,
@@ -288,7 +286,7 @@ bsnprph_gap_event(struct ble_gap_event *event, void *arg)
         return 0;
 
     case BLE_GAP_EVENT_MTU:
-        BSNPRPH_LOG(INFO, "mtu update event; conn_handle=%d cid=%d mtu=%d\n",
+        MODLOG_DFLT(INFO, "mtu update event; conn_handle=%d cid=%d mtu=%d\n",
                     event->mtu.conn_handle,
                     event->mtu.channel_id,
                     event->mtu.value);
@@ -301,7 +299,7 @@ bsnprph_gap_event(struct ble_gap_event *event, void *arg)
 static void
 bsnprph_on_reset(int reason)
 {
-    BSNPRPH_LOG(ERROR, "Resetting state; reason=%d\n", reason);
+    MODLOG_DFLT(ERROR, "Resetting state; reason=%d\n", reason);
 }
 
 static void
@@ -330,13 +328,7 @@ main(void)
     /* Set initial BLE device address. */
     memcpy(g_dev_addr, bsnprph_prph_public_addr, 6);
 
-    /* Initialize the bsnprph log. */
-    log_register("bsnprph", &bsnprph_log, &log_console_handler, NULL,
-                 LOG_SYSLEVEL);
-
     /* Initialize the NimBLE host configuration. */
-    log_register("ble_hs", &ble_hs_log, &log_console_handler, NULL,
-                 LOG_SYSLEVEL);
     ble_hs_cfg.reset_cb = bsnprph_on_reset;
     ble_hs_cfg.sync_cb = bsnprph_on_sync;
     ble_hs_cfg.gatts_register_cb = gatt_svr_register_cb;

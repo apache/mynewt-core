@@ -29,7 +29,7 @@ pkg.keywords:
 
 # NOTE: boot/bootutil and sys/flash_map were here. Seeing if they can be removed
 pkg.deps:
-    - hw/mcu/nxp/mkw41z
-    - libc/baselibc
+    - "@apache-mynewt-core/hw/mcu/nxp/mkw41z"
+    - "@apache-mynewt-core/libc/baselibc"
 
 pkg.cflags: -DCPU_MKW41Z512VHT4

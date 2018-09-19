@@ -23,6 +23,7 @@
 #include <battery/battery_drv.h>
 #include <battery/battery_adc.h>
 #include <adc/adc.h>
+#include <hal/hal_gpio.h>
 
 /* Battery manager interface functions */
 
@@ -34,11 +35,26 @@ battery_adc_property_get(struct battery_driver *driver,
     struct battery_adc *bat_adc = (struct battery_adc *)driver->bd_driver_data;
     int val;
 
-    /* Only one property is supported, voltate */
+    /* Only one property is supported, voltage */
     if (property->bp_type == BATTERY_PROP_VOLTAGE_NOW &&
         property->bp_flags == 0) {
+
+        /* Activate GPIO if it was configured */
+        if (bat_adc->cfg.activation_pin_needed &&
+            bat_adc->cfg.activation_pin != -1) {
+            hal_gpio_write(bat_adc->cfg.activation_pin,
+                    bat_adc->cfg.activation_pin_level);
+        }
         /* Blocking read of voltage */
         rc = adc_read_channel(bat_adc->adc_dev, bat_adc->cfg.channel, &val);
+
+        /* Deactivate GPIO if it was configured */
+        if (bat_adc->cfg.activation_pin_needed &&
+            bat_adc->cfg.activation_pin != -1) {
+            hal_gpio_write(bat_adc->cfg.activation_pin,
+                    bat_adc->cfg.activation_pin_level ? 0 : 1);
+        }
+
         if (rc == 0) {
             property->bp_valid = 1;
             /* Convert value to according to reference voltage and multiplier
@@ -104,6 +120,13 @@ battery_adc_open(struct os_dev *dev, uint32_t timeout, void *arg)
         /* Setup channel configuration to use for battery voltage */
         adc_chan_config(bat_adc->adc_dev, bat_adc->cfg.channel,
                 bat_adc->cfg.adc_channel_cfg);
+
+        /* Additional GPIO needed before measurement ? */
+        if (bat_adc->cfg.activation_pin_needed &&
+            bat_adc->cfg.activation_pin != -1) {
+            hal_gpio_init_out(bat_adc->cfg.activation_pin,
+                        bat_adc->cfg.activation_pin_level ? 0 : 1);
+        }
         rc = 0;
     }
     return rc;

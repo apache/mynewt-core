@@ -24,6 +24,8 @@
 extern "C" {
 #endif
 
+#define SVC_IRQ_NUMBER SVCall_IRQn
+
 /*
  * Defines for naming GPIOs.
  */

@@ -347,10 +347,17 @@ size_t tfp_format(FILE *putp, const char *fmt, va_list va)
             case 'f':
                 p.base = 10;
                 d = va_arg(va, double);
-                /* Cast to an int to get the integer part of the number */
+                /* Convert to an int to get the integer part of the number. */
                 n = d;
                 /* Convert to ascii */
                 i2a(n, &p);
+                /* When the double was converted to an int it was truncated
+                 * towards 0.  If the number is in the range (-1, 0), the
+                 * negative sign was lost.  Preserve the sign in this case.
+                 */
+                if (d < 0.0) {
+                    p.sign = 1;
+                }
                 /* Ignore left align for integer part */
                 p.left = 0;
                 /* Subtract width for decimal part and decimal point */

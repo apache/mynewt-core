@@ -398,4 +398,6 @@ void SX1272SetPublicNetwork(bool enable);
  */
 uint32_t SX1272GetWakeupTime(void);
 
+void SX1272RxDisable(void);
+
 #endif // __SX1272_H__

@@ -26,7 +26,7 @@ pkg.keywords:
     - riscv64
 
 pkg.deps:
-    - hw/hal
-    - hw/mcu/sifive
+    - "@apache-mynewt-core/hw/hal"
+    - "@apache-mynewt-core/hw/mcu/sifive"
 
 pkg.cflags: -march=rv32imac -mabi=ilp32

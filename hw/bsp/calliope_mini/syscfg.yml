@@ -57,23 +57,36 @@ syscfg.defs:
         description: 'Use Segger JLINK OBE firmware'
         value: 0
 
-    I2C_0_PIN_SDA:
-      description: 'DATA pin for I2C 0'
-      value: 20
     I2C_0_PIN_SCL:
-      description: 'CLOCK pin for I2C 0'
-      value: 19
+        description: 'SCL pin for I2C_0'
+        value:  19
+    I2C_0_PIN_SDA:
+        description: 'SDA pin for I2C_0'
+        value:  20
+    I2C_0_FREQ_KHZ:
+        description: 'Frequency in khz for I2C_0 bus'
+        value:  100
     I2C_0_FREQ:
-      description: 'Frequency in Khz for I2C 0'
-      value: 100
+        description: 'Use I2C_0_FREQ_KHZ instead'
+        defunct: 1
+        value:  100
 
+    I2C_1_PIN_SCL:
+        description: 'SCL pin for I2C_1'
+        value:  13
+    I2C_1_PIN_SDA:
+        description: 'SDA pin for I2C_1'
+        value:  12
+    I2C_1_FREQ_KHZ:
+        description: 'Frequency in khz for I2C_1 bus'
+        value:  100
 
     BUTTON_A:
-      description: 'enable Button A'
-      value: 0
+        description: 'enable Button A'
+        value: 0
     BUTTON_B:
-      description: 'enable Button B'
-      value: 0
+        description: 'enable Button B'
+        value: 0
 
 syscfg.defs.BLE_LP_CLOCK: 
     TIMER_0:

@@ -247,13 +247,71 @@ os_dev_close(struct os_dev *dev)
 
     OS_ENTER_CRITICAL(sr);
     if (--dev->od_open_ref == 0) {
-        dev->od_flags &= ~OS_DEV_F_STATUS_OPEN;
+        dev->od_flags &= ~(OS_DEV_F_STATUS_OPEN | OS_DEV_F_STATUS_SUSPENDED);
     }
     OS_EXIT_CRITICAL(sr);
 
     return (0);
 err:
     return (rc);
+}
+
+int
+os_dev_suspend(struct os_dev *dev, os_time_t suspend_t, uint8_t force)
+{
+    os_sr_t sr;
+    int rc;
+
+    OS_ENTER_CRITICAL(sr);
+    if (!(dev->od_flags & OS_DEV_F_STATUS_OPEN)) {
+        OS_EXIT_CRITICAL(sr);
+        return OS_EINVAL;
+    }
+    if (dev->od_flags & OS_DEV_F_STATUS_SUSPENDED) {
+        OS_EXIT_CRITICAL(sr);
+        return OS_OK;
+    }
+    OS_EXIT_CRITICAL(sr);
+
+    if (dev->od_handlers.od_suspend) {
+        rc = dev->od_handlers.od_suspend(dev, suspend_t, force);
+        if (rc) {
+            return rc;
+        }
+    }
+
+    OS_ENTER_CRITICAL(sr);
+    dev->od_flags |= OS_DEV_F_STATUS_SUSPENDED;
+    OS_EXIT_CRITICAL(sr);
+
+    return OS_OK;
+}
+
+int
+os_dev_resume(struct os_dev *dev)
+{
+    os_sr_t sr;
+    int rc;
+
+    OS_ENTER_CRITICAL(sr);
+    if (!(dev->od_flags & OS_DEV_F_STATUS_SUSPENDED)) {
+        OS_EXIT_CRITICAL(sr);
+        return OS_EINVAL;
+    }
+    OS_EXIT_CRITICAL(sr);
+
+    if (dev->od_handlers.od_resume) {
+        rc = dev->od_handlers.od_resume(dev);
+        if (rc) {
+            return rc;
+        }
+    }
+
+    OS_ENTER_CRITICAL(sr);
+    dev->od_flags &= ~OS_DEV_F_STATUS_SUSPENDED;
+    OS_EXIT_CRITICAL(sr);
+
+    return OS_OK;
 }
 
 void
