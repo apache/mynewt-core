@@ -26,6 +26,8 @@ TEST_CASE(enc_flash_test_flash_map)
     int rc;
     struct flash_area *fa;
     int i;
+    int off;
+    int blk_sz;
     bool b;
     char writedata[128];
     char readdata[128];
@@ -38,8 +40,14 @@ TEST_CASE(enc_flash_test_flash_map)
         rc = flash_area_is_empty(fa, &b);
         TEST_ASSERT(rc == 0);
         TEST_ASSERT(b == true);
-        rc = flash_area_isempty_at(fa, 0, fa->fa_size);
-        TEST_ASSERT(rc == 1);
+        for (off = 0; off < fa->fa_size; off += blk_sz) {
+            blk_sz = fa->fa_size - off;
+            if (blk_sz > sizeof(readdata)) {
+                blk_sz = sizeof(readdata);
+            }
+            rc = flash_area_read_is_empty(fa, off, readdata, blk_sz);
+            TEST_ASSERT(rc == 1);
+        }
         fa++;
     }
 
@@ -59,7 +67,8 @@ TEST_CASE(enc_flash_test_flash_map)
     rc = flash_area_is_empty(fa, &b);
     TEST_ASSERT(rc == 0);
     TEST_ASSERT(b == false);
-    rc = flash_area_isempty_at(fa, 0, fa->fa_size);
+    memset(readdata, 0, sizeof(readdata));
+    rc = flash_area_read_is_empty(fa, 0, readdata, sizeof(readdata));
     TEST_ASSERT(rc == 0);
-
+    TEST_ASSERT(!memcmp(writedata, readdata, sizeof(writedata)));
 }

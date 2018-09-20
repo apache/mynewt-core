@@ -196,12 +196,11 @@ fcb_sector_hdr_read(struct fcb *fcb, struct flash_area *fap,
     if (!fdap) {
         fdap = &fda;
     }
-    if (flash_area_isempty_at(fap, 0, sizeof(*fdap))) {
-        return 0;
-    }
-    rc = flash_area_read(fap, 0, fdap, sizeof(*fdap));
-    if (rc) {
+    rc = flash_area_read_is_empty(fap, 0, fdap, sizeof(*fdap));
+    if (rc < 0) {
         return FCB_ERR_FLASH;
+    } else if (rc == 1) {
+        return 0;
     }
     if (fdap->fd_magic != fcb->f_magic) {
         return FCB_ERR_MAGIC;
