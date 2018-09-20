@@ -51,6 +51,8 @@ void hal_uart_sys_clock_changed(void);
 
 void hal_uart_sys_clock_changed(void);
 
+#define FE310_SPI_FIFO_LENGHT 8
+
 #ifdef __cplusplus
 }
 #endif
