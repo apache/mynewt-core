@@ -649,6 +649,8 @@ hal_spi_init(int spi_num, void *cfg, uint8_t spi_type)
         goto err;
     }
 
+    hal_spi_disable(spi_num);
+
     if (spi_type == HAL_SPI_TYPE_MASTER) {
         rc = hal_spi_init_master(spi, (struct nrf52_hal_spi_cfg *)cfg,
                                  irq_handler);
