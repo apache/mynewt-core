@@ -351,6 +351,32 @@ hal_flash_isempty(uint8_t id, uint32_t address, void *dst, uint32_t num_bytes)
 }
 
 int
+hal_flash_isempty_no_buf(uint8_t id, uint32_t address, uint32_t num_bytes)
+{
+    uint8_t buf[MYNEWT_VAL(HAL_FLASH_VERIFY_BUF_SZ)];
+    uint32_t blksz;
+    uint32_t rem;
+    uint32_t off;
+    int empty;
+
+    for (off = 0; off < num_bytes; off += sizeof buf) {
+        rem = num_bytes - off;
+
+        blksz = sizeof buf;
+        if (blksz > rem) {
+            blksz = rem;
+        }
+
+        empty = hal_flash_isempty(id, address + off, buf, blksz);
+        if (empty != 1) {
+            return empty;
+        }
+    }
+
+    return 1;
+}
+
+int
 hal_flash_ioctl(uint8_t id, uint32_t cmd, void *args)
 {
     return 0;
