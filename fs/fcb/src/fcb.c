@@ -196,7 +196,7 @@ fcb_sector_hdr_read(struct fcb *fcb, struct flash_area *fap,
     if (!fdap) {
         fdap = &fda;
     }
-    rc = flash_area_isempty_at(fap, 0, fdap, sizeof(*fdap));
+    rc = flash_area_read_is_empty(fap, 0, fdap, sizeof(*fdap));
     if (rc < 0) {
         return FCB_ERR_FLASH;
     } else if (rc == 1) {

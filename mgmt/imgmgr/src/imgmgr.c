@@ -219,7 +219,7 @@ imgr_read_info(int image_slot, struct image_version *ver, uint8_t *hash,
     if (rc2) {
         return -1;
     }
-    rc2 = flash_area_isempty_at(fa, 0, hdr, sizeof(*hdr));
+    rc2 = flash_area_read_is_empty(fa, 0, hdr, sizeof(*hdr));
     if (rc2 < 0) {
         goto end;
     }
@@ -260,7 +260,7 @@ imgr_read_info(int image_slot, struct image_version *ver, uint8_t *hash,
     }
     tlv = (struct image_tlv *)data;
     while (data_off + sizeof(*tlv) <= data_end) {
-        rc2 = flash_area_isempty_at(fa, data_off, tlv, sizeof(*tlv));
+        rc2 = flash_area_read_is_empty(fa, data_off, tlv, sizeof(*tlv));
         if (rc2 < 0) {
             goto end;
         }
