@@ -158,6 +158,7 @@ TEST_CASE_DECL(fcb_test_reset)
 TEST_CASE_DECL(fcb_test_rotate)
 TEST_CASE_DECL(fcb_test_multiple_scratch)
 TEST_CASE_DECL(fcb_test_last_of_n)
+TEST_CASE_DECL(fcb_test_area_info)
 
 TEST_SUITE(fcb_test_all)
 {
@@ -190,6 +191,10 @@ TEST_SUITE(fcb_test_all)
 
     tu_case_set_pre_cb(fcb_tc_pretest, (void*)4);
     fcb_test_last_of_n();
+
+    tu_case_set_pre_cb(fcb_tc_pretest, (void*)2);
+    fcb_test_area_info();
+
 }
 
 #if MYNEWT_VAL(SELFTEST)
