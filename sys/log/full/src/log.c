@@ -63,6 +63,15 @@ struct shell_cmd g_shell_storage_cmd = {
 #endif
 #endif
 
+#if MYNEWT_VAL(LOG_STATS)
+STATS_NAME_START(logs)
+  STATS_NAME(logs, writes)
+  STATS_NAME(logs, drops)
+  STATS_NAME(logs, errs)
+  STATS_NAME(logs, lost)
+STATS_NAME_END(logs)
+#endif
+
 #if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
 static int log_conf_set(int argc, char **argv, char *val);
 
@@ -339,6 +348,12 @@ log_register(char *name, struct log *log, const struct log_handler *lh,
 
     if (!log_registered(log)) {
         STAILQ_INSERT_TAIL(&g_log_list, log, l_next);
+#if MYNEWT_VAL(LOG_STATS)
+        stats_init(STATS_HDR(log->l_stats),
+                   STATS_SIZE_INIT_PARMS(log->l_stats, STATS_SIZE_32),
+                   STATS_NAME_INIT_PARMS(logs));
+        stats_register(log->l_name, STATS_HDR(log->l_stats));
+#endif
     }
 
     /* Call registered handler now - log structure is set and put on list */
@@ -459,15 +474,18 @@ log_append_typed(struct log *log, uint8_t module, uint8_t level, uint8_t etype,
     struct log_entry_hdr *hdr;
     int rc;
 
-    hdr = (struct log_entry_hdr *)data;
+    LOG_STATS_INC(log, writes);
 
+    hdr = (struct log_entry_hdr *)data;
     rc = log_append_prepare(log, module, level, etype, hdr);
     if (rc != 0) {
+        LOG_STATS_INC(log, drops);
         goto err;
     }
 
     rc = log->l_log->log_append(log, data, len + LOG_ENTRY_HDR_SIZE);
     if (rc != 0) {
+        LOG_STATS_INC(log, errs);
         goto err;
     }
 
@@ -485,13 +503,16 @@ log_append_body(struct log *log, uint8_t module, uint8_t level, uint8_t etype,
     struct log_entry_hdr hdr;
     int rc;
 
+    LOG_STATS_INC(log, writes);
     rc = log_append_prepare(log, module, level, etype, &hdr);
     if (rc != 0) {
+        LOG_STATS_INC(log, drops);
         return rc;
     }
 
     rc = log->l_log->log_append_body(log, &hdr, body, body_len);
     if (rc != 0) {
+        LOG_STATS_INC(log, errs);
         return rc;
     }
 
@@ -511,8 +532,9 @@ log_append_mbuf_typed_no_free(struct log *log, uint8_t module, uint8_t level,
     /* Remove a loyer of indirection for convenience. */
     om = *om_ptr;
 
+    LOG_STATS_INC(log, writes);
     if (!log->l_log->log_append_mbuf) {
-        rc = -1;
+        rc = SYS_ENOTSUP;
         goto err;
     }
 
@@ -526,7 +548,8 @@ log_append_mbuf_typed_no_free(struct log *log, uint8_t module, uint8_t level,
 
     rc = log_append_prepare(log, module, level, etype, hdr);
     if (rc != 0) {
-        goto err;
+        LOG_STATS_INC(log, drops);
+        goto drop;
     }
 
     rc = log->l_log->log_append_mbuf(log, om);
@@ -541,6 +564,8 @@ log_append_mbuf_typed_no_free(struct log *log, uint8_t module, uint8_t level,
     return 0;
 
 err:
+    LOG_STATS_INC(log, errs);
+drop:
     if (om) {
         os_mbuf_free_chain(om);
         *om_ptr = NULL;
@@ -571,23 +596,30 @@ log_append_mbuf_body_no_free(struct log *log, uint8_t module, uint8_t level,
     struct log_entry_hdr hdr;
     int rc;
 
+    LOG_STATS_INC(log, writes);
     if (!log->l_log->log_append_mbuf_body) {
-        return SYS_ENOTSUP;
+        rc = SYS_ENOTSUP;
+        goto err;
     }
 
     rc = log_append_prepare(log, module, level, etype, &hdr);
     if (rc != 0) {
-        return rc;
+        LOG_STATS_INC(log, drops);
+        goto drop;
     }
 
     rc = log->l_log->log_append_mbuf_body(log, &hdr, om);
     if (rc != 0) {
-        return rc;
+        goto err;
     }
 
     log_call_append_cb(log, hdr.ue_index);
 
     return 0;
+err:
+    LOG_STATS_INC(log, errs);
+drop:
+    return rc;
 }
 
 int

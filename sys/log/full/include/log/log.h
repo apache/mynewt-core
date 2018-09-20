@@ -22,6 +22,9 @@
 #include "os/mynewt.h"
 #include "cbmem/cbmem.h"
 #include "log_common/log_common.h"
+#if MYNEWT_VAL(LOG_STATS)
+#include "stats/stats.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -171,6 +174,21 @@ struct log_entry_hdr {
 #define LOG_CRITICAL(__l, __mod, ...) IGNORE(__VA_ARGS__)
 #endif
 
+#if MYNEWT_VAL(LOG_STATS)
+STATS_SECT_START(logs)
+    STATS_SECT_ENTRY(writes)
+    STATS_SECT_ENTRY(drops)
+    STATS_SECT_ENTRY(errs)
+    STATS_SECT_ENTRY(lost)
+STATS_SECT_END
+
+#define LOG_STATS_INC(log, name)        STATS_INC(log->l_stats, name)
+#define LOG_STATS_INCN(log, name, cnt)  STATS_INCN(log->l_stats, name, cnt)
+#else
+#define LOG_STATS_INC(log, name)
+#define LOG_STATS_INCN(log, name, cnt)
+#endif
+
 struct log {
     char *l_name;
     const struct log_handler *l_log;
@@ -178,6 +196,9 @@ struct log {
     STAILQ_ENTRY(log) l_next;
     log_append_cb *l_append_cb;
     uint8_t l_level;
+#if MYNEWT_VAL(LOG_STATS)
+    STATS_SECT_DECL(logs) l_stats;
+#endif
 };
 
 /* Log system level functions (for all logs.) */
