@@ -1053,28 +1053,20 @@ lp5523_config(struct led_itf *itf, struct lp5523_cfg *cfg)
             goto err;
         }
 
-        lp5523_wait(1);
-
         rc = lp5523_set_output_log_dim(itf, i, cfg->per_led_cfg[i - 1].log_dim_en);
         if (rc) {
             goto err;
         }
-
-        lp5523_wait(1);
 
         rc = lp5523_set_output_temp_comp(itf, i, cfg->per_led_cfg[i - 1].temp_comp);
         if (rc) {
             goto err;
         }
 
-        lp5523_wait(1);
-
         rc = lp5523_set_output_on(itf, i, cfg->per_led_cfg[i - 1].output_on);
         if (rc) {
             goto err;
         }
-
-        lp5523_wait(1);
     }
 
 err:
