@@ -21,7 +21,8 @@
 #define _OS_ARCH_ARM_H
 
 #include <stdint.h>
-#include <mcu/cortex_m0.h>
+#include "syscfg/syscfg.h"
+#include "mcu/cortex_m0.h"
 
 #ifdef __cplusplus
 extern "C" {
