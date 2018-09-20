@@ -41,7 +41,7 @@ fcb_elem_crc8(struct fcb *fcb, struct fcb_entry *loc, uint8_t *c8p)
     if (loc->fe_elem_off + 2 > loc->fe_area->fa_size) {
         return FCB_ERR_NOVAR;
     }
-    rc = flash_area_isempty_at(loc->fe_area, loc->fe_elem_off, tmp_str, 2);
+    rc = flash_area_read_is_empty(loc->fe_area, loc->fe_elem_off, tmp_str, 2);
     if (rc < 0) {
         return FCB_ERR_FLASH;
     } else if (rc == 1) {

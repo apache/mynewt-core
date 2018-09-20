@@ -45,7 +45,7 @@ TEST_CASE(enc_flash_test_flash_map)
             if (blk_sz > sizeof(readdata)) {
                 blk_sz = sizeof(readdata);
             }
-            rc = flash_area_isempty_at(fa, off, readdata, blk_sz);
+            rc = flash_area_read_is_empty(fa, off, readdata, blk_sz);
             TEST_ASSERT(rc == 1);
         }
         fa++;
@@ -68,7 +68,7 @@ TEST_CASE(enc_flash_test_flash_map)
     TEST_ASSERT(rc == 0);
     TEST_ASSERT(b == false);
     memset(readdata, 0, sizeof(readdata));
-    rc = flash_area_isempty_at(fa, 0, readdata, sizeof(readdata));
+    rc = flash_area_read_is_empty(fa, 0, readdata, sizeof(readdata));
     TEST_ASSERT(rc == 0);
     TEST_ASSERT(!memcmp(writedata, readdata, sizeof(writedata)));
 }

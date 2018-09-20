@@ -211,8 +211,8 @@ flash_area_is_empty(const struct flash_area *fa, bool *empty)
 }
 
 int
-flash_area_isempty_at(const struct flash_area *fa, uint32_t off, void *dst,
-                      uint32_t len)
+flash_area_read_is_empty(const struct flash_area *fa, uint32_t off, void *dst,
+                         uint32_t len)
 {
     return hal_flash_isempty(fa->fa_device_id, fa->fa_off + off, dst, len);
 }
