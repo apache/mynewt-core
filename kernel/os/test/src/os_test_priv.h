@@ -22,6 +22,7 @@
 
 #include "os/mynewt.h"
 #include "testutil/testutil.h"
+#include "os_test/os_test.h"
 #include "os_test_priv.h"
 
 #include "callout_test.h"

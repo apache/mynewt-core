@@ -63,6 +63,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include "os/os_arch.h"
+#include "os/queue.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -144,6 +145,44 @@ struct os_timezone {
 };
 
 /**
+ * Represents a time change.  Passed to time change listeners when the current
+ * time-of-day is set.
+ */
+struct os_time_change_info {
+    /** UTC time prior to change. */
+    const struct os_timeval *tci_prev_tv;
+    /** Time zone prior to change. */
+    const struct os_timezone *tci_prev_tz;
+    /** UTC time after change. */
+    const struct os_timeval *tci_cur_tv;
+    /** Time zone after change. */
+    const struct os_timezone *tci_cur_tz;
+    /** True if the time was not set prior to change. */
+    bool tci_newly_synced;
+};
+
+/**
+ * Callback that is executed when the time-of-day is set.
+ *
+ * @param info                  Describes the time change that just occurred.
+ * @param arg                   Optional argument correponding to listener.
+ */
+typedef void os_time_change_fn(const struct os_time_change_info *info,
+                               void *arg);
+
+/**
+ * Time change listener.  Notified when the time-of-day is set.
+ */
+struct os_time_change_listener {
+    /*** Public. */
+    os_time_change_fn *tcl_fn;
+    void *tcl_arg;
+
+    /*** Internal. */
+    STAILQ_ENTRY(os_time_change_listener) tcl_next;
+};
+
+/**
  * Add first two timeval arguments and place results in third timeval
  * argument.
  */
@@ -175,7 +214,8 @@ struct os_timezone {
 
 /**
  * Set the time of day.  This does not modify os time, but rather just modifies
- * the offset by which we are tracking real time against os time.
+ * the offset by which we are tracking real time against os time.  This
+ * function notifies all registered time change listeners.
  *
  * @param utctime A timeval representing the UTC time we are setting
  * @param tz The time-zone to apply against the utctime being set.
@@ -195,6 +235,13 @@ int os_settimeofday(struct os_timeval *utctime, struct os_timezone *tz);
  * @return 0 on success, non-zero on failure
  */
 int os_gettimeofday(struct os_timeval *utctime, struct os_timezone *tz);
+
+/**
+ * Indicates whether the time has been set.
+ *
+ * @return                      true if time is set; false otherwise.
+ */
+bool os_time_is_set(void);
 
 /**
  * Get time since boot in microseconds.
@@ -272,6 +319,35 @@ os_time_ticks_to_ms32(os_time_t ticks)
     return ((uint64_t)ticks * 1000) / OS_TICKS_PER_SEC;
 #endif
 }
+
+/**
+ * Registers a time change listener.  Whenever the time is set, all registered
+ * listeners are notified.  The provided pointer is added to an internal list,
+ * so the listener's lifetime must extend indefinitely (or until the listener
+ * is removed).
+ *
+ * NOTE: This function is not thread safe.  The following operations must be
+ * kept exclusive:
+ *     o Addition of listener
+ *     o Removal of listener
+ *     o Setting time
+ *
+ * @param listener              The listener to register.
+ */
+void os_time_change_listen(struct os_time_change_listener *listener);
+
+/**
+ * Unregisters a time change listener.
+ *
+ * NOTE: This function is not thread safe.  The following operations must be
+ * kept exclusive:
+ *     o Addition of listener
+ *     o Removal of listener
+ *     o Setting time
+ *
+ * @param listener              The listener to unregister.
+ */
+int os_time_change_remove(const struct os_time_change_listener *listener);
 
 #ifdef __cplusplus
 }
