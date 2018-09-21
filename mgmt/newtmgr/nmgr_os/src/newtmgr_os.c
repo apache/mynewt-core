@@ -319,12 +319,21 @@ nmgr_reset_tmo(struct os_event *ev)
 static int
 nmgr_reset(struct mgmt_cbuf *cb)
 {
+#if MYNEWT_VAL(LOG_SOFT_RESET)
+    struct log_reboot_info info;
+#endif
     int rc;
 
     os_callout_init(&nmgr_reset_callout, mgmt_evq_get(), nmgr_reset_tmo, NULL);
 
 #if MYNEWT_VAL(LOG_SOFT_RESET)
-    log_reboot(HAL_RESET_REQUESTED);
+    info = (struct log_reboot_info) {
+        .reason = HAL_RESET_REQUESTED,
+        .file = NULL,
+        .line = 0,
+        .pc = 0,
+    };
+    log_reboot(&info);
 #endif
     os_callout_reset(&nmgr_reset_callout, OS_TICKS_PER_SEC / 4);
 
