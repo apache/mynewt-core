@@ -41,6 +41,9 @@ log_fcb_start_append(struct log *log, int len, struct fcb_entry *loc)
     struct fcb_log *fcb_log;
     struct flash_area *old_fa;
     int rc = 0;
+#if MYNEWT_VAL(LOG_STATS)
+    int cnt;
+#endif
 
     fcb_log = (struct fcb_log *)log->l_arg;
     fcb = &fcb_log->fl_fcb;
@@ -66,6 +69,12 @@ log_fcb_start_append(struct log *log, int len, struct fcb_entry *loc)
         old_fa = fcb->f_oldest;
         (void)old_fa; /* to avoid #ifdefs everywhere... */
 
+#if MYNEWT_VAL(LOG_STATS)
+        rc = fcb_area_info(fcb, NULL, &cnt, NULL);
+        if (rc == 0) {
+            LOG_STATS_INCN(log, lost, cnt);
+        }
+#endif
         rc = fcb_rotate(fcb);
         if (rc) {
             goto err;

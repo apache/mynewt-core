@@ -72,6 +72,10 @@ syscfg.defs:
             discarded.  Enabling this setting requires 128 bytes of bss.
         value: 1
 
+    LOG_STATS:
+        description: 'Log statistics'
+        value: 0
+
     LOG_STORAGE_INFO:
         description: >
             Enable "storage_info" API which keeps track of log storage usage and
