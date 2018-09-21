@@ -42,6 +42,24 @@ int hal_flash_erase_sector(uint8_t flash_id, uint32_t sector_address);
 int hal_flash_erase(uint8_t flash_id, uint32_t address, uint32_t num_bytes);
 int hal_flash_isempty(uint8_t flash_id, uint32_t address, void *dst,
                       uint32_t num_bytes);
+
+/**
+ * @brief Determines if the specified region of flash is completely unwritten.
+ *
+ * This function is like `hal_flash_isempty()`, except the caller does not need
+ * to provide a buffer.  Instead, a buffer of size
+ * MYNEWT_VAL(HAL_FLASH_VERIFY_BUF_SZ) is allocated on the stack.
+ *
+ * @param id                    The ID of the flash hardware to inspect.
+ * @param address               The starting address of the procedure.
+ * @param num_bytes             The number of bytes of flash to check.
+ *
+ * @return                      1  if the specified region is empty;
+ *                              0  if the specified region is *not* empty;
+ *                              -1 on error.
+ */
+int hal_flash_isempty_no_buf(uint8_t id, uint32_t address, uint32_t num_bytes);
+
 uint8_t hal_flash_align(uint8_t flash_id);
 uint8_t hal_flash_erased_val(uint8_t flash_id);
 int hal_flash_init(void);

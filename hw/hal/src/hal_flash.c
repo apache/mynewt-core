@@ -106,49 +106,6 @@ hal_flash_read(uint8_t id, uint32_t address, void *dst, uint32_t num_bytes)
     return hf->hf_itf->hff_read(hf, address, dst, num_bytes);
 }
 
-#if MYNEWT_VAL(HAL_FLASH_VERIFY_ERASES)
-/**
- * Verifies that the specified range of flash is erased.
- *
- * @return                      0 on success;
- *                              nonzero on error or unexpected contents.
- */
-static int
-hal_flash_cmp_erased(const struct hal_flash *hf, uint32_t address,
-  uint32_t num_bytes)
-{
-    uint8_t buf[MYNEWT_VAL(HAL_FLASH_VERIFY_BUF_SZ)];
-
-    uint32_t off;
-    uint32_t rem;
-    int chunk_sz;
-    int rc;
-    int i;
-
-    for (off = 0; off < num_bytes; off += sizeof buf) {
-        rem = num_bytes - off;
-        if (rem >= sizeof buf) {
-            chunk_sz = sizeof buf;
-        } else {
-            chunk_sz = rem;
-        }
-
-        rc = hf->hf_itf->hff_read(hf, address + off, buf, chunk_sz);
-        if (rc != 0) {
-            return rc;
-        }
-
-        for (i = 0; i < chunk_sz; i++) {
-            if (buf[i] != hf->hf_erased_val) {
-                return -1;
-            }
-        }
-    }
-
-    return 0;
-}
-#endif
-
 #if MYNEWT_VAL(HAL_FLASH_VERIFY_WRITES)
 /**
  * Verifies that the specified range of flash contains the given contents.
@@ -253,7 +210,7 @@ hal_flash_erase_sector(uint8_t id, uint32_t sector_address)
         assert(rc == 0);
 
         if (sector_address == start) {
-            assert(hal_flash_cmp_erased(hf, start, size) == 0);
+            assert(hal_flash_isempty_no_buf(id, start, size) == 1);
             break;
         }
     }
@@ -303,7 +260,7 @@ hal_flash_erase(uint8_t id, uint32_t address, uint32_t num_bytes)
             }
 
 #if MYNEWT_VAL(HAL_FLASH_VERIFY_ERASES)
-            assert(hal_flash_cmp_erased(hf, start, size) == 0);
+            assert(hal_flash_isempty_no_buf(id, start, size) == 1);
 #endif
         }
     }
@@ -348,6 +305,32 @@ hal_flash_isempty(uint8_t id, uint32_t address, void *dst, uint32_t num_bytes)
     } else {
         return hal_flash_is_erased(hf, address, dst, num_bytes);
     }
+}
+
+int
+hal_flash_isempty_no_buf(uint8_t id, uint32_t address, uint32_t num_bytes)
+{
+    uint8_t buf[MYNEWT_VAL(HAL_FLASH_VERIFY_BUF_SZ)];
+    uint32_t blksz;
+    uint32_t rem;
+    uint32_t off;
+    int empty;
+
+    for (off = 0; off < num_bytes; off += sizeof buf) {
+        rem = num_bytes - off;
+
+        blksz = sizeof buf;
+        if (blksz > rem) {
+            blksz = rem;
+        }
+
+        empty = hal_flash_isempty(id, address + off, buf, blksz);
+        if (empty != 1) {
+            return empty;
+        }
+    }
+
+    return 1;
 }
 
 int
