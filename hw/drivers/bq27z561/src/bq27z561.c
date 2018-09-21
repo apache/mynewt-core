@@ -17,7 +17,6 @@
  * under the License.
  */
 
-#include <assert.h>
 #include <math.h>
 #include <string.h>
 
@@ -1079,7 +1078,7 @@ bq27z561_battery_property_get(struct battery_driver *driver,
             property->bp_value.bpv_temperature = val.bpv_i8;
     } else {
         rc = -1;
-        assert(0);
+        return rc;
     }
     if (rc == 0) {
         property->bp_valid = 1;
@@ -1138,7 +1137,6 @@ bq27z561_battery_property_set(struct battery_driver *driver,
                     (int16_t)property->bp_value.bpv_temperature);
     } else {
         rc = -1;
-        assert(0);
     }
     return rc;
 }
