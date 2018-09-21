@@ -480,13 +480,13 @@ static const char *const bat_shr_desc[] = {
 };
 
 static const char *const tsd_130c_desc[] = {
-        "No overtemerature (lower)",
-        "Overtemerature (lower) fault",
+        "No overtemperature (lower)",
+        "Overtemperature (lower) fault",
 };
 
 static const char *const tsd_140c_desc[] = {
-        "No overtemerature",
-        "Overtemerature fault",
+        "No overtemperature",
+        "Overtemperature fault",
 };
 
 /* Fields for Fault register */
