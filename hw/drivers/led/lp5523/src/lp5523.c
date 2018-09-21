@@ -995,6 +995,9 @@ lp5523_config(struct led_itf *itf, struct lp5523_cfg *cfg)
         goto err;
     }
 
+    /* delay of 500us for startup sequence */
+    os_cputime_delay_usecs(MYNEWT_VAL(LP5523_STARTUP_SEQ_DELAY));
+
     misc_val = 0;
     if (cfg->auto_inc_en) {
         misc_val = LP5523_EN_AUTO_INCR.mask;
