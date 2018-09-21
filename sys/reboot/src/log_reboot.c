@@ -35,13 +35,14 @@
 #endif
 
 uint16_t reboot_cnt;
-static uint16_t soft_reboot;
 static char reboot_cnt_str[12];
-static char soft_reboot_str[12];
+static char log_reboot_written_str[12];
+static int8_t log_reboot_written;
+
 static char *reboot_conf_get(int argc, char **argv, char *buf, int max_len);
 static int reboot_conf_set(int argc, char **argv, char *val);
 static int reboot_conf_export(void (*export_func)(char *name, char *val),
-                             enum conf_export_tgt tgt);
+                              enum conf_export_tgt tgt);
 
 struct conf_handler reboot_conf_handler = {
     .ch_name = "reboot",
@@ -138,8 +139,8 @@ reboot_cnt_inc(void)
  * @param reason for reboot
  * @return 0 on success; non-zero on failure
  */
-int
-log_reboot(const struct log_reboot_info *info)
+static int
+log_reboot_write(const struct log_reboot_info *info)
 {
     struct image_version ver;
     uint8_t hash[IMGMGR_HASH_LEN];
@@ -157,17 +158,9 @@ log_reboot(const struct log_reboot_info *info)
     }
 #endif
 
-    if (reason == HAL_RESET_REQUESTED) {
-        conf_save_one("reboot/soft_reboot", "1");
-    } else {
-        conf_save_one("reboot/soft_reboot", "0");
-    }
-
-    if (!soft_reboot || reason != HAL_RESET_SOFT) {
-        rc = imgr_read_info(boot_current_slot, &ver, hash, NULL);
-        if (rc != 0) {
-            return rc;
-        }
+    rc = imgr_read_info(boot_current_slot, &ver, hash, NULL);
+    if (rc != 0) {
+        return rc;
     }
 
     off = 0;
@@ -204,6 +197,30 @@ log_reboot(const struct log_reboot_info *info)
     return 0;
 }
 
+int
+log_reboot(const struct log_reboot_info *info)
+{
+    int rc;
+
+    /* Don't log a second reboot entry. */
+    if (log_reboot_written) {
+        return 0;
+    }
+
+    rc = log_reboot_write(info);
+    if (rc != 0) {
+        return rc;
+    }
+
+    /* Record that we have written a reboot entry for the current boot.  Upon
+     * rebooting, we won't write a second entry.
+     */
+    log_reboot_written = 1;
+    conf_save_one("reboot/written", "1");
+
+    return 0;
+}
+
 /**
  * Increments the reboot counter and writes an entry to the reboot log, if
  * necessary.  This function should be called from main() after config
@@ -218,13 +235,20 @@ reboot_start(enum hal_reset_reason reason)
 
     reboot_cnt_inc();
 
-    info = (struct log_reboot_info) {
-        .reason = reason,
-        .file = NULL,
-        .line = 0,
-        .pc = 0,
-    };
-    log_reboot_write(&info);
+    /* If an entry wasn't written before the previous reboot, write one now. */
+    if (!log_reboot_written) {
+        info = (struct log_reboot_info) {
+            .reason = reason,
+            .file = NULL,
+            .line = 0,
+            .pc = 0,
+        };
+        log_reboot_write(&info);
+    }
+
+    /* Record that we haven't written a reboot entry for the current boot. */
+    log_reboot_written = 0;
+    conf_save_one("reboot/written", "0");
 }
 
 static char *
@@ -234,10 +258,10 @@ reboot_conf_get(int argc, char **argv, char *buf, int max_len)
         if (!strcmp(argv[0], "reboot_cnt")) {
             return conf_str_from_value(CONF_INT16, &reboot_cnt,
                                        reboot_cnt_str, sizeof reboot_cnt_str);
-        } else if (!strcmp(argv[0], "soft_reboot")) {
-            return conf_str_from_value(CONF_INT16, &soft_reboot,
-                                       soft_reboot_str,
-                                       sizeof soft_reboot_str);
+        } else if (!strcmp(argv[0], "written")) {
+            return conf_str_from_value(CONF_BOOL, &log_reboot_written,
+                                       log_reboot_written_str,
+                                       sizeof log_reboot_written_str);
         }
     }
     return NULL;
@@ -249,8 +273,8 @@ reboot_conf_set(int argc, char **argv, char *val)
     if (argc == 1) {
         if (!strcmp(argv[0], "reboot_cnt")) {
             return CONF_VALUE_SET(val, CONF_INT16, reboot_cnt);
-        } else if (!strcmp(argv[0], "soft_reboot")) {
-            return CONF_VALUE_SET(val, CONF_INT16, soft_reboot);
+        } else if (!strcmp(argv[0], "written")) {
+            return CONF_VALUE_SET(val, CONF_INT16, log_reboot_written);
         }
     }
 
@@ -263,7 +287,7 @@ reboot_conf_export(void (*func)(char *name, char *val),
 {
     if (tgt == CONF_EXPORT_SHOW) {
         func("reboot/reboot_cnt", reboot_cnt_str);
-        func("reboot/soft_reboot", soft_reboot_str);
+        func("reboot/written", log_reboot_written_str);
     }
     return 0;
 }
