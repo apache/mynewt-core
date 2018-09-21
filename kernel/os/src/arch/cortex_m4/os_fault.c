@@ -29,6 +29,10 @@
 #include "coredump/coredump.h"
 #endif
 
+#if MYNEWT_VAL(OS_CRASH_LOG)
+#include "reboot/log_reboot.h"
+#endif
+
 struct exception_frame {
     uint32_t r0;
     uint32_t r1;
@@ -123,12 +127,25 @@ trap_to_coredump(struct trap_frame *tf, struct coredump_regs *regs)
 void
 __assert_func(const char *file, int line, const char *func, const char *e)
 {
+#if MYNEWT_VAL(OS_CRASH_LOG)
+    struct log_reboot_info lri;
+#endif
     int sr;
 
     OS_ENTER_CRITICAL(sr);
     (void)sr;
     console_blocking_mode();
     OS_PRINT_ASSERT(file, line, func, e);
+
+#if MYNEWT_VAL(OS_CRASH_LOG)
+    lri = (struct log_reboot_info) {
+        .reason = HAL_RESET_SOFT,
+        .file = file,
+        .line = line,
+        .pc = (uint32_t)__builtin_return_address(0),
+    };
+    log_reboot(&lri);
+#endif
 
     if (hal_debugger_connected()) {
        /*
@@ -144,6 +161,9 @@ __assert_func(const char *file, int line, const char *func, const char *e)
 void
 os_default_irq(struct trap_frame *tf)
 {
+#if MYNEWT_VAL(OS_CRASH_LOG)
+    struct log_reboot_info lri;
+#endif
 #if MYNEWT_VAL(OS_COREDUMP)
     struct coredump_regs regs;
 #endif
@@ -164,6 +184,17 @@ os_default_irq(struct trap_frame *tf)
     console_printf("BFAR:0x%08lx MMFAR:0x%08lx\n", SCB->BFAR, SCB->MMFAR);
 
     os_stacktrace((uintptr_t)(tf->ef + 1));
+
+#if MYNEWT_VAL(OS_CRASH_LOG)
+    lri = (struct log_reboot_info) {
+        .reason = HAL_RESET_SOFT,
+        .file = NULL,
+        .line = 0,
+        .pc = tf->ef->pc,
+    };
+    log_reboot(&lri);
+#endif
+
 #if MYNEWT_VAL(OS_COREDUMP)
     trap_to_coredump(tf, &regs);
     coredump_dump(&regs, sizeof(regs));

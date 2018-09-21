@@ -43,5 +43,8 @@ pkg.deps.BSP_SIMULATED:
 pkg.deps.OS_SYSVIEW:
     - "@apache-mynewt-core/sys/sysview"
 
+pkg.deps.OS_CRASH_LOG:
+    - "@apache-mynewt-core/sys/reboot"
+
 pkg.init:
     os_pkg_init: 0

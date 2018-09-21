@@ -37,6 +37,10 @@ syscfg.defs:
     OS_CRASH_STACKTRACE:
         description: 'Attempt to print stack trace when system crashes.'
         value: 0
+    OS_CRASH_LOG:
+        description: >
+            Write an entry to the reboot log when the system crashes.
+        value: 1
     OS_WATCHDOG_MONITOR:
         description: >
             'Attempt to capture state of stuck system before HW watchdog fires.'
@@ -135,3 +139,9 @@ syscfg.vals.OS_DEBUG_MODE:
     OS_CTX_SW_STACK_CHECK: 1
     OS_MEMPOOL_CHECK: 1
     OS_MEMPOOL_POISON: 1
+
+syscfg.vals.SELFTEST:
+    # OS_CRASH_LOG depends on some APIs that are almost never present in self
+    # tests (bootloader and newtmgr).  Explicitly disable this setting in self
+    # tests.
+    OS_CRASH_LOG: 0

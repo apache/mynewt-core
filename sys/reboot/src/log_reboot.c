@@ -139,9 +139,14 @@ reboot_cnt_inc(void)
  * @return 0 on success; non-zero on failure
  */
 int
-log_reboot(enum hal_reset_reason reason)
+log_reboot(const struct log_reboot_info *info)
 {
     struct image_version ver;
+    uint8_t hash[IMGMGR_HASH_LEN];
+    char buf[MYNEWT_VAL(REBOOT_LOG_BUF_SIZE)];
+    int off;
+    int rc;
+    int i;
 
 #if MYNEWT_VAL(REBOOT_LOG_FCB)
     {
@@ -159,14 +164,42 @@ log_reboot(enum hal_reset_reason reason)
     }
 
     if (!soft_reboot || reason != HAL_RESET_SOFT) {
-        imgr_my_version(&ver);
-
-        /* Log a reboot */
-        MODLOG_CRITICAL(LOG_MODULE_REBOOT, "rsn:%s, cnt:%u,"
-                        " img:%u.%u.%u.%u", REBOOT_REASON_STR(reason),
-                        reboot_cnt, ver.iv_major, ver.iv_minor,
-                        ver.iv_revision, (unsigned int)ver.iv_build_num);
+        rc = imgr_read_info(boot_current_slot, &ver, hash, NULL);
+        if (rc != 0) {
+            return rc;
+        }
     }
+
+    off = 0;
+    off += snprintf(buf + off, sizeof buf - off,
+                    "rsn:%s, cnt:%u, img:%u.%u.%u.%u, hash:",
+                    REBOOT_REASON_STR(info->reason), reboot_cnt, ver.iv_major,
+                    ver.iv_minor, ver.iv_revision,
+                    (unsigned int)ver.iv_build_num);
+
+    for (i = 0; i < sizeof hash; i++) {
+        off += snprintf(buf + off, sizeof buf - off, "%02x",
+                        (unsigned int)hash[i]);
+    }
+
+    if (info->file != NULL) {
+        off += snprintf(buf + off, sizeof buf - off, ", die:%s:%d",
+                info->file, info->line);
+    }
+
+    if (info->pc != 0) {
+        off += snprintf(buf + off, sizeof buf - off, ", pc:0x%lx",
+                (unsigned long)info->pc);
+    }
+
+    /* Make sure we don't log beyond the end of the source buffer. */
+    if (off > sizeof buf) {
+        off = sizeof buf;
+    }
+
+    /* Log a reboot */
+    modlog_append(LOG_MODULE_REBOOT, LOG_LEVEL_CRITICAL, LOG_ETYPE_STRING,
+                  buf, off);
 
     return 0;
 }
@@ -181,8 +214,17 @@ log_reboot(enum hal_reset_reason reason)
 void
 reboot_start(enum hal_reset_reason reason)
 {
+    struct log_reboot_info info;
+
     reboot_cnt_inc();
-    log_reboot(reason);
+
+    info = (struct log_reboot_info) {
+        .reason = reason,
+        .file = NULL,
+        .line = 0,
+        .pc = 0,
+    };
+    log_reboot_write(&info);
 }
 
 static char *

@@ -19,11 +19,12 @@
 #ifndef __LOG_REBOOT_H__
 #define __LOG_REBOOT_H__
 
+#include <hal/hal_system.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include <hal/hal_system.h>
 #define REBOOT_REASON_STR(reason)                                       \
     (reason == HAL_RESET_POR ? "HARD" :                                 \
       (reason == HAL_RESET_PIN ? "RESET_PIN" :                          \
@@ -33,7 +34,14 @@ extern "C" {
               (reason == HAL_RESET_REQUESTED ? "REQUESTED" :            \
                 "UNKNOWN"))))))
 
-int log_reboot(enum hal_reset_reason);
+struct log_reboot_info {
+    enum hal_reset_reason reason;
+    const char *file;
+    int line;
+    uint32_t pc;
+};
+
+int log_reboot(const struct log_reboot_info *info);
 void reboot_start(enum hal_reset_reason reason);
 
 extern uint16_t reboot_cnt;
