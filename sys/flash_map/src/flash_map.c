@@ -189,25 +189,17 @@ flash_area_erased_val(const struct flash_area *fa)
 int
 flash_area_is_empty(const struct flash_area *fa, bool *empty)
 {
-    uint32_t data[64 >> 2];
-    uint32_t data_off = 0;
-    int8_t bytes_to_read;
     int rc;
 
-     while (data_off < fa->fa_size) {
-         bytes_to_read = min(64, fa->fa_size - data_off);
-         rc = hal_flash_isempty(fa->fa_device_id, fa->fa_off + data_off, data,
-                                bytes_to_read);
-         if (rc < 0) {
-             return rc;
-         } else if (rc == 0) {
-             *empty = false;
-             return 0;
-         }
-         data_off += bytes_to_read;
-     }
-     *empty = true;
-     return 0;
+    *empty = false;
+    rc = hal_flash_isempty_no_buf(fa->fa_device_id, fa->fa_off, fa->fa_size);
+    if (rc < 0) {
+        return rc;
+    } else if (rc == 1) {
+        *empty = true;
+    }
+
+    return 0;
 }
 
 int
