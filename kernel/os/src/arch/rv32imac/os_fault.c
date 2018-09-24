@@ -38,7 +38,7 @@ handle_trap(uint32_t cause, void *fault_address, void *exception_frame)
     hal_system_reset();
 }
 
-void os_default_irq_asm(int num)
+void plic_default_isr(int num)
 {
 
 }
