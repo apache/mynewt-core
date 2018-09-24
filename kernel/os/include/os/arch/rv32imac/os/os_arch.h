@@ -37,6 +37,8 @@ typedef uint32_t os_stack_t;
 #define OS_SANITY_STACK_SIZE (96)
 #define OS_IDLE_STACK_SIZE (64)
 
+void plic_default_isr(int num);
+
 /* Include common arch definitions and APIs */
 #include "os/arch/common.h"
 
