@@ -203,28 +203,28 @@ read_gpio_inbuffer(int pin)
  * This should reset state from (most of) the devices on the other end.
  */
 static void
-hal_i2c_clear_bus(const struct nrf52_hal_i2c_cfg *cfg)
+hal_i2c_clear_bus(int scl_pin, int sda_pin)
 {
     int i;
     NRF_GPIO_Type *scl_port, *sda_port;
     /* Resolve which GPIO port these pins belong to */
-    scl_port = HAL_GPIO_PORT(cfg->scl_pin);
-    sda_port = HAL_GPIO_PORT(cfg->sda_pin);
+    scl_port = HAL_GPIO_PORT(scl_pin);
+    sda_port = HAL_GPIO_PORT(sda_pin);
 
     /* Input connected, standard-low disconnected-high, pull-ups */
-    scl_port->PIN_CNF[cfg->scl_pin] = NRF52_SCL_PIN_CONF;
-    sda_port->PIN_CNF[cfg->sda_pin] = NRF52_SDA_PIN_CONF;
+    scl_port->PIN_CNF[scl_pin] = NRF52_SCL_PIN_CONF;
+    sda_port->PIN_CNF[sda_pin] = NRF52_SDA_PIN_CONF;
 
-    hal_gpio_write(cfg->scl_pin, 1);
-    hal_gpio_write(cfg->sda_pin, 1);
+    hal_gpio_write(scl_pin, 1);
+    hal_gpio_write(sda_pin, 1);
 
-    scl_port->PIN_CNF[cfg->scl_pin] = NRF52_SCL_PIN_CONF_CLR;
-    sda_port->PIN_CNF[cfg->sda_pin] = NRF52_SDA_PIN_CONF_CLR;
+    scl_port->PIN_CNF[scl_pin] = NRF52_SCL_PIN_CONF_CLR;
+    sda_port->PIN_CNF[sda_pin] = NRF52_SDA_PIN_CONF_CLR;
 
     hal_i2c_delay_us(4);
 
     for (i = 0; i < 9; i++) {
-        if (read_gpio_inbuffer(cfg->sda_pin)) {
+        if (read_gpio_inbuffer(sda_pin)) {
             if (i == 0) {
                 /*
                  * Nothing to do here.
@@ -234,23 +234,23 @@ hal_i2c_clear_bus(const struct nrf52_hal_i2c_cfg *cfg)
                 break;
             }
         }
-        hal_gpio_write(cfg->scl_pin, 0);
+        hal_gpio_write(scl_pin, 0);
         hal_i2c_delay_us(4);
-        hal_gpio_write(cfg->scl_pin, 1);
+        hal_gpio_write(scl_pin, 1);
         hal_i2c_delay_us(4);
     }
 
     /*
      * Send STOP.
      */
-    hal_gpio_write(cfg->sda_pin, 0);
+    hal_gpio_write(sda_pin, 0);
     hal_i2c_delay_us(4);
-    hal_gpio_write(cfg->sda_pin, 1);
+    hal_gpio_write(sda_pin, 1);
 
 ret:
     /* Restore GPIO config */
-    scl_port->PIN_CNF[cfg->scl_pin] = NRF52_SCL_PIN_CONF;
-    sda_port->PIN_CNF[cfg->sda_pin] = NRF52_SDA_PIN_CONF;
+    scl_port->PIN_CNF[scl_pin] = NRF52_SCL_PIN_CONF;
+    sda_port->PIN_CNF[sda_pin] = NRF52_SDA_PIN_CONF;
 }
 
 int
@@ -288,7 +288,7 @@ hal_i2c_init(uint8_t i2c_num, void *usercfg)
         goto err;
     }
 
-    hal_i2c_clear_bus(cfg);
+    hal_i2c_clear_bus(cfg->scl_pin, cfg->sda_pin);
 
     /* Resolve which GPIO port these pins belong to */
     scl_port = HAL_GPIO_PORT(cfg->scl_pin);
@@ -373,11 +373,14 @@ err:
         regs->ERRORSRC = nrf_status;
         rc = hal_i2c_convert_status(nrf_status);
     } else if (rc == HAL_I2C_ERR_TIMEOUT) {
-       /* Some I2C slave peripherals cause a glitch on the bus when they
-        * reset which puts the TWI in an unresponsive state.  Disabling and
-        * re-enabling the TWI returns it to normal operation.
-        */
+        /* Some I2C slave peripherals cause a glitch on the bus when they
+         * reset which puts the TWI in an unresponsive state.  Disabling and
+         * re-enabling the TWI returns it to normal operation.
+         * A clear operation is performed in case one of the devices on
+         * the bus is in a bad state.
+         */
         regs->ENABLE = TWI_ENABLE_ENABLE_Disabled;
+        hal_i2c_clear_bus(regs->PSELSCL, regs->PSELSDA);
         regs->ENABLE = TWI_ENABLE_ENABLE_Enabled;
     }
 
@@ -458,8 +461,11 @@ err:
        /* Some I2C slave peripherals cause a glitch on the bus when they
         * reset which puts the TWI in an unresponsive state.  Disabling and
         * re-enabling the TWI returns it to normal operation.
+        * A clear operation is performed in case one of the devices on
+        * the bus is in a bad state.
         */
         regs->ENABLE = TWI_ENABLE_ENABLE_Disabled;
+        hal_i2c_clear_bus(regs->PSELSCL, regs->PSELSDA);
         regs->ENABLE = TWI_ENABLE_ENABLE_Enabled;
     }
 
