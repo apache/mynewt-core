@@ -41,3 +41,8 @@ syscfg.defs:
             Number of retries to use for failed I2C communication.  A retry is
             used when the BQ27Z561 sends an unexpected NACK.
         value: 2
+    BQ27Z561_I2C_TIMEOUT_MS:
+        description: >
+            Number of milliseconds to wait for each I2C transaction to 
+            complete.
+        value: 16
