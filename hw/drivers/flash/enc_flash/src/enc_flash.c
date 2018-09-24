@@ -159,7 +159,6 @@ enc_flash_is_empty(const struct hal_flash *h_dev, uint32_t addr, void *buf,
     struct enc_flash_dev *dev = HAL_TO_ENC(h_dev);
     const struct hal_flash *hwdev;
     int rc;
-    int rc2;
 
     hwdev = dev->efd_hwdev;
 
@@ -167,18 +166,18 @@ enc_flash_is_empty(const struct hal_flash *h_dev, uint32_t addr, void *buf,
         return hwdev->hf_itf->hff_is_empty(hwdev, addr, buf, len);
     } else {
         rc = hal_flash_is_erased(hwdev, addr, buf, len);
-        if (rc < 0) {
+
+        /*
+         * If error or low-level flash is erased, avoid reading it.
+         */
+        if (rc < 0 || rc == 1) {
             return rc;
         }
 
         /*
          * Also read the underlying data.
          */
-        rc2 = enc_flash_read(h_dev, addr, buf, len);
-        if (rc2 < 0) {
-            return rc2;
-        }
-        return rc;
+        return enc_flash_read(h_dev, addr, buf, len);
     }
 }
 
