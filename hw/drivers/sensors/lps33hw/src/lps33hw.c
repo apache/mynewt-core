@@ -176,7 +176,7 @@ lps33hw_i2c_set_reg(struct sensor_itf *itf, uint8_t reg, uint8_t value)
         .buffer = payload
     };
 
-    rc = i2cn_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1,
+    rc = i2cn_master_write(itf->si_num, &data_struct, MYNEWT_VAL(LPS33HW_I2C_TIMEOUT_TICKS), 1,
                            MYNEWT_VAL(LPS33HW_I2C_RETRIES));
 
     if (rc) {
@@ -347,7 +347,7 @@ lps33hw_i2c_get_regs(struct sensor_itf *itf, uint8_t reg, uint8_t size,
     };
 
     /* Register write */
-    rc = i2cn_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1,
+    rc = i2cn_master_write(itf->si_num, &data_struct, MYNEWT_VAL(LPS33HW_I2C_TIMEOUT_TICKS), 1,
                            MYNEWT_VAL(LPS33HW_I2C_RETRIES));
     if (rc) {
         LPS33HW_LOG(ERROR, "I2C access failed at address 0x%02X\n",
@@ -360,7 +360,7 @@ lps33hw_i2c_get_regs(struct sensor_itf *itf, uint8_t reg, uint8_t size,
     data_struct.len = size;
     data_struct.buffer = buffer;
     rc = i2cn_master_read(itf->si_num, &data_struct,
-                          (OS_TICKS_PER_SEC / 10) * size, 1,
+                          (MYNEWT_VAL(LPS33HW_I2C_TIMEOUT_TICKS)) * size, 1,
                           MYNEWT_VAL(LPS33HW_I2C_RETRIES));
 
     if (rc) {
