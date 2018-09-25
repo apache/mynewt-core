@@ -20,7 +20,7 @@
 #ifndef __MCU_CORTEX_M0_H__
 #define __MCU_CORTEX_M0_H__
 
-#include "mkw41z4.h"
+#include "MKW41Z4.h"
 
 #ifdef __cplusplus
 extern "C" {
