@@ -40,14 +40,14 @@ matrix:
       addons: *addon_conf
       env:
         - TEST=TEST_ALL
-    - os: osx
-      osx_image: xcode9.2
-      env:
-        - TEST=BUILD_TARGETS
-    - os: osx
-      osx_image: xcode9.2
-      env:
-        - TEST=BUILD_BLINKY
+    #- os: osx
+    #  osx_image: xcode9.2
+    #  env:
+    #    - TEST=BUILD_TARGETS
+    #- os: osx
+    #  osx_image: xcode9.2
+    #  env:
+    #    - TEST=BUILD_BLINKY
     - os: osx
       osx_image: xcode9.2
       env:
