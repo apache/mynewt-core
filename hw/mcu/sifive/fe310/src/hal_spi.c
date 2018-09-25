@@ -359,15 +359,11 @@ hal_spi_txrx(int spi_num, void *txbuf, void *rxbuf, int len)
         rc = SYS_EINVAL;
         goto err;
     }
-    while (_REG32(spi->spi_base, SPI_REG_TXFIFO) & SPI_TXFIFO_FULL) {
-        if (_REG32(spi->spi_base, SPI_REG_RXFIFO)) {
-        }
-    }
     while (!(_REG32(spi->spi_base, SPI_REG_RXFIFO) & SPI_RXFIFO_EMPTY)) {
     }
 
     while (received < len) {
-        if (sent < len &&
+        if (sent < len && (sent - received) < FE310_SPI_FIFO_LENGHT &&
             !(_REG32(spi->spi_base, SPI_REG_TXFIFO) & SPI_TXFIFO_FULL)) {
             _REG32(spi->spi_base, SPI_REG_TXFIFO) = ((uint8_t *)txbuf)[sent++];
         }
