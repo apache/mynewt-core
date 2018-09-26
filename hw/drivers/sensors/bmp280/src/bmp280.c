@@ -469,7 +469,7 @@ static int
 bmp280_sensor_set_config(struct sensor *sensor, void *cfg)
 {
     struct bmp280* bmp280 = (struct bmp280 *)SENSOR_GET_DEVICE(sensor);
-    
+
     return bmp280_config(bmp280, (struct bmp280_cfg*)cfg);
 }
 
@@ -705,7 +705,7 @@ bmp280_i2c_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
     memset(buffer, 0, len);
 
     /* Register write */
-    rc = i2cn_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 0,
+    rc = i2cn_master_write(itf->si_num, &data_struct, MYNEWT_VAL(BMP280_I2C_TIMEOUT_TICKS), 0,
                            MYNEWT_VAL(BMP280_I2C_RETRIES));
     if (rc) {
         BMP280_LOG(ERROR, "I2C access failed at address 0x%02X\n",
@@ -717,7 +717,7 @@ bmp280_i2c_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
     /* Read len bytes back */
     memset(payload, 0, sizeof(payload));
     data_struct.len = len;
-    rc = i2cn_master_read(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1,
+    rc = i2cn_master_read(itf->si_num, &data_struct, MYNEWT_VAL(BMP280_I2C_TIMEOUT_TICKS), 1,
                           MYNEWT_VAL(BMP280_I2C_RETRIES));
     if (rc) {
         BMP280_LOG(ERROR, "Failed to read from 0x%02X:0x%02X\n",
@@ -820,7 +820,7 @@ bmp280_i2c_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
         payload[1] = buffer[i];
 
         rc = i2cn_master_write(itf->si_num, &data_struct,
-                               OS_TICKS_PER_SEC / 10, 1,
+                               MYNEWT_VAL(BMP280_I2C_TIMEOUT_TICKS), 1,
                                MYNEWT_VAL(BMP280_I2C_RETRIES));
         if (rc) {
             BMP280_LOG(ERROR, "Failed to write 0x%02X:0x%02X\n",

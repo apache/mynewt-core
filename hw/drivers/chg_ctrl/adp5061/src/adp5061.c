@@ -206,7 +206,7 @@ adp5061_get_reg(struct adp5061_dev *dev, uint8_t addr, uint8_t *value)
     /* Register write */
     payload = addr;
     rc = i2cn_master_write(dev->a_chg_ctrl.cc_itf.cci_num, &data_struct,
-            OS_TICKS_PER_SEC / 10, 1, MYNEWT_VAL(ADP5061_I2C_RETRIES));
+            MYNEWT_VAL(ADP5061_I2C_TIMEOUT_TICKS), 1, MYNEWT_VAL(ADP5061_I2C_RETRIES));
     if (rc) {
         goto err;
     }
@@ -214,7 +214,7 @@ adp5061_get_reg(struct adp5061_dev *dev, uint8_t addr, uint8_t *value)
     /* Read one byte back */
     payload = addr;
     rc = i2cn_master_read(dev->a_chg_ctrl.cc_itf.cci_num, &data_struct,
-            OS_TICKS_PER_SEC / 10, 1, MYNEWT_VAL(ADP5061_I2C_RETRIES));
+            MYNEWT_VAL(ADP5061_I2C_TIMEOUT_TICKS), 1, MYNEWT_VAL(ADP5061_I2C_RETRIES));
     *value = payload;
 
 err:
@@ -240,7 +240,7 @@ adp5061_set_reg(struct adp5061_dev *dev, uint8_t addr, uint8_t value)
     }
 
     rc = i2cn_master_write(dev->a_chg_ctrl.cc_itf.cci_num, &data_struct,
-            OS_TICKS_PER_SEC / 10, 1, MYNEWT_VAL(ADP5061_I2C_RETRIES));
+            MYNEWT_VAL(ADP5061_I2C_TIMEOUT_TICKS), 1, MYNEWT_VAL(ADP5061_I2C_RETRIES));
 
     adp5061_itf_unlock(&dev->a_chg_ctrl.cc_itf);
 
@@ -271,7 +271,7 @@ adp5061_set_regs(struct adp5061_dev *dev, uint8_t addr,
     }
 
     rc = i2cn_master_write(dev->a_chg_ctrl.cc_itf.cci_num, &data_struct,
-            OS_TICKS_PER_SEC / 10, 1, MYNEWT_VAL(ADP5061_I2C_RETRIES));
+            MYNEWT_VAL(ADP5061_I2C_TIMEOUT_TICKS), 1, MYNEWT_VAL(ADP5061_I2C_RETRIES));
 
     adp5061_itf_unlock(&dev->a_chg_ctrl.cc_itf);
 

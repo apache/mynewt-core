@@ -67,7 +67,7 @@ lp5523_set_reg(struct led_itf *itf, enum lp5523_registers addr,
         return rc;
     }
 
-    rc = i2cn_master_write(itf->li_num, &data_struct, OS_TICKS_PER_SEC / 10, 1,
+    rc = i2cn_master_write(itf->li_num, &data_struct, MYNEWT_VAL(LP5523_I2C_TIMEOUT_TICKS), 1,
                            MYNEWT_VAL(LP5523_I2C_RETRIES));
 
     if (rc) {
@@ -101,7 +101,7 @@ lp5523_get_reg(struct led_itf *itf, enum lp5523_registers addr,
     }
 
     /* Register write */
-    rc = i2cn_master_write(itf->li_num, &data_struct, OS_TICKS_PER_SEC / 10, 0,
+    rc = i2cn_master_write(itf->li_num, &data_struct, MYNEWT_VAL(LP5523_I2C_TIMEOUT_TICKS), 0,
                            MYNEWT_VAL(LP5523_I2C_RETRIES));
 
     if (rc) {
@@ -113,7 +113,7 @@ lp5523_get_reg(struct led_itf *itf, enum lp5523_registers addr,
 
     /* Read one byte back */
     data_struct.buffer = value;
-    rc = i2cn_master_read(itf->li_num, &data_struct, OS_TICKS_PER_SEC / 10, 1,
+    rc = i2cn_master_read(itf->li_num, &data_struct, MYNEWT_VAL(LP5523_I2C_TIMEOUT_TICKS), 1,
                           MYNEWT_VAL(LP5523_I2C_RETRIES));
 
     if (rc) {
@@ -150,7 +150,7 @@ lp5523_set_n_regs(struct led_itf *itf, enum lp5523_registers addr,
         return rc;
     }
 
-    rc = i2cn_master_write(itf->li_num, &data_struct, (OS_TICKS_PER_SEC / 5),
+    rc = i2cn_master_write(itf->li_num, &data_struct, MYNEWT_VAL(LP5523_I2C_TIMEOUT_TICKS),
                            1, MYNEWT_VAL(LP5523_I2C_RETRIES));
 
     if (rc) {
@@ -183,7 +183,7 @@ lp5523_get_n_regs(struct led_itf *itf, enum lp5523_registers addr,
         return rc;
     }
 
-    rc = i2cn_master_write(itf->li_num, &data_struct, (OS_TICKS_PER_SEC / 10),
+    rc = i2cn_master_write(itf->li_num, &data_struct, MYNEWT_VAL(LP5523_I2C_TIMEOUT_TICKS),
                            0, MYNEWT_VAL(LP5523_I2C_RETRIES));
 
     if (rc) {
@@ -195,7 +195,7 @@ lp5523_get_n_regs(struct led_itf *itf, enum lp5523_registers addr,
 
     data_struct.len = len;
     data_struct.buffer = vals;
-    rc = i2cn_master_read(itf->li_num, &data_struct, OS_TICKS_PER_SEC / 5, 1,
+    rc = i2cn_master_read(itf->li_num, &data_struct, MYNEWT_VAL(LP5523_I2C_TIMEOUT_TICKS), 1,
                           MYNEWT_VAL(LP5523_I2C_RETRIES));
 
     if (rc) {

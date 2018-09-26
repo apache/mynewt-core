@@ -112,7 +112,7 @@ lis2dh12_i2c_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
     memset(buffer, 0, len);
 
     /* Register write */
-    rc = i2cn_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1,
+    rc = i2cn_master_write(itf->si_num, &data_struct, MYNEWT_VAL(LIS2DH12_I2C_TIMEOUT_TICKS), 1,
                            MYNEWT_VAL(LIS2DH12_I2C_RETRIES));
     if (rc) {
         LIS2DH12_LOG(ERROR, "I2C access failed at address 0x%02X\n",
@@ -124,7 +124,7 @@ lis2dh12_i2c_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
     /* Read len bytes back */
     memset(payload, 0, sizeof(payload));
     data_struct.len = len;
-    rc = i2cn_master_read(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1,
+    rc = i2cn_master_read(itf->si_num, &data_struct, MYNEWT_VAL(LIS2DH12_I2C_TIMEOUT_TICKS), 1,
                           MYNEWT_VAL(LIS2DH12_I2C_RETRIES));
     if (rc) {
         LIS2DH12_LOG(ERROR, "Failed to read from 0x%02X:0x%02X\n",
@@ -241,7 +241,7 @@ lis2dh12_i2c_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
     memcpy(&payload[1], buffer, len);
 
     /* Register write */
-    rc = i2cn_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1,
+    rc = i2cn_master_write(itf->si_num, &data_struct, MYNEWT_VAL(LIS2DH12_I2C_TIMEOUT_TICKS), 1,
                            MYNEWT_VAL(LIS2DH12_I2C_RETRIES));
     if (rc) {
         LIS2DH12_LOG(ERROR, "I2C access failed at address 0x%02X\n",
