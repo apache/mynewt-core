@@ -31,28 +31,26 @@ go:
 matrix:
   include:
     - os: linux
-      addons: *addon_conf
-      env: 
+      env:
         - TEST=BUILD_TARGETS
     - os: linux
-      addons: *addon_conf
-      env: 
+      env:
         - TEST=BUILD_BLINKY
     - os: linux
       addons: *addon_conf
-      env: 
+      env:
         - TEST=TEST_ALL
     - os: osx
       osx_image: xcode9.2
-      env: 
+      env:
         - TEST=BUILD_TARGETS
     - os: osx
       osx_image: xcode9.2
-      env: 
+      env:
         - TEST=BUILD_BLINKY
     - os: osx
       osx_image: xcode9.2
-      env: 
+      env:
         - TEST=TEST_ALL
 
 install:
@@ -74,7 +72,8 @@ script:
 - newt install
 
 - export IGNORED_BSPS="ci40 embarc_emsk hifive1 native-armv7 native-mips
-                       pic32mx470_6lp_clicker pic32mz2048_wi-fire sensorhub"
+                       pic32mx470_6lp_clicker pic32mz2048_wi-fire sensorhub
+                       native"
 - $HOME/ci/run_test.sh
 
 cache:
