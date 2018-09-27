@@ -33,6 +33,11 @@ matrix:
     - os: linux
       env:
         - TEST=BUILD_TARGETS
+        - TARGET_SET=1
+    - os: linux
+      env:
+        - TEST=BUILD_TARGETS
+        - TARGET_SET=2
     - os: linux
       env:
         - TEST=BUILD_BLINKY
@@ -69,8 +74,15 @@ install:
 script:
 - cp -R $HOME/ci/mynewt-core-project.yml project.yml
 - cp -R $HOME/ci/mynewt-core-targets targets
+- total=$(targets | wc -l)
+- set_size=$(echo "${total} / 2 + 1" | bc)
+- export TARGETS1=$(ls targets | head -n $set_size)
+- export TARGETS2=$(ls targets | tail -n $set_size)
 - newt install
 
+  # the following list of targets are known to fail building blinky, or
+  # might have extra dependencies hard to provide, non-common toolchains, etc
+  # NOTE: "native" is here to avoid having to install gcc-multilib
 - export IGNORED_BSPS="ci40 embarc_emsk hifive1 native-armv7 native-mips
                        pic32mx470_6lp_clicker pic32mz2048_wi-fire sensorhub
                        native"
