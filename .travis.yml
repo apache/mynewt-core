@@ -74,13 +74,13 @@ install:
 script:
 - cp -R $HOME/ci/mynewt-core-project.yml project.yml
 - cp -R $HOME/ci/mynewt-core-targets targets
-- total=$(ls targets | wc -l)
+- total=$(ls targets/mynewt-core-targets | wc -l)
 - echo $total
 - set_size=$(echo "${total} / 2 + 1" | bc)
 - echo $set_size
-- export TARGETS1=$(ls targets | head -n $set_size)
+- export TARGETS1=$(ls targets/mynewt-core-targets | head -n $set_size)
 - echo $TARGETS1
-- export TARGETS2=$(ls targets | tail -n $set_size)
+- export TARGETS2=$(ls targets/mynewt-core-targets | tail -n $set_size)
 - echo $TARGETS2
 - newt install
 
