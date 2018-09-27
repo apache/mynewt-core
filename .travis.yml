@@ -145,3 +145,4 @@ script:
 cache:
   directories:
   - $HOME/TOOLCHAIN
+  - $HOME/Library/Caches/Homebrew
