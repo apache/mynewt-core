@@ -88,11 +88,12 @@ script:
 - TOTAL_SETS=4
 - set_size=$(echo "$(ls targets/mynewt-core-targets | wc -l) / ${TOTAL_SETS} + 1" | bc)
 - set=0; off=1; sets=()
-- while [[ $set -lt $TOTAL_SETS ]]; do
--   sets[$set]=$(ls targets/mynewt-core-targets | tail -n +$off | head -n $set_size)
--   set=$((set + 1))
--   off=$((off + set_size))
-- done
+- |
+  while [[ $set -lt $TOTAL_SETS ]]; do
+    sets[$set]=$(ls targets/mynewt-core-targets | tail -n +$off | head -n $set_size);
+    set=$((set + 1));
+    off=$((off + set_size));
+  done
 - export TARGETS1=${sets[0]}
 - export TARGETS2=${sets[1]}
 - export TARGETS3=${sets[2]}
