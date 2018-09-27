@@ -40,6 +40,14 @@ matrix:
         - TARGET_SET=2
     - os: linux
       env:
+        - TEST=BUILD_TARGETS
+        - TARGET_SET=3
+    - os: linux
+      env:
+        - TEST=BUILD_TARGETS
+        - TARGET_SET=4
+    - os: linux
+      env:
         - TEST=BUILD_BLINKY
     - os: linux
       addons: *addon_conf
@@ -74,14 +82,22 @@ install:
 script:
 - cp -R $HOME/ci/mynewt-core-project.yml project.yml
 - cp -R $HOME/ci/mynewt-core-targets targets
-- total=$(ls targets/mynewt-core-targets | wc -l)
-- echo $total
-- set_size=$(echo "${total} / 2 + 1" | bc)
-- echo $set_size
-- export TARGETS1=$(ls targets/mynewt-core-targets | head -n $set_size)
-- echo $TARGETS1
-- export TARGETS2=$(ls targets/mynewt-core-targets | tail -n $set_size)
-- echo $TARGETS2
+
+  # Break the targets into different sets to distribute work among containers
+  # The total sets must match the amount specified in the matrix
+- TOTAL_SETS=4
+- set_size=$(echo "$(ls targets/mynewt-core-targets | wc -l) / ${TOTAL_SETS} + 1" | bc)
+- set=0; off=1; sets=()
+- while [[ $set -lt $TOTAL_SETS ]]; do
+-   sets[$set]=$(ls targets/mynewt-core-targets | tail -n +$off | head -n $set_size)
+-   set=$((set + 1))
+-   off=$((off + set_size))
+- done
+- export TARGETS1=${sets[0]}
+- export TARGETS2=${sets[1]}
+- export TARGETS3=${sets[2]}
+- export TARGETS4=${sets[3]}
+
 - newt install
 
   # the following list of targets are known to fail building blinky, or
