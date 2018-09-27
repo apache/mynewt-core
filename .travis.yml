@@ -30,6 +30,7 @@ go:
 
 matrix:
   include:
+    # newt build <targets>
     - os: linux
       env:
         - TEST=BUILD_TARGETS
@@ -46,9 +47,26 @@ matrix:
       env:
         - TEST=BUILD_TARGETS
         - TARGET_SET=4
+
+    # newt build <blinky-for-BSP>
     - os: linux
       env:
         - TEST=BUILD_BLINKY
+        - TARGET_SET=1
+    - os: linux
+      env:
+        - TEST=BUILD_BLINKY
+        - TARGET_SET=2
+    - os: linux
+      env:
+        - TEST=BUILD_BLINKY
+        - TARGET_SET=3
+    - os: linux
+      env:
+        - TEST=BUILD_BLINKY
+        - TARGET_SET=4
+
+    # newt test all (Linux)
     - os: linux
       addons: *addon_conf
       env:
@@ -94,10 +112,25 @@ script:
     set=$((set + 1));
     off=$((off + set_size));
   done
-- export TARGETS1=${sets[0]}
-- export TARGETS2=${sets[1]}
-- export TARGETS3=${sets[2]}
-- export TARGETS4=${sets[3]}
+- export TARGET_SET1=${sets[0]}
+- export TARGET_SET2=${sets[1]}
+- export TARGET_SET3=${sets[2]}
+- export TARGET_SET4=${sets[3]}
+
+  # Break the BSPs into different sets to distribute work among containers
+  # The total sets must match the amount specified in the matrix
+- set_size=$(echo "$(ls ${TRAVIS_BUILD_DIR}/hw/bsp | wc -l) / ${TOTAL_SETS} + 1" | bc)
+- set=0; off=1; sets=()
+- |
+  while [[ $set -lt $TOTAL_SETS ]]; do
+    sets[$set]=$(ls ${TRAVIS_BUILD_DIR}/hw/bsp | tail -n +$off | head -n $set_size);
+    set=$((set + 1));
+    off=$((off + set_size));
+  done
+- export BLINKY_SET1=${sets[0]}
+- export BLINKY_SET2=${sets[1]}
+- export BLINKY_SET3=${sets[2]}
+- export BLINKY_SET4=${sets[3]}
 
 - newt install
 
