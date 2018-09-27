@@ -22,8 +22,8 @@ _addons: &addon_conf
     sources:
       - ubuntu-toolchain-r-test
     packages:
-      - gcc-multilib
       - gcc-7-multilib
+      - linux-libc-dev:i386
 
 go:
   - "1.10"
