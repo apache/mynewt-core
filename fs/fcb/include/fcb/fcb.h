@@ -78,6 +78,20 @@ struct fcb {
 
 int fcb_init(struct fcb *fcb);
 
+/*
+ * Initialize fcb for specific flash area
+ *
+ * Function initializes FCB structure with data taken from specified flash
+ * area.
+ * If FCB was not initialized before in this area, area will be erased.
+ *
+ * @param fcb            Fcb to initialize
+ * @param flash_area_id  flash area for this fcb
+ * @param version        version of fcb
+ *
+ */
+int fcb_init_flash_area(struct fcb *fcb, int flash_area_id, uint8_t version);
+
 /**
  * fcb_log is needed as the number of entries in a log
  */
