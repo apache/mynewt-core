@@ -20,7 +20,7 @@
 #ifndef _OS_ARCH_SIM_H
 #define _OS_ARCH_SIM_H
 
-#include "mcu/mcu_sim.h
+#include "mcu/mcu_sim.h"
 
 #ifdef __cplusplus
 extern "C" {
