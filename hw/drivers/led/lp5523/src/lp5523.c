@@ -27,10 +27,6 @@
 #include "lp5523/lp5523.h"
 #include <syscfg/syscfg.h>
 
-#if MYNEWT_VAL(LED_ABSTRACTION_LAYER)
-#include "led/led.h"
-#endif
-
 /* Define the stats section and records */
 STATS_SECT_START(lp5523_stat_section)
     STATS_SECT_ENTRY(read_errors)
