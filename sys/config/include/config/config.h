@@ -260,6 +260,21 @@ int conf_set_value(char *name, char *val_str);
 char *conf_get_value(char *name, char *buf, int buf_len);
 
 /**
+ * Get stored value of configuration item identified by @p name.
+ * This traverses the configuration area(s), and copies the value
+ * of the latest value.
+ *
+ * Value is copied to @p buf, the maximum number of bytes it will copy is
+ * limited by @p buf_len.
+ *
+ * @param name Name/key of the configuration item.
+ * @param val_str Value of the configuration item.
+ *
+ * @return 0 on success, non-zero on failure.
+ */
+int conf_get_stored_value(char *name, char *buf, int buf_len);
+
+/**
  * Call commit for all configuration handler. This should apply all
  * configuration which has been set, but not applied yet.
  *

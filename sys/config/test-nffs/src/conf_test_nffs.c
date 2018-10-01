@@ -339,6 +339,7 @@ TEST_CASE_DECL(config_test_small_file)
 TEST_CASE_DECL(config_test_multiple_in_file)
 TEST_CASE_DECL(config_test_save_in_file)
 TEST_CASE_DECL(config_test_save_one_file)
+TEST_CASE_DECL(config_test_get_stored_file)
 
 TEST_SUITE(config_test_all)
 {
@@ -365,6 +366,7 @@ TEST_SUITE(config_test_all)
     config_test_save_in_file();
 
     config_test_save_one_file();
+    config_test_get_stored_file();
 }
 
 #if MYNEWT_VAL(SELFTEST)
