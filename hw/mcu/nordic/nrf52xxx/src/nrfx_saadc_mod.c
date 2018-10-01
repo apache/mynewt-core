@@ -28,6 +28,10 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include "syscfg/syscfg.h"
+
+#if MYNEWT_VAL(BSP_NRF52)
+
 #include <nrfx.h>
 
 #if NRFX_CHECK(NRFX_SAADC_ENABLED)
@@ -644,3 +648,4 @@ void nrfx_disable_adc_chan(int chan)
                                 NRF_SAADC_INPUT_DISABLED);
 }
 #endif // NRFX_CHECK(NRFX_SAADC_ENABLED)
+#endif /* MYNEWT_VAL(BSP_NRF52) */
