@@ -82,6 +82,7 @@ matrix:
     - os: osx
       osx_image: xcode9.2
       env:
+        # FIXME: only tests 1/4 of all available
         - TEST=TEST_ALL
 
 install:
@@ -95,7 +96,7 @@ install:
 
 - newt version
 - gcc --version
-- arm-none-eabi-gcc --version
+- [[ ${TEST} != "TEST_ALL" ]] && arm-none-eabi-gcc --version
 
 script:
 - cp -R $HOME/ci/mynewt-core-project.yml project.yml
