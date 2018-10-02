@@ -96,7 +96,7 @@ struct battery {
     /* All propertied are numbered for battery manager internal use */
     uint8_t b_all_property_count;
 
-    /* Numbre of registered listeners */
+    /* Number of registered listeners */
     uint8_t b_listener_count;
 
     /* Array of properties created by battery manager
