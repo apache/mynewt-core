@@ -105,6 +105,11 @@ struct battery {
      */
     struct battery_property *b_properties;
 
+    /* Bitmask of properties which needs polling (for poll and change
+     * notifications).
+     */
+    uint32_t b_polled_properties[BATTERY_PROPERTY_MASK_SIZE];
+
     /**
      * Poll rate in ms for this battery.
      * Field managed by battery manager.
