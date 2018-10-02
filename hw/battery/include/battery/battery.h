@@ -96,7 +96,7 @@ struct battery {
     /* All propertied are numbered for battery manager internal use */
     uint8_t b_all_property_count;
 
-    /* Numbre of registered listeners */
+    /* Number of registered listeners */
     uint8_t b_listener_count;
 
     /* Array of properties created by battery manager
@@ -104,6 +104,11 @@ struct battery {
      * Filled by battery manager.
      */
     struct battery_property *b_properties;
+
+    /* Bitmask of properties which needs polling (for poll and change
+     * notifications).
+     */
+    uint32_t b_polled_properties[BATTERY_PROPERTY_MASK_SIZE];
 
     /**
      * Poll rate in ms for this battery.
