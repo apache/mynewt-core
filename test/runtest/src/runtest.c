@@ -165,8 +165,10 @@ runtest_log_result(const char *msg, bool passed)
     int m_len;
     int len;
 
-    /* str length of {"k":"","n":"","s":"","m":"","r":1}<token> */
-    len = 35 + strlen(runtest_token);
+    /* str length of {"k":"","n":"","s":"","m":"","r":1}<token> plus three
+     * null-terminators.
+     */
+    len = 38 + strlen(runtest_token);
 
     /* How much of the test name can we log? */
     n_len = strlen(tu_case_name);
@@ -175,7 +177,8 @@ runtest_log_result(const char *msg, bool passed)
     }
     len += n_len;
     n = buf;
-    strncpy(n, tu_case_name, n_len + 1);
+    strncpy(n, tu_case_name, n_len);
+    n[n_len] = '\0';
 
     /* How much of the suite name can we log? */
     s_len = strlen(runtest_current_ts->ts_name);
@@ -184,7 +187,8 @@ runtest_log_result(const char *msg, bool passed)
     }
     len += s_len;
     s = n + n_len + 2;
-    strncpy(s, runtest_current_ts->ts_name, s_len + 1);
+    strncpy(s, runtest_current_ts->ts_name, s_len);
+    s[s_len] = '\0';
 
     /* How much of the message can we log? */
     m_len = strlen(msg);
@@ -192,7 +196,8 @@ runtest_log_result(const char *msg, bool passed)
         m_len = LOG_PRINTF_MAX_ENTRY_LEN - len - 1;
     }
     m = s + s_len + 2;
-    strncpy(m, msg, m_len + 1);
+    strncpy(m, msg, m_len);
+    m[m_len] = '\0';
 
     /* XXX Hack to allow the idle task to run and update the timestamp. */
     os_time_delay(1);
