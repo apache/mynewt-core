@@ -46,6 +46,13 @@ typedef uint32_t os_stack_t;
 #define OS_IS_CRITICAL()                    ((mips_getsr() & 1) == 0)
 #define OS_ASSERT_CRITICAL()                assert(OS_IS_CRITICAL())
 
+static inline int
+os_arch_in_isr(void)
+{
+    /* check the EXL bit */
+    return (mips_getsr() & (1 << 1)) ? 1 : 0;
+}
+
 /* Include common arch definitions and APIs */
 #include "os/arch/common.h"
 
