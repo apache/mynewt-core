@@ -24,7 +24,7 @@ compiler.path.objdump: "mips-mti-elf-objdump"
 compiler.path.objsize: "mips-mti-elf-size"
 compiler.path.objcopy: "mips-mti-elf-objcopy"
 
-compiler.flags.base: -std=gnu11 -EL -mips32r2 -Wall -Werror
+compiler.flags.base: [-std=gnu11, -EL, -mips32r2, -Wall, -Werror]
 compiler.flags.default: [compiler.flags.base, -O2, -g]
 compiler.flags.optimized: [compiler.flags.base, -Os, -g]
 compiler.flags.debug: [compiler.flags.base, -g3]

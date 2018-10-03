@@ -24,8 +24,7 @@ compiler.path.archive: "mips-mti-linux-gnu-ar"
 compiler.path.objdump: "mips-mti-linux-gnu-objdump"
 compiler.path.objsize: "mips-mti-linux-gnu-size"
 compiler.path.objcopy: "mips-mti-linux-gnu-objcopy"
-compiler.flags.base: >
-    -std=gnu11 -EL -mips32r2 -Wall -Werror -ggdb
+compiler.flags.base: [-std=gnu11, -EL, -mips32r2, -Wall, -Werror, -ggdb]
 compiler.ld.resolve_circular_deps: true
 
 compiler.flags.default: [compiler.flags.base, -O1]
