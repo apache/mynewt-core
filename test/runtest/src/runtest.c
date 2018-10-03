@@ -155,8 +155,8 @@ static void
 runtest_log_result(const char *msg, bool passed)
 {
 #if MYNEWT_VAL(RUNTEST_LOG)
-    /* Must log valid json with a strlen less than LOG_PRINTF_MAX_ENTRY_LEN */
-    char buf[LOG_PRINTF_MAX_ENTRY_LEN];
+    /* Must log valid json with a strlen less than MODLOG_MAX_PRINTF_LEN */
+    char buf[MYNEWT_VAL(MODLOG_MAX_PRINTF_LEN)];
     char *n;
     int n_len;
     char *s;
@@ -172,8 +172,8 @@ runtest_log_result(const char *msg, bool passed)
 
     /* How much of the test name can we log? */
     n_len = strlen(tu_case_name);
-    if (len + n_len >= LOG_PRINTF_MAX_ENTRY_LEN) {
-        n_len = LOG_PRINTF_MAX_ENTRY_LEN - len - 1;
+    if (len + n_len >= MYNEWT_VAL(MODLOG_MAX_PRINTF_LEN)) {
+        n_len = MYNEWT_VAL(MODLOG_MAX_PRINTF_LEN) - len - 1;
     }
     len += n_len;
     n = buf;
@@ -182,8 +182,8 @@ runtest_log_result(const char *msg, bool passed)
 
     /* How much of the suite name can we log? */
     s_len = strlen(runtest_current_ts->ts_name);
-    if (len + s_len >= LOG_PRINTF_MAX_ENTRY_LEN) {
-        s_len = LOG_PRINTF_MAX_ENTRY_LEN - len - 1;
+    if (len + s_len >= MYNEWT_VAL(MODLOG_MAX_PRINTF_LEN)) {
+        s_len = MYNEWT_VAL(MODLOG_MAX_PRINTF_LEN) - len - 1;
     }
     len += s_len;
     s = n + n_len + 2;
@@ -192,8 +192,8 @@ runtest_log_result(const char *msg, bool passed)
 
     /* How much of the message can we log? */
     m_len = strlen(msg);
-    if (len + m_len >= LOG_PRINTF_MAX_ENTRY_LEN) {
-        m_len = LOG_PRINTF_MAX_ENTRY_LEN - len - 1;
+    if (len + m_len >= MYNEWT_VAL(MODLOG_MAX_PRINTF_LEN)) {
+        m_len = MYNEWT_VAL(MODLOG_MAX_PRINTF_LEN) - len - 1;
     }
     m = s + s_len + 2;
     strncpy(m, msg, m_len);
