@@ -1,0 +1,490 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+syscfg.defs:
+    SPIFLASH_GD25D05C:
+        description: Add support for GD25D05C
+        value: 0
+    SPIFLASH_GD25LD05C:
+        description: Add support for GD25LD05C
+        value: 0
+    SPIFLASH_GD25LE05C:
+        description: Add support for GD25LE05C
+        value: 0
+    SPIFLASH_GD25LH05C:
+        description: Add support for GD25LH05C
+        value: 0
+    SPIFLASH_GD25VD05B:
+        description: Add support for GD25VD05B
+        value: 0
+    SPIFLASH_GD25WD05C:
+        description: Add support for GD25WD05C
+        value: 0
+    SPIFLASH_GD25D10C:
+        description: Add support for GD25D10C
+        value: 0
+    SPIFLASH_GD25LD10C:
+        description: Add support for GD25LD10C
+        value: 0
+    SPIFLASH_GD25LE10C:
+        description: Add support for GD25LE10C
+        value: 0
+    SPIFLASH_GD25LH10C:
+        description: Add support for GD25LH10C
+        value: 0
+    SPIFLASH_GD25VD10B:
+        description: Add support for GD25VD10B
+        value: 0
+    SPIFLASH_GD25WD10C:
+        description: Add support for GD25WD10C
+        value: 0
+    SPIFLASH_GD25LE20C:
+        description: Add support for GD25LE20C
+        value: 0
+    SPIFLASH_GD25LH20C:
+        description: Add support for GD25LH20C
+        value: 0
+    SPIFLASH_GD25D20C:
+        description: Add support for GD25D20C
+        value: 0
+    SPIFLASH_GD25LD20C:
+        description: Add support for GD25LD20C
+        value: 0
+    SPIFLASH_GD25VE20C:
+        description: Add support for GD25VE20C
+        value: 0
+    SPIFLASH_GD25WD20C:
+        description: Add support for GD25WD20C
+        value: 0
+    SPIFLASH_GD25LE40C:
+        description: Add support for GD25LE40C
+        value: 0
+    SPIFLASH_GD25LH40C:
+        description: Add support for GD25LH40C
+        value: 0
+    SPIFLASH_GD25D40C:
+        description: Add support for GD25D40C
+        value: 0
+    SPIFLASH_GD25LD40C:
+        description: Add support for GD25LD40C
+        value: 0
+    SPIFLASH_GD25WD40C:
+        description: Add support for GD25WD40C
+        value: 0
+    SPIFLASH_GD25VE40C:
+        description: Add support for GD25VE40C
+        value: 0
+    SPIFLASH_GD25VE40B:
+        description: Add support for GD25VE40B
+        value: 0
+    SPIFLASH_GD25D80C:
+        description: Add support for GD25D80C
+        value: 0
+    SPIFLASH_GD25LD80C:
+        description: Add support for GD25LD80C
+        value: 0
+    SPIFLASH_GD25LE80C:
+        description: Add support for GD25LE80C
+        value: 0
+    SPIFLASH_GD25LH80B:
+        description: Add support for GD25LH80B
+        value: 0
+    SPIFLASH_GD25LH80C:
+        description: Add support for GD25LH80C
+        value: 0
+    SPIFLASH_GD25WD80C:
+        description: Add support for GD25WD80C
+        value: 0
+    SPIFLASH_GD25Q80C:
+        description: Add support for GD25Q80C
+        value: 0
+    SPIFLASH_GD25B16C:
+        description: Add support for GD25B16C
+        value: 0
+    SPIFLASH_GD25LE16C:
+        description: Add support for GD25LE16C
+        value: 0
+    SPIFLASH_GD25LH16C:
+        description: Add support for GD25LH16C
+        value: 0
+    SPIFLASH_GD25Q16C:
+        description: Add support for GD25Q16C
+        value: 0
+    SPIFLASH_GD25VE16C:
+        description: Add support for GD25VE16C
+        value: 0
+    SPIFLASH_MX25L512E:
+        description: Add support for MX25L512E
+        value: 0
+    SPIFLASH_MX25L5121E:
+        description: Add support for MX25L5121E
+        value: 0
+    SPIFLASH_MX25L1021E:
+        description: Add support for MX25L1021E
+        value: 0
+    SPIFLASH_MX25R512F:
+        description: Add support for MX25R512F
+        value: 0
+    SPIFLASH_MX25U5121E:
+        description: Add support for MX25U5121E
+        value: 0
+    SPIFLASH_MX25U1001E:
+        description: Add support for MX25U1001E
+        value: 0
+    SPIFLASH_MX25V512E:
+        description: Add support for MX25V512E
+        value: 0
+    SPIFLASH_MX25V512F:
+        description: Add support for MX25V512F
+        value: 0
+    SPIFLASH_MX25L1006E:
+        description: Add support for MX25L1006E
+        value: 0
+    SPIFLASH_MX25L1026E:
+        description: Add support for MX25L1026E
+        value: 0
+    SPIFLASH_MX25R1035F:
+        description: Add support for MX25R1035F
+        value: 0
+    SPIFLASH_MX25V1006E:
+        description: Add support for MX25V1006E
+        value: 0
+    SPIFLASH_MX25V1006F:
+        description: Add support for MX25V1006F
+        value: 0
+    SPIFLASH_MX25V1035F:
+        description: Add support for MX25V1035F
+        value: 0
+    SPIFLASH_MX25L2006E:
+        description: Add support for MX25L2006E
+        value: 0
+    SPIFLASH_MX25L2026E:
+        description: Add support for MX25L2026E
+        value: 0
+    SPIFLASH_MX25R2035F:
+        description: Add support for MX25R2035F
+        value: 0
+    SPIFLASH_MX25U2032E:
+        description: Add support for MX25U2032E
+        value: 0
+    SPIFLASH_MX25U2033E:
+        description: Add support for MX25U2033E
+        value: 0
+    SPIFLASH_MX25U2035F:
+        description: Add support for MX25U2035F
+        value: 0
+    SPIFLASH_MX25V2006E:
+        description: Add support for MX25V2006E
+        value: 0
+    SPIFLASH_MX25V2033F:
+        description: Add support for MX25V2033F
+        value: 0
+    SPIFLASH_MX25V2035F:
+        description: Add support for MX25V2035F
+        value: 0
+    SPIFLASH_MX25L4006E:
+        description: Add support for MX25L4006E
+        value: 0
+    SPIFLASH_MX25L4026E:
+        description: Add support for MX25L4026E
+        value: 0
+    SPIFLASH_MX25R4035F:
+        description: Add support for MX25R4035F
+        value: 0
+    SPIFLASH_MX25U4032E:
+        description: Add support for MX25U4032E
+        value: 0
+    SPIFLASH_MX25U4033E:
+        description: Add support for MX25U4033E
+        value: 0
+    SPIFLASH_MX25U4035:
+        description: Add support for MX25U4035
+        value: 0
+    SPIFLASH_MX25U4035F:
+        description: Add support for MX25U4035F
+        value: 0
+    SPIFLASH_MX25V4006E:
+        description: Add support for MX25V4006E
+        value: 0
+    SPIFLASH_MX25V4035F:
+        description: Add support for MX25V4035F
+        value: 0
+    SPIFLASH_MX25U8035:
+        description: Add support for MX25U8035
+        value: 0
+    SPIFLASH_MX25L8006E:
+        description: Add support for MX25L8006E
+        value: 0
+    SPIFLASH_MX25L8008E:
+        description: Add support for MX25L8008E
+        value: 0
+    SPIFLASH_MX25L8035E:
+        description: Add support for MX25L8035E
+        value: 0
+    SPIFLASH_MX25L8036E:
+        description: Add support for MX25L8036E
+        value: 0
+    SPIFLASH_MX25L8073E:
+        description: Add support for MX25L8073E
+        value: 0
+    SPIFLASH_MX25R8035F:
+        description: Add support for MX25R8035F
+        value: 0
+    SPIFLASH_MX25U8032E:
+        description: Add support for MX25U8032E
+        value: 0
+    SPIFLASH_MX25U8033E:
+        description: Add support for MX25U8033E
+        value: 0
+    SPIFLASH_MX25U8035E:
+        description: Add support for MX25U8035E
+        value: 0
+    SPIFLASH_MX25U8035F:
+        description: Add support for MX25U8035F
+        value: 0
+    SPIFLASH_MX25V8006E:
+        description: Add support for MX25V8006E
+        value: 0
+    SPIFLASH_MX25V8033F:
+        description: Add support for MX25V8033F
+        value: 0
+    SPIFLASH_MX25V8035F:
+        description: Add support for MX25V8035F
+        value: 0
+    SPIFLASH_MX25L1606E:
+        description: Add support for MX25L1606E
+        value: 0
+    SPIFLASH_MX25L1608E:
+        description: Add support for MX25L1608E
+        value: 0
+    SPIFLASH_MX25L1633E:
+        description: Add support for MX25L1633E
+        value: 0
+    SPIFLASH_MX25L1635E:
+        description: Add support for MX25L1635E
+        value: 0
+    SPIFLASH_MX25L1636E:
+        description: Add support for MX25L1636E
+        value: 0
+    SPIFLASH_MX25L1673E:
+        description: Add support for MX25L1673E
+        value: 0
+    SPIFLASH_MX25R1635F:
+        description: Add support for MX25R1635F
+        value: 0
+    SPIFLASH_MX25U1633F:
+        description: Add support for MX25U1633F
+        value: 0
+    SPIFLASH_MX25U1635E:
+        description: Add support for MX25U1635E
+        value: 0
+    SPIFLASH_MX25U1635F:
+        description: Add support for MX25U1635F
+        value: 0
+    SPIFLASH_MX25V1635F:
+        description: Add support for MX25V1635F
+        value: 0
+    SPIFLASH_MX25L3206E:
+        description: Add support for MX25L3206E
+        value: 0
+    SPIFLASH_MX25L3208E:
+        description: Add support for MX25L3208E
+        value: 0
+    SPIFLASH_MX25L3233F:
+        description: Add support for MX25L3233F
+        value: 0
+    SPIFLASH_MX25L3235E:
+        description: Add support for MX25L3235E
+        value: 0
+    SPIFLASH_MX25L3236F:
+        description: Add support for MX25L3236F
+        value: 0
+    SPIFLASH_MX25L3239E:
+        description: Add support for MX25L3239E
+        value: 0
+    SPIFLASH_MX25L3273E:
+        description: Add support for MX25L3273E
+        value: 0
+    SPIFLASH_MX25L3273F:
+        description: Add support for MX25L3273F
+        value: 0
+    SPIFLASH_MX25R3235F:
+        description: Add support for MX25R3235F
+        value: 0
+    SPIFLASH_MX25U3235E:
+        description: Add support for MX25U3235E
+        value: 0
+    SPIFLASH_MX25U3235F:
+        description: Add support for MX25U3235F
+        value: 0
+    SPIFLASH_MX25U3273F:
+        description: Add support for MX25U3273F
+        value: 0
+    SPIFLASH_IS25LP080D:
+        description: Add support for IS25LP080D
+        value: 0
+    SPIFLASH_IS25WP080D:
+        description: Add support for IS25WP080D
+        value: 0
+    SPIFLASH_IS25WP040D:
+        description: Add support for IS25WP040D
+        value: 0
+    SPIFLASH_IS25WP020D:
+        description: Add support for IS25WP020D
+        value: 0
+    SPIFLASH_IS25LQ040B:
+        description: Add support for IS25LQ040B
+        value: 0
+    SPIFLASH_IS25LQ020B:
+        description: Add support for IS25LQ020B
+        value: 0
+    SPIFLASH_IS25LQ010B:
+        description: Add support for IS25LQ010B
+        value: 0
+    SPIFLASH_IS25LQ512B:
+        description: Add support for IS25LQ512B
+        value: 0
+    SPIFLASH_IS25WQ040:
+        description: Add support for IS25WQ040
+        value: 0
+    SPIFLASH_IS25WQ020:
+        description: Add support for IS25WQ020
+        value: 0
+    SPIFLASH_IS25LQ025B:
+        description: Add support for IS25LQ025B
+        value: 0
+    SPIFLASH_IS25LP016D:
+        description: Add support for IS25LP016D
+        value: 0
+    SPIFLASH_IS25WP016D:
+        description: Add support for IS25WP016D
+        value: 0
+    SPIFLASH_IS25LP032D:
+        description: Add support for IS25LP032D
+        value: 0
+    SPIFLASH_IS25WP032D:
+        description: Add support for IS25WP032D
+        value: 0
+    SPIFLASH_W25X05CL:
+        description: Add support for W25X05CL
+        value: 0
+    SPIFLASH_W25Q10EW:
+        description: Add support for W25Q10EW
+        value: 0
+    SPIFLASH_W25X10CL:
+        description: Add support for W25X10CL
+        value: 0
+    SPIFLASH_W25Q20CL:
+        description: Add support for W25Q20CL
+        value: 0
+    SPIFLASH_W25Q20EW:
+        description: Add support for W25Q20EW
+        value: 0
+    SPIFLASH_W25X20CL:
+        description: Add support for W25X20CL
+        value: 0
+    SPIFLASH_W25Q40CL:
+        description: Add support for W25Q40CL
+        value: 0
+    SPIFLASH_W25Q40EW:
+        description: Add support for W25Q40EW
+        value: 0
+    SPIFLASH_W25X40CL:
+        description: Add support for W25X40CL
+        value: 0
+    SPIFLASH_W25Q80DV:
+        description: Add support for W25Q80DV
+        value: 0
+    SPIFLASH_W25Q80DL:
+        description: Add support for W25Q80DL
+        value: 0
+    SPIFLASH_W25Q80EW:
+        description: Add support for W25Q80EW
+        value: 0
+    SPIFLASH_W25Q16DV:
+        description: Add support for W25Q16DV
+        value: 0
+    SPIFLASH_W25Q16DW:
+        description: Add support for W25Q16DW
+        value: 0
+    SPIFLASH_W25Q16FW:
+        description: Add support for W25Q16FW
+        value: 0
+    SPIFLASH_W25Q16JL:
+        description: Add support for W25Q16JL
+        value: 0
+    SPIFLASH_W25Q16JV_DTR:
+        description: Add support for W25Q16JV_DTR
+        value: 0
+    SPIFLASH_W25Q16JV_IQ:
+        description: Add support for W25Q16JV_IQ
+        value: 0
+    SPIFLASH_W25Q16JV_IM:
+        description: Add support for W25Q16JV_IM
+        value: 0
+    SPIFLASH_W25Q32BV:
+        description: Add support for W25Q32BV
+        value: 0
+    SPIFLASH_W25Q32FV:
+        description: Add support for W25Q32FV
+        value: 0
+    SPIFLASH_W25Q32FW:
+        description: Add support for W25Q32FW
+        value: 0
+    SPIFLASH_W25Q32JV:
+        description: Add support for W25Q32JV
+        value: 0
+    SPIFLASH_W25Q32JV_IQ:
+        description: Add support for W25Q32JV_IQ
+        value: 0
+    SPIFLASH_W25Q32JW:
+        description: Add support for W25Q32JW
+        value: 0
+    SPIFLASH_W25Q32JW_IQ:
+        description: Add support for W25Q32JW_IQ
+        value: 0
+    SPIFLASH_AT25SF041:
+        description: Add support for AT25SF041
+        value: 0
+    SPIFLASH_AT25SF081:
+        description: Add support for AT25SF081
+        value: 0
+    SPIFLASH_AT25DF081A:
+        description: Add support for AT25DF081A
+        value: 0
+    SPIFLASH_AT25DL081:
+        description: Add support for AT25DL081
+        value: 0
+    SPIFLASH_AT25SF161:
+        description: Add support for AT25SF161
+        value: 0
+    SPIFLASH_AT25DL161:
+        description: Add support for AT25DL161
+        value: 0
+    SPIFLASH_AT25SL321:
+        description: Add support for AT25SL321
+        value: 0
+    SPIFLASH_AT25SF321:
+        description: Add support for AT25SF321
+        value: 0
+    SPIFLASH_AT25DF321A:
+        description: Add support for AT25DF321A
+        value: 0
+    SPIFLASH_AT25QL321:
+        description: Add support for AT25QL321
+        value: 0

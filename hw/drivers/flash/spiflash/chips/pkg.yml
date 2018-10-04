@@ -17,12 +17,11 @@
 # under the License.
 #
 
-pkg.name: hw/drivers/flash/spiflash
-pkg.description: SpiFlash driver
+pkg.name: hw/drivers/flash/spiflash/chips
+pkg.description: SpiFlash chip selection package
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
+    - spiflash
 
 pkg.deps:
-    - "@apache-mynewt-core/hw/hal"
-    - "@apache-mynewt-core/hw/drivers/flash/spiflash/chips"

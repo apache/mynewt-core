@@ -46,7 +46,10 @@ syscfg.defs:
 
     SPIFLASH_MANUFACTURER:
         description: >
-            Expected SpiFlash manufacturer as read by Read JEDEC ID command 9FH
+            Expected SpiFlash manufacturer as read by Read JEDEC ID command 9FH.
+            In case of multiple chip support this can be left as zero and
+            values found in hw/drivers/flash/spiflash/chips/syscfg.yml should be
+            set to 1 for desired chips.
         value: 0
     SPIFLASH_MEMORY_TYPE:
         description: >
