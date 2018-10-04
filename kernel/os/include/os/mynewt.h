@@ -21,6 +21,7 @@
 #define H_OS_MYNEWT_
 
 #include "syscfg/syscfg.h"
+#include "sysdown/sysdown.h"
 #include "sysinit/sysinit.h"
 #include "sysflash/sysflash.h"
 #include "os/os.h"

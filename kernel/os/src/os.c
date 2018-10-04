@@ -24,6 +24,7 @@
 
 #include "hal/hal_os_tick.h"
 #include "hal/hal_bsp.h"
+#include "hal/hal_system.h"
 #include "hal/hal_watchdog.h"
 
 #if MYNEWT_VAL(RTT)
@@ -255,6 +256,23 @@ os_start(void)
 #else
     assert(0);
 #endif
+}
+
+void
+os_reboot(int reason)
+{
+    sysdown(reason);
+}
+
+void
+os_system_reset(void)
+{
+    /* Tickle watchdog just before re-entering bootloader.  Depending on what
+     * the system has been doing lately, the watchdog timer might be close to
+     * firing.
+     */
+    hal_watchdog_tickle();
+    hal_system_reset();
 }
 
 void
