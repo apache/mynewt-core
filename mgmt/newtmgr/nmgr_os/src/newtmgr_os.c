@@ -307,13 +307,7 @@ nmgr_datetime_set(struct mgmt_cbuf *cb)
 static void
 nmgr_reset_tmo(struct os_event *ev)
 {
-    /*
-     * Tickle watchdog just before re-entering bootloader.
-     * Depending on what system has been doing lately, watchdog
-     * timer might be close to firing.
-     */
-    hal_watchdog_tickle();
-    hal_system_reset();
+    os_reboot(HAL_RESET_REQUESTED);
 }
 
 static int

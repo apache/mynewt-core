@@ -1,4 +1,3 @@
-#
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -17,35 +16,25 @@
 # under the License.
 #
 
-pkg.name: kernel/os
-pkg.description: Mynewt operating system core.
-pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
-pkg.homepage: "http://mynewt.apache.org/"
-pkg.keywords:
+# Package: sys/sysdown
 
-pkg.deps:
-    - "@apache-mynewt-core/sys/sys"
-    - "@apache-mynewt-core/sys/sysdown"
-    - "@apache-mynewt-core/sys/sysinit"
-    - "@apache-mynewt-core/util/mem"
+syscfg.defs:
+    SYSDOWN_CONSTRAIN_DOWN:
+        description: Only allow packages to be shutdown by sysdown.
+        value: 1
 
-pkg.req_apis:
-    - console
+    SYSDOWN_PANIC_FILE_LINE:
+        description: Include filename and line number in sysdown panic.
+        value: 0
 
-pkg.deps.OS_CLI:
-    - "@apache-mynewt-core/sys/shell"
+    SYSDOWN_PANIC_MESSAGE:
+        description: Include descriptive message in sysdown panic.
+        value: 0
 
-pkg.deps.OS_COREDUMP:
-    - "@apache-mynewt-core/sys/coredump"
-
-pkg.deps.BSP_SIMULATED:
-    - "@apache-mynewt-core/kernel/sim"
-
-pkg.deps.OS_SYSVIEW:
-    - "@apache-mynewt-core/sys/sysview"
-
-pkg.deps.OS_CRASH_LOG:
-    - "@apache-mynewt-core/sys/reboot"
-
-pkg.init:
-    os_pkg_init: 0
+    SYSDOWN_TIMEOUT_MS:
+        description: >
+            Total duration, in milliseconds, before the shutdown procedure
+            times out.  On timeout, the system triggers a failed assertion.
+            NOTE: This timeout applies to the full shutdown procedure, not to a
+            single subprocedure.
+        value: 10000
