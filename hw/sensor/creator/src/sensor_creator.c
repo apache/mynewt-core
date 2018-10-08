@@ -809,6 +809,8 @@ config_adxl345_sensor(void)
 
     rc = adxl345_config((struct adxl345 *) dev, &cfg);
     assert(rc == 0);
+    return rc;
+}
 #endif
 
 /*
