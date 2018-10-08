@@ -323,7 +323,7 @@ static struct sensor_itf spi2c_0_itf_bma2xx = {
 static struct sensor_itf i2c_0_itf_adxl = {
     .si_type = SENSOR_ITF_I2C,
     .si_num  = 0,
-    .si_addr = 0x1D,
+    .si_addr = MYNEWT_VAL(ADXL345_ITF_ADDR),
     .si_ints = {
        { MYNEWT_VAL(ADXL345_INT_PIN_HOST), MYNEWT_VAL(ADXL345_INT_PIN_DEVICE),
          MYNEWT_VAL(ADXL345_INT_CFG_ACTIVE)}}
