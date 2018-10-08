@@ -428,5 +428,5 @@ battery_shell_register(void)
     SYSINIT_PANIC_ASSERT_MSG(rc == 0, "Failed to register battery shell");
 
     bat = os_dev_open("battery_0", 0, NULL);
-    SYSINIT_PANIC_ASSERT_MSG(rc == 0, "Failed to open battery device");
+    SYSINIT_PANIC_ASSERT_MSG(bat != NULL, "Failed to open battery device");
 }
