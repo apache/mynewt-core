@@ -101,3 +101,7 @@ syscfg.defs:
         description: >
             Sysinit stage for console functionality.
         value: 20
+
+    CONSOLE_TICKS_PAD:
+       description: pad the console ticks output with zeros to this length
+       value: 8

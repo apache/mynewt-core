@@ -27,6 +27,15 @@
 
 #if MYNEWT_VAL(BASELIBC_PRESENT)
 
+/* This collection of macros turns an integer into a string */
+#define STR_HELPER(x) #x
+#define STR(x) STR_HELPER(x)
+
+/* This collection of macros strips the parentheses from another macro */
+#define _Args(...) __VA_ARGS__
+#define STRIP_PARENS_HELPER(X) X
+#define STRIP_PARENS(X) STRIP_PARENS_HELPER( _Args X )
+
 /**
  * Prints the specified format string to the console.
  *
@@ -46,7 +55,7 @@ console_printf(const char *fmt, ...)
     if (console_get_ticks()) {
         /* Prefix each line with a timestamp. */
         if (!console_is_midline) {
-            num_chars += printf("%06lu ", (unsigned long)os_time_get());
+            num_chars += printf("%0" STR(STRIP_PARENS(MYNEWT_VAL(CONSOLE_TICKS_PAD))) "lu ", (unsigned long)os_time_get());
         }
     }
 
