@@ -25,9 +25,11 @@
 #include <console/console.h>
 #include "log/log.h"
 
+/* This collection of macros turns an integer into a string */
 #define STR_HELPER(x) #x
 #define STR(x) STR_HELPER(x)
 
+/* This collection of macros strips the parentheses from another macro */
 #define _Args(...) __VA_ARGS__
 #define STRIP_PARENS_HELPER(X) X
 #define STRIP_PARENS(X) STRIP_PARENS_HELPER( _Args X )
