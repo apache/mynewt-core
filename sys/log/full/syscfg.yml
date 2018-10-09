@@ -100,3 +100,7 @@ syscfg.defs:
         description: >
             Sysinit stage for logging to the second image slot.
         value: 101
+
+    LOG_HDR_TS_PAD:
+        description: "pad the timestamp by this many zeros"
+        value: '0'

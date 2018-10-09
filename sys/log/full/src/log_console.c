@@ -25,6 +25,13 @@
 #include <console/console.h>
 #include "log/log.h"
 
+#define STR_HELPER(x) #x
+#define STR(x) STR_HELPER(x)
+
+#define _Args(...) __VA_ARGS__
+#define STRIP_PARENS_HELPER(X) X
+#define STRIP_PARENS(X) STRIP_PARENS_HELPER( _Args X )
+
 static struct log log_console;
 
 struct log *
@@ -36,8 +43,13 @@ log_console_get(void)
 static void
 log_console_print_hdr(const struct log_entry_hdr *hdr)
 {
-    console_printf("[ts=%lluus, mod=%u level=%u] ",
+#if MYNEWT_VAL(LOG_HDR_TS_PAD) > 0
+    console_printf("[ts=%0" STR(STRIP_PARENS(MYNEWT_VAL(LOG_HDR_TS_PAD))) "lluus, mod=%u level=%u] ",
                    hdr->ue_ts, hdr->ue_module, hdr->ue_level);
+#else
+    console_printf("[ts=%lluus, mod=%u level=%u] ",
+                       hdr->ue_ts, hdr->ue_module, hdr->ue_level);
+#endif
 }
 
 static int
