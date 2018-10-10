@@ -282,7 +282,10 @@ size_t tfp_format(FILE *putp, const char *fmt, va_list va)
             }
 
             /* Width */
-            if (ch >= '0' && ch <= '9') {
+            if (ch == '*') {
+                p.width = intarg(0, 1, &va);
+                ch = *(fmt++);
+            } else if (ch >= '0' && ch <= '9') {
                 ch = a2i(ch, &fmt, 10, &(p.width));
             }
             if (ch == 'l') {
