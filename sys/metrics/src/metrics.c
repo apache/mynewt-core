@@ -125,7 +125,6 @@ metrics_event_end(struct metrics_event_hdr *hdr)
                 log_append_mbuf_typed(hdr->log, hdr->log_module, hdr->log_level,
                                       LOG_ETYPE_CBOR, om);
             } else {
-                os_mbuf_free_chain(om);
                 ret = -1;
             }
         } else {
@@ -445,7 +444,7 @@ metrics_event_to_cbor(struct metrics_event_hdr *hdr, struct os_mbuf *om)
 
     rc = cbor_encoder_create_map(&encoder, &map, CborIndefiniteLength);
     if (rc != 0) {
-        goto failed;
+        return -1;
     }
 
     cbor_encode_text_stringz(&map, "ev");
@@ -481,7 +480,7 @@ metrics_event_to_cbor(struct metrics_event_hdr *hdr, struct os_mbuf *om)
 
         rc = cbor_encoder_create_array(&map, &arr, CborIndefiniteLength);
         if (rc != 0) {
-            goto failed;
+            return -1;
         }
 
         switch (def->type) {
@@ -509,7 +508,7 @@ metrics_event_to_cbor(struct metrics_event_hdr *hdr, struct os_mbuf *om)
 
         rc = cbor_encoder_close_container(&map, &arr);
         if (rc != 0) {
-            goto failed;
+            return -1;
         }
 
         /*
@@ -525,15 +524,10 @@ metrics_event_to_cbor(struct metrics_event_hdr *hdr, struct os_mbuf *om)
 
     rc = cbor_encoder_close_container(&encoder, &map);
     if (rc != 0) {
-        goto failed;
+        return -1;
     }
 
     return 0;
-
-failed:
-    os_mbuf_free_chain(om);
-
-    return -1;
 }
 
 struct os_mbuf *
