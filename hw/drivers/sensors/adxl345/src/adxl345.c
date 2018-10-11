@@ -1043,8 +1043,6 @@ adxl345_init(struct os_dev *dev, void *arg)
 
     adxl->cfg.mask = SENSOR_TYPE_ALL;
 
-    log_register(dev->od_name, &_log, &log_console_handler, NULL, LOG_SYSLEVEL);
-
     sensor = &adxl->sensor;
 
     /* Initialise the stats entry */

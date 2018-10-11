@@ -135,9 +135,23 @@ adxl345_shell_cmd_read(int argc, char **argv)
     return 0;
 }
 
+static void
+dump_reg(int reg_addr, const char *reg_name, uint8_t val, int rc)
+{
+    if (rc == 0) {
+        console_printf("0x%02X (%s): 0x%02X\n", reg_addr, reg_name, val);
+    } else {
+        console_printf("0x%02X (%s): read failed rc=%d\n",
+            reg_addr, reg_name, rc);
+    }
+}
+
+#define DUMP_REG(reg, value, rc) dump_reg(ADXL345_##reg, #reg, val, rc)
+
 static int
 adxl345_shell_cmd_dump(int argc, char **argv)
 {
+    int rc;
     uint8_t val;
     
     if (argc > 2) {
@@ -146,67 +160,67 @@ adxl345_shell_cmd_dump(int argc, char **argv)
     
     /* Dump all the register values for debug purposes */
     val = 0;
-    assert(0 == adxl345_read8(&g_sensor_itf, ADXL345_DEVID, &val));
-    console_printf("0x%02X (DEVID): 0x%02X\n", ADXL345_DEVID, val);
-    assert(0 == adxl345_read8(&g_sensor_itf, ADXL345_THRESH_TAP, &val));
-    console_printf("0x%02X (THRESH_TAP): 0x%02X\n", ADXL345_THRESH_TAP, val);
-    assert(0 == adxl345_read8(&g_sensor_itf, ADXL345_OFSX, &val));
-    console_printf("0x%02X (OFSX): 0x%02X\n", ADXL345_OFSX, val);
-    assert(0 == adxl345_read8(&g_sensor_itf, ADXL345_OFSY, &val));
-    console_printf("0x%02X (OFSY): 0x%02X\n", ADXL345_OFSY, val);
-    assert(0 == adxl345_read8(&g_sensor_itf, ADXL345_OFSZ, &val));
-    console_printf("0x%02X (OFSZ): 0x%02X\n", ADXL345_OFSZ, val);
-    assert(0 == adxl345_read8(&g_sensor_itf, ADXL345_DUR, &val));
-    console_printf("0x%02X (DUR): 0x%02X\n", ADXL345_DUR, val);
-    assert(0 == adxl345_read8(&g_sensor_itf, ADXL345_LATENT, &val));
-    console_printf("0x%02X (LATENT): 0x%02X\n", ADXL345_LATENT, val);
-    assert(0 == adxl345_read8(&g_sensor_itf, ADXL345_WINDOW, &val));
-    console_printf("0x%02X (WINDOW): 0x%02X\n", ADXL345_WINDOW, val);
-    assert(0 == adxl345_read8(&g_sensor_itf, ADXL345_THRESH_ACT, &val));
-    console_printf("0x%02X (THRESH_ACT): 0x%02X\n", ADXL345_THRESH_ACT, val);
-    assert(0 == adxl345_read8(&g_sensor_itf, ADXL345_THRESH_INACT, &val));
-    console_printf("0x%02X (THRESH_INACT): 0x%02X\n", ADXL345_THRESH_INACT, val);
-    assert(0 == adxl345_read8(&g_sensor_itf, ADXL345_TIME_INACT, &val));
-    console_printf("0x%02X (TIME_INACT): 0x%02X\n", ADXL345_TIME_INACT, val);
-    assert(0 == adxl345_read8(&g_sensor_itf, ADXL345_ACT_INACT_CTL, &val));
-    console_printf("0x%02X (ACT_INACT_CTL): 0x%02X\n", ADXL345_ACT_INACT_CTL, val);
-    assert(0 == adxl345_read8(&g_sensor_itf, ADXL345_THRESH_FF, &val));
-    console_printf("0x%02X (THRESH_FF): 0x%02X\n", ADXL345_THRESH_FF, val);
-    assert(0 == adxl345_read8(&g_sensor_itf, ADXL345_TIME_FF, &val));
-    console_printf("0x%02X (TIME_FF): 0x%02X\n", ADXL345_TIME_FF, val);
-    assert(0 == adxl345_read8(&g_sensor_itf, ADXL345_TAP_AXES, &val));
-    console_printf("0x%02X (TAP_AXES): 0x%02X\n", ADXL345_TAP_AXES, val);
-    assert(0 == adxl345_read8(&g_sensor_itf, ADXL345_ACT_TAP_STATUS, &val));
-    console_printf("0x%02X (ACT_TAP_STATUS): 0x%02X\n", ADXL345_ACT_TAP_STATUS, val);
-    assert(0 == adxl345_read8(&g_sensor_itf, ADXL345_BW_RATE, &val));
-    console_printf("0x%02X (BW_RATE): 0x%02X\n", ADXL345_BW_RATE, val);
-    assert(0 == adxl345_read8(&g_sensor_itf, ADXL345_POWER_CTL, &val));
-    console_printf("0x%02X (POWER_CTL): 0x%02X\n", ADXL345_POWER_CTL, val);
-    assert(0 == adxl345_read8(&g_sensor_itf, ADXL345_INT_ENABLE, &val));
-    console_printf("0x%02X (INT_ENABLE): 0x%02X\n", ADXL345_INT_ENABLE, val);
-    assert(0 == adxl345_read8(&g_sensor_itf, ADXL345_INT_MAP, &val));
-    console_printf("0x%02X (INT_MAP): 0x%02X\n", ADXL345_INT_MAP, val);
-    assert(0 == adxl345_read8(&g_sensor_itf, ADXL345_INT_SOURCE, &val));
-    console_printf("0x%02X (INT_SOURCE): 0x%02X\n", ADXL345_INT_SOURCE, val);
-    assert(0 == adxl345_read8(&g_sensor_itf, ADXL345_DATA_FORMAT, &val));
-    console_printf("0x%02X (DATA_FORMAT): 0x%02X\n", ADXL345_DATA_FORMAT, val);
-    assert(0 == adxl345_read8(&g_sensor_itf, ADXL345_DATAX0, &val));
-    console_printf("0x%02X (DATAX0): 0x%02X\n", ADXL345_DATAX0, val);
-    assert(0 == adxl345_read8(&g_sensor_itf, ADXL345_DATAX1, &val));
-    console_printf("0x%02X (DATAX1): 0x%02X\n", ADXL345_DATAX1, val);
-    assert(0 == adxl345_read8(&g_sensor_itf, ADXL345_DATAX0, &val));
-    console_printf("0x%02X (DATAY0): 0x%02X\n", ADXL345_DATAX0, val);
-    assert(0 == adxl345_read8(&g_sensor_itf, ADXL345_DATAX1, &val));
-    console_printf("0x%02X (DATAY1): 0x%02X\n", ADXL345_DATAX1, val);
-    assert(0 == adxl345_read8(&g_sensor_itf, ADXL345_DATAY0, &val));
-    console_printf("0x%02X (DATAZ0): 0x%02X\n", ADXL345_DATAY0, val);
-    assert(0 == adxl345_read8(&g_sensor_itf, ADXL345_DATAZ1, &val));
-    console_printf("0x%02X (DATAZ1): 0x%02X\n", ADXL345_DATAZ1, val);
-    assert(0 == adxl345_read8(&g_sensor_itf, ADXL345_FIFO_CTL, &val));
-    console_printf("0x%02X (FIFO_CTL): 0x%02X\n", ADXL345_FIFO_CTL, val);
-    assert(0 == adxl345_read8(&g_sensor_itf, ADXL345_FIFO_STATUS, &val));
-    console_printf("0x%02X (FIFO_STATUS): 0x%02X\n", ADXL345_FIFO_STATUS, val);
-    
+    rc = adxl345_read8(&g_sensor_itf, ADXL345_DEVID, &val);
+    DUMP_REG(DEVID, val, rc);
+    rc = adxl345_read8(&g_sensor_itf, ADXL345_THRESH_TAP, &val);
+    DUMP_REG(THRESH_TAP, val, rc);
+    rc = adxl345_read8(&g_sensor_itf, ADXL345_OFSX, &val);
+    DUMP_REG(OFSX, val, rc);
+    rc = adxl345_read8(&g_sensor_itf, ADXL345_OFSY, &val);
+    DUMP_REG(OFSY, val, rc);
+    rc = adxl345_read8(&g_sensor_itf, ADXL345_OFSZ, &val);
+    DUMP_REG(OFSZ, val, rc);
+    rc = adxl345_read8(&g_sensor_itf, ADXL345_DUR, &val);
+    DUMP_REG(DUR, val, rc);
+    rc = adxl345_read8(&g_sensor_itf, ADXL345_LATENT, &val);
+    DUMP_REG(LATENT, val, rc);
+    rc = adxl345_read8(&g_sensor_itf, ADXL345_WINDOW, &val);
+    DUMP_REG(WINDOW, val, rc);
+    rc = adxl345_read8(&g_sensor_itf, ADXL345_THRESH_ACT, &val);
+    DUMP_REG(THRESH_ACT, val, rc);
+    rc = adxl345_read8(&g_sensor_itf, ADXL345_THRESH_INACT, &val);
+    DUMP_REG(THRESH_INACT, val, rc);
+    rc = adxl345_read8(&g_sensor_itf, ADXL345_TIME_INACT, &val);
+    DUMP_REG(TIME_INACT, val, rc);
+    rc = adxl345_read8(&g_sensor_itf, ADXL345_ACT_INACT_CTL, &val);
+    DUMP_REG(ACT_INACT_CTL, val, rc);
+    rc = adxl345_read8(&g_sensor_itf, ADXL345_THRESH_FF, &val);
+    DUMP_REG(THRESH_FF, val, rc);
+    rc = adxl345_read8(&g_sensor_itf, ADXL345_TIME_FF, &val);
+    DUMP_REG(TIME_FF, val, rc);
+    rc = adxl345_read8(&g_sensor_itf, ADXL345_TAP_AXES, &val);
+    DUMP_REG(TAP_AXES, val, rc);
+    rc = adxl345_read8(&g_sensor_itf, ADXL345_ACT_TAP_STATUS, &val);
+    DUMP_REG(ACT_TAP_STATUS, val, rc);
+    rc = adxl345_read8(&g_sensor_itf, ADXL345_BW_RATE, &val);
+    DUMP_REG(BW_RATE, val, rc);
+    rc = adxl345_read8(&g_sensor_itf, ADXL345_POWER_CTL, &val);
+    DUMP_REG(POWER_CTL, val, rc);
+    rc = adxl345_read8(&g_sensor_itf, ADXL345_INT_ENABLE, &val);
+    DUMP_REG(INT_ENABLE, val, rc);
+    rc = adxl345_read8(&g_sensor_itf, ADXL345_INT_MAP, &val);
+    DUMP_REG(INT_MAP, val, rc);
+    rc = adxl345_read8(&g_sensor_itf, ADXL345_INT_SOURCE, &val);
+    DUMP_REG(INT_SOURCE, val, rc);
+    rc = adxl345_read8(&g_sensor_itf, ADXL345_DATA_FORMAT, &val);
+    DUMP_REG(DATA_FORMAT, val, rc);
+    rc = adxl345_read8(&g_sensor_itf, ADXL345_DATAX0, &val);
+    DUMP_REG(DATAX0, val, rc);
+    rc = adxl345_read8(&g_sensor_itf, ADXL345_DATAX1, &val);
+    DUMP_REG(DATAX1, val, rc);
+    rc = adxl345_read8(&g_sensor_itf, ADXL345_DATAY0, &val);
+    DUMP_REG(DATAY0, val, rc);
+    rc = adxl345_read8(&g_sensor_itf, ADXL345_DATAY1, &val);
+    DUMP_REG(DATAY1, val, rc);
+    rc = adxl345_read8(&g_sensor_itf, ADXL345_DATAZ0, &val);
+    DUMP_REG(DATAZ0, val, rc);
+    rc = adxl345_read8(&g_sensor_itf, ADXL345_DATAZ1, &val);
+    DUMP_REG(DATAZ1, val, rc);
+    rc = adxl345_read8(&g_sensor_itf, ADXL345_FIFO_CTL, &val);
+    DUMP_REG(FIFO_CTL, val, rc);
+    rc = adxl345_read8(&g_sensor_itf, ADXL345_FIFO_STATUS, &val);
+    DUMP_REG(FIFO_STATUS, val, rc);
+
     return 0;
 }
 
