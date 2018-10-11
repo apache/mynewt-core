@@ -42,3 +42,29 @@ windows_detect() {
         COMSPEC=cmd.exe
     fi
 }
+
+#
+# Check if known parameters are set in EXTRA_JTAG_CMD. Filter these
+# parameters out of the arguments passed to jtag emulator software.
+# Only special parameter is -port <portnumber>
+#
+parse_extra_jtag_cmd() {
+    PORT=3333
+
+    NEW_EXTRA_JTAG_CMD=""
+    while [ "$1" != "" ]; do
+	case $1 in
+	    -port)
+		shift
+		PORT=$1
+		shift
+		;;
+	    *)
+		NEW_EXTRA_JTAG_CMD+=" $1"
+		shift
+		;;
+	esac
+    done
+    echo $NEW_EXTRA_JTAG_CMD
+    EXTRA_JTAG_CMD=$NEW_EXTRA_JTAG_CMD
+}
