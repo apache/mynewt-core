@@ -147,7 +147,6 @@ syscfg.defs:
         value: 0
         restrictions:
             - "!SPI_2_SLAVE"
-            - "MCU_NRF52840"
     SPI_2_MASTER_PIN_SCK:
         description: 'SCK pin for SPI_2_MASTER'
         value: ''
@@ -163,7 +162,6 @@ syscfg.defs:
         value: 0
         restrictions:
             - "!SPI_2_MASTER"
-            - "MCU_NRF52840"
     SPI_2_SLAVE_PIN_SCK:
         description: 'SCK pin for SPI_2_SLAVE'
         value: ''
@@ -175,6 +173,41 @@ syscfg.defs:
         value: ''
     SPI_2_SLAVE_PIN_SS:
         description: 'SS pin for SPI_2_SLAVE'
+        value: ''
+
+    SPI_3_MASTER:
+        description: 'Enable nRF52xxx SPI Master 3'
+        value: 0
+        restrictions:
+            - "!SPI_3_SLAVE"
+            - "MCU_NRF52840"
+    SPI_3_MASTER_PIN_SCK:
+        description: 'SCK pin for SPI_3_MASTER'
+        value: ''
+    SPI_3_MASTER_PIN_MOSI:
+        description: 'MOSI pin for SPI_3_MASTER'
+        value: ''
+    SPI_3_MASTER_PIN_MISO:
+        description: 'MISO pin for SPI_3_MASTER'
+        value: ''
+
+    SPI_3_SLAVE:
+        description: 'Enable nRF52xxx SPI Slave 3'
+        value: 0
+        restrictions:
+            - "!SPI_3_MASTER"
+            - "MCU_NRF52840"
+    SPI_3_SLAVE_PIN_SCK:
+        description: 'SCK pin for SPI_3_SLAVE'
+        value: ''
+    SPI_3_SLAVE_PIN_MOSI:
+        description: 'MOSI pin for SPI_3_SLAVE'
+        value: ''
+    SPI_3_SLAVE_PIN_MISO:
+        description: 'MISO pin for SPI_3_SLAVE'
+        value: ''
+    SPI_3_SLAVE_PIN_SS:
+        description: 'SS pin for SPI_3_SLAVE'
         value: ''
 
     ADC_0:
