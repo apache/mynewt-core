@@ -271,11 +271,6 @@ runtest_evt_fn(struct os_event *ev)
         ts_config.ts_print_results = 0;
         ts_config.ts_system_assert = 0;
 
-        /* The specified "token" is appended to the end of every log message
-         * that is level INFO and above (i.e. not log_debug log messages)
-         */
-        strcpy(runtest_token, runtest_token);
-
         runtest_all = runtest_test_name[0] == '\0' ||
                       strcmp(runtest_test_name, "all") == 0;
 
