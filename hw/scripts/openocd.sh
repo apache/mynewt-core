@@ -27,6 +27,8 @@ GDB=arm-none-eabi-gdb
 openocd_load () {
     OCD_CMD_FILE=.openocd_cmds
 
+    parse_extra_jtag_cmd $EXTRA_JTAG_CMD
+
     echo "$EXTRA_JTAG_CMD" > $OCD_CMD_FILE
     echo "init" >> $OCD_CMD_FILE
     echo "$CFG_RESET" >> $OCD_CMD_FILE
@@ -66,9 +68,10 @@ openocd_debug () {
     OCD_CMD_FILE=.openocd_cmds
 
     windows_detect
+    parse_extra_jtag_cmd $EXTRA_JTAG_CMD
 
-    echo "gdb_port 3333" > $OCD_CMD_FILE
-    echo "telnet_port 4444" >> $OCD_CMD_FILE
+    echo "gdb_port $PORT" > $OCD_CMD_FILE
+    echo "telnet_port $(($PORT+1))" >> $OCD_CMD_FILE
     echo "$EXTRA_JTAG_CMD" >> $OCD_CMD_FILE
 
     if [ -z "$NO_GDB" ]; then
@@ -101,7 +104,7 @@ openocd_debug () {
 
         GDB_CMD_FILE=.gdb_cmds
 
-        echo "target remote localhost:3333" > $GDB_CMD_FILE
+        echo "target remote localhost:$PORT" > $GDB_CMD_FILE
         if [ ! -z "$RESET" ]; then
             echo "mon reset halt" >> $GDB_CMD_FILE
         fi
