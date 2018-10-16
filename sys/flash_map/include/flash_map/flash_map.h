@@ -56,8 +56,8 @@ struct sector_range {
     struct flash_area sr_flash_area;
     uint32_t sr_range_start;
     uint16_t sr_first_sector;
-    uint16_t sr_sector_size;
     uint16_t sr_sector_count;
+    uint32_t sr_sector_size;
 };
 
 extern const struct flash_area *flash_map;
