@@ -382,13 +382,11 @@ fcb_get_sector_loc(const struct fcb *fcb, int sector, struct fcb_entry *entry)
     struct fcb_sector_info info;
     int rc = 0;
 
-    if (sector == FCB_SECTOR_OLDEST) {
-        sector = fcb->f_oldest_sec;
-    }
     rc = fcb_get_sector_info(fcb, sector, &info);
     if (rc == 0) {
         entry->fe_range = info.si_range;
-        entry->fe_sector = (uint16_t)sector;
+        entry->fe_sector = info.si_sector_in_range +
+            info.si_range->sr_first_sector;
     }
 
     return rc;
@@ -398,22 +396,12 @@ fcb_get_sector_loc(const struct fcb *fcb, int sector, struct fcb_entry *entry)
 int
 fcb_offset_in_sector(const struct fcb *fcb, int offset, int sector)
 {
-    struct sector_range *srp = fcb->f_ranges;
-    int start;
-    int end;
-    int i;
+    struct fcb_sector_info info;
+    int rc = fcb_get_sector_info(fcb, sector, &info);
 
-    for (i = 0; i < fcb->f_range_cnt; ++i, ++srp) {
-        if (srp->sr_sector_count * srp->sr_sector_size > offset) {
-            start = (sector - srp->sr_first_sector) * srp->sr_sector_size;
-            end = start + srp->sr_sector_size;
-            if (start <= offset && offset < end)
-                return 0;
-        } else {
-            offset -= srp->sr_sector_count * srp->sr_sector_size;
-        }
-    }
-    return -1;
+    assert(rc == 0);
+    return info.si_sector_offset <= offset &&
+        offset < info.si_sector_offset + info.si_range->sr_range_start;
 }
 
 int
@@ -422,10 +410,8 @@ fcb_get_sector_offset(const struct fcb *fcb, int sector)
     struct fcb_sector_info info;
     int rc = fcb_get_sector_info(fcb, sector, &info);
 
-    if (rc == 0) {
-        rc = info.si_sector_offset;
-    }
-    return rc;
+    assert(rc == 0);
+    return info.si_sector_offset;
 }
 
 int
