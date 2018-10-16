@@ -44,6 +44,9 @@ log_fcb_start_append(struct log *log, int len, struct fcb_entry *loc)
 #if MYNEWT_VAL(LOG_STATS)
     int cnt;
 #endif
+#if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
+    struct fcb_sector_info si;
+#endif
 
     fcb_log = (struct fcb_log *)log->l_arg;
     fcb = &fcb_log->fl_fcb;
@@ -87,7 +90,6 @@ log_fcb_start_append(struct log *log, int len, struct fcb_entry *loc)
          * beginning of current oldest area.
          */
         if (fcb_offset_in_sector(fcb, fcb_log->fl_watermark_off, old_sec)) {
-            struct fcb_sector_info si;
             fcb_get_sector_info(fcb, old_sec, &si);
             fcb_log->fl_watermark_off = si.si_sector_offset;
         }
