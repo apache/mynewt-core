@@ -27,8 +27,7 @@
 typedef uint32_t os_sr_t;
 
 /* Stack element */
-/* uint64_t in an attempt to get the stack 8 aligned */
-typedef uint64_t os_stack_t;
+typedef uint32_t os_stack_t;
 
 /* Stack sizes for common OS tasks */
 #define OS_SANITY_STACK_SIZE (64)
