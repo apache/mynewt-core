@@ -1,11 +1,11 @@
 # RELEASE NOTES
 
-04 June 2018 - Apache Mynewt v1.4.0
+21 June 2018 - Apache Mynewt v1.4.1
 
 For full release notes, please visit the
 [Apache Mynewt Wiki](https://cwiki.apache.org/confluence/display/MYNEWT/Release+Notes).
 
-This is the seventh source release of Apache Mynewt Core. For more
+This is the first bugfix source release of Apache Mynewt Core 1.4. For more
 information on Apache Mynewt, please visit the
 [Apache Mynewt Website](https://mynewt.apache.org/).
 

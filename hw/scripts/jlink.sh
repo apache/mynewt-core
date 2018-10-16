@@ -49,6 +49,10 @@ jlink_load () {
         echo "Missing flash offset"
         exit 1
     fi
+    if [[ $EXTRA_JTAG_CMD =~ '-port ' ]]; then
+        # ExtraJTagCommand contains PORT - Use that port instead.
+        PORT=$(awk '{for(i=1;i<=NF;i++) if ($i=="-port") print $(i+1)}' <<< $EXTRA_JTAG_CMD)
+    fi
 
     echo "Downloading" $FILE_NAME "to" $FLASH_OFFSET
 
