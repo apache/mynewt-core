@@ -34,8 +34,9 @@ fcb_area_info(struct fcb *fcb, int sector, int *elemsp, int *bytesp)
     loc.fe_sector = info.si_sector_in_range + loc.fe_range->sr_first_sector;
     loc.fe_elem_off = 0;
     /* In case caller passed oldest, get real sector number */
-    if (sector == FCB_SECTOR_OLDEST)
+    if (sector == FCB_SECTOR_OLDEST) {
         sector =  loc.fe_sector;
+    }
 
     while (1) {
         rc = fcb_getnext(fcb, &loc);

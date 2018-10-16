@@ -45,18 +45,18 @@ extern "C" {
 struct fcb_entry {
     struct sector_range *fe_range;  /* ptr to area within fcb->f_ranages */
     uint16_t fe_sector;     /* sector number in fcb flash */
-    uint16_t fe_elem_off;	/* start of entry in sector */
-    uint16_t fe_data_off;	/* start of data in sector */
-    uint16_t fe_data_len;	/* size of data area */
+    uint16_t fe_elem_off;   /* start of entry in sector */
+    uint16_t fe_data_off;   /* start of data in sector */
+    uint16_t fe_data_len;   /* size of data area */
 };
 
 struct fcb {
     /* Caller of fcb_init fills this in */
-    uint32_t f_magic;		/* As placed on the disk */
-    uint8_t f_version;  	/* Current version number of the data */
-    uint8_t f_scratch_cnt;	/* How many sectors should be kept empty */
+    uint32_t f_magic;       /* As placed on the disk */
+    uint8_t f_version;      /* Current version number of the data */
+    uint8_t f_scratch_cnt;  /* How many sectors should be kept empty */
     uint8_t f_range_cnt;    /* Number of elements in range array */
-    uint16_t f_sector_cnt;	/* Number of sectors used by fcb */
+    uint16_t f_sector_cnt;  /* Number of sectors used by fcb */
     struct sector_range *f_ranges;
 
     /* Flash circular buffer internal state */
@@ -64,13 +64,13 @@ struct fcb {
     uint16_t f_oldest_sec;
     struct fcb_entry f_active;
     uint16_t f_active_id;
-    uint8_t f_align;		/* writes to flash have to aligned to this */
+    uint8_t f_align;        /* writes to flash have to aligned to this */
 };
 
 struct fcb_sector_info {
-    struct sector_range *si_range;
-    uint32_t si_sector_offset;
-    uint16_t si_sector_in_range;
+    struct sector_range *si_range;  /* Sector range */
+    uint32_t si_sector_offset;      /* Sector offset in fcb */
+    uint16_t si_sector_in_range;    /* Sector number relative to si_range */
 };
 
 /**
@@ -87,6 +87,20 @@ struct fcb_sector_info {
 #define FCB_ERR_VERSION -8
 
 int fcb_init(struct fcb *fcb);
+
+/*
+ * Initialize fcb for specific flash area
+ *
+ * Function initializes FCB structure with data taken from specified flash
+ * area.
+ * If FCB was not initialized before in this area, area will be erased.
+ *
+ * @param fcb            Fcb to initialize
+ * @param flash_area_id  flash area for this fcb
+ * @param version        version of fcb
+ *
+ */
+int fcb_init_flash_area(struct fcb *fcb, int flash_area_id, uint8_t version);
 
 /**
  * fcb_log is needed as the number of entries in a log
@@ -156,18 +170,77 @@ struct sector_range *fcb_get_sector_range(const struct fcb *fcb, int sector);
 
 int fcb_offset_in_sector(const struct fcb *fcb, int offset, int sector);
 
+/**
+ * @brief Get information about sector from fcb.
+ *
+ * @param fcb     fcb to check sector
+ * @param sector  fcb sector number
+ *                sector can be specified as FCB_SECTOR_OLDEST.
+ * @param info    pointer to structure that will receive sector information
+ *
+ * @return 0 if sector information was extracted correctly
+ *        FCB_ERR_ARGS if sector number was outside fcb range.
+ */
 int fcb_get_sector_info(const struct fcb *fcb, int sector,
     struct fcb_sector_info *info);
 
+/**
+ * @brief Get sector_log information needed for fcb_walk.
+ *
+ * @param fcb     fcb to check sector
+ * @param sector  fcb sector number
+ *                sector can be specified as FCB_SECTOR_OLDEST.
+ * @param info    pointer to structure that will receive sector location
+ *
+ * @return 0 if sector information was extracted correctly
+ *        FCB_ERR_ARGS if sector number was outside fcb range.
+ */
 int fcb_get_sector_loc(const struct fcb *fcb, int sector,
     struct fcb_entry *entry);
 
+/**
+ * @brief Get offset from the beginning of fcb of given sector.
+ *
+ * @param fcb     fcb to check sector
+ * @param sector  fcb sector number
+ *                sector can be specified as FCB_SECTOR_OLDEST.
+ *
+ * @return offset of the sector.
+ */
 int fcb_get_sector_offset(const struct fcb *fcb, int sector);
+
+/**
+ * @brief Get offset from the beginning of fcb of given sector location.
+ *
+ * @param loc     location of the sector from fcb_get_sector_loc().
+ *
+ * @return offset of the sector.
+ */
 int fcb_entry_get_sector_offset(const struct fcb_entry *loc);
 
+/**
+ * @brief Write data to fcb sector.
+ *
+ * @param loc     location of the sector from fcb_get_sector_loc().
+ * @param off     offset from the beginning of the sector to start write
+ * @param buf     pointer to data to be written
+ * @param len     number of bytes to write to the fcb sector
+ *
+ * @return 0 if write was successful non zero otherwise.
+ */
 int fcb_write_to_sector(struct fcb_entry *loc, int off,
     const void *buf, int len);
 
+/**
+ * @brief Read data from fcb sector.
+ *
+ * @param loc     location of the sector from fcb_get_sector_loc().
+ * @param off     offset from the beginning of the sector to start read
+ * @param buf     pointer to output buffer
+ * @param len     number of bytes to read from the fcb sector
+ *
+ * @return 0 if read was successful non zero otherwise.
+ */
 int fcb_read_from_sector(struct fcb_entry *loc, int off, void *buf, int len);
 
 /**
