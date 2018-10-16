@@ -42,7 +42,7 @@ extern char val_string[CONF_TEST_FCB_VAL_STR_CNT][CONF_MAX_VAL_LEN];
 
 #define CONF_TEST_FCB_FLASH_CNT   4
 
-extern struct flash_area fcb_areas[CONF_TEST_FCB_FLASH_CNT];
+extern struct sector_range fcb_range[];
 
 extern uint32_t val32;
 extern uint64_t val64;
@@ -59,7 +59,7 @@ extern void config_test_fill_area(
         char test_value[CONF_TEST_FCB_VAL_STR_CNT][CONF_MAX_VAL_LEN],
         int iteration);
 
-void config_wipe_fcb(struct flash_area *fa, int cnt);
+void config_wipe_fcb(struct sector_range *fr, int cnt);
 
 char *ctest_handle_get(int argc, char **argv, char *val, int val_len_max);
 int ctest_handle_set(int argc, char **argv, char *val);

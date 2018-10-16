@@ -45,11 +45,12 @@ TEST_CASE(config_test_custom_compress)
     int i;
 
     config_wipe_srcs();
-    config_wipe_fcb(fcb_areas, sizeof(fcb_areas) / sizeof(fcb_areas[0]));
+    config_wipe_fcb(fcb_range, fcb_range[0].sr_sector_count);
 
     cf.cf_fcb.f_magic = MYNEWT_VAL(CONFIG_FCB_MAGIC);
-    cf.cf_fcb.f_sectors = fcb_areas;
-    cf.cf_fcb.f_sector_cnt = sizeof(fcb_areas) / sizeof(fcb_areas[0]);
+    cf.cf_fcb.f_ranges = fcb_range;
+    cf.cf_fcb.f_range_cnt = 1;
+    cf.cf_fcb.f_sector_cnt = fcb_range[0].sr_sector_count;
 
     rc = conf_fcb_src(&cf);
     TEST_ASSERT(rc == 0);
@@ -70,7 +71,7 @@ TEST_CASE(config_test_custom_compress)
         rc = conf_save();
         TEST_ASSERT(rc == 0);
 
-        if (cf.cf_fcb.f_active.fe_area == &fcb_areas[2]) {
+        if (cf.cf_fcb.f_active.fe_sector == 2) {
             /*
              * Started using space just before scratch.
              */

@@ -272,33 +272,28 @@ void config_wipe_srcs(void)
     conf_save_dst = NULL;
 }
 
-void config_wipe_fcb(struct flash_area *fa, int cnt)
+void config_wipe_fcb(struct sector_range *fr, int cnt)
 {
     int rc;
     int i;
 
     for (i = 0; i < cnt; i++) {
-        rc = flash_area_erase(&fa[i], 0, fa[i].fa_size);
+        rc = flash_area_erase(&fr->sr_flash_area, i * fr->sr_sector_size,
+            fr->sr_sector_size);
         TEST_ASSERT(rc == 0);
     }
 }
 
-struct flash_area fcb_areas[] = {
+struct sector_range fcb_range[] = {
     [0] = {
-        .fa_off = 0x00000000,
-        .fa_size = 16 * 1024
-    },
-    [1] = {
-        .fa_off = 0x00004000,
-        .fa_size = 16 * 1024
-    },
-    [2] = {
-        .fa_off = 0x00008000,
-        .fa_size = 16 * 1024
-    },
-    [3] = {
-        .fa_off = 0x0000c000,
-        .fa_size = 16 * 1024
+        .sr_flash_area = {
+            .fa_off = 0x00000000,
+            .fa_size = 4 * 16 * 1024,
+        },
+        .sr_range_start = 0,
+        .sr_first_sector = 0,
+        .sr_sector_size = 16 * 1024,
+        .sr_sector_count = 4
     }
 };
 

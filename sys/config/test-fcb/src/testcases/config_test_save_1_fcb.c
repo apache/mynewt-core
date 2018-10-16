@@ -26,8 +26,9 @@ TEST_CASE(config_test_save_1_fcb)
     config_wipe_srcs();
 
     cf.cf_fcb.f_magic = MYNEWT_VAL(CONFIG_FCB_MAGIC);
-    cf.cf_fcb.f_sectors = fcb_areas;
-    cf.cf_fcb.f_sector_cnt = sizeof(fcb_areas) / sizeof(fcb_areas[0]);
+    cf.cf_fcb.f_ranges = fcb_range;
+    cf.cf_fcb.f_range_cnt = 1;
+    cf.cf_fcb.f_sector_cnt = fcb_range[0].sr_sector_count;
 
     rc = conf_fcb_src(&cf);
     TEST_ASSERT(rc == 0);

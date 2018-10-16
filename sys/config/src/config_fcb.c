@@ -76,8 +76,7 @@ conf_fcb_src(struct conf_fcb *cf)
          */
         if (cf->cf_fcb.f_scratch_cnt &&
             fcb_free_sector_cnt(&cf->cf_fcb) < 1) {
-            flash_area_erase(cf->cf_fcb.f_active.fe_area, 0,
-              cf->cf_fcb.f_active.fe_area->fa_size);
+            fcb_sector_erase(&cf->cf_fcb, cf->cf_fcb.f_active.fe_sector);
         } else {
             break;
         }
@@ -115,7 +114,7 @@ conf_fcb_load_cb(struct fcb_entry *loc, void *arg)
         len = sizeof(buf) - 1;
     }
 
-    rc = flash_area_read(loc->fe_area, loc->fe_data_off, buf, len);
+    rc = fcb_read_from_sector(loc, loc->fe_data_off, buf, len);
     if (rc) {
         return 0;
     }
@@ -138,7 +137,7 @@ conf_fcb_load(struct conf_store *cs, conf_store_load_cb cb, void *cb_arg)
 
     arg.cb = cb;
     arg.cb_arg = cb_arg;
-    rc = fcb_walk(&cf->cf_fcb, 0, conf_fcb_load_cb, &arg);
+    rc = fcb_walk(&cf->cf_fcb, FCB_SECTOR_OLDEST, conf_fcb_load_cb, &arg);
     if (rc) {
         return OS_EINVAL;
     }
@@ -150,7 +149,7 @@ conf_fcb_var_read(struct fcb_entry *loc, char *buf, char **name, char **val)
 {
     int rc;
 
-    rc = flash_area_read(loc->fe_area, loc->fe_data_off, buf, loc->fe_data_len);
+    rc = fcb_read_from_sector(loc, loc->fe_data_off, buf, loc->fe_data_len);
     if (rc) {
         return rc;
     }
@@ -179,10 +178,11 @@ conf_fcb_compress_internal(struct fcb *fcb,
         return; /* XXX */
     }
 
-    loc1.fe_area = NULL;
+    loc1.fe_range = NULL;
+    loc1.fe_sector = FCB_SECTOR_OLDEST;
     loc1.fe_elem_off = 0;
     while (fcb_getnext(fcb, &loc1) == 0) {
-        if (loc1.fe_area != fcb->f_oldest) {
+        if (loc1.fe_sector != fcb->f_oldest_sec) {
             break;
         }
         rc = conf_fcb_var_read(&loc1, buf1, &name1, &val1);
@@ -217,8 +217,8 @@ conf_fcb_compress_internal(struct fcb *fcb,
         /*
          * Can't find one. Must copy.
          */
-        rc = flash_area_read(loc1.fe_area, loc1.fe_data_off, buf1,
-          loc1.fe_data_len);
+        rc = fcb_read_from_sector(&loc1, loc1.fe_data_off, buf1,
+            loc1.fe_data_len);
         if (rc) {
             continue;
         }
@@ -226,8 +226,8 @@ conf_fcb_compress_internal(struct fcb *fcb,
         if (rc) {
             continue;
         }
-        rc = flash_area_write(loc2.fe_area, loc2.fe_data_off, buf1,
-          loc1.fe_data_len);
+        rc = fcb_write_to_sector(&loc2, loc2.fe_data_off, buf1,
+            loc1.fe_data_len);
         if (rc) {
             continue;
         }
@@ -260,7 +260,7 @@ conf_fcb_append(struct fcb *fcb, char *buf, int len)
     if (rc) {
         return OS_EINVAL;
     }
-    rc = flash_area_write(loc.fe_area, loc.fe_data_off, buf, len);
+    rc = fcb_write_to_sector(&loc, loc.fe_data_off, buf, len);
     if (rc) {
         return OS_EINVAL;
     }
@@ -300,7 +300,7 @@ conf_kv_load_cb(struct fcb_entry *loc, void *arg)
         len = sizeof(buf) - 1;
     }
 
-    rc = flash_area_read(loc->fe_area, loc->fe_data_off, buf, len);
+    rc = fcb_read_from_sector(loc, loc->fe_data_off, buf, len);
     if (rc) {
         return 0;
     }
@@ -331,7 +331,7 @@ conf_fcb_kv_load(struct fcb *fcb, const char *name, char *value, size_t len)
     arg.value = value;
     arg.len = len;
 
-    rc = fcb_walk(fcb, 0, conf_kv_load_cb, &arg);
+    rc = fcb_walk(fcb, FCB_SECTOR_OLDEST, conf_kv_load_cb, &arg);
     if (rc) {
         return OS_EINVAL;
     }

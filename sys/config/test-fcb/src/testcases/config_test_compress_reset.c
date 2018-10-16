@@ -22,17 +22,18 @@ TEST_CASE(config_test_compress_reset)
 {
     int rc;
     struct conf_fcb cf;
-    struct flash_area *fa;
+    int sector;
     char test_value[CONF_TEST_FCB_VAL_STR_CNT][CONF_MAX_VAL_LEN];
     int elems[4];
     int i;
 
     config_wipe_srcs();
-    config_wipe_fcb(fcb_areas, sizeof(fcb_areas) / sizeof(fcb_areas[0]));
+    config_wipe_fcb(fcb_range, fcb_range[0].sr_sector_count);
 
     cf.cf_fcb.f_magic = MYNEWT_VAL(CONFIG_FCB_MAGIC);
-    cf.cf_fcb.f_sectors = fcb_areas;
-    cf.cf_fcb.f_sector_cnt = sizeof(fcb_areas) / sizeof(fcb_areas[0]);
+    cf.cf_fcb.f_ranges = fcb_range;
+    cf.cf_fcb.f_range_cnt = 1;
+    cf.cf_fcb.f_sector_cnt = fcb_range[0].sr_sector_count;
 
     rc = conf_fcb_src(&cf);
     TEST_ASSERT(rc == 0);
@@ -50,7 +51,7 @@ TEST_CASE(config_test_compress_reset)
         rc = conf_save();
         TEST_ASSERT(rc == 0);
 
-        if (cf.cf_fcb.f_active.fe_area == &fcb_areas[2]) {
+        if (cf.cf_fcb.f_active.fe_sector == 2) {
             /*
              * Started using space just before scratch.
              */
@@ -63,19 +64,20 @@ TEST_CASE(config_test_compress_reset)
         TEST_ASSERT(!memcmp(val_string, test_value, CONF_MAX_VAL_LEN));
     }
 
-    fa = cf.cf_fcb.f_active.fe_area;
+    sector = cf.cf_fcb.f_active.fe_sector;
     rc = fcb_append_to_scratch(&cf.cf_fcb);
     TEST_ASSERT(rc == 0);
     TEST_ASSERT(fcb_free_sector_cnt(&cf.cf_fcb) == 0);
-    TEST_ASSERT(fa != cf.cf_fcb.f_active.fe_area);
+    TEST_ASSERT(sector != cf.cf_fcb.f_active.fe_sector);
 
     config_wipe_srcs();
 
     memset(&cf, 0, sizeof(cf));
 
     cf.cf_fcb.f_magic = MYNEWT_VAL(CONFIG_FCB_MAGIC);
-    cf.cf_fcb.f_sectors = fcb_areas;
-    cf.cf_fcb.f_sector_cnt = sizeof(fcb_areas) / sizeof(fcb_areas[0]);
+    cf.cf_fcb.f_ranges = fcb_range;
+    cf.cf_fcb.f_range_cnt = 1;
+    cf.cf_fcb.f_sector_cnt = fcb_range[0].sr_sector_count;
 
     rc = conf_fcb_src(&cf);
     TEST_ASSERT(rc == 0);
@@ -84,7 +86,7 @@ TEST_CASE(config_test_compress_reset)
     TEST_ASSERT(rc == 0);
 
     TEST_ASSERT(fcb_free_sector_cnt(&cf.cf_fcb) == 1);
-    TEST_ASSERT(fa == cf.cf_fcb.f_active.fe_area);
+    TEST_ASSERT(sector == cf.cf_fcb.f_active.fe_sector);
 
     c2_var_count = 0;
 }
