@@ -562,6 +562,11 @@ sock_find_multicast_if(void)
         if ((itf.mif_flags & MN_ITF_F_UP) == 0) {
             continue;
         }
+
+        if ((itf.mif_flags & MN_ITF_F_LINK) == 0) {
+            continue;
+        }
+
         if (itf.mif_flags & MN_ITF_F_MULTICAST) {
             return itf.mif_idx;
         }
