@@ -196,6 +196,12 @@ oc_ep_gatt_size(const struct oc_endpoint *oe)
     return sizeof(struct oc_endpoint_ble);
 }
 
+int
+oc_endpoint_is_gatt(const struct oc_endpoint *oe)
+{
+    return oe->ep.oe_type == oc_gatt_transport_id;
+}
+
 static char *
 oc_log_ep_gatt(char *ptr, int maxlen, const struct oc_endpoint *oe)
 {
