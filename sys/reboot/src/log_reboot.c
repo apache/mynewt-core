@@ -55,7 +55,7 @@ struct conf_handler reboot_conf_handler = {
 #if MYNEWT_VAL(REBOOT_LOG_FCB)
 static struct fcb_log reboot_log_fcb;
 static struct log reboot_log;
-static struct flash_area sector;
+static struct sector_range sector;
 #endif
 
 
@@ -88,9 +88,10 @@ log_reboot_init_fcb(void)
         return SYS_EUNKNOWN;
     }
     fcbp = &reboot_log_fcb.fl_fcb;
-    sector = *ptr;
-    fcbp->f_sectors = &sector;
+    sector.sr_flash_area = *ptr;
+    fcbp->f_ranges = &sector;
     fcbp->f_sector_cnt = 1;
+    fcbp->f_range_cnt = 1;
     fcbp->f_magic = 0x7EADBADF;
     fcbp->f_version = g_log_info.li_version;
 
