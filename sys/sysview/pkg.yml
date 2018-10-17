@@ -22,6 +22,7 @@ pkg.description: Segger SystemView tool API
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
+pkg.build_profile: speed
 pkg.deps:
     - "@apache-mynewt-core/sys/sysview/vendor"
 pkg.init:
