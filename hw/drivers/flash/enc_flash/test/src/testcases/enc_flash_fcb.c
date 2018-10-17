@@ -26,25 +26,21 @@ enc_flash_test_fcb_init(struct fcb *fcb)
     fcb->f_magic = 0xdeadbeef;
     fcb->f_sector_cnt = ENC_TEST_FLASH_AREA_CNT;
     fcb->f_scratch_cnt = 0;
-    fcb->f_sectors = enc_test_flash_areas;
+    fcb->f_ranges = enc_test_sector_ranges;
+    fcb->f_range_cnt = 1;
 }
 
 TEST_CASE(enc_flash_test_fcb)
 {
     int rc;
-    struct flash_area *fa;
     struct fcb_entry loc;
     struct fcb fcb;
-    int i;
     char *writedata = "foobartest";
     char readdata[128];
 
-    fa = enc_test_flash_areas;
-    for (i = 0; i < ENC_TEST_FLASH_AREA_CNT; i++) {
-        rc = flash_area_erase(fa, 0, fa->fa_size);
-        TEST_ASSERT(rc == 0);
-        fa++;
-    }
+    rc = flash_area_erase(&enc_test_sector_ranges[0].sr_flash_area, 0,
+        enc_test_sector_ranges[0].sr_sector_size * ENC_TEST_FLASH_AREA_CNT);
+    TEST_ASSERT(rc == 0);
 
     enc_flash_test_fcb_init(&fcb);
     rc = fcb_init(&fcb);
@@ -53,7 +49,7 @@ TEST_CASE(enc_flash_test_fcb)
     rc = fcb_append(&fcb, strlen(writedata), &loc);
     TEST_ASSERT(rc == 0);
 
-    rc = flash_area_write(loc.fe_area, loc.fe_data_off, writedata,
+    rc = fcb_write_to_sector(&loc, loc.fe_data_off, writedata,
                           strlen(writedata));
     TEST_ASSERT(rc == 0);
 
@@ -65,7 +61,7 @@ TEST_CASE(enc_flash_test_fcb)
     TEST_ASSERT(rc == 0);
 
     memset(readdata, 0, sizeof(readdata));
-    rc = flash_area_read(loc.fe_area, loc.fe_data_off, readdata,
+    rc = fcb_read_from_sector(&loc, loc.fe_data_off, readdata,
                          loc.fe_data_len);
     TEST_ASSERT(rc == 0);
 
@@ -76,7 +72,7 @@ TEST_CASE(enc_flash_test_fcb)
     TEST_ASSERT(rc == 0);
 
     memset(readdata, 0, sizeof(readdata));
-    rc = flash_area_read(loc.fe_area, loc.fe_data_off, readdata,
+    rc = fcb_read_from_sector(&loc, loc.fe_data_off, readdata,
                          loc.fe_data_len);
     TEST_ASSERT(rc == 0);
 

@@ -1,14 +1,17 @@
 #include "log_test_util/log_test_util.h"
 
-static struct flash_area fcb_areas[] = {
+struct sector_range fcb_ranges[] = {
     [0] = {
-        .fa_off = 0x00000000,
-        .fa_size = 16 * 1024
+        .sr_flash_area = {
+            .fa_device_id = 0,
+            .fa_off = 0,
+            .fa_size = 0x8000, /* 32K */
+        },
+        .sr_range_start = 0,
+        .sr_first_sector = 0,
+        .sr_sector_size = 0x4000, /* 16 K */
+        .sr_sector_count = 2,
     },
-    [1] = {
-        .fa_off = 0x00004000,
-        .fa_size = 16 * 1024
-    }
 };
 
 static int ltu_str_idx = 0;
@@ -82,13 +85,14 @@ ltu_setup_fcb(struct fcb_log *fcb_log, struct log *log)
 
     *fcb_log = (struct fcb_log) { 0 };
 
-    fcb_log->fl_fcb.f_sectors = fcb_areas;
-    fcb_log->fl_fcb.f_sector_cnt = sizeof(fcb_areas) / sizeof(fcb_areas[0]);
+    fcb_log->fl_fcb.f_ranges = fcb_ranges;
+    fcb_log->fl_fcb.f_sector_cnt = fcb_ranges[0].sr_sector_count;
+    fcb_log->fl_fcb.f_range_cnt = 1;
     fcb_log->fl_fcb.f_magic = 0x7EADBADF;
     fcb_log->fl_fcb.f_version = 0;
 
     for (i = 0; i < fcb_log->fl_fcb.f_sector_cnt; i++) {
-        rc = flash_area_erase(&fcb_areas[i], 0, fcb_areas[i].fa_size);
+        rc = fcb_sector_erase(&fcb_log->fl_fcb, i);
         TEST_ASSERT(rc == 0);
     }
     rc = fcb_init(&fcb_log->fl_fcb);

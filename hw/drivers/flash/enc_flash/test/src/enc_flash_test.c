@@ -54,6 +54,20 @@ struct flash_area enc_test_flash_areas[4] = {
     }
 };
 
+struct sector_range enc_test_sector_ranges[1] = {
+    [0] = {
+        .sr_flash_area = {
+            .fa_device_id = 0,
+            .fa_off = 0,
+            .fa_size = 0x10000, /* 64K */
+     },
+     .sr_range_start = 0,
+     .sr_first_sector = 0,
+     .sr_sector_size = 0x4000, /* 16 K */
+     .sr_sector_count = 4,
+    },
+};
+
 TEST_SUITE(enc_flash_test_all)
 {
     enc_flash_test_hal();

@@ -30,5 +30,6 @@ TEST_CASE_DECL(enc_flash_test_flash_map)
 TEST_CASE_DECL(enc_flash_test_fcb)
 
 extern struct flash_area enc_test_flash_areas[4];
+extern struct sector_range enc_test_sector_ranges[1];
 
 #endif
