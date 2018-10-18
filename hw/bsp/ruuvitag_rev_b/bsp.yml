@@ -20,16 +20,16 @@
 bsp.arch: cortex_m4
 bsp.compiler: compiler/arm-none-eabi-m4
 bsp.linkerscript:
-    - "hw/bsp/ruuvi_tag_revb2/nrf52xxaa.ld"
+    - "hw/bsp/ruuvitag_rev_b/nrf52xxaa.ld"
     - "@apache-mynewt-core/hw/mcu/nordic/nrf52xxx/nrf52.ld"
 bsp.linkerscript.BOOT_LOADER.OVERWRITE:
-    - "hw/bsp/ruuvi_tag_revb2/boot-nrf52xxaa.ld"
+    - "hw/bsp/ruuvitag_rev_b/boot-nrf52xxaa.ld"
     - "@apache-mynewt-core/hw/mcu/nordic/nrf52xxx/nrf52.ld"
-bsp.part2linkerscript: "hw/bsp/ruuvi_tag_revb2/split-nrf52dk.ld"
-bsp.downloadscript: "hw/bsp/ruuvi_tag_revb2/nrf52dk_download.sh"
-bsp.debugscript: "hw/bsp/ruuvi_tag_revb2/nrf52dk_debug.sh"
-bsp.downloadscript.WINDOWS.OVERWRITE: "hw/bsp/ruuvi_tag_revb2/nrf52dk_download.cmd"
-bsp.debugscript.WINDOWS.OVERWRITE: "hw/bsp/ruuvi_tag_revb2/nrf52dk_debug.cmd"
+bsp.part2linkerscript: "hw/bsp/ruuvitag_rev_b/split-ruuvitag_rev_b.ld"
+bsp.downloadscript: "hw/bsp/ruuvitag_rev_b/ruuvitag_rev_b_download.sh"
+bsp.debugscript: "hw/bsp/ruuvitag_rev_b/ruuvitag_rev_b_debug.sh"
+bsp.downloadscript.WINDOWS.OVERWRITE: "hw/bsp/ruuvitag_rev_b/ruuvitag_rev_b_download.cmd"
+bsp.debugscript.WINDOWS.OVERWRITE: "hw/bsp/ruuvitag_rev_b/ruuvitag_rev_b_debug.cmd"
 
 bsp.flash_map:
     areas:
