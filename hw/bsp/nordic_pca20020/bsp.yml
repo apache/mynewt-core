@@ -20,16 +20,17 @@
 bsp.arch: cortex_m4
 bsp.compiler: compiler/arm-none-eabi-m4
 bsp.linkerscript:
-    - "hw/bsp/nrf52dk/nrf52xxaa.ld"
+    - "hw/bsp/nordic_pca20020/nrf52xxaa.ld"
     - "@apache-mynewt-core/hw/mcu/nordic/nrf52xxx/nrf52.ld"
 bsp.linkerscript.BOOT_LOADER.OVERWRITE:
-    - "hw/bsp/nrf52dk/boot-nrf52xxaa.ld"
+    - "hw/bsp/nordic_pca20020/boot-nrf52xxaa.ld"
     - "@apache-mynewt-core/hw/mcu/nordic/nrf52xxx/nrf52.ld"
-bsp.part2linkerscript: "hw/bsp/nrf52dk/split-nrf52dk.ld"
-bsp.downloadscript: "hw/bsp/nrf52dk/nrf52dk_download.sh"
-bsp.debugscript: "hw/bsp/nrf52dk/nrf52dk_debug.sh"
-bsp.downloadscript.WINDOWS.OVERWRITE: "hw/bsp/nrf52dk/nrf52dk_download.cmd"
-bsp.debugscript.WINDOWS.OVERWRITE: "hw/bsp/nrf52dk/nrf52dk_debug.cmd"
+bsp.part2linkerscript: "hw/bsp/nordic_pca20020/split-nordic_pca20020.ld"
+bsp.downloadscript: "hw/bsp/nordic_pca20020/nordic_pca20020_download.sh"
+bsp.debugscript: "hw/bsp/nordic_pca20020/nordic_pca20020_debug.sh"
+bsp.downloadscript.WINDOWS.OVERWRITE:
+    "hw/bsp/nordic_pca20020/nordic_pca20020_download.cmd"
+bsp.debugscript.WINDOWS.OVERWRITE: "hw/bsp/nordic_pca20020/nordic_pca20020_debug.cmd"
 
 bsp.flash_map:
     areas:

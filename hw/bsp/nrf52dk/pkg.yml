@@ -18,29 +18,6 @@
 #
 
 pkg.name: hw/bsp/nrf52dk
-pkg.type: bsp
-pkg.description: BSP definition for the Nordic nRF52 Development Kit (PCA 10040).
-pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
-pkg.homepage: "http://mynewt.apache.org/"
-pkg.keywords:
-    - nrf52
-    - nrf52dk
+pkg.type: transient
+pkg.link: "@apache-mynewt-core/hw/bsp/nordic_pca10040"
 
-pkg.cflags:
-     - '-DNRF52'
-
-pkg.cflags.HARDFLOAT:
-    - -mfloat-abi=hard -mfpu=fpv4-sp-d16
-
-pkg.deps:
-    - "@apache-mynewt-core/hw/mcu/nordic/nrf52xxx"
-    - "@apache-mynewt-core/libc/baselibc"
-
-pkg.deps.ENC_FLASH_DEV:
-    - "@apache-mynewt-core/hw/drivers/flash/enc_flash/ef_nrf5x"
-
-pkg.deps.SOFT_PWM:
-    - "@apache-mynewt-core/hw/drivers/pwm/soft_pwm"
-
-pkg.deps.UARTBB_0:
-    - "@apache-mynewt-core/hw/drivers/uart/uart_bitbang"

@@ -17,7 +17,7 @@
 # under the License.
 #
 
-# Package: hw/bsp/nrf51dk-16kbram
+# Package: hw/bsp/nordic_pca10028-16k
 
 syscfg.defs:
     BSP_NRF51:
