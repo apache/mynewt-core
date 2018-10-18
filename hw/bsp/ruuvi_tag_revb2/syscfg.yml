@@ -16,7 +16,7 @@
 # under the License.
 #
 
-# Package: hw/bsp/nrf52dk
+# Package: hw/bsp/ruuvi_tag_revb2
 
 syscfg.defs:
     BSP_NRF52:

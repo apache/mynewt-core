@@ -16,7 +16,7 @@
 # under the License.
 #
 
-# Package: hw/bsp/nrf52dk
+# Package: hw/mcu/nordic/nrf52xxx
 
 syscfg.defs:
     MCU_NRF52832:

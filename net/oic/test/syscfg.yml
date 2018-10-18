@@ -16,7 +16,7 @@
 # under the License.
 #
 
-# Package: sys/config/test-fcb
+# Package: net/oic/test
 
 syscfg.vals:
   OC_TRANSPORT_IP: 1

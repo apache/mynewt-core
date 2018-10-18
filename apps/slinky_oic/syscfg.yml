@@ -16,7 +16,7 @@
 # under the License.
 #
 
-# Package: apps/slinky
+# Package: apps/slinky_oic
 
 syscfg.vals:
     # Enable the shell task.

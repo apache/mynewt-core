@@ -16,7 +16,7 @@
 # under the License.
 #
 
-# Package: sys/log/test
+# Package: sys/log/full/test/align4
 
 syscfg.vals:
     LOG_FCB: 1

@@ -16,7 +16,7 @@
 # under the License.
 #
 
-# Package: hw/bsp/nrf52dk
+# Package: hw/mcu/native
 
 syscfg.defs:
     I2C_0:

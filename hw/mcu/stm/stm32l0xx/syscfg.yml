@@ -16,7 +16,7 @@
 # under the License.
 #
 
-# Package: hw/mcu/stm32l0xx
+# Package: hw/mcu/stm/stm32l0xx
 
 syscfg.defs:
     I2C_0:
