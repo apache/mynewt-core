@@ -17,7 +17,7 @@
 # under the License.
 #
 
-# Package: hw/bsp/hifive
+# Package: hw/bsp/hifive1
 
 syscfg.vals:
     XTAL_32768: 1

@@ -16,7 +16,7 @@
 # under the License.
 #
 
-# Package: sys/sysview/vendor
+# Package: sys/sysview
 
 syscfg.defs:
     SYSVIEW_BUFFER_SIZE:

@@ -16,7 +16,7 @@
 # under the License.
 #
 
-# Package: mgmt/imgmgr
+# Package: encoding/cborattr
 
 syscfg.defs:
     CBORATTR_MAX_SIZE:

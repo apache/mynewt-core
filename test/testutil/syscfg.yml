@@ -16,7 +16,7 @@
 # under the License.
 #
 
-# Package: boot/bootutil
+# Package: test/testutil
 
 syscfg.defs:
     TESTUTIL_SYSTEM_ASSERT:

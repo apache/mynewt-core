@@ -16,7 +16,7 @@
 # under the License.
 #
 
-# Package: hw/bsp/nrf52dk
+# Package: hw/mcu/ambiq/apollo2
 
 syscfg.defs:
     MCU_FLASH_MIN_WRITE_SIZE:
