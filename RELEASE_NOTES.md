@@ -1,6 +1,6 @@
 # RELEASE NOTES
 
-04 June 2018 - Apache Mynewt v1.4.0
+18 October 2018 - Apache Mynewt v1.5.0
 
 For full release notes, please visit the
 [Apache Mynewt Wiki](https://cwiki.apache.org/confluence/display/MYNEWT/Release+Notes).
