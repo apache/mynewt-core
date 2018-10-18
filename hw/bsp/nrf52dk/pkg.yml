@@ -41,3 +41,6 @@ pkg.deps.ENC_FLASH_DEV:
 
 pkg.deps.SOFT_PWM:
     - "@apache-mynewt-core/hw/drivers/pwm/soft_pwm"
+
+pkg.deps.UARTBB_0:
+    - "@apache-mynewt-core/hw/drivers/uart/uart_bitbang"
