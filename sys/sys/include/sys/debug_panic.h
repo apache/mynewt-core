@@ -17,14 +17,15 @@
  * under the License.
  */
 
-#ifndef H_OS_MYNEWT_
-#define H_OS_MYNEWT_
+#ifndef H_DEBUG_PANIC_
+#define H_DEBUG_PANIC_
 
-#include "syscfg/syscfg.h"
-#include "sysinit/sysinit.h"
-#include "sysflash/sysflash.h"
-#include "os/os.h"
-#include "defs/error.h"
-#include "sys/debug_panic.h"
+#include "os/mynewt.h"
+
+#if MYNEWT_VAL(DEBUG_PANIC_ENABLED)
+#define DEBUG_PANIC() OS_CRASH()
+#else
+#define DEBUG_PANIC()
+#endif
 
 #endif
