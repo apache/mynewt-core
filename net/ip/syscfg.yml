@@ -16,8 +16,6 @@
 # under the License.
 #
 
-# Package: net/ip
-
 syscfg.defs:
     LWIP_CLI:
         description: 'CLI for interacting with LwIP'

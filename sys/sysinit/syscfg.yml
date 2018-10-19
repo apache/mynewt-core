@@ -16,8 +16,6 @@
 # under the License.
 #
 
-# Package: sys/sysinit
-
 syscfg.defs:
     SYSINIT_CONSTRAIN_INIT:
         description: Only allow packages to be initialized by sysinit.

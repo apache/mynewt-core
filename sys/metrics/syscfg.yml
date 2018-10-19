@@ -16,8 +16,6 @@
 # under the License.
 #
 
-# Package: sys/metrics
-
 syscfg.defs:
     METRICS_POOL_SIZE:
         description: Block size for metrics' mempool

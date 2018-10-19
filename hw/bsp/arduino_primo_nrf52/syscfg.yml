@@ -17,8 +17,6 @@
 # under the License.
 #
 
-# Package: hw/bsp/arduino_primo_nrf52
-
 syscfg.defs:
     OPENOCD_DEBUG:
         description: 'Use OpenOCD for JTAG access.'

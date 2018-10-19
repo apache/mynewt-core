@@ -16,8 +16,6 @@
 # under the License.
 #
 
-# Package: sys/stats/full
-
 syscfg.defs:
     STATS_NAMES:
         description: 'Include and report the textual name of each statistic.'

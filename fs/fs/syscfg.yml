@@ -16,8 +16,6 @@
 # under the License.
 #
 
-# Package: fs/fs
-
 syscfg.defs:
     FS_CLI:
         description: 'CLI commands to interact with files.'

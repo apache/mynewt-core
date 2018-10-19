@@ -17,8 +17,6 @@
 # under the License.
 #
 
-# Package: net/oic
-
 syscfg.defs:
     OC_TRANSPORT_SERIAL:
         description: 'Enables OIC transport over nlip serial'

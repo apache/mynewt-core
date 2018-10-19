@@ -16,8 +16,6 @@
 # under the License.
 #
 
-# Package: hw/sensor/creator
-
 syscfg.defs:
     TSL2561_OFB:
         description: 'TSL2561 is present'

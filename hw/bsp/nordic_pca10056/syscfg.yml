@@ -16,8 +16,6 @@
 # under the License.
 #
 
-# Package: hw/bsp/nordic_pca10056
-
 syscfg.defs:
     BSP_NRF52840:
         description: 'Set to indicate that BSP has NRF52840'

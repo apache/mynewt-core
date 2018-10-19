@@ -16,8 +16,6 @@
 # under the License.
 #
 
-# Package: hw/mcu/stm/stm32f4xx
-
 syscfg.defs:
     MCU_FLASH_MIN_WRITE_SIZE:
         description: >

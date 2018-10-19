@@ -16,8 +16,6 @@
 # under the License.
 #
 
-# Package: hw/bsp/puckjs
-
 syscfg.defs:
     BSP_NRF52:
         description: 'Set to indicate that BSP has NRF52'

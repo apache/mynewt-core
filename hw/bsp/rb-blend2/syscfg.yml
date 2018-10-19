@@ -17,8 +17,6 @@
 # under the License.
 #
 
-# Package: hw/bsp/rb-blend2
-
 syscfg.defs:
     BSP_NRF52:
         description: 'Set to indicate that BSP has NRF52'

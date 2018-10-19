@@ -17,8 +17,6 @@
 # under the License.
 #
 
-# Package: hw/bsp/ci40
-
 syscfg.defs:
     CLOCK_FREQ:
         description: 'Clock frequency (hertz).'

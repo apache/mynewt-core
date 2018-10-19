@@ -17,8 +17,6 @@
 # under the License.
 #
 
-# Package: hw/bsp/usbmkw41z
-
 syscfg.defs:
     BSP_USBMKW41Z:
         description: 'Set to indicate that BSP has MKW41Z'

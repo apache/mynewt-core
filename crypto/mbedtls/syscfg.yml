@@ -16,8 +16,6 @@
 # under the License.
 #
 
-# Package: crypto/mbedtls
-
 syscfg.defs:
   # Enabled curves
   MBEDTLS_ECP_DP_SECP192R1:
