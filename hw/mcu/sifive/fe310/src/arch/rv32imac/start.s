@@ -67,7 +67,7 @@ _reset_handler:
     call atexit
     call __libc_init_array
 
-    call _init
+    call SystemInit
     call _start
     call _fini
     tail exit
