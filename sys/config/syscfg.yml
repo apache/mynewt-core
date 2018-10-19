@@ -16,8 +16,6 @@
 # under the License.
 #
 
-# Package: sys/config
-
 syscfg.defs:
     CONFIG_FCB:
         description: 'Config default storage is in FCB'

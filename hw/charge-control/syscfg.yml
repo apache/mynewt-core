@@ -16,8 +16,6 @@
 # under the License.
 #
 
-# Package: hw/charge-control
-
 syscfg.defs:
     CHARGE_CONTROL_CLI:
         description: 'Whether or not to enable the charge control shell support'

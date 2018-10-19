@@ -16,8 +16,6 @@
 # under the License.
 #
 
-# Package: mgmt/imgmgr
-
 syscfg.defs:
     CBORATTR_MAX_SIZE:
         description: 'The maximum size of a CBOR attribute during decoding'

@@ -16,8 +16,6 @@
 # under the License.
 #
 
-# Package: apps/testbench
-
 syscfg.defs:
     TESTBENCH_BLE:
         description: Enables BLE support in the testbench app.

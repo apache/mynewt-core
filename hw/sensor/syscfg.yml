@@ -16,8 +16,6 @@
 # under the License.
 #
 
-# Package: hw/sensor
-
 syscfg.defs:
     SENSOR_CLI:
         description: 'Whether or not to enable the sensor shell support'

@@ -16,8 +16,6 @@
 # under the License.
 #
 
-# Package: kernel/os
-
 syscfg.defs:
     OS_MAIN_TASK_PRIO:
         description: 'Priority of initialization and main task'

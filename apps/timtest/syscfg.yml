@@ -16,8 +16,6 @@
 # under the License.
 #
 
-# Package: apps/timtest
-
 syscfg.vals:
     SHELL_TASK: 0
     TIMER_1: 1

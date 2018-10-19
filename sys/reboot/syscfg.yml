@@ -16,8 +16,6 @@
 # under the License.
 #
 
-# Package: sys/reboot
-
 syscfg.defs:
     REBOOT_LOG_FCB:
         description: 'Set reboot log target to be FCB.'

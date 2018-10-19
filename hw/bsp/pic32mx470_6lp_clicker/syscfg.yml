@@ -17,8 +17,6 @@
 # under the License.
 #
 
-# Package: hw/bsp/pic32mx470_6lp_clicker
-
 syscfg.defs:
     CLOCK_FREQ:
         description: 'System clock frequency, defined in hal_bsp.c'

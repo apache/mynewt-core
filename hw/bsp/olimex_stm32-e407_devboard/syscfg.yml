@@ -16,8 +16,6 @@
 # under the License.
 #
 
-# Package: hw/bsp/olimex_stm32-e407_devboard
-
 syscfg.defs:
     ADC_1:
         description: "ADC_1"

@@ -17,8 +17,6 @@
 # under the License.
 #
 
-# Package: hw/bsp/nrf51-blenano
-
 syscfg.defs:
     BSP_NRF51:
         description: 'Set to indicate that BSP has NRF51'
