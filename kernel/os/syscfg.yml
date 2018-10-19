@@ -135,6 +135,11 @@ syscfg.defs:
         description: >
             Enables debug runtime checks for time-related functionality.
         value: 0
+    OS_CRASH_FILE_LINE:
+        description: >
+            Include filename and line number in crash messages.  Aids in
+            debugging, but increases text size.
+        value: 0
 
 syscfg.vals.OS_DEBUG_MODE:
     OS_CRASH_STACKTRACE: 1
