@@ -107,6 +107,13 @@ uint32_t flash_area_erased_val(const struct flash_area *fa);
 int flash_area_to_sectors(int idx, int *cnt, struct flash_area *ret);
 
 /*
+ * Given flash map index, return info about sectors within the area.
+ * If the physical sector count within region exceeds that, collect
+ * multiple physical sectors into same number of regions.
+ */
+int flash_area_to_subareas(int idx, int *cnt, struct flash_area *ret);
+
+/*
  * Get-next interface for obtaining info about sectors.
  * To start the get-next walk, call with *sec_id set to -1.
  */

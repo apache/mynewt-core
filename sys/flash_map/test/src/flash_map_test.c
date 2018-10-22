@@ -33,18 +33,20 @@ struct flash_area *fa_sectors;
 /*
  * Max number sectors per area (for native BSP)
  */
-#define SELFTEST_FA_SECTOR_COUNT    64
+#define SELFTEST_FA_SECTOR_COUNT    256
 #endif
 
 TEST_CASE_DECL(flash_map_test_case_1)
 TEST_CASE_DECL(flash_map_test_case_2)
 TEST_CASE_DECL(flash_map_test_case_3)
+TEST_CASE_DECL(flash_map_test_case_4)
 
 TEST_SUITE(flash_map_test_suite)
 {
     flash_map_test_case_1();
     flash_map_test_case_2();
     flash_map_test_case_3();
+    flash_map_test_case_4();
 }
 
 #if MYNEWT_VAL(SELFTEST)

@@ -132,6 +132,73 @@ end:
 }
 
 int
+flash_area_to_subareas(int id, int *cnt, struct flash_area *ret)
+{
+    int rc;
+    int i, j;
+    const struct hal_flash *hf;
+    const struct flash_area *fa;
+    int max_cnt;
+    int next;
+    int first_idx;
+    int last_idx;
+    uint32_t start;
+    uint32_t size;
+    uint32_t min_size;
+
+    rc = flash_area_open(id, &fa);
+    if (rc != 0) {
+        return rc;
+    }
+    first_idx = last_idx = -1;
+    max_cnt = *cnt;
+    *cnt = 0;
+
+    hf = hal_bsp_flash_dev(fa->fa_device_id);
+    for (i = 0; i < hf->hf_sector_cnt; i++) {
+        hf->hf_itf->hff_sector_info(hf, i, &start, &size);
+        if (start >= fa->fa_off && start < fa->fa_off + fa->fa_size) {
+            if (first_idx == -1) {
+                first_idx = i;
+            }
+            last_idx = i;
+            *cnt = *cnt + 1;
+        }
+    }
+    if (*cnt > max_cnt) {
+        min_size = fa->fa_size / max_cnt;
+    } else {
+        min_size = 0;
+    }
+
+    next = 1;
+    for (i = first_idx, j = 0; i < last_idx + 1; i++) {
+        hf->hf_itf->hff_sector_info(hf, i, &start, &size);
+        if (next) {
+            ret[j].fa_device_id = fa->fa_device_id;
+            ret[j].fa_off = start;
+            ret[j].fa_size = size;
+            next = 0;
+        } else {
+            ret[j].fa_size += size;
+        }
+        if (ret[j].fa_size >= min_size) {
+            j++;
+            next = 1;
+        }
+    }
+    if (!next && ret[j].fa_size < min_size) {
+        /*
+         * Last area is a partial one.
+         */
+        j++;
+    }
+    *cnt = j;
+    flash_area_close(fa);
+    return 0;
+}
+
+int
 flash_area_read(const struct flash_area *fa, uint32_t off, void *dst,
     uint32_t len)
 {
