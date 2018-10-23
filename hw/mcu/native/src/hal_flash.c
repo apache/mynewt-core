@@ -94,6 +94,8 @@ static void
 flash_native_file_open(char *name)
 {
     int created = 0;
+    char tmpl[] = "/tmp/native_flash.XXXXXX";
+
     extern int ftruncate(int fd, off_t length);
 
     if (name) {
@@ -104,7 +106,6 @@ flash_native_file_open(char *name)
             created = 1;
         }
     } else {
-        char tmpl[] = "/tmp/native_flash.XXXXXX";
         file = mkstemp(tmpl);
         assert(file > 0);
         created = 1;
@@ -121,6 +122,11 @@ flash_native_file_open(char *name)
     assert(file_loc != MAP_FAILED);
     if (created) {
         flash_native_erase(0, native_flash_dev.hf_size);
+    }
+
+    /* If using a temporary file, unlink it immediately. */
+    if (name == NULL) {
+        remove(tmpl);
     }
 }
 
