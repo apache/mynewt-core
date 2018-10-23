@@ -467,7 +467,12 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
 #else
     if (cfg->suc_uart == USART1) {
 #endif
+#if MYNEWT_VAL(MCU_STM32F0)
+        u->u_regs->BRR = BAUD(HAL_RCC_GetPCLK1Freq(), baudrate);
+#else
         u->u_regs->BRR = BAUD(HAL_RCC_GetPCLK2Freq(), baudrate);
+#endif
+
     } else {
         u->u_regs->BRR = BAUD(HAL_RCC_GetPCLK1Freq(), baudrate);
     }
