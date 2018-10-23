@@ -452,7 +452,11 @@ stm32_spi_resolve_prescaler(uint8_t spi_num, uint32_t baudrate, uint32_t *presca
     case 3:
     case 4:
     case 5:
+#if MYNEWT_VAL(MCU_STM32F0)
+        apbfreq = HAL_RCC_GetPCLK1Freq();
+#else
         apbfreq = HAL_RCC_GetPCLK2Freq();
+#endif
         break;
     default:
         apbfreq = HAL_RCC_GetPCLK1Freq();
