@@ -35,6 +35,9 @@ syscfg.defs:
     OS_CRASH_STACKTRACE:
         description: 'Attempt to print stack trace when system crashes.'
         value: 0
+    OS_CRASH_RESTORE_REGS:
+        description: 'Restore registers to pre-fault state on crash'
+        value: 0
     OS_CRASH_LOG:
         description: >
             Write an entry to the reboot log when the system crashes.
