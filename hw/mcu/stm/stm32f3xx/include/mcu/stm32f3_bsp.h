@@ -49,7 +49,7 @@ int hal_gpio_init_af(int pin, uint8_t af_type, enum hal_gpio_pull pull, uint8_t
 od);
 
 struct hal_flash;
-struct hal_flash* stm32f3_flash_dev(void);
+extern const struct hal_flash stm32f3_flash_dev;
 
 #ifdef __cplusplus
 }

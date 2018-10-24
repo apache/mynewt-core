@@ -49,7 +49,14 @@ static const struct hal_flash_funcs stm32f3_flash_funcs = {
     .hff_init = stm32f3_flash_init
 };
 
-struct hal_flash stm32f3_flash_dev_;
+const struct hal_flash stm32f3_flash_dev = {
+    .hf_itf = &stm32f3_flash_funcs,
+    .hf_base_addr = FLASH_BASE,
+    .hf_size = HAL_FLASH_SIZE,
+    .hf_sector_cnt = HAL_FLASH_SIZE / HAL_FLASH_SECTOR_SIZE,
+    .hf_align = 2,
+    .hf_erased_val = 0xff,
+};
 
 static int
 stm32f3_flash_read(const struct hal_flash *dev, uint32_t address, void *dst,
@@ -116,18 +123,4 @@ stm32f3_flash_init(const struct hal_flash *dev)
 {
     HAL_FLASH_Lock();
     return 0;
-}
-
-struct hal_flash*
-stm32f3_flash_dev()
-{
-    if (0 == stm32f3_flash_dev_.hf_itf) {
-        stm32f3_flash_dev_.hf_itf = &stm32f3_flash_funcs;
-        stm32f3_flash_dev_.hf_base_addr = FLASH_BASE;
-        stm32f3_flash_dev_.hf_size = HAL_FLASH_SIZE;
-        stm32f3_flash_dev_.hf_sector_cnt = HAL_FLASH_SIZE / HAL_FLASH_SECTOR_SIZE;
-        stm32f3_flash_dev_.hf_align = 2;
-        stm32f3_flash_dev_.hf_erased_val = 0xff;
-    }
-    return &stm32f3_flash_dev_;
 }

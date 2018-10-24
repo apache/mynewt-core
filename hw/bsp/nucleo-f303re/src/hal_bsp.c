@@ -145,7 +145,7 @@ hal_bsp_flash_dev(uint8_t id)
     if (id != 0) {
         return NULL;
     }
-    return stm32f3_flash_dev();
+    return &stm32f3_flash_dev;
 }
 
 const struct hal_bsp_mem_dump *
