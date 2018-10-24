@@ -230,7 +230,7 @@ os_mempool_unregister(struct os_mempool *mp)
     } else {
         next = STAILQ_NEXT(cur, mp_list);
         if (next == NULL) {
-            *g_os_mempool_list.stqh_last = next;
+            g_os_mempool_list.stqh_last = &STAILQ_NEXT(prev, mp_list);
         }
 
         STAILQ_NEXT(prev, mp_list) = next;
