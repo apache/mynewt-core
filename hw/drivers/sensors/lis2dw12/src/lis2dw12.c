@@ -2030,13 +2030,23 @@ int lis2dw12_run_self_test(struct sensor_itf *itf, int *result)
     uint8_t prev_config[6];
     /* set config per datasheet, with positive self test mode enabled. */
     uint8_t st_config[] = {0x44, 0x04, 0x40, 0x00, 0x00, 0x10};
+    uint8_t fifo_ctrl;
 
     rc = lis2dw12_readlen(itf, LIS2DW12_REG_CTRL_REG1, prev_config, 6);
     if (rc) {
         return rc;
     }
+    rc = lis2dw12_read8(itf, LIS2DW12_REG_FIFO_CTRL, &fifo_ctrl);
+    if (rc) {
+        return rc;
+    }
     rc = lis2dw12_writelen(itf, LIS2DW12_REG_CTRL_REG2, &st_config[1], 5);
     rc = lis2dw12_writelen(itf, LIS2DW12_REG_CTRL_REG1, st_config, 1);
+    if (rc) {
+        return rc;
+    }
+
+    rc = lis2dw12_write8(itf, LIS2DW12_REG_FIFO_CTRL, 0);
     if (rc) {
         return rc;
     }
@@ -2099,6 +2109,11 @@ int lis2dw12_run_self_test(struct sensor_itf *itf, int *result)
         if (rc) {
             return rc;
         }
+
+    rc = lis2dw12_write8(itf, LIS2DW12_REG_FIFO_CTRL, fifo_ctrl);
+    if (rc) {
+        return rc;
+    }
 
     /* compare values to thresholds */
     *result = 0;
