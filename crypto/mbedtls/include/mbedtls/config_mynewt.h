@@ -183,6 +183,11 @@ extern "C" {
 #if MYNEWT_VAL(MBEDTLS_AES_C) == 0
 #undef MBEDTLS_AES_C
 #endif
+#if MYNEWT_VAL(MBEDTLS_AES_ROM_TABLES)
+#define MBEDTLS_AES_ROM_TABLES
+#else
+#undef MBEDTLS_AES_ROM_TABLES
+#endif
 #if MYNEWT_VAL(MBEDTLS_ARC4_C) == 0
 #undef MBEDTLS_ARC4_C
 #endif
