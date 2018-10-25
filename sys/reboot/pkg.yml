@@ -36,4 +36,4 @@ pkg.deps.REBOOT_LOG_FCB:
     - "@apache-mynewt-core/fs/fcb"
 
 pkg.init:
-    log_reboot_pkg_init: 200
+    log_reboot_pkg_init: 'MYNEWT_VAL(REBOOT_SYSINIT_STAGE)'

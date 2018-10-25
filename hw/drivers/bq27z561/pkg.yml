@@ -38,4 +38,4 @@ pkg.deps.BQ27Z561_CLI:
     - "@apache-mynewt-core/util/parse"
 
 pkg.init:
-    bq27z561_pkg_init: 500
+    bq27z561_pkg_init: 'MYNEWT_VAL(BQ27Z561_SYSINIT_STAGE)'

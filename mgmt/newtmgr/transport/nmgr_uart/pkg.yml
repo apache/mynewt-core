@@ -32,4 +32,4 @@ pkg.deps:
     - "@apache-mynewt-core/util/crc"
 
 pkg.init:
-    nmgr_uart_pkg_init: 501
+    nmgr_uart_pkg_init: 'MYNEWT_VAL(NMGR_UART_SYSINIT_STAGE)'

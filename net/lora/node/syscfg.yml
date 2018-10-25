@@ -92,3 +92,8 @@ syscfg.defs:
                 Sets public or private lora network. A value of 1 means
                 the network is public; private otherwise
         value: 0
+
+    LORA_NODE_SYSINIT_STAGE:
+        description: >
+            Sysinit stage for the LoRa endpoint.
+        value: 200

@@ -30,4 +30,4 @@ pkg.deps:
     - "@apache-mynewt-core/net/ip/mn_socket"
 
 pkg.init:
-    native_sock_init: 200
+    native_sock_init: 'MYNEWT_VAL(NATIVE_SOCKETS_SYSINIT_STAGE)'

@@ -42,4 +42,4 @@ pkg.req_apis:
     - lora_node_driver
 
 pkg.init:
-    lora_node_init: 200
+    lora_node_init: 'MYNEWT_VAL(LORA_NODE_SYSINIT_STAGE)'

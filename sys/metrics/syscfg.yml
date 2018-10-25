@@ -27,3 +27,7 @@ syscfg.defs:
     METRICS_CLI:
         description: Enable shell interface
         value: 0
+    METRICS_SYSINIT_STAGE:
+        description: >
+            Sysinit stage for metrics functionality.
+        value: 500

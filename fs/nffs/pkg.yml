@@ -39,4 +39,4 @@ pkg.req_apis:
     - stats
 
 pkg.init:
-    nffs_pkg_init: 200
+    nffs_pkg_init: 'MYNEWT_VAL(NFFS_SYSINIT_STAGE)'

@@ -46,4 +46,4 @@ pkg.deps.IMGMGR_SHELL:
     - "@apache-mynewt-core/sys/shell"
 
 pkg.init:
-    imgmgr_module_init: 500
+    imgmgr_module_init: 'MYNEWT_VAL(IMGMGR_SYSINIT_STAGE)'

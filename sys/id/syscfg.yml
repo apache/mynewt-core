@@ -52,3 +52,8 @@ syscfg.defs:
         restrictions:
             # Older versions of newt don't export the target name.
             - 'TARGET_NAME'
+
+    ID_SYSINIT_STAGE:
+        description: >
+            Sysinit stage for ID functionality.
+        value: 500

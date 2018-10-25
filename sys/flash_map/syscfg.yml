@@ -19,3 +19,8 @@ syscfg.defs:
     FLASH_MAP_MAX_AREAS:
         description: 'Maximum number of expected flash areas'
         value: 10
+
+    FLASH_MAP_SYSINIT_STAGE:
+        description: >
+            Sysinit stage for flash map functionality.
+        value: 2

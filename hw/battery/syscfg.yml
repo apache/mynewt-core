@@ -31,3 +31,8 @@ syscfg.defs:
             Maximum number of supported battery properties. Number should
             be a minimum multiple of 32 that is grater of supported properties.
         value: 32
+
+    BATTERY_SYSINIT_STAGE:
+        description: >
+            Sysinit stage for battery functionality.
+        value: 501

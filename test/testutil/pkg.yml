@@ -31,4 +31,4 @@ pkg.deps:
     - "@apache-mynewt-core/sys/sysinit"
 
 pkg.init:
-    tu_init: 1
+    tu_init: 'MYNEWT_VAL(TESTUTIL_SYSINIT_STAGE)'

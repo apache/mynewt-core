@@ -56,3 +56,7 @@ syscfg.defs:
             test token is specified by the runtest client and is included in
             test result log entries.
         value: 32
+    RUNTEST_SYSINIT_STAGE:
+        description: >
+            Sysinit stage for runtest functionality.
+        value: 500

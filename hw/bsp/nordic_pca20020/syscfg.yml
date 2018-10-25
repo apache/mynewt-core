@@ -39,6 +39,11 @@ syscfg.defs:
         description: 'NRF52 Thingy onboard lis2dh12 sensor'
         value:  0
 
+    NORDIC_PCA20020_SYSINIT_STAGE:
+        description: >
+            Sysinit stage for the PCA20020 BSP.
+        value: 400
+
 syscfg.vals:
     # Enable nRF52832 MCU
     MCU_NRF52832: 1

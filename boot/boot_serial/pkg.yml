@@ -42,5 +42,5 @@ pkg.cflags.SELFTEST:
     - -DBOOT_SERIAL_DETECT_PIN_CFG=0
 
 pkg.init:
-    boot_serial_os_dev_init: 0
-    boot_serial_pkg_init: 200
+    boot_serial_os_dev_init: 'MYNEWT_VAL(BOOT_SERIAL_SYSINIT_STAGE_OS_DEV)'
+    boot_serial_pkg_init: 'MYNEWT_VAL(BOOT_SERIAL_SYSINIT_STAGE_MAIN)'

@@ -34,4 +34,4 @@ pkg.deps.METRICS_CLI:
     - sys/shell
 
 pkg.init:
-      metrics_pkg_init: 500
+      metrics_pkg_init: 'MYNEWT_VAL(METRICS_SYSINIT_STAGE)'

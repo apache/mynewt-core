@@ -102,3 +102,28 @@ syscfg.defs:
     OC_COAP_RESPONSE_TIMEOUT:
         description: 'How many seconds before client request times out'
         value: 4
+
+    OC_SYSINIT_STAGE_MAIN:
+        description: >
+            Main sysinit stage for OIC functionality.
+        value: 300
+    OC_SYSINIT_STAGE_IP6:
+        description: >
+            Sysinit stage for the IPv6 OIC transport.
+        value: 301
+    OC_SYSINIT_STAGE_IP4:
+        description: >
+            Sysinit stage for the IPv4 OIC transport.
+        value: 301
+    OC_SYSINIT_STAGE_SERIAL:
+        description: >
+            Sysinit stage for the serial OIC transport.
+        value: 301
+    OC_SYSINIT_STAGE_GATT:
+        description: >
+            Sysinit stage for the GATT (BLE) OIC transport.
+        value: 301
+    OC_SYSINIT_STAGE_LORA:
+        description: >
+            Sysinit stage for the LoRa OIC transport.
+        value: 301

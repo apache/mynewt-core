@@ -25,3 +25,8 @@ syscfg.defs:
         description: >
             Specify the eventq to be used by the charge control manager
         value:
+
+    CHARGE_CONTROL_SYSINIT_STAGE:
+        description:
+            Sysinit stage for charge control functionality.
+        value: 501

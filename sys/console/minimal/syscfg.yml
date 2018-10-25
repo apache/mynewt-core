@@ -49,3 +49,8 @@ syscfg.defs:
     CONSOLE_UART_DEV:
         description: 'Console UART device.'
         value: '"uart0"'
+
+    CONSOLE_SYSINIT_STAGE:
+        description: >
+            Sysinit stage for console functionality.
+        value: 20

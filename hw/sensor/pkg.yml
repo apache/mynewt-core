@@ -37,4 +37,4 @@ pkg.req_apis:
     - console
     
 pkg.init:
-    sensor_pkg_init: 501
+    sensor_pkg_init: 'MYNEWT_VAL(SENSOR_SYSINIT_STAGE)'

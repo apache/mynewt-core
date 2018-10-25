@@ -22,3 +22,7 @@ syscfg.defs:
         value: 1
         restrictions:
           - SHELL_TASK
+    IP_SYSINIT_STAGE:
+        description: >
+            Sysinit stage for the IP stack.
+        value: 200

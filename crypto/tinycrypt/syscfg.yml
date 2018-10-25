@@ -27,3 +27,8 @@ syscfg.defs:
         description: >
             Name of OS device to use as TRNG source.
         value: '"trng"'
+
+    TINYCRYPT_SYSINIT_STAGE:
+        description: >
+            Sysinit stage for tinycrypt.
+        value: 200

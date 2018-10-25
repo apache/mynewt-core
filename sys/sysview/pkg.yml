@@ -26,4 +26,4 @@ pkg.build_profile: speed
 pkg.deps:
     - "@apache-mynewt-core/sys/sysview/vendor"
 pkg.init:
-    sysview_init: 100
+    sysview_init: 'MYNEWT_VAL(SYSVIEW_SYSINIT_STAGE)'

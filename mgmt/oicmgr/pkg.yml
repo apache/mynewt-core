@@ -33,4 +33,4 @@ pkg.apis:
     - newtmgr
 
 pkg.init:
-    oicmgr_init: 500
+    oicmgr_init: 'MYNEWT_VAL(OICMGR_SYSINIT_STAGE)'

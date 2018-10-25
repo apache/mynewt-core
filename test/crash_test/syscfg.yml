@@ -24,3 +24,7 @@ syscfg.defs:
     CRASH_TEST_NEWTMGR:
         description: 'Newtmgr commands for crashing'
         value: 1
+    CRASH_TEST_SYSINIT_STAGE:
+        description: >
+            Sysinit stage for crash test functionality.
+        value: 500
