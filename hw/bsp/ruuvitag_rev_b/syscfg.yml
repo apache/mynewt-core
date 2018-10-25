@@ -50,6 +50,17 @@ syscfg.defs:
         description: 'Enable RuuviTag onboard LIS2DH12 sensor (rev. B3 and newer)'
         value:  0
 
+    RUUVITAG_REV_B_SYSINIT_STAGE_BME280:
+        description: >
+            Sysinit stage for the Ruuvitag, Rev. B; initializes the BME280
+            sensor.
+        value: 400
+    RUUVITAG_REV_B_SYSINIT_STAGE_LIS2DH12:
+        description: >
+            Sysinit stage for the Ruuvitag, Rev. B; initializes the LIS2DH12
+            sensor.
+        value: 400
+
 syscfg.vals:
     # Enable nRF52832 MCU
     MCU_NRF52832: 1

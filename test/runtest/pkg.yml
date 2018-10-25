@@ -37,4 +37,4 @@ pkg.req_apis.RUNTEST_CLI:
     - console
 
 pkg.init:
-    runtest_init: 500
+    runtest_init: 'MYNEWT_VAL(RUNTEST_SYSINIT_STAGE)'

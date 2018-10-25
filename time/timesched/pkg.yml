@@ -29,4 +29,4 @@ pkg.deps:
     - "@apache-mynewt-core/kernel/os"
 
 pkg.init:
-    timesched_init: 500
+    timesched_init: 'MYNEWT_VAL(TIMESCHED_SYSINIT_STAGE)'

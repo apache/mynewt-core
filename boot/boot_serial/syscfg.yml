@@ -90,3 +90,14 @@ syscfg.defs:
             - '(BOOT_SERIAL_DETECT_PIN != -1) ||
                (BOOT_SERIAL_DETECT_TIMEOUT != 0) ||
 	       (BOOT_SERIAL_NVREG_INDEX != -1)'
+
+    BOOT_SERIAL_SYSINIT_STAGE_OS_DEV:
+        description: >
+            Sysinit stage for OS device initialization.  `os_init()` does not
+            get called for the boot loader, so this is needed as an
+            alternative.
+        value: 0
+
+    BOOT_SERIAL_SYSINIT_STAGE_MAIN:
+        description: Main sysinit stage for serial boot loader functionality.
+        value: 200

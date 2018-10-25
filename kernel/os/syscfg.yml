@@ -143,6 +143,10 @@ syscfg.defs:
             Include filename and line number in crash messages.  Aids in
             debugging, but increases text size.
         value: 0
+    OS_SYSINIT_STAGE:
+        description: >
+            Sysinit stage for the Mynewt kernel.
+        value: 0
 
 syscfg.vals.OS_DEBUG_MODE:
     OS_CRASH_STACKTRACE: 1

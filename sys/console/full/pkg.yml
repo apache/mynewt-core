@@ -33,4 +33,4 @@ pkg.deps.CONSOLE_RTT:
 pkg.apis: console
 
 pkg.init:
-    console_pkg_init: 20
+    console_pkg_init: 'MYNEWT_VAL(CONSOLE_SYSINIT_STAGE)'

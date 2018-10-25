@@ -48,7 +48,7 @@ pkg.apis:
     - log
 
 pkg.init:
-    log_init: 100
+    log_init: 'MYNEWT_VAL(LOG_SYSINIT_STAGE_MAIN)'
 
 pkg.init.LOG_FCB_SLOT1:
-    log_init_slot1: 101
+    log_init_slot1: 'MYNEWT_VAL(LOG_SYSINIT_STAGE_SLOT1)'

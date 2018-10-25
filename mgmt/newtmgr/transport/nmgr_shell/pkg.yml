@@ -31,4 +31,4 @@ pkg.deps:
     - "@apache-mynewt-core/mgmt/newtmgr"
 
 pkg.init:
-    nmgr_shell_pkg_init: 501
+    nmgr_shell_pkg_init: 'MYNEWT_VAL(NMGR_SHELL_SYSINIT_STAGE)'

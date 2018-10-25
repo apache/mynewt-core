@@ -30,4 +30,4 @@ pkg.deps:
 
 # sys/flash_map must get initialized before sys/mfg.
 pkg.init:
-    mfg_init: 100
+    mfg_init: 'MYNEWT_VAL(MFG_SYSINIT_STAGE)'

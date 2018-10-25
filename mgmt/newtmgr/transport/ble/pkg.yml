@@ -32,4 +32,4 @@ pkg.deps:
     - "@apache-mynewt-nimble/nimble/host"
 
 pkg.init:
-    newtmgr_ble_pkg_init: 501
+    newtmgr_ble_pkg_init: 'MYNEWT_VAL(NEWTMGR_BLE_SYSINIT_STAGE)'

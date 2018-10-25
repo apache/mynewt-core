@@ -32,5 +32,4 @@ pkg.req_apis:
     - console
 
 pkg.init:
-    charge_control_pkg_init: 501
-
+    charge_control_pkg_init: 'MYNEWT_VAL(CHARGE_CONTROL_SYSINIT_STAGE)'

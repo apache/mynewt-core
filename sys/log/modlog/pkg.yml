@@ -32,4 +32,4 @@ pkg.req_apis:
     - log
 
 pkg.init:
-    modlog_init: 100
+    modlog_init: 'MYNEWT_VAL(MODLOG_SYSINIT_STAGE)'

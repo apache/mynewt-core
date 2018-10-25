@@ -58,3 +58,7 @@ syscfg.defs:
                        notification events so that multiple events can be put
                        on the eventq for processing'
          value: 5
+    SENSOR_SYSINIT_STAGE:
+        description: >
+            Sysinit stage for the sensors framework.
+        value: 501

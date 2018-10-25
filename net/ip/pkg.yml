@@ -36,4 +36,4 @@ pkg.deps.LWIP_CLI:
     - "@apache-mynewt-core/sys/shell"
 
 pkg.init:
-    ip_init: 200
+    ip_init: 'MYNEWT_VAL(IP_SYSINIT_STAGE)'

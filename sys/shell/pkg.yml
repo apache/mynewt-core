@@ -35,4 +35,4 @@ pkg.req_apis:
     - console
 
 pkg.init:
-    shell_init: 500
+    shell_init: 'MYNEWT_VAL(SHELL_SYSINIT_STAGE)'

@@ -91,3 +91,12 @@ syscfg.defs:
             bytes used by entries above watermark.
         value: 0
         restrictions: LOG_STORAGE_INFO
+
+    LOG_SYSINIT_STAGE_MAIN:
+        description: >
+            Primary sysinit stage for logging functionality.
+        value: 100
+    LOG_SYSINIT_STAGE_SLOT1:
+        description: >
+            Sysinit stage for logging to the second image slot.
+        value: 101

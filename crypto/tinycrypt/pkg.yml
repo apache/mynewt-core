@@ -30,4 +30,4 @@ pkg.deps.TINYCRYPT_UECC_RNG_USE_TRNG:
     - "@apache-mynewt-core/hw/drivers/trng"
 
 pkg.init.TINYCRYPT_UECC_RNG_USE_TRNG:
-    mynewt_tinycrypt_pkg_init: 200
+    mynewt_tinycrypt_pkg_init: 'MYNEWT_VAL(TINYCRYPT_SYSINIT_STAGE)'

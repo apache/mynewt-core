@@ -34,3 +34,7 @@ syscfg.defs:
         description: >
             Send verbose error message in responses.
         value: 0
+    IMGMGR_SYSINIT_STAGE:
+        description: >
+            Sysinit stage for image management functionality.
+        value: 500

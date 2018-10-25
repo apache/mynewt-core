@@ -38,4 +38,4 @@ pkg.deps.MCU_STM32F7:
 pkg.req_apis: 
 
 pkg.init:
-    stm32_eth_open: 240
+    stm32_eth_open: 'MYNEWT_VAL(STM32_ETH_SYSINIT_STAGE)'

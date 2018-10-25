@@ -28,4 +28,4 @@ pkg.req_apis:
     - console
 
 pkg.init:
-    battery_pkg_init: 501
+    battery_pkg_init: 'MYNEWT_VAL(BATTERY_SYSINIT_STAGE)'

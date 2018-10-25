@@ -35,3 +35,7 @@ syscfg.defs:
         description: 'The priority of the native sockets task.'
         type: task_priority
         value: 2
+    NATIVE_SOCKETS_SYSINIT_STAGE:
+        description: >
+            Sysinit stage for the native sockets implementation.
+        value: 200

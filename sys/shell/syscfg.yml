@@ -63,6 +63,11 @@ syscfg.defs:
         description: 'Include shell prompt module'
         value: 0
 
+    SHELL_SYSINIT_STAGE:
+        description: >
+            Sysinit stage for shell functionality.
+        value: 500
+
 ## duplicated from boot/boot_serial
     BOOT_SERIAL_NVREG_MAGIC:
         description: >

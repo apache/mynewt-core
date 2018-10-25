@@ -41,3 +41,7 @@ syscfg.defs:
             modlog.  This setting will be enabled by default in a future
             release.
         value: 0
+    MODLOG_SYSINIT_STAGE:
+        description: >
+            Sysinit stage for modular logging functionality.
+        value: 100

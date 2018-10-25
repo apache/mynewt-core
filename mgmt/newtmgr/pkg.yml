@@ -37,4 +37,4 @@ pkg.apis:
     - newtmgr
 
 pkg.init:
-    nmgr_pkg_init: 500
+    nmgr_pkg_init: 'MYNEWT_VAL(NEWTMGR_SYSINIT_STAGE)'

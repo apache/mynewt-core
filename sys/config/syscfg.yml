@@ -49,6 +49,16 @@ syscfg.defs:
         description: 'Automatically configure a single config region at bootup'
         value: 1
 
+    CONFIG_SYSINIT_STAGE_1:
+        description: >
+            Primary sysinit stage for the config package.
+        value: 50
+    CONFIG_SYSINIT_STAGE_2:
+        description: >
+            Secondary sysinit stage for the config package; populates the
+            underlying storage medium for config if it is has not been done.
+        value: 220
+
 syscfg.defs.CONFIG_FCB:
     CONFIG_FCB_FLASH_AREA:
         description: 'BSP flash area for config'

@@ -33,3 +33,7 @@ syscfg.defs:
             Number of areas to allocate in the NFFS disk.  A smaller number is
             used if the flash hardware cannot support this value.
         value: 8
+    NFFS_SYSINIT_STAGE:
+        description: >
+            Sysinit stage for NFFS functionality.
+        value: 200

@@ -30,4 +30,4 @@ pkg.deps:
     - "@apache-mynewt-core/sys/mfg"
 
 pkg.init:
-    flash_map_init: 2
+    flash_map_init: 'MYNEWT_VAL(FLASH_MAP_SYSINIT_STAGE)'

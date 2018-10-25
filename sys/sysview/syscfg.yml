@@ -42,3 +42,7 @@ syscfg.defs:
             It is recommended to use large SysView buffer to get as much data
             for analysis as possible.
         value: 0
+    SYSVIEW_SYSINIT_STAGE:
+        description: >
+            Sysinit stage for sysview functionality.
+        value: 100

@@ -32,4 +32,4 @@ pkg.req_apis:
     - console
 
 pkg.init:
-    i2c_scan_init: 500
+    i2c_scan_init: 'MYNEWT_VAL(I2C_SCAN_SYSINIT_STAGE)'

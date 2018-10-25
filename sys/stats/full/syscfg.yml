@@ -61,3 +61,7 @@ syscfg.defs:
             Sysdown stage for persistent stat config.  During system shutdown,
             pending stat writes get flushed to disk.
         value: 500
+    STATS_SYSINIT_STAGE:
+        description: >
+            Sysinit stage for statistics functionality.
+        value: 10

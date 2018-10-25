@@ -44,4 +44,4 @@ pkg.deps.LIS2DH12_ONB:
     - "@apache-mynewt-core/hw/drivers/sensors/lis2dh12"
 
 pkg.init:
-    config_lis2dh12_sensor: 400
+    config_lis2dh12_sensor: 'MYNEWT_VAL(NORDIC_PCA20020_SYSINIT_STAGE)'

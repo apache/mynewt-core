@@ -33,4 +33,4 @@ pkg.deps.CRASH_TEST_NEWTMGR:
     - "@apache-mynewt-core/encoding/json"
 
 pkg.init:
-    crash_test_init: 500
+    crash_test_init: 'MYNEWT_VAL(CRASH_TEST_SYSINIT_STAGE)'

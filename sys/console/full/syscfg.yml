@@ -92,3 +92,8 @@ syscfg.defs:
             value may affect RTT console responsiveness, using small value may
             affect device performance due to more frequent polling.
         value: 250
+
+    CONSOLE_SYSINIT_STAGE:
+        description: >
+            Sysinit stage for console functionality.
+        value: 20

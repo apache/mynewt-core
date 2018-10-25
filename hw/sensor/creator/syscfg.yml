@@ -75,3 +75,7 @@ syscfg.defs:
         description: 'BME680 is present'
         value: 0
 
+    SENSOR_CREATOR_SYSINIT_STAGE:
+        description: >
+            Sysinit stage for the sensor creator package.
+        value: 500
