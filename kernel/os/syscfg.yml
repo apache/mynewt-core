@@ -69,7 +69,7 @@ syscfg.defs:
         value: 30000
     MSYS_1_BLOCK_COUNT:
         description: '1st system pool of mbufs; number of entries'
-        value: 12
+        value: 22
     MSYS_1_BLOCK_SIZE:
         description: '1st system pool of mbufs; size of an entry'
         value: 292
