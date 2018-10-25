@@ -33,6 +33,15 @@ git:
 
 matrix:
   include:
+    # RAT Report
+    - os: linux
+      language: python
+      python:
+        - "3.5"
+      env:
+        - TEST=RAT
+        - DEBUG=1
+
     # newt build <targets>
     - os: linux
       env:
@@ -120,22 +129,30 @@ matrix:
 before_install:
   - printenv
   - export GOPATH=$HOME/gopath
-  - go version
+  - if [ "${TEST}" != "RAT" ]; then go version; fi
 
 install:
   - git clone https://github.com/runtimeco/mynewt-travis-ci $HOME/ci
   - chmod +x $HOME/ci/*.sh
-  - $HOME/ci/${TRAVIS_OS_NAME}_travis_install.sh
+  - |
+    if [ "${TEST}" == "RAT" ]; then
+      pip install requests
+    else
+      $HOME/ci/${TRAVIS_OS_NAME}_travis_install.sh
+    fi
 
 before_script:
-  - newt version
-  - gcc --version
-  - if [ "${TEST}" != "TEST_ALL" ]; then arm-none-eabi-gcc --version; fi
-  - cp -R $HOME/ci/mynewt-core-project.yml project.yml
-  - cp -R $HOME/ci/mynewt-core-targets targets
-  - newt install
-    # pass in the number of target sets
-  - $HOME/ci/prepare_test.sh $VM_AMOUNT
+  - |
+    if [ "${TEST}" != "RAT" ]; then
+      newt version
+      gcc --version
+      if [ "${TEST}" != "TEST_ALL" ]; then arm-none-eabi-gcc --version; fi
+      cp -R $HOME/ci/mynewt-core-project.yml project.yml
+      cp -R $HOME/ci/mynewt-core-targets targets
+      newt install
+      # pass in the number of target sets
+      $HOME/ci/prepare_test.sh $VM_AMOUNT
+    fi
 
 script:
   # the following list of targets are known to fail building blinky, or
@@ -144,7 +161,12 @@ script:
   - export IGNORED_BSPS="ci40 embarc_emsk hifive1 native-armv7 native-mips
                          pic32mx470_6lp_clicker pic32mz2048_wi-fire sensorhub
                          native"
-  - $HOME/ci/run_test.sh
+  - |
+    if [ "${TEST}" != "RAT" ]; then
+      $HOME/ci/run_test.sh
+    else
+      python $HOME/ci/check_license.py
+    fi
 
 cache:
   directories:
