@@ -36,8 +36,10 @@
 
 #include "imgmgr/imgmgr.h"
 #include "imgmgr_priv.h"
+#include "hal/hal_system.h"
 
 static int imgr_cli_cmd(int argc, char **argv);
+static int imgr_cli_set_pending(char *hash_str, int permanent);
 
 static struct shell_cmd shell_imgr_cmd = {
     .sc_cmd = "imgr",
@@ -105,6 +107,38 @@ imgr_cli_show_slot(int slot)
 }
 
 static int
+imgr_cli_swap()
+{
+    uint8_t hash[IMGMGR_HASH_LEN]; /* SHA256 hash */
+    char hash_str[IMGMGR_HASH_LEN * 2 + 1];
+    struct image_version ver;
+    uint32_t flags;
+    uint8_t slot = 1;
+
+
+    if (imgr_read_info(slot, &ver, hash, &flags))
+    {
+        return SYS_EINVAL;
+    }
+
+    if ( NULL == hex_format(hash, IMGMGR_HASH_LEN, hash_str, sizeof(hash_str)))
+    {
+        return SYS_ENOENT;
+    }
+
+    if (imgr_cli_set_pending(hash_str, 1))
+    {
+        return SYS_EUNKNOWN;
+    }
+
+    console_printf("Swap flag set. Reset the chip");
+
+    hal_system_reset();
+
+    return 0;
+}
+
+static int
 imgr_cli_hash_parse(const char *arg, int *out_slot)
 {
     uint8_t hash[IMGMGR_HASH_LEN];
@@ -128,7 +162,7 @@ imgr_cli_hash_parse(const char *arg, int *out_slot)
     return 0;
 }
 
-static void
+static int
 imgr_cli_set_pending(char *hash_str, int permanent)
 {
     int slot;
@@ -136,14 +170,16 @@ imgr_cli_set_pending(char *hash_str, int permanent)
 
     rc = imgr_cli_hash_parse(hash_str, &slot);
     if (rc != 0) {
-        return;
+        return -1;
     }
 
     rc = imgmgr_state_set_pending(slot, permanent);
     if (rc) {
         console_printf("Error setting image to pending; rc=%d\n", rc);
-        return;
+        return -1;
     }
+
+    return 0;
 }
 
 static void
@@ -184,7 +220,10 @@ imgr_cli_cmd(int argc, char **argv)
         } else {
             imgr_cli_set_pending(argv[2], 1);
         }
-    } else {
+    } else if (!strcmp(argv[1], "swap")) {
+        imgr_cli_swap();
+    }
+    else {
         console_printf("Unknown cmd\n");
     }
     return 0;

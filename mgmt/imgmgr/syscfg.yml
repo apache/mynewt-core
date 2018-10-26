@@ -24,7 +24,7 @@ syscfg.defs:
         value: 0
     IMGMGR_CLI:
         description: 'CLI commands to interact with image management'
-        value: 0
+        value: 1
         restrictions:
             - SHELL_TASK
     IMGMGR_MAX_CHUNK_SIZE:
