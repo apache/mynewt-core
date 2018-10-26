@@ -26,6 +26,8 @@
 #include "hal/hal_flash.h"
 #include "hal/hal_flash_int.h"
 
+static uint8_t protected_flash[1];
+
 int
 hal_flash_init(void)
 {
@@ -165,6 +167,10 @@ hal_flash_write(uint8_t id, uint32_t address, const void *src,
         return -1;
     }
 
+    if (protected_flash[id / 8] & (1 << (id & 7))) {
+        return SYS_EACCES;
+    }
+
     rc = hf->hf_itf->hff_write(hf, address, src, num_bytes);
     if (rc != 0) {
         return rc;
@@ -196,6 +202,10 @@ hal_flash_erase_sector(uint8_t id, uint32_t sector_address)
     }
     if (hal_flash_check_addr(hf, sector_address)) {
         return -1;
+    }
+
+    if (protected_flash[id / 8] & (1 << (id & 7))) {
+        return SYS_EACCES;
     }
 
     rc = hf->hf_itf->hff_erase_sector(hf, sector_address);
@@ -236,6 +246,10 @@ hal_flash_erase(uint8_t id, uint32_t address, uint32_t num_bytes)
     if (hal_flash_check_addr(hf, address) ||
       hal_flash_check_addr(hf, address + num_bytes)) {
         return -1;
+    }
+
+    if (protected_flash[id / 8] & (1 << (id & 7))) {
+        return SYS_EACCES;
     }
 
     end = address + num_bytes;
@@ -337,4 +351,23 @@ int
 hal_flash_ioctl(uint8_t id, uint32_t cmd, void *args)
 {
     return 0;
+}
+
+int
+hal_flash_write_protect(uint8_t id, uint8_t protect)
+{
+    if (NULL == hal_bsp_flash_dev(id)) {
+        return SYS_EINVAL;
+    }
+    if (id / 8 >= sizeof(protected_flash) / sizeof(protected_flash[0])) {
+        return SYS_EINVAL;
+    }
+
+    if (protect) {
+        protected_flash[id / 8] |= (1 << (id & 7));
+    } else {
+        protected_flash[id / 8] &= ~(1 << (id & 7));
+    }
+
+    return SYS_EOK;
 }

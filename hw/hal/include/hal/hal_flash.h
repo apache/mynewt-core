@@ -64,6 +64,21 @@ uint8_t hal_flash_align(uint8_t flash_id);
 uint8_t hal_flash_erased_val(uint8_t flash_id);
 int hal_flash_init(void);
 
+/**
+ * @brief Set or clears write protection
+ *
+ * This function allows to disable write to the device if for some reason
+ * (i.e. low power state) writes could result in data corruption.
+ *
+ * @param id          The ID of the flash
+ * @param protect     1 - disable writes
+ *                    0 - enable writes
+ *
+ * @return           SYS_EINVAL - if flash id is not valid
+ *                   SYS_OK - on success
+ */
+int hal_flash_write_protect(uint8_t id, uint8_t protect);
+
 #ifdef __cplusplus
 }
 #endif
