@@ -16,8 +16,6 @@
 # under the License.
 #
 
-# Package: apps/bleuart
-
 syscfg.vals:
     # Disable unused roles; bleuart is a peripheral-only app.
     BLE_ROLE_OBSERVER: 0

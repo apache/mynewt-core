@@ -16,8 +16,6 @@
 # under the License.
 #
 
-# Package: hw/bsp/stm32l152discovery
-
 syscfg.defs:
     I2C_0:
         description: 'I2C (TWI) interface 0'
@@ -27,10 +25,22 @@ syscfg.defs:
         description: >
             Specifies the required alignment for internal flash writes.
             Used internally by the newt tool.
-        value: 8
+        value: 4
 
     MCU_STM32L1:
         description: MCUs are of STM32L1xx family
+        value: 1
+
+    STM32_HAL_SPI_HAS_FIFO:
+        description: This MCU has a SPI without FIFO
+        value: 0
+
+    STM32_HAL_I2C_HAS_CLOCKSPEED:
+        description: This MCU's I2C has a clock speed register
+        value: 1
+
+    STM32_HAL_UART_HAS_SR:
+        description: This MCU's UART uses SR register for status.
         value: 1
 
     SPI_0_MASTER:

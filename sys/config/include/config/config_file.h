@@ -20,6 +20,7 @@
 #define __SYS_CONFIG_FILE_H_
 
 #include "config/config.h"
+#include "config/config_store.h"
 
 #ifdef __cplusplus
 extern "C" {

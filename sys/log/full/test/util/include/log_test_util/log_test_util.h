@@ -60,6 +60,7 @@ TEST_CASE_DECL(log_test_case_fcb_append_mbuf_body);
 
 TEST_SUITE_DECL(log_test_suite_misc);
 TEST_CASE_DECL(log_test_case_level);
+TEST_CASE_DECL(log_test_case_append_cb);
 
 #ifdef __cplusplus
 }

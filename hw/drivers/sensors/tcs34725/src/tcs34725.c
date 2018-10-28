@@ -2,7 +2,7 @@
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
- * resarding copyright ownership.  The ASF licenses this file
+ * regarding copyright ownership.  The ASF licenses this file
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
@@ -23,6 +23,7 @@
 
 #include "os/mynewt.h"
 #include "hal/hal_i2c.h"
+#include "i2cn/i2cn.h"
 #include "sensor/sensor.h"
 #include "tcs34725/tcs34725.h"
 #include "tcs34725_priv.h"
@@ -98,8 +99,8 @@ tcs34725_write8(struct sensor_itf *itf, uint8_t reg, uint32_t value)
         return rc;
     }
 
-    rc = hal_i2c_master_write(itf->si_num, &data_struct,
-                              OS_TICKS_PER_SEC / 10, 1);
+    rc = i2cn_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1,
+                           MYNEWT_VAL(TCS34725_I2C_RETRIES));
     if (rc) {
         TCS34725_LOG(ERROR,
                      "Failed to write to 0x%02X:0x%02X with value 0x%02lX\n",
@@ -140,7 +141,8 @@ tcs34725_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
 
     /* Register write */
     payload = reg | TCS34725_COMMAND_BIT;
-    rc = hal_i2c_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1);
+    rc = i2cn_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1,
+                           MYNEWT_VAL(TCS34725_I2C_RETRIES));
     if (rc) {
         TCS34725_LOG(ERROR, "I2C access failed at address 0x%02X\n",
                      data_struct.address);
@@ -150,7 +152,8 @@ tcs34725_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
 
     /* Read one byte back */
     payload = 0;
-    rc = hal_i2c_master_read(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1);
+    rc = i2cn_master_read(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1,
+                          MYNEWT_VAL(TCS34725_I2C_RETRIES));
     *value = payload;
     if (rc) {
         TCS34725_LOG(ERROR, "Failed to read from 0x%02X:0x%02X\n",
@@ -194,8 +197,8 @@ tcs34725_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer, uint8_t l
     }
 
     /* Register write */
-    rc = hal_i2c_master_write(itf->si_num, &data_struct,
-                              OS_TICKS_PER_SEC / 10, 1);
+    rc = i2cn_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1,
+                           MYNEWT_VAL(TCS34725_I2C_RETRIES));
     if (rc) {
         TCS34725_LOG(ERROR, "I2C access failed at address 0x%02X\n",
                      data_struct.address);
@@ -206,8 +209,8 @@ tcs34725_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer, uint8_t l
     /* Read len bytes back */
     memset(payload, 0, sizeof(payload));
     data_struct.len = len;
-    rc = hal_i2c_master_read(itf->si_num, &data_struct,
-                             OS_TICKS_PER_SEC / 10, 1);
+    rc = i2cn_master_read(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1,
+                          MYNEWT_VAL(TCS34725_I2C_RETRIES));
 
     if (rc) {
         TCS34725_LOG(ERROR, "Failed to read from 0x%02X:0x%02X\n",
@@ -259,8 +262,8 @@ tcs34725_writelen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer, uint8_t 
     }
 
     /* Register write */
-    rc = hal_i2c_master_write(itf->si_num, &data_struct,
-                              OS_TICKS_PER_SEC / 10, 1);
+    rc = i2cn_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1,
+                           MYNEWT_VAL(TCS34725_I2C_RETRIES));
     if (rc) {
         TCS34725_LOG(ERROR, "I2C access failed at address 0x%02X\n",
                      data_struct.address);
@@ -270,8 +273,8 @@ tcs34725_writelen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer, uint8_t 
 
     memset(payload, 0, sizeof(payload));
     data_struct.len = len;
-    rc = hal_i2c_master_write(itf->si_num, &data_struct,
-                              OS_TICKS_PER_SEC / 10, len);
+    rc = i2cn_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10,
+                           len, MYNEWT_VAL(TCS34725_I2C_RETRIES));
 
     if (rc) {
         TCS34725_LOG(ERROR, "Failed to read from 0x%02X:0x%02X\n",
@@ -977,8 +980,8 @@ tcs34725_clear_interrupt(struct sensor_itf *itf)
         .buffer = &payload
     };
 
-    rc = hal_i2c_master_write(itf->si_num, &data_struct,
-                              OS_TICKS_PER_SEC / 10, 1);
+    rc = i2cn_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1,
+                           MYNEWT_VAL(TCS34725_I2C_RETRIES));
     if (rc) {
         goto err;
     }

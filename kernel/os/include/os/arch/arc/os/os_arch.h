@@ -22,56 +22,23 @@
 
 #include <stdint.h>
 #include "mcu/mcu_arc.h"
-#include "os/os_time.h"
-#include "os/os_error.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-struct os_task;
-
-/* Run in user or kernel mode */
-#define OS_RUN_USER         (0)
-#define OS_RUN_KERNEL       (1)
-
 /* Stores interrupt enable/disable state. */
 typedef uint32_t os_sr_t;
 
-/* Stack type, aligned to a 32-bit word. */
-#define OS_STACK_PATTERN    (0xdeadbeef)
-
+/* Stack element */
 typedef uint32_t os_stack_t;
-#define OS_ALIGNMENT        (4)
-#define OS_STACK_ALIGNMENT  (8)
 
-/*
- * Stack sizes for common OS tasks
- */
+/* Stack sizes for common OS tasks */
 #define OS_SANITY_STACK_SIZE (64)
 #define OS_IDLE_STACK_SIZE (64)
 
-#define OS_STACK_ALIGN(__nmemb) \
-    (OS_ALIGN((__nmemb), OS_STACK_ALIGNMENT))
-
-/* Enter a critical section, save processor state, and block interrupts */
-#define OS_ENTER_CRITICAL(__os_sr) (__os_sr = os_arch_save_sr())
-/* Exit a critical section, restore processor state and unblock interrupts */
-#define OS_EXIT_CRITICAL(__os_sr) (os_arch_restore_sr(__os_sr))
-#define OS_ASSERT_CRITICAL() (assert(os_arch_in_critical()))
-
-os_stack_t *os_arch_task_stack_init(struct os_task *, os_stack_t *, int);
-void timer_handler(void);
-void os_arch_ctx_sw(struct os_task *);
-os_sr_t os_arch_save_sr(void);
-void os_arch_restore_sr(os_sr_t);
-int os_arch_in_critical(void);
-void os_arch_init(void);
-os_error_t os_arch_os_init(void);
-os_error_t os_arch_os_start(void);
-void os_set_env(os_stack_t *);
-void os_arch_init_task_stack(os_stack_t *sf);
-void os_default_irq_asm(void);
+/* Include common arch definitions and APIs */
+#include "os/arch/common.h"
 
 #ifdef __cplusplus
 }

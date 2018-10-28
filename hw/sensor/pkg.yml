@@ -35,7 +35,6 @@ pkg.deps.SENSOR_CLI:
 
 pkg.req_apis:
     - console
-
+    
 pkg.init:
     sensor_pkg_init: 501
-

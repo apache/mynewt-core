@@ -17,8 +17,6 @@
 # under the License.
 #
 
-# Package: compiler/arm-none-eabi-m7
-
 syscfg.defs:
    HARDFLOAT:
        description: 'Use hardware FPU'

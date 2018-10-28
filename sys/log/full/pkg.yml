@@ -34,11 +34,15 @@ pkg.deps.LOG_FCB:
     - "@apache-mynewt-core/fs/fcb"
 pkg.deps.LOG_CLI:
     - "@apache-mynewt-core/sys/shell"
+    - "@apache-mynewt-core/encoding/base64"
 
 pkg.deps.LOG_NEWTMGR:
     - "@apache-mynewt-core/mgmt/mgmt"
     - "@apache-mynewt-core/encoding/cborattr"
     - "@apache-mynewt-core/encoding/tinycbor"
+
+pkg.deps.LOG_STORAGE_WATERMARK:
+    - sys/config
 
 pkg.apis:
     - log

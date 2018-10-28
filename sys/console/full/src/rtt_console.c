@@ -30,21 +30,94 @@
 static struct hal_timer rtt_timer;
 #endif
 
-static const char CR = '\r';
+#if MYNEWT_VAL(CONSOLE_RTT_RETRY_COUNT) > 0
+
+static void
+rtt_console_wait_for_retry(void)
+{
+    uint32_t ticks;
+
+    if (os_arch_in_isr()) {
+#if MYNEWT_VAL(CONSOLE_RTT_RETRY_IN_ISR)
+        os_cputime_delay_usecs(MYNEWT_VAL(CONSOLE_RTT_RETRY_DELAY_MS) * 1000);
+#endif
+    } else {
+        ticks = max(1, os_time_ms_to_ticks32(MYNEWT_VAL(CONSOLE_RTT_RETRY_DELAY_MS)));
+        os_time_delay(ticks);
+    }
+}
+
+static void
+rtt_console_write_ch(char c)
+{
+    static int rtt_console_retries_left = MYNEWT_VAL(CONSOLE_RTT_RETRY_COUNT);
+    os_sr_t sr;
+    int ret;
+
+    while (1) {
+        OS_ENTER_CRITICAL(sr);
+        ret = SEGGER_RTT_WriteNoLock(0, &c, 1);
+        OS_EXIT_CRITICAL(sr);
+
+        /*
+         * In case write failed we can wait a bit and retry to allow host pull
+         * some data from buffer. However, in case there is no host connected
+         * we should not spend time retrying over and over again so need to be
+         * smarter here:
+         * - each successful write resets retry counter to predefined value
+         * - each failed write will retry until success or retry counter drops
+         *   to zero
+         * This means that if we failed to write some character after number of
+         * retries (which means that most likely there is no host connected to
+         * read data), we stop retrying until successful write (which means that
+         * host is reading data).
+         */
+
+        if (ret) {
+            rtt_console_retries_left = MYNEWT_VAL(CONSOLE_RTT_RETRY_COUNT);
+            break;
+        }
+
+        if (!rtt_console_retries_left) {
+            break;
+        }
+
+        rtt_console_wait_for_retry();
+        rtt_console_retries_left--;
+    }
+}
+
+#else
+
+static void
+rtt_console_write_ch(char c)
+{
+    os_sr_t sr;
+
+    OS_ENTER_CRITICAL(sr);
+    SEGGER_RTT_WriteNoLock(0, &c, 1);
+    OS_EXIT_CRITICAL(sr);
+}
+
+#endif
 
 int
 console_out(int character)
 {
     char c = (char)character;
 
+    if (g_silence_console) {
+        return c;
+    }
+
     if ('\n' == c) {
-        SEGGER_RTT_WriteWithOverwriteNoLock(0, &CR, 1);
+        rtt_console_write_ch('\r');
         console_is_midline = 0;
     } else {
         console_is_midline = 1;
     }
 
-    SEGGER_RTT_WriteWithOverwriteNoLock(0, &c, 1);
+    rtt_console_write_ch(c);
 
     return character;
 }

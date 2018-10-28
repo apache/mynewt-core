@@ -16,8 +16,6 @@
 # under the License.
 #
 
-# Package: apps/testbench
-
 syscfg.defs:
     TESTBENCH_BLE:
         description: Enables BLE support in the testbench app.
@@ -54,6 +52,7 @@ syscfg.vals:
     LOG_NEWTMGR: 1
     CONFIG_NEWTMGR: 1
 
+    RUNTEST_LOG: 1
     RUNTEST_CLI: 1
     RUNTEST_NEWTMGR: 1
 

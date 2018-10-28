@@ -18,6 +18,7 @@
  */
 
 #include <string.h>
+#include <syscfg/syscfg.h>
 #include "stm32l1xx_hal_def.h"
 #include "stm32l1xx_hal_flash.h"
 #include "stm32l1xx_hal_flash_ex.h"
@@ -50,7 +51,8 @@ const struct hal_flash stm32l1_flash_dev = {
     .hf_base_addr = 0x08000000,
     .hf_size = _FLASH_SIZE,
     .hf_sector_cnt = _FLASH_SIZE / _FLASH_SECTOR_SIZE,
-    .hf_align = 8,
+    .hf_align = MYNEWT_VAL(MCU_FLASH_MIN_WRITE_SIZE),
+    .hf_erased_val = 0,
 };
 
 static int
@@ -65,31 +67,55 @@ static int
 stm32l1_flash_write(const struct hal_flash *dev, uint32_t address,
         const void *src, uint32_t num_bytes)
 {
-    const uint32_t *sptr;
+    uint32_t val;
     uint32_t i;
     int rc;
+    uint8_t align;
     uint32_t num_words;
 
     if (!num_bytes) {
         return -1;
     }
 
+    align = dev->hf_align;
+
+#if MYNEWT_VAL(MCU_FLASH_MIN_WRITE_SIZE) == 1
+    num_words = num_bytes;
+#elif MYNEWT_VAL(MCU_FLASH_MIN_WRITE_SIZE) == 2
+    num_words = ((num_bytes - 1) >> 1) + 1;
+#elif MYNEWT_VAL(MCU_FLASH_MIN_WRITE_SIZE) == 4
+    num_words = ((num_bytes - 1) >> 2) + 1;
+#elif MYNEWT_VAL(MCU_FLASH_MIN_WRITE_SIZE) == 8
+    num_words = ((num_bytes - 1) >> 3) + 1;
+#else
+    #error "Unsupported MCU_FLASH_MIN_WRITE_SIZE"
+#endif
+
     /* Clear status of previous operation. */
     __HAL_FLASH_CLEAR_FLAG(FLASH_FLAG_MASK);
 
-    sptr = (const uint32_t *)src;
-    num_words = ((num_bytes - 1) / 4) + 1;
     for (i = 0; i < num_words; i++) {
-        rc = HAL_FLASH_Program(FLASH_TYPEPROGRAMDATA_WORD, address, sptr[i]);
+        if (num_bytes < align) {
+            memcpy(&val, &((uint8_t *)src)[i * align], num_bytes);
+            /* NOTE: 0 is the erased value for L1 */
+            memset((uint32_t *)&val + num_bytes, 0, align - num_bytes);
+        } else {
+            memcpy(&val, &((uint8_t *)src)[i * align], align);
+        }
+
+        HAL_FLASH_Unlock();
+        rc = HAL_FLASH_Program(FLASH_TYPEPROGRAMDATA_WORD, address, val);
+        HAL_FLASH_Lock();
         if (rc != HAL_OK) {
             return rc;
         }
-        address += 4;
+
+        address += align;
+        num_bytes -= align;
 
         /*
-         * Long writes take excessive time, and stall the idle
-         * thread, so tickling the watchdog here to avoid resetting
-         * during writes...
+         * Long writes take excessive time, and stall the idle thread,
+         * so tickling the watchdog here to avoid reset...
          */
         if (!(i % 32)) {
             hal_watchdog_tickle();
@@ -117,7 +143,10 @@ stm32l1_flash_erase_sector(const struct hal_flash *dev, uint32_t sector_address)
         eraseinit.TypeErase = FLASH_TYPEERASE_PAGES;
         eraseinit.PageAddress = sector_address;
         eraseinit.NbPages = _FLASH_SECTOR_SIZE / FLASH_PAGE_SIZE;
+
+        HAL_FLASH_Unlock();
         rc = HAL_FLASHEx_Erase(&eraseinit, &PageError);
+        HAL_FLASH_Lock();
         if (rc == HAL_OK) {
             return 0;
         }
@@ -138,7 +167,6 @@ stm32l1_flash_sector_info(const struct hal_flash *dev, int idx,
 static int
 stm32l1_flash_init(const struct hal_flash *dev)
 {
-    HAL_FLASH_Unlock();
     /* TODO: enable ACC64 + prefetch */
     return 0;
 }

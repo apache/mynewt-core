@@ -27,7 +27,7 @@
 
 #define BATTERY_MAX_COUNT 1
 
-#define PROP_MASK_SIZE (((BATTERY_MAX_PROPERTY_COUNT) + 31) / 32)
+#define GET_BIT(arr, bit)   ((arr)[(bit) / 32] & (1 << ((bit) % 32)))
 
 /*
  * Structure holds information about listener and what is it listening for.
@@ -35,9 +35,9 @@
 struct listener_data
 {
     /* The properties to monitor for change */
-    uint32_t ld_prop_change_mask[PROP_MASK_SIZE];
+    uint32_t ld_prop_change_mask[BATTERY_PROPERTY_MASK_SIZE];
     /* The properties to monitor for periodic read */
-    uint32_t ld_prop_read_mask[PROP_MASK_SIZE];
+    uint32_t ld_prop_read_mask[BATTERY_PROPERTY_MASK_SIZE];
     /* Pointer to listener provided by the application. */
     struct battery_prop_listener *ld_listener;
 };
@@ -76,31 +76,34 @@ static void
 battery_poll_event_cb(struct os_event *ev)
 {
     int i;
-    os_time_t next_poll = 0xFFFFFFFF;
+    int pflag;
+    os_time_t next_poll = 0;
     os_time_t now = os_time_get();
     struct battery *bat;
-    int ticks;
+    os_stime_t ticks;
 
+    pflag = 0;
     for (i = 0; i < BATTERY_MAX_COUNT; ++i) {
         bat = battery_manager.bm_batteries[i];
         if (bat) {
-            if (now > bat->b_next_run) {
+            if (OS_TIME_TICK_GEQ(now, bat->b_next_run)) {
                 bat->b_last_read_time = now;
                 battery_mgr_poll_battery(battery_manager.bm_batteries[i]);
                 bat->b_next_run = now + os_time_ms_to_ticks32(bat->b_poll_rate);
             }
-            if (bat->b_next_run < next_poll) {
+            if ((pflag == 0) || OS_TIME_TICK_LT(bat->b_next_run, next_poll)) {
+                pflag = 1;
                 next_poll = bat->b_next_run;
             }
         }
     }
 
-    if (next_poll != 0xFFFFFFFF) {
-        ticks = next_poll - os_time_get();
+    if (pflag) {
+        ticks = (os_stime_t)(next_poll - os_time_get());
         if (ticks < 0) {
             ticks = 1;
         }
-        os_callout_reset(&battery_manager.bm_poll_callout, ticks);
+        os_callout_reset(&battery_manager.bm_poll_callout, (os_time_t)ticks);
     }
 }
 
@@ -416,17 +419,23 @@ battery_mgr_poll_battery_driver(struct battery *bat,
 
     /* Read requested properties */
     for (i = 0; i < drv->bd_property_count; ++i, ++prop) {
-        if (driver_property(prop)) {
-            old_val = prop->bp_value;
-            if (drv->bd_funcs->bdf_property_get(drv, prop, 100)) {
-                prop->bp_valid = 0;
-            } else {
-                prop->bp_valid = 1;
-                if (memcmp(&old_val, &prop->bp_value, sizeof(old_val))) {
-                    set_bit(changed, prop->bp_prop_num);
-                }
-                set_bit(queried, prop->bp_prop_num);
+        if (!GET_BIT(bat->b_polled_properties, i)) {
+            continue;
+        }
+
+        if (!driver_property(prop)) {
+            continue;
+        }
+
+        old_val = prop->bp_value;
+        if (drv->bd_funcs->bdf_property_get(drv, prop, 100)) {
+            prop->bp_valid = 0;
+        } else {
+            prop->bp_valid = 1;
+            if (memcmp(&old_val, &prop->bp_value, sizeof(old_val))) {
+                set_bit(changed, prop->bp_prop_num);
             }
+            set_bit(queried, prop->bp_prop_num);
         }
     }
 }
@@ -434,8 +443,8 @@ battery_mgr_poll_battery_driver(struct battery *bat,
 static void
 battery_mgr_poll_battery(struct battery *battery)
 {
-    uint32_t changed[PROP_MASK_SIZE] = {0};
-    uint32_t queried[PROP_MASK_SIZE] = {0};
+    uint32_t changed[BATTERY_PROPERTY_MASK_SIZE] = {0};
+    uint32_t queried[BATTERY_PROPERTY_MASK_SIZE] = {0};
     uint32_t masked;
     int first_one;
     struct listener_data *ld;
@@ -454,7 +463,7 @@ battery_mgr_poll_battery(struct battery *battery)
     /* Notify listeners about property changes */
     for (i = 0; i < battery->b_listener_count; ++i) {
         ld = &battery->b_listeners[i];
-        for (j = 0; j < PROP_MASK_SIZE; ++j) {
+        for (j = 0; j < BATTERY_PROPERTY_MASK_SIZE; ++j) {
             masked = changed[j] & ld->ld_prop_change_mask[j];
             while (masked) {
                 /* Find first set bit */
@@ -473,7 +482,7 @@ battery_mgr_poll_battery(struct battery *battery)
     /* Notify listeners about periodic reads */
     for (i = 0; i < battery->b_listener_count; ++i) {
         ld = &battery->b_listeners[i];
-        for (j = 0; j < PROP_MASK_SIZE; ++j) {
+        for (j = 0; j < BATTERY_PROPERTY_MASK_SIZE; ++j) {
             masked = queried[j] & ld->ld_prop_read_mask[j];
             while (masked) {
                 /* Find first set bit */
@@ -494,15 +503,14 @@ int
 battery_set_poll_rate_ms(struct os_dev *battery, uint32_t poll_rate)
 {
     struct battery *bat = (struct battery *)battery;
-    bat->b_poll_rate = poll_rate;
 
-    if (bat->b_last_read_time == 0 ||
-        os_time_ms_to_ticks32(bat->b_last_read_time + poll_rate) < os_time_get()) {
-        os_callout_reset(&battery_manager.bm_poll_callout, 0);
-    } else {
-        os_callout_reset(&battery_manager.bm_poll_callout,
-            os_time_ms_to_ticks32(bat->b_last_read_time + poll_rate) - os_time_get());
+    if ((poll_rate == 0) || (bat == NULL)) {
+        return -1;
     }
+
+    bat->b_poll_rate = poll_rate;
+    bat->b_next_run = os_time_get();
+    os_callout_reset(&battery_manager.bm_poll_callout, 0);
 
     return 0;
 }
@@ -598,6 +606,25 @@ get_listener_index(struct battery *battery,
     return i;
 }
 
+static int
+battery_update_polled_properties(struct battery *battery)
+{
+    struct listener_data *ld;
+    int i;
+    int j;
+
+    for (i = 0; i < BATTERY_PROPERTY_MASK_SIZE; ++i) {
+        battery->b_polled_properties[i] = 0;
+        for (j = 0; j < battery->b_listener_count; ++j) {
+            ld = &battery->b_listeners[j];
+            battery->b_polled_properties[i] |= ld->ld_prop_read_mask[i];
+            battery->b_polled_properties[i] |= ld->ld_prop_change_mask[i];
+        }
+    }
+
+    return 0;
+}
+
 int
 battery_prop_change_subscribe(struct battery_prop_listener *listener,
         struct battery_property *prop)
@@ -613,6 +640,8 @@ battery_prop_change_subscribe(struct battery_prop_listener *listener,
 
     set_bit(battery->b_listeners[listener_index].ld_prop_change_mask,
             prop->bp_prop_num);
+
+    battery_update_polled_properties(battery);
 
     return 0;
 }
@@ -633,13 +662,12 @@ battery_prop_change_unsubscribe(struct battery_prop_listener *listener,
                 break;
             }
         }
-        if (i < battery->b_listener_count) {
-            clear_bit(battery->b_listeners[i].ld_prop_change_mask,
-                prop->bp_prop_num);
-            return 0;
-        } else {
+        if (i >= battery->b_listener_count) {
             return -1;
         }
+
+        clear_bit(battery->b_listeners[i].ld_prop_change_mask,
+                  prop->bp_prop_num);
     } else {
         /* No property supplied, remove listener from all subscriptions */
         for (i = 0; i < BATTERY_MAX_COUNT; ++i) {
@@ -664,6 +692,8 @@ battery_prop_change_unsubscribe(struct battery_prop_listener *listener,
         }
     }
 
+    battery_update_polled_properties(battery);
+
     return 0;
 }
 
@@ -683,6 +713,8 @@ battery_prop_poll_subscribe(struct battery_prop_listener *listener,
     set_bit(battery->b_listeners[listener_index].ld_prop_read_mask,
             prop->bp_prop_num);
 
+    battery_update_polled_properties(battery);
+
     return 0;
 }
 
@@ -701,13 +733,12 @@ battery_prop_poll_unsubscribe(struct battery_prop_listener *listener,
                 break;
             }
         }
-        if (i < battery->b_listener_count) {
-            clear_bit(battery->b_listeners[i].ld_prop_read_mask,
-                prop->bp_prop_num);
-            return 0;
-        } else {
+        if (i >= battery->b_listener_count) {
             return -1;
         }
+
+        clear_bit(battery->b_listeners[i].ld_prop_read_mask,
+                  prop->bp_prop_num);
     } else {
         for (i = 0; i < BATTERY_MAX_COUNT; ++i) {
             battery =  battery_manager.bm_batteries[i];
@@ -727,6 +758,8 @@ battery_prop_poll_unsubscribe(struct battery_prop_listener *listener,
             }
         }
     }
+
+    battery_update_polled_properties(battery);
 
     return 0;
 }

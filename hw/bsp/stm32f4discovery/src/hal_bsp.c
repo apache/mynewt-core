@@ -66,7 +66,8 @@ const struct hal_flash stm32f4_flash_dev = {
     .hf_base_addr = 0x08000000,
     .hf_size = 1024 * 1024,
     .hf_sector_cnt = NAREAS - 1,
-    .hf_align = 1
+    .hf_align = 1,
+    .hf_erased_val = 0xff,
 };
 
 #if MYNEWT_VAL(UART_0)
@@ -163,6 +164,11 @@ hal_bsp_init(void)
 
 #if MYNEWT_VAL(TIMER_2)
     hal_timer_init(2, TIM11);
+#endif
+
+#if (MYNEWT_VAL(OS_CPUTIME_TIMER_NUM) >= 0)
+    rc = os_cputime_init(MYNEWT_VAL(OS_CPUTIME_FREQ));
+    assert(rc == 0);
 #endif
 
 #if MYNEWT_VAL(SPI_0_MASTER)

@@ -2,7 +2,7 @@
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
- * resarding copyright ownership.  The ASF licenses this file
+ * regarding copyright ownership.  The ASF licenses this file
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
@@ -26,6 +26,7 @@
 #include "hal/hal_i2c.h"
 #include "hal/hal_spi.h"
 #include "hal/hal_gpio.h"
+#include "i2cn/i2cn.h"
 #include "sensor/sensor.h"
 #include "sensor/pressure.h"
 #include "sensor/temperature.h"
@@ -175,8 +176,8 @@ lps33hw_i2c_set_reg(struct sensor_itf *itf, uint8_t reg, uint8_t value)
         .buffer = payload
     };
 
-    rc = hal_i2c_master_write(itf->si_num, &data_struct,
-                              OS_TICKS_PER_SEC / 10, 1);
+    rc = i2cn_master_write(itf->si_num, &data_struct, MYNEWT_VAL(LPS33HW_I2C_TIMEOUT_TICKS), 1,
+                           MYNEWT_VAL(LPS33HW_I2C_RETRIES));
 
     if (rc) {
         LPS33HW_LOG(ERROR,
@@ -346,8 +347,8 @@ lps33hw_i2c_get_regs(struct sensor_itf *itf, uint8_t reg, uint8_t size,
     };
 
     /* Register write */
-    rc = hal_i2c_master_write(itf->si_num, &data_struct,
-                              OS_TICKS_PER_SEC / 10, 1);
+    rc = i2cn_master_write(itf->si_num, &data_struct, MYNEWT_VAL(LPS33HW_I2C_TIMEOUT_TICKS), 0,
+                           MYNEWT_VAL(LPS33HW_I2C_RETRIES));
     if (rc) {
         LPS33HW_LOG(ERROR, "I2C access failed at address 0x%02X\n",
                     itf->si_addr);
@@ -358,8 +359,9 @@ lps33hw_i2c_get_regs(struct sensor_itf *itf, uint8_t reg, uint8_t size,
     /* Read */
     data_struct.len = size;
     data_struct.buffer = buffer;
-    rc = hal_i2c_master_read(itf->si_num, &data_struct,
-                             (OS_TICKS_PER_SEC / 10) * size, 1);
+    rc = i2cn_master_read(itf->si_num, &data_struct,
+                          (MYNEWT_VAL(LPS33HW_I2C_TIMEOUT_TICKS)) * size, 1,
+                          MYNEWT_VAL(LPS33HW_I2C_RETRIES));
 
     if (rc) {
         LPS33HW_LOG(ERROR, "Failed to read from 0x%02X:0x%02X\n",

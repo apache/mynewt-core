@@ -20,8 +20,6 @@
 #ifndef __MCU_CORTEX_M4_H__
 #define __MCU_CORTEX_M4_H__
 
-#include "os/mynewt.h"
-
 #include "mcu/apollo2.h"
 
 #ifdef __cplusplus

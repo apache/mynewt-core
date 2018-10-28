@@ -47,7 +47,7 @@ You can use splitty as part of a split app by setting up your target.
 targets/app
     app=@apache-mynewt-core/apps/splitty
     loader=@apache-mynewt-core/apps/slinky
-    bsp=@apache-mynewt-core/hw/bsp/nrf52dk
+    bsp=@apache-mynewt-core/hw/bsp/nordic_pca10040
     build_profile=optimized
 ```
 

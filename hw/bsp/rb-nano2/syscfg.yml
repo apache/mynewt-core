@@ -17,88 +17,50 @@
 # under the License.
 #
 
-# Package: hw/bsp/rb-nano2
-
 syscfg.defs:
     BSP_NRF52:
         description: 'Set to indicate that BSP has NRF52'
         value: 1
 
-    UART_0:
-        description: 'Whether to enable UART0'
-        value: 1
-    UART_0_PIN_TX:
-        description: 'TX pin for UART0'
-        value: 29
-    UART_0_PIN_RX:
-        description: 'RX pin for UART0'
-        value: 30
-    UART_0_PIN_RTS:
-        description: 'RTS pin for UART0'
-        value: 2
-    UART_0_PIN_CTS:
-        description: 'CTS pin for UART0'
-        value: 28
-
-    UART_1:
-        description: 'Whether to enable bitbanger UART1'
-        value:  0
-    UART_1_PIN_TX:
-        description: 'TX pin for UART1'
-        value:  -1
-    UART_1_PIN_RX:
-        description: 'RX pin for UART1'
-        value:  -1
-
-    SPI_0_MASTER_PIN_SCK:
-        description: 'SCK pin for SPI_0_MASTER'
-        value:  23
-    SPI_0_MASTER_PIN_MOSI:
-        description: 'MOSI pin for SPI_0_MASTER'
-        value:  24
-    SPI_0_MASTER_PIN_MISO:
-        description: 'MISO pin for SPI_0_MASTER'
-        value:  25
-
-    SPI_0_SLAVE_PIN_SCK:
-        description: 'SCK pin for SPI_0_SLAVE'
-        value:  23
-    SPI_0_SLAVE_PIN_MOSI:
-        description: 'MOSI pin for SPI_0_SLAVE'
-        value:  24
-    SPI_0_SLAVE_PIN_MISO:
-        description: 'MISO pin for SPI_0_SLAVE'
-        value:  25
-    SPI_0_SLAVE_PIN_SS:
-        description: 'SS pin for SPI_0_SLAVE'
-        value:  22
-
-    TIMER_0:
-        description: 'NRF52 Timer 0'
-        value:  1
-    TIMER_1:
-        description: 'NRF52 Timer 1'
-        value:  0
-    TIMER_2:
-        description: 'NRF52 Timer 2'
-        value:  0
-    TIMER_3:
-        description: 'NRF52 Timer 3'
-        value:  0
-    TIMER_4:
-        description: 'NRF52 Timer 4'
-        value:  0
-    TIMER_5:
-        description: 'NRF52 RTC 0'
-        value:  0
-
-syscfg.defs.BLE_LP_CLOCK:
-    TIMER_0:
+    SOFT_PWM:
+        description: 'Enable soft PWM'
         value: 0
-    TIMER_5:
-        value: 1
+
+    UARTBB_0:
+        description: 'Enable bit-banger UART 0'
+        value: 0
+    UARTBB_0_PIN_TX:
+        description: 'TX pin for UARTBB0'
+        value: -1
+    UARTBB_0_PIN_RX:
+        description: 'RX pin for UARTBB0'
+        value: -1
 
 syscfg.vals:
+    # Enable nRF52832 MCU
+    MCU_NRF52832: 1
+    # Set default pins for peripherals
+    UART_0_PIN_TX: 29
+    UART_0_PIN_RX: 30
+    UART_0_PIN_RTS: 2
+    UART_0_PIN_CTS: 28
+    SPI_0_MASTER_PIN_SCK: 8
+    SPI_0_MASTER_PIN_MOSI: 6
+    SPI_0_MASTER_PIN_MISO: 7
+    SPI_0_SLAVE_PIN_SCK: 8
+    SPI_0_SLAVE_PIN_MOSI: 6
+    SPI_0_SLAVE_PIN_MISO: 7
+    SPI_0_SLAVE_PIN_SS: 3
+    SPI_1_MASTER_PIN_SCK: 2
+    SPI_1_MASTER_PIN_MOSI: 29
+    SPI_1_MASTER_PIN_MISO: 30
+    SPI_1_SLAVE_PIN_SCK: 2
+    SPI_1_SLAVE_PIN_MOSI: 29
+    SPI_1_SLAVE_PIN_MISO: 30
+    SPI_1_SLAVE_PIN_SS: 28
+    I2C_0_PIN_SCL: 2
+    I2C_0_PIN_SDA: 28
+
     CONFIG_FCB_FLASH_AREA: FLASH_AREA_NFFS
     REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG
     NFFS_FLASH_AREA: FLASH_AREA_NFFS
@@ -107,6 +69,11 @@ syscfg.vals:
     XTAL_32768: 1
 
 syscfg.vals.BLE_LP_CLOCK:
+    TIMER_0: 0
+    TIMER_5: 1
     OS_CPUTIME_FREQ: 32768
     OS_CPUTIME_TIMER_NUM: 5
     BLE_XTAL_SETTLE_TIME: 1500
+
+syscfg.restrictions:
+    - "!UARTBB_0 || (UARTBB_0_PIN_TX >= 0 && UARTBB_0_PIN_RX >= 0)"

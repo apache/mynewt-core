@@ -120,6 +120,18 @@ typedef enum {
     SENSOR_EVENT_TYPE_ORIENT_Y_CHANGE  = (1 << 8),
     /* Orientation Change Event in the Z direction */
     SENSOR_EVENT_TYPE_ORIENT_Z_CHANGE  = (1 << 9),
+    /* Orientation Change Event in the X L direction */
+    SENSOR_EVENT_TYPE_ORIENT_X_L_CHANGE  = (1 << 10),
+    /* Orientation Change Event in the Y L direction */
+    SENSOR_EVENT_TYPE_ORIENT_Y_L_CHANGE  = (1 << 11),
+    /* Orientation Change Event in the Z L direction */
+    SENSOR_EVENT_TYPE_ORIENT_Z_L_CHANGE  = (1 << 12),
+    /* Orientation Change Event in the X H direction */
+    SENSOR_EVENT_TYPE_ORIENT_X_H_CHANGE  = (1 << 13),
+    /* Orientation Change Event in the Y H direction */
+    SENSOR_EVENT_TYPE_ORIENT_Y_H_CHANGE  = (1 << 14),
+    /* Orientation Change Event in the Z H direction */
+    SENSOR_EVENT_TYPE_ORIENT_Z_H_CHANGE  = (1 << 15),
 } sensor_event_type_t;
 
 
@@ -1078,6 +1090,13 @@ sensor_mgr_put_read_evt(void *arg);
  */
 char*
 sensor_ftostr(float, char *, int);
+
+/**
+ * API to register sensor shell
+ */
+int
+sensor_shell_register(void);
+
 #endif
 
 #if MYNEWT_VAL(SENSOR_OIC)

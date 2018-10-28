@@ -37,6 +37,9 @@
 #if MYNEWT_VAL(TSL2561_OFB)
 #include <tsl2561/tsl2561.h>
 #endif
+#if MYNEWT_VAL(TSL2591_OFB)
+#include <tsl2591/tsl2591.h>
+#endif
 #if MYNEWT_VAL(TCS34725_OFB)
 #include <tcs34725/tcs34725.h>
 #endif
@@ -73,6 +76,10 @@
 #include <lps33hw/lps33hw.h>
 #endif
 
+#if MYNEWT_VAL(LPS33THW_OFB)
+#include <lps33thw/lps33thw.h>
+#endif
+
 #if MYNEWT_VAL(LIS2DW12_OFB)
 #include <lis2dw12/lis2dw12.h>
 #endif
@@ -105,6 +112,10 @@ static struct bno055 bno055;
 
 #if MYNEWT_VAL(TSL2561_OFB)
 static struct tsl2561 tsl2561;
+#endif
+
+#if MYNEWT_VAL(TSL2591_OFB)
+static struct tsl2591 tsl2591;
 #endif
 
 #if MYNEWT_VAL(TCS34725_OFB)
@@ -141,6 +152,10 @@ static struct adxl345 adxl345;
 
 #if MYNEWT_VAL(LPS33HW_OFB)
 static struct lps33hw lps33hw;
+#endif
+
+#if MYNEWT_VAL(LPS33THW_OFB)
+static struct lps33thw lps33thw;
 #endif
 
 #if MYNEWT_VAL(LIS2DW12_OFB)
@@ -233,6 +248,15 @@ static struct sensor_itf i2c_0_itf_tsl = {
 };
 #endif
 
+#if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(TSL2591_OFB)
+static struct sensor_itf i2c_0_itf_tsl = {
+    .si_type = SENSOR_ITF_I2C,
+    .si_num  = 0,
+    /*  I2C address for the TSL2591 (0x29) */
+    .si_addr = 0x29
+};
+#endif
+
 #if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(TCS34725_OFB)
 static struct sensor_itf i2c_0_itf_tcs = {
     .si_type = SENSOR_ITF_I2C,
@@ -308,7 +332,7 @@ static struct sensor_itf spi2c_0_itf_bma2xx = {
 static struct sensor_itf i2c_0_itf_adxl = {
     .si_type = SENSOR_ITF_I2C,
     .si_num  = 0,
-    .si_addr = 0x1D,
+    .si_addr = MYNEWT_VAL(ADXL345_ITF_ADDR),
     .si_ints = {
        { MYNEWT_VAL(ADXL345_INT_PIN_HOST), MYNEWT_VAL(ADXL345_INT_PIN_DEVICE),
          MYNEWT_VAL(ADXL345_INT_CFG_ACTIVE)}}
@@ -320,6 +344,14 @@ static struct sensor_itf i2c_0_itf_lps = {
     .si_type = MYNEWT_VAL(LPS33HW_SHELL_ITF_TYPE),
     .si_num  = MYNEWT_VAL(LPS33HW_SHELL_ITF_NUM),
     .si_addr = MYNEWT_VAL(LPS33HW_SHELL_ITF_ADDR)
+};
+#endif
+
+#if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(LPS33THW_OFB)
+static struct sensor_itf i2c_0_itf_lpst = {
+    .si_type = MYNEWT_VAL(LPS33THW_SHELL_ITF_TYPE),
+    .si_num  = MYNEWT_VAL(LPS33THW_SHELL_ITF_NUM),
+    .si_addr = MYNEWT_VAL(LPS33THW_SHELL_ITF_ADDR)
 };
 #endif
 
@@ -549,6 +581,34 @@ config_tsl2561_sensor(void)
 #endif
 
 /**
+ * TSL2591 Sensor default configuration used by the creator package
+ *
+ * @return 0 on success, non-zero on failure
+ */
+#if MYNEWT_VAL(TSL2591_OFB)
+static int
+config_tsl2591_sensor(void)
+{
+    int rc;
+    struct os_dev *dev;
+    struct tsl2591_cfg tslcfg;
+
+    dev = (struct os_dev *) os_dev_open("tsl2591_0", OS_TIMEOUT_NEVER, NULL);
+    assert(dev != NULL);
+
+    /* Gain set to 1X and Inetgration time set to 100ms */
+    tslcfg.gain = TSL2591_LIGHT_GAIN_LOW;
+    tslcfg.integration_time = TSL2591_LIGHT_ITIME_100MS;
+    tslcfg.mask = SENSOR_TYPE_LIGHT;
+
+    rc = tsl2591_config((struct tsl2591 *)dev, &tslcfg);
+
+    os_dev_close(dev);
+    return rc;
+}
+#endif
+
+/**
  * DRV2605 Actuator default configuration used by the creator package
  *
  * @return 0 on success, non-zero on failure
@@ -766,6 +826,8 @@ config_adxl345_sensor(void)
 
     rc = adxl345_config((struct adxl345 *) dev, &cfg);
     assert(rc == 0);
+    return rc;
+}
 #endif
 
 /*
@@ -802,6 +864,40 @@ config_lps33hw_sensor(void)
 }
 #endif
 
+/*
+ * LPS3T3HW Sensor default configuration used by the creator package
+ *
+ * @return 0 on success, non-zero on failure
+ */
+#if MYNEWT_VAL(LPS33THW_OFB)
+static int
+config_lps33thw_sensor(void)
+{
+    int rc;
+    struct os_dev *dev;
+    struct lps33thw_cfg cfg;
+
+    cfg.mask = SENSOR_TYPE_PRESSURE | SENSOR_TYPE_TEMPERATURE;
+    cfg.data_rate = LPS33THW_1HZ;
+    cfg.lpf = LPS33THW_LPF_DISABLED;
+    cfg.int_cfg.pin = 0;
+    cfg.int_cfg.data_rdy = 0;
+    cfg.int_cfg.pressure_low = 0;
+    cfg.int_cfg.pressure_high = 0;
+    cfg.int_cfg.active_low = 0;
+    cfg.int_cfg.open_drain = 0;
+    cfg.int_cfg.latched = 0;
+
+    dev = (struct os_dev *) os_dev_open("lps33thw_0", OS_TIMEOUT_NEVER, NULL);
+    assert(dev != NULL);
+
+    rc = lps33thw_config((struct lps33thw *) dev, &cfg);
+
+    os_dev_close(dev);
+    return rc;
+}
+#endif
+
 /**
  * LIS2DW12 Sensor default configuration used by the creator package
  *
@@ -830,7 +926,7 @@ config_lis2dw12_sensor(void)
 
     cfg.filter_bw = LIS2DW12_FILTER_BW_ODR_DIV_2;
     cfg.high_pass = 0;
-    
+
     cfg.tap.en_x = 1;
     cfg.tap.en_y = 1;
     cfg.tap.en_z = 1;
@@ -870,7 +966,7 @@ config_lis2dw12_sensor(void)
     cfg.power_mode = LIS2DW12_PM_HIGH_PERF;
     cfg.inactivity_sleep_enable = 0;
     cfg.low_noise_enable = 1;
-    
+
     cfg.read_mode.mode = LIS2DW12_READ_M_POLL;
 
     cfg.mask = SENSOR_TYPE_ACCELEROMETER;
@@ -944,7 +1040,7 @@ config_lis2ds12_sensor(void)
 
     rc = lis2ds12_config((struct lis2ds12 *) dev, &cfg);
     assert(rc == 0);
-    
+
     os_dev_close(dev);
     return rc;
 }
@@ -1091,6 +1187,15 @@ sensor_dev_create(void)
     assert(rc == 0);
 #endif
 
+#if MYNEWT_VAL(TSL2591_OFB)
+    rc = os_dev_create((struct os_dev *) &tsl2591, "tsl2591_0",
+      OS_DEV_INIT_PRIMARY, 0, tsl2591_init, (void *)&i2c_0_itf_tsl);
+    assert(rc == 0);
+
+    rc = config_tsl2591_sensor();
+    assert(rc == 0);
+#endif
+
 #if MYNEWT_VAL(TCS34725_OFB)
     rc = os_dev_create((struct os_dev *) &tcs34725, "tcs34725_0",
       OS_DEV_INIT_PRIMARY, 0, tcs34725_init, (void *)&i2c_0_itf_tcs);
@@ -1146,12 +1251,12 @@ sensor_dev_create(void)
 #endif
 
 #if MYNEWT_VAL(BMA2XX_OFB)
-rc = os_dev_create((struct os_dev *)&bma2xx, "bma2xx_0",
-  OS_DEV_INIT_PRIMARY, 0, bma2xx_init, &spi2c_0_itf_bma2xx);
-assert(rc == 0);
+    rc = os_dev_create((struct os_dev *)&bma2xx, "bma2xx_0",
+      OS_DEV_INIT_PRIMARY, 0, bma2xx_init, &spi2c_0_itf_bma2xx);
+    assert(rc == 0);
 
-rc = config_bma2xx_sensor();
-assert(rc == 0);
+    rc = config_bma2xx_sensor();
+    assert(rc == 0);
 #endif
 
 #if MYNEWT_VAL(ADXL345_OFB)
@@ -1169,6 +1274,15 @@ assert(rc == 0);
     assert(rc == 0);
 
     rc = config_lps33hw_sensor();
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(LPS33THW_OFB)
+    rc = os_dev_create((struct os_dev *) &lps33thw, "lps33thw_0",
+      OS_DEV_INIT_PRIMARY, 0, lps33thw_init, (void *)&i2c_0_itf_lpst);
+    assert(rc == 0);
+
+    rc = config_lps33thw_sensor();
     assert(rc == 0);
 #endif
 

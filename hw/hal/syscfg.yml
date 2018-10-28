@@ -1,0 +1,39 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+syscfg.defs:
+    HAL_FLASH_VERIFY_WRITES:
+        description: >
+            If enabled, flash contents are read back and verified after each
+            write.
+        value: 0
+    HAL_FLASH_VERIFY_ERASES:
+        description: >
+            If enabled, flash contents are read back and verified after each
+            erase.
+        value: 0
+    HAL_FLASH_VERIFY_BUF_SZ:
+        description: >
+            The buffer size to use when verifying writes and erases.  One
+            buffer of this size is allocated on the stack during verify
+            operations.
+        value: 16
+
+syscfg.vals.OS_DEBUG_MODE:
+    HAL_FLASH_VERIFY_WRITES: 1
+    HAL_FLASH_VERIFY_ERASES: 1

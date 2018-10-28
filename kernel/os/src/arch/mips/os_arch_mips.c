@@ -48,13 +48,6 @@ _mips_isr_hw5(void)
     timer_handler();
 }
 
-static int
-os_in_isr(void)
-{
-    /* check the EXL bit */
-    return (mips_getsr() & (1 << 1)) ? 1 : 0;
-}
-
 void
 timer_handler(void)
 {
@@ -133,7 +126,7 @@ os_arch_os_init(void)
     os_error_t err;
 
     err = OS_ERR_IN_ISR;
-    if (os_in_isr() == 0) {
+    if (os_arch_in_isr() == 0) {
         err = OS_OK;
 
         /* should be in kernel mode here */
@@ -171,7 +164,7 @@ os_arch_os_start(void)
     os_error_t err;
 
     err = OS_ERR_IN_ISR;
-    if (os_in_isr() == 0) {
+    if (os_arch_in_isr() == 0) {
         err = OS_OK;
         /* should be in kernel mode here */
         os_arch_start();

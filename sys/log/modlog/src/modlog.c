@@ -227,6 +227,9 @@ modlog_append_one(struct modlog_mapping *mm, uint8_t module, uint8_t level,
         if (rc != 0) {
             return SYS_EIO;
         }
+    } else {
+        LOG_STATS_INC(mm->desc.log, writes);
+        LOG_STATS_INC(mm->desc.log, drops);
     }
 
     return 0;
@@ -282,6 +285,9 @@ modlog_append_mbuf_one(struct modlog_mapping *mm, uint8_t module,
         if (rc != 0) {
             return SYS_EIO;
         }
+    } else {
+        LOG_STATS_INC(mm->desc.log, writes);
+        LOG_STATS_INC(mm->desc.log, drops);
     }
 
     return 0;

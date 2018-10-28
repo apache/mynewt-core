@@ -16,8 +16,6 @@
 # under the License.
 #
 
-# Package: kernel/os
-
 syscfg.defs:
     OS_MAIN_TASK_PRIO:
         description: 'Priority of initialization and main task'
@@ -37,6 +35,17 @@ syscfg.defs:
     OS_CRASH_STACKTRACE:
         description: 'Attempt to print stack trace when system crashes.'
         value: 0
+    OS_CRASH_RESTORE_REGS:
+        description: 'Restore registers to pre-fault state on crash'
+        value: 0
+    OS_CRASH_LOG:
+        description: >
+            Write an entry to the reboot log when the system crashes.
+        value: 0
+    OS_WATCHDOG_MONITOR:
+        description: >
+            'Attempt to capture state of stuck system before HW watchdog fires.'
+        value: 0
     OS_SYSVIEW:
         description: 'Enable OS sysview tracing'
         value: 0
@@ -54,6 +63,9 @@ syscfg.defs:
         value: 0
     OS_MEMPOOL_POISON:
         description: 'Whether to do write known pattern to freed memory'
+        value: 0
+    OS_MEMPOOL_GUARD:
+        description: 'Insert guard area at the end of mempool'
         value: 0
     OS_CPUTIME_FREQ:
         description: 'Frequency of os cputime'
@@ -107,3 +119,34 @@ syscfg.defs:
         description: >
             Enable tracing os_sem APIs by SystemView
         value: 1
+
+    OS_DEBUG_MODE:
+        description: >
+            Enables various runtime error checks.  A failed assert is triggered
+            on error detection.  Enabling this setting increases stack usage.
+        value: 0
+
+    OS_IDLE_TICKLESS_MS_MIN:
+        description: >
+            Minimum duration of tickless idle period in miliseconds.
+        value: 100
+    OS_IDLE_TICKLESS_MS_MAX:
+        description: >
+            Maximum duration of tickless idle period in miliseconds.
+        value: 600000
+    OS_TIME_DEBUG:
+        description: >
+            Enables debug runtime checks for time-related functionality.
+        value: 0
+    OS_CRASH_FILE_LINE:
+        description: >
+            Include filename and line number in crash messages.  Aids in
+            debugging, but increases text size.
+        value: 0
+
+syscfg.vals.OS_DEBUG_MODE:
+    OS_CRASH_STACKTRACE: 1
+    OS_CTX_SW_STACK_CHECK: 1
+    OS_MEMPOOL_CHECK: 1
+    OS_MEMPOOL_POISON: 1
+    OS_TIME_DEBUG: 1

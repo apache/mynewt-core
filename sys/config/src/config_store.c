@@ -22,12 +22,19 @@
 
 #include "os/mynewt.h"
 #include "config/config.h"
+#include "config/config_store.h"
 #include "config_priv.h"
 
 struct conf_dup_check_arg {
     const char *name;
     const char *val;
     int is_dup;
+};
+
+struct conf_get_val_arg {
+    const char *name;
+    char val[CONF_MAX_VAL_LEN + 1];
+    int seen;
 };
 
 struct conf_store_head conf_load_srcs;
@@ -105,6 +112,54 @@ conf_set_from_storage(void)
 }
 
 static void
+conf_get_value_cb(char *name, char *val, void *cb_arg)
+{
+    struct conf_get_val_arg *cgva = (struct conf_get_val_arg *)cb_arg;
+
+    if (strcmp(name, cgva->name)) {
+        return;
+    }
+    cgva->seen = 1;
+    if (!val) {
+        cgva->val[0] = '\0';
+    } else {
+        strncpy(cgva->val, val, sizeof(cgva->val) - 1);
+    }
+}
+
+int
+conf_get_stored_value(char *name, char *buf, int buf_len)
+{
+    struct conf_store *cs;
+    struct conf_get_val_arg cgva;
+    int val_len;
+
+    cgva.name = name;
+    cgva.val[0] = '\0';
+    cgva.val[sizeof(cgva.val) - 1] = '\0';
+    cgva.seen = 0;
+
+    /*
+     * for every config store
+     */
+    conf_lock();
+    SLIST_FOREACH(cs, &conf_load_srcs, cs_next) {
+        cs->cs_itf->csi_load(cs, conf_get_value_cb, &cgva);
+    }
+    conf_unlock();
+
+    if (!cgva.seen) {
+        return OS_ENOENT;
+    }
+    val_len = strlen(cgva.val);
+    if (buf_len < val_len) {
+        return OS_EINVAL;
+    }
+    strcpy(buf, cgva.val);
+    return 0;
+}
+
+static void
 conf_dup_check_cb(char *name, char *val, void *cb_arg)
 {
     struct conf_dup_check_arg *cdca = (struct conf_dup_check_arg *)cb_arg;
@@ -163,10 +218,6 @@ out:
     return rc;
 }
 
-/*
- * Walk through all registered subsystems, and ask them to export their
- * config variables. Persist these settings.
- */
 static void
 conf_store_one(char *name, char *value)
 {
@@ -198,6 +249,10 @@ out:
 
 }
 
+/*
+ * Walk through all registered subsystems, and ask them to export their
+ * config variables. Persist these settings.
+ */
 int
 conf_save(void)
 {

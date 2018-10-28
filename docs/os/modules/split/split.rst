@@ -92,8 +92,8 @@ Tutorial
 Building a Split Image
 ~~~~~~~~~~~~~~~~~~~~~~
 
-We will be referring to the nRF51dk for examples in this document. Let's
-take a look at this board's flash map (defined in
+We will be referring to the Nordic PCA10028 (nRF51 DK) for examples in
+this document. Let's take a look at this board's flash map (defined in
 ``hw/bsp/nrf51dk/bsp.yml``):
 
 +---------------------+--------------+-------------+
@@ -121,7 +121,7 @@ our BSP and application together.
     newt target create bleprph-nrf51dk
     newt target set bleprph-nrf51dk                     \
         app=@apache-mynewt-core/apps/bleprph            \
-        bsp=@apache-mynewt-core/hw/bsp/nrf51dk          \
+        bsp=@apache-mynewt-core/hw/bsp/nordic_pca10028  \
         build_profile=optimized                         \
         syscfg=BLE_LL_CFG_FEAT_LE_ENCRYPTION=0:BLE_SM_LEGACY=0
 
@@ -135,7 +135,7 @@ We can verify the target using the ``target show`` command:
     [~/tmp/myproj2]$ newt target show bleprph-nrf51dk
     targets/bleprph-nrf51dk
         app=@apache-mynewt-core/apps/bleprph
-        bsp=@apache-mynewt-core/hw/bsp/nrf51dk
+        bsp=@apache-mynewt-core/hw/bsp/nordic_pca10028
         build_profile=optimized
         syscfg=BLE_LL_CFG_FEAT_LE_ENCRYPTION=0:BLE_SM_LEGACY=0
 
@@ -206,7 +206,7 @@ upgrade.
     newt target set split-nrf51dk                       \
         loader=@apache-mynewt-core/apps/bleprph         \
         app=@apache-mynewt-core/apps/splitty            \
-        bsp=@apache-mynewt-core/hw/bsp/nrf51dk          \
+        bsp=@apache-mynewt-core/hw/bsp/nordic_pca10028  \
         build_profile=optimized                         \
         syscfg=BLE_LL_CFG_FEAT_LE_ENCRYPTION=0:BLE_SM_LEGACY=0
 
@@ -217,7 +217,7 @@ Verify that the target looks correct:
     [~/tmp/myproj2]$ newt target show split-nrf51dk
     targets/split-nrf51dk
         app=@apache-mynewt-core/apps/splitty
-        bsp=@apache-mynewt-core/hw/bsp/nrf51dk
+        bsp=@apache-mynewt-core/hw/bsp/nordic_pca10028
         build_profile=optimized
         loader=@apache-mynewt-core/apps/bleprph
         syscfg=BLE_LL_CFG_FEAT_LE_ENCRYPTION=0:BLE_SM_LEGACY=0
@@ -280,8 +280,8 @@ application at any time. For example, if your application needs
 bluetooth functionality, it can use the BLE stack present in the loader
 instead of containing its own copy.
 
-Finally, let's deploy the split image to our nRF51dk board. The
-procedure here is the same as if we were using the Unified setup, i.e.,
+Finally, let's deploy the split image to our Nordic PCA10028 (nRF51 DK) board.
+The procedure here is the same as if we were using the Unified setup, i.e.,
 via either the ``newt load`` or ``newt run`` command.
 
 ::

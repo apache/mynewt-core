@@ -17,8 +17,6 @@
 # under the License.
 #
 
-# Package: hw/bsp/apollo2_evb
-
 syscfg.defs:
     BSP_APOLLO2:
         description: 'Set to indicate that BSP has the APOLLO2 processor'

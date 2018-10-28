@@ -82,6 +82,13 @@ uart_hal_open(struct os_dev *odev, uint32_t wait, void *arg)
     if (odev->od_flags & OS_DEV_F_STATUS_OPEN) {
         return OS_EBUSY;
     }
+
+    dev->ud_conf_port.uc_databits = uc->uc_databits;
+    dev->ud_conf_port.uc_flow_ctl = uc->uc_flow_ctl;
+    dev->ud_conf_port.uc_parity = uc->uc_parity;
+    dev->ud_conf_port.uc_speed = uc->uc_speed;
+    dev->ud_conf_port.uc_stopbits = uc->uc_stopbits;
+
     rc = hal_uart_init_cbs(uart_hal_dev_get_id(dev), uc->uc_tx_char, uc->uc_tx_done,
                            uc->uc_rx_char, uc->uc_cb_arg);
     if (rc) {
@@ -107,6 +114,55 @@ uart_hal_close(struct os_dev *odev)
     if (rc) {
         return OS_EINVAL;
     }
+
+    return OS_OK;
+}
+
+static int
+uart_hal_suspend(struct os_dev *odev, os_time_t suspend_at, int force)
+{
+    struct uart_dev *dev = (struct uart_dev *)odev;
+    int rc;
+
+    /*
+     * XXX this should not be used as an example on how to add suspend/resume
+     * to os_dev since it's just provisional implementation to allow disable
+     * and enable UART to have some basic power saving. The whole suspend/resume
+     * framework probably should be revised and proper implementation added here
+     * then.
+     */
+
+    /*
+     * It seems as for now we have no way of making decision whether we can
+     * suspend or not, so let's just allow force suspend at "now".
+     */
+    if (OS_TIME_TICK_GT(suspend_at, os_time_get()) || !force) {
+        return OS_EINVAL;
+    }
+
+    rc = hal_uart_close(uart_hal_dev_get_id(dev));
+    if (rc) {
+        return OS_EINVAL;
+    }
+
+    return OS_OK;
+}
+
+static int
+uart_hal_resume(struct os_dev *odev)
+{
+    struct uart_dev *dev = (struct uart_dev *)odev;
+    struct uart_conf_port *ucp = &dev->ud_conf_port;
+    int rc;
+
+    rc = hal_uart_config(uart_hal_dev_get_id(dev), ucp->uc_speed,
+                         ucp->uc_databits, ucp->uc_stopbits,
+                         (enum hal_uart_parity)ucp->uc_parity,
+                         (enum hal_uart_flow_ctl)ucp->uc_flow_ctl);
+    if (rc) {
+        return OS_EINVAL;
+    }
+
     return OS_OK;
 }
 
@@ -128,6 +184,8 @@ uart_hal_init(struct os_dev *odev, void *arg)
     uart_hal_dev_set_id(dev, ch - '0');
 
     OS_DEV_SETHANDLERS(odev, uart_hal_open, uart_hal_close);
+    odev->od_handlers.od_suspend = uart_hal_suspend;
+    odev->od_handlers.od_resume = uart_hal_resume;
 
     dev->ud_funcs.uf_start_tx = uart_hal_start_tx;
     dev->ud_funcs.uf_start_rx = uart_hal_start_rx;

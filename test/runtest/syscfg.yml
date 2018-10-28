@@ -16,14 +16,43 @@
 # under the License.
 #
 
-# Package: test/runtest
-
 syscfg.defs:
+    RUNTEST_LOG:
+        description: >
+            Causes test results to be written to a cbmem-backed log.
+        value: 0
+    RUNTEST_LOG_SIZE:
+        description: >
+            The size of the test log cbmem (bytes).
+        value: 2048
+        restrictions:
+            - 'RUNTEST_LOG_SIZE > 0 || !RUNTEST_LOG'
     RUNTEST_CLI:
         description: 'CLI commands for accessing tests'
-        value: 1
+        value: 0
         restrictions:
             - SHELL_TASK
     RUNTEST_NEWTMGR:
-        description: 'Newtmgr command to execute tests'
+        description: 'Enable newtmgr command to execute tests'
         value: 1
+    RUNTEST_PREFIX:
+        description: >
+            String to preface all log messages with.  If this is undefined, the
+            prefix is constructed from the legacy C macros `BUILD_TARGET` and
+            `BUILD_TEST`.
+        value:
+    RUNTEST_NUM_TASKS:
+        description: 'The number of generic tasks available to unit tests.'
+        value: 4
+    RUNTEST_STACK_SIZE:
+        description: 'The stack size, in words, of each generic test task.'
+        value: 256
+    RUNTEST_MAX_TEST_NAME_LEN:
+        description: 'The maximum length, in characters, of each test name.'
+        value: 32
+    RUNTEST_MAX_TOKEN_LEN:
+        description: >
+            The maximum length, in characters, of the test token name.  The
+            test token is specified by the runtest client and is included in
+            test result log entries.
+        value: 32

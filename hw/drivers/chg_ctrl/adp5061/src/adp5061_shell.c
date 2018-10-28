@@ -480,13 +480,13 @@ static const char *const bat_shr_desc[] = {
 };
 
 static const char *const tsd_130c_desc[] = {
-        "No overtemerature (lower)",
-        "Overtemerature (lower) fault",
+        "No overtemperature (lower)",
+        "Overtemperature (lower) fault",
 };
 
 static const char *const tsd_140c_desc[] = {
-        "No overtemerature",
-        "Overtemerature fault",
+        "No overtemperature",
+        "Overtemperature fault",
 };
 
 /* Fields for Fault register */
@@ -750,7 +750,7 @@ adp5061_shell_read_reg(int argc, char **argv)
 
     for (i = 0; i < NUM_DEVICE_REGS; ++i) {
         if ((status == 0 && adp5061_device_regs[i].addr == reg_ix) ||
-            (strcmp(adp5061_device_regs[i].name, argv[3]) == 0)) {
+            (strcmp(adp5061_device_regs[i].name, argv[2]) == 0)) {
             if (adp5061_get_reg(adp5061_dev,
                     adp5061_device_regs[i].addr, &reg_val)) {
                 console_printf("%21s [0x%02x] = READ ERROR \n",
@@ -798,7 +798,7 @@ adp5061_shell_write_reg(int argc, char **argv)
 
     for (i = 0; i < NUM_DEVICE_REGS; ++i) {
         if ((status == 0 && adp5061_device_regs[i].addr == reg_ix) ||
-            (strcmp(adp5061_device_regs[i].name, argv[3]) == 0)) {
+            (strcmp(adp5061_device_regs[i].name, argv[2]) == 0)) {
             rc = adp5061_set_reg(adp5061_dev, adp5061_device_regs[i].addr,
                     reg_val);
             if (rc) {

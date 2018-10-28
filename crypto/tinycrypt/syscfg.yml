@@ -16,8 +16,6 @@
 # under the License.
 #
 
-# Package: crypto/tinycrypt
-
 syscfg.defs:
     TINYCRYPT_UECC_RNG_USE_TRNG:
         description: >

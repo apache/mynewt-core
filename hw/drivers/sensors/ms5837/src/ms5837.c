@@ -24,6 +24,7 @@
 
 #include "os/mynewt.h"
 #include "hal/hal_i2c.h"
+#include "i2cn/i2cn.h"
 #include "sensor/sensor.h"
 #include "ms5837/ms5837.h"
 #include "sensor/temperature.h"
@@ -266,7 +267,7 @@ static int
 ms5837_sensor_set_config(struct sensor *sensor, void *cfg)
 {
     struct ms5837* ms5837 = (struct ms5837 *)SENSOR_GET_DEVICE(sensor);
-    
+
     return ms5837_config(ms5837, (struct ms5837_cfg*)cfg);
 }
 
@@ -335,7 +336,8 @@ ms5837_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
     }
 
     /* Register write */
-    rc = hal_i2c_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1);
+    rc = i2cn_master_write(itf->si_num, &data_struct, MYNEWT_VAL(MS5837_I2C_TIMEOUT_TICKS), 1,
+                           MYNEWT_VAL(MS5837_I2C_RETRIES));
     if (rc) {
         MS5837_LOG(ERROR, "I2C write command write failed at address 0x%02X\n",
                    data_struct.address);
@@ -379,7 +381,8 @@ ms5837_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
     }
 
     /* Command write */
-    rc = hal_i2c_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1);
+    rc = i2cn_master_write(itf->si_num, &data_struct, MYNEWT_VAL(MS5837_I2C_TIMEOUT_TICKS), 1,
+                           MYNEWT_VAL(MS5837_I2C_RETRIES));
     if (rc) {
         MS5837_LOG(ERROR, "I2C read command write failed at address 0x%02X\n",
                    data_struct.address);
@@ -390,7 +393,8 @@ ms5837_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
     /* Read len bytes back */
     memset(payload, 0, sizeof(payload));
     data_struct.len = len;
-    rc = hal_i2c_master_read(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1);
+    rc = i2cn_master_read(itf->si_num, &data_struct, MYNEWT_VAL(MS5837_I2C_TIMEOUT_TICKS), 1,
+                          MYNEWT_VAL(MS5837_I2C_RETRIES));
     if (rc) {
         MS5837_LOG(ERROR, "Failed to read from 0x%02X:0x%02X\n",
                    data_struct.address, addr);

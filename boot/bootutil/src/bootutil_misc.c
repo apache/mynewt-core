@@ -377,7 +377,6 @@ boot_swap_type(void)
         }
     }
 
-    assert(0);
     return BOOT_SWAP_TYPE_NONE;
 }
 

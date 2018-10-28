@@ -179,6 +179,7 @@ oc_create_discovery_resource(void)
 }
 
 #ifdef OC_CLIENT
+#if MYNEWT_VAL(OC_CLIENT_DISCOVERY_ENABLE)
 oc_discovery_flags_t
 oc_ri_process_discovery_payload(struct coap_packet_rx *rsp,
                                 oc_discovery_cb_t *handler,
@@ -316,4 +317,5 @@ done:
   oc_free_rep(rep);
   return ret;
 }
+#endif /* OC_CLIENT_DISCOVERY_ENABLE */
 #endif /* OC_CLIENT */

@@ -16,8 +16,6 @@
 # under the License.
 #
 
-# Package: apps/slinky
-
 syscfg.vals:
     # Enable the shell task.
     SHELL_TASK: 1
@@ -41,6 +39,3 @@ syscfg.vals:
     OC_SERVER: 1
     OC_TRANSPORT_IP: 1
     OC_TRANSPORT_SERIAL: 1
-
-    # Default task settings
-    OS_MAIN_STACK_SIZE: 512

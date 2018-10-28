@@ -150,6 +150,18 @@ os_trace_idle(void)
     SEGGER_SYSVIEW_OnIdle();
 }
 
+static inline void
+os_trace_user_start(unsigned id)
+{
+    SEGGER_SYSVIEW_OnUserStart(id);
+}
+
+static inline void
+os_trace_user_stop(unsigned id)
+{
+    SEGGER_SYSVIEW_OnUserStop(id);
+}
+
 #endif /* MYNEWT_VAL(OS_SYSVIEW) */
 
 #if MYNEWT_VAL(OS_SYSVIEW) && !defined(OS_TRACE_DISABLE_FILE_API)
@@ -236,6 +248,16 @@ os_trace_task_stop_ready(const struct os_task *t, unsigned reason)
 
 static inline void
 os_trace_idle(void)
+{
+}
+
+static inline void
+os_trace_user_start(unsigned id)
+{
+}
+
+static inline void
+os_trace_user_stop(unsigned id)
 {
 }
 

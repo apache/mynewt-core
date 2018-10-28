@@ -53,7 +53,8 @@ const struct hal_flash apollo2_flash_dev = {
         .hf_base_addr = 0x00000000,
         .hf_size = 1024 * 1024,
         .hf_sector_cnt = 128,
-        .hf_align = 1
+        .hf_align = 1,
+        .hf_erased_val = 0xff,
 };
 
 static int

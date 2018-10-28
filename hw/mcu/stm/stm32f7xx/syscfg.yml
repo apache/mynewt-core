@@ -27,6 +27,18 @@ syscfg.defs:
         description: MCUs are of STM32F7xx family
         value: 1
 
+    STM32_HAL_SPI_HAS_FIFO:
+        description: This MCU has a SPI with FIFO
+        value: 1
+
+    STM32_HAL_I2C_HAS_CLOCKSPEED:
+        description: This MCU's I2C has no clock speed register (has TIMINGR)
+        value: 0
+
+    STM32_HAL_UART_HAS_SR:
+        description: This MCU's UART uses ISR register (not SR) for status.
+        value: 0
+
     MCU_SYSCLK_PLL_HSI:
         description: Configure PLL as sysclock driven by HSI.
         value: 0

@@ -57,3 +57,8 @@ syscfg.defs:
     BMA253_ITF_LOCK_TMO:
         description: 'BMA253 interface lock timeout in milliseconds'
         value: 1000
+    BMA253_I2C_RETRIES:
+        description: >
+            Number of retries to use for failed I2C communication.  A retry is
+            used when the BMA253 sends an unexpected NACK.
+        value: 2

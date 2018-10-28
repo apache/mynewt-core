@@ -109,10 +109,16 @@ coredump_dump(void *regs, int regs_sz)
         area_end = area_off + cur->hbmd_size;
         while (area_off < area_end) {
             tlv.ct_type = COREDUMP_TLV_MEM;
-            if (cur->hbmd_size > USHRT_MAX) {
-                tlv.ct_len = SHRT_MAX + 1;
+            if (area_end - area_off > USHRT_MAX) {
+                tlv.ct_len = USHRT_MAX - 3; /* 0xfffc */
             } else {
-                tlv.ct_len = cur->hbmd_size;
+                tlv.ct_len = area_end - area_off;
+            }
+            if (off + tlv.ct_len + sizeof(tlv) > fa->fa_size) {
+                if (off + sizeof(tlv) >= fa->fa_size) {
+                    break;
+                }
+                tlv.ct_len = fa->fa_size - (off + sizeof(tlv));
             }
             tlv.ct_off = area_off;
             dump_core_tlv(fa, &off, &tlv, (void *)area_off);

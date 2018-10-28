@@ -40,6 +40,8 @@ extern "C" {
 #define BATTERY_MAX_PROPERTY_COUNT 32
 #endif
 
+#define BATTERY_PROPERTY_MASK_SIZE (((BATTERY_MAX_PROPERTY_COUNT) + 31) / 32)
+
 /* Forward declaration of battery structure. */
 struct battery;
 struct battery_property;

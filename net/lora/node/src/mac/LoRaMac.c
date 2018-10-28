@@ -230,6 +230,21 @@ struct os_event g_lora_mac_tx_delay_timeout_event;
 static void lora_mac_rx_on_window2(void);
 static uint8_t lora_mac_extract_mac_cmds(uint8_t max_cmd_bytes, uint8_t *buf);
 
+static void
+lora_mac_rx_disable(void)
+{
+    struct os_eventq *evq;
+
+    /* Disable reception (if not receiving) */
+    Radio.RxDisable();
+
+    /* Remove all possible receive related events */
+    evq = lora_node_mac_evq_get();
+    os_eventq_remove(evq, &g_lora_mac_radio_rx_event);
+    os_eventq_remove(evq, &g_lora_mac_radio_rx_err_event);
+    os_eventq_remove(evq, &g_lora_mac_radio_rx_timeout_event);
+}
+
 /**
  * lora mac rtx timer stop
  *
@@ -2002,6 +2017,9 @@ ScheduleTx(void)
         g_lora_mac_data.rx_win2_delay = LoRaMacParams.ReceiveDelay2 +
             RxWindow2Config.WindowOffset;
     }
+
+    /* Make sure receive is disabled before attempting to transmit */
+    lora_mac_rx_disable();
 
     // Try to send now
     return SendFrameOnChannel(g_lora_mac_data.cur_chan);

@@ -27,6 +27,7 @@ pkg.keywords:
 
 pkg.deps:
     - "@apache-mynewt-core/kernel/os"
+    - "@apache-mynewt-core/hw/drivers/lora"
 
 pkg.apis:
     - lora_node_driver

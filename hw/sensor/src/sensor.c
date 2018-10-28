@@ -77,9 +77,12 @@ static struct os_event sensor_read_event = {
     .ev_cb = sensor_read_ev_cb,
 };
 
+#define SENSOR_NOTIFY_EVT_MEMPOOL_SIZE  \
+    OS_MEMPOOL_SIZE(MYNEWT_VAL(SENSOR_NOTIF_EVENTS_MAX), \
+                    sizeof(struct sensor_notify_os_ev))
+
 static struct os_mempool sensor_notify_evt_pool;
-static uint8_t sensor_notify_evt_area[OS_MEMPOOL_BYTES(MYNEWT_VAL(SENSOR_NOTIF_EVENTS_MAX),
-      sizeof(struct sensor_notify_os_ev))];
+static os_membuf_t sensor_notify_evt_area[SENSOR_NOTIFY_EVT_MEMPOOL_SIZE];
 
 /**
  * Lock sensor manager to access the list of sensors
@@ -645,6 +648,7 @@ sensor_mgr_init(void)
 {
     struct os_timeval ostv;
     struct os_timezone ostz;
+    int rc;
 
 #ifdef MYNEWT_VAL_SENSOR_MGR_EVQ
     sensor_mgr_evq_set(MYNEWT_VAL(SENSOR_MGR_EVQ));
@@ -652,10 +656,11 @@ sensor_mgr_init(void)
     sensor_mgr_evq_set(os_eventq_dflt_get());
 #endif
 
-    os_mempool_init(&sensor_notify_evt_pool,
-                    MYNEWT_VAL(SENSOR_NOTIF_EVENTS_MAX),
-                    sizeof(struct sensor_notify_os_ev), sensor_notify_evt_area,
-                    "sensor_notif_evts");
+    rc = os_mempool_init(&sensor_notify_evt_pool,
+                         MYNEWT_VAL(SENSOR_NOTIF_EVENTS_MAX),
+                         sizeof(struct sensor_notify_os_ev), sensor_notify_evt_area,
+                         "sensor_notif_evts");
+    assert(rc == OS_OK);
 
     /**
      * Initialize sensor polling callout and set it to fire on boot.

@@ -17,8 +17,6 @@
 # under the License.
 #
 
-# Package: net/oic
-
 syscfg.defs:
     OC_TRANSPORT_SERIAL:
         description: 'Enables OIC transport over nlip serial'
@@ -51,6 +49,10 @@ syscfg.defs:
     OC_CLIENT:
         description: 'Enables OIC client support'
         value: '0'
+
+    OC_CLIENT_DISCOVERY_ENABLE:
+        description: 'Enables OIC discovery from client side'
+        value: '1'
 
     OC_SERVER:
         description: 'Enables OIC server support'

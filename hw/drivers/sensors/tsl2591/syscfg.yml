@@ -1,0 +1,49 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+syscfg.defs:
+    TSL2591_CLI:
+        description: 'Enable shell support for the TSL2591'
+        value: 0
+    TSL2591_AUTO_GAIN:
+        description: 'Enable auto gain adjustements when reading samples'
+        value: 0
+    TSL2591_SHELL_ITF_TYPE:
+        description: 'Select interface type'
+        value: 1
+    TSL2591_SHELL_ITF_NUM:
+        description: 'Select interface number'
+        value: 0
+    TSL2591_SHELL_ITF_ADDR:
+        description: 'TSL2591 I2C Addresss'
+        value: 0x29
+    TSL2591_ITF_LOCK_TMO:
+        description: 'TSL2591 interface lock timeout in milliseconds'
+        value: 1000
+    TSL2591_ITIME_DELAY:
+        description: 'Enable an internal read delay based on integration time'
+        value: 0
+    TSL2591_LOG_MODULE:
+        description: 'Numeric module ID to use for TSL2591 log messages'
+        value: 108
+    TSL2591_I2C_RETRIES:
+        description: >
+            Number of retries to use for failed I2C communication.  A retry is
+            used when the TSL2591 sends an unexpected NACK.
+        value: 2

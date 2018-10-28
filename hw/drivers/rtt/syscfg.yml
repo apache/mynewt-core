@@ -16,8 +16,6 @@
 # under the License.
 #
 
-# Package: hw/drivers/rtt
-
 syscfg.defs:
     RTT:
         description: >

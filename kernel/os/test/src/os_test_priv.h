@@ -22,6 +22,7 @@
 
 #include "os/mynewt.h"
 #include "testutil/testutil.h"
+#include "os_test/os_test.h"
 #include "os_test_priv.h"
 
 #include "callout_test.h"
@@ -47,27 +48,9 @@ extern "C" {
 #define TASK3_PRIO (TASK2_PRIO + 1)
 #define TASK4_PRIO (TASK3_PRIO + 1)
 
-extern struct os_task task1;
-extern os_stack_t *stack1;
-extern uint32_t stack1_size;
-
-extern struct os_task task2;
-extern os_stack_t *stack2;
-extern uint32_t stack2_size;
-
-extern struct os_task task3;
-extern os_stack_t *stack3;
-extern uint32_t stack3_size;
-
-extern struct os_task task4;
-extern os_stack_t *stack4;
-extern uint32_t stack4_size;
-
 void os_test_restart(void);
 
-int os_mempool_test_suite(void);
 int os_mbuf_test_suite(void);
-int os_mutex_test_suite(void);
 int os_sem_test_suite(void);
 int os_eventq_test_suite(void);
 int os_callout_test_suite(void);

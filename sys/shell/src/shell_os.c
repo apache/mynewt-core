@@ -170,7 +170,8 @@ shell_os_reset_cmd(int argc, char **argv)
     }
 #endif
     os_time_delay(OS_TICKS_PER_SEC / 10);
-    hal_system_reset();
+    os_reboot(HAL_RESET_REQUESTED);
+    return 0;
 }
 
 #if MYNEWT_VAL(SHELL_CMD_HELP)

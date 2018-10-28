@@ -16,8 +16,6 @@
 # under the License.
 #
 
-# Package: sys/sysview/vendor
-
 syscfg.defs:
     SYSVIEW_BUFFER_SIZE:
         description: Size of the RTT buffer that sysview uses
@@ -36,3 +34,11 @@ syscfg.defs:
         description: >
             Timestamp timer frequency.
         value: 1000000
+    SYSVIEW_POST_MORTEM:
+        description: >
+            Enable post-mortem mode.
+            Traces are continuously stored in cyclic buffer which can be read
+            from the target e.g. after unattended system crashed unexpectedly.
+            It is recommended to use large SysView buffer to get as much data
+            for analysis as possible.
+        value: 0

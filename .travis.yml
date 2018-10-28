@@ -1,0 +1,152 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
+language: go
+
+_addons: &addon_conf
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - gcc-7-multilib
+      - linux-libc-dev:i386
+
+go:
+  - "1.10"
+
+git:
+  depth: false
+
+matrix:
+  include:
+    # newt build <targets>
+    - os: linux
+      env:
+        - TEST=BUILD_TARGETS
+        - VM_AMOUNT=4
+        - TARGET_SET=1
+    - os: linux
+      env:
+        - TEST=BUILD_TARGETS
+        - VM_AMOUNT=4
+        - TARGET_SET=2
+    - os: linux
+      env:
+        - TEST=BUILD_TARGETS
+        - VM_AMOUNT=4
+        - TARGET_SET=3
+    - os: linux
+      env:
+        - TEST=BUILD_TARGETS
+        - VM_AMOUNT=4
+        - TARGET_SET=4
+
+    # newt build <blinky-for-BSP>
+    - os: linux
+      env:
+        - TEST=BUILD_BLINKY
+        - VM_AMOUNT=4
+        - TARGET_SET=1
+    - os: linux
+      env:
+        - TEST=BUILD_BLINKY
+        - VM_AMOUNT=4
+        - TARGET_SET=2
+    - os: linux
+      env:
+        - TEST=BUILD_BLINKY
+        - VM_AMOUNT=4
+        - TARGET_SET=3
+    - os: linux
+      env:
+        - TEST=BUILD_BLINKY
+        - VM_AMOUNT=4
+        - TARGET_SET=4
+
+    # newt test all (Linux)
+    - os: linux
+      addons: *addon_conf
+      env:
+        - TEST=TEST_ALL
+        - VM_AMOUNT=3
+        - TARGET_SET=1
+    - os: linux
+      addons: *addon_conf
+      env:
+        - TEST=TEST_ALL
+        - VM_AMOUNT=3
+        - TARGET_SET=2
+    - os: linux
+      addons: *addon_conf
+      env:
+        - TEST=TEST_ALL
+        - VM_AMOUNT=3
+        - TARGET_SET=3
+
+    # newt test all (osx)
+    - os: osx
+      osx_image: xcode9.2
+      env:
+        - TEST=TEST_ALL
+        - VM_AMOUNT=3
+        - TARGET_SET=1
+    - os: osx
+      osx_image: xcode9.2
+      env:
+        - TEST=TEST_ALL
+        - VM_AMOUNT=3
+        - TARGET_SET=2
+    - os: osx
+      osx_image: xcode9.2
+      env:
+        - TEST=TEST_ALL
+        - VM_AMOUNT=3
+        - TARGET_SET=3
+
+before_install:
+  - printenv
+  - export GOPATH=$HOME/gopath
+  - go version
+
+install:
+  - git clone https://github.com/runtimeco/mynewt-travis-ci $HOME/ci
+  - chmod +x $HOME/ci/*.sh
+  - $HOME/ci/${TRAVIS_OS_NAME}_travis_install.sh
+
+before_script:
+  - newt version
+  - gcc --version
+  - if [ "${TEST}" != "TEST_ALL" ]; then arm-none-eabi-gcc --version; fi
+  - cp -R $HOME/ci/mynewt-core-project.yml project.yml
+  - cp -R $HOME/ci/mynewt-core-targets targets
+  - newt install
+    # pass in the number of target sets
+  - $HOME/ci/prepare_test.sh $VM_AMOUNT
+
+script:
+  # the following list of targets are known to fail building blinky, or
+  # might have extra dependencies hard to provide, non-common toolchains, etc
+  # NOTE: "native" is here to avoid having to install gcc-multilib
+  - export IGNORED_BSPS="ci40 embarc_emsk hifive1 native-armv7 native-mips
+                         pic32mx470_6lp_clicker pic32mz2048_wi-fire sensorhub
+                         native"
+  - $HOME/ci/run_test.sh
+
+cache:
+  directories:
+  - $HOME/TOOLCHAIN
+  - $HOME/Library/Caches/Homebrew

@@ -17,29 +17,10 @@
 # under the License.
 #
 
-# Package: hw/bsp/hifive
-
-syscfg.defs:
-    XTAL_32768:
-        description: 'External 32k oscillator available.'
-        value: 1
-
-    SYS_CLOCK:
-        description: 'System clock'
-        value:  HFXOSC_PLL_256_MHZ
-
-    UART_0:
-        description: 'Whether to enable UART0'
-        value:  1
-
-    TIMER_0:
-        description: 'Whether to use PWM2 16 bit timer as system timer'
-        value:  1
-
-    TIMER_1:
-        description: 'Whether to use PWM1 16 bit timer as system timer'
-        value:  1
-
-    TIMER_2:
-        description: 'Whether to use PWM0 8 bit timer as system timer'
-        value:  1
+syscfg.vals:
+    XTAL_32768: 1
+    SYS_CLOCK: HFXOSC_PLL_256_MHZ
+    UART_0: 1
+    TIMER_0: 1
+    TIMER_1: 1
+    TIMER_2: 1

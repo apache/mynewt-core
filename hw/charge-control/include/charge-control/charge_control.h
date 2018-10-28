@@ -526,6 +526,7 @@ charge_control_set_interface(struct charge_control *cc,
     cc->cc_itf.cci_num = itf->cci_num;
     cc->cc_itf.cci_cs_pin = itf->cci_cs_pin;
     cc->cc_itf.cci_addr = itf->cci_addr;
+    cc->cc_itf.cci_lock = itf->cci_lock;
 
     return (0);
 }

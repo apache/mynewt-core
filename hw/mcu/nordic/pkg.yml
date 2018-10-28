@@ -29,8 +29,8 @@ pkg.keywords:
 pkg.type: sdk
 
 pkg.ign_files.BSP_NRF52:
-    - "nrfx_power.c"
     - "nrfx_power_clock.c"
+    - "nrfx_saadc.c"
 
 pkg.ign_files.BSP_NRF52810:
     - "nrfx_power.c"

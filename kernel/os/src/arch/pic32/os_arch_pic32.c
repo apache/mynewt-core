@@ -74,13 +74,6 @@ void
 __attribute__((interrupt(IPL1AUTO), vector(_CORE_SOFTWARE_0_VECTOR)))
 isr_sw0(void);
 
-static int
-os_in_isr(void)
-{
-    /* check the EXL bit */
-    return (_CP0_GET_STATUS() & _CP0_STATUS_EXL_MASK) ? 1 : 0;
-}
-
 void
 timer_handler(void)
 {
@@ -176,7 +169,7 @@ os_arch_os_init(void)
     os_error_t err;
 
     err = OS_ERR_IN_ISR;
-    if (os_in_isr() == 0) {
+    if (os_arch_in_isr() == 0) {
         err = OS_OK;
         os_sr_t sr;
         OS_ENTER_CRITICAL(sr);
@@ -242,7 +235,7 @@ os_arch_os_start(void)
     os_error_t err;
 
     err = OS_ERR_IN_ISR;
-    if (os_in_isr() == 0) {
+    if (os_arch_in_isr() == 0) {
         err = OS_OK;
         /* should be in kernel mode here */
         os_arch_start();

@@ -24,6 +24,7 @@
 
 #include "hal/hal_os_tick.h"
 #include "hal/hal_bsp.h"
+#include "hal/hal_system.h"
 #include "hal/hal_watchdog.h"
 
 #if MYNEWT_VAL(RTT)
@@ -47,17 +48,32 @@ uint32_t g_os_idle_ctr;
 static struct os_task os_main_task;
 OS_TASK_STACK_DEFINE(os_main_stack, OS_MAIN_STACK_SIZE);
 
+#if MYNEWT_VAL(OS_WATCHDOG_MONITOR)
+
+/*
+ * This should fire just before hal watchdog would.
+ * The timer fires 2 seconds before hardware watchdog; adjust this if
+ * more time is needed to write the corefile.
+ */
+#define OS_WDOG_MONITOR_TMO     ((MYNEWT_VAL(WATCHDOG_INTERVAL) - 2000) * 1000)
+#if MYNEWT_VAL(WATCHDOG_INTERVAL) < 4000
+#error "Watchdog interval too small, must be at least 4000m"
+#endif
+
+static struct hal_timer os_wdog_monitor;
+#endif
+
+#if MYNEWT_VAL(WATCHDOG_INTERVAL) - 200 < MYNEWT_VAL(SANITY_INTERVAL)
+#error "Watchdog interval - 200 < sanity interval"
+#endif
+
+
 /* Default zero.  Set by the architecture specific code when os is started.
  */
 int g_os_started;
 
-#ifdef ARCH_sim
-#define MIN_IDLE_TICKS  1
-#else
-#define MIN_IDLE_TICKS  (100 * OS_TICKS_PER_SEC / 1000) /* 100 msec */
-#endif
-#define MAX_IDLE_TICKS  (600 * OS_TICKS_PER_SEC)        /* 10 minutes */
-
+#define MIN_IDLE_TICKS  (MYNEWT_VAL(OS_IDLE_TICKLESS_MS_MIN) * OS_TICKS_PER_SEC / 1000)
+#define MAX_IDLE_TICKS  (MYNEWT_VAL(OS_IDLE_TICKLESS_MS_MAX) * OS_TICKS_PER_SEC / 1000)
 
 /**
  * Idle operating system task, runs when no other tasks are running.
@@ -80,6 +96,10 @@ os_idle_task(void *arg)
     sanity_last = 0;
 
     hal_watchdog_tickle();
+#if MYNEWT_VAL(OS_WATCHDOG_MONITOR)
+    os_cputime_timer_stop(&os_wdog_monitor);
+    os_cputime_timer_relative(&os_wdog_monitor, OS_WDOG_MONITOR_TMO);
+#endif
 
     while (1) {
         ++g_os_idle_ctr;
@@ -89,6 +109,10 @@ os_idle_task(void *arg)
             os_sanity_run();
             /* Tickle the watchdog after successfully running sanity */
             hal_watchdog_tickle();
+#if MYNEWT_VAL(OS_WATCHDOG_MONITOR)
+            os_cputime_timer_stop(&os_wdog_monitor);
+            os_cputime_timer_relative(&os_wdog_monitor, OS_WDOG_MONITOR_TMO);
+#endif
             sanity_last = now;
         }
 
@@ -146,6 +170,19 @@ os_main(void *arg)
     assert(0);
 }
 
+#if MYNEWT_VAL(OS_WATCHDOG_MONITOR)
+static void
+os_wdog_monitor_tmo(void *arg)
+{
+    /*
+     * Hardware watchdog about to fire.
+     * Stop in debugger/coredump/fault printout.
+     */
+    assert(0);
+    while(1);
+}
+#endif
+
 void
 os_init_idle_task(void)
 {
@@ -160,10 +197,13 @@ os_init_idle_task(void)
     rc = os_sanity_init();
     assert(rc == 0);
 
-    assert(MYNEWT_VAL(WATCHDOG_INTERVAL) - 200 > MYNEWT_VAL(SANITY_INTERVAL));
-
     rc = hal_watchdog_init(MYNEWT_VAL(WATCHDOG_INTERVAL));
     assert(rc == 0);
+
+#if MYNEWT_VAL(OS_WATCHDOG_MONITOR)
+    os_cputime_timer_init(&os_wdog_monitor, os_wdog_monitor_tmo, NULL);
+    os_cputime_timer_relative(&os_wdog_monitor, OS_WDOG_MONITOR_TMO);
+#endif
 }
 
 void
@@ -216,6 +256,23 @@ os_start(void)
 #else
     assert(0);
 #endif
+}
+
+void
+os_reboot(int reason)
+{
+    sysdown(reason);
+}
+
+void
+os_system_reset(void)
+{
+    /* Tickle watchdog just before re-entering bootloader.  Depending on what
+     * the system has been doing lately, the watchdog timer might be close to
+     * firing.
+     */
+    hal_watchdog_tickle();
+    hal_system_reset();
 }
 
 void

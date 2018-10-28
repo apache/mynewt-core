@@ -196,6 +196,12 @@ oc_ep_gatt_size(const struct oc_endpoint *oe)
     return sizeof(struct oc_endpoint_ble);
 }
 
+int
+oc_endpoint_is_gatt(const struct oc_endpoint *oe)
+{
+    return oe->ep.oe_type == oc_gatt_transport_id;
+}
+
 static char *
 oc_log_ep_gatt(char *ptr, int maxlen, const struct oc_endpoint *oe)
 {
@@ -419,10 +425,6 @@ oc_send_buffer_gatt(struct os_mbuf *m)
     uint16_t mtu;
     uint16_t conn_handle;
     uint16_t attr_handle;
-#endif
-
-#if (MYNEWT_VAL(OC_CLIENT) == 1)
-    OC_LOG(ERROR, "oc_gatt send not supported on client");
 #endif
 
 #if (MYNEWT_VAL(OC_SERVER) == 1)

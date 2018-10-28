@@ -16,8 +16,6 @@
 # under the License.
 #
 
-# Package: mgmt/imgmgr
-
 syscfg.defs:
     IMGMGR_COREDUMP:
         description: 'Newtmgr commands for fetching/erasing coredump'
@@ -32,3 +30,7 @@ syscfg.defs:
             The maximum amount of image or core data that can fit in a
             single NMP message
         value: 512
+    IMGMGR_VERBOSE_ERR:
+        description: >
+            Send verbose error message in responses.
+        value: 0

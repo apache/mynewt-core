@@ -41,7 +41,7 @@ crash_cli_cmd(int argc, char **argv)
     if (argc >= 2 && crash_device(argv[1]) == 0) {
         return 0;
     }
-    console_printf("Usage crash [div0|jump0|ref0|assert|wdog]\n");
+    console_printf("Usage crash [div0|jump0|ref0|assert|wdog|wdog2]\n");
     return 0;
 }
 

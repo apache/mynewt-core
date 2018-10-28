@@ -16,8 +16,6 @@
 # under the License.
 #
 
-# Package: sys/reboot
-
 syscfg.defs:
     REBOOT_LOG_FCB:
         description: 'Set reboot log target to be FCB.'
@@ -40,3 +38,9 @@ syscfg.defs:
     REBOOT_LOG_ENTRY_COUNT:
         description: 'Minimum number of reboot log entries retained'
         value: 10
+
+    REBOOT_LOG_BUF_SIZE:
+        description: >
+            The maximum size, in bytes, of a reboot log entry.  A buffer of
+            this size is allocated on the stack each time an entry is written.
+        value: 256

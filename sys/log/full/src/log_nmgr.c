@@ -38,6 +38,9 @@ static int log_nmgr_clear(struct mgmt_cbuf *njb);
 static int log_nmgr_module_list(struct mgmt_cbuf *njb);
 static int log_nmgr_level_list(struct mgmt_cbuf *njb);
 static int log_nmgr_logs_list(struct mgmt_cbuf *njb);
+#if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
+static int log_nmgr_set_watermark(struct mgmt_cbuf *njb);
+#endif
 static struct mgmt_group log_nmgr_group;
 
 
@@ -49,7 +52,10 @@ static struct mgmt_handler log_nmgr_group_handlers[] = {
     [LOGS_NMGR_OP_CLEAR] = {log_nmgr_clear, log_nmgr_clear},
     [LOGS_NMGR_OP_MODULE_LIST] = {log_nmgr_module_list, NULL},
     [LOGS_NMGR_OP_LEVEL_LIST] = {log_nmgr_level_list, NULL},
-    [LOGS_NMGR_OP_LOGS_LIST] = {log_nmgr_logs_list, NULL}
+    [LOGS_NMGR_OP_LOGS_LIST] = {log_nmgr_logs_list, NULL},
+#if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
+    [LOGS_NMGR_OP_SET_WATERMARK] = {log_nmgr_set_watermark, NULL},
+#endif
 };
 
 struct log_encode_data {
@@ -580,6 +586,81 @@ log_nmgr_clear(struct mgmt_cbuf *cb)
 
     return 0;
 }
+
+#if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
+static int
+log_nmgr_set_watermark(struct mgmt_cbuf *cb)
+{
+    struct log *log;
+    int rc;
+    char name[LOG_NAME_MAX_LEN] = {0};
+    int name_len;
+    uint64_t index;
+
+    const struct cbor_attr_t attr[4] = {
+        [0] = {
+            .attribute = "log_name",
+            .type = CborAttrTextStringType,
+            .addr.string = name,
+            .len = sizeof(name)
+        },
+        [1] = {
+            .attribute = "index",
+            .type = CborAttrUnsignedIntegerType,
+            .addr.uinteger = &index
+        },
+        [2] = {
+            .attribute = NULL
+        }
+    };
+
+    rc = cbor_read_object(&cb->it, attr);
+    if (rc) {
+        return rc;
+    }
+
+    name_len = strlen(name);
+    log = NULL;
+    while (1) {
+        log = log_list_get_next(log);
+        if (!log) {
+            break;
+        }
+
+        if (log->l_log->log_type == LOG_TYPE_STREAM) {
+            continue;
+        }
+
+        /* Conditions for returning specific logs */
+        if ((name_len > 0) && strcmp(name, log->l_name)) {
+            continue;
+        }
+
+        rc = log_set_watermark(log, index);
+        if (rc) {
+            goto err;
+        }
+
+        /* If a log was found, encode and break */
+        if (name_len > 0) {
+            break;
+        }
+    }
+
+    /* Running out of logs list and we have a specific log to look for */
+    if (!log && name_len > 0) {
+        rc = OS_EINVAL;
+    }
+
+err:
+    rc = mgmt_cbuf_setoerr(cb, 0);
+    if (rc != 0) {
+        return rc;
+    }
+
+    return (rc);
+}
+#endif
 
 /**
  * Register nmgr group handlers.

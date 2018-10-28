@@ -197,7 +197,7 @@ os_arch_os_init(void)
 
     /* Set all external interrupts to default handler */
     for (i = 0; i < PLIC_NUM_INTERRUPTS; ++i) {
-        plic_interrupts[i] = os_default_irq_asm;
+        plic_interrupts[i] = plic_default_isr;
         /* Default priority set to 0, never interrupt */
         PLIC_REG(PLIC_PRIORITY_OFFSET + i * 4) = 0;
     }

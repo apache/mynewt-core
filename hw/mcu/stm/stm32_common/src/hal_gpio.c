@@ -20,6 +20,7 @@
 #include "hal/hal_gpio.h"
 #include "mcu/cmsis_nvic.h"
 #include "mcu/stm32_hal.h"
+#include "stm32_common/mcu.h"
 #include <assert.h>
 
  /* XXX: Notes
@@ -43,26 +44,7 @@
  * 5) Possibly add access to HAL_GPIO_DeInit.
  */
 
-/*
- * GPIO pin mapping
- *
- * The stm32Fxxx processors have 16 gpio pins per port. We map the logical pin
- * numbers (from 0 to N) in the following manner:
- *      Port A: PA0-PA15 map to pins 0 - 15.
- *      Port B: PB0-PB15 map to pins 16 - 31.
- *      Port C: PC0-PC15 map to pins 32 - 47.
- *
- *      To convert a gpio to pin number, do the following:
- *          - Convert port label to its numeric value (A=0, B=1, C=2, etc).
- *          - Multiply by 16.
- *          - Add port pin number.
- *
- *      Ex: PD11 = (3 * 16) + 11 = 59.
- *          PA0 = (0 * 16) + 0 = 0
- */
-#define GPIO_INDEX(pin)     ((pin) & 0x0F)
-#define GPIO_PORT(pin)      (((pin) >> 4) & 0x0F)
-#define GPIO_MASK(pin)      (1 << GPIO_INDEX(pin))
+#define GPIO_MASK(pin)      (1 << MCU_GPIO_PIN_NUM(pin))
 
 #ifndef GPIOA
 #   define GPIOA    0
@@ -154,6 +136,7 @@ static struct gpio_irq_obj gpio_irq_handlers[16];
 
 struct ext_irqs
 {
+#if !MYNEWT_VAL(MCU_STM32L0) && !MYNEWT_VAL(MCU_STM32F0)
     volatile uint32_t irq0;
     volatile uint32_t irq1;
     volatile uint32_t irq2;
@@ -161,6 +144,11 @@ struct ext_irqs
     volatile uint32_t irq4;
     volatile uint32_t irq9_5;
     volatile uint32_t irq15_10;
+#else
+    volatile uint32_t irq0_1;
+    volatile uint32_t irq2_3;
+    volatile uint32_t irq4_15;
+#endif
 };
 struct ext_irqs ext_irq_counts;
 
@@ -183,6 +171,7 @@ ext_irq_handler(int index)
     }
 }
 
+#if !MYNEWT_VAL(MCU_STM32L0) && !MYNEWT_VAL(MCU_STM32F0)
 /* External interrupt 0 */
 static void
 ext_irq0(void)
@@ -262,6 +251,61 @@ ext_irq15_10(void)
     }
 }
 
+#else /* MYNEWT_VAL(MCU_STM32L0) && MYNEWT_VAL(MCU_STM32F0)*/
+
+/**
+ * ext irq0_1
+ *
+ *  External interrupt handler for irqs 0 through 1.
+ *
+ */
+static void
+ext_irq0_1(void)
+{
+    int index;
+
+    ++ext_irq_counts.irq0_1;
+    for (index = 0; index <= 1; ++index) {
+        ext_irq_handler(index);
+    }
+}
+
+/**
+ * ext irq2_3
+ *
+ *  External interrupt handler for irqs 2 through 3.
+ *
+ */
+static void
+ext_irq2_3(void)
+{
+    int index;
+
+    ++ext_irq_counts.irq2_3;
+    for (index = 2; index <= 3; ++index) {
+        ext_irq_handler(index);
+    }
+}
+
+/**
+ * ext irq4_15
+ *
+ *  External interrupt handler for irqs 4 through 15.
+ *
+ */
+static void
+ext_irq4_15(void)
+{
+    int index;
+
+    ++ext_irq_counts.irq4_15;
+    for (index = 4; index <= 15; ++index) {
+        ext_irq_handler(index);
+    }
+}
+
+#endif /* MYNEWT_VAL(MCU_STM32L0) && MYNEWT_VAL(MCU_STM32F0)*/
+
 /**
  * hal gpio clk enable
  *
@@ -274,63 +318,63 @@ hal_gpio_clk_enable(uint32_t port_idx)
 {
     switch (port_idx) {
 #if defined GPIOA_BASE
-        case 0:
-            __HAL_RCC_GPIOA_CLK_ENABLE();
-            break;
+    case 0:
+        __HAL_RCC_GPIOA_CLK_ENABLE();
+        break;
 #endif
 #if defined GPIOB_BASE
-        case 1:
-            __HAL_RCC_GPIOB_CLK_ENABLE();
-            break;
+    case 1:
+        __HAL_RCC_GPIOB_CLK_ENABLE();
+        break;
 #endif
 #if defined GPIOC_BASE
-        case 2:
-            __HAL_RCC_GPIOC_CLK_ENABLE();
-            break;
+    case 2:
+        __HAL_RCC_GPIOC_CLK_ENABLE();
+        break;
 #endif
 #if defined GPIOD_BASE
-        case 3:
-            __HAL_RCC_GPIOD_CLK_ENABLE();
-            break;
+    case 3:
+        __HAL_RCC_GPIOD_CLK_ENABLE();
+        break;
 #endif
 #if defined GPIOE_BASE
-        case 4:
-            __HAL_RCC_GPIOE_CLK_ENABLE();
-            break;
+    case 4:
+        __HAL_RCC_GPIOE_CLK_ENABLE();
+        break;
 #endif
 #if defined GPIOF_BASE
-        case 5:
-            __HAL_RCC_GPIOF_CLK_ENABLE();
-            break;
+    case 5:
+        __HAL_RCC_GPIOF_CLK_ENABLE();
+        break;
 #endif
 #if defined GPIOG_BASE
-        case 6:
-            __HAL_RCC_GPIOG_CLK_ENABLE();
-            break;
+    case 6:
+        __HAL_RCC_GPIOG_CLK_ENABLE();
+        break;
 #endif
 #if defined GPIOH_BASE
-        case 7:
-            __HAL_RCC_GPIOH_CLK_ENABLE();
-            break;
+    case 7:
+        __HAL_RCC_GPIOH_CLK_ENABLE();
+        break;
 #endif
 #if defined GPIOI_BASE
-        case 8:
-            __HAL_RCC_GPIOI_CLK_ENABLE();
-            break;
+    case 8:
+        __HAL_RCC_GPIOI_CLK_ENABLE();
+        break;
 #endif
 #if defined GPIOJ_BASE
-        case 9:
-            __HAL_RCC_GPIOJ_CLK_ENABLE();
-            break;
+    case 9:
+        __HAL_RCC_GPIOJ_CLK_ENABLE();
+        break;
 #endif
 #if defined GPIOK_BASE
-        case 10:
-            __HAL_RCC_GPIOK_CLK_ENABLE();
-            break;
+    case 10:
+        __HAL_RCC_GPIOK_CLK_ENABLE();
+        break;
 #endif
-        default:
-            assert(0);
-            break;
+    default:
+        assert(0);
+        break;
     }
 }
 
@@ -350,7 +394,9 @@ hal_gpio_pin_to_irq(int pin)
     int index;
     IRQn_Type irqn;
 
-    index = GPIO_INDEX(pin);
+    index = MCU_GPIO_PIN_NUM(pin);
+
+#if !MYNEWT_VAL(MCU_STM32L0) && !MYNEWT_VAL(MCU_STM32F0)
     if (index <= 4) {
         irqn = EXTI0_IRQn + index;
     } else if (index <=  9) {
@@ -358,6 +404,15 @@ hal_gpio_pin_to_irq(int pin)
     } else {
         irqn = EXTI15_10_IRQn;
     }
+#else
+    if (index <= 1) {
+        irqn = EXTI0_1_IRQn;
+    } else if (index <=  3) {
+        irqn = EXTI2_3_IRQn;
+    } else {
+        irqn = EXTI4_15_IRQn;
+    }
+#endif
 
     return irqn;
 }
@@ -372,6 +427,7 @@ hal_gpio_set_nvic(IRQn_Type irqn)
     uint32_t isr;
 
     switch (irqn) {
+#if !MYNEWT_VAL(MCU_STM32L0) && !MYNEWT_VAL(MCU_STM32F0)
     case EXTI0_IRQn:
         isr = (uint32_t)&ext_irq0;
         break;
@@ -393,6 +449,20 @@ hal_gpio_set_nvic(IRQn_Type irqn)
     case EXTI15_10_IRQn:
         isr = (uint32_t)&ext_irq15_10;
         break;
+#else /* MYNEWT_VAL(MCU_STM32L0) && MYNEWT_VAL(MCU_STM32F0)*/
+    case EXTI0_1_IRQn:
+        isr = (uint32_t)&ext_irq0_1;
+        break;
+    
+    case EXTI2_3_IRQn:
+        isr = (uint32_t)&ext_irq2_3;
+        break;
+
+    case EXTI4_15_IRQn:
+        isr = (uint32_t)&ext_irq4_15;
+        break;
+#endif
+
     default:
         assert(0);
         break;
@@ -422,7 +492,7 @@ hal_gpio_init_stm(int pin, GPIO_InitTypeDef *cfg)
     uint32_t mcu_pin_mask;
 
     /* Is this a valid pin? */
-    port = GPIO_PORT(pin);
+    port = MCU_GPIO_PIN_PORT(pin);
     if (port >= HAL_GPIO_PORT_COUNT) {
         return -1;
     }
@@ -456,7 +526,7 @@ hal_gpio_deinit_stm(int pin, GPIO_InitTypeDef *cfg)
     uint32_t mcu_pin_mask;
 
     /* Is this a valid pin? */
-    port = GPIO_PORT(pin);
+    port = MCU_GPIO_PIN_PORT(pin);
     if (port >= HAL_GPIO_PORT_COUNT) {
         return -1;
     }
@@ -510,7 +580,7 @@ int hal_gpio_init_out(int pin, int val)
     int port;
 
     /* Is this a valid pin? */
-    port = GPIO_PORT(pin);
+    port = MCU_GPIO_PIN_PORT(pin);
     if (port >= HAL_GPIO_PORT_COUNT) {
         return -1;
     }
@@ -585,7 +655,7 @@ void hal_gpio_write(int pin, int val)
     uint32_t mcu_pin_mask;
     GPIO_PinState state;
 
-    port = GPIO_PORT(pin);
+    port = MCU_GPIO_PIN_PORT(pin);
     mcu_pin_mask = GPIO_MASK(pin);
 
     if (val) {
@@ -611,7 +681,7 @@ int hal_gpio_read(int pin)
     int port;
     uint32_t mcu_pin_mask;
 
-    port = GPIO_PORT(pin);
+    port = MCU_GPIO_PIN_PORT(pin);
     mcu_pin_mask = GPIO_MASK(pin);
     return HAL_GPIO_ReadPin(portmap[port], mcu_pin_mask);
 }
@@ -690,7 +760,7 @@ hal_gpio_irq_init(int pin, hal_gpio_irq_handler_t handler, void *arg,
         __HAL_GPIO_EXTI_CLEAR_FLAG(pin_mask);
 
         /* Set the gpio irq handler */
-        index = GPIO_INDEX(pin);
+        index = MCU_GPIO_PIN_NUM(pin);
         gpio_irq_handlers[index].isr = handler;
         gpio_irq_handlers[index].arg = arg;
 
@@ -732,7 +802,7 @@ hal_gpio_irq_release(int pin)
     __HAL_GPIO_EXTI_CLEAR_FLAG(pin_mask);
 
     /* Clear out the irq handler */
-    index = GPIO_INDEX(pin);
+    index = MCU_GPIO_PIN_NUM(pin);
     gpio_irq_handlers[index].arg = NULL;
     gpio_irq_handlers[index].isr = NULL;
 }

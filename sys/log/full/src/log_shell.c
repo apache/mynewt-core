@@ -35,14 +35,20 @@
 #endif
 #include "shell/shell.h"
 #include "console/console.h"
+#include "base64/hex.h"
 
 static int
 shell_log_dump_entry(struct log *log, struct log_offset *log_offset,
                      const struct log_entry_hdr *ueh, void *dptr, uint16_t len)
 {
-    char data[128];
+    char data[128 + 1];
     int dlen;
     int rc;
+#if MYNEWT_VAL(LOG_VERSION) > 2
+    char tmp[32 + 1];
+    int off;
+    int blksz;
+#endif
 
     dlen = min(len, 128);
 
@@ -52,8 +58,26 @@ shell_log_dump_entry(struct log *log, struct log_offset *log_offset,
     }
     data[rc] = 0;
 
+#if MYNEWT_VAL(LOG_VERSION) <= 2
     console_printf("[%llu] %s\n", ueh->ue_ts, data);
-
+#else
+    switch (ueh->ue_etype) {
+    case LOG_ETYPE_STRING:
+        console_printf("[%llu] %s\n", ueh->ue_ts, data);
+        break;
+    default:
+        console_printf("[%llu] ", ueh->ue_ts);
+        for (off = 0; off < rc; off += blksz) {
+            blksz = dlen - off;
+            if (blksz > sizeof(tmp) >> 1) {
+                blksz = sizeof(tmp) >> 1;
+            }
+            hex_format(&data[off], blksz, tmp, sizeof(tmp));
+            console_printf("%s", tmp);
+        }
+        console_printf("%s\n", rc < len ? "..." : "");
+    }
+#endif
     return 0;
 }
 
@@ -125,6 +149,40 @@ shell_log_slot1_cmd(int argc, char **argv)
     }
 
     return 0;
+}
+#endif
+
+#if MYNEWT_VAL(LOG_STORAGE_INFO)
+int
+shell_log_storage_cmd(int argc, char **argv)
+{
+    struct log *log;
+    struct log_storage_info info;
+
+    log = NULL;
+    while (1) {
+        log = log_list_get_next(log);
+        if (log == NULL) {
+            break;
+        }
+
+        if (log->l_log->log_type == LOG_TYPE_STREAM) {
+            continue;
+        }
+
+        if (log_storage_info(log, &info)) {
+            console_printf("Storage info not supported for %s\n", log->l_name);
+        } else {
+            console_printf("%s: %d of %d used\n", log->l_name,
+                           (unsigned)info.used, (unsigned)info.size);
+#if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
+            console_printf("%s: %d of %d used by unread entries\n", log->l_name,
+                           (unsigned)info.used_unread, (unsigned)info.size);
+#endif
+        }
+    }
+
+    return (0);
 }
 #endif
 

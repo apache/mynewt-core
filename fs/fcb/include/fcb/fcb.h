@@ -84,6 +84,11 @@ int fcb_init(struct fcb *fcb);
 struct fcb_log {
     struct fcb fl_fcb;
     uint8_t fl_entries;
+
+#if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
+    /* Internal - tracking storage use */
+    uint32_t fl_watermark_off;
+#endif
 };
 
 /**
@@ -138,6 +143,13 @@ fcb_offset_last_n(struct fcb *fcb, uint8_t entries,
  * Clears FCB passed to it
  */
 int fcb_clear(struct fcb *fcb);
+
+/**
+ * Usage report for a given FCB area. Returns number of elements and the
+ * number of bytes stored in them.
+ */
+int fcb_area_info(struct fcb *fcb, struct flash_area *fa, int *elemsp,
+                  int *bytesp);
 
 #ifdef __cplusplus
 }

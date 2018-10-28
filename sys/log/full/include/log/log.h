@@ -22,6 +22,9 @@
 #include "os/mynewt.h"
 #include "cbmem/cbmem.h"
 #include "log_common/log_common.h"
+#if MYNEWT_VAL(LOG_STATS)
+#include "stats/stats.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -50,6 +53,19 @@ struct log_offset {
     void *lo_arg;
 };
 
+#if MYNEWT_VAL(LOG_STORAGE_INFO)
+/**
+ * Log storage information
+ */
+struct log_storage_info {
+    uint32_t size;
+    uint32_t used;
+#if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
+    uint32_t used_unread;
+#endif
+};
+#endif
+
 typedef int (*log_walk_func_t)(struct log *, struct log_offset *log_offset,
         void *dptr, uint16_t len);
 
@@ -72,6 +88,12 @@ typedef int (*lh_append_mbuf_body_func_t)(struct log *log,
 typedef int (*lh_walk_func_t)(struct log *,
         log_walk_func_t walk_func, struct log_offset *log_offset);
 typedef int (*lh_flush_func_t)(struct log *);
+#if MYNEWT_VAL(LOG_STORAGE_INFO)
+typedef int (*lh_storage_info_func_t)(struct log *, struct log_storage_info *);
+#endif
+#if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
+typedef int (*lh_set_watermark_func_t)(struct log *, uint32_t);
+#endif
 typedef int (*lh_registered_func_t)(struct log *);
 
 struct log_handler {
@@ -84,6 +106,12 @@ struct log_handler {
     lh_append_mbuf_body_func_t log_append_mbuf_body;
     lh_walk_func_t log_walk;
     lh_flush_func_t log_flush;
+#if MYNEWT_VAL(LOG_STORAGE_INFO)
+    lh_storage_info_func_t log_storage_info;
+#endif
+#if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
+    lh_set_watermark_func_t log_set_watermark;
+#endif
     /* Functions called only internally (no API for apps) */
     lh_registered_func_t log_registered;
 };
@@ -146,12 +174,31 @@ struct log_entry_hdr {
 #define LOG_CRITICAL(__l, __mod, ...) IGNORE(__VA_ARGS__)
 #endif
 
+#if MYNEWT_VAL(LOG_STATS)
+STATS_SECT_START(logs)
+    STATS_SECT_ENTRY(writes)
+    STATS_SECT_ENTRY(drops)
+    STATS_SECT_ENTRY(errs)
+    STATS_SECT_ENTRY(lost)
+STATS_SECT_END
+
+#define LOG_STATS_INC(log, name)        STATS_INC(log->l_stats, name)
+#define LOG_STATS_INCN(log, name, cnt)  STATS_INCN(log->l_stats, name, cnt)
+#else
+#define LOG_STATS_INC(log, name)
+#define LOG_STATS_INCN(log, name, cnt)
+#endif
+
 struct log {
     char *l_name;
     const struct log_handler *l_log;
     void *l_arg;
     STAILQ_ENTRY(log) l_next;
+    log_append_cb *l_append_cb;
     uint8_t l_level;
+#if MYNEWT_VAL(LOG_STATS)
+    STATS_SECT_DECL(logs) l_stats;
+#endif
 };
 
 /* Log system level functions (for all logs.) */
@@ -190,6 +237,26 @@ const char *log_module_get_name(uint8_t id);
 /* Log functions, manipulate a single log */
 int log_register(char *name, struct log *log, const struct log_handler *,
                  void *arg, uint8_t level);
+
+/**
+ * @brief Configures the given log with the specified append callback.
+ *
+ * A log's append callback is executed each time an entry is appended to the
+ * log.
+ *
+ * @param log                   The log to configure.
+ * @param cb                    The callback to associate with the log.
+ */
+void log_set_append_cb(struct log *log, log_append_cb *cb);
+
+/**
+ * @brief Searches the list of registered logs for one with the specified name.
+ *
+ * @param name                  The name of the log to search for.
+ *
+ * @return                      The sought after log if found, NULL otherwise.
+ */
+struct log *log_find(const char *name);
 
 /**
  * @brief Writes the raw contents of a flat buffer to the specified log.
@@ -542,6 +609,36 @@ log_level_set(uint8_t module, uint8_t level)
 }
 #endif
 
+#if MYNEWT_VAL(LOG_STORAGE_INFO)
+/**
+ * Return information about log storage
+ *
+ * This return information about size and usage of storage on top of which log
+ * instance is created.
+ *
+ * @param log   The log to query.
+ * @param info  The destination to write information to.
+ *
+ * @return 0 on success, error code otherwise
+ *
+ */
+int log_storage_info(struct log *log, struct log_storage_info *info);
+#endif
+#if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
+/**
+ * Set watermark on log
+ *
+ * This sets watermark on log item with given index. This information is used
+ * to calculate size of entries which were logged after watermark item, i.e.
+ * unread items. The watermark is stored persistently for each log.
+ *
+ * @param log    The log to set watermark on.
+ * @param index  The index of a watermarked item.
+ *
+ * @return 0 on success, error code otherwise.
+ */
+int log_set_watermark(struct log *log, uint32_t index);
+#endif
 
 /* Handler exports */
 #if MYNEWT_VAL(LOG_CONSOLE)

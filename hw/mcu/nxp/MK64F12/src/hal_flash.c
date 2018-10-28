@@ -61,7 +61,8 @@ static flash_config_t mk64f12_config;
 struct hal_flash mk64f12_flash_dev = {
     /* Most items are set after FLASH_Init() */
     .hf_itf = &mk64f12_flash_funcs,
-    .hf_align = MK64F12_FLASH_ALIGN
+    .hf_align = MK64F12_FLASH_ALIGN,
+    .hf_erased_val = 0xff,
 };
 
 static int

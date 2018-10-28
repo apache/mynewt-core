@@ -72,7 +72,7 @@ or by including a call to your test suite from
 Example
 ~~~~~~~
 
-`This Tutorial </tutorials/other/unit_test.html>`_ shows how to create a
+:doc:`This Tutorial <../../../tutorials/other/unit_test>` shows how to create a
 test suite for a Mynewt package.
 
 Data structures
@@ -80,29 +80,57 @@ Data structures
 
 .. code-block:: console
 
-    struct tu_config {
-        int tc_print_results;
-        int tc_system_assert;
+    struct ts_config {
+        int ts_print_results;
+        int ts_system_assert;
 
-        tu_case_init_fn_t *tc_case_init_cb;
-        void *tc_case_init_arg;
+        const char *ts_suite_name;
 
-        tu_case_report_fn_t *tc_case_fail_cb;
-        void *tc_case_fail_arg;
+        /*
+         * Called prior to the first test in the suite
+         */
+        tu_init_test_fn_t *ts_suite_init_cb;
+        void *ts_suite_init_arg;
 
-        tu_case_report_fn_t *tc_case_pass_cb;
-        void *tc_case_pass_arg;
+        /*
+         * Called after the last test in the suite
+         */
+        tu_init_test_fn_t *ts_suite_complete_cb;
+        void *ts_suite_complete_arg;
 
-        tu_suite_init_fn_t *tc_suite_init_cb;
-        void *tc_suite_init_arg;
+        /*
+         * Called before every test in the suite
+         */
+        tu_pre_test_fn_t *ts_case_pre_test_cb;
+        void *ts_case_pre_arg;
 
-        tu_restart_fn_t *tc_restart_cb;
-        void *tc_restart_arg;
+        /*
+         * Called after every test in the suite
+         */
+        tu_post_test_fn_t *ts_case_post_test_cb;
+        void *ts_case_post_arg;
+
+        /*
+         * Called after test returns success
+         */
+        tu_case_report_fn_t *ts_case_pass_cb;
+        void *ts_case_pass_arg;
+
+        /*
+         * Called after test fails (typically thoough a failed test assert)
+         */
+        tu_case_report_fn_t *ts_case_fail_cb;
+        void *ts_case_fail_arg;
+
+        /*
+         * restart after running the test suite - self-test only
+         */
+        tu_suite_restart_fn_t *ts_restart_cb;
+        void *ts_restart_arg;
     };
-    extern struct tu_config tu_config;
 
-The global ``tu_config`` struct contains all the testutil package's
-settings. This should be populated before ``tu_init()`` is called.
+The global ``ts_config`` struct contains all the testutil package's
+settings.
 
 API
 ~~~~

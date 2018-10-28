@@ -16,8 +16,6 @@
 # under the License.
 #
 
-# Package: hw/bsp/nrf52dk
-
 syscfg.defs:
     MCU_FLASH_MIN_WRITE_SIZE:
         description: >

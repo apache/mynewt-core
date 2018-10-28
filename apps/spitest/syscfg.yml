@@ -16,8 +16,6 @@
 # under the License.
 #
 
-# Package: apps/spitest
-
 syscfg.defs:
     SPITEST_SS_PIN:
         description: 'SPI slave select pin number'

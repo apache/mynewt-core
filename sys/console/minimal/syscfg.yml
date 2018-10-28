@@ -16,8 +16,6 @@
 # under the License.
 #
 
-# Package: sys/console/minimal
-
 syscfg.defs:
     CONSOLE_UART:
         description: 'Set console output to UART'

@@ -130,7 +130,11 @@ Revision: $Rev: 5626 $
 
 #define SEGGER_SYSVIEW_USE_STATIC_BUFFER    1                                   // Use a static buffer to generate events instead of a buffer on the stack
 
+#if MYNEWT_VAL(SYSVIEW_POST_MORTEM)
+#define SEGGER_SYSVIEW_POST_MORTEM_MODE     1
+#else
 #define SEGGER_SYSVIEW_POST_MORTEM_MODE     0                                   // 1: Enable post mortem analysis mode
+#endif
 
 /*********************************************************************
 *

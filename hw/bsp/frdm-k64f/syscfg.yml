@@ -17,8 +17,6 @@
 # under the License.
 #
 
-# Package: hw/bsp/frdm-k64f
-
 syscfg.defs:
     BSP_MK64F12:
         description: 'Set to indicate that BSP has NXP MK64F12'

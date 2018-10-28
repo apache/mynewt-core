@@ -1,0 +1,40 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+# Package: sys/sysdown
+
+syscfg.defs:
+    SYSDOWN_CONSTRAIN_DOWN:
+        description: Only allow packages to be shutdown by sysdown.
+        value: 1
+
+    SYSDOWN_PANIC_FILE_LINE:
+        description: Include filename and line number in sysdown panic.
+        value: 0
+
+    SYSDOWN_PANIC_MESSAGE:
+        description: Include descriptive message in sysdown panic.
+        value: 0
+
+    SYSDOWN_TIMEOUT_MS:
+        description: >
+            Total duration, in milliseconds, before the shutdown procedure
+            times out.  On timeout, the system triggers a failed assertion.
+            NOTE: This timeout applies to the full shutdown procedure, not to a
+            single subprocedure.
+        value: 10000

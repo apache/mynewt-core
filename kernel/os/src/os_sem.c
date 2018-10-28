@@ -61,7 +61,7 @@ os_sem_release(struct os_sem *sem)
     struct os_task *rdy;
     os_error_t ret;
 
-    os_trace_api_u32(OS_TRACE_ID_SEM_INIT, (uint32_t)sem);
+    os_trace_api_u32(OS_TRACE_ID_SEM_RELEASE, (uint32_t)sem);
 
     /* OS must be started to release semaphores */
     if (!g_os_started) {
@@ -107,7 +107,7 @@ os_sem_release(struct os_sem *sem)
     ret = OS_OK;
 
 done:
-    os_trace_api_ret_u32(OS_TRACE_ID_SEM_INIT, (uint32_t)ret);
+    os_trace_api_ret_u32(OS_TRACE_ID_SEM_RELEASE, (uint32_t)ret);
     return ret;
 }
 

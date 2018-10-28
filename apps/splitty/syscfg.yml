@@ -16,8 +16,6 @@
 # under the License.
 #
 
-# Package: apps/splitty
-
 syscfg.vals:
     # Enable the shell task.
     SHELL_TASK: 1

@@ -26,13 +26,9 @@
 #include <sys/time.h>
 
 #include "os/mynewt.h"
+#include "os_test/os_test.h"
 #include "testutil/testutil.h"
 #include "os_test_priv.h"
-
-uint32_t stack1_size;
-uint32_t stack2_size;
-uint32_t stack3_size;
-uint32_t stack4_size;
 
 /*
  * Most of this file is the driver for the kernel selftest running in sim
@@ -65,45 +61,16 @@ os_test_restart(void)
    tu_restart();
 }
 
-/*
- * sysinit and os_start are only called if running in a sim environment
- * (ie MYNEWT_VAL(SELFTEST) is set)
- */
-void
-os_selftest_pretest_cb(void* arg)
-{
-    os_init(NULL);
-    sysinit();
-}
-
-void
-os_selftest_posttest_cb(void *arg)
-{
-    os_start();
-}
-
-extern void os_mempool_test_init(void *arg);
-extern void os_sem_test_init(void *arg);
-extern void os_mutex_test_init(void *arg);
-
 int
 os_test_all(void)
 {
-
-    tu_suite_set_init_cb(os_mempool_test_init, NULL);
     os_mempool_test_suite();
-#if 1
-    tu_suite_set_init_cb(os_mutex_test_init, NULL);
     os_mutex_test_suite();
-#endif
-    tu_suite_set_init_cb(os_sem_test_init, NULL);
     os_sem_test_suite();
-
     os_mbuf_test_suite();
-
     os_eventq_test_suite();
-
     os_callout_test_suite();
+    os_time_test_suite();
 
     return tu_case_failed;
 }

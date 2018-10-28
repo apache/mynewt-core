@@ -167,9 +167,16 @@ flash_area_align(const struct flash_area *fa)
     return hal_flash_align(fa->fa_device_id);
 }
 
+uint32_t
+flash_area_erased_val(const struct flash_area *fa)
+{
+    return hal_flash_erased_val(fa->fa_device_id);
+}
+
+
 /**
  * Checks if a flash area has been erased. Returns false if there are any
- * non 0xFFFFFFFF bytes.
+ * non non-erased bytes.
  *
  * @param fa                    An opened flash area to iterate.
  *                                  the count of flash area TLVs in the meta
@@ -182,30 +189,24 @@ flash_area_align(const struct flash_area *fa)
 int
 flash_area_is_empty(const struct flash_area *fa, bool *empty)
 {
-    uint32_t data[64 >> 2];
-    uint32_t data_off = 0;
-    int8_t bytes_to_read;
-    uint8_t i;
     int rc;
 
-    while (data_off < fa->fa_size) {
-        bytes_to_read = min(64, fa->fa_size - data_off);
-        rc = flash_area_read(fa, data_off, data, bytes_to_read);
-        if (rc) {
-            return rc;
-        }
-        for (i = 0; i < bytes_to_read >> 2; i++) {
-          if (data[i] != (uint32_t) -1) {
-            goto not_empty;
-          }
-        }
-        data_off += bytes_to_read;
-    }
-    *empty = true;
-    return 0;
-not_empty:
     *empty = false;
+    rc = hal_flash_isempty_no_buf(fa->fa_device_id, fa->fa_off, fa->fa_size);
+    if (rc < 0) {
+        return rc;
+    } else if (rc == 1) {
+        *empty = true;
+    }
+
     return 0;
+}
+
+int
+flash_area_read_is_empty(const struct flash_area *fa, uint32_t off, void *dst,
+                         uint32_t len)
+{
+    return hal_flash_isempty(fa->fa_device_id, fa->fa_off + off, dst, len);
 }
 
 /**

@@ -17,15 +17,12 @@
 # under the License.
 #
 
-# Package: libc/baselibc
-
 syscfg.defs:
     BASELIBC_PRESENT:
         description: "Indicates that baselibc is the libc implementation."
         value: 1
 
     BASELIBC_ASSERT_FILE_LINE:
-        description: >
-            Include filename and line number in assert messages.  Aids in
-            debugging, but increases text size.
+        defunct: 1
+        description: 'Use OS_CRASH_FILE_LINE instead'
         value: 0

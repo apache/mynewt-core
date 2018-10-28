@@ -19,7 +19,7 @@
 #include <assert.h>
 #include <string.h>
 #include "testutil/testutil.h"
-#include "test_json.h"
+#include "test_json_priv.h"
 #include "json/json.h"
 
 char *output = "{\"KeyBool\": true,\"KeyInt\": -1234,\"KeyUint\": 1353214,\"KeyString\": \"foobar\",\"KeyStringN\": \"foobarlong\",\"KeyIntArr\": [153,2532,-322]}";
@@ -28,11 +28,7 @@ char *output1 ="{\"KeyBoolArr\": [true, false], \"KeyUintArr\": [0, 65535, 42949
 char *outputboolspace = "{\"KeyBoolArr\": [    true    ,    false,true         ]}";
 char *outputboolempty = "{\"KeyBoolArr\": , \"KeyBoolArr\": [  ]}";
 
-#if MYNEWT_VAL(SELFTEST)
-char bigbuf[JSON_BIGBUF_SIZE];
-#else
 char *bigbuf;
-#endif
 int buf_index;
 
 int
