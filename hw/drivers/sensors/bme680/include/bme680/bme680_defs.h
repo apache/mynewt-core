@@ -1,57 +1,22 @@
-/**
- * Copyright (C) 2017 - 2018 Bosch Sensortec GmbH
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * resarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ *  http://www.apache.org/licenses/LICENSE-2.0
  *
- * Redistributions of source code must retain the above copyright
- * notice, this list of conditions and the following disclaimer.
- *
- * Redistributions in binary form must reproduce the above copyright
- * notice, this list of conditions and the following disclaimer in the
- * documentation and/or other materials provided with the distribution.
- *
- * Neither the name of the copyright holder nor the names of the
- * contributors may be used to endorse or promote products derived from
- * this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
- * CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL COPYRIGHT HOLDER
- * OR CONTRIBUTORS BE LIABLE FOR ANY
- * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
- * OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
- * ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE
- *
- * The information provided is believed to be accurate and reliable.
- * The copyright holder assumes no responsibility
- * for the consequences of use
- * of such information nor for any infringement of patents or
- * other rights of third parties which may result from its use.
- * No license is granted by implication or otherwise under any patent or
- * patent rights of the copyright holder.
- *
- * @file	bme680_defs.h
- * @date	22 Feb 2018
- * @version	3.5.8
- * @brief
- *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
  */
 
-/*! @file bme680_defs.h
- @brief Sensor driver for BME680 sensor */
-/*!
- * @defgroup BME680 SENSOR API
- * @brief
- * @{*/
 #ifndef BME680_DEFS_H_
 #define BME680_DEFS_H_
 
@@ -67,7 +32,7 @@ extern "C" {
 #endif
 
 /******************************************************************************/
-/*! @name		Common macros					      */
+/* Common macros					      									  */
 /******************************************************************************/
 
 #if !defined(UINT8_C) && !defined(INT8_C)
@@ -90,9 +55,7 @@ extern "C" {
 #define UINT64_C(x)     U64_C(x)
 #endif
 
-/**@}*/
-
-/**\name C standard macros */
+/** C standard macros */
 #ifndef NULL
 #ifdef __cplusplus
 #define NULL   0
@@ -553,5 +516,3 @@ struct bme680_cfg {
 #endif
 
 #endif /* BME680_DEFS_H_ */
-/** @}*/
-/** @}*/
