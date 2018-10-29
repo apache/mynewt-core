@@ -280,10 +280,17 @@ hal_uart_set_nvic(IRQn_Type irqn, struct hal_uart *uart)
         ui = &uart_irqs[1];
         break;
 #ifdef USART3_BASE
+  #if !MYNEWT_VAL(MCU_STM32F0)
     case USART3_IRQn:
         isr = (uint32_t)&uart_irq3;
         ui = &uart_irqs[2];
         break;
+  #else
+    case USART3_4_IRQn:
+        isr = (uint32_t)&uart_irq3;
+        ui = &uart_irqs[2];
+        break;
+  #endif
 #endif
 #ifdef UART4_BASE
     case UART4_IRQn:
