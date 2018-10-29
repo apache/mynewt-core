@@ -620,12 +620,13 @@ oc_ri_invoke_coap_entity_handler(struct coap_packet_rx *request,
       /* If the observe option is set to 1, make an attempt to remove
        * the requesting client from the list of observers. In addition,
        * remove the resource from the list periodic GET callbacks if it
-       * is periodic observable.
+       * is periodic observable, and this was the only observer.
        */
       else if (observe == 1) {
         if (coap_observe_handler(request, response, cur_resource, endpoint) >
             0) {
-          if (cur_resource->properties & OC_PERIODIC) {
+          if (!cur_resource->num_observers &&
+              cur_resource->properties & OC_PERIODIC) {
               os_callout_stop(&cur_resource->callout);
           }
         }
