@@ -24,8 +24,6 @@ matrix:
       language: python
       python:
         - "3.5"
-      env:
-        - secure: "esQQpGFEowqegecBpj4ja2UMj0+LS4sla3SVJF431SDyClAEIPK1T7hHtJbDG83ZTLc18HWUuCnKXbemvb1mfM+A2uKbrTmDF6cctVrT4Hym7YGtxaRvQgje4UbavSLg/DezqAldyRPpXdJsv8ObGp5husiH4DRaoB5CmsUcaZ/RHwz59U+lx39zFr5q8Fb5jSXngB6yGHFg6jDEf16BgwADU61n3ajtQcZfzZ95e5g9GdYYI3u+SzWQSpiuU8irVVxuzdTLHXd07rA27nw1PBidEUrGjnvEm4m6H/ZKAe0mMgyKF+WogCTiNydvgTLzFPhr+RV5q00kPy/mriM7d+EbKXQmovIVvzRjL1LKAGqZo2ge67DA0ePXbcL3nQAI/p1vm2p9pC9oP1ngKZSxNg/AWohcKyCE4IPcMqN6lxbkX1rmQp+hT5jaHlQTgOPv1N7XIrKdHPJO4naGROr6eUDrFF5U8mWlXyRFU5TgWinhPRlPhkTxH0MqvdeXGEaVM7ZVc5yTsB81OFPEC4erAFzsiYCIEu/mN1bHSCv7tqcZKU2OpinSR9CJoQK1PZZbY2ADQHq00AhzfKNFAUDhIjAneinyFrsXWVAcVNGcY3meDi4rYkJ0lqvMrvYpGfZYRbelRojN8Abvw+mViiafblBA++Y50TYWs7Maqh5CjOk="
 
 before_install:
   - printenv
