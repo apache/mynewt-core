@@ -21,7 +21,7 @@ bsp.arch: cortex_m0
 bsp.compiler: compiler/arm-none-eabi-m0
 bsp.linkerscript:
     - "hw/bsp/nucleo-f030r8/nucleo-f030r8.ld"
-    - "@apache-mynewt-core/hw/mcu/stm/stm32f0xx/stm32f030.ld"
+    - "@apache-mynewt-core/hw/mcu/stm/stm32f0xx/stm32f0xx.ld"
 bsp.downloadscript: "hw/bsp/nucleo-f030r8/nucleo-f030r8_download.sh"
 bsp.debugscript: "hw/bsp/nucleo-f030r8/nucleo-f030r8_debug.sh"
 bsp.downloadscript.WINDOWS.OVERWRITE: "hw/bsp/nucleo-f030r8/nucleo-f030r8_download.cmd"

@@ -204,4 +204,3 @@ SECTIONS
     __StackLimit = __StackTop - SIZEOF(.stack_dummy);
     PROVIDE(__stack = __StackTop);
 }
-
