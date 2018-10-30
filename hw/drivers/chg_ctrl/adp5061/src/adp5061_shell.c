@@ -63,6 +63,7 @@ struct adp5061_reg {
     const struct reg_field *fields;
 };
 
+#if MYNEWT_VAL(ADP5061_CLI_DECODE)
 
 /* Change ix value to string from table.
  * Table is NULL terminated. Access outside of range will result in
@@ -569,6 +570,22 @@ static const struct reg_field adp_reg_iend_fields[] = {
         { NULL }
 };
 
+#else
+#define adp_reg_vinx_fields             NULL
+#define adp_reg_term_fields             NULL
+#define adp_reg_chrg_curr_fields        NULL
+#define adp_reg_vol_thre_fields         NULL
+#define adp_reg_timer_fields            NULL
+#define adp_reg_func1_fields            NULL
+#define adp_reg_func2_fields            NULL
+#define adp_reg_int_en_fields           NULL
+#define adp_reg_chg_sts1_fields         NULL
+#define adp_reg_chg_sts2_fields         NULL
+#define adp_reg_fault_fields            NULL
+#define adp_reg_bat_shrt_fields         NULL
+#define adp_reg_iend_fields             NULL
+#endif
+
 /**
 * Definition of all Register names
 */
@@ -651,7 +668,11 @@ adp5061_shell_help(void)
     console_printf("%s cmd\n", adp5061_shell_cmd_struct.sc_cmd);
     console_printf("cmd:\n");
     console_printf("\thelp\n");
+#if MYNEWT_VAL(ADP5061_CLI_DECODE)
     console_printf("\tdump [decode]\n");
+#else
+    console_printf("\tdump\n");
+#endif
     console_printf("\tread reg\n");
     console_printf("\twrite reg\n");
     console_printf("\tdisable\n");
@@ -661,6 +682,7 @@ adp5061_shell_help(void)
     return 0;
 }
 
+#if MYNEWT_VAL(ADP5061_CLI_DECODE)
 static const char *
 field_bin_value(const struct reg_field *field, uint8_t val, char *buf)
 {
@@ -679,19 +701,22 @@ field_bin_value(const struct reg_field *field, uint8_t val, char *buf)
     }
     return buf;
 }
+#endif
 
 static int
 adp5061_shell_cmd_dump(int argc, char **argv)
 {
     uint8_t val;
     int i;
+#if MYNEWT_VAL(ADP5061_CLI_DECODE)
     int decode = 0;
     const struct reg_field *field;
     char binary[9];
     char buf[20];
+#endif
     const struct adp5061_reg *reg;
 
-
+#if MYNEWT_VAL(ADP5061_CLI_DECODE)
     if (argc > 3) {
         return adp5061_shell_err_too_many_args(argv[1]);
     } else if (argc == 3) {
@@ -701,6 +726,11 @@ adp5061_shell_cmd_dump(int argc, char **argv)
             return adp5061_shell_err_unknown_arg(argv[2]);
         }
     }
+#else
+    if (argc > 2) {
+        return adp5061_shell_err_too_many_args(argv[1]);
+    }
+#endif
 
     console_printf("========== Device Regs ==========\n");
     console_printf("==========   ADP5061   ==========\n");
@@ -715,6 +745,7 @@ adp5061_shell_cmd_dump(int argc, char **argv)
             console_printf("%21s [0x%02x] = 0x%02x \n",
                     reg->name,
                     reg->addr, val);
+#if MYNEWT_VAL(ADP5061_CLI_DECODE)
             if (decode && reg->fields)
             {
                 for (field = reg->fields; field->fld_name; ++field)
@@ -724,6 +755,7 @@ adp5061_shell_cmd_dump(int argc, char **argv)
                                    field->fld_decode_value(field, val, buf));
                 }
             }
+#endif
         }
     }
 
@@ -869,8 +901,13 @@ adp5061_shell_charger_status(int argc, char **argv)
         console_printf("Read charger status 1 failed %d\n", rc);
         goto err;
     }
+#if MYNEWT_VAL(ADP5061_CLI_DECODE)
     console_printf("CHARGER_STATUS: %s\n",
         charger_status_desc[ADP5061_CHG_STATUS_1_GET(status_1)]);
+#else
+    console_printf("CHARGER_STATUS: %d\n",
+            ADP5061_CHG_STATUS_1_GET(status_1));
+#endif
     console_printf("VIN_OK: %d\n",
             ADP5061_CHG_STATUS_1_VIN_OK_GET(status_1));
     console_printf("VIN_OV: %d\n",
@@ -887,12 +924,22 @@ adp5061_shell_charger_status(int argc, char **argv)
         console_printf("Read charger status 1 failed %d\n", rc);
         goto err;
     }
+#if MYNEWT_VAL(ADP5061_CLI_DECODE)
     console_printf("THR_STATUS: %s\n",
             thr_status_desc[ADP5061_CHG_STATUS_2_THR_GET(status_2)]);
+#else
+    console_printf("THR_STATUS: %d\n",
+            ADP5061_CHG_STATUS_2_THR_GET(status_2));
+#endif
     console_printf("RCH_LIM_INFO: %d\n",
             ADP5061_CHG_STATUS_2_RCH_LIM_GET(status_2));
+#if MYNEWT_VAL(ADP5061_CLI_DECODE)
     console_printf("BATTERY_STATUS: %s\n",
             battery_status_desc[ADP5061_CHG_STATUS_2_BATT_GET(status_2)]);
+#else
+    console_printf("BATTERY_STATUS: %d\n",
+            ADP5061_CHG_STATUS_2_BATT_GET(status_2));
+#endif
 err:
     return rc;
 }
