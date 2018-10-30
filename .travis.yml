@@ -24,12 +24,14 @@ matrix:
       language: python
       python:
         - "3.5"
+      env:
+        - DEBUG=1
 
 before_install:
   - printenv
 
 install:
-  - pip install requests
+  - pip install requests bs4 lxml
   - git clone -b test-comment https://github.com/utzig/mynewt-travis-ci $HOME/ci
   - chmod +x $HOME/ci/*.sh
 
