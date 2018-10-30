@@ -138,7 +138,7 @@ struct os_dev {
     /** Device flags.  */
     uint8_t od_flags;
     /** Device name */
-    char *od_name;
+    const char *od_name;
     STAILQ_ENTRY(os_dev) od_next;
 };
 
@@ -182,7 +182,7 @@ int os_dev_resume(struct os_dev *dev);
  *
  * @return 0 on success, non-zero on failure.
  */
-int os_dev_create(struct os_dev *dev, char *name, uint8_t stage,
+int os_dev_create(struct os_dev *dev, const char *name, uint8_t stage,
         uint8_t priority, os_dev_init_func_t od_init, void *arg);
 
 /**
@@ -195,7 +195,7 @@ int os_dev_create(struct os_dev *dev, char *name, uint8_t stage,
  *
  * @return A pointer to the device corresponding to name, or NULL if not found.
  */
-struct os_dev *os_dev_lookup(char *name);
+struct os_dev *os_dev_lookup(const char *name);
 
 /**
  * Initialize all devices for a given state.
@@ -234,7 +234,7 @@ int os_dev_resume_all(void);
  *
  * @return 0 on success, non-zero on failure.
  */
-struct os_dev *os_dev_open(char *devname, uint32_t timo, void *arg);
+struct os_dev *os_dev_open(const char *devname, uint32_t timo, void *arg);
 
 /**
  * Close a device.
