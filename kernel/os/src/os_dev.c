@@ -23,7 +23,7 @@
 static STAILQ_HEAD(, os_dev) g_os_dev_list;
 
 static int
-os_dev_init(struct os_dev *dev, char *name, uint8_t stage,
+os_dev_init(struct os_dev *dev, const char *name, uint8_t stage,
         uint8_t priority, os_dev_init_func_t od_init, void *arg)
 {
     dev->od_name = name;
@@ -108,7 +108,7 @@ err:
 }
 
 int
-os_dev_create(struct os_dev *dev, char *name, uint8_t stage,
+os_dev_create(struct os_dev *dev, const char *name, uint8_t stage,
         uint8_t priority, os_dev_init_func_t od_init, void *arg)
 {
     int rc;
@@ -185,7 +185,7 @@ err:
 }
 
 struct os_dev *
-os_dev_lookup(char *name)
+os_dev_lookup(const char *name)
 {
     struct os_dev *dev;
 
@@ -199,7 +199,7 @@ os_dev_lookup(char *name)
 }
 
 struct os_dev *
-os_dev_open(char *devname, uint32_t timo, void *arg)
+os_dev_open(const char *devname, uint32_t timo, void *arg)
 {
     struct os_dev *dev;
     os_sr_t sr;
