@@ -90,7 +90,8 @@ uart_console_queue_char(struct uart_dev *uart_dev, uint8_t ch)
 {
     int sr;
 
-    if ((uart_dev->ud_dev.od_flags & OS_DEV_F_STATUS_OPEN) == 0) {
+    if (((uart_dev->ud_dev.od_flags & OS_DEV_F_STATUS_OPEN) == 0) ||
+	((uart_dev->ud_dev.od_flags & OS_DEV_F_STATUS_SUSPENDED) != 0)) {
         return;
     }
 
