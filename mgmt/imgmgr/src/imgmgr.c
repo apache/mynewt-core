@@ -539,6 +539,10 @@ imgr_upload_inspect(const struct imgr_upload_req *req,
             return MGMT_ERR_EINVAL;
         }
 
+        if (req->data_sha_len > IMGMGR_DATA_SHA_LEN) {
+            return MGMT_ERR_EINVAL;
+        }
+
         /*
          * If request includes proper data hash we can check whether there is
          * upload in progress (interrupted due to e.g. link disconnection) with
