@@ -410,6 +410,9 @@ oc_ri_invoke_coap_entity_handler(struct coap_packet_rx *request,
   oc_response_buffer_t response_buffer;
   oc_response_t response_obj;
   struct os_mbuf *m = NULL;
+#ifdef OC_SERVER
+  int rc;
+#endif
 
   response_buffer.buffer = NULL;
   response_buffer.block_offset = offset;
@@ -598,36 +601,33 @@ oc_ri_invoke_coap_entity_handler(struct coap_packet_rx *request,
        * requesting client as an observer.
        */
       if (observe == 0) {
-        if (coap_observe_handler(request, response, cur_resource, endpoint) ==
-            0) {
+        rc = coap_observe_handler(request, response, cur_resource, endpoint);
+        if (rc >= 0) {
+          coap_set_header_observe(response, 0);
+        }
+        if (rc == 0) {
           /* If the resource is marked as periodic observable it means
            * it must be polled internally for updates (which would lead to
            * notifications being sent). If so, add the resource to a list of
            * periodic GET callbacks to utilize the framework's internal
            * polling mechanism.
            */
-          bool set_observe_option = true;
           if (cur_resource->properties & OC_PERIODIC) {
-              os_callout_reset(&cur_resource->callout,
+            os_callout_reset(&cur_resource->callout,
                 (cur_resource->observe_period_mseconds * OS_TICKS_PER_SEC)/1000);
           }
-
-          if (set_observe_option) {
-            coap_set_header_observe(response, 0);
-          }
         }
-      }
-      /* If the observe option is set to 1, make an attempt to remove
-       * the requesting client from the list of observers. In addition,
-       * remove the resource from the list periodic GET callbacks if it
-       * is periodic observable, and this was the only observer.
-       */
-      else if (observe == 1) {
-        if (coap_observe_handler(request, response, cur_resource, endpoint) >
-            0) {
+      } else if (observe == 1) {
+        /* If the observe option is set to 1, make an attempt to remove
+         * the requesting client from the list of observers. In addition,
+         * remove the resource from the list periodic GET callbacks if it
+         * is periodic observable, and this was the only observer.
+         */
+        rc = coap_observe_handler(request, response, cur_resource, endpoint);
+        if (rc > 0) {
           if (!cur_resource->num_observers &&
               cur_resource->properties & OC_PERIODIC) {
-              os_callout_stop(&cur_resource->callout);
+            os_callout_stop(&cur_resource->callout);
           }
         }
       }
