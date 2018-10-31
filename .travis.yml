@@ -31,7 +31,7 @@ before_install:
   - printenv
 
 install:
-  - pip install requests bs4 lxml
+  - pip install requests
   - git clone -b test-comment https://github.com/utzig/mynewt-travis-ci $HOME/ci
   - chmod +x $HOME/ci/*.sh
 
