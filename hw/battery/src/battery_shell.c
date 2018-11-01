@@ -29,8 +29,6 @@
 
 static int bat_compat_cmd(int argc, char **argv);
 
-struct os_dev *bat;
-
 #if MYNEWT_VAL(SHELL_CMD_HELP)
 #define HELP(a) &(a)
 
@@ -183,16 +181,38 @@ static void print_property(const struct battery_property *prop)
     }
 }
 
+static struct os_dev *
+battery_shell_open_dev(void)
+{
+    struct os_dev *bat;
+
+    bat = os_dev_open("battery_0", 0, NULL);
+    if (bat == NULL) {
+        console_printf("Failed to open battery device\n");
+    }
+
+    return bat;
+}
+
 static int cmd_bat_read(int argc, char **argv)
 {
     int rc;
     int maxp;
     int i;
     struct battery_property *prop;
+    struct os_dev *bat;
+
+    bat = NULL;
 
     if (argc < 2) {
         console_printf("Invalid number of arguments, use read <prop>\n");
         rc = SYS_EINVAL;
+        goto err;
+    }
+
+    bat = battery_shell_open_dev();
+    if (bat == NULL) {
+        rc = SYS_ENODEV;
         goto err;
     }
 
@@ -229,6 +249,9 @@ static int cmd_bat_read(int argc, char **argv)
     rc = 0;
 
 err:
+    if (bat != NULL) {
+        os_dev_close(bat);
+    }
     return rc;
 }
 
@@ -256,11 +279,20 @@ cmd_bat_write(int argc, char ** argv)
     long long min;
     long long max;
     struct battery_property *prop;
+    struct os_dev *bat;
     long long int val;
+
+    bat = NULL;
 
     if (argc < 3) {
         console_printf("Invalid number of arguments, use write <prop> <value>\n");
         rc = SYS_EINVAL;
+        goto err;
+    }
+
+    bat = battery_shell_open_dev();
+    if (bat == NULL) {
+        rc = SYS_ENODEV;
         goto err;
     }
 
@@ -304,33 +336,63 @@ cmd_bat_write(int argc, char ** argv)
     rc = 0;
 
 err:
+    if (bat != NULL) {
+        os_dev_close(bat);
+    }
     return rc;
 }
 
 static int cmd_bat_list(int argc, char **argv)
 {
     int i;
-    int max = battery_get_property_count(bat, NULL);
+    int max;
     struct battery_property *prop;
+    struct os_dev *bat;
     char name[20];
+    int rc;
 
+    bat = NULL;
+
+    bat = battery_shell_open_dev();
+    if (bat == NULL) {
+        rc = SYS_ENODEV;
+        goto err;
+    }
+
+    max = battery_get_property_count(bat, NULL);
     for (i = 0; i < max; ++i) {
         prop = battery_enum_property(bat, NULL, i);
         if (prop) {
             console_printf(" %s\n", battery_prop_get_name(prop, name, 20));
         }
     }
-    return 0;
+
+    rc = 0;
+
+err:
+    if (bat != NULL) {
+        os_dev_close(bat);
+    }
+    return rc;
 }
 
 static int cmd_bat_poll_rate(int argc, char **argv)
 {
     int rc;
     uint32_t rate_in_s;
+    struct os_dev *bat;
+
+    bat = NULL;
 
     if (argc < 2) {
         console_printf("Missing poll rate argument\n");
         rc = SYS_EINVAL;
+        goto err;
+    }
+
+    bat = battery_shell_open_dev();
+    if (bat == NULL) {
+        rc = SYS_ENODEV;
         goto err;
     }
 
@@ -343,6 +405,9 @@ static int cmd_bat_poll_rate(int argc, char **argv)
     rc = battery_set_poll_rate_ms(bat, rate_in_s * 1000);
 
 err:
+    if (bat != NULL) {
+        os_dev_close(bat);
+    }
     return rc;
 }
 
@@ -362,10 +427,19 @@ static int cmd_bat_monitor(int argc, char **argv)
 {
     int rc;
     struct battery_property *prop;
+    struct os_dev *bat;
+
+    bat = NULL;
 
     if (argc < 2) {
         console_printf("Invalid number of arguments, use monitor <prop_nam>\n");
         rc = SYS_EINVAL;
+        goto err;
+    }
+
+    bat = battery_shell_open_dev();
+    if (bat == NULL) {
+        rc = SYS_ENODEV;
         goto err;
     }
 
@@ -393,6 +467,9 @@ static int cmd_bat_monitor(int argc, char **argv)
     rc = battery_prop_poll_subscribe(&listener, prop);
 
 err:
+    if (bat != NULL) {
+        os_dev_close(bat);
+    }
     return rc;
 }
 
@@ -460,7 +537,4 @@ battery_shell_register(void)
     rc = shell_register("bat", bat_cli_commands);
     rc = shell_cmd_register(&bat_cli_cmd);
     SYSINIT_PANIC_ASSERT_MSG(rc == 0, "Failed to register battery shell");
-
-    bat = os_dev_open("battery_0", 0, NULL);
-    SYSINIT_PANIC_ASSERT_MSG(bat != NULL, "Failed to open battery device");
 }
