@@ -185,13 +185,14 @@ static void print_property(const struct battery_property *prop)
 
 static int cmd_bat_read(int argc, char **argv)
 {
-    int rc = 0;
+    int rc;
     int maxp;
     int i;
     struct battery_property *prop;
 
     if (argc < 2) {
         console_printf("Invalid number of arguments, use read <prop>\n");
+        rc = SYS_EINVAL;
         goto err;
     }
 
@@ -202,6 +203,7 @@ static int cmd_bat_read(int argc, char **argv)
             battery_prop_get_value(prop);
             if (!prop->bp_valid) {
                 console_printf("Error reading property\n");
+                rc = SYS_EIO;
                 goto err;
             }
             print_property(prop);
@@ -211,16 +213,21 @@ static int cmd_bat_read(int argc, char **argv)
             prop = battery_find_property_by_name(bat, argv[i]);
             if (prop == NULL) {
                 console_printf("Invalid property name %s\n", argv[i]);
+                rc = SYS_EINVAL;
                 goto err;
             }
             battery_prop_get_value(prop);
             if (!prop->bp_valid) {
                 console_printf("Error reading property\n");
+                rc = SYS_EIO;
                 goto err;
             }
             print_property(prop);
         }
     }
+
+    rc = 0;
+
 err:
     return rc;
 }
@@ -245,7 +252,7 @@ get_min_max(const struct battery_property *prop, long long *min, long long *max)
 static int
 cmd_bat_write(int argc, char ** argv)
 {
-    int rc = 0;
+    int rc;
     long long min;
     long long max;
     struct battery_property *prop;
@@ -253,37 +260,49 @@ cmd_bat_write(int argc, char ** argv)
 
     if (argc < 3) {
         console_printf("Invalid number of arguments, use write <prop> <value>\n");
+        rc = SYS_EINVAL;
         goto err;
     }
 
     prop = battery_find_property_by_name(bat, argv[1]);
     if (prop == NULL) {
         console_printf("Invalid property name %s\n", argv[1]);
+        rc = SYS_EINVAL;
         goto err;
     }
+
     if (get_min_max(prop, &min, &max)) {
         console_printf("Property %s can not be set\n", argv[1]);
+        rc = SYS_EIO;
         goto err;
     }
+
     val = parse_ll_bounds(argv[2], min, max, &rc);
     if (rc) {
         console_printf("Property value not in range <%lld, %lld>\n", min, max);
         rc = 0;
         goto err;
     }
+
     if (prop->bp_type == BATTERY_PROP_VOLTAGE_NOW &&
             (prop->bp_flags & BATTERY_PROPERTY_FLAGS_ALARM_THREASH) != 0) {
-        battery_prop_set_value_uint32(prop, (uint32_t)val);
+        rc = battery_prop_set_value_uint32(prop, (uint32_t)val);
     } else if (prop->bp_type == BATTERY_PROP_TEMP_NOW &&
             (prop->bp_flags & BATTERY_PROPERTY_FLAGS_ALARM_THREASH) != 0) {
-        battery_prop_set_value_float(prop, val);
+        rc = battery_prop_set_value_float(prop, val);
     } else {
         console_printf("Property %s can't be written!\n", argv[1]);
+        rc = SYS_EINVAL;
+        goto err;
     }
     if (!prop->bp_valid) {
         console_printf("Error writing property!\n");
+        rc = SYS_EIO;
         goto err;
     }
+
+    rc = 0;
+
 err:
     return rc;
 }
@@ -309,17 +328,22 @@ static int cmd_bat_poll_rate(int argc, char **argv)
     int rc;
     uint32_t rate_in_s;
 
-    if (argc == 2) {
-        rate_in_s = (uint32_t)parse_ull_bounds(argv[1], 1, 255, &rc);
-        if (rc) {
-            console_printf("Invalid poll rate, use 1..255\n");
-        } else {
-            battery_set_poll_rate_ms(bat, rate_in_s * 1000);
-        }
-    } else {
+    if (argc < 2) {
         console_printf("Missing poll rate argument\n");
+        rc = SYS_EINVAL;
+        goto err;
     }
-    return 0;
+
+    rate_in_s = (uint32_t)parse_ull_bounds(argv[1], 1, 255, &rc);
+    if (rc) {
+        console_printf("Invalid poll rate, use 1..255\n");
+        goto err;
+    }
+
+    rc = battery_set_poll_rate_ms(bat, rate_in_s * 1000);
+
+err:
+    return rc;
 }
 
 static int bat_property(struct battery_prop_listener *listener,
@@ -336,34 +360,37 @@ static struct battery_prop_listener listener = {
 
 static int cmd_bat_monitor(int argc, char **argv)
 {
-    int rc = 0;
+    int rc;
     struct battery_property *prop;
 
     if (argc < 2) {
         console_printf("Invalid number of arguments, use monitor <prop_nam>\n");
+        rc = SYS_EINVAL;
         goto err;
     }
 
     prop = battery_find_property_by_name(bat, argv[1]);
     if (prop == NULL) {
         if (strcmp(argv[1], "off") == 0) {
-            battery_prop_poll_unsubscribe(&listener, NULL);
+            rc = battery_prop_poll_unsubscribe(&listener, NULL);
             goto err;
         }
         console_printf("Invalid property name\n");
+        rc = SYS_EINVAL;
         goto err;
     }
 
     if (argc == 3) {
         if (strcmp(argv[2], "off") == 0) {
-            battery_prop_poll_unsubscribe(&listener, prop);
+            rc = battery_prop_poll_unsubscribe(&listener, prop);
             goto err;
         } else if (strcmp(argv[2], "on") != 0) {
             console_printf("Invalid parameter %s\n", argv[2]);
+            rc = SYS_EINVAL;
             goto err;
         }
     }
-    battery_prop_poll_subscribe(&listener, prop);
+    rc = battery_prop_poll_subscribe(&listener, prop);
 
 err:
     return rc;
@@ -394,19 +421,26 @@ static int bat_compat_cmd(int argc, char **argv)
     int rc;
     int i;
 
-    for (i = 0; bat_cli_commands[i].sc_cmd; ++i)
+    if (argc < 2)
     {
-        if (strcmp(bat_cli_commands[i].sc_cmd, argv[1]) == 0)
-        {
-            rc = bat_cli_commands[i].sc_cmd_func(argc - 1, argv + 1);
-            break;
-        }
+        rc = SYS_EINVAL;
     }
-    /* No command found */
-    if (bat_cli_commands[i].sc_cmd == NULL)
+    else
     {
-        console_printf("Invalid command.\n");
-        rc = -1;
+        for (i = 0; bat_cli_commands[i].sc_cmd; ++i)
+        {
+            if (strcmp(bat_cli_commands[i].sc_cmd, argv[1]) == 0)
+            {
+                rc = bat_cli_commands[i].sc_cmd_func(argc - 1, argv + 1);
+                break;
+            }
+        }
+        /* No command found */
+        if (bat_cli_commands[i].sc_cmd == NULL)
+        {
+            console_printf("Invalid command.\n");
+            rc = -1;
+        }
     }
 
     /* Print help in case of error */
