@@ -145,6 +145,14 @@ int mbedtls_gcm_setkey( mbedtls_gcm_context *ctx,
                         unsigned int keybits );
 
 /**
+ * Same as above, but with preallocated memory for cipher algorithm context
+ */
+int mbedtls_gcm_setkey_noalloc( mbedtls_gcm_context *ctx,
+                                const mbedtls_cipher_info_t *cipher_info,
+                                const unsigned char *key,
+                                void *cipher_ctx);
+
+/**
  * \brief           This function performs GCM encryption or decryption of a buffer.
  *
  * \note            For encryption, the output buffer can be the same as the

@@ -238,6 +238,41 @@ int mbedtls_gcm_setkey( mbedtls_gcm_context *ctx,
     return( 0 );
 }
 
+int mbedtls_gcm_setkey_noalloc( mbedtls_gcm_context *ctx,
+                                const mbedtls_cipher_info_t *cipher_info,
+                                const unsigned char *key,
+                                void *cipher_ctx)
+{
+    int ret;
+
+    ctx->cipher_ctx.cipher_info = cipher_info;
+    ctx->cipher_ctx.cipher_ctx = cipher_ctx;
+#if defined(MBEDTLS_CIPHER_MODE_WITH_PADDING)
+    /*
+     * Ignore possible errors caused by a cipher mode that doesn't use padding
+     */
+#if defined(MBEDTLS_CIPHER_PADDING_PKCS7)
+    (void) mbedtls_cipher_set_padding_mode( &ctx->cipher_ctx,
+                               MBEDTLS_PADDING_PKCS7 );
+#else
+    (void) mbedtls_cipher_set_padding_mode( &ctx->cipher_ctx,
+                               MBEDTLS_PADDING_NONE );
+#endif
+#endif /* MBEDTLS_CIPHER_MODE_WITH_PADDING */
+
+    if( ( ret = mbedtls_cipher_setkey( &ctx->cipher_ctx, key,
+                               cipher_info->key_bitlen,
+                               MBEDTLS_ENCRYPT ) ) != 0 )
+    {
+        return( ret );
+    }
+
+    if( ( ret = gcm_gen_table( ctx ) ) != 0 )
+        return( ret );
+
+    return( 0 );
+}
+
 /*
  * Shoup's method for multiplication use this table with
  *      last4[x] = x times P^128
