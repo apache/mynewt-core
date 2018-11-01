@@ -151,23 +151,6 @@ battery_pkg_init(void)
 }
 
 int
-battery_mgr_register(struct battery *battery)
-{
-    int i;
-
-    os_mutex_pend(&battery_manager.bm_lock, OS_WAIT_FOREVER);
-
-    for (i = 0; i < BATTERY_MAX_COUNT; ++i) {
-        if (battery_manager.bm_batteries[i] == NULL) {
-            battery_manager.bm_batteries[i] = battery;
-        }
-    }
-    os_mutex_release(&battery_manager.bm_lock);
-
-    return 0;
-}
-
-int
 battery_mgr_get_battery_count(void)
 {
     int i;
