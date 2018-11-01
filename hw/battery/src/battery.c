@@ -791,11 +791,14 @@ battery_init(struct os_dev *dev, void *arg)
 
     OS_DEV_SETHANDLERS(dev, battery_open, battery_close);
 
+    os_mutex_pend(&battery_manager.bm_lock, OS_WAIT_FOREVER);
     for (i = 0; i < BATTERY_MAX_COUNT; ++i) {
         if (battery_manager.bm_batteries[i] == NULL) {
             break;
         }
     }
+    os_mutex_release(&battery_manager.bm_lock);
+
     assert(i < BATTERY_MAX_COUNT);
     battery_manager.bm_batteries[i] = bat;
 
