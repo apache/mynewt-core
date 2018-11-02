@@ -92,7 +92,8 @@ const struct hal_flash nrf52k_qspi_dev = {
     .hf_base_addr = 0x00000000,
     .hf_size = MYNEWT_VAL(QSPI_FLASH_SECTOR_COUNT) * MYNEWT_VAL(QSPI_FLASH_SECTOR_SIZE),
     .hf_sector_cnt = MYNEWT_VAL(QSPI_FLASH_SECTOR_COUNT),
-    .hf_align = 1
+    .hf_align = 1,
+    .hf_erased_val = 0xff,
 };
 
 static int

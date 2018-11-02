@@ -83,6 +83,7 @@ static struct at45db_dev at45db_default_dev = {
         .hf_size       = 8192 * 512,  /* FIXME: depends on page size */
         .hf_sector_cnt = 8192,
         .hf_align      = 0,
+        .hf_erased_val = 0xff,
     },
 
     /* SPI settings + updates baudrate on _init */
