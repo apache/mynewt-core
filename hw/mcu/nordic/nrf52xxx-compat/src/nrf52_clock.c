@@ -16,6 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+#include <assert.h>
 #include "mcu/nrf52_hal.h"
 
 static uint8_t nrf52_clock_hfxo_refcnt;
@@ -69,4 +70,6 @@ nrf52_clock_hfxo_release(void)
         stopped = 1;
     }
     __HAL_ENABLE_INTERRUPTS(ctx);
+
+    return stopped;
 }
