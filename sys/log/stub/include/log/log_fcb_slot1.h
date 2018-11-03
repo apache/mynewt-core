@@ -25,7 +25,7 @@
 #if MYNEWT_VAL(LOG_FCB_SLOT1)
 
 #include "log/log.h"
-#include "fcb/fcb.h"
+struct fcb_log;
 
 #ifdef __cplusplus
 extern "C" {
