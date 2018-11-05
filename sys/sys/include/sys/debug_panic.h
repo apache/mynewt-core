@@ -28,4 +28,10 @@
 #define DEBUG_PANIC()
 #endif
 
+#if MYNEWT_VAL(DEBUG_PANIC_ENABLED)
+#define DEBUG_ASSERT(expr) ((expr) ? (void)0 : OS_CRASH())
+#else
+#define DEBUG_ASSERT(expr)
+#endif
+
 #endif
