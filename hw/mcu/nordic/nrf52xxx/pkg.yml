@@ -67,3 +67,11 @@ pkg.deps.PWM_2:
 
 pkg.deps.PWM_3:
     - "@apache-mynewt-core/hw/drivers/pwm/pwm_nrf52"
+
+pkg.deps.I2C_0:
+    - "@apache-mynewt-core/hw/bus"
+    - "@apache-mynewt-core/hw/bus/i2c"
+
+pkg.deps.I2C_1:
+    - "@apache-mynewt-core/hw/bus"
+    - "@apache-mynewt-core/hw/bus/i2c"
