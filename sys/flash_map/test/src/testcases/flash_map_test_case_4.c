@@ -98,7 +98,7 @@ TEST_CASE(flash_map_test_case_4)
             TEST_ASSERT(new_max <= sec_cnt / j);
 
             printf(" %d/%d -> %d %x\n",
-                   sec_cnt, j, new_max, cmp_secs[0].fa_size);
+              sec_cnt, j, new_max, (unsigned)cmp_secs[0].fa_size);
 
             rc = flash_map_test_case_4_chk_areas(cmp_secs, new_max, fap);
             TEST_ASSERT(rc == 0);
