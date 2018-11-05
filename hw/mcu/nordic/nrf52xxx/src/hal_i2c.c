@@ -310,6 +310,106 @@ err:
     return (rc);
 }
 
+static inline NRF_TWI_Type *
+hal_i2c_get_regs(uint8_t i2c_num)
+{
+    struct nrf52_hal_i2c *i2c;
+    int rc;
+
+    rc = hal_i2c_resolve(i2c_num, &i2c);
+    if (rc != 0) {
+        return NULL;
+    }
+
+    return i2c->nhi_regs;
+}
+
+int
+hal_i2c_init_hw(uint8_t i2c_num, const struct hal_i2c_hw_settings *cfg)
+{
+    NRF_TWI_Type *regs;
+    NRF_GPIO_Type *port;
+    int index;
+
+    regs = hal_i2c_get_regs(i2c_num);
+    if (!regs) {
+        return HAL_I2C_ERR_INVAL;
+    }
+
+    regs->ENABLE = TWI_ENABLE_ENABLE_Disabled;
+
+    port = HAL_GPIO_PORT(cfg->pin_scl);
+    index = HAL_GPIO_INDEX(cfg->pin_scl);
+    port->PIN_CNF[index] = NRF52_SCL_PIN_CONF;
+
+    port = HAL_GPIO_PORT(cfg->pin_sda);
+    index = HAL_GPIO_INDEX(cfg->pin_sda);
+    port->PIN_CNF[index] = NRF52_SDA_PIN_CONF;
+
+    regs->PSELSCL = cfg->pin_scl;
+    regs->PSELSDA = cfg->pin_sda;
+    regs->FREQUENCY = TWI_FREQUENCY_FREQUENCY_K100;
+
+    return 0;
+}
+
+static int
+hal_i2c_set_enabled(uint8_t i2c_num, bool enabled)
+{
+    NRF_TWI_Type *regs;
+
+    regs = hal_i2c_get_regs(i2c_num);
+    if (!regs) {
+        return HAL_I2C_ERR_INVAL;
+    }
+
+    regs->ENABLE = enabled ? TWI_ENABLE_ENABLE_Enabled : TWI_ENABLE_ENABLE_Disabled;
+
+    return 0;
+}
+
+int
+hal_i2c_enable(uint8_t i2c_num)
+{
+    return hal_i2c_set_enabled(i2c_num, 1);
+}
+
+int
+hal_i2c_disable(uint8_t i2c_num)
+{
+    return hal_i2c_set_enabled(i2c_num, 0);
+}
+
+int
+hal_i2c_config(uint8_t i2c_num, const struct hal_i2c_settings *cfg)
+{
+    NRF_TWI_Type *regs;
+    int freq;
+
+    regs = hal_i2c_get_regs(i2c_num);
+    if (!regs) {
+        return HAL_I2C_ERR_INVAL;
+    }
+
+    switch (cfg->frequency) {
+    case 100:
+        freq = TWI_FREQUENCY_FREQUENCY_K100;
+        break;
+    case 250:
+        freq = TWI_FREQUENCY_FREQUENCY_K250;
+        break;
+    case 400:
+        freq = TWI_FREQUENCY_FREQUENCY_K400;
+        break;
+    default:
+        return HAL_I2C_ERR_INVAL;
+    }
+
+    regs->FREQUENCY = freq;
+
+    return 0;
+}
+
 int
 hal_i2c_master_write(uint8_t i2c_num, struct hal_i2c_master_data *pdata,
                      uint32_t timo, uint8_t last_op)
