@@ -24,6 +24,10 @@
 #include "hal/hal_i2c.h"
 #include "hal/hal_spi.h"
 #include "bsp/bsp.h"
+#if MYNEWT_VAL(I2C_0) || MYNEWT_VAL(I2C_1)
+#include "bus/bus.h"
+#include "bus/i2c.h"
+#endif
 #include "nrfx.h"
 #if MYNEWT_VAL(ADC_0)
 #include "adc/adc.h"
@@ -86,18 +90,36 @@ static const struct nrf52_uart_cfg os_bsp_uart1_cfg = {
 #endif
 
 #if MYNEWT_VAL(I2C_0)
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+static const struct bus_i2c_dev_cfg i2c0_cfg = {
+    .i2c_num = 0,
+    .pin_sda = MYNEWT_VAL(I2C_0_PIN_SDA),
+    .pin_scl = MYNEWT_VAL(I2C_0_PIN_SCL),
+};
+static struct bus_i2c_dev i2c0_bus;
+#else
 static const struct nrf52_hal_i2c_cfg hal_i2c0_cfg = {
     .scl_pin = MYNEWT_VAL(I2C_0_PIN_SCL),
     .sda_pin = MYNEWT_VAL(I2C_0_PIN_SDA),
     .i2c_frequency = MYNEWT_VAL(I2C_0_FREQ_KHZ),
 };
 #endif
+#endif
 #if MYNEWT_VAL(I2C_1)
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+static const struct bus_i2c_dev_cfg i2c1_cfg = {
+    .i2c_num = 1,
+    .pin_sda = MYNEWT_VAL(I2C_1_PIN_SDA),
+    .pin_scl = MYNEWT_VAL(I2C_1_PIN_SCL),
+};
+static struct bus_i2c_dev i2c1_bus;
+#else
 static const struct nrf52_hal_i2c_cfg hal_i2c1_cfg = {
     .scl_pin = MYNEWT_VAL(I2C_1_PIN_SCL),
     .sda_pin = MYNEWT_VAL(I2C_1_PIN_SDA),
     .i2c_frequency = MYNEWT_VAL(I2C_1_FREQ_KHZ),
 };
+#endif
 #endif
 
 #if MYNEWT_VAL(SPI_0_MASTER)
@@ -279,12 +301,22 @@ nrf52_periph_create_i2c(void)
     (void)rc;
 
 #if MYNEWT_VAL(I2C_0)
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    rc = bus_i2c_dev_create("i2c0", &i2c0_bus, (struct bus_i2c_dev_cfg *)&i2c0_cfg);
+    assert(rc == 0);
+#else
     rc = hal_i2c_init(0, (void *)&hal_i2c0_cfg);
     assert(rc == 0);
 #endif
+#endif
 #if MYNEWT_VAL(I2C_1)
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    rc = bus_i2c_dev_create("i2c1", &i2c1_bus, (struct bus_i2c_dev_cfg *)&i2c1_cfg);
+    assert(rc == 0);
+#else
     rc = hal_i2c_init(1, (void *)&hal_i2c1_cfg);
     assert(rc == 0);
+#endif
 #endif
 }
 
