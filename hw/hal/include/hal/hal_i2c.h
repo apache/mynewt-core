@@ -79,6 +79,18 @@ extern "C" {
 /** Slave responded to data byte with NACK. */
 #define HAL_I2C_ERR_DATA_NACK           5
 
+/** I2C controller hardware settings */
+struct hal_i2c_hw_settings {
+    int pin_scl;
+    int pin_sda;
+};
+
+/** I2C configuration */
+struct hal_i2c_settings {
+    /** Frequency in kHz */
+    uint32_t frequency;
+};
+
 /**
  * When sending a packet, use this structure to pass the arguments.
  */
@@ -111,6 +123,52 @@ struct hal_i2c_master_data {
  * @return 0 on success, and non-zero error code on failure
  */
 int hal_i2c_init(uint8_t i2c_num, void *cfg);
+
+/**
+ * Initialize I2C controller
+ *
+ * This initializes I2C controller hardware before 1st use. Shall be called
+ * only once.
+ *
+ * @param i2c_num  Number of I2C controller
+ * @param cfg      Configuration
+ *
+ * @return 0 on success, non-zero error code on failure
+ */
+int hal_i2c_init_hw(uint8_t i2c_num, const struct hal_i2c_hw_settings *cfg);
+
+/**
+ * Enable I2C controller
+ *
+ * This enables I2C controller before usage.
+ *
+ * @param i2c_num  Number of I2C controller
+ *
+ * @return 0 on success, non-zero error code on failure
+ */
+int hal_i2c_enable(uint8_t i2c_num);
+
+/**
+ * Disable I2C controller
+ *
+ * This disabled I2C controller if no longer needed. Hardware configuration
+ * be preserved after controller is disabled.
+ *
+ * @param i2c_num  Number of I2C controller
+ *
+ * @return 0 on success, non-zero error code on failure
+ */
+int hal_i2c_disable(uint8_t i2c_num);
+
+/**
+ * Configure I2C controller
+ *
+ * This configures I2C controller for operation. Can be called multiple times.
+ *
+ * @param i2c_num  Number of I2C controller
+ * @param cfg      Configuration
+ */
+int hal_i2c_config(uint8_t i2c_num, const struct hal_i2c_settings *cfg);
 
 /**
  * Sends a start condition and writes <len> bytes of data on the i2c bus.
