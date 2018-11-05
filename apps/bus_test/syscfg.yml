@@ -1,0 +1,62 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+syscfg.defs:
+    APP_USE_BME280_NODE:
+        value: 1
+        restrictions:
+            - '!APP_USE_BME280_SENSOR'
+    APP_USE_LIS2DH_NODE:
+        value: 1
+    APP_USE_BME280_SENSOR:
+        value: 0
+        restrictions:
+            - '!APP_USE_BME280_NODE'
+
+    BME280_NODE_BUS_NAME:
+        description: Name of bus device where BME280 is attached
+        value: '"i2c0"'
+    BME280_NODE_I2C_ADDRESS:
+        description: I2C address of BME280 device
+        value: 0x76
+    BME280_NODE_I2C_FREQUENCY:
+        description: I2C frequency [kHz] to use for BME280
+        value: 100
+    BME280_NODE_SPI_FREQUENCY:
+        description: SPI frequency [kHz] to use for BME280
+        value: 4000
+    BME280_NODE_SPI_CS_PIN:
+        description: Chip select pin for BME280
+        value: 35
+
+    LIS2DH_NODE_BUS_NAME:
+        description: Name of bus device where LIS2DH is attached
+        value: '"i2c0"'
+    LIS2DH_NODE_I2C_ADDRESS:
+        description: I2C address of LIS2DH device
+        value: 0x18
+    LIS2DH_NODE_I2C_FREQUENCY:
+        description: I2C frequency [kHz] to use for LIS2DH
+        value: 400
+
+
+syscfg.vals:
+    BUS_DEBUG_OS_DEV: 1
+    FLOAT_USER: 1
+    SENSOR_CLI: 1
+    SHELL_TASK: 1
