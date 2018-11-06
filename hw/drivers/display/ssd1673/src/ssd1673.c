@@ -4,19 +4,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#define LOG_LEVEL CONFIG_DISPLAY_LOG_LEVEL
-#include <logging/log.h>
-LOG_MODULE_REGISTER(ssd1673);
+#include <stdint.h>
 
-#include <string.h>
-#include <device.h>
-#include <display.h>
-#include <init.h>
-#include <gpio.h>
-#include <spi.h>
+#include "os/mynewt.h"
+#include "hal/hal_gpio.h"
+#include "hal/hal_spi.h"
+#include "modlog/modlog.h"
+
+#include "display/display.h"
+#include "display/cfb.h"
 
 #include "ssd1673_regs.h"
-#include <display/cfb.h>
 
 #define EPD_PANEL_WIDTH			250
 #define EPD_PANEL_HEIGHT		120
@@ -31,76 +29,87 @@ LOG_MODULE_REGISTER(ssd1673);
 #define SSD1673_PANEL_LAST_GATE		249
 
 struct ssd1673_data {
-	struct device *reset;
-	struct device *dc;
-	struct device *busy;
-	struct device *spi_dev;
-	struct spi_config spi_config;
-#if defined(CONFIG_SSD1673_SPI_GPIO_CS)
-	struct spi_cs_control cs_ctrl;
-#endif
-	u8_t contrast;
-	u8_t scan_mode;
-	u8_t last_lut;
-	u8_t numof_part_cycles;
+	struct display_driver_api driver_api;
+	struct hal_spi_settings spi_config;
+	uint8_t contrast;
+	uint8_t scan_mode;
+	uint8_t last_lut;
+	uint8_t numof_part_cycles;
 };
+
+static struct ssd1673_data ssd1673_driver;
+static struct os_dev ssd1673;
 
 #define SSD1673_LAST_LUT_INITIAL		0
 #define SSD1673_LAST_LUT_DEFAULT		255
 #define SSD1673_LUT_SIZE			29
 
-static u8_t ssd1673_lut_initial[SSD1673_LUT_SIZE] = {
+static uint8_t ssd1673_lut_initial[SSD1673_LUT_SIZE] = {
 	0x22, 0x55, 0xAA, 0x55, 0xAA, 0x55, 0xAA, 0x11,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x1E, 0x1E, 0x1E, 0x1E, 0x1E, 0x1E, 0x1E, 0x1E,
 	0x01, 0x00, 0x00, 0x00, 0x00
 };
 
-static u8_t ssd1673_lut_default[SSD1673_LUT_SIZE] = {
+static uint8_t ssd1673_lut_default[SSD1673_LUT_SIZE] = {
 	0x18, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x0F, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00
 };
 
-static inline int ssd1673_write_cmd(struct ssd1673_data *driver,
-				    u8_t cmd, u8_t *data, size_t len)
-{
-	struct spi_buf buf = {.buf = &cmd, .len = sizeof(cmd)};
-	struct spi_buf_set buf_set = {.buffers = &buf, .count = 1};
+#define SSD1673_BUSY_DELAY_TICKS os_time_ms_to_ticks32(SSD1673_BUSY_DELAY)
+#define SSD1673_RESET_DELAY_TICKS os_time_ms_to_ticks32(SSD1673_RESET_DELAY)
 
-	gpio_pin_write(driver->dc, CONFIG_SSD1673_DC_PIN, 0);
-	if (spi_write(driver->spi_dev, &driver->spi_config, &buf_set)) {
+#define CONFIG_SSD1673_OS_DEV_NAME	MYNEWT_VAL(SSD1673_OS_DEV_NAME)
+#define CONFIG_SSD1673_BUSY_PIN		MYNEWT_VAL(SSD1673_BUSY_PIN)
+#define CONFIG_SSD1673_RESET_PIN	MYNEWT_VAL(SSD1673_RESET_PIN)
+#define CONFIG_SSD1673_DC_PIN		MYNEWT_VAL(SSD1673_DC_PIN)
+#define CONFIG_SSD1673_CS_PIN		MYNEWT_VAL(SSD1673_CS_PIN)
+#define CONFIG_SSD1673_SPI_FREQ		MYNEWT_VAL(SSD1673_SPI_FREQ)
+#define CONFIG_SSD1673_SPI_DEV		MYNEWT_VAL(SSD1673_SPI_DEV)
+
+static inline int ssd1673_write_cmd(struct ssd1673_data *driver,
+				    uint8_t cmd, uint8_t *data, size_t len)
+{
+	hal_gpio_write(CONFIG_SSD1673_DC_PIN, 0);
+	hal_gpio_write(CONFIG_SSD1673_CS_PIN, 0);
+
+	if (hal_spi_txrx(CONFIG_SSD1673_SPI_DEV,
+			 &cmd, NULL, sizeof(cmd))) {
+		hal_gpio_write(CONFIG_SSD1673_CS_PIN, 1);
 		return -1;
 	}
 
 	if (data != NULL) {
-		buf.buf = data;
-		buf.len = len;
-		gpio_pin_write(driver->dc, CONFIG_SSD1673_DC_PIN, 1);
-		if (spi_write(driver->spi_dev, &driver->spi_config, &buf_set)) {
+		hal_gpio_write(CONFIG_SSD1673_DC_PIN, 1);
+		if (hal_spi_txrx(CONFIG_SSD1673_SPI_DEV,
+				 data, NULL, len)) {
+			hal_gpio_write(CONFIG_SSD1673_CS_PIN, 1);
 			return -1;
 		}
 	}
 
+	hal_gpio_write(CONFIG_SSD1673_CS_PIN, 1);
 	return 0;
 }
 
 static inline void ssd1673_busy_wait(struct ssd1673_data *driver)
 {
-	u32_t val = 0;
+	int val = 0;
 
-	gpio_pin_read(driver->busy, CONFIG_SSD1673_BUSY_PIN, &val);
+	val = hal_gpio_read(CONFIG_SSD1673_BUSY_PIN);
 	while (val) {
-		k_busy_wait(SSD1673_BUSY_DELAY);
-		gpio_pin_read(driver->busy, CONFIG_SSD1673_BUSY_PIN, &val);
+		os_cputime_delay_ticks(SSD1673_BUSY_DELAY_TICKS);
+		val = hal_gpio_read(CONFIG_SSD1673_BUSY_PIN);
 	};
 }
 
 static inline int ssd1673_set_ram_param(struct ssd1673_data *driver,
-					u8_t sx, u8_t ex, u8_t sy, u8_t ey)
+					uint8_t sx, uint8_t ex,
+					uint8_t sy, uint8_t ey)
 {
-	u8_t tmp[2];
+	uint8_t tmp[2];
 
 	tmp[0] = sx; tmp[1] = ex;
 	if (ssd1673_write_cmd(driver, SSD1673_CMD_RAM_XPOS_CTRL,
@@ -118,7 +127,7 @@ static inline int ssd1673_set_ram_param(struct ssd1673_data *driver,
 }
 
 static inline int ssd1673_set_ram_ptr(struct ssd1673_data *driver,
-				       u8_t x, u8_t y)
+				       uint8_t x, uint8_t y)
 {
 	if (ssd1673_write_cmd(driver, SSD1673_CMD_RAM_XPOS_CNTR,
 			      &x, sizeof(x))) {
@@ -143,10 +152,10 @@ static inline void ssd1673_set_orientation(struct ssd1673_data *driver)
 #endif
 }
 
-int ssd1673_resume(const struct device *dev)
+int ssd1673_resume(const struct os_dev *dev)
 {
-	struct ssd1673_data *driver = dev->driver_data;
-	u8_t tmp;
+	struct ssd1673_data *driver = dev->od_init_arg;
+	uint8_t tmp;
 
 	/*
 	 * Uncomment for voltage measurement
@@ -160,19 +169,19 @@ int ssd1673_resume(const struct device *dev)
 				 &tmp, sizeof(tmp));
 }
 
-static int ssd1673_suspend(const struct device *dev)
+static int ssd1673_suspend(const struct os_dev *dev)
 {
-	struct ssd1673_data *driver = dev->driver_data;
-	u8_t tmp = SSD1673_SLEEP_MODE_DSM;
+	struct ssd1673_data *driver = dev->od_init_arg;
+	uint8_t tmp = SSD1673_SLEEP_MODE_DSM;
 
 	return ssd1673_write_cmd(driver, SSD1673_CMD_SLEEP_MODE,
 				 &tmp, sizeof(tmp));
 }
 
-static int ssd1673_update_display(const struct device *dev, bool initial)
+static int ssd1673_update_display(const struct os_dev *dev, bool initial)
 {
-	struct ssd1673_data *driver = dev->driver_data;
-	u8_t tmp;
+	struct ssd1673_data *driver = dev->od_init_arg;
+	uint8_t tmp;
 
 	tmp = SSD1673_CTRL1_INITIAL_UPDATE_LH;
 	if (ssd1673_write_cmd(driver, SSD1673_CMD_UPDATE_CTRL1,
@@ -219,35 +228,33 @@ static int ssd1673_update_display(const struct device *dev, bool initial)
 	return 0;
 }
 
-static int ssd1673_write(const struct device *dev, const u16_t x,
-			 const u16_t y,
+static int ssd1673_write(const struct os_dev *dev, const uint16_t x,
+			 const uint16_t y,
 			 const struct display_buffer_descriptor *desc,
 			 const void *buf)
 {
-	struct ssd1673_data *driver = dev->driver_data;
-	u8_t cmd = SSD1673_CMD_WRITE_RAM;
-	u8_t dummy_page[SSD1673_RAM_YRES];
-	struct spi_buf sbuf = {.buf = &cmd, .len = 1};
-	struct spi_buf_set buf_set = {.buffers = &sbuf, .count = 1};
+	struct ssd1673_data *driver = dev->od_init_arg;
+	uint8_t cmd = SSD1673_CMD_WRITE_RAM;
+	uint8_t dummy_page[SSD1673_RAM_YRES];
 	bool update = true;
 
 	if (desc->pitch < desc->width) {
-		LOG_ERR("Pitch is smaller then width");
+		MODLOG_DFLT(ERROR, "Pitch is smaller then width");
 		return -1;
 	}
 
 	if (buf == NULL || desc->buf_size == 0) {
-		LOG_ERR("Display buffer is not available");
+		MODLOG_DFLT(ERROR, "Display buffer is not available");
 		return -1;
 	}
 
 	if (desc->pitch > desc->width) {
-		LOG_ERR("Unsupported mode");
+		MODLOG_DFLT(ERROR, "Unsupported mode");
 		return -1;
 	}
 
 	if (x != 0 && y != 0) {
-		LOG_ERR("Unsupported origin");
+		MODLOG_DFLT(ERROR, "Unsupported origin");
 		return -1;
 	}
 
@@ -298,36 +305,40 @@ static int ssd1673_write(const struct device *dev, const u16_t x,
 		return -1;
 	}
 
-	gpio_pin_write(driver->dc, CONFIG_SSD1673_DC_PIN, 0);
-	if (spi_write(driver->spi_dev, &driver->spi_config, &buf_set)) {
+	hal_gpio_write(CONFIG_SSD1673_DC_PIN, 0);
+	hal_gpio_write(CONFIG_SSD1673_CS_PIN, 0);
+
+	if (hal_spi_txrx(CONFIG_SSD1673_SPI_DEV, &cmd, NULL, sizeof(cmd))) {
+		hal_gpio_write(CONFIG_SSD1673_CS_PIN, 1);
 		return -1;
 	}
 
-	gpio_pin_write(driver->dc, CONFIG_SSD1673_DC_PIN, 1);
+	hal_gpio_write(CONFIG_SSD1673_DC_PIN, 1);
 	/* clear unusable page */
 	if (driver->scan_mode == SSD1673_DATA_ENTRY_XDYIY) {
-		sbuf.buf = dummy_page;
-		sbuf.len = sizeof(dummy_page);
-		if (spi_write(driver->spi_dev, &driver->spi_config, &buf_set)) {
+		if (hal_spi_txrx(CONFIG_SSD1673_SPI_DEV, dummy_page,
+				 NULL, sizeof(dummy_page))) {
+			hal_gpio_write(CONFIG_SSD1673_CS_PIN, 1);
 			return -1;
 		}
 	}
 
-	sbuf.buf = (u8_t *)buf;
-	sbuf.len = desc->buf_size;
-	if (spi_write(driver->spi_dev, &driver->spi_config, &buf_set)) {
+	if (hal_spi_txrx(CONFIG_SSD1673_SPI_DEV, (uint8_t *)buf,
+			 NULL, desc->buf_size)) {
+		hal_gpio_write(CONFIG_SSD1673_CS_PIN, 1);
 		return -1;
 	}
 
 	/* clear unusable page */
 	if (driver->scan_mode == SSD1673_DATA_ENTRY_XIYDY) {
-		sbuf.buf = dummy_page;
-		sbuf.len = sizeof(dummy_page);
-		if (spi_write(driver->spi_dev, &driver->spi_config, &buf_set)) {
+		if (hal_spi_txrx(CONFIG_SSD1673_SPI_DEV, dummy_page,
+				 NULL, sizeof(dummy_page))) {
+			hal_gpio_write(CONFIG_SSD1673_CS_PIN, 1);
 			return -1;
 		}
 	}
 
+	hal_gpio_write(CONFIG_SSD1673_CS_PIN, 1);
 
 	if (update) {
 		if (driver->contrast) {
@@ -339,38 +350,38 @@ static int ssd1673_write(const struct device *dev, const u16_t x,
 	return 0;
 }
 
-static int ssd1673_read(const struct device *dev, const u16_t x,
-			const u16_t y,
+static int ssd1673_read(const struct os_dev *dev, const uint16_t x,
+			const uint16_t y,
 			const struct display_buffer_descriptor *desc,
 			void *buf)
 {
-	LOG_ERR("not supported");
-	return -ENOTSUP;
+	MODLOG_DFLT(ERROR, "not supported");
+	return -1;
 }
 
-static void *ssd1673_get_framebuffer(const struct device *dev)
+static void *ssd1673_get_framebuffer(const struct os_dev *dev)
 {
-	LOG_ERR("not supported");
+	MODLOG_DFLT(ERROR, "not supported");
 	return NULL;
 }
 
-static int ssd1673_set_brightness(const struct device *dev,
-				  const u8_t brightness)
+static int ssd1673_set_brightness(const struct os_dev *dev,
+				  const uint8_t brightness)
 {
-	LOG_WRN("not supported");
-	return -ENOTSUP;
+	MODLOG_DFLT(WARN, "not supported");
+	return -1;
 }
 
-static int ssd1673_set_contrast(const struct device *dev, u8_t contrast)
+static int ssd1673_set_contrast(const struct os_dev *dev, uint8_t contrast)
 {
-	struct ssd1673_data *driver = dev->driver_data;
+	struct ssd1673_data *driver = dev->od_init_arg;
 
 	driver->contrast = contrast;
 
 	return 0;
 }
 
-static void ssd1673_get_capabilities(const struct device *dev,
+static void ssd1673_get_capabilities(const struct os_dev *dev,
 				     struct display_capabilities *caps)
 {
 	memset(caps, 0, sizeof(struct display_capabilities));
@@ -383,24 +394,24 @@ static void ssd1673_get_capabilities(const struct device *dev,
 			    SCREEN_INFO_EPD;
 }
 
-static int ssd1673_set_pixel_format(const struct device *dev,
+static int ssd1673_set_pixel_format(const struct os_dev *dev,
 				    const enum display_pixel_format pf)
 {
-	LOG_ERR("not supported");
-	return -ENOTSUP;
+	MODLOG_DFLT(ERROR, "not supported");
+	return -1;
 }
 
-static int ssd1673_controller_init(struct device *dev)
+static int ssd1673_controller_init(struct os_dev *dev)
 {
-	struct ssd1673_data *driver = dev->driver_data;
-	u8_t tmp[3];
+	struct ssd1673_data *driver = dev->od_init_arg;
+	uint8_t tmp[3];
 
-	LOG_DBG("");
+	MODLOG_DFLT(DEBUG, "");
 
-	gpio_pin_write(driver->reset, CONFIG_SSD1673_RESET_PIN, 0);
-	k_sleep(SSD1673_RESET_DELAY);
-	gpio_pin_write(driver->reset, CONFIG_SSD1673_RESET_PIN, 1);
-	k_sleep(SSD1673_RESET_DELAY);
+	hal_gpio_write(CONFIG_SSD1673_RESET_PIN, 0);
+	os_time_delay(SSD1673_RESET_DELAY_TICKS);
+	hal_gpio_write(CONFIG_SSD1673_RESET_PIN, 1);
+	os_time_delay(SSD1673_RESET_DELAY_TICKS);
 	ssd1673_busy_wait(driver);
 
 	if (ssd1673_write_cmd(driver, SSD1673_CMD_SW_RESET, NULL, 0)) {
@@ -448,85 +459,56 @@ static int ssd1673_controller_init(struct device *dev)
 	return 0;
 }
 
-static int ssd1673_init(struct device *dev)
+static int ssd1673_init(struct os_dev *dev, void *arg)
 {
-	struct ssd1673_data *driver = dev->driver_data;
+	struct ssd1673_data *driver = dev->od_init_arg;
+	int rc;
 
-	LOG_DBG("");
+	MODLOG_DFLT(DEBUG, "");
 
-	driver->spi_dev = device_get_binding(CONFIG_SSD1673_SPI_DEV_NAME);
-	if (driver->spi_dev == NULL) {
-		LOG_ERR("Could not get SPI device for SSD1673");
-		return -EIO;
-	}
+	driver->spi_config.baudrate = CONFIG_SSD1673_SPI_FREQ;
+	driver->spi_config.data_mode = HAL_SPI_MODE0;
+	driver->spi_config.data_order = HAL_SPI_MSB_FIRST;
+	driver->spi_config.word_size = HAL_SPI_WORD_SIZE_8BIT;
+	rc = hal_spi_config(0, &driver->spi_config);
+	assert(rc == 0);
 
-	driver->spi_config.frequency = CONFIG_SSD1673_SPI_FREQ;
-	driver->spi_config.operation = SPI_OP_MODE_MASTER | SPI_WORD_SET(8);
-	driver->spi_config.slave = CONFIG_SSD1673_SPI_SLAVE_NUMBER;
-	driver->spi_config.cs = NULL;
+	driver->driver_api.blanking_on = ssd1673_resume,
+	driver->driver_api.blanking_off = ssd1673_suspend,
+	driver->driver_api.write = ssd1673_write,
+	driver->driver_api.read = ssd1673_read,
+	driver->driver_api.get_framebuffer = ssd1673_get_framebuffer,
+	driver->driver_api.set_brightness = ssd1673_set_brightness,
+	driver->driver_api.set_contrast = ssd1673_set_contrast,
+	driver->driver_api.get_capabilities = ssd1673_get_capabilities,
+	driver->driver_api.set_pixel_format = ssd1673_set_pixel_format,
+	driver->driver_api.set_orientation = NULL,
 
-	driver->reset = device_get_binding(CONFIG_SSD1673_RESET_GPIO_PORT_NAME);
-	if (driver->reset == NULL) {
-		LOG_ERR("Could not get GPIO port for SSD1673 reset");
-		return -EIO;
-	}
-
-	gpio_pin_configure(driver->reset, CONFIG_SSD1673_RESET_PIN,
-			   GPIO_DIR_OUT);
-
-	driver->dc = device_get_binding(CONFIG_SSD1673_DC_GPIO_PORT_NAME);
-	if (driver->dc == NULL) {
-		LOG_ERR("Could not get GPIO port for SSD1673 DC signal");
-		return -EIO;
-	}
-
-	gpio_pin_configure(driver->dc, CONFIG_SSD1673_DC_PIN,
-			   GPIO_DIR_OUT);
-
-	driver->busy = device_get_binding(CONFIG_SSD1673_BUSY_GPIO_PORT_NAME);
-	if (driver->busy == NULL) {
-		LOG_ERR("Could not get GPIO port for SSD1673 busy signal");
-		return -EIO;
-	}
-
-	gpio_pin_configure(driver->busy, CONFIG_SSD1673_BUSY_PIN,
-			   GPIO_DIR_IN);
-
-#if defined(CONFIG_SSD1673_SPI_GPIO_CS)
-	driver->cs_ctrl.gpio_dev = device_get_binding(
-		CONFIG_SSD1673_SPI_GPIO_CS_DRV_NAME);
-	if (!driver->cs_ctrl.gpio_dev) {
-		LOG_ERR("Unable to get SPI GPIO CS device");
-		return -EIO;
-	}
-
-	driver->cs_ctrl.gpio_pin = CONFIG_SSD1673_SPI_GPIO_CS_PIN;
-	driver->cs_ctrl.delay = 0;
-	driver->spi_config.cs = &driver->cs_ctrl;
-#endif
+	rc = hal_gpio_init_out(CONFIG_SSD1673_RESET_PIN, 1);
+	assert(rc == 0);
+	rc = hal_gpio_init_out(CONFIG_SSD1673_DC_PIN, 1);
+	assert(rc == 0);
+	rc = hal_gpio_init_out(CONFIG_SSD1673_CS_PIN, 1);
+	assert(rc == 0);
+	rc = hal_gpio_init_in(CONFIG_SSD1673_BUSY_PIN, HAL_GPIO_PULL_NONE);
+	assert(rc == 0);
 
 	ssd1673_controller_init(dev);
 
 	return 0;
 }
 
-static struct ssd1673_data ssd1673_driver;
+int ssd1673_pkg_init(void)
+{
+	int rc;
 
-static struct display_driver_api ssd1673_driver_api = {
-	.blanking_on = ssd1673_resume,
-	.blanking_off = ssd1673_suspend,
-	.write = ssd1673_write,
-	.read = ssd1673_read,
-	.get_framebuffer = ssd1673_get_framebuffer,
-	.set_brightness = ssd1673_set_brightness,
-	.set_contrast = ssd1673_set_contrast,
-	.get_capabilities = ssd1673_get_capabilities,
-	.set_pixel_format = ssd1673_set_pixel_format,
-	.set_orientation = NULL,
-};
+	/* Ensure this function only gets called by sysinit. */
+	SYSINIT_ASSERT_ACTIVE();
 
+	rc = os_dev_create(&ssd1673, CONFIG_SSD1673_OS_DEV_NAME,
+			   OS_DEV_INIT_SECONDARY, OS_DEV_INIT_PRIO_DEFAULT,
+			   ssd1673_init, &ssd1673_driver);
+	SYSINIT_PANIC_ASSERT(rc == 0);
 
-DEVICE_AND_API_INIT(ssd1673, CONFIG_SSD1673_DEV_NAME, ssd1673_init,
-		    &ssd1673_driver, NULL,
-		    POST_KERNEL, CONFIG_APPLICATION_INIT_PRIORITY,
-		    &ssd1673_driver_api);
+	return 0;
+}
