@@ -1042,7 +1042,8 @@ lps33thw_sensor_read(struct sensor *sensor, sensor_type_t type,
 
             rc = data_func(sensor, data_arg, &spd, SENSOR_TYPE_PRESSURE);
         }
-    } else if (type & SENSOR_TYPE_TEMPERATURE) {
+    }
+    if (type & SENSOR_TYPE_TEMPERATURE) {
         struct sensor_temp_data std;
 
         rc = lps33thw_get_temperature(itf, &std.std_temp);
@@ -1054,7 +1055,8 @@ lps33thw_sensor_read(struct sensor *sensor, sensor_type_t type,
 
         rc = data_func(sensor, data_arg, &std,
                 SENSOR_TYPE_TEMPERATURE);
-    } else {
+    }
+    if (!(type & SENSOR_TYPE_PRESSURE) && !(type & SENSOR_TYPE_TEMPERATURE)) {
          return SYS_EINVAL;
     }
 
