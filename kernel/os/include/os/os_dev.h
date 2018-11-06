@@ -253,6 +253,13 @@ int os_dev_close(struct os_dev *dev);
  */
 void os_dev_reset(void);
 
+/**
+ * Walk through all devices, calling callback for every device.
+ *
+ * @param walk_func Function to call
+ */
+void os_dev_walk(void (*walk_func)(struct os_dev *));
+
 #ifdef __cplusplus
 }
 #endif
