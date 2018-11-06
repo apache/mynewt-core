@@ -8,13 +8,12 @@
  * Licensed under the Apache License, Version 2.0
  */
 
-#include <zephyr.h>
-#include <display/cfb.h>
+#include "display/cfb.h"
 
 #define CFB_FONTS_FIRST_CHAR	32
 #define CFB_FONTS_LAST_CHAR	127
 
-const u8_t cfb_font_1016[95][20] = {
+const uint8_t cfb_font_1016[95][20] = {
 	/*   */
 	{
 		0x00, 0x00,
@@ -1252,7 +1251,7 @@ const u8_t cfb_font_1016[95][20] = {
 	},
 };
 
-const u8_t cfb_font_1524[95][45] = {
+const uint8_t cfb_font_1524[95][45] = {
 	/*   */
 	{
 		0x00, 0x00, 0x00,
@@ -2965,7 +2964,7 @@ const u8_t cfb_font_1524[95][45] = {
 	},
 };
 
-const u8_t cfb_font_2032[95][80] = {
+const uint8_t cfb_font_2032[95][80] = {
 	/*   */
 	{
 		0x00, 0x00, 0x00, 0x00,
@@ -5153,27 +5152,30 @@ const u8_t cfb_font_2032[95][80] = {
 	},
 };
 
-FONT_ENTRY_DEFINE(font1016,
-		  10,
-		  16,
-		  CFB_FONT_MONO_VPACKED,
-		  cfb_font_1016,
-		  CFB_FONTS_FIRST_CHAR,
-		  CFB_FONTS_LAST_CHAR
-);
-FONT_ENTRY_DEFINE(font1524,
-		  15,
-		  24,
-		  CFB_FONT_MONO_VPACKED,
-		  cfb_font_1524,
-		  CFB_FONTS_FIRST_CHAR,
-		  CFB_FONTS_LAST_CHAR
-);
-FONT_ENTRY_DEFINE(font2032,
-		  20,
-		  32,
-		  CFB_FONT_MONO_VPACKED,
-		  cfb_font_2032,
-		  CFB_FONTS_FIRST_CHAR,
-		  CFB_FONTS_LAST_CHAR
-);
+const struct cfb_font font_array[CFB_FONTS_COUNT] = {
+	FONT_ENTRY_DEFINE(font2032,
+			  20,
+			  32,
+			  CFB_FONT_MONO_VPACKED,
+			  cfb_font_2032,
+			  CFB_FONTS_FIRST_CHAR,
+			  CFB_FONTS_LAST_CHAR
+	),
+	FONT_ENTRY_DEFINE(font1524,
+			  15,
+			  24,
+			  CFB_FONT_MONO_VPACKED,
+			  cfb_font_1524,
+			  CFB_FONTS_FIRST_CHAR,
+			  CFB_FONTS_LAST_CHAR
+	),
+	FONT_ENTRY_DEFINE(font1016,
+			  10,
+			  16,
+			  CFB_FONT_MONO_VPACKED,
+			  cfb_font_1016,
+			  CFB_FONTS_FIRST_CHAR,
+			  CFB_FONTS_LAST_CHAR
+	),
+};
+

@@ -12,8 +12,8 @@
 #ifndef __CFB_H__
 #define __CFB_H__
 
-#include <device.h>
-#include <display.h>
+#include "os/mynewt.h"
+#include "display/display.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -42,18 +42,20 @@ enum cfb_display_param {
 };
 
 enum cfb_font_caps {
-	CFB_FONT_MONO_VPACKED		= BIT(0),
-	CFB_FONT_MONO_HPACKED		= BIT(1),
+	CFB_FONT_MONO_VPACKED		= (1UL << 0),
+	CFB_FONT_MONO_HPACKED		= (1UL << 1),
 };
 
 struct cfb_font {
 	const void *data;
-	u8_t width;
-	u8_t height;
+	uint8_t width;
+	uint8_t height;
 	enum cfb_font_caps caps;
-	u8_t first_char;
-	u8_t last_char;
+	uint8_t first_char;
+	uint8_t last_char;
 };
+
+#define CFB_FONTS_COUNT 3
 
 /**
  * @brief Macro for creating a font entry.
@@ -67,8 +69,6 @@ struct cfb_font {
  * @param _lc     Character mapped to last font element.
  */
 #define FONT_ENTRY_DEFINE(_name, _width, _height, _caps, _data, _fc, _lc)      \
-	static const struct cfb_font _name				       \
-	__attribute__ ((section(".font_entry."))) __attribute__((used)) =      \
 	{								       \
 		.width = _width,					       \
 		.height = _height,					       \
@@ -88,7 +88,7 @@ struct cfb_font {
  *
  * @return 0 on success, negative value otherwise
  */
-int cfb_print(struct device *dev, char *str, u16_t x, u16_t y);
+int cfb_print(struct os_dev *dev, char *str, uint16_t x, uint16_t y);
 
 /**
  * @brief Clear framebuffer.
@@ -98,7 +98,7 @@ int cfb_print(struct device *dev, char *str, u16_t x, u16_t y);
  *
  * @return 0 on success, negative value otherwise
  */
-int cfb_framebuffer_clear(struct device *dev, bool clear_display);
+int cfb_framebuffer_clear(struct os_dev *dev, bool clear_display);
 
 /**
  * @brief Finalize framebuffer and write it to display RAM,
@@ -108,7 +108,7 @@ int cfb_framebuffer_clear(struct device *dev, bool clear_display);
  *
  * @return 0 on success, negative value otherwise
  */
-int cfb_framebuffer_finalize(struct device *dev);
+int cfb_framebuffer_finalize(struct os_dev *dev);
 
 /**
  * @brief Get display parameter.
@@ -118,7 +118,7 @@ int cfb_framebuffer_finalize(struct device *dev);
  *
  * @return Display parameter value
  */
-int cfb_get_display_parameter(struct device *dev, enum cfb_display_param);
+int cfb_get_display_parameter(struct os_dev *dev, enum cfb_display_param);
 
 /**
  * @brief Set font.
@@ -128,7 +128,7 @@ int cfb_get_display_parameter(struct device *dev, enum cfb_display_param);
  *
  * @return 0 on success, negative value otherwise
  */
-int cfb_framebuffer_set_font(struct device *dev, u8_t idx);
+int cfb_framebuffer_set_font(struct os_dev *dev, uint8_t idx);
 
 /**
  * @brief Get font size.
@@ -140,7 +140,8 @@ int cfb_framebuffer_set_font(struct device *dev, u8_t idx);
  *
  * @return 0 on success, negative value otherwise
  */
-int cfb_get_font_size(struct device *dev, u8_t idx, u8_t *width, u8_t *height);
+int cfb_get_font_size(struct os_dev *dev, uint8_t idx,
+		      uint8_t *width, uint8_t *height);
 
 /**
  * @brief Initialize Character Framebuffer.
@@ -149,7 +150,7 @@ int cfb_get_font_size(struct device *dev, u8_t idx, u8_t *width, u8_t *height);
  *
  * @return 0 on success, negative value otherwise
  */
-int cfb_framebuffer_init(struct device *dev);
+int cfb_framebuffer_init(struct os_dev *dev);
 
 #ifdef __cplusplus
 }
