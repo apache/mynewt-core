@@ -42,7 +42,6 @@
 #include "hal/hal_i2c.h"
 #include "parse/parse.h"
 
-static struct os_event g_sensor_shell_read_ev;
 static int sensor_cmd_exec(int, char **);
 static struct shell_cmd shell_sensor_cmd = {
     .sc_cmd = "sensor",
@@ -50,22 +49,21 @@ static struct shell_cmd shell_sensor_cmd = {
 };
 
 struct os_sem g_sensor_shell_sem;
-struct hal_timer g_sensor_shell_timer;
-uint32_t sensor_shell_timer_arg = 0xdeadc0de;
-
 struct sensor_poll_data {
     int spd_nsamples;
     int spd_poll_itvl;
     int spd_poll_duration;
-    int spd_poll_delay;
-    int64_t spd_duration;
-    int64_t spd_start_ts;
+
     struct sensor *spd_sensor;
     sensor_type_t spd_sensor_type;
+
     bool spd_read_in_progress;
+    struct os_event spd_read_ev;
+    struct hal_timer spd_read_timer;
+    uint32_t spd_read_start_ticks;
+    uint32_t spd_read_next_msecs_off;
 };
 
-static int g_sensor_shell_num_entries;
 static struct sensor_poll_data g_spd;
 
 static void
@@ -258,8 +256,6 @@ sensor_shell_read_listener(struct sensor *sensor, void *arg, void *data,
     struct sensor_gyro_data *sgd;
     char tmpstr[13];
 
-    ++g_sensor_shell_num_entries;
-
     console_printf("ts: [ secs: %ld usecs: %d cputime: %u ]\n",
                    (long int)sensor->s_sts.st_ostv.tv_sec,
                    (int)sensor->s_sts.st_ostv.tv_usec,
@@ -428,136 +424,139 @@ sensor_shell_read_listener(struct sensor *sensor, void *arg, void *data,
     return (0);
 }
 
-/* Check for number of samples */
-static int
-sensor_shell_chk_nsamples(struct sensor_poll_data *spd)
-{
-    /* Condition for number of samples */
-    if (spd->spd_nsamples && g_sensor_shell_num_entries >= spd->spd_nsamples) {
-        os_cputime_timer_stop(&g_sensor_shell_timer);
-        return 0;
-    }
-
-    return -1;
-}
-
-/*
- * Incrementing duration based on interval if specified or
- * os_time if interval is not specified and checking duration
- */
-static int
-sensor_shell_polling_done(struct sensor_poll_data *spd, int64_t *duration,
-                          int64_t *start_ts)
-{
-
-    if (spd->spd_poll_duration) {
-        if (spd->spd_poll_itvl) {
-            *duration += spd->spd_poll_itvl * 1000;
-        } else {
-            if (!*start_ts) {
-                *start_ts = os_get_uptime_usec();
-            } else {
-                *duration = os_get_uptime_usec() - *start_ts;
-            }
-        }
-
-        if (*duration >= spd->spd_poll_duration * 1000) {
-            os_cputime_timer_stop(&g_sensor_shell_timer);
-            console_printf("Sensor polling done\n");
-            return 0;
-        }
-    }
-
-    return -1;
-}
-
 static void
 sensor_shell_read_ev_cb(struct os_event *ev)
 {
-    struct sensor_poll_data *spd;
+    uint32_t next_tick;
     int rc;
 
-    if (!ev->ev_arg) {
-        goto done;
-    }
-
-    spd = ev->ev_arg;
-    rc = sensor_read(spd->spd_sensor, spd->spd_sensor_type,
+    rc = sensor_read(g_spd.spd_sensor, g_spd.spd_sensor_type,
                      sensor_shell_read_listener, (void *)SENSOR_IGN_LISTENER,
                      OS_TIMEOUT_NEVER);
     if (rc) {
         console_printf("Cannot read sensor\n");
-        g_spd.spd_read_in_progress = false;
-        goto done;
+        goto stop;
     }
 
-    /* Check number of samples if provided */
-    if (!sensor_shell_chk_nsamples(spd)) {
-        g_spd.spd_read_in_progress = false;
-        goto done;
+    /* If number of samples were provided, check if we should still read */
+    if (g_spd.spd_nsamples && (--g_spd.spd_nsamples == 0)) {
+        goto stop;
     }
 
-    /* Check duration if provided */
-    if (!sensor_shell_polling_done(spd, &spd->spd_start_ts,
-                                   &spd->spd_duration)) {
-        g_spd.spd_read_in_progress = false;
-        goto done;
+    /* Calculate next read time (it should be in future so skip missed ones) */
+    do {
+        g_spd.spd_read_next_msecs_off += g_spd.spd_poll_itvl;
+
+        if (g_spd.spd_poll_duration &&
+            (g_spd.spd_read_next_msecs_off > g_spd.spd_poll_duration)) {
+            goto stop;
+        }
+
+        next_tick = g_spd.spd_read_start_ticks +
+                    os_cputime_usecs_to_ticks(g_spd.spd_read_next_msecs_off * 1000);
+    } while (next_tick <= os_cputime_get32());
+
+    rc = os_cputime_timer_start(&g_spd.spd_read_timer, next_tick);
+    if (!rc) {
+        return;
     }
 
-    os_cputime_timer_relative(&g_sensor_shell_timer, sensor_shell_timer_arg);
+    console_printf("Failed to setup read timer\n");
+    /* fall through */
 
-done:
-    return;
+stop:
+    g_spd.spd_read_in_progress = false;
+    os_cputime_timer_stop(&g_spd.spd_read_timer);
+
+    console_printf("Reading done\n");
 }
 
-void
-sensor_shell_timer_cb(void *arg)
-{
-    g_sensor_shell_read_ev.ev_arg = arg;
-    g_sensor_shell_read_ev.ev_cb  = sensor_shell_read_ev_cb;
-    os_eventq_put(os_eventq_dflt_get(), &g_sensor_shell_read_ev);
-}
-
-/* os cputime timer configuration and initialization */
 static void
-sensor_shell_config_timer(struct sensor_poll_data *spd)
+sensor_shell_read_timer_cb(void *arg)
 {
-    sensor_shell_timer_arg = spd->spd_poll_itvl * 1000;
-
-    os_cputime_timer_init(&g_sensor_shell_timer, sensor_shell_timer_cb,
-                          spd);
-
-    os_cputime_timer_relative(&g_sensor_shell_timer, sensor_shell_timer_arg);
+    os_eventq_put(os_eventq_dflt_get(), &g_spd.spd_read_ev);
 }
 
 static int
-sensor_cmd_read(char *name, sensor_type_t type, struct sensor_poll_data *spd)
+sensor_cmd_read(char **argv, int argc)
 {
-    int rc;
+    char *sensor_name;
+    sensor_type_t type;
+    int i;
 
-    rc = SYS_EOK;
+    if (argc < 2) {
+        /* Need at least sensor name and type */
+        console_printf("Too few arguments: %d\n", argc);
+        goto usage;
+    }
+
+    sensor_name = argv[0];
+    type = strtol(argv[1], NULL, 0);
+
+    for (i = 2; i < argc; i++) {
+        if (argv[i][0] != '-' || strlen(argv[i]) != 2) {
+            console_printf("Invalid parameter '%s'\n", argv[i]);
+            goto usage;
+        }
+
+        if (argc - i < 2) {
+            console_printf("Missing parameter for '%s'\n", argv[i]);
+            goto usage;
+        }
+
+        switch (argv[i][1]) {
+        case 'n':
+            g_spd.spd_nsamples = atoi(argv[++i]);
+            break;
+        case 'i':
+            g_spd.spd_poll_itvl = atoi(argv[++i]);
+            break;
+        case 'd':
+            g_spd.spd_poll_duration = atoi(argv[++i]);
+            break;
+        default:
+            console_printf("Unknown option '%s'\n", argv[i]);
+            goto usage;
+        }
+    }
+
+    if (!g_spd.spd_nsamples && !g_spd.spd_poll_itvl && !g_spd.spd_poll_duration) {
+        /* Just read single sample by default */
+        g_spd.spd_nsamples = 1;
+    }
+
+    if ((g_spd.spd_nsamples > 1) && !g_spd.spd_poll_itvl) {
+        console_printf("Need to specify poll interval if num_samples > 0\n");
+        goto usage;
+    }
 
     /* Look up sensor by name */
-    spd->spd_sensor = sensor_mgr_find_next_bydevname(name, NULL);
-    if (!spd->spd_sensor) {
-        console_printf("Sensor %s not found!\n", name);
+    g_spd.spd_sensor = sensor_mgr_find_next_bydevname(sensor_name, NULL);
+    if (!g_spd.spd_sensor) {
+        console_printf("Sensor %s not found!\n", sensor_name);
+        return SYS_ENOENT;
     }
 
-    if (!(type & spd->spd_sensor->s_types)) {
-        rc = SYS_EINVAL;
+    if (!(type & g_spd.spd_sensor->s_types)) {
         /* Directly return without trying to unregister */
-        console_printf("Read req for wrng type 0x%x from selected sensor: %s\n",
-                       (int)type, name);
-        return rc;
+        console_printf("Read request for wrong type 0x%x from selected sensor: %s\n",
+                       (int)type, sensor_name);
+        return SYS_EINVAL;
     }
 
-    spd->spd_sensor_type = type;
-    if (spd->spd_poll_itvl) {
-        sensor_shell_config_timer(spd);
-    }
+    g_spd.spd_sensor_type = type;
 
-    g_sensor_shell_num_entries = 0;
-    return rc;
+    /* Start 1st read immediately */
+    g_spd.spd_read_start_ticks = os_cputime_get32();
+    sensor_shell_read_timer_cb(NULL);
+
+    return 0;
+
+usage:
+    console_printf("Usage: sensor read <sensor_name> <type> "
+                   "[-n num_samples] [-i poll_interval(ms)] [-d poll_duration(ms)]\n");
+
+    return SYS_EINVAL;
 }
 
 static int
@@ -655,7 +654,6 @@ sensor_cmd_exec(int argc, char **argv)
 {
     char *subcmd;
     int rc = 0;
-    int i;
 
     if (argc <= 1) {
         sensor_display_help();
@@ -672,37 +670,12 @@ sensor_cmd_exec(int argc, char **argv)
             goto done;
         }
 
-        if (argc < 6) {
-            console_printf("Too few arguments: %d\n"
-                           "Usage: sensor read <sensor_name> <type>"
-                           "[-n nsamples] [-i poll_itvl(ms)] [-d poll_duration(ms)]\n",
-                           argc - 2);
-            rc = SYS_EINVAL;
-            goto done;
-        }
-
-        i = 4;
-        memset(&g_spd, 0, sizeof(struct sensor_poll_data));
-        if (argv[i] && !strcmp(argv[i], "-n")) {
-            g_spd.spd_nsamples = atoi(argv[++i]);
-            i++;
-        }
-        if (argv[i] && !strcmp(argv[i], "-i")) {
-            g_spd.spd_poll_itvl = atoi(argv[++i]);
-            i++;
-        }
-        if (argv[i] && !strcmp(argv[i], "-d")) {
-            g_spd.spd_poll_duration = atoi(argv[++i]);
-            i++;
-        }
-
-        rc = sensor_cmd_read(argv[2], (sensor_type_t) strtol(argv[3], NULL, 0), &g_spd);
+        rc = sensor_cmd_read(argv + 2, argc - 2);
         if (rc) {
             goto done;
         }
 
         g_spd.spd_read_in_progress = true;
-
     } else if (!strcmp(argv[1], "type")) {
         rc = sensor_cmd_display_type(argv);
         if (rc) {
@@ -724,10 +697,15 @@ sensor_cmd_exec(int argc, char **argv)
                            argc - 2);
            goto done;
         }
-
     } else if (!strcmp(argv[1], "read_stop")) {
-        os_cputime_timer_stop(&g_sensor_shell_timer);
-        console_printf("Stop read\n");
+        if (!g_spd.spd_read_in_progress) {
+            console_printf("No read in progress\n");
+            rc = SYS_EINVAL;
+            goto done;
+        }
+
+        console_printf("Reading stopped\n");
+        os_cputime_timer_stop(&g_spd.spd_read_timer);
         g_spd.spd_read_in_progress = false;
     } else {
         console_printf("Unknown sensor command %s\n", subcmd);
@@ -743,6 +721,10 @@ done:
 int
 sensor_shell_register(void)
 {
+    memset(&g_spd, 0, sizeof(g_spd));
+    g_spd.spd_read_ev.ev_cb  = sensor_shell_read_ev_cb;
+    os_cputime_timer_init(&g_spd.spd_read_timer, sensor_shell_read_timer_cb, NULL);
+
     shell_cmd_register((struct shell_cmd *) &shell_sensor_cmd);
 
     return (0);
