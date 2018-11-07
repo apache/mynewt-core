@@ -48,7 +48,6 @@ static struct shell_cmd shell_sensor_cmd = {
     .sc_cmd_func = sensor_cmd_exec
 };
 
-struct os_sem g_sensor_shell_sem;
 struct sensor_poll_data {
     int spd_nsamples;
     int spd_poll_itvl;
