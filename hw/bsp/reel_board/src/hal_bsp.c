@@ -24,6 +24,7 @@
 #include "nrfx.h"
 #include "flash_map/flash_map.h"
 #include "hal/hal_bsp.h"
+#include "hal/hal_gpio.h"
 #include "hal/hal_flash.h"
 #include "hal/hal_system.h"
 #include "mcu/nrf52_hal.h"
@@ -80,9 +81,16 @@ hal_bsp_get_nvic_priority(int irq_num, uint32_t pri)
 void
 hal_bsp_init(void)
 {
+    int rc;
+
     /* Make sure system clocks have started */
     hal_system_clock_start();
 
     /* Create all available nRF52840 peripherals */
     nrf52_periph_create();
+
+    if (MYNEWT_VAL(REEL_BOARD_ENABLE_ACTIVE_MODE)) {
+        rc = hal_gpio_init_out(32, 1);
+        assert(rc == 0);
+    }
 }
