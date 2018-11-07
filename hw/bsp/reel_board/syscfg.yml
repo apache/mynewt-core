@@ -20,6 +20,9 @@ syscfg.defs:
     BSP_NRF52840:
         description: 'Set to indicate that BSP has nRF52840'
         value: 1
+    REEL_BOARD_ENABLE_ACTIVE_MODE:
+        description: 'Enable supply voltages for nRF52840 and peripherals'
+        value: 0
 
 syscfg.vals:
     MCU_NRF52840: 1
