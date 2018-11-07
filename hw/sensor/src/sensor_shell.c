@@ -560,7 +560,7 @@ sensor_cmd_read(char *name, sensor_type_t type, struct sensor_poll_data *spd)
     return rc;
 }
 
-int
+static int
 sensor_one_tap_notif(struct sensor *sensor, void *data,
                      sensor_event_type_t type)
 {
@@ -576,7 +576,7 @@ static struct sensor_notifier one_tap = {
     .sn_arg = NULL,
 };
 
-int
+static int
 sensor_double_tap_notif(struct sensor *sensor, void *data,
                         sensor_event_type_t type)
 {
