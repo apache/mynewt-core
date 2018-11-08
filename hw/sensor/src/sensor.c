@@ -868,6 +868,7 @@ sensor_pkg_init(void)
 int
 sensor_itf_lock(struct sensor_itf *si, uint32_t timeout)
 {
+#if !MYNEWT_VAL(BUS_DRIVER_PRESENT)
     int rc;
     os_time_t ticks;
 
@@ -886,6 +887,9 @@ sensor_itf_lock(struct sensor_itf *si, uint32_t timeout)
     }
 
     return (rc);
+#else
+    return 0;
+#endif
 }
 
 /**
@@ -898,11 +902,13 @@ sensor_itf_lock(struct sensor_itf *si, uint32_t timeout)
 void
 sensor_itf_unlock(struct sensor_itf *si)
 {
+#if !MYNEWT_VAL(BUS_DRIVER_PRESENT)
     if (!si->si_lock) {
         return;
     }
 
     os_mutex_release(si->si_lock);
+#endif
 }
 
 
