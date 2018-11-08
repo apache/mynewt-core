@@ -17,6 +17,7 @@
  * under the License.
  */
 
+#include <defs/error.h>
 #include <hal/hal_flash.h>
 #include <flash_map/flash_map.h>
 
@@ -65,4 +66,45 @@ TEST_CASE(enc_flash_test_hal)
     rc = hal_flash_isempty(fa->fa_id, fa->fa_off, readdata, sizeof(readdata));
     TEST_ASSERT(rc == 0);
     TEST_ASSERT(!memcmp(writedata, readdata, sizeof(writedata)));
+
+    /* Wrong id */
+    rc = hal_flash_write_protect(2, 1);
+    TEST_ASSERT(rc == SYS_EINVAL);
+
+    rc = hal_flash_write_protect(fa->fa_id, 1);
+    TEST_ASSERT(rc == 0);
+
+    /* hal_flash_erase should fail */
+    rc = hal_flash_erase(fa->fa_id, fa->fa_off, fa->fa_size);
+    TEST_ASSERT(rc == SYS_EACCES);
+    (void)memset(readdata, 0xAB, sizeof(readdata));
+    rc = hal_flash_read(fa->fa_id, fa->fa_off, readdata, sizeof(readdata));
+    TEST_ASSERT(rc == 0);
+    TEST_ASSERT(0 == memcmp(writedata, readdata, sizeof(readdata)));
+
+    /* hal_flash_sector_erase should fail */
+    rc = hal_flash_erase_sector(fa->fa_id, 0);
+    TEST_ASSERT(rc == SYS_EACCES);
+    (void)memset(readdata, 0xAB, sizeof(readdata));
+    rc = hal_flash_read(fa->fa_id, fa->fa_off, readdata, sizeof(readdata));
+    TEST_ASSERT(rc == 0);
+    TEST_ASSERT(0 == memcmp(writedata, readdata, sizeof(readdata)));
+
+    /* Un-protect and erase */
+    rc = hal_flash_write_protect(fa->fa_id, 0);
+    TEST_ASSERT(rc == 0);
+    rc = hal_flash_erase(fa->fa_id, fa->fa_off, fa->fa_size);
+    TEST_ASSERT(rc == 0);
+
+    /* Protect again */
+    rc = hal_flash_write_protect(fa->fa_id, 1);
+    TEST_ASSERT(rc == 0);
+    /* Verify that area is erased */
+    rc = hal_flash_isempty_no_buf(fa->fa_id, fa->fa_off, 30);
+    TEST_ASSERT(rc == 1);
+    /* Try to write that should fail */
+    rc = hal_flash_write(fa->fa_id, fa->fa_off, writedata, sizeof(writedata));
+    TEST_ASSERT(rc == SYS_EACCES);
+    /* Verify that area is still erased */
+    rc = hal_flash_isempty_no_buf(fa->fa_id, fa->fa_off, 30);
 }
