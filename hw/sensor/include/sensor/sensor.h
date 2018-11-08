@@ -506,6 +506,7 @@ struct sensor_int {
 
 struct sensor_itf {
 
+#if !MYNEWT_VAL(BUS_DRIVER_PRESENT)
     /* Sensor interface type */
     uint8_t si_type;
 
@@ -517,6 +518,7 @@ struct sensor_itf {
 
     /* Sensor address */
     uint16_t si_addr;
+#endif
 
     /* Sensor interface low int pin */
     uint8_t si_low_pin;
@@ -524,8 +526,10 @@ struct sensor_itf {
     /* Sensor interface high int pin */
     uint8_t si_high_pin;
 
+#if !MYNEWT_VAL(BUS_DRIVER_PRESENT)
     /* Mutex for interface access */
     struct os_mutex *si_lock;
+#endif
 
     /* Sensor interface interrupts pins */
     /* XXX We should probably remove low/high pins and replace it with those
@@ -542,6 +546,16 @@ struct sensor_itf {
  * Return the interface for this sensor
  */
 #define SENSOR_GET_ITF(__s) (&((__s)->s_itf))
+
+/*
+ * Return original sensor from sensor interface
+ */
+#define SENSOR_ITF_GET_SENSOR(__itf)    CONTAINER_OF((__itf), struct sensor, s_itf)
+
+/*
+ * Return OS device for original sensor from sensor interface
+ */
+#define SENSOR_ITF_GET_DEVICE(__itf)    SENSOR_GET_DEVICE(SENSOR_ITF_GET_SENSOR((__itf)))
 
 /*
  * Checks if the sensor data is valid and then compares if it is greater than
