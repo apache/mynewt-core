@@ -1011,7 +1011,7 @@ lps33thw_sensor_read(struct sensor *sensor, sensor_type_t type,
         sensor_data_func_t data_func, void *data_arg, uint32_t timeout)
 {
     (void)timeout;
-    int rc;
+    int rc = SYS_EINVAL;
     struct sensor_itf *itf;
 
     itf = SENSOR_GET_ITF(sensor);
