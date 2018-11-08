@@ -22,6 +22,11 @@
 #define __BME280_H__
 
 #include "os/mynewt.h"
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+#include "bus/bus_driver.h"
+#include "bus/i2c.h"
+#include "bus/spi.h"
+#endif
 #include "sensor/sensor.h"
 
 #define BME280_SPI_READ_CMD_BIT 0x80
@@ -102,7 +107,14 @@ struct bme280_pdd {
 };
 
 struct bme280 {
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    union {
+        struct bus_i2c_node i2c_node;
+        struct bus_spi_node spi_node;
+    };
+#else
     struct os_dev dev;
+#endif
     struct sensor sensor;
     struct bme280_cfg cfg;
     struct bme280_pdd pdd;
@@ -270,6 +282,16 @@ bme280_forced_mode_measurement(struct sensor_itf *itf);
 
 #if MYNEWT_VAL(BME280_CLI)
 int bme280_shell_init(void);
+#endif
+
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+int
+bme280_create_i2c_dev(struct bus_i2c_node *node, const char *name,
+                      const struct bus_i2c_node_cfg *cfg);
+
+int
+bme280_create_spi_dev(struct bus_spi_node *node, const char *name,
+                      const struct bus_spi_node_cfg *cfg);
 #endif
 
 #ifdef __cplusplus
