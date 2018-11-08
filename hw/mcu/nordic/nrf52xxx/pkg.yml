@@ -75,3 +75,7 @@ pkg.deps.I2C_0:
 pkg.deps.I2C_1:
     - "@apache-mynewt-core/hw/bus"
     - "@apache-mynewt-core/hw/bus/i2c"
+
+pkg.deps.SPI_1_MASTER:
+    - "@apache-mynewt-core/hw/bus"
+    - "@apache-mynewt-core/hw/bus/spi"

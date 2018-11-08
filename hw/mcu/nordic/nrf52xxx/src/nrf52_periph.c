@@ -28,6 +28,10 @@
 #include "bus/bus.h"
 #include "bus/i2c.h"
 #endif
+#if MYNEWT_VAL(SPI_1_MASTER)
+#include "bus/bus.h"
+#include "bus/spi.h"
+#endif
 #include "nrfx.h"
 #if MYNEWT_VAL(ADC_0)
 #include "adc/adc.h"
@@ -139,12 +143,22 @@ static const struct nrf52_hal_spi_cfg os_bsp_spi0s_cfg = {
 };
 #endif
 #if MYNEWT_VAL(SPI_1_MASTER)
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+static const struct bus_spi_dev_cfg spi1_cfg = {
+    .spi_num = 1,
+    .pin_sck = MYNEWT_VAL(SPI_1_MASTER_PIN_SCK),
+    .pin_mosi = MYNEWT_VAL(SPI_1_MASTER_PIN_MOSI),
+    .pin_miso = MYNEWT_VAL(SPI_1_MASTER_PIN_MISO),
+};
+static struct bus_spi_dev spi1_bus;
+#else
 static const struct nrf52_hal_spi_cfg os_bsp_spi1m_cfg = {
     .sck_pin      = MYNEWT_VAL(SPI_1_MASTER_PIN_SCK),
     .mosi_pin     = MYNEWT_VAL(SPI_1_MASTER_PIN_MOSI),
     .miso_pin     = MYNEWT_VAL(SPI_1_MASTER_PIN_MISO),
     /* For SPI master, SS pin is controlled as regular GPIO */
 };
+#endif
 #endif
 #if MYNEWT_VAL(SPI_1_SLAVE)
 static const struct nrf52_hal_spi_cfg os_bsp_spi1s_cfg = {
@@ -336,8 +350,13 @@ nrf52_periph_create_spi(void)
     assert(rc == 0);
 #endif
 #if MYNEWT_VAL(SPI_1_MASTER)
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    rc = bus_spi_dev_create("spi1", &spi1_bus, (struct bus_spi_dev_cfg *)&spi1_cfg);
+    assert(rc == 0);
+#else
     rc = hal_spi_init(1, (void *)&os_bsp_spi1m_cfg, HAL_SPI_TYPE_MASTER);
     assert(rc == 0);
+#endif
 #endif
 #if MYNEWT_VAL(SPI_1_SLAVE)
     rc = hal_spi_init(1, (void *)&os_bsp_spi1s_cfg, HAL_SPI_TYPE_SLAVE);
