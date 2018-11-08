@@ -263,7 +263,7 @@ err:
  * @return statistic structure if found, NULL if not found.
  */
 struct stats_hdr *
-stats_group_find(char *name)
+stats_group_find(const char *name)
 {
     struct stats_hdr *cur;
 
@@ -289,7 +289,7 @@ stats_group_find(char *name)
  * @return 0 on success, non-zero error code on failure.
  */
 int
-stats_register(char *name, struct stats_hdr *shdr)
+stats_register(const char *name, struct stats_hdr *shdr)
 {
     struct stats_hdr *cur;
     int rc;
@@ -332,7 +332,7 @@ err:
 int
 stats_init_and_reg(struct stats_hdr *shdr, uint8_t size, uint8_t cnt,
                    const struct stats_name_map *map, uint8_t map_cnt,
-                   char *name)
+                   const char *name)
 {
     int rc;
 
