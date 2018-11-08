@@ -942,7 +942,8 @@ struct sensor *sensor_mgr_find_next_bytype(sensor_type_t type, struct sensor *se
  *
  * @return 0 on success, non-zero error code on failure
  */
-struct sensor *sensor_mgr_find_next_bydevname(char *devname, struct sensor *prev_cursor);
+struct sensor *sensor_mgr_find_next_bydevname(const char *devname,
+                                              struct sensor *prev_cursor);
 
 /**
  * Check if sensor type matches
@@ -961,7 +962,7 @@ int sensor_mgr_match_bytype(struct sensor *sensor, void *);
  * @param poll_rate The poll rate in milli seconds
  */
 int
-sensor_set_poll_rate_ms(char *devname, uint32_t poll_rate);
+sensor_set_poll_rate_ms(const char *devname, uint32_t poll_rate);
 
 /**
  * Set the sensor poll rate multiple based on the device name, sensor type
@@ -970,7 +971,7 @@ sensor_set_poll_rate_ms(char *devname, uint32_t poll_rate);
  * @param stt The sensor type trait
  */
 int
-sensor_set_n_poll_rate(char *devname, struct sensor_type_traits *stt);
+sensor_set_n_poll_rate(const char *devname, struct sensor_type_traits *stt);
 
 /**
  * Transmit OIC trigger
@@ -1017,7 +1018,7 @@ sensor_get_type_traits_bytype(sensor_type_t type, struct sensor *sensor);
  * @return NULL on failure, sensor struct on success
  */
 struct sensor *
-sensor_get_type_traits_byname(char *, struct sensor_type_traits **,
+sensor_get_type_traits_byname(const char *, struct sensor_type_traits **,
                               sensor_type_t);
 
 /**
@@ -1029,7 +1030,7 @@ sensor_get_type_traits_byname(char *, struct sensor_type_traits **,
  * @return 0 on success, non-zero on failure
  */
 int
-sensor_set_thresh(char *devname, struct sensor_type_traits *stt);
+sensor_set_thresh(const char *devname, struct sensor_type_traits *stt);
 
 /**
  * Clears the low threshold for a sensor
@@ -1040,7 +1041,7 @@ sensor_set_thresh(char *devname, struct sensor_type_traits *stt);
  * @return 0 on success, non-zero on failure
  */
 int
-sensor_clear_low_thresh(char *devname, sensor_type_t type);
+sensor_clear_low_thresh(const char *devname, sensor_type_t type);
 
 /**
  * Clears the high threshold for a sensor
@@ -1051,7 +1052,7 @@ sensor_clear_low_thresh(char *devname, sensor_type_t type);
  * @return 0 on success, non-zero on failure
  */
 int
-sensor_clear_high_thresh(char *devname, sensor_type_t type);
+sensor_clear_high_thresh(const char *devname, sensor_type_t type);
 
 /**
  * Puts a notification event on the sensor manager evq
