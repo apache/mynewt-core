@@ -60,6 +60,14 @@ extern "C" {
 /* Prototype for tx/rx callback */
 typedef void (*hal_spi_txrx_cb)(void *arg, int len);
 
+/** SPI controller hardware settings */
+struct hal_spi_hw_settings {
+    uint8_t pin_sck;
+    uint8_t pin_mosi;
+    uint8_t pin_miso;
+    uint8_t pin_ss;
+};
+
 /**
  * since one spi device can control multiple devices, some configuration
  * can be changed on the fly from the hal
@@ -87,6 +95,20 @@ struct hal_spi_settings {
  * @return int 0 on success, non-zero error code on failure.
  */
 int hal_spi_init(int spi_num, void *cfg, uint8_t spi_type);
+
+/**
+ * Initialize SPI controller
+ *
+ * This initializes SPI controller hardware before 1st use. Shall be called
+ * only once.
+ *
+ * @param spi_num  Number of SPI controller
+ * @param cfg      Configuration
+ *
+ * @return 0 on success, non-zero error code on failure
+ */
+int hal_spi_init_hw(uint8_t spi_num, uint8_t spi_type,
+                    const struct hal_spi_hw_settings *cfg);
 
 /**
  * Configure the spi. Must be called after the spi is initialized (after
