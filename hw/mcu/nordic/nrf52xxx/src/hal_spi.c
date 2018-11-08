@@ -663,6 +663,20 @@ err:
     return (rc);
 }
 
+int
+hal_spi_init_hw(uint8_t spi_num, uint8_t spi_type,
+                const struct hal_spi_hw_settings *cfg)
+{
+    struct nrf52_hal_spi_cfg hal_cfg;
+
+    hal_cfg.sck_pin = cfg->pin_sck;
+    hal_cfg.mosi_pin = cfg->pin_mosi;
+    hal_cfg.miso_pin = cfg->pin_miso;
+    hal_cfg.ss_pin = cfg->pin_ss;
+
+    return hal_spi_init(spi_num, &hal_cfg, spi_type);
+}
+
 /**
  * Configure the spi. Must be called after the spi is initialized (after
  * hal_spi_init is called) and when the spi is disabled (user must call
