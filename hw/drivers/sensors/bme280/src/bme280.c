@@ -38,12 +38,14 @@
 static double NAN = 0.0/0.0;
 #endif
 
+#if !MYNEWT_VAL(BUS_DRIVER_PRESENT)
 static struct hal_spi_settings spi_bme280_settings = {
     .data_order = HAL_SPI_MSB_FIRST,
     .data_mode  = HAL_SPI_MODE0,
     .baudrate   = 4000,
     .word_size  = HAL_SPI_WORD_SIZE_8BIT,
 };
+#endif
 
 /* Define the stats section and records */
 STATS_SECT_START(bme280_stat_section)
@@ -157,6 +159,7 @@ bme280_init(struct os_dev *dev, void *arg)
         goto err;
     }
 
+#if !MYNEWT_VAL(BUS_DRIVER_PRESENT)
     rc = hal_spi_config(sensor->s_itf.si_num, &spi_bme280_settings);
     if (rc == EINVAL) {
         /* If spi is already enabled, for nrf52, it returns -1, We should not
@@ -174,6 +177,7 @@ bme280_init(struct os_dev *dev, void *arg)
     if (rc) {
         goto err;
     }
+#endif
 
     return (0);
 err:
@@ -826,9 +830,21 @@ int
 bme280_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
                uint8_t len)
 {
+    int rc;
+
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    struct os_dev *dev = SENSOR_ITF_GET_DEVICE(itf);
+
+    /* XXX this is only required for SPI, but apparently device has no problem
+     * with this being set also for I2C so let's leave it for now since there's
+     * no API now to figure out bus type for node
+     */
+    addr |= BME280_SPI_READ_CMD_BIT;
+
+    rc = bus_node_simple_write_read_transact(dev, &addr, 1, payload, len);
+#else
     int i;
     uint16_t retval;
-    int rc;
 
     rc = 0;
 
@@ -863,6 +879,7 @@ bme280_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
 err:
     /* De-select the device */
     hal_gpio_write(itf->si_cs_pin, 1);
+#endif
 
     return rc;
 }
@@ -880,8 +897,31 @@ int
 bme280_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
                 uint8_t len)
 {
-    int i;
     int rc;
+
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    struct os_dev *dev = SENSOR_ITF_GET_DEVICE(itf);
+
+    rc = bus_dev_lock_by_node(dev, OS_TIMEOUT_NEVER);
+    if (rc) {
+        return SYS_EINVAL;
+    }
+
+    addr &= ~BME280_SPI_READ_CMD_BIT;
+
+    rc = bus_node_write(dev, &addr, 1, OS_TIMEOUT_NEVER, BUS_F_NOSTOP);
+    if (rc) {
+        goto done;
+    }
+
+    rc = bus_node_simple_write(dev, payload, len);
+
+done:
+    rc = bus_dev_unlock_by_node(dev);
+    assert(rc == 0);
+
+#else
+    int i;
 
     /* Select the device */
     hal_gpio_write(itf->si_cs_pin, 0);
@@ -914,7 +954,7 @@ bme280_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
 err:
     /* De-select the device */
     hal_gpio_write(itf->si_cs_pin, 1);
-
+#endif
     os_time_delay((OS_TICKS_PER_SEC * 30)/1000 + 1);
 
     return rc;
@@ -1348,3 +1388,43 @@ bme280_forced_mode_measurement(struct sensor_itf *itf)
 err:
     return rc;
 }
+
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+static void
+init_node_cb(struct bus_node *bnode, void *arg)
+{
+    bme280_init((struct os_dev *)bnode, arg);
+}
+
+int
+bme280_create_i2c_dev(struct bus_i2c_node *node, const char *name,
+                      const struct bus_i2c_node_cfg *cfg)
+{
+    struct bus_node_callbacks cbs = {
+        .init = init_node_cb,
+    };
+    int rc;
+
+    bus_node_set_callbacks((struct os_dev *)node, &cbs);
+
+    rc = bus_i2c_node_create(name, node, (struct bus_i2c_node_cfg *)cfg);
+
+    return rc;
+}
+
+int
+bme280_create_spi_dev(struct bus_spi_node *node, const char *name,
+                      const struct bus_spi_node_cfg *cfg)
+{
+    struct bus_node_callbacks cbs = {
+        .init = init_node_cb,
+    };
+    int rc;
+
+    bus_node_set_callbacks((struct os_dev *)node, &cbs);
+
+    rc = bus_spi_node_create(name, node, (struct bus_spi_node_cfg *)cfg);
+
+    return rc;
+}
+#endif
