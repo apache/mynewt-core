@@ -23,6 +23,7 @@
 
 #include "os/mynewt.h"
 #include "stats/stats.h"
+#include "stats_priv.h"
 
 /**
  * Declare an example statistics section, which is fittingly, the number
@@ -79,6 +80,30 @@ STATS_NAME_END(stats)
 STAILQ_HEAD(, stats_hdr) g_stats_registry =
     STAILQ_HEAD_INITIALIZER(g_stats_registry);
 
+static size_t
+stats_offset(const struct stats_hdr *hdr)
+{
+    if (hdr->s_flags & STATS_HDR_F_PERSIST) {
+        return sizeof (struct stats_persisted_hdr);
+    } else {
+        return sizeof (struct stats_hdr);
+    }
+}
+
+size_t
+stats_size(const struct stats_hdr *hdr)
+{
+    return hdr->s_cnt * hdr->s_size;
+}
+
+void *
+stats_data(const struct stats_hdr *hdr)
+{
+    size_t offset;
+
+    offset = stats_offset(hdr);
+    return (uint8_t *)hdr + offset;
+}
 
 /**
  * Walk a specific statistic entry, and call walk_func with arg for
@@ -100,6 +125,7 @@ stats_walk(struct stats_hdr *hdr, stats_walk_func_t walk_func, void *arg)
 {
     char *name;
     char name_buf[12];
+    uint16_t start;
     uint16_t cur;
     uint16_t end;
     int ent_n;
@@ -109,8 +135,9 @@ stats_walk(struct stats_hdr *hdr, stats_walk_func_t walk_func, void *arg)
     int i;
 #endif
 
-    cur = sizeof(*hdr);
-    end = sizeof(*hdr) + (hdr->s_size * hdr->s_cnt);
+    start = stats_offset(hdr);
+    cur = start;
+    end = start + stats_size(hdr);
 
     while (cur < end) {
         /*
@@ -136,7 +163,7 @@ stats_walk(struct stats_hdr *hdr, stats_walk_func_t walk_func, void *arg)
          * structure.
          */
         if (name == NULL) {
-            ent_n = (cur - sizeof(*hdr)) / hdr->s_size;
+            ent_n = (cur - start) / hdr->s_size;
             len = snprintf(name_buf, sizeof(name_buf), "s%d", ent_n);
             name_buf[len] = '\0';
             name = name_buf;
@@ -194,7 +221,6 @@ stats_module_init(void)
     SYSINIT_PANIC_ASSERT(rc == 0);
 }
 
-
 /**
  * Initialize a statistics structure, pointed to by hdr.
  *
@@ -213,10 +239,14 @@ int
 stats_init(struct stats_hdr *shdr, uint8_t size, uint8_t cnt,
         const struct stats_name_map *map, uint8_t map_cnt)
 {
-    memset((uint8_t *) shdr+sizeof(*shdr), 0, size * cnt);
+    size_t offset;
+
+    offset = stats_offset(shdr);
+    memset((uint8_t *)shdr + offset, 0, size * cnt);
 
     shdr->s_size = size;
     shdr->s_cnt = cnt;
+    shdr->s_flags = 0;
 #if MYNEWT_VAL(STATS_NAMES)
     shdr->s_map = map;
     shdr->s_map_cnt = map_cnt;
@@ -306,6 +336,12 @@ stats_register(const char *name, struct stats_hdr *shdr)
 
     shdr->s_name = name;
 
+#if MYNEWT_VAL(STATS_PERSIST)
+    if (shdr->s_flags & STATS_HDR_F_PERSIST) {
+        stats_conf_assert_valid(shdr);
+    }
+#endif
+
     STAILQ_INSERT_TAIL(&g_stats_registry, shdr, s_next);
 
     STATS_INC(g_stats_stats, num_registered);
@@ -362,7 +398,7 @@ stats_reset(struct stats_hdr *hdr)
     void *stat_val;
 
     cur = sizeof(*hdr);
-    end = sizeof(*hdr) + (hdr->s_size * hdr->s_cnt);
+    end = sizeof(*hdr) + stats_size(hdr);
 
     while (cur < end) {
         stat_val = (uint8_t*)hdr + cur;

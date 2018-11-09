@@ -28,3 +28,36 @@ syscfg.defs:
     STATS_NEWTMGR:
         description: 'Expose the "stat" newtmgr command.'
         value: 0
+    STATS_PERSIST:
+        description: >
+            Enables persistent statistics.  Regardless of this setting's value,
+            statistics are not persistent by default.  Enabling this setting
+            just exposes the persistent statistics API.
+        value: 0
+    STATS_PERSIST_BUF_SIZE:
+        description: >
+            The size of the buffer that holds each stat group during
+            persistence.  Before a stat group is persisted, it must be
+            base64-encoded in this buffer.  The buffer is allocated on the
+            stack.  If the buffer is too small for a persistent stat group, the
+            system detects the problem at startup and triggers a failed
+            assertion.
+        value: 128
+    STATS_PERSIST_MAX_NAME_SIZE:
+        description: >
+            The size of the buffer that holds each stat group name during
+            persistence.  The buffer is allocated on the
+            stack.  If the buffer is too small for a persistent stat group
+            name, the system detects the problem at startup and triggers a
+            failed assertion.
+        value: 32
+
+    STATS_SYSINIT_STAGE_CONF:
+        description: >
+            Sysinit stage for persistent stat config.
+        value: 51
+    STATS_SYSDOWN_STAGE:
+        description: >
+            Sysdown stage for persistent stat config.  During system shutdown,
+            pending stat writes get flushed to disk.
+        value: 500

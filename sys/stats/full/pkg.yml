@@ -35,3 +35,9 @@ pkg.deps.STATS_NEWTMGR:
 
 pkg.init:
     stats_module_init: 10
+
+pkg.init.STATS_PERSIST:
+    stats_conf_init: 'MYNEWT_VAL(STATS_SYSINIT_STAGE_CONF)'
+
+pkg.down.STATS_PERSIST:
+    stats_persist_sysdown: 'MYNEWT_VAL(STATS_SYSDOWN_STAGE)'
