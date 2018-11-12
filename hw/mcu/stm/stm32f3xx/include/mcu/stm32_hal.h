@@ -75,6 +75,23 @@ struct stm32_hal_spi_cfg {
 
 #define STM32_HAL_TIMER_MAX     (3)
 
+/* hal_flash */
+#include "stm32f3xx_hal_def.h"
+#include "stm32f3xx_hal_flash.h"
+#include "stm32f3xx_hal_flash_ex.h"
+#define STM32_HAL_FLASH_INIT()
+#define FLASH_PROGRAM_TYPE FLASH_TYPEPROGRAM_HALFWORD
+#define STM32_HAL_FLASH_CLEAR_ERRORS()            \
+    do {                                          \
+        __HAL_FLASH_CLEAR_FLAG(FLASH_FLAG_EOP |   \
+                FLASH_FLAG_WRPERR |               \
+                FLASH_FLAG_PGERR);                \
+    } while (0)
+
+#ifdef __cplusplus
+}
+#endif
+
 #ifdef __cplusplus
 }
 #endif

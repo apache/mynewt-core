@@ -17,6 +17,14 @@
 #
 
 syscfg.defs:
+    STM32_FLASH_SIZE_KB:
+        description: 'Total flash size in KB.'
+        value: 1024
+
+    STM32_FLASH_NUM_AREAS:
+        description: 'Amount of flash sectors for a non-linear STM32 MCU.'
+        value: 13
+
     ADC_1:
         description: "ADC_1"
         value:  0
@@ -26,6 +34,7 @@ syscfg.defs:
     ADC_3:
         description: "ADC_3"
         value:  0
+
     UART_0:
         description: 'Whether to enable UART0'
         value:  1

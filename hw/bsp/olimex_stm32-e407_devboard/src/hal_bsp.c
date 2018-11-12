@@ -40,7 +40,6 @@
 #include "hal/hal_timer.h"
 #include "hal/hal_bsp.h"
 #include "hal/hal_gpio.h"
-#include "hal/hal_flash_int.h"
 #if MYNEWT_VAL(SPI_0_MASTER) || MYNEWT_VAL(SPI_0_SLAVE)
 #include "hal/hal_spi.h"
 #endif
@@ -52,7 +51,7 @@
 #include "mcu/stm32f4_bsp.h"
 #include "mcu/stm32f4xx_mynewt_hal.h"
 
-const uint32_t stm32f4_flash_sectors[] = {
+const uint32_t stm32_flash_sectors[] = {
     0x08000000,     /* 16kB */
     0x08004000,     /* 16kB */
     0x08008000,     /* 16kB */
@@ -68,18 +67,9 @@ const uint32_t stm32f4_flash_sectors[] = {
     0x08100000,     /* End of flash */
 };
 
-#define NAREAS (sizeof(stm32f4_flash_sectors) / sizeof(stm32f4_flash_sectors[0]))
-
-extern const struct hal_flash_funcs stm32f4_flash_funcs;
-
-const struct hal_flash stm32f4_flash_dev = {
-    .hf_itf = &stm32f4_flash_funcs,
-    .hf_base_addr = 0x08000000,
-    .hf_size = 1024 * 1024,
-    .hf_sector_cnt = NAREAS - 1,
-    .hf_align = 1,
-    .hf_erased_val = 0xff,
-};
+#define SZ (sizeof(stm32_flash_sectors) / sizeof(stm32_flash_sectors[0]))
+_Static_assert(MYNEWT_VAL(STM32_FLASH_NUM_AREAS) == SZ,
+        "STM32_FLASH_NUM_AREAS does not match flash sectors");
 
 #if MYNEWT_VAL(TRNG)
 static struct trng_dev os_bsp_trng;
@@ -366,6 +356,7 @@ static const struct hal_bsp_mem_dump dump_cfg[] = {
     }
 };
 
+extern const struct hal_flash stm32_flash_dev;
 const struct hal_flash *
 hal_bsp_flash_dev(uint8_t id)
 {
@@ -375,7 +366,7 @@ hal_bsp_flash_dev(uint8_t id)
     if (id != 0) {
         return NULL;
     }
-    return &stm32f4_flash_dev;
+    return &stm32_flash_dev;
 }
 
 const struct hal_bsp_mem_dump *

@@ -39,6 +39,14 @@ syscfg.defs:
         description: This MCU's UART uses SR register for status.
         value: 1
 
+    MCU_FLASH_ERASED_VAL:
+        description: Value read from erased flash.
+        value: 0xff
+
+    STM32_FLASH_IS_LINEAR:
+        description: This MCU's Flash has one single sector size.
+        value: 0
+
     I2C_0:
         description: 'I2C (TWI) interface 0'
         value:  0
