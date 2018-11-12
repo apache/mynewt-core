@@ -22,6 +22,13 @@ syscfg.defs:
         description: "Indicates that baselibc is the libc implementation."
         value: 1
 
+    BASELIBC_MALLOC_STUB:
+        description: >
+            Replaces baselibc's implementations of `malloc()` and `free()` with
+            no-op stubs.  Useful for reducing code size in builds that do not
+            use dynamically allocated memory.
+        value: 0
+
     BASELIBC_ASSERT_FILE_LINE:
         defunct: 1
         description: 'Use OS_CRASH_FILE_LINE instead'

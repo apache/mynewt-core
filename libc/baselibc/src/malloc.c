@@ -10,6 +10,15 @@
 #include <stdint.h>
 #include "malloc.h"
 
+#include "os/mynewt.h"
+
+#if MYNEWT_VAL(BASELIBC_MALLOC_STUB)
+
+void *malloc(size_t size) { return NULL; }
+void free(void *ptr) { }
+
+#else
+
 /* Both the arena list and the free memory list are double linked
    list with head node.  This the head node. Note that the arena list
    is sorted in order of address. */
@@ -274,3 +283,4 @@ void set_malloc_locking(malloc_lock_t lock, malloc_unlock_t unlock)
     else
         malloc_unlock = &malloc_unlock_nop;
 }
+#endif /* MYNEWT_VAL(BASELIBC_MALLOC_STUB) */
