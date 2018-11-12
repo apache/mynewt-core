@@ -80,8 +80,23 @@ static struct stm32_pwm_conf  stm32_pwm_config[PWM_CNT] = {
 #endif
 };
 
+#endif /* PWM_CNT */
 
-#endif
+const uint32_t stm32_flash_sectors[] = {
+    0x08000000,     /* 32kB  */
+    0x08008000,     /* 32kB  */
+    0x08010000,     /* 32kB  */
+    0x08018000,     /* 32kB  */
+    0x08020000,     /* 128kB */
+    0x08040000,     /* 256kB */
+    0x08080000,     /* 256kB */
+    0x080c0000,     /* 256kB */
+    0x08100000,     /* End of flash */
+};
+
+#define SZ (sizeof(stm32_flash_sectors) / sizeof(stm32_flash_sectors[0]))
+_Static_assert(MYNEWT_VAL(STM32_FLASH_NUM_AREAS) == SZ,
+        "STM32_FLASH_NUM_AREAS does not match flash sectors");
 
 #if MYNEWT_VAL(TRNG)
 static struct trng_dev os_bsp_trng;
@@ -185,6 +200,7 @@ static const struct hal_bsp_mem_dump dump_cfg[] = {
     },
 };
 
+extern const struct hal_flash stm32_flash_dev;
 const struct hal_flash *
 hal_bsp_flash_dev(uint8_t id)
 {
@@ -194,7 +210,7 @@ hal_bsp_flash_dev(uint8_t id)
     if (id != 0) {
         return NULL;
     }
-    return &stm32f7_flash_dev;
+    return &stm32_flash_dev;
 }
 
 const struct hal_bsp_mem_dump *

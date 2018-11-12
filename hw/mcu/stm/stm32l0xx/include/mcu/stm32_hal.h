@@ -80,6 +80,36 @@ struct stm32_hal_spi_cfg {
 
 #define STM32_HAL_TIMER_MAX     (3)
 
+/* hal_flash */
+#include "stm32l0xx_hal_def.h"
+#include "stm32l0xx_hal_rcc.h"
+#include "stm32l0xx_hal_flash.h"
+#include "stm32l0xx_hal_flash_ex.h"
+/*
+ * FIXME: __HAL_FLASH_BUFFER_CACHE_DISABLE() ?
+ *        __HAL_FLASH_PREREAD_BUFFER_ENABLE() ?
+ *        __HAL_FLASH_PREFETCH_BUFFER_ENABLE() ?
+ */
+#define STM32_HAL_FLASH_INIT()        \
+    do {                              \
+        __HAL_RCC_MIF_CLK_ENABLE();   \
+        HAL_FLASH_Unlock();           \
+    } while (0)
+#define FLASH_PROGRAM_TYPE FLASH_TYPEPROGRAM_WORD
+#define STM32_HAL_FLASH_CLEAR_ERRORS()          \
+    do {                                        \
+        __HAL_FLASH_CLEAR_FLAG(FLASH_FLAG_EOP | \
+                FLASH_FLAG_ENDHV |              \
+                FLASH_FLAG_READY |              \
+                FLASH_FLAG_WRPERR |             \
+                FLASH_FLAG_PGAERR |             \
+                FLASH_FLAG_SIZERR |             \
+                FLASH_FLAG_OPTVERR |            \
+                FLASH_FLAG_RDERR |              \
+                FLASH_FLAG_FWWERR |             \
+                FLASH_FLAG_NOTZEROERR);         \
+    } while (0)
+
 #ifdef __cplusplus
 }
 #endif

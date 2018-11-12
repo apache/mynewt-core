@@ -18,6 +18,10 @@
 #
 
 syscfg.defs:
+    STM32_FLASH_SIZE_KB:
+        description: 'Total flash size in KB.'
+        value: 256
+
     UART_0:
         description: 'UART 0'
         value:  1

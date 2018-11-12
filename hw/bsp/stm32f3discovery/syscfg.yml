@@ -18,6 +18,10 @@
 #
 
 syscfg.defs:
+    STM32_FLASH_SIZE_KB:
+        description: 'Total flash size in KB.'
+        value: 1024
+
     UART_0:
         description: 'Whether to enable UART0'
         value:  1
@@ -29,11 +33,9 @@ syscfg.defs:
     TIMER_0:
         description: 'Support for timer 0'
         value: 1
-
     TIMER_1:
         description: 'Support for timer 1'
         value: 0
-
     TIMER_2:
         description: 'Support for timer 2'
         value: 0
