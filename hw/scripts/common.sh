@@ -60,7 +60,7 @@ parse_extra_jtag_cmd() {
 		shift
 		;;
 	    *)
-		NEW_EXTRA_JTAG_CMD+=" $1"
+		NEW_EXTRA_JTAG_CMD="$NEW_EXTRA_JTAG_CMD $1"
 		shift
 		;;
 	esac
