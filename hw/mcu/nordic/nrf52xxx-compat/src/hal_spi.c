@@ -89,6 +89,7 @@ struct nrf52_hal_spi
     /* Callback and arguments */
     hal_spi_txrx_cb txrx_cb_func;
     void            *txrx_cb_arg;
+    struct os_mutex data_lock;
 };
 
 #if MYNEWT_VAL(SPI_0_MASTER) || MYNEWT_VAL(SPI_0_SLAVE)
@@ -573,6 +574,13 @@ hal_spi_init(int spi_num, void *cfg, uint8_t spi_type)
 
     NRF52_HAL_SPI_RESOLVE(spi_num, spi);
 
+    rc = os_mutex_init(&spi->data_lock);
+
+    if (0 != rc)
+    {
+        return -1;
+    }
+
     /* Check for valid arguments */
     rc = EINVAL;
     if (cfg == NULL) {
@@ -740,6 +748,51 @@ hal_spi_enable(int spi_num)
     }
     rc = 0;
 
+err:
+    return rc;
+}
+
+/**
+ * Checks if spi is being used and can be taken?.
+ * in progress.
+ *
+ * @param spi_num - spi number
+ * @param taken - true if intention is to use spi, false if is to release
+ *
+ * @return int 0 on success, non-zero error code on failure.
+ */
+int
+set_spi_taken(int spi_num, bool taken)
+{
+    int rc;
+    struct nrf52_hal_spi* spi = NULL;
+    NRF52_HAL_SPI_RESOLVE(spi_num, spi);
+
+    if (true == taken)
+    {
+        //get lock
+        os_error_t rc_lock = os_mutex_pend(&spi->data_lock, 0);
+        if (OS_OK == rc_lock)
+        {
+            return 0;
+        }
+        else
+        {
+            return -1;
+        }
+    }
+    else
+    {
+        //release lock
+        os_error_t ret = os_mutex_release(&spi->data_lock);
+        if (OS_OK != ret)
+        {
+            return -1;
+        }
+        return 0;
+    }
+
+    rc = 0;
 err:
     return rc;
 }

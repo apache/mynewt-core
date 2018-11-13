@@ -32,6 +32,7 @@ extern "C" {
 #endif
 
 #include <inttypes.h>
+#include <stdbool.h>
 
 /* SPI Type of Master */
 #define HAL_SPI_TYPE_MASTER         (0)
@@ -140,6 +141,15 @@ int hal_spi_enable(int spi_num);
  */
 int hal_spi_disable(int spi_num);
 
+/**
+ * Checks if spi is being used or free to be taken?.
+ *
+ * @param spi_num - spi number
+ * @param taken - true if intention is to use spi, false if is to release
+ *
+ * @return int 0 on success, non-zero error code on failure.
+ */
+int set_spi_taken(int spi_num, bool taken);
 /**
  * Blocking call to send a value on the SPI. Returns the value received from the
  * SPI slave.

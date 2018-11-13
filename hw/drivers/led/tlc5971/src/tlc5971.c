@@ -42,6 +42,16 @@ tlc5971_open(struct os_dev *odev, uint32_t wait, void *arg)
 
     dev = (struct tlc5971_dev *)odev;
 
+    if(0 != set_spi_taken(1, true))
+    {
+        int* p_error = arg;
+        if (NULL != p_error)
+        {
+            *p_error = -1;
+        }
+        return -1;
+    }
+
     /* Configure the spi and enable it */
     spi_cfg.baudrate = dev->tlc_itf.tpi_spi_freq;
     spi_cfg.data_mode = HAL_SPI_MODE0;
@@ -57,6 +67,7 @@ tlc5971_open(struct os_dev *odev, uint32_t wait, void *arg)
     hal_spi_enable(spi_num);
 
     dev->is_enabled = true;
+
     return 0;
 }
 
@@ -72,9 +83,13 @@ tlc5971_open(struct os_dev *odev, uint32_t wait, void *arg)
 static int
 tlc5971_close(struct os_dev *odev)
 {
-    struct tlc5971_dev *dev;
+    struct tlc5971_dev *dev = (struct tlc5971_dev *)odev;
+    if (NULL == dev)
+    {
+        return -1;
+    }
 
-    dev = (struct tlc5971_dev *)odev;
+    set_spi_taken(dev->tlc_itf.tpi_spi_num, false);
 
     /* Disable the SPI */
     hal_spi_disable(dev->tlc_itf.tpi_spi_num);
