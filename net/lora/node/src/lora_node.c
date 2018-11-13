@@ -58,6 +58,11 @@ uint8_t g_lora_app_key[LORA_KEY_LEN];
 /* Flag to denote if we last sent a mac command */
 uint8_t g_lora_node_last_tx_mac_cmd;
 
+/* Used for LoRaMacInitialization(); */
+#if !MYNEWT_VAL(LORA_NODE_CLI)
+    LoRaMacCallback_t lora_cb;
+#endif
+
 /* MAC task */
 #define LORA_MAC_STACK_SIZE   (256)
 struct os_task g_lora_mac_task;
@@ -626,7 +631,6 @@ lora_node_init(void)
     int rc;
 #if !MYNEWT_VAL(LORA_NODE_CLI)
     LoRaMacStatus_t lms;
-    LoRaMacCallback_t lora_cb;
 #endif
 
     rc = stats_init_and_reg(
