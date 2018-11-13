@@ -35,7 +35,6 @@
 #include "stats/stats.h"
 #include <syscfg/syscfg.h>
 #include <sensor/sensor.h>
-#include <console/console.h>
 
 #ifndef LIS2DH12_PRINT_INTR
 #define LIS2DH12_PRINT_INTR     (0)
@@ -90,21 +89,39 @@ static const struct lis2dh12_notif_cfg dflt_notif_cfg[] = {
       .int_cfg   = LIS2DH12_CTRL_REG3_I1_IA1
     },
     {
-      .event     = SENSOR_EVENT_TYPE_ORIENT_X_CHANGE,
+      .event     = SENSOR_EVENT_TYPE_ORIENT_X_L_CHANGE,
       .int_num   = 0, // Should be 0, unless inactivity interrupt is not used
-      .notif_src = LIS2DH12_NOTIF_SRC_INT1_XH | LIS2DH12_NOTIF_SRC_INT1_XL,
+      .notif_src = LIS2DH12_NOTIF_SRC_INT1_XL,
       .int_cfg   = LIS2DH12_CTRL_REG3_I1_IA1
     },
     {
-      .event     = SENSOR_EVENT_TYPE_ORIENT_Y_CHANGE,
+      .event     = SENSOR_EVENT_TYPE_ORIENT_X_H_CHANGE,
       .int_num   = 0, // Should be 0, unless inactivity interrupt is not used
-      .notif_src = LIS2DH12_NOTIF_SRC_INT1_YH | LIS2DH12_NOTIF_SRC_INT1_YL,
+      .notif_src = LIS2DH12_NOTIF_SRC_INT1_XH,
       .int_cfg   = LIS2DH12_CTRL_REG3_I1_IA1
     },
     {
-      .event     = SENSOR_EVENT_TYPE_ORIENT_Z_CHANGE,
+      .event     = SENSOR_EVENT_TYPE_ORIENT_Y_L_CHANGE,
       .int_num   = 0, // Should be 0, unless inactivity interrupt is not used
-      .notif_src = LIS2DH12_NOTIF_SRC_INT1_ZH | LIS2DH12_NOTIF_SRC_INT1_ZL,
+      .notif_src = LIS2DH12_NOTIF_SRC_INT1_YL,
+      .int_cfg   = LIS2DH12_CTRL_REG3_I1_IA1
+    },
+    {
+      .event     = SENSOR_EVENT_TYPE_ORIENT_Y_H_CHANGE,
+      .int_num   = 0, // Should be 0, unless inactivity interrupt is not used
+      .notif_src = LIS2DH12_NOTIF_SRC_INT1_YH,
+      .int_cfg   = LIS2DH12_CTRL_REG3_I1_IA1
+    },
+    {
+      .event     = SENSOR_EVENT_TYPE_ORIENT_Z_L_CHANGE,
+      .int_num   = 0, // Should be 0, unless inactivity interrupt is not used
+      .notif_src = LIS2DH12_NOTIF_SRC_INT1_ZL,
+      .int_cfg   = LIS2DH12_CTRL_REG3_I1_IA1
+    },
+    {
+      .event     = SENSOR_EVENT_TYPE_ORIENT_Z_H_CHANGE,
+      .int_num   = 0, // Should be 0, unless inactivity interrupt is not used
+      .notif_src = LIS2DH12_NOTIF_SRC_INT1_ZH,
       .int_cfg   = LIS2DH12_CTRL_REG3_I1_IA1
     }
 };
@@ -207,6 +224,11 @@ lis2dh12_i2c_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
                      uint8_t len)
 {
     int rc;
+    if (len > 1)
+    {
+        addr |= 0x80;
+    }
+
     uint8_t payload[20] = { addr, 0, 0, 0, 0, 0, 0, 0,
                               0, 0, 0, 0, 0, 0, 0, 0,
                               0, 0, 0, 0};
@@ -845,6 +867,7 @@ lis2dh12_set_fifo_mode(struct sensor_itf *itf, uint8_t mode)
         goto err;
     }
 
+    reg &= 0x3f;
     reg |= mode << 6;
 
     rc = lis2dh12_writelen(itf, LIS2DH12_REG_FIFO_CTRL_REG, &reg, 1);
@@ -952,6 +975,27 @@ lis2dh12_set_op_mode(struct sensor_itf *itf, uint8_t mode)
     int rc;
     uint8_t reg;
 
+    /* reset filtering block */
+    rc = lis2dh12_readlen(itf, LIS2DH12_REG_REFERENCE, &reg, 1);
+    if (rc) {
+        goto err;
+    }
+
+    rc = lis2dh12_readlen(itf, LIS2DH12_REG_CTRL_REG4, &reg, 1);
+    if (rc) {
+        goto err;
+    }
+
+    /* Set HR bit */
+    reg &= ~LIS2DH12_CTRL_REG4_HR;
+    reg |= (mode & 0x08);
+
+    rc = lis2dh12_writelen(itf, LIS2DH12_REG_CTRL_REG4, &reg, 1);
+    if (rc) {
+        goto err;
+    }
+
+    /* Set LP bit */
     rc = lis2dh12_readlen(itf, LIS2DH12_REG_CTRL_REG1, &reg, 1);
     if (rc) {
         goto err;
@@ -965,20 +1009,9 @@ lis2dh12_set_op_mode(struct sensor_itf *itf, uint8_t mode)
         goto err;
     }
 
-    rc = lis2dh12_readlen(itf, LIS2DH12_REG_CTRL_REG4, &reg, 1);
-    if (rc) {
-        goto err;
-    }
 
-    reg &= ~LIS2DH12_CTRL_REG4_HR;
-    reg |= (mode & 0x08);
 
-    rc = lis2dh12_writelen(itf, LIS2DH12_REG_CTRL_REG4, &reg, 1);
-    if (rc) {
-        goto err;
-    }
-
-    os_time_delay(OS_TICKS_PER_SEC/1000 + 1);
+    os_time_delay(OS_TICKS_PER_SEC/1000 + 4);
 
     return 0;
 err:
@@ -1024,9 +1057,15 @@ int
 lis2dh12_get_data(struct sensor_itf *itf, uint8_t fs, int16_t *x, int16_t *y, int16_t *z)
 {
     int rc;
-    uint8_t payload[6] = {0};
 
+    uint8_t payload[6] = {0};
+    uint8_t status;
     *x = *y = *z = 0;
+
+    rc = lis2dh12_readlen(itf, LIS2DH12_REG_STATUS_REG, &status, 1);
+    if (rc) {
+        goto err;
+    }
 
     rc = lis2dh12_readlen(itf, LIS2DH12_REG_OUT_X_L, payload, 6);
     if (rc) {
@@ -1185,23 +1224,6 @@ lis2dh12_int_irq_handler(void *arg)
     sensor_mgr_put_interrupt_evt(sensor);
 }
 
-// TODO: Remove second handler
-// This was added just to distinguish interrupts during bringup
-static void
-lis2dh12_int_irq_handler2(void *arg)
-{
-    struct sensor *sensor = arg;
-    struct lis2dh12 *lis2dh12;
-
-    lis2dh12 = (struct lis2dh12 *)SENSOR_GET_DEVICE(sensor);
-
-    if (lis2dh12->pdd.interrupt) {
-        wake_interrupt(lis2dh12->pdd.interrupt);
-    }
-
-    sensor_mgr_put_interrupt_evt(sensor);
-}
-
 /**
  * Expects to be called back through os_dev_create().
  *
@@ -1296,7 +1318,7 @@ lis2dh12_init(struct os_dev *dev, void *arg)
     if (rc) {
         return rc;
     }
-    rc = init_intpin(lis2dh12, 1, lis2dh12_int_irq_handler2, sensor);
+    rc = init_intpin(lis2dh12, 1, lis2dh12_int_irq_handler, sensor);
     if (rc) {
         return rc;
     }
@@ -1332,6 +1354,55 @@ lis2dh12_set_self_test_mode(struct sensor_itf *itf, uint8_t mode)
 
 err:
     return rc;
+}
+
+/**
+ * Sets the interrupt push-pull/open-drain selection
+ *
+ * @param The sensor interface
+ * @param interrupt setting (0 = push-pull, 1 = open-drain)
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+lis2dh12_set_int_pp_od(struct sensor_itf *itf, uint8_t mode)
+{
+    int rc;
+    uint8_t reg;
+
+    rc = lis2dh12_read8(itf, LIS2DH12_REG_CTRL_REG6, &reg);
+    if (rc) {
+        return rc;
+    }
+
+    reg &= ~LIS2DH12_CTRL_REG6_INT_POLARITY;
+    reg |= mode ? LIS2DH12_CTRL_REG6_INT_POLARITY : 0;
+
+    return lis2dh12_write8(itf, LIS2DH12_REG_CTRL_REG6, reg);
+}
+
+/**
+ * Gets the interrupt push-pull/open-drain selection
+ *
+ * @param The sensor interface
+ * @param ptr to store setting (0 = push-pull, 1 = open-drain)
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+lis2dh12_get_int_pp_od(struct sensor_itf *itf, uint8_t *mode)
+{
+    int rc;
+    uint8_t reg;
+
+    rc = lis2dh12_read8(itf, LIS2DH12_REG_CTRL_REG6, &reg);
+    if (rc) {
+        return rc;
+    }
+
+    *mode = (reg & LIS2DH12_CTRL_REG6_INT_POLARITY) ? 1 : 0;
+
+    return 0;
 }
 
 int
@@ -1851,6 +1922,25 @@ lis2dh12_inc_notif_stats(sensor_event_type_t event)
 }
 
 static int
+lis2dh12_notify(struct lis2dh12 *lis2dh12, uint16_t src,
+                    sensor_event_type_t event_type)
+{
+    struct lis2dh12_notif_cfg *notif_cfg;
+
+    notif_cfg = lis2dh12_find_notif_cfg_by_event(event_type, &lis2dh12->cfg);
+    if (!notif_cfg) {
+        return SYS_EINVAL;
+    }
+
+    if (src & notif_cfg->notif_src) {
+        sensor_mgr_put_notify_evt(&lis2dh12->pdd.notify_ctx, event_type);
+        lis2dh12_inc_notif_stats(event_type);
+    }
+
+    return 0;
+}
+
+static int
 lis2dh12_sensor_handle_interrupt(struct sensor *sensor)
 {
     struct lis2dh12 *lis2dh12;
@@ -1873,6 +1963,9 @@ lis2dh12_sensor_handle_interrupt(struct sensor *sensor)
         goto err;
     }
 
+    /* Read pin state of interrupt 2 before clearing the int */
+    int2_pin_state = hal_gpio_read(itf->si_ints[1].host_pin);
+
     rc = lis2dh12_clear_int2(itf, &int_src_bytes[1]);
     if (rc) {
         LIS2DH12_LOG(ERROR, "Could not read INT1_SRC (err=0x%02x)\n", rc);
@@ -1891,62 +1984,52 @@ lis2dh12_sensor_handle_interrupt(struct sensor *sensor)
         console_printf("X = %-5d Y = %-5d Z = %-5d\n", x, y, z);
     }
 #endif
-
     if (pdd->notify_ctx.snec_evtype & SENSOR_EVENT_TYPE_ORIENT_CHANGE) {
-        notif_cfg = lis2dh12_find_notif_cfg_by_event(SENSOR_EVENT_TYPE_ORIENT_CHANGE,
-                                                     &lis2dh12->cfg);
-        if (int_src & notif_cfg->notif_src) {
-
-            /* Orientation change detected, can be a combination of ZH, ZL, YH,
-             * YL, XH and XL
-             */
-
-            sensor_mgr_put_notify_evt(&lis2dh12->pdd.notify_ctx,
-                                      SENSOR_EVENT_TYPE_ORIENT_CHANGE);
-
-            lis2dh12_inc_notif_stats(SENSOR_EVENT_TYPE_ORIENT_CHANGE);
+        rc = lis2dh12_notify(lis2dh12, int_src, SENSOR_EVENT_TYPE_ORIENT_CHANGE);
+        if (rc) {
+            goto err;
         }
     }
 
-    if (pdd->notify_ctx.snec_evtype & SENSOR_EVENT_TYPE_ORIENT_X_CHANGE) {
-        notif_cfg = lis2dh12_find_notif_cfg_by_event(SENSOR_EVENT_TYPE_ORIENT_X_CHANGE,
-                                                     &lis2dh12->cfg);
-        if (int_src & notif_cfg->notif_src) {
-
-            /* Orientation change detected XH or XL */
-
-            sensor_mgr_put_notify_evt(&lis2dh12->pdd.notify_ctx,
-                                      SENSOR_EVENT_TYPE_ORIENT_X_CHANGE);
-
-            lis2dh12_inc_notif_stats(SENSOR_EVENT_TYPE_ORIENT_X_CHANGE);
+    if (pdd->notify_ctx.snec_evtype & SENSOR_EVENT_TYPE_ORIENT_X_L_CHANGE) {
+        rc = lis2dh12_notify(lis2dh12, int_src, SENSOR_EVENT_TYPE_ORIENT_X_L_CHANGE);
+        if (rc) {
+            goto err;
         }
     }
 
-    if (pdd->notify_ctx.snec_evtype & SENSOR_EVENT_TYPE_ORIENT_Y_CHANGE) {
-        notif_cfg = lis2dh12_find_notif_cfg_by_event(SENSOR_EVENT_TYPE_ORIENT_Y_CHANGE,
-                                                     &lis2dh12->cfg);
-        if (int_src & notif_cfg->notif_src) {
-
-            /* Orientation change detected YH or YL */
-
-            sensor_mgr_put_notify_evt(&lis2dh12->pdd.notify_ctx,
-                                      SENSOR_EVENT_TYPE_ORIENT_Y_CHANGE);
-
-            lis2dh12_inc_notif_stats(SENSOR_EVENT_TYPE_ORIENT_Y_CHANGE);
+    if (pdd->notify_ctx.snec_evtype & SENSOR_EVENT_TYPE_ORIENT_Y_L_CHANGE) {
+        rc = lis2dh12_notify(lis2dh12, int_src, SENSOR_EVENT_TYPE_ORIENT_Y_L_CHANGE);
+        if (rc) {
+            goto err;
         }
     }
 
-    if (pdd->notify_ctx.snec_evtype & SENSOR_EVENT_TYPE_ORIENT_Z_CHANGE) {
-        notif_cfg = lis2dh12_find_notif_cfg_by_event(SENSOR_EVENT_TYPE_ORIENT_Z_CHANGE,
-                                                     &lis2dh12->cfg);
-        if (int_src & notif_cfg->notif_src) {
+    if (pdd->notify_ctx.snec_evtype & SENSOR_EVENT_TYPE_ORIENT_Z_L_CHANGE) {
+        rc = lis2dh12_notify(lis2dh12, int_src, SENSOR_EVENT_TYPE_ORIENT_Z_L_CHANGE);
+        if (rc) {
+            goto err;
+        }
+    }
 
-            /* Orientation change detected ZH or ZL */
+    if (pdd->notify_ctx.snec_evtype & SENSOR_EVENT_TYPE_ORIENT_X_H_CHANGE) {
+        rc = lis2dh12_notify(lis2dh12, int_src, SENSOR_EVENT_TYPE_ORIENT_X_H_CHANGE);
+        if (rc) {
+            goto err;
+        }
+    }
 
-            sensor_mgr_put_notify_evt(&lis2dh12->pdd.notify_ctx,
-                                      SENSOR_EVENT_TYPE_ORIENT_Z_CHANGE);
+    if (pdd->notify_ctx.snec_evtype & SENSOR_EVENT_TYPE_ORIENT_Y_H_CHANGE) {
+        rc = lis2dh12_notify(lis2dh12, int_src, SENSOR_EVENT_TYPE_ORIENT_Y_H_CHANGE);
+        if (rc) {
+            goto err;
+        }
+    }
 
-            lis2dh12_inc_notif_stats(SENSOR_EVENT_TYPE_ORIENT_Z_CHANGE);
+    if (pdd->notify_ctx.snec_evtype & SENSOR_EVENT_TYPE_ORIENT_Z_H_CHANGE) {
+        rc = lis2dh12_notify(lis2dh12, int_src, SENSOR_EVENT_TYPE_ORIENT_Z_H_CHANGE);
+        if (rc) {
+            goto err;
         }
     }
 
@@ -1962,20 +2045,20 @@ lis2dh12_sensor_handle_interrupt(struct sensor *sensor)
             return rc;
         }
 
-        notif_cfg = lis2dh12_find_notif_cfg_by_event(SENSOR_EVENT_TYPE_SINGLE_TAP,
-                                                     &lis2dh12->cfg);
-        if (NULL != notif_cfg && 0 != (click_src & LIS2DH12_CLICK_SRC_SCLICK)) {
-            sensor_mgr_put_notify_evt(&lis2dh12->pdd.notify_ctx,
-                                      SENSOR_EVENT_TYPE_SINGLE_TAP);
-            lis2dh12_inc_notif_stats(SENSOR_EVENT_TYPE_SINGLE_TAP);
+        if ((pdd->notify_ctx.snec_evtype & SENSOR_EVENT_TYPE_SINGLE_TAP) &&
+                (click_src & LIS2DH12_CLICK_SRC_SCLICK)) {
+            rc = lis2dh12_notify(lis2dh12, click_src, SENSOR_EVENT_TYPE_SINGLE_TAP);
+            if (rc) {
+                goto err;
+            }
         }
 
-        notif_cfg = lis2dh12_find_notif_cfg_by_event(SENSOR_EVENT_TYPE_DOUBLE_TAP,
-                                                     &lis2dh12->cfg);
-        if (NULL != notif_cfg && 0 != (click_src & LIS2DH12_CLICK_SRC_DCLICK)) {
-            sensor_mgr_put_notify_evt(&lis2dh12->pdd.notify_ctx,
-                                      SENSOR_EVENT_TYPE_DOUBLE_TAP);
-            lis2dh12_inc_notif_stats(SENSOR_EVENT_TYPE_DOUBLE_TAP);
+        if ((pdd->notify_ctx.snec_evtype & SENSOR_EVENT_TYPE_DOUBLE_TAP) &&
+                (click_src & LIS2DH12_CLICK_SRC_DCLICK)) {
+            rc = lis2dh12_notify(lis2dh12, click_src, SENSOR_EVENT_TYPE_DOUBLE_TAP);
+            if (rc) {
+                goto err;
+            }
         }
     }
 
@@ -1999,7 +2082,6 @@ lis2dh12_sensor_handle_interrupt(struct sensor *sensor)
          * Sleep state can be routed to INT2 pin, pin is active when device stays active
          * Notification will be sent only on activity pin state change.
          */
-        int2_pin_state = hal_gpio_read(itf->si_ints[1].host_pin);
         if (int2_pin_state != lis2dh12->pdd.int2_pin_state) {
             lis2dh12->pdd.int2_pin_state = int2_pin_state;
 
@@ -2022,7 +2104,8 @@ lis2dh12_sensor_handle_interrupt(struct sensor *sensor)
             }
             notif_cfg = lis2dh12_find_notif_cfg_by_event(SENSOR_EVENT_TYPE_SLEEP_CHANGE,
                                                          &lis2dh12->cfg);
-            if (notif_cfg) {
+            /* If interrupt is configured to go high on sleep state */
+            if (notif_cfg && int2_pin_state) {
                 /* Sleep change detected, either wake-up or sleep */
                 sensor_mgr_put_notify_evt(&lis2dh12->pdd.notify_ctx,
                                           SENSOR_EVENT_TYPE_SLEEP_CHANGE);
@@ -2717,6 +2800,12 @@ lis2dh12_config(struct lis2dh12 *lis2dh12, struct lis2dh12_cfg *cfg)
         goto err;
     }
 
+    rc = lis2dh12_set_int_pp_od(itf, cfg->int_pp_od);
+    if (rc) {
+        goto err;
+    }
+    lis2dh12->cfg.int_pp_od = cfg->int_pp_od;
+
     rc = lis2dh12_pull_up_disc(itf, cfg->lc_pull_up_disc);
     if (rc) {
         goto err;
@@ -2745,6 +2834,7 @@ lis2dh12_config(struct lis2dh12 *lis2dh12, struct lis2dh12_cfg *cfg)
 
     lis2dh12->cfg.lc_rate = cfg->lc_rate;
 
+    /*sets xen yen and xen */
     rc = lis2dh12_chan_enable(itf, LIS2DH12_CTRL_REG1_XPEN |
                                    LIS2DH12_CTRL_REG1_YPEN |
                                    LIS2DH12_CTRL_REG1_ZPEN);
@@ -2827,6 +2917,18 @@ lis2dh12_config(struct lis2dh12 *lis2dh12, struct lis2dh12_cfg *cfg)
     if (rc) {
         goto err;
     }
+//    lis2dh12_shell_init();
+    lis2dh12->cfg.read_mode.int_cfg = cfg->read_mode.int_cfg;
+    lis2dh12->cfg.read_mode.int_num = cfg->read_mode.int_num;
+    lis2dh12->cfg.read_mode.mode = cfg->read_mode.mode;
+
+    if (!cfg->notif_cfg) {
+        lis2dh12->cfg.notif_cfg = (struct lis2dh12_notif_cfg *)dflt_notif_cfg;
+        lis2dh12->cfg.max_num_notif = sizeof(dflt_notif_cfg)/sizeof(dflt_notif_cfg[0]);
+    } else {
+        lis2dh12->cfg.notif_cfg = cfg->notif_cfg;
+        lis2dh12->cfg.max_num_notif = cfg->max_num_notif;
+    }
 
     lis2dh12->cfg.read_mode.int_cfg = cfg->read_mode.int_cfg;
     lis2dh12->cfg.read_mode.int_num = cfg->read_mode.int_num;
@@ -2850,5 +2952,6 @@ lis2dh12_config(struct lis2dh12 *lis2dh12, struct lis2dh12_cfg *cfg)
 
     return 0;
 err:
+
     return rc;
 }

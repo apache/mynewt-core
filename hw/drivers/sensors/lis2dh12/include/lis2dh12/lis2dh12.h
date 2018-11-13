@@ -92,6 +92,7 @@ extern "C" {
 #define LIS2DH12_CTRL_REG6_I2_ACT           (1 << 3)
 #define LIS2DH12_CTRL_REG6_INT_POLARITY     (1 << 1)
 
+/* int1_src */
 #define LIS2DH12_INT1_IA                    (1 << 6)
 #define LIS2DH12_INT1_ZH                    (1 << 5)
 #define LIS2DH12_INT1_ZL                    (1 << 4)
@@ -100,6 +101,7 @@ extern "C" {
 #define LIS2DH12_INT1_XH                    (1 << 1)
 #define LIS2DH12_INT1_XL                    (1 << 0)
 
+/* int2_src */
 #define LIS2DH12_INT2_IA                    (1 << 6)
 #define LIS2DH12_INT2_ZH                    (1 << 5)
 #define LIS2DH12_INT2_ZL                    (1 << 4)
@@ -108,6 +110,7 @@ extern "C" {
 #define LIS2DH12_INT2_XH                    (1 << 1)
 #define LIS2DH12_INT2_XL                    (1 << 0)
 
+/* int_src */
 #define LIS2DH12_NOTIF_SRC_INT1_IA          (LIS2DH12_INT1_IA)
 #define LIS2DH12_NOTIF_SRC_INT1_ZH          (LIS2DH12_INT1_ZH)
 #define LIS2DH12_NOTIF_SRC_INT1_ZL          (LIS2DH12_INT1_ZL)
@@ -123,6 +126,7 @@ extern "C" {
 #define LIS2DH12_NOTIF_SRC_INT2_XH          (LIS2DH12_INT2_XH << 8)
 #define LIS2DH12_NOTIF_SRC_INT2_XL          (LIS2DH12_INT2_XL << 8)
 
+/* int1 pin config - generate either data ready or in */
 #define LIS2DH12_CTRL_REG3_I1_CLICK         (1 << 7)
 #define LIS2DH12_CTRL_REG3_I1_IA1           (1 << 6)
 #define LIS2DH12_CTRL_REG3_I1_IA2           (1 << 5)
@@ -165,9 +169,9 @@ struct lis2dh12_tap_settings {
 };
 
 struct lis2dh12_int_cfg {
-	uint8_t cfg;
-	uint8_t ths;
-	uint8_t dur;
+    uint8_t cfg;
+    uint8_t ths;
+    uint8_t dur;
 };
 
 /* Read mode configuration */
@@ -208,6 +212,7 @@ struct lis2dh12_cfg {
     uint8_t latch_int2    : 1;
     uint8_t d4d_int1      : 1;
     uint8_t d4d_int2      : 1;
+    uint8_t int_pp_od     : 1;
 
     /* Power mode */
     uint8_t power_mode;
@@ -494,6 +499,17 @@ lis2dh12_disable_int2(struct sensor_itf *itf);
  */
 int
 lis2dh12_hpf_cfg(struct sensor_itf *itf, uint8_t reg);
+
+/**
+ * Set operating mode
+ *
+ * @param the sensor interface
+ * @param mode CTRL_REG1[3:0]:CTRL_REG4[3:0]
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+lis2dh12_set_op_mode(struct sensor_itf *itf, uint8_t mode);
 
 /**
  * Clear click interrupt

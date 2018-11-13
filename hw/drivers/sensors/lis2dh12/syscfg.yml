@@ -51,3 +51,21 @@ syscfg.defs:
     LIS2DH12_NOTIF_STATS:
         description: 'Enable notification stats'
         value: 1
+    LIS2DH12_INT1_PIN_HOST:
+        description: 'Interrupt pin number on host device connected to INT1 on device'
+        value: 25
+    LIS2DH12_INT1_PIN_DEVICE:
+        description: 'Interrupt pin number 1 or 2 on accelerometer device'
+        value: 1
+    LIS2DH12_INT1_CFG_ACTIVE:
+        description: 'Set 0 for active-low, 1 for active-high'
+        value: 0
+    LIS2DH12_INT2_PIN_HOST:
+        description: 'Interrupt pin number on host device connected to INT1 on device'
+        value: 31
+    LIS2DH12_INT2_PIN_DEVICE:
+        description: 'Interrupt pin number 1 or 2 on accelerometer device'
+        value: 2
+    LIS2DH12_INT2_CFG_ACTIVE:
+        description: 'Set 0 for active-low, 1 for active-high'
+        value: 0
