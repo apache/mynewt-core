@@ -174,18 +174,19 @@ shell_os_reset_cmd(int argc, char **argv)
     return 0;
 }
 
-static void
-shell_os_ls_dev(struct os_dev *dev)
+static int
+shell_os_ls_dev(struct os_dev *dev, void *arg)
 {
     console_printf("%4d %3x %s\n",
                    dev->od_open_ref, dev->od_flags, dev->od_name);
+    return 0;
 }
 
 int
 shell_os_ls_dev_cmd(int argc, char **argv)
 {
     console_printf("%4s %3s %s\n", "ref", "flg", "name");
-    os_dev_walk(shell_os_ls_dev);
+    os_dev_walk(shell_os_ls_dev, NULL);
     return 0;
 }
 
@@ -271,7 +272,7 @@ static const struct shell_cmd os_commands[] = {
 #endif
     },
     {
-        .sc_cmd = "ls_dev",
+        .sc_cmd = "lsdev",
         .sc_cmd_func = shell_os_ls_dev_cmd,
 #if MYNEWT_VAL(SHELL_CMD_HELP)
         .help = &ls_dev_help,
