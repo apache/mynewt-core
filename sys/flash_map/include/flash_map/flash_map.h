@@ -52,6 +52,15 @@ struct flash_area {
     uint32_t fa_size;
 };
 
+struct flash_sector_range {
+    struct flash_area fsr_flash_area;
+    uint32_t fsr_range_start;
+    uint16_t fsr_first_sector;
+    uint16_t fsr_sector_count;
+    uint32_t fsr_sector_size;
+    uint8_t fsr_align;
+};
+
 extern const struct flash_area *flash_map;
 extern int flash_map_entries;
 
@@ -105,6 +114,12 @@ uint32_t flash_area_erased_val(const struct flash_area *fa);
  * Given flash map index, return info about sectors within the area.
  */
 int flash_area_to_sectors(int idx, int *cnt, struct flash_area *ret);
+
+/*
+ * Given flash map area id, return info about sectors within the area.
+ */
+int flash_area_to_sector_ranges(int id, int *cnt,
+  struct flash_sector_range *ret);
 
 /*
  * Get-next interface for obtaining info about sectors.
