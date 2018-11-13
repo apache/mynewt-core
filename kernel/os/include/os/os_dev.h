@@ -257,8 +257,9 @@ void os_dev_reset(void);
  * Walk through all devices, calling callback for every device.
  *
  * @param walk_func Function to call
+ * @aparm arg       Argument to pass to walk_func
  */
-void os_dev_walk(void (*walk_func)(struct os_dev *));
+void os_dev_walk(int (*walk_func)(struct os_dev *, void *), void *arg);
 
 #ifdef __cplusplus
 }
