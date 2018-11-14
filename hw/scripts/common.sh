@@ -56,7 +56,15 @@ parse_extra_jtag_cmd() {
 	case $1 in
 	    -port)
 		shift
-		PORT=$1
+		# Many BSP scripts append their own things additional
+		# parameters. This is done in a way where openocd delimeter is
+		# immediatelly adjacent to parameters passed via newt.
+		# The following is to filter out the delimeter from
+		# PORT, but keep it present within the string passed
+		# to openocd.
+		PORT=`echo $1 | tr -c -d 0-9`
+		ADDITIONAL_CHARS=`echo $1 | tr -d 0-9`
+		NEW_EXTRA_JTAG_CMD="$NEW_EXTRA_JTAG_CMD $ADDITIONAL_CHARS"
 		shift
 		;;
 	    *)
