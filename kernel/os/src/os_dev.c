@@ -320,3 +320,15 @@ os_dev_reset(void)
     STAILQ_INIT(&g_os_dev_list);
 }
 
+void
+os_dev_walk(int (*walk_func)(struct os_dev *, void *), void *arg)
+{
+    struct os_dev *dev;
+
+    STAILQ_FOREACH(dev, &g_os_dev_list, od_next) {
+        if (walk_func(dev, arg)) {
+            break;
+        }
+    }
+}
+

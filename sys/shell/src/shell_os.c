@@ -174,6 +174,22 @@ shell_os_reset_cmd(int argc, char **argv)
     return 0;
 }
 
+static int
+shell_os_ls_dev(struct os_dev *dev, void *arg)
+{
+    console_printf("%4d %3x %s\n",
+                   dev->od_open_ref, dev->od_flags, dev->od_name);
+    return 0;
+}
+
+int
+shell_os_ls_dev_cmd(int argc, char **argv)
+{
+    console_printf("%4s %3s %s\n", "ref", "flg", "name");
+    os_dev_walk(shell_os_ls_dev, NULL);
+    return 0;
+}
+
 #if MYNEWT_VAL(SHELL_CMD_HELP)
 static const struct shell_param tasks_params[] = {
     {"", "task name"},
@@ -220,6 +236,10 @@ static const struct shell_cmd_help reset_help = {
     .usage = NULL,
     .params = reset_params,
 };
+
+static const struct shell_cmd_help ls_dev_help = {
+    .summary = "list OS devices"
+};
 #endif
 
 static const struct shell_cmd os_commands[] = {
@@ -249,6 +269,13 @@ static const struct shell_cmd os_commands[] = {
         .sc_cmd_func = shell_os_reset_cmd,
 #if MYNEWT_VAL(SHELL_CMD_HELP)
         .help = &reset_help,
+#endif
+    },
+    {
+        .sc_cmd = "lsdev",
+        .sc_cmd_func = shell_os_ls_dev_cmd,
+#if MYNEWT_VAL(SHELL_CMD_HELP)
+        .help = &ls_dev_help,
 #endif
     },
     { NULL, NULL, NULL },
