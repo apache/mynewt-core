@@ -1014,7 +1014,7 @@ lis2dh12_set_op_mode(struct sensor_itf *itf, uint8_t mode)
 
 
 
-    os_time_delay(OS_TICKS_PER_SEC/1000 + 4);
+    os_time_delay(OS_TICKS_PER_SEC/1000 + 1);
 
     return 0;
 err:
