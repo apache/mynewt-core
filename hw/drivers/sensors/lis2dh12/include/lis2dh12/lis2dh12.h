@@ -373,6 +373,17 @@ int
 lis2dh12_reset(struct sensor_itf *itf);
 
 /**
+ * Set reference threshold
+ *
+ * @param the sensor interface
+ * @param threshold
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+lis2dh12_set_ref_thresh(struct sensor_itf *itf, uint8_t ths);
+
+/**
  * Enable interrupt 2
  *
  * @param the sensor interface

@@ -35,6 +35,9 @@
 #include "stats/stats.h"
 #include <syscfg/syscfg.h>
 #include <sensor/sensor.h>
+#if LIS2DH12_PRINT_INTR
+#include "console/console.h"
+#endif
 
 #ifndef LIS2DH12_PRINT_INTR
 #define LIS2DH12_PRINT_INTR     (0)
@@ -1984,6 +1987,7 @@ lis2dh12_sensor_handle_interrupt(struct sensor *sensor)
         console_printf("X = %-5d Y = %-5d Z = %-5d\n", x, y, z);
     }
 #endif
+
     if (pdd->notify_ctx.snec_evtype & SENSOR_EVENT_TYPE_ORIENT_CHANGE) {
         rc = lis2dh12_notify(lis2dh12, int_src, SENSOR_EVENT_TYPE_ORIENT_CHANGE);
         if (rc) {
@@ -2051,6 +2055,7 @@ lis2dh12_sensor_handle_interrupt(struct sensor *sensor)
             if (rc) {
                 goto err;
             }
+            return 0;
         }
 
         if ((pdd->notify_ctx.snec_evtype & SENSOR_EVENT_TYPE_DOUBLE_TAP) &&
@@ -2059,6 +2064,7 @@ lis2dh12_sensor_handle_interrupt(struct sensor *sensor)
             if (rc) {
                 goto err;
             }
+            return 0;
         }
     }
 
@@ -2095,21 +2101,25 @@ lis2dh12_sensor_handle_interrupt(struct sensor *sensor)
                 lis2dh12_inc_notif_stats(SENSOR_EVENT_TYPE_WAKEUP);
             } else if (int2_pin_state &&
                        0 != (pdd->notify_ctx.snec_evtype & SENSOR_EVENT_TYPE_SLEEP)) {
-                /* Just want to sleep */
+                /* Just went to sleep */
                 notif_cfg = lis2dh12_find_notif_cfg_by_event(SENSOR_EVENT_TYPE_SLEEP,
                                                              &lis2dh12->cfg);
                 sensor_mgr_put_notify_evt(&lis2dh12->pdd.notify_ctx,
                                            SENSOR_EVENT_TYPE_SLEEP);
                 lis2dh12_inc_notif_stats(SENSOR_EVENT_TYPE_SLEEP);
-            }
-            notif_cfg = lis2dh12_find_notif_cfg_by_event(SENSOR_EVENT_TYPE_SLEEP_CHANGE,
-                                                         &lis2dh12->cfg);
-            /* If interrupt is configured to go high on sleep state */
-            if (notif_cfg && int2_pin_state) {
-                /* Sleep change detected, either wake-up or sleep */
-                sensor_mgr_put_notify_evt(&lis2dh12->pdd.notify_ctx,
-                                          SENSOR_EVENT_TYPE_SLEEP_CHANGE);
-                lis2dh12_inc_notif_stats(SENSOR_EVENT_TYPE_SLEEP_CHANGE);
+            } else{
+                notif_cfg = lis2dh12_find_notif_cfg_by_event(SENSOR_EVENT_TYPE_SLEEP_CHANGE,
+                                                             &lis2dh12->cfg);
+                /* Sleep change interrupt must be configured for int2 */
+                if ((notif_cfg && int2_pin_state && itf->si_ints[1].active == HAL_GPIO_TRIG_RISING) ||
+                        (notif_cfg && !int2_pin_state && itf->si_ints[1].active == HAL_GPIO_TRIG_FALLING) ||
+                        (notif_cfg && itf->si_ints[1].active == HAL_GPIO_TRIG_BOTH))
+                {
+                    /* Sleep change detected, either wake-up or sleep */
+                    sensor_mgr_put_notify_evt(&lis2dh12->pdd.notify_ctx,
+                                              SENSOR_EVENT_TYPE_SLEEP_CHANGE);
+                    lis2dh12_inc_notif_stats(SENSOR_EVENT_TYPE_SLEEP_CHANGE);
+                }
             }
         }
     }
@@ -2131,6 +2141,29 @@ lis2dh12_sensor_get_config(struct sensor *sensor, sensor_type_t type,
     }
 
     cfg->sc_valtype = SENSOR_VALUE_TYPE_FLOAT_TRIPLET;
+
+    return 0;
+err:
+    return rc;
+}
+
+/**
+ * Set reference threshold
+ *
+ * @param the sensor interface
+ * @param threshold
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+lis2dh12_set_ref_thresh(struct sensor_itf *itf, uint8_t ths)
+{
+    int rc;
+
+    rc = lis2dh12_writelen(itf, LIS2DH12_REG_REFERENCE, &ths, 1);
+    if (rc) {
+        goto err;
+    }
 
     return 0;
 err:
@@ -2854,6 +2887,12 @@ lis2dh12_config(struct lis2dh12 *lis2dh12, struct lis2dh12_cfg *cfg)
 
     rc = lis2dh12_set_fifo_mode(itf, cfg->fifo_mode);
     if (rc) {
+        goto err;
+    }
+
+    rc = lis2dh12_set_ref_thresh(itf, cfg->reference);
+    if (rc)
+    {
         goto err;
     }
 
