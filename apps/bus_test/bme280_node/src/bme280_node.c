@@ -41,18 +41,10 @@ struct reg_val {
 static int8_t
 bme280_read(uint8_t dev_id, uint8_t reg_addr, uint8_t *data, uint16_t len)
 {
-    struct reg_val reg;
     int rc;
 
-    assert(len <= sizeof(reg.val));
-
-    reg.addr = reg_addr;
-
     rc = bus_node_simple_write_read_transact(BME280_ODEV(&g_bme280_node),
-                                             &reg.addr, 1, &reg.val[0], len);
-    if (!rc) {
-        memcpy(data, &reg.val[0], len);
-    }
+                                             &reg_addr, 1, data, len);
 
     return rc;
 }
