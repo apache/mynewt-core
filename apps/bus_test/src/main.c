@@ -36,25 +36,39 @@
 #include "bme280/bme280.h"
 #endif
 
-#if MYNEWT_VAL(APP_USE_BME280_NODE) || MYNEWT_VAL(APP_USE_BME280_SENSOR)
 #if MYNEWT_VAL(APP_USE_BME280_SENSOR)
+static const struct sensor_node_cfg g_bme280_sensor_node_cfg = {
+#if MYNEWT_VAL(BME280_NODE_BUS_TYPE) == 0
+    .i2c_node_cfg = {
+        .node_cfg = {
+            .bus_name = MYNEWT_VAL(BME280_NODE_BUS_NAME),
+        },
+        .addr = MYNEWT_VAL(BME280_NODE_I2C_ADDRESS),
+        .freq = MYNEWT_VAL(BME280_NODE_I2C_FREQUENCY),
+    },
+#elif MYNEWT_VAL(BME280_NODE_BUS_TYPE) == 1
+    .spi_node_cfg = {
+        .node_cfg = {
+            .bus_name = MYNEWT_VAL(BME280_NODE_BUS_NAME),
+        },
+        .pin_cs = MYNEWT_VAL(BME280_NODE_SPI_CS_PIN),
+        .mode = BUS_SPI_MODE_0,
+        .data_order = BUS_SPI_DATA_ORDER_MSB,
+        .freq = MYNEWT_VAL(BME280_NODE_SPI_FREQUENCY),
+    },
+#endif
+};
+
+static struct os_dev *g_bme280_node;
+#endif
+
+#if MYNEWT_VAL(APP_USE_BME280_NODE)
 static const struct bus_i2c_node_cfg g_bme280_node_i2c_cfg = {
     .node_cfg = {
         .bus_name = MYNEWT_VAL(BME280_NODE_BUS_NAME),
     },
     .addr = MYNEWT_VAL(BME280_NODE_I2C_ADDRESS),
     .freq = MYNEWT_VAL(BME280_NODE_I2C_FREQUENCY),
-};
-#endif
-
-static const struct bus_spi_node_cfg g_bme280_node_spi_cfg = {
-    .node_cfg = {
-        .bus_name = MYNEWT_VAL(BME280_NODE_BUS_NAME),
-    },
-    .pin_cs = MYNEWT_VAL(BME280_NODE_SPI_CS_PIN),
-    .mode = BUS_SPI_MODE_0,
-    .data_order = BUS_SPI_DATA_ORDER_MSB,
-    .freq = MYNEWT_VAL(BME280_NODE_SPI_FREQUENCY),
 };
 
 static struct os_dev *g_bme280_node;
@@ -179,23 +193,20 @@ main(int argc, char **argv)
 #endif
 
 #if MYNEWT_VAL(APP_USE_BME280_SENSOR)
-    /* XXX hack for now... */
-    if (!strncmp("i2c", MYNEWT_VAL(BME280_NODE_BUS_NAME), 3)) {
-        /* For I2C SDO pin is address select pin */
-        hal_gpio_init_out(MYNEWT_VAL(SPI_1_MASTER_PIN_MISO), 0);
-        /* Make sure CSB is not set to low state as it will switch BME280 to SPI */
-        hal_gpio_init_out(MYNEWT_VAL(BME280_NODE_SPI_CS_PIN), 1);
+#if MYNEWT_VAL(BME280_NODE_BUS_TYPE) == 0
+    /* For I2C SDO pin is address select pin */
+    hal_gpio_init_out(MYNEWT_VAL(SPI_1_MASTER_PIN_MISO), 0);
+    /* Make sure CSB is not set to low state as it will switch BME280 to SPI */
+    hal_gpio_init_out(MYNEWT_VAL(BME280_NODE_SPI_CS_PIN), 1);
 
-        rc = bme280_create_i2c_dev(&bme280.i2c_node, "bme280",
-                                   &g_bme280_node_i2c_cfg);
-        assert(rc == 0);
-    } else if (!strncmp("spi", MYNEWT_VAL(BME280_NODE_BUS_NAME), 3)) {
-        rc = bme280_create_spi_dev(&bme280.spi_node, "bme280",
-                                   &g_bme280_node_spi_cfg);
-        assert(rc == 0);
-    } else {
-        assert(0);
-    }
+    rc = bme280_create_i2c_sensor_dev(&bme280.i2c_node, "bme280",
+                                      &g_bme280_sensor_node_cfg);
+    assert(rc == 0);
+#elif MYNEWT_VAL(BME280_NODE_BUS_TYPE) == 1
+    rc = bme280_create_spi_sensor_dev(&bme280.spi_node, "bme280",
+                                      &g_bme280_sensor_node_cfg);
+    assert(rc == 0);
+#endif
 
     g_bme280_node = os_dev_open("bme280", 0, NULL);
     assert(g_bme280_node);
