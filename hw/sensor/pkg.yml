@@ -33,6 +33,12 @@ pkg.deps.SENSOR_CLI:
     - "@apache-mynewt-core/sys/shell"
     - "@apache-mynewt-core/util/parse"
 
+# XXX probably both do not need to be always included, but let's keep it like
+# this for now to make things simpler
+pkg.deps.BUS_DRIVER_PRESENT:
+    - "@apache-mynewt-core/hw/bus/i2c"
+    - "@apache-mynewt-core/hw/bus/spi"
+
 pkg.req_apis:
     - console
     
