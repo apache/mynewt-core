@@ -223,7 +223,7 @@ bus_node_write_read_transact(struct os_dev *node, const void *wbuf,
 {
     struct bus_node *bnode = (struct bus_node *)node;
     struct bus_dev *bdev = bnode->parent_bus;
-    int rc;
+    int rc, rc_unlock;
 
     BUS_DEBUG_VERIFY_DEV(bdev);
     BUS_DEBUG_VERIFY_NODE(bnode);
@@ -259,8 +259,9 @@ bus_node_write_read_transact(struct os_dev *node, const void *wbuf,
     }
 
 done:
-    rc = bus_dev_unlock_by_node(node);
-    assert(rc == 0);
+    /* This shall succeed because we locked it */
+    rc_unlock = bus_dev_unlock_by_node(node);
+    assert(rc_unlock == 0);
 
     return rc;
 }
