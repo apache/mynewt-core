@@ -121,7 +121,7 @@ bus_spi_read(struct bus_dev *bdev, struct bus_node *bnode, uint8_t *buf,
 }
 
 static int
-bus_spi_write(struct bus_dev *bdev, struct bus_node *bnode, uint8_t *buf,
+bus_spi_write(struct bus_dev *bdev, struct bus_node *bnode, const uint8_t *buf,
               uint16_t length, os_time_t timeout, uint16_t flags)
 {
     struct bus_spi_dev *dev = (struct bus_spi_dev *)bdev;
@@ -133,7 +133,8 @@ bus_spi_write(struct bus_dev *bdev, struct bus_node *bnode, uint8_t *buf,
 
     hal_gpio_write(node->pin_cs, 0);
 
-    rc = hal_spi_txrx(dev->cfg.spi_num, buf, NULL, length);
+    /* XXX update HAL to accept const instead */
+    rc = hal_spi_txrx(dev->cfg.spi_num, (uint8_t *)buf, NULL, length);
 
     if (!(flags & BUS_F_NOSTOP)) {
         hal_gpio_write(node->pin_cs, 1);

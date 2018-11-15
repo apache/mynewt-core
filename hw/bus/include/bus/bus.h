@@ -53,7 +53,7 @@ extern "C" {
  * @return 0 on success, SYS_xxx on error
  */
 int
-bus_node_read(struct os_dev *node, uint8_t *buf, uint16_t length,
+bus_node_read(struct os_dev *node, void *buf, uint16_t length,
               os_time_t timeout, uint16_t flags);
 
 /**
@@ -74,7 +74,7 @@ bus_node_read(struct os_dev *node, uint8_t *buf, uint16_t length,
  * @return 0 on success, SYS_xxx on error
  */
 int
-bus_node_write(struct os_dev *node, uint8_t *buf, uint16_t length,
+bus_node_write(struct os_dev *node, const void *buf, uint16_t length,
                os_time_t timeout, uint16_t flags);
 
 /**
@@ -98,8 +98,8 @@ bus_node_write(struct os_dev *node, uint8_t *buf, uint16_t length,
  * @return 0 on success, SYS_xxx on error
  */
 int
-bus_node_write_read_transact(struct os_dev *node, uint8_t *wbuf,
-                             uint16_t wlength, uint8_t *rbuf, uint16_t rlength,
+bus_node_write_read_transact(struct os_dev *node, const void  *wbuf,
+                             uint16_t wlength, void *rbuf, uint16_t rlength,
                              os_time_t timeout, uint16_t flags);
 
 /**
@@ -114,7 +114,7 @@ bus_node_write_read_transact(struct os_dev *node, uint8_t *wbuf,
  * @return 0 on success, SYS_xxx on error
  */
 static inline int
-bus_node_simple_read(struct os_dev *node, uint8_t *buf, uint16_t length)
+bus_node_simple_read(struct os_dev *node, void *buf, uint16_t length)
 {
     return bus_node_read(node, buf, length, OS_TIMEOUT_NEVER, BUS_F_NONE);
 }
@@ -131,7 +131,7 @@ bus_node_simple_read(struct os_dev *node, uint8_t *buf, uint16_t length)
  * @return 0 on success, SYS_xxx on error
  */
 static inline int
-bus_node_simple_write(struct os_dev *node, uint8_t *buf, uint16_t length)
+bus_node_simple_write(struct os_dev *node, const void *buf, uint16_t length)
 {
     return bus_node_write(node, buf, length, OS_TIMEOUT_NEVER, BUS_F_NONE);
 }
@@ -151,8 +151,8 @@ bus_node_simple_write(struct os_dev *node, uint8_t *buf, uint16_t length)
  * @return 0 on success, SYS_xxx on error
  */
 static inline int
-bus_node_simple_write_read_transact(struct os_dev *node, uint8_t *wbuf,
-                                    uint16_t wlength, uint8_t *rbuf,
+bus_node_simple_write_read_transact(struct os_dev *node, const void *wbuf,
+                                    uint16_t wlength, void *rbuf,
                                     uint16_t rlength)
 {
     return bus_node_write_read_transact(node, wbuf, wlength, rbuf, rlength,

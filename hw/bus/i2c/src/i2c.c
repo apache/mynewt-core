@@ -104,7 +104,7 @@ bus_i2c_read(struct bus_dev *bdev, struct bus_node *bnode, uint8_t *buf,
 }
 
 static int
-bus_i2c_write(struct bus_dev *bdev, struct bus_node *bnode, uint8_t *buf,
+bus_i2c_write(struct bus_dev *bdev, struct bus_node *bnode, const uint8_t *buf,
               uint16_t length, os_time_t timeout, uint16_t flags)
 {
     struct bus_i2c_dev *dev = (struct bus_i2c_dev *)bdev;
@@ -117,7 +117,7 @@ bus_i2c_write(struct bus_dev *bdev, struct bus_node *bnode, uint8_t *buf,
     BUS_DEBUG_VERIFY_NODE(node);
 
     i2c_data.address = node->addr;
-    i2c_data.buffer = buf;
+    i2c_data.buffer = (uint8_t *)buf;
     i2c_data.len = length;
 
     last_op = !(flags & BUS_F_NOSTOP);

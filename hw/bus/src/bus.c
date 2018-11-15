@@ -149,7 +149,7 @@ bus_node_init_func(struct os_dev *odev, void *arg)
 }
 
 int
-bus_node_read(struct os_dev *node, uint8_t *buf, uint16_t length,
+bus_node_read(struct os_dev *node, void *buf, uint16_t length,
               os_time_t timeout, uint16_t flags)
 {
     struct bus_node *bnode = (struct bus_node *)node;
@@ -183,7 +183,7 @@ done:
 }
 
 int
-bus_node_write(struct os_dev *node, uint8_t *buf, uint16_t length,
+bus_node_write(struct os_dev *node, const void *buf, uint16_t length,
                os_time_t timeout, uint16_t flags)
 {
     struct bus_node *bnode = (struct bus_node *)node;
@@ -217,8 +217,8 @@ done:
 }
 
 int
-bus_node_write_read_transact(struct os_dev *node, uint8_t *wbuf,
-                             uint16_t wlength, uint8_t *rbuf, uint16_t rlength,
+bus_node_write_read_transact(struct os_dev *node, const void *wbuf,
+                             uint16_t wlength, void *rbuf, uint16_t rlength,
                              os_time_t timeout, uint16_t flags)
 {
     struct bus_node *bnode = (struct bus_node *)node;
