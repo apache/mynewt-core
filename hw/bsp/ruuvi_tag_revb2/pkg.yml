@@ -18,56 +18,5 @@
 #
 
 pkg.name: hw/bsp/ruuvi_tag_revb2
-pkg.type: bsp
-pkg.description: BSP definition for the Ruuvi Tag rev B (B3 and B4).
-pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
-pkg.homepage: "http://mynewt.apache.org/"
-pkg.keywords:
-    - ruuvi
-    - ruuvi_tag
-    - nrf52
-    - nrf52dk
-
-pkg.cflags:
-    - '-DNRF52'
-
-pkg.cflags.HARDFLOAT:
-    - -mfloat-abi=hard -mfpu=fpv4-sp-d16
-
-pkg.deps:
-    - "@apache-mynewt-core/hw/mcu/nordic/nrf52xxx-compat"
-    - "@apache-mynewt-core/libc/baselibc"
-
-pkg.deps.BLE_DEVICE:
-    - "@apache-mynewt-core/hw/drivers/nimble/nrf52"
-
-pkg.deps.UART_0:
-    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
-
-pkg.deps.UART_1:
-    - "@apache-mynewt-core/hw/drivers/uart/uart_bitbang"
-
-pkg.deps.ADC_0:
-    - "@apache-mynewt-core/hw/drivers/adc/adc_nrf52"
-
-pkg.deps.PWM_0:
-    - "@apache-mynewt-core/hw/drivers/pwm/pwm_nrf52"
-
-pkg.deps.PWM_1:
-    - "@apache-mynewt-core/hw/drivers/pwm/pwm_nrf52"
-
-pkg.deps.PWM_2:
-    - "@apache-mynewt-core/hw/drivers/pwm/pwm_nrf52"
-
-pkg.deps.SOFT_PWM:
-    - "@apache-mynewt-core/hw/drivers/pwm/soft_pwm"
-
-pkg.deps.BME280_ONB:
-    - "@apache-mynewt-core/hw/drivers/sensors/bme280"
-
-pkg.deps.LIS2DH12_ONB:
-    - "@apache-mynewt-core/hw/drivers/sensors/lis2dh12"
-
-pkg.init:
-    config_lis2dh12_sensor: 400
-    config_bme280_sensor: 400
+pkg.type: transient
+pkg.link: "@apache-mynewt-core/hw/bsp/ruuvitag_rev_b"

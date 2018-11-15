@@ -155,8 +155,8 @@ static void
 runtest_log_result(const char *msg, bool passed)
 {
 #if MYNEWT_VAL(RUNTEST_LOG)
-    /* Must log valid json with a strlen less than LOG_PRINTF_MAX_ENTRY_LEN */
-    char buf[LOG_PRINTF_MAX_ENTRY_LEN];
+    /* Must log valid json with a strlen less than MODLOG_MAX_PRINTF_LEN */
+    char buf[MYNEWT_VAL(MODLOG_MAX_PRINTF_LEN)];
     char *n;
     int n_len;
     char *s;
@@ -165,34 +165,39 @@ runtest_log_result(const char *msg, bool passed)
     int m_len;
     int len;
 
-    /* str length of {"k":"","n":"","s":"","m":"","r":1}<token> */
-    len = 35 + strlen(runtest_token);
+    /* str length of {"k":"","n":"","s":"","m":"","r":1}<token> plus three
+     * null-terminators.
+     */
+    len = 38 + strlen(runtest_token);
 
     /* How much of the test name can we log? */
     n_len = strlen(tu_case_name);
-    if (len + n_len >= LOG_PRINTF_MAX_ENTRY_LEN) {
-        n_len = LOG_PRINTF_MAX_ENTRY_LEN - len - 1;
+    if (len + n_len >= MYNEWT_VAL(MODLOG_MAX_PRINTF_LEN)) {
+        n_len = MYNEWT_VAL(MODLOG_MAX_PRINTF_LEN) - len - 1;
     }
     len += n_len;
     n = buf;
-    strncpy(n, tu_case_name, n_len + 1);
+    strncpy(n, tu_case_name, n_len);
+    n[n_len] = '\0';
 
     /* How much of the suite name can we log? */
     s_len = strlen(runtest_current_ts->ts_name);
-    if (len + s_len >= LOG_PRINTF_MAX_ENTRY_LEN) {
-        s_len = LOG_PRINTF_MAX_ENTRY_LEN - len - 1;
+    if (len + s_len >= MYNEWT_VAL(MODLOG_MAX_PRINTF_LEN)) {
+        s_len = MYNEWT_VAL(MODLOG_MAX_PRINTF_LEN) - len - 1;
     }
     len += s_len;
     s = n + n_len + 2;
-    strncpy(s, runtest_current_ts->ts_name, s_len + 1);
+    strncpy(s, runtest_current_ts->ts_name, s_len);
+    s[s_len] = '\0';
 
     /* How much of the message can we log? */
     m_len = strlen(msg);
-    if (len + m_len >= LOG_PRINTF_MAX_ENTRY_LEN) {
-        m_len = LOG_PRINTF_MAX_ENTRY_LEN - len - 1;
+    if (len + m_len >= MYNEWT_VAL(MODLOG_MAX_PRINTF_LEN)) {
+        m_len = MYNEWT_VAL(MODLOG_MAX_PRINTF_LEN) - len - 1;
     }
     m = s + s_len + 2;
-    strncpy(m, msg, m_len + 1);
+    strncpy(m, msg, m_len);
+    m[m_len] = '\0';
 
     /* XXX Hack to allow the idle task to run and update the timestamp. */
     os_time_delay(1);
@@ -270,11 +275,6 @@ runtest_evt_fn(struct os_event *ev)
     if (ev != NULL) {
         ts_config.ts_print_results = 0;
         ts_config.ts_system_assert = 0;
-
-        /* The specified "token" is appended to the end of every log message
-         * that is level INFO and above (i.e. not log_debug log messages)
-         */
-        strcpy(runtest_token, runtest_token);
 
         runtest_all = runtest_test_name[0] == '\0' ||
                       strcmp(runtest_test_name, "all") == 0;

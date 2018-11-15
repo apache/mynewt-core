@@ -28,6 +28,11 @@
 #include "mcu/stm32_hal.h"
 #include "stm32_common/stm32_hal.h"
 
+#if MYNEWT_VAL(MCU_STM32L0)
+void TIM_Base_SetConfig(TIM_TypeDef *TIMx, TIM_Base_InitTypeDef *Structure);
+void TIM_CCxChannelCmd(TIM_TypeDef *TIMx, uint32_t Channel, uint32_t ChannelState);
+#endif
+
 #define STM32_OFLOW_VALUE       (0x10000UL)
 #define STM32_NSEC_PER_SEC      (1000000000UL)
 
@@ -189,8 +194,9 @@ stm32_hw_setup(int num, TIM_TypeDef *regs)
 
 #ifdef TIM1
     if (regs == TIM1) {
+#if MYNEWT_VAL(MCU_STM32F0)
         stm32_tmr_reg_irq(TIM1_CC_IRQn, func);
-#if MYNEWT_VAL(MCU_STM32F3) || MYNEWT_VAL(MCU_STM32L4)
+#elif MYNEWT_VAL(MCU_STM32F3) || MYNEWT_VAL(MCU_STM32L4)
         stm32_tmr_reg_irq(TIM1_UP_TIM16_IRQn, func);
 #else
         stm32_tmr_reg_irq(TIM1_UP_TIM10_IRQn, func);
@@ -259,20 +265,44 @@ stm32_hw_setup(int num, TIM_TypeDef *regs)
 #endif
 #ifdef TIM15
     if (regs == TIM15) {
+#if MYNEWT_VAL(MCU_STM32F0)
+        stm32_tmr_reg_irq(TIM15_IRQn, func);
+#else
         stm32_tmr_reg_irq(TIM1_BRK_TIM15_IRQn, func);
+#endif
         __HAL_RCC_TIM15_CLK_ENABLE();
     }
 #endif
 #ifdef TIM16
     if (regs == TIM16) {
+#if MYNEWT_VAL(MCU_STM32F0)
+        stm32_tmr_reg_irq(TIM16_IRQn, func);
+#else
         stm32_tmr_reg_irq(TIM1_UP_TIM16_IRQn, func);
+#endif
         __HAL_RCC_TIM16_CLK_ENABLE();
     }
 #endif
 #ifdef TIM17
     if (regs == TIM17) {
+#if MYNEWT_VAL(MCU_STM32F0)
+        stm32_tmr_reg_irq(TIM17_IRQn, func);
+#else
         stm32_tmr_reg_irq(TIM1_TRG_COM_TIM17_IRQn, func);
+#endif 
         __HAL_RCC_TIM17_CLK_ENABLE();
+    }
+#endif
+#ifdef TIM21
+    if (regs == TIM21) {
+        stm32_tmr_reg_irq(TIM21_IRQn, func);
+        __HAL_RCC_TIM21_CLK_ENABLE();
+    }
+#endif
+#ifdef TIM22
+    if (regs == TIM22) {
+        stm32_tmr_reg_irq(TIM22_IRQn, func);
+        __HAL_RCC_TIM22_CLK_ENABLE();
     }
 #endif
 }
@@ -333,6 +363,16 @@ stm32_hw_setdown(TIM_TypeDef *regs)
 #ifdef TIM17
     if (regs == TIM17) {
         __HAL_RCC_TIM17_CLK_DISABLE();
+    }
+#endif
+#ifdef TIM21
+    if (regs == TIM21) {
+        __HAL_RCC_TIM21_CLK_DISABLE();
+    }
+#endif
+#ifdef TIM22
+    if (regs == TIM22) {
+        __HAL_RCC_TIM22_CLK_DISABLE();
     }
 #endif
 }
@@ -422,6 +462,16 @@ hal_timer_init(int num, void *cfg)
 #ifdef TIM17
     if (regs == TIM17) {
         __HAL_DBGMCU_FREEZE_TIM17();
+    }
+#endif
+#ifdef TIM21
+    if (regs == TIM21) {
+        __HAL_DBGMCU_FREEZE_TIM21();
+    }
+#endif
+#ifdef TIM22
+    if (regs == TIM22) {
+        __HAL_DBGMCU_FREEZE_TIM22();
     }
 #endif
 

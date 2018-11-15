@@ -25,5 +25,9 @@ TEST_CASE(entropy_test)
 
     rc = mbedtls_entropy_self_test(1);
     TEST_ASSERT(rc == 0);
+
+    /* This tests a HW (_ALT) entropy source */
+    rc = mbedtls_entropy_source_self_test(0);
+    TEST_ASSERT(rc == 0);
 #endif
 }

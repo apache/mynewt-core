@@ -26,6 +26,7 @@
 #include "os/os.h"
 #include "sysinit/sysinit.h"
 #include "hal/hal_i2c.h"
+#include "i2cn/i2cn.h"
 #include "sensor/sensor.h"
 #include "ms5840/ms5840.h"
 #include "sensor/temperature.h"
@@ -238,7 +239,7 @@ ms5840_sensor_read(struct sensor *sensor, sensor_type_t type,
             goto err;
         }
     }
-    
+
     return 0;
 err:
     return rc;
@@ -267,7 +268,7 @@ static int
 ms5840_sensor_set_config(struct sensor *sensor, void *cfg)
 {
     struct ms5840* ms5840 = (struct ms5840 *)SENSOR_GET_DEVICE(sensor);
-    
+
     return ms5840_config(ms5840, (struct ms5840_cfg*)cfg);
 }
 
@@ -336,8 +337,8 @@ ms5840_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
     }
 
     /* Register write */
-    rc = hal_i2c_master_write(itf->si_num, &data_struct,
-                              OS_TICKS_PER_SEC / 10, 1);
+    rc = i2cn_master_write(itf->si_num, &data_struct, MYNEWT_VAL(MS5840_I2C_TIMEOUT_TICKS), 1,
+                           MYNEWT_VAL(MS5840_I2C_RETRIES));
     if (rc) {
         MS5840_LOG(ERROR, "I2C write command write failed at address 0x%02X\n",
                    data_struct.address);
@@ -381,8 +382,8 @@ ms5840_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
     }
 
     /* Command write */
-    rc = hal_i2c_master_write(itf->si_num, &data_struct,
-                              OS_TICKS_PER_SEC / 10, 1);
+    rc = i2cn_master_write(itf->si_num, &data_struct, MYNEWT_VAL(MS5840_I2C_TIMEOUT_TICKS), 1,
+                           MYNEWT_VAL(MS5840_I2C_RETRIES));
     if (rc) {
         MS5840_LOG(ERROR, "I2C read command write failed at address 0x%02X\n",
                    data_struct.address);
@@ -393,8 +394,8 @@ ms5840_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
     /* Read len bytes back */
     memset(payload, 0, sizeof(payload));
     data_struct.len = len;
-    rc = hal_i2c_master_read(itf->si_num, &data_struct,
-                             OS_TICKS_PER_SEC / 10, 1);
+    rc = i2cn_master_read(itf->si_num, &data_struct, MYNEWT_VAL(MS5840_I2C_TIMEOUT_TICKS), 1,
+                          MYNEWT_VAL(MS5840_I2C_RETRIES));
     if (rc) {
         MS5840_LOG(ERROR, "Failed to read from 0x%02X:0x%02X\n",
                    data_struct.address, addr);

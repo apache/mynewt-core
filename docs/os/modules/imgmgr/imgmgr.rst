@@ -1,6 +1,13 @@
 Image Manager
 =============
 
+.. toctree::
+   :maxdepth: 1
+
+   imgmgr_module_init <imgmgr_module_init>
+   imgr_ver_parse <imgr_ver_parse>
+   imgr_ver_str <imgr_ver_str>
+
 Description
 ~~~~~~~~~~~
 
@@ -42,9 +49,9 @@ The functions available in imgmgr are:
 | Function    | Description    |
 +=============+================+
 | `imgr\_ver  | Parses         |
-| \_parse <i  | character      |
-| mgr_ver_pa  | string         |
-| rse.html>`__| containing     |
+| \_parse`    | character      |
+|             | string         |
+|             | containing     |
 |             | specified      |
 |             | image version  |
 |             | number and     |
@@ -54,9 +61,9 @@ The functions available in imgmgr are:
 |             | struct.        |
 +-------------+----------------+
 | `imgr\_ver  | Takes version  |
-| \_str <img  | string from    |
-| r_ver_str.  | specified      |
-| md>`__      | image\_version |
+| \_str`      | string from    |
+|             | specified      |
+|             | image\_version |
 |             | struct and     |
 |             | formats it     |
 |             | into a         |

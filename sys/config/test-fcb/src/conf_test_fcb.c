@@ -333,6 +333,7 @@ TEST_CASE_DECL(config_test_save_3_fcb)
 TEST_CASE_DECL(config_test_compress_reset)
 TEST_CASE_DECL(config_test_save_one_fcb)
 TEST_CASE_DECL(config_test_custom_compress)
+TEST_CASE_DECL(config_test_get_stored_fcb)
 
 TEST_SUITE(config_test_all)
 {
@@ -365,6 +366,7 @@ TEST_SUITE(config_test_all)
     config_test_custom_compress();
 
     config_test_save_one_fcb();
+    config_test_get_stored_fcb();
 }
 
 #if MYNEWT_VAL(SELFTEST)

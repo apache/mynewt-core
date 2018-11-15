@@ -27,6 +27,10 @@
 extern "C" {
 #endif
 
+/* Run in priviliged or unprivileged Thread mode */
+#define OS_RUN_PRIV         (0)
+#define OS_RUN_UNPRIV       (1)
+
 extern struct os_task g_idle_task;
 extern struct os_task_list g_os_run_list;
 extern struct os_task_list g_os_sleep_list;

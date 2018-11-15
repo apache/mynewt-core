@@ -2,7 +2,7 @@
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
- * resarding copyright ownership.  The ASF licenses this file
+ * regarding copyright ownership.  The ASF licenses this file
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
@@ -22,14 +22,14 @@
 #include <string.h>
 #include <errno.h>
 
-
+#include "os/mynewt.h"
 #include "bma2xx/bma2xx.h"
 #include "bma2xx_priv.h"
 #include "defs/error.h"
 #include "hal/hal_gpio.h"
 #include "hal/hal_i2c.h"
 #include "hal/hal_spi.h"
-#include <syscfg/syscfg.h>
+#include "i2cn/i2cn.h"
 
 #if MYNEWT_VAL(BMA2XX_LOG)
 #include "modlog/modlog.h"
@@ -267,8 +267,8 @@ i2c_readlen(struct sensor_itf * itf, uint8_t addr, uint8_t *payload,
     oper.len     = 1;
     oper.buffer  = &addr;
 
-    rc = hal_i2c_master_write(itf->si_num, &oper,
-                              OS_TICKS_PER_SEC / 10, 1);
+    rc = i2cn_master_write(itf->si_num, &oper, OS_TICKS_PER_SEC / 10, 1,
+                           MYNEWT_VAL(BMA2XX_I2C_RETRIES));
     if (rc != 0) {
         BMA2XX_LOG(ERROR, "I2C access failed at address 0x%02X\n", addr);
         return rc;
@@ -278,8 +278,8 @@ i2c_readlen(struct sensor_itf * itf, uint8_t addr, uint8_t *payload,
     oper.len     = len;
     oper.buffer  = payload;
 
-    rc = hal_i2c_master_read(itf->si_num, &oper,
-                             OS_TICKS_PER_SEC / 10, 1);
+    rc = i2cn_master_read(itf->si_num, &oper, OS_TICKS_PER_SEC / 10, 1,
+                          MYNEWT_VAL(BMA2XX_I2C_RETRIES));
     if (rc != 0) {
         BMA2XX_LOG(ERROR, "I2C read failed at address 0x%02X length %u\n",
                    addr, len);
@@ -303,8 +303,8 @@ i2c_writereg(struct sensor_itf * itf, uint8_t addr, uint8_t data)
     oper.len     = 2;
     oper.buffer  = tuple;
 
-    rc = hal_i2c_master_write(itf->si_num, &oper,
-                              OS_TICKS_PER_SEC / 10, 1);
+    rc = i2cn_master_write(itf->si_num, &oper, OS_TICKS_PER_SEC / 10, 1,
+                           MYNEWT_VAL(BMA2XX_I2C_RETRIES));
     if (rc != 0) {
         BMA2XX_LOG(ERROR, "I2C write failed at address 0x%02X single byte\n",
                    addr);

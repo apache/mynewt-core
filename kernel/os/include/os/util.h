@@ -26,4 +26,8 @@
 #define POINTER_TO_INT(p) ((int) ((intptr_t) (p)))
 #define INT_TO_POINTER(u) ((void *) ((intptr_t) (u)))
 
+/* Helper to retrieve pointer to "parent" object in structure */
+#define CONTAINER_OF(ptr, type, field) \
+        ((type *)(((char *)(ptr)) - offsetof(type, field)))
+
 #endif

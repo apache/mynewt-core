@@ -26,6 +26,8 @@
 #include "hal/hal_flash.h"
 #include "hal/hal_flash_int.h"
 
+static uint8_t protected_flash[1];
+
 int
 hal_flash_init(void)
 {
@@ -55,6 +57,18 @@ hal_flash_align(uint8_t flash_id)
         return 1;
     }
     return hf->hf_align;
+}
+
+uint8_t
+hal_flash_erased_val(uint8_t flash_id)
+{
+    const struct hal_flash *hf;
+
+    hf = hal_bsp_flash_dev(flash_id);
+    if (!hf) {
+        return 1;
+    }
+    return hf->hf_erased_val;
 }
 
 uint32_t
@@ -93,49 +107,6 @@ hal_flash_read(uint8_t id, uint32_t address, void *dst, uint32_t num_bytes)
     }
     return hf->hf_itf->hff_read(hf, address, dst, num_bytes);
 }
-
-#if MYNEWT_VAL(HAL_FLASH_VERIFY_ERASES)
-/**
- * Verifies that the specified range of flash is erased.
- *
- * @return                      0 on success;
- *                              nonzero on error or unexpected contents.
- */
-static int
-hal_flash_cmp_erased(const struct hal_flash *hf, uint32_t address,
-  uint32_t num_bytes)
-{
-    uint8_t buf[MYNEWT_VAL(HAL_FLASH_VERIFY_BUF_SZ)];
-
-    uint32_t off;
-    uint32_t rem;
-    int chunk_sz;
-    int rc;
-    int i;
-
-    for (off = 0; off < num_bytes; off += sizeof buf) {
-        rem = num_bytes - off;
-        if (rem >= sizeof buf) {
-            chunk_sz = sizeof buf;
-        } else {
-            chunk_sz = rem;
-        }
-
-        rc = hf->hf_itf->hff_read(hf, address + off, buf, chunk_sz);
-        if (rc != 0) {
-            return rc;
-        }
-
-        for (i = 0; i < chunk_sz; i++) {
-            if (buf[i] != 0xff) {
-                return -1;
-            }
-        }
-    }
-
-    return 0;
-}
-#endif
 
 #if MYNEWT_VAL(HAL_FLASH_VERIFY_WRITES)
 /**
@@ -196,6 +167,10 @@ hal_flash_write(uint8_t id, uint32_t address, const void *src,
         return -1;
     }
 
+    if (protected_flash[id / 8] & (1 << (id & 7))) {
+        return SYS_EACCES;
+    }
+
     rc = hf->hf_itf->hff_write(hf, address, src, num_bytes);
     if (rc != 0) {
         return rc;
@@ -229,6 +204,10 @@ hal_flash_erase_sector(uint8_t id, uint32_t sector_address)
         return -1;
     }
 
+    if (protected_flash[id / 8] & (1 << (id & 7))) {
+        return SYS_EACCES;
+    }
+
     rc = hf->hf_itf->hff_erase_sector(hf, sector_address);
     if (rc != 0) {
         return rc;
@@ -241,7 +220,7 @@ hal_flash_erase_sector(uint8_t id, uint32_t sector_address)
         assert(rc == 0);
 
         if (sector_address == start) {
-            assert(hal_flash_cmp_erased(hf, start, size) == 0);
+            assert(hal_flash_isempty_no_buf(id, start, size) == 1);
             break;
         }
     }
@@ -269,6 +248,10 @@ hal_flash_erase(uint8_t id, uint32_t address, uint32_t num_bytes)
         return -1;
     }
 
+    if (protected_flash[id / 8] & (1 << (id & 7))) {
+        return SYS_EACCES;
+    }
+
     end = address + num_bytes;
     if (end <= address) {
         /*
@@ -291,55 +274,35 @@ hal_flash_erase(uint8_t id, uint32_t address, uint32_t num_bytes)
             }
 
 #if MYNEWT_VAL(HAL_FLASH_VERIFY_ERASES)
-            assert(hal_flash_cmp_erased(hf, start, size) == 0);
+            assert(hal_flash_isempty_no_buf(id, start, size) == 1);
 #endif
         }
     }
     return 0;
 }
 
-static int
-hal_flash_is_setto(const struct hal_flash *hf, uint32_t address,
-                   uint32_t num_bytes, uint8_t val)
+int
+hal_flash_is_erased(const struct hal_flash *hf, uint32_t address, void *dst,
+        uint32_t num_bytes)
 {
-    uint8_t buf[32];
-    uint32_t blksz;
-    int i;
+    uint32_t i;
+    uint8_t *buf;
 
-    while (num_bytes) {
-        blksz = sizeof(buf);
-        if (blksz > num_bytes) {
-            blksz = num_bytes;
+    buf = dst;
+
+    if (hf->hf_itf->hff_read(hf, address, dst, num_bytes)) {
+        return -1;
+    }
+    for (i = 0; i < num_bytes; i++) {
+        if (buf[i] != hf->hf_erased_val) {
+            return 0;
         }
-        if (hf->hf_itf->hff_read(hf, address, buf, blksz)) {
-            return -1;
-        }
-        for (i = 0; i < blksz; i++) {
-            if (buf[i] != val) {
-                return 0;
-            }
-        }
-        num_bytes -= blksz;
     }
     return 1;
 }
 
 int
-hal_flash_is_ones(const struct hal_flash *hf, uint32_t address,
-                   uint32_t num_bytes)
-{
-    return hal_flash_is_setto(hf, address, num_bytes, 0xff);
-}
-
-int
-hal_flash_is_zeroes(const struct hal_flash *hf, uint32_t address,
-                   uint32_t num_bytes)
-{
-    return hal_flash_is_setto(hf, address, num_bytes, 0);
-}
-
-int
-hal_flash_isempty(uint8_t id, uint32_t address, uint32_t num_bytes)
+hal_flash_isempty(uint8_t id, uint32_t address, void *dst, uint32_t num_bytes)
 {
     const struct hal_flash *hf;
 
@@ -352,14 +315,59 @@ hal_flash_isempty(uint8_t id, uint32_t address, uint32_t num_bytes)
         return -1;
     }
     if (hf->hf_itf->hff_is_empty) {
-        return hf->hf_itf->hff_is_empty(hf, address, num_bytes);
+        return hf->hf_itf->hff_is_empty(hf, address, dst, num_bytes);
     } else {
-        return hal_flash_is_ones(hf, address, num_bytes);
+        return hal_flash_is_erased(hf, address, dst, num_bytes);
     }
+}
+
+int
+hal_flash_isempty_no_buf(uint8_t id, uint32_t address, uint32_t num_bytes)
+{
+    uint8_t buf[MYNEWT_VAL(HAL_FLASH_VERIFY_BUF_SZ)];
+    uint32_t blksz;
+    uint32_t rem;
+    uint32_t off;
+    int empty;
+
+    for (off = 0; off < num_bytes; off += sizeof buf) {
+        rem = num_bytes - off;
+
+        blksz = sizeof buf;
+        if (blksz > rem) {
+            blksz = rem;
+        }
+
+        empty = hal_flash_isempty(id, address + off, buf, blksz);
+        if (empty != 1) {
+            return empty;
+        }
+    }
+
+    return 1;
 }
 
 int
 hal_flash_ioctl(uint8_t id, uint32_t cmd, void *args)
 {
     return 0;
+}
+
+int
+hal_flash_write_protect(uint8_t id, uint8_t protect)
+{
+    if (NULL == hal_bsp_flash_dev(id)) {
+        return SYS_EINVAL;
+    }
+    if (id / 8 >= sizeof(protected_flash) / sizeof(protected_flash[0])) {
+        return SYS_EINVAL;
+    }
+
+    if (protect) {
+        protected_flash[id / 8] |= (1 << (id & 7));
+    } else {
+        protected_flash[id / 8] &= ~(1 << (id & 7));
+    }
+
+    return SYS_EOK;
 }

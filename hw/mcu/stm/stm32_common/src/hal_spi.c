@@ -452,7 +452,11 @@ stm32_spi_resolve_prescaler(uint8_t spi_num, uint32_t baudrate, uint32_t *presca
     case 3:
     case 4:
     case 5:
+#if MYNEWT_VAL(MCU_STM32F0)
+        apbfreq = HAL_RCC_GetPCLK1Freq();
+#else
         apbfreq = HAL_RCC_GetPCLK2Freq();
+#endif
         break;
     default:
         apbfreq = HAL_RCC_GetPCLK1Freq();
@@ -602,8 +606,12 @@ hal_spi_config(int spi_num, struct hal_spi_settings *settings)
 #if SPI_0_ENABLED
     case 0:
         __HAL_RCC_SPI1_CLK_ENABLE();
-#if !defined(STM32F1)
+#if !MYNEWT_VAL(MCU_STM32F1)
+    #if !MYNEWT_VAL(MCU_STM32L0)
         gpio.Alternate = GPIO_AF5_SPI1;
+    #else
+        gpio.Alternate = GPIO_AF0_SPI1;
+    #endif
 #endif
         spi->handle.Instance = SPI1;
         break;
@@ -611,8 +619,12 @@ hal_spi_config(int spi_num, struct hal_spi_settings *settings)
 #if SPI_1_ENABLED
     case 1:
         __HAL_RCC_SPI2_CLK_ENABLE();
-#if !defined(STM32F1)
+#if !MYNEWT_VAL(MCU_STM32F1)
+    #if !MYNEWT_VAL(MCU_STM32L0)
         gpio.Alternate = GPIO_AF5_SPI2;
+    #else
+        gpio.Alternate = GPIO_AF0_SPI2;
+    #endif
 #endif
         spi->handle.Instance = SPI2;
         break;
@@ -620,7 +632,7 @@ hal_spi_config(int spi_num, struct hal_spi_settings *settings)
 #if SPI_2_ENABLED
     case 2:
         __HAL_RCC_SPI3_CLK_ENABLE();
-#if !defined(STM32F1)
+#if !MYNEWT_VAL(MCU_STM32F1)
         gpio.Alternate = GPIO_AF6_SPI3;
 #endif
         spi->handle.Instance = SPI3;
@@ -629,7 +641,7 @@ hal_spi_config(int spi_num, struct hal_spi_settings *settings)
 #if SPI_3_ENABLED
     case 3:
         __HAL_RCC_SPI4_CLK_ENABLE();
-#if !defined(STM32F1)
+#if !MYNEWT_VAL(MCU_STM32F1)
         gpio.Alternate = GPIO_AF5_SPI4;
 #endif
         spi->handle.Instance = SPI4;
@@ -638,7 +650,7 @@ hal_spi_config(int spi_num, struct hal_spi_settings *settings)
 #if SPI_4_ENABLED
     case 4:
         __HAL_RCC_SPI5_CLK_ENABLE();
-#if !defined(STM32F1)
+#if !MYNEWT_VAL(MCU_STM32F1)
         gpio.Alternate = GPIO_AF5_SPI5;
 #endif
         spi->handle.Instance = SPI5;
@@ -647,7 +659,7 @@ hal_spi_config(int spi_num, struct hal_spi_settings *settings)
 #if SPI_5_ENABLED
     case 5:
         __HAL_RCC_SPI6_CLK_ENABLE();
-#if !defined(STM32F1)
+#if !MYNEWT_VAL(MCU_STM32F1)
         gpio.Alternate = GPIO_AF5_SPI6;
 #endif
         spi->handle.Instance = SPI6;

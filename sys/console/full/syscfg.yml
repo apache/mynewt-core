@@ -16,8 +16,6 @@
 # under the License.
 #
 
-# Package: sys/console/full
-
 syscfg.defs:
     CONSOLE_UART:
         description: 'Set console output to UART'
@@ -72,6 +70,20 @@ syscfg.defs:
         description: 'Console UART device.'
         value: '"uart0"'
 
+    CONSOLE_RTT_RETRY_COUNT:
+        description: >
+            Number of retries to write data in case buffer is full. This allows
+            to wait for host to read data from buffer in case there's a lot of
+            data to write which do not fit in buffer.
+        value: 2
+    CONSOLE_RTT_RETRY_DELAY_MS:
+        description: >
+            Delay (in miliseconds) between each write retry.
+        value: 2
+    CONSOLE_RTT_RETRY_IN_ISR:
+        description: >
+            Set to non-zero to enable write retries also in ISR.
+        value: 0
     CONSOLE_RTT_INPUT_POLL_INTERVAL_MAX:
         description: >
             Maximum interval (milliseconds) to poll for RTT input.

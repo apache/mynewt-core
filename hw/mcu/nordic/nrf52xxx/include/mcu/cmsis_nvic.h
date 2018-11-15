@@ -8,12 +8,10 @@
 #define MBED_CMSIS_NVIC_H
 
 #include <stdint.h>
-#include <bsp/bsp.h>
+#include "nrf.h"
 
 #define NVIC_NUM_VECTORS      (16 + 38)   // CORE + MCU Peripherals
 #define NVIC_USER_IRQ_OFFSET  16
-
-#include "nrf.h"
 
 #ifdef __cplusplus
 extern "C" {

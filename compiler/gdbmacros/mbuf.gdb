@@ -163,7 +163,7 @@ define mn_mbuf_pool_print
     set $pool = ($arg0)
     set $om = (struct os_mbuf *)$pool->omp_pool.mp_membuf_addr
     set $elem_size = $pool->omp_databuf_len + sizeof (struct os_mbuf)
-    set $end = (uint8_t *)$om + $pool->omp_mbuf_count * $elem_size
+    set $end = (uint8_t *)$om + $pool->omp_pool.mp_num_blocks * $elem_size
 
     while $om < $end
         printf "Mbuf addr: %p\n", $om

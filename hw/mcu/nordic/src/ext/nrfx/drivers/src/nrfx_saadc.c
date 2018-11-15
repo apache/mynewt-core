@@ -1,21 +1,21 @@
 /**
  * Copyright (c) 2015 - 2018, Nordic Semiconductor ASA
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of the copyright holder nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -626,5 +626,21 @@ void nrfx_saadc_limits_set(uint8_t channel, int16_t limit_low, int16_t limit_hig
         m_cb.limits_enabled_flags |= (0x80000000 >> HIGH_LIMIT_TO_FLAG(channel));
         nrf_saadc_int_enable(int_mask);
     }
+}
+
+void nrfx_enable_adc_chan(int chan, nrf_saadc_input_t pselp,
+                          nrf_saadc_input_t pseln)
+{
+    NRFX_ASSERT(m_cb.active_channels < NRF_SAADC_CHANNEL_COUNT);
+    ++m_cb.active_channels;
+    nrf_saadc_channel_input_set(chan, pselp, pseln);
+}
+
+void nrfx_disable_adc_chan(int chan)
+{
+    NRFX_ASSERT(m_cb.active_channels != 0);
+    --m_cb.active_channels;
+    nrf_saadc_channel_input_set(chan, NRF_SAADC_INPUT_DISABLED,
+                                NRF_SAADC_INPUT_DISABLED);
 }
 #endif // NRFX_CHECK(NRFX_SAADC_ENABLED)

@@ -38,6 +38,7 @@
 #if defined(MBEDTLS_GCM_C)
 
 #include "mbedtls/gcm.h"
+#include "mbedtls/platform_util.h"
 
 #include <string.h>
 
@@ -79,11 +80,6 @@
     (b)[(i) + 3] = (unsigned char) ( (n)       );       \
 }
 #endif
-
-/* Implementation that should never be optimized out by the compiler */
-static void mbedtls_zeroize( void *v, size_t n ) {
-    volatile unsigned char *p = v; while( n-- ) *p++ = 0;
-}
 
 /*
  * Initialize a context
@@ -182,6 +178,41 @@ int mbedtls_gcm_setkey( mbedtls_gcm_context *ctx,
         return( ret );
 
     if( ( ret = mbedtls_cipher_setkey( &ctx->cipher_ctx, key, keybits,
+                               MBEDTLS_ENCRYPT ) ) != 0 )
+    {
+        return( ret );
+    }
+
+    if( ( ret = gcm_gen_table( ctx ) ) != 0 )
+        return( ret );
+
+    return( 0 );
+}
+
+int mbedtls_gcm_setkey_noalloc( mbedtls_gcm_context *ctx,
+                                const mbedtls_cipher_info_t *cipher_info,
+                                const unsigned char *key,
+                                void *cipher_ctx)
+{
+    int ret;
+
+    ctx->cipher_ctx.cipher_info = cipher_info;
+    ctx->cipher_ctx.cipher_ctx = cipher_ctx;
+#if defined(MBEDTLS_CIPHER_MODE_WITH_PADDING)
+    /*
+     * Ignore possible errors caused by a cipher mode that doesn't use padding
+     */
+#if defined(MBEDTLS_CIPHER_PADDING_PKCS7)
+    (void) mbedtls_cipher_set_padding_mode( &ctx->cipher_ctx,
+                               MBEDTLS_PADDING_PKCS7 );
+#else
+    (void) mbedtls_cipher_set_padding_mode( &ctx->cipher_ctx,
+                               MBEDTLS_PADDING_NONE );
+#endif
+#endif /* MBEDTLS_CIPHER_MODE_WITH_PADDING */
+
+    if( ( ret = mbedtls_cipher_setkey( &ctx->cipher_ctx, key,
+                               cipher_info->key_bitlen,
                                MBEDTLS_ENCRYPT ) ) != 0 )
     {
         return( ret );
@@ -498,7 +529,7 @@ int mbedtls_gcm_auth_decrypt( mbedtls_gcm_context *ctx,
 
     if( diff != 0 )
     {
-        mbedtls_zeroize( output, length );
+        mbedtls_platform_zeroize( output, length );
         return( MBEDTLS_ERR_GCM_AUTH_FAILED );
     }
 
@@ -508,7 +539,7 @@ int mbedtls_gcm_auth_decrypt( mbedtls_gcm_context *ctx,
 void mbedtls_gcm_free( mbedtls_gcm_context *ctx )
 {
     mbedtls_cipher_free( &ctx->cipher_ctx );
-    mbedtls_zeroize( ctx, sizeof( mbedtls_gcm_context ) );
+    mbedtls_platform_zeroize( ctx, sizeof( mbedtls_gcm_context ) );
 }
 
 #endif /* !MBEDTLS_GCM_ALT */

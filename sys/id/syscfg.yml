@@ -16,8 +16,6 @@
 # under the License.
 #
 
-# Package: sys/id
-
 syscfg.defs:
     ID_SERIAL_PRESENT:
         description: 'Device serial number exported as sys/id/serial.'

@@ -2,7 +2,7 @@
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
- * resarding copyright ownership.  The ASF licenses this file
+ * regarding copyright ownership.  The ASF licenses this file
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
@@ -24,6 +24,7 @@
 
 #include "os/mynewt.h"
 #include "hal/hal_i2c.h"
+#include "i2cn/i2cn.h"
 #include "sensor/sensor.h"
 #include "sensor/light.h"
 #include "tsl2591/tsl2591.h"
@@ -88,8 +89,8 @@ tsl2591_write8(struct sensor_itf *itf, uint8_t reg, uint32_t value)
         return rc;
     }
 
-    rc = hal_i2c_master_write(itf->si_num, &data_struct,
-                              OS_TICKS_PER_SEC / 10, 1);
+    rc = i2cn_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1,
+                           MYNEWT_VAL(TSL2591_I2C_RETRIES));
     if (rc) {
         TSL2591_LOG(ERROR,
                     "Failed to write 0x%02X:0x%02X with value 0x%02lX\n",
@@ -119,8 +120,8 @@ tsl2591_write16(struct sensor_itf *itf, uint8_t reg, uint16_t value)
         return rc;
     }
 
-    rc = hal_i2c_master_write(itf->si_num, &data_struct,
-                              OS_TICKS_PER_SEC / 10, 1);
+    rc = i2cn_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1,
+                           MYNEWT_VAL(TSL2591_I2C_RETRIES));
     if (rc) {
         TSL2591_LOG(ERROR,
                     "Failed to write @0x%02X with value 0x%02X 0x%02X\n",
@@ -152,8 +153,8 @@ tsl2591_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
 
     /* Register write */
     payload = reg;
-    rc = hal_i2c_master_write(itf->si_num, &data_struct,
-                              OS_TICKS_PER_SEC / 10, 1);
+    rc = i2cn_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1,
+                           MYNEWT_VAL(TSL2591_I2C_RETRIES));
     if (rc) {
         TSL2591_LOG(ERROR, "Failed to address sensor\n");
         STATS_INC(g_tsl2591stats, errors);
@@ -162,8 +163,8 @@ tsl2591_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
 
     /* Read one byte back */
     payload = 0;
-    rc = hal_i2c_master_read(itf->si_num, &data_struct,
-                             OS_TICKS_PER_SEC / 10, 1);
+    rc = i2cn_master_read(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1,
+                          MYNEWT_VAL(TSL2591_I2C_RETRIES));
     *value = payload;
     if (rc) {
         TSL2591_LOG(ERROR, "Failed to read @0x%02X\n", reg);
@@ -194,8 +195,8 @@ tsl2591_read16(struct sensor_itf *itf, uint8_t reg, uint16_t *value)
     }
 
     /* Register write */
-    rc = hal_i2c_master_write(itf->si_num, &data_struct,
-                              OS_TICKS_PER_SEC / 10, 1);
+    rc = i2cn_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1,
+                           MYNEWT_VAL(TSL2591_I2C_RETRIES));
     if (rc) {
         TSL2591_LOG(ERROR, "Failed to address sensor\n");
         STATS_INC(g_tsl2591stats, errors);
@@ -205,8 +206,8 @@ tsl2591_read16(struct sensor_itf *itf, uint8_t reg, uint16_t *value)
     /* Read two bytes back */
     memset(payload, 0, 2);
     data_struct.len = 2;
-    rc = hal_i2c_master_read(itf->si_num, &data_struct,
-                             OS_TICKS_PER_SEC / 10, 1);
+    rc = i2cn_master_read(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1,
+                          MYNEWT_VAL(TSL2591_I2C_RETRIES));
     *value = (uint16_t)payload[0] | ((uint16_t)payload[1] << 8);
     if (rc) {
         TSL2591_LOG(ERROR, "Failed to read @0x%02X\n", reg);

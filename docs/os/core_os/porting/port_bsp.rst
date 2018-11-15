@@ -272,17 +272,17 @@ BSP scripts are quite simple, and you can likely get away with just copying them
     # This script attaches a gdb session to a Mynewt image running on your BSP.
 
     # If your BSP uses JLink, a good example script to copy is:
-    #     repos/apache-mynewt-core/hw/bsp/nrf52dk/nrf52dk_debug.sh
+    #     repos/apache-mynewt-core/hw/bsp/nordic_pca10040/nordic_pca10040_debug.sh
     #
     # If your BSP uses OpenOCD, a good example script to copy is:
     #     repos/apache-mynewt-core/hw/bsp/rb-nano2/rb-nano2_debug.sh
 
-Our example nRF52 BSP uses JLink, so we will copy the nRF52dk BSP's scripts:
+Our example Nordic nRF52 BSP uses JLink, so we will copy the Nordic PCA10040 (nRF52 DK) BSP's scripts:
 
 ::
 
-    cp repos/apache-mynewt-core/hw/bsp/nrf52dk/nrf52dk_debug.sh hw/bsp/myboard/myboard_debug.sh
-    cp repos/apache-mynewt-core/hw/bsp/nrf52dk/nrf52dk_download.sh hw/bsp/myboard/myboard_download.sh
+    cp repos/apache-mynewt-core/hw/bsp/nordic_pca10040/nordic_pca10040_debug.sh hw/bsp/myboard/myboard_debug.sh
+    cp repos/apache-mynewt-core/hw/bsp/nordic_pca10040/nordic_pca10040_download.sh hw/bsp/myboard/myboard_download.sh
 
 Fill in BSP functions and defines
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -354,12 +354,12 @@ This file is named according to the following pattern: ``hw/bsp/myboard/src/arch
 The best approach for creating this file is to copy from other BSPs. If there is another BSP that uses the same MCU, you
 might be able to use most or all of its startup file.
 
-For our example BSP, we'll just copy the nRF52dk BSP's startup code:
+For our example BSP, we'll just copy the Nordic PCA10040 (nRF52 DK) BSP's startup code:
 
 .. code-block:: console
 
     $ mkdir -p hw/bsp/myboard/src/arch/cortex_m4
-    $ cp repos/apache-mynewt-core/hw/bsp/nrf52dk/src/arch/cortex_m4/gcc_startup_nrf52.s hw/bsp/myboard/src/arch/cortex_m4/
+    $ cp repos/apache-mynewt-core/hw/bsp/nordic_pca10040/src/arch/cortex_m4/gcc_startup_nrf52.s hw/bsp/myboard/src/arch/cortex_m4/
 
 Satisfy MCU requirements
 ~~~~~~~~~~~~~~~~~~~~~~~~

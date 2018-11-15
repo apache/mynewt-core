@@ -17,8 +17,6 @@
 # under the License.
 #
 
-# Package: hw/bsp/pic32mx2048_wi-fire
-
 syscfg.defs:
     HARDFLOAT:
         description: 'Whether to enable UART0 FPU context switch'

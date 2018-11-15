@@ -63,6 +63,15 @@ struct shell_cmd g_shell_storage_cmd = {
 #endif
 #endif
 
+#if MYNEWT_VAL(LOG_STATS)
+STATS_NAME_START(logs)
+  STATS_NAME(logs, writes)
+  STATS_NAME(logs, drops)
+  STATS_NAME(logs, errs)
+  STATS_NAME(logs, lost)
+STATS_NAME_END(logs)
+#endif
+
 #if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
 static int log_conf_set(int argc, char **argv, char *val);
 
@@ -248,6 +257,22 @@ log_registered(struct log *log)
     return 0;
 }
 
+struct log *
+log_find(const char *name)
+{
+    struct log *log;
+
+    log = NULL;
+    do {
+        log = log_list_get_next(log);
+        if (strcmp(log->l_name, name) == 0) {
+            break;
+        }
+    } while (log != NULL);
+
+    return log;
+}
+
 struct log_read_hdr_arg {
     struct log_entry_hdr *hdr;
     int read_success;
@@ -319,9 +344,16 @@ log_register(char *name, struct log *log, const struct log_handler *lh,
     log->l_log = lh;
     log->l_arg = arg;
     log->l_level = level;
+    log->l_append_cb = NULL;
 
     if (!log_registered(log)) {
         STAILQ_INSERT_TAIL(&g_log_list, log, l_next);
+#if MYNEWT_VAL(LOG_STATS)
+        stats_init(STATS_HDR(log->l_stats),
+                   STATS_SIZE_INIT_PARMS(log->l_stats, STATS_SIZE_32),
+                   STATS_NAME_INIT_PARMS(logs));
+        stats_register(log->l_name, STATS_HDR(log->l_stats));
+#endif
     }
 
     /* Call registered handler now - log structure is set and put on list */
@@ -345,6 +377,12 @@ log_register(char *name, struct log *log, const struct log_handler *lh,
     }
 
     return (0);
+}
+
+void
+log_set_append_cb(struct log *log, log_append_cb *cb)
+{
+    log->l_append_cb = cb;
 }
 
 static int
@@ -408,22 +446,50 @@ err:
     return (rc);
 }
 
+/**
+ * Calls the given log's append callback, if it has one.
+ */
+static void
+log_call_append_cb(struct log *log, uint32_t idx)
+{
+    /* Qualify this as `volatile` to prevent a race condition.  This prevents
+     * the compiler from optimizing this temp variable away.  We copy the
+     * original pointer value into this variable, then inspect and use the temp
+     * variable.  This allows us to read the original pointer only once,
+     * preventing a TOCTTOU race.
+     * (This all assumes that function pointer reads and writes are atomic.)
+     */
+    log_append_cb * volatile cb;
+
+    cb = log->l_append_cb;
+    if (cb != NULL) {
+        cb(log, idx);
+    }
+}
+
 int
 log_append_typed(struct log *log, uint8_t module, uint8_t level, uint8_t etype,
                  void *data, uint16_t len)
 {
+    struct log_entry_hdr *hdr;
     int rc;
 
-    rc = log_append_prepare(log, module, level, etype,
-                            (struct log_entry_hdr *)data);
+    LOG_STATS_INC(log, writes);
+
+    hdr = (struct log_entry_hdr *)data;
+    rc = log_append_prepare(log, module, level, etype, hdr);
     if (rc != 0) {
+        LOG_STATS_INC(log, drops);
         goto err;
     }
 
     rc = log->l_log->log_append(log, data, len + LOG_ENTRY_HDR_SIZE);
     if (rc != 0) {
+        LOG_STATS_INC(log, errs);
         goto err;
     }
+
+    log_call_append_cb(log, hdr->ue_index);
 
     return (0);
 err:
@@ -437,15 +503,20 @@ log_append_body(struct log *log, uint8_t module, uint8_t level, uint8_t etype,
     struct log_entry_hdr hdr;
     int rc;
 
+    LOG_STATS_INC(log, writes);
     rc = log_append_prepare(log, module, level, etype, &hdr);
     if (rc != 0) {
+        LOG_STATS_INC(log, drops);
         return rc;
     }
 
     rc = log->l_log->log_append_body(log, &hdr, body, body_len);
     if (rc != 0) {
+        LOG_STATS_INC(log, errs);
         return rc;
     }
+
+    log_call_append_cb(log, hdr.ue_index);
 
     return 0;
 }
@@ -454,14 +525,16 @@ int
 log_append_mbuf_typed_no_free(struct log *log, uint8_t module, uint8_t level,
                               uint8_t etype, struct os_mbuf **om_ptr)
 {
+    struct log_entry_hdr *hdr;
     struct os_mbuf *om;
     int rc;
 
     /* Remove a loyer of indirection for convenience. */
     om = *om_ptr;
 
+    LOG_STATS_INC(log, writes);
     if (!log->l_log->log_append_mbuf) {
-        rc = -1;
+        rc = SYS_ENOTSUP;
         goto err;
     }
 
@@ -471,10 +544,12 @@ log_append_mbuf_typed_no_free(struct log *log, uint8_t module, uint8_t level,
         goto err;
     }
 
-    rc = log_append_prepare(log, module, level, etype,
-                            (struct log_entry_hdr *)om->om_data);
+    hdr = (struct log_entry_hdr *)om->om_data;
+
+    rc = log_append_prepare(log, module, level, etype, hdr);
     if (rc != 0) {
-        goto err;
+        LOG_STATS_INC(log, drops);
+        goto drop;
     }
 
     rc = log->l_log->log_append_mbuf(log, om);
@@ -482,11 +557,15 @@ log_append_mbuf_typed_no_free(struct log *log, uint8_t module, uint8_t level,
         goto err;
     }
 
+    log_call_append_cb(log, hdr->ue_index);
+
     *om_ptr = om;
 
     return 0;
 
 err:
+    LOG_STATS_INC(log, errs);
+drop:
     if (om) {
         os_mbuf_free_chain(om);
         *om_ptr = NULL;
@@ -517,21 +596,30 @@ log_append_mbuf_body_no_free(struct log *log, uint8_t module, uint8_t level,
     struct log_entry_hdr hdr;
     int rc;
 
+    LOG_STATS_INC(log, writes);
     if (!log->l_log->log_append_mbuf_body) {
-        return SYS_ENOTSUP;
+        rc = SYS_ENOTSUP;
+        goto err;
     }
 
     rc = log_append_prepare(log, module, level, etype, &hdr);
     if (rc != 0) {
-        return rc;
+        LOG_STATS_INC(log, drops);
+        goto drop;
     }
 
     rc = log->l_log->log_append_mbuf_body(log, &hdr, om);
     if (rc != 0) {
-        return rc;
+        goto err;
     }
 
+    log_call_append_cb(log, hdr.ue_index);
+
     return 0;
+err:
+    LOG_STATS_INC(log, errs);
+drop:
+    return rc;
 }
 
 int
@@ -614,17 +702,19 @@ log_walk_body_fn(struct log *log, struct log_offset *log_offset, void *dptr,
     if (rc != 0) {
         return rc;
     }
-    len -= sizeof ueh;
+    if (log_offset->lo_index <= ueh.ue_index) {
+        len -= sizeof ueh;
 
-    /* Pass the wrapped callback argument to the body walk function. */
-    log_offset->lo_arg = lwba->arg;
-    rc = lwba->fn(log, log_offset, &ueh, dptr, len);
+        /* Pass the wrapped callback argument to the body walk function. */
+        log_offset->lo_arg = lwba->arg;
+        rc = lwba->fn(log, log_offset, &ueh, dptr, len);
 
-    /* Restore the original body walk argument. */
-    log_offset->lo_arg = lwba;
+        /* Restore the original body walk argument. */
+        log_offset->lo_arg = lwba;
 
-    if (rc != 0) {
-        return rc;
+        if (rc != 0) {
+            return rc;
+        }
     }
 
     return 0;

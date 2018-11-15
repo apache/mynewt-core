@@ -33,6 +33,15 @@ struct oc_endpoint_ble {
     uint16_t conn_handle;
 };
 
+/**
+ * @brief Indicates whether the provided endpoint is the GATT (BLE) endpoint.
+ *
+ * @param oe                    The endpoint to inspect.
+ *
+ * @return                      1 if `oe` is the GATT endpoint; 0 otherwise.
+ */
+int oc_endpoint_is_gatt(const struct oc_endpoint *oe);
+
 #ifdef __cplusplus
 }
 #endif

@@ -56,10 +56,11 @@ const struct hal_flash pic32mz_flash_dev = {
     .hf_base_addr = 0x1D000000,
     .hf_size = 2048 * 1024,
     .hf_sector_cnt = 128,
-    .hf_align = 4      /* num bytes must be a multiple of 4 as writes can only
+    .hf_align = 4,     /* num bytes must be a multiple of 4 as writes can only
                         * be done on word boundary. This also assumes that
                         * ECC memory is disabled (default on Wi-Fire board).
                         */
+    .hf_erased_val = 0xff,
 };
 
 static int

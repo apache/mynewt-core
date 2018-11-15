@@ -16,8 +16,6 @@
 # under the License.
 #
 
-# Package: sys/shell 
-
 syscfg.defs:
     SHELL_TASK:
         description: 'Controls whether shell is enabled or not.'

@@ -42,6 +42,15 @@
 #include "mbedtls/rsa.h"
 #include "mbedtls/x509.h"
 #include "mbedtls/xtea.h"
+#include "mbedtls/poly1305.h"
+#include "mbedtls/chacha20.h"
+#include "mbedtls/chachapoly.h"
+#include "mbedtls/des.h"
+#include "mbedtls/camellia.h"
+#include "mbedtls/nist_kw.h"
+#include "mbedtls/ctr_drbg.h"
+#include "mbedtls/base64.h"
+#include "mbedtls/timing.h"
 
 TEST_CASE_DECL(sha1_test)
 TEST_CASE_DECL(sha256_test)
@@ -61,6 +70,15 @@ TEST_CASE_DECL(ripemd160_test)
 TEST_CASE_DECL(rsa_test)
 TEST_CASE_DECL(x509_test)
 TEST_CASE_DECL(xtea_test)
+TEST_CASE_DECL(poly1305_test)
+TEST_CASE_DECL(chacha20_test)
+TEST_CASE_DECL(chachapoly_test)
+TEST_CASE_DECL(des_test)
+TEST_CASE_DECL(camellia_test)
+TEST_CASE_DECL(nist_kw_test)
+TEST_CASE_DECL(ctr_drbg_test)
+TEST_CASE_DECL(base64_test)
+TEST_CASE_DECL(timing_test)
 
 TEST_SUITE(mbedtls_test_all)
 {
@@ -82,6 +100,15 @@ TEST_SUITE(mbedtls_test_all)
     rsa_test();
     x509_test();
     xtea_test();
+    poly1305_test();
+    chacha20_test();
+    chachapoly_test();
+    des_test();
+    camellia_test();
+    nist_kw_test();
+    ctr_drbg_test();
+    base64_test();
+    timing_test();
 }
 
 #if MYNEWT_VAL(SELFTEST)

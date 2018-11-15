@@ -16,8 +16,6 @@
 # under the License.
 #
 
-# Package: sys/config/test-fcb
-
 syscfg.vals:
   OC_TRANSPORT_IP: 1
   OC_TRANSPORT_IPV6: 1

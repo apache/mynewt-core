@@ -107,6 +107,17 @@ void os_init(int (*fn)(int argc, char **argv));
  */
 void os_start(void);
 
+/**
+ * Reboots the system.
+ */
+void os_reboot(int reason);
+
+/**
+ * Performs a system reset.  This is typically done at the end of a reboot
+ * procedure.
+ */
+void os_system_reset(void);
+
 #include "os/endian.h"
 #include "os/os_callout.h"
 #include "os/os_cfg.h"

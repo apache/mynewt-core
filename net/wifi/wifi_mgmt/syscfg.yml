@@ -16,8 +16,6 @@
 # under the License.
 #
 
-# Package: net/wifi/wifi_mgmt
-
 syscfg.defs:
     WIFI_MGMT_CLI:
         description: 'CLI for interacting with Wi-Fi interfaces'

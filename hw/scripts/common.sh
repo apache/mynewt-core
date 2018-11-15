@@ -42,3 +42,37 @@ windows_detect() {
         COMSPEC=cmd.exe
     fi
 }
+
+#
+# Check if known parameters are set in EXTRA_JTAG_CMD. Filter these
+# parameters out of the arguments passed to jtag emulator software.
+# Only special parameter is -port <portnumber>
+#
+parse_extra_jtag_cmd() {
+    PORT=3333
+
+    NEW_EXTRA_JTAG_CMD=""
+    while [ "$1" != "" ]; do
+	case $1 in
+	    -port)
+		shift
+		# Many BSP scripts append their own things additional
+		# parameters. This is done in a way where openocd delimeter is
+		# immediatelly adjacent to parameters passed via newt.
+		# The following is to filter out the delimeter from
+		# PORT, but keep it present within the string passed
+		# to openocd.
+		PORT=`echo $1 | tr -c -d 0-9`
+		ADDITIONAL_CHARS=`echo $1 | tr -d 0-9`
+		NEW_EXTRA_JTAG_CMD="$NEW_EXTRA_JTAG_CMD $ADDITIONAL_CHARS"
+		shift
+		;;
+	    *)
+		NEW_EXTRA_JTAG_CMD="$NEW_EXTRA_JTAG_CMD $1"
+		shift
+		;;
+	esac
+    done
+    echo $NEW_EXTRA_JTAG_CMD
+    EXTRA_JTAG_CMD=$NEW_EXTRA_JTAG_CMD
+}

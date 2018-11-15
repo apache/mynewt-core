@@ -44,6 +44,15 @@
 #include "mbedtls/rsa.h"
 #include "mbedtls/x509.h"
 #include "mbedtls/xtea.h"
+#include "mbedtls/poly1305.h"
+#include "mbedtls/chacha20.h"
+#include "mbedtls/chachapoly.h"
+#include "mbedtls/des.h"
+#include "mbedtls/camellia.h"
+#include "mbedtls/nist_kw.h"
+#include "mbedtls/ctr_drbg.h"
+#include "mbedtls/base64.h"
+#include "mbedtls/timing.h"
 
 #ifdef __cplusplus
 #extern "C" {

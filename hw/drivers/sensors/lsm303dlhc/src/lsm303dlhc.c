@@ -2,7 +2,7 @@
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
- * resarding copyright ownership.  The ASF licenses this file
+ * regarding copyright ownership.  The ASF licenses this file
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
@@ -23,6 +23,7 @@
 
 #include "os/mynewt.h"
 #include "hal/hal_i2c.h"
+#include "i2cn/i2cn.h"
 #include "sensor/sensor.h"
 #include "sensor/accel.h"
 #include "sensor/mag.h"
@@ -108,8 +109,8 @@ lsm303dlhc_write8(struct sensor_itf *itf, uint8_t addr, uint8_t reg,
         return rc;
     }
 
-    rc = hal_i2c_master_write(itf->si_num, &data_struct,
-                              OS_TICKS_PER_SEC / 10, 1);
+    rc = i2cn_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1,
+                           MYNEWT_VAL(LSM303DLHC_I2C_RETRIES));
     if (rc) {
         LSM303DLHC_LOG(ERROR,
                        "Failed to write to 0x%02X:0x%02X with value 0x%02lX\n",
@@ -152,8 +153,8 @@ lsm303dlhc_read8(struct sensor_itf *itf, uint8_t addr, uint8_t reg,
 
     /* Register write */
     payload = reg;
-    rc = hal_i2c_master_write(itf->si_num, &data_struct,
-                              OS_TICKS_PER_SEC / 10, 1);
+    rc = i2cn_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1,
+                           MYNEWT_VAL(LSM303DLHC_I2C_RETRIES));
     if (rc) {
         LSM303DLHC_LOG(ERROR, "I2C access failed at address 0x%02X\n", addr);
         STATS_INC(g_lsm303dlhcstats, errors);
@@ -162,8 +163,8 @@ lsm303dlhc_read8(struct sensor_itf *itf, uint8_t addr, uint8_t reg,
 
     /* Read one byte back */
     payload = 0;
-    rc = hal_i2c_master_read(itf->si_num, &data_struct,
-                             OS_TICKS_PER_SEC / 10, 1);
+    rc = i2cn_master_read(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1,
+                          MYNEWT_VAL(LSM303DLHC_I2C_RETRIES));
     *value = payload;
     if (rc) {
         LSM303DLHC_LOG(ERROR, "Failed to read from 0x%02X:0x%02X\n",
@@ -209,8 +210,8 @@ lsm303dlhc_read48(struct sensor_itf *itf, uint8_t addr, uint8_t reg,
     }
 
     /* Register write */
-    rc = hal_i2c_master_write(itf->si_num, &data_struct,
-                              OS_TICKS_PER_SEC / 10, 1);
+    rc = i2cn_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1,
+                           MYNEWT_VAL(LSM303DLHC_I2C_RETRIES));
     if (rc) {
         LSM303DLHC_LOG(ERROR, "I2C access failed at address 0x%02X\n", addr);
         STATS_INC(g_lsm303dlhcstats, errors);
@@ -220,8 +221,8 @@ lsm303dlhc_read48(struct sensor_itf *itf, uint8_t addr, uint8_t reg,
     /* Read six bytes back */
     memset(payload, 0, sizeof(payload));
     data_struct.len = 6;
-    rc = hal_i2c_master_read(itf->si_num, &data_struct,
-                             OS_TICKS_PER_SEC / 10, 1);
+    rc = i2cn_master_read(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1,
+                          MYNEWT_VAL(LSM303DLHC_I2C_RETRIES));
 
     if (rc) {
         LSM303DLHC_LOG(ERROR, "Failed to read from 0x%02X:0x%02X\n",

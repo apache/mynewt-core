@@ -26,6 +26,9 @@ CTASSERT(sizeof(os_time_t) == 4);
 
 os_time_t g_os_time;
 
+static STAILQ_HEAD(, os_time_change_listener) os_time_change_listeners =
+    STAILQ_HEAD_INITIALIZER(os_time_change_listeners);
+
 /*
  * Time-of-day collateral.
  */
@@ -116,13 +119,125 @@ os_time_delay(os_time_t osticks)
     }
 }
 
+/**
+ * Searches the list of registered time change listeners for the specified
+ * entry.
+ *
+ * @param listener              The listener to find.
+ * @param out_prev              On success, the specified listener's
+ *                                  predecessor gets written here.  Pass NULL
+ *                                  if you do not require this information.
+ *
+ * @return                      0 if the specified listener was found;
+ *                              SYS_ENOENT if the listener is not present.
+ */
+static int
+os_time_change_listener_find(const struct os_time_change_listener *listener,
+                             struct os_time_change_listener **out_prev)
+{
+    struct os_time_change_listener *prev;
+    struct os_time_change_listener *cur;
+
+    prev = NULL;
+    STAILQ_FOREACH(cur, &os_time_change_listeners, tcl_next) {
+        if (cur == listener) {
+            break;
+        }
+
+        prev = cur;
+    }
+
+    if (cur == NULL) {
+        return SYS_ENOENT;
+    }
+
+    if (out_prev != NULL) {
+        *out_prev = prev;
+    }
+
+    return 0;
+}
+
+void
+os_time_change_listen(struct os_time_change_listener *listener)
+{
+#if MYNEWT_VAL(OS_TIME_DEBUG)
+    assert(listener->tcl_fn != NULL);
+    assert(os_time_change_listener_find(listener, NULL) == SYS_ENOENT);
+#endif
+
+    STAILQ_INSERT_TAIL(&os_time_change_listeners, listener, tcl_next);
+}
+
+int
+os_time_change_remove(const struct os_time_change_listener *listener)
+{
+    struct os_time_change_listener *prev;
+    int rc;
+
+    rc = os_time_change_listener_find(listener, &prev);
+    if (rc != 0) {
+        return rc;
+    }
+
+    if (prev == NULL) {
+        STAILQ_REMOVE_HEAD(&os_time_change_listeners, tcl_next);
+    } else {
+        STAILQ_NEXT(prev, tcl_next) = STAILQ_NEXT(listener, tcl_next);
+    }
+
+    return 0;
+}
+
+static void
+os_time_change_notify(const struct os_time_change_info *info)
+{
+    struct os_time_change_listener *listener;
+
+    STAILQ_FOREACH(listener, &os_time_change_listeners, tcl_next) {
+        listener->tcl_fn(info, listener->tcl_arg);
+    }
+}
+
+static int
+os_time_populate_info(struct os_time_change_info *info,
+                      const struct os_timeval *new_tv,
+                      const struct os_timezone *new_tz)
+{
+    if (new_tv == NULL && new_tz == NULL) {
+        return SYS_EINVAL;
+    }
+
+    if (new_tv == NULL) {
+        new_tv = &basetod.utctime;
+    }
+    if (new_tz == NULL) {
+        new_tz = &basetod.timezone;
+    }
+
+    info->tci_prev_tv = &basetod.utctime;
+    info->tci_cur_tv = new_tv;
+    info->tci_prev_tz = &basetod.timezone;
+    info->tci_cur_tz = new_tz;
+    info->tci_newly_synced = !os_time_is_set();
+
+    return 0;
+}
+
 int
 os_settimeofday(struct os_timeval *utctime, struct os_timezone *tz)
 {
     os_sr_t sr;
     os_time_t delta;
+    struct os_time_change_info info;
+    bool notify;
+    int rc;
 
     OS_ENTER_CRITICAL(sr);
+
+    rc = os_time_populate_info(&info, utctime, tz);
+    notify = rc == 0;
+
     if (utctime != NULL) {
         /*
          * Update all time-of-day base values.
@@ -136,7 +251,13 @@ os_settimeofday(struct os_timeval *utctime, struct os_timezone *tz)
     if (tz != NULL) {
         basetod.timezone = *tz;
     }
+
     OS_EXIT_CRITICAL(sr);
+
+    /* Notify all listeners of time change. */
+    if (notify) {
+        os_time_change_notify(&info);
+    }
 
     return (0);
 }
@@ -159,6 +280,12 @@ os_gettimeofday(struct os_timeval *tv, struct os_timezone *tz)
     OS_EXIT_CRITICAL(sr);
 
     return (0);
+}
+
+bool
+os_time_is_set(void)
+{
+    return basetod.utctime.tv_sec > 0;
 }
 
 void
@@ -228,24 +355,4 @@ os_time_ticks_to_ms(os_time_t ticks, uint32_t *out_ms)
     *out_ms = ms;
 
     return 0;
-}
-
-os_time_t
-os_time_ms_to_ticks32(uint32_t ms)
-{
-#if OS_TICKS_PER_SEC == 1000
-    return ms;
-#else
-    return ((uint64_t)ms * OS_TICKS_PER_SEC) / 1000;
-#endif
-}
-
-uint32_t
-os_time_ticks_to_ms32(os_time_t ticks)
-{
-#if OS_TICKS_PER_SEC == 1000
-    return ticks;
-#else
-    return ((uint64_t)ticks * 1000) / OS_TICKS_PER_SEC;
-#endif
 }

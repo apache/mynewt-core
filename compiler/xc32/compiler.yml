@@ -24,9 +24,9 @@ compiler.path.objdump: "xc32-objdump"
 compiler.path.objsize: "xc32-size"
 compiler.path.objcopy: "xc32-objcopy"
 
-compiler.flags.base: -std=gnu11 -msmart-io=0
+compiler.flags.base: [-std=gnu11, -msmart-io=0]
 compiler.flags.default: [compiler.flags.base, -O2, -g3]
-compiler.flags.optimized: [compiler.flags.base, -Os -g3]
+compiler.flags.optimized: [compiler.flags.base, -Os, -g3]
 compiler.flags.debug: [compiler.flags.base, -g3]
 
 compiler.as.flags: [-x, assembler-with-cpp]

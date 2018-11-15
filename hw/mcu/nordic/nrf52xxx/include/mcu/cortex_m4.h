@@ -20,8 +20,6 @@
 #ifndef __MCU_CORTEX_M4_H__
 #define __MCU_CORTEX_M4_H__
 
-#include "os/mynewt.h"
-
 #include "nrf.h"
 
 #ifdef __cplusplus

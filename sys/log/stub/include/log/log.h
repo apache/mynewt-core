@@ -46,6 +46,17 @@ log_register(char *name, struct log *log, const struct log_handler *h,
     return 0;
 }
 
+static inline void
+log_set_append_cb(struct log *log, log_append_cb *cb)
+{
+}
+
+static inline struct log *
+log_find(const char *name)
+{
+    return NULL;
+}
+
 static inline int
 log_append_typed(struct log *log, uint8_t module, uint8_t level, uint8_t etype,
                  void *data, uint16_t len)
@@ -57,6 +68,29 @@ static inline int
 log_append_mbuf_typed_no_free(struct log *log, uint8_t module, uint8_t level,
                               uint8_t etype, struct os_mbuf **om_ptr)
 {
+    return 0;
+}
+
+static inline int
+log_append_mbuf_typed(struct log *log, uint8_t module, uint8_t level,
+                      uint8_t etype, struct os_mbuf *om)
+{
+    os_mbuf_free_chain(om);
+    return 0;
+}
+
+static inline int
+log_append_mbuf_body_no_free(struct log *log, uint8_t module, uint8_t level,
+                             uint8_t etype, struct os_mbuf *om)
+{
+    return 0;
+}
+
+static inline int
+log_append_mbuf_body(struct log *log, uint8_t module, uint8_t level,
+                     uint8_t etype, struct os_mbuf *om)
+{
+    os_mbuf_free_chain(om);
     return 0;
 }
 

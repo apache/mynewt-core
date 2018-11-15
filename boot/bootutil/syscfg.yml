@@ -16,8 +16,6 @@
 # under the License.
 #
 
-# Package: boot/bootutil
-
 syscfg.defs:
     BOOTUTIL_SIGN_RSA:
         description: 'Images are signed using RSA2048.'

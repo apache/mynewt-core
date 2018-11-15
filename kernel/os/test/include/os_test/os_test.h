@@ -29,6 +29,10 @@ extern "C" {
 TEST_SUITE_DECL(os_mutex_test_suite);
 TEST_SUITE_DECL(os_sem_test_suite);
 TEST_SUITE_DECL(os_mempool_test_suite);
+
+TEST_SUITE_DECL(os_time_test_suite);
+TEST_CASE_DECL(os_time_test_change);
+
 int os_test_all(void);
 
 #ifdef __cplusplus

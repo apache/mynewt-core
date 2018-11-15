@@ -21,9 +21,16 @@
 #define H_OS_MYNEWT_
 
 #include "syscfg/syscfg.h"
+#include "sysdown/sysdown.h"
 #include "sysinit/sysinit.h"
 #include "sysflash/sysflash.h"
 #include "os/os.h"
 #include "defs/error.h"
+#include "sys/debug_panic.h"
+
+/* Only include the logcfg header if this version of newt can generate it. */
+#if MYNEWT_VAL(NEWT_FEATURE_LOGCFG)
+#include "logcfg/logcfg.h"
+#endif
 
 #endif

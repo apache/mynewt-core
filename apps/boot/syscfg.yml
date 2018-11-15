@@ -16,8 +16,6 @@
 # under the License.
 #
 
-# Package: apps/boot
-
 syscfg.defs:
     BOOT_LOADER:
         description: 'Set to indicate that this app is a bootloader.'

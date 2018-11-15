@@ -16,8 +16,6 @@
 # under the License.
 #
 
-# Package: hw/bsp/embarc_emsk
-
 syscfg.defs:
     UART_0:
         description: 'Whether to enable UART0'

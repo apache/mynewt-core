@@ -16,8 +16,6 @@
 # under the License.
 #
 
-# Package: sys/sysview/vendor
-
 syscfg.defs:
     SYSVIEW_BUFFER_SIZE:
         description: Size of the RTT buffer that sysview uses

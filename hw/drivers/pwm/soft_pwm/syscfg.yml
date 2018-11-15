@@ -16,8 +16,6 @@
 # under the License.
 #
 
-# Package: hw/drivers/pwm/soft_pwm
-
 syscfg.defs:
     SOFT_PWM_DEVS:
         description: 'NUMBER OF SOFT PWM DEVICES'

@@ -41,7 +41,7 @@ struct hal_flash_funcs {
     int (*hff_sector_info)(const struct hal_flash *dev, int idx,
             uint32_t *address, uint32_t *size);
     int (*hff_is_empty)(const struct hal_flash *dev, uint32_t address,
-            uint32_t num_bytes);
+            void *dst, uint32_t num_bytes);
     int (*hff_init)(const struct hal_flash *dev);
 };
 
@@ -51,6 +51,7 @@ struct hal_flash {
     uint32_t hf_size;
     int hf_sector_cnt;
     int hf_align;       /* Alignment requirement. 1 if unrestricted. */
+    uint8_t hf_erased_val;
 };
 
 /*
@@ -58,11 +59,7 @@ struct hal_flash {
  */
 uint32_t hal_flash_sector_size(const struct hal_flash *hf, int sec_idx);
 
-/*
- * Use as hal_flash_funcs.hff_is_empty if flash is erased to zeroes.
- */
-int hal_flash_is_zeroes(const struct hal_flash *, uint32_t, uint32_t);
-int hal_flash_is_ones(const struct hal_flash *, uint32_t, uint32_t);
+int hal_flash_is_erased(const struct hal_flash *, uint32_t, void *, uint32_t);
 
 #ifdef __cplusplus
 }

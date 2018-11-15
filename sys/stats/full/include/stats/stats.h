@@ -33,7 +33,7 @@ struct stats_name_map {
 } __attribute__((packed));
 
 struct stats_hdr {
-    char *s_name;
+    const char *s_name;
     uint8_t s_size;
     uint8_t s_cnt;
     uint16_t s_pad1;
@@ -115,10 +115,10 @@ const struct stats_name_map STATS_NAME_MAP_NAME(__sectname)[] = {
 
 int stats_init(struct stats_hdr *shdr, uint8_t size, uint8_t cnt,
     const struct stats_name_map *map, uint8_t map_cnt);
-int stats_register(char *name, struct stats_hdr *shdr);
+int stats_register(const char *name, struct stats_hdr *shdr);
 int stats_init_and_reg(struct stats_hdr *shdr, uint8_t size, uint8_t cnt,
                        const struct stats_name_map *map, uint8_t map_cnt,
-                       char *name);
+                       const char *name);
 void stats_reset(struct stats_hdr *shdr);
 
 typedef int (*stats_walk_func_t)(struct stats_hdr *, void *, char *,
@@ -128,7 +128,7 @@ int stats_walk(struct stats_hdr *, stats_walk_func_t, void *);
 typedef int (*stats_group_walk_func_t)(struct stats_hdr *, void *);
 int stats_group_walk(stats_group_walk_func_t, void *);
 
-struct stats_hdr *stats_group_find(char *name);
+struct stats_hdr *stats_group_find(const char *name);
 
 /* Private */
 #if MYNEWT_VAL(STATS_NEWTMGR)

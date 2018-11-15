@@ -23,59 +23,37 @@
 #include <stdint.h>
 #include <mips/cpu.h>
 #include <mips/m32c0.h>
-#include "os/os_error.h"
-
 #include "mcu/mips.h"
-
-struct os_task;
-
-/* Run in priviliged or unprivileged Thread mode */
-/* only priv currently supported */
-#define OS_RUN_PRIV         (0)
-#define OS_RUN_UNPRIV       (1)
 
 /* CPU status register */
 typedef uint32_t os_sr_t;
-/* Stack type, aligned to a 32-bit word. */
-#define OS_STACK_PATTERN    (0xdeadbeef)
 
+/* Stack element */
 typedef uint32_t os_stack_t;
+
 #define OS_ALIGNMENT        (4)
 #define OS_STACK_ALIGNMENT  (8)
 
-/*
- * Stack sizes for common OS tasks
- */
+/* Stack sizes for common OS tasks */
 #define OS_SANITY_STACK_SIZE (64)
 #define OS_IDLE_STACK_SIZE (64)
 
-#define OS_STACK_ALIGN(__nmemb) \
-    (OS_ALIGN((__nmemb), OS_STACK_ALIGNMENT))
+#define OS_ENTER_CRITICAL(__os_sr)          \
+        do {                                \
+            __os_sr = _mips_intdisable();   \
+        } while(0)
+#define OS_EXIT_CRITICAL(__os_sr)           _mips_intrestore(__os_sr)
+#define OS_IS_CRITICAL()                    ((mips_getsr() & 1) == 0)
+#define OS_ASSERT_CRITICAL()                assert(OS_IS_CRITICAL())
 
-/* Enter a critical section, save processor state, and block interrupts */
-#define OS_ENTER_CRITICAL(__os_sr) do {__os_sr = _mips_intdisable();} while(0)
+static inline int
+os_arch_in_isr(void)
+{
+    /* check the EXL bit */
+    return (mips_getsr() & (1 << 1)) ? 1 : 0;
+}
 
-/* Exit a critical section, restore processor state and unblock interrupts */
-#define OS_EXIT_CRITICAL(__os_sr) _mips_intrestore(__os_sr)
-#define OS_IS_CRITICAL() ((mips_getsr() & 1) == 0)
-#define OS_ASSERT_CRITICAL() assert(OS_IS_CRITICAL())
-
-os_stack_t *os_arch_task_stack_init(struct os_task *, os_stack_t *, int);
-void timer_handler(void);
-void os_arch_ctx_sw(struct os_task *);
-os_sr_t os_arch_save_sr(void);
-void os_arch_restore_sr(os_sr_t);
-int os_arch_in_critical(void);
-void os_arch_init(void);
-uint32_t os_arch_start(void);
-os_error_t os_arch_os_init(void);
-os_error_t os_arch_os_start(void);
-void os_set_env(os_stack_t *);
-void os_arch_init_task_stack(os_stack_t *sf);
-void os_default_irq_asm(void);
-
-/* External function prototypes supplied by BSP */
-void os_bsp_systick_init(uint32_t os_ticks_per_sec, int prio);
-void os_bsp_ctx_sw(void);
+/* Include common arch definitions and APIs */
+#include "os/arch/common.h"
 
 #endif /* _OS_ARCH_MIPS_H */

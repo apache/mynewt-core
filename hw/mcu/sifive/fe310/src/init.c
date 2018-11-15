@@ -29,7 +29,7 @@ volatile int test;
 
 /* Function called just before main() */
 void
-_init()
+SystemInit(void)
 {
     select_clock(&MYNEWT_VAL(SYS_CLOCK));
 }

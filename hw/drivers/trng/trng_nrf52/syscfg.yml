@@ -16,8 +16,6 @@
 # under the License.
 #
 
-# Package: hw/drivers/trng/trng_nrf52
-
 syscfg.defs:
     NRF52_TRNG_CACHE_LEN:
         description: 'Internal cache length, shall be power of 2'

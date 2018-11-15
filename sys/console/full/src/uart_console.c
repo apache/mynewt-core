@@ -45,6 +45,7 @@ static console_write_char write_char_cb;
 #if MYNEWT_VAL(CONSOLE_UART_RX_BUF_SIZE) > 0
 static struct console_ring cr_rx;
 static uint8_t cr_rx_buf[MYNEWT_VAL(CONSOLE_UART_RX_BUF_SIZE)];
+static volatile bool uart_console_rx_stalled;
 
 struct os_event rx_ev;
 #endif
@@ -89,7 +90,8 @@ uart_console_queue_char(struct uart_dev *uart_dev, uint8_t ch)
 {
     int sr;
 
-    if ((uart_dev->ud_dev.od_flags & OS_DEV_F_STATUS_OPEN) == 0) {
+    if (((uart_dev->ud_dev.od_flags & OS_DEV_F_STATUS_OPEN) == 0) ||
+	((uart_dev->ud_dev.od_flags & OS_DEV_F_STATUS_SUSPENDED) != 0)) {
         return;
     }
 
@@ -208,6 +210,7 @@ uart_console_rx_char(void *arg, uint8_t byte)
 {
 #if MYNEWT_VAL(CONSOLE_UART_RX_BUF_SIZE) > 0
     if (uart_console_ring_is_full(&cr_rx)) {
+        uart_console_rx_stalled = true;
         return -1;
     }
 
@@ -237,18 +240,20 @@ uart_console_rx_char_event(struct os_event *ev)
         if (ret < 0) {
             return;
         }
-
-        /*
-         * It is possible that UART RX was stalled in the meantime since we were
-         * not consuming data from ring buffer - make sure RX is started.
-         */
-        uart_start_rx(uart_dev);
     }
 
     while (!uart_console_ring_is_empty(&cr_rx)) {
         OS_ENTER_CRITICAL(sr);
         b = uart_console_ring_pull_char(&cr_rx);
         OS_EXIT_CRITICAL(sr);
+
+        /* If UART RX was stalled due to a full receive buffer, restart RX now
+         * that we have removed a byte from the buffer.
+         */
+        if (uart_console_rx_stalled) {
+            uart_console_rx_stalled = false;
+            uart_start_rx(uart_dev);
+        }
 
         ret = console_handle_char(b);
         if (ret < 0) {

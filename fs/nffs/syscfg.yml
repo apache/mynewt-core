@@ -16,8 +16,6 @@
 # under the License.
 #
 
-# Package: fs/nffs
-
 syscfg.defs:
     NFFS_FLASH_AREA:
         description: 'Flash area to use for NFFS.'

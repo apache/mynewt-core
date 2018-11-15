@@ -71,6 +71,9 @@ os_callout_reset(struct os_callout *c, os_time_t ticks)
     os_sr_t sr;
     int ret;
 
+    /* Ensure this callout has been initialized. */
+    assert(c->c_evq != NULL);
+
     os_trace_api_u32x2(OS_TRACE_ID_CALLOUT_RESET, (uint32_t)c, (uint32_t)ticks);
 
     if (ticks > INT32_MAX) {

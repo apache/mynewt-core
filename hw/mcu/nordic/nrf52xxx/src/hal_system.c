@@ -17,7 +17,7 @@
  * under the License.
  */
 
-#include <mcu/cortex_m4.h>
+#include "syscfg/syscfg.h"
 #include "hal/hal_system.h"
 #include "nrf.h"
 

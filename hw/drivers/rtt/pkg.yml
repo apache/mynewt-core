@@ -25,6 +25,7 @@ pkg.keywords:
 pkg.deps:
 pkg.req_apis: 
 
+pkg.build_profile: speed
 pkg.cflags:
     - -DSEGGER_RTT_SECTION=".rtt"
     - -Wno-array-bounds

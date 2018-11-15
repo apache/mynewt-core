@@ -32,7 +32,7 @@ struct stats_name_map {
 } __attribute__((packed));
 
 struct stats_hdr {
-    char *s_name;
+    const char *s_name;
     uint8_t s_size;
     uint8_t s_cnt;
     uint16_t s_pad1;

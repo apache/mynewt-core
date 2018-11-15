@@ -32,6 +32,7 @@
 #include "oic/messaging/coap/coap.h"
 #include "oic/port/oc_connectivity.h"
 #include "oic/port/mynewt/ble.h"
+#include "messaging/coap/observe.h"
 #include "host/ble_hs.h"
 #include "services/gap/ble_svc_gap.h"
 #include "services/gatt/ble_svc_gatt.h"
@@ -196,6 +197,12 @@ oc_ep_gatt_size(const struct oc_endpoint *oe)
     return sizeof(struct oc_endpoint_ble);
 }
 
+int
+oc_endpoint_is_gatt(const struct oc_endpoint *oe)
+{
+    return oe->ep.oe_type == oc_gatt_transport_id;
+}
+
 static char *
 oc_log_ep_gatt(char *ptr, int maxlen, const struct oc_endpoint *oe)
 {
@@ -339,6 +346,8 @@ oc_ble_coap_conn_del(uint16_t conn_handle)
     struct os_mbuf_pkthdr *pkt;
     struct os_mbuf *m;
     struct oc_endpoint_ble *oe_ble;
+    struct oc_endpoint oe;
+    int i;
 
     OC_LOG(DEBUG, "oc_gatt endconn %x\n", conn_handle);
     STAILQ_FOREACH(pkt, &oc_ble_reass_q, omp_next) {
@@ -349,6 +358,19 @@ oc_ble_coap_conn_del(uint16_t conn_handle)
             os_mbuf_free_chain(m);
             break;
         }
+    }
+
+    /*
+     * Remove CoAP observers (if any) registered for this connection.
+     */
+    memset(&oe, 0, sizeof(oe));
+    oe_ble = (struct oc_endpoint_ble *)&oe;
+    oe_ble->ep.oe_type = oc_gatt_transport_id;
+    oe_ble->ep.oe_flags = 0;
+    oe_ble->conn_handle = conn_handle;
+    for (i = 0; i < OC_BLE_SRV_CNT; i++) {
+        oe_ble->srv_idx = i;
+        coap_remove_observer_by_client(&oe);
     }
 }
 

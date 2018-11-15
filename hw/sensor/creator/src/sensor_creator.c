@@ -88,6 +88,11 @@
 #include <lis2ds12/lis2ds12.h>
 #endif
 
+#if MYNEWT_VAL(BME680_OFB)
+#include <bme680/bme680.h>
+#endif
+
+
 /* Driver definitions */
 #if MYNEWT_VAL(DRV2605_OFB)
 static struct drv2605 drv2605;
@@ -159,6 +164,10 @@ static struct lis2dw12 lis2dw12;
 
 #if MYNEWT_VAL(LIS2DS12_OFB)
 static struct lis2ds12 lis2ds12;
+#endif
+
+#if MYNEWT_VAL(BME680_OFB)
+static struct bme680 bme680;
 #endif
 
 /**
@@ -323,7 +332,7 @@ static struct sensor_itf spi2c_0_itf_bma2xx = {
 static struct sensor_itf i2c_0_itf_adxl = {
     .si_type = SENSOR_ITF_I2C,
     .si_num  = 0,
-    .si_addr = 0x1D,
+    .si_addr = MYNEWT_VAL(ADXL345_ITF_ADDR),
     .si_ints = {
        { MYNEWT_VAL(ADXL345_INT_PIN_HOST), MYNEWT_VAL(ADXL345_INT_PIN_DEVICE),
          MYNEWT_VAL(ADXL345_INT_CFG_ACTIVE)}}
@@ -365,6 +374,14 @@ static struct sensor_itf i2c_0_itf_lis2ds12 = {
     .si_ints = {
         { MYNEWT_VAL(LIS2DS12_INT1_PIN_HOST), MYNEWT_VAL(LIS2DS12_INT1_PIN_DEVICE),
           MYNEWT_VAL(LIS2DS12_INT1_CFG_ACTIVE)}}
+};
+#endif
+
+#if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(BME680_OFB)
+static struct sensor_itf i2c_0_itf_bme680 = {
+    .si_type = SENSOR_ITF_I2C,
+    .si_num = 0,
+    .si_addr = 0x76,
 };
 #endif
 
@@ -809,6 +826,8 @@ config_adxl345_sensor(void)
 
     rc = adxl345_config((struct adxl345 *) dev, &cfg);
     assert(rc == 0);
+    return rc;
+}
 #endif
 
 /*
@@ -1072,6 +1091,41 @@ config_bma2xx_sensor(void)
 }
 #endif
 
+#if MYNEWT_VAL(BME680_OFB)
+int
+config_bme680_sensor(void)
+{
+    struct os_dev * dev;
+    struct bme680_cfg cfg;
+    int rc;
+
+    dev = os_dev_open("bme680_0", OS_TIMEOUT_NEVER, NULL);
+    assert(dev != NULL);
+
+    cfg.amb_temp = 25;
+    cfg.tph_sett.os_hum = BME680_OS_2X;
+    cfg.tph_sett.os_pres = BME680_OS_4X;
+    cfg.tph_sett.os_temp = BME680_OS_8X;
+    cfg.tph_sett.filter = BME680_FILTER_SIZE_3;
+
+    cfg.gas_sett.run_gas = BME680_ENABLE_GAS_MEAS;
+    cfg.gas_sett.heatr_temp = 320;
+    cfg.gas_sett.heatr_dur = 150;
+
+    cfg.power_mode = BME680_FORCED_MODE;
+
+    cfg.required_settings = BME680_OST_SEL | BME680_OSP_SEL | BME680_OSH_SEL | BME680_FILTER_SEL | BME680_GAS_SENSOR_SEL;
+    cfg.s_mask = SENSOR_TYPE_ALL;
+
+    rc = bme680_config((struct bme680 *)dev, &cfg);
+    assert(rc == 0);
+
+    os_dev_close(dev);
+
+    return 0;
+}
+#endif
+
 /* Sensor device creation */
 void
 sensor_dev_create(void)
@@ -1250,4 +1304,12 @@ sensor_dev_create(void)
     assert(rc == 0);
 #endif
 
+#if MYNEWT_VAL(BME680_OFB)
+    rc = os_dev_create((struct os_dev *) &bme680, "bme680_0",
+      OS_DEV_INIT_PRIMARY, 0, bme680_init, (void *)&i2c_0_itf_bme680);
+    assert(rc == 0);
+
+    rc = config_bme680_sensor();
+    assert(rc == 0);
+#endif
 }

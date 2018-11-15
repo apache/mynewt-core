@@ -144,6 +144,13 @@ fcb_offset_last_n(struct fcb *fcb, uint8_t entries,
  */
 int fcb_clear(struct fcb *fcb);
 
+/**
+ * Usage report for a given FCB area. Returns number of elements and the
+ * number of bytes stored in them.
+ */
+int fcb_area_info(struct fcb *fcb, struct flash_area *fa, int *elemsp,
+                  int *bytesp);
+
 #ifdef __cplusplus
 }
 
