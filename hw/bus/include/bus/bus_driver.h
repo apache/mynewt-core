@@ -44,7 +44,7 @@ struct bus_dev_ops {
     int (* read)(struct bus_dev *dev, struct bus_node *node, uint8_t *buf,
                  uint16_t length, os_time_t timeout, uint16_t flags);
     /* Write data to node */
-    int (* write)(struct bus_dev *dev, struct bus_node *node, uint8_t *buf,
+    int (* write)(struct bus_dev *dev, struct bus_node *node, const uint8_t *buf,
                   uint16_t length, os_time_t timeout,  uint16_t flags);
     /* Disable bus device */
     int (* disable)(struct bus_dev *bus);
