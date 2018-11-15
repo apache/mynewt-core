@@ -350,20 +350,29 @@ int
 lp5523_get_output_on(struct led_itf *itf, uint8_t output, uint8_t *on)
 {
     int rc;
-    uint16_t outputs;
+    uint8_t reg_addr;
+    uint8_t reg;
+    uint8_t shamt;
 
     if ((output < 1) || (output > 9)) {
         rc = -1;
         goto err;
     }
 
-    rc = lp5523_get_bitfield(itf, LP5523_OUTPUT_CTRL_MSB,
-                             &outputs);
+    if (output < 9) {
+        reg_addr = LP5523_OUTPUT_CTRL_LSB;
+        shamt = output - 1;
+    } else {
+        reg_addr = LP5523_OUTPUT_CTRL_MSB;
+        shamt = output - 9;
+    }
+
+    rc = lp5523_get_reg(itf, reg_addr, &reg);
     if (rc) {
         goto err;
     }
 
-    *on = (outputs & (0x1 << (output - 1)));
+    *on = (reg & (0x1 << shamt));
 
     return 0;
 err:
@@ -880,6 +889,7 @@ lp5523_self_test(struct led_itf *itf) {
     uint8_t vdd;
     uint8_t adc;
     uint8_t i;
+    uint8_t on = 0;
 
     rc = lp5523_get_status(itf, &status);
     if (rc) {
@@ -903,8 +913,14 @@ lp5523_self_test(struct led_itf *itf) {
         return rc;
     }
 
-    i = 1;
-    while (i <= 9) {
+    for (i = 1; i <= 9; ++i) {
+        rc = lp5523_get_output_on(itf, i, &on);
+        if (rc) {
+            return rc;
+        }
+        if (!on) {
+            continue;
+        }
         /* set LED PWM to 0xff */
         rc = lp5523_set_output_reg(itf, LP5523_PWM, i, 0xff);
         if (rc) {
@@ -927,7 +943,6 @@ lp5523_self_test(struct led_itf *itf) {
         if (rc) {
             return rc;
         }
-        ++i;
     }
 
     return 0;
