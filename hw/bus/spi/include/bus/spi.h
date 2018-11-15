@@ -59,11 +59,11 @@ struct bus_spi_node_cfg {
     /** General node configuration */
     struct bus_node_cfg node_cfg;
     /** */
-    uint8_t pin_cs;
+    int pin_cs;
     /** Data mode */
-    uint8_t mode;
+    int mode;
     /** Data order */
-    uint8_t data_order;
+    int data_order;
     /** SCK frequency to be used for node */
     uint16_t freq;
     /** Quirks to be applied for device */
@@ -72,7 +72,7 @@ struct bus_spi_node_cfg {
 
 struct bus_spi_node {
     struct bus_node bnode;
-    uint8_t pin_cs;
+    int pin_cs;
     uint8_t mode;
     uint8_t data_order;
     uint16_t freq;

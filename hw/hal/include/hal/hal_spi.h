@@ -62,10 +62,10 @@ typedef void (*hal_spi_txrx_cb)(void *arg, int len);
 
 /** SPI controller hardware settings */
 struct hal_spi_hw_settings {
-    uint8_t pin_sck;
-    uint8_t pin_mosi;
-    uint8_t pin_miso;
-    uint8_t pin_ss;
+    int pin_sck;
+    int pin_mosi;
+    int pin_miso;
+    int pin_ss;
 };
 
 /**
