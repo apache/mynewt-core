@@ -286,12 +286,12 @@ int bme280_shell_init(void);
 
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
 int
-bme280_create_i2c_dev(struct bus_i2c_node *node, const char *name,
-                      const struct bus_i2c_node_cfg *cfg);
+bme280_create_i2c_sensor_dev(struct bus_i2c_node *node, const char *name,
+                             const struct sensor_node_cfg *cfg);
 
 int
-bme280_create_spi_dev(struct bus_spi_node *node, const char *name,
-                      const struct bus_spi_node_cfg *cfg);
+bme280_create_spi_sensor_dev(struct bus_spi_node *node, const char *name,
+                             const struct sensor_node_cfg *cfg);
 #endif
 
 #ifdef __cplusplus

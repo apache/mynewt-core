@@ -1393,12 +1393,16 @@ err:
 static void
 init_node_cb(struct bus_node *bnode, void *arg)
 {
-    bme280_init((struct os_dev *)bnode, arg);
+    struct sensor_node_cfg *cfg = CONTAINER_OF(arg, struct sensor_node_cfg,
+                                               i2c_node_cfg);
+    struct sensor_itf *itf = &cfg->itf;
+
+    bme280_init((struct os_dev *)bnode, itf);
 }
 
 int
-bme280_create_i2c_dev(struct bus_i2c_node *node, const char *name,
-                      const struct bus_i2c_node_cfg *cfg)
+bme280_create_i2c_sensor_dev(struct bus_i2c_node *node, const char *name,
+                             const struct sensor_node_cfg *cfg)
 {
     struct bus_node_callbacks cbs = {
         .init = init_node_cb,
@@ -1407,14 +1411,14 @@ bme280_create_i2c_dev(struct bus_i2c_node *node, const char *name,
 
     bus_node_set_callbacks((struct os_dev *)node, &cbs);
 
-    rc = bus_i2c_node_create(name, node, (struct bus_i2c_node_cfg *)cfg);
+    rc = bus_i2c_node_create(name, node, &cfg->i2c_node_cfg);
 
     return rc;
 }
 
 int
-bme280_create_spi_dev(struct bus_spi_node *node, const char *name,
-                      const struct bus_spi_node_cfg *cfg)
+bme280_create_spi_sensor_dev(struct bus_spi_node *node, const char *name,
+                             const struct sensor_node_cfg *cfg)
 {
     struct bus_node_callbacks cbs = {
         .init = init_node_cb,
@@ -1423,7 +1427,7 @@ bme280_create_spi_dev(struct bus_spi_node *node, const char *name,
 
     bus_node_set_callbacks((struct os_dev *)node, &cbs);
 
-    rc = bus_spi_node_create(name, node, (struct bus_spi_node_cfg *)cfg);
+    rc = bus_spi_node_create(name, node, &cfg->spi_node_cfg);
 
     return rc;
 }
