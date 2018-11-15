@@ -23,6 +23,10 @@
 #include <string.h>
 #include "os/mynewt.h"
 
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+#include "bus/i2c.h"
+#include "bus/spi.h"
+#endif
 #if MYNEWT_VAL(SENSOR_OIC)
 #include "oic/oc_ri.h"
 #endif
@@ -506,7 +510,9 @@ struct sensor_int {
 
 struct sensor_itf {
 
-#if !MYNEWT_VAL(BUS_DRIVER_PRESENT)
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    /* Device configuration is stored in bus node */
+#else
     /* Sensor interface type */
     uint8_t si_type;
 
@@ -526,7 +532,9 @@ struct sensor_itf {
     /* Sensor interface high int pin */
     uint8_t si_high_pin;
 
-#if !MYNEWT_VAL(BUS_DRIVER_PRESENT)
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    /* No need for mutex - locking is done by bus driver */
+#else
     /* Mutex for interface access */
     struct os_mutex *si_lock;
 #endif
@@ -536,6 +544,16 @@ struct sensor_itf {
      */
     struct sensor_int si_ints[MYNEWT_VAL(SENSOR_MAX_INTERRUPTS_PINS)];
 };
+
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+struct sensor_node_cfg {
+    struct sensor_itf itf;
+    union {
+        struct bus_i2c_node_cfg i2c_node_cfg;
+        struct bus_spi_node_cfg spi_node_cfg;
+    };
+};
+#endif
 
 /*
  * Return the OS device structure corresponding to this sensor
