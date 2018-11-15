@@ -28,6 +28,12 @@ syscfg.defs:
         restrictions:
             - '!APP_USE_BME280_NODE'
 
+    BME280_NODE_BUS_TYPE:
+        description: >
+            Type of bus device where BME280 is attached. Set:
+            0 for I2C
+            1 for SPI
+        value: 0
     BME280_NODE_BUS_NAME:
         description: Name of bus device where BME280 is attached
         value: '"i2c0"'
@@ -60,3 +66,6 @@ syscfg.vals:
     FLOAT_USER: 1
     SENSOR_CLI: 1
     SHELL_TASK: 1
+
+syscfg.restrictions:
+    - 'BME280_NODE_BUS_TYPE == 0 || BME280_NODE_BUS_TYPE == 1'
