@@ -29,7 +29,6 @@ bsp.linkerscript:
 bsp.linkerscript.BOOT_LOADER.OVERWRITE:
     - 'hw/bsp/bluepill/boot-bluepill.ld'
     - '@apache-mynewt-core/hw/mcu/stm/stm32f1xx/stm32f103.ld'
-bsp.part2linkerscript: "hw/bsp/bluepill/split-bluepill.ld"
 bsp.downloadscript: "hw/bsp/bluepill/bluepill_download.sh"
 bsp.debugscript: "hw/bsp/bluepill/bluepill_debug.sh"
 bsp.downloadscript.WINDOWS.OVERWRITE: "hw/bsp/bluepill/bluepill_download.cmd"
