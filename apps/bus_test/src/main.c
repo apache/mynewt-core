@@ -37,25 +37,25 @@
 #endif
 
 #if MYNEWT_VAL(APP_USE_BME280_SENSOR)
-static const struct sensor_node_cfg g_bme280_sensor_node_cfg = {
+static struct sensor_itf g_bme280_sensor_itf;
+
 #if MYNEWT_VAL(BME280_NODE_BUS_TYPE) == 0
-    .i2c_node_cfg = {
-        .node_cfg = {
-            .bus_name = MYNEWT_VAL(BME280_NODE_BUS_NAME),
-        },
-        .addr = MYNEWT_VAL(BME280_NODE_I2C_ADDRESS),
-        .freq = MYNEWT_VAL(BME280_NODE_I2C_FREQUENCY),
+static const struct bus_i2c_node_cfg g_bme280_i2c_node_cfg = {
+    .node_cfg = {
+        .bus_name = MYNEWT_VAL(BME280_NODE_BUS_NAME),
     },
+    .addr = MYNEWT_VAL(BME280_NODE_I2C_ADDRESS),
+    .freq = MYNEWT_VAL(BME280_NODE_I2C_FREQUENCY),
+};
 #elif MYNEWT_VAL(BME280_NODE_BUS_TYPE) == 1
-    .spi_node_cfg = {
-        .node_cfg = {
-            .bus_name = MYNEWT_VAL(BME280_NODE_BUS_NAME),
-        },
-        .pin_cs = MYNEWT_VAL(BME280_NODE_SPI_CS_PIN),
-        .mode = BUS_SPI_MODE_0,
-        .data_order = BUS_SPI_DATA_ORDER_MSB,
-        .freq = MYNEWT_VAL(BME280_NODE_SPI_FREQUENCY),
+static const struct bus_spi_node_cfg g_bme280_spi_node_cfg = {
+    .node_cfg = {
+        .bus_name = MYNEWT_VAL(BME280_NODE_BUS_NAME),
     },
+    .pin_cs = MYNEWT_VAL(BME280_NODE_SPI_CS_PIN),
+    .mode = BUS_SPI_MODE_0,
+    .data_order = BUS_SPI_DATA_ORDER_MSB,
+    .freq = MYNEWT_VAL(BME280_NODE_SPI_FREQUENCY),
 #endif
 };
 
@@ -200,11 +200,13 @@ main(int argc, char **argv)
     hal_gpio_init_out(MYNEWT_VAL(BME280_NODE_SPI_CS_PIN), 1);
 
     rc = bme280_create_i2c_sensor_dev(&bme280.i2c_node, "bme280",
-                                      &g_bme280_sensor_node_cfg);
+                                      &g_bme280_i2c_node_cfg,
+                                      &g_bme280_sensor_itf);
     assert(rc == 0);
 #elif MYNEWT_VAL(BME280_NODE_BUS_TYPE) == 1
     rc = bme280_create_spi_sensor_dev(&bme280.spi_node, "bme280",
-                                      &g_bme280_sensor_node_cfg);
+                                      &g_bme280_spi_node_cfg,
+                                      &g_bme280_sensor_itf);
     assert(rc == 0);
 #endif
 
