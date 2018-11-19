@@ -26,9 +26,6 @@
 #include "sensor/sensor.h"
 #include "sensor/temperature.h"
 
-#if MYNEWT_VAL(APP_USE_BME280_NODE)
-#include "bme280_node/bme280_node.h"
-#endif
 #if MYNEWT_VAL(APP_USE_LIS2DH_NODE)
 #include "lis2dh_node/lis2dh_node.h"
 #endif
@@ -62,18 +59,6 @@ static const struct bus_spi_node_cfg g_bme280_spi_node_cfg = {
 static struct os_dev *g_bme280_node;
 #endif
 
-#if MYNEWT_VAL(APP_USE_BME280_NODE)
-static const struct bus_i2c_node_cfg g_bme280_node_i2c_cfg = {
-    .node_cfg = {
-        .bus_name = MYNEWT_VAL(BME280_NODE_BUS_NAME),
-    },
-    .addr = MYNEWT_VAL(BME280_NODE_I2C_ADDRESS),
-    .freq = MYNEWT_VAL(BME280_NODE_I2C_FREQUENCY),
-};
-
-static struct os_dev *g_bme280_node;
-#endif
-
 #if MYNEWT_VAL(APP_USE_LIS2DH_NODE)
 static const struct bus_i2c_node_cfg g_lis2dh_node_i2c_cfg = {
     .node_cfg = {
@@ -98,19 +83,10 @@ static struct os_callout co_read;
 static void
 co_read_cb(struct os_event *ev)
 {
-#if MYNEWT_VAL(APP_USE_BME280_NODE)
-    struct bme280_node_measurement meas;
-#endif
 #if MYNEWT_VAL(APP_USE_LIS2DH_NODE)
     struct lis2dh_node_pos pos;
 #endif
     int rc;
-
-#if MYNEWT_VAL(APP_USE_BME280_NODE)
-    rc = bme280_node_read(g_bme280_node, &meas);
-    assert(rc == 0);
-    console_printf("T=%f P=%f H=%f\n", meas.temperature, meas.pressure, meas.humidity);
-#endif
 
 #if MYNEWT_VAL(APP_USE_LIS2DH_NODE)
     rc = lis2dh_node_read(g_lis2dh_node, &pos);
@@ -176,14 +152,6 @@ main(int argc, char **argv)
 
     sysinit();
 
-#if MYNEWT_VAL(APP_USE_BME280_NODE)
-    rc = bme280_node_i2c_create("bme280", &g_bme280_node_i2c_cfg);
-    assert(rc == 0);
-
-    g_bme280_node = os_dev_open("bme280", 0, NULL);
-    assert(g_bme280_node);
-#endif
-
 #if MYNEWT_VAL(APP_USE_LIS2DH_NODE)
     rc = lis2dh_node_i2c_create("lis2dh", &g_lis2dh_node_i2c_cfg);
     assert(rc == 0);
@@ -231,7 +199,7 @@ main(int argc, char **argv)
 
     os_callout_init(&co_read, os_eventq_dflt_get(), co_read_cb, NULL);
 
-#if MYNEWT_VAL(APP_USE_BME280_NODE) || MYNEWT_VAL(APP_USE_LIS2DH_NODE)
+#if MYNEWT_VAL(APP_USE_LIS2DH_NODE)
     rc = os_callout_reset(&co_read, os_time_ms_to_ticks32(1000));
     assert(rc == 0);
 #endif
