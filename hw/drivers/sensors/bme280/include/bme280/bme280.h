@@ -285,13 +285,35 @@ int bme280_shell_init(void);
 #endif
 
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+/**
+ * Create I2C bus node for BME280 sensor
+ *
+ * @param node        Bus node
+ * @param name        Device name
+ * @param i2c_cfg     I2C node configuration
+ * @param sensor_itf  Sensors interface
+ *
+ * @return 0 on success, non-zero on failure
+ */
 int
 bme280_create_i2c_sensor_dev(struct bus_i2c_node *node, const char *name,
-                             const struct sensor_node_cfg *cfg);
+                             const struct bus_i2c_node_cfg *i2c_cfg,
+                             struct sensor_itf *sensor_itf);
 
+/**
+ * Create SPI bus node for BME280 sensor
+ *
+ * @param node        Bus node
+ * @param name        Device name
+ * @param spi_cfg     SPI node configuration
+ * @param sensor_itf  Sensors interface
+ *
+ * @return 0 on success, non-zero on failure
+ */
 int
 bme280_create_spi_sensor_dev(struct bus_spi_node *node, const char *name,
-                             const struct sensor_node_cfg *cfg);
+                             const struct bus_spi_node_cfg *spi_cfg,
+                             struct sensor_itf *sensor_itf);
 #endif
 
 #ifdef __cplusplus
