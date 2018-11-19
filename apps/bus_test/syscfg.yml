@@ -19,14 +19,10 @@
 syscfg.defs:
     APP_USE_BME280_NODE:
         value: 1
-        restrictions:
-            - '!APP_USE_BME280_SENSOR'
     APP_USE_LIS2DH_NODE:
         value: 1
     APP_USE_BME280_SENSOR:
         value: 0
-        restrictions:
-            - '!APP_USE_BME280_NODE'
 
     BME280_NODE_BUS_TYPE:
         description: >

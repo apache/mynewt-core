@@ -32,8 +32,6 @@ pkg.deps:
 
 pkg.deps.APP_USE_LIS2DH_NODE:
     - "@apache-mynewt-core/apps/bus_test/lis2dh_node"
-pkg.deps.APP_USE_BME280_NODE:
-    - "@apache-mynewt-core/apps/bus_test/bme280_node"
 pkg.deps.APP_USE_BME280_SENSOR:
     - "@apache-mynewt-core/hw/drivers/sensors/bme280"
     - "@apache-mynewt-core/hw/sensor"
