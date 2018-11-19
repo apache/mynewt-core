@@ -166,10 +166,10 @@ bus_i2c_dev_init_func(struct os_dev *odev, void *arg)
         return SYS_EINVAL;
     }
 
+    BUS_DEBUG_POISON_DEV(dev);
+
     rc = bus_dev_init_func(odev, (void*)&bus_i2c_ops);
     assert(rc == 0);
-
-    BUS_DEBUG_POISON_DEV(dev);
 
     dev->cfg = *cfg;
 
@@ -187,12 +187,12 @@ bus_i2c_node_init_func(struct os_dev *odev, void *arg)
     struct bus_node_cfg *node_cfg = &cfg->node_cfg;
     int rc;
 
+    BUS_DEBUG_POISON_NODE(node);
+
     rc = bus_node_init_func(odev, node_cfg);
     if (rc) {
         return rc;
     }
-
-    BUS_DEBUG_POISON_NODE(node);
 
     node->freq = cfg->freq;
     node->addr = cfg->addr;

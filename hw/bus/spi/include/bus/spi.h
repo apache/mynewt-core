@@ -42,7 +42,7 @@ struct bus_spi_dev {
     struct bus_dev bdev;
     struct bus_spi_dev_cfg cfg;
 
-#if MYNEWT_VAL(BUS_DEBUG)
+#if MYNEWT_VAL(BUS_DEBUG_OS_DEV)
     uint32_t devmagic;
 #endif
 };
@@ -78,7 +78,7 @@ struct bus_spi_node {
     uint16_t freq;
     uint16_t quirks;
 
-#if MYNEWT_VAL(BUS_DEBUG)
+#if MYNEWT_VAL(BUS_DEBUG_OS_DEV)
     uint32_t nodemagic;
 #endif
 };
