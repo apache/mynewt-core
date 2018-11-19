@@ -902,7 +902,7 @@ bme280_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
     struct os_dev *dev = SENSOR_ITF_GET_DEVICE(itf);
 
-    rc = bus_dev_lock_by_node(dev, OS_TIMEOUT_NEVER);
+    rc = bus_node_lock(dev, OS_TIMEOUT_NEVER);
     if (rc) {
         return SYS_EINVAL;
     }
@@ -917,9 +917,7 @@ bme280_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
     rc = bus_node_simple_write(dev, payload, len);
 
 done:
-    rc = bus_dev_unlock_by_node(dev);
-    assert(rc == 0);
-
+    (void)bus_node_unlock(dev);
 #else
     int i;
 
@@ -1393,16 +1391,15 @@ err:
 static void
 init_node_cb(struct bus_node *bnode, void *arg)
 {
-    struct sensor_node_cfg *cfg = CONTAINER_OF(arg, struct sensor_node_cfg,
-                                               i2c_node_cfg);
-    struct sensor_itf *itf = &cfg->itf;
+    struct sensor_itf *itf = arg;
 
     bme280_init((struct os_dev *)bnode, itf);
 }
 
 int
 bme280_create_i2c_sensor_dev(struct bus_i2c_node *node, const char *name,
-                             const struct sensor_node_cfg *cfg)
+                             const struct bus_i2c_node_cfg *i2c_cfg,
+                             struct sensor_itf *sensor_itf)
 {
     struct bus_node_callbacks cbs = {
         .init = init_node_cb,
@@ -1411,14 +1408,15 @@ bme280_create_i2c_sensor_dev(struct bus_i2c_node *node, const char *name,
 
     bus_node_set_callbacks((struct os_dev *)node, &cbs);
 
-    rc = bus_i2c_node_create(name, node, &cfg->i2c_node_cfg);
+    rc = bus_i2c_node_create(name, node, i2c_cfg, sensor_itf);
 
     return rc;
 }
 
 int
 bme280_create_spi_sensor_dev(struct bus_spi_node *node, const char *name,
-                             const struct sensor_node_cfg *cfg)
+                             const struct bus_spi_node_cfg *spi_cfg,
+                             struct sensor_itf *sensor_itf)
 {
     struct bus_node_callbacks cbs = {
         .init = init_node_cb,
@@ -1427,7 +1425,7 @@ bme280_create_spi_sensor_dev(struct bus_spi_node *node, const char *name,
 
     bus_node_set_callbacks((struct os_dev *)node, &cbs);
 
-    rc = bus_spi_node_create(name, node, &cfg->spi_node_cfg);
+    rc = bus_spi_node_create(name, node, spi_cfg, sensor_itf);
 
     return rc;
 }
