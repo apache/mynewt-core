@@ -164,7 +164,7 @@ bus_node_simple_write_read_transact(struct os_dev *node, const void *wbuf,
  *
  * \deprecated
  * This API is only provided for compatibility with legacy drivers where locking
- * is provided by Sensors interface. To lock bus for compount transactions use
+ * is provided by Sensors interface. To lock bus for compound transactions use
  * bus_dev_lock() and bus_dev_unlock() instead.
  *
  * @param bus    Bus device object
@@ -178,34 +178,37 @@ bus_dev_get_lock(struct os_dev *bus, struct os_mutex **mutex);
 /**
  * Lock bus for exclusive access
  *
- * Locks bus which given node is attached to for exclusive access. This should
- * be only used for compound transactions where bus shall be locked for the
- * duration of entire transaction. Simple operations like read, write or
- * write-read (i.e. those with dedicated APIs) lock bus automatically.
+ * Locks bus for exclusive access. The parent bus of given node (i.e. bus where
+ * this node is attached) will be locked. This should be only used for compound
+ * transactions where bus shall be locked for the duration of entire transaction.
+ * Simple operations like read, write or write-read (i.e. those with dedicated
+ * APIs) lock bus automatically.
  *
- * @param node     Node attached to bus to lock
+ * After successful locking, bus is configured to be used with given node.
+ *
+ * @param node     Node to lock its parent bus
  * @param timeout  Timeout on locking attempt
  *
  * return 0 on success
  *        SYS_ETIMEOUT on lock timeout
  */
 int
-bus_dev_lock_by_node(struct os_dev *node, os_time_t timeout);
+bus_node_lock(struct os_dev *node, os_time_t timeout);
 
 /**
- * Unlock bus
+ * Unlock bus node
  *
- * Unlocks bus access. This shall be only used when bus was previously locked
- * with bus_dev_lock_by_node(). API operations which lock bus will also unlock
+ * Unlocks exclusive bus access. This shall be only used when bus was previously
+ * locked with bus_node_lock(). API operations which lock bus will also unlock
  * bus automatically.
  *
- * @param node  Node attached to bus to unlock
+ * @param node  Node to unlock its parent bus
  *
  * return 0 on success
  *        SYS_EACCESS when bus was not locked by current task
  */
 int
-bus_dev_unlock_by_node(struct os_dev *node);
+bus_node_unlock(struct os_dev *node);
 
 #ifdef __cplusplus
 }

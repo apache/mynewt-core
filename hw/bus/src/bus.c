@@ -72,27 +72,6 @@ bus_node_close_func(struct os_dev *odev)
     return 0;
 }
 
-static inline int
-bus_dev_configure_for(struct bus_dev *bdev, struct bus_node *bnode)
-{
-    int rc;
-
-    assert((void *)bdev == (void *)bnode->parent_bus);
-
-    if (bdev->configured_for == bnode) {
-        return 0;
-    }
-
-    rc = bdev->dops->configure(bdev, bnode);
-    if (rc) {
-        bdev->configured_for = NULL;
-    } else {
-        bdev->configured_for = bnode;
-    }
-
-    return rc;
-}
-
 void
 bus_node_set_callbacks(struct os_dev *node, struct bus_node_callbacks *cbs)
 {
@@ -166,21 +145,14 @@ bus_node_read(struct os_dev *node, void *buf, uint16_t length,
         return SYS_ENOTSUP;
     }
 
-    rc = bus_dev_lock_by_node(node, timeout);
+    rc = bus_node_lock(node, timeout);
     if (rc) {
         return rc;
     }
 
-    rc = bus_dev_configure_for(bdev, bnode);
-    if (rc) {
-        goto done;
-    }
-
     rc = bdev->dops->read(bdev, bnode, buf, length, timeout, flags);
 
-done:
-    rc = bus_dev_unlock_by_node(node);
-    assert(rc == 0);
+    (void)bus_node_unlock(node);
 
     return rc;
 }
@@ -200,21 +172,14 @@ bus_node_write(struct os_dev *node, const void *buf, uint16_t length,
         return SYS_ENOTSUP;
     }
 
-    rc = bus_dev_lock_by_node(node, timeout);
+    rc = bus_node_lock(node, timeout);
     if (rc) {
         return rc;
     }
 
-    rc = bus_dev_configure_for(bdev, bnode);
-    if (rc) {
-        goto done;
-    }
-
     rc = bdev->dops->write(bdev, bnode, buf, length, timeout, flags);
 
-done:
-    rc = bus_dev_unlock_by_node(node);
-    assert(rc == 0);
+    (void)bus_node_unlock(node);
 
     return rc;
 }
@@ -226,7 +191,7 @@ bus_node_write_read_transact(struct os_dev *node, const void *wbuf,
 {
     struct bus_node *bnode = (struct bus_node *)node;
     struct bus_dev *bdev = bnode->parent_bus;
-    int rc, rc_unlock;
+    int rc;
 
     BUS_DEBUG_VERIFY_DEV(bdev);
     BUS_DEBUG_VERIFY_NODE(bnode);
@@ -235,14 +200,9 @@ bus_node_write_read_transact(struct os_dev *node, const void *wbuf,
         return SYS_ENOTSUP;
     }
 
-    rc = bus_dev_lock_by_node(node, timeout);
+    rc = bus_node_lock(node, timeout);
     if (rc) {
         return rc;
-    }
-
-    rc = bus_dev_configure_for(bdev, bnode);
-    if (rc) {
-        goto done;
     }
 
     /*
@@ -262,20 +222,19 @@ bus_node_write_read_transact(struct os_dev *node, const void *wbuf,
     }
 
 done:
-    /* This shall succeed because we locked it */
-    rc_unlock = bus_dev_unlock_by_node(node);
-    assert(rc_unlock == 0);
+    (void)bus_node_unlock(node);
 
     return rc;
 }
 
 
 int
-bus_dev_lock_by_node(struct os_dev *node, os_time_t timeout)
+bus_node_lock(struct os_dev *node, os_time_t timeout)
 {
     struct bus_node *bnode = (struct bus_node *)node;
     struct bus_dev *bdev = bnode->parent_bus;
     os_error_t err;
+    int rc;
 
     BUS_DEBUG_VERIFY_DEV(bdev);
     BUS_DEBUG_VERIFY_NODE(bnode);
@@ -285,13 +244,25 @@ bus_dev_lock_by_node(struct os_dev *node, os_time_t timeout)
         return SYS_ETIMEOUT;
     }
 
-    assert(err == OS_OK);
+    assert(err == OS_OK || err == OS_NOT_STARTED);
 
-    return 0;
+    /* No need to configure if already configured for the same node */
+    if (bdev->configured_for == bnode) {
+        return 0;
+    }
+
+    rc = bdev->dops->configure(bdev, bnode);
+    if (rc) {
+        bdev->configured_for = NULL;
+    } else {
+        bdev->configured_for = bnode;
+    }
+
+    return rc;
 }
 
 int
-bus_dev_unlock_by_node(struct os_dev *node)
+bus_node_unlock(struct os_dev *node)
 {
     struct bus_node *bnode = (struct bus_node *)node;
     struct bus_dev *bdev = bnode->parent_bus;
@@ -301,11 +272,15 @@ bus_dev_unlock_by_node(struct os_dev *node)
     BUS_DEBUG_VERIFY_NODE(bnode);
 
     err = os_mutex_release(&bdev->lock);
-    if (err == OS_BAD_MUTEX) {
-        return SYS_EACCES;
-    }
 
-    assert(err == OS_OK);
+    /*
+     * Probably no one cares about return value from unlock, so for debugging
+     * purposes let's assert on anything that is not a success. This includes
+     * OS_INVALID_PARM (we basically can't pass invalid mutex here unless our
+     * structs are broken) and OS_BAD_MUTEX (unlock shall be only done by the
+     * same task which locked it).
+     */
+    assert(err == OS_OK || err == OS_NOT_STARTED);
 
     return 0;
 }
