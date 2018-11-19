@@ -102,7 +102,15 @@ struct bus_dev {
 struct bus_node {
     struct os_dev odev;
     struct bus_node_callbacks callbacks;
-    struct bus_dev *parent_bus;
+
+    /*
+     * init_arg is valid until os_dev is initialized (bus_node_init_func called)
+     * parent_bus is valid afterwards
+     */
+    union {
+        struct bus_dev *parent_bus;
+        void *init_arg;
+    };
 
 #if MYNEWT_VAL(BUS_DEBUG)
     uint32_t nodemagic;

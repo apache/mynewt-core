@@ -128,6 +128,7 @@ bus_node_init_func(struct os_dev *odev, void *arg)
     struct bus_node *bnode = (struct bus_node *)odev;
     struct bus_node_cfg *node_cfg = arg;
     struct os_dev *parent_odev;
+    void *init_arg;
 
     parent_odev = os_dev_lookup(node_cfg->bus_name);
     if (!parent_odev) {
@@ -136,13 +137,15 @@ bus_node_init_func(struct os_dev *odev, void *arg)
 
     BUS_DEBUG_POISON_NODE(bnode);
 
+    /* We need to save init_arg here since it will be overwritten by parent_bus */
+    init_arg = bnode->init_arg;
     bnode->parent_bus = (struct bus_dev *)parent_odev;
 
     odev->od_handlers.od_open = bus_node_open_func;
     odev->od_handlers.od_close = bus_node_close_func;
 
     if (bnode->callbacks.init) {
-        bnode->callbacks.init(bnode, arg);
+        bnode->callbacks.init(bnode, init_arg);
     }
 
     return 0;

@@ -101,9 +101,12 @@ bus_spi_node_init_func(struct os_dev *odev, void *arg);
 
 static inline int
 bus_spi_node_create(const char *name, struct bus_spi_node *node,
-                    const struct bus_spi_node_cfg *cfg)
+                    const struct bus_spi_node_cfg *cfg, void *arg)
 {
+    struct bus_node *bnode = (struct bus_node *)node;
     struct os_dev *odev = (struct os_dev *)node;
+
+    bnode->init_arg = arg;
 
     return os_dev_create(odev, name, OS_DEV_INIT_PRIMARY, 1,
                          bus_spi_node_init_func, (void *)cfg);
