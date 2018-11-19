@@ -88,7 +88,7 @@ struct bus_dev {
     struct os_mutex lock;
     struct bus_node *configured_for;
 
-#if MYNEWT_VAL(BUS_DEBUG)
+#if MYNEWT_VAL(BUS_DEBUG_OS_DEV)
     uint32_t devmagic;
 #endif
 };
@@ -112,7 +112,7 @@ struct bus_node {
         void *init_arg;
     };
 
-#if MYNEWT_VAL(BUS_DEBUG)
+#if MYNEWT_VAL(BUS_DEBUG_OS_DEV)
     uint32_t nodemagic;
 #endif
 };

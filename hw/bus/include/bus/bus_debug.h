@@ -26,7 +26,7 @@
 extern "C" {
 #endif
 
-#if MYNEWT_VAL(BUS_DEBUG)
+#if MYNEWT_VAL(BUS_DEBUG_OS_DEV)
 #define BUS_DEBUG_MAGIC_DEV             0xABADBABE
 #define BUS_DEBUG_MAGIC_NODE            0xABADCAFE
 #define BUS_DEBUG_POISON_DEV(_dev)      do { (_dev)->devmagic = (BUS_DEBUG_MAGIC_DEV); } while (0)

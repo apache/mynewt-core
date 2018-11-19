@@ -67,7 +67,7 @@ struct bus_i2c_dev {
     struct bus_dev bdev;
     struct bus_i2c_dev_cfg cfg;
 
-#if MYNEWT_VAL(BUS_DEBUG)
+#if MYNEWT_VAL(BUS_DEBUG_OS_DEV)
     uint32_t devmagic;
 #endif
 };
@@ -84,7 +84,7 @@ struct bus_i2c_node {
     uint16_t quirks;
     uint8_t addr;
 
-#if MYNEWT_VAL(BUS_DEBUG)
+#if MYNEWT_VAL(BUS_DEBUG_OS_DEV)
     uint32_t nodemagic;
 #endif
 };
