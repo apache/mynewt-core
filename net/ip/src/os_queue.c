@@ -32,7 +32,9 @@ int
 os_queue_init(struct os_queue *q, uint8_t elem_size, uint8_t elem_cnt)
 {
     assert(elem_cnt < SHRT_MAX);
-
+    if (elem_cnt == 0) {
+        elem_cnt = 1;
+    }
     q->oq_q = malloc(elem_size * elem_cnt);
     if (!q->oq_q) {
         return -1;
@@ -43,6 +45,14 @@ os_queue_init(struct os_queue *q, uint8_t elem_size, uint8_t elem_cnt)
     os_sem_init(&q->oq_space, elem_cnt);
     os_sem_init(&q->oq_items, 0);
     return 0;
+}
+
+void
+os_queue_free(struct os_queue *q)
+{
+    free(q->oq_q);
+    q->oq_q = NULL;
+    q->oq_size = 0;
 }
 
 int

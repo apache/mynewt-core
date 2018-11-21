@@ -50,7 +50,7 @@
 struct stats_ lwip_stats;
 
 void
-stats_init(void)
+lwip_stats_init(void)
 {
 #ifdef LWIP_DEBUG
 #if MEM_STATS

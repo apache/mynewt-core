@@ -36,6 +36,7 @@ struct os_queue {
 int os_queue_init(struct os_queue *, uint8_t elem_size, uint8_t elem_cnt);
 int os_queue_put(struct os_queue *, void *elem, uint32_t timeout);
 int os_queue_get(struct os_queue *, void *elem, uint32_t timeout);
+void os_queue_free(struct os_queue *);
 
 #ifdef __cplusplus
 }

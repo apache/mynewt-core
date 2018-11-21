@@ -29,9 +29,6 @@ extern "C" {
 #include "os/mynewt.h"
 #include <ip/os_queue.h>
 
-#define SYS_MBOX_NULL NULL
-#define SYS_SEM_NULL  NULL
-
 struct os_queue;
 
 typedef struct os_sem sys_sem_t;
@@ -129,6 +126,24 @@ sys_mbox_trypost(sys_mbox_t *mbox, void *msg)
         return ERR_MEM;
     }
     return ERR_OK;
+}
+
+static inline void
+sys_mbox_free(sys_mbox_t *mbox)
+{
+    os_queue_free(mbox);
+}
+
+static inline int
+sys_mbox_valid(sys_mbox_t *mbox)
+{
+    return mbox->oq_q != NULL;
+}
+
+static inline void
+sys_mbox_set_invalid(sys_mbox_t *mbox)
+{
+    sys_mbox_free(mbox);
 }
 
 static inline sys_thread_t
