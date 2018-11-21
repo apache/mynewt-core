@@ -17,7 +17,9 @@
  * under the License.
  */
 #include <assert.h>
+#include <stdint.h>
 #include "mcu/nrf52_hal.h"
+#include "nrfx.h"
 
 static uint8_t nrf52_clock_hfxo_refcnt;
 
