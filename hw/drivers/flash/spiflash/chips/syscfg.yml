@@ -488,3 +488,6 @@ syscfg.defs:
     SPIFLASH_AT25QL321:
         description: Add support for AT25QL321
         value: 0
+    SPIFLASH_EON2580B:
+        description: Add support for EON2580B
+        value: 0
