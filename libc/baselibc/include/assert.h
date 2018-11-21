@@ -21,7 +21,7 @@ extern "C" {
 
 #else
 #include <stddef.h>
-#include "os/mynewt.h"
+#include "os/os_fault.h"
 
 #define assert(x) ((x) ? (void)0 : OS_CRASH())
 

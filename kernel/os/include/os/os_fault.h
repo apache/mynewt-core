@@ -20,6 +20,8 @@
 #ifndef _OS_FAULT_H
 #define _OS_FAULT_H
 
+#include "syscfg/syscfg.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
