@@ -366,7 +366,7 @@ hal_i2c_master_write(uint8_t i2c_num, struct hal_i2c_master_data *pdata,
         }
     }
 
-    rc = 0;
+    return 0;
 
 err:
     regs->TASKS_STOP = 1;
