@@ -27,8 +27,10 @@ pkg.keywords:
 pkg.deps:
     - "@apache-mynewt-core/kernel/os"
     - '@apache-mynewt-core/hw/hal'
-    - '@apache-mynewt-core/hw/charge-control'
     - '@apache-mynewt-core/hw/util/i2cn'
+
+pkg.deps.!BUS_DRIVER_PRESENT||ADP5061_USE_CHARGE_CONTROL:
+    - '@apache-mynewt-core/hw/charge-control'
 
 pkg.deps.ADP5061_CLI:
     - '@apache-mynewt-core/sys/shell'

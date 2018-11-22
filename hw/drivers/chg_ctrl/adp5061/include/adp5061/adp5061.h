@@ -24,7 +24,9 @@
 #include "os/os_dev.h"
 #include "syscfg/syscfg.h"
 #include "os/os_time.h"
+#if MYNEWT_VAL(ADP5061_USE_CHARGE_CONTROL)
 #include "charge-control/charge_control.h"
+#endif
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
 #include "bus/bus_driver.h"
 #include "bus/i2c.h"
@@ -49,10 +51,13 @@ struct adp5061_config {
 struct adp5061_dev {
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
     struct bus_i2c_node     a_node;
+#if MYNEWT_VAL(ADP5061_USE_CHARGE_CONTROL)
+    struct charge_control   a_chg_ctrl;
+#endif
 #else
     struct os_dev           a_dev;
-#endif
     struct charge_control   a_chg_ctrl;
+#endif
     struct adp5061_config   a_cfg;
     os_time_t               a_last_read_time;
 };

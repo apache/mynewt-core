@@ -34,7 +34,9 @@
 #endif
 #include <adp5061/adp5061.h>
 #include <bsp/bsp.h>
+#if MYNEWT_VAL(ADP5061_USE_CHARGE_CONTROL)
 #include <charge-control/charge_control.h>
+#endif
 #include "adp5061_priv.h"
 
 /**
@@ -63,6 +65,7 @@ static const struct adp5061_config default_config = {
     .iend = 0x01,
 };
 
+#if MYNEWT_VAL(ADP5061_USE_CHARGE_CONTROL)
 #if MYNEWT_VAL(ADP5061_INT_PIN) >= 0
 /**
 * ADP5061 interrupt handler CB
@@ -98,6 +101,7 @@ static void
 adp5061_isr(void *arg){
     os_eventq_put(os_eventq_dflt_get(), &interrupt_handler);
 }
+#endif
 #endif
 
 static int
@@ -427,6 +431,7 @@ adp5061_enable_int(struct adp5061_dev *dev, uint8_t mask)
     return adp5061_set_reg(dev, REG_INT_EN, mask);
 }
 
+#if MYNEWT_VAL(ADP5061_USE_CHARGE_CONTROL)
 static int
 adp5061_chg_ctrl_read(struct charge_control *cc, charge_control_type_t type,
         charge_control_data_func_t data_func, void *data_arg, uint32_t timeout)
@@ -602,12 +607,15 @@ static const struct charge_control_driver g_adp5061_chg_ctrl_driver = {
     .ccd_enable = adp5061_chg_ctrl_enable,
     .ccd_disable = adp5061_chg_ctrl_disable,
 };
+#endif /* ADP5061_USE_CHARGE_CONTROL */
 
 int
 adp5061_init(struct os_dev *dev, void *arg)
 {
     struct adp5061_dev *adp5061 = (struct adp5061_dev *)dev;
+#if MYNEWT_VAL(ADP5061_USE_CHARGE_CONTROL)
     struct charge_control *cc;
+#endif
     const struct adp5061_config *cfg;
     uint8_t device_id;
     int rc;
@@ -617,6 +625,7 @@ adp5061_init(struct os_dev *dev, void *arg)
         goto err;
     }
 
+#if MYNEWT_VAL(ADP5061_USE_CHARGE_CONTROL)
     cc = &adp5061->a_chg_ctrl;
 
     rc = charge_control_init(cc, dev);
@@ -637,6 +646,7 @@ adp5061_init(struct os_dev *dev, void *arg)
 
     charge_control_set_type_mask(cc,
             CHARGE_CONTROL_TYPE_STATUS | CHARGE_CONTROL_TYPE_FAULT);
+#endif /* ADP5061_USE_CHARGE_CONTROL */
 
     cfg = &default_config;
 
@@ -659,10 +669,13 @@ adp5061_init(struct os_dev *dev, void *arg)
         goto err;
     }
 
+#if MYNEWT_VAL(ADP5061_USE_CHARGE_CONTROL)
     rc = charge_control_mgr_register(cc);
     if (rc) {
         goto err;
     }
+#endif /* ADP5061_USE_CHARGE_CONTROL */
+
 #if MYNEWT_VAL(ADP5061_CLI)
     adp5061_shell_init(adp5061);
 #endif

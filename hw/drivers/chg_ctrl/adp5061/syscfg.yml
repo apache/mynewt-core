@@ -39,3 +39,6 @@ syscfg.defs:
     ADP5061_CLI_DECODE:
         description: 'Decode registere fields in shell'
         value: 0
+    ADP5061_USE_CHARGE_CONTROL:
+        description: 'Enable charge control integration'
+        value: 1
