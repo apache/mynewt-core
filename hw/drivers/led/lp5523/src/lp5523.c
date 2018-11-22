@@ -137,6 +137,10 @@ lp5523_set_n_regs(struct led_itf *itf, enum lp5523_registers addr,
         .buffer = payload,
     };
 
+    if (len >= LP5523_MAX_PAYLOAD) {
+        return -1;
+    }
+
     payload[0] = addr;
     memcpy(&payload[1], vals, len);
 
