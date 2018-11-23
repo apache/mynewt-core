@@ -512,6 +512,7 @@ struct sensor_itf {
 
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
     /* Device configuration is stored in bus node */
+    struct os_dev *si_dev;
 #else
     /* Sensor interface type */
     uint8_t si_type;
@@ -524,6 +525,9 @@ struct sensor_itf {
 
     /* Sensor address */
     uint16_t si_addr;
+
+    /* Mutex for interface access */
+    struct os_mutex *si_lock;
 #endif
 
     /* Sensor interface low int pin */
@@ -532,28 +536,11 @@ struct sensor_itf {
     /* Sensor interface high int pin */
     uint8_t si_high_pin;
 
-#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
-    /* No need for mutex - locking is done by bus driver */
-#else
-    /* Mutex for interface access */
-    struct os_mutex *si_lock;
-#endif
-
     /* Sensor interface interrupts pins */
     /* XXX We should probably remove low/high pins and replace it with those
      */
     struct sensor_int si_ints[MYNEWT_VAL(SENSOR_MAX_INTERRUPTS_PINS)];
 };
-
-#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
-struct sensor_node_cfg {
-    struct sensor_itf itf;
-    union {
-        struct bus_i2c_node_cfg i2c_node_cfg;
-        struct bus_spi_node_cfg spi_node_cfg;
-    };
-};
-#endif
 
 /*
  * Return the OS device structure corresponding to this sensor
@@ -564,16 +551,6 @@ struct sensor_node_cfg {
  * Return the interface for this sensor
  */
 #define SENSOR_GET_ITF(__s) (&((__s)->s_itf))
-
-/*
- * Return original sensor from sensor interface
- */
-#define SENSOR_ITF_GET_SENSOR(__itf)    CONTAINER_OF((__itf), struct sensor, s_itf)
-
-/*
- * Return OS device for original sensor from sensor interface
- */
-#define SENSOR_ITF_GET_DEVICE(__itf)    SENSOR_GET_DEVICE(SENSOR_ITF_GET_SENSOR((__itf)))
 
 /*
  * Checks if the sensor data is valid and then compares if it is greater than
