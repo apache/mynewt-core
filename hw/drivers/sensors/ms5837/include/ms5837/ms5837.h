@@ -23,6 +23,10 @@
 
 #include "os/mynewt.h"
 #include "sensor/sensor.h"
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+#include "bus/bus_driver.h"
+#include "bus/i2c.h"
+#endif
 
 #define MS5837_I2C_ADDRESS		0x76
 #define MS5837_NUMBER_COEFFS     7
@@ -42,7 +46,11 @@ struct ms5837_cfg {
 };
 
 struct ms5837 {
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    struct bus_i2c_node i2c_node;
+#else
     struct os_dev dev;
+#endif
     struct sensor sensor;
     struct ms5837_cfg cfg;
     struct ms5837_pdd pdd;
@@ -163,6 +171,23 @@ ms5837_compensate_pressure(uint16_t *coeffs, int32_t temp,
 float
 ms5837_compensate_temperature(uint16_t *coeffs, uint32_t rawtemp,
                               int32_t *comptemp, int32_t *deltat);
+
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+/**
+ * Create I2C bus node for MS5837 sensor
+ *
+ * @param node        Bus node
+ * @param name        Device name
+ * @param i2c_cfg     I2C node configuration
+ * @param sensor_itf  Sensors interface
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+ms5837_create_i2c_sensor_dev(struct bus_i2c_node *node, const char *name,
+                             const struct bus_i2c_node_cfg *i2c_cfg,
+                             struct sensor_itf *sensor_itf);
+#endif
 
 #ifdef __cplusplus
 }
