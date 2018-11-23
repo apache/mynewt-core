@@ -398,6 +398,9 @@ hal_i2c_config(uint8_t i2c_num, const struct hal_i2c_settings *cfg)
     case 250:
         freq = TWI_FREQUENCY_FREQUENCY_K250;
         break;
+    case 380:
+        freq = TWI_FREQUENCY_FREQUENCY_K380;
+        break;
     case 400:
         freq = TWI_FREQUENCY_FREQUENCY_K400;
         break;
