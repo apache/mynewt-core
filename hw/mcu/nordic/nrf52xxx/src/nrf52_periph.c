@@ -127,12 +127,22 @@ static const struct nrf52_hal_i2c_cfg hal_i2c1_cfg = {
 #endif
 
 #if MYNEWT_VAL(SPI_0_MASTER)
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+static const struct bus_spi_dev_cfg spi0_cfg = {
+    .spi_num = 0,
+    .pin_sck = MYNEWT_VAL(SPI_0_MASTER_PIN_SCK),
+    .pin_mosi = MYNEWT_VAL(SPI_0_MASTER_PIN_MOSI),
+    .pin_miso = MYNEWT_VAL(SPI_0_MASTER_PIN_MISO),
+};
+static struct bus_spi_dev spi0_bus;
+#else
 static const struct nrf52_hal_spi_cfg os_bsp_spi0m_cfg = {
     .sck_pin      = MYNEWT_VAL(SPI_0_MASTER_PIN_SCK),
     .mosi_pin     = MYNEWT_VAL(SPI_0_MASTER_PIN_MOSI),
     .miso_pin     = MYNEWT_VAL(SPI_0_MASTER_PIN_MISO),
     /* For SPI master, SS pin is controlled as regular GPIO */
 };
+#endif
 #endif
 #if MYNEWT_VAL(SPI_0_SLAVE)
 static const struct nrf52_hal_spi_cfg os_bsp_spi0s_cfg = {
@@ -169,12 +179,22 @@ static const struct nrf52_hal_spi_cfg os_bsp_spi1s_cfg = {
 };
 #endif
 #if MYNEWT_VAL(SPI_2_MASTER)
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+static const struct bus_spi_dev_cfg spi2_cfg = {
+    .spi_num = 2,
+    .pin_sck = MYNEWT_VAL(SPI_2_MASTER_PIN_SCK),
+    .pin_mosi = MYNEWT_VAL(SPI_2_MASTER_PIN_MOSI),
+    .pin_miso = MYNEWT_VAL(SPI_2_MASTER_PIN_MISO),
+};
+static struct bus_spi_dev spi2_bus;
+#else
 static const struct nrf52_hal_spi_cfg os_bsp_spi2m_cfg = {
     .sck_pin      = MYNEWT_VAL(SPI_2_MASTER_PIN_SCK),
     .mosi_pin     = MYNEWT_VAL(SPI_2_MASTER_PIN_MOSI),
     .miso_pin     = MYNEWT_VAL(SPI_2_MASTER_PIN_MISO),
     /* For SPI master, SS pin is controlled as regular GPIO */
 };
+#endif
 #endif
 #if MYNEWT_VAL(SPI_2_SLAVE)
 static const struct nrf52_hal_spi_cfg os_bsp_spi2s_cfg = {
@@ -342,8 +362,13 @@ nrf52_periph_create_spi(void)
     (void)rc;
 
 #if MYNEWT_VAL(SPI_0_MASTER)
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    rc = bus_spi_dev_create("spi0", &spi0_bus, (struct bus_spi_dev_cfg *)&spi0_cfg);
+    assert(rc == 0);
+#else
     rc = hal_spi_init(0, (void *)&os_bsp_spi0m_cfg, HAL_SPI_TYPE_MASTER);
     assert(rc == 0);
+#endif
 #endif
 #if MYNEWT_VAL(SPI_0_SLAVE)
     rc = hal_spi_init(0, (void *)&os_bsp_spi0s_cfg, HAL_SPI_TYPE_SLAVE);
@@ -363,8 +388,13 @@ nrf52_periph_create_spi(void)
     assert(rc == 0);
 #endif
 #if MYNEWT_VAL(SPI_2_MASTER)
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    rc = bus_spi_dev_create("spi2", &spi2_bus, (struct bus_spi_dev_cfg *)&spi2_cfg);
+    assert(rc == 0);
+#else
     rc = hal_spi_init(2, (void *)&os_bsp_spi2m_cfg, HAL_SPI_TYPE_MASTER);
     assert(rc == 0);
+#endif
 #endif
 #if MYNEWT_VAL(SPI_2_SLAVE)
     rc = hal_spi_init(2, (void *)&os_bsp_spi2s_cfg, HAL_SPI_TYPE_SLAVE);
