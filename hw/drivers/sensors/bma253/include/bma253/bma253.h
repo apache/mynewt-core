@@ -201,8 +201,12 @@ struct bma253_private_driver_data {
 
 /* The device itself */
 struct bma253 {
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    struct bus_i2c_node node;
+#else
     /* Underlying OS device */
     struct os_dev dev;
+#endif
     /* The sensor infrastructure */
     struct sensor sensor;
     /* Default configuration values */
@@ -463,6 +467,22 @@ int
 bma253_shell_init(void);
 #endif
 
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+/**
+ * Create I2C bus node for BMA253 sensor
+ *
+ * @param node        Bus node
+ * @param name        Device name
+ * @param i2c_cfg     I2C node configuration
+ * @param sensor_itf  Sensors interface
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+bma253_create_i2c_sensor_dev(struct bus_i2c_node *node, const char *name,
+                             const struct bus_i2c_node_cfg *i2c_cfg,
+                             struct sensor_itf *sensor_itf);
+#endif
 #ifdef __cplusplus
 }
 #endif
