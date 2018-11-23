@@ -24,6 +24,8 @@
 extern "C" {
 #endif
 
+#include "syscfg/syscfg.h"
+
 /**
  * LED interfaces
  */
@@ -35,7 +37,10 @@ extern "C" {
  * LED interface
  */
 struct led_itf {
-
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    /* Device */
+    struct os_dev *li_dev;
+#else
     /* LED interface type */
     uint8_t li_type;
 
@@ -50,6 +55,7 @@ struct led_itf {
 
     /* Mutex for shared interface access */
     struct os_mutex *li_lock;
+#endif
 };
 
 /**
@@ -63,7 +69,9 @@ struct led_itf {
 static inline int
 led_itf_lock(struct led_itf *li, uint32_t timeout)
 {
-
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    return 0;
+#else
     int rc;
     os_time_t ticks;
 
@@ -82,6 +90,7 @@ led_itf_lock(struct led_itf *li, uint32_t timeout)
     }
 
     return (rc);
+#endif
 }
 
 /**
@@ -94,11 +103,13 @@ led_itf_lock(struct led_itf *li, uint32_t timeout)
 static inline void
 led_itf_unlock(struct led_itf *li)
 {
+#if !MYNEWT_VAL(BUS_DRIVER_PRESENT)
     if (!li->li_lock) {
         return;
     }
 
     os_mutex_release(li->li_lock);
+#endif
 }
 
 #endif
