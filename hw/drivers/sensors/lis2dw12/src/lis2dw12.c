@@ -23,9 +23,13 @@
 #include <string.h>
 
 #include "os/mynewt.h"
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+#include "bus/bus.h"
+#else
 #include "hal/hal_spi.h"
 #include "hal/hal_i2c.h"
 #include "i2cn/i2cn.h"
+#endif
 #include "sensor/sensor.h"
 #include "sensor/accel.h"
 #include "lis2dw12/lis2dw12.h"
@@ -122,12 +126,14 @@ const struct lis2dw12_notif_cfg dflt_notif_cfg[] = {
 
 };
 
+#if !MYNEWT_VAL(BUS_DRIVER_PRESENT)
 static struct hal_spi_settings spi_lis2dw12_settings = {
     .data_order = HAL_SPI_MSB_FIRST,
     .data_mode  = HAL_SPI_MODE3,
     .baudrate   = 4000,
     .word_size  = HAL_SPI_WORD_SIZE_8BIT,
 };
+#endif
 
 /* Define the stats section and records */
 STATS_SECT_START(lis2dw12_stat_section)
@@ -199,6 +205,7 @@ static const struct sensor_driver g_lis2dw12_sensor_driver = {
 
 };
 
+#if !MYNEWT_VAL(BUS_DRIVER_PRESENT)
 /**
  * Write multiple length data to LIS2DW12 sensor over I2C  (MAX: 19 bytes)
  *
@@ -306,6 +313,7 @@ err:
 
     return rc;
 }
+#endif
 
 /**
  * Write multiple length data to LIS2DW12 sensor over different interfaces
@@ -323,6 +331,25 @@ lis2dw12_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
 {
     int rc;
 
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    struct {
+        uint8_t addr;
+        /*
+         * XXX lis2dw12_i2c_writelen has max payload of 20 including addr, not
+         * sure where it comes from
+         */
+        uint8_t payload[19];
+    } write_data;
+
+    if (len > sizeof(write_data.payload)) {
+        return -1;
+    }
+
+    write_data.addr = addr;
+    memcpy(write_data.payload, payload, len);
+
+    rc = bus_node_simple_write(itf->si_dev, &write_data, len + 1);
+#else
     rc = sensor_itf_lock(itf, MYNEWT_VAL(LIS2DW12_ITF_LOCK_TMO));
     if (rc) {
         return rc;
@@ -335,10 +362,12 @@ lis2dw12_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
     }
 
     sensor_itf_unlock(itf);
+#endif
 
     return rc;
 }
 
+#if !MYNEWT_VAL(BUS_DRIVER_PRESENT)
 /**
  * Read multiple bytes starting from specified register over i2c
  *
@@ -437,7 +466,7 @@ err:
 
     return rc;
 }
-
+#endif
 
 /**
  * Write byte to sensor over different interfaces
@@ -451,22 +480,7 @@ err:
 int
 lis2dw12_write8(struct sensor_itf *itf, uint8_t reg, uint8_t value)
 {
-    int rc;
-
-    rc = sensor_itf_lock(itf, MYNEWT_VAL(LIS2DW12_ITF_LOCK_TMO));
-    if (rc) {
-        return rc;
-    }
-
-    if (itf->si_type == SENSOR_ITF_I2C) {
-        rc = lis2dw12_i2c_writelen(itf, reg, &value, 1);
-    } else {
-        rc = lis2dw12_spi_writelen(itf, reg, &value, 1);
-    }
-
-    sensor_itf_unlock(itf);
-
-    return rc;
+    return lis2dw12_writelen(itf, reg, &value, 1);
 }
 
 /**
@@ -481,22 +495,7 @@ lis2dw12_write8(struct sensor_itf *itf, uint8_t reg, uint8_t value)
 int
 lis2dw12_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
 {
-    int rc;
-
-    rc = sensor_itf_lock(itf, MYNEWT_VAL(LIS2DW12_ITF_LOCK_TMO));
-    if (rc) {
-        return rc;
-    }
-
-    if (itf->si_type == SENSOR_ITF_I2C) {
-        rc = lis2dw12_i2c_readlen(itf, reg, value, 1);
-    } else {
-        rc = lis2dw12_spi_readlen(itf, reg, value, 1);
-    }
-
-    sensor_itf_unlock(itf);
-
-    return rc;
+    return lis2dw12_readlen(itf, reg, value, 1);
 }
 
 /**
@@ -515,6 +514,9 @@ lis2dw12_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
 {
     int rc;
 
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    rc = bus_node_simple_write_read_transact(itf->si_dev, &reg, 1, buffer, len);
+#else
     rc = sensor_itf_lock(itf, MYNEWT_VAL(LIS2DW12_ITF_LOCK_TMO));
     if (rc) {
         return rc;
@@ -527,6 +529,7 @@ lis2dw12_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
     }
 
     sensor_itf_unlock(itf);
+#endif
 
     return rc;
 }
@@ -2647,7 +2650,9 @@ lis2dw12_sensor_read(struct sensor *sensor, sensor_type_t type,
     }
 
     itf = SENSOR_GET_ITF(sensor);
+    (void)itf;
 
+#if !MYNEWT_VAL(BUS_DRIVER_PRESENT)
     if (itf->si_type == SENSOR_ITF_SPI) {
 
         rc = hal_spi_disable(sensor->s_itf.si_num);
@@ -2668,6 +2673,7 @@ lis2dw12_sensor_read(struct sensor *sensor, sensor_type_t type,
             goto err;
         }
     }
+#endif
 
     lis2dw12 = (struct lis2dw12 *)SENSOR_GET_DEVICE(sensor);
     cfg = &lis2dw12->cfg;
@@ -3053,6 +3059,7 @@ lis2dw12_init(struct os_dev *dev, void *arg)
         goto err;
     }
 
+#if !MYNEWT_VAL(BUS_DRIVER_PRESENT)
     if (sensor->s_itf.si_type == SENSOR_ITF_SPI) {
 
         rc = hal_spi_disable(sensor->s_itf.si_num);
@@ -3078,7 +3085,7 @@ lis2dw12_init(struct os_dev *dev, void *arg)
             goto err;
         }
     }
-
+#endif
 
     init_interrupt(&lis2dw12->intr, lis2dw12->sensor.s_itf.si_ints);
 
@@ -3111,9 +3118,12 @@ lis2dw12_config(struct lis2dw12 *lis2dw12, struct lis2dw12_cfg *cfg)
     struct sensor *sensor;
 
     itf = SENSOR_GET_ITF(&(lis2dw12->sensor));
-    sensor = &(lis2dw12->sensor);
 
+    (void)sensor;
+
+#if !MYNEWT_VAL(BUS_DRIVER_PRESENT)
     if (itf->si_type == SENSOR_ITF_SPI) {
+        sensor = &(lis2dw12->sensor);
 
         rc = hal_spi_disable(sensor->s_itf.si_num);
         if (rc) {
@@ -3133,6 +3143,7 @@ lis2dw12_config(struct lis2dw12 *lis2dw12, struct lis2dw12_cfg *cfg)
             goto err;
         }
     }
+#endif
 
     rc = lis2dw12_get_chip_id(itf, &chip_id);
     if (rc) {
@@ -3336,3 +3347,47 @@ lis2dw12_config(struct lis2dw12 *lis2dw12, struct lis2dw12_cfg *cfg)
 err:
     return rc;
 }
+
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+static void
+init_node_cb(struct bus_node *bnode, void *arg)
+{
+    struct sensor_itf *itf = arg;
+
+    lis2dw12_init((struct os_dev *)bnode, itf);
+}
+
+int
+lis2dw12_create_i2c_sensor_dev(struct bus_i2c_node *node, const char *name,
+                               const struct bus_i2c_node_cfg *i2c_cfg,
+                               struct sensor_itf *sensor_itf)
+{
+    struct bus_node_callbacks cbs = {
+        .init = init_node_cb,
+    };
+    int rc;
+
+    bus_node_set_callbacks((struct os_dev *)node, &cbs);
+
+    rc = bus_i2c_node_create(name, node, i2c_cfg, sensor_itf);
+
+    return rc;
+}
+
+int
+lis2dw12_create_spi_sensor_dev(struct bus_spi_node *node, const char *name,
+                               const struct bus_spi_node_cfg *spi_cfg,
+                               struct sensor_itf *sensor_itf)
+{
+    struct bus_node_callbacks cbs = {
+        .init = init_node_cb,
+    };
+    int rc;
+
+    bus_node_set_callbacks((struct os_dev *)node, &cbs);
+
+    rc = bus_spi_node_create(name, node, spi_cfg, sensor_itf);
+
+    return rc;
+}
+#endif
