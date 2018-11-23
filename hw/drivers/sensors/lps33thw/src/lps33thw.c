@@ -23,10 +23,14 @@
 #include <math.h>
 
 #include "os/mynewt.h"
+#include "hal/hal_gpio.h"
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+#include "bus/bus.h"
+#else
 #include "hal/hal_i2c.h"
 #include "hal/hal_spi.h"
-#include "hal/hal_gpio.h"
 #include "i2cn/i2cn.h"
+#endif
 #include "sensor/sensor.h"
 #include "sensor/pressure.h"
 #include "sensor/temperature.h"
@@ -36,12 +40,14 @@
 #include "stats/stats.h"
 #include <syscfg/syscfg.h>
 
+#if !MYNEWT_VAL(BUS_DRIVER_PRESENT)
 static struct hal_spi_settings spi_lps33thw_settings = {
     .data_order = HAL_SPI_MSB_FIRST,
     .data_mode  = HAL_SPI_MODE3,
     .baudrate   = 4000,
     .word_size  = HAL_SPI_WORD_SIZE_8BIT,
 };
+#endif
 
 /* Define the stats section and records */
 STATS_SECT_START(lps33thw_stat_section)
@@ -154,6 +160,7 @@ lps33thw_reg_to_degc(int16_t reg)
     return reg / LPS33THW_TEMP_OUT_DIV;
 }
 
+#if !MYNEWT_VAL(BUS_DRIVER_PRESENT)
 /**
  * Writes a single byte to the specified register using i2c
  * interface
@@ -237,6 +244,7 @@ err:
 
     return rc;
 }
+#endif
 
 /**
  * Writes a single byte to the specified register using specified
@@ -253,6 +261,11 @@ lps33thw_set_reg(struct sensor_itf *itf, uint8_t reg, uint8_t value)
 {
     int rc;
 
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    uint8_t data[2] = { reg, value };
+
+    rc = bus_node_simple_write(itf->si_dev, data, 2);
+#else
     rc = sensor_itf_lock(itf, MYNEWT_VAL(LPS33THW_ITF_LOCK_TMO));
     if (rc) {
         return rc;
@@ -265,10 +278,12 @@ lps33thw_set_reg(struct sensor_itf *itf, uint8_t reg, uint8_t value)
     }
 
     sensor_itf_unlock(itf);
+#endif
 
     return rc;
 }
 
+#if !MYNEWT_VAL(BUS_DRIVER_PRESENT)
 /**
  *
  * Read bytes from the specified register using SPI interface
@@ -340,6 +355,11 @@ lps33thw_i2c_get_regs(struct sensor_itf *itf, uint8_t reg, uint8_t size,
 {
     int rc;
 
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    struct os_dev *odev = SENSOR_ITF_GET_DEVICE(itf);
+
+    rc = bus_node_simple_write_read_transact(odev, &reg, 1, buffer, size);
+#else
     struct hal_i2c_master_data data_struct = {
         .address = itf->si_addr,
         .len = 1,
@@ -368,8 +388,11 @@ lps33thw_i2c_get_regs(struct sensor_itf *itf, uint8_t reg, uint8_t size,
                     itf->si_addr, reg);
         STATS_INC(g_lps33thwstats, read_errors);
     }
+#endif
+
     return rc;
 }
+#endif
 
 /**
  * Read bytes from the specified register using specified interface
@@ -387,6 +410,9 @@ lps33thw_get_regs(struct sensor_itf *itf, uint8_t reg, uint8_t size,
 {
     int rc;
 
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    rc = bus_node_simple_write_read_transact(itf->si_dev, &reg, 1, buffer, size);
+#else
     rc = sensor_itf_lock(itf, MYNEWT_VAL(LPS33THW_ITF_LOCK_TMO));
     if (rc) {
         return rc;
@@ -399,6 +425,7 @@ lps33thw_get_regs(struct sensor_itf *itf, uint8_t reg, uint8_t size,
     }
 
     sensor_itf_unlock(itf);
+#endif
 
     return rc;
 }
@@ -902,6 +929,7 @@ lps33thw_init(struct os_dev *dev, void *arg)
         return rc;
     }
 
+#if !MYNEWT_VAL(BUS_DRIVER_PRESENT)
     if (sensor->s_itf.si_type == SENSOR_ITF_SPI) {
         rc = hal_spi_config(sensor->s_itf.si_num, &spi_lps33thw_settings);
         if (rc == EINVAL) {
@@ -921,6 +949,7 @@ lps33thw_init(struct os_dev *dev, void *arg)
             return rc;
         }
     }
+#endif
 
     return rc;
 }
@@ -1084,3 +1113,47 @@ lps33thw_sensor_get_config(struct sensor *sensor, sensor_type_t type,
 
     return 0;
 }
+
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+static void
+init_node_cb(struct bus_node *bnode, void *arg)
+{
+    struct sensor_itf *itf = arg;
+
+    lps33thw_init((struct os_dev *)bnode, itf);
+}
+
+int
+lps33thw_create_i2c_sensor_dev(struct bus_i2c_node *node, const char *name,
+                               const struct bus_i2c_node_cfg *i2c_cfg,
+                               struct sensor_itf *sensor_itf)
+{
+    struct bus_node_callbacks cbs = {
+        .init = init_node_cb,
+    };
+    int rc;
+
+    bus_node_set_callbacks((struct os_dev *)node, &cbs);
+
+    rc = bus_i2c_node_create(name, node, i2c_cfg, sensor_itf);
+
+    return rc;
+}
+
+int
+lps33thw_create_spi_sensor_dev(struct bus_spi_node *node, const char *name,
+                               const struct bus_spi_node_cfg *spi_cfg,
+                               struct sensor_itf *sensor_itf)
+{
+    struct bus_node_callbacks cbs = {
+        .init = init_node_cb,
+    };
+    int rc;
+
+    bus_node_set_callbacks((struct os_dev *)node, &cbs);
+
+    rc = bus_spi_node_create(name, node, spi_cfg, sensor_itf);
+
+    return rc;
+}
+#endif
