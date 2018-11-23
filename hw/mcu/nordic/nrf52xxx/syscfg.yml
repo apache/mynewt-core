@@ -37,6 +37,14 @@ syscfg.defs:
             expected to be overridden by the BSP.
         value: 0
 
+    MCU_I2C_RECOVERY_DELAY_USEC:
+        description: >
+            Time to wait for activity on SCL line after triggering start task
+            before restarting TWI controller. This is to recover from state
+            where controller is unresponsive due to glitch on I2C bus.
+            Note: Default value seems to work fine, but may need to be tuned.
+        value: 100
+
 # MCU peripherals definitions
     I2C_0:
         description: 'Enable nRF52xxx I2C (TWI) 0'

@@ -410,6 +410,64 @@ hal_i2c_config(uint8_t i2c_num, const struct hal_i2c_settings *cfg)
     return 0;
 }
 
+static bool
+hal_i2c_check_scl(int pin_scl)
+{
+    uint32_t end_ticks;
+    int toggled = 0;
+
+    /*
+     * Wait a bit for low state on SCL as this indicates that controller has
+     * started writing something one the bus. It does not matter whether low
+     * state is due to START condition on bus or one of clock cycles when
+     * writing address on bus - in any case this means controller seems to
+     * write something on bus.
+     */
+
+    end_ticks = os_cputime_get32() +
+                os_cputime_usecs_to_ticks(MYNEWT_VAL(MCU_I2C_RECOVERY_DELAY_USEC));
+
+    do {
+        if (!hal_gpio_read(pin_scl)) {
+            toggled = 1;
+        }
+    } while (!toggled && CPUTIME_LT(os_cputime_get32(), end_ticks));
+
+    return toggled;
+}
+
+static inline void
+hal_i2c_trigger_start(NRF_TWI_Type *twi, __O uint32_t *task)
+{
+    int retry = 2;
+
+    /*
+     * Some devices [1] can cause glitch on I2C bus which makes TWI controller
+     * unresponsive and it won't write anything onto bus until disabled and
+     * enabled again. To workaround this we can just check if SCL line is
+     * pulled low after triggering start task which means controller works
+     * properly. In other case, we disable and enable TWI controller and try
+     * again. If this still fails to make controller work properly
+     *
+     * [1] LP5523 does this on reset
+     */
+
+    do {
+        *task = 1;
+        if (hal_i2c_check_scl(twi->PSELSCL)) {
+            break;
+        }
+
+        twi->ENABLE = TWI_ENABLE_ENABLE_Disabled;
+        /*
+         * This is to "clear" other devices on bus which may be affected by the
+         * same glitch.
+         */
+        hal_i2c_clear_bus(twi->PSELSCL, twi->PSELSDA);
+        twi->ENABLE = TWI_ENABLE_ENABLE_Enabled;
+    } while (--retry);
+}
+
 int
 hal_i2c_master_write(uint8_t i2c_num, struct hal_i2c_master_data *pdata,
                      uint32_t timo, uint8_t last_op)
@@ -434,7 +492,7 @@ hal_i2c_master_write(uint8_t i2c_num, struct hal_i2c_master_data *pdata,
     regs->EVENTS_SUSPENDED = 0;
     regs->SHORTS = 0;
 
-    regs->TASKS_STARTTX = 1;
+    hal_i2c_trigger_start(regs, &regs->TASKS_STARTTX);
 
     start = os_time_get();
     for (i = 0; i < pdata->len; i++) {
@@ -474,16 +532,6 @@ err:
         nrf_status = regs->ERRORSRC;
         regs->ERRORSRC = nrf_status;
         rc = hal_i2c_convert_status(nrf_status);
-    } else if (rc == HAL_I2C_ERR_TIMEOUT) {
-        /* Some I2C slave peripherals cause a glitch on the bus when they
-         * reset which puts the TWI in an unresponsive state.  Disabling and
-         * re-enabling the TWI returns it to normal operation.
-         * A clear operation is performed in case one of the devices on
-         * the bus is in a bad state.
-         */
-        regs->ENABLE = TWI_ENABLE_ENABLE_Disabled;
-        hal_i2c_clear_bus(regs->PSELSCL, regs->PSELSDA);
-        regs->ENABLE = TWI_ENABLE_ENABLE_Enabled;
     }
 
     return (rc);
@@ -527,7 +575,8 @@ hal_i2c_master_read(uint8_t i2c_num, struct hal_i2c_master_data *pdata,
     } else {
         regs->SHORTS = TWI_SHORTS_BB_SUSPEND_Msk;
     }
-    regs->TASKS_STARTRX = 1;
+
+    hal_i2c_trigger_start(regs, &regs->TASKS_STARTRX);
 
     for (i = 0; i < pdata->len; i++) {
         regs->TASKS_RESUME = 1;
@@ -559,16 +608,6 @@ err:
         nrf_status = regs->ERRORSRC;
         regs->ERRORSRC = nrf_status;
         rc = hal_i2c_convert_status(nrf_status);
-    } else if (rc == HAL_I2C_ERR_TIMEOUT) {
-       /* Some I2C slave peripherals cause a glitch on the bus when they
-        * reset which puts the TWI in an unresponsive state.  Disabling and
-        * re-enabling the TWI returns it to normal operation.
-        * A clear operation is performed in case one of the devices on
-        * the bus is in a bad state.
-        */
-        regs->ENABLE = TWI_ENABLE_ENABLE_Disabled;
-        hal_i2c_clear_bus(regs->PSELSCL, regs->PSELSDA);
-        regs->ENABLE = TWI_ENABLE_ENABLE_Enabled;
     }
 
     return (rc);
