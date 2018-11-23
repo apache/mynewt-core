@@ -21,7 +21,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
-#include "os/mynewt.h"
+#include "os/os.h"
 
 #ifdef __cplusplus
 extern "C" {
