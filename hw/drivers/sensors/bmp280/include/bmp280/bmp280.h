@@ -22,6 +22,11 @@
 #define __bmp280_H__
 
 #include "os/mynewt.h"
+#if !MYNEWT_VAL(BUS_DRIVER_PRESENT)
+#include "bus/bus.h"
+#include "bus/i2c.h"
+#include "bus/spi.h"
+#endif
 #include "sensor/sensor.h"
 
 #define BMP280_SPI_READ_CMD_BIT 0x80
@@ -257,6 +262,38 @@ bmp280_forced_mode_measurement(struct sensor_itf *itf);
 
 #if MYNEWT_VAL(BMP280_CLI)
 int bmp280_shell_init(void);
+#endif
+
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+/**
+ * Create I2C bus node for BMP280 sensor
+ *
+ * @param node        Bus node
+ * @param name        Device name
+ * @param i2c_cfg     I2C node configuration
+ * @param sensor_itf  Sensors interface
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+bmp280_create_i2c_sensor_dev(struct bus_i2c_node *node, const char *name,
+                             const struct bus_i2c_node_cfg *i2c_cfg,
+                             struct sensor_itf *sensor_itf);
+
+/**
+ * Create SPI bus node for BMP280 sensor
+ *
+ * @param node        Bus node
+ * @param name        Device name
+ * @param spi_cfg     SPI node configuration
+ * @param sensor_itf  Sensors interface
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+bmp280_create_spi_sensor_dev(struct bus_spi_node *node, const char *name,
+                             const struct bus_spi_node_cfg *spi_cfg,
+                             struct sensor_itf *sensor_itf);
 #endif
 
 #ifdef __cplusplus
