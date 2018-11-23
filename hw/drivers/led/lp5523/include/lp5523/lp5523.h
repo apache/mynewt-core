@@ -25,6 +25,10 @@ extern "C" {
 #endif
 
 #include <led/led_itf.h>
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+#include "bus/bus_driver.h"
+#include "bus/i2c.h"
+#endif
 
 #define LP5523_MAX_PAYLOAD   (10)
 
@@ -108,7 +112,11 @@ struct lp5523_cfg {
 };
 
 struct lp5523 {
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    struct bus_i2c_node i2c_node;
+#else
     struct os_dev dev;
+#endif
     struct lp5523_cfg cfg;
 };
 
@@ -1469,6 +1477,21 @@ int lp5523_shell_init(void);
  */
 #define LP5523_INS_SUB(target_variable, variable1, variable2) \
     LP5523_INS_ARITH(0x9310, target_variable, variable1, variable2)
+
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+/**
+ * Create I2C bus node for LP5523
+ *
+ * @param node     Bus node
+ * @param name     Device name
+ * @param i2c_cfg  I2C node configuration
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+lp5523_create_i2c_dev(struct bus_i2c_node *node, const char *name,
+                      const struct bus_i2c_node_cfg *i2c_cfg);
+#endif
 
 #ifdef __cplusplus
 }

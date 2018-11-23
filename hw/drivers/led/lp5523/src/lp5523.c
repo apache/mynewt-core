@@ -52,6 +52,9 @@ lp5523_set_reg(struct led_itf *itf, enum lp5523_registers addr,
     int rc;
     uint8_t payload[2] = { addr, value };
 
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    rc = bus_node_simple_write(itf->li_dev, payload, sizeof(payload));
+#else
     struct hal_i2c_master_data data_struct = {
         .address = itf->li_addr,
         .len = 2,
@@ -75,6 +78,7 @@ lp5523_set_reg(struct led_itf *itf, enum lp5523_registers addr,
     }
 
     led_itf_unlock(itf);
+#endif
 
     return rc;
 }
@@ -85,6 +89,9 @@ lp5523_get_reg(struct led_itf *itf, enum lp5523_registers addr,
 {
     int rc;
 
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    rc = bus_node_simple_write_read_transact(itf->li_dev, &addr, 1, value, 1);
+#else
     struct hal_i2c_master_data data_struct = {
         .address = itf->li_addr,
         .len = 1,
@@ -120,6 +127,7 @@ lp5523_get_reg(struct led_itf *itf, enum lp5523_registers addr,
 
 err:
     led_itf_unlock(itf);
+#endif
 
     return rc;
 }
@@ -131,18 +139,21 @@ lp5523_set_n_regs(struct led_itf *itf, enum lp5523_registers addr,
     int rc;
     uint8_t payload[LP5523_MAX_PAYLOAD] = {0};
 
-    struct hal_i2c_master_data data_struct = {
-        .address = itf->li_addr,
-        .len = len + 1,
-        .buffer = payload,
-    };
-
     if (len >= LP5523_MAX_PAYLOAD) {
         return -1;
     }
 
     payload[0] = addr;
     memcpy(&payload[1], vals, len);
+
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    rc = bus_node_simple_write(itf->li_dev, payload, sizeof(payload));
+#else
+    struct hal_i2c_master_data data_struct = {
+        .address = itf->li_addr,
+        .len = len + 1,
+        .buffer = payload,
+    };
 
     rc = led_itf_lock(itf, MYNEWT_VAL(LP5523_ITF_LOCK_TMO));
     if (rc) {
@@ -159,6 +170,7 @@ lp5523_set_n_regs(struct led_itf *itf, enum lp5523_registers addr,
     }
 
     led_itf_unlock(itf);
+#endif
 
     return rc;
 }
@@ -171,6 +183,9 @@ lp5523_get_n_regs(struct led_itf *itf, enum lp5523_registers addr,
     int rc;
     uint8_t addr_b = (uint8_t) addr;
 
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    rc = bus_node_simple_write_read_transact(itf->li_dev, &addr_b, 1, vals, len);
+#else
     struct hal_i2c_master_data data_struct = {
         .address = itf->li_addr,
         .len = 1,
@@ -205,6 +220,7 @@ lp5523_get_n_regs(struct led_itf *itf, enum lp5523_registers addr,
 
 err:
     led_itf_unlock(itf);
+#endif
 
     return rc;
 }
@@ -932,7 +948,7 @@ lp5523_init(struct os_dev *dev, void *arg)
 {
     int rc;
 
-    if (!arg || !dev) {
+    if (!dev) {
         return SYS_ENODEV;
     }
 
@@ -979,7 +995,9 @@ lp5523_config(struct led_itf *itf, struct lp5523_cfg *cfg)
     int i;
     uint8_t misc_val;
 
+#if !MYNEWT_VAL(BUS_DRIVER_PRESENT)
     itf->li_addr = LP5523_I2C_BASE_ADDR + cfg->asel;
+#endif
 
     if (cfg->prereset) {
         rc = lp5523_reset(itf);
@@ -1074,3 +1092,29 @@ lp5523_config(struct led_itf *itf, struct lp5523_cfg *cfg)
 err:
     return rc;
 }
+
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+static void
+init_node_cb(struct bus_node *bnode, void *arg)
+{
+    assert(arg == NULL);
+
+    lp5523_init((struct os_dev *)bnode, NULL);
+}
+
+int
+lp5523_create_i2c_dev(struct bus_i2c_node *node, const char *name,
+                      const struct bus_i2c_node_cfg *i2c_cfg)
+{
+    struct bus_node_callbacks cbs = {
+        .init = init_node_cb,
+    };
+    int rc;
+
+    bus_node_set_callbacks((struct os_dev *)node, &cbs);
+
+    rc = bus_i2c_node_create(name, node, i2c_cfg, NULL);
+
+    return rc;
+}
+#endif
