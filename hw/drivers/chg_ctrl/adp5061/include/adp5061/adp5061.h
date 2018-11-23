@@ -25,6 +25,10 @@
 #include "syscfg/syscfg.h"
 #include "os/os_time.h"
 #include "charge-control/charge_control.h"
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+#include "bus/bus_driver.h"
+#include "bus/i2c.h"
+#endif
 
 /**
 * Struct for ADP50961 configuration
@@ -43,7 +47,11 @@ struct adp5061_config {
 };
 
 struct adp5061_dev {
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    struct bus_i2c_node     a_node;
+#else
     struct os_dev           a_dev;
+#endif
     struct charge_control   a_chg_ctrl;
     struct adp5061_config   a_cfg;
     os_time_t               a_last_read_time;
@@ -978,5 +986,20 @@ int adp5061_set_regs(struct adp5061_dev *dev, uint8_t addr,
                                             >> ADP5061_SYS_EN_OFFSET)
 #define ADP5061_SYS_EN_SET(a)           ((a & ((1 << ADP5061_SYS_EN_LEN)-1)) \
                                             << ADP5061_SYS_EN_OFFSET)
+
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+/**
+ * Create I2C bus node for ADP5061
+ *
+ * @param node  Bus node
+ * @param name  Device name
+ * @param cfg   I2C node configuration
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+adp5061_create_i2c_dev(struct bus_i2c_node *node, const char *name,
+                       const struct bus_i2c_node_cfg *cfg);
+#endif
 
 #endif /* _ADP5061_H */
