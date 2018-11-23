@@ -22,6 +22,11 @@
 
 #include "os/mynewt.h"
 #include "sensor/sensor.h"
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+#include "bus/bus_driver.h"
+#include "bus/i2c.h"
+#include "bus/spi.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -256,7 +261,14 @@ struct lis2dh12_pdd {
 };
 
 struct lis2dh12 {
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    union {
+        struct bus_i2c_node i2c_node;
+        struct bus_spi_node spi_node;
+    };
+#else
     struct os_dev dev;
+#endif
     struct sensor sensor;
     struct lis2dh12_cfg cfg;
     struct lis2dh12_int intr;
@@ -627,6 +639,38 @@ lis2dh12_get_fifo_samples(struct sensor_itf *itf, uint8_t *samples);
 
 #if MYNEWT_VAL(LIS2DH12_CLI)
 int lis2dh12_shell_init(void);
+#endif
+
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+/**
+ * Create I2C bus node for LIS2DH12 sensor
+ *
+ * @param node        Bus node
+ * @param name        Device name
+ * @param i2c_cfg     I2C node configuration
+ * @param sensor_itf  Sensors interface
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+lis2dh12_create_i2c_sensor_dev(struct bus_i2c_node *node, const char *name,
+                               const struct bus_i2c_node_cfg *i2c_cfg,
+                               struct sensor_itf *sensor_itf);
+
+/**
+ * Create SPI bus node for LIS2DH12 sensor
+ *
+ * @param node        Bus node
+ * @param name        Device name
+ * @param spi_cfg     SPI node configuration
+ * @param sensor_itf  Sensors interface
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+lis2dh12_create_spi_sensor_dev(struct bus_spi_node *node, const char *name,
+                               const struct bus_spi_node_cfg *spi_cfg,
+                               struct sensor_itf *sensor_itf);
 #endif
 
 #ifdef __cplusplus
