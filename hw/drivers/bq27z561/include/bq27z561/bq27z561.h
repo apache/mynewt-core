@@ -162,11 +162,13 @@ struct bq27z561_itf
     struct os_mutex *itf_lock;
 };
 
+#if !MYNEWT_VAL(BUS_DRIVER_PRESENT)
 struct bq27z561_init_arg
 {
     struct bq27z561_itf itf;
     struct os_dev *battery;
 };
+#endif
 
 /* BQ27Z561 device */
 struct bq27z561
@@ -177,8 +179,10 @@ struct bq27z561
     /* Configuration values */
     struct bq27z561_cfg bq27_cfg;
 
+#if !MYNEWT_VAL(BUS_DRIVER_PRESENT)
     /* Interface */
     struct bq27z561_itf bq27_itf;
+#endif
 
     /* Device initialization complete flag */
     uint8_t bq27_initialized;
@@ -603,6 +607,23 @@ int bq27z561_init(struct os_dev * dev, void * arg);
  * @return 0 on success, non-zero on failure.
  */
 int bq27z561_shell_init(void);
+#endif
+
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+/**
+ * Create I2C bus node for BQ27Z561
+ *
+ * @param node         Bus node
+ * @param name         Device name
+ * @param i2c_cfg      I2C node configuration
+ * @param battery_dev  Battery device
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+bq27z561_create_i2c_dev(struct bus_i2c_node *node, const char *name,
+                        const struct bus_i2c_node_cfg *i2c_cfg,
+                        struct os_dev *battery_dev);
 #endif
 
 #ifdef __cplusplus
