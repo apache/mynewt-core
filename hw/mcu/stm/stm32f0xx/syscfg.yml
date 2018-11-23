@@ -37,6 +37,18 @@ syscfg.defs:
         description: This MCU's UART uses ISR register (not SR) for status.
         value: 0
 
+    MCU_FLASH_ERASED_VAL:
+        description: Value read from erased flash.
+        value: 0xff
+
+    STM32_FLASH_IS_LINEAR:
+        description: This MCU's Flash has one single sector size.
+        value: 1
+
+    STM32_FLASH_SECTOR_SIZE:
+        description: This MCU's Flash sector size in bytes.
+        value: 2048
+
     MCU_SYSCLK_PLL_HSI:
         description: Configure PLL as sysclock driven by HSI.
         value: 0

@@ -18,6 +18,14 @@
 #
 
 syscfg.defs:
+    STM32_FLASH_SIZE_KB:
+        description: 'Total flash size in KB.'
+        value: 1536
+
+    STM32_FLASH_NUM_AREAS:
+        description: 'Amount of flash sectors for a non-linear STM32 MCU.'
+        value: 17
+
     UART_0:
         description: 'UART 0'
         value:  1

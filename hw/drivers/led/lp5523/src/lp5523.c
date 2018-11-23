@@ -129,17 +129,20 @@ lp5523_set_n_regs(struct led_itf *itf, enum lp5523_registers addr,
     uint8_t *vals, uint8_t len)
 {
     int rc;
-    uint8_t regs[LP5523_MAX_PAYLOAD] = {0};
+    uint8_t payload[LP5523_MAX_PAYLOAD] = {0};
 
     struct hal_i2c_master_data data_struct = {
         .address = itf->li_addr,
         .len = len + 1,
-        .buffer = regs
+        .buffer = payload,
     };
 
-    memcpy(regs + 1, vals, len);
+    if (len >= LP5523_MAX_PAYLOAD) {
+        return -1;
+    }
 
-    regs[0] = addr;
+    payload[0] = addr;
+    memcpy(&payload[1], vals, len);
 
     rc = led_itf_lock(itf, MYNEWT_VAL(LP5523_ITF_LOCK_TMO));
     if (rc) {
@@ -151,7 +154,7 @@ lp5523_set_n_regs(struct led_itf *itf, enum lp5523_registers addr,
 
     if (rc) {
         LP5523_LOG(ERROR, "Failed to write to 0x%02X:0x%02X\n", itf->li_addr,
-                   regs[0]);
+                   addr);
         STATS_INC(g_lp5523stats, read_errors);
     }
 

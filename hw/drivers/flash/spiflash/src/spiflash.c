@@ -77,6 +77,8 @@ void spiflash_release_power_down(struct spiflash_dev *dev);
     STD_FLASH_CHIP(name, JEDEC_MFC_MICRON, typ, cap, spiflash_release_power_down)
 #define ADESTO_CHIP(name, typ, cap) \
     STD_FLASH_CHIP(name, JEDEC_MFC_ADESTO, typ, cap, spiflash_release_power_down)
+#define EON_CHIP(name, typ, cap) \
+    STD_FLASH_CHIP(name, JEDEC_MFC_EON, typ, cap, spiflash_release_power_down)
 
 static struct spiflash_chip supported_chips[] = {
 #if MYNEWT_VAL(SPIFLASH_MANUFACTURER) && MYNEWT_VAL(SPIFLASH_MEMORY_TYPE) && MYNEWT_VAL(SPIFLASH_MEMORY_CAPACITY)
@@ -554,6 +556,9 @@ static struct spiflash_chip supported_chips[] = {
 #endif
 #if MYNEWT_VAL(SPIFLASH_AT25QL321)
     ADESTO_CHIP(AT25QL321, 0x42, FLASH_CAPACITY_32MBIT),
+#endif
+#if MYNEWT_VAL(SPIFLASH_EON2580B)
+    EON_CHIP(EN80B, 0x30, FLASH_CAPACITY_8MBIT),
 #endif
 
     { {0} },

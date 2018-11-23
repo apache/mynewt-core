@@ -136,6 +136,7 @@ static const struct hal_bsp_mem_dump dump_cfg[] = {
     }
 };
 
+extern const struct hal_flash stm32_flash_dev;
 const struct hal_flash *
 hal_bsp_flash_dev(uint8_t id)
 {
@@ -145,7 +146,7 @@ hal_bsp_flash_dev(uint8_t id)
     if (id != 0) {
         return NULL;
     }
-    return stm32f3_flash_dev();
+    return &stm32_flash_dev;
 }
 
 const struct hal_bsp_mem_dump *
