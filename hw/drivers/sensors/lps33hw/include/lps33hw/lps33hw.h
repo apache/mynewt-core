@@ -22,6 +22,10 @@
 
 #include "os/mynewt.h"
 #include "sensor/sensor.h"
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+#include "bus/bus_driver.h"
+#include "bus/i2c.h"
+#endif
 #include "hal/hal_gpio.h"
 
 #ifdef __cplusplus
@@ -77,7 +81,11 @@ struct lps33hw_private_driver_data {
 };
 
 struct lps33hw {
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    struct bus_i2c_node i2c_node;
+#else
     struct os_dev dev;
+#endif
     struct sensor sensor;
     struct lps33hw_cfg cfg;
     os_time_t last_read_time;
@@ -210,6 +218,23 @@ int lps33hw_config(struct lps33hw *, struct lps33hw_cfg *);
 
 #if MYNEWT_VAL(LPS33HW_CLI)
 int lps33hw_shell_init(void);
+#endif
+
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+/**
+ * Create I2C bus node for LPS33HW sensor
+ *
+ * @param node        Bus node
+ * @param name        Device name
+ * @param i2c_cfg     I2C node configuration
+ * @param sensor_itf  Sensors interface
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+lps33hw_create_i2c_sensor_dev(struct bus_i2c_node *node, const char *name,
+                              const struct bus_i2c_node_cfg *i2c_cfg,
+                              struct sensor_itf *sensor_itf);
 #endif
 
 #ifdef __cplusplus
