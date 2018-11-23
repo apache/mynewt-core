@@ -23,6 +23,11 @@
 #include "os/mynewt.h"
 #include "sensor/sensor.h"
 #include "hal/hal_gpio.h"
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+#include "bus/bus_driver.h"
+#include "bus/i2c.h"
+#include "bus/spi.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -80,7 +85,11 @@ struct lps33thw_private_driver_data {
 };
 
 struct lps33thw {
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    struct bus_i2c_node i2c_node;
+#else
     struct os_dev dev;
+#endif
     struct sensor sensor;
     struct lps33thw_cfg cfg;
     os_time_t last_read_time;
@@ -213,6 +222,38 @@ int lps33thw_config(struct lps33thw *, struct lps33thw_cfg *);
 
 #if MYNEWT_VAL(LPS33THW_CLI)
 int lps33thw_shell_init(void);
+#endif
+
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+/**
+ * Create I2C bus node for LPS33THW sensor
+ *
+ * @param node        Bus node
+ * @param name        Device name
+ * @param i2c_cfg     I2C node configuration
+ * @param sensor_itf  Sensors interface
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+lps33thw_create_i2c_sensor_dev(struct bus_i2c_node *node, const char *name,
+                               const struct bus_i2c_node_cfg *i2c_cfg,
+                               struct sensor_itf *sensor_itf);
+
+/**
+ * Create SPI bus node for LPS33THW sensor
+ *
+ * @param node        Bus node
+ * @param name        Device name
+ * @param spi_cfg     SPI node configuration
+ * @param sensor_itf  Sensors interface
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+lps33thw_create_spi_sensor_dev(struct bus_spi_node *node, const char *name,
+                               const struct bus_spi_node_cfg *spi_cfg,
+                               struct sensor_itf *sensor_itf);
 #endif
 
 #ifdef __cplusplus
