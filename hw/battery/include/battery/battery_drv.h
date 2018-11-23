@@ -29,6 +29,11 @@
 #define __BATTERY_DRV_H__
 
 #include "os/mynewt.h"
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+#include "bus/bus_driver.h"
+#include "bus/i2c.h"
+#include "bus/spi.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -140,8 +145,17 @@ struct battery_driver_functions {
 };
 
 struct battery_driver {
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    /* Underlying bus node */
+    union {
+        struct os_dev dev;
+        struct bus_i2c_node i2c_node;
+        struct bus_spi_node spi_node;
+    };
+#else
     /* Underlying OS device */
     struct os_dev dev;
+#endif
 
     const struct battery_driver_functions *bd_funcs;
     /* Array of properties supported by this battery */
