@@ -25,8 +25,12 @@
 #include "bma253/bma253.h"
 #include "bma253_priv.h"
 #include "hal/hal_gpio.h"
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+#include "bus/bus.h"
+#else
 #include "hal/hal_i2c.h"
 #include "i2cn/i2cn.h"
+#endif
 
 #if MYNEWT_VAL(BMA253_LOG)
 #include "modlog/modlog.h"
@@ -148,11 +152,13 @@ get_register(struct bma253 * bma253,
              uint8_t addr,
              uint8_t * data)
 {
-    struct sensor_itf *itf;
-    struct hal_i2c_master_data oper;
+    struct sensor_itf *itf = SENSOR_GET_ITF(&bma253->sensor);
     int rc;
 
-    itf = SENSOR_GET_ITF(&bma253->sensor);
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    rc = bus_node_simple_write_read_transact(itf->si_dev, &addr, 1, data, 1);
+#else
+    struct hal_i2c_master_data oper;
 
     rc = sensor_itf_lock(itf, MYNEWT_VAL(BMA253_ITF_LOCK_TMO));
     if (rc) {
@@ -183,6 +189,7 @@ get_register(struct bma253 * bma253,
 
 err:
     sensor_itf_unlock(itf);
+#endif
 
     return rc;
 }
@@ -193,11 +200,13 @@ get_registers(struct bma253 * bma253,
               uint8_t * data,
               uint8_t size)
 {
-    struct sensor_itf *itf;
-    struct hal_i2c_master_data oper;
+    struct sensor_itf *itf = SENSOR_GET_ITF(&bma253->sensor);
     int rc;
 
-    itf = SENSOR_GET_ITF(&bma253->sensor);
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    rc = bus_node_simple_write_read_transact(itf->si_dev, &addr, 1, data, size);
+#else
+    struct hal_i2c_master_data oper;
 
     oper.address = itf->si_addr;
     oper.len     = 1;
@@ -228,6 +237,7 @@ get_registers(struct bma253 * bma253,
 
 err:
     sensor_itf_unlock(itf);
+#endif
 
     return rc;
 }
@@ -237,12 +247,27 @@ set_register(struct bma253 * bma253,
              uint8_t addr,
              uint8_t data)
 {
-    struct sensor_itf * itf;
-    uint8_t tuple[2];
-    struct hal_i2c_master_data oper;
+    struct sensor_itf *itf = SENSOR_GET_ITF(&bma253->sensor);
     int rc;
 
-    itf = SENSOR_GET_ITF(&bma253->sensor);
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    rc = bus_node_lock(itf->si_dev, BUS_NODE_LOCK_DEFAULT_TIMEOUT);
+    if (rc) {
+        return SYS_EINVAL;
+    }
+
+    rc = bus_node_write(itf->si_dev, &addr, 1, OS_TIMEOUT_NEVER, BUS_F_NOSTOP);
+    if (rc) {
+        goto done;
+    }
+
+    rc = bus_node_simple_write(itf->si_dev, &data, 1);
+
+done:
+    (void)bus_node_unlock(itf->si_dev);
+#else
+    uint8_t tuple[2];
+    struct hal_i2c_master_data oper;
 
     rc = sensor_itf_lock(itf, MYNEWT_VAL(BMA253_ITF_LOCK_TMO));
     if (rc) {
@@ -273,6 +298,7 @@ set_register(struct bma253 * bma253,
     }
 
     sensor_itf_unlock(itf);
+#endif
 
     return rc;
 }
@@ -4763,3 +4789,30 @@ bma253_init(struct os_dev * dev, void * arg)
 
     return rc;
 }
+
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+static void
+init_node_cb(struct bus_node *bnode, void *arg)
+{
+    struct sensor_itf *itf = arg;
+
+    bma253_init((struct os_dev *)bnode, itf);
+}
+
+int
+bma253_create_i2c_sensor_dev(struct bus_i2c_node *node, const char *name,
+                             const struct bus_i2c_node_cfg *i2c_cfg,
+                             struct sensor_itf *sensor_itf)
+{
+    struct bus_node_callbacks cbs = {
+        .init = init_node_cb,
+    };
+    int rc;
+
+    bus_node_set_callbacks((struct os_dev *)node, &cbs);
+
+    rc = bus_i2c_node_create(name, node, i2c_cfg, sensor_itf);
+
+    return rc;
+}
+#endif
