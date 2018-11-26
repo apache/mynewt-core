@@ -159,14 +159,14 @@ bus_i2c_dev_init_func(struct os_dev *odev, void *arg)
     struct hal_i2c_hw_settings hal_cfg;
     int rc;
 
+    BUS_DEBUG_POISON_DEV(dev);
+
     hal_cfg.pin_scl = cfg->pin_scl;
     hal_cfg.pin_sda = cfg->pin_sda;
     rc = hal_i2c_init_hw(cfg->i2c_num, &hal_cfg);
     if (rc) {
         return SYS_EINVAL;
     }
-
-    BUS_DEBUG_POISON_DEV(dev);
 
     rc = bus_dev_init_func(odev, (void*)&bus_i2c_ops);
     assert(rc == 0);
