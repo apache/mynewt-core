@@ -26,6 +26,27 @@
 #include "bus/i2c.h"
 
 static int
+bus_i2c_translate_hal_error(int hal_err)
+{
+    switch (hal_err) {
+    case 0:
+        return 0;
+    case HAL_I2C_ERR_UNKNOWN:
+        return SYS_EUNKNOWN;
+    case HAL_I2C_ERR_INVAL:
+        return SYS_EINVAL;
+    case HAL_I2C_ERR_TIMEOUT:
+        return SYS_ETIMEOUT;
+    case HAL_I2C_ERR_ADDR_NACK:
+        return SYS_ENOENT;
+    case HAL_I2C_ERR_DATA_NACK:
+        return SYS_EREMOTEIO;
+    }
+
+    return SYS_EUNKNOWN;
+}
+
+static int
 bus_i2c_enable(struct bus_dev *bdev)
 {
     struct bus_i2c_dev *dev = (struct bus_i2c_dev *)bdev;
@@ -100,7 +121,7 @@ bus_i2c_read(struct bus_dev *bdev, struct bus_node *bnode, uint8_t *buf,
 
     rc = hal_i2c_master_read(dev->cfg.i2c_num, &i2c_data, timeout, last_op);
 
-    return rc;
+    return bus_i2c_translate_hal_error(rc);
 }
 
 static int
@@ -124,7 +145,7 @@ bus_i2c_write(struct bus_dev *bdev, struct bus_node *bnode, const uint8_t *buf,
 
     rc = hal_i2c_master_write(dev->cfg.i2c_num, &i2c_data, timeout, last_op);
 
-    return rc;
+    return bus_i2c_translate_hal_error(rc);
 }
 
 static int bus_i2c_disable(struct bus_dev *bdev)
