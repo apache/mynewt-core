@@ -119,7 +119,9 @@ bus_node_write_read_transact(struct os_dev *node, const void  *wbuf,
 static inline int
 bus_node_simple_read(struct os_dev *node, void *buf, uint16_t length)
 {
-    return bus_node_read(node, buf, length, OS_TIMEOUT_NEVER, BUS_F_NONE);
+    return bus_node_read(node, buf, length,
+                         os_time_ms_to_ticks32(MYNEWT_VAL(BUS_DEFAULT_TRANSACTION_TIMEOUT_MS)),
+                         BUS_F_NONE);
 }
 
 /**
@@ -136,7 +138,9 @@ bus_node_simple_read(struct os_dev *node, void *buf, uint16_t length)
 static inline int
 bus_node_simple_write(struct os_dev *node, const void *buf, uint16_t length)
 {
-    return bus_node_write(node, buf, length, OS_TIMEOUT_NEVER, BUS_F_NONE);
+    return bus_node_write(node, buf, length,
+                          os_time_ms_to_ticks32(MYNEWT_VAL(BUS_DEFAULT_TRANSACTION_TIMEOUT_MS)),
+                          BUS_F_NONE);
 }
 
 /**
@@ -159,7 +163,8 @@ bus_node_simple_write_read_transact(struct os_dev *node, const void *wbuf,
                                     uint16_t rlength)
 {
     return bus_node_write_read_transact(node, wbuf, wlength, rbuf, rlength,
-                                        OS_TIMEOUT_NEVER, BUS_F_NONE);
+                                        os_time_ms_to_ticks32(MYNEWT_VAL(BUS_DEFAULT_TRANSACTION_TIMEOUT_MS)),
+                                        BUS_F_NONE);
 }
 
 /**

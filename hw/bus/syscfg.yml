@@ -26,6 +26,11 @@ syscfg.defs:
         description: >
             Default timeout for locking the bus. This can be overriden per-node.
         value: 1000
+    BUS_DEFAULT_TRANSACTION_TIMEOUT_MS:
+        description: >
+            Default timeout for transaction on bus. This is used for simple
+            transaction APIs (i.e. without timeout set explicitly)
+        value: 10
 
     BUS_DEBUG_OS_DEV:
         description: >
