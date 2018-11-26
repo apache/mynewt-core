@@ -22,6 +22,10 @@ syscfg.defs:
             This indicated that hw/bus package is present in build.
             Do not override this settings.
         value: 1
+    BUS_DEFAULT_LOCK_TIMEOUT_MS:
+        description: >
+            Default timeout for locking the bus. This can be overriden per-node.
+        value: 1000
 
     BUS_DEBUG_OS_DEV:
         description: >

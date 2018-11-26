@@ -24,6 +24,8 @@
 #include "bus/bus_debug.h"
 #include "bus/bus_driver.h"
 
+static os_time_t g_bus_node_lock_timeout;
+
 static int
 bus_node_open_func(struct os_dev *odev, uint32_t wait, void *arg)
 {
@@ -145,7 +147,7 @@ bus_node_read(struct os_dev *node, void *buf, uint16_t length,
         return SYS_ENOTSUP;
     }
 
-    rc = bus_node_lock(node, timeout);
+    rc = bus_node_lock(node, g_bus_node_lock_timeout);
     if (rc) {
         return rc;
     }
@@ -172,7 +174,7 @@ bus_node_write(struct os_dev *node, const void *buf, uint16_t length,
         return SYS_ENOTSUP;
     }
 
-    rc = bus_node_lock(node, timeout);
+    rc = bus_node_lock(node, g_bus_node_lock_timeout);
     if (rc) {
         return rc;
     }
@@ -200,7 +202,7 @@ bus_node_write_read_transact(struct os_dev *node, const void *wbuf,
         return SYS_ENOTSUP;
     }
 
-    rc = bus_node_lock(node, timeout);
+    rc = bus_node_lock(node, g_bus_node_lock_timeout);
     if (rc) {
         return rc;
     }
@@ -238,6 +240,10 @@ bus_node_lock(struct os_dev *node, os_time_t timeout)
 
     BUS_DEBUG_VERIFY_DEV(bdev);
     BUS_DEBUG_VERIFY_NODE(bnode);
+
+    if (timeout == BUS_NODE_LOCK_DEFAULT_TIMEOUT) {
+        timeout = g_bus_node_lock_timeout;
+    }
 
     err = os_mutex_pend(&bdev->lock, timeout);
     if (err == OS_TIMEOUT) {
@@ -285,8 +291,18 @@ bus_node_unlock(struct os_dev *node)
     return 0;
 }
 
+os_time_t
+bus_node_get_lock_timeout(struct os_dev *node)
+{
+    return g_bus_node_lock_timeout;
+}
+
 void
 bus_pkg_init(void)
 {
+    uint32_t lock_timeout_ms;
 
+    lock_timeout_ms = MYNEWT_VAL(BUS_DEFAULT_LOCK_TIMEOUT_MS);
+
+    g_bus_node_lock_timeout = os_time_ms_to_ticks32(lock_timeout_ms);
 }

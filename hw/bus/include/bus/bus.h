@@ -35,6 +35,9 @@ extern "C" {
 #define BUS_F_NONE          0
 #define BUS_F_NOSTOP        0x0001
 
+/* Use as default timeout to lock node */
+#define BUS_NODE_LOCK_DEFAULT_TIMEOUT        ((os_time_t) -1)
+
 /**
  * Read data from node
  *
@@ -209,6 +212,17 @@ bus_node_lock(struct os_dev *node, os_time_t timeout);
  */
 int
 bus_node_unlock(struct os_dev *node);
+
+/**
+ * Get node configured lock timeout
+ *
+ * Returns lock timeout as configured for node. If not timeout is configured for
+ * give node or no node is specified, default timeout is returned.
+ *
+ * @param node  Node to get timeout for
+ */
+os_time_t
+bus_node_get_lock_timeout(struct os_dev *node);
 
 #ifdef __cplusplus
 }
