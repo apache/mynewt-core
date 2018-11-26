@@ -177,9 +177,6 @@ bus_i2c_dev_init_func(struct os_dev *odev, void *arg)
 
     dev->cfg = *cfg;
 
-    rc = hal_i2c_enable(dev->cfg.i2c_num);
-    assert(rc == 0);
-
     return 0;
 }
 
