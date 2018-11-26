@@ -260,6 +260,7 @@ bus_node_lock(struct os_dev *node, os_time_t timeout)
     rc = bdev->dops->configure(bdev, bnode);
     if (rc) {
         bdev->configured_for = NULL;
+        (void)bus_node_unlock(node);
     } else {
         bdev->configured_for = bnode;
     }
