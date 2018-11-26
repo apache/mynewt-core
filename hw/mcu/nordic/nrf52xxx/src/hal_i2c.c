@@ -556,7 +556,7 @@ hal_i2c_master_read(uint8_t i2c_num, struct hal_i2c_master_data *pdata,
 
 err:
     regs->TASKS_STOP = 1;
-    regs->SHORTS = TWI_SHORTS_BB_STOP_Msk;
+    regs->SHORTS = 0;
 
     if (regs->EVENTS_ERROR) {
         nrf_status = regs->ERRORSRC;
