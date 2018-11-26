@@ -21,7 +21,7 @@ syscfg.defs:
         description: >
             This indicated that hw/bus package is present in build.
             Do not override this settings.
-        value: 0
+        value: 1
 
     BUS_DEBUG_OS_DEV:
         description: >

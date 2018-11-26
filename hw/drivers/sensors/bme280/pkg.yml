@@ -39,6 +39,3 @@ pkg.req_apis:
 pkg.deps.BME280_CLI:
     - "@apache-mynewt-core/util/parse"
 
-pkg.deps.BUS_DRIVER_PRESENT:
-    - "@apache-mynewt-core/hw/bus/i2c"
-    - "@apache-mynewt-core/hw/bus/spi"
