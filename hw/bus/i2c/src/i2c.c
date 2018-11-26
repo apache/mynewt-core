@@ -209,14 +209,14 @@ bus_i2c_node_init_func(struct os_dev *odev, void *arg)
 
     BUS_DEBUG_POISON_NODE(node);
 
+    node->freq = cfg->freq;
+    node->addr = cfg->addr;
+    node->quirks = cfg->quirks;
+
     rc = bus_node_init_func(odev, node_cfg);
     if (rc) {
         return rc;
     }
-
-    node->freq = cfg->freq;
-    node->addr = cfg->addr;
-    node->quirks = cfg->quirks;
 
     return 0;
 }
