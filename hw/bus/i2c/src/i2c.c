@@ -19,6 +19,7 @@
 
 #include <assert.h>
 #include "defs/error.h"
+#include "hal/hal_gpio.h"
 #include "hal/hal_i2c.h"
 #include "bus/bus.h"
 #include "bus/bus_debug.h"
@@ -160,6 +161,9 @@ bus_i2c_dev_init_func(struct os_dev *odev, void *arg)
     int rc;
 
     BUS_DEBUG_POISON_DEV(dev);
+
+    hal_gpio_init_out(cfg->pin_scl, 1);
+    hal_gpio_init_out(cfg->pin_sda, 1);
 
     hal_cfg.pin_scl = cfg->pin_scl;
     hal_cfg.pin_sda = cfg->pin_sda;
