@@ -208,11 +208,6 @@ bus_spi_node_init_func(struct os_dev *odev, void *arg)
 
     BUS_DEBUG_POISON_NODE(node);
 
-    rc = bus_node_init_func(odev, node_cfg);
-    if (rc) {
-        return rc;
-    }
-
     node->pin_cs = cfg->pin_cs;
     node->mode = cfg->mode;
     node->data_order = cfg->data_order;
@@ -220,6 +215,11 @@ bus_spi_node_init_func(struct os_dev *odev, void *arg)
     node->quirks = cfg->quirks;
 
     hal_gpio_init_out(node->pin_cs, 1);
+
+    rc = bus_node_init_func(odev, node_cfg);
+    if (rc) {
+        return rc;
+    }
 
     return 0;
 }
