@@ -98,8 +98,7 @@ bus_i2c_read(struct bus_dev *bdev, struct bus_node *bnode, uint8_t *buf,
 
     last_op = !(flags & BUS_F_NOSTOP);
 
-    rc = hal_i2c_master_read(dev->cfg.i2c_num, &i2c_data,
-                             os_time_ticks_to_ms32(timeout), last_op);
+    rc = hal_i2c_master_read(dev->cfg.i2c_num, &i2c_data, timeout, last_op);
 
     return rc;
 }
@@ -123,8 +122,7 @@ bus_i2c_write(struct bus_dev *bdev, struct bus_node *bnode, const uint8_t *buf,
 
     last_op = !(flags & BUS_F_NOSTOP);
 
-    rc = hal_i2c_master_write(dev->cfg.i2c_num, &i2c_data,
-                              os_time_ticks_to_ms32(timeout), last_op);
+    rc = hal_i2c_master_write(dev->cfg.i2c_num, &i2c_data, timeout, last_op);
 
     return rc;
 }

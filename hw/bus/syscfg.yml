@@ -30,7 +30,7 @@ syscfg.defs:
         description: >
             Default timeout for transaction on bus. This is used for simple
             transaction APIs (i.e. without timeout set explicitly)
-        value: 10
+        value: 50
 
     BUS_DEBUG_OS_DEV:
         description: >
