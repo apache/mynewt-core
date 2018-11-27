@@ -24,13 +24,14 @@
 #include "hal/hal_i2c.h"
 #include "hal/hal_spi.h"
 #include "bsp/bsp.h"
-#if MYNEWT_VAL(I2C_0) || MYNEWT_VAL(I2C_1)
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
 #include "bus/bus.h"
+#if MYNEWT_VAL(I2C_0) || MYNEWT_VAL(I2C_1)
 #include "bus/i2c.h"
 #endif
-#if MYNEWT_VAL(SPI_1_MASTER)
-#include "bus/bus.h"
+#if MYNEWT_VAL(SPI_0_MASTER) || MYNEWT_VAL(SPI_1_MASTER) || MYNEWT_VAL(SPI_2_MASTER)
 #include "bus/spi.h"
+#endif
 #endif
 #include "nrfx.h"
 #if MYNEWT_VAL(ADC_0)
