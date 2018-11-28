@@ -153,7 +153,7 @@ syscfg.defs:
         value: 0
     QSPI_FLASH_PAGE_SIZE:
         description: >
-            QSPI page size. Writes can only be perfrmed to one page at a time.
+            QSPI page size. Writes can only be performed to one page at a time.
             In most cases it should be 256.
         value: 0
 
