@@ -222,14 +222,20 @@ static int
 nrf52k_qspi_erase_sector(const struct hal_flash *dev,
         uint32_t sector_address)
 {
-    while ((NRF_QSPI->STATUS & QSPI_STATUS_READY_Msk) == 0)
-        ;
-    NRF_QSPI->EVENTS_READY = 0;
-    NRF_QSPI->ERASE.PTR = sector_address;
-    NRF_QSPI->ERASE.LEN = MYNEWT_VAL(QSPI_FLASH_SECTOR_SIZE);
-    NRF_QSPI->TASKS_ERASESTART = 1;
-    while (NRF_QSPI->EVENTS_READY == 0)
-        ;
+    int8_t erases;
+
+    erases = MYNEWT_VAL(QSPI_FLASH_SECTOR_SIZE) / 4096;
+    while (erases-- > 0) {
+        while ((NRF_QSPI->STATUS & QSPI_STATUS_READY_Msk) == 0)
+            ;
+        NRF_QSPI->EVENTS_READY = 0;
+        NRF_QSPI->ERASE.PTR = sector_address;
+        NRF_QSPI->ERASE.LEN = NRF_QSPI_ERASE_LEN_4KB;
+        NRF_QSPI->TASKS_ERASESTART = 1;
+        while (NRF_QSPI->EVENTS_READY == 0)
+            ;
+        sector_address += 4096;
+    }
     return 0;
 }
 
