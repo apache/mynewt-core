@@ -188,8 +188,6 @@ nmgr_handle_req(struct nmgr_transport *nt, struct os_mbuf *req)
     CborEncoder payload_enc;
     struct nmgr_hdr *rsp_hdr;
     struct nmgr_hdr hdr;
-    int off;
-    uint16_t len;
     uint16_t mtu;
     int rc;
 
@@ -215,91 +213,83 @@ nmgr_handle_req(struct nmgr_transport *nt, struct os_mbuf *req)
     /* Copy the request user header into the response. */
     memcpy(OS_MBUF_USRHDR(rsp), OS_MBUF_USRHDR(req), OS_MBUF_USRHDR_LEN(req));
 
-    off = 0;
-    len = OS_MBUF_PKTHDR(req)->omp_len;
+    rc = os_mbuf_copydata(req, 0, sizeof(hdr), &hdr);
+    if (rc < 0) {
+        rc = MGMT_ERR_EINVAL;
+        goto err_norsp;
+    }
 
-    while (off < len) {
-        rc = os_mbuf_copydata(req, off, sizeof(hdr), &hdr);
-        if (rc < 0) {
-            rc = MGMT_ERR_EINVAL;
-            goto err_norsp;
-        }
+    hdr.nh_len = ntohs(hdr.nh_len);
 
-        hdr.nh_len = ntohs(hdr.nh_len);
+    handler = mgmt_find_handler(ntohs(hdr.nh_group), hdr.nh_id);
+    if (!handler) {
+        rc = MGMT_ERR_ENOENT;
+        goto err;
+    }
 
-        handler = mgmt_find_handler(ntohs(hdr.nh_group), hdr.nh_id);
-        if (!handler) {
-            rc = MGMT_ERR_ENOENT;
-            goto err;
-        }
+    /* Build response header apriori.  Then pass to the handlers
+     * to fill out the response data, and adjust length & flags.
+     */
+    rsp_hdr = nmgr_init_rsp(rsp, &hdr);
+    if (!rsp_hdr) {
+        rc = MGMT_ERR_ENOMEM;
+        goto err_norsp;
+    }
 
-        /* Build response header apriori.  Then pass to the handlers
-         * to fill out the response data, and adjust length & flags.
-         */
-        rsp_hdr = nmgr_init_rsp(rsp, &hdr);
-        if (!rsp_hdr) {
-            rc = MGMT_ERR_ENOMEM;
-            goto err_norsp;
-        }
+    cbor_mbuf_reader_init(&nmgr_task_cbuf.reader, req, sizeof(hdr));
+    cbor_parser_init(&nmgr_task_cbuf.reader.r, 0,
+                     &nmgr_task_cbuf.n_b.parser, &nmgr_task_cbuf.n_b.it);
 
-        cbor_mbuf_reader_init(&nmgr_task_cbuf.reader, req, sizeof(hdr));
-        cbor_parser_init(&nmgr_task_cbuf.reader.r, 0,
-                         &nmgr_task_cbuf.n_b.parser, &nmgr_task_cbuf.n_b.it);
+    /* Begin response payload.  Response fields are inserted into the root
+     * map as key value pairs.
+     */
+    rc = cbor_encoder_create_map(&nmgr_task_cbuf.n_b.encoder, &payload_enc,
+                                 CborIndefiniteLength);
+    if (rc != 0) {
+        rc = MGMT_ERR_ENOMEM;
+        goto err;
+    }
 
-        /* Begin response payload.  Response fields are inserted into the root
-         * map as key value pairs.
-         */
-        rc = cbor_encoder_create_map(&nmgr_task_cbuf.n_b.encoder, &payload_enc,
-                                     CborIndefiniteLength);
-        if (rc != 0) {
-            rc = MGMT_ERR_ENOMEM;
-            goto err;
-        }
-
-        if (hdr.nh_op == NMGR_OP_READ) {
-            if (handler->mh_read) {
-                rc = handler->mh_read(&nmgr_task_cbuf.n_b);
-            } else {
-                rc = MGMT_ERR_ENOENT;
-            }
-        } else if (hdr.nh_op == NMGR_OP_WRITE) {
-            if (handler->mh_write) {
-                rc = handler->mh_write(&nmgr_task_cbuf.n_b);
-            } else {
-                rc = MGMT_ERR_ENOENT;
-            }
+    if (hdr.nh_op == NMGR_OP_READ) {
+        if (handler->mh_read) {
+            rc = handler->mh_read(&nmgr_task_cbuf.n_b);
         } else {
-            rc = MGMT_ERR_EINVAL;
+            rc = MGMT_ERR_ENOENT;
         }
-        if (rc != 0) {
+    } else if (hdr.nh_op == NMGR_OP_WRITE) {
+        if (handler->mh_write) {
+            rc = handler->mh_write(&nmgr_task_cbuf.n_b);
+        } else {
+            rc = MGMT_ERR_ENOENT;
+        }
+    } else {
+        rc = MGMT_ERR_EINVAL;
+    }
+    if (rc != 0) {
+        goto err;
+    }
+
+    /* End response payload. */
+    rc = cbor_encoder_close_container(&nmgr_task_cbuf.n_b.encoder,
+                                      &payload_enc);
+    if (rc != 0) {
+        rc = MGMT_ERR_ENOMEM;
+        goto err;
+    }
+
+    rsp_hdr->nh_len += cbor_encode_bytes_written(&nmgr_task_cbuf.n_b.encoder);
+    rsp_hdr->nh_len = htons(rsp_hdr->nh_len);
+
+    rc = nmgr_rsp_tx(nt, &rsp, mtu);
+    if (rc) {
+        /* If the entire mbuf was consumed by the transport, don't attempt
+         * to send an error response.
+         */
+        if (rsp == NULL) {
+            goto err_norsp;
+        } else {
             goto err;
         }
-
-        /* End response payload. */
-        rc = cbor_encoder_close_container(&nmgr_task_cbuf.n_b.encoder,
-                                          &payload_enc);
-        if (rc != 0) {
-            rc = MGMT_ERR_ENOMEM;
-            goto err;
-        }
-
-        rsp_hdr->nh_len +=
-            cbor_encode_bytes_written(&nmgr_task_cbuf.n_b.encoder);
-        rsp_hdr->nh_len = htons(rsp_hdr->nh_len);
-
-        rc = nmgr_rsp_tx(nt, &rsp, mtu);
-        if (rc) {
-            /* If the entire mbuf was consumed by the transport, don't attempt
-             * to send an error response.
-             */
-            if (rsp == NULL) {
-                goto err_norsp;
-            } else {
-                goto err;
-            }
-        }
-
-        off += sizeof(hdr) + OS_ALIGN(hdr.nh_len, 4);
     }
 
     os_mbuf_free_chain(rsp);
