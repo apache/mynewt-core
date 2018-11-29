@@ -611,6 +611,20 @@ struct spiflash_dev spiflash_dev = {
     .flash_chip = NULL,
 };
 
+static inline void spiflash_lock(struct spiflash_dev *dev)
+{
+#if MYNEWT_VAL(OS_SCHEDULING)
+    os_mutex_pend(&dev->lock, OS_TIMEOUT_NEVER);
+#endif
+}
+
+static inline void spiflash_unlock(struct spiflash_dev *dev)
+{
+#if MYNEWT_VAL(OS_SCHEDULING)
+    os_mutex_release(&dev->lock);
+#endif
+}
+
 static inline void
 spiflash_cs_activate(struct spiflash_dev *dev)
 {
@@ -628,11 +642,15 @@ spiflash_power_down(struct spiflash_dev *dev)
 {
     uint8_t cmd[1] = { SPIFLASH_DEEP_POWER_DOWN };
 
+    spiflash_lock(dev);
+
     spiflash_cs_activate(dev);
 
     hal_spi_txrx(dev->spi_num, cmd, cmd, sizeof cmd);
 
     spiflash_cs_deactivate(dev);
+
+    spiflash_unlock(dev);
 }
 
 /*
@@ -642,11 +660,15 @@ spiflash_power_down(struct spiflash_dev *dev)
 void
 spiflash_release_power_down_macronix(struct spiflash_dev *dev)
 {
+    spiflash_lock(dev);
+
     spiflash_cs_activate(dev);
 
     os_cputime_delay_usecs(20);
 
     spiflash_cs_deactivate(dev);
+
+    spiflash_unlock(dev);
 }
 
 void
@@ -654,11 +676,15 @@ spiflash_release_power_down(struct spiflash_dev *dev)
 {
     uint8_t cmd[1] = { SPIFLASH_RELEASE_POWER_DOWN };
 
+    spiflash_lock(dev);
+
     spiflash_cs_activate(dev);
 
     hal_spi_txrx(dev->spi_num, cmd, cmd, sizeof cmd);
 
     spiflash_cs_deactivate(dev);
+
+    spiflash_unlock(dev);
 }
 
 uint8_t
@@ -666,6 +692,8 @@ spiflash_read_jedec_id(struct spiflash_dev *dev,
         uint8_t *manufacturer, uint8_t *memory_type, uint8_t *capacity)
 {
     uint8_t cmd[4] = { SPIFLASH_READ_JEDEC_ID, 0, 0, 0 };
+
+    spiflash_lock(dev);
 
     spiflash_cs_activate(dev);
 
@@ -685,6 +713,8 @@ spiflash_read_jedec_id(struct spiflash_dev *dev,
         *capacity = cmd[3];
     }
 
+    spiflash_unlock(dev);
+
     return 0;
 }
 
@@ -693,12 +723,16 @@ spiflash_read_status(struct spiflash_dev *dev)
 {
     uint8_t val;
 
+    spiflash_lock(dev);
+
     spiflash_cs_activate(dev);
 
     hal_spi_tx_val(dev->spi_num, SPIFLASH_READ_STATUS_REGISTER);
     val = hal_spi_tx_val(dev->spi_num, 0xFF);
 
     spiflash_cs_deactivate(dev);
+
+    spiflash_unlock(dev);
 
     return val;
 }
@@ -716,23 +750,35 @@ spiflash_wait_ready(struct spiflash_dev *dev, uint32_t timeout_ms)
     os_time_t exp_time;
     os_time_ms_to_ticks(timeout_ms, &ticks);
     exp_time = os_time_get() + ticks;
+    int rc = 0;
+
+    spiflash_lock(dev);
 
     while (!spiflash_device_ready(dev)) {
         if (os_time_get() > exp_time) {
-            return -1;
+            rc = -1;
+            goto err;
         }
     }
-    return 0;
+
+err:
+    spiflash_unlock(dev);
+
+    return rc;
 }
 
 int
 spiflash_write_enable(struct spiflash_dev *dev)
 {
+    spiflash_lock(dev);
+
     spiflash_cs_activate(dev);
 
     hal_spi_tx_val(dev->spi_num, SPIFLASH_WRITE_ENABLE);
 
     spiflash_cs_deactivate(dev);
+
+    spiflash_unlock(dev);
 
     return 0;
 }
@@ -748,6 +794,8 @@ spiflash_read(const struct hal_flash *hal_flash_dev, uint32_t addr, void *buf,
 
     dev = (struct spiflash_dev *)hal_flash_dev;
 
+    spiflash_lock(dev);
+
     err = spiflash_wait_ready(dev, 100);
     if (!err) {
         spiflash_cs_activate(dev);
@@ -762,6 +810,8 @@ spiflash_read(const struct hal_flash *hal_flash_dev, uint32_t addr, void *buf,
         spiflash_cs_deactivate(dev);
     }
 
+    spiflash_unlock(dev);
+
     return 0;
 }
 
@@ -774,12 +824,16 @@ spiflash_write(const struct hal_flash *hal_flash_dev, uint32_t addr,
     struct spiflash_dev *dev = (struct spiflash_dev *)hal_flash_dev;
     uint32_t page_limit;
     uint32_t to_write;
+    int rc = 0;
 
     u8buf = (uint8_t *)buf;
 
+    spiflash_lock(dev);
+
     while (len) {
         if (spiflash_wait_ready(dev, 100) != 0) {
-            return -1;
+            rc = -1;
+            goto err;
         }
 
         spiflash_write_enable(dev);
@@ -802,22 +856,28 @@ spiflash_write(const struct hal_flash *hal_flash_dev, uint32_t addr,
 
         spiflash_wait_ready(dev, 100);
     }
+err:
+    spiflash_unlock(dev);
 
-    return 0;
+    return rc;
 }
 
 int
 spiflash_erase_sector(const struct hal_flash *hal_flash_dev,
         uint32_t addr)
 {
+    int rc = 0;
     struct spiflash_dev *dev;
     uint8_t cmd[4] = { SPIFLASH_SECTOR_ERASE,
         (uint8_t)(addr >> 16), (uint8_t)(addr >> 8), (uint8_t)addr };
 
     dev = (struct spiflash_dev *)hal_flash_dev;
 
+    spiflash_lock(dev);
+
     if (spiflash_wait_ready(dev, 100) != 0) {
-        return -1;
+        rc = -1;
+        goto err;
     }
 
     spiflash_write_enable(dev);
@@ -831,8 +891,10 @@ spiflash_erase_sector(const struct hal_flash *hal_flash_dev,
     spiflash_cs_deactivate(dev);
 
     spiflash_wait_ready(dev, 100);
+err:
+    spiflash_unlock(dev);
 
-    return 0;
+    return rc;
 }
 
 int
@@ -857,12 +919,15 @@ spiflash_identify(struct spiflash_dev *dev)
     int release_power_down_count = 0;
     /* Table with unique release power down functions */
     void (*rpd[3])(struct spiflash_dev *);
+    int rc = 0;
 
     /* List of supported spi flash chips can be found in:
      * hw/drivers/flash/spiflash/chips/sysconfig.yml
      */
     _Static_assert((sizeof(supported_chips) / sizeof(supported_chips[0])) > 1,
         "At lease one spiflash chip must be specified in sysconfig with SPIFLASH_<chipid>:1");
+
+    spiflash_lock(dev);
 
     /* Only one chip specified, no need for search*/
     if ((sizeof(supported_chips) / sizeof(supported_chips[0])) == 2) {
@@ -879,7 +944,8 @@ spiflash_identify(struct spiflash_dev *dev)
         if (manufacturer != supported_chips[0].fc_jedec_id.ji_manufacturer ||
             memory_type != supported_chips[0].fc_jedec_id.ji_type ||
             capacity != supported_chips[0].fc_jedec_id.ji_capacity) {
-            return -1;
+            rc = -1;
+            goto err;
         }
         dev->flash_chip = &supported_chips[0];
     } else {
@@ -922,10 +988,13 @@ spiflash_identify(struct spiflash_dev *dev)
         if (dev->flash_chip == NULL) {
             /* Not supported chip */
             assert(0);
-            return -1;
+            rc = -1;
         }
     }
-    return 0;
+err:
+    spiflash_unlock(dev);
+
+    return rc;
 }
 
 int
@@ -935,6 +1004,10 @@ spiflash_init(const struct hal_flash *hal_flash_dev)
     struct spiflash_dev *dev;
 
     dev = (struct spiflash_dev *)hal_flash_dev;
+
+#if MYNEWT_VAL(OS_SCHEDULING)
+    os_mutex_init(&dev->lock);
+#endif
 
     hal_gpio_init_out(dev->ss_pin, 1);
 
