@@ -20,6 +20,9 @@
 #ifndef __SPIFLASH_H__
 #define __SPIFLASH_H__
 
+#if MYNEWT_VAL(OS_SCHEDULING)
+#include <os/os_mutex.h>
+#endif
 #include <hal/hal_flash_int.h>
 #include <hal/hal_spi.h>
 
@@ -39,6 +42,9 @@ struct spiflash_dev {
     const struct spiflash_chip *supported_chips;
     /* Pointer to one of the supported chips */
     const struct spiflash_chip *flash_chip;
+#if MYNEWT_VAL(OS_SCHEDULING)
+    struct os_mutex lock;
+#endif
 };
 
 extern struct spiflash_dev spiflash_dev;
