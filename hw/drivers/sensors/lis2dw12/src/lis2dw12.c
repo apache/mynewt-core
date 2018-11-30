@@ -2069,6 +2069,21 @@ int lis2dw12_run_self_test(struct sensor_itf *itf, int *result)
 
     *result = 0;
 
+    uint8_t fifo_ctrl;
+
+    rc = lis2dw12_read8(itf, LIS2DW12_REG_FIFO_CTRL, &fifo_ctrl);
+    if (rc) {
+        return rc;
+    }
+
+    if (fifo_ctrl) {
+        /* Turn off fifo if was on */
+        rc = lis2dw12_write8(itf, LIS2DW12_REG_FIFO_CTRL, 0);
+        if (rc) {
+            return rc;
+        }
+    }
+
     rc = lis2dw12_readlen(itf, LIS2DW12_REG_CTRL_REG1, prev_config, 6);
     if (rc) {
         return rc;
@@ -2207,6 +2222,14 @@ int lis2dw12_run_self_test(struct sensor_itf *itf, int *result)
     st[0] = scratch[0] / LIS2DW12_ST_NUM_READINGS;
     st[1] = scratch[1] / LIS2DW12_ST_NUM_READINGS;
     st[2] = scratch[2] / LIS2DW12_ST_NUM_READINGS;
+
+    /* Restore fifo mode if any */
+    if (fifo_ctrl) {
+        rc = lis2dw12_write8(itf, LIS2DW12_REG_FIFO_CTRL, fifo_ctrl);
+        if (rc) {
+            return rc;
+        }
+    }
 
     /* compare values to thresholds */
     for (i = 0; i < 3; i++) {
