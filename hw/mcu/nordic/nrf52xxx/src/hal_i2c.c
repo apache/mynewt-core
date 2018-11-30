@@ -413,35 +413,10 @@ hal_i2c_config(uint8_t i2c_num, const struct hal_i2c_settings *cfg)
     return 0;
 }
 
-static bool
-hal_i2c_check_scl(int pin_scl)
-{
-    uint32_t end_ticks;
-    int toggled = 0;
-
-    /*
-     * Wait a bit for low state on SCL as this indicates that controller has
-     * started writing something one the bus. It does not matter whether low
-     * state is due to START condition on bus or one of clock cycles when
-     * writing address on bus - in any case this means controller seems to
-     * write something on bus.
-     */
-
-    end_ticks = os_cputime_get32() +
-                os_cputime_usecs_to_ticks(MYNEWT_VAL(MCU_I2C_RECOVERY_DELAY_USEC));
-
-    do {
-        if (!hal_gpio_read(pin_scl)) {
-            toggled = 1;
-        }
-    } while (!toggled && CPUTIME_LT(os_cputime_get32(), end_ticks));
-
-    return toggled;
-}
-
 static inline void
 hal_i2c_trigger_start(NRF_TWI_Type *twi, __O uint32_t *task)
 {
+    uint32_t end_ticks;
     int retry = 2;
 
     /*
@@ -456,10 +431,40 @@ hal_i2c_trigger_start(NRF_TWI_Type *twi, __O uint32_t *task)
      */
 
     do {
+        twi->EVENTS_BB = 0;
         *task = 1;
-        if (hal_i2c_check_scl(twi->PSELSCL)) {
-            break;
-        }
+
+        /*
+         * Wait a bit for low state on SCL as this indicates that controller has
+         * started writing something one the bus. It does not matter whether low
+         * state is due to START condition on bus or one of clock cycles when
+         * writing address on bus - in any case this means controller seems to
+         * write something on bus.
+         */
+
+        end_ticks = os_cputime_get32() +
+                    os_cputime_usecs_to_ticks(MYNEWT_VAL(MCU_I2C_RECOVERY_DELAY_USEC));
+
+        do {
+            /*
+             * For write op controller will always keep SCL low after writing
+             * START and address on bus and until we write 1st byte of data to
+             * TXD. This allows to reliably detect activity on bus by using SCL
+             * only.
+             *
+             * For read op with only single byte to read it's possible that it
+             * will be read before we start checking SCL line and thus we'll
+             * never detect any activity this way. To avoid this, we'll also
+             * check BB event which in such case indicates that some activity
+             * on bus happened. This won't work for writes since BB is generated
+             * after byte is transmitted, so we need to use both methods to be
+             * able to handle unresponsive TWI controller for both reads and
+             * writes.
+             */
+            if (!hal_gpio_read(twi->PSELSCL) || twi->EVENTS_BB) {
+                return;
+            }
+        } while (CPUTIME_LT(os_cputime_get32(), end_ticks));
 
         twi->ENABLE = TWI_ENABLE_ENABLE_Disabled;
         /*
