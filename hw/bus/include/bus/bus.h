@@ -221,7 +221,7 @@ bus_node_unlock(struct os_dev *node);
 /**
  * Get node configured lock timeout
  *
- * Returns lock timeout as configured for node. If not timeout is configured for
+ * Returns lock timeout as configured for node. If no timeout is configured for
  * give node or no node is specified, default timeout is returned.
  *
  * @param node  Node to get timeout for
