@@ -147,7 +147,7 @@ bus_node_read(struct os_dev *node, void *buf, uint16_t length,
         return SYS_ENOTSUP;
     }
 
-    rc = bus_node_lock(node, g_bus_node_lock_timeout);
+    rc = bus_node_lock(node, bus_node_get_lock_timeout(node));
     if (rc) {
         return rc;
     }
@@ -174,7 +174,7 @@ bus_node_write(struct os_dev *node, const void *buf, uint16_t length,
         return SYS_ENOTSUP;
     }
 
-    rc = bus_node_lock(node, g_bus_node_lock_timeout);
+    rc = bus_node_lock(node, bus_node_get_lock_timeout(node));
     if (rc) {
         return rc;
     }
@@ -202,7 +202,7 @@ bus_node_write_read_transact(struct os_dev *node, const void *wbuf,
         return SYS_ENOTSUP;
     }
 
-    rc = bus_node_lock(node, g_bus_node_lock_timeout);
+    rc = bus_node_lock(node, bus_node_get_lock_timeout(node));
     if (rc) {
         return rc;
     }
