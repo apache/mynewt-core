@@ -34,7 +34,9 @@ syscfg.defs:
         description: 'Enable shell support for the BME280'
         value: 0
     BME280_SPEC_CALC:
-        description: 'BME280 Spec calculation insetad of built in one'
+        description:
+            When set to 1 compensation functions use double precission floating point arithmetic recomended by specification.
+            When set to 0 compensation functions use integer arithmetic.
         value : 1
     BME280_LOG_MODULE:
         description: 'Numeric module ID to use for BME280 log messages'
