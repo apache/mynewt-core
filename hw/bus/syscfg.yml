@@ -32,6 +32,18 @@ syscfg.defs:
             transaction APIs (i.e. without timeout set explicitly)
         value: 50
 
+    BUS_STATS:
+        description: >
+            Enable statistics for bus devices. By default only global per-device
+            statistics are enabled. Use BUS_STATS_PER_NODE to enable statistics
+            for each node also.
+        value: 0
+    BUS_STATS_PER_NODE:
+        description: >
+            Enable per-node statistics for each bus node.
+        value: 0
+        restrictions: BUS_STATS
+
     BUS_DEBUG_OS_DEV:
         description: >
             Enable additional debugging for os_dev objects.

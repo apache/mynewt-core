@@ -22,6 +22,9 @@
 
 #include <stdint.h>
 #include "os/mynewt.h"
+#if MYNEWT_VAL(BUS_STATS)
+#include "stats/stats.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -29,6 +32,16 @@ extern "C" {
 
 struct bus_dev;
 struct bus_node;
+
+#if MYNEWT_VAL(BUS_STATS)
+STATS_SECT_START(bus_stats_section)
+    STATS_SECT_ENTRY(lock_timeouts)
+    STATS_SECT_ENTRY(read_ops)
+    STATS_SECT_ENTRY(read_errors)
+    STATS_SECT_ENTRY(write_ops)
+    STATS_SECT_ENTRY(write_errors)
+STATS_SECT_END
+#endif
 
 /**
  * Bus device operations
@@ -88,6 +101,10 @@ struct bus_dev {
     struct os_mutex lock;
     struct bus_node *configured_for;
 
+#if MYNEWT_VAL(BUS_STATS)
+    STATS_SECT_DECL(bus_stats_section) stats;
+#endif
+
 #if MYNEWT_VAL(BUS_DEBUG_OS_DEV)
     uint32_t devmagic;
 #endif
@@ -111,6 +128,10 @@ struct bus_node {
         struct bus_dev *parent_bus;
         void *init_arg;
     };
+
+#if MYNEWT_VAL(BUS_STATS_PER_NODE)
+    STATS_SECT_DECL(bus_stats_section) stats;
+#endif
 
 #if MYNEWT_VAL(BUS_DEBUG_OS_DEV)
     uint32_t nodemagic;
