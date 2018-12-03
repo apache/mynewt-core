@@ -23,8 +23,38 @@
 #include "bus/bus.h"
 #include "bus/bus_debug.h"
 #include "bus/bus_driver.h"
+#if MYNEWT_VAL(BUS_STATS)
+#include "stats/stats.h"
+#endif
 
 static os_time_t g_bus_node_lock_timeout;
+
+#if MYNEWT_VAL(BUS_STATS)
+STATS_NAME_START(bus_stats_section)
+    STATS_NAME(bus_stats_section, lock_timeouts)
+    STATS_NAME(bus_stats_section, read_ops)
+    STATS_NAME(bus_stats_section, read_errors)
+    STATS_NAME(bus_stats_section, write_ops)
+    STATS_NAME(bus_stats_section, write_errors)
+STATS_NAME_END(bus_stats_section)
+
+#if MYNEWT_VAL(BUS_STATS_PER_NODE)
+#define BUS_STATS_INC(_bdev, _bnode, _var)  \
+    do {                                    \
+        STATS_INC((_bdev)->stats, _var);    \
+        STATS_INC((_bnode)->stats, _var);   \
+    } while (0)
+#else
+#define BUS_STATS_INC(_bdev, _bnode, _var)  \
+    do {                                    \
+        STATS_INC((_bdev)->stats, _var);    \
+    } while (0)
+#endif
+#else
+#define BUS_STATS_INC(_bdev, _bnode, _var)  \
+    do {                                    \
+    } while (0)
+#endif
 
 static int
 bus_node_open_func(struct os_dev *odev, uint32_t wait, void *arg)
@@ -92,6 +122,9 @@ bus_dev_init_func(struct os_dev *odev, void *arg)
 {
     struct bus_dev *bdev = (struct bus_dev *)odev;
     struct bus_dev_ops *ops = arg;
+#if MYNEWT_VAL(BUS_STATS)
+    char *stats_name;
+#endif
 
     BUS_DEBUG_POISON_DEV(bdev);
 
@@ -99,6 +132,15 @@ bus_dev_init_func(struct os_dev *odev, void *arg)
     bdev->configured_for = NULL;
 
     os_mutex_init(&bdev->lock);
+
+#if MYNEWT_VAL(BUS_STATS)
+    asprintf(&stats_name, "bd_%s", odev->od_name);
+    /* XXX should we assert or return error on failure? */
+    stats_init_and_reg(STATS_HDR(bdev->stats),
+                       STATS_SIZE_INIT_PARMS(bdev->stats, STATS_SIZE_32),
+                       STATS_NAME_INIT_PARMS(bus_stats_section),
+                       stats_name);
+#endif
 
     return 0;
 }
@@ -110,6 +152,9 @@ bus_node_init_func(struct os_dev *odev, void *arg)
     struct bus_node_cfg *node_cfg = arg;
     struct os_dev *parent_odev;
     void *init_arg;
+#if MYNEWT_VAL(BUS_STATS_PER_NODE)
+    char *stats_name;
+#endif
 
     parent_odev = os_dev_lookup(node_cfg->bus_name);
     if (!parent_odev) {
@@ -124,6 +169,15 @@ bus_node_init_func(struct os_dev *odev, void *arg)
 
     odev->od_handlers.od_open = bus_node_open_func;
     odev->od_handlers.od_close = bus_node_close_func;
+
+#if MYNEWT_VAL(BUS_STATS_PER_NODE)
+    asprintf(&stats_name, "bn_%s", odev->od_name);
+    /* XXX should we assert or return error on failure? */
+    stats_init_and_reg(STATS_HDR(bnode->stats),
+                       STATS_SIZE_INIT_PARMS(bnode->stats, STATS_SIZE_32),
+                       STATS_NAME_INIT_PARMS(bus_stats_section),
+                       stats_name);
+#endif
 
     if (bnode->callbacks.init) {
         bnode->callbacks.init(bnode, init_arg);
@@ -152,7 +206,11 @@ bus_node_read(struct os_dev *node, void *buf, uint16_t length,
         return rc;
     }
 
+    BUS_STATS_INC(bdev, bnode, read_ops);
     rc = bdev->dops->read(bdev, bnode, buf, length, timeout, flags);
+    if (rc) {
+        BUS_STATS_INC(bdev, bnode, read_errors);
+    }
 
     (void)bus_node_unlock(node);
 
@@ -179,7 +237,11 @@ bus_node_write(struct os_dev *node, const void *buf, uint16_t length,
         return rc;
     }
 
+    BUS_STATS_INC(bdev, bnode, write_ops);
     rc = bdev->dops->write(bdev, bnode, buf, length, timeout, flags);
+    if (rc) {
+        BUS_STATS_INC(bdev, bnode, write_errors);
+    }
 
     (void)bus_node_unlock(node);
 
@@ -213,13 +275,17 @@ bus_node_write_read_transact(struct os_dev *node, const void *wbuf,
      * too many flags now (like we literally have only one flag) let's just pass
      * no flags for now
      */
+    BUS_STATS_INC(bdev, bnode, write_ops);
     rc = bdev->dops->write(bdev, bnode, wbuf, wlength, timeout, BUS_F_NOSTOP);
     if (rc) {
+        BUS_STATS_INC(bdev, bnode, write_errors);
         goto done;
     }
 
+    BUS_STATS_INC(bdev, bnode, read_ops);
     rc = bdev->dops->read(bdev, bnode, rbuf, rlength, timeout, flags);
     if (rc) {
+        BUS_STATS_INC(bdev, bnode, read_errors);
         goto done;
     }
 
@@ -247,6 +313,7 @@ bus_node_lock(struct os_dev *node, os_time_t timeout)
 
     err = os_mutex_pend(&bdev->lock, timeout);
     if (err == OS_TIMEOUT) {
+        BUS_STATS_INC(bdev, bnode, lock_timeouts);
         return SYS_ETIMEOUT;
     }
 
