@@ -37,7 +37,9 @@ syscfg.defs:
         description: 'Enable shell support for the BMP280'
         value: 0
     BMP280_SPEC_CALC:
-        description: 'BMP280 Spec calculation instead of built in one'
+        description:
+            When set to 1 compensation functions use double precission floating point arithmetic recomended by specification.
+            When set to 0 compensation functions use integer arithmetic.
         value : 1
     BMP280_ITF_LOCK_TMO:
         description: 'BMP280 interface lock timeout in milliseconds'
