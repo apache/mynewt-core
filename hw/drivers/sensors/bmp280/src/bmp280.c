@@ -405,13 +405,35 @@ bmp280_sensor_read(struct sensor *sensor, sensor_type_t type,
 
     rawtemp = rawpress = 0;
 
-    /* Get a new pressure sample */
+    /* Temperature is always needed */
+    rc = bmp280_get_temperature(itf, &rawtemp);
+    if (rc) {
+        goto err;
+    }
+    databuf.std.std_temp = bmp280_compensate_temperature(rawtemp, &(bmp280->pdd));
+
+
+    /* Get a new pressure sample if needed */
     if (type & SENSOR_TYPE_PRESSURE) {
         rc = bmp280_get_pressure(itf, &rawpress);
         if (rc) {
             goto err;
         }
+    }
 
+    if (type & SENSOR_TYPE_AMBIENT_TEMPERATURE) {
+        if (databuf.std.std_temp != NAN) {
+            databuf.std.std_temp_is_valid = 1;
+        }
+
+        /* Call data function */
+        rc = data_func(sensor, data_arg, &databuf.std, SENSOR_TYPE_AMBIENT_TEMPERATURE);
+        if (rc) {
+            goto err;
+        }
+    }
+
+    if (type & SENSOR_TYPE_PRESSURE) {
         databuf.spd.spd_press = bmp280_compensate_pressure(itf, rawpress, &(bmp280->pdd));
 
         if (databuf.spd.spd_press != NAN) {
@@ -420,26 +442,6 @@ bmp280_sensor_read(struct sensor *sensor, sensor_type_t type,
 
         /* Call data function */
         rc = data_func(sensor, data_arg, &databuf.spd, SENSOR_TYPE_PRESSURE);
-        if (rc) {
-            goto err;
-        }
-    }
-
-    /* Get a new temperature sample */
-    if (type & SENSOR_TYPE_AMBIENT_TEMPERATURE) {
-        rc = bmp280_get_temperature(itf, &rawtemp);
-        if (rc) {
-            goto err;
-        }
-
-        databuf.std.std_temp = bmp280_compensate_temperature(rawtemp, &(bmp280->pdd));
-
-        if (databuf.std.std_temp != NAN) {
-            databuf.std.std_temp_is_valid = 1;
-        }
-
-        /* Call data function */
-        rc = data_func(sensor, data_arg, &databuf.std, SENSOR_TYPE_AMBIENT_TEMPERATURE);
         if (rc) {
             goto err;
         }

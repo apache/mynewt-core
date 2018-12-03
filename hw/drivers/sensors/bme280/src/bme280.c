@@ -489,13 +489,42 @@ bme280_sensor_read(struct sensor *sensor, sensor_type_t type,
 
     rawtemp = rawpress = rawhumid = 0;
 
+    /* Get a new temperature sample always */
+    rc = bme280_get_temperature(itf, &rawtemp);
+    if (rc) {
+        goto err;
+    }
+    databuf.std.std_temp = bme280_compensate_temperature(rawtemp, &(bme280->pdd));
+
     /* Get a new pressure sample */
     if (type & SENSOR_TYPE_PRESSURE) {
         rc = bme280_get_pressure(itf, &rawpress);
         if (rc) {
             goto err;
         }
+    }
 
+    /* Get a new relative humidity sample */
+    if (type & SENSOR_TYPE_RELATIVE_HUMIDITY) {
+        rc = bme280_get_humidity(itf, &rawhumid);
+        if (rc) {
+            goto err;
+        }
+    }
+
+    if (type & SENSOR_TYPE_AMBIENT_TEMPERATURE) {
+        if (databuf.std.std_temp != NAN) {
+            databuf.std.std_temp_is_valid = 1;
+        }
+
+        /* Call data function */
+        rc = data_func(sensor, data_arg, &databuf.std, SENSOR_TYPE_AMBIENT_TEMPERATURE);
+        if (rc) {
+            goto err;
+        }
+    }
+
+    if (type & SENSOR_TYPE_PRESSURE) {
         databuf.spd.spd_press = bme280_compensate_pressure(itf, rawpress, &(bme280->pdd));
 
         if (databuf.spd.spd_press != NAN) {
@@ -509,33 +538,7 @@ bme280_sensor_read(struct sensor *sensor, sensor_type_t type,
         }
     }
 
-    /* Get a new temperature sample */
-    if (type & SENSOR_TYPE_AMBIENT_TEMPERATURE) {
-        rc = bme280_get_temperature(itf, &rawtemp);
-        if (rc) {
-            goto err;
-        }
-
-        databuf.std.std_temp = bme280_compensate_temperature(rawtemp, &(bme280->pdd));
-
-        if (databuf.std.std_temp != NAN) {
-            databuf.std.std_temp_is_valid = 1;
-        }
-
-        /* Call data function */
-        rc = data_func(sensor, data_arg, &databuf.std, SENSOR_TYPE_AMBIENT_TEMPERATURE);
-        if (rc) {
-            goto err;
-        }
-    }
-
-    /* Get a new relative humidity sample */
     if (type & SENSOR_TYPE_RELATIVE_HUMIDITY) {
-        rc = bme280_get_humidity(itf, &rawhumid);
-        if (rc) {
-            goto err;
-        }
-
         databuf.shd.shd_humid = bme280_compensate_humidity(itf, rawhumid, &(bme280->pdd));
 
         if (databuf.shd.shd_humid != NAN) {
