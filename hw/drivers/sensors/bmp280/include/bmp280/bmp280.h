@@ -22,7 +22,7 @@
 #define __bmp280_H__
 
 #include "os/mynewt.h"
-#if !MYNEWT_VAL(BUS_DRIVER_PRESENT)
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
 #include "bus/bus.h"
 #include "bus/i2c.h"
 #include "bus/spi.h"
