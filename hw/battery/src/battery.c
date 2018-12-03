@@ -492,6 +492,7 @@ battery_set_poll_rate_ms(struct os_dev *battery, uint32_t poll_rate)
     }
 
     if (poll_rate == 0) {
+        bat->b_poll_rate = 0;
         os_callout_stop(&battery_manager.bm_poll_callout);
         return 0;
     }
