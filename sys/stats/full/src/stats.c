@@ -105,6 +105,75 @@ stats_data(const struct stats_hdr *hdr)
     return (uint8_t *)hdr + offset;
 }
 
+static int
+stats_register_internal(const char *name, struct stats_hdr *shdr)
+{
+    struct stats_hdr *cur;
+    int rc;
+
+    /* Don't allow duplicate entries, return an error if this stat
+     * is already registered.
+     */
+    STAILQ_FOREACH(cur, &g_stats_registry, s_next) {
+        if (!strcmp(cur->s_name, name)) {
+            rc = -1;
+            goto err;
+        }
+    }
+
+    shdr->s_name = name;
+
+#if MYNEWT_VAL(STATS_PERSIST)
+    if (shdr->s_flags & STATS_HDR_F_PERSIST) {
+        stats_conf_assert_valid(shdr);
+    }
+#endif
+
+    STAILQ_INSERT_TAIL(&g_stats_registry, shdr, s_next);
+
+    STATS_INC(g_stats_stats, num_registered);
+
+    return (0);
+err:
+    return (rc);
+}
+
+static int
+stats_module_init_internal(void)
+{
+    int rc;
+
+    STAILQ_INIT(&g_stats_registry);
+
+    rc = stats_init(STATS_HDR(g_stats_stats),
+                    STATS_SIZE_INIT_PARMS(g_stats_stats, STATS_SIZE_32),
+                    STATS_NAME_INIT_PARMS(stats));
+    if (rc) {
+        return rc;
+    }
+
+    rc = stats_register_internal("stat", STATS_HDR(g_stats_stats));
+    if (rc) {
+        return rc;
+    }
+
+#if MYNEWT_VAL(STATS_NEWTMGR)
+    rc = stats_nmgr_register_group();
+    if (rc) {
+        return rc;
+    }
+#endif
+
+#if MYNEWT_VAL(STATS_CLI)
+    rc = stats_shell_register();
+    if (rc) {
+        return rc;
+    }
+#endif
+
+    return rc;
+}
+
 /**
  * Walk a specific statistic entry, and call walk_func with arg for
  * each field within that entry.
@@ -200,24 +269,15 @@ stats_module_init(void)
     /* Ensure this function only gets called by sysinit. */
     SYSINIT_ASSERT_ACTIVE();
 
-    STAILQ_INIT(&g_stats_registry);
+    /*
+     * It's possible that some stats were already registered before sysinit
+     * (e.g. from BSP) so the module is already initialized - just return here.
+     */
+    if (g_stats_stats.snum_registered) {
+        return;
+    }
 
-#if MYNEWT_VAL(STATS_CLI)
-    rc = stats_shell_register();
-    SYSINIT_PANIC_ASSERT(rc == 0);
-#endif
-
-#if MYNEWT_VAL(STATS_NEWTMGR)
-    rc = stats_nmgr_register_group();
-    SYSINIT_PANIC_ASSERT(rc == 0);
-#endif
-
-    rc = stats_init(STATS_HDR(g_stats_stats),
-                    STATS_SIZE_INIT_PARMS(g_stats_stats, STATS_SIZE_32),
-                    STATS_NAME_INIT_PARMS(stats));
-    SYSINIT_PANIC_ASSERT(rc == 0);
-
-    rc = stats_register("stat", STATS_HDR(g_stats_stats));
+    rc = stats_module_init_internal();
     SYSINIT_PANIC_ASSERT(rc == 0);
 }
 
@@ -321,34 +381,18 @@ stats_group_find(const char *name)
 int
 stats_register(const char *name, struct stats_hdr *shdr)
 {
-    struct stats_hdr *cur;
-    int rc;
-
-    /* Don't allow duplicate entries, return an error if this stat
-     * is already registered.
+    /*
+     * We should always have at least "stat" registered so if there are no stats
+     * registered, try to initialize module first. This allows to register stat
+     * before sysinit is called (e.g. from BSP).
      */
-    STAILQ_FOREACH(cur, &g_stats_registry, s_next) {
-        if (!strcmp(cur->s_name, name)) {
-            rc = -1;
-            goto err;
+    if (g_stats_stats.snum_registered == 0) {
+        if (stats_module_init_internal()) {
+            return -1;
         }
     }
 
-    shdr->s_name = name;
-
-#if MYNEWT_VAL(STATS_PERSIST)
-    if (shdr->s_flags & STATS_HDR_F_PERSIST) {
-        stats_conf_assert_valid(shdr);
-    }
-#endif
-
-    STAILQ_INSERT_TAIL(&g_stats_registry, shdr, s_next);
-
-    STATS_INC(g_stats_stats, num_registered);
-
-    return (0);
-err:
-    return (rc);
+    return stats_register_internal(name, shdr);
 }
 
 /**
