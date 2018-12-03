@@ -487,7 +487,7 @@ battery_set_poll_rate_ms(struct os_dev *battery, uint32_t poll_rate)
 {
     struct battery *bat = (struct battery *)battery;
 
-    if ((bat == NULL)) {
+    if (bat == NULL) {
         return -1;
     }
 
