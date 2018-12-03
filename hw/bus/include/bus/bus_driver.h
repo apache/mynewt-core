@@ -86,6 +86,8 @@ struct bus_node_callbacks {
 struct bus_node_cfg {
     /** Bus device name where node is attached */
     const char *bus_name;
+    /** Lock timeout [ms], 0 = default timeout */
+    uint16_t lock_timeout_ms;
 };
 
 /**
@@ -128,6 +130,8 @@ struct bus_node {
         struct bus_dev *parent_bus;
         void *init_arg;
     };
+
+    os_time_t lock_timeout;
 
 #if MYNEWT_VAL(BUS_STATS_PER_NODE)
     STATS_SECT_DECL(bus_stats_section) stats;

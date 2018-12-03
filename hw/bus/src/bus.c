@@ -167,6 +167,13 @@ bus_node_init_func(struct os_dev *odev, void *arg)
     init_arg = bnode->init_arg;
     bnode->parent_bus = (struct bus_dev *)parent_odev;
 
+    if (node_cfg->lock_timeout_ms) {
+        bnode->lock_timeout = os_time_ms_to_ticks32(node_cfg->lock_timeout_ms);
+    } else {
+        /* Use default */
+        bnode->lock_timeout = 0;
+    }
+
     odev->od_handlers.od_open = bus_node_open_func;
     odev->od_handlers.od_close = bus_node_close_func;
 
@@ -362,7 +369,9 @@ bus_node_unlock(struct os_dev *node)
 os_time_t
 bus_node_get_lock_timeout(struct os_dev *node)
 {
-    return g_bus_node_lock_timeout;
+    struct bus_node *bnode = (struct bus_node *)node;
+
+    return bnode->lock_timeout ? bnode->lock_timeout : g_bus_node_lock_timeout;
 }
 
 void
