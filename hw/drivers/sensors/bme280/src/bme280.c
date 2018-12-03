@@ -199,7 +199,7 @@ bme280_compensate_temperature(int32_t rawtemp, struct bme280_pdd *pdd)
 {
     double var1, var2, comptemp;
 
-    if (rawtemp == 0x800000) {
+    if (rawtemp == 0x80000) {
         BME280_LOG(ERROR, "Invalid temp data\n");
         STATS_INC(g_bme280stats, invalid_data_errors);
         return NAN;
@@ -234,7 +234,7 @@ bme280_compensate_pressure(struct sensor_itf *itf, int32_t rawpress,
     double var1, var2, p;
     int32_t temp;
 
-    if (rawpress == 0x800000) {
+    if (rawpress == 0x80000) {
         BME280_LOG(ERROR, "Invalid press data\n");
         STATS_INC(g_bme280stats, invalid_data_errors);
         return NAN;
@@ -335,8 +335,6 @@ bme280_compensate_temperature(int32_t rawtemp, struct bme280_pdd *pdd)
         return NAN;
     }
 
-    rawtemp >>= 4;
-
     var1 = ((((rawtemp>>3) - ((int32_t)pdd->bcd.bcd_dig_T1 <<1))) *
             ((int32_t)pdd->bcd.bcd_dig_T2)) >> 11;
 
@@ -366,7 +364,7 @@ bme280_compensate_pressure(struct sensor_itf *itf, int32_t rawpress,
     int64_t var1, var2, p;
     int32_t temp;
 
-    if (rawpress == 0x800000) {
+    if (rawpress == 0x80000) {
         BME280_LOG(ERROR, "Invalid pressure data\n");
         STATS_INC(g_bme280stats, invalid_data_errors);
         return NAN;
@@ -377,8 +375,6 @@ bme280_compensate_pressure(struct sensor_itf *itf, int32_t rawpress,
             (void)bme280_compensate_temperature(temp, pdd);
         }
     }
-
-    rawpress >>= 4;
 
     var1 = ((int64_t)pdd->t_fine) - 128000;
     var2 = var1 * var1 * (int64_t)pdd->bcd.bcd_dig_P6;
@@ -976,13 +972,9 @@ bme280_get_temperature(struct sensor_itf *itf, int32_t *temp)
         goto err;
     }
 
-#if MYNEWT_VAL(BME280_SPEC_CALC)
     *temp = (int32_t)((((uint32_t)(tmp[0])) << 12) |
                       (((uint32_t)(tmp[1])) <<  4) |
                        ((uint32_t)tmp[2] >> 4));
-#else
-    *temp = ((tmp[0] << 16) | (tmp[1] << 8) | tmp[2]);
-#endif
 
     return 0;
 err:
@@ -1006,11 +998,7 @@ bme280_get_humidity(struct sensor_itf *itf, int32_t *humid)
     if (rc) {
         goto err;
     }
-#if MYNEWT_VAL(BME280_SPEC_CALC)
     *humid = (tmp[0] << 8 | tmp[1]);
-#else
-    *humid = (tmp[0] << 8 | tmp[1]);
-#endif
 
     return 0;
 err:
@@ -1035,13 +1023,9 @@ bme280_get_pressure(struct sensor_itf *itf, int32_t *press)
         goto err;
     }
 
-#if MYNEWT_VAL(BME280_SPEC_CALC)
     *press = (int32_t)((((uint32_t)(tmp[0])) << 12) |
                       (((uint32_t)(tmp[1])) <<  4)  |
                        ((uint32_t)tmp[2] >> 4));
-#else
-    *press = ((tmp[0] << 16) | (tmp[1] << 8) | tmp[2]);
-#endif
 
     return 0;
 err:
