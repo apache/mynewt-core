@@ -82,7 +82,10 @@ struct lps33hw_private_driver_data {
 
 struct lps33hw {
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
-    struct bus_i2c_node i2c_node;
+    union {
+        struct bus_i2c_node i2c_node;
+        struct bus_spi_node spi_node;
+    };
 #else
     struct os_dev dev;
 #endif
@@ -90,6 +93,9 @@ struct lps33hw {
     struct lps33hw_cfg cfg;
     os_time_t last_read_time;
     struct lps33hw_private_driver_data pdd;
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    bool node_is_spi;
+#endif
 };
 
 /**
@@ -234,6 +240,21 @@ int lps33hw_shell_init(void);
 int
 lps33hw_create_i2c_sensor_dev(struct bus_i2c_node *node, const char *name,
                               const struct bus_i2c_node_cfg *i2c_cfg,
+                              struct sensor_itf *sensor_itf);
+
+/**
+ * Create SPI bus node for LPS33HW sensor
+ *
+ * @param node        Bus node
+ * @param name        Device name
+ * @param spi_cfg     SPI node configuration
+ * @param sensor_itf  Sensors interface
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+lps33hw_create_spi_sensor_dev(struct bus_spi_node *node, const char *name,
+                              const struct bus_spi_node_cfg *spi_cfg,
                               struct sensor_itf *sensor_itf);
 #endif
 
