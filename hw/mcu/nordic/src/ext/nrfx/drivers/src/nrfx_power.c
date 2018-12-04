@@ -1,21 +1,21 @@
-/**
+/*
  * Copyright (c) 2017 - 2018, Nordic Semiconductor ASA
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of the copyright holder nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -37,6 +37,7 @@
 
 #if NRFX_CHECK(NRFX_CLOCK_ENABLED)
 extern bool nrfx_clock_irq_enabled;
+extern void nrfx_clock_irq_handler(void);
 #endif
 
 /**
@@ -293,5 +294,23 @@ void nrfx_power_irq_handler(void)
     }
 #endif
 }
+
+#if NRFX_CHECK(NRFX_CLOCK_ENABLED)
+/*
+ * If both POWER and CLOCK drivers are used, a common IRQ handler function must
+ * be used that calls the handlers in these two drivers. This is because these
+ * two peripherals share one interrupt.
+ * This function is located here, not in a separate nrfx_power_clock.c file,
+ * so that it does not end up as the only symbol in a separate object when
+ * a library with nrfx is created. In such case, forcing a linker to use this
+ * function instead of another one defined as weak will require additional
+ * actions, and might be even impossible.
+ */
+void nrfx_power_clock_irq_handler(void)
+{
+    nrfx_power_irq_handler();
+    nrfx_clock_irq_handler();
+}
+#endif
 
 #endif // NRFX_CHECK(NRFX_POWER_ENABLED)
