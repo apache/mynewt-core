@@ -58,26 +58,31 @@ shell_log_dump_entry(struct log *log, struct log_offset *log_offset,
     }
     data[rc] = 0;
 
+    console_printf("[%llu] ", ueh->ue_ts);
+
 #if MYNEWT_VAL(LOG_VERSION) <= 2
-    console_printf("[%llu] %s\n", ueh->ue_ts, data);
+    console_write(data, strlen(data));
 #else
     switch (ueh->ue_etype) {
     case LOG_ETYPE_STRING:
-        console_printf("[%llu] %s\n", ueh->ue_ts, data);
+        console_write(data, strlen(data));
         break;
     default:
-        console_printf("[%llu] ", ueh->ue_ts);
         for (off = 0; off < rc; off += blksz) {
             blksz = dlen - off;
             if (blksz > sizeof(tmp) >> 1) {
                 blksz = sizeof(tmp) >> 1;
             }
             hex_format(&data[off], blksz, tmp, sizeof(tmp));
-            console_printf("%s", tmp);
+            console_write(tmp, strlen(tmp));
         }
-        console_printf("%s\n", rc < len ? "..." : "");
+        if (rc < len) {
+            console_write("...", 3);
+        }
     }
 #endif
+
+    console_write("\n", 1);
     return 0;
 }
 
