@@ -236,7 +236,7 @@ lis2dh12_i2c_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
     int rc;
     if (len > 1)
     {
-        addr |= 0x80;
+        addr |= LIS2DH12_I2C_ADDR_INC;
     }
 
     uint8_t payload[20] = { addr, 0, 0, 0, 0, 0, 0, 0,
@@ -310,7 +310,7 @@ lis2dh12_spi_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
      * requested is more than 1
      */
     if (len > 1) {
-        addr |= LIS2DH12_SPI_ADR_INC;
+        addr |= LIS2DH12_SPI_ADDR_INC;
     }
 
     /* Select the device */
@@ -483,6 +483,13 @@ lis2dh12_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
          */
         uint8_t payload[19];
     } write_data;
+    struct lis2dh12 *dev = (struct lis2dh12 *)itf->si_dev;
+
+    if (dev->node_is_spi) {
+        addr |= LIS2DH12_SPI_ADDR_INC;
+    } else {
+        addr |= LIS2DH12_I2C_ADDR_INC;
+    }
 
     if (len > sizeof(write_data.payload)) {
         return -1;
@@ -526,6 +533,15 @@ lis2dh12_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
     int rc;
 
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    struct lis2dh12 *dev = (struct lis2dh12 *)itf->si_dev;
+
+    if (dev->node_is_spi) {
+        addr |= LIS2DH12_SPI_READ_CMD_BIT;
+        addr |= LIS2DH12_SPI_ADDR_INC;
+    } else {
+        addr |= LIS2DH12_I2C_ADDR_INC;
+    }
+
     rc = bus_node_simple_write_read_transact(itf->si_dev, &addr, 1, payload, len);
 #else
     rc = sensor_itf_lock(itf, MYNEWT_VAL(LIS2DH12_ITF_LOCK_TMO));
@@ -3019,10 +3035,13 @@ lis2dh12_create_i2c_sensor_dev(struct bus_i2c_node *node, const char *name,
                                const struct bus_i2c_node_cfg *i2c_cfg,
                                struct sensor_itf *sensor_itf)
 {
+    struct lis2dh12 *dev = (struct lis2dh12 *)node;
     struct bus_node_callbacks cbs = {
         .init = init_node_cb,
     };
     int rc;
+
+    dev->node_is_spi = false;
 
     bus_node_set_callbacks((struct os_dev *)node, &cbs);
 
@@ -3036,10 +3055,13 @@ lis2dh12_create_spi_sensor_dev(struct bus_spi_node *node, const char *name,
                                const struct bus_spi_node_cfg *spi_cfg,
                                struct sensor_itf *sensor_itf)
 {
+    struct lis2dh12 *dev = (struct lis2dh12 *)node;
     struct bus_node_callbacks cbs = {
         .init = init_node_cb,
     };
     int rc;
+
+    dev->node_is_spi = true;
 
     bus_node_set_callbacks((struct os_dev *)node, &cbs);
 

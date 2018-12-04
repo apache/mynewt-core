@@ -171,8 +171,8 @@ extern "C" {
 #define LIS2DH12_REG_ACT_DUR                 0x3F
 
 #define LIS2DH12_SPI_READ_CMD_BIT            0x80
-
-#define LIS2DH12_SPI_ADR_INC                 0x40
+#define LIS2DH12_SPI_ADDR_INC                0x40
+#define LIS2DH12_I2C_ADDR_INC                0x80
 
 int lis2dh12_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload, uint8_t len);
 int lis2dh12_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload, uint8_t len);
