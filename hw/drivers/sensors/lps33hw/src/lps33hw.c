@@ -404,6 +404,12 @@ lps33hw_get_regs(struct sensor_itf *itf, uint8_t reg, uint8_t size,
     int rc;
 
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    struct lps33hw *dev = (struct lps33hw *)itf->si_dev;
+
+    if (dev->node_is_spi) {
+        reg |= LPS33HW_SPI_READ_CMD_BIT;
+    }
+
     rc = bus_node_simple_write_read_transact(itf->si_dev, &reg, 1, buffer, size);
 #else
     rc = sensor_itf_lock(itf, MYNEWT_VAL(LPS33HW_ITF_LOCK_TMO));
@@ -1121,14 +1127,37 @@ lps33hw_create_i2c_sensor_dev(struct bus_i2c_node *node, const char *name,
                               const struct bus_i2c_node_cfg *i2c_cfg,
                               struct sensor_itf *sensor_itf)
 {
+    struct lps33hw *dev = (struct lps33hw *)node;
     struct bus_node_callbacks cbs = {
         .init = init_node_cb,
     };
     int rc;
 
+    dev->node_is_spi = false;
+
     bus_node_set_callbacks((struct os_dev *)node, &cbs);
 
     rc = bus_i2c_node_create(name, node, i2c_cfg, sensor_itf);
+
+    return rc;
+}
+
+int
+lps33hw_create_spi_sensor_dev(struct bus_spi_node *node, const char *name,
+                              const struct bus_spi_node_cfg *spi_cfg,
+                              struct sensor_itf *sensor_itf)
+{
+    struct lps33hw *dev = (struct lps33hw *)node;
+    struct bus_node_callbacks cbs = {
+        .init = init_node_cb,
+    };
+    int rc;
+
+    dev->node_is_spi = true;
+
+    bus_node_set_callbacks((struct os_dev *)node, &cbs);
+
+    rc = bus_spi_node_create(name, node, spi_cfg, sensor_itf);
 
     return rc;
 }
