@@ -515,6 +515,12 @@ lis2dw12_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
     int rc;
 
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    struct lis2dw12 *dev = (struct lis2dw12 *)itf->si_dev;
+
+    if (dev->node_is_spi) {
+        reg |= LIS2DW12_SPI_READ_CMD_BIT;
+    }
+
     rc = bus_node_simple_write_read_transact(itf->si_dev, &reg, 1, buffer, len);
 #else
     rc = sensor_itf_lock(itf, MYNEWT_VAL(LIS2DW12_ITF_LOCK_TMO));
@@ -3362,10 +3368,13 @@ lis2dw12_create_i2c_sensor_dev(struct bus_i2c_node *node, const char *name,
                                const struct bus_i2c_node_cfg *i2c_cfg,
                                struct sensor_itf *sensor_itf)
 {
+    struct lis2dw12 *dev = (struct lis2dw12 *)node;
     struct bus_node_callbacks cbs = {
         .init = init_node_cb,
     };
     int rc;
+
+    dev->node_is_spi = false;
 
     bus_node_set_callbacks((struct os_dev *)node, &cbs);
 
@@ -3379,10 +3388,13 @@ lis2dw12_create_spi_sensor_dev(struct bus_spi_node *node, const char *name,
                                const struct bus_spi_node_cfg *spi_cfg,
                                struct sensor_itf *sensor_itf)
 {
+    struct lis2dw12 *dev = (struct lis2dw12 *)node;
     struct bus_node_callbacks cbs = {
         .init = init_node_cb,
     };
     int rc;
+
+    dev->node_is_spi = true;
 
     bus_node_set_callbacks((struct os_dev *)node, &cbs);
 
