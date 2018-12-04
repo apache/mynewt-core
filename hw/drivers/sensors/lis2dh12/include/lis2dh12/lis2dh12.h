@@ -274,6 +274,9 @@ struct lis2dh12 {
     struct lis2dh12_int intr;
     os_time_t last_read_time;
     struct lis2dh12_pdd pdd;
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    bool node_is_spi;
+#endif
 };
 
 /**
