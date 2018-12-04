@@ -25,6 +25,9 @@ bsp.linkerscript:
 bsp.linkerscript.BOOT_LOADER.OVERWRITE:
     - "hw/bsp/nordic_pca10040/boot-nrf52xxaa.ld"
     - "@apache-mynewt-core/hw/mcu/nordic/nrf52xxx/nrf52.ld"
+bsp.linkerscript.RAM_RESIDENT.OVERWRITE:
+    - "hw/bsp/nordic_pca10040/boot-nrf52xxaa.ld"
+    - "@apache-mynewt-core/hw/mcu/nordic/nrf52xxx/nrf52_ram_resident.ld"
 bsp.part2linkerscript: "hw/bsp/nordic_pca10040/split-nordic_pca10040.ld"
 bsp.downloadscript: "hw/bsp/nordic_pca10040/nordic_pca10040_download.sh"
 bsp.debugscript: "hw/bsp/nordic_pca10040/nordic_pca10040_debug.sh"
