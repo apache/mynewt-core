@@ -40,10 +40,10 @@ static const char *g_log_module_list[ MYNEWT_VAL(LOG_MAX_USER_MODULES) ];
 static uint8_t log_written;
 
 #if MYNEWT_VAL(LOG_CLI)
-int shell_log_dump_all_cmd(int, char **);
+int shell_log_dump_cmd(int, char **);
 struct shell_cmd g_shell_log_cmd = {
     .sc_cmd = "log",
-    .sc_cmd_func = shell_log_dump_all_cmd
+    .sc_cmd_func = shell_log_dump_cmd
 };
 
 #if MYNEWT_VAL(LOG_FCB_SLOT1)

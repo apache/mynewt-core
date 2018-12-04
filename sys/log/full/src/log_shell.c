@@ -209,14 +209,15 @@ shell_log_dump_entry(struct log *log, struct log_offset *log_offset,
 }
 
 int
-shell_log_dump_all_cmd(int argc, char **argv)
+shell_log_dump_cmd(int argc, char **argv)
 {
     struct log *log;
     struct log_offset log_offset;
+    bool last = false;
     int rc;
 
     log = NULL;
-    while (1) {
+    do {
         log = log_list_get_next(log);
         if (log == NULL) {
             break;
@@ -224,6 +225,13 @@ shell_log_dump_all_cmd(int argc, char **argv)
 
         if (log->l_log->log_type == LOG_TYPE_STREAM) {
             continue;
+        }
+
+        if (argc > 1) {
+            if (strcmp(log->l_name, argv[1])) {
+                continue;
+            }
+            last = true;
         }
 
         console_printf("Dumping log %s\n", log->l_name);
@@ -237,7 +245,7 @@ shell_log_dump_all_cmd(int argc, char **argv)
         if (rc != 0) {
             goto err;
         }
-    }
+    } while (!last);
 
     return (0);
 err:
