@@ -285,6 +285,9 @@ struct lis2dw12 {
     struct lis2dw12_cfg cfg;
     struct lis2dw12_int intr;
     struct lis2dw12_pdd pdd;
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    bool node_is_spi;
+#endif
 };
 
 /**
