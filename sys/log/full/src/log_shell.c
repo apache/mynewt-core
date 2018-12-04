@@ -214,7 +214,10 @@ shell_log_dump_cmd(int argc, char **argv)
     struct log *log;
     struct log_offset log_offset;
     bool last = false;
+    bool list_only;
     int rc;
+
+    list_only = ((argc > 1) && !strcmp(argv[1], "-l"));
 
     log = NULL;
     do {
@@ -224,6 +227,11 @@ shell_log_dump_cmd(int argc, char **argv)
         }
 
         if (log->l_log->log_type == LOG_TYPE_STREAM) {
+            continue;
+        }
+
+        if (list_only) {
+            console_printf("%s\n", log->l_name);
             continue;
         }
 
