@@ -94,6 +94,9 @@ struct lps33thw {
     struct lps33thw_cfg cfg;
     os_time_t last_read_time;
     struct lps33thw_private_driver_data pdd;
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    bool node_is_spi;
+#endif
 };
 
 /**
