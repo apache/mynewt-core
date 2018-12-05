@@ -152,7 +152,7 @@ shell_log_dump_entry(struct log *log, struct log_offset *log_offset,
 {
     char data[128 + 1];
     int dlen;
-    int rc;
+    int rc = 0;
 #if MYNEWT_VAL(LOG_VERSION) > 2
     struct CborParser cbor_parser;
     struct CborValue cbor_value;
