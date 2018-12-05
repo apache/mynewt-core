@@ -207,10 +207,10 @@ bus_i2c_hal_dev_init_func(struct os_dev *odev, void *arg)
         return SYS_EINVAL;
     }
 
+    dev->cfg = *cfg;
+
     rc = bus_dev_init_func(odev, (void*)&bus_i2c_hal_ops);
     assert(rc == 0);
-
-    dev->cfg = *cfg;
 
     return 0;
 }
