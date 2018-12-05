@@ -207,12 +207,9 @@ bus_spi_hal_dev_init_func(struct os_dev *odev, void *arg)
 
     BUS_DEBUG_POISON_DEV(dev);
 
-    rc = bus_dev_init_func(odev, (void*)&bus_spi_ops);
-    assert(rc == 0);
-
     dev->cfg = *cfg;
 
-    rc = hal_spi_enable(dev->cfg.spi_num);
+    rc = bus_dev_init_func(odev, (void*)&bus_spi_ops);
     assert(rc == 0);
 
     return 0;

@@ -142,6 +142,10 @@ bus_dev_init_func(struct os_dev *odev, void *arg)
                        stats_name);
 #endif
 
+    if (bdev->dops->enable) {
+        bdev->dops->enable(bdev);
+    }
+
     return 0;
 }
 
