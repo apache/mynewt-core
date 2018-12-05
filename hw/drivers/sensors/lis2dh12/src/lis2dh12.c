@@ -418,7 +418,7 @@ lis2dh12_spi_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
      * requested is moret than 1
      */
     if (len > 1) {
-        addr |= LIS2DH12_SPI_ADR_INC;
+        addr |= LIS2DH12_SPI_ADDR_INC;
     }
 
     /* Select the device */
