@@ -1011,6 +1011,8 @@ spiflash_init(const struct hal_flash *hal_flash_dev)
 
     hal_gpio_init_out(dev->ss_pin, 1);
 
+    (void)hal_spi_disable(dev->spi_num);
+
     rc = hal_spi_config(dev->spi_num, &dev->spi_settings);
     if (rc) {
         return (rc);
