@@ -254,7 +254,7 @@ hal_spi_config(int spi_num, struct hal_spi_settings *settings)
     if (settings->data_order == HAL_SPI_LSB_FIRST) {
         fmt |= SPI_FMT_ENDIAN(1);
     }
-    div = get_cpu_freq() / (2 * settings->baudrate);
+    div = get_cpu_freq() / (2 * settings->baudrate * 1000);
     if (div) {
         div--;
     }
