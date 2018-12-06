@@ -24,6 +24,7 @@
 #include "bus/bus.h"
 #include "bus/bus_debug.h"
 #include "bus/i2c.h"
+#include "i2cn/i2cn.h"
 
 static int
 bus_i2c_translate_hal_error(int hal_err)
@@ -119,7 +120,10 @@ bus_i2c_read(struct bus_dev *bdev, struct bus_node *bnode, uint8_t *buf,
 
     last_op = !(flags & BUS_F_NOSTOP);
 
-    rc = hal_i2c_master_read(dev->cfg.i2c_num, &i2c_data, timeout, last_op);
+    //rc = hal_i2c_master_read(dev->cfg.i2c_num, &i2c_data, timeout, last_op);
+    rc = i2cn_master_read(dev->cfg.i2c_num, &i2c_data, timeout, last_op,
+                          MYNEWT_VAL(MS5840_I2C_RETRIES));
+
 
     return bus_i2c_translate_hal_error(rc);
 }
@@ -143,7 +147,39 @@ bus_i2c_write(struct bus_dev *bdev, struct bus_node *bnode, const uint8_t *buf,
 
     last_op = !(flags & BUS_F_NOSTOP);
 
-    rc = hal_i2c_master_write(dev->cfg.i2c_num, &i2c_data, timeout, last_op);
+    //rc = hal_i2c_master_write(dev->cfg.i2c_num, &i2c_data, timeout, last_op);
+    rc = i2cn_master_write(dev->cfg.i2c_num, &i2c_data, timeout, last_op,
+                           MYNEWT_VAL(MS5840_I2C_RETRIES));
+
+    return bus_i2c_translate_hal_error(rc);
+}
+
+static int
+bus_i2c_write_read(struct bus_dev *bdev, struct bus_node *bnode, const uint8_t *wbuf,
+                   uint16_t wlength, const uint8_t *rbuf, uint16_t rlength,
+                   os_time_t timeout, uint16_t flags)
+{
+    struct bus_i2c_dev *dev = (struct bus_i2c_dev *)bdev;
+    struct bus_i2c_node *node = (struct bus_i2c_node *)bnode;
+    struct hal_i2c_master_data i2c_data;
+    int rc;
+
+    BUS_DEBUG_VERIFY_DEV(dev);
+    BUS_DEBUG_VERIFY_NODE(node);
+
+    i2c_data.address = node->addr;
+    i2c_data.buffer = (uint8_t *)wbuf;
+    i2c_data.len = wlength;
+    i2c_data.buffer2 = (uint8_t *)rbuf;
+    i2c_data.len2 = rlength;
+
+    //
+    // todo: any flag handling would go here.
+    //
+    //rc = hal_i2c_master_write_read(dev->cfg.i2c_num, &i2c_data, timeout);
+    rc = i2cn_master_write_read(dev->cfg.i2c_num, &i2c_data, timeout,
+                                MYNEWT_VAL(MS5840_I2C_RETRIES));
+
 
     return bus_i2c_translate_hal_error(rc);
 }
@@ -168,6 +204,7 @@ static const struct bus_dev_ops bus_i2c_ops = {
     .configure = bus_i2c_configure,
     .read = bus_i2c_read,
     .write = bus_i2c_write,
+    .write_read = bus_i2c_write_read,
     .disable = bus_i2c_disable,
 };
 

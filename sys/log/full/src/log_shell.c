@@ -330,5 +330,3 @@ shell_log_storage_cmd(int argc, char **argv)
 #endif
 
 #endif
-
-

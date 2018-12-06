@@ -79,6 +79,9 @@ extern "C" {
 /** Slave responded to data byte with NACK. */
 #define HAL_I2C_ERR_DATA_NACK           5
 
+/** Overrun error */
+#define HAL_I2C_ERR_OVERRUN             6
+
 /** I2C controller hardware settings */
 struct hal_i2c_hw_settings {
     int pin_scl;
@@ -90,6 +93,9 @@ struct hal_i2c_settings {
     /** Frequency in kHz */
     uint32_t frequency;
 };
+
+/* Prototype for tx/rx callback */
+typedef void (*hal_i2c_txrx_cb)(void *arg);
 
 /**
  * When sending a packet, use this structure to pass the arguments.
@@ -107,10 +113,14 @@ struct hal_i2c_master_data {
      * only the top 7-bits to this function as 0x40
      */
     uint8_t  address;
-    /** Number of buffer bytes to transmit or receive */
+    /** Number of bytes to transmit or receive using buffer */
     uint16_t len;
+    /** Number of bytes to receive using buffer2 during double buffered transactions */
+    uint16_t len2;
     /** Buffer space to hold the transmit or receive */
     uint8_t *buffer;
+    /** Buffer space to hold the receive data during double buffered transactions */
+    uint8_t *buffer2;
 };
 
 /**
@@ -219,6 +229,9 @@ int hal_i2c_master_read(uint8_t i2c_num, struct hal_i2c_master_data *pdata,
  */
 int hal_i2c_master_probe(uint8_t i2c_num, uint8_t address,
                          uint32_t timeout);
+int
+hal_i2c_master_write_read(uint8_t i2c_num, struct hal_i2c_master_data *pdata, uint32_t timo);
+
 
 #ifdef __cplusplus
 }

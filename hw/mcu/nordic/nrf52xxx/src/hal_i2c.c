@@ -22,10 +22,12 @@
 #include <limits.h>
 #include <assert.h>
 #include "os/mynewt.h"
+#include <mcu/cmsis_nvic.h>
 #include <hal/hal_i2c.h>
 #include <hal/hal_gpio.h>
 #include <mcu/nrf52_hal.h>
 #include "nrf_twim.h"
+#include <console/console.h>
 
 #include <nrf.h>
 
@@ -47,20 +49,61 @@
       (GPIO_PIN_CNF_DIR_Output     << GPIO_PIN_CNF_DIR_Pos))
 #define NRF52_SDA_PIN_CONF_CLR    NRF52_SCL_PIN_CONF_CLR
 
+typedef void (*nrf52_i2c_irq_handler_t)(void);
+
+/*
+ * OS semaphore for pending on a transaction to complete.
+ * The semaphore is released in the interrupt context.
+ * This should probably be replaced with callbacks which get
+ * registered before the interface is enabled, similar to
+ * hal_spi_set_rxrx_cb
+ */
+static struct os_sem hal_i2c_sync_sem;
+
 struct nrf52_hal_i2c {
-    NRF_TWI_Type *nhi_regs;
+    NRF_TWIM_Type *nhi_regs;
+    uint32_t irq_number;
+    nrf52_i2c_irq_handler_t irq_handler;
+    volatile int last_error;
 };
 
+void hal_i2c_irq_handler(struct nrf52_hal_i2c *i2c);
+
+
 #if MYNEWT_VAL(I2C_0)
+void i2c0_irq_handler(void);
 struct nrf52_hal_i2c hal_twi_i2c0 = {
-    .nhi_regs = NRF_TWI0
+    .nhi_regs = NRF_TWIM0,
+    .irq_number = SPIM0_SPIS0_TWIM0_TWIS0_SPI0_TWI0_IRQn,
+    .irq_handler = i2c0_irq_handler
 };
+
+void
+i2c0_irq_handler(void)
+{
+    os_trace_isr_enter();
+    hal_i2c_irq_handler(&hal_twi_i2c0);
+    os_trace_isr_exit();
+}
 #endif
+
 #if MYNEWT_VAL(I2C_1)
+void i2c1_irq_handler(void);
 struct nrf52_hal_i2c hal_twi_i2c1 = {
-    .nhi_regs = NRF_TWI1
+    .nhi_regs = NRF_TWIM1,
+    .irq_number = SPIM1_SPIS1_TWIM1_TWIS1_SPI1_TWI1_IRQn,
+    .irq_handler = i2c1_irq_handler
 };
+
+void
+i2c1_irq_handler(void)
+{
+    os_trace_isr_enter();
+    hal_i2c_irq_handler(&hal_twi_i2c1);
+    os_trace_isr_exit();
+}
 #endif
+
 
 static struct nrf52_hal_i2c *nrf52_hal_i2cs[NRF52_HAL_I2C_MAX] = {
 #if MYNEWT_VAL(I2C_0)
@@ -74,6 +117,29 @@ static struct nrf52_hal_i2c *nrf52_hal_i2cs[NRF52_HAL_I2C_MAX] = {
     NULL
 #endif
 };
+
+/**
+ * Converts an nRF SDK I2C status to a HAL I2C error code.
+ */
+static int
+hal_i2c_convert_status(int nrf_status)
+{
+    if (nrf_status == 0) {
+        return 0;
+    } else if (nrf_status & NRF_TWIM_ERROR_DATA_NACK) {
+        console_printf("<>i2c error: DATA_NAK<>\n");
+        return HAL_I2C_ERR_DATA_NACK;
+    } else if (nrf_status & NRF_TWIM_ERROR_ADDRESS_NACK) {
+        console_printf("<>i2c error: ADDR_NAK<>\n");
+        return HAL_I2C_ERR_ADDR_NACK;
+    } else if (nrf_status & TWIM_ERRORSRC_OVERRUN_Msk) {
+        console_printf("<>i2c error: OVERRUN<>\n");
+        return HAL_I2C_ERR_OVERRUN;
+    } else {
+        console_printf("<>i2c error: UNKNOWN<>\n");
+        return HAL_I2C_ERR_UNKNOWN;
+    }
+}
 
 static void
 hal_i2c_delay_us(uint32_t number_of_us)
@@ -169,23 +235,6 @@ hal_i2c_resolve(uint8_t i2c_num, struct nrf52_hal_i2c **out_i2c)
 }
 
 /**
- * Converts an nRF SDK I2C status to a HAL I2C error code.
- */
-static int
-hal_i2c_convert_status(int nrf_status)
-{
-    if (nrf_status == 0) {
-        return 0;
-    } else if (nrf_status & NRF_TWIM_ERROR_DATA_NACK) {
-        return HAL_I2C_ERR_DATA_NACK;
-    } else if (nrf_status & NRF_TWIM_ERROR_ADDRESS_NACK) {
-        return HAL_I2C_ERR_ADDR_NACK;
-    } else {
-        return HAL_I2C_ERR_UNKNOWN;
-    }
-}
-
-/**
  * Reads the input buffer of the specified pin regardless
  * of if it is set as output or input
  */
@@ -253,90 +302,80 @@ ret:
     sda_port->PIN_CNF[sda_pin] = NRF52_SDA_PIN_CONF;
 }
 
+/**
+ * Note: this function is left here for backward compatibility
+ * with existing code that isn't yet using the bus driver. It
+ * will be superceded by hal_i2c_init_hw() and hal_i2c_config()
+ * once all code is using the bus driver.
+ */
 int
 hal_i2c_init(uint8_t i2c_num, void *usercfg)
 {
-    struct nrf52_hal_i2c *i2c;
-    NRF_TWI_Type *regs;
-    struct nrf52_hal_i2c_cfg *cfg;
-    uint32_t freq;
+    struct hal_i2c_hw_settings hw_cfg;
+    struct nrf52_hal_i2c_cfg *legacy_cfg;
+    struct hal_i2c_settings new_cfg;
     int rc;
-    NRF_GPIO_Type *scl_port, *sda_port;
 
     assert(usercfg != NULL);
+    legacy_cfg = (struct nrf52_hal_i2c_cfg *) usercfg;
+    hw_cfg.pin_scl = legacy_cfg->scl_pin;
+    hw_cfg.pin_sda = legacy_cfg->sda_pin;
+    new_cfg.frequency = legacy_cfg->i2c_frequency;
 
-    rc = hal_i2c_resolve(i2c_num, &i2c);
+    /** Set all TWIM registers, excluding frequency, and NVIC */
+    rc = hal_i2c_init_hw(i2c_num, &hw_cfg);
     if (rc != 0) {
         goto err;
     }
 
-    cfg = (struct nrf52_hal_i2c_cfg *) usercfg;
-    regs = i2c->nhi_regs;
-
-    switch (cfg->i2c_frequency) {
-    case 100:
-        freq = TWI_FREQUENCY_FREQUENCY_K100;
-        break;
-    case 250:
-        freq = TWI_FREQUENCY_FREQUENCY_K250;
-        break;
-    case 380:
-        freq = TWI_FREQUENCY_FREQUENCY_K380;
-        break;
-    case 400:
-        freq = TWI_FREQUENCY_FREQUENCY_K400;
-        break;
-    default:
-        rc = HAL_I2C_ERR_INVAL;
+    /** Set frequency */
+    rc = hal_i2c_config(i2c_num, &new_cfg);
+    if (rc != 0) {
         goto err;
     }
 
-    hal_i2c_clear_bus(cfg->scl_pin, cfg->sda_pin);
-
-    /* Resolve which GPIO port these pins belong to */
-    scl_port = HAL_GPIO_PORT(cfg->scl_pin);
-    sda_port = HAL_GPIO_PORT(cfg->sda_pin);
-
-    scl_port->PIN_CNF[cfg->scl_pin] = NRF52_SCL_PIN_CONF;
-    sda_port->PIN_CNF[cfg->sda_pin] = NRF52_SDA_PIN_CONF;
-
-    regs->PSELSCL = cfg->scl_pin;
-    regs->PSELSDA = cfg->sda_pin;
-    regs->FREQUENCY = freq;
-    regs->ENABLE = TWI_ENABLE_ENABLE_Enabled;
+    /** Do an initial bus clear operation, in case some device is misbehaving */
+    hal_i2c_clear_bus(legacy_cfg->scl_pin, legacy_cfg->sda_pin);
 
     return (0);
 err:
     return (rc);
 }
 
-static inline NRF_TWI_Type *
+static inline NRF_TWIM_Type *
 hal_i2c_get_regs(uint8_t i2c_num)
 {
     struct nrf52_hal_i2c *i2c;
     int rc;
-
     rc = hal_i2c_resolve(i2c_num, &i2c);
     if (rc != 0) {
         return NULL;
     }
-
     return i2c->nhi_regs;
 }
 
+/**
+ * This is the init function which gets called by the bus driver and should be the
+ * one to use going forward. hal_i2c_init() is left in the code base for now, just
+ * for backward compatibility with existing code that hasn't yet moved to using the
+ * bus driver.
+ */
 int
 hal_i2c_init_hw(uint8_t i2c_num, const struct hal_i2c_hw_settings *cfg)
 {
-    NRF_TWI_Type *regs;
+    NRF_TWIM_Type *regs;
     NRF_GPIO_Type *port;
+    struct nrf52_hal_i2c *i2c;
     int index;
 
+    hal_i2c_resolve(i2c_num, &i2c);
     regs = hal_i2c_get_regs(i2c_num);
     if (!regs) {
         return HAL_I2C_ERR_INVAL;
     }
 
-    regs->ENABLE = TWI_ENABLE_ENABLE_Disabled;
+
+    regs->ENABLE = TWIM_ENABLE_ENABLE_Disabled;
 
     port = HAL_GPIO_PORT(cfg->pin_scl);
     index = HAL_GPIO_INDEX(cfg->pin_scl);
@@ -346,9 +385,22 @@ hal_i2c_init_hw(uint8_t i2c_num, const struct hal_i2c_hw_settings *cfg)
     index = HAL_GPIO_INDEX(cfg->pin_sda);
     port->PIN_CNF[index] = NRF52_SDA_PIN_CONF;
 
-    regs->PSELSCL = cfg->pin_scl;
-    regs->PSELSDA = cfg->pin_sda;
-    regs->FREQUENCY = TWI_FREQUENCY_FREQUENCY_K100;
+    regs->PSEL.SCL = cfg->pin_scl;
+    regs->PSEL.SDA = cfg->pin_sda;
+    regs->FREQUENCY = TWIM_FREQUENCY_FREQUENCY_K100;
+    regs->ADDRESS = 0;
+    regs->ENABLE = TWIM_ENABLE_ENABLE_Enabled;
+    regs->INTENCLR = NRF_TWIM_ALL_INTS_MASK;
+
+    assert(i2c->irq_handler != NULL);
+    NVIC_SetVector( i2c->irq_number, (uint32_t) i2c->irq_handler );
+    NVIC_SetPriority( i2c->irq_number, (1 << __NVIC_PRIO_BITS) - 1 );
+    NVIC_ClearPendingIRQ( i2c->irq_number );
+    NVIC_EnableIRQ( i2c->irq_number );
+
+    if (os_sem_init(&hal_i2c_sync_sem, 0) != OS_OK) {
+        assert(0);
+    }
 
     return 0;
 }
@@ -356,15 +408,12 @@ hal_i2c_init_hw(uint8_t i2c_num, const struct hal_i2c_hw_settings *cfg)
 static int
 hal_i2c_set_enabled(uint8_t i2c_num, bool enabled)
 {
-    NRF_TWI_Type *regs;
-
+    NRF_TWIM_Type *regs;
     regs = hal_i2c_get_regs(i2c_num);
     if (!regs) {
         return HAL_I2C_ERR_INVAL;
     }
-
-    regs->ENABLE = enabled ? TWI_ENABLE_ENABLE_Enabled : TWI_ENABLE_ENABLE_Disabled;
-
+    regs->ENABLE = enabled ? TWIM_ENABLE_ENABLE_Enabled : TWIM_ENABLE_ENABLE_Disabled;
     return 0;
 }
 
@@ -383,7 +432,7 @@ hal_i2c_disable(uint8_t i2c_num)
 int
 hal_i2c_config(uint8_t i2c_num, const struct hal_i2c_settings *cfg)
 {
-    NRF_TWI_Type *regs;
+    NRF_TWIM_Type *regs;
     int freq;
 
     regs = hal_i2c_get_regs(i2c_num);
@@ -393,16 +442,16 @@ hal_i2c_config(uint8_t i2c_num, const struct hal_i2c_settings *cfg)
 
     switch (cfg->frequency) {
     case 100:
-        freq = TWI_FREQUENCY_FREQUENCY_K100;
+        freq = TWIM_FREQUENCY_FREQUENCY_K100;
         break;
     case 250:
-        freq = TWI_FREQUENCY_FREQUENCY_K250;
+        freq = TWIM_FREQUENCY_FREQUENCY_K250;
         break;
     case 380:
-        freq = TWI_FREQUENCY_FREQUENCY_K380;
+        freq = TWIM_FREQUENCY_FREQUENCY_K380;
         break;
     case 400:
-        freq = TWI_FREQUENCY_FREQUENCY_K400;
+        freq = TWIM_FREQUENCY_FREQUENCY_K400;
         break;
     default:
         return HAL_I2C_ERR_INVAL;
@@ -414,7 +463,7 @@ hal_i2c_config(uint8_t i2c_num, const struct hal_i2c_settings *cfg)
 }
 
 static inline void
-hal_i2c_trigger_start(NRF_TWI_Type *twi, __O uint32_t *task)
+hal_i2c_trigger_start(NRF_TWIM_Type *twim, __O uint32_t *task)
 {
     uint32_t end_ticks;
     int retry = 2;
@@ -431,7 +480,7 @@ hal_i2c_trigger_start(NRF_TWI_Type *twi, __O uint32_t *task)
      */
 
     do {
-        twi->EVENTS_BB = 0;
+        twim->EVENTS_TXSTARTED = 0;
         *task = 1;
 
         /*
@@ -461,165 +510,294 @@ hal_i2c_trigger_start(NRF_TWI_Type *twi, __O uint32_t *task)
              * able to handle unresponsive TWI controller for both reads and
              * writes.
              */
-            if (!hal_gpio_read(twi->PSELSCL) || twi->EVENTS_BB) {
+            if (!hal_gpio_read(twim->PSEL.SCL) || twim->EVENTS_TXSTARTED) {
                 return;
             }
         } while (CPUTIME_LT(os_cputime_get32(), end_ticks));
 
-        twi->ENABLE = TWI_ENABLE_ENABLE_Disabled;
+        twim->ENABLE = TWIM_ENABLE_ENABLE_Disabled;
         /*
          * This is to "clear" other devices on bus which may be affected by the
          * same glitch.
          */
-        hal_i2c_clear_bus(twi->PSELSCL, twi->PSELSDA);
-        twi->ENABLE = TWI_ENABLE_ENABLE_Enabled;
+        hal_i2c_clear_bus(twim->PSEL.SCL, twim->PSEL.SDA);
+        twim->ENABLE = TWIM_ENABLE_ENABLE_Enabled;
     } while (--retry);
 }
 
+/*
+ * Handle errors returned from the TWIM peripheral along with timeouts
+ */
+static int
+hal_i2c_handle_errors(struct nrf52_hal_i2c *i2c, int rc)
+{
+    int nrf_status;
+    NRF_TWIM_Type *regs;
+
+    regs = i2c->nhi_regs;
+    if (regs->EVENTS_SUSPENDED) {
+        regs->EVENTS_SUSPENDED = 0;
+        regs->TASKS_RESUME = 1;
+    }
+    regs->TASKS_STOP = 1;
+
+    if (regs->EVENTS_ERROR) {
+        regs->EVENTS_ERROR = 0;
+        nrf_status = regs->ERRORSRC;
+        regs->ERRORSRC = nrf_status;
+        rc = hal_i2c_convert_status(nrf_status);
+    } else if (rc) {
+        /* Some I2C slave peripherals cause a glitch on the bus when they
+         * reset which puts the TWI in an unresponsive state. Disabling and
+         * re-enabling the TWI returns it to normal operation.
+         * A clear operation is performed in case one of the devices on
+         * the bus is in a bad state.
+         */
+        regs->ENABLE = TWIM_ENABLE_ENABLE_Disabled;
+        hal_i2c_clear_bus(regs->PSEL.SCL, regs->PSEL.SDA);
+        regs->ENABLE = TWIM_ENABLE_ENABLE_Enabled;
+        regs->EVENTS_STOPPED = 0;
+    }
+
+    return rc;
+}
+
+/*
+ * Perform a I2C master write transaction using TWIM/EasyDMA
+ */
 int
 hal_i2c_master_write(uint8_t i2c_num, struct hal_i2c_master_data *pdata,
                      uint32_t timo, uint8_t last_op)
 {
-    struct nrf52_hal_i2c *i2c;
-    NRF_TWI_Type *regs;
-    int nrf_status;
     int rc;
-    int i;
-    uint32_t start;
+    uint32_t int_mask = 0;
+    NRF_TWIM_Type *regs;
+    struct nrf52_hal_i2c *i2c;
 
+    /* Resolve the I2C bus */
     rc = hal_i2c_resolve(i2c_num, &i2c);
     if (rc != 0) {
         return rc;
     }
+
     regs = i2c->nhi_regs;
 
-    regs->ADDRESS = pdata->address;
+    /*
+     * Configure the TXD registers for EasyDMA access to work with buffers of
+     * specific length and address of the slave
+     */
+    regs->ADDRESS    = pdata->address;
+    regs->TXD.MAXCNT = pdata->len;
+    regs->TXD.PTR    = (uint32_t)pdata->buffer;
+    regs->TXD.LIST   = 0;
+
+    /* Disable and clear interrupts */
+    regs->INTENCLR   = NRF_TWIM_ALL_INTS_MASK;
+    regs->INTEN      = 0;
+
+    /* Setup shorts to end transaction based on last_op,
+     * 0 : STOP transaction,
+     * 1 : SUSPEND transaction
+     */
+    if (last_op) {
+        /* Enable short for LASTX->STOP, interrupt to happen on STOP or ERROR */
+        regs->SHORTS = TWIM_SHORTS_LASTTX_STOP_Msk;
+        int_mask = NRF_TWIM_INT_STOPPED_MASK | NRF_TWIM_INT_ERROR_MASK;
+    } else {
+        /* Enable short for LASTX->SUSPEND, interrupt to happen on SUSPENDED or ERROR */
+        regs->SHORTS = TWIM_SHORTS_LASTTX_SUSPEND_Msk;
+        int_mask = NRF_TWIM_INT_SUSPENDED_MASK | NRF_TWIM_INT_ERROR_MASK;
+    }
+
+    i2c->last_error = 0;
+
+    if (os_sem_init(&hal_i2c_sync_sem, 0) != OS_OK) {
+        // todo: DEBUG_PANIC
+        assert(0);
+    }
 
     regs->EVENTS_ERROR = 0;
     regs->EVENTS_STOPPED = 0;
     regs->EVENTS_SUSPENDED = 0;
-    regs->SHORTS = 0;
 
+    /* Start an I2C transmit transaction */
     hal_i2c_trigger_start(regs, &regs->TASKS_STARTTX);
+    //regs->TASKS_STARTTX = 1;
 
-    start = os_time_get();
-    for (i = 0; i < pdata->len; i++) {
-        regs->EVENTS_TXDSENT = 0;
-        regs->TXD = pdata->buffer[i];
-        while (!regs->EVENTS_TXDSENT && !regs->EVENTS_ERROR) {
-            if (os_time_get() - start > timo) {
-                rc = HAL_I2C_ERR_TIMEOUT;
-                goto err;
-            }
-        }
-        if (regs->EVENTS_ERROR) {
-            goto err;
-        }
-    }
-    /* If last_op is zero it means we dont put a stop at end. */
-    if (last_op) {
-        regs->EVENTS_STOPPED = 0;
-        regs->TASKS_STOP = 1;
-        while (!regs->EVENTS_STOPPED && !regs->EVENTS_ERROR) {
-            if (os_time_get() - start > timo) {
-                rc = HAL_I2C_ERR_TIMEOUT;
-                goto err;
-            }
-        }
-        if (regs->EVENTS_ERROR) {
-            goto err;
-        }
+    /* Enable the interrupt for the event which will end the tranaction */
+    regs->INTENSET = int_mask;
+
+    /* Pend on semaphore until it is released by the interrupt */
+    if (os_sem_pend(&hal_i2c_sync_sem, timo) == OS_TIMEOUT) {
+        rc = HAL_I2C_ERR_TIMEOUT;
+        console_printf("<>wr timeout: a=%x<>\n",pdata->address);
+        goto err;
     }
 
+//    console_printf("<>wr stop a=%x, reg=%x<>\n", pdata->address, pdata->buffer[0]);
+    rc = i2c->last_error;
+    if (rc != 0) {
+        goto err;
+    }
     return 0;
-
 err:
-    regs->TASKS_STOP = 1;
-
-    if (regs->EVENTS_ERROR) {
-        nrf_status = regs->ERRORSRC;
-        regs->ERRORSRC = nrf_status;
-        rc = hal_i2c_convert_status(nrf_status);
-    }
-
-    return (rc);
+    return hal_i2c_handle_errors(i2c, rc);
 }
 
+/*
+ * Perform a I2C master read transaction using TWIM/EasyDMA
+ */
 int
 hal_i2c_master_read(uint8_t i2c_num, struct hal_i2c_master_data *pdata,
                     uint32_t timo, uint8_t last_op)
 {
-    struct nrf52_hal_i2c *i2c;
-    NRF_TWI_Type *regs;
-    int nrf_status;
     int rc;
-    int i;
-    uint32_t start;
+    uint32_t int_mask = 0;
+    NRF_TWIM_Type *regs;
+    struct nrf52_hal_i2c *i2c;
 
+    /* Resolve the I2C bus */
     rc = hal_i2c_resolve(i2c_num, &i2c);
     if (rc != 0) {
         return rc;
     }
     regs = i2c->nhi_regs;
 
-    start = os_time_get();
+    /*
+     * Configure the RXD registers for EasyDMA access to work with buffers of
+     * specific length and address of the slave
+     */
+    regs->ADDRESS    = pdata->address;
+    regs->RXD.MAXCNT = pdata->len;
+    regs->RXD.PTR    = (uint32_t)pdata->buffer;
+    regs->RXD.LIST   = 0;
 
-    if (regs->EVENTS_RXDREADY) {
-        /*
-         * If previous read was interrupted, flush RXD.
-         */
-        (void)regs->RXD;
-        (void)regs->RXD;
+    /* Disable and clear interrupts */
+    regs->INTENCLR   = NRF_TWIM_ALL_INTS_MASK;
+    regs->INTEN      = 0;
+
+    i2c->last_error = 0;
+
+    /*
+     * Only set short for RX->STOP for last_op:1 since there is no suspend short
+     * available in nrf52832
+     */
+    if (last_op) {
+        /* Enable short for LASTRX->STOP, interrupt to happen on STOPPED or ERROR */
+        regs->SHORTS = TWIM_SHORTS_LASTRX_STOP_Msk;
+        int_mask = NRF_TWIM_INT_STOPPED_MASK | NRF_TWIM_INT_ERROR_MASK;
+    } else {
+        /* No short, interrupt to happen on LASTRX or ERROR */
+        regs->SHORTS = 0;
+        int_mask = NRF_TWIM_INT_LASTRX_MASK | NRF_TWIM_INT_ERROR_MASK;
     }
+
+    regs->EVENTS_ERROR = 0;
+    regs->EVENTS_STOPPED = 0;
+    regs->EVENTS_RXSTARTED = 0;
+    if (regs->EVENTS_SUSPENDED) {
+        regs->EVENTS_SUSPENDED = 0;
+        regs->TASKS_RESUME = 1;
+    }
+
+    /* Start a receive transaction */
+    hal_i2c_trigger_start(regs, &regs->TASKS_STARTRX);
+    //regs->TASKS_STARTRX = 1;
+
+    /* Enable interrupts */
+    regs->INTENSET = int_mask;
+
+    /* Pend on semaphore until it is released by the interrupt */
+    if (os_sem_pend(&hal_i2c_sync_sem, timo) == OS_TIMEOUT) {
+        rc = HAL_I2C_ERR_TIMEOUT;
+        console_printf("<>rd timeout: a=%x<>\n",pdata->address);
+        goto err;
+    }
+
+//    console_printf("<>rd stop a=%x<>\n", pdata->address);
+    rc = i2c->last_error;
+    if (rc != 0) {
+        goto err;
+    }
+    return 0;
+err:
+    return hal_i2c_handle_errors(i2c, rc);
+}
+
+
+/*
+ * Perform a I2C master write-read repeated start transaction
+ * using TWIM/EasyDMA
+ */
+int
+hal_i2c_master_write_read(uint8_t i2c_num, struct hal_i2c_master_data *pdata, uint32_t timo)
+{
+    int rc;
+    NRF_TWIM_Type *regs;
+    struct nrf52_hal_i2c *i2c;
+
+    /* Resolve the I2C bus */
+    rc = hal_i2c_resolve(i2c_num, &i2c);
+    if (rc != 0) {
+        console_printf("<>resolve failed<>\n");
+        return rc;
+    }
+    regs = i2c->nhi_regs;
+
+    /*
+     * Configure the TXD and RXD registers for EasyDMA access to work with buffers of
+     * specific length and address of the slave
+     */
+    regs->ADDRESS    = pdata->address;
+    regs->TXD.MAXCNT = pdata->len;
+    regs->TXD.PTR    = (uint32_t)pdata->buffer;
+    regs->TXD.LIST   = 0;
+    regs->RXD.MAXCNT = pdata->len2;
+    regs->RXD.PTR    = (uint32_t)pdata->buffer2;
+    regs->RXD.LIST   = 0;
+
+    /* Disable and clear interrupts */
+    regs->INTENCLR   = NRF_TWIM_ALL_INTS_MASK;
+    regs->INTEN      = 0;
+
+    /* Enable 2 shorts: LASTTX->STARTRX and LASTRX->STOP */
+    regs->SHORTS = TWIM_SHORTS_LASTTX_STARTRX_Msk | TWIM_SHORTS_LASTRX_STOP_Msk;
+
+    i2c->last_error = 0;
+
+    if (os_sem_init(&hal_i2c_sync_sem, 0) != OS_OK) {
+        // todo: DEBUG_PANIC
+        assert(0);
+    }
+
     regs->EVENTS_ERROR = 0;
     regs->EVENTS_STOPPED = 0;
     regs->EVENTS_SUSPENDED = 0;
-    regs->EVENTS_RXDREADY = 0;
 
-    regs->ADDRESS = pdata->address;
+    /* Start a transmit-receive transaction */
+    hal_i2c_trigger_start(regs, &regs->TASKS_STARTTX);
+    //regs->TASKS_STARTTX = 1;
 
-    if (pdata->len == 1 && last_op) {
-        regs->SHORTS = TWI_SHORTS_BB_STOP_Msk;
-    } else {
-        regs->SHORTS = TWI_SHORTS_BB_SUSPEND_Msk;
+    /* Enable interrupts for STOPPED and ERROR */
+    regs->INTENSET = NRF_TWIM_INT_STOPPED_MASK | NRF_TWIM_INT_ERROR_MASK;
+
+    /* Pend on semaphore until it is released by the interrupt */
+    if (os_sem_pend(&hal_i2c_sync_sem, timo) == OS_TIMEOUT) {
+        rc = HAL_I2C_ERR_TIMEOUT;
+        console_printf("<>wrrd timeout: a=%x<>\n",pdata->address);
+        goto err;
     }
 
-    hal_i2c_trigger_start(regs, &regs->TASKS_STARTRX);
-
-    for (i = 0; i < pdata->len; i++) {
-        regs->TASKS_RESUME = 1;
-        while (!regs->EVENTS_RXDREADY && !regs->EVENTS_ERROR) {
-            if (os_time_get() - start > timo) {
-                rc = HAL_I2C_ERR_TIMEOUT;
-                goto err;
-            }
-        }
-        if (regs->EVENTS_ERROR) {
-            goto err;
-        }
-        pdata->buffer[i] = regs->RXD;
-        if (i == pdata->len - 2) {
-            if (last_op) {
-                regs->SHORTS = TWI_SHORTS_BB_STOP_Msk;
-            }
-        }
-        regs->EVENTS_RXDREADY = 0;
+//    console_printf("<>wrrd stop a=%x r=%x<>\n", pdata->address, pdata->buffer[0]);
+    rc = i2c->last_error;
+    if (rc != 0) {
+        goto err;
     }
-
-    return (0);
-
+    return 0;
 err:
-    regs->TASKS_STOP = 1;
-    regs->SHORTS = 0;
-
-    if (regs->EVENTS_ERROR) {
-        nrf_status = regs->ERRORSRC;
-        regs->ERRORSRC = nrf_status;
-        rc = hal_i2c_convert_status(nrf_status);
-    }
-
-    return (rc);
+    return hal_i2c_handle_errors(i2c, rc);
 }
+
 
 int
 hal_i2c_master_probe(uint8_t i2c_num, uint8_t address, uint32_t timo)
@@ -632,4 +810,58 @@ hal_i2c_master_probe(uint8_t i2c_num, uint8_t address, uint32_t timo)
     rx.len = 1;
 
     return hal_i2c_master_read(i2c_num, &rx, timo, 1);
+}
+
+/*
+ * Interrupt handler for master I2C transactions using TWIM
+ */
+void
+hal_i2c_irq_handler(struct nrf52_hal_i2c *i2c)
+{
+    NRF_TWIM_Type *regs;
+    regs = i2c->nhi_regs;
+    if (regs->EVENTS_ERROR) {
+        nrf_twim_event_clear(regs, NRF_TWIM_EVENT_ERROR);
+        /*
+         * If STOP hasn't occurred, trigger one now. The error
+         * source will be processed at the end of this handler,
+         * when the STOP interrupt takes place.
+         */
+        if (!regs->EVENTS_STOPPED) {
+            /* Enable the STOPPED event interrupt and resume */
+            regs->INTENCLR = NRF_TWIM_ALL_INTS_MASK;
+            regs->INTENSET = NRF_TWIM_INT_STOPPED_MASK;
+            if (regs->EVENTS_SUSPENDED) {
+                regs->EVENTS_SUSPENDED = 0;
+                regs->TASKS_RESUME = 1;
+            }
+            regs->TASKS_STOP = 1;
+            return;
+        }
+    }
+
+    if (regs->EVENTS_STOPPED) {
+        nrf_twim_event_clear(regs, NRF_TWIM_EVENT_STOPPED);
+        nrf_twim_event_clear(regs, NRF_TWIM_EVENT_LASTTX);
+        nrf_twim_event_clear(regs, NRF_TWIM_EVENT_LASTRX);
+        regs->SHORTS = 0;
+    } else {
+        if (regs->EVENTS_LASTRX) {
+            /* Handle LASTRX event */
+            nrf_twim_event_clear(regs, NRF_TWIM_EVENT_LASTRX);
+            regs->TASKS_SUSPEND = 1;
+        } else {
+            nrf_twim_event_clear(regs, NRF_TWIM_EVENT_SUSPENDED);
+        }
+    }
+
+    /* Read and clear error source register */
+    uint32_t errorsrc = regs->ERRORSRC;
+    regs->ERRORSRC = errorsrc;
+    i2c->last_error = hal_i2c_convert_status(errorsrc);
+
+    if (os_sem_release(&hal_i2c_sync_sem) != OS_OK) {
+        // todo: DEBUG_PANIC
+        assert(0);
+    }
 }
