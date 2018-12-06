@@ -20,11 +20,11 @@
 bsp.arch: rv32imac
 bsp.compiler: compiler/riscv64
 bsp.linkerscript:
-    - "hw/bsp/hifive1/hifive1.ld"
     - "hw/bsp/hifive1/hifive1_app.ld"
-bsp.linkerscript.BOOT_LOADER.OVERWRITE:
     - "hw/bsp/hifive1/hifive1.ld"
+bsp.linkerscript.BOOT_LOADER.OVERWRITE:
     - "hw/bsp/hifive1/hifive1_boot.ld"
+    - "hw/bsp/hifive1/hifive1.ld"
 bsp.downloadscript: "hw/bsp/hifive1/hifive1_download.sh"
 bsp.debugscript: "hw/bsp/hifive1/hifive1_debug.sh"
 
