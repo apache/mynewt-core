@@ -833,15 +833,13 @@ bme280_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
     int rc;
 
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
-    struct os_dev *dev = SENSOR_ITF_GET_DEVICE(itf);
-
     /* XXX this is only required for SPI, but apparently device has no problem
      * with this being set also for I2C so let's leave it for now since there's
      * no API now to figure out bus type for node
      */
     addr |= BME280_SPI_READ_CMD_BIT;
 
-    rc = bus_node_simple_write_read_transact(dev, &addr, 1, payload, len);
+    rc = bus_node_simple_write_read_transact(itf->si_dev, &addr, 1, payload, len);
 #else
     int i;
     uint16_t retval;
@@ -900,7 +898,7 @@ bme280_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
     int rc;
 
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
-    struct os_dev *dev = SENSOR_ITF_GET_DEVICE(itf);
+    struct os_dev *dev = itf->si_dev;
 
     rc = bus_node_lock(dev, OS_TIMEOUT_NEVER);
     if (rc) {
