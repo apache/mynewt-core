@@ -34,6 +34,12 @@
 #endif
 #include <bsp/bsp.h>
 #include <env/freedom-e300-hifive1/platform.h>
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+#include "bus/bus.h"
+#if MYNEWT_VAL(SPI_0) || MYNEWT_VAL(SPI_1) || MYNEWT_VAL(SPI_2)
+#include "bus/spi.h"
+#endif
+#endif
 
 #if MYNEWT_VAL(UART_0)
 static struct uart_dev os_bsp_uart0;
@@ -51,6 +57,21 @@ extern struct fe310_hal_tmr fe310_pwm1;
 #endif
 #if MYNEWT_VAL(TIMER_2)
 extern struct fe310_hal_tmr fe310_pwm0;
+#endif
+
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+#if MYNEWT_VAL(SPI_1)
+static const struct bus_spi_dev_cfg spi1_cfg = {
+    .spi_num = 1,
+};
+static struct bus_spi_dev spi1_bus;
+#endif
+#if MYNEWT_VAL(SPI_2)
+static const struct bus_spi_dev_cfg spi2_cfg = {
+    .spi_num = 2,
+};
+static struct bus_spi_dev spi2_bus;
+#endif
 #endif
 
 /*
@@ -107,13 +128,22 @@ hal_bsp_init(void)
 #endif
 
 #if MYNEWT_VAL(SPI_1)
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    rc = bus_spi_dev_create("spi1", &spi1_bus, (struct bus_spi_dev_cfg *)&spi1_cfg);
+    assert(rc == 0);
+#else
     rc = hal_spi_init(1, NULL, HAL_SPI_TYPE_MASTER);
     assert(rc == 0);
 #endif
-
+#endif
 #if MYNEWT_VAL(SPI_2)
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    rc = bus_spi_dev_create("spi2", &spi2_bus, (struct bus_spi_dev_cfg *)&spi2_cfg);
+    assert(rc == 0);
+#else
     rc = hal_spi_init(2, NULL, HAL_SPI_TYPE_MASTER);
     assert(rc == 0);
+#endif
 #endif
 
 #if MYNEWT_VAL(UART_0)
