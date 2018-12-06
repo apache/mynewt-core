@@ -1040,7 +1040,9 @@ lps33hw_sensor_read(struct sensor *sensor, sensor_type_t type,
 
             rc = data_func(sensor, data_arg, &spd, SENSOR_TYPE_PRESSURE);
         }
-    } else if (type & SENSOR_TYPE_TEMPERATURE) {
+    }
+
+    if (type & SENSOR_TYPE_TEMPERATURE) {
         struct sensor_temp_data std;
 
         rc = lps33hw_get_temperature(itf, &std.std_temp);
