@@ -506,7 +506,8 @@ battery_set_poll_rate_ms_delay(struct os_dev *battery, uint32_t poll_rate,
 
     bat->b_poll_rate = poll_rate;
     bat->b_next_run = os_time_get();
-    os_callout_reset(&battery_manager.bm_poll_callout, start_delay);
+    os_callout_reset(&battery_manager.bm_poll_callout,
+                     os_time_ms_to_ticks32(start_delay));
 
     return 0;
 }
