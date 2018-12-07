@@ -221,6 +221,18 @@ char *battery_prop_get_name(const struct battery_property *prop, char *buf,
  */
 int battery_set_poll_rate_ms(struct os_dev *battery, uint32_t poll_rate);
 
+/**
+ * Set the battery poll rate with a starting delay
+ *
+ * @param The battery
+ * @param The poll rate in milliseconds
+ * @param Start delay before beginning to poll in milliseconds
+ *
+ * @return 0 on success, non-zero error code on failure.
+ */
+int battery_set_poll_rate_ms_delay(struct os_dev *battery, uint32_t poll_rate,
+        uint32_t start_delay);
+
 // =================================================================
 // ========================== BATTERY MANAGER ======================
 // =================================================================
