@@ -33,6 +33,9 @@ pkg.deps:
     - "@apache-mynewt-core/hw/sensor"
     - "@apache-mynewt-core/sys/log/modlog"
 
+pkg.deps.!BUS_DRIVER_PRESENT:
+    - "@apache-mynewt-core/hw/util/i2cn"
+
 pkg.req_apis:
     - stats
 
