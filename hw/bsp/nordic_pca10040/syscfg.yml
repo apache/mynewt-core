@@ -36,6 +36,9 @@ syscfg.defs:
     UARTBB_0_PIN_RX:
         description: 'RX pin for UARTBB0'
         value: -1
+    RAM_RESIDENT:
+        description: 'Compile app to be loaded to RAM'
+        value: 0
 
 syscfg.vals:
     # Enable nRF52832 MCU
