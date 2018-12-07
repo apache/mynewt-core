@@ -409,7 +409,7 @@ bme280_compensate_pressure(struct sensor_itf *itf, int32_t rawpress,
  */
 static float
 bme280_compensate_humidity(struct sensor_itf *itf, uint32_t rawhumid,
-                           struct bme280_calib_data *bcd)
+                           struct bme280_pdd *pdd)
 {
     int32_t h;
     int32_t temp;
@@ -421,13 +421,13 @@ bme280_compensate_humidity(struct sensor_itf *itf, uint32_t rawhumid,
         return NAN;
     }
 
-    if (!g_t_fine) {
-        if(!bme280_get_temperature(&temp)) {
-            (void)bme280_compensate_temperature(temp, bcd);
+    if (!pdd->t_fine) {
+        if(!bme280_get_temperature(itf, &temp)) {
+            (void)bme280_compensate_temperature(temp, pdd);
         }
     }
 
-    tmp32 = (g_t_fine - ((int32_t)76800));
+    tmp32 = (pdd->t_fine - ((int32_t)76800));
 
     tmp32 = (((((rawhumid << 14) - (((int32_t)pdd->bcd.bcd_dig_H4) << 20) -
              (((int32_t)pdd->bcd.bcd_dig_H5) * tmp32)) + ((int32_t)16384)) >> 15) *
