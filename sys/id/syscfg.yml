@@ -45,3 +45,10 @@ syscfg.defs:
         value: 0
         restrictions:
             - 'ID_MODEL_PRESENT'
+
+    ID_TARGET_PRESENT:
+        description: 'Target name string exported as `id/target`.'
+        value: 0
+        restrictions:
+            # Older versions of newt don't export the target name.
+            - 'TARGET_NAME'
