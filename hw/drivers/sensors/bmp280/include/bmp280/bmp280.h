@@ -102,7 +102,14 @@ struct bmp280_pdd {
 };
 
 struct bmp280 {
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    union {
+        struct bus_i2c_node i2c_node;
+        struct bus_spi_node spi_node;
+    };
+#else
     struct os_dev dev;
+#endif
     struct sensor sensor;
     struct bmp280_cfg cfg;
     struct bmp280_pdd pdd;
