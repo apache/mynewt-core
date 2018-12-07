@@ -485,23 +485,7 @@ battery_mgr_poll_battery(struct battery *battery)
 int
 battery_set_poll_rate_ms(struct os_dev *battery, uint32_t poll_rate)
 {
-    struct battery *bat = (struct battery *)battery;
-
-    if (bat == NULL) {
-        return -1;
-    }
-
-    if (poll_rate == 0) {
-        bat->b_poll_rate = 0;
-        os_callout_stop(&battery_manager.bm_poll_callout);
-        return 0;
-    }
-
-    bat->b_poll_rate = poll_rate;
-    bat->b_next_run = os_time_get();
-    os_callout_reset(&battery_manager.bm_poll_callout, 0);
-
-    return 0;
+    return battery_set_poll_rate_ms_delay(battery, poll_rate, 0);
 }
 
 int
