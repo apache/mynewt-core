@@ -94,6 +94,10 @@ id_conf_get(int argc, char **argv, char *val, int val_len_max)
         } else if (!strcmp(argv[0], "model")) {
             return (char *)id_model;
 #endif
+#if MYNEWT_VAL(ID_TARGET_PRESENT)
+        } else if (!strcmp(argv[0], "target")) {
+            return MYNEWT_VAL(TARGET_NAME);
+#endif
         } else if (!strcmp(argv[0], "mfghash")) {
             return id_mfghash;
         }
@@ -141,6 +145,9 @@ id_conf_export(void (*export_func)(char *name, char *val),
         export_func("id/bsp", (char *)id_bsp_str);
         export_func("id/app", (char *)id_app_str);
         export_func("id/mfghash", (char *)id_mfghash);
+#if MYNEWT_VAL(ID_TARGET_PRESENT)
+        export_func("id/target", MYNEWT_VAL(TARGET_NAME));
+#endif
     }
 #if MYNEWT_VAL(ID_SERIAL_PRESENT)
     export_func("id/serial", id_serial);
