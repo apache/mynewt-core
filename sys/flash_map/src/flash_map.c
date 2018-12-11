@@ -52,12 +52,6 @@ flash_area_open(uint8_t id, const struct flash_area **fap)
     return SYS_ENOENT;
 }
 
-void
-flash_area_close(const struct flash_area *fa)
-{
-    /* nothing to do for now */
-}
-
 int
 flash_area_to_sectors(int id, int *cnt, struct flash_area *ret)
 {
