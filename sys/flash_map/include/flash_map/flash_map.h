@@ -75,7 +75,8 @@ void flash_map_init(void);
  */
 int flash_area_open(uint8_t id, const struct flash_area **);
 
-void flash_area_close(const struct flash_area *);
+/** nothing to do for now */
+#define flash_area_close(flash_area)
 
 /*
  * Read/write/erase. Offset is relative from beginning of flash area.
