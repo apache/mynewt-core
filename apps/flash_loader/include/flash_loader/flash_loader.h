@@ -34,6 +34,7 @@
 #define FL_CMD_ERASE            3
 #define FL_CMD_VERIFY           4
 #define FL_CMD_LOAD_VERIFY      5
+#define FL_CMD_DUMP             6
 
 /*
  * Return codes

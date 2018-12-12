@@ -129,6 +129,19 @@ fl_verify_cmd(void)
     return FL_RC_OK;
 }
 
+static int
+fl_dump_cmd(void)
+{
+    int rc;
+
+    rc = hal_flash_read(fl_cmd_flash_id, fl_cmd_flash_addr, (void *)fl_cmd_data,
+                        fl_cmd_amount);
+    if (rc) {
+        return FL_RC_FLASH_ERR;
+    }
+    return FL_RC_OK;
+}
+
 /*
  * Blinks led if running (and LED is defined).
  */
@@ -196,6 +209,10 @@ main(int argc, char **argv)
             if (rc == FL_RC_OK) {
                 rc = fl_verify_cmd();
             }
+            break;
+        case FL_CMD_DUMP:
+            fl_cmd = 0;
+            rc = fl_dump_cmd();
             break;
         default:
             fl_cmd = 0;

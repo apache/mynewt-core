@@ -94,7 +94,7 @@ end
 define fl_program
 	fl_ping
 	if fl_cmd_rc == 1
-	       fl_file_sz $arg0
+		fl_file_sz $arg0
 
 		set $buf_sz = fl_cmd_data_sz
 		set $fl_off = $arg2
@@ -132,7 +132,7 @@ define fl_program
 		if fl_cmd_rc == 1
 			printf "Done\n"
 		else
-			printf "Error during flash load %d\n", fl_cmd_rc
+			printf "Error during flash program %d\n", fl_cmd_rc
 		end
 	end
 end
@@ -158,4 +158,56 @@ Asks flash_loader to erase flash area, and then load the file there.
   file    - name of the file to load
   id     - flash identifier as specified for this BSP
   offset - offset to this flash
+end
+
+define fl_dump
+	fl_ping
+	if fl_cmd_rc == 1
+		set $file_sz = $arg3
+		set $buf_sz = fl_cmd_data_sz
+		set $fl_off = $arg2
+		set $off = 0
+
+		set fl_cmd_flash_id = $arg1
+
+		shell rm $arg0
+		while fl_cmd_rc == 1 && $off < $file_sz
+			if $off + $buf_sz > $file_sz
+				set $buf_sz = $file_sz - $off
+			end
+
+			printf " 0x%x %d\n", $fl_off + $off, $buf_sz
+
+			set fl_cmd_flash_addr = $fl_off + $off
+			set fl_cmd_amount = $buf_sz
+
+			# dump command
+			set fl_cmd = 6
+
+			# wait for flash dump to complete
+			while fl_cmd != 0
+
+			end
+			if fl_cmd_rc == 1
+				dump binary memory /tmp/foo.gdb fl_cmd_data fl_cmd_data + $buf_sz
+				shell cat /tmp/foo.gdb >> $arg0
+				shell rm /tmp/foo.gdb
+			end
+			set $off = $off + $buf_sz
+		end
+		if fl_cmd_rc == 1
+			printf "Done\n"
+		else
+			printf "Error during flash dump %d\n", fl_cmd_rc
+		end
+	end
+end
+
+document fl_dump
+usage: fl_dump <file> <id> <offset> <amount>
+Asks flash_loader to dump contents of flash to a file.
+  file    - name of the file to compare
+  id     - flash identifier as specified for this BSP
+  offset - offset to this flash
+  amount - number of bytes to dump
 end
