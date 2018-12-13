@@ -423,7 +423,7 @@ flash_map_init(void)
      */
     rc = flash_map_read_mfg(sizeof mfg_areas / sizeof mfg_areas[0],
                             mfg_areas, &num_areas);
-    if (rc == 0) {
+    if (rc == 0 && num_areas > 0) {
         flash_map = mfg_areas;
         flash_map_entries = num_areas;
     }
