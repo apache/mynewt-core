@@ -20,7 +20,6 @@
 #include "os/mynewt.h"
 
 #include "modlog/modlog.h"
-#include "data_recorder/faults.h"
 #include "fault/fault.h"
 #include "fault_priv.h"
 
