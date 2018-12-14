@@ -27,13 +27,15 @@
 #include <stdio.h>
 #include <string.h>
 
+#define SPIFLASH_STRESS_TEST_TASK_COUNT 3
+
 struct runtest_task {
     struct os_task task;
     char name[sizeof "taskX"];
-    OS_TASK_STACK_DEFINE_NOSTATIC(stack, MYNEWT_VAL(RUNTEST_STACK_SIZE));
+    OS_TASK_STACK_DEFINE_NOSTATIC(stack, MYNEWT_VAL(SPIFLASH_STRESS_TEST_STACK_SIZE));
 };
 
-static struct runtest_task runtest_tasks[MYNEWT_VAL(RUNTEST_NUM_TASKS)];
+static struct runtest_task runtest_tasks[SPIFLASH_STRESS_TEST_TASK_COUNT];
 
 static int runtest_next_task_idx;
 
@@ -44,9 +46,9 @@ struct task_cfg {
     int increment;
     int pin;
 } task_args[] = {
-    { FLASH_AREA_TEST_1, 0x00000, 0x01000, 1, 11 },
-    { FLASH_AREA_TEST_1, 0x02000, 0x06000, 7, 12 },
-    { FLASH_AREA_TEST_1, 0x08000, 0x08000, 13, 13 },
+    { MYNEWT_VAL(SPIFLASH_STRESS_TEST_FLASH_AREA_ID), 0x00000, 0x01000, 1, 11 },
+    { MYNEWT_VAL(SPIFLASH_STRESS_TEST_FLASH_AREA_ID), 0x02000, 0x06000, 7, 12 },
+    { MYNEWT_VAL(SPIFLASH_STRESS_TEST_FLASH_AREA_ID), 0x08000, 0x08000, 13, 13 },
 };
 
 
@@ -59,7 +61,7 @@ runtest_init_task(os_task_func_t task_func, uint8_t prio)
     char *name;
     int rc;
 
-    if (runtest_next_task_idx >= MYNEWT_VAL(RUNTEST_NUM_TASKS)) {
+    if (runtest_next_task_idx >= SPIFLASH_STRESS_TEST_TASK_COUNT) {
         assert("No more test tasks");
         return NULL;
     }
@@ -74,7 +76,7 @@ runtest_init_task(os_task_func_t task_func, uint8_t prio)
 
     rc = os_task_init(task, name, task_func, &task_args[runtest_next_task_idx],
                       prio, OS_WAIT_FOREVER, stack,
-                      MYNEWT_VAL(RUNTEST_STACK_SIZE));
+                      MYNEWT_VAL(SPIFLASH_STRESS_TEST_STACK_SIZE));
     assert(rc == 0);
 
 #endif
@@ -135,7 +137,8 @@ void flash_test_task1(void *arg)
             os_time_delay(1);
             i += chunk;
         }
-        console_printf("Task %d waits\n", os_sched_get_current_task()->t_taskid);
+        console_printf("Task %d finished and waits for next start\n",
+                       os_sched_get_current_task()->t_taskid);
     }
 }
 
