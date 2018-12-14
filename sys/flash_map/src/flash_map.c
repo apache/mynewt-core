@@ -349,36 +349,33 @@ flash_map_read_mfg(int max_areas,
                    struct flash_area *out_areas, int *out_num_areas)
 {
     struct mfg_meta_flash_area meta_flash_area;
-    struct mfg_meta_tlv tlv;
+    struct mfg_reader reader;
     struct flash_area *fap;
-    uint32_t off;
     int rc;
 
     *out_num_areas = 0;
-    off = 0;
 
     /* Ensure manufacturing meta region has been located in flash. */
-    rc = mfg_init();
-    if (rc != 0) {
-        return rc;
-    }
+    mfg_init();
+
+    mfg_open(&reader);
 
     while (1) {
         if (*out_num_areas >= max_areas) {
             return -1;
         }
 
-        rc = mfg_next_tlv_with_type(&tlv, &off, MFG_META_TLV_TYPE_FLASH_AREA);
+        rc = mfg_seek_next_with_type(&reader, MFG_META_TLV_TYPE_FLASH_AREA);
         switch (rc) {
         case 0:
             break;
-        case MFG_EDONE:
+        case SYS_EDONE:
             return 0;
         default:
             return rc;
         }
 
-        rc = mfg_read_tlv_flash_area(&tlv, off, &meta_flash_area);
+        rc = mfg_read_tlv_flash_area(&reader, &meta_flash_area);
         if (rc != 0) {
             return rc;
         }
@@ -409,16 +406,16 @@ flash_map_init(void)
 
     /* Use the hardcoded default flash map.  This is done for two reasons:
      * 1. A minimal flash map configuration is required to boot strap the
-     *    process of reading the flash map from the manufacturing meta region.
-     *    In particular, a FLASH_AREA_BOOTLOADER entry is required, as the meta
-     *    region is located at the end of the boot loader area.
-     * 2. If we fail to read the flash map from the meta region, the system
-     *    continues to use the default flash map.
+     *    process of reading the flash map from the manufacturing meta regions.
+     *    In particular, a FLASH_AREA_BOOTLOADER entry is required for the boot
+     *    MMR, as well as an entry for each extended MMR.
+     * 2. If we fail to read the flash map from the MMRs, the system continues
+     *    to use the default flash map.
      */
     flash_map = sysflash_map_dflt;
     flash_map_entries = sizeof sysflash_map_dflt / sizeof sysflash_map_dflt[0];
 
-    /* Attempt to read the flash map from the manufacturing meta region.  On
+    /* Attempt to read the flash map from the manufacturing meta regions.  On
      * success, use the new flash map instead of the default hardcoded one.
      */
     rc = flash_map_read_mfg(sizeof mfg_areas / sizeof mfg_areas[0],
