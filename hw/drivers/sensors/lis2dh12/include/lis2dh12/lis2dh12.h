@@ -49,8 +49,8 @@ extern "C" {
 #define LIS2DH12_DATA_RATE_HN_1344HZ_L_5376HZ   0x90
 
 #define LIS2DH12_ST_MODE_DISABLE                0x00
-#define LIS2DH12_ST_MODE_MODE1                  0x01
-#define LIS2DH12_ST_MODE_MODE2                  0x02
+#define LIS2DH12_ST_MODE_MODE0                  0x02
+#define LIS2DH12_ST_MODE_MODE1                  0x04
 
 #define LIS2DH12_HPF_M_NORMAL0                  0x00
 #define LIS2DH12_HPF_M_REF                      0x01
