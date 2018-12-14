@@ -38,9 +38,13 @@ static struct shell_cmd lps33thw_shell_cmd_struct = {
 };
 
 static struct sensor_itf g_sensor_itf = {
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    .si_dev = NULL, /* will be updated on 1st access */
+#else
     .si_type = MYNEWT_VAL(LPS33THW_SHELL_ITF_TYPE),
     .si_num = MYNEWT_VAL(LPS33THW_SHELL_ITF_NUM),
     .si_addr = MYNEWT_VAL(LPS33THW_SHELL_ITF_ADDR)
+#endif
 };
 
 static int
@@ -117,6 +121,17 @@ lps33thw_shell_cmd(int argc, char **argv)
 {
     if (argc == 1) {
         return lps33thw_shell_help();
+    }
+
+    if (!g_sensor_itf.si_dev) {
+        g_sensor_itf.si_dev = os_dev_open(MYNEWT_VAL(LPS33THW_SHELL_NODE_NAME),
+                                          0, NULL);
+
+        if (!g_sensor_itf.si_dev) {
+            console_printf("Cannot open device '%s'\n",
+                           MYNEWT_VAL(LPS33THW_SHELL_NODE_NAME));
+            return 0;
+        }
     }
 
     /* Read pressure */
