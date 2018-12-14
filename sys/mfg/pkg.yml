@@ -27,6 +27,7 @@ pkg.keywords:
 pkg.deps:
     - "@apache-mynewt-core/kernel/os"
     - "@apache-mynewt-core/sys/flash_map"
+    - "@apache-mynewt-core/sys/log/modlog"
 
 # sys/flash_map must get initialized before sys/mfg.
 pkg.init:

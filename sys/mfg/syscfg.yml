@@ -18,7 +18,15 @@
 #
 
 syscfg.defs:
+    MFG_MAX_MMRS:
+        description: >
+            The maximum allowed MMRs in the manufacturing space.  Excess MMRs
+            are not read.
+        value: 2
     MFG_SYSINIT_STAGE:
         description: >
             Sysinit stage for manufacturing support.
         value: 100
+    MFG_LOG_MODULE:
+        description: 'Numeric module ID to use for manufacturing log messages'
+        value: 128

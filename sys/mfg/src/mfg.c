@@ -19,6 +19,7 @@
 
 #include <string.h>
 #include "os/mynewt.h"
+#include "modlog/modlog.h"
 #include "mfg/mfg.h"
 
 /**
@@ -28,8 +29,6 @@
  *  0                   1                   2                   3
  *  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
- * |Version (0x01) |                  0xff padding                 |
- * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  * |   TLV type    |   TLV size    | TLV data ("TLV size" bytes)   ~
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+                               ~
  * ~                                                               ~
@@ -38,7 +37,7 @@
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+                               ~
  * ~                                                               ~
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
- * |   Region size                 |         0xff padding          |
+ * |          Region size          |    Version    | 0xff padding  |
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  * |                       Magic (0x3bb2a269)                      |
  * +-+-+-+-+-+--+-+-+-+-end of boot loader area+-+-+-+-+-+-+-+-+-+-+
@@ -47,149 +46,148 @@
  * purposes.
  *
  * Fields:
- * <Header>
- * 1. Version: Manufacturing meta version number; always 0x01.
- *
  * <TLVs>
- * 2. TLV type: Indicates the type of data to follow.
- * 3. TLV size: The number of bytes of data to follow.
- * 4. TLV data: "TLV size" bytes of data.
+ * 1. TLV type: Indicates the type of data to follow.
+ * 2. TLV size: The number of bytes of data to follow.
+ * 3. TLV data: "TLV size" bytes of data.
  *
  * <Footer>
- * 5. Region size: The size, in bytes, of the entire manufacturing meta region;
- *    includes header, TLVs, and footer.
- * 6. Magic: indicates the presence of the manufacturing meta region.
+ * 4. Region size: The size, in bytes, of the entire manufacturing meta region;
+ *    includes TLVs and footer.
+ * 5. Version: Manufacturing meta version number; always 0x02.
+ * 6. Magic: Indicates the presence of the manufacturing meta region.
  */
 
 #define MFG_META_MAGIC          0x3bb2a269
-#define MFG_META_HEADER_SZ      4
-#define MFG_META_FOOTER_SZ      8
-#define MFG_META_TLV_SZ         2
-#define MFG_META_FLASH_AREA_SZ  12
-
-struct {
-    uint8_t valid:1;
-    uint32_t off;
-    uint32_t size;
-} mfg_state;
-
-struct mfg_meta_header {
-    uint8_t version;
-    uint8_t pad8;
-    uint16_t pad16;
-};
+#define MFG_META_VERSION        2
+#define MFG_META_FOOTER_SZ      (sizeof (struct mfg_meta_footer))
+#define MFG_META_TLV_SZ         (sizeof (struct mfg_meta_tlv))
 
 struct mfg_meta_footer {
     uint16_t size;
-    uint16_t pad16;
+    uint8_t version;
+    uint8_t pad8;
     uint32_t magic;
 };
 
-_Static_assert(sizeof (struct mfg_meta_header) == MFG_META_HEADER_SZ,
-               "mfg_meta_header must be 4 bytes");
-_Static_assert(sizeof (struct mfg_meta_footer) == MFG_META_FOOTER_SZ,
-               "mfg_meta_footer must be 8 bytes");
-_Static_assert(sizeof (struct mfg_meta_flash_area) == MFG_META_FLASH_AREA_SZ,
-               "mfg_meta_flash_area must be 12 bytes");
+/** Represents an MMR after it has been read from flash. */
+struct mfg_mmr {
+    /* Flash area containing MMR. */
+    uint8_t area_id;
+
+    /* Offset within flash area of start of MMR. */
+    uint32_t offset;
+
+    /* Total size of MMR (TLVs + footer). */
+    uint32_t size;
+};
+
+/** The full set of MMRs comprised by all installed mfgimages. */
+static struct mfg_mmr mfg_mmrs[MYNEWT_VAL(MFG_MAX_MMRS)];
+static int mfg_num_mmrs;
+
+/** True if MMR detection has occurred. */
+static bool mfg_initialized;
+
+void
+mfg_open(struct mfg_reader *out_reader)
+{
+    /* Ensure MMRs have been detected. */
+    mfg_init();
+
+    /* Start at MMR index 0. */
+    *out_reader = (struct mfg_reader) { 0 };
+}
 
 /**
- * Retrieves a TLV header from the mfg meta region.  To request the first TLV
- * in the region, specify an offset of 0.  To request a subsequent TLV, specify
- * the values retrieved by the previous call to this function.
+ * Seeks to the next mfg TLV.
  *
- * @param tlv (in / out)        Input: The previously-read TLV header; not used
- *                                  as input when requesting the first TLV.
- *                              Output: On success, the requested TLV header
- *                                  gets written here.
- * @param off (in / out)        Input: The flash-area-offset of the previously
- *                                  read TLV header; 0 when requesting the
- *                                  first TLV.
- *                              Output: On success, the flash-area-offset of
- *                                  the retrieved TLV header.
+ * @param reader                The reader to seek with.
  *
- * @return                      0 if a TLV header was successfully retrieved;
- *                              MFG_EDONE if there are no additional TLVs to
- *                                  read;
+ * @return                      0 if the next TLV was successfully seeked to.
+ *                              SYS_EDONE if there are no additional TLVs
+ *                                  available.
+ *                              SYS_EAGAIN if the end of the current MMR is
+ *                                  reached, but additional MMRs are available
+ *                                  for reading.
  *                              Other MFG error code on failure.
  */
-int
-mfg_next_tlv(struct mfg_meta_tlv *tlv, uint32_t *off)
+static int
+mfg_seek_next_aux(struct mfg_reader *reader)
 {
     const struct flash_area *fap;
+    const struct mfg_mmr *mmr;
     int rc;
 
-    if (!mfg_state.valid) {
-        return MFG_EUNINIT;
+    if (reader->mmr_idx >= mfg_num_mmrs) {
+        /* The reader is expired. */
+        return SYS_EINVAL;
     }
 
-    rc = flash_area_open(FLASH_AREA_BOOTLOADER, &fap);
+    mmr = &mfg_mmrs[reader->mmr_idx];
+
+    rc = flash_area_open(mmr->area_id, &fap);
     if (rc != 0) {
-        rc = MFG_EFLASH;
-        goto done;
+        return SYS_EIO;
     }
 
-    if (*off == 0) {
-        *off = mfg_state.off + MFG_META_HEADER_SZ;
+    if (reader->offset == 0) {
+        /* First seek; advance to the start of the MMR. */
+        reader->offset = mmr->offset;
     } else {
-        /* Advance past current TLV. */
-        *off += MFG_META_TLV_SZ + tlv->size;
+        /* Follow-up seek; skip the current TLV. */
+        reader->offset += MFG_META_TLV_SZ + reader->cur_tlv.size;
     }
 
-    if (*off + MFG_META_FOOTER_SZ >= fap->fa_size) {
-        /* Reached end of boot area; no more TLVs. */
-        return MFG_EDONE;
-    }
-
-    /* Read next TLV. */
-    memset(tlv, 0, sizeof *tlv);
-    rc = flash_area_read(fap, *off, tlv, MFG_META_TLV_SZ);
-    if (rc != 0) {
-        rc = MFG_EFLASH;
+    if (reader->offset >= fap->fa_size - MFG_META_FOOTER_SZ) {
+        /* Reached end of the MMR; advance to the next MMR if one exists. */
+        if (reader->mmr_idx + 1 >= mfg_num_mmrs) {
+            rc = SYS_EDONE;
+        } else {
+            reader->offset = 0;
+            reader->mmr_idx++;
+            rc = SYS_EAGAIN;
+        }
         goto done;
     }
 
-    rc = 0;
+    /* Read current TLV header. */
+    rc = flash_area_read(fap, reader->offset, &reader->cur_tlv,
+                         MFG_META_TLV_SZ);
+    if (rc != 0) {
+        rc = SYS_EIO;
+        goto done;
+    }
 
 done:
     flash_area_close(fap);
     return rc;
 }
 
-/**
- * Retrieves a TLV header of the specified type from the mfg meta region.  To
- * request the first TLV in the region, specify an offset of 0.  To request a
- * subsequent TLV, specify the values retrieved by the previous call to this
- * function.
- *
- * @param tlv (in / out)        Input: The previously-read TLV header; not used
- *                                  as input when requesting the first TLV.
- *                              Output: On success, the requested TLV header
- *                                  gets written here.
- * @param off (in / out)        Input: The flash-area-offset of the previously
- *                                  read TLV header; 0 when requesting the
- *                                  first TLV.
- *                              Output: On success, the flash-area-offset of
- *                                  the retrieved TLV header.
- * @param type                  The type of TLV to retrieve; one of the
- *                                  MFG_META_TLV_TYPE_[...] constants.
- *
- * @return                      0 if a TLV header was successfully retrieved;
- *                              MFG_EDONE if there are no additional TLVs of
- *                                  the specified type to read;
- *                              Other MFG error code on failure.
- */
 int
-mfg_next_tlv_with_type(struct mfg_meta_tlv *tlv, uint32_t *off, uint8_t type)
+mfg_seek_next(struct mfg_reader *reader)
+{
+    int rc;
+
+    do {
+        rc = mfg_seek_next_aux(reader);
+    } while (rc == SYS_EAGAIN);
+
+    return rc;
+}
+
+int
+mfg_seek_next_with_type(struct mfg_reader *reader, uint8_t type)
 {
     int rc;
 
     while (1) {
-        rc = mfg_next_tlv(tlv, off);
+        rc = mfg_seek_next(reader);
         if (rc != 0) {
             break;
         }
 
-        if (tlv->type == type) {
+        if (reader->cur_tlv.type == type) {
             break;
         }
 
@@ -200,149 +198,222 @@ mfg_next_tlv_with_type(struct mfg_meta_tlv *tlv, uint32_t *off, uint8_t type)
 }
 
 /**
- * Reads a flash-area TLV from the manufacturing meta region.  This function
- * should only be called after a TLV has been identified as having the
- * MFG_META_TLV_TYPE_FLASH_AREA type.
- *
- * @param tlv                   The header of the TLV to read.  This header
- *                                  should have been retrieved via a call to
- *                                  mfg_next_tlv() or mfg_next_tlv_with_type().
- * @param off                   The flash-area-offset of the TLV header.  Note:
- *                                  this is the offset of the TLV header, not
- *                                  the TLV data.
- * @param out_mfa (out)         On success, the retrieved flash area
- *                                  information gets written here.
- *
- * @return                      0 on success; MFG error code on failure.
+ * Opens the flash area pointed to by the provided reader.
  */
-int
-mfg_read_tlv_flash_area(const struct mfg_meta_tlv *tlv, uint32_t off,
-                        struct mfg_meta_flash_area *out_mfa)
+static int
+mfg_open_flash_area(const struct mfg_reader *reader,
+                    const struct flash_area **fap)
+{
+    const struct mfg_mmr *mmr;
+    int rc;
+
+    assert(reader->mmr_idx < mfg_num_mmrs);
+    mmr = &mfg_mmrs[reader->mmr_idx];
+
+    rc = flash_area_open(mmr->area_id, fap);
+    if (rc != 0) {
+        return SYS_EIO;
+    }
+
+    return 0;
+}
+
+static int
+mfg_read_tlv_body(const struct mfg_reader *reader, void *dst, int max_size)
 {
     const struct flash_area *fap;
     int read_sz;
     int rc;
 
-    rc = flash_area_open(FLASH_AREA_BOOTLOADER, &fap);
+    rc = mfg_open_flash_area(reader, &fap);
     if (rc != 0) {
-        rc = MFG_EFLASH;
-        goto done;
+        return rc;
     }
 
-    memset(out_mfa, 0, sizeof *out_mfa);
+    memset(dst, 0, max_size);
 
-    read_sz = min(MFG_META_FLASH_AREA_SZ, tlv->size);
-    rc = flash_area_read(fap, off + MFG_META_TLV_SZ, out_mfa, read_sz);
-    if (rc != 0) {
-        rc = MFG_EFLASH;
-        goto done;
-    }
-
-    rc = 0;
-
-done:
+    read_sz = min(max_size, reader->cur_tlv.size);
+    rc = flash_area_read(fap, reader->offset + MFG_META_TLV_SZ, dst, read_sz);
     flash_area_close(fap);
-    return rc;
+
+    if (rc != 0) {
+        return SYS_EIO;
+    }
+
+    return 0;
+}
+
+int
+mfg_read_tlv_flash_area(const struct mfg_reader *reader,
+                        struct mfg_meta_flash_area *out_mfa)
+{
+    return mfg_read_tlv_body(reader, out_mfa, sizeof *out_mfa);
+}
+
+int
+mfg_read_tlv_mmr_ref(const struct mfg_reader *reader,
+                     struct mfg_meta_mmr_ref *out_mr)
+{
+    return mfg_read_tlv_body(reader, out_mr, sizeof *out_mr);
+}
+
+int
+mfg_read_tlv_hash(const struct mfg_reader *reader, void *out_hash)
+{
+    return mfg_read_tlv_body(reader, out_hash, MFG_HASH_SZ);
 }
 
 /**
- * Reads a hash TLV from the manufacturing meta region.  This function should
- * only be called after a TLV has been identified as having the
- * MFG_META_TLV_TYPE_HASH type.
- *
- * @param tlv                   The header of the TLV to read.  This header
- *                                  should have been retrieved via a call to
- *                                  mfg_next_tlv() or mfg_next_tlv_with_type().
- * @param off                   The flash-area-offset of the TLV header.  Note:
- *                                  this is the offset of the TLV header, not
- *                                  the TLV data.
- * @param out_hash (out)        On success, the retrieved SHA256 hash gets
- *                                  written here.  This buffer must be at least
- *                                  32 bytes wide.
- *
- * @return                      0 on success; MFG error code on failure.
+ * Reads an MMR from the end of the specified flash area.
  */
-int
-mfg_read_tlv_hash(const struct mfg_meta_tlv *tlv, uint32_t off, void *out_hash)
+static int
+mfg_read_mmr(uint8_t area_id, struct mfg_mmr *out_mmr)
 {
     const struct flash_area *fap;
-    int read_sz;
+    struct mfg_meta_footer ftr;
     int rc;
 
-    rc = flash_area_open(FLASH_AREA_BOOTLOADER, &fap);
+    rc = flash_area_open(area_id, &fap);
     if (rc != 0) {
-        rc = MFG_EFLASH;
-        goto done;
+        return SYS_EIO;
     }
 
-    read_sz = min(MFG_HASH_SZ, tlv->size);
-    rc = flash_area_read(fap, off + MFG_META_TLV_SZ, out_hash, read_sz);
-    if (rc != 0) {
-        rc = MFG_EFLASH;
-        goto done;
-    }
-
-    rc = 0;
-
-done:
+    /* Read the MMR footer. */
+    rc = flash_area_read(fap, fap->fa_size - sizeof ftr, &ftr, sizeof ftr);
     flash_area_close(fap);
-    return rc;
+
+    if (rc != 0) {
+        return SYS_EIO;
+    }
+
+    if (ftr.magic != MFG_META_MAGIC) {
+        return SYS_ENODEV;
+    }
+
+    if (ftr.version != MFG_META_VERSION) {
+        return SYS_ENOTSUP;
+    }
+
+    if (ftr.size > fap->fa_size) {
+        return SYS_ENODEV;
+    }
+
+    *out_mmr = (struct mfg_mmr) {
+        .area_id = area_id,
+        .offset = fap->fa_size - ftr.size,
+        .size = ftr.size,
+    };
+
+    return 0;
+}
+
+/**
+ * Reads an MMR from the end of the specified flash area.  On success, the
+ * global MMR list is populated with the result for subsequent reading.
+ */
+static int
+mfg_read_next_mmr(uint8_t area_id)
+{
+    int rc;
+    int i;
+
+    /* Detect if this MMR has already been read. */
+    for (i = 0; i < mfg_num_mmrs; i++) {
+        if (mfg_mmrs[i].area_id == area_id) {
+            return SYS_EALREADY;
+        }
+    }
+
+    if (mfg_num_mmrs >= MYNEWT_VAL(MFG_MAX_MMRS)) {
+        return SYS_ENOMEM;
+    }
+
+    rc = mfg_read_mmr(area_id, &mfg_mmrs[mfg_num_mmrs]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    mfg_num_mmrs++;
+    return 0;
+}
+
+/**
+ * Reads all MMR ref TLVs in the specified MMR.  The global MMR list is
+ * populated with the results for subsequent reading.
+ */
+static int
+mfg_read_mmr_refs(void)
+{
+    struct mfg_meta_mmr_ref mmr_ref;
+    struct mfg_reader reader;
+    int rc;
+
+    mfg_open(&reader);
+
+    /* Repeatedly find and read the next MMR ref TLV.  As new MMRs are read,
+     * they are added to the global list and become available in this loop.
+     */
+    while (true) {
+        rc = mfg_seek_next_with_type(&reader, MFG_META_TLV_TYPE_MMR_REF);
+        switch (rc) {
+        case 0:
+            /* Found an MMR ref TLV.  Read it below. */
+            break;
+
+        case SYS_EDONE:
+            /* No more MMR ref TLVs. */
+            return 0;
+
+        default:
+            return rc;
+        }
+
+        rc = mfg_read_tlv_mmr_ref(&reader, &mmr_ref);
+        if (rc != 0) {
+            return rc;
+        }
+
+        rc = mfg_read_next_mmr(mmr_ref.area_id);
+        if (rc != 0 && rc != SYS_EALREADY) {
+            return rc;
+        }
+    }
+
+    return 0;
 }
 
 /**
  * Locates the manufacturing meta region in flash.  This function must be
  * called before any TLVs can be read.  No-op if this function has already
  * executed successfully.
- *
- * @return                      0 on success; MFG error code on failure.
  */
-int
+void
 mfg_init(void)
 {
-    const struct flash_area *fap;
-    struct mfg_meta_footer ftr;
-    uint16_t off;
     int rc;
+
+    if (mfg_initialized) {
+        return;
+    }
+    mfg_initialized = true;
 
     /* Ensure this function only gets called by sysinit. */
     SYSINIT_ASSERT_ACTIVE();
 
-    if (mfg_state.valid) {
-        /* Already initialized. */
-        return 0;
-    }
-
-    mfg_state.valid = 0;
-
-    rc = flash_area_open(FLASH_AREA_BOOTLOADER, &fap);
+    /* Read the first MMR from the boot loader area. */
+    rc = mfg_read_next_mmr(FLASH_AREA_BOOTLOADER);
     if (rc != 0) {
-        rc = MFG_EFLASH;
-        goto done;
+        goto err;
     }
 
-    off = fap->fa_size - sizeof ftr;
-    rc = flash_area_read(fap, off, &ftr, sizeof ftr);
+    /* Read all MMR references. */
+    rc = mfg_read_mmr_refs();
     if (rc != 0) {
-        rc = MFG_EFLASH;
-        goto done;
+        goto err;
     }
 
-    if (ftr.magic != MFG_META_MAGIC) {
-        rc = MFG_EBADDATA;
-        goto done;
-    }
-    if (ftr.size > fap->fa_size) {
-        rc = MFG_EBADDATA;
-        goto done;
-    }
+    return;
 
-    mfg_state.valid = 1;
-    mfg_state.off = fap->fa_size - ftr.size;
-    mfg_state.size = ftr.size;
-
-    rc = 0;
-
-done:
-    flash_area_close(fap);
-    return rc;
+err:
+    MFG_LOG(ERROR, "failed to read MMRs: rc=%d", rc);
 }
