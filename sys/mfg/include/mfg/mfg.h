@@ -20,11 +20,6 @@
 #ifndef H_MFG_
 #define H_MFG_
 
-#define MFG_EUNINIT                     1
-#define MFG_EBADDATA                    2
-#define MFG_EDONE                       3
-#define MFG_EFLASH                      4
-
 #define MFG_HASH_SZ                     32
 
 #define MFG_META_TLV_TYPE_HASH          0x01
@@ -33,33 +28,125 @@
 /** Informational only; not read by firmware. */
 #define MFG_META_TLV_TYPE_FLASH_TRAITS  0x03
 
+#define MFG_META_TLV_TYPE_MMR_REF       0x04
+
 struct mfg_meta_tlv {
     uint8_t type;
     uint8_t size;
     /* Followed by packed data. */
-};
+} __attribute__((packed));
 
 struct mfg_meta_flash_area {
     uint8_t area_id;
     uint8_t device_id;
-    uint16_t pad16;
     uint32_t offset;
     uint32_t size;
-};
+} __attribute__((packed));
 
 /** Informational only; not read by firmware. */
 struct mfg_meta_flash_traits {
     uint8_t device_id;
     uint8_t min_write_sz;
+} __attribute__((packed));
+
+struct mfg_meta_mmr_ref {
+    uint8_t area_id;
+} __attribute__((packed));
+
+/**
+ * Object used for reading records from the manufacturing space.  The
+ * `mfg_open()` function should be used to construct a reader object.
+ */
+struct mfg_reader {
+    /** Public (read-only). */
+    struct mfg_meta_tlv cur_tlv;
+
+    /** Private. */
+    uint8_t mmr_idx;
+    uint32_t offset;
 };
 
-int mfg_next_tlv(struct mfg_meta_tlv *tlv, uint32_t *off);
-int mfg_next_tlv_with_type(struct mfg_meta_tlv *tlv, uint32_t *off,
-                           uint8_t type);
-int mfg_read_tlv_flash_area(const struct mfg_meta_tlv *tlv, uint32_t off,
+/**
+ * Opens the manufacturing space for reading.  The resulting `mfg_reader`
+ * object should be passed to subsequent seek and read functions.
+ */
+void mfg_open(struct mfg_reader *out_reader);
+
+/**
+ * Seeks to the next mfg TLV.  The caller must initialize the supplied
+ * `mfg_reader` with `mfg_open()` prior to calling this function.
+ *
+ * @param reader                The reader to seek with.
+ *
+ * @return                      0 if the next TLV was successfully seeked to.
+ *                              SYS_EDONE if there are no additional TLVs
+ *                                  available.
+ *                              Other MFG error code on failure.
+ */
+int mfg_seek_next(struct mfg_reader *reader);
+/**
+ * Seeks to the next mfg TLV with the specified type.  The caller must
+ * initialize the supplied `mfg_reader` with `mfg_open()` prior to calling this
+ * function.
+ *
+ * @param reader                The reader to seek with.
+ * @param type                  The type of TLV to seek to; one of the
+ *                                  MFG_META_TLV_TYPE_[...] constants.
+ *
+ * @return                      0 if the next TLV was successfully seeked to.
+ *                              SYS_EDONE if there are no additional TLVs
+ *                                  with the specified type available.
+ *                              Other MFG error code on failure.
+ */
+int mfg_seek_next_with_type(struct mfg_reader *reader, uint8_t type);
+
+/**
+ * Reads a hash TLV from the manufacturing space.  This function should
+ * only be called when the provided reader is pointing at a TLV with the
+ * MFG_META_TLV_TYPE_HASH type.
+ *
+ * @param reader                The reader to read with.
+ * @param out_mr (out)          On success, the retrieved MMR reference
+ *                                  information gets written here.
+ *
+ * @return                      0 on success; MFG error code on failure.
+ */
+int mfg_read_tlv_hash(const struct mfg_reader *reader, void *out_hash);
+
+/**
+ * Reads a flash-area TLV from the manufacturing space.  This function should
+ * only be called when the provided reader is pointing at a TLV with the
+ * MFG_META_TLV_TYPE_FLASH_AREA type.
+ *
+ * @param reader                The reader to read with.
+ * @param out_mfa (out)         On success, the retrieved flash area
+ *                                  information gets written here.
+ *
+ * @return                      0 on success; MFG error code on failure.
+ */
+int mfg_read_tlv_flash_area(const struct mfg_reader *reader,
                             struct mfg_meta_flash_area *out_mfa);
-int mfg_read_tlv_hash(const struct mfg_meta_tlv *tlv, uint32_t off,
-                      void *out_hash);
-int mfg_init(void);
+
+/**
+ * Reads an MMR ref TLV from the manufacturing space.  This function should
+ * only be called when the provided reader is pointing at a TLV with the
+ * MFG_META_TLV_TYPE_MMR_REF type.
+ *
+ * @param reader                The reader to read with.
+ * @param out_mr (out)          On success, the retrieved MMR reference
+ *                                  information gets written here.
+ *
+ * @return                      0 on success; MFG error code on failure.
+ */
+int mfg_read_tlv_mmr_ref(const struct mfg_reader *reader,
+                         struct mfg_meta_mmr_ref *out_mr);
+
+/**
+ * Initializes the mfg package.
+ */
+void mfg_init(void);
+
+#define MFG_LOG(lvl_, ...) \
+    MODLOG_ ## lvl_(MYNEWT_VAL(MFG_LOG_MODULE), __VA_ARGS__)
 
 #endif
