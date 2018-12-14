@@ -640,6 +640,19 @@ lis2dh12_set_activity_duration(struct sensor_itf *itf, uint8_t duration);
 int
 lis2dh12_get_fifo_samples(struct sensor_itf *itf, uint8_t *samples);
 
+/**
+ * Run Self test on sensor
+ *
+ * Self test sequence as described in lis2dh12 application note AN5005.
+ *
+ * @param the sensor interface
+ * @param pointer to return test result in (0 on pass, non-zero on failure)
+ *
+ * @return 0 on sucess, non-zero on failure
+ */
+int
+lis2dh12_run_self_test(struct sensor_itf *itf, int *result);
+
 #if MYNEWT_VAL(LIS2DH12_CLI)
 int lis2dh12_shell_init(void);
 #endif
