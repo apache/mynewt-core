@@ -379,6 +379,9 @@ lis2dh12_i2c_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
         goto err;
     }
 
+    if (len > 1) {
+        payload[0] += LIS2DH12_I2C_ADDR_INC;
+    }
     memcpy(&payload[1], buffer, len);
 
     /* Register write */
