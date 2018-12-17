@@ -123,19 +123,6 @@ bus_i2c_dev_create(const char *name, struct bus_i2c_dev *dev,
 }
 
 /**
- * Initialize os_dev as bus I2C node
- *
- * This can be passed as a parameter to os_dev_create() when creating os_dev
- * object for I2C node, however it's recommended to create devices using helper
- * like bus_i2c_node_create().
- *
- * @param node  Node device object
- * @param arg   Node configuration struct (struct bus_node_cfg)
- */
-int
-bus_i2c_node_init_func(struct os_dev *odev, void *arg);
-
-/**
  * Create bus I2C node
  *
  * This is a convenient helper and recommended way to create os_dev for bus I2C
@@ -155,7 +142,7 @@ bus_i2c_node_create(const char *name, struct bus_i2c_node *node,
     bnode->init_arg = arg;
 
     return os_dev_create(odev, name, OS_DEV_INIT_PRIMARY, 1,
-                         bus_i2c_node_init_func, (void *)cfg);
+                         bus_node_init_func, (void *)cfg);
 }
 
 #ifdef __cplusplus

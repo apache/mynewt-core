@@ -47,6 +47,21 @@ bus_i2c_translate_hal_error(int hal_err)
 }
 
 static int
+bus_i2c_init_node(struct bus_dev *bdev, struct bus_node *bnode, void *arg)
+{
+    struct bus_i2c_node *node = (struct bus_i2c_node *)bnode;
+    struct bus_i2c_node_cfg *cfg = arg;
+
+    BUS_DEBUG_POISON_NODE(node);
+
+    node->freq = cfg->freq;
+    node->addr = cfg->addr;
+    node->quirks = cfg->quirks;
+
+    return 0;
+}
+
+static int
 bus_i2c_enable(struct bus_dev *bdev)
 {
     struct bus_i2c_dev *dev = (struct bus_i2c_dev *)bdev;
@@ -164,6 +179,7 @@ static int bus_i2c_disable(struct bus_dev *bdev)
 }
 
 static const struct bus_dev_ops bus_i2c_ops = {
+    .init_node = bus_i2c_init_node,
     .enable = bus_i2c_enable,
     .configure = bus_i2c_configure,
     .read = bus_i2c_read,
@@ -195,28 +211,6 @@ bus_i2c_dev_init_func(struct os_dev *odev, void *arg)
     assert(rc == 0);
 
     dev->cfg = *cfg;
-
-    return 0;
-}
-
-int
-bus_i2c_node_init_func(struct os_dev *odev, void *arg)
-{
-    struct bus_i2c_node *node = (struct bus_i2c_node *)odev;
-    struct bus_i2c_node_cfg *cfg = arg;
-    struct bus_node_cfg *node_cfg = &cfg->node_cfg;
-    int rc;
-
-    BUS_DEBUG_POISON_NODE(node);
-
-    node->freq = cfg->freq;
-    node->addr = cfg->addr;
-    node->quirks = cfg->quirks;
-
-    rc = bus_node_init_func(odev, node_cfg);
-    if (rc) {
-        return rc;
-    }
 
     return 0;
 }
