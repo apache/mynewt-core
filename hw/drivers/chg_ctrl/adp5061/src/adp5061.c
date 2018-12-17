@@ -26,8 +26,7 @@
 #include <mcu/nrf52_hal.h>
 #include <hal/hal_gpio.h>
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
-#include "bus/bus.h"
-#include "bus/i2c.h"
+#include "bus/drivers/i2c_common.h"
 #else
 #include "hal/hal_i2c.h"
 #include "i2cn/i2cn.h"

@@ -30,8 +30,12 @@ pkg.deps:
     - "@apache-mynewt-core/kernel/os"
     - "@apache-mynewt-core/hw/hal"
     - "@apache-mynewt-core/hw/drivers/led"
-    - "@apache-mynewt-core/hw/util/i2cn"
     - "@apache-mynewt-core/sys/log/modlog"
+
+pkg.deps.!BUS_DRIVER_PRESENT:
+    - "@apache-mynewt-core/hw/util/i2cn"
+pkg.deps.BUS_DRIVER_PRESENT:
+    - "@apache-mynewt-core/hw/bus/drivers/i2c_common"
 
 pkg.deps.LP5523_CLI:
     - "@apache-mynewt-core/util/parse"

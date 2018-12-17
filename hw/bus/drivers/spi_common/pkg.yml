@@ -17,12 +17,11 @@
 # under the License.
 #
 
-pkg.name: hw/bus/spi
-pkg.description: SPI bus implementation
+pkg.name: hw/bus/drivers/spi_common
+pkg.description: Common definitions for SPI bus drivers
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
-pkg.deps:
 
 pkg.deps:
-    - "@apache-mynewt-core/hw/bus"
+    - hw/bus

@@ -23,7 +23,7 @@
 #include "hal/hal_i2c.h"
 #include "bus/bus.h"
 #include "bus/bus_debug.h"
-#include "bus/i2c.h"
+#include "bus/drivers/i2c_hal.h"
 
 static int
 bus_i2c_translate_hal_error(int hal_err)
@@ -178,7 +178,7 @@ static int bus_i2c_disable(struct bus_dev *bdev)
     return 0;
 }
 
-static const struct bus_dev_ops bus_i2c_ops = {
+static const struct bus_dev_ops bus_i2c_hal_ops = {
     .init_node = bus_i2c_init_node,
     .enable = bus_i2c_enable,
     .configure = bus_i2c_configure,
@@ -188,7 +188,7 @@ static const struct bus_dev_ops bus_i2c_ops = {
 };
 
 int
-bus_i2c_dev_init_func(struct os_dev *odev, void *arg)
+bus_i2c_hal_dev_init_func(struct os_dev *odev, void *arg)
 {
     struct bus_i2c_dev *dev = (struct bus_i2c_dev *)odev;
     struct bus_i2c_dev_cfg *cfg = arg;
@@ -207,7 +207,7 @@ bus_i2c_dev_init_func(struct os_dev *odev, void *arg)
         return SYS_EINVAL;
     }
 
-    rc = bus_dev_init_func(odev, (void*)&bus_i2c_ops);
+    rc = bus_dev_init_func(odev, (void*)&bus_i2c_hal_ops);
     assert(rc == 0);
 
     dev->cfg = *cfg;

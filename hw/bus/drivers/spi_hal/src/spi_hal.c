@@ -23,7 +23,7 @@
 #include "hal/hal_spi.h"
 #include "bus/bus.h"
 #include "bus/bus_debug.h"
-#include "bus/spi.h"
+#include "bus/drivers/spi_hal.h"
 
 static int
 bus_spi_init_node(struct bus_dev *bdev, struct bus_node *bnode, void *arg)
@@ -187,7 +187,7 @@ static const struct bus_dev_ops bus_spi_ops = {
 };
 
 int
-bus_spi_dev_init_func(struct os_dev *odev, void *arg)
+bus_spi_hal_dev_init_func(struct os_dev *odev, void *arg)
 {
     struct bus_spi_dev *dev = (struct bus_spi_dev *)odev;
     struct bus_spi_dev_cfg *cfg = arg;

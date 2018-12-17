@@ -26,8 +26,7 @@ extern "C" {
 
 #include <led/led_itf.h>
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
-#include "bus/bus_driver.h"
-#include "bus/i2c.h"
+#include "bus/drivers/i2c_common.h"
 #endif
 
 #define LP5523_MAX_PAYLOAD   (10)
