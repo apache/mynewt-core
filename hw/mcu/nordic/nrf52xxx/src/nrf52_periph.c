@@ -27,7 +27,11 @@
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
 #include "bus/bus.h"
 #if MYNEWT_VAL(I2C_0) || MYNEWT_VAL(I2C_1)
+#if MYNEWT_VAL(MCU_BUS_DRIVER_I2C_USE_TWIM)
+#include "bus/drivers/i2c_nrf52_twim.h"
+#else
 #include "bus/drivers/i2c_hal.h"
+#endif
 #endif
 #if MYNEWT_VAL(SPI_0_MASTER) || MYNEWT_VAL(SPI_1_MASTER) || MYNEWT_VAL(SPI_2_MASTER)
 #include "bus/drivers/spi_hal.h"
@@ -337,9 +341,15 @@ nrf52_periph_create_i2c(void)
 
 #if MYNEWT_VAL(I2C_0)
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+#if MYNEWT_VAL(MCU_BUS_DRIVER_I2C_USE_TWIM)
+    rc = bus_i2c_nrf52_twim_dev_create("i2c0", &i2c0_bus,
+                                       (struct bus_i2c_dev_cfg *)&i2c0_cfg);
+    assert(rc == 0);
+#else
     rc = bus_i2c_hal_dev_create("i2c0", &i2c0_bus,
                                 (struct bus_i2c_dev_cfg *)&i2c0_cfg);
     assert(rc == 0);
+#endif
 #else
     rc = hal_i2c_init(0, (void *)&hal_i2c0_cfg);
     assert(rc == 0);
@@ -347,9 +357,15 @@ nrf52_periph_create_i2c(void)
 #endif
 #if MYNEWT_VAL(I2C_1)
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+#if MYNEWT_VAL(MCU_BUS_DRIVER_I2C_USE_TWIM)
+    rc = bus_i2c_nrf52_twim_dev_create("i2c1", &i2c1_bus,
+                                       (struct bus_i2c_dev_cfg *)&i2c1_cfg);
+    assert(rc == 0);
+#else
     rc = bus_i2c_hal_dev_create("i2c1", &i2c1_bus,
                                 (struct bus_i2c_dev_cfg *)&i2c1_cfg);
     assert(rc == 0);
+#endif
 #else
     rc = hal_i2c_init(1, (void *)&hal_i2c1_cfg);
     assert(rc == 0);
