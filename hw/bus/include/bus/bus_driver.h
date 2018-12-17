@@ -49,6 +49,8 @@ STATS_SECT_END
  * These operations shall be defined by bus driver
  */
 struct bus_dev_ops {
+    /* Initialize node */
+    int (* init_node)(struct bus_dev *bus, struct bus_node *node, void *arg);
     /* Enable bus device */
     int (* enable)(struct bus_dev *bus);
     /* Configure bus for node */

@@ -96,9 +96,6 @@ bus_spi_dev_create(const char *name, struct bus_spi_dev *dev,
                          bus_spi_dev_init_func, cfg);
 }
 
-int
-bus_spi_node_init_func(struct os_dev *odev, void *arg);
-
 static inline int
 bus_spi_node_create(const char *name, struct bus_spi_node *node,
                     const struct bus_spi_node_cfg *cfg, void *arg)
@@ -109,7 +106,7 @@ bus_spi_node_create(const char *name, struct bus_spi_node *node,
     bnode->init_arg = arg;
 
     return os_dev_create(odev, name, OS_DEV_INIT_PRIMARY, 1,
-                         bus_spi_node_init_func, (void *)cfg);
+                         bus_node_init_func, (void *)cfg);
 }
 
 #ifdef __cplusplus
