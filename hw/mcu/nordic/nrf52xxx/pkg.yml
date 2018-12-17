@@ -31,8 +31,11 @@ pkg.deps:
     - "@apache-mynewt-core/hw/hal"
 
 pkg.deps.BUS_DRIVER_PRESENT:
-    - "@apache-mynewt-core/hw/bus/drivers/i2c_hal"
     - "@apache-mynewt-core/hw/bus/drivers/spi_hal"
+pkg.deps.'BUS_DRIVER_PRESENT && MCU_BUS_DRIVER_I2C_USE_TWIM':
+    - "@apache-mynewt-core/hw/bus/drivers/i2c_nrf52_twim"
+pkg.deps.'BUS_DRIVER_PRESENT && !MCU_BUS_DRIVER_I2C_USE_TWIM':
+    - "@apache-mynewt-core/hw/bus/drivers/i2c_hal"
 
 # NRF52810 doesn't support SPI/I2C (Use SPIM/I2CM instead)
 pkg.ign_files.BSP_NRF52810:

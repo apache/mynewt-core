@@ -45,6 +45,12 @@ syscfg.defs:
             Note: Default value seems to work fine, but may need to be tuned.
         value: 100
 
+    MCU_BUS_DRIVER_I2C_USE_TWIM:
+        description: >
+            Enables usage of i2c_nrf52_twim bus driver for I2C.
+            If disabled, standard i2c_hal driver is used.
+        value: 0
+
 # MCU peripherals definitions
     I2C_0:
         description: 'Enable nRF52xxx I2C (TWI) 0'
