@@ -123,6 +123,7 @@ lps33thw_shell_cmd(int argc, char **argv)
         return lps33thw_shell_help();
     }
 
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
     if (!g_sensor_itf.si_dev) {
         g_sensor_itf.si_dev = os_dev_open(MYNEWT_VAL(LPS33THW_SHELL_NODE_NAME),
                                           0, NULL);
@@ -133,6 +134,7 @@ lps33thw_shell_cmd(int argc, char **argv)
             return 0;
         }
     }
+#endif
 
     /* Read pressure */
     if (argc > 1 && strcmp(argv[1], "rp") == 0) {
