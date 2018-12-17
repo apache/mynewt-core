@@ -17,9 +17,12 @@
 # under the License.
 #
 
-pkg.name: hw/bus/i2c
-pkg.description: I2C bus implementation
+pkg.name: hw/bus/drivers/i2c_hal
+pkg.description: I2C bus driver using hal_i2c
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
+
 pkg.deps:
+    - hw/bus
+    - hw/bus/drivers/i2c_common

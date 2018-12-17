@@ -17,29 +17,11 @@
 # under the License.
 #
 
-pkg.name: hw/drivers/bq27z561
-pkg.description: Driver for the BQ27Z561 fuel gauge
+pkg.name: hw/bus/drivers/i2c_common
+pkg.description: Common definitions for I2C bus drivers
+pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
+pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
-    - bq27z561
-    - i2c
-    - fuel_gauge
 
 pkg.deps:
-    - "@apache-mynewt-core/kernel/os"
-    - "@apache-mynewt-core/hw/hal"
-    - "@apache-mynewt-core/hw/battery"
-    - "@apache-mynewt-core/sys/log/modlog"
-
-pkg.deps.!BUS_DRIVER_PRESENT:
-    - "@apache-mynewt-core/hw/util/i2cn"
-pkg.deps.BUS_DRIVER_PRESENT:
-    - "@apache-mynewt-core/hw/bus/drivers/i2c_common"
-
-pkg.req_apis:
-    - stats
-
-pkg.deps.BQ27Z561_CLI:
-    - "@apache-mynewt-core/util/parse"
-
-pkg.init:
-    bq27z561_pkg_init: 'MYNEWT_VAL(BQ27Z561_SYSINIT_STAGE)'
+    - hw/bus

@@ -17,8 +17,8 @@
  * under the License.
  */
 
-#ifndef HW_BUS_SPI_H_
-#define HW_BUS_SPI_H_
+#ifndef HW_BUS_DRIVERS_SPI_COMMON_H_
+#define HW_BUS_DRIVERS_SPI_COMMON_H_
 
 #include <stddef.h>
 #include <stdint.h>
@@ -83,19 +83,6 @@ struct bus_spi_node {
 #endif
 };
 
-int
-bus_spi_dev_init_func(struct os_dev *odev, void *arg);
-
-static inline int
-bus_spi_dev_create(const char *name, struct bus_spi_dev *dev,
-                   struct bus_spi_dev_cfg *cfg)
-{
-    struct os_dev *odev = (struct os_dev *)dev;
-
-    return os_dev_create(odev, name, OS_DEV_INIT_PRIMARY, 0,
-                         bus_spi_dev_init_func, cfg);
-}
-
 static inline int
 bus_spi_node_create(const char *name, struct bus_spi_node *node,
                     const struct bus_spi_node_cfg *cfg, void *arg)
@@ -113,4 +100,4 @@ bus_spi_node_create(const char *name, struct bus_spi_node *node,
 }
 #endif
 
-#endif /* HW_BUS_SPI_H_ */
+#endif /* HW_BUS_DRIVERS_SPI_COMMON_H_ */

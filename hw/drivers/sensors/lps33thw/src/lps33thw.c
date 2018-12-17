@@ -25,7 +25,8 @@
 #include "os/mynewt.h"
 #include "hal/hal_gpio.h"
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
-#include "bus/bus.h"
+#include "bus/drivers/i2c_common.h"
+#include "bus/drivers/spi_common.h"
 #else
 #include "hal/hal_i2c.h"
 #include "hal/hal_spi.h"

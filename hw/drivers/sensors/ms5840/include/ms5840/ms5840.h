@@ -25,8 +25,7 @@
 #include "os/os_dev.h"
 #include "sensor/sensor.h"
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
-#include "bus/bus_driver.h"
-#include "bus/i2c.h"
+#include "bus/drivers/i2c_common.h"
 #endif
 
 #define MS5840_I2C_ADDRESS		0x76
