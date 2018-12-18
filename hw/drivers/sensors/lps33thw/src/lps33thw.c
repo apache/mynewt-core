@@ -67,8 +67,8 @@ STATS_SECT_DECL(lps33thw_stat_section) g_lps33thwstats;
 #define LPS33THW_LOG(lvl_, ...) \
     MODLOG_ ## lvl_(MYNEWT_VAL(LPS33THW_LOG_MODULE), __VA_ARGS__)
 
-#define LPS33THW_PRESS_OUT_DIV (40.96)
-#define LPS33THW_TEMP_OUT_DIV (100.0)
+#define LPS33THW_PRESS_OUT_DIV (40.96f)
+#define LPS33THW_TEMP_OUT_DIV (100.0f)
 #define LPS33THW_PRESS_THRESH_DIV (16)
 
 /* Exports for the sensor API */
