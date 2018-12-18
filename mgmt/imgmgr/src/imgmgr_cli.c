@@ -158,6 +158,43 @@ imgr_cli_confirm(void)
     }
 }
 
+static void
+imgr_cli_erase(void)
+{
+    const struct flash_area *fa;
+    int area_id;
+    int rc;
+
+    area_id = imgmgr_find_best_area_id();
+    if (area_id >= 0) {
+#if MYNEWT_VAL(LOG_FCB_SLOT1)
+        /*
+         * If logging to slot1 is enabled, make sure it's locked before erasing
+         * so log handler does not corrupt our data.
+         */
+        if (area_id == FLASH_AREA_IMAGE_1) {
+            log_fcb_slot1_lock();
+        }
+#endif
+
+        rc = flash_area_open(area_id, &fa);
+        if (rc) {
+            console_printf("Error opening area %d\n", area_id);
+            return;
+        }
+        rc = flash_area_erase(fa, 0, fa->fa_size);
+        flash_area_close(fa);
+        if (rc) {
+            console_printf("Error erasing area rc=%d\n", rc);
+        }
+    } else {
+        /*
+         * No slot where to erase!
+         */
+        console_printf("No suitable area to erase\n");
+    }
+}
+
 static int
 imgr_cli_cmd(int argc, char **argv)
 {
@@ -184,6 +221,8 @@ imgr_cli_cmd(int argc, char **argv)
         } else {
             imgr_cli_set_pending(argv[2], 1);
         }
+    } else if (!strcmp(argv[1], "erase")) {
+        imgr_cli_erase();
     } else {
         console_printf("Unknown cmd\n");
     }
