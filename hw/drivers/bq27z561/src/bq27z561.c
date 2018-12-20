@@ -66,7 +66,7 @@ bq27z561_temp_to_celsius(uint16_t temp)
 {
     float temp_c;
 
-    temp_c = ((float)temp * 0.1) - 273;
+    temp_c = temp * 0.1f - 273.0f;
     return temp_c;
 }
 
