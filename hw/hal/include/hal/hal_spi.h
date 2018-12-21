@@ -32,6 +32,8 @@ extern "C" {
 #endif
 
 #include <inttypes.h>
+#include <stdbool.h>
+#include <os/os_time.h>
 
 /* SPI Type of Master */
 #define HAL_SPI_TYPE_MASTER         (0)
@@ -139,6 +141,26 @@ int hal_spi_enable(int spi_num);
  * @return int 0 on success, non-zero error code on failure.
  */
 int hal_spi_disable(int spi_num);
+
+/**
+ * Checks if spi is being used and can be taken?.
+ *
+ * @param spi_num - spi number
+ * @param timeout Timeout, in os ticks.
+ *                A timeout of 0 means do not wait if not available.
+ *                A timeout of OS_TIMEOUT_NEVER means wait forever.
+ * @return int 0 on success, non-zero error code on failure.
+ */
+int take_spi(int spi_num, os_time_t time_out);
+
+/**
+ * Checks if spi can be given if it was taken.
+ *
+ * @param spi_num - spi number
+ *
+ * @return int 0 on success, non-zero error code on failure.
+ */
+int give_spi(int spi_num);
 
 /**
  * Blocking call to send a value on the SPI. Returns the value received from the
