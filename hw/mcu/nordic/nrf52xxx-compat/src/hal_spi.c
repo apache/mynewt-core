@@ -757,39 +757,53 @@ err:
  * in progress.
  *
  * @param spi_num - spi number
- * @param taken - true if intention is to use spi, false if is to release
- *
+ * @param timeout Timeout, in os ticks.
+ *                A timeout of 0 means do not wait if not available.
+ *                A timeout of OS_TIMEOUT_NEVER means wait forever.
  * @return int 0 on success, non-zero error code on failure.
  */
 int
-set_spi_taken(int spi_num, bool taken)
+take_spi(int spi_num, os_time_t time_out)
 {
     int rc;
     struct nrf52_hal_spi* spi = NULL;
     NRF52_HAL_SPI_RESOLVE(spi_num, spi);
 
-    if (true == taken)
+    //get lock
+    os_error_t rc_lock = os_mutex_pend(&spi->data_lock, time_out);
+    if (OS_OK == rc_lock)
     {
-        //get lock
-        os_error_t rc_lock = os_mutex_pend(&spi->data_lock, 0);
-        if (OS_OK == rc_lock)
-        {
-            return 0;
-        }
-        else
-        {
-            return -1;
-        }
+        return 0;
     }
     else
     {
-        //release lock
-        os_error_t ret = os_mutex_release(&spi->data_lock);
-        if (OS_OK != ret)
-        {
-            return -1;
-        }
-        return 0;
+        return -1;
+    }
+
+    rc = 0;
+err:
+    return rc;
+}
+
+/**
+ * Checks if spi can be given if it was taken.
+ *
+ * @param spi_num - spi number
+ *
+ * @return int 0 on success, non-zero error code on failure.
+ */
+int
+give_spi(int spi_num)
+{
+    int rc;
+    struct nrf52_hal_spi* spi = NULL;
+    NRF52_HAL_SPI_RESOLVE(spi_num, spi);
+
+    //release lock
+    os_error_t ret = os_mutex_release(&spi->data_lock);
+    if (OS_OK != ret)
+    {
+        return -1;
     }
 
     rc = 0;

@@ -194,6 +194,14 @@ struct tlc5971_dev {
     uint8_t                     data_packet[TLC5971_PACKET_LENGTH];
 };
 
+/*
+* TLC5971 input argument struct
+*/
+struct tlc5971_input {
+    uint32_t timeout;
+    int ret_value;
+};
+
 int tlc5971_init(struct os_dev *dev, void *arg);
 int tlc5971_is_enabled(struct tlc5971_dev *dev);
 int tlc5971_write(struct tlc5971_dev *dev);
