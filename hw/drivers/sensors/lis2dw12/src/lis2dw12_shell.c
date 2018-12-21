@@ -218,6 +218,10 @@ lis2dw12_shell_cmd_dump(int argc, char **argv)
     console_printf("0x%02X (TAP_THS_Z): 0x%02X\n", LIS2DW12_REG_TAP_THS_Z, val);
     assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_INT_DUR, &val));
     console_printf("0x%02X (INT_DUR): 0x%02X\n", LIS2DW12_REG_INT_DUR, val);
+    assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_WAKE_UP_THS, &val));
+    console_printf("0x%02X (WAKE_UP_THS): 0x%02X\n", LIS2DW12_REG_WAKE_UP_THS, val);
+    assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_WAKE_UP_DUR, &val));
+    console_printf("0x%02X (WAKE_UP_DUR): 0x%02X\n", LIS2DW12_REG_WAKE_UP_DUR, val);
     assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_FREEFALL, &val));
     console_printf("0x%02X (FREEFALL): 0x%02X\n", LIS2DW12_REG_FREEFALL, val);
     assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_INT_SRC, &val));
