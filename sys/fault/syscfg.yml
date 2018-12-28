@@ -18,6 +18,12 @@
 #
 
 syscfg.defs:
+    FAULT_STUB:
+        description: >
+            Turns all functions in the fault API into no-ops.  All domains are
+            considered to have a chronic fail count of 0.
+        value: 0
+
     FAULT_CLI:
         description: >
             Enables the `fault` CLI command.
