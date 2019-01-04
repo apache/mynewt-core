@@ -38,6 +38,7 @@
 #include "base64/hex.h"
 #if MYNEWT_VAL(LOG_VERSION) > 2
 #include "tinycbor/cbor.h"
+#include "tinycbor/compilersupport_p.h"
 #endif
 
 #if MYNEWT_VAL(LOG_VERSION) > 2
@@ -66,7 +67,7 @@ log_shell_cbor_reader_get16(struct cbor_decoder_reader *d, int offset)
 
     (void)log_read_body(cbr->log, cbr->dptr, &val, offset, sizeof(val));
 
-    return val;
+    return cbor_ntohs(val);
 }
 
 static uint32_t
@@ -77,7 +78,7 @@ log_shell_cbor_reader_get32(struct cbor_decoder_reader *d, int offset)
 
     (void)log_read_body(cbr->log, cbr->dptr, &val, offset, sizeof(val));
 
-    return val;
+    return cbor_ntohl(val);
 }
 
 static uint64_t
@@ -88,7 +89,7 @@ log_shell_cbor_reader_get64(struct cbor_decoder_reader *d, int offset)
 
     (void)log_read_body(cbr->log, cbr->dptr, &val, offset, sizeof(val));
 
-    return val;
+    return cbor_ntohll(val);
 }
 
 static uintptr_t
