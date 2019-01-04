@@ -23,7 +23,26 @@
 #include "hal/hal_spi.h"
 #include "bus/bus.h"
 #include "bus/bus_debug.h"
-#include "bus/spi.h"
+#include "bus/drivers/spi_hal.h"
+
+static int
+bus_spi_init_node(struct bus_dev *bdev, struct bus_node *bnode, void *arg)
+{
+    struct bus_spi_node *node = (struct bus_spi_node *)bnode;
+    struct bus_spi_node_cfg *cfg = arg;
+
+    BUS_DEBUG_POISON_NODE(node);
+
+    node->pin_cs = cfg->pin_cs;
+    node->mode = cfg->mode;
+    node->data_order = cfg->data_order;
+    node->freq = cfg->freq;
+    node->quirks = cfg->quirks;
+
+    hal_gpio_init_out(node->pin_cs, 1);
+
+    return 0;
+}
 
 static int
 bus_spi_enable(struct bus_dev *bdev)
@@ -159,6 +178,7 @@ static int bus_spi_disable(struct bus_dev *bdev)
 }
 
 static const struct bus_dev_ops bus_spi_ops = {
+    .init_node = bus_spi_init_node,
     .enable = bus_spi_enable,
     .configure = bus_spi_configure,
     .read = bus_spi_read,
@@ -167,7 +187,7 @@ static const struct bus_dev_ops bus_spi_ops = {
 };
 
 int
-bus_spi_dev_init_func(struct os_dev *odev, void *arg)
+bus_spi_hal_dev_init_func(struct os_dev *odev, void *arg)
 {
     struct bus_spi_dev *dev = (struct bus_spi_dev *)odev;
     struct bus_spi_dev_cfg *cfg = arg;
@@ -187,39 +207,10 @@ bus_spi_dev_init_func(struct os_dev *odev, void *arg)
 
     BUS_DEBUG_POISON_DEV(dev);
 
-    rc = bus_dev_init_func(odev, (void*)&bus_spi_ops);
-    assert(rc == 0);
-
     dev->cfg = *cfg;
 
-    rc = hal_spi_enable(dev->cfg.spi_num);
+    rc = bus_dev_init_func(odev, (void*)&bus_spi_ops);
     assert(rc == 0);
-
-    return 0;
-}
-
-int
-bus_spi_node_init_func(struct os_dev *odev, void *arg)
-{
-    struct bus_spi_node *node = (struct bus_spi_node *)odev;
-    struct bus_spi_node_cfg *cfg = arg;
-    struct bus_node_cfg *node_cfg = &cfg->node_cfg;
-    int rc;
-
-    BUS_DEBUG_POISON_NODE(node);
-
-    node->pin_cs = cfg->pin_cs;
-    node->mode = cfg->mode;
-    node->data_order = cfg->data_order;
-    node->freq = cfg->freq;
-    node->quirks = cfg->quirks;
-
-    hal_gpio_init_out(node->pin_cs, 1);
-
-    rc = bus_node_init_func(odev, node_cfg);
-    if (rc) {
-        return rc;
-    }
 
     return 0;
 }

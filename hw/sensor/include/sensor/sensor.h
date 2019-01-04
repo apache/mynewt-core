@@ -24,8 +24,8 @@
 #include "os/mynewt.h"
 
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
-#include "bus/i2c.h"
-#include "bus/spi.h"
+#include "bus/drivers/i2c_common.h"
+#include "bus/drivers/spi_common.h"
 #endif
 #if MYNEWT_VAL(SENSOR_OIC)
 #include "oic/oc_ri.h"

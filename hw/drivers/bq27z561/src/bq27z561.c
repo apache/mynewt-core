@@ -24,7 +24,7 @@
 #include "bq27z561/bq27z561.h"
 #include "hal/hal_gpio.h"
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
-#include "bus/bus.h"
+#include "bus/drivers/i2c_common.h"
 #else
 #include "hal/hal_i2c.h"
 #include "i2cn/i2cn.h"
@@ -66,7 +66,7 @@ bq27z561_temp_to_celsius(uint16_t temp)
 {
     float temp_c;
 
-    temp_c = ((float)temp * 0.1) - 273;
+    temp_c = temp * 0.1f - 273.0f;
     return temp_c;
 }
 

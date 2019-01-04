@@ -142,6 +142,10 @@ bus_dev_init_func(struct os_dev *odev, void *arg)
                        stats_name);
 #endif
 
+    if (bdev->dops->enable) {
+        bdev->dops->enable(bdev);
+    }
+
     return 0;
 }
 
@@ -151,10 +155,12 @@ bus_node_init_func(struct os_dev *odev, void *arg)
     struct bus_node *bnode = (struct bus_node *)odev;
     struct bus_node_cfg *node_cfg = arg;
     struct os_dev *parent_odev;
+    struct bus_dev *bdev;
     void *init_arg;
 #if MYNEWT_VAL(BUS_STATS_PER_NODE)
     char *stats_name;
 #endif
+    int rc;
 
     parent_odev = os_dev_lookup(node_cfg->bus_name);
     if (!parent_odev) {
@@ -166,6 +172,12 @@ bus_node_init_func(struct os_dev *odev, void *arg)
     /* We need to save init_arg here since it will be overwritten by parent_bus */
     init_arg = bnode->init_arg;
     bnode->parent_bus = (struct bus_dev *)parent_odev;
+
+    bdev = (struct bus_dev *)parent_odev;
+    rc = bdev->dops->init_node(bdev, bnode, arg);
+    if (rc) {
+        return rc;
+    }
 
     if (node_cfg->lock_timeout_ms) {
         bnode->lock_timeout = os_time_ms_to_ticks32(node_cfg->lock_timeout_ms);

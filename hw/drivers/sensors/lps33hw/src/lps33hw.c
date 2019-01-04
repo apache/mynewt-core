@@ -67,8 +67,8 @@ STATS_SECT_DECL(lps33hw_stat_section) g_lps33hwstats;
 #define LPS33HW_LOG(lvl_, ...) \
     MODLOG_ ## lvl_(MYNEWT_VAL(LPS33HW_LOG_MODULE), __VA_ARGS__)
 
-#define LPS33HW_PRESS_OUT_DIV (40.96)
-#define LPS33HW_TEMP_OUT_DIV (100.0)
+#define LPS33HW_PRESS_OUT_DIV (40.96f)
+#define LPS33HW_TEMP_OUT_DIV (100.0f)
 #define LPS33HW_PRESS_THRESH_DIV (16)
 
 /* Exports for the sensor API */
@@ -510,12 +510,7 @@ lps33hw_get_pressure_regs(struct sensor_itf *itf, uint8_t reg, float *pressure)
         return rc;
     }
 
-    int_press = (((int32_t)payload[2] << 16) |
-        ((int32_t)payload[1] << 8) | payload[0]);
-
-    if (int_press & 0x00800000) {
-        int_press |= 0xff000000;
-    }
+    int_press = (((int8_t)payload[2] << 16) | (payload[1] << 8) | payload[0]);
 
     *pressure = lps33hw_reg_to_pa(int_press);
 

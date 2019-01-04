@@ -289,7 +289,7 @@ hal_gpio_irq_release(int pin)
     if (i < 0) {
         return;
     }
-    hal_gpio_irq_disable(i);
+    hal_gpio_irq_disable(pin);
 
     NRF_GPIOTE->CONFIG[i] = 0;
     NRF_GPIOTE->EVENTS_IN[i] = 0;

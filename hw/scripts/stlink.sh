@@ -41,7 +41,7 @@ stlink_load () {
 
     echo "Downloading" $FILE_NAME "to" $FLASH_OFFSET
 
-    st-flash --reset write $FILE_NAME $FLASH_OFFSET 
+    st-flash --reset write $FILE_NAME $FLASH_OFFSET
     if [ $? -ne 0 ]; then
         exit 1
     fi
@@ -55,6 +55,8 @@ stlink_load () {
 stlink_debug () {
     windows_detect
     PORT=3333
+
+    parse_extra_jtag_cmd $EXTRA_JTAG_CMD
 
     if [ -z "$NO_GDB" ]; then
         if [ -z $FILE_NAME ]; then
@@ -72,13 +74,13 @@ stlink_debug () {
             # it doesn't get killed by Ctrl-C signal from bash.
             #
 
-            $COMSPEC /C "start $COMSPEC /C st-util -p $PORT"
+            $COMSPEC /C "start $COMSPEC /C st-util --no-reset -p $PORT"
         else
             #
             # Block Ctrl-C from getting passed to openocd.
             #
             set -m
-            st-util -p $PORT >stlink.log 2>&1 & 
+            st-util --no-reset -p $PORT >stlink.log 2>&1 &
             stpid=$!
             set +m
         fi
@@ -106,8 +108,8 @@ stlink_debug () {
             fi
         fi
     else
-        # No GDB, wait for openocd to exit
-        st-util -p $PORT 
+        # No GDB, wait for st-util to exit
+        st-util --no-reset -p $PORT
         return $?
     fi
 

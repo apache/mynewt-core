@@ -1,21 +1,21 @@
-/**
+/*
  * Copyright (c) 2017 - 2018, Nordic Semiconductor ASA
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of the copyright holder nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -53,12 +53,12 @@ extern "C" {
 #define nrfx_twis_0_irq_handler     TWIM0_TWIS0_IRQHandler
 #endif
 
-// SPIM1_SPIS1_IRQn
+// SPIM0_SPIS0_IRQn
 #if NRFX_CHECK(NRFX_PRS_BOX_1_ENABLED)
-#define nrfx_prs_box_1_irq_handler  SPIM1_SPIS1_IRQHandler
+#define nrfx_prs_box_1_irq_handler  SPIM0_SPIS0_IRQHandler
 #else
-#define nrfx_spim_1_irq_handler     SPIM1_SPIS1_IRQHandler
-#define nrfx_spis_1_irq_handler     SPIM1_SPIS1_IRQHandler
+#define nrfx_spim_0_irq_handler     SPIM0_SPIS0_IRQHandler
+#define nrfx_spis_0_irq_handler     SPIM0_SPIS0_IRQHandler
 #endif
 
 // GPIOTE_IRQn

@@ -19,6 +19,8 @@
 
 #include "os/mynewt.h"
 
+#if !MYNEWT_VAL(FAULT_STUB)
+
 #include "modlog/modlog.h"
 #include "fault/fault.h"
 #include "fault_priv.h"
@@ -336,3 +338,5 @@ fault_init(void)
     rc = fault_conf_init();
     SYSINIT_PANIC_ASSERT(rc == 0);
 }
+
+#endif /* !MYNEWT_VAL(FAULT_STUB) */

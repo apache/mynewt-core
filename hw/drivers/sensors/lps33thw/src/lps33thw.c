@@ -25,7 +25,8 @@
 #include "os/mynewt.h"
 #include "hal/hal_gpio.h"
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
-#include "bus/bus.h"
+#include "bus/drivers/i2c_common.h"
+#include "bus/drivers/spi_common.h"
 #else
 #include "hal/hal_i2c.h"
 #include "hal/hal_spi.h"
@@ -67,8 +68,8 @@ STATS_SECT_DECL(lps33thw_stat_section) g_lps33thwstats;
 #define LPS33THW_LOG(lvl_, ...) \
     MODLOG_ ## lvl_(MYNEWT_VAL(LPS33THW_LOG_MODULE), __VA_ARGS__)
 
-#define LPS33THW_PRESS_OUT_DIV (40.96)
-#define LPS33THW_TEMP_OUT_DIV (100.0)
+#define LPS33THW_PRESS_OUT_DIV (40.96f)
+#define LPS33THW_TEMP_OUT_DIV (100.0f)
 #define LPS33THW_PRESS_THRESH_DIV (16)
 
 /* Exports for the sensor API */
@@ -517,12 +518,7 @@ lps33thw_get_pressure_regs(struct sensor_itf *itf, uint8_t reg, float *pressure)
         return rc;
     }
 
-    int_press = (((int32_t)payload[2] << 16) |
-        ((int32_t)payload[1] << 8) | payload[0]);
-
-    if (int_press & 0x00800000) {
-        int_press |= 0xff000000;
-    }
+    int_press = ((int8_t)payload[2] << 16) | (payload[1] << 8) | payload[0];
 
     *pressure = lps33thw_reg_to_pa(int_press);
 

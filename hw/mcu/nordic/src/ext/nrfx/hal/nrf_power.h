@@ -1,21 +1,21 @@
-/**
+/*
  * Copyright (c) 2017 - 2018, Nordic Semiconductor ASA
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of the copyright holder nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -36,10 +36,6 @@
 
 #ifdef __cplusplus
 extern "C" {
-#endif
-
-#ifndef ARRAY_SIZE
-#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 #endif
 
 /**
@@ -955,46 +951,34 @@ __STATIC_INLINE uint8_t nrf_power_gpregret2_get(void)
 
 __STATIC_INLINE void nrf_power_dcdcen_set(bool enable)
 {
-#if NRF_POWER_HAS_VDDH
     NRF_POWER->DCDCEN = (enable ?
         POWER_DCDCEN_DCDCEN_Enabled : POWER_DCDCEN_DCDCEN_Disabled) <<
             POWER_DCDCEN_DCDCEN_Pos;
-#else
-    NRF_POWER->DCDCEN = (enable ?
-        POWER_DCDCEN_DCDCEN_Enabled : POWER_DCDCEN_DCDCEN_Disabled) <<
-            POWER_DCDCEN_DCDCEN_Pos;
-#endif
 }
 
 __STATIC_INLINE bool nrf_power_dcdcen_get(void)
 {
-#if NRF_POWER_HAS_VDDH
     return (NRF_POWER->DCDCEN & POWER_DCDCEN_DCDCEN_Msk)
             ==
            (POWER_DCDCEN_DCDCEN_Enabled << POWER_DCDCEN_DCDCEN_Pos);
-#else
-    return (NRF_POWER->DCDCEN & POWER_DCDCEN_DCDCEN_Msk)
-            ==
-           (POWER_DCDCEN_DCDCEN_Enabled << POWER_DCDCEN_DCDCEN_Pos);
-#endif
 }
 
 #if NRF_POWER_HAS_RAMPOWER_REGS
 __STATIC_INLINE void nrf_power_rampower_mask_on(uint8_t block, uint32_t section_mask)
 {
-    NRFX_ASSERT(block < ARRAY_SIZE(NRF_POWER->RAM));
+    NRFX_ASSERT(block < NRFX_ARRAY_SIZE(NRF_POWER->RAM));
     NRF_POWER->RAM[block].POWERSET = section_mask;
 }
 
 __STATIC_INLINE void nrf_power_rampower_mask_off(uint8_t block, uint32_t section_mask)
 {
-    NRFX_ASSERT(block < ARRAY_SIZE(NRF_POWER->RAM));
+    NRFX_ASSERT(block < NRFX_ARRAY_SIZE(NRF_POWER->RAM));
     NRF_POWER->RAM[block].POWERCLR = section_mask;
 }
 
 __STATIC_INLINE uint32_t nrf_power_rampower_mask_get(uint8_t block)
 {
-    NRFX_ASSERT(block < ARRAY_SIZE(NRF_POWER->RAM));
+    NRFX_ASSERT(block < NRFX_ARRAY_SIZE(NRF_POWER->RAM));
     return NRF_POWER->RAM[block].POWER;
 }
 #endif /* NRF_POWER_HAS_RAMPOWER_REGS */

@@ -24,7 +24,7 @@
 
 #include "os/mynewt.h"
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
-#include "bus/bus.h"
+#include "bus/drivers/i2c_common.h"
 #else
 #include "hal/hal_spi.h"
 #include "hal/hal_i2c.h"
@@ -2061,9 +2061,28 @@ int lis2dw12_run_self_test(struct sensor_itf *itf, int *result)
     int32_t scratch[3] = {0,0,0};
     int i;
     uint8_t prev_config[6];
-    *result = 0;
-    uint8_t config[6] = { LIS2DW12_DATA_RATE_50HZ | LIS2DW12_PM_HIGH_PERF, LIS2DW12_CTRL_REG2_IF_ADD_INC | LIS2DW12_CTRL_REG2_BDU, 0x00, 0x00, 0x00, LIS2DW12_FS_4G};
+    uint8_t config[6] = { LIS2DW12_DATA_RATE_50HZ | LIS2DW12_PM_HIGH_PERF,
+                          LIS2DW12_CTRL_REG2_IF_ADD_INC | LIS2DW12_CTRL_REG2_BDU,
+                          0x00, 0x00, 0x00, LIS2DW12_FS_4G};
     uint8_t fs;
+    int16_t diff;
+
+    *result = 0;
+
+    uint8_t fifo_ctrl;
+
+    rc = lis2dw12_read8(itf, LIS2DW12_REG_FIFO_CTRL, &fifo_ctrl);
+    if (rc) {
+        return rc;
+    }
+
+    if (fifo_ctrl) {
+        /* Turn off fifo if was on */
+        rc = lis2dw12_write8(itf, LIS2DW12_REG_FIFO_CTRL, 0);
+        if (rc) {
+            return rc;
+        }
+    }
 
     rc = lis2dw12_readlen(itf, LIS2DW12_REG_CTRL_REG1, prev_config, 6);
     if (rc) {
@@ -2088,21 +2107,21 @@ int lis2dw12_run_self_test(struct sensor_itf *itf, int *result)
         return rc;
     }
 
-    //discard
+    /* discard */
     //TODO poll DRDY in STATUS (27h) instead?
-    rc = lis2dw12_get_data(itf, fs, &(data[0]), &(data[1]), &(data[2]));
+    rc = lis2dw12_get_data(itf, fs, &data[0], &data[1], &data[2]);
     if (rc) {
         return rc;
     }
 
     /* take no st offset reading */
-    for(i=0; i<LIS2DW12_ST_NUM_READINGS; i++) {
+    for (i = 0; i < LIS2DW12_ST_NUM_READINGS; i++) {
 
         // TODO poll DRDY in STATUS (27h) instead?
         /* wait at least 20 ms */
         os_time_delay(OS_TICKS_PER_SEC / 50 + 1);
 
-        rc = lis2dw12_get_data(itf, fs, &(data[0]), &(data[1]), &(data[2]));
+        rc = lis2dw12_get_data(itf, fs, &data[0], &data[1], &data[2]);
         if (rc) {
             return rc;
         }
@@ -2111,12 +2130,12 @@ int lis2dw12_run_self_test(struct sensor_itf *itf, int *result)
         scratch[2] += data[2];
     }
 
-    //average
-    no_st[0] = scratch[0]/LIS2DW12_ST_NUM_READINGS;
-    no_st[1] = scratch[1]/LIS2DW12_ST_NUM_READINGS;
-    no_st[2] = scratch[2]/LIS2DW12_ST_NUM_READINGS;
+    /* average */
+    no_st[0] = scratch[0] / LIS2DW12_ST_NUM_READINGS;
+    no_st[1] = scratch[1] / LIS2DW12_ST_NUM_READINGS;
+    no_st[2] = scratch[2] / LIS2DW12_ST_NUM_READINGS;
 
-    //clean scratch
+    /* clean scratch */
     memset(&scratch, 0, sizeof scratch);
 
     /* go into self test mode 1 */
@@ -2128,21 +2147,21 @@ int lis2dw12_run_self_test(struct sensor_itf *itf, int *result)
     /* wait 200ms */
     os_time_delay(OS_TICKS_PER_SEC / 5 + 1);
 
-    //discard
+    /* discard */
     //TODO poll DRDY in STATUS (27h) instead?
-    rc = lis2dw12_get_data(itf, fs, &(data[0]), &(data[1]), &(data[2]));
+    rc = lis2dw12_get_data(itf, fs, &data[0], &data[1], &data[2]);
     if (rc) {
         return rc;
     }
 
     /* take positive offset reading */
-    for(i=0; i<LIS2DW12_ST_NUM_READINGS; i++) {
+    for (i = 0; i < LIS2DW12_ST_NUM_READINGS; i++) {
 
         // TODO poll DRDY in STATUS (27h) instead?
         /* wait at least 20 ms */
         os_time_delay(OS_TICKS_PER_SEC / 50 + 1);
 
-        rc = lis2dw12_get_data(itf, fs, &(data[0]), &(data[1]), &(data[2]));
+        rc = lis2dw12_get_data(itf, fs, &data[0], &data[1], &data[2]);
         if (rc) {
             return rc;
         }
@@ -2151,15 +2170,15 @@ int lis2dw12_run_self_test(struct sensor_itf *itf, int *result)
         scratch[2] += data[2];
     }
 
-    //average
-    st[0] = scratch[0]/LIS2DW12_ST_NUM_READINGS;
-    st[1] = scratch[1]/LIS2DW12_ST_NUM_READINGS;
-    st[2] = scratch[2]/LIS2DW12_ST_NUM_READINGS;
+    /* average */
+    st[0] = scratch[0] / LIS2DW12_ST_NUM_READINGS;
+    st[1] = scratch[1] / LIS2DW12_ST_NUM_READINGS;
+    st[2] = scratch[2] / LIS2DW12_ST_NUM_READINGS;
 
-    //clean scratch
+    /* clean scratch */
     memset(&scratch, 0, sizeof scratch);
 
-    // |Min(ST_X)| <=|OUTX_AVG_ST - OUTX_AVG_NO_ST| <= |Max(ST_X)|
+    /* |Min(ST_X)| <=|OUTX_AVG_ST - OUTX_AVG_NO_ST| <= |Max(ST_X)| */
     /* compare values to thresholds */
     for (i = 0; i < 3; i++) {
         int16_t diff = abs(st[i] - no_st[i]);
@@ -2177,20 +2196,20 @@ int lis2dw12_run_self_test(struct sensor_itf *itf, int *result)
     /* wait 200ms */
     os_time_delay(OS_TICKS_PER_SEC / 5 + 1);
 
-    //discard
-    rc = lis2dw12_get_data(itf, fs, &(data[0]), &(data[1]), &(data[2]));
+    /* discard */
+    rc = lis2dw12_get_data(itf, fs, &data[0], &data[1], &data[2]);
     if (rc) {
         return rc;
     }
 
     /* take negative offset reading */
-    for(i=0; i<LIS2DW12_ST_NUM_READINGS; i++) {
+    for ( i = 0; i < LIS2DW12_ST_NUM_READINGS; i++) {
 
         // TODO poll DRDY in STATUS (27h) instead?
         /* wait at least 20 ms */
         os_time_delay(OS_TICKS_PER_SEC / 50 + 1);
 
-        rc = lis2dw12_get_data(itf, fs, &(data[0]), &(data[1]), &(data[2]));
+        rc = lis2dw12_get_data(itf, fs, &data[0], &data[1], &data[2]);
         if (rc) {
             return rc;
         }
@@ -2199,14 +2218,22 @@ int lis2dw12_run_self_test(struct sensor_itf *itf, int *result)
         scratch[2] += data[2];
     }
 
-    //average
-    st[0] = scratch[0]/LIS2DW12_ST_NUM_READINGS;
-    st[1] = scratch[1]/LIS2DW12_ST_NUM_READINGS;
-    st[2] = scratch[2]/LIS2DW12_ST_NUM_READINGS;
+    /* average */
+    st[0] = scratch[0] / LIS2DW12_ST_NUM_READINGS;
+    st[1] = scratch[1] / LIS2DW12_ST_NUM_READINGS;
+    st[2] = scratch[2] / LIS2DW12_ST_NUM_READINGS;
+
+    /* Restore fifo mode if any */
+    if (fifo_ctrl) {
+        rc = lis2dw12_write8(itf, LIS2DW12_REG_FIFO_CTRL, fifo_ctrl);
+        if (rc) {
+            return rc;
+        }
+    }
 
     /* compare values to thresholds */
     for (i = 0; i < 3; i++) {
-        int16_t diff = abs(st[i] - no_st[i]);
+        diff = abs(st[i] - no_st[i]);
         if (diff < LIS2DW12_ST_MIN || diff > LIS2DW12_ST_MAX) {
             *result -= 1;
         }

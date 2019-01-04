@@ -19,8 +19,13 @@
 
 #include <string.h>
 #include "os/mynewt.h"
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+#include "bus/drivers/i2c_common.h"
+#include "bus/drivers/spi_common.h"
+#else
 #include <hal/hal_i2c.h>
 #include <i2cn/i2cn.h>
+#endif
 #include <modlog/modlog.h>
 #include <stats/stats.h>
 
@@ -147,7 +152,7 @@ lp5523_set_n_regs(struct led_itf *itf, enum lp5523_registers addr,
     memcpy(&payload[1], vals, len);
 
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
-    rc = bus_node_simple_write(itf->li_dev, payload, sizeof(payload));
+    rc = bus_node_simple_write(itf->li_dev, payload, len + 1);
 #else
     struct hal_i2c_master_data data_struct = {
         .address = itf->li_addr,

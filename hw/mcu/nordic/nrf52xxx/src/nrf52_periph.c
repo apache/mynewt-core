@@ -27,10 +27,10 @@
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
 #include "bus/bus.h"
 #if MYNEWT_VAL(I2C_0) || MYNEWT_VAL(I2C_1)
-#include "bus/i2c.h"
+#include "bus/drivers/i2c_hal.h"
 #endif
 #if MYNEWT_VAL(SPI_0_MASTER) || MYNEWT_VAL(SPI_1_MASTER) || MYNEWT_VAL(SPI_2_MASTER)
-#include "bus/spi.h"
+#include "bus/drivers/spi_hal.h"
 #endif
 #endif
 #include "nrfx.h"
@@ -337,7 +337,8 @@ nrf52_periph_create_i2c(void)
 
 #if MYNEWT_VAL(I2C_0)
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
-    rc = bus_i2c_dev_create("i2c0", &i2c0_bus, (struct bus_i2c_dev_cfg *)&i2c0_cfg);
+    rc = bus_i2c_hal_dev_create("i2c0", &i2c0_bus,
+                                (struct bus_i2c_dev_cfg *)&i2c0_cfg);
     assert(rc == 0);
 #else
     rc = hal_i2c_init(0, (void *)&hal_i2c0_cfg);
@@ -346,7 +347,8 @@ nrf52_periph_create_i2c(void)
 #endif
 #if MYNEWT_VAL(I2C_1)
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
-    rc = bus_i2c_dev_create("i2c1", &i2c1_bus, (struct bus_i2c_dev_cfg *)&i2c1_cfg);
+    rc = bus_i2c_hal_dev_create("i2c1", &i2c1_bus,
+                                (struct bus_i2c_dev_cfg *)&i2c1_cfg);
     assert(rc == 0);
 #else
     rc = hal_i2c_init(1, (void *)&hal_i2c1_cfg);
@@ -364,7 +366,8 @@ nrf52_periph_create_spi(void)
 
 #if MYNEWT_VAL(SPI_0_MASTER)
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
-    rc = bus_spi_dev_create("spi0", &spi0_bus, (struct bus_spi_dev_cfg *)&spi0_cfg);
+    rc = bus_spi_hal_dev_create("spi0",
+                                &spi0_bus, (struct bus_spi_dev_cfg *)&spi0_cfg);
     assert(rc == 0);
 #else
     rc = hal_spi_init(0, (void *)&os_bsp_spi0m_cfg, HAL_SPI_TYPE_MASTER);
@@ -377,7 +380,8 @@ nrf52_periph_create_spi(void)
 #endif
 #if MYNEWT_VAL(SPI_1_MASTER)
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
-    rc = bus_spi_dev_create("spi1", &spi1_bus, (struct bus_spi_dev_cfg *)&spi1_cfg);
+    rc = bus_spi_hal_dev_create("spi1", &spi1_bus,
+                                (struct bus_spi_dev_cfg *)&spi1_cfg);
     assert(rc == 0);
 #else
     rc = hal_spi_init(1, (void *)&os_bsp_spi1m_cfg, HAL_SPI_TYPE_MASTER);
@@ -390,7 +394,8 @@ nrf52_periph_create_spi(void)
 #endif
 #if MYNEWT_VAL(SPI_2_MASTER)
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
-    rc = bus_spi_dev_create("spi2", &spi2_bus, (struct bus_spi_dev_cfg *)&spi2_cfg);
+    rc = bus_spi_hal_dev_create("spi2", &spi2_bus,
+                                (struct bus_spi_dev_cfg *)&spi2_cfg);
     assert(rc == 0);
 #else
     rc = hal_spi_init(2, (void *)&os_bsp_spi2m_cfg, HAL_SPI_TYPE_MASTER);
