@@ -224,6 +224,14 @@ lis2dw12_shell_cmd_dump(int argc, char **argv)
     console_printf("0x%02X (WAKE_UP_DUR): 0x%02X\n", LIS2DW12_REG_WAKE_UP_DUR, val);
     assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_FREEFALL, &val));
     console_printf("0x%02X (FREEFALL): 0x%02X\n", LIS2DW12_REG_FREEFALL, val);
+    assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_STATUS_DUP_SRC, &val));
+    console_printf("0x%02X (STATUS_DUP): 0x%02X\n", LIS2DW12_REG_STATUS_DUP_SRC, val);
+    assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_WAKE_UP_SRC, &val));
+    console_printf("0x%02X (WAKE_UP_SRC): 0x%02X\n", LIS2DW12_REG_WAKE_UP_SRC, val);
+    assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_TAP_SRC, &val));
+    console_printf("0x%02X (TAP_SRC): 0x%02X\n", LIS2DW12_REG_TAP_SRC, val);
+    assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_SIXD_SRC, &val));
+    console_printf("0x%02X (SIXD_SRC): 0x%02X\n", LIS2DW12_REG_SIXD_SRC, val);
     assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_INT_SRC, &val));
     console_printf("0x%02X (INT_SRC): 0x%02X\n", LIS2DW12_REG_INT_SRC, val);
     assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_X_OFS, &val));

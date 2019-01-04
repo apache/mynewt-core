@@ -136,6 +136,10 @@ typedef enum {
     SENSOR_EVENT_TYPE_ORIENT_Y_H_CHANGE  = (1 << 14),
     /* Orientation Change Event in the Z H direction */
     SENSOR_EVENT_TYPE_ORIENT_Z_H_CHANGE  = (1 << 15),
+    /* Data available */
+    SENSOR_EVENT_TYPE_DATA_AVAILABLE     = (1 << 16),
+    /* FIFO buffer hit threshold */
+    SENSOR_EVENT_TYPE_FIFO_THR           = (1 << 17),
 } sensor_event_type_t;
 
 

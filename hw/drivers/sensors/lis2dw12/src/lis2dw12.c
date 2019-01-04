@@ -123,6 +123,18 @@ const struct lis2dw12_notif_cfg dflt_notif_cfg[] = {
       .int_num   = 0,
       .notif_src = LIS2DW12_SIXD_SRC_ZH,
       .int_cfg   = LIS2DW12_INT1_CFG_6D
+    },
+    {
+      .event     = SENSOR_EVENT_TYPE_DATA_AVAILABLE,
+      .int_num   = 0,
+      .notif_src = LIS2DW12_STATUS_DRDY,
+      .int_cfg   = LIS2DW12_INT1_CFG_DRDY
+    },
+    {
+      .event     = SENSOR_EVENT_TYPE_FIFO_THR,
+      .int_num   = 0,
+      .notif_src = LIS2DW12_STATUS_FIFO_THS,
+      .int_cfg   = LIS2DW12_INT1_CFG_FTH
     }
 
 };
@@ -1789,6 +1801,8 @@ int lis2dw12_set_wake_up_dur(struct sensor_itf *itf, uint8_t val)
 {
     int rc;
     uint8_t reg;
+    volatile uint8_t ptr = val;
+    (void)ptr;
 
     rc = lis2dw12_read8(itf, LIS2DW12_REG_WAKE_UP_DUR, &reg);
     if (rc) {
@@ -1796,7 +1810,7 @@ int lis2dw12_set_wake_up_dur(struct sensor_itf *itf, uint8_t val)
     }
 
     reg &= ~LIS2DW12_WAKE_DUR_DUR;
-    reg |= (val & LIS2DW12_WAKE_DUR_DUR) << 5;
+    reg |= (val << 5) & LIS2DW12_WAKE_DUR_DUR;
 
     return lis2dw12_write8(itf, LIS2DW12_REG_WAKE_UP_DUR, reg);
 
@@ -2510,8 +2524,9 @@ lis2dw12_get_data(struct sensor_itf *itf, uint8_t fs, int16_t *x, int16_t *y, in
      * we use that as a divisor.
      */
     /*
-     * Need to check this late. The correct implementation should be ((*x >> 2) * fs * 2 * 1000)/( 1 << (resolution) )
+     * Need to check this late. The correct implementation should be ((*x/4) * fs * 2 * 1000)/( 1 << (resolution) )
      * Resolution can be 12 or 14 bits, depends on the current power mode.
+     * In this case, we are correct when the resolution is 14 bits.  (*x * fs * 2 * 1000)/(4 * ( 1 << (resolution)))
      */
     *x = (fs * 2 * 1000 * *x)/UINT16_MAX;
     *y = (fs * 2 * 1000 * *y)/UINT16_MAX;
@@ -2718,6 +2733,75 @@ err:
     }
 }
 
+int
+lis2dw12_fifo_read(struct sensor *sensor,
+                     sensor_type_t sensor_type,
+                     sensor_data_func_t read_func,
+                     void *read_arg,
+                     uint32_t time_ms)
+{
+    struct lis2dw12_pdd *pdd;
+    struct lis2dw12 *lis2dw12;
+    struct sensor_itf *itf;
+    struct lis2dw12_cfg *cfg;
+
+    uint8_t fifo_samples;
+    uint8_t fs;
+    bool bResetFifoRequired = false;
+    int rc;
+
+    /* If the read isn't looking for accel data, don't do anything. */
+    if (!(sensor_type & SENSOR_TYPE_ACCELEROMETER)) {
+        return SYS_EINVAL;
+    }
+
+    lis2dw12 = (struct lis2dw12 *)SENSOR_GET_DEVICE(sensor);
+    itf = SENSOR_GET_ITF(sensor);
+    pdd = &lis2dw12->pdd;
+    cfg = &lis2dw12->cfg;
+
+    if (cfg->read_mode.mode != LIS2DW12_READ_M_BURST_FIFO) {
+        return SYS_EINVAL;
+    }
+
+    if (pdd->interrupt) {
+        return SYS_EBUSY;
+    }
+
+    /* get sensor scale */
+    rc = lis2dw12_get_fs(itf, &fs);
+    if (rc) {
+        goto err;
+    }
+
+    /* check if any data is available in fifo */
+    rc = lis2dw12_get_fifo_samples(itf, &fifo_samples);
+    if (rc) {
+        goto err;
+    }
+
+    bResetFifoRequired = (fifo_samples == MYNEWT_VAL(SENSOR_MOTION_FIFO_DEPTH)) ? true : false;
+
+    /* read all data we believe is currently in fifo */
+    while(fifo_samples > 0) {
+        if (lis2dw12_do_read(sensor, read_func, read_arg, fs)) {
+            goto err;
+        }
+        fifo_samples--;
+    }
+
+err:
+    if(bResetFifoRequired)
+    {
+        // set fifo mode to bypass
+        lis2dw12_set_fifo_cfg(itf, LIS2DW12_FIFO_M_BYPASS, cfg->fifo_threshold);
+        // set fifo mode back to original one
+        lis2dw12_set_fifo_cfg(itf, cfg->fifo_mode, cfg->fifo_threshold);
+    }
+
+    return rc;
+}
+
 static int
 lis2dw12_sensor_read(struct sensor *sensor, sensor_type_t type,
         sensor_data_func_t data_func, void *data_arg, uint32_t timeout)
@@ -2762,10 +2846,17 @@ lis2dw12_sensor_read(struct sensor *sensor, sensor_type_t type,
     lis2dw12 = (struct lis2dw12 *)SENSOR_GET_DEVICE(sensor);
     cfg = &lis2dw12->cfg;
 
-    if (cfg->read_mode.mode == LIS2DW12_READ_M_POLL) {
+    if (cfg->read_mode.mode == LIS2DW12_READ_M_POLL)
+    {
         rc = lis2dw12_poll_read(sensor, type, data_func, data_arg, timeout);
-    } else {
+    }
+    else if (cfg->read_mode.mode == LIS2DW12_READ_M_STREAM)
+    {
         rc = lis2dw12_stream_read(sensor, type, data_func, data_arg, timeout);
+    }
+    else if (cfg->read_mode.mode == LIS2DW12_READ_M_BURST_FIFO)
+    {
+        rc = lis2dw12_fifo_read(sensor, type, data_func, data_arg, timeout);
     }
 err:
     if (rc) {
@@ -2954,23 +3045,28 @@ lis2dw12_sensor_handle_interrupt(struct sensor *sensor)
     struct sensor_itf *itf;
     uint8_t int_src;
     uint8_t int_status;
-    uint8_t sixd_src;
+    uint8_t sixd_src = 0;
     int rc;
+
+//    volatile int64_t start = os_get_uptime_usec();
+//    volatile int64_t end = 0;
+//    volatile int64_t duration = 0;
 
     lis2dw12 = (struct lis2dw12 *)SENSOR_GET_DEVICE(sensor);
     itf = SENSOR_GET_ITF(sensor);
 
-    if (lis2dw12->pdd.notify_ctx.snec_evtype & SENSOR_EVENT_TYPE_SLEEP) {
-        /*
-         * We need to read this register only if we are
-         * interested in the sleep event
-         */
-        rc = lis2dw12_get_int_status(itf, &int_status);
-        if (rc) {
-            LIS2DW12_LOG(ERROR, "Could not read int status err=0x%02x\n", rc);
-            return rc;
-        }
+    /*
+     * We need to read this register only if we are
+     * interested in the sleep event
+     */
+    rc = lis2dw12_get_int_status(itf, &int_status);
+    if (rc) {
+        LIS2DW12_LOG(ERROR, "Could not read int status err=0x%02x\n", rc);
+        return rc;
+    }
 
+    if (lis2dw12->pdd.notify_ctx.snec_evtype & SENSOR_EVENT_TYPE_SLEEP)
+    {
         rc = lis2dw12_notify(lis2dw12, int_status, SENSOR_EVENT_TYPE_SLEEP);
         if (rc) {
             goto err;
@@ -3048,6 +3144,47 @@ lis2dw12_sensor_handle_interrupt(struct sensor *sensor)
     if (rc) {
         goto err;
     }
+
+    // data available test
+    rc = lis2dw12_notify(lis2dw12, int_status, SENSOR_EVENT_TYPE_DATA_AVAILABLE);
+    if (rc) {
+        goto err;
+    }
+
+    // FIFO threshold
+    rc = lis2dw12_notify(lis2dw12, int_status, SENSOR_EVENT_TYPE_FIFO_THR);
+    if (rc) {
+        goto err;
+    }
+
+    // if sleep detected, disable fifo interrupt
+    if(int_status & LIS2DW12_STATUS_SLEEP_STATE)
+    {
+        //disable fifo interrupt
+        struct lis2dw12_notif_cfg *notif_cfg;
+
+        notif_cfg = lis2dw12_find_notif_cfg_by_event(SENSOR_EVENT_TYPE_FIFO_THR, &lis2dw12->cfg);
+        if(notif_cfg)
+        {
+            ;//disable_interrupt(sensor, notif_cfg->int_cfg, notif_cfg->int_num);
+        }
+    }
+
+    // if wakeup detected, enable fifo interrupt
+    if(int_status & LIS2DW12_STATUS_WU_IA)
+    {
+        //enable fifo interrupt
+        struct lis2dw12_notif_cfg *notif_cfg;
+
+        notif_cfg = lis2dw12_find_notif_cfg_by_event(SENSOR_EVENT_TYPE_FIFO_THR, &lis2dw12->cfg);
+        if(notif_cfg)
+        {
+            ;//enable_interrupt(sensor, notif_cfg->int_cfg, notif_cfg->int_num);
+        }
+    }
+
+//    end = os_get_uptime_usec();
+//    duration = end - start;
 
     return 0;
 err:

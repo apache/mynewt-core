@@ -149,12 +149,13 @@ enum lis2dw12_fifo_mode {
 enum lis2dw12_read_mode {
     LIS2DW12_READ_M_POLL = 0,
     LIS2DW12_READ_M_STREAM = 1,
+    LIS2DW12_READ_M_BURST_FIFO = 2,
 };
 
 struct lis2dw12_notif_cfg {
     sensor_event_type_t event;
-    uint8_t int_num:1;
-    uint8_t notif_src:7;
+    uint8_t int_num;
+    uint8_t notif_src;
     uint8_t int_cfg;
 };
 
@@ -888,6 +889,24 @@ int lis2dw12_stream_read(struct sensor *sensor,
                          sensor_data_func_t read_func,
                          void *read_arg,
                          uint32_t time_ms);
+
+/**
+ * Provide a specified size of reading
+ *
+ * @param sensor The sensor ptr
+ * @param type The sensor type
+ * @param read_func The function pointer to invoke for each accelerometer reading.
+ * @param read_arg The opaque pointer that will be passed in to the function.
+ * @param time_ms If non-zero, how long the stream should run in milliseconds.
+ *
+ * @return 0 on success, non-zero on failure.
+ */
+int lis2dw12_fifo_read(struct sensor *sensor,
+                         sensor_type_t sensor_type,
+                         sensor_data_func_t read_func,
+                         void *read_arg,
+                         uint32_t time_ms);
+
 
 /**
  * Do accelerometer polling reads
