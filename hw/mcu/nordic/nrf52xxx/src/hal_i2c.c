@@ -297,8 +297,8 @@ hal_i2c_init(uint8_t i2c_num, void *usercfg)
     scl_port = HAL_GPIO_PORT(cfg->scl_pin);
     sda_port = HAL_GPIO_PORT(cfg->sda_pin);
 
-    scl_port->PIN_CNF[cfg->scl_pin] = NRF52_SCL_PIN_CONF;
-    sda_port->PIN_CNF[cfg->sda_pin] = NRF52_SDA_PIN_CONF;
+    scl_port->PIN_CNF[HAL_GPIO_INDEX(cfg->scl_pin)] = NRF52_SCL_PIN_CONF;
+    sda_port->PIN_CNF[HAL_GPIO_INDEX(cfg->sda_pin)] = NRF52_SDA_PIN_CONF;
 
     regs->PSELSCL = cfg->scl_pin;
     regs->PSELSDA = cfg->sda_pin;
