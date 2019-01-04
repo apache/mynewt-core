@@ -17,9 +17,11 @@
 ; NOTICE: This file has been modified by Nordic Semiconductor ASA.
 
                 IF :DEF: __STARTUP_CONFIG
+#ifdef  __STARTUP_CONFIG
 #include "startup_config.h"
 #ifndef __STARTUP_CONFIG_STACK_ALIGNEMENT
 #define __STARTUP_CONFIG_STACK_ALIGNEMENT 3
+#endif
 #endif
                 ENDIF
 
@@ -28,7 +30,7 @@ Stack_Size      EQU __STARTUP_CONFIG_STACK_SIZE
                 ELIF :DEF: __STACK_SIZE
 Stack_Size      EQU __STACK_SIZE
                 ELSE
-Stack_Size      EQU     8192
+Stack_Size      EQU 8192
                 ENDIF
                 
                 IF :DEF: __STARTUP_CONFIG
@@ -46,7 +48,7 @@ Heap_Size       EQU __STARTUP_CONFIG_HEAP_SIZE
                 ELIF :DEF: __HEAP_SIZE
 Heap_Size       EQU __HEAP_SIZE
                 ELSE
-Heap_Size       EQU     8192
+Heap_Size       EQU 8192
                 ENDIF
 
                 AREA    HEAP, NOINIT, READWRITE, ALIGN=3

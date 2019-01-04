@@ -1,21 +1,21 @@
-/**
+/*
  * Copyright (c) 2015 - 2018, Nordic Semiconductor ASA
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of the copyright holder nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -292,6 +292,15 @@ __STATIC_INLINE void nrf_gpiote_task_force(uint32_t idx, nrf_gpiote_outinit_t in
  */
 __STATIC_INLINE void nrf_gpiote_te_default(uint32_t idx);
 
+/**@brief Function for checking if particular Task-Event is enabled.
+ *
+ * @param[in]  idx        Task-Event index.
+ *
+ * @retval true  If the Task-Event mode is set to Task or Event.
+ * @retval false If the Task-Event mode is set to Disabled.
+ */
+__STATIC_INLINE bool nrf_gpiote_te_is_enabled(uint32_t idx);
+
 #ifndef SUPPRESS_INLINE_IMPLEMENTATION
 __STATIC_INLINE void nrf_gpiote_task_set(nrf_gpiote_tasks_t task)
 {
@@ -407,6 +416,11 @@ __STATIC_INLINE void nrf_gpiote_task_force(uint32_t idx, nrf_gpiote_outinit_t in
 __STATIC_INLINE void nrf_gpiote_te_default(uint32_t idx)
 {
     NRF_GPIOTE->CONFIG[idx] = 0;
+}
+
+__STATIC_INLINE bool nrf_gpiote_te_is_enabled(uint32_t idx)
+{
+    return (NRF_GPIOTE->CONFIG[idx] & GPIOTE_CONFIG_MODE_Msk) != GPIOTE_CONFIG_MODE_Disabled;
 }
 #endif //SUPPRESS_INLINE_IMPLEMENTATION
 
