@@ -44,7 +44,7 @@ extern "C" {
  *                              HAL_I2C_ERR_[...] code on failure.
  */
 int i2cn_master_read(uint8_t i2c_num, struct hal_i2c_master_data *pdata,
-                     uint32_t timeout, uint8_t last_op, int retries);
+                     os_time_t timeout, uint8_t last_op, int retries);
 
 /**
  * @brief Writes to an I2C slave, retrying the specified number of times on
@@ -62,7 +62,7 @@ int i2cn_master_read(uint8_t i2c_num, struct hal_i2c_master_data *pdata,
  *                              HAL_I2C_ERR_[...] code on failure.
  */
 int i2cn_master_write(uint8_t i2c_num, struct hal_i2c_master_data *pdata,
-                      uint32_t timeout, uint8_t last_op, int retries);
+                      os_time_t timeout, uint8_t last_op, int retries);
 
 #ifdef __cplusplus
 }
