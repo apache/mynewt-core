@@ -63,3 +63,33 @@ i2cn_master_write(uint8_t i2c_num, struct hal_i2c_master_data *pdata,
 
     return rc;
 }
+
+int
+i2cn_master_write_read_transact(uint8_t i2c_num,
+                                struct hal_i2c_master_data *wdata,
+                                struct hal_i2c_master_data *rdata,
+                                os_time_t timeout, uint8_t last_op, int retries)
+{
+    int rc = 0;
+    int i;
+
+    /* Ensure at least one try. */
+    if (retries < 0) {
+        retries = 0;
+    }
+
+    for (i = 0; i <= retries; i++) {
+        rc = hal_i2c_master_write(i2c_num, wdata, timeout, 0);
+        if (rc != 0) {
+            continue;
+        }
+
+        rc = hal_i2c_master_read(i2c_num, rdata, timeout, last_op);
+        if (rc == 0) {
+            break;
+        }
+    }
+
+    return rc;
+
+}
