@@ -379,12 +379,15 @@ ms5840_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
     rc = bus_node_simple_write_read_transact(itf->si_dev, &addr, 1, buffer, len);
 #else
-    uint8_t payload[3] = {addr, 0, 0};
-
-    struct hal_i2c_master_data data_struct = {
+    struct hal_i2c_master_data wdata = {
         .address = itf->si_addr,
         .len = 1,
-        .buffer = payload
+        .buffer = &addr,
+    };
+    struct hal_i2c_master_data rdata = {
+        .address = itf->si_addr,
+        .len = len,
+        .buffer = buffer,
     };
 
     /* Clear the supplied buffer */
@@ -395,32 +398,14 @@ ms5840_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
         return rc;
     }
 
-    /* Command write */
-    rc = i2cn_master_write(itf->si_num, &data_struct, MYNEWT_VAL(MS5840_I2C_TIMEOUT_TICKS), 1,
-                           MYNEWT_VAL(MS5840_I2C_RETRIES));
-    if (rc) {
-        MS5840_LOG(ERROR, "I2C read command write failed at address 0x%02X\n",
-                   data_struct.address);
-        STATS_INC(g_ms5840stats, write_errors);
-        goto err;
-    }
-
-    /* Read len bytes back */
-    memset(payload, 0, sizeof(payload));
-    data_struct.len = len;
-    rc = i2cn_master_read(itf->si_num, &data_struct, MYNEWT_VAL(MS5840_I2C_TIMEOUT_TICKS), 1,
-                          MYNEWT_VAL(MS5840_I2C_RETRIES));
+    rc = i2cn_master_write_read_transact(itf->si_num, &wdata, &rdata, MYNEWT_VAL(MS5840_I2C_TIMEOUT_TICKS) * 2,
+                                         1, MYNEWT_VAL(MS5840_I2C_RETRIES));
     if (rc) {
         MS5840_LOG(ERROR, "Failed to read from 0x%02X:0x%02X\n",
-                   data_struct.address, addr);
+                   itf->si_addr, addr);
         STATS_INC(g_ms5840stats, read_errors);
-        goto err;
     }
 
-    /* Copy the I2C results into the supplied buffer */
-    memcpy(buffer, payload, len);
-
-err:
     sensor_itf_unlock(itf);
 #endif
 
