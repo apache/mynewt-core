@@ -361,34 +361,20 @@ lps33thw_i2c_get_regs(struct sensor_itf *itf, uint8_t reg, uint8_t size,
 
     rc = bus_node_simple_write_read_transact(odev, &reg, 1, buffer, size);
 #else
-    struct hal_i2c_master_data data_struct = {
+    struct hal_i2c_master_data wdata = {
         .address = itf->si_addr,
         .len = 1,
         .buffer = &reg
     };
+    struct hal_i2c_master_data rdata = {
+        .address = itf->si_addr,
+        .len = size,
+        .buffer = buffer,
+    };
 
-    /* Register write */
-    rc = i2cn_master_write(itf->si_num, &data_struct, MYNEWT_VAL(LPS33THW_I2C_TIMEOUT_TICKS), 0,
-                           MYNEWT_VAL(LPS33THW_I2C_RETRIES));
-    if (rc) {
-        LPS33THW_LOG(ERROR, "I2C access failed at address 0x%02X\n",
-                    itf->si_addr);
-        STATS_INC(g_lps33thwstats, write_errors);
-        return rc;
-    }
-
-    /* Read */
-    data_struct.len = size;
-    data_struct.buffer = buffer;
-    rc = i2cn_master_read(itf->si_num, &data_struct,
-                          (MYNEWT_VAL(LPS33THW_I2C_TIMEOUT_TICKS)) * size, 1,
-                          MYNEWT_VAL(LPS33THW_I2C_RETRIES));
-
-    if (rc) {
-        LPS33THW_LOG(ERROR, "Failed to read from 0x%02X:0x%02X\n",
-                    itf->si_addr, reg);
-        STATS_INC(g_lps33thwstats, read_errors);
-    }
+    rc = i2cn_master_write_read_transact(itf->si_num, &wdata, &rdata,
+                                         MYNEWT_VAL(LPS33THW_I2C_TIMEOUT_TICKS) * (size + 1),
+                                         1, MYNEWT_VAL(LPS33THW_I2C_RETRIES));
 #endif
 
     return rc;
