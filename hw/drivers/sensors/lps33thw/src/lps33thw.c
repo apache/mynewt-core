@@ -375,6 +375,12 @@ lps33thw_i2c_get_regs(struct sensor_itf *itf, uint8_t reg, uint8_t size,
     rc = i2cn_master_write_read_transact(itf->si_num, &wdata, &rdata,
                                          MYNEWT_VAL(LPS33THW_I2C_TIMEOUT_TICKS) * (size + 1),
                                          1, MYNEWT_VAL(LPS33THW_I2C_RETRIES));
+    if (rc) {
+        LPS33THW_LOG(ERROR, "I2C access failed at address 0x%02X\n",
+                     itf->si_addr);
+        STATS_INC(g_lps33thwstats, read_errors);
+        return rc;
+    }
 #endif
 
     return rc;
