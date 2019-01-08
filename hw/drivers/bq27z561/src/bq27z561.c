@@ -631,7 +631,6 @@ bq27z561_wr_flash(struct bq27z561 *dev, uint16_t addr, uint8_t *buf, int buflen)
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
     rc = bus_node_simple_write(odev, tmpbuf, buflen + 3);
     if (rc) {
-        (void)bus_node_unlock(odev);
         ret = BQ27Z561_ERR_I2C_ERR;
         goto err;
     }
@@ -658,16 +657,16 @@ bq27z561_wr_flash(struct bq27z561 *dev, uint16_t addr, uint8_t *buf, int buflen)
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
     rc = bus_node_simple_write(odev, tmpbuf, 3);
     if (rc) {
-        (void)bus_node_unlock(odev);
         ret = BQ27Z561_ERR_I2C_ERR;
         goto err;
     }
 
     (void)bus_node_unlock(odev);
 
-    ret = BQ27Z561_OK;
+    return BQ27Z561_OK;
 
 err:
+    (void)bus_node_unlock(odev);
 #else
     i2c.len = 3;
     i2c.buffer = tmpbuf;
