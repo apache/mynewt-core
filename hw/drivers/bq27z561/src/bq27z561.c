@@ -604,7 +604,7 @@ bq27z561_wr_flash(struct bq27z561 *dev, uint16_t addr, uint8_t *buf, int buflen)
         return BQ27Z561_ERR_INV_PARAMS;
     }
 
-    if ((addr < BQ27Z561_FLASH_BEG_ADDR) || (addr > BQ27Z561_FLASH_END_ADDR)) {
+    if ((addr < BQ27Z561_FLASH_BEG_ADDR) || (addr + buflen > BQ27Z561_FLASH_END_ADDR)) {
         return BQ27Z561_ERR_INV_FLASH_ADDR;
     }
 
