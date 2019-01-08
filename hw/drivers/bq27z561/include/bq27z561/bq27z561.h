@@ -562,6 +562,21 @@ bq27z561_err_t bq27x561_rd_alt_mfg_cmd(struct bq27z561 *dev, uint16_t cmd,
 
 bq27z561_err_t bq27x561_wr_alt_mfg_cmd(struct bq27z561 *dev, uint16_t cmd,
                                        uint8_t *buf, int len);
+
+
+/**
+ * bq27z561 write flash
+ *
+ * @param dev pointer to device
+ * @param Address location
+ * @param The buffer of data to be written
+ * @param The length of data to be written
+ *
+ * @return int 0: success, -1 error
+ */
+bq27z561_err_t bq27z561_wr_flash(struct bq27z561 *dev, uint16_t addr, 
+                                 uint8_t *buf, int buflen);
+
 /**
  * bq27z561 rd std reg word
  *
