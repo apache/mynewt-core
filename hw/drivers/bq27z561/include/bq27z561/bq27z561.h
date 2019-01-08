@@ -564,6 +564,7 @@ bq27z561_err_t bq27x561_wr_alt_mfg_cmd(struct bq27z561 *dev, uint16_t cmd,
                                        uint8_t *buf, int len);
 
 
+
 /**
  * bq27z561 write flash
  *
@@ -576,6 +577,24 @@ bq27z561_err_t bq27x561_wr_alt_mfg_cmd(struct bq27z561 *dev, uint16_t cmd,
  */
 bq27z561_err_t bq27z561_wr_flash(struct bq27z561 *dev, uint16_t addr, 
                                  uint8_t *buf, int buflen);
+
+/**
+ * bq27x561 write flash. This function is deprecated due to naming convention.
+ *
+ * @param dev pointer to device
+ * @param Address location
+ * @param The buffer of data to be written
+ * @param The length of data to be written
+ *
+ * @return int 0: success, -1 error
+ */
+__attribute__((deprecated))
+static inline bq27z561_err_t bq27x561_wr_flash(struct bq27z561 *dev, 
+                                               uint16_t addr, uint8_t *buf, 
+                                               int buflen)
+{
+    return bq27z561_wr_flash(dev, addr, buf, buflen);
+}
 
 /**
  * bq27z561 rd std reg word
