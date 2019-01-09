@@ -20,6 +20,7 @@ OS User Guide
    Sensor Framework <modules/sensor_framework/sensor_framework>
    Test Utilities <modules/testutil/testutil>
    JSON <modules/json/json>
+   Manufacturing support <modules/mfg/mfg>
 
 This guide provides comprehensive information about Mynewt OS, the
 real-time operating system for embedded systems. It is intended both for
