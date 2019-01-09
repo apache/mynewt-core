@@ -108,7 +108,7 @@ twim_irq_handler(struct bus_i2c_dev *dev)
     dd->errorsrc = nrf_twim->ERRORSRC;
     nrf_twim->ERRORSRC = dd->errorsrc;
 
-    os_sem_release(&twim_devs_data[dev->cfg.i2c_num].sem);
+    os_sem_release(&dd->sem);
 }
 
 static void
@@ -293,7 +293,7 @@ static void
 nrf_twim_start_task(NRF_TWIM_Type *nrf_twim, struct twim_dev_data *dd,
                     __O uint32_t *task_start, __IO uint32_t *event_last)
 {
-    static const int max_attempt = 2;
+    const int max_attempt = 2;
     uint32_t end_ticks;
     int attempt = 1;
     int pin_scl;
@@ -312,7 +312,7 @@ nrf_twim_start_task(NRF_TWIM_Type *nrf_twim, struct twim_dev_data *dd,
      * that controller is responsive.
      */
 
-    do {
+    while (1) {
         *event_last = 0;
         *task_start = 1;
 
@@ -348,7 +348,7 @@ nrf_twim_start_task(NRF_TWIM_Type *nrf_twim, struct twim_dev_data *dd,
         nrf_twim->TASKS_STOP = 1;
         nrf_twim->ENABLE = TWIM_ENABLE_ENABLE_Disabled;
         nrf_twim->ENABLE = TWIM_ENABLE_ENABLE_Enabled;
-    } while (1);
+    };
 
 #if MYNEWT_VAL(I2C_NRF52_TWIM_STAT)
     STATS_INC(dd->stats, scl_hi_err_nrecov);
@@ -477,7 +477,7 @@ bus_i2c_nrf52_twim_read(struct bus_dev *bdev, struct bus_node *bnode,
     nrf_twim_start_task(nrf_twim, dd, &nrf_twim->TASKS_STARTRX,
                         &nrf_twim->EVENTS_LASTRX);
 
-    rc = os_sem_pend(&twim_devs_data[dev->cfg.i2c_num].sem, timeout);
+    rc = os_sem_pend(&dd->sem, timeout);
     nrf_twim->INTEN = 0;
     if (rc == OS_TIMEOUT) {
         rc = SYS_ETIMEOUT;
@@ -544,7 +544,7 @@ bus_i2c_nrf52_twim_write(struct bus_dev *bdev, struct bus_node *bnode,
     nrf_twim_start_task(nrf_twim, dd, &nrf_twim->TASKS_STARTTX,
                         &nrf_twim->EVENTS_LASTTX);
 
-    rc = os_sem_pend(&twim_devs_data[dev->cfg.i2c_num].sem, timeout);
+    rc = os_sem_pend(&dd->sem, timeout);
     nrf_twim->INTEN = 0;
     if (rc == OS_TIMEOUT) {
         rc = SYS_ETIMEOUT;
