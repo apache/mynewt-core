@@ -2353,10 +2353,10 @@ init_intpin(struct lis2dw12 *lis2dw12, hal_gpio_irq_handler_t handler,
         return SYS_EINVAL;
     }
 
-    if (lis2dw12->sensor.s_itf.si_ints[i].active) {
-        trig = HAL_GPIO_TRIG_RISING;
-    } else {
+    if (lis2dw12->cfg.int_active_low) {
         trig = HAL_GPIO_TRIG_FALLING;
+    } else {
+        trig = HAL_GPIO_TRIG_RISING;
     }
 
     rc = hal_gpio_irq_init(pin,
@@ -2467,23 +2467,45 @@ err:
 int
 lis2dw12_get_fs(struct sensor_itf *itf, uint8_t *fs)
 {
-    int rc;
+//    int rc;
+//
+//    rc = lis2dw12_get_full_scale(itf, fs);
+//    if (rc) {
+//        return rc;
+//    }
+//
+//    if (*fs == LIS2DW12_FS_2G) {
+//        *fs = 2;
+//    } else if (*fs == LIS2DW12_FS_4G) {
+//        *fs = 4;
+//    } else if (*fs == LIS2DW12_FS_8G) {
+//        *fs = 8;
+//    } else if (*fs == LIS2DW12_FS_16G) {
+//        *fs = 16;
+//    } else {
+//        return SYS_EINVAL;
+//    }
 
-    rc = lis2dw12_get_full_scale(itf, fs);
-    if (rc) {
-        return rc;
-    }
+    switch(MYNEWT_VAL(LIS2DW12_CFG_FS))
+    {
+        case LIS2DW12_FS_2G:
+            *fs = 2;
+            break;
 
-    if (*fs == LIS2DW12_FS_2G) {
-        *fs = 2;
-    } else if (*fs == LIS2DW12_FS_4G) {
-        *fs = 4;
-    } else if (*fs == LIS2DW12_FS_8G) {
-        *fs = 8;
-    } else if (*fs == LIS2DW12_FS_16G) {
-        *fs = 16;
-    } else {
-        return SYS_EINVAL;
+        case LIS2DW12_FS_4G:
+            *fs = 4;
+            break;
+
+        case LIS2DW12_FS_8G:
+            *fs = 8;
+            break;
+
+        case LIS2DW12_FS_16G:
+            *fs = 16;
+            break;
+
+        default:
+            return SYS_EINVAL;
     }
 
     return 0;
@@ -2747,7 +2769,7 @@ lis2dw12_fifo_read(struct sensor *sensor,
 
     uint8_t fifo_samples;
     uint8_t fs;
-    bool bResetFifoRequired = false;
+//    bool bResetFifoRequired = false;
     int rc;
 
     /* If the read isn't looking for accel data, don't do anything. */
@@ -2780,7 +2802,10 @@ lis2dw12_fifo_read(struct sensor *sensor,
         goto err;
     }
 
-    bResetFifoRequired = (fifo_samples == MYNEWT_VAL(SENSOR_MOTION_FIFO_DEPTH)) ? true : false;
+    //bResetFifoRequired = (fifo_samples == MYNEWT_VAL(SENSOR_MOTION_FIFO_DEPTH)) ? true : false;
+
+    if(fifo_samples > 0)
+        fifo_samples = 32;
 
     /* read all data we believe is currently in fifo */
     while(fifo_samples > 0) {
@@ -2791,13 +2816,17 @@ lis2dw12_fifo_read(struct sensor *sensor,
     }
 
 err:
-    if(bResetFifoRequired)
+    //if(bResetFifoRequired)
     {
         // set fifo mode to bypass
-        lis2dw12_set_fifo_cfg(itf, LIS2DW12_FIFO_M_BYPASS, cfg->fifo_threshold);
+//        lis2dw12_set_fifo_cfg(itf, LIS2DW12_FIFO_M_BYPASS, cfg->fifo_threshold);
         // set fifo mode back to original one
-        lis2dw12_set_fifo_cfg(itf, cfg->fifo_mode, cfg->fifo_threshold);
+//        lis2dw12_set_fifo_cfg(itf, cfg->fifo_mode, cfg->fifo_threshold);
     }
+    //else
+//    {
+//        __asm__("nop");
+//    }
 
     return rc;
 }
@@ -3031,6 +3060,7 @@ lis2dw12_notify(struct lis2dw12 *lis2dw12, uint8_t src,
     notif_cfg = lis2dw12_find_notif_cfg_by_event(event_type, &lis2dw12->cfg);
 
     if (notif_cfg && (src & notif_cfg->notif_src)) {
+        __asm__("nop");
         sensor_mgr_put_notify_evt(&lis2dw12->pdd.notify_ctx, event_type);
         lis2dw12_inc_notif_stats(event_type);
     }
@@ -3167,6 +3197,7 @@ lis2dw12_sensor_handle_interrupt(struct sensor *sensor)
         if(notif_cfg)
         {
             ;//disable_interrupt(sensor, notif_cfg->int_cfg, notif_cfg->int_num);
+            //lis2dw12_set_fifo_cfg(itf, LIS2DW12_FIFO_M_BYPASS, lis2dw12->cfg.fifo_threshold);
         }
     }
 
@@ -3180,6 +3211,8 @@ lis2dw12_sensor_handle_interrupt(struct sensor *sensor)
         if(notif_cfg)
         {
             ;//enable_interrupt(sensor, notif_cfg->int_cfg, notif_cfg->int_num);
+            // set fifo mode back to original one
+            //lis2dw12_set_fifo_cfg(itf, lis2dw12->cfg.fifo_mode, lis2dw12->cfg.fifo_threshold);
         }
     }
 
