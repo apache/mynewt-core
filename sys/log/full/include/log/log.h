@@ -609,6 +609,23 @@ log_level_set(uint8_t module, uint8_t level)
 }
 #endif
 
+/**
+ * @brief Set log level for a logger.
+ *
+ * @param log                   The log to set level to.
+ * @param level                 New log level
+ */
+void log_set_level(struct log *log, uint8_t level);
+
+/**
+ * @brief Get log level for a logger.
+ *
+ * @param log                   The log to set level to.
+ *
+ * @return                      current value of log level.
+ */
+uint8_t log_get_level(const struct log *log);
+
 #if MYNEWT_VAL(LOG_STORAGE_INFO)
 /**
  * Return information about log storage

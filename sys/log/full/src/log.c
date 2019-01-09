@@ -862,3 +862,17 @@ err:
     return (rc);
 }
 #endif
+
+void
+log_set_level(struct log *log, uint8_t level)
+{
+    assert(log);
+    log->l_level = level;
+}
+
+uint8_t
+log_get_level(const struct log *log)
+{
+    assert(log);
+    return log->l_level;
+}
