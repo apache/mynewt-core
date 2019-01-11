@@ -93,6 +93,10 @@ syscfg.defs:
             affect device performance due to more frequent polling.
         value: 250
 
+    CONSOLE_DEFAULT_LOCK_TIMEOUT:
+        description: 'Default timeout (in ms) for console_lock() function used in console_write.'
+        value: 1000
+
     CONSOLE_SYSINIT_STAGE:
         description: >
             Sysinit stage for console functionality.

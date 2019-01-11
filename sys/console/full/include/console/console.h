@@ -86,6 +86,9 @@ extern int console_is_midline;
 extern int console_out(int character);
 extern void console_rx_restart(void);
 
+int console_lock(int timeout);
+int console_unlock(void);
+
 #ifdef __cplusplus
 }
 #endif

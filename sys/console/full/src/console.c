@@ -25,6 +25,7 @@
 #include <string.h>
 
 #include "os/mynewt.h"
+#include "os/os_task.h"
 #include "console/console.h"
 #include "console/ticks.h"
 #include "console_priv.h"
@@ -83,13 +84,14 @@ static struct os_eventq avail_queue;
 static struct os_eventq *lines_queue;
 static completion_cb completion;
 bool g_silence_console;
+static struct os_mutex console_write_lock;
 
 /*
  * Default implementation in case all consoles are disabled - we just ignore any
  * output to console.
  */
 int __attribute__((weak))
-console_out(int c)
+console_out_nolock(int c)
 {
     return c;
 }
@@ -100,16 +102,77 @@ console_echo(int on)
     echo = on;
 }
 
+int
+console_lock(int timeout)
+{
+    int rc = OS_OK;
+
+    /* Locking from isr while some task own mutex fails with OS_EBUSY */
+    if (os_arch_in_isr()) {
+        if (os_mutex_get_level(&console_write_lock)) {
+            rc = OS_EBUSY;
+        }
+        goto end;
+    }
+
+    rc = os_mutex_pend(&console_write_lock, timeout);
+    if (rc == OS_NOT_STARTED) {
+        /* No need to block before system start make it OK */
+        rc = OS_OK;
+    }
+
+end:
+    return rc;
+}
+
+int
+console_unlock(void)
+{
+    int rc = OS_OK;
+
+    if (os_arch_in_isr()) {
+        goto end;
+    }
+
+    rc = os_mutex_release(&console_write_lock);
+    assert(rc == OS_OK || rc == OS_NOT_STARTED);
+end:
+    return rc;
+}
+
+int
+console_out(int c)
+{
+    int rc;
+    const os_time_t timeout =
+        os_time_ms_to_ticks32(MYNEWT_VAL(CONSOLE_DEFAULT_LOCK_TIMEOUT));
+
+    if (console_lock(timeout) != OS_OK) {
+        return c;
+    }
+    rc = console_out_nolock(c);
+
+    (void)console_unlock();
+
+    return rc;
+}
+
 void
 console_write(const char *str, int cnt)
 {
     int i;
+    const os_time_t timeout =
+            os_time_ms_to_ticks32(MYNEWT_VAL(CONSOLE_DEFAULT_LOCK_TIMEOUT));
 
+    if (console_lock(timeout) != OS_OK) {
+        return;
+    }
     for (i = 0; i < cnt; i++) {
-        if (console_out((int)str[i]) == EOF) {
+        if (console_out_nolock((int)str[i]) == EOF) {
             break;
         }
     }
+    (void)console_unlock();
 }
 
 #if MYNEWT_VAL(CONSOLE_COMPAT)
@@ -818,6 +881,7 @@ console_pkg_init(void)
     SYSINIT_ASSERT_ACTIVE();
 
     os_eventq_init(&avail_queue);
+    os_mutex_init(&console_write_lock);
 
 #if MYNEWT_VAL(CONSOLE_HISTORY_SIZE) > 0
     console_hist_init();

@@ -85,6 +85,8 @@ int console_handle_char(uint8_t byte);
 extern int console_is_midline;
 extern int console_out(int character);
 
+int console_lock(int timeout);
+int console_unlock(void);
 
 #ifdef __cplusplus
 }
