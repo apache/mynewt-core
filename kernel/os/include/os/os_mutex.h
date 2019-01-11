@@ -102,6 +102,26 @@ os_error_t os_mutex_release(struct os_mutex *mu);
  */
 os_error_t os_mutex_pend(struct os_mutex *mu, os_time_t timeout);
 
+/**
+ * Get mutex lock count.
+ *
+ * @note Function should be called from task owning the mutex (one that
+ * successfully called os_mutex_pend). Calling function from other task
+ * that does not own the mutex will return value that has little value
+ * to the caller since value can change at any time by other task.
+ *
+ * It can also be called from interrupt context to check if given mutex
+ * is taken.
+ *
+ * @param mu Pointer to mutex.
+ *
+ * @return number of times lock was called from current task
+ */
+static inline os_error_t os_mutex_get_level(struct os_mutex *mu)
+{
+    return mu->mu_level;
+}
+
 #ifdef __cplusplus
 }
 #endif
