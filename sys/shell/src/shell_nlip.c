@@ -156,6 +156,10 @@ shell_nlip_mtx(struct os_mbuf *m)
     nwritten = 0;
     off = 0;
 
+    rc = console_lock(OS_TICKS_PER_SEC);
+    if (rc != OS_OK) {
+        goto err;
+    }
     /* Start a packet */
     console_write(pkt_seq, sizeof(pkt_seq));
 
@@ -170,7 +174,7 @@ shell_nlip_mtx(struct os_mbuf *m)
 
         rc = os_mbuf_copydata(m, off, dlen, readbuf + rb_off);
         if (rc != 0) {
-            goto err;
+            goto end;
         }
         off += dlen;
 
@@ -201,8 +205,8 @@ shell_nlip_mtx(struct os_mbuf *m)
     console_write(encodebuf, elen);
 
     console_write("\n", 1);
-
-    return (0);
+end:
+    (void)console_unlock();
 err:
     return (rc);
 }
