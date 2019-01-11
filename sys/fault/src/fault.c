@@ -168,10 +168,11 @@ fault_process(struct fault_recorder *recorder, bool is_failure)
         /* The domain seems to be working; decrease chronic failure count. */
         fault_decrease_chronic_count(recorder->domain_id);
     } else {
-        /* Fault detected; trigger a crash in debug builds. */
-        DEBUG_PANIC();
-
         if (state == FAULT_STATE_ERROR) {
+            /* Fault detected; trigger a crash in debug builds. */
+            DEBUG_PANIC();
+
+            /* Increase chronic fail count and persist. */
             fault_increase_chronic_count(recorder->domain_id);
         }
     }
