@@ -29,3 +29,4 @@ pkg.deps:
 
 pkg.deps.SELFTEST:
     - "@apache-mynewt-core/sys/console/stub"
+    - "@apache-mynewt-core/sys/log/stub"
