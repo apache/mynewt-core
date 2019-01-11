@@ -102,7 +102,7 @@ rtt_console_write_ch(char c)
 #endif
 
 int
-console_out(int character)
+console_out_nolock(int character)
 {
     char c = (char)character;
 
