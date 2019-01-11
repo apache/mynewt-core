@@ -29,6 +29,7 @@ pkg.deps:
     - "@apache-mynewt-core/boot/bootutil"
     - "@apache-mynewt-core/kernel/os"
     - "@apache-mynewt-core/sys/console/stub"
+    - "@apache-mynewt-core/sys/log/stub"
 
 pkg.deps.BOOT_SERIAL:
     - "@apache-mynewt-core/boot/boot_serial"
