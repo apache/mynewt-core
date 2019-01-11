@@ -117,6 +117,18 @@ console_silence(bool silent)
 {
 }
 
+static inline int
+console_lock(int timeout)
+{
+    return 0;
+}
+
+static inline int
+console_unlock(void)
+{
+    return 0;
+}
+
 #define console_is_midline  (0)
 
 #ifdef __cplusplus
