@@ -2,7 +2,7 @@
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
- * resarding copyright ownership.  The ASF licenses this file
+ * regarding copyright ownership.  The ASF licenses this file
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
@@ -23,8 +23,12 @@
 #include <string.h>
 
 #include "os/mynewt.h"
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+#include "bus/bus.h"
+#else
 #include "hal/hal_spi.h"
 #include "hal/hal_i2c.h"
+#endif
 #include "sensor/sensor.h"
 #include "sensor/accel.h"
 #include "lis2dw12/lis2dw12.h"
@@ -38,6 +42,8 @@
  * Max time to wait for interrupt.
  */
 #define LIS2DW12_MAX_INT_WAIT (4 * OS_TICKS_PER_SEC)
+
+#define LIS2DW12_ST_NUM_READINGS 5
 
 const struct lis2dw12_notif_cfg dflt_notif_cfg[] = {
     {
@@ -83,31 +89,64 @@ const struct lis2dw12_notif_cfg dflt_notif_cfg[] = {
       .int_cfg   = LIS2DW12_INT1_CFG_6D
     },
     {
-      .event     = SENSOR_EVENT_TYPE_ORIENT_X_CHANGE,
+      .event     = SENSOR_EVENT_TYPE_ORIENT_X_L_CHANGE,
       .int_num   = 0,
-      .notif_src = LIS2DW12_SIXD_SRC_XL|LIS2DW12_SIXD_SRC_XH,
+      .notif_src = LIS2DW12_SIXD_SRC_XL,
       .int_cfg   = LIS2DW12_INT1_CFG_6D
     },
     {
-      .event     = SENSOR_EVENT_TYPE_ORIENT_Y_CHANGE,
+      .event     = SENSOR_EVENT_TYPE_ORIENT_Y_L_CHANGE,
       .int_num   = 0,
-      .notif_src = LIS2DW12_SIXD_SRC_YL|LIS2DW12_SIXD_SRC_YH,
+      .notif_src = LIS2DW12_SIXD_SRC_YL,
       .int_cfg   = LIS2DW12_INT1_CFG_6D
     },
     {
-      .event     = SENSOR_EVENT_TYPE_ORIENT_Z_CHANGE,
+      .event     = SENSOR_EVENT_TYPE_ORIENT_Z_L_CHANGE,
       .int_num   = 0,
-      .notif_src = LIS2DW12_SIXD_SRC_ZL|LIS2DW12_SIXD_SRC_ZH,
+      .notif_src = LIS2DW12_SIXD_SRC_ZL,
       .int_cfg   = LIS2DW12_INT1_CFG_6D
+    },
+    {
+      .event     = SENSOR_EVENT_TYPE_ORIENT_X_H_CHANGE,
+      .int_num   = 0,
+      .notif_src = LIS2DW12_SIXD_SRC_XH,
+      .int_cfg   = LIS2DW12_INT1_CFG_6D
+    },
+    {
+      .event     = SENSOR_EVENT_TYPE_ORIENT_Y_H_CHANGE,
+      .int_num   = 0,
+      .notif_src = LIS2DW12_SIXD_SRC_YH,
+      .int_cfg   = LIS2DW12_INT1_CFG_6D
+    },
+    {
+      .event     = SENSOR_EVENT_TYPE_ORIENT_Z_H_CHANGE,
+      .int_num   = 0,
+      .notif_src = LIS2DW12_SIXD_SRC_ZH,
+      .int_cfg   = LIS2DW12_INT1_CFG_6D
+    },
+    {
+      .event     = SENSOR_EVENT_TYPE_DATA_AVAILABLE,
+      .int_num   = 0,
+      .notif_src = LIS2DW12_STATUS_DRDY,
+      .int_cfg   = LIS2DW12_INT1_CFG_DRDY
+    },
+    {
+      .event     = SENSOR_EVENT_TYPE_FIFO_THR,
+      .int_num   = 0,
+      .notif_src = LIS2DW12_STATUS_FIFO_THS,
+      .int_cfg   = LIS2DW12_INT1_CFG_FTH
     }
+
 };
 
+#if !MYNEWT_VAL(BUS_DRIVER_PRESENT)
 static struct hal_spi_settings spi_lis2dw12_settings = {
     .data_order = HAL_SPI_MSB_FIRST,
     .data_mode  = HAL_SPI_MODE3,
     .baudrate   = 4000,
     .word_size  = HAL_SPI_WORD_SIZE_8BIT,
 };
+#endif
 
 /* Define the stats section and records */
 STATS_SECT_START(lis2dw12_stat_section)
@@ -121,9 +160,12 @@ STATS_SECT_START(lis2dw12_stat_section)
     STATS_SECT_ENTRY(wakeup_notify)
     STATS_SECT_ENTRY(sleep_chg_notify)
     STATS_SECT_ENTRY(orient_chg_notify)
-    STATS_SECT_ENTRY(orient_chg_x_notify)
-    STATS_SECT_ENTRY(orient_chg_y_notify)
-    STATS_SECT_ENTRY(orient_chg_z_notify)
+    STATS_SECT_ENTRY(orient_chg_x_l_notify)
+    STATS_SECT_ENTRY(orient_chg_y_l_notify)
+    STATS_SECT_ENTRY(orient_chg_z_l_notify)
+    STATS_SECT_ENTRY(orient_chg_x_h_notify)
+    STATS_SECT_ENTRY(orient_chg_y_h_notify)
+    STATS_SECT_ENTRY(orient_chg_z_h_notify)
 #endif
 STATS_SECT_END
 
@@ -139,9 +181,12 @@ STATS_NAME_START(lis2dw12_stat_section)
     STATS_NAME(lis2dw12_stat_section, wakeup_notify)
     STATS_NAME(lis2dw12_stat_section, sleep_chg_notify)
     STATS_NAME(lis2dw12_stat_section, orient_chg_notify)
-    STATS_NAME(lis2dw12_stat_section, orient_chg_x_notify)
-    STATS_NAME(lis2dw12_stat_section, orient_chg_y_notify)
-    STATS_NAME(lis2dw12_stat_section, orient_chg_z_notify)
+    STATS_NAME(lis2dw12_stat_section, orient_chg_x_l_notify)
+    STATS_NAME(lis2dw12_stat_section, orient_chg_y_l_notify)
+    STATS_NAME(lis2dw12_stat_section, orient_chg_z_l_notify)
+    STATS_NAME(lis2dw12_stat_section, orient_chg_x_h_notify)
+    STATS_NAME(lis2dw12_stat_section, orient_chg_y_h_notify)
+    STATS_NAME(lis2dw12_stat_section, orient_chg_z_h_notify)
 #endif
 STATS_NAME_END(lis2dw12_stat_section)
 
@@ -173,6 +218,7 @@ static const struct sensor_driver g_lis2dw12_sensor_driver = {
 
 };
 
+#if !MYNEWT_VAL(BUS_DRIVER_PRESENT)
 /**
  * Write multiple length data to LIS2DW12 sensor over I2C  (MAX: 19 bytes)
  *
@@ -280,6 +326,7 @@ err:
 
     return rc;
 }
+#endif
 
 /**
  * Write multiple length data to LIS2DW12 sensor over different interfaces
@@ -297,6 +344,25 @@ lis2dw12_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
 {
     int rc;
 
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    struct {
+        uint8_t addr;
+        /*
+         * XXX lis2dw12_i2c_writelen has max payload of 20 including addr, not
+         * sure where it comes from
+         */
+        uint8_t payload[19];
+    } write_data;
+
+    if (len > sizeof(write_data.payload)) {
+        return -1;
+    }
+
+    write_data.addr = addr;
+    memcpy(write_data.payload, payload, len);
+
+    rc = bus_node_simple_write(itf->si_dev, &write_data, len + 1);
+#else
     rc = sensor_itf_lock(itf, MYNEWT_VAL(LIS2DW12_ITF_LOCK_TMO));
     if (rc) {
         return rc;
@@ -309,10 +375,12 @@ lis2dw12_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
     }
 
     sensor_itf_unlock(itf);
+#endif
 
     return rc;
 }
 
+#if !MYNEWT_VAL(BUS_DRIVER_PRESENT)
 /**
  * Read multiple bytes starting from specified register over i2c
  *
@@ -411,7 +479,7 @@ err:
 
     return rc;
 }
-
+#endif
 
 /**
  * Write byte to sensor over different interfaces
@@ -425,22 +493,7 @@ err:
 int
 lis2dw12_write8(struct sensor_itf *itf, uint8_t reg, uint8_t value)
 {
-    int rc;
-
-    rc = sensor_itf_lock(itf, MYNEWT_VAL(LIS2DW12_ITF_LOCK_TMO));
-    if (rc) {
-        return rc;
-    }
-
-    if (itf->si_type == SENSOR_ITF_I2C) {
-        rc = lis2dw12_i2c_writelen(itf, reg, &value, 1);
-    } else {
-        rc = lis2dw12_spi_writelen(itf, reg, &value, 1);
-    }
-
-    sensor_itf_unlock(itf);
-
-    return rc;
+    return lis2dw12_writelen(itf, reg, &value, 1);
 }
 
 /**
@@ -455,22 +508,7 @@ lis2dw12_write8(struct sensor_itf *itf, uint8_t reg, uint8_t value)
 int
 lis2dw12_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
 {
-    int rc;
-
-    rc = sensor_itf_lock(itf, MYNEWT_VAL(LIS2DW12_ITF_LOCK_TMO));
-    if (rc) {
-        return rc;
-    }
-
-    if (itf->si_type == SENSOR_ITF_I2C) {
-        rc = lis2dw12_i2c_readlen(itf, reg, value, 1);
-    } else {
-        rc = lis2dw12_spi_readlen(itf, reg, value, 1);
-    }
-
-    sensor_itf_unlock(itf);
-
-    return rc;
+    return lis2dw12_readlen(itf, reg, value, 1);
 }
 
 /**
@@ -489,6 +527,15 @@ lis2dw12_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
 {
     int rc;
 
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    struct lis2dw12 *dev = (struct lis2dw12 *)itf->si_dev;
+
+    if (dev->node_is_spi) {
+        reg |= LIS2DW12_SPI_READ_CMD_BIT;
+    }
+
+    rc = bus_node_simple_write_read_transact(itf->si_dev, &reg, 1, buffer, len);
+#else
     rc = sensor_itf_lock(itf, MYNEWT_VAL(LIS2DW12_ITF_LOCK_TMO));
     if (rc) {
         return rc;
@@ -501,6 +548,7 @@ lis2dw12_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
     }
 
     sensor_itf_unlock(itf);
+#endif
 
     return rc;
 }
@@ -1753,6 +1801,8 @@ int lis2dw12_set_wake_up_dur(struct sensor_itf *itf, uint8_t val)
 {
     int rc;
     uint8_t reg;
+    volatile uint8_t ptr = val;
+    (void)ptr;
 
     rc = lis2dw12_read8(itf, LIS2DW12_REG_WAKE_UP_DUR, &reg);
     if (rc) {
@@ -1760,7 +1810,7 @@ int lis2dw12_set_wake_up_dur(struct sensor_itf *itf, uint8_t val)
     }
 
     reg &= ~LIS2DW12_WAKE_DUR_DUR;
-    reg |= (val & LIS2DW12_WAKE_DUR_DUR) << 5;
+    reg |= (val << 5) & LIS2DW12_WAKE_DUR_DUR;
 
     return lis2dw12_write8(itf, LIS2DW12_REG_WAKE_UP_DUR, reg);
 
@@ -2020,36 +2070,67 @@ int lis2dw12_get_int1_on_int2_map(struct sensor_itf *itf, uint8_t *val)
 int lis2dw12_run_self_test(struct sensor_itf *itf, int *result)
 {
     int rc;
-    /*configure min and max values for reading 5 samples, and accounting for
-     * both negative and positive offset */
-    int min = LIS2DW12_ST_MIN*5*2;
-    int max = LIS2DW12_ST_MAX*5*2;
-
-    int16_t data[3], diff[3] = {0,0,0};
+    int16_t no_st[3], st[3], data[3] = {0,0,0};
+    int32_t scratch[3] = {0,0,0};
     int i;
     uint8_t prev_config[6];
-    /* set config per datasheet, with positive self test mode enabled. */
-    uint8_t st_config[] = {0x44, 0x04, 0x40, 0x00, 0x00, 0x10};
-    uint8_t fifo_ctrl;
+    *result = 0;
+    uint8_t config[6] = { LIS2DW12_DATA_RATE_50HZ | LIS2DW12_PM_HIGH_PERF, LIS2DW12_CTRL_REG2_IF_ADD_INC | LIS2DW12_CTRL_REG2_BDU, 0x00, 0x00, 0x00, LIS2DW12_FS_4G};
+    uint8_t fs;
 
     rc = lis2dw12_readlen(itf, LIS2DW12_REG_CTRL_REG1, prev_config, 6);
     if (rc) {
         return rc;
     }
-    rc = lis2dw12_read8(itf, LIS2DW12_REG_FIFO_CTRL, &fifo_ctrl);
-    if (rc) {
-        return rc;
-    }
-    rc = lis2dw12_writelen(itf, LIS2DW12_REG_CTRL_REG2, &st_config[1], 5);
-    rc = lis2dw12_writelen(itf, LIS2DW12_REG_CTRL_REG1, st_config, 1);
+
+    rc = lis2dw12_writelen(itf, LIS2DW12_REG_CTRL_REG2, &config[1], 5);
     if (rc) {
         return rc;
     }
 
-    rc = lis2dw12_write8(itf, LIS2DW12_REG_FIFO_CTRL, 0);
+    rc = lis2dw12_write8(itf, LIS2DW12_REG_CTRL_REG1, config[0]);
     if (rc) {
         return rc;
     }
+
+    /* wait 200ms */
+    os_time_delay(OS_TICKS_PER_SEC / 5 + 1);
+
+    rc = lis2dw12_get_fs(itf, &fs);
+    if (rc) {
+        return rc;
+    }
+
+    //discard
+    //TODO poll DRDY in STATUS (27h) instead?
+    rc = lis2dw12_get_data(itf, fs, &(data[0]), &(data[1]), &(data[2]));
+    if (rc) {
+        return rc;
+    }
+
+    /* take no st offset reading */
+    for(i=0; i<LIS2DW12_ST_NUM_READINGS; i++) {
+
+        // TODO poll DRDY in STATUS (27h) instead?
+        /* wait at least 20 ms */
+        os_time_delay(OS_TICKS_PER_SEC / 50 + 1);
+
+        rc = lis2dw12_get_data(itf, fs, &(data[0]), &(data[1]), &(data[2]));
+        if (rc) {
+            return rc;
+        }
+        scratch[0] += data[0];
+        scratch[1] += data[1];
+        scratch[2] += data[2];
+    }
+
+    //average
+    no_st[0] = scratch[0]/LIS2DW12_ST_NUM_READINGS;
+    no_st[1] = scratch[1]/LIS2DW12_ST_NUM_READINGS;
+    no_st[2] = scratch[2]/LIS2DW12_ST_NUM_READINGS;
+
+    //clean scratch
+    memset(&scratch, 0, sizeof scratch);
 
     /* go into self test mode 1 */
     rc = lis2dw12_set_self_test(itf, LIS2DW12_ST_MODE_MODE1);
@@ -2057,25 +2138,47 @@ int lis2dw12_run_self_test(struct sensor_itf *itf, int *result)
         return rc;
     }
 
-    /* wait 100ms */
-    os_time_delay(OS_TICKS_PER_SEC / 100);
-    rc = lis2dw12_get_data(itf, 2, &(data[0]), &(data[1]), &(data[2]));
+    /* wait 200ms */
+    os_time_delay(OS_TICKS_PER_SEC / 5 + 1);
+
+    //discard
+    //TODO poll DRDY in STATUS (27h) instead?
+    rc = lis2dw12_get_data(itf, fs, &(data[0]), &(data[1]), &(data[2]));
     if (rc) {
         return rc;
     }
 
     /* take positive offset reading */
-    for(i=0; i<5; i++) {
+    for(i=0; i<LIS2DW12_ST_NUM_READINGS; i++) {
 
-        rc = lis2dw12_get_data(itf, 2, &(data[0]), &(data[1]), &(data[2]));
+        // TODO poll DRDY in STATUS (27h) instead?
+        /* wait at least 20 ms */
+        os_time_delay(OS_TICKS_PER_SEC / 50 + 1);
+
+        rc = lis2dw12_get_data(itf, fs, &(data[0]), &(data[1]), &(data[2]));
         if (rc) {
             return rc;
         }
-        diff[0] += data[0];
-        diff[1] += data[1];
-        diff[2] += data[2];
-        /* wait at least 20 ms */
-        os_time_delay(OS_TICKS_PER_SEC / 50 + 1);
+        scratch[0] += data[0];
+        scratch[1] += data[1];
+        scratch[2] += data[2];
+    }
+
+    //average
+    st[0] = scratch[0]/LIS2DW12_ST_NUM_READINGS;
+    st[1] = scratch[1]/LIS2DW12_ST_NUM_READINGS;
+    st[2] = scratch[2]/LIS2DW12_ST_NUM_READINGS;
+
+    //clean scratch
+    memset(&scratch, 0, sizeof scratch);
+
+    // |Min(ST_X)| <=|OUTX_AVG_ST - OUTX_AVG_NO_ST| <= |Max(ST_X)|
+    /* compare values to thresholds */
+    for (i = 0; i < 3; i++) {
+        int16_t diff = abs(st[i] - no_st[i]);
+        if (diff < LIS2DW12_ST_MIN || diff > LIS2DW12_ST_MAX) {
+            *result -= 1;
+        }
     }
 
     /* go into self test mode 2 */
@@ -2084,44 +2187,52 @@ int lis2dw12_run_self_test(struct sensor_itf *itf, int *result)
         return rc;
     }
 
-    os_time_delay(OS_TICKS_PER_SEC / 50 + 1);
-    rc = lis2dw12_get_data(itf, 2, &(data[0]), &(data[1]), &(data[2]));
+    /* wait 200ms */
+    os_time_delay(OS_TICKS_PER_SEC / 5 + 1);
+
+    //discard
+    rc = lis2dw12_get_data(itf, fs, &(data[0]), &(data[1]), &(data[2]));
     if (rc) {
         return rc;
     }
 
     /* take negative offset reading */
-    for (i=0; i<5; i++) {
+    for(i=0; i<LIS2DW12_ST_NUM_READINGS; i++) {
 
-            rc = lis2dw12_get_data(itf, 2, &(data[0]), &(data[1]), &(data[2]));
-            if (rc) {
-                return rc;
-            }
-            diff[0] -= data[0];
-            diff[1] -= data[1];
-            diff[2] -= data[2];
-            /* wait at least 20 ms */
-            os_time_delay(OS_TICKS_PER_SEC / 50 + 1);
-        }
+        // TODO poll DRDY in STATUS (27h) instead?
+        /* wait at least 20 ms */
+        os_time_delay(OS_TICKS_PER_SEC / 50 + 1);
 
-    /* disable self test mod */
-    rc = lis2dw12_writelen(itf, LIS2DW12_REG_CTRL_REG1, prev_config, 6);
+        rc = lis2dw12_get_data(itf, fs, &(data[0]), &(data[1]), &(data[2]));
         if (rc) {
             return rc;
         }
+        scratch[0] += data[0];
+        scratch[1] += data[1];
+        scratch[2] += data[2];
+    }
 
-    rc = lis2dw12_write8(itf, LIS2DW12_REG_FIFO_CTRL, fifo_ctrl);
+    //average
+    st[0] = scratch[0]/LIS2DW12_ST_NUM_READINGS;
+    st[1] = scratch[1]/LIS2DW12_ST_NUM_READINGS;
+    st[2] = scratch[2]/LIS2DW12_ST_NUM_READINGS;
+
+    /* compare values to thresholds */
+    for (i = 0; i < 3; i++) {
+        int16_t diff = abs(st[i] - no_st[i]);
+        if (diff < LIS2DW12_ST_MIN || diff > LIS2DW12_ST_MAX) {
+            *result -= 1;
+        }
+    }
+
+    /* disable self test mode */
+    rc = lis2dw12_writelen(itf, LIS2DW12_REG_CTRL_REG1, prev_config, 6);
     if (rc) {
         return rc;
     }
 
-    /* compare values to thresholds */
-    *result = 0;
-    for (i = 0; i < 3; i++) {
-        if ((diff[i] < min) || (diff[i] > max)) {
-            *result -= 1;
-        }
-    }
+    /* wait 200ms */
+    os_time_delay(OS_TICKS_PER_SEC / 5 + 1);
 
     return 0;
 }
@@ -2242,10 +2353,10 @@ init_intpin(struct lis2dw12 *lis2dw12, hal_gpio_irq_handler_t handler,
         return SYS_EINVAL;
     }
 
-    if (lis2dw12->sensor.s_itf.si_ints[i].active) {
-        trig = HAL_GPIO_TRIG_RISING;
-    } else {
+    if (lis2dw12->cfg.int_active_low) {
         trig = HAL_GPIO_TRIG_FALLING;
+    } else {
+        trig = HAL_GPIO_TRIG_RISING;
     }
 
     rc = hal_gpio_irq_init(pin,
@@ -2356,23 +2467,45 @@ err:
 int
 lis2dw12_get_fs(struct sensor_itf *itf, uint8_t *fs)
 {
-    int rc;
+//    int rc;
+//
+//    rc = lis2dw12_get_full_scale(itf, fs);
+//    if (rc) {
+//        return rc;
+//    }
+//
+//    if (*fs == LIS2DW12_FS_2G) {
+//        *fs = 2;
+//    } else if (*fs == LIS2DW12_FS_4G) {
+//        *fs = 4;
+//    } else if (*fs == LIS2DW12_FS_8G) {
+//        *fs = 8;
+//    } else if (*fs == LIS2DW12_FS_16G) {
+//        *fs = 16;
+//    } else {
+//        return SYS_EINVAL;
+//    }
 
-    rc = lis2dw12_get_full_scale(itf, fs);
-    if (rc) {
-        return rc;
-    }
+    switch(MYNEWT_VAL(LIS2DW12_CFG_FS))
+    {
+        case LIS2DW12_FS_2G:
+            *fs = 2;
+            break;
 
-    if (*fs == LIS2DW12_FS_2G) {
-        *fs = 2;
-    } else if (*fs == LIS2DW12_FS_4G) {
-        *fs = 4;
-    } else if (*fs == LIS2DW12_FS_8G) {
-        *fs = 8;
-    } else if (*fs == LIS2DW12_FS_16G) {
-        *fs = 16;
-    } else {
-        return SYS_EINVAL;
+        case LIS2DW12_FS_4G:
+            *fs = 4;
+            break;
+
+        case LIS2DW12_FS_8G:
+            *fs = 8;
+            break;
+
+        case LIS2DW12_FS_16G:
+            *fs = 16;
+            break;
+
+        default:
+            return SYS_EINVAL;
     }
 
     return 0;
@@ -2411,6 +2544,11 @@ lis2dw12_get_data(struct sensor_itf *itf, uint8_t fs, int16_t *x, int16_t *y, in
      * To calculate mg from g we use the 1000 multiple.
      * Since the full scale is represented by 16 bit value,
      * we use that as a divisor.
+     */
+    /*
+     * Need to check this late. The correct implementation should be ((*x/4) * fs * 2 * 1000)/( 1 << (resolution) )
+     * Resolution can be 12 or 14 bits, depends on the current power mode.
+     * In this case, we are correct when the resolution is 14 bits.  (*x * fs * 2 * 1000)/(4 * ( 1 << (resolution)))
      */
     *x = (fs * 2 * 1000 * *x)/UINT16_MAX;
     *y = (fs * 2 * 1000 * *y)/UINT16_MAX;
@@ -2617,6 +2755,71 @@ err:
     }
 }
 
+int
+lis2dw12_fifo_read(struct sensor *sensor,
+                     sensor_type_t sensor_type,
+                     sensor_data_func_t read_func,
+                     void *read_arg,
+                     uint32_t time_ms)
+{
+    struct lis2dw12_pdd *pdd;
+    struct lis2dw12 *lis2dw12;
+    struct sensor_itf *itf;
+    struct lis2dw12_cfg *cfg;
+
+    uint8_t fifo_samples;
+    uint8_t fs;
+//    bool bResetFifoRequired = false;
+    int rc;
+
+    /* If the read isn't looking for accel data, don't do anything. */
+    if (!(sensor_type & SENSOR_TYPE_ACCELEROMETER)) {
+        return SYS_EINVAL;
+    }
+
+    lis2dw12 = (struct lis2dw12 *)SENSOR_GET_DEVICE(sensor);
+    itf = SENSOR_GET_ITF(sensor);
+    pdd = &lis2dw12->pdd;
+    cfg = &lis2dw12->cfg;
+
+    if (cfg->read_mode.mode != LIS2DW12_READ_M_BURST_FIFO) {
+        return SYS_EINVAL;
+    }
+
+    if (pdd->interrupt) {
+        return SYS_EBUSY;
+    }
+
+    /* get sensor scale */
+    rc = lis2dw12_get_fs(itf, &fs);
+    if (rc) {
+        goto err;
+    }
+
+    /* check if any data is available in fifo */
+    rc = lis2dw12_get_fifo_samples(itf, &fifo_samples);
+    if (rc) {
+        goto err;
+    }
+
+    //bResetFifoRequired = (fifo_samples == MYNEWT_VAL(SENSOR_MOTION_FIFO_DEPTH)) ? true : false;
+
+    if(fifo_samples > 0)
+        fifo_samples = 32;
+
+    /* read all data we believe is currently in fifo */
+    while(fifo_samples > 0) {
+        if (lis2dw12_do_read(sensor, read_func, read_arg, fs)) {
+            goto err;
+        }
+        fifo_samples--;
+    }
+
+err:
+
+    return rc;
+}
+
 static int
 lis2dw12_sensor_read(struct sensor *sensor, sensor_type_t type,
         sensor_data_func_t data_func, void *data_arg, uint32_t timeout)
@@ -2633,7 +2836,9 @@ lis2dw12_sensor_read(struct sensor *sensor, sensor_type_t type,
     }
 
     itf = SENSOR_GET_ITF(sensor);
+    (void)itf;
 
+#if !MYNEWT_VAL(BUS_DRIVER_PRESENT)
     if (itf->si_type == SENSOR_ITF_SPI) {
 
         rc = hal_spi_disable(sensor->s_itf.si_num);
@@ -2654,14 +2859,22 @@ lis2dw12_sensor_read(struct sensor *sensor, sensor_type_t type,
             goto err;
         }
     }
+#endif
 
     lis2dw12 = (struct lis2dw12 *)SENSOR_GET_DEVICE(sensor);
     cfg = &lis2dw12->cfg;
 
-    if (cfg->read_mode.mode == LIS2DW12_READ_M_POLL) {
+    if (cfg->read_mode.mode == LIS2DW12_READ_M_POLL)
+    {
         rc = lis2dw12_poll_read(sensor, type, data_func, data_arg, timeout);
-    } else {
+    }
+    else if (cfg->read_mode.mode == LIS2DW12_READ_M_STREAM)
+    {
         rc = lis2dw12_stream_read(sensor, type, data_func, data_arg, timeout);
+    }
+    else if (cfg->read_mode.mode == LIS2DW12_READ_M_BURST_FIFO)
+    {
+        rc = lis2dw12_fifo_read(sensor, type, data_func, data_arg, timeout);
     }
 err:
     if (rc) {
@@ -2707,12 +2920,10 @@ lis2dw12_sensor_set_notification(struct sensor *sensor, sensor_event_type_t even
 {
     struct lis2dw12 *lis2dw12;
     struct lis2dw12_pdd *pdd;
-    struct sensor_itf *itf;
     struct lis2dw12_notif_cfg *notif_cfg;
     int rc;
 
     lis2dw12 = (struct lis2dw12 *)SENSOR_GET_DEVICE(sensor);
-    itf = SENSOR_GET_ITF(sensor);
     pdd = &lis2dw12->pdd;
 
     notif_cfg = lis2dw12_find_notif_cfg_by_event(event, &lis2dw12->cfg);
@@ -2726,13 +2937,6 @@ lis2dw12_sensor_set_notification(struct sensor *sensor, sensor_event_type_t even
         goto err;
     }
 
-    /* enable double tap detection in wake_up_ths */
-    if(event == SENSOR_EVENT_TYPE_DOUBLE_TAP) {
-        rc = lis2dw12_set_double_tap_event_en(itf, 1);
-        if (rc) {
-            goto err;
-        }
-    }
 
     pdd->notify_ctx.snec_evtype |= event;
 
@@ -2801,14 +3005,23 @@ lis2dw12_inc_notif_stats(sensor_event_type_t event)
         case SENSOR_EVENT_TYPE_ORIENT_CHANGE:
             STATS_INC(g_lis2dw12stats, orient_chg_notify);
             break;
-        case SENSOR_EVENT_TYPE_ORIENT_X_CHANGE:
-            STATS_INC(g_lis2dw12stats, orient_chg_x_notify);
+        case SENSOR_EVENT_TYPE_ORIENT_X_L_CHANGE:
+            STATS_INC(g_lis2dw12stats, orient_chg_x_l_notify);
             break;
-        case SENSOR_EVENT_TYPE_ORIENT_Y_CHANGE:
-            STATS_INC(g_lis2dw12stats, orient_chg_y_notify);
+        case SENSOR_EVENT_TYPE_ORIENT_Y_L_CHANGE:
+            STATS_INC(g_lis2dw12stats, orient_chg_y_l_notify);
             break;
-        case SENSOR_EVENT_TYPE_ORIENT_Z_CHANGE:
-            STATS_INC(g_lis2dw12stats, orient_chg_z_notify);
+        case SENSOR_EVENT_TYPE_ORIENT_Z_L_CHANGE:
+            STATS_INC(g_lis2dw12stats, orient_chg_z_l_notify);
+            break;
+        case SENSOR_EVENT_TYPE_ORIENT_X_H_CHANGE:
+            STATS_INC(g_lis2dw12stats, orient_chg_x_h_notify);
+            break;
+        case SENSOR_EVENT_TYPE_ORIENT_Y_H_CHANGE:
+            STATS_INC(g_lis2dw12stats, orient_chg_y_h_notify);
+            break;
+        case SENSOR_EVENT_TYPE_ORIENT_Z_H_CHANGE:
+            STATS_INC(g_lis2dw12stats, orient_chg_z_h_notify);
             break;
         case SENSOR_EVENT_TYPE_SLEEP_CHANGE:
             STATS_INC(g_lis2dw12stats, sleep_chg_notify);
@@ -2819,10 +3032,29 @@ lis2dw12_inc_notif_stats(sensor_event_type_t event)
         case SENSOR_EVENT_TYPE_FREE_FALL:
             STATS_INC(g_lis2dw12stats, free_fall_notify);
             break;
+        default:
+            break;
     }
 #endif
 
     return;
+}
+
+static int
+lis2dw12_notify(struct lis2dw12 *lis2dw12, uint8_t src,
+                    sensor_event_type_t event_type)
+{
+    struct lis2dw12_notif_cfg *notif_cfg;
+
+    notif_cfg = lis2dw12_find_notif_cfg_by_event(event_type, &lis2dw12->cfg);
+
+    if (notif_cfg && (src & notif_cfg->notif_src)) {
+        __asm__("nop");
+        sensor_mgr_put_notify_evt(&lis2dw12->pdd.notify_ctx, event_type);
+        lis2dw12_inc_notif_stats(event_type);
+    }
+
+    return 0;
 }
 
 static int
@@ -2832,38 +3064,16 @@ lis2dw12_sensor_handle_interrupt(struct sensor *sensor)
     struct sensor_itf *itf;
     uint8_t int_src;
     uint8_t int_status;
-    uint8_t sixd_src;
-    struct lis2dw12_notif_cfg *notif_cfg;
+    uint8_t sixd_src = 0;
     int rc;
+    static bool bFifoState = true;
+
+//    volatile int64_t start = os_get_uptime_usec();
+//    volatile int64_t end = 0;
+//    volatile int64_t duration = 0;
 
     lis2dw12 = (struct lis2dw12 *)SENSOR_GET_DEVICE(sensor);
     itf = SENSOR_GET_ITF(sensor);
-
-    if (lis2dw12->pdd.notify_ctx.snec_evtype & SENSOR_EVENT_TYPE_SLEEP) {
-        /*
-         * We need to read this register only if we are
-         * interested in the sleep event
-         */
-        rc = lis2dw12_get_int_status(itf, &int_status);
-        if (rc) {
-            LIS2DW12_LOG(ERROR, "Could not read int status err=0x%02x\n", rc);
-            return rc;
-        }
-
-        notif_cfg = lis2dw12_find_notif_cfg_by_event(SENSOR_EVENT_TYPE_SLEEP,
-                                                     &lis2dw12->cfg);
-        if (!notif_cfg) {
-            rc = SYS_EINVAL;
-            goto err;
-        }
-
-        if (int_status & notif_cfg->notif_src) {
-            /* Sleep state detected */
-            sensor_mgr_put_notify_evt(&lis2dw12->pdd.notify_ctx,
-                                      SENSOR_EVENT_TYPE_SLEEP);
-            lis2dw12_inc_notif_stats(SENSOR_EVENT_TYPE_SLEEP);
-        }
-    }
 
     rc = lis2dw12_get_sixd_src(itf, &sixd_src);
     if (rc) {
@@ -2871,68 +3081,39 @@ lis2dw12_sensor_handle_interrupt(struct sensor *sensor)
         goto err;
     }
 
-    notif_cfg = lis2dw12_find_notif_cfg_by_event(SENSOR_EVENT_TYPE_ORIENT_CHANGE,
-                                                 &lis2dw12->cfg);
-    if (notif_cfg) {
-        if (sixd_src & notif_cfg->notif_src) {
-
-            /* Orientation change detected, can be a combination of ZH, ZL, YH,
-             * YL, XH and XL
-             */
-
-            sensor_mgr_put_notify_evt(&lis2dw12->pdd.notify_ctx,
-                                      SENSOR_EVENT_TYPE_ORIENT_CHANGE);
-
-            lis2dw12_inc_notif_stats(SENSOR_EVENT_TYPE_ORIENT_CHANGE);
-        }
+    rc = lis2dw12_notify(lis2dw12, sixd_src, SENSOR_EVENT_TYPE_ORIENT_CHANGE);
+    if (rc) {
+        goto err;
     }
 
-    notif_cfg = lis2dw12_find_notif_cfg_by_event(SENSOR_EVENT_TYPE_ORIENT_X_CHANGE,
-                                                 &lis2dw12->cfg);
-    if (notif_cfg) {
-        if (sixd_src & notif_cfg->notif_src) {
-
-            /* Orientation change detected, can be a combination of ZH, ZL, YH,
-             * YL, XH and XL
-             */
-
-            sensor_mgr_put_notify_evt(&lis2dw12->pdd.notify_ctx,
-                                      SENSOR_EVENT_TYPE_ORIENT_X_CHANGE);
-
-            lis2dw12_inc_notif_stats(SENSOR_EVENT_TYPE_ORIENT_X_CHANGE);
-        }
+    rc = lis2dw12_notify(lis2dw12, sixd_src, SENSOR_EVENT_TYPE_ORIENT_X_L_CHANGE);
+    if (rc) {
+        goto err;
     }
 
-    notif_cfg = lis2dw12_find_notif_cfg_by_event(SENSOR_EVENT_TYPE_ORIENT_Y_CHANGE,
-                                                 &lis2dw12->cfg);
-    if (notif_cfg) {
-        if (sixd_src & notif_cfg->notif_src) {
-
-            /* Orientation change detected, can be a combination of ZH, ZL, YH,
-             * YL, XH and XL
-             */
-
-            sensor_mgr_put_notify_evt(&lis2dw12->pdd.notify_ctx,
-                                      SENSOR_EVENT_TYPE_ORIENT_Y_CHANGE);
-
-            lis2dw12_inc_notif_stats(SENSOR_EVENT_TYPE_ORIENT_Y_CHANGE);
-        }
+    rc = lis2dw12_notify(lis2dw12, sixd_src, SENSOR_EVENT_TYPE_ORIENT_Y_L_CHANGE);
+    if (rc) {
+        goto err;
     }
 
-    notif_cfg = lis2dw12_find_notif_cfg_by_event(SENSOR_EVENT_TYPE_ORIENT_Z_CHANGE,
-                                                 &lis2dw12->cfg);
-    if (notif_cfg) {
-        if (sixd_src & notif_cfg->notif_src) {
+    rc = lis2dw12_notify(lis2dw12, sixd_src, SENSOR_EVENT_TYPE_ORIENT_Z_L_CHANGE);
+    if (rc) {
+        goto err;
+    }
 
-            /* Orientation change detected, can be a combination of ZH, ZL, YH,
-             * YL, XH and XL
-             */
+    rc = lis2dw12_notify(lis2dw12, sixd_src, SENSOR_EVENT_TYPE_ORIENT_X_H_CHANGE);
+    if (rc) {
+        goto err;
+    }
 
-            sensor_mgr_put_notify_evt(&lis2dw12->pdd.notify_ctx,
-                                      SENSOR_EVENT_TYPE_ORIENT_Z_CHANGE);
+    rc = lis2dw12_notify(lis2dw12, sixd_src, SENSOR_EVENT_TYPE_ORIENT_Y_H_CHANGE);
+    if (rc) {
+        goto err;
+    }
 
-            lis2dw12_inc_notif_stats(SENSOR_EVENT_TYPE_ORIENT_Z_CHANGE);
-        }
+    rc = lis2dw12_notify(lis2dw12, sixd_src, SENSOR_EVENT_TYPE_ORIENT_Z_H_CHANGE);
+    if (rc) {
+        goto err;
     }
 
     rc = lis2dw12_clear_int(itf, &int_src);
@@ -2941,60 +3122,92 @@ lis2dw12_sensor_handle_interrupt(struct sensor *sensor)
         return rc;
     }
 
-    notif_cfg = lis2dw12_find_notif_cfg_by_event(SENSOR_EVENT_TYPE_SINGLE_TAP,
-                                                 &lis2dw12->cfg);
-    if (notif_cfg) {
-        if (int_src & notif_cfg->notif_src) {
-            /* Single tap is detected */
-            sensor_mgr_put_notify_evt(&lis2dw12->pdd.notify_ctx,
-                                      SENSOR_EVENT_TYPE_SINGLE_TAP);
-            lis2dw12_inc_notif_stats(SENSOR_EVENT_TYPE_SINGLE_TAP);
+    rc = lis2dw12_notify(lis2dw12, int_src, SENSOR_EVENT_TYPE_SINGLE_TAP);
+    if (rc) {
+        goto err;
+    }
+
+    rc = lis2dw12_notify(lis2dw12, int_src, SENSOR_EVENT_TYPE_DOUBLE_TAP);
+    if (rc) {
+        goto err;
+    }
+
+    rc = lis2dw12_notify(lis2dw12, int_src, SENSOR_EVENT_TYPE_FREE_FALL);
+    if (rc) {
+        goto err;
+    }
+
+    rc = lis2dw12_notify(lis2dw12, int_src, SENSOR_EVENT_TYPE_WAKEUP);
+    if (rc) {
+        goto err;
+    }
+
+    rc = lis2dw12_notify(lis2dw12, int_src, SENSOR_EVENT_TYPE_SLEEP_CHANGE);
+    if (rc) {
+        goto err;
+    }
+
+    /*
+     * We need to read this register only if we are
+     * interested in the sleep event
+     */
+    rc = lis2dw12_get_int_status(itf, &int_status);
+    if (rc) {
+        LIS2DW12_LOG(ERROR, "Could not read int status err=0x%02x\n", rc);
+        return rc;
+    }
+
+    if (lis2dw12->pdd.notify_ctx.snec_evtype & SENSOR_EVENT_TYPE_SLEEP)
+    {
+        rc = lis2dw12_notify(lis2dw12, int_status, SENSOR_EVENT_TYPE_SLEEP);
+        if (rc) {
+            goto err;
         }
     }
 
-    notif_cfg = lis2dw12_find_notif_cfg_by_event(SENSOR_EVENT_TYPE_DOUBLE_TAP,
-                                                 &lis2dw12->cfg);
-    if (notif_cfg) {
-        if (int_src & notif_cfg->notif_src) {
-            /* Double tap is detected */
-            sensor_mgr_put_notify_evt(&lis2dw12->pdd.notify_ctx,
-                                      SENSOR_EVENT_TYPE_DOUBLE_TAP);
-            lis2dw12_inc_notif_stats(SENSOR_EVENT_TYPE_DOUBLE_TAP);
+    // data available test
+    rc = lis2dw12_notify(lis2dw12, int_status, SENSOR_EVENT_TYPE_DATA_AVAILABLE);
+    if (rc) {
+        goto err;
+    }
+
+    // FIFO threshold
+    rc = lis2dw12_notify(lis2dw12, int_status, SENSOR_EVENT_TYPE_FIFO_THR);
+    if (rc) {
+        goto err;
+    }
+
+    // if sleep detected, disable fifo interrupt
+    if(int_status & LIS2DW12_STATUS_SLEEP_STATE)
+    {
+        //disable fifo interrupt
+        struct lis2dw12_notif_cfg *notif_cfg;
+
+        notif_cfg = lis2dw12_find_notif_cfg_by_event(SENSOR_EVENT_TYPE_FIFO_THR, &lis2dw12->cfg);
+        if(notif_cfg && bFifoState == true)
+        {
+            lis2dw12_set_fifo_cfg(itf, LIS2DW12_FIFO_M_BYPASS, lis2dw12->cfg.fifo_threshold);
+            bFifoState = false;
         }
     }
 
-    notif_cfg = lis2dw12_find_notif_cfg_by_event(SENSOR_EVENT_TYPE_FREE_FALL,
-                                                 &lis2dw12->cfg);
-    if (notif_cfg) {
-        if (int_src & notif_cfg->notif_src) {
-            /* Freefall is detected */
-            sensor_mgr_put_notify_evt(&lis2dw12->pdd.notify_ctx,
-                                      SENSOR_EVENT_TYPE_FREE_FALL);
-            lis2dw12_inc_notif_stats(SENSOR_EVENT_TYPE_FREE_FALL);
+    // if wakeup detected, enable fifo interrupt
+    if(int_status & LIS2DW12_STATUS_DOUBLE_TAP)
+    {
+        //enable fifo interrupt
+        struct lis2dw12_notif_cfg *notif_cfg;
+
+        notif_cfg = lis2dw12_find_notif_cfg_by_event(SENSOR_EVENT_TYPE_FIFO_THR, &lis2dw12->cfg);
+        if(notif_cfg && bFifoState == false)
+        {
+            // set fifo mode back to original one
+            lis2dw12_set_fifo_cfg(itf, lis2dw12->cfg.fifo_mode, lis2dw12->cfg.fifo_threshold);
+            bFifoState = true;
         }
     }
 
-    notif_cfg = lis2dw12_find_notif_cfg_by_event(SENSOR_EVENT_TYPE_WAKEUP,
-                                                 &lis2dw12->cfg);
-    if (notif_cfg) {
-        if (int_src & notif_cfg->notif_src) {
-            /* Wake up is detected */
-            sensor_mgr_put_notify_evt(&lis2dw12->pdd.notify_ctx,
-                                      SENSOR_EVENT_TYPE_WAKEUP);
-            lis2dw12_inc_notif_stats(SENSOR_EVENT_TYPE_WAKEUP);
-        }
-    }
-
-    notif_cfg = lis2dw12_find_notif_cfg_by_event(SENSOR_EVENT_TYPE_SLEEP_CHANGE,
-                                                 &lis2dw12->cfg);
-    if (notif_cfg) {
-        if (int_src & notif_cfg->notif_src) {
-            /* Sleep change detected, either wakeup or sleep */
-            sensor_mgr_put_notify_evt(&lis2dw12->pdd.notify_ctx,
-                                      SENSOR_EVENT_TYPE_SLEEP_CHANGE);
-            lis2dw12_inc_notif_stats(SENSOR_EVENT_TYPE_SLEEP_CHANGE);
-        }
-    }
+//    end = os_get_uptime_usec();
+//    duration = end - start;
 
     return 0;
 err:
@@ -3078,6 +3291,7 @@ lis2dw12_init(struct os_dev *dev, void *arg)
         goto err;
     }
 
+#if !MYNEWT_VAL(BUS_DRIVER_PRESENT)
     if (sensor->s_itf.si_type == SENSOR_ITF_SPI) {
 
         rc = hal_spi_disable(sensor->s_itf.si_num);
@@ -3103,7 +3317,7 @@ lis2dw12_init(struct os_dev *dev, void *arg)
             goto err;
         }
     }
-
+#endif
 
     init_interrupt(&lis2dw12->intr, lis2dw12->sensor.s_itf.si_ints);
 
@@ -3136,9 +3350,12 @@ lis2dw12_config(struct lis2dw12 *lis2dw12, struct lis2dw12_cfg *cfg)
     struct sensor *sensor;
 
     itf = SENSOR_GET_ITF(&(lis2dw12->sensor));
-    sensor = &(lis2dw12->sensor);
 
+    (void)sensor;
+
+#if !MYNEWT_VAL(BUS_DRIVER_PRESENT)
     if (itf->si_type == SENSOR_ITF_SPI) {
+        sensor = &(lis2dw12->sensor);
 
         rc = hal_spi_disable(sensor->s_itf.si_num);
         if (rc) {
@@ -3158,6 +3375,7 @@ lis2dw12_config(struct lis2dw12 *lis2dw12, struct lis2dw12_cfg *cfg)
             goto err;
         }
     }
+#endif
 
     rc = lis2dw12_get_chip_id(itf, &chip_id);
     if (rc) {
@@ -3361,3 +3579,53 @@ lis2dw12_config(struct lis2dw12 *lis2dw12, struct lis2dw12_cfg *cfg)
 err:
     return rc;
 }
+
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+static void
+init_node_cb(struct bus_node *bnode, void *arg)
+{
+    struct sensor_itf *itf = arg;
+
+    lis2dw12_init((struct os_dev *)bnode, itf);
+}
+
+int
+lis2dw12_create_i2c_sensor_dev(struct bus_i2c_node *node, const char *name,
+                               const struct bus_i2c_node_cfg *i2c_cfg,
+                               struct sensor_itf *sensor_itf)
+{
+    struct lis2dw12 *dev = (struct lis2dw12 *)node;
+    struct bus_node_callbacks cbs = {
+        .init = init_node_cb,
+    };
+    int rc;
+
+    dev->node_is_spi = false;
+
+    bus_node_set_callbacks((struct os_dev *)node, &cbs);
+
+    rc = bus_i2c_node_create(name, node, i2c_cfg, sensor_itf);
+
+    return rc;
+}
+
+int
+lis2dw12_create_spi_sensor_dev(struct bus_spi_node *node, const char *name,
+                               const struct bus_spi_node_cfg *spi_cfg,
+                               struct sensor_itf *sensor_itf)
+{
+    struct lis2dw12 *dev = (struct lis2dw12 *)node;
+    struct bus_node_callbacks cbs = {
+        .init = init_node_cb,
+    };
+    int rc;
+
+    dev->node_is_spi = true;
+
+    bus_node_set_callbacks((struct os_dev *)node, &cbs);
+
+    rc = bus_spi_node_create(name, node, spi_cfg, sensor_itf);
+
+    return rc;
+}
+#endif

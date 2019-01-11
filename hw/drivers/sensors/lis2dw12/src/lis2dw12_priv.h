@@ -2,7 +2,7 @@
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
- * resarding copyright ownership.  The ASF licenses this file
+ * regarding copyright ownership.  The ASF licenses this file
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
@@ -118,6 +118,8 @@ extern "C" {
 #define LIS2DW12_REG_FREEFALL                0x36
 #define LIS2DW12_FREEFALL_DUR         (0x1F << 3)
 #define LIS2DW12_FREEFALL_THS          (0x7 << 0)
+
+#define LIS2DW12_REG_STATUS_DUP_SRC          0x37
 
 #define LIS2DW12_REG_WAKE_UP_SRC             0x38
 #define LIS2DW12_REG_TAP_SRC                 0x39

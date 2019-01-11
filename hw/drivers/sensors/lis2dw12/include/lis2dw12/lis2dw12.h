@@ -22,6 +22,10 @@
 
 #include "os/mynewt.h"
 #include "sensor/sensor.h"
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+#include "bus/bus_driver.h"
+#include "bus/i2c.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -145,12 +149,13 @@ enum lis2dw12_fifo_mode {
 enum lis2dw12_read_mode {
     LIS2DW12_READ_M_POLL = 0,
     LIS2DW12_READ_M_STREAM = 1,
+    LIS2DW12_READ_M_BURST_FIFO = 2,
 };
 
 struct lis2dw12_notif_cfg {
     sensor_event_type_t event;
-    uint8_t int_num:1;
-    uint8_t notif_src:7;
+    uint8_t int_num;
+    uint8_t notif_src;
     uint8_t int_cfg;
 };
 
@@ -272,11 +277,18 @@ struct lis2dw12_pdd {
 };
 
 struct lis2dw12 {
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    struct bus_i2c_node i2c_node;
+#else
     struct os_dev dev;
+#endif
     struct sensor sensor;
     struct lis2dw12_cfg cfg;
     struct lis2dw12_int intr;
     struct lis2dw12_pdd pdd;
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    bool node_is_spi;
+#endif
 };
 
 /**
@@ -879,6 +891,24 @@ int lis2dw12_stream_read(struct sensor *sensor,
                          uint32_t time_ms);
 
 /**
+ * Provide a specified size of reading
+ *
+ * @param sensor The sensor ptr
+ * @param type The sensor type
+ * @param read_func The function pointer to invoke for each accelerometer reading.
+ * @param read_arg The opaque pointer that will be passed in to the function.
+ * @param time_ms If non-zero, how long the stream should run in milliseconds.
+ *
+ * @return 0 on success, non-zero on failure.
+ */
+int lis2dw12_fifo_read(struct sensor *sensor,
+                         sensor_type_t sensor_type,
+                         sensor_data_func_t read_func,
+                         void *read_arg,
+                         uint32_t time_ms);
+
+
+/**
  * Do accelerometer polling reads
  *
  * @param sensor The sensor ptr
@@ -917,6 +947,37 @@ int lis2dw12_config(struct lis2dw12 *lis2dw12, struct lis2dw12_cfg *cfg);
 int lis2dw12_shell_init(void);
 #endif
 
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+/**
+ * Create I2C bus node for LIS2DW12 sensor
+ *
+ * @param node        Bus node
+ * @param name        Device name
+ * @param i2c_cfg     I2C node configuration
+ * @param sensor_itf  Sensors interface
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+lis2dw12_create_i2c_sensor_dev(struct bus_i2c_node *node, const char *name,
+                               const struct bus_i2c_node_cfg *i2c_cfg,
+                               struct sensor_itf *sensor_itf);
+
+/**
+ * Create SPI bus node for LIS2DW12 sensor
+ *
+ * @param node        Bus node
+ * @param name        Device name
+ * @param spi_cfg     SPI node configuration
+ * @param sensor_itf  Sensors interface
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+lis2dw12_create_spi_sensor_dev(struct bus_spi_node *node, const char *name,
+                               const struct bus_spi_node_cfg *spi_cfg,
+                               struct sensor_itf *sensor_itf);
+#endif
 
 #ifdef __cplusplus
 }
