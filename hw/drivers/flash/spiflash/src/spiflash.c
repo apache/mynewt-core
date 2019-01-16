@@ -25,7 +25,7 @@
 #include <hal/hal_flash.h>
 #include <hal/hal_flash_int.h>
 #include <spiflash/spiflash.h>
-
+#include "hal/hal_spi.h"
 #if MYNEWT_VAL(SPIFLASH)
 
 #if MYNEWT_VAL(SPIFLASH_SPI_CS_PIN) < 0
@@ -618,9 +618,48 @@ spiflash_cs_deactivate(struct spiflash_dev *dev)
     hal_gpio_write(dev->ss_pin, 1);
 }
 
+static int
+spiflash_cnfg_with_lock(struct spiflash_dev *dev)
+{
+    int rc = 0;
+    if (NULL != dev)
+    {
+        take_spi(dev->spi_num, OS_TIMEOUT_NEVER);
+    }
+    else
+    {
+        return -1;
+    }
+    hal_spi_disable(dev->spi_num);
+    rc = hal_spi_config(dev->spi_num, &dev->spi_settings);
+    hal_spi_enable(dev->spi_num);
+    if (rc)
+    {
+        give_spi(dev->spi_num);
+        return -1;
+    }
+    hal_gpio_init_out(dev->ss_pin, 1);
+
+    return 0;
+}
+
+static void
+spiflash_unlock(const struct spiflash_dev * const dev)
+{
+    if (NULL != dev)
+    {
+        give_spi(dev->spi_num);
+    }
+}
+
 void
 spiflash_power_down(struct spiflash_dev *dev)
 {
+    if (0 != spiflash_cnfg_with_lock(dev))
+    {
+        return;
+    }
+
     uint8_t cmd[1] = { SPIFLASH_DEEP_POWER_DOWN };
 
     spiflash_cs_activate(dev);
@@ -628,6 +667,8 @@ spiflash_power_down(struct spiflash_dev *dev)
     hal_spi_txrx(dev->spi_num, cmd, cmd, sizeof cmd);
 
     spiflash_cs_deactivate(dev);
+
+    spiflash_unlock(dev);
 }
 
 /*
@@ -647,6 +688,11 @@ spiflash_release_power_down_macronix(struct spiflash_dev *dev)
 void
 spiflash_release_power_down(struct spiflash_dev *dev)
 {
+    if (0 != spiflash_cnfg_with_lock(dev))
+    {
+        return;
+    }
+
     uint8_t cmd[1] = { SPIFLASH_RELEASE_POWER_DOWN };
 
     spiflash_cs_activate(dev);
@@ -654,12 +700,19 @@ spiflash_release_power_down(struct spiflash_dev *dev)
     hal_spi_txrx(dev->spi_num, cmd, cmd, sizeof cmd);
 
     spiflash_cs_deactivate(dev);
+
+    spiflash_unlock(dev);
 }
 
 uint8_t
 spiflash_read_jedec_id(struct spiflash_dev *dev,
         uint8_t *manufacturer, uint8_t *memory_type, uint8_t *capacity)
 {
+    if (0 != spiflash_cnfg_with_lock(dev))
+    {
+        return 1;
+    }
+
     uint8_t cmd[4] = { SPIFLASH_READ_JEDEC_ID, 0, 0, 0 };
 
     spiflash_cs_activate(dev);
@@ -680,12 +733,19 @@ spiflash_read_jedec_id(struct spiflash_dev *dev,
         *capacity = cmd[3];
     }
 
+    spiflash_unlock(dev);
+
     return 0;
 }
 
 uint8_t
 spiflash_read_status(struct spiflash_dev *dev)
 {
+    if (0 != spiflash_cnfg_with_lock(dev))
+    {
+        return 0;
+    }
+
     uint8_t val;
 
     spiflash_cs_activate(dev);
@@ -694,6 +754,8 @@ spiflash_read_status(struct spiflash_dev *dev)
     val = hal_spi_tx_val(dev->spi_num, 0xFF);
 
     spiflash_cs_deactivate(dev);
+
+    spiflash_unlock(dev);
 
     return val;
 }
@@ -723,11 +785,18 @@ spiflash_wait_ready(struct spiflash_dev *dev, uint32_t timeout_ms)
 int
 spiflash_write_enable(struct spiflash_dev *dev)
 {
+    if (0 != spiflash_cnfg_with_lock(dev))
+    {
+        return -1;
+    }
+
     spiflash_cs_activate(dev);
 
     hal_spi_tx_val(dev->spi_num, SPIFLASH_WRITE_ENABLE);
 
     spiflash_cs_deactivate(dev);
+
+    spiflash_unlock(dev);
 
     return 0;
 }
@@ -745,8 +814,12 @@ spiflash_read(const struct hal_flash *hal_flash_dev, uint32_t addr, void *buf,
 
     err = spiflash_wait_ready(dev, 100);
     if (!err) {
-        spiflash_cs_activate(dev);
+        if (0 != spiflash_cnfg_with_lock(dev))
+        {
+            return -1;
+        }
 
+        spiflash_cs_activate(dev);
         /* Send command + address */
         hal_spi_txrx(dev->spi_num, cmd, NULL, sizeof cmd);
         /* For security mostly, do not output random data, fill it with FF */
@@ -755,6 +828,8 @@ spiflash_read(const struct hal_flash *hal_flash_dev, uint32_t addr, void *buf,
         hal_spi_txrx(dev->spi_num, buf, buf, len);
 
         spiflash_cs_deactivate(dev);
+
+        spiflash_unlock(dev);
     }
 
     return 0;
@@ -786,10 +861,18 @@ spiflash_write(const struct hal_flash *hal_flash_dev, uint32_t addr,
         page_limit = (addr & ~(dev->page_size - 1)) + dev->page_size;
         to_write = page_limit - addr > len ? len :  page_limit - addr;
 
+        if (0 != spiflash_cnfg_with_lock(dev))
+        {
+            return -1;
+        }
+
         spiflash_cs_activate(dev);
+
         hal_spi_txrx(dev->spi_num, cmd, NULL, sizeof cmd);
         hal_spi_txrx(dev->spi_num, (void *)u8buf, NULL, to_write);
         spiflash_cs_deactivate(dev);
+
+        spiflash_unlock(dev);
 
         addr += to_write;
         u8buf += to_write;
@@ -819,11 +902,18 @@ spiflash_erase_sector(const struct hal_flash *hal_flash_dev,
 
     spiflash_read_status(dev);
 
+    if (0 != spiflash_cnfg_with_lock(dev))
+    {
+        return -1;
+    }
+
     spiflash_cs_activate(dev);
 
     hal_spi_txrx(dev->spi_num, cmd, NULL, sizeof cmd);
 
     spiflash_cs_deactivate(dev);
+
+    spiflash_unlock(dev);
 
     spiflash_wait_ready(dev, 100);
 
