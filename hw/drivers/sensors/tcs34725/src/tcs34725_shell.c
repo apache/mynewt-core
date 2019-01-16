@@ -404,59 +404,51 @@ err:
     return rc;
 }
 
+static void tcs34725_shell_dump_reg(const char *name, uint8_t addr)
+{
+    uint8_t val = 0;
+    int rc;
+
+    rc = tcs34725_read8(&g_sensor_itf, addr, &val);
+    if (rc == 0) {
+        console_printf("0x%02X (%s): 0x%02X\n", addr, name, val);
+    } else {
+        console_printf("0x%02X (%s): failed (%d)\n", addr, name, rc);
+    }
+}
+
+#define DUMP_REG(name) tcs34725_shell_dump_reg(#name, TCS34725_REG_ ## name)
+
 static int
 tcs34725_shell_cmd_dump(int argc, char **argv)
 {
-  uint8_t val;
+    if (argc > 2) {
+        return tcs34725_shell_err_too_many_args(argv[1]);
+    }
 
-  if (argc > 3) {
-      return tcs34725_shell_err_too_many_args(argv[1]);
-  }
+    /* Dump all the register values for debug purposes */
+    DUMP_REG(ENABLE);
+    DUMP_REG(ATIME);
+    DUMP_REG(WTIME);
+    DUMP_REG(AILTL);
+    DUMP_REG(AILTH);
+    DUMP_REG(AIHTL);
+    DUMP_REG(AIHTH);
+    DUMP_REG(PERS);
+    DUMP_REG(CONFIG);
+    DUMP_REG(CONTROL);
+    DUMP_REG(ID);
+    DUMP_REG(STATUS);
+    DUMP_REG(CDATAL);
+    DUMP_REG(CDATAH);
+    DUMP_REG(RDATAL);
+    DUMP_REG(RDATAH);
+    DUMP_REG(GDATAL);
+    DUMP_REG(GDATAH);
+    DUMP_REG(BDATAL);
+    DUMP_REG(BDATAH);
 
-  /* Dump all the register values for debug purposes */
-  val = 0;
-  assert(0 == tcs34725_read8(&g_sensor_itf, TCS34725_REG_ENABLE, &val));
-  console_printf("0x%02X (ENABLE): 0x%02X\n", TCS34725_REG_ENABLE, val);
-  assert(0 == tcs34725_read8(&g_sensor_itf, TCS34725_REG_ATIME, &val));
-  console_printf("0x%02X (ATIME):  0x%02X\n", TCS34725_REG_ATIME, val);
-  assert(0 == tcs34725_read8(&g_sensor_itf, TCS34725_REG_WTIME, &val));
-  console_printf("0x%02X (WTIME):   0x%02X\n", TCS34725_REG_WTIME, val);
-  assert(0 == tcs34725_read8(&g_sensor_itf, TCS34725_REG_AILTL, &val));
-  console_printf("0x%02X (AILTL):   0x%02X\n", TCS34725_REG_AILTL, val);
-  assert(0 == tcs34725_read8(&g_sensor_itf, TCS34725_REG_AILTH, &val));
-  console_printf("0x%02X (AILTH):   0x%02X\n", TCS34725_REG_AILTH, val);
-  assert(0 == tcs34725_read8(&g_sensor_itf, TCS34725_REG_AIHTL, &val));
-  console_printf("0x%02X (AIHTL):   0x%02X\n", TCS34725_REG_AIHTL, val);
-  assert(0 == tcs34725_read8(&g_sensor_itf, TCS34725_REG_AIHTH, &val));
-  console_printf("0x%02X (AIHTH):   0x%02X\n", TCS34725_REG_AIHTH, val);
-  assert(0 == tcs34725_read8(&g_sensor_itf, TCS34725_REG_PERS, &val));
-  console_printf("0x%02X (PERS):   0x%02X\n", TCS34725_REG_PERS, val);
-  assert(0 == tcs34725_read8(&g_sensor_itf, TCS34725_REG_CONFIG, &val));
-  console_printf("0x%02X (CONFIG):   0x%02X\n", TCS34725_REG_CONFIG, val);
-  assert(0 == tcs34725_read8(&g_sensor_itf, TCS34725_REG_CONTROL, &val));
-  console_printf("0x%02X (CONTROL):   0x%02X\n", TCS34725_REG_CONTROL, val);
-  assert(0 == tcs34725_read8(&g_sensor_itf, TCS34725_REG_ID, &val));
-  console_printf("0x%02X (ID):    0x%02X\n", TCS34725_REG_ID, val);
-  assert(0 == tcs34725_read8(&g_sensor_itf, TCS34725_REG_STATUS, &val));
-  console_printf("0x%02X (STATUS):    0x%02X\n", TCS34725_REG_STATUS, val);
-  assert(0 == tcs34725_read8(&g_sensor_itf, TCS34725_REG_CDATAL, &val));
-  console_printf("0x%02X (CDATAL):    0x%02X\n", TCS34725_REG_CDATAL, val);
-  assert(0 == tcs34725_read8(&g_sensor_itf, TCS34725_REG_CDATAH, &val));
-  console_printf("0x%02X (CDATAH):    0x%02X\n", TCS34725_REG_CDATAH, val);
-  assert(0 == tcs34725_read8(&g_sensor_itf, TCS34725_REG_RDATAL, &val));
-  console_printf("0x%02X (RDATAL):    0x%02X\n", TCS34725_REG_RDATAL, val);
-  assert(0 == tcs34725_read8(&g_sensor_itf, TCS34725_REG_RDATAH, &val));
-  console_printf("0x%02X (RDATAH):    0x%02X\n", TCS34725_REG_RDATAH, val);
-  assert(0 == tcs34725_read8(&g_sensor_itf, TCS34725_REG_GDATAL, &val));
-  console_printf("0x%02X (GDATAL):    0x%02X\n", TCS34725_REG_GDATAL, val);
-  assert(0 == tcs34725_read8(&g_sensor_itf, TCS34725_REG_GDATAH, &val));
-  console_printf("0x%02X (GDATAH):    0x%02X\n", TCS34725_REG_GDATAH, val);
-  assert(0 == tcs34725_read8(&g_sensor_itf, TCS34725_REG_BDATAL, &val));
-  console_printf("0x%02X (BDATAL):    0x%02X\n", TCS34725_REG_BDATAL, val);
-  assert(0 == tcs34725_read8(&g_sensor_itf, TCS34725_REG_BDATAH, &val));
-  console_printf("0x%02X (BDATAH):    0x%02X\n", TCS34725_REG_BDATAH, val);
-
-  return 0;
+    return 0;
 }
 
 static int
