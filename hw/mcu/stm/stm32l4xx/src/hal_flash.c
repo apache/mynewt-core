@@ -36,11 +36,16 @@ stm32_mcu_flash_erase_sector(const struct hal_flash *dev, uint32_t sector_addres
 
     if (!(sector_address & (_FLASH_SECTOR_SIZE - 1))) {
         eraseinit.TypeErase = FLASH_TYPEERASE_PAGES;
+#ifdef FLASH_BANK_2
         if ((sector_address - dev->hf_base_addr) < (_FLASH_SIZE / 2)) {
             eraseinit.Banks = FLASH_BANK_1;
-        } else {
+        }
+        else {
             eraseinit.Banks = FLASH_BANK_2;
         }
+#else
+        eraseinit.Banks = FLASH_BANK_1;
+#endif
         eraseinit.Page = (sector_address - dev->hf_base_addr) / FLASH_PAGE_SIZE;
         eraseinit.NbPages = 1;
         rc = HAL_FLASHEx_Erase(&eraseinit, &PageError);
