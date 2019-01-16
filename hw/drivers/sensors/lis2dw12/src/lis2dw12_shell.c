@@ -161,76 +161,60 @@ lis2dw12_shell_cmd_read(int argc, char **argv)
     return 0;
 }
 
+
+static void lis2dw12_shell_dump_reg(const char *name, uint8_t addr)
+{
+    uint8_t val = 0;
+    int rc;
+
+    rc = lis2dw12_read8(&g_sensor_itf, addr, &val);
+    if (rc == 0) {
+        console_printf("0x%02X (%s): 0x%02X\n", addr, name, val);
+    } else {
+        console_printf("0x%02X (%s): failed (%d)\n", addr, name, rc);
+    }
+}
+
+#define DUMP_REG(name) lis2dw12_shell_dump_reg(#name, LIS2DW12_REG_ ## name)
+
 static int
 lis2dw12_shell_cmd_dump(int argc, char **argv)
 {
-    uint8_t val;
-    
     if (argc > 2) {
         return lis2dw12_shell_err_too_many_args(argv[1]);
     }
-    
+
     /* Dump all the register values for debug purposes */
-    val = 0;
-    assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_OUT_TEMP_L, &val));
-    console_printf("0x%02X (OUT_TEMP_L): 0x%02X\n", LIS2DW12_REG_OUT_TEMP_L, val);
-    assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_OUT_TEMP_H, &val));
-    console_printf("0x%02X (OUT_TEMP_H): 0x%02X\n", LIS2DW12_REG_OUT_TEMP_H, val);
-    assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_WHO_AM_I, &val));
-    console_printf("0x%02X (WHO_AM_I): 0x%02X\n", LIS2DW12_REG_WHO_AM_I, val);
-    assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_CTRL_REG1, &val));
-    console_printf("0x%02X (CTRL1): 0x%02X\n", LIS2DW12_REG_CTRL_REG1, val);
-    assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_CTRL_REG2, &val));
-    console_printf("0x%02X (CTRL2): 0x%02X\n", LIS2DW12_REG_CTRL_REG2, val);
-    assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_CTRL_REG3, &val));
-    console_printf("0x%02X (CTRL3): 0x%02X\n", LIS2DW12_REG_CTRL_REG3, val);
-    assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_CTRL_REG4, &val));
-    console_printf("0x%02X (CTRL4): 0x%02X\n", LIS2DW12_REG_CTRL_REG4, val);
-    assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_CTRL_REG5, &val));
-    console_printf("0x%02X (CTRL5): 0x%02X\n", LIS2DW12_REG_CTRL_REG5, val);
-    assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_CTRL_REG6, &val));
-    console_printf("0x%02X (CTRL6): 0x%02X\n", LIS2DW12_REG_CTRL_REG6, val);
-    assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_TEMP_OUT, &val));
-    console_printf("0x%02X (TEMP_OUT): 0x%02X\n", LIS2DW12_REG_TEMP_OUT, val);
-    assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_STATUS_REG, &val));
-    console_printf("0x%02X (STATUS): 0x%02X\n", LIS2DW12_REG_STATUS_REG, val);
-    assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_OUT_X_L, &val));
-    console_printf("0x%02X (OUT_X_L): 0x%02X\n", LIS2DW12_REG_OUT_X_L, val);
-    assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_OUT_X_H, &val));
-    console_printf("0x%02X (OUT_X_H): 0x%02X\n", LIS2DW12_REG_OUT_X_H, val);
-    assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_OUT_Y_L, &val));
-    console_printf("0x%02X (OUT_Y_L): 0x%02X\n", LIS2DW12_REG_OUT_Y_L, val);
-    assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_OUT_Y_H, &val));
-    console_printf("0x%02X (OUT_Y_H): 0x%02X\n", LIS2DW12_REG_OUT_Y_H, val);
-    assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_OUT_Z_L, &val));
-    console_printf("0x%02X (OUT_Z_L): 0x%02X\n", LIS2DW12_REG_OUT_Z_L, val);
-    assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_OUT_Z_H, &val));
-    console_printf("0x%02X (OUT_Z_H): 0x%02X\n", LIS2DW12_REG_OUT_Z_H, val);
-    assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_FIFO_CTRL, &val));
-    console_printf("0x%02X (FIFO_CTRL): 0x%02X\n", LIS2DW12_REG_FIFO_CTRL, val);
-    assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_FIFO_SAMPLES, &val));
-    console_printf("0x%02X (FIFO_SAMPLES): 0x%02X\n", LIS2DW12_REG_FIFO_SAMPLES, val);
-    assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_TAP_THS_X, &val));
-    console_printf("0x%02X (TAP_THS_X): 0x%02X\n", LIS2DW12_REG_TAP_THS_X, val);
-    assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_TAP_THS_Y, &val));
-    console_printf("0x%02X (TAP_THS_Y): 0x%02X\n", LIS2DW12_REG_TAP_THS_Y, val);
-    assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_TAP_THS_Z, &val));
-    console_printf("0x%02X (TAP_THS_Z): 0x%02X\n", LIS2DW12_REG_TAP_THS_Z, val);
-    assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_INT_DUR, &val));
-    console_printf("0x%02X (INT_DUR): 0x%02X\n", LIS2DW12_REG_INT_DUR, val);
-    assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_FREEFALL, &val));
-    console_printf("0x%02X (FREEFALL): 0x%02X\n", LIS2DW12_REG_FREEFALL, val);
-    assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_INT_SRC, &val));
-    console_printf("0x%02X (INT_SRC): 0x%02X\n", LIS2DW12_REG_INT_SRC, val);
-    assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_X_OFS, &val));
-    console_printf("0x%02X (X_OFS): 0x%02X\n", LIS2DW12_REG_X_OFS, val);
-    assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_Y_OFS, &val));
-    console_printf("0x%02X (Y_OFS): 0x%02X\n", LIS2DW12_REG_Y_OFS, val);
-    assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_Z_OFS, &val));
-    console_printf("0x%02X (Z_OFS): 0x%02X\n", LIS2DW12_REG_Z_OFS, val);    
-    assert(0 == lis2dw12_read8(&g_sensor_itf, LIS2DW12_REG_CTRL_REG7, &val));
-    console_printf("0x%02X (CTRL7): 0x%02X\n", LIS2DW12_REG_CTRL_REG7, val);
-    
+    DUMP_REG(OUT_TEMP_L);
+    DUMP_REG(OUT_TEMP_H);
+    DUMP_REG(WHO_AM_I);
+    DUMP_REG(CTRL_REG1);
+    DUMP_REG(CTRL_REG2);
+    DUMP_REG(CTRL_REG3);
+    DUMP_REG(CTRL_REG4);
+    DUMP_REG(CTRL_REG5);
+    DUMP_REG(CTRL_REG6);
+    DUMP_REG(TEMP_OUT);
+    DUMP_REG(STATUS_REG);
+    DUMP_REG(OUT_X_L);
+    DUMP_REG(OUT_X_H);
+    DUMP_REG(OUT_Y_L);
+    DUMP_REG(OUT_Y_H);
+    DUMP_REG(OUT_Z_L);
+    DUMP_REG(OUT_Z_H);
+    DUMP_REG(FIFO_CTRL);
+    DUMP_REG(FIFO_SAMPLES);
+    DUMP_REG(TAP_THS_X);
+    DUMP_REG(TAP_THS_Y);
+    DUMP_REG(TAP_THS_Z);
+    DUMP_REG(INT_DUR);
+    DUMP_REG(FREEFALL);
+    DUMP_REG(INT_SRC);
+    DUMP_REG(X_OFS);
+    DUMP_REG(Y_OFS);
+    DUMP_REG(Z_OFS);
+    DUMP_REG(CTRL_REG7);
+
     return 0;
 }
 
