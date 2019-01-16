@@ -392,8 +392,7 @@ tcs34725_shell_cmd_en(int argc, char **argv)
     /* Update the enable state */
     if (argc == 3) {
         lval = strtol(argv[2], &endptr, 10); /* Base 10 */
-        if (argv[2] != '\0' && *endptr == '\0' &&
-            lval >= 0 && lval <= 1) {
+        if (*endptr == '\0' && lval >= 0 && lval <= 1) {
                 tcs34725_enable(&g_sensor_itf, lval);
         } else {
             return tcs34725_shell_err_invalid_arg(argv[2]);
