@@ -90,6 +90,12 @@ bus_dev_suspend_func(struct os_dev *odev, os_time_t suspend_at, int force)
     struct bus_dev *bdev = (struct bus_dev *)odev;
     int rc;
 
+#if MYNEWT_VAL(BUS_PM)
+    if (bdev->pm_mode != BUS_PM_MODE_MANUAL) {
+        return OS_EINVAL;
+    }
+#endif
+
     /* To make things simple we just allow to suspend "now" */
     if (OS_TIME_TICK_GT(suspend_at, os_time_get())) {
         return OS_EINVAL;
@@ -113,6 +119,12 @@ bus_dev_resume_func(struct os_dev *odev)
     struct bus_dev *bdev = (struct bus_dev *)odev;
     int rc;
 
+#if MYNEWT_VAL(BUS_PM)
+    if (bdev->pm_mode != BUS_PM_MODE_MANUAL) {
+        return OS_EINVAL;
+    }
+#endif
+
     rc = os_mutex_pend(&bdev->lock, OS_TIMEOUT_NEVER);
     if (rc) {
         return rc;
@@ -124,6 +136,29 @@ bus_dev_resume_func(struct os_dev *odev)
 
     return OS_OK;
 }
+
+#if MYNEWT_VAL(BUS_PM)
+static void
+bus_dev_inactivity_tmo_func(struct os_event *ev)
+{
+    struct bus_dev *bdev = (struct bus_dev *)ev->ev_arg;
+    int rc;
+
+    /* Just in case PM was changed while timer was running */
+    if (bdev->pm_mode != BUS_PM_MODE_AUTO) {
+        return;
+    }
+
+    rc = os_mutex_pend(&bdev->lock, OS_TIMEOUT_NEVER);
+    if (rc) {
+        return;
+    }
+
+    bus_dev_disable(bdev);
+
+    os_mutex_release(&bdev->lock);
+}
+#endif
 
 static int
 bus_node_open_func(struct os_dev *odev, uint32_t wait, void *arg)
@@ -201,6 +236,11 @@ bus_dev_init_func(struct os_dev *odev, void *arg)
     bdev->configured_for = NULL;
 
     os_mutex_init(&bdev->lock);
+#if MYNEWT_VAL(BUS_PM)
+    /* XXX allow custom eventq */
+    os_callout_init(&bdev->inactivity_tmo, os_eventq_dflt_get(),
+                    bus_dev_inactivity_tmo_func, odev);
+#endif
 
 #if MYNEWT_VAL(BUS_STATS)
     asprintf(&stats_name, "bd_%s", odev->od_name);
@@ -425,6 +465,15 @@ bus_node_lock(struct os_dev *node, os_time_t timeout)
 
     assert(err == OS_OK || err == OS_NOT_STARTED);
 
+#if MYNEWT_VAL(BUS_PM)
+    /* In auto PM we need to enable bus device on first lock */
+    if ((bdev->pm_mode == BUS_PM_MODE_AUTO) &&
+        (os_mutex_get_level(&bdev->lock) == 1)) {
+        os_callout_stop(&bdev->inactivity_tmo);
+        bus_dev_enable(bdev);
+    }
+#endif
+
     /* No need to configure if already configured for the same node */
     if (bdev->configured_for == bnode) {
         return 0;
@@ -461,6 +510,19 @@ bus_node_unlock(struct os_dev *node)
     BUS_DEBUG_VERIFY_DEV(bdev);
     BUS_DEBUG_VERIFY_NODE(bnode);
 
+#if MYNEWT_VAL(BUS_PM)
+    /* In auto PM we should disable bus device on last unlock */
+    if ((bdev->pm_mode == BUS_PM_MODE_AUTO) &&
+        (os_mutex_get_level(&bdev->lock) == 1)) {
+        if (bdev->pm_opts.pm_mode_auto.disable_tmo) {
+            bus_dev_disable(bdev);
+        } else {
+            os_callout_reset(&bdev->inactivity_tmo,
+                             bdev->pm_opts.pm_mode_auto.disable_tmo);
+        }
+    }
+#endif
+
     err = os_mutex_release(&bdev->lock);
 
     /*
@@ -481,6 +543,35 @@ bus_node_get_lock_timeout(struct os_dev *node)
     struct bus_node *bnode = (struct bus_node *)node;
 
     return bnode->lock_timeout ? bnode->lock_timeout : g_bus_node_lock_timeout;
+}
+
+int
+bus_dev_set_pm(struct os_dev *bus, bus_pm_mode_t pm_mode,
+               union bus_pm_options *pm_opts)
+{
+#if MYNEWT_VAL(BUS_PM)
+    struct bus_dev *bdev = (struct bus_dev *)bus;
+    int rc;
+
+    rc = os_mutex_pend(&bdev->lock, OS_TIMEOUT_NEVER);
+    if (rc) {
+        return SYS_EACCES;
+    }
+
+    bdev->pm_mode = pm_mode;
+
+    if (pm_opts) {
+        memcpy(&bdev->pm_opts, pm_opts, sizeof(*pm_opts));
+    } else {
+        memset(&bdev->pm_opts, 0, sizeof(*pm_opts));
+    }
+
+    os_mutex_release(&bdev->lock);
+
+    return 0;
+#else
+    return SYS_ENOTSUP;
+#endif
 }
 
 void
