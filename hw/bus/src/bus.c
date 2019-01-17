@@ -56,6 +56,34 @@ STATS_NAME_END(bus_stats_section)
     } while (0)
 #endif
 
+static inline void
+bus_dev_enable(struct bus_dev *bdev)
+{
+    if (bdev->enabled) {
+        return;
+    }
+
+    if (bdev->dops->enable) {
+        bdev->dops->enable(bdev);
+    }
+
+    bdev->enabled = true;
+}
+
+static inline void
+bus_dev_disable(struct bus_dev *bdev)
+{
+    if (!bdev->enabled) {
+        return;
+    }
+
+    if (bdev->dops->disable) {
+        bdev->dops->disable(bdev);
+    }
+
+    bdev->enabled = false;
+}
+
 static int
 bus_node_open_func(struct os_dev *odev, uint32_t wait, void *arg)
 {
@@ -142,9 +170,7 @@ bus_dev_init_func(struct os_dev *odev, void *arg)
                        stats_name);
 #endif
 
-    if (bdev->dops->enable) {
-        bdev->dops->enable(bdev);
-    }
+    bus_dev_enable(bdev);
 
     return 0;
 }
@@ -225,12 +251,18 @@ bus_node_read(struct os_dev *node, void *buf, uint16_t length,
         return rc;
     }
 
+    if (!bdev->enabled) {
+        rc = SYS_EIO;
+        goto done;
+    }
+
     BUS_STATS_INC(bdev, bnode, read_ops);
     rc = bdev->dops->read(bdev, bnode, buf, length, timeout, flags);
     if (rc) {
         BUS_STATS_INC(bdev, bnode, read_errors);
     }
 
+done:
     (void)bus_node_unlock(node);
 
     return rc;
@@ -256,12 +288,18 @@ bus_node_write(struct os_dev *node, const void *buf, uint16_t length,
         return rc;
     }
 
+    if (!bdev->enabled) {
+        rc = SYS_EIO;
+        goto done;
+    }
+
     BUS_STATS_INC(bdev, bnode, write_ops);
     rc = bdev->dops->write(bdev, bnode, buf, length, timeout, flags);
     if (rc) {
         BUS_STATS_INC(bdev, bnode, write_errors);
     }
 
+done:
     (void)bus_node_unlock(node);
 
     return rc;
@@ -286,6 +324,11 @@ bus_node_write_read_transact(struct os_dev *node, const void *wbuf,
     rc = bus_node_lock(node, bus_node_get_lock_timeout(node));
     if (rc) {
         return rc;
+    }
+
+    if (!bdev->enabled) {
+        rc = SYS_EIO;
+        goto done;
     }
 
     /*
