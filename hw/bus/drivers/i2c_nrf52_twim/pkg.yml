@@ -26,3 +26,6 @@ pkg.keywords:
 pkg.deps:
     - hw/bus
     - hw/bus/drivers/i2c_common
+
+pkg.req_apis.I2C_NRF52_TWIM_STAT:
+    - stats
