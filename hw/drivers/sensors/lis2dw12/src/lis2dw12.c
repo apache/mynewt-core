@@ -26,8 +26,12 @@
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
 #include "bus/bus.h"
 #else
+#if MYNEWT_VAL(SENSOR_MOTION_INTERFACE) == SENSOR_ITF_SPI
 #include "hal/hal_spi.h"
+#endif
+#if MYNEWT_VAL(SENSOR_MOTION_INTERFACE) == SENSOR_ITF_I2C
 #include "hal/hal_i2c.h"
+#endif
 #endif
 #include "sensor/sensor.h"
 #include "sensor/accel.h"
@@ -140,12 +144,14 @@ const struct lis2dw12_notif_cfg dflt_notif_cfg[] = {
 };
 
 #if !MYNEWT_VAL(BUS_DRIVER_PRESENT)
+#if MYNEWT_VAL(SENSOR_MOTION_INTERFACE) == SENSOR_ITF_SPI
 static struct hal_spi_settings spi_lis2dw12_settings = {
     .data_order = HAL_SPI_MSB_FIRST,
     .data_mode  = HAL_SPI_MODE3,
     .baudrate   = 4000,
     .word_size  = HAL_SPI_WORD_SIZE_8BIT,
 };
+#endif //#if MYNEWT_VAL(SENSOR_MOTION_INTERFACE) == SENSOR_ITF_SPI
 #endif
 
 /* Define the stats section and records */
@@ -229,6 +235,7 @@ static const struct sensor_driver g_lis2dw12_sensor_driver = {
  *
  * @return 0 on success, non-zero on failure
  */
+#if MYNEWT_VAL(SENSOR_MOTION_INTERFACE) == SENSOR_ITF_I2C
 static int
 lis2dw12_i2c_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
                       uint8_t len)
@@ -265,7 +272,7 @@ lis2dw12_i2c_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
 err:
     return rc;
 }
-
+#endif //#if MYNEWT_VAL(SENSOR_MOTION_INTERFACE) == SENSOR_ITF_I2C
 /**
  * Write multiple length data to LIS2DW12 sensor over SPI
  *
@@ -276,6 +283,7 @@ err:
  *
  * @return 0 on success, non-zero on failure
  */
+#if MYNEWT_VAL(SENSOR_MOTION_INTERFACE) == SENSOR_ITF_SPI
 static int
 lis2dw12_spi_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
                       uint8_t len)
@@ -326,6 +334,8 @@ err:
 
     return rc;
 }
+#endif //#if MYNEWT_VAL(SENSOR_MOTION_INTERFACE) == SENSOR_ITF_SPI
+
 #endif
 
 /**
@@ -368,11 +378,11 @@ lis2dw12_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
         return rc;
     }
 
-    if (itf->si_type == SENSOR_ITF_I2C) {
+#if MYNEWT_VAL(SENSOR_MOTION_INTERFACE) == SENSOR_ITF_I2C
         rc = lis2dw12_i2c_writelen(itf, addr, payload, len);
-    } else {
+#elif MYNEWT_VAL(SENSOR_MOTION_INTERFACE) == SENSOR_ITF_SPI
         rc = lis2dw12_spi_writelen(itf, addr, payload, len);
-    }
+#endif
 
     sensor_itf_unlock(itf);
 #endif
@@ -391,6 +401,7 @@ lis2dw12_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
  *
  * @return 0 on success, non-zero error on failure.
  */
+#if MYNEWT_VAL(SENSOR_MOTION_INTERFACE) == SENSOR_ITF_I2C
 int
 lis2dw12_i2c_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
                      uint8_t len)
@@ -427,6 +438,7 @@ lis2dw12_i2c_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
 
     return rc;
 }
+#endif //#if MYNEWT_VAL(SENSOR_MOTION_INTERFACE) == SENSOR_ITF_I2C
 
 /**
  * Read multiple bytes starting from specified register over SPI
@@ -438,6 +450,7 @@ lis2dw12_i2c_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
  *
  * @return 0 on success, non-zero on failure
  */
+#if MYNEWT_VAL(SENSOR_MOTION_INTERFACE) == SENSOR_ITF_SPI
 int
 lis2dw12_spi_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
                     uint8_t len)
@@ -479,6 +492,8 @@ err:
 
     return rc;
 }
+#endif //#if MYNEWT_VAL(SENSOR_MOTION_INTERFACE) == SENSOR_ITF_SPI
+
 #endif
 
 /**
@@ -541,11 +556,11 @@ lis2dw12_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
         return rc;
     }
 
-    if (itf->si_type == SENSOR_ITF_I2C) {
-        rc = lis2dw12_i2c_readlen(itf, reg, buffer, len);
-    } else {
-        rc = lis2dw12_spi_readlen(itf, reg, buffer, len);
-    }
+#if MYNEWT_VAL(SENSOR_MOTION_INTERFACE) == SENSOR_ITF_I2C
+    rc = lis2dw12_i2c_readlen(itf, reg, buffer, len);
+#elif MYNEWT_VAL(SENSOR_MOTION_INTERFACE) == SENSOR_ITF_SPI
+    rc = lis2dw12_spi_readlen(itf, reg, buffer, len);
+#endif
 
     sensor_itf_unlock(itf);
 #endif
@@ -2251,6 +2266,7 @@ init_interrupt(struct lis2dw12_int *interrupt, struct sensor_int *ints)
     interrupt->ints = ints;
 }
 
+#if MYNEWT_VAL(LIS2DW12_CFG_READ_MODE_STREAM_ENABLE)
 static void
 undo_interrupt(struct lis2dw12_int * interrupt)
 {
@@ -2293,6 +2309,7 @@ wait_interrupt(struct lis2dw12_int *interrupt, uint8_t int_num)
     }
     return OS_OK;
 }
+#endif //#if MYNEWT_VAL(LIS2DW12_CFG_READ_MODE_STREAM_ENABLE)
 
 static void
 wake_interrupt(struct lis2dw12_int *interrupt)
@@ -2316,6 +2333,7 @@ wake_interrupt(struct lis2dw12_int *interrupt)
         assert(error == OS_OK);
     }
 }
+
 
 static void
 lis2dw12_int_irq_handler(void *arg)
@@ -2612,6 +2630,7 @@ err:
  *
  * @return 0 on success, non-zero on failure.
  */
+#if MYNEWT_VAL(LIS2DW12_CFG_READ_MODE_POLL_ENABLE)
 int
 lis2dw12_poll_read(struct sensor *sensor, sensor_type_t sensor_type,
                    sensor_data_func_t data_func, void *data_arg,
@@ -2652,7 +2671,9 @@ lis2dw12_poll_read(struct sensor *sensor, sensor_type_t sensor_type,
 err:
     return rc;
 }
+#endif
 
+#if MYNEWT_VAL(LIS2DW12_CFG_READ_MODE_STREAM_ENABLE)
 int
 lis2dw12_stream_read(struct sensor *sensor,
                      sensor_type_t sensor_type,
@@ -2754,7 +2775,9 @@ err:
         return rc2;
     }
 }
+#endif //#if MYNEWT_VAL(LIS2DW12_CFG_READ_MODE_STREAM_ENABLE)
 
+#if MYNEWT_VAL(LIS2DW12_CFG_READ_MODE_BURST_FIFO_ENABLE)
 int
 lis2dw12_fifo_read(struct sensor *sensor,
                      sensor_type_t sensor_type,
@@ -2819,12 +2842,13 @@ err:
 
     return rc;
 }
+#endif
 
 static int
 lis2dw12_sensor_read(struct sensor *sensor, sensor_type_t type,
         sensor_data_func_t data_func, void *data_arg, uint32_t timeout)
 {
-    int rc;
+    int rc = SYS_EINVAL;
     const struct lis2dw12_cfg *cfg;
     struct lis2dw12 *lis2dw12;
     struct sensor_itf *itf;
@@ -2839,43 +2863,49 @@ lis2dw12_sensor_read(struct sensor *sensor, sensor_type_t type,
     (void)itf;
 
 #if !MYNEWT_VAL(BUS_DRIVER_PRESENT)
-    if (itf->si_type == SENSOR_ITF_SPI) {
-
-        rc = hal_spi_disable(sensor->s_itf.si_num);
-        if (rc) {
-            goto err;
-        }
-
-        rc = hal_spi_config(sensor->s_itf.si_num, &spi_lis2dw12_settings);
-        if (rc == EINVAL) {
-            /* If spi is already enabled, for nrf52, it returns -1, We should not
-             * fail if the spi is already enabled
-             */
-            goto err;
-        }
-
-        rc = hal_spi_enable(sensor->s_itf.si_num);
-        if (rc) {
-            goto err;
-        }
+#if MYNEWT_VAL(SENSOR_MOTION_INTERFACE) == SENSOR_ITF_SPI
+    rc = hal_spi_disable(sensor->s_itf.si_num);
+    if (rc) {
+        goto err;
     }
+
+    rc = hal_spi_config(sensor->s_itf.si_num, &spi_lis2dw12_settings);
+    if (rc == EINVAL) {
+        /* If spi is already enabled, for nrf52, it returns -1, We should not
+         * fail if the spi is already enabled
+         */
+        goto err;
+    }
+
+    rc = hal_spi_enable(sensor->s_itf.si_num);
+    if (rc) {
+        goto err;
+    }
+#endif //if MYNEWT_VAL(SENSOR_MOTION_INTERFACE) == SENSOR_ITF_SPI
 #endif
 
     lis2dw12 = (struct lis2dw12 *)SENSOR_GET_DEVICE(sensor);
     cfg = &lis2dw12->cfg;
-
+#if MYNEWT_VAL(LIS2DW12_CFG_READ_MODE_POLL_ENABLE)
     if (cfg->read_mode.mode == LIS2DW12_READ_M_POLL)
     {
         rc = lis2dw12_poll_read(sensor, type, data_func, data_arg, timeout);
     }
-    else if (cfg->read_mode.mode == LIS2DW12_READ_M_STREAM)
+#endif //#if MYNEWT_VAL(LIS2DW12_CFG_READ_MODE_MODE) == LIS2DW12_READ_M_POLL
+
+#if MYNEWT_VAL(LIS2DW12_CFG_READ_MODE_STREAM_ENABLE)
+    if (cfg->read_mode.mode == LIS2DW12_READ_M_STREAM)
     {
         rc = lis2dw12_stream_read(sensor, type, data_func, data_arg, timeout);
     }
-    else if (cfg->read_mode.mode == LIS2DW12_READ_M_BURST_FIFO)
+#endif
+
+#if MYNEWT_VAL(LIS2DW12_CFG_READ_MODE_BURST_FIFO_ENABLE)
+    if (cfg->read_mode.mode == LIS2DW12_READ_M_BURST_FIFO)
     {
         rc = lis2dw12_fifo_read(sensor, type, data_func, data_arg, timeout);
     }
+#endif
 err:
     if (rc) {
         return SYS_EINVAL; /* XXX */
@@ -3292,31 +3322,32 @@ lis2dw12_init(struct os_dev *dev, void *arg)
     }
 
 #if !MYNEWT_VAL(BUS_DRIVER_PRESENT)
-    if (sensor->s_itf.si_type == SENSOR_ITF_SPI) {
+#if MYNEWT_VAL(SENSOR_MOTION_INTERFACE) == SENSOR_ITF_SPI
 
-        rc = hal_spi_disable(sensor->s_itf.si_num);
-        if (rc) {
-            goto err;
-        }
-
-        rc = hal_spi_config(sensor->s_itf.si_num, &spi_lis2dw12_settings);
-        if (rc == EINVAL) {
-            /* If spi is already enabled, for nrf52, it returns -1, We should not
-             * fail if the spi is already enabled
-             */
-            goto err;
-        }
-
-        rc = hal_spi_enable(sensor->s_itf.si_num);
-        if (rc) {
-            goto err;
-        }
-
-        rc = hal_gpio_init_out(sensor->s_itf.si_cs_pin, 1);
-        if (rc) {
-            goto err;
-        }
+    rc = hal_spi_disable(sensor->s_itf.si_num);
+    if (rc) {
+        goto err;
     }
+
+    rc = hal_spi_config(sensor->s_itf.si_num, &spi_lis2dw12_settings);
+    if (rc == EINVAL) {
+        /* If spi is already enabled, for nrf52, it returns -1, We should not
+         * fail if the spi is already enabled
+         */
+        goto err;
+    }
+
+    rc = hal_spi_enable(sensor->s_itf.si_num);
+    if (rc) {
+        goto err;
+    }
+
+    rc = hal_gpio_init_out(sensor->s_itf.si_cs_pin, 1);
+    if (rc) {
+        goto err;
+    }
+
+#endif //#if MYNEWT_VAL(SENSOR_MOTION_INTERFACE) == SENSOR_ITF_SPI
 #endif
 
     init_interrupt(&lis2dw12->intr, lis2dw12->sensor.s_itf.si_ints);
@@ -3354,27 +3385,27 @@ lis2dw12_config(struct lis2dw12 *lis2dw12, struct lis2dw12_cfg *cfg)
     (void)sensor;
 
 #if !MYNEWT_VAL(BUS_DRIVER_PRESENT)
-    if (itf->si_type == SENSOR_ITF_SPI) {
-        sensor = &(lis2dw12->sensor);
+#if MYNEWT_VAL(SENSOR_MOTION_INTERFACE) == SENSOR_ITF_SPI
+    sensor = &(lis2dw12->sensor);
 
-        rc = hal_spi_disable(sensor->s_itf.si_num);
-        if (rc) {
-            goto err;
-        }
-
-        rc = hal_spi_config(sensor->s_itf.si_num, &spi_lis2dw12_settings);
-        if (rc == EINVAL) {
-            /* If spi is already enabled, for nrf52, it returns -1, We should not
-             * fail if the spi is already enabled
-             */
-            goto err;
-        }
-
-        rc = hal_spi_enable(sensor->s_itf.si_num);
-        if (rc) {
-            goto err;
-        }
+    rc = hal_spi_disable(sensor->s_itf.si_num);
+    if (rc) {
+        goto err;
     }
+
+    rc = hal_spi_config(sensor->s_itf.si_num, &spi_lis2dw12_settings);
+    if (rc == EINVAL) {
+        /* If spi is already enabled, for nrf52, it returns -1, We should not
+         * fail if the spi is already enabled
+         */
+        goto err;
+    }
+
+    rc = hal_spi_enable(sensor->s_itf.si_num);
+    if (rc) {
+        goto err;
+    }
+#endif //#if MYNEWT_VAL(SENSOR_MOTION_INTERFACE) == SENSOR_ITF_SPI
 #endif
 
     rc = lis2dw12_get_chip_id(itf, &chip_id);
