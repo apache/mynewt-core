@@ -38,6 +38,29 @@ extern "C" {
 /* Use as default timeout to lock node */
 #define BUS_NODE_LOCK_DEFAULT_TIMEOUT        ((os_time_t) -1)
 
+/** Bus PM mode */
+typedef enum {
+    /* Bus device enable/disable is controlled by application */
+    BUS_PM_MODE_MANUAL = 0,
+    /*
+     * Bus device enable/disable is controlled automatically by driver.
+     * The bus device is enabled when locked for a first time and disabled when
+     * last lock is released.
+     */
+    BUS_PM_MODE_AUTO = 1,
+} bus_pm_mode_t;
+
+/** Extra options for bus PM modes */
+union bus_pm_options {
+    struct {
+        /* XXX nothing here for now */
+    } pm_mode_manual;
+    struct {
+        /* Inactivity timeout to disable bus device. 0 means immediately. */
+        os_time_t disable_tmo;
+    } pm_mode_auto;
+};
+
 /**
  * Read data from node
  *
@@ -228,6 +251,19 @@ bus_node_unlock(struct os_dev *node);
  */
 os_time_t
 bus_node_get_lock_timeout(struct os_dev *node);
+
+/**
+ * Set power management settings for bus device
+ *
+ * @param bus      Bus device object
+ * @param pm_mode  PM mode to set
+ * @param pm_opts  Selected mode PM options
+ *
+ * @return 0 on success
+ */
+int
+bus_dev_set_pm(struct os_dev *bus, bus_pm_mode_t pm_mode,
+               union bus_pm_options *pm_opts);
 
 #ifdef __cplusplus
 }
