@@ -151,6 +151,27 @@ hal_gpio_init_out(int pin, int val)
 }
 
 /**
+ * Deinitialize the specified pin to revert the previous initialization
+ *
+ * @param pin Pin number to unset
+ *
+ * @return int  0: no error; -1 otherwise.
+ */
+int
+hal_gpio_deinit(int pin)
+{
+    uint32_t conf;
+    NRF_GPIO_Type *port;
+
+    conf = GPIO_PIN_CNF_INPUT_Disconnect << GPIO_PIN_CNF_INPUT_Pos;
+    port = HAL_GPIO_PORT(pin);
+    port->PIN_CNF[pin] = conf;
+    port->DIRCLR = HAL_GPIO_MASK(pin);
+
+    return 0;
+}
+
+/**
  * gpio write
  *
  * Write a value (either high or low) to the specified pin.
