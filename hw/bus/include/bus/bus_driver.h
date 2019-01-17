@@ -109,6 +109,8 @@ struct bus_dev {
     STATS_SECT_DECL(bus_stats_section) stats;
 #endif
 
+    bool enabled;
+
 #if MYNEWT_VAL(BUS_DEBUG_OS_DEV)
     uint32_t devmagic;
 #endif
