@@ -26,7 +26,9 @@
 #include "bus/drivers/i2c_common.h"
 #include "mcu/nrf52_hal.h"
 #include "nrfx.h"
+#if MYNEWT_VAL(I2C_NRF52_TWIM_STAT)
 #include "stats/stats.h"
+#endif
 
 #define TWIM_GPIO_PIN_CNF \
     ((GPIO_PIN_CNF_SENSE_Disabled << GPIO_PIN_CNF_SENSE_Pos) |  \
