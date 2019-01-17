@@ -102,6 +102,15 @@ int hal_gpio_init_in(int pin, hal_gpio_pull_t pull);
 int hal_gpio_init_out(int pin, int val);
 
 /**
+ * Deinitialize the specified pin to revert the previous initialization
+ *
+ * @param pin Pin number to unset
+ *
+ * @return int  0: no error; -1 otherwise.
+ */
+int hal_gpio_deinit(int pin);
+
+/**
  * Write a value (either high or low) to the specified pin.
  *
  * @param pin Pin to set
