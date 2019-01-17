@@ -642,6 +642,20 @@ hal_gpio_init_af(int pin, uint8_t af_type, enum hal_gpio_pull pull, uint8_t od)
 }
 
 /**
+ * Deinitialize the specified pin to revert the previous initialization
+ *
+ * @param pin Pin number to unset
+ *
+ * @return int  0: no error; -1 otherwise.
+ */
+int
+hal_gpio_deinit(int pin)
+{
+    GPIO_InitTypeDef gpio;
+    return hal_gpio_deinit_stm(pin, &gpio);
+}
+
+/**
  * gpio write
  *
  * Write a value (either high or low) to the specified pin.
