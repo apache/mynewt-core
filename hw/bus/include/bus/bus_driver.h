@@ -105,6 +105,12 @@ struct bus_dev {
     struct os_mutex lock;
     struct bus_node *configured_for;
 
+#if MYNEWT_VAL(BUS_PM)
+    bus_pm_mode_t pm_mode;
+    union bus_pm_options pm_opts;
+    struct os_callout inactivity_tmo;
+#endif
+
 #if MYNEWT_VAL(BUS_STATS)
     STATS_SECT_DECL(bus_stats_section) stats;
 #endif

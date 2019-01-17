@@ -31,6 +31,12 @@ syscfg.defs:
             Default timeout for transaction on bus. This is used for simple
             transaction APIs (i.e. without timeout set explicitly)
         value: 50
+    BUS_PM:
+        description: >
+            Enable extra power management capabilities for bus driver. This
+            allows for some automatic management of bus device state instead of
+            implementing this manually.
+        value: 0
 
     BUS_STATS:
         description: >
