@@ -85,6 +85,47 @@ bus_dev_disable(struct bus_dev *bdev)
 }
 
 static int
+bus_dev_suspend_func(struct os_dev *odev, os_time_t suspend_at, int force)
+{
+    struct bus_dev *bdev = (struct bus_dev *)odev;
+    int rc;
+
+    /* To make things simple we just allow to suspend "now" */
+    if (OS_TIME_TICK_GT(suspend_at, os_time_get())) {
+        return OS_EINVAL;
+    }
+
+    rc = os_mutex_pend(&bdev->lock, OS_TIMEOUT_NEVER);
+    if (rc) {
+        return rc;
+    }
+
+    bus_dev_disable(bdev);
+
+    os_mutex_release(&bdev->lock);
+
+    return OS_OK;
+}
+
+static int
+bus_dev_resume_func(struct os_dev *odev)
+{
+    struct bus_dev *bdev = (struct bus_dev *)odev;
+    int rc;
+
+    rc = os_mutex_pend(&bdev->lock, OS_TIMEOUT_NEVER);
+    if (rc) {
+        return rc;
+    }
+
+    bus_dev_enable(bdev);
+
+    os_mutex_release(&bdev->lock);
+
+    return OS_OK;
+}
+
+static int
 bus_node_open_func(struct os_dev *odev, uint32_t wait, void *arg)
 {
     struct bus_node *bnode = (struct bus_node *)odev;
@@ -169,6 +210,9 @@ bus_dev_init_func(struct os_dev *odev, void *arg)
                        STATS_NAME_INIT_PARMS(bus_stats_section),
                        stats_name);
 #endif
+
+    odev->od_handlers.od_suspend = bus_dev_suspend_func;
+    odev->od_handlers.od_resume = bus_dev_resume_func;
 
     bus_dev_enable(bdev);
 
