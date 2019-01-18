@@ -20,7 +20,7 @@ syscfg.defs:
     I2C_NRF52_TWIM_STAT:
         description: >
             Enable statistics for driver errors and applied workarounds.
-        value: 1
+        value: 0
     I2C_NRF52_TWIM_SCL_RECOVERY_DELAY_USEC:
         description: >
             Time to wait for activity on SCL line after triggering start task
