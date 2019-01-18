@@ -45,6 +45,13 @@ struct spiflash_dev {
 #if MYNEWT_VAL(OS_SCHEDULING)
     struct os_mutex lock;
 #endif
+#if MYNEWT_VAL(SPIFLASH_AUTO_POWER_DOWN)
+#if MYNEWT_VAL(OS_SCHEDULING)
+    struct os_callout apd_tmo_co;   /* Auto power down timeout callout */
+    os_time_t apd_tmo;              /* Auto power down timeout value (ticks) */
+#endif
+    bool pd_active;                 /* Power down active */
+#endif
 };
 
 extern struct spiflash_dev spiflash_dev;
@@ -99,6 +106,8 @@ int spiflash_init(const struct hal_flash *dev);
 
 void spiflash_power_down(struct spiflash_dev *dev);
 void spiflash_release_power_down(struct spiflash_dev *dev);
+
+int spiflash_auto_power_down_set(struct spiflash_dev *dev, uint32_t timeout_ms);
 
 #ifdef __cplusplus
 }
