@@ -48,8 +48,8 @@
 #error SPIFLASH_BAUDRATE must be set to the correct value in bsp syscfg.yml
 #endif
 
-static void spiflash_release_power_down_macronix(struct spiflash_dev *dev);
-static void spiflash_release_power_down_generic(struct spiflash_dev *dev);
+static void spiflash_release_power_down_macronix(struct spiflash_dev *dev) __attribute__((unused));
+static void spiflash_release_power_down_generic(struct spiflash_dev *dev) __attribute__((unused));
 
 #define STD_FLASH_CHIP(name, mfid, typ, cap, release_power_down) \
     { \
@@ -611,16 +611,49 @@ struct spiflash_dev spiflash_dev = {
     .flash_chip = NULL,
 };
 
-static inline void spiflash_lock(struct spiflash_dev *dev)
+static inline void spiflash_lock_no_apd(struct spiflash_dev *dev)
 {
 #if MYNEWT_VAL(OS_SCHEDULING)
     os_mutex_pend(&dev->lock, OS_TIMEOUT_NEVER);
 #endif
 }
 
+static inline void spiflash_unlock_no_apd(struct spiflash_dev *dev)
+{
+#if MYNEWT_VAL(OS_SCHEDULING)
+    os_mutex_release(&dev->lock);
+#endif
+}
+
+static inline void spiflash_lock(struct spiflash_dev *dev)
+{
+#if MYNEWT_VAL(OS_SCHEDULING)
+    os_mutex_pend(&dev->lock, OS_TIMEOUT_NEVER);
+#endif
+
+#if MYNEWT_VAL(SPIFLASH_AUTO_POWER_DOWN)
+    if (dev->pd_active) {
+        spiflash_release_power_down(dev);
+    } else {
+#if MYNEWT_VAL(OS_SCHEDULING)
+        if (os_mutex_get_level(&dev->lock) == 1) {
+            os_callout_stop(&dev->apd_tmo_co);
+        }
+#endif
+    }
+#endif
+}
+
 static inline void spiflash_unlock(struct spiflash_dev *dev)
 {
 #if MYNEWT_VAL(OS_SCHEDULING)
+#if MYNEWT_VAL(SPIFLASH_AUTO_POWER_DOWN)
+    if (dev->apd_tmo && !dev->pd_active &&
+        (os_mutex_get_level(&dev->lock) == 1)) {
+        os_callout_reset(&dev->apd_tmo_co, dev->apd_tmo);
+    }
+#endif
+
     os_mutex_release(&dev->lock);
 #endif
 }
@@ -642,7 +675,7 @@ spiflash_power_down(struct spiflash_dev *dev)
 {
     uint8_t cmd[1] = { SPIFLASH_DEEP_POWER_DOWN };
 
-    spiflash_lock(dev);
+    spiflash_lock_no_apd(dev);
 
     spiflash_cs_activate(dev);
 
@@ -650,7 +683,11 @@ spiflash_power_down(struct spiflash_dev *dev)
 
     spiflash_cs_deactivate(dev);
 
-    spiflash_unlock(dev);
+#if MYNEWT_VAL(SPIFLASH_AUTO_POWER_DOWN)
+    dev->pd_active = true;
+#endif
+
+    spiflash_unlock_no_apd(dev);
 }
 
 /*
@@ -680,16 +717,63 @@ spiflash_release_power_down_generic(struct spiflash_dev *dev)
 }
 
 void
-spiflash_release_power_down_generic(struct spiflash_dev *dev)
+spiflash_release_power_down(struct spiflash_dev *dev)
 {
-    spiflash_lock(dev);
+    spiflash_lock_no_apd(dev);
 
     if (dev->flash_chip->fc_release_power_down) {
         dev->flash_chip->fc_release_power_down(dev);
     }
 
-    spiflash_unlock(dev);
+#if MYNEWT_VAL(SPIFLASH_AUTO_POWER_DOWN)
+    dev->pd_active = false;
+#endif
+
+    spiflash_unlock_no_apd(dev);
 }
+
+int
+spiflash_auto_power_down_set(struct spiflash_dev *dev, uint32_t timeout_ms)
+{
+#if MYNEWT_VAL(SPIFLASH_AUTO_POWER_DOWN) && MYNEWT_VAL(OS_SCHEDULING)
+    /*
+     * Lock with no auto power down since we do not want to wake up flash here,
+     * it will be done if APD is disabled and power down is active. Then unlock
+     * with APD to make sure it's applied if needed.
+     */
+
+    spiflash_lock_no_apd(dev);
+
+    dev->apd_tmo = os_time_ms_to_ticks32(timeout_ms);
+
+    if (!dev->apd_tmo && dev->pd_active) {
+        spiflash_release_power_down_generic(dev);
+    }
+
+    spiflash_unlock(dev);
+
+    return 0;
+#else
+    /* Not supported */
+    return -1;
+#endif
+}
+
+#if MYNEWT_VAL(SPIFLASH_AUTO_POWER_DOWN)
+static void
+spiflash_apd_tmo_func(struct os_event *ev)
+{
+    struct spiflash_dev *dev = ev->ev_arg;
+
+    spiflash_lock_no_apd(dev);
+
+    if (dev->apd_tmo && !dev->pd_active) {
+        spiflash_power_down(dev);
+    }
+
+    spiflash_unlock_no_apd(dev);
+}
+#endif
 
 uint8_t
 spiflash_read_jedec_id(struct spiflash_dev *dev,
@@ -1009,8 +1093,10 @@ spiflash_init(const struct hal_flash *hal_flash_dev)
 
     dev = (struct spiflash_dev *)hal_flash_dev;
 
-#if MYNEWT_VAL(OS_SCHEDULING)
+#if MYNEWT_VAL(SPIFLASH_AUTO_POWER_DOWN)
     os_mutex_init(&dev->lock);
+    os_callout_init(&dev->apd_tmo_co, os_eventq_dflt_get(),
+                    spiflash_apd_tmo_func, dev);
 #endif
 
     hal_gpio_init_out(dev->ss_pin, 1);

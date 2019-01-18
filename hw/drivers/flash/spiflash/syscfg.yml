@@ -44,6 +44,17 @@ syscfg.defs:
         description: 'Requested baudrate, value must be supported by SPI driver'
         value: 0
 
+    SPIFLASH_AUTO_POWER_DOWN:
+        description: >
+            Enables auto power down feature which allows to power down flash
+            automatically when not used. It will be also automatically released
+            from power down on any access. The power down timeout is configurable
+            in runtime to allow for adjusting behavior of this feature depending
+            on power state.
+            Note: if enabled without OS_SCHEDULING, only automatic release from
+                  power down will be supported (i.e. no automatic power down).
+        value: 0
+
     SPIFLASH_MANUFACTURER:
         description: >
             Expected SpiFlash manufacturer as read by Read JEDEC ID command 9FH.
