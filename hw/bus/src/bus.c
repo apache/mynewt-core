@@ -144,17 +144,15 @@ bus_dev_inactivity_tmo_func(struct os_event *ev)
     struct bus_dev *bdev = (struct bus_dev *)ev->ev_arg;
     int rc;
 
-    /* Just in case PM was changed while timer was running */
-    if (bdev->pm_mode != BUS_PM_MODE_AUTO) {
-        return;
-    }
-
     rc = os_mutex_pend(&bdev->lock, OS_TIMEOUT_NEVER);
     if (rc) {
         return;
     }
 
-    bus_dev_disable(bdev);
+    /* Just in case PM was changed while timer was running */
+    if (bdev->pm_mode == BUS_PM_MODE_AUTO) {
+        bus_dev_disable(bdev);
+    }
 
     os_mutex_release(&bdev->lock);
 }
