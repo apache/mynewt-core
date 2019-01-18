@@ -64,6 +64,12 @@ void os_arch_frame_init(struct stack_frame *sf);
 /* for unittests */
 void os_arch_os_stop(void);
 
+static inline int
+os_arch_in_isr(void)
+{
+    return 0;
+}
+
 #ifdef __cplusplus
 }
 #endif

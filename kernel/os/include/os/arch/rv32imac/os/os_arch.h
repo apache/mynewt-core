@@ -42,6 +42,15 @@ void plic_default_isr(int num);
 /* Include common arch definitions and APIs */
 #include "os/arch/common.h"
 
+static inline int
+os_arch_in_isr(void)
+{
+    /*
+     * TODO: Not implemented yet, add actual code to check it
+     */
+    return 0;
+}
+
 #ifdef __cplusplus
 }
 #endif
