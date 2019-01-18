@@ -63,7 +63,6 @@ void os_arch_ctx_sw(struct os_task *);
 os_sr_t os_arch_save_sr(void);
 void os_arch_restore_sr(os_sr_t);
 int os_arch_in_critical(void);
-int os_arch_in_isr(void);
 void os_arch_init(void);
 uint32_t os_arch_start(void);
 os_error_t os_arch_os_init(void);
