@@ -42,7 +42,7 @@ pkg.deps.IMGMGR_FS:
 pkg.deps.IMGMGR_COREDUMP:
     - "@apache-mynewt-core/sys/coredump"
 
-pkg.deps.IMGMGR_SHELL:
+pkg.deps.IMGMGR_CLI:
     - "@apache-mynewt-core/sys/shell"
 
 pkg.init:
