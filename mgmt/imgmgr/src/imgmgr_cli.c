@@ -34,6 +34,8 @@
 
 #include <base64/hex.h>
 
+#include <parse/parse.h>
+
 #include "imgmgr/imgmgr.h"
 #include "imgmgr_priv.h"
 
@@ -114,13 +116,11 @@ imgr_cli_hash_parse(const char *arg, int *out_slot)
 
     rc = hex_parse(arg, strlen(arg), hash, sizeof hash);
     if (rc != sizeof hash) {
-        console_printf("Invalid hash: %s\n", arg);
         return SYS_EINVAL;
     }
 
     slot = imgr_find_by_hash(hash, &ver);
     if (slot == -1) {
-        console_printf("Unknown img\n");
         return SYS_ENOENT;
     }
 
@@ -128,20 +128,50 @@ imgr_cli_hash_parse(const char *arg, int *out_slot)
     return 0;
 }
 
+static int
+imgr_cli_slot_or_hash_parse(const char *arg, int *out_slot)
+{
+    int rc;
+
+    /* First, parse argument as a slot number.  Parts of the system assume slot
+     * is 0 or 1; enforce those bounds here.
+     */
+    *out_slot = parse_ll_bounds(arg, 0, 1, &rc);
+    if (rc == 0) {
+        return 0;
+    }
+
+    /* Try to parse as a hash string. */
+    rc = imgr_cli_hash_parse(arg, out_slot);
+    switch (rc) {
+    case 0:
+        return 0;
+
+    case SYS_ENOENT:
+        console_printf("No image with hash: %s\n", arg);
+        return rc;
+
+    default:
+        console_printf("Invalid slot number or image hash: %s\n", arg);
+        return rc;
+    }
+}
+
 static void
-imgr_cli_set_pending(char *hash_str, int permanent)
+imgr_cli_set_pending(char *arg, int permanent)
 {
     int slot;
     int rc;
 
-    rc = imgr_cli_hash_parse(hash_str, &slot);
+    /* Parts of the system assume slot is 0 or 1; enforce here. */
+    rc = imgr_cli_slot_or_hash_parse(arg, &slot);
     if (rc != 0) {
         return;
     }
 
     rc = imgmgr_state_set_pending(slot, permanent);
     if (rc) {
-        console_printf("Error setting image to pending; rc=%d\n", rc);
+        console_printf("Error setting slot %d to pending; rc=%d\n", slot, rc);
         return;
     }
 }
