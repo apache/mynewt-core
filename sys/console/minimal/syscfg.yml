@@ -50,7 +50,7 @@ syscfg.defs:
         description: 'Console UART device.'
         value: '"uart0"'
 
-    CONSOLE_LOCK_TIMEOUT:
+    CONSOLE_DEFAULT_LOCK_TIMEOUT:
         description: 'Default timeout (in ms) for console_lock() function used in console_write.'
         value: 1000
 
