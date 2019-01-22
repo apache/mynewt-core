@@ -41,9 +41,22 @@
 
 static int imgr_cli_cmd(int argc, char **argv);
 
+#if MYNEWT_VAL(SHELL_CMD_HELP)
+static const struct shell_cmd_help imgr_cli_help = {
+   .summary = "image management command",
+   .usage = "\n"
+            "    imgr list\n"
+            "    imgr test <slot | hash>\n"
+            "    imgr confirm [slot | hash]"
+};
+#endif
+
 static struct shell_cmd shell_imgr_cmd = {
     .sc_cmd = "imgr",
-    .sc_cmd_func = imgr_cli_cmd
+    .sc_cmd_func = imgr_cli_cmd,
+#if MYNEWT_VAL(SHELL_CMD_HELP)
+    .help = &imgr_cli_help,
+#endif
 };
 
 static void
