@@ -101,8 +101,9 @@ imgr_cli_show_slot(int slot)
 
     (void)imgr_ver_str(&ver, ver_str);
 
-    console_printf("%8s: %s %s\n",
-      ver_str, hex_format(hash, IMGMGR_HASH_LEN, hash_str, sizeof(hash_str)),
+    console_printf("%d %8s: %s %s\n",
+      slot, ver_str,
+      hex_format(hash, IMGMGR_HASH_LEN, hash_str, sizeof(hash_str)),
       imgr_cli_flags_str(flags, state_flags));
 }
 
