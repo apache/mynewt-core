@@ -29,6 +29,7 @@
 #define _OS_EVENTQ_H
 
 #include <inttypes.h>
+#include <syscfg/syscfg.h>
 #include "os/os_time.h"
 #include "os/queue.h"
 
@@ -55,12 +56,27 @@ struct os_event {
     /** Argument to pass to the event queue callback. */
     void *ev_arg;
 
-
     STAILQ_ENTRY(os_event) ev_next;
 };
 
 /** Return whether or not the given event is queued. */
 #define OS_EVENT_QUEUED(__ev) ((__ev)->ev_queued)
+
+#if MYNEWT_VAL(OS_EVENTQ_MONITOR)
+/**
+ * Structure keeping track of time spent inside event callback. This is
+ * stored per eventq, and is updated inside os_eventq_run(). Tick unit
+ * is os_cputime.
+ */
+struct os_eventq_mon {
+    struct os_event *em_ev;     /* pointer to specific os_event */
+    void *em_cb;                /* callback function called */
+    uint32_t em_cnt;            /* number of calls made */
+    uint32_t em_min;            /* least number ticks spent in a call */
+    uint32_t em_max;            /* most number of ticks spent in a call */
+    uint32_t em_cum;            /* cumulative number of ticks spent in a call */
+};
+#endif
 
 struct os_eventq {
     /** Pointer to task that "owns" this event queue. */
@@ -71,12 +87,16 @@ struct os_eventq {
      */
     struct os_task *evq_task;
 
+    STAILQ_HEAD(, os_event) evq_list;
+
 #if MYNEWT_VAL(OS_EVENTQ_DEBUG)
     /** Most recently processed event. */
     struct os_event *evq_prev;
 #endif
-
-    STAILQ_HEAD(, os_event) evq_list;
+#if MYNEWT_VAL(OS_EVENTQ_MONITOR)
+    struct os_eventq_mon *evq_mon;
+    int evq_mon_elems;
+#endif
 };
 
 /**
@@ -156,6 +176,36 @@ void os_eventq_remove(struct os_eventq *, struct os_event *);
  * @return                      The default event queue.
  */
 struct os_eventq *os_eventq_dflt_get(void);
+
+#if MYNEWT_VAL(OS_EVENTQ_MONITOR)
+/**
+ * Instrument OS eventq to monitor time spent handling events.
+ *
+ * @param evq The event queue to start monitoring
+ * @param cnt How many elements can be used in monitoring.
+ * @param mon Pointer to data where monitoring data is collected. Must hold
+ *            cnt number of elements.
+ *
+ */
+static inline void os_eventq_mon_start(struct os_eventq *evq, int cnt,
+                                       struct os_eventq_mon *mon)
+{
+    evq->evq_mon = mon;
+    evq->evq_mon_elems = cnt;
+}
+
+/**
+ * Stop OS eventq monitoring.
+ *
+ * @param evq The event queue this operation applies to
+ *
+ */
+static inline void os_eventq_mon_stop(struct os_eventq *evq)
+{
+    evq->evq_mon = NULL;
+    evq->evq_mon_elems = 0;
+}
+#endif
 
 /**
  * @cond INTERNAL_HIDDEN
