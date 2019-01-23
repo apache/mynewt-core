@@ -46,6 +46,10 @@ syscfg.defs:
         description: >
             'Attempt to capture state of stuck system before HW watchdog fires.'
         value: 0
+    OS_EVENTQ_MONITOR:
+        description: >
+            'Allow instrumentation for collecting time spent hendling events.'
+        value: 0
     OS_SYSVIEW:
         description: 'Enable OS sysview tracing'
         value: 0
