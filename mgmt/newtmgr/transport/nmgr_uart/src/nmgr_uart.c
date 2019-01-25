@@ -29,6 +29,11 @@
 #include <crc/crc16.h>
 #include <base64/base64.h>
 
+/**
+ * @addtogroup Newtmgr
+ * @{
+ */
+
 #define SHELL_NLIP_PKT          0x0609
 #define SHELL_NLIP_DATA         0x0414
 #define SHELL_NLIP_MAX_FRAME    128
@@ -48,7 +53,7 @@ struct nmgr_uart_state {
     struct os_mbuf_pkthdr *nus_rx;
 };
 
-/*
+/**
  * Header for frames arriving over serial.
  */
 struct nmgr_ser_hdr {
@@ -64,7 +69,7 @@ nmgr_uart_mtu(struct os_mbuf *m)
     return MGMT_MAX_MTU;
 }
 
-/*
+/**
  * Called by mgmt to queue packet out to UART.
  */
 static int
@@ -178,7 +183,7 @@ err:
     return -1;
 }
 
-/*
+/**
  * Called by UART driver to send out next character.
  *
  * Interrupts disabled when nmgr_uart_tx_char/nmgr_uart_rx_char are called.
@@ -215,7 +220,7 @@ nmgr_uart_tx_char(void *arg)
     return ch;
 }
 
-/*
+/**
  * Check for full packet. If frame is not right, free the mbuf.
  */
 static void
@@ -288,7 +293,7 @@ err:
     os_mbuf_free_chain(m);
 }
 
-/*
+/**
  * Callback from mgmt task context.
  */
 static void
@@ -307,7 +312,7 @@ nmgr_uart_rx_frame(struct os_event *ev)
     }
 }
 
-/*
+/**
  * Receive a character from UART.
  */
 static int
@@ -385,3 +390,7 @@ nmgr_uart_pkg_init(void)
 
     nus->nus_cb_ev.ev_cb = nmgr_uart_rx_frame;
 }
+
+/**
+ * @} Newtmgr
+ */
