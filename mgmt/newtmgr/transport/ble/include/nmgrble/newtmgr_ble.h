@@ -20,6 +20,11 @@
 #ifndef _NEWTMGR_BLE_H_
 #define _NEWTMGR_BLE_H_
 
+/**
+ * @addtogroup Newtmgr
+ * @{
+ */
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -38,5 +43,9 @@ nmgr_ble_update_rsp_len(struct os_mbuf *req, uint16_t *len, uint8_t *flags);
 #ifdef __cplusplus
 }
 #endif
+
+/**
+ * @} Newtmgr
+ */
 
 #endif /* _NETMGR_H */

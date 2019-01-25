@@ -26,6 +26,11 @@
 #include "newtmgr/newtmgr.h"
 #include "console/console.h"
 
+/**
+ * @addtogroup Newtmgr
+ * @{
+ */
+
 /* nmgr ble mqueue */
 struct os_mqueue nmgr_ble_mq;
 
@@ -239,3 +244,7 @@ newtmgr_ble_pkg_init(void)
     rc = nmgr_ble_gatt_svr_init();
     SYSINIT_PANIC_ASSERT(rc == 0);
 }
+
+/**
+ * @} Newtmgr
+ */
