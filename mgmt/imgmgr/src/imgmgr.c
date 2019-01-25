@@ -825,7 +825,9 @@ imgr_upload(struct mgmt_cbuf *cb)
         }
     }
 
+#if MYNEWT_VAL(IMGMGR_LAZY_ERASE)
 end:
+#endif
     flash_area_close(fa);
 
     if (rc != 0) {
