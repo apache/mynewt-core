@@ -127,6 +127,11 @@ static struct {
     /** Hash of image data; used for resumption of a partial upload. */
     uint8_t data_sha_len;
     uint8_t data_sha[IMGMGR_DATA_SHA_LEN];
+#if MYNEWT_VAL(IMGMGR_LAZY_ERASE)
+    int sector_id;
+    uint32_t sector_end;
+#endif
+
 } imgr_state;
 
 static imgr_upload_fn *imgr_upload_cb;
@@ -484,6 +489,44 @@ imgr_erase_state(struct mgmt_cbuf *cb)
     return 0;
 }
 
+#if MYNEWT_VAL(IMGMGR_LAZY_ERASE)
+
+/**
+ * Erases a flash sector as image upload crosses a sector boundary.
+ * Erasing the entire flash size at one time can take significant time,
+ *   causing a bluetooth disconnect or significant battery sag.
+ * Instead we will erase immediately prior to crossing a sector.
+ * We could check for empty to increase efficiency, but instead we always erase
+ *   for consistency and simplicity.
+ *
+ * @param fa       Flash area being traversed
+ * @param off      Offset that is about to be written
+ * @param len      Number of bytes to be written
+ *
+ * @return         0 if success 
+ *                 ERROR_CODE if could not erase sector
+ */
+int
+imgr_erase_if_needed(const struct flash_area *fa, uint32_t off, uint32_t len)
+{
+    int rc = 0;
+    struct flash_area sector;
+
+    while ((fa->fa_off + off + len) > imgr_state.sector_end) {
+        rc = flash_area_getnext_sector(fa->fa_id, &imgr_state.sector_id, &sector);
+        if (rc) {
+            return rc;
+        }
+        rc = flash_area_erase(&sector, 0, sector.fa_size);
+        if (rc) {
+            return rc;
+        }
+        imgr_state.sector_end = sector.fa_off + sector.fa_size;
+    }
+    return 0;
+}
+#endif
+
 /**
  * Verifies an upload request and indicates the actions that should be taken
  * during processing of the request.  This is a "read only" function in the
@@ -505,7 +548,6 @@ imgr_upload_inspect(const struct imgr_upload_req *req,
     const struct image_header *hdr;
     const struct flash_area *fa;
     uint8_t rem_bytes;
-    bool empty;
     int rc;
 
     memset(action, 0, sizeof *action);
@@ -564,12 +606,14 @@ imgr_upload_inspect(const struct imgr_upload_req *req,
             return MGMT_ERR_ENOMEM;
         }
 
+#if MYNEWT_VAL(IMGMGR_LAZY_ERASE) == 0
         rc = flash_area_open(action->area_id, &fa);
         if (rc) {
             *errstr = imgmgr_err_str_flash_open_failed;
             return MGMT_ERR_EUNKNOWN;
         }
 
+        bool empty;
         rc = flash_area_is_empty(fa, &empty);
         flash_area_close(fa);
         if (rc) {
@@ -577,6 +621,7 @@ imgr_upload_inspect(const struct imgr_upload_req *req,
         }
 
         action->erase = !empty;
+#endif
     } else {
         /* Continuation of upload. */
         action->area_id = imgr_state.area_id;
@@ -739,6 +784,12 @@ imgr_upload(struct mgmt_cbuf *cb)
         }
 #endif
 
+#if MYNEWT_VAL(IMGMGR_LAZY_ERASE)
+        /* setup for lazy sector by sector erase */
+        imgr_state.sector_id = -1;
+        imgr_state.sector_end = 0;
+#else
+        /* erase the entire req.size all at once */
         if (action.erase) {
             rc = flash_area_erase(fa, 0, req.size);
             if (rc != 0) {
@@ -746,12 +797,19 @@ imgr_upload(struct mgmt_cbuf *cb)
                 errstr = imgmgr_err_str_flash_erase_failed;
             }
         }
+#endif
     }
 
     /* Write the image data to flash. */
     if (rc == 0 && req.data_len != 0) {
-        rc = flash_area_write(fa, req.off, req.img_data, action.write_bytes);
-        if (rc != 0) {
+#if MYNEWT_VAL(IMGMGR_LAZY_ERASE)
+        /* erase as we cross sector boundaries */
+        if (imgr_erase_if_needed(fa, req.off, action.write_bytes) != 0) {
+            rc = MGMT_ERR_EUNKNOWN;
+            errstr = imgmgr_err_str_flash_erase_failed;
+        } else
+#endif
+        if (flash_area_write(fa, req.off, req.img_data, action.write_bytes) != 0) {
             rc = MGMT_ERR_EUNKNOWN;
             errstr = imgmgr_err_str_flash_write_failed;
         } else {

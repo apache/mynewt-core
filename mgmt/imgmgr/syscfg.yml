@@ -30,6 +30,11 @@ syscfg.defs:
             The maximum amount of image or core data that can fit in a
             single NMP message
         value: 512
+    IMGMGR_LAZY_ERASE:
+        description: >
+            During a firmware upgrade, erase flash a sector at a time
+            prior to writing to it, rather than all at once at start
+        value: 1
     IMGMGR_VERBOSE_ERR:
         description: >
             Send verbose error message in responses.
