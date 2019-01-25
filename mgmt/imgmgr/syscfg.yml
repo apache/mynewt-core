@@ -34,7 +34,7 @@ syscfg.defs:
         description: >
             During a firmware upgrade, erase flash a sector at a time
             prior to writing to it, rather than all at once at start
-        value: 1
+        value: 0
     IMGMGR_VERBOSE_ERR:
         description: >
             Send verbose error message in responses.
