@@ -20,6 +20,11 @@
 #ifndef _NEWTMGR_H_
 #define _NEWTMGR_H_
 
+/**
+ * @addtogroup Newtmgr Newtmgr server and transport
+ * @{
+ */
+
 #include <tinycbor/cbor.h>
 #include <inttypes.h>
 #include "os/mynewt.h"
@@ -63,5 +68,9 @@ int nmgr_rx_req(struct nmgr_transport *nt, struct os_mbuf *req);
 #ifdef __cplusplus
 }
 #endif
+
+/**
+ * @} Newtmgr
+ */
 
 #endif /* _NETMGR_H */
