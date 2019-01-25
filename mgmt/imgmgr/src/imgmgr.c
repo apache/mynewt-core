@@ -548,6 +548,7 @@ imgr_upload_inspect(const struct imgr_upload_req *req,
     const struct image_header *hdr;
     const struct flash_area *fa;
     uint8_t rem_bytes;
+    bool empty;
     int rc;
 
     memset(action, 0, sizeof *action);
@@ -606,14 +607,15 @@ imgr_upload_inspect(const struct imgr_upload_req *req,
             return MGMT_ERR_ENOMEM;
         }
 
-#if MYNEWT_VAL(IMGMGR_LAZY_ERASE) == 0
+#if MYNEWT_VAL(IMGMGR_LAZY_ERASE)
+        (void) empty;
+#else
         rc = flash_area_open(action->area_id, &fa);
         if (rc) {
             *errstr = imgmgr_err_str_flash_open_failed;
             return MGMT_ERR_EUNKNOWN;
         }
 
-        bool empty;
         rc = flash_area_is_empty(fa, &empty);
         flash_area_close(fa);
         if (rc) {
@@ -807,9 +809,11 @@ imgr_upload(struct mgmt_cbuf *cb)
         if (imgr_erase_if_needed(fa, req.off, action.write_bytes) != 0) {
             rc = MGMT_ERR_EUNKNOWN;
             errstr = imgmgr_err_str_flash_erase_failed;
-        } else
+            goto end;
+        }
 #endif
-        if (flash_area_write(fa, req.off, req.img_data, action.write_bytes) != 0) {
+        rc = flash_area_write(fa, req.off, req.img_data, action.write_bytes);
+        if (rc != 0) {
             rc = MGMT_ERR_EUNKNOWN;
             errstr = imgmgr_err_str_flash_write_failed;
         } else {
@@ -821,6 +825,7 @@ imgr_upload(struct mgmt_cbuf *cb)
         }
     }
 
+end:
     flash_area_close(fa);
 
     if (rc != 0) {
