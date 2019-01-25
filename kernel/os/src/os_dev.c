@@ -50,6 +50,7 @@ static int
 os_dev_add(struct os_dev *dev)
 {
     struct os_dev *cur_dev;
+    struct os_dev *prev_dev;
 
     /* If no devices present, insert into head */
     if (STAILQ_FIRST(&g_os_dev_list) == NULL) {
@@ -61,21 +62,20 @@ os_dev_add(struct os_dev *dev)
      * priority.  Keep sorted in this order for initialization
      * stage.
      */
-    cur_dev = NULL;
+    prev_dev = NULL;
     STAILQ_FOREACH(cur_dev, &g_os_dev_list, od_next) {
-        if (cur_dev->od_stage > dev->od_stage) {
-            continue;
-        }
-
-        if (dev->od_priority >= cur_dev->od_priority) {
+        if (dev->od_stage < cur_dev->od_stage ||
+            ((dev->od_stage == cur_dev->od_stage) &&
+             (dev->od_priority < cur_dev->od_priority))) {
             break;
         }
+        prev_dev = cur_dev;
     }
 
-    if (cur_dev) {
-        STAILQ_INSERT_AFTER(&g_os_dev_list, cur_dev, dev, od_next);
+    if (prev_dev) {
+        STAILQ_INSERT_AFTER(&g_os_dev_list, prev_dev, dev, od_next);
     } else {
-        STAILQ_INSERT_TAIL(&g_os_dev_list, dev, od_next);
+        STAILQ_INSERT_HEAD(&g_os_dev_list, dev, od_next);
     }
 
     return (0);
