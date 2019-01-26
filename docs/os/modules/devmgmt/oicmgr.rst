@@ -117,14 +117,13 @@ Yes
 
    </table>
 
-| The newtmgr application tool uses CoAP (Constrained Application
-  Protocol) requests to send commands to oicmgr.
-| It sends a CoAP request for **/omgr** as follows:
+The newtmgr application tool uses CoAP (Constrained ApplicationProtocol) requests to send commands to oicmgr.
+It sends a CoAP request for **/omgr** as follows:
 
 -  Specifies the newtmgr command to execute in the URI query string.
--  Uses a GET method for newtmgr commands that retreive information from
+-  Initially the GET method was used for newtmgr commands that retreive information from
    your application, for example, the ``taskstat`` and ``mpstat``
-   commands.
+   commands. Now it uses the PUT operation as described below..
 -  Uses a PUT method for newtmgr commands that send data to or modify
    the state of your application, for example, the ``echo`` or
    ``datetime`` commands.
