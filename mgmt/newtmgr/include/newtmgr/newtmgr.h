@@ -21,7 +21,7 @@
 #define _NEWTMGR_H_
 
 /**
- * @adefgroup Newtmgr Newtmgr server and transport
+ * @defgroup Newtmgr Newtmgr server and transport
  * @{
  */
 
