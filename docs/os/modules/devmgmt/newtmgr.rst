@@ -52,7 +52,7 @@ The newtmgr framework has a smaller code size and memory footprint than
 oicmgr but does not support open connectivity.
 
 API
-----------
+~~~~
 
 .. doxygengroup:: Newtmgr
     :content-only:
