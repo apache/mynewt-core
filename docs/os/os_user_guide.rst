@@ -13,6 +13,7 @@ OS User Guide
    Baselibc <modules/baselibc>
    Drivers <modules/drivers/driver>
    Device Management with Newt Manager <modules/devmgmt/newtmgr>
+   Device Management with MCUmgr <modules/mcumgr/mcumgr>
    Image Manager <modules/imgmgr/imgmgr>
    Compile-Time Configuration <modules/sysinitconfig/sysinitconfig>
    File System <modules/fs/fs>
