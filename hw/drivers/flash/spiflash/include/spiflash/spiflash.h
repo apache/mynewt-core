@@ -97,6 +97,9 @@ struct spiflash_chip {
 
 int spiflash_init(const struct hal_flash *dev);
 
+void spiflash_power_down(struct spiflash_dev *dev);
+void spiflash_release_power_down(struct spiflash_dev *dev);
+
 #ifdef __cplusplus
 }
 #endif
