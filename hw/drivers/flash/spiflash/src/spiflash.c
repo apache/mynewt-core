@@ -48,8 +48,8 @@
 #error SPIFLASH_BAUDRATE must be set to the correct value in bsp syscfg.yml
 #endif
 
-void spiflash_release_power_down_macronix(struct spiflash_dev *dev);
-void spiflash_release_power_down(struct spiflash_dev *dev);
+static void spiflash_release_power_down_macronix(struct spiflash_dev *dev);
+static void spiflash_release_power_down_generic(struct spiflash_dev *dev);
 
 #define STD_FLASH_CHIP(name, mfid, typ, cap, release_power_down) \
     { \
@@ -63,28 +63,28 @@ void spiflash_release_power_down(struct spiflash_dev *dev);
 
 
 #define ISSI_CHIP(name, typ, cap) \
-    STD_FLASH_CHIP(name, JEDEC_MFC_ISSI, typ, cap, spiflash_release_power_down)
+    STD_FLASH_CHIP(name, JEDEC_MFC_ISSI, typ, cap, spiflash_release_power_down_generic)
 #define WINBOND_CHIP(name, typ, cap) \
-    STD_FLASH_CHIP(name, JEDEC_MFC_WINBOND, typ, cap, spiflash_release_power_down)
+    STD_FLASH_CHIP(name, JEDEC_MFC_WINBOND, typ, cap, spiflash_release_power_down_generic)
 #define MACRONIX_CHIP(name, typ, cap) \
-    STD_FLASH_CHIP(name, JEDEC_MFC_MACRONIX, typ, cap, spiflash_release_power_down)
+    STD_FLASH_CHIP(name, JEDEC_MFC_MACRONIX, typ, cap, spiflash_release_power_down_generic)
 /* Macro for chips with no RPD command */
 #define MACRONIX_CHIP1(name, typ, cap) \
     STD_FLASH_CHIP(name, JEDEC_MFC_MACRONIX, typ, cap, spiflash_release_power_down_macronix)
 #define GIGADEVICE_CHIP(name, typ, cap) \
-    STD_FLASH_CHIP(name, JEDEC_MFC_GIGADEVICE, typ, cap, spiflash_release_power_down)
+    STD_FLASH_CHIP(name, JEDEC_MFC_GIGADEVICE, typ, cap, spiflash_release_power_down_generic)
 #define MICRON_CHIP(name, typ, cap) \
-    STD_FLASH_CHIP(name, JEDEC_MFC_MICRON, typ, cap, spiflash_release_power_down)
+    STD_FLASH_CHIP(name, JEDEC_MFC_MICRON, typ, cap, spiflash_release_power_down_generic)
 #define ADESTO_CHIP(name, typ, cap) \
-    STD_FLASH_CHIP(name, JEDEC_MFC_ADESTO, typ, cap, spiflash_release_power_down)
+    STD_FLASH_CHIP(name, JEDEC_MFC_ADESTO, typ, cap, spiflash_release_power_down_generic)
 #define EON_CHIP(name, typ, cap) \
-    STD_FLASH_CHIP(name, JEDEC_MFC_EON, typ, cap, spiflash_release_power_down)
+    STD_FLASH_CHIP(name, JEDEC_MFC_EON, typ, cap, spiflash_release_power_down_generic)
 
 static struct spiflash_chip supported_chips[] = {
 #if MYNEWT_VAL(SPIFLASH_MANUFACTURER) && MYNEWT_VAL(SPIFLASH_MEMORY_TYPE) && MYNEWT_VAL(SPIFLASH_MEMORY_CAPACITY)
     STD_FLASH_CHIP("", MYNEWT_VAL(SPIFLASH_MANUFACTURER),
         MYNEWT_VAL(SPIFLASH_MEMORY_TYPE), MYNEWT_VAL(SPIFLASH_MEMORY_CAPACITY),
-        spiflash_release_power_down),
+        spiflash_release_power_down_generic),
 #endif
 #if MYNEWT_VAL(SPIFLASH_GD25D05C)
     GIGADEVICE_CHIP(GD25D05C, 0x40, FLASH_CAPACITY_512KBIT),
@@ -657,32 +657,36 @@ spiflash_power_down(struct spiflash_dev *dev)
  * Some Macronix chips don't have standard release power down command 0xAB.
  * Instead they use CS pin alone to wake up from sleep.
  */
-void
+static void
 spiflash_release_power_down_macronix(struct spiflash_dev *dev)
 {
-    spiflash_lock(dev);
-
     spiflash_cs_activate(dev);
 
     os_cputime_delay_usecs(20);
 
     spiflash_cs_deactivate(dev);
-
-    spiflash_unlock(dev);
 }
 
-void
-spiflash_release_power_down(struct spiflash_dev *dev)
+static void
+spiflash_release_power_down_generic(struct spiflash_dev *dev)
 {
     uint8_t cmd[1] = { SPIFLASH_RELEASE_POWER_DOWN };
-
-    spiflash_lock(dev);
 
     spiflash_cs_activate(dev);
 
     hal_spi_txrx(dev->spi_num, cmd, cmd, sizeof cmd);
 
     spiflash_cs_deactivate(dev);
+}
+
+void
+spiflash_release_power_down_generic(struct spiflash_dev *dev)
+{
+    spiflash_lock(dev);
+
+    if (dev->flash_chip->fc_release_power_down) {
+        dev->flash_chip->fc_release_power_down(dev);
+    }
 
     spiflash_unlock(dev);
 }
@@ -931,7 +935,7 @@ spiflash_identify(struct spiflash_dev *dev)
 
     /* Only one chip specified, no need for search*/
     if ((sizeof(supported_chips) / sizeof(supported_chips[0])) == 2) {
-        spiflash_release_power_down(dev);
+        spiflash_release_power_down_generic(dev);
         spiflash_read_jedec_id(dev, &manufacturer, &memory_type, &capacity);
         /* If BSP defined SpiFlash manufacturer or memory type does not
          * match SpiFlash is most likely not connected, connected to
