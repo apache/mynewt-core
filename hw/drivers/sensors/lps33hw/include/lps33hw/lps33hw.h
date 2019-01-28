@@ -95,6 +95,12 @@ struct lps33hw {
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
     bool node_is_spi;
 #endif
+#if MYNEWT_VAL(LPS33HW_ONE_SHOT_MODE)
+    sensor_type_t type;
+    sensor_data_func_t data_func;
+    void *data_arg;
+    uint32_t timeout;
+#endif
 };
 
 /**
