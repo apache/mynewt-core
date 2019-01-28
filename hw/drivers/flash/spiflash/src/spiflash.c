@@ -1074,7 +1074,7 @@ spiflash_identify(struct spiflash_dev *dev)
 
     /* Only one chip specified, no need for search*/
     if ((sizeof(supported_chips) / sizeof(supported_chips[0])) == 2) {
-        spiflash_release_power_down_generic(dev);
+        supported_chips[0].fc_release_power_down(dev);
         spiflash_read_jedec_id(dev, &manufacturer, &memory_type, &capacity);
         /* If BSP defined SpiFlash manufacturer or memory type does not
          * match SpiFlash is most likely not connected, connected to
