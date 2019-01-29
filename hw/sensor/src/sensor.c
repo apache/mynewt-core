@@ -60,11 +60,6 @@ struct {
     SLIST_HEAD(, sensor) mgr_sensor_list;
 } sensor_mgr;
 
-struct sensor_read_ctx {
-    sensor_data_func_t user_func;
-    void *user_arg;
-};
-
 struct sensor_timestamp sensor_base_ts;
 struct os_callout st_up_osco;
 
