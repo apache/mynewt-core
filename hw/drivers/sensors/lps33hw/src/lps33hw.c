@@ -119,7 +119,7 @@ static void lps33hw_one_shot_read_cb(struct os_event *ev){
       if (lps33hw->cfg.int_cfg.data_rdy) {
 	  /* Stream read */
 	  lps33hw->pdd.user_handler = lps33hw->data_func;
-	  lps33hw->pdd.user_arg = lps33hw->data_arg;
+	  lps33hw->pdd.user_arg = &lps33hw->ctx;
 
 	  rc = lps33hw_enable_interrupt(sensor_one_shot,
 					lps33hw_read_interrupt_handler, sensor_one_shot);
@@ -133,7 +133,7 @@ static void lps33hw_one_shot_read_cb(struct os_event *ev){
 	  spd.spd_press_is_valid = 1;
 	  //console_printf("PRESSURE %f \n", spd.spd_press);
 
-	  rc = lps33hw->data_func(sensor_one_shot, lps33hw->data_arg, &spd, SENSOR_TYPE_PRESSURE);
+	  rc = lps33hw->data_func(sensor_one_shot, &lps33hw->ctx, &spd, SENSOR_TYPE_PRESSURE);
       }
   }
   if (lps33hw->type & SENSOR_TYPE_TEMPERATURE) {
@@ -145,8 +145,8 @@ static void lps33hw_one_shot_read_cb(struct os_event *ev){
       //console_printf("TEMPERATURE %f \n", std.std_temp);
 
       if(!rc){
-	  rc = lps33hw->data_func(sensor_one_shot, lps33hw->data_arg, &std,
-				  SENSOR_TYPE_TEMPERATURE);
+	  rc = lps33hw->data_func(sensor_one_shot, &lps33hw->ctx, &std,
+	  				  SENSOR_TYPE_TEMPERATURE);
       }
   }
 
@@ -1141,7 +1141,7 @@ lps33hw_sensor_read(struct sensor *sensor, sensor_type_t type,
   else{
       lps33hw->type = type;
       lps33hw->data_func = data_func;
-      lps33hw->data_arg = data_arg;
+      lps33hw->ctx = *(struct sensor_read_ctx *)data_arg;
       lps33hw->timeout = timeout;
       rc = lps33hw_set_value(itf, LPS33HW_CTRL_REG1_ODR, LPS33HW_ONE_SHOT);
       if (rc) {
