@@ -27,7 +27,7 @@
 #include "console/console.h"
 
 /**
- * @addtogroup Newtmgr Newtmgr server and transport
+ * \addtogroup Newtmgr
  * @{
  */
 

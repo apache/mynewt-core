@@ -30,7 +30,7 @@
 #include <base64/base64.h>
 
 /**
- * @addtogroup Newtmgr Newtmgr server and transport
+ * \addtogroup Newtmgr Newtmgr
  * @{
  */
 
