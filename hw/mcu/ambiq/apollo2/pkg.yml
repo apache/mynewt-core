@@ -29,4 +29,3 @@ pkg.deps:
     - "@apache-mynewt-core/hw/hal"
     - "@apache-mynewt-core/hw/mcu/ambiq"
     - "@apache-mynewt-core/hw/cmsis-core"
-    - "@apache-mynewt-core/compiler/arm-none-eabi-m4"
