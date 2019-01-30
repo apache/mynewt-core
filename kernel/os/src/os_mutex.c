@@ -79,14 +79,17 @@ os_mutex_release(struct os_mutex *mu)
         goto done;
     }
 
-    /* Decrement nesting level by 1. If not zero, nested (so dont release!) */
-    --mu->mu_level;
-    if (mu->mu_level != 0) {
+    /* Don't release if nested, just decrement nesting level */
+    if (mu->mu_level != 1) {
+        --mu->mu_level;
         ret = OS_OK;
         goto done;
     }
 
     OS_ENTER_CRITICAL(sr);
+
+    /* Decrement nesting level (this effectively sets nesting level to 0) */
+    --mu->mu_level;
 
     /* Restore owner task's priority; resort list if different  */
     if (current->t_prio != mu->mu_prio) {
