@@ -217,6 +217,7 @@ cmsis_nvic.h
 HAL_CM0.s
 HAL_CM3.s
 HAL_CM4.s
+HAL_CM33.s
 SVC_Table.s
 arm_common_tables.h
 arm_const_structs.h
