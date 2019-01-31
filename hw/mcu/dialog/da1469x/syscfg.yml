@@ -33,6 +33,10 @@ syscfg.defs:
             Used internally by the newt tool.
         value: 1
 
+    RAM_RESIDENT:
+        description: 'Compile app to be loaded to RAM'
+        value: 0
+
 # QSPI definitions
     QSPI_FLASH_ADDRESS_LENGTH:
         description: >
