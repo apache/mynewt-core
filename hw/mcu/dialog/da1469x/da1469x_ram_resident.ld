@@ -17,54 +17,19 @@
  */
 OUTPUT_FORMAT ("elf32-littlearm", "elf32-bigarm", "elf32-littlearm")
 
-/* Linker script to place sections and symbol values. Should be used together
- * with other linker script that defines memory regions FLASH and RAM.
- * It references following symbols, which must be defined in code:
- *   Reset_Handler : Entry of reset handler
- *
- * It defines following symbols, which code can use without definition:
- *   __exidx_start
- *   __exidx_end
- *   __etext
- *   __data_start__
- *   __preinit_array_start
- *   __preinit_array_end
- *   __init_array_start
- *   __init_array_end
- *   __fini_array_start
- *   __fini_array_end
- *   __data_end__
- *   __bss_start__
- *   __bss_end__
- *   __HeapBase
- *   __HeapLimit
- *   __StackLimit
- *   __StackTop
- *   __stack
- *   __bssnz_start__
- *   __bssnz_end__
- */
 ENTRY(Reset_Handler)
 
 SECTIONS
 {
-    .imghdr (NOLOAD):
-    {
-        . = . + _imghdr_size;
-    } > FLASH
-
-    __text = .;
-
     .text :
     {
+	__text = .;
         __isr_vector_start = .;
         KEEP(*(.isr_vector))
         /* ISR vector shall have exactly 512 bytes */
         . = __isr_vector_start + 0x200;
         __isr_vector_end = .;
-
-        *(.text)
-        *(.text.*)
+        *(.text*)
 
         KEEP(*(.init))
         KEEP(*(.fini))
@@ -87,29 +52,21 @@ SECTIONS
 
         *(.eh_frame*)
         . = ALIGN(4);
-    } > FLASH
+    } > RAM
 
     .ARM.extab :
     {
         *(.ARM.extab* .gnu.linkonce.armextab.*)
         . = ALIGN(4);
-    } > FLASH
+    } > RAM
 
     __exidx_start = .;
     .ARM.exidx :
     {
         *(.ARM.exidx* .gnu.linkonce.armexidx.*)
         . = ALIGN(4);
-    } > FLASH
-    __exidx_end = .;
-
-    .vector_relocation :
-    {
-        . = ALIGN(4);
-        __vector_tbl_reloc__ = .;
-        . = . + (__isr_vector_end - __isr_vector_start);
-        . = ALIGN(4);
     } > RAM
+    __exidx_end = .;
 
     /* This section will be zeroed by RTT package init */
     .rtt (NOLOAD):
@@ -119,8 +76,6 @@ SECTIONS
         . = ALIGN(4);
     } > RAM
 
-    __text_ram_addr = LOADADDR(.text_ram);
-
     .text_ram :
     {
         . = ALIGN(4);
@@ -128,9 +83,7 @@ SECTIONS
         *(.text_ram*)
         . = ALIGN(4);
         __text_ram_end__ = .;
-    } > RAM AT > FLASH
-
-    __etext = LOADADDR(.data);
+    } > RAM
 
     .data :
     {
@@ -163,7 +116,7 @@ SECTIONS
         . = ALIGN(4);
         /* All data end */
         __data_end__ = .;
-    } > RAM AT > FLASH
+    } > RAM
 
     .bssnz :
     {
