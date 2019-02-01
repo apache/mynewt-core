@@ -51,6 +51,15 @@ syscfg.defs:
             If disabled, standard i2c_hal driver is used.
         value: 0
 
+    MCU_GPIO_USE_PORT_EVENT:
+        description: >
+            When enabled, hal_gpio will use GPIOTE PORT event instead of PIN
+            events for interrupts. This mode may be less accurate (i.e. pulse
+            length needs to be longer in order to be detected) but it reduces
+            power consumption since it does not require HFCLK to be running.
+            Refer to nRF52xxx Product Specification document for more details.
+        value: 0
+
 # MCU peripherals definitions
     I2C_0:
         description: 'Enable nRF52xxx I2C (TWI) 0'
