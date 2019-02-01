@@ -64,10 +64,21 @@
 /* GPIO interrupts */
 #define HAL_GPIO_MAX_IRQ        8
 
+#if MYNEWT_VAL(MCU_GPIO_USE_PORT_EVENT)
+#define HAL_GPIO_SENSE_TRIG_NONE    0x00 /* just 0 */
+#define HAL_GPIO_SENSE_TRIG_BOTH    0x01 /* something else than both below */
+#define HAL_GPIO_SENSE_TRIG_HIGH    0x02 /* GPIO_PIN_CNF_SENSE_High */
+#define HAL_GPIO_SENSE_TRIG_LOW     0x03 /* GPIO_PIN_CNF_SENSE_Low */
+#endif
+
 /* Storage for GPIO callbacks. */
 struct hal_gpio_irq {
     hal_gpio_irq_handler_t func;
     void *arg;
+#if MYNEWT_VAL(MCU_GPIO_USE_PORT_EVENT)
+    int pin;
+    uint8_t sense_trig;
+#endif
 };
 
 static struct hal_gpio_irq hal_gpio_irqs[HAL_GPIO_MAX_IRQ];
@@ -207,17 +218,84 @@ hal_gpio_toggle(int pin)
 static void
 hal_gpio_irq_handler(void)
 {
+#if MYNEWT_VAL(MCU_GPIO_USE_PORT_EVENT)
+    NRF_GPIO_Type *nrf_gpio;
+    int pin_index;
+    int pin_state;
+    uint8_t sense_trig;
+#if NRF52840_XXAA
+    uint64_t gpio_state;
+#else
+    uint32_t gpio_state;
+#endif
+#endif
     int i;
 
     os_trace_isr_enter();
 
+#if MYNEWT_VAL(MCU_GPIO_USE_PORT_EVENT)
+    NRF_GPIOTE->EVENTS_PORT = 0;
+
+    gpio_state = NRF_P0->IN;
+#if NRF52840_XXAA
+    gpio_state |= (uint64_t)NRF_P1->IN << 32;
+#endif
+#endif
+
     for (i = 0; i < HAL_GPIO_MAX_IRQ; i++) {
+#if MYNEWT_VAL(MCU_GPIO_USE_PORT_EVENT)
+        if ((!hal_gpio_irqs[i].func) ||
+            (hal_gpio_irqs[i].sense_trig == HAL_GPIO_SENSE_TRIG_NONE)) {
+            continue;
+        }
+
+        nrf_gpio = HAL_GPIO_PORT(hal_gpio_irqs[i].pin);
+        pin_index = HAL_GPIO_INDEX(hal_gpio_irqs[i].pin);
+
+        /* Store current SENSE setting */
+        sense_trig = (nrf_gpio->PIN_CNF[pin_index] & GPIO_PIN_CNF_SENSE_Msk) >> GPIO_PIN_CNF_SENSE_Pos;
+
+        if (!sense_trig) {
+            continue;
+        }
+
+        /*
+         * SENSE values are 0x02 for high and 0x03 for low, so bit #0 is the
+         * opposite of state which triggers interrupt (thus its value should be
+         * different than pin state).
+         */
+        pin_state = (gpio_state >> hal_gpio_irqs[i].pin) & 0x01;
+        if (pin_state == (sense_trig & 0x01)) {
+            continue;
+        }
+
+        /*
+         * Toggle sense to clear interrupt or allow detection of opposite edge
+         * when trigger on both edges is requested.
+         */
+        nrf_gpio->PIN_CNF[pin_index] &= ~GPIO_PIN_CNF_SENSE_Msk;
+        if (sense_trig == HAL_GPIO_SENSE_TRIG_HIGH) {
+            nrf_gpio->PIN_CNF[pin_index] |= GPIO_PIN_CNF_SENSE_Low << GPIO_PIN_CNF_SENSE_Pos;
+        } else {
+            nrf_gpio->PIN_CNF[pin_index] |= GPIO_PIN_CNF_SENSE_High << GPIO_PIN_CNF_SENSE_Pos;
+        }
+
+        /*
+         * Call handler in case SENSE configuration matches requested one or
+         * trigger on both edges is requested.
+         */
+        if ((hal_gpio_irqs[i].sense_trig == HAL_GPIO_SENSE_TRIG_BOTH) ||
+            (hal_gpio_irqs[i].sense_trig == sense_trig)) {
+            hal_gpio_irqs[i].func(hal_gpio_irqs[i].arg);
+        }
+#else
         if (NRF_GPIOTE->EVENTS_IN[i] && (NRF_GPIOTE->INTENSET & (1 << i))) {
             NRF_GPIOTE->EVENTS_IN[i] = 0;
             if (hal_gpio_irqs[i].func) {
                 hal_gpio_irqs[i].func(hal_gpio_irqs[i].arg);
             }
         }
+#endif
     }
 
     os_trace_isr_exit();
@@ -236,6 +314,11 @@ hal_gpio_irq_setup(void)
         NVIC_SetVector(GPIOTE_IRQn, (uint32_t)hal_gpio_irq_handler);
         NVIC_EnableIRQ(GPIOTE_IRQn);
         irq_setup = 1;
+
+#if MYNEWT_VAL(MCU_GPIO_USE_PORT_EVENT)
+        NRF_GPIOTE->INTENCLR = GPIOTE_INTENCLR_PORT_Msk;
+        NRF_GPIOTE->EVENTS_PORT = 0;
+#endif
     }
 }
 
@@ -263,6 +346,13 @@ hal_gpio_find_pin(int pin)
 {
     int i;
 
+#if MYNEWT_VAL(MCU_GPIO_USE_PORT_EVENT)
+    for (i = 0; i < HAL_GPIO_MAX_IRQ; i++) {
+        if (hal_gpio_irqs[i].func && hal_gpio_irqs[i].pin == pin) {
+            return i;
+        }
+    }
+#else
     pin = pin << GPIOTE_CONFIG_PSEL_Pos;
 
     for (i = 0; i < HAL_GPIO_MAX_IRQ; i++) {
@@ -271,6 +361,8 @@ hal_gpio_find_pin(int pin)
             return i;
         }
     }
+#endif
+
     return -1;
 }
 
@@ -301,6 +393,25 @@ hal_gpio_irq_init(int pin, hal_gpio_irq_handler_t handler, void *arg,
     }
     hal_gpio_init_in(pin, pull);
 
+#if MYNEWT_VAL(MCU_GPIO_USE_PORT_EVENT)
+    (void)conf;
+    hal_gpio_irqs[i].pin = pin;
+
+    switch (trig) {
+    case HAL_GPIO_TRIG_RISING:
+        hal_gpio_irqs[i].sense_trig = HAL_GPIO_SENSE_TRIG_HIGH;
+        break;
+    case HAL_GPIO_TRIG_FALLING:
+        hal_gpio_irqs[i].sense_trig = HAL_GPIO_SENSE_TRIG_LOW;
+        break;
+    case HAL_GPIO_TRIG_BOTH:
+        hal_gpio_irqs[i].sense_trig = HAL_GPIO_SENSE_TRIG_BOTH;
+        break;
+    default:
+        hal_gpio_irqs[i].sense_trig = HAL_GPIO_SENSE_TRIG_NONE;
+        return -1;
+    }
+#else
     switch (trig) {
     case HAL_GPIO_TRIG_RISING:
         conf = GPIOTE_CONFIG_POLARITY_LoToHi << GPIOTE_CONFIG_POLARITY_Pos;
@@ -314,10 +425,12 @@ hal_gpio_irq_init(int pin, hal_gpio_irq_handler_t handler, void *arg,
     default:
         return -1;
     }
+
     conf |= pin << GPIOTE_CONFIG_PSEL_Pos;
     conf |= GPIOTE_CONFIG_MODE_Event << GPIOTE_CONFIG_MODE_Pos;
 
     NRF_GPIOTE->CONFIG[i] = conf;
+#endif
 
     hal_gpio_irqs[i].func = handler;
     hal_gpio_irqs[i].arg = arg;
@@ -345,8 +458,12 @@ hal_gpio_irq_release(int pin)
     }
     hal_gpio_irq_disable(pin);
 
+#if MYNEWT_VAL(MCU_GPIO_USE_PORT_EVENT)
+    hal_gpio_irqs[i].sense_trig = HAL_GPIO_SENSE_TRIG_NONE;
+#else
     NRF_GPIOTE->CONFIG[i] = 0;
     NRF_GPIOTE->EVENTS_IN[i] = 0;
+#endif
 
     hal_gpio_irqs[i].arg = NULL;
     hal_gpio_irqs[i].func = NULL;
@@ -362,14 +479,38 @@ hal_gpio_irq_release(int pin)
 void
 hal_gpio_irq_enable(int pin)
 {
+#if MYNEWT_VAL(MCU_GPIO_USE_PORT_EVENT)
+    NRF_GPIO_Type *nrf_gpio;
+    int pin_index;
+#endif
     int i;
 
     i = hal_gpio_find_pin(pin);
     if (i < 0) {
         return;
     }
+
+#if MYNEWT_VAL(MCU_GPIO_USE_PORT_EVENT)
+    nrf_gpio = HAL_GPIO_PORT(pin);
+    pin_index = HAL_GPIO_INDEX(pin);
+
+    nrf_gpio->PIN_CNF[pin_index] &= ~GPIO_PIN_CNF_SENSE_Msk;
+
+    /*
+     * Always set initial SENSE to opposite of current pin state to avoid
+     * triggering immediately
+     */
+    if (nrf_gpio->IN & (1 << pin_index)) {
+        nrf_gpio->PIN_CNF[pin_index] |= GPIO_PIN_CNF_SENSE_Low << GPIO_PIN_CNF_SENSE_Pos;
+    } else {
+        nrf_gpio->PIN_CNF[pin_index] |= GPIO_PIN_CNF_SENSE_High << GPIO_PIN_CNF_SENSE_Pos;
+    }
+
+    NRF_GPIOTE->INTENSET = GPIOTE_INTENSET_PORT_Msk;
+#else
     NRF_GPIOTE->EVENTS_IN[i] = 0;
     NRF_GPIOTE->INTENSET = 1 << i;
+#endif
 }
 
 /**
@@ -381,11 +522,35 @@ hal_gpio_irq_enable(int pin)
 void
 hal_gpio_irq_disable(int pin)
 {
+#if MYNEWT_VAL(MCU_GPIO_USE_PORT_EVENT)
+    NRF_GPIO_Type *nrf_gpio;
+    int pin_index;
+    bool sense_enabled = false;
+#endif
     int i;
 
     i = hal_gpio_find_pin(pin);
     if (i < 0) {
         return;
     }
+
+#if MYNEWT_VAL(MCU_GPIO_USE_PORT_EVENT)
+    nrf_gpio = HAL_GPIO_PORT(pin);
+    pin_index = HAL_GPIO_INDEX(pin);
+
+    nrf_gpio->PIN_CNF[pin_index] &= ~GPIO_PIN_CNF_SENSE_Msk;
+
+    for (i = 0; i < HAL_GPIO_MAX_IRQ; i++) {
+        if (hal_gpio_irqs[i].sense_trig != HAL_GPIO_SENSE_TRIG_NONE) {
+            sense_enabled = true;
+            break;
+        }
+    }
+
+    if (!sense_enabled) {
+        NRF_GPIOTE->INTENCLR = GPIOTE_INTENCLR_PORT_Msk;
+    }
+#else
     NRF_GPIOTE->INTENCLR = 1 << i;
+#endif
 }
