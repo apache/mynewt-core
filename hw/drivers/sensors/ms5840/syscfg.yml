@@ -32,6 +32,3 @@ syscfg.defs:
         description: >
             Number of OS ticks to wait for each I2C transaction to complete.
         value: 3
-    MS5840_NON_BLOCKING_MODE:
-        description: 'Enables non block mode in the sensor'
-        value: 0

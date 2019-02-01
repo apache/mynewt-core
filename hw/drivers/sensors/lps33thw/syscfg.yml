@@ -36,7 +36,7 @@ syscfg.defs:
             Number of OS ticks to wait for each I2C transaction to complete.
         value: 3
     LPS33THW_ONE_SHOT_MODE:
-        description: 'Enables one shot mode in the sensor'
+        description: 'Enables one shot mode on the sensor'
         value: 0
 
 syscfg.defs.!BUS_DRIVER_PRESENT:
