@@ -55,6 +55,14 @@ struct ms5840 {
     struct ms5840_cfg cfg;
     struct ms5840_pdd pdd;
     os_time_t last_read_time;
+#if MYNEWT_VAL(MS5840_NON_BLOCKING_MODE)
+    sensor_type_t type;
+    sensor_data_func_t data_func;
+    struct sensor_read_ctx ctx;
+    uint32_t timeout;
+    uint32_t rawtemp;
+    uint8_t raw_press_read_done;
+#endif
 };
 
 #define MS5840_RES_OSR_256    0x0

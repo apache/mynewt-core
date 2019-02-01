@@ -78,11 +78,106 @@ static int ms5840_sensor_get_config(struct sensor *, sensor_type_t,
         struct sensor_cfg *);
 static int ms5840_sensor_set_config(struct sensor *, void *);
 
+#if MYNEWT_VAL(MS5840_NON_BLOCKING_MODE)
+static void ms5840_one_shot_read_cb(struct os_event *ev);
+static struct os_callout g_ms5840_one_shot_read;
+static struct sensor *sensor_non_block;
+static uint8_t g_ms5840_insignificant_block = 0;
+#endif
+
 static const struct sensor_driver g_ms5840_sensor_driver = {
     .sd_read = ms5840_sensor_read,
     .sd_get_config = ms5840_sensor_get_config,
     .sd_set_config = ms5840_sensor_set_config,
 };
+
+#if MYNEWT_VAL(MS5840_NON_BLOCKING_MODE)
+static void ms5840_one_shot_read_cb(struct os_event *ev){
+  uint32_t rawpress;
+  int32_t comptemp;
+  int32_t deltat;
+  float temperature;
+  float pressure;
+  struct sensor_itf *itf;
+  struct ms5840 *ms5840;
+  struct ms5840_cfg *cfg;
+  uint8_t payload[3] = {0};
+  int rc;
+  union {
+      struct sensor_temp_data std;
+      struct sensor_press_data spd;
+  } databuf;
+
+  ms5840 = (struct ms5840 *)SENSOR_GET_DEVICE(sensor_non_block);
+  cfg = &(ms5840->cfg);
+  itf = SENSOR_GET_ITF(sensor_non_block);
+  temperature = pressure = 0;
+
+  if (ms5840->type & SENSOR_TYPE_PRESSURE) {
+      if(ms5840->raw_press_read_done != 1){
+	  rc = ms5840_readlen(itf, MS5840_CMD_ADC_READ, payload, 3);
+	  ms5840->rawtemp = ((uint32_t)payload[0] << 16) | ((uint32_t)payload[1] << 8) | payload[2];
+	  rc = ms5840_get_rawpress(itf, &rawpress, cfg->mc_s_press_res_osr);
+	  if(!rc){
+	      if(g_ms5840_insignificant_block == 1){
+		  /* compensate using temperature and pressure coefficients
+		   * competemp is the first order compensated temperature
+		   * which is used as input to the pressure compensation
+		   */
+		  g_ms5840_insignificant_block = 0;
+		  temperature = ms5840_compensate_temperature(ms5840->pdd.eeprom_coeff, ms5840->rawtemp,
+							      &comptemp, &deltat);
+		  pressure = ms5840_compensate_pressure(ms5840->pdd.eeprom_coeff, comptemp,
+							rawpress, deltat);
+
+		  databuf.spd.spd_press = pressure;
+		  databuf.spd.spd_press_is_valid = 1;
+
+		  /* Call data function */
+		  rc = ms5840->data_func(sensor_non_block, &ms5840->ctx, &databuf.spd, SENSOR_TYPE_PRESSURE);
+	      }
+	      else{
+		  ms5840->raw_press_read_done = 1;
+	      }
+	  }
+      }
+      else{
+	  ms5840->raw_press_read_done = 0;
+	  rc = ms5840_readlen(itf, MS5840_CMD_ADC_READ, payload, 3);
+	  if(!rc){
+	      rawpress = ((uint32_t)payload[0] << 16) | ((uint32_t)payload[1] << 8) | payload[2];
+	      temperature = ms5840_compensate_temperature(ms5840->pdd.eeprom_coeff, ms5840->rawtemp,
+							  &comptemp, &deltat);
+	      pressure = ms5840_compensate_pressure(ms5840->pdd.eeprom_coeff, comptemp,
+						    rawpress, deltat);
+
+	      databuf.spd.spd_press = pressure;
+	      databuf.spd.spd_press_is_valid = 1;
+
+	      /* Call data function */
+	      rc = ms5840->data_func(sensor_non_block, &ms5840->ctx, &databuf.spd, SENSOR_TYPE_PRESSURE);
+	  }
+      }
+  }
+  if (ms5840->type & SENSOR_TYPE_AMBIENT_TEMPERATURE){
+      /* read adc value */
+      rc = ms5840_readlen(itf, MS5840_CMD_ADC_READ, payload, 3);
+      if(!rc){
+	  ms5840->rawtemp = ((uint32_t)payload[0] << 16) | ((uint32_t)payload[1] << 8) | payload[2];
+	  if(!temperature){
+	      temperature = ms5840_compensate_temperature(ms5840->pdd.eeprom_coeff, ms5840->rawtemp,
+							  NULL, NULL);
+	  }
+	  databuf.std.std_temp = temperature;
+	  databuf.std.std_temp_is_valid = 1;
+
+	  /* Call data function */
+	  rc = ms5840->data_func(sensor_non_block, &ms5840->ctx, &databuf.std,
+			 SENSOR_TYPE_AMBIENT_TEMPERATURE);
+      }
+    }
+}
+#endif
 
 /**
  * Expects to be called back through os_dev_create().
@@ -99,6 +194,9 @@ ms5840_init(struct os_dev *dev, void *arg)
     struct sensor *sensor;
     struct sensor_itf *itf;
     int rc;
+#if MYNEWT_VAL(MS5840_NON_BLOCKING_MODE)
+    os_callout_init(&g_ms5840_one_shot_read, os_eventq_dflt_get(), ms5840_one_shot_read_cb, NULL);
+#endif
 
     if (!arg || !dev) {
         rc = SYS_ENODEV;
@@ -169,8 +267,101 @@ ms5840_sensor_read(struct sensor *sensor, sensor_type_t type,
     struct sensor_itf *itf;
     struct ms5840 *ms5840;
     struct ms5840_cfg *cfg;
-
     int rc;
+
+#if MYNEWT_VAL(MS5840_NON_BLOCKING_MODE)
+    sensor_non_block = sensor;
+    ms5840 = (struct ms5840 *)SENSOR_GET_DEVICE(sensor);
+    ms5840->type = type;
+    ms5840->data_func = data_func;
+    ms5840->ctx = *(struct sensor_read_ctx *)data_arg;
+    ms5840->timeout = timeout;
+    union {
+        struct sensor_temp_data std;
+        struct sensor_press_data spd;
+    } databuf;
+
+    if (!(type & SENSOR_TYPE_PRESSURE)    &&
+        !(type & SENSOR_TYPE_AMBIENT_TEMPERATURE)) {
+        rc = SYS_EINVAL;
+        goto err;
+    }
+
+    itf = SENSOR_GET_ITF(sensor);
+
+    cfg = &(ms5840->cfg);
+
+    temperature = pressure = 0;
+
+    /* Get a new pressure sample */
+    if (type & SENSOR_TYPE_PRESSURE) {
+        rc = ms5840_get_rawtemp(itf, &rawtemp, cfg->mc_s_temp_res_osr);
+        if (rc) {
+            goto err;
+        }
+        if(g_ms5840_insignificant_block == 1){
+            g_ms5840_insignificant_block = 0;
+            ms5840->rawtemp = rawtemp;
+            rc = ms5840_get_rawpress(itf, &rawpress, cfg->mc_s_press_res_osr);
+            if (rc) {
+                goto err;
+            }
+            if(g_ms5840_insignificant_block == 1){
+        		/* compensate using temperature and pressure coefficients
+                 * competemp is the first order compensated temperature
+                 * which is used as input to the pressure compensation
+                 */
+                g_ms5840_insignificant_block = 0;
+                temperature = ms5840_compensate_temperature(ms5840->pdd.eeprom_coeff, rawtemp,
+                                                            &comptemp, &deltat);
+                pressure = ms5840_compensate_pressure(ms5840->pdd.eeprom_coeff, comptemp,
+                                                      rawpress, deltat);
+
+                databuf.spd.spd_press = pressure;
+                databuf.spd.spd_press_is_valid = 1;
+
+                /* Call data function */
+                rc = data_func(sensor, data_arg, &databuf.spd, SENSOR_TYPE_PRESSURE);
+                if (rc) {
+                    goto err;
+                }
+            }
+            else{
+                ms5840->raw_press_read_done = 1;
+            }
+        }
+    }
+    /* Get a new temperature sample */
+    if (type & SENSOR_TYPE_AMBIENT_TEMPERATURE) {
+        if (!temperature) {
+            rc = ms5840_get_rawtemp(itf, &rawtemp, cfg->mc_s_temp_res_osr);
+            if (rc) {
+                goto err;
+            }
+        }
+        if(g_ms5840_insignificant_block == 1){
+            g_ms5840_insignificant_block = 0;
+            if(!temperature){
+        		    temperature = ms5840_compensate_temperature(ms5840->pdd.eeprom_coeff, rawtemp,
+									NULL, NULL);
+            }
+            databuf.std.std_temp = temperature;
+            databuf.std.std_temp_is_valid = 1;
+
+            /* Call data function */
+            rc = data_func(sensor, data_arg, &databuf.std,
+                           SENSOR_TYPE_AMBIENT_TEMPERATURE);
+            if (rc) {
+                goto err;
+            }
+        }
+    }
+
+    return rc;
+#endif
+
+
+#if (!MYNEWT_VAL(MS5840_NON_BLOCKING_MODE))
     union {
         struct sensor_temp_data std;
         struct sensor_press_data spd;
@@ -245,6 +436,7 @@ ms5840_sensor_read(struct sensor *sensor, sensor_type_t type,
     }
 
     return 0;
+#endif
 err:
     return rc;
 }
@@ -561,7 +753,30 @@ ms5840_get_raw_data(struct sensor_itf *itf, uint8_t cmd, uint32_t *data)
     if (rc) {
         goto err;
     }
+#if MYNEWT_VAL(MS5840_NON_BLOCKING_MODE)
+    if(cnv_time[(cmd & MS5840_CNV_OSR_MASK)/2] < 500){
+	/* delay conversion depending on resolution */
+	os_cputime_delay_usecs(cnv_time[(cmd & MS5840_CNV_OSR_MASK)/2]);
 
+	/* read adc value */
+	rc = ms5840_readlen(itf, MS5840_CMD_ADC_READ, payload, 3);
+	if (rc) {
+	    goto err;
+	}
+
+	*data = ((uint32_t)payload[0] << 16) | ((uint32_t)payload[1] << 8) | payload[2];
+
+	return 0;
+    }
+    else{
+	uint8_t ticks;
+	ticks = ((cnv_time[(cmd & MS5840_CNV_OSR_MASK)/2] * OS_TICKS_PER_SEC)/1000) + 1;
+	os_callout_reset(&g_ms5840_one_shot_read, ticks);
+    }
+    return rc;
+#endif
+
+#if (!MYNEWT_VAL(MS5840_NON_BLOCKING_MODE))
     /* delay conversion depending on resolution */
     os_cputime_delay_usecs(cnv_time[(cmd & MS5840_CNV_OSR_MASK)/2]);
 
@@ -574,6 +789,7 @@ ms5840_get_raw_data(struct sensor_itf *itf, uint8_t cmd, uint32_t *data)
     *data = ((uint32_t)payload[0] << 16) | ((uint32_t)payload[1] << 8) | payload[2];
 
     return 0;
+#endif
 err:
     return rc;
 }
