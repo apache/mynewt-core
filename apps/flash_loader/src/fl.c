@@ -172,6 +172,8 @@ main(int argc, char **argv)
 
     hal_bsp_init();
     flash_map_init();
+    hal_watchdog_init(MYNEWT_VAL(WATCHDOG_INTERVAL));
+    hal_watchdog_enable();
 
     fl_data = malloc(MYNEWT_VAL(FLASH_LOADER_DL_SZ));
     assert(fl_data);
