@@ -228,7 +228,7 @@ struct metrics_event_hdr {
  * @param count    Number of metrics definition
  * @param name     Printable event name
  *
- * @return 0 on success, negative value otherwise
+ * @return 0 on success, SYS_E[...] error otherwise
  */
 int metrics_event_init(struct metrics_event_hdr *hdr,
                        const struct metrics_metric_def *metrics, uint8_t count,
@@ -242,7 +242,7 @@ int metrics_event_init(struct metrics_event_hdr *hdr,
  *
  * @param hdr  Event header
  *
- * @return 0 on success, negative value otherwise
+ * @return 0 on success, SYS_E[...] error otherwise
  */
 int metrics_event_register(struct metrics_event_hdr *hdr);
 
@@ -258,7 +258,7 @@ int metrics_event_register(struct metrics_event_hdr *hdr);
  * @param module  Log module
  * @param level   Log level
  *
- * @return 0 on success, negative value otherwise
+ * @return 0 on success, SYS_E[...] error otherwise
  *
  * @sa log_append
  */
@@ -274,7 +274,7 @@ int metrics_event_set_log(struct metrics_event_hdr *hdr, struct log *log,
  * @param hdr        Event header
  * @param timestamp  Event timestamp
  *
- * @return 0 on success, negative value otherwise
+ * @return 0 on success, SYS_E[...] error otherwise
  */
 int metrics_event_start(struct metrics_event_hdr *hdr, uint32_t timestamp);
 
@@ -288,7 +288,7 @@ int metrics_event_start(struct metrics_event_hdr *hdr, uint32_t timestamp);
  *
  * @param hdr        Event header
  *
- * @return 0 on success, negative value otherwise
+ * @return 0 on success, SYS_E[...] error otherwise.
  */
 int metrics_event_end(struct metrics_event_hdr *hdr);
 
@@ -304,7 +304,7 @@ int metrics_event_end(struct metrics_event_hdr *hdr);
  * @param metric  Metric identifier
  * @param state   New state for metric data collection
  *
- * @return 0 on success, negative value otherwise
+ * @return 0 on success, SYS_E[...] error otherwise
  */
 int metrics_set_state(struct metrics_event_hdr *hdr, uint8_t metric,
                       bool state);
@@ -319,7 +319,7 @@ int metrics_set_state(struct metrics_event_hdr *hdr, uint8_t metric,
  * @param hdr   Event header
  * @param mask  Metrics bitmask
  *
- * @return 0 on success, negative value otherwise
+ * @return 0 on success, SYS_E[...] error otherwise
  */
 int metrics_set_state_mask(struct metrics_event_hdr *hdr, uint32_t mask);
 
@@ -333,7 +333,7 @@ int metrics_set_state_mask(struct metrics_event_hdr *hdr, uint32_t mask);
  * @param hdr   Event header
  * @param mask  Metrics bitmask
  *
- * @return 0 on success, negative value otherwise
+ * @return 0 on success, SYS_E[...] error otherwise
  */
 int metrics_clr_state_mask(struct metrics_event_hdr *hdr, uint32_t mask);
 /**
@@ -360,7 +360,7 @@ uint32_t metrics_get_state_mask(struct metrics_event_hdr *hdr);
  * @param metric  Metric identifier
  * @param val     Metric value
  *
- * @return 0 on success, negative value otherwise
+ * @return 0 on success, SYS_E[...] error otherwise
  */
 int metrics_set_value(struct metrics_event_hdr *hdr, uint8_t metric,
                       uint32_t val);
@@ -375,7 +375,7 @@ int metrics_set_value(struct metrics_event_hdr *hdr, uint8_t metric,
  * @param metric  Metric identifier
  * @param val     Metric value
  *
- * @return 0 on success, negative value otherwise
+ * @return 0 on success, SYS_E[...] error otherwise
  */
 int metrics_set_single_value(struct metrics_event_hdr *hdr, uint8_t metric,
                              uint32_t val);
@@ -391,7 +391,7 @@ int metrics_set_single_value(struct metrics_event_hdr *hdr, uint8_t metric,
  * @param metric  Metric identifier
  * @param val     Metric value
  *
- * @return 0 on success, negative value otherwise
+ * @return 0 on success, SYS_E[...] error otherwise
  */
 int metrics_set_series_value(struct metrics_event_hdr *hdr, uint8_t metric,
                              uint32_t val);
@@ -412,7 +412,7 @@ int metrics_set_series_value(struct metrics_event_hdr *hdr, uint8_t metric,
  * @param hdr  Event header
  * @param om   Target mbuf
  *
- * @return 0 on success, negative value otherwise
+ * @return 0 on success, SYS_E[...] error otherwise
  */
 int metrics_event_to_cbor(struct metrics_event_hdr *hdr, struct os_mbuf *om);
 
