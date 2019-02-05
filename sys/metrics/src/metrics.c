@@ -124,10 +124,9 @@ metrics_event_end(struct metrics_event_hdr *hdr)
     if (hdr->log) {
         om = metrics_get_mbuf();
         if (om) {
-            os_mbuf_extend(om, sizeof(struct log_entry_hdr));
             if (!metrics_event_to_cbor(hdr, om)) {
-                log_append_mbuf_typed(hdr->log, hdr->log_module, hdr->log_level,
-                                      LOG_ETYPE_CBOR, om);
+                log_append_mbuf_body(hdr->log, hdr->log_module, hdr->log_level,
+                                     LOG_ETYPE_CBOR, om);
             } else {
                 ret = -1;
             }
