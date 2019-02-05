@@ -81,7 +81,11 @@ metrics_event_init(struct metrics_event_hdr *hdr,
 int
 metrics_event_register(struct metrics_event_hdr *hdr)
 {
+#if MYNEWT_VAL(METRICS_CLI)
     return metrics_cli_register_event(hdr);
+#else
+    return SYS_ENOTSUP;
+#endif
 }
 
 int

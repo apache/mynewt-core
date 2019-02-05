@@ -17,10 +17,13 @@
  * under the License.
  */
 
+#include "os/mynewt.h"
+
+#if MYNEWT_VAL(METRICS_CLI)
+
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
-#include "os/os.h"
 #include "shell/shell.h"
 #include "console/console.h"
 #include "metrics/metrics.h"
@@ -258,3 +261,4 @@ metrics_cli_init(void)
 
     return 0;
 }
+#endif
