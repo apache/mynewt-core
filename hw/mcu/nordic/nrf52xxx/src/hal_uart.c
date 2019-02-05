@@ -450,7 +450,7 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
 int
 hal_uart_close(int port)
 {
-    struct hal_uart *u;
+    volatile struct hal_uart *u;
     NRF_UARTE_Type *nrf_uart;
 
 #if defined(NRF52840_XXAA)
@@ -472,10 +472,8 @@ hal_uart_close(int port)
 #endif
 
     u->u_open = 0;
-    if (u->u_tx_started) {
-        while (nrf_uart->EVENTS_ENDTX == 0) {
-            /* Wait here until the dma is finished */
-        }
+    while (u->u_tx_started) {
+        /* Wait here until the dma is finished */
     }
     nrf_uart->ENABLE = 0;
     nrf_uart->INTENCLR = 0xffffffff;
