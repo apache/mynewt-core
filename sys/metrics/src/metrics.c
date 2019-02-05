@@ -128,6 +128,7 @@ metrics_event_end(struct metrics_event_hdr *hdr)
                 log_append_mbuf_body(hdr->log, hdr->log_module, hdr->log_level,
                                      LOG_ETYPE_CBOR, om);
             } else {
+                os_mbuf_free_chain(om);
                 ret = -1;
             }
         } else {
