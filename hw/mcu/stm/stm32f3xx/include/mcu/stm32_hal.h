@@ -92,8 +92,4 @@ struct stm32_hal_spi_cfg {
 }
 #endif
 
-#ifdef __cplusplus
-}
-#endif
-
 #endif /* STM32_HAL_H */

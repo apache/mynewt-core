@@ -119,7 +119,7 @@ os_error_t os_mutex_pend(struct os_mutex *mu, os_time_t timeout);
  */
 static inline os_error_t os_mutex_get_level(struct os_mutex *mu)
 {
-    return mu->mu_level;
+    return (os_error_t)mu->mu_level;
 }
 
 #ifdef __cplusplus
