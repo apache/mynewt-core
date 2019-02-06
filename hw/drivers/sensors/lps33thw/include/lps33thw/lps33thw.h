@@ -101,6 +101,7 @@ struct lps33thw {
     sensor_data_func_t data_func;
     struct sensor_read_ctx ctx;
     uint32_t timeout;
+    struct os_callout lps33thw_one_shot_read;
 #endif
 };
 

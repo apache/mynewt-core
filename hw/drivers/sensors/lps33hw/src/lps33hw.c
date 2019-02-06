@@ -90,7 +90,6 @@ static void lps33hw_read_interrupt_handler(void *arg);
 #if MYNEWT_VAL(LPS33HW_ONE_SHOT_MODE)
 #define LPS33HW_ONE_SHOT_TICKS	2
 static void lps33hw_one_shot_read_cb(struct os_event *ev);
-static struct os_callout g_lps33hw_one_shot_read;
 #endif
 
 static const struct sensor_driver g_lps33hw_sensor_driver = {
@@ -937,7 +936,7 @@ lps33hw_init(struct os_dev *dev, void *arg)
 
     lps = (struct lps33hw *) dev;
 #if MYNEWT_VAL(LPS33HW_ONE_SHOT_MODE)
-    os_callout_init(&g_lps33hw_one_shot_read, os_eventq_dflt_get(), lps33hw_one_shot_read_cb, dev);
+    os_callout_init(&lps->lps33hw_one_shot_read, os_eventq_dflt_get(), lps33hw_one_shot_read_cb, dev);
 #endif
 
     sensor = &lps->sensor;
@@ -1142,8 +1141,8 @@ lps33hw_sensor_read(struct sensor *sensor, sensor_type_t type,
       if (rc) {
 	  return rc;
       }
+      os_callout_reset(&lps33hw->lps33hw_one_shot_read, LPS33HW_ONE_SHOT_TICKS);
     }
-  os_callout_reset(&g_lps33hw_one_shot_read, LPS33HW_ONE_SHOT_TICKS);
   return rc;
 #endif
 
