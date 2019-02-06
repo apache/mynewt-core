@@ -104,7 +104,7 @@ hal_gpio_init_out(int pin, int val)
 }
 
 /**
- * Deinitialize the specified pin to revert the previous initialization
+ * Deinitialize the specified pin to revert to default configuration
  *
  * @param pin Pin number to unset
  *
