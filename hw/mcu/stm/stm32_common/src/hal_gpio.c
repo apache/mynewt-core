@@ -642,7 +642,7 @@ hal_gpio_init_af(int pin, uint8_t af_type, enum hal_gpio_pull pull, uint8_t od)
 }
 
 /**
- * Deinitialize the specified pin to revert the previous initialization
+ * Deinitialize the specified pin to revert to default configuration
  *
  * @param pin Pin number to unset
  *
