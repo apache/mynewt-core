@@ -41,7 +41,7 @@ hal_flash_init(void)
             break;
         }
         if (hf->hf_itf->hff_init(hf)) {
-            rc = -1;
+            rc = SYS_EIO;
         }
     }
     return rc;
@@ -87,7 +87,7 @@ static int
 hal_flash_check_addr(const struct hal_flash *hf, uint32_t addr)
 {
     if (addr < hf->hf_base_addr || addr > hf->hf_base_addr + hf->hf_size) {
-        return -1;
+        return SYS_EINVAL;
     }
     return 0;
 }
@@ -96,16 +96,23 @@ int
 hal_flash_read(uint8_t id, uint32_t address, void *dst, uint32_t num_bytes)
 {
     const struct hal_flash *hf;
+    int rc;
 
     hf = hal_bsp_flash_dev(id);
     if (!hf) {
-        return -1;
+        return SYS_EINVAL;
     }
     if (hal_flash_check_addr(hf, address) ||
       hal_flash_check_addr(hf, address + num_bytes)) {
-        return -1;
+        return SYS_EINVAL;
     }
-    return hf->hf_itf->hff_read(hf, address, dst, num_bytes);
+
+    rc = hf->hf_itf->hff_read(hf, address, dst, num_bytes);
+    if (rc != 0) {
+        return SYS_EIO;
+    }
+
+    return 0;
 }
 
 #if MYNEWT_VAL(HAL_FLASH_VERIFY_WRITES)
@@ -113,7 +120,8 @@ hal_flash_read(uint8_t id, uint32_t address, void *dst, uint32_t num_bytes)
  * Verifies that the specified range of flash contains the given contents.
  *
  * @return                      0 on success;
- *                              nonzero on error or unexpected contents.
+ *                              SYS_E[...] code on error;
+ *                              1 on unexpected flash contents.
  */
 static int
 hal_flash_cmp(const struct hal_flash *hf, uint32_t address, const void *val,
@@ -139,11 +147,11 @@ hal_flash_cmp(const struct hal_flash *hf, uint32_t address, const void *val,
 
         rc = hf->hf_itf->hff_read(hf, address + off, buf, chunk_sz);
         if (rc != 0) {
-            return rc;
+            return SYS_EIO;
         }
 
         if (memcmp(buf, u8p + off, chunk_sz) != 0) {
-            return -1;
+            return 1;
         }
     }
 
@@ -160,11 +168,11 @@ hal_flash_write(uint8_t id, uint32_t address, const void *src,
 
     hf = hal_bsp_flash_dev(id);
     if (!hf) {
-        return -1;
+        return SYS_EINVAL;
     }
     if (hal_flash_check_addr(hf, address) ||
       hal_flash_check_addr(hf, address + num_bytes)) {
-        return -1;
+        return SYS_EINVAL;
     }
 
     if (protected_flash[id / 8] & (1 << (id & 7))) {
@@ -173,7 +181,7 @@ hal_flash_write(uint8_t id, uint32_t address, const void *src,
 
     rc = hf->hf_itf->hff_write(hf, address, src, num_bytes);
     if (rc != 0) {
-        return rc;
+        return SYS_EIO;
     }
 
 #if MYNEWT_VAL(HAL_FLASH_VERIFY_WRITES)
@@ -198,10 +206,10 @@ hal_flash_erase_sector(uint8_t id, uint32_t sector_address)
 
     hf = hal_bsp_flash_dev(id);
     if (!hf) {
-        return -1;
+        return SYS_EINVAL;
     }
     if (hal_flash_check_addr(hf, sector_address)) {
-        return -1;
+        return SYS_EINVAL;
     }
 
     if (protected_flash[id / 8] & (1 << (id & 7))) {
@@ -210,7 +218,7 @@ hal_flash_erase_sector(uint8_t id, uint32_t sector_address)
 
     rc = hf->hf_itf->hff_erase_sector(hf, sector_address);
     if (rc != 0) {
-        return rc;
+        return SYS_EIO;
     }
 
 #if MYNEWT_VAL(HAL_FLASH_VERIFY_ERASES)
@@ -241,11 +249,11 @@ hal_flash_erase(uint8_t id, uint32_t address, uint32_t num_bytes)
 
     hf = hal_bsp_flash_dev(id);
     if (!hf) {
-        return -1;
+        return SYS_EINVAL;
     }
     if (hal_flash_check_addr(hf, address) ||
       hal_flash_check_addr(hf, address + num_bytes)) {
-        return -1;
+        return SYS_EINVAL;
     }
 
     if (protected_flash[id / 8] & (1 << (id & 7))) {
@@ -257,7 +265,7 @@ hal_flash_erase(uint8_t id, uint32_t address, uint32_t num_bytes)
         /*
          * Check for wrap-around.
          */
-        return -1;
+        return SYS_EINVAL;
     }
 
     for (i = 0; i < hf->hf_sector_cnt; i++) {
@@ -270,7 +278,7 @@ hal_flash_erase(uint8_t id, uint32_t address, uint32_t num_bytes)
              * erase the sector.
              */
             if (hf->hf_itf->hff_erase_sector(hf, start)) {
-                return -1;
+                return SYS_EIO;
             }
 
 #if MYNEWT_VAL(HAL_FLASH_VERIFY_ERASES)
@@ -287,12 +295,15 @@ hal_flash_is_erased(const struct hal_flash *hf, uint32_t address, void *dst,
 {
     uint32_t i;
     uint8_t *buf;
+    int rc;
 
     buf = dst;
 
-    if (hf->hf_itf->hff_read(hf, address, dst, num_bytes)) {
-        return -1;
+    rc = hf->hf_itf->hff_read(hf, address, dst, num_bytes);
+    if (rc != 0) {
+        return SYS_EIO;
     }
+
     for (i = 0; i < num_bytes; i++) {
         if (buf[i] != hf->hf_erased_val) {
             return 0;
@@ -305,17 +316,23 @@ int
 hal_flash_isempty(uint8_t id, uint32_t address, void *dst, uint32_t num_bytes)
 {
     const struct hal_flash *hf;
+    int rc;
 
     hf = hal_bsp_flash_dev(id);
     if (!hf) {
-        return -1;
+        return SYS_EINVAL;
     }
     if (hal_flash_check_addr(hf, address) ||
       hal_flash_check_addr(hf, address + num_bytes)) {
-        return -1;
+        return SYS_EINVAL;
     }
     if (hf->hf_itf->hff_is_empty) {
-        return hf->hf_itf->hff_is_empty(hf, address, dst, num_bytes);
+        rc = hf->hf_itf->hff_is_empty(hf, address, dst, num_bytes);
+        if (rc < 0) {
+            return SYS_EIO;
+        } else {
+            return rc;
+        }
     } else {
         return hal_flash_is_erased(hf, address, dst, num_bytes);
     }
