@@ -113,14 +113,7 @@ hal_gpio_init_out(int pin, int val)
 int
 hal_gpio_deinit(int pin)
 {
-    uint32_t conf;
-    NRF_GPIO_Type *port;
-
-    conf = GPIO_PIN_CNF_INPUT_Disconnect << GPIO_PIN_CNF_INPUT_Pos;
-    port = HAL_GPIO_PORT(pin);
-    port->PIN_CNF[pin] = conf;
-    port->DIRCLR = HAL_GPIO_MASK(pin);
-
+    NRF_GPIO->PIN_CNF[pin] = GPIO_PIN_CNF_INPUT_Disconnect << GPIO_PIN_CNF_INPUT_Pos;
     return 0;
 }
 
