@@ -167,7 +167,6 @@ hal_gpio_deinit(int pin)
     conf = GPIO_PIN_CNF_INPUT_Disconnect << GPIO_PIN_CNF_INPUT_Pos;
     port = HAL_GPIO_PORT(pin);
     port->PIN_CNF[pin_index] = conf;
-    port->DIRCLR = HAL_GPIO_MASK(pin);
 
     return 0;
 }
