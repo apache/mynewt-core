@@ -102,6 +102,9 @@ static const struct sensor_driver g_lps33thw_sensor_driver = {
     .sd_clear_high_trigger_thresh = lps33thw_sensor_clear_high_thresh
 };
 
+/*
+ * Sensor read after ONE_SHOT conversion
+ */
 #if MYNEWT_VAL(LPS33THW_ONE_SHOT_MODE)
 static void lps33thw_one_shot_read_cb(struct os_event *ev){
   int rc;

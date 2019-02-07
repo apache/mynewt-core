@@ -103,7 +103,7 @@ static const struct sensor_driver g_lps33hw_sensor_driver = {
 };
 
 /*
- * Sensor read after conversion
+ * Sensor read after ONE_SHOT conversion
  */
 #if MYNEWT_VAL(LPS33HW_ONE_SHOT_MODE)
 static void lps33hw_one_shot_read_cb(struct os_event *ev)
