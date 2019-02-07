@@ -381,20 +381,57 @@ log_fcb_walk(struct log *log, log_walk_func_t walk_func,
 
     memset(&loc, 0, sizeof(loc));
 
+    loc = log_offset->fcb_entry_last;
+
     /*
      * if timestamp for request is < 0, return last log entry
      */
-    if (log_offset->lo_ts < 0) {
+    if (log_offset->lo_ts < 0)
+    {
         locp = &fcb->f_active;
         rc = walk_func(log, log_offset, (void *)locp, locp->fe_data_len);
-    } else {
-        while (fcb_getnext(fcb, &loc) == 0) {
-            rc = walk_func(log, log_offset, (void *) &loc, loc.fe_data_len);
-            if (rc) {
+    }
+    else
+    {
+
+        void* dptr = (void *)&loc;
+        struct log_entry_hdr ueh;
+        rc = fcb_getnext(fcb, &loc);
+        if (rc != 0)
+        {
+            return rc;
+        }
+        rc = log_read_hdr(log, dptr, &ueh);
+        if (rc != 0)
+        {
+            return rc;
+        }
+
+        while(ueh.ue_index < log_offset->lo_index)
+        {
+            rc = fcb_getnext(fcb, &loc);
+            if (rc != 0)
+            {
+                return rc;
+            }
+            rc = log_read_hdr(log, dptr, &ueh);
+            if (rc != 0)
+            {
                 break;
             }
         }
+
+        do {
+            rc = walk_func(log, log_offset, (void *) &loc, loc.fe_data_len);
+            if (rc)
+            {
+                log_offset->fcb_entry_last = loc;
+                break;
+            }
+            log_offset->fcb_entry_last = loc;
+        } while (fcb_getnext(fcb, &loc) == 0);
     }
+
     return (rc);
 }
 

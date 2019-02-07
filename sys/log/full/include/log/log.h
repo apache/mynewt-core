@@ -22,7 +22,7 @@
 #include "os/mynewt.h"
 #include "cbmem/cbmem.h"
 #include "log_common/log_common.h"
-
+#include "fcb/fcb.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -48,6 +48,7 @@ struct log_offset {
 
     /* Specific to walk / read function. */
     void *lo_arg;
+    struct fcb_entry fcb_entry_last;
 };
 
 #if MYNEWT_VAL(LOG_STORAGE_INFO)
