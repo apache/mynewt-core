@@ -17,6 +17,10 @@
  * under the License.
  */
 
+#include <assert.h>
+#include "syscfg/syscfg.h"
+#include "hal/hal_timer.h"
+#include "os/os_cputime.h"
 #include "mcu/da1469x_hal.h"
 
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
@@ -62,6 +66,33 @@ static const struct da1469x_hal_i2c_cfg hal_i2c1_cfg = {
 };
 #endif
 #endif
+
+static void
+da1469x_periph_create_timers(void)
+{
+    int rc;
+
+    (void)rc;
+
+#if MYNEWT_VAL(TIMER_0)
+    rc = hal_timer_init(0, NULL);
+    assert(rc == 0);
+#endif
+#if MYNEWT_VAL(TIMER_1)
+    rc = hal_timer_init(1, NULL);
+    assert(rc == 0);
+#endif
+#if MYNEWT_VAL(TIMER_2)
+    rc = hal_timer_init(2, NULL);
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(OS_CPUTIME_TIMER_NUM) >= 0
+    rc = os_cputime_init(MYNEWT_VAL(OS_CPUTIME_FREQ));
+    assert(rc == 0);
+#endif
+}
+
 static void
 da1469x_periph_create_i2c(void)
 {
@@ -95,7 +126,7 @@ da1469x_periph_create_i2c(void)
 void
 da1469x_periph_create(void)
 {
-//    da1469x_periph_create_timers();
+    da1469x_periph_create_timers();
 //    da1469x_periph_create_adc();
 //    da1469x_periph_create_pwm();
 //    da1469x_periph_create_trng();
