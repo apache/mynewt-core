@@ -62,3 +62,6 @@ pkg.deps.UART_4:
 
 pkg.deps.UART_5:
     - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
+
+pkg.deps.TRNG:
+    - "@apache-mynewt-core/hw/drivers/trng/trng_k64f"

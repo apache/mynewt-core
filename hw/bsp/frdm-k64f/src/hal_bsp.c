@@ -28,6 +28,10 @@
 #include "hal/hal_flash_int.h"
 #include "flash_map/flash_map.h"
 #include "hal/hal_flash.h"
+#if MYNEWT_VAL(TRNG)
+#include "trng/trng.h"
+#include "trng_k64f/trng_k64f.h"
+#endif
 #if MYNEWT_VAL(UART_0) || MYNEWT_VAL(UART_1) || MYNEWT_VAL(UART_2) || \
     MYNEWT_VAL(UART_3) || MYNEWT_VAL(UART_4) || MYNEWT_VAL(UART_5)
 #include "uart/uart.h"
@@ -59,6 +63,10 @@ static struct uart_dev os_bsp_uart4;
 #endif
 #if MYNEWT_VAL(UART_5)
 static struct uart_dev os_bsp_uart5;
+#endif
+
+#if MYNEWT_VAL(TRNG)
+static struct trng_dev os_bsp_trng;
 #endif
 
 /*
@@ -164,6 +172,13 @@ hal_bsp_init(void)
     // Init pinmux and other hardware setup.
     init_hardware();
     BOARD_BootClockRUN();
+
+#if MYNEWT_VAL(TRNG)
+    rc = os_dev_create(&os_bsp_trng.dev, "trng",
+                       OS_DEV_INIT_KERNEL, OS_DEV_INIT_PRIO_DEFAULT,
+                       k64f_trng_dev_init, NULL);
+    assert(rc == 0);
+#endif
 
 #if MYNEWT_VAL(UART_0)
     rc = os_dev_create((struct os_dev *) &os_bsp_uart0, "uart0",
