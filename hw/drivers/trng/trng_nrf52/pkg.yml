@@ -19,7 +19,7 @@
 
 pkg.name: hw/drivers/trng/trng_nrf52
 pkg.description: TRNG driver for nRF52xxx
-pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
+pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
