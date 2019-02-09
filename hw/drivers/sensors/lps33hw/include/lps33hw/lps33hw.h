@@ -75,8 +75,7 @@ struct lps33hw_cfg {
 };
 
 struct lps33hw_private_driver_data {
-    sensor_data_func_t user_handler;
-    void *user_arg;
+    struct sensor_read_ctx user_ctx;
 };
 
 struct lps33hw {
@@ -94,6 +93,11 @@ struct lps33hw {
     struct lps33hw_private_driver_data pdd;
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
     bool node_is_spi;
+#endif
+#if MYNEWT_VAL(LPS33HW_ONE_SHOT_MODE)
+    sensor_type_t type;
+    sensor_data_func_t data_func;
+    struct os_callout lps33hw_one_shot_read;
 #endif
 };
 

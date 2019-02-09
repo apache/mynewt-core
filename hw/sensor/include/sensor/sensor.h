@@ -628,6 +628,14 @@ struct sensor {
 };
 
 /**
+ * Read context for calling user function with argument
+ */
+struct sensor_read_ctx {
+    sensor_data_func_t user_func;
+    void *user_arg;
+};
+
+/**
  * Lock access to the sensor_itf specified by si.  Blocks until lock acquired.
  *
  * @param si The sensor_itf to lock
