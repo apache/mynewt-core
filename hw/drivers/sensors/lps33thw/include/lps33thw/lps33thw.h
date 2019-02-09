@@ -79,8 +79,7 @@ struct lps33thw_cfg {
 };
 
 struct lps33thw_private_driver_data {
-    sensor_data_func_t user_handler;
-    void *user_arg;
+    struct sensor_read_ctx user_ctx;
 };
 
 struct lps33thw {
@@ -99,8 +98,6 @@ struct lps33thw {
 #if MYNEWT_VAL(LPS33THW_ONE_SHOT_MODE)
     sensor_type_t type;
     sensor_data_func_t data_func;
-    struct sensor_read_ctx ctx;
-    uint32_t timeout;
     struct os_callout lps33thw_one_shot_read;
 #endif
 };

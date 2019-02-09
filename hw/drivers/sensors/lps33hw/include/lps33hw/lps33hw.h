@@ -97,7 +97,6 @@ struct lps33hw {
 #if MYNEWT_VAL(LPS33HW_ONE_SHOT_MODE)
     sensor_type_t type;
     sensor_data_func_t data_func;
-    uint32_t timeout;
     struct os_callout lps33hw_one_shot_read;
 #endif
 };
