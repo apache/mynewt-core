@@ -88,8 +88,8 @@ static int lps33thw_sensor_clear_high_thresh(struct sensor *sensor,
 static void lps33thw_read_interrupt_handler(void *arg);
 
 #if MYNEWT_VAL(LPS33THW_ONE_SHOT_MODE)
-  #define LPS33THW_ONE_SHOT_TICKS	2
-  static void lps33thw_one_shot_read_cb(struct os_event *ev);
+#define LPS33THW_ONE_SHOT_TICKS	2
+static void lps33thw_one_shot_read_cb(struct os_event *ev);
 #endif
 
 static const struct sensor_driver g_lps33thw_sensor_driver = {
