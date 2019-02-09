@@ -109,7 +109,7 @@ static const struct sensor_driver g_lps33thw_sensor_driver = {
 static void lps33thw_one_shot_read_cb(struct os_event *ev){
   int rc;
   struct lps33thw *lps33thw;
-  static struct sensor *sensor;
+  struct sensor *sensor;
   lps33thw = (struct lps33thw *)ev->ev_arg;
   sensor = &lps33thw->sensor;
   (void)lps33thw->timeout;
@@ -1111,8 +1111,7 @@ lps33thw_sensor_read(struct sensor *sensor, sensor_type_t type,
 	      if (rc) {
 		  return rc;
 	      }
-	  }
-	  else {
+	  } else {
 	      /* Read once */
 	      struct sensor_press_data spd;
 	      rc = lps33thw_get_pressure(itf, &spd.spd_press);
