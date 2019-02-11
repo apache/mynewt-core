@@ -26,6 +26,8 @@ extern "C" {
 
 struct os_eventq *oc_evq_get(void);
 
+void oc_conn_init(void);
+
 #ifdef __cplusplus
 }
 #endif

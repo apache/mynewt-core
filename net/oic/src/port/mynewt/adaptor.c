@@ -176,6 +176,7 @@ oc_connectivity_init(void)
     int i;
     const struct oc_transport *ot;
 
+    oc_conn_init();
     for (i = 0; i < OC_TRANSPORT_MAX; i++) {
         if (!oc_transports[i]) {
             continue;
