@@ -258,6 +258,10 @@ syscfg.defs:
         description: 'Enable nRF52xxx TRNG'
         value: 0
 
+    CRYPTO:
+        description: 'Enable nRF52xxx CRYPTO'
+        value: 0
+
     UART_0:
         description: 'Enable nRF52xxx UART0'
         value: 1
