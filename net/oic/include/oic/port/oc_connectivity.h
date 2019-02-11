@@ -75,6 +75,32 @@ oc_endpoint_use_tcp(struct oc_endpoint *oe)
 uint16_t oc_connectivity_get_dtls_port(void);
 #endif /* OC_SECURITY */
 
+/*
+ * Callback mechanism for connection-oriented transports, to be
+ * called when new connection is established, and when an existing
+ * connection is closed
+ */
+#define OC_ENDPOINT_CONN_EV_OPEN        1
+#define OC_ENDPOINT_CONN_EV_CLOSE       2
+struct oc_conn_cb {
+    SLIST_ENTRY(oc_conn_cb) occ_next;
+    void (*occ_func)(struct oc_endpoint *, int ev);
+};
+void oc_conn_cb_register(struct oc_conn_cb *cb);
+
+struct oc_conn_ev {
+    STAILQ_ENTRY(oc_conn_ev) oce_next;
+    struct oc_endpoint oce_oe;
+    int oce_type;
+};
+/*
+ * Called by underlying connection-oriented transports to notify
+ * about connection state changes.
+ */
+struct oc_conn_ev *oc_conn_ev_alloc(void);
+void oc_conn_created(struct oc_conn_ev *);
+void oc_conn_removed(struct oc_conn_ev *);
+
 enum oc_resource_properties oc_get_trans_security(const struct oc_endpoint *oe);
 int oc_connectivity_init(void);
 void oc_connectivity_shutdown(void);
