@@ -27,25 +27,18 @@
  *
  * @param hdr                   The header for the image to boot.
  */
-void
+void __attribute__((naked))
 hal_system_start(void *img_start)
 {
-    typedef void jump_fn(void);
+    uint32_t *img_data = img_start;
 
-    uint32_t base0entry;
-    uint32_t jump_addr;
-    jump_fn *fn;
-
-    /* First word contains initial MSP value. */
-    __set_MSP(*(uint32_t *)img_start);
-
-    /* Second word contains address of entry point (Reset_Handler). */
-    base0entry = *(uint32_t *)(img_start + 4);
-    jump_addr = base0entry;
-    fn = (jump_fn *)jump_addr;
-
-    /* Jump to image. */
-    fn();
+    asm volatile (".syntax unified        \n"
+                  /* 1st word is stack pointer */
+                  "    msr  msp, %0       \n"
+                  /* 2nd word is a reset handler (image entry) */
+                  "    bx   %1            \n"
+                  : /* no output */
+                  : "r" (img_data[0]), "r" (img_data[1]));
 }
 
 /**
