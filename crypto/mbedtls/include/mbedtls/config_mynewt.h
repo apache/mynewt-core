@@ -180,6 +180,11 @@ extern "C" {
 #undef MBEDTLS_ECP_DP_CURVE25519_ENABLED
 #endif
 
+#if MYNEWT_VAL(MBEDTLS_AES_ALT) == 0
+#undef MBEDTLS_AES_ALT
+#elif !defined(MBEDTLS_AES_ALT)
+#define MBEDTLS_AES_ALT 1
+#endif
 #if MYNEWT_VAL(MBEDTLS_AES_C) == 0
 #undef MBEDTLS_AES_C
 #endif
