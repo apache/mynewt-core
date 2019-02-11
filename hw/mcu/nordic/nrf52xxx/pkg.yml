@@ -54,6 +54,9 @@ pkg.deps.BLE_CONTROLLER:
 pkg.deps.TRNG:
     - "@apache-mynewt-core/hw/drivers/trng/trng_nrf52"
 
+pkg.deps.CRYPTO:
+    - "@apache-mynewt-core/hw/drivers/crypto/crypto_nrf52"
+
 pkg.deps.UART_0:
     - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
 
