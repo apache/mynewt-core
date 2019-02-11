@@ -68,3 +68,7 @@ syscfg.defs:
     TRNG:
         description: 'True Random Number Generator (RNG)'
         value: 0
+
+    CRYPTO:
+        description: 'Enable HW Cryptography module (CRYP)'
+        value: 0
