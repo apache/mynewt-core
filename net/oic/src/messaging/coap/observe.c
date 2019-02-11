@@ -184,6 +184,24 @@ coap_remove_observer_by_mid(oc_endpoint_t *endpoint, uint16_t mid)
     }
     return removed;
 }
+
+void
+coap_observer_walk(int (*walk_func)(struct coap_observer *, void *), void *arg)
+{
+    struct coap_observer *obs, *next;
+    int rc;
+
+    obs = SLIST_FIRST(&oc_observers);
+    while (obs) {
+        next = SLIST_NEXT(obs, next);
+        rc = walk_func(obs, arg);
+        if (rc) {
+            break;
+        }
+        obs = next;
+    }
+}
+
 /*---------------------------------------------------------------------------*/
 /*- Notification ------------------------------------------------------------*/
 /*---------------------------------------------------------------------------*/
