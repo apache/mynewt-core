@@ -1112,8 +1112,6 @@ lps33thw_sensor_read(struct sensor *sensor, sensor_type_t type,
 #endif
 
     if (type & SENSOR_TYPE_PRESSURE) {
-        struct lps33thw *lps33thw;
-        lps33thw = (struct lps33thw *)SENSOR_GET_DEVICE(sensor);
         if (lps33thw->cfg.int_cfg.data_rdy) {
             /* Stream read */
             lps33thw->pdd.user_ctx.user_func = data_func;
