@@ -109,12 +109,9 @@ static const struct sensor_driver g_lps33thw_sensor_driver = {
 static void lps33thw_one_shot_read_cb(struct os_event *ev)
 {
     int rc;
-    struct lps33thw *lps33thw;
-    struct sensor *sensor;
-    lps33thw = (struct lps33thw *)ev->ev_arg;
-    sensor = &lps33thw->sensor;
-    struct sensor_itf *itf;
-    itf = SENSOR_GET_ITF(sensor);
+    struct lps33thw *lps33thw = (struct lps33thw *)ev->ev_arg;
+    struct sensor *sensor = &lps33thw->sensor;
+    struct sensor_itf *itf = SENSOR_GET_ITF(sensor);
 
     if (lps33thw->type & SENSOR_TYPE_PRESSURE) {
         if (lps33thw->cfg.int_cfg.data_rdy) {
@@ -136,7 +133,7 @@ static void lps33thw_one_shot_read_cb(struct os_event *ev)
         struct sensor_temp_data std;
 
         rc = lps33thw_get_temperature(itf, &std.std_temp);
-        if(!rc){
+        if (!rc) {
             std.std_temp_is_valid = 1;
             rc = lps33thw->data_func(sensor, &lps33thw->pdd.user_ctx, &std,
                     SENSOR_TYPE_TEMPERATURE);
@@ -1085,15 +1082,15 @@ lps33thw_sensor_read(struct sensor *sensor, sensor_type_t type,
         sensor_data_func_t data_func, void *data_arg, uint32_t timeout)
 {
     int rc = SYS_EINVAL;
-    struct sensor_itf *itf;
-    itf = SENSOR_GET_ITF(sensor);
+    struct sensor_itf *itf = SENSOR_GET_ITF(sensor);
     uint8_t rate;
+    struct lps33thw *lps33thw  = (struct lps33thw *)SENSOR_GET_DEVICE(sensor);
+
     rc = lps33thw_get_value(itf, LPS33THW_CTRL_REG1_ODR, &rate);
     if (rc) {
         return rc;
     }
-    struct lps33thw *lps33thw;
-    lps33thw = (struct lps33thw *)SENSOR_GET_DEVICE(sensor);
+
     (void)timeout;
 
 #if MYNEWT_VAL(LPS33THW_ONE_SHOT_MODE)
@@ -1115,8 +1112,6 @@ lps33thw_sensor_read(struct sensor *sensor, sensor_type_t type,
 #endif
 
     if (type & SENSOR_TYPE_PRESSURE) {
-        struct lps33thw *lps33thw;
-        lps33thw = (struct lps33thw *)SENSOR_GET_DEVICE(sensor);
         if (lps33thw->cfg.int_cfg.data_rdy) {
             /* Stream read */
             lps33thw->pdd.user_ctx.user_func = data_func;
