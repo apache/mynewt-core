@@ -71,10 +71,13 @@ struct os_eventq {
      */
     struct os_task *evq_task;
 
+#if MYNEWT_VAL(OS_EVENTQ_DEBUG)
+    /** Most recently processed event. */
+    struct os_event *evq_prev;
+#endif
 
     STAILQ_HEAD(, os_event) evq_list;
 };
-
 
 /**
  * Initialize the event queue

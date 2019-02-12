@@ -148,6 +148,10 @@ pull_one:
 
     os_trace_api_ret_u32(OS_TRACE_ID_EVENTQ_GET, (uint32_t)ev);
 
+#if MYNEWT_VAL(OS_EVENTQ_DEBUG)
+    evq->evq_prev = ev;
+#endif
+
     return (ev);
 }
 
