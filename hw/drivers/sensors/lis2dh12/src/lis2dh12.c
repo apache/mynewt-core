@@ -155,9 +155,12 @@ STATS_SECT_START(lis2dh12_stat_section)
     STATS_SECT_ENTRY(wakeup_notify)
     STATS_SECT_ENTRY(sleep_chg_notify)
     STATS_SECT_ENTRY(orient_chg_notify)
-    STATS_SECT_ENTRY(orient_chg_x_notify)
-    STATS_SECT_ENTRY(orient_chg_y_notify)
-    STATS_SECT_ENTRY(orient_chg_z_notify)
+    STATS_SECT_ENTRY(orient_chg_x_l_notify)
+    STATS_SECT_ENTRY(orient_chg_y_l_notify)
+    STATS_SECT_ENTRY(orient_chg_z_l_notify)
+    STATS_SECT_ENTRY(orient_chg_x_h_notify)
+    STATS_SECT_ENTRY(orient_chg_y_h_notify)
+    STATS_SECT_ENTRY(orient_chg_z_h_notify)
 #endif
 STATS_SECT_END
 
@@ -173,9 +176,12 @@ STATS_NAME_START(lis2dh12_stat_section)
     STATS_NAME(lis2dh12_stat_section, wakeup_notify)
     STATS_NAME(lis2dh12_stat_section, sleep_chg_notify)
     STATS_NAME(lis2dh12_stat_section, orient_chg_notify)
-    STATS_NAME(lis2dh12_stat_section, orient_chg_x_notify)
-    STATS_NAME(lis2dh12_stat_section, orient_chg_y_notify)
-    STATS_NAME(lis2dh12_stat_section, orient_chg_z_notify)
+    STATS_NAME(lis2dh12_stat_section, orient_chg_x_l_notify)
+    STATS_NAME(lis2dh12_stat_section, orient_chg_y_l_notify)
+    STATS_NAME(lis2dh12_stat_section, orient_chg_z_l_notify)
+    STATS_NAME(lis2dh12_stat_section, orient_chg_x_h_notify)
+    STATS_NAME(lis2dh12_stat_section, orient_chg_y_h_notify)
+    STATS_NAME(lis2dh12_stat_section, orient_chg_z_h_notify)
 #endif
 STATS_NAME_END(lis2dh12_stat_section)
 
@@ -2104,14 +2110,23 @@ lis2dh12_inc_notif_stats(sensor_event_type_t event)
         case SENSOR_EVENT_TYPE_ORIENT_CHANGE:
             STATS_INC(g_lis2dh12stats, orient_chg_notify);
             break;
-        case SENSOR_EVENT_TYPE_ORIENT_X_CHANGE:
-            STATS_INC(g_lis2dh12stats, orient_chg_x_notify);
+        case SENSOR_EVENT_TYPE_ORIENT_X_L_CHANGE:
+            STATS_INC(g_lis2dh12stats, orient_chg_x_l_notify);
             break;
-        case SENSOR_EVENT_TYPE_ORIENT_Y_CHANGE:
-            STATS_INC(g_lis2dh12stats, orient_chg_y_notify);
+        case SENSOR_EVENT_TYPE_ORIENT_X_H_CHANGE:
+            STATS_INC(g_lis2dh12stats, orient_chg_x_h_notify);
             break;
-        case SENSOR_EVENT_TYPE_ORIENT_Z_CHANGE:
-            STATS_INC(g_lis2dh12stats, orient_chg_z_notify);
+        case SENSOR_EVENT_TYPE_ORIENT_Y_L_CHANGE:
+            STATS_INC(g_lis2dh12stats, orient_chg_y_l_notify);
+            break;
+        case SENSOR_EVENT_TYPE_ORIENT_Y_H_CHANGE:
+            STATS_INC(g_lis2dh12stats, orient_chg_y_h_notify);
+            break;
+        case SENSOR_EVENT_TYPE_ORIENT_Z_L_CHANGE:
+            STATS_INC(g_lis2dh12stats, orient_chg_z_l_notify);
+            break;
+        case SENSOR_EVENT_TYPE_ORIENT_Z_H_CHANGE:
+            STATS_INC(g_lis2dh12stats, orient_chg_z_h_notify);
             break;
         case SENSOR_EVENT_TYPE_SLEEP_CHANGE:
             STATS_INC(g_lis2dh12stats, sleep_chg_notify);
