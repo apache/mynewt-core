@@ -61,10 +61,30 @@ oc_endpoint_size(struct oc_endpoint *oe)
     return oc_transports[oe->ep.oe_type]->ot_ep_size(oe);
 }
 
+/*
+ * Whether transport uses TCP-style headers or not.
+ */
 static inline int
 oc_endpoint_use_tcp(struct oc_endpoint *oe)
 {
     return oc_transports[oe->ep.oe_type]->ot_flags & OC_TRANSPORT_USE_TCP;
+}
+
+/*
+ * Whether underlying transport has connections or not.
+ * This normally is indicated by whether TCP style header are used or not.
+ * Allowing transport to override that.
+ */
+static inline int
+oc_endpoint_has_conn(struct oc_endpoint *oe)
+{
+    const struct oc_transport *ot;
+
+    ot = oc_transports[oe->ep.oe_type];
+    if (ot->ot_ep_has_conn) {
+        return ot->ot_ep_has_conn(oe);
+    }
+    return oc_endpoint_use_tcp(oe);
 }
 
 #define OC_MBUF_ENDPOINT(m)                                            \
