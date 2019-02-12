@@ -40,10 +40,11 @@
 static uint8_t oc_ep_gatt_size(const struct oc_endpoint *oe);
 static void oc_send_buffer_gatt(struct os_mbuf *m);
 static char *oc_log_ep_gatt(char *ptr, int maxlen, const struct oc_endpoint *);
-enum oc_resource_properties
+static enum oc_resource_properties
 oc_get_trans_security_gatt(const struct oc_endpoint *oe_ble);
 static int oc_connectivity_init_gatt(void);
-void oc_connectivity_shutdown_gatt(void);
+static void oc_gatt_conn_ev(struct oc_endpoint *oe, int type);
+static void oc_connectivity_shutdown_gatt(void);
 
 static const struct oc_transport oc_gatt_transport = {
     .ot_flags = OC_TRANSPORT_USE_TCP,
@@ -55,6 +56,7 @@ static const struct oc_transport oc_gatt_transport = {
     .ot_init = oc_connectivity_init_gatt,
     .ot_shutdown = oc_connectivity_shutdown_gatt
 };
+static struct oc_conn_cb oc_gatt_conn_cb;
 
 static uint8_t oc_gatt_transport_id;
 
@@ -203,6 +205,14 @@ oc_endpoint_is_gatt(const struct oc_endpoint *oe)
     return oe->ep.oe_type == oc_gatt_transport_id;
 }
 
+int
+oc_endpoint_gatt_conn_eq(const struct oc_endpoint *oe1,
+                         const struct oc_endpoint *oe2)
+{
+    return ((struct oc_endpoint_ble *)oe1)->conn_handle ==
+           ((struct oc_endpoint_ble *)oe2)->conn_handle;
+}
+
 static char *
 oc_log_ep_gatt(char *ptr, int maxlen, const struct oc_endpoint *oe)
 {
@@ -334,10 +344,25 @@ oc_ble_coap_gatt_srv_init(void)
     return 0;
 }
 
+/*
+ * These are getting called from context of task getting BLE connection
+ * notifications.
+ */
 void
 oc_ble_coap_conn_new(uint16_t conn_handle)
 {
-    OC_LOG(DEBUG, "oc_gatt newconn %x\n", conn_handle);
+    struct oc_conn_ev *oce;
+    struct oc_endpoint_ble *oe_ble;
+
+    oce = oc_conn_ev_alloc();
+    assert(oce);
+    memset(&oce->oce_oe, 0, sizeof(oce->oce_oe));
+    oe_ble = (struct oc_endpoint_ble *)&oce->oce_oe;
+    oe_ble->ep.oe_type = oc_gatt_transport_id;
+    oe_ble->ep.oe_flags = 0;
+    oe_ble->conn_handle = conn_handle;
+
+    oc_conn_created(oce);
 }
 
 void
@@ -346,10 +371,8 @@ oc_ble_coap_conn_del(uint16_t conn_handle)
     struct os_mbuf_pkthdr *pkt;
     struct os_mbuf *m;
     struct oc_endpoint_ble *oe_ble;
-    struct oc_endpoint oe;
-    int i;
+    struct oc_conn_ev *oce;
 
-    OC_LOG(DEBUG, "oc_gatt endconn %x\n", conn_handle);
     STAILQ_FOREACH(pkt, &oc_ble_reass_q, omp_next) {
         m = OS_MBUF_PKTHDR_TO_MBUF(pkt);
         oe_ble = (struct oc_endpoint_ble *)OC_MBUF_ENDPOINT(m);
@@ -361,27 +384,58 @@ oc_ble_coap_conn_del(uint16_t conn_handle)
     }
 
     /*
-     * Remove CoAP observers (if any) registered for this connection.
+     * Notify listeners that this connection is gone.
      */
-    memset(&oe, 0, sizeof(oe));
-    oe_ble = (struct oc_endpoint_ble *)&oe;
+    oce = oc_conn_ev_alloc();
+    assert(oce);
+    memset(&oce->oce_oe, 0, sizeof(oce->oce_oe));
+    oe_ble = (struct oc_endpoint_ble *)&oce->oce_oe;
     oe_ble->ep.oe_type = oc_gatt_transport_id;
     oe_ble->ep.oe_flags = 0;
     oe_ble->conn_handle = conn_handle;
-    for (i = 0; i < OC_BLE_SRV_CNT; i++) {
-        oe_ble->srv_idx = i;
-        coap_remove_observer_by_client(&oe);
-    }
+    oc_conn_removed(oce);
 }
 
-int
-oc_connectivity_init_gatt(void)
+/*
+ * This runs in the context of task handling coap.
+ */
+static int
+oc_gatt_remove_obs(struct coap_observer *obs, void *arg)
 {
-    STAILQ_INIT(&oc_ble_reass_q);
+    if (oc_endpoint_gatt_conn_eq(&obs->endpoint, arg)) {
+        coap_remove_observer(obs);
+    }
     return 0;
 }
 
-void
+static void
+oc_gatt_conn_ev(struct oc_endpoint *oe, int type)
+{
+    if (oe->ep.oe_type != oc_gatt_transport_id) {
+        return;
+    }
+    if (type != OC_ENDPOINT_CONN_EV_CLOSE) {
+        return;
+    }
+
+    /*
+     * Remove CoAP observers (if any) registered for this connection.
+     */
+    coap_observer_walk(oc_gatt_remove_obs, oe);
+}
+
+static int
+oc_connectivity_init_gatt(void)
+{
+    STAILQ_INIT(&oc_ble_reass_q);
+    if (oc_gatt_conn_cb.occ_func == NULL) {
+        oc_gatt_conn_cb.occ_func = oc_gatt_conn_ev;
+        oc_conn_cb_register(&oc_gatt_conn_cb);
+    }
+    return 0;
+}
+
+static void
 oc_connectivity_shutdown_gatt(void)
 {
     /* there is not unregister for BLE */
@@ -490,7 +544,7 @@ err:
 /**
  * Retrieves the specified BLE endpoint's transport layer security properties.
  */
-oc_resource_properties_t
+static oc_resource_properties_t
 oc_get_trans_security_gatt(const struct oc_endpoint *oe)
 {
     const struct oc_endpoint_ble *oe_ble;
