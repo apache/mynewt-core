@@ -105,8 +105,8 @@ syscfg.defs:
 
     OC_CONN_EV_CB_CNT:
         description: >
-            How many connection callback events for connecreated/removed events
-            can be queued at the same time.
+            How many connection callback events for connection reated/removed
+            events can be queued at the same time.
         value: 4
 
     OC_SYSINIT_STAGE_MAIN:
