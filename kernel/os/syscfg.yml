@@ -138,6 +138,11 @@ syscfg.defs:
         description: >
             Enables debug runtime checks for time-related functionality.
         value: 0
+    OS_EVENTQ_DEBUG:
+        description: >
+            Enables debug runtime checks for eventq-related functionality.
+        value: 0
+
     OS_CRASH_FILE_LINE:
         description: >
             Include filename and line number in crash messages.  Aids in
@@ -154,3 +159,4 @@ syscfg.vals.OS_DEBUG_MODE:
     OS_MEMPOOL_CHECK: 1
     OS_MEMPOOL_POISON: 1
     OS_TIME_DEBUG: 1
+    OS_EVENTQ_DEBUG: 1
