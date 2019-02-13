@@ -47,6 +47,12 @@ extern "C" {
 
 extern const struct hal_flash da1469x_flash_dev;
 
+struct da1469x_hal_i2c_cfg {
+    int8_t pin_scl;
+    int8_t pin_sda;
+    uint32_t frequency;
+};
+
 #ifdef __cplusplus
 }
 #endif
