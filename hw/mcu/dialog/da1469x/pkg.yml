@@ -29,3 +29,6 @@ pkg.deps:
     - "@apache-mynewt-core/hw/hal"
     - "@apache-mynewt-core/hw/cmsis-core"
     - hw/mcu/dialog
+
+pkg.deps.'(I2C_0 || I2C_1) && BUS_DRIVER_PRESENT':
+    - "@apache-mynewt-core/hw/bus/drivers/i2c_hal"
