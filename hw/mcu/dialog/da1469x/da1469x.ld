@@ -66,6 +66,11 @@ SECTIONS
         *(.text)
         *(.text.*)
 
+        __cmac_fw_area_start = .;
+        KEEP(*(.cmi_fw_area*))
+        __cmac_fw_area_end = .;
+        . = ALIGN(4);
+
         KEEP(*(.init))
         KEEP(*(.fini))
 
@@ -182,6 +187,16 @@ SECTIONS
         *(COMMON)
         . = ALIGN(4);
         __bss_end__ = .;
+    } > RAM
+
+    .cmac_ram (NOLOAD) :
+    {
+        . = ALIGN(0x400);
+        __cmac_ram_section_start__ = .;
+        cmac_fw_addr = .;
+        . += (__cmac_fw_area_end - __cmac_fw_area_start);
+        . = ALIGN(0x400);
+        __cmac_ram_section_end__ = . - 1;
     } > RAM
 
     /* Heap starts after BSS */
