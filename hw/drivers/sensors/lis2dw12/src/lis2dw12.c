@@ -1238,6 +1238,38 @@ err:
     return rc;
 }
 
+#if MYNEWT_VAL(LIS2DW12_DISABLE_PULL_UP_SDO_SA0)
+/**
+ * Disable pull up on SDO/SA0. This function is added due to HW's request.
+ * According to data sheet, we should leave SDO/SA0 not connected. In our
+ * current design, we connect this pin to ground, which will cause energy
+ * leakage. ST has provided this hidden register access to disable pull-up
+ *
+ * @param The sensor interface
+ * @param value to set (0 = active high, 1 = active low)
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+lis2dw12_disable_pull_up_SDO_SA0(struct sensor_itf *itf, uint8_t disable)
+{
+    int rc;
+    uint8_t reg;
+
+    rc = lis2dw12_read8(itf, 0x17, &reg);
+    if (rc) {
+        return rc;
+    }
+
+    if (disable) {
+        reg |= 0x40;
+         return lis2dw12_write8(itf, 0x17, reg);
+    }
+
+    return 0;
+}
+#endif /* MYNEWT_VAL(LIS2DW12_DISABLE_PULL_UP_SDO_SA0) */
+
 /**
  * Sets new offsets in sensor
  *
@@ -3605,6 +3637,13 @@ lis2dw12_config(struct lis2dw12 *lis2dw12, struct lis2dw12_cfg *cfg)
     }
 
     lis2dw12->cfg.mask = cfg->mask;
+
+#if MYNEWT_VAL(LIS2DW12_DISABLE_PULL_UP_SDO_SA0)
+    lis2dw12_disable_pull_up_SDO_SA0(itf, 1);
+    if (rc) {
+        goto err;
+    }
+#endif /* MYNEWT_VAL(LIS2DW12_DISABLE_PULL_UP_SDO_SA0) */
 
     return 0;
 err:
