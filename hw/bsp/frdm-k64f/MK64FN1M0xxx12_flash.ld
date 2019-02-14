@@ -58,9 +58,9 @@ M_VECTOR_RAM_SIZE = DEFINED(__ram_vector_table__) ? 0x0400 : 0x0;
 /* Specify the memory areas */
 MEMORY
 {
-  m_interrupts          (RX)  : ORIGIN = 0x00008000, LENGTH = 0x00000420
-  m_flash_config        (RX)  : ORIGIN = 0x00008420, LENGTH = 0x00000010
-  FLASH                 (RX)  : ORIGIN = 0x00008430, LENGTH = 0x00100000-0x8430
+  m_interrupts          (RX)  : ORIGIN = 0x0000C000, LENGTH = 0x00000420
+  m_flash_config        (RX)  : ORIGIN = 0x0000C420, LENGTH = 0x00000010
+  FLASH                 (RX)  : ORIGIN = 0x0000C430, LENGTH = 0x00100000-0xC430
   RAM                   (RW)  : ORIGIN = 0x1FFF0000, LENGTH = 0x00040000
 }
 
