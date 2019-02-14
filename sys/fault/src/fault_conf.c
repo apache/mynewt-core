@@ -61,7 +61,6 @@ fault_conf_set(int argc, char **argv, char *val)
         if (strcmp(argv[0], "chronfail") == 0) {
             decode_len = base64_decode_len(val);
             if (decode_len > MYNEWT_VAL(FAULT_MAX_DOMAINS)) {
-                DEBUG_PANIC();
                 return SYS_ENOMEM;
             }
 
