@@ -97,6 +97,16 @@ typedef void fault_thresh_fn(int domain_id, int prev_state, int state,
 void fault_configure_cb(fault_thresh_fn *cb);
 
 /**
+ * @brief Indicates whether an ID corresponds to a registered domain.
+ *
+ * @param domain_id             The domain ID to check.
+ *
+ * @return                      true if the domain has been registered;
+ *                              false otherwise.
+ */
+bool fault_domain_is_registered(int domain_id);
+
+/**
  * @brief processes the result of a fault-capable operation.
  *
  * See `fault_success()` and `fault_failure()` for details.  All else being

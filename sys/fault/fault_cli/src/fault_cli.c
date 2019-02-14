@@ -87,13 +87,13 @@ fault_cli_chronls(int argc, char **argv)
 
     for (i = 0; i < MYNEWT_VAL(FAULT_MAX_DOMAINS); i++) {
         rc = fault_get_chronic_count(i, &count);
-        assert(rc == 0);
-
-        name = fault_domain_name(i);
-        if (name == NULL) {
-            name = "";
+        if (rc == 0) {
+            name = fault_domain_name(i);
+            if (name == NULL) {
+                name = "";
+            }
+            console_printf("(%d) %s: %d\n", i, name, count);
         }
-        console_printf("(%d) %s: %d\n", i, name, count);
     }
 
     return 0;
@@ -137,9 +137,11 @@ fault_cli_chronclr(int argc, char **argv)
     int rc;
 
     for (dom = 0; dom < MYNEWT_VAL(FAULT_MAX_DOMAINS); dom++) {
-        rc = fault_set_chronic_count(dom, 0);
-        if (rc != 0) {
-            return rc;
+        if (fault_domain_is_registered(dom)) {
+            rc = fault_set_chronic_count(dom, 0);
+            if (rc != 0) {
+                return rc;
+            }
         }
     }
 
