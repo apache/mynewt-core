@@ -38,6 +38,8 @@ static const struct shell_cmd_help fault_cli_help = {
         "fault chronset <fault-domain> <count>\n"
         "    Sets and persists the specified chronic fault failure count for\n"
         "    the given domain.\n"
+        "fault chronsetr <fault-domain> <count>\n"
+        "    Performs a chronset and then immediately reboots the device.\n"
         "fault chronclr\n"
         "    Sets all chronic fault failure counts to 0 and persists the\n"
         "    counts.\n"
@@ -131,6 +133,21 @@ fault_cli_chronset(int argc, char **argv)
 }
 
 static int
+fault_cli_chronsetr(int argc, char **argv)
+{
+    int rc;
+
+    rc = fault_cli_chronset(argc, argv);
+    if (rc != 0) {
+        return rc;
+    }
+
+    os_reboot(0);
+
+    return 0;
+}
+
+static int
 fault_cli_chronclr(int argc, char **argv)
 {
     int dom;
@@ -210,6 +227,10 @@ fault_cli_cmd_fn(int argc, char **argv)
 
     if (strcmp(argv[0], "chronset") == 0) {
         return fault_cli_chronset(argc - 1, argv + 1);
+    }
+
+    if (strcmp(argv[0], "chronsetr") == 0) {
+        return fault_cli_chronsetr(argc - 1, argv + 1);
     }
 
     if (strcmp(argv[0], "chronclr") == 0) {
