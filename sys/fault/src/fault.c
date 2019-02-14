@@ -45,12 +45,6 @@ fault_configure_cb(fault_thresh_fn *cb)
     fault_thresh_cb = cb;
 }
 
-static bool
-fault_domain_is_registered(const struct fault_domain *dom)
-{
-    return dom->failure_delta != 0;
-}
-
 static struct fault_domain *
 fault_get_domain(int domain_id)
 {
@@ -59,6 +53,19 @@ fault_get_domain(int domain_id)
     }
 
     return &fault_domains[domain_id];
+}
+
+bool
+fault_domain_is_registered(int domain_id)
+{
+    const struct fault_domain *dom;
+
+    dom = fault_get_domain(domain_id);
+    if (dom == NULL) {
+        return false;
+    }
+
+    return dom->failure_delta != 0;
 }
 
 static struct fault_domain *
@@ -71,7 +78,7 @@ fault_get_registered_domain(int domain_id)
         return NULL;
     }
 
-    if (!fault_domain_is_registered(dom)) {
+    if (!fault_domain_is_registered(domain_id)) {
         return NULL;
     }
 
@@ -224,7 +231,7 @@ fault_fatal_failure(int domain_id, void *arg)
 int
 fault_get_chronic_count(int domain_id, uint8_t *out_count)
 {
-    if (domain_id < 0 || domain_id >= MYNEWT_VAL(FAULT_MAX_DOMAINS)) {
+    if (fault_get_registered_domain(domain_id) == NULL) {
         return SYS_EINVAL;
     }
 
@@ -236,6 +243,10 @@ int
 fault_set_chronic_count(int domain_id, uint8_t count)
 {
     int rc;
+
+    if (fault_get_registered_domain(domain_id) == NULL) {
+        return SYS_EINVAL;
+    }
 
     if (fault_chronic_counts[domain_id] == count) {
         return 0;
@@ -316,7 +327,7 @@ fault_register_domain_priv(int domain_id, uint8_t success_delta,
         return SYS_EINVAL;
     }
 
-    if (fault_domain_is_registered(dom)) {
+    if (fault_domain_is_registered(domain_id)) {
         return SYS_EALREADY;
     }
 
