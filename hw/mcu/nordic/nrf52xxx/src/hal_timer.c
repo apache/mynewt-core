@@ -704,6 +704,7 @@ hal_timer_deinit(int timer_num)
         hwtimer = (NRF_TIMER_Type *)bsptimer->tmr_reg;
         hwtimer->INTENCLR = NRF_TIMER_INT_MASK(NRF_TIMER_CC_INT);
         hwtimer->TASKS_STOP = 1;
+        hwtimer->TASKS_SHUTDOWN = 1;
     }
     bsptimer->tmr_enabled = 0;
     bsptimer->tmr_reg = NULL;
