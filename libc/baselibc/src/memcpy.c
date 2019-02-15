@@ -19,14 +19,14 @@ void *memcpy(void *dst, const void *src, size_t n)
 	asm volatile ("cld ; rep ; movsq ; movl %3,%%ecx ; rep ; movsb":"+c"
 		      (nq), "+S"(p), "+D"(q)
 		      :"r"((uint32_t) (n & 7)));
-#elif defined(ARCH_cortex_m0) || defined(ARCH_cortex_m3) || defined(ARCH_cortex_m4) || defined(ARCH_cortex_m7)
+#elif defined(__arm__)
         (void)p;
         (void)q;
 
-#if defined(ARCH_cortex_m3) || defined(ARCH_cortex_m4) || defined(ARCH_cortex_m7)
+#if defined(__ARM_FEATURE_UNALIGNED)
         /*
-         * For Cortex-M3/4/7 we can speed up a bit by moving 32-bit words since
-         * it supports unaligned access.
+         * We can speed up a bit by moving 32-bit words if unaligned access is
+         * supported (e.g. Cortex-M3/4/7/33).
          */
         asm (".syntax unified           \n"
              "       b    test1         \n"
