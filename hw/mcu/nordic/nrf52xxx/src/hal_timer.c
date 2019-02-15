@@ -581,6 +581,7 @@ hal_timer_config(int timer_num, uint32_t freq_hz)
 
         /* Stop the timer first */
         rtctimer->TASKS_STOP = 1;
+        rtctimer->TASKS_CLEAR = 1;
 
         /* Always no prescaler */
         rtctimer->PRESCALER = 0;
