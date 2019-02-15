@@ -581,6 +581,7 @@ hal_timer_config(int timer_num, uint32_t freq_hz)
 
         /* Stop the timer first */
         rtctimer->TASKS_STOP = 1;
+        rtctimer->TASKS_CLEAR = 1;
 
         /* Always no prescaler */
         rtctimer->PRESCALER = 0;
@@ -653,6 +654,7 @@ hal_timer_config(int timer_num, uint32_t freq_hz)
 
     /* Stop the timer first */
     hwtimer->TASKS_STOP = 1;
+    hwtimer->TASKS_CLEAR = 1;
 
     /* Put the timer in timer mode using 32 bits. */
     hwtimer->MODE = TIMER_MODE_MODE_Timer;
@@ -703,7 +705,7 @@ hal_timer_deinit(int timer_num)
     } else {
         hwtimer = (NRF_TIMER_Type *)bsptimer->tmr_reg;
         hwtimer->INTENCLR = NRF_TIMER_INT_MASK(NRF_TIMER_CC_INT);
-        hwtimer->TASKS_STOP = 1;
+        hwtimer->TASKS_SHUTDOWN = 1;
     }
     bsptimer->tmr_enabled = 0;
     bsptimer->tmr_reg = NULL;
