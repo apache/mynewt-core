@@ -30,4 +30,8 @@
 #define CONTAINER_OF(ptr, type, field) \
         ((type *)(((char *)(ptr)) - offsetof(type, field)))
 
+/* Helper to calculate number of elements in array */
+#define ARRAY_SIZE(array) \
+        (sizeof(array) / sizeof((array)[0]))
+
 #endif
