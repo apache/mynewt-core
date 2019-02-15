@@ -23,6 +23,10 @@
 #include "os/os_cputime.h"
 #include "mcu/da1469x_hal.h"
 
+#if MYNEWT_VAL(UART_0) || MYNEWT_VAL(UART_1) || MYNEWT_VAL(UART_2)
+#include "uart/uart.h"
+#include "uart_hal/uart_hal.h"
+#endif
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
 #include "bus/bus.h"
 #if MYNEWT_VAL(I2C_0) || MYNEWT_VAL(I2C_1)
@@ -32,6 +36,34 @@
 #if MYNEWT_VAL(I2C_0) || MYNEWT_VAL(I2C_1)
 #include "hal/hal_i2c.h"
 #endif
+#endif
+
+#if MYNEWT_VAL(UART_0)
+static struct uart_dev os_bsp_uart0;
+static const struct da1469x_uart_cfg os_bsp_uart0_cfg = {
+    .pin_tx = MYNEWT_VAL(UART_0_PIN_TX),
+    .pin_rx = MYNEWT_VAL(UART_0_PIN_RX),
+    .pin_rts = -1,
+    .pin_cts = -1,
+};
+#endif
+#if MYNEWT_VAL(UART_1)
+static struct uart_dev os_bsp_uart1;
+static const struct da1469x_uart_cfg os_bsp_uart1_cfg = {
+    .pin_tx = MYNEWT_VAL(UART_1_PIN_TX),
+    .pin_rx = MYNEWT_VAL(UART_1_PIN_RX),
+    .pin_rts = MYNEWT_VAL(UART_1_PIN_RTS),
+    .pin_cts = MYNEWT_VAL(UART_1_PIN_CTS),
+};
+#endif
+#if MYNEWT_VAL(UART_2)
+static struct uart_dev os_bsp_uart2;
+static const struct da1469x_uart_cfg os_bsp_uart2_cfg = {
+    .pin_tx = MYNEWT_VAL(UART_2_PIN_TX),
+    .pin_rx = MYNEWT_VAL(UART_2_PIN_RX),
+    .pin_rts = MYNEWT_VAL(UART_2_PIN_RTS),
+    .pin_cts = MYNEWT_VAL(UART_2_PIN_CTS),
+};
 #endif
 
 #if MYNEWT_VAL(I2C_0)
@@ -94,6 +126,33 @@ da1469x_periph_create_timers(void)
 }
 
 static void
+da1469x_periph_create_uart(void)
+{
+    int rc;
+
+    (void)rc;
+
+#if MYNEWT_VAL(UART_0)
+    rc = os_dev_create(&os_bsp_uart0.ud_dev, "uart0",
+                       OS_DEV_INIT_PRIMARY, 0, uart_hal_init,
+                       (void *)&os_bsp_uart0_cfg);
+    assert(rc == 0);
+#endif
+#if MYNEWT_VAL(UART_1)
+    rc = os_dev_create(&os_bsp_uart1.ud_dev, "uart1",
+                       OS_DEV_INIT_PRIMARY, 1, uart_hal_init,
+                       (void *)&os_bsp_uart1_cfg);
+    assert(rc == 0);
+#endif
+#if MYNEWT_VAL(UART_2)
+    rc = os_dev_create(&os_bsp_uart1.ud_dev, "uart2",
+                       OS_DEV_INIT_PRIMARY, 2, uart_hal_init,
+                       (void *)&os_bsp_uart2_cfg);
+    assert(rc == 0);
+#endif
+}
+
+static void
 da1469x_periph_create_i2c(void)
 {
     int rc;
@@ -130,7 +189,7 @@ da1469x_periph_create(void)
 //    da1469x_periph_create_adc();
 //    da1469x_periph_create_pwm();
 //    da1469x_periph_create_trng();
-//    da1469x_periph_create_uart();
+    da1469x_periph_create_uart();
     da1469x_periph_create_i2c();
 //    da1469x_periph_create_spi();
 }

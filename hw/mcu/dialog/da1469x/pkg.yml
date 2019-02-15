@@ -30,5 +30,8 @@ pkg.deps:
     - "@apache-mynewt-core/hw/cmsis-core"
     - hw/mcu/dialog
 
+pkg.deps.'UART_0 || UART_1 || UART_2':
+    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
+
 pkg.deps.'(I2C_0 || I2C_1) && BUS_DRIVER_PRESENT':
     - "@apache-mynewt-core/hw/bus/drivers/i2c_hal"
