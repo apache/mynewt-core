@@ -19,6 +19,13 @@
 
 syscfg.vals:
     MCU_TARGET: DA14699
+    # Set default pins for peripherals
+    UART_0_PIN_TX: 9
+    UART_0_PIN_RX: 8
+    UART_1_PIN_TX: 9
+    UART_1_PIN_RX: 8
+    UART_1_PIN_RTS: 32
+    UART_1_PIN_CTS: 7
     # Configure flash areas
     CONFIG_FCB_FLASH_AREA: FLASH_AREA_NFFS
     REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG
