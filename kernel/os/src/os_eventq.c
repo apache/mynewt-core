@@ -155,15 +155,62 @@ pull_one:
     return (ev);
 }
 
+#if MYNEWT_VAL(OS_EVENTQ_MONITOR)
+static struct os_eventq_mon *
+os_eventq_mon_find(struct os_eventq *evq, struct os_event *ev)
+{
+    int i;
+
+    if (!evq->evq_mon) {
+        return NULL;
+    }
+    for (i = 0; i < evq->evq_mon_elems; i++) {
+        if (evq->evq_mon[i].em_ev == NULL) {
+            evq->evq_mon[i].em_ev = ev;
+            evq->evq_mon[i].em_cb = ev->ev_cb;
+        }
+        if (evq->evq_mon[i].em_ev == ev) {
+            return &evq->evq_mon[i];
+        }
+    }
+    return NULL;
+}
+#endif
+
 void
 os_eventq_run(struct os_eventq *evq)
 {
     struct os_event *ev;
+#if MYNEWT_VAL(OS_EVENTQ_MONITOR)
+    struct os_eventq_mon *mon;
+    uint32_t ticks;
+#endif
 
     ev = os_eventq_get(evq);
     assert(ev->ev_cb != NULL);
-
+#if MYNEWT_VAL(OS_EVENTQ_MONITOR)
+    ticks = os_cputime_get32();
+#endif
     ev->ev_cb(ev);
+#if MYNEWT_VAL(OS_EVENTQ_MONITOR)
+    mon = os_eventq_mon_find(evq, ev);
+    if (mon) {
+        /*
+         * If we're monitoring this eventq, and there was space to store
+         * this data, record the time spent on the event callback.
+         */
+        ticks = os_cputime_get32() - ticks;
+
+        mon->em_cnt++;
+        mon->em_cum += ticks;
+        if (mon->em_min == 0) {
+            mon->em_min = ticks;
+        }
+        if (ticks > mon->em_max) {
+            mon->em_max = ticks;
+        }
+    }
+#endif
 }
 
 static struct os_event *
