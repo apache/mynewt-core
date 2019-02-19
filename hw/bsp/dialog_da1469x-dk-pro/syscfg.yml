@@ -19,6 +19,11 @@
 
 syscfg.vals:
     MCU_TARGET: DA14699
+    # Setting for QSPI Flash
+    QSPI_FLASH_ADDRESS_LENGTH: 24
+    QSPI_FLASH_SECTOR_SIZE: 4096
+    QSPI_FLASH_SECTOR_COUNT: 256
+    QSPI_FLASH_PAGE_SIZE: 256
     # Set default pins for peripherals
     UART_0_PIN_TX: 9
     UART_0_PIN_RX: 8
