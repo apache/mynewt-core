@@ -99,8 +99,8 @@ static const struct mgmt_handler imgr_nmgr_handlers[] = {
 #endif
     },
     [IMGMGR_NMGR_ID_ERASE_STATE] = {
-            .mh_read = NULL,
-            .mh_write = imgr_erase_state,
+        .mh_read = NULL,
+        .mh_write = imgr_erase_state,
     },
 };
 
@@ -442,6 +442,10 @@ imgr_erase(struct mgmt_cbuf *cb)
     if (g_err) {
         return MGMT_ERR_ENOMEM;
     }
+
+    /* Reset in-progress upload. */
+    imgr_state.area_id = -1;
+
     return 0;
 }
 
@@ -485,6 +489,9 @@ imgr_erase_state(struct mgmt_cbuf *cb)
     if (g_err) {
         return MGMT_ERR_ENOMEM;
     }
+
+    /* Reset in-progress upload. */
+    imgr_state.area_id = -1;
 
     return 0;
 }
