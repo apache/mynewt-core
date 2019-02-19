@@ -177,6 +177,17 @@ Reset_Handler:
     strlt   r0, [r3], #4
     blt     .loop_isr_copy
 
+/* Copy QSPI code from flash to RAM */
+    ldr     r1, =__text_ram_addr        /* src ptr */
+    ldr     r2, =__text_ram_start__     /* ptr */
+    ldr     r3, =__text_ram_end__       /* dst end */
+.loop_code_text_ram_copy:
+    cmp     r2, r3
+    ittt    lt
+    ldrlt   r0, [r1], #4
+    strlt   r0, [r2], #4
+    blt     .loop_code_text_ram_copy
+
 /* Copy data from flash to RAM */
     ldr     r1, =__etext                /* src ptr */
     ldr     r2, =__data_start__         /* dst ptr */
