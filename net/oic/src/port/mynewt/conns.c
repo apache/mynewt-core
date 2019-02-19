@@ -75,7 +75,7 @@ oc_conn_created(struct oc_conn_ev *oce)
 {
     OC_LOG(DEBUG, "oc_conn_created: ");
     OC_LOG_ENDPOINT(LOG_LEVEL_DEBUG, &oce->oce_oe);
-    oce->oce_type = OC_ENDPOINT_CONN_EV_CLOSE;
+    oce->oce_type = OC_ENDPOINT_CONN_EV_OPEN;
     oc_conn_ev_queue(oce);
 }
 
