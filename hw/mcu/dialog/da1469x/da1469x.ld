@@ -62,7 +62,9 @@ SECTIONS
         /* ISR vector shall have exactly 512 bytes */
         . = __isr_vector_start + 0x200;
         __isr_vector_end = .;
-        *(.text*)
+
+        *(.text)
+        *(.text.*)
 
         KEEP(*(.init))
         KEEP(*(.fini))
@@ -87,7 +89,6 @@ SECTIONS
         . = ALIGN(4);
     } > FLASH
 
-
     .ARM.extab :
     {
         *(.ARM.extab* .gnu.linkonce.armextab.*)
@@ -102,8 +103,6 @@ SECTIONS
     } > FLASH
     __exidx_end = .;
 
-    __etext = .;
-
     /* This section will be zeroed by RTT package init */
     .rtt (NOLOAD):
     {
@@ -111,6 +110,19 @@ SECTIONS
         *(.rtt)
         . = ALIGN(4);
     } > RAM
+
+    __text_ram_addr = LOADADDR(.text_ram);
+
+    .text_ram :
+    {
+        . = ALIGN(4);
+        __text_ram_start__ = .;
+        *(.text_ram*)
+        . = ALIGN(4);
+        __text_ram_end__ = .;
+    } > RAM AT > FLASH
+
+    __etext = LOADADDR(.data);
 
     .data :
     {
