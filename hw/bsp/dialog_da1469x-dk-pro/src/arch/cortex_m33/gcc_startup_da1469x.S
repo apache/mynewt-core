@@ -27,6 +27,7 @@
 #else
     .equ    Stack_Size, 0xC00
 #endif
+    .equ    NVIC_VTOR, 0xE000ED08
     .globl  __StackTop
     .globl  __StackLimit
 __StackLimit:
@@ -176,6 +177,10 @@ Reset_Handler:
     ldrlt   r0, [r1], #4
     strlt   r0, [r3], #4
     blt     .loop_isr_copy
+/* Set VTOR */
+    ldr     r0, =NVIC_VTOR
+    ldr     r1, =0x20000000
+    str     r1, [r0]
 
 /* Copy QSPI code from flash to RAM */
     ldr     r1, =__text_ram_addr        /* src ptr */
