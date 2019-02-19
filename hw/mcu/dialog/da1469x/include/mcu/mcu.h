@@ -24,6 +24,8 @@
 extern "C" {
 #endif
 
+#define sec_text_ram_core   __attribute__((section(".text_ram"))) __attribute__((noinline))
+
 /**
 * \brief GPIO function
 *
