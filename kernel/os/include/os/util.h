@@ -31,7 +31,8 @@
         ((type *)(((char *)(ptr)) - offsetof(type, field)))
 
 /* Helper to calculate number of elements in array */
+#ifndef ARRAY_SIZE
 #define ARRAY_SIZE(array) \
         (sizeof(array) / sizeof((array)[0]))
-
+#endif
 #endif
