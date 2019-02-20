@@ -26,7 +26,7 @@ syscfg.defs:
 
 syscfg.vals:
     # Enable nRF52840 MCU
-    MCU_NRF52840: 1
+    MCU_TARGET: nRF52840
     # Set default pins for peripherals
     UART_0_PIN_TX: 6
     UART_0_PIN_RX: 8
