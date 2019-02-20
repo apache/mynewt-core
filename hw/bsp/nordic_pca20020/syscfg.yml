@@ -46,7 +46,7 @@ syscfg.defs:
 
 syscfg.vals:
     # Enable nRF52832 MCU
-    MCU_NRF52832: 1
+    MCU_TARGET: nRF52832
     # There are no pins assigned for UART so disable it
     UART_0: 0
     # Set default pins for peripherals

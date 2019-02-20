@@ -63,7 +63,7 @@ syscfg.defs:
 
 syscfg.vals:
     # Enable nRF52832 MCU
-    MCU_NRF52832: 1
+    MCU_TARGET: nRF52832
     # Set default pins for peripherals
     # Latest revisions have testpoints instead of dedicated UART pins,
     # we can use them instead
