@@ -184,6 +184,24 @@ coap_remove_observer_by_mid(oc_endpoint_t *endpoint, uint16_t mid)
     }
     return removed;
 }
+
+void
+coap_observer_walk(int (*walk_func)(struct coap_observer *, void *), void *arg)
+{
+    struct coap_observer *obs, *next;
+    int rc;
+
+    obs = SLIST_FIRST(&oc_observers);
+    while (obs) {
+        next = SLIST_NEXT(obs, next);
+        rc = walk_func(obs, arg);
+        if (rc) {
+            break;
+        }
+        obs = next;
+    }
+}
+
 /*---------------------------------------------------------------------------*/
 /*- Notification ------------------------------------------------------------*/
 /*---------------------------------------------------------------------------*/
@@ -277,7 +295,7 @@ coap_notify_observers(oc_resource_t *resource,
                 coap_init_message(notification, COAP_TYPE_NON, CONTENT_2_05, 0);
 
                 notification->mid = transaction->mid;
-                if (!oc_endpoint_use_tcp(&obs->endpoint) &&
+                if (!oc_endpoint_has_conn(&obs->endpoint) &&
                     obs->obs_counter % COAP_OBSERVE_REFRESH_INTERVAL == 0) {
                     OC_LOG(DEBUG, "coap_observe_notify: forcing CON "
                                  "notification to check for client liveness\n");

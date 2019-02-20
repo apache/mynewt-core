@@ -42,6 +42,18 @@ struct oc_endpoint_ble {
  */
 int oc_endpoint_is_gatt(const struct oc_endpoint *oe);
 
+
+/**
+ * @brief Indicates whether the endpoints belong to same GATT (BLE) connection.
+ *
+ * @param oe1                   The endpoint to compare.
+ * @param oe2                   The endpoint to compare.
+ *
+ * @return                      1 if yes; 0 otherwise.
+ */
+int oc_endpoint_gatt_conn_eq(const struct oc_endpoint *oe1,
+                             const struct oc_endpoint *oe2);
+
 #ifdef __cplusplus
 }
 #endif

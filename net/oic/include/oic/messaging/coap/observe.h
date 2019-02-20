@@ -77,6 +77,8 @@ int coap_notify_observers(oc_resource_t *resource,
 int coap_observe_handler(struct coap_packet_rx *req, coap_packet_t *response,
                          oc_resource_t *resource, oc_endpoint_t *endpoint);
 
+void coap_observer_walk(int (*walk_func)(struct coap_observer *, void *),
+                        void *arg);
 void coap_observe_init(void);
 
 #ifdef __cplusplus
