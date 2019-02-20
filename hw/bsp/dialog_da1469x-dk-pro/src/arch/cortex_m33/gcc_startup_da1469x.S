@@ -28,6 +28,9 @@
     .equ    Stack_Size, 0xC00
 #endif
     .equ    NVIC_VTOR, 0xE000ED08
+    .equ    SYS_CTRL_REG, 0x50000024
+    .equ    CACHE_FLASH_REG, 0x100C0040
+
     .globl  __StackTop
     .globl  __StackLimit
 __StackLimit:
@@ -133,7 +136,7 @@ __isr_vector:
     .type  Reset_Handler, %function
 Reset_Handler:
 /* Make sure interrupt vector is remapped at 0x0 */
-    ldr     r1, =0x50000024 /* SYS_CTRL_REG */
+    ldr     r1, =SYS_CTRL_REG
     ldrh    r2, [r1, #0]
     orrs    r2, r2, #8
     strh    r2, [r1, #0]
@@ -144,7 +147,7 @@ Reset_Handler:
  * header by 1st state bootloader and configured in CACHE_FLASH_REG. We need to
  * retrieve proper offset value for calculations later.
  */
-    ldr     r1, =0x100C0040 /* CACHE_FLASH_REG */
+    ldr     r1, =CACHE_FLASH_REG
     ldr     r4, [r1, #0]
     mov     r2, r4
     mov     r3, #0xFFFF
@@ -228,7 +231,7 @@ Reset_Handler:
 /* Default interrupt handler */
     .type   Default_Handler, %function
 Default_Handler:
-    ldr     r1, =0x50000024 /* SYS_CTRL_REG */
+    ldr     r1, =SYS_CTRL_REG
     ldrh    r2, [r1, #0]
     orrs    r2, r2, #0x80   /* DEBUGGER_ENABLE */
     strh    r2, [r1, #0]
