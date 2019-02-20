@@ -121,6 +121,7 @@ os_mempool_init_internal(struct os_mempool *mp, uint16_t blocks,
                          uint8_t flags)
 {
     int true_block_size;
+    int i;
     uint8_t *block_addr;
     struct os_memblock *block_ptr;
 
@@ -150,26 +151,27 @@ os_mempool_init_internal(struct os_mempool *mp, uint16_t blocks,
     mp->mp_num_blocks = blocks;
     mp->mp_membuf_addr = (uint32_t)membuf;
     mp->name = name;
-    os_mempool_poison(mp, membuf);
-    os_mempool_guard(mp, membuf);
     SLIST_FIRST(mp) = membuf;
 
-    true_block_size = OS_MEMPOOL_TRUE_BLOCK_SIZE(mp);
+    if (blocks > 0) {
+        os_mempool_poison(mp, membuf);
+        os_mempool_guard(mp, membuf);
+        true_block_size = OS_MEMPOOL_TRUE_BLOCK_SIZE(mp);
 
-    /* Chain the memory blocks to the free list */
-    block_addr = (uint8_t *)membuf;
-    block_ptr = (struct os_memblock *)block_addr;
-    while (blocks > 1) {
-        block_addr += true_block_size;
-        os_mempool_poison(mp, block_addr);
-        os_mempool_guard(mp, block_addr);
-        SLIST_NEXT(block_ptr, mb_next) = (struct os_memblock *)block_addr;
+        /* Chain the memory blocks to the free list */
+        block_addr = (uint8_t *)membuf;
         block_ptr = (struct os_memblock *)block_addr;
-        --blocks;
-    }
+        for (i = 1; i < blocks; i++) {
+            block_addr += true_block_size;
+            os_mempool_poison(mp, block_addr);
+            os_mempool_guard(mp, block_addr);
+            SLIST_NEXT(block_ptr, mb_next) = (struct os_memblock *)block_addr;
+            block_ptr = (struct os_memblock *)block_addr;
+        }
 
-    /* Last one in the list should be NULL */
-    SLIST_NEXT(block_ptr, mb_next) = NULL;
+        /* Last one in the list should be NULL */
+        SLIST_NEXT(block_ptr, mb_next) = NULL;
+    }
 
     STAILQ_INSERT_TAIL(&g_os_mempool_list, mp, mp_list);
 
