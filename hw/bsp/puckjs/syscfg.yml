@@ -49,7 +49,7 @@ syscfg.vals:
     NFFS_FLASH_AREA: FLASH_AREA_NFFS
     COREDUMP_FLASH_AREA: FLASH_AREA_IMAGE_1
     MCU_DCDC_ENABLED: 1
-    XTAL_32768_SYNTH: 1
+    MCU_LFCLK_SOURCE: LFSYNTH
 
 # The module on the board has +/- 40 ppm crystal. A value of 5 is
 # for crystals in the range of 31 to 50 ppm.

@@ -24,12 +24,8 @@
 #include "mcu/cmsis_nvic.h"
 
 /* The OS scheduler requires a low-frequency timer. */
-#if MYNEWT_VAL(OS_SCHEDULING)       && \
-    !MYNEWT_VAL(XTAL_32768)         && \
-    !MYNEWT_VAL(XTAL_RC)            && \
-    !MYNEWT_VAL(XTAL_32768_SYNTH)
-
-    #error The OS scheduler requires a low-frequency timer; enable one of: XTAL_32768, XTAL_RC, or XTAL_32768_SYNTH
+#if MYNEWT_VAL(OS_SCHEDULING) && !MYNEWT_VAL(MCU_LFCLK_SOURCE)
+    #error The OS scheduler requires a low-frequency timer; configure MCU_LFCLK_SOURCE
 #endif
 
 #define RTC_FREQ            32768       /* in Hz */
