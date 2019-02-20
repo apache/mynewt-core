@@ -40,6 +40,15 @@ syscfg.defs:
             expected to be overridden by the BSP.
         value: 0
 
+    MCU_LFCLK_SOURCE:
+        description: >
+            Selected source for low frequency clock (LFCLK).
+        value:
+        choices:
+            - LFRC      # 32.768 kHz RC oscillator
+            - LFXO      # 32.768 kHz crystal oscillator
+            - LFSYNTH   # 32.768 kHz synthesized from HFCLK
+
     MCU_I2C_RECOVERY_DELAY_USEC:
         description: >
             Time to wait for activity on SCL line after triggering start task
@@ -403,30 +412,6 @@ syscfg.defs:
         description: 'Enable pin reset'
         value: 0
 
-# The XTAL_xxx definitions are used to set the clock source used for the low
-# frequency clock. It is required that at least one of these sources is
-# enabled (the bsp should set one of these clock sources).
-    XTAL_32768:
-        description: 'External 32k oscillator LF clock source.'
-        value: 0
-        restrictions:
-            - "!XTAL_32768_SYNTH"
-            - "!XTAL_RC"
-
-    XTAL_RC:
-        description: 'internal RC LF clock source'
-        value: 0
-        restrictions:
-            - "!XTAL_32768_SYNTH"
-            - "!XTAL_32768"
-
-    XTAL_32768_SYNTH:
-        description: 'Synthesized 32k LF clock source.'
-        value: 0
-        restrictions:
-            - "!XTAL_RC"
-            - "!XTAL_32768"
-
 # Deprecated settings
 
     MCU_NRF52832:
@@ -442,10 +427,39 @@ syscfg.defs:
             - "!MCU_NRF52832"
         deprecated: 1
 
+    XTAL_32768:
+        description: Use MCU_LFCLK_SOURCE instead
+        value: 0
+        restrictions:
+            - "!XTAL_RC"
+            - "!XTAL_32768_SYNTH"
+        deprecated: 1
+    XTAL_RC:
+        description: Use MCU_LFCLK_SOURCE instead
+        value: 0
+        restrictions:
+            - "!XTAL_32768"
+            - "!XTAL_32768_SYNTH"
+        deprecated: 1
+    XTAL_32768_SYNTH:
+        description: Use MCU_LFCLK_SOURCE instead
+        value: 0
+        restrictions:
+            - "!XTAL_32768"
+            - "!XTAL_RC"
+        deprecated: 1
+
 syscfg.vals.MCU_NRF52832:
     MCU_TARGET: nRF52832
 syscfg.vals.MCU_NRF52840:
     MCU_TARGET: nRF52840
+
+syscfg.vals.XTAL_32768:
+    MCU_LFCLK_SOURCE: LFXO
+syscfg.vals.XTAL_RC:
+    MCU_LFCLK_SOURCE: LFRC
+syscfg.vals.XTAL_32768_SYNTH:
+    MCU_LFCLK_SOURCE: LFSYNTH
 
 syscfg.restrictions:
     - "!I2C_0 || (I2C_0_PIN_SCL && I2C_0_PIN_SDA)"
