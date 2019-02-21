@@ -111,26 +111,19 @@ bus_spi_read(struct bus_dev *bdev, struct bus_node *bnode, uint8_t *buf,
 {
     struct bus_spi_dev *dev = (struct bus_spi_dev *)bdev;
     struct bus_spi_node *node = (struct bus_spi_node *)bnode;
-    uint8_t val;
-    int i;
     int rc;
+    (void)timeout;
 
     BUS_DEBUG_VERIFY_DEV(dev);
     BUS_DEBUG_VERIFY_NODE(node);
 
-    rc = 0;
-
     hal_gpio_write(node->pin_cs, 0);
 
-    for (i = 0; i < length; i++) {
-        val = hal_spi_tx_val(dev->cfg.spi_num, 0xAA);
-        if (val == 0xFFFF) {
-            rc = SYS_EINVAL;
-            break;
-        }
-
-        buf[i] = val;
-    }
+    /* Use output buffer as input to generate SPI clock.
+     * For security mostly, do not output random data, fill it with 0xFF.
+     */
+    memset(buf, 0xFF, length);
+    rc = hal_spi_txrx(dev->cfg.spi_num, buf, buf, length);
 
     if (rc || !(flags & BUS_F_NOSTOP)) {
         hal_gpio_write(node->pin_cs, 1);
