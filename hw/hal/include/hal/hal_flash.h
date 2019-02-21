@@ -45,6 +45,7 @@ int hal_flash_isempty(uint8_t flash_id, uint32_t address, void *dst,
 uint8_t hal_flash_align(uint8_t flash_id);
 uint8_t hal_flash_erased_val(uint8_t flash_id);
 int hal_flash_init(void);
+int hal_flash_power_control(uint8_t id, void *args);
 
 #ifdef __cplusplus
 }

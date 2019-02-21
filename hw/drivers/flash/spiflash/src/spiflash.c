@@ -567,6 +567,7 @@ static int spiflash_erase_sector(const struct hal_flash *hal_flash_dev,
         uint32_t sector_address);
 static int spiflash_sector_info(const struct hal_flash *hal_flash_dev, int idx,
         uint32_t *address, uint32_t *sz);
+static int spiflash_power_control(const struct hal_flash *hal_flash_dev, int state);
 
 static const struct hal_flash_funcs spiflash_flash_funcs = {
     .hff_read         = spiflash_read,
@@ -574,6 +575,7 @@ static const struct hal_flash_funcs spiflash_flash_funcs = {
     .hff_erase_sector = spiflash_erase_sector,
     .hff_sector_info  = spiflash_sector_info,
     .hff_init         = spiflash_init,
+    .hff_power_ctrl   = spiflash_power_control,
 };
 
 struct spiflash_dev spiflash_dev = {
@@ -1034,6 +1036,17 @@ spiflash_init(const struct hal_flash *hal_flash_dev)
     rc = spiflash_identify(dev);
 
     return rc;
+}
+
+int
+spiflash_power_control(const struct hal_flash *hal_flash_dev, int state)
+{
+    if( state == HAL_FLASH_POWER_DOWN)
+    {
+        spiflash_release_power_down((struct spiflash_dev *)hal_flash_dev);
+    }
+
+    return 0;
 }
 
 #endif

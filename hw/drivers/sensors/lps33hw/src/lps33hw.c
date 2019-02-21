@@ -77,6 +77,7 @@ static int lps33hw_sensor_clear_low_thresh(struct sensor *sensor,
         sensor_type_t type);
 static int lps33hw_sensor_clear_high_thresh(struct sensor *sensor,
         sensor_type_t type);
+static int lps33hw_power_control(struct sensor *sensor, void *args);
 
 static const struct sensor_driver g_lps33hw_sensor_driver = {
     .sd_read                      = lps33hw_sensor_read,
@@ -85,7 +86,8 @@ static const struct sensor_driver g_lps33hw_sensor_driver = {
     .sd_set_trigger_thresh        = lps33hw_sensor_set_trigger_thresh,
     .sd_handle_interrupt          = lps33hw_sensor_handle_interrupt,
     .sd_clear_low_trigger_thresh  = lps33hw_sensor_clear_low_thresh,
-    .sd_clear_high_trigger_thresh = lps33hw_sensor_clear_high_thresh
+    .sd_clear_high_trigger_thresh = lps33hw_sensor_clear_high_thresh,
+    .sd_power_control             = lps33hw_power_control,
 };
 
 /*
@@ -1079,6 +1081,21 @@ lps33hw_sensor_get_config(struct sensor *sensor, sensor_type_t type,
     }
 
     cfg->sc_valtype = SENSOR_VALUE_TYPE_FLOAT;
+
+    return 0;
+}
+
+
+static int
+lps33hw_power_control(struct sensor *sensor, void *args)
+{
+    struct sensor_itf *itf = SENSOR_GET_ITF(sensor);
+    int power_state = *(int *)args;
+
+    if(power_state == 0)
+    {
+        return lps33hw_set_value(itf, LPS33HW_CTRL_REG1_ODR, LPS33HW_ONE_SHOT);
+    }
 
     return 0;
 }

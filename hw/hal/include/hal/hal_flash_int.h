@@ -26,6 +26,11 @@ extern "C" {
 
 #include <inttypes.h>
 
+typedef enum{
+    HAL_FLASH_POWER_DOWN,
+    HAL_FLASH_POWER_UP,
+} HAL_FLASH_POWER_STATE;
+
 /*
  * API that flash driver has to implement.
  */
@@ -43,6 +48,8 @@ struct hal_flash_funcs {
     int (*hff_is_empty)(const struct hal_flash *dev, uint32_t address,
             void *dst, uint32_t num_bytes);
     int (*hff_init)(const struct hal_flash *dev);
+
+    int (*hff_power_ctrl)(const struct hal_flash *dev, int state);
 };
 
 struct hal_flash {

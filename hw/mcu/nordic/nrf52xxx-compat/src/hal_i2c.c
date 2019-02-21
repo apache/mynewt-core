@@ -447,3 +447,48 @@ hal_i2c_master_probe(uint8_t i2c_num, uint8_t address, uint32_t timo)
 
     return hal_i2c_master_read(i2c_num, &rx, timo, 1);
 }
+
+int
+hal_i2c_enable(uint8_t i2c_num)
+{
+    int rc = 0;
+    struct nrf52_hal_i2c *i2c;
+    NRF_TWI_Type *regs = NULL;
+
+    NRF52_HAL_I2C_RESOLVE(i2c_num, i2c);
+    regs = i2c->nhi_regs;
+
+    regs->ENABLE = TWI_ENABLE_ENABLE_Enabled;
+
+    return 0;
+
+err:
+    if (regs && regs->EVENTS_ERROR) {
+        rc = regs->ERRORSRC;
+        regs->TASKS_STOP = 1;
+        regs->ERRORSRC = rc;
+    }
+    return rc;
+}
+
+int
+hal_i2c_disable(uint8_t i2c_num)
+{
+    int rc = 0;
+    struct nrf52_hal_i2c *i2c;
+    NRF_TWI_Type *regs = NULL;
+
+    NRF52_HAL_I2C_RESOLVE(i2c_num, i2c);
+    regs = i2c->nhi_regs;
+
+    regs->ENABLE = TWI_ENABLE_ENABLE_Disabled;
+
+    return 0;
+err:
+    if (regs && regs->EVENTS_ERROR) {
+        rc = regs->ERRORSRC;
+        regs->TASKS_STOP = 1;
+        regs->ERRORSRC = rc;
+    }
+    return rc;
+}

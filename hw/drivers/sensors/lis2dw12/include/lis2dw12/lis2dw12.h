@@ -979,6 +979,17 @@ lis2dw12_create_spi_sensor_dev(struct bus_spi_node *node, const char *name,
                                struct sensor_itf *sensor_itf);
 #endif
 
+/**
+ * Disable the sensor to reach the lowest power. This is only used for FTM.
+ *
+ * @param sensor The sensor ptr
+ * @param args   The input value to select different power state.
+ *
+ * @return 0 on success, non-zero on failure.
+ */
+int
+lis2dw12_power_control(struct sensor *sensor, void *args);
+
 #ifdef __cplusplus
 }
 #endif

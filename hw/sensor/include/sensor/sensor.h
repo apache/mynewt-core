@@ -488,6 +488,16 @@ typedef int (*sensor_unset_notification_t)(struct sensor *,
  */
 typedef int (*sensor_handle_interrupt_t)(struct sensor *sensor);
 
+/**
+ * Power control function
+ *
+ * @param sensor Ptr to the sensor
+ * @param args Argument to select different power state
+ *
+ * @return 0 on success, non-zero error code on failure.
+ */
+typedef int (*sensor_power_control_t)(struct sensor *sensor, void *args);
+
 struct sensor_driver {
     sensor_read_func_t sd_read;
     sensor_get_config_func_t sd_get_config;
@@ -498,6 +508,7 @@ struct sensor_driver {
     sensor_set_notification_t sd_set_notification;
     sensor_unset_notification_t sd_unset_notification;
     sensor_handle_interrupt_t sd_handle_interrupt;
+    sensor_power_control_t sd_power_control;
 };
 
 struct sensor_timestamp {
@@ -861,6 +872,21 @@ sensor_get_config(struct sensor *sensor, sensor_type_t type,
 {
     return (sensor->s_funcs->sd_get_config(sensor, type, cfg));
 }
+
+/**
+ * Set sensor power state
+ *
+ * @param sensor The sensor to read configuration for
+ * @param power_state The power state is set to
+ *
+ * @return 0 on success, non-zero error code on failure.
+ */
+static inline int
+sensor_set_power_state(struct sensor *sensor, int power_state)
+{
+    return (sensor->s_funcs->sd_power_control(sensor, &power_state));
+}
+
 
 /**
  *   @} SensorAPI

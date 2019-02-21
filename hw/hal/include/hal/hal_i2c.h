@@ -145,6 +145,24 @@ int hal_i2c_master_read(uint8_t i2c_num, struct hal_i2c_master_data *pdata,
 int hal_i2c_master_probe(uint8_t i2c_num, uint8_t address,
                          uint32_t timeout);
 
+/**
+ * Enable i2c device with the I2C number.
+ *
+ * @param i2c_num The number of the I2C device being initialized
+ *
+ * @return 0 on success, and non-zero error code on failure
+ */
+int hal_i2c_enable(uint8_t i2c_num);
+
+/**
+ * Disable i2c device with the I2C number.
+ *
+ * @param i2c_num The number of the I2C device being initialized
+ *
+ * @return 0 on success, and non-zero error code on failure
+ */
+int hal_i2c_disable(uint8_t i2c_num);
+
 #ifdef __cplusplus
 }
 #endif

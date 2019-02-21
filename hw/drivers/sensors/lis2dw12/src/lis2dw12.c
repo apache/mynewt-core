@@ -220,7 +220,8 @@ static const struct sensor_driver g_lis2dw12_sensor_driver = {
     .sd_get_config         = lis2dw12_sensor_get_config,
     .sd_set_notification   = lis2dw12_sensor_set_notification,
     .sd_unset_notification = lis2dw12_sensor_unset_notification,
-    .sd_handle_interrupt   = lis2dw12_sensor_handle_interrupt
+    .sd_handle_interrupt   = lis2dw12_sensor_handle_interrupt,
+    .sd_power_control      = lis2dw12_power_control,
 
 };
 
@@ -3699,3 +3700,21 @@ lis2dw12_create_spi_sensor_dev(struct bus_spi_node *node, const char *name,
     return rc;
 }
 #endif
+
+
+int
+lis2dw12_power_control(struct sensor *sensor, void *args)
+{
+    struct sensor_itf *itf;
+    int power_state = *(int *)args;
+
+
+    itf = SENSOR_GET_ITF(sensor);
+
+    if(power_state == 0)
+    {
+        return lis2dw12_set_rate(itf, LIS2DW12_DATA_RATE_0HZ);
+    }
+
+    return 0;
+}

@@ -355,3 +355,23 @@ hal_flash_ioctl(uint8_t id, uint32_t cmd, void *args)
 {
     return 0;
 }
+
+int
+hal_flash_power_control(uint8_t id, void *args)
+{
+    const struct hal_flash *hf;
+    int rc = 0;
+    int state = *(int *)args;
+
+    hf = hal_bsp_flash_dev(id);
+    if (!hf) {
+        return -1;
+    }
+
+    if(state == 0)
+    {
+        rc = hf->hf_itf->hff_power_ctrl(hf, HAL_FLASH_POWER_DOWN);
+    }
+
+    return rc;
+}
