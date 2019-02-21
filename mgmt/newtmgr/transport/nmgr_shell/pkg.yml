@@ -30,5 +30,3 @@ pkg.deps:
     - "@apache-mynewt-core/sys/shell"
     - "@apache-mynewt-core/mgmt/newtmgr"
 
-pkg.init:
-    nmgr_shell_pkg_init: 501
