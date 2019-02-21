@@ -60,6 +60,13 @@ struct da1469x_hal_i2c_cfg {
     uint32_t frequency;
 };
 
+struct da1469x_hal_spi_cfg {
+    int8_t pin_sck;
+    int8_t pin_do;
+    int8_t pin_di;
+    int8_t pin_ss;
+};
+
 #ifdef __cplusplus
 }
 #endif

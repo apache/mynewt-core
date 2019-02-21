@@ -89,6 +89,72 @@ syscfg.defs:
         description: 'Frequency [kHz] for I2C_1'
         value: 100
 
+    SPI_0_MASTER:
+        description: 'Enable DA14xxx SPI Master'
+        value: 0
+        restrictions:
+            - "!SPI_0_SLAVE"
+    SPI_0_MASTER_PIN_SCK:
+        description: 'SCK pin for SPI_0_MASTER'
+        value: ''
+    SPI_0_MASTER_PIN_MOSI:
+        description: 'MOSI pin for SPI_0_MASTER'
+        value: ''
+    SPI_0_MASTER_PIN_MISO:
+        description: 'MISO pin for SPI_0_MASTER'
+        value: ''
+
+    SPI_0_SLAVE:
+        description: 'Enable DA14xxx SPI Slave'
+        value: 0
+        restrictions:
+            - "!SPI_0_MASTER"
+    SPI_0_SLAVE_PIN_SCK:
+        description: 'SCK pin for SPI_0_SLAVE'
+        value: ''
+    SPI_0_SLAVE_PIN_MOSI:
+        description: 'MOSI pin for SPI_0_SLAVE'
+        value: ''
+    SPI_0_SLAVE_PIN_MISO:
+        description: 'MISO pin for SPI_0_SLAVE'
+        value: ''
+    SPI_0_SLAVE_PIN_SS:
+        description: 'SS pin for SPI_0_SLAVE'
+        value: ''
+
+    SPI_1_MASTER:
+        description: 'Enable DA14xxx SPI2 Master'
+        value: 0
+        restrictions:
+            - "!SPI_1_SLAVE"
+    SPI_1_MASTER_PIN_SCK:
+        description: 'SCK pin for SPI_1_MASTER'
+        value: ''
+    SPI_1_MASTER_PIN_MOSI:
+        description: 'MOSI pin for SPI_1_MASTER'
+        value: ''
+    SPI_1_MASTER_PIN_MISO:
+        description: 'MISO pin for SPI_1_MASTER'
+        value: ''
+
+    SPI_1_SLAVE:
+        description: 'Enable DA14xxx SPI2 Slave'
+        value: 0
+        restrictions:
+            - "!SPI_1_MASTER"
+    SPI_1_SLAVE_PIN_SCK:
+        description: 'SCK pin for SPI_1_SLAVE'
+        value: ''
+    SPI_1_SLAVE_PIN_MOSI:
+        description: 'MOSI pin for SPI_1_SLAVE'
+        value: ''
+    SPI_1_SLAVE_PIN_MISO:
+        description: 'MISO pin for SPI_1_SLAVE'
+        value: ''
+    SPI_1_SLAVE_PIN_SS:
+        description: 'SS pin for SPI_1_SLAVE'
+        value: ''
+
     UART_0:
         description: Enable DA1469x UART 0 (UART peripheral)
         value: 1
@@ -148,3 +214,7 @@ syscfg.restrictions:
     - "!UART_0 || (UART_0_PIN_TX && UART_0_PIN_RX)"
     - "!UART_1 || (UART_1_PIN_TX && UART_1_PIN_RX)"
     - "!UART_2 || (UART_2_PIN_TX && UART_2_PIN_RX)"
+    - "!SPI_0_MASTER || (SPI_0_MASTER_PIN_SCK && SPI_0_MASTER_PIN_MOSI && SPI_0_MASTER_PIN_MISO)"
+    - "!SPI_1_MASTER || (SPI_1_MASTER_PIN_SCK && SPI_1_MASTER_PIN_MOSI && SPI_1_MASTER_PIN_MISO)"
+    - "!SPI_0_SLAVE || (SPI_0_SLAVE_PIN_SCK && SPI_0_SLAVE_PIN_MOSI && SPI_0_SLAVE_PIN_MISO && SPI_0_SLAVE_PIN_SS)"
+    - "!SPI_1_SLAVE || (SPI_1_SLAVE_PIN_SCK && SPI_1_SLAVE_PIN_MOSI && SPI_1_SLAVE_PIN_MISO && SPI_1_SLAVE_PIN_SS)"
