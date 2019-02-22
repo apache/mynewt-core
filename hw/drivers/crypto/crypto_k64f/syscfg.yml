@@ -1,3 +1,4 @@
+#
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -17,16 +18,9 @@
 #
 
 syscfg.defs:
-    MCU_FLASH_MIN_WRITE_SIZE:
-        description: >
-            Specifies the required alignment for internal flash writes.
-            Used internally by the newt tool.
-        value: 8
-
-    TRNG:
-        description: 'Enable True Random Number Generator (RNGA)'
+    CRYPTO_HW_AES_CBC:
+        description: "This HW does not support AES-CBC mode."
         value: 0
-
-    CRYPTO:
-        description: 'Enable cryptograpy accelerator (CAU)'
+    CRYPTO_HW_AES_CTR:
+        description: "This HW does not support AES-CTR mode."
         value: 0
