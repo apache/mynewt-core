@@ -65,3 +65,6 @@ pkg.deps.UART_5:
 
 pkg.deps.TRNG:
     - "@apache-mynewt-core/hw/drivers/trng/trng_k64f"
+
+pkg.deps.CRYPTO:
+    - "@apache-mynewt-core/hw/drivers/crypto/crypto_k64f"
