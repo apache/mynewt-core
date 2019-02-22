@@ -36,6 +36,7 @@ mempool_test(int num_blocks, int block_size, bool clear)
     void *block;
     os_error_t rc;
 
+    /* Attempt to unregister the pool in case this test has already run. */
     os_mempool_unregister(&g_TstMempool);
 
     /* Check for too many blocks */
