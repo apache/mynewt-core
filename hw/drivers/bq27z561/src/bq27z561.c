@@ -1150,6 +1150,11 @@ bq27z561_battery_property_get(struct battery_driver *driver,
         rc = bq27z561_get_rem_capacity((struct bq27z561 *) driver->bd_driver_data,
                                   &val.bpv_u16);
         property->bp_value.bpv_capacity = val.bpv_u16;
+    } else if (property->bp_type == BATTERY_PROP_CAPACITY_FULL &&
+               property->bp_flags == 0) {
+        rc = bq27z561_get_full_chg_capacity((struct bq27z561 *) driver->bd_driver_data,
+                                            &val.bpv_u16);
+        property->bp_value.bpv_capacity = val.bpv_u16;
     } else if (property->bp_type == BATTERY_PROP_SOC &&
                property->bp_flags == 0) {
         rc = bq27z561_get_relative_state_of_charge(
@@ -1288,6 +1293,7 @@ static const struct battery_driver_functions bq27z561_drv_funcs = {
 static const struct battery_driver_property bq27z561_battery_properties[] = {
     { BATTERY_PROP_STATUS, 0, "Status" },
     { BATTERY_PROP_CAPACITY, 0, "Capacity" },
+    { BATTERY_PROP_CAPACITY_FULL, 0, "FullChargeCapacity" },
     { BATTERY_PROP_TEMP_NOW, 0, "Temperature" },
     { BATTERY_PROP_VOLTAGE_NOW, 0, "Voltage" },
     { BATTERY_PROP_CURRENT_NOW, 0, "Current" },

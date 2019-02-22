@@ -167,6 +167,7 @@ static void print_property(const struct battery_property *prop)
                 bat_status[prop->bp_value.bpv_status]);
         break;
     case BATTERY_PROP_CAPACITY:
+    case BATTERY_PROP_CAPACITY_FULL:
         console_printf(" %s %lu mAh\n", name, prop->bp_value.bpv_capacity);
         break;
     case BATTERY_PROP_CAPACITY_LEVEL:
