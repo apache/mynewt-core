@@ -21,6 +21,7 @@
 
 static struct os_mempool_ext *freed_pool;
 static void *freed_block;
+static struct os_mempool_ext pool;
 
 static os_error_t
 put_cb(struct os_mempool_ext *mpe, void *block, void *arg)
@@ -39,9 +40,11 @@ put_cb(struct os_mempool_ext *mpe, void *block, void *arg)
 TEST_CASE(os_mempool_test_ext_basic)
 {
     uint8_t buf[OS_MEMPOOL_BYTES(10, 32)];
-    struct os_mempool_ext pool;
     int *ip;
     int rc;
+
+    /* Attempt to unregister the pool in case this test has already run. */
+    os_mempool_unregister(&pool.mpe_mp);
 
     rc = os_mempool_ext_init(&pool, 10, 32, buf, "test_ext_basic");
     TEST_ASSERT_FATAL(rc == 0);
