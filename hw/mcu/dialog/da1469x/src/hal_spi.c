@@ -290,6 +290,7 @@ hal_spi_config(int spi_num, struct hal_spi_settings *settings)
     regs = spi->hw->regs;
 
     regs->SPI_CTRL_REG &= ~SPI_SPI_CTRL_REG_SPI_ON_Msk;
+    regs->SPI_CTRL_REG |= SPI_SPI_CTRL_REG_SPI_RST_Msk;
 
     /* Preserve some register fields only */
     ctrl_reg = regs->SPI_CTRL_REG & (SPI_SPI_RX_TX_REG_SPI_DATA_Msk |
@@ -298,7 +299,8 @@ hal_spi_config(int spi_num, struct hal_spi_settings *settings)
                                      SPI_SPI_CTRL_REG_SPI_PRIORITY_Msk |
                                      SPI_SPI_CTRL_REG_SPI_EN_CTRL_Msk |
                                      SPI_SPI_CTRL_REG_SPI_SMN_Msk |
-                                     SPI_SPI_CTRL_REG_SPI_DO_Msk);
+                                     SPI_SPI_CTRL_REG_SPI_DO_Msk |
+                                     SPI_SPI_CTRL_REG_SPI_RST_Msk);
 
     assert(settings->data_order == HAL_SPI_MSB_FIRST);
 
@@ -362,6 +364,7 @@ hal_spi_enable(int spi_num)
     }
 
     regs->SPI_CTRL_REG |= SPI_SPI_CTRL_REG_SPI_ON_Msk;
+    regs->SPI_CTRL_REG &= ~SPI_SPI_CTRL_REG_SPI_RST_Msk;
 
     return 0;
 }
@@ -383,6 +386,7 @@ hal_spi_disable(int spi_num)
 
     regs->SPI_CTRL_REG &= ~(SPI_SPI_CTRL_REG_SPI_ON_Msk |
                             SPI_SPI_CTRL_REG_SPI_INT_BIT_Msk);
+    regs->SPI_CTRL_REG |= SPI_SPI_CTRL_REG_SPI_RST_Msk;
 
     return 0;
 }
