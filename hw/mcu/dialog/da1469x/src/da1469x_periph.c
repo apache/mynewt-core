@@ -37,6 +37,14 @@
 #include "hal/hal_i2c.h"
 #endif
 #endif
+#if MYNEWT_VAL(TRNG)
+#include "trng/trng.h"
+#include "trng_da1469x.h"
+#endif
+
+#if MYNEWT_VAL(TRNG)
+static struct trng_dev os_bsp_trng;
+#endif
 
 #if MYNEWT_VAL(SPI_0_MASTER) || MYNEWT_VAL(SPI_1_MASTER)
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
@@ -186,6 +194,21 @@ da1469x_periph_create_timers(void)
 }
 
 static void
+da1469x_periph_create_trng(void)
+{
+    int rc;
+
+    (void)rc;
+
+#if MYNEWT_VAL(TRNG)
+    rc = os_dev_create(&os_bsp_trng.dev, "trng",
+                       OS_DEV_INIT_KERNEL, OS_DEV_INIT_PRIO_DEFAULT,
+                       da1469x_trng_init, NULL);
+    assert(rc == 0);
+#endif
+}
+
+static void
 da1469x_periph_create_uart(void)
 {
     int rc;
@@ -288,7 +311,7 @@ da1469x_periph_create(void)
     da1469x_periph_create_timers();
 //    da1469x_periph_create_adc();
 //    da1469x_periph_create_pwm();
-//    da1469x_periph_create_trng();
+    da1469x_periph_create_trng();
     da1469x_periph_create_uart();
     da1469x_periph_create_i2c();
     da1469x_periph_create_spi();

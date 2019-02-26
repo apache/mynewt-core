@@ -211,6 +211,10 @@ syscfg.defs:
         description: Enable DA1469x timer 2 (Timer4 peripheral)
         value:  0
 
+    TRNG:
+        description: 'Enable DA1469x TRNG'
+        value: 0
+
 syscfg.restrictions:
     - "QSPI_FLASH_ADDRESS_LENGTH==24"
     - "!I2C_0 || (I2C_0_PIN_SCL && I2C_0_PIN_SDA)"
