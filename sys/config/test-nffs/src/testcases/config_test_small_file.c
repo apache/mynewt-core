@@ -24,7 +24,7 @@ TEST_CASE(config_test_small_file)
     struct conf_file cf_mfg;
     struct conf_file cf_running;
     const char cf_mfg_test[] = "myfoo/mybar=1";
-    const char cf_running_test[] = " myfoo/mybar = 8 ";
+    const char cf_running_test[] = " myfoo/mybar = 8";
 
     config_wipe_srcs();
 
