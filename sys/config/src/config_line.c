@@ -58,7 +58,7 @@ conf_line_parse(char *buf, char **namep, char **valp)
             }
             break;
         case FIND_VAL_END:
-            if (isspace((unsigned char)*cp)) {
+            if (!isprint((unsigned char)*cp)) {
                 *cp = '\0';
             }
             break;
