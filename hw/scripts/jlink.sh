@@ -64,6 +64,12 @@ jlink_load () {
     # XXXX 'newt run' was not always updating the flash on nrf52dk. With
     # 'info reg' in place it seems to work every time. Not sure why.
     echo "info reg" >> $GDB_CMD_FILE
+
+    # Reset the device a second time.  Some devices seem to be stuck in a weird
+    # state when they are programmed (e.g., looping in a default interrupt
+    # handler).  The reset clears the bad state.
+    echo "mon reset" >> $GDB_CMD_FILE
+
     echo "quit" >> $GDB_CMD_FILE
 
     msgs=`arm-none-eabi-gdb -x $GDB_CMD_FILE 2>&1`
