@@ -876,6 +876,8 @@ spiflash_wait_ready(struct spiflash_dev *dev, uint32_t timeout_ms)
     spiflash_lock(dev);
 
     while (!spiflash_device_ready(dev)) {
+        /* If not ready let's give it 10ms */
+        os_time_delay(os_time_ms_to_ticks32(10));
         if (os_time_get() > exp_time) {
             rc = -1;
             goto err;
@@ -1032,6 +1034,11 @@ spiflash_erase_sector(const struct hal_flash *hal_flash_dev,
 
     spiflash_cs_deactivate(dev);
 #endif
+
+    /* Usually erase sector takes around 40ms, let's wait here that time.
+     * TODO: Do it configurable per flash.
+     */
+    os_time_delay(os_time_ms_to_ticks32(40));
 
     spiflash_wait_ready(dev, 100);
 err:
