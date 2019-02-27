@@ -876,8 +876,6 @@ spiflash_wait_ready(struct spiflash_dev *dev, uint32_t timeout_ms)
     spiflash_lock(dev);
 
     while (!spiflash_device_ready(dev)) {
-        /* If not ready let's give it 10ms */
-        os_time_delay(os_time_ms_to_ticks32(10));
         if (os_time_get() > exp_time) {
             rc = -1;
             goto err;
