@@ -40,11 +40,11 @@ compiler.flags.base.LINUX: [-DMN_LINUX]
 compiler.ld.flags.LINUX: [-lutil]
 
 # OS X.
-compiler.path.cc.DARWIN.OVERWRITE: "gcc-5"
-compiler.path.as.DARWIN.OVERWRITE: "gcc-5"
+compiler.path.cc.DARWIN.OVERWRITE: "gcc"
+compiler.path.as.DARWIN.OVERWRITE: "gcc"
 compiler.path.objdump.DARWIN.OVERWRITE: "gobjdump"
 compiler.path.objcopy.DARWIN.OVERWRITE: "gobjcopy"
-compiler.flags.base.DARWIN: [-DMN_OSX]
+compiler.flags.base.DARWIN: [-DMN_OSX, -Wno-missing-braces]
 compiler.ld.resolve_circular_deps.DARWIN.OVERWRITE: false
 
 compiler.path.cc.FREEBSD.OVERWRITE: "gcc7"
