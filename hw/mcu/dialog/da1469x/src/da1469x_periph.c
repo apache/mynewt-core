@@ -62,6 +62,10 @@ static struct trng_dev os_bsp_trng;
 #include "hal/hal_spi.h"
 #endif
 
+#if MYNEWT_VAL(GPADC)
+#include <gpadc_da1469x/gpadc_da1469x.h>
+#endif
+
 #if MYNEWT_VAL(UART_0)
 static struct uart_dev os_bsp_uart0;
 static const struct da1469x_uart_cfg os_bsp_uart0_cfg = {
@@ -121,6 +125,11 @@ static const struct da1469x_hal_i2c_cfg hal_i2c1_cfg = {
     .frequency = MYNEWT_VAL(I2C_1_FREQ_KHZ),
 };
 #endif
+#endif
+#if MYNEWT_VAL(GPADC)
+static struct da1469x_gpadc_dev os_bsp_gpadc;
+static struct da1469x_gpadc_dev_cfg os_bsp_gpadc_cfg = {
+};
 #endif
 
 #if MYNEWT_VAL(SPI_0_MASTER)
@@ -252,6 +261,20 @@ da1469x_periph_create_trng(void)
 }
 
 static void
+da1469x_periph_create_adc(void)
+{
+    int rc;
+
+    (void)rc;
+#if MYNEWT_VAL(GPADC)
+    rc = os_dev_create(&os_bsp_gpadc.dgd_adc.ad_dev, "gpadc",
+                       OS_DEV_INIT_KERNEL, OS_DEV_INIT_PRIO_DEFAULT,
+                       da1469x_gpadc_init, &os_bsp_gpadc_cfg);
+    assert(rc == 0);
+#endif
+}
+
+static void
 da1469x_periph_create_uart(void)
 {
     int rc;
@@ -352,7 +375,7 @@ void
 da1469x_periph_create(void)
 {
     da1469x_periph_create_timers();
-//    da1469x_periph_create_adc();
+    da1469x_periph_create_adc();
     da1469x_periph_create_pwm();
     da1469x_periph_create_trng();
     da1469x_periph_create_uart();
