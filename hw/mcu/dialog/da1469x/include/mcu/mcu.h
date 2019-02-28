@@ -100,6 +100,9 @@ typedef enum {
 #define MCU_GPIO_MODE_OUTPUT                0x300    /**< GPIO as an output */
 #define MCU_GPIO_MODE_OUTPUT_OPEN_DRAIN     0x700    /**< GPIO as an open-drain output */
 
+#define MCU_GPIO_PORT0(pin)		((0 * 32) + (pin))
+#define MCU_GPIO_PORT1(pin)		((1 * 32) + (pin))
+
 void mcu_gpio_set_pin_function(int pin, int mode, mcu_gpio_func func);
 
 #define MCU_MEM_QSPIF_M_START_ADDRESS   (0x16000000)
