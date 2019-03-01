@@ -941,9 +941,7 @@ hal_spi_txrx(int spi_num, void *txbuf, void *rxbuf, int len)
         spim = hal_spi->nhs_spi.spim;
         enabled = spim->ENABLE;
         if (enabled == SPIM_ENABLE_ENABLE_Enabled) {
-            spim->INTENCLR = NRF_SPI_IRQ_DISABLE_ALL;
-            hal_spi_stop_transfer(spim);
-            spim->ENABLE = 0;
+            hal_spi_disable(spi_num);
             enabled = 0;
         }
 
