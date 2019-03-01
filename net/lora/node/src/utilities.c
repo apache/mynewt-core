@@ -40,9 +40,3 @@ TimerGetElapsedTime(TimerTime_t savedTime)
 {
     return timer_get_elapsed_time(savedTime);
 }
-
-TimerTime_t
-TimerGetFutureTime(TimerTime_t eventInFuture)
-{
-    return timer_get_future_time(eventInFuture);
-}

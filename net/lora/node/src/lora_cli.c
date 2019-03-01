@@ -676,6 +676,18 @@ lora_cli_log_cmd(int argc, char **argv)
         case LORA_NODE_LOG_LINK_CHK:
             console_printf("LINK_CHK status=%lu", g_lnd_log[i].lnd_p32);
             break;
+        case LORA_NODE_LOG_LP_ENTER:
+            console_printf("LOW POWER ENTER");
+            break;
+        case LORA_NODE_LOG_LP_EXIT:
+            console_printf("LOW POWER EXIT");
+            break;
+        case LORA_NODE_LOG_RX_WIN2_TIMEOUT:
+            console_printf("RX_WIN2 TIMEOUT");
+            break;
+        case LORA_NODE_LOG_RX_WIN2_CANCEL:
+            console_printf("RX_WIN2 CANCEL");
+            break;
         default:
             console_printf("id=%u p8=%u p16=%u p32=%lu",
                            g_lnd_log[i].lnd_id, g_lnd_log[i].lnd_p8,

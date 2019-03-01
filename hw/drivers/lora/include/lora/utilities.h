@@ -40,12 +40,4 @@ uint32_t timer_get_current_time(void);
  */
 uint32_t timer_get_elapsed_time(uint32_t saved_time);
 
-/*!
- * \brief Return the Time elapsed since a fix moment in Time
- *
- * \param [IN] event_in_future  fix moment in the future
- * \retval time                 returns difference between now and future event
- */
-uint32_t timer_get_future_time(uint32_t event_in_future);
-
 #endif // __LORA_UTILITIES_H__

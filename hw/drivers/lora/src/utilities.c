@@ -17,25 +17,19 @@
  * under the License.
  */
 
-#include <stdlib.h>
+#include <stdint.h>
 
-#include "os/mynewt.h"
-#include "lora/utilities.h"
+#include "os/os.h"
 
 uint32_t
 timer_get_current_time(void)
 {
-    return hal_timer_read(MYNEWT_VAL(LORA_MAC_TIMER_NUM));
+    /* Convert the OS time ticks to seconds, and then to us*/
+    return os_cputime_ticks_to_usecs(os_cputime_get32());
 }
 
 uint32_t
 timer_get_elapsed_time(uint32_t saved_time)
 {
-    return hal_timer_read(MYNEWT_VAL(LORA_MAC_TIMER_NUM)) - saved_time;
-}
-
-uint32_t
-timer_get_future_time(uint32_t event_in_future)
-{
-    return hal_timer_read(MYNEWT_VAL(LORA_MAC_TIMER_NUM)) + event_in_future;
+    return timer_get_current_time() - saved_time;
 }

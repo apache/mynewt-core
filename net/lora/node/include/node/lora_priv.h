@@ -263,9 +263,17 @@ extern uint16_t g_lnd_log_index;
 #define LORA_NODE_LOG_RX_ADR_REQ        (80)
 #define LORA_NODE_LOG_PROC_MAC_CMD      (85)
 #define LORA_NODE_LOG_LINK_CHK          (90)
+#define LORA_NODE_LOG_LP_ENTER          (95)
+#define LORA_NODE_LOG_LP_EXIT           (96)
+#define LORA_NODE_LOG_RX_WIN2_TIMEOUT   (97)
+#define LORA_NODE_LOG_RX_WIN2_CANCEL    (98)
 
 #else
 #define lora_node_log(a,b,c,d)
 #endif
+
+void lora_enter_low_power(void);
+void lora_exit_low_power(void);
+void lora_config_peripherals(void);
 
 #endif
