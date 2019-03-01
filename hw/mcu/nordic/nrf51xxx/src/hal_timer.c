@@ -670,7 +670,7 @@ hal_timer_config(int timer_num, uint32_t freq_hz)
     __HAL_DISABLE_INTERRUPTS(ctx);
 
     /* Make sure HFXO is started */
-    nrf52_clock_hfxo_request();
+    nrf51_clock_hfxo_request();
     hwtimer = (NRF_TIMER_Type *)bsptimer->tmr_reg;
 
     /* Stop the timer first */
@@ -735,7 +735,7 @@ hal_timer_deinit(int timer_num)
         hwtimer = (NRF_TIMER_Type *)bsptimer->tmr_reg;
         hwtimer->INTENCLR = NRF_TIMER_INT_MASK(NRF_TIMER_CC_INT);
         hwtimer->TASKS_STOP = 1;
-        nrf52_clock_hfxo_release();
+        nrf51_clock_hfxo_release();
     }
     bsptimer->tmr_enabled = 0;
     bsptimer->tmr_reg = NULL;
