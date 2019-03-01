@@ -20,7 +20,7 @@
 #include "syscfg/syscfg.h"
 #include "hal/hal_system.h"
 #include "nrf.h"
-#include "mcu/nrf_clock.h"
+#include "mcu/nrf52_clock.h"
 
 /**
  * Function called at startup. Called after BSS and .data initialized but
