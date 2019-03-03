@@ -70,6 +70,8 @@ struct nrf52_hal_spi
     uint8_t spi_xfr_flag;   /* Master only */
     uint8_t dummy_rx;       /* Master only */
     uint8_t slave_state;    /* Slave only */
+    uint16_t nhs_buflen;
+    uint16_t nhs_bytes_txd;
     struct hal_spi_settings spi_cfg; /* Slave and master */
 
     /* Pointer to HW registers */
@@ -81,10 +83,9 @@ struct nrf52_hal_spi
     /* IRQ number */
     IRQn_Type irq_num;
 
-    uint8_t *nhs_txbuf;         /* Pointer to TX buffer */
-    uint8_t *nhs_rxbuf;         /* Pointer to RX buffer */
-    uint16_t nhs_buflen;        /* Length of buffer */
-    uint16_t nhs_bytes_txq;     /* Number of bytes queued for TX */
+    /* Pointers to tx/rx buffers */
+    uint8_t *nhs_txbuf;
+    uint8_t *nhs_rxbuf;
 
     /* Callback and arguments */
     hal_spi_txrx_cb txrx_cb_func;
@@ -136,59 +137,41 @@ nrf52_irqm_handler(struct nrf52_hal_spi *spi)
 {
     NRF_SPIM_Type *spim;
     uint16_t xfr_bytes;
-    uint16_t next_len;
+    uint16_t len;
 
     spim = spi->nhs_spi.spim;
-
-    /* Should not occur but if no transfer just leave  */
-    if (spi->spi_xfr_flag == 0) {
-        return;
-    }
-
-    if ((spim->EVENTS_STARTED) && (spim->INTENSET & SPIM_INTENSET_STARTED_Msk)) {
-        spim->EVENTS_STARTED = 0;
-
-        xfr_bytes = spim->TXD.MAXCNT;
-        spi->nhs_bytes_txq += xfr_bytes;
-
-        if (spi->nhs_bytes_txq < spi->nhs_buflen) {
-            spi->nhs_txbuf += xfr_bytes;
-
-            next_len = min(SPIM_TXD_MAXCNT_MAX,
-                           spi->nhs_buflen - spi->nhs_bytes_txq);
-
-            spim->TXD.PTR = (uint32_t)spi->nhs_txbuf;
-            spim->TXD.MAXCNT = next_len;
-
-            /* If no RX buffer was provided, we already set it to dummy one */
-            if (spi->nhs_rxbuf) {
-                spi->nhs_rxbuf += xfr_bytes;
-                spim->RXD.PTR = (uint32_t)spi->nhs_rxbuf;
-                spim->RXD.MAXCNT = next_len;
-            }
-
-            spim->SHORTS |= SPIM_SHORTS_END_START_Msk;
-            spim->INTENSET = SPIM_INTENSET_STARTED_Msk;
-            spim->INTENCLR = SPIM_INTENSET_END_Msk;
-        } else {
-            spim->SHORTS &= ~SPIM_SHORTS_END_START_Msk;
-            spim->INTENSET = SPIM_INTENSET_END_Msk;
-            spim->INTENCLR = SPIM_INTENSET_STARTED_Msk;
-        }
-    }
-
     if (spim->EVENTS_END) {
         spim->EVENTS_END = 0;
 
-        if (spim->INTENSET & SPIM_INTENSET_END_Msk) {
+        /* Should not occur but if no transfer just leave  */
+        if (spi->spi_xfr_flag == 0) {
+            return;
+        }
+
+        /* Are there more bytes to send? */
+        xfr_bytes = spim->TXD.AMOUNT;
+        spi->nhs_bytes_txd += xfr_bytes;
+        if (spi->nhs_bytes_txd < spi->nhs_buflen) {
+            spi->nhs_txbuf += xfr_bytes;
+            len = spi->nhs_buflen - spi->nhs_bytes_txd;
+            len = min(SPIM_TXD_MAXCNT_MAX, len);
+            spim->TXD.PTR = (uint32_t)spi->nhs_txbuf;
+            spim->TXD.MAXCNT = (uint8_t)len;
+
+            /* If no rxbuf, we need to set rxbuf and maxcnt to 1 */
+            if (spi->nhs_rxbuf) {
+                spi->nhs_rxbuf += xfr_bytes;
+                spim->RXD.PTR    = (uint32_t)spi->nhs_rxbuf;
+                spim->RXD.MAXCNT = (uint8_t)len;
+            }
+            spim->TASKS_START = 1;
+        } else {
             if (spi->txrx_cb_func) {
                 spi->txrx_cb_func(spi->txrx_cb_arg, spi->nhs_buflen);
+
             }
-
             spi->spi_xfr_flag = 0;
-
-            spim->SHORTS &= ~SPIM_SHORTS_END_START_Msk;
-            spim->INTENCLR = SPIM_INTENSET_STARTED_Msk | SPIM_INTENSET_END_Msk;
+            spim->INTENCLR = SPIM_INTENSET_END_Msk;
         }
     }
 }
@@ -797,7 +780,7 @@ hal_spi_disable(int spi_num)
     spi->nhs_txbuf = NULL;
     spi->nhs_rxbuf = NULL;
     spi->nhs_buflen = 0;
-    spi->nhs_bytes_txq = 0;
+    spi->nhs_bytes_txd = 0;
 
     rc = 0;
 
@@ -1048,7 +1031,7 @@ hal_spi_txrx_noblock(int spi_num, void *txbuf, void *rxbuf, int len)
         }
 
         /* Set internal data structure information */
-        spi->nhs_bytes_txq = 0;
+        spi->nhs_bytes_txd = 0;
         spi->nhs_buflen = len;
         spi->nhs_txbuf = txbuf;
 
@@ -1070,15 +1053,8 @@ hal_spi_txrx_noblock(int spi_num, void *txbuf, void *rxbuf, int len)
 
         spim->EVENTS_END = 0;
         spim->EVENTS_STOPPED = 0;
-        spim->EVENTS_STARTED = 0;
-        if (spi->nhs_buflen < 256) {
-            spim->INTENCLR = SPIM_INTENSET_STARTED_Msk;
-            spim->INTENSET = SPIM_INTENSET_END_Msk;
-        } else {
-            spim->INTENCLR = SPIM_INTENSET_END_Msk;
-            spim->INTENSET = SPIM_INTENSET_STARTED_Msk;
-        }
         spim->TASKS_START = 1;
+        spim->INTENSET = SPIM_INTENSET_END_Msk;
     } else {
         /* Must have txbuf or rxbuf */
         if ((txbuf == NULL) && (rxbuf == NULL)) {
