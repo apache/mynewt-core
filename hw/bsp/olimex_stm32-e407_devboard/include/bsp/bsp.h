@@ -47,6 +47,35 @@ extern uint8_t _ccram_start;
 #define UART_CNT 1
 #define SPI_SS_PIN       (4)
 
+/* Arduino pins */
+#define ARDUINO_PIN_D0      MCU_GPIO_PORTB(7)
+#define ARDUINO_PIN_D1      MCU_GPIO_PORTB(6)
+#define ARDUINO_PIN_D2      MCU_GPIO_PORTE(2)
+#define ARDUINO_PIN_D3      MCU_GPIO_PORTE(4)
+#define ARDUINO_PIN_D4      MCU_GPIO_PORTE(5)
+#define ARDUINO_PIN_D5      MCU_GPIO_PORTR(6)
+#define ARDUINO_PIN_D6      MCU_GPIO_PORTG(7)
+#define ARDUINO_PIN_D7      MCU_GPIO_PORTG(8)
+#define ARDUINO_PIN_D8      MCU_GPIO_PORTG(12)
+#define ARDUINO_PIN_D9      MCU_GPIO_PORTG(15)
+#define ARDUINO_PIN_D10     MCU_GPIO_PORTA(4)
+#define ARDUINO_PIN_D11     MCU_GPIO_PORTB(5)
+#define ARDUINO_PIN_D12     MCU_GPIO_PORTA(6)
+#define ARDUINO_PIN_D13     MCU_GPIO_PORTA(5)
+#define ARDUINO_PIN_A0      MCU_GPIO_PORTC(0)
+#define ARDUINO_PIN_A1      MCU_GPIO_PORTF(6)
+#define ARDUINO_PIN_A2      MCU_GPIO_PORTF(7)
+#define ARDUINO_PIN_A3      MCU_GPIO_PORTF(8)
+#define ARDUINO_PIN_A4      MCU_GPIO_PORTF(9)
+#define ARDUINO_PIN_A5      MCU_GPIO_PORTF(10)
+
+#define ARDUINO_PIN_RX      ARDUINO_PIN_D0
+#define ARDUINO_PIN_TX      ARDUINO_PIN_D1
+
+#define ARDUINO_PIN_SCK     ARDUINO_PIN_D13
+#define ARDUINO_PIN_MOSI    ARDUINO_PIN_D11
+#define ARDUINO_PIN_MISO    ARDUINO_PIN_D12
+
 #ifdef __cplusplus
 }
 #endif
