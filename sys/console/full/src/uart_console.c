@@ -272,6 +272,20 @@ uart_console_is_init(void)
 }
 
 int
+uart_console_deinit(void)
+{
+    struct os_dev *dev;
+    dev = os_dev_lookup("uart0");
+    if(dev)
+    {
+        /* Force close now */
+        os_dev_close(dev);
+        uart_dev = NULL;
+    }
+    return 0;
+}
+
+int
 uart_console_init(void)
 {
     struct uart_conf uc = {
