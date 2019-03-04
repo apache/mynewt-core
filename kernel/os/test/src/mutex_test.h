@@ -28,7 +28,7 @@
 #include "os_test_priv.h"
 
 #ifdef __cplusplus
-#extern "C" {
+extern "C" {
 #endif
 
 extern volatile int g_task1_val;

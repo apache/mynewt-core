@@ -21,7 +21,7 @@
 #define H_NFFS_TEST_PRIV_
 
 #ifdef __cplusplus
-#extern "C" {
+extern "C" {
 #endif
 
 struct nffs_test_block_desc {

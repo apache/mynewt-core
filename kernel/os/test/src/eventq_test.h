@@ -25,7 +25,7 @@
 #include "os_test_priv.h"
 
 #ifdef __cplusplus
-#extern "C" {
+extern "C" {
 #endif
 
 #if MYNEWT_VAL(SELFTEST)

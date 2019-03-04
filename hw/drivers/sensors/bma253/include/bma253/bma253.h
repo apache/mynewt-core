@@ -26,7 +26,7 @@
 #include "sensor/temperature.h"
 
 #ifdef __cplusplus
-#extern "C" {
+extern "C" {
 #endif
 
 /* XXX use some better defaults. For now it is min */

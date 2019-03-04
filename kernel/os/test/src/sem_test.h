@@ -26,7 +26,7 @@
 #include "os_test_priv.h"
 
 #ifdef __cplusplus
-#extern "C" {
+extern "C" {
 #endif
 
 extern struct os_sem g_sem1;

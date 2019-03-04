@@ -35,7 +35,7 @@
 #include "boot_serial_priv.h"
 
 #ifdef __cplusplus
-#extern "C" {
+extern "C" {
 #endif
 
 void tx_msg(void *src, int len);
