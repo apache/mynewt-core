@@ -33,7 +33,7 @@
 #include "nffs_priv.h"
 
 #ifdef __cplusplus
-#extern "C" {
+extern "C" {
 #endif
 
 extern struct nffs_hash_entry *nffs_test_touched_entries;

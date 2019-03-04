@@ -55,7 +55,7 @@
 #include "mbedtls/timing.h"
 
 #ifdef __cplusplus
-#extern "C" {
+extern "C" {
 #endif
 
 /* This space intentionally left blank */

@@ -29,7 +29,7 @@
 #include "hal/hal_flash_int.h"
 
 #ifdef __cplusplus
-#extern "C" {
+extern "C" {
 #endif
 
 /* This space intentionally left blank */

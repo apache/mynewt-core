@@ -24,7 +24,7 @@
 #include "battery/battery_drv.h"
 
 #ifdef __cplusplus
-#extern "C" {
+extern "C" {
 #endif
 
 /* The i2c address of the device */

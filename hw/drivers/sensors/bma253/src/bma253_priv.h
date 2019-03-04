@@ -23,7 +23,7 @@
 #include "bma253/bma253.h"
 
 #ifdef __cplusplus
-#extern "C" {
+extern "C" {
 #endif
 
 /*
