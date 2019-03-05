@@ -31,5 +31,3 @@ pkg.deps:
     - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
     - "@apache-mynewt-core/net/ip/native_sockets"
 
-pkg.deps.BLE_DEVICE:
-    - "@apache-mynewt-core/hw/drivers/nimble/native"
