@@ -86,7 +86,7 @@ syscfg.vals.'BSP_RUUVITAG_REV_B_NUM == 1':
     UART_0_PIN_TX: 7
     UART_0_PIN_RX: 8
 
-syscfg.vals.BLE_LP_CLOCK:
+syscfg.vals.BLE_CONTROLLER:
     TIMER_0: 0
     TIMER_5: 1
     OS_CPUTIME_FREQ: 32768

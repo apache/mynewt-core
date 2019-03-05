@@ -58,7 +58,7 @@ syscfg.vals:
     QSPI_PIN_DIO2: 22
     QSPI_PIN_DIO3: 23
 
-syscfg.vals.BLE_LP_CLOCK:
+syscfg.vals.BLE_CONTROLLER:
     TIMER_0: 0
     TIMER_5: 1
     OS_CPUTIME_FREQ: 32768

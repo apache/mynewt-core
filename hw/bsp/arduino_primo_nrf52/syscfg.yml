@@ -64,7 +64,7 @@ syscfg.vals:
     SPI_0_MASTER: 1
     XTAL_32768: 1
 
-syscfg.vals.BLE_LP_CLOCK:
+syscfg.vals.BLE_CONTROLLER:
     TIMER_0: 0
     TIMER_5: 1
     OS_CPUTIME_FREQ: 32768

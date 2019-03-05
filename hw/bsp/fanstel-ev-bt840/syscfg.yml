@@ -37,7 +37,7 @@ syscfg.vals:
     SPI_0_MASTER_PIN_MOSI: 23
     SPI_0_MASTER_PIN_MISO: 24
 
-syscfg.vals.BLE_LP_CLOCK:
+syscfg.vals.BLE_CONTROLLER:
     TIMER_0: 0
     TIMER_5: 1
     OS_CPUTIME_FREQ: 32768

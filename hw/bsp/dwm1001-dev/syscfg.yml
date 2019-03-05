@@ -62,7 +62,7 @@ syscfg.vals:
     XTAL_32768: 1
     BOOT_SERIAL_DETECT_PIN: 2  # Button BT_WAKE_UP
 
-syscfg.vals.BLE_LP_CLOCK:
+syscfg.vals.BLE_CONTROLLER:
     TIMER_0: 0
     TIMER_5: 1
     OS_CPUTIME_FREQ: 32768
