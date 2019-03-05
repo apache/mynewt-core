@@ -48,7 +48,7 @@ pkg.cflags.NFC_PINS_AS_GPIO:
 pkg.cflags.GPIO_AS_PIN_RESET: 
     - '-DCONFIG_GPIO_AS_PINRESET=1'
 
-pkg.deps.BLE_DEVICE:
+pkg.deps.BLE_CONTROLLER:
     - "@apache-mynewt-core/hw/drivers/nimble/nrf52"
 
 pkg.deps.TRNG:
