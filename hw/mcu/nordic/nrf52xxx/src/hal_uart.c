@@ -291,10 +291,16 @@ hal_uart_baudrate(int baudrate)
         return UARTE_BAUDRATE_BAUDRATE_Baud4800;
     case 9600:
         return UARTE_BAUDRATE_BAUDRATE_Baud9600;
+    case 14400:
+        return UARTE_BAUDRATE_BAUDRATE_Baud14400;
     case 19200:
         return UARTE_BAUDRATE_BAUDRATE_Baud19200;
+    case 28800:
+        return UARTE_BAUDRATE_BAUDRATE_Baud28800;
     case 38400:
         return UARTE_BAUDRATE_BAUDRATE_Baud38400;
+    case 56000:
+        return UARTE_BAUDRATE_BAUDRATE_Baud56000;
     case 57600:
         return UARTE_BAUDRATE_BAUDRATE_Baud57600;
     case 76800:
@@ -303,6 +309,8 @@ hal_uart_baudrate(int baudrate)
         return UARTE_BAUDRATE_BAUDRATE_Baud115200;
     case 230400:
         return UARTE_BAUDRATE_BAUDRATE_Baud230400;
+    case 250000:
+        return UARTE_BAUDRATE_BAUDRATE_Baud250000;
     case 460800:
         return UARTE_BAUDRATE_BAUDRATE_Baud460800;
     case 921600:
