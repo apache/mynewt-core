@@ -45,7 +45,7 @@ syscfg.vals:
     SSD1673_CS_PIN: 17
     SSD1673_SPI_DEV: 0
 
-syscfg.vals.BLE_LP_CLOCK:
+syscfg.vals.BLE_CONTROLLER:
     TIMER_0: 0
     TIMER_5: 1
     OS_CPUTIME_FREQ: 32768

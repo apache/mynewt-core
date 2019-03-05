@@ -62,7 +62,7 @@ syscfg.vals:
     BOOT_SERIAL_DETECT_PIN: 16  # on IRC-BTLE board P0.16=SWITCH_1
     # BOOT_SERIAL_DETECT_PIN 30 # on IRC-BTLE board P0.30=SWITCH_2
 
-syscfg.vals.BLE_LP_CLOCK:
+syscfg.vals.BLE_CONTROLLER:
     TIMER_0: 0
     TIMER_5: 1
     OS_CPUTIME_FREQ: 32768
