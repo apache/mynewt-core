@@ -19,7 +19,7 @@
 #include "os_test_priv.h"
 
 /* Test case to test case for speak and listen */
-TEST_CASE(callout_test_speak)
+TEST_CASE_SELF(callout_test_speak)
 {
     /* Initialize the sending task */
     os_task_init(&callout_task_struct_speak, "callout_task_speak",

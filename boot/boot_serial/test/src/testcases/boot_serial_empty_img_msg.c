@@ -18,7 +18,7 @@
  */
 #include "boot_test.h"
 
-TEST_CASE(boot_serial_empty_img_msg)
+TEST_CASE_SELF(boot_serial_empty_img_msg)
 {
     char buf[sizeof(struct nmgr_hdr) + 32];
     struct nmgr_hdr *hdr;

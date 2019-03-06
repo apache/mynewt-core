@@ -18,7 +18,7 @@
  */
 #include "os_test_priv.h"
 
-TEST_CASE(event_test_sr)
+TEST_CASE_SELF(event_test_sr)
 {
     int i;
 

@@ -18,7 +18,7 @@
  */
 #include "fcb_test.h"
 
-TEST_CASE(fcb_test_init)
+TEST_CASE_SELF(fcb_test_init)
 {
     int rc;
     struct fcb *fcb;
@@ -35,11 +35,11 @@ TEST_CASE(fcb_test_init)
     TEST_ASSERT(rc == FCB_ERR_ARGS);
 
     fcb->f_sector_cnt = 2;
-    fcb->f_magic = 0x12345678;
-    rc = fcb_init(fcb);
-    TEST_ASSERT(rc == FCB_ERR_MAGIC);
-
     fcb->f_magic = 0;
     rc = fcb_init(fcb);
     TEST_ASSERT(rc == 0);
+
+    fcb->f_magic = 0x12345678;
+    rc = fcb_init(fcb);
+    TEST_ASSERT(rc == FCB_ERR_MAGIC);
 }

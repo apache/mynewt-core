@@ -265,9 +265,9 @@ native_flash_sector_info(const struct hal_flash *dev, int idx,
 static int
 native_flash_init(const struct hal_flash *dev)
 {
-    if (native_flash_file) {
+    //if (native_flash_file) {
         flash_native_file_open(native_flash_file);
-    }
+    //}
 #if MYNEWT_VAL(MCU_FLASH_STYLE_NORDIC)
     int i;
 

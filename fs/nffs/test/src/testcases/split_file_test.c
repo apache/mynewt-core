@@ -19,7 +19,7 @@
 
 #include "nffs_test_utils.h"
 
-TEST_CASE(nffs_test_split_file)
+TEST_CASE_SELF(nffs_test_split_file)
 {
     static char data[24 * 1024];
     int rc;

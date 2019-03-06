@@ -66,10 +66,7 @@ TEST_SUITE(enc_flash_test_all)
 int
 main(int argc, char **argv)
 {
-    sysinit();
-
     enc_flash_test_all();
-
     return tu_any_failed;
 }
 

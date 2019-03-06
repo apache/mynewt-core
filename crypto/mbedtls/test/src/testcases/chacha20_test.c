@@ -18,7 +18,7 @@
  */
 #include "mbedtls_test.h"
 
-TEST_CASE(chacha20_test)
+TEST_CASE_SELF(chacha20_test)
 {
     int rc;
 

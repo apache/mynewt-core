@@ -19,7 +19,7 @@
 
 #include "boot_test.h"
 
-TEST_CASE(boot_serial_img_msg)
+TEST_CASE_SELF(boot_serial_img_msg)
 {
     char img[16];
     char enc_img[BASE64_ENCODE_SIZE(sizeof(img)) + 1];

@@ -19,7 +19,7 @@
 #include <string.h>
 #include "encoding_test_priv.h"
 
-TEST_CASE(hex2str)
+TEST_CASE_SELF(hex2str)
 {
     int i;
     char *ret;

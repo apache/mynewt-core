@@ -88,11 +88,7 @@ boot_test_all(void)
 int
 main(int argc, char **argv)
 {
-    sysinit();
-
-    boot_test_all();
-
-    return tu_any_failed;
+    return boot_test_all();
 }
 
 #endif

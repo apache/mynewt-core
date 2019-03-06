@@ -18,15 +18,13 @@
  */
 #include "conf_test_nffs.h"
 
-TEST_CASE(config_test_empty_file)
+TEST_CASE_SELF(config_test_empty_file)
 {
     int rc;
     struct conf_file cf_mfg;
     struct conf_file cf_running;
     const char cf_mfg_test[] = "";
     const char cf_running_test[] = "\n\n";
-
-    config_wipe_srcs();
 
     cf_mfg.cf_name = "/config/mfg";
     cf_running.cf_name = "/config/running";
@@ -51,6 +49,5 @@ TEST_CASE(config_test_empty_file)
     TEST_ASSERT(rc == 0);
 
     conf_load();
-    config_wipe_srcs();
     ctest_clear_call_state();
 }

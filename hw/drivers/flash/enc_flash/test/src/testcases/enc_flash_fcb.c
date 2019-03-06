@@ -29,7 +29,7 @@ enc_flash_test_fcb_init(struct fcb *fcb)
     fcb->f_sectors = enc_test_flash_areas;
 }
 
-TEST_CASE(enc_flash_test_fcb)
+TEST_CASE_SELF(enc_flash_test_fcb)
 {
     int rc;
     struct flash_area *fa;

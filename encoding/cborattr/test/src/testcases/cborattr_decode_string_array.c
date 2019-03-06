@@ -94,7 +94,7 @@ test_encode_string_array_three(void)
 /*
  * string array
  */
-TEST_CASE(test_cborattr_decode_string_array)
+TEST_CASE_SELF(test_cborattr_decode_string_array)
 {
     int rc;
     char *str_ptrs[5];

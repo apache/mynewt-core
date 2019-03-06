@@ -18,7 +18,7 @@
  */
 #include "fcb_test.h"
 
-TEST_CASE(fcb_test_append_fill)
+TEST_CASE_SELF(fcb_test_append_fill)
 {
     struct fcb *fcb;
     int rc;
@@ -35,16 +35,7 @@ TEST_CASE(fcb_test_append_fill)
         .elem_cnts = aa_separate_cnts
     };
 
-#if 0
-    fcb_test_wipe();
-    fcb = &test_fcb;
-    memset(fcb, 0, sizeof(*fcb));
-    fcb->f_sector_cnt = 2;
-    fcb->f_sectors = test_fcb_area;
-
-    rc = fcb_init(fcb);
-    TEST_ASSERT(rc == 0);
-#endif
+    fcb_tc_pretest(2);
 
     fcb = &test_fcb;
 

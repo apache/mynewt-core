@@ -21,13 +21,9 @@
 #include "runtest/runtest.h"
 #include "os_test_priv.h"
 
-TEST_CASE(os_mutex_test_case_1)
+TEST_CASE_SELF(os_mutex_test_case_1)
 {
     int rc;
-
-#if MYNEWT_VAL(SELFTEST)
-    sysinit();
-#endif
 
     g_mutex_test = 1;
     g_task1_val = 0;

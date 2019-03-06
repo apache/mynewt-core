@@ -107,7 +107,7 @@ test_encode_data_complex(void)
 /*
  * Simple decoding.
  */
-TEST_CASE(test_cborattr_decode_object)
+TEST_CASE_SELF(test_cborattr_decode_object)
 {
     int rc;
     int64_t bm_val = 0;

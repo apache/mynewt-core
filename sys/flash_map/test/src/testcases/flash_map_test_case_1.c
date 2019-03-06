@@ -24,7 +24,7 @@ extern struct flash_area *fa_sectors;
 /*
  * Test flash_area_to_sectors()
  */
-TEST_CASE(flash_map_test_case_1)
+TEST_CASE_SELF(flash_map_test_case_1)
 {
     const struct flash_area *fa;
     int areas_checked = 0;

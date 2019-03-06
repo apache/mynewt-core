@@ -97,8 +97,6 @@ ltu_setup_fcb(struct fcb_log *fcb_log, struct log *log)
     int rc;
     int i;
 
-    sysinit();
-
     *fcb_log = (struct fcb_log) { 0 };
 
     fcb_log->fl_fcb.f_sectors = fcb_areas;
@@ -119,8 +117,6 @@ ltu_setup_fcb(struct fcb_log *fcb_log, struct log *log)
 void
 ltu_setup_cbmem(struct cbmem *cbmem, struct log *log)
 {
-    sysinit();
-
     cbmem_init(cbmem, ltu_cbmem_buf, sizeof ltu_cbmem_buf);
     log_register("log", log, &log_cbmem_handler, cbmem, LOG_SYSLEVEL);
 }

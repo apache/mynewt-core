@@ -21,7 +21,7 @@
 
 #include "boot_test.h"
 
-TEST_CASE(boot_serial_upload_bigger_image)
+TEST_CASE_SELF(boot_serial_upload_bigger_image)
 {
     char img[256];
     char enc_img[64];

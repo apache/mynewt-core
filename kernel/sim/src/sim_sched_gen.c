@@ -171,16 +171,8 @@ sim_task_start(struct stack_frame *sf, int rc)
     task = sf->sf_task;
     task->t_func(task->t_arg);
 
-    /* If a unit test is executing, the test is complete when a task handler
-     * returns.
-     */
-#if MYNEWT_VAL(SELFTEST)
-    void tu_restart(void);
-    tu_restart();
-#else
-    /* Otherwise, a task handler should never return. */
+    /* A task handler should never return. */
     assert(0);
-#endif
 }
 
 os_stack_t *

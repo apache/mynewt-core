@@ -50,7 +50,7 @@ ottc_time_change_cb(const struct os_time_change_info *info, void *arg)
     entry->arg = arg;
 }
 
-TEST_CASE(os_time_test_change)
+TEST_CASE_SELF(os_time_test_change)
 {
     struct os_timezone tz1;
     struct os_timezone tz2;

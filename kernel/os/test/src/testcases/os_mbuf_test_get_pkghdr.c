@@ -18,7 +18,7 @@
  */
 #include "os_test_priv.h"
 
-TEST_CASE(os_mbuf_test_get_pkthdr)
+TEST_CASE_SELF(os_mbuf_test_get_pkthdr)
 {
     struct os_mbuf *m;
  

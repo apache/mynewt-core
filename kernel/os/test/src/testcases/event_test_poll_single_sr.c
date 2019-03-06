@@ -20,7 +20,7 @@
 
 /* The case for poll single */
 /* Test case for poll timeout */
-TEST_CASE(event_test_poll_single_sr)
+TEST_CASE_SELF(event_test_poll_single_sr)
 {
     int i;
 

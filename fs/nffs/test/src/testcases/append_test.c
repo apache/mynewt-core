@@ -21,7 +21,7 @@
 
 void process_inode_entry(struct nffs_inode_entry *inode_entry, int indent);
 
-TEST_CASE(nffs_test_append)
+TEST_CASE_SELF(nffs_test_append)
 {
     struct fs_file *file;
     uint32_t len;

@@ -50,11 +50,6 @@ extern "C" {
 
 void os_test_restart(void);
 
-int os_mbuf_test_suite(void);
-int os_sem_test_suite(void);
-int os_eventq_test_suite(void);
-int os_callout_test_suite(void);
-
 #ifdef __cplusplus
 }
 #endif

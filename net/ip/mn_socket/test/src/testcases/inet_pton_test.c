@@ -19,7 +19,7 @@
 
 #include "mn_sock_test.h"
 
-TEST_CASE(inet_pton_test)
+TEST_CASE_SELF(inet_pton_test)
 {
     int rc;
     uint8_t addr[8];

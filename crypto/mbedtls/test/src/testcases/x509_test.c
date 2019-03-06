@@ -18,7 +18,7 @@
  */
 #include "mbedtls_test.h"
 
-TEST_CASE(x509_test)
+TEST_CASE_SELF(x509_test)
 {
     int rc;
 

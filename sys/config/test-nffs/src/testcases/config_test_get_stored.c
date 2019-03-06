@@ -18,15 +18,14 @@
  */
 #include "conf_test_nffs.h"
 
-TEST_CASE(config_test_get_stored_file)
+TEST_CASE_SELF(config_test_get_stored_file)
 {
     int rc;
     struct conf_file cf;
     char stored_val[32];
 
-    config_wipe_srcs();
     rc = fs_mkdir("/config");
-    TEST_ASSERT(rc == 0 || rc == FS_EEXIST);
+    TEST_ASSERT(rc == 0);
 
     cf.cf_name = "/config/blah";
     rc = conf_file_src(&cf);

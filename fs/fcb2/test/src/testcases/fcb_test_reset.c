@@ -18,7 +18,7 @@
  */
 #include "fcb_test.h"
 
-TEST_CASE(fcb_test_reset)
+TEST_CASE_SELF(fcb_test_reset)
 {
     struct fcb *fcb;
     int rc;
@@ -26,6 +26,8 @@ TEST_CASE(fcb_test_reset)
     struct fcb_entry loc;
     uint8_t test_data[128];
     int var_cnt;
+
+    fcb_tc_pretest(2);
 
     fcb = &test_fcb;
 

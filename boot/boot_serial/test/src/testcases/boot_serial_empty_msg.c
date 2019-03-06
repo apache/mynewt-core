@@ -18,7 +18,7 @@
  */
 #include "boot_test.h"
 
-TEST_CASE(boot_serial_empty_msg)
+TEST_CASE_SELF(boot_serial_empty_msg)
 {
     char buf[4];
     struct nmgr_hdr hdr;

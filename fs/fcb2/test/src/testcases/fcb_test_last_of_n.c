@@ -18,7 +18,7 @@
  */
 #include "fcb_test.h"
 
-TEST_CASE(fcb_test_last_of_n)
+TEST_CASE_SELF(fcb_test_last_of_n)
 {
     const uint8_t ENTRIES = 5;
     struct fcb *fcb;
@@ -27,6 +27,8 @@ TEST_CASE(fcb_test_last_of_n)
     struct fcb_entry areas[ENTRIES];
     uint8_t test_data[128];
     uint8_t i;
+
+    fcb_tc_pretest(4);
 
     fcb = &test_fcb;
     fcb->f_scratch_cnt = 1;

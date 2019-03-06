@@ -19,7 +19,7 @@
 #include "os_test_priv.h"
 
 /* Test case to test the basics of the callout */
-TEST_CASE(callout_test)
+TEST_CASE_SELF(callout_test)
 {
     /* Initialize the sending task */
     os_task_init(&callout_task_struct_send, "callout_task_send",

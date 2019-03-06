@@ -21,7 +21,7 @@
 
 #include "enc_flash_test.h"
 
-TEST_CASE(enc_flash_test_flash_map)
+TEST_CASE_SELF(enc_flash_test_flash_map)
 {
     int rc;
     struct flash_area *fa;

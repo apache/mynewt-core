@@ -18,7 +18,7 @@
  */
 #include "boot_test.h"
 
-TEST_CASE(boot_test_permanent)
+TEST_CASE_SELF(boot_test_permanent)
 {
     int rc;
 

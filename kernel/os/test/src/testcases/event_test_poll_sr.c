@@ -19,7 +19,7 @@
 #include "os_test_priv.h"
 
 /* To test for the basic function of os_eventq_poll() */
-TEST_CASE(event_test_poll_sr)
+TEST_CASE_SELF(event_test_poll_sr)
 {
     int i;
 

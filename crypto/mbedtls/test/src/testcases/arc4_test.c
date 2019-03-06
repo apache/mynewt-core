@@ -18,7 +18,7 @@
  */
 #include "mbedtls_test.h"
 
-TEST_CASE(arc4_test)
+TEST_CASE_SELF(arc4_test)
 {
     int rc;
 

@@ -18,7 +18,7 @@
  */
 #include "boot_test.h"
 
-TEST_CASE(boot_test_nv_bs_10)
+TEST_CASE_SELF(boot_test_nv_bs_10)
 {
     struct image_header hdr = {
         .ih_magic = IMAGE_MAGIC,

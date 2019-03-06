@@ -19,7 +19,7 @@
 
 #include "nffs_test_utils.h"
 
-TEST_CASE(nffs_test_corrupt_block)
+TEST_CASE_SELF(nffs_test_corrupt_block)
 {
     struct nffs_block block;
     struct fs_file *fs_file;

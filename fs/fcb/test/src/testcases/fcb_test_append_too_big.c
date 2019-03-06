@@ -18,23 +18,14 @@
  */
 #include "fcb_test.h"
 
-TEST_CASE(fcb_test_append_too_big)
+TEST_CASE_SELF(fcb_test_append_too_big)
 {
     struct fcb *fcb;
     int rc;
     int len;
     struct fcb_entry elem_loc;
 
-#if 0
-    fcb_test_wipe();
-    fcb = &test_fcb;
-    memset(fcb, 0, sizeof(*fcb));
-    fcb->f_sector_cnt = 2;
-    fcb->f_sectors = test_fcb_area;
-
-    rc = fcb_init(fcb);
-    TEST_ASSERT(rc == 0);
-#endif
+    fcb_tc_pretest(2);
 
     fcb = &test_fcb;
 

@@ -21,7 +21,7 @@
 /*
  * Simple decoding.
  */
-TEST_CASE(test_cborattr_decode1)
+TEST_CASE_SELF(test_cborattr_decode1)
 {
     const uint8_t *data;
     int len;

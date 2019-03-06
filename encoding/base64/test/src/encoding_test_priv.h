@@ -29,7 +29,7 @@
 extern "C" {
 #endif
 
-int hex_fmt_test_suite(void);
+TEST_SUITE_DECL(hex_fmt_test_suite);
 
 #ifdef __cplusplus
 }

@@ -19,7 +19,7 @@
 #include "test_json_priv.h"
 
 /* now test the decode on a string */
-TEST_CASE(test_json_simple_decode)
+TEST_CASE_SELF(test_json_simple_decode)
 {
     struct test_jbuf tjb;
     struct test_jbuf tjb1;

@@ -85,7 +85,7 @@ test_encode_object_array(void)
 /*
  * object array
  */
-TEST_CASE(test_cborattr_decode_object_array)
+TEST_CASE_SELF(test_cborattr_decode_object_array)
 {
     int rc;
     struct h_obj {

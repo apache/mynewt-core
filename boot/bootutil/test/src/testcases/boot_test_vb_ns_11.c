@@ -18,7 +18,7 @@
  */
 #include "boot_test.h"
 
-TEST_CASE(boot_test_vb_ns_11)
+TEST_CASE_SELF(boot_test_vb_ns_11)
 {
     int rc;
 

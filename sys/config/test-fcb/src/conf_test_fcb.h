@@ -83,6 +83,21 @@ extern struct conf_handler c2_test_handler;
 
 extern struct conf_handler c3_test_handler;
 
+TEST_CASE_DECL(config_empty_lookups)
+TEST_CASE_DECL(config_test_getset_unknown)
+TEST_CASE_DECL(config_test_getset_int)
+TEST_CASE_DECL(config_test_getset_bytes)
+TEST_CASE_DECL(config_test_getset_int64)
+TEST_CASE_DECL(config_test_commit)
+TEST_CASE_DECL(config_test_empty_fcb)
+TEST_CASE_DECL(config_test_save_1_fcb)
+TEST_CASE_DECL(config_test_save_2_fcb)
+TEST_CASE_DECL(config_test_save_3_fcb)
+TEST_CASE_DECL(config_test_compress_reset)
+TEST_CASE_DECL(config_test_save_one_fcb)
+TEST_CASE_DECL(config_test_custom_compress)
+TEST_CASE_DECL(config_test_get_stored_fcb)
+
 #ifdef __cplusplus
 }
 #endif

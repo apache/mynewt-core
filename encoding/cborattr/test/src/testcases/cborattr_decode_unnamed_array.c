@@ -68,7 +68,7 @@ test_encode_unnamed_array(void)
 /*
  * integer array
  */
-TEST_CASE(test_cborattr_decode_unnamed_array)
+TEST_CASE_SELF(test_cborattr_decode_unnamed_array)
 {
     int rc;
     int64_t arr_data[5];

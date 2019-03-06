@@ -70,7 +70,7 @@ test_encode_bool_array(void)
 /*
  * array of booleans
  */
-TEST_CASE(test_cborattr_decode_bool_array)
+TEST_CASE_SELF(test_cborattr_decode_bool_array)
 {
     int rc;
     bool arr_data[5];

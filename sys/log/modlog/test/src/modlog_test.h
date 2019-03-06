@@ -30,6 +30,7 @@ TEST_SUITE_DECL(modlog_test_suite_all);
 TEST_CASE_DECL(modlog_test_case_append);
 TEST_CASE_DECL(modlog_test_case_basic);
 TEST_CASE_DECL(modlog_test_case_printf);
-TEST_CASE_DECL(modlog_test_case_prio);
+TEST_CASE_DECL(modlog_test_case_prio_flat);
+TEST_CASE_DECL(modlog_test_case_prio_mbuf);
 
 #endif

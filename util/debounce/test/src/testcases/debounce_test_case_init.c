@@ -21,7 +21,7 @@
 #include "debounce/debounce.h"
 #include "debounce_test.h"
 
-TEST_CASE(debounce_test_case_init)
+TEST_CASE_SELF(debounce_test_case_init)
 {
     struct debouncer d;
     int rc;

@@ -18,7 +18,7 @@
  */
 #include "test_json_priv.h"
 
-TEST_CASE(test_json_simple_encode)
+TEST_CASE_SELF(test_json_simple_encode)
 {
     struct json_encoder encoder;
     struct json_value value;

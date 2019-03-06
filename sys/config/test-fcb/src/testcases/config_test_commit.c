@@ -18,7 +18,7 @@
  */
 #include "conf_test_fcb.h"
 
-TEST_CASE(config_test_commit)
+TEST_CASE_SELF(config_test_commit)
 {
     char name[80];
     int rc;

@@ -31,8 +31,6 @@ mltcp_run(bool use_mbufs)
     uint8_t buf[sizeof (struct log_entry_hdr) + 16];
     int rc;
 
-    sysinit();
-
     /* Initialize three logs. */
     memset(&mla1, 0, sizeof mla1);
     mltu_register_log(&log1, &mla1, "log1", 0);
@@ -87,8 +85,12 @@ mltcp_run(bool use_mbufs)
     TEST_ASSERT(mla3.num_entries == 1);
 }
 
-TEST_CASE(modlog_test_case_prio)
+TEST_CASE_SELF(modlog_test_case_prio_flat)
 {
     mltcp_run(false);
+}
+
+TEST_CASE_SELF(modlog_test_case_prio_mbuf)
+{
     mltcp_run(true);
 }

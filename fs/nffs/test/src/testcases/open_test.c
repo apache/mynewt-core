@@ -19,7 +19,7 @@
 
 #include "nffs_test_utils.h"
 
-TEST_CASE(nffs_test_open)
+TEST_CASE_SELF(nffs_test_open)
 {
     struct fs_file *file;
     struct fs_dir *dir;

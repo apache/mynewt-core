@@ -18,7 +18,7 @@
  */
 #include "fcb_test.h"
 
-TEST_CASE(fcb_test_area_info)
+TEST_CASE_SELF(fcb_test_area_info)
 {
     struct fcb *fcb;
     int rc;
@@ -28,6 +28,8 @@ TEST_CASE(fcb_test_area_info)
     int elem_cnts[2] = {0, 0};
     int area_elems[2];
     int area_bytes[2];
+
+    fcb_tc_pretest(2);
 
     fcb = &test_fcb;
 
