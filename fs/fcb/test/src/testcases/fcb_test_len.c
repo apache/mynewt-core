@@ -18,13 +18,15 @@
  */
 #include "fcb_test.h"
 
-TEST_CASE(fcb_test_len)
+TEST_CASE_SELF(fcb_test_len)
 {
     uint8_t buf[3];
     uint16_t len;
     uint16_t len2;
     int rc;
     int rc2;
+
+    fcb_tc_pretest(2);
 
     for (len = 0; len < FCB_MAX_LEN; len++) {
         rc = fcb_put_len(buf, len);

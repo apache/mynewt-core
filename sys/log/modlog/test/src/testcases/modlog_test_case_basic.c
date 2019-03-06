@@ -46,7 +46,7 @@ mltcb_desc_has_contents(const struct modlog_desc *desc, uint8_t module,
            desc->min_level ==   min_level;
 }
 
-TEST_CASE(modlog_test_case_basic)
+TEST_CASE_SELF(modlog_test_case_basic)
 {
     struct mltcb_foreach_arg lfa;
     struct log log1;
@@ -57,8 +57,6 @@ TEST_CASE(modlog_test_case_basic)
     uint8_t handle3;
     int rc;
     int i;
-
-    sysinit();
 
     /* NULL log. */
     rc = modlog_register(1, NULL, LOG_LEVEL_DEBUG, NULL);

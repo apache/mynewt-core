@@ -18,12 +18,10 @@
  */
 #include "conf_test_nffs.h"
 
-TEST_CASE(config_test_save_in_file)
+TEST_CASE_SELF(config_test_save_in_file)
 {
     int rc;
     struct conf_file cf;
-
-    config_wipe_srcs();
 
     rc = fs_mkdir("/config");
     TEST_ASSERT(rc == 0 || rc == FS_EEXIST);

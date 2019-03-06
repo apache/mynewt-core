@@ -18,7 +18,7 @@
  */
 #include "mbedtls_test.h"
 
-TEST_CASE(ctr_drbg_test)
+TEST_CASE_SELF(ctr_drbg_test)
 {
     int rc;
 

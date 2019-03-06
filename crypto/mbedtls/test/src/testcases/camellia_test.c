@@ -18,7 +18,7 @@
  */
 #include "mbedtls_test.h"
 
-TEST_CASE(camellia_test)
+TEST_CASE_SELF(camellia_test)
 {
     int rc;
 

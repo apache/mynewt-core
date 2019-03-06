@@ -18,7 +18,7 @@
  */
 #include "mbedtls_test.h"
 
-TEST_CASE(rsa_test)
+TEST_CASE_SELF(rsa_test)
 {
     int rc;
 

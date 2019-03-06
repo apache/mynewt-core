@@ -19,7 +19,7 @@
 
 #include "nffs_test_utils.h"
 
-TEST_CASE(nffs_test_read)
+TEST_CASE_SELF(nffs_test_read)
 {
     struct fs_file *file;
     uint8_t buf[16];

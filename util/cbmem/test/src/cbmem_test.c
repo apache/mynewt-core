@@ -50,8 +50,8 @@ setup_cbmem1(void *arg)
 
     /* Insert 65 1024 entries, and overflow buffer.
      * This should overflow two entries, because the buffer is sized for 64
-     * entries, and then the headers themselves will eat into one of the entries,
-     * so there should be a total of 63 entries.
+     * entries, and then the headers themselves will eat into one of the
+     * entries, so there should be a total of 63 entries.
      * Ensure no data corruption.
      */
     for (i = 0; i < 65; i++) {
@@ -87,6 +87,8 @@ TEST_CASE_DECL(cbmem_test_case_3)
 
 TEST_SUITE(cbmem_test_suite)
 {
+    tu_suite_set_pre_test_cb(setup_cbmem1, NULL);
+
     cbmem_test_case_1();
     cbmem_test_case_2();
     cbmem_test_case_3();
@@ -97,11 +99,7 @@ TEST_SUITE(cbmem_test_suite)
 int
 main(int argc, char **argv)
 {
-    sysinit();
-
-    tu_suite_set_init_cb(setup_cbmem1, NULL);
     cbmem_test_suite();
-
     return tu_any_failed;
 }
 

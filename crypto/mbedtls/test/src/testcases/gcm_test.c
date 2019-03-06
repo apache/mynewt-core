@@ -18,7 +18,7 @@
  */
 #include "mbedtls_test.h"
 
-TEST_CASE(gcm_test)
+TEST_CASE_SELF(gcm_test)
 {
     int rc;
 

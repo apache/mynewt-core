@@ -18,7 +18,7 @@
  */
 #include "conf_test_nffs.h"
 
-TEST_CASE(config_setup_nffs)
+TEST_CASE_SELF(config_setup_nffs)
 {
     int rc;
 

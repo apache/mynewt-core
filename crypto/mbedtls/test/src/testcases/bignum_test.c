@@ -18,7 +18,7 @@
  */
 #include "mbedtls_test.h"
 
-TEST_CASE(bignum_test)
+TEST_CASE_SELF(bignum_test)
 {
     int rc;
 

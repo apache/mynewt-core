@@ -40,7 +40,7 @@ ltcwc_append_cb(struct log *log, uint32_t idx)
     entry->idx = idx;
 }
 
-TEST_CASE(log_test_case_append_cb)
+TEST_CASE_SELF(log_test_case_append_cb)
 {
     struct fcb_log fcb_log;
     struct log log;

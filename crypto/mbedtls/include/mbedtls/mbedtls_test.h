@@ -23,7 +23,7 @@
 extern "C" {
 #endif
 
-int mbedtls_test_all();
+TEST_SUITE_DECL(mbedtls_test_all);
 
 #ifdef __cplusplus
 }

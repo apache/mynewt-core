@@ -25,7 +25,8 @@ TEST_SUITE(modlog_test_suite_all)
     modlog_test_case_append();
     modlog_test_case_basic();
     modlog_test_case_printf();
-    modlog_test_case_prio();
+    modlog_test_case_prio_flat();
+    modlog_test_case_prio_mbuf();
 }
 
 #if MYNEWT_VAL(SELFTEST)
@@ -33,10 +34,7 @@ TEST_SUITE(modlog_test_suite_all)
 int
 main(int argc, char **argv)
 {
-    sysinit();
-
     modlog_test_suite_all();
-
     return tu_any_failed;
 }
 

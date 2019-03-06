@@ -18,7 +18,7 @@
  */
 #include "mbedtls_test.h"
 
-TEST_CASE(entropy_test)
+TEST_CASE_SELF(entropy_test)
 {
 #if 0 /* XXX fix this later, no strong entropy source atm */
     int rc;

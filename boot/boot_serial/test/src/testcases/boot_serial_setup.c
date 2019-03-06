@@ -18,7 +18,7 @@
  */
 #include "boot_test.h"
 
-TEST_CASE(boot_serial_setup)
+TEST_CASE_SELF(boot_serial_setup)
 {
     int rc;
 

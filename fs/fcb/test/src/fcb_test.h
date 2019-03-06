@@ -29,7 +29,7 @@
 #include "fcb_priv.h"
 
 #ifdef __cplusplus
-#extern "C" {
+extern "C" {
 #endif
 
 extern struct fcb test_fcb;
@@ -40,6 +40,7 @@ struct append_arg {
     int *elem_cnts;
 };
 
+void fcb_tc_pretest(uint8_t sector_count);
 void fcb_test_wipe(void);
 int fcb_test_empty_walk_cb(struct fcb_entry *loc, void *arg);
 uint8_t fcb_test_append_data(int msg_len, int off);

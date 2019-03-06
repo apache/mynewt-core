@@ -19,7 +19,7 @@
 
 #include "nffs_test_utils.h"
 
-TEST_CASE(nffs_test_rename)
+TEST_CASE_SELF(nffs_test_rename)
 {
     struct fs_file *file;
     const char contents[] = "contents";

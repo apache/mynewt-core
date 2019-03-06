@@ -23,7 +23,7 @@
 
 #include "enc_flash_test.h"
 
-TEST_CASE(enc_flash_test_hal)
+TEST_CASE_SELF(enc_flash_test_hal)
 {
     int rc;
     struct flash_area *fa;

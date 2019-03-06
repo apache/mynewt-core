@@ -32,7 +32,7 @@ omtw_chain_len(const struct os_mbuf *om)
     return len;
 }
 
-TEST_CASE(os_mbuf_test_widen)
+TEST_CASE_SELF(os_mbuf_test_widen)
 {
     struct os_mbuf *om;
     int rc;

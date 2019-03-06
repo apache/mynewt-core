@@ -467,4 +467,9 @@ os_mempool_info_get_next(struct os_mempool *mp, struct os_mempool_info *omi)
     return (cur);
 }
 
+void
+os_mempool_module_init(void)
+{
+    STAILQ_INIT(&g_os_mempool_list);
+}
 

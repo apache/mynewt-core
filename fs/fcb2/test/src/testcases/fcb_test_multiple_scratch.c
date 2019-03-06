@@ -18,7 +18,7 @@
  */
 #include "fcb_test.h"
 
-TEST_CASE(fcb_test_multiple_scratch)
+TEST_CASE_SELF(fcb_test_multiple_scratch)
 {
     struct fcb *fcb;
     int rc;
@@ -30,6 +30,8 @@ TEST_CASE(fcb_test_multiple_scratch)
     struct append_arg aa_arg = {
         .elem_cnts = cnts
     };
+
+    fcb_tc_pretest(4);
 
     fcb = &test_fcb;
     fcb->f_scratch_cnt = 1;

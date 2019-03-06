@@ -72,7 +72,7 @@ test_encode_int_array(void)
 /*
  * integer array
  */
-TEST_CASE(test_cborattr_decode_int_array)
+TEST_CASE_SELF(test_cborattr_decode_int_array)
 {
     int rc;
     int64_t arr_data[5];

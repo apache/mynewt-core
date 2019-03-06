@@ -19,7 +19,7 @@
 
 #include "nffs_test_utils.h"
 
-TEST_CASE(nffs_test_readdir)
+TEST_CASE_SELF(nffs_test_readdir)
 {
     struct fs_dirent *dirent;
     struct fs_dir *dir;

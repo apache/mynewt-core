@@ -18,7 +18,7 @@
  */
 #include "fcb_test.h"
 
-TEST_CASE(fcb_test_rotate)
+TEST_CASE_SELF(fcb_test_rotate)
 {
     struct fcb *fcb;
     int rc;
@@ -30,6 +30,8 @@ TEST_CASE(fcb_test_rotate)
     struct append_arg aa_arg = {
         .elem_cnts = cnts
     };
+
+    fcb_tc_pretest(2);
 
     fcb = &test_fcb;
 

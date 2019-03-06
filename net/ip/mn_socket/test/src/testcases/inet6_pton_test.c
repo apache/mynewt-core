@@ -18,7 +18,7 @@
  */
 #include "mn_sock_test.h"
 
-TEST_CASE(inet6_pton_test)
+TEST_CASE_SELF(inet6_pton_test)
 {
     uint8_t addr_bytes[32];
     int rc;

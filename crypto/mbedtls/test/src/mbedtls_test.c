@@ -115,10 +115,7 @@ TEST_SUITE(mbedtls_test_all)
 int
 main(int argc, char **argv)
 {
-    sysinit();
-
     mbedtls_test_all();
-
     return tu_any_failed;
 }
 

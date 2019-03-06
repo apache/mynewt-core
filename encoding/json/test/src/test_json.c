@@ -39,10 +39,7 @@ TEST_SUITE(test_json_suite)
 int
 main(int argc, char **argv)
 {
-    sysinit();
-
     test_json_suite();
-
     return tu_any_failed;
 }
 #endif

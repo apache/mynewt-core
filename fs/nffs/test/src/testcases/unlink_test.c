@@ -19,7 +19,7 @@
 
 #include "nffs_test_utils.h"
 
-TEST_CASE(nffs_test_unlink)
+TEST_CASE_SELF(nffs_test_unlink)
 {
     struct fs_file *file0;
     struct fs_file *file2;

@@ -19,15 +19,13 @@
 
 #include "modlog_test.h"
 
-TEST_CASE(modlog_test_case_printf)
+TEST_CASE_SELF(modlog_test_case_printf)
 {
     struct mltu_log_arg mla;
     struct log log;
     char buf[MYNEWT_VAL(MODLOG_MAX_PRINTF_LEN) * 2];
     int rc;
     int i;
-
-    sysinit();
 
     memset(&mla, 0, sizeof mla);
     mltu_register_log(&log, &mla, "log", 0);

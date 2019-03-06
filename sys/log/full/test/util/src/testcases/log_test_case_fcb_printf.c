@@ -19,7 +19,7 @@
 
 #include "log_test_util/log_test_util.h"
 
-TEST_CASE(log_test_case_fcb_printf)
+TEST_CASE_SELF(log_test_case_fcb_printf)
 {
     struct fcb_log fcb_log;
     struct log log;

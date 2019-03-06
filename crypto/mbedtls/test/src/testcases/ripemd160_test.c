@@ -18,7 +18,7 @@
  */
 #include "mbedtls_test.h"
 
-TEST_CASE(ripemd160_test)
+TEST_CASE_SELF(ripemd160_test)
 {
     int rc;
 

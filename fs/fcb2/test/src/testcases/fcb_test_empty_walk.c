@@ -18,10 +18,12 @@
  */
 #include "fcb_test.h"
 
-TEST_CASE(fcb_test_empty_walk)
+TEST_CASE_SELF(fcb_test_empty_walk)
 {
     int rc;
     struct fcb *fcb;
+
+    fcb_tc_pretest(2);
 
     fcb = &test_fcb;
 

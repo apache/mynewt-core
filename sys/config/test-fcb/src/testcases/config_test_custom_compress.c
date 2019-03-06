@@ -36,7 +36,7 @@ test_custom_compress_filter2(const char *val, const char *name, void *arg)
     return 1;
 }
 
-TEST_CASE(config_test_custom_compress)
+TEST_CASE_SELF(config_test_custom_compress)
 {
     int rc;
     struct conf_fcb cf;

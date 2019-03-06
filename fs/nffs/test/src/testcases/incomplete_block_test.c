@@ -26,7 +26,7 @@
  * file to be salvaged. Instead, the file should be removed and all data
  * declared invalid.
  */
-TEST_CASE(nffs_test_incomplete_block)
+TEST_CASE_SELF(nffs_test_incomplete_block)
 {
     struct nffs_block block;
     struct fs_file *fs_file;

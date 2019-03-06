@@ -19,7 +19,7 @@
 
 #include "nffs_test_utils.h"
 
-TEST_CASE(nffs_test_wear_level)
+TEST_CASE_SELF(nffs_test_wear_level)
 {
     int rc;
     int i;

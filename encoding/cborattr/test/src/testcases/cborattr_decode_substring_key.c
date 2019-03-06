@@ -68,7 +68,7 @@ test_encode_substring_key(void)
 /*
  * substring key
  */
-TEST_CASE(test_cborattr_decode_substring_key)
+TEST_CASE_SELF(test_cborattr_decode_substring_key)
 {
     int rc;
     char test_str_1a[4] = { '\0' };

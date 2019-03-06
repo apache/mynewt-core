@@ -19,7 +19,7 @@
 
 #include "log_test_util/log_test_util.h"
 
-TEST_CASE(log_test_case_cbmem_append_mbuf)
+TEST_CASE_SELF(log_test_case_cbmem_append_mbuf)
 {
     struct cbmem cbmem;
     struct os_mbuf *om;

@@ -43,7 +43,7 @@ put_cb(struct os_mempool_ext *mpe, void *block, void *arg)
     return os_memblock_put_from_cb(&mpe->mpe_mp, block);
 }
 
-TEST_CASE(os_mempool_test_ext_nested)
+TEST_CASE_SELF(os_mempool_test_ext_nested)
 {
     uint8_t buf[OS_MEMPOOL_BYTES(10, 32)];
     int *elem;

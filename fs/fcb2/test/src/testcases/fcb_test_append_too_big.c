@@ -18,12 +18,14 @@
  */
 #include "fcb_test.h"
 
-TEST_CASE(fcb_test_append_too_big)
+TEST_CASE_SELF(fcb_test_append_too_big)
 {
     struct fcb *fcb;
     int rc;
     int len;
     struct fcb_entry elem_loc;
+
+    fcb_tc_pretest(2);
 
     fcb = &test_fcb;
 

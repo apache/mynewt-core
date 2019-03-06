@@ -18,7 +18,7 @@
  */
 #include "mbedtls_test.h"
 
-TEST_CASE(timing_test)
+TEST_CASE_SELF(timing_test)
 {
     int rc;
 
