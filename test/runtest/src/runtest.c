@@ -215,14 +215,14 @@ runtest_log_result(const char *msg, bool passed)
 }
 
 static void
-runtest_pass(char *msg, void *arg)
+runtest_pass(const char *msg, void *arg)
 {
     runtest_reset();
     runtest_log_result(msg, true);
 }
 
 static void
-runtest_fail(char *msg, void *arg)
+runtest_fail(const char *msg, void *arg)
 {
     runtest_reset();
     runtest_log_result(msg, false);
@@ -269,13 +269,7 @@ runtest_evt_fn(struct os_event *ev)
     runtest_total_tests = 0;
     runtest_total_fails = 0;
 
-    tu_suite_set_pass_cb(runtest_pass, NULL);
-    tu_suite_set_fail_cb(runtest_fail, NULL);
-
     if (ev != NULL) {
-        ts_config.ts_print_results = 0;
-        ts_config.ts_system_assert = 0;
-
         runtest_all = runtest_test_name[0] == '\0' ||
                       strcmp(runtest_test_name, "all") == 0;
 
@@ -359,6 +353,10 @@ runtest_init(void)
 
     rc = os_mutex_init(&runtest_mtx);
     SYSINIT_PANIC_ASSERT(rc == 0);
+
+    tu_config.ts_system_assert = 0;
+    tu_set_pass_cb(runtest_pass, NULL);
+    tu_set_fail_cb(runtest_fail, NULL);
 
     /* Use the main event queue by default. */
     runtest_evq_set(os_eventq_dflt_get());
