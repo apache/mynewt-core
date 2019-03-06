@@ -204,16 +204,42 @@ syscfg.defs:
     TIMER_0:
         description: Enable DA1469x timer 0 (Timer peripheral)
         value: 1
+        restrictions:
+            - '!PWM_0'
+
     TIMER_1:
         description: Enable DA1469x timer 1 (Timer3 peripheral)
         value:  0
+        restrictions:
+            - '!PWM_1'
+
     TIMER_2:
         description: Enable DA1469x timer 2 (Timer4 peripheral)
         value:  0
+        restrictions:
+            - '!PWM_2'
 
     TRNG:
         description: 'Enable DA1469x TRNG'
         value: 0
+
+    PWM_0:
+        description: 'Enable DA1469x PWM 0'
+        value: 0
+        restrictions:
+            - '!TIMER_0'
+
+    PWM_1:
+        description: 'Enable DA1469x PWM 1'
+        value: 0
+        restrictions:
+            - '!TIMER_1'
+
+    PWM_2:
+        description: 'Enable DA1469x PWM 2'
+        value: 0
+        restrictions:
+            - '!TIMER_2'
 
 syscfg.restrictions:
     - "QSPI_FLASH_ADDRESS_LENGTH==24"
