@@ -45,8 +45,14 @@ typedef void (*console_rx_cb)(void);
 typedef int (*console_append_char_cb)(char *line, uint8_t byte);
 typedef void (*completion_cb)(char *str, console_append_char_cb cb);
 
-void console_deinit();
-void console_reinit();
+/**
+ * De initializes the UART console.
+ */
+void console_deinit(void);
+/**
+ * Re Initializes the UART console.
+ */
+void console_reinit(void);
 int console_init(console_rx_cb rx_cb);
 int console_is_init(void);
 void console_write(const char *str, int cnt);

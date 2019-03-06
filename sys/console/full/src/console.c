@@ -671,7 +671,7 @@ console_handle_char(uint8_t byte)
 #if !MYNEWT_VAL(CONSOLE_INPUT)
     return 0;
 #endif
-    if(g_console_input_ignore){
+    if (g_console_input_ignore) {
         return 0;
     }
 
@@ -858,7 +858,7 @@ console_set_completion_cb(completion_cb cb)
 }
 
 void
-console_deinit()
+console_deinit(void)
 {
 #if MYNEWT_VAL(CONSOLE_UART)
     uart_console_deinit();
@@ -866,7 +866,7 @@ console_deinit()
 }
 
 void
-console_reinit()
+console_reinit(void)
 {
 #if MYNEWT_VAL(CONSOLE_UART)
      uart_console_init();

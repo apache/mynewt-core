@@ -275,12 +275,13 @@ int
 uart_console_deinit(void)
 {
     struct os_dev *dev;
-    dev = os_dev_lookup("uart0");
-    if(dev)
-    {
+    dev = os_dev_lookup(MYNEWT_VAL(CONSOLE_UART_DEV));
+    if (dev) {
         /* Force close now */
         os_dev_close(dev);
         uart_dev = NULL;
+    } else {
+        return SYS_ENODEV;
     }
     return 0;
 }
