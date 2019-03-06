@@ -41,6 +41,10 @@
 #include "trng/trng.h"
 #include "trng_da1469x.h"
 #endif
+#if MYNEWT_VAL(PWM_0) || MYNEWT_VAL(PWM_1) || MYNEWT_VAL(PWM_2)
+#include "pwm/pwm.h"
+#include "pwm_da1469x.h"
+#endif
 
 #if MYNEWT_VAL(TRNG)
 static struct trng_dev os_bsp_trng;
@@ -167,6 +171,16 @@ static const struct da1469x_hal_spi_cfg hal_spi1_cfg = {
 };
 #endif
 
+#if MYNEWT_VAL(PWM_0)
+static struct pwm_dev os_bsp_pwm0;
+#endif
+#if MYNEWT_VAL(PWM_1)
+static struct pwm_dev os_bsp_pwm1;
+#endif
+#if MYNEWT_VAL(PWM_2)
+static struct pwm_dev os_bsp_pwm2;
+#endif
+
 static void
 da1469x_periph_create_timers(void)
 {
@@ -189,6 +203,35 @@ da1469x_periph_create_timers(void)
 
 #if MYNEWT_VAL(OS_CPUTIME_TIMER_NUM) >= 0
     rc = os_cputime_init(MYNEWT_VAL(OS_CPUTIME_FREQ));
+    assert(rc == 0);
+#endif
+}
+
+static void
+da1469x_periph_create_pwm()
+{
+    int rc;
+
+    (void)rc;
+
+#if MYNEWT_VAL(PWM_0)
+    rc = os_dev_create(&os_bsp_pwm0.pwm_os_dev, "pwm0",
+                       OS_DEV_INIT_KERNEL, OS_DEV_INIT_PRIO_DEFAULT,
+                       da1469x_pwm_init, UINT_TO_POINTER(0));
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(PWM_1)
+    rc = os_dev_create(&os_bsp_pwm1.pwm_os_dev, "pwm1",
+                       OS_DEV_INIT_KERNEL, OS_DEV_INIT_PRIO_DEFAULT,
+                       da1469x_pwm_init, UINT_TO_POINTER(1));
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(PWM_2)
+    rc = os_dev_create(&os_bsp_pwm2.pwm_os_dev, "pwm2",
+                       OS_DEV_INIT_KERNEL, OS_DEV_INIT_PRIO_DEFAULT,
+                       da1469x_pwm_init, UINT_TO_POINTER(2));
     assert(rc == 0);
 #endif
 }
@@ -310,7 +353,7 @@ da1469x_periph_create(void)
 {
     da1469x_periph_create_timers();
 //    da1469x_periph_create_adc();
-//    da1469x_periph_create_pwm();
+    da1469x_periph_create_pwm();
     da1469x_periph_create_trng();
     da1469x_periph_create_uart();
     da1469x_periph_create_i2c();
