@@ -43,6 +43,16 @@ console_is_init(void)
     return 0;
 }
 
+static void inline
+console_deinit(void)
+{
+}
+
+static void inline
+console_reinit(void)
+{
+}
+
 static int inline
 console_init(console_rx_cb rx_cb)
 {
@@ -114,6 +124,11 @@ console_out(int character)
 
 static void inline
 console_silence(bool silent)
+{
+}
+
+static void inline
+console_input_ignore(bool ignore)
 {
 }
 
