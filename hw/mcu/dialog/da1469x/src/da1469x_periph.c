@@ -22,6 +22,7 @@
 #include "hal/hal_timer.h"
 #include "os/os_cputime.h"
 #include "mcu/da1469x_hal.h"
+#include "mcu/da1469x_dma.h"
 
 #if MYNEWT_VAL(UART_0) || MYNEWT_VAL(UART_1) || MYNEWT_VAL(UART_2)
 #include "uart/uart.h"
@@ -388,6 +389,8 @@ da1469x_periph_create_spi(void)
 void
 da1469x_periph_create(void)
 {
+    da1469x_dma_init();
+
     da1469x_periph_create_timers();
     da1469x_periph_create_adc();
     da1469x_periph_create_pwm();
