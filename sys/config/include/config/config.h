@@ -189,13 +189,6 @@ int conf_register(struct conf_handler *cf);
 int conf_load(void);
 
 /**
- * Load configuration from a specific registered persistence source.
- * Handlers will be called for configuration subtrees for
- * encountered values.
- */
-int conf_load_one(char *name);
-
-/**
  * @brief Loads the configuration if it hasn't been loaded since reboot.
  *
  * @return 0 on success, non-zero on failure.
