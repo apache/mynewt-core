@@ -38,45 +38,26 @@ extern "C" {
   */
 
 /*
- * General execution flow of test suites and callbacks (more to come XXX)
+ * General execution flow of test suites and callbacks.
  *
  * TEST_SUITE
- *      tu_suite_init -> ts_suite_init_cb
- *          tu_suite_pre_test -> ts_case_pre_test_cb
- *              tu_case_init -> tc_case_init_cb
- *              tu_case_pre_test -> tc_case_pre_test_cb
- *                  TEST_CASE
- *              tu_case_post_test -> tc_case_post_test_cb
- *              tu_case_pass/tu_case_fail -> ts_case_{pass,fail}_cb
- *              tu_case_complete
- *          tu_suite_post_test -> ts_case_post_test_cb
- *      tu_suite_complete -> ts_suite_complete_cb
+ *     TEST_CASE
+ *         tu_suite_pre_test_cb 
+ *         <test-body>
+ *         tu_case_pass/tu_case_fail
+ *         tu_case_post_test_cb
  */
 
-typedef void tu_case_report_fn_t(char *msg, void *arg);
-typedef void tu_suite_restart_fn_t(void *arg);
-
-typedef void tu_init_test_fn_t(void *arg);
+typedef void tu_case_report_fn_t(const char *msg, void *arg);
 typedef void tu_pre_test_fn_t(void *arg);
 typedef void tu_post_test_fn_t(void *arg);
-
 typedef void tu_testsuite_fn_t(void);
 
-/*
- * Private declarations - Test Suite configuration
- */
-void tu_suite_set_init_cb(tu_init_test_fn_t *cb, void *cb_arg);
-void tu_suite_set_complete_cb(tu_init_test_fn_t *cb, void *cb_arg);
-void tu_suite_set_pre_test_cb(tu_pre_test_fn_t *cb, void *cb_arg);
-void tu_suite_set_post_test_cb(tu_post_test_fn_t *cb, void *cb_arg);
-void tu_suite_set_pass_cb(tu_case_report_fn_t *cb, void *cb_arg);
-void tu_suite_set_fail_cb(tu_case_report_fn_t *cb, void *cb_arg);
-
+void tu_set_pass_cb(tu_case_report_fn_t *cb, void *cb_arg);
+void tu_set_fail_cb(tu_case_report_fn_t *cb, void *cb_arg);
 void tu_suite_init(const char *name);
 void tu_suite_pre_test(void);
-void tu_suite_post_test(void);
 void tu_suite_complete(void);
-
 int tu_suite_register(tu_testsuite_fn_t* ts, const char *name);
 
 struct ts_suite {
@@ -88,53 +69,31 @@ struct ts_suite {
 SLIST_HEAD(ts_testsuite_list, ts_suite);
 extern struct ts_testsuite_list g_ts_suites;
 
-struct ts_config {
-    int ts_print_results;
+struct tu_config {
     int ts_system_assert;
 
     const char *ts_suite_name;
 
-    /*
-     * Called prior to the first test in the suite
-     */
-    tu_init_test_fn_t *ts_suite_init_cb;
-    void *ts_suite_init_arg;
+    tu_pre_test_fn_t *pre_test_cb;
+    void *pre_test_arg;
 
     /*
-     * Called after the last test in the suite
+     * Called after the current test case completes.
      */
-    tu_init_test_fn_t *ts_suite_complete_cb;
-    void *ts_suite_complete_arg;
-
-    /*
-     * Called before every test in the suite
-     */
-    tu_pre_test_fn_t *ts_case_pre_test_cb;
-    void *ts_case_pre_arg;
-
-    /*
-     * Called after every test in the suite
-     */
-    tu_post_test_fn_t *ts_case_post_test_cb;
-    void *ts_case_post_arg;
+    tu_post_test_fn_t *post_test_cb;
+    void *post_test_arg;
 
     /*
      * Called after test returns success
      */
-    tu_case_report_fn_t *ts_case_pass_cb;
-    void *ts_case_pass_arg;
+    tu_case_report_fn_t *pass_cb;
+    void *pass_arg;
 
     /*
-     * Called after test fails (typically thoough a failed test assert)
+     * Called after test fails (typically through a failed test assert)
      */
-    tu_case_report_fn_t *ts_case_fail_cb;
-    void *ts_case_fail_arg;
-
-    /*
-     * restart after running the test suite - self-test only 
-     */
-    tu_suite_restart_fn_t *ts_restart_cb;
-    void *ts_restart_arg;
+    tu_case_report_fn_t *fail_cb;
+    void *fail_arg;
 };
 
 void tu_restart(void);
@@ -144,29 +103,8 @@ void tu_start_os(const char *test_task_name, os_task_func_t test_task_handler);
  * Public declarations - test case configuration
  */
 
-void tu_case_set_init_cb(tu_init_test_fn_t *cb, void *cb_arg);
-void tu_case_set_pre_cb(tu_pre_test_fn_t *cb, void *cb_arg);
-void tu_case_set_post_cb(tu_post_test_fn_t *cb, void *cb_arg);
-
-struct tc_config {
-    /*
-     * Called to initialize the test case
-     */
-    tu_init_test_fn_t *tc_case_init_cb;
-    void *tc_case_init_arg;
-
-    /*
-     * Called prior to the test case start
-     */
-    tu_pre_test_fn_t *tc_case_pre_test_cb;
-    void *tc_case_pre_arg;
-
-    /*
-     * Called after the test case completes
-     */
-    tu_post_test_fn_t *tc_case_post_test_cb;
-    void *tc_case_post_arg;
-};
+void tu_suite_set_pre_test_cb(tu_pre_test_fn_t *cb, void *cb_arg);
+void tu_case_set_post_test_cb(tu_post_test_fn_t *cb, void *cb_arg);
 
 void tu_case_init(const char *name);
 void tu_case_complete(void);
@@ -177,13 +115,9 @@ void tu_case_fail_assert(int fatal, const char *file, int line,
 void tu_case_write_pass_auto(void);
 void tu_case_pass_manual(const char *file, int line,
                          const char *format, ...);
-void tu_case_pre_test(void);
 void tu_case_post_test(void);
 
-extern struct tc_config tc_config;
-extern struct tc_config *tc_current_config;
-extern struct ts_config ts_config;
-extern struct ts_config *ts_current_config;
+extern struct tu_config tu_config;
 
 extern const char *tu_suite_name;
 extern const char *tu_case_name;
@@ -195,23 +129,21 @@ extern int tu_case_failed;
 extern int tu_case_idx;
 extern jmp_buf tu_case_jb;
 
-#define TEST_SUITE_DECL(suite_name) extern int suite_name(void)
+#define TEST_SUITE_DECL(suite_name) void suite_name(void)
 
-#define TEST_SUITE_REGISTER(suite_name)                      \
-  tu_suite_register((tu_testsuite_fn_t*)suite_name, ((const char *)#suite_name));
+#define TEST_SUITE_REGISTER(suite_name)                     \
+    tu_suite_register(suite_name, #suite_name);
 
 #define TEST_SUITE(suite_name)                               \
 void                                                         \
 TEST_SUITE_##suite_name(void);                               \
                                                              \
-    int                                                      \
+    void                                                     \
     suite_name(void)                                         \
     {                                                        \
         tu_suite_init(#suite_name);                          \
         TEST_SUITE_##suite_name();                           \
         tu_suite_complete();                                 \
-                                                             \
-        return tu_suite_failed;                              \
     }                                                        \
                                                              \
     void                                                     \
@@ -221,17 +153,19 @@ TEST_SUITE_##suite_name(void);                               \
  * For declaring the test cases across multiple files
  * belonging to the same suite
  */
-#define TEST_CASE_DECL(case_name)                            \
+#define TEST_CASE_DECL(case_name)                           \
     int case_name(void);
 
-#define TEST_CASE_DEFN(case_name, body)                     \
+#define TEST_CASE_DEFN(case_name, do_sysinit, body)         \
     int                                                     \
     case_name(void)                                         \
     {                                                       \
+        if (do_sysinit) {                                   \
+            sysinit();                                      \
+        }                                                   \
         tu_suite_pre_test();                                \
         tu_case_init(#case_name);                           \
                                                             \
-        tu_case_pre_test();                                 \
         if (setjmp(tu_case_jb) == 0) {                      \
             /* Execute test body. */                        \
             body;                                           \
@@ -241,32 +175,102 @@ TEST_SUITE_##suite_name(void);                               \
             }                                               \
         }                                                   \
         tu_case_complete();                                 \
-        tu_suite_post_test();                               \
                                                             \
         return tu_case_failed;                              \
     }                                                       \
 
 /**
- * Defines a test case that runs without the OS.
+ * @brief Defines a test case suitable for running in an application.
+ *
+ * The `TEST_CASE()` macro should not be used for self-tests (i.e., tests that
+ * are run with `newt test`).  Instead, `TEST_CASE_SELF()` or
+ * `TEST_CASE_TASK()` should be preferred; those macros perform system clean up
+ * before the test runs.
  */
-#define TEST_CASE(case_name)                                \
-    void TEST_CASE_##case_name(void);                       \
-    TEST_CASE_DEFN(case_name, TEST_CASE_##case_name())      \
-                                                            \
-    void                                                    \
+#define TEST_CASE(case_name)                                    \
+    void TEST_CASE_##case_name(void);                           \
+    TEST_CASE_DEFN(case_name, false, TEST_CASE_##case_name())   \
+                                                                \
+    void                                                        \
     TEST_CASE_##case_name(void)
 
-/**
- * Defines a test case that runs in a task in the OS.
- */
-#define TEST_CASE_TASK(case_name)                           \
+#define TEST_CASE_SELF_EMIT_(case_name)                         \
+    void TEST_CASE_##case_name(void);                           \
+    TEST_CASE_DEFN(case_name, true, TEST_CASE_##case_name())    \
+                                                                \
+    void                                                        \
+    TEST_CASE_##case_name(void)
+
+#define TEST_CASE_TASK_EMIT_(case_name)                     \
     void TEST_CASE_##case_name(void *arg);                  \
-    TEST_CASE_DEFN(case_name,                               \
+    TEST_CASE_DEFN(case_name, true,                         \
                    tu_start_os(#case_name "_test_task",     \
                                TEST_CASE_##case_name));     \
                                                             \
     void                                                    \
     TEST_CASE_##case_name(void *TU_UNUSED_arg)
+
+#if MYNEWT_VAL(SELFTEST) || defined __DOXYGEN__
+
+/**
+ * @brief Defines a test case for self-test mode (i.e., suitable for `newt
+ * test`).
+ *
+ * Test cases defined with `TEST_CASE_SELF()` execute `sysinit()` before the
+ * test body.
+ */
+#define TEST_CASE_SELF(case_name) TEST_CASE_SELF_EMIT_(case_name)
+
+/**
+ * @brief Defines a test case that runs inside a temporary task.
+ *
+ * Most tests don't utilize the OS scheduler; they simply run in main(),
+ * outside the context of a task.  However, sometimes the OS is required to
+ * fully test a package, e.g., to verify timeouts and other timed events.
+ *
+ * The `TEST_CASE_TASK()` macro simplifies the implementation of test cases
+ * that require the OS.  This macro is identical in usage to
+ * `TEST_CASE_SELF()`, except the test case it defines performs some additional
+ * preliminary work:
+ *
+ * 1. Creates the default task.
+ * 2. Creates the "test task" (the task where the test itself runs).
+ * 3. Starts the OS.
+ *
+ * The body following the macro invocation is what actually runs in the test
+ * task.  The test task has a priority of `OS_MAIN_TASK_PRIO + 1`, so it yields
+ * to the main task.  Thus, tests using this macro typically have the following
+ * form:
+ *
+ *     TEST_CASE_TASK(my_test)
+ *     {
+ *         enqueue_event_to_main_task();
+ *         // Event immediately runs to completion.
+ *         TEST_ASSERT(expected_event_result);
+ *
+ *         // ...
+ *     }
+ *
+ * The `TEST_CASE_TASK()` macro is only usable in self-tests (i.e., tests that
+ * are run with `newt test`).
+ */
+#define TEST_CASE_TASK(case_name) TEST_CASE_TASK_EMIT_(case_name)
+
+#else
+
+#define TEST_CASE_SELF(case_name)                               \
+    _Static_assert(0, "Test `"#case_name"` is a self test.  "   \
+                      "It can only be run from `newt test`");   \
+    /* Emit case definition anyway to prevent syntax errors. */ \
+    TEST_CASE_SELF_EMIT_(case_name)
+
+#define TEST_CASE_TASK(case_name)                               \
+    _Static_assert(0, "Test `"#case_name"` is a self test.  "   \
+                      "It can only be run from `newt test`");   \
+    /* Emit case definition anyway to prevent syntax errors. */ \
+    TEST_CASE_TASK_EMIT_(case_name)
+    
+#endif
 
 #define FIRST_AUX(first, ...) first
 #define FIRST(...) FIRST_AUX(__VA_ARGS__, _)
@@ -281,7 +285,7 @@ TEST_SUITE_##suite_name(void);                               \
 #define REST_OR_0_AUX_N(first, ...) __VA_ARGS__
 
 #define XSTR(s) STR(s)
-#ifndef STR
+#ifndef STR 
 #define STR(s) #s
 #endif
 
@@ -327,4 +331,3 @@ TEST_SUITE_##suite_name(void);                               \
  *   @} OSTestutil
  * @} OSSys
  */
-
