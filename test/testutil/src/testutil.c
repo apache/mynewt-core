@@ -34,15 +34,41 @@
 #define TU_TEST_TASK_PRIO   (MYNEWT_VAL(OS_MAIN_TASK_PRIO) + 1)
 #define TU_TEST_STACK_SIZE  1024
 
-struct tc_config tc_config;
-struct tc_config *tc_current_config = &tc_config;
-
-struct ts_config ts_config;
-struct ts_config *ts_current_config = &ts_config;
+struct tu_config tu_config;
 
 int tu_any_failed;
 
 struct ts_testsuite_list *ts_suites;
+
+void
+tu_set_pass_cb(tu_case_report_fn_t *cb, void *cb_arg)
+{
+    tu_config.pass_cb = cb;
+    tu_config.pass_arg = cb_arg;
+}
+
+void
+tu_set_fail_cb(tu_case_report_fn_t *cb, void *cb_arg)
+{
+    tu_config.fail_cb = cb;
+    tu_config.fail_arg = cb_arg;
+}
+
+#if MYNEWT_VAL(SELFTEST)
+static void
+tu_pass_cb_self(const char *msg, void *arg)
+{
+    printf("[pass] %s/%s %s\n", tu_config.ts_suite_name, tu_case_name, msg);
+    fflush(stdout);
+}
+
+static void
+tu_fail_cb_self(const char *msg, void *arg)
+{
+    printf("[FAIL] %s/%s %s\n", tu_config.ts_suite_name, tu_case_name, msg);
+    fflush(stdout);
+}
+#endif
 
 void
 tu_init(void)
@@ -52,7 +78,8 @@ tu_init(void)
 
 #if MYNEWT_VAL(SELFTEST)
     os_init(NULL);
-    ts_config.ts_print_results = 1;
+    tu_set_pass_cb(tu_pass_cb_self, NULL);
+    tu_set_fail_cb(tu_fail_cb_self, NULL);
 #endif
 }
 
@@ -71,11 +98,6 @@ void
 tu_restart(void)
 {
     tu_case_write_pass_auto();
-
-    if (ts_config.ts_restart_cb != NULL) {
-        ts_config.ts_restart_cb(ts_config.ts_restart_arg);
-    }
-
     tu_arch_restart();
 }
 
@@ -98,6 +120,17 @@ tu_create_dflt_task(void)
                  OS_STACK_ALIGN(OS_MAIN_STACK_SIZE));
 }
 
+static void
+tu_test_task_handler(void *arg)
+{
+    os_task_func_t fn;
+
+    fn = (os_task_func_t)arg;
+    fn(NULL);
+
+    tu_restart();
+}
+
 /**
  * Creates the "test task."  For test cases running in the OS, this is the task
  * that contains the actual test logic.
@@ -108,7 +141,7 @@ tu_create_test_task(const char *task_name, os_task_func_t task_handler)
     static os_stack_t stack[OS_STACK_ALIGN(TU_TEST_STACK_SIZE)];
     static struct os_task task;
 
-    os_task_init(&task, task_name, task_handler, NULL,
+    os_task_init(&task, task_name, tu_test_task_handler, (void *)task_handler,
                  TU_TEST_TASK_PRIO, OS_WAIT_FOREVER, stack,
                  OS_STACK_ALIGN(TU_TEST_STACK_SIZE));
 
@@ -122,8 +155,6 @@ tu_create_test_task(const char *task_name, os_task_func_t task_handler)
 void
 tu_start_os(const char *test_task_name, os_task_func_t test_task_handler)
 {
-    sysinit();
-
     tu_create_dflt_task();
     tu_create_test_task(test_task_name, test_task_handler);
 
