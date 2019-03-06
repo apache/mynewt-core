@@ -45,6 +45,14 @@ typedef void (*console_rx_cb)(void);
 typedef int (*console_append_char_cb)(char *line, uint8_t byte);
 typedef void (*completion_cb)(char *str, console_append_char_cb cb);
 
+/**
+ * De initializes the UART console.
+ */
+void console_deinit(void);
+/**
+ * Re Initializes the UART console.
+ */
+void console_reinit(void);
 int console_init(console_rx_cb rx_cb);
 int console_is_init(void);
 void console_write(const char *str, int cnt);
@@ -69,6 +77,11 @@ void console_line_event_put(struct os_event *ev);
  * Global indicating whether console is silent or not
  */
 extern bool g_silence_console;
+/**
+ * Global indicating whether console input is disabled or not
+ */
+extern bool g_console_input_ignore;
+
 
 /**
  * Silences console output, input is still active
@@ -80,6 +93,19 @@ static void inline
 console_silence(bool silent)
 {
     g_silence_console = silent;
+}
+
+
+/**
+ * Ignores console input, output is still active
+ *
+ * @param ignore Lets console know if input should be disabled,
+ *        true for ignore input, false otherwise
+ */
+static void inline
+console_input_ignore(bool ignore)
+{
+    g_console_input_ignore = ignore;
 }
 
 extern int console_is_midline;
