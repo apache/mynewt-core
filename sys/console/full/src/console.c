@@ -84,6 +84,7 @@ static struct os_eventq avail_queue;
 static struct os_eventq *lines_queue;
 static completion_cb completion;
 bool g_silence_console;
+bool g_console_input_ignore;
 static struct os_mutex console_write_lock;
 
 /*
@@ -670,6 +671,9 @@ console_handle_char(uint8_t byte)
 #if !MYNEWT_VAL(CONSOLE_INPUT)
     return 0;
 #endif
+    if (g_console_input_ignore) {
+        return 0;
+    }
 
     static struct os_event *ev;
     static struct console_input *input;
@@ -851,6 +855,22 @@ void
 console_set_completion_cb(completion_cb cb)
 {
     completion = cb;
+}
+
+void
+console_deinit(void)
+{
+#if MYNEWT_VAL(CONSOLE_UART)
+    uart_console_deinit();
+#endif
+}
+
+void
+console_reinit(void)
+{
+#if MYNEWT_VAL(CONSOLE_UART)
+     uart_console_init();
+#endif
 }
 
 #if MYNEWT_VAL(CONSOLE_COMPAT)
