@@ -208,7 +208,11 @@ DioIrqHandler *DioIrq[] = {
     SX1272OnDio0Irq,
     SX1272OnDio1Irq,
     SX1272OnDio2Irq,
+#if (SX1272_DIO3 >= 0)
     SX1272OnDio3Irq,
+#else
+    NULL,
+#endif
 #if (SX1272_DIO4 >= 0)
     SX1272OnDio4Irq,
 #else
