@@ -190,9 +190,10 @@ int conf_load(void);
 
 /**
  * Load configuration from a specific registered persistence source.
- * Handlers will be called for configuration subtrees for
+ * Handlers will be called for configuration subtree for
  * encountered values.
  *
+ * @param name of the configuration subtree.
  * @return 0 on success, non-zero on failure.
  */
 int conf_load_one(char *name);

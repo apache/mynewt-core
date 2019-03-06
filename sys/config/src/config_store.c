@@ -67,8 +67,7 @@ conf_dst_register(struct conf_store *cs)
 static void
 conf_load_cb(char *name, char *val, void *cb_arg)
 {
-    if ((cb_arg && !strcmp((char*)cb_arg, name)) ||
-        cb_arg == NULL) {
+    if (!cb_arg || !strcmp((char*)cb_arg, name)) {
         /* If cb_arg is set, set specific conf value
          * If cb_arg is not set, just set the value
          * anyways
@@ -83,7 +82,7 @@ conf_load_one(char *name)
     struct conf_store *cs;
 
     /*
-     * for every config store
+     * for this specific config store
      *    load config
      *    apply config
      *    commit all
