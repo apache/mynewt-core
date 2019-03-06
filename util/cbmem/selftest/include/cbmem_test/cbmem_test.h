@@ -16,6 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 #ifndef __CBMEM_TEST_H
 #define __CBMEM_TEST_H
 
@@ -30,13 +31,18 @@
 #define CBMEM1_BUF_SIZE (64 * 1024)
 #define CBMEM1_ENTRY_SIZE 1024
 
-struct cbmem cbmem1;
-uint8_t cbmem1_buf[CBMEM1_BUF_SIZE];
-uint8_t cbmem1_entry[CBMEM1_ENTRY_SIZE];
+extern struct cbmem cbmem1;
+extern uint8_t cbmem1_buf[CBMEM1_BUF_SIZE];
+extern uint8_t cbmem1_entry[CBMEM1_ENTRY_SIZE];
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+TEST_CASE_DECL(cbmem_test_case_1);
+TEST_CASE_DECL(cbmem_test_case_2);
+TEST_CASE_DECL(cbmem_test_case_3);
+TEST_SUITE_DECL(cbmem_test_suite);
 
 int cbmem_test_case_1_walk(struct cbmem *cbmem,
                            struct cbmem_entry_hdr *hdr, void *arg);

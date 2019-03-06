@@ -16,7 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include "cbmem_test.h"
+
+#include "cbmem_test/cbmem_test.h"
 
 TEST_CASE_SELF(cbmem_test_case_3)
 {
