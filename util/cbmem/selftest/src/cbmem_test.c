@@ -24,7 +24,7 @@
 #include "os/mynewt.h"
 #include "testutil/testutil.h"
 #include "cbmem/cbmem.h"
-#include "cbmem_test.h"
+#include "cbmem_test/cbmem_test.h"
 
 struct cbmem cbmem1;
 uint8_t cbmem1_buf[CBMEM1_BUF_SIZE];
@@ -81,10 +81,6 @@ cbmem_test_case_1_walk(struct cbmem *cbmem, struct cbmem_entry_hdr *hdr,
     return (0);
 }
 
-TEST_CASE_DECL(cbmem_test_case_1)
-TEST_CASE_DECL(cbmem_test_case_2)
-TEST_CASE_DECL(cbmem_test_case_3)
-
 TEST_SUITE(cbmem_test_suite)
 {
     tu_suite_set_pre_test_cb(setup_cbmem1, NULL);
@@ -94,13 +90,9 @@ TEST_SUITE(cbmem_test_suite)
     cbmem_test_case_3();
 }
 
-#if MYNEWT_VAL(SELFTEST)
-
 int
 main(int argc, char **argv)
 {
     cbmem_test_suite();
     return tu_any_failed;
 }
-
-#endif

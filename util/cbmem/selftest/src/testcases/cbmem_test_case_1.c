@@ -16,7 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include "cbmem_test.h"
+
+#include "cbmem_test/cbmem_test.h"
 
 TEST_CASE_SELF(cbmem_test_case_1)
 {
@@ -29,5 +30,4 @@ TEST_CASE_SELF(cbmem_test_case_1)
     TEST_ASSERT_FATAL(rc == 0, "Could not walk cbmem tree!  rc = %d", rc);
     TEST_ASSERT_FATAL(i == 65,
             "Did not go through every element of walk, %d processed", i - 2);
-
 }
