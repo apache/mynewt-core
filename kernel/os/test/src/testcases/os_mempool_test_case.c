@@ -172,7 +172,7 @@ retest:
 
 }
 
-TEST_CASE(os_mempool_test_case)
+TEST_CASE_SELF(os_mempool_test_case)
 {
     mempool_test(NUM_MEM_BLOCKS, MEM_BLOCK_SIZE, false);
     mempool_test(NUM_MEM_BLOCKS, MEM_BLOCK_SIZE, true);

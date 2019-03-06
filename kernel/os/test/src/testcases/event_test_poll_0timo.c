@@ -22,7 +22,7 @@
  * Tests eventq_poll() with a timeout of 0.  This should not involve the
  * scheduler at all, so it should work without starting the OS.
  */
-TEST_CASE(event_test_poll_0timo)
+TEST_CASE_SELF(event_test_poll_0timo)
 {
     struct os_eventq *eventqs[SIZE_MULTI_EVENT];
     struct os_event *evp;

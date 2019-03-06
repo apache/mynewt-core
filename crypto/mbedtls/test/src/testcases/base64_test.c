@@ -18,7 +18,7 @@
  */
 #include "mbedtls_test.h"
 
-TEST_CASE(base64_test)
+TEST_CASE_SELF(base64_test)
 {
     int rc;
 

@@ -168,6 +168,7 @@ typedef uint64_t os_membuf_t;
 #define OS_MEMPOOL_BYTES(n,blksize)     \
     (sizeof (os_membuf_t) * OS_MEMPOOL_SIZE((n), (blksize)))
 
+
 /**
  * Initialize a memory pool.
  *

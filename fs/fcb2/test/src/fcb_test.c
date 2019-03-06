@@ -30,8 +30,6 @@
 
 #include "flash_map/flash_map.h"
 
-#if MYNEWT_VAL(SELFTEST)
-
 struct fcb test_fcb;
 
 #if MYNEWT_VAL(SELFTEST)
@@ -113,7 +111,7 @@ fcb_test_cnt_elems_cb(struct fcb_entry *loc, void *arg)
 }
 
 void
-fcb_tc_pretest(void* arg)
+fcb_tc_pretest(uint8_t sector_count)
 {
     struct fcb *fcb;
     int rc = 0;
@@ -121,25 +119,18 @@ fcb_tc_pretest(void* arg)
     fcb_test_wipe();
     fcb = &test_fcb;
     memset(fcb, 0, sizeof(*fcb));
-    fcb->f_sector_cnt = (int)arg;
+    fcb->f_sector_cnt = sector_count;
     fcb->f_ranges = test_fcb_ranges; /* XXX */
     fcb->f_range_cnt = 1;
-    test_fcb_ranges[0].fsr_sector_count = (int)arg;
-    test_fcb_ranges[0].fsr_flash_area.fa_size = test_fcb_ranges[0].fsr_sector_size * (int)arg;
+    test_fcb_ranges[0].fsr_sector_count = sector_count;
+    test_fcb_ranges[0].fsr_flash_area.fa_size =
+        test_fcb_ranges[0].fsr_sector_size * sector_count;
 
     rc = fcb_init(fcb);
     if (rc != 0) {
         printf("fcb_tc_pretest rc == %x, %d\n", rc, rc);
         TEST_ASSERT(rc == 0);
     }
-
-    return;
-}
-
-void
-fcb_ts_init(void *arg)
-{
-    return;
 }
 
 TEST_CASE_DECL(fcb_test_init)
@@ -155,51 +146,23 @@ TEST_CASE_DECL(fcb_test_area_info)
 
 TEST_SUITE(fcb_test_all)
 {
-    tu_case_set_pre_cb(fcb_tc_pretest, (void*)2);
-
-    /* pretest not needed */
     fcb_test_init();
-
-    tu_case_set_pre_cb(fcb_tc_pretest, (void*)2);
     fcb_test_empty_walk();
-
-    tu_case_set_pre_cb(fcb_tc_pretest, (void*)2);
     fcb_test_append();
-
-    tu_case_set_pre_cb(fcb_tc_pretest, (void*)2);
     fcb_test_append_too_big();
-
-    tu_case_set_pre_cb(fcb_tc_pretest, (void*)2);
     fcb_test_append_fill();
-
-    tu_case_set_pre_cb(fcb_tc_pretest, (void*)2);
     fcb_test_reset();
-
-    tu_case_set_pre_cb(fcb_tc_pretest, (void*)2);
     fcb_test_rotate();
-
-    tu_case_set_pre_cb(fcb_tc_pretest, (void*)4);
     fcb_test_multiple_scratch();
-
-    tu_case_set_pre_cb(fcb_tc_pretest, (void*)4);
     fcb_test_last_of_n();
-
-    tu_case_set_pre_cb(fcb_tc_pretest, (void*)2);
     fcb_test_area_info();
-
 }
 
 #if MYNEWT_VAL(SELFTEST)
 int
 main(int argc, char **argv)
 {
-    sysinit();
-
-    tu_suite_set_init_cb(fcb_ts_init, NULL);
     fcb_test_all();
-
     return tu_any_failed;
 }
 #endif
-
-#endif /* MYNEWT_VAL(SELFTEST) */

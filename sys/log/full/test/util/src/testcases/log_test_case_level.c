@@ -45,7 +45,7 @@ log_last(struct log *log)
     return idx;
 }
 
-TEST_CASE(log_test_case_level)
+TEST_CASE_SELF(log_test_case_level)
 {
     struct cbmem cbmem;
     struct log log;

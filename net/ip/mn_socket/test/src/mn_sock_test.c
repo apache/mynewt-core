@@ -37,18 +37,26 @@ TEST_CASE_DECL(inet6_pton_test)
 TEST_CASE_DECL(inet_ntop_test)
 TEST_CASE_DECL(socket_tests)
 
-TEST_SUITE(mn_socket_test_all)
+static void
+mn_socket_test_init(void *arg)
 {
     int rc;
 
     rc = os_mempool_init(&test_mbuf_mpool, MB_CNT, MB_SZ,
                          test_mbuf_area, "mb");
-    TEST_ASSERT(rc == 0);
+    TEST_ASSERT_FATAL(rc == 0);
+
     rc = os_mbuf_pool_init(&test_mbuf_pool, &test_mbuf_mpool,
                            MB_CNT, MB_CNT);
-    TEST_ASSERT(rc == 0);
+    TEST_ASSERT_FATAL(rc == 0);
+
     rc = os_msys_register(&test_mbuf_pool);
-    TEST_ASSERT(rc == 0);
+    TEST_ASSERT_FATAL(rc == 0);
+}
+
+TEST_SUITE(mn_socket_test_all)
+{
+    tu_suite_set_pre_test_cb(mn_socket_test_init, NULL);
 
     inet_pton_test();
     inet6_pton_test();
@@ -56,30 +64,11 @@ TEST_SUITE(mn_socket_test_all)
     socket_tests();
 }
 
-void
-mn_socket_test_init()
-{
-    int rc;
-
-    rc = os_mempool_init(&test_mbuf_mpool, MB_CNT, MB_SZ,
-                         test_mbuf_area, "mb");
-    TEST_ASSERT(rc == 0);
-    rc = os_mbuf_pool_init(&test_mbuf_pool, &test_mbuf_mpool,
-                           MB_CNT, MB_CNT);
-    TEST_ASSERT(rc == 0);
-    rc = os_msys_register(&test_mbuf_pool);
-    TEST_ASSERT(rc == 0);
-}
-
 #if MYNEWT_VAL(SELFTEST)
 int
 main(int argc, char **argv)
 {
-    sysinit();
-
-    tu_suite_set_init_cb((void*)mn_socket_test_init, NULL);
     mn_socket_test_all();
-
     return tu_any_failed;
 }
 #endif

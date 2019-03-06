@@ -23,7 +23,7 @@ extern struct flash_area *fa_sectors;
 /*
  * Test flash_area_to_sectors() vs flash_area_getnext_sector()
  */
-TEST_CASE(flash_map_test_case_3)
+TEST_CASE_SELF(flash_map_test_case_3)
 {
     int areas[] = {
         FLASH_AREA_BOOTLOADER,

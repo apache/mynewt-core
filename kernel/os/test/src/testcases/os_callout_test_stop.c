@@ -19,7 +19,7 @@
 #include "os_test_priv.h"
 
 /* Test case of the callout_task_stop */
-TEST_CASE(callout_test_stop)
+TEST_CASE_SELF(callout_test_stop)
 {
     int k;
 

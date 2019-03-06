@@ -63,7 +63,7 @@ stcpe_sensor_read(struct sensor *sensor, sensor_type_t type,
     return stcpe_sensor_read_status;
 }
 
-TEST_CASE(sensor_test_case_poll_err)
+TEST_CASE_SELF(sensor_test_case_poll_err)
 {
     static struct sensor_driver driver = {
         .sd_read = stcpe_sensor_read,
@@ -71,8 +71,6 @@ TEST_CASE(sensor_test_case_poll_err)
 
     struct sensor sn;
     int rc;
-
-    sysinit();
 
     /***
      * Register the sensor and an error callback.  Arbitrarily specify

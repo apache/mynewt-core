@@ -18,7 +18,7 @@
  */
 #include "cbmem_test.h"
 
-TEST_CASE(cbmem_test_case_1)
+TEST_CASE_SELF(cbmem_test_case_1)
 {
     int i;
     int rc;

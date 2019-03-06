@@ -51,8 +51,6 @@ TEST_SUITE(flash_map_test_suite)
 int
 main(int argc, char **argv)
 {
-    sysinit();
-
     fa_sectors = (struct flash_area *)
                 malloc(sizeof(struct flash_area) * SELFTEST_FA_SECTOR_COUNT);
     TEST_ASSERT_FATAL(fa_sectors);

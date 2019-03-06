@@ -39,10 +39,7 @@ TEST_SUITE(test_cborattr_suite)
 int
 main(int argc, char **argv)
 {
-    sysinit();
-
     test_cborattr_suite();
-
     return tu_any_failed;
 }
 #endif

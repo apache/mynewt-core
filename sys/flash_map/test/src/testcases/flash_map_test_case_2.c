@@ -23,7 +23,7 @@ extern struct flash_area *fa_sectors;
 /*
  * Test flash_erase
  */
-TEST_CASE(flash_map_test_case_2)
+TEST_CASE_SELF(flash_map_test_case_2)
 {
     const struct flash_area *fa;
     int sec_cnt;

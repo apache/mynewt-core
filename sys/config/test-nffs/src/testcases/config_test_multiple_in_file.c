@@ -18,7 +18,7 @@
  */
 #include "conf_test_nffs.h"
 
-TEST_CASE(config_test_multiple_in_file)
+TEST_CASE_SELF(config_test_multiple_in_file)
 {
     int rc;
     struct conf_file cf_mfg;
@@ -30,11 +30,12 @@ TEST_CASE(config_test_multiple_in_file)
       "myfoo/mybar=15\n"
       "\n";
 
-    config_wipe_srcs();
-
     cf_mfg.cf_name = "/config/mfg";
     rc = conf_file_src(&cf_mfg);
     TEST_ASSERT(rc == 0);
+
+    rc = fs_mkdir("/config");
+    TEST_ASSERT_FATAL(rc == 0);
 
     rc = fsutil_write_file("/config/mfg", cf_mfg_test1, sizeof(cf_mfg_test1));
     TEST_ASSERT(rc == 0);

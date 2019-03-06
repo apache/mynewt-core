@@ -20,12 +20,8 @@
 #include "runtest/runtest.h"
 #include "os_test_priv.h"
 
-TEST_CASE(os_mutex_test_basic)
+TEST_CASE_SELF(os_mutex_test_basic)
 {
-#if MYNEWT_VAL(SELFTEST)
-    sysinit();
-#endif
-
     os_mutex_init(&g_mutex1);
     runtest_init_task(mutex_test_basic_handler,
                       MYNEWT_VAL(OS_MAIN_TASK_PRIO) + 1);

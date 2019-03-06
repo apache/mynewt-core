@@ -19,7 +19,7 @@
 
 #include "nffs_test_utils.h"
 
-TEST_CASE(nffs_test_large_write)
+TEST_CASE_SELF(nffs_test_large_write)
 {
     static char data[NFFS_BLOCK_MAX_DATA_SZ_MAX * 5];
     int rc;

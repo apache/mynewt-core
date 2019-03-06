@@ -18,7 +18,7 @@
  */
 #include "mbedtls_test.h"
 
-TEST_CASE(sha512_test)
+TEST_CASE_SELF(sha512_test)
 {
     int rc;
 

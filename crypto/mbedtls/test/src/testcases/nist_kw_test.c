@@ -18,7 +18,7 @@
  */
 #include "mbedtls_test.h"
 
-TEST_CASE(nist_kw_test)
+TEST_CASE_SELF(nist_kw_test)
 {
     int rc;
 

@@ -19,7 +19,7 @@
 
 #include "mn_sock_test.h"
 
-TEST_CASE(inet_ntop_test)
+TEST_CASE_SELF(inet_ntop_test)
 {
     const char *rstr;
     char addr[48];

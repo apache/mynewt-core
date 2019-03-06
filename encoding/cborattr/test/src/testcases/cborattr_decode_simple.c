@@ -80,7 +80,7 @@ test_encode_data(void)
 /*
  * Simple decoding.
  */
-TEST_CASE(test_cborattr_decode_simple)
+TEST_CASE_SELF(test_cborattr_decode_simple)
 {
     int rc;
     uint64_t a_val = 0;

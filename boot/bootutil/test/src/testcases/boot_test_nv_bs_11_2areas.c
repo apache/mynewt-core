@@ -18,7 +18,7 @@
  */
 #include "boot_test.h"
 
-TEST_CASE(boot_test_nv_bs_11_2areas)
+TEST_CASE_SELF(boot_test_nv_bs_11_2areas)
 {
     struct boot_status status;
     int rc;

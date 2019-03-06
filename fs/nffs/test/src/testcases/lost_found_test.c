@@ -19,7 +19,7 @@
 
 #include "nffs_test_utils.h"
 
-TEST_CASE(nffs_test_lost_found)
+TEST_CASE_SELF(nffs_test_lost_found)
 {
     char buf[32];
     struct nffs_inode_entry *inode_entry;

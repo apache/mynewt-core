@@ -18,7 +18,7 @@
  */
 #include "mbedtls_test.h"
 
-TEST_CASE(poly1305_test)
+TEST_CASE_SELF(poly1305_test)
 {
     int rc;
 

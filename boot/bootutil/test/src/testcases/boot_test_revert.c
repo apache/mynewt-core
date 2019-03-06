@@ -18,7 +18,7 @@
  */
 #include "boot_test.h"
 
-TEST_CASE(boot_test_revert)
+TEST_CASE_SELF(boot_test_revert)
 {
     struct image_header hdr0 = { .ih_magic = IMAGE_MAGIC,
         .ih_tlv_size = 4 + 32,

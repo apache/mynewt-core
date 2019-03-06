@@ -18,7 +18,7 @@
  */
 #include "cbmem_test.h"
 
-TEST_CASE(cbmem_test_case_2)
+TEST_CASE_SELF(cbmem_test_case_2)
 {
     struct cbmem_entry_hdr *hdr;
     struct cbmem_iter iter;

@@ -19,7 +19,7 @@
 #include "os_test_priv.h"
 
 /* Test case for poll timeout */
-TEST_CASE(event_test_poll_timeout_sr)
+TEST_CASE_SELF(event_test_poll_timeout_sr)
 {
     int i;
 

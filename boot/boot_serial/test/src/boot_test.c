@@ -28,14 +28,9 @@
 #include "testutil/testutil.h"
 #include "hal/hal_flash.h"
 #include "flash_map/flash_map.h"
+#include "boot_test.h"
 
 #include "boot_serial_priv.h"
-
-TEST_CASE_DECL(boot_serial_setup)
-TEST_CASE_DECL(boot_serial_empty_msg)
-TEST_CASE_DECL(boot_serial_empty_img_msg)
-TEST_CASE_DECL(boot_serial_img_msg)
-TEST_CASE_DECL(boot_serial_upload_bigger_image)
 
 void
 tx_msg(void *src, int len)
@@ -52,21 +47,11 @@ TEST_SUITE(boot_serial_suite)
     boot_serial_upload_bigger_image();
 }
 
-int
-boot_serial_test(void)
-{
-    boot_serial_suite();
-    return tu_any_failed;
-}
-
 #if MYNEWT_VAL(SELFTEST)
 int
 main(void)
 {
-    sysinit();
-
-    boot_serial_test();
-
+    boot_serial_suite();
     return tu_any_failed;
 }
 #endif

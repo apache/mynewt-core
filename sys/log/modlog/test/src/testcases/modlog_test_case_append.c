@@ -34,8 +34,6 @@ mltca_run(bool use_mbufs)
     uint8_t byte;
     int rc;
 
-    sysinit();
-
     /* Initialize three logs. */
     memset(&mla1, 0, sizeof mla1);
     mltu_register_log(&log1, &mla1, "log1", 0);
@@ -197,7 +195,7 @@ mltca_run(bool use_mbufs)
     TEST_ASSERT(mla3.num_entries == 0);
 }
 
-TEST_CASE(modlog_test_case_append)
+TEST_CASE_SELF(modlog_test_case_append)
 {
     mltca_run(false);
     mltca_run(true);

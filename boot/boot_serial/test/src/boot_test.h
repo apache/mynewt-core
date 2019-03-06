@@ -40,6 +40,13 @@ extern "C" {
 
 void tx_msg(void *src, int len);
 
+TEST_SUITE_DECL(boot_serial_suite);
+TEST_CASE_DECL(boot_serial_setup);
+TEST_CASE_DECL(boot_serial_empty_msg);
+TEST_CASE_DECL(boot_serial_empty_img_msg);
+TEST_CASE_DECL(boot_serial_img_msg);
+TEST_CASE_DECL(boot_serial_upload_bigger_image);
+
 #ifdef __cplusplus
 }
 #endif

@@ -18,7 +18,7 @@
  */
 #include "conf_test_fcb.h"
 
-TEST_CASE(config_test_getset_int)
+TEST_CASE_SELF(config_test_getset_int)
 {
     char name[80];
     char tmp[64], *str;

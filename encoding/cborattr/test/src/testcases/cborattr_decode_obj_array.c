@@ -81,7 +81,7 @@ test_encode_obj_array(void)
 /*
  * object array
  */
-TEST_CASE(test_cborattr_decode_obj_array)
+TEST_CASE_SELF(test_cborattr_decode_obj_array)
 {
     int rc;
     char arr_data[4];

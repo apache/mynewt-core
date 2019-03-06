@@ -41,44 +41,34 @@ extern int c2_var_count;
 extern char val_string[64][CONF_MAX_VAL_LEN];
 
 extern uint32_t val32;
-extern uint32_t val64;
+extern uint64_t val64;
 
 extern int test_get_called;
 extern int test_set_called;
 extern int test_commit_called;
 extern int test_export_block;
 
-char *ctest_handle_get(int argc, char **argv, char *val, int val_len_max);
-int ctest_handle_set(int argc, char **argv, char *val);
-int ctest_handle_commit(void);
-int ctest_handle_export(void (*cb)(char *name, char *value),
-                        enum conf_export_tgt tgt);
 int ctest_get_call_state(void);
 void ctest_clear_call_state(void);
 
-void config_wipe_srcs(void);
-
 int conf_test_file_strstr(const char *fname, char *string);
 
-char *c2_handle_get(int argc, char **argv, char *val, int val_len_max);
-int c2_handle_set(int argc, char **argv, char *val);
-int c2_handle_export(void (*cb)(char *name, char *value),
-                     enum conf_export_tgt tgt);
-
-char *c3_handle_get(int argc, char **argv, char *val, int val_len_max);
-int c3_handle_set(int argc, char **argv, char *val);
-int c3_handle_export(void (*cb)(char *name, char *value),
-                     enum conf_export_tgt tgt);
+TEST_CASE_DECL(config_empty_lookups);
+TEST_CASE_DECL(config_test_getset_unknown);
+TEST_CASE_DECL(config_test_getset_int);
+TEST_CASE_DECL(config_test_getset_bytes);
+TEST_CASE_DECL(config_test_getset_int64);
+TEST_CASE_DECL(config_test_commit);
+TEST_CASE_DECL(config_setup_nffs);
+TEST_CASE_DECL(config_test_empty_file);
+TEST_CASE_DECL(config_test_small_file);;
+TEST_CASE_DECL(config_test_multiple_in_file);
+TEST_CASE_DECL(config_test_save_in_file);
+TEST_CASE_DECL(config_test_save_one_file);
+TEST_CASE_DECL(config_test_get_stored_file);
 
 extern struct conf_handler config_test_handler;
-
-extern struct conf_handler c2_test_handler;
-
-extern struct conf_handler c3_test_handler;
-
-extern struct nffs_area_desc config_nffs[];
-
-void config_test_all(void);
+extern const struct nffs_area_desc config_nffs[];
 
 #ifdef __cplusplus
 }

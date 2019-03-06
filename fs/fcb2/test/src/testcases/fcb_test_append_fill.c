@@ -18,7 +18,7 @@
  */
 #include "fcb_test.h"
 
-TEST_CASE(fcb_test_append_fill)
+TEST_CASE_SELF(fcb_test_append_fill)
 {
     struct fcb *fcb;
     int rc;
@@ -34,6 +34,8 @@ TEST_CASE(fcb_test_append_fill)
     struct append_arg aa_separate = {
         .elem_cnts = aa_separate_cnts
     };
+
+    fcb_tc_pretest(2);
 
     fcb = &test_fcb;
 

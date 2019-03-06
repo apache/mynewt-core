@@ -19,7 +19,7 @@
 #include <string.h>
 #include "encoding_test_priv.h"
 
-TEST_CASE(str2hex)
+TEST_CASE_SELF(str2hex)
 {
     int i;
     char cmp_data[8];

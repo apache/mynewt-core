@@ -18,7 +18,7 @@
  */
 #include "conf_test_fcb.h"
 
-TEST_CASE(config_empty_lookups)
+TEST_CASE_SELF(config_empty_lookups)
 {
     int rc;
     char name[80];

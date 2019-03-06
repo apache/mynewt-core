@@ -30,10 +30,10 @@
 #include "config_priv.h"
 #include "conf_test_fcb.h"
 
+char val_string[CONF_TEST_FCB_VAL_STR_CNT][CONF_MAX_VAL_LEN];
+
 uint8_t val8;
 int c2_var_count = 1;
-
-char val_string[CONF_TEST_FCB_VAL_STR_CNT][CONF_MAX_VAL_LEN];
 
 uint32_t val32;
 uint64_t val64;
@@ -317,31 +317,51 @@ config_test_fill_area(
       }
 }
 
-TEST_CASE_DECL(config_empty_lookups)
-TEST_CASE_DECL(config_test_insert)
-TEST_CASE_DECL(config_test_getset_unknown)
-TEST_CASE_DECL(config_test_getset_int)
-TEST_CASE_DECL(config_test_getset_bytes)
-TEST_CASE_DECL(config_test_getset_int64)
-TEST_CASE_DECL(config_test_commit)
-TEST_CASE_DECL(config_test_empty_fcb)
-TEST_CASE_DECL(config_test_save_1_fcb)
-TEST_CASE_DECL(config_test_insert2)
-TEST_CASE_DECL(config_test_save_2_fcb)
-TEST_CASE_DECL(config_test_insert3)
-TEST_CASE_DECL(config_test_save_3_fcb)
-TEST_CASE_DECL(config_test_compress_reset)
-TEST_CASE_DECL(config_test_save_one_fcb)
-TEST_CASE_DECL(config_test_custom_compress)
-TEST_CASE_DECL(config_test_get_stored_fcb)
-
-TEST_SUITE(config_test_all)
+static void
+conf_test_fcb_pre_test(void *arg)
 {
-    /*
-     * Config tests.
-     */
+    int rc;
+
+    rc = conf_register(&config_test_handler);
+    TEST_ASSERT_FATAL(rc == 0);
+}
+
+static void
+conf_test_fcb_pre_test2(void *arg)
+{
+    int rc;
+
+    rc = conf_register(&config_test_handler);
+    TEST_ASSERT_FATAL(rc == 0);
+
+    rc = conf_register(&c2_test_handler);
+    TEST_ASSERT_FATAL(rc == 0);
+}
+
+static void
+conf_test_fcb_pre_test3(void *arg)
+{
+    int rc;
+
+    rc = conf_register(&config_test_handler);
+    TEST_ASSERT_FATAL(rc == 0);
+
+    rc = conf_register(&c2_test_handler);
+    TEST_ASSERT_FATAL(rc == 0);
+
+    rc = conf_register(&c3_test_handler);
+    TEST_ASSERT_FATAL(rc == 0);
+}
+
+TEST_SUITE(config_test_c0)
+{
     config_empty_lookups();
-    config_test_insert();
+}
+
+TEST_SUITE(config_test_c1)
+{
+    tu_config.pre_test_cb = conf_test_fcb_pre_test;
+
     config_test_getset_unknown();
     config_test_getset_int();
     config_test_getset_bytes();
@@ -349,24 +369,29 @@ TEST_SUITE(config_test_all)
 
     config_test_commit();
 
-    /*
-     * FCB as backing storage.
-     */
-    config_test_empty_fcb();
     config_test_save_1_fcb();
+}
 
-    config_test_insert2();
+TEST_SUITE(config_test_c2)
+{
+    tu_config.pre_test_cb = conf_test_fcb_pre_test2;
+
+    config_test_empty_fcb();
 
     config_test_save_2_fcb();
 
-    config_test_insert3();
+    config_test_save_one_fcb();
+    config_test_get_stored_fcb();
+}
+
+TEST_SUITE(config_test_c3)
+{
+    tu_config.pre_test_cb = conf_test_fcb_pre_test3;
+
     config_test_save_3_fcb();
 
     config_test_compress_reset();
     config_test_custom_compress();
-
-    config_test_save_one_fcb();
-    config_test_get_stored_fcb();
 }
 
 #if MYNEWT_VAL(SELFTEST)
@@ -374,10 +399,10 @@ TEST_SUITE(config_test_all)
 int
 main(int argc, char **argv)
 {
-    sysinit();
-
-    conf_init();
-    config_test_all();
+    config_test_c0();
+    config_test_c1();
+    config_test_c2();
+    config_test_c3();
 
     return tu_any_failed;
 }

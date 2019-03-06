@@ -22,13 +22,9 @@
 #include "os_test_priv.h"
 #include "sem_test.h"
 
-TEST_CASE(os_sem_test_basic)
+TEST_CASE_SELF(os_sem_test_basic)
 {
     os_error_t err;
-
-#if MYNEWT_VAL(SELFTEST)
-    sysinit();
-#endif
 
     err = os_sem_init(&g_sem1, 1);
     TEST_ASSERT(err == OS_OK);

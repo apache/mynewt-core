@@ -18,22 +18,13 @@
  */
 #include "fcb_test.h"
 
-TEST_CASE(fcb_test_empty_walk)
+TEST_CASE_SELF(fcb_test_empty_walk)
 {
     int rc;
     struct fcb *fcb;
 
-#if 0
-    fcb_test_wipe();
-    fcb = &test_fcb;
-    memset(fcb, 0, sizeof(*fcb));
+    fcb_tc_pretest(2);
 
-    fcb->f_sector_cnt = 2;
-    fcb->f_sectors = test_fcb_area;
-
-    rc = fcb_init(fcb);
-    TEST_ASSERT(rc == 0);
-#endif
     fcb = &test_fcb;
 
     rc = fcb_walk(fcb, 0, fcb_test_empty_walk_cb, NULL);

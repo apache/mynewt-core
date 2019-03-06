@@ -18,7 +18,7 @@
  */
 #include "mbedtls_test.h"
 
-TEST_CASE(chachapoly_test)
+TEST_CASE_SELF(chachapoly_test)
 {
     int rc;
 

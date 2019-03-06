@@ -18,10 +18,12 @@
  */
 #include "fcb_test.h"
 
-TEST_CASE(fcb_test_init)
+TEST_CASE_SELF(fcb_test_init)
 {
     int rc;
     struct fcb *fcb;
+
+    fcb_tc_pretest(2);
 
     fcb = &test_fcb;
     memset(fcb, 0, sizeof(*fcb));

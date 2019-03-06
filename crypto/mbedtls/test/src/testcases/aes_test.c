@@ -18,7 +18,7 @@
  */
 #include "mbedtls_test.h"
 
-TEST_CASE(aes_test)
+TEST_CASE_SELF(aes_test)
 {
     int rc;
 

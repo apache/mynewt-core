@@ -18,7 +18,7 @@
  */
 #include "conf_test_nffs.h"
 
-TEST_CASE(config_test_getset_bytes)
+TEST_CASE_SELF(config_test_getset_bytes)
 {
     char orig[32];
     char bytes[32];

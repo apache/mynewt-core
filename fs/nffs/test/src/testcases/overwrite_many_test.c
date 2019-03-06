@@ -19,7 +19,7 @@
 
 #include "nffs_test_utils.h"
 
-TEST_CASE(nffs_test_overwrite_many)
+TEST_CASE_SELF(nffs_test_overwrite_many)
 {
     struct nffs_test_block_desc *blocks = (struct nffs_test_block_desc[]) { {
         .data = "abcdefgh",

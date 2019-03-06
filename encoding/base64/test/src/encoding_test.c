@@ -25,6 +25,12 @@
 TEST_CASE_DECL(hex2str)
 TEST_CASE_DECL(str2hex)
 
+TEST_SUITE(hex_fmt_test_suite)
+{
+    hex2str();
+    str2hex();
+}
+
 int
 hex_fmt_test_all(void)
 {
@@ -32,21 +38,12 @@ hex_fmt_test_all(void)
     return tu_case_failed;
 }
 
-TEST_SUITE(hex_fmt_test_suite)
-{
-    hex2str();
-    str2hex();
-}
-
 #if MYNEWT_VAL(SELFTEST)
 
 int
 main(int argc, char **argv)
 {
-    sysinit();
-
-    hex_fmt_test_all();
-    return tu_any_failed;
+    return hex_fmt_test_all();
 }
 
 #endif

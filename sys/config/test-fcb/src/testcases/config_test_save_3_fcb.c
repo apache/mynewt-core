@@ -18,7 +18,7 @@
  */
 #include "conf_test_fcb.h"
 
-TEST_CASE(config_test_save_3_fcb)
+TEST_CASE_SELF(config_test_save_3_fcb)
 {
     int rc;
     struct conf_fcb cf;

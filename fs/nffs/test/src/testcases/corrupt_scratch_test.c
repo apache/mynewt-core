@@ -19,7 +19,7 @@
 
 #include "nffs_test_utils.h"
 
-TEST_CASE(nffs_test_corrupt_scratch)
+TEST_CASE_SELF(nffs_test_corrupt_scratch)
 {
     int non_scratch_id;
     int scratch_id;

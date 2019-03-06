@@ -19,7 +19,7 @@
 
 #include "nffs_test_utils.h"
 
-TEST_CASE(nffs_test_large_unlink)
+TEST_CASE_SELF(nffs_test_large_unlink)
 {
     /* It should not be necessary to initialize this array, but the libgcc
      * version of strcmp triggers a "Conditional jump or move depends on

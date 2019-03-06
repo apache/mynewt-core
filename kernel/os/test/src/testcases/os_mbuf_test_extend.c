@@ -18,7 +18,7 @@
  */
 #include "os_test_priv.h"
 
-TEST_CASE(os_mbuf_test_extend)
+TEST_CASE_SELF(os_mbuf_test_extend)
 {
     struct os_mbuf *om;
     void *v;

@@ -18,7 +18,7 @@
  */
 #include "mbedtls_test.h"
 
-TEST_CASE(sha256_test)
+TEST_CASE_SELF(sha256_test)
 {
     int rc;
 
