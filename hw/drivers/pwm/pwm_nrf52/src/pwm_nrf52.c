@@ -309,7 +309,9 @@ nrf52_pwm_open(struct os_dev *odev, uint32_t wait, void *arg)
     }
 
     if (odev->od_flags & OS_DEV_F_STATUS_OPEN) {
-        os_mutex_release(&dev->pwm_lock);
+        if (os_started()) {
+            os_mutex_release(&dev->pwm_lock);
+        }
         stat = OS_EBUSY;
         return (stat);
     }
