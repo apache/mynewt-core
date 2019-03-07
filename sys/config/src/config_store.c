@@ -91,9 +91,6 @@ conf_load_one(char *name)
     conf_loading = true;
     SLIST_FOREACH(cs, &conf_load_srcs, cs_next) {
         cs->cs_itf->csi_load(cs, conf_load_cb, name);
-        if (SLIST_NEXT(cs, cs_next)) {
-            conf_commit(name);
-        }
     }
     conf_loading = false;
     conf_unlock();
