@@ -66,10 +66,9 @@ static struct nrf52_pwm_dev_global instances[] =
     [0].cycle_handler = NULL,
     [0].cycle_data = NULL,
     [0].seq_end_handler = NULL,
-    [0].seq_end_data = NULL
+    [0].seq_end_data = NULL,
 #endif
 #if MYNEWT_VAL(PWM_1)
-    ,
     [1].in_use = false,
     [1].playing = false,
     [1].drv_instance = NRFX_PWM_INSTANCE(1),
@@ -81,10 +80,9 @@ static struct nrf52_pwm_dev_global instances[] =
     [1].cycle_handler = NULL,
     [1].cycle_data = NULL,
     [1].seq_end_handler = NULL,
-    [1].seq_end_data = NULL
+    [1].seq_end_data = NULL,
 #endif
 #if MYNEWT_VAL(PWM_2)
-    ,
     [2].in_use = false,
     [2].playing = false,
     [2].drv_instance = NRFX_PWM_INSTANCE(2),
@@ -96,10 +94,9 @@ static struct nrf52_pwm_dev_global instances[] =
     [2].cycle_handler = NULL,
     [2].cycle_data = NULL,
     [2].seq_end_handler = NULL,
-    [2].seq_end_data = NULL
+    [2].seq_end_data = NULL,
 #endif
 #if MYNEWT_VAL(PWM_3)
-    ,
     [3].in_use = false,
     [3].playing = false,
     [3].drv_instance = NRFX_PWM_INSTANCE(3),
@@ -111,7 +108,7 @@ static struct nrf52_pwm_dev_global instances[] =
     [3].cycle_handler = NULL,
     [3].cycle_data = NULL,
     [3].seq_end_handler = NULL,
-    [3].seq_end_data = NULL
+    [3].seq_end_data = NULL,
 #endif
 };
 
