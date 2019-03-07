@@ -69,6 +69,8 @@ struct ts_suite {
 SLIST_HEAD(ts_testsuite_list, ts_suite);
 extern struct ts_testsuite_list g_ts_suites;
 
+#include "testutil/deprecated.h"
+
 struct tu_config {
     int ts_system_assert;
 
@@ -94,6 +96,9 @@ struct tu_config {
      */
     tu_case_report_fn_t *fail_cb;
     void *fail_arg;
+
+    /* XXX: Deprecated; remove after next releas. */
+    struct tu_deprecated_cfg deprecated;
 };
 
 void tu_restart(void);
