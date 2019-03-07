@@ -82,9 +82,10 @@ hal_system_clock_start(void)
     /* Reset clock dividers to 0 */
     CRG_TOP->CLK_AMBA_REG &= ~(CRG_TOP_CLK_AMBA_REG_HCLK_DIV_Msk | CRG_TOP_CLK_AMBA_REG_PCLK_DIV_Msk);
 
-    /* Select RC32K as LP clock */
-    CRG_TOP->CLK_RC32K_REG |= CRG_TOP_CLK_RC32K_REG_RC32K_ENABLE_Msk;
-    CRG_TOP->CLK_CTRL_REG &= ~CRG_TOP_CLK_CTRL_REG_LP_CLK_SEL_Msk;
+    /* Select XTAL32K as LP clock */
+    CRG_TOP->CLK_XTAL32K_REG |= CRG_TOP_CLK_XTAL32K_REG_XTAL32K_ENABLE_Msk;
+    CRG_TOP->CLK_CTRL_REG = ((CRG_TOP->CLK_CTRL_REG & ~CRG_TOP_CLK_CTRL_REG_LP_CLK_SEL_Msk) |
+                                                (2U << CRG_TOP_CLK_CTRL_REG_LP_CLK_SEL_Pos));
 
     /*
      * XXX for now let's just assume that XTAL32M is running since 1st stage
