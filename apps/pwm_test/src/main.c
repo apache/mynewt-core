@@ -22,6 +22,7 @@
 #include <bsp/bsp.h>
 #include <easing/easing.h>
 #include <console/console.h>
+#include "pwm_shell.h"
 
 #if (defined NUCLEO_F767ZI)
 #   define  PWM_TEST_CH_CFG_PIN  MCU_AFIO_GPIO(LED_BLINK_PIN, 2)
@@ -43,12 +44,6 @@
 #   define  PWM_TEST_CH_CFG_INV  true 
 #   define  PWM_TEST_CH_NUM      0
 #   define  PWM_TEST_IRQ_PRIO    3
-#endif
-
-#if MYNEWT_VAL(SOFT_PWM)
-#   define PWM_TEST_DEV   "spwm0"
-#else
-#   define PWM_TEST_DEV   "pwm0"
 #endif
 
 struct pwm_dev *pwm;
@@ -124,7 +119,7 @@ pwm_end_seq_handler(void* unused)
 }
 
 int
-pwm_init(void)
+pwm_init(struct pwm_dev *pwm_dev, int pin)
 {
     struct pwm_chan_cfg chan_conf = {
         .pin = PWM_TEST_CH_CFG_PIN,
@@ -142,12 +137,26 @@ pwm_init(void)
     };
     int rc;
 
-    pwm = (struct pwm_dev *) os_dev_open(PWM_TEST_DEV, 0, NULL);
+    if (pwm) {
+        pwm = pwm_dev;
+    } else {
+        pwm = (struct pwm_dev *)os_dev_open(PWM_TEST_DEV, 0, NULL);
+        if (!pwm) {
+            console_printf("Device %s not available\n", PWM_TEST_DEV);
+            return 0;
+        }
+    }
+
+    if (pin >= 0) {
+        chan_conf.pin = pin;
+    }
 
     pwm_configure_device(pwm, &dev_conf);
 
     /* set the PWM frequency */
-    pwm_set_frequency(pwm, pwm_freq);
+    rc = pwm_set_frequency(pwm, pwm_freq);
+    assert(rc > 0);
+
     top_val = (uint16_t) pwm_get_top_value(pwm);
 
     /* setup led */
@@ -167,7 +176,11 @@ main(int argc, char **argv)
 {
     sysinit();
 
-    pwm_init();
+#if MYNEWT_VAL(SHELL_TASK)
+    pwm_shell_init();
+#else
+    pwm_init(NULL, -1);
+#endif
 
     while (1) {
         os_eventq_run(os_eventq_dflt_get());
