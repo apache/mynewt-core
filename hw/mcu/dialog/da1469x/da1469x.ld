@@ -103,6 +103,16 @@ SECTIONS
     } > FLASH
     __exidx_end = .;
 
+    __etext = .;
+
+    .vector_relocation :
+    {
+        . = ALIGN(4);
+        __vector_tbl_reloc__ = .;
+        . = . + (__isr_vector_end - __isr_vector_start);
+        . = ALIGN(4);
+    } > RAM
+
     /* This section will be zeroed by RTT package init */
     .rtt (NOLOAD):
     {

@@ -12,7 +12,7 @@ MEMORY
      */
 
     FLASH (rx)  : ORIGIN = (0x00000000), LENGTH = (23 * 1024)
-    RAM (rw)    : ORIGIN = (0x20000200), LENGTH = (512 * 1024 - 512)
+    RAM (rw)    : ORIGIN = (0x20000000), LENGTH = (512 * 1024)
 }
 
 /* The bootloader does not contain an image header */
