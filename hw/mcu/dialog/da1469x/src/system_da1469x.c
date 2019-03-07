@@ -18,6 +18,7 @@
  */
 
 #include <assert.h>
+#include "mcu/da1469x_pdc.h"
 #include "DA1469xAB.h"
 
 #define PMU_ALL_SLEEP_MASK      (CRG_TOP_PMU_CTRL_REG_TIM_SLEEP_Msk | \
@@ -44,6 +45,14 @@ void SystemInit(void)
     __DSB();
     __ISB();
 #endif
+
+    /*
+     * Reset all PDC entries. Make sure PD_SYS cannot be powered down before
+     * resetting as otherwise it will be powered down as soon as we clear last
+     * valid entry to wake up M33 master.
+     */
+    CRG_TOP->PMU_CTRL_REG &= ~CRG_TOP_PMU_CTRL_REG_SYS_SLEEP_Msk;
+    da1469x_pdc_reset();
 
     /* Enable Radio LDO */
     CRG_TOP->POWER_CTRL_REG |= CRG_TOP_POWER_CTRL_REG_LDO_RADIO_ENABLE_Msk;
