@@ -26,14 +26,9 @@ TEST_SUITE(debounce_test_suite_misc)
     debounce_test_case_basic();
 }
 
-#if MYNEWT_VAL(SELFTEST)
-
 int
 main(int argc, char **argv)
 {
     debounce_test_suite_misc();
-
     return tu_any_failed;
 }
-
-#endif

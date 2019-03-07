@@ -29,13 +29,9 @@ TEST_SUITE(modlog_test_suite_all)
     modlog_test_case_prio_mbuf();
 }
 
-#if MYNEWT_VAL(SELFTEST)
-
 int
 main(int argc, char **argv)
 {
     modlog_test_suite_all();
     return tu_any_failed;
 }
-
-#endif

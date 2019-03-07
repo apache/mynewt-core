@@ -32,18 +32,8 @@ TEST_SUITE(hex_fmt_test_suite)
 }
 
 int
-hex_fmt_test_all(void)
+main(int argc, char **argv)
 {
     hex_fmt_test_suite();
     return tu_case_failed;
 }
-
-#if MYNEWT_VAL(SELFTEST)
-
-int
-main(int argc, char **argv)
-{
-    return hex_fmt_test_all();
-}
-
-#endif

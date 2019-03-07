@@ -23,12 +23,10 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps:
-    - "@apache-mynewt-core/net/oic"
-    - "@apache-mynewt-core/encoding/tinycbor"
     - "@apache-mynewt-core/encoding/cborattr"
-    - "@apache-mynewt-core/test/testutil"
-
-pkg.deps.SELFTEST:
+    - "@apache-mynewt-core/encoding/tinycbor"
+    - "@apache-mynewt-core/net/oic"
     - "@apache-mynewt-core/sys/console/stub"
     - "@apache-mynewt-core/sys/log/full"
     - "@apache-mynewt-core/sys/stats/full"
+    - "@apache-mynewt-core/test/testutil"

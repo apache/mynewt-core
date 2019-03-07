@@ -61,13 +61,9 @@ TEST_SUITE(enc_flash_test_all)
     enc_flash_test_fcb();
 }
 
-#if MYNEWT_VAL(SELFTEST)
-
 int
 main(int argc, char **argv)
 {
     enc_flash_test_all();
     return tu_any_failed;
 }
-
-#endif

@@ -32,7 +32,6 @@
 
 struct fcb test_fcb;
 
-#if MYNEWT_VAL(SELFTEST)
 struct flash_sector_range test_fcb_ranges[] = {
     [0] = {
         .fsr_flash_area = {
@@ -61,7 +60,6 @@ fcb_test_wipe(void)
         TEST_ASSERT(rc == 0);
     }
 }
-#endif
 
 int
 fcb_test_empty_walk_cb(struct fcb_entry *loc, void *arg)
@@ -158,11 +156,9 @@ TEST_SUITE(fcb_test_all)
     fcb_test_area_info();
 }
 
-#if MYNEWT_VAL(SELFTEST)
 int
 main(int argc, char **argv)
 {
     fcb_test_all();
     return tu_any_failed;
 }
-#endif

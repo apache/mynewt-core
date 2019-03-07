@@ -35,7 +35,6 @@
  * In the sim environment, we can initialize and restart mynewt at will
  * where that is not the case when the test cases are run in a target env.
  */
-#if MYNEWT_VAL(SELFTEST)
 void
 os_test_restart(void)
 {
@@ -81,14 +80,3 @@ main(int argc, char **argv)
     os_test_all();
     return tu_any_failed;
 }
-
-#else
-/*
- * Leave this as an implemented function for non-sim test environments
- */
-void
-os_test_restart(void)
-{
-    return;
-}
-#endif /* MYNEWT_VAL(SELFTEST) */

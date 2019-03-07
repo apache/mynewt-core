@@ -24,12 +24,9 @@ TEST_SUITE(rwlock_test_suite_basic)
     rwlock_test_case_basic();
 }
 
-#if MYNEWT_VAL(SELFTEST)
 int
 main(int argc, char **argv)
 {
     rwlock_test_suite_basic();
-
     return tu_any_failed;
 }
-#endif
