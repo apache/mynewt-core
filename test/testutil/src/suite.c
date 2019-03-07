@@ -77,12 +77,28 @@ tu_suite_pre_test(void)
     if (tu_config.pre_test_cb != NULL) {
         tu_config.pre_test_cb(tu_config.pre_test_arg);
     }
+
+    /* XXX: Deprecated; remove after next release. */
+    if (tu_config.deprecated.tc_case_pre_test_cb != NULL) {
+        tu_config.deprecated.tc_case_pre_test_cb(
+            tu_config.deprecated.tc_case_pre_arg);
+    }
 }
 
 void
 tu_suite_complete(void)
 {
     tu_suite_set_pre_test_cb(NULL, NULL);
+
+    /* XXX: Deprecated; remove after next release. */
+    if (tu_config.deprecated.ts_suite_complete_cb != NULL) {
+        tu_config.deprecated.ts_suite_complete_cb(
+            tu_config.deprecated.ts_suite_complete_arg);
+    }
+    tu_config.deprecated.ts_suite_init_cb = NULL;
+    tu_config.deprecated.ts_suite_complete_cb = NULL;
+    tu_config.deprecated.tc_case_pre_test_cb = NULL;
+    tu_config.deprecated.tc_case_post_test_cb = NULL;
 }
 
 void
@@ -90,4 +106,10 @@ tu_suite_init(const char *name)
 {
     tu_suite_failed = 0;
     tu_suite_set_name(name);
+
+    /* XXX: Deprecated; remove after next release. */
+    if (tu_config.deprecated.ts_suite_init_cb != NULL) {
+        tu_config.deprecated.ts_suite_init_cb(
+            tu_config.deprecated.ts_suite_init_arg);
+    }
 }
