@@ -297,7 +297,7 @@ nrf52_pwm_open(struct os_dev *odev, uint32_t wait, void *arg)
     inst_id = dev->pwm_instance_id;
 
     if (instances[inst_id].in_use) {
-        return (EINVAL);
+        return OS_EBUSY;
     }
     instances[inst_id].in_use = true;
 
@@ -341,7 +341,7 @@ nrf52_pwm_close(struct os_dev *odev)
     inst_id = dev->pwm_instance_id;
 
     if (!instances[inst_id].in_use) {
-        return (EINVAL);
+        return OS_EINVAL;
     }
 
     if(instances[inst_id].playing) {
