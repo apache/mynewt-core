@@ -77,18 +77,8 @@ TEST_SUITE(boot_test_main)
 }
 
 int
-boot_test_all(void)
+main(int argc, char **argv)
 {
     boot_test_main();
     return tu_any_failed;
 }
-
-#if MYNEWT_VAL(SELFTEST)
-
-int
-main(int argc, char **argv)
-{
-    return boot_test_all();
-}
-
-#endif

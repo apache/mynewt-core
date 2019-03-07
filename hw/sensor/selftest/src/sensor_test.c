@@ -25,8 +25,6 @@ TEST_SUITE(sensor_test_suite_poll)
     sensor_test_case_poll_err();
 }
 
-#if MYNEWT_VAL(SELFTEST)
-
 int
 main(int argc, char **argv)
 {
@@ -34,5 +32,3 @@ main(int argc, char **argv)
 
     return tu_any_failed;
 }
-
-#endif

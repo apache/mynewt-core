@@ -30,11 +30,8 @@
 
 #include "flash_map/flash_map.h"
 
-#if MYNEWT_VAL(SELFTEST)
-
 struct fcb test_fcb;
 
-#if MYNEWT_VAL(SELFTEST)
 struct flash_area test_fcb_area[] = {
     [0] = {
         .fa_device_id = 0,
@@ -71,7 +68,6 @@ fcb_test_wipe(void)
         TEST_ASSERT(rc == 0);
     }
 }
-#endif
 
 int
 fcb_test_empty_walk_cb(struct fcb_entry *loc, void *arg)
@@ -167,13 +163,9 @@ TEST_SUITE(fcb_test_all)
     fcb_test_area_info();
 }
 
-#if MYNEWT_VAL(SELFTEST)
 int
 main(int argc, char **argv)
 {
     fcb_test_all();
     return tu_any_failed;
 }
-#endif
-
-#endif /* MYNEWT_VAL(SELFTEST) */

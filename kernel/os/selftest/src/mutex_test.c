@@ -25,11 +25,9 @@
 #include "testutil/testutil.h"
 #include "os_test_priv.h"
 
-#if MYNEWT_VAL(SELFTEST)
 #ifdef ARCH_sim
 #define MUTEX_TEST_STACK_SIZE     OS_STACK_ALIGN(1024)
 #endif
-#endif /* MYNEWT_VAL(SELFTEST) */
 
 struct os_mutex g_mutex1;
 struct os_mutex g_mutex2;

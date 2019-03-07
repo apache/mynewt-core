@@ -29,12 +29,10 @@
 
 struct flash_area *fa_sectors;
 
-#if MYNEWT_VAL(SELFTEST)
 /*
  * Max number sectors per area (for native BSP)
  */
 #define SELFTEST_FA_SECTOR_COUNT    64
-#endif
 
 TEST_CASE_DECL(flash_map_test_case_1)
 TEST_CASE_DECL(flash_map_test_case_2)
@@ -47,7 +45,6 @@ TEST_SUITE(flash_map_test_suite)
     flash_map_test_case_3();
 }
 
-#if MYNEWT_VAL(SELFTEST)
 int
 main(int argc, char **argv)
 {
@@ -59,4 +56,3 @@ main(int argc, char **argv)
 
     return tu_any_failed;
 }
-#endif

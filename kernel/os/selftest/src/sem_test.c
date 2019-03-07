@@ -61,9 +61,7 @@ sem_test_sleep_task_handler(void *arg)
     TEST_ASSERT(t->t_func == sem_test_sleep_task_handler);
 
     os_time_delay(2 * OS_TICKS_PER_SEC);
-#if MYNEWT_VAL(SELFTEST)
     os_test_restart();
-#endif
 }
 
 void
@@ -159,9 +157,7 @@ sem_test_basic_handler(void *arg)
                 "Task: task=%p prio=%u\n", sem_test_sem_to_s(sem), t,
                 t->t_prio);
 
-#if MYNEWT_VAL(SELFTEST)
     os_test_restart();
-#endif
 }
 
 void
@@ -189,9 +185,7 @@ sem_test_1_task1_handler(void *arg)
         os_time_delay(OS_TICKS_PER_SEC / 10);
     }
 
-#if MYNEWT_VAL(SELFTEST)
     os_test_restart();
-#endif
 }
 
 void
