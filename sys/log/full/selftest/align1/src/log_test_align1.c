@@ -20,8 +20,6 @@
 #include "os/mynewt.h"
 #include "log_test_util/log_test_util.h"
 
-#if MYNEWT_VAL(SELFTEST)
-
 int
 main(int argc, char **argv)
 {
@@ -33,6 +31,3 @@ main(int argc, char **argv)
 
     return tu_any_failed;
 }
-
-#endif
-

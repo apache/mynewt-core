@@ -394,8 +394,6 @@ TEST_SUITE(config_test_c3)
     config_test_custom_compress();
 }
 
-#if MYNEWT_VAL(SELFTEST)
-
 int
 main(int argc, char **argv)
 {
@@ -406,5 +404,3 @@ main(int argc, char **argv)
 
     return tu_any_failed;
 }
-
-#endif

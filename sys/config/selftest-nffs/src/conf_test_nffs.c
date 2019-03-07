@@ -220,13 +220,9 @@ TEST_SUITE(config_test_all)
     config_test_get_stored_file();
 }
 
-#if MYNEWT_VAL(SELFTEST)
-
 int
 main(int argc, char **argv)
 {
     config_test_all();
     return tu_any_failed;
 }
-
-#endif

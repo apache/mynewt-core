@@ -47,11 +47,9 @@ TEST_SUITE(boot_serial_suite)
     boot_serial_upload_bigger_image();
 }
 
-#if MYNEWT_VAL(SELFTEST)
 int
 main(void)
 {
     boot_serial_suite();
     return tu_any_failed;
 }
-#endif

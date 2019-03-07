@@ -35,11 +35,9 @@ TEST_SUITE(test_cborattr_suite)
     test_cborattr_decode_substring_key();
 }
 
-#if MYNEWT_VAL(SELFTEST)
 int
 main(int argc, char **argv)
 {
     test_cborattr_suite();
     return tu_any_failed;
 }
-#endif

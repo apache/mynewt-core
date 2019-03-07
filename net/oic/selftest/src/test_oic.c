@@ -26,11 +26,9 @@ TEST_SUITE(oic_test_all)
     oic_tests();
 }
 
-#if MYNEWT_VAL(SELFTEST)
 int
 main(int argc, char **argv)
 {
     oic_test_all();
     return tu_any_failed;
 }
-#endif

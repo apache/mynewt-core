@@ -23,11 +23,9 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps: 
-    - "@apache-mynewt-core/test/testutil"
-    - "@apache-mynewt-core/sys/config"
-
-pkg.deps.SELFTEST:
     - "@apache-mynewt-core/fs/nffs"
+    - "@apache-mynewt-core/sys/config"
     - "@apache-mynewt-core/sys/console/stub"
     - "@apache-mynewt-core/sys/log/full"
     - "@apache-mynewt-core/sys/stats/stub"
+    - "@apache-mynewt-core/test/testutil"

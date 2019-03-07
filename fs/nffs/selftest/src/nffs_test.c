@@ -49,7 +49,6 @@
 #include "nffs_priv.h"
 #include "nffs_test.h"
 
-#if MYNEWT_VAL(SELFTEST)
 struct nffs_area_desc nffs_selftest_area_descs[] = {
         { 0x00000000, 16 * 1024 },
         { 0x00004000, 16 * 1024 },
@@ -182,5 +181,3 @@ main(void)
 
     return tu_any_failed;
 }
-
-#endif /* MYNEWT_VAL(SELFTEST) */

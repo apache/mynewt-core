@@ -111,12 +111,9 @@ TEST_SUITE(mbedtls_test_all)
     timing_test();
 }
 
-#if MYNEWT_VAL(SELFTEST)
 int
 main(int argc, char **argv)
 {
     mbedtls_test_all();
     return tu_any_failed;
 }
-
-#endif

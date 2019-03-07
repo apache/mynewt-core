@@ -64,11 +64,9 @@ TEST_SUITE(mn_socket_test_all)
     socket_tests();
 }
 
-#if MYNEWT_VAL(SELFTEST)
 int
 main(int argc, char **argv)
 {
     mn_socket_test_all();
     return tu_any_failed;
 }
-#endif

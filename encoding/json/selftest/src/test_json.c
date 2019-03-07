@@ -35,11 +35,9 @@ TEST_SUITE(test_json_suite)
     free(bigbuf);
 }
 
-#if MYNEWT_VAL(SELFTEST)
 int
 main(int argc, char **argv)
 {
     test_json_suite();
     return tu_any_failed;
 }
-#endif
