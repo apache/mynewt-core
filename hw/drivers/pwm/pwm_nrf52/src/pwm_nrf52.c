@@ -207,19 +207,24 @@ static void handler_3(nrfx_pwm_evt_type_t event_type)
 
 static nrfx_pwm_handler_t internal_handlers[] = {
 #if MYNEWT_VAL(PWM_0)
-handler_0
+handler_0,
+#else
+NULL,
 #endif
 #if MYNEWT_VAL(PWM_1)
-,
-handler_1
+handler_1,
+#else
+NULL,
 #endif
 #if MYNEWT_VAL(PWM_2)
-,
-handler_2
+handler_2,
+#else
+NULL,
 #endif
 #if MYNEWT_VAL(PWM_3)
-,
-handler_3
+handler_3,
+#else
+NULL,
 #endif
 };
 
