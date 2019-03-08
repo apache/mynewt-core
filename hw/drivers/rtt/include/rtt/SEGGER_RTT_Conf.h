@@ -60,4 +60,7 @@
             OS_EXIT_CRITICAL(sr);       \
         }
 
+/* Do not use assembly implementation (not included) */
+#define RTT_USE_ASM                     0
+
 #endif

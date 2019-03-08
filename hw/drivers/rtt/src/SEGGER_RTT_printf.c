@@ -54,7 +54,7 @@
 ---------------------------END-OF-HEADER------------------------------
 File    : SEGGER_RTT_printf.c
 Purpose : Replacement for printf to write formatted data via RTT
-Revision: $Rev: 9599 $
+Revision: $Rev: 12360 $
 ----------------------------------------------------------------------
 */
 #include "rtt/SEGGER_RTT.h"
@@ -103,7 +103,6 @@ typedef struct {
 *
 **********************************************************************
 */
-int SEGGER_RTT_vprintf(unsigned BufferIndex, const char * sFormat, va_list * pParamList);
 
 /*********************************************************************
 *
