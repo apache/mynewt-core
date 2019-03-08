@@ -20,6 +20,7 @@
 #include <string.h>
 
 #include "os/mynewt.h"
+#include <bsp/bsp.h>
 #include <hal/hal_spi.h>
 #include <hal/hal_gpio.h>
 #include <hal/hal_flash.h>
