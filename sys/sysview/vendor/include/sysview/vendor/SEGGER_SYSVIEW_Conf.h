@@ -84,7 +84,8 @@ Revision: $Rev: 13453 $
 #if (defined __SES_ARM) || (defined __CROSSWORKS_ARM) || (defined __GNUC__) || (defined __clang__)
   #if (defined __ARM_ARCH_6M__) || (defined __ARM_ARCH_8M_BASE__)
     #define SEGGER_SYSVIEW_CORE SEGGER_SYSVIEW_CORE_CM0
-  #elif (defined(__ARM_ARCH_7M__) || defined(__ARM_ARCH_7EM__))
+/* XXX Added __ARM_ARCH_8M_MAIN__ to support Cortex-M33 */
+  #elif (defined(__ARM_ARCH_7M__) || defined(__ARM_ARCH_7EM__) || defined(__ARM_ARCH_8M_MAIN__))
     #define SEGGER_SYSVIEW_CORE SEGGER_SYSVIEW_CORE_CM3
   #endif
 #elif defined(__ICCARM__)
