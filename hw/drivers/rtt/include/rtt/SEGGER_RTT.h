@@ -1,6 +1,6 @@
 /*********************************************************************
 *                    SEGGER Microcontroller GmbH                     *
-*       Solutions for real time microcontroller applications         *
+*                        The Embedded Experts                        *
 **********************************************************************
 *                                                                    *
 *            (c) 1995 - 2018 SEGGER Microcontroller GmbH             *
@@ -31,7 +31,7 @@
 *   disclaimer in the documentation and/or other materials provided  *
 *   with the distribution.                                           *
 *                                                                    *
-* o Neither the name of SEGGER Microcontroller GmbH         *
+* o Neither the name of SEGGER Microcontroller GmbH                  *
 *   nor the names of its contributors may be used to endorse or      *
 *   promote products derived from this software without specific     *
 *   prior written permission.                                        *
@@ -56,7 +56,7 @@ File    : SEGGER_RTT.h
 Purpose : Implementation of SEGGER real-time transfer which allows
           real-time communication on targets which support debugger 
           memory accesses while the CPU is running.
-Revision: $Rev: 11303 $
+Revision: $Rev: 13430 $
 ----------------------------------------------------------------------
 */
 
@@ -64,6 +64,26 @@ Revision: $Rev: 11303 $
 #define SEGGER_RTT_H
 
 #include "SEGGER_RTT_Conf.h"
+
+
+
+/*********************************************************************
+*
+*       Defines, defaults
+*
+**********************************************************************
+*/
+#ifndef RTT_USE_ASM
+  #if ((defined __SES_ARM) || (defined __CROSSWORKS_ARM) || (defined __GNUC__) || (defined __clang__)) && (defined(__ARM_ARCH_7M__) || defined(__ARM_ARCH_7EM__) || defined(__ARM_ARCH_8M_MAIN__))
+    #define RTT_USE_ASM                           (1)
+  #else
+    #define RTT_USE_ASM                           (0)
+  #endif
+#endif
+
+#ifndef SEGGER_RTT_ASM  // defined when SEGGER_RTT.h is included from assembly file
+#include <stdlib.h>
+#include <stdarg.h>
 
 /*********************************************************************
 *
@@ -154,6 +174,7 @@ int          SEGGER_RTT_WaitKey                 (void);
 unsigned     SEGGER_RTT_Write                   (unsigned BufferIndex, const void* pBuffer, unsigned NumBytes);
 unsigned     SEGGER_RTT_WriteNoLock             (unsigned BufferIndex, const void* pBuffer, unsigned NumBytes);
 unsigned     SEGGER_RTT_WriteSkipNoLock         (unsigned BufferIndex, const void* pBuffer, unsigned NumBytes);
+unsigned     SEGGER_RTT_ASM_WriteSkipNoLock     (unsigned BufferIndex, const void* pBuffer, unsigned NumBytes);
 unsigned     SEGGER_RTT_WriteString             (unsigned BufferIndex, const char* s);
 void         SEGGER_RTT_WriteWithOverwriteNoLock(unsigned BufferIndex, const void* pBuffer, unsigned NumBytes);
 unsigned     SEGGER_RTT_PutChar                 (unsigned BufferIndex, char c);
@@ -163,6 +184,10 @@ unsigned     SEGGER_RTT_PutCharSkipNoLock       (unsigned BufferIndex, char c);
 // Function macro for performance optimization
 //
 #define      SEGGER_RTT_HASDATA(n)       (_SEGGER_RTT.aDown[n].WrOff - _SEGGER_RTT.aDown[n].RdOff)
+
+#if RTT_USE_ASM
+  #define SEGGER_RTT_WriteSkipNoLock  SEGGER_RTT_ASM_WriteSkipNoLock
+#endif
 
 /*********************************************************************
 *
@@ -180,9 +205,13 @@ int     SEGGER_RTT_TerminalOut        (char TerminalId, const char* s);
 **********************************************************************
 */
 int SEGGER_RTT_printf(unsigned BufferIndex, const char * sFormat, ...);
+int SEGGER_RTT_vprintf(unsigned BufferIndex, const char * sFormat, va_list * pParamList);
+
 #ifdef __cplusplus
   }
 #endif
+
+#endif // ifndef(SEGGER_RTT_ASM)
 
 /*********************************************************************
 *
@@ -194,10 +223,10 @@ int SEGGER_RTT_printf(unsigned BufferIndex, const char * sFormat, ...);
 //
 // Operating modes. Define behavior if buffer is full (not enough space for entire message)
 //
-#define SEGGER_RTT_MODE_NO_BLOCK_SKIP         (0U)     // Skip. Do not block, output nothing. (Default)
-#define SEGGER_RTT_MODE_NO_BLOCK_TRIM         (1U)     // Trim: Do not block, output as much as fits.
-#define SEGGER_RTT_MODE_BLOCK_IF_FIFO_FULL    (2U)     // Block: Wait until there is space in the buffer.
-#define SEGGER_RTT_MODE_MASK                  (3U)
+#define SEGGER_RTT_MODE_NO_BLOCK_SKIP         (0)     // Skip. Do not block, output nothing. (Default)
+#define SEGGER_RTT_MODE_NO_BLOCK_TRIM         (1)     // Trim: Do not block, output as much as fits.
+#define SEGGER_RTT_MODE_BLOCK_IF_FIFO_FULL    (2)     // Block: Wait until there is space in the buffer.
+#define SEGGER_RTT_MODE_MASK                  (3)
 
 //
 // Control sequences, based on ANSI.
