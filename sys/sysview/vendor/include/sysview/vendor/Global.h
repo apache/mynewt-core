@@ -1,9 +1,9 @@
 /*********************************************************************
-*                SEGGER Microcontroller GmbH & Co. KG                *
+*                    SEGGER Microcontroller GmbH                     *
 *                        The Embedded Experts                        *
 **********************************************************************
 *                                                                    *
-*       (c) 2015 - 2017  SEGGER Microcontroller GmbH & Co. KG        *
+*            (c) 1995 - 2019 SEGGER Microcontroller GmbH             *
 *                                                                    *
 *       www.segger.com     Support: support@segger.com               *
 *                                                                    *
@@ -31,7 +31,7 @@
 *   disclaimer in the documentation and/or other materials provided  *
 *   with the distribution.                                           *
 *                                                                    *
-* o Neither the name of SEGGER Microcontroller GmbH & Co. KG         *
+* o Neither the name of SEGGER Microcontroller GmbH         *
 *   nor the names of its contributors may be used to endorse or      *
 *   promote products derived from this software without specific     *
 *   prior written permission.                                        *
@@ -52,17 +52,10 @@
 *                                                                    *
 **********************************************************************
 *                                                                    *
-*       SystemView version: V2.40d                                    *
+*       SystemView version: V2.52g                                    *
 *                                                                    *
 **********************************************************************
-----------------------------------------------------------------------
-File    : Global.h
-Purpose : Global types
-          In case your application already has a Global.h, you should
-          merge the files. In order to use Segger code, the types
-          U8, U16, U32, I8, I16, I32 need to be defined in Global.h;
-          additional definitions do not hurt.
----------------------------END-OF-HEADER------------------------------
+-------------------------- END-OF-HEADER -----------------------------
 */
 
 #ifndef GLOBAL_H            // Guard against multiple inclusion
