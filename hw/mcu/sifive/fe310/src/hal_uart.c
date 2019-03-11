@@ -182,14 +182,14 @@ int
 hal_uart_init(int port, void *arg)
 {
     uint32_t mask;
-    struct fe310_uart_cfg *cfg = (struct fe310_uart_cfg *)arg;
+    (void)arg;
 
     if (port != 0) {
         return -1;
     }
 
     /* Configure RX/TX pins */
-    mask = (1 << cfg->suc_pin_tx) | (1 << cfg->suc_pin_rx);
+    mask = (1U << IOF_UART0_RX) | (1U << IOF_UART0_TX);
     GPIO_REG(GPIO_IOF_EN) |= mask;
     GPIO_REG(GPIO_IOF_SEL) &= ~mask;
 
