@@ -25,9 +25,13 @@ extern "C" {
 #endif
 
 #include <mcu/cortex_m0.h>
+
 #include "stm32f0xx_hal.h"
 #include "stm32f0xx_hal_def.h"
+
 #include "stm32f0xx_mynewt_hal.h"
+#include "stm32f0xx.h"
+#include "stm32f0xx_hal_dma.h"
 
 /* hal_watchdog */
 #include "stm32f0xx_hal_iwdg.h"
@@ -43,8 +47,6 @@ extern "C" {
     } while (0)
 
 /* hal_spi */
-#include "stm32f0xx.h"
-#include "stm32f0xx_hal_dma.h"
 #include "stm32f0xx_hal_spi.h"
 #include "stm32f0xx_hal_gpio.h"
 #include "stm32f0xx_hal_gpio_ex.h"
@@ -64,7 +66,6 @@ struct stm32_hal_spi_cfg {
 
 /* hal_uart */
 #include "stm32f0xx_hal_uart.h"
-#include "stm32f0xx_hal_usart.h"
 #include "mcu/stm32f0_bsp.h"
 
 /* hal_timer */

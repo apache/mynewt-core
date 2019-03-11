@@ -448,16 +448,14 @@ stm32_spi_resolve_prescaler(uint8_t spi_num, uint32_t baudrate, uint32_t *presca
      * SPI ports from 0.
      */
     switch (spi_num) {
+#if !MYNEWT_VAL(MCU_STM32F0)
     case 0:
     case 3:
     case 4:
     case 5:
-#if MYNEWT_VAL(MCU_STM32F0)
-        apbfreq = HAL_RCC_GetPCLK1Freq();
-#else
         apbfreq = HAL_RCC_GetPCLK2Freq();
-#endif
         break;
+#endif
     default:
         apbfreq = HAL_RCC_GetPCLK1Freq();
         break;
@@ -607,7 +605,7 @@ hal_spi_config(int spi_num, struct hal_spi_settings *settings)
     case 0:
         __HAL_RCC_SPI1_CLK_ENABLE();
 #if !MYNEWT_VAL(MCU_STM32F1)
-    #if !MYNEWT_VAL(MCU_STM32L0)
+    #if !MYNEWT_VAL(MCU_STM32L0) && !MYNEWT_VAL(MCU_STM32F0)
         gpio.Alternate = GPIO_AF5_SPI1;
     #else
         gpio.Alternate = GPIO_AF0_SPI1;
