@@ -21,8 +21,8 @@
 #define __MCU_STM32F0_MYNEWT_HAL_H
 
 #include "stm32f0xx.h"
-#include "stm32f0xx_hal_gpio.h"
 #include "stm32f0xx_hal_dma.h"
+#include "stm32f0xx_hal_gpio.h"
 #include "stm32f0xx_hal_i2c.h"
 
 #ifdef __cplusplus
