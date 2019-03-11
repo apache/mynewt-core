@@ -367,6 +367,16 @@ hal_spi_config_master(struct nrf52_hal_spi *spi,
         case 8000:
             frequency = SPIM_FREQUENCY_FREQUENCY_M8;
             break;
+#if defined(SPIM_FREQUENCY_FREQUENCY_M16)
+        case 16000:
+            frequency = SPIM_FREQUENCY_FREQUENCY_M16;
+            break;
+#endif
+#if defined(SPIM_FREQUENCY_FREQUENCY_M32)
+        case 32000:
+            frequency = SPIM_FREQUENCY_FREQUENCY_M32;
+            break;
+#endif
         default:
             frequency = 0;
             rc = EINVAL;
