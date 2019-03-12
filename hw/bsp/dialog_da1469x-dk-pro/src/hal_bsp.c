@@ -17,7 +17,9 @@
  * under the License.
  */
 
+#include <assert.h>
 #include <stdint.h>
+#include <string.h>
 #include "hal/hal_bsp.h"
 #include "hal/hal_flash.h"
 #include "hal/hal_system.h"
@@ -32,6 +34,12 @@ static const struct hal_bsp_mem_dump dump_cfg[] = {
         .hbmd_size = MCU_MEM_SYSRAM_END_ADDRESS - MCU_MEM_SYSRAM_START_ADDRESS,
     }
 };
+
+/* Note: This is just dummy implementation.
+ * There is no special register for hardware id.
+ * Most probably it should be generated and stored somewhere in OTP.
+ */
+static char hw_id[] = "DA1469X_HW_ID";
 
 const struct hal_flash *
 hal_bsp_flash_dev(uint8_t id)
@@ -54,6 +62,23 @@ int
 hal_bsp_power_state(int state)
 {
     return 0;
+}
+
+int
+hal_bsp_hw_id_len(void)
+{
+    return sizeof(hw_id);
+}
+
+int
+hal_bsp_hw_id(uint8_t *id, int max_len)
+{
+    int len = sizeof(hw_id);
+
+    assert(max_len > len);
+    memcpy(id, hw_id, len);
+
+    return len;
 }
 
 void
