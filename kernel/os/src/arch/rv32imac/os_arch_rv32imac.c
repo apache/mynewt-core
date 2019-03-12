@@ -226,14 +226,6 @@ os_arch_start(void)
 
     /* Get the highest priority ready to run to set the current task */
     t = os_sched_next_task();
-    /*
-     * First time setup fake os_task struct that only has one pointer for SP
-     * Having that will make context switch function work same for first
-     * and every other time.
-     * This fake SP will be used during initial context switch to store SP
-     * that will never be used.
-     */
-    os_sched_set_current_task(&fake_task);
 
     /* Clean software interrupt, and enable it */
     CLINT_REG(CLINT_MSIP) = 0;
@@ -249,6 +241,15 @@ os_arch_start(void)
 
     /* Perform context switch */
     os_arch_ctx_sw(t);
+
+    /*
+     * First time setup fake os_task struct that only has one pointer for SP
+     * Having that will make context switch function work same for first
+     * and every other time.
+     * This fake SP will be used during initial context switch to store SP
+     * that will never be used.
+     */
+    os_sched_set_current_task(&fake_task);
 
     /* Enable interrupts */
     set_csr(mstatus, MSTATUS_MIE);
