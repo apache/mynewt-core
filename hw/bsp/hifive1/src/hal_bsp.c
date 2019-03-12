@@ -28,6 +28,9 @@
 #include <mcu/fe310_hal.h>
 #include <mcu/fe310_periph.h>
 #include <bsp/bsp.h>
+#if MYNEWT_VAL(SPIFLASH)
+#include <spiflash/spiflash.h>
+#endif
 
 /*
  * What memory to include in coredump.
@@ -39,16 +42,33 @@ static const struct hal_bsp_mem_dump dump_cfg[] = {
     }
 };
 
+#if MYNEWT_VAL(SPIFLASH)
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+struct bus_spi_node_cfg flash_spi_cfg = {
+    .node_cfg.bus_name = MYNEWT_VAL(BSP_FLASH_SPI_BUS),
+    .pin_cs = MYNEWT_VAL(SPIFLASH_SPI_CS_PIN),
+    .mode = BUS_SPI_MODE_3,
+    .data_order = HAL_SPI_MSB_FIRST,
+    .freq = MYNEWT_VAL(SPIFLASH_BAUDRATE),
+};
+#endif
+#endif
+
+static const struct hal_flash *flash_devs[] = {
+    [0] = &fe310_flash_dev,
+#if MYNEWT_VAL(SPIFLASH)
+    [1] = &spiflash_dev.hal,
+#endif
+};
+
 const struct hal_flash *
 hal_bsp_flash_dev(uint8_t id)
 {
-    /*
-     * Internal flash mapped to id 0.
-     */
-    if (id != 0) {
+    if (id >= ARRAY_SIZE(flash_devs)) {
         return NULL;
     }
-    return &fe310_flash_dev;
+
+    return flash_devs[id];
 }
 
 const struct hal_bsp_mem_dump *
@@ -61,5 +81,18 @@ hal_bsp_core_dump(int *area_cnt)
 void
 hal_bsp_init(void)
 {
+    int rc;
+
+    (void)rc;
     fe310_periph_create();
+
+#if MYNEWT_VAL(SPIFLASH)
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    /* Create external flash dev */
+    rc = spiflash_create_spi_dev(&spiflash_dev.dev,
+        MYNEWT_VAL(BSP_FLASH_SPI_NAME), &flash_spi_cfg);
+
+    assert(rc == 0);
+#endif
+#endif
 }
