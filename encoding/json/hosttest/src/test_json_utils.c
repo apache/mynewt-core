@@ -32,33 +32,40 @@ char *bigbuf;
 int buf_index;
 
 int
-test_write(void *buf, char* data, int len) {
+test_write(void *buf, char* data, int len)
+{
     int i;
-    for(i = 0; i < len; i++) {
+
+    for (i = 0; i < len; i++) {
         bigbuf[buf_index++] = data[i];
     }
+
     return len;
 }
 
 char
-test_jbuf_read_next(struct json_buffer *jb) {
+test_jbuf_read_next(struct json_buffer *jb)
+{
     char c;
     struct test_jbuf  *ptjb = (struct test_jbuf*) jb;
 
-    if((ptjb->start_buf + ptjb->current_position) <= ptjb->end_buf) {
+    if ((ptjb->start_buf + ptjb->current_position) <= ptjb->end_buf) {
         c = *(ptjb->start_buf + ptjb->current_position);
         ptjb->current_position++;
         return c;
     }
+
     return '\0';
 }
 
 /* this goes backward in the buffer one character */
 char
-test_jbuf_read_prev(struct json_buffer *jb) {
+test_jbuf_read_prev(struct json_buffer *jb)
+{
     char c;
     struct test_jbuf  *ptjb = (struct test_jbuf*) jb;
-    if(ptjb->current_position) {
+
+    if (ptjb->current_position) {
        ptjb->current_position--;
        c = *(ptjb->start_buf + ptjb->current_position);
        return c;
@@ -66,11 +73,11 @@ test_jbuf_read_prev(struct json_buffer *jb) {
 
     /* can't rewind */
     return '\0';
-
 }
 
 int
-test_jbuf_readn(struct json_buffer *jb, char *buf, int size) {
+test_jbuf_readn(struct json_buffer *jb, char *buf, int size)
+{
     struct test_jbuf  *ptjb = (struct test_jbuf*) jb;
 
     int remlen;
@@ -86,7 +93,8 @@ test_jbuf_readn(struct json_buffer *jb, char *buf, int size) {
 }
 
 void
-test_buf_init(struct test_jbuf *ptjb, char *string) {
+test_buf_init(struct test_jbuf *ptjb, char *string)
+{
     /* initialize the decode */
     ptjb->json_buf.jb_read_next = test_jbuf_read_next;
     ptjb->json_buf.jb_read_prev = test_jbuf_read_prev;
