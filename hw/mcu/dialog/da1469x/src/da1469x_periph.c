@@ -65,6 +65,9 @@ static struct trng_dev os_bsp_trng;
 #if MYNEWT_VAL(GPADC)
 #include <gpadc_da1469x/gpadc_da1469x.h>
 #endif
+#if MYNEWT_VAL(SDADC)
+#include <sdadc_da1469x/sdadc_da1469x.h>
+#endif
 
 #if MYNEWT_VAL(UART_0)
 static struct uart_dev os_bsp_uart0;
@@ -129,6 +132,11 @@ static const struct da1469x_hal_i2c_cfg hal_i2c1_cfg = {
 #if MYNEWT_VAL(GPADC)
 static struct da1469x_gpadc_dev os_bsp_gpadc;
 static struct da1469x_gpadc_dev_cfg os_bsp_gpadc_cfg = {
+};
+#endif
+#if MYNEWT_VAL(SDADC)
+static struct da1469x_sdadc_dev os_bsp_sdadc;
+static struct da1469x_sdadc_dev_cfg os_bsp_sdadc_cfg = {
 };
 #endif
 
@@ -270,6 +278,12 @@ da1469x_periph_create_adc(void)
     rc = os_dev_create(&os_bsp_gpadc.dgd_adc.ad_dev, "gpadc",
                        OS_DEV_INIT_KERNEL, OS_DEV_INIT_PRIO_DEFAULT,
                        da1469x_gpadc_init, &os_bsp_gpadc_cfg);
+    assert(rc == 0);
+#endif
+#if MYNEWT_VAL(SDADC)
+    rc = os_dev_create(&os_bsp_sdadc.dsd_adc.ad_dev, "sdadc",
+                       OS_DEV_INIT_KERNEL, OS_DEV_INIT_PRIO_DEFAULT,
+                       da1469x_sdadc_init, &os_bsp_sdadc_cfg);
     assert(rc == 0);
 #endif
 }
