@@ -29,7 +29,10 @@
 #include "console/console.h"
 #include "console/ticks.h"
 #include "console_priv.h"
+
+#if MYNEWT_VAL(LOG_CONSOLE)
 #include "log/log.h"
+#endif
 
 /* Control characters */
 #define ESC                0x1b
