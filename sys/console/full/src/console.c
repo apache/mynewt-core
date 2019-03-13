@@ -762,20 +762,24 @@ console_handle_char(uint8_t byte)
             nlip_state |= NLIP_PKT_START1;
             if (g_silence_console) {
                 console_silence(false);
+#if MYNEWT_VAL(LOG_CONSOLE)
                 log = log_console_get();
                 if (log) {
                     log_set_level(log, 255);
                 }
+#endif
             }
             break;
         case CONSOLE_NLIP_DATA_START1:
             nlip_state |= NLIP_DATA_START1;
             if (g_silence_console) {
                 console_silence(false);
+#if MYNEWT_VAL(LOG_CONSOLE)
                 log = log_console_get();
                 if (log) {
                     log_set_level(log, 255);
                 }
+#endif
             }
             break;
         case DEL:
@@ -801,10 +805,12 @@ console_handle_char(uint8_t byte)
         case '\n':
             if (g_console_input_ignore) {
                 console_silence(true);
+#if MYNEWT_VAL(LOG_CONSOLE)
                 log = log_console_get();
                 if (log) {
                     log_set_level(log, 0);
                 }
+#endif
             }
             if (byte == '\n' && prev_endl == '\r') {
                 /* handle double end line chars */
