@@ -54,7 +54,7 @@ setup_cbmem1(void *arg)
      * entries, so there should be a total of 63 entries.
      * Ensure no data corruption.
      */
-    for (i = 0; i < 65; i++) {
+    for (i = 0; i < CBMEM1_ENTRY_COUNT + 1; i++) {
         cbmem1_entry[0] = i;
         rc = cbmem_append(&cbmem1, cbmem1_entry, sizeof(cbmem1_entry));
         TEST_ASSERT_FATAL(rc == 0, "Could not append entry %d, rc = %d", i, rc);
