@@ -245,6 +245,10 @@ syscfg.defs:
         description: Enable DA1469x general purpose ADC
         value: 0
 
+    SDADC:
+        description: Enable DA1469x sigma delta ADC
+        value: 0
+
 syscfg.restrictions:
     - "QSPI_FLASH_ADDRESS_LENGTH==24"
     - "!I2C_0 || (I2C_0_PIN_SCL && I2C_0_PIN_SDA)"
