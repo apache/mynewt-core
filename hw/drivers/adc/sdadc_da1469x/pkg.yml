@@ -17,33 +17,18 @@
 # under the License.
 #
 
-pkg.name: hw/mcu/dialog/da1469x
-pkg.description: MCU definition for Dialog DA1469x ARM Cortex-M33 chips
+pkg.name: hw/drivers/adc/sdadc_da1469x
+pkg.description: ADC driver for Dialog DA1469x sigma delta ADC
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
     - dialog
     - da1469x
+    - adc
+
+pkg.apis:
+    - ADC_HW_IMPL
 
 pkg.deps:
-    - "@apache-mynewt-core/hw/hal"
-    - "@apache-mynewt-core/hw/cmsis-core"
-    - hw/mcu/dialog
-
-pkg.deps.TRNG:
-    - "hw/drivers/trng/trng_da1469x"
-
-pkg.deps.'UART_0 || UART_1 || UART_2':
-    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
-
-pkg.deps.'(I2C_0 || I2C_1) && BUS_DRIVER_PRESENT':
-    - "@apache-mynewt-core/hw/bus/drivers/i2c_hal"
-
-pkg.deps.'(SPI_0_MASTER || SPI_1_MASTER) && BUS_DRIVER_PRESENT':
-    - "@apache-mynewt-core/hw/bus/drivers/spi_hal"
-
-pkg.deps.GPADC:
-    - hw/drivers/adc/gpadc_da1469x
-
-pkg.deps.SDADC:
-    - hw/drivers/adc/sdadc_da1469x
+    - "@apache-mynewt-core/hw/drivers/adc"
+    - hw/mcu/dialog/da1469x
