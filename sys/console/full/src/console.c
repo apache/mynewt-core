@@ -29,6 +29,7 @@
 #include "console/console.h"
 #include "console/ticks.h"
 #include "console_priv.h"
+#include "log/log.h"
 
 /* Control characters */
 #define ESC                0x1b
@@ -665,19 +666,17 @@ console_append_char(char *line, uint8_t byte)
     return 1;
 }
 
+
 int
 console_handle_char(uint8_t byte)
 {
 #if !MYNEWT_VAL(CONSOLE_INPUT)
     return 0;
 #endif
-    if (g_console_input_ignore) {
-        return 0;
-    }
-
     static struct os_event *ev;
     static struct console_input *input;
     static char prev_endl = '\0';
+    struct log *log;
 
     if (!lines_queue) {
         return 0;
@@ -729,12 +728,18 @@ console_handle_char(uint8_t byte)
 
     /* Handle ANSI escape mode */
     if (esc_state & ESC_ANSI) {
+        if (g_console_input_ignore) {
+            return 0;
+        }
         handle_ansi(byte, input->line);
         return 0;
     }
 
     /* Handle escape mode */
     if (esc_state & ESC_ESC) {
+        if (g_console_input_ignore) {
+            return 0;
+        }
         esc_state &= ~ESC_ESC;
         handle_ansi(byte, input->line);
         switch (byte) {
@@ -755,17 +760,37 @@ console_handle_char(uint8_t byte)
         switch (byte) {
         case CONSOLE_NLIP_PKT_START1:
             nlip_state |= NLIP_PKT_START1;
+            if (g_silence_console) {
+                console_silence(false);
+                log = log_console_get();
+                if (log) {
+                    log_set_level(log, 255);
+                }
+            }
             break;
         case CONSOLE_NLIP_DATA_START1:
             nlip_state |= NLIP_DATA_START1;
+            if (g_silence_console) {
+                console_silence(false);
+                log = log_console_get();
+                if (log) {
+                    log_set_level(log, 255);
+                }
+            }
             break;
         case DEL:
         case BS:
+            if (g_console_input_ignore) {
+                break;
+            }
             if (cur > 0) {
                 del_char(&input->line[--cur], end);
             }
             break;
         case ESC:
+            if (g_console_input_ignore) {
+                break;
+            }
             esc_state |= ESC_ESC;
             break;
         default:
@@ -774,11 +799,19 @@ console_handle_char(uint8_t byte)
         case '\r':
             /* Falls through. */
         case '\n':
+            if (g_console_input_ignore) {
+                console_silence(true);
+                log = log_console_get();
+                if (log) {
+                    log_set_level(log, 0);
+                }
+            }
             if (byte == '\n' && prev_endl == '\r') {
                 /* handle double end line chars */
                 prev_endl = byte;
                 break;
             }
+        
             prev_endl = byte;
             input->line[cur + end] = '\0';
             console_out('\r');
@@ -800,6 +833,9 @@ console_handle_char(uint8_t byte)
             ev = NULL;
             break;
         case '\t':
+            if (g_console_input_ignore) {
+                break;
+            }
             if (completion && !end) {
 #if MYNEWT_VAL(CONSOLE_UART_RX_BUF_SIZE) == 0
                 console_blocking_mode();
@@ -815,7 +851,9 @@ console_handle_char(uint8_t byte)
         return 0;
     }
 
-    insert_char(&input->line[cur], byte, end);
+    if (!g_console_input_ignore) {
+        insert_char(&input->line[cur], byte, end);
+    }
     return 0;
 }
 
