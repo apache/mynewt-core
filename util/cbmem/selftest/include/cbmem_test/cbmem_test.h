@@ -28,8 +28,9 @@
 #include "testutil/testutil.h"
 #include "cbmem/cbmem.h"
 
-#define CBMEM1_BUF_SIZE (64 * 1024)
-#define CBMEM1_ENTRY_SIZE 1024
+#define CBMEM1_ENTRY_COUNT  64
+#define CBMEM1_ENTRY_SIZE   1024
+#define CBMEM1_BUF_SIZE     (CBMEM1_ENTRY_COUNT * CBMEM1_ENTRY_SIZE)
 
 extern struct cbmem cbmem1;
 extern uint8_t cbmem1_buf[CBMEM1_BUF_SIZE];
