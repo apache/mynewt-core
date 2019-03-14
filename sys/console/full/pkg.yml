@@ -31,7 +31,7 @@ pkg.deps.CONSOLE_UART:
 pkg.deps.CONSOLE_RTT:
     - "@apache-mynewt-core/hw/drivers/rtt"
 pkg.deps.LOG_CONSOLE:
-    - "@apache-mynewt-core/sys/log/full"
+    - log
 pkg.apis: console
 
 pkg.init:

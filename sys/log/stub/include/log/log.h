@@ -99,6 +99,16 @@ log_init(void)
 {
 }
 
+void log_set_level(struct log *log, uint8_t level)
+{
+    return;
+}
+
+uint8_t log_get_level(const struct log *log)
+{
+    return 0;
+}
+
 #define log_printf(...)
 
 /*
