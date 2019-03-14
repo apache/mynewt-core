@@ -679,7 +679,9 @@ console_handle_char(uint8_t byte)
     static struct os_event *ev;
     static struct console_input *input;
     static char prev_endl = '\0';
+#if MYNEWT_VAL(LOG_CONSOLE)
     struct log *log;
+#endif
 
     if (!lines_queue) {
         return 0;
