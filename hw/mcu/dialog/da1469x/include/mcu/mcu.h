@@ -26,6 +26,18 @@ extern "C" {
 
 #define sec_text_ram_core   __attribute__((section(".text_ram"))) __attribute__((noinline))
 
+#define MCU_SYSVIEW_INTERRUPTS \
+    "I#1=Reset,I#2=MNI,I#3=HardFault,I#4=MemoryMgmt,I#5=BusFault,I#6=UsageFault," \
+    "I#7=SecureFault,I#11=SVCall,I#12=DebugMonitor,I#14=PendSV,I#15=SysTick," \
+    "I#16=SENSOR_NODE,I#17=DMA,I#18=CHARGER_STATE,I#19=CHARGER_ERROR," \
+    "I#20=CMAC2SYS,I#21=UART,I#22=UART2,I#23=UART3,I#24=I2C,I#25=I2C2,I#26=SPI," \
+    "I#27=SPI2,I#28=PCM,I#29=SRC_IN,I#30=SRC_OUT,I#31=USB,I#32=TIMER," \
+    "I#33=TIMER2,I#34=RTC,I#35=KEY_WKUP_GPIO,I#36=PDC,I#37=VBUS,I#38=MRM," \
+    "I#39=MOTOR_CONTROLLER,I#40=TRNG,I#41=DCDC,I#42=XTAL32M_RDY,I#43=ADC," \
+    "I#44=ADC2,I#45=CRYPTO,I#46=CAPTIMER1,I#47=RFDIAG,I#48=LCD_CONTROLLER," \
+    "I#49=PLL_LOCK,I#50=TIMER3,I#51=TIMER4,I#52=LRA,I#53=RTC_EVENT," \
+    "I#54=GPIO_P0,I#55=GPIO_P1"
+
 /**
 * \brief GPIO function
 *
