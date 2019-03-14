@@ -20,6 +20,7 @@
 #ifndef H_DEFS_SECTIONS_
 #define H_DEFS_SECTIONS_
 
+#include <mcu/mcu.h>
 #include <bsp/bsp.h>
 
 #ifdef __cplusplus
