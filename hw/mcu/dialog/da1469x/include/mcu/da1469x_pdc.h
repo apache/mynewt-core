@@ -82,6 +82,22 @@ int da1469x_pdc_add(uint8_t trigger, uint8_t master, uint8_t en);
 void da1469x_pdc_del(int idx);
 
 /**
+ * Find entry in PDC lookup table matching given values
+ *
+ * Set either \p trigger or \p master to negative value to disable matching on
+ * that value.
+ * \p en matches at least specified power domains, more domains can be included
+ * in matched entry.
+ *
+ * @param trigger  Trigger to match
+ * @param master   Master to wakeup to match
+ * @param en       Required power domains to enable
+ *
+ * @return entry index on success, SYS_ENOENT if not found
+ */
+int da1469x_pdc_find(int trigger, int master, uint8_t en);
+
+/**
  * Reset PDC lookup table
  *
  * This deletes all valid entried from LUT and acknowledges them in case some
