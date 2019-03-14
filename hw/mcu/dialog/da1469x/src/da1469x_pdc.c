@@ -54,6 +54,35 @@ da1469x_pdc_del(int idx)
     MCU_PDC_CTRL_REGS(idx) &= ~PDC_PDC_CTRL0_REG_PDC_MASTER_Msk;
 }
 
+int
+da1469x_pdc_find(int trigger, int master, uint8_t en)
+{
+    int idx;
+    uint32_t mask;
+    uint32_t value;
+
+    mask = en << PDC_PDC_CTRL0_REG_EN_XTAL_Pos;
+    value = en << PDC_PDC_CTRL0_REG_EN_XTAL_Pos;
+    if (trigger >= 0) {
+        mask |= PDC_PDC_CTRL0_REG_TRIG_SELECT_Msk | PDC_PDC_CTRL0_REG_TRIG_ID_Msk;
+        value |= ((trigger >> 5) << PDC_PDC_CTRL0_REG_TRIG_SELECT_Pos) |
+                 ((trigger & 0x1f) << PDC_PDC_CTRL0_REG_TRIG_ID_Pos);
+    }
+    if (master > 0) {
+        mask |= PDC_PDC_CTRL0_REG_PDC_MASTER_Msk;
+        value |= master << PDC_PDC_CTRL0_REG_PDC_MASTER_Pos;
+    }
+    assert(mask);
+
+    for (idx = 0; idx < MCU_PDC_CTRL_REGS_COUNT; idx++) {
+        if ((MCU_PDC_CTRL_REGS(idx) & mask) == value) {
+            return idx;
+        }
+    }
+
+    return SYS_ENOENT;
+}
+
 void
 da1469x_pdc_reset(void)
 {
