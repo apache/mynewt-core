@@ -127,6 +127,11 @@ da1469x_pdc_set(int idx)
     PDC->PDC_SET_PENDING_REG = idx;
 }
 
+/**
+ * Acknowledge all pending entries on M33 core
+ */
+void da1469x_pdc_ack_all_m33(void);
+
 #ifdef __cplusplus
 }
 #endif
