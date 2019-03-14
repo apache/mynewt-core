@@ -23,7 +23,8 @@ SECTIONS
 {
     .text :
     {
-	__text = .;
+        __text = .;
+        __intvect_start__ = .;
         __isr_vector_start = .;
         KEEP(*(.isr_vector))
         /* ISR vector shall have exactly 512 bytes */
@@ -162,5 +163,8 @@ SECTIONS
 
     /* Check if data + heap + stack exceeds RAM limit */
     ASSERT(__HeapBase <= __HeapLimit, "region RAM overflowed with stack")
+
+    /* Check that intvect is at the beginning of RAM */
+    ASSERT(__intvect_start__ == ORIGIN(RAM), "intvect is not at beginning of RAM")
 }
 

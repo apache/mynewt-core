@@ -29,7 +29,6 @@
 #else
     .equ    Stack_Size, 0xC00
 #endif
-    .equ    NVIC_VTOR, 0xE000ED08
     .equ    SYS_CTRL_REG, 0x50000024
     .equ    CACHE_FLASH_REG, 0x100C0040
 
@@ -137,10 +136,10 @@ __isr_vector:
     .globl Reset_Handler
     .type  Reset_Handler, %function
 Reset_Handler:
-/* Disable remapping of intvect to 0x0 */
+ /* Make sure interrupt vector is remapped at 0x0 */
     ldr     r1, =SYS_CTRL_REG
     ldrh    r2, [r1, #0]
-    bic     r2, r2, #8
+    orrs    r2, r2, #8
     strh    r2, [r1, #0]
 
 #if !MYNEWT_VAL(RAM_RESIDENT)
@@ -160,19 +159,11 @@ Reset_Handler:
     lsr     r2, r2, #2
     orr     r4, r4, r2
 
-/*
- * Copy ISR vector from flash to RAM
- *
- * ISR vector is placed at the start for SYSRAM which is remapped (512 bytes)
- * at 0x0 and thus overrides 512 bytes fo Flash which is also remapped at 0x0.
- * In bootloader this means that copying ISR vector from 0x0 to RAM will load
- * and store values at exactly the same physical location. To avoid this we
- * just need to add calculated flash offset to ISR vector area addresses so
- * they are read directly from Flash address space.
- */
+/* Copy ISR vector from flash to RAM */
     ldr     r1, =__isr_vector_start     /* src ptr */
     ldr     r2, =__isr_vector_end       /* src end */
-    ldr     r3, =0x20000000             /* dst ptr */
+    ldr     r3, =__intvect_start__      /* dst ptr */
+/* Make sure we copy from QSPIC address range, not from remapped range */
     cmp     r1, r4
     itt     lt
     addlt   r1, r1, r4
@@ -206,11 +197,6 @@ Reset_Handler:
     strlt   r0, [r2], #4
     blt     .loop_data_copy
 #endif
-
-/* Set VTOR */
-    ldr     r0, =NVIC_VTOR
-    ldr     r1, =0x20000000
-    str     r1, [r0]
 
 /* Clear BSS */
     movs    r0, 0
