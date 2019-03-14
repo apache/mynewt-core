@@ -484,6 +484,16 @@ typedef int (*sensor_unset_notification_t)(struct sensor *,
  */
 typedef int (*sensor_handle_interrupt_t)(struct sensor *sensor);
 
+/**
+ * Reset Sensor function Ptr
+ *
+ * @param Ptr to the sensor
+ *
+ * @return 0 on success, non-zero on failure
+ */
+typedef int (*sensor_reset_t)(struct sensor *);
+
+
 struct sensor_driver {
     sensor_read_func_t sd_read;
     sensor_get_config_func_t sd_get_config;
@@ -494,6 +504,7 @@ struct sensor_driver {
     sensor_set_notification_t sd_set_notification;
     sensor_unset_notification_t sd_unset_notification;
     sensor_handle_interrupt_t sd_handle_interrupt;
+    sensor_reset_t sd_reset;
 };
 
 struct sensor_timestamp {
@@ -1096,6 +1107,14 @@ sensor_mgr_put_interrupt_evt(struct sensor *sensor);
  */
 void
 sensor_mgr_put_read_evt(void *arg);
+
+/**
+ * Resets the sensor
+ *
+ * @param Ptr to sensor
+ */
+int
+sensor_reset(struct sensor *sensor);
 
 #if MYNEWT_VAL(SENSOR_CLI)
 /**

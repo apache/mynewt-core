@@ -126,11 +126,11 @@ int lps33hw_set_lpf(struct sensor_itf *itf,
 /**
  * Software reset.
  *
- * @param The interface object associated with the lps33hw.
+ * @param Ptr to the sensor
  *
  * @return 0 on success, non-zero error on failure.
  */
-int lps33hw_reset(struct sensor_itf *itf);
+int lps33hw_reset(struct sensor *sensor);
 
 /*
  * Get pressure.
