@@ -108,10 +108,10 @@ SECTIONS
     } > FLASH
     __exidx_end = .;
 
-    .vector_relocation :
+    .intvect :
     {
         . = ALIGN(4);
-        __vector_tbl_reloc__ = .;
+        __intvect_start__ = .;
         . = . + (__isr_vector_end - __isr_vector_start);
         . = ALIGN(4);
     } > RAM
@@ -224,5 +224,8 @@ SECTIONS
 
     /* Check if data + heap + stack exceeds RAM limit */
     ASSERT(__HeapBase <= __HeapLimit, "region RAM overflowed with stack")
+
+    /* Check that intvect is at the beginning of RAM */
+    ASSERT(__intvect_start__ == ORIGIN(RAM), "intvect is not at beginning of RAM")
 }
 
