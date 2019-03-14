@@ -44,6 +44,11 @@ extern "C" {
 #define sec_bss_nz_core
 #endif
 
+/* Code which should be placed and executed from RAM */
+#ifndef sec_text_ram_core
+#define sec_text_ram_core
+#endif
+
 /**
  * Sensitive data (eg keys), which should be excluded from corefiles.
  */
