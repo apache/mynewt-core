@@ -93,3 +93,15 @@ da1469x_pdc_reset(void)
         da1469x_pdc_ack(idx);
     }
 }
+
+void
+da1469x_pdc_ack_all_m33(void)
+{
+    int idx;
+
+    for (idx = 0; idx < MCU_PDC_CTRL_REGS_COUNT; idx++) {
+        if (PDC->PDC_PENDING_CM33_REG & (1 << idx)) {
+            da1469x_pdc_ack(idx);
+        }
+    }
+}
