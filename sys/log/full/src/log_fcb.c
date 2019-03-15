@@ -34,6 +34,84 @@ static struct flash_area sector;
 
 static int log_fcb_rtr_erase(struct log *log, void *arg);
 
+/**
+ * Finds the first log entry whose "offset" is >= the one specified.  A log
+ * offset consists of two parts:
+ *     o timestamp
+ *     o index
+ *
+ * The "timestamp" field is misnamed.  If it has a value of -1, then the offset
+ * always points to the latest entry.  If this value is not -1, then it is
+ * ignored; the "index" field is used instead.
+ *
+ * XXX: We should rename "timestamp" or make it an actual timestamp.
+ *
+ * The "index" field corresponds to a log entry index.
+ *
+ * If bookmarks are enabled, this function uses them in the search.
+ *
+ * @return                      0 if an entry was found
+ *                              SYS_ENOENT if there are no suitable entries.
+ *                              Other error on failure.
+ */
+static int
+log_fcb_find_gte(struct log *log, struct log_offset *log_offset,
+                 struct fcb_entry *out_entry)
+{
+    const struct fcb_log_bmark *bmark;
+    struct log_entry_hdr hdr;
+    struct fcb_log *fcb_log;
+    struct fcb *fcb;
+    int rc;
+
+    fcb_log = log->l_arg;
+    fcb = &fcb_log->fl_fcb;
+
+    /*
+     * if timestamp for request is < 0, return last log entry
+     */
+    if (log_offset->lo_ts < 0) {
+        if (fcb_log->fl_entries == 0) {
+            return SYS_ENOENT;
+        } else {
+            *out_entry = fcb->f_active;
+            return 0;
+        }
+    }
+
+#if MYNEWT_VAL(LOG_FCB_BOOKMARKS)
+    bmark = fcb_log_closest_bmark(fcb_log, log_offset->lo_index);
+    if (bmark != NULL) {
+        *out_entry = bmark->flb_entry;
+    }
+#else
+    bmark = NULL;
+#endif
+
+    if (bmark == NULL) {
+        /* No bookmark.  Read the first entry in the log. */
+        memset(out_entry, 0, sizeof *out_entry);
+        rc = fcb_getnext(fcb, out_entry);
+        if (rc != 0) {
+            return SYS_ENOENT;
+        }
+    }
+
+    /* Keep advancing until we find an entry with a great enough index. */
+    do {
+        rc = log_read_hdr(log, out_entry, &hdr);
+        if (rc != 0) {
+            return rc;
+        }
+
+        if (hdr.ue_index >= log_offset->lo_index) {
+            return 0;
+        }
+    } while (fcb_getnext(fcb, out_entry) == 0);
+
+    return SYS_ENOENT;
+}
+
 static int
 log_fcb_start_append(struct log *log, int len, struct fcb_entry *loc)
 {
@@ -75,6 +153,12 @@ log_fcb_start_append(struct log *log, int len, struct fcb_entry *loc)
             LOG_STATS_INCN(log, lost, cnt);
         }
 #endif
+
+#if MYNEWT_VAL(LOG_FCB_BOOKMARKS)
+        /* The FCB needs to be rotated.  Invalidate all bookmarks. */
+        fcb_log_clear_bmarks(fcb_log);
+#endif
+
         rc = fcb_rotate(fcb);
         if (rc) {
             goto err;
@@ -381,30 +465,39 @@ log_fcb_walk(struct log *log, log_walk_func_t walk_func,
              struct log_offset *log_offset)
 {
     struct fcb *fcb;
+    struct fcb_log *fcb_log;
     struct fcb_entry loc;
-    struct fcb_entry *locp;
     int rc;
 
-    rc = 0;
-    fcb = &((struct fcb_log *)log->l_arg)->fl_fcb;
+    fcb_log = log->l_arg;
+    fcb = &fcb_log->fl_fcb;
 
-    memset(&loc, 0, sizeof(loc));
-
-    /*
-     * if timestamp for request is < 0, return last log entry
-     */
-    if (log_offset->lo_ts < 0) {
-        locp = &fcb->f_active;
-        rc = walk_func(log, log_offset, (void *)locp, locp->fe_data_len);
-    } else {
-        while (fcb_getnext(fcb, &loc) == 0) {
-            rc = walk_func(log, log_offset, (void *) &loc, loc.fe_data_len);
-            if (rc) {
-                break;
-            }
-        }
+    /* Locate the starting point of the walk. */
+    rc = log_fcb_find_gte(log, log_offset, &loc);
+    switch (rc) {
+    case 0:
+        /* Found a starting point. */
+        break;
+    case SYS_ENOENT:
+        /* No entries match the offset criteria; nothing to walk. */
+        return 0;
+    default:
+        return rc;
     }
-    return (rc);
+
+#if MYNEWT_VAL(LOG_FCB_BOOKMARKS)
+    /* Add a bookmark pointing to this walk's start location. */
+    fcb_log_add_bmark(fcb_log, &loc, log_offset->lo_index);
+#endif
+
+    do {
+        rc = walk_func(log, log_offset, &loc, loc.fe_data_len);
+        if (rc != 0) {
+            return rc;
+        }
+    } while (fcb_getnext(fcb, &loc) == 0);
+
+    return 0;
 }
 
 static int
