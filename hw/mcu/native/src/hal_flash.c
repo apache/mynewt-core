@@ -117,6 +117,10 @@ flash_native_file_open(char *name)
         }
     }
 
+    if (file_loc != NULL) {
+        munmap(file_loc, native_flash_dev.hf_size);
+    }
+
     file_loc = mmap(0, native_flash_dev.hf_size,
           PROT_READ | PROT_WRITE, MAP_SHARED, file, 0);
     assert(file_loc != MAP_FAILED);
