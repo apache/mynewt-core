@@ -2202,3 +2202,30 @@ err:
     return (rc);
 }
 
+/**
+ * Reset sensor
+ *
+ * @param Ptr to the sensor
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+sensor_reset(struct sensor *sensor)
+{
+    int rc;
+
+    if (!sensor->s_funcs->sd_reset) {
+        rc = SYS_EINVAL;
+        return rc;
+    }
+
+    rc = sensor_lock(sensor);
+    if (rc) {
+        return rc;
+    }
+
+    rc = sensor->s_funcs->sd_reset(sensor);
+
+    sensor_unlock(sensor);
+    return rc;
+}

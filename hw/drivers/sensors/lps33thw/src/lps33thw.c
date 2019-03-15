@@ -99,7 +99,8 @@ static const struct sensor_driver g_lps33thw_sensor_driver = {
     .sd_set_trigger_thresh        = lps33thw_sensor_set_trigger_thresh,
     .sd_handle_interrupt          = lps33thw_sensor_handle_interrupt,
     .sd_clear_low_trigger_thresh  = lps33thw_sensor_clear_low_thresh,
-    .sd_clear_high_trigger_thresh = lps33thw_sensor_clear_high_thresh
+    .sd_clear_high_trigger_thresh = lps33thw_sensor_clear_high_thresh,
+    .sd_reset                     = lps33thw_reset
 };
 
 /*
@@ -538,8 +539,12 @@ lps33thw_set_lpf(struct sensor_itf *itf, enum lps33thw_low_pass_config lpf)
 }
 
 int
-lps33thw_reset(struct sensor_itf *itf)
+lps33thw_reset(struct sensor *sensor)
 {
+    struct sensor_itf *itf;
+     
+    itf = SENSOR_GET_ITF(sensor);
+
     return lps33thw_set_reg(itf, LPS33THW_CTRL_REG2, 0x04);
 }
 
