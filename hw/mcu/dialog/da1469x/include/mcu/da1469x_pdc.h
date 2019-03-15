@@ -20,6 +20,7 @@
 #ifndef __MCU_DA1469X_PDC_H_
 #define __MCU_DA1469X_PDC_H_
 
+#include <stdbool.h>
 #include <stdint.h>
 #include "DA1469xAB.h"
 
@@ -125,6 +126,19 @@ static inline void
 da1469x_pdc_set(int idx)
 {
     PDC->PDC_SET_PENDING_REG = idx;
+}
+
+/**
+ * Check if PDC lookup table entry is pending
+ *
+ * @param idx  Entry index
+ *
+ * @return true if entry is pending, false otherwise
+ */
+static inline bool
+da1469x_pdc_is_pending(int idx)
+{
+    return PDC->PDC_PENDING_REG & (1 << idx);
 }
 
 /**
