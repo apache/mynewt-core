@@ -17,6 +17,8 @@
  * under the License.
  */
 
+ #include "syscfg/syscfg.h"
+
     .syntax unified
     .arch   armv7-m
 
@@ -141,6 +143,7 @@ Reset_Handler:
     bic     r2, r2, #8
     strh    r2, [r1, #0]
 
+#if !MYNEWT_VAL(RAM_RESIDENT)
 /*
  * Flash is remapped at 0x0 with an offset, i.e. 0x0 does not correspond to
  * 0x16000000 but to start of an image on flash. This is calculated from product
@@ -180,10 +183,6 @@ Reset_Handler:
     ldrlt   r0, [r1], #4
     strlt   r0, [r3], #4
     blt     .loop_isr_copy
-/* Set VTOR */
-    ldr     r0, =NVIC_VTOR
-    ldr     r1, =0x20000000
-    str     r1, [r0]
 
 /* Copy QSPI code from flash to RAM */
     ldr     r1, =__text_ram_addr        /* src ptr */
@@ -206,6 +205,12 @@ Reset_Handler:
     ldrlt   r0, [r1], #4
     strlt   r0, [r2], #4
     blt     .loop_data_copy
+#endif
+
+/* Set VTOR */
+    ldr     r0, =NVIC_VTOR
+    ldr     r1, =0x20000000
+    str     r1, [r0]
 
 /* Clear BSS */
     movs    r0, 0
