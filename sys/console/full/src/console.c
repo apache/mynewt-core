@@ -30,10 +30,6 @@
 #include "console/ticks.h"
 #include "console_priv.h"
 
-#if MYNEWT_VAL(LOG_CONSOLE)
-#include "log/log.h"
-#endif
-
 /* Control characters */
 #define ESC                0x1b
 #define DEL                0x7f
@@ -67,6 +63,7 @@
 
 /* Indicates whether the previous line of output was completed. */
 int console_is_midline;
+uint8_t g_is_output_nlip;
 
 #if MYNEWT_VAL(CONSOLE_COMPAT)
 #define CONSOLE_COMPAT_MAX_CMD_QUEUED 1
@@ -87,8 +84,9 @@ static uint16_t cur, end;
 static struct os_eventq avail_queue;
 static struct os_eventq *lines_queue;
 static completion_cb completion;
-bool g_silence_console;
-bool g_console_input_ignore;
+bool g_console_silence;
+bool g_console_silence_non_nlip;
+bool g_console_ignore_non_nlip;
 static struct os_mutex console_write_lock;
 
 /*
@@ -172,10 +170,23 @@ console_write(const char *str, int cnt)
     if (console_lock(timeout) != OS_OK) {
         return;
     }
+        
+    /* If the byte string is non nlip and we are silencing non nlip bytes,
+     * do not let it go out on the console
+     */ 
+    if (!g_is_output_nlip && g_console_silence_non_nlip) {
+        goto done;
+    }
+ 
     for (i = 0; i < cnt; i++) {
         if (console_out_nolock((int)str[i]) == EOF) {
             break;
         }
+    }
+
+done:
+    if (str[cnt - 1] == '\n') {
+        g_is_output_nlip = 0;
     }
     (void)console_unlock();
 }
@@ -637,10 +648,12 @@ handle_nlip(uint8_t byte)
     if ((nlip_state & NLIP_PKT_START1) &&
         (byte == CONSOLE_NLIP_PKT_START2)) {
         nlip_state |= NLIP_PKT_START2;
+        g_is_output_nlip = 1;
         return 1;
     } else if ((nlip_state & NLIP_DATA_START1) &&
                (byte == CONSOLE_NLIP_DATA_START2)) {
         nlip_state |= NLIP_DATA_START2;
+        g_is_output_nlip = 1;
         return 1;
     } else {
         nlip_state = 0;
@@ -679,9 +692,6 @@ console_handle_char(uint8_t byte)
     static struct os_event *ev;
     static struct console_input *input;
     static char prev_endl = '\0';
-#if MYNEWT_VAL(LOG_CONSOLE)
-    struct log *log;
-#endif
 
     if (!lines_queue) {
         return 0;
@@ -733,7 +743,7 @@ console_handle_char(uint8_t byte)
 
     /* Handle ANSI escape mode */
     if (esc_state & ESC_ANSI) {
-        if (g_console_input_ignore) {
+        if (g_console_ignore_non_nlip) {
             return 0;
         }
         handle_ansi(byte, input->line);
@@ -742,7 +752,7 @@ console_handle_char(uint8_t byte)
 
     /* Handle escape mode */
     if (esc_state & ESC_ESC) {
-        if (g_console_input_ignore) {
+        if (g_console_ignore_non_nlip) {
             return 0;
         }
         esc_state &= ~ESC_ESC;
@@ -765,31 +775,13 @@ console_handle_char(uint8_t byte)
         switch (byte) {
         case CONSOLE_NLIP_PKT_START1:
             nlip_state |= NLIP_PKT_START1;
-            if (g_silence_console) {
-                console_silence(false);
-#if MYNEWT_VAL(LOG_CONSOLE)
-                log = log_console_get();
-                if (log) {
-                    log_set_level(log, 255);
-                }
-#endif
-            }
             break;
         case CONSOLE_NLIP_DATA_START1:
             nlip_state |= NLIP_DATA_START1;
-            if (g_silence_console) {
-                console_silence(false);
-#if MYNEWT_VAL(LOG_CONSOLE)
-                log = log_console_get();
-                if (log) {
-                    log_set_level(log, 255);
-                }
-#endif
-            }
             break;
         case DEL:
         case BS:
-            if (g_console_input_ignore) {
+            if (g_console_ignore_non_nlip) {
                 break;
             }
             if (cur > 0) {
@@ -797,7 +789,7 @@ console_handle_char(uint8_t byte)
             }
             break;
         case ESC:
-            if (g_console_input_ignore) {
+            if (g_console_ignore_non_nlip) {
                 break;
             }
             esc_state |= ESC_ESC;
@@ -808,15 +800,6 @@ console_handle_char(uint8_t byte)
         case '\r':
             /* Falls through. */
         case '\n':
-            if (g_console_input_ignore) {
-                console_silence(true);
-#if MYNEWT_VAL(LOG_CONSOLE)
-                log = log_console_get();
-                if (log) {
-                    log_set_level(log, 0);
-                }
-#endif
-            }
             if (byte == '\n' && prev_endl == '\r') {
                 /* handle double end line chars */
                 prev_endl = byte;
@@ -844,7 +827,7 @@ console_handle_char(uint8_t byte)
             ev = NULL;
             break;
         case '\t':
-            if (g_console_input_ignore) {
+            if (g_console_ignore_non_nlip) {
                 break;
             }
             if (completion && !end) {
@@ -862,7 +845,7 @@ console_handle_char(uint8_t byte)
         return 0;
     }
 
-    if (!g_console_input_ignore) {
+    if (!g_console_ignore_non_nlip) {
         insert_char(&input->line[cur], byte, end);
     }
     return 0;

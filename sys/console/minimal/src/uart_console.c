@@ -132,7 +132,7 @@ uart_console_non_blocking_mode(void)
 int
 console_out_nolock(int c)
 {
-    if (g_silence_console) {
+    if (g_console_silence) {
         return c;
     }
 

@@ -99,12 +99,12 @@ log_init(void)
 {
 }
 
-void log_set_level(struct log *log, uint8_t level)
+static inline void log_set_level(struct log *log, uint8_t level)
 {
     return;
 }
 
-uint8_t log_get_level(const struct log *log)
+static inline uint8_t log_get_level(const struct log *log)
 {
     return 0;
 }

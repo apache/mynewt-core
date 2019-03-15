@@ -37,7 +37,7 @@ console_out(int character)
 {
     char c = (char)character;
 
-    if (g_silence_console) {
+    if (g_console_silence) {
         return c;
     }
 
