@@ -47,6 +47,15 @@ syscfg.defs:
         restrictions:
             - "LOG_FCB"
 
+    LOG_FCB_BOOKMARKS:
+        description: >
+            Enables the bookmarks optimization for FCB-backed log lookups.  To
+            use this optimization, the application must configure FCB logs with
+            bookmark storage at runtime.
+        value: 0
+        restrictions:
+            - LOG_FCB
+
     LOG_CONSOLE:
         description: 'Support logging to console.'
         value: 1
