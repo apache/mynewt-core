@@ -35,6 +35,8 @@
 #include "imgmgr/imgmgr.h"
 #include "imgmgr_priv.h"
 
+const imgmgr_dfu_callbacks_t *imgmgr_dfu_callbacks_fn;
+
 static int imgr_upload(struct mgmt_cbuf *);
 static int imgr_erase(struct mgmt_cbuf *);
 static int imgr_erase_state(struct mgmt_cbuf *);
@@ -737,6 +739,10 @@ imgr_upload(struct mgmt_cbuf *cb)
     /* Determine what actions to take as a result of this request. */
     rc = imgr_upload_inspect(&req, &action, &errstr);
     if (rc != 0) {
+        if (imgmgr_dfu_callbacks_fn->dfu_stopped_cb != NULL)
+        {
+            imgmgr_dfu_callbacks_fn->dfu_stopped_cb();
+        }
         return rc;
     }
 
@@ -753,6 +759,7 @@ imgr_upload(struct mgmt_cbuf *cb)
     if (imgr_upload_cb != NULL) {
         rc = imgr_upload_cb(req.off, action.size, imgr_upload_arg);
         if (rc != 0) {
+            imgr_dfu_stopped();
             return imgr_error_rsp(cb, rc, imgmgr_err_str_app_reject);
         }
     }
@@ -763,6 +770,7 @@ imgr_upload(struct mgmt_cbuf *cb)
 
     rc = flash_area_open(imgr_state.area_id, &fa);
     if (rc != 0) {
+        imgr_dfu_stopped();
         return imgr_error_rsp(cb, MGMT_ERR_EUNKNOWN,
                               imgmgr_err_str_flash_open_failed);
     }
@@ -772,6 +780,8 @@ imgr_upload(struct mgmt_cbuf *cb)
          * New upload.
          */
         imgr_state.off = 0;
+
+        imgr_dfu_started();
 
         /*
          * We accept SHA trimmed to any length by client since it's up to client
@@ -821,6 +831,7 @@ imgr_upload(struct mgmt_cbuf *cb)
 #endif
         rc = flash_area_write(fa, req.off, req.img_data, action.write_bytes);
         if (rc != 0) {
+            imgr_dfu_stopped();
             rc = MGMT_ERR_EUNKNOWN;
             errstr = imgmgr_err_str_flash_write_failed;
         } else {
@@ -845,10 +856,35 @@ end:
 }
 
 void
+imgr_dfu_stopped(void)
+{
+    if (imgmgr_dfu_callbacks_fn->dfu_stopped_cb != NULL)
+    {
+        imgmgr_dfu_callbacks_fn->dfu_stopped_cb();
+    }
+}
+
+void
+imgr_dfu_started(void)
+{
+    if (imgmgr_dfu_callbacks_fn->dfu_started_cb != NULL)
+    {
+        imgmgr_dfu_callbacks_fn->dfu_started_cb();
+    }
+}
+
+void
 imgr_set_upload_cb(imgr_upload_fn *cb, void *arg)
 {
     imgr_upload_cb = cb;
     imgr_upload_arg = arg;
+}
+
+int
+imgmgr_register_callbacks(const imgmgr_dfu_callbacks_t *cb_struct)
+{
+    imgmgr_dfu_callbacks_fn = cb_struct;
+    return 0;
 }
 
 void
