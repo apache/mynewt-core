@@ -739,10 +739,7 @@ imgr_upload(struct mgmt_cbuf *cb)
     /* Determine what actions to take as a result of this request. */
     rc = imgr_upload_inspect(&req, &action, &errstr);
     if (rc != 0) {
-        if (imgmgr_dfu_callbacks_fn->dfu_stopped_cb != NULL)
-        {
-            imgmgr_dfu_callbacks_fn->dfu_stopped_cb();
-        }
+        imgr_dfu_stopped();
         return rc;
     }
 
