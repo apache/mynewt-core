@@ -215,7 +215,9 @@ coap_notify_observers(oc_resource_t *resource,
     oc_request_t request = {};
     oc_response_t response = {};
     oc_response_buffer_t response_buffer;
+#if MYNEWT_VAL(OC_SEPARATE_RESPONSES)
     struct coap_packet_rx req[1];
+#endif
     coap_packet_t notification[1];
     coap_transaction_t *transaction = NULL;
     struct os_mbuf *m = NULL;

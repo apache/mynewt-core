@@ -23,6 +23,7 @@
 #include "oic/oc_api.h"
 #include "oic/port/oc_storage.h"
 #include "oic/messaging/coap/coap.h"
+#include "oic/messaging/coap/oc_coap.h"
 #include "oic/messaging/coap/separate.h"
 
 #ifdef __cplusplus
