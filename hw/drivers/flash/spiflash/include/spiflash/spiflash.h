@@ -109,8 +109,6 @@ struct spiflash_chip {
 #define FLASH_CAPACITY_16MBIT       0x15
 #define FLASH_CAPACITY_32MBIT       0x16
 
-int spiflash_init(const struct hal_flash *dev);
-
 void spiflash_power_down(struct spiflash_dev *dev);
 void spiflash_release_power_down(struct spiflash_dev *dev);
 

@@ -568,21 +568,22 @@ static struct spiflash_chip supported_chips[] = {
     { {0} },
 };
 
-static int spiflash_read(const struct hal_flash *hal_flash_dev, uint32_t addr,
+static int hal_spiflash_read(const struct hal_flash *hal_flash_dev, uint32_t addr,
         void *buf, uint32_t len);
-static int spiflash_write(const struct hal_flash *hal_flash_dev, uint32_t addr,
+static int hal_spiflash_write(const struct hal_flash *hal_flash_dev, uint32_t addr,
         const void *buf, uint32_t len);
-static int spiflash_erase_sector(const struct hal_flash *hal_flash_dev,
+static int hal_spiflash_erase_sector(const struct hal_flash *hal_flash_dev,
         uint32_t sector_address);
-static int spiflash_sector_info(const struct hal_flash *hal_flash_dev, int idx,
+static int hal_spiflash_sector_info(const struct hal_flash *hal_flash_dev, int idx,
         uint32_t *address, uint32_t *sz);
+static int hal_spiflash_init(const struct hal_flash *dev);
 
 static const struct hal_flash_funcs spiflash_flash_funcs = {
-    .hff_read         = spiflash_read,
-    .hff_write        = spiflash_write,
-    .hff_erase_sector = spiflash_erase_sector,
-    .hff_sector_info  = spiflash_sector_info,
-    .hff_init         = spiflash_init,
+    .hff_read         = hal_spiflash_read,
+    .hff_write        = hal_spiflash_write,
+    .hff_erase_sector = hal_spiflash_erase_sector,
+    .hff_sector_info  = hal_spiflash_sector_info,
+    .hff_init         = hal_spiflash_init,
 };
 
 struct spiflash_dev spiflash_dev = {
@@ -910,9 +911,9 @@ spiflash_write_enable(struct spiflash_dev *dev)
     return 0;
 }
 
-int
-spiflash_read(const struct hal_flash *hal_flash_dev, uint32_t addr, void *buf,
-        uint32_t len)
+static int
+hal_spiflash_read(const struct hal_flash *hal_flash_dev, uint32_t addr, void *buf,
+                  uint32_t len)
 {
     int err = 0;
     uint8_t cmd[] = { SPIFLASH_READ,
@@ -947,8 +948,8 @@ spiflash_read(const struct hal_flash *hal_flash_dev, uint32_t addr, void *buf,
     return 0;
 }
 
-int
-spiflash_write(const struct hal_flash *hal_flash_dev, uint32_t addr,
+static int
+hal_spiflash_write(const struct hal_flash *hal_flash_dev, uint32_t addr,
         const void *buf, uint32_t len)
 {
     uint8_t cmd[4] = { SPIFLASH_PAGE_PROGRAM };
@@ -1002,9 +1003,8 @@ err:
     return rc;
 }
 
-int
-spiflash_erase_sector(const struct hal_flash *hal_flash_dev,
-        uint32_t addr)
+static int
+hal_spiflash_erase_sector(const struct hal_flash *hal_flash_dev, uint32_t addr)
 {
     int rc = 0;
     struct spiflash_dev *dev;
@@ -1046,8 +1046,8 @@ err:
     return rc;
 }
 
-int
-spiflash_sector_info(const struct hal_flash *hal_flash_dev, int idx,
+static int
+hal_spiflash_sector_info(const struct hal_flash *hal_flash_dev, int idx,
         uint32_t *address, uint32_t *sz)
 {
     const struct spiflash_dev *dev = (const struct spiflash_dev *)hal_flash_dev;
@@ -1146,8 +1146,8 @@ err:
     return rc;
 }
 
-int
-spiflash_init(const struct hal_flash *hal_flash_dev)
+static int
+hal_spiflash_init(const struct hal_flash *hal_flash_dev)
 {
     int rc;
     struct spiflash_dev *dev;
