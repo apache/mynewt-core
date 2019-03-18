@@ -103,12 +103,6 @@ da1469x_cmac_pdc_signal(void)
     da1469x_pdc_set(g_da1469x_pdc_sys2cmac);
 }
 
-static inline void
-da1469x_cmac_pdc_ack(void)
-{
-    da1469x_pdc_ack(g_da1469x_pdc_cmac2sys);
-}
-
 static void
 cmac2sys_isr(void)
 {
@@ -118,8 +112,6 @@ cmac2sys_isr(void)
     uint16_t len;
 
     os_trace_isr_enter();
-
-    da1469x_cmac_pdc_ack();
 
     /* Clear CMAC2SYS interrupt */
     *(volatile uint32_t *)0x40002000 = 2;
