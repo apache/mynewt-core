@@ -47,8 +47,8 @@ extern uint8_t _ccram_start;
 #define UART_CNT 1
 
 /* Arduino pins */
-#define ARDUINO_PIN_D0      MCU_GPIO_PORTC(5)
-#define ARDUINO_PIN_D1      MCU_GPIO_PORTC(4)
+#define ARDUINO_PIN_D0      MCU_GPIO_PORTG(9)
+#define ARDUINO_PIN_D1      MCU_GPIO_PORTG(14)
 #define ARDUINO_PIN_D2      MCU_GPIO_PORTF(15)
 #define ARDUINO_PIN_D3      MCU_GPIO_PORTE(13)
 #define ARDUINO_PIN_D4      MCU_GPIO_PORTF(14)
@@ -64,9 +64,9 @@ extern uint8_t _ccram_start;
 #define ARDUINO_PIN_A0      MCU_GPIO_PORTA(3)
 #define ARDUINO_PIN_A1      MCU_GPIO_PORTC(0)
 #define ARDUINO_PIN_A2      MCU_GPIO_PORTC(3)
-#define ARDUINO_PIN_A3      MCU_GPIO_PORTD(11)
-#define ARDUINO_PIN_A4      MCU_GPIO_PORTD(12)
-#define ARDUINO_PIN_A5      MCU_GPIO_PORTD(13)
+#define ARDUINO_PIN_A3      MCU_GPIO_PORTC(1)
+#define ARDUINO_PIN_A4      MCU_GPIO_PORTC(4)
+#define ARDUINO_PIN_A5      MCU_GPIO_PORTC(5)
 
 #define ARDUINO_PIN_RX      ARDUINO_PIN_D0
 #define ARDUINO_PIN_TX      ARDUINO_PIN_D1
