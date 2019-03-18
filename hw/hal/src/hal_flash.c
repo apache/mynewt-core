@@ -268,22 +268,29 @@ hal_flash_erase(uint8_t id, uint32_t address, uint32_t num_bytes)
         return SYS_EINVAL;
     }
 
-    for (i = 0; i < hf->hf_sector_cnt; i++) {
-        rc = hf->hf_itf->hff_sector_info(hf, i, &start, &size);
-        assert(rc == 0);
-        end_area = start + size;
-        if (address < end_area && end > start) {
-            /*
-             * If some region of eraseable area falls inside sector,
-             * erase the sector.
-             */
-            if (hf->hf_itf->hff_erase_sector(hf, start)) {
-                return SYS_EIO;
-            }
+    if (hf->hf_itf->hff_erase) {
+        hf->hf_itf->hff_erase(hf, address, num_bytes);
+#if MYNEWT_VAL(HAL_FLASH_VERIFY_ERASES)
+        assert(hal_flash_isempty_no_buf(id, address, num_bytes) == 1);
+#endif
+    } else {
+        for (i = 0; i < hf->hf_sector_cnt; i++) {
+            rc = hf->hf_itf->hff_sector_info(hf, i, &start, &size);
+            assert(rc == 0);
+            end_area = start + size;
+            if (address < end_area && end > start) {
+                /*
+                 * If some region of eraseable area falls inside sector,
+                 * erase the sector.
+                 */
+                if (hf->hf_itf->hff_erase_sector(hf, start)) {
+                    return SYS_EIO;
+                }
 
 #if MYNEWT_VAL(HAL_FLASH_VERIFY_ERASES)
-            assert(hal_flash_isempty_no_buf(id, start, size) == 1);
+                assert(hal_flash_isempty_no_buf(id, start, size) == 1);
 #endif
+            }
         }
     }
     return 0;

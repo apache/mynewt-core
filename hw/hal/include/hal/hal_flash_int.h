@@ -43,6 +43,8 @@ struct hal_flash_funcs {
     int (*hff_is_empty)(const struct hal_flash *dev, uint32_t address,
             void *dst, uint32_t num_bytes);
     int (*hff_init)(const struct hal_flash *dev);
+    int (*hff_erase)(const struct hal_flash *dev, uint32_t address,
+            uint32_t num_bytes);
 };
 
 struct hal_flash {
