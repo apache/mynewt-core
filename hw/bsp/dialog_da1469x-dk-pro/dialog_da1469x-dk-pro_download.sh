@@ -105,6 +105,7 @@ mon reset
 mon halt
 restore $FLASH_LOADER.bin binary 0x20000000
 symbol-file $FLASH_LOADER
+set *(int *)0x500000BC = 4
 set \$sp=*(int *)0x20000000
 set \$pc=*(int *)0x20000004
 b main

@@ -116,6 +116,12 @@ SECTIONS
         . = ALIGN(4);
     } > RAM
 
+    .sleep_state (NOLOAD) :
+    {
+        . = ALIGN(4);
+        *(sleep_state)
+    } > RAM
+
     /* This section will be zeroed by RTT package init */
     .rtt (NOLOAD):
     {
