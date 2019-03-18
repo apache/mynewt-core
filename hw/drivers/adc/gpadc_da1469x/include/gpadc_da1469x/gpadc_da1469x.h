@@ -21,6 +21,7 @@
 #define __GPADC_DA1469x__
 
 #include <adc/adc.h>
+#include <mcu/da1469x_dma.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -29,14 +30,16 @@ extern "C" {
 struct da1469x_gpadc_dev {
     struct adc_dev dgd_adc;
     uint16_t *dgd_buf[2];
-    int dgd_buf_idx;
     int dgd_buf_len;
+    struct da1469x_dma_regs *dgd_dma[2]; /* periph DMA always comes in pairs */
     struct da1469x_gpadc_init_cfg *dgd_init_cfg;
     struct adc_chan_config dgd_adc_chan;
 };
 
 struct da1469x_gpadc_init_cfg {
     uint8_t dgic_adc_clk_div:1;
+    uint8_t dgic_dma_prio:3;
+    int8_t dgic_dma_cidx;
 };
 
 struct da1469x_gpadc_dev_cfg {
