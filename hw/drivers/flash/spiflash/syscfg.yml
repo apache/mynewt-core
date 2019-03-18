@@ -70,3 +70,9 @@ syscfg.defs:
         description: >
             Expected SpiFlash memory capactity as read by Read JEDEC ID command 9FH
         value: 0
+
+    SPIFLASH_READ_STATUS_INTERVAL:
+        description: >
+            Time between Read Status Register commands when waiting for flash
+            to be ready (us)
+        value: 10

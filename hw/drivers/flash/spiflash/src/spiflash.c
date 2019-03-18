@@ -860,34 +860,62 @@ spiflash_read_status(struct spiflash_dev *dev)
     return val;
 }
 
+static void
+spiflash_delay_us(uint32_t usecs)
+{
+#if MYNEWT_VAL(OS_SCHEDULING)
+    uint32_t ticks = os_time_ms_to_ticks32(usecs / 1000);
+    if (ticks > 1) {
+        os_time_delay(ticks);
+    } else {
+        os_cputime_delay_usecs(usecs);
+    }
+#else
+    os_cputime_delay_usecs(usecs);
+#endif
+}
+
 bool
 spiflash_device_ready(struct spiflash_dev *dev)
 {
     return !(spiflash_read_status(dev) & SPIFLASH_STATUS_BUSY);
 }
 
-int
-spiflash_wait_ready(struct spiflash_dev *dev, uint32_t timeout_ms)
+static int
+spiflash_wait_ready_till(struct spiflash_dev *dev, uint32_t timeout_us,
+    uint32_t step_us)
 {
-    uint32_t ticks;
-    os_time_t exp_time;
-    os_time_ms_to_ticks(timeout_ms, &ticks);
-    exp_time = os_time_get() + ticks;
-    int rc = 0;
+    int rc = -1;
+    uint32_t limit = os_cputime_get32() + timeout_us;
+
+    if (step_us < MYNEWT_VAL(SPIFLASH_READ_STATUS_INTERVAL)) {
+        step_us = MYNEWT_VAL(SPIFLASH_READ_STATUS_INTERVAL);
+    }
 
     spiflash_lock(dev);
 
-    while (!spiflash_device_ready(dev)) {
-        if (os_time_get() > exp_time) {
-            rc = -1;
-            goto err;
+    do {
+        if (spiflash_device_ready(dev)) {
+            rc = 0;
+            break;
         }
-    }
+        spiflash_delay_us(step_us);
+    } while (CPUTIME_LT(os_cputime_get32(), limit));
 
-err:
     spiflash_unlock(dev);
 
     return rc;
+}
+
+int
+spiflash_wait_ready(struct spiflash_dev *dev, uint32_t timeout_ms)
+{
+    /*
+     * Timeout is in ms, check status register 100 times in this time.
+     * If it would be shorter time than SPIFLASH_READ_STATUS_INTERVAL
+     * number of timer status register is checked will be smaler.
+     */
+    return spiflash_wait_ready_till(dev, timeout_ms * 1000, timeout_ms * 10);
 }
 
 int
