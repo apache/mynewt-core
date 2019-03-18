@@ -30,6 +30,7 @@
 
 /* Indicates whether the previous line of output was completed. */
 int console_is_midline;
+uint8_t g_is_output_nlip;
 
 #define CONSOLE_NLIP_PKT_START1 (6)
 #define CONSOLE_NLIP_PKT_START2 (9)
@@ -56,7 +57,9 @@ static int echo = MYNEWT_VAL(CONSOLE_ECHO);
 static uint8_t cur, end;
 static struct os_eventq *avail_queue;
 static struct os_eventq *lines_queue;
-bool g_silence_console;
+bool g_console_silence;
+bool g_console_silence_non_nlip;
+bool g_console_ignore_non_nlip;
 static struct os_mutex console_write_lock;
 
 int __attribute__((weak))
@@ -136,10 +139,23 @@ console_write(const char *str, int cnt)
     if (console_lock(timeout) != OS_OK) {
         return;
     }
+
+    /* If the byte string is non nlip and we are silencing non nlip bytes,
+     * do not let it go out on the console
+     */ 
+    if (!g_is_output_nlip && g_console_silence_non_nlip) {
+        goto done;
+    }
+
     for (i = 0; i < cnt; i++) {
         if (console_out_nolock((int)str[i]) == EOF) {
             break;
         }
+    }
+
+done:
+    if (cnt > 0 && str[cnt - 1] == '\n') {
+        g_is_output_nlip = 0;
     }
     (void)console_unlock();
 }
@@ -224,10 +240,12 @@ handle_nlip(uint8_t byte)
     if ((nlip_state & NLIP_PKT_START1) &&
         (byte == CONSOLE_NLIP_PKT_START2)) {
         nlip_state |= NLIP_PKT_START2;
+        g_is_output_nlip = 1;
         return 1;
     } else if ((nlip_state & NLIP_DATA_START1) &&
                (byte == CONSOLE_NLIP_DATA_START2)) {
         nlip_state |= NLIP_DATA_START2;
+        g_is_output_nlip = 1;
         return 1;
     } else {
         nlip_state = 0;
@@ -335,7 +353,8 @@ console_handle_char(uint8_t byte)
     }
 
     /* Ignore characters if there's no more buffer space */
-    if (cur + end < sizeof(input->line) - 1) {
+    if ((cur + end < sizeof(input->line) - 1) &&
+        (!g_console_ignore_non_nlip)) {
         insert_char(&input->line[cur], byte, end);
     }
     return 0;

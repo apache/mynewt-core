@@ -63,6 +63,7 @@
 
 /* Indicates whether the previous line of output was completed. */
 int console_is_midline;
+uint8_t g_is_output_nlip;
 
 #if MYNEWT_VAL(CONSOLE_COMPAT)
 #define CONSOLE_COMPAT_MAX_CMD_QUEUED 1
@@ -83,8 +84,9 @@ static uint16_t cur, end;
 static struct os_eventq avail_queue;
 static struct os_eventq *lines_queue;
 static completion_cb completion;
-bool g_silence_console;
-bool g_console_input_ignore;
+bool g_console_silence;
+bool g_console_silence_non_nlip;
+bool g_console_ignore_non_nlip;
 static struct os_mutex console_write_lock;
 
 /*
@@ -168,10 +170,23 @@ console_write(const char *str, int cnt)
     if (console_lock(timeout) != OS_OK) {
         return;
     }
+        
+    /* If the byte string is non nlip and we are silencing non nlip bytes,
+     * do not let it go out on the console
+     */ 
+    if (!g_is_output_nlip && g_console_silence_non_nlip) {
+        goto done;
+    }
+ 
     for (i = 0; i < cnt; i++) {
         if (console_out_nolock((int)str[i]) == EOF) {
             break;
         }
+    }
+
+done:
+    if (cnt > 0 && str[cnt - 1] == '\n') {
+        g_is_output_nlip = 0;
     }
     (void)console_unlock();
 }
@@ -633,10 +648,12 @@ handle_nlip(uint8_t byte)
     if ((nlip_state & NLIP_PKT_START1) &&
         (byte == CONSOLE_NLIP_PKT_START2)) {
         nlip_state |= NLIP_PKT_START2;
+        g_is_output_nlip = 1;
         return 1;
     } else if ((nlip_state & NLIP_DATA_START1) &&
                (byte == CONSOLE_NLIP_DATA_START2)) {
         nlip_state |= NLIP_DATA_START2;
+        g_is_output_nlip = 1;
         return 1;
     } else {
         nlip_state = 0;
@@ -665,16 +682,13 @@ console_append_char(char *line, uint8_t byte)
     return 1;
 }
 
+
 int
 console_handle_char(uint8_t byte)
 {
 #if !MYNEWT_VAL(CONSOLE_INPUT)
     return 0;
 #endif
-    if (g_console_input_ignore) {
-        return 0;
-    }
-
     static struct os_event *ev;
     static struct console_input *input;
     static char prev_endl = '\0';
@@ -729,12 +743,18 @@ console_handle_char(uint8_t byte)
 
     /* Handle ANSI escape mode */
     if (esc_state & ESC_ANSI) {
+        if (g_console_ignore_non_nlip) {
+            return 0;
+        }
         handle_ansi(byte, input->line);
         return 0;
     }
 
     /* Handle escape mode */
     if (esc_state & ESC_ESC) {
+        if (g_console_ignore_non_nlip) {
+            return 0;
+        }
         esc_state &= ~ESC_ESC;
         handle_ansi(byte, input->line);
         switch (byte) {
@@ -761,11 +781,17 @@ console_handle_char(uint8_t byte)
             break;
         case DEL:
         case BS:
+            if (g_console_ignore_non_nlip) {
+                break;
+            }
             if (cur > 0) {
                 del_char(&input->line[--cur], end);
             }
             break;
         case ESC:
+            if (g_console_ignore_non_nlip) {
+                break;
+            }
             esc_state |= ESC_ESC;
             break;
         default:
@@ -779,6 +805,7 @@ console_handle_char(uint8_t byte)
                 prev_endl = byte;
                 break;
             }
+        
             prev_endl = byte;
             input->line[cur + end] = '\0';
             console_out('\r');
@@ -800,6 +827,9 @@ console_handle_char(uint8_t byte)
             ev = NULL;
             break;
         case '\t':
+            if (g_console_ignore_non_nlip) {
+                break;
+            }
             if (completion && !end) {
 #if MYNEWT_VAL(CONSOLE_UART_RX_BUF_SIZE) == 0
                 console_blocking_mode();
@@ -815,7 +845,9 @@ console_handle_char(uint8_t byte)
         return 0;
     }
 
-    insert_char(&input->line[cur], byte, end);
+    if (!g_console_ignore_non_nlip) {
+        insert_char(&input->line[cur], byte, end);
+    }
     return 0;
 }
 
