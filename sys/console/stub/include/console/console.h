@@ -128,7 +128,12 @@ console_silence(bool silent)
 }
 
 static void inline
-console_input_ignore(bool ignore)
+console_silence_non_nlip(bool silent)
+{
+}
+
+static void inline
+console_ignore_non_nlip(bool ignore)
 {
 }
 
