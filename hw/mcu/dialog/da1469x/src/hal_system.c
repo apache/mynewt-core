@@ -18,6 +18,7 @@
  */
  
 #include "syscfg/syscfg.h"
+#include "mcu/da1469x_clock.h"
 #include "mcu/da1469x_pdc.h"
 #include "hal/hal_system.h"
 #include "DA1469xAB.h"
@@ -80,10 +81,6 @@ hal_debugger_connected(void)
 void
 hal_system_clock_start(void)
 {
-#if MYNEWT_VAL(BOOT_LOADER)
-    int idx;
-#endif
-
     /* Reset clock dividers to 0 */
     CRG_TOP->CLK_AMBA_REG &= ~(CRG_TOP_CLK_AMBA_REG_HCLK_DIV_Msk | CRG_TOP_CLK_AMBA_REG_PCLK_DIV_Msk);
 
@@ -92,31 +89,11 @@ hal_system_clock_start(void)
     CRG_TOP->CLK_CTRL_REG = ((CRG_TOP->CLK_CTRL_REG & ~CRG_TOP_CLK_CTRL_REG_LP_CLK_SEL_Msk) |
                                                 (2U << CRG_TOP_CLK_CTRL_REG_LP_CLK_SEL_Pos));
 
-    /*
-     * XXX this is done only in boot loader since in application XTAL32M will be
-     *     already enabled and we'll never get an interrupt
-     */
-#if MYNEWT_VAL(BOOT_LOADER)
-    /* Enable XTAL32M and wait for it to settle */
-    CRG_XTAL->XTALRDY_CTRL_REG = (CRG_XTAL->XTALRDY_CTRL_REG &
-                                  ~(CRG_XTAL_XTALRDY_CTRL_REG_XTALRDY_CLK_SEL_Msk |
-                                    CRG_XTAL_XTALRDY_CTRL_REG_XTALRDY_CNT_Msk)) |
-                                 64;
-    NVIC_ClearPendingIRQ(XTAL32M_RDY_IRQn);
-    idx = da1469x_pdc_add(MCU_PDC_TRIGGER_SW_TRIGGER, MCU_PDC_MASTER_M33,
-                          MCU_PDC_EN_XTAL);
-    da1469x_pdc_set(idx);
-    da1469x_pdc_ack(idx);
-    while (!NVIC_GetPendingIRQ(XTAL32M_RDY_IRQn));
-#endif
-
-    /* Switch from RC32M to XTAL32M */
-    if (CRG_TOP->CLK_CTRL_REG & CRG_TOP_CLK_CTRL_REG_RUNNING_AT_RC32M_Msk) {
-        CRG_TOP->CLK_SWITCH2XTAL_REG = CRG_TOP_CLK_SWITCH2XTAL_REG_SWITCH2XTAL_Msk;
-    } else {
-        CRG_TOP->CLK_CTRL_REG &= ~CRG_TOP_CLK_CTRL_REG_SYS_CLK_SEL_Msk;
-    }
-    while (!(CRG_TOP->CLK_CTRL_REG & CRG_TOP_CLK_CTRL_REG_RUNNING_AT_XTAL32M_Msk));
+    /* Switch to XTAL32M and disable RC32M */
+    da1469x_clock_sys_xtal32m_init();
+    da1469x_clock_sys_xtal32m_enable();
+    da1469x_clock_sys_xtal32m_switch_safe();
+    da1469x_clock_sys_rc32m_disable();
 }
 
 enum hal_reset_reason
