@@ -185,7 +185,7 @@ console_write(const char *str, int cnt)
     }
 
 done:
-    if (str[cnt - 1] == '\n') {
+    if (cnt > 0 && str[cnt - 1] == '\n') {
         g_is_output_nlip = 0;
     }
     (void)console_unlock();

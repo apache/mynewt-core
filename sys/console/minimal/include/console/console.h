@@ -68,11 +68,11 @@ console_set_completion_cb(uint8_t (*completion)(char *str, uint8_t len))
  */
 extern bool g_console_silence;
 /**
- * Global indicating whether non nlip console is silent or not
+ * Global indicating whether non nlip console output is silent or not
  */
 extern bool g_console_silence_non_nlip;
 /**
- * Global indicating whether console input is disabled or not
+ * Global indicating whether non nlip console input is disabled or not
  */
 extern bool g_console_ignore_non_nlip;
 

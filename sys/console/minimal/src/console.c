@@ -154,7 +154,7 @@ console_write(const char *str, int cnt)
     }
 
 done:
-    if (str[cnt - 1] == '\n') {
+    if (cnt > 0 && str[cnt - 1] == '\n') {
         g_is_output_nlip = 0;
     }
     (void)console_unlock();
@@ -353,7 +353,7 @@ console_handle_char(uint8_t byte)
     }
 
     /* Ignore characters if there's no more buffer space */
-    if ((cur + end < sizeof(input->line) - 1) ||
+    if ((cur + end < sizeof(input->line) - 1) &&
         (!g_console_ignore_non_nlip)) {
         insert_char(&input->line[cur], byte, end);
     }
