@@ -132,12 +132,15 @@ static const struct da1469x_hal_i2c_cfg hal_i2c1_cfg = {
 #endif
 #if MYNEWT_VAL(GPADC)
 static struct da1469x_gpadc_dev os_bsp_gpadc;
-static struct da1469x_gpadc_dev_cfg os_bsp_gpadc_cfg = {
+static struct da1469x_gpadc_init_cfg os_bsp_gpadc_cfg = {
+    .dgic_adc_clk_div = MYNEWT_VAL(GPADC_CLK_DIV),
+    .dgic_dma_cidx = MYNEWT_VAL(GPADC_DMA_CIDX),
+    .dgic_dma_prio = MYNEWT_VAL(GPADC_DMA_PRIO)
 };
 #endif
 #if MYNEWT_VAL(SDADC)
 static struct da1469x_sdadc_dev os_bsp_sdadc;
-static struct da1469x_sdadc_dev_cfg os_bsp_sdadc_cfg = {
+static struct da1469x_sdadc_init_cfg os_bsp_sdadc_cfg = {
 };
 #endif
 

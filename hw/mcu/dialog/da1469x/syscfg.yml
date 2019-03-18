@@ -242,7 +242,18 @@ syscfg.defs:
             - '!TIMER_2'
 
     GPADC:
-        description: Enable DA1469x general purpose ADC
+        description: 'Enable DA1469x general purpose ADC'
+        value: 0
+    GPADC_CLK_DIV:
+        description: 'Controls GPADC_CLK_SEL bit in CLK_PER'
+        value: 1
+    GPADC_DMA_CIDX:
+        description: >
+          'DMA channel idx to use for GPADC. -1 means let system decide'
+        value: -1
+    GPADC_DMA_PRIO:
+        description: >
+          'DMA priority for GPADC, 0-7'
         value: 0
 
     SDADC:

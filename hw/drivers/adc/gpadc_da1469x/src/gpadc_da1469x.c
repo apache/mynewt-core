@@ -30,7 +30,7 @@
 
 static struct da1469x_gpadc_dev *da1469x_gpadc_dev;
 
-static int
+static void
 da1469x_gpadc_resolve_pins(uint32_t ctrl, int *pin0p, int *pin1p)
 {
     int pin0 = -1;
@@ -106,12 +106,11 @@ da1469x_gpadc_resolve_pins(uint32_t ctrl, int *pin0p, int *pin1p)
             pin1 = MCU_GPIO_PORT0(9);
             break;
         default:
-            return -1;
+            break;
         }
     }
     *pin0p = pin0;
     *pin1p = pin1;
-    return 0;
 }
 
 /**
@@ -175,10 +174,6 @@ da1469x_gpadc_read_channel(struct adc_dev *adev, uint8_t cnum, int *result)
 {
     uint32_t reg;
 
-    reg = GPADC->GP_ADC_CTRL2_REG;
-    reg &= ~GPADC_GP_ADC_CTRL2_REG_GP_ADC_DMA_EN_Msk;
-    GPADC->GP_ADC_CTRL2_REG = reg;
-
     /*
      * Disable continuous mode (if set), and wait for ADC to stop.
      */
@@ -190,12 +185,11 @@ da1469x_gpadc_read_channel(struct adc_dev *adev, uint8_t cnum, int *result)
         reg = GPADC->GP_ADC_CTRL_REG;
     } while (reg & GPADC_GP_ADC_CTRL_REG_GP_ADC_START_Msk);
 
-    /*
-     * Disable interrupt delivery.
-     */
-    reg &= ~GPADC_GP_ADC_CTRL_REG_GP_ADC_MINT_Msk;
+    /* Clear interrupts */
+    GPADC->GP_ADC_CLEAR_INT_REG = 1;
 
-    /* Start the conversion */
+    /* Start the conversion, disable DMA */
+    GPADC->GP_ADC_CTRL2_REG &= ~GPADC_GP_ADC_CTRL2_REG_GP_ADC_DMA_EN_Msk;
     reg |= GPADC_GP_ADC_CTRL_REG_GP_ADC_START_Msk;
     GPADC->GP_ADC_CTRL_REG = reg;
 
@@ -203,9 +197,6 @@ da1469x_gpadc_read_channel(struct adc_dev *adev, uint8_t cnum, int *result)
     do {
         reg = GPADC->GP_ADC_CTRL_REG;
     } while ((reg & GPADC_GP_ADC_CTRL_REG_GP_ADC_INT_Msk) == 0);
-
-    /* Clear interrupts */
-    GPADC->GP_ADC_CLEAR_INT_REG = 1;
 
     /*
      * Read results. # of valid bits depends on settings.
@@ -222,32 +213,46 @@ da1469x_gpadc_read_channel(struct adc_dev *adev, uint8_t cnum, int *result)
     return 0;
 }
 
+static void
+da1469x_gpadc_dma_buf(struct da1469x_gpadc_dev *dev)
+{
+    struct da1469x_dma_regs *dr;
+
+    dr = dev->dgd_dma[0];
+
+    dr->DMA_B_START_REG = (uint32_t)dev->dgd_buf[0];
+    dr->DMA_INT_REG = dev->dgd_buf_len - 1;
+    dr->DMA_LEN_REG = dev->dgd_buf_len - 1;
+    dr->DMA_CTRL_REG |= DMA_DMA0_CTRL_REG_DMA_ON_Msk;
+}
+
 /**
  * Trigger taking a sample.
  */
 static int
 da1469x_gpadc_sample(struct adc_dev *adev)
 {
-    uint32_t reg;
+    struct da1469x_gpadc_dev *dev;
+    int sr;
+
+    dev = (struct da1469x_gpadc_dev *)adev;
 
     /*
-     * Disable continuous mode (if set), and wait for ADC to stop.
+     * Disable continous mode (if set), and wait for ADC to stop.
      */
-    if (GPADC->GP_ADC_CTRL_REG & GPADC_GP_ADC_CTRL_REG_GP_ADC_CONT_Msk) {
-        GPADC->GP_ADC_CTRL_REG &= ~GPADC_GP_ADC_CTRL_REG_GP_ADC_CONT_Msk;
+    GPADC->GP_ADC_CTRL_REG &= ~GPADC_GP_ADC_CTRL_REG_GP_ADC_CONT_Msk;
+    while (GPADC->GP_ADC_CTRL_REG & GPADC_GP_ADC_CTRL_REG_GP_ADC_START_Msk);
+
+    if (dev->dgd_buf[0]) {
+        OS_ENTER_CRITICAL(sr);
+        da1469x_gpadc_dma_buf(dev);
+        OS_EXIT_CRITICAL(sr);
     }
 
-    do {
-        reg = GPADC->GP_ADC_CTRL_REG;
-    } while (reg & GPADC_GP_ADC_CTRL_REG_GP_ADC_START_Msk);
-
-    /* Clear interrupts */
-    GPADC->GP_ADC_CLEAR_INT_REG = 1;
-
-    /* Start the conversion. Enable interrupt delivery */
-    reg |= (GPADC_GP_ADC_CTRL_REG_GP_ADC_MINT_Msk |
-      GPADC_GP_ADC_CTRL_REG_GP_ADC_START_Msk);
-    GPADC->GP_ADC_CTRL_REG = reg;
+    /* Start the conversion.  */
+    GPADC->GP_ADC_CTRL2_REG |= GPADC_GP_ADC_CTRL2_REG_GP_ADC_DMA_EN_Msk;
+    GPADC->GP_ADC_CTRL_REG |= (GPADC_GP_ADC_CTRL_REG_GP_ADC_START_Msk |
+                               GPADC_GP_ADC_CTRL_REG_GP_ADC_CONT_Msk);
 
     return 0;
 }
@@ -255,23 +260,21 @@ da1469x_gpadc_sample(struct adc_dev *adev)
 /**
  * Set buffer to read data into.  Implementation of setbuffer handler.
  * Sets both the primary and secondary buffers for DMA.
- *
- * XXX not using DMA yet, so don't use multiple buffers unless conversion
- * is set to take up some time. Otherwise the system will end up in an
- * interrupt loop.
  */
 static int
 da1469x_gpadc_set_buffer(struct adc_dev *adev, void *buf1, void *buf2,
                          int buf_len)
 {
     struct da1469x_gpadc_dev *dev;
+    int sr;
 
     dev = (struct da1469x_gpadc_dev *)adev;
 
+    OS_ENTER_CRITICAL(sr);
     dev->dgd_buf[0] = buf1;
     dev->dgd_buf[1] = buf2;
-    dev->dgd_buf_idx = 0;
     dev->dgd_buf_len = (buf_len / sizeof(uint16_t));
+    OS_EXIT_CRITICAL(sr);
 
     return 0;
 }
@@ -286,13 +289,13 @@ da1469x_gpadc_release_buffer(struct adc_dev *adev, void *buf, int buf_len)
     dev = (struct da1469x_gpadc_dev *)adev;
 
     OS_ENTER_CRITICAL(sr);
-    if (dev->dgd_buf_idx >= dev->dgd_buf_len || dev->dgd_buf[0] == NULL) {
+    if (dev->dgd_buf[0] == NULL) {
         /*
          * If data RX was stalled, restart it.
          */
         dev->dgd_buf[0] = buf;
-        dev->dgd_buf_idx = 0;
-        GPADC->GP_ADC_CTRL_REG |= (GPADC_GP_ADC_CTRL_REG_GP_ADC_MINT_Msk |
+        da1469x_gpadc_dma_buf(dev);
+        GPADC->GP_ADC_CTRL_REG |= (GPADC_GP_ADC_CTRL_REG_GP_ADC_CONT_Msk |
                                    GPADC_GP_ADC_CTRL_REG_GP_ADC_START_Msk);
     } else if (dev->dgd_buf[1] == NULL) {
         /*
@@ -334,41 +337,34 @@ da1469x_gpadc_size_buffer(struct adc_dev *dev, int chans, int samples)
     return sizeof(uint16_t) * chans * samples;
 }
 
-static void
-da1469x_gpadc_irq(void)
+static int
+da1469x_gpadc_dmairq(void *arg)
 {
-    struct da1469x_gpadc_dev *dev;
+    struct da1469x_gpadc_dev *dev = (struct da1469x_gpadc_dev *)arg;
     struct adc_dev *adev;
     uint16_t *buf;
-    uint32_t res;
-    int full = 0;
-    int rc;
 
-    dev = (struct da1469x_gpadc_dev *)da1469x_gpadc_dev;
-
-    res = GPADC->GP_ADC_RESULT_REG;
-
-    /* Clear interrupts */
-    GPADC->GP_ADC_CLEAR_INT_REG = 1;
-
+    /* swap inactive buf to active slot (if it exists) */
     buf = dev->dgd_buf[0];
-    buf[dev->dgd_buf_idx++] = res;
-    if (dev->dgd_buf_idx >= dev->dgd_buf_len) {
-        /* swap inactive buf to active slot (if it exists) */
-        dev->dgd_buf[0] = dev->dgd_buf[1];
-        dev->dgd_buf[1] = NULL;
-        dev->dgd_buf_idx = 0;
-        full = 1;
+    dev->dgd_buf[0] = dev->dgd_buf[1];
+    dev->dgd_buf[1] = NULL;
+
+    /*
+     * We got DMA interrupt, so it should not be running anymore.
+     */
+    while (dev->dgd_dma[0]->DMA_CTRL_REG & DMA_DMA0_CTRL_REG_DMA_ON_Msk);
+
+    if (dev->dgd_buf[0]) {
+        da1469x_gpadc_dma_buf(dev);
+    } else {
+        GPADC->GP_ADC_CTRL_REG &= ~GPADC_GP_ADC_CTRL_REG_GP_ADC_CONT_Msk;
     }
-    if (dev->dgd_buf[0] && dev->dgd_buf_idx < dev->dgd_buf_len) {
-        GPADC->GP_ADC_CTRL_REG |= GPADC_GP_ADC_CTRL_REG_GP_ADC_START_Msk;
-    }
-    if (full) {
-        adev = &dev->dgd_adc;
-        rc = adev->ad_event_handler_func(adev, NULL, ADC_EVENT_RESULT, buf,
-                                         dev->dgd_buf_len);
-        (void)rc;
-    }
+
+    adev = &dev->dgd_adc;
+    adev->ad_event_handler_func(adev, NULL, ADC_EVENT_RESULT, buf,
+                                dev->dgd_buf_len);
+
+    return 0;
 }
 
 static const struct adc_driver_funcs da1469x_gpadc_funcs = {
@@ -396,11 +392,6 @@ da1469x_gpadc_hwinit(struct da1469x_gpadc_dev *dev,
       CRG_TOP_LDO_VDDD_HIGH_CTRL_REG_LDO_VDDD_HIGH_ENABLE_Msk;
 
     /*
-     * Clear pending interrupts
-     */
-    GPADC->GP_ADC_CLEAR_INT_REG = 1;
-
-    /*
      * ADC logic part clocked with the ADC_CLK (16 MHz or 96 MHz)
      * selected with CLK_PER_REG[ADC_CLK_SEL].
      */
@@ -409,9 +400,7 @@ da1469x_gpadc_hwinit(struct da1469x_gpadc_dev *dev,
     reg |= dgic->dgic_adc_clk_div;
     CRG_PER->CLK_PER_REG = reg;
 
-    if (da1469x_gpadc_resolve_pins(dgdc->dgdc_gpadc_ctrl, &pin0, &pin1)) {
-        return -1;
-    }
+    da1469x_gpadc_resolve_pins(dgdc->dgdc_gpadc_ctrl, &pin0, &pin1);
     if (pin0 >= 0) {
         mcu_gpio_set_pin_function(pin0, MCU_GPIO_MODE_INPUT, MCU_GPIO_FUNC_ADC);
     }
@@ -466,7 +455,14 @@ static int
 da1469x_gpadc_open(struct os_dev *odev, uint32_t wait, void *arg)
 {
     struct da1469x_gpadc_dev *dev;
+    struct da1469x_dma_config cfg = {
+        .src_inc = false,
+        .dst_inc = true,
+        .bus_width = MCU_DMA_BUS_WIDTH_2B,
+        .burst_mode = MCU_DMA_BURST_MODE_DISABLED,
+    };
     int rc;
+    int dma_cidx;
 
     dev = (struct da1469x_gpadc_dev *)odev;
 
@@ -479,7 +475,17 @@ da1469x_gpadc_open(struct os_dev *odev, uint32_t wait, void *arg)
         if (da1469x_gpadc_hwinit(dev, arg)) {
             rc = OS_EINVAL;
         }
-        NVIC_EnableIRQ(ADC_IRQn);
+        dma_cidx = dev->dgd_init_cfg->dgic_dma_cidx;
+        cfg.priority = dev->dgd_init_cfg->dgic_dma_prio;
+        if (da1469x_dma_acquire_periph(dma_cidx, MCU_DMA_PERIPH_GPADC,
+                                       dev->dgd_dma)) {
+            rc = OS_ERROR;
+        }
+        da1469x_dma_configure(dev->dgd_dma[0], &cfg, da1469x_gpadc_dmairq, dev);
+        dev->dgd_dma[0]->DMA_A_START_REG = (uint32_t)&GPADC->GP_ADC_RESULT_REG;
+    }
+    if (rc) {
+        --dev->dgd_adc.ad_ref_cnt;
     }
     os_mutex_release(&dev->dgd_adc.ad_lock);
     return rc;
@@ -499,14 +505,12 @@ da1469x_gpadc_close(struct os_dev *odev)
         return rc;
     }
     if (--dev->dgd_adc.ad_ref_cnt == 0) {
-        NVIC_DisableIRQ(ADC_IRQn);
+        da1469x_dma_release_channel(dev->dgd_dma[0]);
         /*
          * uninit
          * XXXX what state should the pins be left in?
          */
-        if (da1469x_gpadc_resolve_pins(GPADC->GP_ADC_CTRL_REG, &pin0, &pin1)) {
-            return -1;
-        }
+        da1469x_gpadc_resolve_pins(GPADC->GP_ADC_CTRL_REG, &pin0, &pin1);
         if (pin0 >= 0) {
             mcu_gpio_set_pin_function(pin0, MCU_GPIO_MODE_INPUT_PULLDOWN, 0);
         }
@@ -514,7 +518,6 @@ da1469x_gpadc_close(struct os_dev *odev)
             mcu_gpio_set_pin_function(pin0, MCU_GPIO_MODE_INPUT_PULLDOWN, 0);
         }
         GPADC->GP_ADC_CTRL_REG = 0;
-        GPADC->GP_ADC_CLEAR_INT_REG = 1;
         CRG_TOP->LDO_VDDD_HIGH_CTRL_REG &=
           ~CRG_TOP_LDO_VDDD_HIGH_CTRL_REG_LDO_VDDD_HIGH_ENABLE_Msk;
 
@@ -542,6 +545,5 @@ da1469x_gpadc_init(struct os_dev *odev, void *arg)
 
     dev->dgd_adc.ad_funcs = &da1469x_gpadc_funcs;
 
-    NVIC_SetVector(ADC_IRQn, (uint32_t)da1469x_gpadc_irq);
     return 0;
 }
