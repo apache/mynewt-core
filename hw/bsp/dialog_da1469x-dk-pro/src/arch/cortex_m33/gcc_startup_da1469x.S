@@ -29,8 +29,9 @@
 #else
     .equ    Stack_Size, 0xC00
 #endif
-    .equ    SYS_CTRL_REG, 0x50000024
-    .equ    CACHE_FLASH_REG, 0x100C0040
+    .equ    SYS_CTRL_REG,       0x50000024
+    .equ    CACHE_FLASH_REG,    0x100C0040
+    .equ    RESET_STAT_REG,     0x500000BC
 
     .globl  __StackTop
     .globl  __StackLimit
@@ -129,6 +130,23 @@ __isr_vector:
     .long   0                       /* Reserved */
     .size   __isr_vector, . - __isr_vector
 
+    .section .text_ram
+    .thumb
+    .thumb_func
+    .align 2
+    .globl wakeup_handler
+    .type  wakeup_handler, %function
+wakeup_handler:
+    ldr     r0, =RESET_STAT_REG
+    ldr     r0, [r0, #0]
+    teq     r0, #0
+    ite     eq
+    ldreq   r3, =da1469x_m33_wakeup
+    ldrne   r3, =Reset_Handler
+    bx      r3
+
+    .size   wakeup_handler, . - wakeup_handler
+
     .text
     .thumb
     .thumb_func
@@ -211,6 +229,11 @@ Reset_Handler:
     ldr     r0, =__HeapBase
     ldr     r1, =__HeapLimit
     bl      _sbrkInit
+
+/* Set reset handler to wakeup handler so we can handle wake up from deep sleep */
+    ldr     r0, =__intvect_start__
+    ldr     r1, =wakeup_handler
+    str     r1, [r0, #4]
 
     bl      SystemInit
     bl      hal_system_init

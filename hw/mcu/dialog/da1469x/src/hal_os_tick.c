@@ -23,6 +23,7 @@
 #include "hal/hal_os_tick.h"
 #include "hal/hal_system.h"
 #include "os/os_trace_api.h"
+#include "da1469x_priv.h"
 #include "DA1469xAB.h"
 
 struct hal_os_tick {
@@ -149,8 +150,7 @@ os_tick_idle(os_time_t ticks)
         hal_os_tick_set_timer_trigger_val(new_trigger_val);
     }
 
-    __DSB();
-    __WFI();
+    da1469x_sleep(ticks);
 
     if (ticks > 0) {
         hal_os_tick_handler();

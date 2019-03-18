@@ -222,22 +222,23 @@ da1469x_cmac_init(void)
     struct cmac_config *cmac_config;
     struct cmac_config_dynamic *cmac_config_dyn;
 
-    /* Set PDC entries to wakeup CMAC from M33 and M33 from CMAC */
+    /* Add PDC entry to wake up CMAC from M33 */
     g_da1469x_pdc_sys2cmac = da1469x_pdc_add(MCU_PDC_TRIGGER_MAC_TIMER,
                                              MCU_PDC_MASTER_CMAC,
                                              MCU_PDC_EN_XTAL);
     da1469x_pdc_set(g_da1469x_pdc_sys2cmac);
     da1469x_pdc_ack(g_da1469x_pdc_sys2cmac);
 
-    g_da1469x_pdc_cmac2sys = da1469x_pdc_add(MCU_PDC_TRIGGER_COMBO,
-                                             MCU_PDC_MASTER_M33,
-                                             MCU_PDC_EN_XTAL);
-    da1469x_pdc_set(g_da1469x_pdc_cmac2sys);
-    da1469x_pdc_ack(g_da1469x_pdc_cmac2sys);
-
-    /* Enable PD_RAD */
-    CRG_TOP->PMU_CTRL_REG &= ~CRG_TOP_PMU_CTRL_REG_RADIO_SLEEP_Msk;
-    while (!(CRG_TOP->SYS_STAT_REG & CRG_TOP_SYS_STAT_REG_RAD_IS_UP_Msk));
+    /* Add PDC entry to wake up M33 from CMAC, if does not exist yet */
+    g_da1469x_pdc_cmac2sys = da1469x_pdc_find(MCU_PDC_TRIGGER_COMBO,
+                                              MCU_PDC_MASTER_M33, 0);
+    if (g_da1469x_pdc_cmac2sys < 0) {
+        g_da1469x_pdc_cmac2sys = da1469x_pdc_add(MCU_PDC_TRIGGER_COMBO,
+                                                 MCU_PDC_MASTER_M33,
+                                                 MCU_PDC_EN_XTAL);
+        da1469x_pdc_set(g_da1469x_pdc_cmac2sys);
+        da1469x_pdc_ack(g_da1469x_pdc_cmac2sys);
+    }
 
     /* Enable Radio LDO */
     CRG_TOP->POWER_CTRL_REG |= CRG_TOP_POWER_CTRL_REG_LDO_RADIO_ENABLE_Msk;
