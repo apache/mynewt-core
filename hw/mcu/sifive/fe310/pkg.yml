@@ -29,4 +29,7 @@ pkg.deps:
     - "@apache-mynewt-core/hw/hal"
     - "@apache-mynewt-core/hw/mcu/sifive"
 
+pkg.deps.BUS_DRIVER_PRESENT:
+    - "@apache-mynewt-core/hw/bus/drivers/spi_hal"
+
 pkg.cflags: -march=rv32imac -mabi=ilp32

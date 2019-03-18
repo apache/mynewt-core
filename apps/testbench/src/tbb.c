@@ -40,12 +40,15 @@
 #include "nimble/ble.h"
 #include "host/ble_hs.h"
 #include "services/gap/ble_svc_gap.h"
+#include "host/util/util.h"
 
 #include "oic/oc_gatt.h"
 
 #include "tbb.h"
 
 static int tbb_gap_event(struct ble_gap_event *event, void *arg);
+
+static uint8_t tbb_own_addr_type;
 
 void
 tbb_print_addr(const void *addr)
@@ -142,7 +145,7 @@ tbb_advertise(void)
     memset(&adv_params, 0, sizeof adv_params);
     adv_params.conn_mode = BLE_GAP_CONN_MODE_UND;
     adv_params.disc_mode = BLE_GAP_DISC_MODE_GEN;
-    rc = ble_gap_adv_start(BLE_OWN_ADDR_PUBLIC, NULL, BLE_HS_FOREVER,
+    rc = ble_gap_adv_start(tbb_own_addr_type, NULL, BLE_HS_FOREVER,
                            &adv_params, tbb_gap_event, NULL);
     if (rc != 0) {
         MODLOG_DFLT(ERROR, "error enabling advertisement; rc=%d\n", rc);
@@ -256,6 +259,16 @@ tbb_on_reset(int reason)
 static void
 tbb_on_sync(void)
 {
+    int rc;
+
+    /* Ensure we have a Bluetooth address. */
+    rc = ble_hs_util_ensure_addr(0);
+    assert(rc == 0);
+
+    /* Determine what type of address we'll be using. */
+    rc = ble_hs_id_infer_auto(0, &tbb_own_addr_type);
+    assert(rc == 0);
+
     /* Begin advertising. */
     tbb_advertise();
 }

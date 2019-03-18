@@ -37,6 +37,7 @@ extern struct os_task_list g_os_sleep_list;
 extern struct os_task_stailq g_os_task_list;
 extern struct os_callout_list g_callout_list;
 
+void os_mempool_module_init(void);
 void os_msys_init(void);
 
 /**

@@ -32,6 +32,13 @@
 #include "trng/trng.h"
 #include "trng_k64f/trng_k64f.h"
 #endif
+#if MYNEWT_VAL(CRYPTO)
+#include "crypto/crypto.h"
+#include "crypto_k64f/crypto_k64f.h"
+#endif
+#if MYNEWT_VAL(ENC_FLASH_DEV)
+#include <ef_crypto/ef_crypto.h>
+#endif
 #if MYNEWT_VAL(UART_0) || MYNEWT_VAL(UART_1) || MYNEWT_VAL(UART_2) || \
     MYNEWT_VAL(UART_3) || MYNEWT_VAL(UART_4) || MYNEWT_VAL(UART_5)
 #include "uart/uart.h"
@@ -69,38 +76,55 @@ static struct uart_dev os_bsp_uart5;
 static struct trng_dev os_bsp_trng;
 #endif
 
+#if MYNEWT_VAL(CRYPTO)
+static struct crypto_dev os_bsp_crypto;
+#endif
+
 /*
  * What memory to include in coredump.
  */
 static const struct hal_bsp_mem_dump dump_cfg[] = {
     [0] = {
-	.hbmd_start = &__DATA_ROM,
+        .hbmd_start = &__DATA_ROM,
         .hbmd_size = RAM_SIZE
     }
 };
 
 static void init_hardware(void)
 {
-    // Disable the MPU otherwise USB cannot access the bus
+    /* Disable the MPU otherwise USB cannot access the bus */
     MPU->CESR = 0;
 
-    // Enable all the ports
+    /* Enable all the ports */
     SIM->SCGC5 |= (SIM_SCGC5_PORTA_MASK | SIM_SCGC5_PORTB_MASK | SIM_SCGC5_PORTC_MASK | SIM_SCGC5_PORTD_MASK |
                    SIM_SCGC5_PORTE_MASK);
 }
 
 extern void BOARD_BootClockRUN(void);
 
+#if MYNEWT_VAL(ENC_FLASH_DEV)
+static struct eflash_crypto_dev enc_flash_dev0 = {
+    .ecd_dev = {
+        .efd_hal = {
+            .hf_itf = &enc_flash_funcs,
+        },
+        .efd_hwdev = &mk64f12_flash_dev,
+    }
+};
+#endif
+
 const struct hal_flash *
 hal_bsp_flash_dev(uint8_t id)
 {
-    /*
-     * Internal flash mapped to id 0.
-     */
-    if (id != 0) {
-        return NULL;
+    if (id == 0) {
+        return &mk64f12_flash_dev;
     }
-    return &mk64f12_flash_dev;
+#if MYNEWT_VAL(ENC_FLASH_DEV)
+    if (id == 1) {
+        return &enc_flash_dev0.ecd_dev.efd_hal;
+    }
+#endif
+    return NULL;
 }
 
 const struct hal_bsp_mem_dump *
@@ -169,7 +193,8 @@ hal_bsp_init(void)
     int rc = 0;
 
     (void)rc;
-    // Init pinmux and other hardware setup.
+
+    /* Init pinmux and other hardware setup. */
     init_hardware();
     BOARD_BootClockRUN();
 
@@ -177,6 +202,13 @@ hal_bsp_init(void)
     rc = os_dev_create(&os_bsp_trng.dev, "trng",
                        OS_DEV_INIT_KERNEL, OS_DEV_INIT_PRIO_DEFAULT,
                        k64f_trng_dev_init, NULL);
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(CRYPTO)
+    rc = os_dev_create(&os_bsp_crypto.dev, "crypto",
+                       OS_DEV_INIT_KERNEL, OS_DEV_INIT_PRIO_DEFAULT,
+                       k64f_crypto_dev_init, NULL);
     assert(rc == 0);
 #endif
 

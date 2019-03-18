@@ -26,3 +26,7 @@ syscfg.defs:
     TRNG:
         description: 'Enable True Random Number Generator (RNGA)'
         value: 0
+
+    CRYPTO:
+        description: 'Enable cryptograpy accelerator (CAU)'
+        value: 0

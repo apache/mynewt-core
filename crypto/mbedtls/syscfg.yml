@@ -44,6 +44,9 @@ syscfg.defs:
     value: 0
 
   # Ciphers
+  MBEDTLS_AES_ALT:
+    description: 'Set to enable HW based AES'
+    value: 0
   MBEDTLS_AES_C:
     value: 1
   MBEDTLS_AES_ROM_TABLES:

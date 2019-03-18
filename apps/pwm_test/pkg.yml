@@ -30,3 +30,4 @@ pkg.deps:
     - "@apache-mynewt-core/hw/drivers/pwm"
     - "@apache-mynewt-core/util/easing"
     - "@apache-mynewt-core/sys/log/stub"
+    - "@apache-mynewt-core/sys/shell"

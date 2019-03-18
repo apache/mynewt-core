@@ -50,6 +50,10 @@
 #include "trng/trng.h"
 #include "trng_nrf52/trng_nrf52.h"
 #endif
+#if MYNEWT_VAL(CRYPTO)
+#include "crypto/crypto.h"
+#include "crypto_nrf52/crypto_nrf52.h"
+#endif
 #if MYNEWT_VAL(UART_0) || MYNEWT_VAL(UART_1)
 #include "uart/uart.h"
 #include "uart_hal/uart_hal.h"
@@ -77,6 +81,10 @@ static struct pwm_dev os_bsp_pwm3;
 
 #if MYNEWT_VAL(TRNG)
 static struct trng_dev os_bsp_trng;
+#endif
+
+#if MYNEWT_VAL(CRYPTO)
+static struct crypto_dev os_bsp_crypto;
 #endif
 
 #if MYNEWT_VAL(UART_0)
@@ -312,6 +320,21 @@ nrf52_periph_create_trng(void)
 }
 
 static void
+nrf52_periph_create_crypto(void)
+{
+    int rc;
+
+    (void)rc;
+
+#if MYNEWT_VAL(CRYPTO)
+    rc = os_dev_create(&os_bsp_crypto.dev, "crypto",
+                       OS_DEV_INIT_PRIMARY, OS_DEV_INIT_PRIO_DEFAULT,
+                       nrf52_crypto_dev_init, NULL);
+    assert(rc == 0);
+#endif
+}
+
+static void
 nrf52_periph_create_uart(void)
 {
     int rc;
@@ -431,6 +454,7 @@ nrf52_periph_create(void)
     nrf52_periph_create_adc();
     nrf52_periph_create_pwm();
     nrf52_periph_create_trng();
+    nrf52_periph_create_crypto();
     nrf52_periph_create_uart();
     nrf52_periph_create_i2c();
     nrf52_periph_create_spi();

@@ -20,6 +20,7 @@
 #ifndef H_DEFS_SECTIONS_
 #define H_DEFS_SECTIONS_
 
+#include <mcu/mcu.h>
 #include <bsp/bsp.h>
 
 #ifdef __cplusplus
@@ -42,6 +43,11 @@ extern "C" {
 #endif
 #ifndef sec_bss_nz_core
 #define sec_bss_nz_core
+#endif
+
+/* Code which should be placed and executed from RAM */
+#ifndef sec_text_ram_core
+#define sec_text_ram_core
 #endif
 
 /**

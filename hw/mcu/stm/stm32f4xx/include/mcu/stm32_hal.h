@@ -73,8 +73,12 @@ struct stm32_hal_spi_cfg {
 
 #define STM32_HAL_TIMER_MAX     (3)
 
-/* hal_trng */
+/* hw/drivers/trng */
 #include "stm32f4xx_hal_rng.h"
+
+/* hw/drivers/crypto */
+#include "stm32f4xx_hal_cryp.h"
+#include "stm32f4xx_hal_rcc_ex.h"
 
 /* hal_flash */
 #include "stm32f4xx_hal_def.h"

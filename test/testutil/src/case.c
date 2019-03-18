@@ -82,36 +82,11 @@ tu_case_set_name(const char *name)
     tu_case_name = name;
 }
 
-/**
- * Configures a callback that gets executed at the end of each test.
- * This callback is cleared when the current test completes.
- *
- * @param cb -  The callback to execute at the end of each test case.
- * @param cb_arg - An optional argument that gets passed to the
- *                                  callback.
- */
-/*
- * Called to initialize test (after tu_suite_pre_cb and before 
- */
 void
-tu_case_set_init_cb(tu_init_test_fn_t *cb, void *cb_arg)
+tu_case_set_post_test_cb(tu_post_test_fn_t *cb, void *cb_arg)
 {
-    tc_config.tc_case_init_cb = cb;
-    tc_config.tc_case_init_arg = cb_arg;
-}
-
-void
-tu_case_set_pre_cb(tu_pre_test_fn_t *cb, void *cb_arg)
-{
-    tc_config.tc_case_pre_test_cb = cb;
-    tc_config.tc_case_pre_arg = cb_arg;
-}
-
-void
-tu_case_set_post_cb(tu_post_test_fn_t *cb, void *cb_arg)
-{
-    tc_config.tc_case_post_test_cb = cb;
-    tc_config.tc_case_post_arg = cb_arg;
+    tu_config.post_test_cb = cb;
+    tu_config.post_test_arg = cb_arg;
 }
 
 void
@@ -119,11 +94,12 @@ tu_case_init(const char *name)
 {
     tu_case_reported = 0;
     tu_case_failed = 0;
-
     tu_case_set_name(name);
 
-    if (tc_config.tc_case_init_cb != NULL) {
-        tc_config.tc_case_init_cb(tc_config.tc_case_init_arg);
+    /* XXX: Deprecated; remove after next release. */
+    if (tu_config.deprecated.tc_case_init_cb != NULL) {
+        tu_config.deprecated.tc_case_init_cb(
+            tu_config.deprecated.tc_case_init_arg);
     }
 }
 
@@ -131,23 +107,20 @@ void
 tu_case_complete(void)
 {
     tu_case_idx++;
-    tu_case_set_pre_cb(NULL, NULL);
-    tu_case_set_post_cb(NULL, NULL);
-}
-
-void
-tu_case_pre_test(void)
-{
-    if (tc_config.tc_case_pre_test_cb != NULL) {
-        tc_config.tc_case_pre_test_cb(tc_config.tc_case_pre_arg);
-    }
+    tu_case_set_post_test_cb(NULL, NULL);
 }
 
 void
 tu_case_post_test(void)
 {
-    if (tc_config.tc_case_post_test_cb != NULL) {
-        tc_config.tc_case_post_test_cb(tc_config.tc_case_post_arg);
+    if (tu_config.post_test_cb != NULL) {
+        tu_config.post_test_cb(tu_config.post_test_arg);
+    }
+
+    /* XXX: Deprecated; remove after next release. */
+    if (tu_config.deprecated.tc_case_post_test_cb != NULL) {
+        tu_config.deprecated.tc_case_post_test_cb(
+            tu_config.deprecated.tc_case_post_test_cb);
     }
 }
 
@@ -161,18 +134,10 @@ tu_case_buf_clear(void)
 static void
 tu_case_write_pass_buf(void)
 {
-#if MYNEWT_VAL(SELFTEST)
-    if (ts_config.ts_print_results) {
-        printf("[pass] %s/%s %s\n", ts_current_config->ts_suite_name,
-               tu_case_name, tu_case_buf);
-        fflush(stdout);
-    }
-#endif
-
     tu_case_reported = 1;
 
-    if (ts_config.ts_case_pass_cb != NULL) {
-        ts_config.ts_case_pass_cb(tu_case_buf, ts_config.ts_case_pass_arg);
+    if (tu_config.pass_cb != NULL) {
+        tu_config.pass_cb(tu_case_buf, tu_config.pass_arg);
     }
 
     tu_case_buf_clear();
@@ -194,18 +159,10 @@ tu_case_fail(void)
     tu_suite_failed = 1;
     tu_any_failed = 1;
 
-#if MYNEWT_VAL(SELFTEST)
-    if (ts_config.ts_print_results) {
-        printf("[FAIL] %s/%s %s", ts_current_config->ts_suite_name,
-               tu_case_name, tu_case_buf);
-        fflush(stdout);
-    }
-#endif
-
     tu_case_post_test();
 
-    if (ts_config.ts_case_fail_cb != NULL) {
-        ts_config.ts_case_fail_cb(tu_case_buf, ts_config.ts_case_fail_arg);
+    if (tu_config.fail_cb != NULL) {
+        tu_config.fail_cb(tu_case_buf, tu_config.fail_arg);
     }
 
     tu_case_buf_clear();
@@ -254,7 +211,7 @@ tu_case_fail_assert(int fatal, const char *file, int line,
     va_list ap;
     int rc;
 
-    if (ts_config.ts_system_assert) {
+    if (tu_config.ts_system_assert) {
         assert(0);
     }
 

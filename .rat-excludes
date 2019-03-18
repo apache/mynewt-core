@@ -356,6 +356,9 @@ nucleo-f413zh
 # NUCLEO-L467rg BSP - BSD License
 nucleo-l476rg
 
+# NUCLEO-F072RB BSP - BSD License
+nucleo-f072rb
+
 # Microchip PIC32 SDK - BSD License
 p32mz2048efg100.h
 pic32_init_cache.S

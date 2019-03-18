@@ -27,22 +27,21 @@ pkg.keywords:
 pkg.deps:
     - "@apache-mynewt-core/boot/bootutil"
     - "@apache-mynewt-core/boot/split_app"
-    - "@apache-mynewt-core/encoding/json/test"
     - "@apache-mynewt-core/kernel/os"
-    - "@apache-mynewt-core/kernel/os/test"
     - "@apache-mynewt-core/mgmt/imgmgr"
     - "@apache-mynewt-core/mgmt/oicmgr"
     - "@apache-mynewt-core/sys/config"
     - "@apache-mynewt-core/sys/console/full"
-    - "@apache-mynewt-core/sys/flash_map"
-    - "@apache-mynewt-core/sys/flash_map/test"
     - "@apache-mynewt-core/sys/id"
     - "@apache-mynewt-core/sys/log/full"
     - "@apache-mynewt-core/sys/log/modlog"
     - "@apache-mynewt-core/sys/stats/full"
-    - "@apache-mynewt-core/test/crash_test"
     - "@apache-mynewt-core/test/runtest"
     - "@apache-mynewt-core/test/testutil"
+
+    # Unit test packages.
+    - "@apache-mynewt-core/encoding/json/hosttest"
+    - "@apache-mynewt-core/util/cbmem/hosttest"
 
 pkg.deps.TESTBENCH_BLE:
     - "@apache-mynewt-nimble/nimble/controller"
@@ -50,12 +49,5 @@ pkg.deps.TESTBENCH_BLE:
     - "@apache-mynewt-nimble/nimble/host/services/gap"
     - "@apache-mynewt-nimble/nimble/host/services/gatt"
     - "@apache-mynewt-nimble/nimble/host/store/ram"
+    - "@apache-mynewt-nimble/nimble/host/util"
     - "@apache-mynewt-nimble/nimble/transport/ram"
-
-pkg.deps.CONFIG_NFFS:
-    - "@apache-mynewt-core/fs/nffs"
-    - "@apache-mynewt-core/fs/nffs/test"
-
-pkg.deps.CONFIG_FCB:
-    - "@apache-mynewt-core/fs/fcb"
-    - "@apache-mynewt-core/fs/fcb/test"

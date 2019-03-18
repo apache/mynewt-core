@@ -156,13 +156,13 @@ nrf52_irqm_handler(struct nrf52_hal_spi *spi)
             len = spi->nhs_buflen - spi->nhs_bytes_txd;
             len = min(SPIM_TXD_MAXCNT_MAX, len);
             spim->TXD.PTR = (uint32_t)spi->nhs_txbuf;
-            spim->TXD.MAXCNT = (uint8_t)len;
+            spim->TXD.MAXCNT = len;
 
             /* If no rxbuf, we need to set rxbuf and maxcnt to 1 */
             if (spi->nhs_rxbuf) {
                 spi->nhs_rxbuf += xfr_bytes;
                 spim->RXD.PTR    = (uint32_t)spi->nhs_rxbuf;
-                spim->RXD.MAXCNT = (uint8_t)len;
+                spim->RXD.MAXCNT = len;
             }
             spim->TASKS_START = 1;
         } else {
@@ -367,6 +367,16 @@ hal_spi_config_master(struct nrf52_hal_spi *spi,
         case 8000:
             frequency = SPIM_FREQUENCY_FREQUENCY_M8;
             break;
+#if defined(SPIM_FREQUENCY_FREQUENCY_M16)
+        case 16000:
+            frequency = SPIM_FREQUENCY_FREQUENCY_M16;
+            break;
+#endif
+#if defined(SPIM_FREQUENCY_FREQUENCY_M32)
+        case 32000:
+            frequency = SPIM_FREQUENCY_FREQUENCY_M32;
+            break;
+#endif
         default:
             frequency = 0;
             rc = EINVAL;

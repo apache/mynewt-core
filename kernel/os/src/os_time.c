@@ -98,13 +98,6 @@ os_time_advance(int ticks)
         }
     }
 }
-#else
-void
-os_time_advance(int ticks)
-{
-    g_os_time += ticks;
-}
-#endif
 
 void
 os_time_delay(os_time_t osticks)
@@ -118,6 +111,21 @@ os_time_delay(os_time_t osticks)
         os_sched(NULL);
     }
 }
+
+#else
+
+void
+os_time_advance(int ticks)
+{
+    g_os_time += ticks;
+}
+
+void
+os_time_delay(os_time_t osticks)
+{
+}
+
+#endif
 
 /**
  * Searches the list of registered time change listeners for the specified

@@ -20,7 +20,11 @@
 #include <hal/hal_nvreg.h>
 #include <mcu/stm32_hal.h>
 
-#if defined RTC_BACKUP_SUPPORT
+#if defined(RTC_BACKUP_SUPPORT) && defined(HAL_PWR_MODULE_ENABLED)
+#define PWR_ENABLED 1
+#endif
+
+#if PWR_ENABLED
 #define HAL_NVREG_MAX (RTC_BKP_NUMBER)
 #else
 #define HAL_NVREG_MAX (0)
@@ -29,7 +33,7 @@
 /* RTC backup registers are 32-bits wide */
 #define HAL_NVREG_WIDTH_BYTES (4)
 
-#if defined RTC_BACKUP_SUPPORT
+#if PWR_ENABLED
 static volatile uint32_t *regs[HAL_NVREG_MAX] = {
 #if HAL_NVREG_MAX > 0
     &RTC->BKP0R,
@@ -72,12 +76,12 @@ static volatile uint32_t *regs[HAL_NVREG_MAX] = {
     &RTC->BKP31R,
 #endif /* HAL_NVREG_MAX > 20 */
 };
-#endif /* RTC_BACKUP_SUPPORT */
+#endif /* PWR_ENABLED */
 
 void
 hal_nvreg_write(unsigned int reg, uint32_t val)
 {
-#if defined RTC_BACKUP_SUPPORT
+#if PWR_ENABLED
     if (reg < HAL_NVREG_MAX) {
         HAL_PWR_EnableBkUpAccess();
         *regs[reg] = val;
@@ -90,7 +94,7 @@ uint32_t
 hal_nvreg_read(unsigned int reg)
 {
     uint32_t val = 0;
-#if defined RTC_BACKUP_SUPPORT
+#if PWR_ENABLED
     if (reg < HAL_NVREG_MAX) {
         HAL_PWR_EnableBkUpAccess();
         val = *regs[reg];

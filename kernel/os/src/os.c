@@ -287,6 +287,7 @@ os_pkg_init(void)
     assert(err == OS_OK);
 
     os_msys_init();
+    os_mempool_module_init();
 }
 
 /**

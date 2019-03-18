@@ -333,7 +333,7 @@ nmgr_reset(struct mgmt_cbuf *cb)
 
     rc = mgmt_cbuf_setoerr(cb, 0);
     if (rc != 0) {
-        return rc;
+        return MGMT_ERR_EUNKNOWN;
     }
 
     return 0;

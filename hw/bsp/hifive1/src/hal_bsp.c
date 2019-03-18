@@ -25,53 +25,11 @@
 #include <flash_map/flash_map.h>
 #include <hal/hal_bsp.h>
 #include <hal/hal_flash.h>
-#include <hal/hal_spi.h>
-#include <hal/hal_watchdog.h>
 #include <mcu/fe310_hal.h>
-#if MYNEWT_VAL(UART_0)
-#include <uart/uart.h>
-#include <uart_hal/uart_hal.h>
-#endif
+#include <mcu/fe310_periph.h>
 #include <bsp/bsp.h>
-#include <env/freedom-e300-hifive1/platform.h>
-#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
-#include "bus/bus.h"
-#if MYNEWT_VAL(SPI_0) || MYNEWT_VAL(SPI_1) || MYNEWT_VAL(SPI_2)
-#include "bus/spi.h"
-#endif
-#endif
-
-#if MYNEWT_VAL(UART_0)
-static struct uart_dev os_bsp_uart0;
-static const struct fe310_uart_cfg os_bsp_uart0_cfg = {
-    .suc_pin_tx = HIFIVE_UART0_TX,
-    .suc_pin_rx = HIFIVE_UART0_RX,
-};
-#endif
-
-#if MYNEWT_VAL(TIMER_0)
-extern struct fe310_hal_tmr fe310_pwm2;
-#endif
-#if MYNEWT_VAL(TIMER_1)
-extern struct fe310_hal_tmr fe310_pwm1;
-#endif
-#if MYNEWT_VAL(TIMER_2)
-extern struct fe310_hal_tmr fe310_pwm0;
-#endif
-
-#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
-#if MYNEWT_VAL(SPI_1)
-static const struct bus_spi_dev_cfg spi1_cfg = {
-    .spi_num = 1,
-};
-static struct bus_spi_dev spi1_bus;
-#endif
-#if MYNEWT_VAL(SPI_2)
-static const struct bus_spi_dev_cfg spi2_cfg = {
-    .spi_num = 2,
-};
-static struct bus_spi_dev spi2_bus;
-#endif
+#if MYNEWT_VAL(SPIFLASH)
+#include <spiflash/spiflash.h>
 #endif
 
 /*
@@ -84,16 +42,33 @@ static const struct hal_bsp_mem_dump dump_cfg[] = {
     }
 };
 
+#if MYNEWT_VAL(SPIFLASH)
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+struct bus_spi_node_cfg flash_spi_cfg = {
+    .node_cfg.bus_name = MYNEWT_VAL(BSP_FLASH_SPI_BUS),
+    .pin_cs = MYNEWT_VAL(SPIFLASH_SPI_CS_PIN),
+    .mode = BUS_SPI_MODE_3,
+    .data_order = HAL_SPI_MSB_FIRST,
+    .freq = MYNEWT_VAL(SPIFLASH_BAUDRATE),
+};
+#endif
+#endif
+
+static const struct hal_flash *flash_devs[] = {
+    [0] = &fe310_flash_dev,
+#if MYNEWT_VAL(SPIFLASH)
+    [1] = &spiflash_dev.hal,
+#endif
+};
+
 const struct hal_flash *
 hal_bsp_flash_dev(uint8_t id)
 {
-    /*
-     * Internal flash mapped to id 0.
-     */
-    if (id != 0) {
+    if (id >= ARRAY_SIZE(flash_devs)) {
         return NULL;
     }
-    return &fe310_flash_dev;
+
+    return flash_devs[id];
 }
 
 const struct hal_bsp_mem_dump *
@@ -109,47 +84,23 @@ hal_bsp_init(void)
     int rc;
 
     (void)rc;
-#if MYNEWT_VAL(TIMER_0)
-    rc = hal_timer_init(0, (void *)&fe310_pwm2);
-    assert(rc == 0);
-#endif
-#if MYNEWT_VAL(TIMER_1)
-    rc = hal_timer_init(1, (void *)&fe310_pwm1);
-    assert(rc == 0);
-#endif
-#if MYNEWT_VAL(TIMER_2)
-    rc = hal_timer_init(2, (void *)&fe310_pwm0);
-    assert(rc == 0);
-#endif
+    fe310_periph_create();
 
-#if (MYNEWT_VAL(OS_CPUTIME_TIMER_NUM) >= 0)
-    rc = os_cputime_init(MYNEWT_VAL(OS_CPUTIME_FREQ));
-    assert(rc == 0);
-#endif
-
-#if MYNEWT_VAL(SPI_1)
+#if MYNEWT_VAL(SPIFLASH)
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
-    rc = bus_spi_dev_create("spi1", &spi1_bus, (struct bus_spi_dev_cfg *)&spi1_cfg);
-    assert(rc == 0);
-#else
-    rc = hal_spi_init(1, NULL, HAL_SPI_TYPE_MASTER);
-    assert(rc == 0);
-#endif
-#endif
-#if MYNEWT_VAL(SPI_2)
-#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
-    rc = bus_spi_dev_create("spi2", &spi2_bus, (struct bus_spi_dev_cfg *)&spi2_cfg);
-    assert(rc == 0);
-#else
-    rc = hal_spi_init(2, NULL, HAL_SPI_TYPE_MASTER);
-    assert(rc == 0);
-#endif
-#endif
+    /* Create external flash dev */
+    rc = spiflash_create_spi_dev(&spiflash_dev.dev,
+        MYNEWT_VAL(BSP_FLASH_SPI_NAME), &flash_spi_cfg);
 
-#if MYNEWT_VAL(UART_0)
-    rc = os_dev_create((struct os_dev *) &os_bsp_uart0, "uart0",
-      OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *)&os_bsp_uart0_cfg);
     assert(rc == 0);
 #endif
+#endif
+}
 
+int
+hal_bsp_hw_id(uint8_t *id, int max_len)
+{
+    /* XXX figure out what to put here */
+
+    return 0;
 }
