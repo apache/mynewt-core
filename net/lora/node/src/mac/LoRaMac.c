@@ -838,7 +838,8 @@ lora_mac_process_radio_tx(struct os_event *ev)
     if (LM_F_NODE_ACK_REQ()) {
         getPhy.Attribute = PHY_ACK_TIMEOUT;
         phyParam = RegionGetPhyParam(LoRaMacRegion, &getPhy);
-        os_cputime_timer_relative(&g_lora_mac_data.rtx_timer, curTime +
+        os_cputime_timer_stop(&g_lora_mac_data.rtx_timer);
+        os_cputime_timer_relative(&g_lora_mac_data.rtx_timer,
                            ((g_lora_mac_data.rx_win2_delay + phyParam.Value) * 1000));
     } else {
         /*
@@ -858,7 +859,8 @@ lora_mac_process_radio_tx(struct os_event *ev)
                 timeout += (uint32_t)((RxWindow2Config.tsymbol * 1000) *
                     RxWindow2Config.WindowTimeout);
             }
-            os_cputime_timer_relative(&g_lora_mac_data.rtx_timer, curTime + timeout);
+            os_cputime_timer_stop(&g_lora_mac_data.rtx_timer);
+            os_cputime_timer_relative(&g_lora_mac_data.rtx_timer, timeout);
         }
     }
 

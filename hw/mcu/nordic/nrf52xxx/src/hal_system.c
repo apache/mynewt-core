@@ -38,7 +38,6 @@ hal_system_init(void)
 #if MYNEWT_VAL(MCU_DCDC_ENABLED)
     NRF_POWER->DCDCEN = 1;
 #endif
-    //nrf_hfxo_manager_init();
 }
 
 void

@@ -92,6 +92,7 @@ syscfg.defs:
                 Sets public or private lora network. A value of 1 means
                 the network is public; private otherwise
         value: 0
+
     LORA_LP_CLOCK:
         description: >
             Used by BSP packages to configure LP clock for the LoRa system.
