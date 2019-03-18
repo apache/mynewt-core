@@ -37,6 +37,14 @@ syscfg.defs:
             Specifies settling time [ms] of 32K crystal oscillator.
         value: 8000
 
+    MCU_DEEP_SLEEP:
+        description: >
+            Enable deep sleep for M33 core.
+            This is an experimental feature and still under active
+            development. It is recommended to keep it disabled for
+            general usage.
+        value: 0
+
     MCU_FLASH_MIN_WRITE_SIZE:
         description: >
             Specifies the required alignment for internal flash writes.

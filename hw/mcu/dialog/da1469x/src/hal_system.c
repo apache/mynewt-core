@@ -16,9 +16,12 @@
  * specific language governing permissions and limitations
  * under the License.
  */
- 
+
+#include <assert.h>
 #include "syscfg/syscfg.h"
 #include "mcu/da1469x_clock.h"
+#include "mcu/da1469x_pd.h"
+#include "mcu/da1469x_pdc.h"
 #include "hal/hal_system.h"
 #include "os/os_cputime.h"
 #include "DA1469xAB.h"
@@ -26,6 +29,8 @@
 #if !MYNEWT_VAL(BOOT_LOADER)
 static enum hal_reset_reason g_hal_reset_reason;
 #endif
+
+bool g_mcu_lpclk_available;
 
 void
 hal_system_init(void)
@@ -91,6 +96,9 @@ hal_system_clock_start(void)
      */
     da1469x_clock_lp_rcx_disable();
 
+    /* Make sure PD_TIM is up since this is where XTAL32M state machine runs */
+    da1469x_pd_acquire(MCU_PD_DOMAIN_TIM);
+
     /* Switch to XTAL32M and disable RC32M */
     da1469x_clock_sys_xtal32m_init();
     da1469x_clock_sys_xtal32m_enable();
@@ -112,6 +120,8 @@ static void
 da1469x_lpclk_settle_tmr_cb(void *arg)
 {
     da1469x_clock_lp_xtal32k_switch();
+
+    g_mcu_lpclk_available = true;
 }
 
 void
