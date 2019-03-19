@@ -58,7 +58,9 @@ static int
 log_fcb_find_gte(struct log *log, struct log_offset *log_offset,
                  struct fcb_entry *out_entry)
 {
+#if MYNEWT_VAL(LOG_FCB_BOOKMARKS)
     const struct fcb_log_bmark *bmark;
+#endif
     struct log_entry_hdr hdr;
     struct fcb_log *fcb_log;
     struct fcb *fcb;
@@ -67,16 +69,32 @@ log_fcb_find_gte(struct log *log, struct log_offset *log_offset,
     fcb_log = log->l_arg;
     fcb = &fcb_log->fl_fcb;
 
+    /* Attempt to read the first entry.  If this fails, the FCB is empty. */
+    memset(out_entry, 0, sizeof *out_entry);
+    rc = fcb_getnext(fcb, out_entry);
+    if (rc == FCB_ERR_NOVAR) {
+        return SYS_ENOENT;
+    } else if (rc != 0) {
+        return SYS_EUNKNOWN;
+    }
+
     /*
      * if timestamp for request is < 0, return last log entry
      */
     if (log_offset->lo_ts < 0) {
-        if (fcb_log->fl_entries == 0) {
-            return SYS_ENOENT;
-        } else {
-            *out_entry = fcb->f_active;
-            return 0;
-        }
+        *out_entry = fcb->f_active;
+        return 0;
+    }
+
+    /* If the requested index is beyond the end of the log, there is nothing to
+     * retrieve.
+     */
+    rc = log_read_hdr(log, &fcb->f_active, &hdr);
+    if (rc != 0) {
+        return rc;
+    }
+    if (log_offset->lo_index > hdr.ue_index) {
+        return SYS_ENOENT;
     }
 
 #if MYNEWT_VAL(LOG_FCB_BOOKMARKS)
@@ -84,18 +102,7 @@ log_fcb_find_gte(struct log *log, struct log_offset *log_offset,
     if (bmark != NULL) {
         *out_entry = bmark->flb_entry;
     }
-#else
-    bmark = NULL;
 #endif
-
-    if (bmark == NULL) {
-        /* No bookmark.  Read the first entry in the log. */
-        memset(out_entry, 0, sizeof *out_entry);
-        rc = fcb_getnext(fcb, out_entry);
-        if (rc != 0) {
-            return SYS_ENOENT;
-        }
-    }
 
     /* Keep advancing until we find an entry with a great enough index. */
     do {
@@ -486,8 +493,12 @@ log_fcb_walk(struct log *log, log_walk_func_t walk_func,
     }
 
 #if MYNEWT_VAL(LOG_FCB_BOOKMARKS)
-    /* Add a bookmark pointing to this walk's start location. */
-    fcb_log_add_bmark(fcb_log, &loc, log_offset->lo_index);
+    /* If a minimum index was specified (i.e., we are not just retrieving the
+     * last entry), add a bookmark pointing to this walk's start location.
+     */
+    if (log_offset->lo_ts >= 0) {
+        fcb_log_add_bmark(fcb_log, &loc, log_offset->lo_index);
+    }
 #endif
 
     do {
