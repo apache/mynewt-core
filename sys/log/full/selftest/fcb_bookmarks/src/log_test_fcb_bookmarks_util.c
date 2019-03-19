@@ -127,7 +127,9 @@ ltfbu_write_entry(void)
 {
     uint8_t body[LTFBU_MAX_BODY_LEN];
     uint32_t idx;
-    int rc; TEST_ASSERT_FATAL(ltfbu_num_entry_idxs < LTFBU_MAX_ENTRY_IDXS);
+    int rc;
+
+    TEST_ASSERT_FATAL(ltfbu_num_entry_idxs < LTFBU_MAX_ENTRY_IDXS);
 
     ltfbu_skip();
     idx = g_log_info.li_next_index;
