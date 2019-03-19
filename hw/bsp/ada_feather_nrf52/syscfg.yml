@@ -59,7 +59,7 @@ syscfg.vals:
 # for crystals in the range of 31 to 50 ppm.
     BLE_LL_MASTER_SCA: 5
 
-syscfg.vals.BLE_LP_CLOCK:
+syscfg.vals.BLE_CONTROLLER:
     TIMER_0: 0
     TIMER_5: 1
     OS_CPUTIME_FREQ: 32768
