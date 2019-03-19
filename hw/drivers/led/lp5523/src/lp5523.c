@@ -424,7 +424,6 @@ lp5523_get_output_reg(struct led_itf *itf, enum lp5523_output_registers addr,
     return lp5523_get_reg(itf, addr + (output - 1), value);
 }
 
-
 int
 lp5523_set_engine_reg(struct led_itf *itf, enum lp5523_engine_registers addr,
     uint8_t engine, uint8_t value)
@@ -635,20 +634,40 @@ lp5523_get_engine_mapping(struct led_itf *itf, uint8_t engine,
 static int
 lp5523_set_pr_instruction(struct led_itf *itf, uint8_t addr, uint16_t *ins)
 {
-    uint8_t mem[2] = { ((*ins) >> 8) & 0x00ff, (*ins) & 0x00ff };
+    int rc;
 
-    return lp5523_set_n_regs(itf, LP5523_PROGRAM_MEMORY + (addr << 1), mem, 2);
+    uint8_t byte1 = (((*ins) >> 8) & 0x00ff);
+    uint8_t byte2 = ((*ins) & 0x00ff);
+
+    addr = addr << 1;
+
+    rc = lp5523_set_n_regs(itf, LP5523_PROGRAM_MEMORY + addr, &byte1, 1);
+    if (rc) {
+        return rc;
+    }
+
+    rc = lp5523_set_n_regs(itf, LP5523_PROGRAM_MEMORY + (addr + 1), &byte2, 1);
+
+    return rc;
 }
 
 static int
 lp5523_get_pr_instruction(struct led_itf *itf, uint8_t addr, uint16_t *ins)
 {
     int rc;
-    uint8_t mem[2];
+    uint8_t byte1;
+    uint8_t byte2;
 
-    rc = lp5523_get_n_regs(itf, LP5523_PROGRAM_MEMORY + (addr << 1), mem, 2);
+    addr = addr << 1;
 
-    *ins = (((uint16_t)mem[0]) << 8) | mem[1];
+    rc = lp5523_get_n_regs(itf, LP5523_PROGRAM_MEMORY + addr, &byte1, 1);
+    if (rc) {
+        return rc;
+    }
+
+    rc = lp5523_get_n_regs(itf, LP5523_PROGRAM_MEMORY + (addr + 1), &byte2, 1);
+
+    *ins = (((uint16_t)byte1) << 8) | byte2;
 
     return rc;
 }
@@ -658,15 +677,22 @@ lp5523_verify_pr_instruction(struct led_itf *itf, uint8_t addr,
     uint16_t *ins)
 {
     int rc;
-    uint8_t mem[2];
+    uint8_t byte1;
+    uint8_t byte2;
     uint16_t ver;
 
-    rc = lp5523_get_n_regs(itf, LP5523_PROGRAM_MEMORY + (addr << 1), mem, 2);
+    addr = addr << 1;
+    rc = lp5523_get_n_regs(itf, LP5523_PROGRAM_MEMORY + addr, &byte1, 1);
     if (rc) {
         return rc;
     }
 
-    ver = ((((uint16_t)mem[0]) << 8) | mem[1]);
+    rc = lp5523_get_n_regs(itf, LP5523_PROGRAM_MEMORY + (addr + 1), &byte2, 1);
+    if (rc) {
+        return rc;
+    }
+
+    ver = ((((uint16_t)byte1) << 8) | byte2);
 
     return (*ins != ver) ? 1 : 0;
 }
