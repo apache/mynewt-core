@@ -127,18 +127,19 @@ da1469x_sdadc_read_channel(struct adc_dev *adev, uint8_t cnum, int *result)
     uint32_t reg;
 
     /*
-     * Disable DMA, interrupts and continuous mode (if set), and wait for
-     * ADC to stop.
+     * Disable continuous mode (if set), and wait for ADC to stop.
      */
-    reg = SDADC->SDADC_CTRL_REG;
-    reg &= ~(SDADC_SDADC_CTRL_REG_SDADC_DMA_EN_Msk |
-             SDADC_SDADC_CTRL_REG_SDADC_CONT_Msk |
-             SDADC_SDADC_CTRL_REG_SDADC_MINT_Msk);
-    SDADC->SDADC_CTRL_REG = reg;
+    SDADC->SDADC_CTRL_REG &= ~SDADC_SDADC_CTRL_REG_SDADC_CONT_Msk;
 
     do {
         reg = SDADC->SDADC_CTRL_REG;
     } while (reg & SDADC_SDADC_CTRL_REG_SDADC_START_Msk);
+
+    /* Clear interrupts */
+    SDADC->SDADC_CLEAR_INT_REG = 1;
+
+    /* Disable DMA */
+    SDADC->SDADC_CTRL_REG &= ~SDADC_SDADC_CTRL_REG_SDADC_DMA_EN_Msk;
 
     /* Start the conversion */
     reg |= SDADC_SDADC_CTRL_REG_SDADC_START_Msk;
@@ -149,9 +150,6 @@ da1469x_sdadc_read_channel(struct adc_dev *adev, uint8_t cnum, int *result)
         reg = SDADC->SDADC_CTRL_REG;
     } while ((reg & SDADC_SDADC_CTRL_REG_SDADC_INT_Msk) == 0);
 
-    /* Clear interrupts */
-    SDADC->SDADC_CLEAR_INT_REG = 1;
-
     /*
      * Read results. # of valid bits depends on settings.
      *
@@ -161,34 +159,46 @@ da1469x_sdadc_read_channel(struct adc_dev *adev, uint8_t cnum, int *result)
     return 0;
 }
 
+static void
+da1469x_sdadc_dma_buf(struct da1469x_sdadc_dev *dev)
+{
+    struct da1469x_dma_regs *dr;
+
+    dr = dev->dsd_dma[0];
+
+    dr->DMA_B_START_REG = (uint32_t)dev->dsd_buf[0];
+    dr->DMA_INT_REG = dev->dsd_buf_len - 1;
+    dr->DMA_LEN_REG = dev->dsd_buf_len - 1;
+    dr->DMA_CTRL_REG |= DMA_DMA0_CTRL_REG_DMA_ON_Msk;
+}
+
 /**
  * Trigger taking a sample.
  */
 static int
 da1469x_sdadc_sample(struct adc_dev *adev)
 {
-    uint32_t reg;
+    struct da1469x_sdadc_dev *dev;
+    int sr;
+
+    dev = (struct da1469x_sdadc_dev *)adev;
 
     /*
      * Disable continuous mode (if set), and wait for ADC to stop.
      */
-    reg = SDADC->SDADC_CTRL_REG;
-    reg &= ~(SDADC_SDADC_CTRL_REG_SDADC_DMA_EN_Msk |
-             SDADC_SDADC_CTRL_REG_SDADC_CONT_Msk |
-             SDADC_SDADC_CTRL_REG_SDADC_MINT_Msk);
-    SDADC->SDADC_CTRL_REG = reg;
+    SDADC->SDADC_CTRL_REG &= ~SDADC_SDADC_CTRL_REG_SDADC_CONT_Msk;
+    while (SDADC->SDADC_CTRL_REG & SDADC_SDADC_CTRL_REG_SDADC_START_Msk);
 
-    do {
-        reg = SDADC->SDADC_CTRL_REG;
-    } while (reg & SDADC_SDADC_CTRL_REG_SDADC_START_Msk);
+    if (dev->dsd_buf[0]) {
+        OS_ENTER_CRITICAL(sr);
+        da1469x_sdadc_dma_buf(dev);
+        OS_EXIT_CRITICAL(sr);
+    }
 
-    /* Clear interrupts */
-    SDADC->SDADC_CLEAR_INT_REG = 1;
-
-    /* Start the conversion. Enable interrupt delivery */
-    reg |= (SDADC_SDADC_CTRL_REG_SDADC_MINT_Msk |
-            SDADC_SDADC_CTRL_REG_SDADC_START_Msk);
-    SDADC->SDADC_CTRL_REG = reg;
+    /* Start the conversion. */
+    SDADC->SDADC_CTRL_REG |= (SDADC_SDADC_CTRL_REG_SDADC_CONT_Msk |
+                              SDADC_SDADC_CTRL_REG_SDADC_DMA_EN_Msk |
+                              SDADC_SDADC_CTRL_REG_SDADC_START_Msk);
 
     return 0;
 }
@@ -196,23 +206,21 @@ da1469x_sdadc_sample(struct adc_dev *adev)
 /**
  * Set buffer to read data into.  Implementation of setbuffer handler.
  * Sets both the primary and secondary buffers for DMA.
- *
- * XXX not using DMA yet, so don't use multiple buffers unless conversion
- * is set to take up some time. Otherwise the system will end up in an
- * interrupt loop.
  */
 static int
 da1469x_sdadc_set_buffer(struct adc_dev *adev, void *buf1, void *buf2,
                          int buf_len)
 {
     struct da1469x_sdadc_dev *dev;
+    int sr;
 
     dev = (struct da1469x_sdadc_dev *)adev;
 
+    OS_ENTER_CRITICAL(sr);
     dev->dsd_buf[0] = buf1;
     dev->dsd_buf[1] = buf2;
-    dev->dsd_buf_idx = 0;
     dev->dsd_buf_len = (buf_len / sizeof(uint16_t));
+    OS_EXIT_CRITICAL(sr);
 
     return 0;
 }
@@ -227,13 +235,13 @@ da1469x_sdadc_release_buffer(struct adc_dev *adev, void *buf, int buf_len)
     dev = (struct da1469x_sdadc_dev *)adev;
 
     OS_ENTER_CRITICAL(sr);
-    if (dev->dsd_buf_idx >= dev->dsd_buf_len || dev->dsd_buf[0] == NULL) {
+    if (dev->dsd_buf[0] == NULL) {
         /*
          * If data RX was stalled, restart it.
          */
         dev->dsd_buf[0] = buf;
-        dev->dsd_buf_idx = 0;
-        SDADC->SDADC_CTRL_REG |= (SDADC_SDADC_CTRL_REG_SDADC_MINT_Msk |
+        da1469x_sdadc_dma_buf(dev);
+        SDADC->SDADC_CTRL_REG |= (SDADC_SDADC_CTRL_REG_SDADC_CONT_Msk |
                                   SDADC_SDADC_CTRL_REG_SDADC_START_Msk);
     } else if (dev->dsd_buf[1] == NULL) {
         /*
@@ -264,41 +272,34 @@ da1469x_sdadc_size_buffer(struct adc_dev *dev, int chans, int samples)
     return sizeof(uint16_t) * chans * samples;
 }
 
-static void
-da1469x_sdadc_irq(void)
+static int
+da1469x_sdadc_dmairq(void *arg)
 {
-    struct da1469x_sdadc_dev *dev;
+    struct da1469x_sdadc_dev *dev = (struct da1469x_sdadc_dev *)arg;
     struct adc_dev *adev;
     uint16_t *buf;
-    uint32_t res;
-    int full = 0;
-    int rc;
-
-    dev = (struct da1469x_sdadc_dev *)da1469x_sdadc_dev;
-
-    res = SDADC->SDADC_RESULT_REG;
-
-    /* Clear interrupts */
-    SDADC->SDADC_CLEAR_INT_REG = 1;
 
     buf = dev->dsd_buf[0];
-    buf[dev->dsd_buf_idx++] = res;
-    if (dev->dsd_buf_idx >= dev->dsd_buf_len) {
-        /* swap inactive buf to active slot (if it exists) */
-        dev->dsd_buf[0] = dev->dsd_buf[1];
-        dev->dsd_buf[1] = NULL;
-        dev->dsd_buf_idx = 0;
-        full = 1;
+
+    /* swap inactive buf to active slot (if it exists) */
+    dev->dsd_buf[0] = dev->dsd_buf[1];
+    dev->dsd_buf[1] = NULL;
+
+    /*
+     * We got DMA interrupt, so it should not be running anymore.
+     */
+    while (dev->dsd_dma[0]->DMA_CTRL_REG & DMA_DMA0_CTRL_REG_DMA_ON_Msk);
+
+    if (dev->dsd_buf[0]) {
+        da1469x_sdadc_dma_buf(dev);
+    } else {
+        SDADC->SDADC_CTRL_REG &= ~SDADC_SDADC_CTRL_REG_SDADC_CONT_Msk;
     }
-    if (dev->dsd_buf[0] && dev->dsd_buf_idx < dev->dsd_buf_len) {
-        SDADC->SDADC_CTRL_REG |= SDADC_SDADC_CTRL_REG_SDADC_START_Msk;
-    }
-    if (full) {
-        adev = &dev->dsd_adc;
-        rc = adev->ad_event_handler_func(adev, NULL, ADC_EVENT_RESULT, buf,
-                                         dev->dsd_buf_len);
-        (void)rc;
-    }
+
+    adev = &dev->dsd_adc;
+    adev->ad_event_handler_func(adev, NULL, ADC_EVENT_RESULT, buf,
+                                dev->dsd_buf_len);
+    return 0;
 }
 
 static const struct adc_driver_funcs da1469x_sdadc_funcs = {
@@ -318,11 +319,6 @@ da1469x_sdadc_hwinit(struct da1469x_sdadc_dev *dev,
     uint32_t reg;
     int pin0;
     int pin1;
-
-    /*
-     * Clear pending interrupts
-     */
-    SDADC->SDADC_CLEAR_INT_REG = 1;
 
     da1469x_sdadc_resolve_pins(dsdc->dsdc_sdadc_ctrl, &pin0, &pin1);
     if (pin0 >= 0) {
@@ -363,7 +359,14 @@ static int
 da1469x_sdadc_open(struct os_dev *odev, uint32_t wait, void *arg)
 {
     struct da1469x_sdadc_dev *dev;
+    struct da1469x_dma_config cfg = {
+        .src_inc = false,
+        .dst_inc = true,
+        .bus_width = MCU_DMA_BUS_WIDTH_2B,
+        .burst_mode = MCU_DMA_BURST_MODE_DISABLED,
+    };
     int rc;
+    int dma_cidx;
 
     dev = (struct da1469x_sdadc_dev *)odev;
 
@@ -376,7 +379,17 @@ da1469x_sdadc_open(struct os_dev *odev, uint32_t wait, void *arg)
         if (da1469x_sdadc_hwinit(dev, arg)) {
             rc = OS_EINVAL;
         }
-        NVIC_EnableIRQ(ADC2_IRQn);
+        dma_cidx = dev->dsd_init_cfg->dsic_dma_cidx;
+        cfg.priority = dev->dsd_init_cfg->dsic_dma_prio;
+        if (da1469x_dma_acquire_periph(dma_cidx, MCU_DMA_PERIPH_SDADC,
+            dev->dsd_dma)) {
+            rc = OS_ERROR;
+        }
+        da1469x_dma_configure(dev->dsd_dma[0], &cfg, da1469x_sdadc_dmairq, dev);
+        dev->dsd_dma[0]->DMA_A_START_REG = (uint32_t)&SDADC->SDADC_RESULT_REG;
+    }
+    if (rc) {
+        --dev->dsd_adc.ad_ref_cnt;
     }
     os_mutex_release(&dev->dsd_adc.ad_lock);
     return rc;
@@ -396,7 +409,7 @@ da1469x_sdadc_close(struct os_dev *odev)
         return rc;
     }
     if (--dev->dsd_adc.ad_ref_cnt == 0) {
-        NVIC_DisableIRQ(ADC2_IRQn);
+        da1469x_dma_release_channel(dev->dsd_dma[0]);
         /*
          * uninit
          * XXXX what state should the pins be left in?
@@ -434,6 +447,5 @@ da1469x_sdadc_init(struct os_dev *odev, void *arg)
 
     dev->dsd_adc.ad_funcs = &da1469x_sdadc_funcs;
 
-    NVIC_SetVector(ADC2_IRQn, (uint32_t)da1469x_sdadc_irq);
     return 0;
 }
