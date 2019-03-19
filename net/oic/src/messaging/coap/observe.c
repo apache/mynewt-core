@@ -211,9 +211,15 @@ coap_notify_observers(oc_resource_t *resource,
                       oc_endpoint_t *endpoint)
 {
     int num_observers = 0;
+    coap_observer_t *obs = NULL;
     oc_request_t request = {};
     oc_response_t response = {};
     oc_response_buffer_t response_buffer;
+#if MYNEWT_VAL(OC_SEPARATE_RESPONSES)
+    struct coap_packet_rx req[1];
+#endif
+    coap_packet_t notification[1];
+    coap_transaction_t *transaction = NULL;
     struct os_mbuf *m = NULL;
 
     if (resource) {
@@ -221,33 +227,12 @@ coap_notify_observers(oc_resource_t *resource,
             OC_LOG(DEBUG, "coap_notify_observers: no observers left\n");
             return 0;
         }
-        num_observers = resource->num_observers;
-    }
-    response.separate_response = 0;
-    if (!response_buf && resource) {
-        OC_LOG(DEBUG, "coap_notify_observers: Issue GET request to resource\n");
-        /* performing GET on the resource */
-        m = os_msys_get_pkthdr(0, 0);
-        if (!m) {
-            /* XXX count */
-            return num_observers;
-        }
-        response_buffer.buffer = m;
         response_buffer.block_offset = NULL;
         response.response_buffer = &response_buffer;
         request.resource = resource;
         request.response = &response;
-        oc_rep_new(m);
-        resource->get_handler(&request, resource->default_interface);
-        response_buf = &response_buffer;
-        if (response_buf->code == OC_IGNORE) {
-            OC_LOG(ERROR, "coap_notify_observers: Resource ignored request\n");
-            os_mbuf_free_chain(m);
-            return num_observers;
-        }
     }
 
-    coap_observer_t *obs = NULL;
     /* iterate over observers */
     for (obs = SLIST_FIRST(&oc_observers); obs; obs = SLIST_NEXT(obs, next)) {
         /* skip if neither resource nor endpoint match */
@@ -257,11 +242,30 @@ coap_notify_observers(oc_resource_t *resource,
             continue;
         }
 
+        response.separate_response = 0;
         num_observers = obs->resource->num_observers;
+        if (!response_buf && resource) {
+            OC_LOG(DEBUG, "coap_notify_observers: GET request to resource\n");
+            /* performing GET on the resource */
+            m = os_msys_get_pkthdr(0, 0);
+            if (!m) {
+                /* XXX count */
+                return num_observers;
+            }
+            response_buffer.buffer = m;
+            request.origin = &obs->endpoint;
+            oc_rep_new(m);
+            resource->get_handler(&request, resource->default_interface);
+            response_buf = &response_buffer;
+            if (response_buf->code == OC_IGNORE) {
+                OC_LOG(ERROR, "coap_notify_observers: Resource ignored req\n");
+                os_mbuf_free_chain(m);
+                return num_observers;
+            }
+        }
 #if MYNEWT_VAL(OC_SEPARATE_RESPONSES)
         if (response.separate_response != NULL &&
-          response_buf->code == oc_status_code(OC_STATUS_OK)) {
-            struct coap_packet_rx req[1];
+            response_buf->code == oc_status_code(OC_STATUS_OK)) {
 
             req->block1_num = 0;
             req->block1_size = 0;
@@ -275,23 +279,22 @@ coap_notify_observers(oc_resource_t *resource,
             req->token_len = obs->token_len;
             OC_LOG(DEBUG, "Resource is SLOW; creating separate response\n");
             if (coap_separate_accept(req, response.separate_response,
-                &obs->endpoint, 0) == 1) {
+                                     &obs->endpoint, 0) == 1) {
                 response.separate_response->active = 1;
             }
         } else {
 #endif /* OC_SEPARATE_RESPONSES */
-            OC_LOG(DEBUG, "coap_notify_observers: notifying observer\n");
-            coap_transaction_t *transaction = NULL;
-            if (response_buf && (transaction = coap_new_transaction(
-                  coap_get_mid(), &obs->endpoint))) {
+            if (response_buf &&
+                (transaction = coap_new_transaction(coap_get_mid(),
+                                                    &obs->endpoint))) {
+
+                OC_LOG(DEBUG, "coap_notify_observers: notifying observer\n");
 
                 /* update last MID for RST matching */
                 obs->last_mid = transaction->mid;
 
                 /* prepare response */
                 /* build notification */
-                coap_packet_t notification[1];
-                /* this way the packet can be treated as pointer as usual */
                 coap_init_message(notification, COAP_TYPE_NON, CONTENT_2_05, 0);
 
                 notification->mid = transaction->mid;
@@ -306,7 +309,7 @@ coap_notify_observers(oc_resource_t *resource,
                 coap_set_status_code(notification, response_buf->code);
                 coap_set_header_content_format(notification, APPLICATION_CBOR);
                 if (notification->code < BAD_REQUEST_4_00 &&
-                  obs->resource->num_observers) {
+                    obs->resource->num_observers) {
                     coap_set_header_observe(notification, (obs->obs_counter)++);
                     observe_counter++;
                 } else {
