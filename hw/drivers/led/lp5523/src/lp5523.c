@@ -424,7 +424,6 @@ lp5523_get_output_reg(struct led_itf *itf, enum lp5523_output_registers addr,
     return lp5523_get_reg(itf, addr + (output - 1), value);
 }
 
-
 int
 lp5523_set_engine_reg(struct led_itf *itf, enum lp5523_engine_registers addr,
     uint8_t engine, uint8_t value)
