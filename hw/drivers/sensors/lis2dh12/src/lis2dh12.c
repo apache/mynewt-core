@@ -811,31 +811,30 @@ lis2dh12_set_rate(struct sensor_itf *itf, uint8_t rate)
         goto err;
     }
 
-    /*
-     * As per the datasheet, REFERENCE(26h) needs to be read
-     * for a reset of the filter block before switching to
-     * normal/high-performance mode from power down mode
-     */
-    if (rate != LIS2DH12_DATA_RATE_0HZ || rate != LIS2DH12_DATA_RATE_L_1620HZ) {
-
-        rc = lis2dh12_readlen(itf, LIS2DH12_REG_REFERENCE, &reg, 1);
-        if (rc) {
-            goto err;
-        }
-    }
-
-    rc = lis2dh12_readlen(itf, LIS2DH12_REG_CTRL_REG1,
-                          &reg, 1);
+    rc = lis2dh12_readlen(itf, LIS2DH12_REG_CTRL_REG1, &reg, 1);
     if (rc) {
         goto err;
     }
 
     reg = (reg & ~LIS2DH12_CTRL_REG1_ODR) | rate;
 
-    rc = lis2dh12_writelen(itf, LIS2DH12_REG_CTRL_REG1,
-                           &reg, 1);
+    rc = lis2dh12_writelen(itf, LIS2DH12_REG_CTRL_REG1, &reg, 1);
     if (rc) {
         goto err;
+    }
+
+    /*
+     * As per the datasheet, REFERENCE(26h) needs to be read
+     * for a reset of the filter block before switching to
+     * normal/high-performance mode from power down mode
+     */
+    rc = lis2dh12_readlen(itf, LIS2DH12_REG_CTRL_REG4, &reg, 1);
+    if ((rate == LIS2DH12_DATA_RATE_0HZ) && (reg & LIS2DH12_CTRL_REG4_HR)) {
+
+        rc = lis2dh12_readlen(itf, LIS2DH12_REG_REFERENCE, &reg, 1);
+        if (rc) {
+            goto err;
+        }
     }
 
     return 0;
@@ -1005,12 +1004,6 @@ lis2dh12_set_op_mode(struct sensor_itf *itf, uint8_t mode)
 {
     int rc;
     uint8_t reg;
-
-    /* reset filtering block */
-    rc = lis2dh12_readlen(itf, LIS2DH12_REG_REFERENCE, &reg, 1);
-    if (rc) {
-        goto err;
-    }
 
     rc = lis2dh12_readlen(itf, LIS2DH12_REG_CTRL_REG4, &reg, 1);
     if (rc) {
