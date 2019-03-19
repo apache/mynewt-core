@@ -32,6 +32,10 @@
 #define TICKS24_GTE(_t1, _t2)       ((int32_t)(((_t1) - (_t2)) << 8) >= 0)
 #define TICKS24_LT(_t1, _t2)        ((int32_t)(((_t1) - (_t2)) << 8) < 0)
 #define TICKS24_LTE(_t1, _t2)       ((int32_t)(((_t1) - (_t2)) << 8) <= 0)
+#define TICKS_GT(_t1, _t2)          ((int32_t)((_t1) - (_t2)) > 0)
+#define TICKS_GTE(_t1, _t2)         ((int32_t)((_t1) - (_t2)) >= 0)
+#define TICKS_LT(_t1, _t2)          ((int32_t)((_t1) - (_t2)) < 0)
+#define TICKS_LTE(_t1, _t2)         ((int32_t)((_t1) - (_t2)) <= 0)
 
 struct da1469x_timer {
     /*
@@ -41,6 +45,13 @@ struct da1469x_timer {
     TIMER_Type *regs;
     IRQn_Type irqn;
     TAILQ_HEAD(hal_timer_qhead, hal_timer) queue;
+    /*
+     * Upper 8 bits extend hardware counter register to be 32 bits.
+     * Lower 24 bits keep last read value from hardware.
+     * When new value is read and is lower then old one upper 8 bits are
+     * incremented.
+     */
+    uint32_t tmr_cntr;
 };
 
 #if MYNEWT_VAL(TIMER_0)
@@ -82,9 +93,30 @@ da1469x_timer_resolve(unsigned timer_num)
 }
 
 static inline uint32_t
+da1469x_timer_get_value_nolock(struct da1469x_timer *tmr)
+{
+    uint32_t v = tmr->regs->TIMER_TIMER_VAL_REG;
+
+    if (v < (tmr->tmr_cntr & 0x00FFFFFFU)) {
+        tmr->tmr_cntr = (tmr->tmr_cntr & 0xFF000000U) + v + 0x01000000U;
+    } else {
+        tmr->tmr_cntr = (tmr->tmr_cntr & 0xFF000000U) + v;
+    }
+
+    return tmr->tmr_cntr;
+}
+
+static inline uint32_t
 da1469x_timer_get_value(struct da1469x_timer *tmr)
 {
-    return tmr->regs->TIMER_TIMER_VAL_REG;
+    uint32_t primask;
+    uint32_t val;
+
+    __HAL_DISABLE_INTERRUPTS(primask);
+    val = da1469x_timer_get_value_nolock(tmr);
+    __HAL_ENABLE_INTERRUPTS(primask);
+
+    return val;
 }
 
 static void
@@ -101,9 +133,25 @@ da1469x_timer_set_trigger(struct da1469x_timer *tmr, uint32_t tick)
     regs->TIMER_CTRL_REG |= TIMER_TIMER_CTRL_REG_TIM_IRQ_EN_Msk;
 
     /* Force interrupt to occur as we may have missed it */
-    if (TICKS24_LTE(tick, da1469x_timer_get_value(tmr))) {
+    if (TICKS_LTE(tick, da1469x_timer_get_value_nolock(tmr))) {
         NVIC_SetPendingIRQ(tmr->irqn);
     }
+}
+
+static void
+da1469x_timer_set_half_time_trigger(struct da1469x_timer *tmr)
+{
+    TIMER_Type *regs;
+    uint32_t tick;
+
+    __HAL_ASSERT_CRITICAL();
+
+    regs = tmr->regs;
+
+    regs->TIMER_CTRL_REG &= ~TIMER_TIMER_CTRL_REG_TIM_IRQ_EN_Msk;
+    tick = da1469x_timer_get_value_nolock(tmr) + 0x00800000U;
+    regs->TIMER_RELOAD_REG = tick;
+    regs->TIMER_CTRL_REG |= TIMER_TIMER_CTRL_REG_TIM_IRQ_EN_Msk;
 }
 
 #if MYNEWT_VAL(TIMER_0) || MYNEWT_VAL(TIMER_1) || MYNEWT_VAL(TIMER_2)
@@ -117,7 +165,7 @@ da1469x_timer_check_queue(struct da1469x_timer *tmr)
 
     /* Remove and process each expired timer in the sorted queue. */
     while ((timer = TAILQ_FIRST(&tmr->queue)) != NULL) {
-        if (TICKS24_GT(timer->expiry, da1469x_timer_get_value(tmr))) {
+        if (TICKS_GT(timer->expiry, da1469x_timer_get_value_nolock(tmr))) {
             break;
         }
 
@@ -129,6 +177,8 @@ da1469x_timer_check_queue(struct da1469x_timer *tmr)
     /* Schedule interrupt for next timer, if any. */
     if (timer != NULL) {
         da1469x_timer_set_trigger(tmr, timer->expiry);
+    } else {
+        da1469x_timer_set_half_time_trigger(tmr);
     }
 
     __HAL_ENABLE_INTERRUPTS(primask);
@@ -374,7 +424,7 @@ hal_timer_delay(int timer_num, uint32_t ticks)
     }
 
     until = da1469x_timer_get_value(tmr) + ticks;
-    while (TICKS24_LT(da1469x_timer_get_value(tmr), until)) {
+    while (TICKS_LT(da1469x_timer_get_value(tmr), until)) {
         /* busy loop */
     }
 
@@ -432,7 +482,7 @@ hal_timer_start_at(struct hal_timer *timer, uint32_t tick)
         TAILQ_INSERT_HEAD(&tmr->queue, timer, link);
     } else {
         TAILQ_FOREACH(cur, &tmr->queue, link) {
-            if (TICKS24_LT(timer->expiry, cur->expiry)) {
+            if (TICKS_LT(timer->expiry, cur->expiry)) {
                 TAILQ_INSERT_BEFORE(cur, timer, link);
                 break;
             }
@@ -444,6 +494,8 @@ hal_timer_start_at(struct hal_timer *timer, uint32_t tick)
 
     if (timer == TAILQ_FIRST(&tmr->queue)) {
         da1469x_timer_set_trigger(tmr, tick);
+    } else {
+        da1469x_timer_set_half_time_trigger(tmr);
     }
 
     __HAL_ENABLE_INTERRUPTS(primask);
@@ -479,6 +531,8 @@ hal_timer_stop(struct hal_timer *timer)
         timer = TAILQ_FIRST(&tmr->queue);
         if (timer != NULL) {
             da1469x_timer_set_trigger(tmr, timer->expiry);
+        } else {
+            da1469x_timer_set_half_time_trigger(tmr);
         }
     }
 
