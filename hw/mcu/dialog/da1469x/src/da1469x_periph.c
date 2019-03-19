@@ -141,6 +141,8 @@ static struct da1469x_gpadc_init_cfg os_bsp_gpadc_cfg = {
 #if MYNEWT_VAL(SDADC)
 static struct da1469x_sdadc_dev os_bsp_sdadc;
 static struct da1469x_sdadc_init_cfg os_bsp_sdadc_cfg = {
+    .dsic_dma_cidx = MYNEWT_VAL(SDADC_DMA_CIDX),
+    .dsic_dma_prio = MYNEWT_VAL(SDADC_DMA_PRIO)
 };
 #endif
 
