@@ -259,6 +259,14 @@ syscfg.defs:
     SDADC:
         description: Enable DA1469x sigma delta ADC
         value: 0
+    SDADC_DMA_CIDX:
+        description: >
+          'DMA channel idx to use for SDADC. -1 means let system decide'
+        value: -1
+    SDADC_DMA_PRIO:
+        description: >
+          'DMA priority for SDADC, 0-7'
+        value: 0
 
 syscfg.restrictions:
     - "QSPI_FLASH_ADDRESS_LENGTH==24"
