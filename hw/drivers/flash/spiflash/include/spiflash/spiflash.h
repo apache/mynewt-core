@@ -89,6 +89,9 @@ extern struct spiflash_dev spiflash_dev;
 #define SPIFLASH_WRITE_ENABLE               0x06
 #define SPIFLASH_FAST_READ                  0x0B
 #define SPIFLASH_SECTOR_ERASE               0x20
+#define SPIFLASH_BLOCK_ERASE_32KB           MYNEWT_VAL(SPIFLASH_BLOCK_ERASE_32BK)
+#define SPIFLASH_BLOCK_ERASE_64KB           MYNEWT_VAL(SPIFLASH_BLOCK_ERASE_64BK)
+#define SPIFLASH_CHIP_ERASE                 0x60
 #define SPIFLASH_DEEP_POWER_DOWN            0xB9
 #define SPIFLASH_RELEASE_POWER_DOWN         0xAB
 #define SPIFLASH_READ_MANUFACTURER_ID       0x90
@@ -132,6 +135,16 @@ void spiflash_power_down(struct spiflash_dev *dev);
 void spiflash_release_power_down(struct spiflash_dev *dev);
 
 int spiflash_auto_power_down_set(struct spiflash_dev *dev, uint32_t timeout_ms);
+
+int spiflash_sector_erase(struct spiflash_dev *dev, uint32_t addr);
+#if MYNEWT_VAL(SPIFLASH_BLOCK_ERASE_32BK)
+int spiflash_block_32k_erase(struct spiflash_dev *dev, uint32_t addr);
+#endif
+#if MYNEWT_VAL(SPIFLASH_BLOCK_ERASE_64BK)
+int spiflash_block_64k_erase(struct spiflash_dev *dev, uint32_t addr);
+#endif
+int spiflash_chip_erase(struct spiflash_dev *dev);
+int spiflash_erase(struct spiflash_dev *dev, uint32_t addr, uint32_t size);
 
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
 int spiflash_create_spi_dev(struct bus_spi_node *node, const char *name,

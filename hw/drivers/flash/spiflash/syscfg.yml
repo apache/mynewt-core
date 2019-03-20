@@ -76,6 +76,12 @@ syscfg.defs:
             Time between Read Status Register commands when waiting for flash
             to be ready (us)
         value: 10
+    SPIFLASH_BLOCK_ERASE_32BK:
+        description: Block erase 32KB command, set to 0 if flash does not support this command.
+        value: 0x52
+    SPIFLASH_BLOCK_ERASE_64BK:
+        description: Block erase 64KB command, set to 0 if flash does not support this command.
+        value: 0xD8
     SPIFLASH_TBP1_TYPICAL:
         description: 'Byte program time (first byte) (us)'
         value: 15
