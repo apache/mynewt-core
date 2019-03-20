@@ -47,7 +47,9 @@ hal_system_reset(void)
             /*
              * If debugger is attached, breakpoint here.
              */
+#if !MYNEWT_VAL(MCU_DEBUG_IGNORE_BKPT)
             asm("bkpt");
+#endif
         }
         NVIC_SystemReset();
     }
@@ -56,11 +58,7 @@ hal_system_reset(void)
 int
 hal_debugger_connected(void)
 {
-#if MYNEWT_VAL(NRF52_HAL_DEBUGGER_CHK)
     return CoreDebug->DHCSR & CoreDebug_DHCSR_C_DEBUGEN_Msk;
-#else
-    return 0;
-#endif
 }
 
 /**
