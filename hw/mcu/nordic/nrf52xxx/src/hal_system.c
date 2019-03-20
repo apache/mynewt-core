@@ -47,7 +47,9 @@ hal_system_reset(void)
             /*
              * If debugger is attached, breakpoint here.
              */
+#if !MYNEWT_VAL(MCU_DEBUG_IGNORE_BKPT)
             asm("bkpt");
+#endif
         }
         NVIC_SystemReset();
     }
