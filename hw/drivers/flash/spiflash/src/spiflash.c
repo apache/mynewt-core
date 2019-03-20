@@ -577,6 +577,8 @@ static int hal_spiflash_erase_sector(const struct hal_flash *hal_flash_dev,
 static int hal_spiflash_sector_info(const struct hal_flash *hal_flash_dev, int idx,
         uint32_t *address, uint32_t *sz);
 static int hal_spiflash_init(const struct hal_flash *dev);
+static int hal_spiflash_erase(const struct hal_flash *hal_flash_dev,
+        uint32_t address, uint32_t sz);
 
 static const struct hal_flash_funcs spiflash_flash_funcs = {
     .hff_read         = hal_spiflash_read,
@@ -584,6 +586,7 @@ static const struct hal_flash_funcs spiflash_flash_funcs = {
     .hff_erase_sector = hal_spiflash_erase_sector,
     .hff_sector_info  = hal_spiflash_sector_info,
     .hff_init         = hal_spiflash_init,
+    .hff_erase        = hal_spiflash_erase,
 };
 
 static const struct spiflash_characteristics spiflash_characteristics = {
@@ -1078,6 +1081,15 @@ hal_spiflash_erase_sector(const struct hal_flash *hal_flash_dev, uint32_t addr)
 }
 
 static int
+hal_spiflash_erase(const struct hal_flash *hal_flash_dev,
+    uint32_t address, uint32_t size)
+{
+    struct spiflash_dev *dev = (struct spiflash_dev *)hal_flash_dev;
+
+    return spiflash_erase(dev, address, size);
+}
+
+static int
 spiflash_execute_erase(struct spiflash_dev *dev, const uint8_t *buf,
                        uint32_t size,
                        const struct spiflash_time_spec *delay_spec)
@@ -1146,6 +1158,82 @@ spiflash_sector_erase(struct spiflash_dev *dev, uint32_t addr)
 {
     return spiflash_erase_cmd(dev, SPIFLASH_SECTOR_ERASE, addr,
                               &dev->characteristics->tse);
+}
+
+#if MYNEWT_VAL(SPIFLASH_BLOCK_ERASE_32BK)
+int
+spiflash_block_32k_erase(struct spiflash_dev *dev, uint32_t addr)
+{
+    return spiflash_erase_cmd(dev, SPIFLASH_BLOCK_ERASE_32KB, addr,
+                              &dev->characteristics->tbe1);
+}
+#endif
+
+#if MYNEWT_VAL(SPIFLASH_BLOCK_ERASE_64BK)
+int
+spiflash_block_64k_erase(struct spiflash_dev *dev, uint32_t addr)
+{
+    return spiflash_erase_cmd(dev, SPIFLASH_BLOCK_ERASE_64KB, addr,
+                              &dev->characteristics->tbe2);
+}
+#endif
+
+int
+spiflash_chip_erase(struct spiflash_dev *dev)
+{
+    uint8_t buf[1] = { SPIFLASH_CHIP_ERASE };
+
+    return spiflash_execute_erase(dev, buf, sizeof(buf),
+                                  &dev->characteristics->tce);
+}
+
+int
+spiflash_erase(struct spiflash_dev *dev, uint32_t address, uint32_t size)
+{
+    int rc = 0;
+
+    if (address == 0 && size == dev->hal.hf_size) {
+        return spiflash_chip_erase(dev);
+    }
+    address &= ~0xFFFU;
+    while (size) {
+#if MYNEWT_VAL(SPIFLASH_BLOCK_ERASE_64BK)
+        if ((address & 0xFFFFU) == 0 && (size >= 0x10000)) {
+            /* 64 KB erase if possible */
+            rc = spiflash_block_64k_erase(dev, address);
+            if (rc) {
+                goto err;
+            }
+            address += 0x10000;
+            size -= 0x10000;
+            continue;
+        }
+#endif
+#if MYNEWT_VAL(SPIFLASH_BLOCK_ERASE_32BK)
+        if ((address & 0x7FFFU) == 0 && (size >= 0x8000)) {
+            /* 32 KB erase if possible */
+            rc = spiflash_block_32k_erase(dev, address);
+            if (rc) {
+                goto err;
+            }
+            address += 0x8000;
+            size -= 0x8000;
+            continue;
+        }
+#endif
+        rc = spiflash_sector_erase(dev, address);
+        if (rc) {
+            goto err;
+        }
+        address += MYNEWT_VAL(SPIFLASH_SECTOR_SIZE);
+        if (size > MYNEWT_VAL(SPIFLASH_SECTOR_SIZE)) {
+            size -= MYNEWT_VAL(SPIFLASH_SECTOR_SIZE);
+        } else {
+            size = 0;
+        }
+    }
+err:
+    return rc;
 }
 
 int
