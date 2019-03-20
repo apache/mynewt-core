@@ -230,6 +230,8 @@ imgmgr_state_confirm(void)
 #endif
     }
 
+    imgmgr_dfu_confirmed();
+
     return 0;
 }
 
