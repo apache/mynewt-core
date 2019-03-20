@@ -60,6 +60,12 @@ syscfg.defs:
             Refer to nRF52xxx Product Specification document for more details.
         value: 0
 
+    MCU_DEBUG_IGNORE_BKPT:
+       description: >
+            When enabled, asm(bkpt) will be ignored. If not set, it will hit
+            the breakpoint wherever it gets called, For example, reset and crash
+       value: 0
+
 # MCU peripherals definitions
     I2C_0:
         description: 'Enable nRF52xxx I2C (TWI) 0'
