@@ -586,6 +586,33 @@ static const struct hal_flash_funcs spiflash_flash_funcs = {
     .hff_init         = hal_spiflash_init,
 };
 
+static const struct spiflash_characteristics spiflash_characteristics = {
+    .tse = {
+        .typical = MYNEWT_VAL(SPIFLASH_TSE_TYPICAL),
+        .maximum = MYNEWT_VAL(SPIFLASH_TSE_MAXIMUM)
+    },
+    .tbe1 = {
+        .typical = MYNEWT_VAL(SPIFLASH_TBE1_TYPICAL),
+        .maximum = MYNEWT_VAL(SPIFLASH_TBE1_MAXIMUM)
+    },
+    .tbe2 = {
+        .typical = MYNEWT_VAL(SPIFLASH_TBE2_TYPICAL),
+        .maximum = MYNEWT_VAL(SPIFLASH_TBE2_MAXIMUM)
+    },
+    .tce = {
+        .typical = MYNEWT_VAL(SPIFLASH_TCE_TYPICAL),
+        .maximum = MYNEWT_VAL(SPIFLASH_TCE_MAXIMUM)
+    },
+    .tpp = {
+        .typical = MYNEWT_VAL(SPIFLASH_TPP_TYPICAL),
+        .maximum = MYNEWT_VAL(SPIFLASH_TPP_MAXIMUM)
+    },
+    .tbp1 = {
+        .typical = MYNEWT_VAL(SPIFLASH_TBP1_TYPICAL),
+        .maximum = MYNEWT_VAL(SPIFLASH_TBP1_MAXIMUM)
+    },
+};
+
 struct spiflash_dev spiflash_dev = {
     /* struct hal_flash for compatibility */
     .hal = {
@@ -614,6 +641,7 @@ struct spiflash_dev spiflash_dev = {
     .page_size          = MYNEWT_VAL(SPIFLASH_PAGE_SIZE),
 
     .supported_chips = supported_chips,
+    .characteristics = &spiflash_characteristics,
     .flash_chip = NULL,
 };
 
@@ -985,18 +1013,23 @@ hal_spiflash_write(const struct hal_flash *hal_flash_dev, uint32_t addr,
     struct spiflash_dev *dev = (struct spiflash_dev *)hal_flash_dev;
     uint32_t page_limit;
     uint32_t to_write;
+    uint32_t pp_time_typical;
+    uint32_t pp_time_maximum;
     int rc = 0;
 
     u8buf = (uint8_t *)buf;
 
     spiflash_lock(dev);
 
-    while (len) {
-        if (spiflash_wait_ready(dev, 100) != 0) {
-            rc = -1;
-            goto err;
-        }
+    if (spiflash_wait_ready(dev, 100) != 0) {
+        rc = -1;
+        goto err;
+    }
 
+    pp_time_typical = dev->characteristics->tbp1.typical;
+    pp_time_maximum = dev->characteristics->tpp.maximum;
+
+    while (len) {
         spiflash_write_enable(dev);
 
         cmd[1] = (uint8_t)(addr >> 16);
@@ -1019,11 +1052,16 @@ hal_spiflash_write(const struct hal_flash *hal_flash_dev, uint32_t addr,
         hal_spi_txrx(dev->spi_num, (void *)u8buf, NULL, to_write);
         spiflash_cs_deactivate(dev);
 #endif
+        spiflash_delay_us(pp_time_typical);
+        rc = spiflash_wait_ready_till(dev, pp_time_maximum - pp_time_typical,
+            (pp_time_maximum - pp_time_typical) / 10);
+        if (rc) {
+            break;
+        }
         addr += to_write;
         u8buf += to_write;
         len -= to_write;
 
-        spiflash_wait_ready(dev, 100);
     }
 err:
     spiflash_unlock(dev);
@@ -1034,12 +1072,19 @@ err:
 static int
 hal_spiflash_erase_sector(const struct hal_flash *hal_flash_dev, uint32_t addr)
 {
-    int rc = 0;
-    struct spiflash_dev *dev;
-    uint8_t cmd[4] = { SPIFLASH_SECTOR_ERASE,
-        (uint8_t)(addr >> 16), (uint8_t)(addr >> 8), (uint8_t)addr };
+    struct spiflash_dev *dev = (struct spiflash_dev *)hal_flash_dev;
 
-    dev = (struct spiflash_dev *)hal_flash_dev;
+    return spiflash_sector_erase(dev, addr);
+}
+
+static int
+spiflash_execute_erase(struct spiflash_dev *dev, const uint8_t *buf,
+                       uint32_t size,
+                       const struct spiflash_time_spec *delay_spec)
+{
+    int rc = 0;
+    uint32_t wait_time_us;
+    uint32_t start_time;
 
     spiflash_lock(dev);
 
@@ -1053,21 +1098,22 @@ hal_spiflash_erase_sector(const struct hal_flash *hal_flash_dev, uint32_t addr)
     spiflash_read_status(dev);
 
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
-    bus_node_simple_write((struct os_dev *)&dev->dev, cmd, sizeof(cmd));
+    bus_node_simple_write((struct os_dev *)&dev->dev, buf, (uint16_t)size);
 #else
     spiflash_cs_activate(dev);
 
-    hal_spi_txrx(dev->spi_num, cmd, NULL, sizeof cmd);
+    hal_spi_txrx(dev->spi_num, (void *)buf, NULL, size);
 
     spiflash_cs_deactivate(dev);
 #endif
+    start_time = os_cputime_ticks_to_usecs(os_cputime_get32());
+    /* Wait typical erase time before starting polling for ready */
+    spiflash_delay_us(delay_spec->typical);
 
-    /* Usually erase sector takes around 40ms, let's wait here that time.
-     * TODO: Do it configurable per flash.
-     */
-    os_time_delay(os_time_ms_to_ticks32(40));
+    /* Poll status ready for remaining time */
+    wait_time_us = start_time + delay_spec->maximum - os_cputime_get32();
 
-    spiflash_wait_ready(dev, 100);
+    rc = spiflash_wait_ready_till(dev, wait_time_us, wait_time_us / 50);
 err:
     spiflash_unlock(dev);
 
@@ -1083,6 +1129,23 @@ hal_spiflash_sector_info(const struct hal_flash *hal_flash_dev, int idx,
     *address = idx * dev->sector_size;
     *sz = dev->sector_size;
     return 0;
+}
+
+static int
+spiflash_erase_cmd(struct spiflash_dev *dev, uint8_t cmd, uint32_t addr,
+                   const struct spiflash_time_spec *time_spec)
+{
+    uint8_t buf[4] = { cmd, (uint8_t)(addr >> 16U), (uint8_t)(addr >> 8U),
+                       (uint8_t)addr };
+    return spiflash_execute_erase(dev, buf, sizeof(buf), time_spec);
+
+}
+
+int
+spiflash_sector_erase(struct spiflash_dev *dev, uint32_t addr)
+{
+    return spiflash_erase_cmd(dev, SPIFLASH_SECTOR_ERASE, addr,
+                              &dev->characteristics->tse);
 }
 
 int

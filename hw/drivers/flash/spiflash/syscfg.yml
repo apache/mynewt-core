@@ -76,3 +76,39 @@ syscfg.defs:
             Time between Read Status Register commands when waiting for flash
             to be ready (us)
         value: 10
+    SPIFLASH_TBP1_TYPICAL:
+        description: 'Byte program time (first byte) (us)'
+        value: 15
+    SPIFLASH_TBP1_MAXIMUM:
+        description: 'Maximum byte program time (first byte)  (us)'
+        value: 30
+    SPIFLASH_TPP_TYPICAL:
+        description: 'Page program time (us)'
+        value: 800
+    SPIFLASH_TPP_MAXIMUM:
+        description: 'Maximum page program time (us)'
+        value: 3000
+    SPIFLASH_TSE_TYPICAL:
+        description: 'Sector erase time (4KB) (us)'
+        value: 45000
+    SPIFLASH_TSE_MAXIMUM:
+        description: 'Maximum sector erase time (us)'
+        value: 300000
+    SPIFLASH_TBE1_TYPICAL:
+        description: 'Block erase time (32KB) (us)'
+        value: 120000
+    SPIFLASH_TBE1_MAXIMUM:
+        description: 'Maximum block erase time (32KB) (us)'
+        value:  800000
+    SPIFLASH_TBE2_TYPICAL:
+        description: 'Block erase time (64KB) (us)'
+        value: 150000
+    SPIFLASH_TBE2_MAXIMUM:
+        description: 'Maximum block erase time (64KB) (us)'
+        value: 1000000
+    SPIFLASH_TCE_TYPICAL:
+        description: 'Chip erase time (us)'
+        value: 2000000
+    SPIFLASH_TCE_MAXIMUM:
+        description: 'Maximum chip erase time (us)'
+        value: 6000000
