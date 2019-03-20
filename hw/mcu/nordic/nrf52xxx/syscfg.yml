@@ -60,6 +60,12 @@ syscfg.defs:
             Refer to nRF52xxx Product Specification document for more details.
         value: 0
 
+    NRF52_HAL_DEBUGGER_CHK:
+       description: >
+            When enabled, hal_debugger_connected() will check the debug registers
+            for a debugger. If not set, it will assume a debugger is not connected
+       value: 1
+
 # MCU peripherals definitions
     I2C_0:
         description: 'Enable nRF52xxx I2C (TWI) 0'
