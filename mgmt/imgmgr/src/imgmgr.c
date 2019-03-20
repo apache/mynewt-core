@@ -856,8 +856,7 @@ end:
 void
 imgmgr_dfu_stopped(void)
 {
-    if (imgmgr_dfu_callbacks_fn && imgmgr_dfu_callbacks_fn->dfu_stopped_cb != NULL)
-    {
+    if (imgmgr_dfu_callbacks_fn && imgmgr_dfu_callbacks_fn->dfu_stopped_cb) {
         imgmgr_dfu_callbacks_fn->dfu_stopped_cb();
     }
 }
@@ -865,8 +864,7 @@ imgmgr_dfu_stopped(void)
 void
 imgmgr_dfu_started(void)
 {
-    if (imgmgr_dfu_callbacks_fn && imgmgr_dfu_callbacks_fn->dfu_started_cb != NULL)
-    {
+    if (imgmgr_dfu_callbacks_fn && imgmgr_dfu_callbacks_fn->dfu_started_cb) {
         imgmgr_dfu_callbacks_fn->dfu_started_cb();
     }
 }
@@ -874,8 +872,7 @@ imgmgr_dfu_started(void)
 void
 imgmgr_dfu_pending(void)
 {
-    if (imgmgr_dfu_callbacks_fn && imgmgr_dfu_callbacks_fn->dfu_pending_cb != NULL)
-    {
+    if (imgmgr_dfu_callbacks_fn && imgmgr_dfu_callbacks_fn->dfu_pending_cb) {
         imgmgr_dfu_callbacks_fn->dfu_pending_cb();
     }
 }
@@ -883,8 +880,7 @@ imgmgr_dfu_pending(void)
 void
 imgmgr_dfu_confirmed(void)
 {
-    if (imgmgr_dfu_callbacks_fn && imgmgr_dfu_callbacks_fn->dfu_confirmed_cb != NULL)
-    {
+    if (imgmgr_dfu_callbacks_fn && imgmgr_dfu_callbacks_fn->dfu_confirmed_cb) {
         imgmgr_dfu_callbacks_fn->dfu_confirmed_cb();
     }
 }
