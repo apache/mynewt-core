@@ -33,6 +33,24 @@
 extern "C" {
 #endif
 
+/*
+ * Structure to hold typical and maximum time as stated in chip datasheet.
+ * Values are used for timeouts and are specified in micro seconds.
+ */
+struct spiflash_time_spec {
+    uint32_t typical;
+    uint32_t maximum;
+};
+
+struct spiflash_characteristics {
+    struct spiflash_time_spec tse;  /* Sector erase time (4KB) */
+    struct spiflash_time_spec tbe1; /* Block erase time (32KB) */
+    struct spiflash_time_spec tbe2; /* Block erase time (64KB) */
+    struct spiflash_time_spec tce;  /* Chip erase time */
+    struct spiflash_time_spec tpp;  /* Page program time */
+    struct spiflash_time_spec tbp1; /* Byte program time */
+};
+
 struct spiflash_dev {
     struct hal_flash hal;
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
@@ -49,6 +67,7 @@ struct spiflash_dev {
     const struct spiflash_chip *supported_chips;
     /* Pointer to one of the supported chips */
     const struct spiflash_chip *flash_chip;
+    const struct spiflash_characteristics *characteristics;
 #if MYNEWT_VAL(OS_SCHEDULING)
     struct os_mutex lock;
 #endif
