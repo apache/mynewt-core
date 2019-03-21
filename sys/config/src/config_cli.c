@@ -94,18 +94,21 @@ shell_conf_command(int argc, char **argv)
 
     (void)rc;
     switch (argc) {
+#if (MYNEWT_VAL(CONFIG_CLI_RW) & 1) == 1
     case 2:
         name = argv[1];
         break;
+#endif
+#if (MYNEWT_VAL(CONFIG_CLI_RW) & 2) == 2
     case 3:
         name = argv[1];
         val = argv[2];
         break;
+#endif
     default:
         goto err;
     }
     if (!strcmp(name, "commit")) {
-#if (MYNEWT_VAL(CONFIG_CLI_RW) & 2) == 2
         rc = conf_commit(val);
         if (rc) {
             val = "Failed to commit\n";
@@ -114,10 +117,8 @@ shell_conf_command(int argc, char **argv)
         }
         console_printf("%s", val);
         return 0;
-#endif
     } else {
         if (!strcmp(name, "dump")) {
-#if (MYNEWT_VAL(CONFIG_CLI_RW) & 1) == 1
             if (!val || !strcmp(val, "running")) {
                 conf_dump_running();
             }
@@ -126,34 +127,27 @@ shell_conf_command(int argc, char **argv)
                 conf_dump_saved();
             }
 #endif
-#endif
             return 0;
         } else {
-#if (MYNEWT_VAL(CONFIG_CLI_RW) & 2) == 2
             if (!strcmp(name, "save")) {
                 conf_save();
                 return 0;
             }
-#endif
         }
     }
     if (!val) {
-#if (MYNEWT_VAL(CONFIG_CLI_RW) & 1) == 1
         val = conf_get_value(name, tmp_buf, sizeof(tmp_buf));
         if (!val) {
             console_printf("Cannot display value\n");
             goto err;
         }
         console_printf("%s\n", val);
-#endif
     } else {
-#if (MYNEWT_VAL(CONFIG_CLI_RW) & 2) == 2
         rc = conf_set_value(name, val);
         if (rc) {
             console_printf("Failed to set, err: %d\n", rc);
             goto err;
         }
-#endif
     }
     return 0;
 err:

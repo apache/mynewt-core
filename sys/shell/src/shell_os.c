@@ -219,15 +219,19 @@ static const struct shell_cmd_help mpool_help = {
     .params = mpool_params,
 };
 
+#if (MYNEWT_VAL(SHELL_OS_DATETIME_CMD) & 2) == 2
 static const struct shell_param date_params[] = {
     {"", "datetime to set"},
     {NULL, NULL}
 };
+#endif
 
 static const struct shell_cmd_help date_help = {
     .summary = "show system date",
     .usage = NULL,
+#if (MYNEWT_VAL(SHELL_OS_DATETIME_CMD) & 2) == 2
     .params = date_params,
+#endif
 };
 
 static const struct shell_param reset_params[] = {
