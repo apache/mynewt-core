@@ -737,6 +737,7 @@ spiflash_power_down(struct spiflash_dev *dev)
 #if MYNEWT_VAL(SPIFLASH_AUTO_POWER_DOWN)
     dev->pd_active = true;
 #endif
+    dev->ready = false;
 
     spiflash_unlock_no_apd(dev);
 }
@@ -909,7 +910,9 @@ spiflash_delay_us(uint32_t usecs)
 bool
 spiflash_device_ready(struct spiflash_dev *dev)
 {
-    return !(spiflash_read_status(dev) & SPIFLASH_STATUS_BUSY);
+    dev->ready = !(spiflash_read_status(dev) & SPIFLASH_STATUS_BUSY);
+
+    return dev->ready;
 }
 
 static int
@@ -918,6 +921,10 @@ spiflash_wait_ready_till(struct spiflash_dev *dev, uint32_t timeout_us,
 {
     int rc = -1;
     uint32_t limit = os_cputime_get32() + timeout_us;
+
+    if (dev->ready) {
+        return 0;
+    }
 
     if (step_us < MYNEWT_VAL(SPIFLASH_READ_STATUS_INTERVAL)) {
         step_us = MYNEWT_VAL(SPIFLASH_READ_STATUS_INTERVAL);
@@ -1055,6 +1062,8 @@ hal_spiflash_write(const struct hal_flash *hal_flash_dev, uint32_t addr,
         hal_spi_txrx(dev->spi_num, (void *)u8buf, NULL, to_write);
         spiflash_cs_deactivate(dev);
 #endif
+        /* Now we know that device is not ready */
+        dev->ready = false;
         spiflash_delay_us(pp_time_typical);
         rc = spiflash_wait_ready_till(dev, pp_time_maximum - pp_time_typical,
             (pp_time_maximum - pp_time_typical) / 10);
@@ -1118,6 +1127,9 @@ spiflash_execute_erase(struct spiflash_dev *dev, const uint8_t *buf,
 
     spiflash_cs_deactivate(dev);
 #endif
+    /* Now we know that device is not ready */
+    dev->ready = false;
+
     start_time = os_cputime_ticks_to_usecs(os_cputime_get32());
     /* Wait typical erase time before starting polling for ready */
     spiflash_delay_us(delay_spec->typical);
