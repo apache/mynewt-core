@@ -52,7 +52,8 @@ typedef struct
 {
     imgrmgr_dfu_cb dfu_started_cb;
     imgrmgr_dfu_cb dfu_stopped_cb;
-    imgrmgr_dfu_cb dfu_complete_cb;
+    imgrmgr_dfu_cb dfu_pending_cb;
+    imgrmgr_dfu_cb dfu_confirmed_cb;
 } imgmgr_dfu_callbacks_t;
 
 /** @typedef imgr_upload_fn
@@ -122,10 +123,11 @@ int imgmgr_state_slot_in_use(int slot);
 int imgmgr_state_set_pending(int slot, int permanent);
 int imgmgr_state_confirm(void);
 int imgmgr_find_best_area_id(void);
-int imgmgr_register_callbacks(const imgmgr_dfu_callbacks_t *cb_struct);
-void imgr_dfu_stopped(void);
-void imgr_dfu_started(void);
-void imgr_dfu_complete(void);
+void imgmgr_register_callbacks(const imgmgr_dfu_callbacks_t *cb_struct);
+void imgmgr_dfu_stopped(void);
+void imgmgr_dfu_started(void);
+void imgmgr_dfu_pending(void);
+void imgmgr_dfu_confirmed(void);
 #ifdef __cplusplus
 }
 #endif
