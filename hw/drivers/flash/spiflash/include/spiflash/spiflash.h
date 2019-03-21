@@ -63,6 +63,7 @@ struct spiflash_dev {
 #endif
     uint16_t sector_size;
     uint16_t page_size;
+    bool ready;
     /* Array of supported flash chips */
     const struct spiflash_chip *supported_chips;
     /* Pointer to one of the supported chips */
