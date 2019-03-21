@@ -94,9 +94,18 @@ static void
 flash_native_file_open(char *name)
 {
     int created = 0;
-    char tmpl[] = "/tmp/native_flash.XXXXXX";
+    char tmpl[256];
+    const char *tmpdir;
 
     extern int ftruncate(int fd, off_t length);
+
+    /* Attempt to use the current macOS user's temporary directory. */
+    tmpdir = getenv("TMPDIR");
+    if (tmpdir == NULL) {
+        tmpdir = "/tmp";
+    }
+
+    snprintf(tmpl, sizeof tmpl, "%s/native_flash.XXXXXX", tmpdir);
 
     if (name) {
         file = open(name, O_RDWR);
