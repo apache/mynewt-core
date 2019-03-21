@@ -37,6 +37,7 @@ static struct shell_cmd shell_conf_cmd = {
     .sc_cmd_func = shell_conf_command
 };
 
+#if (MYNEWT_VAL(CONFIG_CLI_RW) & 1) == 1
 static void
 conf_running_one(char *name, char *val)
 {
@@ -56,6 +57,7 @@ conf_dump_running(void)
     }
     conf_unlock();
 }
+#endif
 
 #if MYNEWT_VAL(CONFIG_CLI_DEBUG)
 static void
@@ -84,11 +86,13 @@ conf_dump_saved(void)
 static int
 shell_conf_command(int argc, char **argv)
 {
+#if MYNEWT_VAL(CONFIG_CLI_RW)
     char *name = NULL;
     char *val = NULL;
     char tmp_buf[CONF_MAX_VAL_LEN + 1];
     int rc;
 
+    (void)rc;
     switch (argc) {
     case 2:
         name = argv[1];
@@ -100,8 +104,8 @@ shell_conf_command(int argc, char **argv)
     default:
         goto err;
     }
-
     if (!strcmp(name, "commit")) {
+#if (MYNEWT_VAL(CONFIG_CLI_RW) & 2) == 2
         rc = conf_commit(val);
         if (rc) {
             val = "Failed to commit\n";
@@ -110,36 +114,50 @@ shell_conf_command(int argc, char **argv)
         }
         console_printf("%s", val);
         return 0;
-    } else if (!strcmp(name, "dump")) {
-        if (!val || !strcmp(val, "running")) {
-            conf_dump_running();
-        }
-#if MYNEWT_VAL(CONFIG_CLI_DEBUG)
-        if (val && !strcmp(val, "saved")) {
-            conf_dump_saved();
-        }
 #endif
-        return 0;
-    } else if (!strcmp(name, "save")) {
-        conf_save();
-        return 0;
+    } else {
+        if (!strcmp(name, "dump")) {
+#if (MYNEWT_VAL(CONFIG_CLI_RW) & 1) == 1
+            if (!val || !strcmp(val, "running")) {
+                conf_dump_running();
+            }
+#if MYNEWT_VAL(CONFIG_CLI_DEBUG)
+            if (val && !strcmp(val, "saved")) {
+                conf_dump_saved();
+            }
+#endif
+#endif
+            return 0;
+        } else {
+#if (MYNEWT_VAL(CONFIG_CLI_RW) & 2) == 2
+            if (!strcmp(name, "save")) {
+                conf_save();
+                return 0;
+            }
+#endif
+        }
     }
     if (!val) {
+#if (MYNEWT_VAL(CONFIG_CLI_RW) & 1) == 1
         val = conf_get_value(name, tmp_buf, sizeof(tmp_buf));
         if (!val) {
             console_printf("Cannot display value\n");
             goto err;
         }
         console_printf("%s\n", val);
+#endif
     } else {
+#if (MYNEWT_VAL(CONFIG_CLI_RW) & 2) == 2
         rc = conf_set_value(name, val);
         if (rc) {
             console_printf("Failed to set, err: %d\n", rc);
             goto err;
         }
+#endif
     }
     return 0;
 err:
+#endif
     console_printf("Invalid args\n");
     return 0;
 }

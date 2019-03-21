@@ -130,21 +130,26 @@ shell_os_mpool_display_cmd(int argc, char **argv)
 int
 shell_os_date_cmd(int argc, char **argv)
 {
+    int rc;
+#if MYNEWT_VAL(SHELL_OS_DATETIME_CMD)
     struct os_timeval tv;
     struct os_timezone tz;
     char buf[DATETIME_BUFSIZE];
-    int rc;
 
     argc--; argv++;     /* skip command name */
+    rc = -1;
 
     if (argc == 0) {
+#if (MYNEWT_VAL(SHELL_OS_DATETIME_CMD) & 1) == 1
         /* Display the current datetime */
         rc = os_gettimeofday(&tv, &tz);
         assert(rc == 0);
         rc = datetime_format(&tv, &tz, buf, sizeof(buf));
         assert(rc == 0);
         console_printf("%s\n", buf);
+#endif
     } else if (argc == 1) {
+#if (MYNEWT_VAL(SHELL_OS_DATETIME_CMD) & 2) == 2
         /* Set the current datetime */
         rc = datetime_parse(*argv, &tv, &tz);
         if (rc == 0) {
@@ -152,10 +157,11 @@ shell_os_date_cmd(int argc, char **argv)
         } else {
             console_printf("Invalid datetime\n");
         }
+#endif
     } else {
         rc = -1;
     }
-
+#endif
     return rc;
 }
 
