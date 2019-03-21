@@ -249,7 +249,6 @@ coap_notify_observers(oc_resource_t *resource,
             /* performing GET on the resource */
             m = os_msys_get_pkthdr(0, 0);
             if (!m) {
-                /* XXX count */
                 return num_observers;
             }
             response_buffer.buffer = m;
@@ -323,6 +322,19 @@ coap_notify_observers(oc_resource_t *resource,
                 } else {
                     coap_clear_transaction(transaction);
                 }
+                if (response_buf == &response_buffer) {
+                    /*
+                     * We allocated mbuf, and it's still valid.
+                     */
+                    os_mbuf_free_chain(m);
+                    m = NULL;
+                    response_buf = NULL;
+                }
+            } else if (response_buf) {
+                /*
+                 * Failed to alloc transaction.
+                 */
+                break;
             }
 #if MYNEWT_VAL(OC_SEPARATE_RESPONSES)
         }
