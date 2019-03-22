@@ -577,8 +577,7 @@ oc_ri_invoke_coap_entity_handler(struct coap_packet_rx *request,
     response_buffer.response_length = 0;
     response_buffer.code = oc_status_code(OC_STATUS_METHOD_NOT_ALLOWED);
     success = false;
-  }
-  else if (!authorized) {
+  } else if (!authorized) {
     OC_LOG(ERROR, "ocri: Subject not authorized\n");
     /* If the requestor (subject) does not have access granted via an
      * access control entry in the ACL, then it is not authorized to
@@ -586,6 +585,8 @@ oc_ri_invoke_coap_entity_handler(struct coap_packet_rx *request,
      */
     response_buffer.response_length = 0;
     response_buffer.code = oc_status_code(OC_STATUS_FORBIDDEN);
+    success = false;
+  } else if (response_buffer.code >= BAD_REQUEST_4_00) {
     success = false;
   }
 
