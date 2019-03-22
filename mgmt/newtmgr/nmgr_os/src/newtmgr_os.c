@@ -33,6 +33,9 @@
 #if MYNEWT_VAL(LOG_SOFT_RESET)
 #include <reboot/log_reboot.h>
 #endif
+#if MYNEWT_VAL(TIMEPERSIST)
+#include <timepersist/timepersist.h>
+#endif
 
 #include "nmgr_os/nmgr_os.h"
 
@@ -292,6 +295,10 @@ nmgr_datetime_set(struct mgmt_cbuf *cb)
         if (rc) {
           return MGMT_ERR_EINVAL;
         }
+#if MYNEWT_VAL(TIMEPERSIST)
+        timepersist();
+#endif
+
     } else {
         return MGMT_ERR_EINVAL;
     }
