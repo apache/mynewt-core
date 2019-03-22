@@ -96,6 +96,7 @@ struct log;
 #define LOGS_NMGR_OP_LEVEL_LIST   	(4)
 #define LOGS_NMGR_OP_LOGS_LIST    	(5)
 #define LOGS_NMGR_OP_SET_WATERMARK	(6)
+#define LOGS_NMGR_OP_MODLEVEL	        (8)
 
 #define LOG_PRINTF_MAX_ENTRY_LEN (128)
 
