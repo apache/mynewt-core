@@ -18,11 +18,13 @@
  */
 
 #include "runtest/runtest.h"
+#include "taskpool/taskpool.h"
 #include "os_test_priv.h"
 
-TEST_CASE_SELF(os_mutex_test_basic)
+TEST_CASE_TASK(os_mutex_test_basic)
 {
     os_mutex_init(&g_mutex1);
-    runtest_init_task(mutex_test_basic_handler,
-                      MYNEWT_VAL(OS_MAIN_TASK_PRIO) + 1);
+    taskpool_alloc_assert(mutex_test_basic_handler,
+                          MYNEWT_VAL(OS_MAIN_TASK_PRIO) + 2);
+    taskpool_wait_assert(200);
 }
