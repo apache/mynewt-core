@@ -28,6 +28,6 @@ TEST_CASE_SELF(cbmem_test_case_1)
     i = 2;
     rc = cbmem_walk(&cbmem1, cbmem_test_case_1_walk, &i);
     TEST_ASSERT_FATAL(rc == 0, "Could not walk cbmem tree!  rc = %d", rc);
-    TEST_ASSERT_FATAL(i == 65,
+    TEST_ASSERT_FATAL(i == CBMEM1_ENTRY_COUNT + 1,
             "Did not go through every element of walk, %d processed", i - 2);
 }
