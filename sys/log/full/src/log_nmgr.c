@@ -38,6 +38,8 @@ static int log_nmgr_clear(struct mgmt_cbuf *njb);
 static int log_nmgr_module_list(struct mgmt_cbuf *njb);
 static int log_nmgr_level_list(struct mgmt_cbuf *njb);
 static int log_nmgr_logs_list(struct mgmt_cbuf *njb);
+static int log_nmgr_modlevel_set(struct mgmt_cbuf *njb);
+static int log_nmgr_modlevel_get(struct mgmt_cbuf *njb);
 #if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
 static int log_nmgr_set_watermark(struct mgmt_cbuf *njb);
 #endif
@@ -56,6 +58,7 @@ static struct mgmt_handler log_nmgr_group_handlers[] = {
 #if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
     [LOGS_NMGR_OP_SET_WATERMARK] = {log_nmgr_set_watermark, NULL},
 #endif
+    [LOGS_NMGR_OP_MODLEVEL] = {log_nmgr_modlevel_get, log_nmgr_modlevel_set},
 };
 
 struct log_encode_data {
@@ -549,6 +552,93 @@ log_nmgr_level_list(struct mgmt_cbuf *cb)
         return MGMT_ERR_ENOMEM;
     }
     return (0);
+}
+
+/**
+ * Newtmgr Log Level Set/Get handler
+ * @param nmgr json buffer
+ * @return 0 on success; non-zero on failure
+ */
+static int
+log_nmgr_modlevel_set(struct mgmt_cbuf *cb)
+{
+    int rc;
+    uint64_t level;
+    uint64_t module;
+    CborError g_err = CborNoError;
+
+    const struct cbor_attr_t attr[4] = {
+        [0] = {
+            .attribute = "log_module",
+            .type = CborAttrUnsignedIntegerType,
+            .addr.uinteger = &module,
+        },
+        [1] = {
+            .attribute = "level",
+            .type = CborAttrUnsignedIntegerType,
+            .addr.uinteger = &level
+        },
+        [2] = {
+            .attribute = NULL
+        }
+    };
+
+    rc = cbor_read_object(&cb->it, attr);
+    if (rc) {
+        return rc;
+    }
+
+    rc = log_level_set(module, level);
+    if (rc) {
+        rc = MGMT_ERR_EINVAL;
+    }
+
+    g_err |= cbor_encode_text_stringz(&cb->encoder, "rc");
+    g_err |= cbor_encode_int(&cb->encoder, rc);
+
+    rc = 0;
+    return (rc);
+}
+
+/**
+ * Newtmgr Log Level Set/Get handler
+ * @param nmgr json buffer
+ * @return 0 on success; non-zero on failure
+ */
+static int
+log_nmgr_modlevel_get(struct mgmt_cbuf *cb)
+{
+    int rc;
+    uint64_t level;
+    uint64_t module;
+    CborError g_err = CborNoError;
+
+    const struct cbor_attr_t attr[4] = {
+        [0] = {
+            .attribute = "log_module",
+            .type = CborAttrUnsignedIntegerType,
+            .addr.uinteger = &module,
+        },
+        [1] = {
+            .attribute = NULL
+        }
+    };
+
+    rc = cbor_read_object(&cb->it, attr);
+    if (rc) {
+        return rc;
+    }
+
+    level = log_level_get(module);
+
+    g_err |= cbor_encode_text_stringz(&cb->encoder, "level");
+    g_err |= cbor_encode_uint(&cb->encoder, level);
+
+    g_err |= cbor_encode_text_stringz(&cb->encoder, "rc");
+    g_err |= cbor_encode_int(&cb->encoder, rc);
+
+    rc = 0;
+    return (rc);
 }
 
 /**
