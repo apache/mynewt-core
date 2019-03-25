@@ -18,7 +18,7 @@
  */
 
 #include "os/mynewt.h"
-#include "runtest/runtest.h"
+#include "taskpool/taskpool.h"
 #include "os_test_priv.h"
 
 TEST_CASE_SELF(os_sem_test_case_1)
@@ -28,10 +28,10 @@ TEST_CASE_SELF(os_sem_test_case_1)
     err = os_sem_init(&g_sem1, 1);
     TEST_ASSERT(err == OS_OK);
 
-    runtest_init_task(sem_test_1_task1_handler,
-                      MYNEWT_VAL(OS_MAIN_TASK_PRIO) + 1);
-    runtest_init_task(sem_test_1_task2_handler,
-                      MYNEWT_VAL(OS_MAIN_TASK_PRIO) + 2);
-    runtest_init_task(sem_test_1_task3_handler,
-                      MYNEWT_VAL(OS_MAIN_TASK_PRIO) + 3);
+    taskpool_alloc_assert(sem_test_1_task1_handler,
+                          MYNEWT_VAL(OS_MAIN_TASK_PRIO) + 1);
+    taskpool_alloc_assert(sem_test_1_task2_handler,
+                          MYNEWT_VAL(OS_MAIN_TASK_PRIO) + 2);
+    taskpool_alloc_assert(sem_test_1_task3_handler,
+                          MYNEWT_VAL(OS_MAIN_TASK_PRIO) + 3);
 }
