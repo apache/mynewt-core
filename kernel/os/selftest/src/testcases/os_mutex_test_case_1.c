@@ -19,9 +19,10 @@
 
 #include "os/mynewt.h"
 #include "runtest/runtest.h"
+#include "taskpool/taskpool.h"
 #include "os_test_priv.h"
 
-TEST_CASE_SELF(os_mutex_test_case_1)
+TEST_CASE_TASK(os_mutex_test_case_1)
 {
     int rc;
 
@@ -35,10 +36,12 @@ TEST_CASE_SELF(os_mutex_test_case_1)
     rc = os_mutex_init(&g_mutex2);
     TEST_ASSERT(rc == 0);
 
-    runtest_init_task(mutex_test1_task1_handler,
-                      MYNEWT_VAL(OS_MAIN_TASK_PRIO) + 1);
-    runtest_init_task(mutex_task2_handler,
-                      MYNEWT_VAL(OS_MAIN_TASK_PRIO) + 2);
-    runtest_init_task(mutex_task3_handler,
-                      MYNEWT_VAL(OS_MAIN_TASK_PRIO) + 3);
+    taskpool_alloc_assert(mutex_test1_task1_handler,
+                          MYNEWT_VAL(OS_MAIN_TASK_PRIO) + 2);
+    taskpool_alloc_assert(mutex_task2_handler,
+                          MYNEWT_VAL(OS_MAIN_TASK_PRIO) + 3);
+    taskpool_alloc_assert(mutex_task3_handler,
+                          MYNEWT_VAL(OS_MAIN_TASK_PRIO) + 4);
+
+    taskpool_wait_assert(200);
 }
