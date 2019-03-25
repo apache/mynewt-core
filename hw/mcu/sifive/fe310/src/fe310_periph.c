@@ -60,10 +60,10 @@ static struct uart_dev os_bsp_uart0;
 static const struct bus_spi_dev_cfg spi1_cfg = {
     .spi_num = 1,
 };
-static struct bus_spi_dev spi1_bus;
+static struct bus_spi_hal_dev spi1_bus;
 #endif
 #if MYNEWT_VAL(SPI_2)
-static const struct bus_spi_dev_cfg spi2_cfg = {
+static const struct bus_spi_hal_dev spi2_cfg = {
     .spi_num = 2,
 };
 static struct bus_spi_dev spi2_bus;
