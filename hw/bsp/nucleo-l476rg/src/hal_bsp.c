@@ -150,6 +150,11 @@ hal_bsp_init(void)
     assert(rc == 0);
 #endif
 
+#if (MYNEWT_VAL(OS_CPUTIME_TIMER_NUM) >= 0)
+    rc = os_cputime_init(MYNEWT_VAL(OS_CPUTIME_FREQ));
+    assert(rc == 0);
+#endif
+
 #if MYNEWT_VAL(SPI_0_SLAVE)
     rc = hal_spi_init(0, &spi0_cfg, HAL_SPI_TYPE_SLAVE);
     assert(rc == 0);
