@@ -88,7 +88,7 @@ struct stm32_hal_spi_cfg spi0_cfg = {
     .ss_pin   = MCU_GPIO_PORTA(4),
     .sck_pin  = MCU_GPIO_PORTA(5),
     .miso_pin = MCU_GPIO_PORTA(6),
-    .mosi_pin = MCU_GPIO_PORTB(5),
+    .mosi_pin = MCU_GPIO_PORTA(7),
     .irq_prio = 2,
 };
 #endif
