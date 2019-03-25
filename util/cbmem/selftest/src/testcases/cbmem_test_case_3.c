@@ -51,12 +51,13 @@ TEST_CASE_SELF(cbmem_test_case_3)
             off += rc;
             len += rc;
         }
-        TEST_ASSERT_FATAL(len == 1024,
-                "Couldn't read full entry, expected %d got %d", 1024, len);
+        TEST_ASSERT_FATAL(len == CBMEM1_ENTRY_SIZE,
+                "Couldn't read full entry, expected %d got %d",
+                CBMEM1_ENTRY_SIZE, len);
         i++;
 
         /* go apesh*t, and read data out of bounds, see what we get. */
-        rc = cbmem_read(&cbmem1, hdr, buf, 2048, sizeof(buf));
+        rc = cbmem_read(&cbmem1, hdr, buf, CBMEM1_ENTRY_SIZE * 2, sizeof(buf));
         TEST_ASSERT_FATAL(rc < 0,
                 "Reading invalid should return error, instead %d returned.",
                 rc);
