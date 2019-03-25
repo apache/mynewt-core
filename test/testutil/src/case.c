@@ -173,7 +173,7 @@ tu_case_append_file_info(const char *file, int line)
 {
     int rc;
 
-    rc = tu_case_append_buf("|%s:%d| ", file, line);
+    rc = tu_case_append_buf("[%s:%d] ", file, line);
     assert(rc == 0);
 }
 
@@ -221,7 +221,7 @@ tu_case_fail_assert(int fatal, const char *file, int line,
     tu_case_append_assert_msg(expr);
 
     if (format != NULL) {
-        rc = tu_case_append_buf("\n");
+        rc = tu_case_append_buf("; ");
         assert(rc == 0);
 
         va_start(ap, format);
@@ -229,9 +229,6 @@ tu_case_fail_assert(int fatal, const char *file, int line,
         assert(rc == 0);
         va_end(ap);
     }
-
-    rc = tu_case_append_buf("\n");
-    assert(rc == 0);
 
     tu_case_fail();
 
