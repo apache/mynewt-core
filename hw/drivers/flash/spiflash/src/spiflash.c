@@ -920,7 +920,7 @@ spiflash_wait_ready_till(struct spiflash_dev *dev, uint32_t timeout_us,
     uint32_t step_us)
 {
     int rc = -1;
-    uint32_t limit = os_cputime_get32() + timeout_us;
+    uint32_t limit;
 
     if (dev->ready) {
         return 0;
@@ -928,10 +928,14 @@ spiflash_wait_ready_till(struct spiflash_dev *dev, uint32_t timeout_us,
 
     if (step_us < MYNEWT_VAL(SPIFLASH_READ_STATUS_INTERVAL)) {
         step_us = MYNEWT_VAL(SPIFLASH_READ_STATUS_INTERVAL);
+    } else if (step_us > 1000000) {
+        /* Read status once per second max */
+        step_us = 1000000;
     }
 
     spiflash_lock(dev);
 
+    limit = os_cputime_get32() + os_cputime_usecs_to_ticks(timeout_us);
     do {
         if (spiflash_device_ready(dev)) {
             rc = 0;
@@ -1038,6 +1042,9 @@ hal_spiflash_write(const struct hal_flash *hal_flash_dev, uint32_t addr,
 
     pp_time_typical = dev->characteristics->tbp1.typical;
     pp_time_maximum = dev->characteristics->tpp.maximum;
+    if (pp_time_maximum < pp_time_typical) {
+        pp_time_maximum = pp_time_typical;
+    }
 
     while (len) {
         spiflash_write_enable(dev);
@@ -1130,13 +1137,18 @@ spiflash_execute_erase(struct spiflash_dev *dev, const uint8_t *buf,
     /* Now we know that device is not ready */
     dev->ready = false;
 
-    start_time = os_cputime_ticks_to_usecs(os_cputime_get32());
+    start_time = os_cputime_get32();
     /* Wait typical erase time before starting polling for ready */
     spiflash_delay_us(delay_spec->typical);
 
-    /* Poll status ready for remaining time */
-    wait_time_us = start_time + delay_spec->maximum - os_cputime_get32();
+    wait_time_us = os_cputime_ticks_to_usecs(os_cputime_get32() - start_time);
+    if (wait_time_us > delay_spec->maximum) {
+        wait_time_us = 0;
+    } else {
+        wait_time_us = delay_spec->maximum - wait_time_us;
+    }
 
+    /* Poll status ready for remaining time */
     rc = spiflash_wait_ready_till(dev, wait_time_us, wait_time_us / 50);
 err:
     spiflash_unlock(dev);
