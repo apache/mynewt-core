@@ -41,12 +41,6 @@ syscfg.defs:
             prefix is constructed from the legacy C macros `BUILD_TARGET` and
             `BUILD_TEST`.
         value:
-    RUNTEST_NUM_TASKS:
-        description: 'The number of generic tasks available to unit tests.'
-        value: 4
-    RUNTEST_STACK_SIZE:
-        description: 'The stack size, in words, of each generic test task.'
-        value: 256
     RUNTEST_MAX_TEST_NAME_LEN:
         description: 'The maximum length, in characters, of each test name.'
         value: 32
