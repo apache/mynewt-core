@@ -47,6 +47,14 @@ static struct os_mbuf_pool os_msys_2_mbuf_pool;
 static struct os_mempool os_msys_2_mempool;
 #endif
 
+#define OS_MSYS_SANITY_ENABLED                  \
+    (MYNEWT_VAL(MSYS_1_SANITY_MIN_COUNT) > 0 || \
+     MYNEWT_VAL(MSYS_2_SANITY_MIN_COUNT) > 0)
+
+#if OS_MSYS_SANITY_ENABLED
+static struct os_sanity_check os_msys_sc;
+#endif
+
 int
 os_msys_register(struct os_mbuf_pool *new_pool)
 {
@@ -158,6 +166,54 @@ os_msys_num_free(void)
     return total;
 }
 
+#if OS_MSYS_SANITY_ENABLED
+
+/**
+ * Retrieves the minimum safe buffer count for an msys pool.  That is, the
+ * lowest a pool's buffer count can be without causing the sanity check to
+ * fail.
+ *
+ * @param idx                   The index of the msys pool to query.
+ *
+ * @return                      The msys pool's minimum safe buffer count.
+ */
+static int
+os_msys_sanity_min_count(int idx)
+{
+    switch (idx) {
+    case 0:
+        return MYNEWT_VAL(MSYS_1_SANITY_MIN_COUNT);
+
+    case 1:
+        return MYNEWT_VAL(MSYS_2_SANITY_MIN_COUNT);
+
+    default:
+        assert(0);
+        return 0;
+    }
+}
+
+static int
+os_msys_sanity(struct os_sanity_check *sc, void *arg)
+{
+    const struct os_mbuf_pool *omp;
+    int min_count;
+    int idx;
+
+    idx = 0;
+    STAILQ_FOREACH(omp, &g_msys_pool_list, omp_next) {
+        min_count = os_msys_sanity_min_count(idx);
+        if (omp->omp_pool->mp_num_free < min_count) {
+            return OS_ENOMEM;
+        }
+
+        idx++;
+    }
+
+    return 0;
+}
+#endif
+
 static void
 os_msys_init_once(void *data, struct os_mempool *mempool,
                   struct os_mbuf_pool *mbuf_pool,
@@ -199,5 +255,13 @@ os_msys_init(void)
                       MYNEWT_VAL(MSYS_2_BLOCK_COUNT),
                       SYSINIT_MSYS_2_MEMBLOCK_SIZE,
                       "msys_2");
+#endif
+
+#if OS_MSYS_SANITY_ENABLED
+    os_msys_sc.sc_func = os_msys_sanity;
+    os_msys_sc.sc_checkin_itvl =
+        OS_TICKS_PER_SEC * MYNEWT_VAL(MSYS_SANITY_TIMEOUT) / 1000;
+    rc = os_sanity_check_register(&os_msys_sc);
+    SYSINIT_PANIC_ASSERT(rc == 0);
 #endif
 }
