@@ -286,8 +286,8 @@ os_pkg_init(void)
     err = os_dev_initialize_all(OS_DEV_INIT_KERNEL);
     assert(err == OS_OK);
 
-    os_msys_init();
     os_mempool_module_init();
+    os_msys_init();
 }
 
 /**
