@@ -95,6 +95,18 @@ split-ble400.ld
 nrf52-thingy_no_boot.ld
 split-nrf52-thingy.ld
 
+# Nordic SDK - BSD License
+nordic_pca10028_no_boot.ld
+split-nordic_pca10028.ld
+nordic_pca10028-16k_no_boot.ld
+split-nordic_pca10028-16k.ld
+nordic_pca10040_no_boot.ld
+split-nordic_pca10040.ld
+nordic_pca10056_no_boot.ld
+split-nordic_pca10056.ld
+nordic_pca20020_no_boot.ld
+split-nordic_pca20020.ld
+
 # RedBear Blend2 SDK - BSD License
 rb-blend2_no_boot.ld
 split-rb-blend2.ld
@@ -194,6 +206,10 @@ stm32f4xx_hal_flash_ex.c
 stm32f4xx_hal_gpio.c
 stm32f4xx_hal_rcc.c
 stm32f4xx_hal_uart.c
+
+#STM32F0xx HAL - BSD licence
+STM32F0xx_HAL_Driver
+stm32f0xx
 
 # baselibc - BSD License.
 # tinyprintf - BSD License.
@@ -359,6 +375,9 @@ nucleo-l476rg
 # NUCLEO-F072RB BSP - BSD License
 nucleo-f072rb
 
+# NUCLEO-F030R8 BSP - BSD License
+nucleo-f030r8
+
 # Microchip PIC32 SDK - BSD License
 p32mz2048efg100.h
 pic32_init_cache.S
@@ -451,3 +470,12 @@ split-fanstel-ev-bt840.ld
 
 # B-L072Z-LRWAN1 BSP - BSD License
 b-l072z-lrwan1
+
+# bluepill BSP - BSD License
+bluepill
+
+# Ruuvitag BSP - BSD License
+ruuvitag_rev_b
+
+# reel_board BSP - BSD License
+reel_board
