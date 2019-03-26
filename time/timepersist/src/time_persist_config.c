@@ -21,6 +21,7 @@
 
 #if MYNEWT_VAL(TIMEPERSIST_SYS_CONFIG)
 
+#include <hal/hal_system.h>
 #include <config/config.h>
 #include <datetime/datetime.h>
 
@@ -51,8 +52,21 @@ timepersist_conf_set(int argc, char **argv, char *val)
         return OS_ERR_PRIV;
     }
     if (!strcmp(argv[0], "s")) {
-        if (!datetime_parse(val, &tv, &tz)) {
+        if (!val) {
+            memset(&tv, 0, sizeof(tv));
+            memset(&tz, 0, sizeof(tz));
             os_settimeofday(&tv, &tz);
+        } else if (!datetime_parse(val, &tv, &tz)) {
+            if (hal_reset_cause() == HAL_RESET_POR) {
+                /*
+                 * In this case the stored time could be off considerably.
+                 * Schedule an immediate callout which will clear out the
+                 * stored time.
+                 */
+                os_callout_reset(&timepersist_timer, 0);
+            } else {
+                os_settimeofday(&tv, &tz);
+            }
         }
         return OS_OK;
     }
@@ -71,6 +85,8 @@ timepersist(void)
         if (!datetime_format(&tv, &tz, str, DATETIME_BUFSIZE)) {
             conf_save_one("time/s", str);
         }
+    } else if (hal_reset_cause() == HAL_RESET_POR) {
+        conf_save_one("time/s", NULL);
     }
 }
 
