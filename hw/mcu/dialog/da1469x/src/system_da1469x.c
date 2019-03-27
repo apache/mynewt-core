@@ -20,6 +20,7 @@
 #include <assert.h>
 #include "mcu/da1469x_pd.h"
 #include "mcu/da1469x_pdc.h"
+#include "mcu/da1469x_prail.h"
 #include "DA1469xAB.h"
 #include "da1469x_priv.h"
 
@@ -63,9 +64,6 @@ void SystemInit(void)
     CRG_TOP->PMU_CTRL_REG &= ~CRG_TOP_PMU_CTRL_REG_SYS_SLEEP_Msk;
     da1469x_pdc_reset();
 
-    /* Enable Radio LDO */
-    CRG_TOP->POWER_CTRL_REG |= CRG_TOP_POWER_CTRL_REG_LDO_RADIO_ENABLE_Msk;
-
     /* Keep CMAC in reset, we don't need it now */
     CRG_TOP->CLK_RADIO_REG = (0 << CRG_TOP_CLK_RADIO_REG_RFCU_ENABLE_Pos) |
                              (1 << CRG_TOP_CLK_RADIO_REG_CMAC_SYNCH_RESET_Pos) |
@@ -108,6 +106,9 @@ void SystemInit(void)
                           (1 << OTPC_OTPC_MODE_REG_OTPC_MODE_MODE_Pos);
     while (!(OTPC->OTPC_STAT_REG & OTPC_OTPC_STAT_REG_OTPC_STAT_MRDY_Msk));
     CRG_TOP->CLK_AMBA_REG &= ~CRG_TOP_CLK_AMBA_REG_OTP_ENABLE_Msk;
+
+    /* Initialize and configure power rails */
+    da1469x_prail_initialize();
 
     /* XXX temporarily enable PD_COM and PD_PER since we do not control them */
     da1469x_pd_acquire(MCU_PD_DOMAIN_COM);
