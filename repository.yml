@@ -34,6 +34,7 @@ repo.versions:
     "1.4.0": "mynewt_1_4_0_tag"
     "1.4.1": "mynewt_1_4_1_tag"
     "1.5.0": "mynewt_1_5_0_tag"
+    "1.6.0": "mynewt_1_6_0_tag"
 
     "0-latest": "1.5.0"
     "1-latest": "1.5.0"
@@ -47,6 +48,7 @@ repo.versions:
     "1.3-latest": "1.3.0"
     "1.4-latest": "1.4.1"
     "1.5-latest": "1.5.0"
+    "1.6-latest": "1.6.0"
 
 repo.newt_compatibility:
     # Allow all versions for 0.0.0.  This is a workaround to prevent a warning
@@ -58,6 +60,9 @@ repo.newt_compatibility:
     # Core 1.1.0+ requires newt 1.1.0+ (feature: self-overrides).
     # Core 1.4.0+ requires newt 1.4.0+ (feature: sync repo deps).
     # Core 1.5.0+ requires newt 1.5.0+ (feature: transient packages)
+    # Core 1.6.0+ requires newt 1.6.0+ (feature: choice)
+    1.6.0:
+        1.6.0: good
     1.5.0:
         1.5.0: good
     1.4.1:
@@ -81,3 +86,4 @@ repo.deps:
             mynewt_1_4_0_tag: 1.0.0
             mynewt_1_4_1_tag: 1.0.0
             mynewt_1_5_0_tag: 1.0.0
+            mynewt_1_6_0_tag: 1.1.0
