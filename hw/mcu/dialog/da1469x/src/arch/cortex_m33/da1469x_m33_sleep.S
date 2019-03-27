@@ -45,6 +45,7 @@ da1469x_m33_sleep_state:
 
     .size   da1469x_m33_sleep_state, . - da1469x_m33_sleep_state
 
+    .equ CLK_AMBA_REG,              0x50000000
     .equ RESET_STAT_REG,            0x500000BC
     .equ NVIC_BASE,                 0xE000E100
     .equ NVIC_IPR_OFFSET,           0x300
@@ -112,6 +113,12 @@ da1469x_m33_sleep:
     movs    r3, #0
     str     r3, [r0, #0]
 
+/* Disable QSPI controller clock */
+    ldr     r0, =CLK_AMBA_REG
+    ldr     r1, [r0, #0]
+    bic     r1, r1, #0x1000
+    str     r1, [r0, #0]
+
 /* Set SCB->SCR[SLEEPDEEP] so we can enter deep sleep */
     ldr     r0, =(SCB_BASE + SCB_SCR_OFFSET)
     ldr     r1, [r0, #0]
@@ -130,6 +137,13 @@ da1469x_m33_sleep:
  */
     str     r1, [r0, #0]
     mov     r0, #0
+
+/* Enable QSPI controller clock */
+    ldr     r2, =CLK_AMBA_REG
+    ldr     r1, [r2, #0]
+    orr     r1, r1, #0x1000
+    str     r1, [r2, #0]
+
     b       da1469x_m33_restore
 
     .section .text_ram
@@ -182,6 +196,12 @@ da1469x_m33_wakeup:
     msr     MSP, r0
     msr     PSP, r1
     msr     CONTROL, r2
+
+/* Enable QSPI controller clock */
+    ldr     r0, =CLK_AMBA_REG
+    ldr     r1, [r0, #0]
+    orr     r1, r1, #0x1000
+    str     r1, [r0, #0]
 
 /*
  * Flash is likely in QPI mode but QSPIC assumes it is in single mode so we
