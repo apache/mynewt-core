@@ -68,6 +68,12 @@ syscfg.defs:
             Sysinit stage for shell functionality.
         value: 500
 
+    SHELL_OS_DATETIME_CMD:
+        description: >
+            Datetime command enabled, read 1,
+            write 2, read/write 3 (default)
+        value: 3 
+
 ## duplicated from boot/boot_serial
     BOOT_SERIAL_NVREG_MAGIC:
         description: >
