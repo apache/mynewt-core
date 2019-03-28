@@ -41,7 +41,7 @@ syscfg.defs:
 
     TIMER_0:
         description: 'TIMER_0'
-        value: 0
+        value: 1
 
     ETH_0:
         description: 'Ethernet driver for LwIP'
