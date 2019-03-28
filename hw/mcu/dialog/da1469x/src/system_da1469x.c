@@ -96,6 +96,9 @@ void SystemInit(void)
     g_mcu_pdc_combo_idx = idx;
 
     CRG_TOP->PMU_CTRL_REG |= CRG_TOP_PMU_CTRL_REG_SYS_SLEEP_Msk;
+
+    /* Enable cache retainability */
+    CRG_TOP->PMU_CTRL_REG |= CRG_TOP_PMU_CTRL_REG_RETAIN_CACHE_Msk;
 #endif
 
     /* XXX temporarily enable PD_COM and PD_PER since we do not control them */
