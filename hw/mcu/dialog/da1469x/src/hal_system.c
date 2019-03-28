@@ -19,8 +19,8 @@
  
 #include "syscfg/syscfg.h"
 #include "mcu/da1469x_clock.h"
-#include "mcu/da1469x_pdc.h"
 #include "hal/hal_system.h"
+#include "os/os_cputime.h"
 #include "DA1469xAB.h"
 
 #if !MYNEWT_VAL(BOOT_LOADER)
@@ -84,10 +84,12 @@ hal_system_clock_start(void)
     /* Reset clock dividers to 0 */
     CRG_TOP->CLK_AMBA_REG &= ~(CRG_TOP_CLK_AMBA_REG_HCLK_DIV_Msk | CRG_TOP_CLK_AMBA_REG_PCLK_DIV_Msk);
 
-    /* Select XTAL32K as LP clock */
-    CRG_TOP->CLK_XTAL32K_REG |= CRG_TOP_CLK_XTAL32K_REG_XTAL32K_ENABLE_Msk;
-    CRG_TOP->CLK_CTRL_REG = ((CRG_TOP->CLK_CTRL_REG & ~CRG_TOP_CLK_CTRL_REG_LP_CLK_SEL_Msk) |
-                                                (2U << CRG_TOP_CLK_CTRL_REG_LP_CLK_SEL_Pos));
+    /*
+     * We cannot switch lp_clk to XTAL32K here since it needs some time to
+     * settle, so we just disable RCX (we don't need it) and then we'll handle
+     * switch to XTAL32K from sysinit since we need os_cputime for this.
+     */
+    da1469x_clock_lp_rcx_disable();
 
     /* Switch to XTAL32M and disable RC32M */
     da1469x_clock_sys_xtal32m_init();
@@ -104,4 +106,22 @@ hal_reset_cause(void)
 #else
     return g_hal_reset_reason;
 #endif
+}
+
+static void
+da1469x_lpclk_settle_tmr_cb(void *arg)
+{
+    da1469x_clock_lp_xtal32k_switch();
+}
+
+void
+da1469x_lpclk_init(void)
+{
+    static struct hal_timer lpclk_settle_tmr;
+
+    da1469x_clock_lp_xtal32k_enable();
+
+    os_cputime_timer_init(&lpclk_settle_tmr, da1469x_lpclk_settle_tmr_cb, NULL);
+    os_cputime_timer_relative(&lpclk_settle_tmr,
+                              MYNEWT_VAL(MCU_CLOCK_XTAL32K_SETTLE_TIME_MS) * 1000);
 }
