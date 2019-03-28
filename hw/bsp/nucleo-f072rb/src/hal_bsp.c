@@ -194,4 +194,9 @@ hal_bsp_init(void)
     rc = hal_timer_init(2, TIM17);
     assert(rc == 0);
 #endif
+
+#if (MYNEWT_VAL(OS_CPUTIME_TIMER_NUM) >= 0)
+    rc = os_cputime_init(MYNEWT_VAL(OS_CPUTIME_FREQ));
+    assert(rc == 0);
+#endif
 }
