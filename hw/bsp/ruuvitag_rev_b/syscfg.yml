@@ -97,4 +97,4 @@ syscfg.restrictions:
     - "!UARTBB_0 || (UARTBB_0_PIN_TX >= 0 && UARTBB_0_PIN_RX >= 0)"
     - "!BME280_ONB || SPI_0_MASTER"
     - "!LIS2DH12_ONB || SPI_0_MASTER"
-    - "!LIS2DH12_ONB || BSP_RUUVITAG_REV >= 3"
+    - "!LIS2DH12_ONB || BSP_RUUVITAG_REV_B_NUM >= 3"
