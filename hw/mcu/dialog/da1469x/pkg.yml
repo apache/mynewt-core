@@ -47,3 +47,6 @@ pkg.deps.GPADC:
 
 pkg.deps.SDADC:
     - hw/drivers/adc/sdadc_da1469x
+
+pkg.init:
+    da1469x_lpclk_init: 1
