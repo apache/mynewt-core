@@ -30,5 +30,5 @@ pkg.deps:
     - "@apache-mynewt-core/hw/cmsis-core"
     - "@apache-mynewt-core/hw/hal"
 
--pkg.deps.BLE_CONTROLLER:
--    - "@apache-mynewt-core/hw/drivers/nimble/nrf51"
+pkg.deps.BLE_CONTROLLER:
+    - "@apache-mynewt-core/hw/drivers/nimble/nrf51"
