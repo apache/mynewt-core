@@ -79,6 +79,10 @@ struct spiflash_dev {
 #endif
     bool pd_active;                 /* Power down active */
 #endif
+#if MYNEWT_VAL(SPIFLASH_CACHE_SIZE)
+    uint32_t cached_addr;
+    uint8_t cache[MYNEWT_VAL(SPIFLASH_CACHE_SIZE)];
+#endif
 };
 
 extern struct spiflash_dev spiflash_dev;
