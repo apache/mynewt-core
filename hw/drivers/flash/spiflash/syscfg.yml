@@ -44,6 +44,12 @@ syscfg.defs:
         description: 'Requested baudrate, value must be supported by SPI driver'
         value: 0
 
+    SPIFLASH_CACHE_SIZE:
+        description:
+            When this value is set to value other then 0, all reads that are
+            smaller then this size are rounded up to this value.
+            Subsequent reads from cached adress range is much faster.
+        value: 0
     SPIFLASH_AUTO_POWER_DOWN:
         description: >
             Enables auto power down feature which allows to power down flash

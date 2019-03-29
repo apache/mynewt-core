@@ -986,6 +986,11 @@ hal_spiflash_read(const struct hal_flash *hal_flash_dev, uint32_t addr, void *bu
                   uint32_t len)
 {
     int err = 0;
+#if MYNEWT_VAL(SPIFLASH_CACHE_SIZE)
+    uint32_t cached_size;
+    uint8_t *user_buf;
+    uint32_t left;
+#endif
     uint8_t cmd[] = { SPIFLASH_READ,
         (uint8_t)(addr >> 16), (uint8_t)(addr >> 8), (uint8_t)(addr) };
     struct spiflash_dev *dev;
@@ -996,21 +1001,69 @@ hal_spiflash_read(const struct hal_flash *hal_flash_dev, uint32_t addr, void *bu
 
     err = spiflash_wait_ready(dev, 100);
     if (!err) {
-#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
-        bus_node_simple_write_read_transact((struct os_dev *)&dev->dev,
-            &cmd, 4, buf, len);
-#else
-        spiflash_cs_activate(dev);
-
-        /* Send command + address */
-        hal_spi_txrx(dev->spi_num, cmd, NULL, sizeof cmd);
-        /* For security mostly, do not output random data, fill it with FF */
-        memset(buf, 0xFF, len);
-        /* Tx buf does not matter, for simplicity pass read buffer */
-        hal_spi_txrx(dev->spi_num, buf, buf, len);
-
-        spiflash_cs_deactivate(dev);
+#if MYNEWT_VAL(SPIFLASH_CACHE_SIZE)
+        if ((dev->cached_addr <= addr) &&
+            (addr < dev->cached_addr + MYNEWT_VAL(SPIFLASH_CACHE_SIZE))) {
+            /* Check if everything is cached */
+            if (len < MYNEWT_VAL(SPIFLASH_CACHE_SIZE) -
+                      (addr - dev->cached_addr)) {
+                /* Everything  was cached */
+                memcpy(buf, dev->cache + addr - dev->cached_addr, len);
+                len = 0;
+            } else {
+                /* Some data was cached */
+                cached_size = MYNEWT_VAL(SPIFLASH_CACHE_SIZE) -
+                    (addr - dev->cached_addr);
+                memcpy(buf, dev->cache + addr - dev->cached_addr, cached_size);
+                len -= cached_size;
+                buf = (uint8_t *)buf + cached_size;
+                addr += cached_size;
+                cmd[1] = (uint8_t)(addr >> 16);
+                cmd[2] = (uint8_t)(addr >> 8);
+                cmd[3] = (uint8_t)(addr);
+            }
+        }
+        left = len;
+        user_buf = buf;
+        /*
+         * In case small amount of data was requested use cache buffer for
+         * reading, instead of caller buffer that would be to small.
+         */
+        if (len > 0 && len < MYNEWT_VAL(SPIFLASH_CACHE_SIZE)) {
+            len = MYNEWT_VAL(SPIFLASH_CACHE_SIZE);
+            buf = dev->cache;
+        }
 #endif
+        if (len > 0) {
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+            bus_node_simple_write_read_transact((struct os_dev *)&dev->dev,
+                &cmd, 4, buf, len);
+#else
+            spiflash_cs_activate(dev);
+
+            /* Send command + address */
+            hal_spi_txrx(dev->spi_num, cmd, NULL, sizeof cmd);
+            /* For security mostly, do not output random data, fill it with FF */
+            memset(buf, 0xFF, len);
+            /* Tx buf does not matter, for simplicity pass read buffer */
+            hal_spi_txrx(dev->spi_num, buf, buf, len);
+
+            spiflash_cs_deactivate(dev);
+#endif
+#if MYNEWT_VAL(SPIFLASH_CACHE_SIZE)
+            /* If buffer was too small, cache was used for reading */
+            if (left < MYNEWT_VAL(SPIFLASH_CACHE_SIZE)) {
+                memcpy(user_buf, dev->cache, left);
+                dev->cached_addr = addr;
+            } else {
+                /* Read was done directly to user buffer, copy end to cache */
+                dev->cached_addr = addr + left - MYNEWT_VAL(SPIFLASH_CACHE_SIZE);
+                memcpy(dev->cache, (uint8_t *)buf + left -
+                       MYNEWT_VAL(SPIFLASH_CACHE_SIZE),
+                       MYNEWT_VAL(SPIFLASH_CACHE_SIZE));
+            }
+#endif
+        }
     }
 
     spiflash_unlock(dev);
@@ -1039,6 +1092,10 @@ hal_spiflash_write(const struct hal_flash *hal_flash_dev, uint32_t addr,
         rc = -1;
         goto err;
     }
+
+#if MYNEWT_VAL(SPIFLASH_CACHE_SIZE)
+    dev->cached_addr = 0xFFFFFFFF;
+#endif
 
     pp_time_typical = dev->characteristics->tbp1.typical;
     pp_time_maximum = dev->characteristics->tpp.maximum;
@@ -1115,6 +1172,10 @@ spiflash_execute_erase(struct spiflash_dev *dev, const uint8_t *buf,
     uint32_t start_time;
 
     spiflash_lock(dev);
+
+#if MYNEWT_VAL(SPIFLASH_CACHE_SIZE)
+    dev->cached_addr = 0xFFFFFFFF;
+#endif
 
     if (spiflash_wait_ready(dev, 100) != 0) {
         rc = -1;
