@@ -31,7 +31,7 @@ syscfg.defs:
 
     TIMER_0:
         description: 'Support for TIMER_0'
-        value: 0
+        value: 1
     TIMER_1:
         description: 'Support for TIMER_1'
         value: 0
