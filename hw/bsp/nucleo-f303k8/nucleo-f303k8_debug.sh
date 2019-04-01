@@ -18,36 +18,20 @@
 #
 
 # Called with following variables set:
+#  - CORE_PATH is absolute path to @apache-mynewt-core
 #  - BSP_PATH is absolute path to hw/bsp/bsp_name
 #  - BIN_BASENAME is the path to prefix to target binary,
 #    .elf appended to name is the ELF file
 #  - FEATURES holds the target features string
 #  - EXTRA_JTAG_CMD holds extra parameters to pass to jtag software
 #  - RESET set if target should be reset when attaching
+#  - NO_GDB set if we should not start gdb to debug
 #
-if [ -z "$BIN_BASENAME" ]; then
-    echo "Need binary to debug"
-    exit 1
-fi
+. $CORE_PATH/hw/scripts/openocd.sh
 
 FILE_NAME=$BIN_BASENAME.elf
-GDB_CMD_FILE=.gdb_cmds
-
-echo "Debugging" $FILE_NAME
-
-#
-# Block Ctrl-C from getting passed to openocd.
+CFG="-f board/st_nucleo_f3.cfg"
 # Exit openocd when gdb detaches.
-#
-set -m
-openocd -f board/st_nucleo_f3.cfg -c "gdb_port 3333; telnet_port 4444; stm32f3x.cpu configure -event gdb-detach {resume;shutdown}" -c "$EXTRA_JTAG_CMD" -c init -c halt &
-set +m
+EXTRA_JTAG_CMD="$EXTRA_JTAG_CMD; stm32f3x.cpu configure -event gdb-detach {if {[stm32f3x.cpu curstate] eq \"halted\"} resume;shutdown}"
 
-echo "target remote localhost:3333" > $GDB_CMD_FILE
-if [ ! -z "$RESET" ]; then
-    echo "mon reset" >> $GDB_CMD_FILE
-fi
-
-arm-none-eabi-gdb -x $GDB_CMD_FILE $FILE_NAME
-rm $GDB_CMD_FILE
-
+openocd_debug
