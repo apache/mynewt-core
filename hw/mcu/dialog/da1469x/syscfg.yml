@@ -27,6 +27,11 @@ syscfg.defs:
             - DA14697
             - DA14699
 
+    MCU_CLOCK_XTAL32M_SETTLE_TIME_US:
+        description: >
+            Specifies settling time [us] of 32M crystal oscillator.
+        value: 2000
+
     MCU_FLASH_MIN_WRITE_SIZE:
         description: >
             Specifies the required alignment for internal flash writes.
