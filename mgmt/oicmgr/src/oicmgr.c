@@ -29,6 +29,7 @@
 #include <tinycbor/cbor.h>
 #include <tinycbor/cbor_mbuf_reader.h>
 #include <oic/oc_api.h>
+#include "oicmgr/oicmgr.h"
 
 struct omgr_cbuf {
     struct mgmt_cbuf ob_mj;
@@ -130,7 +131,30 @@ omgr_send_err_rsp(struct CborEncoder *enc, const struct nmgr_hdr *hdr,
     return 0;
 }
 
-static void
+
+int
+omgr_extract_req_hdr(oc_request_t *req, struct nmgr_hdr *out_hdr)
+{
+    struct omgr_state *o = &omgr_state;
+    uint16_t data_off;
+    struct os_mbuf *m;
+    int rc;
+
+    coap_get_payload(req->packet, &m, &data_off);
+
+    cbor_mbuf_reader_init(&o->os_cbuf.ob_reader, m, data_off);
+    cbor_parser_init(&o->os_cbuf.ob_reader.r, 0, &o->os_cbuf.ob_mj.parser,
+                     &o->os_cbuf.ob_mj.it);
+
+    rc = omgr_oic_read_hdr(&o->os_cbuf.ob_mj.it, out_hdr);
+    if (rc != 0) {
+        return MGMT_ERR_EINVAL;
+    }
+
+    return 0;
+}
+
+void
 omgr_oic_put(oc_request_t *req, oc_interface_mask_t mask)
 {
     struct omgr_state *o = &omgr_state;
