@@ -49,6 +49,7 @@ struct imgr_upload_req {
     size_t data_sha_len;
     uint8_t img_data[MYNEWT_VAL(IMGMGR_MAX_CHUNK_SIZE)];
     uint8_t data_sha[IMGMGR_DATA_SHA_LEN];
+    bool upgrade;                   /* Only allow greater version numbers. */
 };
 
 /** Describes what to do during processing of an upload request. */
@@ -147,6 +148,7 @@ static const char *imgmgr_err_str_no_slot = "no slot";
 static const char *imgmgr_err_str_flash_open_failed = "fa open fail";
 static const char *imgmgr_err_str_flash_erase_failed = "fa erase fail";
 static const char *imgmgr_err_str_flash_write_failed = "fa write fail";
+static const char *imgmgr_err_str_downgrade = "downgrade";
 #else
 #define imgmgr_err_str_app_reject                   NULL
 #define imgmgr_err_str_hdr_malformed                NULL
@@ -155,6 +157,7 @@ static const char *imgmgr_err_str_flash_write_failed = "fa write fail";
 #define imgmgr_err_str_flash_open_failed            NULL
 #define imgmgr_err_str_flash_erase_failed           NULL
 #define imgmgr_err_str_flash_write_failed           NULL
+#define imgmgr_err_str_downgrade                    NULL
 #endif
 
 #if MYNEWT_VAL(BOOTUTIL_IMAGE_FORMAT_V2)
@@ -196,12 +199,12 @@ imgr_img_tlvs(const struct flash_area *fa, struct image_header *hdr,
  * @param image_slot
  * @param ver (optional)
  * @param hash (optional)
- * @param flags
+ * @param flags (optional)
  *
  * Returns -1 if area is not readable.
  * Returns 0 if image in slot is ok, and version string is valid.
  * Returns 1 if there is not a full image.
- * Returns 2 if slot is empty. XXXX not there yet
+ * Returns 2 if slot is empty.
  */
 int
 imgr_read_info(int image_slot, struct image_version *ver, uint8_t *hash,
@@ -302,6 +305,42 @@ int
 imgr_my_version(struct image_version *ver)
 {
     return imgr_read_info(boot_current_slot, ver, NULL, NULL);
+}
+
+/**
+ * Compares two image version numbers in a semver-compatible way.
+ *
+ * @param a                     The first version to compare.
+ * @param b                     The second version to compare.
+ *
+ * @return                      -1 if a < b
+ * @return                       0 if a = b
+ * @return                       1 if a > b
+ */
+static int
+imgr_vercmp(const struct image_version *a, const struct image_version *b)
+{
+    if (a->iv_major < b->iv_major) {
+        return -1;
+    } else if (a->iv_major > b->iv_major) {
+        return 1;
+    }
+
+    if (a->iv_minor < b->iv_minor) {
+        return -1;
+    } else if (a->iv_minor > b->iv_minor) {
+        return 1;
+    }
+
+    if (a->iv_revision < b->iv_revision) {
+        return -1;
+    } else if (a->iv_revision > b->iv_revision) {
+        return 1;
+    }
+
+    /* Note: For semver compatibility, don't compare the 32-bit build num. */
+
+    return 0;
 }
 
 /*
@@ -556,6 +595,7 @@ imgr_upload_inspect(const struct imgr_upload_req *req,
 {
     const struct image_header *hdr;
     const struct flash_area *fa;
+    struct image_version cur_ver;
     uint8_t rem_bytes;
     bool empty;
     int rc;
@@ -614,6 +654,21 @@ imgr_upload_inspect(const struct imgr_upload_req *req,
             /* No slot where to upload! */
             *errstr = imgmgr_err_str_no_slot;
             return MGMT_ERR_ENOMEM;
+        }
+
+        if (req->upgrade) {
+            /* User specified upgrade-only.  Make sure new image version is
+             * greater than that of the currently running image.
+             */
+            rc = imgr_my_version(&cur_ver);
+            if (rc != 0) {
+                return MGMT_ERR_EUNKNOWN;
+            }
+
+            if (imgr_vercmp(&cur_ver, &hdr->ih_ver) >= 0) {
+                *errstr = imgmgr_err_str_downgrade;
+                return MGMT_ERR_EBADSTATE;
+            }
         }
 
 #if MYNEWT_VAL(IMGMGR_LAZY_ERASE)
@@ -696,8 +751,9 @@ imgr_upload(struct mgmt_cbuf *cb)
         .size = -1,
         .data_len = 0,
         .data_sha_len = 0,
+        .upgrade = false,
     };
-    const struct cbor_attr_t off_attr[5] = {
+    const struct cbor_attr_t off_attr[] = {
         [0] = {
             .attribute = "data",
             .type = CborAttrByteStringType,
@@ -724,7 +780,13 @@ imgr_upload(struct mgmt_cbuf *cb)
             .addr.bytestring.len = &req.data_sha_len,
             .len = sizeof(req.data_sha)
         },
-        [4] = { 0 },
+        [4] = {
+            .attribute = "upgrade",
+            .type = CborAttrBooleanType,
+            .addr.boolean = &req.upgrade,
+            .dflt.boolean = false,
+        },
+        [5] = { 0 },
     };
     int rc;
     const char *errstr = NULL;
