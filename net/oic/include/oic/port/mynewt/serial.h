@@ -26,6 +26,11 @@ extern "C" {
 
 extern uint8_t oc_serial_transport_id;
 
+/**
+ * Indicates whether the given CoAP endpoint uses the serial transport.
+ */
+int oc_endpoint_is_serial(const struct oc_endpoint *oe);
+
 #ifdef __cplusplus
 }
 #endif
