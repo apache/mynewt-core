@@ -312,10 +312,11 @@ int adp5061_set_regs(struct adp5061_dev *dev, uint8_t addr,
 #define ADP5061_VTRM_4V08           0x1D
 #define ADP5061_VTRM_4V10           0x1E
 #define ADP5061_VTRM_4V12           0x1F
-#define ADP5061_VTRM_4V14           0x21
-#define ADP5061_VTRM_4V16           0x22
-#define ADP5061_VTRM_4V18           0x23
-#define ADP5061_VTRM_4V20           0x24
+#define ADP5061_VTRM_4V14           0x20
+#define ADP5061_VTRM_4V16           0x21
+#define ADP5061_VTRM_4V18           0x22
+#define ADP5061_VTRM_4V20           0x23
+#define ADP5061_VTRM_4V22           0x24
 #define ADP5061_VTRM_4V24           0x25
 #define ADP5061_VTRM_4V26           0x26
 #define ADP5061_VTRM_4V28           0x27
