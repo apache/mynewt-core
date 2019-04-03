@@ -87,6 +87,13 @@ os_msys_reset(void)
 }
 
 static struct os_mbuf_pool *
+os_msys_find_biggest_pool(void)
+{
+    /* Mempools are sorted by the blocksize, so just return last one */
+    return STAILQ_LAST(&g_msys_pool_list, os_mbuf_pool, omp_next);
+}
+
+static struct os_mbuf_pool *
 os_msys_find_pool(uint16_t dsize)
 {
     struct os_mbuf_pool *pool;
@@ -112,7 +119,15 @@ os_msys_get(uint16_t dsize, uint16_t leadingspace)
     struct os_mbuf *m;
     struct os_mbuf_pool *pool;
 
-    pool = os_msys_find_pool(dsize);
+    /* If dsize = 0 that means user has no idea how big block size is needed,
+    * therefore lets find for him the biggest one
+    */
+    if (dsize == 0) {
+        pool = os_msys_find_biggest_pool();
+    } else {
+        pool = os_msys_find_pool(dsize);
+    }
+
     if (!pool) {
         goto err;
     }
@@ -131,7 +146,16 @@ os_msys_get_pkthdr(uint16_t dsize, uint16_t user_hdr_len)
     struct os_mbuf_pool *pool;
 
     total_pkthdr_len =  user_hdr_len + sizeof(struct os_mbuf_pkthdr);
-    pool = os_msys_find_pool(dsize + total_pkthdr_len);
+
+    /* If dsize = 0 that means user has no idea how big block size is needed,
+     * therefore lets find for him the biggest one
+     */
+    if (dsize == 0) {
+        pool = os_msys_find_biggest_pool();
+    } else {
+        pool = os_msys_find_pool(dsize + total_pkthdr_len);
+    }
+
     if (!pool) {
         goto err;
     }
