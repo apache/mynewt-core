@@ -27,16 +27,16 @@ syscfg.defs:
         value: 1
     UART_0_PIN_TX:
         description: 'TX pin for UART0'
-        value: 9
+        value: 6
     UART_0_PIN_RX:
         description: 'RX pin for UART0'
-        value: 11
+        value: 5
     UART_0_PIN_RTS:
         description: 'RTS pin for UART0'
-        value: 8
+        value: 12
     UART_0_PIN_CTS:
         description: 'CTS pin for UART0'
-        value: 10
+        value: 7
 
     SPI_0_MASTER_PIN_SCK:
         description: 'SCK pin for SPI_0_MASTER'
