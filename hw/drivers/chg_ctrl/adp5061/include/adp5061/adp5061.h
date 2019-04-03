@@ -331,6 +331,7 @@ int adp5061_set_regs(struct adp5061_dev *dev, uint8_t addr,
 #define ADP5061_VTRM_4V46           0x31
 #define ADP5061_VTRM_4V48           0x32
 #define ADP5061_VTRM_4V50           0x33
+
 /* CHG_VLIM */
 #define APD5061_CHG_VLIM_LEN        2
 #define APD5061_CHG_VLIM_OFFSET     0
