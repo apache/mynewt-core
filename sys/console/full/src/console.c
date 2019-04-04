@@ -170,14 +170,17 @@ console_write(const char *str, int cnt)
     if (console_lock(timeout) != OS_OK) {
         return;
     }
-        
+    if (cnt >= 2 && str[0] == CONSOLE_NLIP_DATA_START1 &&
+        str[1] == CONSOLE_NLIP_DATA_START2) {
+        g_is_output_nlip = 1;
+    }
     /* If the byte string is non nlip and we are silencing non nlip bytes,
      * do not let it go out on the console
      */ 
     if (!g_is_output_nlip && g_console_silence_non_nlip) {
         goto done;
     }
- 
+
     for (i = 0; i < cnt; i++) {
         if (console_out_nolock((int)str[i]) == EOF) {
             break;
