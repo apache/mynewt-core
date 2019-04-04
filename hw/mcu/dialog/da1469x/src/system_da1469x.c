@@ -109,6 +109,9 @@ void SystemInit(void)
 
     /* Initialize and configure power rails */
     da1469x_prail_initialize();
+#if MYNEWT_VAL(MCU_DCDC_ENABLE)
+    da1469x_prail_dcdc_enable();
+#endif
 
     /* XXX temporarily enable PD_COM and PD_PER since we do not control them */
     da1469x_pd_acquire(MCU_PD_DOMAIN_COM);

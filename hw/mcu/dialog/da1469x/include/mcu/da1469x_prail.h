@@ -20,12 +20,29 @@
 #ifndef __MCU_DA1469X_PRAIL_H_
 #define __MCU_DA1469X_PRAIL_H_
 
+#include "syscfg/syscfg.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 void da1469x_prail_initialize(void);
+
+#if MYNEWT_VAL(MCU_DCDC_ENABLE)
+
+/**
+ * Enable DCDC
+ */
+void da1469x_prail_dcdc_enable(void);
+
+/**
+ * Restore DCDC settings
+ *
+ * This assumes DCDC was enabled before.
+ */
+void da1469x_prail_dcdc_restore(void);
+
+#endif
 
 #ifdef __cplusplus
 }
