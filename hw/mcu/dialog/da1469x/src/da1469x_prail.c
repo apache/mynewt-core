@@ -18,6 +18,8 @@
  */
 
 #include <assert.h>
+#include <string.h>
+#include "syscfg/syscfg.h"
 #include "mcu/da1469x_hal.h"
 #include "mcu/da1469x_prail.h"
 #include "DA1469xAB.h"
@@ -26,6 +28,18 @@
     CRG_TOP->POWER_CTRL_REG =                                                   \
     (CRG_TOP->POWER_CTRL_REG & ~CRG_TOP_POWER_CTRL_REG_ ## _field ## _Msk) |    \
     ((_val) << CRG_TOP_POWER_CTRL_REG_ ## _field ## _Pos)
+
+#if MYNEWT_VAL(MCU_DCDC_ENABLE)
+struct dcdc_config {
+    uint32_t v18_reg;
+    uint32_t v18p_reg;
+    uint32_t vdd_reg;
+    uint32_t v14_reg;
+    uint32_t ctrl1_reg;
+};
+
+static struct dcdc_config g_mcu_dcdc_config;
+#endif
 
 static void
 da1469x_prail_configure_3v0(void)
@@ -93,6 +107,42 @@ da1469x_prail_configure_1v4(void)
      */
 //    POWER_CTRL_REG_SET(LDO_RADIO_ENABLE, 1);
 }
+
+#if MYNEWT_VAL(MCU_DCDC_ENABLE)
+void
+da1469x_prail_dcdc_enable(void)
+{
+    DCDC->DCDC_V18_REG |= DCDC_DCDC_V18_REG_DCDC_V18_ENABLE_HV_Msk;
+    DCDC->DCDC_V18_REG &= ~DCDC_DCDC_V18_REG_DCDC_V18_ENABLE_LV_Msk;
+
+    DCDC->DCDC_V18P_REG |= DCDC_DCDC_V18P_REG_DCDC_V18P_ENABLE_HV_Msk;
+    DCDC->DCDC_V18P_REG &= ~DCDC_DCDC_V18P_REG_DCDC_V18P_ENABLE_LV_Msk;
+
+    DCDC->DCDC_VDD_REG |= DCDC_DCDC_VDD_REG_DCDC_VDD_ENABLE_HV_Msk;
+    DCDC->DCDC_VDD_REG |= DCDC_DCDC_VDD_REG_DCDC_VDD_ENABLE_LV_Msk;
+
+    DCDC->DCDC_V14_REG |= DCDC_DCDC_VDD_REG_DCDC_VDD_ENABLE_HV_Msk;
+    DCDC->DCDC_V14_REG |= DCDC_DCDC_VDD_REG_DCDC_VDD_ENABLE_LV_Msk;
+
+    DCDC->DCDC_CTRL1_REG |= DCDC_DCDC_CTRL1_REG_DCDC_ENABLE_Msk;
+
+    g_mcu_dcdc_config.v18_reg = DCDC->DCDC_V18_REG;
+    g_mcu_dcdc_config.v18p_reg = DCDC->DCDC_V18P_REG;
+    g_mcu_dcdc_config.vdd_reg = DCDC->DCDC_VDD_REG;
+    g_mcu_dcdc_config.v14_reg = DCDC->DCDC_V14_REG;
+    g_mcu_dcdc_config.ctrl1_reg = DCDC->DCDC_CTRL1_REG;
+}
+
+void
+da1469x_prail_dcdc_restore(void)
+{
+    DCDC->DCDC_V18_REG = g_mcu_dcdc_config.v18_reg;
+    DCDC->DCDC_V18P_REG = g_mcu_dcdc_config.v18p_reg;
+    DCDC->DCDC_VDD_REG = g_mcu_dcdc_config.vdd_reg;
+    DCDC->DCDC_V14_REG = g_mcu_dcdc_config.v14_reg;
+    DCDC->DCDC_CTRL1_REG = g_mcu_dcdc_config.ctrl1_reg;
+}
+#endif
 
 void
 da1469x_prail_initialize(void)

@@ -27,6 +27,11 @@ syscfg.defs:
             - DA14697
             - DA14699
 
+    MCU_DCDC_ENABLE:
+        description: >
+            Specifies whether or not to enable SIMO DC-DC Converter.
+        value: 0
+
     MCU_CLOCK_XTAL32M_SETTLE_TIME_US:
         description: >
             Specifies settling time [us] of 32M crystal oscillator.
