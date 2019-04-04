@@ -479,3 +479,8 @@ ruuvitag_rev_b
 
 # reel_board BSP - BSD License
 reel_board
+
+# Dialog DA1469x BSP - BSD and APL2 license
+dialog_da1469x-dk-pro
+da1469x
+DA1469xAB.h
