@@ -64,6 +64,12 @@ oc_ep_serial_size(const struct oc_endpoint *oe)
     return sizeof(struct oc_endpoint_plain);
 }
 
+int
+oc_endpoint_is_serial(const struct oc_endpoint *oe)
+{
+    return oe->ep.oe_type == oc_serial_transport_id;
+}
+
 static int
 oc_serial_in(struct os_mbuf *m, void *arg)
 {
