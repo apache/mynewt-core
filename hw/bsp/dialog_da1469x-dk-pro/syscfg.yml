@@ -19,6 +19,7 @@
 
 syscfg.vals:
     MCU_TARGET: DA14699
+    MCU_DCDC_ENABLE: 1
     # Setting for QSPI Flash
     QSPI_FLASH_ADDRESS_LENGTH: 24
     QSPI_FLASH_SECTOR_SIZE: 4096
