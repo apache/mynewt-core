@@ -20,6 +20,7 @@
 #include <assert.h>
 #include "mcu/da1469x_clock.h"
 #include "mcu/da1469x_pdc.h"
+#include "mcu/da1469x_prail.h"
 #include "hal/hal_system.h"
 #include "DA1469xAB.h"
 #include "da1469x_priv.h"
@@ -69,6 +70,10 @@ da1469x_sleep(os_time_t ticks)
         /* We were not sleeping, just return */
         return;
     }
+
+#if MYNEWT_VAL(MCU_DCDC_ENABLE)
+    da1469x_prail_dcdc_restore();
+#endif
 
     /*
      * If PDC entry for "combo" wakeup is pending, but none of CMAC2SYS, WKUP
