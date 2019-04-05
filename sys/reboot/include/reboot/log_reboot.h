@@ -31,8 +31,8 @@ extern "C" {
         (reason == HAL_RESET_WATCHDOG ? "WDOG" :                        \
           (reason == HAL_RESET_SOFT ? "SOFT" :                          \
             (reason == HAL_RESET_BROWNOUT ? "BROWNOUT" :                \
-              (reason == HAL_RESET_POWER_OFF ? "WAKEUP_SYS_OFF" :       \
-                (reason == HAL_RESET_REQUESTED ? "REQUESTED" :          \
+              (reason == HAL_RESET_REQUESTED ? "REQUESTED" :            \
+                (reason == HAL_RESET_SYS_OFF_INT ? "SYSTEM_OFF_INT" :   \
                 "UNKNOWN")))))))
 
 struct log_reboot_info {
