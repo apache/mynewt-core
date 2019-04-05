@@ -66,10 +66,10 @@ enum hal_reset_reason {
     HAL_RESET_SOFT = 4,
     /** Low supply voltage */
     HAL_RESET_BROWNOUT = 5,
-    /** Power on */
-    HAL_RESET_POWER_OFF = 6,
     /** Restart due to user request */
-    HAL_RESET_REQUESTED = 7,
+    HAL_RESET_REQUESTED = 6,
+    /** System Off, wakeup on external interrupt*/
+    HAL_RESET_SYS_OFF_INT = 7,
 };
 
 /**
