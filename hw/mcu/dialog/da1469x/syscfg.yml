@@ -94,7 +94,7 @@ syscfg.defs:
         value: 100
 
     SPI_0_MASTER:
-        description: 'Enable DA14xxx SPI Master'
+        description: 'Enable DA1469x SPI Master'
         value: 0
         restrictions:
             - "!SPI_0_SLAVE"
@@ -109,7 +109,7 @@ syscfg.defs:
         value: ''
 
     SPI_0_SLAVE:
-        description: 'Enable DA14xxx SPI Slave'
+        description: 'Enable DA1469x SPI Slave'
         value: 0
         restrictions:
             - "!SPI_0_MASTER"
@@ -127,7 +127,7 @@ syscfg.defs:
         value: ''
 
     SPI_1_MASTER:
-        description: 'Enable DA14xxx SPI2 Master'
+        description: 'Enable DA1469x SPI2 Master'
         value: 0
         restrictions:
             - "!SPI_1_SLAVE"
@@ -142,7 +142,7 @@ syscfg.defs:
         value: ''
 
     SPI_1_SLAVE:
-        description: 'Enable DA14xxx SPI2 Slave'
+        description: 'Enable DA1469x SPI2 Slave'
         value: 0
         restrictions:
             - "!SPI_1_MASTER"
