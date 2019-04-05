@@ -514,7 +514,17 @@ log_fcb_walk(struct log *log, log_walk_func_t walk_func,
 static int
 log_fcb_flush(struct log *log)
 {
-    return fcb_clear(&((struct fcb_log *)log->l_arg)->fl_fcb);
+    struct fcb_log *fcb_log;
+    struct fcb *fcb;
+
+    fcb_log = (struct fcb_log *)log->l_arg;
+    fcb = &fcb_log->fl_fcb;
+
+#if MYNEWT_VAL(LOG_FCB_BOOKMARKS)
+    fcb_log_clear_bmarks(fcb_log);
+#endif
+
+    return fcb_clear(fcb);
 }
 
 static int
