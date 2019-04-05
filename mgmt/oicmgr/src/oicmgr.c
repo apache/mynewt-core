@@ -154,8 +154,8 @@ omgr_extract_req_hdr(oc_request_t *req, struct nmgr_hdr *out_hdr)
     return 0;
 }
 
-void
-omgr_oic_put(oc_request_t *req, oc_interface_mask_t mask)
+int
+omgr_oic_process_put(oc_request_t *req, oc_interface_mask_t mask)
 {
     struct omgr_state *o = &omgr_state;
     const struct mgmt_handler *handler;
@@ -272,6 +272,14 @@ done:
 
     cbor_encoder_close_container(&g_encoder, &o->os_cbuf.ob_mj.encoder);
     oc_send_response(req, rc);
+
+    return rc;
+}
+
+static void
+omgr_oic_put(oc_request_t *req, oc_interface_mask_t mask)
+{
+    omgr_oic_process_put(req, mask);
 }
 
 int

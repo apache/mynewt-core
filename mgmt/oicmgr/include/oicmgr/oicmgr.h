@@ -30,8 +30,11 @@
  * @param req                   The oicmgr request to process.
  * @param mask                  The oicmgr mask supported by the CoAP request
  *                                  handler.
+ *
+ * @return                      0 on success;
+ *                              nonzero on failure (not consistent code sets).
  */
-void omgr_oic_put(oc_request_t *req, oc_interface_mask_t mask);
+int omgr_oic_process_put(oc_request_t *req, oc_interface_mask_t mask);
 
 /**
  * Parses an oicmgr request and copies out the NMP header.
