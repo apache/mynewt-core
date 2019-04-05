@@ -59,18 +59,22 @@ int
 os_msys_register(struct os_mbuf_pool *new_pool)
 {
     struct os_mbuf_pool *pool;
+    struct os_mbuf_pool *prev;
 
+    /* We want to have order from smallest to biggest mempool. */
+    prev = NULL;
     pool = NULL;
     STAILQ_FOREACH(pool, &g_msys_pool_list, omp_next) {
-        if (new_pool->omp_databuf_len > pool->omp_databuf_len) {
+        if (new_pool->omp_databuf_len < pool->omp_databuf_len) {
             break;
         }
+        prev = pool;
     }
 
-    if (pool) {
-        STAILQ_INSERT_AFTER(&g_msys_pool_list, pool, new_pool, omp_next);
+    if (prev) {
+        STAILQ_INSERT_AFTER(&g_msys_pool_list, prev, new_pool, omp_next);
     } else {
-        STAILQ_INSERT_TAIL(&g_msys_pool_list, new_pool, omp_next);
+        STAILQ_INSERT_HEAD(&g_msys_pool_list, new_pool, omp_next);
     }
 
     return (0);
