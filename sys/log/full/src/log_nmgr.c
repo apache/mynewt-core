@@ -138,11 +138,12 @@ log_nmgr_encode_entry(struct log *log, struct log_offset *log_offset,
         g_err |= cbor_encode_text_stringz(&rsp, "bin");
         break;
     case LOG_ETYPE_STRING:
-    default:
-        /* no need for type here */
         g_err |= cbor_encode_text_stringz(&rsp, "type");
         g_err |= cbor_encode_text_stringz(&rsp, "str");
         break;
+    default:
+        ed->counter++;
+        return MGMT_ERR_ECORRUPT;
     }
 
     g_err |= cbor_encode_text_stringz(&rsp, "msg");
@@ -201,11 +202,13 @@ log_nmgr_encode_entry(struct log *log, struct log_offset *log_offset,
         g_err |= cbor_encode_text_stringz(&rsp, "bin");
         break;
     case LOG_ETYPE_STRING:
-    default:
         /* no need for type here */
         g_err |= cbor_encode_text_stringz(&rsp, "type");
         g_err |= cbor_encode_text_stringz(&rsp, "str");
         break;
+    default:
+        ed->counter++;
+        return MGMT_ERR_ECORRUPT;
     }
 
     g_err |= cbor_encode_text_stringz(&rsp, "msg");

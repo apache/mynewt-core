@@ -64,6 +64,7 @@ extern "C" {
 #define MGMT_ERR_ETIMEOUT   (4)
 #define MGMT_ERR_ENOENT     (5)
 #define MGMT_ERR_EBADSTATE  (6)     /* Current state disallows command. */
+#define MGMT_ERR_ECORRUPT   (7)
 #define MGMT_ERR_EPERUSER   (256)
 
 #define NMGR_HDR_SIZE           (8)
