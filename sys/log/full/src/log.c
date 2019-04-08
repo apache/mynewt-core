@@ -388,20 +388,23 @@ log_set_append_cb(struct log *log, log_append_cb *cb)
 static int
 log_chk_type(uint8_t etype)
 {
+    int rc;
+
+    rc = OS_OK;
 
 #if MYNEWT_VAL(LOG_VERSION) > 2
     switch(etype) {
         case LOG_ETYPE_STRING:
         case LOG_ETYPE_BINARY:
         case LOG_ETYPE_CBOR:
-            return OS_OK;
+            break;
         default:
+            rc = OS_ERROR;
             break;
     }
-#else
-    return OS_OK;
 #endif
-    return OS_ERROR;
+
+    return rc;
 }
 
 static int
