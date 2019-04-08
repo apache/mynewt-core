@@ -388,6 +388,8 @@ log_set_append_cb(struct log *log, log_append_cb *cb)
 static int
 log_chk_type(uint8_t etype)
 {
+
+#if MYNEWT_VAL(LOG_VERSION) > 2
     switch(etype) {
         case LOG_ETYPE_STRING:
         case LOG_ETYPE_BINARY:
@@ -396,7 +398,9 @@ log_chk_type(uint8_t etype)
         default:
             break;
     }
-
+#else
+    return OS_OK;
+#endif
     return OS_ERROR;
 }
 
@@ -411,10 +415,8 @@ log_append_prepare(struct log *log, uint8_t module, uint8_t level,
 
     rc = 0;
 
-#if MYNEWT_VAL(LOG_VERSION) > 2
     rc = log_chk_type(etype);
     assert(rc == OS_OK);
-#endif
 
     if (log->l_name == NULL || log->l_log == NULL) {
         rc = -1;
