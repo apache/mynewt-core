@@ -592,67 +592,74 @@ complete_command(char *line, char *command_prefix,
                  int command_len, int module_idx,
                  console_append_char_cb append_char)
 {
-    const char *first_match = NULL;
-    int i, j, common_chars = -1, space = 0;
-    const struct shell_module *module;
+    int first_match = -1;
+    int match_count = 0;
+    int i, j, common_chars = -1;
+    const struct shell_cmd *commands;
 
-    module = &shell_modules[module_idx];
+    commands = shell_modules[module_idx].commands;
 
-    for (i = 0; module->commands[i].sc_cmd; i++) {
-        if (strncmp(command_prefix,
-            module->commands[i].sc_cmd, command_len)) {
+    for (i = 0; commands[i].sc_cmd; i++) {
+        if (0 != strncmp(command_prefix, commands[i].sc_cmd, command_len)) {
+            continue;
+        }
+        match_count++;
+
+        if (match_count == 1) {
+            first_match = i;
+            common_chars = strlen(commands[i].sc_cmd);
             continue;
         }
 
-        if (!first_match) {
-            first_match = module->commands[i].sc_cmd;
+        /*
+         * Common chars were already reduced to what was printed,
+         * no need to check more.
+         */
+        if (common_chars <= command_len) {
             continue;
         }
-
-        /* more commands match, print first match */
-        if (first_match && (common_chars < 0)) {
-            console_printf("\n");
-            console_printf("%s\n", first_match);
-            common_chars = strlen(first_match);
-        }
-
-        /* cut common part of matching names */
-        for (j = 0; j < common_chars; j++) {
-            if (first_match[j] != module->commands[i].sc_cmd[j]) {
+        /* Check how many additional chars are same as first command's */
+        for (j = command_len; j < common_chars; j++) {
+            if (commands[first_match].sc_cmd[j] != commands[i].sc_cmd[j]) {
                 break;
             }
         }
-
         common_chars = j;
-
-        console_printf("%s\n", module->commands[i].sc_cmd);
     }
 
-    /* no match, do nothing */
-    if (!first_match) {
+    if (match_count == 0) {
         return;
     }
 
-    if (common_chars >= 0) {
-        /* multiple match, restore prompt */
-        print_prompt();
-        console_printf("%s", line);
-    } else {
-        common_chars = strlen(first_match);
-        space = 1;
+    /* Additional characters could be appended */
+    if (common_chars > command_len) {
+        /* complete common part */
+        for (i = command_len; i < common_chars; i++) {
+            if (!append_char(line, (uint8_t)commands[first_match].sc_cmd[i])) {
+                return;
+            }
+        }
+        if (match_count == 1) {
+            /* Whole word matched, append space */
+            append_char(line, ' ');
+        }
+        return;
     }
 
-    /* complete common part */
-    for (i = command_len; i < common_chars; i++) {
-        if (!append_char(line, first_match[i])) {
-            return;
+    /*
+     * More words match but there is nothing that could be appended
+     * list all possible matches.
+     */
+    console_printf("\n");
+    console_printf("%s\n", commands[first_match].sc_cmd);
+    for (i = first_match + 1; commands[i].sc_cmd; i++) {
+        if (0 == strncmp(command_prefix, commands[i].sc_cmd, command_len)) {
+            console_printf("%s\n", commands[i].sc_cmd);
         }
     }
-
-    /* for convenience add space after command */
-    if (space) {
-        append_char(line, ' ');
-    }
+    /* restore prompt */
+    print_prompt();
+    console_printf("%s", line);
 }
 
 static void
