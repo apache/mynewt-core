@@ -117,7 +117,7 @@ os_error_t os_mutex_pend(struct os_mutex *mu, os_time_t timeout);
  *
  * @return number of times lock was called from current task
  */
-static inline os_error_t os_mutex_get_level(struct os_mutex *mu)
+static inline uint16_t os_mutex_get_level(struct os_mutex *mu)
 {
     return mu->mu_level;
 }
