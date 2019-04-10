@@ -378,6 +378,11 @@ nucleo-f072rb
 # NUCLEO-F030R8 BSP - BSD License
 nucleo-f030r8
 
+# NUCLEO-F103RB BSP - BSD License
+stm32f1xx_hal_conf.h
+system_stm32f1xx.c
+startup_stm32f103xb.s
+
 # Microchip PIC32 SDK - BSD License
 p32mz2048efg100.h
 pic32_init_cache.S
