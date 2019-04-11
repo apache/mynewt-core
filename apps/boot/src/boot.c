@@ -29,6 +29,7 @@
 #include <console/console.h>
 #include "bootutil/image.h"
 #include "bootutil/bootutil.h"
+#include "hal/hal_watchdog.h"
 
 #define BOOT_AREA_DESC_MAX  (256)
 #define AREA_DESC_MAX       (BOOT_AREA_DESC_MAX)
@@ -40,6 +41,8 @@ main(void)
     int rc;
 
     hal_bsp_init();
+
+    hal_watchdog_init(MYNEWT_VAL(WATCHDOG_INTERVAL));
 
 #if MYNEWT_VAL(BOOT_SERIAL)
     sysinit();
