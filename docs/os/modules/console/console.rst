@@ -88,7 +88,7 @@ capability and has the following ``pkg.yml`` file:
         - "@apache-mynewt-core/mgmt/newtmgr"
         - "@apache-mynewt-core/mgmt/newtmgr/transport/nmgr_shell"
         - "@apache-mynewt-core/kernel/os"
-        - "@apache-mynewt-core/boot/bootutil"
+        - "@mcuboot/boot/bootutil"
         - "@apache-mynewt-core/sys/shell"
         - "@apache-mynewt-core/sys/console/full"
            ...
@@ -127,7 +127,7 @@ project boot pkg looks like the following:
 
     pkg.name: apps/boot
     pkg.deps:
-        - "@apache-mynewt-core/boot/bootutil"
+        - "@mcuboot/boot/bootutil"
         - "@apache-mynewt-core/kernel/os"
         - "@apache-mynewt-core/sys/console/stub"
 
@@ -151,7 +151,7 @@ has the following ``pkg.yml`` file:
         - loader
 
     pkg.deps:
-        - "@apache-mynewt-core/boot/bootutil"
+        - "@mcuboot/boot/bootutil"
         - "@apache-mynewt-core/kernel/os"
         - "@apache-mynewt-core/sys/console/stub"
 
