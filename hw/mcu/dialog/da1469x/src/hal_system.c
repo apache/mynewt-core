@@ -60,10 +60,6 @@ hal_system_init(void)
         g_hal_reset_reason = 0;
     }
 #endif
-    /* Disable pad latches */
-    CRG_TOP->P0_RESET_PAD_LATCH_REG = CRG_TOP_P0_PAD_LATCH_REG_P0_LATCH_EN_Msk;
-    CRG_TOP->P1_RESET_PAD_LATCH_REG = CRG_TOP_P1_PAD_LATCH_REG_P1_LATCH_EN_Msk;
-
 }
 
 void

@@ -21,6 +21,7 @@
 #include "mcu/da1469x_clock.h"
 #include "mcu/da1469x_pdc.h"
 #include "mcu/da1469x_prail.h"
+#include "mcu/mcu.h"
 #include "hal/hal_system.h"
 #include "DA1469xAB.h"
 #include "da1469x_priv.h"
@@ -65,7 +66,9 @@ da1469x_sleep(os_time_t ticks)
         return;
     }
 
+    mcu_gpio_apply_latches();
     ret = da1469x_m33_sleep();
+    mcu_gpio_restore_latches();
     if (!ret) {
         /* We were not sleeping, just return */
         return;
