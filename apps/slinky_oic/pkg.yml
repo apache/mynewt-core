@@ -28,7 +28,7 @@ pkg.deps:
     - "@apache-mynewt-core/mgmt/imgmgr"
     - "@apache-mynewt-core/mgmt/oicmgr"
     - "@apache-mynewt-core/kernel/os"
-    - "@apache-mynewt-core/boot/bootutil"
+    - "@mcuboot/boot/bootutil"
     - "@apache-mynewt-core/sys/shell"
     - "@apache-mynewt-core/sys/config"
     - "@apache-mynewt-core/sys/console/full"
