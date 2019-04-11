@@ -111,6 +111,17 @@ hal_gpio_init_out(int pin, int val)
     return 0;
 }
 
+int
+hal_gpio_deinit(int pin)
+{
+    /* Reset mode to default value and latch pin */
+    GPIO_PIN_MODE_REG(pin) = 0x200;
+    GPIO_PIN_RESET_DATA_REG(pin) = 1 << (pin & 31);
+    GPIO_PIN_LATCH(pin);
+
+    return 0;
+}
+
 void
 hal_gpio_write(int pin, int val)
 {
