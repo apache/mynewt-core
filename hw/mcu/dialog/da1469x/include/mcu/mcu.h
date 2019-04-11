@@ -116,6 +116,8 @@ typedef enum {
 #define MCU_GPIO_PORT1(pin)		((1 * 32) + (pin))
 
 void mcu_gpio_set_pin_function(int pin, int mode, mcu_gpio_func func);
+void mcu_gpio_apply_latches(void);
+void mcu_gpio_restore_latches(void);
 
 #define MCU_MEM_QSPIF_M_START_ADDRESS   (0x16000000)
 #define MCU_MEM_QSPIF_M_END_ADDRESS     (0x18000000)

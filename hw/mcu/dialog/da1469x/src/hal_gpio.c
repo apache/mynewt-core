@@ -73,6 +73,8 @@ struct hal_gpio_irq {
 
 static struct hal_gpio_irq hal_gpio_irqs[HAL_GPIO_MAX_IRQ];
 
+static uint32_t hal_gpio_latch_state[2];
+
 int
 hal_gpio_init_in(int pin, hal_gpio_pull_t pull)
 {
@@ -288,4 +290,20 @@ mcu_gpio_set_pin_function(int pin, int mode, mcu_gpio_func func)
     GPIO_PIN_MODE_REG(pin) = (func & GPIO_P0_00_MODE_REG_PID_Msk) |
         (mode & (GPIO_P0_00_MODE_REG_PUPD_Msk | GPIO_P0_00_MODE_REG_PPOD_Msk));
     GPIO_PIN_UNLATCH(pin);
+}
+
+void
+mcu_gpio_apply_latches(void)
+{
+    hal_gpio_latch_state[0] = CRG_TOP->P0_PAD_LATCH_REG;
+    hal_gpio_latch_state[1] = CRG_TOP->P1_PAD_LATCH_REG;
+    CRG_TOP->P0_RESET_PAD_LATCH_REG = CRG_TOP_P0_PAD_LATCH_REG_P0_LATCH_EN_Msk;
+    CRG_TOP->P1_RESET_PAD_LATCH_REG = CRG_TOP_P1_PAD_LATCH_REG_P1_LATCH_EN_Msk;
+}
+
+void
+mcu_gpio_restore_latches(void)
+{
+    CRG_TOP->P0_PAD_LATCH_REG = hal_gpio_latch_state[0];
+    CRG_TOP->P1_PAD_LATCH_REG = hal_gpio_latch_state[1];
 }
