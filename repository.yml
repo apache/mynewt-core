@@ -87,3 +87,10 @@ repo.deps:
             mynewt_1_4_1_tag: 1.0.0
             mynewt_1_5_0_tag: 1.0.0
             mynewt_1_6_0_tag: 1.1.0
+
+    mcuboot:
+        type: github
+        user: JuulLabs-OSS
+        repo: mcuboot
+        vers:
+            master: 1-latest
