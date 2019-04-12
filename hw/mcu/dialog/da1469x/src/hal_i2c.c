@@ -107,22 +107,16 @@ hal_i2c_disable(uint8_t i2c_num)
     return 0;
 }
 
-int
-hal_i2c_init_hw(uint8_t i2c_num, const struct hal_i2c_hw_settings *cfg)
+static void
+i2c_init_hw(const struct da1469x_hal_i2c *i2c, int pin_scl, int pin_sda)
 {
-    const struct da1469x_hal_i2c *i2c;
     uint32_t i2c_con_reg;
 
-    i2c = hal_i2c_resolve(i2c_num);
-    if (!i2c) {
-       return HAL_I2C_ERR_INVAL;
-    }
-
     /* Configure SCL, SDA.*/
-    mcu_gpio_set_pin_function(cfg->pin_scl, MCU_GPIO_MODE_OUTPUT, i2c->scl_func);
-    mcu_gpio_set_pin_function(cfg->pin_sda, MCU_GPIO_MODE_OUTPUT, i2c->sda_func);
+    mcu_gpio_set_pin_function(pin_scl, MCU_GPIO_MODE_OUTPUT, i2c->scl_func);
+    mcu_gpio_set_pin_function(pin_sda, MCU_GPIO_MODE_OUTPUT, i2c->sda_func);
 
-    if (i2c_num == 0) {
+    if (i2c == da1469x_hal_i2cs[0]) {
         CRG_COM->RESET_CLK_COM_REG = CRG_COM_RESET_CLK_COM_REG_I2C_CLK_SEL_Msk;
         CRG_COM->SET_CLK_COM_REG = CRG_COM_RESET_CLK_COM_REG_I2C_ENABLE_Msk;
     } else {
@@ -150,6 +144,19 @@ hal_i2c_init_hw(uint8_t i2c_num, const struct hal_i2c_hw_settings *cfg)
     i2c->regs->I2C_INTR_MASK_REG = 0x0000;
 
     NVIC_EnableIRQ(i2c->irqn);
+}
+
+int
+hal_i2c_init_hw(uint8_t i2c_num, const struct hal_i2c_hw_settings *cfg)
+{
+    const struct da1469x_hal_i2c *i2c;
+
+    i2c = hal_i2c_resolve(i2c_num);
+    if (!i2c) {
+       return HAL_I2C_ERR_INVAL;
+    }
+
+    i2c_init_hw(i2c, cfg->pin_scl, cfg->pin_sda);
 
     return 0;
 }
@@ -210,39 +217,13 @@ hal_i2c_init(uint8_t i2c_num, void *usercfg)
         return HAL_I2C_ERR_INVAL;
     }
 
-    /* Configure SCL, SDA.*/
-    mcu_gpio_set_pin_function(da1469x_cfg->pin_scl, MCU_GPIO_MODE_OUTPUT, i2c->scl_func);
-    mcu_gpio_set_pin_function(da1469x_cfg->pin_sda, MCU_GPIO_MODE_OUTPUT, i2c->sda_func);
-
-    if (i2c_num == 0) {
-        CRG_COM->RESET_CLK_COM_REG = CRG_COM_RESET_CLK_COM_REG_I2C_CLK_SEL_Msk;
-        CRG_COM->SET_CLK_COM_REG = CRG_COM_RESET_CLK_COM_REG_I2C_ENABLE_Msk;
-    } else {
-        CRG_COM->RESET_CLK_COM_REG = CRG_COM_RESET_CLK_COM_REG_I2C2_CLK_SEL_Msk;
-        CRG_COM->SET_CLK_COM_REG = CRG_COM_RESET_CLK_COM_REG_I2C2_ENABLE_Msk;
-    }
-
-    /* Abort ongoing transactions and disable */
-    i2c->regs->I2C_ENABLE_REG |= (1 << I2C_I2C_ENABLE_REG_I2C_ABORT_Pos);
-    i2c->regs->I2C_ENABLE_REG &= ~(1 << I2C_I2C_ENABLE_REG_I2C_EN_Pos);
-    while (i2c->regs->I2C_ENABLE_STATUS_REG & I2C_I2C_ENABLE_STATUS_REG_IC_EN_Msk);
-    /* TODO Maybe should wait here some time */
-
-    /* Configure I2C_CON_REG, first configure to master */
-    i2c->regs->I2C_CON_REG = (1 << I2C_I2C_CON_REG_I2C_MASTER_MODE_Pos);
-
-    /* Use 7-bit addressing */
-    i2c->regs->I2C_CON_REG &= ~(1 << I2C_I2C_CON_REG_I2C_10BITADDR_MASTER_Pos);
+    i2c_init_hw(i2c, da1469x_cfg->pin_scl, da1469x_cfg->pin_sda);
 
     cfg.frequency = da1469x_cfg->frequency;
     rc = i2c_config(i2c, &cfg);
     if (rc) {
         return rc;
     }
-
-    i2c->regs->I2C_INTR_MASK_REG = 0x0000;
-
-    NVIC_EnableIRQ(i2c->irqn);
 
     return 0;
 }
