@@ -19,8 +19,6 @@
 #include <assert.h>
 #include <os/mynewt.h>
 
-#include <console/console.h>
-
 #include <adc/adc.h>
 
 #include <DA1469xAB.h>
