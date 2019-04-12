@@ -66,9 +66,9 @@ da1469x_sleep(os_time_t ticks)
         return;
     }
 
-    mcu_gpio_apply_latches();
+    mcu_gpio_enter_sleep();
     ret = da1469x_m33_sleep();
-    mcu_gpio_restore_latches();
+    mcu_gpio_exit_sleep();
     if (!ret) {
         /* We were not sleeping, just return */
         return;
