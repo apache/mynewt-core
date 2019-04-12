@@ -148,6 +148,7 @@ before_script:
       gcc --version
       if [ "${TEST}" != "TEST_ALL" ]; then arm-none-eabi-gcc --version; fi
       cp -R $HOME/ci/mynewt-core-project.yml project.yml
+      mkdir -p targets
       cp -R $HOME/ci/mynewt-core-targets targets
       newt install
       # pass in the number of target sets
