@@ -25,6 +25,7 @@
 
 #include <DA1469xAB.h>
 #include <mcu/mcu.h>
+#include <mcu/da1469x_pd.h>
 
 #include "sdadc_da1469x/sdadc_da1469x.h"
 
@@ -375,6 +376,8 @@ da1469x_sdadc_open(struct os_dev *odev, uint32_t wait, void *arg)
         return rc;
     }
     if (++dev->dsd_adc.ad_ref_cnt == 1) {
+        da1469x_pd_acquire(MCU_PD_DOMAIN_COM);
+
         /* initialize */
         if (da1469x_sdadc_hwinit(dev, arg)) {
             rc = OS_EINVAL;
@@ -389,6 +392,7 @@ da1469x_sdadc_open(struct os_dev *odev, uint32_t wait, void *arg)
         dev->dsd_dma[0]->DMA_A_START_REG = (uint32_t)&SDADC->SDADC_RESULT_REG;
     }
     if (rc) {
+        da1469x_pd_release(MCU_PD_DOMAIN_COM);
         --dev->dsd_adc.ad_ref_cnt;
     }
     os_mutex_release(&dev->dsd_adc.ad_lock);
@@ -423,6 +427,8 @@ da1469x_sdadc_close(struct os_dev *odev)
         }
         SDADC->SDADC_CTRL_REG = 0;
         SDADC->SDADC_CLEAR_INT_REG = 1;
+
+        da1469x_pd_release(MCU_PD_DOMAIN_COM);
     }
     os_mutex_release(&dev->dsd_adc.ad_lock);
     return rc;
