@@ -18,9 +18,11 @@
  * under the License.
  */
 
+#include <assert.h>
 #include "syscfg/syscfg.h"
 #include "mcu/da1469x_hal.h"
 #include "mcu/da1469x_pd.h"
+#include "mcu/da1469x_retreg.h"
 #include <mcu/mcu.h>
 #include "mcu/cmsis_nvic.h"
 #include "hal/hal_gpio.h"
@@ -74,6 +76,9 @@ static struct hal_gpio_irq hal_gpio_irqs[HAL_GPIO_MAX_IRQ];
 
 static uint32_t hal_gpio_latch_state[2];
 
+static uint8_t g_mcu_gpio_retained_num;
+static struct da1469x_retreg g_mcu_gpio_retained[MYNEWT_VAL(MCU_GPIO_RETAINABLE_NUM)];
+
 /*
  * We assume that any latched pin has default configuration, i.e. was either
  * not configured or was deinited. Any unlatched pin is considered to be used
@@ -92,6 +97,36 @@ static uint32_t hal_gpio_latch_state[2];
  * calling mcu_gpio_latch().
  */
 
+static void
+mcu_gpio_retained_add_port(uint32_t latch_val, volatile uint32_t *base_reg)
+{
+    struct da1469x_retreg *retreg;
+    int pin;
+
+    retreg = &g_mcu_gpio_retained[g_mcu_gpio_retained_num];
+
+    while (latch_val) {
+        assert(g_mcu_gpio_retained_num < MYNEWT_VAL(MCU_GPIO_RETAINABLE_NUM));
+
+        pin = __builtin_ctz(latch_val);
+        latch_val &= ~(1 << pin);
+
+        da1469x_retreg_assign(retreg, &base_reg[pin]);
+
+        g_mcu_gpio_retained_num++;
+        retreg++;
+    }
+}
+
+static void
+mcu_gpio_retained_refresh(void)
+{
+    g_mcu_gpio_retained_num = 0;
+
+    mcu_gpio_retained_add_port(CRG_TOP->P0_PAD_LATCH_REG, &GPIO->P0_00_MODE_REG);
+    mcu_gpio_retained_add_port(CRG_TOP->P1_PAD_LATCH_REG, &GPIO->P1_00_MODE_REG);
+}
+
 static inline void
 mcu_gpio_unlatch_prepare(int pin)
 {
@@ -109,6 +144,7 @@ mcu_gpio_unlatch(int pin)
     __HAL_ASSERT_CRITICAL();
 
     *GPIO_PIN_UNLATCH_ADDR(pin) = 1 << ((pin) & 31);
+    mcu_gpio_retained_refresh();
 }
 
 static inline void
@@ -123,6 +159,7 @@ mcu_gpio_latch(int pin)
     latch_pre = CRG_TOP->P0_PAD_LATCH_REG | CRG_TOP->P0_PAD_LATCH_REG;
 
     *GPIO_PIN_LATCH_ADDR(pin) = 1 << ((pin) & 31);
+    mcu_gpio_retained_refresh();
 
     latch_post = CRG_TOP->P0_PAD_LATCH_REG | CRG_TOP->P0_PAD_LATCH_REG;
 
@@ -382,17 +419,38 @@ mcu_gpio_set_pin_function(int pin, int mode, mcu_gpio_func func)
 }
 
 void
-mcu_gpio_apply_latches(void)
+mcu_gpio_enter_sleep(void)
 {
+    if (g_mcu_gpio_retained_num == 0) {
+        return;
+    }
+
     hal_gpio_latch_state[0] = CRG_TOP->P0_PAD_LATCH_REG;
     hal_gpio_latch_state[1] = CRG_TOP->P1_PAD_LATCH_REG;
+
+    da1469x_retreg_update(g_mcu_gpio_retained, g_mcu_gpio_retained_num);
+
     CRG_TOP->P0_RESET_PAD_LATCH_REG = CRG_TOP_P0_PAD_LATCH_REG_P0_LATCH_EN_Msk;
     CRG_TOP->P1_RESET_PAD_LATCH_REG = CRG_TOP_P1_PAD_LATCH_REG_P1_LATCH_EN_Msk;
+
+    da1469x_pd_release(MCU_PD_DOMAIN_COM);
 }
 
 void
-mcu_gpio_restore_latches(void)
+mcu_gpio_exit_sleep(void)
 {
+    if (g_mcu_gpio_retained_num == 0) {
+        return;
+    }
+
+    da1469x_pd_acquire(MCU_PD_DOMAIN_COM);
+
+    da1469x_retreg_restore(g_mcu_gpio_retained, g_mcu_gpio_retained_num);
+
+    /* Set pins states to their latched values */
+    GPIO->P0_DATA_REG = GPIO->P0_DATA_REG;
+    GPIO->P1_DATA_REG = GPIO->P1_DATA_REG;
+
     CRG_TOP->P0_PAD_LATCH_REG = hal_gpio_latch_state[0];
     CRG_TOP->P1_PAD_LATCH_REG = hal_gpio_latch_state[1];
 }
