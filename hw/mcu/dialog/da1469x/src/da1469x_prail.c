@@ -22,6 +22,8 @@
 #include "syscfg/syscfg.h"
 #include "mcu/da1469x_hal.h"
 #include "mcu/da1469x_prail.h"
+#include "mcu/da1469x_retreg.h"
+#include "os/util.h"
 #include "DA1469xAB.h"
 
 #define POWER_CTRL_REG_SET(_field, _val)                                        \
@@ -30,15 +32,11 @@
     ((_val) << CRG_TOP_POWER_CTRL_REG_ ## _field ## _Pos)
 
 #if MYNEWT_VAL(MCU_DCDC_ENABLE)
-struct dcdc_config {
-    uint32_t v18_reg;
-    uint32_t v18p_reg;
-    uint32_t vdd_reg;
-    uint32_t v14_reg;
-    uint32_t ctrl1_reg;
-};
-
-static struct dcdc_config g_mcu_dcdc_config;
+/*
+ * Need to store 5 registers:
+ * DCDC_V18_REG, DCDC_V18P_REG, DCDC_VDD_RE, DCDC_V14_REG, DCDC_CTRL1_REG
+ */
+static struct da1469x_retreg g_mcu_dcdc_config[5];
 #endif
 
 static void
@@ -126,21 +124,18 @@ da1469x_prail_dcdc_enable(void)
 
     DCDC->DCDC_CTRL1_REG |= DCDC_DCDC_CTRL1_REG_DCDC_ENABLE_Msk;
 
-    g_mcu_dcdc_config.v18_reg = DCDC->DCDC_V18_REG;
-    g_mcu_dcdc_config.v18p_reg = DCDC->DCDC_V18P_REG;
-    g_mcu_dcdc_config.vdd_reg = DCDC->DCDC_VDD_REG;
-    g_mcu_dcdc_config.v14_reg = DCDC->DCDC_V14_REG;
-    g_mcu_dcdc_config.ctrl1_reg = DCDC->DCDC_CTRL1_REG;
+    da1469x_retreg_init(g_mcu_dcdc_config, ARRAY_SIZE(g_mcu_dcdc_config));
+    da1469x_retreg_assign(&g_mcu_dcdc_config[0], &DCDC->DCDC_V18_REG);
+    da1469x_retreg_assign(&g_mcu_dcdc_config[1], &DCDC->DCDC_V18P_REG);
+    da1469x_retreg_assign(&g_mcu_dcdc_config[2], &DCDC->DCDC_VDD_REG);
+    da1469x_retreg_assign(&g_mcu_dcdc_config[3], &DCDC->DCDC_V14_REG);
+    da1469x_retreg_assign(&g_mcu_dcdc_config[4], &DCDC->DCDC_CTRL1_REG);
 }
 
 void
 da1469x_prail_dcdc_restore(void)
 {
-    DCDC->DCDC_V18_REG = g_mcu_dcdc_config.v18_reg;
-    DCDC->DCDC_V18P_REG = g_mcu_dcdc_config.v18p_reg;
-    DCDC->DCDC_VDD_REG = g_mcu_dcdc_config.vdd_reg;
-    DCDC->DCDC_V14_REG = g_mcu_dcdc_config.v14_reg;
-    DCDC->DCDC_CTRL1_REG = g_mcu_dcdc_config.ctrl1_reg;
+    da1469x_retreg_restore(g_mcu_dcdc_config, ARRAY_SIZE(g_mcu_dcdc_config));
 }
 #endif
 
