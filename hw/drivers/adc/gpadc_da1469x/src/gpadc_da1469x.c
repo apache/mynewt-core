@@ -25,6 +25,7 @@
 
 #include <DA1469xAB.h>
 #include <mcu/mcu.h>
+#include <mcu/da1469x_pd.h>
 
 #include "gpadc_da1469x/gpadc_da1469x.h"
 
@@ -471,6 +472,8 @@ da1469x_gpadc_open(struct os_dev *odev, uint32_t wait, void *arg)
         return rc;
     }
     if (++dev->dgd_adc.ad_ref_cnt == 1) {
+        da1469x_pd_acquire(MCU_PD_DOMAIN_PER);
+
         /* initialize */
         if (da1469x_gpadc_hwinit(dev, arg)) {
             rc = OS_EINVAL;
@@ -485,6 +488,7 @@ da1469x_gpadc_open(struct os_dev *odev, uint32_t wait, void *arg)
         dev->dgd_dma[0]->DMA_A_START_REG = (uint32_t)&GPADC->GP_ADC_RESULT_REG;
     }
     if (rc) {
+        da1469x_pd_release(MCU_PD_DOMAIN_PER);
         --dev->dgd_adc.ad_ref_cnt;
     }
     os_mutex_release(&dev->dgd_adc.ad_lock);
@@ -521,6 +525,7 @@ da1469x_gpadc_close(struct os_dev *odev)
         CRG_TOP->LDO_VDDD_HIGH_CTRL_REG &=
           ~CRG_TOP_LDO_VDDD_HIGH_CTRL_REG_LDO_VDDD_HIGH_ENABLE_Msk;
 
+        da1469x_pd_release(MCU_PD_DOMAIN_PER);
     }
     os_mutex_release(&dev->dgd_adc.ad_lock);
     return rc;
