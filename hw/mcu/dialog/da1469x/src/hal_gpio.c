@@ -20,6 +20,7 @@
 
 #include "syscfg/syscfg.h"
 #include "mcu/da1469x_hal.h"
+#include "mcu/da1469x_pd.h"
 #include <mcu/mcu.h>
 #include "mcu/cmsis_nvic.h"
 #include "hal/hal_gpio.h"
@@ -47,8 +48,6 @@
 #define GPIO_PIN_PADPWR_CTRL_REG(pin)      *GPIO_PIN_PADPWR_CTRL_REG_ADDR(pin)
 #define GPIO_PIN_UNLATCH_ADDR(pin)         (CRG_TOP_REG(P0_SET_PAD_LATCH_REG) + GPIO_PORT(pin) * 3)
 #define GPIO_PIN_LATCH_ADDR(pin)           (CRG_TOP_REG(P0_RESET_PAD_LATCH_REG) + GPIO_PORT(pin) * 3)
-#define GPIO_PIN_UNLATCH(pin)              do { *GPIO_PIN_UNLATCH_ADDR(pin) = 1 << ((pin) & 31); } while (0)
-#define GPIO_PIN_LATCH(pin)                do { *GPIO_PIN_LATCH_ADDR(pin) = 1 << ((pin) & 31); } while (0)
 
 #define WKUP_CTRL_REG_ADDR              (WAKEUP_REG(WKUP_CTRL_REG))
 #define WKUP_RESET_IRQ_REG_ADDR         (WAKEUP_REG(WKUP_RESET_IRQ_REG))
@@ -75,25 +74,96 @@ static struct hal_gpio_irq hal_gpio_irqs[HAL_GPIO_MAX_IRQ];
 
 static uint32_t hal_gpio_latch_state[2];
 
+/*
+ * We assume that any latched pin has default configuration, i.e. was either
+ * not configured or was deinited. Any unlatched pin is considered to be used
+ * by someone.
+ *
+ * By default, all pins are assumed to have default configuration and are
+ * latched. This allows PD_COM to be disabled (if no other peripheral needs
+ * it) since we do not need GPIO mux to be active.
+ *
+ * Configuration of any pin shall be done as follows, with interrupts disabled:
+ * 1. call mcu_gpio_unlatch_prepare() to enable PD_COM if needed
+ * 2. configure pin
+ * 3. call mcu_gpio_unlatch() to actually unlatch pin
+ *
+ * Once pin is restored to default configuration it shall be latched again by
+ * calling mcu_gpio_latch().
+ */
+
+static inline void
+mcu_gpio_unlatch_prepare(int pin)
+{
+    __HAL_ASSERT_CRITICAL();
+
+    /* Acquire PD_COM if first pin will be unlatched */
+    if ((CRG_TOP->P0_PAD_LATCH_REG | CRG_TOP->P0_PAD_LATCH_REG) == 0) {
+        da1469x_pd_acquire(MCU_PD_DOMAIN_COM);
+    }
+}
+
+static inline void
+mcu_gpio_unlatch(int pin)
+{
+    __HAL_ASSERT_CRITICAL();
+
+    *GPIO_PIN_UNLATCH_ADDR(pin) = 1 << ((pin) & 31);
+}
+
+static inline void
+mcu_gpio_latch(int pin)
+{
+    uint32_t primask;
+    uint32_t latch_pre;
+    uint32_t latch_post;
+
+    __HAL_DISABLE_INTERRUPTS(primask);
+
+    latch_pre = CRG_TOP->P0_PAD_LATCH_REG | CRG_TOP->P0_PAD_LATCH_REG;
+
+    *GPIO_PIN_LATCH_ADDR(pin) = 1 << ((pin) & 31);
+
+    latch_post = CRG_TOP->P0_PAD_LATCH_REG | CRG_TOP->P0_PAD_LATCH_REG;
+
+    /* Release PD_COM if last pin was latched */
+    if (latch_pre && !latch_post) {
+        da1469x_pd_release(MCU_PD_DOMAIN_COM);
+    }
+
+    __HAL_ENABLE_INTERRUPTS(primask);
+}
+
 int
 hal_gpio_init_in(int pin, hal_gpio_pull_t pull)
 {
     volatile uint32_t *px_xx_mod_reg = GPIO_PIN_MODE_REG_ADDR(pin);
+    uint32_t regval;
+    uint32_t primask;
 
     switch (pull) {
     case HAL_GPIO_PULL_UP:
-        *px_xx_mod_reg = MCU_GPIO_FUNC_GPIO | MCU_GPIO_MODE_INPUT_PULLUP;
+        regval = MCU_GPIO_FUNC_GPIO | MCU_GPIO_MODE_INPUT_PULLUP;
         break;
     case HAL_GPIO_PULL_DOWN:
-        *px_xx_mod_reg = MCU_GPIO_FUNC_GPIO | MCU_GPIO_MODE_INPUT_PULLDOWN;
+        regval = MCU_GPIO_FUNC_GPIO | MCU_GPIO_MODE_INPUT_PULLDOWN;
         break;
     case HAL_GPIO_PULL_NONE:
-        *px_xx_mod_reg = MCU_GPIO_FUNC_GPIO | MCU_GPIO_MODE_INPUT;
+        regval = MCU_GPIO_FUNC_GPIO | MCU_GPIO_MODE_INPUT;
         break;
     default:
         return -1;
     }
-    GPIO_PIN_UNLATCH(pin);
+
+    __HAL_DISABLE_INTERRUPTS(primask);
+
+    mcu_gpio_unlatch_prepare(pin);
+
+    *px_xx_mod_reg = regval;
+
+    mcu_gpio_unlatch(pin);
+
+    __HAL_ENABLE_INTERRUPTS(primask);
 
     return 0;
 }
@@ -101,6 +171,12 @@ hal_gpio_init_in(int pin, hal_gpio_pull_t pull)
 int
 hal_gpio_init_out(int pin, int val)
 {
+    uint32_t primask;
+
+    __HAL_DISABLE_INTERRUPTS(primask);
+
+    mcu_gpio_unlatch_prepare(pin);
+
     GPIO_PIN_MODE_REG(pin) = MCU_GPIO_MODE_OUTPUT;
 
     if (val) {
@@ -108,7 +184,10 @@ hal_gpio_init_out(int pin, int val)
     } else {
         GPIO_PIN_RESET_DATA_REG(pin) = (1 << (pin & 31));
     }
-    GPIO_PIN_UNLATCH(pin);
+
+    mcu_gpio_unlatch(pin);
+
+    __HAL_ENABLE_INTERRUPTS(primask);
 
     return 0;
 }
@@ -119,7 +198,8 @@ hal_gpio_deinit(int pin)
     /* Reset mode to default value and latch pin */
     GPIO_PIN_MODE_REG(pin) = 0x200;
     GPIO_PIN_RESET_DATA_REG(pin) = 1 << (pin & 31);
-    GPIO_PIN_LATCH(pin);
+
+    mcu_gpio_latch(pin);
 
     return 0;
 }
@@ -287,9 +367,18 @@ hal_gpio_irq_disable(int pin)
 void
 mcu_gpio_set_pin_function(int pin, int mode, mcu_gpio_func func)
 {
+    uint32_t primask;
+
+    __HAL_DISABLE_INTERRUPTS(primask);
+
+    mcu_gpio_unlatch_prepare(pin);
+
     GPIO_PIN_MODE_REG(pin) = (func & GPIO_P0_00_MODE_REG_PID_Msk) |
         (mode & (GPIO_P0_00_MODE_REG_PUPD_Msk | GPIO_P0_00_MODE_REG_PPOD_Msk));
-    GPIO_PIN_UNLATCH(pin);
+
+    mcu_gpio_unlatch(pin);
+
+    __HAL_ENABLE_INTERRUPTS(primask);
 }
 
 void
