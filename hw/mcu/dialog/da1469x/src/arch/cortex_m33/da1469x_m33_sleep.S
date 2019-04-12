@@ -17,6 +17,8 @@
  * under the License.
  */
 
+#include "syscfg/syscfg.h"
+
     .syntax unified
     .arch   armv7-m
 
@@ -40,8 +42,10 @@ da1469x_m33_sleep_state:
     .space 40   /* IPR[0..39] */
 .saved_scb:
     .space 28   /* SCR, CCR, SHPR[0..11], CPACR */
+#if MYNEWT_VAL(HARDFLOAT)
 .saved_fpu:
     .space 8    /* FPCCR, FPDSCR */
+#endif
 
     .size   da1469x_m33_sleep_state, . - da1469x_m33_sleep_state
 
@@ -101,12 +105,14 @@ da1469x_m33_sleep:
     and     r10, r10, #(SCB_CPACR_MASK)
     stmia   r3!, {r4-r10}
 
-/* Save NVIC state (FPCCR and FPDSCR) */
+#if MYNEWT_VAL(HARDFLOAT)
+/* Save FPU state (FPCCR and FPDSCR) */
     ldr     r0, =FPU_BASE
     ldr     r4, [r0, #(FPU_FPCCR_OFFSET)]
     and     r4, r4, #(FPU_FPCCR_MASK)
     ldr     r5, [r0, #(FPU_FPDSCR_OFFSET)]
     stmia   r3!, {r4-r5}
+#endif
 
 /* Clear RESET_STAT_REG so wakeup handler can detect wakeup from deep sleep */
     ldr     r0, =RESET_STAT_REG
@@ -182,6 +188,7 @@ da1469x_m33_wakeup:
     orr     r9, r9, r1
     stmia   r0!, {r4-r9}
 
+#if MYNEWT_VAL(HARDFLOAT)
 /* Restore FPU state */
     ldmia   r3!, {r4-r5}
     ldr     r0, =FPU_BASE
@@ -189,6 +196,7 @@ da1469x_m33_wakeup:
     orr     r4, r4, r1
     str     r4, [r0, #(FPU_FPCCR_OFFSET)]
     str     r5, [r0, #(FPU_FPDSCR_OFFSET)]
+#endif
 
 /* Restore MSP, PSP and CONTROL */
     ldr     r3, =.saved_msp
