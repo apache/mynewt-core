@@ -104,7 +104,7 @@ da1469x_sdadc_configure_channel(struct adc_dev *adev, uint8_t cnum,
          */
         refmv = ((struct da1469x_sdadc_chan_cfg *)cfg)->dscc_refmv;
     }
-    if (ctrl & SDADC_SDADC_CTRL_REG_SDADC_SE_Msk &&
+    if ((ctrl & SDADC_SDADC_CTRL_REG_SDADC_SE_Msk) &&
         ((ctrl & SDADC_SDADC_CTRL_REG_SDADC_INP_SEL_Msk) ==
          (8 << SDADC_SDADC_CTRL_REG_SDADC_INP_SEL_Pos))) {
         /*
