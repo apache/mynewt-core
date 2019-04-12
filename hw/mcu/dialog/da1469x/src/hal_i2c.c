@@ -146,23 +146,8 @@ i2c_init_hw(const struct da1469x_hal_i2c *i2c, int pin_scl, int pin_sda)
     NVIC_EnableIRQ(i2c->irqn);
 }
 
-int
-hal_i2c_init_hw(uint8_t i2c_num, const struct hal_i2c_hw_settings *cfg)
-{
-    const struct da1469x_hal_i2c *i2c;
-
-    i2c = hal_i2c_resolve(i2c_num);
-    if (!i2c) {
-       return HAL_I2C_ERR_INVAL;
-    }
-
-    i2c_init_hw(i2c, cfg->pin_scl, cfg->pin_sda);
-
-    return 0;
-}
-
 static int
-i2c_config(const struct da1469x_hal_i2c *i2c, const struct hal_i2c_settings *cfg)
+i2c_config(const struct da1469x_hal_i2c *i2c, uint32_t frequency)
 {
     uint32_t i2c_con_reg;
 
@@ -171,7 +156,7 @@ i2c_config(const struct da1469x_hal_i2c *i2c, const struct hal_i2c_settings *cfg
 
     /* Clear speed register */
     i2c_con_reg &= ~I2C_I2C_CON_REG_I2C_SPEED_Msk;
-    switch (cfg->frequency) {
+    switch (frequency) {
     case 100:
         i2c_con_reg |= (1 << I2C_I2C_CON_REG_I2C_SPEED_Pos);
         break;
@@ -188,6 +173,21 @@ i2c_config(const struct da1469x_hal_i2c *i2c, const struct hal_i2c_settings *cfg
 }
 
 int
+hal_i2c_init_hw(uint8_t i2c_num, const struct hal_i2c_hw_settings *cfg)
+{
+    const struct da1469x_hal_i2c *i2c;
+
+    i2c = hal_i2c_resolve(i2c_num);
+    if (!i2c) {
+       return HAL_I2C_ERR_INVAL;
+    }
+
+    i2c_init_hw(i2c, cfg->pin_scl, cfg->pin_sda);
+
+    return 0;
+}
+
+int
 hal_i2c_config(uint8_t i2c_num, const struct hal_i2c_settings *cfg)
 {
     const struct da1469x_hal_i2c *i2c;
@@ -197,16 +197,14 @@ hal_i2c_config(uint8_t i2c_num, const struct hal_i2c_settings *cfg)
        return HAL_I2C_ERR_INVAL;
     }
 
-    return i2c_config(i2c, cfg);
+    return i2c_config(i2c, cfg->frequency);
 }
 
 int
 hal_i2c_init(uint8_t i2c_num, void *usercfg)
 {
-    int rc;
     const struct da1469x_hal_i2c_cfg *da1469x_cfg = usercfg;
     const struct da1469x_hal_i2c *i2c;
-    struct hal_i2c_settings cfg;
 
     i2c = hal_i2c_resolve(i2c_num);
     if (!i2c) {
@@ -219,13 +217,7 @@ hal_i2c_init(uint8_t i2c_num, void *usercfg)
 
     i2c_init_hw(i2c, da1469x_cfg->pin_scl, da1469x_cfg->pin_sda);
 
-    cfg.frequency = da1469x_cfg->frequency;
-    rc = i2c_config(i2c, &cfg);
-    if (rc) {
-        return rc;
-    }
-
-    return 0;
+    return i2c_config(i2c, da1469x_cfg->frequency);
 }
 
 static uint32_t
