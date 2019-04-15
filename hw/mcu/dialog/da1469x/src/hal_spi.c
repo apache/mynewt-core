@@ -21,6 +21,7 @@
 #include <errno.h>
 #include <assert.h>
 #include <os/mynewt.h>
+#include <mcu/da1469x_pd.h>
 #include <mcu/da1469x_hal.h>
 #include <hal/hal_spi.h>
 #include <mcu/mcu.h>
@@ -256,6 +257,8 @@ hal_spi_init(int spi_num, void *cfg, uint8_t spi_type)
     if ((spi_type != HAL_SPI_TYPE_MASTER) && (spi_type != HAL_SPI_TYPE_SLAVE)) {
         return SYS_EINVAL;
     }
+
+    da1469x_pd_acquire(MCU_PD_DOMAIN_COM);
 
     spi->spi_type  = spi_type;
 
