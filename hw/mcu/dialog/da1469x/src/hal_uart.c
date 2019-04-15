@@ -21,6 +21,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include "syscfg/syscfg.h"
+#include "mcu/da1469x_pd.h"
 #include "mcu/da1469x_hal.h"
 #include "mcu/mcu.h"
 #include "hal/hal_uart.h"
@@ -411,6 +412,8 @@ hal_uart_init(int port, void *arg)
     if (cfg->pin_cts >= 0) {
         mcu_gpio_set_pin_function(cfg->pin_cts, MCU_GPIO_MODE_INPUT, gpiofunc[3]);
     }
+
+    da1469x_pd_acquire(MCU_PD_DOMAIN_COM);
 
     NVIC_DisableIRQ(irqn);
     NVIC_SetPriority(irqn, (1 << __NVIC_PRIO_BITS) - 1);
