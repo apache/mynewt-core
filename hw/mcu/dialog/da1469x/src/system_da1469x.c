@@ -116,8 +116,4 @@ void SystemInit(void)
     /* Latch all pins. We will unlatch them when initialized to do something. */
     CRG_TOP->P0_RESET_PAD_LATCH_REG = CRG_TOP_P0_PAD_LATCH_REG_P0_LATCH_EN_Msk;
     CRG_TOP->P1_RESET_PAD_LATCH_REG = CRG_TOP_P1_PAD_LATCH_REG_P1_LATCH_EN_Msk;
-
-    /* XXX temporarily enable PD_COM and PD_PER since we do not control them */
-    da1469x_pd_acquire(MCU_PD_DOMAIN_COM);
-    da1469x_pd_acquire(MCU_PD_DOMAIN_PER);
 }
