@@ -21,6 +21,7 @@
 #include <stdbool.h>
 #include "syscfg/syscfg.h"
 #include "os/os_time.h"
+#include "mcu/da1469x_pd.h"
 #include "mcu/da1469x_hal.h"
 #include "mcu/mcu.h"
 #include "hal/hal_i2c.h"
@@ -111,6 +112,8 @@ static void
 i2c_init_hw(const struct da1469x_hal_i2c *i2c, int pin_scl, int pin_sda)
 {
     uint32_t i2c_con_reg;
+
+    da1469x_pd_acquire(MCU_PD_DOMAIN_COM);
 
     /* Configure SCL, SDA.*/
     mcu_gpio_set_pin_function(pin_scl, MCU_GPIO_MODE_OUTPUT, i2c->scl_func);
