@@ -296,9 +296,8 @@ hal_spi_config(int spi_num, struct hal_spi_settings *settings)
     regs->SPI_CTRL_REG |= SPI_SPI_CTRL_REG_SPI_RST_Msk;
 
     /* Preserve some register fields only */
-    ctrl_reg = regs->SPI_CTRL_REG & (SPI_SPI_RX_TX_REG_SPI_DATA_Msk |
+    ctrl_reg = regs->SPI_CTRL_REG & (SPI_SPI_CTRL_REG_SPI_TX_FIFO_NOTFULL_MASK_Msk |
                                      SPI_SPI_CTRL_REG_SPI_DMA_TXREQ_MODE_Msk |
-                                     SPI_SPI_CTRL_REG_SPI_9BIT_VAL_Msk |
                                      SPI_SPI_CTRL_REG_SPI_PRIORITY_Msk |
                                      SPI_SPI_CTRL_REG_SPI_EN_CTRL_Msk |
                                      SPI_SPI_CTRL_REG_SPI_SMN_Msk |
