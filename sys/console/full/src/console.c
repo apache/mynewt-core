@@ -658,12 +658,10 @@ handle_nlip(uint8_t byte)
     if ((nlip_state & NLIP_PKT_START1) &&
         (byte == CONSOLE_NLIP_PKT_START2)) {
         nlip_state |= NLIP_PKT_START2;
-        g_is_output_nlip = 1;
         return 1;
     } else if ((nlip_state & NLIP_DATA_START1) &&
                (byte == CONSOLE_NLIP_DATA_START2)) {
         nlip_state |= NLIP_DATA_START2;
-        g_is_output_nlip = 1;
         return 1;
     } else {
         nlip_state = 0;
