@@ -93,4 +93,5 @@ repo.deps:
         user: JuulLabs-OSS
         repo: mcuboot
         vers:
-            master: 1-latest
+            master: 0-dev
+            mynewt_1_6_0_tag: 1-latest
