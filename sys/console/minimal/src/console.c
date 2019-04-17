@@ -145,6 +145,9 @@ console_write(const char *str, int cnt)
         g_is_output_nlip = 1;
     }
 
+    /* From the shell the first byte is always \n followed by the
+     * actual pkt start bytes, hence checking byte 1 and 2
+     */
     if (cnt >= 3 && str[1] == CONSOLE_NLIP_PKT_START1 &&
         str[2] == CONSOLE_NLIP_PKT_START2) {
         g_is_output_nlip = 1;
