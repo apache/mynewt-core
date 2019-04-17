@@ -170,10 +170,20 @@ console_write(const char *str, int cnt)
     if (console_lock(timeout) != OS_OK) {
         return;
     }
+
     if (cnt >= 2 && str[0] == CONSOLE_NLIP_DATA_START1 &&
         str[1] == CONSOLE_NLIP_DATA_START2) {
         g_is_output_nlip = 1;
     }
+
+    /* From the shell the first byte is always \n followed by the
+     * actual pkt start bytes, hence checking byte 1 and 2
+     */
+    if (cnt >= 3 && str[1] == CONSOLE_NLIP_PKT_START1 &&
+        str[2] == CONSOLE_NLIP_PKT_START2) {
+        g_is_output_nlip = 1;
+    }
+
     /* If the byte string is non nlip and we are silencing non nlip bytes,
      * do not let it go out on the console
      */ 
@@ -651,12 +661,10 @@ handle_nlip(uint8_t byte)
     if ((nlip_state & NLIP_PKT_START1) &&
         (byte == CONSOLE_NLIP_PKT_START2)) {
         nlip_state |= NLIP_PKT_START2;
-        g_is_output_nlip = 1;
         return 1;
     } else if ((nlip_state & NLIP_DATA_START1) &&
                (byte == CONSOLE_NLIP_DATA_START2)) {
         nlip_state |= NLIP_DATA_START2;
-        g_is_output_nlip = 1;
         return 1;
     } else {
         nlip_state = 0;
