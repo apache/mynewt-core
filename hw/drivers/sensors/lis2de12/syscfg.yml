@@ -1,0 +1,71 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+syscfg.defs:
+    LIS2DE12_ITF_LOCK_TMO:
+        description: 'LIS2DE12 interface lock timeout in milliseconds'
+        value: 1000
+    LIS2DE12_LOG_MODULE:
+        description: 'Numeric module ID to use for LIS2DE12 log messages'
+        value: 110
+    LIS2DE12_I2C_RETRIES:
+        description: >
+            Number of retries to use for failed I2C communication.  A retry is
+            used when the LIS2DE12 sends an unexpected NACK.
+        value: 2
+    LIS2DE12_I2C_TIMEOUT_TICKS:
+        description: >
+            Number of OS ticks to wait for each I2C transaction to complete.
+        value: 3
+    LIS2DE12_SHELL_ITF_NUM:
+        description: 'Shell interface number for the LIS2DE12'
+        value: 0
+    LIS2DE12_SHELL_ITF_TYPE:
+        description: 'Shell interface type for the LIS2DE12'
+        value: 1
+    LIS2DE12_SHELL_CSPIN:
+        description: 'CS pin for LIS2DE12'
+        value : -1
+    LIS2DE12_SHELL_ITF_ADDR:
+        description: 'Slave address for LIS2DE12'
+        value : 0x19
+    LIS2DE12_CLI:
+        description: 'Enable shell support for the LIS2DE12'
+        value: 0
+    LIS2DE12_NOTIF_STATS:
+        description: 'Enable notification stats'
+        value: 1
+    LIS2DE12_INT1_PIN_HOST:
+        description: 'Interrupt pin number on host device connected to INT1 on device'
+        value: 25
+    LIS2DE12_INT1_PIN_DEVICE:
+        description: 'Interrupt pin number 1 or 2 on accelerometer device'
+        value: 1
+    LIS2DE12_INT1_CFG_ACTIVE:
+        description: 'Set 0 for active-low, 1 for active-high'
+        value: 1
+    LIS2DE12_INT2_PIN_HOST:
+        description: 'Interrupt pin number on host device connected to INT1 on device'
+        value: 31
+    LIS2DE12_INT2_PIN_DEVICE:
+        description: 'Interrupt pin number 1 or 2 on accelerometer device'
+        value: 2
+    LIS2DE12_INT2_CFG_ACTIVE:
+        description: 'Set 0 for active-low, 1 for active-high'
+        value: 1
