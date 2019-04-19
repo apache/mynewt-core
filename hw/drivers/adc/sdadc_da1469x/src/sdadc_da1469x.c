@@ -63,7 +63,7 @@ da1469x_sdadc_resolve_pins(uint32_t ctrl, int *pin0p, int *pin1p)
     }
     if ((ctrl & SDADC_SDADC_CTRL_REG_SDADC_SE_Msk) == 0 &&
         srcn < DA1469X_SDADC_SRC2PIN_SZ) {
-        pin1 = da1469x_sdadc_src2pin[srcp];
+        pin1 = da1469x_sdadc_src2pin[srcn];
     }
     *pin0p = pin0;
     *pin1p = pin1;
