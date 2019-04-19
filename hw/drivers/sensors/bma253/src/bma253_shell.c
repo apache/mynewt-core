@@ -216,7 +216,7 @@ struct stream_read_context {
 };
 
 static bool
-bma253_stream_read_cb(void * arg,
+bma253_stream_read_cb_core(void * arg,
                       struct sensor_accel_data * sad)
 {
     char buffer_x[20];
@@ -239,6 +239,21 @@ bma253_stream_read_cb(void * arg,
     return ctx->count == 0;
 }
 
+static
+int bma253_stream_read_cb(
+        struct sensor   *sensor,
+        void            *read_arg,
+        void            *data,
+        sensor_type_t   type)
+{
+    BMA253_UNUSED_VAR(sensor);
+    BMA253_UNUSED_VAR(type);
+
+    bma253_stream_read_cb_core(read_arg, (struct sensor_accel_data *)data);
+
+    return 0;
+}
+
 static int
 bma253_stream_read_cmd(struct bma253 * bma253,
                        int argc,
@@ -256,10 +271,11 @@ bma253_stream_read_cmd(struct bma253 * bma253,
         return EINVAL;
     }
 
-    return bma253_stream_read(bma253,
-                              bma253_stream_read_cb,
-                              &ctx,
-                              0);
+    return bma253_stream_read(&bma253->sensor,   //zg
+            SENSOR_TYPE_ACCELEROMETER,   //zg
+            bma253_stream_read_cb,
+            &ctx,
+            0);
 }
 
 static int
@@ -431,6 +447,8 @@ bma253_wait_for_tap_cmd(struct bma253 * bma253,
     const struct tap_type * tap_type;
     uint8_t i;
     int rc;
+
+    console_printf("wait_for_tap_cmd: %d!\n", argc);
 
     if (argc != 1) {
         return EINVAL;

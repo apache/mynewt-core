@@ -35,6 +35,7 @@
 #include "modlog/modlog.h"
 #endif
 
+#if MYNEWT_VAL(BMA2XX_LOG)
 #define BMA2XX_LOG(lvl_, ...) \
     MODLOG_ ## lvl_(MYNEWT_VAL(BMA2XX_LOG_MODULE), __VA_ARGS__)
 #else

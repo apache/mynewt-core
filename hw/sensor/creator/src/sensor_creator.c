@@ -282,10 +282,10 @@ static struct sensor_itf i2c_0_itf_lis = {
     .si_num  = 0,
     .si_addr = 0x18,
     .si_ints = {
-        { 26, MYNEWT_VAL(BMA2XX_INT_PIN_DEVICE),
-            MYNEWT_VAL(BMA2XX_INT_CFG_ACTIVE)},
-        { 25, MYNEWT_VAL(BMA2XX_INT2_PIN_DEVICE),
-            MYNEWT_VAL(BMA2XX_INT_CFG_ACTIVE)}
+        { 25, MYNEWT_VAL(BMA253_INT_PIN_DEVICE),    //zg
+            MYNEWT_VAL(BMA253_INT_CFG_ACTIVE)}, //zg
+        { 24, MYNEWT_VAL(BMA253_INT2_PIN_DEVICE),
+            MYNEWT_VAL(BMA253_INT_CFG_ACTIVE)}  //zg
     },
 };
 #endif
@@ -309,11 +309,12 @@ static struct sensor_itf spi2c_0_itf_bma2xx = {
 static struct sensor_itf spi2c_0_itf_bma2xx = {
     .si_type = SENSOR_ITF_SPI,
     .si_num = 0,
-    .si_cs_pin = 21,
+    .si_cs_pin = 11,
     .si_ints = {
-        { 26, MYNEWT_VAL(BMA2XX_INT_PIN_DEVICE),
+        { 12, MYNEWT_VAL(BMA2XX_INT_PIN_DEVICE),    //zg
+        //{ 26, MYNEWT_VAL(BMA2XX_INT_PIN_DEVICE),
             MYNEWT_VAL(BMA2XX_INT_CFG_ACTIVE)},
-        { 25, MYNEWT_VAL(BMA2XX_INT2_PIN_DEVICE),
+        { 26, MYNEWT_VAL(BMA2XX_INT2_PIN_DEVICE),   //zg
             MYNEWT_VAL(BMA2XX_INT_CFG_ACTIVE)}
     },
 };
@@ -352,7 +353,8 @@ static struct sensor_itf i2c_0_itf_lis2dw12 = {
     .si_num  = 0,
     .si_addr = 0x18,
     .si_ints = {
-        { MYNEWT_VAL(LIS2DW12_INT1_PIN_HOST), MYNEWT_VAL(LIS2DW12_INT1_PIN_DEVICE),
+        //{ MYNEWT_VAL(LIS2DW12_INT1_PIN_HOST), MYNEWT_VAL(LIS2DW12_INT1_PIN_DEVICE),
+        { 25, MYNEWT_VAL(LIS2DW12_INT1_PIN_DEVICE), //zg
           MYNEWT_VAL(LIS2DW12_INT1_CFG_ACTIVE)}}
 };
 #endif
@@ -1045,7 +1047,7 @@ config_bma2xx_sensor(void)
     dev = os_dev_open("bma2xx_0", OS_TIMEOUT_NEVER, NULL);
     assert(dev != NULL);
 
-    cfg.model = BMA2XX_BMA280;
+    cfg.model = BMA2XX_BMA253;  //zg
     cfg.low_g_delay_ms = BMA2XX_LOW_G_DELAY_MS_DEFAULT;
     cfg.high_g_delay_ms = BMA2XX_HIGH_G_DELAY_MS_DEFAULT;
     cfg.g_range = BMA2XX_G_RANGE_2;

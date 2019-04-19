@@ -48,6 +48,7 @@ i2cn_master_write(uint8_t i2c_num, struct hal_i2c_master_data *pdata,
 {
     int rc = 0;
     int i;
+    volatile int32_t loop = 5120;  //zg
 
     /* Ensure at least one try. */
     if (retries < 0) {
@@ -59,6 +60,9 @@ i2cn_master_write(uint8_t i2c_num, struct hal_i2c_master_data *pdata,
         if (rc == 0) {
             break;
         }
+
+        while (loop--) {}
+
     }
 
     return rc;
