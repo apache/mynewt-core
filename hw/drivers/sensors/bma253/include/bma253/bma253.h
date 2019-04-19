@@ -25,9 +25,13 @@
 #include "sensor/accel.h"
 #include "sensor/temperature.h"
 
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+
+#define BMA253_UNUSED_VAR(v)    ((void)v)
 
 /* XXX use some better defaults. For now it is min */
 #define BMA253_LOW_G_DELAY_MS_DEFAULT       2
@@ -197,7 +201,28 @@ struct bma253_private_driver_data {
     uint8_t int_num;
     uint8_t int_route;
     uint8_t int_ref_cnt;
+
+
+    //zg: check for potential improvement
+    uint8_t fifo_buf[31 * 6];
 };
+
+typedef union bma253_feature_enable {
+    struct {
+        uint32_t any_motion :1;
+        uint32_t double_tap :1;
+        uint32_t single_tap :1;
+        uint32_t orient     :1;
+        uint32_t low_g      :1;
+        uint32_t high_g     :1;
+    } req;
+
+    uint32_t bits;
+} bma253_feature_enable_t;
+
+#ifndef MAX
+#define MAX(n, m) (((n) < (m)) ? (m) : (n))
+#endif
 
 /* The device itself */
 struct bma253 {
@@ -220,6 +245,30 @@ struct bma253 {
 
     /* Private driver data */
     struct bma253_private_driver_data pdd;
+
+    /* all the features currently enabled */
+    sensor_event_type_t     ev_enabled;
+
+    uint32_t                daq_req_new: 1;
+    /* the data acquisition is in progress */
+    uint32_t                daq_in_proc: 1;
+
+
+    /* this flag is to turn on or off bus read/write monitoring */
+    uint32_t                bus_rw_mon      :1;
+
+    /* currently configured bandwidth on hw, of type: enum bma253_filter_bandwidth */
+    uint32_t                bandwidth_curr  :3;
+
+    /* this flag tells that an important hw config change (like bandwidth, power mode) is pending */
+    uint32_t                hw_cfg_pending  :1;
+
+    /* pending power mode, of type enum bma253_power_mode */
+    uint32_t                pending_hw_cfg_pm:3;
+
+    /* pending bandwidth, of type enum bma253_filter_bandwidth */
+    uint32_t                pending_hw_cfg_bw:3;
+
 };
 
 /* Offset compensation is performed to target this given value, by axis */

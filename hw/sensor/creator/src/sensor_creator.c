@@ -299,17 +299,30 @@ static struct sensor_itf i2c_0_itf_ms40 = {
 };
 #endif
 
-
 #if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(BMA253_OFB)
-static struct sensor_itf i2c_0_itf_lis = {
+static struct sensor_itf spi2c_0_itf_bma253 = {
     .si_type = SENSOR_ITF_I2C,
     .si_num  = 0,
     .si_addr = 0x18,
     .si_ints = {
-        { 26, MYNEWT_VAL(BMA2XX_INT_PIN_DEVICE),
-            MYNEWT_VAL(BMA2XX_INT_CFG_ACTIVE)},
-        { 25, MYNEWT_VAL(BMA2XX_INT2_PIN_DEVICE),
-            MYNEWT_VAL(BMA2XX_INT_CFG_ACTIVE)}
+        { 12, MYNEWT_VAL(BMA253_INT_PIN_DEVICE),
+            MYNEWT_VAL(BMA253_INT_CFG_ACTIVE)},
+        { 24, MYNEWT_VAL(BMA253_INT2_PIN_DEVICE),
+            MYNEWT_VAL(BMA253_INT_CFG_ACTIVE)}
+    },
+};
+#endif
+
+#if MYNEWT_VAL(SPI_0_MASTER) && MYNEWT_VAL(BMA253_OFB)
+static struct sensor_itf spi2c_0_itf_bma253 = {
+    .si_type = SENSOR_ITF_SPI,
+    .si_num  = 0,
+    .si_cs_pin = 11,
+    .si_ints = {
+        { 12, MYNEWT_VAL(BMA253_INT_PIN_DEVICE),
+            MYNEWT_VAL(BMA253_INT_CFG_ACTIVE)},
+        { 24, MYNEWT_VAL(BMA253_INT2_PIN_DEVICE),
+            MYNEWT_VAL(BMA253_INT_CFG_ACTIVE)}
     },
 };
 #endif
@@ -796,20 +809,23 @@ config_bma253_sensor(void)
     cfg.low_g_delay_ms = BMA253_LOW_G_DELAY_MS_DEFAULT;
     cfg.high_g_delay_ms = BMA253_HIGH_G_DELAY_MS_DEFAULT;
     cfg.g_range = BMA253_G_RANGE_2;
-    cfg.filter_bandwidth = BMA253_FILTER_BANDWIDTH_1000_HZ;
+    /* filter_bandwidth is the intended setting for data streaming */
+    cfg.filter_bandwidth = BMA253_FILTER_BANDWIDTH_31_25_HZ;
     cfg.use_unfiltered_data = false;
     cfg.tap_quiet = BMA253_TAP_QUIET_30_MS;
     cfg.tap_shock = BMA253_TAP_SHOCK_50_MS;
     cfg.d_tap_window = BMA253_D_TAP_WINDOW_250_MS;
     cfg.tap_wake_samples = BMA253_TAP_WAKE_SAMPLES_2;
-    cfg.tap_thresh_g = 1.0;
+    cfg.tap_thresh_g = 0.200f;
     cfg.offset_x_g = 0.0;
     cfg.offset_y_g = 0.0;
     cfg.offset_z_g = 0.0;
-    cfg.power_mode = BMA253_POWER_MODE_NORMAL;
-    cfg.sleep_duration = BMA253_SLEEP_DURATION_0_5_MS;
+    /* options: BMA253_POWER_MODE_SUSPEND, BMA253_POWER_MODE_NORMAL, BMA253_POWER_MODE_LPM_1, */
+    cfg.power_mode = BMA253_POWER_MODE_SUSPEND;
+    cfg.sleep_duration = BMA253_SLEEP_DURATION_10_MS;
     cfg.sensor_mask = SENSOR_TYPE_ACCELEROMETER;
-    cfg.read_mode = BMA253_READ_M_POLL;
+    /* options: BMA253_READ_M_STREAM, BMA253_READ_M_POLL */
+    cfg.read_mode = BMA253_READ_M_STREAM;
 
     rc = bma253_config((struct bma253 *)dev, &cfg);
     assert(rc == 0);
@@ -1343,7 +1359,7 @@ sensor_dev_create(void)
 
 #if MYNEWT_VAL(BMA253_OFB)
     rc = os_dev_create((struct os_dev *)&bma253, "bma253_0",
-      OS_DEV_INIT_PRIMARY, 0, bma253_init, &i2c_0_itf_lis);
+      OS_DEV_INIT_PRIMARY, 0, bma253_init, &spi2c_0_itf_bma253);
     assert(rc == 0);
 
     rc = config_bma253_sensor();
