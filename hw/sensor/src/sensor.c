@@ -35,6 +35,11 @@
 #include "sensor/gyro.h"
 #include "console/console.h"
 
+#ifdef MYNEWT_VAL_SENSOR_MGR_EVQ
+extern struct os_eventq MYNEWT_VAL(SENSOR_MGR_EVQ);
+#endif
+
+
 #if MYNEWT_VAL(SENSOR_POLL_TEST_LOG)
 uint32_t test_log_idx;
 uint32_t smgr_wakeup_idx;
@@ -646,7 +651,7 @@ sensor_mgr_init(void)
     int rc;
 
 #ifdef MYNEWT_VAL_SENSOR_MGR_EVQ
-    sensor_mgr_evq_set(MYNEWT_VAL(SENSOR_MGR_EVQ));
+    sensor_mgr_evq_set(&MYNEWT_VAL(SENSOR_MGR_EVQ));
 #else
     sensor_mgr_evq_set(os_eventq_dflt_get());
 #endif
