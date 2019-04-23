@@ -79,6 +79,7 @@ log_nmgr_encode_entry(struct log *log, struct log_offset *log_offset,
     uint8_t data[128];
     int rc;
     int rsp_len;
+    bool too_long;
     CborError g_err = CborNoError;
     struct log_encode_data *ed = log_offset->lo_arg;
     CborEncoder rsp;
@@ -87,6 +88,7 @@ log_nmgr_encode_entry(struct log *log, struct log_offset *log_offset,
 #if MYNEWT_VAL(LOG_VERSION) > 2
     CborEncoder str_encoder;
     int off;
+    uint8_t etype;
 #endif
     rc = OS_OK;
 
@@ -146,6 +148,12 @@ log_nmgr_encode_entry(struct log *log, struct log_offset *log_offset,
         return MGMT_ERR_ECORRUPT;
     }
 
+    /*
+     * Copy the type from the header type. This may get changed to type
+     * string if a single entry is too long.
+     */
+    etype = ueh->ue_etype;
+
     g_err |= cbor_encode_text_stringz(&rsp, "msg");
 
     /*
@@ -179,20 +187,41 @@ log_nmgr_encode_entry(struct log *log, struct log_offset *log_offset,
     g_err |= cbor_encode_uint(&rsp,  ueh->ue_module);
     g_err |= cbor_encoder_close_container(&cnt_encoder, &rsp);
     rsp_len += cbor_encode_bytes_written(&cnt_encoder);
+
     /*
-     * Make sure that at least single entry is returned, even in case response
-     * exceeds this magic value. This is to make sure we can read long log
-     * entries, even if they have to be read one by one.
+     * Check if the response is too long. If more than one entry is in the
+     * response we will not add the current one and will return ENOMEM. If this
+     * is just a single entry we add the generic too long message text.
      */
-    if ((rsp_len > 400) && (ed->counter > 0)) {
-        rc = OS_ENOMEM;
-        goto err;
+    too_long = false;
+    if (rsp_len > MYNEWT_VAL(LOG_NMGR_MAX_RSP_LEN)) {
+        /*
+         * Is this just a single entry? If so, encode the generic error
+         * message in the "msg" field of the response
+         */
+        if (ed->counter == 0) {
+#if MYNEWT_VAL(LOG_VERSION) > 2
+            etype = LOG_ETYPE_STRING;
+#endif
+            too_long = true;
+        } else {
+            rc = OS_ENOMEM;
+            goto err;
+        }
     }
+
+    /*
+     * If a single entry is too long the response length (rsp_len) is not
+     * correct. However, this is not an issue since we only use lo_data_len
+     * when encoding multiple entries. Therefore, there is no need to try
+     * and do a dummy encoding with the generic too long entry message simply
+     * to calculate a response size that will not be used.
+     */
     log_offset->lo_data_len = rsp_len;
 
     g_err |= cbor_encoder_create_map(ed->enc, &rsp, CborIndefiniteLength);
 #if MYNEWT_VAL(LOG_VERSION) > 2
-    switch (ueh->ue_etype) {
+    switch (etype) {
     case LOG_ETYPE_CBOR:
         g_err |= cbor_encode_text_stringz(&rsp, "type");
         g_err |= cbor_encode_text_stringz(&rsp, "cbor");
@@ -220,18 +249,27 @@ log_nmgr_encode_entry(struct log *log, struct log_offset *log_offset,
      * inside.
      */
     g_err |= cbor_encoder_create_indef_byte_string(&rsp, &str_encoder);
-    for (off = 0; off < len && !g_err; ) {
-        rc = log_read_body(log, dptr, data, off, sizeof(data));
-        if (rc < 0) {
-            g_err |= 1;
-            break;
-        }
+    if (too_long) {
+        sprintf((char *)data, "error: entry too large (%d bytes)", rsp_len);
+        rc = strlen((char *)data);
         g_err |= cbor_encode_byte_string(&str_encoder, data, rc);
-        off += rc;
+    } else {
+        for (off = 0; off < len && !g_err;) {
+            rc = log_read_body(log, dptr, data, off, sizeof(data));
+            if (rc < 0) {
+                g_err |= 1;
+                break;
+            }
+            g_err |= cbor_encode_byte_string(&str_encoder, data, rc);
+            off += rc;
+        }
     }
     g_err |= cbor_encoder_close_container(&rsp, &str_encoder);
 #else
     g_err |= cbor_encode_text_stringz(&rsp, "msg");
+    if (too_long) {
+        sprintf((char *)data, "error: entry too large (%d bytes)", rsp_len);
+    }
     g_err |= cbor_encode_text_stringz(&rsp, (char *)data);
 #endif
     g_err |= cbor_encode_text_stringz(&rsp, "ts");
@@ -249,7 +287,13 @@ log_nmgr_encode_entry(struct log *log, struct log_offset *log_offset,
     if (g_err) {
         return MGMT_ERR_ENOMEM;
     }
-    return (0);
+
+    /* If response is too long we want to respond with ENOMEM error code */
+    if (too_long) {
+        rc = OS_ENOMEM;
+    } else {
+        rc = 0;
+    }
 err:
     return (rc);
 }
@@ -284,7 +328,7 @@ log_encode_entries(struct log *log, CborEncoder *cb,
     g_err |= cbor_encoder_close_container(&cnt_encoder, &entries);
     rsp_len = cbor_encode_bytes_written(cb) +
               cbor_encode_bytes_written(&cnt_encoder);
-    if (rsp_len > 400) {
+    if (rsp_len > MYNEWT_VAL(LOG_NMGR_MAX_RSP_LEN)) {
         rc = OS_ENOMEM;
         goto err;
     }
