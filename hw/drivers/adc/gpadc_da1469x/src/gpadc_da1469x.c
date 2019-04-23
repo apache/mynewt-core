@@ -662,3 +662,30 @@ da1469x_gpadc_init(struct os_dev *odev, void *arg)
 
     return 0;
 }
+
+#if MYNEWT_VAL(GPADC_BATTERY)
+
+static struct da1469x_gpadc_dev_cfg os_bsp_gpadc_battery_cfg = {
+    .dgdc_gpadc_ctrl = (1U << GPADC_GP_ADC_CTRL_REG_GP_ADC_SE_Pos) |
+                       (8U << GPADC_GP_ADC_CTRL_REG_GP_ADC_SEL_Pos),
+    .dgdc_gpadc_ctrl2 = 0,
+    .dgdc_gpadc_ctrl3 = 0,
+    .dgdc_gpadc_set_offp = 0,
+    .dgdc_gpadc_set_offn = 0,
+    .dgdc_gpadc_offp = 0,
+    .dgdc_gpadc_offn = 0,
+};
+
+struct os_dev *
+da1469x_open_battery_adc(const char *dev_name, uint32_t wait)
+{
+    struct os_dev *adc = os_dev_open(dev_name, wait, &os_bsp_gpadc_battery_cfg);
+    if (adc) {
+        /* call adc_chan_config to setup correct multiplier so read returns
+         * value in mV */
+        adc_chan_config((struct adc_dev *)adc, 0, NULL);
+    }
+    return adc;
+}
+
+#endif
