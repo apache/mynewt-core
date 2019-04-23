@@ -77,10 +77,6 @@ int runtest_run(const char *test_name, const char *token);
  */
 int runtest_total_fails_get(void);
 
-/* XXX: Deprecated API.  Remove after next release. */
-struct os_task *runtest_init_task(
-    os_task_func_t task_handler, uint8_t prio) __attribute__((deprecated));
-
 #ifdef __cplusplus
 }
 #endif
