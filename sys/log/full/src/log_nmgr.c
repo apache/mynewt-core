@@ -79,7 +79,6 @@ log_nmgr_encode_entry(struct log *log, struct log_offset *log_offset,
     uint8_t data[128];
     int rc;
     int rsp_len;
-    uint8_t etype;
     bool too_long;
     CborError g_err = CborNoError;
     struct log_encode_data *ed = log_offset->lo_arg;
@@ -89,6 +88,7 @@ log_nmgr_encode_entry(struct log *log, struct log_offset *log_offset,
 #if MYNEWT_VAL(LOG_VERSION) > 2
     CborEncoder str_encoder;
     int off;
+    uint8_t etype;
 #endif
     rc = OS_OK;
 
