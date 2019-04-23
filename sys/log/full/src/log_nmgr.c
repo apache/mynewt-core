@@ -200,7 +200,9 @@ log_nmgr_encode_entry(struct log *log, struct log_offset *log_offset,
          * message in the "msg" field of the response
          */
         if (ed->counter == 0) {
+#if MYNEWT_VAL(LOG_VERSION) > 2
             etype = LOG_ETYPE_STRING;
+#endif
             too_long = true;
         } else {
             rc = OS_ENOMEM;
@@ -248,7 +250,6 @@ log_nmgr_encode_entry(struct log *log, struct log_offset *log_offset,
      */
     g_err |= cbor_encoder_create_indef_byte_string(&rsp, &str_encoder);
     if (too_long) {
-        data[0] = 0;
         sprintf((char *)data, "error: entry too large (%d bytes)", rsp_len);
         rc = strlen((char *)data);
         g_err |= cbor_encode_byte_string(&str_encoder, data, rc);
@@ -267,7 +268,6 @@ log_nmgr_encode_entry(struct log *log, struct log_offset *log_offset,
 #else
     g_err |= cbor_encode_text_stringz(&rsp, "msg");
     if (too_long) {
-        data[0] = 0;
         sprintf((char *)data, "error: entry too large (%d bytes)", rsp_len);
     }
     g_err |= cbor_encode_text_stringz(&rsp, (char *)data);
