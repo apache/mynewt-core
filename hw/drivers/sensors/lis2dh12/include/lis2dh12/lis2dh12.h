@@ -651,7 +651,20 @@ int
 lis2dh12_get_fifo_samples(struct sensor_itf *itf, uint8_t *samples);
 
 /**
- * Run Self test on sensor
+ * Run Self test on sensor to see if any axis has an error
+ *
+ * Self test sequence as described in lis2dh12 application note AN5005.
+ *
+ * @param the sensor interface
+ * @param pointer to return test result in (0 on pass, non-zero on failure)
+ *
+ * @return 0 on sucess, non-zero on failure
+ */
+int
+lis2dh12_run_self_test(struct sensor_itf *itf, int *result);
+
+/**
+ * Run Self test on sensor and identify individual axis errors
  *
  * Self test sequence as described in lis2dh12 application note AN5005.
  *
@@ -660,8 +673,8 @@ lis2dh12_get_fifo_samples(struct sensor_itf *itf, uint8_t *samples);
  *
  * @return 0 on sucess, non-zero on failure
  */
-int 
-lis2dh12_run_self_test(struct sensor_itf *itf, struct lis2dh12_health_t *result);
+int
+lis2dh12_run_self_test_per_axis(struct sensor_itf *itf, struct lis2dh12_health_t *result);
 
 #if MYNEWT_VAL(LIS2DH12_CLI)
 int lis2dh12_shell_init(void);
