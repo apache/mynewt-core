@@ -1506,8 +1506,7 @@ lis2dh12_wait_for_data(struct sensor_itf *itf, int timeout_ms)
     }
     return rc;
 }
-
-int lis2dh12_run_self_test(struct sensor_itf *itf, int *result)
+int lis2dh12_run_self_test(struct sensor_itf *itf, struct lis2dh12_health_t *result)
 {
     int rc, rc2;
     int i;
@@ -1526,7 +1525,10 @@ int lis2dh12_run_self_test(struct sensor_itf *itf, int *result)
     uint8_t fifo_ctrl = 0;
     const int read_count = 5;
 
-    *result = 0;
+    for(i = 0; i < 3; i++)
+    {
+        result->axis[i] = 0;
+    }
 
     rc = lis2dh12_readlen(itf, LIS2DH12_REG_CTRL_REG1, prev_config, 4);
     if (rc) {
@@ -1642,10 +1644,10 @@ int lis2dh12_run_self_test(struct sensor_itf *itf, int *result)
 
     /* |Min(ST_X)| <=|OUTX_AVG_ST - OUTX_AVG_NO_ST| <= |Max(ST_X)| */
     /* Compare values to thresholds */
-    for (i = 0; i < 3; i++) {
+    for (i = 0; i < LIS2DH12_AXIS_MAX; i++) {
         diff = abs(st[i] - no_st[i]);
         if (diff < LIS2DH12_ST_MIN || diff > LIS2DH12_ST_MAX) {
-            *result -= 1;
+            result->axis[i] = 1;
         }
     }
 end:

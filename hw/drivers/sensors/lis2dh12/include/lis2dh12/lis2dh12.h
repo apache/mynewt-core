@@ -233,6 +233,17 @@ struct lis2dh12_cfg {
     sensor_type_t lc_s_mask;
 };
 
+enum lis2dh12_axis {
+    LIS2DH12_AXIS_X = 0,
+    LIS2DH12_AXIS_Y,
+    LIS2DH12_AXIS_Z,
+    LIS2DH12_AXIS_MAX
+};
+
+struct lis2dh12_health_t {
+    uint8_t axis[3];
+};
+
 /* Used to track interrupt state to wake any present waiters */
 struct lis2dh12_int {
     /* Synchronize access to this structure */
@@ -645,12 +656,12 @@ lis2dh12_get_fifo_samples(struct sensor_itf *itf, uint8_t *samples);
  * Self test sequence as described in lis2dh12 application note AN5005.
  *
  * @param the sensor interface
- * @param pointer to return test result in (0 on pass, non-zero on failure)
+ * @param pointer to return test result in (0 on pass, non-zero on failure) per axis
  *
  * @return 0 on sucess, non-zero on failure
  */
-int
-lis2dh12_run_self_test(struct sensor_itf *itf, int *result);
+int 
+lis2dh12_run_self_test(struct sensor_itf *itf, struct lis2dh12_health_t *result);
 
 #if MYNEWT_VAL(LIS2DH12_CLI)
 int lis2dh12_shell_init(void);
