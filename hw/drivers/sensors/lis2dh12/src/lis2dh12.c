@@ -1525,7 +1525,7 @@ int lis2dh12_run_self_test(struct sensor_itf *itf, struct lis2dh12_health_t *res
     uint8_t fifo_ctrl = 0;
     const int read_count = 5;
 
-    for(i = 0; i < 3; i++)
+    for(i = 0; i < LIS2DH12_AXIS_MAX; i++)
     {
         result->axis[i] = 0;
     }
@@ -1603,7 +1603,6 @@ int lis2dh12_run_self_test(struct sensor_itf *itf, struct lis2dh12_health_t *res
     if (rc) {
         goto end;
     }
-
     /* Wait 90ms */
     os_time_delay(90 * OS_TICKS_PER_SEC / 1000 + 1);
 
