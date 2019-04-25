@@ -416,12 +416,14 @@ bma2xx_get_chip_id(struct bma2xx *bma2xx,
 
 static void
 compute_accel_data(struct accel_data * accel_data,
-                   enum bma2xx_model model,
-                   const uint8_t * raw_data,
-                   float accel_scale)
+        uint8_t     data_len,
+        enum bma2xx_model model,
+        const uint8_t * raw_data,
+        float accel_scale)
 {
     int16_t raw_accel;
     uint8_t model_shift = 0;
+    uint8_t i;
 
     switch (model) {
         case BMA2XX_BMA280:
@@ -434,17 +436,19 @@ compute_accel_data(struct accel_data * accel_data,
             break;
     }
 
-    raw_accel = (int16_t)(raw_data[0] & 0xFC) | (int16_t)(raw_data[1] << 8);
-    raw_accel >>= model_shift;
+    for (i = 0; i <  data_len; i++) {
+        raw_accel = (int16_t)(raw_data[(i<<1)] & 0xFC) | (int16_t)(raw_data[(i<<1) + 1] << 8);
+        raw_accel >>= model_shift;
 
-    accel_data->accel_g = (float)raw_accel * accel_scale;
-    accel_data->new_data = raw_data[0] & 0x01;
+        accel_data[i].accel_g = (float)raw_accel * accel_scale;
+        accel_data[i].new_data = raw_data[(i<<1)] & 0x01;
+    }
 }
 
-static int
+    static int
 get_accel_scale(enum bma2xx_model model,
-                enum bma2xx_g_range g_range,
-                float *accel_scale)
+        enum bma2xx_g_range g_range,
+        float *accel_scale)
 {
     switch (g_range) {
         case BMA2XX_G_RANGE_2:
@@ -502,15 +506,16 @@ get_accel_scale(enum bma2xx_model model,
     return 0;
 }
 
-int
+    int
 bma2xx_get_accel(struct bma2xx *bma2xx,
-                 enum bma2xx_g_range g_range,
-                 enum axis axis,
-                 struct accel_data * accel_data)
+        enum bma2xx_g_range g_range,
+        enum axis axis,
+        struct accel_data * accel_data)
 {
     float accel_scale;
     uint8_t base_addr;
-    uint8_t data[2];
+    uint8_t data[6];
+    uint8_t len = 2;
     int rc;
 
     rc = get_accel_scale(bma2xx->cfg.model, g_range, &accel_scale);
@@ -519,33 +524,38 @@ bma2xx_get_accel(struct bma2xx *bma2xx,
     }
 
     switch (axis) {
-    case AXIS_X:
-        base_addr = REG_ADDR_ACCD_X_LSB;
-        break;
-    case AXIS_Y:
-        base_addr = REG_ADDR_ACCD_Y_LSB;
-        break;
-    case AXIS_Z:
-        base_addr = REG_ADDR_ACCD_Z_LSB;
-        break;
-    default:
-        return SYS_EINVAL;
+        case AXIS_ALL:
+            base_addr = REG_ADDR_ACCD_X_LSB;
+            len = 6;
+            break;
+        case AXIS_X:
+            base_addr = REG_ADDR_ACCD_X_LSB;
+            break;
+        case AXIS_Y:
+            base_addr = REG_ADDR_ACCD_Y_LSB;
+            break;
+        case AXIS_Z:
+            base_addr = REG_ADDR_ACCD_Z_LSB;
+            break;
+        default:
+            return SYS_EINVAL;
     }
 
     rc = get_registers((struct bma2xx *)bma2xx, base_addr,
-                       data, sizeof(data) / sizeof(*data));
+            data, len);
     if (rc != 0) {
         return rc;
     }
 
-    compute_accel_data(accel_data, bma2xx->cfg.model, data, accel_scale);
+
+    compute_accel_data(accel_data, (len >> 1), bma2xx->cfg.model, data, accel_scale);
 
     return 0;
 }
 
-int
+    int
 bma2xx_get_temp(struct bma2xx *bma2xx,
-                float * temp_c)
+        float * temp_c)
 {
     uint8_t data;
     int rc;
@@ -560,44 +570,46 @@ bma2xx_get_temp(struct bma2xx *bma2xx,
     return 0;
 }
 
-static void
+    static void
 quad_to_axis_trigger(struct axis_trigger * axis_trigger,
-                     uint8_t quad_bits,
-                     const char * name_bits)
+        uint8_t quad_bits,
+        const char * name_bits)
 {
     axis_trigger->sign = (quad_bits >> 3) & 0x01;
     switch (quad_bits & 0x07) {
-    default:
-        BMA2XX_LOG(ERROR, "unknown %s quad bits 0x%02X\n",
-                   name_bits, quad_bits);
-    case 0x00:
-        axis_trigger->axis = -1;
-        axis_trigger->axis_known = false;
-        break;
-    case 0x01:
-        axis_trigger->axis = AXIS_X;
-        axis_trigger->axis_known = true;
-        break;
-    case 0x02:
-        axis_trigger->axis = AXIS_Y;
-        axis_trigger->axis_known = true;
-        break;
-    case 0x03:
-        axis_trigger->axis = AXIS_Z;
-        axis_trigger->axis_known = true;
-        break;
+        case 0x01:
+            axis_trigger->axis = AXIS_X;
+            axis_trigger->axis_known = true;
+            BMA2XX_LOG(DEBUG, "tap from %c X axis\n", axis_trigger->sign ? '+' : '-');
+            break;
+        case (1 << 1):
+            axis_trigger->axis = AXIS_Y;
+            axis_trigger->axis_known = true;
+            BMA2XX_LOG(DEBUG, "tap from %c Y axis\n", axis_trigger->sign ? '+' : '-');
+            break;
+        case (1 << 2):
+            axis_trigger->axis = AXIS_Z;
+            axis_trigger->axis_known = true;
+            BMA2XX_LOG(DEBUG, "tap from %c Z axis\n", axis_trigger->sign ? '+' : '-');
+            break;
+        default:
+            BMA2XX_LOG(INFO, "unknown %s quad bits 0x%02X\n",
+                    name_bits, quad_bits);
+            axis_trigger->axis = -1;
+            axis_trigger->axis_known = false;
+            break;
     }
 }
 
-int
+    int
 bma2xx_get_int_status(struct bma2xx *bma2xx,
-                      struct int_status * int_status)
+        struct int_status * int_status)
 {
     uint8_t data[4];
     int rc;
 
     rc = get_registers((struct bma2xx *)bma2xx, REG_ADDR_INT_STATUS_0,
-                       data, sizeof(data) / sizeof(*data));
+            data, sizeof(data) / sizeof(*data));
     if (rc != 0) {
         return rc;
     }
@@ -614,22 +626,22 @@ bma2xx_get_int_status(struct bma2xx *bma2xx,
     int_status->fifo_wmark_int_active = data[1] & 0x40;
     int_status->fifo_full_int_active = data[1] & 0x20;
     quad_to_axis_trigger(&int_status->tap_trigger,
-                 (data[2] >> 4) & 0x0F, "tap");
+            (data[2] >> 4) & 0x0F, "tap");
     quad_to_axis_trigger(&int_status->slope_trigger,
-                 (data[2] >> 0) & 0x0F, "slope");
+            (data[2] >> 0) & 0x0F, "slope");
     int_status->device_is_flat = data[3] & 0x80;
     int_status->device_is_down = data[3] & 0x40;
     int_status->device_orientation = (data[3] >> 4) & 0x03;
     quad_to_axis_trigger(&int_status->high_g_trigger,
-                 (data[3] >> 0) & 0x0F, "high_g");
+            (data[3] >> 0) & 0x0F, "high_g");
 
     return 0;
 }
 
-int
+    int
 bma2xx_get_fifo_status(struct bma2xx *bma2xx,
-                       bool * overrun,
-                       uint8_t * frame_counter)
+        bool * overrun,
+        uint8_t * frame_counter)
 {
     uint8_t data;
     int rc;
@@ -645,9 +657,9 @@ bma2xx_get_fifo_status(struct bma2xx *bma2xx,
     return 0;
 }
 
-int
+    int
 bma2xx_get_g_range(struct bma2xx *bma2xx,
-                   enum bma2xx_g_range * g_range)
+        enum bma2xx_g_range * g_range)
 {
     uint8_t data;
     int rc;
@@ -658,56 +670,56 @@ bma2xx_get_g_range(struct bma2xx *bma2xx,
     }
 
     switch (data & 0x0F) {
-    default:
-        BMA2XX_LOG(ERROR, "unknown PMU_RANGE reg value 0x%02X\n", data);
-        *g_range = BMA2XX_G_RANGE_16;
-        break;
-    case 0x03:
-        *g_range = BMA2XX_G_RANGE_2;
-        break;
-    case 0x05:
-        *g_range = BMA2XX_G_RANGE_4;
-        break;
-    case 0x08:
-        *g_range = BMA2XX_G_RANGE_8;
-        break;
-    case 0x0C:
-        *g_range = BMA2XX_G_RANGE_16;
-        break;
+        default:
+            BMA2XX_LOG(ERROR, "unknown PMU_RANGE reg value 0x%02X\n", data);
+            *g_range = BMA2XX_G_RANGE_16;
+            break;
+        case 0x03:
+            *g_range = BMA2XX_G_RANGE_2;
+            break;
+        case 0x05:
+            *g_range = BMA2XX_G_RANGE_4;
+            break;
+        case 0x08:
+            *g_range = BMA2XX_G_RANGE_8;
+            break;
+        case 0x0C:
+            *g_range = BMA2XX_G_RANGE_16;
+            break;
     }
 
     return 0;
 }
 
-int
+    int
 bma2xx_set_g_range(struct bma2xx *bma2xx,
-                   enum bma2xx_g_range g_range)
+        enum bma2xx_g_range g_range)
 {
     uint8_t data;
 
     switch (g_range) {
-    case BMA2XX_G_RANGE_2:
-        data = 0x03;
-        break;
-    case BMA2XX_G_RANGE_4:
-        data = 0x05;
-        break;
-    case BMA2XX_G_RANGE_8:
-        data = 0x08;
-        break;
-    case BMA2XX_G_RANGE_16:
-        data = 0x0C;
-        break;
-    default:
-        return SYS_EINVAL;
+        case BMA2XX_G_RANGE_2:
+            data = 0x03;
+            break;
+        case BMA2XX_G_RANGE_4:
+            data = 0x05;
+            break;
+        case BMA2XX_G_RANGE_8:
+            data = 0x08;
+            break;
+        case BMA2XX_G_RANGE_16:
+            data = 0x0C;
+            break;
+        default:
+            return SYS_EINVAL;
     }
 
     return set_register((struct bma2xx *)bma2xx, REG_ADDR_PMU_RANGE, data);
 }
 
-int
+    int
 bma2xx_get_filter_bandwidth(struct bma2xx *bma2xx,
-                            enum bma2xx_filter_bandwidth * filter_bandwidth)
+        enum bma2xx_filter_bandwidth * filter_bandwidth)
 {
     uint8_t data;
     int rc;
@@ -718,166 +730,166 @@ bma2xx_get_filter_bandwidth(struct bma2xx *bma2xx,
     }
 
     switch (data & 0x1F) {
-    case 0x00 ... 0x08:
-        *filter_bandwidth = BMA2XX_FILTER_BANDWIDTH_7_81_HZ;
-        break;
-    case 0x09:
-        *filter_bandwidth = BMA2XX_FILTER_BANDWIDTH_15_63_HZ;
-        break;
-    case 0x0A:
-        *filter_bandwidth = BMA2XX_FILTER_BANDWIDTH_31_25_HZ;
-        break;
-    case 0x0B:
-        *filter_bandwidth = BMA2XX_FILTER_BANDWIDTH_62_5_HZ;
-        break;
-    case 0x0C:
-        *filter_bandwidth = BMA2XX_FILTER_BANDWIDTH_125_HZ;
-        break;
-    case 0x0D:
-        *filter_bandwidth = BMA2XX_FILTER_BANDWIDTH_250_HZ;
-        break;
-    case 0x0E:
-        *filter_bandwidth = BMA2XX_FILTER_BANDWIDTH_500_HZ;
-        break;
-    case 0x0F ... 0x1F:
-        *filter_bandwidth = BMA2XX_FILTER_BANDWIDTH_1000_HZ;
-        break;
+        case 0x00 ... 0x08:
+            *filter_bandwidth = BMA2XX_FILTER_BANDWIDTH_7_81_HZ;
+            break;
+        case 0x09:
+            *filter_bandwidth = BMA2XX_FILTER_BANDWIDTH_15_63_HZ;
+            break;
+        case 0x0A:
+            *filter_bandwidth = BMA2XX_FILTER_BANDWIDTH_31_25_HZ;
+            break;
+        case 0x0B:
+            *filter_bandwidth = BMA2XX_FILTER_BANDWIDTH_62_5_HZ;
+            break;
+        case 0x0C:
+            *filter_bandwidth = BMA2XX_FILTER_BANDWIDTH_125_HZ;
+            break;
+        case 0x0D:
+            *filter_bandwidth = BMA2XX_FILTER_BANDWIDTH_250_HZ;
+            break;
+        case 0x0E:
+            *filter_bandwidth = BMA2XX_FILTER_BANDWIDTH_500_HZ;
+            break;
+        case 0x0F ... 0x1F:
+            *filter_bandwidth = BMA2XX_FILTER_BANDWIDTH_1000_HZ;
+            break;
     }
 
     return 0;
 }
 
-int
+    int
 bma2xx_set_filter_bandwidth(struct bma2xx *bma2xx,
-                            enum bma2xx_filter_bandwidth filter_bandwidth)
+        enum bma2xx_filter_bandwidth filter_bandwidth)
 {
     uint8_t data;
 
     switch (filter_bandwidth) {
-    case BMA2XX_FILTER_BANDWIDTH_7_81_HZ:
-        data = 0x08;
-        break;
-    case BMA2XX_FILTER_BANDWIDTH_15_63_HZ:
-        data = 0x09;
-        break;
-    case BMA2XX_FILTER_BANDWIDTH_31_25_HZ:
-        data = 0x0A;
-        break;
-    case BMA2XX_FILTER_BANDWIDTH_62_5_HZ:
-        data = 0x0B;
-        break;
-    case BMA2XX_FILTER_BANDWIDTH_125_HZ:
-        data = 0x0C;
-        break;
-    case BMA2XX_FILTER_BANDWIDTH_250_HZ:
-        data = 0x0D;
-        break;
-    case BMA2XX_FILTER_BANDWIDTH_500_HZ:
-        data = 0x0E;
-        break;
-    case BMA2XX_FILTER_BANDWIDTH_1000_HZ:
-        switch( bma2xx->cfg.model) {
-            case BMA2XX_BMA253:
-                data = 0x0F;
-                break;
-            case BMA2XX_BMA280:
-                return SYS_EINVAL;
-            default:
-                return SYS_EINVAL;
-        }
-        break;
-    case BMA2XX_FILTER_BANDWIDTH_ODR_MAX:
-        switch( bma2xx->cfg.model) {
-            case BMA2XX_BMA253:
-                return SYS_EINVAL;
-            case BMA2XX_BMA280:
-                data = 0x0F;
-                break;
-            default:
-                return SYS_EINVAL;
-        }
-        break;
-    default:
-        return SYS_EINVAL;
+        case BMA2XX_FILTER_BANDWIDTH_7_81_HZ:
+            data = 0x08;
+            break;
+        case BMA2XX_FILTER_BANDWIDTH_15_63_HZ:
+            data = 0x09;
+            break;
+        case BMA2XX_FILTER_BANDWIDTH_31_25_HZ:
+            data = 0x0A;
+            break;
+        case BMA2XX_FILTER_BANDWIDTH_62_5_HZ:
+            data = 0x0B;
+            break;
+        case BMA2XX_FILTER_BANDWIDTH_125_HZ:
+            data = 0x0C;
+            break;
+        case BMA2XX_FILTER_BANDWIDTH_250_HZ:
+            data = 0x0D;
+            break;
+        case BMA2XX_FILTER_BANDWIDTH_500_HZ:
+            data = 0x0E;
+            break;
+        case BMA2XX_FILTER_BANDWIDTH_1000_HZ:
+            switch( bma2xx->cfg.model) {
+                case BMA2XX_BMA253:
+                    data = 0x0F;
+                    break;
+                case BMA2XX_BMA280:
+                    return SYS_EINVAL;
+                default:
+                    return SYS_EINVAL;
+            }
+            break;
+        case BMA2XX_FILTER_BANDWIDTH_ODR_MAX:
+            switch( bma2xx->cfg.model) {
+                case BMA2XX_BMA253:
+                    return SYS_EINVAL;
+                case BMA2XX_BMA280:
+                    data = 0x0F;
+                    break;
+                default:
+                    return SYS_EINVAL;
+            }
+            break;
+        default:
+            return SYS_EINVAL;
     }
 
     return set_register((struct bma2xx *)bma2xx, REG_ADDR_PMU_BW, data);
 }
 
-int
+    int
 bma2xx_get_power_settings(struct bma2xx *bma2xx,
-                          struct power_settings * power_settings)
+        struct power_settings * power_settings)
 {
     uint8_t data[2];
     int rc;
 
     rc = get_registers((struct bma2xx *)bma2xx, REG_ADDR_PMU_LPW,
-                       data, sizeof(data) / sizeof(*data));
+            data, sizeof(data) / sizeof(*data));
     if (rc != 0) {
         return rc;
     }
 
     switch ((data[0] >> 5) & 0x07) {
-    default:
-        BMA2XX_LOG(ERROR, "unknown PMU_LPW reg value 0x%02X\n", data[0]);
-        power_settings->power_mode = BMA2XX_POWER_MODE_NORMAL;
-        break;
-    case 0x00:
-        power_settings->power_mode = BMA2XX_POWER_MODE_NORMAL;
-        break;
-    case 0x01:
-        power_settings->power_mode = BMA2XX_POWER_MODE_DEEP_SUSPEND;
-        break;
-    case 0x02:
-        if ((data[1] & 0x40) == 0) {
-            power_settings->power_mode = BMA2XX_POWER_MODE_LPM_1;
-        } else {
-            power_settings->power_mode = BMA2XX_POWER_MODE_LPM_2;
-        }
-        break;
-    case 0x04:
-        if ((data[1] & 0x40) == 0) {
-            power_settings->power_mode = BMA2XX_POWER_MODE_SUSPEND;
-        } else {
-            power_settings->power_mode = BMA2XX_POWER_MODE_STANDBY;
-        }
-        break;
+        default:
+            BMA2XX_LOG(ERROR, "unknown PMU_LPW reg value 0x%02X\n", data[0]);
+            power_settings->power_mode = BMA2XX_POWER_MODE_NORMAL;
+            break;
+        case 0x00:
+            power_settings->power_mode = BMA2XX_POWER_MODE_NORMAL;
+            break;
+        case 0x01:
+            power_settings->power_mode = BMA2XX_POWER_MODE_DEEP_SUSPEND;
+            break;
+        case 0x02:
+            if ((data[1] & 0x40) == 0) {
+                power_settings->power_mode = BMA2XX_POWER_MODE_LPM_1;
+            } else {
+                power_settings->power_mode = BMA2XX_POWER_MODE_LPM_2;
+            }
+            break;
+        case 0x04:
+            if ((data[1] & 0x40) == 0) {
+                power_settings->power_mode = BMA2XX_POWER_MODE_SUSPEND;
+            } else {
+                power_settings->power_mode = BMA2XX_POWER_MODE_STANDBY;
+            }
+            break;
     }
 
     switch ((data[0] >> 1) & 0x0F) {
-    case 0x00 ... 0x05:
-        power_settings->sleep_duration = BMA2XX_SLEEP_DURATION_0_5_MS;
-        break;
-    case 0x06:
-        power_settings->sleep_duration = BMA2XX_SLEEP_DURATION_1_MS;
-        break;
-    case 0x07:
-        power_settings->sleep_duration = BMA2XX_SLEEP_DURATION_2_MS;
-        break;
-    case 0x08:
-        power_settings->sleep_duration = BMA2XX_SLEEP_DURATION_4_MS;
-        break;
-    case 0x09:
-        power_settings->sleep_duration = BMA2XX_SLEEP_DURATION_6_MS;
-        break;
-    case 0x0A:
-        power_settings->sleep_duration = BMA2XX_SLEEP_DURATION_10_MS;
-        break;
-    case 0x0B:
-        power_settings->sleep_duration = BMA2XX_SLEEP_DURATION_25_MS;
-        break;
-    case 0x0C:
-        power_settings->sleep_duration = BMA2XX_SLEEP_DURATION_50_MS;
-        break;
-    case 0x0D:
-        power_settings->sleep_duration = BMA2XX_SLEEP_DURATION_100_MS;
-        break;
-    case 0x0E:
-        power_settings->sleep_duration = BMA2XX_SLEEP_DURATION_500_MS;
-        break;
-    case 0x0F:
-        power_settings->sleep_duration = BMA2XX_SLEEP_DURATION_1_S;
-        break;
+        case 0x00 ... 0x05:
+            power_settings->sleep_duration = BMA2XX_SLEEP_DURATION_0_5_MS;
+            break;
+        case 0x06:
+            power_settings->sleep_duration = BMA2XX_SLEEP_DURATION_1_MS;
+            break;
+        case 0x07:
+            power_settings->sleep_duration = BMA2XX_SLEEP_DURATION_2_MS;
+            break;
+        case 0x08:
+            power_settings->sleep_duration = BMA2XX_SLEEP_DURATION_4_MS;
+            break;
+        case 0x09:
+            power_settings->sleep_duration = BMA2XX_SLEEP_DURATION_6_MS;
+            break;
+        case 0x0A:
+            power_settings->sleep_duration = BMA2XX_SLEEP_DURATION_10_MS;
+            break;
+        case 0x0B:
+            power_settings->sleep_duration = BMA2XX_SLEEP_DURATION_25_MS;
+            break;
+        case 0x0C:
+            power_settings->sleep_duration = BMA2XX_SLEEP_DURATION_50_MS;
+            break;
+        case 0x0D:
+            power_settings->sleep_duration = BMA2XX_SLEEP_DURATION_100_MS;
+            break;
+        case 0x0E:
+            power_settings->sleep_duration = BMA2XX_SLEEP_DURATION_500_MS;
+            break;
+        case 0x0F:
+            power_settings->sleep_duration = BMA2XX_SLEEP_DURATION_1_S;
+            break;
     }
 
     if ((data[1] & 0x20) != 0) {
@@ -889,9 +901,9 @@ bma2xx_get_power_settings(struct bma2xx *bma2xx,
     return 0;
 }
 
-int
+    int
 bma2xx_set_power_settings(struct bma2xx *bma2xx,
-                          struct power_settings * power_settings)
+        struct power_settings * power_settings)
 {
     uint8_t data[2];
     int rc;
@@ -2908,7 +2920,7 @@ bma2xx_get_fifo(struct bma2xx *bma2xx,
                 struct accel_data * accel_data)
 {
     float accel_scale;
-    uint8_t size, iter;
+    uint8_t size;
     uint8_t data[AXIS_ALL << 1];
     int rc;
 
@@ -2935,12 +2947,11 @@ bma2xx_get_fifo(struct bma2xx *bma2xx,
         return rc;
     }
 
-    for (iter = 0; iter < size; iter += 2) {
-        compute_accel_data(accel_data + (iter >> 1),
-                           bma2xx->cfg.model,
-                           data + iter,
-                           accel_scale);
-    }
+    compute_accel_data(accel_data,
+            (size >> 1),
+            bma2xx->cfg.model,
+            data,
+            accel_scale);
 
     return 0;
 }
@@ -4384,22 +4395,8 @@ sensor_driver_read(struct sensor * sensor,
     if ((sensor_type & SENSOR_TYPE_ACCELEROMETER) != 0) {
         rc = bma2xx_get_accel(bma2xx,
                               cfg->g_range,
-                              AXIS_X,
-                              accel_data + AXIS_X);
-        if (rc != 0) {
-            return rc;
-        }
-        rc = bma2xx_get_accel(bma2xx,
-                              cfg->g_range,
-                              AXIS_Y,
-                              accel_data + AXIS_Y);
-        if (rc != 0) {
-            return rc;
-        }
-        rc = bma2xx_get_accel(bma2xx,
-                              cfg->g_range,
-                              AXIS_Z,
-                              accel_data + AXIS_Z);
+                              AXIS_ALL,
+                              accel_data);
         if (rc != 0) {
             return rc;
         }

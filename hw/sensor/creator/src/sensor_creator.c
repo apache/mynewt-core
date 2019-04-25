@@ -67,6 +67,9 @@
 #include <bma2xx/bma2xx.h>
 #endif
 
+#if MYNEWT_VAL(BMP388_OFB)
+#include <bmp388/bmp388.h>
+#endif
 
 #if MYNEWT_VAL(ADXL345_OFB)
 #include <adxl345/adxl345.h>
@@ -155,6 +158,9 @@ static struct lps33thw lps33thw;
 
 #if MYNEWT_VAL(LIS2DW12_OFB)
 static struct lis2dw12 lis2dw12;
+#endif
+#if MYNEWT_VAL(BMP388_OFB)
+static struct bmp388 bmp388;
 #endif
 
 #if MYNEWT_VAL(LIS2DS12_OFB)
@@ -359,6 +365,29 @@ static struct sensor_itf i2c_0_itf_lis2dw12 = {
 };
 #endif
 
+#if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(BMP388_OFB)
+static struct sensor_itf i2c_0_itf_bmp388 = {
+    .si_type = SENSOR_ITF_I2C,
+    .si_num  = 0,
+    .si_addr = 0x76,
+    .si_ints = {
+        { 31, MYNEWT_VAL(BMP388_INT1_PIN_DEVICE),
+          MYNEWT_VAL(BMP388_INT1_CFG_ACTIVE)}}
+};
+#endif
+#if MYNEWT_VAL(SPI_0_MASTER) && MYNEWT_VAL(BMP388_OFB)
+//TODO:  Make INT pin nums configurable.  Leaving hardcoded
+//to handle multiple bma2xx sensor interface examples
+static struct sensor_itf spi2c_0_itf_bmp388 = {
+    .si_type = SENSOR_ITF_SPI,
+    .si_num = 0,
+    .si_cs_pin = 30,
+    .si_ints = {
+        { 31, MYNEWT_VAL(BMP388_INT1_PIN_DEVICE),
+            MYNEWT_VAL(BMP388_INT1_CFG_ACTIVE)}
+    },
+};
+#endif
 #if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(LIS2DS12_OFB)
 static struct sensor_itf i2c_0_itf_lis2ds12 = {
     .si_type = SENSOR_ITF_I2C,
@@ -963,6 +992,38 @@ config_lis2dw12_sensor(void)
     return rc;
 }
 #endif
+#if MYNEWT_VAL(BMP388_OFB)
+static int
+config_bmp388_sensor(void)
+{
+    int rc;
+    struct os_dev *dev;
+    struct bmp388_cfg cfg = {0};
+    dev = (struct os_dev *) os_dev_open("bmp388_0", OS_TIMEOUT_NEVER, NULL);
+    assert(dev != NULL);
+    cfg.rate = BMP3_ODR_200_HZ;
+    cfg.int1_pin_cfg = 0;
+    cfg.int2_pin_cfg = 0;
+    cfg.int_enable = 0;
+    cfg.int_pp_od = 0;
+    cfg.int_latched = 0;
+    cfg.int_active_low = 0;
+    cfg.fifo_mode = BMP388_FIFO_M_BYPASS;
+    cfg.fifo_threshold = 32;
+	cfg.filter_press_osr = BMP3_OVERSAMPLING_2X;
+	cfg.filter_temp_osr = BMP3_OVERSAMPLING_2X;
+    cfg.power_mode = BMP3_FORCED_MODE;
+    cfg.read_mode.mode = BMP388_READ_M_POLL;
+    cfg.read_mode.int_cfg = MYNEWT_VAL(BMP388_INT_ENABLE);
+	cfg.read_mode.int_num = MYNEWT_VAL(BMP388_INT_NUM);
+    cfg.mask = SENSOR_TYPE_AMBIENT_TEMPERATURE|
+                       SENSOR_TYPE_PRESSURE;
+    rc = bmp388_config((struct bmp388 *) dev, &cfg);
+    assert(rc == 0);
+    os_dev_close(dev);
+    return rc;
+}
+#endif
 
 /**
  * LIS2DS12 Sensor default configuration used by the creator package
@@ -1245,6 +1306,13 @@ sensor_dev_create(void)
     assert(rc == 0);
 #endif
 
+#if MYNEWT_VAL(BMP388_OFB)
+      rc = os_dev_create((struct os_dev *) &bmp388, "bmp388_0",
+      OS_DEV_INIT_PRIMARY, 0, bmp388_init, (void *)&spi2c_0_itf_bmp388);
+    assert(rc == 0);
+    rc = config_bmp388_sensor();
+    assert(rc == 0);
+#endif
 #if MYNEWT_VAL(LIS2DS12_OFB)
     rc = os_dev_create((struct os_dev *) &lis2ds12, "lis2ds12_0",
       OS_DEV_INIT_PRIMARY, 0, lis2ds12_init, (void *)&i2c_0_itf_lis2ds12);
