@@ -272,6 +272,10 @@ syscfg.defs:
         restrictions:
             - '!TIMER_2'
 
+    CHARGER:
+        description: 'Enable DA1469x charger'
+        value: 0
+
     GPADC:
         description: 'Enable DA1469x general purpose ADC'
         value: 0

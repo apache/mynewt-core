@@ -30,6 +30,9 @@ pkg.deps:
     - "@apache-mynewt-core/hw/cmsis-core"
     - hw/mcu/dialog
 
+pkg.deps.CHARGER:
+    - hw/drivers/chg_ctrl/da1469x_charger
+
 pkg.deps.TRNG:
     - "hw/drivers/trng/trng_da1469x"
 
