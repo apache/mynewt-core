@@ -69,6 +69,7 @@ STATS_NAME_START(logs)
   STATS_NAME(logs, drops)
   STATS_NAME(logs, errs)
   STATS_NAME(logs, lost)
+  STATS_NAME(logs, too_long)
 STATS_NAME_END(logs)
 #endif
 
@@ -345,6 +346,7 @@ log_register(char *name, struct log *log, const struct log_handler *lh,
     log->l_arg = arg;
     log->l_level = level;
     log->l_append_cb = NULL;
+    log->l_max_entry_len = 0;
 
     if (!log_registered(log)) {
         STAILQ_INSERT_TAIL(&g_log_list, log, l_next);
@@ -403,6 +405,22 @@ log_chk_type(uint8_t etype)
             break;
     }
 #endif
+
+    return rc;
+}
+
+static int
+log_chk_max_entry_len(struct log *log, uint16_t len)
+{
+    int rc;
+
+    rc = OS_OK;
+    if (log->l_max_entry_len != 0) {
+        if (len > log->l_max_entry_len) {
+            LOG_STATS_INC(log, too_long);
+            rc = OS_ENOMEM;
+        }
+    }
 
     return rc;
 }
@@ -501,6 +519,11 @@ log_append_typed(struct log *log, uint8_t module, uint8_t level, uint8_t etype,
 
     LOG_STATS_INC(log, writes);
 
+    rc = log_chk_max_entry_len(log, len);
+    if (rc != OS_OK) {
+        goto err;
+    }
+
     hdr = (struct log_entry_hdr *)data;
     rc = log_append_prepare(log, module, level, etype, hdr);
     if (rc != 0) {
@@ -529,6 +552,12 @@ log_append_body(struct log *log, uint8_t module, uint8_t level, uint8_t etype,
     int rc;
 
     LOG_STATS_INC(log, writes);
+
+    rc = log_chk_max_entry_len(log, body_len);
+    if (rc != OS_OK) {
+        return rc;
+    }
+
     rc = log_append_prepare(log, module, level, etype, &hdr);
     if (rc != 0) {
         LOG_STATS_INC(log, drops);
@@ -552,6 +581,7 @@ log_append_mbuf_typed_no_free(struct log *log, uint8_t module, uint8_t level,
 {
     struct log_entry_hdr *hdr;
     struct os_mbuf *om;
+    uint16_t len;
     int rc;
 
     /* Remove a loyer of indirection for convenience. */
@@ -567,6 +597,21 @@ log_append_mbuf_typed_no_free(struct log *log, uint8_t module, uint8_t level,
     if (!om) {
         rc = -1;
         goto err;
+    }
+
+    /*
+     * Check that the log body length is less than the maximum entry. This code
+     * may appear a bit odd in that it checks that the length is greater than
+     * a log entry header length. The reason for this check is to ensure any
+     * error handling of this case to be the same as it was before the
+     * maximum entry length was checked.
+     */
+    len = os_mbuf_len(om);
+    if (len > LOG_ENTRY_HDR_SIZE) {
+        rc = log_chk_max_entry_len(log, len - LOG_ENTRY_HDR_SIZE);
+        if (rc) {
+            goto drop;
+        }
     }
 
     hdr = (struct log_entry_hdr *)om->om_data;
@@ -619,12 +664,19 @@ log_append_mbuf_body_no_free(struct log *log, uint8_t module, uint8_t level,
                              uint8_t etype, struct os_mbuf *om)
 {
     struct log_entry_hdr hdr;
+    uint16_t len;
     int rc;
 
     LOG_STATS_INC(log, writes);
     if (!log->l_log->log_append_mbuf_body) {
         rc = SYS_ENOTSUP;
         goto err;
+    }
+
+    len = os_mbuf_len(om);
+    rc = log_chk_max_entry_len(log, len);
+    if (rc) {
+        goto drop;
     }
 
     rc = log_append_prepare(log, module, level, etype, &hdr);
@@ -900,4 +952,11 @@ log_get_level(const struct log *log)
 {
     assert(log);
     return log->l_level;
+}
+
+void
+log_set_max_entry_len(struct log *log, uint16_t max_entry_len)
+{
+    assert(log);
+    log->l_max_entry_len = max_entry_len;
 }
