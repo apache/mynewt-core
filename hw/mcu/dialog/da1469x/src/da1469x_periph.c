@@ -23,6 +23,7 @@
 #include "os/os_cputime.h"
 #include "mcu/da1469x_hal.h"
 #include "mcu/da1469x_dma.h"
+#include "bsp/bsp.h"
 
 #if MYNEWT_VAL(UART_0) || MYNEWT_VAL(UART_1) || MYNEWT_VAL(UART_2)
 #include "uart/uart.h"
@@ -68,6 +69,10 @@ static struct trng_dev os_bsp_trng;
 #endif
 #if MYNEWT_VAL(SDADC)
 #include <sdadc_da1469x/sdadc_da1469x.h>
+#endif
+
+#if MYNEWT_VAL(CHARGER)
+#include "da1469x_charger/da1469x_charger.h"
 #endif
 
 #if MYNEWT_VAL(UART_0)
@@ -202,6 +207,10 @@ static struct pwm_dev os_bsp_pwm1;
 #endif
 #if MYNEWT_VAL(PWM_2)
 static struct pwm_dev os_bsp_pwm2;
+#endif
+
+#if MYNEWT_VAL(CHARGER)
+struct da1469x_charger_dev da1469x_charger_dev;
 #endif
 
 static void
@@ -391,6 +400,49 @@ da1469x_periph_create_spi(void)
 #endif
 }
 
+#if MYNEWT_VAL(CHARGER)
+struct da1469x_charger_config cfg = {
+    .ctrl = 63U << CHARGER_CHARGER_CTRL_REG_EOC_INTERVAL_CHECK_THRES_Pos |
+            1U << CHARGER_CHARGER_CTRL_REG_PRE_CHARGE_MODE_Pos |
+            1U << CHARGER_CHARGER_CTRL_REG_CHARGE_LOOP_HOLD_Pos |
+            (MYNEWT_VAL(DA1469X_CHARGER_TBAT_MONITOR_MODE)) <<
+                CHARGER_CHARGER_CTRL_REG_TBAT_MONITOR_MODE_Pos |
+            1U << CHARGER_CHARGER_CTRL_REG_CHARGE_TIMERS_HALT_ENABLE_Pos |
+            (MYNEWT_VAL(DA1469X_CHARGER_NTC_ENABLE)) <<
+                CHARGER_CHARGER_CTRL_REG_TBAT_PROT_ENABLE_Pos |
+            1U << CHARGER_CHARGER_CTRL_REG_TDIE_PROT_ENABLE_Pos |
+            1U << CHARGER_CHARGER_CTRL_REG_CHARGER_RESUME_Pos,
+    .ctrl_valid = 1,
+    .voltage_param =
+        DA1469X_ENCODE_V(MYNEWT_VAL(DA1469X_CHARGER_V_OVP)) <<
+            CHARGER_CHARGER_VOLTAGE_PARAM_REG_V_OVP_Pos |
+        DA1469X_ENCODE_V(MYNEWT_VAL(DA1469X_CHARGER_V_REPLENISH)) <<
+            CHARGER_CHARGER_VOLTAGE_PARAM_REG_V_REPLENISH_Pos |
+        DA1469X_ENCODE_V(MYNEWT_VAL(DA1469X_CHARGER_V_PRECHARGE)) <<
+            CHARGER_CHARGER_VOLTAGE_PARAM_REG_V_PRECHARGE_Pos |
+        DA1469X_ENCODE_V(MYNEWT_VAL(DA1469X_CHARGER_V_CHARGE)) <<
+            CHARGER_CHARGER_VOLTAGE_PARAM_REG_V_CHARGE_Pos,
+    .voltage_param_valid = 1,
+    .current_param =
+        DA1469X_ENCODE_PRECHG_I(MYNEWT_VAL(DA1469X_CHARGER_I_PRECHARGE)) |
+        DA1469X_ENCODE_CHG_I(MYNEWT_VAL(DA1469X_CHARGER_I_CHARGE)) |
+        DA1469X_ENCODE_EOC_I(MYNEWT_VAL(DA1469X_CHARGER_I_END_OF_CHARGE)),
+    .current_param_valid = 1,
+};
+#endif
+
+void
+da1469x_periph_create_charger(void)
+{
+#if MYNEWT_VAL(CHARGER)
+    int rc;
+
+    rc = da1469x_charger_create(&da1469x_charger_dev, "charger", &cfg);
+
+    assert(rc == 0);
+#endif
+}
+
 void
 da1469x_periph_create(void)
 {
@@ -403,4 +455,5 @@ da1469x_periph_create(void)
     da1469x_periph_create_uart();
     da1469x_periph_create_i2c();
     da1469x_periph_create_spi();
+    da1469x_periph_create_charger();
 }
