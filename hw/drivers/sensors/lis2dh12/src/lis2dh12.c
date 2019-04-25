@@ -1506,165 +1506,6 @@ lis2dh12_wait_for_data(struct sensor_itf *itf, int timeout_ms)
     }
     return rc;
 }
-int lis2dh12_run_self_test_per_axis(struct sensor_itf *itf, struct lis2dh12_health_t *result)
-{
-    int rc, rc2;
-    int i;
-    int16_t no_st[3], st[3], data[3];
-    int32_t scratch[3] = { 0 };
-    uint8_t prev_config[4];
-    uint8_t config[4] = { LIS2DH12_CTRL_REG1_XPEN |
-                          LIS2DH12_CTRL_REG1_YPEN |
-                          LIS2DH12_CTRL_REG1_ZPEN |
-                          LIS2DH12_DATA_RATE_50HZ,
-                          0, 0,
-                          LIS2DH12_ST_MODE_DISABLE |
-                          LIS2DH12_FS_2G |
-                          LIS2DH12_CTRL_REG4_BDU };
-    int16_t diff;
-    uint8_t fifo_ctrl = 0;
-    const int read_count = 5;
-
-    for(i = 0; i < LIS2DH12_AXIS_MAX; i++)
-    {
-        result->axis[i] = 0;
-    }
-
-    rc = lis2dh12_readlen(itf, LIS2DH12_REG_CTRL_REG1, prev_config, 4);
-    if (rc) {
-        return rc;
-    }
-
-    rc = lis2dh12_writelen(itf, LIS2DH12_REG_CTRL_REG2, &config[1], 3);
-    if (rc) {
-        goto end;
-    }
-
-    rc = lis2dh12_write8(itf, LIS2DH12_REG_CTRL_REG1, config[0]);
-    if (rc) {
-        goto end;
-    }
-
-    /* Turn on bypass mode for fifo */
-    rc = lis2dh12_read8(itf, LIS2DH12_REG_FIFO_CTRL_REG, &fifo_ctrl);
-    if (rc) {
-        goto end;
-    }
-
-    if (fifo_ctrl) {
-        rc = lis2dh12_write8(itf, LIS2DH12_REG_FIFO_CTRL_REG, 0);
-        if (rc) {
-            goto end;
-        }
-    }
-    /* Wait 90ms */
-    os_time_delay(90 * OS_TICKS_PER_SEC / 1000 + 1);
-
-    /* Wait 1ms for first sample */
-    rc = lis2dh12_wait_for_data(itf, 1);
-    if (rc) {
-        goto end;
-    }
-
-    /* Read and discard data */
-    rc = lis2dh12_get_data(itf, 2, &data[0], &data[1], &data[2]);
-    if (rc) {
-        goto end;
-    }
-
-    /* Take no st offset reading */
-    for (i = 0; i < read_count; i++) {
-        /* Wait at least 20 ms, ODR is 50Hz */
-        os_time_delay(20 * OS_TICKS_PER_SEC / 1000 + 1);
-
-        rc = lis2dh12_wait_for_data(itf, 1);
-        if (rc) {
-            goto end;
-        }
-
-        rc = lis2dh12_get_data(itf, 2, &data[0], &data[1], &data[2]);
-        if (rc) {
-            goto end;
-        }
-        scratch[0] += data[0];
-        scratch[1] += data[1];
-        scratch[2] += data[2];
-    }
-
-    /* Average the stored data on each axis */
-    no_st[0] = scratch[0] / read_count;
-    no_st[1] = scratch[1] / read_count;
-    no_st[2] = scratch[2] / read_count;
-
-    memset(&scratch, 0, sizeof(scratch));
-
-    /* Self test mode 0 */
-    rc = lis2dh12_set_self_test_mode(itf, LIS2DH12_ST_MODE_MODE0);
-    if (rc) {
-        goto end;
-    }
-    /* Wait 90ms */
-    os_time_delay(90 * OS_TICKS_PER_SEC / 1000 + 1);
-
-    /* Wait 1 ms for first sample */
-    rc = lis2dh12_wait_for_data(itf, 1);
-    if (rc) {
-        goto end;
-    }
-
-    /* Read and discard data */
-    rc = lis2dh12_get_data(itf, 2, &data[0], &data[1], &data[2]);
-    if (rc) {
-        goto end;
-    }
-
-    for (i = 0; i < read_count; i++) {
-        /* Wait at least 20 ms, ODR is 50Hz */
-        os_time_delay(20 * OS_TICKS_PER_SEC / 1000 + 1);
-
-        rc = lis2dh12_wait_for_data(itf, 1);
-        if (rc) {
-            goto end;
-        }
-
-        rc = lis2dh12_get_data(itf, 2, &data[0], &data[1], &data[2]);
-        if (rc) {
-            goto end;
-        }
-        scratch[0] += data[0];
-        scratch[1] += data[1];
-        scratch[2] += data[2];
-    }
-
-    /* Average the stored data on each axis */
-    st[0] = scratch[0] / read_count;
-    st[1] = scratch[1] / read_count;
-    st[2] = scratch[2] / read_count;
-
-    /* |Min(ST_X)| <=|OUTX_AVG_ST - OUTX_AVG_NO_ST| <= |Max(ST_X)| */
-    /* Compare values to thresholds */
-    for (i = 0; i < LIS2DH12_AXIS_MAX; i++) {
-        diff = abs(st[i] - no_st[i]);
-        if (diff < LIS2DH12_ST_MIN || diff > LIS2DH12_ST_MAX) {
-            result->axis[i] = 1;
-        }
-    }
-end:
-    /* Restore fifo mode if was set */
-    if (fifo_ctrl) {
-        rc2 = lis2dh12_write8(itf, LIS2DH12_REG_FIFO_CTRL_REG, fifo_ctrl);
-        if (rc == OS_OK && rc2 != OS_OK) {
-            rc = rc2;
-        }
-    }
-    /* Disable self test mode, and restore other settings */
-    rc2 = lis2dh12_writelen(itf, LIS2DH12_REG_CTRL_REG1, prev_config, 4);
-    if (rc == OS_OK && rc2 != OS_OK) {
-        rc = rc2;
-    }
-
-    return rc;
-}
 
 int lis2dh12_run_self_test(struct sensor_itf *itf, int *result)
 {
@@ -1801,10 +1642,10 @@ int lis2dh12_run_self_test(struct sensor_itf *itf, int *result)
 
     /* |Min(ST_X)| <=|OUTX_AVG_ST - OUTX_AVG_NO_ST| <= |Max(ST_X)| */
     /* Compare values to thresholds */
-    for (i = 0; i < 3; i++) {
+    for (i = 0; i < LIS2DH12_AXIS_MAX; i++) {
         diff = abs(st[i] - no_st[i]);
         if (diff < LIS2DH12_ST_MIN || diff > LIS2DH12_ST_MAX) {
-            *result -= 1;
+            *result |= 1 << i;
         }
     }
 end:
