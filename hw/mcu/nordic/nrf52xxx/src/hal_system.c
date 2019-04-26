@@ -48,7 +48,9 @@ hal_system_reset(void)
             /*
              * If debugger is attached, breakpoint here.
              */
+#if !MYNEWT_VAL(MCU_DEBUG_IGNORE_BKPT)
             asm("bkpt");
+#endif
         }
         NVIC_SystemReset();
     }
@@ -68,8 +70,7 @@ hal_debugger_connected(void)
 void
 hal_system_clock_start(void)
 {
-#if MYNEWT_VAL(XTAL_32768) || MYNEWT_VAL(XTAL_RC) || \
-                                                 MYNEWT_VAL(XTAL_32768_SYNTH)
+#if MYNEWT_VAL(MCU_LFCLK_SOURCE)
     uint32_t regmsk;
     uint32_t regval;
     uint32_t clksrc;
@@ -77,23 +78,20 @@ hal_system_clock_start(void)
     regmsk = CLOCK_LFCLKSTAT_STATE_Msk | CLOCK_LFCLKSTAT_SRC_Msk;
     regval = CLOCK_LFCLKSTAT_STATE_Running << CLOCK_LFCLKSTAT_STATE_Pos;
 
-#if MYNEWT_VAL(XTAL_32768)
+#if MYNEWT_VAL_CHOICE(MCU_LFCLK_SOURCE, LFXO)
     regval |= CLOCK_LFCLKSTAT_SRC_Xtal << CLOCK_LFCLKSTAT_SRC_Pos;
     clksrc = CLOCK_LFCLKSRC_SRC_Xtal;
-#endif
-
-#if MYNEWT_VAL(XTAL_32768_SYNTH)
+#elif MYNEWT_VAL_CHOICE(MCU_LFCLK_SOURCE, LFSYNTH)
     regval |= CLOCK_LFCLKSTAT_SRC_Synth << CLOCK_LFCLKSTAT_SRC_Pos;
     clksrc = CLOCK_LFCLKSRC_SRC_Synth;
-#endif
-
- #if MYNEWT_VAL(XTAL_RC)
+#elif MYNEWT_VAL_CHOICE(MCU_LFCLK_SOURCE, LFRC)
     regval |= CLOCK_LFCLKSTAT_SRC_RC << CLOCK_LFCLKSTAT_SRC_Pos;
     clksrc = CLOCK_LFCLKSRC_SRC_RC;
+#else
+    #error Unknown LFCLK source selected
 #endif
 
-
-#if MYNEWT_VAL(XTAL_32768_SYNTH)
+#if MYNEWT_VAL_CHOICE(MCU_LFCLK_SOURCE, LFSYNTH)
     /* Must turn on HFLCK for synthesized 32768 crystal */
     nrf52_clock_hfxo_request();
 #endif

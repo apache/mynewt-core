@@ -37,6 +37,7 @@ static struct shell_cmd shell_conf_cmd = {
     .sc_cmd_func = shell_conf_command
 };
 
+#if (MYNEWT_VAL(CONFIG_CLI_RW) & 1) == 1
 static void
 conf_running_one(char *name, char *val)
 {
@@ -56,6 +57,7 @@ conf_dump_running(void)
     }
     conf_unlock();
 }
+#endif
 
 #if MYNEWT_VAL(CONFIG_CLI_DEBUG)
 static void
@@ -84,23 +86,28 @@ conf_dump_saved(void)
 static int
 shell_conf_command(int argc, char **argv)
 {
+#if MYNEWT_VAL(CONFIG_CLI_RW)
     char *name = NULL;
     char *val = NULL;
     char tmp_buf[CONF_MAX_VAL_LEN + 1];
     int rc;
 
+    (void)rc;
     switch (argc) {
+#if (MYNEWT_VAL(CONFIG_CLI_RW) & 1) == 1
     case 2:
         name = argv[1];
         break;
+#endif
+#if (MYNEWT_VAL(CONFIG_CLI_RW) & 2) == 2
     case 3:
         name = argv[1];
         val = argv[2];
         break;
+#endif
     default:
         goto err;
     }
-
     if (!strcmp(name, "commit")) {
         rc = conf_commit(val);
         if (rc) {
@@ -110,19 +117,23 @@ shell_conf_command(int argc, char **argv)
         }
         console_printf("%s", val);
         return 0;
-    } else if (!strcmp(name, "dump")) {
-        if (!val || !strcmp(val, "running")) {
-            conf_dump_running();
-        }
+    } else {
+        if (!strcmp(name, "dump")) {
+            if (!val || !strcmp(val, "running")) {
+                conf_dump_running();
+            }
 #if MYNEWT_VAL(CONFIG_CLI_DEBUG)
-        if (val && !strcmp(val, "saved")) {
-            conf_dump_saved();
-        }
+            if (val && !strcmp(val, "saved")) {
+                conf_dump_saved();
+            }
 #endif
-        return 0;
-    } else if (!strcmp(name, "save")) {
-        conf_save();
-        return 0;
+            return 0;
+        } else {
+            if (!strcmp(name, "save")) {
+                conf_save();
+                return 0;
+            }
+        }
     }
     if (!val) {
         val = conf_get_value(name, tmp_buf, sizeof(tmp_buf));
@@ -140,6 +151,7 @@ shell_conf_command(int argc, char **argv)
     }
     return 0;
 err:
+#endif
     console_printf("Invalid args\n");
     return 0;
 }

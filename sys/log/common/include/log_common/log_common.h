@@ -89,13 +89,14 @@ struct log;
 #endif
 
 /* Newtmgr Log opcodes */
-#define LOGS_NMGR_OP_READ         	(0)
-#define LOGS_NMGR_OP_CLEAR        	(1)
-#define LOGS_NMGR_OP_APPEND       	(2)
-#define LOGS_NMGR_OP_MODULE_LIST  	(3)
-#define LOGS_NMGR_OP_LEVEL_LIST   	(4)
-#define LOGS_NMGR_OP_LOGS_LIST    	(5)
-#define LOGS_NMGR_OP_SET_WATERMARK	(6)
+#define LOGS_NMGR_OP_READ               (0)
+#define LOGS_NMGR_OP_CLEAR              (1)
+#define LOGS_NMGR_OP_APPEND             (2)
+#define LOGS_NMGR_OP_MODULE_LIST        (3)
+#define LOGS_NMGR_OP_LEVEL_LIST         (4)
+#define LOGS_NMGR_OP_LOGS_LIST          (5)
+#define LOGS_NMGR_OP_SET_WATERMARK      (6)
+#define LOGS_NMGR_OP_MODLEVEL           (8)
 
 #define LOG_PRINTF_MAX_ENTRY_LEN (128)
 

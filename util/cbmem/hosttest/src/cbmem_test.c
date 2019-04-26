@@ -48,13 +48,11 @@ setup_cbmem1(void *arg)
 
     memset(cbmem1_entry, 0xff, sizeof(cbmem1_entry));
 
-    /* Insert 65 1024 entries, and overflow buffer.
-     * This should overflow two entries, because the buffer is sized for 64
-     * entries, and then the headers themselves will eat into one of the
-     * entries, so there should be a total of 63 entries.
-     * Ensure no data corruption.
+    /* Insert max+1 entries and overflow buffer.  This should overflow.  The
+     * last header will eat into one of the entries, so there should be a total
+     * of max-1 entries.  Ensure no data corruption.
      */
-    for (i = 0; i < 65; i++) {
+    for (i = 0; i < CBMEM1_ENTRY_COUNT + 1; i++) {
         cbmem1_entry[0] = i;
         rc = cbmem_append(&cbmem1, cbmem1_entry, sizeof(cbmem1_entry));
         TEST_ASSERT_FATAL(rc == 0, "Could not append entry %d, rc = %d", i, rc);

@@ -1,0 +1,52 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+pkg.name: hw/mcu/dialog/da1469x
+pkg.description: MCU definition for Dialog DA1469x ARM Cortex-M33 chips
+pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
+pkg.homepage: "http://mynewt.apache.org/"
+pkg.keywords:
+    - dialog
+    - da1469x
+
+pkg.deps:
+    - "@apache-mynewt-core/hw/hal"
+    - "@apache-mynewt-core/hw/cmsis-core"
+    - hw/mcu/dialog
+
+pkg.deps.TRNG:
+    - "hw/drivers/trng/trng_da1469x"
+
+pkg.deps.'UART_0 || UART_1 || UART_2':
+    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
+
+pkg.deps.'(I2C_0 || I2C_1) && BUS_DRIVER_PRESENT':
+    - "@apache-mynewt-core/hw/bus/drivers/i2c_hal"
+
+pkg.deps.'(SPI_0_MASTER || SPI_1_MASTER) && BUS_DRIVER_PRESENT':
+    - "@apache-mynewt-core/hw/bus/drivers/spi_hal"
+
+pkg.deps.GPADC:
+    - hw/drivers/adc/gpadc_da1469x
+
+pkg.deps.SDADC:
+    - hw/drivers/adc/sdadc_da1469x
+
+pkg.init:
+    da1469x_lpclk_init: 1

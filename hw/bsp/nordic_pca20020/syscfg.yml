@@ -46,7 +46,7 @@ syscfg.defs:
 
 syscfg.vals:
     # Enable nRF52832 MCU
-    MCU_NRF52832: 1
+    MCU_TARGET: nRF52832
     # There are no pins assigned for UART so disable it
     UART_0: 0
     # Set default pins for peripherals
@@ -62,10 +62,10 @@ syscfg.vals:
     NFFS_FLASH_AREA: FLASH_AREA_NFFS
     COREDUMP_FLASH_AREA: FLASH_AREA_IMAGE_1
     MCU_DCDC_ENABLED: 1
-    XTAL_32768: 1
+    MCU_LFCLK_SOURCE: LFXO
     BOOT_SERIAL_DETECT_PIN: 11  # Button 1
 
-syscfg.vals.BLE_LP_CLOCK:
+syscfg.vals.BLE_CONTROLLER:
     TIMER_0: 0
     TIMER_5: 1
     OS_CPUTIME_FREQ: 32768

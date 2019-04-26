@@ -100,10 +100,10 @@ static struct stm32_hal_i2c_cfg i2c_cfg0 = {
 
 #if MYNEWT_VAL(SPI_0_SLAVE) || MYNEWT_VAL(SPI_0_MASTER)
 struct stm32_hal_spi_cfg spi0_cfg = {
-    .ss_pin = MCU_GPIO_PORTA(4),            /* PA4 */
-    .sck_pin  = MCU_GPIO_PORTA(5),          /* PA5 */
-    .miso_pin = MCU_GPIO_PORTA(6),          /* PA6 */
-    .mosi_pin = MCU_GPIO_PORTB(5),          /* PB5 */
+    .ss_pin   = MCU_GPIO_PORTA(4),          /* CN8 - A2 */
+    .sck_pin  = MCU_GPIO_PORTA(5),          /* CN5 - D13 */
+    .miso_pin = MCU_GPIO_PORTA(6),          /* CN5 - D12 */
+    .mosi_pin = MCU_GPIO_PORTA(7),          /* CN5 - D11 */
     .irq_prio = 2
 };
 #endif
@@ -158,6 +158,11 @@ hal_bsp_init(void)
 
 #if MYNEWT_VAL(TIMER_0)
     hal_timer_init(0, TIM9);
+#endif
+
+#if (MYNEWT_VAL(OS_CPUTIME_TIMER_NUM) >= 0)
+    rc = os_cputime_init(MYNEWT_VAL(OS_CPUTIME_FREQ));
+    assert(rc == 0);
 #endif
 }
 

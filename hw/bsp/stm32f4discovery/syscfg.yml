@@ -32,7 +32,7 @@ syscfg.defs:
 
     TIMER_0:
         description: 'Timer 0'
-        value:  0
+        value:  1
     TIMER_1:
         description: 'Timer 1'
         value:  0

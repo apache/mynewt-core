@@ -37,6 +37,8 @@ hal_reset_cause(void)
         reason = HAL_RESET_SOFT;
     } else if (reg & POWER_RESETREAS_RESETPIN_Msk) {
         reason = HAL_RESET_PIN;
+    } else if (reg & POWER_RESETREAS_OFF_Msk) {
+        reason = HAL_RESET_SYS_OFF_INT;
     } else {
         reason = HAL_RESET_POR; /* could also be brownout */
     }

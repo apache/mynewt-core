@@ -44,6 +44,12 @@ syscfg.defs:
         description: 'Requested baudrate, value must be supported by SPI driver'
         value: 0
 
+    SPIFLASH_CACHE_SIZE:
+        description:
+            When this value is set to value other then 0, all reads that are
+            smaller then this size are rounded up to this value.
+            Subsequent reads from cached adress range is much faster.
+        value: 0
     SPIFLASH_AUTO_POWER_DOWN:
         description: >
             Enables auto power down feature which allows to power down flash
@@ -70,3 +76,51 @@ syscfg.defs:
         description: >
             Expected SpiFlash memory capactity as read by Read JEDEC ID command 9FH
         value: 0
+
+    SPIFLASH_READ_STATUS_INTERVAL:
+        description: >
+            Time between Read Status Register commands when waiting for flash
+            to be ready (us)
+        value: 10
+    SPIFLASH_BLOCK_ERASE_32BK:
+        description: Block erase 32KB command, set to 0 if flash does not support this command.
+        value: 0x52
+    SPIFLASH_BLOCK_ERASE_64BK:
+        description: Block erase 64KB command, set to 0 if flash does not support this command.
+        value: 0xD8
+    SPIFLASH_TBP1_TYPICAL:
+        description: 'Byte program time (first byte) (us)'
+        value: 15
+    SPIFLASH_TBP1_MAXIMUM:
+        description: 'Maximum byte program time (first byte)  (us)'
+        value: 30
+    SPIFLASH_TPP_TYPICAL:
+        description: 'Page program time (us)'
+        value: 800
+    SPIFLASH_TPP_MAXIMUM:
+        description: 'Maximum page program time (us)'
+        value: 3000
+    SPIFLASH_TSE_TYPICAL:
+        description: 'Sector erase time (4KB) (us)'
+        value: 45000
+    SPIFLASH_TSE_MAXIMUM:
+        description: 'Maximum sector erase time (us)'
+        value: 300000
+    SPIFLASH_TBE1_TYPICAL:
+        description: 'Block erase time (32KB) (us)'
+        value: 120000
+    SPIFLASH_TBE1_MAXIMUM:
+        description: 'Maximum block erase time (32KB) (us)'
+        value:  800000
+    SPIFLASH_TBE2_TYPICAL:
+        description: 'Block erase time (64KB) (us)'
+        value: 150000
+    SPIFLASH_TBE2_MAXIMUM:
+        description: 'Maximum block erase time (64KB) (us)'
+        value: 1000000
+    SPIFLASH_TCE_TYPICAL:
+        description: 'Chip erase time (us)'
+        value: 2000000
+    SPIFLASH_TCE_MAXIMUM:
+        description: 'Maximum chip erase time (us)'
+        value: 6000000

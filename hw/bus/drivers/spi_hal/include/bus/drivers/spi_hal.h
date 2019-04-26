@@ -29,6 +29,13 @@
 extern "C" {
 #endif
 
+struct bus_spi_hal_dev {
+    struct bus_spi_dev spi_dev;
+#if MYNEWT_VAL(SPI_HAL_USE_NOBLOCK)
+    struct os_sem sem;
+#endif
+};
+
 /**
  * Initialize os_dev as SPI bus device using spi_hal driver
  *
@@ -53,7 +60,7 @@ bus_spi_hal_dev_init_func(struct os_dev *odev, void *arg);
  * @param cfg   Configuration
  */
 static inline int
-bus_spi_hal_dev_create(const char *name, struct bus_spi_dev *dev,
+bus_spi_hal_dev_create(const char *name, struct bus_spi_hal_dev *dev,
                        struct bus_spi_dev_cfg *cfg)
 {
     struct os_dev *odev = (struct os_dev *)dev;

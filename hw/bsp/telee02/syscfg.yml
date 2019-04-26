@@ -37,7 +37,7 @@ syscfg.defs:
 
 syscfg.vals:
     # Enable nRF52832 MCU
-    MCU_NRF52832: 1
+    MCU_TARGET: nRF52832
     # Set default pins for peripherals
     UART_0_PIN_TX: 6
     UART_0_PIN_RX: 8
@@ -59,7 +59,7 @@ syscfg.vals:
     BOOT_SERIAL_DETECT_PIN: 12
     SX1276_HAS_ANT_SW: 1
 
-syscfg.vals.BLE_LP_CLOCK:
+syscfg.vals.BLE_CONTROLLER:
     TIMER_0: 0
     TIMER_5: 1
     OS_CPUTIME_FREQ: 32768

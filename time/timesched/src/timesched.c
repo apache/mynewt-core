@@ -140,7 +140,9 @@ timesched_timer_stop(struct timesched_timer *timer)
 
     OS_ENTER_CRITICAL(sr);
 
-    TAILQ_REMOVE(&g_timesched_q, timer, link);
+    if (timer->link.tqe_prev != NULL) {
+        TAILQ_REMOVE(&g_timesched_q, timer, link);
+    }
 
     OS_EXIT_CRITICAL(sr);
 

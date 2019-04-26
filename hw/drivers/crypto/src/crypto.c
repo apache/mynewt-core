@@ -29,54 +29,52 @@ crypto_do_ctr(struct crypto_dev *crypto, const void *key, uint16_t keylen,
         void *nonce, const void *inbuf, void *outbuf, uint32_t len)
 {
     size_t remain;
+    uint32_t sz;
     uint32_t i;
-    uint32_t j;
-    uint8_t tmp[AES_BLOCK_LEN];
     uint8_t *outbuf8 = (uint8_t *)outbuf;
     uint8_t *inbuf8 = (uint8_t *)inbuf;
-    uint8_t incopy[AES_BLOCK_LEN];
+    uint8_t _nonce[AES_BLOCK_LEN];
+    uint8_t _out[AES_BLOCK_LEN];
     int rc;
 
     if (crypto->interface.encrypt == NULL) {
         return 0;
     }
 
-    i = 0;
+    sz = 0;
     remain = len;
-    memcpy(tmp, nonce, AES_BLOCK_LEN);
+    memcpy(_nonce, nonce, AES_BLOCK_LEN);
     while (len) {
         if (len > AES_BLOCK_LEN) {
             len = AES_BLOCK_LEN;
         }
 
-        memcpy(incopy, inbuf8, len);
-
         rc = crypto->interface.encrypt(crypto, CRYPTO_ALGO_AES, CRYPTO_MODE_ECB,
-                (const uint8_t *)key, keylen, NULL, (const uint8_t *)tmp,
-                outbuf8, AES_BLOCK_LEN);
+                (const uint8_t *)key, keylen, NULL, (const uint8_t *)_nonce,
+                _out, AES_BLOCK_LEN);
         if (rc != AES_BLOCK_LEN) {
-            return rc;
+            return sz + rc;
         }
 
-        for (j = 0; j < len; j++) {
-            outbuf8[j] ^= incopy[j];
+        for (i = 0; i < len; i++) {
+            outbuf8[i] = inbuf8[i] ^ _out[i];
         }
 
-        for (j = AES_BLOCK_LEN; j > 0; --j) {
-            if (++tmp[j - 1] != 0) {
+        for (i = AES_BLOCK_LEN; i > 0; --i) {
+            if (++_nonce[i - 1] != 0) {
                 break;
             }
         }
 
         inbuf8 += len;
         outbuf8 += len;
-        i += len;
+        sz += len;
         remain -= len;
         len = remain;
     }
 
-    memcpy(nonce, tmp, AES_BLOCK_LEN);
-    return i;
+    memcpy(nonce, _nonce, AES_BLOCK_LEN);
+    return sz;
 }
 #endif /* MYNEWT_VAL(CRYPTO_NEED_CTR) && !MYNEWT_VAL(CRYPTO_HW_AES_CTR) */
 
@@ -97,7 +95,7 @@ crypto_do_cbc(struct crypto_dev *crypto, uint8_t op, const void *key,
     bool inplace;
     int rc;
 
-    if (!CRYPTO_VALID_OP(op) || len % AES_BLOCK_LEN) {
+    if (!CRYPTO_VALID_OP(op) || (len & (AES_BLOCK_LEN - 1))) {
         return 0;
     }
 

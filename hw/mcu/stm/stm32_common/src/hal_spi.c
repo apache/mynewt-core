@@ -979,9 +979,14 @@ hal_spi_txrx(int spi_num, void *txbuf, void *rxbuf, int len)
     __HAL_DISABLE_INTERRUPTS(sr);
     spi_stat.tx++;
     __HAL_SPI_ENABLE(&spi->handle);
-    rc = HAL_SPI_TransmitReceive(&spi->handle, (uint8_t *)txbuf,
-                                 (uint8_t *)rxbuf, len,
-                                 STM32_HAL_SPI_TIMEOUT);
+    if (rxbuf) {
+        rc = HAL_SPI_TransmitReceive(&spi->handle, (uint8_t *)txbuf,
+                                     (uint8_t *)rxbuf, len,
+                                     STM32_HAL_SPI_TIMEOUT);
+    } else {
+        rc = HAL_SPI_Transmit(&spi->handle, (uint8_t *)txbuf,
+                              len, STM32_HAL_SPI_TIMEOUT);
+    }
     __HAL_ENABLE_INTERRUPTS(sr);
     if (rc != HAL_OK) {
         rc = -1;

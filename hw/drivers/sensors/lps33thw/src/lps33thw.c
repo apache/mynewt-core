@@ -542,7 +542,7 @@ int
 lps33thw_reset(struct sensor *sensor)
 {
     struct sensor_itf *itf;
-     
+
     itf = SENSOR_GET_ITF(sensor);
 
     return lps33thw_set_reg(itf, LPS33THW_CTRL_REG2, 0x04);
@@ -937,7 +937,7 @@ lps33thw_init(struct os_dev *dev, void *arg)
 
     lps = (struct lps33thw *) dev;
 #if MYNEWT_VAL(LPS33THW_ONE_SHOT_MODE)
-    os_callout_init(&lps->lps33thw_one_shot_read, os_eventq_dflt_get(), lps33thw_one_shot_read_cb, dev);
+    os_callout_init(&lps->lps33thw_one_shot_read, sensor_mgr_evq_get(), lps33thw_one_shot_read_cb, dev);
 #endif
 
     sensor = &lps->sensor;

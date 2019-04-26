@@ -74,7 +74,7 @@ static uint32_t
 log_shell_cbor_reader_get32(struct cbor_decoder_reader *d, int offset)
 {
     struct log_shell_cbor_reader *cbr = (struct log_shell_cbor_reader *)d;
-    uint8_t val = 0;
+    uint32_t val = 0;
 
     (void)log_read_body(cbr->log, cbr->dptr, &val, offset, sizeof(val));
 
@@ -331,5 +331,3 @@ shell_log_storage_cmd(int argc, char **argv)
 #endif
 
 #endif
-
-

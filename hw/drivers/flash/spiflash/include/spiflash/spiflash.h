@@ -33,6 +33,24 @@
 extern "C" {
 #endif
 
+/*
+ * Structure to hold typical and maximum time as stated in chip datasheet.
+ * Values are used for timeouts and are specified in micro seconds.
+ */
+struct spiflash_time_spec {
+    uint32_t typical;
+    uint32_t maximum;
+};
+
+struct spiflash_characteristics {
+    struct spiflash_time_spec tse;  /* Sector erase time (4KB) */
+    struct spiflash_time_spec tbe1; /* Block erase time (32KB) */
+    struct spiflash_time_spec tbe2; /* Block erase time (64KB) */
+    struct spiflash_time_spec tce;  /* Chip erase time */
+    struct spiflash_time_spec tpp;  /* Page program time */
+    struct spiflash_time_spec tbp1; /* Byte program time */
+};
+
 struct spiflash_dev {
     struct hal_flash hal;
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
@@ -45,10 +63,12 @@ struct spiflash_dev {
 #endif
     uint16_t sector_size;
     uint16_t page_size;
+    bool ready;
     /* Array of supported flash chips */
     const struct spiflash_chip *supported_chips;
     /* Pointer to one of the supported chips */
     const struct spiflash_chip *flash_chip;
+    const struct spiflash_characteristics *characteristics;
 #if MYNEWT_VAL(OS_SCHEDULING)
     struct os_mutex lock;
 #endif
@@ -58,6 +78,10 @@ struct spiflash_dev {
     os_time_t apd_tmo;              /* Auto power down timeout value (ticks) */
 #endif
     bool pd_active;                 /* Power down active */
+#endif
+#if MYNEWT_VAL(SPIFLASH_CACHE_SIZE)
+    uint32_t cached_addr;
+    uint8_t cache[MYNEWT_VAL(SPIFLASH_CACHE_SIZE)];
 #endif
 };
 
@@ -70,6 +94,9 @@ extern struct spiflash_dev spiflash_dev;
 #define SPIFLASH_WRITE_ENABLE               0x06
 #define SPIFLASH_FAST_READ                  0x0B
 #define SPIFLASH_SECTOR_ERASE               0x20
+#define SPIFLASH_BLOCK_ERASE_32KB           MYNEWT_VAL(SPIFLASH_BLOCK_ERASE_32BK)
+#define SPIFLASH_BLOCK_ERASE_64KB           MYNEWT_VAL(SPIFLASH_BLOCK_ERASE_64BK)
+#define SPIFLASH_CHIP_ERASE                 0x60
 #define SPIFLASH_DEEP_POWER_DOWN            0xB9
 #define SPIFLASH_RELEASE_POWER_DOWN         0xAB
 #define SPIFLASH_READ_MANUFACTURER_ID       0x90
@@ -109,12 +136,20 @@ struct spiflash_chip {
 #define FLASH_CAPACITY_16MBIT       0x15
 #define FLASH_CAPACITY_32MBIT       0x16
 
-int spiflash_init(const struct hal_flash *dev);
-
 void spiflash_power_down(struct spiflash_dev *dev);
 void spiflash_release_power_down(struct spiflash_dev *dev);
 
 int spiflash_auto_power_down_set(struct spiflash_dev *dev, uint32_t timeout_ms);
+
+int spiflash_sector_erase(struct spiflash_dev *dev, uint32_t addr);
+#if MYNEWT_VAL(SPIFLASH_BLOCK_ERASE_32BK)
+int spiflash_block_32k_erase(struct spiflash_dev *dev, uint32_t addr);
+#endif
+#if MYNEWT_VAL(SPIFLASH_BLOCK_ERASE_64BK)
+int spiflash_block_64k_erase(struct spiflash_dev *dev, uint32_t addr);
+#endif
+int spiflash_chip_erase(struct spiflash_dev *dev);
+int spiflash_erase(struct spiflash_dev *dev, uint32_t addr, uint32_t size);
 
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
 int spiflash_create_spi_dev(struct bus_spi_node *node, const char *name,

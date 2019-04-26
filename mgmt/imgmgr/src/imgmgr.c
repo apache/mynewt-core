@@ -35,6 +35,8 @@
 #include "imgmgr/imgmgr.h"
 #include "imgmgr_priv.h"
 
+const imgmgr_dfu_callbacks_t *imgmgr_dfu_callbacks_fn;
+
 static int imgr_upload(struct mgmt_cbuf *);
 static int imgr_erase(struct mgmt_cbuf *);
 static int imgr_erase_state(struct mgmt_cbuf *);
@@ -47,6 +49,7 @@ struct imgr_upload_req {
     size_t data_sha_len;
     uint8_t img_data[MYNEWT_VAL(IMGMGR_MAX_CHUNK_SIZE)];
     uint8_t data_sha[IMGMGR_DATA_SHA_LEN];
+    bool upgrade;                   /* Only allow greater version numbers. */
 };
 
 /** Describes what to do during processing of an upload request. */
@@ -145,6 +148,7 @@ static const char *imgmgr_err_str_no_slot = "no slot";
 static const char *imgmgr_err_str_flash_open_failed = "fa open fail";
 static const char *imgmgr_err_str_flash_erase_failed = "fa erase fail";
 static const char *imgmgr_err_str_flash_write_failed = "fa write fail";
+static const char *imgmgr_err_str_downgrade = "downgrade";
 #else
 #define imgmgr_err_str_app_reject                   NULL
 #define imgmgr_err_str_hdr_malformed                NULL
@@ -153,6 +157,7 @@ static const char *imgmgr_err_str_flash_write_failed = "fa write fail";
 #define imgmgr_err_str_flash_open_failed            NULL
 #define imgmgr_err_str_flash_erase_failed           NULL
 #define imgmgr_err_str_flash_write_failed           NULL
+#define imgmgr_err_str_downgrade                    NULL
 #endif
 
 #if MYNEWT_VAL(BOOTUTIL_IMAGE_FORMAT_V2)
@@ -194,12 +199,12 @@ imgr_img_tlvs(const struct flash_area *fa, struct image_header *hdr,
  * @param image_slot
  * @param ver (optional)
  * @param hash (optional)
- * @param flags
+ * @param flags (optional)
  *
  * Returns -1 if area is not readable.
  * Returns 0 if image in slot is ok, and version string is valid.
  * Returns 1 if there is not a full image.
- * Returns 2 if slot is empty. XXXX not there yet
+ * Returns 2 if slot is empty.
  */
 int
 imgr_read_info(int image_slot, struct image_version *ver, uint8_t *hash,
@@ -300,6 +305,42 @@ int
 imgr_my_version(struct image_version *ver)
 {
     return imgr_read_info(boot_current_slot, ver, NULL, NULL);
+}
+
+/**
+ * Compares two image version numbers in a semver-compatible way.
+ *
+ * @param a                     The first version to compare.
+ * @param b                     The second version to compare.
+ *
+ * @return                      -1 if a < b
+ * @return                       0 if a = b
+ * @return                       1 if a > b
+ */
+static int
+imgr_vercmp(const struct image_version *a, const struct image_version *b)
+{
+    if (a->iv_major < b->iv_major) {
+        return -1;
+    } else if (a->iv_major > b->iv_major) {
+        return 1;
+    }
+
+    if (a->iv_minor < b->iv_minor) {
+        return -1;
+    } else if (a->iv_minor > b->iv_minor) {
+        return 1;
+    }
+
+    if (a->iv_revision < b->iv_revision) {
+        return -1;
+    } else if (a->iv_revision > b->iv_revision) {
+        return 1;
+    }
+
+    /* Note: For semver compatibility, don't compare the 32-bit build num. */
+
+    return 0;
 }
 
 /*
@@ -554,6 +595,7 @@ imgr_upload_inspect(const struct imgr_upload_req *req,
 {
     const struct image_header *hdr;
     const struct flash_area *fa;
+    struct image_version cur_ver;
     uint8_t rem_bytes;
     bool empty;
     int rc;
@@ -612,6 +654,21 @@ imgr_upload_inspect(const struct imgr_upload_req *req,
             /* No slot where to upload! */
             *errstr = imgmgr_err_str_no_slot;
             return MGMT_ERR_ENOMEM;
+        }
+
+        if (req->upgrade) {
+            /* User specified upgrade-only.  Make sure new image version is
+             * greater than that of the currently running image.
+             */
+            rc = imgr_my_version(&cur_ver);
+            if (rc != 0) {
+                return MGMT_ERR_EUNKNOWN;
+            }
+
+            if (imgr_vercmp(&cur_ver, &hdr->ih_ver) >= 0) {
+                *errstr = imgmgr_err_str_downgrade;
+                return MGMT_ERR_EBADSTATE;
+            }
         }
 
 #if MYNEWT_VAL(IMGMGR_LAZY_ERASE)
@@ -694,8 +751,9 @@ imgr_upload(struct mgmt_cbuf *cb)
         .size = -1,
         .data_len = 0,
         .data_sha_len = 0,
+        .upgrade = false,
     };
-    const struct cbor_attr_t off_attr[5] = {
+    const struct cbor_attr_t off_attr[] = {
         [0] = {
             .attribute = "data",
             .type = CborAttrByteStringType,
@@ -722,7 +780,13 @@ imgr_upload(struct mgmt_cbuf *cb)
             .addr.bytestring.len = &req.data_sha_len,
             .len = sizeof(req.data_sha)
         },
-        [4] = { 0 },
+        [4] = {
+            .attribute = "upgrade",
+            .type = CborAttrBooleanType,
+            .addr.boolean = &req.upgrade,
+            .dflt.boolean = false,
+        },
+        [5] = { 0 },
     };
     int rc;
     const char *errstr = NULL;
@@ -737,6 +801,7 @@ imgr_upload(struct mgmt_cbuf *cb)
     /* Determine what actions to take as a result of this request. */
     rc = imgr_upload_inspect(&req, &action, &errstr);
     if (rc != 0) {
+        imgmgr_dfu_stopped();
         return rc;
     }
 
@@ -753,6 +818,7 @@ imgr_upload(struct mgmt_cbuf *cb)
     if (imgr_upload_cb != NULL) {
         rc = imgr_upload_cb(req.off, action.size, imgr_upload_arg);
         if (rc != 0) {
+            imgmgr_dfu_stopped();
             return imgr_error_rsp(cb, rc, imgmgr_err_str_app_reject);
         }
     }
@@ -763,6 +829,7 @@ imgr_upload(struct mgmt_cbuf *cb)
 
     rc = flash_area_open(imgr_state.area_id, &fa);
     if (rc != 0) {
+        imgmgr_dfu_stopped();
         return imgr_error_rsp(cb, MGMT_ERR_EUNKNOWN,
                               imgmgr_err_str_flash_open_failed);
     }
@@ -772,6 +839,8 @@ imgr_upload(struct mgmt_cbuf *cb)
          * New upload.
          */
         imgr_state.off = 0;
+
+        imgmgr_dfu_started();
 
         /*
          * We accept SHA trimmed to any length by client since it's up to client
@@ -821,12 +890,14 @@ imgr_upload(struct mgmt_cbuf *cb)
 #endif
         rc = flash_area_write(fa, req.off, req.img_data, action.write_bytes);
         if (rc != 0) {
+            imgmgr_dfu_stopped();
             rc = MGMT_ERR_EUNKNOWN;
             errstr = imgmgr_err_str_flash_write_failed;
         } else {
             imgr_state.off += action.write_bytes;
             if (imgr_state.off == imgr_state.size) {
                 /* Done */
+                imgmgr_dfu_pending();
                 imgr_state.area_id = -1;
             }
         }
@@ -845,10 +916,48 @@ end:
 }
 
 void
+imgmgr_dfu_stopped(void)
+{
+    if (imgmgr_dfu_callbacks_fn && imgmgr_dfu_callbacks_fn->dfu_stopped_cb) {
+        imgmgr_dfu_callbacks_fn->dfu_stopped_cb();
+    }
+}
+
+void
+imgmgr_dfu_started(void)
+{
+    if (imgmgr_dfu_callbacks_fn && imgmgr_dfu_callbacks_fn->dfu_started_cb) {
+        imgmgr_dfu_callbacks_fn->dfu_started_cb();
+    }
+}
+
+void
+imgmgr_dfu_pending(void)
+{
+    if (imgmgr_dfu_callbacks_fn && imgmgr_dfu_callbacks_fn->dfu_pending_cb) {
+        imgmgr_dfu_callbacks_fn->dfu_pending_cb();
+    }
+}
+
+void
+imgmgr_dfu_confirmed(void)
+{
+    if (imgmgr_dfu_callbacks_fn && imgmgr_dfu_callbacks_fn->dfu_confirmed_cb) {
+        imgmgr_dfu_callbacks_fn->dfu_confirmed_cb();
+    }
+}
+
+void
 imgr_set_upload_cb(imgr_upload_fn *cb, void *arg)
 {
     imgr_upload_cb = cb;
     imgr_upload_arg = arg;
+}
+
+void
+imgmgr_register_callbacks(const imgmgr_dfu_callbacks_t *cb_struct)
+{
+    imgmgr_dfu_callbacks_fn = cb_struct;
 }
 
 void

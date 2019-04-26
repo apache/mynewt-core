@@ -185,6 +185,11 @@ hal_bsp_init(void)
     hal_timer_init(2, TIM11);
 #endif
 
+#if (MYNEWT_VAL(OS_CPUTIME_TIMER_NUM) >= 0)
+    rc = os_cputime_init(MYNEWT_VAL(OS_CPUTIME_FREQ));
+    assert(rc == 0);
+#endif
+
 #if MYNEWT_VAL(SPI_1_MASTER)
     rc = hal_spi_init(1, &spi1_cfg, HAL_SPI_TYPE_MASTER);
     assert(rc == 0);

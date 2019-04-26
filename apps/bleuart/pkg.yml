@@ -23,7 +23,7 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps:
-    - "@apache-mynewt-core/boot/bootutil"
+    - "@mcuboot/boot/bootutil"
     - "@apache-mynewt-core/kernel/os"
     - "@apache-mynewt-nimble/nimble/controller"
     - "@apache-mynewt-nimble/nimble/host"

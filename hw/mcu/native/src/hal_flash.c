@@ -23,6 +23,7 @@
 #include <string.h>
 #include <inttypes.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "os/mynewt.h"
 
@@ -30,7 +31,7 @@
 #include "mcu/mcu_sim.h"
 
 char *native_flash_file;
-static int file;
+static int file = -1;
 static void *file_loc;
 
 static int native_flash_init(const struct hal_flash *dev);
@@ -98,6 +99,11 @@ flash_native_file_open(char *name)
 
     extern int ftruncate(int fd, off_t length);
 
+    if (file != -1) {
+        close(file);
+        file = -1;
+    }
+
     if (name) {
         file = open(name, O_RDWR);
         if (file < 0) {
@@ -115,6 +121,10 @@ flash_native_file_open(char *name)
         if (ftruncate(file, native_flash_dev.hf_size) < 0) {
             assert(0);
         }
+    }
+
+    if (file_loc != NULL) {
+        munmap(file_loc, native_flash_dev.hf_size);
     }
 
     file_loc = mmap(0, native_flash_dev.hf_size,

@@ -34,5 +34,8 @@ pkg.deps:
 pkg.deps.LOG_SOFT_RESET:
     - "@apache-mynewt-core/sys/reboot"
 
+pkg.deps.TIMEPERSIST:
+    - "@apache-mynewt-core/time/timepersist"
+
 pkg.req_apis:
     - newtmgr

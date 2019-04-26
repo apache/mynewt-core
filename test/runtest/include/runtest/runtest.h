@@ -62,11 +62,6 @@ struct os_eventq *runtest_evq_get(void);
 void runtest_evq_set(struct os_eventq *evq);
 
 /**
- * Initializes a new task from the runtest task pool.
- */
-struct os_task *runtest_init_task(os_task_func_t task_handler, uint8_t prio);
-
-/**
  * Enqueues a single test for immediate execution.
  *
  * @param test_name             The name of the test to run.

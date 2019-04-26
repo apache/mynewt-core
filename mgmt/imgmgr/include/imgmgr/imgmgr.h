@@ -44,6 +44,18 @@ extern "C" {
 #define IMGMGR_STATE_F_ACTIVE           0x04
 #define IMGMGR_STATE_F_PERMANENT        0x08
 
+/** @brief Generic callback function for events */
+typedef void (*imgrmgr_dfu_cb)(void);
+
+/** Callback function pointers */
+typedef struct
+{
+    imgrmgr_dfu_cb dfu_started_cb;
+    imgrmgr_dfu_cb dfu_stopped_cb;
+    imgrmgr_dfu_cb dfu_pending_cb;
+    imgrmgr_dfu_cb dfu_confirmed_cb;
+} imgmgr_dfu_callbacks_t;
+
 /** @typedef imgr_upload_fn
  * @brief Application callback that is executed when an image upload request is
  * received.
@@ -111,7 +123,11 @@ int imgmgr_state_slot_in_use(int slot);
 int imgmgr_state_set_pending(int slot, int permanent);
 int imgmgr_state_confirm(void);
 int imgmgr_find_best_area_id(void);
-
+void imgmgr_register_callbacks(const imgmgr_dfu_callbacks_t *cb_struct);
+void imgmgr_dfu_stopped(void);
+void imgmgr_dfu_started(void);
+void imgmgr_dfu_pending(void);
+void imgmgr_dfu_confirmed(void);
 #ifdef __cplusplus
 }
 #endif

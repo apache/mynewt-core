@@ -63,7 +63,7 @@ syscfg.defs:
 
 syscfg.vals:
     # Enable nRF52832 MCU
-    MCU_NRF52832: 1
+    MCU_TARGET: nRF52832
     # Set default pins for peripherals
     # Latest revisions have testpoints instead of dedicated UART pins,
     # we can use them instead
@@ -78,7 +78,7 @@ syscfg.vals:
     NFFS_FLASH_AREA: FLASH_AREA_NFFS
     COREDUMP_FLASH_AREA: FLASH_AREA_IMAGE_1
     MCU_DCDC_ENABLED: 1
-    XTAL_32768: 1
+    MCU_LFCLK_SOURCE: LFXO
     BOOT_SERIAL_DETECT_PIN: 13  # Button 1
 
 syscfg.vals.'BSP_RUUVITAG_REV_B_NUM == 1':
@@ -86,7 +86,7 @@ syscfg.vals.'BSP_RUUVITAG_REV_B_NUM == 1':
     UART_0_PIN_TX: 7
     UART_0_PIN_RX: 8
 
-syscfg.vals.BLE_LP_CLOCK:
+syscfg.vals.BLE_CONTROLLER:
     TIMER_0: 0
     TIMER_5: 1
     OS_CPUTIME_FREQ: 32768
@@ -97,4 +97,4 @@ syscfg.restrictions:
     - "!UARTBB_0 || (UARTBB_0_PIN_TX >= 0 && UARTBB_0_PIN_RX >= 0)"
     - "!BME280_ONB || SPI_0_MASTER"
     - "!LIS2DH12_ONB || SPI_0_MASTER"
-    - "!LIS2DH12_ONB || BSP_RUUVITAG_REV >= 3"
+    - "!LIS2DH12_ONB || BSP_RUUVITAG_REV_B_NUM >= 3"

@@ -27,7 +27,7 @@
 int
 console_out(int c)
 {
-    if (g_silence_console) {
+    if (g_console_silence) {
         return c;
     }
 

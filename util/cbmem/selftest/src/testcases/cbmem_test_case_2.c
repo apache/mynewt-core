@@ -44,7 +44,7 @@ TEST_CASE_SELF(cbmem_test_case_2)
     }
 
     /* i starts at 2, for the 2 overwritten entries */
-    TEST_ASSERT_FATAL(i == 65,
-            "Did not iterate through all 63 elements of CBMEM1, processed %d",
-            i - 2);
+    TEST_ASSERT_FATAL(i == CBMEM1_ENTRY_COUNT + 1,
+            "Did not iterate through all %d elements of CBMEM1, processed %d",
+            CBMEM1_ENTRY_COUNT - 1, i - 2);
 }

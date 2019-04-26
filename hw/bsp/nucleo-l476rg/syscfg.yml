@@ -28,7 +28,7 @@ syscfg.defs:
 
     TIMER_0:
         description: 'Whether to enable TIMER_0'
-        value: 0
+        value: 1
 
     TIMER_1:
         description: 'Whether to enable TIMER_1'

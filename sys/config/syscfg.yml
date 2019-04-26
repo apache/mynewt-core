@@ -58,6 +58,10 @@ syscfg.defs:
             Secondary sysinit stage for the config package; populates the
             underlying storage medium for config if it is has not been done.
         value: 220
+    CONFIG_CLI_RW:
+        description: >
+            Config CLI commands read 1, write 2, read/write 3
+        value: 3
 
 syscfg.defs.CONFIG_FCB:
     CONFIG_FCB_FLASH_AREA:

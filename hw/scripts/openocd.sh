@@ -27,8 +27,12 @@ GDB=arm-none-eabi-gdb
 openocd_load () {
     OCD_CMD_FILE=.openocd_cmds
 
+    windows_detect
     parse_extra_jtag_cmd $EXTRA_JTAG_CMD
 
+    if [ $WINDOWS -eq 1 ] ; then
+        FILE_NAME=`cygpath -u $FILE_NAME`
+    fi
     echo "$EXTRA_JTAG_CMD" > $OCD_CMD_FILE
     echo "init" >> $OCD_CMD_FILE
     echo "$CFG_RESET" >> $OCD_CMD_FILE

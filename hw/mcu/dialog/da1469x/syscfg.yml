@@ -1,0 +1,312 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+syscfg.defs:
+    MCU_TARGET:
+        description: Specifies target MCU, shall be set by BSP.
+        value:
+        restrictions: $notnull
+        choices:
+            - DA14691
+            - DA14695
+            - DA14697
+            - DA14699
+
+    MCU_DCDC_ENABLE:
+        description: >
+            Specifies whether or not to enable SIMO DC-DC Converter.
+        value: 0
+    
+    MCU_GPIO_RETAINABLE_NUM:
+        description: >
+            Number of GPIO pins which can have its state retained in
+            deep sleep. This applies only if deep sleep is enabled since
+            PD_COM will be disabled before entering deep sleep and thus
+            state of any configured GPIO has to be retained and restored.
+        value: 4
+
+    MCU_CLOCK_XTAL32M_SETTLE_TIME_US:
+        description: >
+            Specifies settling time [us] of 32M crystal oscillator.
+        value: 2000
+
+    MCU_CLOCK_XTAL32K_SETTLE_TIME_MS:
+        description: >
+            Specifies settling time [ms] of 32K crystal oscillator.
+        value: 8000
+
+    MCU_DEEP_SLEEP:
+        description: >
+            Enable deep sleep for M33 core.
+            This is an experimental feature and still under active
+            development. It is recommended to keep it disabled for
+            general usage.
+        value: 0
+
+    MCU_FLASH_MIN_WRITE_SIZE:
+        description: >
+            Specifies the required alignment for internal flash writes.
+            Used internally by the newt tool.
+        value: 1
+
+    RAM_RESIDENT:
+        description: 'Compile app to be loaded to RAM'
+        value: 0
+
+# QSPI definitions
+    QSPI_FLASH_ADDRESS_LENGTH:
+        description: >
+            Sector address length used by flash (only 24 bit supported now)
+        value:
+        restrictions: $notnull
+    QSPI_FLASH_SECTOR_SIZE:
+        description: >
+            Sector size used by flash (usually 4096)
+        value:
+        restrictions: $notnull
+    QSPI_FLASH_SECTOR_COUNT:
+        description: >
+            Number of sectors on flash
+        value:
+        restrictions: $notnull
+    QSPI_FLASH_PAGE_SIZE:
+        description: >
+            Page size used by flash (usually 256)
+        value:
+        restrictions: $notnull
+    QSPI_FLASH_READ_BUFFER_SIZE:
+        description: >
+            In order to write data located on flash to another location on flash
+            they have to be read first. This is the size of buffer used to read
+            data before writing, i.e. each such transfer will be split into
+            chunks of this size. Buffer is created on stack.
+        value: 128
+
+# MCU peripherals definitions
+    I2C_0:
+        description: 'Enable DA1469x I2C'
+        value: 0
+    I2C_0_PIN_SCL:
+        description: 'SCL pin for I2C_0'
+        value: ''
+    I2C_0_PIN_SDA:
+        description: 'SDA pin for I2C_0'
+        value: ''
+    I2C_0_FREQ_KHZ:
+        description: 'Frequency [kHz] for I2C_0'
+        value: 100
+
+    I2C_1:
+        description: 'Enable DA1469x I2C2. Note, even it is I2C2 as per specification it is exposed as I2C_1'
+        value: 0
+    I2C_1_PIN_SCL:
+        description: 'SCL pin for I2C_1'
+        value: ''
+    I2C_1_PIN_SDA:
+        description: 'SDA pin for I2C_1'
+        value: ''
+    I2C_1_FREQ_KHZ:
+        description: 'Frequency [kHz] for I2C_1'
+        value: 100
+
+    SPI_0_MASTER:
+        description: 'Enable DA1469x SPI Master'
+        value: 0
+        restrictions:
+            - "!SPI_0_SLAVE"
+    SPI_0_MASTER_PIN_SCK:
+        description: 'SCK pin for SPI_0_MASTER'
+        value: ''
+    SPI_0_MASTER_PIN_MOSI:
+        description: 'MOSI pin for SPI_0_MASTER'
+        value: ''
+    SPI_0_MASTER_PIN_MISO:
+        description: 'MISO pin for SPI_0_MASTER'
+        value: ''
+
+    SPI_0_SLAVE:
+        description: 'Enable DA1469x SPI Slave'
+        value: 0
+        restrictions:
+            - "!SPI_0_MASTER"
+    SPI_0_SLAVE_PIN_SCK:
+        description: 'SCK pin for SPI_0_SLAVE'
+        value: ''
+    SPI_0_SLAVE_PIN_MOSI:
+        description: 'MOSI pin for SPI_0_SLAVE'
+        value: ''
+    SPI_0_SLAVE_PIN_MISO:
+        description: 'MISO pin for SPI_0_SLAVE'
+        value: ''
+    SPI_0_SLAVE_PIN_SS:
+        description: 'SS pin for SPI_0_SLAVE'
+        value: ''
+
+    SPI_1_MASTER:
+        description: 'Enable DA1469x SPI2 Master'
+        value: 0
+        restrictions:
+            - "!SPI_1_SLAVE"
+    SPI_1_MASTER_PIN_SCK:
+        description: 'SCK pin for SPI_1_MASTER'
+        value: ''
+    SPI_1_MASTER_PIN_MOSI:
+        description: 'MOSI pin for SPI_1_MASTER'
+        value: ''
+    SPI_1_MASTER_PIN_MISO:
+        description: 'MISO pin for SPI_1_MASTER'
+        value: ''
+
+    SPI_1_SLAVE:
+        description: 'Enable DA1469x SPI2 Slave'
+        value: 0
+        restrictions:
+            - "!SPI_1_MASTER"
+    SPI_1_SLAVE_PIN_SCK:
+        description: 'SCK pin for SPI_1_SLAVE'
+        value: ''
+    SPI_1_SLAVE_PIN_MOSI:
+        description: 'MOSI pin for SPI_1_SLAVE'
+        value: ''
+    SPI_1_SLAVE_PIN_MISO:
+        description: 'MISO pin for SPI_1_SLAVE'
+        value: ''
+    SPI_1_SLAVE_PIN_SS:
+        description: 'SS pin for SPI_1_SLAVE'
+        value: ''
+
+    UART_0:
+        description: Enable DA1469x UART 0 (UART peripheral)
+        value: 1
+    UART_0_PIN_TX:
+        description: 'TX pin for UART0'
+        value: ''
+    UART_0_PIN_RX:
+        description: 'RX pin for UART0'
+        value: ''
+
+    UART_1:
+        description: Enable DA1469x UART 1 (UART2 peripheral)
+        value: 0
+    UART_1_PIN_TX:
+        description: 'TX pin for UART1'
+        value: ''
+    UART_1_PIN_RX:
+        description: 'RX pin for UART1'
+        value: ''
+    UART_1_PIN_RTS:
+        description: 'RTS pin for UART1'
+        value: -1
+    UART_1_PIN_CTS:
+        description: 'CTS pin for UART1'
+        value: -1
+
+    UART_2:
+        description: Enable DA1469x UART 2 (UART3 peripheral)
+        value: 0
+    UART_2_PIN_TX:
+        description: 'TX pin for UART2'
+        value: ''
+    UART_2_PIN_RX:
+        description: 'RX pin for UART2'
+        value: ''
+    UART_2_PIN_RTS:
+        description: 'RTS pin for UART2'
+        value: -1
+    UART_2_PIN_CTS:
+        description: 'CTS pin for UART2'
+        value: -1
+
+    TIMER_0:
+        description: Enable DA1469x timer 0 (Timer peripheral)
+        value: 1
+        restrictions:
+            - '!PWM_0'
+
+    TIMER_1:
+        description: Enable DA1469x timer 1 (Timer3 peripheral)
+        value:  0
+        restrictions:
+            - '!PWM_1'
+
+    TIMER_2:
+        description: Enable DA1469x timer 2 (Timer4 peripheral)
+        value:  0
+        restrictions:
+            - '!PWM_2'
+
+    TRNG:
+        description: 'Enable DA1469x TRNG'
+        value: 0
+
+    PWM_0:
+        description: 'Enable DA1469x PWM 0'
+        value: 0
+        restrictions:
+            - '!TIMER_0'
+
+    PWM_1:
+        description: 'Enable DA1469x PWM 1'
+        value: 0
+        restrictions:
+            - '!TIMER_1'
+
+    PWM_2:
+        description: 'Enable DA1469x PWM 2'
+        value: 0
+        restrictions:
+            - '!TIMER_2'
+
+    GPADC:
+        description: 'Enable DA1469x general purpose ADC'
+        value: 0
+    GPADC_CLK_DIV:
+        description: 'Controls GPADC_CLK_SEL bit in CLK_PER'
+        value: 1
+    GPADC_DMA_CIDX:
+        description: >
+          'DMA channel idx to use for GPADC. -1 means let system decide'
+        value: -1
+    GPADC_DMA_PRIO:
+        description: >
+          'DMA priority for GPADC, 0-7'
+        value: 0
+
+    SDADC:
+        description: Enable DA1469x sigma delta ADC
+        value: 0
+    SDADC_DMA_CIDX:
+        description: >
+          'DMA channel idx to use for SDADC. -1 means let system decide'
+        value: -1
+    SDADC_DMA_PRIO:
+        description: >
+          'DMA priority for SDADC, 0-7'
+        value: 0
+
+syscfg.restrictions:
+    - "QSPI_FLASH_ADDRESS_LENGTH==24"
+    - "!I2C_0 || (I2C_0_PIN_SCL && I2C_0_PIN_SDA)"
+    - "!I2C_1 || (I2C_1_PIN_SCL && I2C_1_PIN_SDA)"
+    - "!UART_0 || (UART_0_PIN_TX && UART_0_PIN_RX)"
+    - "!UART_1 || (UART_1_PIN_TX && UART_1_PIN_RX)"
+    - "!UART_2 || (UART_2_PIN_TX && UART_2_PIN_RX)"
+    - "!SPI_0_MASTER || (SPI_0_MASTER_PIN_SCK && SPI_0_MASTER_PIN_MOSI && SPI_0_MASTER_PIN_MISO)"
+    - "!SPI_1_MASTER || (SPI_1_MASTER_PIN_SCK && SPI_1_MASTER_PIN_MOSI && SPI_1_MASTER_PIN_MISO)"
+    - "!SPI_0_SLAVE || (SPI_0_SLAVE_PIN_SCK && SPI_0_SLAVE_PIN_MOSI && SPI_0_SLAVE_PIN_MISO && SPI_0_SLAVE_PIN_SS)"
+    - "!SPI_1_SLAVE || (SPI_1_SLAVE_PIN_SCK && SPI_1_SLAVE_PIN_MOSI && SPI_1_SLAVE_PIN_MISO && SPI_1_SLAVE_PIN_SS)"

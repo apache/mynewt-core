@@ -88,7 +88,7 @@ struct stm32_hal_spi_cfg spi0_cfg = {
     .ss_pin   = MCU_GPIO_PORTA(4),
     .sck_pin  = MCU_GPIO_PORTA(5),
     .miso_pin = MCU_GPIO_PORTA(6),
-    .mosi_pin = MCU_GPIO_PORTB(5),
+    .mosi_pin = MCU_GPIO_PORTA(7),
     .irq_prio = 2,
 };
 #endif
@@ -147,6 +147,11 @@ hal_bsp_init(void)
 
 #if MYNEWT_VAL(SPI_0_MASTER)
     rc = hal_spi_init(0, &spi0_cfg, HAL_SPI_TYPE_MASTER);
+    assert(rc == 0);
+#endif
+
+#if (MYNEWT_VAL(OS_CPUTIME_TIMER_NUM) >= 0)
+    rc = os_cputime_init(MYNEWT_VAL(OS_CPUTIME_FREQ));
     assert(rc == 0);
 #endif
 
