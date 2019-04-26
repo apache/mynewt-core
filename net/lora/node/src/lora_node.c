@@ -90,8 +90,7 @@ struct lora_node_debug_log_entry g_lnd_log[LORA_NODE_DEBUG_LOG_ENTRIES];
 uint16_t g_lnd_log_index;
 
 /* Low power callback functions */
-extern void lora_low_power_enter(void);
-extern void lora_low_power_exit(void);
+extern void lora_bsp_enable_mac_timer(void);
 
 void
 lora_node_log(uint8_t logid, uint8_t p8, uint16_t p16, uint32_t p32)
@@ -690,7 +689,7 @@ void lora_enter_low_power(void)
 {
     if (!low_power_active) {
         low_power_active = true;
-        lora_low_power_enter();
+        hal_timer_deinit(MYNEWT_VAL(LORA_MAC_TIMER_NUM));
         lora_node_log(LORA_NODE_LOG_LP_ENTER, 0, 0, 0);
     }
 }
@@ -699,7 +698,7 @@ void lora_exit_low_power(void)
 {
     if (low_power_active) {
         low_power_active = false;
-        lora_low_power_exit();
+        lora_bsp_enable_mac_timer();
         lora_node_log(LORA_NODE_LOG_LP_EXIT, 0, 0, 0);
         lora_config_peripherals();
     }
