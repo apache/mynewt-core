@@ -22,6 +22,7 @@
 #include "hal/hal_system.h"
 #include <nrf51.h>
 #include <nrf51_bitfields.h>
+#include "mcu/nrf51_clock.h"
 
 /**
  * Function called at startup. Called after BSS and .data initialized but
@@ -96,16 +97,7 @@ hal_system_clock_start(void)
 
 #if MYNEWT_VAL(XTAL_32768_SYNTH)
     /* Must turn on HFLCK for synthesized 32768 crystal */
-    if ((NRF_CLOCK->HFCLKSTAT & CLOCK_HFCLKSTAT_STATE_Msk) !=
-                (CLOCK_HFCLKSTAT_STATE_Running << CLOCK_HFCLKSTAT_STATE_Pos)) {
-        NRF_CLOCK->EVENTS_HFCLKSTARTED = 0;
-        NRF_CLOCK->TASKS_HFCLKSTART = 1;
-        while (1) {
-            if ((NRF_CLOCK->EVENTS_HFCLKSTARTED) != 0) {
-                break;
-            }
-        }
-    }
+    nrf51_clock_hfxo_request();
 #endif
 
     /* Check if this clock source is already running */
