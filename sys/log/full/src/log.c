@@ -609,7 +609,7 @@ log_append_mbuf_typed_no_free(struct log *log, uint8_t module, uint8_t level,
     len = os_mbuf_len(om);
     if (len > LOG_ENTRY_HDR_SIZE) {
         rc = log_chk_max_entry_len(log, len - LOG_ENTRY_HDR_SIZE);
-        if (rc) {
+        if (rc != OS_OK) {
             goto drop;
         }
     }
@@ -675,7 +675,7 @@ log_append_mbuf_body_no_free(struct log *log, uint8_t module, uint8_t level,
 
     len = os_mbuf_len(om);
     rc = log_chk_max_entry_len(log, len);
-    if (rc) {
+    if (rc != OS_OK) {
         goto drop;
     }
 
