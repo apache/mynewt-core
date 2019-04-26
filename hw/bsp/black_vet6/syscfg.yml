@@ -1,0 +1,121 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+syscfg.defs:
+    STM32_FLASH_SIZE_KB:
+        description: 'Total flash size in KB.'
+        value: 512
+
+    STM32_FLASH_NUM_AREAS:
+        description: 'Amount of flash sectors for a non-linear STM32 MCU.'
+        value: 9
+
+    ADC_1:
+        description: "ADC_1"
+        value:  0
+    ADC_2:
+        description: "ADC_2"
+        value:  0
+    ADC_3:
+        description: "ADC_3"
+        value:  0
+
+    UART_0:
+        description: 'Whether to enable UART0'
+        value:  1
+    UART_0_TX:
+        description: 'UART 0 TX pin. TX from J6 connector'
+        value:  'MCU_GPIO_PORTA(9)'
+    UART_0_RX:
+        description: 'UART 0 RX pin. RX from J6 connector'
+        value:  'MCU_GPIO_PORTA(10)'
+    UART_0_RTS:
+        description: 'UART 0 RTS pin.'
+        value:  -1
+    UART_0_CTS:
+        description: 'UART 0 CTS pin.'
+        value:  -1
+
+    SPI_0_SCK:
+        description: 'SPI_0 clock pin'
+        value: 'MCU_GPIO_PORTB(3)'
+    SPI_0_MISO:
+        description: 'SPI_0 MISO pin'
+        value: 'MCU_GPIO_PORTB(4)'
+    SPI_0_MOSI:
+        description: 'SPI_0 MOSI pin'
+        value: 'MCU_GPIO_PORTB(5)'
+
+    SPI_1_SCK:
+        description: 'SPI_1 clock pin'
+        value: 'MCU_GPIO_PORTB(13)'
+    SPI_1_MISO:
+        description: 'SPI_1 MISO pin'
+        value: 'MCU_GPIO_PORTB(14)'
+    SPI_1_MOSI:
+        description: 'SPI_1 MOSI pin'
+        value: 'MCU_GPIO_PORTB(15)'
+
+    TIMER_0:
+        description: 'Enable TIMER_0, (TIM2 up to 84MHz, 32 bits)'
+        value: 1
+    TIMER_1:
+        description: 'Enable TIMER_1, (TIM3 up to 84MHz, 16 bits)'
+        value: 0
+    TIMER_2:
+        description: 'Enable TIMER_2, (TIM4 up to 84MHz, 16 bits)'
+        value: 0
+
+    ETH_0:
+        description: 'Ethernet driver for LwIP'
+        value: 0
+
+syscfg.vals:
+    REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG
+    CONFIG_FCB_FLASH_AREA: FLASH_AREA_NFFS
+    NFFS_FLASH_AREA: FLASH_AREA_NFFS
+    COREDUMP_FLASH_AREA: FLASH_AREA_IMAGE_1
+    HARDFLOAT: 1
+
+    SPI_0_MASTER: 1
+    # On board SPIFLASH configuraiont for W25Q16VBS
+    SPIFLASH: 1
+    SPIFLASH_SPI_NUM: 0
+    SPIFLASH_SPI_CS_PIN: 'MCU_GPIO_PORTB(0)'
+    SPIFLASH_BAUDRATE: 42000
+    SPIFLASH_MANUFACTURER: 0xEF
+    SPIFLASH_MEMORY_TYPE: 0x40
+    SPIFLASH_MEMORY_CAPACITY: 0x15
+    SPIFLASH_SECTOR_COUNT: 512
+    SPIFLASH_SECTOR_SIZE: 4094
+    SPIFLASH_PAGE_SIZE: 256
+
+    SPIFLASH_TBP1_TYPICAL: 20
+    SPIFLASH_TBP1_MAXIMUM: 50
+    SPIFLASH_TPP_TYPICAL: 700
+    SPIFLASH_TPP_MAXIMUM: 3000
+    SPIFLASH_TSE_TYPICAL: 30000
+    SPIFLASH_TSE_MAXIMUM: 400000
+    SPIFLASH_TBE1_TYPICAL: 120000
+    SPIFLASH_TBE1_MAXIMUM: 800000
+    SPIFLASH_TBE2_TYPICAL: 150000
+    SPIFLASH_TBE2_MAXIMUM: 1000000
+    SPIFLASH_TCE_TYPICAL: 3000000
+    SPIFLASH_TCE_MAXIMUM: 10000000
+
+    BSP_FLASH_SPI_BUS: '"spi0"'
