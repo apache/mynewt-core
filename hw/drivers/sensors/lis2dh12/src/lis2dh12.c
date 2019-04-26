@@ -1642,10 +1642,10 @@ int lis2dh12_run_self_test(struct sensor_itf *itf, int *result)
 
     /* |Min(ST_X)| <=|OUTX_AVG_ST - OUTX_AVG_NO_ST| <= |Max(ST_X)| */
     /* Compare values to thresholds */
-    for (i = 0; i < 3; i++) {
+    for (i = 0; i < LIS2DH12_AXIS_MAX; i++) {
         diff = abs(st[i] - no_st[i]);
         if (diff < LIS2DH12_ST_MIN || diff > LIS2DH12_ST_MAX) {
-            *result -= 1;
+            *result |= 1 << i;
         }
     }
 end:
