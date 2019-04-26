@@ -180,6 +180,7 @@ STATS_SECT_START(logs)
     STATS_SECT_ENTRY(drops)
     STATS_SECT_ENTRY(errs)
     STATS_SECT_ENTRY(lost)
+    STATS_SECT_ENTRY(too_long)
 STATS_SECT_END
 
 #define LOG_STATS_INC(log, name)        STATS_INC(log->l_stats, name)
@@ -196,6 +197,7 @@ struct log {
     STAILQ_ENTRY(log) l_next;
     log_append_cb *l_append_cb;
     uint8_t l_level;
+    uint16_t l_max_entry_len;   /* Log body length; if 0 disables check. */
 #if MYNEWT_VAL(LOG_STATS)
     STATS_SECT_DECL(logs) l_stats;
 #endif
@@ -625,6 +627,17 @@ void log_set_level(struct log *log, uint8_t level);
  * @return                      current value of log level.
  */
 uint8_t log_get_level(const struct log *log);
+
+/**
+ * @brief Set maximum length of an entry in the log. If set to
+ *        0, no check will be made for maximum write length.
+ *        Note that this is maximum log body length; the log
+ *        entry header is not included in the check.
+ *
+ * @param log                   Log to set max entry length
+ * @param level                 New max entry length
+ */
+void log_set_max_entry_len(struct log *log, uint16_t max_entry_len);
 
 #if MYNEWT_VAL(LOG_STORAGE_INFO)
 /**
