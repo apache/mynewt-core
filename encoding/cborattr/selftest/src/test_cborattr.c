@@ -33,6 +33,8 @@ TEST_SUITE(test_cborattr_suite)
     test_cborattr_decode_object_array();
     test_cborattr_decode_unnamed_array();
     test_cborattr_decode_substring_key();
+    test_cborattr_encode_simple();
+    test_cborattr_encode_omit();
 }
 
 int
