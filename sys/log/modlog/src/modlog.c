@@ -301,6 +301,8 @@ modlog_append_mbuf_no_lock(uint8_t module, uint8_t level, uint8_t etype,
     bool found;
     int rc;
 
+    rc = 0;
+
     found = false;
     SLIST_FOREACH(mm, &modlog_mappings, next) {
         if (mm->desc.module == module) {
@@ -308,7 +310,7 @@ modlog_append_mbuf_no_lock(uint8_t module, uint8_t level, uint8_t etype,
 
             rc = modlog_append_mbuf_one(mm, module, level, etype, om);
             if (rc != 0) {
-                return rc;
+                break;
             }
         } else if (mm->desc.module > module) {
             break;
@@ -323,14 +325,14 @@ modlog_append_mbuf_no_lock(uint8_t module, uint8_t level, uint8_t etype,
 
             rc = modlog_append_mbuf_one(mm, module, level, etype, om);
             if (rc != 0) {
-                return rc;
+                break;
             }
         }
     }
 
     os_mbuf_free_chain(om);
 
-    return 0;
+    return rc;
 }
 
 static int
