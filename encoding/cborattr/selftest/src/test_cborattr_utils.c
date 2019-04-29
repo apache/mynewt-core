@@ -33,3 +33,18 @@ test_str1(int *len)
     *len = sizeof(test_data1);
     return (test_data1);
 }
+
+void
+cborattr_test_util_encode(const struct cbor_out_attr_t *attrs,
+                          const uint8_t *expected, int len)
+{
+    struct os_mbuf *om;
+    int rc;
+
+    rc = cbor_write_object_msys(attrs, &om);
+    TEST_ASSERT_FATAL(rc == 0);
+
+    TEST_ASSERT(os_mbuf_cmpf(om, 0, expected, len) == 0);
+
+    os_mbuf_free_chain(om);
+}
