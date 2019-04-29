@@ -171,7 +171,7 @@ da1469x_gpadc_configure_channel(struct adc_dev *adev, uint8_t cnum,
  * Blocking read of an ADC channel, returns result as an integer.
  */
 static int
-da1469x_gpadc_read_channel(struct adc_dev *adev, uint8_t cnum, int *result)
+da1469x_gpadc_read(uint32_t *val)
 {
     uint32_t reg;
 
@@ -199,17 +199,39 @@ da1469x_gpadc_read_channel(struct adc_dev *adev, uint8_t cnum, int *result)
         reg = GPADC->GP_ADC_CTRL_REG;
     } while ((reg & GPADC_GP_ADC_CTRL_REG_GP_ADC_INT_Msk) == 0);
 
+    *val = GPADC->GP_ADC_RESULT_REG;
+
+    return 0;
+}
+
+static int
+da1469x_gpadc_read_scaled(uint32_t *val)
+{
+    if (da1469x_gpadc_read(val)) {
+        return -1;
+    }
+    *val = *val >> 6;
+    return 0;
+}
+
+static int
+da1469x_gpadc_read_channel(struct adc_dev *adev, uint8_t cnum, int *result)
+{
+    uint32_t val;
+
+    da1469x_gpadc_read(&val);
+
     /*
      * Read results. # of valid bits depends on settings.
      */
-    if (reg & GPADC_GP_ADC_CTRL_REG_GP_ADC_SE_Msk) {
-        *result = GPADC->GP_ADC_RESULT_REG;
+    if (GPADC->GP_ADC_CTRL_REG & GPADC_GP_ADC_CTRL_REG_GP_ADC_SE_Msk) {
+        *result = val;
     } else {
         /*
          * Differential mode.
          * 0x8000 is 0V. Move that point to be 0.
          */
-        *result = GPADC->GP_ADC_RESULT_REG - 0x8000;
+        *result = val - 0x8000;
     }
     return 0;
 }
@@ -378,6 +400,90 @@ static const struct adc_driver_funcs da1469x_gpadc_funcs = {
     .af_size_buffer = da1469x_gpadc_size_buffer
 };
 
+/*
+ * Run through calibration sequence as described in datasheet.
+ */
+static int
+da1469x_gpadc_calibrate(struct da1469x_gpadc_dev *dev)
+{
+    uint32_t adc_off_p;
+    uint32_t adc_off_n;
+    uint32_t orig_ctrl;
+    int i;
+
+    orig_ctrl = GPADC->GP_ADC_CTRL_REG;
+
+    /*
+     * Only attempt this few times. If calibration fails, still go ahead.
+     */
+    for (i = 0; i < 5; i++) {
+        /*
+         * Step 1. Set up registers.
+         */
+        GPADC->GP_ADC_OFFP_REG = 0x200;
+        GPADC->GP_ADC_OFFN_REG = 0x200;
+
+        GPADC->GP_ADC_CTRL_REG =
+          (orig_ctrl & ~GPADC_GP_ADC_CTRL_REG_GP_ADC_SIGN_Msk) |
+           GPADC_GP_ADC_CTRL_REG_GP_ADC_MUTE_Msk;
+
+        /*
+         * Step 2. Run conversion.
+         */
+        if (da1469x_gpadc_read_scaled(&adc_off_p)) {
+            return -1;
+        }
+
+        /*
+         * Step 3.
+         */
+        adc_off_p -= 0x200;
+
+        /*
+         * Step 4; reconfigure register.
+         */
+        GPADC->GP_ADC_CTRL_REG |= GPADC_GP_ADC_CTRL_REG_GP_ADC_SIGN_Msk;
+
+        /*
+         * Step 5. Run conversion.
+         */
+        if (da1469x_gpadc_read_scaled(&adc_off_n)) {
+            return -1;
+        }
+
+        /*
+         * Step 6.
+         */
+        adc_off_n -= 0x200;
+
+        /*
+         * Step 7.
+         */
+        if (GPADC->GP_ADC_CTRL_REG & GPADC_GP_ADC_CTRL_REG_GP_ADC_SE_Msk) {
+            GPADC->GP_ADC_OFFP_REG = 0x200 - (adc_off_p * 2);
+            GPADC->GP_ADC_OFFN_REG = 0x200 - (adc_off_n * 2);
+        } else {
+            GPADC->GP_ADC_OFFP_REG = 0x200 - adc_off_p;
+            GPADC->GP_ADC_OFFN_REG = 0x200 - adc_off_n;
+        }
+
+        /*
+         * Step 8. Verify results.
+         */
+        GPADC->GP_ADC_CTRL_REG &= ~GPADC_GP_ADC_CTRL_REG_GP_ADC_SIGN_Msk;
+        if (da1469x_gpadc_read_scaled(&adc_off_p)) {
+            return -1;
+        }
+        adc_off_p = abs(0x200 - adc_off_p);
+        if (adc_off_p < 0x8) {
+            break;
+        }
+    }
+    assert(i != 5);
+    GPADC->GP_ADC_CTRL_REG = orig_ctrl;
+    return 0;
+}
+
 static int
 da1469x_gpadc_hwinit(struct da1469x_gpadc_dev *dev,
                      struct da1469x_gpadc_dev_cfg *dgdc)
@@ -447,6 +553,10 @@ da1469x_gpadc_hwinit(struct da1469x_gpadc_dev *dev,
     if (dgdc->dgdc_gpadc_set_offn) {
         reg = dgdc->dgdc_gpadc_offn & GPADC_GP_ADC_OFFN_REG_GP_ADC_OFFN_Msk;
         GPADC->GP_ADC_OFFN_REG = reg;
+    }
+
+    if (dgdc->dgdc_gpadc_autocalibrate) {
+        return da1469x_gpadc_calibrate(dev);
     }
 
     return 0;
