@@ -22,6 +22,10 @@
 #include <tinycbor/cbor.h>
 #include <tinycbor/cbor_buf_reader.h>
 #include <tinycbor/cbor_mbuf_reader.h>
+#include <tinycbor/cbor_mbuf_writer.h>
+
+static int cbor_write_val(struct CborEncoder *enc,
+                          const struct cbor_out_val_t *val);
 
 /* this maps a CborType to a matching CborAtter Type. The mapping is not
  * one-to-one because of signedness of integers
@@ -417,4 +421,181 @@ cbor_read_mbuf_attrs(struct os_mbuf *m, uint16_t off, uint16_t len,
         return -1;
     }
     return cbor_read_object(&value, attrs);
+}
+
+static int
+cbor_write_arr_val(struct CborEncoder *enc,
+                   const struct cbor_out_arr_val_t *arr)
+{
+    struct CborEncoder arr_enc;
+    size_t i;
+    int rc;
+
+    rc = cbor_encoder_create_array(enc, &arr_enc, arr->len);
+    if (rc != 0) {
+        return SYS_ENOMEM;
+    }
+
+    for (i = 0; i < arr->len; i++) {
+        rc = cbor_write_val(&arr_enc, &arr->elems[i]);
+        if (rc != 0) {
+            return SYS_ENOMEM;
+        }
+    }
+
+    rc = cbor_encoder_close_container(enc, &arr_enc);
+    if (rc != 0) {
+        return SYS_ENOMEM;
+    }
+
+    return 0;
+}
+
+static int
+cbor_write_val(struct CborEncoder *enc, const struct cbor_out_val_t *val)
+{
+    int len;
+    int rc;
+
+    switch (val->type) {
+    case CborAttrNullType:
+        rc = cbor_encode_null(enc);
+        break;
+
+    case CborAttrBooleanType:
+        rc = cbor_encode_boolean(enc, val->boolean);
+        break;
+
+    case CborAttrIntegerType:
+        rc = cbor_encode_int(enc, val->integer);
+        break;
+
+    case CborAttrUnsignedIntegerType:
+        rc = cbor_encode_uint(enc, val->uinteger);
+        break;
+
+#if FLOAT_SUPPORT
+    case CborAttrFloatType:
+        rc = cbor_encode_float(enc, val->fval);
+        break;
+
+    case CborAttrDoubleType:
+        rc = cbor_encode_double(enc, val->real);
+        break;
+#endif
+
+    case CborAttrByteStringType:
+        if (val->bytestring.data == NULL &&
+            val->bytestring.len != 0) {
+
+            return SYS_EINVAL;
+        }
+
+        rc = cbor_encode_byte_string(enc, val->bytestring.data,
+                                     val->bytestring.len);
+        break;
+
+    case CborAttrTextStringType:
+        if (val->string == NULL) {
+            len = 0;
+        } else {
+            len = strlen(val->string);
+        }
+        rc = cbor_encode_text_string(enc, val->string, len);
+        break;
+
+    case CborAttrObjectType:
+        rc = cbor_write_object(enc, val->obj);
+        break;
+
+    case CborAttrArrayType:
+        rc = cbor_write_arr_val(enc, &val->array);
+        break;
+
+    default:
+        return SYS_ENOTSUP;
+    }
+
+    if (rc != 0) {
+        return SYS_ENOMEM;
+    }
+
+    return 0;
+}
+
+static int
+cbor_write_attr(struct CborEncoder *enc, const struct cbor_out_attr_t *attr)
+{
+    int len;
+    int rc;
+
+    if (attr->omit) {
+        return 0;
+    }
+
+    len = strlen(attr->attribute);
+    rc = cbor_encode_text_string(enc, attr->attribute, len);
+    if (rc != 0) {
+        return rc;
+    } 
+
+    rc = cbor_write_val(enc, &attr->val);
+    if (rc != 0) {
+        return rc;
+    } 
+
+    return 0;
+}
+
+int
+cbor_write_object(struct CborEncoder *enc, const struct cbor_out_attr_t *attrs)
+{
+    const struct cbor_out_attr_t *attr;
+    struct CborEncoder map;
+    int rc;
+
+    rc = cbor_encoder_create_map(enc, &map, CborIndefiniteLength);
+    if (rc != 0) {
+        return SYS_ENOMEM;
+    }
+
+    for (attr = attrs; attr->val.type != 0; attr++) {
+        rc = cbor_write_attr(&map, attr);
+        if (rc != 0) {
+            return rc;
+        }
+    }
+
+    rc = cbor_encoder_close_container(enc, &map);
+    if (rc != 0) {
+        return SYS_ENOMEM;
+    }
+
+    return 0;
+}
+
+int
+cbor_write_object_msys(const struct cbor_out_attr_t *attrs,
+                       struct os_mbuf **out_om)
+{
+    struct cbor_mbuf_writer writer;
+    struct CborEncoder encoder;
+    int rc;
+
+    *out_om = os_msys_get_pkthdr(0, 0);
+    if (*out_om == NULL) {
+        return SYS_ENOMEM;
+    }
+
+    cbor_mbuf_writer_init(&writer, *out_om);
+    cbor_encoder_init(&encoder, &writer.enc, 0);
+
+    rc = cbor_write_object(&encoder, attrs);
+    if (rc != 0) {
+        os_mbuf_free_chain(*out_om);
+        *out_om = NULL;
+        return rc;
+    }
+
+    return 0;
 }

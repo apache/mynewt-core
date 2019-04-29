@@ -117,6 +117,41 @@ struct cbor_attr_t {
     bool nodefault;
 };
 
+/** An array value to be encoded as CBOR. */
+struct cbor_out_arr_val_t {
+    struct cbor_out_val_t *elems;
+    size_t len;
+};
+
+/** A single value to be encoded as CBOR. */
+struct cbor_out_val_t {
+    /** The type of data. */
+    CborAttrType type;
+
+    /** The data value. */
+    union {
+        long long int integer;
+        long long unsigned int uinteger;
+        double real;
+        float fval;
+        const char *string;
+        bool boolean;
+        struct {
+            const uint8_t *data;
+            size_t len;
+        } bytestring;
+        struct cbor_out_arr_val_t array;
+        struct cbor_out_attr_t *obj; /* Terminated with a type=0 entry. */
+    };
+};
+
+/** An object key-value pair to be encoded as CBOR. */
+struct cbor_out_attr_t {
+    const char *attribute;      /** The attribute name (key). */
+    struct cbor_out_val_t val;  /** The attribute value. */
+    bool omit;                  /** Attribute ignored if true. */
+};
+
 /*
  * Use the following macros to declare template initializers for
  * CborAttrStructObjectType arrays. Writing the equivalents out by hand is
@@ -147,6 +182,29 @@ int cbor_read_flat_attrs(const uint8_t *data, int len,
 struct os_mbuf;
 int cbor_read_mbuf_attrs(struct os_mbuf *m, uint16_t off, uint16_t len,
                          const struct cbor_attr_t *attrs);
+
+/**
+ * @brief Encodes a CBOR representation of the specified key-value map.
+ *
+ * @param enc                   The CBOR encoder to write to.
+ * @param attrs                 The key-value map to encode.
+ *
+ * @return                      0 on success; SYS_E[...] error on failure.
+ */
+int cbor_write_object(struct CborEncoder *enc,
+                      const struct cbor_out_attr_t *attrs);
+
+/**
+ * @brief Encodes a CBOR representation of the specified key-value map into an
+ * msys mbuf chain.
+ *
+ * @param attrs                 The key-value map to encode.
+ * @param out_om                On success, points to the populate mbuf chain.
+ *
+ * @return                      0 on success; SYS_E[...] error on failure.
+ */
+int cbor_write_object_msys(const struct cbor_out_attr_t *attrs,
+                           struct os_mbuf **out_om);
 
 #ifdef __cplusplus
 }
