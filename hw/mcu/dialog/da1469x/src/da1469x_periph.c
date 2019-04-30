@@ -44,7 +44,7 @@
 #endif
 #if MYNEWT_VAL(PWM_0) || MYNEWT_VAL(PWM_1) || MYNEWT_VAL(PWM_2)
 #include "pwm/pwm.h"
-#include "pwm_da1469x.h"
+#include "pwm_da1469x/pwm_da1469x.h"
 #endif
 
 #if MYNEWT_VAL(TRNG)
