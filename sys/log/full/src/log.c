@@ -341,6 +341,10 @@ log_register(char *name, struct log *log, const struct log_handler *lh,
 
     assert(!log_written);
 
+    if (level > LOG_LEVEL_MAX) {
+        level = LOG_LEVEL_MAX;
+    }
+
     log->l_name = name;
     log->l_log = lh;
     log->l_arg = arg;
@@ -442,6 +446,10 @@ log_append_prepare(struct log *log, uint8_t module, uint8_t level,
     if (log->l_name == NULL || log->l_log == NULL) {
         rc = -1;
         goto err;
+    }
+
+    if (level > LOG_LEVEL_MAX) {
+        level = LOG_LEVEL_MAX;
     }
 
     if (log->l_log->log_type == LOG_TYPE_STORAGE) {

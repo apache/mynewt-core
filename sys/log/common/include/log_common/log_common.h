@@ -43,7 +43,7 @@ struct log;
 #define LOG_LEVEL_ERROR    (3)
 #define LOG_LEVEL_CRITICAL (4)
 /* Up to 7 custom log levels. */
-#define LOG_LEVEL_MAX      (UINT8_MAX)
+#define LOG_LEVEL_MAX      (15)
 
 #define LOG_LEVEL_STR(level) \
     (LOG_LEVEL_DEBUG    == level ? "DEBUG"    :\
@@ -83,7 +83,7 @@ struct log;
 #define LOG_NAME_MAX_LEN    (64)
 
 #ifndef MYNEWT_VAL_LOG_LEVEL
-#define LOG_SYSLEVEL    ((uint8_t)0xff)
+#define LOG_SYSLEVEL    ((uint8_t)LOG_LEVEL_MAX)
 #else
 #define LOG_SYSLEVEL    ((uint8_t)MYNEWT_VAL_LOG_LEVEL)
 #endif
