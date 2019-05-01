@@ -47,6 +47,9 @@ syscfg.defs:
     BMP280_OFB:
         description: 'BMP280 is present'
         value : 0
+    BMP388_OFB:
+        description: 'BMP388 is present'
+        value : 0
     TCS34725_OFB:
         description: 'TCS34725 is present'
         value : 0

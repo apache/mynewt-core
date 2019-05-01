@@ -20,7 +20,7 @@
 syscfg.defs:
     BMA253_CLI:
         description: 'Enable shell support for BMA253'
-        value: 0
+        value: 1
     BMA253_I2C_WDT:
         description: 'Enable I2C watchdog functionality'
         value: 1
@@ -32,7 +32,7 @@ syscfg.defs:
         value: 1
     BMA253_INT_CFG_OUTPUT:
         description: 'Set 0 for push-pull, 1 for open-drain'
-        value: 1
+        value: 0
     BMA253_INT_PIN_DEVICE:
         description: 'Interrupt pin number 1 or 2 on accelerometer device'
         value: 1
@@ -47,7 +47,7 @@ syscfg.defs:
         value: -1
     BMA253_LOG:
         description: 'Enable BMA253 logging'
-        value: 0
+        value: 1
     BMA253_LOG_MODULE:
         description: 'Numeric module ID to use for BMA253 log messages'
         value: 253

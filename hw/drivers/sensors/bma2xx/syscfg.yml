@@ -32,7 +32,7 @@ syscfg.defs:
         value: 1
     BMA2XX_INT_CFG_OUTPUT:
         description: 'Set 0 for push-pull, 1 for open-drain'
-        value: 1
+        value: 0
     BMA2XX_INT_PIN_DEVICE:
         description: 'Interrupt pin number 1 or 2 on accelerometer device'
         value: 1
@@ -41,7 +41,7 @@ syscfg.defs:
         value: 2
     BMA2XX_LOG:
         description: 'Enable BMA2XX logging'
-        value: 0
+        value: 1
     BMA2XX_LOG_MODULE:
         description: 'Numeric module ID to use for BMA2XX log messages'
         value: 200

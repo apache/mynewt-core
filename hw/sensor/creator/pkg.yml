@@ -48,6 +48,8 @@ pkg.deps.MCU_NATIVE:
     - "@apache-mynewt-core/hw/drivers/sensors/sim"
 pkg.deps.BMP280_OFB:
     - "@apache-mynewt-core/hw/drivers/sensors/bmp280"
+pkg.deps.BMP388_OFB:
+    - "@apache-mynewt-core/hw/drivers/sensors/bmp388"
 pkg.deps.BMA253_OFB:
     - "@apache-mynewt-core/hw/drivers/sensors/bma253"
 pkg.deps.BMA2XX_OFB:

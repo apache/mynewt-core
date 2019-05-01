@@ -47,11 +47,19 @@
 #define BMA253_NOTIFY_MASK  0x01
 #define BMA253_READ_MASK    0x02
 
+
 static void
 delay_msec(uint32_t delay)
 {
     delay = (delay * OS_TICKS_PER_SEC) / 1000 + 1;
     os_time_delay(delay);
+}
+
+/* this is for very brief delay only, e.g.: 2us  */
+static void
+delay_usec_blocking(uint32_t us)
+{
+    os_cputime_delay_usecs(us);
 }
 
 #if MYNEWT_VAL(BMA253_INT_ENABLE)
@@ -104,6 +112,7 @@ wait_interrupt(struct bma253_int * interrupt, enum bma253_int_num int_num)
         os_error_t error;
 
         error = os_sem_pend(&interrupt->wait, -1);
+        BMA253_LOG(DEBUG, "some interrupt received\n");
         assert(error == OS_OK);
     }
 }
@@ -169,7 +178,7 @@ get_register(struct bma253 * bma253,
     oper.len     = 1;
     oper.buffer  = &addr;
 
-    rc = i2cn_master_write(itf->si_num, &oper, OS_TICKS_PER_SEC / 10, 1,
+    rc = i2cn_master_write(itf->si_num, &oper, OS_TICKS_PER_SEC / 10, 0,    //zg
                            MYNEWT_VAL(BMA253_I2C_RETRIES));
     if (rc != 0) {
         BMA253_LOG(ERROR, "I2C access failed at address 0x%02X\n", addr);
@@ -186,6 +195,9 @@ get_register(struct bma253 * bma253,
         BMA253_LOG(ERROR, "I2C read failed at address 0x%02X single byte\n",
                    addr);
     }
+
+
+    BMA253_LOG(DEBUG, "bus_read@0x%02X:%02X\n", addr, data[0]);
 
 err:
     sensor_itf_unlock(itf);
@@ -235,6 +247,10 @@ get_registers(struct bma253 * bma253,
                    addr, size);
     }
 
+    if (1 == size) {
+        BMA253_LOG(DEBUG, "bus_read@0x%02X:%02X\n", addr, data[0]);
+    }
+
 err:
     sensor_itf_unlock(itf);
 #endif
@@ -281,12 +297,15 @@ done:
     oper.len     = 2;
     oper.buffer  = tuple;
 
-    rc = i2cn_master_write(itf->si_num, &oper, OS_TICKS_PER_SEC / 10, 1,
+    //rc = i2cn_master_write(itf->si_num, &oper, OS_TICKS_PER_SEC / 10, 1,
+    rc = i2cn_master_write(itf->si_num, &oper, 3, 1,    //zg
                            MYNEWT_VAL(BMA253_I2C_RETRIES));
     if (rc != 0) {
         BMA253_LOG(ERROR, "I2C write failed at address 0x%02X single byte\n",
                    addr);
     }
+
+    BMA253_LOG(DEBUG, "bus_write@0x%02X:%02X\n", addr, data);
 
     switch (bma253->power) {
     case BMA253_POWER_MODE_SUSPEND:
@@ -299,6 +318,8 @@ done:
 
     sensor_itf_unlock(itf);
 #endif
+
+    delay_usec_blocking(2);    //zg
 
     return rc;
 }
@@ -395,32 +416,35 @@ bma253_get_temp(const struct bma253 * bma253,
     return 0;
 }
 
-static void
+
+    static void
 quad_to_axis_trigger(struct axis_trigger * axis_trigger,
-                     uint8_t quad_bits,
-                     const char * name_bits)
+        uint8_t quad_bits,
+        const char * name_bits)
 {
     axis_trigger->sign = (quad_bits >> 3) & 0x01;
     switch (quad_bits & 0x07) {
-    default:
-        BMA253_LOG(ERROR, "unknown %s quad bits 0x%02X\n",
-                   name_bits, quad_bits);
-    case 0x00:
-        axis_trigger->axis = -1;
-        axis_trigger->axis_known = false;
-        break;
-    case 0x01:
-        axis_trigger->axis = AXIS_X;
-        axis_trigger->axis_known = true;
-        break;
-    case 0x02:
-        axis_trigger->axis = AXIS_Y;
-        axis_trigger->axis_known = true;
-        break;
-    case 0x03:
-        axis_trigger->axis = AXIS_Z;
-        axis_trigger->axis_known = true;
-        break;
+        case 0x01:
+            axis_trigger->axis = AXIS_X;
+            axis_trigger->axis_known = true;
+            BMA253_LOG(INFO, "tap from %c X axis\n", axis_trigger->sign ? '+' : '-');
+            break;
+        case (1 << 1):
+            axis_trigger->axis = AXIS_Y;
+            axis_trigger->axis_known = true;
+            BMA253_LOG(INFO, "tap from %c Y axis\n", axis_trigger->sign ? '+' : '-');
+            break;
+        case (1 << 2):
+            axis_trigger->axis = AXIS_Z;
+            axis_trigger->axis_known = true;
+            BMA253_LOG(INFO, "tap from %c Z axis\n", axis_trigger->sign ? '+' : '-');
+            break;
+        default:
+            BMA253_LOG(INFO, "unknown %s quad bits 0x%02X\n",
+                    name_bits, quad_bits);
+            axis_trigger->axis = -1;
+            axis_trigger->axis_known = false;
+            break;
     }
 }
 
@@ -839,6 +863,7 @@ int
 bma253_set_softreset(const struct bma253 * bma253)
 {
     int rc;
+    uint8_t regv;
 
     rc = set_register((struct bma253 *)bma253, REG_ADDR_BGW_SOFTRESET, REG_VALUE_SOFT_RESET);
     if (rc != 0) {
@@ -846,6 +871,9 @@ bma253_set_softreset(const struct bma253 * bma253)
     }
 
     delay_msec(2);
+
+
+    rc = get_registers((struct bma253 *)bma253, REG_ADDR_PMU_RANGE, &regv, 1);   //zg
 
     return 0;
 }
@@ -913,10 +941,24 @@ bma253_set_int_enable(const struct bma253 * bma253,
               (int_enable->slow_no_mot_y_int_enable << 1) |
               (int_enable->slow_no_mot_x_int_enable << 0);
 
-    rc = set_register((struct bma253 *)bma253, REG_ADDR_INT_EN_0, data[0]);
-    if (rc != 0) {
-        return rc;
-    }
+    int retry = 2;
+
+    do {    //zg
+        uint8_t regv;
+        rc = set_register((struct bma253 *)bma253, REG_ADDR_INT_EN_0, data[0]);
+        if (rc != 0) {
+            return rc;
+        }
+
+        rc = get_registers((struct bma253 *)bma253, REG_ADDR_INT_EN_0, &regv, 1);    //zg
+
+        if (regv == data[0]) {
+            break;
+        } else {
+            delay_msec(1);
+        }
+    } while (retry--);
+
     rc = set_register((struct bma253 *)bma253, REG_ADDR_INT_EN_1, data[1]);
     if (rc != 0) {
         return rc;
@@ -1039,6 +1081,7 @@ bma253_set_int_routes(const struct bma253 * bma253,
 {
     uint8_t data[3];
     int rc;
+    uint8_t regv;   //zg
 
     data[0] = (((int_routes->flat_int_route & INT_ROUTE_PIN_1) != 0) << 7) |
               (((int_routes->orient_int_route & INT_ROUTE_PIN_1) != 0) << 6) |
@@ -1065,10 +1108,15 @@ bma253_set_int_routes(const struct bma253 * bma253,
               (((int_routes->high_g_int_route & INT_ROUTE_PIN_2) != 0) << 1) |
               (((int_routes->low_g_int_route & INT_ROUTE_PIN_2) != 0) << 0);
 
+    rc = get_registers((struct bma253 *)bma253, REG_ADDR_INT_MAP_0, &regv, 1);  //zg
+
     rc = set_register((struct bma253 *)bma253, REG_ADDR_INT_MAP_0, data[0]);
     if (rc != 0) {
         return rc;
     }
+
+    rc = get_registers((struct bma253 *)bma253, REG_ADDR_INT_MAP_0, &regv, 1);  //zg
+
     rc = set_register((struct bma253 *)bma253, REG_ADDR_INT_MAP_1, data[1]);
     if (rc != 0) {
         return rc;
@@ -2799,6 +2847,7 @@ reset_and_recfg(struct bma253 * bma253)
         return rc;
     }
 
+
     rc = bma253_set_g_range(bma253, cfg->g_range);
     if (rc != 0) {
         return rc;
@@ -4145,7 +4194,15 @@ bma253_wait_for_tap(struct bma253 * bma253,
         goto done;
     }
 
+    rc = bma253_set_int_latch(bma253, false, INT_LATCH_LATCHED);
+    if (rc != 0) {
+        return rc;
+    }
+
+    pdd->registered_mask |= BMA253_NOTIFY_MASK;
+
     wait_interrupt(&bma253->intr, pdd->int_num);
+
 
     rc = bma253_set_int_enable(bma253, &int_enable_org);
     if (rc != 0) {
@@ -4564,6 +4621,9 @@ sensor_driver_set_notification(struct sensor * sensor,
     struct int_routes int_routes;
     struct bma253_private_driver_data *pdd;
 
+
+    BMA253_LOG(ERROR, "dd_set_notify %d\n", sensor_event_type);
+
     if ((sensor_event_type & ~(SENSOR_EVENT_TYPE_DOUBLE_TAP |
                                SENSOR_EVENT_TYPE_SINGLE_TAP)) != 0) {
         return SYS_EINVAL;
@@ -4626,8 +4686,14 @@ sensor_driver_set_notification(struct sensor * sensor,
     int_enable.s_tap_int_enable         = sensor_event_type &
                                           SENSOR_EVENT_TYPE_SINGLE_TAP;
     int_enable.d_tap_int_enable         = sensor_event_type &
-                                          SENSOR_EVENT_TYPE_DOUBLE_TAP;
+        SENSOR_EVENT_TYPE_DOUBLE_TAP;
+
+    rc = bma253_set_int_latch(bma253, true, INT_LATCH_LATCHED);
+
+    int_enable.slope_z_int_enable   = 0;    //zg: TODO
     rc = bma253_set_int_enable(bma253, &int_enable);
+
+
 
 done:
     if (rc != 0) {
@@ -4654,11 +4720,16 @@ sensor_driver_handle_interrupt(struct sensor * sensor)
     bma253 = (struct bma253 *)SENSOR_GET_DEVICE(sensor);
     pdd = &bma253->pdd;
 
+    BMA253_LOG(DEBUG, "sensor drv isr\n");   //zg
+
     rc = bma253_get_int_status(bma253, &int_status);
     if (rc != 0) {
         BMA253_LOG(ERROR, "Cound not read int status err=0x%02x\n", rc);
         return rc;
     }
+
+    rc = bma253_set_int_latch(bma253, true, INT_LATCH_LATCHED);
+    BMA253_LOG(ERROR, "registered_mask: %x %d\n", pdd->registered_mask, int_status.d_tap_int_active);   //zg
 
     if (pdd->registered_mask & BMA253_NOTIFY_MASK) {
         if (int_status.s_tap_int_active) {
@@ -4667,6 +4738,7 @@ sensor_driver_handle_interrupt(struct sensor * sensor)
 
         if (int_status.d_tap_int_active) {
             sensor_mgr_put_notify_evt(&pdd->notify_ctx, SENSOR_EVENT_TYPE_DOUBLE_TAP);
+            BMA253_LOG(ERROR, "DT Event Sent\n");
         }
     }
 
