@@ -60,9 +60,10 @@ TEST_CASE_SELF(log_test_case_level)
         TEST_ASSERT(log_level_get(i) == 0);
     }
 
-    /* Level too great. */
-    rc = log_level_set(100, 16);
-    TEST_ASSERT(rc == SYS_EINVAL);
+    /* Level too great.  Ensure saturation at LOG_LEVEL_MAX. */
+    rc = log_level_set(100, LOG_LEVEL_MAX + 1);
+    TEST_ASSERT(rc == 0);
+    TEST_ASSERT(log_level_get(100) == LOG_LEVEL_MAX);
 
     /* Ensure all modules can be configured. */
     for (i = 0; i < 256; i++) {

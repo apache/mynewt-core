@@ -47,8 +47,8 @@ log_level_set(uint8_t module, uint8_t level)
 {
     uint8_t *byte;
 
-    if (level > 0x0f) {
-        return SYS_EINVAL;
+    if (level > LOG_LEVEL_MAX) {
+        level = LOG_LEVEL_MAX;
     }
 
     byte = &log_level_map[module / 2];
