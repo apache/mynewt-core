@@ -332,19 +332,58 @@ bma253_get_chip_id(const struct bma253 * bma253,
 }
 
 static void
-compute_accel_data(struct accel_data * accel_data,
-                   const uint8_t * raw_data,
-                   float accel_scale)
+compute_accel_data(
+        const struct bma253 *bma253,
+        struct accel_data   *accel_data,
+        uint8_t             data_len,
+        const uint8_t       *raw_data,
+        float               accel_scale)
 {
     int16_t raw_accel;
+    uint8_t model_shift = BMA253_ACCEL_BIT_SHIFT;
+    uint8_t i;
 
-    raw_accel = (raw_data[0] >> 4) | (raw_data[1] << 4);
-    raw_accel <<= 4;
-    raw_accel >>= 4;
+    BMA253_UNUSED_VAR(bma253);
 
-    accel_data->accel_g = (float)raw_accel * accel_scale;
-    accel_data->new_data = raw_data[0] & 0x01;
+    for (i = 0; i <  data_len; i++) {
+        raw_accel = (int16_t)(raw_data[(i<<1)] & BMA253_DATA_LSB_MASK) |
+            (int16_t)(raw_data[(i<<1) + 1] << 8);
+        raw_accel >>= model_shift;
+
+        accel_data[i].accel_g = (float)raw_accel * accel_scale;
+        accel_data[i].new_data = raw_data[(i<<1)] & 0x01;
+    }
 }
+
+
+    static int
+get_accel_scale(
+        const struct bma253 *bma253,
+        enum bma253_g_range g_range,
+        float               *accel_scale)
+{
+    BMA253_UNUSED_VAR(bma253);
+
+    switch (g_range) {
+    case BMA253_G_RANGE_2:
+        *accel_scale = BMA253_G_SCALE_2;
+        break;
+    case BMA253_G_RANGE_4:
+        *accel_scale = BMA253_G_SCALE_4;
+        break;
+    case BMA253_G_RANGE_8:
+        *accel_scale = BMA253_G_SCALE_8;
+        break;
+    case BMA253_G_RANGE_16:
+        *accel_scale = BMA253_G_SCALE_16;
+        break;
+    default:
+        return SYS_EINVAL;
+    }
+
+    return 0;
+}
+
 
 int
 bma253_get_accel(const struct bma253 * bma253,
@@ -354,47 +393,40 @@ bma253_get_accel(const struct bma253 * bma253,
 {
     float accel_scale;
     uint8_t base_addr;
-    uint8_t data[2];
+    uint8_t data[6] = "";
+    uint8_t len = 2;
     int rc;
 
-    switch (g_range) {
-    case BMA253_G_RANGE_2:
-        accel_scale = 0.00098;
-        break;
-    case BMA253_G_RANGE_4:
-        accel_scale = 0.00195;
-        break;
-    case BMA253_G_RANGE_8:
-        accel_scale = 0.00391;
-        break;
-    case BMA253_G_RANGE_16:
-        accel_scale = 0.00781;
-        break;
-    default:
-        return SYS_EINVAL;
+    rc = get_accel_scale(bma253, g_range, &accel_scale);
+    if (0 != rc) {
+        return rc;
     }
 
     switch (axis) {
-    case AXIS_X:
-        base_addr = REG_ADDR_ACCD_X_LSB;
-        break;
-    case AXIS_Y:
-        base_addr = REG_ADDR_ACCD_Y_LSB;
-        break;
-    case AXIS_Z:
-        base_addr = REG_ADDR_ACCD_Z_LSB;
-        break;
-    default:
-        return SYS_EINVAL;
+        case AXIS_ALL:
+            base_addr = REG_ADDR_ACCD_X_LSB;
+            len = 6;
+            break;
+        case AXIS_X:
+            base_addr = REG_ADDR_ACCD_X_LSB;
+            break;
+        case AXIS_Y:
+            base_addr = REG_ADDR_ACCD_Y_LSB;
+            break;
+        case AXIS_Z:
+            base_addr = REG_ADDR_ACCD_Z_LSB;
+            break;
+        default:
+            return SYS_EINVAL;
     }
 
     rc = get_registers((struct bma253 *)bma253, base_addr,
-                       data, sizeof(data) / sizeof(*data));
+                       data, len);
     if (rc != 0) {
         return rc;
     }
 
-    compute_accel_data(accel_data, data, accel_scale);
+    compute_accel_data(bma253, accel_data, (len >> 1), data, accel_scale);
 
     return 0;
 }
@@ -2772,25 +2804,14 @@ bma253_get_fifo(const struct bma253 * bma253,
                 struct accel_data * accel_data)
 {
     float accel_scale;
-    uint8_t size, iter;
+    uint8_t size;
     uint8_t data[AXIS_ALL << 1];
     int rc;
 
-    switch (g_range) {
-    case BMA253_G_RANGE_2:
-        accel_scale = 0.00098;
-        break;
-    case BMA253_G_RANGE_4:
-        accel_scale = 0.00195;
-        break;
-    case BMA253_G_RANGE_8:
-        accel_scale = 0.00391;
-        break;
-    case BMA253_G_RANGE_16:
-        accel_scale = 0.00781;
-        break;
-    default:
-        return SYS_EINVAL;
+
+    rc = get_accel_scale(bma253, g_range, &accel_scale);
+    if (0 != rc) {
+        return rc;
     }
 
     switch (fifo_data) {
@@ -2811,11 +2832,10 @@ bma253_get_fifo(const struct bma253 * bma253,
         return rc;
     }
 
-    for (iter = 0; iter < size; iter += 2) {
-        compute_accel_data(accel_data + (iter >> 1),
-                           data + iter,
-                           accel_scale);
-    }
+    compute_accel_data(bma253, accel_data,
+            (size >> 1),
+            data,
+            accel_scale);
 
     return 0;
 }
@@ -4302,22 +4322,8 @@ bma253_poll_read(struct sensor * sensor,
     if ((sensor_type & SENSOR_TYPE_ACCELEROMETER) != 0) {
         rc = bma253_get_accel(bma253,
                               cfg->g_range,
-                              AXIS_X,
-                              accel_data + AXIS_X);
-        if (rc != 0) {
-            return rc;
-        }
-        rc = bma253_get_accel(bma253,
-                              cfg->g_range,
-                              AXIS_Y,
-                              accel_data + AXIS_Y);
-        if (rc != 0) {
-            return rc;
-        }
-        rc = bma253_get_accel(bma253,
-                              cfg->g_range,
-                              AXIS_Z,
-                              accel_data + AXIS_Z);
+                              AXIS_ALL,
+                              accel_data);
         if (rc != 0) {
             return rc;
         }

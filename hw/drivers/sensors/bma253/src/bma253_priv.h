@@ -26,6 +26,7 @@
 extern "C" {
 #endif
 
+
 /*
  * Full register map:
  */
@@ -99,6 +100,18 @@ extern "C" {
 #define REG_VALUE_CHIP_ID    0xFA
 /* Magical value that is used to initiate a full reset */
 #define REG_VALUE_SOFT_RESET 0xB6
+
+
+    /* variant specifc defines */
+#define BMA253_G_SCALE_2     (0.000977f)
+#define BMA253_G_SCALE_4     (0.001953f)
+#define BMA253_G_SCALE_8     (0.003906f)
+#define BMA253_G_SCALE_16     (0.007813f)
+#define BMA253_ACCEL_BIT_SHIFT 4
+
+#define BMA253_DATA_LSB_MASK 0xfc
+
+
 
 /* Get the chip ID */
 int
