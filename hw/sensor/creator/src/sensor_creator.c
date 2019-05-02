@@ -92,6 +92,9 @@
 #include <bme680/bme680.h>
 #endif
 
+#if MYNEWT_VAL(KXTJ3_OFB)
+#include <kxtj3/kxtj3.h>
+#endif
 
 /* Driver definitions */
 #if MYNEWT_VAL(DRV2605_OFB)
@@ -168,6 +171,10 @@ static struct lis2ds12 lis2ds12;
 
 #if MYNEWT_VAL(BME680_OFB)
 static struct bme680 bme680;
+#endif
+
+#if MYNEWT_VAL(KXTJ3_OFB)
+static struct kxtj3 kxtj3;
 #endif
 
 /**
@@ -414,6 +421,17 @@ config_ms5837_sensor(void)
     os_dev_close(dev);
     return rc;
 }
+#endif
+
+#if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(KXTJ3_OFB)
+static struct sensor_itf i2c_0_itf_kxtj3 = {
+    .si_type = SENSOR_ITF_I2C,
+    .si_num  = 0,
+    .si_addr = 0x0F,
+    //.si_ints = {
+    //    { MYNEWT_VAL(LIS2DS12_INT1_PIN_HOST), MYNEWT_VAL(LIS2DS12_INT1_PIN_DEVICE),
+    //      MYNEWT_VAL(LIS2DS12_INT1_CFG_ACTIVE)}}
+};
 #endif
 
 /**
@@ -1126,6 +1144,36 @@ config_bme680_sensor(void)
 }
 #endif
 
+/**
+ * KXTJ3 Sensor default configuration used by the creator package
+ *
+ * @return 0 on success, non-zero on failure
+ */
+#if MYNEWT_VAL(KXTJ3_OFB)
+static int
+config_kxtj3_sensor(void)
+{
+    int rc;
+    struct os_dev *dev;
+    struct kxtj3_cfg cfg;
+
+    dev = (struct os_dev *) os_dev_open("kxtj3_0", OS_TIMEOUT_NEVER, NULL);
+    assert(dev != NULL);
+
+    cfg.oper_mode = KXTJ3_OPER_MODE_OPERATING;
+    cfg.perf_mode = KXTJ3_PERF_MODE_HIGH_RES_12BIT;
+    cfg.grange = KXTJ3_GRANGE_4G;
+    cfg.odr = KXTJ3_ODR_50HZ;
+    cfg.sensors_mask = SENSOR_TYPE_ACCELEROMETER;
+
+    rc = kxtj3_config((struct kxtj3 *) dev, &cfg);
+    assert(rc == 0);
+
+    os_dev_close(dev);
+    return rc;
+}
+#endif
+
 /* Sensor device creation */
 void
 sensor_dev_create(void)
@@ -1310,6 +1358,15 @@ sensor_dev_create(void)
     assert(rc == 0);
 
     rc = config_bme680_sensor();
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(KXTJ3_OFB)
+    rc = os_dev_create((struct os_dev *) &kxtj3, "kxtj3_0",
+      OS_DEV_INIT_PRIMARY, 0, kxtj3_init, (void *)&i2c_0_itf_kxtj3);
+    assert(rc == 0);
+
+    rc = config_kxtj3_sensor();
     assert(rc == 0);
 #endif
 }
