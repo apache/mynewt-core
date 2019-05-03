@@ -30,6 +30,7 @@
 #else
 #include "hal/hal_i2c.h"
 #include "i2cn/i2cn.h"
+#include "hal/hal_spi.h"
 #endif
 
 #if MYNEWT_VAL(BMA253_LOG)
@@ -178,7 +179,7 @@ get_register(struct bma253 * bma253,
     oper.len     = 1;
     oper.buffer  = &addr;
 
-    rc = i2cn_master_write(itf->si_num, &oper, OS_TICKS_PER_SEC / 10, 0,    //zg
+    rc = i2cn_master_write(itf->si_num, &oper, OS_TICKS_PER_SEC / 10, 0,    //zg, last_op set to 0
                            MYNEWT_VAL(BMA253_I2C_RETRIES));
     if (rc != 0) {
         BMA253_LOG(ERROR, "I2C access failed at address 0x%02X\n", addr);
@@ -229,7 +230,7 @@ get_registers(struct bma253 * bma253,
         return rc;
     }
 
-    rc = i2cn_master_write(itf->si_num, &oper, OS_TICKS_PER_SEC / 10, 1,
+    rc = i2cn_master_write(itf->si_num, &oper, OS_TICKS_PER_SEC / 10, 0,    //zg, set last_op to 0
                            MYNEWT_VAL(BMA253_I2C_RETRIES));
     if (rc != 0) {
         BMA253_LOG(ERROR, "I2C access failed at address 0x%02X\n", addr);
@@ -4615,6 +4616,7 @@ sensor_driver_unset_notification(struct sensor * sensor,
 #endif
 }
 
+
 static int
 sensor_driver_set_notification(struct sensor * sensor,
                                sensor_event_type_t sensor_event_type)
@@ -4700,9 +4702,9 @@ sensor_driver_set_notification(struct sensor * sensor,
     rc = bma253_set_int_enable(bma253, &int_enable);
 
 
-
 done:
     if (rc != 0) {
+        BMA253_LOG(ERROR, "error setting notification: %d\n", rc);
         pdd->notify_ctx.snec_evtype &= ~sensor_event_type;
         pdd->registered_mask &= ~BMA253_NOTIFY_MASK;
         disable_intpin(bma253);
