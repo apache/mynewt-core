@@ -25,6 +25,7 @@
 #include "sensor/accel.h"
 #include "sensor/temperature.h"
 
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -200,6 +201,10 @@ struct bma253_private_driver_data {
     uint8_t int_num;
     uint8_t int_route;
     uint8_t int_ref_cnt;
+
+
+    //zg: check for potential improvement
+    uint8_t fifo_buf[31 * 6];
 };
 
 /* The device itself */

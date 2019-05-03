@@ -186,6 +186,12 @@ get_registers(struct bma253 * bma253,
     struct sensor_itf *itf = SENSOR_GET_ITF(&bma253->sensor);
     int rc;
 
+    if (size > 0) {
+    } else {
+        BMA253_LOG(ERROR, "try to read 0 byte at address 0x%02X\n", addr);
+        return SYS_EINVAL;
+    }
+
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
     rc = bus_node_simple_write_read_transact(itf->si_dev, &addr, 1, data, size);
 #else
@@ -218,7 +224,7 @@ get_registers(struct bma253 * bma253,
                    addr, size);
     }
 
-    if (1 == size) {
+    if ((1 == size) || (0 != rc)) {
         BMA253_LOG(DEBUG, "bus_read@0x%02X:%02X rc:%d\n", addr, data[0], rc);
     }
 
@@ -316,7 +322,7 @@ compute_accel_data(
 
     BMA253_UNUSED_VAR(bma253);
 
-    for (i = 0; i <  data_len; i++) {
+    for (i = 0; i < data_len; i++) {
         raw_accel = (int16_t)(raw_data[(i<<1)] & BMA253_DATA_LSB_MASK) |
             (int16_t)(raw_data[(i<<1) + 1] << 8);
         raw_accel >>= model_shift;
@@ -327,6 +333,7 @@ compute_accel_data(
 }
 
 
+//zg: to improve
     static int
 get_accel_scale(
         const struct bma253 *bma253,
@@ -2765,53 +2772,119 @@ bma253_set_fifo_cfg(const struct bma253 * bma253,
         break;
     }
 
+    data |= (0x03 << 2);    //zg
+
     return set_register((struct bma253 *)bma253, REG_ADDR_FIFO_CONFIG_1, data);
 }
 
-int
-bma253_get_fifo(const struct bma253 * bma253,
-                enum bma253_g_range g_range,
-                enum fifo_data fifo_data,
-                struct accel_data * accel_data)
-{
-    float accel_scale;
-    uint8_t size;
-    uint8_t data[AXIS_ALL << 1];
-    int rc;
 
+struct sensor_data_subscriber_info {
+    sensor_data_func_t read_func;
+    void *read_arg;
+};
+
+    int
+bma253_read_and_handle_fifo_data(
+        struct bma253           *bma253,
+        enum fifo_data          fifo_data,
+        struct sensor_data_subscriber_info *sdsi)
+{
+    int     rc;
+    uint32_t i;
+    uint8_t regv;
+
+    float   accel_scale;
+
+    uint8_t *ff_buf = bma253->pdd.fifo_buf;
+    uint32_t size;
+    uint32_t frm_size;
+
+    uint8_t ff_frm_cnt = 0; //current fifo frame counter
+    bool    ff_or = 0;  // fifo over run bit
+
+    struct accel_data   accel_data[AXIS_ALL];
+    struct sensor_accel_data sad;
+
+    enum bma253_g_range g_range = bma253->cfg.g_range;
+
+    struct sensor *sensor = &bma253->sensor;
 
     rc = get_accel_scale(bma253, g_range, &accel_scale);
     if (0 != rc) {
         return rc;
     }
 
+    //zg: to improve
     switch (fifo_data) {
     case FIFO_DATA_X_AND_Y_AND_Z:
-        size = AXIS_ALL << 1;
+        frm_size = AXIS_ALL << 1;
         break;
     case FIFO_DATA_X_ONLY:
     case FIFO_DATA_Y_ONLY:
     case FIFO_DATA_Z_ONLY:
-        size = 1 << 1;
+        frm_size = 1 << 1;
         break;
     default:
         return SYS_EINVAL;
     }
 
-    rc = get_registers((struct bma253 *)bma253, REG_ADDR_FIFO_DATA, data, size);
-    if (rc != 0) {
+    rc = bma253_get_fifo_status(bma253, &ff_or, &ff_frm_cnt);
+    if (0 == rc) {
+        if (!ff_or) {
+        } else {
+            BMA253_LOG(WARN, "fifo_overrun: 0x%x\n", ff_frm_cnt);
+            //force the frame counter to be the max
+            ff_frm_cnt = SPEC_MAX_FIFO_DEPTH;
+        }
+    } else {
         return rc;
     }
 
-    compute_accel_data(bma253, accel_data,
-            (size >> 1),
-            data,
-            accel_scale);
+    if (ff_frm_cnt > 0) {
+    } else {
+        //exit mildly
+        return 0;
+    }
+
+    size = ff_frm_cnt * frm_size;
+
+    rc = get_registers((struct bma253 *)bma253, REG_ADDR_FIFO_DATA, ff_buf, size);
+    if (0 == rc) {
+        if (ff_or) {
+            regv = 0x8c;
+            rc = get_register(bma253, REG_ADDR_FIFO_CONFIG_1, &regv);
+            if (0 == rc) {
+                set_register(bma253, REG_ADDR_FIFO_CONFIG_1, regv);
+            }
+        }
+    } else {
+        return rc;
+    }
+
+    for (i = 0; i < ff_frm_cnt; i++) {
+        compute_accel_data(bma253, accel_data,
+                (frm_size >> 1),
+                ff_buf + i * frm_size,
+                accel_scale);
+
+
+        sad.sad_x = accel_data[AXIS_X].accel_g;
+        sad.sad_y = accel_data[AXIS_Y].accel_g;
+        sad.sad_z = accel_data[AXIS_Z].accel_g;
+        sad.sad_x_is_valid = 1;
+        sad.sad_y_is_valid = 1;
+        sad.sad_z_is_valid = 1;
+
+        if (sdsi->read_func(sensor, sdsi->read_arg, &sad, SENSOR_TYPE_ACCELEROMETER)) {
+            break;
+        }
+    }
+
 
     return 0;
 }
 
-static int
+    static int
 reset_and_recfg(struct bma253 * bma253)
 {
     const struct bma253_cfg * cfg;
@@ -2982,7 +3055,7 @@ reset_and_recfg(struct bma253 * bma253)
         return rc;
     }
 
-    fifo_cfg.fifo_mode = FIFO_MODE_BYPASS;
+    fifo_cfg.fifo_mode = FIFO_MODE_STREAM;  //zg
     fifo_cfg.fifo_data = FIFO_DATA_X_AND_Y_AND_Z;
 
     rc = bma253_set_fifo_cfg(bma253, &fifo_cfg);
@@ -3661,12 +3734,12 @@ bma253_stream_read(struct sensor *sensor,
     struct int_enable int_enable = { 0 };
     os_time_t time_ticks;
     os_time_t stop_ticks;
-    struct accel_data accel_data[AXIS_ALL];
-    struct sensor_accel_data sad;
     struct bma253_private_driver_data *pdd;
 
+    struct sensor_data_subscriber_info sdsi;
+
     if ((sensor_type & ~(SENSOR_TYPE_ACCELEROMETER |
-                         SENSOR_TYPE_AMBIENT_TEMPERATURE)) != 0) {
+                    SENSOR_TYPE_AMBIENT_TEMPERATURE)) != 0) {
         return SYS_EINVAL;
     }
 
@@ -3717,62 +3790,54 @@ bma253_stream_read(struct sensor *sensor,
         stop_ticks = os_time_get() + time_ticks;
     }
 
+    sdsi.read_func = read_func;
+    sdsi.read_arg = read_arg;
+
     for (;;) {
 #if MYNEWT_VAL(BMA253_INT_ENABLE)
         wait_interrupt(&bma253->intr, pdd->int_num);
+        BMA253_UNUSED_VAR(cfg);
 #else
         switch (cfg->filter_bandwidth) {
-        case BMA253_FILTER_BANDWIDTH_7_81_HZ:
-            delay_msec(128);
-            break;
-        case BMA253_FILTER_BANDWIDTH_15_63_HZ:
-            delay_msec(64);
-            break;
-        case BMA253_FILTER_BANDWIDTH_31_25_HZ:
-            delay_msec(32);
-            break;
-        case BMA253_FILTER_BANDWIDTH_62_5_HZ:
-            delay_msec(16);
-            break;
-        case BMA253_FILTER_BANDWIDTH_125_HZ:
-            delay_msec(8);
-            break;
-        case BMA253_FILTER_BANDWIDTH_250_HZ:
-            delay_msec(4);
-            break;
-        case BMA253_FILTER_BANDWIDTH_500_HZ:
-            delay_msec(2);
-            break;
-        case BMA253_FILTER_BANDWIDTH_1000_HZ:
-            delay_msec(1);
-            break;
-        default:
-            delay_msec(1000);
-            break;
+            case BMA253_FILTER_BANDWIDTH_7_81_HZ:
+                delay_msec(128);
+                break;
+            case BMA253_FILTER_BANDWIDTH_15_63_HZ:
+                delay_msec(64);
+                break;
+            case BMA253_FILTER_BANDWIDTH_31_25_HZ:
+                delay_msec(32);
+                break;
+            case BMA253_FILTER_BANDWIDTH_62_5_HZ:
+                delay_msec(16);
+                break;
+            case BMA253_FILTER_BANDWIDTH_125_HZ:
+                delay_msec(8);
+                break;
+            case BMA253_FILTER_BANDWIDTH_250_HZ:
+                delay_msec(4);
+                break;
+            case BMA253_FILTER_BANDWIDTH_500_HZ:
+                delay_msec(2);
+                break;
+            case BMA253_FILTER_BANDWIDTH_1000_HZ:
+                delay_msec(1);
+                break;
+            default:
+                delay_msec(1000);
+                break;
         }
 #endif
-
-        rc = bma253_get_fifo(bma253,
-                             cfg->g_range,
-                             FIFO_DATA_X_AND_Y_AND_Z,
-                             accel_data);
+        rc = bma253_read_and_handle_fifo_data(bma253,
+                FIFO_DATA_X_AND_Y_AND_Z,
+                &sdsi);
         if (rc != 0) {
             goto done;
         }
 
-        sad.sad_x = accel_data[AXIS_X].accel_g;
-        sad.sad_y = accel_data[AXIS_Y].accel_g;
-        sad.sad_z = accel_data[AXIS_Z].accel_g;
-        sad.sad_x_is_valid = 1;
-        sad.sad_y_is_valid = 1;
-        sad.sad_z_is_valid = 1;
-
-        if (read_func(sensor, read_arg, &sad, SENSOR_TYPE_ACCELEROMETER)) {
-            break;
-        }
 
         if (time_ms != 0 && OS_TIME_TICK_GT(os_time_get(), stop_ticks)) {
-                break;
+            break;
         }
     }
 
@@ -4252,6 +4317,8 @@ sensor_driver_read(struct sensor *sensor,
     if (cfg->read_mode == BMA253_READ_M_POLL) {
         rc = bma253_poll_read(sensor, sensor_type, data_func, data_arg, timeout);
     } else {
+        bma253_dump_reg(bma253);
+
         rc = bma253_stream_read(sensor, sensor_type, data_func, data_arg, timeout);
     }
 
@@ -4595,6 +4662,8 @@ void bma253_dump_reg(struct bma253 * bma253)
     for (i = REG_ADDR_FIFO_STATUS; i < (REG_ADDR_INT_RST_LATCH + 1); i++) {
         get_register(bma253, i, &regv);
     }
+
+    get_register(bma253, REG_ADDR_FIFO_CONFIG_1, &regv);
 }
 
 static int

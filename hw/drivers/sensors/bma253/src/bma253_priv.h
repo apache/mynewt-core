@@ -101,6 +101,8 @@ extern "C" {
 /* Magical value that is used to initiate a full reset */
 #define REG_VALUE_SOFT_RESET 0xB6
 
+#define SPEC_MAX_FIFO_DEPTH  31
+
 
     /* variant specifc defines */
 #define BMA253_G_SCALE_2     (0.000977f)
@@ -661,6 +663,9 @@ bma253_get_fifo(const struct bma253 * bma253,
                 enum bma253_g_range g_range,
                 enum fifo_data fifo_data,
                 struct accel_data * accel_data);
+
+
+void bma253_dump_reg(struct bma253 * bma253);
 
 #ifdef __cplusplus
 }
