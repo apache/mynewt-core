@@ -31,5 +31,9 @@ __assert_func(const char *file, int line, const char *func, const char *e)
     console_blocking_mode();
     OS_PRINT_ASSERT(file, line, func, e);
 
+#if MYNEWT_VAL(OS_ASSERT_CB)
+    os_assert_cb();
+#endif
+
     hal_system_reset();
 }
