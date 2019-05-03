@@ -4617,6 +4617,16 @@ sensor_driver_unset_notification(struct sensor * sensor,
 }
 
 
+void bma253_dump_reg(struct bma253 * bma253)
+{
+    uint8_t i;
+    uint8_t regv;
+
+    for (i = REG_ADDR_FIFO_STATUS; i < (REG_ADDR_INT_RST_LATCH + 1); i++) {
+        get_register(bma253, i, &regv);
+    }
+}
+
 static int
 sensor_driver_set_notification(struct sensor * sensor,
                                sensor_event_type_t sensor_event_type)
@@ -4701,6 +4711,7 @@ sensor_driver_set_notification(struct sensor * sensor,
     int_enable.slope_z_int_enable   = 0;    //zg: TODO
     rc = bma253_set_int_enable(bma253, &int_enable);
 
+    bma253_dump_reg(bma253);
 
 done:
     if (rc != 0) {
