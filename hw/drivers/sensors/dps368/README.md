@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <!---
 #Copyright 2019 Infineon Technologies AG
 #
@@ -16,6 +17,8 @@
 --->
 
 
+=======
+>>>>>>> Infineon dps368 support addition as off board sensor
 # Infineon DPS3xx Digital Baromteric Pressure Sensor
 Software Driver Package v1.0 for Apache Mynewt OS
 <br>(c) Infineon Technologies AG
