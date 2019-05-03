@@ -21,10 +21,6 @@
 #include "hal/hal_system.h"
 #include "nrf.h"
 
-#ifdef MYNEWT_VAL_MCU_PRE_BKPT_CB
-extern void MYNEWT_VAL(MCU_PRE_BKPT_CB)(void);
-#endif
-
 /**
  * Function called at startup. Called after BSS and .data initialized but
  * prior to the _start function.
@@ -56,10 +52,6 @@ hal_system_reset(void)
             /*
              * If debugger is attached, breakpoint here.
              */
-#ifdef MYNEWT_VAL_MCU_PRE_BKPT_CB
-            MYNEWT_VAL(MCU_PRE_BKPT_CB)();
-#endif
-
 #if !MYNEWT_VAL(MCU_DEBUG_IGNORE_BKPT)
             asm("bkpt");
 #endif
