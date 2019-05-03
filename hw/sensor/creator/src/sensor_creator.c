@@ -92,6 +92,10 @@
 #include <bme680/bme680.h>
 #endif
 
+#if MYNEWT_VAL(DPS368_OFB)
+#include <dps368/dps368.h>
+#endif
+
 
 /* Driver definitions */
 #if MYNEWT_VAL(DRV2605_OFB)
@@ -169,6 +173,11 @@ static struct lis2ds12 lis2ds12;
 #if MYNEWT_VAL(BME680_OFB)
 static struct bme680 bme680;
 #endif
+
+#if MYNEWT_VAL(DPS368_OFB)
+static struct dps368 dps368;
+#endif
+
 
 /**
  * If a UART sensor needs to be created, interface is defined in
@@ -384,6 +393,16 @@ static struct sensor_itf i2c_0_itf_bme680 = {
     .si_addr = 0x76,
 };
 #endif
+
+/*DPS368 itf instantioation*/
+#if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(DPS368_OFB)
+static struct sensor_itf i2c_0_itf_dps368 = {
+    .si_type = MYNEWT_VAL(DPS368_SHELL_ITF_TYPE),
+    .si_num  = MYNEWT_VAL(DPS368_SHELL_ITF_NUM),
+    .si_addr = MYNEWT_VAL(DPS368_SHELL_ITF_ADDR)
+};
+#endif
+
 
 /**
  * MS5837 Sensor default configuration used by the creator package
@@ -1126,6 +1145,42 @@ config_bme680_sensor(void)
 }
 #endif
 
+
+/*
+ * DPS368 Sensor default configuration used by the creator package
+ *
+ * @return 0 on success, non-zero on failure
+ */
+#if MYNEWT_VAL(DPS368_OFB)
+static int
+config_dps368_sensor(void)
+{
+    int rc;
+    struct os_dev *dev;
+    struct dps368_cfg_s cfg;
+
+    cfg.config_opt = DPS3xx_CONF_WITH_INIT_SEQUENCE | DPS3xx_RECONF_ALL;
+    cfg.mode = (dps3xx_operating_modes_e)MYNEWT_VAL(DPS368_DFLT_CONF_MODE);
+    cfg.odr_p = (dps3xx_odr_e) ( MYNEWT_VAL(DPS368_DFLT_CONF_ODR_P) << 4);
+    cfg.odr_t = (dps3xx_odr_e) ( MYNEWT_VAL(DPS368_DFLT_CONF_ODR_T) << 4);
+    cfg.osr_p = (dps3xx_osr_e)   MYNEWT_VAL(DPS368_DFLT_CONF_OSR_P);
+    cfg.osr_t = (dps3xx_osr_e)   MYNEWT_VAL(DPS368_DFLT_CONF_OSR_T);
+
+    cfg.chosen_type = SENSOR_TYPE_PRESSURE | SENSOR_TYPE_TEMPERATURE;
+
+    dev = (struct os_dev *) os_dev_open("dps368_0", OS_TIMEOUT_NEVER, NULL);
+    assert(dev != NULL);
+
+    rc = dps368_config((struct dps368 *) dev, &cfg);
+
+    os_dev_close(dev);
+    return rc;
+}
+#endif
+
+
+
+
 /* Sensor device creation */
 void
 sensor_dev_create(void)
@@ -1310,6 +1365,15 @@ sensor_dev_create(void)
     assert(rc == 0);
 
     rc = config_bme680_sensor();
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(DPS368_OFB)
+    rc = os_dev_create((struct os_dev *) &dps368, "dps368_0",
+      OS_DEV_INIT_PRIMARY, 0, dps368_init, (void *)&i2c_0_itf_dps368);
+    assert(rc == 0);
+
+    rc = config_dps368_sensor();
     assert(rc == 0);
 #endif
 }

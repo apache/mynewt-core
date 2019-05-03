@@ -74,6 +74,9 @@ syscfg.defs:
     BME680_OFB:
         description: 'BME680 is present'
         value: 0
+    DPS368_OFB:
+        description: 'DPS368 is present'
+        value: 0
 
     SENSOR_CREATOR_SYSINIT_STAGE:
         description: >
