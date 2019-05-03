@@ -70,6 +70,7 @@ os_error_t os_arch_os_start(void);
 void os_set_env(os_stack_t *);
 void os_arch_init_task_stack(os_stack_t *sf);
 void os_default_irq_asm(void);
+void os_assert_cb(void);
 
 #ifdef __cplusplus
 }
