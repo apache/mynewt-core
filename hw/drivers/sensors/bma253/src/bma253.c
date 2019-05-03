@@ -157,52 +157,22 @@ interrupt_handler(void * arg)
 }
 #endif
 
-static int
+
+static
+int get_registers(struct bma253 * bma253,
+        uint8_t addr,
+        uint8_t * data,
+        uint8_t size);
+
+static inline
+    int
 get_register(struct bma253 * bma253,
              uint8_t addr,
              uint8_t * data)
 {
-    struct sensor_itf *itf = SENSOR_GET_ITF(&bma253->sensor);
     int rc;
 
-#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
-    rc = bus_node_simple_write_read_transact(itf->si_dev, &addr, 1, data, 1);
-#else
-    struct hal_i2c_master_data oper;
-
-    rc = sensor_itf_lock(itf, MYNEWT_VAL(BMA253_ITF_LOCK_TMO));
-    if (rc) {
-        return rc;
-    }
-
-    oper.address = itf->si_addr;
-    oper.len     = 1;
-    oper.buffer  = &addr;
-
-    rc = i2cn_master_write(itf->si_num, &oper, OS_TICKS_PER_SEC / 10, 0,    //zg, last_op set to 0
-                           MYNEWT_VAL(BMA253_I2C_RETRIES));
-    if (rc != 0) {
-        BMA253_LOG(ERROR, "I2C access failed at address 0x%02X\n", addr);
-        goto err;
-    }
-
-    oper.address = itf->si_addr;
-    oper.len     = 1;
-    oper.buffer  = data;
-
-    rc = i2cn_master_read(itf->si_num, &oper, OS_TICKS_PER_SEC / 10, 1,
-                          MYNEWT_VAL(BMA253_I2C_RETRIES));
-    if (rc != 0) {
-        BMA253_LOG(ERROR, "I2C read failed at address 0x%02X single byte\n",
-                   addr);
-    }
-
-
-    BMA253_LOG(DEBUG, "bus_read@0x%02X:%02X\n", addr, data[0]);
-
-err:
-    sensor_itf_unlock(itf);
-#endif
+    rc = get_registers(bma253, addr, data, 1);
 
     return rc;
 }
@@ -249,7 +219,7 @@ get_registers(struct bma253 * bma253,
     }
 
     if (1 == size) {
-        BMA253_LOG(DEBUG, "bus_read@0x%02X:%02X\n", addr, data[0]);
+        BMA253_LOG(DEBUG, "bus_read@0x%02X:%02X rc:%d\n", addr, data[0], rc);
     }
 
 err:
@@ -306,7 +276,7 @@ done:
                    addr);
     }
 
-    BMA253_LOG(DEBUG, "bus_write@0x%02X:%02X\n", addr, data);
+    BMA253_LOG(DEBUG, "bus_write@0x%02X:%02X rc:%d\n", addr, data, rc);
 
     switch (bma253->power) {
     case BMA253_POWER_MODE_SUSPEND:
