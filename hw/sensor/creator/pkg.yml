@@ -58,5 +58,7 @@ pkg.deps.LPS33HW_OFB:
     - "@apache-mynewt-core/hw/drivers/sensors/lps33hw"
 pkg.deps.LPS33THW_OFB:
     - "@apache-mynewt-core/hw/drivers/sensors/lps33thw"
+pkg.deps.DPS368_OFB:
+    - "@apache-mynewt-core/hw/drivers/sensors/dps368"
 pkg.init:
     sensor_dev_create: 'MYNEWT_VAL(SENSOR_CREATOR_SYSINIT_STAGE)'
