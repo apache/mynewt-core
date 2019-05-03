@@ -91,6 +91,11 @@ const char *hal_reset_cause_str(void);
  */
 void hal_system_clock_start(void);
 
+/**
+ * Reset callback to be called before an reset happens inside hal_system_reset()
+ */
+void hal_system_reset_cb(void);
+
 #ifdef __cplusplus
 }
 #endif

@@ -25,10 +25,6 @@
 #include "hal/hal_system.h"
 #include "os_priv.h"
 
-#ifdef MYNEWT_VAL_MCU_PRE_BKPT_CB
-extern void MYNEWT_VAL(MCU_PRE_BKPT_CB)(void);
-#endif
-
 #if MYNEWT_VAL(OS_COREDUMP)
 #include "coredump/coredump.h"
 #endif
@@ -151,14 +147,14 @@ __assert_func(const char *file, int line, const char *func, const char *e)
     log_reboot(&lri);
 #endif
 
+#if MYNEWT_VAL(OS_ASSERT_CB)
+    os_assert_cb();
+#endif
+
     if (hal_debugger_connected()) {
        /*
         * If debugger is attached, breakpoint before the trap.
         */
-#ifdef MYNEWT_VAL_MCU_PRE_BKPT_CB
-       MYNEWT_VAL(MCU_PRE_BKPT_CB)();
-#endif
-
 #if !MYNEWT_VAL(MCU_DEBUG_IGNORE_BKPT)
        asm("bkpt");
 #endif

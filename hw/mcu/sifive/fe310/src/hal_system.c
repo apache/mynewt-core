@@ -22,6 +22,11 @@
 void
 hal_system_reset(void)
 {
+
+#if MYNEWT_VAL(HAL_SYSTEM_RESET_CB)
+    hal_system_reset_cb();
+#endif
+
     while(1) {
         if (hal_debugger_connected()) {
             asm ("ebreak");
