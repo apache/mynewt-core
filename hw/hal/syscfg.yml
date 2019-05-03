@@ -33,6 +33,10 @@ syscfg.defs:
             buffer of this size is allocated on the stack during verify
             operations.
         value: 16
+    HAL_SYSTEM_RESET_CB:
+        description: >
+            If set, hal system reset callback gets called inside hal_system_reset().
+        value: 0
 
 syscfg.vals.OS_DEBUG_MODE:
     HAL_FLASH_VERIFY_WRITES: 1

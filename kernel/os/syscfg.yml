@@ -171,6 +171,10 @@ syscfg.defs:
         description: >
             Sysinit stage for the Mynewt kernel.
         value: 0
+    OS_ASSERT_CB:
+        description: >
+            If set, assert callback gets called inside __assert_func()
+        value: 0
 
 syscfg.vals.OS_DEBUG_MODE:
     OS_CRASH_STACKTRACE: 1
