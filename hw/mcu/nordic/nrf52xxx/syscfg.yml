@@ -78,6 +78,13 @@ syscfg.defs:
             the breakpoint wherever it gets called, For example, reset and crash
        value: 0
 
+    MCU_PRE_BKPT_CB:
+       description: >
+            A callback which needs to get called before bkpt instruction is
+            executed, when a reset happens or when assert happens when the
+            debugger is connected.
+       value:
+
 # MCU peripherals definitions
     I2C_0:
         description: 'Enable nRF52xxx I2C (TWI) 0'
