@@ -18,6 +18,7 @@
  */
 
 #include <stdint.h>
+#include "os/mynewt.h"
 #include "mcu/cortex_m4.h"
 #include "hal/hal_system.h"
 #include "am_mcu_apollo.h"

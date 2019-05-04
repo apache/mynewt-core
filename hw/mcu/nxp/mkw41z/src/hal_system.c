@@ -17,7 +17,8 @@
  * under the License.
  */
 
-#include <mcu/cortex_m0.h>
+#include "os/mynewt.h"
+#include "mcu/cortex_m0.h"
 #include "hal/hal_system.h"
 
 void

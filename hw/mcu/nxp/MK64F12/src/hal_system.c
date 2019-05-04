@@ -17,7 +17,8 @@
  * under the License.
  */
 
-#include <mcu/cortex_m4.h>
+#include "os/mynewt.h"
+#include "mcu/cortex_m4.h"
 #include "hal/hal_system.h"
 
 int hal_debugger_connected(void)
