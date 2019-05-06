@@ -926,6 +926,7 @@ uint16_t hal_spi_tx_val(int spi_num, uint16_t val)
     }
     __HAL_DISABLE_INTERRUPTS(sr);
     spi_stat.tx++;
+    retval = 0;
     rc = HAL_SPI_TransmitReceive(&spi->handle,(uint8_t *)&val,
                                  (uint8_t *)&retval, len,
                                  STM32_HAL_SPI_TIMEOUT);
