@@ -60,7 +60,7 @@ repo.newt_compatibility:
     # Core 1.1.0+ requires newt 1.1.0+ (feature: self-overrides).
     # Core 1.4.0+ requires newt 1.4.0+ (feature: sync repo deps).
     # Core 1.5.0+ requires newt 1.5.0+ (feature: transient packages)
-    # Core 1.6.0+ requires newt 1.6.0+ (feature: choise)
+    # Core 1.6.0+ requires newt 1.6.0+ (feature: choice)
     1.6.0:
         1.6.0: good
     1.5.0:
@@ -87,7 +87,6 @@ repo.deps:
             mynewt_1_4_1_tag: 1.0.0
             mynewt_1_5_0_tag: 1.0.0
             mynewt_1_6_0_tag: 1.1.0
-
 
     mcuboot:
         type: github
