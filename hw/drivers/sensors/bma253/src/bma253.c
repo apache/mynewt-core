@@ -33,6 +33,7 @@
 #include "hal/hal_spi.h"
 #endif
 
+
 #if MYNEWT_VAL(BMA253_LOG)
 #include "modlog/modlog.h"
 #endif
@@ -141,6 +142,7 @@ wake_interrupt(struct bma253_int * interrupt)
     }
 }
 
+
 static void
 interrupt_handler(void * arg)
 {
@@ -224,8 +226,8 @@ get_registers(struct bma253 * bma253,
                    addr, size);
     }
 
-    if ((1 == size) || (0 != rc)) {
-        BMA253_LOG(DEBUG, "bus_read@0x%02X:%02X rc:%d\n", addr, data[0], rc);
+    if ((bma253->bus_rw_mon && (1 == size)) || (0 != rc)) {
+            BMA253_LOG(DEBUG, "bus_read@0x%02X:%02X rc:%d\n", addr, data[0], rc);
     }
 
 err:
@@ -282,7 +284,9 @@ done:
                    addr);
     }
 
-    BMA253_LOG(DEBUG, "bus_write@0x%02X:%02X rc:%d\n", addr, data, rc);
+    if (bma253->bus_rw_mon || (0 != rc)) {
+        BMA253_LOG(DEBUG, "bus_write@0x%02X:%02X rc:%d\n", addr, data, rc);
+    }
 
     switch (bma253->power) {
     case BMA253_POWER_MODE_SUSPEND:
@@ -3734,6 +3738,7 @@ bma253_stream_read(struct sensor *sensor,
     struct int_enable int_enable = { 0 };
     os_time_t time_ticks;
     os_time_t stop_ticks;
+    os_time_t curr_ticks;
     struct bma253_private_driver_data *pdd;
 
     struct sensor_data_subscriber_info sdsi;
@@ -3836,9 +3841,11 @@ bma253_stream_read(struct sensor *sensor,
         }
 
 
-        if (time_ms != 0 && OS_TIME_TICK_GT(os_time_get(), stop_ticks)) {
+        curr_ticks = os_time_get();
+        if (time_ms != 0 && OS_TIME_TICK_GT(curr_ticks, stop_ticks)) {
             break;
         }
+
     }
 
     rc = bma253_set_int_enable(bma253, &int_enable_org);
@@ -4318,7 +4325,6 @@ sensor_driver_read(struct sensor *sensor,
         rc = bma253_poll_read(sensor, sensor_type, data_func, data_arg, timeout);
     } else {
         bma253_dump_reg(bma253);
-
         rc = bma253_stream_read(sensor, sensor_type, data_func, data_arg, timeout);
     }
 
@@ -4831,6 +4837,8 @@ bma253_config(struct bma253 * bma253, struct bma253_cfg * cfg)
     bma253->cfg = *cfg;
 
     sensor = &bma253->sensor;
+
+    bma253->bus_rw_mon = 1;
 
     rc = bma253_get_chip_id(bma253, &chip_id);
     if (rc != 0) {

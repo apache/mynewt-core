@@ -207,6 +207,7 @@ struct bma253_private_driver_data {
     uint8_t fifo_buf[31 * 6];
 };
 
+
 /* The device itself */
 struct bma253 {
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
@@ -228,6 +229,9 @@ struct bma253 {
 
     /* Private driver data */
     struct bma253_private_driver_data pdd;
+
+    /* this flag is to turn on or off bus read/write monitoring */
+    uint32_t                bus_rw_mon      :1;
 };
 
 /* Offset compensation is performed to target this given value, by axis */
