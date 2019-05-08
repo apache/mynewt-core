@@ -49,6 +49,17 @@
 #define BMA253_NOTIFY_MASK  0x01
 #define BMA253_READ_MASK    0x02
 
+#define BMA253_DRV_CHECK_RC(rc)\
+    do {\
+        if (0 == rc) {\
+        } else { \
+            return rc;\
+        }\
+    } while (0);
+
+static int
+sensor_driver_handle_interrupt(struct sensor * sensor);
+
 
 static void
 delay_msec(uint32_t delay)
@@ -115,7 +126,9 @@ wait_interrupt(struct bma253_int * interrupt, enum bma253_int_num int_num)
 
         error = os_sem_pend(&interrupt->wait, -1);
         BMA253_LOG(DEBUG, "some interrupt received\n");
-        assert(error == OS_OK);
+        if (OS_OK != error) {
+            assert(error == OS_OK);
+        }
     }
 }
 
@@ -222,8 +235,8 @@ get_registers(struct bma253 * bma253,
     rc = i2cn_master_read(itf->si_num, &oper, OS_TICKS_PER_SEC / 10, 1,
                           MYNEWT_VAL(BMA253_I2C_RETRIES));
     if (rc != 0) {
-        BMA253_LOG(ERROR, "I2C read failed at address 0x%02X length %u\n",
-                   addr, size);
+        BMA253_LOG(ERROR, "I2C read failed at address 0x%02X length %u err: %d\n",
+                   addr, size, rc);
     }
 
     if ((bma253->bus_rw_mon && (1 == size)) || (0 != rc)) {
@@ -469,6 +482,7 @@ bma253_get_int_status(const struct bma253 * bma253,
     uint8_t data[4];
     int rc;
 
+
     rc = get_registers((struct bma253 *)bma253, REG_ADDR_INT_STATUS_0,
                        data, sizeof(data) / sizeof(*data));
     if (rc != 0) {
@@ -495,6 +509,7 @@ bma253_get_int_status(const struct bma253 * bma253,
     int_status->device_orientation = (data[3] >> 4) & 0x03;
     quad_to_axis_trigger(&int_status->high_g_trigger,
                  (data[3] >> 0) & 0x0F, "high_g");
+
 
     return 0;
 }
@@ -2925,6 +2940,7 @@ reset_and_recfg(struct bma253 * bma253)
     if (rc != 0) {
         return rc;
     }
+    bma253->bandwidth_curr = cfg->filter_bandwidth;
 
     rc = bma253_set_data_acquisition(bma253,
                      cfg->use_unfiltered_data,
@@ -3066,6 +3082,8 @@ reset_and_recfg(struct bma253 * bma253)
     if (rc != 0) {
         return rc;
     }
+
+
 
     return 0;
 }
@@ -3331,6 +3349,92 @@ self_test_nudge(const struct bma253 * bma253,
     }
 
     delay_msec(50);
+
+    return 0;
+}
+
+static
+    int
+bma253_exec_pending_hw_cfg(struct bma253 * bma253)
+{
+    int rc = 0;
+    enum bma253_power_mode          pm = bma253->pending_hw_cfg_pm;
+    enum bma253_filter_bandwidth    bw = bma253->pending_hw_cfg_bw;
+
+    if (pm != bma253->power) {
+        rc = change_power(bma253, pm);
+        BMA253_DRV_CHECK_RC(rc);
+    }
+
+    if (bw != bma253->bandwidth_curr) {
+        rc = bma253_set_filter_bandwidth(bma253, bw);
+        BMA253_DRV_CHECK_RC(rc);
+        bma253->bandwidth_curr = bw;
+    }
+
+    return rc;
+}
+
+static
+    int
+bma253_arbitrate_hw_cfg(struct bma253 * bma253)
+{
+    int rc;
+    bool daq_req_new;
+    bool daq_in_proc;
+    bool hw_cfg_pending = false;
+
+    enum bma253_power_mode          pm;
+    enum bma253_filter_bandwidth    bw;
+    struct bma253_int *interrupt;
+
+    interrupt = &((struct bma253 *)bma253)->intr;
+    BMA253_UNUSED_VAR(interrupt);
+
+    OS_ENTER_CRITICAL(interrupt->lock);
+    daq_req_new = bma253->daq_req_new;
+    daq_in_proc = bma253->daq_in_proc;
+    OS_EXIT_CRITICAL(interrupt->lock);
+
+
+    if (daq_req_new || daq_in_proc) {
+        pm = BMA253_POWER_MODE_NORMAL;
+    } else if (bma253->ev_enabled) {
+        pm = BMA253_POWER_MODE_LPM_1;
+    } else {
+        pm = BMA253_POWER_MODE_SUSPEND;
+    }
+
+    bw = bma253->cfg.filter_bandwidth;
+    if (bma253->ev_enabled & SENSOR_EVENT_TYPE_DOUBLE_TAP) {
+        if (daq_in_proc || daq_req_new) {
+            if (bma253->cfg.filter_bandwidth < BMA253_FILTER_BANDWIDTH_125_HZ) {
+                bw = BMA253_FILTER_BANDWIDTH_125_HZ;
+            }
+        } else {
+            bw = BMA253_FILTER_BANDWIDTH_1000_HZ;
+        }
+    }
+
+    if (daq_in_proc) {
+        OS_ENTER_CRITICAL(interrupt->lock);
+        bma253->hw_cfg_pending = 1;
+        hw_cfg_pending = 1;
+        bma253->pending_hw_cfg_pm = pm;
+        bma253->pending_hw_cfg_bw = bw;
+        OS_EXIT_CRITICAL(interrupt->lock);
+    }
+
+    if (!hw_cfg_pending) {
+        rc = change_power(bma253, pm);
+        BMA253_DRV_CHECK_RC(rc);
+        if (bw != bma253->bandwidth_curr) {
+            rc = bma253_set_filter_bandwidth(bma253, bw);
+            BMA253_DRV_CHECK_RC(rc);
+            bma253->bandwidth_curr = bw;
+        }
+
+    }
 
     return 0;
 }
@@ -3846,6 +3950,15 @@ bma253_stream_read(struct sensor *sensor,
             break;
         }
 
+
+        if (bma253->hw_cfg_pending) {
+            rc = bma253_exec_pending_hw_cfg(bma253);
+        }
+
+        if (bma253->ev_enabled) {
+            sensor_driver_handle_interrupt(&bma253->sensor);
+        }
+
     }
 
     rc = bma253_set_int_enable(bma253, &int_enable_org);
@@ -4311,6 +4424,10 @@ sensor_driver_read(struct sensor *sensor,
     int rc;
     const struct bma253_cfg *cfg;
     struct bma253 *bma253;
+    struct bma253_int *interrupt;
+    bool hw_cfg_pending;
+
+    BMA253_UNUSED_VAR(interrupt);
 
     if ((sensor_type & ~(SENSOR_TYPE_ACCELEROMETER |
                          SENSOR_TYPE_AMBIENT_TEMPERATURE)) != 0) {
@@ -4320,12 +4437,33 @@ sensor_driver_read(struct sensor *sensor,
 
     bma253 = (struct bma253 *)SENSOR_GET_DEVICE(sensor);
     cfg = &bma253->cfg;
+    interrupt = &bma253->intr;
+
+    OS_ENTER_CRITICAL(interrupt->lock);
+    bma253->daq_req_new = 1;
+    OS_EXIT_CRITICAL(interrupt->lock);
+    bma253_arbitrate_hw_cfg(bma253);
+
+    OS_ENTER_CRITICAL(interrupt->lock);
+    bma253->daq_req_new = 0;
+    bma253->daq_in_proc = 1;
+    OS_EXIT_CRITICAL(interrupt->lock);
 
     if (cfg->read_mode == BMA253_READ_M_POLL) {
         rc = bma253_poll_read(sensor, sensor_type, data_func, data_arg, timeout);
     } else {
         bma253_dump_reg(bma253);
         rc = bma253_stream_read(sensor, sensor_type, data_func, data_arg, timeout);
+    }
+
+    OS_ENTER_CRITICAL(interrupt->lock);
+    bma253->daq_req_new = 0;
+    bma253->daq_in_proc = 0;
+    hw_cfg_pending = bma253->hw_cfg_pending;
+    OS_EXIT_CRITICAL(interrupt->lock);
+
+    if (hw_cfg_pending) {
+        rc = bma253_exec_pending_hw_cfg(bma253);
     }
 
     return 0;
@@ -4764,6 +4902,10 @@ done:
         pdd->notify_ctx.snec_evtype &= ~sensor_event_type;
         pdd->registered_mask &= ~BMA253_NOTIFY_MASK;
         disable_intpin(bma253);
+    } else {
+        bma253->ev_enabled = sensor_event_type;
+        rc = bma253_arbitrate_hw_cfg(bma253);
+        BMA253_DRV_CHECK_RC(rc);
     }
 
     return rc;
