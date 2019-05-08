@@ -22,6 +22,9 @@
 
 #include "os/mynewt.h"
 #include "sensor/sensor.h"
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+#include "bus/drivers/i2c_common.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -75,7 +78,11 @@ struct kxtj3_cfg {
 };
 
 struct kxtj3 {
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    struct bus_i2c_node i2c_node;
+#else
     struct os_dev dev;
+#endif
     struct sensor sensor;
     struct kxtj3_cfg cfg;
 };
@@ -99,6 +106,23 @@ int kxtj3_init(struct os_dev *dev, void *arg);
  */
 int kxtj3_config(struct kxtj3 *kxtj3, struct kxtj3_cfg *kxtj3_cfg);
 
+
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+/**
+ * Create I2C bus node for KXTJ3 sensor
+ *
+ * @param node        Bus node
+ * @param name        Device name
+ * @param i2c_cfg     I2C node configuration
+ * @param sensor_itf  Sensors interface
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+kxtj3_create_i2c_sensor_dev(struct bus_i2c_node *node, const char *name,
+                            const struct bus_i2c_node_cfg *i2c_cfg,
+                            struct sensor_itf *sensor_itf);
+#endif
 
 #if MYNEWT_VAL(KXTJ3_CLI)
 /**

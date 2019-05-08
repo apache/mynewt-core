@@ -428,9 +428,6 @@ static struct sensor_itf i2c_0_itf_kxtj3 = {
     .si_type = SENSOR_ITF_I2C,
     .si_num  = 0,
     .si_addr = 0x0F,
-    //.si_ints = {
-    //    { MYNEWT_VAL(LIS2DS12_INT1_PIN_HOST), MYNEWT_VAL(LIS2DS12_INT1_PIN_DEVICE),
-    //      MYNEWT_VAL(LIS2DS12_INT1_CFG_ACTIVE)}}
 };
 #endif
 

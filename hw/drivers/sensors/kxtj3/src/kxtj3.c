@@ -22,8 +22,12 @@
 #include <assert.h>
 
 #include "os/mynewt.h"
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+#include "bus/drivers/i2c_common.h"
+#else
 #include "hal/hal_i2c.h"
 #include "i2cn/i2cn.h"
+#endif
 #include "sensor/sensor.h"
 #include "sensor/accel.h"
 #include "kxtj3/kxtj3.h"
@@ -31,6 +35,7 @@
 #include "modlog/modlog.h"
 #include "stats/stats.h"
 #include <syscfg/syscfg.h>
+
 
 #define KXTJ3_LOG(lvl_, ...) \
     MODLOG_ ## lvl_(MYNEWT_VAL(KXTJ3_LOG_MODULE), __VA_ARGS__)
@@ -67,7 +72,9 @@ kxtj3_write8(struct sensor_itf *itf, uint8_t reg, uint8_t value)
 {
     int rc;
     uint8_t payload[2] = {reg, value};
-
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    rc = bus_node_simple_write(itf->si_dev, payload, 2);
+#else
     struct hal_i2c_master_data data_struct = {
         .address = itf->si_addr,
         .len = 2,
@@ -81,60 +88,7 @@ kxtj3_write8(struct sensor_itf *itf, uint8_t reg, uint8_t value)
                    "Failed to write to 0x%02X:0x%02X with value 0x%02X\n",
                    data_struct.address, reg, value);
     }
-
-    return rc;
-}
-
-/**
- * Reads a single byte from the specified register
- *
- * @param The Sensor interface
- * @param The register address to read from
- * @param Pointer to where the register value should be written
- *
- * @return 0 on success, non-zero error on failure.
- */
-int
-kxtj3_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
-{
-    int rc;
-    uint8_t payload;
-
-    struct hal_i2c_master_data data_struct = {
-        .address = itf->si_addr,
-        .len = 1,
-        .buffer = &payload
-    };
-
-    rc = sensor_itf_lock(itf, MYNEWT_VAL(KXTJ3_ITF_LOCK_TMO));
-    if (rc) {
-        return rc;
-    }
-
-    /* Register write */
-    payload = reg;
-    rc = i2cn_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 0,
-                           MYNEWT_VAL(KXTJ3_I2C_RETRIES));
-    if (rc) {
-        KXTJ3_LOG(ERROR,
-                   "I2C register write failed at address 0x%02X:0x%02X\n",
-                   data_struct.address, reg);
-        goto err;
-    }
-
-    /* Read one byte back */
-    payload = 0;
-    rc = i2cn_master_read(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1,
-                          MYNEWT_VAL(KXTJ3_I2C_RETRIES));
-    *value = payload;
-    if (rc) {
-        KXTJ3_LOG(ERROR, "Failed to read from 0x%02X:0x%02X\n",
-                   data_struct.address, reg);
-    }
-
-err:
-    sensor_itf_unlock(itf);
-
+#endif
     return rc;
 }
 
@@ -150,9 +104,13 @@ err:
  */
 static int
 kxtj3_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
-               uint8_t len)
+              uint8_t len)
 {
     int rc;
+
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    rc = bus_node_simple_write_read_transact(itf->si_dev, &reg, 1, buffer, len);
+#else
     uint8_t payload[23] = {reg, 0, 0, 0, 0, 0, 0, 0,
                              0, 0, 0, 0, 0, 0, 0, 0,
                              0, 0, 0, 0, 0, 0, 0};
@@ -195,7 +153,25 @@ kxtj3_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
 
 err:
     sensor_itf_unlock(itf);
+#endif
 
+    return rc;
+}
+
+/**
+ * Reads a single byte from the specified register
+ *
+ * @param The Sensor interface
+ * @param The register address to read from
+ * @param Pointer to where the register value should be written
+ *
+ * @return 0 on success, non-zero error on failure.
+ */
+int
+kxtj3_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
+{
+    int rc;
+    rc = kxtj3_readlen(itf, reg, value, 1);
     return rc;
 }
 
@@ -556,8 +532,6 @@ kxtj3_convert_raw_xyz_data_to_sda(struct kxtj3 *kxtj3,
     sad->sad_y_is_valid = 1;
     sad->sad_z_is_valid = 1;
 
-    //KXTJ3_LOG(DEBUG, "kxtj3 raw x,y,z: %d, %d, %d\n", x,y,z);
-
     return 0;
 err:
     return rc;
@@ -756,4 +730,31 @@ kxtj3_config(struct kxtj3 *kxtj3, struct kxtj3_cfg *cfg)
 err:
     return rc;
 }
+
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+static void
+init_node_cb(struct bus_node *bnode, void *arg)
+{
+    struct sensor_itf *itf = arg;
+
+    kxtj3_init((struct os_dev *)bnode, itf);
+}
+
+int
+kxtj3_create_i2c_sensor_dev(struct bus_i2c_node *node, const char *name,
+                            const struct bus_i2c_node_cfg *i2c_cfg,
+                            struct sensor_itf *sensor_itf)
+{
+    struct bus_node_callbacks cbs = {
+        .init = init_node_cb,
+    };
+    int rc;
+
+    bus_node_set_callbacks((struct os_dev *)node, &cbs);
+
+    rc = bus_i2c_node_create(name, node, i2c_cfg, sensor_itf);
+
+    return rc;
+}
+#endif
 
