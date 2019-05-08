@@ -28,14 +28,16 @@
 
 struct conf_handler_head conf_handlers;
 
-static os_event_fn conf_ev_fn_load;
-
 static struct os_mutex conf_mtx;
+
+#if MYNEWT_VAL(OS_SCHEDULING)
+static os_event_fn conf_ev_fn_load;
 
 /* OS event - causes persisted config values to be loaded at startup. */
 static struct os_event conf_ev_load = {
     .ev_cb = conf_ev_fn_load,
 };
+#endif
 
 void
 conf_init(void)
@@ -62,7 +64,9 @@ conf_init(void)
      * processed.  This gives main() a chance to configure the underlying
      * storage first.
      */
+#if MYNEWT_VAL(OS_SCHEDULING)
     os_eventq_put(os_eventq_dflt_get(), &conf_ev_load);
+#endif
 }
 
 void
@@ -86,11 +90,13 @@ conf_register(struct conf_handler *handler)
     return 0;
 }
 
+#if MYNEWT_VAL(OS_SCHEDULING)
 static void
 conf_ev_fn_load(struct os_event *ev)
 {
     conf_ensure_loaded();
 }
+#endif
 
 /*
  * Find conf_handler based on name.
