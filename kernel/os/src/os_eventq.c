@@ -46,6 +46,8 @@ os_eventq_put(struct os_eventq *evq, struct os_event *ev)
     int resched;
     os_sr_t sr;
 
+    assert(evq != NULL && os_eventq_inited(evq));
+
     os_trace_api_u32x2(OS_TRACE_ID_EVENTQ_PUT, (uint32_t)evq, (uint32_t)ev);
 
     OS_ENTER_CRITICAL(sr);
