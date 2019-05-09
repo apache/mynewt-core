@@ -154,36 +154,71 @@ enum axis_trigger_sign {
 
 /* Which axis was this interrupt triggered on */
 struct axis_trigger {
-    enum axis_trigger_sign sign;
-    enum axis axis;
-    bool axis_known;
+    /* value of type enum axis_trigger_sign  */
+    uint8_t sign    :1;
+    /* value of type enum axis  */
+    uint8_t axis    :2;
+    uint8_t axis_known :1;
 };
 
 /* Active status of all interrupts */
-struct int_status {
-    bool flat_int_active;
-    bool orient_int_active;
-    bool s_tap_int_active;
-    bool d_tap_int_active;
-    bool slow_no_mot_int_active;
-    bool slope_int_active;
-    bool high_g_int_active;
-    bool low_g_int_active;
-    bool data_int_active;
-    bool fifo_wmark_int_active;
-    bool fifo_full_int_active;
-    struct axis_trigger tap_trigger;
-    struct axis_trigger slope_trigger;
-    bool device_is_flat;
-    bool device_is_down;
-    enum bma253_orient_xy device_orientation;
-    struct axis_trigger high_g_trigger;
-};
+typedef struct {
+    union {
+        struct {
+            uint8_t low_g_int_active	:1;
+            uint8_t high_g_int_active	:1;
+            uint8_t slope_int_active	:1;
+            uint8_t slow_no_mot_int_active	:1;
+            uint8_t d_tap_int_active	:1;
+            uint8_t s_tap_int_active	:1;
+            uint8_t orient_int_active	:1;
+            uint8_t flat_int_active	:1;
+
+        } bits;
+
+        uint8_t reg;
+
+    } int_status_0;
+
+    union {
+        struct {
+            uint8_t reserved_1          :5;
+            uint8_t fifo_full_int_active	:1;
+            uint8_t fifo_wmark_int_active	:1;
+            uint8_t data_int_active	:1;
+        } bits;
+
+        uint8_t reg;
+    } int_status_1;
+
+
+    uint8_t slope_first     :3;
+    uint8_t slope_sign      :1;
+
+    uint8_t tap_first       :3;
+    uint8_t tap_sign        :1;
+
+    uint8_t high_first      :3;
+    uint8_t high_sign       :1;
+    /* value of type: enum bma253_orient_xy */
+    uint8_t device_orientation:2;
+    uint8_t device_is_down 	:1;
+    uint8_t device_is_flat 	:1;
+
+
+    uint8_t stat_reg[4];
+} bma253_int_stat_t;
+
+
+#define BMA253_GET_VAL_BIT(val, bit) (((val)>>(bit)) & 0x01)
+#define BMA253_GET_VAL_BIT_BLOCK(val, start, end) (((val)>>(start)) & ((1<<(end - (start) + 1))-1))
+
+#define BMA253_SET_VAL_BIT(val, bit) (val | (1 << (bit)))
 
 /* Get the active status of all interrupts */
 int
 bma253_get_int_status(const struct bma253 * bma253,
-                      struct int_status * int_status);
+                      bma253_int_stat_t * int_status);
 
 /* Get the status and size of the FIFO */
 int

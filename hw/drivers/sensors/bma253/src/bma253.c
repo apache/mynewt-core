@@ -444,7 +444,7 @@ bma253_get_temp(const struct bma253 * bma253,
 }
 
 
-    static void
+    void
 quad_to_axis_trigger(struct axis_trigger * axis_trigger,
         uint8_t quad_bits,
         const char * name_bits)
@@ -477,39 +477,34 @@ quad_to_axis_trigger(struct axis_trigger * axis_trigger,
 
 int
 bma253_get_int_status(const struct bma253 * bma253,
-                      struct int_status * int_status)
+                      bma253_int_stat_t * int_status)
 {
-    uint8_t data[4];
+    uint8_t data[4] = "";
     int rc;
 
-
     rc = get_registers((struct bma253 *)bma253, REG_ADDR_INT_STATUS_0,
-                       data, sizeof(data) / sizeof(*data));
+                       data, 4);
     if (rc != 0) {
         return rc;
     }
 
-    int_status->flat_int_active = data[0] & 0x80;
-    int_status->orient_int_active = data[0] & 0x40;
-    int_status->s_tap_int_active = data[0] & 0x20;
-    int_status->d_tap_int_active = data[0] & 0x10;
-    int_status->slow_no_mot_int_active = data[0] & 0x08;
-    int_status->slope_int_active = data[0] & 0x04;
-    int_status->high_g_int_active = data[0] & 0x02;
-    int_status->low_g_int_active = data[0] & 0x01;
-    int_status->data_int_active = data[1] & 0x80;
-    int_status->fifo_wmark_int_active = data[1] & 0x40;
-    int_status->fifo_full_int_active = data[1] & 0x20;
-    quad_to_axis_trigger(&int_status->tap_trigger,
-                 (data[2] >> 4) & 0x0F, "tap");
-    quad_to_axis_trigger(&int_status->slope_trigger,
-                 (data[2] >> 0) & 0x0F, "slope");
-    int_status->device_is_flat = data[3] & 0x80;
-    int_status->device_is_down = data[3] & 0x40;
-    int_status->device_orientation = (data[3] >> 4) & 0x03;
-    quad_to_axis_trigger(&int_status->high_g_trigger,
-                 (data[3] >> 0) & 0x0F, "high_g");
+    int_status->int_status_0.bits.flat_int_active = BMA253_GET_VAL_BIT(data[0], 7);
+    int_status->int_status_0.bits.orient_int_active = BMA253_GET_VAL_BIT(data[0], 6);
+    int_status->int_status_0.bits.s_tap_int_active = BMA253_GET_VAL_BIT(data[0], 5);
+    int_status->int_status_0.bits.d_tap_int_active = BMA253_GET_VAL_BIT(data[0], 4);
+    int_status->int_status_0.bits.slow_no_mot_int_active = BMA253_GET_VAL_BIT(data[0], 3);
+    int_status->int_status_0.bits.slope_int_active = BMA253_GET_VAL_BIT(data[0], 2);
+    int_status->int_status_0.bits.high_g_int_active = BMA253_GET_VAL_BIT(data[0], 1);
+    int_status->int_status_0.bits.low_g_int_active = BMA253_GET_VAL_BIT(data[0], 0);
 
+    int_status->int_status_1.bits.data_int_active = BMA253_GET_VAL_BIT(data[1], 7);
+    int_status->int_status_1.bits.fifo_wmark_int_active = BMA253_GET_VAL_BIT(data[1], 6);
+    int_status->int_status_1.bits.fifo_full_int_active = BMA253_GET_VAL_BIT(data[1], 5);
+
+
+    int_status->device_is_flat = BMA253_GET_VAL_BIT(data[3], 7);
+    int_status->device_is_down = BMA253_GET_VAL_BIT(data[3], 6);
+    int_status->device_orientation = BMA253_GET_VAL_BIT_BLOCK(data[3], 4, 5);
 
     return 0;
 }
@@ -4019,7 +4014,7 @@ bma253_current_orient(struct bma253 * bma253,
     int rc;
     struct int_enable int_enable_org;
     struct int_enable int_enable = { 0 };
-    struct int_status int_status;
+    bma253_int_stat_t int_status;
 
     request_power[0] = BMA253_POWER_MODE_LPM_1;
     request_power[1] = BMA253_POWER_MODE_LPM_2;
@@ -4079,7 +4074,7 @@ bma253_wait_for_orient(struct bma253 * bma253,
     enum bma253_power_mode request_power[3];
     struct int_enable int_enable_org;
     struct int_enable int_enable = {0};
-    struct int_status int_status;
+    bma253_int_stat_t int_status;
     struct bma253_private_driver_data *pdd;
 
     pdd = &bma253->pdd;
@@ -4920,7 +4915,7 @@ sensor_driver_handle_interrupt(struct sensor * sensor)
 #if MYNEWT_VAL(BMA253_INT_ENABLE)
     struct bma253 * bma253;
     struct bma253_private_driver_data *pdd;
-    struct int_status int_status;
+    bma253_int_stat_t int_status;
     int rc;
 
     bma253 = (struct bma253 *)SENSOR_GET_DEVICE(sensor);
@@ -4934,22 +4929,27 @@ sensor_driver_handle_interrupt(struct sensor * sensor)
         return rc;
     }
 
-    rc = bma253_set_int_latch(bma253, true, INT_LATCH_LATCHED);
-    BMA253_LOG(ERROR, "registered_mask: %x %d\n", pdd->registered_mask, int_status.d_tap_int_active);   //zg
+    if (int_status.int_status_0.reg) {
+        rc = bma253_set_int_latch(bma253, true, INT_LATCH_LATCHED);
+        BMA253_LOG(DEBUG, "registered_mask: %x %d\n",
+                pdd->registered_mask, int_status.int_status_0.reg);
+    } else {
+        return 0;
+    }
 
     if (pdd->registered_mask & BMA253_NOTIFY_MASK) {
-        if (int_status.s_tap_int_active) {
+        if (int_status.int_status_0.bits.s_tap_int_active) {
             sensor_mgr_put_notify_evt(&pdd->notify_ctx, SENSOR_EVENT_TYPE_SINGLE_TAP);
         }
 
-        if (int_status.d_tap_int_active) {
+        if (int_status.int_status_0.bits.d_tap_int_active) {
             sensor_mgr_put_notify_evt(&pdd->notify_ctx, SENSOR_EVENT_TYPE_DOUBLE_TAP);
             BMA253_LOG(ERROR, "DT Event Sent\n");
         }
     }
 
     if ((pdd->registered_mask & BMA253_READ_MASK) &&
-            (int_status.high_g_int_active || int_status.low_g_int_active)) {
+            (int_status.int_status_0.bits.high_g_int_active || int_status.int_status_0.bits.low_g_int_active)) {
         sensor_mgr_put_read_evt(&pdd->read_ctx);
     }
 
