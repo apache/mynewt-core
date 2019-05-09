@@ -589,6 +589,22 @@ static struct sensor_notifier double_tap = {
     .sn_arg = NULL,
 };
 
+
+static int
+sensor_wakeup_notif(struct sensor *sensor, void *data,
+                  sensor_event_type_t type)
+{
+    console_printf("wakeup happend\n");
+
+    return 0;
+};
+
+static struct sensor_notifier wakeup = {
+    .sn_sensor_event_type = SENSOR_EVENT_TYPE_WAKEUP,
+    .sn_func = sensor_wakeup_notif,
+    .sn_arg = NULL,
+};
+
 static int
 sensor_cmd_notify(char *name, bool on, char *type_string)
 {
@@ -606,6 +622,8 @@ sensor_cmd_notify(char *name, bool on, char *type_string)
         type = SENSOR_EVENT_TYPE_SINGLE_TAP;
     } else if (!strcmp(type_string, "double")) {
         type = SENSOR_EVENT_TYPE_DOUBLE_TAP;
+    } else if (!strcmp(type_string, "wakeup")) {
+        type = SENSOR_EVENT_TYPE_WAKEUP;
     } else {
         return 1;
     }
@@ -625,6 +643,14 @@ sensor_cmd_notify(char *name, bool on, char *type_string)
                  goto done;
             }
         }
+        if (type == SENSOR_EVENT_TYPE_WAKEUP) {
+            rc = sensor_unregister_notifier(sensor, &wakeup);
+            if (rc) {
+                 console_printf("Could not unregister wakeup\n");
+                 goto done;
+            }
+        }
+
         goto done;
     }
 
@@ -640,6 +666,14 @@ sensor_cmd_notify(char *name, bool on, char *type_string)
         rc = sensor_register_notifier(sensor, &double_tap);
         if (rc) {
              console_printf("Could not register double tap\n");
+             goto done;
+        }
+    }
+
+    if (type == SENSOR_EVENT_TYPE_WAKEUP) {
+        rc = sensor_register_notifier(sensor, &wakeup);
+        if (rc) {
+             console_printf("Could not register wakeup\n");
              goto done;
         }
     }
@@ -683,7 +717,7 @@ sensor_cmd_exec(int argc, char **argv)
     } else if (!strcmp(argv[1], "notify")) {
         if (argc < 3) {
             console_printf("Too few arguments: %d\n"
-                           "Usage: sensor notify <sensor_name> <on/off> <single/double>",
+                           "Usage: sensor notify <sensor_name> <on/off> <single/double/wakeup>",
                            argc - 2);
             rc = SYS_EINVAL;
             goto done;
@@ -692,7 +726,7 @@ sensor_cmd_exec(int argc, char **argv)
         rc = sensor_cmd_notify(argv[2], !strcmp(argv[3], "on"), argv[4]);
         if (rc) {
             console_printf("Too few arguments: %d\n"
-                           "Usage: sensor notify <sensor_name> <on/off> <single/double>",
+                           "Usage: sensor notify <sensor_name> <on/off> <single/double/wakeup>",
                            argc - 2);
            goto done;
         }
