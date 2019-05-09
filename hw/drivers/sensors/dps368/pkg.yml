@@ -14,9 +14,9 @@
 #
 
 pkg.name: "hw/drivers/sensors/dps368"
-pkg.description: Driver for Infineon DPS368 pressure sensor
-pkg.author: "Saumitra Chafekar <saumitra.chafekar@infineon.com>"
-pkg.homepage: "https://www.infineon.com/"
+pkg.description: Driver for Infineon DPS368/DPS3xx barometric pressure sensors
+pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
+pkg.homepage: "https://mynewt.apache.org"
 pkg.keywords:
     - dps368
     - i2c

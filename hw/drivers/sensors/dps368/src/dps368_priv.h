@@ -37,7 +37,7 @@
 #include "stats/stats.h"
 
 
-#define DPS368_SPI_READ_CMD_BIT			0x80
+#define DPS368_SPI_READ_CMD_BIT         0x80
 
 
 #ifdef __cplusplus
@@ -50,7 +50,7 @@ extern "C" {
  *
  * @param ptr Device structure
  *
- * @return	nothing
+ * @return  nothing
  */
 void
 dps368_stats_int(struct os_dev *dev);

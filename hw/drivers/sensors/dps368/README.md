@@ -14,11 +14,14 @@
 #limitations under the License.
 #
 --->
+
 # Infineon DPS3xx Digital Baromteric Pressure Sensor
 Software Driver Package v1.0 for Apache Mynewt OS
 <br>(c) Infineon Technologies AG
 <hr>
-##### Quick Start Guide
+
+#### Quick Start Guide
+
 __1) Features:__<br><br>
 	&emsp;&emsp;&emsp;- Supports polling based sensor data reporting <br>
 	&emsp;&emsp;&emsp;- Supports I2C (address:0x77 or 0x76) and SPI(4 Wire) <br>
@@ -135,6 +138,6 @@ config_dps368_sensor(void)
 }	
 
 ```
-This gives application flexibility to only configure the desired part of configuration, avoiding unnecessary transactions over bus.<br>After setting desired configuration and before polling sensor for data,__make sure that sensor is either in "Background" (continuous streaming) or "Command" (one shot) mode i.e.  
+This gives application flexibility to only configure the desired part of configuration, avoiding unnecessary transactions over bus.<br>After setting desired configuration and before polling sensor for data,__make sure that sensor is either in "Background" (continuous streaming) or "Command" (one shot) mode__  
 Sensor data now can be polled through sensor\_read() or sensor\_manager/Listener etc.
 

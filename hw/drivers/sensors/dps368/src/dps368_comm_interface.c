@@ -46,21 +46,20 @@ STATS_SECT_DECL(dps368_stat_section) g_dps368_stats;
  *
  * @param ptr Device structure
  *
- * @return	nothing
+ * @return  nothing
  */
 void
 dps368_stats_int(struct os_dev *dev)
 {
-	int rc;
-	/* Initialise the stats entry */
-	rc = stats_init(
-			STATS_HDR(g_dps368_stats),
-			STATS_SIZE_INIT_PARMS(g_dps368_stats, STATS_SIZE_32),
-			STATS_NAME_INIT_PARMS(dps368_stat_section));
-	SYSINIT_PANIC_ASSERT(rc == 0);
-	/* Register the entry with the stats registry */
-	rc = stats_register(dev->od_name, STATS_HDR(g_dps368_stats));
-	SYSINIT_PANIC_ASSERT(rc == 0);
+    int rc;
+    /* Initialise the stats entry */
+    rc = stats_init(STATS_HDR(g_dps368_stats),
+            STATS_SIZE_INIT_PARMS(g_dps368_stats, STATS_SIZE_32),
+            STATS_NAME_INIT_PARMS(dps368_stat_section));
+    SYSINIT_PANIC_ASSERT(rc == 0);
+    /* Register the entry with the stats registry */
+    rc = stats_register(dev->od_name, STATS_HDR(g_dps368_stats));
+    SYSINIT_PANIC_ASSERT(rc == 0);
 }
 
 
@@ -80,21 +79,20 @@ static int
 dps368_i2c_write_reg(struct sensor_itf *itf, uint8_t reg, uint8_t value)
 {
     int rc;
-    uint8_t payload[2] = { reg, value };
+    uint8_t payload[2] =
+        { reg, value };
 
-    struct hal_i2c_master_data data_struct = {
-        .address = itf->si_addr,
-        .len = 2,
-        .buffer = payload
-    };
+    struct hal_i2c_master_data data_struct =
+        { .address = itf->si_addr, .len = 2, .buffer = payload };
 
-    rc = i2cn_master_write(itf->si_num, &data_struct, MYNEWT_VAL(DPS368_I2C_TIMEOUT_TICKS), 1,
-                           MYNEWT_VAL(DPS368_I2C_RETRIES));
+    rc = i2cn_master_write(itf->si_num, &data_struct,
+            MYNEWT_VAL(DPS368_I2C_TIMEOUT_TICKS), 1,
+            MYNEWT_VAL(DPS368_I2C_RETRIES));
 
     if (rc) {
-    	DPS368_LOG(ERROR,
-                    "Could not write to 0x%02X:0x%02X with value 0x%02X\n",
-                    itf->si_addr, reg, value);
+        DPS368_LOG(ERROR,
+                "Could not write to 0x%02X:0x%02X with value 0x%02X\n",
+                itf->si_addr, reg, value);
         STATS_INC(g_dps368_stats, read_errors);
     }
 
@@ -124,7 +122,7 @@ dps368_spi_write_reg(struct sensor_itf *itf, uint8_t reg, uint8_t value)
     if (rc == 0xFFFF) {
         rc = SYS_EINVAL;
         DPS368_LOG(ERROR, "SPI_%u register write failed addr:0x%02X\n",
-                    itf->si_num, reg);
+                itf->si_num, reg);
         STATS_INC(g_dps368_stats, write_errors);
         goto err;
     }
@@ -133,8 +131,8 @@ dps368_spi_write_reg(struct sensor_itf *itf, uint8_t reg, uint8_t value)
     rc = hal_spi_tx_val(itf->si_num, value);
     if (rc == 0xFFFF) {
         rc = SYS_EINVAL;
-        DPS368_LOG(ERROR, "SPI_%u write failed addr:0x%02X\n",
-                    itf->si_num, reg);
+        DPS368_LOG(ERROR, "SPI_%u write failed addr:0x%02X\n", itf->si_num,
+                reg);
         STATS_INC(g_dps368_stats, write_errors);
         goto err;
     }
@@ -145,7 +143,7 @@ err:
     /* De-select the device */
     hal_gpio_write(itf->si_cs_pin, 1);
 
-    os_time_delay((OS_TICKS_PER_SEC * 30)/1000 + 1);
+    os_time_delay((OS_TICKS_PER_SEC * 30) / 1000 + 1);
 
     return rc;
 }
@@ -178,11 +176,11 @@ dps368_i2c_read_regs(struct sensor_itf *itf, uint8_t reg, uint8_t size,
     };
 
     rc = i2cn_master_write_read_transact(itf->si_num, &wdata, &rdata,
-                                         MYNEWT_VAL(DPS368_I2C_TIMEOUT_TICKS) * (size + 1),
-                                         1, MYNEWT_VAL(DPS368_I2C_RETRIES));
+            MYNEWT_VAL(DPS368_I2C_TIMEOUT_TICKS) * (size + 1), 1,
+            MYNEWT_VAL(DPS368_I2C_RETRIES));
     if (rc) {
-    	DPS368_LOG(ERROR, "I2C access failed at address 0x%02X\n",
-                    itf->si_addr);
+        DPS368_LOG(ERROR, "I2C access failed at address 0x%02X\n",
+                itf->si_addr);
         STATS_INC(g_dps368_stats, read_errors);
         return rc;
     }
@@ -219,7 +217,7 @@ dps368_spi_read_regs(struct sensor_itf *itf, uint8_t reg, uint8_t size,
     if (retval == 0xFFFF) {
         rc = SYS_EINVAL;
         DPS368_LOG(ERROR, "SPI_%u register write failed addr:0x%02X\n",
-                    itf->si_num, reg);
+                itf->si_num, reg);
         STATS_INC(g_dps368_stats, read_errors);
         goto err;
     }
@@ -229,8 +227,8 @@ dps368_spi_read_regs(struct sensor_itf *itf, uint8_t reg, uint8_t size,
         retval = hal_spi_tx_val(itf->si_num, 0);
         if (retval == 0xFFFF) {
             rc = SYS_EINVAL;
-            DPS368_LOG(ERROR, "SPI_%u read failed addr:0x%02X\n",
-                        itf->si_num, reg);
+            DPS368_LOG(ERROR, "SPI_%u read failed addr:0x%02X\n", itf->si_num,
+                    reg);
             STATS_INC(g_dps368_stats, read_errors);
             goto err;
         }
@@ -297,15 +295,16 @@ int dps368_read_regs(struct sensor_itf *itf, uint8_t addr, uint8_t *buff, uint8_
     int rc;
 
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
-    struct dps368 *dev = (struct ldps368 *)itf->si_dev;
+    struct dps368 *dev = (struct dps368 *)itf->si_dev;
 
     if (dev->node_is_spi) {
-        reg |= DPS368_SPI_READ_CMD_BIT;
+        addr |= DPS368_SPI_READ_CMD_BIT;
     }
 
     rc = bus_node_simple_write_read_transact(itf->si_dev, &addr, 1, buff, len);
 #else
     rc = sensor_itf_lock(itf, MYNEWT_VAL(DPS368_ITF_LOCK_TMO));
+
     if (rc) {
         return rc;
     }

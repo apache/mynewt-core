@@ -89,7 +89,6 @@ dps368_shell_help(void)
     console_printf("cmd:\n");
     console_printf("\tchipid\n");
 
-
     return 0;
 }
 
@@ -102,7 +101,7 @@ dps368_shell_cmd(int argc, char **argv)
 
     /* Read Chip Id */
     if (argc > 1 && strcmp(argv[1], "chipid") == 0) {
-    	return dps368_shell_cmd_read_hw_id(argc, argv);
+        return dps368_shell_cmd_read_hw_id(argc, argv);
     }
 
 
