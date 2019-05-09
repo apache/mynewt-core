@@ -60,6 +60,8 @@
 static int
 sensor_driver_handle_interrupt(struct sensor * sensor);
 
+static int
+bma253_clear_fifo(const struct bma253 * bma253);
 
 static void
 delay_msec(uint32_t delay)
@@ -528,6 +530,7 @@ bma253_get_fifo_status(const struct bma253 * bma253,
     return 0;
 }
 
+
 int
 bma253_get_g_range(const struct bma253 * bma253,
                    enum bma253_g_range * g_range)
@@ -843,9 +846,20 @@ bma253_set_power_settings(const struct bma253 * bma253,
     if (rc != 0) {
         return rc;
     }
+
+    if (BMA253_POWER_MODE_NORMAL == power_settings->power_mode) {
+        rc = bma253_clear_fifo(bma253);
+        BMA253_DRV_CHECK_RC(rc);
+    }
+
     rc = set_register((struct bma253 *)bma253, REG_ADDR_PMU_LPW, data[0]);
     if (rc != 0) {
         return rc;
+    }
+
+    if (BMA253_POWER_MODE_SUSPEND == power_settings->power_mode) {
+        rc = bma253_clear_fifo(bma253);
+        BMA253_DRV_CHECK_RC(rc);
     }
 
     return 0;
@@ -2213,6 +2227,22 @@ bma253_set_flat_int_cfg(const struct bma253 * bma253,
     return 0;
 }
 
+static int
+bma253_clear_fifo(const struct bma253 * bma253)
+{
+    int rc;
+    uint8_t regv = 0x8c;
+
+    rc = get_register((struct bma253 *)bma253, REG_ADDR_FIFO_CONFIG_1, &regv);
+    BMA253_DRV_CHECK_RC(rc);
+
+    rc = set_register((struct bma253 *)bma253, REG_ADDR_FIFO_CONFIG_1, regv);
+    BMA253_DRV_CHECK_RC(rc);
+
+    return 0;
+}
+
+
 int
 bma253_get_fifo_wmark_level(const struct bma253 * bma253,
                             uint8_t * wmark_level)
@@ -2805,7 +2835,6 @@ bma253_read_and_handle_fifo_data(
 {
     int     rc;
     uint32_t i;
-    uint8_t regv;
 
     float   accel_scale;
 
@@ -2865,11 +2894,7 @@ bma253_read_and_handle_fifo_data(
     rc = get_registers((struct bma253 *)bma253, REG_ADDR_FIFO_DATA, ff_buf, size);
     if (0 == rc) {
         if (ff_or) {
-            regv = 0x8c;
-            rc = get_register(bma253, REG_ADDR_FIFO_CONFIG_1, &regv);
-            if (0 == rc) {
-                set_register(bma253, REG_ADDR_FIFO_CONFIG_1, regv);
-            }
+            bma253_clear_fifo(bma253);
         }
     } else {
         return rc;
