@@ -33,6 +33,7 @@
 #include "hal/hal_spi.h"
 #endif
 
+#undef MYNEWT_VAL_BMA253_LOG
 
 #if MYNEWT_VAL(BMA253_LOG)
 #include "modlog/modlog.h"
@@ -303,26 +304,29 @@ done:
         BMA253_LOG(DEBUG, "bus_write@0x%02X:%02X rc:%d\n", addr, data, rc);
     }
 
-    switch (bma253->power) {
-    case BMA253_POWER_MODE_SUSPEND:
-    case BMA253_POWER_MODE_LPM_1:
-        delay_msec(1);
-        break;
-    default:
-        break;
-    }
-
     sensor_itf_unlock(itf);
 #endif
 
-    delay_usec_blocking(2);    //zg
+    if (!rc) {
+        switch (bma253->power) {
+            case BMA253_POWER_MODE_SUSPEND:
+            case BMA253_POWER_MODE_DEEP_SUSPEND:
+            case BMA253_POWER_MODE_LPM_1:
+                delay_msec(1);  //to improve: 450us is enough
+                break;
+            default:
+                delay_usec_blocking(2);
+                break;
+        }
+    }
+
 
     return rc;
 }
 
-int
+    int
 bma253_get_chip_id(const struct bma253 * bma253,
-                   uint8_t * chip_id)
+        uint8_t * chip_id)
 {
     return get_register((struct bma253 *)bma253, REG_ADDR_BGW_CHIPID, chip_id);
 }
@@ -856,6 +860,7 @@ bma253_set_power_settings(const struct bma253 * bma253,
     if (rc != 0) {
         return rc;
     }
+    ((struct bma253 *)bma253)->power = power_settings->power_mode;
 
     if (BMA253_POWER_MODE_SUSPEND == power_settings->power_mode) {
         rc = bma253_clear_fifo(bma253);
@@ -3175,8 +3180,6 @@ change_power(struct bma253 * bma253,
         if (rc != 0) {
             return rc;
         }
-
-        bma253->power = step1_mode;
     }
 
     if (step2_move) {
@@ -3188,8 +3191,6 @@ change_power(struct bma253 * bma253,
         if (rc != 0) {
             return rc;
         }
-
-        bma253->power = step2_mode;
     }
 
     return 0;
