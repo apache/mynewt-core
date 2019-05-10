@@ -807,20 +807,24 @@ config_bma253_sensor(void)
     cfg.low_g_delay_ms = BMA253_LOW_G_DELAY_MS_DEFAULT;
     cfg.high_g_delay_ms = BMA253_HIGH_G_DELAY_MS_DEFAULT;
     cfg.g_range = BMA253_G_RANGE_2;
-    cfg.filter_bandwidth = BMA253_FILTER_BANDWIDTH_1000_HZ;
+    /* filter_bandwidth is the intended setting for data streaming */
+    cfg.filter_bandwidth = BMA253_FILTER_BANDWIDTH_31_25_HZ;
     cfg.use_unfiltered_data = false;
     cfg.tap_quiet = BMA253_TAP_QUIET_30_MS;
     cfg.tap_shock = BMA253_TAP_SHOCK_50_MS;
     cfg.d_tap_window = BMA253_D_TAP_WINDOW_250_MS;
     cfg.tap_wake_samples = BMA253_TAP_WAKE_SAMPLES_2;
-    cfg.tap_thresh_g = 1.0;
+    //cfg.tap_thresh_g = 1.0;
+    cfg.tap_thresh_g = 0.200f;  //zg
     cfg.offset_x_g = 0.0;
     cfg.offset_y_g = 0.0;
     cfg.offset_z_g = 0.0;
-    cfg.power_mode = BMA253_POWER_MODE_NORMAL;
-    cfg.sleep_duration = BMA253_SLEEP_DURATION_0_5_MS;
+    //cfg.power_mode = BMA253_POWER_MODE_NORMAL;
+    cfg.power_mode = BMA253_POWER_MODE_SUSPEND;
+    cfg.sleep_duration = BMA253_SLEEP_DURATION_10_MS;   //zg
     cfg.sensor_mask = SENSOR_TYPE_ACCELEROMETER;
-    cfg.read_mode = BMA253_READ_M_POLL;
+    //cfg.read_mode = BMA253_READ_M_POLL;//zg
+    cfg.read_mode = BMA253_READ_M_STREAM;
 
     rc = bma253_config((struct bma253 *)dev, &cfg);
     assert(rc == 0);
