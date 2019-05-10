@@ -62,5 +62,5 @@ bsp.flash_map:
             user_id: 1
             device: 1
             offset: 0x00040000
-            size: 256kB
+            size: 32kB
 
