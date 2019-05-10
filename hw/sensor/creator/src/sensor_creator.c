@@ -305,6 +305,21 @@ static struct sensor_itf i2c_0_itf_lis = {
 };
 #endif
 
+#if MYNEWT_VAL(SPI_0_MASTER) && MYNEWT_VAL(BMA253_OFB)
+static struct sensor_itf i2c_0_itf_lis = {
+    .si_type = SENSOR_ITF_SPI,
+    .si_num  = 0,
+    .si_cs_pin = 11,
+    .si_ints = {
+        { 12, MYNEWT_VAL(BMA253_INT_PIN_DEVICE),    //zg
+            MYNEWT_VAL(BMA253_INT_CFG_ACTIVE)}, //zg
+        { 24, MYNEWT_VAL(BMA253_INT2_PIN_DEVICE),
+            MYNEWT_VAL(BMA253_INT_CFG_ACTIVE)}  //zg
+    },
+};
+#endif
+
+
 #if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(BMA2XX_OFB)
 static struct sensor_itf spi2c_0_itf_bma2xx = {
     .si_type = SENSOR_ITF_I2C,

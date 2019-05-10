@@ -103,6 +103,8 @@ extern "C" {
 
 #define SPEC_MAX_FIFO_DEPTH  31
 
+#define BMA253_SPI_READ_CMD_BIT 0x80
+
 
     /* variant specifc defines */
 #define BMA253_G_SCALE_2     (0.000977f)

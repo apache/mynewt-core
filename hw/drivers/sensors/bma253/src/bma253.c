@@ -33,11 +33,11 @@
 #include "hal/hal_spi.h"
 #endif
 
-#undef MYNEWT_VAL_BMA253_LOG
 
 #if MYNEWT_VAL(BMA253_LOG)
 #include "modlog/modlog.h"
 #endif
+
 
 #if MYNEWT_VAL(BMA253_LOG)
 
@@ -196,23 +196,57 @@ get_register(struct bma253 * bma253,
 }
 
 static int
-get_registers(struct bma253 * bma253,
-              uint8_t addr,
-              uint8_t * data,
-              uint8_t size)
+spi_readlen(
+        struct sensor_itf   *itf,
+        uint8_t             addr,
+        uint8_t             *data,
+        uint8_t             size)
 {
-    struct sensor_itf *itf = SENSOR_GET_ITF(&bma253->sensor);
-    int rc;
+    int i;
+    uint16_t retval;
+    int rc = 0;
 
-    if (size > 0) {
-    } else {
-        BMA253_LOG(ERROR, "try to read 0 byte at address 0x%02X\n", addr);
-        return SYS_EINVAL;
+    /* Select the device */
+    hal_gpio_write(itf->si_cs_pin, 0);
+
+    /* Send the address */
+    retval = hal_spi_tx_val(itf->si_num, addr | BMA253_SPI_READ_CMD_BIT);
+    if (retval == 0xFFFF) {
+        rc = SYS_EINVAL;
+        BMA253_LOG(ERROR, "SPI_%u register write failed addr:0x%02X\n",
+                   itf->si_num, addr);
+        goto err;
     }
 
-#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
-    rc = bus_node_simple_write_read_transact(itf->si_dev, &addr, 1, data, size);
-#else
+    for (i = 0; i < size; i++) {
+        /* Read data */
+        retval = hal_spi_tx_val(itf->si_num, 0);
+        if (retval == 0xFFFF) {
+            rc = SYS_EINVAL;
+            BMA253_LOG(ERROR, "SPI_%u read failed addr:0x%02X\n",
+                       itf->si_num, addr);
+            goto err;
+        }
+        data[i] = retval;
+    }
+
+    err:
+    /* De-select the device */
+    hal_gpio_write(itf->si_cs_pin, 1);
+
+    return rc;
+}
+
+static int
+i2c_readlen(
+        struct sensor_itf   *itf,
+        uint8_t             addr,
+        uint8_t             *data,
+        uint8_t             size)
+{
+    int rc = 0;
+
+
     struct hal_i2c_master_data oper;
 
     oper.address = itf->si_addr;
@@ -242,13 +276,122 @@ get_registers(struct bma253 * bma253,
                    addr, size, rc);
     }
 
-    if ((bma253->bus_rw_mon && (1 == size)) || (0 != rc)) {
-            BMA253_LOG(DEBUG, "bus_read@0x%02X:%02X rc:%d\n", addr, data[0], rc);
-    }
-
 err:
     sensor_itf_unlock(itf);
+
+    return rc;
+}
+
+
+static int
+get_registers(struct bma253 * bma253,
+              uint8_t addr,
+              uint8_t * data,
+              uint8_t size)
+{
+    struct sensor_itf *itf = SENSOR_GET_ITF(&bma253->sensor);
+    int rc;
+
+    if (size > 0) {
+    } else {
+        BMA253_LOG(ERROR, "try to read 0 byte at address 0x%02X\n", addr);
+        return SYS_EINVAL;
+    }
+
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    rc = bus_node_simple_write_read_transact(itf->si_dev, &addr, 1, data, size);
+#else
+    if (itf->si_type == SENSOR_ITF_SPI) {
+        rc = spi_readlen(itf, addr, data, size);
+    } else {
+        rc = i2c_readlen(itf, addr, data, size);
+    }
 #endif
+
+    if (0 == rc) {
+        if (bma253->bus_rw_mon && (1 == size)) {
+            BMA253_LOG(DEBUG, "bus_read@0x%02X:%02X\n", addr, data[0]);
+        }
+    } else {
+        BMA253_LOG(ERROR, "bus_read@0x%02X rc:%d\n", addr, rc);
+    }
+
+
+    return rc;
+}
+
+
+/**
+ * Write multiple length data SPI
+ *
+ * @param register address
+ * @param variable length data
+ * @param length of the data to write
+ *
+ * @return 0 on success, non-zero on failure
+ */
+static int
+spi_writereg(
+        struct sensor_itf   *itf,
+        uint8_t             addr,
+        uint8_t             data)
+{
+    int rc;
+
+    /* Select the device */
+    hal_gpio_write(itf->si_cs_pin, 0);
+
+    /* Send the address */
+    rc = hal_spi_tx_val(itf->si_num, addr);
+    if (rc == 0xFFFF) {
+        rc = SYS_EINVAL;
+        BMA253_LOG(ERROR, "SPI_%u register write failed addr:0x%02X\n",
+                itf->si_num, addr);
+        goto err;
+    }
+
+    /* send data */
+    rc = hal_spi_tx_val(itf->si_num, data);
+    if (rc == 0xFFFF) {
+        rc = SYS_EINVAL;
+        BMA253_LOG(ERROR, "SPI_%u write failed addr:0x%02X:0x%02X\n",
+                itf->si_num, addr);
+        goto err;
+    }
+
+    rc = 0;
+err:
+    /* De-select the device */
+    hal_gpio_write(itf->si_cs_pin, 1);
+
+    return rc;
+}
+
+
+static int
+i2c_writereg(
+        struct sensor_itf   *itf,
+        uint8_t             addr,
+        uint8_t             data)
+{
+    int rc;
+    uint8_t tuple[2];
+    struct hal_i2c_master_data oper;
+
+    tuple[0] = addr;
+    tuple[1] = data;
+
+    oper.address = itf->si_addr;
+    oper.len     = 2;
+    oper.buffer  = tuple;
+
+    //rc = i2cn_master_write(itf->si_num, &oper, OS_TICKS_PER_SEC / 10, 1,
+    rc = i2cn_master_write(itf->si_num, &oper, 3, 1,    //zg
+                           MYNEWT_VAL(BMA253_I2C_RETRIES));
+    if (rc != 0) {
+        BMA253_LOG(ERROR, "I2C write failed at address 0x%02X single byte\n",
+                   addr);
+    }
 
     return rc;
 }
@@ -277,35 +420,27 @@ set_register(struct bma253 * bma253,
 done:
     (void)bus_node_unlock(itf->si_dev);
 #else
-    uint8_t tuple[2];
-    struct hal_i2c_master_data oper;
 
     rc = sensor_itf_lock(itf, MYNEWT_VAL(BMA253_ITF_LOCK_TMO));
     if (rc) {
         return rc;
     }
 
-    tuple[0] = addr;
-    tuple[1] = data;
-
-    oper.address = itf->si_addr;
-    oper.len     = 2;
-    oper.buffer  = tuple;
-
-    //rc = i2cn_master_write(itf->si_num, &oper, OS_TICKS_PER_SEC / 10, 1,
-    rc = i2cn_master_write(itf->si_num, &oper, 3, 1,    //zg
-                           MYNEWT_VAL(BMA253_I2C_RETRIES));
-    if (rc != 0) {
-        BMA253_LOG(ERROR, "I2C write failed at address 0x%02X single byte\n",
-                   addr);
+    if (itf->si_type == SENSOR_ITF_SPI) {
+        rc = spi_writereg(itf, addr, data);
+    } else {
+        rc = i2c_writereg(itf, addr, data);
     }
 
-    if (bma253->bus_rw_mon || (0 != rc)) {
-        BMA253_LOG(DEBUG, "bus_write@0x%02X:%02X rc:%d\n", addr, data, rc);
-    }
-
-    sensor_itf_unlock(itf);
+   sensor_itf_unlock(itf);
 #endif
+   if (0 == rc) {
+       if (bma253->bus_rw_mon) {
+           BMA253_LOG(DEBUG, "bus_write@0x%02X:%02X\n", addr, data);
+       }
+   } else {
+       BMA253_LOG(ERROR, "bus_write@0x%02X:%02X rc:%d\n", addr, data, rc);
+   }
 
     if (!rc) {
         switch (bma253->power) {
@@ -318,8 +453,9 @@ done:
                 delay_usec_blocking(2);
                 break;
         }
+    } else {
+        delay_msec(1);  //to improve: 450us is enough
     }
-
 
     return rc;
 }
@@ -523,7 +659,9 @@ bma253_get_fifo_status(const struct bma253 * bma253,
     uint8_t data;
     int rc;
 
+    ((struct bma253 *)bma253)->bus_rw_mon = 0;
     rc = get_register((struct bma253 *)bma253, REG_ADDR_FIFO_STATUS, &data);
+    ((struct bma253 *)bma253)->bus_rw_mon = 1;
     if (rc != 0) {
         return rc;
     }
@@ -850,6 +988,7 @@ bma253_set_power_settings(const struct bma253 * bma253,
     if (rc != 0) {
         return rc;
     }
+
 
     if (BMA253_POWER_MODE_NORMAL == power_settings->power_mode) {
         rc = bma253_clear_fifo(bma253);
@@ -5076,6 +5215,25 @@ bma253_init(struct os_dev * dev, void * arg)
     if (rc != 0) {
         return rc;
     }
+
+#if MYNEWT_VAL(SPI_0_MASTER) || MYNEWT_VAL(SPI_1_MASTER)
+    static struct hal_spi_settings spi_bma253_settings = {
+        .data_order = HAL_SPI_MSB_FIRST,
+        .data_mode  = HAL_SPI_MODE0,
+        .baudrate   = 4000,
+        .word_size  = HAL_SPI_WORD_SIZE_8BIT,
+    };
+
+    rc = hal_spi_config(sensor->s_itf.si_num, &spi_bma253_settings);
+    BMA253_DRV_CHECK_RC(rc);
+
+	rc = hal_spi_enable(sensor->s_itf.si_num);
+    BMA253_DRV_CHECK_RC(rc);
+
+	rc = hal_gpio_init_out(sensor->s_itf.si_cs_pin, 1);
+    BMA253_DRV_CHECK_RC(rc);
+#endif
+
 
 #if MYNEWT_VAL(BMA253_INT_ENABLE)
     init_interrupt(&bma253->intr, bma253->sensor.s_itf.si_ints);
