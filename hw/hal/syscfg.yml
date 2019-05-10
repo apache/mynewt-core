@@ -37,6 +37,11 @@ syscfg.defs:
         description: >
             If set, hal system reset callback gets called inside hal_system_reset().
         value: 0
+    HAL_ENABLE_SOFTWARE_BREAKPOINTS:
+        description: >
+            If set to 0 software breakpoints placed with HAL_DEBUG_BREAK macro will not
+            be executed.
+        value: 1
 
 syscfg.vals.OS_DEBUG_MODE:
     HAL_FLASH_VERIFY_WRITES: 1
