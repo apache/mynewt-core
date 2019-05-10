@@ -39,10 +39,12 @@
 #endif
 
 
+#define BMA253_LOG_LEVEL_THRESH LOG_LEVEL_WARN
+
 #if MYNEWT_VAL(BMA253_LOG)
 
 #define BMA253_LOG(lvl_, ...) \
-    MODLOG_ ## lvl_(MYNEWT_VAL(BMA253_LOG_MODULE), __VA_ARGS__)
+    if ((LOG_LEVEL_ ## lvl_) >= BMA253_LOG_LEVEL_THRESH) { MODLOG_ ## lvl_(MYNEWT_VAL(BMA253_LOG_MODULE), __VA_ARGS__); }
 #else
 #define BMA253_LOG(lvl_, ...)
 #endif
@@ -128,7 +130,7 @@ wait_interrupt(struct bma253_int * interrupt, enum bma253_int_num int_num)
         os_error_t error;
 
         error = os_sem_pend(&interrupt->wait, -1);
-        BMA253_LOG(DEBUG, "some interrupt received\n");
+        BMA253_LOG(DEBUG, "bma253_int\n");
         if (OS_OK != error) {
             assert(error == OS_OK);
         }
@@ -5086,7 +5088,7 @@ sensor_driver_handle_interrupt(struct sensor * sensor)
     bma253 = (struct bma253 *)SENSOR_GET_DEVICE(sensor);
     pdd = &bma253->pdd;
 
-    BMA253_LOG(DEBUG, "sensor drv isr\n");   //zg
+    BMA253_LOG(DEBUG, "bma253_isr\n");   //zg
 
     rc = bma253_get_int_status(bma253, &int_status);
     if (rc != 0) {
