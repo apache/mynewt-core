@@ -39,16 +39,48 @@ syscfg.defs:
         description: 'Whether to enable UART0'
         value:  1
     UART_0_TX:
-        description: 'UART 0 TX pin. TX from J6 connector'
+        description: 'USART1 TX pin. TX from J6 connector'
         value:  'MCU_GPIO_PORTA(9)'
     UART_0_RX:
-        description: 'UART 0 RX pin. RX from J6 connector'
+        description: 'USART1 RX pin. RX from J6 connector'
         value:  'MCU_GPIO_PORTA(10)'
     UART_0_RTS:
-        description: 'UART 0 RTS pin.'
+        description: 'USART1 RTS pin.'
         value:  -1
     UART_0_CTS:
-        description: 'UART 0 CTS pin.'
+        description: 'USART1 CTS pin.'
+        value:  -1
+
+    UART_1:
+        description: 'Whether to enable UART0'
+        value:  1
+    UART_1_TX:
+        description: 'USART2 TX pin. PA2, PD5'
+        value:  'MCU_GPIO_PORTD(5)'
+    UART_1_RX:
+        description: 'USART2 RX pin. PA3, PD6'
+        value:  'MCU_GPIO_PORTD(6)'
+    UART_1_RTS:
+        description: 'USART2 RTS pin.'
+        value:  -1
+    UART_1_CTS:
+        description: 'USART2 CTS pin.'
+        value:  -1
+
+    UART_2:
+        description: 'Whether to enable UART0'
+        value:  1
+    UART_2_TX:
+        description: 'USART3 TX pin. PB10, PC10, PD8'
+        value:  'MCU_GPIO_PORTD(8)'
+    UART_2_RX:
+        description: 'USART3 RX pin. PB11, PC11, PD9'
+        value:  'MCU_GPIO_PORTD(9)'
+    UART_2_RTS:
+        description: 'USART3 RTS pin.'
+        value:  -1
+    UART_2_CTS:
+        description: 'USART3 CTS pin.'
         value:  -1
 
     SPI_0_SCK:
