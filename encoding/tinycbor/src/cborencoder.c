@@ -522,6 +522,20 @@ CborError cbor_encoder_create_map(CborEncoder *encoder, CborEncoder *mapEncoder,
 }
 
 /**
+ * Creates a indefinite-length text string in the CBOR stream provided by
+ * \a encoder and initializes \a stringEncoder so that chunks of original string
+ * can be added using the CborEncoder functions. The string must be terminated by
+ * calling cbor_encoder_close_container() with the same \a encoder and
+ * \a stringEncoder parameters.
+ *
+ * \sa cbor_encoder_create_array
+ */
+CborError cbor_encoder_create_indef_text_string(CborEncoder *encoder, CborEncoder *stringEncoder)
+{
+    return create_container(encoder, stringEncoder, CborIndefiniteLength, TextStringType << MajorTypeShift);
+}
+
+/**
  * Creates a indefinite-length byte string in the CBOR stream provided by
  * \a encoder and initializes \a stringEncoder so that chunks of original string
  * can be added using the CborEncoder functions. The string must be terminated by
