@@ -20,13 +20,17 @@
 #ifndef __MCU_ARC_H__
 #define __MCU_ARC_H__
 
-#include "os/mynewt.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #define OS_TICKS_PER_SEC    (100)
+
+static inline void
+hal_debug_break(void)
+{
+    asm("BRK_S");
+}
 
 #ifdef __cplusplus
 }
