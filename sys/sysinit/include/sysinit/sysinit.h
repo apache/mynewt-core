@@ -67,6 +67,7 @@ void sysinit_panic_set(sysinit_panic_fn *panic_fn);
 #define SYSINIT_PANIC_ASSERT_MSG(rc, msg) do \
 {                                            \
     if (!(rc)) {                             \
+        HAL_DEBUG_BREAK();                   \
         SYSINIT_PANIC_MSG(msg);              \
     }                                        \
 } while (0)
