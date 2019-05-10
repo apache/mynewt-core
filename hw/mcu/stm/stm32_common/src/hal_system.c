@@ -43,8 +43,11 @@ hal_system_reset(void)
 int
 hal_debugger_connected(void)
 {
-    /* FIXME */
+#if (__CORTEX_M == 0)
     return 0;
+#else
+    return CoreDebug->DHCSR & CoreDebug_DHCSR_C_DEBUGEN_Msk;
+#endif
 }
 
 uint32_t
