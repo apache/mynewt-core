@@ -18,7 +18,9 @@
  */
 
 #include "syscfg/syscfg.h"
+#include "mcu/cortex_m4.h"
 #include "hal/hal_system.h"
+#include "hal/hal_debug.h"
 #include "nrf.h"
 
 /**
@@ -48,14 +50,7 @@ hal_system_reset(void)
 #endif
 
     while (1) {
-        if (hal_debugger_connected()) {
-            /*
-             * If debugger is attached, breakpoint here.
-             */
-#if !MYNEWT_VAL(MCU_DEBUG_IGNORE_BKPT)
-            asm("bkpt");
-#endif
-        }
+        HAL_DEBUG_BREAK();
         NVIC_SystemReset();
     }
 }

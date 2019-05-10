@@ -29,10 +29,8 @@ hal_system_reset(void)
     hal_system_reset_cb();
 #endif
 
-    while(1) {
-        if (hal_debugger_connected()) {
-            asm ("ebreak");
-        }
+    while (1) {
+        HAL_DEBUG_BREAK();
     }
 }
 
