@@ -24,21 +24,11 @@
 
 #define CONS_OUTPUT_MAX_LINE    128
 
-
 #if MYNEWT_VAL(BASELIBC_PRESENT)
 
-/**
- * Prints the specified format string to the console.
- *
- * @return                      The number of characters that would have been
- *                                  printed if the console buffer were
- *                                  unlimited.  This return value is analogous
- *                                  to that of snprintf.
- */
 int
-console_printf(const char *fmt, ...)
+console_vprintf(const char *fmt, va_list ap)
 {
-    va_list args;
     int num_chars;
 
     num_chars = 0;
@@ -50,28 +40,16 @@ console_printf(const char *fmt, ...)
         }
     }
 
-    va_start(args, fmt);
-    num_chars += vprintf(fmt, args);
-    va_end(args);
+    num_chars += vprintf(fmt, ap);
 
     return num_chars;
 }
 
-
 #else
 
-/**
- * Prints the specified format string to the console.
- *
- * @return                      The number of characters that would have been
- *                                  printed if the console buffer were
- *                                  unlimited.  This return value is analogous
- *                                  to that of snprintf.
- */
 int
-console_printf(const char *fmt, ...)
+console_vprintf(const char *fmt, va_list ap)
 {
-    va_list args;
     char buf[CONS_OUTPUT_MAX_LINE];
     int num_chars;
     int len;
@@ -88,15 +66,35 @@ console_printf(const char *fmt, ...)
         }
     }
 
-    va_start(args, fmt);
-    len = vsnprintf(buf, sizeof(buf), fmt, args);
+    len = vsnprintf(buf, sizeof(buf), fmt, ap);
     num_chars += len;
     if (len >= sizeof(buf)) {
         len = sizeof(buf) - 1;
     }
     console_write(buf, len);
+
+    return num_chars;
+}
+
+#endif
+
+/**
+ * Prints the specified format string to the console.
+ *
+ * @return                      The number of characters that would have been
+ *                                  printed if the console buffer were
+ *                                  unlimited.  This return value is analogous
+ *                                  to that of snprintf.
+ */
+int
+console_printf(const char *fmt, ...)
+{
+    va_list args;
+    int num_chars;
+
+    va_start(args, fmt);
+    num_chars = console_vprintf(fmt, args);
     va_end(args);
 
     return num_chars;
 }
-#endif
