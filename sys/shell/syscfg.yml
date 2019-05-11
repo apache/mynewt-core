@@ -74,6 +74,22 @@ syscfg.defs:
             write 2, read/write 3 (default)
         value: 3 
 
+    SHELL_BRIDGE:
+        description: >
+            Enables the `shell exec` newtmgr command; executes shell commands
+            via newtmgr.
+        value: 0
+    SHELL_BRIDGE_MAX_IN_LEN:
+        description: >
+            Maximum combined length of arguments passed to the `shell exec`
+            newtmgr command.
+        value: 128
+    SHELL_BRIDGE_PRINTF_LEN:
+        description: >
+            Maximum number of characters that can be streamed by a single
+            printf call during processing of the `shell exec` newtmgr command.
+        value: 128
+
 ## duplicated from boot/boot_serial
     BOOT_SERIAL_NVREG_MAGIC:
         description: >
