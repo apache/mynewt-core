@@ -26,35 +26,43 @@
 
 #include <string.h>
 #include "shell/shell.h"
-#include "console/console.h"
+#include "streamer/streamer.h"
 #include "stats/stats.h"
 
-static int shell_stats_display(int argc, char **argv);
-static struct shell_cmd shell_stats_cmd = {
-    .sc_cmd = "stat",
-    .sc_cmd_func = shell_stats_display
-};
+static int shell_stats_display(const struct shell_cmd *cmd,
+                               int argc, char **argv,
+                               struct streamer *streamer);
+
+static struct shell_cmd shell_stats_cmd =
+    SHELL_CMD_EXT("stat", shell_stats_display, NULL);
+
 uint8_t stats_shell_registered;
 
 static int 
 stats_shell_display_entry(struct stats_hdr *hdr, void *arg, char *name,
         uint16_t stat_off)
 {
+    struct streamer *streamer;
     void *stat_val;
+
+    streamer = arg;
 
     stat_val = (uint8_t *)hdr + stat_off;
     switch (hdr->s_size) {
         case sizeof(uint16_t):
-            console_printf("%s: %u\n", name, *(uint16_t *) stat_val);
+            streamer_printf(streamer, "%s: %u\n", name,
+                    *(uint16_t *) stat_val);
             break;
         case sizeof(uint32_t):
-            console_printf("%s: %lu\n", name, *(unsigned long *) stat_val);
+            streamer_printf(streamer, "%s: %lu\n", name,
+                    *(unsigned long *) stat_val);
             break;
         case sizeof(uint64_t):
-            console_printf("%s: %llu\n", name, *(uint64_t *) stat_val);
+            streamer_printf(streamer, "%s: %llu\n", name,
+                    *(uint64_t *) stat_val);
             break;
         default:
-            console_printf("Unknown stat size for %s %u\n", name, 
+            streamer_printf(streamer, "Unknown stat size for %s %u\n", name, 
                     hdr->s_size);
             break;
     }
@@ -65,12 +73,16 @@ stats_shell_display_entry(struct stats_hdr *hdr, void *arg, char *name,
 static int 
 stats_shell_display_group(struct stats_hdr *hdr, void *arg)
 {
-    console_printf("\t%s\n", hdr->s_name);
+    struct streamer *streamer;
+
+    streamer = arg;
+    streamer_printf(streamer, "\t%s\n", hdr->s_name);
     return (0);
 }
 
 static int
-shell_stats_display(int argc, char **argv)
+shell_stats_display(const struct shell_cmd *cmd, int argc, char **argv,
+                    struct streamer *streamer)
 {
     struct stats_hdr *hdr;
     char *name;
@@ -78,21 +90,21 @@ shell_stats_display(int argc, char **argv)
 
     name = argv[1];
     if (name == NULL || !strcmp(name, "")) {
-        console_printf("Must specify a statistic name to dump, "
+        streamer_printf(streamer, "Must specify a statistic name to dump, "
                 "possible names are:\n");
-        stats_group_walk(stats_shell_display_group, NULL);
+        stats_group_walk(stats_shell_display_group, streamer);
         rc = OS_EINVAL;
         goto err;
     }
 
     hdr = stats_group_find(name);
     if (!hdr) {
-        console_printf("Could not find statistic group %s\n", name);
+        streamer_printf(streamer, "Could not find statistic group %s\n", name);
         rc = OS_EINVAL;
         goto err;
     }
 
-    rc = stats_walk(hdr, stats_shell_display_entry, NULL);
+    rc = stats_walk(hdr, stats_shell_display_entry, streamer);
     if (rc != 0) {
         goto err;
     }
