@@ -24,7 +24,19 @@
 extern "C" {
 #endif
 
+#include "streamer/streamer.h"
 #include "shell/shell.h"
+struct CborEncoder;
+ 
+#if MYNEWT_VAL(SHELL_BRIDGE)
+/**
+ * Streams CBOR text strings to its encoder.
+ */
+struct shell_bridge_streamer {
+    struct streamer streamer;
+    struct CborEncoder *str_encoder;
+};
+#endif
 
 #if MYNEWT_VAL(SHELL_NEWTMGR)
 #define SHELL_NLIP_PKT_START1 (6)
@@ -39,6 +51,12 @@ void shell_nlip_clear_pkt(void);
 
 void shell_os_register(void);
 void shell_prompt_register(void);
+
+#if MYNEWT_VAL(SHELL_BRIDGE)
+void shell_bridge_streamer_new(struct shell_bridge_streamer *sbs,
+                               struct CborEncoder *str_encoder);
+int shell_bridge_init(void);
+#endif
 
 #ifdef __cplusplus
 }
