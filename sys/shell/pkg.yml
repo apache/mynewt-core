@@ -33,6 +33,9 @@ pkg.deps.SHELL_NEWTMGR:
     - "@apache-mynewt-core/encoding/base64"
     - "@apache-mynewt-core/util/crc"
 
+pkg.deps.SHELL_BRIDGE:
+    - "@apache-mynewt-core/encoding/tinycbor"
+
 pkg.req_apis:
     - console
 

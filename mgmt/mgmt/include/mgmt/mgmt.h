@@ -58,6 +58,7 @@ extern "C" {
 #define MGMT_GROUP_ID_SPLIT     (6)
 #define MGMT_GROUP_ID_RUN       (7)
 #define MGMT_GROUP_ID_FS        (8)
+#define MGMT_GROUP_ID_SHELL     (9)
 #define MGMT_GROUP_ID_PERUSER   (64)
 
 /**
