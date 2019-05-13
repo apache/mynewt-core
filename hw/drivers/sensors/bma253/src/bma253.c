@@ -388,7 +388,7 @@ i2c_writereg(
     oper.buffer  = tuple;
 
     //rc = i2cn_master_write(itf->si_num, &oper, OS_TICKS_PER_SEC / 10, 1,
-    rc = i2cn_master_write(itf->si_num, &oper, 3, 1,    //zg
+    rc = i2cn_master_write(itf->si_num, &oper, 3, 1,
                            MYNEWT_VAL(BMA253_I2C_RETRIES));
     if (rc != 0) {
         BMA253_LOG(ERROR, "I2C write failed at address 0x%02X single byte\n",
@@ -1057,7 +1057,7 @@ bma253_set_softreset(const struct bma253 * bma253)
     delay_msec(2);
 
 
-    rc = get_registers((struct bma253 *)bma253, REG_ADDR_PMU_RANGE, &regv, 1);   //zg
+    rc = get_registers((struct bma253 *)bma253, REG_ADDR_PMU_RANGE, &regv, 1);
 
     return 0;
 }
@@ -1127,14 +1127,14 @@ bma253_set_int_enable(const struct bma253 * bma253,
 
     int retry = 2;
 
-    do {    //zg
+    do {
         uint8_t regv;
         rc = set_register((struct bma253 *)bma253, REG_ADDR_INT_EN_0, data[0]);
         if (rc != 0) {
             return rc;
         }
 
-        rc = get_registers((struct bma253 *)bma253, REG_ADDR_INT_EN_0, &regv, 1);    //zg
+        rc = get_registers((struct bma253 *)bma253, REG_ADDR_INT_EN_0, &regv, 1);
 
         if (regv == data[0]) {
             break;
@@ -1265,7 +1265,7 @@ bma253_set_int_routes(const struct bma253 * bma253,
 {
     uint8_t data[3];
     int rc;
-    uint8_t regv;   //zg
+    uint8_t regv;
 
     data[0] = (((int_routes->flat_int_route & INT_ROUTE_PIN_1) != 0) << 7) |
               (((int_routes->orient_int_route & INT_ROUTE_PIN_1) != 0) << 6) |
@@ -1292,14 +1292,14 @@ bma253_set_int_routes(const struct bma253 * bma253,
               (((int_routes->high_g_int_route & INT_ROUTE_PIN_2) != 0) << 1) |
               (((int_routes->low_g_int_route & INT_ROUTE_PIN_2) != 0) << 0);
 
-    rc = get_registers((struct bma253 *)bma253, REG_ADDR_INT_MAP_0, &regv, 1);  //zg
+    rc = get_registers((struct bma253 *)bma253, REG_ADDR_INT_MAP_0, &regv, 1);
 
     rc = set_register((struct bma253 *)bma253, REG_ADDR_INT_MAP_0, data[0]);
     if (rc != 0) {
         return rc;
     }
 
-    rc = get_registers((struct bma253 *)bma253, REG_ADDR_INT_MAP_0, &regv, 1);  //zg
+    rc = get_registers((struct bma253 *)bma253, REG_ADDR_INT_MAP_0, &regv, 1);
 
     rc = set_register((struct bma253 *)bma253, REG_ADDR_INT_MAP_1, data[1]);
     if (rc != 0) {
@@ -2962,7 +2962,7 @@ bma253_set_fifo_cfg(const struct bma253 * bma253,
         break;
     }
 
-    data |= (0x03 << 2);    //zg
+    data |= (0x03 << 2);
 
     return set_register((struct bma253 *)bma253, REG_ADDR_FIFO_CONFIG_1, data);
 }
@@ -3241,7 +3241,7 @@ reset_and_recfg(struct bma253 * bma253)
         return rc;
     }
 
-    fifo_cfg.fifo_mode = FIFO_MODE_STREAM;  //zg
+    fifo_cfg.fifo_mode = FIFO_MODE_STREAM;
     fifo_cfg.fifo_data = FIFO_DATA_X_AND_Y_AND_Z;
 
     rc = bma253_set_fifo_cfg(bma253, &fifo_cfg);
@@ -5088,7 +5088,7 @@ sensor_driver_handle_interrupt(struct sensor * sensor)
     bma253 = (struct bma253 *)SENSOR_GET_DEVICE(sensor);
     pdd = &bma253->pdd;
 
-    BMA253_LOG(DEBUG, "bma253_isr\n");   //zg
+    BMA253_LOG(DEBUG, "bma253_isr\n");
 
     rc = bma253_get_int_status(bma253, &int_status);
     if (rc != 0) {

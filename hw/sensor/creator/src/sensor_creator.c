@@ -292,29 +292,29 @@ static struct sensor_itf i2c_0_itf_ms40 = {
 
 
 #if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(BMA253_OFB)
-static struct sensor_itf i2c_0_itf_lis = {
+static struct sensor_itf spi2c_0_itf_bma253 = {
     .si_type = SENSOR_ITF_I2C,
     .si_num  = 0,
     .si_addr = 0x18,
     .si_ints = {
-        { 12, MYNEWT_VAL(BMA253_INT_PIN_DEVICE),    //zg
-            MYNEWT_VAL(BMA253_INT_CFG_ACTIVE)}, //zg
+        { 12, MYNEWT_VAL(BMA253_INT_PIN_DEVICE),
+            MYNEWT_VAL(BMA253_INT_CFG_ACTIVE)},
         { 24, MYNEWT_VAL(BMA253_INT2_PIN_DEVICE),
-            MYNEWT_VAL(BMA253_INT_CFG_ACTIVE)}  //zg
+            MYNEWT_VAL(BMA253_INT_CFG_ACTIVE)}
     },
 };
 #endif
 
 #if MYNEWT_VAL(SPI_0_MASTER) && MYNEWT_VAL(BMA253_OFB)
-static struct sensor_itf i2c_0_itf_lis = {
+static struct sensor_itf spi2c_0_itf_bma253 = {
     .si_type = SENSOR_ITF_SPI,
     .si_num  = 0,
     .si_cs_pin = 11,
     .si_ints = {
-        { 12, MYNEWT_VAL(BMA253_INT_PIN_DEVICE),    //zg
-            MYNEWT_VAL(BMA253_INT_CFG_ACTIVE)}, //zg
+        { 12, MYNEWT_VAL(BMA253_INT_PIN_DEVICE),
+            MYNEWT_VAL(BMA253_INT_CFG_ACTIVE)},
         { 24, MYNEWT_VAL(BMA253_INT2_PIN_DEVICE),
-            MYNEWT_VAL(BMA253_INT_CFG_ACTIVE)}  //zg
+            MYNEWT_VAL(BMA253_INT_CFG_ACTIVE)}
     },
 };
 #endif
@@ -341,10 +341,10 @@ static struct sensor_itf spi2c_0_itf_bma2xx = {
     .si_num = 0,
     .si_cs_pin = 11,
     .si_ints = {
-        { 12, MYNEWT_VAL(BMA2XX_INT_PIN_DEVICE),    //zg
+        { 12, MYNEWT_VAL(BMA2XX_INT_PIN_DEVICE),
         //{ 26, MYNEWT_VAL(BMA2XX_INT_PIN_DEVICE),
             MYNEWT_VAL(BMA2XX_INT_CFG_ACTIVE)},
-        { 26, MYNEWT_VAL(BMA2XX_INT2_PIN_DEVICE),   //zg
+        { 26, MYNEWT_VAL(BMA2XX_INT2_PIN_DEVICE),
             MYNEWT_VAL(BMA2XX_INT_CFG_ACTIVE)}
     },
 };
@@ -384,7 +384,7 @@ static struct sensor_itf i2c_0_itf_lis2dw12 = {
     .si_addr = 0x18,
     .si_ints = {
         //{ MYNEWT_VAL(LIS2DW12_INT1_PIN_HOST), MYNEWT_VAL(LIS2DW12_INT1_PIN_DEVICE),
-        { 25, MYNEWT_VAL(LIS2DW12_INT1_PIN_DEVICE), //zg
+        { 25, MYNEWT_VAL(LIS2DW12_INT1_PIN_DEVICE),
           MYNEWT_VAL(LIS2DW12_INT1_CFG_ACTIVE)}}
 };
 #endif
@@ -814,16 +814,15 @@ config_bma253_sensor(void)
     cfg.tap_shock = BMA253_TAP_SHOCK_50_MS;
     cfg.d_tap_window = BMA253_D_TAP_WINDOW_250_MS;
     cfg.tap_wake_samples = BMA253_TAP_WAKE_SAMPLES_2;
-    //cfg.tap_thresh_g = 1.0;
-    cfg.tap_thresh_g = 0.200f;  //zg
+    cfg.tap_thresh_g = 0.200f;
     cfg.offset_x_g = 0.0;
     cfg.offset_y_g = 0.0;
     cfg.offset_z_g = 0.0;
-    //cfg.power_mode = BMA253_POWER_MODE_NORMAL;
+    /* options: BMA253_POWER_MODE_SUSPEND, BMA253_POWER_MODE_NORMAL, BMA253_POWER_MODE_LPM_1, */
     cfg.power_mode = BMA253_POWER_MODE_SUSPEND;
-    cfg.sleep_duration = BMA253_SLEEP_DURATION_10_MS;   //zg
+    cfg.sleep_duration = BMA253_SLEEP_DURATION_10_MS;
     cfg.sensor_mask = SENSOR_TYPE_ACCELEROMETER;
-    //cfg.read_mode = BMA253_READ_M_POLL;//zg
+    /* options: BMA253_READ_M_STREAM, BMA253_READ_M_POLL */
     cfg.read_mode = BMA253_READ_M_STREAM;
 
     rc = bma253_config((struct bma253 *)dev, &cfg);
@@ -1157,7 +1156,7 @@ config_bma2xx_sensor(void)
     dev = os_dev_open("bma2xx_0", OS_TIMEOUT_NEVER, NULL);
     assert(dev != NULL);
 
-    cfg.model = BMA2XX_BMA253;  //zg
+    cfg.model = BMA2XX_BMA253;
     cfg.low_g_delay_ms = BMA2XX_LOW_G_DELAY_MS_DEFAULT;
     cfg.high_g_delay_ms = BMA2XX_HIGH_G_DELAY_MS_DEFAULT;
     cfg.g_range = BMA2XX_G_RANGE_2;
@@ -1338,7 +1337,7 @@ sensor_dev_create(void)
 
 #if MYNEWT_VAL(BMA253_OFB)
     rc = os_dev_create((struct os_dev *)&bma253, "bma253_0",
-      OS_DEV_INIT_PRIMARY, 0, bma253_init, &i2c_0_itf_lis);
+      OS_DEV_INIT_PRIMARY, 0, bma253_init, &spi2c_0_itf_bma253);
     assert(rc == 0);
 
     rc = config_bma253_sensor();
