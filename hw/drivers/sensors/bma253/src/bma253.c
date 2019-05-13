@@ -4933,6 +4933,9 @@ sensor_driver_unset_notification(struct sensor * sensor,
 
     if (sensor_event_type & SENSOR_EVENT_TYPE_DOUBLE_TAP) {
         int_routes.d_tap_int_route = INT_ROUTE_NONE;
+
+
+        bma253->ev_enabled &= ~SENSOR_EVENT_TYPE_DOUBLE_TAP;
     }
 
     rc = bma253_set_int_routes(bma253, &int_routes);
