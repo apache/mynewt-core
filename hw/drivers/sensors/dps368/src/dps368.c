@@ -162,7 +162,8 @@ dps368_is_trim_complete(struct sensor_itf *itf, uint8_t *ready)
  * @return 0 on success, non-zero on failure
  */
 static int
-dps368_prepare_calib_coeff(struct sensor_itf *itf, dps3xx_cal_coeff_regs_s *coeffs, dps3xx_temperature_src_e *src_t)
+dps368_prepare_calib_coeff(struct sensor_itf *itf,
+        dps3xx_cal_coeff_regs_s *coeffs, dps3xx_temperature_src_e *src_t)
 {
      uint8_t read_buffer[IFX_DPS368_COEF_LEN] = {0};
      int rc;
@@ -672,7 +673,6 @@ dps368_get_temperature_degC(struct dps368 *dps368,float *tempdegC)
 }
 
 
-
 /*Public functions implementations*/
 int
 dps368_get_hwid(struct sensor_itf *itf, uint8_t *hwid)
@@ -978,7 +978,6 @@ dps368_sensor_set_config(struct sensor *sensor, void *cfg)
 
     return dps368_config(dps368, (struct dps368_cfg_s*) cfg);
 }
-
 
 
 /*Bus- peripheral communication instantiations */

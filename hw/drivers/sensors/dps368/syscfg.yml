@@ -16,7 +16,7 @@
 syscfg.defs:
     DPS368_CLI:
         description: 'Enable shell support for the DPS368'
-        value: 1
+        value: 0
     DPS368_SHELL_ITF_TYPE:
         description: 'DPS368 interface type'
         value: 1
