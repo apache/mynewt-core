@@ -77,6 +77,9 @@ syscfg.defs:
     KXTJ3_OFB:
         description: 'KXTJ3 is present'
         value : 0
+    DPS368_OFB:
+        description: 'DPS368 is present'
+        value: 0
 
     SENSOR_CREATOR_SYSINIT_STAGE:
         description: >
