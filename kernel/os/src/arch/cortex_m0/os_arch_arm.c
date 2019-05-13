@@ -212,7 +212,6 @@ os_arch_os_init(void)
          */
         NVIC_SetVector(NonMaskableInt_IRQn, (uint32_t)os_default_irq_asm);
         NVIC_SetVector(HardFault_IRQn, (uint32_t)os_default_irq_asm);
-        NVIC_SetVector(-13, (uint32_t)os_default_irq_asm); /* Hardfault */
         for (i = 0; i < NVIC_NUM_VECTORS - NVIC_USER_IRQ_OFFSET; i++) {
             NVIC_SetVector(i, (uint32_t)os_default_irq_asm);
         }

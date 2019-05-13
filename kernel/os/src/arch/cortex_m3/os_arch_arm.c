@@ -220,7 +220,7 @@ os_arch_os_init(void)
          * should help in trying to figure out what went wrong.
          */
         NVIC_SetVector(NonMaskableInt_IRQn, (uint32_t)os_default_irq_asm);
-        NVIC_SetVector(-13, (uint32_t)os_default_irq_asm);
+        NVIC_SetVector(HardFault_IRQn, (uint32_t)os_default_irq_asm);
         NVIC_SetVector(MemoryManagement_IRQn, (uint32_t)os_default_irq_asm);
         NVIC_SetVector(BusFault_IRQn, (uint32_t)os_default_irq_asm);
         NVIC_SetVector(UsageFault_IRQn, (uint32_t)os_default_irq_asm);
