@@ -69,12 +69,64 @@ enum kxtj3_odr {
     KXTJ3_ODR_1600HZ  = 11,
 };
 
+/* KXTJ3 Wake-up ODR */
+enum kxtj3_wuf_odr {
+    KXTJ3_WUF_ODR_0P781HZ = 0,
+    KXTJ3_WUF_ODR_1P563HZ = 1,
+    KXTJ3_WUF_ODR_3P125HZ = 2,
+    KXTJ3_WUF_ODR_6P25HZ  = 3,
+    KXTJ3_WUF_ODR_12P5HZ  = 4,
+    KXTJ3_WUF_ODR_25HZ    = 5,
+    KXTJ3_WUF_ODR_50HZ    = 6,
+    KXTJ3_WUF_ODR_100HZ   = 7,
+};
+
+/* KXTJ3 wake-up functionality config */
+struct kxtj3_wuf_cfg {
+    enum kxtj3_wuf_odr odr;
+    float threshold; /* ms/2 */
+    float delay; /* seconds */
+};
+
 struct kxtj3_cfg {
     enum kxtj3_oper_mode oper_mode;
     enum kxtj3_perf_mode perf_mode;
     enum kxtj3_grange grange;
     enum kxtj3_odr odr;
+
+    /* Wake-up config */
+    struct kxtj3_wuf_cfg wuf;
+
+    /* interrupt config */
+    uint8_t int_enable;
+    uint8_t int_polarity;
+    uint8_t int_latch;
+
     uint32_t sensors_mask;
+};
+
+/* Used to track interrupt state to wake any present waiters */
+struct kxtj3_int {
+    /* Synchronize access to this structure */
+    os_sr_t lock;
+    /* Sleep waiting for an interrupt to occur */
+    struct os_sem wait;
+    /* Is the interrupt currently active */
+    bool active;
+    /* Is there a waiter currently sleeping */
+    bool asleep;
+    /* Configured interrupts */
+    struct sensor_int *ints;
+};
+
+/* Int enabled flags */
+#define KXTJ3_INT_WUFE 0x2
+
+/* Private per driver data */
+struct kxtj3_pdd {
+    struct kxtj3_int *interrupt;
+    struct sensor_notify_ev_ctx notify_ctx;
+    uint8_t int_enabled_bits;
 };
 
 struct kxtj3 {
@@ -85,6 +137,8 @@ struct kxtj3 {
 #endif
     struct sensor sensor;
     struct kxtj3_cfg cfg;
+    struct kxtj3_int intr;
+    struct kxtj3_pdd pdd;
 };
 
 /**
