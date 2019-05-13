@@ -40,6 +40,7 @@ extern uint8_t _ram_start;
 /* LED pins */
 #define LED_1           (33)    /* P1_1 */
 #define LED_2           (43)    /* P1_11 */
+#define LED_3           (42)    /* P1_10 */
 #define LED_BLINK_PIN   LED_1
 
 /* Button pin */
