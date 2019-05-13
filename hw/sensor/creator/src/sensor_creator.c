@@ -400,6 +400,15 @@ static struct sensor_itf i2c_0_itf_bme680 = {
 };
 #endif
 
+/*DPS368 itf instantioation*/
+#if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(DPS368_OFB)
+static struct sensor_itf i2c_0_itf_dps368 = {
+    .si_type = MYNEWT_VAL(DPS368_SHELL_ITF_TYPE),
+    .si_num  = MYNEWT_VAL(DPS368_SHELL_ITF_NUM),
+    .si_addr = MYNEWT_VAL(DPS368_SHELL_ITF_ADDR)
+};
+#endif
+
 /**
  * MS5837 Sensor default configuration used by the creator package
  *
