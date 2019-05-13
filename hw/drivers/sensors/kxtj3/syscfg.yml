@@ -18,6 +18,15 @@
 #
 
 syscfg.defs:
+    KXTJ3_INT_PIN_HOST:
+        description: 'Interrupt pin number on host device connected to INT on device'
+        value: 1
+    KXTJ3_INT_PIN_DEVICE:
+        description: 'KXTJ3 has one INT pin, use 1'
+        value: 1
+    KXTJ3_INT_CFG_ACTIVE:
+        description: 'Set 0 for active-low, 1 for active-high'
+        value: 1
     KXTJ3_CLI:
         description: 'Enable shell support for the KXTJ3'
         value: 0
