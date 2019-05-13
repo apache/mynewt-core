@@ -390,7 +390,7 @@ static struct sensor_itf i2c_0_itf_lis2dw12 = {
 #endif
 
 #if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(BMP388_OFB)
-static struct sensor_itf i2c_0_itf_bmp388 = {
+static struct sensor_itf spi2c_0_itf_bmp388= {
     .si_type = SENSOR_ITF_I2C,
     .si_num  = 0,
     .si_addr = 0x76,
@@ -1035,27 +1035,40 @@ config_bmp388_sensor(void)
     int rc;
     struct os_dev *dev;
     struct bmp388_cfg cfg = {0};
+
     dev = (struct os_dev *) os_dev_open("bmp388_0", OS_TIMEOUT_NEVER, NULL);
     assert(dev != NULL);
-    cfg.rate = BMP3_ODR_200_HZ;
-    cfg.int1_pin_cfg = 0;
-    cfg.int2_pin_cfg = 0;
-    cfg.int_enable = 0;
+
+	cfg.rate = BMP3_ODR_50_HZ;
+
+    /*options: BMP388_DRDY_INT, BMP388_FIFO_WTMK_INT, BMP388_FIFO_FULL_INT */
+	cfg.int_enable_type = BMP388_FIFO_FULL_INT;
+
     cfg.int_pp_od = 0;
     cfg.int_latched = 0;
-    cfg.int_active_low = 0;
-    cfg.fifo_mode = BMP388_FIFO_M_BYPASS;
-    cfg.fifo_threshold = 32;
+    cfg.int_active_low = 1;
+
+
+    /* options: BMP388_FIFO_M_BYPASS, BMP388_FIFO_M_FIFO */
+    cfg.fifo_mode = BMP388_FIFO_M_FIFO;
+	cfg.fifo_threshold = 73;
+
 	cfg.filter_press_osr = BMP3_OVERSAMPLING_2X;
 	cfg.filter_temp_osr = BMP3_OVERSAMPLING_2X;
     cfg.power_mode = BMP3_FORCED_MODE;
-    cfg.read_mode.mode = BMP388_READ_M_POLL;
-    cfg.read_mode.int_cfg = MYNEWT_VAL(BMP388_INT_ENABLE);
+
+    /* options: BMP388_READ_M_POLL or BMP388_READ_M_STREAM */
+	cfg.read_mode.mode = BMP388_READ_M_STREAM;
+
+    /* options: BMP388_DRDY_INT,  BMP388_FIFO_WTMK_INT, BMP388_FIFO_FULL_INT */
+	cfg.read_mode.int_type = BMP388_FIFO_FULL_INT;
 	cfg.read_mode.int_num = MYNEWT_VAL(BMP388_INT_NUM);
     cfg.mask = SENSOR_TYPE_AMBIENT_TEMPERATURE|
                        SENSOR_TYPE_PRESSURE;
+
     rc = bmp388_config((struct bmp388 *) dev, &cfg);
     assert(rc == 0);
+
     os_dev_close(dev);
     return rc;
 }
@@ -1378,8 +1391,8 @@ sensor_dev_create(void)
 #endif
 
 #if MYNEWT_VAL(BMP388_OFB)
-      rc = os_dev_create((struct os_dev *) &bmp388, "bmp388_0",
-      OS_DEV_INIT_PRIMARY, 0, bmp388_init, (void *)&spi2c_0_itf_bmp388);
+    rc = os_dev_create((struct os_dev *) &bmp388, "bmp388_0",
+            OS_DEV_INIT_PRIMARY, 0, bmp388_init, (void *)&spi2c_0_itf_bmp388);
     assert(rc == 0);
     rc = config_bmp388_sensor();
     assert(rc == 0);
