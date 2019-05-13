@@ -223,6 +223,9 @@ kxtj3_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value);
 int
 kxtj3_write8(struct sensor_itf *itf, uint8_t reg, uint8_t value);
 
+int
+kxtj3_wait_for_wakeup(struct sensor *sensor);
+
 #ifdef __cplusplus
 }
 #endif

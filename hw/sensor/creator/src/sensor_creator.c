@@ -428,6 +428,9 @@ static struct sensor_itf i2c_0_itf_kxtj3 = {
     .si_type = SENSOR_ITF_I2C,
     .si_num  = 0,
     .si_addr = 0x0F,
+    .si_ints = {
+        { MYNEWT_VAL(KXTJ3_INT_PIN_HOST), MYNEWT_VAL(KXTJ3_INT_PIN_DEVICE),
+          MYNEWT_VAL(KXTJ3_INT_CFG_ACTIVE)}}
 };
 #endif
 
@@ -1161,6 +1164,9 @@ config_kxtj3_sensor(void)
     cfg.perf_mode = KXTJ3_PERF_MODE_HIGH_RES_12BIT;
     cfg.grange = KXTJ3_GRANGE_4G;
     cfg.odr = KXTJ3_ODR_50HZ;
+    cfg.wuf.odr = KXTJ3_WUF_ODR_25HZ;
+    cfg.wuf.threshold =  STANDARD_ACCEL_GRAVITY / 2.0F; /* m/s2 */
+    cfg.wuf.delay = 0.25F; /* seconds */
     cfg.sensors_mask = SENSOR_TYPE_ACCELEROMETER;
 
     rc = kxtj3_config((struct kxtj3 *) dev, &cfg);
