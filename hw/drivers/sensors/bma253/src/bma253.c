@@ -4541,6 +4541,10 @@ bma253_wait_for_tap(struct bma253 * bma253,
 
     wait_interrupt(&bma253->intr, pdd->int_num);
 
+    //clear this after interrupt is fired
+    pdd->registered_mask &= ~BMA253_NOTIFY_MASK;
+
+    rc = bma253_set_int_latch(bma253, true, INT_LATCH_LATCHED);
 
     rc = bma253_set_int_enable(bma253, &int_enable_org);
     if (rc != 0) {

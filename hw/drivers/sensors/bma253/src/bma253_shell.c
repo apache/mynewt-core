@@ -448,7 +448,6 @@ bma253_wait_for_tap_cmd(struct bma253 * bma253,
     uint8_t i;
     int rc;
 
-    console_printf("wait_for_tap_cmd: %d!\n", argc);
 
     if (argc != 1) {
         return EINVAL;
