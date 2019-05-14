@@ -19,6 +19,7 @@
 
 #include <string.h>
 #include "os/mynewt.h"
+#include "node/lora.h"
 #include "node/lora_priv.h"
 #include "node/lora_band.h"
 
@@ -88,6 +89,9 @@ struct lm_join_ev_arg_obj g_lm_join_ev_arg;
 struct lora_node_debug_log_entry g_lnd_log[LORA_NODE_DEBUG_LOG_ENTRIES];
 uint16_t g_lnd_log_index;
 
+/* Low power callback functions */
+extern void lora_bsp_enable_mac_timer(void);
+
 void
 lora_node_log(uint8_t logid, uint8_t p8, uint16_t p16, uint32_t p32)
 {
@@ -98,8 +102,7 @@ lora_node_log(uint8_t logid, uint8_t p8, uint16_t p16, uint32_t p32)
     g_lnd_log[g_lnd_log_index].lnd_p8 = p8;
     g_lnd_log[g_lnd_log_index].lnd_p16 = p16;
     g_lnd_log[g_lnd_log_index].lnd_p32 = p32;
-    g_lnd_log[g_lnd_log_index].lnd_cputime =
-        hal_timer_read(MYNEWT_VAL(LORA_MAC_TIMER_NUM));
+    g_lnd_log[g_lnd_log_index].lnd_cputime = TimerGetCurrentTime();
 
     ++g_lnd_log_index;
     if (g_lnd_log_index == LORA_NODE_DEBUG_LOG_ENTRIES) {
@@ -678,4 +681,25 @@ lora_node_init(void)
     lms = LoRaMacInitialization(&lora_cb, LORA_NODE_REGION);
     assert(lms == LORAMAC_STATUS_OK);
 #endif
+}
+
+static bool low_power_active = true;
+
+void lora_enter_low_power(void)
+{
+    if (!low_power_active) {
+        low_power_active = true;
+        hal_timer_deinit(MYNEWT_VAL(LORA_MAC_TIMER_NUM));
+        lora_node_log(LORA_NODE_LOG_LP_ENTER, 0, 0, 0);
+    }
+}
+
+void lora_exit_low_power(void)
+{
+    if (low_power_active) {
+        low_power_active = false;
+        lora_bsp_enable_mac_timer();
+        lora_node_log(LORA_NODE_LOG_LP_EXIT, 0, 0, 0);
+        lora_config_peripherals();
+    }
 }
