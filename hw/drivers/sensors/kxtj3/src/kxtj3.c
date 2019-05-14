@@ -45,6 +45,7 @@ static int kxtj3_sensor_read(struct sensor *, sensor_type_t,
         sensor_data_func_t, void *, uint32_t);
 static int kxtj3_sensor_get_config(struct sensor *, sensor_type_t,
         struct sensor_cfg *);
+static int kxtj3_sensor_set_config(struct sensor *, void *);
 static int kxtj3_sensor_set_notification(struct sensor *,
                                          sensor_event_type_t);
 static int kxtj3_sensor_unset_notification(struct sensor *,
@@ -54,6 +55,7 @@ static int kxtj3_sensor_handle_interrupt(struct sensor *);
 static const struct sensor_driver g_kxtj3_sensor_driver = {
     .sd_read       = kxtj3_sensor_read,
     .sd_get_config = kxtj3_sensor_get_config,
+    .sd_set_config = kxtj3_sensor_set_config,
     .sd_set_notification   = kxtj3_sensor_set_notification,
     .sd_unset_notification = kxtj3_sensor_unset_notification,
     .sd_handle_interrupt = kxtj3_sensor_handle_interrupt,
@@ -1402,6 +1404,16 @@ kxtj3_sensor_get_config(struct sensor *sensor,
     return 0;
 err:
     return rc;
+}
+
+static int
+kxtj3_sensor_set_config(struct sensor *sensor, void *cfg)
+{
+    struct kxtj3 *kxtj3;
+
+    kxtj3 = (struct kxtj3 *)SENSOR_GET_DEVICE(sensor);
+
+    return kxtj3_config(kxtj3, (struct kxtj3_cfg*)cfg);
 }
 
 int
