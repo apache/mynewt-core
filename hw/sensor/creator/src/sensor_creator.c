@@ -68,6 +68,11 @@
 #endif
 
 
+#if MYNEWT_VAL(BMP388_OFB)
+#include <bmp388/bmp388.h>
+#endif
+
+
 #if MYNEWT_VAL(ADXL345_OFB)
 #include <adxl345/adxl345.h>
 #endif
@@ -151,6 +156,10 @@ static struct bma253 bma253;
 
 #if MYNEWT_VAL(BMA2XX_OFB)
 static struct bma2xx bma2xx;
+#endif
+
+#if MYNEWT_VAL(BMP388_OFB)
+static struct bmp388 bmp388;
 #endif
 
 #if MYNEWT_VAL(ADXL345_OFB)
@@ -342,6 +351,29 @@ static struct sensor_itf spi2c_0_itf_bma2xx = {
     },
 };
 #endif
+
+#if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(BMP388_OFB)
+static struct sensor_itf spi2c_0_itf_bmp388= {
+    .si_type = SENSOR_ITF_I2C,
+    .si_num  = 0,
+    .si_addr = 0x76,
+    .si_ints = {
+        { 31, MYNEWT_VAL(BMP388_INT1_PIN_DEVICE),
+          MYNEWT_VAL(BMP388_INT1_CFG_ACTIVE)}}
+};
+#endif
+#if MYNEWT_VAL(SPI_0_MASTER) && MYNEWT_VAL(BMP388_OFB)
+static struct sensor_itf spi2c_0_itf_bmp388 = {
+    .si_type = SENSOR_ITF_SPI,
+    .si_num = 0,
+    .si_cs_pin = 30,
+    .si_ints = {
+        { 31, MYNEWT_VAL(BMP388_INT1_PIN_DEVICE),
+            MYNEWT_VAL(BMP388_INT1_CFG_ACTIVE)}
+    },
+};
+#endif
+
 
 #if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(ADXL345_OFB)
 static struct sensor_itf i2c_0_itf_adxl = {
@@ -820,6 +852,7 @@ config_bma253_sensor(void)
 }
 #endif
 
+
 /**
  * ADXL345 Sensor default configuration used by the creator package
  *
@@ -1126,6 +1159,54 @@ config_bma2xx_sensor(void)
 }
 #endif
 
+#if MYNEWT_VAL(BMP388_OFB)
+static int
+config_bmp388_sensor(void)
+{
+    int rc;
+    struct os_dev *dev;
+    struct bmp388_cfg cfg = {0};
+
+    dev = (struct os_dev *) os_dev_open("bmp388_0", OS_TIMEOUT_NEVER, NULL);
+    assert(dev != NULL);
+
+	cfg.rate = BMP3_ODR_50_HZ;
+
+    /*options: BMP388_DRDY_INT, BMP388_FIFO_WTMK_INT, BMP388_FIFO_FULL_INT */
+	cfg.int_enable_type = BMP388_FIFO_FULL_INT;
+
+    cfg.int_pp_od = 0;
+    cfg.int_latched = 0;
+    cfg.int_active_low = 1;
+
+
+    /* options: BMP388_FIFO_M_BYPASS, BMP388_FIFO_M_FIFO */
+    cfg.fifo_mode = BMP388_FIFO_M_FIFO;
+	cfg.fifo_threshold = 73;
+
+	cfg.filter_press_osr = BMP3_OVERSAMPLING_2X;
+	cfg.filter_temp_osr = BMP3_OVERSAMPLING_2X;
+    cfg.power_mode = BMP3_FORCED_MODE;
+
+    /* options: BMP388_READ_M_POLL or BMP388_READ_M_STREAM */
+	cfg.read_mode.mode = BMP388_READ_M_STREAM;
+
+    /* options: BMP388_DRDY_INT,  BMP388_FIFO_WTMK_INT, BMP388_FIFO_FULL_INT */
+	cfg.read_mode.int_type = BMP388_FIFO_FULL_INT;
+	cfg.read_mode.int_num = MYNEWT_VAL(BMP388_INT_NUM);
+    cfg.mask = SENSOR_TYPE_AMBIENT_TEMPERATURE|
+                       SENSOR_TYPE_PRESSURE;
+
+    rc = bmp388_config((struct bmp388 *) dev, &cfg);
+    assert(rc == 0);
+
+    os_dev_close(dev);
+    return rc;
+}
+#endif
+
+
+
 #if MYNEWT_VAL(BME680_OFB)
 int
 config_bme680_sensor(void)
@@ -1358,6 +1439,16 @@ sensor_dev_create(void)
     rc = config_bma2xx_sensor();
     assert(rc == 0);
 #endif
+
+#if MYNEWT_VAL(BMP388_OFB)
+    rc = os_dev_create((struct os_dev *)&bmp388, "bmp388_0",
+      OS_DEV_INIT_PRIMARY, 0, bmp388_init, &spi2c_0_itf_bmp388);
+    assert(rc == 0);
+
+    rc = config_bmp388_sensor();
+    assert(rc == 0);
+#endif
+
 
 #if MYNEWT_VAL(ADXL345_OFB)
     rc = os_dev_create((struct os_dev *) &adxl345, "adxl345_0",

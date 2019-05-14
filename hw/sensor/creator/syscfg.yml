@@ -68,6 +68,9 @@ syscfg.defs:
     BMA2XX_OFB:
         description: 'A sensor in the BMA2XX family is present'
         value : 0
+    BMP388_OFB:
+        description: 'A sensor in the BMP388 family is present'
+        value : 0
     LIS2DS12_OFB:
         description: 'LIS2DS12 is present'
         value : 0
