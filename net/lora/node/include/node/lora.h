@@ -301,7 +301,6 @@ int lora_app_link_check(void);
  */
 int lora_node_link_qual(int16_t *rssi, int16_t *snr);
 
-
 /*
  * Maximum payload that can be sent in the next frame.
  */

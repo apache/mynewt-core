@@ -32,6 +32,7 @@
 #include <string.h>
 #include <assert.h>
 #include "os/mynewt.h"
+#include "os/os.h"
 #include "node/lora.h"
 #include "node/utilities.h"
 #include "node/mac/LoRaMacCrypto.h"
@@ -39,6 +40,7 @@
 #include "node/mac/LoRaMacTest.h"
 #include "hal/hal_timer.h"
 #include "node/lora_priv.h"
+#include "lora/utilities.h"
 
 #if MYNEWT_VAL(LORA_MAC_TIMER_NUM) == -1
 #error "Must define a Lora MAC timer number"
@@ -253,7 +255,7 @@ lora_mac_rx_disable(void)
 static void
 lora_mac_rtx_timer_stop(void)
 {
-    hal_timer_stop(&g_lora_mac_data.rtx_timer);
+    os_cputime_timer_stop(&g_lora_mac_data.rtx_timer);
     os_eventq_remove(lora_node_mac_evq_get(), &g_lora_mac_rtx_timeout_event);
 }
 
@@ -268,7 +270,9 @@ lora_mac_rx_win2_stop(void)
 {
     if (LoRaMacDeviceClass == CLASS_A) {
         hal_timer_stop(&RxWindowTimer2);
+        lora_enter_low_power();
         os_eventq_remove(lora_node_mac_evq_get(), &g_lora_mac_rx_win2_event);
+        lora_node_log(LORA_NODE_LOG_RX_WIN2_CANCEL, 0, 0, 0);
     }
 }
 
@@ -721,9 +725,9 @@ lora_mac_join_req_tx_fail(void)
            this but probably should be modified */
         /* Add some transmit delay between join request transmissions */
         LoRaMacState |= LORAMAC_TX_DELAYED;
-        hal_timer_stop(&TxDelayedTimer);
-        hal_timer_start(&TxDelayedTimer,
-            randr(0, MYNEWT_VAL(LORA_JOIN_REQ_RAND_DELAY) * 1000));
+        os_cputime_timer_stop(&TxDelayedTimer);
+        os_cputime_timer_relative(&TxDelayedTimer,
+            randr(0, MYNEWT_VAL(LORA_JOIN_REQ_RAND_DELAY * 1000)));
     }
 }
 
@@ -803,14 +807,15 @@ lora_mac_process_radio_tx(struct os_event *ev)
     PhyParam_t phyParam;
     SetBandTxDoneParams_t txDone;
 
-    /* XXX: We need to time this more accurately */
-    uint32_t curTime = hal_timer_read(LORA_MAC_TIMER_NUM);
-
+    lora_exit_low_power();
     if (LoRaMacDeviceClass != CLASS_C) {
         Radio.Sleep( );
     } else {
         lora_mac_rx_on_window2();
     }
+
+    /* XXX: We need to time this more accurately */
+    uint32_t curTime = hal_timer_read(LORA_MAC_TIMER_NUM);
 
     /* Always start receive window 1 */
     hal_timer_start_at(&RxWindowTimer1,
@@ -833,7 +838,8 @@ lora_mac_process_radio_tx(struct os_event *ev)
     if (LM_F_NODE_ACK_REQ()) {
         getPhy.Attribute = PHY_ACK_TIMEOUT;
         phyParam = RegionGetPhyParam(LoRaMacRegion, &getPhy);
-        hal_timer_start_at(&g_lora_mac_data.rtx_timer, curTime +
+        os_cputime_timer_stop(&g_lora_mac_data.rtx_timer);
+        os_cputime_timer_relative(&g_lora_mac_data.rtx_timer,
                            ((g_lora_mac_data.rx_win2_delay + phyParam.Value) * 1000));
     } else {
         /*
@@ -853,7 +859,8 @@ lora_mac_process_radio_tx(struct os_event *ev)
                 timeout += (uint32_t)((RxWindow2Config.tsymbol * 1000) *
                     RxWindow2Config.WindowTimeout);
             }
-            hal_timer_start_at(&g_lora_mac_data.rtx_timer, curTime + timeout);
+            os_cputime_timer_stop(&g_lora_mac_data.rtx_timer);
+            os_cputime_timer_relative(&g_lora_mac_data.rtx_timer, timeout);
         }
     }
 
@@ -863,11 +870,11 @@ lora_mac_process_radio_tx(struct os_event *ev)
     // Update last tx done time for the current channel
     txDone.Channel = g_lora_mac_data.cur_chan;
     txDone.Joined = LM_F_IS_JOINED();
-    txDone.LastTxDoneTime = curTime;
+    txDone.LastTxDoneTime = timer_get_current_time();
     RegionSetBandTxDone(LoRaMacRegion, &txDone);
 
     // Update Aggregated last tx done time
-    g_lora_mac_data.aggr_last_tx_done_time = curTime;
+    g_lora_mac_data.aggr_last_tx_done_time = txDone.LastTxDoneTime;
 
     if (!LM_F_NODE_ACK_REQ()) {
         g_lora_mac_data.nb_rep_cntr++;
@@ -1501,6 +1508,9 @@ lora_mac_rx_on_window2(void)
 static void
 lora_mac_process_rx_win2_timeout(struct os_event *ev)
 {
+    /* Turn off the high resolution timer */
+    lora_enter_low_power();
+    lora_node_log(LORA_NODE_LOG_RX_WIN2_TIMEOUT, 0, 0, 0);
     /*
      * There are two cases here. Either the radio is still receiving in which
      * case the radio status is not idle, or the radio finished receiving
@@ -1973,8 +1983,8 @@ ScheduleTx(void)
 
             // Send later - prepare timer
             LoRaMacState |= LORAMAC_TX_DELAYED;
-            hal_timer_stop(&TxDelayedTimer);
-            hal_timer_start(&TxDelayedTimer, duty_cycle_time_off);
+            os_cputime_timer_stop(&TxDelayedTimer);
+            os_cputime_timer_relative(&TxDelayedTimer, duty_cycle_time_off);
 
             lora_node_log(LORA_NODE_LOG_TX_DELAY, g_lora_mac_data.max_dc, 0,
                           duty_cycle_time_off);
@@ -2494,16 +2504,17 @@ LoRaMacInitialization(LoRaMacCallback_t *callbacks, LoRaMacRegion_t region)
 
     ResetMacParameters( );
 
-    /* XXX: determine which of these should be os callouts */
-    hal_timer_config(LORA_MAC_TIMER_NUM, LORA_MAC_TIMER_FREQ);
-    hal_timer_set_cb(LORA_MAC_TIMER_NUM, &TxDelayedTimer, OnTxDelayedTimerEvent,
-                     NULL);
+    /* TxDelayedTimer and RTX timers are configured to use the CPU timer, which should be configured
+    as a low power timer. The accuracy of these timers is not critical. */
+    os_cputime_timer_init(&TxDelayedTimer, OnTxDelayedTimerEvent, NULL);
+    os_cputime_timer_init(&g_lora_mac_data.rtx_timer, lora_mac_rtx_timer_cb, NULL);
+
+    /* The RX Window timers are configured to use the high resolution LORA_MAC_TIMER,
+    as their accuracy is critical. */
     hal_timer_set_cb(LORA_MAC_TIMER_NUM, &RxWindowTimer1, OnRxWindow1TimerEvent,
                      NULL);
     hal_timer_set_cb(LORA_MAC_TIMER_NUM, &RxWindowTimer2, OnRxWindow2TimerEvent,
                      NULL);
-    hal_timer_set_cb(LORA_MAC_TIMER_NUM, &g_lora_mac_data.rtx_timer,
-                     lora_mac_rtx_timer_cb, NULL);
 
     /* Init MAC radio events */
     g_lora_mac_radio_tx_timeout_event.ev_cb = lora_mac_process_radio_tx_timeout;
@@ -3288,4 +3299,11 @@ lora_mac_extract_mac_cmds(uint8_t max_cmd_bytes, uint8_t *buf)
     }
 
     return bytes_added;
+}
+
+/* Reconfigure peripherals after exiting low power mode */
+void
+lora_config_peripherals(void)
+{
+    hal_timer_config(LORA_MAC_TIMER_NUM, LORA_MAC_TIMER_FREQ);
 }

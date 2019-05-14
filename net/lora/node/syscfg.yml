@@ -93,6 +93,11 @@ syscfg.defs:
                 the network is public; private otherwise
         value: 0
 
+    LORA_LP_CLOCK:
+        description: >
+            Used by BSP packages to configure LP clock for the LoRa system.
+        value: 1
+
     LORA_NODE_SYSINIT_STAGE:
         description: >
             Sysinit stage for the LoRa endpoint.

@@ -175,3 +175,22 @@ hal_bsp_get_nvic_priority(int irq_num, uint32_t pri)
     /* Add any interrupt priorities configured by the bsp here */
     return pri;
 }
+
+#if MYNEWT_VAL(LORA_NODE)
+void lora_bsp_enable_mac_timer(void)
+{
+    /* Turn on the LoRa MAC timer. This function is automatically
+     * called by the LoRa stack when exiting low power mode.*/
+    #if MYNEWT_VAL(LORA_MAC_TIMER_NUM) == 0
+        #define TIMER_INIT  TIM2
+    #elif MYNEWT_VAL(LORA_MAC_TIMER_NUM) == 1
+        #define TIMER_INIT  TIM3
+    #elif MYNEWT_VAL(LORA_MAC_TIMER_NUM) == 2
+        #define TIMER_INIT  TIM21
+    #else
+        #error "Invalid LORA_MAC_TIMER_NUM"
+    #endif
+
+    hal_timer_init(MYNEWT_VAL(LORA_MAC_TIMER_NUM), TIMER_INIT);
+}
+#endif
