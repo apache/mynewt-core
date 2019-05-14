@@ -1017,6 +1017,17 @@ bma253_set_power_settings(const struct bma253 * bma253,
     }
     ((struct bma253 *)bma253)->power = power_settings->power_mode;
 
+    //immediately after changing power mode, a delay is needed
+    switch (power_settings->power_mode) {
+        case BMA253_POWER_MODE_SUSPEND:
+        case BMA253_POWER_MODE_DEEP_SUSPEND:
+        case BMA253_POWER_MODE_LPM_1:
+            delay_msec(1);    //450us is enough
+            break;
+        default:
+            break;
+    }
+
     if (BMA253_POWER_MODE_SUSPEND == power_settings->power_mode) {
         rc = bma253_clear_fifo(bma253);
         BMA253_DRV_CHECK_RC(rc);
