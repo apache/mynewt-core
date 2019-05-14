@@ -27,9 +27,7 @@
 void
 hal_system_start(void *img_start)
 {
-    typedef void jump_fn(void);
-
-    jump_fn *fn = (jump_fn *)img_start;
+    __attribute__((noreturn)) void (*fn)(void) = img_start;
 
     /* Jump to image. */
     fn();

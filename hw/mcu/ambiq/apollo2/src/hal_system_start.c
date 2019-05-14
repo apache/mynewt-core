@@ -30,11 +30,9 @@
 void
 hal_system_start(void *img_start)
 {
-    typedef void jump_fn(void);
-
     uint32_t base0entry;
     uint32_t jump_addr;
-    jump_fn *fn;
+    __attribute__((noreturn)) void (*fn)(void);
 
     /* First word contains initial MSP value. */
     __set_MSP(*(uint32_t *)img_start);
@@ -42,7 +40,7 @@ hal_system_start(void *img_start)
     /* Second word contains address of entry point (Reset_Handler). */
     base0entry = *(uint32_t *)(img_start + 4);
     jump_addr = base0entry;
-    fn = (jump_fn *)jump_addr;
+    fn = (void *)jump_addr;
 
     /* Jump to image. */
     fn();
