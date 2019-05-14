@@ -105,6 +105,8 @@ extern "C" {
 
 #define BMA253_SPI_READ_CMD_BIT 0x80
 
+#define BMA253_SAMPLE_COUNT_TO_INVALIDATE 4
+
 
     /* variant specifc defines */
 #define BMA253_G_SCALE_2     (0.000977f)

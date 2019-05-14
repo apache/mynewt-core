@@ -570,6 +570,20 @@ bma253_get_accel(const struct bma253 * bma253,
     return 0;
 }
 
+
+/*
+ * @return the time (in usec) between two samples
+ **/
+static
+int bma253_get_sample_interval_us(
+        const struct bma253 * bma253)
+{
+    int sample_interval;
+    sample_interval = 500 << (BMA253_FILTER_BANDWIDTH_1000_HZ - bma253->bandwidth_curr);
+
+    return sample_interval;
+}
+
 int
 bma253_get_temp(const struct bma253 * bma253,
                 float * temp_c)
@@ -3545,10 +3559,12 @@ bma253_arbitrate_hw_cfg(struct bma253 * bma253)
     bool daq_req_new;
     bool daq_in_proc;
     bool hw_cfg_pending = false;
+    bool invalidate_data = false;
 
     enum bma253_power_mode          pm;
     enum bma253_filter_bandwidth    bw;
     struct bma253_int *interrupt;
+
 
     interrupt = &((struct bma253 *)bma253)->intr;
     BMA253_UNUSED_VAR(interrupt);
@@ -3588,14 +3604,26 @@ bma253_arbitrate_hw_cfg(struct bma253 * bma253)
     }
 
     if (!hw_cfg_pending) {
-        rc = change_power(bma253, pm);
-        BMA253_DRV_CHECK_RC(rc);
+        if (pm != bma253->power) {
+            rc = change_power(bma253, pm);
+            BMA253_DRV_CHECK_RC(rc);
+
+            invalidate_data = true;
+        }
+
         if (bw != bma253->bandwidth_curr) {
             rc = bma253_set_filter_bandwidth(bma253, bw);
             BMA253_DRV_CHECK_RC(rc);
             bma253->bandwidth_curr = bw;
+
+            invalidate_data = true;
         }
 
+        if (invalidate_data) {
+            int sample_interval = bma253_get_sample_interval_us(bma253) / 1000;
+            delay_msec((sample_interval > 1 ? sample_interval : 1) * BMA253_SAMPLE_COUNT_TO_INVALIDATE);
+            bma253_clear_fifo(bma253);
+        }
     }
 
     return 0;
@@ -4653,6 +4681,8 @@ bma253_poll_read(struct sensor * sensor,
     float temp_c;
     struct sensor_temp_data std;
 
+    enum bma253_power_mode power_mode_orig;
+
     bma253 = (struct bma253 *)SENSOR_GET_DEVICE(sensor);
     cfg = &bma253->cfg;
 
@@ -4660,11 +4690,20 @@ bma253_poll_read(struct sensor * sensor,
     request_power[1] = BMA253_POWER_MODE_LPM_2;
     request_power[2] = BMA253_POWER_MODE_NORMAL;
 
+
+    power_mode_orig = bma253->power;
+
     rc = interim_power(bma253,
                        request_power,
                        sizeof(request_power) / sizeof(*request_power));
     if (rc != 0) {
         return rc;
+    }
+
+    if (power_mode_orig != bma253->power) {
+        int sample_interval = bma253_get_sample_interval_us(bma253) / 1000;
+        delay_msec((sample_interval > 1 ? sample_interval : 1) * BMA253_SAMPLE_COUNT_TO_INVALIDATE);
+        bma253_clear_fifo(bma253);
     }
 
     if ((sensor_type & SENSOR_TYPE_ACCELEROMETER) != 0) {
