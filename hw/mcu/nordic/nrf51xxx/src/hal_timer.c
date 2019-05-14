@@ -671,6 +671,7 @@ hal_timer_config(int timer_num, uint32_t freq_hz)
 
     /* Make sure HFXO is started */
     nrf51_clock_hfxo_request();
+    nrf51_clock_hfxo_wait_until_started();
     hwtimer = (NRF_TIMER_Type *)bsptimer->tmr_reg;
 
     /* Stop the timer first */

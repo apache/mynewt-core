@@ -33,6 +33,11 @@
 int nrf51_clock_hfxo_request(void);
 
 /**
+ * Wait for the HFXO clock to be turned on.
+ */
+void nrf51_clock_hfxo_wait_until_started(void);
+
+/**
  * Release the HFXO; caller no longer needs the HFXO to be turned on. Each call
  * to release should have been preceeded by a corresponding call to request the
  * HFXO

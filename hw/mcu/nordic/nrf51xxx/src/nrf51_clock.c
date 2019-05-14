@@ -39,6 +39,7 @@ nrf51_clock_hfxo_request(void)
     __HAL_DISABLE_INTERRUPTS(ctx);
     assert(nrf51_clock_hfxo_refcnt < 0xff);
     if (nrf51_clock_hfxo_refcnt == 0) {
+        NRF_CLOCK->EVENTS_HFCLKSTARTED = 0;
         NRF_CLOCK->TASKS_HFCLKSTART = 1;
         started = 1;
     }
@@ -46,6 +47,15 @@ nrf51_clock_hfxo_request(void)
     __HAL_ENABLE_INTERRUPTS(ctx);
 
     return started;
+}
+
+/**
+ * Wait for the HFXO clock to be turned on.
+ */
+void
+nrf51_clock_hfxo_wait_until_started(void)
+{
+    while (NRF_CLOCK->EVENTS_HFCLKSTARTED == 0);
 }
 
 /**

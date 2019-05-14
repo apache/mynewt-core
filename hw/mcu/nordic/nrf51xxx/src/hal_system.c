@@ -98,6 +98,7 @@ hal_system_clock_start(void)
 #if MYNEWT_VAL(XTAL_32768_SYNTH)
     /* Must turn on HFLCK for synthesized 32768 crystal */
     nrf51_clock_hfxo_request();
+    nrf51_clock_hfxo_wait_until_started();
 #endif
 
     /* Check if this clock source is already running */

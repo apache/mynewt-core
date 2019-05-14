@@ -99,6 +99,7 @@ hal_system_clock_start(void)
 #if MYNEWT_VAL_CHOICE(MCU_LFCLK_SOURCE, LFSYNTH)
     /* Must turn on HFLCK for synthesized 32768 crystal */
     nrf52_clock_hfxo_request();
+    nrf52_clock_hfxo_wait_until_started();
 #endif
 
     /* Check if this clock source is already running */
