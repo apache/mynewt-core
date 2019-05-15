@@ -64,3 +64,6 @@ syscfg.defs:
     DPS368_DFLT_CONF_MODE:
         description: 'Default Mode for sensor: Valid values are 0, 1,2,5,6,7. Refere enum in driver package'
         value: 7 #Background for both P and T
+    DPS368_ENABLE_STATS:
+        description: 'Enable statistics for the driver'
+        value: 0

@@ -115,7 +115,7 @@ stats_register_internal(const char *name, struct stats_hdr *shdr)
      * is already registered.
      */
     STAILQ_FOREACH(cur, &g_stats_registry, s_next) {
-        if (!strcmp(cur->s_name, name)) {
+        if (!strcmp(cur->s_name, name) || cur == shdr) {
             rc = -1;
             goto err;
         }

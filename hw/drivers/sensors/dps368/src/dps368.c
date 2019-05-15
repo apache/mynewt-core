@@ -747,7 +747,9 @@ int dps368_init(struct os_dev *dev, void *arg)
 
     dps368->cfg.config_opt = DPS3xx_CONF_WITH_INIT_SEQUENCE;
 
+#if MYNEWT_VAL(DPS368_ENABLE_STATS)
     dps368_stats_int(dev);
+#endif
 
     rc = sensor_init(sensor, dev);
 
@@ -1022,5 +1024,3 @@ dps368_create_spi_sensor_dev(struct bus_spi_node *node, const char *name,
     return rc;
 }
 #endif
-
-
