@@ -366,6 +366,9 @@ startup_stm32l152xc.s
 # NUCLEO-F767 BSP - BSD License
 startup_stm32f767xx.s
 
+# NUCLEO-F439 BSP - BSD License
+startup_stm32f439xx.s
+
 # NUCLEO-F413ZH BSP - BSD License
 nucleo-f413zh
 
