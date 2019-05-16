@@ -206,7 +206,7 @@ os_arch_task_stack_init(struct os_task *t, os_stack_t *stack_top, int size)
  * @return uint32_t
  */
 static void
-os_arch_start(void)
+os_arch_arc_start(void)
 {
     uint32_t *ptr32;
     struct os_task *t;
@@ -275,7 +275,7 @@ os_arch_trap_handler(void *exc_frame)
      */
     parameter = _arc_aux_read(AUX_ECR) & AUX_ECR_PARAM_MASK;
     if (parameter == 0) {
-        os_arch_start();
+        os_arch_arc_start();
     }
 }
 
