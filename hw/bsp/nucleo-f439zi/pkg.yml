@@ -40,3 +40,9 @@ pkg.deps:
 
 pkg.deps.UART_0:
     - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
+
+pkg.deps.TRNG:
+    - "@apache-mynewt-core/hw/drivers/trng/trng_stm32"
+
+pkg.deps.CRYPTO:
+    - "@apache-mynewt-core/hw/drivers/crypto/crypto_stm32"

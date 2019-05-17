@@ -26,6 +26,16 @@
 #include <uart_hal/uart_hal.h>
 #endif
 
+#if MYNEWT_VAL(TRNG)
+#include "trng/trng.h"
+#include "trng_stm32/trng_stm32.h"
+#endif
+
+#if MYNEWT_VAL(CRYPTO)
+#include "crypto/crypto.h"
+#include "crypto_stm32/crypto_stm32.h"
+#endif
+
 #include <hal/hal_bsp.h>
 #include <hal/hal_gpio.h>
 #include <hal/hal_timer.h>
@@ -73,6 +83,14 @@ const uint32_t stm32_flash_sectors[] = {
 #define SZ (sizeof(stm32_flash_sectors) / sizeof(stm32_flash_sectors[0]))
 _Static_assert(MYNEWT_VAL(STM32_FLASH_NUM_AREAS) == SZ,
         "STM32_FLASH_NUM_AREAS does not match flash sectors");
+
+#if MYNEWT_VAL(TRNG)
+static struct trng_dev os_bsp_trng;
+#endif
+
+#if MYNEWT_VAL(CRYPTO)
+static struct crypto_dev os_bsp_crypto;
+#endif
 
 #if MYNEWT_VAL(UART_0)
 static struct uart_dev hal_uart0;
@@ -166,11 +184,26 @@ hal_bsp_init(void)
 
     (void)rc;
 
+#if MYNEWT_VAL(TRNG)
+    rc = os_dev_create(&os_bsp_trng.dev, "trng",
+                       OS_DEV_INIT_KERNEL, OS_DEV_INIT_PRIO_DEFAULT,
+                       stm32_trng_dev_init, NULL);
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(CRYPTO)
+    rc = os_dev_create(&os_bsp_crypto.dev, "crypto",
+                       OS_DEV_INIT_KERNEL, OS_DEV_INIT_PRIO_DEFAULT,
+                       stm32_crypto_dev_init, NULL);
+    assert(rc == 0);
+#endif
+
 #if MYNEWT_VAL(UART_0)
     rc = os_dev_create((struct os_dev *) &hal_uart0, "uart0",
       OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *)&uart_cfg[0]);
     assert(rc == 0);
 #endif
+
 #if MYNEWT_VAL(TIMER_0)
     hal_timer_init(0, TIM9);
 #endif
