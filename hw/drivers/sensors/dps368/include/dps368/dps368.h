@@ -26,6 +26,7 @@
 #include "bus/drivers/i2c_common.h"
 #include "bus/drivers/spi_common.h"
 #endif
+#include <stats/stats.h>
 
 #include "sensor/sensor.h"
 
@@ -33,7 +34,7 @@
 #define    IFX_DPS368_TRIM_FINISH_TIME_MS   12
 #define    IFX_DPS368_DEV_PROD_REVID        0x10
 
-#define    IFX_DPS368_CONFIG_TIME_MS        1 //1 ms config time
+#define    IFX_DPS368_CONFIG_TIME_MS        1 /* 1 ms config time */
 
 #define    IFX_DPS368_FAC_TEST_RUN_PRS_ODR  DPS368_ODR_8
 #define    IFX_DPS368_FAC_TEST_RUN_TMP_ODR  DPS368_ODR_4
@@ -53,7 +54,7 @@
 #define    IFX_DPS368_SOFT_RESET_VERIFY_REG_ADDR       0x06
 
 #define    IFX_DPS368_COEF_REG_ADDR                    0x10
-#define    IFX_DPS368_COEF_LEN                         18    // Length in bytes
+#define    IFX_DPS368_COEF_LEN                         18    /* Length in bytes */
 
 #define    IFX_DPS368_TMP_COEF_SRCE_REG_ADDR           0x28
 #define    IFX_DPS368_TMP_COEF_SRCE_REG_LEN            1
@@ -250,7 +251,13 @@ struct dps368_cfg_s {
     sensor_type_t chosen_type;
 };
 
-struct dps368{
+/* Define the stats section and records */
+STATS_SECT_START(dps368_stat_section)
+    STATS_SECT_ENTRY(read_errors)
+    STATS_SECT_ENTRY(write_errors)
+STATS_SECT_END
+
+struct dps368 {
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
     union {
         struct bus_i2c_node i2c_node;
@@ -270,6 +277,8 @@ struct dps368{
     dps3xx_temperature_src_e temp_src;
     dps_cfg cfg_word;
     uint8_t validated;
+    /* Variable used to hold stats data */
+    STATS_SECT_DECL(dps368_stat_section) stats;
 };
 
 

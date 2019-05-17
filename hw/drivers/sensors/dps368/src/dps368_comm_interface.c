@@ -21,47 +21,6 @@
 #include "dps368_priv.h"
 
 
-/* Define the stats section and records */
-STATS_SECT_START(dps368_stat_section)
-    STATS_SECT_ENTRY(read_errors)
-    STATS_SECT_ENTRY(write_errors)
-    STATS_SECT_ENTRY(out_of_bound_data_errors)
-STATS_SECT_END
-
-/* Define stat names for querying */
-STATS_NAME_START(dps368_stat_section)
-    STATS_NAME(dps368_stat_section, read_errors)
-    STATS_NAME(dps368_stat_section, write_errors)
-    STATS_NAME(dps368_stat_section, out_of_bound_data_errors)
-STATS_NAME_END(dps368_stat_section)
-
-/* Global variable used to hold stats data */
-STATS_SECT_DECL(dps368_stat_section) g_dps368_stats;
-
-
-/**
- * sensor stats init
- *
- *
- * @param ptr Device structure
- *
- * @return  nothing
- */
-void
-dps368_stats_int(struct os_dev *dev)
-{
-    int rc;
-    /* Initialise the stats entry */
-    rc = stats_init(STATS_HDR(g_dps368_stats),
-            STATS_SIZE_INIT_PARMS(g_dps368_stats, STATS_SIZE_32),
-            STATS_NAME_INIT_PARMS(dps368_stat_section));
-    SYSINIT_PANIC_ASSERT(rc == 0);
-    /* Register the entry with the stats registry */
-    rc = stats_register(dev->od_name, STATS_HDR(g_dps368_stats));
-    SYSINIT_PANIC_ASSERT(rc == 0);
-}
-
-
 /*DPS368 bus W/R handling */
 #if !MYNEWT_VAL(BUS_DRIVER_PRESENT)
 /**
@@ -92,7 +51,6 @@ dps368_i2c_write_reg(struct sensor_itf *itf, uint8_t reg, uint8_t value)
         DPS368_LOG(ERROR,
                 "Could not write to 0x%02X:0x%02X with value 0x%02X\n",
                 itf->si_addr, reg, value);
-        STATS_INC(g_dps368_stats, read_errors);
     }
 
     return rc;
@@ -122,7 +80,6 @@ dps368_spi_write_reg(struct sensor_itf *itf, uint8_t reg, uint8_t value)
         rc = SYS_EINVAL;
         DPS368_LOG(ERROR, "SPI_%u register write failed addr:0x%02X\n",
                 itf->si_num, reg);
-        STATS_INC(g_dps368_stats, write_errors);
         goto err;
     }
 
@@ -132,7 +89,6 @@ dps368_spi_write_reg(struct sensor_itf *itf, uint8_t reg, uint8_t value)
         rc = SYS_EINVAL;
         DPS368_LOG(ERROR, "SPI_%u write failed addr:0x%02X\n", itf->si_num,
                 reg);
-        STATS_INC(g_dps368_stats, write_errors);
         goto err;
     }
 
@@ -180,7 +136,6 @@ dps368_i2c_read_regs(struct sensor_itf *itf, uint8_t reg, uint8_t size,
     if (rc) {
         DPS368_LOG(ERROR, "I2C access failed at address 0x%02X\n",
                 itf->si_addr);
-        STATS_INC(g_dps368_stats, read_errors);
         return rc;
     }
 
@@ -217,7 +172,6 @@ dps368_spi_read_regs(struct sensor_itf *itf, uint8_t reg, uint8_t size,
         rc = SYS_EINVAL;
         DPS368_LOG(ERROR, "SPI_%u register write failed addr:0x%02X\n",
                 itf->si_num, reg);
-        STATS_INC(g_dps368_stats, read_errors);
         goto err;
     }
 
@@ -228,7 +182,6 @@ dps368_spi_read_regs(struct sensor_itf *itf, uint8_t reg, uint8_t size,
             rc = SYS_EINVAL;
             DPS368_LOG(ERROR, "SPI_%u read failed addr:0x%02X\n", itf->si_num,
                     reg);
-            STATS_INC(g_dps368_stats, read_errors);
             goto err;
         }
         buffer[i] = retval;
@@ -275,7 +228,7 @@ int dps368_write_reg(struct sensor_itf *itf, uint8_t addr, uint8_t value)
 
     sensor_itf_unlock(itf);
 #endif
-
+    
     return rc;
 }
 
