@@ -38,21 +38,9 @@
 
 #define DPS368_SPI_READ_CMD_BIT         0x80
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-/**
- * sensor stats init
- *
- *
- * @param ptr Device structure
- *
- * @return  nothing
- */
-void
-dps368_stats_int(struct os_dev *dev);
 
 /**
  * Write a single register to DPS368 value over underlying communication interface

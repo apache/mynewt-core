@@ -32,7 +32,13 @@
 
 #include "dps368/dps368.h"
 #include "dps368_priv.h"
+#include <stats/stats.h>
 
+/* Define stat names for querying */
+STATS_NAME_START(dps368_stat_section)
+    STATS_NAME(dps368_stat_section, read_errors)
+    STATS_NAME(dps368_stat_section, write_errors)
+STATS_NAME_END(dps368_stat_section)
 
 #if !MYNEWT_VAL(BUS_DRIVER_PRESENT)
 static struct hal_spi_settings spi_dps368_settings_s = {
@@ -73,7 +79,7 @@ dps368_verify_sensor(struct sensor_itf *itf, uint8_t *sensor_exist)
     int rc;
     uint8_t hwid;
 
-    rc = dps368_get_hwid(itf,&hwid);
+    rc = dps368_get_hwid(itf, &hwid);
 
     if (rc) {
         *sensor_exist = 0;
@@ -284,28 +290,29 @@ dps368_set_oem_parameters(struct sensor_itf *itf)
     int rc;
 
     if ((rc = dps368_write_reg(itf, (uint8_t) 0x0E, (uint8_t) 0xA5))) {
-        return rc;
+        goto done;
     }
 
     if ((rc = dps368_write_reg(itf, (uint8_t) 0x0F, (uint8_t) 0x96))) {
-        return rc;
+        goto done;
     }
 
     if ((rc = dps368_write_reg(itf, (uint8_t) 0x62, (uint8_t) 0x02))) {
-        return rc;
+        goto done;
     }
 
     if ((rc = dps368_write_reg(itf, (uint8_t) 0x0E, (uint8_t) 0x00))) {
-        return rc;
+        goto done;
     }
 
     if ((rc = dps368_write_reg(itf, (uint8_t) 0x0F, (uint8_t) 0x00))) {
-        return rc;
+        goto done;
     }
 
     DPS368_LOG(INFO,"DPS368:OEM Parameters are set\n");
 
-    return 0;
+done:
+    return rc;
 
 }
 
@@ -381,6 +388,7 @@ dps368_set_mode(struct dps368 *dps368, dps3xx_operating_modes_e mode)
     rc = dps368_write_reg(itf, IFX_DPS368_MEAS_CFG_REG_ADDR, md);
 
     if (rc) {
+        STATS_INC(dps368->stats, write_errors);
         return rc;
     }
 
@@ -453,13 +461,13 @@ dps368_reconfig(struct dps368 *dps368, dps3xx_osr_e osr_t,dps3xx_osr_e osr_p,
     rc = dps368_write_reg(itf, IFX_DPS368_TMP_CFG_REG_ADDR, config_val_tmp);
 
     if (rc) {
-        return rc;
+        goto write_err;
     }
 
     rc = dps368_write_reg(itf, IFX_DPS368_PRS_CFG_REG_ADDR, config_val_prs);
 
     if (rc) {
-        return rc;
+        goto write_err;
     }
 
 
@@ -478,7 +486,7 @@ dps368_reconfig(struct dps368 *dps368, dps3xx_osr_e osr_t,dps3xx_osr_e osr_p,
     rc = dps368_write_reg(itf,IFX_DPS368_CFG_REG_ADDR,config_val);
 
     if (rc){
-        return rc;
+        goto write_err;
     }
 
     /*Update state accordingly with proper scaling factors based on oversampling rates*/
@@ -493,8 +501,10 @@ dps368_reconfig(struct dps368 *dps368, dps3xx_osr_e osr_t,dps3xx_osr_e osr_p,
     if (rc) {
         return rc;
     }
-
     return 0;
+write_err:
+    STATS_INC(dps368->stats, write_errors);
+    return rc;
 }
 
 /**
@@ -548,12 +558,12 @@ dps368_validate_sample_accuracy(struct dps368 *dps368)
  * Gets compensated pressure in hecto Pascal
  *
  * @param Instance of sensor specific driver state
- * @param ptr computed and temperature compensated pressure in hPa
+ * @param ptr computed and temperature compensated pressure in Pa
  *
  * @return 0 on success, and non-zero error code on failure
  */
 static int
-dps368_get_pressure_hPa(struct dps368 *dps368,float *pressurehPa)
+dps368_get_pressure_Pa(struct dps368 *dps368, float *pressurePa)
 {
     int rc;
     uint8_t read_buffer[IFX_DPS368_PSR_TMP_READ_LEN] = {0};
@@ -568,18 +578,17 @@ dps368_get_pressure_hPa(struct dps368 *dps368,float *pressurehPa)
     itf = SENSOR_GET_ITF(&(dps368->sensor));
 
     if (dps368->validated != 1) {
-
         rc = dps368_validate_sample_accuracy(dps368);
-
         if (rc) {
+            STATS_INC(dps368->stats, read_errors); 
             return rc;
         }
     }
 
     rc = dps368_read_regs(itf, IFX_DPS368_PSR_TMP_READ_REG_ADDR, read_buffer,
-    IFX_DPS368_PSR_TMP_READ_LEN);
-
+                          IFX_DPS368_PSR_TMP_READ_LEN);
     if (rc) {
+        STATS_INC(dps368->stats, read_errors); 
         return rc;
     }
 
@@ -606,9 +615,7 @@ dps368_get_pressure_hPa(struct dps368 *dps368,float *pressurehPa)
                     temp_scaled * dps368->calib_coeffs.C01 +temp_scaled * press_scaled *
                     ( dps368->calib_coeffs.C11 + press_scaled * dps368->calib_coeffs.C21 );
 
-    press_final = press_final * 0.01f;  //to convert it into mBar // hPa
-
-    *pressurehPa  = press_final;  //press_final;
+    *pressurePa  = press_final;
 
     return 0;
 }
@@ -622,7 +629,7 @@ dps368_get_pressure_hPa(struct dps368 *dps368,float *pressurehPa)
  * @return 0 on success, and non-zero error code on failure
  */
 static int
-dps368_get_temperature_degC(struct dps368 *dps368,float *tempdegC)
+dps368_get_temperature_degC(struct dps368 *dps368, float *tempdegC)
 {
     int rc;
     uint8_t read_buffer[IFX_DPS368_PSR_TMP_READ_LEN -3] = {0};
@@ -651,6 +658,7 @@ dps368_get_temperature_degC(struct dps368 *dps368,float *tempdegC)
             IFX_DPS368_PSR_TMP_READ_LEN - 3);
 
     if (rc) {
+        STATS_INC(dps368->stats, read_errors);
         return rc;
     }
 
@@ -705,6 +713,7 @@ int dps368_soft_reset(struct sensor *sensor)
             IFX_DPS368_SOFT_RESET_REG_DATA);
 
     if (rc) {
+        STATS_INC(((struct dps368 *)sensor)->stats, write_errors);
         return rc;
     }
 
@@ -713,6 +722,7 @@ int dps368_soft_reset(struct sensor *sensor)
 
     /*Check if sensor is back */
     if ((rc = dps368_is_init_complete(itf, &ready))) {
+        STATS_INC(((struct dps368 *)sensor)->stats, read_errors);
         return rc;
     }
 
@@ -724,11 +734,26 @@ int dps368_soft_reset(struct sensor *sensor)
 
     /*perform post init sequence*/
     if ((rc = dps368_set_oem_parameters(itf))) {
+        STATS_INC(((struct dps368 *)sensor)->stats, write_errors);
         return rc;
     }
 
     return 0;
 
+}
+
+static void
+dps368_stats_int(struct os_dev *dev)
+{
+    int rc;
+    /* Initialise the stats entry */
+    rc = stats_init(STATS_HDR(((struct dps368 *)dev)->stats),
+            STATS_SIZE_INIT_PARMS(((struct dps368 *)dev)->stats, STATS_SIZE_32),
+            STATS_NAME_INIT_PARMS(dps368_stat_section));
+    SYSINIT_PANIC_ASSERT(rc == 0);
+    /* Register the entry with the stats registry */
+    rc = stats_register(dev->od_name, STATS_HDR(((struct dps368 *)dev)->stats));
+    SYSINIT_PANIC_ASSERT(rc == 0);
 }
 
 int dps368_init(struct os_dev *dev, void *arg)
@@ -832,6 +857,7 @@ int dps368_config(struct dps368 *dps368, struct dps368_cfg_s *cfg)
         updated_cfg.mode  = cfg->mode;
 
         if ((rc = dps368_verify_sensor(itf, &sensor_exist))) {
+            STATS_INC(dps368->stats, read_errors); 
             return rc;
         }
 
@@ -846,6 +872,7 @@ int dps368_config(struct dps368 *dps368, struct dps368_cfg_s *cfg)
         DPS368_LOG(INFO, "DPS368:Soft reset: OK\n");
 
         if ((rc = dps368_is_trim_complete(itf, &ready))) {
+            STATS_INC(dps368->stats, read_errors); 
             return rc;
         }
 
@@ -853,6 +880,7 @@ int dps368_config(struct dps368 *dps368, struct dps368_cfg_s *cfg)
 
             if ((rc = dps368_prepare_calib_coeff(itf, &dps368->calib_coeffs,
                     &dps368->temp_src))) {
+                STATS_INC(dps368->stats, read_errors); 
                 return rc;
             }
 
@@ -922,7 +950,7 @@ dps368_sensor_read(struct sensor *sensor, sensor_type_t type,
 
     if (type & SENSOR_TYPE_PRESSURE) {
         struct sensor_press_data spd;
-        rc = dps368_get_pressure_hPa(dps368, &spd.spd_press);
+        rc = dps368_get_pressure_Pa(dps368, &spd.spd_press);
         if (rc) {
             return rc;
         }
@@ -1022,5 +1050,4 @@ dps368_create_spi_sensor_dev(struct bus_spi_node *node, const char *name,
     return rc;
 }
 #endif
-
 
