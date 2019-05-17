@@ -28,7 +28,7 @@ syscfg.defs:
         value: 1
     BMP388_INT_ENABLE:
         description: 'Enable interrupt support for the BMP388'
-        value: 1
+        value: 0
     BMP388_FIFO_ENABLE:
         description: 'Enable fifo support for the BMP388'
         value: 1
@@ -58,7 +58,7 @@ syscfg.defs:
         value: 0
     BMP388_NOTIF_STATS:
         description: 'Enable notification stats'
-        value: 1
+        value: 0
     BMP388_ITF_LOCK_TMO:
         description: 'BMP388 interface lock timeout in milliseconds'
         value: 1000
@@ -69,7 +69,7 @@ syscfg.defs:
         description: >
             Number of retries to use for failed I2C communication.  A retry is
             used when the BMP388 sends an unexpected NACK.
-        value: 5
+        value: 2
     BMP388_I2C_TIMEOUT_TICKS:
         description: >
             Number of OS ticks to wait for each I2C transaction to complete.
