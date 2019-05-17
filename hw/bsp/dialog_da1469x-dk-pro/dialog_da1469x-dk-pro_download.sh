@@ -123,7 +123,9 @@ end
 fl_erase 0 $FLASH_OFFSET $FILE_SIZE
 fl_program $FILE_NAME 0 $FLASH_OFFSET
 
-mon reset
+# 'mon reset' does not appear to reset the board. Write to MCU register
+# directly instead.
+set *(int *)0x100C0050 = 1
 quit
 
 EOF
