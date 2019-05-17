@@ -33,117 +33,124 @@ git:
 
 matrix:
   include:
-    # RAT Report
-    - os: linux
-      language: python
-      python:
-        - "3.5"
-      env:
-        - TEST=RAT
-        - DEBUG=1
+#    # RAT Report
+#    - os: linux
+#      language: python
+#      python:
+#        - "3.5"
+#      env:
+#        - TEST=RAT
+#        - DEBUG=1
 
-    # newt build <targets>
+    # Run style checks
     - os: linux
       env:
-        - TEST=BUILD_TARGETS
-        - VM_AMOUNT=4
-        - TARGET_SET=1
-    - os: linux
-      env:
-        - TEST=BUILD_TARGETS
-        - VM_AMOUNT=4
-        - TARGET_SET=2
-    - os: linux
-      env:
-        - TEST=BUILD_TARGETS
-        - VM_AMOUNT=4
-        - TARGET_SET=3
-    - os: linux
-      env:
-        - TEST=BUILD_TARGETS
-        - VM_AMOUNT=4
-        - TARGET_SET=4
+        - TEST=STYLE
 
-    # newt build <blinky-for-BSP>
-    - os: linux
-      env:
-        - TEST=BUILD_BLINKY
-        - VM_AMOUNT=4
-        - TARGET_SET=1
-    - os: linux
-      env:
-        - TEST=BUILD_BLINKY
-        - VM_AMOUNT=4
-        - TARGET_SET=2
-    - os: linux
-      env:
-        - TEST=BUILD_BLINKY
-        - VM_AMOUNT=4
-        - TARGET_SET=3
-    - os: linux
-      env:
-        - TEST=BUILD_BLINKY
-        - VM_AMOUNT=4
-        - TARGET_SET=4
-
-    # newt test all (Linux)
-    - os: linux
-      addons: *addon_conf
-      env:
-        - TEST=TEST_ALL
-        - VM_AMOUNT=3
-        - TARGET_SET=1
-    - os: linux
-      addons: *addon_conf
-      env:
-        - TEST=TEST_ALL
-        - VM_AMOUNT=3
-        - TARGET_SET=2
-    - os: linux
-      addons: *addon_conf
-      env:
-        - TEST=TEST_ALL
-        - VM_AMOUNT=3
-        - TARGET_SET=3
-
-    # newt test all (osx)
-    - os: osx
-      osx_image: xcode9.2
-      env:
-        - TEST=TEST_ALL
-        - VM_AMOUNT=3
-        - TARGET_SET=1
-    - os: osx
-      osx_image: xcode9.2
-      env:
-        - TEST=TEST_ALL
-        - VM_AMOUNT=3
-        - TARGET_SET=2
-    - os: osx
-      osx_image: xcode9.2
-      env:
-        - TEST=TEST_ALL
-        - VM_AMOUNT=3
-        - TARGET_SET=3
+#    # newt build <targets>
+#    - os: linux
+#      env:
+#        - TEST=BUILD_TARGETS
+#        - VM_AMOUNT=4
+#        - TARGET_SET=1
+#    - os: linux
+#      env:
+#        - TEST=BUILD_TARGETS
+#        - VM_AMOUNT=4
+#        - TARGET_SET=2
+#    - os: linux
+#      env:
+#        - TEST=BUILD_TARGETS
+#        - VM_AMOUNT=4
+#        - TARGET_SET=3
+#    - os: linux
+#      env:
+#        - TEST=BUILD_TARGETS
+#        - VM_AMOUNT=4
+#        - TARGET_SET=4
+#
+#    # newt build <blinky-for-BSP>
+#    - os: linux
+#      env:
+#        - TEST=BUILD_BLINKY
+#        - VM_AMOUNT=4
+#        - TARGET_SET=1
+#    - os: linux
+#      env:
+#        - TEST=BUILD_BLINKY
+#        - VM_AMOUNT=4
+#        - TARGET_SET=2
+#    - os: linux
+#      env:
+#        - TEST=BUILD_BLINKY
+#        - VM_AMOUNT=4
+#        - TARGET_SET=3
+#    - os: linux
+#      env:
+#        - TEST=BUILD_BLINKY
+#        - VM_AMOUNT=4
+#        - TARGET_SET=4
+#
+#    # newt test all (Linux)
+#    - os: linux
+#      addons: *addon_conf
+#      env:
+#        - TEST=TEST_ALL
+#        - VM_AMOUNT=3
+#        - TARGET_SET=1
+#    - os: linux
+#      addons: *addon_conf
+#      env:
+#        - TEST=TEST_ALL
+#        - VM_AMOUNT=3
+#        - TARGET_SET=2
+#    - os: linux
+#      addons: *addon_conf
+#      env:
+#        - TEST=TEST_ALL
+#        - VM_AMOUNT=3
+#        - TARGET_SET=3
+#
+#    # newt test all (osx)
+#    - os: osx
+#      osx_image: xcode9.2
+#      env:
+#        - TEST=TEST_ALL
+#        - VM_AMOUNT=3
+#        - TARGET_SET=1
+#    - os: osx
+#      osx_image: xcode9.2
+#      env:
+#        - TEST=TEST_ALL
+#        - VM_AMOUNT=3
+#        - TARGET_SET=2
+#    - os: osx
+#      osx_image: xcode9.2
+#      env:
+#        - TEST=TEST_ALL
+#        - VM_AMOUNT=3
+#        - TARGET_SET=3
 
 before_install:
   - printenv
   - export GOPATH=$HOME/gopath
-  - if [ "${TEST}" != "RAT" ]; then go version; fi
+  - if [ "${TEST}" != "RAT" && "${TEST}" != "STYLE" ]; then go version; fi
 
 install:
-  - git clone https://github.com/runtimeco/mynewt-travis-ci $HOME/ci
+  - git clone https://github.com/utzig/mynewt-travis-ci -b style-checks $HOME/ci
   - chmod +x $HOME/ci/*.sh
   - |
     if [ "${TEST}" == "RAT" ]; then
       pip install requests
+    elif [ "${TEST}" == "STYLE" ]; then
+      true
     else
       $HOME/ci/${TRAVIS_OS_NAME}_travis_install.sh
     fi
 
 before_script:
   - |
-    if [ "${TEST}" != "RAT" ]; then
+    if [ "${TEST}" != "RAT" && "${TEST}" != "STYLE" ]; then
       newt version
       gcc --version
       if [ "${TEST}" != "TEST_ALL" ]; then arm-none-eabi-gcc --version; fi
@@ -163,10 +170,12 @@ script:
                          pic32mx470_6lp_clicker pic32mz2048_wi-fire sensorhub
                          native"
   - |
-    if [ "${TEST}" != "RAT" ]; then
-      $HOME/ci/run_test.sh
-    else
+    if [ "${TEST}" == "RAT" ]; then
       python $HOME/ci/check_license.py
+    elif [ "${TEST}" == "STYLE" ]; then
+      $HOME/ci/check_style.sh
+    else
+      $HOME/ci/run_test.sh
     fi
 
 cache:
