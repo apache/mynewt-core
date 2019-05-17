@@ -362,18 +362,6 @@ static struct sensor_itf spi2c_0_itf_bmp388= {
           MYNEWT_VAL(BMP388_INT1_CFG_ACTIVE)}}
 };
 #endif
-#if MYNEWT_VAL(SPI_0_MASTER) && MYNEWT_VAL(BMP388_OFB)
-static struct sensor_itf spi2c_0_itf_bmp388 = {
-    .si_type = SENSOR_ITF_SPI,
-    .si_num = 0,
-    .si_cs_pin = 30,
-    .si_ints = {
-        { 31, MYNEWT_VAL(BMP388_INT1_PIN_DEVICE),
-            MYNEWT_VAL(BMP388_INT1_CFG_ACTIVE)}
-    },
-};
-#endif
-
 
 #if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(ADXL345_OFB)
 static struct sensor_itf i2c_0_itf_adxl = {
