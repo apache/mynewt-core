@@ -62,5 +62,9 @@ pkg.deps.KXTJ3_OFB:
     - "@apache-mynewt-core/hw/drivers/sensors/kxtj3"
 pkg.deps.DPS368_OFB:
     - "@apache-mynewt-core/hw/drivers/sensors/dps368"
+pkg.deps.ICP101XX_OFB:
+    - "@apache-mynewt-core/hw/drivers/sensors/icp101xx"
+pkg.deps.ICP10114_OFB:
+    - "@apache-mynewt-core/hw/drivers/sensors/icp101xx"
 pkg.init:
     sensor_dev_create: 'MYNEWT_VAL(SENSOR_CREATOR_SYSINIT_STAGE)'

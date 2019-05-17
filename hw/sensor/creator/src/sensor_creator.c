@@ -100,6 +100,10 @@
 #include <dps368/dps368.h>
 #endif
 
+#if MYNEWT_VAL(ICP101XX_OFB)
+#include <icp101xx/icp101xx.h>
+#endif
+
 /* Driver definitions */
 #if MYNEWT_VAL(DRV2605_OFB)
 static struct drv2605 drv2605;
@@ -183,6 +187,14 @@ static struct kxtj3 kxtj3;
 
 #if MYNEWT_VAL(DPS368_OFB)
 static struct dps368 dps368;
+#endif
+
+#if MYNEWT_VAL(ICP101XX_OFB)
+static struct icp101xx icp101xx;
+#endif
+
+#if MYNEWT_VAL(ICP10114_OFB)
+static struct icp101xx icp10114;
 #endif
 
 /**
@@ -405,6 +417,22 @@ static struct sensor_itf i2c_0_itf_dps368 = {
     .si_type = MYNEWT_VAL(DPS368_SHELL_ITF_TYPE),
     .si_num  = MYNEWT_VAL(DPS368_SHELL_ITF_NUM),
     .si_addr = MYNEWT_VAL(DPS368_SHELL_ITF_ADDR)
+};
+#endif
+
+#if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(ICP101XX_OFB)
+static struct sensor_itf i2c_0_itf_icp101xx = {
+    .si_type = MYNEWT_VAL(ICP101XX_SHELL_ITF_TYPE),
+    .si_num  = MYNEWT_VAL(ICP101XX_SHELL_ITF_NUM),
+    .si_addr = MYNEWT_VAL(ICP101XX_SHELL_ITF_ADDR)
+};
+#endif
+
+#if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(ICP10114_OFB)
+static struct sensor_itf i2c_0_itf_icp10114 = {
+    .si_type = MYNEWT_VAL(ICP101XX_SHELL_ITF_TYPE),
+    .si_num  = MYNEWT_VAL(ICP101XX_SHELL_ITF_NUM),
+    .si_addr = MYNEWT_VAL(ICP10114_SHELL_ITF_ADDR)
 };
 #endif
 
@@ -1228,6 +1256,63 @@ config_dps368_sensor(void)
 }
 #endif
 
+
+#if MYNEWT_VAL(ICP101XX_OFB)
+/**
+ * ICP101XX sensor default configuration
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+config_icp101xx_sensor(void)
+{
+    struct os_dev * dev;
+    struct icp101xx_cfg cfg;
+    int rc;
+
+    dev = os_dev_open("icp101xx_0", OS_TIMEOUT_NEVER, NULL);
+    assert(dev != NULL);
+
+    cfg.bc_mask = SENSOR_TYPE_PRESSURE|SENSOR_TYPE_TEMPERATURE;
+
+    rc = icp101xx_config((struct icp101xx *)dev, &cfg);
+    assert(rc == 0);
+
+    os_dev_close(dev);
+
+    return 0;
+
+}
+#endif
+
+#if MYNEWT_VAL(ICP10114_OFB)
+/**
+ * ICP10114 sensor default configuration
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+config_icp10114_sensor(void)
+{
+    struct os_dev * dev;
+    struct icp101xx_cfg cfg;
+    int rc;
+
+    dev = os_dev_open("icp10114_0", OS_TIMEOUT_NEVER, NULL);
+    assert(dev != NULL);
+
+    cfg.bc_mask = SENSOR_TYPE_PRESSURE|SENSOR_TYPE_TEMPERATURE;
+
+    rc = icp101xx_config((struct icp101xx *)dev, &cfg);
+    assert(rc == 0);
+
+    os_dev_close(dev);
+
+    return 0;
+
+}
+#endif
+
 /* Sensor device creation */
 void
 sensor_dev_create(void)
@@ -1430,6 +1515,24 @@ sensor_dev_create(void)
     assert(rc == 0);
 
     rc = config_dps368_sensor();
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(ICP101XX_OFB)
+    rc = os_dev_create((struct os_dev *) &icp101xx, "icp101xx_0",
+      OS_DEV_INIT_PRIMARY, 0, icp101xx_init, (void *)&i2c_0_itf_icp101xx);
+    assert(rc == 0);
+
+    rc = config_icp101xx_sensor();
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(ICP10114_OFB)
+    rc = os_dev_create((struct os_dev *) &icp10114, "icp10114_0",
+      OS_DEV_INIT_PRIMARY, 0, icp101xx_init, (void *)&i2c_0_itf_icp10114);
+    assert(rc == 0);
+
+    rc = config_icp10114_sensor();
     assert(rc == 0);
 #endif
 }
