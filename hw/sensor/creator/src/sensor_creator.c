@@ -1158,10 +1158,10 @@ config_bmp388_sensor(void)
     dev = (struct os_dev *) os_dev_open("bmp388_0", OS_TIMEOUT_NEVER, NULL);
     assert(dev != NULL);
 
-	cfg.rate = BMP3_ODR_50_HZ;
+    cfg.rate = BMP3_ODR_50_HZ;
 
     /*options: BMP388_DRDY_INT, BMP388_FIFO_WTMK_INT, BMP388_FIFO_FULL_INT */
-	cfg.int_enable_type = BMP388_FIFO_FULL_INT;
+    cfg.int_enable_type = BMP388_FIFO_FULL_INT;
 
     cfg.int_pp_od = 0;
     cfg.int_latched = 0;
@@ -1169,19 +1169,19 @@ config_bmp388_sensor(void)
 
 
     /* options: BMP388_FIFO_M_BYPASS, BMP388_FIFO_M_FIFO */
-    cfg.fifo_mode = BMP388_FIFO_M_FIFO;
-	cfg.fifo_threshold = 73;
+    cfg.fifo_mode = BMP388_FIFO_M_BYPASS;
+    cfg.fifo_threshold = 73;
 
-	cfg.filter_press_osr = BMP3_OVERSAMPLING_2X;
-	cfg.filter_temp_osr = BMP3_OVERSAMPLING_2X;
+    cfg.filter_press_osr = BMP3_OVERSAMPLING_2X;
+    cfg.filter_temp_osr = BMP3_OVERSAMPLING_2X;
     cfg.power_mode = BMP3_FORCED_MODE;
 
     /* options: BMP388_READ_M_POLL or BMP388_READ_M_STREAM */
-	cfg.read_mode.mode = BMP388_READ_M_STREAM;
+    cfg.read_mode.mode = BMP388_READ_M_STREAM;
 
     /* options: BMP388_DRDY_INT,  BMP388_FIFO_WTMK_INT, BMP388_FIFO_FULL_INT */
-	cfg.read_mode.int_type = BMP388_FIFO_FULL_INT;
-	cfg.read_mode.int_num = MYNEWT_VAL(BMP388_INT_NUM);
+    cfg.read_mode.int_type = BMP388_FIFO_FULL_INT;
+    cfg.read_mode.int_num = MYNEWT_VAL(BMP388_INT_NUM);
     cfg.mask = SENSOR_TYPE_AMBIENT_TEMPERATURE|
                        SENSOR_TYPE_PRESSURE;
 
@@ -1192,8 +1192,6 @@ config_bmp388_sensor(void)
     return rc;
 }
 #endif
-
-
 
 #if MYNEWT_VAL(BME680_OFB)
 int
