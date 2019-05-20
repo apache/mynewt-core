@@ -31,7 +31,7 @@ syscfg.defs:
         value: 0
     BMP388_FIFO_ENABLE:
         description: 'Enable fifo support for the BMP388'
-        value: 1
+        value: 0
     BMP388_INT_PIN_HOST:
         description: 'Host interrupt pin number for the BMP388'
         value: 31
