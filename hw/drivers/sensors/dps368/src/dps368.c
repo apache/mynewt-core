@@ -545,15 +545,15 @@ dps368_validate_sample_accuracy(struct dps368 *dps368)
 }
 
 /**
- * Gets compensated pressure in hecto Pascal
+ * Gets compensated pressure in Pascals
  *
  * @param Instance of sensor specific driver state
- * @param ptr computed and temperature compensated pressure in hPa
+ * @param ptr computed and temperature compensated pressure in Pa
  *
  * @return 0 on success, and non-zero error code on failure
  */
 static int
-dps368_get_pressure_hPa(struct dps368 *dps368,float *pressurehPa)
+dps368_get_pressure_Pa(struct dps368 *dps368,float *pressurePa)
 {
     int rc;
     uint8_t read_buffer[IFX_DPS368_PSR_TMP_READ_LEN] = {0};
@@ -606,9 +606,7 @@ dps368_get_pressure_hPa(struct dps368 *dps368,float *pressurehPa)
                     temp_scaled * dps368->calib_coeffs.C01 +temp_scaled * press_scaled *
                     ( dps368->calib_coeffs.C11 + press_scaled * dps368->calib_coeffs.C21 );
 
-    press_final = press_final * 0.01f;  //to convert it into mBar // hPa
-
-    *pressurehPa  = press_final;  //press_final;
+    *pressurePa  = press_final;  //press_final;
 
     return 0;
 }
@@ -924,7 +922,7 @@ dps368_sensor_read(struct sensor *sensor, sensor_type_t type,
 
     if (type & SENSOR_TYPE_PRESSURE) {
         struct sensor_press_data spd;
-        rc = dps368_get_pressure_hPa(dps368, &spd.spd_press);
+        rc = dps368_get_pressure_Pa(dps368, &spd.spd_press);
         if (rc) {
             return rc;
         }
