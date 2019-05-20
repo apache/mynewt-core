@@ -66,7 +66,6 @@ data sheet.*/
 #define BMP3_TEMP         UINT8_C(1 << 1)
 #define BMP3_ALL          UINT8_C(0x03)
 
-
 /**\name Power mode macros */
 #define BMP3_SLEEP_MODE     UINT8_C(0x00)
 #define BMP3_FORCED_MODE        UINT8_C(0x01)
@@ -187,16 +186,16 @@ data sheet. */
 /**\name Macros to select the which FIFO settings are to be set by the user
 These values are internal for API implementation. Don't relate this to
 data sheet.*/
-#define BMP3_FIFO_MODE_SEL          UINT16_C(1 << 1)
+#define BMP3_FIFO_MODE_SEL                  UINT16_C(1 << 1)
 #define BMP3_FIFO_STOP_ON_FULL_EN_SEL       UINT16_C(1 << 2)
-#define BMP3_FIFO_TIME_EN_SEL           UINT16_C(1 << 3)
-#define BMP3_FIFO_PRESS_EN_SEL      UINT16_C(1 << 4)
-#define BMP3_FIFO_TEMP_EN_SEL           UINT16_C(1 << 5)
-#define BMP3_FIFO_DOWN_SAMPLING_SEL     UINT16_C(1 << 6)
-#define BMP3_FIFO_FILTER_EN_SEL     UINT16_C(1 << 7)
-#define BMP3_FIFO_FWTM_EN_SEL           UINT16_C(1 << 8)
-#define BMP3_FIFO_FULL_EN_SEL           UINT16_C(1 << 9)
-#define BMP3_FIFO_ALL_SETTINGS      UINT16_C(0x3FF)
+#define BMP3_FIFO_TIME_EN_SEL               UINT16_C(1 << 3)
+#define BMP3_FIFO_PRESS_EN_SEL              UINT16_C(1 << 4)
+#define BMP3_FIFO_TEMP_EN_SEL               UINT16_C(1 << 5)
+#define BMP3_FIFO_DOWN_SAMPLING_SEL         UINT16_C(1 << 6)
+#define BMP3_FIFO_FILTER_EN_SEL             UINT16_C(1 << 7)
+#define BMP3_FIFO_FWTM_EN_SEL               UINT16_C(1 << 8)
+#define BMP3_FIFO_FULL_EN_SEL               UINT16_C(1 << 9)
+#define BMP3_FIFO_ALL_SETTINGS              UINT16_C(0x3FF)
 
 
 #define BMP3_ERR_FATAL_MSK      UINT8_C(0x01)
@@ -223,7 +222,6 @@ data sheet.*/
 
 #define BMP3_INT_STATUS_DRDY_MSK    UINT8_C(0x08)
 #define BMP3_INT_STATUS_DRDY_POS    UINT8_C(0x03)
-
 
 #define BMP3_OP_MODE_MSK        UINT8_C(0x30)
 #define BMP3_OP_MODE_POS        UINT8_C(0x04)
@@ -292,7 +290,6 @@ data sheet.*/
 /**\name Macro to combine two 8 bit data's to form a 16 bit data */
 #define BMP3_CONCAT_BYTES(msb, lsb)     (((uint16_t)msb << 8) | (uint16_t)lsb)
 
-
 #define BMP3_SET_BITS(reg_data, bitname, data) \
                 ((reg_data & ~(bitname##_MSK)) | \
                 ((data << bitname##_POS) & bitname##_MSK))
@@ -309,7 +306,6 @@ data sheet.*/
 #define BMP3_GET_LSB(var)   (uint8_t)(var & BMP3_SET_LOW_BYTE)
 #define BMP3_GET_MSB(var)   (uint8_t)((var & BMP3_SET_HIGH_BYTE) >> 8)
 
-
 /**\name API success code */
 #define BMP3_OK             INT8_C(0)
 /**\name API error codes */
@@ -321,7 +317,6 @@ data sheet.*/
 #define BMP3_E_INVALID_LEN          INT8_C(-6)
 #define BMP3_E_COMM_FAIL            INT8_C(-7)
 #define BMP3_E_FIFO_WATERMARK_NOT_REACHED   INT8_C(-8)
-
 
 #define BMP388_INT_DRDY_STATE                 0x08
 #define BMP388_INT_FIFOWTM_STATE              0x01
@@ -344,8 +339,6 @@ data sheet.*/
 #define FIFO_ERROR_FRAME    UINT8_C(0x44)
 /*! FIFO configuration change header frame */
 #define FIFO_CONFIG_CHANGE  UINT8_C(0x48)
-
-
 
 enum bmp388_fifo_mode {
     BMP388_FIFO_M_BYPASS               = 0,
@@ -387,7 +380,6 @@ struct bmp388_cfg {
     uint8_t int_pp_od   : 1;
     uint8_t int_latched : 1;
     uint8_t int_active_low  : 1;
-
 
     /* Power mode */
     uint8_t power_mode     : 4;
@@ -478,10 +470,7 @@ struct bmp3_uncomp_data {
 * @brief Register Trim Variables
 */
 struct bmp3_reg_calib_data {
-/**
-* @ Trim Variables
-*/
-/**@{*/
+
     uint16_t par_t1;
     uint16_t par_t2;
     int8_t par_t3;
@@ -497,11 +486,10 @@ struct bmp3_reg_calib_data {
     int8_t par_p10;
     int8_t par_p11;
     int64_t t_lin;
-/**@}*/
 };
 
 /*!
-* @brief Calibration data
+* brief Calibration data
 */
 struct bmp3_calib_data {
     /*! Register data */
@@ -509,7 +497,7 @@ struct bmp3_calib_data {
 };
 
 /*!
-* @brief bmp3 advance settings
+* brief bmp3 advance settings
 */
 struct bmp3_adv_settings {
     /*! i2c watch dog enable */
@@ -519,7 +507,7 @@ struct bmp3_adv_settings {
 };
 
 /*!
-* @brief bmp3 odr and filter settings
+* brief bmp3 odr and filter settings
 */
 struct bmp3_odr_filter_settings {
     /*! Pressure oversampling */
@@ -533,7 +521,7 @@ struct bmp3_odr_filter_settings {
 };
 
 /*!
-* @brief bmp3 interrupt pin settings
+* brief bmp3 interrupt pin settings
 */
 struct bmp3_int_ctrl_settings {
     /*! Output mode */
@@ -547,7 +535,7 @@ struct bmp3_int_ctrl_settings {
 };
 
 /*!
-* @brief bmp3 device settings
+* brief bmp3 device settings
 */
 struct bmp3_settings {
     /*! Power mode which user wants to set */
@@ -565,7 +553,7 @@ struct bmp3_settings {
 };
 
 /*!
-* @brief bmp3 fifo frame
+* brief bmp3 fifo frame
 */
 struct bmp3_fifo_data {
     /*! Data buffer of user defined length is to be mapped here
@@ -590,7 +578,7 @@ struct bmp3_fifo_data {
 };
 
 /*!
-* @brief bmp3 fifo configuration
+* brief bmp3 fifo configuration
 */
 struct bmp3_fifo_settings {
     /*! enable/disable */
@@ -614,7 +602,7 @@ struct bmp3_fifo_settings {
 };
 
 /*!
-* @brief bmp3 bmp3 FIFO
+* brief bmp3 bmp3 FIFO
 */
 struct bmp3_fifo {
     /*! FIFO frame structure */
@@ -626,7 +614,7 @@ struct bmp3_fifo {
 };
 
 /*!
-* @brief bmp3 sensor status flags
+* brief bmp3 sensor status flags
 */
 struct bmp3_sens_status {
     /*! Command ready status */
@@ -638,7 +626,7 @@ struct bmp3_sens_status {
 };
 
 /*!
-* @brief bmp3 interrupt status flags
+* brief bmp3 interrupt status flags
 */
 struct bmp3_int_status {
     /*! fifo watermark interrupt */
@@ -650,7 +638,7 @@ struct bmp3_int_status {
 };
 
 /*!
-* @brief bmp3 error status flags
+* brief bmp3 error status flags
 */
 struct bmp3_err_status {
     /*! fatal error */
@@ -662,7 +650,7 @@ struct bmp3_err_status {
 };
 
 /*!
-* @brief bmp3 status flags
+* brief bmp3 status flags
 */
 struct bmp3_status {
     /*! Interrupt status */
@@ -676,7 +664,7 @@ struct bmp3_status {
 };
 
 /*!
-* @brief bmp3 device structure
+* brief bmp3 device structure
 */
 struct bmp3_dev {
     /*! Chip Id */
@@ -726,7 +714,6 @@ int8_t bmp3_init(struct sensor_itf *itf, struct bmp3_dev *dev);
 
 int8_t bmp388_get_sensor_data(struct sensor_itf *itf, struct bmp3_dev *dev, struct bmp3_data *sensor_data);
 
-
 /*!
 * @brief This API sets the power control(pressure enable and
 * temperature enable), over sampling, odr and filter
@@ -767,7 +754,6 @@ int8_t bmp3_set_sensor_settings(struct sensor_itf *itf, uint32_t desired_setting
 * @param chip_id Ptr to chip id to be filled up
 */
 int bmp388_get_chip_id(struct sensor_itf *itf, uint8_t *chip_id);
-
 
 /**
 * Dump the registers
@@ -816,7 +802,6 @@ int bmp388_set_power_mode(struct sensor_itf *itf, uint8_t mode);
 * @return 0 on success, non-zero on failure
 */
 int bmp388_get_power_mode(struct sensor_itf *itf, uint8_t *mode);
-
 
 /**
 * Sets the interrupt push-pull/open-drain selection
@@ -877,7 +862,6 @@ int bmp388_set_int_active_low(struct sensor_itf *itf, uint8_t low);
 * @return 0 on success, non-zero on failure
 */
 int bmp388_get_int_active_low(struct sensor_itf *itf, uint8_t *low);
-
 
 /**
 * Set filter config
