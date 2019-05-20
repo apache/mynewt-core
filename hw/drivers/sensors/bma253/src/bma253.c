@@ -184,6 +184,7 @@ get_register(struct bma253 * bma253,
     return rc;
 }
 
+#if !MYNEWT_VAL(BUS_DRIVER_PRESENT)
 static int
 spi_readlen(
         struct sensor_itf   *itf,
@@ -270,7 +271,7 @@ err:
 
     return rc;
 }
-
+#endif
 
 static int
 get_registers(struct bma253 * bma253,
@@ -310,6 +311,7 @@ get_registers(struct bma253 * bma253,
 }
 
 
+#if !MYNEWT_VAL(BUS_DRIVER_PRESENT)
 /**
  * Write multiple length data SPI
  *
@@ -383,6 +385,7 @@ i2c_writereg(
 
     return rc;
 }
+#endif
 
 static int
 set_register(struct bma253 * bma253,
@@ -5257,7 +5260,7 @@ bma253_init(struct os_dev * dev, void * arg)
         return rc;
     }
 
-#if MYNEWT_VAL(SPI_0_MASTER) || MYNEWT_VAL(SPI_1_MASTER)
+#if MYNEWT_VAL(SPI_0_MASTER) || MYNEWT_VAL(SPI_1_MASTER) && !MYNEWT_VAL(BUS_DRIVER_PRESENT)
     static struct hal_spi_settings spi_bma253_settings = {
         .data_order = HAL_SPI_MSB_FIRST,
         .data_mode  = HAL_SPI_MODE0,
