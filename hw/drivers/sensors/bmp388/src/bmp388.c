@@ -3631,6 +3631,8 @@ bmp388_sensor_read(struct sensor *sensor, sensor_type_t type,
             goto err;
         }
     }
+#else
+    ((void)itf);
 #endif
 
     bmp388 = (struct bmp388 *)SENSOR_GET_DEVICE(sensor);
@@ -3970,6 +3972,8 @@ bmp388_config(struct bmp388 *bmp388, struct bmp388_cfg *cfg)
             goto err;
         }
     }
+#else
+    ((void)(sensor));
 #endif
 
     rc = bmp3_init(itf, &g_bmp388_dev);

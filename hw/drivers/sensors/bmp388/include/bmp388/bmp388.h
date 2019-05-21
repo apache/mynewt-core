@@ -418,7 +418,7 @@ struct bmp388_pdd {
 
 struct bmp388 {
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
-    struct bus_i2c_node i2c_node
+    struct bus_i2c_node i2c_node;
 #else
     struct os_dev dev;
 #endif
