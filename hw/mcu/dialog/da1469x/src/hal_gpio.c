@@ -133,7 +133,7 @@ mcu_gpio_unlatch_prepare(int pin)
     __HAL_ASSERT_CRITICAL();
 
     /* Acquire PD_COM if first pin will be unlatched */
-    if ((CRG_TOP->P0_PAD_LATCH_REG | CRG_TOP->P0_PAD_LATCH_REG) == 0) {
+    if ((CRG_TOP->P0_PAD_LATCH_REG | CRG_TOP->P1_PAD_LATCH_REG) == 0) {
         da1469x_pd_acquire(MCU_PD_DOMAIN_COM);
     }
 }
@@ -156,12 +156,12 @@ mcu_gpio_latch(int pin)
 
     __HAL_DISABLE_INTERRUPTS(primask);
 
-    latch_pre = CRG_TOP->P0_PAD_LATCH_REG | CRG_TOP->P0_PAD_LATCH_REG;
+    latch_pre = CRG_TOP->P0_PAD_LATCH_REG | CRG_TOP->P1_PAD_LATCH_REG;
 
     *GPIO_PIN_LATCH_ADDR(pin) = 1 << ((pin) & 31);
     mcu_gpio_retained_refresh();
 
-    latch_post = CRG_TOP->P0_PAD_LATCH_REG | CRG_TOP->P0_PAD_LATCH_REG;
+    latch_post = CRG_TOP->P0_PAD_LATCH_REG | CRG_TOP->P1_PAD_LATCH_REG;
 
     /* Release PD_COM if last pin was latched */
     if (latch_pre && !latch_post) {
