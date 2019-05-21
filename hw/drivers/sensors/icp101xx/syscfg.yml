@@ -38,7 +38,7 @@ syscfg.defs:
         value: 1000 # Max timeout for a full I2C transaction
     ICP101XX_CLI:
         description: 'Enable shell support for the ICP101XX'
-        value: 1
+        value: 0
     ICP101XX_SPEC_CALC:
         description: 'ICP101XX Spec calculation insetad of built in one'
         value : 1
