@@ -546,6 +546,7 @@ sensor_cmd_read(char **argv, int argc)
     g_spd.spd_sensor_type = type;
 
     /* Start 1st read immediately */
+    g_spd.spd_read_next_msecs_off = 0;
     g_spd.spd_read_start_ticks = os_cputime_get32();
     sensor_shell_read_timer_cb(NULL);
 
