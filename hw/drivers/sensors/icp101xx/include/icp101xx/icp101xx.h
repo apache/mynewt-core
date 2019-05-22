@@ -22,6 +22,7 @@
 #define __icp101xx_H__
 
 #include <stdint.h>
+#include <stats/stats.h>
 #include "os/mynewt.h"
 #include "sensor/sensor.h"
 
@@ -29,6 +30,9 @@
 extern "C" {
 #endif
 
+/**
+ *  @brief icp101xx sensor configuration structure
+ */
 struct icp101xx_cfg {
     float sensor_constants[4]; // OTP
     float p_Pa_calib[3];
@@ -41,11 +45,22 @@ struct icp101xx_cfg {
     uint8_t skip_first_data;
 };
 
+/* Define the stats section and records */
+STATS_SECT_START(icp101xx_stat_section)
+    STATS_SECT_ENTRY(read_errors)
+    STATS_SECT_ENTRY(write_errors)
+STATS_SECT_END
+
+/**
+ *  @brief icp101xx sensor device structure
+ */
 struct icp101xx {
     struct os_dev dev;
     struct sensor sensor;
     struct icp101xx_cfg cfg;
     os_time_t last_read_time;
+    /* Variable used to hold stats data */
+    STATS_SECT_DECL(icp101xx_stat_section) stats;
 };
 
 /**
@@ -55,31 +70,37 @@ struct icp101xx {
  *  @param Argument passed to OS device init, unused
  *  @return     0 on success, negative value on error
  */
-int icp101xx_init(struct os_dev *dev, void *arg);
+int icp101xx_init(struct os_dev *, void *);
 
 /**
- *  @brief icp101xx sensor configuration
+ *  @brief Configure the icp101xx
+ *  @param icp101xx sensor device
+ *  @param icp101xx sensor configuration
  *  @return     0 on success, negative value on error
  */
 int icp101xx_config(struct icp101xx *, struct icp101xx_cfg *);
 
 /** @brief return WHOAMI value
+ *  @param icp101xx sensor device
  *  @param[out] whoami WHOAMI for device
  *  @return     0 on success, negative value on error
  */
-int icp101xx_get_whoami(struct sensor_itf *itf, uint8_t * whoami);
+int icp101xx_get_whoami(struct icp101xx *, uint8_t * whoami);
 
 /** @brief Send soft reset
+ *  @param icp101xx sensor device
  *  @return     0 on success, negative value on error
  */
-int icp101xx_soft_reset(struct sensor_itf *itf);
+int icp101xx_soft_reset(struct icp101xx *);
 
 /** @brief Check and retrieve for new data
+ *  @param icp101xx sensor device
+ *  @param icp101xx sensor configuration
  *  @param[out] pressure pressure data in Pascal
  *  @param[out] temperature temperature data in Degree Celsius
  *  @return     0 on success, negative value on error
  */
-int icp101xx_get_data(struct sensor_itf *itf,  struct icp101xx_cfg *, float * temperature, float * pressure);
+int icp101xx_get_data(struct icp101xx *,  struct icp101xx_cfg *, float * temperature, float * pressure);
 
 #if MYNEWT_VAL(ICP101XX_CLI)
 int icp101xx_shell_init(void);
