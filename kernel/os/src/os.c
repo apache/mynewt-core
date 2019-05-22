@@ -45,8 +45,14 @@ OS_TASK_STACK_DEFINE(g_idle_task_stack, OS_IDLE_STACK_SIZE);
 
 uint32_t g_os_idle_ctr;
 
-static struct os_task os_main_task;
-OS_TASK_STACK_DEFINE(os_main_stack, OS_MAIN_STACK_SIZE);
+struct os_task g_os_main_task;
+OS_TASK_STACK_DEFINE(g_os_main_stack, OS_MAIN_STACK_SIZE);
+
+/*
+ * Double the interval timer to allow proper timer check-in.
+ */
+#define OS_MAIN_TASK_TIMER_TICKS \
+    os_time_ms_to_ticks32(MYNEWT_VAL(OS_MAIN_TASK_SANITY_ITVL_MS)) * 2
 
 #if MYNEWT_VAL(OS_WATCHDOG_MONITOR)
 
@@ -227,11 +233,14 @@ os_init(int (*main_fn)(int argc, char **arg))
     assert(err == OS_OK);
 
     if (main_fn) {
-        err = os_task_init(&os_main_task, "main", os_main, main_fn,
-                           OS_MAIN_TASK_PRIO, OS_WAIT_FOREVER, os_main_stack,
-                           OS_STACK_ALIGN(OS_MAIN_STACK_SIZE));
+        err = os_task_init(&g_os_main_task, "main", os_main, main_fn,
+                   OS_MAIN_TASK_PRIO,
+                   (OS_MAIN_TASK_TIMER_TICKS == 0) ? \
+                        OS_WAIT_FOREVER : OS_MAIN_TASK_TIMER_TICKS,
+                   g_os_main_stack, OS_STACK_ALIGN(OS_MAIN_STACK_SIZE));
         assert(err == 0);
     }
+
     /* Call bsp related OS initializations */
     hal_bsp_init();
 
