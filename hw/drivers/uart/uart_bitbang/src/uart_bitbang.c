@@ -118,6 +118,9 @@ uart_bitbang_rx_timer(void *arg)
     struct uart_bitbang *ub = (struct uart_bitbang *)arg;
     int val;
 
+    if (ub->ub_rx.pin < 0) {
+        return;
+    }
     val = hal_gpio_read(ub->ub_rx.pin);
 
     if (val) {
@@ -153,6 +156,10 @@ uart_bitbang_isr(void *arg)
 {
     struct uart_bitbang *ub = (struct uart_bitbang *)arg;
     uint32_t time;
+
+    if (ub->ub_rx.pin < 0) {
+        return;
+    }
 
     time = os_cputime_get32();
     if (ub->ub_rx.start - time < (9 * ub->ub_bittime)) {
@@ -224,6 +231,11 @@ uart_bitbang_start_rx(struct uart_dev *dev)
     int rc;
 
     ub = (struct uart_bitbang *)dev->ud_priv;
+
+    if (ub->ub_rx.pin < 0) {
+        return;
+    }
+
     if (ub->ub_rx_stall) {
         rc = ub->ub_rx_func(ub->ub_func_arg, ub->ub_rx.byte);
         if (rc == 0) {
@@ -263,12 +275,13 @@ uart_bitbang_config(struct uart_bitbang *ub, int32_t baudrate, uint8_t databits,
         return -1;
     }
 
-    if (hal_gpio_irq_init(ub->ub_rx.pin, uart_bitbang_isr, ub,
-        HAL_GPIO_TRIG_FALLING, HAL_GPIO_PULL_UP)) {
-        return -1;
+    if (ub->ub_rx.pin >= 0) {
+        if (hal_gpio_irq_init(ub->ub_rx.pin, uart_bitbang_isr, ub,
+            HAL_GPIO_TRIG_FALLING, HAL_GPIO_PULL_UP)) {
+            return -1;
+        }
+        hal_gpio_irq_enable(ub->ub_rx.pin);
     }
-    hal_gpio_irq_enable(ub->ub_rx.pin);
-
     ub->ub_open = 1;
     return 0;
 }
@@ -304,8 +317,11 @@ uart_bitbang_close(struct os_dev *odev)
 
     ub = (struct uart_bitbang *)dev->ud_priv;
     OS_ENTER_CRITICAL(sr);
-    hal_gpio_irq_disable(ub->ub_rx.pin);
-    hal_gpio_irq_release(ub->ub_rx.pin);
+
+    if (ub->ub_rx.pin >= 0) {
+        hal_gpio_irq_disable(ub->ub_rx.pin);
+        hal_gpio_irq_release(ub->ub_rx.pin);
+    }
     ub->ub_open = 0;
     ub->ub_txing = 0;
     ub->ub_rx_stall = 0;
