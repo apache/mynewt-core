@@ -45,8 +45,13 @@ OS_TASK_STACK_DEFINE(g_idle_task_stack, OS_IDLE_STACK_SIZE);
 
 uint32_t g_os_idle_ctr;
 
+#if MYNEWT_VAL(OS_MAIN_TASK_SANITY_ITVL_S) == 0
 static struct os_task os_main_task;
 OS_TASK_STACK_DEFINE(os_main_stack, OS_MAIN_STACK_SIZE);
+#else
+struct os_task g_os_main_task;
+OS_TASK_STACK_DEFINE(g_os_main_stack, OS_MAIN_STACK_SIZE);
+#endif
 
 #if MYNEWT_VAL(OS_WATCHDOG_MONITOR)
 
@@ -226,12 +231,23 @@ os_init(int (*main_fn)(int argc, char **arg))
     err = os_arch_os_init();
     assert(err == OS_OK);
 
+#if MYNEWT_VAL(OS_MAIN_TASK_SANITY_ITVL_S) == 0
     if (main_fn) {
         err = os_task_init(&os_main_task, "main", os_main, main_fn,
                            OS_MAIN_TASK_PRIO, OS_WAIT_FOREVER, os_main_stack,
                            OS_STACK_ALIGN(OS_MAIN_STACK_SIZE));
         assert(err == 0);
     }
+#else
+    if (main_fn) {
+        err = os_task_init(&g_os_main_task, "main", os_main, main_fn,
+                           OS_MAIN_TASK_PRIO,
+                           MYNEWT_VAL(OS_MAIN_TASK_SANITY_ITVL_S) * OS_TICKS_PER_SEC,
+                           g_os_main_stack, OS_STACK_ALIGN(OS_MAIN_STACK_SIZE));
+        assert(err == 0);
+    }
+#endif
+
     /* Call bsp related OS initializations */
     hal_bsp_init();
 
