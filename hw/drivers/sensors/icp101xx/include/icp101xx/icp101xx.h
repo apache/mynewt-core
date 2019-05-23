@@ -30,6 +30,17 @@
 extern "C" {
 #endif
 
+enum icp101xx_meas {
+    ICP101XX_MEAS_LOW_POWER_T_FIRST       = 0,
+    ICP101XX_MEAS_LOW_POWER_P_FIRST       = 1,
+    ICP101XX_MEAS_NORMAL_T_FIRST          = 2,
+    ICP101XX_MEAS_NORMAL_P_FIRST          = 3,
+    ICP101XX_MEAS_LOW_NOISE_T_FIRST       = 4,
+    ICP101XX_MEAS_LOW_NOISE_P_FIRST       = 5,
+    ICP101XX_MEAS_ULTRA_LOW_NOISE_T_FIRST = 6,
+    ICP101XX_MEAS_ULTRA_LOW_NOISE_P_FIRST = 7
+};
+
 /**
  *  @brief icp101xx sensor configuration structure
  */
@@ -41,7 +52,7 @@ struct icp101xx_cfg {
     float quadr_factor;
     float offst_factor;
     uint32_t bc_mask;
-    uint16_t measurement_mode;
+    enum icp101xx_meas measurement_mode;
     uint8_t skip_first_data;
 };
 

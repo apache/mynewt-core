@@ -1274,6 +1274,7 @@ config_icp101xx_sensor(void)
     assert(dev != NULL);
 
     cfg.bc_mask = SENSOR_TYPE_PRESSURE|SENSOR_TYPE_TEMPERATURE;
+    cfg.measurement_mode = ICP101XX_MEAS_LOW_NOISE_P_FIRST;
 
     rc = icp101xx_config((struct icp101xx *)dev, &cfg);
     assert(rc == 0);
@@ -1302,7 +1303,8 @@ config_icp10114_sensor(void)
     assert(dev != NULL);
 
     cfg.bc_mask = SENSOR_TYPE_PRESSURE|SENSOR_TYPE_TEMPERATURE;
-
+    cfg.measurement_mode = ICP101XX_MEAS_LOW_NOISE_P_FIRST;
+    
     rc = icp101xx_config((struct icp101xx *)dev, &cfg);
     assert(rc == 0);
 

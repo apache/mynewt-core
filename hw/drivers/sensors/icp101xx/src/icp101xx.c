@@ -46,12 +46,14 @@ STATS_NAME_END(icp101xx_stat_section)
 /* Exports for the sensor API.*/
 static int icp101xx_sensor_read(struct sensor *, sensor_type_t,
         sensor_data_func_t, void *, uint32_t);
+static int icp101xx_sensor_set_config(struct sensor *, void *);
 static int icp101xx_sensor_get_config(struct sensor *, sensor_type_t,
         struct sensor_cfg *);
 
 static const struct sensor_driver g_icp101xx_sensor_driver = {
-    icp101xx_sensor_read,
-    icp101xx_sensor_get_config
+    .sd_read               = icp101xx_sensor_read,
+    .sd_set_config         = icp101xx_sensor_set_config,
+    .sd_get_config         = icp101xx_sensor_get_config
 };
 
 /**
@@ -120,6 +122,22 @@ icp101xx_sensor_read(struct sensor *sensor, sensor_type_t type,
     return 0;
 err:
     return rc;
+}
+
+/**
+ * Send a new configuration register set to the sensor.
+ *
+ * @param sensor Ptr to the sensor-specific stucture
+ * @param cfg Ptr to the sensor-specific configuration structure
+ *
+ * @return 0 on success, non-zero error code on failure.
+ */
+int
+icp101xx_sensor_set_config(struct sensor *sensor, void *cfg)
+{
+    struct icp101xx* icp101xx = (struct icp101xx *)SENSOR_GET_DEVICE(sensor);
+    
+    return icp101xx_config(icp101xx, (struct icp101xx_cfg*)cfg);
 }
 
 /**
@@ -274,7 +292,7 @@ static int
 default_cfg(struct icp101xx_cfg *cfg)
 {
     cfg->skip_first_data = 1;
-    cfg->measurement_mode = ICP101XX_CMD_MEAS_LOW_NOISE_P_FIRST;
+    cfg->measurement_mode = ICP101XX_MEAS_LOW_NOISE_P_FIRST;
 
     cfg->p_Pa_calib[0] = 45000.0;
     cfg->p_Pa_calib[1] = 80000.0;
@@ -375,13 +393,42 @@ read_otp(struct icp101xx *icp101xx, struct icp101xx_cfg *cfg, int16_t *calibrati
 static int
 send_measurement_command(struct icp101xx *icp101xx, struct icp101xx_cfg *cfg)
 {
-    int rc = 0;
     struct sensor_itf *itf;
+    int rc = 0;
+    uint16_t reg;
 
     itf = SENSOR_GET_ITF(&(icp101xx->sensor));
 
+    switch (cfg->measurement_mode) {
+        case ICP101XX_MEAS_LOW_POWER_P_FIRST:
+            reg = ICP101XX_CMD_MEAS_LOW_POWER_P_FIRST;
+            break;
+        case ICP101XX_MEAS_LOW_POWER_T_FIRST:
+            reg = ICP101XX_CMD_MEAS_LOW_POWER_T_FIRST;
+            break;
+        case ICP101XX_MEAS_NORMAL_P_FIRST:
+            reg = ICP101XX_CMD_MEAS_NORMAL_P_FIRST;
+            break;
+        case ICP101XX_MEAS_NORMAL_T_FIRST:
+            reg = ICP101XX_CMD_MEAS_NORMAL_T_FIRST;
+            break;
+        case ICP101XX_MEAS_LOW_NOISE_P_FIRST:
+            reg = ICP101XX_CMD_MEAS_LOW_NOISE_P_FIRST;
+            break;
+        case ICP101XX_MEAS_LOW_NOISE_T_FIRST:
+            reg = ICP101XX_CMD_MEAS_LOW_NOISE_T_FIRST;
+            break;
+        case ICP101XX_MEAS_ULTRA_LOW_NOISE_P_FIRST:
+            reg = ICP101XX_CMD_MEAS_ULTRA_LOW_NOISE_P_FIRST;
+            break;
+        case ICP101XX_MEAS_ULTRA_LOW_NOISE_T_FIRST:
+            reg = ICP101XX_CMD_MEAS_ULTRA_LOW_NOISE_T_FIRST;
+            break;
+        default:
+            return SYS_EINVAL;
+    }
     /* Send Measurement Command */
-    rc = icp101xx_write_reg(itf, cfg->measurement_mode, NULL, 0);
+    rc = icp101xx_write_reg(itf, reg, NULL, 0);
     if (rc) {
         STATS_INC(icp101xx->stats, write_errors);
     }
@@ -407,10 +454,10 @@ read_raw_data(struct icp101xx *icp101xx, struct icp101xx_cfg *cfg, int32_t *raw_
     }
 
     switch (cfg->measurement_mode) {
-        case ICP101XX_CMD_MEAS_LOW_POWER_P_FIRST:
-        case ICP101XX_CMD_MEAS_NORMAL_P_FIRST:
-        case ICP101XX_CMD_MEAS_LOW_NOISE_P_FIRST:
-        case ICP101XX_CMD_MEAS_ULTRA_LOW_NOISE_P_FIRST:
+        case ICP101XX_MEAS_LOW_POWER_P_FIRST:
+        case ICP101XX_MEAS_NORMAL_P_FIRST:
+        case ICP101XX_MEAS_LOW_NOISE_P_FIRST:
+        case ICP101XX_MEAS_ULTRA_LOW_NOISE_P_FIRST:
             /* Read P first */
             /* Pressure */
             *raw_pressure = (data_read[0] << (8*2) | data_read[1] << (8*1) | 
@@ -422,10 +469,10 @@ read_raw_data(struct icp101xx *icp101xx, struct icp101xx_cfg *cfg, int32_t *raw_
             /* don't care of data_read[8] because it's crc */
             break;
         
-        case ICP101XX_CMD_MEAS_LOW_POWER_T_FIRST:
-        case ICP101XX_CMD_MEAS_NORMAL_T_FIRST:
-        case ICP101XX_CMD_MEAS_LOW_NOISE_T_FIRST:
-        case ICP101XX_CMD_MEAS_ULTRA_LOW_NOISE_T_FIRST:
+        case ICP101XX_MEAS_LOW_POWER_T_FIRST:
+        case ICP101XX_MEAS_NORMAL_T_FIRST:
+        case ICP101XX_MEAS_LOW_NOISE_T_FIRST:
+        case ICP101XX_MEAS_ULTRA_LOW_NOISE_T_FIRST:
             /* Read T first */
             /* Temperature */
             *raw_temperature = data_read[0] << 8 | data_read[1];
@@ -609,6 +656,7 @@ icp101xx_config(struct icp101xx *icp101xx, struct icp101xx_cfg *cfg)
     }
 
     icp101xx->cfg.bc_mask = cfg->bc_mask;
+    icp101xx->cfg.measurement_mode = cfg->measurement_mode;
 
     return 0;
 err:
