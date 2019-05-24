@@ -83,6 +83,12 @@ syscfg.defs:
     DPS368_OFB:
         description: 'DPS368 is present'
         value: 0
+    ICP101XX_OFB:
+        description: 'A sensor in the ICP101XX family is present'
+        value : 0
+    ICP10114_OFB:
+        description: 'ICP10114 is present'
+        value : 0
 
     SENSOR_CREATOR_SYSINIT_STAGE:
         description: >
