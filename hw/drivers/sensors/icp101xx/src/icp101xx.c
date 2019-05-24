@@ -34,18 +34,11 @@
 #include "stats/stats.h"
 #include <syscfg/syscfg.h>
 
-/* Define the stats section and records */
-STATS_SECT_START(icp101xx_stat_section)
-    STATS_SECT_ENTRY(errors)
-STATS_SECT_END
-
 /* Define stat names for querying */
 STATS_NAME_START(icp101xx_stat_section)
-    STATS_NAME(icp101xx_stat_section, errors)
+    STATS_NAME(icp101xx_stat_section, read_errors)
+    STATS_NAME(icp101xx_stat_section, write_errors)
 STATS_NAME_END(icp101xx_stat_section)
-
-/* Global variable used to hold stats data */
-STATS_SECT_DECL(icp101xx_stat_section) g_icp101xxstats;
 
 #define ICP101XX_LOG(lvl_, ...) \
     MODLOG_ ## lvl_(MYNEWT_VAL(ICP101XX_LOG_MODULE), __VA_ARGS__)
@@ -53,12 +46,14 @@ STATS_SECT_DECL(icp101xx_stat_section) g_icp101xxstats;
 /* Exports for the sensor API.*/
 static int icp101xx_sensor_read(struct sensor *, sensor_type_t,
         sensor_data_func_t, void *, uint32_t);
+static int icp101xx_sensor_set_config(struct sensor *, void *);
 static int icp101xx_sensor_get_config(struct sensor *, sensor_type_t,
         struct sensor_cfg *);
 
 static const struct sensor_driver g_icp101xx_sensor_driver = {
-    icp101xx_sensor_read,
-    icp101xx_sensor_get_config
+    .sd_read               = icp101xx_sensor_read,
+    .sd_set_config         = icp101xx_sensor_set_config,
+    .sd_get_config         = icp101xx_sensor_get_config
 };
 
 /**
@@ -77,7 +72,6 @@ icp101xx_sensor_read(struct sensor *sensor, sensor_type_t type,
                      sensor_data_func_t data_func, void *data_arg, uint32_t timeout)
 {
     int rc;
-    struct sensor_itf *itf;
     struct icp101xx *icp101xx;
     union {
         struct sensor_temp_data std;
@@ -86,7 +80,6 @@ icp101xx_sensor_read(struct sensor *sensor, sensor_type_t type,
     float temperature_degc;
     float pressure_pa;
 
-    itf = SENSOR_GET_ITF(sensor);
     icp101xx = (struct icp101xx *) SENSOR_GET_DEVICE(sensor);
 
     if (!(type & SENSOR_TYPE_PRESSURE) &&
@@ -97,7 +90,7 @@ icp101xx_sensor_read(struct sensor *sensor, sensor_type_t type,
     
     memset(&databuf, 0, sizeof(databuf));
     
-    rc = icp101xx_get_data(itf, &(icp101xx->cfg), &temperature_degc, &pressure_pa);
+    rc = icp101xx_get_data(icp101xx, &(icp101xx->cfg), &temperature_degc, &pressure_pa);
     if (rc) {
         goto err;
     }
@@ -129,6 +122,22 @@ icp101xx_sensor_read(struct sensor *sensor, sensor_type_t type,
     return 0;
 err:
     return rc;
+}
+
+/**
+ * Send a new configuration register set to the sensor.
+ *
+ * @param sensor Ptr to the sensor-specific stucture
+ * @param cfg Ptr to the sensor-specific configuration structure
+ *
+ * @return 0 on success, non-zero error code on failure.
+ */
+int
+icp101xx_sensor_set_config(struct sensor *sensor, void *cfg)
+{
+    struct icp101xx* icp101xx = (struct icp101xx *)SENSOR_GET_DEVICE(sensor);
+    
+    return icp101xx_config(icp101xx, (struct icp101xx_cfg*)cfg);
 }
 
 /**
@@ -187,7 +196,6 @@ icp101xx_write_reg(struct sensor_itf *itf, uint16_t reg, uint8_t *buf,
         ICP101XX_LOG(ERROR,
                      "Failed to write to 0x%02X:0x%02X\n",
                       data_struct.address, reg);
-        STATS_INC(g_icp101xxstats, errors);
     }
 
     return rc;
@@ -200,7 +208,6 @@ icp101xx_read_reg(struct sensor_itf *itf, uint16_t reg, uint8_t *buf,
     int rc;
     uint8_t payload[11] = {(reg & 0xFF00) >> 8, reg & 0x00FF,
                            0, 0, 0, 0, 0, 0, 0, 0, 0};
-
     struct hal_i2c_master_data data_struct = {
         .address = itf->si_addr,
         .len = 2,
@@ -225,7 +232,6 @@ icp101xx_read_reg(struct sensor_itf *itf, uint16_t reg, uint8_t *buf,
     if (rc) {
         ICP101XX_LOG(ERROR, "I2C access failed at address 0x%02X\n",
                      data_struct.address);
-        STATS_INC(g_icp101xxstats, errors);
         goto err;
     }
 
@@ -237,7 +243,6 @@ icp101xx_read_reg(struct sensor_itf *itf, uint16_t reg, uint8_t *buf,
     if (rc) {
         ICP101XX_LOG(ERROR, "Failed to read from 0x%02X:0x%02X\n",
                      data_struct.address, reg);
-        STATS_INC(g_icp101xxstats, errors);
     }
 
     /* Copy the I2C results into the supplied buffer */
@@ -275,7 +280,6 @@ icp101xx_read(struct sensor_itf *itf, uint8_t * buf, uint32_t len)
     if (rc) {
         ICP101XX_LOG(ERROR, "Failed to read %d bytes from 0x%x\n", 
                      data_struct.address);
-        STATS_INC(g_icp101xxstats, errors);
     }
 
 err:
@@ -288,7 +292,7 @@ static int
 default_cfg(struct icp101xx_cfg *cfg)
 {
     cfg->skip_first_data = 1;
-    cfg->measurement_mode = ICP101XX_CMD_MEAS_LOW_NOISE_P_FIRST;
+    cfg->measurement_mode = ICP101XX_MEAS_LOW_NOISE_P_FIRST;
 
     cfg->p_Pa_calib[0] = 45000.0;
     cfg->p_Pa_calib[1] = 80000.0;
@@ -336,13 +340,16 @@ check_crc(uint8_t *frame)
 }
 
 static int
-read_otp(struct sensor_itf *itf, struct icp101xx_cfg *cfg, int16_t *calibration_data)
+read_otp(struct icp101xx *icp101xx, struct icp101xx_cfg *cfg, int16_t *calibration_data)
 {
+    struct sensor_itf *itf;
     uint8_t data_write[10];
     uint8_t data_read[10] = {0};
     uint8_t crc;
     int rc;
     int i;
+
+    itf = SENSOR_GET_ITF(&(icp101xx->sensor));
 
     /* OTP Read mode */
     data_write[0] = (ICP101XX_OTP_READ_ADDR & 0xFF00) << 8;
@@ -352,6 +359,7 @@ read_otp(struct sensor_itf *itf, struct icp101xx_cfg *cfg, int16_t *calibration_
     data_write[2] = crc;
     rc = icp101xx_write_reg(itf, ICP101XX_CMD_SET_CAL_PTR, data_write, 3);
     if (rc) {
+        STATS_INC(icp101xx->stats, write_errors);
         return rc;
     }
 
@@ -359,6 +367,7 @@ read_otp(struct sensor_itf *itf, struct icp101xx_cfg *cfg, int16_t *calibration_
     for (i = 0; i < 4; i++) {
         rc = icp101xx_read_reg(itf, ICP101XX_CMD_INC_CAL_PTR, data_read, 3);
         if (rc) {
+            STATS_INC(icp101xx->stats, read_errors);
             return rc;
         }
 
@@ -382,34 +391,73 @@ read_otp(struct sensor_itf *itf, struct icp101xx_cfg *cfg, int16_t *calibration_
 }
 
 static int
-send_measurement_command(struct sensor_itf *itf, struct icp101xx_cfg *cfg)
+send_measurement_command(struct icp101xx *icp101xx, struct icp101xx_cfg *cfg)
 {
+    struct sensor_itf *itf;
     int rc = 0;
+    uint16_t reg;
 
+    itf = SENSOR_GET_ITF(&(icp101xx->sensor));
+
+    switch (cfg->measurement_mode) {
+        case ICP101XX_MEAS_LOW_POWER_P_FIRST:
+            reg = ICP101XX_CMD_MEAS_LOW_POWER_P_FIRST;
+            break;
+        case ICP101XX_MEAS_LOW_POWER_T_FIRST:
+            reg = ICP101XX_CMD_MEAS_LOW_POWER_T_FIRST;
+            break;
+        case ICP101XX_MEAS_NORMAL_P_FIRST:
+            reg = ICP101XX_CMD_MEAS_NORMAL_P_FIRST;
+            break;
+        case ICP101XX_MEAS_NORMAL_T_FIRST:
+            reg = ICP101XX_CMD_MEAS_NORMAL_T_FIRST;
+            break;
+        case ICP101XX_MEAS_LOW_NOISE_P_FIRST:
+            reg = ICP101XX_CMD_MEAS_LOW_NOISE_P_FIRST;
+            break;
+        case ICP101XX_MEAS_LOW_NOISE_T_FIRST:
+            reg = ICP101XX_CMD_MEAS_LOW_NOISE_T_FIRST;
+            break;
+        case ICP101XX_MEAS_ULTRA_LOW_NOISE_P_FIRST:
+            reg = ICP101XX_CMD_MEAS_ULTRA_LOW_NOISE_P_FIRST;
+            break;
+        case ICP101XX_MEAS_ULTRA_LOW_NOISE_T_FIRST:
+            reg = ICP101XX_CMD_MEAS_ULTRA_LOW_NOISE_T_FIRST;
+            break;
+        default:
+            return SYS_EINVAL;
+    }
     /* Send Measurement Command */
-    rc = icp101xx_write_reg(itf, cfg->measurement_mode, NULL, 0);
-    
+    rc = icp101xx_write_reg(itf, reg, NULL, 0);
+    if (rc) {
+        STATS_INC(icp101xx->stats, write_errors);
+    }
+
     return rc;
 }
 
 static int
-read_raw_data(struct sensor_itf *itf, struct icp101xx_cfg *cfg, int32_t *raw_pressure,
+read_raw_data(struct icp101xx *icp101xx, struct icp101xx_cfg *cfg, int32_t *raw_pressure,
               int32_t *raw_temperature)
 {
+    struct sensor_itf *itf;
     uint8_t data_read[10] = {0};
     int rc;
+
+    itf = SENSOR_GET_ITF(&(icp101xx->sensor));
 
     /* Read previous measure */
     rc = icp101xx_read(itf, data_read, 9);
     if (rc) {
+        STATS_INC(icp101xx->stats, read_errors);
         goto err;
     }
 
     switch (cfg->measurement_mode) {
-        case ICP101XX_CMD_MEAS_LOW_POWER_P_FIRST:
-        case ICP101XX_CMD_MEAS_NORMAL_P_FIRST:
-        case ICP101XX_CMD_MEAS_LOW_NOISE_P_FIRST:
-        case ICP101XX_CMD_MEAS_ULTRA_LOW_NOISE_P_FIRST:
+        case ICP101XX_MEAS_LOW_POWER_P_FIRST:
+        case ICP101XX_MEAS_NORMAL_P_FIRST:
+        case ICP101XX_MEAS_LOW_NOISE_P_FIRST:
+        case ICP101XX_MEAS_ULTRA_LOW_NOISE_P_FIRST:
             /* Read P first */
             /* Pressure */
             *raw_pressure = (data_read[0] << (8*2) | data_read[1] << (8*1) | 
@@ -421,10 +469,10 @@ read_raw_data(struct sensor_itf *itf, struct icp101xx_cfg *cfg, int32_t *raw_pre
             /* don't care of data_read[8] because it's crc */
             break;
         
-        case ICP101XX_CMD_MEAS_LOW_POWER_T_FIRST:
-        case ICP101XX_CMD_MEAS_NORMAL_T_FIRST:
-        case ICP101XX_CMD_MEAS_LOW_NOISE_T_FIRST:
-        case ICP101XX_CMD_MEAS_ULTRA_LOW_NOISE_T_FIRST:
+        case ICP101XX_MEAS_LOW_POWER_T_FIRST:
+        case ICP101XX_MEAS_NORMAL_T_FIRST:
+        case ICP101XX_MEAS_LOW_NOISE_T_FIRST:
+        case ICP101XX_MEAS_ULTRA_LOW_NOISE_T_FIRST:
             /* Read T first */
             /* Temperature */
             *raw_temperature = data_read[0] << 8 | data_read[1];
@@ -442,7 +490,7 @@ read_raw_data(struct sensor_itf *itf, struct icp101xx_cfg *cfg, int32_t *raw_pre
 
 
     /* Restart next measurement */
-    rc = send_measurement_command(itf, cfg);
+    rc = send_measurement_command(icp101xx, cfg);
     if (rc) {
         goto err;
     }
@@ -513,7 +561,6 @@ icp101xx_init(struct os_dev *dev, void *arg)
     struct icp101xx *icp101xx;
     struct sensor *sensor;
     int rc;
-    static int is_init = 0;
 
     if (!arg || !dev) {
         rc = SYS_ENODEV;
@@ -529,21 +576,15 @@ icp101xx_init(struct os_dev *dev, void *arg)
 
     sensor = &icp101xx->sensor;
 
-    /* Ensure the stats module is only called once in case 
-        multiple instance of the driver are registered.
-        Only the first instance will have the stats module available. */
-    if (is_init == 0) {
-        /* Initialise the stats entry */
-        rc = stats_init(
-            STATS_HDR(g_icp101xxstats),
-            STATS_SIZE_INIT_PARMS(g_icp101xxstats, STATS_SIZE_32),
-            STATS_NAME_INIT_PARMS(icp101xx_stat_section));
-        SYSINIT_PANIC_ASSERT(rc == 0);
-        /* Register the entry with the stats registry */
-        rc = stats_register(dev->od_name, STATS_HDR(g_icp101xxstats));
-        SYSINIT_PANIC_ASSERT(rc == 0);
-        is_init = 1;
-    }
+    /* Initialise the stats entry */
+    rc = stats_init(
+        STATS_HDR(((struct icp101xx *)dev)->stats),
+        STATS_SIZE_INIT_PARMS(((struct icp101xx *)dev)->stats, STATS_SIZE_32),
+        STATS_NAME_INIT_PARMS(icp101xx_stat_section));
+    SYSINIT_PANIC_ASSERT(rc == 0);
+    /* Register the entry with the stats registry */
+    rc = stats_register(dev->od_name, STATS_HDR(((struct icp101xx *)dev)->stats));
+    SYSINIT_PANIC_ASSERT(rc == 0);
     
     rc = sensor_init(sensor, dev);
     if (rc != 0) {
@@ -578,16 +619,13 @@ icp101xx_config(struct icp101xx *icp101xx, struct icp101xx_cfg *cfg)
 {
     int rc;
     uint8_t id;
-    struct sensor_itf *itf;
     int16_t otp[4];
 
-    itf = SENSOR_GET_ITF(&(icp101xx->sensor));
-
     /* Reset sensor */
-    icp101xx_soft_reset(itf);
+    icp101xx_soft_reset(icp101xx);
 
     /* Check if we can read the chip address */
-    rc = icp101xx_get_whoami(itf, &id);
+    rc = icp101xx_get_whoami(icp101xx, &id);
     if (rc) {
         goto err;
     }
@@ -595,7 +633,7 @@ icp101xx_config(struct icp101xx *icp101xx, struct icp101xx_cfg *cfg)
     if (id != ICP101XX_ID) {
         os_time_delay((OS_TICKS_PER_SEC * 100)/1000 + 1);
 
-        rc = icp101xx_get_whoami(itf, &id);
+        rc = icp101xx_get_whoami(icp101xx, &id);
         if (rc) {
             goto err;
         }
@@ -607,7 +645,7 @@ icp101xx_config(struct icp101xx *icp101xx, struct icp101xx_cfg *cfg)
         }
     }
 
-    rc = read_otp(itf, &(icp101xx->cfg), otp);
+    rc = read_otp(icp101xx, &(icp101xx->cfg), otp);
     if (rc) {
         goto err;
     }
@@ -618,6 +656,7 @@ icp101xx_config(struct icp101xx *icp101xx, struct icp101xx_cfg *cfg)
     }
 
     icp101xx->cfg.bc_mask = cfg->bc_mask;
+    icp101xx->cfg.measurement_mode = cfg->measurement_mode;
 
     return 0;
 err:
@@ -625,15 +664,19 @@ err:
 }
 
 int
-icp101xx_get_whoami(struct sensor_itf *itf, uint8_t * whoami)
+icp101xx_get_whoami(struct icp101xx *icp101xx, uint8_t * whoami)
 {
     int rc;
     uint16_t reg_value;
     uint8_t data_read[3] = {0};
+    struct sensor_itf *itf;
+
+    itf = SENSOR_GET_ITF(&(icp101xx->sensor));
 
     /* Read ID of pressure sensor */
     rc = icp101xx_read_reg(itf, ICP101XX_CMD_READ_ID, data_read, 3);
     if (rc) {
+        STATS_INC(icp101xx->stats, read_errors);
         goto err;
     }
 
@@ -653,19 +696,25 @@ err:
 }
 
 int
-icp101xx_soft_reset(struct sensor_itf *itf)
+icp101xx_soft_reset(struct icp101xx *icp101xx)
 {
+    struct sensor_itf *itf;
     int rc = 0;
+
+    itf = SENSOR_GET_ITF(&(icp101xx->sensor));
 
     /* Send Soft Reset Command */
     rc = icp101xx_write_reg(itf, ICP101XX_CMD_SOFT_RESET, NULL, 0);
+    if (rc) {
+        STATS_INC(icp101xx->stats, write_errors);
+    }
     os_cputime_delay_usecs(170);
 
     return rc;
 }
 
 int
-icp101xx_get_data(struct sensor_itf *itf, struct icp101xx_cfg *cfg,
+icp101xx_get_data(struct icp101xx *icp101xx, struct icp101xx_cfg *cfg,
                   float * temperature, float * pressure)
 {
     int rc;
@@ -673,7 +722,7 @@ icp101xx_get_data(struct sensor_itf *itf, struct icp101xx_cfg *cfg,
     float pressure_pa;
     float temperature_degc;
 
-    rc = read_raw_data(itf, cfg, &raw_press, &raw_temp);
+    rc = read_raw_data(icp101xx, cfg, &raw_press, &raw_temp);
     if (rc) {
         goto err;
     }

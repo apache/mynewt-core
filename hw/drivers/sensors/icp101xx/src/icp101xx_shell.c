@@ -76,7 +76,8 @@ icp101xx_shell_help(void)
 static int
 icp101xx_shell_cmd_get_chip_id(int argc, char **argv)
 {
-    uint8_t id;
+    uint16_t id;
+    uint8_t data_read[2] = {0};
     int rc;
 
     if (argc > 3) {
@@ -85,10 +86,14 @@ icp101xx_shell_cmd_get_chip_id(int argc, char **argv)
 
     /* Display the chip id */
     if (argc == 2) {
-        rc = icp101xx_get_whoami(&g_sensor_itf, &id);
+        /* Read ID of pressure sensor */
+        rc = icp101xx_read_reg(&g_sensor_itf, ICP101XX_CMD_READ_ID, data_read, 2);
         if (rc) {
             console_printf("Read failed %d", rc);
+            return rc;
         }
+        id = data_read[0] << 8 | data_read[1];
+
         console_printf("Read ID register : 0x%x\n", id);
     }
 
@@ -98,7 +103,7 @@ icp101xx_shell_cmd_get_chip_id(int argc, char **argv)
 static int
 icp101xx_shell_cmd_soft_reset(int argc, char **argv)
 {
-    return icp101xx_soft_reset(&g_sensor_itf);
+    return icp101xx_write_reg(&g_sensor_itf, ICP101XX_CMD_SOFT_RESET, NULL, 0);
 }
 
 static int
