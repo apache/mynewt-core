@@ -48,10 +48,15 @@ POSSIBILITY OF SUCH DAMAGE.
         
     #elif defined(NRF52810_XXAA)
         #include "nrf52810_peripherals.h"
+    #elif defined(NRF52811_XXAA)
+        #include "nrf52811_peripherals.h"        
     #elif defined(NRF52832_XXAA) || defined(NRF52832_XXAB)
         #include "nrf52832_peripherals.h"
     #elif defined(NRF52840_XXAA)
         #include "nrf52840_peripherals.h"
+        
+    #elif defined(NRF9160_XXAA)
+        #include "nrf9160_peripherals.h"
         
     #else
         #error "Device must be defined. See nrf.h."

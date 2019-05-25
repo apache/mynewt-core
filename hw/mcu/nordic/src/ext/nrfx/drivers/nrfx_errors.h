@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 - 2018, Nordic Semiconductor ASA
+ * Copyright (c) 2017 - 2019, Nordic Semiconductor ASA
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -39,10 +39,13 @@
  * @{
  * @ingroup nrfx
  *
- * @brief Global error codes definitions.
+ * @brief Global error code definitions.
  */
 
+/** @brief Base number of error codes. */
 #define NRFX_ERROR_BASE_NUM         0x0BAD0000
+
+/** @brief Base number of driver error codes. */
 #define NRFX_ERROR_DRIVERS_BASE_NUM (NRFX_ERROR_BASE_NUM + 0x10000)
 
 /** @brief Enumerated type for error codes. */
