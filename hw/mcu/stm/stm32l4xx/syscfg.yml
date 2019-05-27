@@ -18,8 +18,40 @@
 
 syscfg.defs:
     I2C_0:
-        description: 'I2C (TWI) interface 0'
+        description: 'I2C (TWI) interface I2C1'
         value:  0
+
+    I2C_0_PIN_SCL:
+        description: 'SCL pin for I2C1, PB6, PB8, PG14'
+        value: MCU_GPIO_PORTB(8)
+
+    I2C_0_PIN_SDA:
+        description: 'SDA pin for I2C1, PB7, PB9, PG13'
+        value: MCU_GPIO_PORTB(9)
+
+    I2C_1:
+        description: 'I2C (TWI) interface I2C2'
+        value:  0
+
+    I2C_1_PIN_SCL:
+        description: 'SCL pin for I2C2, PB10, PB13, PF1'
+        value: MCU_GPIO_PORTB(10)
+
+    I2C_1_PIN_SDA:
+        description: 'SDA pin for I2C2, PB11, PB14, PF0'
+        value: MCU_GPIO_PORTB(11)
+
+    I2C_2:
+        description: 'I2C (TWI) interface I2C3'
+        value:  0
+
+    I2C_2_PIN_SCL:
+        description: 'SCL pin for I2C3, PC0, PF1, PG7'
+        value: MCU_GPIO_PORTC(0)
+
+    I2C_2_PIN_SDA:
+        description: 'SDA pin for I2C3, PC1, PF0, PG8'
+        value: MCU_GPIO_PORTC(1)
 
     MCU_FLASH_MIN_WRITE_SIZE:
         description: >
