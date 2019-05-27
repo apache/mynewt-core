@@ -258,10 +258,10 @@ static struct sensor_itf i2c_0_itf_lsm = {
 };
 #endif
 
-#if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(MPU6050_OFB)
-static struct sensor_itf i2c_0_itf_mpu = {
+#if MYNEWT_VAL(MPU6050_OFB)
+static struct sensor_itf mpu6050_i2c_itf = {
     .si_type = SENSOR_ITF_I2C,
-    .si_num  = 0,
+    .si_num  = MYNEWT_VAL(MPU6050_OFB_I2C_NUM),
     .si_addr = MPU6050_I2C_ADDR
 };
 #endif
@@ -1418,7 +1418,7 @@ sensor_dev_create(void)
 
 #if MYNEWT_VAL(MPU6050_OFB)
     rc = os_dev_create((struct os_dev *) &mpu6050, "mpu6050_0",
-      OS_DEV_INIT_PRIMARY, 0, mpu6050_init, (void *)&i2c_0_itf_mpu);
+      OS_DEV_INIT_PRIMARY, 0, mpu6050_init, (void *)&mpu6050_i2c_itf);
     assert(rc == 0);
 
     rc = config_mpu6050_sensor();
