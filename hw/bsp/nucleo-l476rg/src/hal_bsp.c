@@ -49,18 +49,32 @@
 #if MYNEWT_VAL(UART_0)
 static struct uart_dev hal_uart0;
 
-static const struct stm32_uart_cfg uart_cfg[UART_CNT] = {
-    [0] = {
-        .suc_uart = USART2,
-        .suc_rcc_reg = &RCC->APB1ENR1,
-        .suc_rcc_dev = RCC_APB1ENR1_USART2EN,
-        .suc_pin_tx = MCU_GPIO_PORTA(2),
-        .suc_pin_rx = MCU_GPIO_PORTA(3),
-        .suc_pin_rts = -1,
-        .suc_pin_cts = -1,
-        .suc_pin_af = GPIO_AF7_USART2,
-        .suc_irqn = USART2_IRQn
-    }
+static const struct stm32_uart_cfg uart0_cfg = {
+    .suc_uart = USART2,
+    .suc_rcc_reg = &RCC->APB1ENR1,
+    .suc_rcc_dev = RCC_APB1ENR1_USART2EN,
+    .suc_pin_tx = MYNEWT_VAL(UART_0_PIN_TX),
+    .suc_pin_rx = MYNEWT_VAL(UART_0_PIN_RX),
+    .suc_pin_rts = MYNEWT_VAL(UART_0_PIN_RTS),
+    .suc_pin_cts = MYNEWT_VAL(UART_0_PIN_CTS),
+    .suc_pin_af = GPIO_AF7_USART2,
+    .suc_irqn = USART2_IRQn
+};
+#endif
+
+#if MYNEWT_VAL(UART_1)
+static struct uart_dev hal_uart1;
+
+static const struct stm32_uart_cfg uart1_cfg = {
+    .suc_uart = USART1,
+    .suc_rcc_reg = &RCC->APB2ENR,
+    .suc_rcc_dev = RCC_APB2ENR_USART1EN,
+    .suc_pin_tx = MYNEWT_VAL(UART_1_PIN_TX),
+    .suc_pin_rx = MYNEWT_VAL(UART_1_PIN_RX),
+    .suc_pin_rts = MYNEWT_VAL(UART_1_PIN_RTS),
+    .suc_pin_cts = MYNEWT_VAL(UART_1_PIN_CTS),
+    .suc_pin_af = GPIO_AF7_USART1,
+    .suc_irqn = USART1_IRQn
 };
 #endif
 
@@ -129,7 +143,13 @@ hal_bsp_init(void)
 
 #if MYNEWT_VAL(UART_0)
     rc = os_dev_create((struct os_dev *) &hal_uart0, "uart0",
-      OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *)&uart_cfg[0]);
+      OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *)&uart0_cfg);
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(UART_1)
+    rc = os_dev_create((struct os_dev *) &hal_uart1, "uart1",
+      OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *)&uart1_cfg);
     assert(rc == 0);
 #endif
 
