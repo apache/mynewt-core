@@ -89,11 +89,43 @@ static struct stm32_hal_i2c_cfg i2c_cfg0 = {
     .hic_i2c = I2C1,
     .hic_rcc_reg = &RCC->APB1ENR1,
     .hic_rcc_dev = RCC_APB1ENR1_I2C1EN,
-    .hic_pin_sda = MCU_GPIO_PORTB(9),     /* PB9 - D14 on CN5 */
-    .hic_pin_scl = MCU_GPIO_PORTB(8),     /* PB8 - D15 on CN5 */
+    .hic_pin_sda = MYNEWT_VAL(I2C_0_PIN_SDA),
+    .hic_pin_scl = MYNEWT_VAL(I2C_0_PIN_SCL),
     .hic_pin_af = GPIO_AF4_I2C1,
     .hic_10bit = 0,
-    .hic_timingr = 0x10420F13,            /* 100KHz at 8MHz of SysCoreClock */
+    .hic_timingr = 0x00000E14,            /* 100KHz at 4MHz of SysCoreClock */
+};
+#endif
+
+#if MYNEWT_VAL(I2C_1)
+static struct stm32_hal_i2c_cfg i2c_cfg1 = {
+    .hic_i2c = I2C2,
+    .hic_rcc_reg = &RCC->APB1ENR1,
+    .hic_rcc_dev = RCC_APB1ENR1_I2C2EN,
+    .hic_pin_sda = MYNEWT_VAL(I2C_1_PIN_SDA),
+    .hic_pin_scl = MYNEWT_VAL(I2C_1_PIN_SCL),
+    .hic_pin_af = GPIO_AF4_I2C2,
+    .hic_10bit = 0,
+    .hic_timingr = 0x00000E14,            /* 100KHz at 4MHz of SysCoreClock */
+};
+#endif
+
+#if MYNEWT_VAL(I2C_2)
+/*
+ * NOTE: The PC0 and PC1 pins are connected through solder bridges SB51/SB56
+ * in the board to A4 and A5 pins.
+ * If solder brides are removed I2C_2 can't be accessed since only PC0, PC1
+ * are present on Nucleo-64 board for I2C3 to use.
+ */
+static struct stm32_hal_i2c_cfg i2c_cfg2 = {
+    .hic_i2c = I2C3,
+    .hic_rcc_reg = &RCC->APB1ENR1,
+    .hic_rcc_dev = RCC_APB1ENR1_I2C3EN,
+    .hic_pin_sda = MYNEWT_VAL(I2C_2_PIN_SDA),
+    .hic_pin_scl = MYNEWT_VAL(I2C_2_PIN_SCL),
+    .hic_pin_af = GPIO_AF4_I2C3,
+    .hic_10bit = 0,
+    .hic_timingr = 0x00000E14,            /* 100KHz at 4MHz of SysCoreClock */
 };
 #endif
 
@@ -182,6 +214,16 @@ hal_bsp_init(void)
 
 #if MYNEWT_VAL(I2C_0)
     rc = hal_i2c_init(0, &i2c_cfg0);
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(I2C_1)
+    rc = hal_i2c_init(1, &i2c_cfg1);
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(I2C_2)
+    rc = hal_i2c_init(2, &i2c_cfg2);
     assert(rc == 0);
 #endif
 }
