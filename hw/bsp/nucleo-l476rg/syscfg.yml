@@ -23,8 +23,36 @@ syscfg.defs:
         value: 1024
 
     UART_0:
-        description: 'Whether to enable UART0'
+        description: 'Whether to enable USART2'
         value:  1
+    UART_0_PIN_TX:
+        description: 'TX pin for USART2, PA2, PD5'
+        value: MCU_GPIO_PORTA(2)
+    UART_0_PIN_RX:
+        description: 'RX pin for USART2, PA3, PD6'
+        value: MCU_GPIO_PORTA(3)
+    UART_0_PIN_CTS:
+        description: 'CTS pin for USART2, PA0, PD3'
+        value: -1
+    UART_0_PIN_RTS:
+        description: 'RTS pin for USART2, PA1, PD4'
+        value: -1
+
+    UART_1:
+        description: 'Whether to enable USART1'
+        value:  0
+    UART_1_PIN_TX:
+        description: 'TX pin for USART1, PA9, PB6'
+        value: MCU_GPIO_PORTA(9)
+    UART_1_PIN_RX:
+        description: 'RX pin for USART1, PA10, PB7'
+        value: MCU_GPIO_PORTA(10)
+    UART_1_PIN_CTS:
+        description: 'CTS pin for USART1, PA11, PB4'
+        value: -1
+    UART_1_PIN_RTS:
+        description: 'RTS pin for USART1, PA12, PB3'
+        value: -1
 
     TIMER_0:
         description: 'Whether to enable TIMER_0'
