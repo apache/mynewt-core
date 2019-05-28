@@ -28,6 +28,7 @@ pkg.deps:
     - "@apache-mynewt-core/time/datetime"
 
 pkg.deps.SHELL_NEWTMGR:
+    - "@apache-mynewt-core/mgmt/mgmt"
     - "@apache-mynewt-core/encoding/base64"
     - "@apache-mynewt-core/util/crc"
 
