@@ -30,6 +30,7 @@
 struct vector_data {
     char *plain;
     char *cipher;
+    uint8_t sz;
 };
 
 struct test_vectors {
@@ -120,18 +121,22 @@ static struct test_vectors aes_128_ctr_vectors = {
         {
             .plain = "\x6b\xc1\xbe\xe2\x2e\x40\x9f\x96\xe9\x3d\x7e\x11\x73\x93\x17\x2a",
             .cipher = "\x87\x4d\x61\x91\xb6\x20\xe3\x26\x1b\xef\x68\x64\x99\x0d\xb6\xce",
+            .sz = AES_BLOCK_LEN,
         },
         {
             .plain = "\xae\x2d\x8a\x57\x1e\x03\xac\x9c\x9e\xb7\x6f\xac\x45\xaf\x8e\x51",
             .cipher = "\x98\x06\xf6\x6b\x79\x70\xfd\xff\x86\x17\x18\x7b\xb9\xff\xfd\xff",
+            .sz = AES_BLOCK_LEN,
         },
         {
-            .plain = "\x30\xc8\x1c\x46\xa3\x5c\xe4\x11\xe5\xfb\xc1\x19\x1a\x0a\x52\xef",
-            .cipher = "\x5a\xe4\xdf\x3e\xdb\xd5\xd3\x5e\x5b\x4f\x09\x02\x0d\xb0\x3e\xab",
+            .plain = "\x30\xc8\x1c\x46\xa3\x5c\xe4\x11",
+            .cipher = "\x5a\xe4\xdf\x3e\xdb\xd5\xd3\x5e",
+            .sz = 8,
         },
         {
             .plain = "\xf6\x9f\x24\x45\xdf\x4f\x9b\x17\xad\x2b\x41\x7b\xe6\x6c\x37\x10",
             .cipher = "\x1e\x03\x1d\xda\x2f\xbe\x03\xd1\x79\x21\x70\xa0\xf3\x00\x9c\xee",
+            .sz = AES_BLOCK_LEN,
         },
     },
 };
@@ -165,6 +170,7 @@ run_test_vectors(struct crypto_dev *crypto, struct test_vectors *test_mode)
     struct vector_data *vector;
     int i;
     uint32_t sz;
+    uint32_t asksz;
 
     algo = test_mode->algo;
     mode = test_mode->mode;
@@ -184,10 +190,14 @@ run_test_vectors(struct crypto_dev *crypto, struct test_vectors *test_mode)
         vector = &vectors[i];
         inbuf = (uint8_t *)vector->plain;
 
+        asksz = AES_BLOCK_LEN;
+        if (mode == CRYPTO_MODE_CTR) {
+            asksz = vector->sz;
+        }
         sz = crypto_encrypt_custom(crypto, algo, mode, key, keylen, ivp,
-                inbuf, outbuf, AES_BLOCK_LEN);
-        if (sz == AES_BLOCK_LEN && memcmp(outbuf, vector->cipher, sz) == 0) {
-            printf("ok\n");
+                inbuf, outbuf, asksz);
+        if (sz == asksz && memcmp(outbuf, vector->cipher, sz) == 0) {
+            printf("ok, sz=%lu\n", sz);
         } else {
             printf("fail\n");
         }
@@ -204,10 +214,15 @@ run_test_vectors(struct crypto_dev *crypto, struct test_vectors *test_mode)
         vector = &vectors[i];
         inbuf = (uint8_t *)vector->cipher;
 
+        asksz = AES_BLOCK_LEN;
+        if (mode == CRYPTO_MODE_CTR) {
+            asksz = vector->sz;
+        }
+
         sz = crypto_decrypt_custom(crypto, algo, mode, key, keylen, ivp,
-                inbuf, outbuf, AES_BLOCK_LEN);
-        if (sz == AES_BLOCK_LEN && memcmp(outbuf, vector->plain, sz) == 0) {
-            printf("ok\n");
+                inbuf, outbuf, asksz);
+        if (sz == asksz && memcmp(outbuf, vector->plain, sz) == 0) {
+            printf("ok, sz=%lu\n", sz);
         } else {
             printf("fail\n");
         }
