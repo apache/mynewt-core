@@ -47,6 +47,7 @@ struct test_vectors {
  * Test vectors from "NIST Special Publication 800-38A"
  */
 
+#if MYNEWT_VAL(CRYPTOTEST_VECTORS_ECB)
 static struct test_vectors aes_128_ecb_vectors = {
     .name = "AES-128-ECB",
     .algo = CRYPTO_ALGO_AES,
@@ -74,7 +75,9 @@ static struct test_vectors aes_128_ecb_vectors = {
         },
     },
 };
+#endif /* MYNEWT_VAL(CRYPTOTEST_VECTORS_ECB) */
 
+#if MYNEWT_VAL(CRYPTOTEST_VECTORS_CBC)
 static struct test_vectors aes_128_cbc_vectors = {
     .name = "AES-128-CBC",
     .algo = CRYPTO_ALGO_AES,
@@ -102,7 +105,9 @@ static struct test_vectors aes_128_cbc_vectors = {
         },
     },
 };
+#endif /* MYNEWT_VAL(CRYPTOTEST_VECTORS_CBC) */
 
+#if MYNEWT_VAL(CRYPTOTEST_VECTORS_CTR)
 static struct test_vectors aes_128_ctr_vectors = {
     .name = "AES-128-CTR",
     .algo = CRYPTO_ALGO_AES,
@@ -130,11 +135,18 @@ static struct test_vectors aes_128_ctr_vectors = {
         },
     },
 };
+#endif /* MYNEWT_VAL(CRYPTOTEST_VECTORS_CTR) */
 
 static struct test_vectors *all_tests[] = {
+#if MYNEWT_VAL(CRYPTOTEST_VECTORS_ECB)
     &aes_128_ecb_vectors,
+#endif
+#if MYNEWT_VAL(CRYPTOTEST_VECTORS_CBC)
     &aes_128_cbc_vectors,
+#endif
+#if MYNEWT_VAL(CRYPTOTEST_VECTORS_CTR)
     &aes_128_ctr_vectors,
+#endif
     NULL,
 };
 
@@ -202,6 +214,7 @@ run_test_vectors(struct crypto_dev *crypto, struct test_vectors *test_mode)
     }
 }
 
+#if MYNEWT_VAL(CRYPTOTEST_BENCHMARK)
 extern uint8_t aes_128_key[];
 extern uint8_t aes_128_ecb_input[];
 extern uint8_t aes_128_ecb_expected[];
@@ -254,7 +267,9 @@ run_benchmark(char *name, block_encrypt_func_t encfn, void *data, uint8_t iter)
     }
     printf("done in %lu ticks\n", os_time_get() - t);
 }
+#endif /* MYNEWT_VAL(CRYPTOTEST_BENCHMARK) */
 
+#if MYNEWT_VAL(CRYPTOTEST_CONCURRENCY)
 static void
 concurrency_test_handler(void *arg)
 {
@@ -307,7 +322,9 @@ run_concurrency_test(struct crypto_dev *crypto)
                 8 + i, OS_WAIT_FOREVER, pstack, STACK_SIZE);
     }
 }
+#endif /* MYNEWT_VAL(CRYPTOTEST_CONCURRENCY) */
 
+#if MYNEWT_VAL(CRYPTOTEST_INPLACE)
 struct inplace_test {
     uint16_t mode;
     char *name;
@@ -373,7 +390,9 @@ run_inplace_test(struct crypto_dev *crypto)
         }
     }
 }
+#endif /* MYNEWT_VAL(CRYPTOTEST_INPLACE) */
 
+#if MYNEWT_VAL(CRYPTOTEST_IOVEC)
 struct iov_data_block {
     char *plain;
     char *cipher;
@@ -561,16 +580,18 @@ run_iovec_test(struct crypto_dev *crypto)
         }
     }
 }
-
+#endif /* MYNEWT_VAL(CRYPTOTEST_IOVEC) */
 
 int
 main(void)
 {
     struct crypto_dev *crypto;
+#if MYNEWT_VAL(CRYPTOTEST_BENCHMARK)
     mbedtls_aes_context mbed_aes;
     struct tc_aes_key_sched_struct tc_aes;
-    int i;
     int iterations;
+#endif
+    int i;
 
     sysinit();
 
@@ -582,12 +603,17 @@ main(void)
         run_test_vectors(crypto, all_tests[i]);
     }
 
+#if MYNEWT_VAL(CRYPTOTEST_INPLACE)
     printf("\n=== In-place encrypt/decrypt ===\n");
     run_inplace_test(crypto);
+#endif
 
+#if MYNEWT_VAL(CRYPTOTEST_IOVEC)
     printf("\n=== iovec encrypt/decrypt ===\n");
     run_iovec_test(crypto);
+#endif
 
+#if MYNEWT_VAL(CRYPTOTEST_BENCHMARK)
     mbedtls_aes_init(&mbed_aes);
     mbedtls_aes_setkey_enc(&mbed_aes, aes_128_key, 128);
 
@@ -601,8 +627,11 @@ main(void)
         run_benchmark("TINYCRYPT", tc_enc_block, &tc_aes, iterations);
         os_time_delay(OS_TICKS_PER_SEC);
     }
+#endif
 
+#if MYNEWT_VAL(CRYPTOTEST_CONCURRENCY)
     run_concurrency_test(crypto);
+#endif
 
     while (1) {
         os_eventq_run(os_eventq_dflt_get());
