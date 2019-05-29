@@ -30,9 +30,6 @@ pkg.deps:
     - "@apache-mynewt-core/mgmt/newtmgr/nmgr_os"
     - "@apache-mynewt-core/util/mem"
 
-pkg.deps.NEWTMGR_BLE_HOST:
-    - "@apache-mynewt-core/mgmt/newtmgr/transport/ble"
-
 pkg.apis:
     - newtmgr
 
