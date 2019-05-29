@@ -24,9 +24,9 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps:
-    - "@apache-mynewt-core/encoding/cborattr"
+    - "@apache-mynewt-mcumgr/cborattr"
     - "@apache-mynewt-core/kernel/os"
-    - "@apache-mynewt-core/mgmt/mgmt"
+    - "@apache-mynewt-mcumgr/mgmt"
     - "@apache-mynewt-core/mgmt/newtmgr/nmgr_os"
     - "@apache-mynewt-core/util/mem"
 
