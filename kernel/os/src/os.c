@@ -235,8 +235,7 @@ os_init(int (*main_fn)(int argc, char **arg))
     if (main_fn) {
         err = os_task_init(&g_os_main_task, "main", os_main, main_fn,
                    OS_MAIN_TASK_PRIO,
-                   (OS_MAIN_TASK_TIMER_TICKS == 0) ? \
-                        OS_WAIT_FOREVER : OS_MAIN_TASK_TIMER_TICKS,
+                   (OS_MAIN_TASK_TIMER_TICKS == 0) ? OS_WAIT_FOREVER : OS_MAIN_TASK_TIMER_TICKS,
                    g_os_main_stack, OS_STACK_ALIGN(OS_MAIN_STACK_SIZE));
         assert(err == 0);
     }
