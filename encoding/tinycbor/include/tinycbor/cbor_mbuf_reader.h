@@ -22,6 +22,7 @@
 
 #include "os/mynewt.h"
 #include <tinycbor/cbor.h>
+#include "tinycbor/cbor_mbuf_reader.h"
 
 #ifdef __cplusplus
 extern "C" {

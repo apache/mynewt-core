@@ -29,7 +29,7 @@ pkg.deps:
     - "@apache-mynewt-core/kernel/os"
     - "@apache-mynewt-core/mgmt/mgmt"
     - "@apache-mynewt-core/encoding/tinycbor"
-    - "@apache-mynewt-core/encoding/cborattr"
+    - "@apache-mynewt-mcumgr/cborattr"
 
 pkg.deps.LOG_SOFT_RESET:
     - "@apache-mynewt-core/sys/reboot"

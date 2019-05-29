@@ -31,7 +31,7 @@ pkg.apis:
 pkg.deps.STATS_CLI:
     - "@apache-mynewt-core/sys/shell"
 pkg.deps.STATS_NEWTMGR:
-    - "@apache-mynewt-core/mgmt/mgmt"
+    - "@apache-mynewt-mcumgr/mgmt"
 
 pkg.init:
     stats_module_init: 'MYNEWT_VAL(STATS_SYSINIT_STAGE)'

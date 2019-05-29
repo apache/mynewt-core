@@ -40,7 +40,7 @@ pkg.deps.LOG_CLI:
 
 pkg.deps.LOG_NEWTMGR:
     - "@apache-mynewt-core/mgmt/mgmt"
-    - "@apache-mynewt-core/encoding/cborattr"
+    - "@apache-mynewt-mcumgr/cborattr"
     - "@apache-mynewt-core/encoding/tinycbor"
 
 pkg.deps.LOG_FLAGS_IMAGE_HASH:

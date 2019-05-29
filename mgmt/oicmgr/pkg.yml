@@ -26,7 +26,7 @@ pkg.keywords:
 pkg.deps:
     - "@apache-mynewt-core/kernel/os"
     - "@apache-mynewt-core/net/oic"
-    - "@apache-mynewt-core/mgmt/mgmt"
+    - "@apache-mynewt-mcumgr/mgmt"
     - "@apache-mynewt-core/mgmt/newtmgr/nmgr_os"
 
 pkg.apis:
