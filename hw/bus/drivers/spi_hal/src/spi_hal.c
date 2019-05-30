@@ -226,7 +226,7 @@ bus_spi_hal_dev_init_func(struct os_dev *odev, void *arg)
     hal_cfg.pin_sck = cfg->pin_sck;
     hal_cfg.pin_mosi = cfg->pin_mosi;
     hal_cfg.pin_miso = cfg->pin_miso;
-    hal_cfg.pin_ss = 0;
+    hal_cfg.pin_ss = -1;
 
     /* XXX we support master only! */
     rc = hal_spi_init_hw(cfg->spi_num, HAL_SPI_TYPE_MASTER, &hal_cfg);
