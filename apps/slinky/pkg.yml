@@ -26,8 +26,7 @@ pkg.keywords:
 
 pkg.deps:
     - "@apache-mynewt-core/test/flash_test"
-    - "@apache-mynewt-core/mgmt/imgmgr"
-    - "@apache-mynewt-core/mgmt/newtmgr"
+    - "@apache-mynewt-mcumgr/mgmt"
     - "@apache-mynewt-core/mgmt/newtmgr/transport/nmgr_shell"
     - "@apache-mynewt-core/kernel/os"
     - "@mcuboot/boot/bootutil"
