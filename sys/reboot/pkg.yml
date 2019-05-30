@@ -27,7 +27,6 @@ pkg.keywords:
 
 pkg.deps:
     - "@apache-mynewt-core/kernel/os"
-    - "@apache-mynewt-core/mgmt/imgmgr"
     - "@apache-mynewt-core/sys/config"
     - "@apache-mynewt-core/sys/flash_map"
     - "@apache-mynewt-core/sys/log/modlog"
