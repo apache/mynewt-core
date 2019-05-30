@@ -159,7 +159,7 @@ static const struct bus_spi_dev_cfg spi0_cfg = {
     .pin_mosi = MYNEWT_VAL(SPI_0_MASTER_PIN_MOSI),
     .pin_miso = MYNEWT_VAL(SPI_0_MASTER_PIN_MISO),
 };
-static struct bus_spi_dev spi0_bus;
+static struct bus_spi_hal_dev spi0_bus;
 #else
 static const struct da1469x_hal_spi_cfg hal_spi0_cfg = {
     .pin_sck = MYNEWT_VAL(SPI_0_MASTER_PIN_SCK),
@@ -183,7 +183,7 @@ static const struct bus_spi_dev_cfg spi1_cfg = {
     .pin_mosi = MYNEWT_VAL(SPI_1_MASTER_PIN_MOSI),
     .pin_miso = MYNEWT_VAL(SPI_1_MASTER_PIN_MISO),
 };
-static struct bus_spi_dev spi1_bus;
+static struct bus_spi_hal_dev spi1_bus;
 #else
 static const struct da1469x_hal_spi_cfg hal_spi1_cfg = {
     .pin_sck = MYNEWT_VAL(SPI_1_MASTER_PIN_SCK),
