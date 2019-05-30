@@ -31,13 +31,12 @@
 #if MYNEWT_VAL(SPLIT_LOADER)
 #include "split/split.h"
 #endif
-#include <newtmgr/newtmgr.h>
+//#include <newtmgr/newtmgr.h>
 #include <bootutil/image.h>
 #include <bootutil/bootutil.h>
-#include <imgmgr/imgmgr.h>
 #include <assert.h>
 #include <string.h>
-#include <reboot/log_reboot.h>
+//#include <reboot/log_reboot.h>
 #include <id/id.h>
 #include "modlog/modlog.h"
 
@@ -147,19 +146,19 @@ task1_handler(void *arg)
 {
     struct os_task *t;
     int prev_pin_state, curr_pin_state;
-    struct image_version ver;
+    //struct image_version ver;
 
     /* Set the led pin for the E407 devboard */
     g_led_pin = LED_BLINK_PIN;
     hal_gpio_init_out(g_led_pin, 1);
 
-    if (imgr_my_version(&ver) == 0) {
-        console_printf("\nSlinky %u.%u.%u.%u\n",
-          ver.iv_major, ver.iv_minor, ver.iv_revision,
-          (unsigned int)ver.iv_build_num);
-    } else {
+//    if (imgr_my_version(&ver) == 0) {
+//        console_printf("\nSlinky %u.%u.%u.%u\n",
+//          ver.iv_major, ver.iv_minor, ver.iv_revision,
+//          (unsigned int)ver.iv_build_num);
+//    } else {
         console_printf("\nSlinky\n");
-    }
+//    }
 
     while (1) {
         t = os_sched_get_current_task();
@@ -265,7 +264,7 @@ main(int argc, char **argv)
 
     stats_register("gpio_toggle", STATS_HDR(g_stats_gpio_toggle));
 
-    reboot_start(hal_reset_cause());
+    //reboot_start(hal_reset_cause());
 
     init_tasks();
 
