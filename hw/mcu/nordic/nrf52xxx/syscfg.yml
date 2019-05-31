@@ -24,6 +24,8 @@ syscfg.defs:
         restrictions:
             - $notnull
         choices:
+            - nRF52810
+            - nRF52811
             - nRF52832
             - nRF52840
 
@@ -449,6 +451,10 @@ syscfg.defs:
             - "!XTAL_RC"
         deprecated: 1
 
+syscfg.vals.MCU_NRF52810:
+    MCU_TARGET: nRF52810
+syscfg.vals.MCU_NRF52811:
+    MCU_TARGET: nRF52811
 syscfg.vals.MCU_NRF52832:
     MCU_TARGET: nRF52832
 syscfg.vals.MCU_NRF52840:

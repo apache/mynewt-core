@@ -29,6 +29,11 @@
 
 #include <nrf.h>
 
+#if defined(NRF52810_XXAA) || defined(NRF52811_XXAA)
+#define PSELSCL PSEL.SCL
+#define PSELSDA PSEL.SDA
+#endif
+
 #define NRF52_HAL_I2C_MAX (2)
 
 #define NRF52_SCL_PIN_CONF                                              \
