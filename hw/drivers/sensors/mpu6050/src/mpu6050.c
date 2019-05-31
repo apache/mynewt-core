@@ -75,8 +75,11 @@ int
 mpu6050_write8(struct sensor_itf *itf, uint8_t reg, uint32_t value)
 {
     int rc;
-    uint8_t payload[2] = { reg, value & 0xFF };
+    uint8_t payload[2] = { reg, (uint8_t)value };
 
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    rc = bus_node_simple_write(itf->si_dev, payload, 2);
+#else
     struct hal_i2c_master_data data_struct = {
         .address = itf->si_addr,
         .len = 2,
@@ -99,6 +102,7 @@ mpu6050_write8(struct sensor_itf *itf, uint8_t reg, uint32_t value)
     }
 
     sensor_itf_unlock(itf);
+#endif
 
     return rc;
 }
@@ -117,6 +121,9 @@ mpu6050_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
 {
     int rc;
 
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    rc = bus_node_simple_write_read_transact(itf->si_dev, &reg, 1, value, 1);
+#else
     struct hal_i2c_master_data data_struct = {
         .address = itf->si_addr,
         .len = 1,
@@ -150,6 +157,7 @@ mpu6050_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
     }
 
     sensor_itf_unlock(itf);
+#endif
 
     return rc;
 }
@@ -168,6 +176,9 @@ mpu6050_read48(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer)
 {
     int rc;
 
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    rc = bus_node_simple_write_read_transact(itf->si_dev, &reg, 1, buffer, 6);
+#else
     struct hal_i2c_master_data data_struct = {
         .address = itf->si_addr,
         .len = 1,
@@ -202,6 +213,7 @@ mpu6050_read48(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer)
     }
 
     sensor_itf_unlock(itf);
+#endif
 
     return rc;
 }
@@ -646,3 +658,31 @@ mpu6050_sensor_get_config(struct sensor *sensor, sensor_type_t type,
 
     return 0;
 }
+
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+static void
+init_node_cb(struct bus_node *bnode, void *arg)
+{
+    struct sensor_itf *itf = arg;
+
+    mpu6050_init((struct os_dev *)bnode, itf);
+}
+
+int
+mpu6050_create_i2c_sensor_dev(struct bus_i2c_node *node, const char *name,
+                             const struct bus_i2c_node_cfg *i2c_cfg,
+                             struct sensor_itf *sensor_itf)
+{
+    struct bus_node_callbacks cbs = {
+        .init = init_node_cb,
+    };
+    int rc;
+
+    sensor_itf->si_dev = &node->bnode.odev;
+    bus_node_set_callbacks((struct os_dev *)node, &cbs);
+
+    rc = bus_i2c_node_create(name, node, i2c_cfg, sensor_itf);
+
+    return rc;
+}
+#endif
