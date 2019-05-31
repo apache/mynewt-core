@@ -17,6 +17,7 @@
  * under the License.
  */
 
+#include <stdarg.h>
 #include "streamer/streamer.h"
 
 int
