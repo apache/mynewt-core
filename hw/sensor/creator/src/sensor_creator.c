@@ -237,7 +237,7 @@ static struct sensor_itf i2c_0_itf_bmp = {
 static struct sensor_itf spi_0_itf_bme = {
     .si_type = SENSOR_ITF_SPI,
     .si_num = 0,
-    .si_cs_pin = 3
+    .si_cs_pin = MYNEWT_VAL(BME280_OFB_CS)
 };
 #endif
 

@@ -46,6 +46,9 @@ syscfg.defs:
     BME280_OFB:
         description: 'BME280 is present'
         value : 0
+    BME280_OFB_CS:
+        description: 'BME280 CS PIN'
+        value : -1
     MS5837_OFB:
         description: 'MS5837 is present'
         value : 0
