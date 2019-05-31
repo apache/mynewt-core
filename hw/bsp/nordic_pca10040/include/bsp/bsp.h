@@ -53,20 +53,20 @@ extern uint8_t _ram_start;
 #define BUTTON_4 (16)
 
 /* Arduino pins */
-#define ARDUINO_PIN_D0      1
-#define ARDUINO_PIN_D1      2
-#define ARDUINO_PIN_D2      3
-#define ARDUINO_PIN_D3      4
-#define ARDUINO_PIN_D4      5
-#define ARDUINO_PIN_D5      6
-#define ARDUINO_PIN_D6      7
-#define ARDUINO_PIN_D7      8
-#define ARDUINO_PIN_D8      10
-#define ARDUINO_PIN_D9      11
-#define ARDUINO_PIN_D10     12
-#define ARDUINO_PIN_D11     13
-#define ARDUINO_PIN_D12     14
-#define ARDUINO_PIN_D13     15
+#define ARDUINO_PIN_D0      11
+#define ARDUINO_PIN_D1      12
+#define ARDUINO_PIN_D2      13
+#define ARDUINO_PIN_D3      14
+#define ARDUINO_PIN_D4      15
+#define ARDUINO_PIN_D5      16
+#define ARDUINO_PIN_D6      17
+#define ARDUINO_PIN_D7      18
+#define ARDUINO_PIN_D8      19
+#define ARDUINO_PIN_D9      20
+#define ARDUINO_PIN_D10     22
+#define ARDUINO_PIN_D11     23
+#define ARDUINO_PIN_D12     24
+#define ARDUINO_PIN_D13     25
 #define ARDUINO_PIN_A0      3
 #define ARDUINO_PIN_A1      4
 #define ARDUINO_PIN_A2      28
