@@ -40,6 +40,9 @@ syscfg.defs:
             ((MPU6050_OFB_I2C_NUM == 0) && (I2C_0 == 1)) ||
             ((MPU6050_OFB_I2C_NUM == 1) && (I2C_1 == 1)) ||
             ((MPU6050_OFB_I2C_NUM == 2) && (I2C_2 == 1))'
+    MPU6050_OFB_I2C_BUS:
+        description: 'I2C interface used for MPU6050'
+        value : '"i2c0"'
     BNO055_OFB:
         description: 'BNO055 is present'
         value : 0

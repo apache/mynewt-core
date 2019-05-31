@@ -259,11 +259,22 @@ static struct sensor_itf i2c_0_itf_lsm = {
 #endif
 
 #if MYNEWT_VAL(MPU6050_OFB)
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+static const struct bus_i2c_node_cfg mpu6050_node_cfg = {
+    .node_cfg = {
+        .bus_name = MYNEWT_VAL(MPU6050_OFB_I2C_BUS),
+    },
+    .addr = MPU6050_I2C_ADDR,
+    .freq = 400,
+};
+static struct sensor_itf mpu6050_i2c_itf;
+#else
 static struct sensor_itf mpu6050_i2c_itf = {
     .si_type = SENSOR_ITF_I2C,
     .si_num  = MYNEWT_VAL(MPU6050_OFB_I2C_NUM),
     .si_addr = MPU6050_I2C_ADDR
 };
+#endif
 #endif
 
 #if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(BNO055_OFB)
@@ -1417,8 +1428,13 @@ sensor_dev_create(void)
 #endif
 
 #if MYNEWT_VAL(MPU6050_OFB)
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    rc = mpu6050_create_i2c_sensor_dev(&mpu6050.i2c_node, "mpu6050_0",
+                                       &mpu6050_node_cfg, &mpu6050_i2c_itf);
+#else
     rc = os_dev_create((struct os_dev *) &mpu6050, "mpu6050_0",
       OS_DEV_INIT_PRIMARY, 0, mpu6050_init, (void *)&mpu6050_i2c_itf);
+#endif
     assert(rc == 0);
 
     rc = config_mpu6050_sensor();
