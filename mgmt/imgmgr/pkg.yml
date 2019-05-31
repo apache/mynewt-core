@@ -17,35 +17,33 @@
 # under the License.
 #
 
-pkg.name: apps/slinky
-pkg.type: app
-pkg.description: "Example application which uses a variety of mynewt features."
+pkg.name: mgmt/imgmgr
+pkg.description: Library for image uploading.
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps:
-    - "@apache-mynewt-core/test/flash_test"
-    - "@apache-mynewt-mcumgr/mgmt"
-    - "@apache-mynewt-mcumgr/cmd/img_mgmt"
-    #- "@apache-mynewt-core/mgmt/newtmgr/transport/nmgr_shell"
-    - "@apache-mynewt-core/kernel/os"
-    - "@mcuboot/boot/bootutil"
-    - "@apache-mynewt-core/sys/shell"
-    - "@apache-mynewt-core/sys/config"
-    - "@apache-mynewt-core/sys/console/full"
-    - "@apache-mynewt-core/sys/id"
-    - "@apache-mynewt-core/sys/log/full"
-    - "@apache-mynewt-core/sys/log/modlog"
-    - "@apache-mynewt-core/sys/stats/full"
     - "@apache-mynewt-core/boot/split"
+    - "@apache-mynewt-core/encoding/base64"
+    - "@apache-mynewt-core/sys/flash_map"
 
-pkg.deps.I2C_0: test/i2c_scan
-pkg.deps.I2C_1: test/i2c_scan
-pkg.deps.I2C_2: test/i2c_scan
+pkg.req_apis:
+    #- newtmgr
+    - bootloader
 
-pkg.deps.CONFIG_NFFS:
-    - "@apache-mynewt-core/fs/nffs"
+pkg.req_apis.LOG_FCB_SLOT1:
+    - log
 
-pkg.deps.CONFIG_FCB:
-    - "@apache-mynewt-core/fs/fcb"
+pkg.deps.IMGMGR_FS:
+    - "@apache-mynewt-core/fs/fs"
+
+pkg.deps.IMGMGR_COREDUMP:
+    - "@apache-mynewt-core/sys/coredump"
+
+pkg.deps.IMGMGR_CLI:
+    - "@apache-mynewt-core/sys/shell"
+    - "@apache-mynewt-core/util/parse"
+
+pkg.init:
+    imgmgr_module_init: 'MYNEWT_VAL(IMGMGR_SYSINIT_STAGE)'
