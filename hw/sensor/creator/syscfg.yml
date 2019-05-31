@@ -52,6 +52,12 @@ syscfg.defs:
     BME280_OFB_CS:
         description: 'BME280 CS PIN'
         value : -1
+    BME280_OFB_BAUDRATE:
+        description: 'BME280 SPI speed'
+        value : 4000
+    BME280_OFB_SPI_BUS:
+        description: 'BME280 bus name'
+        value : '"spi0"'
     MS5837_OFB:
         description: 'MS5837 is present'
         value : 0
