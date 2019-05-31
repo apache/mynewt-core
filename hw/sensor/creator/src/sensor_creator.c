@@ -234,11 +234,22 @@ static struct sensor_itf i2c_0_itf_bmp = {
 #endif
 
 #if MYNEWT_VAL(SPI_0_MASTER) && MYNEWT_VAL(BME280_OFB)
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+struct bus_spi_node_cfg flash_spi_cfg = {
+    .node_cfg.bus_name = MYNEWT_VAL(BME280_OFB_SPI_BUS),
+    .pin_cs = MYNEWT_VAL(BME280_OFB_CS),
+    .mode = BUS_SPI_MODE_0,
+    .data_order = HAL_SPI_MSB_FIRST,
+    .freq = MYNEWT_VAL(BME280_OFB_BAUDRATE),
+};
+static struct sensor_itf bme280_itf;
+#else
 static struct sensor_itf spi_0_itf_bme = {
     .si_type = SENSOR_ITF_SPI,
     .si_num = 0,
     .si_cs_pin = MYNEWT_VAL(BME280_OFB_CS)
 };
+#endif
 #endif
 
 #if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(DRV2605_OFB)
@@ -1478,9 +1489,15 @@ sensor_dev_create(void)
 #endif
 
 #if MYNEWT_VAL(BME280_OFB)
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    rc = bme280_create_spi_sensor_dev(&bme280.spi_node, "bme280_0",
+                                      &flash_spi_cfg, &bme280_itf);
+    assert(rc == 0);
+#else
     rc = os_dev_create((struct os_dev *) &bme280, "bme280_0",
       OS_DEV_INIT_PRIMARY, 0, bme280_init, (void *)&spi_0_itf_bme);
     assert(rc == 0);
+#endif
 
     rc = config_bme280_sensor();
     assert(rc == 0);
