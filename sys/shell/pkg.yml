@@ -29,7 +29,7 @@ pkg.deps:
     - "@apache-mynewt-core/util/streamer"
 
 pkg.deps.SHELL_NEWTMGR:
-    - "@apache-mynewt-core/mgmt/mgmt"
+    - "@apache-mynewt-mcumgr/mgmt"
     - "@apache-mynewt-core/encoding/base64"
     - "@apache-mynewt-core/util/crc"
 

@@ -17,19 +17,19 @@
 # under the License.
 #
 
-pkg.name: sys/log/modlog
-pkg.description: Module-mapped logging.
+pkg.name: mgmt/newtmgr/transport/smp_shell
+pkg.description: SMP transport over shell
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
-    - logging
+    - smp
+    - shell
 
 pkg.deps:
     - "@apache-mynewt-core/kernel/os"
-    - "@apache-mynewt-core/util/rwlock"
-
-#pkg.req_apis:
-#    - log
+    - "@apache-mynewt-core/sys/shell"
+    - "@apache-mynewt-mcumgr/smp"
+    - "@apache-mynewt-mcumgr/mgmt"
 
 pkg.init:
-    modlog_init: 'MYNEWT_VAL(MODLOG_SYSINIT_STAGE)'
+    smp_shell_pkg_init: 'MYNEWT_VAL(SMP_SHELL_SYSINIT_STAGE)'
