@@ -85,6 +85,20 @@ struct nrf52_hal_spi_cfg {
 #define HAL_GPIOTE_PIN_MASK     GPIOTE_CONFIG_PSEL_Msk
 #endif
 
+#ifdef NRF52810_XXAA
+#define HAL_GPIO_INDEX(pin)     (pin)
+#define HAL_GPIO_PORT(pin)      (NRF_P0)
+#define HAL_GPIO_MASK(pin)      (1 << pin)
+#define HAL_GPIOTE_PIN_MASK     GPIOTE_CONFIG_PSEL_Msk
+#endif
+
+#ifdef NRF52811_XXAA
+#define HAL_GPIO_INDEX(pin)     (pin)
+#define HAL_GPIO_PORT(pin)      (NRF_P0)
+#define HAL_GPIO_MASK(pin)      (1 << pin)
+#define HAL_GPIOTE_PIN_MASK     GPIOTE_CONFIG_PSEL_Msk
+#endif
+
 #ifdef NRF52840_XXAA
 #define HAL_GPIO_INDEX(pin)     ((pin) & 0x1F)
 #define HAL_GPIO_PORT(pin)      ((pin) > 31 ? NRF_P1 : NRF_P0)
