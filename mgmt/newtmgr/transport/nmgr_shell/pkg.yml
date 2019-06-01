@@ -22,13 +22,14 @@ pkg.description: Newtmgr transport over shell
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
-    - newtmgr
+    - smp
     - shell
 
 pkg.deps:
     - "@apache-mynewt-core/kernel/os"
     - "@apache-mynewt-core/sys/shell"
-    - "@apache-mynewt-core/mgmt/newtmgr"
+    - "@apache-mynewt-mcumgr/smp"
+    - "@apache-mynewt-mcumgr/mgmt"
 
 pkg.init:
     nmgr_shell_pkg_init: 'MYNEWT_VAL(NMGR_SHELL_SYSINIT_STAGE)'

@@ -25,16 +25,16 @@
 #include <mgmt/mgmt.h>
 #include <smp/smp.h>
 
-static struct nmgr_transport nmgr_shell_transport;
+static struct smp_streamer smp_shell_streamer;
 
 static uint16_t
-nmgr_shell_get_mtu(struct os_mbuf *m)
+smp_shell_get_mtu(struct os_mbuf *m)
 {
     return MGMT_MAX_MTU;
 }
 
 static int
-nmgr_shell_out(struct nmgr_transport *nt, struct os_mbuf *m)
+smp_shell_out(struct os_mbuf *m)
 {
     int rc;
 
@@ -50,23 +50,19 @@ err:
 }
 
 static int
-nmgr_shell_in(struct os_mbuf *m, void *arg)
+smp_shell_in(struct os_mbuf *m, void *arg)
 {
-    return nmgr_rx_req(&nmgr_shell_transport, m);
+    return smp_process_request_packet(&smp_shell_streamer, m);
 }
 
 void
-nmgr_shell_pkg_init(void)
+smp_shell_pkg_init(void)
 {
     int rc;
 
     /* Ensure this function only gets called by sysinit. */
     SYSINIT_ASSERT_ACTIVE();
 
-    rc = nmgr_transport_init(&nmgr_shell_transport, nmgr_shell_out,
-      nmgr_shell_get_mtu);
-    assert(rc == 0);
-
-    rc = shell_nlip_input_register(nmgr_shell_in, &nmgr_shell_transport);
+    rc = shell_nlip_input_register(smp_shell_in, &smp_shell_streamer);
     assert(rc == 0);
 }

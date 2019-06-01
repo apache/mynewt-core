@@ -17,19 +17,8 @@
 # under the License.
 #
 
-pkg.name: sys/log/modlog
-pkg.description: Module-mapped logging.
-pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
-pkg.homepage: "http://mynewt.apache.org/"
-pkg.keywords:
-    - logging
-
-pkg.deps:
-    - "@apache-mynewt-core/kernel/os"
-    - "@apache-mynewt-core/util/rwlock"
-
-#pkg.req_apis:
-#    - log
-
-pkg.init:
-    modlog_init: 'MYNEWT_VAL(MODLOG_SYSINIT_STAGE)'
+syscfg.defs:
+    SMP_SHELL_SYSINIT_STAGE:
+        description: >
+            Sysinit stage for the shell SMP transport.
+        value: 501
