@@ -50,4 +50,3 @@ syscfg.defs:
     LPS33HW_ONE_SHOT_MODE:
         description: 'Enables one shot mode on the sensor'
         value: 0
- 
