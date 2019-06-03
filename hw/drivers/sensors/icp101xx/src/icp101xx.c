@@ -352,7 +352,7 @@ read_otp(struct icp101xx *icp101xx, struct icp101xx_cfg *cfg, int16_t *calibrati
     itf = SENSOR_GET_ITF(&(icp101xx->sensor));
 
     /* OTP Read mode */
-    data_write[0] = (ICP101XX_OTP_READ_ADDR & 0xFF00) << 8;
+    data_write[0] = (ICP101XX_OTP_READ_ADDR & 0xFF00) >> 8;
     data_write[1] = ICP101XX_OTP_READ_ADDR & 0x00FF;
     crc = compute_crc(data_write);
     
@@ -373,8 +373,8 @@ read_otp(struct icp101xx *icp101xx, struct icp101xx_cfg *cfg, int16_t *calibrati
 
         calibration_data[i] = data_read[0] << 8 | data_read[1];
         /* Check CRC */
-        if (!check_crc(data_read)) {
-            return -1;
+        if (!check_crc(&data_read[0])) {
+            return SYS_EINVAL;
         }
     }
 
@@ -446,48 +446,58 @@ read_raw_data(struct icp101xx *icp101xx, struct icp101xx_cfg *cfg, int32_t *raw_
 
     itf = SENSOR_GET_ITF(&(icp101xx->sensor));
 
-    /* Read previous measure */
-    rc = icp101xx_read(itf, data_read, 9);
-    if (rc) {
-        STATS_INC(icp101xx->stats, read_errors);
-        goto err;
-    }
-
-    switch (cfg->measurement_mode) {
-        case ICP101XX_MEAS_LOW_POWER_P_FIRST:
-        case ICP101XX_MEAS_NORMAL_P_FIRST:
-        case ICP101XX_MEAS_LOW_NOISE_P_FIRST:
-        case ICP101XX_MEAS_ULTRA_LOW_NOISE_P_FIRST:
-            /* Read P first */
-            /* Pressure */
-            *raw_pressure = (data_read[0] << (8*2) | data_read[1] << (8*1) | 
-                             data_read[3] << (8*0));
-            /* don't care of data_read[4] because LLSB must be disregarded */
-            /* don't care of data_read[2] & data_read[5] because it's crc */
-            /* Temperature */
-            *raw_temperature = data_read[6] << 8 | data_read[7];
-            /* don't care of data_read[8] because it's crc */
-            break;
-        
-        case ICP101XX_MEAS_LOW_POWER_T_FIRST:
-        case ICP101XX_MEAS_NORMAL_T_FIRST:
-        case ICP101XX_MEAS_LOW_NOISE_T_FIRST:
-        case ICP101XX_MEAS_ULTRA_LOW_NOISE_T_FIRST:
-            /* Read T first */
-            /* Temperature */
-            *raw_temperature = data_read[0] << 8 | data_read[1];
-            /* don't care of data_read[2] because it's crc */
-            /* Pressure */
-            *raw_pressure = (data_read[3] << (8*2) | data_read[4] << (8*1) |
-                             data_read[6] << (8*0));
-            /* don't care of data_read[7] because LLSB must be disregarded */
-            /* don't care of data_read[5] & data_read[8] because it's crc */
-            break;
-        
-        default:
+    if (0 == icp101xx->cfg.skip_first_data) {
+        /* Read previous measure */
+        rc = icp101xx_read(itf, data_read, 9);
+        if (rc) {
+            STATS_INC(icp101xx->stats, read_errors);
             goto err;
+        }
+        
+        /* Check CRC */
+        if (!check_crc(&data_read[0]) ||
+            !check_crc(&data_read[3]) ||
+            !check_crc(&data_read[6])) {
+            rc = SYS_EINVAL;
+            goto err;
+        }
+        
+        switch (cfg->measurement_mode) {
+            case ICP101XX_MEAS_LOW_POWER_P_FIRST:
+            case ICP101XX_MEAS_NORMAL_P_FIRST:
+            case ICP101XX_MEAS_LOW_NOISE_P_FIRST:
+            case ICP101XX_MEAS_ULTRA_LOW_NOISE_P_FIRST:
+                /* Read P first */
+                /* Pressure */
+                *raw_pressure = (data_read[0] << (8*2) | data_read[1] << (8*1) | 
+                                 data_read[3] << (8*0));
+                /* don't care of data_read[4] because LLSB must be disregarded */
+                /* don't care of data_read[2] & data_read[5] because it's crc */
+                /* Temperature */
+                *raw_temperature = data_read[6] << 8 | data_read[7];
+                /* don't care of data_read[8] because it's crc */
+                break;
+            
+            case ICP101XX_MEAS_LOW_POWER_T_FIRST:
+            case ICP101XX_MEAS_NORMAL_T_FIRST:
+            case ICP101XX_MEAS_LOW_NOISE_T_FIRST:
+            case ICP101XX_MEAS_ULTRA_LOW_NOISE_T_FIRST:
+                /* Read T first */
+                /* Temperature */
+                *raw_temperature = data_read[0] << 8 | data_read[1];
+                /* don't care of data_read[2] because it's crc */
+                /* Pressure */
+                *raw_pressure = (data_read[3] << (8*2) | data_read[4] << (8*1) |
+                                 data_read[6] << (8*0));
+                /* don't care of data_read[7] because LLSB must be disregarded */
+                /* don't care of data_read[5] & data_read[8] because it's crc */
+                break;
+            
+            default:
+                rc = SYS_ENOTSUP;
+                goto err;
+        }
     }
-
 
     /* Restart next measurement */
     rc = send_measurement_command(icp101xx, cfg);
@@ -684,7 +694,8 @@ icp101xx_get_whoami(struct icp101xx *icp101xx, uint8_t * whoami)
     /* Get only ICP-101xx-specific product code bits */
     reg_value &= ICP101XX_PRODUCT_SPECIFIC_BITMASK;
     /* Check CRC */
-    if (!check_crc(data_read)) {
+    if (!check_crc(&data_read[0])) {
+        rc = SYS_EINVAL;
         goto err;
     }
 
@@ -730,7 +741,7 @@ icp101xx_get_data(struct icp101xx *icp101xx, struct icp101xx_cfg *cfg,
     /* ICP101XX_LOG(DEBUG, "raw T = %d\n", raw_temp); */
 
     rc = process_data(cfg, raw_press, raw_temp,
-        &pressure_pa, &temperature_degc);
+                      &pressure_pa, &temperature_degc);
     if (rc == 0) {
         *pressure = pressure_pa;
         *temperature = temperature_degc;
