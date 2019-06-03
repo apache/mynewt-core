@@ -1391,6 +1391,7 @@ bme280_create_i2c_sensor_dev(struct bus_i2c_node *node, const char *name,
     };
     int rc;
 
+    sensor_itf->si_dev = &node->bnode.odev;
     bus_node_set_callbacks((struct os_dev *)node, &cbs);
 
     rc = bus_i2c_node_create(name, node, i2c_cfg, sensor_itf);
@@ -1408,6 +1409,7 @@ bme280_create_spi_sensor_dev(struct bus_spi_node *node, const char *name,
     };
     int rc;
 
+    sensor_itf->si_dev = &node->bnode.odev;
     bus_node_set_callbacks((struct os_dev *)node, &cbs);
 
     rc = bus_spi_node_create(name, node, spi_cfg, sensor_itf);
