@@ -24,6 +24,7 @@
 #include "base64/base64.h"
 #include "crc/crc16.h"
 #include "console/console.h"
+#include "mgmt/mgmt.h"
 #include "shell/shell.h"
 #include "shell_priv.h"
 
@@ -121,8 +122,8 @@ shell_nlip_mtx(struct os_mbuf *m)
     uint16_t crc;
     int rb_off;
     int elen;
-    uint16_t nwritten;
-    uint16_t linelen;
+    uint16_t bodylen;
+    uint16_t newbodylen;
     int rc;
     struct os_mbuf *tmp;
     void *ptr;
@@ -153,60 +154,71 @@ shell_nlip_mtx(struct os_mbuf *m)
     memcpy(ptr, &crc, sizeof(crc));
 
     totlen = OS_MBUF_PKTHDR(m)->omp_len;
-    nwritten = 0;
     off = 0;
+    bodylen = 0;
+    rb_off = 0;
 
     rc = console_lock(OS_TICKS_PER_SEC);
     if (rc != OS_OK) {
         goto err;
     }
+
     /* Start a packet */
     console_write(pkt_seq, sizeof(pkt_seq));
 
-    linelen = 0;
-
-    rb_off = 2;
+    /* Encode the packet length. */
     dlen = htons(totlen);
     memcpy(readbuf, &dlen, sizeof(dlen));
+    rb_off += 2;
 
     while (totlen > 0) {
+        /* Calculate number of source bytes to include in this chunk. */
         dlen = min(SHELL_NLIP_MTX_BUF_SIZE - rb_off, totlen);
 
-        rc = os_mbuf_copydata(m, off, dlen, readbuf + rb_off);
-        if (rc != 0) {
-            goto end;
-        }
-        off += dlen;
-
-        /* If the next packet will overwhelm the line length, truncate
-         * this line.
+        /* If appending this chunk to the current line causes the line to be
+         * too long, terminate the line before emitting the chunk.
+         *
+         * Total line length:
+         *     2                       +    // Frame header.
+         *     bodylen                 +    // Body bytes already emitted.
+         *     BASE64_ENCODE_SIZE(...) +    // Next chunk.
+         *     1                            // Terminating newline.
          */
-        if (linelen +
-                BASE64_ENCODE_SIZE(min(SHELL_NLIP_MTX_BUF_SIZE - rb_off,
-                        totlen - dlen)) >= 120) {
-            elen = base64_encode(readbuf, dlen + rb_off, encodebuf, 1);
+        newbodylen = 2 + bodylen + BASE64_ENCODE_SIZE(dlen + rb_off) + 1;
+        if (newbodylen > MGMT_NLIP_MAX_FRAME) {
+            /* The chunk won't fit.  Terminate the current line. */
+            elen = base64_pad(encodebuf, bodylen);
             console_write(encodebuf, elen);
             console_write("\n", 1);
+
+            /* Begin the next frame. */
             console_write(esc_seq, sizeof(esc_seq));
-            linelen = 0;
+            bodylen = 0;
         } else {
+            /* The chunk will fit.  Emit it. */
+            rc = os_mbuf_copydata(m, off, dlen, readbuf + rb_off);
+            if (rc != 0) {
+                goto end;
+            }
+
             elen = base64_encode(readbuf, dlen + rb_off, encodebuf, 0);
             console_write(encodebuf, elen);
-            linelen += elen;
+            bodylen += elen;
+            totlen -= dlen;
+            off += dlen;
         }
 
         rb_off = 0;
-
-        nwritten += elen;
-        totlen -= dlen;
     }
 
-    elen = base64_pad(encodebuf, linelen);
+    /* The final line was never terminated.  Terminate it now. */ 
+    elen = base64_pad(encodebuf, bodylen);
     console_write(encodebuf, elen);
-
     console_write("\n", 1);
+
 end:
     (void)console_unlock();
+
 err:
     return (rc);
 }

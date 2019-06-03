@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 - 2018, Nordic Semiconductor ASA
+ * Copyright (c) 2016 - 2019, Nordic Semiconductor ASA
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -65,6 +65,10 @@
 #endif
 
 #ifndef NRFX_USBD_CONFIG_ISO_IN_ZLP
+/*
+ * Respond to an IN token on ISO IN endpoint with ZLP when no data is ready.
+ * NOTE: This option does not work on Engineering A chip.
+ */
 #define NRFX_USBD_CONFIG_ISO_IN_ZLP  0
 #endif
 
@@ -753,13 +757,11 @@ static inline void usbd_dma_start(nrfx_usbd_ep_t ep)
 
 void nrfx_usbd_isoinconfig_set(nrf_usbd_isoinconfig_t config)
 {
-    NRFX_ASSERT(!nrfx_usbd_errata_type_52840_eng_a());
     nrf_usbd_isoinconfig_set(config);
 }
 
 nrf_usbd_isoinconfig_t nrfx_usbd_isoinconfig_get(void)
 {
-    NRFX_ASSERT(!nrfx_usbd_errata_type_52840_eng_a());
     return nrf_usbd_isoinconfig_get();
 }
 
@@ -1153,6 +1155,25 @@ static void usbd_ep_data_handler(nrfx_usbd_ep_t ep, uint8_t bitpos)
     if (NRF_USBD_EPIN_CHECK(ep))
     {
         /* IN endpoint (Device -> Host) */
+
+        /* Secure against the race condition that occurs when an IN transfer is interrupted
+         * by an OUT transaction, which in turn is interrupted by a process with higher priority.
+         * If the IN events ENDEPIN and EPDATA arrive during that high priority process,
+         * the OUT handler might call usbd_ep_data_handler without calling 
+         * nrf_usbd_epin_dma_handler (or nrf_usbd_ep0in_dma_handler) for the IN transaction.
+         */
+        if (nrf_usbd_event_get_and_clear(nrfx_usbd_ep_to_endevent(ep)))
+        {
+            if (ep != NRFX_USBD_EPIN0)
+            {
+                nrf_usbd_epin_dma_handler(ep);
+            }
+            else
+            {
+                nrf_usbd_ep0in_dma_handler();
+            }
+        }
+
         if (0 == (m_ep_dma_waiting & (1U << bitpos)))
         {
             NRFX_LOG_DEBUG("USBD event: EndpointData: In finished");
@@ -1657,12 +1678,6 @@ void nrfx_usbd_irq_handler(void)
 
 nrfx_err_t nrfx_usbd_init(nrfx_usbd_event_handler_t event_handler)
 {
-    NRFX_ASSERT((nrfx_usbd_errata_type_52840_eng_a() ||
-                 nrfx_usbd_errata_type_52840_eng_b() || 
-                 nrfx_usbd_errata_type_52840_eng_c() ||
-                 nrfx_usbd_errata_type_52840_eng_d())
-               );
-
     NRFX_ASSERT(event_handler);
 
     if (m_drv_state != NRFX_DRV_STATE_UNINITIALIZED)
@@ -1864,6 +1879,9 @@ void nrfx_usbd_stop(void)
 {
     NRFX_ASSERT(m_drv_state == NRFX_DRV_STATE_POWERED_ON);
 
+    /* Clear interrupt */
+    NRFX_IRQ_PENDING_CLEAR(USBD_IRQn);
+
     if (NRFX_IRQ_IS_ENABLED(USBD_IRQn))
     {
         /* Abort transfers */
@@ -1914,20 +1932,6 @@ bool nrfx_usbd_suspend(void)
             else
             {
                 suspended = true;
-
-                if (nrfx_usbd_errata_171())
-                {
-                    if (*((volatile uint32_t *)(0x4006EC00)) == 0x00000000)
-                    {
-                        *((volatile uint32_t *)(0x4006EC00)) = 0x00009375;
-                        *((volatile uint32_t *)(0x4006EC14)) = 0x00000000;
-                        *((volatile uint32_t *)(0x4006EC00)) = 0x00009375;
-                    }
-                    else
-                    {
-                        *((volatile uint32_t *)(0x4006EC14)) = 0x00000000;
-                    }
-                }
             }
         }
     }
@@ -2282,7 +2286,7 @@ void nrfx_usbd_setup_get(nrfx_usbd_setup_t * p_setup)
 {
     memset(p_setup, 0, sizeof(nrfx_usbd_setup_t));
     p_setup->bmRequestType = nrf_usbd_setup_bmrequesttype_get();
-    p_setup->bmRequest     = nrf_usbd_setup_brequest_get();
+    p_setup->bRequest      = nrf_usbd_setup_brequest_get();
     p_setup->wValue        = nrf_usbd_setup_wvalue_get();
     p_setup->wIndex        = nrf_usbd_setup_windex_get();
     p_setup->wLength       = nrf_usbd_setup_wlength_get();

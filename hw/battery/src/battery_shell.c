@@ -476,12 +476,12 @@ err:
 
 static const struct shell_cmd bat_cli_commands[] =
 {
-    { "read", cmd_bat_read, HELP(bat_read_help) },
-    { "write", cmd_bat_write, HELP(bat_write_help) },
-    { "list", cmd_bat_list, HELP(bat_list_help) },
-    { "pollrate", cmd_bat_poll_rate, HELP(bat_poll_rate_help) },
-    { "monitor", cmd_bat_monitor, HELP(bat_monitor_help) },
-    { NULL, NULL, NULL }
+    SHELL_CMD("read", cmd_bat_read, &bat_read_help),
+    SHELL_CMD("write", cmd_bat_write, &bat_write_help),
+    SHELL_CMD("list", cmd_bat_list, &bat_list_help),
+    SHELL_CMD("pollrate", cmd_bat_poll_rate, &bat_poll_rate_help),
+    SHELL_CMD("monitor", cmd_bat_monitor, &bat_monitor_help),
+    { 0 },
 };
 
 /**

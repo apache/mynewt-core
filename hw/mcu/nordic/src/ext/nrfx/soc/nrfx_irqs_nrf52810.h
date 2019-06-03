@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 - 2018, Nordic Semiconductor ASA
+ * Copyright (c) 2017 - 2019, Nordic Semiconductor ASA
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -42,23 +42,30 @@ extern "C" {
 
 // RADIO_IRQn
 
-// UARTE0_IRQn
-#define nrfx_uarte_0_irq_handler    UARTE0_IRQHandler
-
-// TWIM0_TWIS0_IRQn
-#if NRFX_CHECK(NRFX_PRS_BOX_0_ENABLED)
-#define nrfx_prs_box_0_irq_handler  TWIM0_TWIS0_IRQHandler
+// UARTE0_UART0_IRQn
+#if NRFX_CHECK(NRFX_PRS_BOX_2_ENABLED)
+#define nrfx_prs_box_2_irq_handler  UARTE0_UART0_IRQHandler
 #else
-#define nrfx_twim_0_irq_handler     TWIM0_TWIS0_IRQHandler
-#define nrfx_twis_0_irq_handler     TWIM0_TWIS0_IRQHandler
+#define nrfx_uarte_0_irq_handler    UARTE0_UART0_IRQHandler
+#define nrfx_uart_0_irq_handler     UARTE0_UART0_IRQHandler
 #endif
 
-// SPIM0_SPIS0_IRQn
-#if NRFX_CHECK(NRFX_PRS_BOX_1_ENABLED)
-#define nrfx_prs_box_1_irq_handler  SPIM0_SPIS0_IRQHandler
+// TWIM0_TWIS0_TWI0_IRQn
+#if NRFX_CHECK(NRFX_PRS_BOX_0_ENABLED)
+#define nrfx_prs_box_0_irq_handler  TWIM0_TWIS0_TWI0_IRQHandler
 #else
-#define nrfx_spim_0_irq_handler     SPIM0_SPIS0_IRQHandler
-#define nrfx_spis_0_irq_handler     SPIM0_SPIS0_IRQHandler
+#define nrfx_twim_0_irq_handler     TWIM0_TWIS0_TWI0_IRQHandler
+#define nrfx_twis_0_irq_handler     TWIM0_TWIS0_TWI0_IRQHandler
+#define nrfx_twi_0_irq_handler      TWIM0_TWIS0_TWI0_IRQHandler
+#endif
+
+// SPIM0_SPIS0_SPI0_IRQn
+#if NRFX_CHECK(NRFX_PRS_BOX_1_ENABLED)
+#define nrfx_prs_box_1_irq_handler  SPIM0_SPIS0_SPI0_IRQHandler
+#else
+#define nrfx_spim_0_irq_handler     SPIM0_SPIS0_SPI0_IRQHandler
+#define nrfx_spis_0_irq_handler     SPIM0_SPIS0_SPI0_IRQHandler
+#define nrfx_spi_0_irq_handler      SPIM0_SPIS0_SPI0_IRQHandler
 #endif
 
 // GPIOTE_IRQn
@@ -80,6 +87,7 @@ extern "C" {
 #define nrfx_rtc_0_irq_handler      RTC0_IRQHandler
 
 // TEMP_IRQn
+#define nrfx_temp_irq_handler       TEMP_IRQHandler
 
 // RNG_IRQn
 #define nrfx_rng_irq_handler        RNG_IRQHandler

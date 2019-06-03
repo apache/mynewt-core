@@ -63,6 +63,7 @@ void console_blocking_mode(void);
 void console_non_blocking_mode(void);
 void console_echo(int on);
 
+int console_vprintf(const char *fmt, va_list ap);
 int console_printf(const char *fmt, ...)
     __attribute__ ((format (printf, 1, 2)));;
 

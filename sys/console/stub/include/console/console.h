@@ -21,6 +21,7 @@
 
 #include <inttypes.h>
 #include <stdbool.h>
+#include <stdarg.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -84,6 +85,12 @@ console_non_blocking_mode(void)
 static void inline
 console_echo(int on)
 {
+}
+
+static int inline
+console_vprintf(const char *fmt, va_list ap)
+{
+    return 0;
 }
 
 static int inline console_printf(const char *fmt, ...)

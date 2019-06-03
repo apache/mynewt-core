@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 - 2018, Nordic Semiconductor ASA
+ * Copyright (c) 2017 - 2019, Nordic Semiconductor ASA
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -81,6 +81,7 @@ extern "C" {
 #define nrfx_rtc_0_irq_handler      RTC0_IRQHandler
 
 // TEMP_IRQn
+#define nrfx_temp_irq_handler       TEMP_IRQHandler
 
 // RNG_IRQn
 #define nrfx_rng_irq_handler        RNG_IRQHandler

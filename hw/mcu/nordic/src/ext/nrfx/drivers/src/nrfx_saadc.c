@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2015 - 2018, Nordic Semiconductor ASA
+/*
+ * Copyright (c) 2015 - 2019, Nordic Semiconductor ASA
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -228,6 +228,7 @@ nrfx_err_t nrfx_saadc_init(nrfx_saadc_config_t const * p_config,
     nrf_saadc_int_disable(NRF_SAADC_INT_ALL);
     nrf_saadc_event_clear(NRF_SAADC_EVENT_END);
     nrf_saadc_event_clear(NRF_SAADC_EVENT_STARTED);
+    nrf_saadc_event_clear(NRF_SAADC_EVENT_STOPPED);
     NRFX_IRQ_PRIORITY_SET(SAADC_IRQn, p_config->interrupt_priority);
     NRFX_IRQ_ENABLE(SAADC_IRQn);
     nrf_saadc_int_enable(NRF_SAADC_INT_END);
@@ -314,7 +315,6 @@ nrfx_err_t nrfx_saadc_channel_init(uint8_t                                  chan
     m_cb.psel[channel].pselp = p_config->pin_p;
     m_cb.psel[channel].pseln = p_config->pin_n;
     nrf_saadc_channel_init(channel, p_config);
-    nrf_saadc_channel_input_set(channel, p_config->pin_p, p_config->pin_n);
 
 #ifdef NRF52_PAN_74
     if ((p_config->acq_time == NRF_SAADC_ACQTIME_3US) ||
@@ -581,7 +581,7 @@ void nrfx_saadc_abort(void)
         {
             // Wait for ADC being stopped.
             bool result;
-            NRFX_WAIT_FOR((m_cb.adc_state != NRF_SAADC_STATE_IDLE), HW_TIMEOUT, 0, result);
+            NRFX_WAIT_FOR((m_cb.adc_state == NRF_SAADC_STATE_IDLE), HW_TIMEOUT, 0, result);
             NRFX_ASSERT(result);
         }
 
@@ -626,21 +626,5 @@ void nrfx_saadc_limits_set(uint8_t channel, int16_t limit_low, int16_t limit_hig
         m_cb.limits_enabled_flags |= (0x80000000 >> HIGH_LIMIT_TO_FLAG(channel));
         nrf_saadc_int_enable(int_mask);
     }
-}
-
-void nrfx_enable_adc_chan(int chan, nrf_saadc_input_t pselp,
-                          nrf_saadc_input_t pseln)
-{
-    NRFX_ASSERT(m_cb.active_channels < NRF_SAADC_CHANNEL_COUNT);
-    ++m_cb.active_channels;
-    nrf_saadc_channel_input_set(chan, pselp, pseln);
-}
-
-void nrfx_disable_adc_chan(int chan)
-{
-    NRFX_ASSERT(m_cb.active_channels != 0);
-    --m_cb.active_channels;
-    nrf_saadc_channel_input_set(chan, NRF_SAADC_INPUT_DISABLED,
-                                NRF_SAADC_INPUT_DISABLED);
 }
 #endif // NRFX_CHECK(NRFX_SAADC_ENABLED)

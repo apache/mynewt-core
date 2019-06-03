@@ -28,7 +28,13 @@ extern "C" {
 #endif
 
 /* MTU for newtmgr responses */
-#define MGMT_MAX_MTU 1024
+#define MGMT_MAX_MTU            1024
+
+/* NLIP packets sent over serial are fragmented into frames of 127 bytes or
+ * fewer. This 127-byte maximum applies to the entire frame, including header,
+ * CRC, and terminating newline.
+ */
+#define MGMT_NLIP_MAX_FRAME     127
 
 #ifndef STR
 /* Stringification of constants */
@@ -52,6 +58,7 @@ extern "C" {
 #define MGMT_GROUP_ID_SPLIT     (6)
 #define MGMT_GROUP_ID_RUN       (7)
 #define MGMT_GROUP_ID_FS        (8)
+#define MGMT_GROUP_ID_SHELL     (9)
 #define MGMT_GROUP_ID_PERUSER   (64)
 
 /**

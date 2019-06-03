@@ -272,6 +272,10 @@ syscfg.defs:
         restrictions:
             - '!TIMER_2'
 
+    CHARGER:
+        description: 'Enable DA1469x charger'
+        value: 0
+
     GPADC:
         description: 'Enable DA1469x general purpose ADC'
         value: 0
@@ -286,6 +290,12 @@ syscfg.defs:
         description: >
           'DMA priority for GPADC, 0-7'
         value: 0
+    GPADC_BATTERY:
+        description: >
+          Enable battery measurement on GPADC
+        value: 0
+        restrictions:
+            - '!SDADC_BATTERY'
 
     SDADC:
         description: Enable DA1469x sigma delta ADC
@@ -298,6 +308,12 @@ syscfg.defs:
         description: >
           'DMA priority for SDADC, 0-7'
         value: 0
+    SDADC_BATTERY:
+        description: >
+          Enable battery measurement on SDADC
+        value: 0
+        restrictions:
+            - '!GPADC_BATTERY'
 
 syscfg.restrictions:
     - "QSPI_FLASH_ADDRESS_LENGTH==24"

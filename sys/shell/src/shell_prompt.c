@@ -73,7 +73,7 @@ static const struct shell_cmd prompt_commands[] = {
         .help = &ticks_help,
 #endif
     },
-    { NULL, NULL, NULL },
+    { 0 },
 };
 
 

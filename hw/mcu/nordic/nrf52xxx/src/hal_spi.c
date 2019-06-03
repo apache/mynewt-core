@@ -302,9 +302,31 @@ hal_spi_config_master(struct nrf52_hal_spi *spi,
     uint32_t nrf_config;
     uint32_t frequency;
     NRF_SPIM_Type *spim;
+    NRF_GPIO_Type *port;
+    uint32_t pin;
 
     spim = spi->nhs_spi.spim;
     memcpy(&spi->spi_cfg, settings, sizeof(*settings));
+
+    /*
+     * Configure SCK. NOTE: this is done here in the config API as the data
+     * mode is not set at init time so we do it here when we configure the SPI.
+     */
+    pin = spim->PSEL.SCK & SPIM_PSEL_SCK_PIN_Msk;
+    port = NRF_P0;
+#ifdef NRF52840_XXAA
+    if (spim->PSEL.SCK & SPIM_PSEL_SCK_PORT_Msk) {
+        port = NRF_P1;
+    }
+#endif
+    if (settings->data_mode <= HAL_SPI_MODE1) {
+        port->OUTCLR = (1UL << pin);
+    } else {
+        port->OUTSET = (1UL << pin);
+    }
+    port->PIN_CNF[pin] =
+        (GPIO_PIN_CNF_DIR_Output << GPIO_PIN_CNF_DIR_Pos) |
+        (GPIO_PIN_CNF_INPUT_Disconnect << GPIO_PIN_CNF_INPUT_Pos);
 
     /* Only 8-bit word sizes supported. */
     rc = 0;
@@ -446,18 +468,6 @@ hal_spi_init_master(struct nrf52_hal_spi *spi,
     NRF_SPIM_Type *spim;
     NRF_GPIO_Type *port;
     uint32_t pin;
-
-    /* Configure SCK */
-    port = HAL_GPIO_PORT(cfg->sck_pin);
-    pin = HAL_GPIO_INDEX(cfg->sck_pin);
-    if (spi->spi_cfg.data_mode <= HAL_SPI_MODE1) {
-        port->OUTCLR = (1UL << pin);
-    } else {
-        port->OUTSET = (1UL << pin);
-    }
-    port->PIN_CNF[pin] =
-        (GPIO_PIN_CNF_DIR_Output << GPIO_PIN_CNF_DIR_Pos) |
-        (GPIO_PIN_CNF_INPUT_Disconnect << GPIO_PIN_CNF_INPUT_Pos);
 
     /*  Configure MOSI */
     port = HAL_GPIO_PORT(cfg->mosi_pin);
