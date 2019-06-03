@@ -78,21 +78,7 @@ struct nrf52_hal_spi_cfg {
  *  user specifies a pin that is not used by the processor. If an invalid pin
  *  number is used unexpected and/or erroneous behavior will result.
  */
-#ifdef NRF52
-#define HAL_GPIO_INDEX(pin)     (pin)
-#define HAL_GPIO_PORT(pin)      (NRF_P0)
-#define HAL_GPIO_MASK(pin)      (1 << pin)
-#define HAL_GPIOTE_PIN_MASK     GPIOTE_CONFIG_PSEL_Msk
-#endif
-
-#ifdef NRF52810_XXAA
-#define HAL_GPIO_INDEX(pin)     (pin)
-#define HAL_GPIO_PORT(pin)      (NRF_P0)
-#define HAL_GPIO_MASK(pin)      (1 << pin)
-#define HAL_GPIOTE_PIN_MASK     GPIOTE_CONFIG_PSEL_Msk
-#endif
-
-#ifdef NRF52811_XXAA
+#if defined(NRF52832_XXAA) || defined(NRF52810_XXAA) || defined(NRF52811_XXAA)
 #define HAL_GPIO_INDEX(pin)     (pin)
 #define HAL_GPIO_PORT(pin)      (NRF_P0)
 #define HAL_GPIO_MASK(pin)      (1 << pin)
