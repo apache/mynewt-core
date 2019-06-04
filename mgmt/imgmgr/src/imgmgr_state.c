@@ -142,11 +142,15 @@ imgmgr_state_set_pending(int slot, int permanent)
 {
     uint32_t image_flags;
     uint8_t state_flags;
+    uint8_t hash[IMGMGR_HASH_LEN];
+    const uint8_t *hashp;
     int split_app_active;
     int rc;
 
     state_flags = imgmgr_state_flags(slot);
     split_app_active = split_app_active_get();
+
+    hashp = NULL;
 
     /* Unconfirmed slots are always runable.  A confirmed slot can only be
      * run if it is a loader in a split image setup.
@@ -154,13 +158,16 @@ imgmgr_state_set_pending(int slot, int permanent)
     if ((state_flags & IMGMGR_STATE_F_CONFIRMED) &&
         (slot != 0 || !split_app_active)) {
 
-        return MGMT_ERR_EBADSTATE;
+        rc = MGMT_ERR_EBADSTATE;
+        goto done;
     }
 
-    rc = imgr_read_info(slot, NULL, NULL, &image_flags);
+    rc = imgr_read_info(slot, NULL, hash, &image_flags);
     if (rc != 0) {
-        return MGMT_ERR_EUNKNOWN;
+        rc = MGMT_ERR_EUNKNOWN;
+        goto done;
     }
+    hashp = hash;
 
     if (!(image_flags & IMAGE_F_NON_BOOTABLE)) {
         /* Unified image or loader. */
@@ -168,7 +175,8 @@ imgmgr_state_set_pending(int slot, int permanent)
             /* No change in split status. */
             rc = boot_set_pending(permanent);
             if (rc != 0) {
-                return MGMT_ERR_EUNKNOWN;
+                rc = MGMT_ERR_EUNKNOWN;
+                goto done;
             }
         } else {
             /* Currently loader + app; testing loader-only. */
@@ -178,7 +186,8 @@ imgmgr_state_set_pending(int slot, int permanent)
                 rc = split_write_split(SPLIT_MODE_TEST_LOADER);
             }
             if (rc != 0) {
-                return MGMT_ERR_EUNKNOWN;
+                rc = MGMT_ERR_EUNKNOWN;
+                goto done;
             }
         }
     } else {
@@ -189,11 +198,18 @@ imgmgr_state_set_pending(int slot, int permanent)
             rc = split_write_split(SPLIT_MODE_TEST_APP);
         }
         if (rc != 0) {
-            return MGMT_ERR_EUNKNOWN;
+            rc = MGMT_ERR_EUNKNOWN;
+            goto done;
         }
     }
 
-    return 0;
+done:
+    if (permanent) {
+        imgmgr_log_confirm(rc, hashp);
+    } else {
+        imgmgr_log_pending(rc, hashp);
+    }
+    return rc;
 }
 
 int
@@ -203,25 +219,29 @@ imgmgr_state_confirm(void)
 
     /* Confirm disallowed if a test is pending. */
     if (imgmgr_state_any_pending()) {
-        return MGMT_ERR_EBADSTATE;
+        rc = MGMT_ERR_EBADSTATE;
+        goto done;
     }
 
     /* Confirm the unified image or loader in slot 0. */
     rc = boot_set_confirmed();
     if (rc != 0) {
-        return MGMT_ERR_EUNKNOWN;
+        rc = MGMT_ERR_EUNKNOWN;
+        goto done;
     }
 
     /* If a split app in slot 1 is active, confirm it as well. */
     if (split_app_active_get()) {
         rc = split_write_split(SPLIT_MODE_APP);
         if (rc != 0) {
-            return MGMT_ERR_EUNKNOWN;
+            rc = MGMT_ERR_EUNKNOWN;
+            goto done;
         }
     } else {
         rc = split_write_split(SPLIT_MODE_LOADER);
         if (rc != 0) {
-            return MGMT_ERR_EUNKNOWN;
+            rc = MGMT_ERR_EUNKNOWN;
+            goto done;
         }
 
 #if MYNEWT_VAL(LOG_FCB_SLOT1)
@@ -232,7 +252,9 @@ imgmgr_state_confirm(void)
 
     imgmgr_dfu_confirmed();
 
-    return 0;
+done:
+    imgmgr_log_confirm(rc, NULL);
+    return rc;
 }
 
 int
