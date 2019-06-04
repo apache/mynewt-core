@@ -6,29 +6,13 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; COPYRIGHT(c) 2017 STMicroelectronics</center></h2>
+  * <h2><center>&copy; Copyright (c) 2017 STMicroelectronics.
+  * All rights reserved.</center></h2>
   *
-  * Redistribution and use in source and binary forms, with or without modification,
-  * are permitted provided that the following conditions are met:
-  *   1. Redistributions of source code must retain the above copyright notice,
-  *      this list of conditions and the following disclaimer.
-  *   2. Redistributions in binary form must reproduce the above copyright notice,
-  *      this list of conditions and the following disclaimer in the documentation
-  *      and/or other materials provided with the distribution.
-  *   3. Neither the name of STMicroelectronics nor the names of its contributors
-  *      may be used to endorse or promote products derived from this software
-  *      without specific prior written permission.
-  *
-  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-  * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-  * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-  * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+  * This software component is licensed by ST under BSD 3-Clause license,
+  * the "License"; You may not use this file except in compliance with the
+  * License. You may obtain a copy of the License at:
+  *                        opensource.org/licenses/BSD-3-Clause
   *
   ******************************************************************************
   */
@@ -40,6 +24,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#if !defined(STM32L412xx) && !defined(STM32L422xx)
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32l4xx_hal_def.h"
@@ -137,10 +123,11 @@ typedef struct
   uint32_t AudioFrequency;      /*!< Specifies the audio frequency sampling.
                                      This parameter can be a value of @ref SAI_Audio_Frequency */
 
-  uint32_t Mckdiv;              /*!< Specifies the master clock divider, the parameter will be used if for
-                                     AudioFrequency the user choice
+  uint32_t Mckdiv;              /*!< Specifies the master clock divider.
                                      This parameter must be a number between Min_Data = 0 and Max_Data = 63 on STM32L4Rx/STM32L4Sx devices.
-                                     This parameter must be a number between Min_Data = 0 and Max_Data = 15 on other devices. */
+                                     This parameter must be a number between Min_Data = 0 and Max_Data = 15 on other devices.
+                                     @note This parameter is used only if AudioFrequency is set to
+                                           SAI_AUDIO_FREQUENCY_MCKDIV otherwise it is internally computed. */
 
 #if defined(STM32L4R5xx) || defined(STM32L4R7xx) || defined(STM32L4R9xx) || defined(STM32L4S5xx) || defined(STM32L4S7xx) || defined(STM32L4S9xx)
   uint32_t MckOverSampling;     /*!< Specifies the master clock oversampling.
@@ -842,7 +829,7 @@ uint32_t HAL_SAI_GetError(SAI_HandleTypeDef *hsai);
   */
 
 /* Private macros ------------------------------------------------------------*/
-/** @addtogroup SAI_Private_Macros
+/** @defgroup SAI_Private_Macros SAI Private Macros
   * @{
   */
 #define IS_SAI_BLOCK_SYNCEXT(STATE) (((STATE) == SAI_SYNCEXT_DISABLE) ||\
@@ -951,7 +938,11 @@ uint32_t HAL_SAI_GetError(SAI_HandleTypeDef *hsai);
 #define IS_SAI_BLOCK_FS_DEFINITION(DEFINITION) (((DEFINITION) == SAI_FS_STARTFRAME) || \
                                                 ((DEFINITION) == SAI_FS_CHANNEL_IDENTIFICATION))
 
-#define IS_SAI_BLOCK_MASTER_DIVIDER(DIVIDER) ((DIVIDER) <= 15)
+#if defined(STM32L4R5xx) || defined(STM32L4R7xx) || defined(STM32L4R9xx) || defined(STM32L4S5xx) || defined(STM32L4S7xx) || defined(STM32L4S9xx)
+#define IS_SAI_BLOCK_MASTER_DIVIDER(DIVIDER) ((DIVIDER) <= 63U)
+#else
+#define IS_SAI_BLOCK_MASTER_DIVIDER(DIVIDER) ((DIVIDER) <= 15U)
+#endif
 
 #define IS_SAI_BLOCK_FRAME_LENGTH(LENGTH) ((8U <= (LENGTH)) && ((LENGTH) <= 256U))
 
@@ -977,6 +968,8 @@ uint32_t HAL_SAI_GetError(SAI_HandleTypeDef *hsai);
 /**
   * @}
   */
+
+#endif /* !STM32L412xx && !STM32L422xx */
 
 #ifdef __cplusplus
 }

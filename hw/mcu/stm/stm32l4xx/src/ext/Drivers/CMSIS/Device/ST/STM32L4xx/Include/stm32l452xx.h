@@ -12,29 +12,13 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; COPYRIGHT(c) 2017 STMicroelectronics</center></h2>
+  * <h2><center>&copy; Copyright (c) 2017 STMicroelectronics.
+  * All rights reserved.</center></h2>
   *
-  * Redistribution and use in source and binary forms, with or without modification,
-  * are permitted provided that the following conditions are met:
-  *   1. Redistributions of source code must retain the above copyright notice,
-  *      this list of conditions and the following disclaimer.
-  *   2. Redistributions in binary form must reproduce the above copyright notice,
-  *      this list of conditions and the following disclaimer in the documentation
-  *      and/or other materials provided with the distribution.
-  *   3. Neither the name of STMicroelectronics nor the names of its contributors
-  *      may be used to endorse or promote products derived from this software
-  *      without specific prior written permission.
-  *
-  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-  * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-  * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-  * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+  * This software component is licensed by ST under BSD 3-Clause license,
+  * the "License"; You may not use this file except in compliance with the
+  * License. You may obtain a copy of the License at:
+  *                        opensource.org/licenses/BSD-3-Clause
   *
   ******************************************************************************
   */
@@ -93,7 +77,7 @@ typedef enum
   SysTick_IRQn                = -1,     /*!< 15 Cortex-M4 System Tick Interrupt                                */
 /******  STM32 specific Interrupt Numbers **********************************************************************/
   WWDG_IRQn                   = 0,      /*!< Window WatchDog Interrupt                                         */
-  PVD_PVM_IRQn                = 1,      /*!< PVD/PVM1/PVM2/PVM3/PVM4 through EXTI Line detection Interrupts    */
+  PVD_PVM_IRQn                = 1,      /*!< PVD/PVM1/PVM3/PVM4 through EXTI Line detection Interrupts         */
   TAMP_STAMP_IRQn             = 2,      /*!< Tamper and TimeStamp interrupts through the EXTI line             */
   RTC_WKUP_IRQn               = 3,      /*!< RTC Wakeup interrupt through the EXTI line                        */
   FLASH_IRQn                  = 4,      /*!< FLASH global Interrupt                                            */
@@ -750,7 +734,6 @@ typedef struct
   __IO uint32_t BKP30R;      /*!< RTC backup register 30,                                    Address offset: 0xC8 */
   __IO uint32_t BKP31R;      /*!< RTC backup register 31,                                    Address offset: 0xCC */
 } RTC_TypeDef;
-
 
 /**
   * @brief Serial Audio Interface
@@ -5764,7 +5747,7 @@ typedef struct
 
 /*******************  Bit definition for CRC_IDR register  ********************/
 #define CRC_IDR_IDR_Pos          (0U)
-#define CRC_IDR_IDR_Msk          (0xFFUL << CRC_IDR_IDR_Pos)                   /*!< 0x000000FF */
+#define CRC_IDR_IDR_Msk          (0xFFU << CRC_IDR_IDR_Pos)                    /*!< 0x000000FF */
 #define CRC_IDR_IDR              CRC_IDR_IDR_Msk                               /*!< General-purpose 8-bit data register bits */
 
 /********************  Bit definition for CRC_CR register  ********************/
@@ -7336,12 +7319,12 @@ typedef struct
 
 /******************  Bits definition for FLASH_PCROP1SR register  **********/
 #define FLASH_PCROP1SR_PCROP1_STRT_Pos    (0U)
-#define FLASH_PCROP1SR_PCROP1_STRT_Msk    (0x7FFFUL << FLASH_PCROP1SR_PCROP1_STRT_Pos) /*!< 0x00007FFF */
+#define FLASH_PCROP1SR_PCROP1_STRT_Msk    (0xFFFFUL << FLASH_PCROP1SR_PCROP1_STRT_Pos) /*!< 0x0000FFFF */
 #define FLASH_PCROP1SR_PCROP1_STRT        FLASH_PCROP1SR_PCROP1_STRT_Msk
 
 /******************  Bits definition for FLASH_PCROP1ER register  ***********/
 #define FLASH_PCROP1ER_PCROP1_END_Pos     (0U)
-#define FLASH_PCROP1ER_PCROP1_END_Msk     (0x7FFFUL << FLASH_PCROP1ER_PCROP1_END_Pos) /*!< 0x00007FFF */
+#define FLASH_PCROP1ER_PCROP1_END_Msk     (0xFFFFUL << FLASH_PCROP1ER_PCROP1_END_Pos) /*!< 0x0000FFFF */
 #define FLASH_PCROP1ER_PCROP1_END         FLASH_PCROP1ER_PCROP1_END_Msk
 #define FLASH_PCROP1ER_PCROP_RDP_Pos      (31U)
 #define FLASH_PCROP1ER_PCROP_RDP_Msk      (0x1UL << FLASH_PCROP1ER_PCROP_RDP_Pos) /*!< 0x80000000 */
@@ -7352,7 +7335,7 @@ typedef struct
 #define FLASH_WRP1AR_WRP1A_STRT_Msk       (0xFFUL << FLASH_WRP1AR_WRP1A_STRT_Pos) /*!< 0x000000FF */
 #define FLASH_WRP1AR_WRP1A_STRT           FLASH_WRP1AR_WRP1A_STRT_Msk
 #define FLASH_WRP1AR_WRP1A_END_Pos        (16U)
-#define FLASH_WRP1AR_WRP1A_END_Msk        (0xFFUL << FLASH_WRP1AR_WRP1A_END_Pos) /*!< 0x00FF0000 */
+#define FLASH_WRP1AR_WRP1A_END_Msk        (0xFFUL << FLASH_WRP1AR_WRP1A_END_Pos)  /*!< 0x00FF0000 */
 #define FLASH_WRP1AR_WRP1A_END            FLASH_WRP1AR_WRP1A_END_Msk
 
 /******************  Bits definition for FLASH_WRPB1R register  ***************/
@@ -7360,7 +7343,7 @@ typedef struct
 #define FLASH_WRP1BR_WRP1B_STRT_Msk       (0xFFUL << FLASH_WRP1BR_WRP1B_STRT_Pos) /*!< 0x000000FF */
 #define FLASH_WRP1BR_WRP1B_STRT           FLASH_WRP1BR_WRP1B_STRT_Msk
 #define FLASH_WRP1BR_WRP1B_END_Pos        (16U)
-#define FLASH_WRP1BR_WRP1B_END_Msk        (0xFFUL << FLASH_WRP1BR_WRP1B_END_Pos) /*!< 0x00FF0000 */
+#define FLASH_WRP1BR_WRP1B_END_Msk        (0xFFUL << FLASH_WRP1BR_WRP1B_END_Pos)  /*!< 0x00FF0000 */
 #define FLASH_WRP1BR_WRP1B_END            FLASH_WRP1BR_WRP1B_END_Msk
 
 
@@ -9482,6 +9465,8 @@ typedef struct
 /*
 * @brief Specific device feature definitions  (not present on all devices in the STM32L4 serie)
 */
+#define RCC_PLLSAI1_SUPPORT
+#define RCC_PLLP_SUPPORT
 #define RCC_HSI48_SUPPORT
 #define RCC_PLLP_DIV_2_31_SUPPORT
 #define RCC_PLLSAI1P_DIV_2_31_SUPPORT
@@ -13537,7 +13522,7 @@ typedef struct
 
 /******************************************************************************/
 /*                                                                            */
-/*                         Low Power Timer (LPTTIM)                           */
+/*                         Low Power Timer (LPTIM)                            */
 /*                                                                            */
 /******************************************************************************/
 /******************  Bit definition for LPTIM_ISR register  *******************/
@@ -15717,6 +15702,9 @@ typedef struct
 #define IS_LPTIM_INSTANCE(INSTANCE)     (((INSTANCE) == LPTIM1) || \
                                          ((INSTANCE) == LPTIM2))
 
+/****************** LPTIM Instances : supporting the encoder mode *************/
+#define IS_LPTIM_ENCODER_INTERFACE_INSTANCE(INSTANCE) ((INSTANCE) == LPTIM1)
+
 /****************** TIM Instances : All supported instances *******************/
 #define IS_TIM_INSTANCE(INSTANCE)       (((INSTANCE) == TIM1)   || \
                                          ((INSTANCE) == TIM2)   || \
@@ -16038,6 +16026,7 @@ typedef struct
 /******************************************************************************/
 
 /* Aliases for __IRQn */
+#define TIM6_IRQn                      TIM6_DAC_IRQn
 #define ADC1_2_IRQn                    ADC1_IRQn
 #define TIM1_TRG_COM_TIM17_IRQn        TIM1_TRG_COM_IRQn
 #define HASH_RNG_IRQn                  RNG_IRQn
@@ -16047,6 +16036,7 @@ typedef struct
 #define DFSDM1_IRQn                    DFSDM1_FLT1_IRQn
 
 /* Aliases for __IRQHandler */
+#define TIM6_IRQHandler                TIM6_DAC_IRQHandler
 #define ADC1_2_IRQHandler              ADC1_IRQHandler
 #define TIM1_TRG_COM_TIM17_IRQHandler  TIM1_TRG_COM_IRQHandler
 #define HASH_RNG_IRQHandler            RNG_IRQHandler
