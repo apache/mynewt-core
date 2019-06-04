@@ -28,6 +28,7 @@ pkg.deps:
     - "@apache-mynewt-core/encoding/base64"
     - "@apache-mynewt-core/mgmt/mgmt"
     - "@apache-mynewt-core/sys/flash_map"
+    - "@apache-mynewt-core/sys/log/modlog"
 
 pkg.req_apis:
     - newtmgr

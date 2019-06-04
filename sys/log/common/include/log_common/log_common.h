@@ -88,6 +88,22 @@ struct log;
 #define LOG_SYSLEVEL    ((uint8_t)MYNEWT_VAL_LOG_LEVEL)
 #endif
 
+/**
+ * @brief Determines if a log module will accept an entry with a given level.
+ *
+ * A log entry is only accepted if its level is less than or equal to both:
+ *    o Global log level setting (LOG_LEVEL), and
+ *    o The specified module log level
+ *
+ * @param mod_level             The module's minimum log level.
+ * @param entry_level           The level of the entry to be logged.
+ *
+ * @return                      true if the entry would be logged;
+ *                              false otherwise.
+ */
+#define LOG_MOD_LEVEL_IS_ACTIVE(mod_level, entry_level) \
+    (LOG_LEVEL <= (entry_level) && (mod_level) <= (entry_level))
+
 /* Newtmgr Log opcodes */
 #define LOGS_NMGR_OP_READ               (0)
 #define LOGS_NMGR_OP_CLEAR              (1)
