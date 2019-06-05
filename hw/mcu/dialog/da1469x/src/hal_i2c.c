@@ -238,7 +238,7 @@ i2c_check_tx_is_not_full(const struct da1469x_hal_i2c *i2c)
 static bool
 i2c_check_tx_is_empty(const struct da1469x_hal_i2c *i2c)
 {
-    return i2c->regs->I2C_STATUS_REG & I2C_I2C_STATUS_REG_TFNF_Msk;
+    return i2c->regs->I2C_STATUS_REG & I2C_I2C_STATUS_REG_TFE_Msk;
 }
 
 static bool
@@ -442,12 +442,13 @@ done:
 int
 hal_i2c_master_probe(uint8_t i2c_num, uint8_t address, uint32_t timo)
 {
-    struct hal_i2c_master_data rx;
-    uint8_t buf;
+    struct hal_i2c_master_data tx;
+    uint8_t buf = 0;
 
-    rx.address = address;
-    rx.buffer = &buf;
-    rx.len = 1;
+    tx.address = address;
+    tx.buffer = &buf;
+    tx.len = 1;
 
-    return hal_i2c_master_read(i2c_num, &rx, timo, 1);
+    /* Reading before writing causes i2c bus to hang up sometimes. */
+    return hal_i2c_master_write(i2c_num, &tx, timo, 1);
 }
