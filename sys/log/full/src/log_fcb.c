@@ -681,7 +681,6 @@ log_fcb_copy_entry(struct log *log, struct fcb_entry *entry,
     if (rc < 0) {
         goto err;
     }
-    data[rc] = '\0';
 
     /* Changing the fcb to be logged to be dst fcb */
     fcb_tmp = &((struct fcb_log *)log->l_arg)->fl_fcb;
