@@ -23,9 +23,11 @@
 #include "os/mynewt.h"
 #include <shell/shell.h>
 #include <mgmt/mgmt.h>
-#include <smp/smp.h>
+#include <mynewt_smp/smp.h>
+#include "tinycbor/cbor_mbuf_reader.h"
+#include "tinycbor/cbor_mbuf_writer.h"
 
-static struct smp_streamer smp_shell_streamer;
+static struct smp_transport g_smp_shell_transport;
 
 static uint16_t
 smp_shell_get_mtu(struct os_mbuf *m)
@@ -33,7 +35,7 @@ smp_shell_get_mtu(struct os_mbuf *m)
     return MGMT_MAX_MTU;
 }
 
-static int
+int
 smp_shell_out(struct os_mbuf *m)
 {
     int rc;
@@ -52,7 +54,19 @@ err:
 static int
 smp_shell_in(struct os_mbuf *m, void *arg)
 {
-    return smp_process_request_packet(&smp_shell_streamer, m);
+    struct cbor_mbuf_reader cmr;
+    struct cbor_mbuf_writer cmw;
+
+    g_smp_shell_transport.st_streamer = (struct smp_streamer) {
+        .mgmt_stmr = {
+            .cfg = &g_smp_cbor_cfg,
+            .reader = &cmr.r,
+            .writer = &cmw.enc,
+            .cb_arg = &g_smp_shell_transport,
+        },
+        .tx_rsp_cb = smp_tx_rsp,
+    };
+    return smp_process_request_packet(&g_smp_shell_transport.st_streamer, m);
 }
 
 void
@@ -60,9 +74,11 @@ smp_shell_pkg_init(void)
 {
     int rc;
 
-    /* Ensure this function only gets called by sysinit. */
     SYSINIT_ASSERT_ACTIVE();
 
-    rc = shell_nlip_input_register(smp_shell_in, &smp_shell_streamer);
+    rc = smp_transport_init(&g_smp_shell_transport, smp_shell_out, smp_shell_get_mtu);
+    assert(rc == 0);
+
+    rc = shell_nlip_input_register(smp_shell_in, &g_smp_shell_transport);
     assert(rc == 0);
 }

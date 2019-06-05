@@ -17,8 +17,19 @@
 # under the License.
 #
 
-syscfg.defs:
-    NEWTMGR_SYSINIT_STAGE:
-        description: >
-            Sysinit stage for newtmgr functionality.
-        value: 500
+pkg.name: mgmt/smp
+pkg.description: Server-side newtmgr functionality.
+pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
+pkg.homepage: "http://mynewt.apache.org/"
+pkg.keywords:
+
+pkg.deps:
+    - "@apache-mynewt-mcumgr/cborattr"
+    - "@apache-mynewt-core/kernel/os"
+    - "@apache-mynewt-mcumgr/mgmt"
+    - "@apache-mynewt-core/util/mem"
+    - "@apache-mynewt-mcumgr/smp"
+    - "@apache-mynewt-mcumgr/cmd/os_mgmt"
+
+pkg.init:
+    smp_pkg_init: 'MYNEWT_VAL(SMP_SYSINIT_STAGE)'
