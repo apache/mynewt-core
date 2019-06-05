@@ -209,7 +209,8 @@ os_task_info_get_next(const struct os_task *prev, struct os_task_info *oti)
     oti->oti_last_checkin = next->t_sanity_check.sc_checkin_last;
     oti->oti_next_checkin = next->t_sanity_check.sc_checkin_last +
         next->t_sanity_check.sc_checkin_itvl;
-    strncpy(oti->oti_name, next->t_name, sizeof(oti->oti_name));
+    oti->oti_name[0] = '\0';
+    strncat(oti->oti_name, next->t_name, sizeof(oti->oti_name) - 1);
 
     return (next);
 }
