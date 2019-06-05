@@ -590,7 +590,7 @@ err:
 bq27z561_err_t
 bq27z561_wr_flash(struct bq27z561 *dev, uint16_t addr, uint8_t *buf, int buflen)
 {
-    uint8_t tmpbuf[BQ27Z561_MAX_FLASH_RW_LEN + 2];
+    uint8_t tmpbuf[BQ27Z561_MAX_FLASH_RW_LEN + 3];
     uint8_t chksum;
     bq27z561_err_t ret;
     int rc;
