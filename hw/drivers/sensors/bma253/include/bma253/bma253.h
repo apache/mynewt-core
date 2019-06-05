@@ -35,6 +35,10 @@ extern "C" {
 /* XXX use some better defaults. For now it is min */
 #define BMA253_LOW_G_DELAY_MS_DEFAULT       2
 #define BMA253_HIGH_G_DELAY_MS_DEFAULT      2
+#define BMA253_LOW_DUR                      142
+#define BMA253_LOW_THRESHOLD                0.375
+#define BMA253_LOW_HYS                      0.125
+
 
 /* Range of acceleration measurements */
 enum bma253_g_range {

@@ -23,7 +23,7 @@
 
 /*********************************************************/
 driver for bma253
-version: eee54bbf. 2019/5/14 
+version:1.0.0.2  2019/6/4 
 /*********************************************************/
 target platform: nrf52832
 BSP: nrf52dk
@@ -44,6 +44,14 @@ bma253 wait-for-tap double
 if using the sensor_shell (option 1), the double tap could be turned off by:
 sensor notify bma253_0 off double
 
+
+[command for testing low_g feature]
+- option 1:
+sensor notify bma253_0 on freefall
+
+
+if using the sensor_shell (option 1), the low_g could be turned off by:
+sensor notify bma253_0 off freefall
 
 [command for sensor data read test]
 sensor read bmp253_0 1 -n 10 -i 20 -d 4000

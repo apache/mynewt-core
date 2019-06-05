@@ -4934,13 +4934,15 @@ sensor_driver_unset_notification(struct sensor * sensor,
     int rc;
 
     if ((sensor_event_type & ~(SENSOR_EVENT_TYPE_DOUBLE_TAP |
-                               SENSOR_EVENT_TYPE_SINGLE_TAP)) != 0) {
+                               SENSOR_EVENT_TYPE_SINGLE_TAP |
+                               SENSOR_EVENT_TYPE_FREE_FALL)) != 0) {
         return SYS_EINVAL;
     }
 
-    /*XXX for now we do not support registering for both events */
-    if (sensor_event_type == (SENSOR_EVENT_TYPE_DOUBLE_TAP |
-                                        SENSOR_EVENT_TYPE_SINGLE_TAP)) {
+    /*XXX for now we only support registering for one event */
+    if ((sensor_event_type != SENSOR_EVENT_TYPE_DOUBLE_TAP) &&
+        (sensor_event_type != SENSOR_EVENT_TYPE_SINGLE_TAP) &&
+        (sensor_event_type != SENSOR_EVENT_TYPE_FREE_FALL)) {
         return SYS_EINVAL;
     }
 
@@ -4968,14 +4970,19 @@ sensor_driver_unset_notification(struct sensor * sensor,
 
     if (sensor_event_type & SENSOR_EVENT_TYPE_SINGLE_TAP) {
         int_routes.s_tap_int_route = INT_ROUTE_NONE;
+        bma253->ev_enabled &= ~SENSOR_EVENT_TYPE_SINGLE_TAP;
     }
 
     if (sensor_event_type & SENSOR_EVENT_TYPE_DOUBLE_TAP) {
         int_routes.d_tap_int_route = INT_ROUTE_NONE;
-
-
         bma253->ev_enabled &= ~SENSOR_EVENT_TYPE_DOUBLE_TAP;
     }
+
+    if (sensor_event_type & SENSOR_EVENT_TYPE_FREE_FALL) {
+        int_routes.low_g_int_route = INT_ROUTE_NONE;
+        bma253->ev_enabled &= ~SENSOR_EVENT_TYPE_FREE_FALL;
+    }
+
 
     rc = bma253_set_int_routes(bma253, &int_routes);
     if (rc != 0) {
@@ -4989,6 +4996,7 @@ sensor_driver_unset_notification(struct sensor * sensor,
 
     int_enable.d_tap_int_enable = false;
     int_enable.s_tap_int_enable = false;
+    int_enable.low_g_int_enable = false;
 
     rc = bma253_set_int_enable(bma253, &int_enable);
     if (rc != 0) {
@@ -5025,18 +5033,21 @@ sensor_driver_set_notification(struct sensor * sensor,
     struct int_enable int_enable;
     struct int_routes int_routes;
     struct bma253_private_driver_data *pdd;
+    struct low_g_int_cfg low_g_int_cfg_set;
 
 
     BMA253_LOG(ERROR, "dd_set_notify %d\n", sensor_event_type);
 
     if ((sensor_event_type & ~(SENSOR_EVENT_TYPE_DOUBLE_TAP |
-                               SENSOR_EVENT_TYPE_SINGLE_TAP)) != 0) {
+                               SENSOR_EVENT_TYPE_SINGLE_TAP |
+                               SENSOR_EVENT_TYPE_FREE_FALL)) != 0) {
         return SYS_EINVAL;
     }
 
-    /*XXX for now we do not support registering for both events */
-    if (sensor_event_type == (SENSOR_EVENT_TYPE_DOUBLE_TAP |
-                                        SENSOR_EVENT_TYPE_SINGLE_TAP)) {
+    /*XXX for now we only support registering for one event */
+    if ((sensor_event_type != SENSOR_EVENT_TYPE_DOUBLE_TAP) &&
+        (sensor_event_type != SENSOR_EVENT_TYPE_SINGLE_TAP) &&
+        (sensor_event_type != SENSOR_EVENT_TYPE_FREE_FALL)) {
         return SYS_EINVAL;
     }
 
@@ -5076,6 +5087,10 @@ sensor_driver_set_notification(struct sensor * sensor,
         int_routes.s_tap_int_route = pdd->int_route;
     }
 
+    if (sensor_event_type & SENSOR_EVENT_TYPE_FREE_FALL) {
+        int_routes.low_g_int_route = pdd->int_route;
+    }
+
     rc = bma253_set_int_routes(bma253, &int_routes);
     if (rc != 0) {
         return rc;
@@ -5092,8 +5107,19 @@ sensor_driver_set_notification(struct sensor * sensor,
                                           SENSOR_EVENT_TYPE_SINGLE_TAP;
     int_enable.d_tap_int_enable         = sensor_event_type &
                                           SENSOR_EVENT_TYPE_DOUBLE_TAP;
+    int_enable.low_g_int_enable         = sensor_event_type &
+                                          SENSOR_EVENT_TYPE_FREE_FALL;
 
     rc = bma253_set_int_latch(bma253, true, INT_LATCH_LATCHED);
+
+    if (sensor_event_type & SENSOR_EVENT_TYPE_FREE_FALL) {
+        /* set low_g threshold/duration/hysterisis */
+        low_g_int_cfg_set.axis_summing = false;
+        low_g_int_cfg_set.delay_ms = BMA253_LOW_DUR;
+        low_g_int_cfg_set.thresh_g = BMA253_LOW_THRESHOLD;
+        low_g_int_cfg_set.hyster_g = BMA253_LOW_HYS;
+        rc = bma253_set_low_g_int_cfg(bma253, &low_g_int_cfg_set);
+    }
 
     int_enable.slope_z_int_enable   = 0;
     rc = bma253_set_int_enable(bma253, &int_enable);
@@ -5155,6 +5181,12 @@ sensor_driver_handle_interrupt(struct sensor * sensor)
             sensor_mgr_put_notify_evt(&pdd->notify_ctx, SENSOR_EVENT_TYPE_DOUBLE_TAP);
             BMA253_LOG(ERROR, "DT Event Sent\n");
         }
+
+        if (int_status.int_status_0.bits.low_g_int_active) {
+            sensor_mgr_put_notify_evt(&pdd->notify_ctx, SENSOR_EVENT_TYPE_FREE_FALL);
+            BMA253_LOG(ERROR, "freefall Event Sent\n");
+        }
+
     }
 
     if ((pdd->registered_mask & BMA253_READ_MASK) &&
