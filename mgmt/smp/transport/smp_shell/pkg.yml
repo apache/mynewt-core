@@ -17,7 +17,7 @@
 # under the License.
 #
 
-pkg.name: mgmt/newtmgr/transport/smp_shell
+pkg.name: mgmt/smp/transport/smp_shell
 pkg.description: SMP transport over shell
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
@@ -28,8 +28,9 @@ pkg.keywords:
 pkg.deps:
     - "@apache-mynewt-core/kernel/os"
     - "@apache-mynewt-core/sys/shell"
-    - "@apache-mynewt-mcumgr/smp"
+    - "@apache-mynewt-core/mgmt/smp"
     - "@apache-mynewt-mcumgr/mgmt"
+    - "@apache-mynewt-core/encoding/tinycbor"
 
 pkg.init:
     smp_shell_pkg_init: 'MYNEWT_VAL(SMP_SHELL_SYSINIT_STAGE)'

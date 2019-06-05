@@ -17,21 +17,19 @@
 # under the License.
 #
 
-pkg.name: mgmt/newtmgr
-pkg.description: Server-side newtmgr functionality.
+pkg.name: mgmt/smp/transport/ble
+pkg.description: BLE transport SMP functionality.
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
+    - ble
+    - bluetooth
 
 pkg.deps:
-    - "@apache-mynewt-mcumgr/cborattr"
     - "@apache-mynewt-core/kernel/os"
-    - "@apache-mynewt-mcumgr/mgmt"
-    - "@apache-mynewt-core/mgmt/newtmgr/nmgr_os"
-    - "@apache-mynewt-core/util/mem"
-
-pkg.apis:
-    - newtmgr
+    - "@apache-mynewt-core/mgmt/mgmt"
+    - "@apache-mynewt-core/mgmt/smp"
+    - "@apache-mynewt-nimble/nimble/host"
 
 pkg.init:
-    nmgr_pkg_init: 'MYNEWT_VAL(NEWTMGR_SYSINIT_STAGE)'
+    smp_ble_pkg_init: 'MYNEWT_VAL(SMP_BLE_SYSINIT_STAGE)'

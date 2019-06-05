@@ -19,15 +19,11 @@
 
 #include <assert.h>
 #include <string.h>
-
 #include "os/mynewt.h"
-
 #include "mem/mem.h"
-
 #include "mgmt/mgmt.h"
-
-#include "smp/smp.h"
-
+#include "os_mgmt/os_mgmt.h"
+#include "mynewt_smp/smp.h"
 #include "tinycbor/cbor.h"
 #include "tinycbor/cbor_mbuf_writer.h"
 #include "tinycbor/cbor_mbuf_reader.h"
@@ -42,9 +38,8 @@ static mgmt_write_at_fn smp_write_at;
 static mgmt_init_reader_fn smp_init_reader;
 static mgmt_init_writer_fn smp_init_writer;
 static mgmt_free_buf_fn smp_free_buf;
-smp_tx_rsp_fn smp_tx_rsp;
 
-const struct mgmt_streamer_cfg smp_cbor_cfg = {
+const struct mgmt_streamer_cfg g_smp_cbor_cfg = {
     .alloc_rsp = smp_alloc_rsp,
     .trim_front = smp_trim_front,
     .reset_buf = smp_reset_buf,
@@ -97,7 +92,7 @@ smp_reset_buf(void *m, void *arg)
      * costains useful information which we do not wast
      * to get rid of
      */
-    os_mbuf_adj(m, -1 * ((struct os_mbuf *)m)->pkt_len);
+    os_mbuf_adj(m, -1 * ((struct os_mbuf *)m)->om_len);
 }
 
 static int
@@ -144,7 +139,7 @@ smp_init_reader(struct cbor_decoder_reader *reader, void *m,
     }
 
     cmr = (struct cbor_mbuf_reader *)reader;
-    cbor_mbuf_reader_init(cmr, m);
+    cbor_mbuf_reader_init(cmr, m, 0);
 
     return 0;
 }
@@ -197,7 +192,6 @@ smp_tx_rsp(struct smp_streamer *ns, void *rsp, void *arg)
     struct os_mbuf *m;
     uint16_t mtu;
     int rc;
-    int i;
 
     st = arg;
     m  = rsp;
@@ -208,14 +202,13 @@ smp_tx_rsp(struct smp_streamer *ns, void *rsp, void *arg)
         return MGMT_ERR_EUNKNOWN;
     }
 
-    i = 0;
     while (m != NULL) {
         frag = mem_split_frag(&m, mtu, smp_rsp_frag_alloc, rsp);
         if (frag == NULL) {
             return MGMT_ERR_ENOMEM;
         }
 
-        rc = st->st_output(st, frag);
+        rc = st->st_output(frag);
         if (rc != 0) {
             return MGMT_ERR_EUNKNOWN;
         }
@@ -239,9 +232,9 @@ smp_process_packet(struct smp_transport *st)
         return MGMT_ERR_EINVAL;
     }
 
-    st->streamer = (struct smp_streamer) {
+    st->st_streamer = (struct smp_streamer) {
         .mgmt_stmr = {
-            .cfg = &smp_cbor_cfg,
+            .cfg = &g_smp_cbor_cfg,
             .reader = &reader.r,
             .writer = &writer.enc,
             .cb_arg = st,
@@ -255,11 +248,13 @@ smp_process_packet(struct smp_transport *st)
             break;
         }
 
-        rc = smp_process_request_packet(&st->streamer, m);
+        rc = smp_process_request_packet(&st->st_streamer, m);
         if (rc) {
             return rc;
         }
     }
+    
+    return 0;
 }
 
 static void
@@ -291,13 +286,10 @@ err:
 void
 smp_pkg_init(void)
 {
-    int rc;
-
     /* Ensure this function only gets called by sysinit. */
     SYSINIT_ASSERT_ACTIVE();
 
-    rc = os_mgmt_register_group();
-    SYSINIT_PANIC_ASSERT(rc == 0);
+    os_mgmt_register_group();
 
     mgmt_evq_set(os_eventq_dflt_get());
 }
