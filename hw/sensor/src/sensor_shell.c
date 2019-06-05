@@ -108,6 +108,8 @@ sensor_cmd_display_type(char **argv)
     struct sensor *sensor;
     unsigned int type;
 
+    rc = 0;
+
     /* Look up sensor by name */
     sensor = sensor_mgr_find_next_bydevname(argv[2], NULL);
     if (!sensor) {
