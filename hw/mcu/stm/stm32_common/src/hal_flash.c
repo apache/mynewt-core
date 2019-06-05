@@ -198,7 +198,7 @@ stm32_flash_erase_sector(const struct hal_flash *dev, uint32_t sector_address)
 #endif
             eraseinit.Sector = i;
             eraseinit.NbSectors = 1;
-            eraseinit.VoltageRange = FLASH_VOLTAGE_RANGE_1;
+            eraseinit.VoltageRange = FLASH_VOLTAGE_RANGE_3;
 
             err = HAL_FLASHEx_Erase(&eraseinit, &SectorError);
             if (err) {

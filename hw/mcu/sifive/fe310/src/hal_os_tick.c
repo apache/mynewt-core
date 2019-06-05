@@ -28,11 +28,19 @@ static uint32_t ticks_per_ostick;
 #define RTC_FREQ        32768
 
 uint64_t get_timer_value(void);
+void timer_interrupt_handler(void);
 void set_mtimecmp(uint64_t time);
 
 void
 os_tick_idle(os_time_t ticks)
 {
+    if (MYNEWT_VAL(OS_TICKLESS_SLEEP) && ticks > 1) {
+        set_mtimecmp(last_tick_time + ticks_per_ostick * ticks);
+    }
+    __asm volatile ("wfi");
+    if (MYNEWT_VAL(OS_TICKLESS_SLEEP) && ticks > 1) {
+        timer_interrupt_handler();
+    }
 }
 
 void
@@ -48,12 +56,16 @@ os_tick_init(uint32_t os_ticks_per_sec, int prio)
 void
 timer_interrupt_handler(void)
 {
+    int delta;
+    int ticks;
     uint64_t time = get_timer_value();
-    int delta = (int)(time - last_tick_time);
-    last_tick_time = time;
 
-    int ticks = delta / ticks_per_ostick;
-    set_mtimecmp(time + ticks_per_ostick);
+    delta = (int)(time - last_tick_time);
+    ticks = (int)(delta / ticks_per_ostick);
+
+    last_tick_time += ticks * ticks_per_ostick;
+
+    set_mtimecmp(last_tick_time + ticks_per_ostick);
 
     os_time_advance(ticks);
 }

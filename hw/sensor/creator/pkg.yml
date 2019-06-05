@@ -52,11 +52,21 @@ pkg.deps.BMA253_OFB:
     - "@apache-mynewt-core/hw/drivers/sensors/bma253"
 pkg.deps.BMA2XX_OFB:
     - "@apache-mynewt-core/hw/drivers/sensors/bma2xx"
+pkg.deps.BMP388_OFB:
+    - "@apache-mynewt-core/hw/drivers/sensors/bmp388"
 pkg.deps.LIS2DW12_OFB:
     - "@apache-mynewt-core/hw/drivers/sensors/lis2dw12"
 pkg.deps.LPS33HW_OFB:
     - "@apache-mynewt-core/hw/drivers/sensors/lps33hw"
 pkg.deps.LPS33THW_OFB:
     - "@apache-mynewt-core/hw/drivers/sensors/lps33thw"
+pkg.deps.KXTJ3_OFB:
+    - "@apache-mynewt-core/hw/drivers/sensors/kxtj3"
+pkg.deps.DPS368_OFB:
+    - "@apache-mynewt-core/hw/drivers/sensors/dps368"
+pkg.deps.ICP101XX_OFB:
+    - "@apache-mynewt-core/hw/drivers/sensors/icp101xx"
+pkg.deps.ICP10114_OFB:
+    - "@apache-mynewt-core/hw/drivers/sensors/icp101xx"
 pkg.init:
     sensor_dev_create: 'MYNEWT_VAL(SENSOR_CREATOR_SYSINIT_STAGE)'

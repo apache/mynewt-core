@@ -24,6 +24,8 @@ syscfg.defs:
         restrictions:
             - $notnull
         choices:
+            - nRF52810
+            - nRF52811
             - nRF52832
             - nRF52840
 

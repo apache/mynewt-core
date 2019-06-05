@@ -68,6 +68,11 @@
 #endif
 
 
+#if MYNEWT_VAL(BMP388_OFB)
+#include <bmp388/bmp388.h>
+#endif
+
+
 #if MYNEWT_VAL(ADXL345_OFB)
 #include <adxl345/adxl345.h>
 #endif
@@ -92,6 +97,17 @@
 #include <bme680/bme680.h>
 #endif
 
+#if MYNEWT_VAL(KXTJ3_OFB)
+#include <kxtj3/kxtj3.h>
+#endif
+
+#if MYNEWT_VAL(DPS368_OFB)
+#include <dps368/dps368.h>
+#endif
+
+#if MYNEWT_VAL(ICP101XX_OFB)
+#include <icp101xx/icp101xx.h>
+#endif
 
 /* Driver definitions */
 #if MYNEWT_VAL(DRV2605_OFB)
@@ -146,6 +162,10 @@ static struct bma253 bma253;
 static struct bma2xx bma2xx;
 #endif
 
+#if MYNEWT_VAL(BMP388_OFB)
+static struct bmp388 bmp388;
+#endif
+
 #if MYNEWT_VAL(ADXL345_OFB)
 static struct adxl345 adxl345;
 #endif
@@ -168,6 +188,22 @@ static struct lis2ds12 lis2ds12;
 
 #if MYNEWT_VAL(BME680_OFB)
 static struct bme680 bme680;
+#endif
+
+#if MYNEWT_VAL(KXTJ3_OFB)
+static struct kxtj3 kxtj3;
+#endif
+
+#if MYNEWT_VAL(DPS368_OFB)
+static struct dps368 dps368;
+#endif
+
+#if MYNEWT_VAL(ICP101XX_OFB)
+static struct icp101xx icp101xx;
+#endif
+
+#if MYNEWT_VAL(ICP10114_OFB)
+static struct icp101xx icp10114;
 #endif
 
 /**
@@ -222,10 +258,10 @@ static struct sensor_itf i2c_0_itf_lsm = {
 };
 #endif
 
-#if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(MPU6050_OFB)
-static struct sensor_itf i2c_0_itf_mpu = {
+#if MYNEWT_VAL(MPU6050_OFB)
+static struct sensor_itf mpu6050_i2c_itf = {
     .si_type = SENSOR_ITF_I2C,
-    .si_num  = 0,
+    .si_num  = MYNEWT_VAL(MPU6050_OFB_I2C_NUM),
     .si_addr = MPU6050_I2C_ADDR
 };
 #endif
@@ -284,17 +320,16 @@ static struct sensor_itf i2c_0_itf_ms40 = {
 };
 #endif
 
-
 #if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(BMA253_OFB)
-static struct sensor_itf i2c_0_itf_lis = {
+static struct sensor_itf spi2c_0_itf_bma253 = {
     .si_type = SENSOR_ITF_I2C,
     .si_num  = 0,
     .si_addr = 0x18,
     .si_ints = {
-        { 26, MYNEWT_VAL(BMA2XX_INT_PIN_DEVICE),
-            MYNEWT_VAL(BMA2XX_INT_CFG_ACTIVE)},
-        { 25, MYNEWT_VAL(BMA2XX_INT2_PIN_DEVICE),
-            MYNEWT_VAL(BMA2XX_INT_CFG_ACTIVE)}
+        { 12, MYNEWT_VAL(BMA253_INT_PIN_DEVICE),
+            MYNEWT_VAL(BMA253_INT_CFG_ACTIVE)},
+        { 24, MYNEWT_VAL(BMA253_INT2_PIN_DEVICE),
+            MYNEWT_VAL(BMA253_INT_CFG_ACTIVE)}
     },
 };
 #endif
@@ -325,6 +360,17 @@ static struct sensor_itf spi2c_0_itf_bma2xx = {
         { 25, MYNEWT_VAL(BMA2XX_INT2_PIN_DEVICE),
             MYNEWT_VAL(BMA2XX_INT_CFG_ACTIVE)}
     },
+};
+#endif
+
+#if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(BMP388_OFB)
+static struct sensor_itf spi2c_0_itf_bmp388= {
+    .si_type = SENSOR_ITF_I2C,
+    .si_num  = 0,
+    .si_addr = 0x76,
+    .si_ints = {
+        { 31, MYNEWT_VAL(BMP388_INT1_PIN_DEVICE),
+          MYNEWT_VAL(BMP388_INT1_CFG_ACTIVE)}}
 };
 #endif
 
@@ -385,6 +431,31 @@ static struct sensor_itf i2c_0_itf_bme680 = {
 };
 #endif
 
+/*DPS368 itf instantioation*/
+#if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(DPS368_OFB)
+static struct sensor_itf i2c_0_itf_dps368 = {
+    .si_type = MYNEWT_VAL(DPS368_SHELL_ITF_TYPE),
+    .si_num  = MYNEWT_VAL(DPS368_SHELL_ITF_NUM),
+    .si_addr = MYNEWT_VAL(DPS368_SHELL_ITF_ADDR)
+};
+#endif
+
+#if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(ICP101XX_OFB)
+static struct sensor_itf i2c_0_itf_icp101xx = {
+    .si_type = MYNEWT_VAL(ICP101XX_SHELL_ITF_TYPE),
+    .si_num  = MYNEWT_VAL(ICP101XX_SHELL_ITF_NUM),
+    .si_addr = MYNEWT_VAL(ICP101XX_SHELL_ITF_ADDR)
+};
+#endif
+
+#if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(ICP10114_OFB)
+static struct sensor_itf i2c_0_itf_icp10114 = {
+    .si_type = MYNEWT_VAL(ICP101XX_SHELL_ITF_TYPE),
+    .si_num  = MYNEWT_VAL(ICP101XX_SHELL_ITF_NUM),
+    .si_addr = MYNEWT_VAL(ICP10114_SHELL_ITF_ADDR)
+};
+#endif
+
 /**
  * MS5837 Sensor default configuration used by the creator package
  *
@@ -414,6 +485,17 @@ config_ms5837_sensor(void)
     os_dev_close(dev);
     return rc;
 }
+#endif
+
+#if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(KXTJ3_OFB)
+static struct sensor_itf i2c_0_itf_kxtj3 = {
+    .si_type = SENSOR_ITF_I2C,
+    .si_num  = 0,
+    .si_addr = 0x0F,
+    .si_ints = {
+        { MYNEWT_VAL(KXTJ3_INT_PIN_HOST), MYNEWT_VAL(KXTJ3_INT_PIN_DEVICE),
+          MYNEWT_VAL(KXTJ3_INT_CFG_ACTIVE)}}
+};
 #endif
 
 /**
@@ -761,19 +843,22 @@ config_bma253_sensor(void)
     cfg.low_g_delay_ms = BMA253_LOW_G_DELAY_MS_DEFAULT;
     cfg.high_g_delay_ms = BMA253_HIGH_G_DELAY_MS_DEFAULT;
     cfg.g_range = BMA253_G_RANGE_2;
-    cfg.filter_bandwidth = BMA253_FILTER_BANDWIDTH_1000_HZ;
+    /* filter_bandwidth is the intended setting for data streaming */
+    cfg.filter_bandwidth = BMA253_FILTER_BANDWIDTH_31_25_HZ;
     cfg.use_unfiltered_data = false;
     cfg.tap_quiet = BMA253_TAP_QUIET_30_MS;
     cfg.tap_shock = BMA253_TAP_SHOCK_50_MS;
     cfg.d_tap_window = BMA253_D_TAP_WINDOW_250_MS;
     cfg.tap_wake_samples = BMA253_TAP_WAKE_SAMPLES_2;
-    cfg.tap_thresh_g = 1.0;
+    cfg.tap_thresh_g = 0.200f;
     cfg.offset_x_g = 0.0;
     cfg.offset_y_g = 0.0;
     cfg.offset_z_g = 0.0;
-    cfg.power_mode = BMA253_POWER_MODE_NORMAL;
-    cfg.sleep_duration = BMA253_SLEEP_DURATION_0_5_MS;
+    /* options: BMA253_POWER_MODE_SUSPEND, BMA253_POWER_MODE_NORMAL, BMA253_POWER_MODE_LPM_1, */
+    cfg.power_mode = BMA253_POWER_MODE_SUSPEND;
+    cfg.sleep_duration = BMA253_SLEEP_DURATION_10_MS;
     cfg.sensor_mask = SENSOR_TYPE_ACCELEROMETER;
+    /* options: BMA253_READ_M_STREAM, BMA253_READ_M_POLL */
     cfg.read_mode = BMA253_READ_M_POLL;
 
     rc = bma253_config((struct bma253 *)dev, &cfg);
@@ -784,6 +869,7 @@ config_bma253_sensor(void)
     return 0;
 }
 #endif
+
 
 /**
  * ADXL345 Sensor default configuration used by the creator package
@@ -1091,6 +1177,52 @@ config_bma2xx_sensor(void)
 }
 #endif
 
+#if MYNEWT_VAL(BMP388_OFB)
+static int
+config_bmp388_sensor(void)
+{
+    int rc;
+    struct os_dev *dev;
+    struct bmp388_cfg cfg = {0};
+
+    dev = (struct os_dev *) os_dev_open("bmp388_0", OS_TIMEOUT_NEVER, NULL);
+    assert(dev != NULL);
+
+    cfg.rate = BMP3_ODR_50_HZ;
+
+    /*options: BMP388_DRDY_INT, BMP388_FIFO_WTMK_INT, BMP388_FIFO_FULL_INT */
+    cfg.int_enable_type = BMP388_FIFO_FULL_INT;
+
+    cfg.int_pp_od = 0;
+    cfg.int_latched = 0;
+    cfg.int_active_low = 1;
+
+
+    /* options: BMP388_FIFO_M_BYPASS, BMP388_FIFO_M_FIFO */
+    cfg.fifo_mode = BMP388_FIFO_M_BYPASS;
+    cfg.fifo_threshold = 73;
+
+    cfg.filter_press_osr = BMP3_OVERSAMPLING_2X;
+    cfg.filter_temp_osr = BMP3_OVERSAMPLING_2X;
+    cfg.power_mode = BMP3_FORCED_MODE;
+
+    /* options: BMP388_READ_M_POLL or BMP388_READ_M_STREAM */
+    cfg.read_mode.mode = BMP388_READ_M_STREAM;
+
+    /* options: BMP388_DRDY_INT,  BMP388_FIFO_WTMK_INT, BMP388_FIFO_FULL_INT */
+    cfg.read_mode.int_type = BMP388_FIFO_FULL_INT;
+    cfg.read_mode.int_num = MYNEWT_VAL(BMP388_INT_NUM);
+    cfg.mask = SENSOR_TYPE_AMBIENT_TEMPERATURE|
+                       SENSOR_TYPE_PRESSURE;
+
+    rc = bmp388_config((struct bmp388 *) dev, &cfg);
+    assert(rc == 0);
+
+    os_dev_close(dev);
+    return rc;
+}
+#endif
+
 #if MYNEWT_VAL(BME680_OFB)
 int
 config_bme680_sensor(void)
@@ -1123,6 +1255,130 @@ config_bme680_sensor(void)
     os_dev_close(dev);
 
     return 0;
+}
+#endif
+
+/**
+ * KXTJ3 Sensor default configuration used by the creator package
+ *
+ * @return 0 on success, non-zero on failure
+ */
+#if MYNEWT_VAL(KXTJ3_OFB)
+static int
+config_kxtj3_sensor(void)
+{
+    int rc;
+    struct os_dev *dev;
+    struct kxtj3_cfg cfg;
+
+    dev = (struct os_dev *) os_dev_open("kxtj3_0", OS_TIMEOUT_NEVER, NULL);
+    assert(dev != NULL);
+
+    cfg.oper_mode = KXTJ3_OPER_MODE_OPERATING;
+    cfg.perf_mode = KXTJ3_PERF_MODE_HIGH_RES_12BIT;
+    cfg.grange = KXTJ3_GRANGE_4G;
+    cfg.odr = KXTJ3_ODR_50HZ;
+    cfg.wuf.odr = KXTJ3_WUF_ODR_25HZ;
+    cfg.wuf.threshold =  STANDARD_ACCEL_GRAVITY / 2.0F; /* m/s2 */
+    cfg.wuf.delay = 0.25F; /* seconds */
+    cfg.sensors_mask = SENSOR_TYPE_ACCELEROMETER;
+
+    rc = kxtj3_config((struct kxtj3 *) dev, &cfg);
+    assert(rc == 0);
+
+    os_dev_close(dev);
+    return rc;
+}
+#endif
+
+/*
+ * DPS368 Sensor default configuration used by the creator package
+ *
+ * @return 0 on success, non-zero on failure
+ */
+#if MYNEWT_VAL(DPS368_OFB)
+static int
+config_dps368_sensor(void)
+{
+    int rc;
+    struct os_dev *dev;
+    struct dps368_cfg_s cfg;
+
+    cfg.config_opt = DPS3xx_CONF_WITH_INIT_SEQUENCE | DPS3xx_RECONF_ALL;
+    cfg.mode = (dps3xx_operating_modes_e)MYNEWT_VAL(DPS368_DFLT_CONF_MODE);
+    cfg.odr_p = (dps3xx_odr_e) ( MYNEWT_VAL(DPS368_DFLT_CONF_ODR_P) << 4);
+    cfg.odr_t = (dps3xx_odr_e) ( MYNEWT_VAL(DPS368_DFLT_CONF_ODR_T) << 4);
+    cfg.osr_p = (dps3xx_osr_e)   MYNEWT_VAL(DPS368_DFLT_CONF_OSR_P);
+    cfg.osr_t = (dps3xx_osr_e)   MYNEWT_VAL(DPS368_DFLT_CONF_OSR_T);
+
+    cfg.chosen_type = SENSOR_TYPE_PRESSURE | SENSOR_TYPE_TEMPERATURE;
+
+    dev = (struct os_dev *) os_dev_open("dps368_0", OS_TIMEOUT_NEVER, NULL);
+    assert(dev != NULL);
+
+    rc = dps368_config((struct dps368 *) dev, &cfg);
+
+    os_dev_close(dev);
+    return rc;
+}
+#endif
+
+
+#if MYNEWT_VAL(ICP101XX_OFB)
+/**
+ * ICP101XX sensor default configuration
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+config_icp101xx_sensor(void)
+{
+    struct os_dev * dev;
+    struct icp101xx_cfg cfg;
+    int rc;
+
+    dev = os_dev_open("icp101xx_0", OS_TIMEOUT_NEVER, NULL);
+    assert(dev != NULL);
+
+    cfg.bc_mask = SENSOR_TYPE_PRESSURE|SENSOR_TYPE_TEMPERATURE;
+    cfg.measurement_mode = ICP101XX_MEAS_LOW_NOISE_P_FIRST;
+
+    rc = icp101xx_config((struct icp101xx *)dev, &cfg);
+    assert(rc == 0);
+
+    os_dev_close(dev);
+
+    return 0;
+
+}
+#endif
+
+#if MYNEWT_VAL(ICP10114_OFB)
+/**
+ * ICP10114 sensor default configuration
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+config_icp10114_sensor(void)
+{
+    struct os_dev * dev;
+    struct icp101xx_cfg cfg;
+    int rc;
+
+    dev = os_dev_open("icp10114_0", OS_TIMEOUT_NEVER, NULL);
+    assert(dev != NULL);
+
+    cfg.bc_mask = SENSOR_TYPE_PRESSURE|SENSOR_TYPE_TEMPERATURE;
+    cfg.measurement_mode = ICP101XX_MEAS_LOW_NOISE_P_FIRST;
+    
+    rc = icp101xx_config((struct icp101xx *)dev, &cfg);
+    assert(rc == 0);
+
+    os_dev_close(dev);
+
+    return 0;
+
 }
 #endif
 
@@ -1162,7 +1418,7 @@ sensor_dev_create(void)
 
 #if MYNEWT_VAL(MPU6050_OFB)
     rc = os_dev_create((struct os_dev *) &mpu6050, "mpu6050_0",
-      OS_DEV_INIT_PRIMARY, 0, mpu6050_init, (void *)&i2c_0_itf_mpu);
+      OS_DEV_INIT_PRIMARY, 0, mpu6050_init, (void *)&mpu6050_i2c_itf);
     assert(rc == 0);
 
     rc = config_mpu6050_sensor();
@@ -1243,7 +1499,7 @@ sensor_dev_create(void)
 
 #if MYNEWT_VAL(BMA253_OFB)
     rc = os_dev_create((struct os_dev *)&bma253, "bma253_0",
-      OS_DEV_INIT_PRIMARY, 0, bma253_init, &i2c_0_itf_lis);
+      OS_DEV_INIT_PRIMARY, 0, bma253_init, &spi2c_0_itf_bma253);
     assert(rc == 0);
 
     rc = config_bma253_sensor();
@@ -1258,6 +1514,16 @@ sensor_dev_create(void)
     rc = config_bma2xx_sensor();
     assert(rc == 0);
 #endif
+
+#if MYNEWT_VAL(BMP388_OFB)
+    rc = os_dev_create((struct os_dev *)&bmp388, "bmp388_0",
+      OS_DEV_INIT_PRIMARY, 0, bmp388_init, &spi2c_0_itf_bmp388);
+    assert(rc == 0);
+
+    rc = config_bmp388_sensor();
+    assert(rc == 0);
+#endif
+
 
 #if MYNEWT_VAL(ADXL345_OFB)
     rc = os_dev_create((struct os_dev *) &adxl345, "adxl345_0",
@@ -1310,6 +1576,42 @@ sensor_dev_create(void)
     assert(rc == 0);
 
     rc = config_bme680_sensor();
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(KXTJ3_OFB)
+    rc = os_dev_create((struct os_dev *) &kxtj3, "kxtj3_0",
+      OS_DEV_INIT_PRIMARY, 0, kxtj3_init, (void *)&i2c_0_itf_kxtj3);
+    assert(rc == 0);
+
+    rc = config_kxtj3_sensor();
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(DPS368_OFB)
+    rc = os_dev_create((struct os_dev *) &dps368, "dps368_0",
+      OS_DEV_INIT_PRIMARY, 0, dps368_init, (void *)&i2c_0_itf_dps368);
+    assert(rc == 0);
+
+    rc = config_dps368_sensor();
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(ICP101XX_OFB)
+    rc = os_dev_create((struct os_dev *) &icp101xx, "icp101xx_0",
+      OS_DEV_INIT_PRIMARY, 0, icp101xx_init, (void *)&i2c_0_itf_icp101xx);
+    assert(rc == 0);
+
+    rc = config_icp101xx_sensor();
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(ICP10114_OFB)
+    rc = os_dev_create((struct os_dev *) &icp10114, "icp10114_0",
+      OS_DEV_INIT_PRIMARY, 0, icp101xx_init, (void *)&i2c_0_itf_icp10114);
+    assert(rc == 0);
+
+    rc = config_icp10114_sensor();
     assert(rc == 0);
 #endif
 }

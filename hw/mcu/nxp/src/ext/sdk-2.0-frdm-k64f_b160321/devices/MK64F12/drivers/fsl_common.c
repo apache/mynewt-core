@@ -45,6 +45,10 @@ void __aeabi_assert(const char *failedExpr, const char *file, int line)
 void __assert_func(const char *file, int line, const char *func, const char *failedExpr)
 {
     PRINTF("ASSERT ERROR \" %s \": file \"%s\" Line \"%d\" function name \"%s\" \n", failedExpr, file, line, func);
+
+#if MYNEWT_VAL(OS_ASSERT_CB)
+    os_assert_cb();
+#endif
     for (;;)
     {
         __asm("bkpt #0");

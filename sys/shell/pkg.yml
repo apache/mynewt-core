@@ -26,10 +26,15 @@ pkg.keywords:
 pkg.deps:
     - "@apache-mynewt-core/kernel/os"
     - "@apache-mynewt-core/time/datetime"
+    - "@apache-mynewt-core/util/streamer"
 
 pkg.deps.SHELL_NEWTMGR:
+    - "@apache-mynewt-core/mgmt/mgmt"
     - "@apache-mynewt-core/encoding/base64"
     - "@apache-mynewt-core/util/crc"
+
+pkg.deps.SHELL_BRIDGE:
+    - "@apache-mynewt-core/encoding/tinycbor"
 
 pkg.req_apis:
     - console

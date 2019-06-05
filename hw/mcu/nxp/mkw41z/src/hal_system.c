@@ -17,12 +17,18 @@
  * under the License.
  */
 
-#include <mcu/cortex_m0.h>
+#include "os/mynewt.h"
+#include "mcu/cortex_m0.h"
 #include "hal/hal_system.h"
 
 void
 hal_system_reset(void)
 {
+
+#if MYNEWT_VAL(HAL_SYSTEM_RESET_CB)
+    hal_system_reset_cb();
+#endif
+
     while (1) {
         NVIC_SystemReset();
     }

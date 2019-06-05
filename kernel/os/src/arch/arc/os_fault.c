@@ -133,6 +133,10 @@ __assert_func(const char *file, int line, const char *func, const char *e)
     (void)sr;
     console_blocking_mode();
     OS_PRINT_ASSERT(file, line, func, e);
+
+#if MYNEWT_VAL(OS_ASSERT_CB)
+    os_assert_cb();
+#endif
     if (hal_debugger_connected()) {
        /*
         * If debugger is attached, breakpoint before the trap.

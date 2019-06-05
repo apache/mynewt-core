@@ -16,20 +16,14 @@ Maintainer: Miguel Luis and Gregory Cristian
 #include <string.h>
 #include <stdlib.h>
 #include "os/mynewt.h"
+#include "os/os.h"
 #include "hal/hal_gpio.h"
 #include "hal/hal_spi.h"
-#include "hal/hal_timer.h"
 #include "bsp/bsp.h"
 #include "radio/radio.h"
 #include "sx1272.h"
 #include "sx1272-board.h"
 #include "lora/utilities.h"
-
-#if MYNEWT_VAL(LORA_MAC_TIMER_NUM) == -1
-#error "Must define a Lora MAC timer number"
-#else
-#define SX1272_TIMER_NUM    MYNEWT_VAL(LORA_MAC_TIMER_NUM)
-#endif
 
 /* XXX: dummy for now to read sx1272 */
 #if MYNEWT_VAL(BSP_USE_HAL_SPI)
@@ -214,7 +208,11 @@ DioIrqHandler *DioIrq[] = {
     SX1272OnDio0Irq,
     SX1272OnDio1Irq,
     SX1272OnDio2Irq,
+#if (SX1272_DIO3 >= 0)
     SX1272OnDio3Irq,
+#else
+    NULL,
+#endif
 #if (SX1272_DIO4 >= 0)
     SX1272OnDio4Irq,
 #else
@@ -265,9 +263,9 @@ SX1272Init(RadioEvents_t *events)
     RadioEvents = events;
 
     // Initialize driver timeout timers
-    hal_timer_set_cb(SX1272_TIMER_NUM, &TxTimeoutTimer, SX1272OnTimeoutIrq, NULL);
-    hal_timer_set_cb(SX1272_TIMER_NUM, &RxTimeoutTimer, SX1272OnTimeoutIrq, NULL);
-    hal_timer_set_cb(SX1272_TIMER_NUM, &RxTimeoutSyncWord, SX1272OnTimeoutIrq, NULL);
+    os_cputime_timer_init(&TxTimeoutTimer, SX1272OnTimeoutIrq, NULL);
+    os_cputime_timer_init(&RxTimeoutTimer, SX1272OnTimeoutIrq, NULL);
+    os_cputime_timer_init(&RxTimeoutSyncWord, SX1272OnTimeoutIrq, NULL);
 
     SX1272IoInit();
     SX1272IoIrqInit(DioIrq);
@@ -315,7 +313,7 @@ SX1272IsChannelFree(RadioModems_t modem, uint32_t freq, int16_t rssiThresh,
     SX1272SetOpMode(RF_OPMODE_RECEIVER);
 
     /* Delay for 1 msec */
-    hal_timer_delay(SX1272_TIMER_NUM, 1000);
+    os_cputime_delay_usecs(1000);
 
     carrierSenseTime = timer_get_current_time( );
 
@@ -357,7 +355,7 @@ SX1272Random(void)
     SX1272SetOpMode(RF_OPMODE_RECEIVER);
 
     for (i = 0; i < 32; i++) {
-        hal_timer_delay(SX1272_TIMER_NUM, 1000);
+        os_cputime_delay_usecs(1000);
         // Unfiltered RSSI value reading. Only takes the LSB value
         rnd |= ((uint32_t)SX1272Read(REG_LR_RSSIWIDEBAND) & 0x01) << i;
     }
@@ -729,7 +727,7 @@ SX1272Send(uint8_t *buffer, uint8_t size)
         // FIFO operations can not take place in Sleep mode
         if ((SX1272Read(REG_OPMODE) & ~RF_OPMODE_MASK) == RF_OPMODE_SLEEP) {
             SX1272SetStby();
-            hal_timer_delay(SX1272_TIMER_NUM, 1000);
+            os_cputime_delay_usecs(1000);
         }
 
         // Write payload buffer
@@ -747,8 +745,8 @@ SX1272Send(uint8_t *buffer, uint8_t size)
 void
 SX1272SetSleep(void)
 {
-    hal_timer_stop(&RxTimeoutTimer);
-    hal_timer_stop(&TxTimeoutTimer);
+    os_cputime_timer_stop(&RxTimeoutTimer);
+    os_cputime_timer_stop(&TxTimeoutTimer);
 
     SX1272SetOpMode(RF_OPMODE_SLEEP);
     SX1272.Settings.State = RF_IDLE;
@@ -757,8 +755,8 @@ SX1272SetSleep(void)
 void
 SX1272SetStby(void)
 {
-    hal_timer_stop(&RxTimeoutTimer);
-    hal_timer_stop(&TxTimeoutTimer);
+    os_cputime_timer_stop(&RxTimeoutTimer);
+    os_cputime_timer_stop(&TxTimeoutTimer);
 
     SX1272SetOpMode(RF_OPMODE_STANDBY);
     SX1272.Settings.State = RF_IDLE;
@@ -845,16 +843,16 @@ SX1272SetRx(uint32_t timeout)
 
     SX1272.Settings.State = RF_RX_RUNNING;
     if (timeout != 0) {
-        hal_timer_stop(&RxTimeoutTimer);
-        hal_timer_start(&RxTimeoutTimer, timeout * 1000);
+        os_cputime_timer_stop(&RxTimeoutTimer);
+        os_cputime_timer_relative(&RxTimeoutTimer, timeout * 1000);
     }
 
     if (SX1272.Settings.Modem == MODEM_FSK) {
         SX1272SetOpMode(RF_OPMODE_RECEIVER);
 
         if (rxcontinuous == false) {
-            hal_timer_stop(&RxTimeoutSyncWord);
-            hal_timer_start(&RxTimeoutSyncWord,
+            os_cputime_timer_stop(&RxTimeoutSyncWord);
+            os_cputime_timer_relative(&RxTimeoutSyncWord,
                             SX1272.Settings.Fsk.RxSingleTimeout * 1000);
 
         }
@@ -917,8 +915,8 @@ SX1272SetTx(uint32_t timeout)
     }
 
     SX1272.Settings.State = RF_TX_RUNNING;
-    hal_timer_stop(&TxTimeoutTimer);
-    hal_timer_start(&TxTimeoutTimer, timeout * 1000);
+    os_cputime_timer_stop(&TxTimeoutTimer);
+    os_cputime_timer_relative(&TxTimeoutTimer, timeout * 1000);
     SX1272SetOpMode(RF_OPMODE_TRANSMITTER);
 }
 
@@ -964,10 +962,10 @@ SX1272SetTxContinuousWave(uint32_t freq, int8_t power, uint16_t time)
     SX1272Write(REG_DIOMAPPING1, RF_DIOMAPPING1_DIO0_11 | RF_DIOMAPPING1_DIO1_11);
     SX1272Write(REG_DIOMAPPING2, RF_DIOMAPPING2_DIO4_10 | RF_DIOMAPPING2_DIO5_10);
 
-    hal_timer_stop(&TxTimeoutTimer);
+    os_cputime_timer_stop(&TxTimeoutTimer);
 
     SX1272.Settings.State = RF_TX_RUNNING;
-    hal_timer_start(&TxTimeoutTimer, timeout * 1000);
+    os_cputime_timer_relative(&TxTimeoutTimer, timeout * 1000);
     SX1272SetOpMode(RF_OPMODE_TRANSMITTER);
 }
 
@@ -1005,9 +1003,9 @@ SX1272Reset(void)
 {
 
     hal_gpio_init_out(SX1272_NRESET, 1);
-    hal_timer_delay(SX1272_TIMER_NUM, 1000);
+    os_cputime_delay_usecs(1000);
     hal_gpio_init_in(SX1272_NRESET, HAL_GPIO_PULL_NONE);
-    hal_timer_delay(SX1272_TIMER_NUM, 6000);
+    os_cputime_delay_usecs(6000);
 }
 
 void
@@ -1176,12 +1174,12 @@ SX1272OnTimeoutIrq(void *unused)
             {
                 // Continuous mode restart Rx chain
                 SX1272Write(REG_RXCONFIG, SX1272Read(REG_RXCONFIG) | RF_RXCONFIG_RESTARTRXWITHOUTPLLLOCK);
-                hal_timer_stop(&RxTimeoutSyncWord);
-                hal_timer_start(&RxTimeoutSyncWord,
+                os_cputime_timer_stop(&RxTimeoutSyncWord);
+                os_cputime_timer_relative(&RxTimeoutSyncWord,
                                 SX1272.Settings.Fsk.RxSingleTimeout * 1000);
             } else {
                 SX1272.Settings.State = RF_IDLE;
-                hal_timer_stop(&RxTimeoutSyncWord);
+                os_cputime_timer_stop(&RxTimeoutSyncWord);
             }
         }
 
@@ -1246,16 +1244,16 @@ SX1272OnDio0Irq(void *unused)
                                                     RF_IRQFLAGS1_SYNCADDRESSMATCH);
                         SX1272Write(REG_IRQFLAGS2, RF_IRQFLAGS2_FIFOOVERRUN);
 
-                        hal_timer_stop(&RxTimeoutTimer);
+                        os_cputime_timer_stop(&RxTimeoutTimer);
 
                         if (SX1272.Settings.Fsk.RxContinuous == false) {
-                            hal_timer_stop(&RxTimeoutSyncWord);
+                            os_cputime_timer_stop(&RxTimeoutSyncWord);
                             SX1272.Settings.State = RF_IDLE;
                         } else {
                             // Continuous mode restart Rx chain
                             SX1272Write(REG_RXCONFIG, SX1272Read(REG_RXCONFIG) | RF_RXCONFIG_RESTARTRXWITHOUTPLLLOCK);
-                            hal_timer_stop(&RxTimeoutSyncWord);
-                            hal_timer_start(&RxTimeoutSyncWord,
+                            os_cputime_timer_stop(&RxTimeoutSyncWord);
+                            os_cputime_timer_relative(&RxTimeoutSyncWord,
                                             SX1272.Settings.Fsk.RxSingleTimeout * 1000);
                         }
 
@@ -1284,16 +1282,16 @@ SX1272OnDio0Irq(void *unused)
                     SX1272.Settings.FskPacketHandler.NbBytes += (SX1272.Settings.FskPacketHandler.Size - SX1272.Settings.FskPacketHandler.NbBytes);
                 }
 
-                hal_timer_stop(&RxTimeoutTimer);
+                os_cputime_timer_stop(&RxTimeoutTimer);
 
                 if (SX1272.Settings.Fsk.RxContinuous == false) {
                     SX1272.Settings.State = RF_IDLE;
-                    hal_timer_stop(&RxTimeoutSyncWord);
+                    os_cputime_timer_stop(&RxTimeoutSyncWord);
                 } else {
                     // Continuous mode restart Rx chain
                     SX1272Write(REG_RXCONFIG, SX1272Read(REG_RXCONFIG) | RF_RXCONFIG_RESTARTRXWITHOUTPLLLOCK);
-                    hal_timer_stop(&RxTimeoutSyncWord);
-                    hal_timer_start(&RxTimeoutSyncWord,
+                    os_cputime_timer_stop(&RxTimeoutSyncWord);
+                    os_cputime_timer_relative(&RxTimeoutSyncWord,
                                     SX1272.Settings.Fsk.RxSingleTimeout * 1000);
                 }
 
@@ -1317,7 +1315,7 @@ SX1272OnDio0Irq(void *unused)
                     if (SX1272.Settings.LoRa.RxContinuous == false) {
                         SX1272.Settings.State = RF_IDLE;
                     }
-                    hal_timer_stop(&RxTimeoutTimer);
+                    os_cputime_timer_stop(&RxTimeoutTimer);
 
                     if ((RadioEvents != NULL) && (RadioEvents->RxError != NULL)) {
                         RadioEvents->RxError();
@@ -1351,7 +1349,7 @@ SX1272OnDio0Irq(void *unused)
                 if (SX1272.Settings.LoRa.RxContinuous == false) {
                     SX1272.Settings.State = RF_IDLE;
                 }
-                hal_timer_stop(&RxTimeoutTimer);
+                os_cputime_timer_stop(&RxTimeoutTimer);
 
                 if ((RadioEvents != NULL) && (RadioEvents->RxDone != NULL)) {
                     RadioEvents->RxDone(g_rxtx_buffer,
@@ -1365,7 +1363,7 @@ SX1272OnDio0Irq(void *unused)
             }
             break;
         case RF_TX_RUNNING:
-            hal_timer_stop(&TxTimeoutTimer);
+            os_cputime_timer_stop(&TxTimeoutTimer);
             // TxDone interrupt
             switch (SX1272.Settings.Modem) {
             case MODEM_LORA:
@@ -1414,7 +1412,7 @@ SX1272OnDio1Irq(void *unused)
                 break;
             case MODEM_LORA:
                 // Sync time out
-                hal_timer_stop(&RxTimeoutTimer);
+                os_cputime_timer_stop(&RxTimeoutTimer);
 
                 // Clear Irq
                 SX1272Write(REG_LR_IRQFLAGS, RFLR_IRQFLAGS_RXTIMEOUT);
@@ -1461,7 +1459,7 @@ SX1272OnDio2Irq(void *unused)
             case MODEM_FSK:
                 if ((SX1272.Settings.FskPacketHandler.PreambleDetected == true) &&
                     (SX1272.Settings.FskPacketHandler.SyncWordDetected == false)) {
-                    hal_timer_stop(&RxTimeoutSyncWord);
+                    os_cputime_timer_stop(&RxTimeoutSyncWord);
 
                     SX1272.Settings.FskPacketHandler.SyncWordDetected = true;
 

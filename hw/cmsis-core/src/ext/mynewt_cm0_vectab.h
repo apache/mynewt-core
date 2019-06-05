@@ -22,13 +22,17 @@
 
 #define NVIC_USER_IRQ_OFFSET          16
 
+#ifndef __VTOR_PRESENT
+    #define __VTOR_PRESENT            0U
+#endif
+
 extern char __vector_tbl_reloc__[];
 
 __STATIC_INLINE void
 NVIC_SetVector(IRQn_Type IRQn, uint32_t vector)
 {
     uint32_t *vectors;
-#ifndef __VTOR_PRESENT
+#if (__VTOR_PRESENT == 0)
     vectors = (uint32_t *)&__vector_tbl_reloc__;
 #else
     vectors = (uint32_t *)SCB->VTOR;

@@ -1,0 +1,55 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+syscfg.defs:
+    KXTJ3_INT_PIN_HOST:
+        description: 'Interrupt pin number on host device connected to INT on device'
+        value: 1
+    KXTJ3_INT_PIN_DEVICE:
+        description: 'KXTJ3 has one INT pin, use 1'
+        value: 1
+    KXTJ3_INT_CFG_ACTIVE:
+        description: 'Set 0 for active-low, 1 for active-high'
+        value: 1
+    KXTJ3_CLI:
+        description: 'Enable shell support for the KXTJ3'
+        value: 0
+    KXTJ3_SHELL_ITF_TYPE:
+        description: 'KXTJ3 interface type'
+        value: 1
+    KXTJ3_SHELL_ITF_NUM:
+        description: 'KXTJ3 interface number'
+        value: 0
+    KXTJ3_SHELL_ITF_ADDR:
+        description: 'KXTJ3 I2C Address'
+        value: 0x0f
+    KXTJ3_ITF_LOCK_TMO:
+        description: 'KXTJ3 interface lock timeout in milliseconds'
+        value: 1000
+    KXTJ3_SHELL_DEV_NAME:
+        description: 'KXTJ3 Shell device name'
+        value: "\"kxtj3_0\""
+    KXTJ3_LOG_MODULE:
+        description: 'Numeric module ID to use for KXTJ3 log messages'
+        value: 85
+    KXTJ3_I2C_RETRIES:
+        description: >
+            Number of retries to use for failed I2C communication.  A retry is
+            used when the KXTJ3 sends an unexpected NACK.
+        value: 2

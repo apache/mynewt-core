@@ -109,6 +109,21 @@ static inline uint8_t log_get_level(const struct log *log)
     return 0;
 }
 
+/**
+ * @brief Set maximum length of an entry in the log. If set to
+ *        0, no check will be made for maximum write length.
+ *        Note that this is maximum log body length; the log
+ *        entry header is not included in the check.
+ *
+ * @param log                   Log to set max entry length
+ * @param level                 New max entry length
+ */
+static inline void
+log_set_max_entry_len(struct log *log, uint16_t max_entry_len)
+{
+    return;
+}
+
 #define log_printf(...)
 
 /*

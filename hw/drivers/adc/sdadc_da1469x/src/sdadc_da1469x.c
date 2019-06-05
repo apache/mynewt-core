@@ -453,3 +453,28 @@ da1469x_sdadc_init(struct os_dev *odev, void *arg)
 
     return 0;
 }
+
+#if MYNEWT_VAL(SDADC_BATTERY)
+
+static struct da1469x_sdadc_dev_cfg os_bsp_adc_battery_cfg = {
+    .dsdc_sdadc_ctrl = (1U << SDADC_SDADC_CTRL_REG_SDADC_SE_Pos) |
+                       (8U << SDADC_SDADC_CTRL_REG_SDADC_INP_SEL_Pos),
+    .dsdc_sdadc_gain_corr = 0,
+    .dsdc_sdadc_offs_corr = 0,
+    .dsdc_sdadc_set_gain_corr = 0,
+    .dsdc_sdadc_set_offs_corr = 0,
+};
+
+struct os_dev *
+da1469x_open_battery_adc(const char *dev_name, uint32_t wait)
+{
+    struct os_dev *adc = os_dev_open(dev_name, wait, &os_bsp_adc_battery_cfg);
+    if (adc) {
+        /* call adc_chan_config to setup correct multiplier so read returns
+         * value in mV */
+        adc_chan_config((struct adc_dev *)adc, 0, NULL);
+    }
+    return adc;
+}
+
+#endif

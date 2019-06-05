@@ -36,7 +36,6 @@
 
 #define SHELL_NLIP_PKT          0x0609
 #define SHELL_NLIP_DATA         0x0414
-#define SHELL_NLIP_MAX_FRAME    128
 
 #define NUS_EV_TO_STATE(ptr)                                            \
     (struct nmgr_uart_state *)((uint8_t *)ptr -                         \
@@ -109,7 +108,7 @@ nmgr_uart_out(struct nmgr_transport *nt, struct os_mbuf *m)
     /*
      * Create another mbuf chain with base64 encoded data.
      */
-    n = os_msys_get(SHELL_NLIP_MAX_FRAME, 0);
+    n = os_msys_get(MGMT_NLIP_MAX_FRAME, 0);
     if (!n || OS_MBUF_TRAILINGSPACE(n) < 32) {
         goto err;
     }
@@ -323,12 +322,12 @@ nmgr_uart_rx_char(void *arg, uint8_t data)
     int rc;
 
     if (!nus->nus_rx) {
-        m = os_msys_get_pkthdr(SHELL_NLIP_MAX_FRAME, 0);
+        m = os_msys_get_pkthdr(MGMT_NLIP_MAX_FRAME, 0);
         if (!m) {
             return 0;
         }
         nus->nus_rx = OS_MBUF_PKTHDR(m);
-        if (OS_MBUF_TRAILINGSPACE(m) < SHELL_NLIP_MAX_FRAME) {
+        if (OS_MBUF_TRAILINGSPACE(m) < MGMT_NLIP_MAX_FRAME) {
             /*
              * mbuf is too small.
              */

@@ -45,6 +45,16 @@ enum os_error {
 
 typedef enum os_error os_error_t;
 
+/**
+ * @brief Converts an OS error code (`OS_[...]`) to an equivalent system error
+ * code (`SYS_E[...]`).
+ *
+ * @param os_error              The OS error code to convert.
+ *
+ * @return                      The equivalent system error code.
+ */
+int os_error_to_sys(os_error_t os_error);
+
 #ifdef __cplusplus
 }
 #endif

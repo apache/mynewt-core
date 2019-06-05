@@ -66,6 +66,12 @@
 #if MYNEWT_VAL(LIS2DW12_CLI)
 #include <lis2dw12/lis2dw12.h>
 #endif
+#if MYNEWT_VAL(KXTJ3_CLI)
+#include <kxtj3/kxtj3.h>
+#endif
+#if MYNEWT_VAL(ICP101XX_CLI)
+#include <icp101xx/icp101xx.h>
+#endif
 
 #if MYNEWT_VAL(SENSOR_OIC)
 #include <oic/oc_api.h>
@@ -452,6 +458,14 @@ sensors_dev_shell_init(void)
 
 #if MYNEWT_VAL(LIS2DW12_CLI)
     lis2dw12_shell_init();
+#endif
+
+#if MYNEWT_VAL(KXTJ3_CLI)
+    kxtj3_shell_init();
+#endif
+
+#if MYNEWT_VAL(ICP101XX_CLI)
+    icp101xx_shell_init();
 #endif
 }
 

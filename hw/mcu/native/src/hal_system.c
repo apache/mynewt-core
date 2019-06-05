@@ -31,6 +31,11 @@
 void
 hal_system_reset(void)
 {
+
+#if MYNEWT_VAL(HAL_SYSTEM_RESET_CB)
+    hal_system_reset_cb();
+#endif
+
 #if MYNEWT_VAL(SELFTEST)
     /* Don't hang in the middle of a unit test. */
     assert(0);

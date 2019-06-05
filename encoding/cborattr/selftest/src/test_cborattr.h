@@ -35,6 +35,8 @@ extern "C" {
  */
 const uint8_t *test_str1(int *len);
 
+void cborattr_test_util_encode(const struct cbor_out_attr_t *attrs,
+                               const uint8_t *expected, int len);
 /*
  * Testcases
  */
@@ -48,7 +50,8 @@ TEST_CASE_DECL(test_cborattr_decode_string_array);
 TEST_CASE_DECL(test_cborattr_decode_object_array);
 TEST_CASE_DECL(test_cborattr_decode_unnamed_array);
 TEST_CASE_DECL(test_cborattr_decode_substring_key);
-
+TEST_CASE_DECL(test_cborattr_encode_simple);
+TEST_CASE_DECL(test_cborattr_encode_omit);
 
 #ifdef __cplusplus
 }

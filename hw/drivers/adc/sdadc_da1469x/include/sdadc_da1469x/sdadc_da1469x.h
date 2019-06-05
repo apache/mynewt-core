@@ -63,6 +63,13 @@ struct da1469x_sdadc_chan_cfg {
  */
 int da1469x_sdadc_init(struct os_dev *, void *);
 
+#if MYNEWT_VAL(SDADC_BATTERY)
+
+#define BATTERY_ADC_DEV_NAME    "sdadc"
+
+struct os_dev *da1469x_open_battery_adc(const char *dev_name, uint32_t wait);
+#endif
+
 #ifdef __cplusplus
 }
 #endif

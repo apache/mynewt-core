@@ -238,6 +238,11 @@ os_dev_close(struct os_dev *dev)
     int rc;
     os_sr_t sr;
 
+    if (dev == NULL) {
+        rc = OS_EINVAL;
+        goto err;
+    }
+
     if (dev->od_handlers.od_close) {
         rc = dev->od_handlers.od_close(dev);
         if (rc != 0) {

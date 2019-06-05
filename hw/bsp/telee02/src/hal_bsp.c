@@ -157,3 +157,12 @@ hal_bsp_init(void)
     rc = hal_gpio_init_out(SX1276_ANT_HF_CTRL, 1);
     assert(rc == 0);
 }
+
+#if MYNEWT_VAL(LORA_NODE)
+void lora_bsp_enable_mac_timer(void)
+{
+    /* Turn on the LoRa MAC timer. This function is automatically
+     * called by the LoRa stack when exiting low power mode.*/
+    hal_timer_init(MYNEWT_VAL(LORA_MAC_TIMER_NUM), NULL);
+}
+#endif

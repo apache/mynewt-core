@@ -43,13 +43,14 @@ struct da1469x_gpadc_init_cfg {
 };
 
 struct da1469x_gpadc_dev_cfg {
-    uint32_t dgdc_gpadc_ctrl;
-    uint32_t dgdc_gpadc_ctrl2;
-    uint32_t dgdc_gpadc_ctrl3;
-    uint8_t dgdc_gpadc_set_offp:1;
-    uint8_t dgdc_gpadc_set_offn:1;
-    uint32_t dgdc_gpadc_offp;
-    uint32_t dgdc_gpadc_offn;
+    uint32_t dgdc_gpadc_ctrl;           /* GP_ADC_CTRL_REG */
+    uint32_t dgdc_gpadc_ctrl2;          /* GP_ADC_CTRL2_REG */
+    uint32_t dgdc_gpadc_ctrl3;          /* GP_ADC_CTRL3_REG */
+    uint8_t dgdc_gpadc_set_offp:1;      /* Set GP_ADC_OFFP explicitly */
+    uint8_t dgdc_gpadc_set_offn:1;      /* Set GP_ADC_OFFN explicitly */
+    uint8_t dgdc_gpadc_autocalibrate:1; /* Set offp/offn automatically */
+    uint32_t dgdc_gpadc_offp;           /* GP_ADC_OFFP (when _set_offp set) */
+    uint32_t dgdc_gpadc_offn;           /* GP_ADC_OFFN (when _set_offn set) */
 };
 
 struct da1469x_gpadc_chan_cfg {
@@ -64,6 +65,13 @@ struct da1469x_gpadc_chan_cfg {
  * @return 0 on success, non-zero when fail.
  */
 int da1469x_gpadc_init(struct os_dev *, void *);
+
+#if MYNEWT_VAL(GPADC_BATTERY)
+
+#define BATTERY_ADC_DEV_NAME    "gpadc"
+
+struct os_dev *da1469x_open_battery_adc(const char *dev_name, uint32_t wait);
+#endif
 
 #ifdef __cplusplus
 }

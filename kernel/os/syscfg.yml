@@ -171,6 +171,15 @@ syscfg.defs:
         description: >
             Sysinit stage for the Mynewt kernel.
         value: 0
+    OS_ASSERT_CB:
+        description: >
+            If set, assert callback gets called inside __assert_func()
+        value: 0
+    OS_MAIN_TASK_SANITY_ITVL_MS:
+        description: >
+            Interval for sanity check on main task. Setting a 0 will disable
+            sanity check on main task. Value is in milliseconds.
+        value: 0
 
 syscfg.vals.OS_DEBUG_MODE:
     OS_CRASH_STACKTRACE: 1

@@ -32,6 +32,14 @@ syscfg.defs:
     MPU6050_OFB:
         description: 'MPU6050 is present'
         value : 0
+    MPU6050_OFB_I2C_NUM:
+        description: 'I2C interface used for MPU6050'
+        value: 0
+        restrictions:
+         - '(MPU6050_OFB == 0) ||
+            ((MPU6050_OFB_I2C_NUM == 0) && (I2C_0 == 1)) ||
+            ((MPU6050_OFB_I2C_NUM == 1) && (I2C_1 == 1)) ||
+            ((MPU6050_OFB_I2C_NUM == 2) && (I2C_2 == 1))'
     BNO055_OFB:
         description: 'BNO055 is present'
         value : 0
@@ -68,12 +76,27 @@ syscfg.defs:
     BMA2XX_OFB:
         description: 'A sensor in the BMA2XX family is present'
         value : 0
+    BMP388_OFB:
+        description: 'A sensor in the BMP388 family is present'
+        value : 0
     LIS2DS12_OFB:
         description: 'LIS2DS12 is present'
         value : 0
     BME680_OFB:
         description: 'BME680 is present'
         value: 0
+    KXTJ3_OFB:
+        description: 'KXTJ3 is present'
+        value : 0
+    DPS368_OFB:
+        description: 'DPS368 is present'
+        value: 0
+    ICP101XX_OFB:
+        description: 'A sensor in the ICP101XX family is present'
+        value : 0
+    ICP10114_OFB:
+        description: 'ICP10114 is present'
+        value : 0
 
     SENSOR_CREATOR_SYSINIT_STAGE:
         description: >

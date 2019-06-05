@@ -32,7 +32,7 @@ syscfg.defs:
         value: 1
     BMA253_INT_CFG_OUTPUT:
         description: 'Set 0 for push-pull, 1 for open-drain'
-        value: 1
+        value: 0
     BMA253_INT_PIN_DEVICE:
         description: 'Interrupt pin number 1 or 2 on accelerometer device'
         value: 1

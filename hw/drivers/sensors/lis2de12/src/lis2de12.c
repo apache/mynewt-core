@@ -2915,6 +2915,7 @@ lis2de12_config(struct lis2de12 *lis2de12, struct lis2de12_cfg *cfg)
     itf = SENSOR_GET_ITF(&(lis2de12->sensor));
     sensor = &(lis2de12->sensor);
 
+    (void)sensor;
 #if !MYNEWT_VAL(BUS_DRIVER_PRESENT)
     if (itf->si_type == SENSOR_ITF_SPI) {
 
