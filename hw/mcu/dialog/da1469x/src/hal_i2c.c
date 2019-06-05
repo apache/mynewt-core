@@ -449,6 +449,9 @@ hal_i2c_master_probe(uint8_t i2c_num, uint8_t address, uint32_t timo)
     tx.buffer = &buf;
     tx.len = 1;
 
-    /* Reading before writing causes i2c bus to hang up sometimes. */
+    /* 
+    * Using a i2c write instead of a i2c read because i2c read does not detect any i2c device on bus.
+    * Also, i2c read before i2c write causes i2c bus to hang up sometimes. 
+    */
     return hal_i2c_master_write(i2c_num, &tx, timo, 1);
 }
