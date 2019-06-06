@@ -66,6 +66,7 @@ smp_shell_in(struct os_mbuf *m, void *arg)
         },
         .tx_rsp_cb = smp_tx_rsp,
     };
+
     return smp_process_request_packet(&g_smp_shell_transport.st_streamer, m);
 }
 
