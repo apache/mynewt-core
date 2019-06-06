@@ -161,7 +161,7 @@ adxl345_i2c_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
                            MYNEWT_VAL(ADXL345_I2C_RETRIES));
     if (rc) {
         ADXL345_LOG(ERROR, "I2C access failed at address 0x%02X\n",
-                    itf->si_addr)
+                    itf->si_addr);
                     
         STATS_INC(g_adxl345stats, write_errors);
         return rc;
@@ -513,7 +513,7 @@ adxl345_get_power_mode(struct sensor_itf *itf, enum adxl345_power_mode *state)
     reg &= 0xC;
     reg >>= 2;
 
-    *state = (enum adxl345_accel_range)reg;
+    *state = (enum adxl345_power_mode)reg;
 
     return 0;
 }
