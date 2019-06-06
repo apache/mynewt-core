@@ -92,7 +92,7 @@ smp_reset_buf(void *m, void *arg)
      * costains useful information which we do not wast
      * to get rid of
      */
-    os_mbuf_adj(m, -1 * ((struct os_mbuf *)m)->om_len);
+    os_mbuf_adj(m, -1 * OS_MBUF_PKTLEN((struct os_mbuf *)m));
 }
 
 static int
@@ -109,11 +109,17 @@ smp_write_at(struct cbor_encoder_writer *writer, size_t offset,
 
     cmw = (struct cbor_mbuf_writer *)writer;
     m = cmw->m;
+
+    if (offset > OS_MBUF_PKTLEN(m)) {
+        return MGMT_ERR_EINVAL;
+    }
     
     rc = os_mbuf_copyinto(m, offset, data, len);
     if (rc) {
         return MGMT_ERR_ENOMEM;
     }
+
+    writer->bytes_written = OS_MBUF_PKTLEN(m);
 
     return 0;
 }
