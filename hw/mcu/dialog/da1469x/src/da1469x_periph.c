@@ -32,7 +32,11 @@
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
 #include "bus/bus.h"
 #if MYNEWT_VAL(I2C_0) || MYNEWT_VAL(I2C_1)
+#if MYNEWT_VAL(I2C_DA1469X_BUS_DRIVER)
+#include "bus/drivers/i2c_da1469x.h"
+#else
 #include "bus/drivers/i2c_hal.h"
+#endif
 #endif
 #else
 #if MYNEWT_VAL(I2C_0) || MYNEWT_VAL(I2C_1)
@@ -339,8 +343,13 @@ da1469x_periph_create_i2c(void)
 
 #if MYNEWT_VAL(I2C_0)
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+#if MYNEWT_VAL(I2C_DA1469X_BUS_DRIVER)
+    rc = bus_i2c_da1469x_dev_create("i2c0", &i2c0_bus,
+                                    (struct bus_i2c_dev_cfg *)&i2c0_cfg);
+#else
     rc = bus_i2c_hal_dev_create("i2c0", &i2c0_bus,
                                 (struct bus_i2c_dev_cfg *)&i2c0_cfg);
+#endif
     assert(rc == 0);
 #else
     rc = hal_i2c_init(0, (void *)&hal_i2c0_cfg);
@@ -350,8 +359,13 @@ da1469x_periph_create_i2c(void)
 
 #if MYNEWT_VAL(I2C_1)
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+#if MYNEWT_VAL(I2C_DA1469X_BUS_DRIVER)
+    rc = bus_i2c_da1469x_dev_create("i2c1", &i2c1_bus,
+                                    (struct bus_i2c_dev_cfg *)&i2c1_cfg);
+#else
     rc = bus_i2c_hal_dev_create("i2c1", &i2c1_bus,
                                 (struct bus_i2c_dev_cfg *)&i2c1_cfg);
+#endif
     assert(rc == 0);
 #else
     rc = hal_i2c_init(1, (void *)&hal_i2c1_cfg);
