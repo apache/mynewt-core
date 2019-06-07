@@ -396,15 +396,38 @@ static struct sensor_itf spi2c_0_itf_bmp388= {
 };
 #endif
 
-#if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(ADXL345_OFB)
-static struct sensor_itf i2c_0_itf_adxl = {
+#if MYNEWT_VAL(ADXL345_OFB)
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+#if MYNEWT_VAL(ADXL345_OFB_I2C_NUM) >= 0
+static const struct bus_i2c_node_cfg adxl345_node_cfg = {
+    .node_cfg = {
+        .bus_name = MYNEWT_VAL(ADXL345_OFB_BUS),
+    },
+    .addr = MYNEWT_VAL(ADXL345_ITF_ADDR),
+    .freq = 400,
+};
+#elif MYNEWT_VAL(ADXL345_OFB_SPI_NUM) >= 0
+static const struct bus_spi_node_cfg adxl345_node_cfg = {
+    .node_cfg = {
+        .bus_name = MYNEWT_VAL(ADXL345_OFB_BUS),
+    },
+    .pin_cs = MYNEWT_VAL(ADXL345_OFB_CS),
+    .mode = BUS_SPI_MODE_3,
+    .data_order = BUS_SPI_DATA_ORDER_MSB,
+    .freq = 4000,
+};
+#endif
+static struct sensor_itf adxl345_itf;
+#else
+static struct sensor_itf adxl_itf = {
     .si_type = SENSOR_ITF_I2C,
-    .si_num  = 0,
+    .si_num  = MYNEWT_VAL(ADXL345_OFB_I2C_NUM),
     .si_addr = MYNEWT_VAL(ADXL345_ITF_ADDR),
     .si_ints = {
        { MYNEWT_VAL(ADXL345_INT_PIN_HOST), MYNEWT_VAL(ADXL345_INT_PIN_DEVICE),
          MYNEWT_VAL(ADXL345_INT_CFG_ACTIVE)}}
 };
+#endif
 #endif
 
 #if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(LPS33HW_OFB)
@@ -1559,8 +1582,18 @@ sensor_dev_create(void)
 
 
 #if MYNEWT_VAL(ADXL345_OFB)
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+#if MYNEWT_VAL(ADXL345_OFB_I2C_NUM) >= 0
+    rc = adxl345_create_i2c_sensor_dev(&adxl345.i2c_node, "adxl345_0",
+                                       &adxl345_node_cfg, &adxl345_itf);
+#elif MYNEWT_VAL(ADXL345_OFB_SPI_NUM) >= 0
+    rc = adxl345_create_spi_sensor_dev(&adxl345.spi_node, "adxl345_0",
+                                       &adxl345_node_cfg, &adxl345_itf);
+#endif
+#else
     rc = os_dev_create((struct os_dev *) &adxl345, "adxl345_0",
-      OS_DEV_INIT_PRIMARY, 0, adxl345_init, (void *)&i2c_0_itf_adxl);
+      OS_DEV_INIT_PRIMARY, 0, adxl345_init, (void *)&adxl_itf);
+#endif
     assert(rc == 0);
 
     rc = config_adxl345_sensor();
