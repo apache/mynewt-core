@@ -1,0 +1,35 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+syscfg.defs:
+    I2C_DA1469X_BUS_DRIVER:
+        description: 'Constant value set to 1 when package is included'
+        value: 1
+    I2C_DA1469X_STAT:
+        description: >
+            Enable statistics for driver errors and applied workarounds.
+        value: 0
+    I2C_DA1469X_TX_DMA_BUFFER_SIZE:
+        description: >
+            Buffer size (in 16 bits words) used for DMA transfers.
+            If set to 1 DMA is used only for reads. If set to greater
+            value static buffer will be used that will hold outgoing data
+            for DMA.
+        value: 1
+        restrictions:
+            - '(I2C_DA1469X_TX_DMA_BUFFER_SIZE > 0)'
