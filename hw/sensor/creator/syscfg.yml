@@ -76,6 +76,30 @@ syscfg.defs:
     ADXL345_OFB:
         description: 'ADXL345 is present'
         value : 0
+    ADXL345_OFB_I2C_NUM:
+        description: 'I2C interface used for ADXL345'
+        value:
+        restrictions:
+         - '(ADXL345_OFB == 0) ||
+            ((ADXL345_OFB_I2C_NUM == 0) && (I2C_0 == 1)) ||
+            ((ADXL345_OFB_I2C_NUM == 1) && (I2C_1 == 1)) ||
+            ((ADXL345_OFB_I2C_NUM == 2) && (I2C_2 == 1)) ||
+            ((ADXL345_OFB_I2C_NUM == -1))'
+    ADXL345_OFB_SPI_NUM:
+        description: 'SPI interface used for ADXL345'
+        value: -1
+        restrictions:
+         - '(ADXL345_OFB == 0) ||
+            ((ADXL345_OFB_SPI_NUM == 0) && (SPI_0_MASTER == 1)) ||
+            ((ADXL345_OFB_SPI_NUM == 1) && (SPI_1_MASTER == 1)) ||
+            ((ADXL345_OFB_SPI_NUM == 2) && (SPI_2_MASTER == 1)) ||
+            ((ADXL345_OFB_SPI_NUM == -1))'
+    ADXL345_OFB_BUS:
+        description: 'I2C or SPI interface used for ADXL345'
+        value: '"i2c0"'
+    ADXL345_OFB_CS:
+        description: 'CS pin for ADXL345'
+        value:
     LPS33HW_OFB:
         description: 'LPS33HW is present'
         value : 0
