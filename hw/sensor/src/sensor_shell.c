@@ -489,6 +489,10 @@ sensor_cmd_read(char **argv, int argc)
         goto usage;
     }
 
+    g_spd.spd_nsamples = 0;
+    g_spd.spd_poll_itvl = 0;
+    g_spd.spd_poll_duration = 0;
+
     sensor_name = argv[0];
     type = strtol(argv[1], NULL, 0);
 
