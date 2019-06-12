@@ -160,17 +160,43 @@ bmp280_shell_cmd_oversample(int argc, char **argv)
     uint8_t oversample;
     uint32_t type;
 
-    if (argc > 3) {
+    if (argc > 4) {
         return bmp280_shell_err_too_many_args(argv[1]);
     }
 
-    /* Display the oversample */
-    if (argc == 3) {
-        val = parse_ll_bounds(argv[2], 4, 8, &rc);
+    /* Display the oversampling */
+    if (argc == 2) {
+        rc = bmp280_get_oversample(&g_sensor_itf,
+                                   SENSOR_TYPE_AMBIENT_TEMPERATURE, &oversample);
+        if (rc == 0) {
+            if (oversample == 0) {
+                console_printf("Temperature measurement disabled\n");
+            } else {
+                console_printf("Temperature oversampling %u (x%u)\n",
+                               oversample, 1U << (oversample - 1));
+            }
+        } else {
+            console_printf("Error reading temperature oversampling %d\n", rc);
+        }
+        rc = bmp280_get_oversample(&g_sensor_itf, SENSOR_TYPE_PRESSURE,
+                                   &oversample);
+        if (rc == 0) {
+            if (oversample == 0) {
+                console_printf("Pressure measurement disabled\n");
+            } else {
+                console_printf("Pressure oversampling %u (x%u)\n",
+                               oversample, 1U << (oversample - 1));
+            }
+        } else {
+            console_printf("Error reading pressure oversampling %d\n", rc);
+        }
+    } else if (argc == 3) {
+        /* Display the oversample */
+        val = (uint8_t)parse_ll_bounds(argv[2], 5, 6, &rc);
         if (rc) {
             return bmp280_shell_err_invalid_arg(argv[2]);
         }
-        rc = bmp280_get_oversample(&g_sensor_itf, val, &oversample);
+        rc = bmp280_get_oversample(&g_sensor_itf, 1U << val, &oversample);
         if (rc) {
             goto err;
         }
@@ -179,12 +205,12 @@ bmp280_shell_cmd_oversample(int argc, char **argv)
 
     /* Update the oversampling  */
     if (argc == 4) {
-        val = parse_ll_bounds(argv[2], 4, 8, &rc);
+        val = (uint8_t)parse_ll_bounds(argv[2], 5, 6, &rc);
         if (rc) {
             return bmp280_shell_err_invalid_arg(argv[2]);
         }
 
-        type = val;
+        type = 1U << val;
 
         val = parse_ll_bounds(argv[3], 0, 5, &rc);
         if (rc) {
