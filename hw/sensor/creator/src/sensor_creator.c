@@ -225,12 +225,34 @@ static struct icp101xx icp10114;
  *#endif
  */
 
-#if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(BMP280_OFB)
+#if MYNEWT_VAL(BMP280_OFB)
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+#if MYNEWT_VAL(BMP280_OFB_I2C_NUM) >= 0
+static const struct bus_i2c_node_cfg bmp280_node_cfg = {
+    .node_cfg = {
+        .bus_name = MYNEWT_VAL(BMP280_OFB_BUS),
+    },
+    .addr = MYNEWT_VAL(BMP280_OFB_I2C_ADDR),
+    .freq = 400,
+};
+#endif
+#if MYNEWT_VAL(BMP280_OFB_SPI_NUM) >= 0
+struct bus_spi_node_cfg bmp280_node_cfg = {
+    .node_cfg.bus_name = MYNEWT_VAL(BME280_OFB_SPI_BUS),
+    .pin_cs = MYNEWT_VAL(BMP280_OFB_CS),
+    .mode = BUS_SPI_MODE_0,
+    .data_order = HAL_SPI_MSB_FIRST,
+    .freq = MYNEWT_VAL(BMP280_OFB_BAUDRATE),
+};
+#endif
+static struct sensor_itf bmp280_itf;
+#elif MYNEWT_VAL(I2C_0)
 static struct sensor_itf i2c_0_itf_bmp = {
     .si_type = SENSOR_ITF_I2C,
     .si_num = 0,
     .si_addr = BMP280_DFLT_I2C_ADDR
 };
+#endif
 #endif
 
 #if MYNEWT_VAL(SPI_0_MASTER) && MYNEWT_VAL(BME280_OFB)
@@ -1545,10 +1567,19 @@ sensor_dev_create(void)
 #endif
 
 #if MYNEWT_VAL(BMP280_OFB)
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+#if MYNEWT_VAL(BMP280_OFB_I2C_NUM) >= 0
+    rc = bmp280_create_i2c_sensor_dev(&bmp280.i2c_node, "bmp280_0",
+                                      &bmp280_node_cfg, &bmp280_itf);
+#elif MYNEWT_VAL(BMP280_OFB_SPI_NUM) >= 0
+    rc = bmp280_create_spi_sensor_dev(&bmp280.spi_node, "bmp280_0",
+                                      &bmp280_node_cfg, &bmp280_itf);
+#endif
+#else
     rc = os_dev_create((struct os_dev *) &bmp280, "bmp280_0",
       OS_DEV_INIT_PRIMARY, 0, bmp280_init, (void *)&i2c_0_itf_bmp);
     assert(rc == 0);
-
+#endif
     rc = config_bmp280_sensor();
     assert(rc == 0);
 #endif
