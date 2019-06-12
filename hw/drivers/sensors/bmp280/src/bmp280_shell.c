@@ -303,63 +303,53 @@ err:
     return rc;
 }
 
+static void
+bmp280_shell_dump_reg(const char *name, uint8_t addr)
+{
+    uint8_t val = 0;
+    int rc;
+
+    rc = bmp280_readlen(&g_sensor_itf, addr, &val, 1);
+    if (rc == 0) {
+        console_printf("0x%02X (%s): 0x%02X\n", addr, name, val);
+    } else {
+        console_printf("0x%02X (%s): failed (%d)\n", addr, name, rc);
+    }
+}
+
+#define DUMP_REG(name) bmp280_shell_dump_reg(#name, BMP280_REG_ADDR_ ## name)
+
 static int
 bmp280_shell_cmd_dump(int argc, char **argv)
 {
-  uint8_t val;
-
   if (argc > 3) {
       return bmp280_shell_err_too_many_args(argv[1]);
   }
 
   /* Dump all the register values for debug purposes */
-  val = 0;
-  assert(0 == bmp280_readlen(&g_sensor_itf, BMP280_REG_ADDR_DIG_T1, &val, 1));
-  console_printf("0x%02X (DIG_T1): 0x%02X\n", BMP280_REG_ADDR_DIG_T1, val);
-  assert(0 == bmp280_readlen(&g_sensor_itf, BMP280_REG_ADDR_DIG_T2, &val, 1));
-  console_printf("0x%02X (DIG_T2):  0x%02X\n", BMP280_REG_ADDR_DIG_T2, val);
-  assert(0 == bmp280_readlen(&g_sensor_itf, BMP280_REG_ADDR_DIG_T3, &val, 1));
-  console_printf("0x%02X (DIG_T3):   0x%02X\n", BMP280_REG_ADDR_DIG_T3, val);
-  assert(0 == bmp280_readlen(&g_sensor_itf, BMP280_REG_ADDR_DIG_P1, &val, 1));
-  console_printf("0x%02X (DIG_P1): 0x%02X\n", BMP280_REG_ADDR_DIG_P1, val);
-  assert(0 == bmp280_readlen(&g_sensor_itf, BMP280_REG_ADDR_DIG_P2, &val, 1));
-  console_printf("0x%02X (DIG_P2):  0x%02X\n", BMP280_REG_ADDR_DIG_P2, val);
-  assert(0 == bmp280_readlen(&g_sensor_itf, BMP280_REG_ADDR_DIG_P3, &val, 1));
-  console_printf("0x%02X (DIG_P3):   0x%02X\n", BMP280_REG_ADDR_DIG_P3, val);
-  assert(0 == bmp280_readlen(&g_sensor_itf, BMP280_REG_ADDR_DIG_P4, &val, 1));
-  console_printf("0x%02X (DIG_P4): 0x%02X\n", BMP280_REG_ADDR_DIG_P4, val);
-  assert(0 == bmp280_readlen(&g_sensor_itf, BMP280_REG_ADDR_DIG_P5, &val, 1));
-  console_printf("0x%02X (DIG_P5):  0x%02X\n", BMP280_REG_ADDR_DIG_P5, val);
-  assert(0 == bmp280_readlen(&g_sensor_itf, BMP280_REG_ADDR_DIG_P6, &val, 1));
-  console_printf("0x%02X (DIG_P6):   0x%02X\n", BMP280_REG_ADDR_DIG_P6, val);
-  assert(0 == bmp280_readlen(&g_sensor_itf, BMP280_REG_ADDR_DIG_P7, &val, 1));
-  console_printf("0x%02X (DIG_P7): 0x%02X\n", BMP280_REG_ADDR_DIG_P7, val);
-  assert(0 == bmp280_readlen(&g_sensor_itf, BMP280_REG_ADDR_DIG_P8, &val, 1));
-  console_printf("0x%02X (DIG_P8):  0x%02X\n", BMP280_REG_ADDR_DIG_P8, val);
-  assert(0 == bmp280_readlen(&g_sensor_itf, BMP280_REG_ADDR_DIG_P9, &val, 1));
-  console_printf("0x%02X (DIG_P9):   0x%02X\n", BMP280_REG_ADDR_DIG_P9, val);
-  assert(0 == bmp280_readlen(&g_sensor_itf, BMP280_REG_ADDR_CHIPID, &val, 1));
-  console_printf("0x%02X (CHIPID):   0x%02X\n", BMP280_REG_ADDR_CHIPID, val);
-  assert(0 == bmp280_readlen(&g_sensor_itf, BMP280_REG_ADDR_VERSION, &val, 1));
-  console_printf("0x%02X (VER):   0x%02X\n", BMP280_REG_ADDR_VERSION, val);
-  assert(0 == bmp280_readlen(&g_sensor_itf, BMP280_REG_ADDR_STATUS, &val, 1));
-  console_printf("0x%02X (STATUS):   0x%02X\n", BMP280_REG_ADDR_STATUS, val);
-  assert(0 == bmp280_readlen(&g_sensor_itf, BMP280_REG_ADDR_CTRL_MEAS, &val, 1));
-  console_printf("0x%02X (CTRL_MEAS):   0x%02X\n", BMP280_REG_ADDR_CTRL_MEAS, val);
-  assert(0 == bmp280_readlen(&g_sensor_itf, BMP280_REG_ADDR_CONFIG, &val, 1));
-  console_printf("0x%02X (CONFIG):   0x%02X\n", BMP280_REG_ADDR_CONFIG, val);
-  assert(0 == bmp280_readlen(&g_sensor_itf, BMP280_REG_ADDR_PRESS_MSB, &val, 1));
-  console_printf("0x%02X (PRESS MSB):   0x%02X\n", BMP280_REG_ADDR_PRESS_MSB, val);
-  assert(0 == bmp280_readlen(&g_sensor_itf, BMP280_REG_ADDR_PRESS_LSB, &val, 1));
-  console_printf("0x%02X (PRESS LSB):   0x%02X\n", BMP280_REG_ADDR_PRESS_LSB, val);
-  assert(0 == bmp280_readlen(&g_sensor_itf, BMP280_REG_ADDR_PRESS_XLSB, &val, 1));
-  console_printf("0x%02X (PRESS XLSB):   0x%02X\n", BMP280_REG_ADDR_PRESS_XLSB, val);
-  assert(0 == bmp280_readlen(&g_sensor_itf, BMP280_REG_ADDR_TEMP_XLSB, &val, 1));
-  console_printf("0x%02X (TEMP MSB):   0x%02X\n", BMP280_REG_ADDR_TEMP_MSB, val);
-  assert(0 == bmp280_readlen(&g_sensor_itf, BMP280_REG_ADDR_TEMP_LSB, &val, 1));
-  console_printf("0x%02X (TEMP LSB):   0x%02X\n", BMP280_REG_ADDR_TEMP_LSB, val);
-  assert(0 == bmp280_readlen(&g_sensor_itf, BMP280_REG_ADDR_TEMP_XLSB, &val, 1));
-  console_printf("0x%02X (TEMP XLSB):   0x%02X\n", BMP280_REG_ADDR_TEMP_XLSB, val);
+  DUMP_REG(DIG_T1);
+  DUMP_REG(DIG_T2);
+  DUMP_REG(DIG_T3);
+  DUMP_REG(DIG_P1);
+  DUMP_REG(DIG_P2);
+  DUMP_REG(DIG_P3);
+  DUMP_REG(DIG_P4);
+  DUMP_REG(DIG_P5);
+  DUMP_REG(DIG_P6);
+  DUMP_REG(DIG_P7);
+  DUMP_REG(DIG_P8);
+  DUMP_REG(DIG_P9);
+  DUMP_REG(CHIPID);
+  DUMP_REG(VERSION);
+  DUMP_REG(STATUS);
+  DUMP_REG(CTRL_MEAS);
+  DUMP_REG(CONFIG);
+  DUMP_REG(PRESS_MSB);
+  DUMP_REG(PRESS_LSB);
+  DUMP_REG(PRESS_XLSB);
+  DUMP_REG(TEMP_XLSB);
+  DUMP_REG(TEMP_LSB);
+  DUMP_REG(TEMP_XLSB);
 
   return 0;
 }
