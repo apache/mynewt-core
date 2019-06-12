@@ -87,6 +87,14 @@ static const struct sensor_driver g_bmp280_sensor_driver = {
     .sd_set_config = bmp280_sensor_set_config,
 };
 
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+static bool
+bmp280_uses_spi(struct sensor_itf *itf)
+{
+    return ((struct bmp280 *)(itf->si_dev))->node_is_spi;
+}
+#endif
+
 static int
 bmp280_default_cfg(struct bmp280_cfg *cfg)
 {
@@ -919,6 +927,9 @@ bmp280_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
     uint8_t data[2] = { addr };
 
+    if (bmp280_uses_spi(itf)) {
+        data[0] &= ~BMP280_SPI_READ_CMD_BIT;
+    }
     do {
         data[1] = *(payload++);
         rc = bus_node_simple_write(itf->si_dev, data, 2);
@@ -1367,6 +1378,8 @@ bmp280_create_i2c_sensor_dev(struct bus_i2c_node *node, const char *name,
     };
     int rc;
 
+    ((struct bmp280 *)(node))->node_is_spi = false;
+
     bus_node_set_callbacks((struct os_dev *)node, &cbs);
 
     rc = bus_i2c_node_create(name, node, i2c_cfg, sensor_itf);
@@ -1383,6 +1396,8 @@ bmp280_create_spi_sensor_dev(struct bus_spi_node *node, const char *name,
         .init = init_node_cb,
     };
     int rc;
+
+    ((struct bmp280 *)(node))->node_is_spi = true;
 
     bus_node_set_callbacks((struct os_dev *)node, &cbs);
 
