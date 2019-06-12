@@ -24,6 +24,7 @@
 #include "hal/hal_gpio.h"
 #include "bmp280/bmp280.h"
 #include "bmp280_priv.h"
+#include "bsp/bsp.h"
 
 #if MYNEWT_VAL(BMP280_CLI)
 
@@ -37,12 +38,16 @@ static struct shell_cmd bmp280_shell_cmd_struct = {
     .sc_cmd_func = bmp280_shell_cmd
 };
 
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+static struct sensor_itf g_sensor_itf;
+#else
 static struct sensor_itf g_sensor_itf = {
     .si_type = MYNEWT_VAL(BMP280_SHELL_ITF_TYPE),
     .si_num = MYNEWT_VAL(BMP280_SHELL_ITF_NUM),
     .si_cs_pin = MYNEWT_VAL(BMP280_SHELL_CSPIN),
     .si_addr = MYNEWT_VAL(BMP280_SHELL_ITF_ADDR)
 };
+#endif
 
 static int
 bmp280_shell_err_too_many_args(char *cmd_name)
@@ -399,11 +404,59 @@ bmp280_shell_cmd(int argc, char **argv)
     return bmp280_shell_err_unknown_arg(argv[1]);
 }
 
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+
+#if MYNEWT_VAL(BMP280_SHELL_ITF_TYPE) == SENSOR_ITF_I2C
+struct bmp280 bmp280_raw;
+
+static const struct bus_i2c_node_cfg bmp280_raw_cfg = {
+    .node_cfg = {
+        .bus_name = MYNEWT_VAL(BMP280_SHELL_ITF_BUS),
+    },
+    .addr = MYNEWT_VAL(BMP280_SHELL_ITF_ADDR),
+    .freq = 400,
+};
+#elif MYNEWT_VAL(BMP280_SHELL_ITF_TYPE) == SENSOR_ITF_SPI
+struct bmp280 bmp280_raw = {
+    .node_is_spi = true,
+};
+
+static const struct bus_spi_node_cfg bmp280_raw_cfg = {
+    .node_cfg = {
+        .bus_name = MYNEWT_VAL(BMP280_SHELL_ITF_BUS),
+    },
+    .pin_cs = MYNEWT_VAL(BMP280_SHELL_CSPIN),
+    .data_order = BUS_SPI_DATA_ORDER_MSB,
+    .mode = BUS_SPI_MODE_0,
+    .freq = 4000,
+};
+#endif
+
+#endif
+
 int
 bmp280_shell_init(void)
 {
     int rc;
 
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    struct os_dev *dev = NULL;
+
+    g_sensor_itf.si_dev = (struct os_dev *)&bmp280_raw;
+#if MYNEWT_VAL(BMP280_SHELL_ITF_TYPE) == SENSOR_ITF_I2C
+    rc = bus_i2c_node_create("bmp280_raw", &bmp280_raw.i2c_node,
+                             &bmp280_raw_cfg, &g_sensor_itf);
+#elif MYNEWT_VAL(BMP280_SHELL_ITF_TYPE) == SENSOR_ITF_SPI
+    rc = bus_spi_node_create("bmp280_raw", &bmp280_raw.spi_node,
+                             &bmp280_raw_cfg, &g_sensor_itf);
+#endif
+    if (rc == 0) {
+        dev = os_dev_open("bmp280_raw", 0, NULL);
+    }
+    if (rc != 0 || dev == NULL) {
+        console_printf("Failed to create bmp280_raw device\n");
+    }
+#endif
     rc = shell_cmd_register(&bmp280_shell_cmd_struct);
     SYSINIT_PANIC_ASSERT(rc == 0);
 

@@ -27,6 +27,9 @@ syscfg.defs:
     BMP280_SHELL_ITF_TYPE:
         description: 'Shell interface type for the BMP280'
         value: 1
+    BMP280_SHELL_ITF_BUS:
+        description: 'Shell interface bus for the BMP280 when bus driver is used'
+        value: '"i2c0"'
     BMP280_SHELL_CSPIN:
         description: 'CS pin for BMP280'
         value : -1
