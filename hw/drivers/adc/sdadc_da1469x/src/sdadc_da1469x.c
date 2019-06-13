@@ -21,7 +21,6 @@
 
 #include <adc/adc.h>
 
-#include <DA1469xAB.h>
 #include <mcu/mcu.h>
 #include <mcu/da1469x_pd.h>
 

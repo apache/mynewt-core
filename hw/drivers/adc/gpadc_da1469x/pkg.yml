@@ -31,4 +31,3 @@ pkg.apis:
 
 pkg.deps:
     - "@apache-mynewt-core/hw/drivers/adc"
-    - hw/mcu/dialog/da1469x

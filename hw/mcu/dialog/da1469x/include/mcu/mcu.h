@@ -24,6 +24,8 @@
 extern "C" {
 #endif
 
+#include "DA1469xAB.h"
+
 #define sec_text_ram_core   __attribute__((section(".text_ram"))) __attribute__((noinline))
 
 #define MCU_SYSVIEW_INTERRUPTS \
