@@ -479,6 +479,9 @@ split-fanstel-ev-bt840.ld
 # B-L072Z-LRWAN1 BSP - BSD License
 b-l072z-lrwan1
 
+# B-L475E-IOT01A BSP - BSD License
+b-l475e-iot01a
+
 # bluepill BSP - BSD License
 bluepill
 
