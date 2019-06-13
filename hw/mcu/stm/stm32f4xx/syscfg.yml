@@ -145,3 +145,7 @@ syscfg.defs:
     CRYPTO:
         description: 'Enable HW Cryptography module (CRYP)'
         value: 0
+
+    HASH:
+        description: 'Enable HW hash module (HASH)'
+        value: 0
