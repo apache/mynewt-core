@@ -19,7 +19,7 @@
 
 #include <stdint.h>
 #include <trng/trng.h>
-#include <DA1469xAB.h>
+#include <mcu/mcu.h>
 
 #define DA1469X_TRNG_FIFO_SIZE  (32 * sizeof(uint32_t))
 #define DA1469X_TRNG_FIFO_ADDR  (0x30050000UL)
