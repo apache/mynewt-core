@@ -39,6 +39,10 @@
 #if MYNEWT_VAL(ENC_FLASH_DEV)
 #include <ef_crypto/ef_crypto.h>
 #endif
+#if MYNEWT_VAL(HASH)
+#include "hash/hash.h"
+#include "hash_k64f/hash_k64f.h"
+#endif
 #if MYNEWT_VAL(UART_0) || MYNEWT_VAL(UART_1) || MYNEWT_VAL(UART_2) || \
     MYNEWT_VAL(UART_3) || MYNEWT_VAL(UART_4) || MYNEWT_VAL(UART_5)
 #include "uart/uart.h"
@@ -78,6 +82,10 @@ static struct trng_dev os_bsp_trng;
 
 #if MYNEWT_VAL(CRYPTO)
 static struct crypto_dev os_bsp_crypto;
+#endif
+
+#if MYNEWT_VAL(HASH)
+static struct hash_dev os_bsp_hash;
 #endif
 
 /*
@@ -209,6 +217,12 @@ hal_bsp_init(void)
     rc = os_dev_create(&os_bsp_crypto.dev, "crypto",
                        OS_DEV_INIT_KERNEL, OS_DEV_INIT_PRIO_DEFAULT,
                        k64f_crypto_dev_init, NULL);
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(HASH)
+    rc = os_dev_create(&os_bsp_hash.dev, "hash", OS_DEV_INIT_KERNEL,
+                       OS_DEV_INIT_PRIO_DEFAULT, k64f_hash_dev_init, NULL);
     assert(rc == 0);
 #endif
 
