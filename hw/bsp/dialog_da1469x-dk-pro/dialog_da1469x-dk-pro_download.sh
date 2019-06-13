@@ -76,7 +76,7 @@ if [ "$BOOT_LOADER" ]; then
     IMAGE_FILE=$FILE_NAME.img
 
     # allocate 9K for header
-    dd if=/dev/zero bs=9k count=1 | LANG=C tr "\000" "\377" > ${IMAGE_FILE}
+    dd if=/dev/zero bs=9k count=1 | LANG=C LC_CTYPE=C tr "\000" "\377" > ${IMAGE_FILE}
 
     # update product header
     HEX="5070 00200000 00200000 eb00a5a8 66000000 aa11 0300 014007c84e"
