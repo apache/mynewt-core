@@ -30,3 +30,7 @@ syscfg.defs:
     CRYPTO:
         description: 'Enable cryptograpy accelerator (CAU)'
         value: 0
+
+    HASH:
+        description: 'Enable hash accelerator (CAU)'
+        value: 0
