@@ -263,6 +263,22 @@ smp_process_packet(struct smp_transport *st)
     return 0;
 }
 
+int
+smp_rx_req(struct smp_transport *st, struct os_mbuf *req)
+{
+    int rc;
+    
+    rc = os_mqueue_put(&st->st_imq, os_eventq_dflt_get(), req);
+    if (rc) {
+        goto err;
+    }
+     
+    return 0;
+err:
+    os_mbuf_free_chain(req);
+    return rc;
+}
+
 static void
 smp_event_data_in(struct os_event *ev)
 {
@@ -294,8 +310,6 @@ smp_pkg_init(void)
 {
     /* Ensure this function only gets called by sysinit. */
     SYSINIT_ASSERT_ACTIVE();
-
-    os_mgmt_register_group();
 
     mgmt_evq_set(os_eventq_dflt_get());
 }
