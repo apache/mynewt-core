@@ -19,12 +19,14 @@
 
 #include "os/mynewt.h"
 #include "bus/bus.h"
-#include "bus/i2c.h"
-#include "bus/spi.h"
+#include "bus/drivers/i2c_common.h"
+#include "bus/drivers/spi_common.h"
 #include "console/console.h"
 #include "hal/hal_gpio.h"
+#if MYNEWT_VAL(APP_USE_BME280_SENSOR)
 #include "sensor/sensor.h"
 #include "sensor/temperature.h"
+#endif
 
 #if MYNEWT_VAL(APP_USE_LIS2DH_NODE)
 #include "lis2dh_node/lis2dh_node.h"
@@ -53,8 +55,8 @@ static const struct bus_spi_node_cfg g_bme280_spi_node_cfg = {
     .mode = BUS_SPI_MODE_0,
     .data_order = BUS_SPI_DATA_ORDER_MSB,
     .freq = MYNEWT_VAL(BME280_NODE_SPI_FREQUENCY),
-#endif
 };
+#endif
 
 static struct os_dev *g_bme280_node;
 #endif
