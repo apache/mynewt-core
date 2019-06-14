@@ -94,6 +94,11 @@ syscfg.defs:
     value: 0
 
   # Hash functions
+  MBEDTLS_SHA256_ALT:
+    description: 'Set to enable HW based HASH'
+    value: 0
+  MBEDTLS_SHA256_C:
+    value: 1
   MBEDTLS_MD5_C:
     value: 0
   MBEDTLS_SHA1_C:
