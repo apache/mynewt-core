@@ -65,6 +65,7 @@ static void *
 smp_alloc_rsp(const void *req, void *arg)
 {
    struct os_mbuf *m;
+   struct os_mbuf *rsp;
  
    if (!req) {
        return NULL;
@@ -72,7 +73,14 @@ smp_alloc_rsp(const void *req, void *arg)
 
    m = (struct os_mbuf *)req;
 
-   return os_msys_get_pkthdr(0, OS_MBUF_USRHDR_LEN(m)); 
+   rsp = os_msys_get_pkthdr(0, OS_MBUF_USRHDR_LEN(m));
+   if (!rsp) {
+       return NULL;
+   }
+
+   memcpy(OS_MBUF_USRHDR(rsp), OS_MBUF_USRHDR(m), OS_MBUF_USRHDR_LEN(m));
+
+   return rsp;
 }
 
 static void
