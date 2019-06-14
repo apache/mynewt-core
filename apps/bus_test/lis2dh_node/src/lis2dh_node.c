@@ -20,7 +20,7 @@
 #include "os/mynewt.h"
 #include "console/console.h"
 #include "bus/bus.h"
-#include "bus/i2c.h"
+#include "bus/drivers/i2c_common.h"
 #include "lis2dh_node/lis2dh_node.h"
 
 static struct bus_i2c_node g_lis2dh_node;
@@ -88,7 +88,7 @@ lis2dh_node_i2c_create(const char *name, const struct bus_i2c_node_cfg *cfg)
     bus_node_set_callbacks((struct os_dev *)&g_lis2dh_node, &cbs);
 
     rc = bus_i2c_node_create(name, &g_lis2dh_node,
-                             (struct bus_i2c_node_cfg *)cfg);
+                             (struct bus_i2c_node_cfg *)cfg, NULL);
 
     return rc;
 }
