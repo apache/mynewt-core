@@ -18,7 +18,7 @@
 #
 
 pkg.name: mgmt/smp
-pkg.description: Server-side newtmgr functionality.
+pkg.description: Server-side SMP functionality.
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:

@@ -27,7 +27,7 @@ pkg.keywords:
 
 pkg.deps:
     - "@apache-mynewt-core/kernel/os"
-    - "@apache-mynewt-core/mgmt/mgmt"
+    - "@apache-mynewt-mcumgr/mgmt"
     - "@apache-mynewt-core/mgmt/smp"
     - "@apache-mynewt-nimble/nimble/host"
 

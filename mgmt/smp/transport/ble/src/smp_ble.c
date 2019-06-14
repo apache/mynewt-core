@@ -25,17 +25,18 @@
 #include "mgmt/mgmt.h"
 #include "smp/smp.h"
 #include "console/console.h"
+#include "mynewt_smp/smp.h"
 
 /**
- * \addtogroup Newtmgr
+ * \addtogroup SMP
  * @{
  */
 
 /* smp ble mqueue */
-struct os_mqueue smp_ble_mq;
+struct os_mqueue g_smp_ble_mq;
 
 /* ble smp transport */
-struct smp_transport ble_nt;
+struct smp_transport g_smp_ble_transport;
 
 /* ble smp attr handle */
 uint16_t g_ble_smp_attr_handle;
@@ -135,10 +136,11 @@ gatt_svr_chr_access_smp(uint16_t conn_handle, uint16_t attr_handle,
              */
             memcpy(OS_MBUF_USRHDR(m_req), &conn_handle, sizeof(conn_handle));
 
-            rc = smp_rx_req(&ble_nt, m_req);
-            if (rc != 0) {
+            rc = smp_rx_req(&g_smp_ble_transport, m_req);
+            if (rc) {
                 return BLE_ATT_ERR_UNLIKELY;
             }
+            
             return 0;
 
         default:
@@ -167,7 +169,7 @@ smp_ble_get_mtu(struct os_mbuf *req) {
 }
 
 /**
- * Nmgr ble process mqueue event
+ * SMP ble process mqueue event
  * Gets an event from the smp mqueue and does a notify with the response
  *
  * @param eventq
@@ -180,7 +182,7 @@ smp_ble_event_data_in(struct os_event *ev)
     struct os_mbuf *m_resp;
     uint16_t conn_handle;
 
-    while ((m_resp = os_mqueue_get(&smp_ble_mq)) != NULL) {
+    while ((m_resp = os_mqueue_get(&g_smp_ble_mq)) != NULL) {
         assert(OS_MBUF_USRHDR_LEN(m_resp) >= sizeof (conn_handle));
         memcpy(&conn_handle, OS_MBUF_USRHDR(m_resp), sizeof (conn_handle));
         ble_gattc_notify_custom(conn_handle, g_ble_smp_attr_handle,
@@ -189,23 +191,23 @@ smp_ble_event_data_in(struct os_event *ev)
 }
 
 static int
-smp_ble_out(struct smp_transport *nt, struct os_mbuf *om)
+smp_ble_out(struct os_mbuf *om)
 {
     int rc;
 
-    rc = os_mqueue_put(&smp_ble_mq, mgmt_evq_get(), om);
+    rc = os_mqueue_put(&g_smp_ble_mq, os_eventq_dflt_get(), om);
     if (rc != 0) {
         goto err;
     }
 
-    return (0);
+    return 0;
 err:
     os_mbuf_free_chain(om);
-    return (rc);
+    return rc;
 }
 
 /**
- * Nmgr ble GATT server initialization
+ * SMP ble GATT server initialization
  *
  * @param eventq
  * @return 0 on success; non-zero on failure
@@ -225,9 +227,9 @@ smp_ble_gatt_svr_init(void)
         return rc;
     }
 
-    os_mqueue_init(&smp_ble_mq, &smp_ble_event_data_in, NULL);
+    os_mqueue_init(&g_smp_ble_mq, &smp_ble_event_data_in, NULL);
 
-    rc = smp_transport_init(&ble_nt, smp_ble_out, smp_ble_get_mtu);
+    rc = smp_transport_init(&g_smp_ble_transport, smp_ble_out, smp_ble_get_mtu);
 
 err:
     return rc;
@@ -246,5 +248,5 @@ smp_ble_pkg_init(void)
 }
 
 /**
- * @} Newtmgr
+ * @} SMP
  */
