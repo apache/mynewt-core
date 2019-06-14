@@ -244,6 +244,14 @@ extern "C" {
 #undef MBEDTLS_CTR_DRBG_C
 #endif
 
+#if MYNEWT_VAL(MBEDTLS_SHA256_ALT) == 0
+#undef MBEDTLS_SHA256_ALT
+#elif !defined(MBEDTLS_SHA256_ALT)
+#define MBEDTLS_SHA256_ALT 1
+#endif
+#if MYNEWT_VAL(MBEDTLS_SHA256_C) == 0
+#undef MBEDTLS_SHA256_C
+#endif
 #if MYNEWT_VAL(MBEDTLS_MD5_C) == 0
 #undef MBEDTLS_MD5_C
 #endif
