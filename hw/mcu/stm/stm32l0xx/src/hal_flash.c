@@ -18,6 +18,7 @@
  */
 
 #include <string.h>
+#include <assert.h>
 #include <syscfg/syscfg.h>
 #include <mcu/stm32_hal.h>
 #include "hal/hal_flash_int.h"
@@ -38,7 +39,7 @@
  * intentionally alerts the user that this code needs to be updated
  * as well.
  */
-_Static_assert(_FLASH_SECTOR_SIZE == (_REAL_SECTOR_SIZE * _PAGES_PER_SECTOR),
+static_assert(_FLASH_SECTOR_SIZE == (_REAL_SECTOR_SIZE * _PAGES_PER_SECTOR),
     "STM32_FLASH_SECTOR_SIZE was changed; the erase function needs updating!");
 
 int

@@ -259,14 +259,14 @@ TEST_SUITE_##suite_name(void);                               \
 #else
 
 #define TEST_CASE_SELF(case_name)                               \
-    _Static_assert(0, "Test `"#case_name"` is a self test.  "   \
-                      "It can only be run from `newt test`");   \
+    static_assert(0, "Test `"#case_name"` is a self test.  "    \
+                     "It can only be run from `newt test`");    \
     /* Emit case definition anyway to prevent syntax errors. */ \
     TEST_CASE_SELF_EMIT_(case_name)
 
 #define TEST_CASE_TASK(case_name)                               \
-    _Static_assert(0, "Test `"#case_name"` is a self test.  "   \
-                      "It can only be run from `newt test`");   \
+    static_assert(0, "Test `"#case_name"` is a self test.  "    \
+                     "It can only be run from `newt test`");    \
     /* Emit case definition anyway to prevent syntax errors. */ \
     TEST_CASE_TASK_EMIT_(case_name)
     
