@@ -29,6 +29,10 @@
 
 #include <nrf.h>
 
+/*** Custom master clock frequency */
+/** 380 kbps */
+#define TWI_CUSTOM_FREQUENCY_FREQUENCY_K380 (0x06147ae9UL)
+
 #if defined(NRF52810_XXAA) || defined(NRF52811_XXAA)
 #define PSELSCL PSEL.SCL
 #define PSELSDA PSEL.SDA
