@@ -17,6 +17,7 @@
  * under the License.
  */
 
+#include <assert.h>
 #include "os/mynewt.h"
 
 /**
@@ -44,8 +45,8 @@ sysdown(int reason)
 #define SYSDOWN_TIMEOUT_TICKS   \
     (MYNEWT_VAL(SYSDOWN_TIMEOUT_MS) * OS_TICKS_PER_SEC / 1000)
 
-_Static_assert(SYSDOWN_TIMEOUT_TICKS >= 0 && SYSDOWN_TIMEOUT_TICKS < INT32_MAX,
-               "SYSDOWN_TIMEOUT_MS value not in valid range");
+static_assert(SYSDOWN_TIMEOUT_TICKS >= 0 && SYSDOWN_TIMEOUT_TICKS < INT32_MAX,
+              "SYSDOWN_TIMEOUT_MS value not in valid range");
 
 static volatile int sysdown_num_in_progress;
 bool sysdown_active;
