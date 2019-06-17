@@ -36,6 +36,11 @@
 #include "crypto_stm32/crypto_stm32.h"
 #endif
 
+#if MYNEWT_VAL(HASH)
+#include "hash/hash.h"
+#include "hash_stm32/hash_stm32.h"
+#endif
+
 #include <hal/hal_bsp.h>
 #include <hal/hal_gpio.h>
 #include <hal/hal_timer.h>
@@ -90,6 +95,10 @@ static struct trng_dev os_bsp_trng;
 
 #if MYNEWT_VAL(CRYPTO)
 static struct crypto_dev os_bsp_crypto;
+#endif
+
+#if MYNEWT_VAL(HASH)
+static struct hash_dev os_bsp_hash;
 #endif
 
 #if MYNEWT_VAL(UART_0)
@@ -195,6 +204,11 @@ hal_bsp_init(void)
     rc = os_dev_create(&os_bsp_crypto.dev, "crypto",
                        OS_DEV_INIT_KERNEL, OS_DEV_INIT_PRIO_DEFAULT,
                        stm32_crypto_dev_init, NULL);
+#endif
+
+#if MYNEWT_VAL(HASH)
+    rc = os_dev_create(&os_bsp_hash.dev, "hash", OS_DEV_INIT_KERNEL,
+                       OS_DEV_INIT_PRIO_DEFAULT, stm32_hash_dev_init, NULL);
     assert(rc == 0);
 #endif
 
