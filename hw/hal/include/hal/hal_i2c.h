@@ -62,6 +62,10 @@ extern "C" {
  *      :c:func:`hal_i2c_read()`; --- read back data, setting 'last_op' to '1'
  */
 
+/*** Custom master clock frequency */
+/** 380 kbps */
+#define TWI_CUSTOM_FREQUENCY_FREQUENCY_K380 (0x06147ae9UL)
+
 /*** I2C status codes (0=success). */
 
 /** Unknown error. */

@@ -419,7 +419,7 @@ bus_i2c_nrf52_twim_configure(struct bus_dev *bdev, struct bus_node *bnode)
         nrf_twim->FREQUENCY = TWIM_FREQUENCY_FREQUENCY_K250;
         break;
     case 380:
-        nrf_twim->FREQUENCY = TWIM_FREQUENCY_FREQUENCY_K380;
+        nrf_twim->FREQUENCY = TWIM_CUSTOM_FREQUENCY_FREQUENCY_K380;
         break;
     case 400:
         nrf_twim->FREQUENCY = TWIM_FREQUENCY_FREQUENCY_K400;
