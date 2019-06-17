@@ -46,3 +46,6 @@ pkg.deps.TRNG:
 
 pkg.deps.CRYPTO:
     - "@apache-mynewt-core/hw/drivers/crypto/crypto_stm32"
+
+pkg.deps.HASH:
+    - "@apache-mynewt-core/hw/drivers/hash/hash_stm32"

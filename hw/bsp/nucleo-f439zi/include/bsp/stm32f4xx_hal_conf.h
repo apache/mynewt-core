@@ -69,7 +69,6 @@
 #define HAL_PCCARD_MODULE_ENABLED
 #define HAL_SRAM_MODULE_ENABLED
 /* #define HAL_SDRAM_MODULE_ENABLED */
-#define HAL_HASH_MODULE_ENABLED
 #define HAL_GPIO_MODULE_ENABLED
 #define HAL_I2C_MODULE_ENABLED
 #define HAL_I2S_MODULE_ENABLED
@@ -102,6 +101,7 @@
 #define HAL_RNG_MODULE_ENABLED
 #define HAL_CRYP_MODULE_ENABLED
 #define HAL_PWR_MODULE_ENABLED
+#define HAL_HASH_MODULE_ENABLED
 #endif
 
 /* ########################## HSE/HSI Values adaptation ##################### */
