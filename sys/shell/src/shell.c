@@ -686,6 +686,10 @@ complete_command(char *line, char *command_prefix,
             append_char(line, ' ');
         }
         return;
+    } else if (match_count == 1) {
+        /* Whole word matched, append space */
+        append_char(line, ' ');
+        return;
     }
 
     /*
