@@ -39,6 +39,8 @@
 #ifndef __STM32F4xx_HAL_CONF_H
 #define __STM32F4xx_HAL_CONF_H
 
+#include <syscfg/syscfg.h>
+
 #ifdef __cplusplus
  extern "C" {
 #endif
@@ -165,10 +167,9 @@
 #define  VDD_VALUE                    ((uint32_t)3300) /*!< Value of VDD in mv */
 #define  TICK_INT_PRIORITY            ((uint32_t)0x0F) /*!< tick interrupt priority */
 #define  USE_RTOS                     0
-#define  PREFETCH_ENABLE              0 /* The prefetch will be enabled in SystemClock_Config(), depending on the used
-                                           STM32F405/415/07/417 device: RevA (prefetch must be off) or RevZ (prefetch can be on/off) */
-#define  INSTRUCTION_CACHE_ENABLE     1
-#define  DATA_CACHE_ENABLE            1
+#define  PREFETCH_ENABLE              MYNEWT_VAL(STM32_FLASH_PREFETCH_ENABLE)
+#define  INSTRUCTION_CACHE_ENABLE     MYNEWT_VAL(STM32_INSTRUCTION_CACHE_ENABLE)
+#define  DATA_CACHE_ENABLE            MYNEWT_VAL(STM32_DATA_CACHE_ENABLE)
 
 /* ########################## Assert Selection ############################## */
 /**
