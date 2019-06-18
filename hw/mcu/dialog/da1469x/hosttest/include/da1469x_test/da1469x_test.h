@@ -32,6 +32,8 @@ extern "C" {
 #endif
 
 TEST_CASE_DECL(da1469x_snc_test_case_1);
+TEST_CASE_DECL(da1469x_snc_test_case_2);
+TEST_CASE_DECL(da1469x_snc_test_case_3);
 TEST_SUITE_DECL(da1469x_test_suite);
 
 #ifdef __cplusplus

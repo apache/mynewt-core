@@ -165,7 +165,7 @@ TEST_CASE(da1469x_snc_test_case_1)
 {
     int rc;
 
-    MODLOG_INFO(LOG_MODULE_TEST, "DA1469x snc test");
+    MODLOG_INFO(LOG_MODULE_TEST, "DA1469x snc test 1");
 
     /*
      * Initialize to some non-zero number. The test program should increment
@@ -189,15 +189,15 @@ TEST_CASE(da1469x_snc_test_case_1)
     /* Test var 14 is a pointer to var 15 */
     da1469x_test_var14 = (uint32_t)&da1469x_test_var15;
 
-    /* Configure the SNC (base address and divider */
-    rc = snc_config(&snc_program, SNC_CLK_DIV_1);
+    /* Configure the SNC (base address and divider) */
+    rc = da1469x_snc_config(&snc_program, SNC_CLK_DIV_1);
     if (rc) {
         MODLOG_INFO(LOG_MODULE_TEST, "snc config failed");
         TEST_ASSERT_FATAL(0);
     }
 
     /* Initialize the SNC */
-    rc = snc_sw_init();
+    rc = da1469x_snc_sw_init();
     if (rc) {
         MODLOG_INFO(LOG_MODULE_TEST, "snc init failed");
         TEST_ASSERT_FATAL(0);
@@ -207,20 +207,20 @@ TEST_CASE(da1469x_snc_test_case_1)
      * Make sure IRQ config bits are 0. The init function clears these but
      * we do it here as well.
      */
-    snc_irq_config(SNC_IRQ_MASK_NONE);
+    da1469x_snc_irq_config(SNC_IRQ_MASK_NONE, NULL, NULL);
     if ((SNC->SNC_CTRL_REG & SNC_SNC_CTRL_REG_SNC_IRQ_CONFIG_Msk) != 0) {
         MODLOG_INFO(LOG_MODULE_TEST, "snc irq config failed");
         TEST_ASSERT_FATAL(0);
     }
 
     /* Start the program */
-    snc_sw_start();
+    da1469x_snc_sw_start();
 
     /* Wait 1 second for program to finish. */
     os_time_delay(OS_TICKS_PER_SEC);
-    if (!snc_program_is_done()) {
+    if (!da1469x_snc_program_is_done()) {
         MODLOG_INFO(LOG_MODULE_TEST, "snc test failed (not done)");
-        snc_sw_stop();
+        da1469x_snc_sw_stop();
         TEST_ASSERT_FATAL(0);
     }
 
@@ -324,6 +324,144 @@ TEST_CASE(da1469x_snc_test_case_1)
         TEST_ASSERT_FATAL(0);
     }
 
-    MODLOG_INFO(LOG_MODULE_TEST, "snc test success");
+    da1469x_snc_sw_stop();
+    rc = da1469x_snc_sw_deinit();
+    if (rc) {
+        MODLOG_INFO(LOG_MODULE_TEST, "snc s/w deinit failed");
+        TEST_ASSERT_FATAL(0);
+    }
+
+    MODLOG_INFO(LOG_MODULE_TEST, "snc test 1 success");
+}
+
+/*====================== TEST CASE 2 =====================================
+The intent of this test case is to test the interrupt API.
+========================================================================*/
+uint32_t g_snc_tc2_cntr;
+uint32_t snc_prog_test_case2[] =
+{
+    /* This should toggle the IRQ_EN bit, thus generating an interrupt */
+    SNC_CMD_TOBRE_REG(0x50020C00, SNC_SNC_CTRL_REG_SNC_IRQ_EN_Msk),
+    SNC_CMD_SLEEP()
+};
+
+void snc_tc2_irq_cb(void *arg)
+{
+    uint32_t *tmp;
+
+    tmp = (uint32_t *)arg;
+    if (tmp) {
+        *tmp += 1;
+    }
+}
+
+TEST_CASE(da1469x_snc_test_case_2)
+{
+    int rc;
+
+    MODLOG_INFO(LOG_MODULE_TEST, "DA1469x snc test 2");
+
+    /* Configure the SNC (base address and divider) */
+    rc = da1469x_snc_config(&snc_prog_test_case2, SNC_CLK_DIV_1);
+    if (rc) {
+        MODLOG_INFO(LOG_MODULE_TEST, "snc config failed");
+        TEST_ASSERT_FATAL(0);
+    }
+
+    /* Initialize the SNC */
+    rc = da1469x_snc_sw_init();
+    if (rc) {
+        MODLOG_INFO(LOG_MODULE_TEST, "snc init failed");
+        TEST_ASSERT_FATAL(0);
+    }
+
+    /*
+     * Register an interrupt routine. Pass it an argument as well. This
+     * argument points to a global counter that should get incremented once
+     */
+    da1469x_snc_irq_config(SNC_IRQ_MASK_HOST, snc_tc2_irq_cb, &g_snc_tc2_cntr);
+
+    /* Start the program */
+    da1469x_snc_sw_start();
+
+    /* This program should finish very quickly */
+    os_time_delay(OS_TICKS_PER_SEC / 10);
+    if (!da1469x_snc_program_is_done()) {
+        MODLOG_INFO(LOG_MODULE_TEST, "snc test 2 failed (not done)");
+        da1469x_snc_sw_stop();
+        TEST_ASSERT_FATAL(0);
+    }
+
+    /* Check that the counter got incremented */
+    if (g_snc_tc2_cntr != 1) {
+        MODLOG_INFO(LOG_MODULE_TEST, "snc test failed tc2=%u", g_snc_tc2_cntr);
+        TEST_ASSERT_FATAL(0);
+    }
+
+    da1469x_snc_sw_stop();
+    rc = da1469x_snc_sw_deinit();
+    if (rc) {
+        MODLOG_INFO(LOG_MODULE_TEST, "snc s/w deinit failed");
+        TEST_ASSERT_FATAL(0);
+    }
+
+    MODLOG_INFO(LOG_MODULE_TEST, "snc test 2 success");
+}
+
+/*
+ * This test case enables only the PDC interrupt. Should not get a SNC
+ * interrupt to the M33 in this case
+ */
+TEST_CASE(da1469x_snc_test_case_3)
+{
+    int rc;
+
+    MODLOG_INFO(LOG_MODULE_TEST, "DA1469x snc test 3");
+
+    /* Configure the SNC (base address and divider) */
+    rc = da1469x_snc_config(&snc_prog_test_case2, SNC_CLK_DIV_1);
+    if (rc) {
+        MODLOG_INFO(LOG_MODULE_TEST, "snc config failed");
+        TEST_ASSERT_FATAL(0);
+    }
+
+    /* Initialize the SNC */
+    rc = da1469x_snc_sw_init();
+    if (rc) {
+        MODLOG_INFO(LOG_MODULE_TEST, "snc init failed");
+        TEST_ASSERT_FATAL(0);
+    }
+
+    /*
+     * Register an interrupt routine. Pass it an argument as well. This
+     * argument points to a global counter that should get incremented once
+     */
+    da1469x_snc_irq_config(SNC_IRQ_MASK_PDC, snc_tc2_irq_cb, &g_snc_tc2_cntr);
+
+    /* Start the program */
+    da1469x_snc_sw_start();
+
+    /* This program should finish very quickly */
+    os_time_delay(OS_TICKS_PER_SEC / 10);
+    if (!da1469x_snc_program_is_done()) {
+        MODLOG_INFO(LOG_MODULE_TEST, "snc test 3 failed (not done)");
+        da1469x_snc_sw_stop();
+        TEST_ASSERT_FATAL(0);
+    }
+
+    /* Check that the counter got incremented */
+    if (g_snc_tc2_cntr != 1) {
+        MODLOG_INFO(LOG_MODULE_TEST, "snc test failed tc2=%u", g_snc_tc2_cntr);
+        TEST_ASSERT_FATAL(0);
+    }
+
+    da1469x_snc_sw_stop();
+    rc = da1469x_snc_sw_deinit();
+    if (rc) {
+        MODLOG_INFO(LOG_MODULE_TEST, "snc s/w deinit failed");
+        TEST_ASSERT_FATAL(0);
+    }
+
+    MODLOG_INFO(LOG_MODULE_TEST, "snc test 3 success");
 }
 #endif

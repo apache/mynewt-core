@@ -21,19 +21,27 @@
 #define __MCU_DA1469X_SNC_H_
 
 #include <stdint.h>
+#include "mcu/mcu.h"
 #include "DA1469xAB.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* XXX: define these here for now until I get a better definition */
-#define SNC_REG_BASE_ADDR   (0x50000000)
-#define SNC_RAM_BASE_ADDR   (0x20000000)
+/*
+ * The following two defintions are used by some instructions to determine if
+ * the address used in the instruction refers to a peripheral register location
+ * or is an address in system RAM.
+ */
+#define SNC_PERIPH_ADDR     (0x50000000)
+#define SNC_SYSRAM_ADDR     (MCU_MEM_SYSRAM_START_ADDRESS)
 #define SNC_REG_MASK        (1 << 19)
-#define SNC_OP_IS_REG(op)   ((((uint32_t)op) & SNC_REG_BASE_ADDR) ? SNC_REG_MASK : 0)
-#define SNC_ADDR(addr)      (((uint32_t)addr) - SNC_RAM_BASE_ADDR)
-#define SNC_REG(addr)       (((uint32_t)addr) - SNC_REG_BASE_ADDR)
+#define SNC_OP_IS_REG(op)   ((((uint32_t)op) & SNC_PERIPH_ADDR) ? SNC_REG_MASK : 0)
+#define SNC_ADDR(addr)      (((uint32_t)addr) - SNC_SYSRAM_ADDR)
+#define SNC_REG(addr)       (((uint32_t)addr) - SNC_PERIPH_ADDR)
+
+/* Proto for isr callback function (for M33) */
+typedef void (*snc_isr_cb_t)(void *arg);
 
 /*
  * For certain commands which use direct or indirect addresses. A direct address
@@ -357,44 +365,64 @@ extern "C" {
  */
 
 /**
+ * da1469x snc sw init
+ *
  * initialize the SNC for software control
  *
  * Called when the host processor wants control of the SNC (PDC
- * no longer controls SNC).
+ * no longer controls SNC). The SNC must be stopped or this function will return
+ * an error.
  *
- * @return int 0: success, -1 error.
+ * NOTE: this function will acquire the COM power domain.
+ *
+ * @return int 0: success, -1: error (SNC not currently stopped).
  */
-int snc_sw_init(void);
+int da1469x_snc_sw_init(void);
 
 /**
- * snc sw start
+ * da1469x snc sw deinit
+ *
+ * Takes the SNC out of software control. The SNC must be
+ * stopped and in software control or an error will be returned
+ *
+ * NOTE: this function releases the COM power domain when
+ * called.
+ *
+ * @return int 0: success, -1: error
+ */
+int da1469x_snc_sw_deinit(void);
+
+/**
+ * da1469x snc sw start
  *
  * Starts the SNC. Note that the user should have called
  * snc_sw_load prior to starting the SNC via software control.
  *
  * @return int 0: success -1: error
  */
-int snc_sw_start(void);
+int da1469x_snc_sw_start(void);
 
 /**
- * snc sw stop
+ * da1469x snc sw stop
  *
  * Stops the SNC from running a program. This should only be
  * called when the SNC is under software control.
  *
  * @return int 0: success -1: error
  */
-int snc_sw_stop(void);
+int da1469x_snc_sw_stop(void);
 
 /**
+ * da1469x snc program is done
+ *
  * Checks if the SNC program has finished
  *
  * @return int 0: not finished 1: finished
  */
-int snc_program_is_done(void);
+int da1469x_snc_program_is_done(void);
 
 /**
- * snc irq config
+ * da1469x snc irq config
  *
  * Configures the SNC to interrupt the host processor and/or PDC
  * when SNC generates an interrupt.
@@ -403,6 +431,9 @@ int snc_program_is_done(void);
  *  SNC_IRQ_MASK_NONE: Do not interrupt host or PDC
  *  SNC_IRQ_MASK_HOST: Interrupt host processor (CM33)
  *  SNC_IRQ_MASK_PDC: Interrupt PDC
+ * @param isr_cb    Callback function for M33 irq handler. Can
+ *                  be NULL.
+ * @param isr_arg   Argument to isr callback function.
  *
  * @return int 0: success -1: invalid mask parameter
  *
@@ -413,49 +444,47 @@ int snc_program_is_done(void);
  * function will automatically clear the IRQ if that is the case
  * and will not report an error.
  */
-int snc_irq_config(uint8_t mask);
+int da1469x_snc_irq_config(uint8_t mask, snc_isr_cb_t isr_cb, void *arg);
 
 #define SNC_IRQ_MASK_NONE   (0x00)  /* Do not interrupt host or PDC */
 #define SNC_IRQ_MASK_HOST   (0x01)  /* Interrupt host processor (CM33) */
 #define SNC_IRQ_MASK_PDC    (0x02)  /* Interrupt PDC */
 
 /**
- * snc irq clear
+ * da1469x snc irq clear
  *
  * Clears the IRQ from the SNC to the PDC and/or Host processor.
  */
 static inline void
-snc_irq_clear(void)
+da1469x_snc_irq_clear(void)
 {
-    SNC->SNC_CTRL_REG &= ~SNC_SNC_CTRL_REG_SNC_IRQ_ACK_Msk;
+    SNC->SNC_CTRL_REG |= SNC_SNC_CTRL_REG_SNC_IRQ_ACK_Msk;
 }
 
 /**
- * snc error status
+ * da1469x snc error status
  *
- * Returns the status register error bits for hard fault and bus
- * error.
+ * Returns error status for the SNC
  *
- * @return uint32_t Error status.
- *  Returns the SNC status register error bits:
- *   SNC_SNC_STATUS_REG_HARD_FAULT_STATUS_Msk: Hard Fault error
- *   SNC_SNC_STATUS_REG_BUS_ERROR_STATUS_Msk: Bus Fault error
+ * @return uint8_t Error status.
+ *  Returns one or more of the following errors:
+ *   SNC_BUS_ERROR: Bus Fault error (invalid memory access)
+ *   SNC_HARD_FAULT_ERROR: Hard Fault error (invalid
+ *   instruction)
  */
-static inline uint32_t
-snc_error_status(void)
-{
-    return SNC->SNC_STATUS_REG & (SNC_SNC_STATUS_REG_HARD_FAULT_STATUS_Msk |
-                                  SNC_SNC_STATUS_REG_BUS_ERROR_STATUS_Msk);
-}
+uint8_t da1469x_snc_error_status(void);
+
+#define SNC_BUS_ERROR            (0x01)
+#define SNC_HARD_FAULT_ERROR     (0x02)
 
 static inline void
-snc_enable_bus_err_detect(void)
+da1469x_snc_enable_bus_err_detect(void)
 {
     SNC->SNC_CTRL_REG |= SNC_SNC_CTRL_REG_BUS_ERROR_DETECT_EN_Msk;
 }
 
 /**
- * snc config
+ * da1469x snc config
  *
  * Configures the starting program address of the SNC in the
  * memory controller and sets SNC clock divider.
@@ -471,7 +500,7 @@ snc_enable_bus_err_detect(void)
  *
  * @return int 0: success, -1 otherwise.
  */
-int snc_config(void *prog_addr, int clk_div);
+int da1469x_snc_config(void *prog_addr, int clk_div);
 
 #define SNC_CLK_DIV_1       (0)
 #define SNC_CLK_DIV_2       (1)
