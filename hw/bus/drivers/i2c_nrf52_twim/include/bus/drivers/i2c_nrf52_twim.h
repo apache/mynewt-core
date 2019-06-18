@@ -29,6 +29,10 @@
 extern "C" {
 #endif
 
+/*** Custom master clock frequency */
+/** 380 kbps */
+#define TWIM_CUSTOM_FREQUENCY_FREQUENCY_K380 (0x06147ae9UL)
+
 /**
  * Initialize os_dev as I2C bus device using nRF52xxx TWIM peripheral
  *
