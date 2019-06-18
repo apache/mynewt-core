@@ -39,6 +39,8 @@
 #ifndef __STM32F4xx_HAL_CONF_H
 #define __STM32F4xx_HAL_CONF_H
 
+#include <syscfg/syscfg.h>
+
 #ifdef __cplusplus
  extern "C" {
 #endif
@@ -107,7 +109,7 @@
   *        This value is used by the RCC HAL module to compute the system frequency
   *        (when HSE is used as system clock source, directly or through the PLL).  
   */
-#if !defined  (HSE_VALUE) 
+#if !defined  (HSE_VALUE)
   #define HSE_VALUE    ((uint32_t)8000000) /*!< Value of the External oscillator in Hz */
 #endif /* HSE_VALUE */
 
@@ -127,8 +129,8 @@
 /**
   * @brief Internal Low Speed oscillator (LSI) value.
   */
-#if !defined  (LSI_VALUE) 
- #define LSI_VALUE  ((uint32_t)32000)    
+#if !defined  (LSI_VALUE)
+ #define LSI_VALUE  ((uint32_t)32000)
 #endif /* LSI_VALUE */                      /*!< Value of the Internal Low Speed oscillator in Hz
                                              The real value may vary depending on the variations
                                              in voltage and temperature.  */
@@ -158,18 +160,17 @@
 /* ########################### System Configuration ######################### */
 /**
   * @brief This is the HAL system configuration section
-  */     
+  */
 #define  VDD_VALUE                    ((uint32_t)3300) /*!< Value of VDD in mv */
 #define  TICK_INT_PRIORITY            ((uint32_t)0x0F) /*!< tick interrupt priority */
 #define  USE_RTOS                     0
-#define  PREFETCH_ENABLE              0 /* The prefetch will be enabled in SystemClock_Config(), depending on the used 
-                                           STM32F405/415/07/417 device: RevA (prefetch must be off) or RevZ (prefetch can be on/off) */
-#define  INSTRUCTION_CACHE_ENABLE     1
-#define  DATA_CACHE_ENABLE            1
+#define  PREFETCH_ENABLE              MYNEWT_VAL(STM32_FLASH_PREFETCH_ENABLE)
+#define  INSTRUCTION_CACHE_ENABLE     MYNEWT_VAL(STM32_INSTRUCTION_CACHE_ENABLE)
+#define  DATA_CACHE_ENABLE            MYNEWT_VAL(STM32_DATA_CACHE_ENABLE)
 
 /* ########################## Assert Selection ############################## */
 /**
-  * @brief Uncomment the line below to expanse the "assert_param" macro in the 
+  * @brief Uncomment the line below to expanse the "assert_param" macro in the
   *        HAL drivers code
   */
 /* #define USE_FULL_ASSERT    1 */
@@ -186,7 +187,7 @@
 #define MAC_ADDR4   0
 #define MAC_ADDR5   0
 
-/* Definition of the Ethernet driver buffers size and count */   
+/* Definition of the Ethernet driver buffers size and count */
 #define ETH_RX_BUF_SIZE                ETH_MAX_PACKET_SIZE /* buffer size for receive               */
 #define ETH_TX_BUF_SIZE                ETH_MAX_PACKET_SIZE /* buffer size for transmit              */
 #define ETH_RXBUFNB                    ((uint32_t)4)       /* 4 Rx buffers of size ETH_RX_BUF_SIZE  */
@@ -194,9 +195,9 @@
 
 /* Section 2: PHY configuration section */
 
-/* DP83848 PHY Address*/ 
+/* DP83848 PHY Address*/
 #define DP83848_PHY_ADDRESS             0x01
-/* PHY Reset delay these values are based on a 1 ms Systick interrupt*/ 
+/* PHY Reset delay these values are based on a 1 ms Systick interrupt*/
 #define PHY_RESET_DELAY                 ((uint32_t)0x000000FF)
 /* PHY Configuration delay */
 #define PHY_CONFIG_DELAY                ((uint32_t)0x00000FFF)
@@ -223,13 +224,13 @@
 #define PHY_AUTONEGO_COMPLETE           ((uint16_t)0x0020)  /*!< Auto-Negotiation process completed   */
 #define PHY_LINKED_STATUS               ((uint16_t)0x0004)  /*!< Valid link established               */
 #define PHY_JABBER_DETECTION            ((uint16_t)0x0002)  /*!< Jabber condition detected            */
-  
+
 /* Section 4: Extended PHY Registers */
 
 #define PHY_SR                          ((uint16_t)0x10)    /*!< PHY status register Offset                      */
 #define PHY_MICR                        ((uint16_t)0x11)    /*!< MII Interrupt Control Register                  */
 #define PHY_MISR                        ((uint16_t)0x12)    /*!< MII Interrupt Status and Misc. Control Register */
- 
+
 #define PHY_LINK_STATUS                 ((uint16_t)0x0001)  /*!< PHY Link mask                                   */
 #define PHY_SPEED_STATUS                ((uint16_t)0x0002)  /*!< PHY Speed mask                                  */
 #define PHY_DUPLEX_STATUS               ((uint16_t)0x0004)  /*!< PHY Duplex mask                                 */
@@ -251,7 +252,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 /**
-  * @brief Include module's header file 
+  * @brief Include module's header file
   */
 
 #ifdef HAL_RCC_MODULE_ENABLED
@@ -265,7 +266,7 @@
 #ifdef HAL_DMA_MODULE_ENABLED
   #include "stm32f4xx_hal_dma.h"
 #endif /* HAL_DMA_MODULE_ENABLED */
-   
+
 #ifdef HAL_CORTEX_MODULE_ENABLED
   #include "stm32f4xx_hal_cortex.h"
 #endif /* HAL_CORTEX_MODULE_ENABLED */
@@ -283,7 +284,7 @@
 #endif /* HAL_CRC_MODULE_ENABLED */
 
 #ifdef HAL_CRYP_MODULE_ENABLED
-  #include "stm32f4xx_hal_cryp.h" 
+  #include "stm32f4xx_hal_cryp.h"
 #endif /* HAL_CRYP_MODULE_ENABLED */
 
 #ifdef HAL_DMA2D_MODULE_ENABLED
@@ -305,7 +306,7 @@
 #ifdef HAL_FLASH_MODULE_ENABLED
   #include "stm32f4xx_hal_flash.h"
 #endif /* HAL_FLASH_MODULE_ENABLED */
- 
+
 #ifdef HAL_SRAM_MODULE_ENABLED
   #include "stm32f4xx_hal_sram.h"
 #endif /* HAL_SRAM_MODULE_ENABLED */
@@ -320,11 +321,11 @@
 
 #ifdef HAL_PCCARD_MODULE_ENABLED
   #include "stm32f4xx_hal_pccard.h"
-#endif /* HAL_PCCARD_MODULE_ENABLED */ 
-  
+#endif /* HAL_PCCARD_MODULE_ENABLED */
+
 #ifdef HAL_SDRAM_MODULE_ENABLED
   #include "stm32f4xx_hal_sdram.h"
-#endif /* HAL_SDRAM_MODULE_ENABLED */      
+#endif /* HAL_SDRAM_MODULE_ENABLED */
 
 #ifdef HAL_HASH_MODULE_ENABLED
  #include "stm32f4xx_hal_hash.h"
@@ -401,14 +402,14 @@
 #ifdef HAL_HCD_MODULE_ENABLED
  #include "stm32f4xx_hal_hcd.h"
 #endif /* HAL_HCD_MODULE_ENABLED */
-   
+
 /* Exported macro ------------------------------------------------------------*/
 #ifdef  USE_FULL_ASSERT
 /**
   * @brief  The assert_param macro is used for function's parameters check.
   * @param  expr: If expr is false, it calls assert_failed function
   *         which reports the name of the source file and the source
-  *         line number of the call that failed. 
+  *         line number of the call that failed.
   *         If expr is true, it returns no value.
   * @retval None
   */
@@ -417,15 +418,12 @@
   void assert_failed(uint8_t* file, uint32_t line);
 #else
   #define assert_param(expr) ((void)0)
-#endif /* USE_FULL_ASSERT */    
-    
-
+#endif /* USE_FULL_ASSERT */
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif /* __STM32F4xx_HAL_CONF_H */
- 
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
