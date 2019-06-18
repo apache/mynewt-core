@@ -23,8 +23,8 @@ syscfg.defs:
         value: 1024
 
     STM32_FLASH_NUM_AREAS:
-        description: 'Amount of flash sectors for a non-linear STM32 MCU.'
-        value: 9
+        description: 'Number of flash sectors for a non-linear STM32 MCU.'
+        value: 8
 
     UART_0:
         description: 'Uart 0'

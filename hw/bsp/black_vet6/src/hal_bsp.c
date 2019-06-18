@@ -69,7 +69,7 @@ const uint32_t stm32_flash_sectors[] = {
 };
 
 #define SZ ARRAY_SIZE(stm32_flash_sectors)
-static_assert(MYNEWT_VAL(STM32_FLASH_NUM_AREAS) == SZ,
+static_assert(MYNEWT_VAL(STM32_FLASH_NUM_AREAS) + 1 == SZ,
         "STM32_FLASH_NUM_AREAS does not match flash sectors");
 
 #if MYNEWT_VAL(TRNG)
