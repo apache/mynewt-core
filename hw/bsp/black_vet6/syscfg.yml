@@ -22,8 +22,8 @@ syscfg.defs:
         value: 512
 
     STM32_FLASH_NUM_AREAS:
-        description: 'Amount of flash sectors for a non-linear STM32 MCU.'
-        value: 9
+        description: 'Number of flash sectors for a non-linear STM32 MCU.'
+        value: 8
 
     ADC_1:
         description: "ADC_1"
