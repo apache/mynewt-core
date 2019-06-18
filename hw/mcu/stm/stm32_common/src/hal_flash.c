@@ -53,7 +53,7 @@ const struct hal_flash_funcs stm32_flash_funcs = {
 
 #if !FLASH_IS_LINEAR
 extern const uint32_t stm32_flash_sectors[];
-#define FLASH_NUM_AREAS (MYNEWT_VAL(STM32_FLASH_NUM_AREAS) - 1)
+#define FLASH_NUM_AREAS MYNEWT_VAL(STM32_FLASH_NUM_AREAS)
 #else
 #define FLASH_NUM_AREAS (_FLASH_SIZE / _FLASH_SECTOR_SIZE)
 #endif
