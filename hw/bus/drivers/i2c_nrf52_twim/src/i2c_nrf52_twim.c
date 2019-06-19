@@ -24,6 +24,7 @@
 #include "bus/bus_debug.h"
 #include "bus/bus_driver.h"
 #include "bus/drivers/i2c_common.h"
+#include "bus/drivers/i2c_nrf52_twim.h"
 #include "mcu/nrf52_hal.h"
 #include "nrfx.h"
 #if MYNEWT_VAL(I2C_NRF52_TWIM_STAT)
