@@ -910,7 +910,7 @@ log_walk_body(struct log *log, log_walk_body_func_t walk_body_func,
  * @return                      The number of bytes read; 0 on failure.
  */
 int
-log_read(struct log *log, void *dptr, void *buf, uint16_t off,
+log_read(struct log *log, const void *dptr, void *buf, uint16_t off,
          uint16_t len)
 {
     int rc;

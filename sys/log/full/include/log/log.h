@@ -80,9 +80,9 @@ typedef int (*log_walk_func_t)(struct log *, struct log_offset *log_offset,
 
 typedef int (*log_walk_body_func_t)(struct log *log,
         struct log_offset *log_offset, const struct log_entry_hdr *hdr,
-        void *dptr, uint16_t len);
+        const void *dptr, uint16_t len);
 
-typedef int (*lh_read_func_t)(struct log *, void *dptr, void *buf,
+typedef int (*lh_read_func_t)(struct log *, const void *dptr, void *buf,
         uint16_t offset, uint16_t len);
 typedef int (*lh_read_mbuf_func_t)(struct log *, void *dptr, struct os_mbuf *om,
                                    uint16_t offset, uint16_t len);
@@ -510,7 +510,7 @@ log_append_mbuf(struct log *log, uint8_t module, uint8_t level,
 
 void log_printf(struct log *log, uint8_t module, uint8_t level,
         const char *msg, ...);
-int log_read(struct log *log, void *dptr, void *buf, uint16_t off,
+int log_read(struct log *log, const void *dptr, void *buf, uint16_t off,
         uint16_t len);
 
 /**

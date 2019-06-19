@@ -89,8 +89,11 @@ stats_nmgr_read(struct mgmt_cbuf *cb)
 #define STATS_NMGR_NAME_LEN (32)
     char stats_name[STATS_NMGR_NAME_LEN];
     struct cbor_attr_t attrs[] = {
-        { "name", CborAttrTextStringType, .addr.string = &stats_name[0],
-            .len = sizeof(stats_name) },
+        { "name",
+          CborAttrTextStringType,
+          .addr.string = &stats_name[0],
+          .len = sizeof(stats_name)
+        },
         { NULL },
     };
     CborError g_err = CborNoError;
