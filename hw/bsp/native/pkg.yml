@@ -30,5 +30,9 @@ pkg.deps:
     - "@apache-mynewt-core/hw/mcu/native"
     - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
     - "@apache-mynewt-core/hw/drivers/flash/enc_flash/ef_tinycrypt"
+    - "@apache-mynewt-core/hw/drivers/trng/trng_sw"
     - "@apache-mynewt-core/net/ip/native_sockets"
+
+pkg.init:
+    hal_bsp_init_trng: 2
 
