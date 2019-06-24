@@ -134,7 +134,7 @@ int
 shell_os_date_cmd(const struct shell_cmd *cmd, int argc, char **argv,
                   struct streamer *streamer)
 {
-    int rc;
+    int rc = 0;
 #if MYNEWT_VAL(SHELL_OS_DATETIME_CMD)
     struct os_timeval tv;
     struct os_timezone tz;
