@@ -17,6 +17,9 @@
 # under the License.
 #
 
+bsp.name: "B-L072Z-LRWAN1"
+bsp.url: https://www.st.com/en/evaluation-tools/b-l072z-lrwan1.html
+bsp.maker: "STMicroelectronics"
 bsp.arch: cortex_m0
 bsp.compiler: compiler/arm-none-eabi-m0
 bsp.linkerscript:
