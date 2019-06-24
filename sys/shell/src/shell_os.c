@@ -130,7 +130,7 @@ shell_os_mpool_display_cmd(int argc, char **argv)
 int
 shell_os_date_cmd(int argc, char **argv)
 {
-    int rc;
+    int rc = 0;
 #if MYNEWT_VAL(SHELL_OS_DATETIME_CMD)
     struct os_timeval tv;
     struct os_timezone tz;
