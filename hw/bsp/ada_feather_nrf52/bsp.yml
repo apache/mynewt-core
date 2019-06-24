@@ -17,6 +17,9 @@
 # under the License.
 #
 
+bsp.name: "Adafruit Feather"
+bsp.url: https://www.adafruit.com/product/3574
+bsp.maker: "Adafruit Industries"
 bsp.arch: cortex_m4
 bsp.compiler: compiler/arm-none-eabi-m4
 bsp.linkerscript:

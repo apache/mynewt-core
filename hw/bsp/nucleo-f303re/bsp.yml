@@ -17,6 +17,9 @@
 # under the License.
 #
 
+bsp.name: "NUCLEO-F303RE"
+bsp.url: https://www.st.com/en/evaluation-tools/nucleo-f303re.html
+bsp.maker: "STMicroelectronics"
 bsp.arch: cortex_m4
 bsp.compiler: compiler/arm-none-eabi-m4
 bsp.linkerscript:

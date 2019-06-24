@@ -17,6 +17,9 @@
 # under the License.
 #
 
+bsp.name: "Nordic Thingy:52"
+bsp.url: https://www.nordicsemi.com/Software-and-Tools/Development-Kits/Nordic-Thingy-52
+bsp.maker: "Nordic Semiconductor"
 bsp.arch: cortex_m4
 bsp.compiler: compiler/arm-none-eabi-m4
 bsp.linkerscript:

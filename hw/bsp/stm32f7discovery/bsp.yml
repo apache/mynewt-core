@@ -17,6 +17,9 @@
 # under the License.
 #
 
+bsp.name: "32F746GDISCOVERY"
+bsp.url: https://www.st.com/en/evaluation-tools/32f746gdiscovery.html
+bsp.maker: "STMicroelectronics"
 bsp.arch: cortex_m7
 bsp.compiler: compiler/arm-none-eabi-m7
 bsp.linkerscript:

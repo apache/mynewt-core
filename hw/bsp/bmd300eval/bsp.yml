@@ -17,6 +17,9 @@
 # under the License.
 #
 
+bsp.name: "BMD-300: Bluetooth 5"
+bsp.url: https://www.rigado.com/products/modules/bmd-300/
+bsp.maker: "RIGADO"
 bsp.arch: cortex_m4
 bsp.compiler: compiler/arm-none-eabi-m4
 bsp.linkerscript:
