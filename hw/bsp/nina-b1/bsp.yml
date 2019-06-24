@@ -17,6 +17,9 @@
 # under the License.
 #
 
+bsp.name: "NINA-B1 series"
+bsp.url: https://www.u-blox.com/en/product/nina-b1-series
+bsp.maker: "u-blox"
 bsp.arch: cortex_m4
 bsp.compiler: compiler/arm-none-eabi-m4
 bsp.linkerscript:

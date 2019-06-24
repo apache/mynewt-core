@@ -17,6 +17,10 @@
 # under the License.
 #
 
+bsp.name: "Creator Ci40 IoT Kit"
+bsp.url: https://creatordev.io/ci40-iot-dev-kit.html
+bsp.maker: "Imagination Technologies"
+
 bsp.arch: mips
 bsp.compiler: compiler/mips
 bsp.linkerscript: "hw/bsp/ci40/uhi32.ld"

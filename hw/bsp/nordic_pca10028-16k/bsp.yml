@@ -17,6 +17,9 @@
 # under the License.
 #
 
+bsp.name: "nRF51 DK (16KB)"
+bsp.url: https://www.nordicsemi.com/Software-and-Tools/Development-Kits/nRF51-DK
+bsp.maker: "Nordic Semiconductor"
 bsp.arch: cortex_m0
 bsp.compiler: compiler/arm-none-eabi-m0
 bsp.linkerscript:

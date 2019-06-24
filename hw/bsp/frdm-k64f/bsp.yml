@@ -17,6 +17,9 @@
 # under the License.
 #
 
+bsp.name: "FRDM-K64F: Freedom Development Platform"
+bsp.url: https://www.nxp.com/support/developer-resources/evaluation-and-development-boards/freedom-development-boards/mcu-boards/freedom-development-platform-for-kinetis-k64-k63-and-k24-mcus:FRDM-K64F
+bsp.maker: "NXP"
 bsp.arch: cortex_m4
 bsp.compiler: compiler/arm-none-eabi-m4
 bsp.linkerscript: "hw/bsp/frdm-k64f/MK64FN1M0xxx12_flash.ld"

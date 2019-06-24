@@ -17,6 +17,9 @@
 # under the License.
 #
 
+bsp.name: "NUCLEO-L476RG"
+bsp.url: https://www.st.com/en/evaluation-tools/nucleo-l476rg.html
+bsp.maker: "STMicroelectronics"
 bsp.arch: cortex_m4
 bsp.compiler: compiler/arm-none-eabi-m4
 bsp.linkerscript:
