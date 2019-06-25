@@ -207,6 +207,9 @@ stm32f4xx_hal_gpio.c
 stm32f4xx_hal_rcc.c
 stm32f4xx_hal_uart.c
 
+# STM32F4x MCU/BSP clock customization
+clock_stm32f4xx.c
+
 #STM32F0xx HAL - BSD licence
 STM32F0xx_HAL_Driver
 stm32f0xx
