@@ -30,7 +30,7 @@
 
 . $CORE_PATH/hw/scripts/openocd.sh
 
-CFG="-f interface/ftdi/olimex-arm-usb-tiny-h.cfg -s $BSP_PATH -f f407.cfg"
+CFG="-f interface/ftdi/olimex-arm-usb-tiny-h.cfg -s $BSP_PATH -f target/stm32f4x.cfg"
 
 if [ "$MFG_IMAGE" ]; then
     FLASH_OFFSET=0x08000000

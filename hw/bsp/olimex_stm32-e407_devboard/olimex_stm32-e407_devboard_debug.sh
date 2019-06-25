@@ -30,7 +30,7 @@
 . $CORE_PATH/hw/scripts/openocd.sh
 
 FILE_NAME=$BIN_BASENAME.elf
-CFG="-f interface/ftdi/olimex-arm-usb-tiny-h.cfg -s $BSP_PATH -f f407.cfg"
+CFG="-f interface/ftdi/olimex-arm-usb-tiny-h.cfg -s $BSP_PATH -f target/stm32f4x.cfg"
 # Exit openocd when gdb detaches.
 EXTRA_JTAG_CMD="$EXTRA_JTAG_CMD; stm32f4x.cpu configure -event gdb-detach {if {[stm32f4x.cpu curstate] eq \"halted\"} resume;shutdown}"
 
