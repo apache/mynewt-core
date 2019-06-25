@@ -113,6 +113,11 @@ hal_bsp_init(void)
             OS_DEV_INIT_PRIMARY, 0, simaccel_init, (void *) NULL);
     assert(rc == 0);
 #endif
+
+#if MYNEWT_VAL(OS_CPUTIME_TIMER_NUM >= 0)
+    rc = os_cputime_init(MYNEWT_VAL(OS_CPUTIME_FREQ));
+    assert(rc == 0);
+#endif
 }
 
 void
