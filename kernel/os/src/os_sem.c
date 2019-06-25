@@ -42,6 +42,7 @@ os_sem_init(struct os_sem *sem, uint16_t tokens)
         goto done;
     }
 
+    sem->init_tokens = tokens;
     sem->sem_tokens = tokens;
     SLIST_FIRST(&sem->sem_head) = NULL;
 
@@ -74,6 +75,12 @@ os_sem_release(struct os_sem *sem)
         ret = OS_INVALID_PARM;
         goto done;
     }
+
+    if (sem->sem_tokens >= sem->init_tokens) {
+        ret = OS_EINVAL;
+        goto done;
+    }
+
 
     /* Get current task */
     resched = 0;

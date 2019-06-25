@@ -38,7 +38,8 @@ extern "C" {
  */
 struct os_sem {
     SLIST_HEAD(, os_task) sem_head;
-    uint16_t    _pad;
+    /** Initial number of tokens */
+    uint16_t    init_tokens;
     /** Number of tokens */
     uint16_t    sem_tokens;
 };
@@ -73,6 +74,7 @@ os_error_t os_sem_init(struct os_sem *sem, uint16_t tokens);
  *
  * @return os_error_t
  *      OS_INVALID_PARM Semaphore passed in was NULL.
+ *      OS_EINVAL Semaphore token value higher than the initial token value.
  *      OS_OK No error
  */
 os_error_t os_sem_release(struct os_sem *sem);
