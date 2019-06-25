@@ -1369,7 +1369,7 @@ int lis2ds12_set_wake_up_dur(struct sensor_itf *itf, uint8_t val)
     }
 
     reg &= ~LIS2DS12_WAKE_DUR_DUR;
-    reg |= (val & LIS2DS12_WAKE_DUR_DUR) << 5;
+    reg |= (val << 5) & LIS2DS12_WAKE_DUR_DUR;
 
     return lis2ds12_write8(itf, LIS2DS12_REG_WAKE_UP_DUR, reg);
 }
