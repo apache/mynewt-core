@@ -42,15 +42,10 @@
 #include <tinycbor/cbor.h>
 #include <cborattr/cborattr.h>
 
-static struct os_callout smp_reset_callout;
-
-static int smp_def_echo(struct mgmt_cbuf *);
-static int smp_def_console_echo(struct mgmt_cbuf *);
-static int smp_def_taskstat_read(struct mgmt_cbuf *njb);
-static int smp_def_mpstat_read(struct mgmt_cbuf *njb);
-static int smp_datetime_get(struct mgmt_cbuf *njb);
-static int smp_datetime_set(struct mgmt_cbuf *njb);
-static int smp_reset(struct mgmt_cbuf *njb);
+static int smp_def_console_echo(struct mgmt_ctxt *);
+static int smp_def_mpstat_read(struct mgmt_ctxt *njb);
+static int smp_datetime_get(struct mgmt_ctxt *njb);
+static int smp_datetime_set(struct mgmt_ctxt *njb);
 
 static const struct mgmt_handler smp_def_group_handlers[] = {
     [SMP_ID_CONS_ECHO_CTRL] = {
@@ -74,7 +69,7 @@ static struct mgmt_group smp_def_group = {
 };
 
 static int
-smp_def_console_echo(struct mgmt_cbuf *cb)
+smp_def_console_echo(struct mgmt_ctxt *cb)
 {
     long long int echo_on = 1;
     int rc;
@@ -102,7 +97,7 @@ smp_def_console_echo(struct mgmt_cbuf *cb)
 }
 
 static int
-smp_def_mpstat_read(struct mgmt_cbuf *cb)
+smp_def_mpstat_read(struct mgmt_ctxt *cb)
 {
     struct os_mempool *prev_mp;
     struct os_mempool_info omi;
@@ -145,7 +140,7 @@ smp_def_mpstat_read(struct mgmt_cbuf *cb)
 }
 
 static int
-smp_datetime_get(struct mgmt_cbuf *cb)
+smp_datetime_get(struct mgmt_ctxt *cb)
 {
     struct os_timeval tv;
     struct os_timezone tz;
@@ -177,7 +172,7 @@ err:
 }
 
 static int
-smp_datetime_set(struct mgmt_cbuf *cb)
+smp_datetime_set(struct mgmt_ctxt *mc)
 {
     struct os_timeval tv;
     struct os_timezone tz;
@@ -193,7 +188,7 @@ smp_datetime_set(struct mgmt_cbuf *cb)
         { 0 },
     };
 
-    rc = cbor_read_object(&cb->it, datetime_write_attr);
+    rc = cbor_read_object(&mc->it, datetime_write_attr);
     if (rc) {
         return MGMT_ERR_EINVAL;
     }
@@ -213,7 +208,7 @@ smp_datetime_set(struct mgmt_cbuf *cb)
         return MGMT_ERR_EINVAL;
     }
 
-    rc = mgmt_cbuf_setoerr(cb, 0);
+    rc = mgmt_write_rsp_status(mc, 0);
     if (rc != 0) {
         return rc;
     }
@@ -221,14 +216,14 @@ smp_datetime_set(struct mgmt_cbuf *cb)
     return 0;
 }
 
-int
+void
 smp_os_groups_register(void)
 {
-    return mgmt_register_group(&smp_def_group);
+    mgmt_register_group(&smp_def_group);
 }
 
-int
+void
 smp_os_pkg_init(void)
 {
-    return smp_os_groups_register();
+    smp_os_groups_register();
 }
