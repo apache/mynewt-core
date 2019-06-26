@@ -107,6 +107,20 @@ da1469x_qspi_mode_quad(const struct hal_flash *dev)
 }
 
 CODE_QSPI_INLINE static void
+da1469x_qspi_mode_dual(const struct hal_flash *dev)
+{
+    QSPIC->QSPIC_CTRLBUS_REG = QSPIC_QSPIC_CTRLBUS_REG_QSPIC_SET_DUAL_Msk;
+    QSPIC->QSPIC_CTRLMODE_REG |= QSPIC_QSPIC_CTRLMODE_REG_QSPIC_IO2_OEN_Msk |
+                                 QSPIC_QSPIC_CTRLMODE_REG_QSPIC_IO2_DAT_Msk |
+                                 QSPIC_QSPIC_CTRLMODE_REG_QSPIC_IO3_OEN_Msk |
+                                 QSPIC_QSPIC_CTRLMODE_REG_QSPIC_IO3_DAT_Msk;
+
+    QSPIC->QSPIC_CTRLBUS_REG = QSPIC_QSPIC_CTRLBUS_REG_QSPIC_EN_CS_Msk;
+    da1469x_qspi_write8(dev, 0xff);
+    QSPIC->QSPIC_CTRLBUS_REG = QSPIC_QSPIC_CTRLBUS_REG_QSPIC_DIS_CS_Msk;
+}
+
+CODE_QSPI_INLINE static void
 da1469x_qspi_mode_manual(const struct hal_flash *dev)
 {
     QSPIC->QSPIC_CTRLMODE_REG &= ~QSPIC_QSPIC_CTRLMODE_REG_QSPIC_AUTO_MD_Msk;
@@ -173,10 +187,30 @@ da1469x_qspi_cmd_write_page(const struct hal_flash *dev, uint32_t address,
 
     QSPIC->QSPIC_CTRLBUS_REG = QSPIC_QSPIC_CTRLBUS_REG_QSPIC_EN_CS_Msk;
 
-    address = __builtin_bswap32(address) & 0xffffff00;
-    da1469x_qspi_write32(dev, address | 0x32);
-
-    da1469x_qspi_mode_quad(dev);
+    if (MYNEWT_VAL(QSPI_FLASH_CMD_QUAD_IO_PAGE_PROGRAM) > 0) {
+        /* Only command in single mode address and data in quad mode */
+        da1469x_qspi_write8(dev, MYNEWT_VAL(QSPI_FLASH_CMD_QUAD_IO_PAGE_PROGRAM));
+        da1469x_qspi_mode_quad(dev);
+        da1469x_qspi_write8(dev, (uint8_t)(address >> 16U));
+        da1469x_qspi_write8(dev, (uint8_t)(address >> 8U));
+        da1469x_qspi_write8(dev, (uint8_t)(address));
+    } else if (MYNEWT_VAL(QSPI_FLASH_CMD_QUAD_INPUT_PAGE_PROGRAM) > 0) {
+        /* Command and data in single mode, data in quad mode */
+        address = __builtin_bswap32(address) & 0xffffff00;
+        da1469x_qspi_write32(dev, address |
+                                  MYNEWT_VAL(QSPI_FLASH_CMD_QUAD_INPUT_PAGE_PROGRAM));
+        da1469x_qspi_mode_quad(dev);
+    } else  if (MYNEWT_VAL(QSPI_FLASH_CMD_DUAL_INPUT_PAGE_PROGRAM) > 0) {
+        /* Command and data in single mode, data in dual mode */
+        address = __builtin_bswap32(address) & 0xffffff00;
+        da1469x_qspi_write32(dev, address |
+                                  MYNEWT_VAL(QSPI_FLASH_CMD_DUAL_INPUT_PAGE_PROGRAM));
+        da1469x_qspi_mode_dual(dev);
+    } else {
+        /* Standard page program command in single mode */
+        address = __builtin_bswap32(address) & 0xffffff00;
+        da1469x_qspi_write32(dev, address | 0x02);
+    }
 
     while (length >= 4) {
         da1469x_qspi_write32(dev, *(uint32_t *)buf);
@@ -192,7 +226,11 @@ da1469x_qspi_cmd_write_page(const struct hal_flash *dev, uint32_t address,
 
     QSPIC->QSPIC_CTRLBUS_REG = QSPIC_QSPIC_CTRLBUS_REG_QSPIC_DIS_CS_Msk;
 
-    da1469x_qspi_mode_single(dev);
+    if ((MYNEWT_VAL(QSPI_FLASH_CMD_QUAD_IO_PAGE_PROGRAM) > 0) ||
+        (MYNEWT_VAL(QSPI_FLASH_CMD_QUAD_INPUT_PAGE_PROGRAM) > 0) ||
+        (MYNEWT_VAL(QSPI_FLASH_CMD_DUAL_INPUT_PAGE_PROGRAM) > 0)) {
+        da1469x_qspi_mode_single(dev);
+    }
 
     return written;
 }
