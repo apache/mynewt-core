@@ -25,9 +25,6 @@ syscfg.defs:
         value: 0
         restrictions:
             - SHELL_TASK
-    STATS_NEWTMGR:
-        description: 'Expose the "stat" newtmgr command.'
-        value: 0
     STATS_PERSIST:
         description: >
             Enables persistent statistics.  Regardless of this setting's value,
