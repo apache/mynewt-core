@@ -77,7 +77,7 @@ STATS_NAME_START(stats)
     STATS_NAME(stats, num_registered)
 STATS_NAME_END(stats)
 
-STAILQ_HEAD(, stats_hdr) g_stats_registry =
+struct stats_registry_list g_stats_registry =
     STAILQ_HEAD_INITIALIZER(g_stats_registry);
 
 static size_t

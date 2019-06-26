@@ -27,6 +27,9 @@
 extern "C" {
 #endif
 
+STAILQ_HEAD(stats_registry_list, stats_hdr);
+extern struct stats_registry_list g_stats_registry;
+
 /** The stat group is periodically written to sys/config. */
 #define STATS_HDR_F_PERSIST             0x01
 
