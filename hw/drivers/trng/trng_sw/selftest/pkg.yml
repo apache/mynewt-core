@@ -6,7 +6,7 @@
 # to you under the Apache License, Version 2.0 (the
 # "License"); you may not use this file except in compliance
 # with the License.  You may obtain a copy of the License at
-# 
+#
 #  http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing,
@@ -17,22 +17,15 @@
 # under the License.
 #
 
-pkg.name: hw/bsp/native
-pkg.type: bsp
-pkg.description: BSP definition for native (i386) applications.
+pkg.name: hw/drivers/trng/trng_sw/selftest
+pkg.type: unittest
+pkg.description: Unit testing of TRNG SW driver API
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
-    - native
-    - bsp
 
 pkg.deps:
-    - "@apache-mynewt-core/hw/mcu/native"
-    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
-    - "@apache-mynewt-core/hw/drivers/flash/enc_flash/ef_tinycrypt"
-    - "@apache-mynewt-core/hw/drivers/trng/trng_sw"
-    - "@apache-mynewt-core/net/ip/native_sockets"
-
-pkg.init:
-    hal_bsp_init_trng: 2
-
+    - "@apache-mynewt-core/hw/drivers/trng"
+    - "@apache-mynewt-core/test/testutil"
+    - "@apache-mynewt-core/sys/console/stub"
+    - "@apache-mynewt-core/sys/log/stub"
