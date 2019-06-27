@@ -3295,7 +3295,6 @@ bmp388_poll_read(struct sensor *sensor, sensor_type_t sensor_type,
     bmp388 = (struct bmp388 *)SENSOR_GET_DEVICE(sensor);
     itf = SENSOR_GET_ITF(sensor);
     cfg = &bmp388->cfg;
-    BMP388_LOG(ERROR, "bmp388_poll_read entered\n");
 
     /* If the read isn't looking for pressure data, don't do anything. */
     if ((!(sensor_type & SENSOR_TYPE_PRESSURE)) && (!(sensor_type & SENSOR_TYPE_TEMPERATURE))) {
@@ -3310,7 +3309,6 @@ bmp388_poll_read(struct sensor *sensor, sensor_type_t sensor_type,
 
     g_bmp388_dev.settings.op_mode = BMP3_FORCED_MODE;
     rc = bmp388_set_forced_mode_with_osr(itf, &g_bmp388_dev);
-    BMP388_LOG(ERROR, "bmp388_set_forced_mode_with_osr \n");
     if (rc) {
         BMP388_LOG(ERROR, "bmp388_set_forced_mode_with_osr failed %d\n", rc);
         goto err;
@@ -3644,7 +3642,6 @@ err:
         BMP388_LOG(ERROR, "bmp388_sensor_read read failed\n");
         return SYS_EINVAL;
     } else {
-        BMP388_LOG(ERROR, "bmp388_sensor_read exited\n");
         return SYS_EOK;
     }
 }
