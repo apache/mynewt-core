@@ -20,6 +20,7 @@
 #define __BMP388_H__
 
 #include "os/mynewt.h"
+#include <stats/stats.h>
 #include "sensor/sensor.h"
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
 #include "bus/drivers/i2c_common.h"
@@ -307,16 +308,18 @@ data sheet.*/
 #define BMP3_GET_MSB(var)   (uint8_t)((var & BMP3_SET_HIGH_BYTE) >> 8)
 
 /**\name API success code */
-#define BMP3_OK             INT8_C(0)
+#define BMP3_OK                             INT8_C(0)
 /**\name API error codes */
-#define BMP3_E_NULL_PTR         INT8_C(-1)
-#define BMP3_E_DEV_NOT_FOUND            INT8_C(-2)
-#define BMP3_E_INVALID_ODR_OSR_SETTINGS INT8_C(-3)
-#define BMP3_E_CMD_EXEC_FAILED      INT8_C(-4)
-#define BMP3_E_CONFIGURATION_ERR        INT8_C(-5)
-#define BMP3_E_INVALID_LEN          INT8_C(-6)
-#define BMP3_E_COMM_FAIL            INT8_C(-7)
+#define BMP3_E_NULL_PTR                     INT8_C(-1)
+#define BMP3_E_DEV_NOT_FOUND                INT8_C(-2)
+#define BMP3_E_INVALID_ODR_OSR_SETTINGS     INT8_C(-3)
+#define BMP3_E_CMD_EXEC_FAILED              INT8_C(-4)
+#define BMP3_E_CONFIGURATION_ERR            INT8_C(-5)
+#define BMP3_E_INVALID_LEN                  INT8_C(-6)
+#define BMP3_E_COMM_FAIL                    INT8_C(-7)
 #define BMP3_E_FIFO_WATERMARK_NOT_REACHED   INT8_C(-8)
+#define BMP3_E_WRITE                        INT8_C(-9)
+#define BMP3_E_READ                         INT8_C(-10)
 
 #define BMP388_INT_DRDY_STATE                 0x08
 #define BMP388_INT_FIFOWTM_STATE              0x01
@@ -416,6 +419,12 @@ struct bmp388_pdd {
     uint16_t int_enable;
 };
 
+/* Define the stats section and records */
+STATS_SECT_START(bmp388_stat_section)
+    STATS_SECT_ENTRY(write_errors)
+    STATS_SECT_ENTRY(read_errors)
+STATS_SECT_END
+
 struct bmp388 {
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
     struct bus_i2c_node i2c_node;
@@ -429,6 +438,9 @@ struct bmp388 {
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
     bool node_is_spi;
 #endif
+    /* Variable used to hold stats data */
+    STATS_SECT_DECL(bmp388_stat_section) stats;
+
 
 };
 /********************************************************/
