@@ -1279,8 +1279,8 @@ config_bmp388_sensor(void)
     /* options: BMP388_DRDY_INT,  BMP388_FIFO_WTMK_INT, BMP388_FIFO_FULL_INT */
     cfg.read_mode.int_type = BMP388_FIFO_FULL_INT;
     cfg.read_mode.int_num = MYNEWT_VAL(BMP388_INT_NUM);
-    cfg.mask = SENSOR_TYPE_AMBIENT_TEMPERATURE|
-                       SENSOR_TYPE_PRESSURE;
+    cfg.mask = SENSOR_TYPE_TEMPERATURE|
+               SENSOR_TYPE_PRESSURE;
 
     rc = bmp388_config((struct bmp388 *) dev, &cfg);
     assert(rc == 0);
