@@ -3252,12 +3252,12 @@ static int bmp388_do_report(struct sensor *sensor, sensor_type_t sensor_type, se
         }
     }
 
-    if (sensor_type & SENSOR_TYPE_AMBIENT_TEMPERATURE)
+    if (sensor_type & SENSOR_TYPE_TEMPERATURE)
     {
         databuf.std.std_temp = temperature;
         databuf.std.std_temp_is_valid = 1;
         /* Call data function */
-        rc = data_func(sensor, data_arg, &databuf.std, SENSOR_TYPE_AMBIENT_TEMPERATURE);
+        rc = data_func(sensor, data_arg, &databuf.std, SENSOR_TYPE_TEMPERATURE);
         if (rc) {
             goto err;
         }
@@ -3298,7 +3298,7 @@ bmp388_poll_read(struct sensor *sensor, sensor_type_t sensor_type,
     BMP388_LOG(ERROR, "bmp388_poll_read entered\n");
 
     /* If the read isn't looking for pressure data, don't do anything. */
-    if ((!(sensor_type & SENSOR_TYPE_PRESSURE)) && (!(sensor_type & SENSOR_TYPE_AMBIENT_TEMPERATURE))) {
+    if ((!(sensor_type & SENSOR_TYPE_PRESSURE)) && (!(sensor_type & SENSOR_TYPE_TEMPERATURE))) {
         rc = SYS_EINVAL;
         goto err;
     }
@@ -3379,11 +3379,10 @@ bmp388_stream_read(struct sensor *sensor,
 #endif
 
     /* If the read isn't looking for pressure or temperature data, don't do anything. */
-    if ((!(sensor_type & SENSOR_TYPE_PRESSURE)) && (!(sensor_type & SENSOR_TYPE_AMBIENT_TEMPERATURE))) {
+    if ((!(sensor_type & SENSOR_TYPE_PRESSURE)) && (!(sensor_type & SENSOR_TYPE_TEMPERATURE))) {
         BMP388_LOG(ERROR, "unsupported sensor type for bmp388\n");
         return SYS_EINVAL;
     }
-    BMP388_LOG(ERROR, "bmp388_stream_read entered\n");
 
     bmp388 = (struct bmp388 *)SENSOR_GET_DEVICE(sensor);
     itf = SENSOR_GET_ITF(sensor);
@@ -3545,7 +3544,6 @@ try_count = 0xFFFF;
         if (bmp388->cfg.fifo_mode == BMP388_FIFO_M_BYPASS) {
             g_bmp388_dev.settings.op_mode = BMP3_FORCED_MODE;
             rc = bmp388_set_forced_mode_with_osr(itf, &g_bmp388_dev);
-            BMP388_LOG(ERROR, "bmp388_set_forced_mode_with_osr \n");
             if (rc) {
                 BMP388_LOG(ERROR, "bmp388_set_forced_mode_with_osr failed %d\n", rc);
                 goto err;
@@ -3566,8 +3564,8 @@ try_count = 0xFFFF;
 #endif
 
         if (time_ms != 0 && OS_TIME_TICK_GT(os_time_get(), stop_ticks)) {
-            BMP388_LOG(ERROR, "stream time expired\n");
-            BMP388_LOG(ERROR, "you can make BMP388_MAX_STREAM_MS bigger to extend stream time duration\n");
+            BMP388_LOG(INFO, "stream time expired\n");
+            BMP388_LOG(INFO, "you can make BMP388_MAX_STREAM_MS bigger to extend stream time duration\n");
             break;
         }
 
@@ -3600,9 +3598,9 @@ bmp388_sensor_read(struct sensor *sensor, sensor_type_t type,
     BMP388_LOG(ERROR, "bmp388_sensor_read entered\n");
 #endif
     /* If the read isn't looking for pressure data, don't do anything. */
-    if ((!(type & SENSOR_TYPE_PRESSURE)) && (!(type & SENSOR_TYPE_AMBIENT_TEMPERATURE))) {
+    if ((!(type & SENSOR_TYPE_PRESSURE)) && (!(type & SENSOR_TYPE_TEMPERATURE))) {
         rc = SYS_EINVAL;
-        BMP388_LOG(ERROR, "bmp388_sensor_read unsurpported sensor type\n");
+        BMP388_LOG(ERROR, "bmp388_sensor_read unsupported sensor type\n");
         goto err;
     }
 
@@ -3638,10 +3636,8 @@ bmp388_sensor_read(struct sensor *sensor, sensor_type_t type,
 
     if (cfg->read_mode.mode == BMP388_READ_M_POLL) {
         rc = bmp388_poll_read(sensor, type, data_func, data_arg, timeout);
-        BMP388_LOG(ERROR, "bmp388_sensor_read poll read\n");
     } else {
         rc = bmp388_stream_read(sensor, type, data_func, data_arg, timeout);
-        BMP388_LOG(ERROR, "bmp388_sensor_read stream read\n");
     }
 err:
     if (rc) {
@@ -3843,7 +3839,7 @@ bmp388_init(struct os_dev *dev, void *arg)
     }
 
     /* Add the light driver */
-    rc = sensor_set_driver(sensor, SENSOR_TYPE_AMBIENT_TEMPERATURE |
+    rc = sensor_set_driver(sensor, SENSOR_TYPE_TEMPERATURE |
             SENSOR_TYPE_PRESSURE,
             (struct sensor_driver *) &g_bmp388_sensor_driver);
 
