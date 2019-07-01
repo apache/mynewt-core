@@ -22,5 +22,3 @@ pkg.description: ADC driver interfaces
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
-pkg.req_apis:
-    - ADC_HW_IMPL
