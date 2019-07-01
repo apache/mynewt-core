@@ -22,8 +22,6 @@ pkg.description: ADC driver for the NRF51
 pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
-pkg.apis:
-    - ADC_HW_IMPL
 pkg.deps:
     - "@apache-mynewt-core/hw/drivers/adc"
     - "@apache-mynewt-core/hw/mcu/nordic"

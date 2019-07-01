@@ -26,8 +26,5 @@ pkg.keywords:
     - da1469x
     - adc
 
-pkg.apis:
-    - ADC_HW_IMPL
-
 pkg.deps:
     - "@apache-mynewt-core/hw/drivers/adc"
