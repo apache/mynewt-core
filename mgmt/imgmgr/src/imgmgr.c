@@ -72,18 +72,6 @@ struct imgr_upload_action {
 };
 
 static const struct mgmt_handler imgr_nmgr_handlers[] = {
-    [IMGMGR_NMGR_ID_STATE] = {
-        .mh_read = imgmgr_state_read,
-        .mh_write = imgmgr_state_write,
-    },
-    [IMGMGR_NMGR_ID_UPLOAD] = {
-        .mh_read = NULL,
-        .mh_write = imgr_upload
-    },
-    [IMGMGR_NMGR_ID_ERASE] = {
-        .mh_read = NULL,
-        .mh_write = imgr_erase
-    },
     [IMGMGR_NMGR_ID_CORELIST] = {
 #if MYNEWT_VAL(IMGMGR_COREDUMP)
         .mh_read = imgr_core_list,
@@ -193,119 +181,11 @@ imgr_img_tlvs(const struct flash_area *fa, struct image_header *hdr,
     return 0;
 }
 #endif
-/*
- * Read version and build hash from image located slot "image_slot".  Note:
- * this is a slot index, not a flash area ID.
- *
- * @param image_slot
- * @param ver (optional)
- * @param hash (optional)
- * @param flags (optional)
- *
- * Returns -1 if area is not readable.
- * Returns 0 if image in slot is ok, and version string is valid.
- * Returns 1 if there is not a full image.
- * Returns 2 if slot is empty.
- */
-int
-imgr_read_info(int image_slot, struct image_version *ver, uint8_t *hash,
-               uint32_t *flags)
-{
-    struct image_header *hdr;
-    struct image_tlv *tlv;
-    int rc = -1;
-    int rc2;
-    const struct flash_area *fa;
-    uint8_t data[sizeof(struct image_header)];
-    uint32_t data_off, data_end;
-    int area_id;
-
-    /* Silence spurious warning. */
-    data_end = 0;
-
-    area_id = flash_area_id_from_image_slot(image_slot);
-
-    hdr = (struct image_header *)data;
-    rc2 = flash_area_open(area_id, &fa);
-    if (rc2) {
-        return -1;
-    }
-    rc2 = flash_area_read_is_empty(fa, 0, hdr, sizeof(*hdr));
-    if (rc2 < 0) {
-        goto end;
-    }
-
-    if (ver) {
-        memset(ver, 0xff, sizeof(*ver));
-    }
-    if (hdr->ih_magic == IMAGE_MAGIC) {
-        if (ver) {
-            memcpy(ver, &hdr->ih_ver, sizeof(*ver));
-        }
-    } else if (rc2 == 1) {
-        /* Area is empty */
-        rc = 2;
-        goto end;
-    } else {
-        rc = 1;
-        goto end;
-    }
-
-    if (flags) {
-        *flags = hdr->ih_flags;
-    }
-
-    /*
-     * Build ID is in a TLV after the image.
-     */
-    data_off = hdr->ih_hdr_size + hdr->ih_img_size;
-
-    rc = imgr_img_tlvs(fa, hdr, &data_off, &data_end);
-    if (rc) {
-        goto end;
-    }
-
-    if (data_end > fa->fa_size) {
-        rc = 1;
-        goto end;
-    }
-    tlv = (struct image_tlv *)data;
-    while (data_off + sizeof(*tlv) <= data_end) {
-        rc2 = flash_area_read_is_empty(fa, data_off, tlv, sizeof(*tlv));
-        if (rc2 < 0) {
-            goto end;
-        }
-        if (rc2 == 1) {
-            break;
-        }
-        if (tlv->it_type != IMAGE_TLV_SHA256 ||
-          tlv->it_len != IMGMGR_HASH_LEN) {
-            data_off += sizeof(*tlv) + tlv->it_len;
-            continue;
-        }
-        data_off += sizeof(*tlv);
-        if (hash) {
-            if (data_off + IMGMGR_HASH_LEN > data_end) {
-                goto end;
-            }
-            rc2 = flash_area_read(fa, data_off, hash, IMGMGR_HASH_LEN);
-            if (rc2) {
-                goto end;
-            }
-        }
-        rc = 0;
-        goto end;
-    }
-    rc = 1;
-end:
-    flash_area_close(fa);
-    return rc;
-}
 
 int
 imgr_my_version(struct image_version *ver)
 {
-    return imgr_read_info(boot_current_slot, ver, NULL, NULL);
+    return img_mgmt_read_info(boot_current_slot, ver, NULL, NULL);
 }
 
 /**
@@ -355,7 +235,7 @@ imgr_find_by_ver(struct image_version *find, uint8_t *hash)
     struct image_version ver;
 
     for (i = 0; i < 2; i++) {
-        if (imgr_read_info(i, &ver, hash, NULL) != 0) {
+        if (img_mgmt_read_info(i, &ver, hash, NULL) != 0) {
             continue;
         }
         if (!memcmp(find, &ver, sizeof(ver))) {
@@ -376,7 +256,7 @@ imgr_find_by_hash(uint8_t *find, struct image_version *ver)
     uint8_t hash[IMGMGR_HASH_LEN];
 
     for (i = 0; i < 2; i++) {
-        if (imgr_read_info(i, ver, hash, NULL) != 0) {
+        if (img_mgmt_read_info(i, ver, hash, NULL) != 0) {
             continue;
         }
         if (!memcmp(hash, find, IMGMGR_HASH_LEN)) {
@@ -395,13 +275,13 @@ imgmgr_find_best_area_id(void)
     int rc;
 
     for (i = 0; i < 2; i++) {
-        rc = imgr_read_info(i, &ver, NULL, NULL);
+        rc = img_mgmt_read_info(i, &ver, NULL, NULL);
         if (rc < 0) {
             continue;
         }
         if (rc == 0) {
             /* Image in slot is ok. */
-            if (imgmgr_state_slot_in_use(i)) {
+            if (img_mgmt_state_slot_in_use(i)) {
                 /* Slot is in use; can't use this. */
                 continue;
             } else {
