@@ -544,6 +544,17 @@ int
 lis2dh12_set_op_mode(struct sensor_itf *itf, uint8_t mode);
 
 /**
+ * Get operating mode
+ *
+ * @param the sensor interface
+ * @param ptr to mode
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+lis2dh12_get_op_mode(struct sensor_itf *itf, uint8_t *mode);
+
+/**
  * Clear click interrupt
  *
  * @param the sensor interface
