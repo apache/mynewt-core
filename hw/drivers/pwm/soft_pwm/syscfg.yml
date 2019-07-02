@@ -17,10 +17,14 @@
 #
 
 syscfg.defs:
+    SOFT_PWM_SYSINIT_STAGE:
+        description: 'Sysinit stage for the soft PWM package'
+        value: 5
+
     SOFT_PWM_DEVS:
-        description: 'NUMBER OF SOFT PWM DEVICES'
+        description: 'Number of soft PWM devices.'
         value: 1
 
     SOFT_PWM_CHANS:
-        description: 'NUMBER OF SOFT PWM CHANNELS PER DEVICE'
+        description: 'Number of soft PWM channels per device.'
         value: 4

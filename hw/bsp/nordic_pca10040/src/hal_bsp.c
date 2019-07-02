@@ -30,27 +30,8 @@
 #include "mcu/nrf52_periph.h"
 #include "bsp/bsp.h"
 #include "defs/sections.h"
-#if MYNEWT_VAL(SOFT_PWM)
-#include "pwm/pwm.h"
-#include "soft_pwm/soft_pwm.h"
-#endif
 #if MYNEWT_VAL(ENC_FLASH_DEV)
 #include <ef_nrf5x/ef_nrf5x.h>
-#endif
-#if MYNEWT_VAL(UARTBB_0)
-#include "uart_bitbang/uart_bitbang.h"
-#endif
-
-#if MYNEWT_VAL(SOFT_PWM)
-static struct pwm_dev os_bsp_spwm[MYNEWT_VAL(SOFT_PWM_DEVS)];
-#endif
-
-#if MYNEWT_VAL(UARTBB_0)
-static const struct uart_bitbang_conf os_bsp_uartbb0_cfg = {
-    .ubc_txpin = MYNEWT_VAL(UARTBB_0_PIN_TX),
-    .ubc_rxpin = MYNEWT_VAL(UARTBB_0_PIN_RX),
-    .ubc_cputimer_freq = MYNEWT_VAL(OS_CPUTIME_FREQ),
-};
 #endif
 
 /*
@@ -133,32 +114,9 @@ hal_bsp_get_nvic_priority(int irq_num, uint32_t pri)
 void
 hal_bsp_init(void)
 {
-#if MYNEWT_VAL(SOFT_PWM)
-    int rc;
-    int idx;
-    char *spwm_name;
-#endif
-
     /* Make sure system clocks have started */
     hal_system_clock_start();
 
     /* Create all available nRF52840 peripherals */
     nrf52_periph_create();
-
-#if MYNEWT_VAL(SOFT_PWM)
-    for (idx = 0; idx < MYNEWT_VAL(SOFT_PWM_DEVS); idx++) {
-        asprintf(&spwm_name, "spwm%d", idx);
-        rc = os_dev_create(&os_bsp_spwm[idx].pwm_os_dev, spwm_name,
-                           OS_DEV_INIT_KERNEL, OS_DEV_INIT_PRIO_DEFAULT,
-                           soft_pwm_dev_init, UINT_TO_POINTER(idx));
-        assert(rc == 0);
-    }
-#endif
-
-#if MYNEWT_VAL(UARTBB_0)
-    rc = os_dev_create(&os_bsp_uartbb0.ud_dev, "uartbb0",
-                       OS_DEV_INIT_PRIMARY, 0, uart_bitbang_init,
-                       (void *)&os_bsp_uartbb0_cfg);
-    assert(rc == 0);
-#endif
 }
