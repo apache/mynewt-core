@@ -35,12 +35,6 @@ syscfg.defs:
     UARTBB_0:
         description: 'Enable bit-banger UART 0'
         value: 0
-    UARTBB_0_PIN_TX:
-        description: 'TX pin for UARTBB0'
-        value: -1
-    UARTBB_0_PIN_RX:
-        description: 'RX pin for UARTBB0'
-        value: -1
 
     BME280_ONB:
         description: 'Enable RuuviTag onboard BME280 sensor'
@@ -94,7 +88,6 @@ syscfg.vals.BLE_CONTROLLER:
     BLE_XTAL_SETTLE_TIME: 1500
 
 syscfg.restrictions:
-    - "!UARTBB_0 || (UARTBB_0_PIN_TX >= 0 && UARTBB_0_PIN_RX >= 0)"
     - "!BME280_ONB || SPI_0_MASTER"
     - "!LIS2DH12_ONB || SPI_0_MASTER"
     - "!LIS2DH12_ONB || BSP_RUUVITAG_REV_B_NUM >= 3"

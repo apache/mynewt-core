@@ -1,4 +1,3 @@
-#
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -17,15 +16,16 @@
 # under the License.
 #
 
-pkg.name: hw/drivers/uart/uart_bitbang
-pkg.description: Async UART port with a bitbanger.
-pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
-pkg.homepage: "http://mynewt.apache.org/"
-pkg.keywords:
-pkg.apis:
-pkg.deps:
-    - "@apache-mynewt-core/hw/hal"
-    - "@apache-mynewt-core/hw/drivers/uart"
+syscfg.defs:
+    UARTBB_SYSINIT_STAGE:
+        description: 'Sysinit stage for the UART bitbang package'
+        value: 5
+    UARTBB_0_PIN_TX:
+        description: 'TX pin for UARTBB0'
+        value: -1
+    UARTBB_0_PIN_RX:
+        description: 'RX pin for UARTBB0'
+        value: -1
 
-pkg.init:
-    uart_bitbang_pkg_init: 'MYNEWT_VAL(UARTBB_SYSINIT_STAGE)'
+syscfg.restrictions:
+    - (UARTBB_0_PIN_TX >= 0 && UARTBB_0_PIN_RX >= 0)
