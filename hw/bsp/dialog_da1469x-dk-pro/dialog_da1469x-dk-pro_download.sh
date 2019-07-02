@@ -75,21 +75,27 @@ file_size() {
 if [ "$BOOT_LOADER" ]; then
     IMAGE_FILE=$FILE_NAME.img
 
-    # allocate 9K for header
-    dd if=/dev/zero bs=9k count=1 | LANG=C LC_CTYPE=C tr "\000" "\377" > ${IMAGE_FILE}
+    if [ "${MYNEWT_VAL_BOOT_SECURE}" == 1 ]; then
+        if [ -z ${MYNEWT_VAL_BOOT_AES_KEY} ]; then
+            echo "Undefined AES KEY file.  Check syscfg settings"
+            exit 1
+        fi
 
-    # update product header
-    HEX="5070 00200000 00200000 eb00a5a8 66000000 aa11 0300 014007c84e"
-    echo -n ${HEX} | xxd -r -p | dd bs=1 of=${IMAGE_FILE} conv=notrunc
+        if [ -z ${MYNEWT_VAL_BOOT_SIG_PEM} ]; then
+            echo "Undefined signature PEM file. Check syscfg settings"
+            exit 1
+        fi
 
-    # update image header
-    SIZE=$(hex2le $(printf "%08x" $(file_size ${FILE_NAME})))
-    CRC32=$(hex2le $(crc32 ${FILE_NAME}))
-    HEX="5171 ${SIZE} ${CRC32} 00000000000000000000000000000000 00000000 00040000 aa22 0000 aa44 0000"
-    echo -n ${HEX} | xxd -r -p | dd bs=1 of=${IMAGE_FILE} seek=8k conv=notrunc
+        ${BSP_PATH}/da1469x_header_tool.py secure --sign ${MYNEWT_VAL_BOOT_SIG_PEM} \
+            -s${MYNEWT_VAL_BOOT_SIG_SLOT} -d${MYNEWT_VAL_BOOT_AES_SLOT} \
+            -E${MYNEWT_VAL_BOOT_AES_KEY} ${IMAGE_FILE} ${FILE_NAME}
+    else
+        ${BSP_PATH}/da1469x_header_tool.py nonsecure ${IMAGE_FILE} ${FILE_NAME}
+    fi
 
-    # append original image to header
-    cat $FILE_NAME >> ${IMAGE_FILE}
+    if [ $? != 0 ]; then
+        exit 1
+    fi
 
     # use new image for flashing
     FILE_NAME=${IMAGE_FILE}
