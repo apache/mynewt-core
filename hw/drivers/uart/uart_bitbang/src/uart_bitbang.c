@@ -64,6 +64,13 @@ struct uart_bitbang {
     void *ub_func_arg;
 };
 
+static struct uart_dev os_dev_uartbb0;
+static const struct uart_bitbang_conf os_bsp_uartbb0_cfg = {
+    .ubc_txpin = MYNEWT_VAL(UARTBB_0_PIN_TX),
+    .ubc_rxpin = MYNEWT_VAL(UARTBB_0_PIN_RX),
+    .ubc_cputimer_freq = MYNEWT_VAL(OS_CPUTIME_FREQ),
+};
+
 /*
  * Bytes start with START bit (0) followed by 8 data bits and then the
  * STOP bit (1). STOP bit should be configurable. Data bits are sent LSB first.
@@ -359,3 +366,19 @@ uart_bitbang_init(struct os_dev *odev, void *arg)
     return OS_OK;
 }
 
+void
+uart_bitbang_pkg_init()
+{
+    int rc;
+
+    /* Ensure this function only gets called by sysinit. */
+    SYSINIT_ASSERT_ACTIVE();
+
+    rc = os_dev_create(&os_dev_uartbb0.ud_dev,
+                       "uartbb0",
+                       OS_DEV_INIT_PRIMARY,
+                       0,
+                       uart_bitbang_init,
+                       (void *)&os_bsp_uartbb0_cfg);
+    SYSINIT_PANIC_ASSERT(rc == 0);
+}

@@ -32,6 +32,7 @@ struct uart_bitbang_conf {
 
 struct os_dev;
 int uart_bitbang_init(struct os_dev *, void *);
+void uart_bitbang_pkg_init();
 
 #ifdef __cplusplus
 }
