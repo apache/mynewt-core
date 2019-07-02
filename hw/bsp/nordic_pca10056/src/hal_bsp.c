@@ -29,14 +29,6 @@
 #include "mcu/nrf52_hal.h"
 #include "mcu/nrf52_periph.h"
 #include "bsp/bsp.h"
-#if MYNEWT_VAL(SOFT_PWM)
-#include "pwm/pwm.h"
-#include "soft_pwm/soft_pwm.h"
-#endif
-
-#if MYNEWT_VAL(SOFT_PWM)
-static struct pwm_dev os_bsp_spwm[MYNEWT_VAL(SOFT_PWM_DEVS)];
-#endif
 
 /*
  * What memory to include in coredump.
@@ -106,27 +98,11 @@ hal_bsp_get_nvic_priority(int irq_num, uint32_t pri)
 void
 hal_bsp_init(void)
 {
-#if MYNEWT_VAL(SOFT_PWM)
-    int rc;
-    int idx;
-    char *spwm_name;
-#endif
-
     /* Make sure system clocks have started */
     hal_system_clock_start();
 
     /* Create all available nRF52840 peripherals */
     nrf52_periph_create();
-
-#if MYNEWT_VAL(SOFT_PWM)
-    for (idx = 0; idx < MYNEWT_VAL(SOFT_PWM_DEVS); idx++) {
-        asprintf(&spwm_name, "spwm%d", idx);
-        rc = os_dev_create(&os_bsp_spwm[idx].pwm_os_dev, spwm_name,
-                           OS_DEV_INIT_KERNEL, OS_DEV_INIT_PRIO_DEFAULT,
-                           soft_pwm_dev_init, UINT_TO_POINTER(idx));
-        assert(rc == 0);
-    }
-#endif
 }
 
 #if MYNEWT_VAL(BSP_USE_HAL_SPI)

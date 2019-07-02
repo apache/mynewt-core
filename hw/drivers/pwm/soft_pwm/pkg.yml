@@ -25,5 +25,9 @@ pkg.keywords:
 
 pkg.apis:
     - PWM_HW_IMPL
+
 pkg.deps:
-   - "@apache-mynewt-core/hw/drivers/pwm"
+    - "@apache-mynewt-core/hw/drivers/pwm"
+
+pkg.init:
+    soft_pwm_pkg_init: 'MYNEWT_VAL(SOFT_PWM_SYSINIT_STAGE)'
