@@ -137,7 +137,7 @@ battery_adc_close(struct os_dev *dev)
 {
     struct battery_adc *bat_adc = (struct battery_adc *)dev;
     if (bat_adc->adc_dev) {
-        os_dev_close((struct os_dev *)&bat_adc->dev);
+        os_dev_close((struct os_dev *)&bat_adc->adc_dev);
         bat_adc->adc_dev = NULL;
     }
     return 0;
