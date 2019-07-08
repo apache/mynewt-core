@@ -18,6 +18,7 @@
  */
 
 #include <string.h>
+#include <assert.h>
 
 #include "os/mynewt.h"
 #include <bsp/bsp.h>
@@ -1337,7 +1338,7 @@ spiflash_identify(struct spiflash_dev *dev)
     /* List of supported spi flash chips can be found in:
      * hw/drivers/flash/spiflash/chips/sysconfig.yml
      */
-    _Static_assert((sizeof(supported_chips) / sizeof(supported_chips[0])) > 1,
+    static_assert((sizeof(supported_chips) / sizeof(supported_chips[0])) > 1,
         "At lease one spiflash chip must be specified in sysconfig with SPIFLASH_<chipid>:1");
 
     spiflash_lock(dev);

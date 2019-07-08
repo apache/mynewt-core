@@ -69,6 +69,18 @@ syscfg.defs:
         value: 0
 
 # QSPI definitions
+    QSPI_FLASH_CMD_QUAD_IO_PAGE_PROGRAM:
+        description: >
+            Command to send data and address to flash in quad mode (usually 38H).
+        value: -1
+    QSPI_FLASH_CMD_QUAD_INPUT_PAGE_PROGRAM:
+        description: >
+            Command to send data to flash in quad mode  (usually 32H).
+        value: -1
+    QSPI_FLASH_CMD_DUAL_INPUT_PAGE_PROGRAM:
+        description: >
+            Command to send data to flash in dual mode  (usually A2H).
+        value: -1
     QSPI_FLASH_ADDRESS_LENGTH:
         description: >
             Sector address length used by flash (only 24 bit supported now)

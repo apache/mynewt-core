@@ -24,8 +24,6 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 pkg.features:
     - ADC_STM32F4
-pkg.apis:
-    - ADC_HW_IMPL
 pkg.deps:
     - "@apache-mynewt-core/hw/drivers/adc"
 pkg.deps.TEST:

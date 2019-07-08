@@ -30,6 +30,7 @@
 struct vector_data {
     char *plain;
     char *cipher;
+    uint8_t sz;
 };
 
 struct test_vectors {
@@ -47,6 +48,7 @@ struct test_vectors {
  * Test vectors from "NIST Special Publication 800-38A"
  */
 
+#if MYNEWT_VAL(CRYPTOTEST_VECTORS_ECB)
 static struct test_vectors aes_128_ecb_vectors = {
     .name = "AES-128-ECB",
     .algo = CRYPTO_ALGO_AES,
@@ -74,7 +76,9 @@ static struct test_vectors aes_128_ecb_vectors = {
         },
     },
 };
+#endif /* MYNEWT_VAL(CRYPTOTEST_VECTORS_ECB) */
 
+#if MYNEWT_VAL(CRYPTOTEST_VECTORS_CBC)
 static struct test_vectors aes_128_cbc_vectors = {
     .name = "AES-128-CBC",
     .algo = CRYPTO_ALGO_AES,
@@ -102,7 +106,9 @@ static struct test_vectors aes_128_cbc_vectors = {
         },
     },
 };
+#endif /* MYNEWT_VAL(CRYPTOTEST_VECTORS_CBC) */
 
+#if MYNEWT_VAL(CRYPTOTEST_VECTORS_CTR)
 static struct test_vectors aes_128_ctr_vectors = {
     .name = "AES-128-CTR",
     .algo = CRYPTO_ALGO_AES,
@@ -115,26 +121,37 @@ static struct test_vectors aes_128_ctr_vectors = {
         {
             .plain = "\x6b\xc1\xbe\xe2\x2e\x40\x9f\x96\xe9\x3d\x7e\x11\x73\x93\x17\x2a",
             .cipher = "\x87\x4d\x61\x91\xb6\x20\xe3\x26\x1b\xef\x68\x64\x99\x0d\xb6\xce",
+            .sz = AES_BLOCK_LEN,
         },
         {
             .plain = "\xae\x2d\x8a\x57\x1e\x03\xac\x9c\x9e\xb7\x6f\xac\x45\xaf\x8e\x51",
             .cipher = "\x98\x06\xf6\x6b\x79\x70\xfd\xff\x86\x17\x18\x7b\xb9\xff\xfd\xff",
+            .sz = AES_BLOCK_LEN,
         },
         {
-            .plain = "\x30\xc8\x1c\x46\xa3\x5c\xe4\x11\xe5\xfb\xc1\x19\x1a\x0a\x52\xef",
-            .cipher = "\x5a\xe4\xdf\x3e\xdb\xd5\xd3\x5e\x5b\x4f\x09\x02\x0d\xb0\x3e\xab",
+            .plain = "\x30\xc8\x1c\x46\xa3\x5c\xe4\x11",
+            .cipher = "\x5a\xe4\xdf\x3e\xdb\xd5\xd3\x5e",
+            .sz = 8,
         },
         {
             .plain = "\xf6\x9f\x24\x45\xdf\x4f\x9b\x17\xad\x2b\x41\x7b\xe6\x6c\x37\x10",
             .cipher = "\x1e\x03\x1d\xda\x2f\xbe\x03\xd1\x79\x21\x70\xa0\xf3\x00\x9c\xee",
+            .sz = AES_BLOCK_LEN,
         },
     },
 };
+#endif /* MYNEWT_VAL(CRYPTOTEST_VECTORS_CTR) */
 
 static struct test_vectors *all_tests[] = {
+#if MYNEWT_VAL(CRYPTOTEST_VECTORS_ECB)
     &aes_128_ecb_vectors,
+#endif
+#if MYNEWT_VAL(CRYPTOTEST_VECTORS_CBC)
     &aes_128_cbc_vectors,
+#endif
+#if MYNEWT_VAL(CRYPTOTEST_VECTORS_CTR)
     &aes_128_ctr_vectors,
+#endif
     NULL,
 };
 
@@ -153,6 +170,7 @@ run_test_vectors(struct crypto_dev *crypto, struct test_vectors *test_mode)
     struct vector_data *vector;
     int i;
     uint32_t sz;
+    uint32_t asksz;
 
     algo = test_mode->algo;
     mode = test_mode->mode;
@@ -172,10 +190,14 @@ run_test_vectors(struct crypto_dev *crypto, struct test_vectors *test_mode)
         vector = &vectors[i];
         inbuf = (uint8_t *)vector->plain;
 
+        asksz = AES_BLOCK_LEN;
+        if (mode == CRYPTO_MODE_CTR) {
+            asksz = vector->sz;
+        }
         sz = crypto_encrypt_custom(crypto, algo, mode, key, keylen, ivp,
-                inbuf, outbuf, AES_BLOCK_LEN);
-        if (sz == AES_BLOCK_LEN && memcmp(outbuf, vector->cipher, sz) == 0) {
-            printf("ok\n");
+                inbuf, outbuf, asksz);
+        if (sz == asksz && memcmp(outbuf, vector->cipher, sz) == 0) {
+            printf("ok, sz=%lu\n", sz);
         } else {
             printf("fail\n");
         }
@@ -192,16 +214,22 @@ run_test_vectors(struct crypto_dev *crypto, struct test_vectors *test_mode)
         vector = &vectors[i];
         inbuf = (uint8_t *)vector->cipher;
 
+        asksz = AES_BLOCK_LEN;
+        if (mode == CRYPTO_MODE_CTR) {
+            asksz = vector->sz;
+        }
+
         sz = crypto_decrypt_custom(crypto, algo, mode, key, keylen, ivp,
-                inbuf, outbuf, AES_BLOCK_LEN);
-        if (sz == AES_BLOCK_LEN && memcmp(outbuf, vector->plain, sz) == 0) {
-            printf("ok\n");
+                inbuf, outbuf, asksz);
+        if (sz == asksz && memcmp(outbuf, vector->plain, sz) == 0) {
+            printf("ok, sz=%lu\n", sz);
         } else {
             printf("fail\n");
         }
     }
 }
 
+#if MYNEWT_VAL(CRYPTOTEST_BENCHMARK)
 extern uint8_t aes_128_key[];
 extern uint8_t aes_128_ecb_input[];
 extern uint8_t aes_128_ecb_expected[];
@@ -254,7 +282,9 @@ run_benchmark(char *name, block_encrypt_func_t encfn, void *data, uint8_t iter)
     }
     printf("done in %lu ticks\n", os_time_get() - t);
 }
+#endif /* MYNEWT_VAL(CRYPTOTEST_BENCHMARK) */
 
+#if MYNEWT_VAL(CRYPTOTEST_CONCURRENCY)
 static void
 concurrency_test_handler(void *arg)
 {
@@ -307,7 +337,9 @@ run_concurrency_test(struct crypto_dev *crypto)
                 8 + i, OS_WAIT_FOREVER, pstack, STACK_SIZE);
     }
 }
+#endif /* MYNEWT_VAL(CRYPTOTEST_CONCURRENCY) */
 
+#if MYNEWT_VAL(CRYPTOTEST_INPLACE)
 struct inplace_test {
     uint16_t mode;
     char *name;
@@ -373,7 +405,9 @@ run_inplace_test(struct crypto_dev *crypto)
         }
     }
 }
+#endif /* MYNEWT_VAL(CRYPTOTEST_INPLACE) */
 
+#if MYNEWT_VAL(CRYPTOTEST_IOVEC)
 struct iov_data_block {
     char *plain;
     char *cipher;
@@ -561,16 +595,18 @@ run_iovec_test(struct crypto_dev *crypto)
         }
     }
 }
-
+#endif /* MYNEWT_VAL(CRYPTOTEST_IOVEC) */
 
 int
 main(void)
 {
     struct crypto_dev *crypto;
+#if MYNEWT_VAL(CRYPTOTEST_BENCHMARK)
     mbedtls_aes_context mbed_aes;
     struct tc_aes_key_sched_struct tc_aes;
-    int i;
     int iterations;
+#endif
+    int i;
 
     sysinit();
 
@@ -582,12 +618,17 @@ main(void)
         run_test_vectors(crypto, all_tests[i]);
     }
 
+#if MYNEWT_VAL(CRYPTOTEST_INPLACE)
     printf("\n=== In-place encrypt/decrypt ===\n");
     run_inplace_test(crypto);
+#endif
 
+#if MYNEWT_VAL(CRYPTOTEST_IOVEC)
     printf("\n=== iovec encrypt/decrypt ===\n");
     run_iovec_test(crypto);
+#endif
 
+#if MYNEWT_VAL(CRYPTOTEST_BENCHMARK)
     mbedtls_aes_init(&mbed_aes);
     mbedtls_aes_setkey_enc(&mbed_aes, aes_128_key, 128);
 
@@ -601,8 +642,11 @@ main(void)
         run_benchmark("TINYCRYPT", tc_enc_block, &tc_aes, iterations);
         os_time_delay(OS_TICKS_PER_SEC);
     }
+#endif
 
+#if MYNEWT_VAL(CRYPTOTEST_CONCURRENCY)
     run_concurrency_test(crypto);
+#endif
 
     while (1) {
         os_eventq_run(os_eventq_dflt_get());

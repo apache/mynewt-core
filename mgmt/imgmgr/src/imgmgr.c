@@ -743,6 +743,45 @@ imgr_upload_good_rsp(struct mgmt_cbuf *cb)
     return 0;
 }
 
+/**
+ * Logs an upload request if necessary.
+ *
+ * @param is_first              Whether the request includes the first chunk of
+ *                                  the image.
+ * @param is_last               Whether the request includes the last chunk of
+ *                                  the image.
+ * @param status                The result of processing the upload request
+ *                                  (MGMT_ERR code).
+ *
+ * @return                      0 on success; nonzero on failure.
+ */
+static int
+imgr_upload_log(bool is_first, bool is_last, int status)
+{
+    uint8_t hash[IMGMGR_HASH_LEN];
+    const uint8_t *hashp;
+    int rc;
+
+    if (is_first) {
+        return imgmgr_log_upload_start(status);
+    }
+
+    if (is_last || status != 0) {
+        /* Log the image hash if we know it. */
+        rc = imgr_read_info(1, NULL, hash, NULL);
+        if (rc != 0) {
+            hashp = NULL;
+        } else {
+            hashp = hash;
+        }
+
+        return imgmgr_log_upload_done(status, hashp);
+    }
+
+    /* Nothing to log. */
+    return 0;
+}
+
 static int
 imgr_upload(struct mgmt_cbuf *cb)
 {
@@ -818,8 +857,8 @@ imgr_upload(struct mgmt_cbuf *cb)
     if (imgr_upload_cb != NULL) {
         rc = imgr_upload_cb(req.off, action.size, imgr_upload_arg);
         if (rc != 0) {
-            imgmgr_dfu_stopped();
-            return imgr_error_rsp(cb, rc, imgmgr_err_str_app_reject);
+            errstr = imgmgr_err_str_app_reject;
+            goto end;
         }
     }
 
@@ -829,9 +868,9 @@ imgr_upload(struct mgmt_cbuf *cb)
 
     rc = flash_area_open(imgr_state.area_id, &fa);
     if (rc != 0) {
-        imgmgr_dfu_stopped();
-        return imgr_error_rsp(cb, MGMT_ERR_EUNKNOWN,
-                              imgmgr_err_str_flash_open_failed);
+        rc = MGMT_ERR_EUNKNOWN;
+        errstr = imgmgr_err_str_flash_open_failed;
+        goto end;
     }
 
     if (req.off == 0) {
@@ -873,13 +912,14 @@ imgr_upload(struct mgmt_cbuf *cb)
             if (rc != 0) {
                 rc = MGMT_ERR_EUNKNOWN;
                 errstr = imgmgr_err_str_flash_erase_failed;
+                goto end;
             }
         }
 #endif
     }
 
     /* Write the image data to flash. */
-    if (rc == 0 && req.data_len != 0) {
+    if (req.data_len != 0) {
 #if MYNEWT_VAL(IMGMGR_LAZY_ERASE)
         /* erase as we cross sector boundaries */
         if (imgr_erase_if_needed(fa, req.off, action.write_bytes) != 0) {
@@ -890,9 +930,9 @@ imgr_upload(struct mgmt_cbuf *cb)
 #endif
         rc = flash_area_write(fa, req.off, req.img_data, action.write_bytes);
         if (rc != 0) {
-            imgmgr_dfu_stopped();
             rc = MGMT_ERR_EUNKNOWN;
             errstr = imgmgr_err_str_flash_write_failed;
+            goto end;
         } else {
             imgr_state.off += action.write_bytes;
             if (imgr_state.off == imgr_state.size) {
@@ -903,12 +943,15 @@ imgr_upload(struct mgmt_cbuf *cb)
         }
     }
 
-#if MYNEWT_VAL(IMGMGR_LAZY_ERASE)
 end:
-#endif
-    flash_area_close(fa);
+    if (fa != NULL) {
+        flash_area_close(fa);
+    }
+
+    imgr_upload_log(req.off == 0, imgr_state.off == imgr_state.size, rc);
 
     if (rc != 0) {
+        imgmgr_dfu_stopped();
         return imgr_error_rsp(cb, rc, errstr);
     }
 

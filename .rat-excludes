@@ -207,6 +207,9 @@ stm32f4xx_hal_gpio.c
 stm32f4xx_hal_rcc.c
 stm32f4xx_hal_uart.c
 
+# STM32F4x MCU/BSP clock customization
+clock_stm32f4xx.c
+
 #STM32F0xx HAL - BSD licence
 STM32F0xx_HAL_Driver
 stm32f0xx
@@ -478,6 +481,9 @@ split-fanstel-ev-bt840.ld
 
 # B-L072Z-LRWAN1 BSP - BSD License
 b-l072z-lrwan1
+
+# B-L475E-IOT01A BSP - BSD License
+b-l475e-iot01a
 
 # bluepill BSP - BSD License
 bluepill

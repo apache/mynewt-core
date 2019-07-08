@@ -24,6 +24,7 @@
 #include "bus/bus_debug.h"
 #include "bus/bus_driver.h"
 #include "bus/drivers/i2c_common.h"
+#include "bus/drivers/i2c_nrf52_twim.h"
 #include "mcu/nrf52_hal.h"
 #include "nrfx.h"
 #if MYNEWT_VAL(I2C_NRF52_TWIM_STAT)
@@ -419,7 +420,7 @@ bus_i2c_nrf52_twim_configure(struct bus_dev *bdev, struct bus_node *bnode)
         nrf_twim->FREQUENCY = TWIM_FREQUENCY_FREQUENCY_K250;
         break;
     case 380:
-        nrf_twim->FREQUENCY = TWIM_FREQUENCY_FREQUENCY_K380;
+        nrf_twim->FREQUENCY = TWIM_CUSTOM_FREQUENCY_FREQUENCY_K380;
         break;
     case 400:
         nrf_twim->FREQUENCY = TWIM_FREQUENCY_FREQUENCY_K400;

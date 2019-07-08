@@ -17,6 +17,9 @@
 # under the License.
 #
 
+bsp.name: "RuuviTag"
+bsp.url: https://ruuvi.com/ruuvitag-specs/
+bsp.maker: "Ruuvi"
 bsp.arch: cortex_m4
 bsp.compiler: compiler/arm-none-eabi-m4
 bsp.linkerscript:

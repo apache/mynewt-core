@@ -106,6 +106,7 @@ struct bmp280 {
         struct bus_i2c_node i2c_node;
         struct bus_spi_node spi_node;
     };
+    bool node_is_spi;
 #else
     struct os_dev dev;
 #endif

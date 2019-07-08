@@ -24,7 +24,7 @@
     [..]
       (#) As prerequisite, fill in the HAL_QSPI_MspInit() :
         (++) Enable QuadSPI clock interface with __HAL_RCC_QSPI_CLK_ENABLE().
-        (++) Reset QuadSPI IP with __HAL_RCC_QSPI_FORCE_RESET() and __HAL_RCC_QSPI_RELEASE_RESET().
+        (++) Reset QuadSPI Peripheral with __HAL_RCC_QSPI_FORCE_RESET() and __HAL_RCC_QSPI_RELEASE_RESET().
         (++) Enable the clocks for the QuadSPI GPIOS with __HAL_RCC_GPIOx_CLK_ENABLE().
         (++) Configure these QuadSPI pins in alternate mode using HAL_GPIO_Init().
         (++) If interrupt mode is used, enable and configure QuadSPI global
@@ -196,29 +196,13 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; COPYRIGHT(c) 2017 STMicroelectronics</center></h2>
+  * <h2><center>&copy; Copyright (c) 2017 STMicroelectronics.
+  * All rights reserved.</center></h2>
   *
-  * Redistribution and use in source and binary forms, with or without modification,
-  * are permitted provided that the following conditions are met:
-  *   1. Redistributions of source code must retain the above copyright notice,
-  *      this list of conditions and the following disclaimer.
-  *   2. Redistributions in binary form must reproduce the above copyright notice,
-  *      this list of conditions and the following disclaimer in the documentation
-  *      and/or other materials provided with the distribution.
-  *   3. Neither the name of STMicroelectronics nor the names of its contributors
-  *      may be used to endorse or promote products derived from this software
-  *      without specific prior written permission.
-  *
-  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-  * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-  * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-  * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+  * This software component is licensed by ST under BSD 3-Clause license,
+  * the "License"; You may not use this file except in compliance with the
+  * License. You may obtain a copy of the License at:
+  *                       opensource.org/licenses/BSD-3-Clause
   *
   ******************************************************************************
   */
@@ -226,7 +210,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stm32l4xx_hal.h"
 
-#if defined(QUADSPI) || defined(QUADSPI1) || defined(QUADSPI2)
+#if defined(QUADSPI)
 
 /** @addtogroup STM32L4xx_HAL_Driver
   * @{
@@ -366,7 +350,7 @@ HAL_StatusTypeDef HAL_QSPI_Init(QSPI_HandleTypeDef *hqspi)
 #endif
 
     /* Configure the default timeout for the QSPI memory access */
-    HAL_QSPI_SetTimeout(hqspi, HAL_QPSI_TIMEOUT_DEFAULT_VALUE);
+    HAL_QSPI_SetTimeout(hqspi, HAL_QSPI_TIMEOUT_DEFAULT_VALUE);
   }
 
   /* Configure QSPI FIFO Threshold */
@@ -1415,7 +1399,7 @@ HAL_StatusTypeDef HAL_QSPI_Transmit_DMA(QSPI_HandleTypeDef *hqspi, uint8_t *pDat
           /* Process unlocked */
           __HAL_UNLOCK(hqspi);
         }
-      }
+     }
     }
     else
     {
@@ -2033,7 +2017,7 @@ __weak void HAL_QSPI_TimeOutCallback(QSPI_HandleTypeDef *hqspi)
   * @brief  Register a User QSPI Callback
   *         To be used instead of the weak (surcharged) predefined callback
   * @param hqspi : QSPI handle
-  * @param CallbackID : ID of the callback to be registered
+  * @param CallbackId : ID of the callback to be registered
   *        This parameter can be one of the following values:
   *          @arg @ref HAL_QSPI_ERROR_CB_ID          QSPI Error Callback ID
   *          @arg @ref HAL_QSPI_ABORT_CB_ID          QSPI Abort Callback ID
@@ -2050,7 +2034,7 @@ __weak void HAL_QSPI_TimeOutCallback(QSPI_HandleTypeDef *hqspi)
   * @param pCallback : pointer to the Callback function
   * @retval status
   */
-HAL_StatusTypeDef HAL_QSPI_RegisterCallback (QSPI_HandleTypeDef *hqspi, HAL_QSPI_CallbackIDTypeDef CallbackID, pQSPI_CallbackTypeDef pCallback)
+HAL_StatusTypeDef HAL_QSPI_RegisterCallback (QSPI_HandleTypeDef *hqspi, HAL_QSPI_CallbackIDTypeDef CallbackId, pQSPI_CallbackTypeDef pCallback)
 {
   HAL_StatusTypeDef status = HAL_OK;
 
@@ -2066,7 +2050,7 @@ HAL_StatusTypeDef HAL_QSPI_RegisterCallback (QSPI_HandleTypeDef *hqspi, HAL_QSPI
 
   if(hqspi->State == HAL_QSPI_STATE_READY)
   {
-    switch (CallbackID)
+    switch (CallbackId)
     {
     case  HAL_QSPI_ERROR_CB_ID :
       hqspi->ErrorCallback = pCallback;
@@ -2114,7 +2098,7 @@ HAL_StatusTypeDef HAL_QSPI_RegisterCallback (QSPI_HandleTypeDef *hqspi, HAL_QSPI
   }
   else if (hqspi->State == HAL_QSPI_STATE_RESET)
   {
-    switch (CallbackID)
+    switch (CallbackId)
     {
     case HAL_QSPI_MSP_INIT_CB_ID :
       hqspi->MspInitCallback = pCallback;
@@ -2147,7 +2131,7 @@ HAL_StatusTypeDef HAL_QSPI_RegisterCallback (QSPI_HandleTypeDef *hqspi, HAL_QSPI
   * @brief  Unregister a User QSPI Callback
   *         QSPI Callback is redirected to the weak (surcharged) predefined callback
   * @param hqspi : QSPI handle
-  * @param CallbackID : ID of the callback to be unregistered
+  * @param CallbackId : ID of the callback to be unregistered
   *        This parameter can be one of the following values:
   *          @arg @ref HAL_QSPI_ERROR_CB_ID          QSPI Error Callback ID
   *          @arg @ref HAL_QSPI_ABORT_CB_ID          QSPI Abort Callback ID
@@ -2163,7 +2147,7 @@ HAL_StatusTypeDef HAL_QSPI_RegisterCallback (QSPI_HandleTypeDef *hqspi, HAL_QSPI
   *          @arg @ref HAL_QSPI_MSP_DEINIT_CB_ID     QSPI MspDeInit callback ID
   * @retval status
   */
-HAL_StatusTypeDef HAL_QSPI_UnRegisterCallback (QSPI_HandleTypeDef *hqspi, HAL_QSPI_CallbackIDTypeDef CallbackID)
+HAL_StatusTypeDef HAL_QSPI_UnRegisterCallback (QSPI_HandleTypeDef *hqspi, HAL_QSPI_CallbackIDTypeDef CallbackId)
 {
   HAL_StatusTypeDef status = HAL_OK;
 
@@ -2172,7 +2156,7 @@ HAL_StatusTypeDef HAL_QSPI_UnRegisterCallback (QSPI_HandleTypeDef *hqspi, HAL_QS
 
   if(hqspi->State == HAL_QSPI_STATE_READY)
   {
-    switch (CallbackID)
+    switch (CallbackId)
     {
     case  HAL_QSPI_ERROR_CB_ID :
       hqspi->ErrorCallback = HAL_QSPI_ErrorCallback;
@@ -2220,7 +2204,7 @@ HAL_StatusTypeDef HAL_QSPI_UnRegisterCallback (QSPI_HandleTypeDef *hqspi, HAL_QS
   }
   else if (hqspi->State == HAL_QSPI_STATE_RESET)
   {
-    switch (CallbackID)
+    switch (CallbackId)
     {
     case HAL_QSPI_MSP_INIT_CB_ID :
       hqspi->MspInitCallback = HAL_QSPI_MspInit;
@@ -2585,21 +2569,8 @@ static void QSPI_DMAError(DMA_HandleTypeDef *hdma)
   CLEAR_BIT(hqspi->Instance->CR, QUADSPI_CR_DMAEN);
 
   /* Abort the QSPI */
-  if (HAL_QSPI_Abort_IT(hqspi) != HAL_OK)
-  {
-    /* Disable the QSPI FIFO Threshold, Transfer Error and Transfer complete Interrupts */
-    __HAL_QSPI_DISABLE_IT(hqspi, QSPI_IT_TC | QSPI_IT_TE | QSPI_IT_FT);
+  (void)HAL_QSPI_Abort_IT(hqspi);
 
-    /* Change state of QSPI */
-    hqspi->State = HAL_QSPI_STATE_READY;
-    
-    /* Error callback */
-#if (USE_HAL_QSPI_REGISTER_CALLBACKS == 1)
-    hqspi->ErrorCallback(hqspi);
-#else
-    HAL_QSPI_ErrorCallback(hqspi);
-#endif
-  }
 }
 
 /**

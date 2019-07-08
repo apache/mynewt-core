@@ -78,7 +78,7 @@ rtt_console_write_ch(char c)
             break;
         }
 
-        if (!rtt_console_retries_left) {
+        if (rtt_console_retries_left <= 0) {
             break;
         }
 

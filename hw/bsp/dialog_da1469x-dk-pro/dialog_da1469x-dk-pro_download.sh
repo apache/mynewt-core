@@ -76,7 +76,7 @@ if [ "$BOOT_LOADER" ]; then
     IMAGE_FILE=$FILE_NAME.img
 
     # allocate 9K for header
-    dd if=/dev/zero bs=9k count=1 | LANG=C tr "\000" "\377" > ${IMAGE_FILE}
+    dd if=/dev/zero bs=9k count=1 | LANG=C LC_CTYPE=C tr "\000" "\377" > ${IMAGE_FILE}
 
     # update product header
     HEX="5070 00200000 00200000 eb00a5a8 66000000 aa11 0300 014007c84e"
@@ -105,6 +105,12 @@ mon reset
 mon halt
 restore $FLASH_LOADER.bin binary 0x20000000
 symbol-file $FLASH_LOADER
+
+# Configure QSPI controller so it can read flash in automode (values 
+# valid for Macronix flash found on Dialog development kits)
+set *(int *)0x3800000C = 0xa8a500eb
+set *(int *)0x38000010 = 0x00000066
+
 set *(int *)0x500000BC = 4
 set \$sp=*(int *)0x20000000
 set \$pc=*(int *)0x20000004

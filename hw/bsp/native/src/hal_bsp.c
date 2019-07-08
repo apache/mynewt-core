@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
+#include <unistd.h>
 #include <inttypes.h>
 #include "os/mynewt.h"
 #include <bsp/bsp.h>
@@ -32,6 +33,7 @@
 #include "hal/hal_i2c.h"
 #include "defs/sections.h"
 #include "ef_tinycrypt/ef_tinycrypt.h"
+#include <trng_sw/trng_sw.h>
 
 #if MYNEWT_VAL(SIM_ACCEL_PRESENT)
 #include "sim/sim_accel.h"
@@ -40,7 +42,12 @@ static struct sim_accel os_bsp_accel0;
 
 static struct uart_dev os_bsp_uart0;
 static struct uart_dev os_bsp_uart1;
-
+static struct trng_sw_dev os_bsp_trng;
+static pid_t mypid;
+static struct trng_sw_dev_cfg os_bsp_trng_cfg = {
+    .tsdc_entr = &mypid,
+    .tsdc_len = sizeof(mypid)
+};
 static sec_data_secret struct eflash_tinycrypt_dev ef_dev0 = {
     .etd_dev = {
         .efd_hal = {
@@ -90,14 +97,41 @@ hal_bsp_init(void)
             OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *) NULL);
     assert(rc == 0);
 
+    mypid = getpid();
+    rc = os_dev_create((struct os_dev *)&os_bsp_trng, "trng",
+                       OS_DEV_INIT_PRIMARY, 0, trng_sw_dev_init,
+                       &os_bsp_trng_cfg);
+    assert(rc == 0);
+
 #if MYNEWT_VAL(I2C_0)
     rc = hal_i2c_init(0, NULL);
     assert(rc == 0);
 #endif
-    
+
 #if MYNEWT_VAL(SIM_ACCEL_PRESENT)
     rc = os_dev_create((struct os_dev *) &os_bsp_accel0, "simaccel0",
             OS_DEV_INIT_PRIMARY, 0, simaccel_init, (void *) NULL);
     assert(rc == 0);
 #endif
+
+#if MYNEWT_VAL(OS_CPUTIME_TIMER_NUM >= 0)
+    rc = os_cputime_init(MYNEWT_VAL(OS_CPUTIME_FREQ));
+    assert(rc == 0);
+#endif
+}
+
+void
+hal_bsp_init_trng(void)
+{
+    int i;
+    int rc;
+
+    /*
+     * Add entropy (don't do it like this if you use this for real, use
+     * something proper).
+     */
+    for (i = 0; i < 8; i++) {
+        rc = trng_sw_dev_add_entropy(&os_bsp_trng, &mypid, sizeof(mypid));
+        assert(rc == 0);
+    }
 }

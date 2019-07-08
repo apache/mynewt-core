@@ -65,11 +65,16 @@ stm32_has_support(struct crypto_dev *crypto, uint8_t op, uint16_t algo,
 
 static uint32_t
 stm32_crypto_op(struct crypto_dev *crypto, uint8_t op, uint16_t algo,
-        uint16_t mode, const uint8_t *key, uint16_t keylen, const uint8_t *iv,
+        uint16_t mode, const uint8_t *key, uint16_t keylen, uint8_t *iv,
         const uint8_t *inbuf, uint8_t *outbuf, uint32_t len)
 {
     HAL_StatusTypeDef status;
     uint32_t sz = 0;
+    uint8_t i;
+    uint8_t iv_save[AES_BLOCK_LEN];
+    unsigned int inc;
+    unsigned int carry;
+    unsigned int v;
 
     if (!stm32_has_support(crypto, op, algo, mode, keylen)) {
         return 0;
@@ -106,9 +111,16 @@ stm32_crypto_op(struct crypto_dev *crypto, uint8_t op, uint16_t algo,
         if (op == CRYPTO_OP_ENCRYPT) {
             status = HAL_CRYP_AESCBC_Encrypt(&g_hcryp, (uint8_t *)inbuf, len,
                     outbuf, HAL_MAX_DELAY);
+            if (status == HAL_OK) {
+                memcpy(iv, &outbuf[len-AES_BLOCK_LEN], AES_BLOCK_LEN);
+            }
         } else {
+            memcpy(iv_save, &inbuf[len-AES_BLOCK_LEN], AES_BLOCK_LEN);
             status = HAL_CRYP_AESCBC_Decrypt(&g_hcryp, (uint8_t *)inbuf, len,
                     outbuf, HAL_MAX_DELAY);
+            if (status == HAL_OK) {
+                memcpy(iv, iv_save, AES_BLOCK_LEN);
+            }
         }
         break;
     case CRYPTO_MODE_CTR:
@@ -119,17 +131,25 @@ stm32_crypto_op(struct crypto_dev *crypto, uint8_t op, uint16_t algo,
             status = HAL_CRYP_AESCTR_Decrypt(&g_hcryp, (uint8_t *)inbuf, len,
                     outbuf, HAL_MAX_DELAY);
         }
+        if (status == HAL_OK) {
+            inc = (len + AES_BLOCK_LEN - 1) / AES_BLOCK_LEN;
+            carry = 0;
+            for (i = AES_BLOCK_LEN; (inc != 0 || carry != 0) && i > 0; --i) {
+                v = carry + (uint8_t)inc + iv[i - 1];
+                iv[i - 1] = (uint8_t)v;
+                inc >>= 8;
+                carry = v >> 8;
+            }
+        }
         break;
     default:
         sz = 0;
         goto out;
     }
 
-    if (status != HAL_OK) {
-        sz = 0;
+    if (status == HAL_OK) {
+        sz = len;
     }
-
-    /* XXX update IV/nonce if OK */
 
 out:
     os_mutex_release(&gmtx);

@@ -17,6 +17,9 @@
 # under the License.
 #
 
+bsp.name: "Blend 2"
+bsp.url: https://redbear.cc/product/retired/blend-2.html
+bsp.maker: "RedBear"
 bsp.arch: cortex_m4
 bsp.compiler: compiler/arm-none-eabi-m4
 bsp.linkerscript:

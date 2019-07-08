@@ -17,6 +17,9 @@
 # under the License.
 #
 
+bsp.name: "micro:bit"
+bsp.url: https://microbit.org/guide/hardware/
+bsp.maker: "BBC (with Nordic nRF51822)"
 bsp.arch: cortex_m0
 bsp.compiler: compiler/arm-none-eabi-m0
 bsp.linkerscript:

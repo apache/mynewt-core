@@ -17,6 +17,10 @@
 # under the License.
 #
 
+bsp.name: "Wi-FIRE"
+bsp.url: https://store.digilentinc.com/wi-fire-wifi-enabled-pic32mz-microcontroller-board/
+bsp.maker: "Digilent Inc."
+
 bsp.arch: pic32
 bsp.compiler: compiler/xc32
 

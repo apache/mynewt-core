@@ -21,6 +21,27 @@ syscfg.defs:
     APP_CRYPTO_DEV:
         description: CRYPTO device name
         value: '"crypto"'
+    CRYPTOTEST_VECTORS_ECB:
+        description: Enable AES-ECB test vectors
+        value: 1
+    CRYPTOTEST_VECTORS_CBC:
+        description: Enable AES-CBC test vectors
+        value: 1
+    CRYPTOTEST_VECTORS_CTR:
+        description: Enable AES-CTR test vectors
+        value: 1
+    CRYPTOTEST_INPLACE:
+        description: Enable in-place encryption/decryption test
+        value: 1
+    CRYPTOTEST_IOVEC:
+        description: Enable I/O vec test
+        value: 1
+    CRYPTOTEST_CONCURRENCY:
+        description: Enable concurrency test
+        value: 1
+    CRYPTOTEST_BENCHMARK:
+        description: Enable benchmark against tinycrypt/mbedTLS
+        value: 1
 
 syscfg.vals:
     CRYPTO: 1

@@ -6,36 +6,20 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; COPYRIGHT(c) 2017 STMicroelectronics</center></h2>
+  * <h2><center>&copy; Copyright (c) 2017 STMicroelectronics.
+  * All rights reserved.</center></h2>
   *
-  * Redistribution and use in source and binary forms, with or without modification,
-  * are permitted provided that the following conditions are met:
-  *   1. Redistributions of source code must retain the above copyright notice,
-  *      this list of conditions and the following disclaimer.
-  *   2. Redistributions in binary form must reproduce the above copyright notice,
-  *      this list of conditions and the following disclaimer in the documentation
-  *      and/or other materials provided with the distribution.
-  *   3. Neither the name of STMicroelectronics nor the names of its contributors
-  *      may be used to endorse or promote products derived from this software
-  *      without specific prior written permission.
-  *
-  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-  * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-  * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-  * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+  * This software component is licensed by ST under BSD 3-Clause license,
+  * the "License"; You may not use this file except in compliance with the
+  * License. You may obtain a copy of the License at:
+  *                        opensource.org/licenses/BSD-3-Clause
   *
   ******************************************************************************
   */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __STM32L4xx_LL_USART_H
-#define __STM32L4xx_LL_USART_H
+#ifndef STM32L4xx_LL_USART_H
+#define STM32L4xx_LL_USART_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -61,25 +45,25 @@ extern "C" {
   * @{
   */
 /* Array used to get the USART prescaler division decimal values versus @ref USART_LL_EC_PRESCALER values */
-static const uint16_t USART_PRESCALER_TAB[] =
+static const uint32_t USART_PRESCALER_TAB[] =
 {
-  (uint16_t)1,
-  (uint16_t)2,
-  (uint16_t)4,
-  (uint16_t)6,
-  (uint16_t)8,
-  (uint16_t)10,
-  (uint16_t)12,
-  (uint16_t)16,
-  (uint16_t)32,
-  (uint16_t)64,
-  (uint16_t)128,
-  (uint16_t)256
+  1UL,
+  2UL,
+  4UL,
+  6UL,
+  8UL,
+  10UL,
+  12UL,
+  16UL,
+  32UL,
+  64UL,
+  128UL,
+  256UL
 };
 /**
   * @}
   */
-#endif
+#endif /* USART_PRESC_PRESCALER */
 
 /* Private constants ---------------------------------------------------------*/
 /** @defgroup USART_LL_Private_Constants USART Private Constants
@@ -115,7 +99,7 @@ typedef struct
                                            This parameter can be a value of @ref USART_LL_EC_PRESCALER.
 
                                            This feature can be modified afterwards using unitary function @ref LL_USART_SetPrescaler().*/
-#endif
+#endif /* USART_PRESC_PRESCALER */
 
   uint32_t BaudRate;                  /*!< This field defines expected Usart communication baud rate.
 
@@ -207,18 +191,18 @@ typedef struct
 #define LL_USART_ICR_IDLECF                     USART_ICR_IDLECF              /*!< Idle line detected flag */
 #if defined(USART_CR1_FIFOEN)
 #define LL_USART_ICR_TXFECF                     USART_ICR_TXFECF              /*!< TX FIFO Empty Clear flag */
-#endif
+#endif /* USART_CR1_FIFOEN */
 #define LL_USART_ICR_TCCF                       USART_ICR_TCCF                /*!< Transmission complete flag */
 #if defined(USART_TCBGT_SUPPORT)
 #define LL_USART_ICR_TCBGTCF                    USART_ICR_TCBGTCF             /*!< Transmission completed before guard time flag */
-#endif
+#endif /* USART_TCBGT_SUPPORT */
 #define LL_USART_ICR_LBDCF                      USART_ICR_LBDCF               /*!< LIN break detection flag */
 #define LL_USART_ICR_CTSCF                      USART_ICR_CTSCF               /*!< CTS flag */
 #define LL_USART_ICR_RTOCF                      USART_ICR_RTOCF               /*!< Receiver timeout flag */
 #define LL_USART_ICR_EOBCF                      USART_ICR_EOBCF               /*!< End of block flag */
 #if defined(USART_CR2_SLVEN)
 #define LL_USART_ICR_UDRCF                      USART_ICR_UDRCF               /*!< SPI Slave Underrun Clear flag */
-#endif
+#endif /* USART_CR2_SLVEN */
 #define LL_USART_ICR_CMCF                       USART_ICR_CMCF                /*!< Character match flag */
 #define LL_USART_ICR_WUCF                       USART_ICR_WUCF                /*!< Wakeup from Stop mode flag */
 /**
@@ -238,13 +222,13 @@ typedef struct
 #define LL_USART_ISR_RXNE_RXFNE                 USART_ISR_RXNE_RXFNE          /*!< Read data register or RX FIFO not empty flag */
 #else
 #define LL_USART_ISR_RXNE                       USART_ISR_RXNE                /*!< Read data register not empty flag */
-#endif
+#endif /* USART_CR1_FIFOEN */
 #define LL_USART_ISR_TC                         USART_ISR_TC                  /*!< Transmission complete flag */
 #if defined(USART_CR1_FIFOEN)
 #define LL_USART_ISR_TXE_TXFNF                  USART_ISR_TXE_TXFNF           /*!< Transmit data register empty or TX FIFO Not Full flag*/
 #else
 #define LL_USART_ISR_TXE                        USART_ISR_TXE                 /*!< Transmit data register empty flag */
-#endif
+#endif /* USART_CR1_FIFOEN */
 #define LL_USART_ISR_LBDF                       USART_ISR_LBDF                /*!< LIN break detection flag */
 #define LL_USART_ISR_CTSIF                      USART_ISR_CTSIF               /*!< CTS interrupt flag */
 #define LL_USART_ISR_CTS                        USART_ISR_CTS                 /*!< CTS flag */
@@ -252,7 +236,7 @@ typedef struct
 #define LL_USART_ISR_EOBF                       USART_ISR_EOBF                /*!< End of block flag */
 #if defined(USART_CR2_SLVEN)
 #define LL_USART_ISR_UDR                        USART_ISR_UDR                 /*!< SPI Slave underrun error flag */
-#endif
+#endif /* USART_CR2_SLVEN */
 #define LL_USART_ISR_ABRE                       USART_ISR_ABRE                /*!< Auto baud rate error flag */
 #define LL_USART_ISR_ABRF                       USART_ISR_ABRF                /*!< Auto baud rate flag */
 #define LL_USART_ISR_BUSY                       USART_ISR_BUSY                /*!< Busy flag */
@@ -265,14 +249,14 @@ typedef struct
 #if defined(USART_CR1_FIFOEN)
 #define LL_USART_ISR_TXFE                       USART_ISR_TXFE                /*!< TX FIFO empty flag */
 #define LL_USART_ISR_RXFF                       USART_ISR_RXFF                /*!< RX FIFO full flag */
-#endif
+#endif /* USART_CR1_FIFOEN */
 #if defined(USART_TCBGT_SUPPORT)
 #define LL_USART_ISR_TCBGT                      USART_ISR_TCBGT               /*!< Transmission complete before guard time completion flag */
-#endif
+#endif /* USART_TCBGT_SUPPORT */
 #if defined(USART_CR1_FIFOEN)
 #define LL_USART_ISR_RXFT                       USART_ISR_RXFT                /*!< RX FIFO threshold flag */
 #define LL_USART_ISR_TXFT                       USART_ISR_TXFT                /*!< TX FIFO threshold flag */
-#endif
+#endif /* USART_CR1_FIFOEN */
 /**
   * @}
   */
@@ -286,13 +270,13 @@ typedef struct
 #define LL_USART_CR1_RXNEIE_RXFNEIE             USART_CR1_RXNEIE_RXFNEIE      /*!< Read data register and RXFIFO not empty interrupt enable */
 #else
 #define LL_USART_CR1_RXNEIE                     USART_CR1_RXNEIE              /*!< Read data register not empty interrupt enable */
-#endif
+#endif /* USART_CR1_FIFOEN */
 #define LL_USART_CR1_TCIE                       USART_CR1_TCIE                /*!< Transmission complete interrupt enable */
 #if defined(USART_CR1_FIFOEN)
 #define LL_USART_CR1_TXEIE_TXFNFIE              USART_CR1_TXEIE_TXFNFIE       /*!< Transmit data register empty and TX FIFO not full interrupt enable */
 #else
 #define LL_USART_CR1_TXEIE                      USART_CR1_TXEIE               /*!< Transmit data register empty interrupt enable */
-#endif
+#endif /* USART_CR1_FIFOEN */
 #define LL_USART_CR1_PEIE                       USART_CR1_PEIE                /*!< Parity error */
 #define LL_USART_CR1_CMIE                       USART_CR1_CMIE                /*!< Character match interrupt enable */
 #define LL_USART_CR1_RTOIE                      USART_CR1_RTOIE               /*!< Receiver timeout interrupt enable */
@@ -300,20 +284,20 @@ typedef struct
 #if defined(USART_CR1_FIFOEN)
 #define LL_USART_CR1_TXFEIE                     USART_CR1_TXFEIE              /*!< TX FIFO empty interrupt enable */
 #define LL_USART_CR1_RXFFIE                     USART_CR1_RXFFIE              /*!< RX FIFO full interrupt enable */
-#endif
+#endif /* USART_CR1_FIFOEN */
 #define LL_USART_CR2_LBDIE                      USART_CR2_LBDIE               /*!< LIN break detection interrupt enable */
 #define LL_USART_CR3_EIE                        USART_CR3_EIE                 /*!< Error interrupt enable */
 #define LL_USART_CR3_CTSIE                      USART_CR3_CTSIE               /*!< CTS interrupt enable */
 #define LL_USART_CR3_WUFIE                      USART_CR3_WUFIE               /*!< Wakeup from Stop mode interrupt enable */
 #if defined(USART_CR1_FIFOEN)
 #define LL_USART_CR3_TXFTIE                     USART_CR3_TXFTIE              /*!< TX FIFO threshold interrupt enable */
-#endif
+#endif /* USART_CR1_FIFOEN */
 #if defined(USART_TCBGT_SUPPORT)
 #define LL_USART_CR3_TCBGTIE                    USART_CR3_TCBGTIE             /*!< Transmission complete before guard time interrupt enable */
-#endif
+#endif /* USART_TCBGT_SUPPORT */
 #if defined(USART_CR1_FIFOEN)
 #define LL_USART_CR3_RXFTIE                     USART_CR3_RXFTIE              /*!< RX FIFO threshold interrupt enable */
-#endif
+#endif /* USART_CR1_FIFOEN */
 /**
   * @}
   */
@@ -331,8 +315,8 @@ typedef struct
 /**
   * @}
   */
-#endif
 
+#endif /* USART_CR1_FIFOEN */
 /** @defgroup USART_LL_EC_DIRECTION Communication Direction
   * @{
   */
@@ -440,8 +424,8 @@ typedef struct
 /**
   * @}
   */
-#endif
 
+#endif /* USART_PRESC_PRESCALER */
 /** @defgroup USART_LL_EC_STOPBITS Stop Bits
   * @{
   */
@@ -635,10 +619,12 @@ typedef struct
   * @retval USARTDIV value to be used for BRR register filling in OverSampling_8 case
   */
 #if defined(USART_PRESC_PRESCALER)
-#define __LL_USART_DIV_SAMPLING8(__PERIPHCLK__, __PRESCALER__, __BAUDRATE__) (((((__PERIPHCLK__)/(uint32_t)(USART_PRESCALER_TAB[(__PRESCALER__)]))*2U) + ((__BAUDRATE__)/2U))/(__BAUDRATE__))
+#define __LL_USART_DIV_SAMPLING8(__PERIPHCLK__, __PRESCALER__, __BAUDRATE__) (((((__PERIPHCLK__)/(USART_PRESCALER_TAB[(__PRESCALER__)]))*2U)\
+                                                                               + ((__BAUDRATE__)/2U))/(__BAUDRATE__))
 #else
-#define __LL_USART_DIV_SAMPLING8(__PERIPHCLK__, __BAUDRATE__) ((((__PERIPHCLK__)*2U) + ((__BAUDRATE__)/2U))/(__BAUDRATE__))
-#endif
+#define __LL_USART_DIV_SAMPLING8(__PERIPHCLK__, __BAUDRATE__) ((((__PERIPHCLK__)*2U)\
+                                                                + ((__BAUDRATE__)/2U))/(__BAUDRATE__))
+#endif /* USART_PRESC_PRESCALER */
 
 /**
   * @brief  Compute USARTDIV value according to Peripheral Clock and
@@ -663,10 +649,11 @@ typedef struct
   * @retval USARTDIV value to be used for BRR register filling in OverSampling_16 case
   */
 #if defined(USART_PRESC_PRESCALER)
-#define __LL_USART_DIV_SAMPLING16(__PERIPHCLK__, __PRESCALER__, __BAUDRATE__) ((((__PERIPHCLK__)/(uint32_t)(USART_PRESCALER_TAB[(__PRESCALER__)])) + ((__BAUDRATE__)/2U))/(__BAUDRATE__))
+#define __LL_USART_DIV_SAMPLING16(__PERIPHCLK__, __PRESCALER__, __BAUDRATE__) ((((__PERIPHCLK__)/(USART_PRESCALER_TAB[(__PRESCALER__)]))\
+                                                                                + ((__BAUDRATE__)/2U))/(__BAUDRATE__))
 #else
 #define __LL_USART_DIV_SAMPLING16(__PERIPHCLK__, __BAUDRATE__) (((__PERIPHCLK__) + ((__BAUDRATE__)/2U))/(__BAUDRATE__))
-#endif
+#endif /* USART_PRESC_PRESCALER */
 
 /**
   * @}
@@ -719,7 +706,7 @@ __STATIC_INLINE void LL_USART_Disable(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsEnabled(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->CR1, USART_CR1_UE) == (USART_CR1_UE));
+  return ((READ_BIT(USARTx->CR1, USART_CR1_UE) == (USART_CR1_UE)) ? 1UL : 0UL);
 }
 
 #if defined(USART_CR1_FIFOEN)
@@ -759,7 +746,7 @@ __STATIC_INLINE void LL_USART_DisableFIFO(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsEnabledFIFO(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->CR1, USART_CR1_FIFOEN) == (USART_CR1_FIFOEN));
+  return ((READ_BIT(USARTx->CR1, USART_CR1_FIFOEN) == (USART_CR1_FIFOEN)) ? 1UL : 0UL);
 }
 
 /**
@@ -865,10 +852,10 @@ __STATIC_INLINE uint32_t LL_USART_GetRXFIFOThreshold(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE void LL_USART_ConfigFIFOsThreshold(USART_TypeDef *USARTx, uint32_t TXThreshold, uint32_t RXThreshold)
 {
-  MODIFY_REG(USARTx->CR3, USART_CR3_TXFTCFG | USART_CR3_RXFTCFG, TXThreshold << USART_CR3_TXFTCFG_Pos | RXThreshold << USART_CR3_RXFTCFG_Pos);
+  MODIFY_REG(USARTx->CR3, USART_CR3_TXFTCFG | USART_CR3_RXFTCFG, (TXThreshold << USART_CR3_TXFTCFG_Pos) | (RXThreshold << USART_CR3_RXFTCFG_Pos));
 }
-#endif
 
+#endif /* USART_CR1_FIFOEN */
 /**
   * @brief  USART enabled in STOP Mode.
   * @note   When this function is enabled, USART is able to wake up the MCU from Stop mode, provided that
@@ -908,7 +895,7 @@ __STATIC_INLINE void LL_USART_DisableInStopMode(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsEnabledInStopMode(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->CR1, USART_CR1_UESM) == (USART_CR1_UESM));
+  return ((READ_BIT(USARTx->CR1, USART_CR1_UESM) == (USART_CR1_UESM)) ? 1UL : 0UL);
 }
 
 #if defined(USART_CR3_UCESM)
@@ -1148,7 +1135,7 @@ __STATIC_INLINE void LL_USART_DisableMuteMode(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsEnabledMuteMode(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->CR1, USART_CR1_MME) == (USART_CR1_MME));
+  return ((READ_BIT(USARTx->CR1, USART_CR1_MME) == (USART_CR1_MME)) ? 1UL : 0UL);
 }
 
 /**
@@ -1351,8 +1338,8 @@ __STATIC_INLINE uint32_t LL_USART_GetPrescaler(USART_TypeDef *USARTx)
 {
   return (uint32_t)(READ_BIT(USARTx->PRESC, USART_PRESC_PRESCALER));
 }
-#endif
 
+#endif /* USART_PRESC_PRESCALER */
 /**
   * @brief  Enable Clock output on SCLK pin
   * @note   Macro @ref IS_USART_INSTANCE(USARTx) can be used to check whether or not
@@ -1389,7 +1376,7 @@ __STATIC_INLINE void LL_USART_DisableSCLKOutput(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsEnabledSCLKOutput(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->CR2, USART_CR2_CLKEN) == (USART_CR2_CLKEN));
+  return ((READ_BIT(USARTx->CR2, USART_CR2_CLKEN) == (USART_CR2_CLKEN)) ? 1UL : 0UL);
 }
 
 /**
@@ -1634,7 +1621,7 @@ __STATIC_INLINE void LL_USART_DisableAutoBaudRate(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsEnabledAutoBaud(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->CR2, USART_CR2_ABREN) == (USART_CR2_ABREN));
+  return ((READ_BIT(USARTx->CR2, USART_CR2_ABREN) == (USART_CR2_ABREN)) ? 1UL : 0UL);
 }
 
 /**
@@ -1702,7 +1689,7 @@ __STATIC_INLINE void LL_USART_DisableRxTimeout(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsEnabledRxTimeout(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->CR2, USART_CR2_RTOEN) == (USART_CR2_RTOEN));
+  return ((READ_BIT(USARTx->CR2, USART_CR2_RTOEN) == (USART_CR2_RTOEN)) ? 1UL : 0UL);
 }
 
 /**
@@ -1881,7 +1868,7 @@ __STATIC_INLINE void LL_USART_DisableOneBitSamp(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsEnabledOneBitSamp(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->CR3, USART_CR3_ONEBIT) == (USART_CR3_ONEBIT));
+  return ((READ_BIT(USARTx->CR3, USART_CR3_ONEBIT) == (USART_CR3_ONEBIT)) ? 1UL : 0UL);
 }
 
 /**
@@ -1914,7 +1901,7 @@ __STATIC_INLINE void LL_USART_DisableOverrunDetect(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsEnabledOverrunDetect(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->CR3, USART_CR3_OVRDIS) != USART_CR3_OVRDIS);
+  return ((READ_BIT(USARTx->CR3, USART_CR3_OVRDIS) != USART_CR3_OVRDIS) ? 1UL : 0UL);
 }
 
 /**
@@ -1982,23 +1969,32 @@ __STATIC_INLINE uint32_t LL_USART_GetWKUPType(USART_TypeDef *USARTx)
   * @retval None
   */
 #if defined(USART_PRESC_PRESCALER)
-__STATIC_INLINE void LL_USART_SetBaudRate(USART_TypeDef *USARTx, uint32_t PeriphClk, uint32_t PrescalerValue, uint32_t OverSampling,
+__STATIC_INLINE void LL_USART_SetBaudRate(USART_TypeDef *USARTx, uint32_t PeriphClk, uint32_t PrescalerValue,
+                                          uint32_t OverSampling,
                                           uint32_t BaudRate)
 #else
 __STATIC_INLINE void LL_USART_SetBaudRate(USART_TypeDef *USARTx, uint32_t PeriphClk, uint32_t OverSampling,
                                           uint32_t BaudRate)
-#endif
+#endif /* USART_PRESC_PRESCALER */
 {
-  register uint32_t usartdiv = 0x0U;
-  register uint32_t brrtemp = 0x0U;
+  uint32_t usartdiv;
+  register uint32_t brrtemp;
 
+#if defined(USART_PRESC_PRESCALER)
+  if (PrescalerValue > LL_USART_PRESCALER_DIV256)
+  {
+    /* Do not overstep the size of USART_PRESCALER_TAB */
+  }
+  else if (OverSampling == LL_USART_OVERSAMPLING_8)
+#else
   if (OverSampling == LL_USART_OVERSAMPLING_8)
+#endif /* USART_PRESC_PRESCALER */
   {
 #if defined(USART_PRESC_PRESCALER)
-    usartdiv = (uint16_t)(__LL_USART_DIV_SAMPLING8(PeriphClk, (uint16_t)PrescalerValue, BaudRate));
+    usartdiv = (uint16_t)(__LL_USART_DIV_SAMPLING8(PeriphClk, (uint8_t)PrescalerValue, BaudRate));
 #else
     usartdiv = (uint16_t)(__LL_USART_DIV_SAMPLING8(PeriphClk, BaudRate));
-#endif
+#endif /* USART_PRESC_PRESCALER */
     brrtemp = usartdiv & 0xFFF0U;
     brrtemp |= (uint16_t)((usartdiv & (uint16_t)0x000FU) >> 1U);
     USARTx->BRR = brrtemp;
@@ -2006,10 +2002,10 @@ __STATIC_INLINE void LL_USART_SetBaudRate(USART_TypeDef *USARTx, uint32_t Periph
   else
   {
 #if defined(USART_PRESC_PRESCALER)
-    USARTx->BRR = (uint16_t)(__LL_USART_DIV_SAMPLING16(PeriphClk, (uint16_t)PrescalerValue, BaudRate));
+    USARTx->BRR = (uint16_t)(__LL_USART_DIV_SAMPLING16(PeriphClk, (uint8_t)PrescalerValue, BaudRate));
 #else
     USARTx->BRR = (uint16_t)(__LL_USART_DIV_SAMPLING16(PeriphClk, BaudRate));
-#endif
+#endif /* USART_PRESC_PRESCALER */
   }
 }
 
@@ -2042,29 +2038,34 @@ __STATIC_INLINE void LL_USART_SetBaudRate(USART_TypeDef *USARTx, uint32_t Periph
   * @retval Baud Rate
   */
 #if defined(USART_PRESC_PRESCALER)
-__STATIC_INLINE uint32_t LL_USART_GetBaudRate(USART_TypeDef *USARTx, uint32_t PeriphClk, uint32_t PrescalerValue, uint32_t OverSampling)
+__STATIC_INLINE uint32_t LL_USART_GetBaudRate(USART_TypeDef *USARTx, uint32_t PeriphClk, uint32_t PrescalerValue,
+                                              uint32_t OverSampling)
 #else
 __STATIC_INLINE uint32_t LL_USART_GetBaudRate(USART_TypeDef *USARTx, uint32_t PeriphClk, uint32_t OverSampling)
-#endif
+#endif /* USART_PRESC_PRESCALER */
 {
-  register uint32_t usartdiv = 0x0U;
+  register uint32_t usartdiv;
   register uint32_t brrresult = 0x0U;
 #if defined(USART_PRESC_PRESCALER)
-  register uint32_t periphclkpresc = (uint32_t)(PeriphClk / (uint32_t)(USART_PRESCALER_TAB[(uint16_t)PrescalerValue]));
-#endif
+  register uint32_t periphclkpresc = (uint32_t)(PeriphClk / (USART_PRESCALER_TAB[(uint8_t)PrescalerValue]));
+#endif /* USART_PRESC_PRESCALER */
 
   usartdiv = USARTx->BRR;
 
-  if (OverSampling == LL_USART_OVERSAMPLING_8)
+  if (usartdiv == 0U)
   {
-    if ((usartdiv & 0xFFF7U) != 0U)
+    /* Do not perform a division by 0 */
+  }
+  else if (OverSampling == LL_USART_OVERSAMPLING_8)
+  {
+    usartdiv = (uint16_t)((usartdiv & 0xFFF0U) | ((usartdiv & 0x0007U) << 1U)) ;
+    if (usartdiv != 0U)
     {
-      usartdiv = (uint16_t)((usartdiv & 0xFFF0U) | ((usartdiv & 0x0007U) << 1U)) ;
 #if defined(USART_PRESC_PRESCALER)
       brrresult = (periphclkpresc * 2U) / usartdiv;
 #else
       brrresult = (PeriphClk * 2U) / usartdiv;
-#endif
+#endif /* USART_PRESC_PRESCALER */
     }
   }
   else
@@ -2075,7 +2076,7 @@ __STATIC_INLINE uint32_t LL_USART_GetBaudRate(USART_TypeDef *USARTx, uint32_t Pe
       brrresult = periphclkpresc / usartdiv;
 #else
       brrresult = PeriphClk / usartdiv;
-#endif
+#endif /* USART_PRESC_PRESCALER */
     }
   }
   return (brrresult);
@@ -2171,7 +2172,7 @@ __STATIC_INLINE void LL_USART_DisableIrda(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsEnabledIrda(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->CR3, USART_CR3_IREN) == (USART_CR3_IREN));
+  return ((READ_BIT(USARTx->CR3, USART_CR3_IREN) == (USART_CR3_IREN)) ? 1UL : 0UL);
 }
 
 /**
@@ -2217,7 +2218,7 @@ __STATIC_INLINE uint32_t LL_USART_GetIrdaPowerMode(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE void LL_USART_SetIrdaPrescaler(USART_TypeDef *USARTx, uint32_t PrescalerValue)
 {
-  MODIFY_REG(USARTx->GTPR, USART_GTPR_PSC, (uint16_t)PrescalerValue);
+  MODIFY_REG(USARTx->GTPR, (uint16_t)USART_GTPR_PSC, (uint16_t)PrescalerValue);
 }
 
 /**
@@ -2278,7 +2279,7 @@ __STATIC_INLINE void LL_USART_DisableSmartcardNACK(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsEnabledSmartcardNACK(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->CR3, USART_CR3_NACK) == (USART_CR3_NACK));
+  return ((READ_BIT(USARTx->CR3, USART_CR3_NACK) == (USART_CR3_NACK)) ? 1UL : 0UL);
 }
 
 /**
@@ -2317,7 +2318,7 @@ __STATIC_INLINE void LL_USART_DisableSmartcard(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsEnabledSmartcard(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->CR3, USART_CR3_SCEN) == (USART_CR3_SCEN));
+  return ((READ_BIT(USARTx->CR3, USART_CR3_SCEN) == (USART_CR3_SCEN)) ? 1UL : 0UL);
 }
 
 /**
@@ -2364,7 +2365,7 @@ __STATIC_INLINE uint32_t LL_USART_GetSmartcardAutoRetryCount(USART_TypeDef *USAR
   */
 __STATIC_INLINE void LL_USART_SetSmartcardPrescaler(USART_TypeDef *USARTx, uint32_t PrescalerValue)
 {
-  MODIFY_REG(USARTx->GTPR, USART_GTPR_PSC, (uint16_t)PrescalerValue);
+  MODIFY_REG(USARTx->GTPR, (uint16_t)USART_GTPR_PSC, (uint16_t)PrescalerValue);
 }
 
 /**
@@ -2393,7 +2394,7 @@ __STATIC_INLINE uint32_t LL_USART_GetSmartcardPrescaler(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE void LL_USART_SetSmartcardGuardTime(USART_TypeDef *USARTx, uint32_t GuardTime)
 {
-  MODIFY_REG(USARTx->GTPR, USART_GTPR_GT, GuardTime << USART_GTPR_GT_Pos);
+  MODIFY_REG(USARTx->GTPR, (uint16_t)USART_GTPR_GT, (uint16_t)(GuardTime << USART_GTPR_GT_Pos));
 }
 
 /**
@@ -2454,7 +2455,7 @@ __STATIC_INLINE void LL_USART_DisableHalfDuplex(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsEnabledHalfDuplex(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->CR3, USART_CR3_HDSEL) == (USART_CR3_HDSEL));
+  return ((READ_BIT(USARTx->CR3, USART_CR3_HDSEL) == (USART_CR3_HDSEL)) ? 1UL : 0UL);
 }
 
 /**
@@ -2501,7 +2502,7 @@ __STATIC_INLINE void LL_USART_DisableSPISlave(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsEnabledSPISlave(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->CR2, USART_CR2_SLVEN) == (USART_CR2_SLVEN));
+  return ((READ_BIT(USARTx->CR2, USART_CR2_SLVEN) == (USART_CR2_SLVEN)) ? 1UL : 0UL);
 }
 
 /**
@@ -2543,14 +2544,14 @@ __STATIC_INLINE void LL_USART_DisableSPISlaveSelect(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsEnabledSPISlaveSelect(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->CR2, USART_CR2_DIS_NSS) != (USART_CR2_DIS_NSS));
+  return ((READ_BIT(USARTx->CR2, USART_CR2_DIS_NSS) != (USART_CR2_DIS_NSS)) ? 1UL : 0UL);
 }
 
 /**
   * @}
   */
-#endif
 
+#endif /* USART_CR2_SLVEN */
 /** @defgroup USART_LL_EF_Configuration_LIN Configuration functions related to LIN feature
   * @{
   */
@@ -2622,7 +2623,7 @@ __STATIC_INLINE void LL_USART_DisableLIN(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsEnabledLIN(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->CR2, USART_CR2_LINEN) == (USART_CR2_LINEN));
+  return ((READ_BIT(USARTx->CR2, USART_CR2_LINEN) == (USART_CR2_LINEN)) ? 1UL : 0UL);
 }
 
 /**
@@ -2723,7 +2724,7 @@ __STATIC_INLINE void LL_USART_DisableDEMode(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsEnabledDEMode(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->CR3, USART_CR3_DEM) == (USART_CR3_DEM));
+  return ((READ_BIT(USARTx->CR3, USART_CR3_DEM) == (USART_CR3_DEM)) ? 1UL : 0UL);
 }
 
 /**
@@ -3050,7 +3051,7 @@ __STATIC_INLINE void LL_USART_ConfigMultiProcessMode(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsActiveFlag_PE(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->ISR, USART_ISR_PE) == (USART_ISR_PE));
+  return ((READ_BIT(USARTx->ISR, USART_ISR_PE) == (USART_ISR_PE)) ? 1UL : 0UL);
 }
 
 /**
@@ -3061,18 +3062,18 @@ __STATIC_INLINE uint32_t LL_USART_IsActiveFlag_PE(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsActiveFlag_FE(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->ISR, USART_ISR_FE) == (USART_ISR_FE));
+  return ((READ_BIT(USARTx->ISR, USART_ISR_FE) == (USART_ISR_FE)) ? 1UL : 0UL);
 }
 
 /**
   * @brief  Check if the USART Noise error detected Flag is set or not
-  * @rmtoll ISR          NF            LL_USART_IsActiveFlag_NE
+  * @rmtoll ISR          NE            LL_USART_IsActiveFlag_NE
   * @param  USARTx USART Instance
   * @retval State of bit (1 or 0).
   */
 __STATIC_INLINE uint32_t LL_USART_IsActiveFlag_NE(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->ISR, USART_ISR_NE) == (USART_ISR_NE));
+  return ((READ_BIT(USARTx->ISR, USART_ISR_NE) == (USART_ISR_NE)) ? 1UL : 0UL);
 }
 
 /**
@@ -3083,7 +3084,7 @@ __STATIC_INLINE uint32_t LL_USART_IsActiveFlag_NE(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsActiveFlag_ORE(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->ISR, USART_ISR_ORE) == (USART_ISR_ORE));
+  return ((READ_BIT(USARTx->ISR, USART_ISR_ORE) == (USART_ISR_ORE)) ? 1UL : 0UL);
 }
 
 /**
@@ -3094,7 +3095,7 @@ __STATIC_INLINE uint32_t LL_USART_IsActiveFlag_ORE(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsActiveFlag_IDLE(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->ISR, USART_ISR_IDLE) == (USART_ISR_IDLE));
+  return ((READ_BIT(USARTx->ISR, USART_ISR_IDLE) == (USART_ISR_IDLE)) ? 1UL : 0UL);
 }
 
 #if defined(USART_CR1_FIFOEN)
@@ -3111,10 +3112,10 @@ __STATIC_INLINE uint32_t LL_USART_IsActiveFlag_IDLE(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsActiveFlag_RXNE_RXFNE(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->ISR, USART_ISR_RXNE_RXFNE) == (USART_ISR_RXNE_RXFNE));
+  return ((READ_BIT(USARTx->ISR, USART_ISR_RXNE_RXFNE) == (USART_ISR_RXNE_RXFNE)) ? 1UL : 0UL);
 }
-#else
 
+#else
 /**
   * @brief  Check if the USART Read Data Register Not Empty Flag is set or not
   * @rmtoll ISR          RXNE          LL_USART_IsActiveFlag_RXNE
@@ -3123,10 +3124,10 @@ __STATIC_INLINE uint32_t LL_USART_IsActiveFlag_RXNE_RXFNE(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsActiveFlag_RXNE(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->ISR, USART_ISR_RXNE) == (USART_ISR_RXNE));
+  return ((READ_BIT(USARTx->ISR, USART_ISR_RXNE) == (USART_ISR_RXNE)) ? 1UL : 0UL);
 }
-#endif
 
+#endif /* USART_CR1_FIFOEN */
 /**
   * @brief  Check if the USART Transmission Complete Flag is set or not
   * @rmtoll ISR          TC            LL_USART_IsActiveFlag_TC
@@ -3135,7 +3136,7 @@ __STATIC_INLINE uint32_t LL_USART_IsActiveFlag_RXNE(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsActiveFlag_TC(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->ISR, USART_ISR_TC) == (USART_ISR_TC));
+  return ((READ_BIT(USARTx->ISR, USART_ISR_TC) == (USART_ISR_TC)) ? 1UL : 0UL);
 }
 
 #if defined(USART_CR1_FIFOEN)
@@ -3152,10 +3153,10 @@ __STATIC_INLINE uint32_t LL_USART_IsActiveFlag_TC(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsActiveFlag_TXE_TXFNF(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->ISR, USART_ISR_TXE_TXFNF) == (USART_ISR_TXE_TXFNF));
+  return ((READ_BIT(USARTx->ISR, USART_ISR_TXE_TXFNF) == (USART_ISR_TXE_TXFNF)) ? 1UL : 0UL);
 }
-#else
 
+#else
 /**
   * @brief  Check if the USART Transmit Data Register Empty Flag is set or not
   * @rmtoll ISR          TXE           LL_USART_IsActiveFlag_TXE
@@ -3164,10 +3165,10 @@ __STATIC_INLINE uint32_t LL_USART_IsActiveFlag_TXE_TXFNF(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsActiveFlag_TXE(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->ISR, USART_ISR_TXE) == (USART_ISR_TXE));
+  return ((READ_BIT(USARTx->ISR, USART_ISR_TXE) == (USART_ISR_TXE)) ? 1UL : 0UL);
 }
-#endif
 
+#endif /* USART_CR1_FIFOEN */
 /**
   * @brief  Check if the USART LIN Break Detection Flag is set or not
   * @note   Macro @ref IS_UART_LIN_INSTANCE(USARTx) can be used to check whether or not
@@ -3178,7 +3179,7 @@ __STATIC_INLINE uint32_t LL_USART_IsActiveFlag_TXE(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsActiveFlag_LBD(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->ISR, USART_ISR_LBDF) == (USART_ISR_LBDF));
+  return ((READ_BIT(USARTx->ISR, USART_ISR_LBDF) == (USART_ISR_LBDF)) ? 1UL : 0UL);
 }
 
 /**
@@ -3191,7 +3192,7 @@ __STATIC_INLINE uint32_t LL_USART_IsActiveFlag_LBD(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsActiveFlag_nCTS(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->ISR, USART_ISR_CTSIF) == (USART_ISR_CTSIF));
+  return ((READ_BIT(USARTx->ISR, USART_ISR_CTSIF) == (USART_ISR_CTSIF)) ? 1UL : 0UL);
 }
 
 /**
@@ -3204,7 +3205,7 @@ __STATIC_INLINE uint32_t LL_USART_IsActiveFlag_nCTS(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsActiveFlag_CTS(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->ISR, USART_ISR_CTS) == (USART_ISR_CTS));
+  return ((READ_BIT(USARTx->ISR, USART_ISR_CTS) == (USART_ISR_CTS)) ? 1UL : 0UL);
 }
 
 /**
@@ -3215,7 +3216,7 @@ __STATIC_INLINE uint32_t LL_USART_IsActiveFlag_CTS(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsActiveFlag_RTO(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->ISR, USART_ISR_RTOF) == (USART_ISR_RTOF));
+  return ((READ_BIT(USARTx->ISR, USART_ISR_RTOF) == (USART_ISR_RTOF)) ? 1UL : 0UL);
 }
 
 /**
@@ -3228,7 +3229,7 @@ __STATIC_INLINE uint32_t LL_USART_IsActiveFlag_RTO(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsActiveFlag_EOB(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->ISR, USART_ISR_EOBF) == (USART_ISR_EOBF));
+  return ((READ_BIT(USARTx->ISR, USART_ISR_EOBF) == (USART_ISR_EOBF)) ? 1UL : 0UL);
 }
 
 #if defined(USART_CR2_SLVEN)
@@ -3242,10 +3243,10 @@ __STATIC_INLINE uint32_t LL_USART_IsActiveFlag_EOB(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsActiveFlag_UDR(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->ISR, USART_ISR_UDR) == (USART_ISR_UDR));
+  return ((READ_BIT(USARTx->ISR, USART_ISR_UDR) == (USART_ISR_UDR)) ? 1UL : 0UL);
 }
 
-#endif
+#endif /* USART_CR2_SLVEN */
 /**
   * @brief  Check if the USART Auto-Baud Rate Error Flag is set or not
   * @note   Macro @ref IS_USART_AUTOBAUDRATE_DETECTION_INSTANCE(USARTx) can be used to check whether or not
@@ -3256,7 +3257,7 @@ __STATIC_INLINE uint32_t LL_USART_IsActiveFlag_UDR(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsActiveFlag_ABRE(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->ISR, USART_ISR_ABRE) == (USART_ISR_ABRE));
+  return ((READ_BIT(USARTx->ISR, USART_ISR_ABRE) == (USART_ISR_ABRE)) ? 1UL : 0UL);
 }
 
 /**
@@ -3269,7 +3270,7 @@ __STATIC_INLINE uint32_t LL_USART_IsActiveFlag_ABRE(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsActiveFlag_ABR(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->ISR, USART_ISR_ABRF) == (USART_ISR_ABRF));
+  return ((READ_BIT(USARTx->ISR, USART_ISR_ABRF) == (USART_ISR_ABRF)) ? 1UL : 0UL);
 }
 
 /**
@@ -3280,7 +3281,7 @@ __STATIC_INLINE uint32_t LL_USART_IsActiveFlag_ABR(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsActiveFlag_BUSY(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->ISR, USART_ISR_BUSY) == (USART_ISR_BUSY));
+  return ((READ_BIT(USARTx->ISR, USART_ISR_BUSY) == (USART_ISR_BUSY)) ? 1UL : 0UL);
 }
 
 /**
@@ -3291,7 +3292,7 @@ __STATIC_INLINE uint32_t LL_USART_IsActiveFlag_BUSY(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsActiveFlag_CM(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->ISR, USART_ISR_CMF) == (USART_ISR_CMF));
+  return ((READ_BIT(USARTx->ISR, USART_ISR_CMF) == (USART_ISR_CMF)) ? 1UL : 0UL);
 }
 
 /**
@@ -3302,7 +3303,7 @@ __STATIC_INLINE uint32_t LL_USART_IsActiveFlag_CM(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsActiveFlag_SBK(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->ISR, USART_ISR_SBKF) == (USART_ISR_SBKF));
+  return ((READ_BIT(USARTx->ISR, USART_ISR_SBKF) == (USART_ISR_SBKF)) ? 1UL : 0UL);
 }
 
 /**
@@ -3313,7 +3314,7 @@ __STATIC_INLINE uint32_t LL_USART_IsActiveFlag_SBK(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsActiveFlag_RWU(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->ISR, USART_ISR_RWU) == (USART_ISR_RWU));
+  return ((READ_BIT(USARTx->ISR, USART_ISR_RWU) == (USART_ISR_RWU)) ? 1UL : 0UL);
 }
 
 /**
@@ -3326,7 +3327,7 @@ __STATIC_INLINE uint32_t LL_USART_IsActiveFlag_RWU(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsActiveFlag_WKUP(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->ISR, USART_ISR_WUF) == (USART_ISR_WUF));
+  return ((READ_BIT(USARTx->ISR, USART_ISR_WUF) == (USART_ISR_WUF)) ? 1UL : 0UL);
 }
 
 /**
@@ -3337,7 +3338,7 @@ __STATIC_INLINE uint32_t LL_USART_IsActiveFlag_WKUP(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsActiveFlag_TEACK(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->ISR, USART_ISR_TEACK) == (USART_ISR_TEACK));
+  return ((READ_BIT(USARTx->ISR, USART_ISR_TEACK) == (USART_ISR_TEACK)) ? 1UL : 0UL);
 }
 
 /**
@@ -3348,7 +3349,7 @@ __STATIC_INLINE uint32_t LL_USART_IsActiveFlag_TEACK(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsActiveFlag_REACK(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->ISR, USART_ISR_REACK) == (USART_ISR_REACK));
+  return ((READ_BIT(USARTx->ISR, USART_ISR_REACK) == (USART_ISR_REACK)) ? 1UL : 0UL);
 }
 
 #if defined(USART_CR1_FIFOEN)
@@ -3362,7 +3363,7 @@ __STATIC_INLINE uint32_t LL_USART_IsActiveFlag_REACK(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsActiveFlag_TXFE(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->ISR, USART_ISR_TXFE) == (USART_ISR_TXFE));
+  return ((READ_BIT(USARTx->ISR, USART_ISR_TXFE) == (USART_ISR_TXFE)) ? 1UL : 0UL);
 }
 
 /**
@@ -3375,10 +3376,10 @@ __STATIC_INLINE uint32_t LL_USART_IsActiveFlag_TXFE(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsActiveFlag_RXFF(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->ISR, USART_ISR_RXFF) == (USART_ISR_RXFF));
+  return ((READ_BIT(USARTx->ISR, USART_ISR_RXFF) == (USART_ISR_RXFF)) ? 1UL : 0UL);
 }
-#endif
 
+#endif /* USART_CR1_FIFOEN */
 #if defined(USART_TCBGT_SUPPORT)
 /* Function available only on devices supporting Transmit Complete before Guard Time feature */
 /**
@@ -3389,9 +3390,9 @@ __STATIC_INLINE uint32_t LL_USART_IsActiveFlag_RXFF(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsActiveFlag_TCBGT(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->ISR, USART_ISR_TCBGT) == (USART_ISR_TCBGT));
+  return ((READ_BIT(USARTx->ISR, USART_ISR_TCBGT) == (USART_ISR_TCBGT)) ? 1UL : 0UL);
 }
-#endif
+#endif /* USART_TCBGT_SUPPORT */
 
 #if defined(USART_CR1_FIFOEN)
 /**
@@ -3404,7 +3405,7 @@ __STATIC_INLINE uint32_t LL_USART_IsActiveFlag_TCBGT(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsActiveFlag_TXFT(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->ISR, USART_ISR_TXFT) == (USART_ISR_TXFT));
+  return ((READ_BIT(USARTx->ISR, USART_ISR_TXFT) == (USART_ISR_TXFT)) ? 1UL : 0UL);
 }
 
 /**
@@ -3417,10 +3418,10 @@ __STATIC_INLINE uint32_t LL_USART_IsActiveFlag_TXFT(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsActiveFlag_RXFT(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->ISR, USART_ISR_RXFT) == (USART_ISR_RXFT));
+  return ((READ_BIT(USARTx->ISR, USART_ISR_RXFT) == (USART_ISR_RXFT)) ? 1UL : 0UL);
 }
-#endif
 
+#endif /* USART_CR1_FIFOEN */
 /**
   * @brief  Clear Parity Error Flag
   * @rmtoll ICR          PECF          LL_USART_ClearFlag_PE
@@ -3445,7 +3446,7 @@ __STATIC_INLINE void LL_USART_ClearFlag_FE(USART_TypeDef *USARTx)
 
 /**
   * @brief  Clear Noise Error detected Flag
-  * @rmtoll ICR          NECF           LL_USART_ClearFlag_NE
+  * @rmtoll ICR          NECF          LL_USART_ClearFlag_NE
   * @param  USARTx USART Instance
   * @retval None
   */
@@ -3489,8 +3490,8 @@ __STATIC_INLINE void LL_USART_ClearFlag_TXFE(USART_TypeDef *USARTx)
 {
   WRITE_REG(USARTx->ICR, USART_ICR_TXFECF);
 }
-#endif
 
+#endif /* USART_CR1_FIFOEN */
 /**
   * @brief  Clear Transmission Complete Flag
   * @rmtoll ICR          TCCF          LL_USART_ClearFlag_TC
@@ -3514,7 +3515,7 @@ __STATIC_INLINE void LL_USART_ClearFlag_TCBGT(USART_TypeDef *USARTx)
 {
   WRITE_REG(USARTx->ICR, USART_ICR_TCBGTCF);
 }
-#endif
+#endif /* USART_TCBGT_SUPPORT */
 
 /**
   * @brief  Clear LIN Break Detection Flag
@@ -3580,7 +3581,7 @@ __STATIC_INLINE void LL_USART_ClearFlag_UDR(USART_TypeDef *USARTx)
   WRITE_REG(USARTx->ICR, USART_ICR_UDRCF);
 }
 
-#endif
+#endif /* USART_CR2_SLVEN */
 /**
   * @brief  Clear Character Match Flag
   * @rmtoll ICR          CMCF          LL_USART_ClearFlag_CM
@@ -3640,8 +3641,8 @@ __STATIC_INLINE void LL_USART_EnableIT_RXNE_RXFNE(USART_TypeDef *USARTx)
 {
   SET_BIT(USARTx->CR1, USART_CR1_RXNEIE_RXFNEIE);
 }
-#else
 
+#else
 /**
   * @brief  Enable RX Not Empty Interrupt
   * @rmtoll CR1          RXNEIE        LL_USART_EnableIT_RXNE
@@ -3652,8 +3653,8 @@ __STATIC_INLINE void LL_USART_EnableIT_RXNE(USART_TypeDef *USARTx)
 {
   SET_BIT(USARTx->CR1, USART_CR1_RXNEIE);
 }
-#endif
 
+#endif /* USART_CR1_FIFOEN */
 /**
   * @brief  Enable Transmission Complete Interrupt
   * @rmtoll CR1          TCIE          LL_USART_EnableIT_TC
@@ -3681,8 +3682,8 @@ __STATIC_INLINE void LL_USART_EnableIT_TXE_TXFNF(USART_TypeDef *USARTx)
 {
   SET_BIT(USARTx->CR1, USART_CR1_TXEIE_TXFNFIE);
 }
-#else
 
+#else
 /**
   * @brief  Enable TX Empty Interrupt
   * @rmtoll CR1          TXEIE         LL_USART_EnableIT_TXE
@@ -3693,8 +3694,8 @@ __STATIC_INLINE void LL_USART_EnableIT_TXE(USART_TypeDef *USARTx)
 {
   SET_BIT(USARTx->CR1, USART_CR1_TXEIE);
 }
-#endif
 
+#endif /* USART_CR1_FIFOEN */
 /**
   * @brief  Enable Parity Error Interrupt
   * @rmtoll CR1          PEIE          LL_USART_EnableIT_PE
@@ -3765,8 +3766,8 @@ __STATIC_INLINE void LL_USART_EnableIT_RXFF(USART_TypeDef *USARTx)
 {
   SET_BIT(USARTx->CR1, USART_CR1_RXFFIE);
 }
-#endif
 
+#endif /* USART_CR1_FIFOEN */
 /**
   * @brief  Enable LIN Break Detection Interrupt
   * @note   Macro @ref IS_UART_LIN_INSTANCE(USARTx) can be used to check whether or not
@@ -3834,8 +3835,8 @@ __STATIC_INLINE void LL_USART_EnableIT_TXFT(USART_TypeDef *USARTx)
 {
   SET_BIT(USARTx->CR3, USART_CR3_TXFTIE);
 }
-#endif
 
+#endif /* USART_CR1_FIFOEN */
 #if defined(USART_TCBGT_SUPPORT)
 /* Function available only on devices supporting Transmit Complete before Guard Time feature */
 /**
@@ -3850,7 +3851,7 @@ __STATIC_INLINE void LL_USART_EnableIT_TCBGT(USART_TypeDef *USARTx)
 {
   SET_BIT(USARTx->CR3, USART_CR3_TCBGTIE);
 }
-#endif
+#endif /* USART_TCBGT_SUPPORT */
 
 #if defined(USART_CR1_FIFOEN)
 /**
@@ -3865,8 +3866,8 @@ __STATIC_INLINE void LL_USART_EnableIT_RXFT(USART_TypeDef *USARTx)
 {
   SET_BIT(USARTx->CR3, USART_CR3_RXFTIE);
 }
-#endif
 
+#endif /* USART_CR1_FIFOEN */
 /**
   * @brief  Disable IDLE Interrupt
   * @rmtoll CR1          IDLEIE        LL_USART_DisableIT_IDLE
@@ -3894,8 +3895,8 @@ __STATIC_INLINE void LL_USART_DisableIT_RXNE_RXFNE(USART_TypeDef *USARTx)
 {
   CLEAR_BIT(USARTx->CR1, USART_CR1_RXNEIE_RXFNEIE);
 }
-#else
 
+#else
 /**
   * @brief  Disable RX Not Empty Interrupt
   * @rmtoll CR1          RXNEIE        LL_USART_DisableIT_RXNE
@@ -3906,8 +3907,8 @@ __STATIC_INLINE void LL_USART_DisableIT_RXNE(USART_TypeDef *USARTx)
 {
   CLEAR_BIT(USARTx->CR1, USART_CR1_RXNEIE);
 }
-#endif
 
+#endif /* USART_CR1_FIFOEN */
 /**
   * @brief  Disable Transmission Complete Interrupt
   * @rmtoll CR1          TCIE          LL_USART_DisableIT_TC
@@ -3935,8 +3936,8 @@ __STATIC_INLINE void LL_USART_DisableIT_TXE_TXFNF(USART_TypeDef *USARTx)
 {
   CLEAR_BIT(USARTx->CR1, USART_CR1_TXEIE_TXFNFIE);
 }
-#else
 
+#else
 /**
   * @brief  Disable TX Empty Interrupt
   * @rmtoll CR1          TXEIE         LL_USART_DisableIT_TXE
@@ -3947,8 +3948,8 @@ __STATIC_INLINE void LL_USART_DisableIT_TXE(USART_TypeDef *USARTx)
 {
   CLEAR_BIT(USARTx->CR1, USART_CR1_TXEIE);
 }
-#endif
 
+#endif /* USART_CR1_FIFOEN */
 /**
   * @brief  Disable Parity Error Interrupt
   * @rmtoll CR1          PEIE          LL_USART_DisableIT_PE
@@ -4021,8 +4022,8 @@ __STATIC_INLINE void LL_USART_DisableIT_RXFF(USART_TypeDef *USARTx)
 {
   CLEAR_BIT(USARTx->CR1, USART_CR1_RXFFIE);
 }
-#endif
 
+#endif /* USART_CR1_FIFOEN */
 /**
   * @brief  Disable LIN Break Detection Interrupt
   * @note   Macro @ref IS_UART_LIN_INSTANCE(USARTx) can be used to check whether or not
@@ -4090,8 +4091,8 @@ __STATIC_INLINE void LL_USART_DisableIT_TXFT(USART_TypeDef *USARTx)
 {
   CLEAR_BIT(USARTx->CR3, USART_CR3_TXFTIE);
 }
-#endif
 
+#endif /* USART_CR1_FIFOEN */
 #if defined(USART_TCBGT_SUPPORT)
 /* Function available only on devices supporting Transmit Complete before Guard Time feature */
 /**
@@ -4106,7 +4107,7 @@ __STATIC_INLINE void LL_USART_DisableIT_TCBGT(USART_TypeDef *USARTx)
 {
   CLEAR_BIT(USARTx->CR3, USART_CR3_TCBGTIE);
 }
-#endif
+#endif /* USART_TCBGT_SUPPORT */
 
 #if defined(USART_CR1_FIFOEN)
 /**
@@ -4121,8 +4122,8 @@ __STATIC_INLINE void LL_USART_DisableIT_RXFT(USART_TypeDef *USARTx)
 {
   CLEAR_BIT(USARTx->CR3, USART_CR3_RXFTIE);
 }
-#endif
 
+#endif /* USART_CR1_FIFOEN */
 /**
   * @brief  Check if the USART IDLE Interrupt  source is enabled or disabled.
   * @rmtoll CR1          IDLEIE        LL_USART_IsEnabledIT_IDLE
@@ -4131,7 +4132,7 @@ __STATIC_INLINE void LL_USART_DisableIT_RXFT(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsEnabledIT_IDLE(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->CR1, USART_CR1_IDLEIE) == (USART_CR1_IDLEIE));
+  return ((READ_BIT(USARTx->CR1, USART_CR1_IDLEIE) == (USART_CR1_IDLEIE)) ? 1UL : 0UL);
 }
 
 #if defined(USART_CR1_FIFOEN)
@@ -4148,10 +4149,10 @@ __STATIC_INLINE uint32_t LL_USART_IsEnabledIT_IDLE(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsEnabledIT_RXNE_RXFNE(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->CR1, USART_CR1_RXNEIE_RXFNEIE) == (USART_CR1_RXNEIE_RXFNEIE));
+  return ((READ_BIT(USARTx->CR1, USART_CR1_RXNEIE_RXFNEIE) == (USART_CR1_RXNEIE_RXFNEIE)) ? 1UL : 0UL);
 }
-#else
 
+#else
 /**
   * @brief  Check if the USART RX Not Empty Interrupt is enabled or disabled.
   * @rmtoll CR1          RXNEIE        LL_USART_IsEnabledIT_RXNE
@@ -4160,10 +4161,10 @@ __STATIC_INLINE uint32_t LL_USART_IsEnabledIT_RXNE_RXFNE(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsEnabledIT_RXNE(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->CR1, USART_CR1_RXNEIE) == (USART_CR1_RXNEIE));
+  return ((READ_BIT(USARTx->CR1, USART_CR1_RXNEIE) == (USART_CR1_RXNEIE)) ? 1U : 0U);
 }
-#endif
 
+#endif /* USART_CR1_FIFOEN */
 /**
   * @brief  Check if the USART Transmission Complete Interrupt is enabled or disabled.
   * @rmtoll CR1          TCIE          LL_USART_IsEnabledIT_TC
@@ -4172,7 +4173,7 @@ __STATIC_INLINE uint32_t LL_USART_IsEnabledIT_RXNE(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsEnabledIT_TC(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->CR1, USART_CR1_TCIE) == (USART_CR1_TCIE));
+  return ((READ_BIT(USARTx->CR1, USART_CR1_TCIE) == (USART_CR1_TCIE)) ? 1UL : 0UL);
 }
 
 #if defined(USART_CR1_FIFOEN)
@@ -4189,10 +4190,10 @@ __STATIC_INLINE uint32_t LL_USART_IsEnabledIT_TC(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsEnabledIT_TXE_TXFNF(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->CR1, USART_CR1_TXEIE_TXFNFIE) == (USART_CR1_TXEIE_TXFNFIE));
+  return ((READ_BIT(USARTx->CR1, USART_CR1_TXEIE_TXFNFIE) == (USART_CR1_TXEIE_TXFNFIE)) ? 1UL : 0UL);
 }
-#else
 
+#else
 /**
   * @brief  Check if the USART TX Empty Interrupt is enabled or disabled.
   * @rmtoll CR1          TXEIE         LL_USART_IsEnabledIT_TXE
@@ -4201,10 +4202,10 @@ __STATIC_INLINE uint32_t LL_USART_IsEnabledIT_TXE_TXFNF(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsEnabledIT_TXE(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->CR1, USART_CR1_TXEIE) == (USART_CR1_TXEIE));
+  return ((READ_BIT(USARTx->CR1, USART_CR1_TXEIE) == (USART_CR1_TXEIE)) ? 1U : 0U);
 }
-#endif
 
+#endif /* USART_CR1_FIFOEN */
 /**
   * @brief  Check if the USART Parity Error Interrupt is enabled or disabled.
   * @rmtoll CR1          PEIE          LL_USART_IsEnabledIT_PE
@@ -4213,7 +4214,7 @@ __STATIC_INLINE uint32_t LL_USART_IsEnabledIT_TXE(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsEnabledIT_PE(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->CR1, USART_CR1_PEIE) == (USART_CR1_PEIE));
+  return ((READ_BIT(USARTx->CR1, USART_CR1_PEIE) == (USART_CR1_PEIE)) ? 1UL : 0UL);
 }
 
 /**
@@ -4224,7 +4225,7 @@ __STATIC_INLINE uint32_t LL_USART_IsEnabledIT_PE(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsEnabledIT_CM(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->CR1, USART_CR1_CMIE) == (USART_CR1_CMIE));
+  return ((READ_BIT(USARTx->CR1, USART_CR1_CMIE) == (USART_CR1_CMIE)) ? 1UL : 0UL);
 }
 
 /**
@@ -4235,7 +4236,7 @@ __STATIC_INLINE uint32_t LL_USART_IsEnabledIT_CM(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsEnabledIT_RTO(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->CR1, USART_CR1_RTOIE) == (USART_CR1_RTOIE));
+  return ((READ_BIT(USARTx->CR1, USART_CR1_RTOIE) == (USART_CR1_RTOIE)) ? 1UL : 0UL);
 }
 
 /**
@@ -4248,7 +4249,7 @@ __STATIC_INLINE uint32_t LL_USART_IsEnabledIT_RTO(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsEnabledIT_EOB(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->CR1, USART_CR1_EOBIE) == (USART_CR1_EOBIE));
+  return ((READ_BIT(USARTx->CR1, USART_CR1_EOBIE) == (USART_CR1_EOBIE)) ? 1UL : 0UL);
 }
 
 #if defined(USART_CR1_FIFOEN)
@@ -4262,7 +4263,7 @@ __STATIC_INLINE uint32_t LL_USART_IsEnabledIT_EOB(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsEnabledIT_TXFE(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->CR1, USART_CR1_TXFEIE) == (USART_CR1_TXFEIE));
+  return ((READ_BIT(USARTx->CR1, USART_CR1_TXFEIE) == (USART_CR1_TXFEIE)) ? 1UL : 0UL);
 }
 
 /**
@@ -4275,10 +4276,10 @@ __STATIC_INLINE uint32_t LL_USART_IsEnabledIT_TXFE(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsEnabledIT_RXFF(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->CR1, USART_CR1_RXFFIE) == (USART_CR1_RXFFIE));
+  return ((READ_BIT(USARTx->CR1, USART_CR1_RXFFIE) == (USART_CR1_RXFFIE)) ? 1UL : 0UL);
 }
-#endif
 
+#endif /* USART_CR1_FIFOEN */
 /**
   * @brief  Check if the USART LIN Break Detection Interrupt is enabled or disabled.
   * @note   Macro @ref IS_UART_LIN_INSTANCE(USARTx) can be used to check whether or not
@@ -4289,7 +4290,7 @@ __STATIC_INLINE uint32_t LL_USART_IsEnabledIT_RXFF(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsEnabledIT_LBD(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->CR2, USART_CR2_LBDIE) == (USART_CR2_LBDIE));
+  return ((READ_BIT(USARTx->CR2, USART_CR2_LBDIE) == (USART_CR2_LBDIE)) ? 1UL : 0UL);
 }
 
 /**
@@ -4300,7 +4301,7 @@ __STATIC_INLINE uint32_t LL_USART_IsEnabledIT_LBD(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsEnabledIT_ERROR(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->CR3, USART_CR3_EIE) == (USART_CR3_EIE));
+  return ((READ_BIT(USARTx->CR3, USART_CR3_EIE) == (USART_CR3_EIE)) ? 1UL : 0UL);
 }
 
 /**
@@ -4313,7 +4314,7 @@ __STATIC_INLINE uint32_t LL_USART_IsEnabledIT_ERROR(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsEnabledIT_CTS(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->CR3, USART_CR3_CTSIE) == (USART_CR3_CTSIE));
+  return ((READ_BIT(USARTx->CR3, USART_CR3_CTSIE) == (USART_CR3_CTSIE)) ? 1UL : 0UL);
 }
 
 /**
@@ -4326,7 +4327,7 @@ __STATIC_INLINE uint32_t LL_USART_IsEnabledIT_CTS(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsEnabledIT_WKUP(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->CR3, USART_CR3_WUFIE) == (USART_CR3_WUFIE));
+  return ((READ_BIT(USARTx->CR3, USART_CR3_WUFIE) == (USART_CR3_WUFIE)) ? 1UL : 0UL);
 }
 
 #if defined(USART_CR1_FIFOEN)
@@ -4340,10 +4341,10 @@ __STATIC_INLINE uint32_t LL_USART_IsEnabledIT_WKUP(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsEnabledIT_TXFT(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->CR3, USART_CR3_TXFTIE) == (USART_CR3_TXFTIE));
+  return ((READ_BIT(USARTx->CR3, USART_CR3_TXFTIE) == (USART_CR3_TXFTIE)) ? 1UL : 0UL);
 }
-#endif
 
+#endif /* USART_CR1_FIFOEN */
 #if defined(USART_TCBGT_SUPPORT)
 /* Function available only on devices supporting Transmit Complete before Guard Time feature */
 /**
@@ -4356,9 +4357,9 @@ __STATIC_INLINE uint32_t LL_USART_IsEnabledIT_TXFT(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsEnabledIT_TCBGT(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->CR3, USART_CR3_TCBGTIE) == (USART_CR3_TCBGTIE));
+  return ((READ_BIT(USARTx->CR3, USART_CR3_TCBGTIE) == (USART_CR3_TCBGTIE)) ? 1UL : 0UL);
 }
-#endif
+#endif /* USART_TCBGT_SUPPORT */
 
 #if defined(USART_CR1_FIFOEN)
 /**
@@ -4371,10 +4372,10 @@ __STATIC_INLINE uint32_t LL_USART_IsEnabledIT_TCBGT(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsEnabledIT_RXFT(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->CR3, USART_CR3_RXFTIE) == (USART_CR3_RXFTIE));
+  return ((READ_BIT(USARTx->CR3, USART_CR3_RXFTIE) == (USART_CR3_RXFTIE)) ? 1UL : 0UL);
 }
-#endif
 
+#endif /* USART_CR1_FIFOEN */
 /**
   * @}
   */
@@ -4413,7 +4414,7 @@ __STATIC_INLINE void LL_USART_DisableDMAReq_RX(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsEnabledDMAReq_RX(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->CR3, USART_CR3_DMAR) == (USART_CR3_DMAR));
+  return ((READ_BIT(USARTx->CR3, USART_CR3_DMAR) == (USART_CR3_DMAR)) ? 1UL : 0UL);
 }
 
 /**
@@ -4446,7 +4447,7 @@ __STATIC_INLINE void LL_USART_DisableDMAReq_TX(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsEnabledDMAReq_TX(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->CR3, USART_CR3_DMAT) == (USART_CR3_DMAT));
+  return ((READ_BIT(USARTx->CR3, USART_CR3_DMAT) == (USART_CR3_DMAT)) ? 1UL : 0UL);
 }
 
 /**
@@ -4479,7 +4480,7 @@ __STATIC_INLINE void LL_USART_DisableDMADeactOnRxErr(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE uint32_t LL_USART_IsEnabledDMADeactOnRxErr(USART_TypeDef *USARTx)
 {
-  return (READ_BIT(USARTx->CR3, USART_CR3_DDRE) == (USART_CR3_DDRE));
+  return ((READ_BIT(USARTx->CR3, USART_CR3_DDRE) == (USART_CR3_DDRE)) ? 1UL : 0UL);
 }
 
 /**
@@ -4494,17 +4495,17 @@ __STATIC_INLINE uint32_t LL_USART_IsEnabledDMADeactOnRxErr(USART_TypeDef *USARTx
   */
 __STATIC_INLINE uint32_t LL_USART_DMA_GetRegAddr(USART_TypeDef *USARTx, uint32_t Direction)
 {
-  register uint32_t data_reg_addr = 0U;
+  register uint32_t data_reg_addr;
 
   if (Direction == LL_USART_DMA_REG_DATA_TRANSMIT)
   {
     /* return address of TDR register */
-    data_reg_addr = (uint32_t) & (USARTx->TDR);
+    data_reg_addr = (uint32_t) &(USARTx->TDR);
   }
   else
   {
     /* return address of RDR register */
-    data_reg_addr = (uint32_t) & (USARTx->RDR);
+    data_reg_addr = (uint32_t) &(USARTx->RDR);
   }
 
   return data_reg_addr;
@@ -4526,7 +4527,7 @@ __STATIC_INLINE uint32_t LL_USART_DMA_GetRegAddr(USART_TypeDef *USARTx, uint32_t
   */
 __STATIC_INLINE uint8_t LL_USART_ReceiveData8(USART_TypeDef *USARTx)
 {
-  return (uint8_t)(READ_BIT(USARTx->RDR, USART_RDR_RDR));
+  return (uint8_t)(READ_BIT(USARTx->RDR, USART_RDR_RDR) & 0xFFU);
 }
 
 /**
@@ -4561,7 +4562,7 @@ __STATIC_INLINE void LL_USART_TransmitData8(USART_TypeDef *USARTx, uint8_t Value
   */
 __STATIC_INLINE void LL_USART_TransmitData9(USART_TypeDef *USARTx, uint16_t Value)
 {
-  USARTx->TDR = Value & 0x1FFU;
+  USARTx->TDR = (uint16_t)(Value & 0x1FFUL);
 }
 
 /**
@@ -4582,7 +4583,7 @@ __STATIC_INLINE void LL_USART_TransmitData9(USART_TypeDef *USARTx, uint16_t Valu
   */
 __STATIC_INLINE void LL_USART_RequestAutoBaudRate(USART_TypeDef *USARTx)
 {
-  SET_BIT(USARTx->RQR, USART_RQR_ABRRQ);
+  SET_BIT(USARTx->RQR, (uint16_t)USART_RQR_ABRRQ);
 }
 
 /**
@@ -4593,7 +4594,7 @@ __STATIC_INLINE void LL_USART_RequestAutoBaudRate(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE void LL_USART_RequestBreakSending(USART_TypeDef *USARTx)
 {
-  SET_BIT(USARTx->RQR, USART_RQR_SBKRQ);
+  SET_BIT(USARTx->RQR, (uint16_t)USART_RQR_SBKRQ);
 }
 
 /**
@@ -4604,7 +4605,7 @@ __STATIC_INLINE void LL_USART_RequestBreakSending(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE void LL_USART_RequestEnterMuteMode(USART_TypeDef *USARTx)
 {
-  SET_BIT(USARTx->RQR, USART_RQR_MMRQ);
+  SET_BIT(USARTx->RQR, (uint16_t)USART_RQR_MMRQ);
 }
 
 /**
@@ -4623,7 +4624,7 @@ __STATIC_INLINE void LL_USART_RequestEnterMuteMode(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE void LL_USART_RequestRxDataFlush(USART_TypeDef *USARTx)
 {
-  SET_BIT(USARTx->RQR, USART_RQR_RXFRQ);
+  SET_BIT(USARTx->RQR, (uint16_t)USART_RQR_RXFRQ);
 }
 
 /**
@@ -4640,7 +4641,7 @@ __STATIC_INLINE void LL_USART_RequestRxDataFlush(USART_TypeDef *USARTx)
   */
 __STATIC_INLINE void LL_USART_RequestTxDataFlush(USART_TypeDef *USARTx)
 {
-  SET_BIT(USARTx->RQR, USART_RQR_TXFRQ);
+  SET_BIT(USARTx->RQR, (uint16_t)USART_RQR_TXFRQ);
 }
 
 /**
@@ -4679,6 +4680,6 @@ void        LL_USART_ClockStructInit(LL_USART_ClockInitTypeDef *USART_ClockInitS
 }
 #endif
 
-#endif /* __STM32L4xx_LL_USART_H */
+#endif /* STM32L4xx_LL_USART_H */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

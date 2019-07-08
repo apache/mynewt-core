@@ -136,7 +136,15 @@ struct adxl345_private_driver_data {
 
     
 struct adxl345 {
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    union {
+        struct bus_i2c_node i2c_node;
+        struct bus_spi_node spi_node;
+    };
+    bool node_is_spi;
+#else
     struct os_dev dev;
+#endif
     struct sensor sensor;
     struct adxl345_cfg cfg;
 
@@ -189,7 +197,16 @@ int adxl345_get_accel_data(struct sensor_itf *itf, struct sensor_accel_data *sad
 int adxl345_shell_init(void);
 #endif
 
-    
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+int adxl345_create_i2c_sensor_dev(struct bus_i2c_node *node, const char *name,
+                                  const struct bus_i2c_node_cfg *i2c_cfg,
+                                  struct sensor_itf *sensor_itf);
+int adxl345_create_spi_sensor_dev(struct bus_spi_node *node, const char *name,
+                                  const struct bus_spi_node_cfg *spi_cfg,
+                                  struct sensor_itf *sensor_itf);
+
+#endif
+
 #ifdef __cplusplus
 }
 #endif

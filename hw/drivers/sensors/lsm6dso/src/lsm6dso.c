@@ -2964,6 +2964,7 @@ lsm6dso_create_i2c_sensor_dev(struct bus_i2c_node *node, const char *name,
 
     dev->node_is_spi = false;
 
+    sensor_itf->si_dev = &node->bnode.odev;
     bus_node_set_callbacks((struct os_dev *)node, &cbs);
 
     rc = bus_i2c_node_create(name, node, i2c_cfg, sensor_itf);
@@ -2984,6 +2985,7 @@ lsm6dso_create_spi_sensor_dev(struct bus_spi_node *node, const char *name,
 
     dev->node_is_spi = true;
 
+    sensor_itf->si_dev = &node->bnode.odev;
     bus_node_set_callbacks((struct os_dev *)node, &cbs);
 
     rc = bus_spi_node_create(name, node, spi_cfg, sensor_itf);

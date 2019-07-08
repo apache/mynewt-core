@@ -19,6 +19,9 @@
 
 # Flash sector size: 8 kB.
 
+bsp.name: "Apollo EVB"
+bsp.url: https://www.ambiqmicro.com/mcu/
+bsp.maker: "Ambiq micro"
 bsp.arch: cortex_m4
 bsp.compiler: compiler/arm-none-eabi-m4 
 bsp.linkerscript:

@@ -306,7 +306,7 @@ int stats_persist_init(struct stats_hdr *hdr, uint8_t size,
 #else /* MYNEWT_VAL(STATS_PERSIST) */
 
 #define STATS_PERSISTED_SECT_START(__name) \
-    _Static_assert(0, "You must enable STATS_PERSIST to use persistent stats");
+    static_assert(0, "You must enable STATS_PERSIST to use persistent stats");
 
 #define STATS_PERSIST_SCHED(hdrp_)
 

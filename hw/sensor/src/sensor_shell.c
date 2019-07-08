@@ -489,6 +489,10 @@ sensor_cmd_read(char **argv, int argc)
         goto usage;
     }
 
+    g_spd.spd_nsamples = 0;
+    g_spd.spd_poll_itvl = 0;
+    g_spd.spd_poll_duration = 0;
+
     sensor_name = argv[0];
     type = strtol(argv[1], NULL, 0);
 
@@ -607,6 +611,21 @@ static struct sensor_notifier wakeup = {
 };
 
 static int
+sensor_free_fall_notif(struct sensor *sensor, void *data,
+                  sensor_event_type_t type)
+{
+    console_printf("free fall happend\n");
+
+    return 0;
+};
+
+static struct sensor_notifier free_fall = {
+    .sn_sensor_event_type = SENSOR_EVENT_TYPE_FREE_FALL,
+    .sn_func = sensor_free_fall_notif,
+    .sn_arg = NULL,
+};
+
+static int
 sensor_cmd_notify(char *name, bool on, char *type_string)
 {
     struct sensor *sensor;
@@ -625,6 +644,8 @@ sensor_cmd_notify(char *name, bool on, char *type_string)
         type = SENSOR_EVENT_TYPE_DOUBLE_TAP;
     } else if (!strcmp(type_string, "wakeup")) {
         type = SENSOR_EVENT_TYPE_WAKEUP;
+    } else if (!strcmp(type_string, "freefall")) {
+        type = SENSOR_EVENT_TYPE_FREE_FALL;
     } else {
         return 1;
     }
@@ -648,6 +669,13 @@ sensor_cmd_notify(char *name, bool on, char *type_string)
             rc = sensor_unregister_notifier(sensor, &wakeup);
             if (rc) {
                  console_printf("Could not unregister wakeup\n");
+                 goto done;
+            }
+        }
+        if (type == SENSOR_EVENT_TYPE_FREE_FALL) {
+            rc = sensor_unregister_notifier(sensor, &free_fall);
+            if (rc) {
+                 console_printf("Could not unregister free fall\n");
                  goto done;
             }
         }
@@ -675,6 +703,14 @@ sensor_cmd_notify(char *name, bool on, char *type_string)
         rc = sensor_register_notifier(sensor, &wakeup);
         if (rc) {
              console_printf("Could not register wakeup\n");
+             goto done;
+        }
+    }
+
+    if (type == SENSOR_EVENT_TYPE_FREE_FALL) {
+        rc = sensor_register_notifier(sensor, &free_fall);
+        if (rc) {
+             console_printf("Could not register free fall\n");
              goto done;
         }
     }
@@ -718,7 +754,8 @@ sensor_cmd_exec(int argc, char **argv)
     } else if (!strcmp(argv[1], "notify")) {
         if (argc < 3) {
             console_printf("Too few arguments: %d\n"
-                           "Usage: sensor notify <sensor_name> <on/off> <single/double/wakeup>",
+                           "Usage: sensor notify <sensor_name> <on/off> "
+                           "<single/double/wakeup/freefall>",
                            argc - 2);
             rc = SYS_EINVAL;
             goto done;
@@ -727,7 +764,8 @@ sensor_cmd_exec(int argc, char **argv)
         rc = sensor_cmd_notify(argv[2], !strcmp(argv[3], "on"), argv[4]);
         if (rc) {
             console_printf("Too few arguments: %d\n"
-                           "Usage: sensor notify <sensor_name> <on/off> <single/double/wakeup>",
+                           "Usage: sensor notify <sensor_name> <on/off> "
+                           "<single/double/wakeup/freefall>",
                            argc - 2);
            goto done;
         }

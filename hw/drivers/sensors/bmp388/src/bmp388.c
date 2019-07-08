@@ -105,26 +105,11 @@ static struct hal_spi_settings spi_bmp388_settings = {
 };
 #endif
 
-/* Define the stats section and records */
-STATS_SECT_START(bmp388_stat_section)
-    STATS_SECT_ENTRY(write_errors)
-    STATS_SECT_ENTRY(read_errors)
-#if MYNEWT_VAL(BMP388_NOTIF_STATS)
-    STATS_SECT_ENTRY(wakeup_notify)
-#endif
-STATS_SECT_END
-
 /* Define stat names for querying */
 STATS_NAME_START(bmp388_stat_section)
     STATS_NAME(bmp388_stat_section, write_errors)
     STATS_NAME(bmp388_stat_section, read_errors)
-#if MYNEWT_VAL(BMP388_NOTIF_STATS)
-    STATS_NAME(bmp388_stat_section, wakeup_notify)
-#endif
 STATS_NAME_END(bmp388_stat_section)
-
-/* Global variable used to hold stats data */
-STATS_SECT_DECL(bmp388_stat_section) g_bmp388stats;
 
 struct bmp3_dev g_bmp388_dev;
 
@@ -208,7 +193,7 @@ delay_msec(uint32_t delay)
 * @param variable length payload
 * @param length of the payload to write
 *
-* @return 0 on success, non-zero on failure
+* @return BMP3_OK on success, non-zero on failure
 */
 static int
 bmp388_i2c_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
@@ -226,7 +211,7 @@ bmp388_i2c_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
     };
 
     if (len > (sizeof(payload) - 1)) {
-        rc = OS_EINVAL;
+        rc = BMP3_E_INVALID_LEN;
         goto err;
     }
 
@@ -237,12 +222,11 @@ bmp388_i2c_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
                         MYNEWT_VAL(BMP388_I2C_RETRIES));
     if (rc) {
         BMP388_LOG(ERROR, "I2C access failed at address 0x%02X\n",
-                    data_struct.address);
-        STATS_INC(g_bmp388stats, write_errors);
+                   data_struct.address);
         goto err;
     }
 
-    return 0;
+    return BMP3_OK;
 err:
     return rc;
 }
@@ -255,7 +239,7 @@ err:
 * @param variable length payload
 * @param length of the payload to write
 *
-* @return 0 on success, non-zero on failure
+* @return BMP3_OK on success, non-zero on failure
 */
 static int
 bmp388_spi_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
@@ -271,10 +255,9 @@ bmp388_spi_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
     /* Send the address */
     rc = hal_spi_tx_val(itf->si_num, addr);
     if (rc == 0xFFFF) {
-        rc = SYS_EINVAL;
+        rc = BMP3_E_WRITE;
         BMP388_LOG(ERROR, "SPI_%u register write failed addr:0x%02X\n",
                     itf->si_num, addr);
-        STATS_INC(g_bmp388stats, write_errors);
         goto err;
     }
 
@@ -282,10 +265,9 @@ bmp388_spi_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
         /* Read data */
         rc = hal_spi_tx_val(itf->si_num, payload[i]);
         if (rc == 0xFFFF) {
-            rc = SYS_EINVAL;
+            rc = BMP3_E_WRITE;
             BMP388_LOG(ERROR, "SPI_%u write failed addr:0x%02X:0x%02X\n",
                         itf->si_num, addr);
-            STATS_INC(g_bmp388stats, write_errors);
             goto err;
         }
     }
@@ -309,7 +291,7 @@ err:
 * @param variable length payload
 * @param length of the payload to write
 *
-* @return 0 on success, non-zero on failure
+* @return BMP3_OK on success, non-zero on failure
 */
 int
 bmp388_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
@@ -336,8 +318,6 @@ bmp388_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
     if (rc) {
         return rc;
     }
-
-
 
     if (itf->si_type == SENSOR_ITF_I2C) {
         rc = bmp388_i2c_writelen(itf, addr, payload, len);
@@ -380,7 +360,7 @@ bmp388_i2c_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
     if (rc) {
         BMP388_LOG(ERROR, "I2C access failed at address 0x%02X\n",
                     itf->si_addr);
-        STATS_INC(g_bmp388stats, write_errors);
+        rc = BMP3_E_WRITE;
         return rc;
     }
 
@@ -393,7 +373,7 @@ bmp388_i2c_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
     if (rc) {
         BMP388_LOG(ERROR, "Failed to read from 0x%02X:0x%02X\n",
                     itf->si_addr, reg);
-        STATS_INC(g_bmp388stats, read_errors);
+        rc = BMP3_E_READ;
     }
 
     return rc;
@@ -424,10 +404,9 @@ bmp388_spi_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
     retval = hal_spi_tx_val(itf->si_num, reg | BMP388_SPI_READ_CMD_BIT);
 
     if (retval == 0xFFFF) {
-        rc = SYS_EINVAL;
         BMP388_LOG(ERROR, "SPI_%u register write failed addr:0x%02X\n",
                     itf->si_num, reg);
-        STATS_INC(g_bmp388stats, read_errors);
+        rc = BMP3_E_READ;
         goto err;
     }
 
@@ -435,10 +414,9 @@ bmp388_spi_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
         /* Read data */
         retval = hal_spi_tx_val(itf->si_num, 0);
         if (retval == 0xFFFF) {
-            rc = SYS_EINVAL;
             BMP388_LOG(ERROR, "SPI_%u read failed addr:0x%02X\n",
                         itf->si_num, reg);
-            STATS_INC(g_bmp388stats, read_errors);
+            rc = BMP3_E_READ;
             goto err;
         }
         buffer[i] = retval;
@@ -536,7 +514,8 @@ static uint8_t are_settings_changed(uint32_t sub_settings, uint32_t desired_sett
 * @brief This internal API interleaves the register address between the
 * register data buffer for burst write operation.
 */
-static void interleave_reg_addr(const uint8_t *reg_addr, uint8_t *temp_buff, const uint8_t *reg_data, uint8_t len)
+static void interleave_reg_addr(const uint8_t *reg_addr, uint8_t *temp_buff,
+                                const uint8_t *reg_data, uint8_t len)
 {
     uint8_t index;
     /* conbime for bmp388 burst write */
@@ -550,12 +529,15 @@ static void interleave_reg_addr(const uint8_t *reg_addr, uint8_t *temp_buff, con
 /*!
 * @brief This API reads the data from the given register address of the sensor.
 */
-int8_t bmp3_get_regs(struct sensor_itf *itf, uint8_t reg_addr, uint8_t *reg_data, uint16_t len, const struct bmp3_dev *dev)
+int8_t bmp3_get_regs(struct sensor_itf *itf, uint8_t reg_addr,
+                     uint8_t *reg_data, uint16_t len,
+                     const struct bmp3_dev *dev)
 {
     int8_t rslt;
     uint16_t temp_len = len + dev->dummy_byte;
     uint16_t i;
     uint8_t temp_buff[len + dev->dummy_byte];
+    struct bmp388 *bmp388;
 
     /* Check for null pointer in the device structure*/
     rslt = null_ptr_check(dev);
@@ -566,8 +548,15 @@ int8_t bmp3_get_regs(struct sensor_itf *itf, uint8_t reg_addr, uint8_t *reg_data
             reg_data[i] = temp_buff[i + dev->dummy_byte];
 
         /* Check for communication error */
-        if (rslt != BMP3_OK)
+        if (rslt != BMP3_OK) {
+            bmp388 = (struct bmp388 *)dev;
             rslt = BMP3_E_COMM_FAIL;
+            if (rslt == BMP3_E_READ) {
+               STATS_INC(bmp388->stats, read_errors);
+            } else {
+               STATS_INC(bmp388->stats, write_errors);
+            }
+        }
     }
 
     return rslt;
@@ -577,12 +566,15 @@ int8_t bmp3_get_regs(struct sensor_itf *itf, uint8_t reg_addr, uint8_t *reg_data
 * @brief This API writes the given data to the register address
 * of the sensor.
 */
-int8_t bmp3_set_regs(struct sensor_itf *itf, uint8_t *reg_addr, const uint8_t *reg_data, uint8_t len, const struct bmp3_dev *dev)
+int8_t bmp3_set_regs(struct sensor_itf *itf, uint8_t *reg_addr,
+                     const uint8_t *reg_data, uint8_t len,
+                     const struct bmp3_dev *dev)
 {
     int8_t rslt;
     uint8_t temp_buff[len * 2];
     uint16_t temp_len;
     uint8_t reg_addr_cnt;
+    struct bmp388 *bmp388;
 
     /* Check for null pointer in the device structure*/
     rslt = null_ptr_check(dev);
@@ -606,15 +598,21 @@ int8_t bmp3_set_regs(struct sensor_itf *itf, uint8_t *reg_addr, const uint8_t *r
             }
             rslt = bmp388_writelen(itf, reg_addr[0], temp_buff, temp_len);
             /* Check for communication error */
-            if (rslt != BMP3_OK)
+            if (rslt != BMP3_OK) {
+                bmp388 = (struct bmp388 *)dev;
                 rslt = BMP3_E_COMM_FAIL;
+                if (rslt == BMP3_E_READ) {
+                    STATS_INC(bmp388->stats, read_errors);
+                } else {
+                    STATS_INC(bmp388->stats, write_errors);
+                }
+            }
         } else {
             rslt = BMP3_E_INVALID_LEN;
         }
     } else {
         rslt = BMP3_E_NULL_PTR;
     }
-
 
     return rslt;
 }
@@ -3254,12 +3252,12 @@ static int bmp388_do_report(struct sensor *sensor, sensor_type_t sensor_type, se
         }
     }
 
-    if (sensor_type & SENSOR_TYPE_AMBIENT_TEMPERATURE)
+    if (sensor_type & SENSOR_TYPE_TEMPERATURE)
     {
         databuf.std.std_temp = temperature;
         databuf.std.std_temp_is_valid = 1;
         /* Call data function */
-        rc = data_func(sensor, data_arg, &databuf.std, SENSOR_TYPE_AMBIENT_TEMPERATURE);
+        rc = data_func(sensor, data_arg, &databuf.std, SENSOR_TYPE_TEMPERATURE);
         if (rc) {
             goto err;
         }
@@ -3297,10 +3295,9 @@ bmp388_poll_read(struct sensor *sensor, sensor_type_t sensor_type,
     bmp388 = (struct bmp388 *)SENSOR_GET_DEVICE(sensor);
     itf = SENSOR_GET_ITF(sensor);
     cfg = &bmp388->cfg;
-    BMP388_LOG(ERROR, "bmp388_poll_read entered\n");
 
     /* If the read isn't looking for pressure data, don't do anything. */
-    if ((!(sensor_type & SENSOR_TYPE_PRESSURE)) && (!(sensor_type & SENSOR_TYPE_AMBIENT_TEMPERATURE))) {
+    if ((!(sensor_type & SENSOR_TYPE_PRESSURE)) && (!(sensor_type & SENSOR_TYPE_TEMPERATURE))) {
         rc = SYS_EINVAL;
         goto err;
     }
@@ -3312,7 +3309,6 @@ bmp388_poll_read(struct sensor *sensor, sensor_type_t sensor_type,
 
     g_bmp388_dev.settings.op_mode = BMP3_FORCED_MODE;
     rc = bmp388_set_forced_mode_with_osr(itf, &g_bmp388_dev);
-    BMP388_LOG(ERROR, "bmp388_set_forced_mode_with_osr \n");
     if (rc) {
         BMP388_LOG(ERROR, "bmp388_set_forced_mode_with_osr failed %d\n", rc);
         goto err;
@@ -3381,11 +3377,10 @@ bmp388_stream_read(struct sensor *sensor,
 #endif
 
     /* If the read isn't looking for pressure or temperature data, don't do anything. */
-    if ((!(sensor_type & SENSOR_TYPE_PRESSURE)) && (!(sensor_type & SENSOR_TYPE_AMBIENT_TEMPERATURE))) {
+    if ((!(sensor_type & SENSOR_TYPE_PRESSURE)) && (!(sensor_type & SENSOR_TYPE_TEMPERATURE))) {
         BMP388_LOG(ERROR, "unsupported sensor type for bmp388\n");
         return SYS_EINVAL;
     }
-    BMP388_LOG(ERROR, "bmp388_stream_read entered\n");
 
     bmp388 = (struct bmp388 *)SENSOR_GET_DEVICE(sensor);
     itf = SENSOR_GET_ITF(sensor);
@@ -3547,7 +3542,6 @@ try_count = 0xFFFF;
         if (bmp388->cfg.fifo_mode == BMP388_FIFO_M_BYPASS) {
             g_bmp388_dev.settings.op_mode = BMP3_FORCED_MODE;
             rc = bmp388_set_forced_mode_with_osr(itf, &g_bmp388_dev);
-            BMP388_LOG(ERROR, "bmp388_set_forced_mode_with_osr \n");
             if (rc) {
                 BMP388_LOG(ERROR, "bmp388_set_forced_mode_with_osr failed %d\n", rc);
                 goto err;
@@ -3568,8 +3562,8 @@ try_count = 0xFFFF;
 #endif
 
         if (time_ms != 0 && OS_TIME_TICK_GT(os_time_get(), stop_ticks)) {
-            BMP388_LOG(ERROR, "stream time expired\n");
-            BMP388_LOG(ERROR, "you can make BMP388_MAX_STREAM_MS bigger to extend stream time duration\n");
+            BMP388_LOG(INFO, "stream time expired\n");
+            BMP388_LOG(INFO, "you can make BMP388_MAX_STREAM_MS bigger to extend stream time duration\n");
             break;
         }
 
@@ -3602,9 +3596,9 @@ bmp388_sensor_read(struct sensor *sensor, sensor_type_t type,
     BMP388_LOG(ERROR, "bmp388_sensor_read entered\n");
 #endif
     /* If the read isn't looking for pressure data, don't do anything. */
-    if ((!(type & SENSOR_TYPE_PRESSURE)) && (!(type & SENSOR_TYPE_AMBIENT_TEMPERATURE))) {
+    if ((!(type & SENSOR_TYPE_PRESSURE)) && (!(type & SENSOR_TYPE_TEMPERATURE))) {
         rc = SYS_EINVAL;
-        BMP388_LOG(ERROR, "bmp388_sensor_read unsurpported sensor type\n");
+        BMP388_LOG(ERROR, "bmp388_sensor_read unsupported sensor type\n");
         goto err;
     }
 
@@ -3640,17 +3634,14 @@ bmp388_sensor_read(struct sensor *sensor, sensor_type_t type,
 
     if (cfg->read_mode.mode == BMP388_READ_M_POLL) {
         rc = bmp388_poll_read(sensor, type, data_func, data_arg, timeout);
-        BMP388_LOG(ERROR, "bmp388_sensor_read poll read\n");
     } else {
         rc = bmp388_stream_read(sensor, type, data_func, data_arg, timeout);
-        BMP388_LOG(ERROR, "bmp388_sensor_read stream read\n");
     }
 err:
     if (rc) {
         BMP388_LOG(ERROR, "bmp388_sensor_read read failed\n");
         return SYS_EINVAL;
     } else {
-        BMP388_LOG(ERROR, "bmp388_sensor_read exited\n");
         return SYS_EOK;
     }
 }
@@ -3831,12 +3822,12 @@ bmp388_init(struct os_dev *dev, void *arg)
 
     /* Initialise the stats entry */
     rc = stats_init(
-        STATS_HDR(g_bmp388stats),
-        STATS_SIZE_INIT_PARMS(g_bmp388stats, STATS_SIZE_32),
+        STATS_HDR(bmp388->stats),
+        STATS_SIZE_INIT_PARMS(bmp388->stats, STATS_SIZE_32),
         STATS_NAME_INIT_PARMS(bmp388_stat_section));
     SYSINIT_PANIC_ASSERT(rc == 0);
     /* Register the entry with the stats registry */
-    rc = stats_register(dev->od_name, STATS_HDR(g_bmp388stats));
+    rc = stats_register(dev->od_name, STATS_HDR(bmp388->stats));
     SYSINIT_PANIC_ASSERT(rc == 0);
 
     rc = sensor_init(sensor, dev);
@@ -3845,7 +3836,7 @@ bmp388_init(struct os_dev *dev, void *arg)
     }
 
     /* Add the light driver */
-    rc = sensor_set_driver(sensor, SENSOR_TYPE_AMBIENT_TEMPERATURE |
+    rc = sensor_set_driver(sensor, SENSOR_TYPE_TEMPERATURE |
             SENSOR_TYPE_PRESSURE,
             (struct sensor_driver *) &g_bmp388_sensor_driver);
 
@@ -4088,6 +4079,7 @@ bmp388_create_i2c_sensor_dev(struct bus_i2c_node *node, const char *name,
 
     dev->node_is_spi = false;
 
+    sensor_itf->si_dev = &node->bnode.odev;
     bus_node_set_callbacks((struct os_dev *)node, &cbs);
 
     rc = bus_i2c_node_create(name, node, i2c_cfg, sensor_itf);
@@ -4108,6 +4100,7 @@ bmp388_create_spi_sensor_dev(struct bus_spi_node *node, const char *name,
 
     dev->node_is_spi = true;
 
+    sensor_itf->si_dev = &node->bnode.odev;
     bus_node_set_callbacks((struct os_dev *)node, &cbs);
 
     rc = bus_spi_node_create(name, node, spi_cfg, sensor_itf);

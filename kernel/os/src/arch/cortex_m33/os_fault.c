@@ -96,27 +96,20 @@ trap_to_coredump(struct trap_frame *tf, struct coredump_regs *regs)
     regs->r12 = tf->ef->r12;
     /*
      * SP just before exception for the coredump.
-     * See ARMv7-M Architecture Ref Manual, sections B1.5.6 - B1.5.8
+     * See ARMv8-M Architecture Ref Manual, section E2.1.236
      * If floating point registers were pushed to stack, SP is adjusted
      * by 0x68.
+     * If FPPCR.TS is set, treat floating point registers as secure, and
+     * SP is adjusted by 0xa8. XXX not dealing with secure mode yet.
      * Otherwise, SP is adjusted by 0x20.
-     * If SCB->CCR.STKALIGN is set, or fpu is active, SP is aligned to
-     * 8-byte boundary on exception entry.
-     * If this alignment adjustment happened, xPSR will have bit 9 set.
      */
     if ((tf->lr & 0x10) == 0) {
         /*
          * Extended frame
          */
         regs->sp = ((uint32_t)tf->ef) + 0x68;
-        if (tf->ef->psr & (1 << 9)) {
-            regs->sp += 4;
-        }
     } else {
         regs->sp = ((uint32_t)tf->ef) + 0x20;
-        if ((SCB->CCR & SCB_CCR_STKALIGN_Msk) & tf->ef->psr & (1 << 9)) {
-            regs->sp += 4;
-        }
     }
     regs->lr = tf->ef->lr;
     regs->pc = tf->ef->pc;
@@ -172,7 +165,7 @@ os_default_irq(struct trap_frame *tf)
     struct coredump_regs regs;
 #endif
 #if MYNEWT_VAL(OS_CRASH_RESTORE_REGS)
-    uint32_t *orig_sp;
+    uint32_t orig_sp;
 #endif
 
     console_blocking_mode();
@@ -209,11 +202,15 @@ os_default_irq(struct trap_frame *tf)
 
 #if MYNEWT_VAL(OS_CRASH_RESTORE_REGS)
     if (((SCB->ICSR & SCB_ICSR_VECTACTIVE_Msk) < 16) &&
-                                            hal_debugger_connected()) {
-        orig_sp = &tf->ef->r0;
-        orig_sp += 8;
-        if (tf->ef->psr & SCB_CCR_STKALIGN_Msk) {
-            orig_sp++;
+        hal_debugger_connected()) {
+
+        if ((tf->lr & 0x10) == 0) {
+            /*
+             * Extended frame
+             */
+            orig_sp = ((uint32_t)tf->ef) + 0x68;
+        } else {
+            orig_sp = ((uint32_t)tf->ef) + 0x20;
         }
 
         console_printf("Use 'set $pc = 0x%08lx' to restore PC in gdb\n",
