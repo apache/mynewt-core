@@ -169,15 +169,14 @@ struct axis_trigger {
 typedef struct {
     union {
         struct {
-            uint8_t low_g_int_active	:1;
-            uint8_t high_g_int_active	:1;
-            uint8_t slope_int_active	:1;
-            uint8_t slow_no_mot_int_active	:1;
-            uint8_t d_tap_int_active	:1;
-            uint8_t s_tap_int_active	:1;
-            uint8_t orient_int_active	:1;
-            uint8_t flat_int_active	:1;
-
+            uint8_t low_g_int_active    :1;
+            uint8_t high_g_int_active   :1;
+            uint8_t slope_int_active    :1;
+            uint8_t slow_no_mot_int_active :1;
+            uint8_t d_tap_int_active    :1;
+            uint8_t s_tap_int_active    :1;
+            uint8_t orient_int_active    :1;
+            uint8_t flat_int_active    :1;
         } bits;
 
         uint8_t reg;
@@ -187,9 +186,9 @@ typedef struct {
     union {
         struct {
             uint8_t reserved_1          :5;
-            uint8_t fifo_full_int_active	:1;
-            uint8_t fifo_wmark_int_active	:1;
-            uint8_t data_int_active	:1;
+            uint8_t fifo_full_int_active    :1;
+            uint8_t fifo_wmark_int_active    :1;
+            uint8_t data_int_active    :1;
         } bits;
 
         uint8_t reg;
