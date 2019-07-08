@@ -39,6 +39,14 @@ extern "C" {
 #define BMA253_LOW_THRESHOLD                0.375
 #define BMA253_LOW_HYS                      0.125
 
+/* define interrupt cofiguration type */
+#define BMA253_SINGLE_TAP_INT               0
+#define BMA253_DOUBLE_TAP_INT               1
+#define BMA253_LOW_G_INT                    2
+
+#define BMA253_LOW_G_SRC                    0x01
+#define BMA253_DOUBLE_TAP_SRC               0x16
+#define BMA253_SINGLE_TAP_SRC               0x32
 
 /* Range of acceleration measurements */
 enum bma253_g_range {
@@ -141,6 +149,13 @@ enum bma253_read_mode {
     BMA253_READ_M_STREAM = 1,
 };
 
+struct bma253_notif_cfg {
+    sensor_event_type_t event;
+    uint8_t notif_src;
+    uint8_t int_cfg;
+};
+
+
 /* Default configuration values to use with the device */
 struct bma253_cfg {
     /* Accelerometer configuration */
@@ -178,6 +193,9 @@ struct bma253_cfg {
     enum bma253_read_mode read_mode;
     /* Applicable sensor types supported */
     sensor_type_t sensor_mask;
+    /* Notif config */
+    struct bma253_notif_cfg *notif_cfg;
+    uint8_t max_num_notif;
 };
 
 /* Used to track interrupt state to wake any present waiters */
