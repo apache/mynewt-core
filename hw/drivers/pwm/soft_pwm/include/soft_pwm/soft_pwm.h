@@ -27,6 +27,7 @@ extern "C" {
 #endif
 
 int soft_pwm_dev_init(struct os_dev *odev, void *arg);
+void soft_pwm_pkg_init();
 
 #ifdef __cplusplus
 }
