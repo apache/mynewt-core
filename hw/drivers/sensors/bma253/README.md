@@ -23,7 +23,7 @@
 
 /*********************************************************/
 driver for bma253
-version:1.0.0.3  2019/7/8 
+version:1.0.0.4  2019/7/9 
 /*********************************************************/
 target platform: nrf52832
 BSP: nrf52dk
@@ -52,6 +52,14 @@ sensor notify bma253_0 on freefall
 
 if using the sensor_shell (option 1), the low_g could be turned off by:
 sensor notify bma253_0 off freefall
+
+[command for testing orient change feature]
+- option 1:
+sensor notify bma253_0 on orient
+
+
+if using the sensor_shell (option 1), the orient change could be turned off by:
+sensor notify bma253_0 off orient
 
 [command for sensor data read test]
 sensor read bmp253_0 1 -n 10 -i 20 -d 4000
