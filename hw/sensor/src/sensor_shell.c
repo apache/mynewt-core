@@ -626,6 +626,22 @@ static struct sensor_notifier free_fall = {
 };
 
 static int
+sensor_orient_change_notif(struct sensor *sensor, void *data,
+                  sensor_event_type_t type)
+{
+    console_printf("orient change happend\n");
+
+    return 0;
+};
+
+static struct sensor_notifier orient_change = {
+    .sn_sensor_event_type = SENSOR_EVENT_TYPE_ORIENT_CHANGE,
+    .sn_func = sensor_orient_change_notif,
+    .sn_arg = NULL,
+};
+
+
+static int
 sensor_cmd_notify(char *name, bool on, char *type_string)
 {
     struct sensor *sensor;
@@ -646,6 +662,8 @@ sensor_cmd_notify(char *name, bool on, char *type_string)
         type = SENSOR_EVENT_TYPE_WAKEUP;
     } else if (!strcmp(type_string, "freefall")) {
         type = SENSOR_EVENT_TYPE_FREE_FALL;
+    } else if (!strcmp(type_string, "orient")) {
+        type = SENSOR_EVENT_TYPE_ORIENT_CHANGE;
     } else {
         return 1;
     }
@@ -676,6 +694,13 @@ sensor_cmd_notify(char *name, bool on, char *type_string)
             rc = sensor_unregister_notifier(sensor, &free_fall);
             if (rc) {
                  console_printf("Could not unregister free fall\n");
+                 goto done;
+            }
+        }
+        if (type == SENSOR_EVENT_TYPE_ORIENT_CHANGE) {
+            rc = sensor_unregister_notifier(sensor, &orient_change);
+            if (rc) {
+                 console_printf("Could not unregister orient change\n");
                  goto done;
             }
         }
@@ -712,6 +737,14 @@ sensor_cmd_notify(char *name, bool on, char *type_string)
         if (rc) {
              console_printf("Could not register free fall\n");
              goto done;
+        }
+    }
+
+    if (type == SENSOR_EVENT_TYPE_ORIENT_CHANGE) {
+        rc = sensor_register_notifier(sensor, &orient_change);
+        if (rc) {
+            console_printf("Could not register free fall\n");
+            goto done;
         }
     }
 
@@ -755,7 +788,7 @@ sensor_cmd_exec(int argc, char **argv)
         if (argc < 3) {
             console_printf("Too few arguments: %d\n"
                            "Usage: sensor notify <sensor_name> <on/off> "
-                           "<single/double/wakeup/freefall>",
+                           "<single/double/wakeup/freefall/orient>",
                            argc - 2);
             rc = SYS_EINVAL;
             goto done;
@@ -765,7 +798,7 @@ sensor_cmd_exec(int argc, char **argv)
         if (rc) {
             console_printf("Too few arguments: %d\n"
                            "Usage: sensor notify <sensor_name> <on/off> "
-                           "<single/double/wakeup/freefall>",
+                           "<single/double/wakeup/freefall/orient>",
                            argc - 2);
            goto done;
         }
