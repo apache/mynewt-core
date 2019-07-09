@@ -70,6 +70,11 @@ const struct bma253_notif_cfg bma253_notif_cfg[] = {
       .event     = SENSOR_EVENT_TYPE_FREE_FALL,
       .notif_src = BMA253_LOW_G_SRC,
       .int_cfg   = BMA253_LOW_G_INT
+    },
+    {
+      .event     = SENSOR_EVENT_TYPE_ORIENT_CHANGE,
+      .notif_src = BMA253_ORIENT_SRC,
+      .int_cfg   = BMA253_ORIENT_INT
     }
 };
 
@@ -2411,6 +2416,7 @@ bma253_enable_notify_interrupt(struct bma253_notif_cfg *notif_cfg,
     struct int_enable int_enable;
     struct int_routes int_routes;
     struct low_g_int_cfg low_g_int_cfg_set;
+    struct orient_int_cfg orient_int_cfg;
     int rc;
     /* Configure route */
     rc = bma253_get_int_routes(bma253, &int_routes);
@@ -2428,6 +2434,9 @@ bma253_enable_notify_interrupt(struct bma253_notif_cfg *notif_cfg,
         break;
     case BMA253_LOW_G_INT:
         int_routes.low_g_int_route = pdd->int_route;
+        break;
+    case BMA253_ORIENT_INT:
+        int_routes.orient_int_route = pdd->int_route;
         break;
     default:
         rc = SYS_EINVAL;
@@ -2450,7 +2459,6 @@ bma253_enable_notify_interrupt(struct bma253_notif_cfg *notif_cfg,
     {
     case BMA253_DOUBLE_TAP_INT:
         int_enable.d_tap_int_enable = true;
-        BMA253_LOG(ERROR, "set double INT enable: %d\n", rc);
         break;
     case BMA253_SINGLE_TAP_INT:
         int_enable.s_tap_int_enable = true;
@@ -2458,12 +2466,15 @@ bma253_enable_notify_interrupt(struct bma253_notif_cfg *notif_cfg,
     case BMA253_LOW_G_INT:
         int_enable.low_g_int_enable = true;
         break;
+    case BMA253_ORIENT_INT:
+        int_enable.orient_int_enable = true;
+        break;
     default:
         rc = SYS_EINVAL;
         return rc;
     }
 
-    rc = bma253_set_int_latch(bma253, true, INT_LATCH_LATCHED);
+    rc = bma253_set_int_latch(bma253, true, INT_LATCH_TEMPORARY_500_MS);
 
     if (notif_cfg->int_cfg == BMA253_LOW_G_INT) {
         /* set low_g threshold/duration/hysterisis */
@@ -2474,6 +2485,15 @@ bma253_enable_notify_interrupt(struct bma253_notif_cfg *notif_cfg,
         rc = bma253_set_low_g_int_cfg(bma253, &low_g_int_cfg_set);
     }
 
+    if (notif_cfg->int_cfg == BMA253_ORIENT_INT) {
+        orient_int_cfg.blocking_angle = BMA253_BLOCKING_ANGLE;
+        orient_int_cfg.signal_up_dn = 0;
+        orient_int_cfg.hyster_g = BMA253_ORIENT_HYSTER_G;
+        orient_int_cfg.orient_mode = BMA253_ORIENT_MODE_SYMMETRICAL;
+        orient_int_cfg.orient_blocking = BMA253_ORIENT_BLOCKING_ACCEL_AND_SLOPE;
+        rc = bma253_set_orient_int_cfg(bma253, &orient_int_cfg);
+        BMA253_LOG(ERROR, "set ORIENT INT seting: %d\n", rc);
+    }
     int_enable.slope_z_int_enable = 0;
     rc = bma253_set_int_enable(bma253, &int_enable);
     return rc;
@@ -2502,6 +2522,9 @@ bma253_disable_notify_interrupt(struct bma253_notif_cfg *notif_cfg,
         break;
     case BMA253_LOW_G_INT:
         int_routes.low_g_int_route = INT_ROUTE_NONE;
+        break;
+    case BMA253_ORIENT_INT:
+        int_routes.orient_int_route = INT_ROUTE_NONE;
         break;
     default:
         rc = SYS_EINVAL;
@@ -2533,6 +2556,9 @@ bma253_disable_notify_interrupt(struct bma253_notif_cfg *notif_cfg,
         break;
     case BMA253_LOW_G_INT:
         int_enable.low_g_int_enable = false;
+        break;
+    case BMA253_ORIENT_INT:
+        int_enable.orient_int_enable = false;
         break;
     default:
         rc = SYS_EINVAL;
@@ -5115,7 +5141,7 @@ void bma253_dump_reg(struct bma253 * bma253)
     uint8_t i;
     uint8_t regv;
 
-    for (i = REG_ADDR_FIFO_STATUS; i < (REG_ADDR_INT_RST_LATCH + 1); i++) {
+    for (i = REG_ADDR_FIFO_STATUS; i < (REG_ADDR_FIFO_CONFIG_0 + 1); i++) {
         get_register(bma253, i, &regv);
     }
 
@@ -5154,14 +5180,16 @@ sensor_driver_unset_notification(struct sensor * sensor,
 
     if ((sensor_event_type & ~(SENSOR_EVENT_TYPE_DOUBLE_TAP |
                                SENSOR_EVENT_TYPE_SINGLE_TAP |
-                               SENSOR_EVENT_TYPE_FREE_FALL)) != 0) {
+                               SENSOR_EVENT_TYPE_FREE_FALL |
+                               SENSOR_EVENT_TYPE_ORIENT_CHANGE)) != 0) {
         return SYS_EINVAL;
     }
 
     /*XXX for now we only support registering for one event */
     if ((sensor_event_type != SENSOR_EVENT_TYPE_DOUBLE_TAP) &&
         (sensor_event_type != SENSOR_EVENT_TYPE_SINGLE_TAP) &&
-        (sensor_event_type != SENSOR_EVENT_TYPE_FREE_FALL)) {
+        (sensor_event_type != SENSOR_EVENT_TYPE_FREE_FALL) &&
+        (sensor_event_type != SENSOR_EVENT_TYPE_ORIENT_CHANGE)) {
         return SYS_EINVAL;
     }
 
@@ -5205,14 +5233,16 @@ sensor_driver_set_notification(struct sensor * sensor,
 
     if ((sensor_event_type & ~(SENSOR_EVENT_TYPE_DOUBLE_TAP |
                                SENSOR_EVENT_TYPE_SINGLE_TAP |
-                               SENSOR_EVENT_TYPE_FREE_FALL)) != 0) {
+                               SENSOR_EVENT_TYPE_FREE_FALL |
+                               SENSOR_EVENT_TYPE_ORIENT_CHANGE)) != 0) {
         return SYS_EINVAL;
     }
 
     /*XXX for now we only support registering for one event */
     if ((sensor_event_type != SENSOR_EVENT_TYPE_DOUBLE_TAP) &&
         (sensor_event_type != SENSOR_EVENT_TYPE_SINGLE_TAP) &&
-        (sensor_event_type != SENSOR_EVENT_TYPE_FREE_FALL)) {
+        (sensor_event_type != SENSOR_EVENT_TYPE_FREE_FALL) &&
+        (sensor_event_type != SENSOR_EVENT_TYPE_ORIENT_CHANGE)) {
         return SYS_EINVAL;
     }
 
@@ -5271,19 +5301,21 @@ sensor_driver_handle_interrupt(struct sensor * sensor)
     bma253 = (struct bma253 *)SENSOR_GET_DEVICE(sensor);
     pdd = &bma253->pdd;
 
-    BMA253_LOG(DEBUG, "bma253_isr\n");
+    BMA253_LOG(DEBUG, "!!!bma253_isr\n");
 
     rc = bma253_get_int_status(bma253, &int_status);
     if (rc != 0) {
         BMA253_LOG(ERROR, "Cound not read int status err=0x%02x\n", rc);
         return rc;
     }
+    BMA253_LOG(ERROR, "read int status =0x%x\n", int_status.int_status_0.reg);
 
     if (int_status.int_status_0.reg) {
-        rc = bma253_set_int_latch(bma253, true, INT_LATCH_LATCHED);
+          rc = bma253_set_int_latch(bma253, true, INT_LATCH_TEMPORARY_500_MS);
         BMA253_LOG(DEBUG, "registered_mask: %x %d\n",
                 pdd->registered_mask, int_status.int_status_0.reg);
     } else {
+        BMA253_LOG(ERROR, "return, read int status err=0x%x\n", int_status.int_status_0.reg);
         return 0;
     }
 
@@ -5297,6 +5329,10 @@ sensor_driver_handle_interrupt(struct sensor * sensor)
 
         rc = bma253_notify(bma253, int_status.int_status_0.reg,
                            SENSOR_EVENT_TYPE_FREE_FALL);
+
+        rc = bma253_notify(bma253, int_status.int_status_0.reg,
+                           SENSOR_EVENT_TYPE_ORIENT_CHANGE);
+
 
     }
 
