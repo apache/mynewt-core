@@ -38,15 +38,21 @@ extern "C" {
 #define BMA253_LOW_DUR                      142
 #define BMA253_LOW_THRESHOLD                0.375
 #define BMA253_LOW_HYS                      0.125
+#define BMA253_BLOCKING_ANGLE               0x08
+#define BMA253_ORIENT_HYSTER_G              0.125
 
 /* define interrupt cofiguration type */
 #define BMA253_SINGLE_TAP_INT               0
 #define BMA253_DOUBLE_TAP_INT               1
 #define BMA253_LOW_G_INT                    2
+#define BMA253_ORIENT_INT                   3
+
 
 #define BMA253_LOW_G_SRC                    0x01
 #define BMA253_DOUBLE_TAP_SRC               0x16
 #define BMA253_SINGLE_TAP_SRC               0x32
+#define BMA253_ORIENT_SRC                   0x40
+
 
 /* Range of acceleration measurements */
 enum bma253_g_range {
