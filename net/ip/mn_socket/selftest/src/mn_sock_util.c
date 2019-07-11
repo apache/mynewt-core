@@ -732,6 +732,7 @@ sock_udp_mcast_v6(void)
      */
     memcpy(&msin6.msin6_addr, mcast_addr, sizeof(mcast_addr));
 
+#ifndef MN_FreeBSD
     rc = mn_sendto(tx_sock, (struct os_mbuf *)m, (struct mn_sockaddr *)&msin6);
     TEST_ASSERT(rc == 0);
 
@@ -740,11 +741,12 @@ sock_udp_mcast_v6(void)
      */
     rc = os_sem_pend(&test_sem, OS_TICKS_PER_SEC / 2);
     TEST_ASSERT(rc == OS_TIMEOUT);
+#endif
 
     mreq.mm_idx = loop_if_idx;
     mreq.mm_family = MN_AF_INET6;
     memcpy(&mreq.mm_addr.v6.s_addr, msin6.msin6_addr.s_addr,
-      sizeof(msin6.msin6_addr.s_addr));
+           sizeof(msin6.msin6_addr.s_addr));
 
     /*
      * Now join it.
@@ -779,12 +781,13 @@ sock_udp_mcast_v6(void)
     rc = os_mbuf_copyinto(m, 0, data, sizeof(data));
     TEST_ASSERT(rc == 0);
 
+#ifndef MN_FreeBSD
     rc = mn_sendto(tx_sock, (struct os_mbuf *)m, (struct mn_sockaddr *)&msin6);
     TEST_ASSERT(rc == 0);
 
     rc = os_sem_pend(&test_sem, OS_TICKS_PER_SEC);
     TEST_ASSERT(rc == OS_TIMEOUT);
-
+#endif
     mn_close(rx_sock);
     mn_close(tx_sock);
 }
