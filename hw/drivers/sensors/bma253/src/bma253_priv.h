@@ -169,15 +169,14 @@ struct axis_trigger {
 typedef struct {
     union {
         struct {
-            uint8_t low_g_int_active	:1;
-            uint8_t high_g_int_active	:1;
-            uint8_t slope_int_active	:1;
-            uint8_t slow_no_mot_int_active	:1;
-            uint8_t d_tap_int_active	:1;
-            uint8_t s_tap_int_active	:1;
-            uint8_t orient_int_active	:1;
-            uint8_t flat_int_active	:1;
-
+            uint8_t low_g_int_active        :1;
+            uint8_t high_g_int_active       :1;
+            uint8_t slope_int_active        :1;
+            uint8_t slow_no_mot_int_active  :1;
+            uint8_t d_tap_int_active        :1;
+            uint8_t s_tap_int_active        :1;
+            uint8_t orient_int_active       :1;
+            uint8_t flat_int_active         :1;
         } bits;
 
         uint8_t reg;
@@ -186,31 +185,49 @@ typedef struct {
 
     union {
         struct {
-            uint8_t reserved_1          :5;
-            uint8_t fifo_full_int_active	:1;
-            uint8_t fifo_wmark_int_active	:1;
-            uint8_t data_int_active	:1;
+            uint8_t reserved_1              :5;
+            uint8_t fifo_full_int_active    :1;
+            uint8_t fifo_wmark_int_active   :1;
+            uint8_t data_int_active         :1;
         } bits;
 
         uint8_t reg;
     } int_status_1;
 
 
-    uint8_t slope_first     :3;
-    uint8_t slope_sign      :1;
+    union {
+        struct {
+            uint8_t slope_first             :3;
+            uint8_t slope_sign              :1;
+            uint8_t tap_first               :3;
+            uint8_t tap_sign                :1;
+        } bits;
 
-    uint8_t tap_first       :3;
-    uint8_t tap_sign        :1;
+        uint8_t reg;
+    } int_status_2;
 
-    uint8_t high_first      :3;
-    uint8_t high_sign       :1;
+    union {
+        struct {
+            uint8_t high_first              :3;
+            uint8_t high_sign               :1;
+            /* value of type: enum bma253_orient_xy */
+            uint8_t device_orientation      :2;
+            uint8_t device_is_down          :1;
+            uint8_t device_is_flat          :1;
+
+        } bits;
+
+        uint8_t reg;
+    } int_status_3;
+#if 0
     /* value of type: enum bma253_orient_xy */
     uint8_t device_orientation:2;
-    uint8_t device_is_down 	:1;
-    uint8_t device_is_flat 	:1;
-
+    uint8_t device_is_down  :1;
+    uint8_t device_is_flat  :1;
 
     uint8_t stat_reg[4];
+#endif
+
 } bma253_int_stat_t;
 
 
@@ -450,7 +467,6 @@ bma253_get_high_g_int_cfg(const struct bma253 * bma253,
                           struct high_g_int_cfg * high_g_int_cfg);
 int
 bma253_set_high_g_int_cfg(const struct bma253 * bma253,
-                          enum bma253_g_range g_range,
                           const struct high_g_int_cfg * high_g_int_cfg);
 
 /* Settings for the slow/no-motion interrupt */
@@ -468,7 +484,6 @@ bma253_get_slow_no_mot_int_cfg(const struct bma253 * bma253,
 int
 bma253_set_slow_no_mot_int_cfg(const struct bma253 * bma253,
                                bool no_motion_select,
-                               enum bma253_g_range g_range,
                                const struct slow_no_mot_int_cfg * slow_no_mot_int_cfg);
 
 /* Settings for the slope interrupt */
@@ -484,7 +499,6 @@ bma253_get_slope_int_cfg(const struct bma253 * bma253,
                          struct slope_int_cfg * slope_int_cfg);
 int
 bma253_set_slope_int_cfg(const struct bma253 * bma253,
-                         enum bma253_g_range g_range,
                          const struct slope_int_cfg * slope_int_cfg);
 
 /* Settings for the double/single tap interrupt */
