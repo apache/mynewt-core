@@ -28,12 +28,6 @@ syscfg.defs:
     UARTBB_0:
         description: 'Enable bit-banger UART 0'
         value: 0
-    UARTBB_0_PIN_TX:
-        description: 'TX pin for UARTBB0'
-        value: -1
-    UARTBB_0_PIN_RX:
-        description: 'RX pin for UARTBB0'
-        value: -1
 
 syscfg.vals:
     # Enable nRF52832 MCU
@@ -68,6 +62,3 @@ syscfg.vals.BLE_CONTROLLER:
     OS_CPUTIME_FREQ: 32768
     OS_CPUTIME_TIMER_NUM: 5
     BLE_XTAL_SETTLE_TIME: 1500
-
-syscfg.restrictions:
-    - "!UARTBB_0 || (UARTBB_0_PIN_TX >= 0 && UARTBB_0_PIN_RX >= 0)"

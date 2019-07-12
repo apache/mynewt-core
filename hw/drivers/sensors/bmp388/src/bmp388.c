@@ -96,7 +96,7 @@
 */
 #define BMP388_MAX_INT_WAIT (10 * OS_TICKS_PER_SEC)
 
-#if !MYNEWT_VAL(BUS_DRIVER_PRESENST)
+#if !MYNEWT_VAL(BUS_DRIVER_PRESENT)
 static struct hal_spi_settings spi_bmp388_settings = {
     .data_order = HAL_SPI_MSB_FIRST,
     .data_mode  = HAL_SPI_MODE0,

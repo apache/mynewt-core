@@ -54,6 +54,7 @@ struct soft_pwm_dev {
 };
 
 static struct soft_pwm_dev instances[DEV_COUNT];
+static struct pwm_dev os_dev_spwm[DEV_COUNT];
 
 /**
  * Cycle start callback
@@ -505,4 +506,26 @@ soft_pwm_dev_init(struct os_dev *odev, void *arg)
     pwm_funcs->pwm_disable = soft_pwm_disable;
 
     return (0);
+}
+
+void
+soft_pwm_pkg_init()
+{
+    int rc;
+    int idx;
+    char *spwm_name;
+
+    /* Ensure this function only gets called by sysinit. */
+    SYSINIT_ASSERT_ACTIVE();
+
+    for (idx = 0; idx < DEV_COUNT; idx++) {
+        asprintf(&spwm_name, "spwm%d", idx);
+        rc = os_dev_create(&os_dev_spwm[idx].pwm_os_dev,
+                           spwm_name,
+                           OS_DEV_INIT_KERNEL,
+                           OS_DEV_INIT_PRIO_DEFAULT,
+                           soft_pwm_dev_init,
+                           UINT_TO_POINTER(idx));
+        SYSINIT_PANIC_ASSERT(rc == 0);
+    }
 }
