@@ -55,6 +55,70 @@
         }\
     } while (0);
 
+const struct bma253_notif_cfg bma253_notif_cfg[] = {
+    {
+      .event     = SENSOR_EVENT_TYPE_SINGLE_TAP,
+      .notif_src = BMA253_SINGLE_TAP_SRC,
+      .int_cfg   = BMA253_SINGLE_TAP_INT
+    },
+    {
+      .event     = SENSOR_EVENT_TYPE_DOUBLE_TAP,
+      .notif_src = BMA253_DOUBLE_TAP_SRC,
+      .int_cfg   = BMA253_DOUBLE_TAP_INT
+    },
+    {
+      .event     = SENSOR_EVENT_TYPE_FREE_FALL,
+      .notif_src = BMA253_LOW_G_SRC,
+      .int_cfg   = BMA253_LOW_G_INT
+    },
+    {
+      .event     = SENSOR_EVENT_TYPE_ORIENT_CHANGE,
+      .notif_src = BMA253_ORIENT_SRC,
+      .int_cfg   = BMA253_ORIENT_INT
+    },
+    {
+      .event     = SENSOR_EVENT_TYPE_SLEEP,
+      .notif_src = BMA253_SLEEP_SRC,
+      .int_cfg   = BMA253_SLEEP_INT
+    },
+    {
+      .event     = SENSOR_EVENT_TYPE_WAKEUP,
+      .notif_src  = BMA253_WAKEUP_SRC,
+      .int_cfg    = BMA253_WAKEUP_INT
+    },    
+    {
+      .event     = SENSOR_EVENT_TYPE_ORIENT_X_H_CHANGE,
+      .notif_src = BMA253_POS_HIGH_G_X_SRC,
+      .int_cfg   = BMA253_HIGH_G_P_X_INT
+    },
+    {
+      .event     = SENSOR_EVENT_TYPE_ORIENT_Y_H_CHANGE,
+      .notif_src = BMA253_POS_HIGH_G_Y_SRC,
+      .int_cfg   = BMA253_HIGH_G_P_Y_INT
+    },
+    {
+      .event     = SENSOR_EVENT_TYPE_ORIENT_Z_H_CHANGE,
+      .notif_src = BMA253_POS_HIGH_G_Z_SRC,
+      .int_cfg   = BMA253_HIGH_G_P_Z_INT
+    },
+    {
+      .event     = SENSOR_EVENT_TYPE_ORIENT_X_L_CHANGE,
+      .notif_src = BMA253_NEG_HIGH_G_X_SRC,
+      .int_cfg   = BMA253_HIGH_G_P_X_INT
+    },
+    {
+      .event     = SENSOR_EVENT_TYPE_ORIENT_Y_L_CHANGE,
+      .notif_src = BMA253_NEG_HIGH_G_Y_SRC,
+      .int_cfg   = BMA253_HIGH_G_N_Y_INT
+    },
+    {
+      .event     = SENSOR_EVENT_TYPE_ORIENT_Z_L_CHANGE,
+      .notif_src = BMA253_NEG_HIGH_G_Z_SRC,
+      .int_cfg   = BMA253_HIGH_G_N_Z_INT
+    }    
+};
+
+
 static int
 sensor_driver_handle_interrupt(struct sensor * sensor);
 
@@ -625,35 +689,32 @@ quad_to_axis_trigger(struct axis_trigger * axis_trigger,
 }
 
 int
-bma253_get_int_status(const struct bma253 * bma253,
-                      bma253_int_stat_t * int_status)
+bma253_get_high_g_int_status(const struct bma253 * bma253,
+                      uint8_t * int_status)
 {
-    uint8_t data[4] = "";
-    int rc;
+    int rc = 0;
 
-    rc = get_registers((struct bma253 *)bma253, REG_ADDR_INT_STATUS_0,
-                       data, 4);
+    rc = get_registers((struct bma253 *)bma253, REG_ADDR_INT_STATUS_3,
+                       int_status, 4);
     if (rc != 0) {
         return rc;
     }
-
-    int_status->int_status_0.bits.flat_int_active = BMA253_GET_VAL_BIT(data[0], 7);
-    int_status->int_status_0.bits.orient_int_active = BMA253_GET_VAL_BIT(data[0], 6);
-    int_status->int_status_0.bits.s_tap_int_active = BMA253_GET_VAL_BIT(data[0], 5);
-    int_status->int_status_0.bits.d_tap_int_active = BMA253_GET_VAL_BIT(data[0], 4);
-    int_status->int_status_0.bits.slow_no_mot_int_active = BMA253_GET_VAL_BIT(data[0], 3);
-    int_status->int_status_0.bits.slope_int_active = BMA253_GET_VAL_BIT(data[0], 2);
-    int_status->int_status_0.bits.high_g_int_active = BMA253_GET_VAL_BIT(data[0], 1);
-    int_status->int_status_0.bits.low_g_int_active = BMA253_GET_VAL_BIT(data[0], 0);
-
-    int_status->int_status_1.bits.data_int_active = BMA253_GET_VAL_BIT(data[1], 7);
-    int_status->int_status_1.bits.fifo_wmark_int_active = BMA253_GET_VAL_BIT(data[1], 6);
-    int_status->int_status_1.bits.fifo_full_int_active = BMA253_GET_VAL_BIT(data[1], 5);
+	return rc;
+}
 
 
-    int_status->device_is_flat = BMA253_GET_VAL_BIT(data[3], 7);
-    int_status->device_is_down = BMA253_GET_VAL_BIT(data[3], 6);
-    int_status->device_orientation = BMA253_GET_VAL_BIT_BLOCK(data[3], 4, 5);
+int
+bma253_get_int_status(const struct bma253 * bma253,
+                      bma253_int_stat_t * int_status)
+{
+    int rc;
+
+    rc = get_registers((struct bma253 *)bma253, REG_ADDR_INT_STATUS_0,
+                       (uint8_t*)int_status, 4);
+
+    if (rc != 0) {
+        return rc;
+    }
 
     return 0;
 }
@@ -1526,6 +1587,8 @@ bma253_set_int_latch(const struct bma253 * bma253,
 {
     uint8_t data;
 
+    BMA253_LOG(ERROR, "bma253_set_int_latch: %d reset: %d\n", int_latch, reset_ints);
+
     data = 0;
     data |= reset_ints << 7;
 
@@ -1687,13 +1750,18 @@ bma253_get_high_g_int_cfg(const struct bma253 * bma253,
 
 int
 bma253_set_high_g_int_cfg(const struct bma253 * bma253,
-                          enum bma253_g_range g_range,
                           const struct high_g_int_cfg * high_g_int_cfg)
 {
     float hyster_scale;
     float thresh_scale;
+    const struct bma253_cfg * cfg;
+    enum bma253_g_range g_range;
     uint8_t data[3];
     int rc;
+    cfg = &bma253->cfg;
+    g_range = cfg->g_range;
+
+
 
     switch (g_range) {
     case BMA253_G_RANGE_2:
@@ -1732,6 +1800,7 @@ bma253_set_high_g_int_cfg(const struct bma253 * bma253,
     data[0] = ((uint8_t)(high_g_int_cfg->hyster_g / hyster_scale) & 0x03) << 6;
     data[1] = (high_g_int_cfg->delay_ms >> 1) - 1;
     data[2] = high_g_int_cfg->thresh_g / thresh_scale;
+    BMA253_LOG(INFO, "set high g INT setting: 0x%x : %d 0x%x : %d 0x%x : %d\n", data[0], data[1], data[2]);
 
     rc = set_register((struct bma253 *)bma253, REG_ADDR_INT_2, data[0]);
     if (rc != 0) {
@@ -1810,13 +1879,17 @@ bma253_get_slow_no_mot_int_cfg(const struct bma253 * bma253,
 int
 bma253_set_slow_no_mot_int_cfg(const struct bma253 * bma253,
                                bool no_motion_select,
-                               enum bma253_g_range g_range,
                                const struct slow_no_mot_int_cfg * slow_no_mot_int_cfg)
 {
     float thresh_scale;
+    const struct bma253_cfg * cfg;
+    enum bma253_g_range g_range;
     uint8_t data[2];
     uint16_t duration;
     int rc;
+
+    cfg = &bma253->cfg;
+    g_range = cfg->g_range;
 
     switch (g_range) {
     case BMA253_G_RANGE_2:
@@ -1872,10 +1945,12 @@ bma253_set_slow_no_mot_int_cfg(const struct bma253 * bma253,
     data[1] = slow_no_mot_int_cfg->thresh_g / thresh_scale;
 
     rc = set_register((struct bma253 *)bma253, REG_ADDR_INT_5, data[0]);
+    BMA253_LOG(ERROR, "set sleep INT setting: 0x%x rc: %d\n", data[0], rc);
     if (rc != 0) {
         return rc;
     }
     rc = set_register((struct bma253 *)bma253, REG_ADDR_INT_7, data[1]);
+    BMA253_LOG(ERROR, "set sleep INT setting: 0x%x rc: %d\n", data[1], rc);
     if (rc != 0) {
         return rc;
     }
@@ -1923,12 +1998,16 @@ bma253_get_slope_int_cfg(const struct bma253 * bma253,
 
 int
 bma253_set_slope_int_cfg(const struct bma253 * bma253,
-                         enum bma253_g_range g_range,
                          const struct slope_int_cfg * slope_int_cfg)
 {
     float thresh_scale;
+    const struct bma253_cfg * cfg;
+    enum bma253_g_range g_range;
     uint8_t data[2];
     int rc;
+
+    cfg = &bma253->cfg;
+    g_range = cfg->g_range;
 
     switch (g_range) {
     case BMA253_G_RANGE_2:
@@ -2382,6 +2461,289 @@ bma253_set_flat_int_cfg(const struct bma253 * bma253,
     }
 
     return 0;
+}
+
+static int
+bma253_enable_notify_interrupt(struct bma253_notif_cfg *notif_cfg,
+                                       const struct bma253 * bma253,
+                                       struct bma253_private_driver_data *pdd)
+{
+    struct int_enable int_enable;
+    struct int_routes int_routes;
+    struct low_g_int_cfg low_g_int_cfg_set;
+    struct orient_int_cfg orient_int_cfg;
+    struct slope_int_cfg slope_int_cfg;
+    struct slow_no_mot_int_cfg slow_no_mot_int_cfg;
+    struct high_g_int_cfg high_g_int_cfg;
+    int rc;
+    /* Configure route */
+    rc = bma253_get_int_routes(bma253, &int_routes);
+    if (rc != 0) {
+        BMA253_LOG(ERROR, "error bma253_get_int_routes: %d\n", rc);
+        return rc;
+    }
+    switch (notif_cfg->int_cfg)
+    {
+    case BMA253_DOUBLE_TAP_INT:
+        int_routes.d_tap_int_route = pdd->int_route;
+        break;
+    case BMA253_SINGLE_TAP_INT:
+        int_routes.s_tap_int_route = pdd->int_route;
+        break;
+    case BMA253_LOW_G_INT:
+        int_routes.low_g_int_route = pdd->int_route;
+        break;
+    case BMA253_ORIENT_INT:
+        int_routes.orient_int_route = pdd->int_route;
+        break;
+    case BMA253_SLEEP_INT:
+        int_routes.slow_no_mot_int_route= pdd->int_route;
+        break;
+    case BMA253_WAKEUP_INT:
+        int_routes.slope_int_route= pdd->int_route;
+        break;
+    case BMA253_HIGH_G_P_X_INT:
+    case BMA253_HIGH_G_P_Y_INT:
+    case BMA253_HIGH_G_P_Z_INT:
+    case BMA253_HIGH_G_N_X_INT:
+    case BMA253_HIGH_G_N_Y_INT:
+    case BMA253_HIGH_G_N_Z_INT:
+        int_routes.high_g_int_route = pdd->int_route;
+        break;
+    default:
+        rc = SYS_EINVAL;
+        return rc;
+    }
+
+    rc = bma253_set_int_routes(bma253, &int_routes);
+    if (rc != 0) {
+        return rc;
+    }
+
+    /* Configure enable event*/
+    rc = bma253_get_int_enable(bma253, &int_enable);
+    if (rc != 0) {
+        return rc;
+    }
+
+     /* Enable event INT */
+    switch (notif_cfg->int_cfg)
+    {
+    case BMA253_DOUBLE_TAP_INT:
+        int_enable.d_tap_int_enable = true;
+        break;
+    case BMA253_SINGLE_TAP_INT:
+        int_enable.s_tap_int_enable = true;
+        break;
+    case BMA253_LOW_G_INT:
+        int_enable.low_g_int_enable = true;
+        break;
+    case BMA253_ORIENT_INT:
+        int_enable.orient_int_enable = true;
+        break;
+    case BMA253_SLEEP_INT:
+        int_enable.no_motion_select = true;
+        int_enable.slow_no_mot_x_int_enable = true;
+        int_enable.slow_no_mot_y_int_enable = true;
+        int_enable.slow_no_mot_z_int_enable = true;
+        break;
+    case BMA253_WAKEUP_INT:
+        int_enable.slope_x_int_enable = true;
+        int_enable.slope_y_int_enable = true;
+        int_enable.slope_z_int_enable = true;
+        break;
+    case BMA253_HIGH_G_P_X_INT:
+        int_enable.high_g_x_int_enable = true;
+        break;
+    case BMA253_HIGH_G_P_Y_INT:
+        int_enable.high_g_y_int_enable = true;
+        break;
+    case BMA253_HIGH_G_P_Z_INT:
+        int_enable.high_g_z_int_enable = true;
+        break;
+    case BMA253_HIGH_G_N_X_INT:
+        int_enable.high_g_x_int_enable = true;
+        break;
+    case BMA253_HIGH_G_N_Y_INT:
+        int_enable.high_g_y_int_enable = true;
+        break;
+    case BMA253_HIGH_G_N_Z_INT:
+        int_enable.high_g_z_int_enable = true;
+        break;
+    default:
+        rc = SYS_EINVAL;
+        return rc;
+    }
+
+    rc = bma253_set_int_latch(bma253, true, INT_LATCH_TEMPORARY_500_MS);
+
+    if (notif_cfg->int_cfg == BMA253_LOW_G_INT) {
+        /* set low_g threshold/duration/hysterisis */
+        low_g_int_cfg_set.axis_summing = false;
+        low_g_int_cfg_set.delay_ms = BMA253_LOW_DUR;
+        low_g_int_cfg_set.thresh_g = BMA253_LOW_THRESHOLD;
+        low_g_int_cfg_set.hyster_g = BMA253_LOW_HYS;
+        rc = bma253_set_low_g_int_cfg(bma253, &low_g_int_cfg_set);
+    }
+
+    if (notif_cfg->int_cfg == BMA253_ORIENT_INT) {
+        orient_int_cfg.blocking_angle = BMA253_BLOCKING_ANGLE;
+        orient_int_cfg.signal_up_dn = 0;
+        orient_int_cfg.hyster_g = BMA253_ORIENT_HYSTER_G;
+        orient_int_cfg.orient_mode = BMA253_ORIENT_MODE_SYMMETRICAL;
+        orient_int_cfg.orient_blocking = BMA253_ORIENT_BLOCKING_ACCEL_AND_SLOPE;
+        rc = bma253_set_orient_int_cfg(bma253, &orient_int_cfg);
+        BMA253_LOG(ERROR, "set ORIENT INT seting: %d\n", rc);
+    }
+
+    /*set parameter for int*/
+    if (notif_cfg->int_cfg == BMA253_SLEEP_INT) {
+        slow_no_mot_int_cfg.duration_p_or_s = 5;
+        slow_no_mot_int_cfg.thresh_g = 0.3;
+        rc = bma253_set_slow_no_mot_int_cfg(bma253, true, &slow_no_mot_int_cfg);
+        if (rc != 0) {
+            BMA253_LOG(ERROR, "set sleep INT setting: %d\n", rc);
+        }
+    }
+
+    if (notif_cfg->int_cfg == BMA253_WAKEUP_INT) {
+        slope_int_cfg.duration_p = 3;
+        slope_int_cfg.thresh_g = 0.3;
+        rc = bma253_set_slope_int_cfg(bma253, &slope_int_cfg);
+        if (rc != 0) {
+            BMA253_LOG(ERROR, "set wakeup INT setting: %d\n", rc);
+        }
+    }
+
+    if ((notif_cfg->int_cfg == BMA253_HIGH_G_P_X_INT)||
+        (notif_cfg->int_cfg == BMA253_HIGH_G_P_Y_INT)||
+        (notif_cfg->int_cfg == BMA253_HIGH_G_P_Z_INT)||
+        (notif_cfg->int_cfg == BMA253_HIGH_G_N_X_INT)||
+        (notif_cfg->int_cfg == BMA253_HIGH_G_N_Y_INT)||
+        (notif_cfg->int_cfg == BMA253_HIGH_G_N_Z_INT)) {
+        high_g_int_cfg.hyster_g = 0.25;
+        high_g_int_cfg.delay_ms = 40;
+        high_g_int_cfg.thresh_g = 1.5;
+        rc = bma253_set_high_g_int_cfg(bma253, &high_g_int_cfg);
+        if (rc != 0) {
+            BMA253_LOG(ERROR, "set high g INT setting: %d\n", rc);
+        }
+    }
+
+    bma253_set_int_latch(bma253, false, INT_LATCH_TEMPORARY_500_MS);
+    rc = bma253_set_int_enable(bma253, &int_enable);
+    return rc;
+}
+
+static int
+bma253_disable_notify_interrupt(struct bma253_notif_cfg *notif_cfg,
+                                             struct bma253 * bma253)
+{
+    struct int_enable int_enable;
+    struct int_routes int_routes;
+    int rc;
+    /* Configure route */
+    rc = bma253_get_int_routes(bma253, &int_routes);
+    if (rc != 0) {
+        BMA253_LOG(ERROR, "error bma253_get_int_routes: %d\n", rc);
+        return rc;
+    }
+    switch (notif_cfg->int_cfg)
+    {
+    case BMA253_DOUBLE_TAP_INT:
+        int_routes.d_tap_int_route = INT_ROUTE_NONE;
+        break;
+    case BMA253_SINGLE_TAP_INT:
+        int_routes.s_tap_int_route = INT_ROUTE_NONE;
+        break;
+    case BMA253_LOW_G_INT:
+        int_routes.low_g_int_route = INT_ROUTE_NONE;
+        break;
+    case BMA253_ORIENT_INT:
+        int_routes.orient_int_route = INT_ROUTE_NONE;
+        break;
+    case BMA253_SLEEP_INT:
+        int_routes.slow_no_mot_int_route = INT_ROUTE_NONE;
+        break;
+    case BMA253_WAKEUP_INT:
+        int_routes.slope_int_route = INT_ROUTE_NONE;
+        break;
+    case BMA253_HIGH_G_P_X_INT:
+    case BMA253_HIGH_G_P_Y_INT:
+    case BMA253_HIGH_G_P_Z_INT:
+    case BMA253_HIGH_G_N_X_INT:
+    case BMA253_HIGH_G_N_Y_INT:
+    case BMA253_HIGH_G_N_Z_INT:
+        /*share the same int pin so don't set int map for those int*/
+        break;
+    default:
+        rc = SYS_EINVAL;
+        return rc;
+    }
+
+    rc = bma253_set_int_routes(bma253, &int_routes);
+    if (rc != 0) {
+        return rc;
+    }
+    bma253->ev_enabled &= ~notif_cfg->event;
+
+
+    /* Configure enable event*/
+    rc = bma253_get_int_enable(bma253, &int_enable);
+    if (rc != 0) {
+        return rc;
+    }
+
+     /* Disable event INT */
+    switch (notif_cfg->int_cfg)
+    {
+    case BMA253_DOUBLE_TAP_INT:
+        int_enable.d_tap_int_enable = false;
+        BMA253_LOG(ERROR, "set double INT enable: %d\n", rc);
+        break;
+    case BMA253_SINGLE_TAP_INT:
+        int_enable.s_tap_int_enable = false;
+        break;
+    case BMA253_LOW_G_INT:
+        int_enable.low_g_int_enable = false;
+        break;
+    case BMA253_ORIENT_INT:
+        int_enable.orient_int_enable = false;
+        break;
+    case BMA253_SLEEP_INT:
+        int_enable.slow_no_mot_x_int_enable = false;
+        int_enable.slow_no_mot_y_int_enable = false;
+        int_enable.slow_no_mot_z_int_enable = false;
+        break;
+    case BMA253_WAKEUP_INT:
+        int_enable.slope_x_int_enable = false;
+        int_enable.slope_y_int_enable = false;
+        int_enable.slope_z_int_enable = false;
+        break;
+    case BMA253_HIGH_G_P_X_INT:
+        int_enable.high_g_x_int_enable = false;
+        break;
+    case BMA253_HIGH_G_P_Y_INT:
+        int_enable.high_g_y_int_enable = false;
+        break;
+    case BMA253_HIGH_G_P_Z_INT:
+        int_enable.high_g_z_int_enable = false;
+        break;
+    case BMA253_HIGH_G_N_X_INT:
+        int_enable.high_g_x_int_enable = false;
+        break;
+    case BMA253_HIGH_G_N_Y_INT:
+        int_enable.high_g_y_int_enable = false;
+        break;
+    case BMA253_HIGH_G_N_Z_INT:
+        int_enable.high_g_z_int_enable = false;
+        break;
+    default:
+        rc = SYS_EINVAL;
+        return rc;
+    }
+    rc = bma253_set_int_enable(bma253, &int_enable);
+    return rc;
 }
 
 static int
@@ -3088,6 +3450,8 @@ reset_and_recfg(struct bma253 * bma253)
     struct high_g_int_cfg high_g_int_cfg;
     struct tap_int_cfg tap_int_cfg;
     struct orient_int_cfg orient_int_cfg;
+    struct slow_no_mot_int_cfg slow_no_mot_int_cfg;
+    struct slope_int_cfg slope_int_cfg;
     enum i2c_watchdog i2c_watchdog;
     struct fifo_cfg fifo_cfg;
     struct bma253_private_driver_data *pdd;
@@ -3130,8 +3494,8 @@ reset_and_recfg(struct bma253 * bma253)
     int_routes.orient_int_route      = int_route;
     int_routes.s_tap_int_route       = INT_ROUTE_NONE;
     int_routes.d_tap_int_route       = INT_ROUTE_NONE;
-    int_routes.slow_no_mot_int_route = INT_ROUTE_NONE;
-    int_routes.slope_int_route       = INT_ROUTE_NONE;
+    int_routes.slow_no_mot_int_route = int_route;
+    int_routes.slope_int_route       = int_route;
     int_routes.high_g_int_route      = int_route;
     int_routes.low_g_int_route       = int_route;
     int_routes.fifo_wmark_int_route  = INT_ROUTE_NONE;
@@ -3180,6 +3544,15 @@ reset_and_recfg(struct bma253 * bma253)
         return rc;
     }
 
+    slow_no_mot_int_cfg.duration_p_or_s = 5;
+    slow_no_mot_int_cfg.thresh_g = 0.3;
+    bma253_set_slow_no_mot_int_cfg(bma253, true, &slow_no_mot_int_cfg);
+
+    slope_int_cfg.duration_p = 3;
+    slope_int_cfg.thresh_g = 0.3;
+    bma253_set_slope_int_cfg(bma253, &slope_int_cfg);
+
+
     low_g_int_cfg.delay_ms     = cfg->low_g_delay_ms;
     low_g_int_cfg.thresh_g     = cfg->low_g_thresh_g;
     low_g_int_cfg.hyster_g     = cfg->low_g_hyster_g;
@@ -3194,7 +3567,7 @@ reset_and_recfg(struct bma253 * bma253)
     high_g_int_cfg.delay_ms = cfg->high_g_delay_ms;
     high_g_int_cfg.thresh_g = cfg->high_g_thresh_g;
 
-    rc = bma253_set_high_g_int_cfg(bma253, cfg->g_range, &high_g_int_cfg);
+    rc = bma253_set_high_g_int_cfg(bma253, &high_g_int_cfg);
     if (rc != 0) {
         return rc;
     }
@@ -4245,8 +4618,8 @@ bma253_current_orient(struct bma253 * bma253,
         return rc;
     }
 
-    orient_xyz->orient_xy  = int_status.device_orientation;
-    orient_xyz->downward_z = int_status.device_is_down;
+    orient_xyz->orient_xy  = int_status.int_status_3.bits.device_orientation;
+    orient_xyz->downward_z = int_status.int_status_3.bits.device_is_down;
 
     return 0;
 }
@@ -4318,8 +4691,8 @@ bma253_wait_for_orient(struct bma253 * bma253,
         goto done;
     }
 
-    orient_xyz->orient_xy  = int_status.device_orientation;
-    orient_xyz->downward_z = int_status.device_is_down;
+    orient_xyz->orient_xy  = int_status.int_status_3.bits.device_orientation;
+    orient_xyz->downward_z = int_status.int_status_3.bits.device_is_down;
 
 done:
     pdd->interrupt = NULL;
@@ -4783,7 +5156,7 @@ sensor_driver_set_trigger_thresh(struct sensor * sensor,
 {
 #if MYNEWT_VAL(BMA253_INT_ENABLE)
     struct bma253 * bma253;
-    const struct bma253_cfg * cfg;
+    //const struct bma253_cfg * cfg;
     int rc;
     enum bma253_power_mode request_power[3];
     const struct sensor_accel_data * low_thresh;
@@ -4799,7 +5172,7 @@ sensor_driver_set_trigger_thresh(struct sensor * sensor,
     }
 
     bma253 = (struct bma253 *)SENSOR_GET_DEVICE(sensor);
-    cfg = &bma253->cfg;
+    //cfg = &bma253->cfg;
     pdd = &bma253->pdd;
 
     pdd->read_ctx.srec_type |= sensor_type;
@@ -4886,7 +5259,6 @@ sensor_driver_set_trigger_thresh(struct sensor * sensor,
         high_g_int_cfg.thresh_g = thresh;
 
         rc = bma253_set_high_g_int_cfg(bma253,
-                                       cfg->g_range,
                                        &high_g_int_cfg);
         if (rc != 0) {
             goto done;
@@ -4921,6 +5293,68 @@ sensor_driver_set_config(struct sensor *sensor, void *cfg)
     return bma253_config(bma253, (struct bma253_cfg*)cfg);
 }
 
+static struct bma253_notif_cfg *
+bma253_find_notif_cfg_by_event(sensor_event_type_t event,
+                                 struct bma253_cfg *cfg)
+{
+    int i;
+    struct bma253_notif_cfg *notif_cfg = NULL;
+
+    if (!cfg) {
+        goto err;
+    }
+
+    for (i = 0; i < cfg->max_num_notif; i++) {
+        if (event == cfg->notif_cfg[i].event) {
+            notif_cfg = &cfg->notif_cfg[i];
+            break;
+        }
+    }
+
+    if (i == cfg->max_num_notif) {
+       /* here if type is set to a non valid event or more than one event
+        * we do not currently support registering for more than one event
+        * per notification
+        */
+        goto err;
+    }
+
+    return notif_cfg;
+err:
+    return NULL;
+}
+
+void bma253_dump_reg(struct bma253 * bma253)
+{
+    uint8_t i;
+    uint8_t regv;
+
+    for (i = REG_ADDR_FIFO_STATUS; i < (REG_ADDR_FIFO_CONFIG_0 + 1); i++) {
+        get_register(bma253, i, &regv);
+    }
+
+    get_register(bma253, REG_ADDR_FIFO_CONFIG_1, &regv);
+}
+
+static int
+bma253_notify(struct bma253 *bma253, uint8_t src,
+                    sensor_event_type_t event_type)
+{
+    struct bma253_notif_cfg *notif_cfg;
+
+    notif_cfg = bma253_find_notif_cfg_by_event(event_type, &bma253->cfg);
+    if (!notif_cfg) {
+        return SYS_EINVAL;
+    }
+
+    if (src & notif_cfg->notif_src) {
+        sensor_mgr_put_notify_evt(&bma253->pdd.notify_ctx, event_type);
+    }
+
+    return 0;
+}
+
+
 static int
 sensor_driver_unset_notification(struct sensor * sensor,
                                  sensor_event_type_t sensor_event_type)
@@ -4928,21 +5362,38 @@ sensor_driver_unset_notification(struct sensor * sensor,
 #if MYNEWT_VAL(BMA253_INT_ENABLE)
     struct bma253 * bma253;
     enum bma253_power_mode request_power[3];
-    struct int_enable int_enable;
-    struct int_routes int_routes;
     struct bma253_private_driver_data *pdd;
     int rc;
+    struct bma253_notif_cfg *notif_cfg;
 
     if ((sensor_event_type & ~(SENSOR_EVENT_TYPE_DOUBLE_TAP |
                                SENSOR_EVENT_TYPE_SINGLE_TAP |
-                               SENSOR_EVENT_TYPE_FREE_FALL)) != 0) {
+                               SENSOR_EVENT_TYPE_FREE_FALL |
+                               SENSOR_EVENT_TYPE_ORIENT_CHANGE |
+                               SENSOR_EVENT_TYPE_SLEEP |
+                               SENSOR_EVENT_TYPE_WAKEUP |
+                               SENSOR_EVENT_TYPE_ORIENT_X_H_CHANGE |
+                               SENSOR_EVENT_TYPE_ORIENT_Y_H_CHANGE |
+                               SENSOR_EVENT_TYPE_ORIENT_Z_H_CHANGE |
+                               SENSOR_EVENT_TYPE_ORIENT_X_L_CHANGE |
+                               SENSOR_EVENT_TYPE_ORIENT_Y_L_CHANGE |
+                               SENSOR_EVENT_TYPE_ORIENT_Z_L_CHANGE )) != 0) {
         return SYS_EINVAL;
     }
 
     /*XXX for now we only support registering for one event */
     if ((sensor_event_type != SENSOR_EVENT_TYPE_DOUBLE_TAP) &&
         (sensor_event_type != SENSOR_EVENT_TYPE_SINGLE_TAP) &&
-        (sensor_event_type != SENSOR_EVENT_TYPE_FREE_FALL)) {
+        (sensor_event_type != SENSOR_EVENT_TYPE_FREE_FALL) &&
+        (sensor_event_type != SENSOR_EVENT_TYPE_ORIENT_CHANGE) &&
+        (sensor_event_type != SENSOR_EVENT_TYPE_SLEEP) &&
+        (sensor_event_type != SENSOR_EVENT_TYPE_WAKEUP) &&
+        (sensor_event_type != SENSOR_EVENT_TYPE_ORIENT_X_H_CHANGE) &&
+        (sensor_event_type != SENSOR_EVENT_TYPE_ORIENT_Y_H_CHANGE) &&
+        (sensor_event_type != SENSOR_EVENT_TYPE_ORIENT_Z_H_CHANGE) &&
+        (sensor_event_type != SENSOR_EVENT_TYPE_ORIENT_X_L_CHANGE) &&
+        (sensor_event_type != SENSOR_EVENT_TYPE_ORIENT_Y_L_CHANGE) &&
+        (sensor_event_type != SENSOR_EVENT_TYPE_ORIENT_Z_L_CHANGE)) {
         return SYS_EINVAL;
     }
 
@@ -4959,67 +5410,16 @@ sensor_driver_unset_notification(struct sensor * sensor,
     if (rc != 0) {
         return rc;
     }
-
-    /* Clear route and interrupts. We can do it for single and double as driver
-     * supports notification only for one of them at the time
-     */
-    rc = bma253_get_int_routes(bma253, &int_routes);
+    notif_cfg = bma253_find_notif_cfg_by_event(sensor_event_type, &bma253->cfg);
+    rc = bma253_disable_notify_interrupt(notif_cfg, bma253);
     if (rc != 0) {
         return rc;
     }
-
-    if (sensor_event_type & SENSOR_EVENT_TYPE_SINGLE_TAP) {
-        int_routes.s_tap_int_route = INT_ROUTE_NONE;
-        bma253->ev_enabled &= ~SENSOR_EVENT_TYPE_SINGLE_TAP;
-    }
-
-    if (sensor_event_type & SENSOR_EVENT_TYPE_DOUBLE_TAP) {
-        int_routes.d_tap_int_route = INT_ROUTE_NONE;
-        bma253->ev_enabled &= ~SENSOR_EVENT_TYPE_DOUBLE_TAP;
-    }
-
-    if (sensor_event_type & SENSOR_EVENT_TYPE_FREE_FALL) {
-        int_routes.low_g_int_route = INT_ROUTE_NONE;
-        bma253->ev_enabled &= ~SENSOR_EVENT_TYPE_FREE_FALL;
-    }
-
-
-    rc = bma253_set_int_routes(bma253, &int_routes);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = bma253_get_int_enable(bma253, &int_enable);
-    if (rc != 0) {
-        return rc;
-    }
-
-    int_enable.d_tap_int_enable = false;
-    int_enable.s_tap_int_enable = false;
-    int_enable.low_g_int_enable = false;
-
-    rc = bma253_set_int_enable(bma253, &int_enable);
-    if (rc != 0) {
-        return rc;
-    }
-
+    bma253_dump_reg(bma253);
     return 0;
 #else
     return SYS_ENODEV;
 #endif
-}
-
-
-void bma253_dump_reg(struct bma253 * bma253)
-{
-    uint8_t i;
-    uint8_t regv;
-
-    for (i = REG_ADDR_FIFO_STATUS; i < (REG_ADDR_INT_RST_LATCH + 1); i++) {
-        get_register(bma253, i, &regv);
-    }
-
-    get_register(bma253, REG_ADDR_FIFO_CONFIG_1, &regv);
 }
 
 static int
@@ -5030,24 +5430,40 @@ sensor_driver_set_notification(struct sensor * sensor,
     struct bma253 * bma253;
     int rc;
     enum bma253_power_mode request_power[3];
-    struct int_enable int_enable;
-    struct int_routes int_routes;
     struct bma253_private_driver_data *pdd;
-    struct low_g_int_cfg low_g_int_cfg_set;
-
+    struct bma253_notif_cfg *notif_cfg;
 
     BMA253_LOG(ERROR, "dd_set_notify %d\n", sensor_event_type);
 
     if ((sensor_event_type & ~(SENSOR_EVENT_TYPE_DOUBLE_TAP |
                                SENSOR_EVENT_TYPE_SINGLE_TAP |
-                               SENSOR_EVENT_TYPE_FREE_FALL)) != 0) {
+                               SENSOR_EVENT_TYPE_FREE_FALL |
+                               SENSOR_EVENT_TYPE_ORIENT_CHANGE |
+                               SENSOR_EVENT_TYPE_SLEEP |
+                               SENSOR_EVENT_TYPE_WAKEUP |
+                               SENSOR_EVENT_TYPE_ORIENT_X_H_CHANGE |
+                               SENSOR_EVENT_TYPE_ORIENT_Y_H_CHANGE |
+                               SENSOR_EVENT_TYPE_ORIENT_Z_H_CHANGE |
+                               SENSOR_EVENT_TYPE_ORIENT_X_L_CHANGE |
+                               SENSOR_EVENT_TYPE_ORIENT_Y_L_CHANGE |
+                               SENSOR_EVENT_TYPE_ORIENT_Z_L_CHANGE )) != 0) {
+
         return SYS_EINVAL;
     }
 
     /*XXX for now we only support registering for one event */
-    if ((sensor_event_type != SENSOR_EVENT_TYPE_DOUBLE_TAP) &&
+if ((sensor_event_type != SENSOR_EVENT_TYPE_DOUBLE_TAP) &&
         (sensor_event_type != SENSOR_EVENT_TYPE_SINGLE_TAP) &&
-        (sensor_event_type != SENSOR_EVENT_TYPE_FREE_FALL)) {
+        (sensor_event_type != SENSOR_EVENT_TYPE_FREE_FALL) &&
+        (sensor_event_type != SENSOR_EVENT_TYPE_ORIENT_CHANGE) &&
+        (sensor_event_type != SENSOR_EVENT_TYPE_SLEEP) &&
+        (sensor_event_type != SENSOR_EVENT_TYPE_WAKEUP) &&
+        (sensor_event_type != SENSOR_EVENT_TYPE_ORIENT_X_H_CHANGE) &&
+        (sensor_event_type != SENSOR_EVENT_TYPE_ORIENT_Y_H_CHANGE) &&
+        (sensor_event_type != SENSOR_EVENT_TYPE_ORIENT_Z_H_CHANGE) &&
+        (sensor_event_type != SENSOR_EVENT_TYPE_ORIENT_X_L_CHANGE) &&
+        (sensor_event_type != SENSOR_EVENT_TYPE_ORIENT_Y_L_CHANGE) &&
+        (sensor_event_type != SENSOR_EVENT_TYPE_ORIENT_Z_L_CHANGE)) {        
         return SYS_EINVAL;
     }
 
@@ -5072,58 +5488,8 @@ sensor_driver_set_notification(struct sensor * sensor,
     if (rc != 0) {
         goto done;
     }
-
-    /* Configure route */
-    rc = bma253_get_int_routes(bma253, &int_routes);
-    if (rc != 0) {
-        return rc;
-    }
-
-    if (sensor_event_type & SENSOR_EVENT_TYPE_DOUBLE_TAP) {
-        int_routes.d_tap_int_route = pdd->int_route;
-    }
-
-    if (sensor_event_type & SENSOR_EVENT_TYPE_SINGLE_TAP) {
-        int_routes.s_tap_int_route = pdd->int_route;
-    }
-
-    if (sensor_event_type & SENSOR_EVENT_TYPE_FREE_FALL) {
-        int_routes.low_g_int_route = pdd->int_route;
-    }
-
-    rc = bma253_set_int_routes(bma253, &int_routes);
-    if (rc != 0) {
-        return rc;
-    }
-
-    /* Configure enable event*/
-    rc = bma253_get_int_enable(bma253, &int_enable);
-    if (rc != 0) {
-        goto done;
-    }
-
-    /* Enable tap event*/
-    int_enable.s_tap_int_enable         = sensor_event_type &
-                                          SENSOR_EVENT_TYPE_SINGLE_TAP;
-    int_enable.d_tap_int_enable         = sensor_event_type &
-                                          SENSOR_EVENT_TYPE_DOUBLE_TAP;
-    int_enable.low_g_int_enable         = sensor_event_type &
-                                          SENSOR_EVENT_TYPE_FREE_FALL;
-
-    rc = bma253_set_int_latch(bma253, true, INT_LATCH_LATCHED);
-
-    if (sensor_event_type & SENSOR_EVENT_TYPE_FREE_FALL) {
-        /* set low_g threshold/duration/hysterisis */
-        low_g_int_cfg_set.axis_summing = false;
-        low_g_int_cfg_set.delay_ms = BMA253_LOW_DUR;
-        low_g_int_cfg_set.thresh_g = BMA253_LOW_THRESHOLD;
-        low_g_int_cfg_set.hyster_g = BMA253_LOW_HYS;
-        rc = bma253_set_low_g_int_cfg(bma253, &low_g_int_cfg_set);
-    }
-
-    int_enable.slope_z_int_enable   = 0;
-    rc = bma253_set_int_enable(bma253, &int_enable);
-
+    notif_cfg = bma253_find_notif_cfg_by_event(sensor_event_type, &bma253->cfg);
+    rc = bma253_enable_notify_interrupt(notif_cfg, bma253, pdd);
     bma253_dump_reg(bma253);
 
 done:
@@ -5156,37 +5522,50 @@ sensor_driver_handle_interrupt(struct sensor * sensor)
     bma253 = (struct bma253 *)SENSOR_GET_DEVICE(sensor);
     pdd = &bma253->pdd;
 
-    BMA253_LOG(DEBUG, "bma253_isr\n");
+    BMA253_LOG(DEBUG, "!!!bma253_isr\n");
 
     rc = bma253_get_int_status(bma253, &int_status);
     if (rc != 0) {
         BMA253_LOG(ERROR, "Cound not read int status err=0x%02x\n", rc);
         return rc;
     }
-
-    if (int_status.int_status_0.reg) {
-        rc = bma253_set_int_latch(bma253, true, INT_LATCH_LATCHED);
-        BMA253_LOG(DEBUG, "registered_mask: %x %d\n",
-                pdd->registered_mask, int_status.int_status_0.reg);
-    } else {
-        return 0;
-    }
+    BMA253_LOG(INFO, "read int status =0x%x\n", int_status.int_status_0.reg);
+    BMA253_LOG(INFO, "read int status3 =0x%x\n", int_status.int_status_3.reg);
 
     if (pdd->registered_mask & BMA253_NOTIFY_MASK) {
-        if (int_status.int_status_0.bits.s_tap_int_active) {
-            sensor_mgr_put_notify_evt(&pdd->notify_ctx, SENSOR_EVENT_TYPE_SINGLE_TAP);
-        }
 
-        if (int_status.int_status_0.bits.d_tap_int_active) {
-            sensor_mgr_put_notify_evt(&pdd->notify_ctx, SENSOR_EVENT_TYPE_DOUBLE_TAP);
-            BMA253_LOG(ERROR, "DT Event Sent\n");
-        }
+        rc = bma253_notify(bma253, int_status.int_status_0.reg,
+                           SENSOR_EVENT_TYPE_SINGLE_TAP);
 
-        if (int_status.int_status_0.bits.low_g_int_active) {
-            sensor_mgr_put_notify_evt(&pdd->notify_ctx, SENSOR_EVENT_TYPE_FREE_FALL);
-            BMA253_LOG(ERROR, "freefall Event Sent\n");
-        }
+        rc = bma253_notify(bma253, int_status.int_status_0.reg,
+                           SENSOR_EVENT_TYPE_DOUBLE_TAP);
 
+        rc = bma253_notify(bma253, int_status.int_status_0.reg,
+                           SENSOR_EVENT_TYPE_FREE_FALL);
+        rc = bma253_notify(bma253, int_status.int_status_0.reg,
+                           SENSOR_EVENT_TYPE_ORIENT_CHANGE);
+        rc = bma253_notify(bma253, int_status.int_status_0.reg,
+                           SENSOR_EVENT_TYPE_SLEEP);
+        rc = bma253_notify(bma253, int_status.int_status_0.reg,
+                           SENSOR_EVENT_TYPE_WAKEUP);
+        if(int_status.int_status_3.bits.high_sign)
+        {
+            rc = bma253_notify(bma253, int_status.int_status_3.bits.high_first,
+                           SENSOR_EVENT_TYPE_ORIENT_X_L_CHANGE);
+            rc = bma253_notify(bma253, int_status.int_status_3.bits.high_first,
+                           SENSOR_EVENT_TYPE_ORIENT_Y_L_CHANGE);
+            rc = bma253_notify(bma253, int_status.int_status_3.bits.high_first,
+                           SENSOR_EVENT_TYPE_ORIENT_Z_L_CHANGE);
+        }
+        else
+        {
+            rc = bma253_notify(bma253, int_status.int_status_3.bits.high_first,
+                           SENSOR_EVENT_TYPE_ORIENT_X_H_CHANGE);
+            rc = bma253_notify(bma253, int_status.int_status_3.bits.high_first,
+                           SENSOR_EVENT_TYPE_ORIENT_Y_H_CHANGE);
+            rc = bma253_notify(bma253, int_status.int_status_3.bits.high_first,
+                           SENSOR_EVENT_TYPE_ORIENT_Z_H_CHANGE);
+        }
     }
 
     if ((pdd->registered_mask & BMA253_READ_MASK) &&
@@ -5246,7 +5625,15 @@ bma253_config(struct bma253 * bma253, struct bma253_cfg * cfg)
     if (rc != 0) {
         return rc;
     }
+    if (!cfg->notif_cfg) {
+        bma253->cfg.notif_cfg = (struct bma253_notif_cfg *)bma253_notif_cfg;
+        bma253->cfg.max_num_notif = sizeof(bma253_notif_cfg)/sizeof(*bma253_notif_cfg);
+    } else {
+        bma253->cfg.notif_cfg = cfg->notif_cfg;
+        bma253->cfg.max_num_notif = cfg->max_num_notif;
+    }
 
+    BMA253_LOG(ERROR, "bma253->cfg.max_num_notif %d\n", bma253->cfg.max_num_notif);
     return 0;
 }
 
@@ -5306,7 +5693,7 @@ bma253_init(struct os_dev * dev, void * arg)
     rc = hal_spi_enable(sensor->s_itf.si_num);
     BMA253_DRV_CHECK_RC(rc);
 
-	rc = hal_gpio_init_out(sensor->s_itf.si_cs_pin, 1);
+    rc = hal_gpio_init_out(sensor->s_itf.si_cs_pin, 1);
     BMA253_DRV_CHECK_RC(rc);
 #endif
 
