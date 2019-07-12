@@ -46,12 +46,34 @@ extern "C" {
 #define BMA253_DOUBLE_TAP_INT               1
 #define BMA253_LOW_G_INT                    2
 #define BMA253_ORIENT_INT                   3
-
+#define BMA253_SLEEP_INT                    4
+#define BMA253_WAKEUP_INT                   5
+//#define BMA253_HIGH_G_INT                   6
+#define BMA253_HIGH_G_P_X_INT               6
+#define BMA253_HIGH_G_P_Y_INT               7
+#define BMA253_HIGH_G_P_Z_INT               8
+#define BMA253_HIGH_G_N_X_INT               9
+#define BMA253_HIGH_G_N_Y_INT               10
+#define BMA253_HIGH_G_N_Z_INT               11
 
 #define BMA253_LOW_G_SRC                    0x01
-#define BMA253_DOUBLE_TAP_SRC               0x16
-#define BMA253_SINGLE_TAP_SRC               0x32
+#define BMA253_SLEEP_SRC                    0x08
+#define BMA253_WAKEUP_SRC                   0x04
+#define BMA253_HIGH_G_SRC                   0x02
+#define BMA253_DOUBLE_TAP_SRC               0x10
+#define BMA253_SINGLE_TAP_SRC               0x20
 #define BMA253_ORIENT_SRC                   0x40
+
+#define BMA253_POS_HIGH_G_X_SRC             0x01
+#define BMA253_POS_HIGH_G_Y_SRC             0x02
+#define BMA253_POS_HIGH_G_Z_SRC             0x04
+#define BMA253_NEG_HIGH_G_X_SRC             0x01
+#define BMA253_NEG_HIGH_G_Y_SRC             0x02
+#define BMA253_NEG_HIGH_G_Z_SRC             0x04
+
+
+
+
 
 
 /* Range of acceleration measurements */

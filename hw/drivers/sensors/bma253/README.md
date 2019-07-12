@@ -23,7 +23,7 @@
 
 /*********************************************************/
 driver for bma253
-version:1.0.0.4  2019/7/9 
+version:1.0.0.4  2019/7/12 
 /*********************************************************/
 target platform: nrf52832
 BSP: nrf52dk
@@ -60,6 +60,32 @@ sensor notify bma253_0 on orient
 
 if using the sensor_shell (option 1), the orient change could be turned off by:
 sensor notify bma253_0 off orient
+
+[command for testing sleep feature]
+- option 1:
+sensor notify bma253_0 on sleep
+
+
+if using the sensor_shell (option 1), the sleep could be turned off by:
+sensor notify bma253_0 off sleep
+
+[command for testing wakeup feature]
+- option 1:
+sensor notify bma253_0 on wakeup
+
+
+if using the sensor_shell (option 1), the wakeup could be turned off by:
+sensor notify bma253_0 off wakeup
+
+
+[command for testing orient feature]
+- option 1:
+sensor notify bma253_0 on orient_xl
+other options: orient_yl, orient_zl, orient_xh, orient_yh, orient_zh
+
+if using the sensor_shell (option 1), the orient could be turned off by:
+sensor notify bma253_0 off orient_xl
+other options: orient_yl, orient_zl, orient_xh, orient_yh, orient_zh
 
 [command for sensor data read test]
 sensor read bmp253_0 1 -n 10 -i 20 -d 4000
