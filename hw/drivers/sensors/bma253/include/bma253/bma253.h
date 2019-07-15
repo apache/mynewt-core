@@ -42,6 +42,7 @@ extern "C" {
 #define BMA253_LOW_DUR                      142
 #define BMA253_LOW_THRESHOLD                0.375
 #define BMA253_LOW_HYS                      0.125
+
 #define BMA253_LOW_AXIS_SUMMING             false
 
 #define BMA253_HIGH_G_DELAY_MS_DEFAULT      40

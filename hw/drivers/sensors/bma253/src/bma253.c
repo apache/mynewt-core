@@ -2582,10 +2582,12 @@ bma253_enable_notify_interrupt(struct bma253_notif_cfg *notif_cfg,
 
     if (notif_cfg->int_cfg == BMA253_LOW_G_INT) {
         /* set low_g threshold/duration/hysterisis */
+
         low_g_int_cfg_set.axis_summing = cfg->low_g_int_cfg.axis_summing;
         low_g_int_cfg_set.delay_ms = cfg->low_g_int_cfg.delay_ms;
         low_g_int_cfg_set.thresh_g = cfg->low_g_int_cfg.thresh_g;
         low_g_int_cfg_set.hyster_g = cfg->low_g_int_cfg.hyster_g;
+
         rc = bma253_set_low_g_int_cfg(bma253, &low_g_int_cfg_set);
     }
 
@@ -3555,11 +3557,10 @@ reset_and_recfg(struct bma253 * bma253)
     slope_int_cfg.thresh_g = cfg->slope_int_cfg.thresh_g;
     bma253_set_slope_int_cfg(bma253, &slope_int_cfg);
 
-
     low_g_int_cfg.delay_ms     = cfg->low_g_int_cfg.delay_ms;
     low_g_int_cfg.thresh_g     = cfg->low_g_int_cfg.thresh_g;
     low_g_int_cfg.hyster_g     = cfg->low_g_int_cfg.hyster_g;
-    low_g_int_cfg.axis_summing = false;
+    low_g_int_cfg.axis_summing = cfg->low_g_int_cfg.axis_summing;
 
     rc = bma253_set_low_g_int_cfg(bma253, &low_g_int_cfg);
     if (rc != 0) {
@@ -5159,7 +5160,7 @@ sensor_driver_set_trigger_thresh(struct sensor * sensor,
 {
 #if MYNEWT_VAL(BMA253_INT_ENABLE)
     struct bma253 * bma253;
-    const struct bma253_cfg * cfg;
+    //const struct bma253_cfg * cfg;
     int rc;
     enum bma253_power_mode request_power[3];
     const struct sensor_accel_data * low_thresh;
@@ -5175,7 +5176,7 @@ sensor_driver_set_trigger_thresh(struct sensor * sensor,
     }
 
     bma253 = (struct bma253 *)SENSOR_GET_DEVICE(sensor);
-    cfg = &bma253->cfg;
+    //cfg = &bma253->cfg;
     pdd = &bma253->pdd;
 
     pdd->read_ctx.srec_type |= sensor_type;
@@ -5225,7 +5226,7 @@ sensor_driver_set_trigger_thresh(struct sensor * sensor,
         low_g_int_cfg.delay_ms     = cfg->low_g_int_cfg.delay_ms;
         low_g_int_cfg.thresh_g     = thresh;
         low_g_int_cfg.hyster_g     = cfg->low_g_int_cfg.hyster_g;
-        low_g_int_cfg.axis_summing = false;
+        low_g_int_cfg.axis_summing = cfg->low_g_int_cfg.axis_summing;;
 
         rc = bma253_set_low_g_int_cfg(bma253, &low_g_int_cfg);
         if (rc != 0) {
