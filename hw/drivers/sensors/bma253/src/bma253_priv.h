@@ -219,14 +219,6 @@ typedef struct {
 
         uint8_t reg;
     } int_status_3;
-#if 0
-    /* value of type: enum bma253_orient_xy */
-    uint8_t device_orientation:2;
-    uint8_t device_is_down  :1;
-    uint8_t device_is_flat  :1;
-
-    uint8_t stat_reg[4];
-#endif
 
 } bma253_int_stat_t;
 
@@ -437,13 +429,6 @@ bma253_set_int_latch(const struct bma253 * bma253,
                      bool reset_ints,
                      enum int_latch int_latch);
 
-/* Settings for the low-g interrupt */
-struct low_g_int_cfg {
-    uint16_t delay_ms;
-    float thresh_g;
-    float hyster_g;
-    bool axis_summing;
-};
 
 /* Get/Set the low-g interrupt settings */
 int
@@ -453,13 +438,6 @@ int
 bma253_set_low_g_int_cfg(const struct bma253 * bma253,
                          const struct low_g_int_cfg * low_g_int_cfg);
 
-/* Settings for the high-g interrupt */
-struct high_g_int_cfg {
-    float hyster_g;
-    uint16_t delay_ms;
-    float thresh_g;
-};
-
 /* Get/Set the high-g interrupt settings */
 int
 bma253_get_high_g_int_cfg(const struct bma253 * bma253,
@@ -468,12 +446,6 @@ bma253_get_high_g_int_cfg(const struct bma253 * bma253,
 int
 bma253_set_high_g_int_cfg(const struct bma253 * bma253,
                           const struct high_g_int_cfg * high_g_int_cfg);
-
-/* Settings for the slow/no-motion interrupt */
-struct slow_no_mot_int_cfg {
-    uint16_t duration_p_or_s;
-    float thresh_g;
-};
 
 /* Get/Set the slow/no-motion interrupt settings */
 int
@@ -486,12 +458,6 @@ bma253_set_slow_no_mot_int_cfg(const struct bma253 * bma253,
                                bool no_motion_select,
                                const struct slow_no_mot_int_cfg * slow_no_mot_int_cfg);
 
-/* Settings for the slope interrupt */
-struct slope_int_cfg {
-    uint8_t duration_p;
-    float thresh_g;
-};
-
 /* Get/Set the slope interrupt settings */
 int
 bma253_get_slope_int_cfg(const struct bma253 * bma253,
@@ -500,15 +466,6 @@ bma253_get_slope_int_cfg(const struct bma253 * bma253,
 int
 bma253_set_slope_int_cfg(const struct bma253 * bma253,
                          const struct slope_int_cfg * slope_int_cfg);
-
-/* Settings for the double/single tap interrupt */
-struct tap_int_cfg {
-    enum bma253_tap_quiet tap_quiet;
-    enum bma253_tap_shock tap_shock;
-    enum bma253_d_tap_window d_tap_window;
-    enum bma253_tap_wake_samples tap_wake_samples;
-    float thresh_g;
-};
 
 /* Get/Set the double/single tap interrupt settings */
 int
@@ -519,15 +476,6 @@ int
 bma253_set_tap_int_cfg(const struct bma253 * bma253,
                        enum bma253_g_range g_range,
                        const struct tap_int_cfg * tap_int_cfg);
-
-/* Settings for the orientation interrupt */
-struct orient_int_cfg {
-    float hyster_g;
-    enum bma253_orient_blocking orient_blocking;
-    enum bma253_orient_mode orient_mode;
-    bool signal_up_dn;
-    uint8_t blocking_angle;
-};
 
 /* Get/Set the orientation interrupt settings */
 int
