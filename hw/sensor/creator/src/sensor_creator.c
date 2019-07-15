@@ -907,26 +907,44 @@ config_bma253_sensor(void)
     dev = os_dev_open("bma253_0", OS_TIMEOUT_NEVER, NULL);
     assert(dev != NULL);
 
-    cfg.low_g_delay_ms = BMA253_LOW_G_DELAY_MS_DEFAULT;
-    cfg.high_g_delay_ms = BMA253_HIGH_G_DELAY_MS_DEFAULT;
     cfg.g_range = BMA253_G_RANGE_2;
-    /* filter_bandwidth is the intended setting for data streaming */
-    cfg.filter_bandwidth = BMA253_FILTER_BANDWIDTH_31_25_HZ;
-    cfg.use_unfiltered_data = false;
-    cfg.tap_quiet = BMA253_TAP_QUIET_30_MS;
-    cfg.tap_shock = BMA253_TAP_SHOCK_50_MS;
-    cfg.d_tap_window = BMA253_D_TAP_WINDOW_250_MS;
-    cfg.tap_wake_samples = BMA253_TAP_WAKE_SAMPLES_2;
-    cfg.tap_thresh_g = 0.200f;
+    cfg.filter_bandwidth = BMA253_FILTER_BANDWIDTH_1000_HZ;
     cfg.offset_x_g = 0.0;
     cfg.offset_y_g = 0.0;
     cfg.offset_z_g = 0.0;
-    /* options: BMA253_POWER_MODE_SUSPEND, BMA253_POWER_MODE_NORMAL, BMA253_POWER_MODE_LPM_1, */
-    cfg.power_mode = BMA253_POWER_MODE_SUSPEND;
-    cfg.sleep_duration = BMA253_SLEEP_DURATION_10_MS;
+    cfg.power_mode = BMA253_POWER_MODE_NORMAL;
+    cfg.sleep_duration = BMA253_SLEEP_DURATION_0_5_MS;
     cfg.sensor_mask = SENSOR_TYPE_ACCELEROMETER;
-    /* options: BMA253_READ_M_STREAM, BMA253_READ_M_POLL */
     cfg.read_mode = BMA253_READ_M_POLL;
+
+    cfg.slow_no_mot_int_cfg.duration_p_or_s = BMA253_NO_MOTION_DURATION;
+    cfg.slow_no_mot_int_cfg.thresh_g = BMA253_NO_MOTION_THRESH;
+
+    cfg.slope_int_cfg.duration_p = BMA253_SLOPE_INT_DURATION;
+    cfg.slope_int_cfg.thresh_g = BMA253_SLOPE_INT_THRESH;
+
+    cfg.low_g_int_cfg.delay_ms = BMA253_LOW_DUR;
+    cfg.low_g_int_cfg.thresh_g = BMA253_LOW_THRESHOLD;
+    cfg.low_g_int_cfg.hyster_g = BMA253_LOW_HYS;
+    cfg.low_g_int_cfg.axis_summing = BMA253_LOW_AXIS_SUMMING;
+
+    cfg.high_g_int_cfg.hyster_g = BMA253_HIGH_HYS;
+    cfg.high_g_int_cfg.delay_ms = BMA253_HIGH_DUR;
+    cfg.high_g_int_cfg.thresh_g = BMA253_HIGH_THRESHOLD_G;
+
+    cfg.tap_int_cfg.tap_quiet = BMA253_TAP_QUIET_30_MS;
+    cfg.tap_int_cfg.tap_shock = BMA253_TAP_SHOCK_50_MS;
+    cfg.tap_int_cfg.tap_wake_samples = BMA253_TAP_WAKE_SAMPLES_2;
+    cfg.tap_int_cfg.thresh_g = BMA253_TAP_THRESHOLD_G;
+    cfg.tap_int_cfg.d_tap_window = BMA253_D_TAP_WINDOW_250_MS;
+
+    cfg.orient_int_cfg.hyster_g = BMA253_ORIENT_HYSTER_G;
+    cfg.orient_int_cfg.orient_blocking = BMA253_ORIENT_BLOCKING_ACCEL_AND_SLOPE;
+    cfg.orient_int_cfg.orient_mode = BMA253_ORIENT_MODE_SYMMETRICAL;
+    cfg.orient_int_cfg.signal_up_dn = BMA253_SIG_UP_DN;
+    cfg.orient_int_cfg.blocking_angle = BMA253_BLOCKING_ANGLE;
+
+    cfg.use_unfiltered_data = false;
 
     rc = bma253_config((struct bma253 *)dev, &cfg);
     assert(rc == 0);

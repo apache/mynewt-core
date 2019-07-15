@@ -2475,6 +2475,7 @@ bma253_enable_notify_interrupt(struct bma253_notif_cfg *notif_cfg,
     struct slope_int_cfg slope_int_cfg;
     struct slow_no_mot_int_cfg slow_no_mot_int_cfg;
     struct high_g_int_cfg high_g_int_cfg;
+    const struct bma253_cfg * cfg;
     int rc;
     /* Configure route */
     rc = bma253_get_int_routes(bma253, &int_routes);
@@ -2482,6 +2483,8 @@ bma253_enable_notify_interrupt(struct bma253_notif_cfg *notif_cfg,
         BMA253_LOG(ERROR, "error bma253_get_int_routes: %d\n", rc);
         return rc;
     }
+    cfg = &bma253->cfg;
+
     switch (notif_cfg->int_cfg)
     {
     case BMA253_DOUBLE_TAP_INT:
@@ -2579,27 +2582,27 @@ bma253_enable_notify_interrupt(struct bma253_notif_cfg *notif_cfg,
 
     if (notif_cfg->int_cfg == BMA253_LOW_G_INT) {
         /* set low_g threshold/duration/hysterisis */
-        low_g_int_cfg_set.axis_summing = false;
-        low_g_int_cfg_set.delay_ms = BMA253_LOW_DUR;
-        low_g_int_cfg_set.thresh_g = BMA253_LOW_THRESHOLD;
-        low_g_int_cfg_set.hyster_g = BMA253_LOW_HYS;
+        low_g_int_cfg_set.axis_summing = cfg->low_g_int_cfg.axis_summing;
+        low_g_int_cfg_set.delay_ms = cfg->low_g_int_cfg.delay_ms;
+        low_g_int_cfg_set.thresh_g = cfg->low_g_int_cfg.thresh_g;
+        low_g_int_cfg_set.hyster_g = cfg->low_g_int_cfg.hyster_g;
         rc = bma253_set_low_g_int_cfg(bma253, &low_g_int_cfg_set);
     }
 
     if (notif_cfg->int_cfg == BMA253_ORIENT_INT) {
-        orient_int_cfg.blocking_angle = BMA253_BLOCKING_ANGLE;
-        orient_int_cfg.signal_up_dn = 0;
-        orient_int_cfg.hyster_g = BMA253_ORIENT_HYSTER_G;
-        orient_int_cfg.orient_mode = BMA253_ORIENT_MODE_SYMMETRICAL;
-        orient_int_cfg.orient_blocking = BMA253_ORIENT_BLOCKING_ACCEL_AND_SLOPE;
+        orient_int_cfg.blocking_angle = cfg->orient_int_cfg.blocking_angle;
+        orient_int_cfg.signal_up_dn = cfg->orient_int_cfg.signal_up_dn;
+        orient_int_cfg.hyster_g = cfg->orient_int_cfg.hyster_g;
+        orient_int_cfg.orient_mode = cfg->orient_int_cfg.orient_mode;
+        orient_int_cfg.orient_blocking = cfg->orient_int_cfg.orient_blocking;
         rc = bma253_set_orient_int_cfg(bma253, &orient_int_cfg);
         BMA253_LOG(ERROR, "set ORIENT INT seting: %d\n", rc);
     }
 
     /*set parameter for int*/
     if (notif_cfg->int_cfg == BMA253_SLEEP_INT) {
-        slow_no_mot_int_cfg.duration_p_or_s = 5;
-        slow_no_mot_int_cfg.thresh_g = 0.3;
+        slow_no_mot_int_cfg.duration_p_or_s = cfg->slow_no_mot_int_cfg.duration_p_or_s;
+        slow_no_mot_int_cfg.thresh_g = cfg->slow_no_mot_int_cfg.thresh_g;
         rc = bma253_set_slow_no_mot_int_cfg(bma253, true, &slow_no_mot_int_cfg);
         if (rc != 0) {
             BMA253_LOG(ERROR, "set sleep INT setting: %d\n", rc);
@@ -2607,8 +2610,8 @@ bma253_enable_notify_interrupt(struct bma253_notif_cfg *notif_cfg,
     }
 
     if (notif_cfg->int_cfg == BMA253_WAKEUP_INT) {
-        slope_int_cfg.duration_p = 3;
-        slope_int_cfg.thresh_g = 0.3;
+        slope_int_cfg.duration_p = cfg->slope_int_cfg.duration_p;
+        slope_int_cfg.thresh_g = cfg->slope_int_cfg.thresh_g;
         rc = bma253_set_slope_int_cfg(bma253, &slope_int_cfg);
         if (rc != 0) {
             BMA253_LOG(ERROR, "set wakeup INT setting: %d\n", rc);
@@ -2621,9 +2624,9 @@ bma253_enable_notify_interrupt(struct bma253_notif_cfg *notif_cfg,
         (notif_cfg->int_cfg == BMA253_HIGH_G_N_X_INT)||
         (notif_cfg->int_cfg == BMA253_HIGH_G_N_Y_INT)||
         (notif_cfg->int_cfg == BMA253_HIGH_G_N_Z_INT)) {
-        high_g_int_cfg.hyster_g = 0.25;
-        high_g_int_cfg.delay_ms = 40;
-        high_g_int_cfg.thresh_g = 1.5;
+        high_g_int_cfg.hyster_g = cfg->high_g_int_cfg.hyster_g;
+        high_g_int_cfg.delay_ms = cfg->high_g_int_cfg.delay_ms;
+        high_g_int_cfg.thresh_g = cfg->high_g_int_cfg.thresh_g;
         rc = bma253_set_high_g_int_cfg(bma253, &high_g_int_cfg);
         if (rc != 0) {
             BMA253_LOG(ERROR, "set high g INT setting: %d\n", rc);
@@ -3544,18 +3547,18 @@ reset_and_recfg(struct bma253 * bma253)
         return rc;
     }
 
-    slow_no_mot_int_cfg.duration_p_or_s = 5;
-    slow_no_mot_int_cfg.thresh_g = 0.3;
+    slow_no_mot_int_cfg.duration_p_or_s = cfg->slow_no_mot_int_cfg.duration_p_or_s;
+    slow_no_mot_int_cfg.thresh_g = cfg->slow_no_mot_int_cfg.thresh_g;
     bma253_set_slow_no_mot_int_cfg(bma253, true, &slow_no_mot_int_cfg);
 
-    slope_int_cfg.duration_p = 3;
-    slope_int_cfg.thresh_g = 0.3;
+    slope_int_cfg.duration_p = cfg->slope_int_cfg.duration_p;
+    slope_int_cfg.thresh_g = cfg->slope_int_cfg.thresh_g;
     bma253_set_slope_int_cfg(bma253, &slope_int_cfg);
 
 
-    low_g_int_cfg.delay_ms     = cfg->low_g_delay_ms;
-    low_g_int_cfg.thresh_g     = cfg->low_g_thresh_g;
-    low_g_int_cfg.hyster_g     = cfg->low_g_hyster_g;
+    low_g_int_cfg.delay_ms     = cfg->low_g_int_cfg.delay_ms;
+    low_g_int_cfg.thresh_g     = cfg->low_g_int_cfg.thresh_g;
+    low_g_int_cfg.hyster_g     = cfg->low_g_int_cfg.hyster_g;
     low_g_int_cfg.axis_summing = false;
 
     rc = bma253_set_low_g_int_cfg(bma253, &low_g_int_cfg);
@@ -3563,31 +3566,31 @@ reset_and_recfg(struct bma253 * bma253)
         return rc;
     }
 
-    high_g_int_cfg.hyster_g = cfg->high_g_hyster_g;
-    high_g_int_cfg.delay_ms = cfg->high_g_delay_ms;
-    high_g_int_cfg.thresh_g = cfg->high_g_thresh_g;
+    high_g_int_cfg.hyster_g = cfg->high_g_int_cfg.hyster_g;
+    high_g_int_cfg.delay_ms = cfg->high_g_int_cfg.delay_ms;
+    high_g_int_cfg.thresh_g = cfg->high_g_int_cfg.thresh_g;
 
     rc = bma253_set_high_g_int_cfg(bma253, &high_g_int_cfg);
     if (rc != 0) {
         return rc;
     }
 
-    tap_int_cfg.tap_quiet        = cfg->tap_quiet;
-    tap_int_cfg.tap_shock        = cfg->tap_shock;
-    tap_int_cfg.d_tap_window     = cfg->d_tap_window;
-    tap_int_cfg.tap_wake_samples = cfg->tap_wake_samples;
-    tap_int_cfg.thresh_g         = cfg->tap_thresh_g;
+    tap_int_cfg.tap_quiet        = cfg->tap_int_cfg.tap_quiet;
+    tap_int_cfg.tap_shock        = cfg->tap_int_cfg.tap_shock;
+    tap_int_cfg.d_tap_window     = cfg->tap_int_cfg.d_tap_window;
+    tap_int_cfg.tap_wake_samples = cfg->tap_int_cfg.tap_wake_samples;
+    tap_int_cfg.thresh_g         = cfg->tap_int_cfg.thresh_g;
 
     rc = bma253_set_tap_int_cfg(bma253, cfg->g_range, &tap_int_cfg);
     if (rc != 0) {
         return rc;
     }
 
-    orient_int_cfg.hyster_g        = cfg->orient_hyster_g;
-    orient_int_cfg.orient_blocking = cfg->orient_blocking;
-    orient_int_cfg.orient_mode     = cfg->orient_mode;
-    orient_int_cfg.signal_up_dn    = cfg->orient_signal_ud;
-    orient_int_cfg.blocking_angle  = 0x08;
+    orient_int_cfg.hyster_g        = cfg->orient_int_cfg.hyster_g;
+    orient_int_cfg.orient_blocking = cfg->orient_int_cfg.orient_blocking;
+    orient_int_cfg.orient_mode     = cfg->orient_int_cfg.orient_mode;
+    orient_int_cfg.signal_up_dn    = cfg->orient_int_cfg.signal_up_dn;
+    orient_int_cfg.blocking_angle  = cfg->orient_int_cfg.blocking_angle;
 
     rc = bma253_set_orient_int_cfg(bma253, &orient_int_cfg);
     if (rc != 0) {
@@ -5156,7 +5159,7 @@ sensor_driver_set_trigger_thresh(struct sensor * sensor,
 {
 #if MYNEWT_VAL(BMA253_INT_ENABLE)
     struct bma253 * bma253;
-    //const struct bma253_cfg * cfg;
+    const struct bma253_cfg * cfg;
     int rc;
     enum bma253_power_mode request_power[3];
     const struct sensor_accel_data * low_thresh;
@@ -5172,7 +5175,7 @@ sensor_driver_set_trigger_thresh(struct sensor * sensor,
     }
 
     bma253 = (struct bma253 *)SENSOR_GET_DEVICE(sensor);
-    //cfg = &bma253->cfg;
+    cfg = &bma253->cfg;
     pdd = &bma253->pdd;
 
     pdd->read_ctx.srec_type |= sensor_type;
@@ -5219,13 +5222,12 @@ sensor_driver_set_trigger_thresh(struct sensor * sensor,
             }
         }
 
-        low_g_int_cfg.delay_ms     = 20;
+        low_g_int_cfg.delay_ms     = cfg->low_g_int_cfg.delay_ms;
         low_g_int_cfg.thresh_g     = thresh;
-        low_g_int_cfg.hyster_g     = 0.125;
+        low_g_int_cfg.hyster_g     = cfg->low_g_int_cfg.hyster_g;
         low_g_int_cfg.axis_summing = false;
 
-        rc = bma253_set_low_g_int_cfg(bma253,
-                                      &low_g_int_cfg);
+        rc = bma253_set_low_g_int_cfg(bma253, &low_g_int_cfg);
         if (rc != 0) {
             goto done;
         }
@@ -5254,12 +5256,11 @@ sensor_driver_set_trigger_thresh(struct sensor * sensor,
             }
         }
 
-        high_g_int_cfg.hyster_g = 0.25;
-        high_g_int_cfg.delay_ms = 32;
+        high_g_int_cfg.hyster_g = cfg->high_g_int_cfg.hyster_g;
+        high_g_int_cfg.delay_ms = cfg->high_g_int_cfg.delay_ms;
         high_g_int_cfg.thresh_g = thresh;
 
-        rc = bma253_set_high_g_int_cfg(bma253,
-                                       &high_g_int_cfg);
+        rc = bma253_set_high_g_int_cfg(bma253, &high_g_int_cfg);
         if (rc != 0) {
             goto done;
         }
