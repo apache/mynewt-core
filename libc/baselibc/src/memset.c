@@ -44,6 +44,7 @@ void *memset(void *dst, int c, size_t n)
                   "   movs r4, #3                           \n"
                   "   ands r3, r3, r4                       \n"
                   "   subs r3, %[len], r3                   \n"
+                  "   bmi  3f                               \n"
                   "   b    2f                               \n"
                   /* fill non-word aligned bytes at the end of buffer */
                   "1: subs %[len], #1                       \n"
@@ -57,9 +58,9 @@ void *memset(void *dst, int c, size_t n)
                   "   bpl  1b                               \n"
                   "   adds %[len], #4                       \n"
                   /* fill remaining non-word aligned bytes */
-                  "   b    2f                               \n"
+                  "   b    3f                               \n"
                   "1: strb %[val], [%[buf], %[len]]         \n"
-                  "2: subs %[len], #1                       \n"
+                  "3: subs %[len], #1                       \n"
                   "   bpl  1b                               \n"
                   : [buf] "+r" (q), [val] "+r" (c), [len] "+r" (n)
                   :
