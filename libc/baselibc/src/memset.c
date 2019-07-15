@@ -5,6 +5,10 @@
 #include <string.h>
 #include <stdint.h>
 
+#if defined(__arm__)
+#include <mcu/cmsis_nvic.h>
+#endif
+
 void *memset(void *dst, int c, size_t n)
 {
 	char *q = dst;
