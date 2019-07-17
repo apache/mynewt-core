@@ -55,7 +55,7 @@
         }\
     } while (0);
 
-const struct bma253_notif_cfg bma253_notif_cfg[] = {
+const struct bma253_notif_cfg dflt_bma253_notif_cfg[] = {
     {
       .event     = SENSOR_EVENT_TYPE_SINGLE_TAP,
       .notif_src = BMA253_SINGLE_TAP_SRC,
@@ -5160,7 +5160,7 @@ sensor_driver_set_trigger_thresh(struct sensor * sensor,
 {
 #if MYNEWT_VAL(BMA253_INT_ENABLE)
     struct bma253 * bma253;
-    //const struct bma253_cfg * cfg;
+    const struct bma253_cfg *cfg;
     int rc;
     enum bma253_power_mode request_power[3];
     const struct sensor_accel_data * low_thresh;
@@ -5176,7 +5176,7 @@ sensor_driver_set_trigger_thresh(struct sensor * sensor,
     }
 
     bma253 = (struct bma253 *)SENSOR_GET_DEVICE(sensor);
-    //cfg = &bma253->cfg;
+    cfg = &bma253->cfg;
     pdd = &bma253->pdd;
 
     pdd->read_ctx.srec_type |= sensor_type;
@@ -5628,8 +5628,8 @@ bma253_config(struct bma253 * bma253, struct bma253_cfg * cfg)
         return rc;
     }
     if (!cfg->notif_cfg) {
-        bma253->cfg.notif_cfg = (struct bma253_notif_cfg *)bma253_notif_cfg;
-        bma253->cfg.max_num_notif = sizeof(bma253_notif_cfg)/sizeof(*bma253_notif_cfg);
+        bma253->cfg.notif_cfg = (struct bma253_notif_cfg *)dflt_bma253_notif_cfg;
+        bma253->cfg.max_num_notif = sizeof(dflt_bma253_notif_cfg)/sizeof(*dflt_bma253_notif_cfg);
     } else {
         bma253->cfg.notif_cfg = cfg->notif_cfg;
         bma253->cfg.max_num_notif = cfg->max_num_notif;
