@@ -116,8 +116,8 @@ i2c_init_hw(const struct da1469x_hal_i2c *i2c, int pin_scl, int pin_sda)
     da1469x_pd_acquire(MCU_PD_DOMAIN_COM);
 
     /* Configure SCL, SDA.*/
-    mcu_gpio_set_pin_function(pin_scl, MCU_GPIO_MODE_OUTPUT, i2c->scl_func);
-    mcu_gpio_set_pin_function(pin_sda, MCU_GPIO_MODE_OUTPUT, i2c->sda_func);
+    mcu_gpio_set_pin_function(pin_scl, MCU_GPIO_MODE_OUTPUT_OPEN_DRAIN, i2c->scl_func);
+    mcu_gpio_set_pin_function(pin_sda, MCU_GPIO_MODE_OUTPUT_OPEN_DRAIN, i2c->sda_func);
 
     if (i2c == da1469x_hal_i2cs[0]) {
         CRG_COM->RESET_CLK_COM_REG = CRG_COM_RESET_CLK_COM_REG_I2C_CLK_SEL_Msk;
