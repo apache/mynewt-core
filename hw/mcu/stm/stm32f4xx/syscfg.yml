@@ -31,6 +31,18 @@ syscfg.defs:
         description: Voltage scale
         value: 0
 
+    STM32_CLOCK_LSI:
+        description: Enable low-speed internal clock source
+        value: 1
+
+    STM32_CLOCK_LSE:
+        description: Enable low-speed external clock source (aka RTC xtal)
+        value: 0
+
+    STM32_CLOCK_LSE_BYPASS:
+        description: 0 for 32768 xtal; 1 for input clock
+        value: 0
+
     STM32_CLOCK_HSE:
         description: Enable high-speed external clock source
         value: 0
@@ -39,17 +51,13 @@ syscfg.defs:
         description: 0 for xtal; 1 for input clock
         value: 0
 
-    STM32_CLOCK_LSE:
-        description: Enable low-speed external clock source (aka RTC xtal)
-        value: 0
-
     STM32_CLOCK_HSI:
         description: Enable high-speed internal clock source
-        value: 0
+        value: 1
 
-    STM32_CLOCK_LSI:
-        description: Enable low-speed internal clock source
-        value: 0
+    STM32_CLOCK_HSI_CALIBRATION:
+        description: HSI calibration value
+        value: 'RCC_HSICALIBRATION_DEFAULT'
 
     STM32_CLOCK_PLL_PLLM:
         description: PLL config M parameter
