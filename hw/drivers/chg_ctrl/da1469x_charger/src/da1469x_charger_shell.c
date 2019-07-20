@@ -34,80 +34,6 @@
 #include <gpadc_da1469x/gpadc_da1469x.h>
 #endif
 
-#if MYNEWT_VAL(SHELL_CMD_HELP)
-#define HELP(a) &(da1469x_charger_##a##_help)
-static const struct shell_cmd_help da1469x_charger_dump_help = {
-    .summary = "Displays charger related registers",
-#if MYNEWT_VAL(DA1469X_CHARGER_CLI_DECODE)
-    .usage = "dump [decode]",
-#else
-    .usage = NULL,
-#endif
-    .params = NULL,
-};
-
-#if MYNEWT_VAL(DA1469X_CHARGER_CLI_DECODE)
-static const struct shell_cmd_help da1469x_charger_decode_help = {
-    .summary = "Enables or disables decoding of registers",
-    .usage = "decode 1 | 0",
-    .params = NULL,
-};
-#endif
-
-static const struct shell_cmd_help da1469x_charger_enable_help = {
-    .summary = "Enables charging",
-    .usage = NULL,
-    .params = NULL,
-};
-
-static const struct shell_cmd_help da1469x_charger_disable_help = {
-    .summary = "Disables charging",
-    .usage = NULL,
-    .params = NULL,
-};
-
-static const struct shell_cmd_help da1469x_charger_status_help = {
-    .summary = "Shows status of charger and battery",
-    .usage = NULL,
-    .params = NULL,
-};
-
-static const struct shell_cmd_help da1469x_charger_clear_irq_help = {
-    .summary = "Clears interrupts",
-    .usage = NULL,
-    .params = NULL,
-};
-
-static const struct shell_cmd_help da1469x_charger_set_i_help = {
-    .summary = "Sets charging currents",
-    .usage = "seti <charge_current> [precharge_current [eoc percentage]]",
-    .params = NULL,
-};
-
-static const struct shell_cmd_help da1469x_charger_set_v_help = {
-    .summary = "Sets charging voltages",
-    .usage = "setv <charge_v> [<precharge_v> [<replenish_v> [ovp_v]]]",
-    .params = NULL,
-};
-
-#if MYNEWT_VAL(DA1469X_CHARGER_USE_CHARGE_CONTROL)
-static const struct shell_cmd_help da1469x_charger_listen_help = {
-    .summary = "Starts or stops charging state notifications",
-    .usage = "listen start | stop",
-    .params = NULL,
-};
-#endif
-
-static const struct shell_cmd_help da1469x_charger_reg_help = {
-    .summary = "Read or writes register",
-    .usage = "<reg_name> ",
-    .params = NULL,
-};
-
-#else
-#define HELP(a) NULL
-#endif
-
 /*
  * Struct for field name description.
  * Used for argument validation and field decoding
@@ -657,6 +583,7 @@ da1469x_charger_help(void)
     console_printf("\tstatus\n");
     console_printf("\tseti <charge_i> [<precharge_i> [<eoc_percent>]]\n");
     console_printf("\tsetv <charge_v> [<precharge_v> [<replenish_v> [<ovp_v>]]]\n");
+    console_printf("\tclrirq\n");
 #if MYNEWT_VAL(DA1469X_CHARGER_USE_CHARGE_CONTROL)
     console_printf("\tlisten start | stop\n");
 #endif
@@ -1058,6 +985,44 @@ da1469x_charger_shell_cmd_listen(int argc, char **argv)
 #endif /* MYNEWT_VAL(DA1469X_CHARGER_USE_CHARGE_CONTROL) */
 
 static int
+da1469x_charger_reg_cmd(int argc, char **argv, bool reg_read)
+{
+    const struct reg *reg = NULL;
+    uint32_t val;
+    int status;
+    int i;
+    bool decode = da1469x_charger_cli_decode_fields;
+
+    for (i = 0; i < NUM_CHARGER_REGS; ++i) {
+        if (strcasecmp(charger_regs[i].name, argv[1]) == 0) {
+            reg = charger_regs + i;
+        }
+    }
+    if (!reg) {
+        return -1;
+    }
+
+    if (reg_read) {
+#if MYNEWT_VAL(DA1469X_CHARGER_CLI_DECODE)
+        if (strcmp(argv[2], "decode") == 0) {
+            decode = true;
+        }
+#endif
+        val = *reg->addr;
+        da1469x_charger_dump_register(reg, val, decode);
+    } else {
+        val = (uint32_t)parse_ull_bounds(argv[2], 0, 0xFFFFFFFF, &status);
+        if (status) {
+            console_printf("Invalid register value %s\n", argv[2]);
+            return 0;
+        }
+        *reg->addr = val;
+    }
+
+    return 0;
+}
+
+static int
 da1469x_charger_shell_cmd(int argc, char **argv)
 {
     if (argc == 1) {
@@ -1088,6 +1053,12 @@ da1469x_charger_shell_cmd(int argc, char **argv)
     } else if (strcmp(argv[0], "listen") == 0) {
         return da1469x_charger_shell_cmd_listen(argc, argv);
 #endif
+    } else if (strcmp(argv[0], "clrirq") == 0) {
+        return da1469x_charger_shell_cmd_clear_irq(argc, argv);
+    } else if (strcmp(argv[0], "read") == 0) {
+        return da1469x_charger_reg_cmd(argc, argv, true);
+    } else if (strcmp(argv[0], "write") == 0) {
+        return da1469x_charger_reg_cmd(argc, argv, false);
     }
 
     return da1469x_charger_shell_err_unknown_arg(argv[1]);
@@ -1098,91 +1069,20 @@ static const struct shell_cmd da1469x_charger_shell_cmd_struct = {
     .sc_cmd_func = da1469x_charger_shell_cmd
 };
 
-static int
-da1469x_charger_reg_cmd(int argc, char **argv)
-{
-    const struct reg *reg = NULL;
-    uint32_t val;
-    int status;
-    int i;
-    bool dump = false;
-    bool decode = da1469x_charger_cli_decode_fields;
-
-    for (i = 0; i < NUM_CHARGER_REGS; ++i) {
-        if (strcasecmp(charger_regs[i].name, argv[0]) == 0) {
-            reg = charger_regs + i;
-        }
-    }
-    if (!reg) {
-        return 0;
-    }
-
-    if (argc == 1) {
-        dump = true;
-#if MYNEWT_VAL(DA1469X_CHARGER_CLI_DECODE)
-    } else if (strcmp(argv[1], "decode") == 0) {
-        dump = true;
-        decode = true;
-#endif
-    } else {
-        val = (uint32_t)parse_ull_bounds(argv[1], 0, 0xFFFFFFFF, &status);
-        if (status) {
-            console_printf("Invalid register value %s\n", argv[1]);
-            return 0;
-        }
-
-    }
-    if (dump) {
-        val = *reg->addr;
-        da1469x_charger_dump_register(reg, val, decode);
-    } else {
-        *reg->addr = val;
-    }
-
-    return 0;
-}
-
 static const struct shell_cmd da1469x_charger_cmds[] = {
 #if MYNEWT_VAL(DA1469X_CHARGER_CLI_DECODE)
-    SHELL_CMD("decode", da1469x_charger_shell_cmd_decode, HELP(decode)),
+    SHELL_CMD("decode", da1469x_charger_shell_cmd_decode, NULL),
 #endif
-    SHELL_CMD("dump", da1469x_charger_shell_cmd_dump, HELP(dump)),
-    SHELL_CMD("enable", da1469x_charger_shell_cmd_enable, HELP(enable)),
-    SHELL_CMD("disable", da1469x_charger_shell_cmd_disable, HELP(disable)),
-    SHELL_CMD("status", da1469x_charger_shell_cmd_status, HELP(status)),
-    SHELL_CMD("clrirq", da1469x_charger_shell_cmd_clear_irq, HELP(clear_irq)),
-    SHELL_CMD("seti", da1469x_charger_shell_cmd_set_i, HELP(set_i)),
-    SHELL_CMD("setv", da1469x_charger_shell_cmd_set_v, HELP(set_v)),
+    SHELL_CMD("dump", da1469x_charger_shell_cmd_dump, NULL),
+    SHELL_CMD("enable", da1469x_charger_shell_cmd_enable, NULL),
+    SHELL_CMD("disable", da1469x_charger_shell_cmd_disable, NULL),
+    SHELL_CMD("status", da1469x_charger_shell_cmd_status, NULL),
+    SHELL_CMD("clrirq", da1469x_charger_shell_cmd_clear_irq, NULL),
+    SHELL_CMD("seti", da1469x_charger_shell_cmd_set_i, NULL),
+    SHELL_CMD("setv", da1469x_charger_shell_cmd_set_v, NULL),
 #if MYNEWT_VAL(DA1469X_CHARGER_USE_CHARGE_CONTROL)
-    SHELL_CMD("listen", da1469x_charger_shell_cmd_listen, HELP(listen)),
+    SHELL_CMD("listen", da1469x_charger_shell_cmd_listen, NULL),
 #endif
-    SHELL_CMD(REG_NAME(CTRL), da1469x_charger_reg_cmd, HELP(reg)),
-    SHELL_CMD(REG_NAME(STATUS), da1469x_charger_reg_cmd, HELP(reg)),
-    SHELL_CMD(REG_NAME(VOLTAGE_PARAM), da1469x_charger_reg_cmd, HELP(reg)),
-    SHELL_CMD(REG_NAME(CURRENT_PARAM), da1469x_charger_reg_cmd, HELP(reg)),
-    SHELL_CMD(REG_NAME(TEMPSET_PARAM), da1469x_charger_reg_cmd, HELP(reg)),
-    SHELL_CMD(REG_NAME(PRE_CHARGE_TIMER), da1469x_charger_reg_cmd, HELP(reg)),
-    SHELL_CMD(REG_NAME(CC_CHARGE_TIMER), da1469x_charger_reg_cmd, HELP(reg)),
-    SHELL_CMD(REG_NAME(CV_CHARGE_TIMER), da1469x_charger_reg_cmd, HELP(reg)),
-    SHELL_CMD(REG_NAME(TOTAL_CHARGE_TIMER), da1469x_charger_reg_cmd, HELP(reg)),
-    SHELL_CMD(REG_NAME(JEITA_V_CHARGE), da1469x_charger_reg_cmd, HELP(reg)),
-    SHELL_CMD(REG_NAME(JEITA_V_PRECHARGE), da1469x_charger_reg_cmd, HELP(reg)),
-    SHELL_CMD(REG_NAME(JEITA_V_REPLENISH), da1469x_charger_reg_cmd, HELP(reg)),
-    SHELL_CMD(REG_NAME(JEITA_V_OVP), da1469x_charger_reg_cmd, HELP(reg)),
-    SHELL_CMD(REG_NAME(JEITA_CURRENT), da1469x_charger_reg_cmd, HELP(reg)),
-    SHELL_CMD(REG_NAME(VBAT_COMP_TIMER), da1469x_charger_reg_cmd, HELP(reg)),
-    SHELL_CMD(REG_NAME(VOVP_COMP_TIMER), da1469x_charger_reg_cmd, HELP(reg)),
-    SHELL_CMD(REG_NAME(TDIE_COMP_TIMER), da1469x_charger_reg_cmd, HELP(reg)),
-    SHELL_CMD(REG_NAME(TBAT_MON_TIMER), da1469x_charger_reg_cmd, HELP(reg)),
-    SHELL_CMD(REG_NAME(TBAT_COMP_TIMER), da1469x_charger_reg_cmd, HELP(reg)),
-    SHELL_CMD(REG_NAME(THOT_COMP_TIMER), da1469x_charger_reg_cmd, HELP(reg)),
-    SHELL_CMD(REG_NAME(PWR_UP_TIMER), da1469x_charger_reg_cmd, HELP(reg)),
-    SHELL_CMD(REG_NAME(STATE_IRQ_MASK), da1469x_charger_reg_cmd, HELP(reg)),
-    SHELL_CMD(REG_NAME(ERROR_IRQ_MASK), da1469x_charger_reg_cmd, HELP(reg)),
-    SHELL_CMD(REG_NAME(STATE_IRQ_STATUS), da1469x_charger_reg_cmd, HELP(reg)),
-    SHELL_CMD(REG_NAME(ERROR_IRQ_STATUS), da1469x_charger_reg_cmd, HELP(reg)),
-    SHELL_CMD(REG_NAME(STATE_IRQ_CLR), da1469x_charger_reg_cmd, HELP(reg)),
-    SHELL_CMD(REG_NAME(ERROR_IRQ_CLR), da1469x_charger_reg_cmd, HELP(reg)),
     SHELL_CMD(NULL, NULL, NULL)
 };
 
