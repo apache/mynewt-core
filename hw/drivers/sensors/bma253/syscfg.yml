@@ -62,3 +62,6 @@ syscfg.defs:
             Number of retries to use for failed I2C communication.  A retry is
             used when the BMA253 sends an unexpected NACK.
         value: 2
+    BMA253_NOTIF_STATS:
+        description: 'Enable BMA253 notification stats'
+        value: 0
