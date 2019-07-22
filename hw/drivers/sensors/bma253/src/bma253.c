@@ -32,10 +32,10 @@
 #include "i2cn/i2cn.h"
 #include "hal/hal_spi.h"
 #endif
-
 #if MYNEWT_VAL(BMA253_LOG)
 #include "modlog/modlog.h"
 #endif
+#include "stats/stats.h"
 
 #if MYNEWT_VAL(BMA253_LOG)
 
@@ -118,12 +118,110 @@ const struct bma253_notif_cfg dflt_bma253_notif_cfg[] = {
     }    
 };
 
+/* Define the stats section and records */
+STATS_SECT_START(bma253_stat_section)
+    STATS_SECT_ENTRY(write_errors)
+    STATS_SECT_ENTRY(read_errors)
+#if MYNEWT_VAL(BMA253_NOTIF_STATS)
+    STATS_SECT_ENTRY(single_tap_notify)
+    STATS_SECT_ENTRY(double_tap_notify)
+    STATS_SECT_ENTRY(free_fall_notify)
+    STATS_SECT_ENTRY(sleep_notify)
+    STATS_SECT_ENTRY(wakeup_notify)
+    STATS_SECT_ENTRY(sleep_chg_notify)
+    STATS_SECT_ENTRY(orient_chg_notify)
+    STATS_SECT_ENTRY(orient_chg_x_l_notify)
+    STATS_SECT_ENTRY(orient_chg_y_l_notify)
+    STATS_SECT_ENTRY(orient_chg_z_l_notify)
+    STATS_SECT_ENTRY(orient_chg_x_h_notify)
+    STATS_SECT_ENTRY(orient_chg_y_h_notify)
+    STATS_SECT_ENTRY(orient_chg_z_h_notify)
+#endif
+STATS_SECT_END
+
+/* Define stat names for querying */
+STATS_NAME_START(bma253_stat_section)
+    STATS_NAME(bma253_stat_section, write_errors)
+    STATS_NAME(bma253_stat_section, read_errors)
+#if MYNEWT_VAL(BMA253_NOTIF_STATS)
+    STATS_NAME(bma253_stat_section, single_tap_notify)
+    STATS_NAME(bma253_stat_section, double_tap_notify)
+    STATS_NAME(bma253_stat_section, free_fall_notify)
+    STATS_NAME(bma253_stat_section, sleep_notify)
+    STATS_NAME(bma253_stat_section, wakeup_notify)
+    STATS_NAME(bma253_stat_section, sleep_chg_notify)
+    STATS_NAME(bma253_stat_section, orient_chg_notify)
+    STATS_NAME(bma253_stat_section, orient_chg_x_l_notify)
+    STATS_NAME(bma253_stat_section, orient_chg_y_l_notify)
+    STATS_NAME(bma253_stat_section, orient_chg_z_l_notify)
+    STATS_NAME(bma253_stat_section, orient_chg_x_h_notify)
+    STATS_NAME(bma253_stat_section, orient_chg_y_h_notify)
+    STATS_NAME(bma253_stat_section, orient_chg_z_h_notify)
+#endif
+STATS_NAME_END(bma253_stat_section)
+
+/* Global variable used to hold stats data */
+STATS_SECT_DECL(bma253_stat_section) g_bma253stats;
 
 static int
 sensor_driver_handle_interrupt(struct sensor * sensor);
 
 static int
 bma253_clear_fifo(const struct bma253 * bma253);
+
+static void
+bma253_inc_notif_stats(sensor_event_type_t event)
+{
+
+#if MYNEWT_VAL(BMA253_NOTIF_STATS)
+    switch (event) {
+        case SENSOR_EVENT_TYPE_SLEEP:
+            STATS_INC(g_bma253stats, sleep_notify);
+            break;
+        case SENSOR_EVENT_TYPE_SINGLE_TAP:
+            STATS_INC(g_bma253stats, single_tap_notify);
+            break;
+        case SENSOR_EVENT_TYPE_DOUBLE_TAP:
+            STATS_INC(g_bma253stats, double_tap_notify);
+            break;
+        case SENSOR_EVENT_TYPE_ORIENT_CHANGE:
+            STATS_INC(g_bma253stats, orient_chg_notify);
+            break;
+        case SENSOR_EVENT_TYPE_ORIENT_X_L_CHANGE:
+            STATS_INC(g_bma253stats, orient_chg_x_l_notify);
+            break;
+        case SENSOR_EVENT_TYPE_ORIENT_X_H_CHANGE:
+            STATS_INC(g_bma253stats, orient_chg_x_h_notify);
+            break;
+        case SENSOR_EVENT_TYPE_ORIENT_Y_L_CHANGE:
+            STATS_INC(g_bma253stats, orient_chg_y_l_notify);
+            break;
+        case SENSOR_EVENT_TYPE_ORIENT_Y_H_CHANGE:
+            STATS_INC(g_bma253stats, orient_chg_y_h_notify);
+            break;
+        case SENSOR_EVENT_TYPE_ORIENT_Z_L_CHANGE:
+            STATS_INC(g_bma253stats, orient_chg_z_l_notify);
+            break;
+        case SENSOR_EVENT_TYPE_ORIENT_Z_H_CHANGE:
+            STATS_INC(g_bma253stats, orient_chg_z_h_notify);
+            break;
+        case SENSOR_EVENT_TYPE_SLEEP_CHANGE:
+            STATS_INC(g_bma253stats, sleep_chg_notify);
+            break;
+        case SENSOR_EVENT_TYPE_WAKEUP:
+            STATS_INC(g_bma253stats, wakeup_notify);
+            break;
+        case SENSOR_EVENT_TYPE_FREE_FALL:
+            STATS_INC(g_bma253stats, free_fall_notify);
+            break;
+        default:
+            break;
+    }
+#endif
+
+    return;
+}
+
 
 static void
 delay_msec(uint32_t delay)
@@ -5351,6 +5449,7 @@ bma253_notify(struct bma253 *bma253, uint8_t src,
 
     if (src & notif_cfg->notif_src) {
         sensor_mgr_put_notify_evt(&bma253->pdd.notify_ctx, event_type);
+        bma253_inc_notif_stats(event_type);
     }
 
     return 0;
@@ -5472,7 +5571,7 @@ if ((sensor_event_type != SENSOR_EVENT_TYPE_DOUBLE_TAP) &&
     bma253 = (struct bma253 *)SENSOR_GET_DEVICE(sensor);
     pdd = &bma253->pdd;
 
-    if (pdd->registered_mask & BMA253_NOTIFY_MASK) {
+    if (pdd->notify_ctx.snec_evtype & sensor_event_type) {
         return SYS_EBUSY;
     }
 
@@ -5656,6 +5755,16 @@ bma253_init(struct os_dev * dev, void * arg)
     bma253 = (struct bma253 *)dev;
     sensor = &bma253->sensor;
 
+    /* Initialise the stats entry */
+    rc = stats_init(
+        STATS_HDR(g_bma253stats),
+        STATS_SIZE_INIT_PARMS(g_bma253stats, STATS_SIZE_32),
+        STATS_NAME_INIT_PARMS(bma253_stat_section));
+    SYSINIT_PANIC_ASSERT(rc == 0);
+    /* Register the entry with the stats registry */
+    rc = stats_register(dev->od_name, STATS_HDR(g_bma253stats));
+    SYSINIT_PANIC_ASSERT(rc == 0);
+
     rc = sensor_init(sensor, dev);
     if (rc != 0) {
         return rc;
@@ -5682,21 +5791,23 @@ bma253_init(struct os_dev * dev, void * arg)
     }
 
 #if MYNEWT_VAL(SPI_0_MASTER) || MYNEWT_VAL(SPI_1_MASTER) && !MYNEWT_VAL(BUS_DRIVER_PRESENT)
-    static struct hal_spi_settings spi_bma253_settings = {
-        .data_order = HAL_SPI_MSB_FIRST,
-        .data_mode  = HAL_SPI_MODE0,
-        .baudrate   = 4000,
-        .word_size  = HAL_SPI_WORD_SIZE_8BIT,
-    };
+    if (sensor->s_itf.si_type == SENSOR_ITF_SPI) {
+        static struct hal_spi_settings spi_bma253_settings = {
+            .data_order = HAL_SPI_MSB_FIRST,
+            .data_mode  = HAL_SPI_MODE0,
+            .baudrate   = 4000,
+            .word_size  = HAL_SPI_WORD_SIZE_8BIT,
+        };
 
-    rc = hal_spi_config(sensor->s_itf.si_num, &spi_bma253_settings);
-    BMA253_DRV_CHECK_RC(rc);
+        rc = hal_spi_config(sensor->s_itf.si_num, &spi_bma253_settings);
+        BMA253_DRV_CHECK_RC(rc);
 
-    rc = hal_spi_enable(sensor->s_itf.si_num);
-    BMA253_DRV_CHECK_RC(rc);
+        rc = hal_spi_enable(sensor->s_itf.si_num);
+        BMA253_DRV_CHECK_RC(rc);
 
-    rc = hal_gpio_init_out(sensor->s_itf.si_cs_pin, 1);
-    BMA253_DRV_CHECK_RC(rc);
+        rc = hal_gpio_init_out(sensor->s_itf.si_cs_pin, 1);
+        BMA253_DRV_CHECK_RC(rc);
+    }
 #endif
 
 
