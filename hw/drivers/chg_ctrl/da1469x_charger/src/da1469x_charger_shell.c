@@ -637,32 +637,6 @@ static const struct reg charger_regs[] = {
 };
 #define NUM_CHARGER_REGS ARRAY_SIZE(charger_regs)
 
-static const struct shell_cmd da1469x_charger_shell_cmd_struct;
-
-static int
-da1469x_charger_help(void)
-{
-    console_printf("%s cmd\n", da1469x_charger_shell_cmd_struct.sc_cmd);
-    console_printf("cmd:\n");
-    console_printf("\thelp\n");
-#if MYNEWT_VAL(DA1469X_CHARGER_CLI_DECODE)
-    console_printf("\tdump [decode]\n");
-#else
-    console_printf("\tdump\n");
-#endif
-    console_printf("\tread <reg_name>\n");
-    console_printf("\twrite <reg_anme> <value>\n");
-    console_printf("\tdisable\n");
-    console_printf("\tenable\n");
-    console_printf("\tstatus\n");
-    console_printf("\tseti <charge_i> [<precharge_i> [<eoc_percent>]]\n");
-    console_printf("\tsetv <charge_v> [<precharge_v> [<replenish_v> [<ovp_v>]]]\n");
-#if MYNEWT_VAL(DA1469X_CHARGER_USE_CHARGE_CONTROL)
-    console_printf("\tlisten start | stop\n");
-#endif
-    return 0;
-}
-
 static int
 da1469x_charger_shell_err_too_many_args(const char *cmd_name)
 {
@@ -1058,47 +1032,6 @@ da1469x_charger_shell_cmd_listen(int argc, char **argv)
 #endif /* MYNEWT_VAL(DA1469X_CHARGER_USE_CHARGE_CONTROL) */
 
 static int
-da1469x_charger_shell_cmd(int argc, char **argv)
-{
-    if (argc == 1) {
-        return da1469x_charger_help();
-    }
-
-    argv++;
-    argc--;
-    if (strcmp(argv[0], "help") == 0) {
-        return da1469x_charger_help();
-#if MYNEWT_VAL(DA1469X_CHARGER_CLI_DECODE)
-    } else if (strcmp(argv[0], "decode") == 0) {
-        return da1469x_charger_shell_cmd_decode(argc, argv);
-#endif
-    } else if (strcmp(argv[0], "dump") == 0) {
-        return da1469x_charger_shell_cmd_dump(argc, argv);
-    } else if (strcmp(argv[0], "enable") == 0) {
-        return da1469x_charger_shell_cmd_enable(argc, argv);
-    } else if (strcmp(argv[0], "disable") == 0) {
-        return da1469x_charger_shell_cmd_disable(argc, argv);
-    } else if (strcmp(argv[0], "status") == 0) {
-        return da1469x_charger_shell_cmd_status(argc, argv);
-    } else if (strcmp(argv[0], "seti") == 0) {
-        return da1469x_charger_shell_cmd_set_i(argc, argv);
-    } else if (strcmp(argv[0], "setv") == 0) {
-        return da1469x_charger_shell_cmd_set_v(argc, argv);
-#if MYNEWT_VAL(DA1469X_CHARGER_USE_CHARGE_CONTROL)
-    } else if (strcmp(argv[0], "listen") == 0) {
-        return da1469x_charger_shell_cmd_listen(argc, argv);
-#endif
-    }
-
-    return da1469x_charger_shell_err_unknown_arg(argv[1]);
-}
-
-static const struct shell_cmd da1469x_charger_shell_cmd_struct = {
-    .sc_cmd = "charger",
-    .sc_cmd_func = da1469x_charger_shell_cmd
-};
-
-static int
 da1469x_charger_reg_cmd(int argc, char **argv)
 {
     const struct reg *reg = NULL;
@@ -1186,14 +1119,71 @@ static const struct shell_cmd da1469x_charger_cmds[] = {
     SHELL_CMD(NULL, NULL, NULL)
 };
 
+#if MYNEWT_VAL(SHELL_COMPAT)
+static const struct shell_cmd da1469x_charger_shell_cmd_struct;
+
+static int
+da1469x_charger_help(void)
+{
+    console_printf("%s cmd\n", da1469x_charger_shell_cmd_struct.sc_cmd);
+    console_printf("cmd:\n");
+    console_printf("\thelp\n");
+#if MYNEWT_VAL(DA1469X_CHARGER_CLI_DECODE)
+    console_printf("\tdump [decode]\n");
+    console_printf("\tdecode [1 | 0]\n");
+#else
+    console_printf("\tdump\n");
+#endif
+    console_printf("\t<reg_name>\n");
+    console_printf("\t<reg_anme> <value>\n");
+    console_printf("\tdisable\n");
+    console_printf("\tenable\n");
+    console_printf("\tstatus\n");
+    console_printf("\tclrirq\n");
+    console_printf("\tseti <charge_i> [<precharge_i> [<eoc_percent>]]\n");
+    console_printf("\tsetv <charge_v> [<precharge_v> [<replenish_v> [<ovp_v>]]]\n");
+#if MYNEWT_VAL(DA1469X_CHARGER_USE_CHARGE_CONTROL)
+    console_printf("\tlisten start | stop\n");
+#endif
+    return 0;
+}
+
+static int
+da1469x_charger_shell_cmd(int argc, char **argv)
+{
+    const struct shell_cmd *cmd = da1469x_charger_cmds;
+
+    argv++;
+    argc--;
+    if (argc == 0 || strcmp(argv[0], "help") == 0) {
+        return da1469x_charger_help();
+    }
+
+    for (; cmd->sc_cmd; ++cmd) {
+        if (strcmp(cmd->sc_cmd, argv[0]) == 0) {
+            return cmd->sc_cmd_func(argc, argv);
+        }
+    }
+
+    return da1469x_charger_shell_err_unknown_arg(argv[1]);
+}
+
+static const struct shell_cmd da1469x_charger_shell_cmd_struct = {
+    .sc_cmd = "charger",
+    .sc_cmd_func = da1469x_charger_shell_cmd
+};
+#endif
+
 int
 da1469x_charger_shell_init(struct da1469x_charger_dev *dev)
 {
     int rc;
     (void)dev;
 
+#if MYNEWT_VAL(SHELL_COMPAT)
     rc = shell_cmd_register(&da1469x_charger_shell_cmd_struct);
     SYSINIT_PANIC_ASSERT(rc == 0);
+#endif
 
     rc = shell_register("charger", da1469x_charger_cmds);
     return rc;
