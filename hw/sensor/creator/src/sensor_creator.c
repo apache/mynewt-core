@@ -433,7 +433,28 @@ static struct sensor_itf spi2c_0_itf_bma2xx = {
 };
 #endif
 
-#if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(BMP388_OFB)
+#if MYNEWT_VAL(BMP388_OFB)
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+#if MYNEWT_VAL(BMP388_OFB_I2C_NUM) >= 0
+static const struct bus_i2c_node_cfg bmp388_node_cfg = {
+    .node_cfg = {
+        .bus_name = MYNEWT_VAL(BMP388_OFB_BUS),
+    },
+    .addr = MYNEWT_VAL(BMP388_OFB_I2C_ADDR),
+    .freq = 400,
+};
+#elif MYNEWT_VAL(BMP388_OFB_SPI_NUM) >= 0
+struct bus_spi_node_cfg bmp388_node_cfg = {
+    .node_cfg.bus_name = MYNEWT_VAL(BMP388_OFB_BUS),
+    .pin_cs = MYNEWT_VAL(BMP388_OFB_CS),
+    .mode = BUS_SPI_MODE_0,
+    .data_order = HAL_SPI_MSB_FIRST,
+    .freq = MYNEWT_VAL(BMP388_OFB_BAUDRATE),
+};
+#endif
+static struct sensor_itf bmp388_itf;
+#else
+#if MYNEWT_VAL(I2C_0)
 static struct sensor_itf spi2c_0_itf_bmp388= {
     .si_type = SENSOR_ITF_I2C,
     .si_num  = 0,
@@ -442,6 +463,8 @@ static struct sensor_itf spi2c_0_itf_bmp388= {
         { 31, MYNEWT_VAL(BMP388_INT1_PIN_DEVICE),
           MYNEWT_VAL(BMP388_INT1_CFG_ACTIVE)}}
 };
+#endif
+#endif
 #endif
 
 #if MYNEWT_VAL(ADXL345_OFB)
@@ -1729,10 +1752,21 @@ sensor_dev_create(void)
 #endif
 
 #if MYNEWT_VAL(BMP388_OFB)
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+#if MYNEWT_VAL(BMP388_OFB_I2C_NUM) >= 0
+    rc = bmp388_create_i2c_sensor_dev(&bmp388.i2c_node, "bmp388_0",
+                                      &bmp388_node_cfg, &bmp388_itf);
+#elif MYNEWT_VAL(BMP388_OFB_SPI_NUM) >= 0
+    rc = bmp388_create_spi_sensor_dev(&bmp388.spi_node, "bmp388_0",
+                                      &bmp388_node_cfg, &bmp388_itf);
+#endif
+    assert(rc == 0);
+#else
     rc = os_dev_create((struct os_dev *)&bmp388, "bmp388_0",
       OS_DEV_INIT_PRIMARY, 0, bmp388_init, &spi2c_0_itf_bmp388);
     assert(rc == 0);
 
+#endif
     rc = config_bmp388_sensor();
     assert(rc == 0);
 #endif
