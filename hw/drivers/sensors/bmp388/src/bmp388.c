@@ -691,44 +691,20 @@ fill_filter_data(uint8_t *addr, uint8_t *reg_data, uint8_t *len,
 }
 
 /*!
-* @brief This internal API is used to calculate the power functionality.
-*/
-static uint32_t
-bmp3_pow(uint8_t base, uint8_t power)
-{
-    uint32_t pow_output = 1;
-
-    while (power != 0) {
-        pow_output = base * pow_output;
-        power--;
-    }
-
-    return pow_output;
-}
-
-/*!
 * @brief This internal API calculates the pressure measurement duration of the
 * sensor.
 */
 static uint16_t
 calculate_press_meas_time(const struct bmp3_dev *dev)
 {
-    uint16_t press_meas_t;
-    struct bmp3_odr_filter_settings odr_filter = dev->settings.odr_filter;
-#ifdef BMP3_DOUBLE_PRECISION_COMPENSATION
-    double base = 2.0;
-    double partial_out;
-#else
-    uint8_t base = 2;
-    uint32_t partial_out;
-#endif /* BMP3_DOUBLE_PRECISION_COMPENSATION */
+    static const uint8_t over_sample[] = { 1, 2, 4, 8, 16, 32, 32, 32 };
+    int press_meas_t;
 
-    partial_out = bmp3_pow(base, odr_filter.press_os);
-    press_meas_t = (uint16_t)(BMP3_PRESS_SETTLE_TIME + partial_out * BMP3_ADC_CONV_TIME);
-    /* convert into mill seconds */
-    press_meas_t = press_meas_t / 1000;
+    press_meas_t = BMP3_PRESS_SETTLE_TIME +
+        over_sample[dev->settings.odr_filter.press_os] * BMP3_ADC_CONV_TIME;
 
-    return press_meas_t;
+    /* convert from us -> ms */
+    return (uint16_t)(press_meas_t / 1000);
 }
 
 /*!
@@ -738,22 +714,14 @@ calculate_press_meas_time(const struct bmp3_dev *dev)
 static uint16_t
 calculate_temp_meas_time(const struct bmp3_dev *dev)
 {
-    uint16_t temp_meas_t;
-    struct bmp3_odr_filter_settings odr_filter = dev->settings.odr_filter;
-#ifdef BMP3_DOUBLE_PRECISION_COMPENSATION
-    float base = 2.0;
-    float partial_out;
-#else
-    uint8_t base = 2;
-    uint32_t partial_out;
-#endif /* BMP3_DOUBLE_PRECISION_COMPENSATION */
+    static const uint8_t over_sample[] = { 1, 2, 4, 8, 16, 32, 32, 32 };
+    int temp_meas_t;
 
-    partial_out = bmp3_pow(base, odr_filter.temp_os);
-    temp_meas_t = (uint16_t)(BMP3_TEMP_SETTLE_TIME + partial_out * BMP3_ADC_CONV_TIME);
-    /* convert into mill seconds */
-    temp_meas_t = temp_meas_t / 1000;
+    temp_meas_t = BMP3_TEMP_SETTLE_TIME +
+        over_sample[dev->settings.odr_filter.temp_os] * BMP3_ADC_CONV_TIME;
 
-    return temp_meas_t;
+    /* convert from us -> ms */
+    return (uint16_t)(temp_meas_t / 1000);
 }
 
 /*!
