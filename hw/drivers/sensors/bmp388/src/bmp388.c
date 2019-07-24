@@ -893,7 +893,7 @@ set_odr_filter_settings(struct sensor_itf *itf, uint32_t desired_settings,
             /* For normal mode, osr and odr settings should be proper */
             rslt = validate_osr_and_odr_settings(dev);
         }
-        if (rslt == BMP3_OK) {
+        if (rslt == BMP3_OK && len > 0) {
             /* Burst write the over sampling, odr and filter
             settings in the register */
             rslt = bmp3_set_regs(itf, reg_addr, reg_data, len, dev);
