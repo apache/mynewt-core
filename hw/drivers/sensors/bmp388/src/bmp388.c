@@ -2612,13 +2612,8 @@ bmp3_get_status(struct sensor_itf *itf, struct bmp3_dev *dev)
 static void
 reset_fifo_index(struct bmp3_fifo *fifo)
 {
-    /* Loop variable */
-    uint16_t i;
+    memset(fifo->data.buffer, 0, sizeof(fifo->data.buffer));
 
-    for (i = 0; i < 512; i++) {
-        /* Initialize data buffer to zero */
-        fifo->data.buffer[i] = 0;
-    }
     fifo->data.byte_count = 0;
     fifo->data.start_idx = 0;
     fifo->data.parsed_frames = 0;
