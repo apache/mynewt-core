@@ -109,6 +109,16 @@ static struct hal_spi_settings spi_bmp388_settings = {
 };
 #endif
 
+bool static inline
+itf_is_spi(struct sensor_itf *itf)
+{
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    return ((struct bmp388 *)itf->si_dev)->node_is_spi;
+#else
+    return itf->si_type == SENSOR_ITF_SPI;
+#endif
+}
+
 /* Define stat names for querying */
 STATS_NAME_START(bmp388_stat_section)
     STATS_NAME(bmp388_stat_section, write_errors)
@@ -203,28 +213,17 @@ delay_msec(uint32_t delay)
 * @return BMP3_OK on success, non-zero on failure
 */
 static int
-bmp388_i2c_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
-                    uint8_t len)
+bmp388_i2c_writelen(struct sensor_itf *itf, const uint8_t *payload, uint8_t len)
 {
     int rc;
-    uint8_t payload[20] = { addr, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0};
 
     struct hal_i2c_master_data data_struct = {
         .address = itf->si_addr,
-        .len = len + 1,
-        .buffer = payload
+        .len = len,
+        .buffer = (uint8_t *)payload
     };
 
-    if (len > (sizeof(payload) - 1)) {
-        rc = BMP3_E_INVALID_LEN;
-        goto err;
-    }
-
-    memcpy(&payload[1], buffer, len);
-
-    /* Register write */
+    /* Register(s) write */
     rc = i2cn_master_write(itf->si_num, &data_struct, MYNEWT_VAL(BMP388_I2C_TIMEOUT_TICKS), 1,
                         MYNEWT_VAL(BMP388_I2C_RETRIES));
     if (rc) {
@@ -249,8 +248,7 @@ err:
 * @return BMP3_OK on success, non-zero on failure
 */
 static int
-bmp388_spi_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
-                    uint16_t len)
+bmp388_spi_writelen(struct sensor_itf *itf, const uint8_t *payload, uint16_t len)
 {
     int i;
     int rc;
@@ -258,22 +256,12 @@ bmp388_spi_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
     /* Select the device */
     hal_gpio_write(itf->si_cs_pin, 0);
 
-    /* Send the address */
-    rc = hal_spi_tx_val(itf->si_num, addr);
-    if (rc == 0xFFFF) {
-        rc = BMP3_E_WRITE;
-        BMP388_LOG_ERROR("SPI_%u register write failed addr:0x%02X\n",
-                    itf->si_num, addr);
-        goto err;
-    }
-
     for (i = 0; i < len; i++) {
         /* Read data */
         rc = hal_spi_tx_val(itf->si_num, payload[i]);
         if (rc == 0xFFFF) {
             rc = BMP3_E_WRITE;
-            BMP388_LOG_ERROR("SPI_%u write failed addr:0x%02X:0x%02X\n",
-                        itf->si_num, addr);
+            BMP388_LOG_ERROR(ERROR, "SPI_write failed\n");
             goto err;
         }
     }
@@ -298,26 +286,12 @@ err:
 *
 * @return BMP3_OK on success, non-zero on failure
 */
-int
-bmp388_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
-                uint16_t len)
+int8_t
+bmp388_writelen(struct sensor_itf *itf, const uint8_t *payload, uint8_t len)
 {
     int rc;
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
-    struct {
-        uint8_t addr;
-        /* max payload of 20 */
-        uint8_t payload[19];
-    } write_data;
-
-    if (len > sizeof(write_data.payload)) {
-        return -1;
-    }
-
-    write_data.addr = addr;
-    memcpy(write_data.payload, payload, len);
-    rc = bus_node_simple_write(itf->si_dev, &write_data, len + 1);
-
+    rc = bus_node_simple_write(itf->si_dev, payload, len);
 #else
     rc = sensor_itf_lock(itf, MYNEWT_VAL(BMP388_ITF_LOCK_TMO));
     if (rc) {
@@ -325,9 +299,9 @@ bmp388_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
     }
 
     if (itf->si_type == SENSOR_ITF_I2C) {
-        rc = bmp388_i2c_writelen(itf, addr, payload, len);
+        rc = bmp388_i2c_writelen(itf, payload, len);
     } else {
-        rc = bmp388_spi_writelen(itf, addr, payload, len);
+        rc = bmp388_spi_writelen(itf, payload, len);
     }
 
     sensor_itf_unlock(itf);
@@ -347,7 +321,7 @@ bmp388_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
 *
 * @return 0 on success, non-zero error on failure.
 */
-int
+int8_t
 bmp388_i2c_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
                    uint16_t len)
 {
@@ -394,7 +368,7 @@ bmp388_i2c_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
 *
 * @return 0 on success, non-zero on failure
 */
-int
+int8_t
 bmp388_spi_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
                    uint16_t len)
 {
@@ -411,6 +385,16 @@ bmp388_spi_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
     if (retval == 0xFFFF) {
         BMP388_LOG_ERROR("SPI_%u register write failed addr:0x%02X\n",
                          itf->si_num, reg);
+        rc = BMP3_E_READ;
+        goto err;
+    }
+
+    /* Send dummy byte */
+    retval = hal_spi_tx_val(itf->si_num, 0);
+
+    if (retval == 0xFFFF) {
+        BMP388_LOG(ERROR, "SPI_%u register write failed addr:0x%02X\n",
+                   itf->si_num, reg);
         rc = BMP3_E_READ;
         goto err;
     }
@@ -445,21 +429,22 @@ err:
 *
 * @return 0 on success, non-zero on failure
 */
-int
+int8_t
 bmp388_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
                uint16_t len)
 {
     int rc;
 
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
-    struct bmp388 *dev = (struct bmp388 *)itf->si_dev;
+    uint8_t reg_buf[2] = { reg };
+    uint16_t wlen = 1;
 
-    if (dev->node_is_spi) {
-        reg |= BMP388_SPI_READ_CMD_BIT;
+    if (itf_is_spi(itf)) {
+        reg_buf[0] |= BMP388_SPI_READ_CMD_BIT;
+        wlen = 2;
     }
-
-    rc = bus_node_simple_write_read_transact(itf->si_dev, &reg, 1, buffer, len);
-
+    rc = bus_node_simple_write_read_transact(itf->si_dev, &reg_buf, wlen,
+                                             buffer, len);
 #else
     rc = sensor_itf_lock(itf, MYNEWT_VAL(BMP388_ITF_LOCK_TMO));
     if (rc) {
@@ -519,23 +504,6 @@ are_settings_changed(uint32_t sub_settings, uint32_t desired_settings)
 }
 
 /*!
-* @brief This internal API interleaves the register address between the
-* register data buffer for burst write operation.
-*/
-static void
-interleave_reg_addr(const uint8_t *reg_addr, uint8_t *temp_buff,
-                    const uint8_t *reg_data, uint8_t len)
-{
-    uint8_t index;
-
-    /* conbime for bmp388 burst write */
-    for (index = 1; index < len; index++) {
-        temp_buff[(index * 2) - 1] = reg_addr[index];
-        temp_buff[index * 2] = reg_data[index];
-    }
-}
-
-/*!
 * @brief This API reads the data from the given register address of the sensor.
 */
 int8_t
@@ -544,22 +512,16 @@ bmp3_get_regs(struct sensor_itf *itf, uint8_t reg_addr,
               const struct bmp3_dev *dev)
 {
     int8_t rslt;
-    uint16_t temp_len = len + dev->dummy_byte;
-    uint16_t i;
-    uint8_t temp_buff[len + dev->dummy_byte];
-    struct bmp388 *bmp388;
+    struct bmp388 *bmp388 = (struct bmp388 *)dev;
 
     /* Check for null pointer in the device structure */
     rslt = null_ptr_check(dev);
     /* Proceed if null check is fine */
     if (rslt == BMP3_OK) {
-        rslt = bmp388_readlen(itf, reg_addr, temp_buff, temp_len);
-        for (i = 0; i < len; i++)
-            reg_data[i] = temp_buff[i + dev->dummy_byte];
+        rslt = bmp388_readlen(itf, reg_addr, reg_data, len);
 
         /* Check for communication error */
         if (rslt != BMP3_OK) {
-            bmp388 = (struct bmp388 *)dev;
             if (rslt == BMP3_E_READ) {
                 STATS_INC(bmp388->stats, read_errors);
             } else {
@@ -576,39 +538,29 @@ bmp3_get_regs(struct sensor_itf *itf, uint8_t reg_addr,
 * of the sensor.
 */
 int8_t
-bmp3_set_regs(struct sensor_itf *itf, uint8_t *reg_addr,
+bmp3_set_regs(struct sensor_itf *itf, const uint8_t *reg_addr,
               const uint8_t *reg_data, uint8_t len,
               const struct bmp3_dev *dev)
 {
     int8_t rslt;
-    uint8_t temp_buff[len * 2];
-    uint16_t temp_len;
-    uint8_t reg_addr_cnt;
-    struct bmp388 *bmp388;
+    uint8_t len2 = (uint8_t)(len * 2);
+    uint8_t i;
+    uint8_t buf[len2];
+    struct bmp388 *bmp388 = (struct bmp388 *)dev;
 
     /* Check for null pointer in the device structure */
     rslt = null_ptr_check(dev);
     /* Check for arguments validity */
     if ((rslt == BMP3_OK) && (reg_addr != NULL) && (reg_data != NULL)) {
         if (len != 0) {
-            temp_buff[0] = reg_data[0];
-            /* If interface selected is SPI */
-            if (dev->intf == BMP3_SPI_INTF) {
-                for (reg_addr_cnt = 0; reg_addr_cnt < len; reg_addr_cnt++)
-                    reg_addr[reg_addr_cnt] = reg_addr[reg_addr_cnt] & 0x7F;
+            /* Interleave address and data */
+            for (i = 0; i < len2;) {
+                buf[i++] = (uint8_t)(0x7F & *reg_addr++);
+                buf[i++] = *reg_data++;
             }
-            /* Burst write mode */
-            if (len > 1) {
-                /* Interleave register address w.r.t data for burst write */
-                interleave_reg_addr(reg_addr, temp_buff, reg_data, len);
-                temp_len = len * 2;
-            } else {
-                temp_len = len;
-            }
-            rslt = bmp388_writelen(itf, reg_addr[0], temp_buff, temp_len);
+            rslt = bmp388_writelen(itf, buf, len2);
             /* Check for communication error */
             if (rslt != BMP3_OK) {
-                bmp388 = (struct bmp388 *)dev;
                 if (rslt == BMP3_E_READ) {
                     STATS_INC(bmp388->stats, read_errors);
                 } else {
@@ -806,7 +758,7 @@ set_pwr_ctrl_settings(struct sensor_itf *itf, uint32_t desired_settings,
     uint8_t reg_addr = BMP3_PWR_CTRL_ADDR;
     uint8_t reg_data;
 
-    rslt = bmp388_readlen(itf, reg_addr, &reg_data, 1);
+    rslt = bmp3_get_regs(itf, reg_addr, &reg_data, 1, dev);
 
     if (rslt == BMP3_OK) {
         if (desired_settings & BMP3_PRESS_EN_SEL) {
@@ -818,7 +770,7 @@ set_pwr_ctrl_settings(struct sensor_itf *itf, uint32_t desired_settings,
             reg_data = BMP3_SET_BITS(reg_data, BMP3_TEMP_EN, dev->settings.temp_en);
         }
         /* Write the power control settings in the register */
-        rslt = bmp388_writelen(itf, reg_addr, &reg_data, 1);
+        rslt = bmp3_set_regs(itf, &reg_addr, &reg_data, 1, dev);
     }
 
     return rslt;
@@ -1705,15 +1657,6 @@ bmp3_init(struct sensor_itf *itf, struct bmp3_dev *dev)
     rslt = null_ptr_check(dev);
     /* Proceed if null check is fine */
     if (rslt == BMP3_OK) {
-        /* Read mechanism according to selected interface */
-        if (dev->intf != BMP3_I2C_INTF) {
-            /* If SPI interface is selected, read extra byte */
-            dev->dummy_byte = 1;
-        } else {
-            /* If I2C interface is selected, no need to read
-            extra byte */
-            dev->dummy_byte = 0;
-        }
         /* Read the chip-id of bmp3 sensor */
         rslt = bmp3_get_regs(itf, BMP3_CHIP_ID_ADDR, &chip_id, 1, dev);
         /* Proceed if everything is fine until now */
@@ -3889,8 +3832,6 @@ bmp388_init(struct os_dev *dev, void *arg)
 
 #if !MYNEWT_VAL(BUS_DRIVER_PRESENT)
     if (sensor->s_itf.si_type == SENSOR_ITF_SPI) {
-
-        g_bmp388_dev.intf = BMP3_SPI_INTF;
         rc = hal_spi_disable(sensor->s_itf.si_num);
         if (rc) {
             BMP388_LOG_ERROR("******bmp388_init hal_spi_disable failed, rc = %d\n", rc);
@@ -3917,9 +3858,6 @@ bmp388_init(struct os_dev *dev, void *arg)
             BMP388_LOG_ERROR("******bmp388_init hal_gpio_init_out failed, rc = %d\n", rc);
             goto err;
         }
-
-    }else {
-        g_bmp388_dev.intf = BMP3_I2C_INTF;
     }
 #endif
 
