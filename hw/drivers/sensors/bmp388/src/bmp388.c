@@ -3958,11 +3958,6 @@ bmp388_init(struct os_dev *dev, void *arg)
 
     }else {
         g_bmp388_dev.intf = BMP3_I2C_INTF;
-
-#if BMP388_DEBUG
-        BMP388_LOG_ERROR("******bmp388_init entered\n");
-#endif
-
     }
 #endif
 
