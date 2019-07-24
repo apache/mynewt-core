@@ -1630,12 +1630,9 @@ get_calib_data(struct sensor_itf *itf, struct bmp3_dev *dev)
     uint8_t reg_addr = BMP3_CALIB_DATA_ADDR;
     /* Array to store calibration data */
     uint8_t calib_data[BMP3_CALIB_DATA_LEN] = {0};
-    uint8_t index = 0;
 
     /* Read the calibration data from the sensor */
-    //rslt = bmp3_get_regs(itf, reg_addr, calib_data, BMP3_CALIB_DATA_LEN, dev);
-    for (index = 0; index < BMP3_CALIB_DATA_LEN; index++)
-        rslt = bmp3_get_regs(itf, reg_addr + index, calib_data + index, 1, dev);
+    rslt = bmp3_get_regs(itf, reg_addr, calib_data, BMP3_CALIB_DATA_LEN, dev);
     /* Parse calibration data and store it in device structure */
     parse_calib_data(calib_data, dev);
 
