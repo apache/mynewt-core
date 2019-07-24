@@ -1875,9 +1875,10 @@ bmp3_set_fifo_settings(struct sensor_itf *itf, uint16_t desired_settings,
                        const struct bmp3_dev *dev)
 {
     int8_t rslt;
-    uint8_t fifo_sett[5];
+    uint8_t fifo_sett[3];
     uint8_t len = 3;
-    uint8_t reg_addr[3] = {BMP3_FIFO_CONFIG_1_ADDR, BMP3_FIFO_CONFIG_1_ADDR + 1, BMP3_FIFO_CONFIG_1_ADDR + 2};
+    uint8_t reg_addr[3] = {BMP3_FIFO_CONFIG_1_ADDR, BMP3_FIFO_CONFIG_2_ADDR,
+                           BMP3_INT_CTRL_ADDR};
 
     /* Check for null pointer in the device structure */
     rslt = null_ptr_check(dev);
