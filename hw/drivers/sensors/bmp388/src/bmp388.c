@@ -560,7 +560,6 @@ bmp3_get_regs(struct sensor_itf *itf, uint8_t reg_addr,
         /* Check for communication error */
         if (rslt != BMP3_OK) {
             bmp388 = (struct bmp388 *)dev;
-            rslt = BMP3_E_COMM_FAIL;
             if (rslt == BMP3_E_READ) {
                 STATS_INC(bmp388->stats, read_errors);
             } else {
@@ -610,7 +609,6 @@ bmp3_set_regs(struct sensor_itf *itf, uint8_t *reg_addr,
             /* Check for communication error */
             if (rslt != BMP3_OK) {
                 bmp388 = (struct bmp388 *)dev;
-                rslt = BMP3_E_COMM_FAIL;
                 if (rslt == BMP3_E_READ) {
                     STATS_INC(bmp388->stats, read_errors);
                 } else {
