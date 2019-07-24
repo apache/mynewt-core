@@ -440,8 +440,6 @@ struct bmp388 {
 #endif
     /* Variable used to hold stats data */
     STATS_SECT_DECL(bmp388_stat_section) stats;
-
-
 };
 /********************************************************/
 
@@ -569,7 +567,7 @@ struct bmp3_settings {
 */
 struct bmp3_fifo_data {
     /*! Data buffer of user defined length is to be mapped here
-        512 + 4 + 7*3 */
+        512 + 4 + 7 * 3 */
     uint8_t buffer[540];
     /*! Number of bytes of data read from the fifo */
     uint16_t byte_count;
@@ -973,10 +971,10 @@ int bmp388_run_self_test(struct sensor_itf *itf, int *result);
 * @return 0 on success, non-zero on failure.
 */
 int bmp388_stream_read(struct sensor *sensor,
-                        sensor_type_t sensor_type,
-                        sensor_data_func_t read_func,
-                        void *read_arg,
-                        uint32_t time_ms);
+                       sensor_type_t sensor_type,
+                       sensor_data_func_t read_func,
+                       void *read_arg,
+                       uint32_t time_ms);
 
 /**
 * Do pressure sensor polling reads
@@ -990,10 +988,10 @@ int bmp388_stream_read(struct sensor *sensor,
 * @return 0 on success, non-zero on failure.
 */
 int bmp388_poll_read(struct sensor *sensor,
-                    sensor_type_t sensor_type,
-                    sensor_data_func_t data_func,
-                    void *data_arg,
-                    uint32_t timeout);
+                     sensor_type_t sensor_type,
+                     sensor_data_func_t data_func,
+                     void *data_arg,
+                     uint32_t timeout);
 
 /**
 * Expects to be called back through os_dev_create().
@@ -1030,8 +1028,8 @@ int bmp388_shell_init(void);
 */
 int
 bmp388_create_i2c_sensor_dev(struct bus_i2c_node *node, const char *name,
-                                        const struct bus_i2c_node_cfg *i2c_cfg,
-                                        struct sensor_itf *sensor_itf);
+                             const struct bus_i2c_node_cfg *i2c_cfg,
+                             struct sensor_itf *sensor_itf);
 
 /**
 * Create SPI bus node for bmp388 sensor
@@ -1045,8 +1043,8 @@ bmp388_create_i2c_sensor_dev(struct bus_i2c_node *node, const char *name,
 */
 int
 bmp388_create_spi_sensor_dev(struct bus_spi_node *node, const char *name,
-                                        const struct bus_spi_node_cfg *spi_cfg,
-                                        struct sensor_itf *sensor_itf);
+                             const struct bus_spi_node_cfg *spi_cfg,
+                             struct sensor_itf *sensor_itf);
 
 #endif
 

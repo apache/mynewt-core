@@ -261,7 +261,6 @@ bmp388_shell_cmd_poll_read(int argc, char **argv)
             return bmp388_shell_err_invalid_arg(argv[3]);
         }
         report_interval = val;
-
     }
 
     dev = os_dev_open(MYNEWT_VAL(BMP388_SHELL_DEV_NAME), OS_TIMEOUT_NEVER, NULL);
@@ -275,10 +274,8 @@ bmp388_shell_cmd_poll_read(int argc, char **argv)
 
     console_printf("bmp388_shell_cmd_poll_read!\n");
 
-    if ((samples > 0) && (report_interval))
-    {
-        while (samples != 0)
-        {
+    if ((samples > 0) && (report_interval)) {
+        while (samples != 0) {
             bmp388_poll_read(&(bmp388->sensor),
                                 SENSOR_TYPE_PRESSURE | SENSOR_TYPE_AMBIENT_TEMPERATURE,
                                 bmp388_stream_read_cb,
