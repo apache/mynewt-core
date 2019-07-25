@@ -261,7 +261,7 @@ bmp388_spi_writelen(struct sensor_itf *itf, const uint8_t *payload, uint16_t len
         rc = hal_spi_tx_val(itf->si_num, payload[i]);
         if (rc == 0xFFFF) {
             rc = BMP3_E_WRITE;
-            BMP388_LOG_ERROR(ERROR, "SPI_write failed\n");
+            BMP388_LOG_ERROR("SPI_write failed\n");
             goto err;
         }
     }
@@ -393,7 +393,7 @@ bmp388_spi_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
     retval = hal_spi_tx_val(itf->si_num, 0);
 
     if (retval == 0xFFFF) {
-        BMP388_LOG(ERROR, "SPI_%u register write failed addr:0x%02X\n",
+        BMP388_LOG_ERROR("SPI_%u register write failed addr:0x%02X\n",
                    itf->si_num, reg);
         rc = BMP3_E_READ;
         goto err;
@@ -1194,9 +1194,9 @@ parse_sensor_data(const uint8_t *reg_data, struct bmp3_uncomp_data *uncomp_data)
 
 /*!
 * @brief This internal API is used to compensate the raw temperature data and
-* return the compensated temperature data in integer data type.
+* return the compensated temperature data in 0.01 degC.
 */
-static int64_t
+static int16_t
 compensate_temperature(const struct bmp3_uncomp_data *uncomp_data,
                        struct bmp3_calib_data *calib_data)
 {
@@ -1206,7 +1206,7 @@ compensate_temperature(const struct bmp3_uncomp_data *uncomp_data,
     int64_t partial_data4;
     int64_t partial_data5;
     int64_t partial_data6;
-    int64_t comp_temp;
+    int16_t comp_temp;
 #if COMPENSTATE_DEBUG
     BMP388_LOG_ERROR("*****uncomp_data->temperature = 0x%x calib_data->reg_calib_data.par_t1 = 0x%x\n", uncomp_data->temperature, calib_data->reg_calib_data.par_t1);
 #endif
@@ -1247,11 +1247,11 @@ compensate_temperature(const struct bmp3_uncomp_data *uncomp_data,
     BMP388_LOG_ERROR("*****partial_data6 high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((partial_data6)>>32),(uint32_t)(partial_data6&0xffffffff));
 #endif
     /* Store t_lin in dev. structure for pressure calculation */
-    calib_data->reg_calib_data.t_lin = partial_data6;
-    comp_temp = (int64_t)((partial_data6 * 25) / 16384);
+    calib_data->reg_calib_data.t_lin = (uint32_t)partial_data6;
+    comp_temp = (int16_t)(calib_data->reg_calib_data.t_lin * 25 / 16384);
 
 #if COMPENSTATE_DEBUG
-    BMP388_LOG_ERROR("*****comp_temp high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((comp_temp)>>32),(uint32_t)(comp_temp&0xffffffff));
+    BMP388_LOG_ERROR("*****comp_temp = 0x%x\n", comp_temp);
 #endif
 
     return comp_temp;
@@ -1261,7 +1261,7 @@ compensate_temperature(const struct bmp3_uncomp_data *uncomp_data,
 * @brief This internal API is used to compensate the raw pressure data and
 * return the compensated pressure data in integer data type.
 */
-static uint64_t
+static uint32_t
 compensate_pressure(const struct bmp3_uncomp_data *uncomp_data,
                     const struct bmp3_calib_data *calib_data)
 {
@@ -1274,12 +1274,13 @@ compensate_pressure(const struct bmp3_uncomp_data *uncomp_data,
     int64_t partial_data6;
     int64_t offset;
     int64_t sensitivity;
-    uint64_t comp_press;
+    uint32_t comp_press;
+    int64_t t_lin = calib_data->reg_calib_data.t_lin;
 #if COMPENSTATE_DEBUG
-    BMP388_LOG_ERROR("*****reg_calib_data->t_lin high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((reg_calib_data->t_lin)>>32),(uint32_t)(reg_calib_data->t_lin&0xffffffff));
+    BMP388_LOG_ERROR("*****reg_calib_data->t_lin = 0x%x\n", reg_calib_data->t_lin);
 #endif
 
-    partial_data1 = reg_calib_data->t_lin * reg_calib_data->t_lin;
+    partial_data1 = t_lin * calib_data->reg_calib_data.t_lin;
 
 #if COMPENSTATE_DEBUG
     BMP388_LOG_ERROR("*****partial_data1 high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((partial_data1)>>32),(uint32_t)(partial_data1&0xffffffff));
@@ -1291,7 +1292,7 @@ compensate_pressure(const struct bmp3_uncomp_data *uncomp_data,
     BMP388_LOG_ERROR("*****partial_data2 high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)(partial_data2>>32),(uint32_t)(partial_data2&0xffffffff));
 #endif
 
-    partial_data3 = (partial_data2 * reg_calib_data->t_lin) / 256;
+    partial_data3 = (partial_data2 * t_lin) / 256;
 
 #if COMPENSTATE_DEBUG
     BMP388_LOG_ERROR("*****partial_data3 high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((partial_data3)>>32),(uint32_t)(partial_data3&0xffffffff));
@@ -1312,7 +1313,7 @@ compensate_pressure(const struct bmp3_uncomp_data *uncomp_data,
     BMP388_LOG_ERROR("*****reg_calib_data->par_p6 = %d\n", reg_calib_data->par_p6);
 #endif
 
-    partial_data6 = (reg_calib_data->par_p6 * reg_calib_data->t_lin) * 4194304;
+    partial_data6 = (reg_calib_data->par_p6 * t_lin) * 4194304;
 
 #if COMPENSTATE_DEBUG
     BMP388_LOG_ERROR("*****partial_data6 high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((partial_data6)>>32),(uint32_t)(partial_data6&0xffffffff));
@@ -1341,7 +1342,7 @@ compensate_pressure(const struct bmp3_uncomp_data *uncomp_data,
     BMP388_LOG_ERROR("*****reg_calib_data->par_p2 = %d\n", reg_calib_data->par_p2);
 #endif
 
-    partial_data5 = (reg_calib_data->par_p2 - 16384) * reg_calib_data->t_lin * 2097152;
+    partial_data5 = (reg_calib_data->par_p2 - 16384) * t_lin * 2097152;
 
 #if COMPENSTATE_DEBUG
     BMP388_LOG_ERROR("*****partial_data5 high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((partial_data5)>>32),(uint32_t)(partial_data5&0xffffffff));
@@ -1362,7 +1363,7 @@ compensate_pressure(const struct bmp3_uncomp_data *uncomp_data,
     BMP388_LOG_ERROR("*****reg_calib_data->par_p10 = %d\n", reg_calib_data->par_p10);
 #endif
 
-    partial_data2 = reg_calib_data->par_p10 * reg_calib_data->t_lin;
+    partial_data2 = reg_calib_data->par_p10 * t_lin;
 
 #if COMPENSTATE_DEBUG
     BMP388_LOG_ERROR("*****partial_data2 high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((partial_data2)>>32),(uint32_t)(partial_data2&0xffffffff));
@@ -1412,10 +1413,10 @@ compensate_pressure(const struct bmp3_uncomp_data *uncomp_data,
     BMP388_LOG_ERROR("*****partial_data4 high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((partial_data4)>>32),(uint32_t)(partial_data4&0xffffffff));
 #endif
 
-    comp_press = (((uint64_t)partial_data4 * 25) / (uint64_t)1099511627776);
+    comp_press = (uint32_t)(partial_data4 * 25 / 1099511627776ULL);
 
 #if COMPENSTATE_DEBUG
-    BMP388_LOG_ERROR("*****comp_press high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((comp_press)>>32),(uint32_t)(comp_press&0xffffffff));
+    BMP388_LOG_ERROR("*****comp_press = 0x%x\n", comp_press);
 #endif
 
     return comp_press;
