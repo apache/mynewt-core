@@ -457,18 +457,18 @@ enum bmp3_intf {
 };
 
 /*!
-* @brief bmp3 sensor structure which comprises of temperature and pressure
+* @brief bmp3 sensor data which comprises temperature and pressure
 * data.
 */
 struct bmp3_data {
-    /*! Compensated temperature */
-    int64_t temperature;
-    /*! Compensated pressure */
-    uint64_t pressure;
+    /*! Compensated temperature in 0.01 degC*/
+    int16_t temperature;
+    /*! Compensated pressure in 0.01 Pa */
+    uint32_t pressure;
 };
 
 /*!
-* @brief bmp3 sensor structure which comprises of uncompensated temperature
+* @brief bmp388 sensor structure comprises uncompensated temperature
 * and pressure data.
 */
 struct bmp3_uncomp_data {
@@ -498,7 +498,7 @@ struct bmp3_reg_calib_data {
     int16_t par_p9;
     int8_t par_p10;
     int8_t par_p11;
-    int64_t t_lin;
+    int32_t t_lin;
 };
 
 /*!
@@ -725,7 +725,8 @@ int8_t bmp388_set_forced_mode_with_osr(struct sensor_itf *itf, struct bmp3_dev *
 */
 int8_t bmp3_init(struct sensor_itf *itf, struct bmp3_dev *dev);
 
-int8_t bmp388_get_sensor_data(struct sensor_itf *itf, struct bmp3_dev *dev, struct bmp3_data *sensor_data);
+int8_t bmp388_get_sensor_data(struct sensor_itf *itf, struct bmp3_dev *dev,
+                              struct bmp3_data *sensor_data);
 
 /*!
 * @brief This API sets the power control(pressure enable and
