@@ -3443,11 +3443,12 @@ bma253_set_fifo_cfg(const struct bma253 * bma253,
     return set_register((struct bma253 *)bma253, REG_ADDR_FIFO_CONFIG_1, data);
 }
 
-    int
-bma253_read_and_handle_fifo_data(
-        struct bma253           *bma253,
-        enum fifo_data          fifo_data,
-        struct sensor_read_ctx  *sdsi)
+int
+bma253_read_and_handle_fifo_data(struct bma253 *bma253,
+                                 enum fifo_data fifo_data,
+                                 struct sensor_read_ctx *sdsi,
+                                 os_time_t stop_ticks,
+                                 uint32_t time_ms)
 {
     int     rc;
     uint32_t i;
@@ -3457,6 +3458,7 @@ bma253_read_and_handle_fifo_data(
     uint8_t *ff_buf = bma253->pdd.fifo_buf;
     uint32_t size;
     uint32_t frm_size;
+    os_time_t curr_ticks;
 
     /* current fifo frame counter */
     uint8_t ff_frm_cnt = 0;
@@ -3518,6 +3520,12 @@ bma253_read_and_handle_fifo_data(
     }
 
     for (i = 0; i < ff_frm_cnt; i++) {
+
+        curr_ticks = os_time_get();
+        if (time_ms != 0 && OS_TIME_TICK_GT(curr_ticks, stop_ticks)) {
+            return SYS_ETIMEOUT;
+        }
+
         compute_accel_data(bma253, accel_data,
                 (frm_size >> 1),
                 ff_buf + i * frm_size,
@@ -3535,7 +3543,6 @@ bma253_read_and_handle_fifo_data(
             break;
         }
     }
-
 
     return 0;
 }
@@ -3722,8 +3729,13 @@ reset_and_recfg(struct bma253 * bma253)
         return rc;
     }
 
-    fifo_cfg.fifo_mode = FIFO_MODE_BYPASS;
-    fifo_cfg.fifo_data = FIFO_DATA_X_AND_Y_AND_Z;
+    if (cfg->read_mode == BMA253_READ_M_POLL) {
+        fifo_cfg.fifo_mode = FIFO_MODE_BYPASS;
+        fifo_cfg.fifo_data = FIFO_DATA_X_AND_Y_AND_Z;
+    } else {
+        fifo_cfg.fifo_mode = FIFO_MODE_FIFO;
+        fifo_cfg.fifo_data = FIFO_DATA_X_AND_Y_AND_Z;
+    }
 
     rc = bma253_set_fifo_cfg(bma253, &fifo_cfg);
     if (rc != 0) {
@@ -4498,7 +4510,6 @@ bma253_stream_read(struct sensor *sensor,
     struct int_enable int_enable = { 0 };
     os_time_t time_ticks;
     os_time_t stop_ticks;
-    os_time_t curr_ticks;
     struct bma253_private_driver_data *pdd;
 
     struct sensor_read_ctx sdsi;
@@ -4558,54 +4569,46 @@ bma253_stream_read(struct sensor *sensor,
     sdsi.user_func = read_func;
     sdsi.user_arg = read_arg;
 
-    for (;;) {
 #if MYNEWT_VAL(BMA253_INT_ENABLE)
         wait_interrupt(&bma253->intr, pdd->int_num);
         BMA253_UNUSED_VAR(cfg);
 #else
         switch (cfg->filter_bandwidth) {
-        case BMA253_FILTER_BANDWIDTH_7_81_HZ:
-            delay_msec(128);
+            case BMA253_FILTER_BANDWIDTH_7_81_HZ:
+                delay_msec(128);
             break;
-        case BMA253_FILTER_BANDWIDTH_15_63_HZ:
-            delay_msec(64);
+            case BMA253_FILTER_BANDWIDTH_15_63_HZ:
+                delay_msec(64);
             break;
-        case BMA253_FILTER_BANDWIDTH_31_25_HZ:
-            delay_msec(32);
+            case BMA253_FILTER_BANDWIDTH_31_25_HZ:
+                delay_msec(32);
             break;
-        case BMA253_FILTER_BANDWIDTH_62_5_HZ:
-            delay_msec(16);
+            case BMA253_FILTER_BANDWIDTH_62_5_HZ:
+                delay_msec(16);
             break;
-        case BMA253_FILTER_BANDWIDTH_125_HZ:
-            delay_msec(8);
+            case BMA253_FILTER_BANDWIDTH_125_HZ:
+                delay_msec(8);
             break;
-        case BMA253_FILTER_BANDWIDTH_250_HZ:
-            delay_msec(4);
+            case BMA253_FILTER_BANDWIDTH_250_HZ:
+                delay_msec(4);
             break;
-        case BMA253_FILTER_BANDWIDTH_500_HZ:
-            delay_msec(2);
+            case BMA253_FILTER_BANDWIDTH_500_HZ:
+                delay_msec(2);
             break;
-        case BMA253_FILTER_BANDWIDTH_1000_HZ:
-            delay_msec(1);
+            case BMA253_FILTER_BANDWIDTH_1000_HZ:
+                delay_msec(1);
             break;
-        default:
-            delay_msec(1000);
+            default:
+                delay_msec(1000);
             break;
-    }
+        }
 #endif
         rc = bma253_read_and_handle_fifo_data(bma253,
-                FIFO_DATA_X_AND_Y_AND_Z,
-                &sdsi);
+                 FIFO_DATA_X_AND_Y_AND_Z,
+                 &sdsi, stop_ticks, time_ms);
         if (rc != 0) {
             goto done;
         }
-
-
-        curr_ticks = os_time_get();
-        if (time_ms != 0 && OS_TIME_TICK_GT(curr_ticks, stop_ticks)) {
-            break;
-        }
-
 
         if (bma253->hw_cfg_pending) {
             rc = bma253_exec_pending_hw_cfg(bma253);
@@ -4615,7 +4618,6 @@ bma253_stream_read(struct sensor *sensor,
             sensor_driver_handle_interrupt(&bma253->sensor);
         }
 
-    }
 
     rc = bma253_set_int_enable(bma253, &int_enable_org);
     if (rc != 0) {
@@ -5111,7 +5113,7 @@ sensor_driver_read(struct sensor *sensor,
     if (cfg->read_mode == BMA253_READ_M_POLL) {
         rc = bma253_poll_read(sensor, sensor_type, data_func, data_arg, timeout);
     } else {
-        fifo_cfg.fifo_mode = FIFO_MODE_STREAM;
+        fifo_cfg.fifo_mode = FIFO_MODE_FIFO;
         fifo_cfg.fifo_data = FIFO_DATA_X_AND_Y_AND_Z;
         rc = bma253_set_fifo_cfg(bma253, &fifo_cfg);
         BMA253_DRV_CHECK_RC(rc);
