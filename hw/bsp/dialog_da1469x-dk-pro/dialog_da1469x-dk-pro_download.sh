@@ -142,8 +142,10 @@ quit
 
 EOF
 
-arm-none-eabi-gdb -x $GDB_CMD_FILE
-
+arm-none-eabi-gdb -batch -x $GDB_CMD_FILE
+if [ $? != 0 ]; then
+    exit 1
+fi
 # gdb appears to exit before jlinkgdbserver, so immediate
 # execution of debug script (i.e. from 'newt run'), will fail due
 # to 2 instances of jlinkgdbserver running. Slow exit from here for a bit.
