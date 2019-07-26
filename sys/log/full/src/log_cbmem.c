@@ -156,7 +156,7 @@ log_cbmem_read(struct log *log, const void *dptr, void *buf, uint16_t offset,
 }
 
 static int
-log_cbmem_read_mbuf(struct log *log, void *dptr, struct os_mbuf *om,
+log_cbmem_read_mbuf(struct log *log, const void *dptr, struct os_mbuf *om,
                     uint16_t offset, uint16_t len)
 {
     struct cbmem *cbmem;

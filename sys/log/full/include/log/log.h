@@ -76,7 +76,7 @@ struct log_storage_info {
 #endif
 
 typedef int (*log_walk_func_t)(struct log *, struct log_offset *log_offset,
-        void *dptr, uint16_t len);
+        const void *dptr, uint16_t len);
 
 typedef int (*log_walk_body_func_t)(struct log *log,
         struct log_offset *log_offset, const struct log_entry_hdr *hdr,
@@ -84,7 +84,7 @@ typedef int (*log_walk_body_func_t)(struct log *log,
 
 typedef int (*lh_read_func_t)(struct log *, const void *dptr, void *buf,
         uint16_t offset, uint16_t len);
-typedef int (*lh_read_mbuf_func_t)(struct log *, void *dptr, struct os_mbuf *om,
+typedef int (*lh_read_mbuf_func_t)(struct log *, const void *dptr, struct os_mbuf *om,
                                    uint16_t offset, uint16_t len);
 typedef int (*lh_append_func_t)(struct log *, void *buf, int len);
 typedef int (*lh_append_body_func_t)(struct log *log,
@@ -524,7 +524,7 @@ int log_read(struct log *log, const void *dptr, void *buf, uint16_t off,
  *
  * @return                      0 on success; nonzero on failure.
  */
-int log_read_hdr(struct log *log, void *dptr, struct log_entry_hdr *hdr);
+int log_read_hdr(struct log *log, const void *dptr, struct log_entry_hdr *hdr);
 
 /**
  * @brief Reads the header length
@@ -551,9 +551,9 @@ log_hdr_len(const struct log_entry_hdr *hdr);
  * @return                      The number of bytes actually read on success;
  *                              -1 on failure.
  */
-int log_read_body(struct log *log, void *dptr, void *buf, uint16_t off,
+int log_read_body(struct log *log, const void *dptr, void *buf, uint16_t off,
                   uint16_t len);
-int log_read_mbuf(struct log *log, void *dptr, struct os_mbuf *om, uint16_t off,
+int log_read_mbuf(struct log *log, const void *dptr, struct os_mbuf *om, uint16_t off,
                   uint16_t len);
 /**
  * @brief Reads data from the body of a log entry into an mbuf.
@@ -570,7 +570,7 @@ int log_read_mbuf(struct log *log, void *dptr, struct os_mbuf *om, uint16_t off,
  * @return                      The number of bytes actually read on success;
  *                              -1 on failure.
  */
-int log_read_mbuf_body(struct log *log, void *dptr, struct os_mbuf *om,
+int log_read_mbuf_body(struct log *log, const void *dptr, struct os_mbuf *om,
                        uint16_t off, uint16_t len);
 int log_walk(struct log *log, log_walk_func_t walk_func,
         struct log_offset *log_offset);

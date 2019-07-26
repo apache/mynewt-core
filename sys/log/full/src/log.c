@@ -317,7 +317,7 @@ struct log_read_hdr_arg {
 };
 
 static int
-log_read_hdr_walk(struct log *log, struct log_offset *log_offset, void *dptr,
+log_read_hdr_walk(struct log *log, struct log_offset *log_offset, const void *dptr,
                   uint16_t len)
 {
     struct log_read_hdr_arg *arg;
@@ -853,7 +853,7 @@ struct log_walk_body_arg {
  * forwards the data to the body walk callback.
  */
 static int
-log_walk_body_fn(struct log *log, struct log_offset *log_offset, void *dptr,
+log_walk_body_fn(struct log *log, struct log_offset *log_offset, const void *dptr,
                  uint16_t len)
 {
     struct log_walk_body_arg *lwba;
@@ -921,7 +921,7 @@ log_read(struct log *log, const void *dptr, void *buf, uint16_t off,
 }
 
 int
-log_read_hdr(struct log *log, void *dptr, struct log_entry_hdr *hdr)
+log_read_hdr(struct log *log, const void *dptr, struct log_entry_hdr *hdr)
 {
     int bytes_read;
 
@@ -942,7 +942,7 @@ log_read_hdr(struct log *log, void *dptr, struct log_entry_hdr *hdr)
 }
 
 int
-log_read_body(struct log *log, void *dptr, void *buf, uint16_t off,
+log_read_body(struct log *log, const void *dptr, void *buf, uint16_t off,
               uint16_t len)
 {
     int rc;
@@ -958,7 +958,7 @@ log_read_body(struct log *log, void *dptr, void *buf, uint16_t off,
 }
 
 int
-log_read_mbuf(struct log *log, void *dptr, struct os_mbuf *om, uint16_t off,
+log_read_mbuf(struct log *log, const void *dptr, struct os_mbuf *om, uint16_t off,
               uint16_t len)
 {
     int rc;
@@ -973,7 +973,7 @@ log_read_mbuf(struct log *log, void *dptr, struct os_mbuf *om, uint16_t off,
 }
 
 int
-log_read_mbuf_body(struct log *log, void *dptr, struct os_mbuf *om,
+log_read_mbuf_body(struct log *log, const void *dptr, struct os_mbuf *om,
                    uint16_t off, uint16_t len)
 {
     int rc;
