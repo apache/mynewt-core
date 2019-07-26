@@ -45,7 +45,7 @@
 struct log_shell_cbor_reader {
     struct cbor_decoder_reader r;
     struct log *log;
-    void *dptr;
+    const void *dptr;
 };
 
 static uint8_t
@@ -133,7 +133,7 @@ log_shell_cbor_reader_cpy(struct cbor_decoder_reader *d, char *dst,
 
 static void
 log_shell_cbor_reader_init(struct log_shell_cbor_reader *cbr, struct log *log,
-                           void *dptr, uint16_t len)
+                           const void *dptr, uint16_t len)
 {
     cbr->r.get8 = &log_shell_cbor_reader_get8;
     cbr->r.get16 = &log_shell_cbor_reader_get16;
@@ -149,7 +149,7 @@ log_shell_cbor_reader_init(struct log_shell_cbor_reader *cbr, struct log *log,
 
 static int
 shell_log_dump_entry(struct log *log, struct log_offset *log_offset,
-                     const struct log_entry_hdr *ueh, void *dptr, uint16_t len)
+                     const struct log_entry_hdr *ueh, const void *dptr, uint16_t len)
 {
     char data[128 + 1];
     int dlen;
