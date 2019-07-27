@@ -87,11 +87,11 @@ struct imgmgr_upload_cmd {
 
 struct mgmt_cbuf;
 
-int imgr_core_list(struct mgmt_cbuf *);
-int imgr_core_load(struct mgmt_cbuf *);
-int imgr_core_erase(struct mgmt_cbuf *);
-int imgmgr_state_read(struct mgmt_cbuf *cb);
-int imgmgr_state_write(struct mgmt_cbuf *njb);
+int imgr_core_list(struct mgmt_ctxt *);
+int imgr_core_load(struct mgmt_ctxt *);
+int imgr_core_erase(struct mgmt_ctxt *);
+int imgmgr_state_read(struct mgmt_ctxt *mc);
+int imgmgr_state_write(struct mgmt_ctxt *mc);
 int imgr_find_by_ver(struct image_version *find, uint8_t *hash);
 int imgr_find_by_hash(uint8_t *find, struct image_version *ver);
 int imgr_cli_register(void);

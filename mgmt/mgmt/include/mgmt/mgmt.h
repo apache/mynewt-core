@@ -89,7 +89,7 @@ struct nmgr_hdr {
 
 struct mgmt_cbuf;
 
-typedef int (*mgmt_handler_func_t)(struct mgmt_cbuf *);
+typedef int (*mgmt_handler_func_t)(struct mgmt_ctxt *);
 
 struct mgmt_handler {
     mgmt_handler_func_t mh_read;

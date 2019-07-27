@@ -27,20 +27,18 @@
 #include "cborattr/cborattr.h"
 #include "bootutil/image.h"
 #include "bootutil/bootutil.h"
-#include "mgmt/mgmt.h"
 #if MYNEWT_VAL(LOG_FCB_SLOT1)
 #include "log/log_fcb_slot1.h"
 #endif
 
 #include "imgmgr/imgmgr.h"
 #include "mgmt/mgmt.h"
+#include "img_mgmt/img_mgmt.h"
 #include "imgmgr_priv.h"
 
 const imgmgr_dfu_callbacks_t *imgmgr_dfu_callbacks_fn;
 
-static int imgr_upload(struct mgmt_cbuf *);
-static int imgr_erase(struct mgmt_cbuf *);
-static int imgr_erase_state(struct mgmt_cbuf *);
+static int imgr_erase_state(struct mgmt_ctxt *);
 
 /** Represents an individual upload request. */
 struct imgr_upload_req {
@@ -149,6 +147,7 @@ static const char *imgmgr_err_str_downgrade = "downgrade";
 #define imgmgr_err_str_downgrade                    NULL
 #endif
 
+#if 0
 #if MYNEWT_VAL(BOOTUTIL_IMAGE_FORMAT_V2)
 static int
 imgr_img_tlvs(const struct flash_area *fa, struct image_header *hdr,
@@ -181,6 +180,7 @@ imgr_img_tlvs(const struct flash_area *fa, struct image_header *hdr,
     return 0;
 }
 #endif
+#endif
 
 int
 imgr_my_version(struct image_version *ver)
@@ -188,6 +188,7 @@ imgr_my_version(struct image_version *ver)
     return img_mgmt_read_info(boot_current_slot, ver, NULL, NULL);
 }
 
+#if 0
 /**
  * Compares two image version numbers in a semver-compatible way.
  *
@@ -223,6 +224,7 @@ imgr_vercmp(const struct image_version *a, const struct image_version *b)
 
     return 0;
 }
+#endif
 
 /*
  * Finds image given version number. Returns the slot number image is in,
@@ -281,7 +283,7 @@ imgmgr_find_best_area_id(void)
         }
         if (rc == 0) {
             /* Image in slot is ok. */
-            if (img_mgmt_state_slot_in_use(i)) {
+            if (img_mgmt_slot_in_use(i)) {
                 /* Slot is in use; can't use this. */
                 continue;
             } else {
@@ -321,58 +323,7 @@ imgr_error_rsp(struct mgmt_cbuf *cb, int rc, const char *rsn)
 #endif
 
 static int
-imgr_erase(struct mgmt_cbuf *cb)
-{
-    const struct flash_area *fa;
-    int area_id;
-    int rc;
-    CborError g_err = CborNoError;
-
-    area_id = imgmgr_find_best_area_id();
-    if (area_id >= 0) {
-#if MYNEWT_VAL(LOG_FCB_SLOT1)
-        /*
-         * If logging to slot1 is enabled, make sure it's locked before erasing
-         * so log handler does not corrupt our data.
-         */
-        if (area_id == FLASH_AREA_IMAGE_1) {
-            log_fcb_slot1_lock();
-        }
-#endif
-
-        rc = flash_area_open(area_id, &fa);
-        if (rc) {
-            return imgr_error_rsp(cb, MGMT_ERR_EINVAL,
-                                  imgmgr_err_str_flash_open_failed);
-        }
-        rc = flash_area_erase(fa, 0, fa->fa_size);
-        flash_area_close(fa);
-        if (rc) {
-            return imgr_error_rsp(cb, MGMT_ERR_EINVAL,
-                                  imgmgr_err_str_flash_erase_failed);
-        }
-    } else {
-        /*
-         * No slot where to erase!
-         */
-        return imgr_error_rsp(cb, MGMT_ERR_ENOMEM, imgmgr_err_str_no_slot);
-    }
-
-    g_err |= cbor_encode_text_stringz(&cb->encoder, "rc");
-    g_err |= cbor_encode_int(&cb->encoder, MGMT_ERR_EOK);
-
-    if (g_err) {
-        return MGMT_ERR_ENOMEM;
-    }
-
-    /* Reset in-progress upload. */
-    imgr_state.area_id = -1;
-
-    return 0;
-}
-
-static int
-imgr_erase_state(struct mgmt_cbuf *cb)
+imgr_erase_state(struct mgmt_ctxt *ctxt)
 {
     const struct flash_area *fa;
     int area_id;
@@ -383,13 +334,13 @@ imgr_erase_state(struct mgmt_cbuf *cb)
     if (area_id >= 0) {
         rc = flash_area_open(area_id, &fa);
         if (rc) {
-            return imgr_error_rsp(cb, MGMT_ERR_EINVAL,
+            return imgr_error_rsp(ctxt, MGMT_ERR_EINVAL,
                                   imgmgr_err_str_flash_open_failed);
         }
 
         rc = flash_area_erase(fa, 0, sizeof(struct image_header));
         if (rc) {
-            return imgr_error_rsp(cb, MGMT_ERR_EINVAL,
+            return imgr_error_rsp(ctxt, MGMT_ERR_EINVAL,
                                   imgmgr_err_str_flash_erase_failed);
         }
 
@@ -402,11 +353,11 @@ imgr_erase_state(struct mgmt_cbuf *cb)
         }
 #endif
     } else {
-        return imgr_error_rsp(cb, MGMT_ERR_ENOMEM, imgmgr_err_str_no_slot);
+        return imgr_error_rsp(ctxt, MGMT_ERR_ENOMEM, imgmgr_err_str_no_slot);
     }
 
-    g_err |= cbor_encode_text_stringz(&cb->encoder, "rc");
-    g_err |= cbor_encode_int(&cb->encoder, MGMT_ERR_EOK);
+    g_err |= cbor_encode_text_stringz(&ctxt->encoder, "rc");
+    g_err |= cbor_encode_int(&ctxt->encoder, MGMT_ERR_EOK);
 
     if (g_err) {
         return MGMT_ERR_ENOMEM;
@@ -456,6 +407,7 @@ imgr_erase_if_needed(const struct flash_area *fa, uint32_t off, uint32_t len)
 }
 #endif
 
+#if 0
 /**
  * Verifies an upload request and indicates the actions that should be taken
  * during processing of the request.  This is a "read only" function in the
@@ -623,178 +575,7 @@ imgr_upload_good_rsp(struct mgmt_cbuf *cb)
 
     return 0;
 }
-
-static int
-imgr_upload(struct mgmt_cbuf *cb)
-{
-    struct imgr_upload_req req = {
-        .off = -1,
-        .size = -1,
-        .data_len = 0,
-        .data_sha_len = 0,
-        .upgrade = false,
-    };
-    const struct cbor_attr_t off_attr[] = {
-        [0] = {
-            .attribute = "data",
-            .type = CborAttrByteStringType,
-            .addr.bytestring.data = req.img_data,
-            .addr.bytestring.len = &req.data_len,
-            .len = sizeof(req.img_data)
-        },
-        [1] = {
-            .attribute = "len",
-            .type = CborAttrUnsignedIntegerType,
-            .addr.uinteger = &req.size,
-            .nodefault = true
-        },
-        [2] = {
-            .attribute = "off",
-            .type = CborAttrUnsignedIntegerType,
-            .addr.uinteger = &req.off,
-            .nodefault = true
-        },
-        [3] = {
-            .attribute = "sha",
-            .type = CborAttrByteStringType,
-            .addr.bytestring.data = req.data_sha,
-            .addr.bytestring.len = &req.data_sha_len,
-            .len = sizeof(req.data_sha)
-        },
-        [4] = {
-            .attribute = "upgrade",
-            .type = CborAttrBooleanType,
-            .addr.boolean = &req.upgrade,
-            .dflt.boolean = false,
-        },
-        [5] = { 0 },
-    };
-    int rc;
-    const char *errstr = NULL;
-    struct imgr_upload_action action;
-    const struct flash_area *fa = NULL;
-
-    rc = cbor_read_object(&cb->it, off_attr);
-    if (rc != 0) {
-        return MGMT_ERR_EINVAL;
-    }
-
-    /* Determine what actions to take as a result of this request. */
-    rc = imgr_upload_inspect(&req, &action, &errstr);
-    if (rc != 0) {
-        imgmgr_dfu_stopped();
-        return rc;
-    }
-
-    if (!action.proceed) {
-        /* Request specifies incorrect offset.  Respond with a success code and
-         * the correct offset.
-         */
-        return imgr_upload_good_rsp(cb);
-    }
-
-    /* Request is valid.  Give the application a chance to reject this upload
-     * request.
-     */
-    if (imgr_upload_cb != NULL) {
-        rc = imgr_upload_cb(req.off, action.size, imgr_upload_arg);
-        if (rc != 0) {
-            imgmgr_dfu_stopped();
-            return imgr_error_rsp(cb, rc, imgmgr_err_str_app_reject);
-        }
-    }
-
-    /* Remember flash area ID and image size for subsequent upload requests. */
-    imgr_state.area_id = action.area_id;
-    imgr_state.size = action.size;
-
-    rc = flash_area_open(imgr_state.area_id, &fa);
-    if (rc != 0) {
-        imgmgr_dfu_stopped();
-        return imgr_error_rsp(cb, MGMT_ERR_EUNKNOWN,
-                              imgmgr_err_str_flash_open_failed);
-    }
-
-    if (req.off == 0) {
-        /*
-         * New upload.
-         */
-        imgr_state.off = 0;
-
-        imgmgr_dfu_started();
-
-        /*
-         * We accept SHA trimmed to any length by client since it's up to client
-         * to make sure provided data are good enough to avoid collisions when
-         * resuming upload.
-         */
-        imgr_state.data_sha_len = req.data_sha_len;
-        memcpy(imgr_state.data_sha, req.data_sha, req.data_sha_len);
-        memset(&imgr_state.data_sha[req.data_sha_len], 0,
-               IMGMGR_DATA_SHA_LEN - req.data_sha_len);
-
-#if MYNEWT_VAL(LOG_FCB_SLOT1)
-        /*
-         * If logging to slot1 is enabled, make sure it's locked before
-         * erasing so log handler does not corrupt our data.
-         */
-        if (imgr_state.area_id == FLASH_AREA_IMAGE_1) {
-            log_fcb_slot1_lock();
-        }
 #endif
-
-#if MYNEWT_VAL(IMGMGR_LAZY_ERASE)
-        /* setup for lazy sector by sector erase */
-        imgr_state.sector_id = -1;
-        imgr_state.sector_end = 0;
-#else
-        /* erase the entire req.size all at once */
-        if (action.erase) {
-            rc = flash_area_erase(fa, 0, req.size);
-            if (rc != 0) {
-                rc = MGMT_ERR_EUNKNOWN;
-                errstr = imgmgr_err_str_flash_erase_failed;
-            }
-        }
-#endif
-    }
-
-    /* Write the image data to flash. */
-    if (rc == 0 && req.data_len != 0) {
-#if MYNEWT_VAL(IMGMGR_LAZY_ERASE)
-        /* erase as we cross sector boundaries */
-        if (imgr_erase_if_needed(fa, req.off, action.write_bytes) != 0) {
-            rc = MGMT_ERR_EUNKNOWN;
-            errstr = imgmgr_err_str_flash_erase_failed;
-            goto end;
-        }
-#endif
-        rc = flash_area_write(fa, req.off, req.img_data, action.write_bytes);
-        if (rc != 0) {
-            imgmgr_dfu_stopped();
-            rc = MGMT_ERR_EUNKNOWN;
-            errstr = imgmgr_err_str_flash_write_failed;
-        } else {
-            imgr_state.off += action.write_bytes;
-            if (imgr_state.off == imgr_state.size) {
-                /* Done */
-                imgmgr_dfu_pending();
-                imgr_state.area_id = -1;
-            }
-        }
-    }
-
-#if MYNEWT_VAL(IMGMGR_LAZY_ERASE)
-end:
-#endif
-    flash_area_close(fa);
-
-    if (rc != 0) {
-        return imgr_error_rsp(cb, rc, errstr);
-    }
-
-    return imgr_upload_good_rsp(cb);
-}
 
 void
 imgmgr_dfu_stopped(void)
@@ -844,13 +625,10 @@ imgmgr_register_callbacks(const imgmgr_dfu_callbacks_t *cb_struct)
 void
 imgmgr_module_init(void)
 {
-    int rc;
-
     /* Ensure this function only gets called by sysinit. */
     SYSINIT_ASSERT_ACTIVE();
 
-    rc = mgmt_group_register(&imgr_nmgr_group);
-    SYSINIT_PANIC_ASSERT(rc == 0);
+    mgmt_register_group(&imgr_nmgr_group);
 
 #if MYNEWT_VAL(IMGMGR_CLI)
     rc = imgr_cli_register();
@@ -862,7 +640,7 @@ imgmgr_module_init(void)
      * If logging to slot1 is enabled, make sure we lock it if slot1 is in use
      * to prevent data corruption.
      */
-    if (imgmgr_state_slot_in_use(1)) {
+    if (img_mgmt_slot_in_use(1)) {
         log_fcb_slot1_lock();
     }
 #endif
