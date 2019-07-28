@@ -40,7 +40,8 @@ nrf52_clock_hfxo_request(void)
     assert(nrf52_clock_hfxo_refcnt < 0xff);
     if (nrf52_clock_hfxo_refcnt == 0) {
         /* Make sure that the HFXO has not previously been started manually */
-        assert(NRF_CLOCK->EVENTS_HFCLKSTARTED == 0);
+        assert((NRF_CLOCK->HFCLKSTAT & CLOCK_HFCLKSTAT_STATE_Msk) !=
+            (CLOCK_HFCLKSTAT_STATE_Running << CLOCK_HFCLKSTAT_STATE_Pos));
         NRF_CLOCK->EVENTS_HFCLKSTARTED = 0;
         NRF_CLOCK->TASKS_HFCLKSTART = 1;
         while (NRF_CLOCK->EVENTS_HFCLKSTARTED == 0);
