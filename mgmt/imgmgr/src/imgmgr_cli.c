@@ -37,6 +37,7 @@
 #include <parse/parse.h>
 
 #include "imgmgr/imgmgr.h"
+#include "img_mgtm/img_mgmt.h"
 #include "imgmgr_priv.h"
 
 static int imgr_cli_cmd(int argc, char **argv);
@@ -74,7 +75,7 @@ imgr_cli_flags_str(uint32_t image_flags, uint8_t state_flags)
     memset(buf, ' ', sizeof buf);
     p = buf;
 
-    if (state_flags & IMGMGR_STATE_F_ACTIVE) {
+    if (state_flags & IMG_MGMT_STATE_F_ACTIVE) {
         *p = 'a';
     }
     p++;
@@ -82,11 +83,11 @@ imgr_cli_flags_str(uint32_t image_flags, uint8_t state_flags)
         *p = 'b';
     }
     p++;
-    if (state_flags & IMGMGR_STATE_F_CONFIRMED) {
+    if (state_flags & IMG_MGMT_STATE_F_CONFIRMED) {
         *p = 'c';
     }
     p++;
-    if (state_flags & IMGMGR_STATE_F_PENDING) {
+    if (state_flags & IMG_MGMT_STATE_F_PENDING) {
         *p = 'p';
     }
     p++;
@@ -183,7 +184,7 @@ imgr_cli_set_pending(char *arg, int permanent)
         return;
     }
 
-    rc = imgmgr_state_set_pending(slot, permanent);
+    rc = img_mgmt_state_set_pending(slot, permanent);
     if (rc) {
         console_printf("Error setting slot %d to pending; rc=%d\n", slot, rc);
         return;
@@ -195,7 +196,7 @@ imgr_cli_confirm(void)
 {
     int rc;
 
-    rc = imgmgr_state_confirm();
+    rc = img_mgmt_state_confirm();
     if (rc != 0) {
         console_printf("Error confirming image state; rc=%d\n", rc);
         return;

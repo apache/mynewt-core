@@ -27,12 +27,6 @@
 extern "C" {
 #endif
 
-#define IMGMGR_MAX_IMGS		2
-
-#define IMGMGR_HASH_STR		48
-
-#define IMGMGR_DATA_SHA_LEN     32 /* SHA256 */
-
 /*
  * When accompanied by image, it's this structure followed by data.
  * Response contains just the offset.
@@ -90,8 +84,6 @@ struct mgmt_cbuf;
 int imgr_core_list(struct mgmt_ctxt *);
 int imgr_core_load(struct mgmt_ctxt *);
 int imgr_core_erase(struct mgmt_ctxt *);
-int imgmgr_state_read(struct mgmt_ctxt *mc);
-int imgmgr_state_write(struct mgmt_ctxt *mc);
 int imgr_find_by_ver(struct image_version *find, uint8_t *hash);
 int imgr_find_by_hash(uint8_t *find, struct image_version *ver);
 int imgr_cli_register(void);
