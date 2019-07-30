@@ -167,24 +167,19 @@ int bmp388_stream_read_cb(struct sensor * sensors, void *arg, void *data,
     struct sensor_temp_data *std;
     struct sensor_press_data *spd;
 
-    if (sensortype & SENSOR_TYPE_PRESSURE)
-    {
+    if (sensortype & SENSOR_TYPE_PRESSURE) {
         spd = (struct sensor_press_data *)data;
         sensor_ftostr(spd->spd_press, buffer_pressure, sizeof(buffer_pressure));
         console_printf("pressure = %s \n",
                 buffer_pressure);
     }
 
-    if (sensortype & SENSOR_TYPE_AMBIENT_TEMPERATURE)
-    {
+    if (sensortype & SENSOR_TYPE_TEMPERATURE) {
         std = (struct sensor_temp_data *)data;
         sensor_ftostr(std->std_temp, buffer_temperature, sizeof(buffer_temperature));
         console_printf("temperature = %s \n",
                 buffer_temperature);
     }
-
-
-
 
     ctx = (struct stream_read_context *)arg;
     ctx->count--;
@@ -227,7 +222,7 @@ bmp388_shell_cmd_stream_read(int argc, char **argv)
     console_printf("bmp388_shell_cmd_streamread!\n");
 
     return bmp388_stream_read(&(bmp388->sensor),
-                                SENSOR_TYPE_PRESSURE | SENSOR_TYPE_AMBIENT_TEMPERATURE,
+                                SENSOR_TYPE_PRESSURE | SENSOR_TYPE_TEMPERATURE,
                                 bmp388_stream_read_cb,
                                 &ctx,
                                 0);
@@ -277,7 +272,7 @@ bmp388_shell_cmd_poll_read(int argc, char **argv)
     if ((samples > 0) && (report_interval)) {
         while (samples != 0) {
             bmp388_poll_read(&(bmp388->sensor),
-                                SENSOR_TYPE_PRESSURE | SENSOR_TYPE_AMBIENT_TEMPERATURE,
+                                SENSOR_TYPE_PRESSURE | SENSOR_TYPE_TEMPERATURE,
                                 bmp388_stream_read_cb,
                                 &ctx,
                                 0);
