@@ -2997,24 +2997,27 @@ init_interrupt(struct bmp388_int *interrupt, struct sensor_int *ints)
 static void
 undo_interrupt(struct bmp388_int *interrupt)
 {
-    OS_ENTER_CRITICAL(interrupt->lock);
+    os_sr_t sr;
+
+    OS_ENTER_CRITICAL(sr);
     interrupt->active = false;
     interrupt->asleep = false;
-    OS_EXIT_CRITICAL(interrupt->lock);
+    OS_EXIT_CRITICAL(sr);
 }
 
 static int
 wait_interrupt(struct bmp388_int *interrupt, uint8_t int_num)
 {
+    os_sr_t sr;
     bool wait;
     os_error_t error;
 
-    OS_ENTER_CRITICAL(interrupt->lock);
+    OS_ENTER_CRITICAL(sr);
 
     /* Check if we did not missed interrupt */
     if (hal_gpio_read(interrupt->ints[int_num].host_pin) ==
         interrupt->ints[int_num].active) {
-        OS_EXIT_CRITICAL(interrupt->lock);
+        OS_EXIT_CRITICAL(sr);
         return OS_OK;
     }
 
@@ -3025,7 +3028,7 @@ wait_interrupt(struct bmp388_int *interrupt, uint8_t int_num)
         interrupt->asleep = true;
         wait = true;
     }
-    OS_EXIT_CRITICAL(interrupt->lock);
+    OS_EXIT_CRITICAL(sr);
 
     if (wait) {
         error = os_sem_pend(&interrupt->wait, BMP388_MAX_INT_WAIT);
@@ -3041,9 +3044,10 @@ wait_interrupt(struct bmp388_int *interrupt, uint8_t int_num)
 static void
 wake_interrupt(struct bmp388_int *interrupt)
 {
+    os_sr_t sr;
     bool wake;
 
-    OS_ENTER_CRITICAL(interrupt->lock);
+    OS_ENTER_CRITICAL(sr);
     if (interrupt->asleep) {
         interrupt->asleep = false;
         wake = true;
@@ -3051,7 +3055,7 @@ wake_interrupt(struct bmp388_int *interrupt)
         interrupt->active = true;
         wake = false;
     }
-    OS_EXIT_CRITICAL(interrupt->lock);
+    OS_EXIT_CRITICAL(sr);
 
     if (wake) {
         os_error_t error;

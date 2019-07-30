@@ -397,8 +397,6 @@ struct bmp388_cfg {
 
 /* Used to track interrupt state to wake any present waiters */
 struct bmp388_int {
-    /* Synchronize access to this structure */
-    os_sr_t lock;
     /* Sleep waiting for an interrupt to occur */
     struct os_sem wait;
     /* Is the interrupt currently active */
