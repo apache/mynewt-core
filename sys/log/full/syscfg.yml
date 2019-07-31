@@ -50,17 +50,6 @@ syscfg.defs:
         restrictions:
             - "!LOG_FCB"
 
-    LOG_FCB_SLOT1:
-        description: >
-            Support logging to FCB located in slot 1.
-            This is a thin wrapper over LOG_FCB which should be used if
-            destination FCB is located in slot 1 as it can detect when
-            a new image is uploaded to this slot and stop logging to
-            prevent data corruption.
-        value: 0
-        restrictions:
-            - "LOG_FCB"
-
     LOG_FCB_BOOKMARKS:
         description: >
             Enables the bookmarks optimization for FCB-backed log lookups.  To
@@ -132,7 +121,3 @@ syscfg.defs:
         description: >
             Primary sysinit stage for logging functionality.
         value: 100
-    LOG_SYSINIT_STAGE_SLOT1:
-        description: >
-            Sysinit stage for logging to the second image slot.
-        value: 101
