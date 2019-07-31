@@ -79,7 +79,7 @@
 #include "parse/parse.h"
 
 struct stream_read_context {
-    uint32_t count;
+    int count;
 };
 
 static int bmp388_shell_cmd(int argc, char **argv);
@@ -181,7 +181,9 @@ int bmp388_stream_read_cb(struct sensor * sensors, void *arg, void *data,
     }
 
     ctx = (struct stream_read_context *)arg;
-    ctx->count--;
+    if (--ctx->count <= 0) {
+        return 1;
+    }
 
     return 0;
 }
