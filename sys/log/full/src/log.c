@@ -33,6 +33,8 @@
 #include "shell/shell.h"
 #endif
 
+#include "imgmgr/imgmgr.h"
+
 struct log_info g_log_info;
 
 static STAILQ_HEAD(, log) g_log_list = STAILQ_HEAD_INITIALIZER(g_log_list);
@@ -492,6 +494,15 @@ log_append_prepare(struct log *log, uint8_t module, uint8_t level,
 #else
     assert(etype == LOG_ETYPE_STRING);
 #endif
+#if MYNEWT_VAL(LOG_VERSION) > 3
+
+#if MYNEWT_VAL(LOG_FLAGS_LOG_IMG_HASH)
+    uint8_t hash[IMGMGR_HASH_LEN];
+    imgr_read_info(0, NULL, hash, NULL);
+    memcpy(ue->ue_rsvd, hash, 4);
+#endif // MYNEWT_VAL(LOG_FLAGS_LOG_IMG_HASH)
+
+#endif // MYNEWT_VAL(LOG_VERSION) > 3
 
 err:
     return (rc);
