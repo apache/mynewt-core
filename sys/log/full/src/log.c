@@ -33,10 +33,17 @@
 #include "shell/shell.h"
 #endif
 
+struct log_module_entry {
+    int16_t id;
+    const char *name;
+};
+
 struct log_info g_log_info;
 
 static STAILQ_HEAD(, log) g_log_list = STAILQ_HEAD_INITIALIZER(g_log_list);
-static const char *g_log_module_list[ MYNEWT_VAL(LOG_MAX_USER_MODULES) ];
+static struct log_module_entry g_log_module_list[
+    MYNEWT_VAL(LOG_MAX_USER_MODULES)];
+static int g_log_module_count;
 static uint8_t log_written;
 
 #if MYNEWT_VAL(LOG_CLI)
@@ -130,7 +137,6 @@ log_init(void)
 
     (void)rc;
 
-    memset(g_log_module_list, 0, sizeof(g_log_module_list));
     log_written = 0;
 
     STAILQ_INIT(&g_log_list);
@@ -178,82 +184,91 @@ log_list_get_next(struct log *log)
     return (next);
 }
 
+static int
+log_module_find_idx(uint8_t id)
+{
+    const struct log_module_entry *entry;
+    int i;
+
+    for (i = 0; i < g_log_module_count; i++) {
+        entry = &g_log_module_list[i];
+        if (entry->id == id) {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
 uint8_t
 log_module_register(uint8_t id, const char *name)
 {
-    uint8_t idx;
+    int idx;
 
-    if (id == 0) {
-        /* Find free idx */
-        for (idx = 0;
-             idx < MYNEWT_VAL(LOG_MAX_USER_MODULES) && g_log_module_list[idx];
-             idx++) {
-        }
-
-        if (idx == MYNEWT_VAL(LOG_MAX_USER_MODULES)) {
-            /* No free idx */
-            return 0;
-        }
-    } else {
-        if ((id < LOG_MODULE_PERUSER) ||
-                (id >= LOG_MODULE_PERUSER + MYNEWT_VAL(LOG_MAX_USER_MODULES))) {
-            /* Invalid id */
-            return 0;
-        }
-
-        idx = id - LOG_MODULE_PERUSER;
-    }
-
-    if (g_log_module_list[idx]) {
-        /* Already registered with selected id */
+    if (g_log_module_count >= MYNEWT_VAL(LOG_MAX_USER_MODULES)) {
+        /* No free entries. */
         return 0;
     }
 
-    g_log_module_list[idx] = name;
+    idx = log_module_find_idx(id);
+    if (idx != -1) {
+        /* Already registered. */
+        return 0;
+    }
 
-    return idx + LOG_MODULE_PERUSER;
+    /* Write to first unused entry. */
+    g_log_module_list[g_log_module_count] = (struct log_module_entry) {
+        .id = id,
+        .name = name,
+    };
+    g_log_module_count++;
+
+    return id;
 }
 
 const char *
 log_module_get_name(uint8_t module)
 {
-    if (module < LOG_MODULE_PERUSER) {
-        switch (module) {
+    int idx;
+
+    switch (module) {
 #ifdef MYNEWT_VAL_DFLT_LOG_MOD
-        case MYNEWT_VAL(DFLT_LOG_MOD):
-            return "DEFAULT";
+    case MYNEWT_VAL(DFLT_LOG_MOD):
+        return "DEFAULT";
 #endif
 #ifdef MYNEWT_VAL_OS_LOG_MOD
-        case MYNEWT_VAL(OS_LOG_MOD):
-            return "OS";
+    case MYNEWT_VAL(OS_LOG_MOD):
+        return "OS";
 #endif
 #ifdef MYNEWT_VAL_BLE_LL_LOG_MOD
-        case MYNEWT_VAL(BLE_LL_LOG_MOD):
-            return "NIMBLE_CTLR";
+    case MYNEWT_VAL(BLE_LL_LOG_MOD):
+        return "NIMBLE_CTLR";
 #endif
 #ifdef MYNEWT_VAL_BLE_HS_LOG_MOD
-        case MYNEWT_VAL(BLE_HS_LOG_MOD):
-            return "NIMBLE_HOST";
+    case MYNEWT_VAL(BLE_HS_LOG_MOD):
+        return "NIMBLE_HOST";
 #endif
 #ifdef MYNEWT_VAL_NFFS_LOG_MOD
-        case MYNEWT_VAL(NFFS_LOG_MOD):
-            return "NFFS";
+    case MYNEWT_VAL(NFFS_LOG_MOD):
+        return "NFFS";
 #endif
 #ifdef MYNEWT_VAL_REBOOT_LOG_MOD
-        case MYNEWT_VAL(REBOOT_LOG_MOD):
-            return "REBOOT";
+    case MYNEWT_VAL(REBOOT_LOG_MOD):
+        return "REBOOT";
 #endif
 #ifdef MYNEWT_VAL_OC_LOG_MOD
-        case MYNEWT_VAL(OC_LOG_MOD):
-            return "IOTIVITY";
+    case MYNEWT_VAL(OC_LOG_MOD):
+        return "IOTIVITY";
 #endif
 #ifdef MYNEWT_VAL_TEST_LOG_MOD
-        case MYNEWT_VAL(TEST_LOG_MOD):
-            return "TEST";
+    case MYNEWT_VAL(TEST_LOG_MOD):
+        return "TEST";
 #endif
+    default:
+        idx = log_module_find_idx(module);
+        if (idx != -1) {
+            return g_log_module_list[idx].name;
         }
-    } else if (module - LOG_MODULE_PERUSER < MYNEWT_VAL(LOG_MAX_USER_MODULES)) {
-        return g_log_module_list[module - LOG_MODULE_PERUSER];
     }
 
     return NULL;

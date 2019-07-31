@@ -212,11 +212,7 @@ struct log *log_list_get_next(struct log *);
  *
  * This function associates user log module with given name.
  *
- * If \p id is non-zero, module is registered with selected id.
- * If \p id is zero, module id is selected automatically (first available).
- *
- * Up to `LOG_MAX_USER_MODULES` (syscfg) modules can be registered with ids
- * starting from `LOG_MODULE_PERUSER`.
+ * Up to `LOG_MAX_USER_MODULES` (syscfg) modules can be registered.
  *
  * @param id    Selected module id
  * @param name  Module name
