@@ -32,18 +32,8 @@
 #include "i2cn/i2cn.h"
 #include "hal/hal_spi.h"
 #endif
-#if MYNEWT_VAL(BMA253_LOG)
 #include "modlog/modlog.h"
-#endif
 #include "stats/stats.h"
-
-#if MYNEWT_VAL(BMA253_LOG)
-
-#define BMA253_LOG(lvl_, ...) \
-    MODLOG_ ## lvl_(MYNEWT_VAL(BMA253_LOG_MODULE), __VA_ARGS__)
-#else
-#define BMA253_LOG(lvl_, ...)
-#endif
 
 #define BMA253_NOTIFY_MASK  0x01
 #define BMA253_READ_MASK    0x02
@@ -280,7 +270,7 @@ wait_interrupt(struct bma253_int * interrupt, enum bma253_int_num int_num)
         os_error_t error;
 
         error = os_sem_pend(&interrupt->wait, -1);
-        BMA253_LOG(DEBUG, "bma253_int\n");
+        BMA253_LOG_DEBUG("bma253_int\n");
         if (OS_OK != error) {
             assert(0);
         }
@@ -365,7 +355,7 @@ spi_readlen(
     retval = hal_spi_tx_val(itf->si_num, addr | BMA253_SPI_READ_CMD_BIT);
     if (retval == 0xFFFF) {
         rc = SYS_EINVAL;
-        BMA253_LOG(ERROR, "SPI_%u register write failed addr:0x%02X\n",
+        BMA253_LOG_ERROR("SPI_%u register write failed addr:0x%02X\n",
                    itf->si_num, addr);
         goto err;
     }
@@ -375,7 +365,7 @@ spi_readlen(
         retval = hal_spi_tx_val(itf->si_num, 0);
         if (retval == 0xFFFF) {
             rc = SYS_EINVAL;
-            BMA253_LOG(ERROR, "SPI_%u read failed addr:0x%02X\n",
+            BMA253_LOG_ERROR("SPI_%u read failed addr:0x%02X\n",
                        itf->si_num, addr);
             goto err;
         }
@@ -413,7 +403,7 @@ i2c_readlen(
     rc = i2cn_master_write(itf->si_num, &oper, OS_TICKS_PER_SEC / 10, 0,
                            MYNEWT_VAL(BMA253_I2C_RETRIES));
     if (rc != 0) {
-        BMA253_LOG(ERROR, "I2C access failed at address 0x%02X\n", addr);
+        BMA253_LOG_ERROR("I2C access failed at address 0x%02X\n", addr);
         goto err;
     }
 
@@ -424,7 +414,7 @@ i2c_readlen(
     rc = i2cn_master_read(itf->si_num, &oper, OS_TICKS_PER_SEC / 10, 1,
                           MYNEWT_VAL(BMA253_I2C_RETRIES));
     if (rc != 0) {
-        BMA253_LOG(ERROR, "I2C read failed at address 0x%02X length %u err: %d\n",
+        BMA253_LOG_ERROR("I2C read failed at address 0x%02X length %u err: %d\n",
                    addr, size, rc);
     }
 
@@ -446,7 +436,7 @@ get_registers(struct bma253 * bma253,
 
     if (size > 0) {
     } else {
-        BMA253_LOG(ERROR, "try to read 0 byte at address 0x%02X\n", addr);
+        BMA253_LOG_ERROR("try to read 0 byte at address 0x%02X\n", addr);
         return SYS_EINVAL;
     }
 
@@ -462,10 +452,10 @@ get_registers(struct bma253 * bma253,
 
     if (0 == rc) {
         if (bma253->bus_rw_mon && (1 == size)) {
-            BMA253_LOG(DEBUG, "bus_read@0x%02X:%02X\n", addr, data[0]);
+            BMA253_LOG_DEBUG("bus_read@0x%02X:%02X\n", addr, data[0]);
         }
     } else {
-        BMA253_LOG(ERROR, "bus_read@0x%02X rc:%d\n", addr, rc);
+        BMA253_LOG_ERROR("bus_read@0x%02X rc:%d\n", addr, rc);
     }
 
 
@@ -498,7 +488,7 @@ spi_writereg(
     rc = hal_spi_tx_val(itf->si_num, addr);
     if (rc == 0xFFFF) {
         rc = SYS_EINVAL;
-        BMA253_LOG(ERROR, "SPI_%u register write failed addr:0x%02X\n",
+        BMA253_LOG_ERROR("SPI_%u register write failed addr:0x%02X\n",
                 itf->si_num, addr);
         goto err;
     }
@@ -507,7 +497,7 @@ spi_writereg(
     rc = hal_spi_tx_val(itf->si_num, data);
     if (rc == 0xFFFF) {
         rc = SYS_EINVAL;
-        BMA253_LOG(ERROR, "SPI_%u write failed addr:0x%02X:0x%02X\n",
+        BMA253_LOG_ERROR("SPI_%u write failed addr:0x%02X:0x%02X\n",
                 itf->si_num, addr);
         goto err;
     }
@@ -541,7 +531,7 @@ i2c_writereg(
     rc = i2cn_master_write(itf->si_num, &oper, OS_TICKS_PER_SEC / 10, 1,
                            MYNEWT_VAL(BMA253_I2C_RETRIES));
     if (rc != 0) {
-        BMA253_LOG(ERROR, "I2C write failed at address 0x%02X single byte\n",
+        BMA253_LOG_ERROR("I2C write failed at address 0x%02X single byte\n",
                    addr);
     }
 
@@ -589,10 +579,10 @@ done:
 #endif
    if (0 == rc) {
        if (bma253->bus_rw_mon) {
-           BMA253_LOG(DEBUG, "bus_write@0x%02X:%02X\n", addr, data);
+           BMA253_LOG_DEBUG("bus_write@0x%02X:%02X\n", addr, data);
        }
    } else {
-       BMA253_LOG(ERROR, "bus_write@0x%02X:%02X rc:%d\n", addr, data, rc);
+       BMA253_LOG_ERROR("bus_write@0x%02X:%02X rc:%d\n", addr, data, rc);
    }
 
     if (!rc) {
@@ -765,20 +755,20 @@ quad_to_axis_trigger(struct axis_trigger * axis_trigger,
         case 0x01:
             axis_trigger->axis = AXIS_X;
             axis_trigger->axis_known = true;
-            BMA253_LOG(INFO, "tap from %c X axis\n", axis_trigger->sign ? '+' : '-');
+            BMA253_LOG_INFO("tap from %c X axis\n", axis_trigger->sign ? '+' : '-');
             break;
         case (1 << 1):
             axis_trigger->axis = AXIS_Y;
             axis_trigger->axis_known = true;
-            BMA253_LOG(INFO, "tap from %c Y axis\n", axis_trigger->sign ? '+' : '-');
+            BMA253_LOG_INFO("tap from %c Y axis\n", axis_trigger->sign ? '+' : '-');
             break;
         case (1 << 2):
             axis_trigger->axis = AXIS_Z;
             axis_trigger->axis_known = true;
-            BMA253_LOG(INFO, "tap from %c Z axis\n", axis_trigger->sign ? '+' : '-');
+            BMA253_LOG_INFO("tap from %c Z axis\n", axis_trigger->sign ? '+' : '-');
             break;
         default:
-            BMA253_LOG(INFO, "unknown %s quad bits 0x%02X\n",
+            BMA253_LOG_INFO("unknown %s quad bits 0x%02X\n",
                     name_bits, quad_bits);
             axis_trigger->axis = -1;
             axis_trigger->axis_known = false;
@@ -853,7 +843,7 @@ bma253_get_g_range(const struct bma253 * bma253,
 
     switch (data & 0x0F) {
     default:
-        BMA253_LOG(ERROR, "unknown PMU_RANGE reg value 0x%02X\n", data);
+        BMA253_LOG_ERROR("unknown PMU_RANGE reg value 0x%02X\n", data);
         *g_range = BMA253_G_RANGE_16;
         break;
     case 0x03:
@@ -994,7 +984,7 @@ bma253_get_power_settings(const struct bma253 * bma253,
 
     switch ((data[0] >> 5) & 0x07) {
     default:
-        BMA253_LOG(ERROR, "unknown PMU_LPW reg value 0x%02X\n", data[0]);
+        BMA253_LOG_ERROR("unknown PMU_LPW reg value 0x%02X\n", data[0]);
         power_settings->power_mode = BMA253_POWER_MODE_NORMAL;
         break;
     case 0x00:
@@ -1685,7 +1675,7 @@ bma253_set_int_latch(const struct bma253 * bma253,
 {
     uint8_t data;
 
-    BMA253_LOG(ERROR, "bma253_set_int_latch: %d reset: %d\n", int_latch, reset_ints);
+    BMA253_LOG_ERROR("bma253_set_int_latch: %d reset: %d\n", int_latch, reset_ints);
 
     data = 0;
     data |= reset_ints << 7;
@@ -1898,7 +1888,7 @@ bma253_set_high_g_int_cfg(const struct bma253 * bma253,
     data[0] = ((uint8_t)(high_g_int_cfg->hyster_g / hyster_scale) & 0x03) << 6;
     data[1] = (high_g_int_cfg->delay_ms >> 1) - 1;
     data[2] = high_g_int_cfg->thresh_g / thresh_scale;
-    BMA253_LOG(INFO, "set high g INT setting: 0x%x : %d 0x%x : %d 0x%x : %d\n", data[0], data[1], data[2]);
+    BMA253_LOG_INFO("set high g INT setting: 0x%x : %d 0x%x : %d 0x%x : %d\n", data[0], data[1], data[2]);
 
     rc = set_register((struct bma253 *)bma253, REG_ADDR_INT_2, data[0]);
     if (rc != 0) {
@@ -2043,12 +2033,12 @@ bma253_set_slow_no_mot_int_cfg(const struct bma253 * bma253,
     data[1] = slow_no_mot_int_cfg->thresh_g / thresh_scale;
 
     rc = set_register((struct bma253 *)bma253, REG_ADDR_INT_5, data[0]);
-    BMA253_LOG(ERROR, "set sleep INT setting: 0x%x rc: %d\n", data[0], rc);
+    BMA253_LOG_ERROR("set sleep INT setting: 0x%x rc: %d\n", data[0], rc);
     if (rc != 0) {
         return rc;
     }
     rc = set_register((struct bma253 *)bma253, REG_ADDR_INT_7, data[1]);
-    BMA253_LOG(ERROR, "set sleep INT setting: 0x%x rc: %d\n", data[1], rc);
+    BMA253_LOG_ERROR("set sleep INT setting: 0x%x rc: %d\n", data[1], rc);
     if (rc != 0) {
         return rc;
     }
@@ -2578,7 +2568,7 @@ bma253_enable_notify_interrupt(struct bma253_notif_cfg *notif_cfg,
     /* Configure route */
     rc = bma253_get_int_routes(bma253, &int_routes);
     if (rc != 0) {
-        BMA253_LOG(ERROR, "error bma253_get_int_routes: %d\n", rc);
+        BMA253_LOG_ERROR("error bma253_get_int_routes: %d\n", rc);
         return rc;
     }
     cfg = &bma253->cfg;
@@ -2696,7 +2686,7 @@ bma253_enable_notify_interrupt(struct bma253_notif_cfg *notif_cfg,
         orient_int_cfg.orient_mode = cfg->orient_int_cfg.orient_mode;
         orient_int_cfg.orient_blocking = cfg->orient_int_cfg.orient_blocking;
         rc = bma253_set_orient_int_cfg(bma253, &orient_int_cfg);
-        BMA253_LOG(ERROR, "set ORIENT INT seting: %d\n", rc);
+        BMA253_LOG_ERROR("set ORIENT INT seting: %d\n", rc);
     }
 
     /*set parameter for int*/
@@ -2705,7 +2695,7 @@ bma253_enable_notify_interrupt(struct bma253_notif_cfg *notif_cfg,
         slow_no_mot_int_cfg.thresh_g = cfg->slow_no_mot_int_cfg.thresh_g;
         rc = bma253_set_slow_no_mot_int_cfg(bma253, true, &slow_no_mot_int_cfg);
         if (rc != 0) {
-            BMA253_LOG(ERROR, "set sleep INT setting: %d\n", rc);
+            BMA253_LOG_ERROR("set sleep INT setting: %d\n", rc);
         }
     }
 
@@ -2714,7 +2704,7 @@ bma253_enable_notify_interrupt(struct bma253_notif_cfg *notif_cfg,
         slope_int_cfg.thresh_g = cfg->slope_int_cfg.thresh_g;
         rc = bma253_set_slope_int_cfg(bma253, &slope_int_cfg);
         if (rc != 0) {
-            BMA253_LOG(ERROR, "set wakeup INT setting: %d\n", rc);
+            BMA253_LOG_ERROR("set wakeup INT setting: %d\n", rc);
         }
     }
 
@@ -2729,7 +2719,7 @@ bma253_enable_notify_interrupt(struct bma253_notif_cfg *notif_cfg,
         high_g_int_cfg.thresh_g = cfg->high_g_int_cfg.thresh_g;
         rc = bma253_set_high_g_int_cfg(bma253, &high_g_int_cfg);
         if (rc != 0) {
-            BMA253_LOG(ERROR, "set high g INT setting: %d\n", rc);
+            BMA253_LOG_ERROR("set high g INT setting: %d\n", rc);
         }
     }
 
@@ -2748,7 +2738,7 @@ bma253_disable_notify_interrupt(struct bma253_notif_cfg *notif_cfg,
     /* Configure route */
     rc = bma253_get_int_routes(bma253, &int_routes);
     if (rc != 0) {
-        BMA253_LOG(ERROR, "error bma253_get_int_routes: %d\n", rc);
+        BMA253_LOG_ERROR("error bma253_get_int_routes: %d\n", rc);
         return rc;
     }
     switch (notif_cfg->int_cfg)
@@ -2802,7 +2792,7 @@ bma253_disable_notify_interrupt(struct bma253_notif_cfg *notif_cfg,
     {
     case BMA253_DOUBLE_TAP_INT:
         int_enable.d_tap_int_enable = false;
-        BMA253_LOG(ERROR, "set double INT enable: %d\n", rc);
+        BMA253_LOG_ERROR("set double INT enable: %d\n", rc);
         break;
     case BMA253_SINGLE_TAP_INT:
         int_enable.s_tap_int_enable = false;
@@ -3371,7 +3361,7 @@ bma253_get_fifo_cfg(const struct bma253 * bma253,
 
     switch ((data >> 6) & 0x03) {
     case 0x03:
-        BMA253_LOG(ERROR, "unknown FIFO_CONFIG_1 reg value 0x%02X\n", data);
+        BMA253_LOG_ERROR("unknown FIFO_CONFIG_1 reg value 0x%02X\n", data);
     case 0x00:
         fifo_cfg->fifo_mode = FIFO_MODE_BYPASS;
         break;
@@ -3494,7 +3484,7 @@ bma253_read_and_handle_fifo_data(struct bma253 *bma253,
     if (0 == rc) {
         if (!ff_or) {
         } else {
-            BMA253_LOG(WARN, "fifo_overrun: 0x%x\n", ff_frm_cnt);
+            BMA253_LOG_WARN("fifo_overrun: 0x%x\n", ff_frm_cnt);
             /* force the frame counter to be the max */
             ff_frm_cnt = SPEC_MAX_FIFO_DEPTH;
         }
@@ -3884,7 +3874,7 @@ init_intpin(struct bma253 * bma253,
     }
 
     if (pin < 0) {
-        BMA253_LOG(ERROR, "Interrupt pin not configured\n");
+        BMA253_LOG_ERROR("Interrupt pin not configured\n");
         return SYS_EINVAL;
     }
 
@@ -3900,7 +3890,7 @@ init_intpin(struct bma253 * bma253,
     } else if (bma253->sensor.s_itf.si_ints[pdd->int_num].device_pin == 2) {
         pdd->int_route = INT_ROUTE_PIN_2;
     } else {
-        BMA253_LOG(ERROR, "Route not configured\n");
+        BMA253_LOG_ERROR("Route not configured\n");
         return SYS_EINVAL;
     }
 
@@ -4283,7 +4273,7 @@ axis_offset_compensation(const struct bma253 * bma253,
     }
 
     if (!ready) {
-        BMA253_LOG(ERROR, "offset compensation already in progress\n");
+        BMA253_LOG_ERROR("offset compensation already in progress\n");
         return SYS_ETIMEOUT;
     }
 
@@ -4308,7 +4298,7 @@ axis_offset_compensation(const struct bma253 * bma253,
     }
 
     if (count == 0) {
-        BMA253_LOG(ERROR, "offset compensation did not complete\n");
+        BMA253_LOG_ERROR("offset compensation did not complete\n");
         return SYS_ETIMEOUT;
     }
 
@@ -4427,15 +4417,15 @@ bma253_query_offsets(struct bma253 * bma253,
 
     mismatch = false;
     if (cfg->offset_x_g != val_offset_x_g) {
-        BMA253_LOG(ERROR, "X compensation offset value mismatch\n");
+        BMA253_LOG_ERROR("X compensation offset value mismatch\n");
         mismatch = true;
     }
     if (cfg->offset_y_g != val_offset_y_g) {
-        BMA253_LOG(ERROR, "Y compensation offset value mismatch\n");
+        BMA253_LOG_ERROR("Y compensation offset value mismatch\n");
         mismatch = true;
     }
     if (cfg->offset_z_g != val_offset_z_g) {
-        BMA253_LOG(ERROR, "Z compensation offset value mismatch\n");
+        BMA253_LOG_ERROR("Z compensation offset value mismatch\n");
         mismatch = true;
     }
 
@@ -4743,7 +4733,7 @@ bma253_wait_for_orient(struct bma253 * bma253,
     pdd = &bma253->pdd;
 
     if (pdd->interrupt) {
-        BMA253_LOG(ERROR, "Interrupt used\n");
+        BMA253_LOG_ERROR("Interrupt used\n");
         return SYS_EINVAL;
     }
 
@@ -4820,7 +4810,7 @@ bma253_wait_for_high_g(struct bma253 * bma253)
     pdd = &bma253->pdd;
 
     if (pdd->interrupt) {
-        BMA253_LOG(ERROR, "Interrupt used\n");
+        BMA253_LOG_ERROR("Interrupt used\n");
         return SYS_EINVAL;
     }
 
@@ -4892,7 +4882,7 @@ bma253_wait_for_low_g(struct bma253 * bma253)
     pdd = &bma253->pdd;
 
     if (pdd->interrupt) {
-        BMA253_LOG(ERROR, "Interrupt used\n");
+        BMA253_LOG_ERROR("Interrupt used\n");
         return SYS_EINVAL;
     }
 
@@ -4995,7 +4985,7 @@ bma253_wait_for_tap(struct bma253 * bma253,
     }
 
     if (pdd->interrupt) {
-        BMA253_LOG(ERROR, "Interrupt used\n");
+        BMA253_LOG_ERROR("Interrupt used\n");
         return SYS_EINVAL;
     }
 
@@ -5536,7 +5526,7 @@ sensor_driver_set_notification(struct sensor * sensor,
     struct bma253_private_driver_data *pdd;
     struct bma253_notif_cfg *notif_cfg;
 
-    BMA253_LOG(ERROR, "dd_set_notify %d\n", sensor_event_type);
+    BMA253_LOG_ERROR("dd_set_notify %d\n", sensor_event_type);
 
     if ((sensor_event_type & ~(SENSOR_EVENT_TYPE_DOUBLE_TAP |
                                SENSOR_EVENT_TYPE_SINGLE_TAP |
@@ -5597,7 +5587,7 @@ if ((sensor_event_type != SENSOR_EVENT_TYPE_DOUBLE_TAP) &&
 
 done:
     if (rc != 0) {
-        BMA253_LOG(ERROR, "error setting notification: %d\n", rc);
+        BMA253_LOG_ERROR("error setting notification: %d\n", rc);
         pdd->notify_ctx.snec_evtype &= ~sensor_event_type;
         pdd->registered_mask &= ~BMA253_NOTIFY_MASK;
         disable_intpin(bma253);
@@ -5625,15 +5615,15 @@ sensor_driver_handle_interrupt(struct sensor * sensor)
     bma253 = (struct bma253 *)SENSOR_GET_DEVICE(sensor);
     pdd = &bma253->pdd;
 
-    BMA253_LOG(DEBUG, "!!!bma253_isr\n");
+    BMA253_LOG_DEBUG("!!!bma253_isr\n");
 
     rc = bma253_get_int_status(bma253, &int_status);
     if (rc != 0) {
-        BMA253_LOG(ERROR, "Cound not read int status err=0x%02x\n", rc);
+        BMA253_LOG_ERROR("Cound not read int status err=0x%02x\n", rc);
         return rc;
     }
-    BMA253_LOG(INFO, "read int status =0x%x\n", int_status.int_status_0.reg);
-    BMA253_LOG(INFO, "read int status3 =0x%x\n", int_status.int_status_3.reg);
+    BMA253_LOG_INFO("read int status =0x%x\n", int_status.int_status_0.reg);
+    BMA253_LOG_INFO("read int status3 =0x%x\n", int_status.int_status_3.reg);
 
     if (pdd->registered_mask & BMA253_NOTIFY_MASK) {
 
@@ -5710,7 +5700,7 @@ bma253_config(struct bma253 * bma253, struct bma253_cfg * cfg)
         return rc;
     }
     if (chip_id != REG_VALUE_CHIP_ID) {
-        BMA253_LOG(ERROR, "received incorrect chip ID 0x%02X\n", chip_id);
+        BMA253_LOG_ERROR("received incorrect chip ID 0x%02X\n", chip_id);
         return SYS_EINVAL;
     }
 
@@ -5736,7 +5726,7 @@ bma253_config(struct bma253 * bma253, struct bma253_cfg * cfg)
         bma253->cfg.max_num_notif = cfg->max_num_notif;
     }
 
-    BMA253_LOG(ERROR, "bma253->cfg.max_num_notif %d\n", bma253->cfg.max_num_notif);
+    BMA253_LOG_ERROR("bma253->cfg.max_num_notif %d\n", bma253->cfg.max_num_notif);
     return 0;
 }
 

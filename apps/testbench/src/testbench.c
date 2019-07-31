@@ -150,7 +150,7 @@ main(int argc, char **argv)
                  TESTTASK_PRIO, OS_WAIT_FOREVER, teststack,
                  TESTTASK_STACK_SIZE);
 
-    MODLOG_INFO(LOG_MODULE_TEST, "testbench app initialized");
+    TEST_LOG_INFO("testbench app initialized");
 
     while (1) {
         os_eventq_run(os_eventq_dflt_get());

@@ -29,9 +29,7 @@
 #include "drv2605_priv.h"
 #include <syscfg/syscfg.h>
 
-#if MYNEWT_VAL(DRV2605_LOG)
 #include "modlog/modlog.h"
-#endif
 
 #if MYNEWT_VAL(DRV2605_STATS)
 #include "stats/stats.h"
@@ -50,13 +48,6 @@ STATS_NAME_END(drv2605_stat_section)
 
 /* Global variable used to hold stats data */
 STATS_SECT_DECL(drv2605_stat_section) g_drv2605stats;
-#endif
-
-#if MYNEWT_VAL(DRV2605_LOG)
-#define DRV2605_LOG(lvl_, ...) \
-    MODLOG_ ## lvl_(MYNEWT_VAL(DRV2605_LOG_MODULE), __VA_ARGS__)
-#else
-#define DRV2605_LOG(lvl_, ...)
 #endif
 
 /**
@@ -88,7 +79,7 @@ drv2605_write8(struct sensor_itf *itf, uint8_t reg, uint8_t value)
     rc = i2cn_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC, 1,
                            MYNEWT_VAL(DRV2605_I2C_RETRIES));
     if (rc) {
-        DRV2605_LOG(ERROR,
+        DRV2605_LOG_ERROR(
                     "Failed to write to 0x%02X:0x%02X with value 0x%02X\n",
                     data_struct.address, reg, value);
 #if MYNEWT_VAL(DRV2605_STATS)
@@ -140,7 +131,7 @@ drv2605_writelen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
     rc = i2cn_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1,
                            MYNEWT_VAL(DRV2605_I2C_RETRIES));
     if (rc) {
-        DRV2605_LOG(ERROR, "I2C access failed at address 0x%02X\n",
+        DRV2605_LOG_ERROR("I2C access failed at address 0x%02X\n",
                     data_struct.address);
 #if MYNEWT_VAL(DRV2605_STATS)
         STATS_INC(g_drv2605stats, errors);
@@ -185,7 +176,7 @@ drv2605_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
     rc = i2cn_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 0,
                            MYNEWT_VAL(DRV2605_I2C_RETRIES));
     if (rc) {
-        DRV2605_LOG(ERROR,
+        DRV2605_LOG_ERROR(
                     "I2C register write failed at address 0x%02X:0x%02X\n",
                     data_struct.address, reg);
 #if MYNEWT_VAL(DRV2605_STATS)
@@ -200,7 +191,7 @@ drv2605_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
                           MYNEWT_VAL(DRV2605_I2C_RETRIES));
     *value = payload;
     if (rc) {
-        DRV2605_LOG(ERROR, "Failed to read from 0x%02X:0x%02X\n",
+        DRV2605_LOG_ERROR("Failed to read from 0x%02X:0x%02X\n",
                     data_struct.address, reg);
 #if MYNEWT_VAL(DRV2605_STATS)
         STATS_INC(g_drv2605stats, errors);
@@ -250,7 +241,7 @@ drv2605_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
     rc = i2cn_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 0,
                            MYNEWT_VAL(DRV2605_I2C_RETRIES));
     if (rc) {
-        DRV2605_LOG(ERROR, "I2C access failed at address 0x%02X\n",
+        DRV2605_LOG_ERROR("I2C access failed at address 0x%02X\n",
                     data_struct.address);
 #if MYNEWT_VAL(DRV2605_STATS)
         STATS_INC(g_drv2605stats, errors);
@@ -264,7 +255,7 @@ drv2605_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
     rc = i2cn_master_read(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1,
                           MYNEWT_VAL(DRV2605_I2C_RETRIES));
     if (rc) {
-        DRV2605_LOG(ERROR, "Failed to read from 0x%02X:0x%02X\n",
+        DRV2605_LOG_ERROR("Failed to read from 0x%02X:0x%02X\n",
                     data_struct.address, reg);
 #if MYNEWT_VAL(DRV2605_STATS)
         STATS_INC(g_drv2605stats, errors);
@@ -346,7 +337,7 @@ drv2605_init(struct os_dev *dev, void *arg)
     /* Check if we can read the chip address */
     rc = drv2605_get_chip_id(arg, &id);
     if (rc) {
-        DRV2605_LOG(ERROR, "unable to get chip id [1]: %d\n", rc);
+        DRV2605_LOG_ERROR("unable to get chip id [1]: %d\n", rc);
         goto err;
     }
 
@@ -355,13 +346,13 @@ drv2605_init(struct os_dev *dev, void *arg)
 
         rc = drv2605_get_chip_id(arg, &id);
         if (rc) {
-            DRV2605_LOG(ERROR, "unable to get chip id [2]: %d\n", rc);
+            DRV2605_LOG_ERROR("unable to get chip id [2]: %d\n", rc);
             goto err;
         }
 
         if (id != DRV2605_STATUS_DEVICE_ID_2605 && id != DRV2605_STATUS_DEVICE_ID_2605L) {
             rc = SYS_EINVAL;
-            DRV2605_LOG(ERROR,
+            DRV2605_LOG_ERROR(
                         "id not as expected: got: %d, expected %d or %d\n", id,
                         DRV2605_STATUS_DEVICE_ID_2605,
                         DRV2605_STATUS_DEVICE_ID_2605L);
@@ -371,7 +362,7 @@ drv2605_init(struct os_dev *dev, void *arg)
 
     return (0);
 err:
-    DRV2605_LOG(ERROR, "Error initializing DRV2605: %d\n", rc);
+    DRV2605_LOG_ERROR("Error initializing DRV2605: %d\n", rc);
     return (rc);
 }
 

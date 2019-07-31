@@ -65,9 +65,6 @@ STATS_NAME_END(ms5837_stat_section)
 /* Global variable used to hold stats data */
 STATS_SECT_DECL(ms5837_stat_section) g_ms5837stats;
 
-#define MS5837_LOG(lvl_, ...) \
-    MODLOG_ ## lvl_(MYNEWT_VAL(MS5837_LOG_MODULE), __VA_ARGS__)
-
 /* Exports for the sensor API */
 static int ms5837_sensor_read(struct sensor *, sensor_type_t,
         sensor_data_func_t, void *, uint32_t);
@@ -348,7 +345,7 @@ ms5837_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
     rc = i2cn_master_write(itf->si_num, &data_struct, MYNEWT_VAL(MS5837_I2C_TIMEOUT_TICKS), 1,
                            MYNEWT_VAL(MS5837_I2C_RETRIES));
     if (rc) {
-        MS5837_LOG(ERROR, "I2C write command write failed at address 0x%02X\n",
+        MS5837_LOG_ERROR("I2C write command write failed at address 0x%02X\n",
                    data_struct.address);
         STATS_INC(g_ms5837stats, write_errors);
     }
@@ -397,7 +394,7 @@ ms5837_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
     rc = i2cn_master_write(itf->si_num, &data_struct, MYNEWT_VAL(MS5837_I2C_TIMEOUT_TICKS), 1,
                            MYNEWT_VAL(MS5837_I2C_RETRIES));
     if (rc) {
-        MS5837_LOG(ERROR, "I2C read command write failed at address 0x%02X\n",
+        MS5837_LOG_ERROR("I2C read command write failed at address 0x%02X\n",
                    data_struct.address);
         STATS_INC(g_ms5837stats, write_errors);
         goto err;
@@ -409,7 +406,7 @@ ms5837_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
     rc = i2cn_master_read(itf->si_num, &data_struct, MYNEWT_VAL(MS5837_I2C_TIMEOUT_TICKS), 1,
                           MYNEWT_VAL(MS5837_I2C_RETRIES));
     if (rc) {
-        MS5837_LOG(ERROR, "Failed to read from 0x%02X:0x%02X\n",
+        MS5837_LOG_ERROR("Failed to read from 0x%02X:0x%02X\n",
                    data_struct.address, addr);
         STATS_INC(g_ms5837stats, read_errors);
         goto err;
@@ -455,7 +452,7 @@ ms5837_read_eeprom(struct sensor_itf *itf, uint16_t *coeff)
     rc = ms5837_crc_check(payload, (payload[MS5837_IDX_CRC] & 0xF000) >> 12);
     if (rc) {
         rc = SYS_EINVAL;
-        MS5837_LOG(ERROR, "Failure in CRC, 0x%02X\n",
+        MS5837_LOG_ERROR("Failure in CRC, 0x%02X\n",
                    payload[MS5837_IDX_CRC] &  0xF000 >> 12);
         STATS_INC(g_ms5837stats, eeprom_crc_errors);
         goto err;

@@ -37,9 +37,6 @@ syscfg.defs:
     DPS368_ITF_LOCK_TMO:
         description: 'DPS368 interface lock timeout in milliseconds'
         value: 1000
-    DPS368_LOG_MODULE:
-        description: 'Numeric module ID to use for DPS368 log messages'
-        value: 36
     DPS368_I2C_RETRIES:
         description: >
             Number of retries to use for failed I2C communication.  A retry is
@@ -64,3 +61,18 @@ syscfg.defs:
     DPS368_DFLT_CONF_MODE:
         description: 'Default Mode for sensor: Valid values are 0, 1,2,5,6,7. Refere enum in driver package'
         value: 7 #Background for both P and T
+
+    ### Log settings.
+
+    DPS368_LOG_MODULE:
+        description: 'Numeric module ID to use for DPS368 log messages.'
+        value: 36
+    DPS368_LOG_LVL:
+        description: 'Minimum level for the DPS368 log.'
+        value: 1
+
+syscfg.logs:
+    DPS368_LOG:
+        module: MYNEWT_VAL(DPS368_LOG_MODULE)
+        level: MYNEWT_VAL(DPS368_LOG_LVL)
+

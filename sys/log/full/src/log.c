@@ -219,24 +219,38 @@ log_module_get_name(uint8_t module)
 {
     if (module < LOG_MODULE_PERUSER) {
         switch (module) {
-        case LOG_MODULE_DEFAULT:
+#ifdef MYNEWT_VAL_DFLT_LOG_MOD
+        case MYNEWT_VAL(DFLT_LOG_MOD):
             return "DEFAULT";
-        case LOG_MODULE_OS:
+#endif
+#ifdef MYNEWT_VAL_OS_LOG_MOD
+        case MYNEWT_VAL(OS_LOG_MOD):
             return "OS";
-        case LOG_MODULE_NEWTMGR:
-            return "NEWTMGR";
-        case LOG_MODULE_NIMBLE_CTLR:
+#endif
+#ifdef MYNEWT_VAL_BLE_LL_LOG_MOD
+        case MYNEWT_VAL(BLE_LL_LOG_MOD):
             return "NIMBLE_CTLR";
-        case LOG_MODULE_NIMBLE_HOST:
+#endif
+#ifdef MYNEWT_VAL_BLE_HS_LOG_MOD
+        case MYNEWT_VAL(BLE_HS_LOG_MOD):
             return "NIMBLE_HOST";
-        case LOG_MODULE_NFFS:
+#endif
+#ifdef MYNEWT_VAL_NFFS_LOG_MOD
+        case MYNEWT_VAL(NFFS_LOG_MOD):
             return "NFFS";
-        case LOG_MODULE_REBOOT:
+#endif
+#ifdef MYNEWT_VAL_REBOOT_LOG_MOD
+        case MYNEWT_VAL(REBOOT_LOG_MOD):
             return "REBOOT";
-        case LOG_MODULE_IOTIVITY:
+#endif
+#ifdef MYNEWT_VAL_OC_LOG_MOD
+        case MYNEWT_VAL(OC_LOG_MOD):
             return "IOTIVITY";
-        case LOG_MODULE_TEST:
+#endif
+#ifdef MYNEWT_VAL_TEST_LOG_MOD
+        case MYNEWT_VAL(TEST_LOG_MOD):
             return "TEST";
+#endif
         }
     } else if (module - LOG_MODULE_PERUSER < MYNEWT_VAL(LOG_MAX_USER_MODULES)) {
         return g_log_module_list[module - LOG_MODULE_PERUSER];

@@ -50,9 +50,6 @@ STATS_NAME_END(bno055_stat_section)
 /* Global variable used to hold stats data */
 STATS_SECT_DECL(bno055_stat_section) g_bno055stats;
 
-#define BNO055_LOG(lvl_, ...) \
-    MODLOG_ ## lvl_(MYNEWT_VAL(BNO055_LOG_MODULE), __VA_ARGS__)
-
 /* Exports for the sensor API.*/
 static int bno055_sensor_read(struct sensor *, sensor_type_t,
         sensor_data_func_t, void *, uint32_t);
@@ -88,7 +85,7 @@ bno055_write8(struct sensor_itf *itf, uint8_t reg, uint8_t value)
     rc = i2cn_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC, 1,
                            MYNEWT_VAL(BNO055_I2C_RETRIES));
     if (rc) {
-        BNO055_LOG(ERROR,
+        BNO055_LOG_ERROR(
                    "Failed to write to 0x%02X:0x%02X with value 0x%02X\n",
                    data_struct.address, reg, value);
         STATS_INC(g_bno055stats, errors);
@@ -136,7 +133,7 @@ bno055_writelen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
     rc = i2cn_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1,
                            MYNEWT_VAL(BNO055_I2C_RETRIES));
     if (rc) {
-        BNO055_LOG(ERROR, "I2C access failed at address 0x%02X\n",
+        BNO055_LOG_ERROR("I2C access failed at address 0x%02X\n",
                    data_struct.address);
         STATS_INC(g_bno055stats, errors);
         goto err;
@@ -147,7 +144,7 @@ bno055_writelen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
     rc = i2cn_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10,
                            len, MYNEWT_VAL(BNO055_I2C_RETRIES));
     if (rc) {
-        BNO055_LOG(ERROR, "Failed to read from 0x%02X:0x%02X\n",
+        BNO055_LOG_ERROR("Failed to read from 0x%02X:0x%02X\n",
                    data_struct.address, reg);
         STATS_INC(g_bno055stats, errors);;
     }
@@ -189,7 +186,7 @@ bno055_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
     rc = i2cn_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 0,
                            MYNEWT_VAL(BNO055_I2C_RETRIES));
     if (rc) {
-        BNO055_LOG(ERROR,
+        BNO055_LOG_ERROR(
                    "I2C register write failed at address 0x%02X:0x%02X\n",
                    data_struct.address, reg);
         STATS_INC(g_bno055stats, errors);
@@ -202,7 +199,7 @@ bno055_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
                           MYNEWT_VAL(BNO055_I2C_RETRIES));
     *value = payload;
     if (rc) {
-        BNO055_LOG(ERROR, "Failed to read from 0x%02X:0x%02X\n",
+        BNO055_LOG_ERROR("Failed to read from 0x%02X:0x%02X\n",
                    data_struct.address, reg);
         STATS_INC(g_bno055stats, errors);
     }
@@ -250,7 +247,7 @@ bno055_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
     rc = i2cn_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1,
                            MYNEWT_VAL(BNO055_I2C_RETRIES));
     if (rc) {
-        BNO055_LOG(ERROR, "I2C access failed at address 0x%02X\n",
+        BNO055_LOG_ERROR("I2C access failed at address 0x%02X\n",
                    data_struct.address);
         STATS_INC(g_bno055stats, errors);
         goto err;
@@ -262,7 +259,7 @@ bno055_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
     rc = i2cn_master_read(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1,
                           MYNEWT_VAL(BNO055_I2C_RETRIES));
     if (rc) {
-        BNO055_LOG(ERROR, "Failed to read from 0x%02X:0x%02X\n",
+        BNO055_LOG_ERROR("Failed to read from 0x%02X:0x%02X\n",
                    data_struct.address, reg);
         STATS_INC(g_bno055stats, errors);
     }
@@ -649,7 +646,7 @@ bno055_placement_cfg(struct sensor_itf *itf, uint8_t placement)
         remap_sign = BNO055_REMAP_SIGN_P7;
         break;
     default:
-        BNO055_LOG(ERROR, "Invalid Axis config, Assuming P1(default) \n");
+        BNO055_LOG_ERROR("Invalid Axis config, Assuming P1(default) \n");
         rc = SYS_EINVAL;
         goto err;
     }
@@ -817,7 +814,7 @@ bno055_config(struct bno055 *bno055, struct bno055_cfg *cfg)
         }
 
         if (cfg->bc_opr_mode != mode) {
-            BNO055_LOG(ERROR, "Config mode and read mode do not match.\n");
+            BNO055_LOG_ERROR("Config mode and read mode do not match.\n");
             rc = SYS_EINVAL;
             goto err;
         }
@@ -917,7 +914,7 @@ bno055_find_reg(sensor_type_t type, uint8_t *reg)
             *reg = BNO055_GRAVITY_DATA_X_LSB_ADDR;
             break;
         default:
-            BNO055_LOG(ERROR, "Not supported sensor type: %d\n", (int)type);
+            BNO055_LOG_ERROR("Not supported sensor type: %d\n", (int)type);
             rc = SYS_EINVAL;
             break;
     }
@@ -1029,7 +1026,7 @@ bno055_get_vector_data(struct sensor_itf *itf, void *datastruct, int type)
             sad->sad_z_is_valid = 1;
             break;
         default:
-            BNO055_LOG(ERROR, "Not supported sensor type: %d\n", type);
+            BNO055_LOG_ERROR("Not supported sensor type: %d\n", type);
             rc = SYS_EINVAL;
             goto err;
     }

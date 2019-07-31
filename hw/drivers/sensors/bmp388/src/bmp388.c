@@ -113,10 +113,6 @@ STATS_NAME_END(bmp388_stat_section)
 
 struct bmp3_dev g_bmp388_dev;
 
-
-#define BMP388_LOG(lvl_, ...) \
-    MODLOG_ ## lvl_(MYNEWT_VAL(BMP388_LOG_MODULE), __VA_ARGS__)
-
 /* Exports for the sensor API */
 static int bmp388_sensor_read(struct sensor *, sensor_type_t,
         sensor_data_func_t, void *, uint32_t);
@@ -221,8 +217,8 @@ bmp388_i2c_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
     rc = i2cn_master_write(itf->si_num, &data_struct, MYNEWT_VAL(BMP388_I2C_TIMEOUT_TICKS), 1,
                         MYNEWT_VAL(BMP388_I2C_RETRIES));
     if (rc) {
-        BMP388_LOG(ERROR, "I2C access failed at address 0x%02X\n",
-                   data_struct.address);
+        BMP388_LOG_ERROR("I2C access failed at address 0x%02X\n",
+                         data_struct.address);
         goto err;
     }
 
@@ -256,7 +252,7 @@ bmp388_spi_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
     rc = hal_spi_tx_val(itf->si_num, addr);
     if (rc == 0xFFFF) {
         rc = BMP3_E_WRITE;
-        BMP388_LOG(ERROR, "SPI_%u register write failed addr:0x%02X\n",
+        BMP388_LOG_ERROR("SPI_%u register write failed addr:0x%02X\n",
                     itf->si_num, addr);
         goto err;
     }
@@ -266,7 +262,7 @@ bmp388_spi_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
         rc = hal_spi_tx_val(itf->si_num, payload[i]);
         if (rc == 0xFFFF) {
             rc = BMP3_E_WRITE;
-            BMP388_LOG(ERROR, "SPI_%u write failed addr:0x%02X:0x%02X\n",
+            BMP388_LOG_ERROR("SPI_%u write failed addr:0x%02X:0x%02X\n",
                         itf->si_num, addr);
             goto err;
         }
@@ -358,8 +354,8 @@ bmp388_i2c_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
     rc = i2cn_master_write(itf->si_num, &data_struct, MYNEWT_VAL(BMP388_I2C_TIMEOUT_TICKS), 1,
                         MYNEWT_VAL(BMP388_I2C_RETRIES));
     if (rc) {
-        BMP388_LOG(ERROR, "I2C access failed at address 0x%02X\n",
-                    itf->si_addr);
+        BMP388_LOG_ERROR("I2C access failed at address 0x%02X\n",
+                         itf->si_addr);
         rc = BMP3_E_WRITE;
         return rc;
     }
@@ -371,8 +367,8 @@ bmp388_i2c_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
                         MYNEWT_VAL(BMP388_I2C_RETRIES));
 
     if (rc) {
-        BMP388_LOG(ERROR, "Failed to read from 0x%02X:0x%02X\n",
-                    itf->si_addr, reg);
+        BMP388_LOG_ERROR("Failed to read from 0x%02X:0x%02X\n",
+                         itf->si_addr, reg);
         rc = BMP3_E_READ;
     }
 
@@ -404,8 +400,8 @@ bmp388_spi_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
     retval = hal_spi_tx_val(itf->si_num, reg | BMP388_SPI_READ_CMD_BIT);
 
     if (retval == 0xFFFF) {
-        BMP388_LOG(ERROR, "SPI_%u register write failed addr:0x%02X\n",
-                    itf->si_num, reg);
+        BMP388_LOG_ERROR("SPI_%u register write failed addr:0x%02X\n",
+                         itf->si_num, reg);
         rc = BMP3_E_READ;
         goto err;
     }
@@ -414,8 +410,8 @@ bmp388_spi_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
         /* Read data */
         retval = hal_spi_tx_val(itf->si_num, 0);
         if (retval == 0xFFFF) {
-            BMP388_LOG(ERROR, "SPI_%u read failed addr:0x%02X\n",
-                        itf->si_num, reg);
+            BMP388_LOG_ERROR("SPI_%u read failed addr:0x%02X\n",
+                             itf->si_num, reg);
             rc = BMP3_E_READ;
             goto err;
         }
@@ -1252,50 +1248,50 @@ static int64_t compensate_temperature(const struct bmp3_uncomp_data *uncomp_data
     int64_t partial_data6;
     int64_t comp_temp;
 #if COMPENSTATE_DEBUG
-    BMP388_LOG(ERROR, "*****uncomp_data->temperature = 0x%x calib_data->reg_calib_data.par_t1 = 0x%x\n", uncomp_data->temperature, calib_data->reg_calib_data.par_t1);
+    BMP388_LOG_ERROR("*****uncomp_data->temperature = 0x%x calib_data->reg_calib_data.par_t1 = 0x%x\n", uncomp_data->temperature, calib_data->reg_calib_data.par_t1);
 #endif
     partial_data1 = (uint64_t)(uncomp_data->temperature) - (256 * (uint64_t)(calib_data->reg_calib_data.par_t1));
 
 #if COMPENSTATE_DEBUG
-    BMP388_LOG(ERROR, "*****partial_data1 high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((partial_data1)>>32),(uint32_t)(partial_data1&0xffffffff));
-    BMP388_LOG(ERROR, "*****calib_data->reg_calib_data.par_t2 = 0x%x\n", calib_data->reg_calib_data.par_t2);
+    BMP388_LOG_ERROR("*****partial_data1 high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((partial_data1)>>32),(uint32_t)(partial_data1&0xffffffff));
+    BMP388_LOG_ERROR("*****calib_data->reg_calib_data.par_t2 = 0x%x\n", calib_data->reg_calib_data.par_t2);
 #endif
 
     partial_data2 = ((uint64_t)(calib_data->reg_calib_data.par_t2)) * partial_data1;
 
 #if COMPENSTATE_DEBUG
-    BMP388_LOG(ERROR, "*****partial_data2 high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((partial_data2)>>32),(uint32_t)((partial_data2&0xffffffff)));
+    BMP388_LOG_ERROR("*****partial_data2 high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((partial_data2)>>32),(uint32_t)((partial_data2&0xffffffff)));
 #endif
     partial_data3 = partial_data1 * partial_data1;
 
 #if COMPENSTATE_DEBUG
-    BMP388_LOG(ERROR, "*****partial_data3 high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((partial_data3)>>32),(uint32_t)((partial_data3&0xffffffff)));
-    BMP388_LOG(ERROR, "*****calib_data->reg_calib_data.par_t3 = 0x%x\n", calib_data->reg_calib_data.par_t3);
+    BMP388_LOG_ERROR("*****partial_data3 high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((partial_data3)>>32),(uint32_t)((partial_data3&0xffffffff)));
+    BMP388_LOG_ERROR("*****calib_data->reg_calib_data.par_t3 = 0x%x\n", calib_data->reg_calib_data.par_t3);
 #endif
 
     partial_data4 = (int64_t)partial_data3 * calib_data->reg_calib_data.par_t3;
 
 #if COMPENSTATE_DEBUG
-    BMP388_LOG(ERROR, "*****partial_data4 high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((partial_data4)>>32),(uint32_t)((partial_data4&0xffffffff)));
+    BMP388_LOG_ERROR("*****partial_data4 high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((partial_data4)>>32),(uint32_t)((partial_data4&0xffffffff)));
 #endif
 
     partial_data5 = ((int64_t)(partial_data2 * 262144) + partial_data4);
 
 #if COMPENSTATE_DEBUG
-    BMP388_LOG(ERROR, "*****partial_data5 high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((partial_data5)>>32),(uint32_t)(partial_data5&0xffffffff));
+    BMP388_LOG_ERROR("*****partial_data5 high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((partial_data5)>>32),(uint32_t)(partial_data5&0xffffffff));
 #endif
 
     partial_data6 = partial_data5 / 4294967296;
 
 #if COMPENSTATE_DEBUG
-    BMP388_LOG(ERROR, "*****partial_data6 high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((partial_data6)>>32),(uint32_t)(partial_data6&0xffffffff));
+    BMP388_LOG_ERROR("*****partial_data6 high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((partial_data6)>>32),(uint32_t)(partial_data6&0xffffffff));
 #endif
     /* Store t_lin in dev. structure for pressure calculation */
     calib_data->reg_calib_data.t_lin = partial_data6;
     comp_temp = (int64_t)((partial_data6 * 25)  / 16384);
 
 #if COMPENSTATE_DEBUG
-    BMP388_LOG(ERROR, "*****comp_temp high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((comp_temp)>>32),(uint32_t)(comp_temp&0xffffffff));
+    BMP388_LOG_ERROR("*****comp_temp high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((comp_temp)>>32),(uint32_t)(comp_temp&0xffffffff));
 #endif
 
     return comp_temp;
@@ -1319,146 +1315,146 @@ static uint64_t compensate_pressure(const struct bmp3_uncomp_data *uncomp_data,
     int64_t sensitivity;
     uint64_t comp_press;
 #if COMPENSTATE_DEBUG
-    BMP388_LOG(ERROR, "*****reg_calib_data->t_lin high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((reg_calib_data->t_lin)>>32),(uint32_t)(reg_calib_data->t_lin&0xffffffff));
+    BMP388_LOG_ERROR("*****reg_calib_data->t_lin high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((reg_calib_data->t_lin)>>32),(uint32_t)(reg_calib_data->t_lin&0xffffffff));
 #endif
 
     partial_data1 = reg_calib_data->t_lin * reg_calib_data->t_lin;
 
 #if COMPENSTATE_DEBUG
-    BMP388_LOG(ERROR, "*****partial_data1 high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((partial_data1)>>32),(uint32_t)(partial_data1&0xffffffff));
+    BMP388_LOG_ERROR("*****partial_data1 high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((partial_data1)>>32),(uint32_t)(partial_data1&0xffffffff));
 #endif
 
     partial_data2 = partial_data1 / 64;
 
 #if COMPENSTATE_DEBUG
-    BMP388_LOG(ERROR, "*****partial_data2 high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)(partial_data2>>32),(uint32_t)(partial_data2&0xffffffff));
+    BMP388_LOG_ERROR("*****partial_data2 high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)(partial_data2>>32),(uint32_t)(partial_data2&0xffffffff));
 #endif
 
     partial_data3 = (partial_data2 * reg_calib_data->t_lin) / 256;
 
 #if COMPENSTATE_DEBUG
-    BMP388_LOG(ERROR, "*****partial_data3 high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((partial_data3)>>32),(uint32_t)(partial_data3&0xffffffff));
-    BMP388_LOG(ERROR, "*****reg_calib_data->par_p8 = %d\n", reg_calib_data->par_p8);
+    BMP388_LOG_ERROR("*****partial_data3 high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((partial_data3)>>32),(uint32_t)(partial_data3&0xffffffff));
+    BMP388_LOG_ERROR("*****reg_calib_data->par_p8 = %d\n", reg_calib_data->par_p8);
 #endif
 
     partial_data4 = (reg_calib_data->par_p8 * partial_data3) / 32;
 
 #if COMPENSTATE_DEBUG
-    BMP388_LOG(ERROR, "*****partial_data4 high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((partial_data4)>>32),(uint32_t)(partial_data4&0xffffffff));
-    BMP388_LOG(ERROR, "*****reg_calib_data->par_p7 = %d\n", reg_calib_data->par_p7);
+    BMP388_LOG_ERROR("*****partial_data4 high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((partial_data4)>>32),(uint32_t)(partial_data4&0xffffffff));
+    BMP388_LOG_ERROR("*****reg_calib_data->par_p7 = %d\n", reg_calib_data->par_p7);
 #endif
 
     partial_data5 = (reg_calib_data->par_p7 * partial_data1) * 16;
 
 #if COMPENSTATE_DEBUG
-    BMP388_LOG(ERROR, "*****partial_data5 high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((partial_data5)>>32),(uint32_t)(partial_data5&0xffffffff));
-    BMP388_LOG(ERROR, "*****reg_calib_data->par_p6 = %d\n", reg_calib_data->par_p6);
+    BMP388_LOG_ERROR("*****partial_data5 high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((partial_data5)>>32),(uint32_t)(partial_data5&0xffffffff));
+    BMP388_LOG_ERROR("*****reg_calib_data->par_p6 = %d\n", reg_calib_data->par_p6);
 #endif
 
     partial_data6 = (reg_calib_data->par_p6 * reg_calib_data->t_lin) * 4194304;
 
 #if COMPENSTATE_DEBUG
-    BMP388_LOG(ERROR, "*****partial_data6 high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((partial_data6)>>32),(uint32_t)(partial_data6&0xffffffff));
-    BMP388_LOG(ERROR, "*****reg_calib_data->par_p5 = %d\n", reg_calib_data->par_p5);
+    BMP388_LOG_ERROR("*****partial_data6 high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((partial_data6)>>32),(uint32_t)(partial_data6&0xffffffff));
+    BMP388_LOG_ERROR("*****reg_calib_data->par_p5 = %d\n", reg_calib_data->par_p5);
 #endif
 
     offset = (reg_calib_data->par_p5 * 140737488355328) + partial_data4 + partial_data5 + partial_data6;
 
 #if COMPENSTATE_DEBUG
-    BMP388_LOG(ERROR, "*****offset high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((offset)>>32),(uint32_t)(offset&0xffffffff));
+    BMP388_LOG_ERROR("*****offset high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((offset)>>32),(uint32_t)(offset&0xffffffff));
 
-    BMP388_LOG(ERROR, "*****reg_calib_data->par_p4 = %d\n", reg_calib_data->par_p4);
+    BMP388_LOG_ERROR("*****reg_calib_data->par_p4 = %d\n", reg_calib_data->par_p4);
 #endif
 
     partial_data2 = (reg_calib_data->par_p4 * partial_data3) / 32;
 
 #if COMPENSTATE_DEBUG
-    BMP388_LOG(ERROR, "*****partial_data2 high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((partial_data2)>>32),(uint32_t)(partial_data2&0xffffffff));
-    BMP388_LOG(ERROR, "*****reg_calib_data->par_p3 = %d\n", reg_calib_data->par_p3);
+    BMP388_LOG_ERROR("*****partial_data2 high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((partial_data2)>>32),(uint32_t)(partial_data2&0xffffffff));
+    BMP388_LOG_ERROR("*****reg_calib_data->par_p3 = %d\n", reg_calib_data->par_p3);
 #endif
 
     partial_data4 = (reg_calib_data->par_p3 * partial_data1) * 4;
 
 #if COMPENSTATE_DEBUG
-    BMP388_LOG(ERROR, "*****partial_data4 high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((partial_data4)>>32),(uint32_t)(partial_data4&0xffffffff));
-    BMP388_LOG(ERROR, "*****reg_calib_data->par_p2 = %d\n", reg_calib_data->par_p2);
+    BMP388_LOG_ERROR("*****partial_data4 high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((partial_data4)>>32),(uint32_t)(partial_data4&0xffffffff));
+    BMP388_LOG_ERROR("*****reg_calib_data->par_p2 = %d\n", reg_calib_data->par_p2);
 #endif
 
     partial_data5 = (reg_calib_data->par_p2 - 16384) * reg_calib_data->t_lin * 2097152;
 
 #if COMPENSTATE_DEBUG
-    BMP388_LOG(ERROR, "*****partial_data5 high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((partial_data5)>>32),(uint32_t)(partial_data5&0xffffffff));
-    BMP388_LOG(ERROR, "*****reg_calib_data->par_p1 = %d\n", reg_calib_data->par_p1);
+    BMP388_LOG_ERROR("*****partial_data5 high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((partial_data5)>>32),(uint32_t)(partial_data5&0xffffffff));
+    BMP388_LOG_ERROR("*****reg_calib_data->par_p1 = %d\n", reg_calib_data->par_p1);
 #endif
 
     sensitivity = ((reg_calib_data->par_p1 - 16384) * 70368744177664) + partial_data2 + partial_data4
             + partial_data5;
 
 #if COMPENSTATE_DEBUG
-    BMP388_LOG(ERROR, "*****sensitivity high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((sensitivity)>>32),(uint32_t)(sensitivity&0xffffffff));
+    BMP388_LOG_ERROR("*****sensitivity high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((sensitivity)>>32),(uint32_t)(sensitivity&0xffffffff));
 #endif
 
     partial_data1 = (sensitivity / 16777216) * uncomp_data->pressure;
 
 #if COMPENSTATE_DEBUG
-    BMP388_LOG(ERROR, "*****partial_data1 high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((partial_data1)>>32),(uint32_t)(partial_data1&0xffffffff));
-    BMP388_LOG(ERROR, "*****reg_calib_data->par_p10 = %d\n", reg_calib_data->par_p10);
+    BMP388_LOG_ERROR("*****partial_data1 high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((partial_data1)>>32),(uint32_t)(partial_data1&0xffffffff));
+    BMP388_LOG_ERROR("*****reg_calib_data->par_p10 = %d\n", reg_calib_data->par_p10);
 #endif
 
     partial_data2 = reg_calib_data->par_p10 * reg_calib_data->t_lin;
 
 #if COMPENSTATE_DEBUG
-    BMP388_LOG(ERROR, "*****partial_data2 high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((partial_data2)>>32),(uint32_t)(partial_data2&0xffffffff));
-    BMP388_LOG(ERROR, "*****reg_calib_data->par_p9 = %d\n", reg_calib_data->par_p9);
+    BMP388_LOG_ERROR("*****partial_data2 high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((partial_data2)>>32),(uint32_t)(partial_data2&0xffffffff));
+    BMP388_LOG_ERROR("*****reg_calib_data->par_p9 = %d\n", reg_calib_data->par_p9);
 #endif
 
     partial_data3 = partial_data2 + (65536 * reg_calib_data->par_p9);
 
 #if COMPENSTATE_DEBUG
-    BMP388_LOG(ERROR, "*****partial_data3 high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((partial_data3)>>32),(uint32_t)(partial_data3&0xffffffff));
+    BMP388_LOG_ERROR("*****partial_data3 high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((partial_data3)>>32),(uint32_t)(partial_data3&0xffffffff));
 #endif
 
     partial_data4 = (partial_data3 * uncomp_data->pressure) / 8192;
 
 #if COMPENSTATE_DEBUG
-    BMP388_LOG(ERROR, "*****partial_data4 high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((partial_data4)>>32),(uint32_t)(partial_data4&0xffffffff));
+    BMP388_LOG_ERROR("*****partial_data4 high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((partial_data4)>>32),(uint32_t)(partial_data4&0xffffffff));
 #endif
 
     partial_data5 = (partial_data4 * uncomp_data->pressure) / 512;
 
 #if COMPENSTATE_DEBUG
-    BMP388_LOG(ERROR, "*****partial_data5 high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((partial_data5)>>32),(uint32_t)(partial_data5&0xffffffff));
+    BMP388_LOG_ERROR("*****partial_data5 high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((partial_data5)>>32),(uint32_t)(partial_data5&0xffffffff));
 #endif
 
     partial_data6 = (int64_t)((uint64_t)uncomp_data->pressure * (uint64_t)uncomp_data->pressure);
 
 #if COMPENSTATE_DEBUG
-    BMP388_LOG(ERROR, "*****partial_data6 high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((partial_data6)>>32),(uint32_t)(partial_data6&0xffffffff));
-    BMP388_LOG(ERROR, "*****reg_calib_data->par_p11 = %d\n", reg_calib_data->par_p11);
+    BMP388_LOG_ERROR("*****partial_data6 high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((partial_data6)>>32),(uint32_t)(partial_data6&0xffffffff));
+    BMP388_LOG_ERROR("*****reg_calib_data->par_p11 = %d\n", reg_calib_data->par_p11);
 #endif
 
     partial_data2 = (reg_calib_data->par_p11 * partial_data6) / 65536;
 
 #if COMPENSTATE_DEBUG
-    BMP388_LOG(ERROR, "*****partial_data2 high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((partial_data2)>>32),(uint32_t)(partial_data2&0xffffffff));
+    BMP388_LOG_ERROR("*****partial_data2 high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((partial_data2)>>32),(uint32_t)(partial_data2&0xffffffff));
 #endif
 
     partial_data3 = (partial_data2 * uncomp_data->pressure) / 128;
 
 #if COMPENSTATE_DEBUG
-    BMP388_LOG(ERROR, "*****partial_data3 high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((partial_data3)>>32),(uint32_t)(partial_data3&0xffffffff));
+    BMP388_LOG_ERROR("*****partial_data3 high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((partial_data3)>>32),(uint32_t)(partial_data3&0xffffffff));
 #endif
 
     partial_data4 = (offset / 4) + partial_data1 + partial_data5 + partial_data3;
 
 #if COMPENSTATE_DEBUG
-    BMP388_LOG(ERROR, "*****partial_data4 high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((partial_data4)>>32),(uint32_t)(partial_data4&0xffffffff));
+    BMP388_LOG_ERROR("*****partial_data4 high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((partial_data4)>>32),(uint32_t)(partial_data4&0xffffffff));
 #endif
 
     comp_press = (((uint64_t)partial_data4 * 25) / (uint64_t)1099511627776);
 
 #if COMPENSTATE_DEBUG
-    BMP388_LOG(ERROR, "*****comp_press high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((comp_press)>>32),(uint32_t)(comp_press&0xffffffff));
+    BMP388_LOG_ERROR("*****comp_press high32bit = 0x%x low32bit = 0x%x\n", (uint32_t)((comp_press)>>32),(uint32_t)(comp_press&0xffffffff));
 #endif
 
     return comp_press;
@@ -1514,7 +1510,7 @@ int8_t bmp3_get_sensor_data(struct sensor_itf *itf, uint8_t sensor_comp, struct 
             /* Parse the read data from the sensor */
             parse_sensor_data(reg_data, &uncomp_data);
 #if COMPENSTATE_DEBUG
-            BMP388_LOG(ERROR, "*****uncomp_data Temperature = %d Pressure = %d\n", uncomp_data.temperature, uncomp_data.pressure);
+            BMP388_LOG_ERROR("*****uncomp_data Temperature = %d Pressure = %d\n", uncomp_data.temperature, uncomp_data.pressure);
 #endif
             /* Compensate the pressure/temperature/both data read
             from the sensor */
@@ -1714,17 +1710,17 @@ int8_t bmp3_init(struct sensor_itf *itf, struct bmp3_dev *dev)
                     /* Read the calibration data */
                     rslt = get_calib_data(itf, dev);
                 } else {
-                    BMP388_LOG(ERROR, "******bmp3_init bmp3_soft_reset failed %d\n", rslt);
+                    BMP388_LOG_ERROR("******bmp3_init bmp3_soft_reset failed %d\n", rslt);
                 }
             } else {
-                BMP388_LOG(ERROR, "******bmp3_init get wrong chip ID\n");
+                BMP388_LOG_ERROR("******bmp3_init get wrong chip ID\n");
                 rslt = BMP3_E_DEV_NOT_FOUND;
             }
 #if BMP388_DEBUG
-            BMP388_LOG(ERROR, "******bmp3_init chip ID  0x%x\n", chip_id);
+            BMP388_LOG_ERROR("******bmp3_init chip ID  0x%x\n", chip_id);
 #endif
         } else {
-            BMP388_LOG(ERROR, "******bmp3_init get chip ID failed %d\n", rslt);
+            BMP388_LOG_ERROR("******bmp3_init get chip ID failed %d\n", rslt);
         }
     }
 
@@ -1764,10 +1760,10 @@ int bmp388_dump(struct sensor_itf *itf)
         val = 0;
         rc = bmp3_get_regs(itf, index, &val, 1, &g_bmp388_dev);
         if (rc) {
-            BMP388_LOG(ERROR, "read register 0x%02X failed %d\n", index, rc);
+            BMP388_LOG_ERROR("read register 0x%02X failed %d\n", index, rc);
             goto err;
         }
-        BMP388_LOG(ERROR, "register 0x%02X : 0x%02X\n", index, val);
+        BMP388_LOG_ERROR("register 0x%02X : 0x%02X\n", index, val);
     }
 
 err:
@@ -1969,7 +1965,7 @@ int8_t bmp388_configure_fifo_with_watermark(struct sensor_itf *itf, struct bmp3_
     /* Set the selected settings in fifo */
     rslt = bmp3_set_fifo_settings(itf, settings_sel, dev);
     if (rslt != 0) {
-    BMP388_LOG(ERROR, "bmp3_set_fifo_settings failed %d\n", rslt);
+    BMP388_LOG_ERROR("bmp3_set_fifo_settings failed %d\n", rslt);
     goto ERR;
     }
     /* Set the number of frames to be read so as to set the watermark length in the sensor */
@@ -1977,7 +1973,7 @@ int8_t bmp388_configure_fifo_with_watermark(struct sensor_itf *itf, struct bmp3_
     dev->fifo->data.req_frames = g_bmp388_dev.fifo_watermark_level;
     rslt = bmp3_set_fifo_watermark(itf, dev);
     if (rslt != 0) {
-    BMP388_LOG(ERROR, "bmp3_set_fifo_watermark failed %d\n", rslt);
+    BMP388_LOG_ERROR("bmp3_set_fifo_watermark failed %d\n", rslt);
     goto ERR;
     }
 ERR:
@@ -2013,7 +2009,7 @@ int8_t bmp388_configure_fifo_with_fifofull(struct sensor_itf *itf, struct bmp3_d
     /* Set the selected settings in fifo */
     rslt = bmp3_set_fifo_settings(itf, settings_sel, dev);
     if (rslt != 0) {
-    BMP388_LOG(ERROR, "bmp3_set_fifo_settings failed %d\n", rslt);
+    BMP388_LOG_ERROR("bmp3_set_fifo_settings failed %d\n", rslt);
     goto ERR;
     }
 ERR:
@@ -2047,7 +2043,7 @@ int8_t bmp388_enable_fifo(struct sensor_itf *itf, struct bmp3_dev *dev, uint8_t 
     /* Set the selected settings in fifo */
     rslt = bmp3_set_fifo_settings(itf, settings_sel, dev);
     if (rslt != 0) {
-    BMP388_LOG(ERROR, "bmp3_set_fifo_settings failed %d\n", rslt);
+    BMP388_LOG_ERROR("bmp3_set_fifo_settings failed %d\n", rslt);
     goto ERR;
     }
 ERR:
@@ -2403,54 +2399,54 @@ int bmp388_set_int_enable(struct sensor_itf *itf, uint8_t enabled, uint8_t int_t
     {
     case BMP388_DRDY_INT:
 #if BMP388_DEBUG
-        BMP388_LOG(ERROR, "*****bmp388_set_int_enable start to set data ready interrupt\n");
+        BMP388_LOG_ERROR("*****bmp388_set_int_enable start to set data ready interrupt\n");
 #endif
         rc = bmp388_set_drdy_int(itf, enabled);
         if (rc) {
-            BMP388_LOG(ERROR, "******bmp388_set_drdy_int failed %d\n", rc);
+            BMP388_LOG_ERROR("******bmp388_set_drdy_int failed %d\n", rc);
             goto ERR;
         }
 
         rc = bmp388_set_normal_mode(itf, &g_bmp388_dev);
         if (rc) {
-            BMP388_LOG(ERROR, "******bmp388_set_normal_mode failed %d\n", rc);
+            BMP388_LOG_ERROR("******bmp388_set_normal_mode failed %d\n", rc);
             goto ERR;
         }
         break;
     case BMP388_FIFO_WTMK_INT:
 #if BMP388_DEBUG
-        BMP388_LOG(ERROR, "*****bmp388_set_int_enable start to set fifo water mark\n");
+        BMP388_LOG_ERROR("*****bmp388_set_int_enable start to set fifo water mark\n");
 #endif
         rc = bmp388_configure_fifo_with_watermark(itf, &g_bmp388_dev, enabled);
         if (rc) {
-            BMP388_LOG(ERROR, "******bmp388_configure_fifo_with_watermark failed %d\n", rc);
+            BMP388_LOG_ERROR("******bmp388_configure_fifo_with_watermark failed %d\n", rc);
             goto ERR;
         }
 
         rc = bmp388_set_normal_mode(itf, &g_bmp388_dev);
         if (rc) {
-            BMP388_LOG(ERROR, "******bmp388_set_normal_mode failed %d\n", rc);
+            BMP388_LOG_ERROR("******bmp388_set_normal_mode failed %d\n", rc);
             goto ERR;
         }
         break;
     case BMP388_FIFO_FULL_INT:
 #if BMP388_DEBUG
-        BMP388_LOG(ERROR, "*****bmp388_set_int_enable start to set fifo full\n");
+        BMP388_LOG_ERROR("*****bmp388_set_int_enable start to set fifo full\n");
 #endif
         rc = bmp388_configure_fifo_with_fifofull(itf, &g_bmp388_dev, enabled);
         if (rc) {
-            BMP388_LOG(ERROR, "******bmp388_configure_fifo_with_fifofull failed %d\n", rc);
+            BMP388_LOG_ERROR("******bmp388_configure_fifo_with_fifofull failed %d\n", rc);
             goto ERR;
         }
         rc = bmp388_set_normal_mode(itf, &g_bmp388_dev);
         if (rc) {
-            BMP388_LOG(ERROR, "******bmp388_set_normal_mode failed %d\n", rc);
+            BMP388_LOG_ERROR("******bmp388_set_normal_mode failed %d\n", rc);
             goto ERR;
         }
         break;
     default:
         rc = SYS_EINVAL;
-        BMP388_LOG(ERROR, "******invalid BMP388 interrupt type\n");
+        BMP388_LOG_ERROR("******invalid BMP388 interrupt type\n");
         goto ERR;
 
     }
@@ -2634,15 +2630,15 @@ int8_t bmp3_get_fifo_data(struct sensor_itf *itf, const struct bmp3_dev *dev)
         reset_fifo_index(dev->fifo);
         /* Get the total no of bytes available in FIFO */
         rslt = bmp3_get_fifo_length(itf, &fifo_len, dev);
-        BMP388_LOG(ERROR, "*****fifo_len is %d\n", fifo_len);
+        BMP388_LOG_ERROR("*****fifo_len is %d\n", fifo_len);
 #if BMP388_DEBUG
-        BMP388_LOG(ERROR, "*****fifo_len is %d\n", fifo_len);
+        BMP388_LOG_ERROR("*****fifo_len is %d\n", fifo_len);
 #endif
         /* For sensor time frame */
         if (dev->fifo->settings.time_en == TRUE) {
             fifo_len = fifo_len + 4 + 7*3;
 #if BMP388_DEBUG
-            BMP388_LOG(ERROR, "*****fifo_len added timefifo length is %d\n", fifo_len);
+            BMP388_LOG_ERROR("*****fifo_len added timefifo length is %d\n", fifo_len);
 #endif
         }
         /* Update the fifo length in the fifo structure */
@@ -2654,7 +2650,7 @@ int8_t bmp3_get_fifo_data(struct sensor_itf *itf, const struct bmp3_dev *dev)
 #if FIFOPARSE_DEBUG
         if (rslt == 0) {
             for (i = 0; i < fifo_len; i++)
-                BMP388_LOG(ERROR, "*****i is %d buffer[i] is %d\n", i, fifo->data.buffer[i]);
+                BMP388_LOG_ERROR("*****i is %d buffer[i] is %d\n", i, fifo->data.buffer[i]);
         }
 #endif
     } else {
@@ -2814,8 +2810,8 @@ static uint8_t parse_fifo_data_frame(uint8_t header, struct bmp3_fifo *fifo, uin
 {
     uint8_t t_p_frame = 0;
 #if FIFOPARSE_DEBUG
-    BMP388_LOG(ERROR, "****  header is %d\n",  header);
-    BMP388_LOG(ERROR, "****  byte_index is %d\n",  *byte_index);
+    BMP388_LOG_ERROR("****  header is %d\n",  header);
+    BMP388_LOG_ERROR("****  byte_index is %d\n",  *byte_index);
 #endif
     switch (header) {
     case FIFO_TEMP_PRESS_FRAME:
@@ -2823,8 +2819,8 @@ static uint8_t parse_fifo_data_frame(uint8_t header, struct bmp3_fifo *fifo, uin
         *parsed_frames = *parsed_frames + 1;
         t_p_frame = BMP3_PRESS | BMP3_TEMP;
 #if FIFOPARSE_DEBUG
-        BMP388_LOG(ERROR, "**** parsed_frames %d\n", *parsed_frames);
-        BMP388_LOG(ERROR, "**** FIFO_TEMP_PRESS_FRAME\n");
+        BMP388_LOG_ERROR("**** parsed_frames %d\n", *parsed_frames);
+        BMP388_LOG_ERROR("**** FIFO_TEMP_PRESS_FRAME\n");
 #endif
         break;
 
@@ -2833,8 +2829,8 @@ static uint8_t parse_fifo_data_frame(uint8_t header, struct bmp3_fifo *fifo, uin
         *parsed_frames = *parsed_frames + 1;
         t_p_frame = BMP3_TEMP;
 #if FIFOPARSE_DEBUG
-        BMP388_LOG(ERROR, "**** parsed_frames %d\n", *parsed_frames);
-        BMP388_LOG(ERROR, "**** FIFO_TEMP_FRAME\n");
+        BMP388_LOG_ERROR("**** parsed_frames %d\n", *parsed_frames);
+        BMP388_LOG_ERROR("**** FIFO_TEMP_FRAME\n");
 #endif
         break;
 
@@ -2843,8 +2839,8 @@ static uint8_t parse_fifo_data_frame(uint8_t header, struct bmp3_fifo *fifo, uin
         *parsed_frames = *parsed_frames + 1;
         t_p_frame = BMP3_PRESS;
 #if FIFOPARSE_DEBUG
-        BMP388_LOG(ERROR, "**** parsed_frames %d\n", *parsed_frames);
-        BMP388_LOG(ERROR, "**** FIFO_PRESS_FRAME\n");
+        BMP388_LOG_ERROR("**** parsed_frames %d\n", *parsed_frames);
+        BMP388_LOG_ERROR("**** FIFO_PRESS_FRAME\n");
 #endif
         break;
 
@@ -2853,9 +2849,9 @@ static uint8_t parse_fifo_data_frame(uint8_t header, struct bmp3_fifo *fifo, uin
         fifo->no_need_sensortime = true;
         fifo->sensortime_updated = true;
 #if FIFOPARSE_DEBUG
-        BMP388_LOG(ERROR, "**** FIFO_TIME_FRAME\n");
+        BMP388_LOG_ERROR("**** FIFO_TIME_FRAME\n");
 #endif
-        BMP388_LOG(ERROR, "**** FIFO_TIME_FRAME\n");
+        BMP388_LOG_ERROR("**** FIFO_TIME_FRAME\n");
 
         break;
 
@@ -2863,7 +2859,7 @@ static uint8_t parse_fifo_data_frame(uint8_t header, struct bmp3_fifo *fifo, uin
         fifo->data.config_change = 1;
         *byte_index = *byte_index + 1;
 #if FIFOPARSE_DEBUG
-        BMP388_LOG(ERROR, "**** FIFO_CONFIG_CHANGE\n");
+        BMP388_LOG_ERROR("**** FIFO_CONFIG_CHANGE\n");
 #endif
         break;
 
@@ -2871,7 +2867,7 @@ static uint8_t parse_fifo_data_frame(uint8_t header, struct bmp3_fifo *fifo, uin
         fifo->data.config_err = 1;
         *byte_index = *byte_index + 1;
 #if FIFOPARSE_DEBUG
-        BMP388_LOG(ERROR, "**** FIFO_ERROR_FRAME\n");
+        BMP388_LOG_ERROR("**** FIFO_ERROR_FRAME\n");
 #endif
         break;
 
@@ -2879,7 +2875,7 @@ static uint8_t parse_fifo_data_frame(uint8_t header, struct bmp3_fifo *fifo, uin
         fifo->data.config_err = 1;
         *byte_index = *byte_index + 1;
 #if FIFOPARSE_DEBUG
-        BMP388_LOG(ERROR, "**** unknown FIFO_FRAME\n");
+        BMP388_LOG_ERROR("**** unknown FIFO_FRAME\n");
 #endif
         break;
 
@@ -2916,9 +2912,9 @@ int8_t bmp3_extract_fifo_data(struct bmp3_data *data, struct bmp3_dev *dev)
             }
         }
 #if BMP388_DEBUG
-        BMP388_LOG(ERROR, "******byte_index %d\n", byte_index);
-        BMP388_LOG(ERROR, "******parsed_frames %d\n", parsed_frames);
-        BMP388_LOG(ERROR, "******dev->fifo->no_need_sensortime %d\n", dev->fifo->no_need_sensortime);
+        BMP388_LOG_ERROR("******byte_index %d\n", byte_index);
+        BMP388_LOG_ERROR("******parsed_frames %d\n", parsed_frames);
+        BMP388_LOG_ERROR("******dev->fifo->no_need_sensortime %d\n", dev->fifo->no_need_sensortime);
 #endif
         /* Check if any frames are parsed in FIFO */
         if (parsed_frames != 0) {
@@ -2957,21 +2953,21 @@ int bmp388_run_self_test(struct sensor_itf *itf, int *result)
     if (rc) {
         *result = -1;
         rc = SYS_EINVAL;
-        BMP388_LOG(ERROR, "******read BMP388 chipID failed %d\n", rc);
+        BMP388_LOG_ERROR("******read BMP388 chipID failed %d\n", rc);
         return rc;
     }
 
     if (chip_id != BMP3_CHIP_ID) {
         *result = -1;
         rc = SYS_EINVAL;
-        BMP388_LOG(ERROR, "******self_test gets BMP388 chipID failed 0x%x\n", chip_id);
+        BMP388_LOG_ERROR("******self_test gets BMP388 chipID failed 0x%x\n", chip_id);
         return rc;
     } else {
-        BMP388_LOG(ERROR, "******self_test gets BMP388 chipID 0x%x\n", chip_id);
+        BMP388_LOG_ERROR("******self_test gets BMP388 chipID 0x%x\n", chip_id);
     }
     rc = bmp388_get_sensor_data(itf, &g_bmp388_dev, &sensor_data);
     if (rc) {
-        BMP388_LOG(ERROR, "bmp388_get_sensor_data failed %d\n", rc);
+        BMP388_LOG_ERROR("bmp388_get_sensor_data failed %d\n", rc);
         *result = -1;
         rc = SYS_EINVAL;
         return rc;
@@ -2981,14 +2977,14 @@ int bmp388_run_self_test(struct sensor_itf *itf, int *result)
 
     if ((pressure < 300) || (pressure > 1250))
     {
-        BMP388_LOG(ERROR, "pressure data abnormal\n");
+        BMP388_LOG_ERROR("pressure data abnormal\n");
         *result = -1;
         rc = SYS_EINVAL;
         return rc;
     }
     if ((temperature < -40) || (temperature > 85))
     {
-        BMP388_LOG(ERROR, "temperature data abnormal\n");
+        BMP388_LOG_ERROR("temperature data abnormal\n");
         *result = -1;
         rc = SYS_EINVAL;
         return rc;
@@ -3111,7 +3107,7 @@ init_intpin(struct bmp388 *bmp388, hal_gpio_irq_handler_t handler,
     }
 
     if (pin < 0) {
-        BMP388_LOG(ERROR, "Interrupt pin not configured\n");
+        BMP388_LOG_ERROR("Interrupt pin not configured\n");
         return SYS_EINVAL;
     }
 
@@ -3127,7 +3123,7 @@ init_intpin(struct bmp388 *bmp388, hal_gpio_irq_handler_t handler,
                         trig,
                         HAL_GPIO_PULL_NONE);
     if (rc != 0) {
-        BMP388_LOG(ERROR, "Failed to initialise interrupt pin %d\n", pin);
+        BMP388_LOG_ERROR("Failed to initialise interrupt pin %d\n", pin);
         return rc;
     }
 
@@ -3145,7 +3141,7 @@ disable_interrupt(struct sensor *sensor, uint8_t int_to_disable, uint8_t int_num
     if (int_to_disable == 0) {
         return SYS_EINVAL;
     }
-    BMP388_LOG(ERROR, "*****disable_interrupt entered \n");
+    BMP388_LOG_ERROR("*****disable_interrupt entered \n");
 
     bmp388 = (struct bmp388 *)SENSOR_GET_DEVICE(sensor);
     itf = SENSOR_GET_ITF(sensor);
@@ -3155,7 +3151,7 @@ disable_interrupt(struct sensor *sensor, uint8_t int_to_disable, uint8_t int_num
 
     /* disable int pin */
     if (!pdd->int_enable) {
-        BMP388_LOG(ERROR, "*****disable_interrupt disable int pin \n");
+        BMP388_LOG_ERROR("*****disable_interrupt disable int pin \n");
         hal_gpio_irq_disable(itf->si_ints[int_num].host_pin);
         /* disable interrupt in device */
         rc = bmp388_set_int_enable(itf, 0, int_to_disable);
@@ -3182,7 +3178,7 @@ enable_interrupt(struct sensor *sensor, uint8_t int_to_enable, uint8_t int_num)
     int rc;
 
     if (!int_to_enable) {
-        BMP388_LOG(ERROR, "*****enable_interrupt int_to_enable is 0 \n");
+        BMP388_LOG_ERROR("*****enable_interrupt int_to_enable is 0 \n");
         rc = SYS_EINVAL;
         goto err;
     }
@@ -3193,7 +3189,7 @@ enable_interrupt(struct sensor *sensor, uint8_t int_to_enable, uint8_t int_num)
 
     rc = bmp388_clear_int(itf);
     if (rc) {
-        BMP388_LOG(ERROR, "*****enable_interrupt bmp388_clear_int failed%d\n", rc);
+        BMP388_LOG_ERROR("*****enable_interrupt bmp388_clear_int failed%d\n", rc);
         goto err;
     }
 
@@ -3203,7 +3199,7 @@ enable_interrupt(struct sensor *sensor, uint8_t int_to_enable, uint8_t int_num)
 
         rc = bmp388_set_int_enable(itf, 1, int_to_enable);
         if (rc) {
-            BMP388_LOG(ERROR, "*****enable_interrupt bmp388_set_int_enable failed%d\n", rc);
+            BMP388_LOG_ERROR("*****enable_interrupt bmp388_set_int_enable failed%d\n", rc);
             goto err;
         }
     }
@@ -3217,7 +3213,7 @@ enable_interrupt(struct sensor *sensor, uint8_t int_to_enable, uint8_t int_num)
     }
 
     if (rc) {
-        BMP388_LOG(ERROR, "*****enable_interrupt bmp388_set_int1/int2_pin_cfg failed%d\n", rc);
+        BMP388_LOG_ERROR("*****enable_interrupt bmp388_set_int1/int2_pin_cfg failed%d\n", rc);
         disable_interrupt(sensor, int_to_enable, int_num);
         goto err;
     }
@@ -3310,19 +3306,19 @@ bmp388_poll_read(struct sensor *sensor, sensor_type_t sensor_type,
     g_bmp388_dev.settings.op_mode = BMP3_FORCED_MODE;
     rc = bmp388_set_forced_mode_with_osr(itf, &g_bmp388_dev);
     if (rc) {
-        BMP388_LOG(ERROR, "bmp388_set_forced_mode_with_osr failed %d\n", rc);
+        BMP388_LOG_ERROR("bmp388_set_forced_mode_with_osr failed %d\n", rc);
         goto err;
     }
 
     rc = bmp388_get_sensor_data(itf, &g_bmp388_dev, &sensor_data);
     if (rc) {
-        BMP388_LOG(ERROR, "bmp388_get_sensor_data failed %d\n", rc);
+        BMP388_LOG_ERROR("bmp388_get_sensor_data failed %d\n", rc);
         goto err;
     }
 
     rc = bmp388_do_report(sensor, sensor_type, data_func, data_arg, &sensor_data);
     if (rc) {
-        BMP388_LOG(ERROR, "bmp388_do_report failed %d\n", rc);
+        BMP388_LOG_ERROR("bmp388_do_report failed %d\n", rc);
         goto err;
     }
 
@@ -3378,7 +3374,7 @@ bmp388_stream_read(struct sensor *sensor,
 
     /* If the read isn't looking for pressure or temperature data, don't do anything. */
     if ((!(sensor_type & SENSOR_TYPE_PRESSURE)) && (!(sensor_type & SENSOR_TYPE_TEMPERATURE))) {
-        BMP388_LOG(ERROR, "unsupported sensor type for bmp388\n");
+        BMP388_LOG_ERROR("unsupported sensor type for bmp388\n");
         return SYS_EINVAL;
     }
 
@@ -3391,7 +3387,7 @@ bmp388_stream_read(struct sensor *sensor,
 
 
     if (cfg->read_mode.mode != BMP388_READ_M_STREAM) {
-        BMP388_LOG(ERROR, "*****bmp388_stream_read mode is not stream\n");
+        BMP388_LOG_ERROR("*****bmp388_stream_read mode is not stream\n");
         return SYS_EINVAL;
     }
 
@@ -3412,7 +3408,7 @@ bmp388_stream_read(struct sensor *sensor,
     undo_interrupt(&bmp388->intr);
 
     if (pdd->interrupt) {
-        BMP388_LOG(ERROR, "*****bmp388_stream_read interrupt is not null\n");
+        BMP388_LOG_ERROR("*****bmp388_stream_read interrupt is not null\n");
         return SYS_EBUSY;
     }
 
@@ -3422,7 +3418,7 @@ bmp388_stream_read(struct sensor *sensor,
     rc = enable_interrupt(sensor, cfg->read_mode.int_type,
                         cfg->read_mode.int_num);
     if (rc) {
-        BMP388_LOG(ERROR, "*****bmp388_stream_read enable_interrupt failed%d\n", rc);
+        BMP388_LOG_ERROR("*****bmp388_stream_read enable_interrupt failed%d\n", rc);
         return rc;
     }
 #else
@@ -3431,7 +3427,7 @@ bmp388_stream_read(struct sensor *sensor,
     /* enable normal mode for fifo feature */
     rc = bmp388_set_normal_mode(itf, &g_bmp388_dev);
     if (rc) {
-        BMP388_LOG(ERROR, "******bmp388_set_normal_mode failed %d\n", rc);
+        BMP388_LOG_ERROR("******bmp388_set_normal_mode failed %d\n", rc);
         goto err;
     }
 #endif
@@ -3460,10 +3456,10 @@ bmp388_stream_read(struct sensor *sensor,
 #if MYNEWT_VAL(BMP388_INT_ENABLE)
         rc = wait_interrupt(&bmp388->intr, cfg->read_mode.int_num);
         if (rc) {
-            BMP388_LOG(ERROR, "*****bmp388_stream_read wait_interrupt failed%d\n", rc);
+            BMP388_LOG_ERROR("*****bmp388_stream_read wait_interrupt failed%d\n", rc);
             goto err;
         } else {
-            BMP388_LOG(ERROR, "*****wait_interrupt got the interrupt\n");
+            BMP388_LOG_ERROR("*****wait_interrupt got the interrupt\n");
         }
 #endif
 
@@ -3495,7 +3491,7 @@ try_count = 0xFFFF;
 #if MYNEWT_VAL(BMP388_FIFO_ENABLE)
         if (try_count > 0) {
 #if FIFOPARSE_DEBUG
-            BMP388_LOG(ERROR, "*****try_count is %d\n", try_count);
+            BMP388_LOG_ERROR("*****try_count is %d\n", try_count);
 #endif
             rc = bmp3_get_fifo_data(itf, &g_bmp388_dev);
             if (fifo.settings.time_en)
@@ -3507,10 +3503,10 @@ try_count = 0xFFFF;
             if (g_bmp388_dev.fifo->data.frame_not_available)
             {
                 /* no valid fifo frame in sensor */
-                BMP388_LOG(ERROR, "**** fifo frames not valid %d\n", rc);
+                BMP388_LOG_ERROR("**** fifo frames not valid %d\n", rc);
             } else {
 #if BMP388_DEBUG
-                BMP388_LOG(ERROR, "*****parsed_frames is %d\n", g_bmp388_dev.fifo->data.parsed_frames);
+                BMP388_LOG_ERROR("*****parsed_frames is %d\n", g_bmp388_dev.fifo->data.parsed_frames);
 #endif
                 frame_length = g_bmp388_dev.fifo->data.req_frames;
                 if (frame_length > g_bmp388_dev.fifo->data.parsed_frames) {
@@ -3521,19 +3517,19 @@ try_count = 0xFFFF;
                 {
                     rc = bmp388_do_report(sensor, sensor_type, read_func, read_arg, &sensor_data[i]);
                     if (rc) {
-                        BMP388_LOG(ERROR, "bmp388_do_report failed %d\n", rc);
+                        BMP388_LOG_ERROR("bmp388_do_report failed %d\n", rc);
                         goto err;
                     }
                 }
 
                 if (g_bmp388_dev.fifo->sensortime_updated) {
-                    BMP388_LOG(ERROR, "*****bmp388 sensor time %d\n", g_bmp388_dev.fifo->data.sensor_time);
+                    BMP388_LOG_ERROR("*****bmp388 sensor time %d\n", g_bmp388_dev.fifo->data.sensor_time);
                     g_bmp388_dev.fifo->sensortime_updated = false;
                 }
             }
         }else {
 
-            BMP388_LOG(ERROR, "FIFO water mark unreached\n");
+            BMP388_LOG_ERROR("FIFO water mark unreached\n");
             rc = SYS_EINVAL;
             goto err;
         }
@@ -3543,18 +3539,18 @@ try_count = 0xFFFF;
             g_bmp388_dev.settings.op_mode = BMP3_FORCED_MODE;
             rc = bmp388_set_forced_mode_with_osr(itf, &g_bmp388_dev);
             if (rc) {
-                BMP388_LOG(ERROR, "bmp388_set_forced_mode_with_osr failed %d\n", rc);
+                BMP388_LOG_ERROR("bmp388_set_forced_mode_with_osr failed %d\n", rc);
                 goto err;
             }
             rc = bmp388_get_sensor_data(itf, &g_bmp388_dev, &sensor_data);
             if (rc) {
-                BMP388_LOG(ERROR, "bmp388_get_sensor_data failed %d\n", rc);
+                BMP388_LOG_ERROR("bmp388_get_sensor_data failed %d\n", rc);
                 goto err;
             }
 
             rc = bmp388_do_report(sensor, sensor_type, read_func, read_arg, &sensor_data);
             if (rc) {
-                BMP388_LOG(ERROR, "bmp388_do_report failed %d\n", rc);
+                BMP388_LOG_ERROR("bmp388_do_report failed %d\n", rc);
                 goto err;
             }
 
@@ -3562,8 +3558,8 @@ try_count = 0xFFFF;
 #endif
 
         if (time_ms != 0 && OS_TIME_TICK_GT(os_time_get(), stop_ticks)) {
-            BMP388_LOG(INFO, "stream time expired\n");
-            BMP388_LOG(INFO, "you can make BMP388_MAX_STREAM_MS bigger to extend stream time duration\n");
+            BMP388_LOG_INFO("stream time expired\n");
+            BMP388_LOG_INFO("you can make BMP388_MAX_STREAM_MS bigger to extend stream time duration\n");
             break;
         }
 
@@ -3593,12 +3589,12 @@ bmp388_sensor_read(struct sensor *sensor, sensor_type_t type,
     struct bmp388 *bmp388;
     struct sensor_itf *itf;
 #if BMP388_DEBUG
-    BMP388_LOG(ERROR, "bmp388_sensor_read entered\n");
+    BMP388_LOG_ERROR("bmp388_sensor_read entered\n");
 #endif
     /* If the read isn't looking for pressure data, don't do anything. */
     if ((!(type & SENSOR_TYPE_PRESSURE)) && (!(type & SENSOR_TYPE_TEMPERATURE))) {
         rc = SYS_EINVAL;
-        BMP388_LOG(ERROR, "bmp388_sensor_read unsupported sensor type\n");
+        BMP388_LOG_ERROR("bmp388_sensor_read unsupported sensor type\n");
         goto err;
     }
 
@@ -3639,7 +3635,7 @@ bmp388_sensor_read(struct sensor *sensor, sensor_type_t type,
     }
 err:
     if (rc) {
-        BMP388_LOG(ERROR, "bmp388_sensor_read read failed\n");
+        BMP388_LOG_ERROR("bmp388_sensor_read read failed\n");
         return SYS_EINVAL;
     } else {
         return SYS_EOK;
@@ -3729,11 +3725,11 @@ bmp388_sensor_handle_interrupt(struct sensor *sensor)
 #endif
     itf = SENSOR_GET_ITF(sensor);
 
-    BMP388_LOG(ERROR, "******bmp388_sensor_handle_interrupt entered\n");
+    BMP388_LOG_ERROR("******bmp388_sensor_handle_interrupt entered\n");
 
     rc = bmp3_get_status(itf, &g_bmp388_dev);
     if (rc) {
-        BMP388_LOG(ERROR, "Could not get status err=0x%02x\n", rc);
+        BMP388_LOG_ERROR("Could not get status err=0x%02x\n", rc);
         goto err;
     }
 
@@ -3742,7 +3738,7 @@ bmp388_sensor_handle_interrupt(struct sensor *sensor)
         (bmp388->cfg.int_enable_type == BMP388_FIFO_FULL_INT)) {
         rc = bmp3_fifo_flush(itf, &g_bmp388_dev);
         if (rc) {
-            BMP388_LOG(ERROR, "fifo flush failed, err=0x%02x\n", rc);
+            BMP388_LOG_ERROR("fifo flush failed, err=0x%02x\n", rc);
             goto err;
         }
     }
@@ -3753,14 +3749,14 @@ bmp388_sensor_handle_interrupt(struct sensor *sensor)
                      g_bmp388_dev.status.intr.drdy;
 
     if (int_status_all == 0) {
-        BMP388_LOG(ERROR, "Could not get any INT happened status \n");
+        BMP388_LOG_ERROR("Could not get any INT happened status \n");
         rc = SYS_EINVAL;
         goto err;
     }
 #if CLEAR_INT_AFTER_ISR
     rc = bmp388_clear_int(itf);
     if (rc) {
-        BMP388_LOG(ERROR, "Could not clear int src err=0x%02x\n", rc);
+        BMP388_LOG_ERROR("Could not clear int src err=0x%02x\n", rc);
         goto err;
     }
 #endif
@@ -3812,7 +3808,7 @@ bmp388_init(struct os_dev *dev, void *arg)
     }
 
 #if BMP388_DEBUG
-    BMP388_LOG(ERROR, "******bmp388_init entered\n");
+    BMP388_LOG_ERROR("******bmp388_init entered\n");
 #endif
     bmp388 = (struct bmp388 *) dev;
 
@@ -3861,7 +3857,7 @@ bmp388_init(struct os_dev *dev, void *arg)
         g_bmp388_dev.intf = BMP3_SPI_INTF;
         rc = hal_spi_disable(sensor->s_itf.si_num);
         if (rc) {
-            BMP388_LOG(ERROR, "******bmp388_init hal_spi_disable failed, rc = %d\n", rc);
+            BMP388_LOG_ERROR("******bmp388_init hal_spi_disable failed, rc = %d\n", rc);
             goto err;
         }
 
@@ -3870,19 +3866,19 @@ bmp388_init(struct os_dev *dev, void *arg)
             /* If spi is already enabled, for nrf52, it returns -1, We should not
             * fail if the spi is already enabled
             */
-            BMP388_LOG(ERROR, "******bmp388_init hal_spi_config failed, rc = %d\n", rc);
+            BMP388_LOG_ERROR("******bmp388_init hal_spi_config failed, rc = %d\n", rc);
             goto err;
         }
 
         rc = hal_spi_enable(sensor->s_itf.si_num);
         if (rc) {
-            BMP388_LOG(ERROR, "******bmp388_init hal_spi_enable failed, rc = %d\n", rc);
+            BMP388_LOG_ERROR("******bmp388_init hal_spi_enable failed, rc = %d\n", rc);
             goto err;
         }
 
         rc = hal_gpio_init_out(sensor->s_itf.si_cs_pin, 1);
         if (rc) {
-            BMP388_LOG(ERROR, "******bmp388_init hal_gpio_init_out failed, rc = %d\n", rc);
+            BMP388_LOG_ERROR("******bmp388_init hal_gpio_init_out failed, rc = %d\n", rc);
             goto err;
         }
 
@@ -3890,7 +3886,7 @@ bmp388_init(struct os_dev *dev, void *arg)
         g_bmp388_dev.intf = BMP3_I2C_INTF;
 
 #if BMP388_DEBUG
-        BMP388_LOG(ERROR, "******bmp388_init entered\n");
+        BMP388_LOG_ERROR("******bmp388_init entered\n");
 #endif
 
     }
@@ -3905,14 +3901,14 @@ bmp388_init(struct os_dev *dev, void *arg)
 
     rc = init_intpin(bmp388, bmp388_int_irq_handler, sensor);
     if (rc) {
-        BMP388_LOG(ERROR, "******init_intpin failed \n");
+        BMP388_LOG_ERROR("******init_intpin failed \n");
         return rc;
     }
 
 #endif
 
 #if BMP388_DEBUG
-    BMP388_LOG(ERROR, "******bmp388_init exited \n");
+    BMP388_LOG_ERROR("******bmp388_init exited \n");
 #endif
     return 0;
 err:
@@ -3937,7 +3933,7 @@ bmp388_config(struct bmp388 *bmp388, struct bmp388_cfg *cfg)
     sensor = &(bmp388->sensor);
 
 #if BMP388_DEBUG
-    BMP388_LOG(ERROR, "******bmp388_config entered\n");
+    BMP388_LOG_ERROR("******bmp388_config entered\n");
 #endif
 
 #if !MYNEWT_VAL(BUS_DRIVER_PRESENT)
@@ -3953,13 +3949,13 @@ bmp388_config(struct bmp388 *bmp388, struct bmp388_cfg *cfg)
             /* If spi is already enabled, for nrf52, it returns -1, We should not
             * fail if the spi is already enabled
             */
-            BMP388_LOG(ERROR, "******bmp388_config hal_spi_config failed, rc = %d\n", rc);
+            BMP388_LOG_ERROR("******bmp388_config hal_spi_config failed, rc = %d\n", rc);
             goto err;
         }
 
         rc = hal_spi_enable(sensor->s_itf.si_num);
         if (rc) {
-            BMP388_LOG(ERROR, "******bmp388_config hal_spi_enable failed, rc = %d\n", rc);
+            BMP388_LOG_ERROR("******bmp388_config hal_spi_enable failed, rc = %d\n", rc);
             goto err;
         }
     }
@@ -3969,7 +3965,7 @@ bmp388_config(struct bmp388 *bmp388, struct bmp388_cfg *cfg)
 
     rc = bmp3_init(itf, &g_bmp388_dev);
     if (rc) {
-        BMP388_LOG(ERROR, "******config bmp3_init failed %d\n", rc);
+        BMP388_LOG_ERROR("******config bmp3_init failed %d\n", rc);
         goto err;
     }
 
@@ -3980,10 +3976,10 @@ bmp388_config(struct bmp388 *bmp388, struct bmp388_cfg *cfg)
 
     if (chip_id != BMP3_CHIP_ID) {
         rc = SYS_EINVAL;
-        BMP388_LOG(ERROR, "******config gets BMP388 chipID failed 0x%x\n", chip_id);
+        BMP388_LOG_ERROR("******config gets BMP388 chipID failed 0x%x\n", chip_id);
         goto err;
     } else {
-        BMP388_LOG(ERROR, "******config gets BMP388 chipID 0x%x\n", chip_id);
+        BMP388_LOG_ERROR("******config gets BMP388 chipID 0x%x\n", chip_id);
     }
 
     rc = bmp388_set_int_pp_od(itf, cfg->int_pp_od);
@@ -4049,7 +4045,7 @@ bmp388_config(struct bmp388 *bmp388, struct bmp388_cfg *cfg)
     bmp388->cfg.mask = cfg->mask;
 
 #if BMP388_DEBUG
-    BMP388_LOG(ERROR, "******bmp388_config exited\n");
+    BMP388_LOG_ERROR("******bmp388_config exited\n");
 #endif
 
     return 0;

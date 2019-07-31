@@ -1,3 +1,4 @@
+#
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -5,7 +6,7 @@
 # to you under the Apache License, Version 2.0 (the
 # "License"); you may not use this file except in compliance
 # with the License.  You may obtain a copy of the License at
-#
+# 
 #  http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing,
@@ -17,25 +18,15 @@
 #
 
 syscfg.defs:
-    MPU6050_ITF_LOCK_TMO:
-        description: 'MPU6050 interface lock timeout in milliseconds'
-        value: 1000
-    MPU6050_I2C_RETRIES:
-        description: >
-            Number of retries to use for failed I2C communication.  A retry is
-            used when the MPU6050 sends an unexpected NACK.
-        value: 2
-
-    ### Log settings.
-
-    MPU6050_LOG_MODULE:
-        description: 'Numeric module ID to use for MPU6050 log messages.'
-        value: 115
-    MPU6050_LOG_LVL:
-        description: 'Minimum level for the MPU6050 log.'
+    DFLT_LOG_MOD:
+        description: 'Numeric module ID to use for default log messages.'
+        value: 0
+    DFLT_LOG_LVL:
+        description: 'Minimum level for the default log.'
         value: 1
 
 syscfg.logs:
-    MPU6050_LOG:
-        module: MYNEWT_VAL(MPU6050_LOG_MODULE)
-        level: MYNEWT_VAL(MPU6050_LOG_LVL)
+    DFLT_LOG:
+        module: MYNEWT_VAL(DFLT_LOG_MOD)
+        level: MYNEWT_VAL(DFLT_LOG_LVL)
+

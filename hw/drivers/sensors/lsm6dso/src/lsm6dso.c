@@ -126,9 +126,6 @@ STATS_NAME_END(lsm6dso_stat_section)
 /* Global variable used to hold stats data */
 STATS_SECT_DECL(lsm6dso_stat_section) g_lsm6dsostats;
 
-#define LSM6DSO_LOG(lvl_, ...) \
-    MODLOG_ ## lvl_(MYNEWT_VAL(LSM6DSO_LOG_MODULE), __VA_ARGS__)
-
 /* Exports for the sensor API */
 static int lsm6dso_sensor_read(struct sensor *, sensor_type_t,
                                sensor_data_func_t, void *, uint32_t);
@@ -184,7 +181,7 @@ static int lsm6dso_i2c_readlen(struct sensor_itf *itf, uint8_t addr,
                            1,
                            MYNEWT_VAL(LSM6DSO_I2C_RETRIES));
     if (rc) {
-        LSM6DSO_LOG(ERROR, "I2C access failed at address 0x%02X\n",
+        LSM6DSO_LOG_ERROR("I2C access failed at address 0x%02X\n",
                      data_struct.address);
         STATS_INC(g_lsm6dsostats, read_errors);
         goto err;
@@ -198,7 +195,7 @@ static int lsm6dso_i2c_readlen(struct sensor_itf *itf, uint8_t addr,
                           MYNEWT_VAL(LSM6DSO_I2C_TIMEOUT_TICKS), len,
                           MYNEWT_VAL(LSM6DSO_I2C_RETRIES));
     if (rc) {
-        LSM6DSO_LOG(ERROR, "Failed to read from 0x%02X:0x%02X\n",
+        LSM6DSO_LOG_ERROR("Failed to read from 0x%02X:0x%02X\n",
                      data_struct.address, addr);
         STATS_INC(g_lsm6dsostats, read_errors);
         goto err;
@@ -242,7 +239,7 @@ static int lsm6dso_spi_readlen(struct sensor_itf *itf, uint8_t addr,
     retval = hal_spi_tx_val(itf->si_num, addr);
     if (retval == 0xFFFF) {
         rc = SYS_EINVAL;
-        LSM6DSO_LOG(ERROR, "SPI_%u register write failed addr:0x%02X\n",
+        LSM6DSO_LOG_ERROR("SPI_%u register write failed addr:0x%02X\n",
                      itf->si_num, addr);
         STATS_INC(g_lsm6dsostats, read_errors);
         goto err;
@@ -253,7 +250,7 @@ static int lsm6dso_spi_readlen(struct sensor_itf *itf, uint8_t addr,
         retval = hal_spi_tx_val(itf->si_num, 0xFF);
         if (retval == 0xFFFF) {
             rc = SYS_EINVAL;
-            LSM6DSO_LOG(ERROR, "SPI_%u read failed addr:0x%02X\n",
+            LSM6DSO_LOG_ERROR("SPI_%u read failed addr:0x%02X\n",
                          itf->si_num, addr);
             STATS_INC(g_lsm6dsostats, read_errors);
             goto err;
@@ -302,7 +299,7 @@ static int lsm6dso_i2c_writelen(struct sensor_itf *itf, uint8_t addr,
                            MYNEWT_VAL(LSM6DSO_I2C_TIMEOUT_TICKS), 1,
                            MYNEWT_VAL(LSM6DSO_I2C_RETRIES));
     if (rc) {
-        LSM6DSO_LOG(ERROR, "I2C access failed at address 0x%02X\n",
+        LSM6DSO_LOG_ERROR("I2C access failed at address 0x%02X\n",
                      data_struct.address);
         STATS_INC(g_lsm6dsostats, write_errors);
         return rc;
@@ -334,7 +331,7 @@ static int lsm6dso_spi_writelen(struct sensor_itf *itf, uint8_t addr,
     rc = hal_spi_tx_val(itf->si_num, addr);
     if (rc == 0xFFFF) {
         rc = SYS_EINVAL;
-        LSM6DSO_LOG(ERROR, "SPI_%u register write failed addr:0x%02X\n",
+        LSM6DSO_LOG_ERROR("SPI_%u register write failed addr:0x%02X\n",
                      itf->si_num, addr);
         STATS_INC(g_lsm6dsostats, write_errors);
         goto err;
@@ -345,7 +342,7 @@ static int lsm6dso_spi_writelen(struct sensor_itf *itf, uint8_t addr,
         rc = hal_spi_tx_val(itf->si_num, payload[i]);
         if (rc == 0xFFFF) {
             rc = SYS_EINVAL;
-            LSM6DSO_LOG(ERROR, "SPI_%u write failed addr:0x%02X\n",
+            LSM6DSO_LOG_ERROR("SPI_%u write failed addr:0x%02X\n",
                          itf->si_num, addr);
             STATS_INC(g_lsm6dsostats, write_errors);
             goto err;
@@ -553,7 +550,7 @@ static int lsm6dso_get_gyro_sensitivity(uint8_t fs, int *val)
         *val = LSM6DSO_G_SENSITIVITY_2000DPS;
         break;
     default:
-        LSM6DSO_LOG(ERROR, "Invalid Gyro FS: %d\n", fs);
+        LSM6DSO_LOG_ERROR("Invalid Gyro FS: %d\n", fs);
 
         return SYS_EINVAL;
     }
@@ -585,7 +582,7 @@ static int lsm6dso_get_acc_sensitivity(uint8_t fs, int *val)
         *val = LSM6DSO_XL_SENSITIVITY_16G;
         break;
     default:
-        LSM6DSO_LOG(ERROR, "Invalid Acc FS: %d\n", fs);
+        LSM6DSO_LOG_ERROR("Invalid Acc FS: %d\n", fs);
 
         return SYS_EINVAL;
     }
@@ -1016,7 +1013,7 @@ int lsm6dso_clear_int_pin_cfg(struct sensor_itf *itf, uint8_t int_pin,
         reg = LSM6DSO_MD2_CFG_ADDR;
         break;
     default:
-        LSM6DSO_LOG(ERROR, "Invalid int pin %d\n", int_pin);
+        LSM6DSO_LOG_ERROR("Invalid int pin %d\n", int_pin);
 
         return SYS_EINVAL;
     }
@@ -1060,7 +1057,7 @@ int lsm6dso_set_int_pin_cfg(struct sensor_itf *itf, uint8_t int_pin,
         reg = LSM6DSO_MD2_CFG_ADDR;
         break;
     default:
-        LSM6DSO_LOG(ERROR, "Invalid int pin %d\n", int_pin);
+        LSM6DSO_LOG_ERROR("Invalid int pin %d\n", int_pin);
 
         return SYS_EINVAL;
     }
@@ -1522,7 +1519,7 @@ static int init_intpin(struct lsm6dso *lsm6dso, hal_gpio_irq_handler_t handler,
     }
 
     if (pin < 0) {
-        LSM6DSO_LOG(ERROR, "Interrupt pin not configured\n");
+        LSM6DSO_LOG_ERROR("Interrupt pin not configured\n");
 
         return SYS_EINVAL;
     }
@@ -1536,7 +1533,7 @@ static int init_intpin(struct lsm6dso *lsm6dso, hal_gpio_irq_handler_t handler,
     rc = hal_gpio_irq_init(pin, handler, arg,
                            trig, HAL_GPIO_PULL_NONE);
     if (rc) {
-        LSM6DSO_LOG(ERROR, "Failed to initialise interrupt pin %d\n", pin);
+        LSM6DSO_LOG_ERROR("Failed to initialise interrupt pin %d\n", pin);
 
         return rc;
     }
@@ -1665,7 +1662,7 @@ int disable_fifo_interrupt(struct sensor *sensor, sensor_type_t type,
         reg = LSM6DSO_INT2_CTRL;
         break;
     default:
-        LSM6DSO_LOG(ERROR, "Invalid int pin %d\n", int_pin);
+        LSM6DSO_LOG_ERROR("Invalid int pin %d\n", int_pin);
         rc = SYS_EINVAL;
         goto err;
     }
@@ -1733,7 +1730,7 @@ int enable_fifo_interrupt(struct sensor *sensor, sensor_type_t type,
         break;
     default:
         rc = SYS_EINVAL;
-        LSM6DSO_LOG(ERROR, "Invalid int pin %d\n", int_pin);
+        LSM6DSO_LOG_ERROR("Invalid int pin %d\n", int_pin);
         goto err;
     }
 
@@ -2099,7 +2096,7 @@ int lsm6dso_get_ag_data(struct sensor_itf *itf, sensor_type_t type, void *data,
             sensitivity = cfg->acc_sensitivity;
            break;
         default:
-            LSM6DSO_LOG(ERROR, "Invalid sensor type: %d\n", type);
+            LSM6DSO_LOG_ERROR("Invalid sensor type: %d\n", type);
             return SYS_EINVAL;
     }
 
@@ -2157,7 +2154,7 @@ int lsm6dso_read_fifo(struct sensor_itf *itf,
         sensitivity = cfg->acc_sensitivity;
         break;
     default:
-         LSM6DSO_LOG(ERROR, "Invalid sensor tag: %d\n", payload[0]);
+         LSM6DSO_LOG_ERROR("Invalid sensor tag: %d\n", payload[0]);
          return SYS_ENODEV;
     }
 
@@ -2568,7 +2565,7 @@ static int lsm6dso_sensor_handle_interrupt(struct sensor *sensor)
 
     rc = lsm6dso_clear_int(itf, int_src);
     if (rc) {
-        LSM6DSO_LOG(ERROR, "Could not read int src err=0x%02x\n", rc);
+        LSM6DSO_LOG_ERROR("Could not read int src err=0x%02x\n", rc);
         return rc;
     }
 

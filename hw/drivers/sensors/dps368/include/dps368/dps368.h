@@ -281,10 +281,6 @@ struct dps368 {
     STATS_SECT_DECL(dps368_stat_section) stats;
 };
 
-
-#define DPS368_LOG(lvl_, ...) \
-    MODLOG_ ## lvl_(MYNEWT_VAL(DPS368_LOG_MODULE), __VA_ARGS__)
-
 /**
  * Initialize the dps368.
  *

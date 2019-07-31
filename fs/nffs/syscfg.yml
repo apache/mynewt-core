@@ -37,3 +37,17 @@ syscfg.defs:
         description: >
             Sysinit stage for NFFS functionality.
         value: 200
+
+    ### Log settings.
+
+    NFFS_LOG_MOD:
+        description: 'Numeric module ID to use for NFFS log messages.'
+        value: 5
+    NFFS_LOG_LVL:
+        description: 'Minimum level for the NFFS log.'
+        value: 1
+
+syscfg.logs:
+    NFFS_LOG:
+        module: MYNEWT_VAL(NFFS_LOG_MOD)
+        level: MYNEWT_VAL(NFFS_LOG_LVL)

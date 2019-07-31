@@ -341,6 +341,8 @@ modlog_printf(uint8_t module, uint8_t level, const char *msg, ...)
     MODLOG_ ## ml_lvl_((ml_mod_), __VA_ARGS__)
 
 /**
+ * XXX: Deprecated.  Use LOG_DFLT instead.
+ *
  * @brief Writes a formatted text entry with the specified level to the
  * default log module.
  *
@@ -378,9 +380,6 @@ modlog_printf(uint8_t module, uint8_t level, const char *msg, ...)
 
 #undef LOG_CRITICAL
 #define LOG_CRITICAL    MODLOG_CRITICAL
-
-#undef LOG_DFLT
-#define LOG_DFLT        MODLOG_DFLT
 
 #endif
 

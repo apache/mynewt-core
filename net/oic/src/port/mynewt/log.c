@@ -47,7 +47,7 @@ oc_log_endpoint(uint8_t lvl, struct oc_endpoint *oe)
             str = "<unkwn>";
         }
     }
-    modlog_printf(LOG_MODULE_IOTIVITY, lvl, "%s\n", str);
+    modlog_printf(MYNEWT_VAL(OC_LOG_MOD), lvl, "%s\n", str);
 }
 
 void
@@ -57,15 +57,15 @@ oc_log_bytes(uint8_t lvl, void *addr, int len, int print_char)
     uint8_t *p = (uint8_t *)addr;
 
     (void)p;
-    modlog_printf(LOG_MODULE_IOTIVITY, lvl, "[");
+    modlog_printf(MYNEWT_VAL(OC_LOG_MOD), lvl, "[");
     for (i = 0; i < len; i++) {
         if (print_char) {
-            modlog_printf(LOG_MODULE_IOTIVITY, lvl, "%c", p[i]);
+            modlog_printf(MYNEWT_VAL(OC_LOG_MOD), lvl, "%c", p[i]);
         } else {
-            modlog_printf(LOG_MODULE_IOTIVITY, lvl, "%02x", p[i]);
+            modlog_printf(MYNEWT_VAL(OC_LOG_MOD), lvl, "%02x", p[i]);
         }
     }
-    modlog_printf(LOG_MODULE_IOTIVITY, lvl, "]\n");
+    modlog_printf(MYNEWT_VAL(OC_LOG_MOD), lvl, "]\n");
 }
 
 void
@@ -76,7 +76,7 @@ oc_log_bytes_mbuf(uint8_t lvl, struct os_mbuf *m, int off, int len,
     uint8_t tmp[4];
     int blen;
 
-    modlog_printf(LOG_MODULE_IOTIVITY, lvl, "[");
+    modlog_printf(MYNEWT_VAL(OC_LOG_MOD), lvl, "[");
     while (len) {
         blen = len;
         if (blen > sizeof(tmp)) {
@@ -85,13 +85,13 @@ oc_log_bytes_mbuf(uint8_t lvl, struct os_mbuf *m, int off, int len,
         os_mbuf_copydata(m, off, blen, tmp);
         for (i = 0; i < blen; i++) {
             if (print_char) {
-                modlog_printf(LOG_MODULE_IOTIVITY, lvl, "%c", tmp[i]);
+                modlog_printf(MYNEWT_VAL(OC_LOG_MOD), lvl, "%c", tmp[i]);
             } else {
-                modlog_printf(LOG_MODULE_IOTIVITY, lvl, "%02x", tmp[i]);
+                modlog_printf(MYNEWT_VAL(OC_LOG_MOD), lvl, "%02x", tmp[i]);
             }
         }
         off += blen;
         len -= blen;
     }
-    modlog_printf(LOG_MODULE_IOTIVITY, lvl, "]\n");
+    modlog_printf(MYNEWT_VAL(OC_LOG_MOD), lvl, "]\n");
 }

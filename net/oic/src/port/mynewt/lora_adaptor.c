@@ -325,7 +325,7 @@ oc_lora_deliver(struct oc_lora_state *os)
     if (OS_MBUF_USRHDR_LEN(m) < sizeof(struct oc_endpoint_lora)) {
         n = os_msys_get_pkthdr(0, sizeof(struct oc_endpoint_lora));
         if (!n) {
-            OC_LOG(ERROR, "oc_lora_deliver: Could not allocate mbuf\n");
+            OC_LOG_ERROR("oc_lora_deliver: Could not allocate mbuf\n");
             STATS_INC(oc_lora_stats, ierr);
             os_mbuf_free_chain(m);
             return;

@@ -311,7 +311,7 @@ static void
 nffs_cache_log_block(struct nffs_cache_inode *cache_inode,
                      struct nffs_cache_block *cache_block)
 {
-    NFFS_LOG(DEBUG, "id=%u inode=%u flash_off=0x%08x "
+    NFFS_LOG_DEBUG("id=%u inode=%u flash_off=0x%08x "
                     "file_off=%u len=%d (entry=%p)\n",
              (unsigned int)cache_block->ncb_block.nb_hash_entry->nhe_id,
              (unsigned int)cache_inode->nci_inode.ni_inode_entry->nie_hash_entry.nhe_id,
@@ -326,7 +326,7 @@ nffs_cache_log_insert_block(struct nffs_cache_inode *cache_inode,
                             struct nffs_cache_block *cache_block,
                             int tail)
 {
-    NFFS_LOG(DEBUG, "caching block (%s): ", tail ? "tail" : "head");
+    NFFS_LOG_DEBUG("caching block (%s): ", tail ? "tail" : "head");
     nffs_cache_log_block(cache_inode, cache_block);
 }
 

@@ -941,7 +941,7 @@ int
 shell_register(const char *module_name, const struct shell_cmd *commands)
 {
     if (num_of_shell_entities >= MYNEWT_VAL(SHELL_MAX_MODULES)) {
-        MODLOG_ERROR(LOG_MODULE_DEFAULT, "Max number of modules reached\n");
+        DFLT_LOG_ERROR("Max number of modules reached\n");
         assert(0);
     }
 
@@ -964,7 +964,7 @@ shell_cmd_register(const struct shell_cmd *sc)
     int rc;
 
     if (num_compat_commands >= MYNEWT_VAL(SHELL_MAX_COMPAT_COMMANDS)) {
-        MODLOG_ERROR(LOG_MODULE_DEFAULT,
+        DFLT_LOG_ERROR(
                      "Max number of compat commands reached\n");
         assert(0);
     }
@@ -975,7 +975,7 @@ shell_cmd_register(const struct shell_cmd *sc)
 
         rc = set_default_module(SHELL_COMPAT_MODULE_NAME);
         if (rc != 0) {
-            MODLOG_ERROR(LOG_MODULE_DEFAULT,
+            DFLT_LOG_ERROR(
                          "Illegal module %s, default is not changed\n",
                          SHELL_COMPAT_MODULE_NAME);
         }
