@@ -29,7 +29,6 @@ pkg.deps:
     - "@apache-mynewt-core/sys/flash_map"
 
 pkg.req_apis:
-    #- newtmgr
     - bootloader
 
 pkg.req_apis.LOG_FCB_SLOT1:

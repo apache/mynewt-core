@@ -61,20 +61,12 @@ int imgr_ver_parse(char *src, struct image_version *ver);
 int imgr_ver_str(struct image_version *ver, char *dst);
 
 /*
- * Given flash_map slot id, read in image_version and/or image hash.
- */
-int imgr_read_info(int area_id, struct image_version *ver, uint8_t *hash, uint32_t *flags);
-
-/*
  * Returns version number of current image (if available).
  */
 int imgr_my_version(struct image_version *ver);
 
-
-uint8_t imgmgr_state_flags(int query_slot);
-int imgmgr_state_set_pending(int slot, int permanent);
-int imgmgr_state_confirm(void);
 int imgmgr_find_best_area_id(void);
+
 #ifdef __cplusplus
 }
 #endif
