@@ -452,7 +452,15 @@ struct bus_spi_node_cfg bmp388_node_cfg = {
     .freq = MYNEWT_VAL(BMP388_OFB_BAUDRATE),
 };
 #endif
-static struct sensor_itf bmp388_itf;
+static struct sensor_itf bmp388_itf = {
+    .si_ints = {
+        {
+            .host_pin = MYNEWT_VAL(BMP388_OFB_INT_PIN),
+            .device_pin = MYNEWT_VAL(BMP388_INT1_PIN_DEVICE),
+            .active = MYNEWT_VAL(BMP388_INT1_CFG_ACTIVE)
+        },
+    }
+};
 #else
 #if MYNEWT_VAL(BMP388_OFB_I2C_NUM) >= 0
 static struct sensor_itf spi2c_0_itf_bmp388 = {
@@ -460,8 +468,12 @@ static struct sensor_itf spi2c_0_itf_bmp388 = {
     .si_num  = MYNEWT_VAL(BMP388_OFB_I2C_NUM),
     .si_addr = MYNEWT_VAL(BMP388_OFB_I2C_ADDR),
     .si_ints = {
-        { 31, MYNEWT_VAL(BMP388_INT1_PIN_DEVICE),
-          MYNEWT_VAL(BMP388_INT1_CFG_ACTIVE)}}
+        {
+            .host_pin = MYNEWT_VAL(BMP388_OFB_INT_PIN),
+            .device_pin = MYNEWT_VAL(BMP388_INT1_PIN_DEVICE),
+            .active = MYNEWT_VAL(BMP388_INT1_CFG_ACTIVE)
+        }
+    }
 };
 #elif MYNEWT_VAL(BMP388_OFB_SPI_NUM) >= 0
 static struct sensor_itf spi2c_0_itf_bmp388 = {
@@ -469,8 +481,12 @@ static struct sensor_itf spi2c_0_itf_bmp388 = {
     .si_num  = MYNEWT_VAL(BMP388_OFB_SPI_NUM),
     .si_cs_pin = MYNEWT_VAL(BMP388_OFB_CS),
     .si_ints = {
-        { 31, MYNEWT_VAL(BMP388_INT1_PIN_DEVICE),
-          MYNEWT_VAL(BMP388_INT1_CFG_ACTIVE)}}
+        {
+            .host_pin = MYNEWT_VAL(BMP388_OFB_INT_PIN),
+            .device_pin = MYNEWT_VAL(BMP388_INT1_PIN_DEVICE),
+            .active = MYNEWT_VAL(BMP388_INT1_CFG_ACTIVE)
+        }
+    }
 };
 #endif
 #endif
