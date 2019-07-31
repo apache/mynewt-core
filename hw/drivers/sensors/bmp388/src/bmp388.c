@@ -2092,7 +2092,7 @@ bmp388_get_latched_int(struct bmp388 *bmp388, uint8_t *en)
 }
 
 int
-bmp388_set_int_active_low(struct bmp388 *bmp388, uint8_t low)
+bmp388_set_int_active_level(struct bmp388 *bmp388, uint8_t level)
 {
     int8_t rslt;
     /* Used to select the settings user needs to change */
@@ -2102,7 +2102,7 @@ bmp388_set_int_active_low(struct bmp388 *bmp388, uint8_t low)
     bmp388->bmp3_dev.settings.press_en = BMP3_ENABLE;
     bmp388->bmp3_dev.settings.temp_en = BMP3_ENABLE;
     /* Select active level for INT */
-    bmp388->bmp3_dev.settings.int_settings.level = low;
+    bmp388->bmp3_dev.settings.int_settings.level = level;
     /* Assign the settings which needs to be set in the sensor */
     settings_sel = BMP3_PRESS_EN_SEL | BMP3_TEMP_EN_SEL | BMP3_LEVEL_SEL;
     rslt = bmp3_set_sensor_settings(settings_sel, &bmp388->bmp3_dev);
@@ -2111,7 +2111,7 @@ bmp388_set_int_active_low(struct bmp388 *bmp388, uint8_t low)
 }
 
 int
-bmp388_get_int_active_low(struct bmp388 *bmp388, uint8_t *low)
+bmp388_get_int_active_level(struct bmp388 *bmp388, uint8_t *level)
 {
     int rc = 0;
 
@@ -3764,11 +3764,11 @@ bmp388_config(struct bmp388 *bmp388, struct bmp388_cfg *cfg)
     }
     bmp388->cfg.int_latched = cfg->int_latched;
 
-    rc = bmp388_set_int_active_low(bmp388, cfg->int_active_low);
+    rc = bmp388_set_int_active_level(bmp388, cfg->int_active_level);
     if (rc) {
         goto err;
     }
-    bmp388->cfg.int_active_low = cfg->int_active_low;
+    bmp388->cfg.int_active_level = cfg->int_active_level;
 
     rc = bmp388_set_filter_cfg(bmp388, cfg->filter_press_osr, cfg->filter_temp_osr);
     if (rc) {
