@@ -122,6 +122,12 @@ syscfg.defs:
             0 Initializes watermarks to unknown (0xffffffff)
         value: 1
 
+    LOG_READ_WATERMARK_UPDATE:
+        description: >
+            Enables update of the log watermark after a log read
+        value: 0
+        restrictions: LOG_STORAGE_WATERMARK
+
     LOG_SYSINIT_STAGE_MAIN:
         description: >
             Primary sysinit stage for logging functionality.

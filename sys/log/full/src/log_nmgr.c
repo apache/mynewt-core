@@ -466,7 +466,7 @@ log_nmgr_read(struct mgmt_cbuf *cb)
         rc = OS_EINVAL;
     }
 
-#if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
+#if MYNEWT_VAL(LOG_READ_WATERMARK_UPDATE)
     log_set_watermark(log, index);
 #endif
 
