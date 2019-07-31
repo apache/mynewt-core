@@ -203,7 +203,6 @@ log_nmgr_encode_entry(struct log *log, struct log_offset *log_offset,
         off += rc;
     }
     g_err |= cbor_encoder_close_container(&rsp, &str_encoder);
-
 #else
     g_err |= cbor_encode_text_stringz(&rsp, "msg");
     g_err |= cbor_encode_text_stringz(&rsp, (char *)data);
@@ -296,7 +295,6 @@ log_nmgr_encode_entry(struct log *log, struct log_offset *log_offset,
         }
     }
     g_err |= cbor_encoder_close_container(&rsp, &str_encoder);
-
 #else
     g_err |= cbor_encode_text_stringz(&rsp, "msg");
     if (too_long) {
