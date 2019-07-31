@@ -503,9 +503,9 @@ log_append_prepare(struct log *log, uint8_t module, uint8_t level,
 
     imgr_read_info(0, NULL, hash, NULL);
     memcpy(ue->ue_rsvd, hash, 4);
-#endif // MYNEWT_VAL(LOG_FLAGS_LOG_IMG_HASH)
+#endif
 
-#endif // MYNEWT_VAL(LOG_VERSION) > 3
+#endif
 
 err:
     return (rc);
