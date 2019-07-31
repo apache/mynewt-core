@@ -1414,7 +1414,7 @@ config_bmp388_sensor(void)
 
     cfg.int_pp_od = 0;
     cfg.int_latched = 0;
-    cfg.int_active_low = 1;
+    cfg.int_active_level = 1;
 
 
     /* options: BMP388_FIFO_M_BYPASS, BMP388_FIFO_M_FIFO */
