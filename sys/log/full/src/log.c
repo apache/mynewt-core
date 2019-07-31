@@ -74,6 +74,7 @@ STATS_NAME_END(logs)
 #endif
 
 #if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
+#if MYNEWT_VAL(LOG_PERSIST_WATERMARK)
 static int log_conf_set(int argc, char **argv, char *val);
 
 static struct conf_handler log_conf = {
@@ -117,6 +118,7 @@ log_conf_set(int argc, char **argv, char *val)
     return 0;
 }
 #endif
+#endif
 
 void
 log_init(void)
@@ -155,8 +157,10 @@ log_init(void)
 #endif
 
 #if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
+#if MYNEWT_VAL(LOG_PERSIST_WATERMARK)
     rc = conf_register(&log_conf);
     SYSINIT_PANIC_ASSERT(rc == 0);
+#endif
 #endif
 }
 
@@ -921,8 +925,10 @@ err:
 int
 log_set_watermark(struct log *log, uint32_t index)
 {
+#if MYNEWT_VAL(LOG_PERSIST_WATERMARK)
     char log_path[CONF_MAX_NAME_LEN];
     char mark_val[10]; /* fits uint32_t + \0 */
+#endif
     int rc;
 
     if (!log->l_log->log_set_watermark) {
@@ -935,12 +941,14 @@ log_set_watermark(struct log *log, uint32_t index)
         goto err;
     }
 
+#if MYNEWT_VAL(LOG_PERSIST_WATERMARK)
     snprintf(log_path, CONF_MAX_NAME_LEN, "log/%s/mark", log->l_name);
     log_path[CONF_MAX_NAME_LEN - 1] = '\0';
 
     sprintf(mark_val, "%u", (unsigned)index);
 
     conf_save_one(log_path, mark_val);
+#endif
 
     return (0);
 err:

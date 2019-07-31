@@ -466,6 +466,10 @@ log_nmgr_read(struct mgmt_cbuf *cb)
         rc = OS_EINVAL;
     }
 
+#if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
+    log_set_watermark(log, index);
+#endif
+
 err:
     g_err |= cbor_encoder_close_container(&cb->encoder, &logs);
     g_err |= cbor_encode_text_stringz(&cb->encoder, "rc");

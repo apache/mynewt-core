@@ -532,19 +532,28 @@ log_fcb_registered(struct log *log)
 {
 #if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
     struct fcb_log *fl;
+#if MYNEWT_VAL(LOG_PERSIST_WATERMARK)
     struct fcb *fcb;
     struct fcb_entry loc;
+#endif
 
     fl = (struct fcb_log *)log->l_arg;
+
+#if MYNEWT_VAL(LOG_PERSIST_WATERMARK)
     fcb = &fl->fl_fcb;
 
     /* Set watermark to first element */
     memset(&loc, 0, sizeof(loc));
+
     if (fcb_getnext(fcb, &loc)) {
         fl->fl_watermark_off = loc.fe_area->fa_off + loc.fe_elem_off;
     } else {
         fl->fl_watermark_off = fcb->f_oldest->fa_off;
     }
+#else
+    /* Initialize watermark to designated unknown value*/
+    fl->fl_watermark_off = 0xffffffff;
+#endif
 #endif
     return 0;
 }
@@ -603,9 +612,14 @@ log_fcb_storage_info(struct log *log, struct log_storage_info *info)
 #if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
     /* Calculate used size */
     fa_used = el_max - fl->fl_watermark_off;
-    if ((int32_t)fa_used < 0) {
+
+    if (fl->fl_watermark_off == 0xffffffff){
+        fa_used = 0xffffffff;
+    }
+    else if ((int32_t)fa_used < 0) {
         fa_used += fa_size;
     }
+
     info->used_unread = fa_used;
 #endif
 
