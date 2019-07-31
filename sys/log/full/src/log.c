@@ -157,11 +157,6 @@ log_init(void)
 #endif
 #endif
 
-#if MYNEWT_VAL(LOG_NEWTMGR)
-    rc = log_nmgr_register_group();
-    SYSINIT_PANIC_ASSERT(rc == 0);
-#endif
-
 #if MYNEWT_VAL(LOG_CONSOLE)
     log_console_init();
 #endif
