@@ -135,7 +135,7 @@ bmp388_shell_cmd_read_chipid(int argc, char **argv)
     uint8_t chipid;
     struct os_dev * dev;
     struct bmp388 *bmp388;
-    struct sensor_itf *itf;
+
     dev = os_dev_open(MYNEWT_VAL(BMP388_SHELL_DEV_NAME), OS_TIMEOUT_NEVER, NULL);
     if (dev == NULL) {
         console_printf("failed to open bmp388_0 device\n");
@@ -143,9 +143,8 @@ bmp388_shell_cmd_read_chipid(int argc, char **argv)
     }
 
     bmp388 = (struct bmp388 *)dev;
-    itf = SENSOR_GET_ITF(&(bmp388->sensor));
 
-    rc = bmp388_get_chip_id(itf, &chipid);
+    rc = bmp388_get_chip_id(bmp388, &chipid);
     if (rc) {
         goto err;
     }
@@ -290,7 +289,7 @@ bmp388_shell_cmd_dump(int argc, char **argv)
     int rc = 0;
     struct os_dev * dev;
     struct bmp388 *bmp388;
-    struct sensor_itf *itf;
+
     if (argc > 2) {
         return bmp388_shell_err_too_many_args(argv[1]);
     }
@@ -301,10 +300,8 @@ bmp388_shell_cmd_dump(int argc, char **argv)
     }
 
     bmp388 = (struct bmp388 *)dev;
-    itf = SENSOR_GET_ITF(&(bmp388->sensor));
 
-
-    rc = bmp388_dump(itf);
+    rc = bmp388_dump(bmp388);
 
     return rc;
 }
@@ -316,7 +313,7 @@ bmp388_shell_cmd_test(int argc, char **argv)
     int result;
     struct os_dev * dev;
     struct bmp388 *bmp388;
-    struct sensor_itf *itf;
+
     dev = os_dev_open(MYNEWT_VAL(BMP388_SHELL_DEV_NAME), OS_TIMEOUT_NEVER, NULL);
     if (dev == NULL) {
         console_printf("failed to open bmp388_0 device\n");
@@ -324,9 +321,8 @@ bmp388_shell_cmd_test(int argc, char **argv)
     }
 
     bmp388 = (struct bmp388 *)dev;
-    itf = SENSOR_GET_ITF(&(bmp388->sensor));
 
-    rc = bmp388_run_self_test(itf, &result);
+    rc = bmp388_run_self_test(bmp388, &result);
     if (rc) {
         goto err;
     }
