@@ -1474,16 +1474,11 @@ bmp388_get_sensor_data(struct bmp388 *bmp388, struct bmp3_data *sensor_data)
     int8_t rslt;
     /* Variable used to select the sensor component */
     uint8_t sensor_comp;
-    /* Variable used to store the compensated data */
-    struct bmp3_data data;
 
     /* Sensor component selection */
     sensor_comp = BMP3_PRESS | BMP3_TEMP;
     /* Temperature and Pressure data are read and stored in the bmp3_data instance */
-    rslt = bmp3_get_sensor_data(itf, sensor_comp, &data, dev);
-    /* Print the temperature and pressure data */
-    sensor_data->pressure = data.pressure;
-    sensor_data->temperature = data.temperature;
+    rslt = bmp3_get_sensor_data(sensor_comp, sensor_data, &bmp388->bmp3_dev);
 
     return rslt;
 }
@@ -3581,6 +3576,7 @@ bmp388_sensor_get_config(struct sensor *sensor, sensor_type_t type,
                          struct sensor_cfg *cfg)
 {
     int rc;
+    (void)sensor;
 
     if (type != SENSOR_TYPE_ACCELEROMETER) {
         rc = SYS_EINVAL;
