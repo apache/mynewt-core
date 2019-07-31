@@ -499,7 +499,7 @@ log_append_prepare(struct log *log, uint8_t module, uint8_t level,
 #if MYNEWT_VAL(LOG_FLAGS_LOG_IMG_HASH)
     uint8_t hash[IMGMGR_HASH_LEN];
 
-    ue->ue_flags = LOG_FLAGS_LOG_IMG_HASH_e;
+    ue->ue_flags &= LOG_FLAGS_LOG_IMG_HASH;
 
     imgr_read_info(0, NULL, hash, NULL);
     memcpy(ue->ue_rsvd, hash, 4);

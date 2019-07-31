@@ -26,7 +26,7 @@ syscfg.defs:
 
     LOG_VERSION:
         description: 'Log entry header version used.'
-        value: 2
+        value: 4
 
     LOG_LEVEL:
         description: 'Limits what level log messages are compiled in.'
@@ -36,7 +36,7 @@ syscfg.defs:
         description: >
             Enable logging of the first 4 bytes of the image hash. 0 - disable; 
             1 - enable.
-        value: 0
+        value: 1
 
     LOG_FCB:
         description: 'Support logging to FCB.'
