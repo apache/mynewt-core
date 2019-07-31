@@ -219,6 +219,9 @@ syscfg.defs:
     BMP388_OFB_CS:
         description: 'SPI CS pin for BMP388'
         value:
+    BMP388_OFB_INT_PIN:
+        description: 'Host interrupt pin for BMP388'
+        value: -1
     LIS2DS12_OFB:
         description: 'LIS2DS12 is present'
         value : 0
