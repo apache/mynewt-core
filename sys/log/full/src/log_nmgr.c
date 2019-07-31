@@ -175,10 +175,10 @@ log_nmgr_encode_entry(struct log *log, struct log_offset *log_offset,
     g_err |= cbor_encoder_close_container(&rsp, &str_encoder);
 
 #if MYNEWT_VAL(LOG_VERSION) > 3
-#if MYNEWT_VAL(LOG_FLAGS_LOG_IMG_HASH)
-    g_err |= cbor_encode_text_stringz(&rsp, "vr");
+    g_err |= cbor_encode_text_stringz(&rsp, "flag");
+    g_err |= cbor_encode_uint(&rsp, ueh->ue_flags);
+    g_err |= cbor_encode_text_stringz(&rsp, "res");
     g_err |= cbor_encode_byte_string(&rsp, ueh->ue_rsvd, 4);
-#endif // MYNEWT_VAL(LOG_FLAGS_LOG_IMG_HASH)
 #endif // MYNEWT_VAL(LOG_VERSION) > 3
 
 #else
@@ -275,10 +275,10 @@ log_nmgr_encode_entry(struct log *log, struct log_offset *log_offset,
     g_err |= cbor_encoder_close_container(&rsp, &str_encoder);
 
 #if MYNEWT_VAL(LOG_VERSION) > 3
-#if MYNEWT_VAL(LOG_FLAGS_LOG_IMG_HASH)
-    g_err |= cbor_encode_text_stringz(&rsp, "vr");
+    g_err |= cbor_encode_text_stringz(&rsp, "flag");
+    g_err |= cbor_encode_uint(&rsp, ueh->ue_flags);
+    g_err |= cbor_encode_text_stringz(&rsp, "res");
     g_err |= cbor_encode_byte_string(&rsp, ueh->ue_rsvd, 4);
-#endif // MYNEWT_VAL(LOG_FLAGS_LOG_IMG_HASH)
 #endif // MYNEWT_VAL(LOG_VERSION) > 3
 
 #else

@@ -116,6 +116,11 @@ struct log_handler {
     lh_registered_func_t log_registered;
 };
 
+typedef enum {
+    LOG_FLAGS_LOG_IMG_HASH_e = 1,
+    LOG_FLAGS_MAX_e,
+}log_flags_e;
+
 #if MYNEWT_VAL(LOG_VERSION) == 2
 struct log_entry_hdr {
     int64_t ue_ts;
