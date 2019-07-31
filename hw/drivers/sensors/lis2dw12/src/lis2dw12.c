@@ -182,9 +182,6 @@ STATS_NAME_END(lis2dw12_stat_section)
 /* Global variable used to hold stats data */
 STATS_SECT_DECL(lis2dw12_stat_section) g_lis2dw12stats;
 
-#define LIS2DW12_LOG(lvl_, ...) \
-    MODLOG_ ## lvl_(MYNEWT_VAL(LIS2DW12_LOG_MODULE), __VA_ARGS__)
-
 /* Exports for the sensor API */
 static int lis2dw12_sensor_read(struct sensor *, sensor_type_t,
         sensor_data_func_t, void *, uint32_t);
@@ -244,7 +241,7 @@ lis2dw12_i2c_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
     rc = i2cn_master_write(itf->si_num, &data_struct, MYNEWT_VAL(LIS2DW12_I2C_TIMEOUT_TICKS), 1,
                            MYNEWT_VAL(LIS2DW12_I2C_RETRIES));
     if (rc) {
-        LIS2DW12_LOG(ERROR, "I2C access failed at address 0x%02X\n",
+        LIS2DW12_LOG_ERROR("I2C access failed at address 0x%02X\n",
                      data_struct.address);
         STATS_INC(g_lis2dw12stats, write_errors);
         goto err;
@@ -288,7 +285,7 @@ lis2dw12_spi_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
     rc = hal_spi_tx_val(itf->si_num, addr);
     if (rc == 0xFFFF) {
         rc = SYS_EINVAL;
-        LIS2DW12_LOG(ERROR, "SPI_%u register write failed addr:0x%02X\n",
+        LIS2DW12_LOG_ERROR("SPI_%u register write failed addr:0x%02X\n",
                      itf->si_num, addr);
         STATS_INC(g_lis2dw12stats, write_errors);
         goto err;
@@ -299,7 +296,7 @@ lis2dw12_spi_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
         rc = hal_spi_tx_val(itf->si_num, payload[i]);
         if (rc == 0xFFFF) {
             rc = SYS_EINVAL;
-            LIS2DW12_LOG(ERROR, "SPI_%u write failed addr:0x%02X:0x%02X\n",
+            LIS2DW12_LOG_ERROR("SPI_%u write failed addr:0x%02X:0x%02X\n",
                          itf->si_num, addr);
             STATS_INC(g_lis2dw12stats, write_errors);
             goto err;
@@ -396,7 +393,7 @@ lis2dw12_i2c_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
     rc = i2cn_master_write(itf->si_num, &data_struct, MYNEWT_VAL(LIS2DW12_I2C_TIMEOUT_TICKS), 1,
                            MYNEWT_VAL(LIS2DW12_I2C_RETRIES));
     if (rc) {
-        LIS2DW12_LOG(ERROR, "I2C access failed at address 0x%02X\n",
+        LIS2DW12_LOG_ERROR("I2C access failed at address 0x%02X\n",
                      itf->si_addr);
         STATS_INC(g_lis2dw12stats, write_errors);
         return rc;
@@ -409,7 +406,7 @@ lis2dw12_i2c_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
                           MYNEWT_VAL(LIS2DW12_I2C_RETRIES));
 
     if (rc) {
-        LIS2DW12_LOG(ERROR, "Failed to read from 0x%02X:0x%02X\n",
+        LIS2DW12_LOG_ERROR("Failed to read from 0x%02X:0x%02X\n",
                      itf->si_addr, reg);
         STATS_INC(g_lis2dw12stats, read_errors);
     }
@@ -443,7 +440,7 @@ lis2dw12_spi_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
 
     if (retval == 0xFFFF) {
         rc = SYS_EINVAL;
-        LIS2DW12_LOG(ERROR, "SPI_%u register write failed addr:0x%02X\n",
+        LIS2DW12_LOG_ERROR("SPI_%u register write failed addr:0x%02X\n",
                      itf->si_num, reg);
         STATS_INC(g_lis2dw12stats, read_errors);
         goto err;
@@ -454,7 +451,7 @@ lis2dw12_spi_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
         retval = hal_spi_tx_val(itf->si_num, 0);
         if (retval == 0xFFFF) {
             rc = SYS_EINVAL;
-            LIS2DW12_LOG(ERROR, "SPI_%u read failed addr:0x%02X\n",
+            LIS2DW12_LOG_ERROR("SPI_%u read failed addr:0x%02X\n",
                          itf->si_num, reg);
             STATS_INC(g_lis2dw12stats, read_errors);
             goto err;
@@ -635,7 +632,7 @@ lis2dw12_set_full_scale(struct sensor_itf *itf, uint8_t fs)
     uint8_t reg;
 
     if (fs > LIS2DW12_FS_16G) {
-        LIS2DW12_LOG(ERROR, "Invalid full scale value\n");
+        LIS2DW12_LOG_ERROR("Invalid full scale value\n");
         rc = SYS_EINVAL;
         goto err;
     }
@@ -699,7 +696,7 @@ lis2dw12_set_rate(struct sensor_itf *itf, uint8_t rate)
     uint8_t reg;
 
     if (rate > LIS2DW12_DATA_RATE_1600HZ) {
-        LIS2DW12_LOG(ERROR, "Invalid rate value\n");
+        LIS2DW12_LOG_ERROR("Invalid rate value\n");
         rc = SYS_EINVAL;
         goto err;
     }
@@ -2362,7 +2359,7 @@ init_intpin(struct lis2dw12 *lis2dw12, hal_gpio_irq_handler_t handler,
     }
 
     if (pin < 0) {
-        LIS2DW12_LOG(ERROR, "Interrupt pin not configured\n");
+        LIS2DW12_LOG_ERROR("Interrupt pin not configured\n");
         return SYS_EINVAL;
     }
 
@@ -2378,7 +2375,7 @@ init_intpin(struct lis2dw12 *lis2dw12, hal_gpio_irq_handler_t handler,
                            trig,
                            HAL_GPIO_PULL_NONE);
     if (rc != 0) {
-        LIS2DW12_LOG(ERROR, "Failed to initialise interrupt pin %d\n", pin);
+        LIS2DW12_LOG_ERROR("Failed to initialise interrupt pin %d\n", pin);
         return rc;
     }
 
@@ -3005,7 +3002,7 @@ lis2dw12_sensor_handle_interrupt(struct sensor *sensor)
          */
         rc = lis2dw12_get_int_status(itf, &int_status);
         if (rc) {
-            LIS2DW12_LOG(ERROR, "Could not read int status err=0x%02x\n", rc);
+            LIS2DW12_LOG_ERROR("Could not read int status err=0x%02x\n", rc);
             return rc;
         }
 
@@ -3017,7 +3014,7 @@ lis2dw12_sensor_handle_interrupt(struct sensor *sensor)
 
     rc = lis2dw12_get_sixd_src(itf, &sixd_src);
     if (rc) {
-        LIS2DW12_LOG(ERROR, "Could not read sixd src err=0x%02x\n", rc);
+        LIS2DW12_LOG_ERROR("Could not read sixd src err=0x%02x\n", rc);
         goto err;
     }
 
@@ -3058,7 +3055,7 @@ lis2dw12_sensor_handle_interrupt(struct sensor *sensor)
 
     rc = lis2dw12_clear_int(itf, &int_src);
     if (rc) {
-        LIS2DW12_LOG(ERROR, "Could not read int src err=0x%02x\n", rc);
+        LIS2DW12_LOG_ERROR("Could not read int src err=0x%02x\n", rc);
         return rc;
     }
 

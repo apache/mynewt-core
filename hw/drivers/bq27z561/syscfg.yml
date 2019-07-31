@@ -24,12 +24,6 @@ syscfg.defs:
     BQ27Z561_INT_ENABLE:
         description: 'Enable interrupt support, necessary for events'
         value: 0
-    BQ27Z561_LOG:
-        description: 'Enable BQ27Z561 logging'
-        value: 1
-    BQ27Z561_LOG_MODULE:
-        description: 'Numeric module ID to use for BQ27Z561 log messages'
-        value: 111
     BQ27Z561_SHELL_DEV_NAME:
         description: 'BQ27Z561 Shell device name'
         value: "\"bq27z561_0\""
@@ -49,3 +43,17 @@ syscfg.defs:
         description: >
             Sysinit stage for the BQ27Z561 driver.
         value: 500
+
+    ### Log settings.
+
+    BQ27Z561_LOG_MODULE:
+        description: 'Numeric module ID to use for BQ27Z561 log messages.'
+        value: 111
+    BQ27Z561_LOG_LVL:
+        description: 'Minimum level for the BQ27Z561 log.'
+        value: 15 # Disable logging by default.
+
+syscfg.logs:
+    BQ27Z561_LOG:
+        module: MYNEWT_VAL(BQ27Z561_LOG_MODULE)
+        level: MYNEWT_VAL(BQ27Z561_LOG_LVL)

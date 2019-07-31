@@ -37,9 +37,6 @@
 #include "stats/stats.h"
 #include <syscfg/syscfg.h>
 
-#define KXTJ3_LOG(lvl_, ...) \
-    MODLOG_ ## lvl_(MYNEWT_VAL(KXTJ3_LOG_MODULE), __VA_ARGS__)
-
 /* Exports for the sensor API.*/
 static int kxtj3_sensor_read(struct sensor *, sensor_type_t,
         sensor_data_func_t, void *, uint32_t);
@@ -94,7 +91,7 @@ kxtj3_write8(struct sensor_itf *itf, uint8_t reg, uint8_t value)
     rc = i2cn_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC, 1,
                            MYNEWT_VAL(KXTJ3_I2C_RETRIES));
     if (rc) {
-        KXTJ3_LOG(ERROR,
+        KXTJ3_LOG_ERROR(
                    "Failed to write to 0x%02X:0x%02X with value 0x%02X\n",
                    data_struct.address, reg, value);
     }
@@ -143,7 +140,7 @@ kxtj3_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
     rc = i2cn_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1,
                            MYNEWT_VAL(KXTJ3_I2C_RETRIES));
     if (rc) {
-        KXTJ3_LOG(ERROR, "I2C access failed at address 0x%02X\n",
+        KXTJ3_LOG_ERROR("I2C access failed at address 0x%02X\n",
                    data_struct.address);
         goto err;
     }
@@ -154,7 +151,7 @@ kxtj3_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
     rc = i2cn_master_read(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1,
                           MYNEWT_VAL(KXTJ3_I2C_RETRIES));
     if (rc) {
-        KXTJ3_LOG(ERROR, "Failed to read from 0x%02X:0x%02X\n",
+        KXTJ3_LOG_ERROR("Failed to read from 0x%02X:0x%02X\n",
                    data_struct.address, reg);
     }
 
@@ -238,7 +235,7 @@ kxtj3_set_oper_mode(struct sensor_itf *itf,
         reg_val &= ~KXTJ3_CTRL_REG1_PC;
     }
     else {
-        KXTJ3_LOG(ERROR, "Incorrect oper_mode %d \n", oper_mode);
+        KXTJ3_LOG_ERROR("Incorrect oper_mode %d \n", oper_mode);
         rc = SYS_EINVAL;
         goto err;
     }
@@ -304,7 +301,7 @@ kxtj3_set_odr(struct sensor_itf *itf, enum kxtj3_odr odr)
         reg_val = KXTJ3_DATA_CTRL_REG_OSA_0P781;
         break;
     default:
-        KXTJ3_LOG(ERROR, "Incorrect odr %d \n", odr);
+        KXTJ3_LOG_ERROR("Incorrect odr %d \n", odr);
         rc = SYS_EINVAL;
         goto err;
     }
@@ -398,7 +395,7 @@ kxtj3_set_res_and_grange(struct sensor_itf *itf,
         reg_val |= KXTJ3_CTRL_REG1_GSEL_2G;
     }
     else {
-        KXTJ3_LOG(ERROR, "Incorrect grange %d \n", grange);
+        KXTJ3_LOG_ERROR("Incorrect grange %d \n", grange);
         rc = SYS_EINVAL;
         goto err;
     }
@@ -488,7 +485,7 @@ kxtj3_get_conversation_params(struct kxtj3_cfg *cfg,
         *shift = 2;
         break;
     default:
-        KXTJ3_LOG(ERROR, "Incorrect perf_mode %d \n", cfg->perf_mode);
+        KXTJ3_LOG_ERROR("Incorrect perf_mode %d \n", cfg->perf_mode);
         rc = SYS_EINVAL;
         goto err;
     }
@@ -510,7 +507,7 @@ kxtj3_get_conversation_params(struct kxtj3_cfg *cfg,
         *lsb_g = 32.0F / counts;
         break;
     default:
-        KXTJ3_LOG(ERROR, "Incorrect grange %d \n", cfg->grange);
+        KXTJ3_LOG_ERROR("Incorrect grange %d \n", cfg->grange);
         rc = SYS_EINVAL;
         goto err;
     }
@@ -683,7 +680,7 @@ kxtj3_convert_wuf_cfg_to_reg_val(struct kxtj3_wuf_cfg *cfg,
         odr_hz = 0.781F;
         break;
     default:
-        KXTJ3_LOG(ERROR, "Incorrect wuf odr %d \n", cfg->odr);
+        KXTJ3_LOG_ERROR("Incorrect wuf odr %d \n", cfg->odr);
         rc = SYS_EINVAL;
     }
 
@@ -1007,7 +1004,7 @@ init_intpin(struct kxtj3 *kxtj3, hal_gpio_irq_handler_t handler,
     }
 
     if (pin < 0) {
-        KXTJ3_LOG(ERROR, "Interrupt pin not configured\n");
+        KXTJ3_LOG_ERROR("Interrupt pin not configured\n");
         return SYS_EINVAL;
     }
 
@@ -1024,7 +1021,7 @@ init_intpin(struct kxtj3 *kxtj3, hal_gpio_irq_handler_t handler,
                            HAL_GPIO_PULL_NONE);
 
     if (rc != 0) {
-        KXTJ3_LOG(ERROR, "Failed to initialise interrupt pin %d\n", pin);
+        KXTJ3_LOG_ERROR("Failed to initialise interrupt pin %d\n", pin);
         return rc;
     }
 
@@ -1202,7 +1199,7 @@ kxtj3_wait_for_wakeup(struct sensor *sensor)
     pdd = &kxtj3->pdd;
 
     if (pdd->interrupt) {
-        KXTJ3_LOG(ERROR, "Interrupt used\n");
+        KXTJ3_LOG_ERROR("Interrupt used\n");
         return SYS_EINVAL;
     }
 
@@ -1372,7 +1369,7 @@ kxtj3_sensor_handle_interrupt(struct sensor *sensor)
 
     rc = kxtj3_get_int_source1(itf, &int_source1);
     if (rc != 0) {
-        KXTJ3_LOG(ERROR, "Int source1 read fail rc=%d\n", rc);
+        KXTJ3_LOG_ERROR("Int source1 read fail rc=%d\n", rc);
         return rc;
     }
 
@@ -1489,7 +1486,7 @@ kxtj3_config(struct kxtj3 *kxtj3, struct kxtj3_cfg *cfg)
         goto err;
     }
 
-    KXTJ3_LOG(INFO, "kxtj3_config kxtj3 id  0x%02X\n",id);
+    KXTJ3_LOG_INFO("kxtj3_config kxtj3 id  0x%02X\n",id);
 
     if (id != KXTJ3_WHO_AM_I_WIA_ID) {
         kxtj3_delay_ms(1000);

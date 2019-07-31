@@ -54,9 +54,6 @@ STATS_NAME_END(tsl2591_stat_section)
 /* Global variable used to hold stats data */
 STATS_SECT_DECL(tsl2591_stat_section) g_tsl2591stats;
 
-#define TSL2591_LOG(lvl_, ...) \
-    MODLOG_ ## lvl_(MYNEWT_VAL(TSL2591_LOG_MODULE), __VA_ARGS__)
-
 #if MYNEWT_VAL(TSL2591_ITIME_DELAY)
 static int g_tsl2591_itime_delay_ms;
 #endif
@@ -92,7 +89,7 @@ tsl2591_write8(struct sensor_itf *itf, uint8_t reg, uint32_t value)
     rc = i2cn_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1,
                            MYNEWT_VAL(TSL2591_I2C_RETRIES));
     if (rc) {
-        TSL2591_LOG(ERROR,
+        TSL2591_LOG_ERROR(
                     "Failed to write 0x%02X:0x%02X with value 0x%02lX\n",
                     data_struct.address, reg, value);
         STATS_INC(g_tsl2591stats, errors);
@@ -123,7 +120,7 @@ tsl2591_write16(struct sensor_itf *itf, uint8_t reg, uint16_t value)
     rc = i2cn_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1,
                            MYNEWT_VAL(TSL2591_I2C_RETRIES));
     if (rc) {
-        TSL2591_LOG(ERROR,
+        TSL2591_LOG_ERROR(
                     "Failed to write @0x%02X with value 0x%02X 0x%02X\n",
                     reg, payload[0], payload[1]);
         STATS_INC(g_tsl2591stats, errors);
@@ -156,7 +153,7 @@ tsl2591_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
     rc = i2cn_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1,
                            MYNEWT_VAL(TSL2591_I2C_RETRIES));
     if (rc) {
-        TSL2591_LOG(ERROR, "Failed to address sensor\n");
+        TSL2591_LOG_ERROR("Failed to address sensor\n");
         STATS_INC(g_tsl2591stats, errors);
         goto err;
     }
@@ -167,7 +164,7 @@ tsl2591_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
                           MYNEWT_VAL(TSL2591_I2C_RETRIES));
     *value = payload;
     if (rc) {
-        TSL2591_LOG(ERROR, "Failed to read @0x%02X\n", reg);
+        TSL2591_LOG_ERROR("Failed to read @0x%02X\n", reg);
         STATS_INC(g_tsl2591stats, errors);
     }
 
@@ -198,7 +195,7 @@ tsl2591_read16(struct sensor_itf *itf, uint8_t reg, uint16_t *value)
     rc = i2cn_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1,
                            MYNEWT_VAL(TSL2591_I2C_RETRIES));
     if (rc) {
-        TSL2591_LOG(ERROR, "Failed to address sensor\n");
+        TSL2591_LOG_ERROR("Failed to address sensor\n");
         STATS_INC(g_tsl2591stats, errors);
         goto err;
     }
@@ -210,7 +207,7 @@ tsl2591_read16(struct sensor_itf *itf, uint8_t reg, uint16_t *value)
                           MYNEWT_VAL(TSL2591_I2C_RETRIES));
     *value = (uint16_t)payload[0] | ((uint16_t)payload[1] << 8);
     if (rc) {
-        TSL2591_LOG(ERROR, "Failed to read @0x%02X\n", reg);
+        TSL2591_LOG_ERROR("Failed to read @0x%02X\n", reg);
         STATS_INC(g_tsl2591stats, errors);
         goto err;
     }
@@ -314,7 +311,7 @@ tsl2591_set_gain(struct sensor_itf *itf, uint8_t gain)
         && (gain != TSL2591_LIGHT_GAIN_MED)
         && (gain != TSL2591_LIGHT_GAIN_HIGH)
         && (gain != TSL2591_LIGHT_GAIN_MAX)) {
-            TSL2591_LOG(ERROR, "Invalid gain value\n");
+            TSL2591_LOG_ERROR("Invalid gain value\n");
             rc = SYS_EINVAL;
             goto err;
     }

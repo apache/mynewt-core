@@ -64,7 +64,7 @@ coap_receive(struct os_mbuf **mp)
 
     erbium_status_code = NO_ERROR;
 
-    OC_LOG(INFO, "CoAP: received datalen=%u\n", OS_MBUF_PKTLEN(*mp));
+    OC_LOG_INFO("CoAP: received datalen=%u\n", OS_MBUF_PKTLEN(*mp));
 
     memcpy(&endpoint, OC_MBUF_ENDPOINT(*mp),
            oc_endpoint_size(OC_MBUF_ENDPOINT(*mp)));
@@ -75,21 +75,21 @@ coap_receive(struct os_mbuf **mp)
 
     m = *mp;
 /*TODO duplicates suppression, if required by application */
-    OC_LOG(DEBUG, "  Parsed: CoAP version: %u, token: 0x%02X%02X, mid: %u\n",
+    OC_LOG_DEBUG("  Parsed: CoAP version: %u, token: 0x%02X%02X, mid: %u\n",
                  message->version, message->token[0], message->token[1],
                  message->mid);
     switch (message->type) {
     case COAP_TYPE_CON:
-        OC_LOG(DEBUG, "  type: CON\n");
+        OC_LOG_DEBUG("  type: CON\n");
         break;
     case COAP_TYPE_NON:
-        OC_LOG(DEBUG, "  type: NON\n");
+        OC_LOG_DEBUG("  type: NON\n");
         break;
     case COAP_TYPE_ACK:
-        OC_LOG(DEBUG, "  type: ACK\n");
+        OC_LOG_DEBUG("  type: ACK\n");
         break;
     case COAP_TYPE_RST:
-        OC_LOG(DEBUG, "  type: RST\n");
+        OC_LOG_DEBUG("  type: RST\n");
         break;
     default:
         break;
@@ -99,20 +99,20 @@ coap_receive(struct os_mbuf **mp)
         /* handle requests */
         switch (message->code) {
         case COAP_GET:
-            OC_LOG(DEBUG, "  method: GET\n");
+            OC_LOG_DEBUG("  method: GET\n");
             break;
         case COAP_PUT:
-            OC_LOG(DEBUG, "  method: PUT\n");
+            OC_LOG_DEBUG("  method: PUT\n");
             break;
         case COAP_POST:
-            OC_LOG(DEBUG, "  method: POST\n");
+            OC_LOG_DEBUG("  method: POST\n");
             break;
         case COAP_DELETE:
-            OC_LOG(DEBUG, "  method: DELETE\n");
+            OC_LOG_DEBUG("  method: DELETE\n");
             break;
         }
 
-        OC_LOG(DEBUG, "  Payload: %d bytes\n", message->payload_len);
+        OC_LOG_DEBUG("  Payload: %d bytes\n", message->payload_len);
 
         /* use transaction buffer for response to confirmable request */
         transaction = coap_new_transaction(message->mid, OC_MBUF_ENDPOINT(m));
@@ -144,7 +144,7 @@ coap_receive(struct os_mbuf **mp)
         }
         if (coap_get_header_block2(message, &block_num, NULL,
                                    &block_size, &block_offset)) {
-            OC_LOG(DEBUG, " Blockwise: block request %u (%u/%u) @ %u bytes\n",
+            OC_LOG_DEBUG(" Blockwise: block request %u (%u/%u) @ %u bytes\n",
                          (unsigned int) block_num, block_size,
                          COAP_MAX_BLOCK_SIZE, (unsigned int) block_offset);
             block_size = MIN(block_size, COAP_MAX_BLOCK_SIZE);
@@ -163,7 +163,7 @@ coap_receive(struct os_mbuf **mp)
                 if (IS_OPTION(message, COAP_OPTION_BLOCK1) &&
                   response->code < BAD_REQUEST_4_00 &&
                   !IS_OPTION(response, COAP_OPTION_BLOCK1)) {
-                    OC_LOG(ERROR, " Block1 option NOT IMPLEMENTED\n");
+                    OC_LOG_ERROR(" Block1 option NOT IMPLEMENTED\n");
 
                     erbium_status_code = NOT_IMPLEMENTED_5_01;
                     coap_error_message = "NoBlock1Support";
@@ -176,7 +176,7 @@ coap_receive(struct os_mbuf **mp)
                      * unaware of blockwise transfer
                      */
                     if (new_offset == block_offset) {
-                        OC_LOG(DEBUG, " Block: unaware resource %u/%u\n",
+                        OC_LOG_DEBUG(" Block: unaware resource %u/%u\n",
                                      response->payload_len, block_size);
                         if (block_offset >= response->payload_len) {
                             response->code = BAD_OPTION_4_02;
@@ -199,7 +199,7 @@ coap_receive(struct os_mbuf **mp)
 
                         /* resource provides chunk-wise data */
                     } else {
-                        OC_LOG(DEBUG, " Block: aware resource, off %d\n",
+                        OC_LOG_DEBUG(" Block: aware resource, off %d\n",
                                      (int) new_offset);
                         coap_set_header_block2(response, block_num,
                                                new_offset != -1 ||
@@ -213,7 +213,7 @@ coap_receive(struct os_mbuf **mp)
 
                     /* Resource requested Block2 transfer */
                 } else if (new_offset != 0) {
-                    OC_LOG(DEBUG, " block: no block option, using block sz %u\n",
+                    OC_LOG_DEBUG(" block: no block option, using block sz %u\n",
                                  COAP_MAX_BLOCK_SIZE);
 
                     coap_set_header_block2(response, 0, new_offset != -1,
@@ -268,7 +268,7 @@ out:
             coap_send_transaction(transaction);
         }
     } else if (erbium_status_code == CLEAR_TRANSACTION) {
-        OC_LOG(DEBUG, " Clearing transaction for manual response\n");
+        OC_LOG_DEBUG(" Clearing transaction for manual response\n");
         /* used in server for separate response */
         coap_clear_transaction(transaction);
     }

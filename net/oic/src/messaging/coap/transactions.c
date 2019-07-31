@@ -100,7 +100,7 @@ coap_send_transaction(coap_transaction_t *t)
 
     confirmable = (COAP_TYPE_CON == t->type) ? true : false;
 
-    OC_LOG(DEBUG, "Sending transaction %u\n", t->mid);
+    OC_LOG_DEBUG("Sending transaction %u\n", t->mid);
 
     if (confirmable) {
         if (t->retrans_counter < COAP_MAX_RETRANSMIT) {
@@ -110,11 +110,11 @@ coap_send_transaction(coap_transaction_t *t)
                   COAP_RESPONSE_TIMEOUT_TICKS +
                   (oc_random_rand() %
                     (oc_clock_time_t)COAP_RESPONSE_TIMEOUT_BACKOFF_MASK);
-                OC_LOG(DEBUG, "Initial interval " OC_CLK_FMT "\n",
+                OC_LOG_DEBUG("Initial interval " OC_CLK_FMT "\n",
                              t->retrans_tmo);
             } else {
                 t->retrans_tmo <<= 1; /* double */
-                OC_LOG(DEBUG, "Doubled " OC_CLK_FMT "\n", t->retrans_tmo);
+                OC_LOG_DEBUG("Doubled " OC_CLK_FMT "\n", t->retrans_tmo);
             }
 
             os_callout_reset(&t->retrans_timer, t->retrans_tmo);
@@ -124,7 +124,7 @@ coap_send_transaction(coap_transaction_t *t)
             t = NULL;
         } else {
             /* timed out */
-            OC_LOG(DEBUG, "Timeout\n");
+            OC_LOG_DEBUG("Timeout\n");
 
 #ifdef OC_SERVER
             /* handle observers */
@@ -191,7 +191,7 @@ coap_transaction_retrans(struct os_event *ev)
 {
     coap_transaction_t *t = ev->ev_arg;
     ++(t->retrans_counter);
-    OC_LOG(DEBUG, "Retransmitting %u (%u)\n", t->mid, t->retrans_counter);
+    OC_LOG_DEBUG("Retransmitting %u (%u)\n", t->mid, t->retrans_counter);
     coap_send_transaction(t);
 }
 

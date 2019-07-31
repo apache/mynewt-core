@@ -415,5 +415,5 @@ mfg_init(void)
     return;
 
 err:
-    MFG_LOG(ERROR, "failed to read MMRs: rc=%d", rc);
+    MFG_LOG_ERROR("failed to read MMRs: rc=%d", rc);
 }

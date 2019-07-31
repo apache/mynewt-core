@@ -25,7 +25,7 @@ extern "C" {
 
 #define oc_abort(msg)                                                   \
     do {                                                                \
-      OC_LOG(ERROR, "error: %s\nAbort.\n", msg);                         \
+      OC_LOG_ERROR("error: %s\nAbort.\n", msg);                         \
       assert(0);                                                        \
   } while (0)
 

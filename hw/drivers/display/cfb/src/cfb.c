@@ -124,7 +124,7 @@ int cfb_print(struct os_dev *dev, char *str, uint16_t x, uint16_t y)
 	}
 
 	if (fptr->height % 8) {
-		MODLOG_DFLT(ERROR, "Wrong font size");
+		DFLT_LOG_ERROR("Wrong font size");
 		return -1;
 	}
 
@@ -139,14 +139,14 @@ int cfb_print(struct os_dev *dev, char *str, uint16_t x, uint16_t y)
 		return 0;
 	}
 
-	MODLOG_DFLT(ERROR, "Unsupported framebuffer configuration");
+	DFLT_LOG_ERROR("Unsupported framebuffer configuration");
 	return -1;
 }
 
 static int cfb_reverse_bytes(const struct char_framebuffer *fb)
 {
 	if (!(fb->screen_info & SCREEN_INFO_MONO_VTILED)) {
-		MODLOG_DFLT(ERROR, "Unsupported framebuffer configuration");
+		DFLT_LOG_ERROR("Unsupported framebuffer configuration");
 		return -1;
 	}
 
@@ -305,7 +305,7 @@ int cfb_framebuffer_init(struct os_dev *dev)
 
 
 	fb->numof_fonts = (sizeof(font_array) / sizeof((font_array)[0]));
-	MODLOG_DFLT(DEBUG, "number of fonts %d", fb->numof_fonts);
+	DFLT_LOG_DEBUG("number of fonts %d", fb->numof_fonts);
 	if (!fb->numof_fonts) {
 		return -1;
 	}

@@ -78,7 +78,7 @@ oc_main_init(oc_handler_t *handler)
         goto err;
     }
 
-    OC_LOG(INFO, "oic: Initialized\n");
+    OC_LOG_INFO("oic: Initialized\n");
 
 #ifdef OC_CLIENT
     if (handler->requests_entry) {
@@ -104,7 +104,7 @@ void
 oc_main_shutdown(void)
 {
     if (initialized == false) {
-        OC_LOG(ERROR, "oic: not initialized\n");
+        OC_LOG_ERROR("oic: not initialized\n");
         return;
     }
 

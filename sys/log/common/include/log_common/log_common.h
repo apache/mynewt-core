@@ -53,16 +53,20 @@ struct log;
     (LOG_LEVEL_CRITICAL == level ? "CRITICAL" :\
      "UNKNOWN")))))
 
-/* Log module, eventually this can be a part of the filter. */
-#define LOG_MODULE_DEFAULT          (0)
-#define LOG_MODULE_OS               (1)
-#define LOG_MODULE_NEWTMGR          (2)
-#define LOG_MODULE_NIMBLE_CTLR      (3)
-#define LOG_MODULE_NIMBLE_HOST      (4)
-#define LOG_MODULE_NFFS             (5)
-#define LOG_MODULE_REBOOT           (6)
-#define LOG_MODULE_IOTIVITY         (7)
-#define LOG_MODULE_TEST             (8)
+/* XXX: These module IDs are defined for backwards compatibility.  Application
+ * code should use the syscfg settings directly.  These defines will be removed
+ * in a future release.
+ */
+#define LOG_MODULE_DEFAULT          0
+#define LOG_MODULE_OS               1
+#define LOG_MODULE_NEWTMGR          2
+#define LOG_MODULE_NIMBLE_CTLR      3
+#define LOG_MODULE_NIMBLE_HOST      4
+#define LOG_MODULE_NFFS             5
+#define LOG_MODULE_REBOOT           6
+#define LOG_MODULE_IOTIVITY         7
+#define LOG_MODULE_TEST             8
+
 #define LOG_MODULE_PERUSER          (64)
 #define LOG_MODULE_MAX              (255)
 

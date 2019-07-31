@@ -27,6 +27,18 @@ syscfg.defs:
         description: >
             Sysinit stage for manufacturing support.
         value: 100
+
+    ### Log settings.
+
     MFG_LOG_MODULE:
-        description: 'Numeric module ID to use for manufacturing log messages'
+        description: 'Numeric module ID to use for manufacturing log messages.'
         value: 128
+    MFG_LOG_LVL:
+        description: 'Minimum level for the manufacturing log.'
+        value: 15 # Disable logging by default.
+
+syscfg.logs:
+    MFG_LOG:
+        module: MYNEWT_VAL(MFG_LOG_MODULE)
+        level: MYNEWT_VAL(MFG_LOG_LVL)
+

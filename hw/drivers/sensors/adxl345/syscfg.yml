@@ -50,9 +50,6 @@ syscfg.defs:
     ADXL345_ITF_LOCK_TMO:
         description: 'ADXL345 interface lock timeout in milliseconds'
         value: 1000
-    ADXL345_LOG_MODULE:
-        description: 'Numeric module ID to use for ADXL345 log messages'
-        value: 75
     ADXL345_I2C_RETRIES:
         description: >
             Number of retries to use for failed I2C communication.  A retry is
@@ -61,3 +58,18 @@ syscfg.defs:
     ADXL345_ITF_ADDR:
         description: 'Slave address for ADXL345 (0x1D or 0x53)'
         value : 0x1D
+
+    ### Log settings.
+
+    ADXL345_LOG_MODULE:
+        description: 'Numeric module ID to use for ADXL345 log messages.'
+        value: 75
+    ADXL345_LOG_LVL:
+        description: 'Minimum level for the ADXL345 log.'
+        value: 1
+
+syscfg.logs:
+    ADXL345_LOG:
+        module: MYNEWT_VAL(ADXL345_LOG_MODULE)
+        level: MYNEWT_VAL(ADXL345_LOG_LVL)
+
