@@ -28,6 +28,7 @@
 #include "cborattr/cborattr.h"
 #include "tinycbor/cbor_cnt_writer.h"
 #include "log/log.h"
+#include "imgmgr/imgmgr.h"
 
 /* Source code is only included if the newtmgr library is enabled.  Otherwise
  * this file is compiled out for code size.
@@ -77,6 +78,7 @@ log_nmgr_encode_entry(struct log *log, struct log_offset *log_offset,
                       uint16_t len)
 {
     uint8_t data[128];
+    uint8_t hash[IMGMGR_HASH_LEN];
     int rc;
     int rsp_len;
     bool too_long;
@@ -148,6 +150,9 @@ log_nmgr_encode_entry(struct log *log, struct log_offset *log_offset,
         return MGMT_ERR_ECORRUPT;
     }
 
+    g_err |= cbor_encode_text_stringz(&rsp, "flag");
+    g_err |= cbor_encode_uint(&rsp, ueh->ue_flag);
+
     /*
      * Copy the type from the header type. This may get changed to type
      * string if a single entry is too long.
@@ -164,6 +169,26 @@ log_nmgr_encode_entry(struct log *log, struct log_offset *log_offset,
      */
     g_err |= cbor_encoder_create_indef_byte_string(&rsp, &str_encoder);
     for (off = 0; off < len && !g_err; ) {
+        /* Entering first log entry. Check flag.*/
+        if (off == 0) {
+            switch(ueh->ue_flag) {
+            case LOG_FLAGS_LOG_IMG_HASH:
+                imgr_read_info(0, NULL, hash, NULL);
+                memcpy(data, hash, 4);
+                break;
+            default:
+                break;
+            }
+            rc = log_read_body(log, dptr, data + 4, off, sizeof(data) - 4);
+            if (rc < 0) {
+                g_err |= 1;
+                break;
+            }
+            g_err |= cbor_encode_byte_string(&str_encoder, data, rc);
+            off += rc;
+            continue;
+        }
+
         rc = log_read_body(log, dptr, data, off, sizeof(data));
         if (rc < 0) {
             g_err |= 1;

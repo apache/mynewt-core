@@ -33,7 +33,6 @@
 #include "shell/shell.h"
 #endif
 
-#include "imgmgr/imgmgr.h"
 
 struct log_info g_log_info;
 
