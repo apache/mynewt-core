@@ -382,7 +382,7 @@ struct bmp388_cfg {
     uint8_t int_enable_type  : 2;
     uint8_t int_pp_od   : 1;
     uint8_t int_latched : 1;
-    uint8_t int_active_low  : 1;
+    uint8_t int_active_level  : 1;
 
     /* Power mode */
     uint8_t power_mode     : 4;
@@ -861,21 +861,21 @@ int bmp388_get_latched_int(struct bmp388 *bmp388, uint8_t *en);
 * Sets whether interrupts are active high or low
 *
 * @param bmp388 The device
-* @param low Value to set (0 = active high, 1 = active low)
+* @param level Value to set (1 = active high, 0 = active low)
 *
 * @return 0 on success, non-zero on failure
 */
-int bmp388_set_int_active_low(struct bmp388 *bmp388, uint8_t low);
+int bmp388_set_int_active_level(struct bmp388 *bmp388, uint8_t level);
 
 /**
 * Gets whether interrupts are active high or low
 *
 * @param bmp388 The device
-* @param low Ptr to store value (0 = active high, 1 = active low)
+* @param level Ptr to store value (1 = active high, 0 = active low)
 *
 * @return 0 on success, non-zero on failure
 */
-int bmp388_get_int_active_low(struct bmp388 *bmp388, uint8_t *low);
+int bmp388_get_int_active_low(struct bmp388 *bmp388, uint8_t *level);
 
 /**
 * Set filter config
