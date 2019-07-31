@@ -200,6 +200,7 @@ imgmgr_module_init(void)
     mgmt_register_group(&imgr_nmgr_group);
 
 #if MYNEWT_VAL(IMGMGR_CLI)
+    int rc;
     rc = imgr_cli_register();
     SYSINIT_PANIC_ASSERT(rc == 0);
 #endif
