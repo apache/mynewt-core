@@ -184,7 +184,6 @@ log_nmgr_encode_entry(struct log *log, struct log_offset *log_offset,
                 }
                 g_err |= cbor_encode_byte_string(&str_encoder, data, rc);
                 off += rc;
-                continue;
             }
         } else {
             /* Continue subsequent reads after inserting image hash after the first 
