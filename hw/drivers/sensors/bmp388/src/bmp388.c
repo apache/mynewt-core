@@ -2927,23 +2927,17 @@ init_intpin(struct bmp388 *bmp388, hal_gpio_irq_handler_t handler,
             void *arg)
 {
     hal_gpio_irq_trig_t trig;
-    int pin = -1;
+    int pin;
     int rc;
-    int i;
 
-    for (i = 0; i < MYNEWT_VAL(SENSOR_MAX_INTERRUPTS_PINS); i++) {
-        pin = bmp388->sensor.s_itf.si_ints[i].host_pin;
-        if (pin >= 0) {
-            break;
-        }
-    }
+    pin = bmp388->sensor.s_itf.si_ints[0].host_pin;
 
     if (pin < 0) {
         BMP388_LOG_ERROR("Interrupt pin not configured\n");
         return SYS_EINVAL;
     }
 
-    if (bmp388->sensor.s_itf.si_ints[i].active) {
+    if (bmp388->sensor.s_itf.si_ints[0].active) {
         trig = HAL_GPIO_TRIG_RISING;
     } else {
         trig = HAL_GPIO_TRIG_FALLING;
