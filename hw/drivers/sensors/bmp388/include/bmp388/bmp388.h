@@ -423,25 +423,6 @@ STATS_SECT_START(bmp388_stat_section)
     STATS_SECT_ENTRY(read_errors)
 STATS_SECT_END
 
-struct bmp388 {
-#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
-    union {
-        struct bus_i2c_node i2c_node;
-        struct bus_spi_node spi_node;
-    };
-#else
-    struct os_dev dev;
-#endif
-    struct sensor sensor;
-    struct bmp388_cfg cfg;
-    struct bmp388_int intr;
-    struct bmp388_pdd pdd;
-#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
-    bool node_is_spi;
-#endif
-    /* Variable used to hold stats data */
-    STATS_SECT_DECL(bmp388_stat_section) stats;
-};
 /********************************************************/
 
 /*!
@@ -698,32 +679,53 @@ struct bmp3_dev {
     uint8_t fifo_watermark_level;
 };
 
+struct bmp388 {
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    union {
+        struct bus_i2c_node i2c_node;
+        struct bus_spi_node spi_node;
+    };
+#else
+    struct os_dev dev;
+#endif
+    struct sensor sensor;
+    struct bmp388_cfg cfg;
+    struct bmp388_int intr;
+    struct bmp388_pdd pdd;
+    struct bmp3_dev bmp3_dev;
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    bool node_is_spi;
+#endif
+    /* Variable used to hold stats data */
+    STATS_SECT_DECL(bmp388_stat_section) stats;
+};
+
 /**
 * Set bmp388 to normal mode
 *
-* @param itf The sensor interface
+* @param bmp388 The device
 *
 * @return 0 on success, non-zero on failure
 */
-int8_t bmp388_set_normal_mode(struct sensor_itf *itf, struct bmp3_dev *dev);
+int8_t bmp388_set_normal_mode(struct bmp388 *bmp388);
 
 /**
 * Set bmp388 to force mode with OSR
 *
-* @param itf The sensor interface
+* @param bmp388 The device
 *
 * @return 0 on success, non-zero on failure
 */
-int8_t bmp388_set_forced_mode_with_osr(struct sensor_itf *itf, struct bmp3_dev *dev);
+int8_t bmp388_set_forced_mode_with_osr(struct bmp388 *bmp388);
 
 /*!
 *  @brief This API is the entry point.
 *  It performs the selection of I2C/SPI read mechanism according to the
 *  selected interface and reads the chip-id and calibration data of the sensor.
 */
-int8_t bmp3_init(struct sensor_itf *itf, struct bmp3_dev *dev);
+int8_t bmp3_init(struct bmp3_dev *dev);
 
-int8_t bmp388_get_sensor_data(struct sensor_itf *itf, struct bmp3_dev *dev,
+int8_t bmp388_get_sensor_data(struct bmp388 *bpp388,
                               struct bmp3_data *sensor_data);
 
 /*!
@@ -757,209 +759,190 @@ int8_t bmp388_get_sensor_data(struct sensor_itf *itf, struct bmp3_dev *dev,
 * @return Result of API execution status
 * @retval zero -> Success / +ve value -> Warning / -ve value -> Error.
 */
-int8_t bmp3_set_sensor_settings(struct sensor_itf *itf, uint32_t desired_settings, struct bmp3_dev *dev);
+int8_t bmp3_set_sensor_settings(uint32_t desired_settings, struct bmp3_dev *dev);
 
 /**
 * Get chip ID
 *
-* @param itf The sensor interface
+* @param bmp388 The device
 * @param chip_id Ptr to chip id to be filled up
 */
-int bmp388_get_chip_id(struct sensor_itf *itf, uint8_t *chip_id);
+int bmp388_get_chip_id(struct bmp388 *bmp388, uint8_t *chip_id);
 
 /**
 * Dump the registers
 *
-* @param itf The sensor interface
+* @param bmp388 The device
 */
-int bmp388_dump(struct sensor_itf *itf);
+int bmp388_dump(struct bmp388 *bmp388);
 
 
 /**
 * Sets the rate
 *
-* @param itf The sensor interface
+* @param bmp388 The device
 * @param rate The sampling rate of the sensor
 *
 * @return 0 on success, non-zero on failure
 */
-int bmp388_set_rate(struct sensor_itf *itf, uint8_t rate);
+int bmp388_set_rate(struct bmp388 *bmp388, uint8_t rate);
 
 /**
 * Gets the current rate
 *
-* @param itf The sensor interface
+* @param bmp388 The device
 * @param rate Ptr to rate read from the sensor
 *
 * @return 0 on success, non-zero on failure
 */
-int bmp388_get_rate(struct sensor_itf *itf, uint8_t *rate);
+int bmp388_get_rate(struct bmp388 *bmp388, uint8_t *rate);
 
 /**
 * Sets the power mode of the sensor
 *
-* @param itf The sensor interface
+* @param bmp388 The device
 * @param mode Power mode
 *
 * @return 0 on success, non-zero on failure
 */
-int bmp388_set_power_mode(struct sensor_itf *itf, uint8_t mode);
+int bmp388_set_power_mode(struct bmp388 *bmp388, uint8_t mode);
 
 /**
 * Gets the power mode of the sensor
 *
-* @param itf The sensor interface
+* @param bmp388 The device
 * @param mode Power mode
 *
 * @return 0 on success, non-zero on failure
 */
-int bmp388_get_power_mode(struct sensor_itf *itf, uint8_t *mode);
+int bmp388_get_power_mode(struct bmp388 *bmp388, uint8_t *mode);
 
 /**
 * Sets the interrupt push-pull/open-drain selection
 *
-* @param itf The sensor interface
+* @param bmp388 The device
 * @param mode Interrupt setting (0 = push-pull, 1 = open-drain)
 *
 * @return 0 on success, non-zero on failure
 */
-int bmp388_set_int_pp_od(struct sensor_itf *itf, uint8_t mode);
+int bmp388_set_int_pp_od(struct bmp388 *bmp388, uint8_t mode);
 
 /**
 * Gets the interrupt push-pull/open-drain selection
 *
-* @param itf The sensor interface
+* @param bmp388 The device
 * @param mode Ptr to store setting (0 = push-pull, 1 = open-drain)
 *
 * @return 0 on success, non-zero on failure
 */
-int bmp388_get_int_pp_od(struct sensor_itf *itf, uint8_t *mode);
+int bmp388_get_int_pp_od(struct bmp388 *bmp388, uint8_t *mode);
 
 /**
 * Sets whether latched interrupts are enabled
 *
-* @param itf The sensor interface
+* @param bmp388 The device
 * @param en Value to set (0 = not latched, 1 = latched)
 *
 * @return 0 on success, non-zero on failure
 */
-int bmp388_set_latched_int(struct sensor_itf *itf, uint8_t en);
+int bmp388_set_latched_int(struct bmp388 *bmp388, uint8_t en);
 
 /**
 * Gets whether latched interrupts are enabled
 *
-* @param itf The sensor interface
+* @param bmp388 The device
 * @param en Ptr to store value (0 = not latched, 1 = latched)
 *
 * @return 0 on success, non-zero on failure
 */
-int bmp388_get_latched_int(struct sensor_itf *itf, uint8_t *en);
+int bmp388_get_latched_int(struct bmp388 *bmp388, uint8_t *en);
 
 /**
 * Sets whether interrupts are active high or low
 *
-* @param itf The sensor interface
+* @param bmp388 The device
 * @param low Value to set (0 = active high, 1 = active low)
 *
 * @return 0 on success, non-zero on failure
 */
-int bmp388_set_int_active_low(struct sensor_itf *itf, uint8_t low);
+int bmp388_set_int_active_low(struct bmp388 *bmp388, uint8_t low);
 
 /**
 * Gets whether interrupts are active high or low
 *
-* @param itf The sensor interface
+* @param bmp388 The device
 * @param low Ptr to store value (0 = active high, 1 = active low)
 *
 * @return 0 on success, non-zero on failure
 */
-int bmp388_get_int_active_low(struct sensor_itf *itf, uint8_t *low);
+int bmp388_get_int_active_low(struct bmp388 *bmp388, uint8_t *low);
 
 /**
 * Set filter config
 *
-* @param itf The sensor interface
-* @param bw The filter bandwidth
-* @param type The filter type (1 = high pass, 0 = low pass)
+* @param bmp388 The device
+* @param press_osr Oversampling selection for pressure
+*                 (BMP3_NO_OVERSAMPLING..BMP3_OVERSAMPLING_32)
+* @param temp_osr Oversampling selection for temperature
+*                 (BMP3_NO_OVERSAMPLING..BMP3_OVERSAMPLING_32)
 *
 * @return 0 on success, non-zero on failure
 */
-int bmp388_set_filter_cfg(struct sensor_itf *itf, uint8_t press_osr, uint8_t temp_osr);
+int bmp388_set_filter_cfg(struct bmp388 *bmp388, uint8_t press_osr, uint8_t temp_osr);
 
 /**
 * Get filter config
 *
-* @param itf The sensor interface
+* @param bmp388 The device
 * @param bw Ptr to the filter bandwidth
 * @param type Ptr to filter type (1 = high pass, 0 = low pass)
 *
 * @return 0 on success, non-zero on failure
 */
-int bmp388_get_filter_cfg(struct sensor_itf *itf, uint8_t *bw, uint8_t *type);
+int bmp388_get_filter_cfg(struct bmp388 *bmp388, uint8_t *bw, uint8_t *type);
 
-
-/**
-* Clear interrupt pin configuration for interrupt 1
-*
-* @param itf The sensor interface
-* @param cfg int1 config
-*
-* @return 0 on success, non-zero on failure
-*/
-int
-bmp388_clear_int1_pin_cfg(struct sensor_itf *itf, uint8_t cfg);
-
-/**
-* Clear interrupt pin configuration for interrupt 2
-*
-* @param itf The sensor interface
-* @param cfg int2 config
-*
-* @return 0 on success, non-zero on failure
-*/
-int
-bmp388_clear_int2_pin_cfg(struct sensor_itf *itf, uint8_t cfg);
 
 /**
 * Set whether interrupts are enabled
 *
-* @param itf The sensor interface
+* @param bmp388 The device
 * @param enabled Value to set (0 = disabled, 1 = enabled)
+* @param int_type interrupt to enable/disable
 *
 * @return 0 on success, non-zero on failure
 */
-int bmp388_set_int_enable(struct sensor_itf *itf, uint8_t enabled, uint8_t int_type);
+int bmp388_set_int_enable(struct bmp388 *bmp388, uint8_t enabled,
+                          enum bmp388_int_type int_type);
 
 /**
 * Clear interrupts
 *
-* @param itf The sensor interface
-* @param src Ptr to return interrupt source in
+* @param bmp388 The device
 *
 * @return 0 on success, non-zero on failure
 */
-int bmp388_clear_int(struct sensor_itf *itf);
+int bmp388_clear_int(struct bmp388 *bmp388);
 
 /**
 * Setup FIFO
 *
-* @param itf The sensor interface
+* @param bmp388 The device
 * @param mode FIFO mode to setup
 * @param fifo_ths Threshold to set for FIFO
 *
 * @return 0 on success, non-zero on failure
 */
-int bmp388_set_fifo_cfg(struct sensor_itf *itf, enum bmp388_fifo_mode mode, uint8_t fifo_ths);
+int bmp388_set_fifo_cfg(struct bmp388 *bmp388, enum bmp388_fifo_mode mode, uint8_t fifo_ths);
 
 /**
 * Run Self test on sensor
 *
-* @param itf The sensor interface
+* @param bmp388 The device
 * @param result Ptr to return test result in (0 on pass, non-zero on failure)
 *
 * @return 0 on sucess, non-zero on failure
 */
-int bmp388_run_self_test(struct sensor_itf *itf, int *result);
+int bmp388_run_self_test(struct bmp388 *bmp388, int *result);
 
 /**
 * Provide a continuous stream of pressure readings.
@@ -1008,8 +991,8 @@ int bmp388_init(struct os_dev *dev, void *arg);
 /**
 * Configure the sensor
 *
-* @param lis2dw12 Ptr to sensor driver
-* @param cfg Ptr to sensor driver config
+* @param bmp388 The device
+* @param cfg Ptr to sensor config
 */
 int bmp388_config(struct bmp388 *bmp388, struct bmp388_cfg *cfg);
 
