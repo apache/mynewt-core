@@ -20,9 +20,6 @@ syscfg.defs:
     MS5837_ITF_LOCK_TMO:
         description: 'MS5837 interface lock timeout in milliseconds'
         value: 1000
-    MS5837_LOG_MODULE:
-        description: 'Numeric module ID to use for MS5837 log messages'
-        value: 140
     MS5837_I2C_RETRIES:
         description: >
             Number of retries to use for failed I2C communication.  A retry is
@@ -32,3 +29,17 @@ syscfg.defs:
         description: >
             Number of OS ticks to wait for each I2C transaction to complete.
         value: 3
+
+    ### Log settings.
+
+    MS5837_LOG_MODULE:
+        description: 'Numeric module ID to use for MS5837 log messages.'
+        value: 140
+    MS5837_LOG_LVL:
+        description: 'Minimum level for the MS5837 log.'
+        value: 1
+
+syscfg.logs:
+    MS5837_LOG:
+        module: MYNEWT_VAL(MS5837_LOG_MODULE)
+        level: MYNEWT_VAL(MS5837_LOG_LVL)

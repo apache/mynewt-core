@@ -47,9 +47,6 @@ STATS_NAME_END(lp5523_stat_section)
 /* Global variable used to hold stats data */
 STATS_SECT_DECL(lp5523_stat_section) g_lp5523stats;
 
-#define LP5523_LOG(lvl_, ...) \
-    MODLOG_ ## lvl_(MYNEWT_VAL(LP5523_LOG_MODULE), __VA_ARGS__)
-
 int
 lp5523_set_reg(struct led_itf *itf, enum lp5523_registers addr,
     uint8_t value)
@@ -75,7 +72,7 @@ lp5523_set_reg(struct led_itf *itf, enum lp5523_registers addr,
                            MYNEWT_VAL(LP5523_I2C_RETRIES));
 
     if (rc) {
-        LP5523_LOG(ERROR,
+        LP5523_LOG_ERROR(
                    "Failed to write to 0x%02X:0x%02X with value 0x%02X "
                    "(rc=%d)\n",
                    itf->li_addr, addr, value, rc);
@@ -113,7 +110,7 @@ lp5523_get_reg(struct led_itf *itf, enum lp5523_registers addr,
                            MYNEWT_VAL(LP5523_I2C_RETRIES));
 
     if (rc) {
-        LP5523_LOG(ERROR, "I2C access failed at address 0x%02X\n",
+        LP5523_LOG_ERROR("I2C access failed at address 0x%02X\n",
                    itf->li_addr);
         STATS_INC(g_lp5523stats, write_errors);
         goto err;
@@ -125,7 +122,7 @@ lp5523_get_reg(struct led_itf *itf, enum lp5523_registers addr,
                           MYNEWT_VAL(LP5523_I2C_RETRIES));
 
     if (rc) {
-         LP5523_LOG(ERROR, "Failed to read from 0x%02X:0x%02X\n",
+         LP5523_LOG_ERROR("Failed to read from 0x%02X:0x%02X\n",
                     itf->li_addr, addr);
          STATS_INC(g_lp5523stats, read_errors);
     }
@@ -169,7 +166,7 @@ lp5523_set_n_regs(struct led_itf *itf, enum lp5523_registers addr,
                            1, MYNEWT_VAL(LP5523_I2C_RETRIES));
 
     if (rc) {
-        LP5523_LOG(ERROR, "Failed to write to 0x%02X:0x%02X\n", itf->li_addr,
+        LP5523_LOG_ERROR("Failed to write to 0x%02X:0x%02X\n", itf->li_addr,
                    addr);
         STATS_INC(g_lp5523stats, read_errors);
     }
@@ -206,7 +203,7 @@ lp5523_get_n_regs(struct led_itf *itf, enum lp5523_registers addr,
                            0, MYNEWT_VAL(LP5523_I2C_RETRIES));
 
     if (rc) {
-        LP5523_LOG(ERROR, "Failed to write to 0x%02X:0x%02X\n", itf->li_addr,
+        LP5523_LOG_ERROR("Failed to write to 0x%02X:0x%02X\n", itf->li_addr,
                    addr_b);
         STATS_INC(g_lp5523stats, read_errors);
         goto err;
@@ -218,7 +215,7 @@ lp5523_get_n_regs(struct led_itf *itf, enum lp5523_registers addr,
                           MYNEWT_VAL(LP5523_I2C_RETRIES));
 
     if (rc) {
-         LP5523_LOG(ERROR, "Failed to read from 0x%02X:0x%02X\n", itf->li_addr,
+         LP5523_LOG_ERROR("Failed to read from 0x%02X:0x%02X\n", itf->li_addr,
                     addr_b);
          STATS_INC(g_lp5523stats, read_errors);
     }

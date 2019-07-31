@@ -24,3 +24,17 @@ syscfg.defs:
         description: >
             Sysinit stage for testutil functionality.
         value: 1
+
+    ### Log settings.
+
+    TEST_LOG_MOD:
+        description: 'Numeric module ID to use for test log messages.'
+        value: 8
+    TEST_LOG_LVL:
+        description: 'Minimum level for the test log.'
+        value: 1
+
+syscfg.logs:
+    TEST_LOG:
+        module: MYNEWT_VAL(TEST_LOG_MOD)
+        level: MYNEWT_VAL(TEST_LOG_LVL)

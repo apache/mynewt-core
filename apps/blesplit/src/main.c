@@ -46,19 +46,19 @@ static int blesplit_gap_event(struct ble_gap_event *event, void *arg);
 static void
 blesplit_print_conn_desc(struct ble_gap_conn_desc *desc)
 {
-    MODLOG_DFLT(INFO, "handle=%d our_ota_addr_type=%d our_ota_addr=",
+    DFLT_LOG_INFO("handle=%d our_ota_addr_type=%d our_ota_addr=",
                 desc->conn_handle, desc->our_ota_addr.type);
     print_addr(desc->our_ota_addr.val);
-    MODLOG_DFLT(INFO, " our_id_addr_type=%d our_id_addr=",
+    DFLT_LOG_INFO(" our_id_addr_type=%d our_id_addr=",
                 desc->our_id_addr.type);
     print_addr(desc->our_id_addr.val);
-    MODLOG_DFLT(INFO, " peer_ota_addr_type=%d peer_ota_addr=",
+    DFLT_LOG_INFO(" peer_ota_addr_type=%d peer_ota_addr=",
                 desc->peer_ota_addr.type);
     print_addr(desc->peer_ota_addr.val);
-    MODLOG_DFLT(INFO, " peer_id_addr_type=%d peer_id_addr=",
+    DFLT_LOG_INFO(" peer_id_addr_type=%d peer_id_addr=",
                 desc->peer_id_addr.type);
     print_addr(desc->peer_id_addr.val);
-    MODLOG_DFLT(INFO, " conn_itvl=%d conn_latency=%d supervision_timeout=%d "
+    DFLT_LOG_INFO(" conn_itvl=%d conn_latency=%d supervision_timeout=%d "
                  "encrypted=%d authenticated=%d bonded=%d\n",
                  desc->conn_itvl, desc->conn_latency,
                  desc->supervision_timeout,
@@ -84,7 +84,7 @@ blesplit_advertise(void)
     /* Figure out address to use while advertising (no privacy for now) */
     rc = ble_hs_id_infer_auto(0, &own_addr_type);
     if (rc != 0) {
-        MODLOG_DFLT(ERROR, "error determining address type; rc=%d\n", rc);
+        DFLT_LOG_ERROR("error determining address type; rc=%d\n", rc);
         return;
     }
 
@@ -125,7 +125,7 @@ blesplit_advertise(void)
 
     rc = ble_gap_adv_set_fields(&fields);
     if (rc != 0) {
-        MODLOG_DFLT(ERROR, "error setting advertisement data; rc=%d\n", rc);
+        DFLT_LOG_ERROR("error setting advertisement data; rc=%d\n", rc);
         return;
     }
 
@@ -136,7 +136,7 @@ blesplit_advertise(void)
     rc = ble_gap_adv_start(own_addr_type, NULL, BLE_HS_FOREVER,
                            &adv_params, blesplit_gap_event, NULL);
     if (rc != 0) {
-        MODLOG_DFLT(ERROR, "error enabling advertisement; rc=%d\n", rc);
+        DFLT_LOG_ERROR("error enabling advertisement; rc=%d\n", rc);
         return;
     }
 }
@@ -165,7 +165,7 @@ blesplit_gap_event(struct ble_gap_event *event, void *arg)
     switch (event->type) {
     case BLE_GAP_EVENT_CONNECT:
         /* A new connection was established or a connection attempt failed. */
-        MODLOG_DFLT(INFO, "connection %s; status=%d ",
+        DFLT_LOG_INFO("connection %s; status=%d ",
                     event->connect.status == 0 ? "established" : "failed",
                     event->connect.status);
         if (event->connect.status == 0) {
@@ -173,7 +173,7 @@ blesplit_gap_event(struct ble_gap_event *event, void *arg)
             assert(rc == 0);
             blesplit_print_conn_desc(&desc);
         }
-        MODLOG_DFLT(INFO, "\n");
+        DFLT_LOG_INFO("\n");
 
         if (event->connect.status != 0) {
             /* Connection failed; resume advertising. */
@@ -182,9 +182,9 @@ blesplit_gap_event(struct ble_gap_event *event, void *arg)
         return 0;
 
     case BLE_GAP_EVENT_DISCONNECT:
-        MODLOG_DFLT(INFO, "disconnect; reason=%d ", event->disconnect.reason);
+        DFLT_LOG_INFO("disconnect; reason=%d ", event->disconnect.reason);
         blesplit_print_conn_desc(&event->disconnect.conn);
-        MODLOG_DFLT(INFO, "\n");
+        DFLT_LOG_INFO("\n");
 
         /* Connection terminated; resume advertising. */
         blesplit_advertise();
@@ -192,33 +192,33 @@ blesplit_gap_event(struct ble_gap_event *event, void *arg)
 
     case BLE_GAP_EVENT_CONN_UPDATE:
         /* The central has updated the connection parameters. */
-        MODLOG_DFLT(INFO, "connection updated; status=%d ",
+        DFLT_LOG_INFO("connection updated; status=%d ",
                     event->conn_update.status);
         rc = ble_gap_conn_find(event->connect.conn_handle, &desc);
         assert(rc == 0);
         blesplit_print_conn_desc(&desc);
-        MODLOG_DFLT(INFO, "\n");
+        DFLT_LOG_INFO("\n");
         return 0;
 
 
     case BLE_GAP_EVENT_ADV_COMPLETE:
-        MODLOG_DFLT(INFO, "advertise complete; reason=%d\n",
+        DFLT_LOG_INFO("advertise complete; reason=%d\n",
                     event->adv_complete.reason);
         blesplit_advertise();
         return 0;
 
     case BLE_GAP_EVENT_ENC_CHANGE:
         /* Encryption has been enabled or disabled for this connection. */
-        MODLOG_DFLT(INFO, "encryption change event; status=%d ",
+        DFLT_LOG_INFO("encryption change event; status=%d ",
                     event->enc_change.status);
         rc = ble_gap_conn_find(event->connect.conn_handle, &desc);
         assert(rc == 0);
         blesplit_print_conn_desc(&desc);
-        MODLOG_DFLT(INFO, "\n");
+        DFLT_LOG_INFO("\n");
         return 0;
 
     case BLE_GAP_EVENT_SUBSCRIBE:
-        MODLOG_DFLT(INFO, "subscribe event; conn_handle=%d attr_handle=%d "
+        DFLT_LOG_INFO("subscribe event; conn_handle=%d attr_handle=%d "
                           "reason=%d prevn=%d curn=%d previ=%d curi=%d\n",
                     event->subscribe.conn_handle,
                     event->subscribe.attr_handle,
@@ -230,7 +230,7 @@ blesplit_gap_event(struct ble_gap_event *event, void *arg)
         return 0;
 
     case BLE_GAP_EVENT_MTU:
-        MODLOG_DFLT(INFO, "mtu update event; conn_handle=%d cid=%d mtu=%d\n",
+        DFLT_LOG_INFO("mtu update event; conn_handle=%d cid=%d mtu=%d\n",
                     event->mtu.conn_handle,
                     event->mtu.channel_id,
                     event->mtu.value);
@@ -259,7 +259,7 @@ blesplit_gap_event(struct ble_gap_event *event, void *arg)
 static void
 blesplit_on_reset(int reason)
 {
-    MODLOG_DFLT(ERROR, "Resetting state; reason=%d\n", reason);
+    DFLT_LOG_ERROR("Resetting state; reason=%d\n", reason);
 }
 
 static void

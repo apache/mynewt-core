@@ -93,7 +93,7 @@ coap_separate_accept(struct coap_packet_rx *coap_req,
     erbium_status_code = CLEAR_TRANSACTION;
     /* send separate ACK for CON */
     if (coap_req->type == COAP_TYPE_CON) {
-        OC_LOG(DEBUG, "Sending ACK for separate response\n");
+        OC_LOG_DEBUG("Sending ACK for separate response\n");
         coap_packet_t ack[1];
         /* ACK with empty code (0) */
         coap_init_message(ack, COAP_TYPE_ACK, 0, coap_req->mid);

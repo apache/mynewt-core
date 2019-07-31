@@ -44,11 +44,23 @@ syscfg.defs:
     LIS2DS12_ITF_LOCK_TMO:
         description: 'LIS2DS12 interface lock timeout in milliseconds'
         value: 1000
-    LIS2DS12_LOG_MODULE:
-        description: 'Numeric module ID to use for LIS2DS12 log messages'
-        value: 212
     LIS2DS12_I2C_RETRIES:
         description: >
             Number of retries to use for failed I2C communication.  A retry is
             used when the LIS2DS12 sends an unexpected NACK.
         value: 2
+
+    ### Log settings.
+
+    LIS2DS12_LOG_MODULE:
+        description: 'Numeric module ID to use for LIS2DS12 log messages.'
+        value: 212
+    LIS2DS12_LOG_LVL:
+        description: 'Minimum level for the LIS2DS12 log.'
+        value: 1
+
+syscfg.logs:
+    LIS2DS12_LOG:
+        module: MYNEWT_VAL(LIS2DS12_LOG_MODULE)
+        level: MYNEWT_VAL(LIS2DS12_LOG_LVL)
+

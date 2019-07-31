@@ -165,7 +165,7 @@ TEST_CASE(da1469x_snc_test_case_1)
 {
     int rc;
 
-    MODLOG_INFO(LOG_MODULE_TEST, "DA1469x snc test 1");
+    TEST_LOG_INFO("DA1469x snc test 1");
 
     /*
      * Initialize to some non-zero number. The test program should increment
@@ -192,14 +192,14 @@ TEST_CASE(da1469x_snc_test_case_1)
     /* Configure the SNC (base address and divider) */
     rc = da1469x_snc_config(&snc_program, SNC_CLK_DIV_1);
     if (rc) {
-        MODLOG_INFO(LOG_MODULE_TEST, "snc config failed");
+        TEST_LOG_INFO("snc config failed");
         TEST_ASSERT_FATAL(0);
     }
 
     /* Initialize the SNC */
     rc = da1469x_snc_sw_init();
     if (rc) {
-        MODLOG_INFO(LOG_MODULE_TEST, "snc init failed");
+        TEST_LOG_INFO("snc init failed");
         TEST_ASSERT_FATAL(0);
     }
 
@@ -209,7 +209,7 @@ TEST_CASE(da1469x_snc_test_case_1)
      */
     da1469x_snc_irq_config(SNC_IRQ_MASK_NONE, NULL, NULL);
     if ((SNC->SNC_CTRL_REG & SNC_SNC_CTRL_REG_SNC_IRQ_CONFIG_Msk) != 0) {
-        MODLOG_INFO(LOG_MODULE_TEST, "snc irq config failed");
+        TEST_LOG_INFO("snc irq config failed");
         TEST_ASSERT_FATAL(0);
     }
 
@@ -219,44 +219,44 @@ TEST_CASE(da1469x_snc_test_case_1)
     /* Wait 1 second for program to finish. */
     os_time_delay(OS_TICKS_PER_SEC);
     if (!da1469x_snc_program_is_done()) {
-        MODLOG_INFO(LOG_MODULE_TEST, "snc test failed (not done)");
+        TEST_LOG_INFO("snc test failed (not done)");
         da1469x_snc_sw_stop();
         TEST_ASSERT_FATAL(0);
     }
 
     /* Check test var 1 and test var 2 have correct values */
     if (da1469x_test_var1 != 11) {
-        MODLOG_INFO(LOG_MODULE_TEST, "snc test failed: inc by 1");
+        TEST_LOG_INFO("snc test failed: inc by 1");
         TEST_ASSERT_FATAL(0);
     }
     if (da1469x_test_var2 != 14) {
-        MODLOG_INFO(LOG_MODULE_TEST, "snc test failed: inc by 4");
+        TEST_LOG_INFO("snc test failed: inc by 4");
         TEST_ASSERT_FATAL(0);
     }
 
     /* Test var 3 should be 0 */
     if (da1469x_test_var3 != 0) {
-        MODLOG_INFO(LOG_MODULE_TEST, "snc test failed: RDCBI and/or COBR_EQ");
+        TEST_LOG_INFO("snc test failed: RDCBI and/or COBR_EQ");
         TEST_ASSERT_FATAL(0);
     }
 
     /* Test var 4 should be 10 */
     if (da1469x_test_var4 != 11) {
-        MODLOG_INFO(LOG_MODULE_TEST, "snc test failed: COBR loop. tv4=%lu",
+        TEST_LOG_INFO("snc test failed: COBR loop. tv4=%lu",
                     da1469x_test_var4);
         TEST_ASSERT_FATAL(0);
     }
 
     /* Test var 5 should be 20 */
     if (da1469x_test_var5 != 21) {
-        MODLOG_INFO(LOG_MODULE_TEST, "snc test failed: COBR loop 2. tv5=%lu",
+        TEST_LOG_INFO("snc test failed: COBR loop 2. tv5=%lu",
                     da1469x_test_var5);
         TEST_ASSERT_FATAL(0);
     }
 
     /* Test var 8 should be equal to test var 7 */
     if (da1469x_test_var8 != da1469x_test_var7) {
-        MODLOG_INFO(LOG_MODULE_TEST, "snc test failed: WADAD direct. tv7=%lx"
+        TEST_LOG_INFO("snc test failed: WADAD direct. tv7=%lx"
                                      " tv8=%lx",
                     da1469x_test_var7, da1469x_test_var8);
         TEST_ASSERT_FATAL(0);
@@ -264,7 +264,7 @@ TEST_CASE(da1469x_snc_test_case_1)
 
     /* Test var 11 should have value in test var 7 */
     if (da1469x_test_var11 != da1469x_test_var7) {
-        MODLOG_INFO(LOG_MODULE_TEST, "snc test failed: WADAD indirect. tv7=%lx"
+        TEST_LOG_INFO("snc test failed: WADAD indirect. tv7=%lx"
                                      " tv11=%lx",
                     da1469x_test_var7, da1469x_test_var11);
         TEST_ASSERT_FATAL(0);
@@ -273,7 +273,7 @@ TEST_CASE(da1469x_snc_test_case_1)
 
     /* Test var 12 should be those two values xor'd (should equal 0xFFA77F) */
     if (da1469x_test_var12 != (SNC_TEST_XOR_MASK ^ 0xC3A78F)) {
-        MODLOG_INFO(LOG_MODULE_TEST, "snc test failed: TOBRE. tv12=%lx",
+        TEST_LOG_INFO("snc test failed: TOBRE. tv12=%lx",
                     da1469x_test_var12);
         TEST_ASSERT_FATAL(0);
     }
@@ -281,14 +281,14 @@ TEST_CASE(da1469x_snc_test_case_1)
     /* SNC control registers should have both IRQ bits set */
     if ((SNC->SNC_CTRL_REG & SNC_SNC_CTRL_REG_SNC_IRQ_CONFIG_Msk) !=
         SNC_SNC_CTRL_REG_SNC_IRQ_CONFIG_Msk) {
-        MODLOG_INFO(LOG_MODULE_TEST, "snc test failed: TOBRE register %lx",
+        TEST_LOG_INFO("snc test failed: TOBRE register %lx",
                     SNC->SNC_CTRL_REG);
         TEST_ASSERT_FATAL(0);
     }
 
     /* Contents of test var 13 should equal address of test var 12 */
     if (da1469x_test_var13 != (uint32_t)&da1469x_test_var12) {
-        MODLOG_INFO(LOG_MODULE_TEST, "snc test failed: WADVA direct. &tv12=%lx"
+        TEST_LOG_INFO("snc test failed: WADVA direct. &tv12=%lx"
                                      " tv13=%lx",
                     &da1469x_test_var12,
                     da1469x_test_var13);
@@ -297,21 +297,21 @@ TEST_CASE(da1469x_snc_test_case_1)
 
     /* Test var 15 should be equal 0x33333333 */
     if (da1469x_test_var15 != 0x33333333) {
-        MODLOG_INFO(LOG_MODULE_TEST, "snc test failed: WADVA indirect tv15=%lx",
+        TEST_LOG_INFO("snc test failed: WADVA indirect tv15=%lx",
                     da1469x_test_var15);
         TEST_ASSERT_FATAL(0);
     }
 
     /* Test var 0 should be equal to 1 */
     if (da1469x_test_var0 != 1) {
-        MODLOG_INFO(LOG_MODULE_TEST, "snc test failed: RDCGR RAMRAM tv0=%lx",
+        TEST_LOG_INFO("snc test failed: RDCGR RAMRAM tv0=%lx",
                     da1469x_test_var0);
         TEST_ASSERT_FATAL(0);
     }
 
     /* Test var 16 should be equal to 0 */
     if (da1469x_test_var16 != 0) {
-        MODLOG_INFO(LOG_MODULE_TEST, "snc test failed: RDCBI reg tv16=%lx",
+        TEST_LOG_INFO("snc test failed: RDCBI reg tv16=%lx",
                     da1469x_test_var16);
         TEST_ASSERT_FATAL(0);
     }
@@ -319,7 +319,7 @@ TEST_CASE(da1469x_snc_test_case_1)
     /* Check for hard fault or bus status errors */
     if (SNC->SNC_STATUS_REG & (SNC_SNC_STATUS_REG_HARD_FAULT_STATUS_Msk |
                                SNC_SNC_STATUS_REG_BUS_ERROR_STATUS_Msk)) {
-        MODLOG_INFO(LOG_MODULE_TEST, "snc test failed: ERR snc status %lx",
+        TEST_LOG_INFO("snc test failed: ERR snc status %lx",
                     SNC->SNC_STATUS_REG);
         TEST_ASSERT_FATAL(0);
     }
@@ -327,11 +327,11 @@ TEST_CASE(da1469x_snc_test_case_1)
     da1469x_snc_sw_stop();
     rc = da1469x_snc_sw_deinit();
     if (rc) {
-        MODLOG_INFO(LOG_MODULE_TEST, "snc s/w deinit failed");
+        TEST_LOG_INFO("snc s/w deinit failed");
         TEST_ASSERT_FATAL(0);
     }
 
-    MODLOG_INFO(LOG_MODULE_TEST, "snc test 1 success");
+    TEST_LOG_INFO("snc test 1 success");
 }
 
 /*====================== TEST CASE 2 =====================================
@@ -359,19 +359,19 @@ TEST_CASE(da1469x_snc_test_case_2)
 {
     int rc;
 
-    MODLOG_INFO(LOG_MODULE_TEST, "DA1469x snc test 2");
+    TEST_LOG_INFO("DA1469x snc test 2");
 
     /* Configure the SNC (base address and divider) */
     rc = da1469x_snc_config(&snc_prog_test_case2, SNC_CLK_DIV_1);
     if (rc) {
-        MODLOG_INFO(LOG_MODULE_TEST, "snc config failed");
+        TEST_LOG_INFO("snc config failed");
         TEST_ASSERT_FATAL(0);
     }
 
     /* Initialize the SNC */
     rc = da1469x_snc_sw_init();
     if (rc) {
-        MODLOG_INFO(LOG_MODULE_TEST, "snc init failed");
+        TEST_LOG_INFO("snc init failed");
         TEST_ASSERT_FATAL(0);
     }
 
@@ -387,25 +387,25 @@ TEST_CASE(da1469x_snc_test_case_2)
     /* This program should finish very quickly */
     os_time_delay(OS_TICKS_PER_SEC / 10);
     if (!da1469x_snc_program_is_done()) {
-        MODLOG_INFO(LOG_MODULE_TEST, "snc test 2 failed (not done)");
+        TEST_LOG_INFO("snc test 2 failed (not done)");
         da1469x_snc_sw_stop();
         TEST_ASSERT_FATAL(0);
     }
 
     /* Check that the counter got incremented */
     if (g_snc_tc2_cntr != 1) {
-        MODLOG_INFO(LOG_MODULE_TEST, "snc test failed tc2=%u", g_snc_tc2_cntr);
+        TEST_LOG_INFO("snc test failed tc2=%u", g_snc_tc2_cntr);
         TEST_ASSERT_FATAL(0);
     }
 
     da1469x_snc_sw_stop();
     rc = da1469x_snc_sw_deinit();
     if (rc) {
-        MODLOG_INFO(LOG_MODULE_TEST, "snc s/w deinit failed");
+        TEST_LOG_INFO("snc s/w deinit failed");
         TEST_ASSERT_FATAL(0);
     }
 
-    MODLOG_INFO(LOG_MODULE_TEST, "snc test 2 success");
+    TEST_LOG_INFO("snc test 2 success");
 }
 
 /*
@@ -416,19 +416,19 @@ TEST_CASE(da1469x_snc_test_case_3)
 {
     int rc;
 
-    MODLOG_INFO(LOG_MODULE_TEST, "DA1469x snc test 3");
+    TEST_LOG_INFO("DA1469x snc test 3");
 
     /* Configure the SNC (base address and divider) */
     rc = da1469x_snc_config(&snc_prog_test_case2, SNC_CLK_DIV_1);
     if (rc) {
-        MODLOG_INFO(LOG_MODULE_TEST, "snc config failed");
+        TEST_LOG_INFO("snc config failed");
         TEST_ASSERT_FATAL(0);
     }
 
     /* Initialize the SNC */
     rc = da1469x_snc_sw_init();
     if (rc) {
-        MODLOG_INFO(LOG_MODULE_TEST, "snc init failed");
+        TEST_LOG_INFO("snc init failed");
         TEST_ASSERT_FATAL(0);
     }
 
@@ -444,24 +444,24 @@ TEST_CASE(da1469x_snc_test_case_3)
     /* This program should finish very quickly */
     os_time_delay(OS_TICKS_PER_SEC / 10);
     if (!da1469x_snc_program_is_done()) {
-        MODLOG_INFO(LOG_MODULE_TEST, "snc test 3 failed (not done)");
+        TEST_LOG_INFO("snc test 3 failed (not done)");
         da1469x_snc_sw_stop();
         TEST_ASSERT_FATAL(0);
     }
 
     /* Check that the counter got incremented */
     if (g_snc_tc2_cntr != 1) {
-        MODLOG_INFO(LOG_MODULE_TEST, "snc test failed tc2=%u", g_snc_tc2_cntr);
+        TEST_LOG_INFO("snc test failed tc2=%u", g_snc_tc2_cntr);
         TEST_ASSERT_FATAL(0);
     }
 
     da1469x_snc_sw_stop();
     rc = da1469x_snc_sw_deinit();
     if (rc) {
-        MODLOG_INFO(LOG_MODULE_TEST, "snc s/w deinit failed");
+        TEST_LOG_INFO("snc s/w deinit failed");
         TEST_ASSERT_FATAL(0);
     }
 
-    MODLOG_INFO(LOG_MODULE_TEST, "snc test 3 success");
+    TEST_LOG_INFO("snc test 3 success");
 }
 #endif

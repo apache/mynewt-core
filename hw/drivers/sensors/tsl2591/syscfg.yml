@@ -39,11 +39,23 @@ syscfg.defs:
     TSL2591_ITIME_DELAY:
         description: 'Enable an internal read delay based on integration time'
         value: 0
-    TSL2591_LOG_MODULE:
-        description: 'Numeric module ID to use for TSL2591 log messages'
-        value: 108
     TSL2591_I2C_RETRIES:
         description: >
             Number of retries to use for failed I2C communication.  A retry is
             used when the TSL2591 sends an unexpected NACK.
         value: 2
+
+    ### Log settings.
+
+    TSL2591_LOG_MODULE:
+        description: 'Numeric module ID to use for TSL2591 log messages.'
+        value: 108
+    TSL2591_LOG_LVL:
+        description: 'Minimum level for the TSL2591 log.'
+        value: 1
+
+syscfg.logs:
+    TSL2591_LOG:
+        module: MYNEWT_VAL(TSL2591_LOG_MODULE)
+        level: MYNEWT_VAL(TSL2591_LOG_LVL)
+

@@ -38,6 +38,18 @@ syscfg.defs:
             When set to 1 compensation functions use double precission floating point arithmetic recomended by specification.
             When set to 0 compensation functions use integer arithmetic.
         value : 1
+
+    ### Log settings.
+
     BME280_LOG_MODULE:
-        description: 'Numeric module ID to use for BME280 log messages'
+        description: 'Numeric module ID to use for BME280 log messages.'
         value: 208
+    BME280_LOG_LVL:
+        description: 'Minimum level for the BME280 log.'
+        value: 1
+
+syscfg.logs:
+    BME280_LOG:
+        module: MYNEWT_VAL(BME280_LOG_MODULE)
+        level: MYNEWT_VAL(BME280_LOG_LVL)
+

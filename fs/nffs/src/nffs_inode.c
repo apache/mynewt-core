@@ -481,7 +481,7 @@ nffs_inode_delete_from_disk(struct nffs_inode *inode)
     nffs_crc_disk_inode_fill(&disk_inode, "");
 
     rc = nffs_inode_write_disk(&disk_inode, "", area_idx, offset);
-    NFFS_LOG(DEBUG, "inode_del_disk: wrote unlinked ino %x to disk ref %d\n",
+    NFFS_LOG_DEBUG("inode_del_disk: wrote unlinked ino %x to disk ref %d\n",
                (unsigned int)disk_inode.ndi_id,
                inode->ni_inode_entry->nie_refcnt);
 
@@ -492,7 +492,7 @@ nffs_inode_delete_from_disk(struct nffs_inode *inode)
      */
     if (nffs_hash_id_is_file(inode->ni_inode_entry->nie_hash_entry.nhe_id)) {
         nffs_inode_setflags(inode->ni_inode_entry, NFFS_INODE_FLAG_DELETED);
-        NFFS_LOG(DEBUG, "inode_delete_from_disk: ino %x flag DELETE\n",
+        NFFS_LOG_DEBUG("inode_delete_from_disk: ino %x flag DELETE\n",
                    (unsigned int)inode->ni_inode_entry->nie_hash_entry.nhe_id);
 
     }
@@ -691,7 +691,7 @@ nffs_inode_update(struct nffs_inode_entry *inode_entry)
 
     nffs_crc_disk_inode_fill(&disk_inode, filename);
 
-    NFFS_LOG(DEBUG, "nffs_inode_update writing inode %x last block %x\n",
+    NFFS_LOG_DEBUG("nffs_inode_update writing inode %x last block %x\n",
              (unsigned int)disk_inode.ndi_id,
              (unsigned int)disk_inode.ndi_lastblock_id);
 

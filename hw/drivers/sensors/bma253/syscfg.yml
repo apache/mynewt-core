@@ -45,12 +45,6 @@ syscfg.defs:
     BMA253_INT2_PIN_HOST:
         description: 'Interrupt pin number on host device connected to INT2 on device'
         value: -1
-    BMA253_LOG:
-        description: 'Enable BMA253 logging'
-        value: 0
-    BMA253_LOG_MODULE:
-        description: 'Numeric module ID to use for BMA253 log messages'
-        value: 253
     BMA253_SHELL_DEV_NAME:
         description: 'BMA253 Shell device name'
         value: "\"bma253_0\""
@@ -65,3 +59,18 @@ syscfg.defs:
     BMA253_NOTIF_STATS:
         description: 'Enable BMA253 notification stats'
         value: 0
+
+    ### Log settings.
+
+    BMA253_LOG_MODULE:
+        description: 'Numeric module ID to use for BMA253 log messages.'
+        value: 253
+    BMA253_LOG_LVL:
+        description: 'Minimum level for the BMA253 log.'
+        value: 15 # Logging disabled by default.
+
+syscfg.logs:
+    BMA253_LOG:
+        module: MYNEWT_VAL(BMA253_LOG_MODULE)
+        level: MYNEWT_VAL(BMA253_LOG_LVL)
+

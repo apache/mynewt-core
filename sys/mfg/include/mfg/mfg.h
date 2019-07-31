@@ -146,7 +146,4 @@ int mfg_read_tlv_mmr_ref(const struct mfg_reader *reader,
  */
 void mfg_init(void);
 
-#define MFG_LOG(lvl_, ...) \
-    MODLOG_ ## lvl_(MYNEWT_VAL(MFG_LOG_MODULE), __VA_ARGS__)
-
 #endif

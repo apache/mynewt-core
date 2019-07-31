@@ -255,22 +255,22 @@ static int ssd1673_write(const struct os_dev *dev, const uint16_t x,
 	bool update = true;
 
 	if (desc->pitch < desc->width) {
-		MODLOG_DFLT(ERROR, "Pitch is smaller then width");
+		DFLT_LOG_ERROR("Pitch is smaller then width");
 		return -1;
 	}
 
 	if (buf == NULL || desc->buf_size == 0) {
-		MODLOG_DFLT(ERROR, "Display buffer is not available");
+		DFLT_LOG_ERROR("Display buffer is not available");
 		return -1;
 	}
 
 	if (desc->pitch > desc->width) {
-		MODLOG_DFLT(ERROR, "Unsupported mode");
+		DFLT_LOG_ERROR("Unsupported mode");
 		return -1;
 	}
 
 	if (x != 0 && y != 0) {
-		MODLOG_DFLT(ERROR, "Unsupported origin");
+		DFLT_LOG_ERROR("Unsupported origin");
 		return -1;
 	}
 
@@ -371,20 +371,20 @@ static int ssd1673_read(const struct os_dev *dev, const uint16_t x,
 			const struct display_buffer_descriptor *desc,
 			void *buf)
 {
-	MODLOG_DFLT(ERROR, "not supported");
+	DFLT_LOG_ERROR("not supported");
 	return -1;
 }
 
 static void *ssd1673_get_framebuffer(const struct os_dev *dev)
 {
-	MODLOG_DFLT(ERROR, "not supported");
+	DFLT_LOG_ERROR("not supported");
 	return NULL;
 }
 
 static int ssd1673_set_brightness(const struct os_dev *dev,
 				  const uint8_t brightness)
 {
-	MODLOG_DFLT(WARN, "not supported");
+	DFLT_LOG_WARN("not supported");
 	return -1;
 }
 
@@ -413,7 +413,7 @@ static void ssd1673_get_capabilities(const struct os_dev *dev,
 static int ssd1673_set_pixel_format(const struct os_dev *dev,
 				    const enum display_pixel_format pf)
 {
-	MODLOG_DFLT(ERROR, "not supported");
+	DFLT_LOG_ERROR("not supported");
 	return -1;
 }
 
@@ -422,7 +422,7 @@ static int ssd1673_controller_init(struct os_dev *dev)
 	struct ssd1673_data *driver = dev->od_init_arg;
 	uint8_t tmp[3];
 
-	MODLOG_DFLT(DEBUG, "");
+	DFLT_LOG_DEBUG("");
 
 	hal_gpio_write(CONFIG_SSD1673_RESET_PIN, 0);
 	os_time_delay(SSD1673_RESET_DELAY_TICKS);
@@ -480,7 +480,7 @@ static int ssd1673_init(struct os_dev *dev, void *arg)
 	struct ssd1673_data *driver = dev->od_init_arg;
 	int rc;
 
-	MODLOG_DFLT(DEBUG, "");
+	DFLT_LOG_DEBUG("");
 
 	driver->spi_config.baudrate = CONFIG_SSD1673_SPI_FREQ;
 	driver->spi_config.data_mode = HAL_SPI_MODE0;

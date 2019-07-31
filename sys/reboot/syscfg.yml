@@ -49,3 +49,7 @@ syscfg.defs:
         description: >
             Sysinit stage for reboot functionality.
         value: 200
+
+    REBOOT_LOG_MOD:
+        description: 'Numeric module ID to use for reboot log messages.'
+        value: 6

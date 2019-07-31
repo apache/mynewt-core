@@ -416,7 +416,7 @@ nffs_restore_inode_gets_replaced(struct nffs_inode_entry *old_inode_entry,
 
 
     if (nffs_inode_is_dummy(old_inode_entry)) {
-        NFFS_LOG(DEBUG, "inode_gets_replaced dummy!\n");
+        NFFS_LOG_DEBUG("inode_gets_replaced dummy!\n");
         *out_should_replace = 1;
         return 0;
     }
@@ -425,7 +425,7 @@ nffs_restore_inode_gets_replaced(struct nffs_inode_entry *old_inode_entry,
      * inode is known to be obsolete and needs to be replaced no matter what
      */
     if (nffs_inode_getflags(old_inode_entry, NFFS_INODE_FLAG_OBSOLETE)) {
-        NFFS_LOG(DEBUG, "inode_gets_replaced obsolete\n");
+        NFFS_LOG_DEBUG("inode_gets_replaced obsolete\n");
         *out_should_replace = 2;
         return 0;
     }
@@ -437,7 +437,7 @@ nffs_restore_inode_gets_replaced(struct nffs_inode_entry *old_inode_entry,
     }
 
     if (old_inode.ni_seq < disk_inode->ndi_seq) {
-        NFFS_LOG(DEBUG, "inode_gets_replaced seq\n");
+        NFFS_LOG_DEBUG("inode_gets_replaced seq\n");
         *out_should_replace = 3;
         return 0;
     }
@@ -497,7 +497,7 @@ nffs_restore_inode(const struct nffs_disk_inode *disk_inode, uint8_t area_idx,
              * Restore this inode even though deleted on disk
              * so the additional restored blocks have a place to go
              */
-            NFFS_LOG(DEBUG, "restoring deleted inode %x\n",
+            NFFS_LOG_DEBUG("restoring deleted inode %x\n",
                      (unsigned int)disk_inode->ndi_id);
             nffs_inode_setflags(inode_entry, NFFS_INODE_FLAG_DELETED);
         }
@@ -623,7 +623,7 @@ nffs_restore_inode(const struct nffs_disk_inode *disk_inode, uint8_t area_idx,
              * Restore this inode even though deleted on disk
              * so the additional restored blocks have a place to go
              */
-            NFFS_LOG(DEBUG, "restoring deleted inode %x\n",
+            NFFS_LOG_DEBUG("restoring deleted inode %x\n",
                      (unsigned int)disk_inode->ndi_id);
             nffs_inode_setflags(inode_entry, NFFS_INODE_FLAG_DELETED);
         }
@@ -705,13 +705,13 @@ nffs_restore_inode(const struct nffs_disk_inode *disk_inode, uint8_t area_idx,
     }
 
     if (nffs_hash_id_is_file(inode_entry->nie_hash_entry.nhe_id)) {
-        NFFS_LOG(DEBUG, "restoring file; id=0x%08x\n",
+        NFFS_LOG_DEBUG("restoring file; id=0x%08x\n",
                  (unsigned int)inode_entry->nie_hash_entry.nhe_id);
         if (inode_entry->nie_hash_entry.nhe_id >= nffs_hash_next_file_id) {
             nffs_hash_next_file_id = inode_entry->nie_hash_entry.nhe_id + 1;
         }
     } else {
-        NFFS_LOG(DEBUG, "restoring dir; id=0x%08x\n",
+        NFFS_LOG_DEBUG("restoring dir; id=0x%08x\n",
                  (unsigned int)inode_entry->nie_hash_entry.nhe_id);
         if (inode_entry->nie_hash_entry.nhe_id >= nffs_hash_next_dir_id) {
             nffs_hash_next_dir_id = inode_entry->nie_hash_entry.nhe_id + 1;
@@ -880,7 +880,7 @@ nffs_restore_block(const struct nffs_disk_block *disk_block, uint8_t area_idx,
         nffs_restore_largest_block_data_len = disk_block->ndb_data_len;
     }
 
-    NFFS_LOG(DEBUG, "restoring block; id=0x%08x seq=%u inode_id=%u prev_id=%u "
+    NFFS_LOG_DEBUG("restoring block; id=0x%08x seq=%u inode_id=%u prev_id=%u "
              "data_len=%u\n",
              (unsigned int)disk_block->ndb_id,
              (unsigned int)disk_block->ndb_seq,
@@ -1219,33 +1219,33 @@ nffs_log_contents(void)
         if (nffs_hash_id_is_block(entry->nhe_id)) {
             rc = nffs_block_from_hash_entry(&block, entry);
             assert(rc == 0 || rc == FS_ENOENT);
-            NFFS_LOG(DEBUG, "block; id=%u inode_id=",
+            NFFS_LOG_DEBUG("block; id=%u inode_id=",
                      (unsigned int)entry->nhe_id);
             if (block.nb_inode_entry == NULL) {
-                NFFS_LOG(DEBUG, "null ");
+                NFFS_LOG_DEBUG("null ");
             } else {
-                NFFS_LOG(DEBUG, "%u ",
+                NFFS_LOG_DEBUG("%u ",
                      (unsigned int)block.nb_inode_entry->nie_hash_entry.nhe_id);
             }
 
-            NFFS_LOG(DEBUG, "prev_id=");
+            NFFS_LOG_DEBUG("prev_id=");
             if (block.nb_prev == NULL) {
-                NFFS_LOG(DEBUG, "null ");
+                NFFS_LOG_DEBUG("null ");
             } else {
-                NFFS_LOG(DEBUG, "%u ", (unsigned int)block.nb_prev->nhe_id);
+                NFFS_LOG_DEBUG("%u ", (unsigned int)block.nb_prev->nhe_id);
             }
 
-            NFFS_LOG(DEBUG, "data_len=%u\n", block.nb_data_len);
+            NFFS_LOG_DEBUG("data_len=%u\n", block.nb_data_len);
         } else {
             inode_entry = (void *)entry;
             rc = nffs_inode_from_entry(&inode, inode_entry);
             if (rc == FS_ENOENT) {
-                NFFS_LOG(DEBUG, "DUMMY file; id=%x ref=%d block_id=",
+                NFFS_LOG_DEBUG("DUMMY file; id=%x ref=%d block_id=",
                          (unsigned int)entry->nhe_id, inode_entry->nie_refcnt);
                 if (inode_entry->nie_last_block_entry == NULL) {
-                    NFFS_LOG(DEBUG, "null");
+                    NFFS_LOG_DEBUG("null");
                 } else {
-                    NFFS_LOG(DEBUG, "%x",
+                    NFFS_LOG_DEBUG("%x",
                      (unsigned int)inode_entry->nie_last_block_entry->nhe_id);
                 }
             } else if (rc != 0) {
@@ -1254,18 +1254,18 @@ nffs_log_contents(void)
             /*assert(rc == 0);*/
 
             if (nffs_hash_id_is_file(entry->nhe_id)) {
-                NFFS_LOG(DEBUG, "file; id=%u name=%.3s block_id=",
+                NFFS_LOG_DEBUG("file; id=%u name=%.3s block_id=",
                          (unsigned int)entry->nhe_id, inode.ni_filename);
                 if (inode_entry->nie_last_block_entry == NULL) {
-                    NFFS_LOG(DEBUG, "null");
+                    NFFS_LOG_DEBUG("null");
                 } else {
-                    NFFS_LOG(DEBUG, "%u",
+                    NFFS_LOG_DEBUG("%u",
                      (unsigned int)inode_entry->nie_last_block_entry->nhe_id);
                 }
-                NFFS_LOG(DEBUG, "\n");
+                NFFS_LOG_DEBUG("\n");
             } else {
                 inode_entry = (void *)entry;
-                NFFS_LOG(DEBUG, "dir; id=%u name=%.3s\n",
+                NFFS_LOG_DEBUG("dir; id=%u name=%.3s\n",
                          (unsigned int)entry->nhe_id, inode.ni_filename);
 
             }
@@ -1408,7 +1408,7 @@ nffs_restore_full(const struct nffs_area_desc *area_descs)
         goto err;
     }
 
-    NFFS_LOG(DEBUG, "CONTENTS\n");
+    NFFS_LOG_DEBUG("CONTENTS\n");
     nffs_log_contents();
 
     return 0;

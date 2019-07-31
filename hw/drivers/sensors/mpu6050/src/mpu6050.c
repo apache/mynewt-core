@@ -48,9 +48,6 @@ STATS_NAME_END(mpu6050_stat_section)
 /* Global variable used to hold stats data */
 STATS_SECT_DECL(mpu6050_stat_section) g_mpu6050stats;
 
-#define MPU6050_LOG(lvl_, ...) \
-    MODLOG_ ## lvl_(MYNEWT_VAL(MPU6050_LOG_MODULE), __VA_ARGS__)
-
 /* Exports for the sensor API */
 static int mpu6050_sensor_read(struct sensor *, sensor_type_t,
         sensor_data_func_t, void *, uint32_t);
@@ -95,7 +92,7 @@ mpu6050_write8(struct sensor_itf *itf, uint8_t reg, uint32_t value)
                            MYNEWT_VAL(MPU6050_I2C_RETRIES));
 
     if (rc) {
-        MPU6050_LOG(ERROR,
+        MPU6050_LOG_ERROR(
                     "Failed to write to 0x%02X:0x%02X with value 0x%02lX\n",
                     itf->si_addr, reg, value);
         STATS_INC(g_mpu6050stats, read_errors);
@@ -139,7 +136,7 @@ mpu6050_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
     rc = i2cn_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 0,
                            MYNEWT_VAL(MPU6050_I2C_RETRIES));
     if (rc) {
-        MPU6050_LOG(ERROR, "I2C access failed at address 0x%02X\n",
+        MPU6050_LOG_ERROR("I2C access failed at address 0x%02X\n",
                     itf->si_addr);
         STATS_INC(g_mpu6050stats, write_errors);
         return rc;
@@ -151,7 +148,7 @@ mpu6050_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
                           MYNEWT_VAL(MPU6050_I2C_RETRIES));
 
     if (rc) {
-        MPU6050_LOG(ERROR, "Failed to read from 0x%02X:0x%02X\n",
+        MPU6050_LOG_ERROR("Failed to read from 0x%02X:0x%02X\n",
                     itf->si_addr, reg);
         STATS_INC(g_mpu6050stats, read_errors);
     }
@@ -194,7 +191,7 @@ mpu6050_read48(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer)
     rc = i2cn_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 0,
                            MYNEWT_VAL(MPU6050_I2C_RETRIES));
     if (rc) {
-        MPU6050_LOG(ERROR, "I2C access failed at address 0x%02X\n",
+        MPU6050_LOG_ERROR("I2C access failed at address 0x%02X\n",
                     itf->si_addr);
         STATS_INC(g_mpu6050stats, write_errors);
         return rc;
@@ -207,7 +204,7 @@ mpu6050_read48(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer)
                           MYNEWT_VAL(MPU6050_I2C_RETRIES));
 
     if (rc) {
-        MPU6050_LOG(ERROR, "Failed to read from 0x%02X:0x%02X\n",
+        MPU6050_LOG_ERROR("Failed to read from 0x%02X:0x%02X\n",
                     itf->si_addr, reg);
         STATS_INC(g_mpu6050stats, read_errors);
     }

@@ -97,7 +97,7 @@ oc_send_buffer(struct os_mbuf *m)
     if (ot) {
         ot->ot_tx_ucast(m);
     } else {
-        OC_LOG(ERROR, "Unknown transport option %u\n", oe->ep.oe_type);
+        OC_LOG_ERROR("Unknown transport option %u\n", oe->ep.oe_type);
         os_mbuf_free_chain(m);
     }
 }
@@ -150,7 +150,7 @@ oc_get_trans_security(const struct oc_endpoint *oe)
             return 0;
         }
     }
-    OC_LOG(ERROR, "Unknown transport option %u\n", oe->ep.oe_type);
+    OC_LOG_ERROR("Unknown transport option %u\n", oe->ep.oe_type);
     return 0;
 }
 

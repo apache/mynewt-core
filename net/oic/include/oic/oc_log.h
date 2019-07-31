@@ -30,8 +30,6 @@ extern "C" {
  */
 #if MYNEWT_VAL(OC_LOGGING)
 
-#define OC_LOG(lvl_, ...) MODLOG_ ## lvl_(LOG_MODULE_IOTIVITY, __VA_ARGS__)
-
 struct oc_endpoint;
 void oc_log_endpoint(uint8_t lvl, struct oc_endpoint *);
 void oc_log_bytes(uint8_t lvl, void *addr, int len, int print_char);
@@ -76,7 +74,6 @@ void oc_log_bytes_mbuf(uint8_t lvl, struct os_mbuf *, int off, int len,
 
 #else
 
-#define OC_LOG(lvl_, ...)
 #define OC_LOG_ENDPOINT(...)
 #define OC_LOG_STR(...)
 #define OC_LOG_STR_MBUF(...)
