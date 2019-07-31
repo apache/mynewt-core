@@ -3572,12 +3572,12 @@ bmp388_sensor_get_config(struct sensor *sensor, sensor_type_t type,
     int rc;
     (void)sensor;
 
-    if (type != SENSOR_TYPE_ACCELEROMETER) {
+    if ((type & (SENSOR_TYPE_PRESSURE | SENSOR_TYPE_TEMPERATURE)) == 0) {
         rc = SYS_EINVAL;
         goto err;
     }
 
-    cfg->sc_valtype = SENSOR_VALUE_TYPE_FLOAT_TRIPLET;
+    cfg->sc_valtype = SENSOR_VALUE_TYPE_FLOAT;
 
     return 0;
 err:
