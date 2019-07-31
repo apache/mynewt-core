@@ -491,20 +491,11 @@ log_append_prepare(struct log *log, uint8_t module, uint8_t level,
     ue->ue_index = idx;
 #if MYNEWT_VAL(LOG_VERSION) > 2
     ue->ue_etype = etype;
+#if MYNEWT_VAL(LOG_FLAGS_LOG_IMG_HASH)
+    ue->ue_flag &= LOG_FLAGS_LOG_IMG_HASH;
+#endif
 #else
     assert(etype == LOG_ETYPE_STRING);
-#endif
-#if MYNEWT_VAL(LOG_VERSION) > 3
-
-#if MYNEWT_VAL(LOG_FLAGS_LOG_IMG_HASH)
-    uint8_t hash[IMGMGR_HASH_LEN];
-
-    ue->ue_flags &= LOG_FLAGS_LOG_IMG_HASH;
-
-    imgr_read_info(0, NULL, hash, NULL);
-    memcpy(ue->ue_rsvd, hash, 4);
-#endif
-
 #endif
 
 err:

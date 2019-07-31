@@ -132,17 +132,8 @@ struct log_entry_hdr {
     uint32_t ue_index;
     uint8_t ue_module;
     uint8_t ue_level;
-    uint8_t ue_etype;
-}__attribute__((__packed__));
-#elif MYNEWT_VAL(LOG_VERSION) == 4
-struct log_entry_hdr {
-    int64_t ue_ts;
-    uint32_t ue_index;
-    uint8_t ue_module;
-    uint8_t ue_level;
     uint8_t ue_etype:4;
-    uint8_t ue_flags:4;
-    uint8_t ue_rsvd[4];
+    uint8_t ue_flag:4;
 }__attribute__((__packed__));
 #else
 #error "Unsupported log version"
