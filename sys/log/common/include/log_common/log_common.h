@@ -67,7 +67,6 @@ struct log;
 #define LOG_MODULE_IOTIVITY         7
 #define LOG_MODULE_TEST             8
 
-#define LOG_MODULE_PERUSER          (64)
 #define LOG_MODULE_MAX              (255)
 
 #define LOG_ETYPE_STRING         (0)
