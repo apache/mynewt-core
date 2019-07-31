@@ -171,36 +171,32 @@ log_nmgr_encode_entry(struct log *log, struct log_offset *log_offset,
     for (off = 0; off < len && !g_err; ) {
         /* Entering first log entry. Check flag. */
         if (off == 0) {
-            switch(ueh->ue_flag) {
-            case LOG_FLAGS_LOG_IMG_HASH:
+            if (ueh->ue_flag & FLAGS_LOG_IMG_HASH) {
                 /* Read entire image hash */
                 imgr_read_info(0, NULL, hash, NULL);
                 /* Store the first four bytes of the image hash */
                 memcpy(data, hash, 4);
-                break;
-            default:
-                break;
+                /* Offset 4 bytes to account for the image hash */
+                rc = log_read_body(log, dptr, data + 4, off, sizeof(data) - 4);
+                if (rc < 0) {
+                    g_err |= 1;
+                    break;
+                }
+                g_err |= cbor_encode_byte_string(&str_encoder, data, rc);
+                off += rc;
+                continue;
             }
-            /* Offset 4 bytes to account for the image hash */
-            rc = log_read_body(log, dptr, data + 4, off, sizeof(data) - 4);
+        } else {
+            /* Continue subsequent reads after inserting image hash after the first 
+               read. */
+            rc = log_read_body(log, dptr, data, off, sizeof(data));
             if (rc < 0) {
                 g_err |= 1;
                 break;
             }
             g_err |= cbor_encode_byte_string(&str_encoder, data, rc);
             off += rc;
-            continue;
         }
-
-        /* Continue subsequent reads after inserting image hash after the first 
-           read. */
-        rc = log_read_body(log, dptr, data, off, sizeof(data));
-        if (rc < 0) {
-            g_err |= 1;
-            break;
-        }
-        g_err |= cbor_encode_byte_string(&str_encoder, data, rc);
-        off += rc;
     }
     g_err |= cbor_encoder_close_container(&rsp, &str_encoder);
 #else
