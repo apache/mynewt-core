@@ -32,7 +32,7 @@ syscfg.defs:
         description: 'Limits what level log messages are compiled in.'
         value: 0
 
-    LOG_FLAGS_LOG_IMG_HASH:
+    LOG_FLAGS_IMAGE_HASH:
         description: >
             Enable logging of the first 4 bytes of the image hash. 0 - disable; 
             1 - enable.

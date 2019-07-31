@@ -171,7 +171,7 @@ log_nmgr_encode_entry(struct log *log, struct log_offset *log_offset,
     for (off = 0; off < len && !g_err; ) {
         /* Entering first log entry. Check flag. */
         if (off == 0) {
-            if (ueh->ue_flag & FLAGS_LOG_IMG_HASH) {
+            if (ueh->ue_flag & LOG_FLAGS_IMG_HASH) {
                 /* Read entire image hash */
                 imgr_read_info(0, NULL, hash, NULL);
                 /* Store the first four bytes of the image hash */

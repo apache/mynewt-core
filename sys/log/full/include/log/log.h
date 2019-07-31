@@ -117,7 +117,7 @@ struct log_handler {
 };
 
 /* Flags used to indicate type of data in reserved payload*/
-#define FLAGS_LOG_IMG_HASH (1 << 0)
+#define LOG_FLAGS_IMG_HASH (1 << 0)
 
 #if MYNEWT_VAL(LOG_VERSION) == 2
 struct log_entry_hdr {

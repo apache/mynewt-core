@@ -491,8 +491,8 @@ log_append_prepare(struct log *log, uint8_t module, uint8_t level,
     ue->ue_etype = etype;
     /* Clear flags before assigning */
     ue->ue_flag = 0;
-#if MYNEWT_VAL(LOG_FLAGS_LOG_IMG_HASH)
-    ue->ue_flag |= FLAGS_LOG_IMG_HASH;
+#if MYNEWT_VAL(LOG_FLAGS_IMAGE_HASH)
+    ue->ue_flag |= LOG_FLAGS_IMG_HASH;
 #endif
 #else
     assert(etype == LOG_ETYPE_STRING);
