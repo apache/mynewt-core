@@ -159,6 +159,16 @@ os_arch_in_critical(void)
     return !(read_csr(mstatus) & MSTATUS_MIE);
 }
 
+void
+os_arch_task_return_handler(void)
+{
+    /*
+     * If you are stuck here it means that task finished by
+     * simple return which is not supported.
+     */
+    while (1);
+}
+
 /* assumes stack_top will be 8 aligned */
 
 os_stack_t *
@@ -179,6 +189,8 @@ os_arch_task_stack_init(struct os_task *t, os_stack_t *stack_top, int size)
     /* Set remaining portions of stack frame */
     sf->pc = (uint32_t) t->t_func;
     sf->a0 = (uint32_t) t->t_arg;
+    /* Set function to cache returns from tasks. */
+    sf->ra = (os_stack_t)os_arch_task_return_handler;
 
     return (os_stack_t *) sf;
 }
