@@ -149,6 +149,16 @@ os_arch_in_critical(void)
     return (isr_ctx & 1);
 }
 
+static void
+os_arch_task_return_handler(void)
+{
+    /*
+     * If you are stuck here it means that task finished by
+     * simple return which is not supported.
+     */
+    while (1);
+}
+
 os_stack_t *
 os_arch_task_stack_init(struct os_task *t, os_stack_t *stack_top, int size)
 {
@@ -159,8 +169,8 @@ os_arch_task_stack_init(struct os_task *t, os_stack_t *stack_top, int size)
     /* Get stack frame pointer */
     s = (os_stack_t *) ((uint8_t *) stack_top - sizeof(*sf));
 
-    /* Zero out R1-R3, R12, LR */
-    for (i = 9; i < 14; ++i) {
+    /* Zero out R1-R3, R12 */
+    for (i = 9; i < 13; ++i) {
         s[i] = 0;
     }
 
@@ -172,6 +182,8 @@ os_arch_task_stack_init(struct os_task *t, os_stack_t *stack_top, int size)
     sf->xpsr = INITIAL_xPSR;
     sf->pc = (uint32_t)t->t_func;
     sf->r0 = (uint32_t)t->t_arg;
+    /* Set function to cache returns from tasks. */
+    sf->lr = (uint32_t)os_arch_task_return_handler;
 
     return (s);
 }
