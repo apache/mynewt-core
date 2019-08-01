@@ -150,9 +150,6 @@ log_nmgr_encode_entry(struct log *log, struct log_offset *log_offset,
         return MGMT_ERR_ECORRUPT;
     }
 
-    g_err |= cbor_encode_text_stringz(&rsp, "flag");
-    g_err |= cbor_encode_uint(&rsp, ueh->ue_flag);
-
     /*
      * Copy the type from the header type. This may get changed to type
      * string if a single entry is too long.
@@ -174,6 +171,9 @@ log_nmgr_encode_entry(struct log *log, struct log_offset *log_offset,
             if (ueh->ue_flag & LOG_FLAGS_IMG_HASH) {
                 /* Read entire image hash */
                 imgr_read_info(0, NULL, hash, NULL);
+                /* Encode hash */
+                g_err |= cbor_encode_text_stringz(&rsp, "imghash");
+                g_err |= cbor_encode_byte_string(&rsp, hash, rc);
                 /* Store the first four bytes of the image hash */
                 memcpy(data, hash, 4);
                 /* Offset 4 bytes to account for the image hash */
@@ -186,8 +186,10 @@ log_nmgr_encode_entry(struct log *log, struct log_offset *log_offset,
                 off += rc;
             }
         } else {
-            /* Continue subsequent reads after inserting image hash after the first 
-               read. */
+            /* 
+             * Continue subsequent reads after inserting image hash after the 
+             * first read. 
+             */
             rc = log_read_body(log, dptr, data, off, sizeof(data));
             if (rc < 0) {
                 g_err |= 1;
