@@ -439,7 +439,12 @@ static const struct bus_spi_node_cfg adxl345_node_cfg = {
     .freq = 4000,
 };
 #endif
-static struct sensor_itf adxl345_itf;
+static struct sensor_itf adxl345_itf = {
+    .si_ints = {
+        { MYNEWT_VAL(ADXL345_INT_PIN_HOST), MYNEWT_VAL(ADXL345_INT_PIN_DEVICE),
+          MYNEWT_VAL(ADXL345_INT_CFG_ACTIVE)}
+    }
+};
 #else
 static struct sensor_itf adxl_itf = {
     .si_type = SENSOR_ITF_I2C,
