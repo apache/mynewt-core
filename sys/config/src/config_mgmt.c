@@ -28,8 +28,8 @@
 #include "config/config.h"
 #include "config_priv.h"
 
-static int conf_nmgr_read(struct mgmt_cbuf *);
-static int conf_nmgr_write(struct mgmt_cbuf *);
+static int conf_nmgr_read(struct mgmt_ctxt *);
+static int conf_nmgr_write(struct mgmt_ctxt *);
 
 static const struct mgmt_handler conf_nmgr_handlers[] = {
     [CONF_NMGR_OP] = { conf_nmgr_read, conf_nmgr_write}
@@ -42,7 +42,7 @@ static struct mgmt_group conf_nmgr_group = {
 };
 
 static int
-conf_nmgr_read(struct mgmt_cbuf *cb)
+conf_nmgr_read(struct mgmt_ctxt *cb)
 {
     int rc;
     char name_str[CONF_MAX_NAME_LEN];
@@ -82,7 +82,7 @@ conf_nmgr_read(struct mgmt_cbuf *cb)
 }
 
 static int
-conf_nmgr_write(struct mgmt_cbuf *cb)
+conf_nmgr_write(struct mgmt_ctxt *cb)
 {
     int rc;
     char name_str[CONF_MAX_NAME_LEN];
@@ -145,6 +145,7 @@ conf_nmgr_write(struct mgmt_cbuf *cb)
 int
 conf_nmgr_register(void)
 {
-    return mgmt_group_register(&conf_nmgr_group);
+     mgmt_register_group(&conf_nmgr_group);
+     return 0;
 }
 #endif
