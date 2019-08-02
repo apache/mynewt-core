@@ -36,7 +36,14 @@ syscfg.defs:
         description: 'Enables one shot mode on the sensor'
         value: 0
 
-syscfg.defs.!BUS_DRIVER_PRESENT:
+    LPS33THW_INT_CFG_ACTIVE:
+        description: 'Set 0 for active-low, 1 for active-high'
+        value: 1
+
+    LPS33THW_INT_PIN_HOST:
+        description: 'Interrupt pin number on host device connected to INT_DRDY on device'
+        value: 23
+
     LPS33THW_SHELL_ITF_NUM:
         description: 'Shell interface number for the LPS33THW'
         value: 0
@@ -50,7 +57,6 @@ syscfg.defs.!BUS_DRIVER_PRESENT:
         description: 'Slave address for LPS33THW'
         value : 0x5C
 
-syscfg.defs.BUS_DRIVER_PRESENT:
     LPS33THW_SHELL_NODE_NAME:
         description: 'Bus node name for the LPS33THW'
         value: '"lps33thw"'
