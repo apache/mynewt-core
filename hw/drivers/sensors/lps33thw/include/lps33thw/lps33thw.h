@@ -58,6 +58,25 @@ enum lps33thw_low_pass_config {
     LPS33THW_LPF_ENABLED_HIGH_BW = 0x03  /* Bandwidth = data rate / 20 */
 };
 
+/*
+ * Sensor read mode
+ *
+ * LPS33THW_READ_POLL enable polling mode
+ * LPS33THW_READ_STREAM enable FIFO read mode
+ */
+enum lps33thw_read_mode {
+    LPS33THW_READ_POLL = 0,
+    LPS33THW_READ_STREAM = 1,
+};
+
+struct lps33thw_int {
+    /* Synchronize access to this structure */
+    os_sr_t lock;
+
+    /* Sleep waiting for an interrupt to occur */
+    struct os_sem wait;
+};
+
 struct lps33thw_int_cfg {
     uint8_t pin;
     unsigned int data_rdy : 1;
@@ -66,7 +85,9 @@ struct lps33thw_int_cfg {
     unsigned int active_low : 1;
     unsigned int open_drain : 1;
     unsigned int latched : 1;
+    unsigned int fifo_wtm_rdy : 1;
 };
+
 
 struct lps33thw_cfg {
     sensor_type_t mask;
@@ -76,10 +97,15 @@ struct lps33thw_cfg {
     unsigned int autozero : 1;
     unsigned int autorifp : 1;
     unsigned int low_noise_en: 1;
+    uint8_t fifo_wtm;
+    enum lps33thw_read_mode read_mode;
 };
 
 struct lps33thw_private_driver_data {
     struct sensor_read_ctx user_ctx;
+
+    /* Inetrrupt state */
+    struct lps33thw_int *interrupt;
 };
 
 struct lps33thw {
@@ -92,6 +118,7 @@ struct lps33thw {
     struct lps33thw_cfg cfg;
     os_time_t last_read_time;
     struct lps33thw_private_driver_data pdd;
+    struct lps33thw_int interrupt;
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
     bool node_is_spi;
 #endif
