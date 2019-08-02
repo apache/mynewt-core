@@ -454,6 +454,10 @@ log_nmgr_read(struct mgmt_cbuf *cb)
             goto err;
         }
 
+#if MYNEWT_VAL(LOG_READ_WATERMARK_UPDATE)
+        log_set_watermark(log, index);
+#endif
+
         /* If a log was found, encode and break */
         if (name_len > 0) {
             break;
@@ -465,10 +469,6 @@ log_nmgr_read(struct mgmt_cbuf *cb)
     if (!log && name_len > 0) {
         rc = OS_EINVAL;
     }
-
-#if MYNEWT_VAL(LOG_READ_WATERMARK_UPDATE)
-    log_set_watermark(log, index);
-#endif
 
 err:
     g_err |= cbor_encoder_close_container(&cb->encoder, &logs);
