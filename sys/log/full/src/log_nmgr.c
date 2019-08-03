@@ -185,6 +185,12 @@ log_nmgr_encode_entry(struct log *log, struct log_offset *log_offset,
     g_err |= cbor_encode_uint(&rsp,  ueh->ue_index);
     g_err |= cbor_encode_text_stringz(&rsp, "module");
     g_err |= cbor_encode_uint(&rsp,  ueh->ue_module);
+    if (ueh->ue_flags & LOG_FLAGS_IMG_HASH) {
+        /* Encode image hash */
+        g_err |= cbor_encode_text_stringz(&rsp, "imghash");
+        g_err |= cbor_encode_byte_string(&rsp, ueh->ue_imghash,
+                                         LOG_IMG_HASHLEN);
+    }
     g_err |= cbor_encoder_close_container(&cnt_encoder, &rsp);
     rsp_len += cbor_encode_bytes_written(&cnt_encoder);
 
@@ -280,6 +286,12 @@ log_nmgr_encode_entry(struct log *log, struct log_offset *log_offset,
     g_err |= cbor_encode_uint(&rsp,  ueh->ue_index);
     g_err |= cbor_encode_text_stringz(&rsp, "module");
     g_err |= cbor_encode_uint(&rsp,  ueh->ue_module);
+    if (ueh->ue_flags & LOG_FLAGS_IMG_HASH) {
+        /* Encode hash */
+        g_err |= cbor_encode_text_stringz(&rsp, "imghash");
+        g_err |= cbor_encode_byte_string(&rsp, ueh->ue_imghash,
+                                         LOG_IMG_HASHLEN);
+    }
     g_err |= cbor_encoder_close_container(ed->enc, &rsp);
 
     ed->counter++;

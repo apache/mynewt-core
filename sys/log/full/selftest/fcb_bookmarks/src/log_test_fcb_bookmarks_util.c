@@ -67,7 +67,7 @@ ltfbu_max_entries(void)
     crc_size = 1;
 
     /* "+ 1" for CRC. */
-    entry_size = sizeof (struct log_entry_hdr) + ltfbu_cfg.body_len +
+    entry_size = LOG_BASE_ENTRY_HDR_SIZE + ltfbu_cfg.body_len +
                  len_size + crc_size;
     entry_space = LTFBU_SECTOR_SIZE - 8;
 

@@ -17,31 +17,17 @@
  * under the License.
  */
 
+#include "os/mynewt.h"
 #include "log_test_util/log_test_util.h"
 
-TEST_CASE_SELF(log_test_case_cbmem_append)
+int
+main(int argc, char **argv)
 {
-    struct cbmem cbmem;
-    struct log log;
-    uint8_t buf[256];
-    char *str;
-    int body_len;
-    int i;
-    int rc;
+    log_test_suite_cbmem_flat();
+    log_test_suite_cbmem_mbuf();
+    log_test_suite_fcb_flat();
+    log_test_suite_fcb_mbuf();
+    log_test_suite_misc();
 
-    ltu_setup_cbmem(&cbmem, &log);
-
-    for (i = 0; ; i++) {
-        str = ltu_str_logs[i];
-        if (!str) {
-            break;
-        }
-
-        body_len = strlen(str);
-        memcpy(buf + LOG_HDR_SIZE, str, body_len);
-        rc = log_append_typed(&log, 0, 0, LOG_ETYPE_STRING, buf, body_len);
-        TEST_ASSERT_FATAL(rc == 0);
-    }
-
-    ltu_verify_contents(&log);
+    return tu_any_failed;
 }
