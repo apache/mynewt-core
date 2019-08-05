@@ -35,7 +35,20 @@
 #define WAKEUP_REG(name) ((__IO uint32_t *)(WAKEUP_BASE + offsetof(WAKEUP_Type, name)))
 #define CRG_TOP_REG(name) ((__IO uint32_t *)(CRG_TOP_BASE + offsetof(CRG_TOP_Type, name)))
 
-#define GPIO_PORT(pin) (((unsigned)(pin)) >> 5)
+#ifndef MCU_GPIO_PORT0_PIN_COUNT
+#define MCU_GPIO_PORT0_PIN_COUNT 32
+#endif
+
+#if (MCU_GPIO_PORT0_PIN_COUNT) == 32
+#define GPIO_PORT(pin)          (((unsigned)(pin)) >> 5U)
+#define GPIO_PORT_PIN(pin)      (((unsigned)(pin)) & 31U)
+#else
+#define GPIO_PORT(pin)          (((unsigned)(pin)) < MCU_GPIO_PORT0_PIN_COUNT ? 0 : 1)
+#define GPIO_PORT_PIN(pin)      ((unsigned)(pin) < MCU_GPIO_PORT0_PIN_COUNT ? \
+                                (pin) : (pin) - MCU_GPIO_PORT0_PIN_COUNT)
+#endif
+
+#define GPIO_PIN_BIT(pin)       (1 << GPIO_PORT_PIN(pin))
 
 #define GPIO_PIN_DATA_REG_ADDR(pin)        (GPIO_REG(P0_DATA_REG) + GPIO_PORT(pin))
 #define GPIO_PIN_DATA_REG(pin)             *GPIO_PIN_DATA_REG_ADDR(pin)
@@ -55,12 +68,12 @@
 #define WKUP_SELECT_PX_REG_ADDR(pin)    (WAKEUP_REG(WKUP_SELECT_P0_REG) + GPIO_PORT(pin))
 #define WKUP_SELECT_PX_REG(pin)         *(WKUP_SELECT_PX_REG_ADDR(pin))
 #define WKUP_POL_PX_REG_ADDR(pin)       (WAKEUP_REG(WKUP_POL_P0_REG) + GPIO_PORT(pin))
-#define WKUP_POL_PX_SET_FALLING(pin)    do { *(WKUP_POL_PX_REG_ADDR(pin)) |= (1 << ((pin) & 31)); } while (0)
-#define WKUP_POL_PX_SET_RISING(pin)     do { *(WKUP_POL_PX_REG_ADDR(pin)) &= ~(1 << ((pin) & 31)); } while (0)
+#define WKUP_POL_PX_SET_FALLING(pin)    do { *(WKUP_POL_PX_REG_ADDR(pin)) |= GPIO_PIN_BIT(pin); } while (0)
+#define WKUP_POL_PX_SET_RISING(pin)     do { *(WKUP_POL_PX_REG_ADDR(pin)) &= ~GPIO_PIN_BIT(pin); } while (0)
 #define WKUP_STAT_PX_REG_ADDR(pin)      (WAKEUP_REG(WKUP_STATUS_P0_REG) + GPIO_PORT(pin))
-#define WKUP_STAT(pin)                  ((*(WKUP_STAT_PX_REG_ADDR(pin)) >> ((pin) & 31)) & 1)
+#define WKUP_STAT(pin)                  ((*(WKUP_STAT_PX_REG_ADDR(pin)) >> GPIO_PORT_PIN(pin)) & 1)
 #define WKUP_CLEAR_PX_REG_ADDR(pin)     (WAKEUP_REG(WKUP_CLEAR_P0_REG) + GPIO_PORT(pin))
-#define WKUP_CLEAR_PX(pin)              do { (*(WKUP_CLEAR_PX_REG_ADDR(pin)) = (1 << ((pin) & 31))); } while (0)
+#define WKUP_CLEAR_PX(pin)              do { (*(WKUP_CLEAR_PX_REG_ADDR(pin)) = GPIO_PIN_BIT(pin)); } while (0)
 #define WKUP_SEL_GPIO_PX_REG_ADDR(pin)  (WAKEUP_REG(WKUP_SEL_GPIO_P0_REG) + GPIO_PORT(pin))
 #define WKUP_SEL_GPIO_PX_REG(pin)       *(WKUP_SEL_GPIO_PX_REG_ADDR(pin))
 
@@ -142,7 +155,7 @@ mcu_gpio_unlatch(int pin)
 {
     __HAL_ASSERT_CRITICAL();
 
-    *GPIO_PIN_UNLATCH_ADDR(pin) = 1 << ((pin) & 31);
+    *GPIO_PIN_UNLATCH_ADDR(pin) = GPIO_PIN_BIT(pin);
     mcu_gpio_retained_refresh();
 }
 
@@ -157,7 +170,7 @@ mcu_gpio_latch(int pin)
 
     latch_pre = CRG_TOP->P0_PAD_LATCH_REG | CRG_TOP->P1_PAD_LATCH_REG;
 
-    *GPIO_PIN_LATCH_ADDR(pin) = 1 << ((pin) & 31);
+    *GPIO_PIN_LATCH_ADDR(pin) = GPIO_PIN_BIT(pin);
     mcu_gpio_retained_refresh();
 
     latch_post = CRG_TOP->P0_PAD_LATCH_REG | CRG_TOP->P1_PAD_LATCH_REG;
@@ -216,9 +229,9 @@ hal_gpio_init_out(int pin, int val)
     GPIO_PIN_MODE_REG(pin) = MCU_GPIO_MODE_OUTPUT;
 
     if (val) {
-        GPIO_PIN_SET_DATA_REG(pin) = (1 << (pin & 31));
+        GPIO_PIN_SET_DATA_REG(pin) = GPIO_PIN_BIT(pin);
     } else {
-        GPIO_PIN_RESET_DATA_REG(pin) = (1 << (pin & 31));
+        GPIO_PIN_RESET_DATA_REG(pin) = GPIO_PIN_BIT(pin);
     }
 
     mcu_gpio_unlatch(pin);
@@ -233,7 +246,7 @@ hal_gpio_deinit(int pin)
 {
     /* Reset mode to default value and latch pin */
     GPIO_PIN_MODE_REG(pin) = 0x200;
-    GPIO_PIN_RESET_DATA_REG(pin) = 1 << (pin & 31);
+    GPIO_PIN_RESET_DATA_REG(pin) = GPIO_PIN_BIT(pin);
 
     mcu_gpio_latch(pin);
 
@@ -244,16 +257,16 @@ void
 hal_gpio_write(int pin, int val)
 {
     if (val) {
-        GPIO_PIN_SET_DATA_REG(pin) = 1 << (pin & 31);
+        GPIO_PIN_SET_DATA_REG(pin) = GPIO_PIN_BIT(pin);
     } else {
-        GPIO_PIN_RESET_DATA_REG(pin) = 1 << (pin & 31);
+        GPIO_PIN_RESET_DATA_REG(pin) = GPIO_PIN_BIT(pin);
     }
 }
 
 int
 hal_gpio_read(int pin)
 {
-    return (GPIO_PIN_DATA_REG(pin) >> (pin & 31)) & 1;
+    return (GPIO_PIN_DATA_REG(pin) >> GPIO_PORT_PIN(pin)) & 1;
 }
 
 int
@@ -390,13 +403,13 @@ hal_gpio_irq_release(int pin)
 void
 hal_gpio_irq_enable(int pin)
 {
-    WKUP_SEL_GPIO_PX_REG(pin) |= (1 << (pin & 31));
+    WKUP_SEL_GPIO_PX_REG(pin) |= GPIO_PIN_BIT(pin);
 }
 
 void
 hal_gpio_irq_disable(int pin)
 {
-    WKUP_SEL_GPIO_PX_REG(pin) &= ~(1 << (pin & 31));
+    WKUP_SEL_GPIO_PX_REG(pin) &= ~GPIO_PIN_BIT(pin);
     WKUP_CLEAR_PX(pin);
 }
 
