@@ -21,7 +21,7 @@
 #define __MCU_DA1469X_RETREG_H_
 
 #include <stdint.h>
-#include "DA1469xAB.h"
+#include "mcu/mcu.h"
 
 #ifdef __cplusplus
 extern "C" {

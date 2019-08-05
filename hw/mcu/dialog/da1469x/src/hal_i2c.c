@@ -26,7 +26,6 @@
 #include "mcu/mcu.h"
 #include "hal/hal_i2c.h"
 #include "hal/hal_gpio.h"
-#include "DA1469xAB.h"
 
 #define DA1469X_HAL_I2C_MAX (2)
 

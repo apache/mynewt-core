@@ -27,7 +27,7 @@
 #include "mcu/da1469x_cmac.h"
 #include "mcu/da1469x_hal.h"
 #include "mcu/da1469x_pdc.h"
-#include "DA1469xAB.h"
+#include "mcu/mcu.h"
 
 #define CMAC_SYM_CONFIG     ((void *)(0x00818f20 + MEMCTRL->CMI_CODE_BASE_REG))
 #define CMAC_SYM_CONFIG_DYN ((void *)(0x00821af8 + MEMCTRL->CMI_CODE_BASE_REG))

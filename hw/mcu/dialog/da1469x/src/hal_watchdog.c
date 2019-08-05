@@ -19,7 +19,7 @@
 
 #include <assert.h>
 #include "hal/hal_watchdog.h"
-#include "DA1469xAB.h"
+#include "mcu/mcu.h"
 
 static uint32_t g_hal_watchdog_reload_val;
 

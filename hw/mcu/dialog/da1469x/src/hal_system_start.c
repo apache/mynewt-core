@@ -21,7 +21,6 @@
 #include <stdint.h>
 #include "mcu/mcu.h"
 #include "mcu/da1469x_hal.h"
-#include "DA1469xAB.h"
 
 void __attribute__((naked))
 hal_system_start(void *img_start)

@@ -8,7 +8,7 @@
 #define MBED_CMSIS_NVIC_H
 
 #include <stdint.h>
-#include "DA1469xAB.h"
+#include "mcu/mcu.h"
 
 #define NVIC_USER_IRQ_OFFSET  16
 #define NVIC_NUM_VECTORS      (NVIC_USER_IRQ_OFFSET + 40)

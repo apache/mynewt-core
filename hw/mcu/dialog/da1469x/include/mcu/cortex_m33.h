@@ -20,7 +20,7 @@
 #ifndef __MCU_CORTEX_M33_H_
 #define __MCU_CORTEX_M33_H_
 
-#include "DA1469xAB.h"
+#include "mcu/mcu.h"
 
 #ifdef __cplusplus
 extern "C" {

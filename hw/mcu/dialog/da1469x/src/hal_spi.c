@@ -25,7 +25,6 @@
 #include <mcu/da1469x_hal.h>
 #include <hal/hal_spi.h>
 #include <mcu/mcu.h>
-#include "DA1469xAB.h"
 
 /* The maximum number of SPI interfaces we will allow */
 #define DA1469X_HAL_SPI_MAX (2)

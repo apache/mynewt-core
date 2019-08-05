@@ -27,7 +27,6 @@
 #include "mcu/cmsis_nvic.h"
 #include "hal/hal_gpio.h"
 #include "bsp/bsp.h"
-#include "DA1469xAB.h"
 
 /* GPIO interrupts */
 #define HAL_GPIO_MAX_IRQ        (4)
