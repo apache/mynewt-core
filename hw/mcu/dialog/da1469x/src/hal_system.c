@@ -24,7 +24,6 @@
 #include "mcu/da1469x_pdc.h"
 #include "hal/hal_system.h"
 #include "os/os_cputime.h"
-#include "DA1469xAB.h"
 
 #if !MYNEWT_VAL(BOOT_LOADER)
 static enum hal_reset_reason g_hal_reset_reason;

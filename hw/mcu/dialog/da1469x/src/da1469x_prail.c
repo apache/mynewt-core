@@ -20,11 +20,11 @@
 #include <assert.h>
 #include <string.h>
 #include "syscfg/syscfg.h"
+#include "mcu/mcu.h"
 #include "mcu/da1469x_hal.h"
 #include "mcu/da1469x_prail.h"
 #include "mcu/da1469x_retreg.h"
 #include "os/util.h"
-#include "DA1469xAB.h"
 
 #define POWER_CTRL_REG_SET(_field, _val)                                        \
     CRG_TOP->POWER_CTRL_REG =                                                   \

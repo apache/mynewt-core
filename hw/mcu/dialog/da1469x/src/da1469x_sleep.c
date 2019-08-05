@@ -23,7 +23,6 @@
 #include "mcu/da1469x_prail.h"
 #include "mcu/mcu.h"
 #include "hal/hal_system.h"
-#include "DA1469xAB.h"
 #include "da1469x_priv.h"
 
 #if MYNEWT_VAL(MCU_DEEP_SLEEP)

@@ -23,7 +23,7 @@
 #include "mcu/da1469x_hal.h"
 #include "hal/hal_timer.h"
 #include "defs/error.h"
-#include "DA1469xAB.h"
+#include "mcu/mcu.h"
 
 #define DA1469X_TIMER_COUNT         (3)
 
