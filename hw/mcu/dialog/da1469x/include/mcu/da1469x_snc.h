@@ -22,7 +22,6 @@
 
 #include <stdint.h>
 #include "mcu/mcu.h"
-#include "DA1469xAB.h"
 
 #ifdef __cplusplus
 extern "C" {

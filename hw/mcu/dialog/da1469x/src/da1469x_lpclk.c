@@ -20,12 +20,12 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include "syscfg/syscfg.h"
+#include "mcu/mcu.h"
 #include "mcu/da1469x_clock.h"
 #include "mcu/da1469x_lpclk.h"
 #include "hal/hal_system.h"
 #include "hal/hal_timer.h"
 #include "os/os_cputime.h"
-#include "DA1469xAB.h"
 #include "da1469x_priv.h"
 
 bool g_mcu_lpclk_available;

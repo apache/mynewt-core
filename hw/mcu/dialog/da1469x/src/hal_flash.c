@@ -23,7 +23,7 @@
 #include "defs/sections.h"
 #include "mcu/da1469x_hal.h"
 #include "hal/hal_flash_int.h"
-#include "DA1469xAB.h"
+#include "mcu/mcu.h"
 
 #define CODE_QSPI_INLINE    __attribute__((always_inline)) inline
 

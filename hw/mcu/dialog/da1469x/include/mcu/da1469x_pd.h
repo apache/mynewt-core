@@ -22,7 +22,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#include "DA1469xAB.h"
+#include "mcu/mcu.h"
 
 #ifdef __cplusplus
 extern "C" {

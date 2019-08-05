@@ -24,7 +24,7 @@
 #include "hal/hal_system.h"
 #include "os/os_trace_api.h"
 #include "da1469x_priv.h"
-#include "DA1469xAB.h"
+#include "mcu/mcu.h"
 
 struct hal_os_tick {
     int ticks_per_ostick;

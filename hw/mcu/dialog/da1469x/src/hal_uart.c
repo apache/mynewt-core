@@ -28,7 +28,6 @@
 #include "defs/error.h"
 #include "os/os_trace_api.h"
 #include "os/util.h"
-#include "DA1469xAB.h"
 
 #define DA1469X_UART_COUNT      3
 

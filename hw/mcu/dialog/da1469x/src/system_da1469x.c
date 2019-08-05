@@ -21,7 +21,7 @@
 #include "mcu/da1469x_pd.h"
 #include "mcu/da1469x_pdc.h"
 #include "mcu/da1469x_prail.h"
-#include "DA1469xAB.h"
+#include "mcu/mcu.h"
 #include "da1469x_priv.h"
 
 #define PMU_ALL_SLEEP_MASK      (CRG_TOP_PMU_CTRL_REG_TIM_SLEEP_Msk | \
