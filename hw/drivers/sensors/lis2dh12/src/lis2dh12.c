@@ -757,7 +757,7 @@ lis2dh12_get_full_scale(struct sensor_itf *itf, uint8_t *fs)
         goto err;
     }
 
-    *fs = (reg & LIS2DH12_CTRL_REG4_FS) >> 4;
+    *fs = (reg & LIS2DH12_CTRL_REG4_FS);
 
     return 0;
 err:
