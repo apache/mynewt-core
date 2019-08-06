@@ -48,6 +48,14 @@ syscfg.defs:
         description: 'Enables one shot mode on the sensor'
         value: 0
 
+    LPS33HW_INT_CFG_ACTIVE:
+        description: 'Set 0 for active-low, 1 for active-high'
+        value: 1
+
+    LPS33HW_INT_PIN_HOST:
+        description: 'Interrupt pin number on host device connected to INT_DRDY on device'
+        value: -1
+
     ### Log settings.
 
     LPS33HW_LOG_MODULE:
