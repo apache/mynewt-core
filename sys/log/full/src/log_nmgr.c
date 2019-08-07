@@ -450,6 +450,11 @@ log_nmgr_read(struct mgmt_cbuf *cb)
         }
 
         rc = log_encode(log, &logs, ts, index);
+#if MYNEWT_VAL(LOG_READ_WATERMARK_UPDATE)
+        if (rc == 0 || rc == OS_ENOMEM) {
+            log_set_watermark(log, index);
+        }
+#endif
         if (rc) {
             goto err;
         }
@@ -465,10 +470,6 @@ log_nmgr_read(struct mgmt_cbuf *cb)
     if (!log && name_len > 0) {
         rc = OS_EINVAL;
     }
-
-#if MYNEWT_VAL(LOG_READ_WATERMARK_UPDATE)
-    log_set_watermark(log, index);
-#endif
 
 err:
     g_err |= cbor_encoder_close_container(&cb->encoder, &logs);
