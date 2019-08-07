@@ -38,6 +38,14 @@ syscfg.defs:
         description: 'Specifies path to ED25519 private key PEM file'
         value: ''
 
+syscfg.defs.BUS_DRIVER_PRESENT:
+    BSP_FLASH_SPI_NAME:
+        description: 'SPIFLASH device name'
+        value: '"spiflash0"'
+    BSP_FLASH_SPI_BUS:
+        description: 'bus name SPIFLASH is connected to'
+        value:
+
 syscfg.vals:
     MCU_TARGET: DA14699
     MCU_DCDC_ENABLE: 1

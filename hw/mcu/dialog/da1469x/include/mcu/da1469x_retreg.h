@@ -78,7 +78,7 @@ void da1469x_retreg_restore(struct da1469x_retreg *retregs, uint8_t count);
 static inline void
 da1469x_retreg_invalidate(struct da1469x_retreg *retreg)
 {
-    retreg->reg = MCU_RETREG_ADDR_DUMMY;
+    retreg->reg = (uint32_t *)MCU_RETREG_ADDR_DUMMY;
     retreg->value = 0;
 }
 
