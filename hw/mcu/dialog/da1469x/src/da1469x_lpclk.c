@@ -21,6 +21,7 @@
 #include <stdint.h>
 #include "syscfg/syscfg.h"
 #include "mcu/da1469x_clock.h"
+#include "mcu/da1469x_lpclk.h"
 #include "hal/hal_system.h"
 #include "hal/hal_timer.h"
 #include "os/os_cputime.h"
@@ -29,12 +30,28 @@
 
 bool g_mcu_lpclk_available;
 
+static da1469x_lpclk_cb *g_da1469x_lpclk_cmac_cb;
+
 static void
 da1469x_lpclk_settle_tmr_cb(void *arg)
 {
     da1469x_clock_lp_xtal32k_switch();
 
     g_mcu_lpclk_available = true;
+
+    if (g_da1469x_lpclk_cmac_cb) {
+        g_da1469x_lpclk_cmac_cb();
+    }
+}
+
+void
+da1469x_lpclk_register_cmac_cb(da1469x_lpclk_cb *cb)
+{
+    g_da1469x_lpclk_cmac_cb = cb;
+
+    if (g_mcu_lpclk_available) {
+        cb();
+    }
 }
 
 void
