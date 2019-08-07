@@ -1,4 +1,3 @@
-#
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -17,19 +16,8 @@
 # under the License.
 #
 
-pkg.name: hw/bsp/dialog_da1469x-dk-pro
-pkg.type: bsp
-pkg.description: BSP definition for the Dialog DA1469x PRO development kit with DA14699 daughter board.
-pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
-pkg.homepage: "http://mynewt.apache.org/"
-pkg.keywords:
-    - dialog
-    - da1469x
-
-pkg.cflags.HARDFLOAT:
-    - '-mfloat-abi=hard'
-    - '-mfpu=fpv5-sp-d16'
-
-pkg.deps:
-    - "@apache-mynewt-core/libc/baselibc"
-    - "@apache-mynewt-core/hw/mcu/dialog/da14699"
+syscfg.vals:
+    # MCU_TARGET have to be set in BSP due to newt limitation that dose not
+    # allow overriding values defined by other packages event if they
+    # are not set
+#    MCU_TARGET: DA14699

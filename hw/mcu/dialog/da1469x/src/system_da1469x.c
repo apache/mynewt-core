@@ -39,12 +39,14 @@ void SystemInit(void)
     int idx;
 #endif
 
+    /* TODO: Check chip version.
     assert(CHIP_VERSION->CHIP_ID1_REG == '2');
     assert(CHIP_VERSION->CHIP_ID2_REG == '5');
     assert(CHIP_VERSION->CHIP_ID3_REG == '2');
     assert(CHIP_VERSION->CHIP_ID4_REG == '2');
     assert(CHIP_VERSION->CHIP_REVISION_REG == 'A');
     assert(CHIP_VERSION->CHIP_TEST1_REG == 'B');
+     */
 
     /* Enable FPU when using hard-float */
 #if (__FPU_USED == 1)
