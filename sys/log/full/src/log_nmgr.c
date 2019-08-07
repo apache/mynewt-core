@@ -450,6 +450,11 @@ log_nmgr_read(struct mgmt_cbuf *cb)
         }
 
         rc = log_encode(log, &logs, ts, index);
+#if MYNEWT_VAL(LOG_READ_WATERMARK_UPDATE)
+        if (rc == 0 || rc == OS_ENOMEM) {
+            log_set_watermark(log, index);
+        }
+#endif
         if (rc) {
             goto err;
         }

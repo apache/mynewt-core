@@ -631,41 +631,61 @@ log_fcb_storage_info(struct log *log, struct log_storage_info *info)
 
 #if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
 static int
+log_fcb_new_watermark_index(struct log *log, struct log_offset *log_offset, void *dptr,
+                            uint16_t len)
+{
+    struct fcb_entry *loc;
+    struct fcb_log *fl;
+    struct log_entry_hdr ueh;
+    int rc;
+
+    loc = (struct fcb_entry*)dptr;
+    fl = (struct fcb_log *)log->l_arg;
+
+    rc = log_fcb_read(log, loc, &ueh, 0, sizeof(ueh));
+
+    if (rc != sizeof(ueh)) {
+        return -1;
+    }
+    /* Set log watermark to end of this element */
+    if (ueh.ue_index >= log_offset->lo_index) {
+        fl->fl_watermark_off = loc->fe_area->fa_off + loc->fe_data_off + loc->fe_data_len;
+        return -1;
+    } else {
+        return 0;
+    }
+}
+
+static int
 log_fcb_set_watermark(struct log *log, uint32_t index)
 {
+    int rc;
+    struct log_offset log_offset;
     struct fcb_log *fl;
     struct fcb *fcb;
-    struct log_entry_hdr ueh;
-    struct fcb_entry loc;
-    uint32_t end_off;
-    int rc;
 
     fl = (struct fcb_log *)log->l_arg;
     fcb = &fl->fl_fcb;
 
-    memset(&loc, 0, sizeof(loc));
-    end_off = fcb->f_oldest->fa_off;
-    rc = 0;
+    log_offset.lo_arg = NULL;
+    log_offset.lo_ts = 0;
+    log_offset.lo_index = index;
+    log_offset.lo_data_len = 0;
 
-    while (fcb_getnext(fcb, &loc) == 0) {
-        rc = log_fcb_read(log, &loc, &ueh, 0, sizeof(ueh));
-
-        if (rc != sizeof(ueh)) {
-            break;
-        }
-
-        if (ueh.ue_index > index) {
-            break;
-        }
-
-        /* Move end offset max pointer to end of this element */
-        end_off = loc.fe_area->fa_off + loc.fe_data_off + loc.fe_data_len;
+    /* Find where to start the walk, and set watermark accordingly */
+    rc = log_fcb_walk(log, log_fcb_new_watermark_index, &log_offset);
+    if (rc != 0) {
+        goto done;
     }
 
-    /* End of last element found is now our watermark */
-    fl->fl_watermark_off = end_off;
+    /* If there are no entries to read and the watermark has not been set */
+    if (fl->fl_watermark_off == 0xffffffff) {
+        fl->fl_watermark_off = fcb->f_oldest->fa_off;
+    }
 
-    return rc;
+    return (0);
+done:
+    return (rc);
 }
 #endif
 
