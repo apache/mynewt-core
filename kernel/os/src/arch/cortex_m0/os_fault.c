@@ -121,12 +121,7 @@ __assert_func(const char *file, int line, const char *func, const char *e)
 #if MYNEWT_VAL(OS_ASSERT_CB)
     os_assert_cb();
 #endif
-    if (hal_debugger_connected()) {
-       /*
-        * If debugger is attached, breakpoint before the trap.
-        */
-       asm("bkpt");
-    }
+
     SCB->ICSR = SCB_ICSR_NMIPENDSET_Msk;
     /* Exception happens right away. Next line not executed. */
     hal_system_reset();
