@@ -19,6 +19,7 @@
 
 #include "os/mynewt.h"
 #include "hal/hal_system.h"
+#include <platform.h>
 
 void
 hal_system_reset(void)
@@ -38,5 +39,9 @@ hal_system_reset(void)
 int
 hal_debugger_connected(void)
 {
-    return 0;
+    /*
+     * This always on domain register is now used to detect debugger
+     * connection. openocd scripts sets magic value 0x5151A2BC when connected.
+     */
+    return AON_REG(AON_BACKUP15) == 0x5151A2BC;
 }
