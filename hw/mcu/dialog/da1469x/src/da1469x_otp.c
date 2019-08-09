@@ -25,33 +25,13 @@
 #include "mcu/da1469x_clock.h"
 #include <mcu/da1469x_otp.h>
 
-enum otpc_mode_val {
-    OTPC_MODE_PDOWN = 0,
-    OTPC_MODE_DSTBY,
-    OTPC_MODE_STBY,
-    OTPC_MODE_READ,
-    OTPC_MODE_PROG,
-    OTPC_MODE_PVFY,
-    OTPC_MODE_RINI,
-};
-
-static inline void
-da1469x_otp_set_mode(enum otpc_mode_val mode)
-{
-    OTPC->OTPC_MODE_REG = (OTPC->OTPC_MODE_REG &
-                           ~OTPC_OTPC_MODE_REG_OTPC_MODE_MODE_Msk) |
-                          (mode << OTPC_OTPC_MODE_REG_OTPC_MODE_MODE_Pos);
-    while (!(OTPC->OTPC_STAT_REG & OTPC_OTPC_STAT_REG_OTPC_STAT_MRDY_Msk));
-}
-
-
 int
 da1469x_otp_read(uint32_t offset, void *dst, uint32_t num_bytes)
 {
     uint32_t *src_addr = (uint32_t *)(MCU_OTPM_BASE + offset);
     uint32_t *dst_addr = dst;
 
-    if (offset >= MCU_OTPM_SIZE || (offset + num_bytes) >= MCU_OTPM_SIZE) {
+    if (offset >= MCU_OTPM_SIZE || (offset + num_bytes) > MCU_OTPM_SIZE) {
        return OTP_ERR_INVALID_ADDRESS;
     }
 
@@ -82,7 +62,7 @@ da1469x_otp_write(uint32_t offset, const void *src, uint32_t num_bytes)
     const uint32_t *src_addr = src;
     int ret = 0;
 
-    if (offset >= MCU_OTPM_SIZE || (offset + num_bytes) >= MCU_OTPM_SIZE) {
+    if (offset >= MCU_OTPM_SIZE || (offset + num_bytes) > MCU_OTPM_SIZE) {
        return OTP_ERR_INVALID_ADDRESS;
     }
 

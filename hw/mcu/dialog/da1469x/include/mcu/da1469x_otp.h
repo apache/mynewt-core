@@ -22,6 +22,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <mcu/mcu.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -35,6 +36,25 @@ extern "C" {
 #define OTP_SEGMENT_QSPI_FW_KEYS    0xb00
 #define OTP_SEGMENT_USER_DATA_KEYS  0xa00
 #define OTP_SEGMENT_SIGNATURE_KEYS  0x8c0
+
+enum otpc_mode_val {
+    OTPC_MODE_PDOWN = 0,
+    OTPC_MODE_DSTBY,
+    OTPC_MODE_STBY,
+    OTPC_MODE_READ,
+    OTPC_MODE_PROG,
+    OTPC_MODE_PVFY,
+    OTPC_MODE_RINI,
+};
+
+static inline void
+da1469x_otp_set_mode(enum otpc_mode_val mode)
+{
+    OTPC->OTPC_MODE_REG = (OTPC->OTPC_MODE_REG &
+                           ~OTPC_OTPC_MODE_REG_OTPC_MODE_MODE_Msk) |
+                          (mode << OTPC_OTPC_MODE_REG_OTPC_MODE_MODE_Pos);
+    while (!(OTPC->OTPC_STAT_REG & OTPC_OTPC_STAT_REG_OTPC_STAT_MRDY_Msk));
+}
 
 int da1469x_otp_write(uint32_t address, const void *src,
                              uint32_t num_bytes);

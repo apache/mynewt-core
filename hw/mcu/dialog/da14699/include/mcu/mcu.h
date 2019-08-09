@@ -150,7 +150,7 @@ void mcu_gpio_exit_sleep(void);
 #define MCU_MEM_SYSRAM_START_ADDRESS    (0x20000000)
 #define MCU_MEM_SYSRAM_END_ADDRESS      (0x20080000)
 
-#define MCU_OTPM_BASE 0x10080000UL
+#define MCU_OTPM_BASE 0x30080000UL
 #define MCU_OTPM_SIZE 4096
 
 /* Largest group id seen on a DA14699 was 18 so far */
