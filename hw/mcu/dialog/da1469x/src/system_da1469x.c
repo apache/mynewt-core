@@ -22,6 +22,7 @@
 #include "mcu/da1469x_pdc.h"
 #include "mcu/da1469x_prail.h"
 #include "mcu/da1469x_clock.h"
+#include <mcu/da1469x_otp.h>
 #include "mcu/mcu.h"
 #include "da1469x_priv.h"
 
@@ -102,14 +103,8 @@ void SystemInit(void)
     CRG_TOP->PMU_CTRL_REG |= CRG_TOP_PMU_CTRL_REG_RETAIN_CACHE_Msk;
 #endif
 
-
-    /* Switch OTPC to deep standby (DSTBY) mode */
-    da1469x_clock_amba_enable(CRG_TOP_CLK_AMBA_REG_OTP_ENABLE_Msk);
-    OTPC->OTPC_MODE_REG = (OTPC->OTPC_MODE_REG &
-                           ~OTPC_OTPC_MODE_REG_OTPC_MODE_MODE_Msk) |
-                          (1 << OTPC_OTPC_MODE_REG_OTPC_MODE_MODE_Pos);
-    while (!(OTPC->OTPC_STAT_REG & OTPC_OTPC_STAT_REG_OTPC_STAT_MRDY_Msk));
-    da1469x_clock_amba_disable(CRG_TOP_CLK_AMBA_REG_OTP_ENABLE_Msk);
+    /* initialize OTP and place in deep standby */
+    da1469x_otp_init();
 
     /* Initialize and configure power rails */
     da1469x_prail_initialize();
