@@ -150,6 +150,9 @@ void mcu_gpio_exit_sleep(void);
 #define MCU_MEM_SYSRAM_START_ADDRESS    (0x20000000)
 #define MCU_MEM_SYSRAM_END_ADDRESS      (0x20080000)
 
+#define OTPM_BASE 0x10080000UL
+#define OTPM_SIZE 0x4096
+
 #ifdef __cplusplus
 }
 #endif
