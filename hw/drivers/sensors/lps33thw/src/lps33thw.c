@@ -826,7 +826,7 @@ lps33thw_config_interrupt(struct sensor *sensor, struct lps33thw_int_cfg cfg)
     if (rc) {
         return rc;
     }
-    rc = lps33thw_set_value(itf, LPS33THW_CTRL_REG3_FIFO_WTM, cfg.fifo_wtm_rdy);
+    rc = lps33thw_set_value(itf, LPS33THW_CTRL_REG3_F_FTH, cfg.fifo_wtm_rdy);
     if (rc) {
         return rc;
     }
