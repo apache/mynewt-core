@@ -30,9 +30,6 @@
 #include <console/console.h>
 #include <datetime/datetime.h>
 
-#if MYNEWT_VAL(LOG_SOFT_RESET)
-#include <reboot/log_reboot.h>
-#endif
 #if MYNEWT_VAL(TIMEPERSIST)
 #include <timepersist/timepersist.h>
 #endif
