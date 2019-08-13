@@ -102,6 +102,21 @@ int imgr_read_info(int area_id, struct image_version *ver, uint8_t *hash, uint32
  */
 int imgr_my_version(struct image_version *ver);
 
+/*
+ * Read the current running image's build hash
+ *
+ * @param hash Ptr to hash to be filled up
+ * @param hashlen Length of hash to return
+ *
+ * Returns -2 if either of the argument is 0 or NULL
+ * Returns -1 if area is not readable
+ * Returns 0 if image in slot is ok
+ * Returns 1 if there is not a full image
+ * Returns 2 if slot is empty
+ */
+int
+imgr_get_current_hash(uint8_t *hash, uint16_t hashlen);
+
 /**
  * @brief Configures a callback that gets called whenever a valid image upload
  * request is received.

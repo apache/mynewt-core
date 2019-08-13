@@ -36,27 +36,14 @@ log_console_get(void)
 static void
 log_console_print_hdr(const struct log_entry_hdr *hdr)
 {
-    console_printf("[ts=%lluus, mod=%u level=%u] ",
+    console_printf("[ts=%lluus, mod=%u level=%u ",
                    hdr->ue_ts, hdr->ue_module, hdr->ue_level);
-}
 
-static int
-log_console_append(struct log *log, void *buf, int len)
-{
-    struct log_entry_hdr *hdr;
-
-    if (!console_is_init()) {
-        return (0);
+    if (hdr->ue_flags & LOG_FLAGS_IMG_HASH) {
+        console_printf("ih=0x%x%x%x%x", hdr->ue_imghash[0], hdr->ue_imghash[1],
+                       hdr->ue_imghash[2], hdr->ue_imghash[3]);
     }
-
-    if (!console_is_midline) {
-        hdr = (struct log_entry_hdr *) buf;
-        log_console_print_hdr(hdr);
-    }
-
-    console_write((char *) buf + LOG_ENTRY_HDR_SIZE, len - LOG_ENTRY_HDR_SIZE);
-
-    return (0);
+    console_printf("]");
 }
 
 static int
@@ -74,6 +61,13 @@ log_console_append_body(struct log *log, const struct log_entry_hdr *hdr,
     console_write(body, body_len);
 
     return (0);
+}
+
+static int
+log_console_append(struct log *log, void *buf, int len)
+{
+    return log_console_append_body(log, buf, (uint8_t *)buf + LOG_BASE_ENTRY_HDR_SIZE,
+                                   len - LOG_BASE_ENTRY_HDR_SIZE);
 }
 
 static int

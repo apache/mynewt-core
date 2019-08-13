@@ -26,10 +26,16 @@ syscfg.defs:
 
     LOG_VERSION:
         description: 'Log entry header version used.'
-        value: 2
+        value: 3
 
     LOG_LEVEL:
         description: 'Limits what level log messages are compiled in.'
+        value: 0
+
+    LOG_FLAGS_IMAGE_HASH:
+        description: >
+            Enable logging of the first 4 bytes of the image hash. 0 - disable; 
+            1 - enable.
         value: 0
 
     LOG_FCB:

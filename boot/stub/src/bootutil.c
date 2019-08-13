@@ -17,31 +17,28 @@
  * under the License.
  */
 
-#include "log_test_util/log_test_util.h"
+#include <defs/error.h>
+#include "bootutil/bootutil.h"
 
-TEST_CASE_SELF(log_test_case_cbmem_append)
+int boot_current_slot;
+
+int boot_swap_type(void)
 {
-    struct cbmem cbmem;
-    struct log log;
-    uint8_t buf[256];
-    char *str;
-    int body_len;
-    int i;
-    int rc;
+    return BOOT_SWAP_TYPE_NONE;
+}
 
-    ltu_setup_cbmem(&cbmem, &log);
+int boot_set_pending(int permanent)
+{
+    return SYS_ENOTSUP;
+}
 
-    for (i = 0; ; i++) {
-        str = ltu_str_logs[i];
-        if (!str) {
-            break;
-        }
+int boot_set_confirmed(void)
+{
+    return SYS_ENOTSUP;
+}
 
-        body_len = strlen(str);
-        memcpy(buf + LOG_HDR_SIZE, str, body_len);
-        rc = log_append_typed(&log, 0, 0, LOG_ETYPE_STRING, buf, body_len);
-        TEST_ASSERT_FATAL(rc == 0);
-    }
-
-    ltu_verify_contents(&log);
+int
+split_go(int loader_slot, int split_slot, void **entry)
+{
+    return SYS_ENOTSUP;
 }

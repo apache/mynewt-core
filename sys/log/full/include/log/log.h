@@ -26,6 +26,12 @@
 #include "stats/stats.h"
 #endif
 
+#if MYNEWT_VAL(LOG_FLAGS_IMAGE_HASH)
+#define LOG_HDR_SIZE 19
+#else
+#define LOG_HDR_SIZE 15
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -81,10 +87,10 @@ typedef int (*lh_append_func_t)(struct log *, void *buf, int len);
 typedef int (*lh_append_body_func_t)(struct log *log,
                                      const struct log_entry_hdr *hdr,
                                      const void *body, int body_len);
-typedef int (*lh_append_mbuf_func_t)(struct log *, const struct os_mbuf *om);
+typedef int (*lh_append_mbuf_func_t)(struct log *, struct os_mbuf *om);
 typedef int (*lh_append_mbuf_body_func_t)(struct log *log,
                                           const struct log_entry_hdr *hdr,
-                                          const struct os_mbuf *om);
+                                          struct os_mbuf *om);
 typedef int (*lh_walk_func_t)(struct log *,
         log_walk_func_t walk_func, struct log_offset *log_offset);
 typedef int (*lh_flush_func_t)(struct log *);
@@ -116,6 +122,12 @@ struct log_handler {
     lh_registered_func_t log_registered;
 };
 
+/* Image hash length to be looged */
+#define LOG_IMG_HASHLEN 4
+
+/* Flags used to indicate type of data in reserved payload*/
+#define LOG_FLAGS_IMG_HASH (1 << 0)
+
 #if MYNEWT_VAL(LOG_VERSION) == 2
 struct log_entry_hdr {
     int64_t ue_ts;
@@ -129,13 +141,15 @@ struct log_entry_hdr {
     uint32_t ue_index;
     uint8_t ue_module;
     uint8_t ue_level;
-    uint8_t ue_etype;
+    uint8_t ue_etype:4;
+    uint8_t ue_flags:4;
+    uint8_t ue_imghash[4];
 }__attribute__((__packed__));
 #else
 #error "Unsupported log version"
 #endif
 
-#define LOG_ENTRY_HDR_SIZE (sizeof(struct log_entry_hdr))
+#define LOG_BASE_ENTRY_HDR_SIZE (15)
 
 #define LOG_MODULE_STR(module)      log_module_get_name(module)
 
@@ -260,11 +274,11 @@ struct log *log_find(const char *name);
  * @brief Writes the raw contents of a flat buffer to the specified log.
  *
  * NOTE: The flat buffer must have an initial padding of length
- * `LOG_ENTRY_HDR_SIZE`.  This padding is *not* reflected in the specified
+ * `LOG_HDR_SIZE`. This padding is *not* reflected in the specified
  * length.  So, to log the string "abc", you should pass the following
  * arguments to this function:
  *
- *     data: <padding>abc   (total of `LOG_ENTRY_HDR_SIZE`+3 bytes.)
+ *     data: <padding>abc   (total of `LOG_HDR_SIZE`+3 bytes.)
  *     len: 3
  *
  * @param log                   The log to write to.
@@ -290,11 +304,11 @@ int log_append_typed(struct log *log, uint8_t module, uint8_t level,
  * the caller via a write to the supplied mbuf pointer-to-pointer.
  *
  * NOTE: The mbuf must have an initial padding of length
- * `LOG_ENTRY_HDR_SIZE`.  So, to log the string "abc", you should pass an mbuf
+ * `LOG_HDR_SIZE`. So, to log the string "abc", you should pass an mbuf
  * with the following characteristics:
  *
  *     om_data: <padding>abc
- *     om_len: `LOG_ENTRY_HDR_SIZE` + 3
+ *     om_len: `LOG_HDR_SIZE` + 3
  *
  * @param log                   The log to write to.
  * @param module                The module ID of the entry to write.
@@ -319,11 +333,11 @@ int log_append_mbuf_typed_no_free(struct log *log, uint8_t module,
  * regardless of the outcome.
  *
  * NOTE: The mbuf must have an initial padding of length
- * `LOG_ENTRY_HDR_SIZE`.  So, to log the string "abc", you should pass an mbuf
+ * `LOG_HDR_SIZE`. So, to log the string "abc", you should pass an mbuf
  * with the following characteristics:
  *
  *     om_data: <padding>abc
- *     om_len: `LOG_ENTRY_HDR_SIZE` + 3
+ *     om_len: `LOG_HDR_SIZE` + 3
  *
  * @param log                   The log to write to.
  * @param module                The module ID of the entry to write.
@@ -407,11 +421,11 @@ void log_console_init(void);
  * @brief Writes the raw contents of a flat buffer to the specified log.
  *
  * NOTE: The flat buffer must have an initial padding of length
- * `LOG_ENTRY_HDR_SIZE`.  This padding is *not* reflected in the specified
+ * `LOG_HDR_SIZE`. This padding is *not* reflected in the specified
  * length.  So, to log the string "abc", you should pass the following
  * arguments to this function:
  *
- *     data: <padding>abc   (total of `LOG_ENTRY_HDR_SIZE`+3 bytes.)
+ *     data: <padding>abc   (total of `LOG_HDR_SIZE`+3 bytes.)
  *     len: 3
  *
  * @param log                   The log to write to.
@@ -439,11 +453,11 @@ log_append(struct log *log, uint8_t module, uint8_t level, void *data,
  * the caller via a write to the supplied mbuf pointer-to-pointer.
  *
  * NOTE: The mbuf must have an initial padding of length
- * `LOG_ENTRY_HDR_SIZE`.  So, to log the string "abc", you should pass an mbuf
+ * `LOG_HDR_SIZE`. So, to log the string "abc", you should pass an mbuf
  * with the following characteristics:
  *
  *     om_data: <padding>abc
- *     om_len: `LOG_ENTRY_HDR_SIZE` + 3
+ *     om_len: `LOG_HDR_SIZE` + 3
  *
  * @param log                   The log to write to.
  * @param module                The module ID of the entry to write.
@@ -470,11 +484,11 @@ log_append_mbuf_no_free(struct log *log, uint8_t module, uint8_t level,
  * regardless of the outcome.
  *
  * NOTE: The mbuf must have an initial padding of length
- * `LOG_ENTRY_HDR_SIZE`.  So, to log the string "abc", you should pass an mbuf
+ * `LOG_HDR_SIZE`. So, to log the string "abc", you should pass an mbuf
  * with the following characteristics:
  *
  *     om_data: <padding>abc
- *     om_len: `LOG_ENTRY_HDR_SIZE` + 3
+ *     om_len: `LOG_HDR_SIZE` + 3
  *
  * @param log                   The log to write to.
  * @param module                The module ID of the entry to write.
@@ -508,6 +522,16 @@ int log_read(struct log *log, void *dptr, void *buf, uint16_t off,
  * @return                      0 on success; nonzero on failure.
  */
 int log_read_hdr(struct log *log, void *dptr, struct log_entry_hdr *hdr);
+
+/**
+ * @brief Reads the header length
+ *
+ * @param hdr Ptr to the header
+ * 
+ * @return Length of the header
+ */
+uint16_t
+log_hdr_len(const struct log_entry_hdr *hdr);
 
 /**
  * @brief Reads data from the body of a log entry into a flat buffer.
@@ -665,6 +689,15 @@ int log_storage_info(struct log *log, struct log_storage_info *info);
  */
 int log_set_watermark(struct log *log, uint32_t index);
 #endif
+/**
+ * Fill log current image hash
+ *
+ * @param hdr Ptr to the header
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+log_fill_current_img_hash(struct log_entry_hdr *hdr);
 
 /* Handler exports */
 #if MYNEWT_VAL(LOG_CONSOLE)
