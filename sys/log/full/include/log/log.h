@@ -26,6 +26,12 @@
 #include "stats/stats.h"
 #endif
 
+#if MYNEWT_VAL(LOG_FLAGS_IMAGE_HASH)
+#define LOG_HDR_SIZE 19
+#else
+#define LOG_HDR_SIZE 15
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -268,11 +274,11 @@ struct log *log_find(const char *name);
  * @brief Writes the raw contents of a flat buffer to the specified log.
  *
  * NOTE: The flat buffer must have an initial padding of length
- * `LOG_BASE_ENTRY_HDR_SIZE`.  This padding is *not* reflected in the specified
+ * `LOG_HDR_SIZE`. This padding is *not* reflected in the specified
  * length.  So, to log the string "abc", you should pass the following
  * arguments to this function:
  *
- *     data: <padding>abc   (total of `LOG_BASE_ENTRY_HDR_SIZE`+3 bytes.)
+ *     data: <padding>abc   (total of `LOG_HDR_SIZE`+3 bytes.)
  *     len: 3
  *
  * @param log                   The log to write to.
@@ -298,11 +304,11 @@ int log_append_typed(struct log *log, uint8_t module, uint8_t level,
  * the caller via a write to the supplied mbuf pointer-to-pointer.
  *
  * NOTE: The mbuf must have an initial padding of length
- * `LOG_BASE_ENTRY_HDR_SIZE`.  So, to log the string "abc", you should pass an mbuf
+ * `LOG_HDR_SIZE`. So, to log the string "abc", you should pass an mbuf
  * with the following characteristics:
  *
  *     om_data: <padding>abc
- *     om_len: `LOG_BASE_ENTRY_HDR_SIZE` + 3
+ *     om_len: `LOG_HDR_SIZE` + 3
  *
  * @param log                   The log to write to.
  * @param module                The module ID of the entry to write.
@@ -327,11 +333,11 @@ int log_append_mbuf_typed_no_free(struct log *log, uint8_t module,
  * regardless of the outcome.
  *
  * NOTE: The mbuf must have an initial padding of length
- * `LOG_BASE_ENTRY_HDR_SIZE`.  So, to log the string "abc", you should pass an mbuf
+ * `LOG_HDR_SIZE`. So, to log the string "abc", you should pass an mbuf
  * with the following characteristics:
  *
  *     om_data: <padding>abc
- *     om_len: `LOG_BASE_ENTRY_HDR_SIZE` + 3
+ *     om_len: `LOG_HDR_SIZE` + 3
  *
  * @param log                   The log to write to.
  * @param module                The module ID of the entry to write.
@@ -415,11 +421,11 @@ void log_console_init(void);
  * @brief Writes the raw contents of a flat buffer to the specified log.
  *
  * NOTE: The flat buffer must have an initial padding of length
- * `LOG_BASE_ENTRY_HDR_SIZE`.  This padding is *not* reflected in the specified
+ * `LOG_HDR_SIZE`. This padding is *not* reflected in the specified
  * length.  So, to log the string "abc", you should pass the following
  * arguments to this function:
  *
- *     data: <padding>abc   (total of `LOG_BASE_ENTRY_HDR_SIZE`+3 bytes.)
+ *     data: <padding>abc   (total of `LOG_HDR_SIZE`+3 bytes.)
  *     len: 3
  *
  * @param log                   The log to write to.
@@ -447,11 +453,11 @@ log_append(struct log *log, uint8_t module, uint8_t level, void *data,
  * the caller via a write to the supplied mbuf pointer-to-pointer.
  *
  * NOTE: The mbuf must have an initial padding of length
- * `LOG_BASE_ENTRY_HDR_SIZE`.  So, to log the string "abc", you should pass an mbuf
+ * `LOG_HDR_SIZE`. So, to log the string "abc", you should pass an mbuf
  * with the following characteristics:
  *
  *     om_data: <padding>abc
- *     om_len: `LOG_BASE_ENTRY_HDR_SIZE` + 3
+ *     om_len: `LOG_HDR_SIZE` + 3
  *
  * @param log                   The log to write to.
  * @param module                The module ID of the entry to write.
@@ -478,11 +484,11 @@ log_append_mbuf_no_free(struct log *log, uint8_t module, uint8_t level,
  * regardless of the outcome.
  *
  * NOTE: The mbuf must have an initial padding of length
- * `LOG_BASE_ENTRY_HDR_SIZE`.  So, to log the string "abc", you should pass an mbuf
+ * `LOG_HDR_SIZE`. So, to log the string "abc", you should pass an mbuf
  * with the following characteristics:
  *
  *     om_data: <padding>abc
- *     om_len: `LOG_BASE_ENTRY_HDR_SIZE` + 3
+ *     om_len: `LOG_HDR_SIZE` + 3
  *
  * @param log                   The log to write to.
  * @param module                The module ID of the entry to write.

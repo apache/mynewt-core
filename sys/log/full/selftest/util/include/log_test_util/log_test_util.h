@@ -30,12 +30,6 @@
 extern "C" {
 #endif
 
-#if MYNEWT_VAL(LOG_FLAGS_IMAGE_HASH)
-#define LOG_HDR_SIZE 19
-#else
-#define LOG_HDR_SIZE 15
-#endif
-
 extern struct fcb log_fcb;
 extern struct log my_log;
 extern char *ltu_str_logs[];

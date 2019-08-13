@@ -25,3 +25,6 @@ pkg.keywords:
     - bootutil
     - bootloader
     - api
+
+pkg.apis:
+    - bootloader

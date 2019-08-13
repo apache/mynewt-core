@@ -29,7 +29,3 @@ pkg.deps:
     - "@apache-mynewt-core/test/testutil"
     - "@apache-mynewt-core/mgmt/newtmgr"
     - "@apache-mynewt-core/boot/stub"
-
-pkg.apis:
-    - bootloader
-    
