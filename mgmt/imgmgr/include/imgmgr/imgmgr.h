@@ -65,6 +65,21 @@ int imgr_ver_str(struct image_version *ver, char *dst);
  */
 int imgr_my_version(struct image_version *ver);
 
+/*
+ * Read the current running image's build hash
+ *
+ * @param hash Ptr to hash to be filled up
+ * @param hashlen Length of hash to return
+ *
+ * Returns -2 if either of the argument is 0 or NULL
+ * Returns -1 if area is not readable
+ * Returns 0 if image in slot is ok
+ * Returns 1 if there is not a full image
+ * Returns 2 if slot is empty
+ */
+int
+imgr_get_current_hash(uint8_t *hash, uint16_t hashlen);
+
 int imgmgr_find_best_area_id(void);
 
 #ifdef __cplusplus

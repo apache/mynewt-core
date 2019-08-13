@@ -225,6 +225,7 @@ log_fcb_append_body(struct log *log, const struct log_entry_hdr *hdr,
 
     fcb_log = (struct fcb_log *)log->l_arg;
     fcb = &fcb_log->fl_fcb;
+    hdr_len = 0;
 
     if (fcb->f_align > LOG_FCB_MAX_ALIGN) {
         return SYS_ENOTSUP;
@@ -714,7 +715,7 @@ log_fcb_copy_entry(struct log *log, struct fcb_entry *entry,
 {
     struct log_entry_hdr ueh;
     char data[LOG_PRINTF_MAX_ENTRY_LEN + LOG_BASE_ENTRY_HDR_SIZE + LOG_IMG_HASHLEN];
-    uint16_t hdr_len;
+    uint16_t hdr_len = 0;
     int dlen;
     int rc;
     struct fcb *fcb_tmp;
@@ -728,7 +729,7 @@ log_fcb_copy_entry(struct log *log, struct fcb_entry *entry,
 
     dlen = min(entry->fe_data_len, LOG_PRINTF_MAX_ENTRY_LEN +
                hdr_len);
-
+    
     rc = log_fcb_read(log, entry, data, 0, dlen);
     if (rc < 0) {
         goto err;

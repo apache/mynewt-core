@@ -69,6 +69,38 @@ static struct mgmt_group imgr_mgmt_group = {
     .mg_group_id = MGMT_GROUP_ID_IMAGE,
 };
 
+/*
+ * Read the current running image's build hash
+ *
+ * @param hash Ptr to hash to be filled up
+ * @param hashlen Length of hash to return
+ *
+ * Returns -2 if either of the argument is 0 or NULL
+ * Returns -1 if area is not readable
+ * Returns 0 if image in slot is ok
+ * Returns 1 if there is not a full image
+ * Returns 2 if slot is empty
+ */
+int
+imgr_get_current_hash(uint8_t *hash, uint16_t hashlen)
+{
+    uint8_t imghash[IMGMGR_HASH_LEN];
+    int rc;
+
+    if (!hashlen || !hash) {
+        return -2;
+    }
+
+    rc = img_mgmt_read_info(0, NULL, imghash, NULL);
+    if (rc) {
+        return rc;
+    }
+ 
+    memcpy(hash, imghash, hashlen);
+ 
+    return 0;
+}
+
 int
 imgr_my_version(struct image_version *ver)
 {
