@@ -40,7 +40,7 @@ TEST_CASE_SELF(log_test_case_fcb_append_mbuf)
         om = ltu_flat_to_fragged_mbuf(str, strlen(str), 2);
 
         /* Prepend space for the entry header. */
-        om = os_mbuf_prepend(om, LOG_ENTRY_HDR_SIZE);
+        om = os_mbuf_prepend(om, LOG_HDR_SIZE);
         TEST_ASSERT(om != NULL);
 
         rc = log_append_mbuf_typed(&log, 0, 0, LOG_ETYPE_STRING, om);

@@ -210,6 +210,29 @@ int
 imgr_read_info(int image_slot, struct image_version *ver, uint8_t *hash,
                uint32_t *flags)
 {
+#if MYNEWT_VAL(IMGMGR_DUMMY_HDR)
+    uint8_t dummy_hash[] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
+                            0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77};
+ 
+    if (!hash && !ver && !flags) {
+        return 0;
+    }
+
+    if (hash) {
+        memcpy(hash, dummy_hash, IMGMGR_HASH_LEN);
+    }
+
+    if (ver) {
+        memset(ver, 0xff, sizeof *ver);
+    }
+
+    if (flags) {
+        *flags = 0;
+    }
+
+    return 0;
+#endif
+
     struct image_header *hdr;
     struct image_tlv *tlv;
     int rc = -1;
@@ -218,6 +241,7 @@ imgr_read_info(int image_slot, struct image_version *ver, uint8_t *hash,
     uint8_t data[sizeof(struct image_header)];
     uint32_t data_off, data_end;
     int area_id;
+
 
     /* Silence spurious warning. */
     data_end = 0;
@@ -299,6 +323,38 @@ imgr_read_info(int image_slot, struct image_version *ver, uint8_t *hash,
 end:
     flash_area_close(fa);
     return rc;
+}
+
+/*
+ * Read the current running image's build hash
+ *
+ * @param hash Ptr to hash to be filled up
+ * @param hashlen Length of hash to return
+ *
+ * Returns -2 if either of the argument is 0 or NULL
+ * Returns -1 if area is not readable
+ * Returns 0 if image in slot is ok
+ * Returns 1 if there is not a full image
+ * Returns 2 if slot is empty
+ */
+int
+imgr_get_current_hash(uint8_t *hash, uint16_t hashlen)
+{
+    uint8_t imghash[IMGMGR_HASH_LEN];
+    int rc;
+
+    if (!hashlen || !hash) {
+        return -2;
+    }
+
+    rc = imgr_read_info(0, NULL, imghash, NULL);
+    if (rc) {
+        return rc;
+    }
+ 
+    memcpy(hash, imghash, hashlen);
+ 
+    return 0;
 }
 
 int

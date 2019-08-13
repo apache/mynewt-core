@@ -190,47 +190,20 @@ err:
     return (rc);
 }
 
-static int
-log_fcb_append(struct log *log, void *buf, int len)
-{
-    struct fcb *fcb;
-    struct fcb_entry loc;
-    struct fcb_log *fcb_log;
-    int rc;
-
-    fcb_log = (struct fcb_log *)log->l_arg;
-    fcb = &fcb_log->fl_fcb;
-
-    rc = log_fcb_start_append(log, len, &loc);
-    if (rc) {
-        goto err;
-    }
-
-    rc = flash_area_write(loc.fe_area, loc.fe_data_off, buf, len);
-    if (rc) {
-        goto err;
-    }
-
-    rc = fcb_append_finish(fcb, &loc);
-
-err:
-    return (rc);
-}
-
 /**
  * Calculates the number of message body bytes that should be included after
  * the entry header in the first write.  Inclusion of body bytes is necessary
  * to satisfy the flash hardware's write alignment restrictions.
  */
 static int
-log_fcb_hdr_body_bytes(uint8_t align)
+log_fcb_hdr_body_bytes(uint8_t align, uint8_t hdr_len)
 {
     uint8_t mod;
 
     /* Assume power-of-two alignment for faster modulo calculation. */
     assert((align & (align - 1)) == 0);
-
-    mod = sizeof (struct log_entry_hdr) & (align - 1);
+  
+    mod = hdr_len & (align - 1);
     if (mod == 0) {
         return 0;
     }
@@ -242,7 +215,7 @@ static int
 log_fcb_append_body(struct log *log, const struct log_entry_hdr *hdr,
                     const void *body, int body_len)
 {
-    uint8_t buf[sizeof (struct log_entry_hdr) + LOG_FCB_MAX_ALIGN - 1];
+    uint8_t buf[LOG_BASE_ENTRY_HDR_SIZE + LOG_IMG_HASHLEN + LOG_FCB_MAX_ALIGN - 1];
     struct fcb *fcb;
     struct fcb_entry loc;
     struct fcb_log *fcb_log;
@@ -250,34 +223,47 @@ log_fcb_append_body(struct log *log, const struct log_entry_hdr *hdr,
     int hdr_alignment;
     int chunk_sz;
     int rc;
+    uint16_t hdr_len;
 
     fcb_log = (struct fcb_log *)log->l_arg;
     fcb = &fcb_log->fl_fcb;
+    hdr_len = 0;
 
     if (fcb->f_align > LOG_FCB_MAX_ALIGN) {
         return SYS_ENOTSUP;
     }
 
-    rc = log_fcb_start_append(log, sizeof *hdr + body_len, &loc);
+    hdr_len = log_hdr_len(hdr);
+
+    rc = log_fcb_start_append(log, hdr_len + body_len, &loc);
     if (rc != 0) {
         return rc;
     }
 
     /* Append the first chunk (header + x-bytes of body, where x is however
      * many bytes are required to increase the chunk size up to a multiple of
-     * the flash alignment).
+     * the flash alignment). If the hash flag is set, we have to account for
+     * appending the hash right after the header.
      */
-    hdr_alignment = log_fcb_hdr_body_bytes(fcb->f_align);
+    hdr_alignment = log_fcb_hdr_body_bytes(fcb->f_align, hdr_len);
     if (hdr_alignment > body_len) {
-        chunk_sz = sizeof *hdr + body_len;
+        chunk_sz = hdr_len + body_len;
     } else {
-        chunk_sz = sizeof *hdr + hdr_alignment;
+        chunk_sz = hdr_len + hdr_alignment;
     }
+
+    /*
+     * Based on the flags being set in the log header, we need to write
+     * specific fields to the flash
+     */
 
     u8p = body;
 
-    memcpy(buf, hdr, sizeof *hdr);
-    memcpy(buf + sizeof *hdr, u8p, hdr_alignment);
+    memcpy(buf, hdr, LOG_BASE_ENTRY_HDR_SIZE);
+    if (hdr->ue_flags & LOG_FLAGS_IMG_HASH) {
+        memcpy(buf + LOG_BASE_ENTRY_HDR_SIZE, hdr->ue_imghash, LOG_IMG_HASHLEN);
+    }
+    memcpy(buf + hdr_len, u8p, hdr_alignment);
 
     rc = flash_area_write(loc.fe_area, loc.fe_data_off, buf, chunk_sz);
     if (rc != 0) {
@@ -306,13 +292,24 @@ log_fcb_append_body(struct log *log, const struct log_entry_hdr *hdr,
 }
 
 static int
-log_fcb_write_mbuf(struct fcb_entry *loc, const struct os_mbuf *om)
+log_fcb_append(struct log *log, void *buf, int len)
+{
+    int hdr_len;
+
+    hdr_len = log_hdr_len(buf);
+
+    return log_fcb_append_body(log, buf, (uint8_t *)buf + hdr_len,
+                               len - hdr_len);
+}
+
+static int
+log_fcb_write_mbuf(struct fcb_entry *loc, struct os_mbuf *om)
 {
     int rc;
 
     while (om) {
-        rc = flash_area_write(loc->fe_area, loc->fe_data_off,
-                              om->om_data, om->om_len);
+        rc = flash_area_write(loc->fe_area, loc->fe_data_off, om->om_data,
+                              om->om_len);
         if (rc != 0) {
             return SYS_EIO;
         }
@@ -325,7 +322,8 @@ log_fcb_write_mbuf(struct fcb_entry *loc, const struct os_mbuf *om)
 }
 
 static int
-log_fcb_append_mbuf(struct log *log, const struct os_mbuf *om)
+log_fcb_append_mbuf_body(struct log *log, const struct log_entry_hdr *hdr,
+                         struct os_mbuf *om)
 {
     struct fcb *fcb;
     struct fcb_entry loc;
@@ -339,15 +337,29 @@ log_fcb_append_mbuf(struct log *log, const struct os_mbuf *om)
     /* This function expects to be able to write each mbuf without any
      * buffering.
      */
-    /* XXX: Fix this; buffer mbuf writes to satisfy flash alignment. */
     if (fcb->f_align != 1) {
         return SYS_ENOTSUP;
     }
 
-    len = os_mbuf_len(om);
+    len = log_hdr_len(hdr) + os_mbuf_len(om);
     rc = log_fcb_start_append(log, len, &loc);
     if (rc != 0) {
         return rc;
+    }
+
+    rc = flash_area_write(loc.fe_area, loc.fe_data_off, hdr, LOG_BASE_ENTRY_HDR_SIZE);
+    if (rc != 0) {
+        return rc;
+    }
+    loc.fe_data_off += LOG_BASE_ENTRY_HDR_SIZE;
+    
+    if (hdr->ue_flags & LOG_FLAGS_IMG_HASH) {
+        /* Write LOG_IMG_HASHLEN bytes of image hash */
+        rc = flash_area_write(loc.fe_area, loc.fe_data_off, hdr->ue_imghash, LOG_IMG_HASHLEN);
+        if (rc != 0) {
+            return rc;
+        }
+        loc.fe_data_off += LOG_IMG_HASHLEN;
     }
 
     rc = log_fcb_write_mbuf(&loc, om);
@@ -364,48 +376,45 @@ log_fcb_append_mbuf(struct log *log, const struct os_mbuf *om)
 }
 
 static int
-log_fcb_append_mbuf_body(struct log *log, const struct log_entry_hdr *hdr,
-                         const struct os_mbuf *om)
+log_fcb_append_mbuf(struct log *log, struct os_mbuf *om)
 {
-    struct fcb *fcb;
-    struct fcb_entry loc;
-    struct fcb_log *fcb_log;
-    int len;
     int rc;
+    uint16_t mlen;
+    uint16_t hdr_len;
+    struct log_entry_hdr hdr;
 
-    fcb_log = (struct fcb_log *)log->l_arg;
-    fcb = &fcb_log->fl_fcb;
-
-    /* This function expects to be able to write each mbuf without any
-     * buffering.
-     */
-    if (fcb->f_align != 1) {
-        return SYS_ENOTSUP;
+    mlen = os_mbuf_len(om);
+    if (mlen < LOG_BASE_ENTRY_HDR_SIZE) {
+        return SYS_ENOMEM;
     }
 
-    len = sizeof *hdr + os_mbuf_len(om);
-    rc = log_fcb_start_append(log, len, &loc);
-    if (rc != 0) {
-        return rc;
-    }
+    /*
+     * We do a pull up twice, once so that the base header is
+     * contiguous, so that we read the flags correctly, second
+     * time is so that we account for the image hash as well.
+     */    
+    om = os_mbuf_pullup(om, LOG_BASE_ENTRY_HDR_SIZE);
+    
+    /* 
+     * We can just pass the om->om_data ptr as the log_entry_hdr
+     * because the log_entry_hdr is a packed struct and does not
+     * cause any alignment or padding issues
+     */  
+    hdr_len = log_hdr_len((struct log_entry_hdr *)om->om_data);
+    
+    om = os_mbuf_pullup(om, hdr_len);
+    
+    memcpy(&hdr, om->om_data, hdr_len);
 
-    rc = flash_area_write(loc.fe_area, loc.fe_data_off, hdr, sizeof *hdr);
-    if (rc != 0) {
-        return rc;
-    }
-    loc.fe_data_off += sizeof *hdr;
+    os_mbuf_adj(om, hdr_len);
 
-    rc = log_fcb_write_mbuf(&loc, om);
-    if (rc != 0) {
-        return rc;
-    }
+    rc = log_fcb_append_mbuf_body(log, &hdr, om);
+    
+    os_mbuf_prepend(om, hdr_len);
 
-    rc = fcb_append_finish(fcb, &loc);
-    if (rc != 0) {
-        return rc;
-    }
+    memcpy(om->om_data, &hdr, hdr_len);
 
-    return 0;
+    return rc;
 }
 
 static int
@@ -699,18 +708,22 @@ log_fcb_copy_entry(struct log *log, struct fcb_entry *entry,
                    struct fcb *dst_fcb)
 {
     struct log_entry_hdr ueh;
-    char data[LOG_PRINTF_MAX_ENTRY_LEN + sizeof(ueh)];
+    char data[LOG_PRINTF_MAX_ENTRY_LEN + LOG_BASE_ENTRY_HDR_SIZE + LOG_IMG_HASHLEN];
+    uint16_t hdr_len = 0;
     int dlen;
     int rc;
     struct fcb *fcb_tmp;
 
-    rc = log_fcb_read(log, entry, &ueh, 0, sizeof(ueh));
-    if (rc != sizeof(ueh)) {
+    rc = log_fcb_read(log, entry, &ueh, 0, LOG_BASE_ENTRY_HDR_SIZE);
+    if (rc != LOG_BASE_ENTRY_HDR_SIZE) {
         goto err;
     }
 
-    dlen = min(entry->fe_data_len, LOG_PRINTF_MAX_ENTRY_LEN + sizeof(ueh));
+    hdr_len = log_hdr_len(&ueh);
 
+    dlen = min(entry->fe_data_len, LOG_PRINTF_MAX_ENTRY_LEN +
+               hdr_len);
+    
     rc = log_fcb_read(log, entry, data, 0, dlen);
     if (rc < 0) {
         goto err;

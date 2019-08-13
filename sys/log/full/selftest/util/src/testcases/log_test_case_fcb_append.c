@@ -37,7 +37,7 @@ TEST_CASE_SELF(log_test_case_fcb_append)
         }
 
         body_len = strlen(str);
-        memcpy(buf + LOG_ENTRY_HDR_SIZE, str, body_len);
+        memcpy(buf + LOG_HDR_SIZE, str, body_len);
         log_append_typed(&log, 0, 0, LOG_ETYPE_STRING, buf, body_len);
     }
 

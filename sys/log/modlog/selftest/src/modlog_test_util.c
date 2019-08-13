@@ -43,22 +43,25 @@ mltu_log_append_body(struct log *log, const struct log_entry_hdr *hdr,
 
 static int
 mltu_log_append_mbuf_body(struct log *log, const struct log_entry_hdr *hdr,
-                          const struct os_mbuf *om)
+                          struct os_mbuf *om)
 {
     struct mltu_log_entry *entry;
     struct mltu_log_arg *mla;
+    uint16_t len;
     int rc;
+    
 
     mla = log->l_arg;
+    len = os_mbuf_len(om);
 
     TEST_ASSERT_FATAL(mla->num_entries < MLTU_LOG_ARG_MAX_ENTRIES);
-    TEST_ASSERT_FATAL(OS_MBUF_PKTLEN(om) <= MLTU_LOG_ENTRY_MAX_LEN);
+    TEST_ASSERT_FATAL(len <= MLTU_LOG_ENTRY_MAX_LEN);
 
     entry = mla->entries + mla->num_entries++;
     entry->hdr = *hdr;
-    entry->len = OS_MBUF_PKTLEN(om);
+    entry->len = len;
 
-    rc = os_mbuf_copydata(om, 0, OS_MBUF_PKTLEN(om), entry->body);
+    rc = os_mbuf_copydata(om, 0, len, entry->body);
     TEST_ASSERT_FATAL(rc == 0);
 
     return 0;

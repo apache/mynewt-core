@@ -49,30 +49,66 @@ static bool g_slot1_locked;
         })
 
 static int
-log_fcb_slot1_append(struct log *log, void *buf, int len)
+log_fcb_slot1_append_body(struct log *log, const struct log_entry_hdr *hdr,
+                          const void *body, int body_len)
 {
     return LOG_FCB_SLOT1_CALL(log, log_append, buf, len);
 }
 
 static int
-log_fcb_slot1_append_body(struct log *log, const struct log_entry_hdr *hdr,
-                          const void *body, int body_len)
+log_fcb_slot1_append(struct log *log, void *buf, int len)
 {
-    return LOG_FCB_SLOT1_CALL(log, log_append_body, hdr, body, body_len);
-}
-
-static int
-log_fcb_slot1_append_mbuf(struct log *log, const struct os_mbuf *om)
-{
-    return LOG_FCB_SLOT1_CALL(log, log_append_mbuf, om);
+    return log_fcb_slot1_append_body(log, (uint8_t *)buf + LOG_BASE_ENTRY_HDR_SIZE,
+                                     len - LOG_BASE_ENTRY_HDR_SIZE);
 }
 
 static int
 log_fcb_slot1_append_mbuf_body(struct log *log,
                                const struct log_entry_hdr *hdr,
-                               const struct os_mbuf *om)
+                               struct os_mbuf *om)
 {
     return LOG_FCB_SLOT1_CALL(log, log_append_mbuf_body, hdr, om);
+}
+
+static int
+log_fcb_slot1_append_mbuf(struct log *log, struct os_mbuf *om)
+{
+    uint16_t mlen;
+    uint16_t hdr_len;
+    struct log_entry_hdr hdr;
+
+    mlen = os_mbuf_len(om);
+    if (mlen < LOG_BASE_ENTRY_HDR_SIZE) {
+        return SYS_ENOMEM;
+    }
+
+    /*
+     * We do a pull up twice, once so that the base header is
+     * contiguous, so that we read the flags correctly, second
+     * time is so that we account for the image hash as well.
+     */    
+    om = os_mbuf_pullup(om, LOG_BASE_ENTRY_HDR_SIZE);
+    
+    /* 
+     * We can just pass the om->om_data ptr as the log_entry_hdr
+     * because the log_entry_hdr is a packed struct and does not
+     * cause any alignment or padding issues
+     */  
+    hdr_len = log_hdr_len((struct log_entry_hdr *)om->om_data);
+    
+    om = os_mbuf_pullup(om, hdr_len);
+    
+    memcpy(&hdr, om->om_data, hdr_len);
+
+    os_mbuf_adj(om, hdr_len);
+
+    rc = log_fcb_slot1_append_mbuf_body(log, &hdr, om);
+    
+    os_mbuf_prepend(om, hdr_len);
+
+    memcpy(om->om_data, &hdr, hdr_len);
+
+    return rc;
 }
 
 static int
