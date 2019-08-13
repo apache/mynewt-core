@@ -43,3 +43,8 @@ syscfg.defs:
         description: >
             Sysinit stage for image management functionality.
         value: 500
+    IMGMGR_DUMMY_HDR:
+        description: 'Returns dummy image header data for imgr functions,
+                      useful when there are no images present, Eg: unit
+                      tests'
+        value: 0
