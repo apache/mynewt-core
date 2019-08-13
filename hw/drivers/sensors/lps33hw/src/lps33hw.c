@@ -944,7 +944,7 @@ int lps33hw_init(struct os_dev *dev, void *arg)
 
     lps33hw = (struct lps33hw *)dev;
 #if MYNEWT_VAL(LPS33HW_ONE_SHOT_MODE)
-    os_callout_init(&lps->lps33hw_one_shot_read, sensor_mgr_evq_get(),
+    os_callout_init(&lps33hw->lps33hw_one_shot_read, sensor_mgr_evq_get(),
                     lps33hw_one_shot_read_cb, dev);
 #endif
 
