@@ -104,6 +104,20 @@ syscfg.defs:
     BMA253_OFB:
         description: 'BMA253 is present'
         value : 0
+    BMA253_OFB_BUS:
+        description: 'I2C or SPI interface used for BMA253'
+        value: '"i2c0"'
+    BMA253_OFB_INT1_PIN:
+        description: >
+            MCU's pin for INT1 of BMA253
+        value: -1
+    BMA253_OFB_INT2_PIN:
+        description: >
+            MCU's pin for INT2 of BMA253
+        value: -1
+    BMA253_OFB_I2C_ADDR:
+        description: 'I2C address of BMA253 0x18 or 0x19'
+        value: 0x18
     ADXL345_OFB:
         description: 'ADXL345 is present'
         value : 0
