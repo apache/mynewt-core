@@ -27,6 +27,7 @@ pkg.deps:
     - "@apache-mynewt-core/boot/split"
     - "@apache-mynewt-core/encoding/base64"
     - "@apache-mynewt-core/sys/flash_map"
+    - "@apache-mynewt-mcumgr/cmd/img_mgmt"
 
 pkg.req_apis:
     - bootloader
