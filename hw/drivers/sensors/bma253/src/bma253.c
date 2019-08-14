@@ -5782,7 +5782,7 @@ bma253_init(struct os_dev * dev, void * arg)
         return rc;
     }
 
-#if MYNEWT_VAL(SPI_0_MASTER) || MYNEWT_VAL(SPI_1_MASTER) && !MYNEWT_VAL(BUS_DRIVER_PRESENT)
+#if (MYNEWT_VAL(SPI_0_MASTER) || MYNEWT_VAL(SPI_1_MASTER)) && !MYNEWT_VAL(BUS_DRIVER_PRESENT)
     if (sensor->s_itf.si_type == SENSOR_ITF_SPI) {
         static struct hal_spi_settings spi_bma253_settings = {
             .data_order = HAL_SPI_MSB_FIRST,
