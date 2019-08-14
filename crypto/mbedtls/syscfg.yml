@@ -51,6 +51,8 @@ syscfg.defs:
     value: 1
   MBEDTLS_AES_ROM_TABLES:
     value: 0
+  MBEDTLS_AES_FEWER_TABLES:
+    value: 0
   MBEDTLS_ARC4_C:
     value: 0
   MBEDTLS_BLOWFISH_C:
