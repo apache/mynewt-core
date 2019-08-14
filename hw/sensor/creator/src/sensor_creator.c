@@ -372,7 +372,24 @@ static struct sensor_itf i2c_0_itf_ms40 = {
 };
 #endif
 
-#if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(BMA253_OFB)
+#if MYNEWT_VAL(BMA253_OFB)
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+static const struct bus_i2c_node_cfg bma253_i2c_cfg = {
+    .node_cfg = {
+        .bus_name = MYNEWT_VAL(BMA253_OFB_BUS),
+    },
+    .addr = MYNEWT_VAL(BMA253_OFB_I2C_ADDR),
+    .freq = 400,
+};
+static struct sensor_itf spi2c_0_itf_bma253 = {
+    .si_ints = {
+        { MYNEWT_VAL(BMA253_OFB_INT1_PIN), MYNEWT_VAL(BMA253_INT_PIN_DEVICE),
+            MYNEWT_VAL(BMA253_INT_CFG_ACTIVE)},
+        { MYNEWT_VAL(BMA253_OFB_INT1_PIN), MYNEWT_VAL(BMA253_INT2_PIN_DEVICE),
+            MYNEWT_VAL(BMA253_INT_CFG_ACTIVE)}
+    },
+};
+#elif MYNEWT_VAL(I2C_0)
 static struct sensor_itf spi2c_0_itf_bma253 = {
     .si_type = SENSOR_ITF_I2C,
     .si_num  = 0,
@@ -384,6 +401,7 @@ static struct sensor_itf spi2c_0_itf_bma253 = {
             MYNEWT_VAL(BMA253_INT_CFG_ACTIVE)}
     },
 };
+#endif
 #endif
 
 #if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(BMA2XX_OFB)
@@ -1687,9 +1705,15 @@ sensor_dev_create(void)
 #endif
 
 #if MYNEWT_VAL(BMA253_OFB)
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    rc = bma253_create_i2c_sensor_dev(&bma253.node, "bma253_0",
+                                      &bma253_i2c_cfg, &spi2c_0_itf_bma253);
+    assert(rc == 0);
+#else
     rc = os_dev_create((struct os_dev *)&bma253, "bma253_0",
       OS_DEV_INIT_PRIMARY, 0, bma253_init, &spi2c_0_itf_bma253);
     assert(rc == 0);
+#endif
 
     rc = config_bma253_sensor();
     assert(rc == 0);
