@@ -28,7 +28,7 @@
 #include "tinycbor/cbor_mbuf_writer.h"
 #include "tinycbor/cbor_mbuf_reader.h"
 
-/* Shared queue that newtmgr uses for work items. */
+/* Shared queue that SMP uses for work items. */
 struct os_eventq *g_smp_evq;
 
 static mgmt_alloc_rsp_fn smp_alloc_rsp;

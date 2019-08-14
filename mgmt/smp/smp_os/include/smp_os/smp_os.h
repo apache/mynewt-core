@@ -34,7 +34,7 @@ extern "C" {
 #define SMP_ID_DATETIME_STR    4
 #define SMP_ID_RESET           5
 
-int mgmt_os_groups_register(void);
+void smp_os_groups_register(void);
 
 #ifdef __cplusplus
 }
