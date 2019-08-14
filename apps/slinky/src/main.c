@@ -36,7 +36,7 @@
 #include <bootutil/bootutil.h>
 #include <assert.h>
 #include <string.h>
-//#include <reboot/log_reboot.h>
+#include <reboot/log_reboot.h>
 #include <id/id.h>
 #include "modlog/modlog.h"
 #include "img_mgmt/img_mgmt.h"
@@ -265,7 +265,7 @@ main(int argc, char **argv)
 
     stats_register("gpio_toggle", STATS_HDR(g_stats_gpio_toggle));
 
-    //reboot_start(hal_reset_cause());
+    reboot_start(hal_reset_cause());
 
     init_tasks();
 
