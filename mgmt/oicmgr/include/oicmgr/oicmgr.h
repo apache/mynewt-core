@@ -40,12 +40,12 @@ int omgr_oic_process_put(oc_request_t *req, oc_interface_mask_t mask);
  * Parses an oicmgr request and copies out the NMP header.
  *
  * @param req                   The oicmgr request to parse.
- * @param out_hdr               On success, the extracted NMP header gets
+ * @param out_hdr               On success, the extracted MGMT header gets
  *                                  written here.
  *
  * @return                      0 on success;
  *                              MGMT_ERR_EINVAL on parse failure.
  */
-int omgr_extract_req_hdr(oc_request_t *req, struct nmgr_hdr *out_hdr);
+int omgr_extract_req_hdr(oc_request_t *req, struct mgmt_hdr *out_hdr);
 
 #endif
