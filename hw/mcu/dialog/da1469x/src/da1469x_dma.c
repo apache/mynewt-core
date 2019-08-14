@@ -32,8 +32,8 @@
     do {                                            \
         DMA->DMA_REQ_MUX_REG =                      \
             (DMA->DMA_REQ_MUX_REG &                 \
-             ~(0xf << ((_cidx) * 4))) |             \
-            ((_periph) << ((_cidx) * 4));           \
+             ~(0xf << ((_cidx) * 2))) |             \
+            ((_periph) << ((_cidx) * 2));           \
     } while (0)
 #define MCU_DMA_GET_MUX(_cidx)                      \
     (DMA->DMA_REQ_MUX_REG >> ((_cidx) * 4) & 0xf)
