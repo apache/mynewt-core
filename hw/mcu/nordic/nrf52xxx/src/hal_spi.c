@@ -46,7 +46,7 @@ typedef void (*nrf52_spi_irq_handler_t)(void);
  */
 
 /* The maximum number of SPI interfaces we will allow */
-#define NRF52_HAL_SPI_MAX (3)
+#define NRF52_HAL_SPI_MAX (4)
 
 /* Used to disable all interrupts */
 #define NRF_SPI_IRQ_DISABLE_ALL 0xFFFFFFFF
@@ -101,6 +101,47 @@ struct nrf52_hal_spi nrf52_hal_spi1;
 #if MYNEWT_VAL(SPI_2_MASTER)  || MYNEWT_VAL(SPI_2_SLAVE)
 struct nrf52_hal_spi nrf52_hal_spi2;
 #endif
+#if MYNEWT_VAL(SPI_3_MASTER)
+struct nrf52_hal_spi nrf52_hal_spi3;
+
+static uint32_t m_anomaly_198_preserved_value;
+static void
+anomaly_198_enable(uint8_t const * p_buffer, size_t buf_len)
+{
+    uint32_t buffer_end_addr;
+    uint32_t block_addr;
+    uint32_t block_flag;
+    uint32_t occupied_blocks;
+    m_anomaly_198_preserved_value = *((volatile uint32_t *)0x40000E00);
+
+    if (buf_len == 0) {
+        return;
+    }
+    buffer_end_addr = ((uint32_t)p_buffer) + buf_len;
+    block_addr      = ((uint32_t)p_buffer) & ~0x1FFF;
+    block_flag      = (1UL << ((block_addr >> 13) & 0xFFFF));
+    occupied_blocks = 0;
+
+    if (block_addr >= 0x20010000) {
+        occupied_blocks = (1UL << 8);
+    } else {
+        do {
+            occupied_blocks |= block_flag;
+            block_flag <<= 1;
+            block_addr  += 0x2000;
+        } while ((block_addr < buffer_end_addr) && (block_addr < 0x20012000));
+    }
+
+    *((volatile uint32_t *)0x40000E00) = occupied_blocks;
+}
+
+static void
+anomaly_198_disable(void)
+{
+    *((volatile uint32_t *)0x40000E00) = m_anomaly_198_preserved_value;
+}
+
+#endif
 
 static const struct nrf52_hal_spi *nrf52_hal_spis[NRF52_HAL_SPI_MAX] = {
 #if MYNEWT_VAL(SPI_0_MASTER) || MYNEWT_VAL(SPI_0_SLAVE)
@@ -118,6 +159,11 @@ static const struct nrf52_hal_spi *nrf52_hal_spis[NRF52_HAL_SPI_MAX] = {
 #else
     NULL,
 #endif
+#if MYNEWT_VAL(SPI_3_MASTER)
+    &nrf52_hal_spi3,
+#else
+    NULL,
+#endif
 };
 
 #define NRF52_HAL_SPI_RESOLVE(__n, __v)                     \
@@ -131,7 +177,7 @@ static const struct nrf52_hal_spi *nrf52_hal_spis[NRF52_HAL_SPI_MAX] = {
         goto err;                                           \
     }
 
-#if (MYNEWT_VAL(SPI_0_MASTER) || MYNEWT_VAL(SPI_1_MASTER) || MYNEWT_VAL(SPI_2_MASTER))
+#if (MYNEWT_VAL(SPI_0_MASTER) || MYNEWT_VAL(SPI_1_MASTER) || MYNEWT_VAL(SPI_2_MASTER) || MYNEWT_VAL(SPI_3_MASTER))
 static void
 nrf52_irqm_handler(struct nrf52_hal_spi *spi)
 {
@@ -286,6 +332,21 @@ nrf52_spi2_irq_handler(void)
 }
 #endif
 
+#if MYNEWT_VAL(SPI_3_MASTER)
+void
+nrf52_spi3_irq_handler(void)
+{
+    os_trace_isr_enter();
+    if (nrf52_hal_spi3.spi_type == HAL_SPI_TYPE_MASTER) {
+        anomaly_198_disable();
+#if MYNEWT_VAL(SPI_3_MASTER)
+        nrf52_irqm_handler(&nrf52_hal_spi3);
+#endif
+    }
+    os_trace_isr_exit();
+}
+#endif
+
 static void
 hal_spi_stop_transfer(NRF_SPIM_Type *spim)
 {
@@ -389,12 +450,13 @@ hal_spi_config_master(struct nrf52_hal_spi *spi,
         case 8000:
             frequency = SPIM_FREQUENCY_FREQUENCY_M8;
             break;
-#if defined(SPIM_FREQUENCY_FREQUENCY_M16)
+            /* 16 and 32 MHz is only supported on SPI_3_MASTER */
+#if defined(SPIM_FREQUENCY_FREQUENCY_M16) && MYNEWT_VAL(SPI_3_MASTER)
         case 16000:
             frequency = SPIM_FREQUENCY_FREQUENCY_M16;
             break;
 #endif
-#if defined(SPIM_FREQUENCY_FREQUENCY_M32)
+#if defined(SPIM_FREQUENCY_FREQUENCY_M32) && MYNEWT_VAL(SPI_3_MASTER)
         case 32000:
             frequency = SPIM_FREQUENCY_FREQUENCY_M32;
             break;
@@ -644,6 +706,18 @@ hal_spi_init(int spi_num, void *cfg, uint8_t spi_type)
 #else
             assert(0);
 #endif
+        }
+#else
+        goto err;
+#endif
+    } else if (spi_num == 3) {
+#if MYNEWT_VAL(SPI_3_MASTER)
+        spi->irq_num = SPIM3_IRQn;
+        irq_handler = nrf52_spi3_irq_handler;
+        if (spi_type == HAL_SPI_TYPE_MASTER) {
+            spi->nhs_spi.spim = NRF_SPIM3;
+        } else {
+            assert(0);
         }
 #else
         goto err;
@@ -1055,6 +1129,11 @@ hal_spi_txrx_noblock(int spi_num, void *txbuf, void *rxbuf, int len)
             goto err;
         }
         spim = spi->nhs_spi.spim;
+#if MYNEWT_VAL(SPI_3_MASTER)
+        if (spim == NRF_SPIM3) {
+            anomaly_198_enable(txbuf, len);
+        }
+#endif
         spim->INTENCLR = SPIM_INTENCLR_END_Msk;
         spi->spi_xfr_flag = 1;
 
