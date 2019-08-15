@@ -19,9 +19,10 @@
 
 #include "os/mynewt.h"
 
-#if MYNEWT_VAL(CRASH_TEST_NEWTMGR)
+#if MYNEWT_VAL(CRASH_TEST_MGMT)
 
 #include <string.h>
+#include "os/os.h"
 
 #include "mgmt/mgmt.h"
 #include "cborattr/cborattr.h"
@@ -30,28 +31,37 @@
 #include "crash_test/crash_test.h"
 #include "crash_test_priv.h"
 
-static int crash_test_nmgr_write(struct mgmt_cbuf *);
+static int crash_test_mgmt_write(struct mgmt_ctxt *);
 
-static const struct mgmt_handler crash_test_nmgr_handler[] = {
-    [0] = { NULL, crash_test_nmgr_write }
+static const struct mgmt_handler crash_test_mgmt_handler[] = {
+    [0] = { NULL, crash_test_mgmt_write }
 };
 
-struct mgmt_group crash_test_nmgr_group = {
-    .mg_handlers = (struct mgmt_handler *)crash_test_nmgr_handler,
+struct mgmt_group crash_test_mgmt_group = {
+    .mg_handlers = (struct mgmt_handler *)crash_test_mgmt_handler,
     .mg_handlers_count = 1,
     .mg_group_id = MGMT_GROUP_ID_CRASH
 };
 
-static int
-crash_test_nmgr_write(struct mgmt_cbuf *cb)
+static char how_str[8];
+static struct os_callout mynewt_os_mgmt_crash_callout;
+
+static void
+crash_cb(struct os_event *unused)
 {
-    char tmp_str[64];
+    crash_device(how_str);
+}
+
+static int
+crash_test_mgmt_write(struct mgmt_ctxt *cb)
+{
+    int delay_ms = MYNEWT_VAL(CRASH_TEST_MGMT_DELAY);
     const struct cbor_attr_t attr[2] = {
         [0] = {
             .attribute = "t",
             .type = CborAttrTextStringType,
-            .addr.string = tmp_str,
-            .len = sizeof(tmp_str)
+            .addr.string = how_str,
+            .len = sizeof(how_str)
         },
         [1] = {
             .attribute = NULL
@@ -64,15 +74,17 @@ crash_test_nmgr_write(struct mgmt_cbuf *cb)
         return MGMT_ERR_EINVAL;
     }
 
-    rc = crash_device(tmp_str);
+    rc = crash_verify_cmd(how_str);
     if (rc != 0) {
         return MGMT_ERR_EINVAL;
     }
 
-    rc = mgmt_cbuf_setoerr(cb, 0);
-    if (rc != 0) {
-        return rc;
-    }
+    os_callout_init(&mynewt_os_mgmt_crash_callout, os_eventq_dflt_get(),
+                    crash_cb, NULL);
+
+    os_callout_reset(&mynewt_os_mgmt_crash_callout,
+                     delay_ms * OS_TICKS_PER_SEC / 1000);
+
 
     return 0;
 }

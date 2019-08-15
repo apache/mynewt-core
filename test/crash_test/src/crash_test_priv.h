@@ -26,11 +26,12 @@ extern "C" {
 #if MYNEWT_VAL(CRASH_TEST_CLI)
 extern struct shell_cmd crash_cmd_struct;
 #endif
-#if MYNEWT_VAL(CRASH_TEST_NEWTMGR)
-extern struct mgmt_group crash_test_nmgr_group;
+#if MYNEWT_VAL(CRASH_TEST_MGMT)
+extern struct mgmt_group crash_test_mgmt_group;
 #endif
 
 int crash_device(char *how);
+int crash_verify_cmd(char *how);
 
 #ifdef __cplusplus
 }
