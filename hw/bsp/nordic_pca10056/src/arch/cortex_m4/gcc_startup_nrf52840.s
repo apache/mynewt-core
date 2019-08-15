@@ -129,9 +129,11 @@ __isr_vector:
     .long   UARTE1_IRQHandler
     .long   QSPI_IRQHandler
     .long   CRYPTOCELL_IRQHandler
-    .long   SPIM3_IRQHandler
     .long   0                           /*Reserved */
     .long   PWM3_IRQHandler
+    .long   0                           /*Reserved */
+    .long   0                           /*Reserved */
+    .long   SPIM3_IRQHandler
 
 
     .size    __isr_vector, . - __isr_vector
