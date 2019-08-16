@@ -28,8 +28,8 @@ static SLIST_HEAD(, fs_ops) root_fops = SLIST_HEAD_INITIALIZER();
 static uint8_t g_cli_initialized;
 #endif
 
-#if MYNEWT_VAL(FS_NMGR)
-static uint8_t g_nmgr_initialized;
+#if MYNEWT_VAL(FS_MGMT)
+static uint8_t g_mgmt_initialized;
 #endif
 
 int
@@ -52,10 +52,10 @@ fs_register(struct fs_ops *fops)
     }
 #endif
 
-#if MYNEWT_VAL(FS_NMGR)
-    if (!g_nmgr_initialized) {
-        fs_nmgr_init();
-        g_nmgr_initialized = 1;
+#if MYNEWT_VAL(FS_MGMT)
+    if (!g_mgmt_initialized) {
+        fs_mgmt_init();
+        g_mgmt_initialized = 1;
     }
 #endif
 

@@ -35,7 +35,7 @@
 static int
 imgr_erase_state(struct mgmt_ctxt *ctxt);
 
-static const struct mgmt_handler imgr_nmgr_handlers[] = {
+static const struct mgmt_handler imgr_mgmt_handlers[] = {
     [IMGMGR_NMGR_ID_CORELIST] = {
 #if MYNEWT_VAL(IMGMGR_COREDUMP)
         .mh_read = imgr_core_list,
@@ -61,10 +61,10 @@ static const struct mgmt_handler imgr_nmgr_handlers[] = {
 };
 
 #define IMGR_HANDLER_CNT                                                \
-    sizeof(imgr_nmgr_handlers) / sizeof(imgr_nmgr_handlers[0])
+    sizeof(imgr_mgmt_handlers) / sizeof(imgr_mgmt_handlers[0])
 
-static struct mgmt_group imgr_nmgr_group = {
-    .mg_handlers = (struct mgmt_handler *)imgr_nmgr_handlers,
+static struct mgmt_group imgr_mgmt_group = {
+    .mg_handlers = (struct mgmt_handler *)imgr_mgmt_handlers,
     .mg_handlers_count = IMGR_HANDLER_CNT,
     .mg_group_id = MGMT_GROUP_ID_IMAGE,
 };
@@ -197,7 +197,7 @@ imgmgr_module_init(void)
     /* Ensure this function only gets called by sysinit. */
     SYSINIT_ASSERT_ACTIVE();
 
-    mgmt_register_group(&imgr_nmgr_group);
+    mgmt_register_group(&imgr_mgmt_group);
 
 #if MYNEWT_VAL(IMGMGR_CLI)
     int rc;

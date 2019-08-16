@@ -714,11 +714,6 @@ extern const struct log_handler log_fcb_handler;
 extern const struct log_handler log_fcb_slot1_handler;
 #endif
 
-/* Private */
-#if MYNEWT_VAL(LOG_NEWTMGR)
-int log_nmgr_register_group(void);
-#endif
-
 #ifdef __cplusplus
 }
 #endif

@@ -62,3 +62,7 @@ syscfg.defs:
         description: >
             Sysinit stage for statistics functionality.
         value: 10
+    STATS_MGMT:
+        description: >
+            Enable stats management over SMP
+        value: 0

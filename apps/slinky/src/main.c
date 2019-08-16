@@ -31,7 +31,6 @@
 #if MYNEWT_VAL(SPLIT_LOADER)
 #include "split/split.h"
 #endif
-//#include <newtmgr/newtmgr.h>
 #include <bootutil/image.h>
 #include <bootutil/bootutil.h>
 #include <assert.h>

@@ -32,8 +32,8 @@ syscfg.defs:
         value: 0
         restrictions:
             - SHELL_TASK
-    RUNTEST_NEWTMGR:
-        description: 'Enable newtmgr command to execute tests'
+    RUNTEST_MGMT:
+        description: 'Enable mgmt command to execute tests'
         value: 1
     RUNTEST_PREFIX:
         description: >

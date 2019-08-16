@@ -36,7 +36,7 @@ syscfg.defs:
     SHELL_MAX_CMD_QUEUED:
         description: >
             Max number of command lines queued.  A value >= 2 is required if
-            the shell is acting as a newtmgr transport.
+            the shell is acting as a mgmt transport.
         value: 2
     SHELL_COMPAT:
         description: 'Enable compatibility module'
@@ -47,8 +47,8 @@ syscfg.defs:
     SHELL_COMPLETION:
         description: 'Include completion functionality'
         value: 1
-    SHELL_NEWTMGR:
-        description: 'Enable newtmgr over shell'
+    SHELL_MGMT:
+        description: 'Enable mgmt over shell'
         value: 1
 
     SHELL_OS_MODULE:

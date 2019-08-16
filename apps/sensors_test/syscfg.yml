@@ -35,10 +35,10 @@ syscfg.vals:
     STATS_CLI: 1
     LOG_CLI: 1
 
-    # Enable newtmgr commands.
-    STATS_NEWTMGR: 0
-    LOG_NEWTMGR: 0
-    CONFIG_NEWTMGR: 0
+    # Enable mgmt commands.
+    STATS_MGMT: 0
+    LOG_MGMT: 0
+    CONFIG_MGMT: 0
 
     TSL2561_CLI: 0
     BNO055_CLI: 0

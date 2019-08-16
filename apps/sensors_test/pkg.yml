@@ -34,7 +34,7 @@ pkg.deps:
     - "@apache-mynewt-core/sys/stats/full"
     - "@apache-mynewt-core/hw/sensor/creator"
     - "@apache-mynewt-core/sys/reboot"
-    - "@apache-mynewt-core/mgmt/newtmgr/transport/ble"
+    - "@apache-mynewt-core/mgmt/mgmt/transport/ble"
     - "@apache-mynewt-core/sys/id"
     - "@apache-mynewt-core/mgmt/imgmgr"
     - "@apache-mynewt-core/test/flash_test"

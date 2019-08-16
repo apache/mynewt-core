@@ -26,10 +26,10 @@ pkg.deps.CRASH_TEST_CLI:
     - "@apache-mynewt-core/sys/shell"
 pkg.req_apis.CRASH_TEST_CLI:
     - console
-pkg.deps.CRASH_TEST_NEWTMGR:
+pkg.deps.CRASH_TEST_MGMT:
     - "@apache-mynewt-core/mgmt/mgmt"
 
-pkg.deps.CRASH_TEST_NEWTMGR:
+pkg.deps.CRASH_TEST_MGMT:
     - "@apache-mynewt-core/encoding/json"
 
 pkg.init:

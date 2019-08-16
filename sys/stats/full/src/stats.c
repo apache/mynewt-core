@@ -157,13 +157,6 @@ stats_module_init_internal(void)
         return rc;
     }
 
-#if MYNEWT_VAL(STATS_NEWTMGR)
-    rc = stats_nmgr_register_group();
-    if (rc) {
-        return rc;
-    }
-#endif
-
 #if MYNEWT_VAL(STATS_CLI)
     rc = stats_shell_register();
     if (rc) {

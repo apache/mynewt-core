@@ -35,6 +35,6 @@ pkg.deps:
     - "@apache-mynewt-core/sys/log/modlog"
     - "@apache-mynewt-core/sys/stats/full"
     - "@apache-mynewt-core/libc/baselibc"
-    - "@apache-mynewt-core/mgmt/newtmgr"
-    - "@apache-mynewt-core/mgmt/newtmgr/transport/ble"
+    - "@apache-mynewt-core/mgmt/mgmt"
+    - "@apache-mynewt-core/mgmt/mgmt/transport/ble"
     - "@apache-mynewt-nimble/nimble/host/services/bleuart"

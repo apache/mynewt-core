@@ -27,7 +27,7 @@ extern "C" {
 #endif
 
 int split_conf_init(void);
-int split_nmgr_register(void);
+int split_mgmt_register(void);
 int split_read_split(split_mode_t *split);
 
 #ifdef __cplusplus

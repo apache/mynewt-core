@@ -28,7 +28,7 @@ pkg.deps:
     - "@apache-mynewt-core/time/datetime"
     - "@apache-mynewt-core/util/streamer"
 
-pkg.deps.SHELL_NEWTMGR:
+pkg.deps.SHELL_MGMT:
     - "@apache-mynewt-mcumgr/mgmt"
     - "@apache-mynewt-core/encoding/base64"
     - "@apache-mynewt-core/util/crc"
