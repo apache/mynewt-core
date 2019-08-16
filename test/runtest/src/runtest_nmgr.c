@@ -19,7 +19,7 @@
 
 #include "os/mynewt.h"
 
-#if MYNEWT_VAL(RUNTEST_NEWTMGR)
+#if MYNEWT_VAL(RUNTEST_MGMT)
 #include <string.h>
 
 #include "mgmt/mgmt.h"
@@ -31,23 +31,23 @@
 #include "runtest/runtest.h"
 #include "runtest_priv.h"
 
-static int runtest_nmgr_test(struct mgmt_cbuf *);
-static int runtest_nmgr_list(struct mgmt_cbuf *);
+static int runtest_mgmt_test(struct mgmt_cbuf *);
+static int runtest_mgmt_list(struct mgmt_cbuf *);
 
-static struct mgmt_group runtest_nmgr_group;
+static struct mgmt_group runtest_mgmt_group;
 
-static const struct mgmt_handler runtest_nmgr_handlers[] = {
-    [RUNTEST_NMGR_OP_TEST] = { NULL, runtest_nmgr_test },
-    [RUNTEST_NMGR_OP_LIST] = { runtest_nmgr_list, NULL }
+static const struct mgmt_handler runtest_mgmt_handlers[] = {
+    [RUNTEST_NMGR_OP_TEST] = { NULL, runtest_mgmt_test },
+    [RUNTEST_NMGR_OP_LIST] = { runtest_mgmt_list, NULL }
 };
 
 /*
- * package "run test" request from newtmgr and enqueue on default queue
+ * package "run test" request from mgmt and enqueue on default queue
  * of the application which is actually running the tests (e.g., mynewtsanity).
  * Application callback was initialized by call to run_evb_set() above.
  */
 static int
-runtest_nmgr_test(struct mgmt_cbuf *cb)
+runtest_mgmt_test(struct mgmt_cbuf *cb)
 {
     char testname[MYNEWT_VAL(RUNTEST_MAX_TEST_NAME_LEN)] = "";
     char token[MYNEWT_VAL(RUNTEST_MAX_TOKEN_LEN)];
@@ -104,7 +104,7 @@ runtest_nmgr_test(struct mgmt_cbuf *cb)
  * List all register tests
  */
 static int
-runtest_nmgr_list(struct mgmt_cbuf *cb)
+runtest_mgmt_list(struct mgmt_cbuf *cb)
 {
     CborError g_err = CborNoError;
     CborEncoder run_list;
@@ -130,15 +130,15 @@ runtest_nmgr_list(struct mgmt_cbuf *cb)
 }
 
 /*
- * Register nmgr group handlers
+ * Register mgmt group handlers
  */
 int
-runtest_nmgr_register_group(void)
+runtest_mgmt_register_group(void)
 {
-    MGMT_GROUP_SET_HANDLERS(&runtest_nmgr_group, runtest_nmgr_handlers);
-    runtest_nmgr_group.mg_group_id = MGMT_GROUP_ID_RUN;
+    MGMT_GROUP_SET_HANDLERS(&runtest_mgmt_group, runtest_mgmt_handlers);
+    runtest_mgmt_group.mg_group_id = MGMT_GROUP_ID_RUN;
 
-    return mgmt_group_register(&runtest_nmgr_group);
+    return mgmt_group_register(&runtest_mgmt_group);
 }
 
-#endif /* MYNEWT_VAL(RUNTEST_NEWTMGR) */
+#endif /* MYNEWT_VAL(RUNTEST_MGMT) */

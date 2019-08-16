@@ -19,7 +19,7 @@
 
 #include "os/mynewt.h"
 
-#if MYNEWT_VAL(SHELL_NEWTMGR)
+#if MYNEWT_VAL(SHELL_MGMT)
 #include <stddef.h>
 #include "base64/base64.h"
 #include "crc/crc16.h"

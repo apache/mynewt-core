@@ -69,8 +69,8 @@ syscfg.defs:
         restrictions:
             - SHELL_TASK
 
-    LOG_NEWTMGR:
-        description: 'Expose "log" command in newtmgr.'
+    LOG_MGMT:
+        description: 'Expose "log" command in mgmt.'
         value: 0
     
     LOG_MAX_USER_MODULES:
@@ -98,7 +98,7 @@ syscfg.defs:
     LOG_STORAGE_WATERMARK:
         description: >
             Enable "set_watermark" API which can watermark log by entry index and
-            thus allow to e.g. keep track of read items in log e.g. (via newtmgr).
+            thus allow to e.g. keep track of read items in log e.g. (via mgmt).
             This also extends information returned by "storage_info" to number of
             bytes used by entries above watermark.
         value: 0

@@ -89,4 +89,4 @@ crash_test_mgmt_write(struct mgmt_ctxt *cb)
     return 0;
 }
 
-#endif /* MYNEWT_VAL(CRASH_TEST_NEWTMGR) */
+#endif /* MYNEWT_VAL(CRASH_TEST_MGMT) */

@@ -23,8 +23,8 @@ syscfg.defs:
         restrictions:
             - SHELL_TASK
 
-    FS_NMGR:
-        description: 'Enables file system newtmgr commands.'
+    FS_MGMT:
+        description: 'Enables file system mgmt commands.'
         value: 0
 
     FS_UPLOAD_MAX_CHUNK_SIZE:

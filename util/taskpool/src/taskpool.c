@@ -246,9 +246,6 @@ taskpool_wait_assert(os_time_t max_ticks)
     assert(rc == 0);
 }
 
-/*
- * Package init routine to register newtmgr "run" commands
- */
 void
 taskpool_init(void)
 {

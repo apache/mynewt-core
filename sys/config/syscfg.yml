@@ -37,7 +37,7 @@ syscfg.defs:
             - '!CONFIG_FCB'
             - '!CONFIG_NFFS'
             - 'CONFIG_FCB_FLASH_AREA'
-    CONFIG_NEWTMGR:
+    CONFIG_MGMT:
         description: 'Newtmgr access to config'
         value: 0
 

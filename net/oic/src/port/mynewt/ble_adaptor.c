@@ -118,7 +118,7 @@ static STAILQ_HEAD(, os_mbuf_pkthdr) oc_ble_reass_q;
 
 #if (MYNEWT_VAL(OC_SERVER) == 1)
 /*
- * BLE nmgr attribute handles for service
+ * BLE mgmt attribute handles for service
  */
 #define OC_BLE_SRV_CNT		2
 static struct {

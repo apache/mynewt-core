@@ -27,7 +27,7 @@ pkg.deps:
     - "@apache-mynewt-core/util/taskpool"
 pkg.deps.RUNTEST_CLI:
     - "@apache-mynewt-core/sys/shell"
-pkg.deps.RUNTEST_NEWTMGR:
+pkg.deps.RUNTEST_MGMT:
     - "@apache-mynewt-core/mgmt/mgmt"
     - "@apache-mynewt-core/encoding/json"
     - "@apache-mynewt-core/test/testutil"

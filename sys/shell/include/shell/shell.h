@@ -165,7 +165,7 @@ void shell_evq_set(struct os_eventq *evq);
  */
 int shell_exec(int argc, char **argv, struct streamer *streamer);
 
-#if MYNEWT_VAL(SHELL_NEWTMGR)
+#if MYNEWT_VAL(SHELL_MGMT)
 struct os_mbuf;
 typedef int (*shell_nlip_input_func_t)(struct os_mbuf *, void *arg);
 int shell_nlip_input_register(shell_nlip_input_func_t nf, void *arg);

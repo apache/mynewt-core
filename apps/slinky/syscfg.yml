@@ -39,7 +39,7 @@ syscfg.vals:
     LOG_CLI: 1
     CONFIG_CLI: 1
 
-    # Enable newtmgr commands.
-    STATS_NEWTMGR: 1
-    LOG_NEWTMGR: 1
-    CONFIG_NEWTMGR: 1
+    # Enable mgmt commands.
+    STATS_MGMT: 1
+    LOG_MGMT: 1
+    CONFIG_MGMT: 1
