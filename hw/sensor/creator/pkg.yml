@@ -56,6 +56,8 @@ pkg.deps.BMP388_OFB:
     - "@apache-mynewt-core/hw/drivers/sensors/bmp388"
 pkg.deps.LIS2DW12_OFB:
     - "@apache-mynewt-core/hw/drivers/sensors/lis2dw12"
+pkg.deps.LIS2DH12_OFB:
+    - "@apache-mynewt-core/hw/drivers/sensors/lis2dh12"
 pkg.deps.LPS33HW_OFB:
     - "@apache-mynewt-core/hw/drivers/sensors/lps33hw"
 pkg.deps.LPS33THW_OFB:

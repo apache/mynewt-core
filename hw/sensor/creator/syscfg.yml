@@ -140,6 +140,34 @@ syscfg.defs:
     LIS2DW12_OFB:
         description: 'LIS2DW12 is present'
         value : 0
+    LIS2DH12_OFB:
+        description: 'LIS2DH12 is present'
+        value : 0
+    LIS2DH12_OFB_I2C_NUM:
+        description: 'I2C interface used for LIS2DH12'
+        value:
+        restrictions:
+         - '(LIS2DH12_OFB == 0) ||
+            ((LIS2DH12_OFB_I2C_NUM == 0) && (I2C_0 == 1)) ||
+            ((LIS2DH12_OFB_I2C_NUM == 1) && (I2C_1 == 1)) ||
+            ((LIS2DH12_OFB_I2C_NUM == 2) && (I2C_2 == 1)) ||
+            ((LIS2DH12_OFB_I2C_NUM == -1))'
+    LIS2DH12_OFB_ITF_ADDR:
+        description: 'I2C address of LIS2DH12 0x18 or 0x19'
+        value: 0x18
+        range: 0x18,0x19
+    LIS2DH12_OFB_INT1_PIN_HOST:
+        description: 'Host pin for LIS2DH12 INT1 pin'
+        value: -1
+    LIS2DH12_OFB_INT2_PIN_HOST:
+        description: 'Host pin for LIS2DH12 INT2 pin'
+        value: -1
+    LIS2DH12_OFB_INT_CFG_ACTIVE:
+        description: 'Set 0 for active-low, 1 for active-high'
+        value: 1
+    LIS2DH12_OFB_BUS:
+        description: 'I2C or SPI interface used for LIS2DH12'
+        value: '"i2c0"'
     BMA2XX_OFB:
         description: 'A sensor in the BMA2XX family is present'
         value : 0
