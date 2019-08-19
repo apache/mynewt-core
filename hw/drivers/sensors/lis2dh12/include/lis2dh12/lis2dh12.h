@@ -216,7 +216,8 @@ struct lis2dh12_cfg {
     uint8_t latch_int2    : 1;
     uint8_t d4d_int1      : 1;
     uint8_t d4d_int2      : 1;
-    uint8_t int_pp_od     : 1;
+    /* Interrupt polarity 0 - active high */
+    uint8_t int_pol       : 1;
 
     /* Power mode */
     uint8_t power_mode;
