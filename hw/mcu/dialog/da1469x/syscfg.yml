@@ -39,6 +39,11 @@ syscfg.defs:
             PD_COM will be disabled before entering deep sleep and thus
             state of any configured GPIO has to be retained and restored.
         value: 4
+    MCU_GPIO_MAX_IRQ:
+        desriptin: >
+            Maximum number of GPIO interrupts that can be configured at
+            once.
+        value: 4
 
     MCU_CLOCK_XTAL32M_SETTLE_TIME_US:
         description: >
