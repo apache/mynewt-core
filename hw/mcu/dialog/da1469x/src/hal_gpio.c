@@ -29,7 +29,7 @@
 #include "bsp/bsp.h"
 
 /* GPIO interrupts */
-#define HAL_GPIO_MAX_IRQ        (4)
+#define HAL_GPIO_MAX_IRQ        MYNEWT_VAL(MCU_GPIO_MAX_IRQ)
 
 #define GPIO_REG(name) ((__IO uint32_t *)(GPIO_BASE + offsetof(GPIO_Type, name)))
 #define WAKEUP_REG(name) ((__IO uint32_t *)(WAKEUP_BASE + offsetof(WAKEUP_Type, name)))
@@ -358,6 +358,8 @@ hal_gpio_irq_init(int pin, hal_gpio_irq_handler_t handler, void *arg,
     hal_gpio_irq_setup();
 
     i = hal_gpio_find_empty_slot();
+    /* If assert failed increase syscfg value MCU_GPIO_MAX_IRQ */
+    assert(i >= 0);
     if (i < 0) {
         return -1;
     }
