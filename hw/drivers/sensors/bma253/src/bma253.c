@@ -3522,9 +3522,9 @@ bma253_read_and_handle_fifo_data(struct bma253 *bma253,
                 accel_scale);
 
 
-        sad.sad_x = accel_data[AXIS_X].accel_g;
-        sad.sad_y = accel_data[AXIS_Y].accel_g;
-        sad.sad_z = accel_data[AXIS_Z].accel_g;
+        sad.sad_x = accel_data[AXIS_X].accel_g * STANDARD_ACCEL_GRAVITY;
+        sad.sad_y = accel_data[AXIS_Y].accel_g * STANDARD_ACCEL_GRAVITY;
+        sad.sad_z = accel_data[AXIS_Z].accel_g * STANDARD_ACCEL_GRAVITY;
         sad.sad_x_is_valid = 1;
         sad.sad_y_is_valid = 1;
         sad.sad_z_is_valid = 1;
@@ -5178,9 +5178,9 @@ bma253_poll_read(struct sensor * sensor,
             return rc;
         }
 
-        sad.sad_x = accel_data[AXIS_X].accel_g;
-        sad.sad_y = accel_data[AXIS_Y].accel_g;
-        sad.sad_z = accel_data[AXIS_Z].accel_g;
+        sad.sad_x = accel_data[AXIS_X].accel_g * STANDARD_ACCEL_GRAVITY;
+        sad.sad_y = accel_data[AXIS_Y].accel_g * STANDARD_ACCEL_GRAVITY;
+        sad.sad_z = accel_data[AXIS_Z].accel_g * STANDARD_ACCEL_GRAVITY;
         sad.sad_x_is_valid = 1;
         sad.sad_y_is_valid = 1;
         sad.sad_z_is_valid = 1;
