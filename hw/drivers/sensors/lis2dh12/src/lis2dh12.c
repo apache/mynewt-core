@@ -1132,7 +1132,11 @@ init_intpin(struct lis2dh12 *lis2dh12, int int_num, hal_gpio_irq_handler_t handl
 
     pin = lis2dh12->sensor.s_itf.si_ints[int_num].host_pin;
     if (pin >= 0) {
-        trig = lis2dh12->sensor.s_itf.si_ints[int_num].active;
+        if (lis2dh12->sensor.s_itf.si_ints[int_num].active) {
+            trig = HAL_GPIO_TRIG_RISING;
+        } else {
+            trig = HAL_GPIO_TRIG_FALLING;
+        }
 
         rc = hal_gpio_irq_init(pin,
                                handler,
@@ -1387,15 +1391,15 @@ err:
 }
 
 /**
- * Sets the interrupt push-pull/open-drain selection
+ * Sets the interrupt signal activation level for both pins
  *
  * @param The sensor interface
- * @param interrupt setting (0 = push-pull, 1 = open-drain)
+ * @param interrupt pin polarity (0 = active high, 1 = active low)
  *
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dh12_set_int_pp_od(struct sensor_itf *itf, uint8_t mode)
+lis2dh12_set_int_polarity(struct sensor_itf *itf, uint8_t mode)
 {
     int rc;
     uint8_t reg;
@@ -1412,15 +1416,15 @@ lis2dh12_set_int_pp_od(struct sensor_itf *itf, uint8_t mode)
 }
 
 /**
- * Gets the interrupt push-pull/open-drain selection
+ * Gets the interrupt activation level
  *
  * @param The sensor interface
- * @param ptr to store setting (0 = push-pull, 1 = open-drain)
+ * @param ptr to store setting
  *
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dh12_get_int_pp_od(struct sensor_itf *itf, uint8_t *mode)
+lis2dh12_get_int_polarity(struct sensor_itf *itf, uint8_t *int_pol)
 {
     int rc;
     uint8_t reg;
@@ -1430,7 +1434,7 @@ lis2dh12_get_int_pp_od(struct sensor_itf *itf, uint8_t *mode)
         return rc;
     }
 
-    *mode = (reg & LIS2DH12_CTRL_REG6_INT_POLARITY) ? 1 : 0;
+    *int_pol = (reg & LIS2DH12_CTRL_REG6_INT_POLARITY) ? 1 : 0;
 
     return 0;
 }
@@ -3054,11 +3058,11 @@ lis2dh12_config(struct lis2dh12 *lis2dh12, struct lis2dh12_cfg *cfg)
         goto err;
     }
 
-    rc = lis2dh12_set_int_pp_od(itf, cfg->int_pp_od);
+    rc = lis2dh12_set_int_polarity(itf, cfg->int_pol);
     if (rc) {
         goto err;
     }
-    lis2dh12->cfg.int_pp_od = cfg->int_pp_od;
+    lis2dh12->cfg.int_pol = cfg->int_pol;
 
     rc = lis2dh12_pull_up_disc(itf, cfg->lc_pull_up_disc);
     if (rc) {
