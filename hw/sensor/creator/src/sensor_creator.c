@@ -89,6 +89,10 @@
 #include <lis2dw12/lis2dw12.h>
 #endif
 
+#if MYNEWT_VAL(LIS2DH12_OFB)
+#include <lis2dh12/lis2dh12.h>
+#endif
+
 #if MYNEWT_VAL(LIS2DS12_OFB)
 #include <lis2ds12/lis2ds12.h>
 #endif
@@ -180,6 +184,10 @@ static struct lps33thw lps33thw;
 
 #if MYNEWT_VAL(LIS2DW12_OFB)
 static struct lis2dw12 lis2dw12;
+#endif
+
+#if MYNEWT_VAL(LIS2DH12_OFB)
+static struct lis2dh12 lis2dh12;
 #endif
 
 #if MYNEWT_VAL(LIS2DS12_OFB)
@@ -493,6 +501,48 @@ static struct sensor_itf i2c_0_itf_lis2ds12 = {
         { MYNEWT_VAL(LIS2DS12_INT1_PIN_HOST), MYNEWT_VAL(LIS2DS12_INT1_PIN_DEVICE),
           MYNEWT_VAL(LIS2DS12_INT1_CFG_ACTIVE)}}
 };
+#endif
+
+#if MYNEWT_VAL(LIS2DH12_OFB)
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+#if MYNEWT_VAL(LIS2DH12_OFB_I2C_NUM) >= 0
+static const struct bus_i2c_node_cfg lis2dh12_node_cfg = {
+    .node_cfg = {
+        .bus_name = MYNEWT_VAL(LIS2DH12_OFB_BUS),
+    },
+    .addr = MYNEWT_VAL(LIS2DH12_OFB_ITF_ADDR),
+    .freq = 400,
+};
+#elif MYNEWT_VAL(LIS2DH12_OFB_SPI_NUM) >= 0
+static const struct bus_spi_node_cfg lis2dh12_node_cfg = {
+    .node_cfg = {
+        .bus_name = MYNEWT_VAL(LIS2DH12_OFB_BUS),
+    },
+    .pin_cs = MYNEWT_VAL(LIS2DH12_OFB_CS),
+    .mode = BUS_SPI_MODE_3,
+    .data_order = BUS_SPI_DATA_ORDER_MSB,
+    .freq = 4000,
+};
+#endif
+static struct sensor_itf lis2dh12_itf = {
+    .si_ints = {
+        { MYNEWT_VAL(LIS2DH12_OFB_INT1_PIN_HOST), 1,
+            MYNEWT_VAL(LIS2DH12_OFB_INT_CFG_ACTIVE)},
+        { MYNEWT_VAL(LIS2DH12_OFB_INT2_PIN_HOST), 2,
+            MYNEWT_VAL(LIS2DH12_OFB_INT_CFG_ACTIVE)}}
+};
+#else
+static struct sensor_itf lis2dh12_itf = {
+    .si_type = SENSOR_ITF_I2C,
+    .si_num  = MYNEWT_VAL(LIS2DH12_OFB_I2C_NUM),
+    .si_addr = MYNEWT_VAL(LIS2DH12_OFB_ITF_ADDR),
+    .si_ints = {
+        { MYNEWT_VAL(LIS2DH12_OFB_INT1_PIN_HOST), 1,
+            MYNEWT_VAL(LIS2DH12_OFB_INT_CFG_ACTIVE)},
+        { MYNEWT_VAL(LIS2DH12_OFB_INT2_PIN_HOST), 2,
+            MYNEWT_VAL(LIS2DH12_OFB_INT_CFG_ACTIVE)}}
+};
+#endif
 #endif
 
 #if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(BME680_OFB)
@@ -1156,6 +1206,35 @@ config_lis2dw12_sensor(void)
 #endif
 
 /**
+ * LIS2DH12 Sensor default configuration used by the creator package
+ *
+ * @return 0 on success, non-zero on failure
+ */
+#if MYNEWT_VAL(LIS2DH12_OFB)
+static int
+config_lis2dh12_sensor(void)
+{
+    int rc;
+    struct os_dev *dev;
+    struct lis2dh12_cfg cfg = {0};
+
+    dev = os_dev_open("lis2dh12_0", OS_TIMEOUT_NEVER, NULL);
+    assert(dev != NULL);
+
+    cfg.lc_s_mask = SENSOR_TYPE_ACCELEROMETER;
+    cfg.lc_rate = LIS2DH12_DATA_RATE_HN_1344HZ_L_5376HZ;
+    cfg.lc_fs = LIS2DH12_FS_2G;
+
+    rc = lis2dh12_config((struct lis2dh12 *)dev, &cfg);
+    assert(rc == 0);
+
+    os_dev_close(dev);
+
+    return rc;
+}
+#endif
+
+/**
  * LIS2DS12 Sensor default configuration used by the creator package
  *
  * @return 0 on success, non-zero on failure
@@ -1678,6 +1757,23 @@ sensor_dev_create(void)
     assert(rc == 0);
 
     rc = config_lis2dw12_sensor();
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(LIS2DH12_OFB)
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+#if MYNEWT_VAL(BMP388_OFB_I2C_NUM) >= 0
+    rc = lis2dh12_create_i2c_sensor_dev(&lis2dh12.i2c_node, "lis2dh12_0",
+                                        &lis2dh12_node_cfg, &lis2dh12_itf);
+    assert(rc == 0);
+#endif
+#else
+    rc = os_dev_create((struct os_dev *)&lis2dh12, "lis2dh12_0",
+      OS_DEV_INIT_PRIMARY, 0, lis2dh12_init, &lis2dh12_itf);
+    assert(rc == 0);
+#endif
+
+    rc = config_lis2dh12_sensor();
     assert(rc == 0);
 #endif
 
