@@ -459,6 +459,7 @@ hal_gpio_irq_release(int pin)
 
     hal_gpio_irqs[i].arg = NULL;
     hal_gpio_irqs[i].func = NULL;
+    hal_gpio_irqs[i].pin = 0;
 }
 
 /**
