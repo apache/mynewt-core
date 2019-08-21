@@ -19,3 +19,4 @@
 syscfg.vals:
     CONFIG_NFFS: 1
     CONFIG_FCB_FLASH_AREA: 
+    CONFIG_AUTO_INIT: 0
