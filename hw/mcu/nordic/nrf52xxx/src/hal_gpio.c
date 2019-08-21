@@ -376,11 +376,14 @@ hal_gpio_irq_init(int pin, hal_gpio_irq_handler_t handler, void *arg,
                   hal_gpio_irq_trig_t trig, hal_gpio_pull_t pull)
 {
     uint32_t conf;
-    int i;
+    int i, sr;
+
+    __HAL_DISABLE_INTERRUPTS(sr);
 
     hal_gpio_irq_setup();
     i = hal_gpio_find_empty_slot();
     if (i < 0) {
+        __HAL_ENABLE_INTERRUPTS(sr);
         return -1;
     }
     hal_gpio_init_in(pin, pull);
@@ -401,6 +404,7 @@ hal_gpio_irq_init(int pin, hal_gpio_irq_handler_t handler, void *arg,
         break;
     default:
         hal_gpio_irqs[i].sense_trig = HAL_GPIO_SENSE_TRIG_NONE;
+        __HAL_ENABLE_INTERRUPTS(sr);
         return -1;
     }
 #else
@@ -415,6 +419,7 @@ hal_gpio_irq_init(int pin, hal_gpio_irq_handler_t handler, void *arg,
         conf = GPIOTE_CONFIG_POLARITY_Toggle << GPIOTE_CONFIG_POLARITY_Pos;
         break;
     default:
+        __HAL_ENABLE_INTERRUPTS(sr);
         return -1;
     }
 
@@ -426,6 +431,8 @@ hal_gpio_irq_init(int pin, hal_gpio_irq_handler_t handler, void *arg,
 
     hal_gpio_irqs[i].func = handler;
     hal_gpio_irqs[i].arg = arg;
+
+    __HAL_ENABLE_INTERRUPTS(sr);
 
     return 0;
 }
@@ -442,10 +449,13 @@ hal_gpio_irq_init(int pin, hal_gpio_irq_handler_t handler, void *arg,
 void
 hal_gpio_irq_release(int pin)
 {
-    int i;
+    int i, sr;
+
+    __HAL_DISABLE_INTERRUPTS(sr);
 
     i = hal_gpio_find_pin(pin);
     if (i < 0) {
+        __HAL_ENABLE_INTERRUPTS(sr);
         return;
     }
     hal_gpio_irq_disable(pin);
@@ -460,6 +470,8 @@ hal_gpio_irq_release(int pin)
     hal_gpio_irqs[i].arg = NULL;
     hal_gpio_irqs[i].func = NULL;
     hal_gpio_irqs[i].pin = 0;
+
+    __HAL_ENABLE_INTERRUPTS(sr);
 }
 
 /**
@@ -476,10 +488,13 @@ hal_gpio_irq_enable(int pin)
     NRF_GPIO_Type *nrf_gpio;
     int pin_index;
 #endif
-    int i;
+    int i, sr;
+
+    __HAL_DISABLE_INTERRUPTS(sr);
 
     i = hal_gpio_find_pin(pin);
     if (i < 0) {
+        __HAL_ENABLE_INTERRUPTS(sr);
         return;
     }
 
@@ -504,6 +519,8 @@ hal_gpio_irq_enable(int pin)
     NRF_GPIOTE->EVENTS_IN[i] = 0;
     NRF_GPIOTE->INTENSET = 1 << i;
 #endif
+
+    __HAL_ENABLE_INTERRUPTS(sr);
 }
 
 /**
@@ -520,10 +537,13 @@ hal_gpio_irq_disable(int pin)
     int pin_index;
     bool sense_enabled = false;
 #endif
-    int i;
+    int i, sr;
+
+    __HAL_DISABLE_INTERRUPTS(sr);
 
     i = hal_gpio_find_pin(pin);
     if (i < 0) {
+        __HAL_ENABLE_INTERRUPTS(sr);
         return;
     }
 
@@ -546,4 +566,5 @@ hal_gpio_irq_disable(int pin)
 #else
     NRF_GPIOTE->INTENCLR = 1 << i;
 #endif
+    __HAL_ENABLE_INTERRUPTS(sr);
 }
