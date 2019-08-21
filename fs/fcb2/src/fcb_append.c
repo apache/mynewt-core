@@ -112,7 +112,8 @@ fcb_entry_location_in_range(const struct fcb_entry *loc)
 {
     const struct flash_sector_range *range = loc->fe_range;
 
-    return range->fsr_sector_size * (1 + loc->fe_sector - range->fsr_first_sector) -
+    return range->fsr_sector_size *
+        (1 + loc->fe_sector - range->fsr_first_sector) -
         (loc->fe_entry_num * fcb_len_in_flash(loc->fe_range, FCB_ENTRY_SIZE));
 }
 
@@ -141,7 +142,7 @@ int
 fcb_read(struct fcb_entry *loc, uint16_t off, void *buf, uint16_t len)
 {
     int pos = loc->fe_data_off + off;
-    /* Make sure tha read is only from entry data */
+    /* Make sure that read is only from entry data */
     if (off + len > loc->fe_data_len) {
         len = loc->fe_data_len - off;
     }
@@ -173,7 +174,8 @@ fcb_append(struct fcb *fcb, uint16_t len, struct fcb_entry *append_loc)
         return FCB_ERR_ARGS;
     }
     active = &fcb->f_active;
-    if (fcb_active_sector_free_space(fcb) < fcb_element_length_in_flash(active, len)) {
+    if (fcb_active_sector_free_space(fcb) < fcb_element_length_in_flash(active,
+                                                                        len)) {
         sector = fcb_new_sector(fcb, fcb->f_scratch_cnt);
         if (sector >= 0) {
             range = fcb_get_sector_range(fcb, sector);

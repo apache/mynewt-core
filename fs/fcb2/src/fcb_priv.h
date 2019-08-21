@@ -34,6 +34,12 @@ struct fcb_disk_area {
     uint16_t fd_id;
 };
 
+struct fcb_sector_info {
+    struct flash_sector_range *si_range;  /* Sector range */
+    uint32_t si_sector_offset;            /* Sector offset in fcb */
+    uint16_t si_sector_in_range;          /* Sector number relative to si_range */
+};
+
 static inline int
 fcb_len_in_flash(const struct flash_sector_range *range, uint16_t len)
 {
@@ -44,7 +50,6 @@ fcb_len_in_flash(const struct flash_sector_range *range, uint16_t len)
 }
 
 int fcb_getnext_in_area(struct fcb *fcb, struct fcb_entry *loc);
-struct flash_area *fcb_getnext_area(struct fcb *fcb, struct flash_area *fap);
 
 static inline int
 fcb_getnext_sector(struct fcb *fcb, int sector)
@@ -58,7 +63,6 @@ fcb_getnext_sector(struct fcb *fcb, int sector)
 int fcb_getnext_nolock(struct fcb *fcb, struct fcb_entry *loc);
 
 int fcb_elem_info(struct fcb_entry *loc);
-int fcb_elem_crc8(struct fcb_entry *loc, uint8_t *crc8p);
 int fcb_elem_crc16(struct fcb_entry *loc, uint16_t *c16p);
 int fcb_sector_hdr_init(struct fcb *fcb, int sector, uint16_t id);
 int fcb_entry_location_in_range(const struct fcb_entry *loc);
@@ -114,16 +118,6 @@ int fcb_write_to_sector(struct fcb_entry *loc, int off,
  * @return 0 if read was successful non zero otherwise.
  */
 int fcb_read_from_sector(struct fcb_entry *loc, int off, void *buf, int len);
-
-/**
- * Erase sector in FCB
- *
- * @param fcb     FCB to use
- * @param sector  sector number to erase 0..f_sector_cnt
- *
- * return 0 on success, error code on failure
- */
-int fcb_sector_erase(const struct fcb *fcb, int sector);
 
 #ifdef __cplusplus
 }
