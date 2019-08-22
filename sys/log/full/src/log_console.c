@@ -63,6 +63,7 @@ log_console_append_body(struct log *log, const struct log_entry_hdr *hdr,
     return (0);
 }
 
+int
 log_console_append(struct log *log, void *buf, int len)
 {
     return log_console_append_body(log, buf, (uint8_t *)buf + LOG_BASE_ENTRY_HDR_SIZE,
