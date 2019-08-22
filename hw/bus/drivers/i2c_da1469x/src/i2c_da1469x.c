@@ -503,6 +503,7 @@ i2c_da1469x_read(struct bus_dev *bdev, struct bus_node *bnode,
     dd->transfer.started = 1;
     dd->i2c_isr = i2c_da1469x_fill_fifo_for_rx;
     if (length >= MIN_DMA_SIZE) {
+        i2c_regs->I2C_DMA_CR_REG = 0;
         /*
          * To read I2C controller with DMA output FIFO must be fed with
          * read requests. In this case only one value is needed if DMA source
