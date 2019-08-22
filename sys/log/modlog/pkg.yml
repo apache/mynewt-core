@@ -28,8 +28,8 @@ pkg.deps:
     - "@apache-mynewt-core/kernel/os"
     - "@apache-mynewt-core/util/rwlock"
 
-#pkg.req_apis:
-#    - log
+pkg.req_apis:
+    - log
 
 pkg.init:
     modlog_init: 'MYNEWT_VAL(MODLOG_SYSINIT_STAGE)'

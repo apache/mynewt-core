@@ -28,7 +28,7 @@ pkg.deps:
 pkg.deps.RUNTEST_CLI:
     - "@apache-mynewt-core/sys/shell"
 pkg.deps.RUNTEST_MGMT:
-    - "@apache-mynewt-core/mgmt/mgmt"
+    - "@apache-mynewt-mcumgr/mgmt"
     - "@apache-mynewt-core/encoding/json"
     - "@apache-mynewt-core/test/testutil"
 pkg.deps.RUNTEST_LOG:
