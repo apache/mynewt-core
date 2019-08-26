@@ -408,7 +408,11 @@ log_register(char *name, struct log *log, const struct log_handler *lh,
 
     /* Call registered handler now - log structure is set and put on list */
     if (log->l_log->log_registered) {
-        log->l_log->log_registered(log);
+        rc = log->l_log->log_registered(log);
+        if (rc) {
+            STAILQ_REMOVE(&g_log_list, log, log, l_next);
+            return rc;
+        }
     }
 
     /* If this is a persisted log, read the index from its most recent entry.

@@ -76,11 +76,6 @@ struct log;
 #define LOG_ETYPE_BINARY         (2)
 #endif
 
-/* Logging medium */
-#define LOG_STORE_CONSOLE    1
-#define LOG_STORE_CBMEM      2
-#define LOG_STORE_FCB        3
-
 /* UTC Timestamp for Jan 2016 00:00:00 */
 #define UTC01_01_2016    1451606400
 
