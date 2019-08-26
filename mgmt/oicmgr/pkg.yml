@@ -29,11 +29,9 @@ pkg.keywords:
 pkg.deps:
     - "@apache-mynewt-core/kernel/os"
     - "@apache-mynewt-core/net/oic"
+    - "@apache-mynewt-mcumgr/omp"
     - "@apache-mynewt-mcumgr/mgmt"
     - "@apache-mynewt-core/mgmt/smp/smp_os"
 
-pkg.apis:
-    - smp
-
 pkg.init:
-    oicmgr_init: 'MYNEWT_VAL(OICMGR_SYSINIT_STAGE)'
+    omgr_pkg_init: 'MYNEWT_VAL(OICMGR_SYSINIT_STAGE)'
