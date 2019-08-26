@@ -31,13 +31,16 @@ syscfg.defs:
         description: >
             Specifies whether or not to enable SIMO DC-DC Converter.
         value: 0
-    
+
     MCU_GPIO_RETAINABLE_NUM:
         description: >
             Number of GPIO pins which can have its state retained in
             deep sleep. This applies only if deep sleep is enabled since
             PD_COM will be disabled before entering deep sleep and thus
             state of any configured GPIO has to be retained and restored.
+            If set to -1, power domain which controls GPIO pins will be
+            always active and thus retaining and restoring of GPIO pins
+            state is disabled.
         value: 4
     MCU_GPIO_MAX_IRQ:
         desriptin: >
