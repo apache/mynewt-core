@@ -124,7 +124,8 @@ struct fcb_log {
  * loc as argument.
  */
 int fcb_append(struct fcb *fcb, uint16_t len, struct fcb_entry *loc);
-int fcb_write(struct fcb_entry *loc, uint16_t off, void *buf, uint16_t len);
+int fcb_write(struct fcb_entry *loc, uint16_t off, const void *buf,
+              uint16_t len);
 int fcb_append_finish(struct fcb_entry *append_loc);
 
 /**
