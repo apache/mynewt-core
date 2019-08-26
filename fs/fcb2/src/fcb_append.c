@@ -128,7 +128,7 @@ fcb_active_sector_free_space(const struct fcb *fcb)
 }
 
 int
-fcb_write(struct fcb_entry *loc, uint16_t off, void *buf, uint16_t len)
+fcb_write(struct fcb_entry *loc, uint16_t off, const void *buf, uint16_t len)
 {
     int pos = loc->fe_data_off + off;
     /* Make sure tha write does not exceed lenght declared in fcb_append */
