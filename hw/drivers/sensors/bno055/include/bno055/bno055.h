@@ -161,7 +161,11 @@ struct bno055_cfg {
 };
 
 struct bno055 {
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    struct bus_i2c_node i2c_node;
+#else
     struct os_dev dev;
+#endif
     struct sensor sensor;
     struct bno055_cfg cfg;
     os_time_t last_read_time;
@@ -397,6 +401,11 @@ bno055_get_sys_status(struct sensor_itf *itf, uint8_t *system_status,
 int
 bno055_get_chip_id(struct sensor_itf *itf, uint8_t *id);
 
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+int bno055_create_sensor_dev(struct bno055 *dev, const char *name,
+                             const struct bus_i2c_node_cfg *i2c_cfg,
+                             struct sensor_itf *sensor_itf);
+#endif
 
 #ifdef __cplusplus
 }
