@@ -76,6 +76,13 @@ bno055_write8(struct sensor_itf *itf, uint8_t reg, uint8_t value)
     int rc;
     uint8_t payload[2] = { reg, value};
 
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    rc = bus_node_simple_write(itf->si_dev, payload, 2);
+    if (rc) {
+        BNO055_LOG_ERROR("Write to bno055 failed %d\n", rc);
+        STATS_INC(g_bno055stats, errors);
+    }
+#else
     struct hal_i2c_master_data data_struct = {
         .address = itf->si_addr,
         .len = 2,
@@ -90,6 +97,7 @@ bno055_write8(struct sensor_itf *itf, uint8_t reg, uint8_t value)
                    data_struct.address, reg, value);
         STATS_INC(g_bno055stats, errors);
     }
+#endif
 
     return rc;
 }
@@ -112,6 +120,19 @@ bno055_writelen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
                               0, 0, 0, 0, 0, 0, 0, 0,
                               0, 0, 0, 0, 0, 0, 0};
 
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    if (len > (sizeof(payload) - 1)) {
+        return OS_EINVAL;
+    }
+
+    memcpy(payload, buffer, len);
+
+    rc = bus_node_simple_write(itf->si_dev, payload, len + 1);
+    if (rc) {
+        BNO055_LOG_ERROR("Write to bno055 failed %d\n", rc);
+        STATS_INC(g_bno055stats, errors);
+    }
+#else
     struct hal_i2c_master_data data_struct = {
         .address = itf->si_addr,
         .len = 1,
@@ -151,6 +172,7 @@ bno055_writelen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
 
 err:
     sensor_itf_unlock(itf);
+#endif
 
     return rc;
 }
@@ -168,8 +190,15 @@ int
 bno055_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
 {
     int rc;
-    uint8_t payload;
 
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    rc = bus_node_simple_write_read_transact(itf->si_dev, &reg, 1, value, 1);
+    if (rc) {
+        BNO055_LOG_ERROR("Read from bno055 failed %d\n", rc);
+        STATS_INC(g_bno055stats, errors);
+    }
+#else
+    uint8_t payload;
     struct hal_i2c_master_data data_struct = {
         .address = itf->si_addr,
         .len = 1,
@@ -206,6 +235,7 @@ bno055_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
 
 err:
     sensor_itf_unlock(itf);
+#endif
 
     return rc;
 }
@@ -225,6 +255,14 @@ bno055_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
                uint8_t len)
 {
     int rc;
+
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    rc = bus_node_simple_write_read_transact(itf->si_dev, &reg, 1, buffer, len);
+    if (rc) {
+        BNO055_LOG_ERROR("Read from bno055 failed %d\n", rc);
+        STATS_INC(g_bno055stats, errors);
+    }
+#else
     uint8_t payload[23] = { reg, 0, 0, 0, 0, 0, 0, 0,
                               0, 0, 0, 0, 0, 0, 0, 0,
                               0, 0, 0, 0, 0, 0, 0};
@@ -269,6 +307,7 @@ bno055_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
 
 err:
     sensor_itf_unlock(itf);
+#endif
 
     return rc;
 }
@@ -2231,3 +2270,29 @@ err:
     return rc;
 }
 
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+
+void
+init_node_cb(struct bus_node *node, void *arg)
+{
+    bno055_init((struct os_dev *)node, arg);
+}
+
+int
+bno055_create_sensor_dev(struct bno055 *dev, const char *name,
+                         const struct bus_i2c_node_cfg *i2c_cfg,
+                         struct sensor_itf *sensor_itf)
+{
+    struct bus_node_callbacks cbs = {
+        .init = init_node_cb,
+    };
+    int rc;
+
+    sensor_itf->si_dev = &dev->i2c_node.bnode.odev;
+    bus_node_set_callbacks((struct os_dev *)dev, &cbs);
+
+    rc = bus_i2c_node_create(name, &dev->i2c_node, i2c_cfg, sensor_itf);
+
+    return rc;
+}
+#endif
