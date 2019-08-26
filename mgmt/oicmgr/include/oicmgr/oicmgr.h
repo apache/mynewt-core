@@ -23,6 +23,15 @@
 #include "oic/oc_ri.h"
 #include "mgmt/mgmt.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+//struct smp_transport;
+extern const struct mgmt_streamer_cfg g_omp_cbor_cfg;
+//smp_tx_rsp_fn smp_tx_rsp;
+
+
 /**
  * Process an oicmgr request.  On completion, an oicmgr response is sent back
  * to the client.
@@ -47,5 +56,11 @@ int omgr_oic_process_put(oc_request_t *req, oc_interface_mask_t mask);
  *                              MGMT_ERR_EINVAL on parse failure.
  */
 int omgr_extract_req_hdr(oc_request_t *req, struct mgmt_hdr *out_hdr);
+
+
+int omgr_pkg_init(void);
+#ifdef __cplusplus
+}
+#endif
 
 #endif
