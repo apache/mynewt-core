@@ -41,6 +41,14 @@ syscfg.defs:
     LOG_FCB:
         description: 'Support logging to FCB.'
         value: 0
+        restrictions:
+            - "!LOG_FCB2"
+
+    LOG_FCB2:
+        description: 'Support logging to FCB2.'
+        value: 0
+        restrictions:
+            - "!LOG_FCB"
 
     LOG_FCB_SLOT1:
         description: >

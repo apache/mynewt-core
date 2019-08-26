@@ -32,6 +32,8 @@ pkg.deps:
 pkg.deps.LOG_FCB:
     - "@apache-mynewt-core/hw/hal"
     - "@apache-mynewt-core/fs/fcb"
+pkg.deps.LOG_FCB2:
+    - "@apache-mynewt-core/fs/fcb2"
 pkg.deps.LOG_CLI:
     - "@apache-mynewt-core/sys/shell"
     - "@apache-mynewt-core/encoding/base64"
