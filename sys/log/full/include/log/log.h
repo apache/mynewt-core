@@ -704,8 +704,10 @@ log_fill_current_img_hash(struct log_entry_hdr *hdr);
 extern const struct log_handler log_console_handler;
 #endif
 extern const struct log_handler log_cbmem_handler;
-#if MYNEWT_VAL(LOG_FCB)
+#if MYNEWT_VAL(LOG_FCB) || MYNEWT_VAL(LOG_FCB2)
 extern const struct log_handler log_fcb_handler;
+#endif
+#if MYNEWT_VAL(LOG_FCB)
 extern const struct log_handler log_fcb_slot1_handler;
 #endif
 
