@@ -46,6 +46,13 @@ syscfg.defs:
     BNO055_OFB:
         description: 'BNO055 is present'
         value : 0
+    BNO055_OFB_I2C_BUS:
+        description: 'I2C interface used for BNO055'
+        value : '"i2c0"'
+    BNO055_OFB_I2C_ADDR:
+        description: 'I2C address of BNO055 0x28 or 0x29'
+        value: 0x28
+        range: 0x28,0x29
     BME280_OFB:
         description: 'BME280 is present'
         value : 0
