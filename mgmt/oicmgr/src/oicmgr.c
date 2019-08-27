@@ -113,7 +113,7 @@ omgr_write_at(struct cbor_encoder_writer *writer, size_t offset,
     if (offset > OS_MBUF_PKTLEN(m)) {
         return MGMT_ERR_EINVAL;
     }
-    
+
     rc = os_mbuf_copyinto(m, offset, data, len);
     if (rc) {
         return MGMT_ERR_ENOMEM;
@@ -162,13 +162,17 @@ static int
 omgr_init_writer(struct cbor_encoder_writer *writer, void *m,
                  void *unused)
 {
-    struct cbor_mbuf_writer *cmw;
+    /* struct cbor_mbuf_writer *cmw; */
 
-    if (!writer) {
-        return MGMT_ERR_EINVAL;
-    }
-    cmw = (struct cbor_mbuf_writer *)writer;
-    cbor_mbuf_writer_init(cmw, m);
+    /* if (!writer) { */
+    /*     return MGMT_ERR_EINVAL; */
+    /* } */
+
+    //This inits the global writer
+    oc_set_separate_response_buffer(&g_sep_resp);
+    
+    /* cmw = (struct cbor_mbuf_writer *) writer; */
+    /* cbor_mbuf_writer_init(cmw, m); */
 
     return 0;
 }
@@ -176,9 +180,11 @@ omgr_init_writer(struct cbor_encoder_writer *writer, void *m,
 static void
 oic_tx_rsp(struct mgmt_ctxt *ctxt, void *req, int retval)
 {
-    /* oc_request_t *request = (oc_request_t *) req; */
-    oc_set_separate_response_buffer(&g_sep_resp);
-    oc_send_separate_response(&g_sep_resp, retval);
+    if (g_sep_resp.buffer) {
+        oc_send_separate_response(&g_sep_resp, retval);
+    } else {
+        oc_send_response((oc_request_t *)req, retval);
+    }
 }
 
 /**
@@ -188,7 +194,7 @@ static void
 omgr_process_request(oc_request_t *req, oc_interface_mask_t mask)
 {
     struct cbor_mbuf_reader reader;
-    struct cbor_mbuf_writer writer;
+    //struct cbor_mbuf_writer writer;
     struct os_mbuf *m;
     uint16_t req_data_off;
     int rc = 0;
@@ -204,9 +210,10 @@ omgr_process_request(oc_request_t *req, oc_interface_mask_t mask)
         .mgmt_stmr = {
             .cfg = &g_omgr_cbor_cfg,
             .reader = &reader.r,
-            .writer = &writer.enc,
-            .cb_arg = &req_data_off
+            .writer = g_encoder.writer,
+            .cb_arg = &req_data_off,
         },
+        .rsp_encoder = &g_encoder,
         .tx_rsp_cb = oic_tx_rsp,
     };
 
@@ -216,7 +223,7 @@ omgr_process_request(oc_request_t *req, oc_interface_mask_t mask)
         /* Fallthrough */
 
     case OC_IF_RW:
-        /* oc_indicate_separate_response(req, &g_sep_resp); */
+        oc_indicate_separate_response(req, &g_sep_resp);
         rc = omp_process_request_packet(&omgr_streamer, m, req);
         break;
 
@@ -238,7 +245,7 @@ done:
             rc = OC_STATUS_BAD_REQUEST;
             break;
         }
-        oc_send_response(req, rc);
+        oic_tx_rsp(NULL, req, rc);
     }
 }
 
