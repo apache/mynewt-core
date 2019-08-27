@@ -35,21 +35,21 @@ static struct omp_streamer omgr_streamer;
 static oc_separate_response_t g_sep_resp;
 
 static mgmt_alloc_rsp_fn omgr_alloc_rsp;
-/* static mgmt_trim_front_fn omgr_trim_front; */
-/* static mgmt_reset_buf_fn omgr_reset_buf; */
+static mgmt_trim_front_fn omgr_trim_front;
+static mgmt_reset_buf_fn omgr_reset_buf;
 static mgmt_write_at_fn omgr_write_at;
 static mgmt_init_reader_fn omgr_init_reader;
 static mgmt_init_writer_fn omgr_init_writer;
-/* static mgmt_free_buf_fn omgr_free_buf; */
+static mgmt_free_buf_fn omgr_free_buf;
 
 const struct mgmt_streamer_cfg g_omgr_cbor_cfg = {
     .alloc_rsp = omgr_alloc_rsp,
-    /* .trim_front = omgr_trim_front, */
-    /* .reset_buf = omgr_reset_buf, */
+    .trim_front = omgr_trim_front,
+    .reset_buf = omgr_reset_buf,
     .write_at = omgr_write_at,
     .init_reader = omgr_init_reader,
     .init_writer = omgr_init_writer,
-    /* .free_buf = omgr_free_buf, */
+    .free_buf = omgr_free_buf,
 };
 
 static void*
@@ -75,25 +75,25 @@ omgr_alloc_rsp(const void *src_buf,  void *req)
     return &g_sep_resp.buffer;
 }
 
-/* static void */
-/* smp_trim_front(void *m, size_t len, void *arg) */
-/* { */
-/*     os_mbuf_adj(m, len); */
-/* } */
+static void
+omgr_trim_front(void *m, size_t len, void *arg)
+{
+    os_mbuf_adj(m, len);
+}
 
-/* static void */
-/* omgr_reset_buf(void *m, void *arg) */
-/* { */
-/*     if (!m) { */
-/*         return; */
-/*     } */
+static void
+omgr_reset_buf(void *m, void *arg)
+{
+    if (!m) {
+        return;
+    }
 
-/*     /\* We need to trim from the back because the head */
-/*      * costains useful information which we do not wast */
-/*      * to get rid of */
-/*      *\/ */
-/*     os_mbuf_adj(m, -1 * OS_MBUF_PKTLEN((struct os_mbuf *)m)); */
-/* } */
+    /* We need to trim from the back because the head
+     * costains useful information which we do not wast
+     * to get rid of
+     */
+    os_mbuf_adj(m, -1 * OS_MBUF_PKTLEN((struct os_mbuf *)m));
+}
 
 static int
 omgr_write_at(struct cbor_encoder_writer *writer, size_t offset,
@@ -124,15 +124,15 @@ omgr_write_at(struct cbor_encoder_writer *writer, size_t offset,
     return 0;
 }
 
-/* static void */
-/* smp_free_buf(void *m, void *arg) */
-/* { */
-/*     if (!m) { */
-/*         return; */
-/*     } */
+static void
+omgr_free_buf(void *m, void *arg)
+{
+    if (!m) {
+        return;
+    }
 
-/*     os_mbuf_free_chain(m); */
-/* } */
+    os_mbuf_free_chain(m);
+}
 
 static int
 omgr_init_reader(struct cbor_decoder_reader *reader, void *m, void *off)
@@ -162,17 +162,17 @@ static int
 omgr_init_writer(struct cbor_encoder_writer *writer, void *m,
                  void *unused)
 {
-    /* struct cbor_mbuf_writer *cmw; */
+    struct cbor_mbuf_writer *cmw;
 
-    /* if (!writer) { */
-    /*     return MGMT_ERR_EINVAL; */
-    /* } */
+    if (!writer) {
+        return MGMT_ERR_EINVAL;
+    }
 
     //This inits the global writer
-    oc_set_separate_response_buffer(&g_sep_resp);
-    
-    /* cmw = (struct cbor_mbuf_writer *) writer; */
-    /* cbor_mbuf_writer_init(cmw, m); */
+    /* oc_set_separate_response_buffer(&g_sep_resp); */
+    /* omgr_streamer.mgmt_stmr.writer = g_encoder.writer; */
+    cmw = (struct cbor_mbuf_writer *) writer;
+    cbor_mbuf_writer_init(cmw, m);
 
     return 0;
 }
@@ -180,11 +180,7 @@ omgr_init_writer(struct cbor_encoder_writer *writer, void *m,
 static void
 oic_tx_rsp(struct mgmt_ctxt *ctxt, void *req, int retval)
 {
-    if (g_sep_resp.buffer) {
-        oc_send_separate_response(&g_sep_resp, retval);
-    } else {
-        oc_send_response((oc_request_t *)req, retval);
-    }
+    oc_send_response((oc_request_t *)req, retval);
 }
 
 /**
@@ -223,7 +219,6 @@ omgr_process_request(oc_request_t *req, oc_interface_mask_t mask)
         /* Fallthrough */
 
     case OC_IF_RW:
-        oc_indicate_separate_response(req, &g_sep_resp);
         rc = omp_process_request_packet(&omgr_streamer, m, req);
         break;
 
@@ -245,7 +240,7 @@ done:
             rc = OC_STATUS_BAD_REQUEST;
             break;
         }
-        oic_tx_rsp(NULL, req, rc);
+        oc_send_response(req, rc);
     }
 }
 
