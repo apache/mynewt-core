@@ -45,6 +45,9 @@ pkg.deps.'(I2C_0 || I2C_1) && BUS_DRIVER_PRESENT':
 pkg.deps.'(SPI_0_MASTER || SPI_1_MASTER) && BUS_DRIVER_PRESENT':
     - "@apache-mynewt-core/hw/bus/drivers/spi_hal"
 
+pkg.deps.'(PWM_0 || PWM_1 || PWM_2)':
+    - "@apache-mynewt-core/hw/drivers/pwm/pwm_da1469x"
+
 pkg.deps.GPADC:
     - "@apache-mynewt-core/hw/drivers/adc/gpadc_da1469x"
 
