@@ -67,7 +67,6 @@ int fcb_elem_crc16(struct fcb_entry *loc, uint16_t *c16p);
 int fcb_sector_hdr_init(struct fcb *fcb, int sector, uint16_t id);
 int fcb_entry_location_in_range(const struct fcb_entry *loc);
 
-
 struct flash_sector_range *fcb_get_sector_range(const struct fcb *fcb,
     int sector);
 
