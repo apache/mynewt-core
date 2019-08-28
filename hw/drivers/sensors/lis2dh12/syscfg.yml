@@ -30,18 +30,11 @@ syscfg.defs:
         description: >
             Number of OS ticks to wait for each I2C transaction to complete.
         value: 3
-    LIS2DH12_SHELL_ITF_NUM:
-        description: 'Shell interface number for the LIS2DH12'
-        value: 0
-    LIS2DH12_SHELL_ITF_TYPE:
-        description: 'Shell interface type for the LIS2DH12'
-        value: 1
-    LIS2DH12_SHELL_CSPIN:
-        description: 'CS pin for LIS2DH12'
-        value : -1
-    LIS2DH12_SHELL_ITF_ADDR:
-        description: 'Slave address for LIS2DH12'
-        value : 0x19
+    LIS2DH12_SHELL_DEV:
+        description: >
+            Device name for lis2dh12 device used in shell
+        value:
+        restriction: LIS2DH12_CLI == 0 || $notnull
     LIS2DH12_CLI:
         description: 'Enable shell support for the LIS2DH12'
         value: 0
