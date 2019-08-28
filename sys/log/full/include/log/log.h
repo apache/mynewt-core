@@ -41,6 +41,12 @@
 #define LOG_HDR_SIZE 15
 #endif
 
+#if MYNEWT_VAL(LOG_FLAGS_IMAGE_HASH)
+#define LOG_HDR_SIZE 19
+#else
+#define LOG_HDR_SIZE 15
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -715,9 +721,6 @@ extern const struct log_handler log_console_handler;
 extern const struct log_handler log_cbmem_handler;
 #if MYNEWT_VAL(LOG_FCB) || MYNEWT_VAL(LOG_FCB2)
 extern const struct log_handler log_fcb_handler;
-#endif
-#if MYNEWT_VAL(LOG_FCB)
-extern const struct log_handler log_fcb_slot1_handler;
 #endif
 
 #ifdef __cplusplus
