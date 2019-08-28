@@ -22,11 +22,11 @@
 #include <assert.h>
 
 #include <os/mynewt.h>
+#include <mcu/mcu.h>
 #include <da1469x_charger/da1469x_charger.h>
 #include <bsp/bsp.h>
 #if MYNEWT_VAL(DA1469X_CHARGER_USE_CHARGE_CONTROL)
 #include <charge-control/charge_control.h>
-#include <DA1469xAB.h>
 #endif
 
 int
