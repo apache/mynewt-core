@@ -138,6 +138,7 @@ int fcb_append_finish(struct fcb_entry *append_loc);
 typedef int (*fcb_walk_cb)(struct fcb_entry *loc, void *arg);
 int fcb_walk(struct fcb *, int sector, fcb_walk_cb cb, void *cb_arg);
 int fcb_getnext(struct fcb *fcb, struct fcb_entry *loc);
+int fcb_getprev(struct fcb *fcb, struct fcb_entry *loc);
 int fcb_read(struct fcb_entry *loc, uint16_t off, void *buf, uint16_t len);
 
 /**
@@ -165,7 +166,7 @@ int fcb_is_empty(struct fcb *fcb);
  */
 int
 fcb_offset_last_n(struct fcb *fcb, uint8_t entries,
-        struct fcb_entry *last_n_entry);
+                  struct fcb_entry *last_n_entry);
 
 /**
  * Erase sector in FCB

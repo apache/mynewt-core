@@ -141,6 +141,7 @@ TEST_CASE_DECL(fcb_test_rotate)
 TEST_CASE_DECL(fcb_test_multiple_scratch)
 TEST_CASE_DECL(fcb_test_last_of_n)
 TEST_CASE_DECL(fcb_test_area_info)
+TEST_CASE_DECL(fcb_test_getprev)
 
 TEST_SUITE(fcb_test_all)
 {
@@ -154,6 +155,7 @@ TEST_SUITE(fcb_test_all)
     fcb_test_multiple_scratch();
     fcb_test_last_of_n();
     fcb_test_area_info();
+    fcb_test_getprev();
 }
 
 int
