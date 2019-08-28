@@ -26,7 +26,7 @@
 #include <bsp/bsp.h>
 #if MYNEWT_VAL(DA1469X_CHARGER_USE_CHARGE_CONTROL)
 #include <charge-control/charge_control.h>
-#include <DA1469xAB.h>
+#include <mcu/mcu.h>
 #endif
 
 int
