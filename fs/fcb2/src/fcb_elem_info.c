@@ -57,7 +57,7 @@ fcb_elem_crc16(struct fcb_entry *loc, uint16_t *c16p)
     return 0;
 }
 
-int
+static int
 fcb_read_entry(struct fcb_entry *loc)
 {
     uint8_t buf[FCB_ENTRY_SIZE];

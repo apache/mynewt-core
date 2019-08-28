@@ -122,7 +122,8 @@ fcb_is_empty(struct fcb *fcb)
 {
     return (fcb->f_active.fe_sector == fcb->f_oldest_sec &&
         fcb->f_active.fe_data_off ==
-            fcb_len_in_flash(fcb->f_active.fe_range, sizeof(struct fcb_disk_area)));
+            fcb_len_in_flash(fcb->f_active.fe_range,
+                             sizeof(struct fcb_disk_area)));
 }
 
 struct flash_sector_range *
@@ -217,10 +218,8 @@ fcb_sector_hdr_read(struct fcb *fcb, struct flash_sector_range *srp,
  * @return 0 on there are any fcbs aviable; OS_ENOENT otherwise
  */
 int
-fcb_offset_last_n(struct fcb *fcb, uint8_t entries,
-        struct fcb_entry *last_n_entry)
+fcb_offset_last_n(struct fcb *fcb, uint8_t entries, struct fcb_entry *loc)
 {
-    struct fcb_entry loc;
     int i;
 
     /* assure a minimum amount of entries */
@@ -229,19 +228,16 @@ fcb_offset_last_n(struct fcb *fcb, uint8_t entries,
     }
 
     i = 0;
-    memset(&loc, 0, sizeof(loc));
-    while (!fcb_getnext(fcb, &loc)) {
-        if (i == 0) {
-            /* Start from the beginning of fcb entries */
-            *last_n_entry = loc;
-        } else if (i > (entries - 1)) {
-            /* Update last_n_entry after n entries and keep updating */
-            fcb_getnext(fcb, last_n_entry);
-        }
+    memset(loc, 0, sizeof(*loc));
+    while (!fcb_getprev(fcb, loc)) {
+        --entries;
         i++;
+        if (entries == 0) {
+            break;
+        }
     }
 
-    return (i == 0) ? OS_ENOENT : 0;
+    return (i == 0) ? FCB_ERR_NOVAR : 0;
 }
 
 /**
@@ -285,7 +281,8 @@ fcb_init_flash_area(struct fcb *fcb, int flash_area_id, uint32_t magic,
     assert(rc == 0 && sector_range_cnt > 0);
     sector_ranges = malloc(sizeof(struct flash_sector_range) * sector_range_cnt);
     assert(sector_ranges);
-    rc = flash_area_to_sector_ranges(flash_area_id, &sector_range_cnt, sector_ranges);
+    rc = flash_area_to_sector_ranges(flash_area_id, &sector_range_cnt,
+                                     sector_ranges);
     assert(rc == 0 && sector_range_cnt > 0);
 
     fcb->f_ranges = sector_ranges;
