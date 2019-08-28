@@ -26,7 +26,7 @@
 #include <da1469x_charger/da1469x_charger.h>
 #include <parse/parse.h>
 #include <stdio.h>
-#include <DA1469xAB.h>
+#include <mcu/mcu.h>
 #if MYNEWT_VAL(SDADC_BATTERY)
 #include <sdadc_da1469x/sdadc_da1469x.h>
 #endif
