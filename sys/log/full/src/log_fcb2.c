@@ -67,9 +67,9 @@ log_fcb2_find_gte(struct log *log, struct log_offset *log_offset,
     fcb_log = log->l_arg;
     fcb = &fcb_log->fl_fcb;
 
-    /* Attempt to read the first entry.  If this fails, the FCB is empty. */
-    memset(out_entry, 0, sizeof *out_entry);
-    rc = fcb_getnext(fcb, out_entry);
+    /* Attempt to read the last entry.  If this fails, the FCB is empty. */
+    memset(out_entry, 0, sizeof(*out_entry));
+    rc = fcb_getprev(fcb, out_entry);
     if (rc == FCB_ERR_NOVAR) {
         return SYS_ENOENT;
     } else if (rc != 0) {
@@ -77,25 +77,31 @@ log_fcb2_find_gte(struct log *log, struct log_offset *log_offset,
     }
 
     /*
-     * if timestamp for request is < 0, return last log entry
+     * if timestamp for request is < 0, return last log entry (already read).
      */
     if (log_offset->lo_ts < 0) {
-        *out_entry = fcb->f_active;
         return 0;
     }
 
-#if 0 /* XXXX */
     /* If the requested index is beyond the end of the log, there is nothing to
      * retrieve.
      */
-    rc = log_read_hdr(log, &fcb->f_active, &hdr);
+    rc = log_read_hdr(log, out_entry, &hdr);
     if (rc != 0) {
         return rc;
     }
     if (log_offset->lo_index > hdr.ue_index) {
         return SYS_ENOENT;
     }
-#endif
+
+    /*
+     * Start from beginning.
+     */
+    memset(out_entry, 0, sizeof(*out_entry));
+    rc = fcb_getnext(fcb, out_entry);
+    if (rc != 0) {
+        return SYS_EUNKNOWN;
+    }
 #if MYNEWT_VAL(LOG_FCB_BOOKMARKS)
     bmark = fcb_log_closest_bmark(fcb_log, log_offset->lo_index);
     if (bmark != NULL) {
