@@ -258,7 +258,7 @@ omgr_pkg_init(void)
      * net/oic must be initialized before now.
      */
     res = oc_new_resource("/omgr", 1, 0);
-    oc_resource_bind_resource_type(res, MYNEWT_VAL(OMP_OIC_RESOURCE_NAME));
+    oc_resource_bind_resource_type(res, MYNEWT_VAL(OICMGR_OIC_RESOURCE_NAME));
     mode = OC_IF_RW;
     oc_resource_bind_resource_interface(res, mode);
     oc_resource_set_default_interface(res, mode);
