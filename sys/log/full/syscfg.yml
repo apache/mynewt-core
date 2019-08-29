@@ -68,7 +68,7 @@ syscfg.defs:
             bookmark storage at runtime.
         value: 0
         restrictions:
-            - LOG_FCB
+            - (LOG_FCB || LOG_FCB2)
 
     LOG_CONSOLE:
         description: 'Support logging to console.'

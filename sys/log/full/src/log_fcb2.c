@@ -24,8 +24,8 @@
 #include <string.h>
 
 #include "flash_map/flash_map.h"
-#include "fcb/fcb.h"
 #include "log/log.h"
+#include "fcb/fcb.h"
 
 /* Assume the flash alignment requirement is no stricter than 8. */
 #define LOG_FCB2_MAX_ALIGN   8
@@ -164,7 +164,12 @@ log_fcb2_start_append(struct log *log, int len, struct fcb_entry *loc)
 #endif
 
 #if MYNEWT_VAL(LOG_STATS)
+#if MYNEWT_VAL(LOG_FCB)
         rc = fcb_area_info(fcb, NULL, &cnt, NULL);
+#endif
+#if MYNEWT_VAL(LOG_FCB2)
+        rc = fcb_area_info(fcb, FCB_SECTOR_OLDEST, &cnt, NULL);
+#endif
         if (rc == 0) {
             LOG_STATS_INCN(log, lost, cnt);
         }
