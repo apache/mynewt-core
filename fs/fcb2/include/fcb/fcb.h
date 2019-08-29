@@ -30,9 +30,11 @@ extern "C" {
 
 #include <inttypes.h>
 #include <limits.h>
+#include <assert.h>
 
-#include "os/mynewt.h"
-#include "flash_map/flash_map.h"
+#include <syscfg/syscfg.h>
+#include <os/os_mutex.h>
+#include <flash_map/flash_map.h>
 
 #define FCB_MAX_LEN	(CHAR_MAX | CHAR_MAX << 7) /* Max length of element */
 
@@ -103,19 +105,6 @@ int fcb_init(struct fcb *fcb);
  */
 int fcb_init_flash_area(struct fcb *fcb, int flash_area_id, uint32_t magic,
     uint8_t version);
-
-/**
- * fcb_log is needed as the number of entries in a log
- */
-struct fcb_log {
-    struct fcb fl_fcb;
-    uint8_t fl_entries;
-
-#if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
-    /* Internal - tracking storage use */
-    uint32_t fl_watermark_off;
-#endif
-};
 
 /**
  * fcb_append() appends an entry to circular buffer. When writing the
