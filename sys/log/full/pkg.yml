@@ -52,6 +52,9 @@ pkg.deps.LOG_STORAGE_WATERMARK:
 pkg.apis:
     - log
 
+pkg.req_apis.LOG_STATS:
+    - stats
+
 pkg.init:
     log_init: 'MYNEWT_VAL(LOG_SYSINIT_STAGE_MAIN)'
 
