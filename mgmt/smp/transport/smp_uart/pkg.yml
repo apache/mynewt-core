@@ -6,7 +6,7 @@
 # to you under the Apache License, Version 2.0 (the
 # "License"); you may not use this file except in compliance
 # with the License.  You may obtain a copy of the License at
-# 
+#
 #  http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing,
@@ -17,25 +17,19 @@
 # under the License.
 #
 
-pkg.name: mgmt/smp
-pkg.description: Server-side SMP functionality.
+pkg.name: mgmt/smp/transport/smp_uart
+pkg.description: SMP transport over raw UART
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
+    - smp
+    - uart
 
 pkg.deps:
-    - "@apache-mynewt-mcumgr/cborattr"
     - "@apache-mynewt-core/kernel/os"
-    - "@apache-mynewt-mcumgr/mgmt"
-    - "@apache-mynewt-core/util/mem"
-    - "@apache-mynewt-mcumgr/smp"
-    - "@apache-mynewt-mcumgr/cmd/os_mgmt"
-
-pkg.deps.LOG_SOFT_RESET:
-    - "@apache-mynewt-core/sys/reboot"
-
-pkg.deps.TIMEPERSIST:
-    - "@apache-mynewt-core/time/timepersist"
+    - "@apache-mynewt-core/hw/drivers/uart"
+    - "@apache-mynewt-core/mgmt/smp"
+    - "@apache-mynewt-core/util/crc"
 
 pkg.init:
-    smp_pkg_init: 'MYNEWT_VAL(SMP_SYSINIT_STAGE)'
+    smp_uart_pkg_init: 'MYNEWT_VAL(SMP_UART_SYSINIT_STAGE)'
