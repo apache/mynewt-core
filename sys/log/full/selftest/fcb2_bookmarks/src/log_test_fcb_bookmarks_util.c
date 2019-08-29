@@ -40,15 +40,14 @@ static struct log ltfbu_log;
 
 static struct fcb_log_bmark ltfbu_bmarks[LTFBU_MAX_BMARKS];
 
-static struct flash_area ltfbu_fcb_areas[] = {
-    [0] = {
+static struct flash_sector_range ltfbu_fcb_range = {
+    .fsr_flash_area = {
         .fa_off = 0 * LTFBU_SECTOR_SIZE,
-        .fa_size = LTFBU_SECTOR_SIZE,
+        .fa_size = 2 * LTFBU_SECTOR_SIZE
     },
-    [1] = {
-        .fa_off = 1 * LTFBU_SECTOR_SIZE,
-        .fa_size = LTFBU_SECTOR_SIZE,
-    }
+    .fsr_sector_count = 2,
+    .fsr_sector_size = LTFBU_SECTOR_SIZE,
+    .fsr_align = MYNEWT_VAL(MCU_FLASH_MIN_WRITE_SIZE)
 };
 
 static int
@@ -56,19 +55,10 @@ ltfbu_max_entries(void)
 {
     int entry_space;
     int entry_size;
-    int len_size;
-    int crc_size;
 
-    if (ltfbu_cfg.body_len > 127) {
-        len_size = 2;
-    } else {
-        len_size = 1;
-    }
-    crc_size = 1;
-
-    /* "+ 1" for CRC. */
+    /* "+ 2" for CRC. */
     entry_size = LOG_BASE_ENTRY_HDR_SIZE + ltfbu_cfg.body_len +
-                 len_size + crc_size;
+                 FCB_ENTRY_SIZE + 2;
     entry_space = LTFBU_SECTOR_SIZE - 8;
 
     return entry_space / entry_size;
@@ -206,7 +196,6 @@ void
 ltfbu_init(const struct ltfbu_cfg *cfg)
 {
     int rc;
-    int i;
 
     /* Ensure tests are repeatable. */
     srand(0);
@@ -216,17 +205,17 @@ ltfbu_init(const struct ltfbu_cfg *cfg)
 
     ltfbu_fcb_log = (struct fcb_log) {
         .fl_fcb.f_scratch_cnt = 1,
-        .fl_fcb.f_sectors = ltfbu_fcb_areas,
-        .fl_fcb.f_sector_cnt = sizeof(ltfbu_fcb_areas) / sizeof(ltfbu_fcb_areas[0]),
+        .fl_fcb.f_range_cnt = 1,
+        .fl_fcb.f_sector_cnt = ltfbu_fcb_range.fsr_sector_count,
+        .fl_fcb.f_ranges = &ltfbu_fcb_range,
         .fl_fcb.f_magic = 0x7EADBADF,
         .fl_fcb.f_version = 0,
     };
 
-    for (i = 0; i < ltfbu_fcb_log.fl_fcb.f_sector_cnt; i++) {
-        rc = flash_area_erase(&ltfbu_fcb_areas[i], 0,
-                              ltfbu_fcb_areas[i].fa_size);
-        TEST_ASSERT_FATAL(rc == 0);
-    }
+    rc = flash_area_erase(&ltfbu_fcb_range.fsr_flash_area, 0,
+                     ltfbu_fcb_range.fsr_flash_area.fa_size);
+    TEST_ASSERT_FATAL(rc == 0);
+
     rc = fcb_init(&ltfbu_fcb_log.fl_fcb);
     TEST_ASSERT_FATAL(rc == 0);
 
