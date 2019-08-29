@@ -82,7 +82,8 @@ os_cputime_ticks_to_usecs(uint32_t ticks)
 
     shift = __builtin_popcount(MYNEWT_VAL(OS_CPUTIME_FREQ) - 1) - 6;
 
-    usecs = ((ticks >> shift) * 15625) + (((ticks & 0x1ff) * 15625) >> shift);
+    usecs = ((ticks >> shift) * 15625) +
+            (((ticks & ~(~0U << shift)) * 15625) >> shift);
     return usecs;
 }
 
