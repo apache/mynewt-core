@@ -21,15 +21,9 @@ syscfg.defs:
     BNO055_CLI:
         description: 'Enable shell support for the BNO055'
         value: 0
-    BNO055_SHELL_ITF_TYPE:
-        description: 'BNO055 interface type'
-        value: 1
-    BNO055_SHELL_ITF_NUM:
-        description: 'BNO055 interface number'
-        value: 0
-    BNO055_SHELL_ITF_ADDR:
-        description: 'BNO055 I2C Address'
-        value: 0x28
+    BNO055_SHELL_DEV:
+        description: 'System defined device to use in shell'
+        value: '"bno055_0"'
     BNO055_ITF_LOCK_TMO:
         description: 'BNO055 interface lock timeout in milliseconds'
         value: 1000
