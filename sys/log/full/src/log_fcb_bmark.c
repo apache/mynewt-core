@@ -17,13 +17,13 @@
  * under the License.
  */
 
+#include <string.h>
+
 #include "os/mynewt.h"
 
 #if MYNEWT_VAL(LOG_FCB_BOOKMARKS)
 
-#include "fcb/fcb.h"
-#include "fcb_priv.h"
-#include "string.h"
+#include "log/log_fcb.h"
 
 void
 fcb_log_init_bmarks(struct fcb_log *fcb_log,

@@ -25,6 +25,9 @@
 #if MYNEWT_VAL(LOG_STATS)
 #include "stats/stats.h"
 #endif
+#if MYNEWT_VAL(LOG_FCB) || MYNEWT_VAL(LOG_FCB2)
+#include "log/log_fcb.h"
+#endif
 
 #if MYNEWT_VAL(LOG_FLAGS_IMAGE_HASH)
 #define LOG_HDR_SIZE 19
