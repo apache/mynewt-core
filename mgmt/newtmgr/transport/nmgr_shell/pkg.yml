@@ -17,25 +17,6 @@
 # under the License.
 #
 
-pkg.name: mgmt/smp
-pkg.description: Server-side SMP functionality.
-pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
-pkg.homepage: "http://mynewt.apache.org/"
-pkg.keywords:
-
-pkg.deps:
-    - "@apache-mynewt-mcumgr/cborattr"
-    - "@apache-mynewt-core/kernel/os"
-    - "@apache-mynewt-mcumgr/mgmt"
-    - "@apache-mynewt-core/util/mem"
-    - "@apache-mynewt-mcumgr/smp"
-    - "@apache-mynewt-mcumgr/cmd/os_mgmt"
-
-pkg.deps.LOG_SOFT_RESET:
-    - "@apache-mynewt-core/sys/reboot"
-
-pkg.deps.TIMEPERSIST:
-    - "@apache-mynewt-core/time/timepersist"
-
-pkg.init:
-    smp_pkg_init: 'MYNEWT_VAL(SMP_SYSINIT_STAGE)'
+pkg.name: mgmt/newtmgr/transport/nmgr_shell
+pkg.type: transient
+pkg.link: "@apache-mynewt-core/mgmt/smp/transport/smp_shell"
