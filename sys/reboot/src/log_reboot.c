@@ -55,7 +55,12 @@ struct conf_handler reboot_conf_handler = {
 #if MYNEWT_VAL(REBOOT_LOG_FCB)
 static struct fcb_log reboot_log_fcb;
 static struct log reboot_log;
-static struct flash_area sector;
+#if MYNEWT_VAL(LOG_FCB)
+static struct flash_area reboot_sector;
+#endif
+#if MYNEWT_VAL(LOG_FCB2)
+static struct flash_sector_range reboot_sector;
+#endif
 #endif
 
 
@@ -88,12 +93,24 @@ log_reboot_init_fcb(void)
         return SYS_EUNKNOWN;
     }
     fcbp = &reboot_log_fcb.fl_fcb;
+#if MYNEWT_VAL(LOG_FCB)
     sector = *ptr;
-    fcbp->f_sectors = &sector;
-    fcbp->f_sector_cnt = 1;
     fcbp->f_magic = 0x7EADBADF;
     fcbp->f_version = g_log_info.li_version;
-
+    fcbp->f_sector_cnt = 1;
+    fcbp->f_sectors = &reboot_sector;
+#endif
+#if MYNEWT_VAL(LOG_FCB2)
+    fcbp->f_magic = 0x8EADBAE0;
+    fcbp->f_version = g_log_info.li_version;
+    fcbp->f_sector_cnt = 1;
+    fcbp->f_range_cnt = 1;
+    fcbp->f_ranges = &reboot_sector;
+    reboot_sector.fsr_flash_area = *ptr;
+    reboot_sector.fsr_sector_count = 1;
+    reboot_sector.fsr_sector_size = ptr->fa_size;
+    reboot_sector.fsr_align = flash_area_align(ptr);
+#endif
     reboot_log_fcb.fl_entries = MYNEWT_VAL(REBOOT_LOG_ENTRY_COUNT);
 
     rc = fcb_init(fcbp);
