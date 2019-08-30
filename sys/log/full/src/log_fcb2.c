@@ -821,7 +821,7 @@ log_fcb2_rtr_erase(struct log *log, void *arg)
     fcb_scratch.f_ranges = &range;
     fcb_scratch.f_sector_cnt = 1;
     fcb_scratch.f_range_cnt = 1;
-    fcb_scratch.f_magic = 0x7EADBADF;
+    fcb_scratch.f_magic = 0x7EADBAE0;
     fcb_scratch.f_version = g_log_info.li_version;
 
     flash_area_erase(&range.fsr_flash_area, 0, range.fsr_flash_area.fa_size);
