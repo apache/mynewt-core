@@ -739,8 +739,7 @@ log_fcb2_copy_entry(struct log *log, struct fcb_entry *entry,
     }
 
     /* Changing the fcb to be logged to be dst fcb */
-    fcb_tmp = &((struct fcb_log *)log->l_arg)->fl_fcb;
-
+    fcb_tmp = log->l_arg;
     log->l_arg = dst_fcb;
     rc = log_fcb2_append(log, data, dlen);
     log->l_arg = fcb_tmp;
@@ -763,24 +762,21 @@ log_fcb2_copy(struct log *log, struct fcb *src_fcb, struct fcb *dst_fcb,
 {
     struct fcb_entry entry;
     int rc;
-    int copy = 0;
 
     rc = 0;
 
-    memset(&entry, 0, sizeof(entry));
-    while (!fcb_getnext(src_fcb, &entry)) {
-        if (!copy) {
-            if (from && (entry.fe_range != from->fe_range ||
-                         entry.fe_data_off != from->fe_data_off)) {
-                continue;
-            }
-            copy = 1;
-        }
+    entry = *from;
+    do {
         rc = log_fcb2_copy_entry(log, &entry, dst_fcb);
         if (rc) {
             break;
         }
-    }
+        rc = fcb_getnext(src_fcb, &entry);
+        if (rc == FCB_ERR_NOVAR) {
+            rc = 0;
+            break;
+        }
+    } while (rc == 0);
 
     return (rc);
 }
@@ -848,8 +844,13 @@ log_fcb2_rtr_erase(struct log *log, void *arg)
         goto err;
     }
 
+    memset(&entry, 0, sizeof(entry));
+    rc = fcb_getnext(&fcb_scratch, &entry);
+    if (rc) {
+        goto err;
+    }
     /* Copy back from scratch */
-    rc = log_fcb2_copy(log, &fcb_scratch, fcb, NULL);
+    rc = log_fcb2_copy(log, &fcb_scratch, fcb, &entry);
 
 err:
     return (rc);
