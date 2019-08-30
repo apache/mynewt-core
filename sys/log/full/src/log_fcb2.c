@@ -770,8 +770,8 @@ log_fcb2_copy(struct log *log, struct fcb *src_fcb, struct fcb *dst_fcb,
     memset(&entry, 0, sizeof(entry));
     while (!fcb_getnext(src_fcb, &entry)) {
         if (!copy) {
-            if (from && entry.fe_range != from->fe_range &&
-                entry.fe_data_off != from->fe_data_off) {
+            if (from && (entry.fe_range != from->fe_range ||
+                         entry.fe_data_off != from->fe_data_off)) {
                 continue;
             }
             copy = 1;
