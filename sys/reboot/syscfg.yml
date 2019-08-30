@@ -21,7 +21,7 @@ syscfg.defs:
         description: 'Set reboot log target to be FCB.'
         value: 0
         restrictions:
-            - LOG_FCB
+            - (LOG_FCB || LOG_FCB2)
             - REBOOT_LOG_FLASH_AREA
 
     REBOOT_LOG_CONSOLE:
