@@ -94,7 +94,7 @@ log_reboot_init_fcb(void)
     }
     fcbp = &reboot_log_fcb.fl_fcb;
 #if MYNEWT_VAL(LOG_FCB)
-    sector = *ptr;
+    reboot_sector = *ptr;
     fcbp->f_magic = 0x7EADBADF;
     fcbp->f_version = g_log_info.li_version;
     fcbp->f_sector_cnt = 1;
