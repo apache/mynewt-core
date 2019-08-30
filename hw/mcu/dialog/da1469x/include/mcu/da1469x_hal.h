@@ -68,6 +68,22 @@ struct da1469x_hal_spi_cfg {
     int8_t pin_ss;
 };
 
+/**
+ * Allow QSPI and the connected flash to be setup.
+ * This allows proper operation when configation script is not
+ * executed/present yet.
+ *
+ * @param dev    Pointer to device
+ * @param bursta BURSTCMDA_REG register setting
+ * @param burstb BURSTCMDB_REG register setting
+ * @param cmds   Array of byte sized commands sent over SPI to flash
+ * @param len    Number of command bytes
+ *
+ * @return 0 on success, non-zero on failure.
+ */
+void da1469x_flash_setup(const struct hal_flash *dev, uint32_t bursta,
+                         uint32_t burstb, uint8_t *cmds, int len);
+
 #ifdef __cplusplus
 }
 #endif

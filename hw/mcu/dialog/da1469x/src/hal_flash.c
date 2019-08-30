@@ -307,6 +307,28 @@ da1469x_qspi_erase_sector(const struct hal_flash *dev, uint32_t sector_address)
     return 0;
 }
 
+void
+da1469x_flash_setup(const struct hal_flash *dev, uint32_t bursta,
+                    uint32_t burstb, uint8_t *cmds, int len)
+{
+    int i;
+
+    da1469x_qspi_mode_manual(NULL);
+    da1469x_qspi_mode_single(NULL);
+
+    QSPIC->QSPIC_BURSTCMDA_REG = bursta;
+    QSPIC->QSPIC_BURSTCMDB_REG = burstb;
+
+    QSPIC->QSPIC_CTRLBUS_REG = QSPIC_QSPIC_CTRLBUS_REG_QSPIC_EN_CS_Msk;
+    for (i = 0; i < len; i++) {
+        da1469x_qspi_write8(NULL, cmds[i]);
+    }
+    QSPIC->QSPIC_CTRLBUS_REG = QSPIC_QSPIC_CTRLBUS_REG_QSPIC_DIS_CS_Msk;
+
+    da1469x_qspi_mode_quad(NULL);
+    da1469x_qspi_mode_auto(NULL);
+}
+
 static int
 da1469x_hff_read(const struct hal_flash *dev, uint32_t address, void *dst,
                  uint32_t num_bytes)
