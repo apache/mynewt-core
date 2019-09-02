@@ -39,6 +39,8 @@
 #ifndef __STM32F7xx_HAL_CONF_H
 #define __STM32F7xx_HAL_CONF_H
 
+#include <syscfg/syscfg.h>
+
 #ifdef __cplusplus
  extern "C" {
 #endif
@@ -158,8 +160,8 @@
 #define  VDD_VALUE                    ((uint32_t)3300U) /*!< Value of VDD in mv */
 #define  TICK_INT_PRIORITY            ((uint32_t)0x0FU) /*!< tick interrupt priority */
 #define  USE_RTOS                     0U
-#define  PREFETCH_ENABLE              1U
-#define  ART_ACCLERATOR_ENABLE        1U /* To enable instruction cache and prefetch */
+#define  PREFETCH_ENABLE              MYNEWT_VAL(STM32_FLASH_PREFETCH_ENABLE)
+#define  ART_ACCLERATOR_ENABLE        MYNEWT_VAL(STM32_ART_ACCLERATOR_ENABLE)
 
 /* ########################## Assert Selection ############################## */
 /**
