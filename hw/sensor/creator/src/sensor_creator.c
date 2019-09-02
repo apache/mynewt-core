@@ -28,6 +28,9 @@
 #if MYNEWT_VAL(LSM303DLHC_OFB)
 #include <lsm303dlhc/lsm303dlhc.h>
 #endif
+#if MYNEWT_VAL(LSM6DSO_OFB)
+#include <lsm6dso/lsm6dso.h>
+#endif
 #if MYNEWT_VAL(MPU6050_OFB)
 #include <mpu6050/mpu6050.h>
 #endif
@@ -120,6 +123,10 @@ static struct drv2605 drv2605;
 
 #if MYNEWT_VAL(LSM303DLHC_OFB)
 static struct lsm303dlhc lsm303dlhc;
+#endif
+
+#if MYNEWT_VAL(LSM6DSO_OFB)
+static struct lsm6dso lsm6dso;
 #endif
 
 #if MYNEWT_VAL(MPU6050_OFB)
@@ -297,6 +304,25 @@ static struct sensor_itf i2c_0_itf_lsm = {
     .si_num  = 0,
     .si_addr = 0
 };
+#endif
+
+#if MYNEWT_VAL(LSM6DSO_OFB)
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+static const struct bus_i2c_node_cfg lsm6dso_node_cfg = {
+    .node_cfg = {
+        .bus_name = MYNEWT_VAL(LSM6DSO_OFB_I2C_BUS),
+    },
+    .addr = MYNEWT_VAL(LSM6DSO_OFB_I2C_ADDR),
+    .freq = 400,
+};
+static struct sensor_itf lsm6dso_i2c_itf;
+#else
+static struct sensor_itf lsm6dso_i2c_itf = {
+    .si_type = SENSOR_ITF_I2C,
+    .si_num  = MYNEWT_VAL(LSM6DSO_OFB_I2C_NUM),
+    .si_addr = MYNEWT_VAL(LSM6DSO_OFB_I2C_ADDR)
+};
+#endif
 #endif
 
 #if MYNEWT_VAL(MPU6050_OFB)
@@ -944,6 +970,68 @@ config_lsm303dlhc_sensor(void)
                   SENSOR_TYPE_MAGNETIC_FIELD;
 
     rc = lsm303dlhc_config((struct lsm303dlhc *) dev, &lsmcfg);
+
+    os_dev_close(dev);
+    return rc;
+}
+#endif
+
+/**
+ * LSM6DSO Sensor default configuration used by the creator package
+ *
+ * @return 0 on success, non-zero on failure
+ */
+#if MYNEWT_VAL(LSM6DSO_OFB)
+static int
+config_lsm6dso_sensor(void)
+{
+    int rc;
+    struct os_dev *dev;
+    struct lsm6dso_cfg cfg = {
+        .acc_fs = LSM6DSO_ACCEL_FS_4G_VAL,
+        .acc_rate = LSM6DSO_ACCEL_52HZ_VAL,
+
+        .gyro_fs = LSM6DSO_GYRO_FS_500DPS_VAL,
+        .gyro_rate = LSM6DSO_GYRO_52HZ_VAL,
+
+        .wk = {
+            .hpf_slope = 1, /* High pass filter applied */
+            .wake_up_ths = 15,
+            .wake_up_dur = 3,
+            .sleep_duration = 3,
+        },
+        .fifo = {
+            .mode = LSM6DSO_FIFO_MODE_CONTINUOUS_VAL,
+            .wtm = 10,
+        },
+        .ff = {
+            .freefall_dur = 3,
+            .freefall_ths = 3,
+        },
+        .tap = {
+            .dur = 10,
+            .en_x = 1,
+            .en_y = 1,
+            .en_z = 1,
+            .en_dtap = 1,
+            .quiet = 0,
+            .shock = 0,
+            .tap_prio = 0,
+            .tap_ths = 20
+        },
+        .orientation = {
+            .en_4d = 0,
+            .ths_6d = 0,
+        },
+        .int1_pin_cfg = 0,
+        .int2_pin_cfg = 0,
+        .map_int2_to_int1 = 0,
+    };
+
+    dev = (struct os_dev *)os_dev_open("lsm6dso_0", OS_TIMEOUT_NEVER, NULL);
+    assert(dev != NULL);
+
+    rc = lsm6dso_config((struct lsm6dso *)dev, &cfg);
 
     os_dev_close(dev);
     return rc;
@@ -1659,6 +1747,20 @@ sensor_dev_create(void)
     assert(rc == 0);
 
     rc = config_lsm303dlhc_sensor();
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(LSM6DSO_OFB)
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    rc = lsm6dso_create_i2c_sensor_dev(&lsm6dso.i2c_node, "lsm6dso_0",
+                                       &lsm6dso_node_cfg, &lsm6dso_i2c_itf);
+#else
+    rc = os_dev_create((struct os_dev *)&lsm6dso, "lsm6dso_0",
+      OS_DEV_INIT_PRIMARY, 0, lsm6dso_init, (void *)&lsm6dso_i2c_itf);
+#endif
+    assert(rc == 0);
+
+    rc = config_lsm6dso_sensor();
     assert(rc == 0);
 #endif
 
