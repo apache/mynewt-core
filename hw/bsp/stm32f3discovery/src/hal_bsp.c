@@ -162,8 +162,6 @@ hal_bsp_init(void)
     int rc;
     (void)rc;  /* in case there are no devices declared */
 
-    hal_system_clock_start();
-
 #if MYNEWT_VAL(UART_0)
     rc = os_dev_create((struct os_dev *)&hal_uart[0], UART_DEV_NAME,
             OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *)&uart_cfg[0]);
