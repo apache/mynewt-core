@@ -383,7 +383,6 @@ int lsm6dso_writelen(struct sensor_itf *itf, uint8_t addr,
          */
         uint8_t payload[19];
     } write_data;
-    struct lsm6dso *dev = (struct lsm6dso *)itf->si_dev;
 
     if (len > sizeof(write_data.payload)) {
         return -1;
@@ -406,9 +405,9 @@ int lsm6dso_writelen(struct sensor_itf *itf, uint8_t addr,
     }
 
     sensor_itf_unlock(itf);
+err:
 #endif /* BUS_DRIVER_PRESENT */
 
-err:
     return rc;
 }
 

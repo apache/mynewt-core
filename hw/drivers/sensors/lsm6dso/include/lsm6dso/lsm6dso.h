@@ -348,6 +348,17 @@ lsm6dso_get_ag_data(struct sensor_itf *itf, sensor_type_t type, void *data,
  */
 int lsm6dso_run_self_test(struct sensor_itf *itf, int *result);
 
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+int lsm6dso_create_i2c_sensor_dev(struct bus_i2c_node *node, const char *name,
+                                  const struct bus_i2c_node_cfg *i2c_cfg,
+                                  struct sensor_itf *sensor_itf);
+
+int lsm6dso_create_spi_sensor_dev(struct bus_spi_node *node, const char *name,
+                                  const struct bus_spi_node_cfg *spi_cfg,
+                                  struct sensor_itf *sensor_itf);
+
+#endif
+
 #ifdef __cplusplus
 }
 #endif
