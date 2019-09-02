@@ -71,7 +71,7 @@ fcb_getprev(struct fcb *fcb, struct fcb_entry *loc)
          */
         *loc = fcb->f_active;
     }
-    do {
+     while (1) {
         loc->fe_entry_num--;
         if (loc->fe_entry_num < 1) {
             /*
@@ -96,7 +96,7 @@ fcb_getprev(struct fcb *fcb, struct fcb_entry *loc)
                 break;
             }
         }
-    } while (1);
+    }
     os_mutex_release(&fcb->f_mtx);
     return rc;
 }
