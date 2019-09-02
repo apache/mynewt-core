@@ -37,7 +37,7 @@ syscfg.defs:
 
     BNO055_LOG_MODULE:
         description: 'Numeric module ID to use for BNO055 log messages.'
-        value: 85
+        value: 87
     BNO055_LOG_LVL:
         description: 'Minimum level for the BNO055 log.'
         value: 1
