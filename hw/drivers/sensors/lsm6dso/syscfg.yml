@@ -68,7 +68,7 @@ syscfg.defs:
 
     LSM6DSO_LOG_MODULE:
         description: 'Numeric module ID to use for LSM6DSO log messages.'
-        value: 110
+        value: 113
     LSM6DSO_LOG_LVL:
         description: 'Minimum level for the LSM6DSO log.'
         value: 1

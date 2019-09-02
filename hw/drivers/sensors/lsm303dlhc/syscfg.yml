@@ -30,7 +30,7 @@ syscfg.defs:
 
     LSM303DLHC_LOG_MODULE:
         description: 'Numeric module ID to use for LSM303DLHC log messages.'
-        value: 195
+        value: 196
     LSM303DLHC_LOG_LVL:
         description: 'Minimum level for the LSM303DLHC log.'
         value: 1
