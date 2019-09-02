@@ -76,7 +76,7 @@ syscfg.defs:
 
     BMP388_LOG_MODULE:
         description: 'Numeric module ID to use for BMP388 log messages.'
-        value: 213
+        value: 214
     BMP388_LOG_LVL:
         description: 'Minimum level for the BMP388 log.'
         value: 1

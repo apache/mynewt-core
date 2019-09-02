@@ -71,7 +71,7 @@ syscfg.defs:
 
     LIS2DE12_LOG_MODULE:
         description: 'Numeric module ID to use for LIS2DE12 log messages.'
-        value: 110
+        value: 112
     LIS2DE12_LOG_LVL:
         description: 'Minimum level for the LIS2DE12 log.'
         value: 1
