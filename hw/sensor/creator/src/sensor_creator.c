@@ -1862,7 +1862,7 @@ sensor_dev_create(void)
 
 #if MYNEWT_VAL(LIS2DH12_OFB)
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
-#if MYNEWT_VAL(BMP388_OFB_I2C_NUM) >= 0
+#if MYNEWT_VAL(LIS2DH12_OFB_I2C_NUM) >= 0
     rc = lis2dh12_create_i2c_sensor_dev(&lis2dh12.i2c_node, "lis2dh12_0",
                                         &lis2dh12_node_cfg, &lis2dh12_itf);
     assert(rc == 0);
