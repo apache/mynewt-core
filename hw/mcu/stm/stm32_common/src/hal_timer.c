@@ -94,7 +94,7 @@ stm32_tmr_cbs(struct stm32_hal_tmr *tmr)
     }
     ht = TAILQ_FIRST(&tmr->sht_timers);
     if (ht) {
-        tmr->sht_regs->CCR1 = ht->expiry;
+        tmr->sht_regs->CCR1 = ht->expiry & 0xFFFFU;
     } else {
         TIM_CCxChannelCmd(tmr->sht_regs, TIM_CHANNEL_1, TIM_CCx_DISABLE);
         tmr->sht_regs->DIER &= ~TIM_DIER_CC1IE;
@@ -740,7 +740,7 @@ hal_timer_start_at(struct hal_timer *timer, uint32_t tick)
     } else {
         if (timer == TAILQ_FIRST(&tmr->sht_timers)) {
             TIM_CCxChannelCmd(tmr->sht_regs, TIM_CHANNEL_1, TIM_CCx_ENABLE);
-            tmr->sht_regs->CCR1 = timer->expiry;
+            tmr->sht_regs->CCR1 = timer->expiry & 0xFFFFU;
             tmr->sht_regs->DIER |= TIM_DIER_CC1IE;
         }
     }
@@ -780,7 +780,7 @@ hal_timer_stop(struct hal_timer *timer)
         timer->link.tqe_prev = NULL;
         if (reset_ocmp) {
             if (ht) {
-                tmr->sht_regs->CCR1 = ht->expiry;
+                tmr->sht_regs->CCR1 = ht->expiry & 0xFFFFU;
             } else {
                 TIM_CCxChannelCmd(tmr->sht_regs, TIM_CHANNEL_1,
                   TIM_CCx_DISABLE);
