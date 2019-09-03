@@ -38,7 +38,7 @@ static int ltfbu_num_entry_idxs;
 static struct fcb_log ltfbu_fcb_log;
 static struct log ltfbu_log;
 
-static struct fcb_log_bmark ltfbu_bmarks[LTFBU_MAX_BMARKS];
+static struct log_fcb_bmark ltfbu_bmarks[LTFBU_MAX_BMARKS];
 
 static struct flash_area ltfbu_fcb_areas[] = {
     [0] = {
@@ -231,7 +231,7 @@ ltfbu_init(const struct ltfbu_cfg *cfg)
     TEST_ASSERT_FATAL(rc == 0);
 
     if (cfg->bmark_count > 0) {
-        fcb_log_init_bmarks(&ltfbu_fcb_log, ltfbu_bmarks, cfg->bmark_count);
+        log_fcb_init_bmarks(&ltfbu_fcb_log, ltfbu_bmarks, cfg->bmark_count);
     }
 
     log_register("log", &ltfbu_log, &log_fcb_handler, &ltfbu_fcb_log,

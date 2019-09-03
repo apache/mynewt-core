@@ -30,7 +30,7 @@
 /* Assume the flash alignment requirement is no stricter than 8. */
 #define LOG_FCB_MAX_ALIGN   8
 
-static int log_fcb_rtr_erase(struct log *log, void *arg);
+static int log_fcb_rtr_erase(struct log *log);
 
 /**
  * Finds the first log entry whose "offset" is >= the one specified.  A log
@@ -57,7 +57,7 @@ log_fcb_find_gte(struct log *log, struct log_offset *log_offset,
                  struct fcb_entry *out_entry)
 {
 #if MYNEWT_VAL(LOG_FCB_BOOKMARKS)
-    const struct fcb_log_bmark *bmark;
+    const struct log_fcb_bmark *bmark;
 #endif
     struct log_entry_hdr hdr;
     struct fcb_log *fcb_log;
@@ -96,9 +96,9 @@ log_fcb_find_gte(struct log *log, struct log_offset *log_offset,
     }
 
 #if MYNEWT_VAL(LOG_FCB_BOOKMARKS)
-    bmark = fcb_log_closest_bmark(fcb_log, log_offset->lo_index);
+    bmark = log_fcb_closest_bmark(fcb_log, log_offset->lo_index);
     if (bmark != NULL) {
-        *out_entry = bmark->flb_entry;
+        *out_entry = bmark->lfb_entry;
     }
 #endif
 
@@ -142,7 +142,7 @@ log_fcb_start_append(struct log *log, int len, struct fcb_entry *loc)
         }
 
         if (fcb_log->fl_entries) {
-            rc = log_fcb_rtr_erase(log, fcb_log);
+            rc = log_fcb_rtr_erase(log);
             if (rc) {
                 goto err;
             }
@@ -161,7 +161,7 @@ log_fcb_start_append(struct log *log, int len, struct fcb_entry *loc)
 
 #if MYNEWT_VAL(LOG_FCB_BOOKMARKS)
         /* The FCB needs to be rotated.  Invalidate all bookmarks. */
-        fcb_log_clear_bmarks(fcb_log);
+        log_fcb_clear_bmarks(fcb_log);
 #endif
 
         rc = fcb_rotate(fcb);
@@ -225,7 +225,6 @@ log_fcb_append_body(struct log *log, const struct log_entry_hdr *hdr,
 
     fcb_log = (struct fcb_log *)log->l_arg;
     fcb = &fcb_log->fl_fcb;
-    hdr_len = 0;
 
     if (fcb->f_align > LOG_FCB_MAX_ALIGN) {
         return SYS_ENOTSUP;
@@ -504,14 +503,18 @@ log_fcb_walk(struct log *log, log_walk_func_t walk_func,
      * last entry), add a bookmark pointing to this walk's start location.
      */
     if (log_offset->lo_ts >= 0) {
-        fcb_log_add_bmark(fcb_log, &loc, log_offset->lo_index);
+        log_fcb_add_bmark(fcb_log, &loc, log_offset->lo_index);
     }
 #endif
 
     do {
         rc = walk_func(log, log_offset, &loc, loc.fe_data_len);
         if (rc != 0) {
-            return rc;
+            if (rc < 0) {
+                return rc;
+            } else {
+                return 0;
+            }
         }
     } while (fcb_getnext(fcb, &loc) == 0);
 
@@ -528,7 +531,7 @@ log_fcb_flush(struct log *log)
     fcb = &fcb_log->fl_fcb;
 
 #if MYNEWT_VAL(LOG_FCB_BOOKMARKS)
-    fcb_log_clear_bmarks(fcb_log);
+    log_fcb_clear_bmarks(fcb_log);
 #endif
 
     return fcb_clear(fcb);
@@ -657,7 +660,7 @@ log_fcb_new_watermark_index(struct log *log, struct log_offset *log_offset, void
     /* Set log watermark to end of this element */
     if (ueh.ue_index >= log_offset->lo_index) {
         fl->fl_watermark_off = loc->fe_area->fa_off + loc->fe_data_off + loc->fe_data_len;
-        return -1;
+        return 1;
     } else {
         return 0;
     }
@@ -698,7 +701,11 @@ done:
 
 /**
  * Copies one log entry from source fcb to destination fcb
- * @param src_fcb, dst_fcb
+ *
+ * @param log      Log this operation applies to
+ * @param entry    FCB2 location for the entry being copied
+ * @param dst_fcb  FCB2 area where data is getting copied to.
+ *
  * @return 0 on success; non-zero on error
  */
 static int
@@ -707,7 +714,7 @@ log_fcb_copy_entry(struct log *log, struct fcb_entry *entry,
 {
     struct log_entry_hdr ueh;
     char data[LOG_PRINTF_MAX_ENTRY_LEN + LOG_BASE_ENTRY_HDR_SIZE + LOG_IMG_HASHLEN];
-    uint16_t hdr_len = 0;
+    uint16_t hdr_len;
     int dlen;
     int rc;
     struct fcb *fcb_tmp;
@@ -743,7 +750,12 @@ err:
 
 /**
  * Copies log entries from source fcb to destination fcb
- * @param src_fcb, dst_fcb, element offset to start copying
+ *
+ * @param log      Log this operation applies to
+ * @param src_fcb  FCB area which is the source of data
+ * @param dst_fcb  FCB area which is the target
+ * @param offset   Flash offset where to start the copy
+ *
  * @return 0 on success; non-zero on error
  */
 static int
@@ -770,13 +782,15 @@ log_fcb_copy(struct log *log, struct fcb *src_fcb, struct fcb *dst_fcb,
 }
 
 /**
- * Flushes the log while restoring specified number of entries
+ * Flushes the log while keeping the specified number of entries
  * using image scratch
- * @param src_fcb, dst_fcb
+ *
+ * @param log      Log this operation applies to
+ *
  * @return 0 on success; non-zero on error
  */
 static int
-log_fcb_rtr_erase(struct log *log, void *arg)
+log_fcb_rtr_erase(struct log *log)
 {
     struct fcb_log *fcb_log;
     struct fcb fcb_scratch;
@@ -792,8 +806,8 @@ log_fcb_rtr_erase(struct log *log, void *arg)
         goto err;
     }
 
-    fcb_log = (struct fcb_log *)arg;
-    fcb = (struct fcb *)fcb_log;
+    fcb_log = log->l_arg;
+    fcb = &fcb_log->fl_fcb;
 
     memset(&fcb_scratch, 0, sizeof(fcb_scratch));
 

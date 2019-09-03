@@ -26,27 +26,27 @@
 #include "log/log_fcb.h"
 
 void
-fcb_log_init_bmarks(struct fcb_log *fcb_log,
-                    struct fcb_log_bmark *buf, int bmark_count)
+log_fcb_init_bmarks(struct fcb_log *fcb_log,
+                    struct log_fcb_bmark *buf, int bmark_count)
 {
-    fcb_log->fl_bset = (struct fcb_log_bset) {
-        .fls_bmarks = buf,
-        .fls_cap = bmark_count,
+    fcb_log->fl_bset = (struct log_fcb_bset) {
+        .lfs_bmarks = buf,
+        .lfs_cap = bmark_count,
     };
 }
 
 void
-fcb_log_clear_bmarks(struct fcb_log *fcb_log)
+log_fcb_clear_bmarks(struct fcb_log *fcb_log)
 {
-    fcb_log->fl_bset.fls_size = 0;
-    fcb_log->fl_bset.fls_next = 0;
+    fcb_log->fl_bset.lfs_size = 0;
+    fcb_log->fl_bset.lfs_next = 0;
 }
 
-const struct fcb_log_bmark *
-fcb_log_closest_bmark(const struct fcb_log *fcb_log, uint32_t index)
+const struct log_fcb_bmark *
+log_fcb_closest_bmark(const struct fcb_log *fcb_log, uint32_t index)
 {
-    const struct fcb_log_bmark *closest;
-    const struct fcb_log_bmark *bmark;
+    const struct log_fcb_bmark *closest;
+    const struct log_fcb_bmark *bmark;
     uint32_t min_diff;
     uint32_t diff;
     int i;
@@ -54,10 +54,10 @@ fcb_log_closest_bmark(const struct fcb_log *fcb_log, uint32_t index)
     min_diff = UINT32_MAX;
     closest = NULL;
 
-    for (i = 0; i < fcb_log->fl_bset.fls_size; i++) {
-        bmark = &fcb_log->fl_bset.fls_bmarks[i];
-        if (bmark->flb_index <= index) {
-            diff = index - bmark->flb_index;
+    for (i = 0; i < fcb_log->fl_bset.lfs_size; i++) {
+        bmark = &fcb_log->fl_bset.lfs_bmarks[i];
+        if (bmark->lfb_index <= index) {
+            diff = index - bmark->lfb_index;
             if (diff < min_diff) {
                 min_diff = diff;
                 closest = bmark;
@@ -69,29 +69,29 @@ fcb_log_closest_bmark(const struct fcb_log *fcb_log, uint32_t index)
 }
 
 void
-fcb_log_add_bmark(struct fcb_log *fcb_log, const struct fcb_entry *entry,
+log_fcb_add_bmark(struct fcb_log *fcb_log, const struct fcb_entry *entry,
                   uint32_t index)
 {
-    struct fcb_log_bset *bset;
+    struct log_fcb_bset *bset;
 
     bset = &fcb_log->fl_bset;
 
-    if (bset->fls_cap == 0) {
+    if (bset->lfs_cap == 0) {
         return;
     }
 
-    bset->fls_bmarks[bset->fls_next] = (struct fcb_log_bmark) {
-        .flb_entry = *entry,
-        .flb_index = index,
+    bset->lfs_bmarks[bset->lfs_next] = (struct log_fcb_bmark) {
+        .lfb_entry = *entry,
+        .lfb_index = index,
     };
 
-    if (bset->fls_size < bset->fls_cap) {
-        bset->fls_size++;
+    if (bset->lfs_size < bset->lfs_cap) {
+        bset->lfs_size++;
     }
 
-    bset->fls_next++;
-    if (bset->fls_next >= bset->fls_cap) {
-        bset->fls_next = 0;
+    bset->lfs_next++;
+    if (bset->lfs_next >= bset->lfs_cap) {
+        bset->lfs_next = 0;
     }
 }
 
