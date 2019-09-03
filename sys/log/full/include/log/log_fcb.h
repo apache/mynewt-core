@@ -26,27 +26,27 @@ extern "C" {
 #include <fcb/fcb.h>
 
 /** An individual fcb log bookmark. */
-struct fcb_log_bmark {
+struct log_fcb_bmark {
     /* FCB entry that the bookmark points to. */
-    struct fcb_entry flb_entry;
+    struct fcb_entry lfb_entry;
 
     /* The index of the log entry that the FCB entry contains. */
-    uint32_t flb_index;
+    uint32_t lfb_index;
 };
 
 /** A set of fcb log bookmarks. */
-struct fcb_log_bset {
+struct log_fcb_bset {
     /** Array of bookmarks. */
-    struct fcb_log_bmark *fls_bmarks;
+    struct log_fcb_bmark *lfs_bmarks;
 
     /** The maximum number of bookmarks. */
-    int fls_cap;
+    int lfs_cap;
 
     /** The number of currently usable bookmarks. */
-    int fls_size;
+    int lfs_size;
 
     /** The index where the next bookmark will get written. */
-    int fls_next;
+    int lfs_next;
 };
 
 /**
@@ -57,11 +57,17 @@ struct fcb_log {
     uint8_t fl_entries;
 
 #if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
+#if MYNEWT_VAL(LOG_FCB)
     /* Internal - tracking storage use */
     uint32_t fl_watermark_off;
 #endif
+#if MYNEWT_VAL(LOG_FCB2)
+    uint16_t fl_watermark_sec;
+    uint32_t fl_watermark_off;
+#endif
+#endif
 #if MYNEWT_VAL(LOG_FCB_BOOKMARKS)
-    struct fcb_log_bset fl_bset;
+    struct log_fcb_bset fl_bset;
 #endif
 };
 
@@ -86,18 +92,18 @@ struct fcb_log {
  * @brief Configures an fcb_log to use the specified buffer for bookmarks.
  *
  * @param fcb_log               The log to configure.
- * @param bmarks                The buffer to use for bookmarks.
+ * @param buf                   The buffer to use for bookmarks.
  * @param bmark_count           The bookmark capacity of the supplied buffer.
  */
-void fcb_log_init_bmarks(struct fcb_log *fcb_log,
-                         struct fcb_log_bmark *buf, int bmark_count);
+void log_fcb_init_bmarks(struct fcb_log *fcb_log,
+                         struct log_fcb_bmark *buf, int bmark_count);
 
 /**
  * @brief Erases all bookmarks from the supplied fcb_log.
  *
  * @param fcb_log               The fcb_log to clear.
  */
-void fcb_log_clear_bmarks(struct fcb_log *fcb_log);
+void log_fcb_clear_bmarks(struct fcb_log *fcb_log);
 
 /**
  * @brief Searches an fcb_log for the closest bookmark that comes before or at
@@ -109,8 +115,8 @@ void fcb_log_clear_bmarks(struct fcb_log *fcb_log);
  * @return                      The closest bookmark on success;
  *                              NULL if the log has no applicable bookmarks.
  */
-const struct fcb_log_bmark *
-fcb_log_closest_bmark(const struct fcb_log *fcb_log, uint32_t index);
+const struct log_fcb_bmark *
+log_fcb_closest_bmark(const struct fcb_log *fcb_log, uint32_t index);
 
 /**
  * Inserts a bookmark into the provided log.
@@ -119,7 +125,7 @@ fcb_log_closest_bmark(const struct fcb_log *fcb_log, uint32_t index);
  * @param entry                 The entry the bookmark should point to.
  * @param index                 The log entry index of the bookmark.
  */
-void fcb_log_add_bmark(struct fcb_log *fcb_log, const struct fcb_entry *entry,
+void log_fcb_add_bmark(struct fcb_log *fcb_log, const struct fcb_entry *entry,
                        uint32_t index);
 #endif
 
