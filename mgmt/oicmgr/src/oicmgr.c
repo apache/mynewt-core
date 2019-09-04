@@ -269,3 +269,54 @@ omgr_pkg_init(void)
 
     return 0;
 }
+
+static int
+omgr_oic_read_hdr(struct CborValue *cv, struct nmgr_hdr *out_hdr)
+{
+    size_t hlen;
+    int rc;
+
+    struct cbor_attr_t attrs[] = {
+        [0] = {
+            .attribute = "_h",
+            .type = CborAttrByteStringType,
+            .addr.bytestring.data = (void *)out_hdr,
+            .addr.bytestring.len = &hlen,
+            .nodefault = 1,
+            .len = sizeof *out_hdr,
+        },
+        [1] = { 0 }
+    };
+
+    rc = cbor_read_object(cv, attrs);
+    if (rc != 0 || hlen != sizeof *out_hdr) {
+        return MGMT_ERR_EINVAL;
+    }
+
+    out_hdr->nh_len = ntohs(out_hdr->nh_len);
+    out_hdr->nh_group = ntohs(out_hdr->nh_group);
+
+    return 0;
+}
+
+int
+omgr_extract_req_hdr(oc_request_t *req, struct nmgr_hdr *out_hdr)
+{
+    struct omp_state *o = &omgr_state;
+    uint16_t data_off;
+    struct os_mbuf *m;
+    int rc;
+
+    coap_get_payload(req->packet, &m, &data_off);
+
+    cbor_mbuf_reader_init(&o->m_ctxt.mc_reader, m, data_off);
+    cbor_parser_init(&o->m_ctxt.mc_reader.r, 0, &o->m_ctxt.mc_mj.parser,
+                     &o->m_ctxt.it);
+
+    rc = omgr_oic_read_hdr(&o->m_ctxt.mc_mj.it, out_hdr);
+    if (rc != 0) {
+        return MGMT_ERR_EINVAL;
+    }
+
+    return 0;
+}
