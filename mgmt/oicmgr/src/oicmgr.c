@@ -27,6 +27,8 @@
 #include "tinycbor/cbor.h"
 #include "tinycbor/cbor_mbuf_writer.h"
 #include "tinycbor/cbor_mbuf_reader.h"
+#include "cborattr/cborattr.h"
+#include "omp/omp.h"
 
 #include "oic/oc_api.h"
 
@@ -184,7 +186,7 @@ oic_tx_rsp(struct omp_streamer *stmr, int retval, void *unused)
 /**
  * Processes a single OMP request and sends the corresponding response(s).
  */
-static void
+void
 omgr_process_request(oc_request_t *req, oc_interface_mask_t mask)
 {
     struct cbor_mbuf_reader reader;
@@ -270,50 +272,23 @@ omgr_pkg_init(void)
     return 0;
 }
 
-static int
-omgr_oic_read_hdr(struct CborValue *cv, struct nmgr_hdr *out_hdr)
-{
-    size_t hlen;
-    int rc;
-
-    struct cbor_attr_t attrs[] = {
-        [0] = {
-            .attribute = "_h",
-            .type = CborAttrByteStringType,
-            .addr.bytestring.data = (void *)out_hdr,
-            .addr.bytestring.len = &hlen,
-            .nodefault = 1,
-            .len = sizeof *out_hdr,
-        },
-        [1] = { 0 }
-    };
-
-    rc = cbor_read_object(cv, attrs);
-    if (rc != 0 || hlen != sizeof *out_hdr) {
-        return MGMT_ERR_EINVAL;
-    }
-
-    out_hdr->nh_len = ntohs(out_hdr->nh_len);
-    out_hdr->nh_group = ntohs(out_hdr->nh_group);
-
-    return 0;
-}
-
 int
 omgr_extract_req_hdr(oc_request_t *req, struct nmgr_hdr *out_hdr)
 {
-    struct omp_state *o = &omgr_state;
     uint16_t data_off;
     struct os_mbuf *m;
     int rc;
+    struct cbor_mbuf_reader reader;
+    CborParser parser;
+    CborValue it;
 
     coap_get_payload(req->packet, &m, &data_off);
 
-    cbor_mbuf_reader_init(&o->m_ctxt.mc_reader, m, data_off);
-    cbor_parser_init(&o->m_ctxt.mc_reader.r, 0, &o->m_ctxt.mc_mj.parser,
-                     &o->m_ctxt.it);
+    cbor_mbuf_reader_init(&reader, m, data_off);
+    cbor_parser_init(&reader.r, 0, &parser,
+                     &it);
 
-    rc = omgr_oic_read_hdr(&o->m_ctxt.mc_mj.it, out_hdr);
+    rc = omp_read_hdr(&it, out_hdr);
     if (rc != 0) {
         return MGMT_ERR_EINVAL;
     }
