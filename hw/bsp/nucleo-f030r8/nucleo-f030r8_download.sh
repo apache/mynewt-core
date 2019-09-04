@@ -17,39 +17,13 @@
 # under the License.
 #
 
-# Called with following variables set:
-#  - BSP_PATH is absolute path to hw/bsp/bsp_name
-#  - BIN_BASENAME is the path to prefix to target binary,
-#    .elf appended to name is the ELF file
-#  - IMAGE_SLOT is the image slot to download to (for non-mfg-image, non-boot)
-#  - FEATURES holds the target features string
-#  - EXTRA_JTAG_CMD holds extra parameters to pass to jtag software
-#  - MFG_IMAGE is "1" if this is a manufacturing image
+. $CORE_PATH/hw/scripts/stlink.sh
 
-if [ -z "$BIN_BASENAME" ]; then
-    echo "Need binary to download"
-    exit 1
+if [ "$MFG_IMAGE" ]; then
+    FLASH_OFFSET=0x08000000
 fi
 
-IS_BOOTLOADER=0
+BOOT_LOADER=1
 
-# Look for 'bootloader' in FEATURES
-for feature in $FEATURES; do
-    if [ $feature == "bootloader" ]; then
-        IS_BOOTLOADER=1
-    fi
-done
-
-if [ "$MFG_IMAGE" == "1" ]; then
-    FILE_NAME=$BASENAME.bin
-elif [ $IS_BOOTLOADER -eq 1 ]; then
-    FILE_NAME=$BIN_BASENAME.elf.bin
-else
-    FILE_NAME=$BIN_BASENAME.elf
-fi
-FLASH_OFFSET=0x08000000
-
-echo "Downloading" $FILE_NAME "to" $FLASH_OFFSET
-
-openocd -d0 -f board/st_nucleo_f0.cfg -c "init; reset halt; flash write_image erase $FILE_NAME; reset run; shutdown" 2>&1 | tee /tmp/newt.log
-
+common_file_to_load
+stlink_load
