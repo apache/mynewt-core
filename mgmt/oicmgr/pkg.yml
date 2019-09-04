@@ -30,6 +30,7 @@ pkg.deps:
     - "@apache-mynewt-core/kernel/os"
     - "@apache-mynewt-core/net/oic"
     - "@apache-mynewt-mcumgr/omp/port/mynewt"
+    - "@apache-mynewt-mcumgr/omp"
 
 pkg.init:
     omgr_pkg_init: 'MYNEWT_VAL(OICMGR_SYSINIT_STAGE)'
