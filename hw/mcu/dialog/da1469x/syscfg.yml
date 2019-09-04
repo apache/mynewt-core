@@ -31,7 +31,7 @@ syscfg.defs:
         description: >
             Specifies whether or not to enable SIMO DC-DC Converter.
         value: 0
-    
+
     MCU_GPIO_RETAINABLE_NUM:
         description: >
             Number of GPIO pins which can have its state retained in
@@ -113,6 +113,14 @@ syscfg.defs:
             data before writing, i.e. each such transfer will be split into
             chunks of this size. Buffer is created on stack.
         value: 128
+    MCU_QSPIC_BURSTCMDA_INIT_VAL:
+        description: >
+            Initialization value for QSPIC_BURSTCMDA_REG
+        value: -1
+    MCU_QSPIC_BURSTCMDB_INIT_VAL:
+        description: >
+            Initialization value for QSPIC_BURSTCMDB_REG
+        value: -1
 
 # MCU peripherals definitions
     I2C_0:
