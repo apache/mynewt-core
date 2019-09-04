@@ -32,6 +32,56 @@
 #include "img_mgmt/img_mgmt.h"
 #include "imgmgr_priv.h"
 
+static imgr_upload_fn *imgr_upload_cb;
+static void *imgr_upload_arg;
+
+void
+imgr_set_upload_cb(imgr_upload_fn *cb, void *arg)
+{
+    imgr_upload_cb = cb;
+    imgr_upload_arg = arg;
+}
+
+
+void imgmgr_dfu_stopped(void)
+{
+    img_mgmt_dfu_stopped();
+}
+
+void imgmgr_dfu_started(void)
+{
+    img_mgmt_dfu_started();
+}
+
+void imgmgr_dfu_pending(void)
+{
+    img_mgmt_dfu_pending();
+}
+
+void imgmgr_dfu_confirmed(void)
+{
+    img_mgmt_dfu_confirmed();
+}
+
+void
+imgmgr_register_callbacks(const imgmgr_dfu_callbacks_t *cb_struct)
+{
+    img_mgmt_register_callbacks((const img_mgmt_dfu_callbacks_t *)cb_struct);
+}
+
+uint8_t
+imgmgr_state_flags(int query_slot)
+{
+    return img_mgmt_state_flags(query_slot);
+}
+
+int
+imgr_read_info(int image_slot, struct image_version *ver, uint8_t *hash,
+               uint32_t *flags)
+{
+    return img_mgmt_read_info(image_slot, ver, hash, flags);
+}
+
 static int
 imgr_erase_state(struct mgmt_ctxt *ctxt);
 

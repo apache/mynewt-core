@@ -43,4 +43,4 @@ pkg.deps.CONFIG_FCB:
 
 pkg.deps.BUILD_WITH_OIC:
     - "@apache-mynewt-core/net/oic"
-    - "@apache-mynewt-core/encoding/cborattr"
+    - "@apache-mynewt-mcumgr/cborattr"
