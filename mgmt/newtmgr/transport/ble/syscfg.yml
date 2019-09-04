@@ -6,7 +6,7 @@
 # to you under the Apache License, Version 2.0 (the
 # "License"); you may not use this file except in compliance
 # with the License.  You may obtain a copy of the License at
-#
+# 
 #  http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing,
@@ -18,25 +18,7 @@
 #
 
 syscfg.defs:
-    SMP_UART:
-        description: 'UART port number to use for smp'
-        value: '"uart0"'
-
-    SMP_UART_SPEED:
-        description: 'Baudrate for smp UART'
-        value: 115200
-
-    SMP_UART_SYSINIT_STAGE:
+    NEWTMGR_BLE_SYSINIT_STAGE:
         description: >
-            Sysinit stage for the UART smp transport.
+            Sysinit stage for the BLE smp transport.
         value: 501
-
-# For backwards compatibility with newtmgr
-syscfg.vals.NMGR_UART:
-    SMP_UART: MYNEWT_VAL(NMGR_UART)
-
-syscfg.vals.NMGR_UART_SPEED:
-    SMP_UART_SPEED: MYNEWT_VAL(SMP_UART_SPEED)
-
-syscfg.vals.NMGR_UART_SYSINIT_STAGE:
-    SMP_UART_SYSINIT_STAGE: MYNEWT_VAL(NMGR_UART_SYSINIT_STAGE)

@@ -48,7 +48,10 @@ syscfg.defs:
         description: 'Include completion functionality'
         value: 1
     SHELL_MGMT:
-        description: 'Enable mgmt over shell'
+        description: 'Enable SMP over shell'
+        value: 1
+    SHELL_NEWTMGR:
+        description: 'Enable newtmgr over shell'
         value: 1
 
     SHELL_OS_MODULE:
@@ -105,3 +108,6 @@ syscfg.defs:
             Index of retained register to use (using hal_nvreg_read) for reading
             magic value.
         value: -1
+
+syscfg.vals.SHELL_NEWTMGR:
+        SHELL_MGMT: MYNEWT_VAL(SHELL_NEWTMGR)

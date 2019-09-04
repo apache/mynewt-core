@@ -22,3 +22,6 @@ syscfg.defs:
         description: >
             Sysinit stage for the BLE smp transport.
         value: 501
+
+syscfg.vals.NEWTMGR_BLE_SYSINIT_STAGE:
+    SMP_BLE_SYSINIT_STAGE: MYNEWT_VAL(NEWTMGR_BLE_SYSINIT_STAGE)

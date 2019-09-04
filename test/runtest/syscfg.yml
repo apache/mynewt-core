@@ -35,6 +35,9 @@ syscfg.defs:
     RUNTEST_MGMT:
         description: 'Enable mgmt command to execute tests'
         value: 1
+    RUNTEST_NEWTMGR:
+        description: 'Enable newtmgr command to execute tests'
+        value: 1
     RUNTEST_PREFIX:
         description: >
             String to preface all log messages with.  If this is undefined, the
@@ -54,3 +57,6 @@ syscfg.defs:
         description: >
             Sysinit stage for runtest functionality.
         value: 500
+
+syscfg.vals.RUNTEST_NEWTMGR:
+        RUNTEST_MGMT: MYNEWT_VAL(RUNTEST_NEWTMGR)

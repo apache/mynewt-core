@@ -22,3 +22,8 @@ syscfg.defs:
         description: >
             Sysinit stage for SMP functionality.
         value: 500
+
+# The following is for newtmgr transient package for backwards
+# compatibility
+syscfg.vals.NEWTMGR_SYSINIT_STAGE:
+        SMP_SYSINIT_STAGE: MYNEWT_VAL(NEWTMGR_SYSINIT_STAGE)

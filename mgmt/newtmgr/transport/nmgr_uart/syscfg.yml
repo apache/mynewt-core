@@ -18,25 +18,15 @@
 #
 
 syscfg.defs:
-    SMP_UART:
-        description: 'UART port number to use for smp'
+    NMGR_UART:
+        description: 'UART port number to use for newtmgr'
         value: '"uart0"'
 
-    SMP_UART_SPEED:
-        description: 'Baudrate for smp UART'
+    NMGR_UART_SPEED:
+        description: 'Baudrate for newtmgr UART'
         value: 115200
 
-    SMP_UART_SYSINIT_STAGE:
+    NMGR_UART_SYSINIT_STAGE:
         description: >
-            Sysinit stage for the UART smp transport.
+            Sysinit stage for the UART newtmgr transport.
         value: 501
-
-# For backwards compatibility with newtmgr
-syscfg.vals.NMGR_UART:
-    SMP_UART: MYNEWT_VAL(NMGR_UART)
-
-syscfg.vals.NMGR_UART_SPEED:
-    SMP_UART_SPEED: MYNEWT_VAL(SMP_UART_SPEED)
-
-syscfg.vals.NMGR_UART_SYSINIT_STAGE:
-    SMP_UART_SYSINIT_STAGE: MYNEWT_VAL(NMGR_UART_SYSINIT_STAGE)
