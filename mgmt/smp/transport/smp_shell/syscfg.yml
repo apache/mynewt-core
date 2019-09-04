@@ -22,3 +22,6 @@ syscfg.defs:
         description: >
             Sysinit stage for the shell SMP transport.
         value: 501
+
+syscfg.vals.NEWTMGR_SHELL_SYSINIT_STAGE:
+    SMP_SHELL_SYSINIT_STAGE: MYNEWT_VAL(NEWTMGR_SHELL_SYSINIT_STAGE)

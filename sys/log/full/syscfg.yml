@@ -72,6 +72,24 @@ syscfg.defs:
     LOG_MGMT:
         description: 'Expose "log" command in mgmt.'
         value: 0
+
+    LOG_NEWTMGR:
+        description: 'Expose "log" command in newtmgr.'
+        value: 0
+
+    LOG_NMGR_MAX_RSP_LEN:
+        description: >
+            The maximum newtmgr log response length. Note that this does not
+            represent the entire length of the response sent as the response
+            error code is added to the response after this check is performed.
+            If a single log entry exceeds this value the msg contents of the
+            log entry will be the following string: error: entry too large
+            (xxx bytes) with xxx being the size of the entry. Note that the
+            value of 400 is a legacy hard-coded value that the code used to
+            limit the size of a response with multiple entries although the
+            previous code did not limit the size of a response with only one
+            entry in it.
+        value: 400
     
     LOG_MAX_USER_MODULES:
         description: 'Maximum number of user modules to register'
@@ -121,3 +139,6 @@ syscfg.defs:
         description: >
             Primary sysinit stage for logging functionality.
         value: 100
+
+syscfg.vals.LOG_NEWTMGR:
+    LOG_MGMT: MYNEWT_VAL(LOG_MGMT)

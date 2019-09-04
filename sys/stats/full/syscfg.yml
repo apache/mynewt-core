@@ -66,3 +66,10 @@ syscfg.defs:
         description: >
             Enable stats management over SMP
         value: 0
+    STATS_NEWTMGR:
+        description: >
+            Enable stats management over Newtmgr
+        value: 0
+
+syscfg.vals.STATS_NEWTMGR:
+    STATS_MGMT: MYNEWT_VAL(STATS_NEWTMGR)
