@@ -27,7 +27,6 @@
 #include <syscfg/syscfg.h>
 #include "os/os_trace_api.h"
 
-        .file   "HAL_CM0.S"
         .syntax unified
 
 /*----------------------------------------------------------------------------
