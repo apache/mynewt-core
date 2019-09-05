@@ -30,7 +30,7 @@ syscfg.defs:
         description: >
             Number of OS ticks to wait for each I2C transaction to complete.
         value: 3
-    LIS2DH12_SHELL_DEV:
+    LIS2DH12_SHELL_DEV_NAME:
         description: >
             Device name for lis2dh12 device used in shell
         value:
