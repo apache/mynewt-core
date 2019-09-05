@@ -140,8 +140,6 @@ lis2dh12_shell_cmd_read(int argc, char **argv)
         return lis2dh12_shell_err_too_many_args(argv[1]);
     }
 
-    lis2dh12_shell_open_device();
-
     /* Check if more than one sample requested */
     if (argc == 3) {
         val = parse_ll_bounds(argv[2], 1, UINT16_MAX, &rc);
@@ -328,6 +326,12 @@ lis2dh12_shell_cmd(int argc, char **argv)
 {
     if (argc == 1) {
         return lis2dh12_shell_help();
+    }
+
+    if (lis2dh12_shell_open_device()) {
+        console_printf("Error: device not found \"%s\"\n",
+                       MYNEWT_VAL(LIS2DH12_SHELL_DEV));
+        return 0;
     }
 
     /* Read command (get a new data sample) */
