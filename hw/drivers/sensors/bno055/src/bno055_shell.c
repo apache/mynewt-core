@@ -52,8 +52,8 @@ bno055_shell_open_device(void)
         return 0;
     }
 
-    g_bno055 = (struct bno055 *)os_dev_open(MYNEWT_VAL(BNO055_SHELL_DEV), 1000,
-                                            NULL);
+    g_bno055 = (struct bno055 *)os_dev_open(MYNEWT_VAL(BNO055_SHELL_DEV_NAME),
+                                            1000, NULL);
     if (g_bno055) {
         g_sensor_itf = &g_bno055->sensor.s_itf;
         return 0;
@@ -491,7 +491,7 @@ bno055_shell_cmd(int argc, char **argv)
 
     if (bno055_shell_open_device()) {
         console_printf("Error: device not found \"%s\"\n",
-                       MYNEWT_VAL(BNO055_SHELL_DEV));
+                       MYNEWT_VAL(BNO055_SHELL_DEV_NAME));
     }
     /* Read command (get a new data sample) */
     if (argc > 1 && strcmp(argv[1], "r") == 0) {
