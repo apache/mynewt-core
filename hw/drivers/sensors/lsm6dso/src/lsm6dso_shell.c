@@ -86,8 +86,8 @@ lsm6dso_shell_open_device(void)
         return 0;
     }
 
-    g_lsm6dso = (struct lsm6dso *)os_dev_open(MYNEWT_VAL(LSM6DSO_SHELL_DEV), 1000,
-                                              NULL);
+    g_lsm6dso = (struct lsm6dso *)os_dev_open(MYNEWT_VAL(LSM6DSO_SHELL_DEV_NAME),
+                                              1000, NULL);
     if (g_lsm6dso) {
         g_sensor_itf = &g_lsm6dso->sensor.s_itf;
         return 0;
@@ -256,7 +256,7 @@ static int lsm6dso_shell_cmd(int argc, char **argv)
 
     if (lsm6dso_shell_open_device()) {
         console_printf("Error: device not found \"%s\"\n",
-                       MYNEWT_VAL(LSM6DSO_SHELL_DEV));
+                       MYNEWT_VAL(LSM6DSO_SHELL_DEV_NAME));
     }
 
     if (argc > 1 && strcmp(argv[1], "dump") == 0) {

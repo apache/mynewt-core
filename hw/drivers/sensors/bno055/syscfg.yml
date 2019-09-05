@@ -21,7 +21,7 @@ syscfg.defs:
     BNO055_CLI:
         description: 'Enable shell support for the BNO055'
         value: 0
-    BNO055_SHELL_DEV:
+    BNO055_SHELL_DEV_NAME:
         description: 'System defined device to use in shell'
         value: '"bno055_0"'
     BNO055_ITF_LOCK_TMO:

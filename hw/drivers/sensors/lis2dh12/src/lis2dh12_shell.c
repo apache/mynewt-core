@@ -50,7 +50,7 @@ lis2dh12_shell_open_device(void)
         return 0;
     }
 
-    g_lis2dh12 = (struct lis2dh12 *)os_dev_open(MYNEWT_VAL(LIS2DH12_SHELL_DEV),
+    g_lis2dh12 = (struct lis2dh12 *)os_dev_open(MYNEWT_VAL(LIS2DH12_SHELL_DEV_NAME),
                                                 1000, NULL);
     if (g_lis2dh12) {
         g_sensor_itf = &g_lis2dh12->sensor.s_itf;
@@ -330,7 +330,7 @@ lis2dh12_shell_cmd(int argc, char **argv)
 
     if (lis2dh12_shell_open_device()) {
         console_printf("Error: device not found \"%s\"\n",
-                       MYNEWT_VAL(LIS2DH12_SHELL_DEV));
+                       MYNEWT_VAL(LIS2DH12_SHELL_DEV_NAME));
         return 0;
     }
 
