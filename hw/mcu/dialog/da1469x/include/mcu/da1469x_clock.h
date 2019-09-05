@@ -66,6 +66,18 @@ void da1469x_clock_lp_xtal32k_enable(void);
 void da1469x_clock_lp_xtal32k_switch(void);
 
 /**
+ * Enable RCX
+ */
+void da1469x_clock_lp_rcx_enable(void);
+
+/**
+ * Switch lp_clk to RCX
+ *
+ * Caller shall ensure RCX is already settled.
+ */
+void da1469x_clock_lp_rcx_switch(void);
+
+/**
  * Disable RCX
  */
 void da1469x_clock_lp_rcx_disable(void);

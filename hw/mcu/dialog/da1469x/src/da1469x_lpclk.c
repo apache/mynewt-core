@@ -32,6 +32,7 @@ bool g_mcu_lpclk_available;
 
 static da1469x_lpclk_cb *g_da1469x_lpclk_cmac_cb;
 
+#if MYNEWT_VAL_CHOICE(MCU_LPCLK_SOURCE, XTAL32K)
 static void
 da1469x_lpclk_settle_tmr_cb(void *arg)
 {
@@ -43,6 +44,7 @@ da1469x_lpclk_settle_tmr_cb(void *arg)
         g_da1469x_lpclk_cmac_cb();
     }
 }
+#endif
 
 void
 da1469x_lpclk_register_cmac_cb(da1469x_lpclk_cb *cb)
@@ -57,11 +59,15 @@ da1469x_lpclk_register_cmac_cb(da1469x_lpclk_cb *cb)
 void
 da1469x_lpclk_init(void)
 {
+#if MYNEWT_VAL_CHOICE(MCU_LPCLK_SOURCE, XTAL32K)
     static struct hal_timer lpclk_settle_tmr;
-
     da1469x_clock_lp_xtal32k_enable();
-
     os_cputime_timer_init(&lpclk_settle_tmr, da1469x_lpclk_settle_tmr_cb, NULL);
     os_cputime_timer_relative(&lpclk_settle_tmr,
                               MYNEWT_VAL(MCU_CLOCK_XTAL32K_SETTLE_TIME_MS) * 1000);
+#endif
+#if MYNEWT_VAL_CHOICE(MCU_LPCLK_SOURCE, RCX)
+    da1469x_clock_lp_rcx_enable();
+    da1469x_clock_lp_rcx_switch();
+#endif
 }

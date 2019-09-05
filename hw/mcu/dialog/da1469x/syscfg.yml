@@ -48,6 +48,14 @@ syscfg.defs:
             once.
         value: 4
 
+    MCU_LPCLK_SOURCE:
+        description: >
+            Selected low power clock source. default RC32K.
+        value:
+        choices:
+            - RCX       # ~14.5 kHz crystal oscillator
+            - XTAL32K   # 32 kHz crystal oscillator
+
     MCU_CLOCK_XTAL32M_SETTLE_TIME_US:
         description: >
             Specifies settling time [us] of 32M crystal oscillator.
@@ -334,6 +342,19 @@ syscfg.defs:
         value: 0
         restrictions:
             - '!GPADC_BATTERY'
+
+    LP_RCX:
+        description:
+        value: 0
+
+    LP_XTAL32K:
+        description:
+        value: 0
+
+syscfg.vals.LP_RCX:
+    MCU_LPCLK_SOURCE: RCX
+syscfg.vals.LP_XTAL32K:
+    MCU_LPCLK_SOURCE: XTAL32K
 
 syscfg.restrictions:
     - "QSPI_FLASH_ADDRESS_LENGTH==24"

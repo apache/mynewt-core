@@ -120,6 +120,20 @@ da1469x_clock_lp_xtal32k_switch(void)
 }
 
 void
+da1469x_clock_lp_rcx_enable(void)
+{
+    CRG_TOP->CLK_RCX_REG  |= CRG_TOP_CLK_RCX_REG_RCX_ENABLE_Msk;
+}
+
+void
+da1469x_clock_lp_rcx_switch(void)
+{
+    CRG_TOP->CLK_CTRL_REG = (CRG_TOP->CLK_CTRL_REG &
+                             ~CRG_TOP_CLK_CTRL_REG_LP_CLK_SEL_Msk) |
+                            (1 << CRG_TOP_CLK_CTRL_REG_LP_CLK_SEL_Pos);
+}
+
+void
 da1469x_clock_lp_rcx_disable(void)
 {
     CRG_TOP->CLK_RCX_REG &= ~CRG_TOP_CLK_RCX_REG_RCX_ENABLE_Msk;
