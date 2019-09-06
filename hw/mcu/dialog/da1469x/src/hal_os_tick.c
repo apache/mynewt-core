@@ -18,6 +18,7 @@
  */
 
 #include <assert.h>
+#include "mcu/da1469x_clock.h"
 #include "mcu/da1469x_hal.h"
 #include "mcu/cmsis_nvic.h"
 #include "hal/hal_os_tick.h"
@@ -163,7 +164,11 @@ os_tick_init(uint32_t os_ticks_per_sec, int prio)
     uint32_t primask;
 
     g_hal_os_tick.last_trigger_val = 0;
+#if MYNEWT_VAL_CHOICE(MCU_LPCLK_SOURCE, RCX)
+    g_hal_os_tick.ticks_per_ostick = da1469x_clock_lp_rcx_freq_get() / os_ticks_per_sec;
+#else
     g_hal_os_tick.ticks_per_ostick = 32768 / os_ticks_per_sec;
+#endif
     g_hal_os_tick.max_idle_ticks = (1UL << 22) / g_hal_os_tick.ticks_per_ostick;
 
     TIMER2->TIMER2_CTRL_REG = 0;
