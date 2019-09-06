@@ -20,6 +20,8 @@
 #ifndef __MCU_DA1469X_CLOCK_H_
 #define __MCU_DA1469X_CLOCK_H_
 
+#include <stdint.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -76,6 +78,16 @@ void da1469x_clock_lp_rcx_enable(void);
  * Caller shall ensure RCX is already settled.
  */
 void da1469x_clock_lp_rcx_switch(void);
+
+/**
+ * Calibrate RCX
+ */
+void da1469x_clock_lp_rcx_calibrate(void);
+
+/**
+ * Get calibrated (measured) RCX frequency
+ */
+uint32_t da1469x_clock_lp_rcx_freq_get(void);
 
 /**
  * Disable RCX
