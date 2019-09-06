@@ -54,7 +54,7 @@ syscfg.defs:
         value: RC32K
         choices:
             - RC32K     # 32 kHz RC oscillator
-            - RCX       # ~14.5 kHz crystal oscillator
+            - RCX       # ~15 kHz RC oscillator
             - XTAL32K   # 32 kHz crystal oscillator
 
     MCU_CLOCK_XTAL32M_SETTLE_TIME_US:
