@@ -66,8 +66,4 @@ da1469x_lpclk_init(void)
     os_cputime_timer_relative(&lpclk_settle_tmr,
                               MYNEWT_VAL(MCU_CLOCK_XTAL32K_SETTLE_TIME_MS) * 1000);
 #endif
-#if MYNEWT_VAL_CHOICE(MCU_LPCLK_SOURCE, RCX)
-    da1469x_clock_lp_rcx_enable();
-    da1469x_clock_lp_rcx_switch();
-#endif
 }
