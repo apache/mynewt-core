@@ -343,19 +343,6 @@ syscfg.defs:
         restrictions:
             - '!GPADC_BATTERY'
 
-    LP_RCX:
-        description:
-        value: 0
-
-    LP_XTAL32K:
-        description:
-        value: 0
-
-syscfg.vals.LP_RCX:
-    MCU_LPCLK_SOURCE: RCX
-syscfg.vals.LP_XTAL32K:
-    MCU_LPCLK_SOURCE: XTAL32K
-
 syscfg.restrictions:
     - "QSPI_FLASH_ADDRESS_LENGTH==24"
     - "!I2C_0 || (I2C_0_PIN_SCL && I2C_0_PIN_SDA)"
