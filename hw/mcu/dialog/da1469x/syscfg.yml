@@ -50,9 +50,10 @@ syscfg.defs:
 
     MCU_LPCLK_SOURCE:
         description: >
-            Selected low power clock source. default RC32K.
-        value:
+            Selected low power clock source.
+        value: RC32K
         choices:
+            - RC32K     # 32 kHz RC oscillator
             - RCX       # ~14.5 kHz crystal oscillator
             - XTAL32K   # 32 kHz crystal oscillator
 
