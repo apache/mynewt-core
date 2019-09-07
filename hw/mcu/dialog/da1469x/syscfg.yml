@@ -125,6 +125,20 @@ syscfg.defs:
             data before writing, i.e. each such transfer will be split into
             chunks of this size. Buffer is created on stack.
         value: 128
+    MCU_QSPIC_BURSTCMDA_INIT_VAL:
+        description: >
+            Initialization value for QSPIC_BURSTCMDA_REG. May be used to allow
+            RAM_RESIDENT applications to configure the QSPIC with settings that
+            would typically be applied via OTP or flash header configuration.
+        value: ''
+        restrictions:
+        - (RAM_RESIDENT)
+    MCU_QSPIC_BURSTCMDB_INIT_VAL:
+        description: >
+            Initialization value for QSPIC_BURSTCMDB_REG
+        value: ''
+        restrictions:
+        - (RAM_RESIDENT)
 
 # MCU peripherals definitions
     I2C_0:
