@@ -130,7 +130,7 @@ syscfg.defs:
             Enable application initialization of QSPIC settings. Syscfg values that
             are defined for QSPIC_BURSTCMDA_REG, QSPIC_BURSTCMDB_REG or
             QSPIC_CTRLMODE_REG will be applied by hal_flash_init.
-        value: 0
+        value: 1
     MCU_QSPIC_BURSTCMDA_INIT_VAL:
         description: >
             MCU initialization value for QSPIC_BURSTCMDA_REG
