@@ -379,8 +379,36 @@ da1469x_hff_sector_info(const struct hal_flash *dev, int idx,
     return 0;
 }
 
-static int
-da1469x_hff_init(const struct hal_flash *dev)
+#if MYNEWT_VAL(MCU_QSPIC_APP_CFG)
+static sec_text_ram_core void
+da1469x_hff_mcu_custom_init(const struct hal_flash *dev)
 {
+    uint32_t primask;
+    uint32_t ctrlmode_reg = QSPIC->QSPIC_CTRLMODE_REG;
+    __HAL_DISABLE_INTERRUPTS(primask);
+    da1469x_qspi_mode_manual(dev);
+#if defined (MYNEWT_VAL_MCU_QSPIC_BURSTCMDA_INIT_VAL)
+    QSPIC->QSPIC_BURSTCMDA_REG = MYNEWT_VAL(MCU_QSPIC_BURSTCMDA_INIT_VAL);
+#endif
+#if defined (MYNEWT_VAL_MCU_QSPIC_BURSTCMDB_INIT_VAL)
+    QSPIC->QSPIC_BURSTCMDB_REG = MYNEWT_VAL(MCU_QSPIC_BURSTCMDB_INIT_VAL);
+#endif
+#if defined (MYNEWT_VAL_MCU_QSPIC_CTRLMODE_INIT_VAL)
+    QSPIC->QSPIC_CTRLMODE_REG = MYNEWT_VAL(MCU_QSPIC_CTRLMODE_INIT_VAL);
+#endif
+    if (ctrlmode_reg & QSPIC_QSPIC_CTRLMODE_REG_QSPIC_AUTO_MD_Msk) {
+        /* restore auto mode */
+        da1469x_qspi_mode_auto(dev);
+    }
+    __HAL_ENABLE_INTERRUPTS(primask);
+}
+#endif
+
+static int
+    da1469x_hff_init(const struct hal_flash *dev)
+{
+#if MYNEWT_VAL(MCU_QSPIC_APP_CFG)
+    da1469x_hff_mcu_custom_init(dev);
+#endif
     return 0;
 }
