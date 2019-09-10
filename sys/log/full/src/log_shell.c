@@ -165,7 +165,6 @@ shell_log_dump_entry(struct log *log, struct log_offset *log_offset,
     bool read_hash = ueh->ue_flags & LOG_FLAGS_IMG_HASH;
 #else
     bool read_data = true;
-    bool read_hash = false;
 #endif
 
     dlen = min(len, 128);
@@ -178,11 +177,13 @@ shell_log_dump_entry(struct log *log, struct log_offset *log_offset,
         data[rc] = 0;
     }
 
+#if MYNEWT_VAL(LOG_VERSION) > 2
     if (read_hash) {
         console_printf("[ih=0x%x%x%x%x]", ueh->ue_imghash[0], ueh->ue_imghash[1],
                        ueh->ue_imghash[2], ueh->ue_imghash[3]);
     }
     console_printf(" [%llu] ", ueh->ue_ts);
+#endif
 
 #if MYNEWT_VAL(LOG_VERSION) <= 2
     console_write(data, strlen(data));

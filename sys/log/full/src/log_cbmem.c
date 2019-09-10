@@ -27,15 +27,17 @@ log_cbmem_append_body(struct log *log, const struct log_entry_hdr *hdr,
 {
     struct cbmem *cbmem;
     struct cbmem_scat_gath sg = {
-        .entries = (struct cbmem_scat_gath_entry[3]) {
+        .entries = (struct cbmem_scat_gath_entry[]) {
             {
                 .flat_buf = hdr,
                 .flat_len = LOG_BASE_ENTRY_HDR_SIZE,
             },
+#if MYNEWT_VAL(LOG_VERSION) > 2
             {
                 .flat_buf = hdr->ue_imghash,
                 .flat_len = 0,
             },
+#endif
             {
                 .flat_buf = body,
                 .flat_len = body_len,
@@ -44,10 +46,11 @@ log_cbmem_append_body(struct log *log, const struct log_entry_hdr *hdr,
         .count = 3,
     };
 
+#if MYNEWT_VAL(LOG_VERSION) > 2
     if (hdr->ue_flags & LOG_FLAGS_IMG_HASH) {
         sg.entries[1].flat_len = LOG_IMG_HASHLEN;
     }
-
+#endif
     cbmem = (struct cbmem *) log->l_arg;
 
     return cbmem_append_scat_gath(cbmem, &sg);
@@ -70,15 +73,17 @@ log_cbmem_append_mbuf_body(struct log *log, const struct log_entry_hdr *hdr,
 {
     struct cbmem *cbmem;
     struct cbmem_scat_gath sg = {
-        .entries = (struct cbmem_scat_gath_entry[3]) {
+        .entries = (struct cbmem_scat_gath_entry[]) {
             {
                 .flat_buf = hdr,
                 .flat_len = LOG_BASE_ENTRY_HDR_SIZE,
             },
+#if MYNEWT_VAL(LOG_VERSION) > 2
             {
                 .flat_buf = hdr->ue_imghash,
                 .flat_len = 0,
             },
+#endif
             {
                 .om = om,
             },
@@ -86,11 +91,11 @@ log_cbmem_append_mbuf_body(struct log *log, const struct log_entry_hdr *hdr,
         .count = 3,
     };
 
-
+#if MYNEWT_VAL(LOG_VERSION) > 2
     if (hdr->ue_flags & LOG_FLAGS_IMG_HASH) {
         sg.entries[1].flat_len = LOG_IMG_HASHLEN;
     }
-
+#endif
     cbmem = (struct cbmem *) log->l_arg;
 
     return cbmem_append_scat_gath(cbmem, &sg);

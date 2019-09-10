@@ -704,6 +704,8 @@ int log_storage_info(struct log *log, struct log_storage_info *info);
  */
 int log_set_watermark(struct log *log, uint32_t index);
 #endif
+
+#if MYNEWT_VAL(LOG_VERSION) > 2
 /**
  * Fill log current image hash
  *
@@ -713,6 +715,7 @@ int log_set_watermark(struct log *log, uint32_t index);
  */
 int
 log_fill_current_img_hash(struct log_entry_hdr *hdr);
+#endif
 
 /* Handler exports */
 #if MYNEWT_VAL(LOG_CONSOLE)
