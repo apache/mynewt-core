@@ -305,7 +305,7 @@ lis2dh12_shell_cmd_test(int argc, char **argv)
     int rc;
     int result = 0;
 
-    rc = 0; //lis2dh12_run_self_test(&g_sensor_itf, &result);
+    rc = lis2dh12_run_self_test(g_sensor_itf, &result);
     if (rc) {
         goto err;
     }

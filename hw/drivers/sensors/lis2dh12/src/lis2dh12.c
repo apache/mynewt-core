@@ -209,6 +209,8 @@ static int lis2dh12_sensor_unset_notification(struct sensor *,
                                               sensor_event_type_t);
 static int lis2dh12_sensor_handle_interrupt(struct sensor *);
 
+static int lis2dh12_set_self_test_mode(struct sensor_itf *, uint8_t);
+
 static const struct sensor_driver g_lis2dh12_sensor_driver = {
     .sd_read = lis2dh12_sensor_read,
     .sd_set_config = lis2dh12_sensor_set_config,
@@ -1369,7 +1371,7 @@ err:
  * @param mode to set
  * @return 0 on success, non-zero on failure
  */
-int
+static int
 lis2dh12_set_self_test_mode(struct sensor_itf *itf, uint8_t mode)
 {
     uint8_t reg;
