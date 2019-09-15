@@ -29,14 +29,14 @@
 static struct da1469x_sdadc_dev *da1469x_sdadc_dev;
 
 static const int da1469x_sdadc_src2pin[] = {
-    MCU_GPIO_PORT1(9),  /* 0 */
-    MCU_GPIO_PORT0(25), /* 1 */
-    MCU_GPIO_PORT0(8),  /* 2 */
-    MCU_GPIO_PORT0(9),  /* 3 */
-    MCU_GPIO_PORT1(14), /* 4 */
-    MCU_GPIO_PORT1(20), /* 5 */
-    MCU_GPIO_PORT1(21), /* 6 */
-    MCU_GPIO_PORT1(22), /* 7 */
+    MCU_PIN_SDADC0,  /* 0 */
+    MCU_PIN_SDADC1,  /* 1 */
+    MCU_PIN_SDADC2,  /* 2 */
+    MCU_PIN_SDADC3,  /* 3 */
+    MCU_PIN_SDADC4,  /* 4 */
+    MCU_PIN_SDADC5,  /* 5 */
+    MCU_PIN_SDADC6,  /* 6 */
+    MCU_PIN_SDADC7,  /* 7 */
 };
 #define DA1469X_SDADC_SRC2PIN_SZ                                        \
     (sizeof(da1469x_sdadc_src2pin) / sizeof(da1469x_sdadc_src2pin[0]))

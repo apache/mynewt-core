@@ -119,6 +119,28 @@ typedef enum {
 #define MCU_GPIO_PORT1(pin)		((1 * 32) + (pin))
 #define MCU_DMA_CHAN_MAX                    8
 
+#define MCU_PIN_GPADC_SEL0               MCU_GPIO_PORT1(9)
+#define MCU_PIN_GPADC_SEL1               MCU_GPIO_PORT0(25)
+#define MCU_PIN_GPADC_SEL2               MCU_GPIO_PORT0(8)
+#define MCU_PIN_GPADC_SEL3               MCU_GPIO_PORT0(9)
+#define MCU_PIN_GPADC_SEL16              MCU_GPIO_PORT1(13)
+#define MCU_PIN_GPADC_SEL17              MCU_GPIO_PORT1(12)
+#define MCU_PIN_GPADC_SEL18              MCU_GPIO_PORT1(18)
+#define MCU_PIN_GPADC_SEL19              MCU_GPIO_PORT1(19)
+#define MCU_PIN_GPADC_DIFF0_P0           MCU_GPIO_PORT1(9)
+#define MCU_PIN_GPADC_DIFF0_P1           MCU_GPIO_PORT0(25)
+#define MCU_PIN_GPADC_DIFF1_P0           MCU_GPIO_PORT0(8)
+#define MCU_PIN_GPADC_DIFF1_P1           MCU_GPIO_PORT0(9)
+
+#define MCU_PIN_SDADC0               MCU_GPIO_PORT1(9)
+#define MCU_PIN_SDADC1               MCU_GPIO_PORT0(25)
+#define MCU_PIN_SDADC2               MCU_GPIO_PORT0(8)
+#define MCU_PIN_SDADC3               MCU_GPIO_PORT0(9)
+#define MCU_PIN_SDADC4               MCU_GPIO_PORT1(14)
+#define MCU_PIN_SDADC5               MCU_GPIO_PORT1(20)
+#define MCU_PIN_SDADC6               MCU_GPIO_PORT1(21)
+#define MCU_PIN_SDADC7               MCU_GPIO_PORT1(22)
+
 void mcu_gpio_set_pin_function(int pin, int mode, mcu_gpio_func func);
 void mcu_gpio_enter_sleep(void);
 void mcu_gpio_exit_sleep(void);
