@@ -21,12 +21,12 @@
 TEST_CASE_SELF(fcb_test_empty_walk)
 {
     int rc;
-    struct fcb *fcb;
+    struct fcb2 *fcb;
 
     fcb_tc_pretest(2);
 
     fcb = &test_fcb;
 
-    rc = fcb_walk(fcb, 0, fcb_test_empty_walk_cb, NULL);
+    rc = fcb2_walk(fcb, 0, fcb_test_empty_walk_cb, NULL);
     TEST_ASSERT(rc == 0);
 }

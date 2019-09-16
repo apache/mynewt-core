@@ -21,29 +21,30 @@
 TEST_CASE_SELF(fcb_test_init)
 {
     int rc;
-    struct fcb *fcb;
+    struct fcb2 *fcb;
 
     fcb_tc_pretest(2);
 
     fcb = &test_fcb;
     memset(fcb, 0, sizeof(*fcb));
 
-    rc = fcb_init(fcb);
-    TEST_ASSERT(rc == FCB_ERR_ARGS);
+    rc = fcb2_init(fcb);
+    TEST_ASSERT(rc == FCB2_ERR_ARGS);
 
     fcb->f_ranges = test_fcb_ranges;
 
-    rc = fcb_init(fcb);
-    TEST_ASSERT(rc == FCB_ERR_ARGS);
+    rc = fcb2_init(fcb);
+    TEST_ASSERT(rc == FCB2_ERR_ARGS);
 
     fcb->f_sector_cnt = 2;
     fcb->f_magic = 0x12345678;
     fcb->f_range_cnt = 1;
-    fcb->f_ranges[0].fsr_flash_area.fa_size = 2 * fcb->f_ranges[0].fsr_sector_size;
-    rc = fcb_init(fcb);
-    TEST_ASSERT(rc == FCB_ERR_MAGIC);
+    fcb->f_ranges[0].fsr_flash_area.fa_size =
+              2 * fcb->f_ranges[0].fsr_sector_size;
+    rc = fcb2_init(fcb);
+    TEST_ASSERT(rc == FCB2_ERR_MAGIC);
 
     fcb->f_magic = 0;
-    rc = fcb_init(fcb);
+    rc = fcb2_init(fcb);
     TEST_ASSERT(rc == 0);
 }

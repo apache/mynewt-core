@@ -23,13 +23,20 @@
 extern "C" {
 #endif
 
+#if MYNEWT_VAL(LOG_FCB)
 #include <fcb/fcb.h>
+#elif MYNEWT_VAL(LOG_FCB2)
+#include <fcb/fcb2.h>
+#endif
 
 /** An individual fcb log bookmark. */
 struct log_fcb_bmark {
     /* FCB entry that the bookmark points to. */
+#if MYNEWT_VAL(LOG_FCB)
     struct fcb_entry lfb_entry;
-
+#elif MYNEWT_VAL(LOG_FCB2)
+    struct fcb2_entry lfb_entry;
+#endif
     /* The index of the log entry that the FCB entry contains. */
     uint32_t lfb_index;
 };
@@ -52,24 +59,36 @@ struct log_fcb_bset {
 /**
  * fcb_log is needed as the number of entries in a log
  */
+#if MYNEWT_VAL(LOG_FCB)
+
 struct fcb_log {
     struct fcb fl_fcb;
     uint8_t fl_entries;
 
 #if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
-#if MYNEWT_VAL(LOG_FCB)
     /* Internal - tracking storage use */
     uint32_t fl_watermark_off;
-#endif
-#if MYNEWT_VAL(LOG_FCB2)
-    uint16_t fl_watermark_sec;
-    uint32_t fl_watermark_off;
-#endif
 #endif
 #if MYNEWT_VAL(LOG_FCB_BOOKMARKS)
     struct log_fcb_bset fl_bset;
 #endif
 };
+
+#elif MYNEWT_VAL(LOG_FCB2)
+
+struct fcb_log {
+    struct fcb2 fl_fcb;
+    uint8_t fl_entries;
+
+#if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
+    uint16_t fl_watermark_sec;
+    uint32_t fl_watermark_off;
+#endif
+#if MYNEWT_VAL(LOG_FCB_BOOKMARKS)
+    struct log_fcb_bset fl_bset;
+#endif
+};
+#endif
 
 #if MYNEWT_VAL(LOG_FCB_BOOKMARKS)
 
@@ -125,8 +144,13 @@ log_fcb_closest_bmark(const struct fcb_log *fcb_log, uint32_t index);
  * @param entry                 The entry the bookmark should point to.
  * @param index                 The log entry index of the bookmark.
  */
+#if MYNEWT_VAL(LOG_FCB)
 void log_fcb_add_bmark(struct fcb_log *fcb_log, const struct fcb_entry *entry,
                        uint32_t index);
+#elif MYNEWT_VAL(LOG_FCB2)
+void log_fcb_add_bmark(struct fcb_log *fcb_log, const struct fcb2_entry *entry,
+                       uint32_t index);
+#endif
 #endif
 
 #ifdef __cplusplus

@@ -25,14 +25,14 @@
 #include "os/mynewt.h"
 #include "testutil/testutil.h"
 
-#include "fcb/fcb.h"
+#include "fcb/fcb2.h"
 #include "fcb_priv.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-extern struct fcb test_fcb;
+extern struct fcb2 test_fcb;
 
 extern struct flash_sector_range test_fcb_ranges[];
 
@@ -41,10 +41,10 @@ struct append_arg {
 };
 
 void fcb_test_wipe(void);
-int fcb_test_empty_walk_cb(struct fcb_entry *loc, void *arg);
+int fcb_test_empty_walk_cb(struct fcb2_entry *loc, void *arg);
 uint8_t fcb_test_append_data(int msg_len, int off);
-int fcb_test_data_walk_cb(struct fcb_entry *loc, void *arg);
-int fcb_test_cnt_elems_cb(struct fcb_entry *loc, void *arg);
+int fcb_test_data_walk_cb(struct fcb2_entry *loc, void *arg);
+int fcb_test_cnt_elems_cb(struct fcb2_entry *loc, void *arg);
 void fcb_tc_pretest(uint8_t sector_count);
 
 #ifdef __cplusplus

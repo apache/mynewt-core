@@ -32,10 +32,6 @@
 #include "tinycbor/cbor.h"
 #include "tinycbor/cbor_buf_writer.h"
 
-#if MYNEWT_VAL(REBOOT_LOG_FCB)
-#include "fcb/fcb.h"
-#endif
-
 uint16_t reboot_cnt;
 static char reboot_cnt_str[12];
 static char log_reboot_written_str[12];
@@ -88,12 +84,18 @@ static int
 log_reboot_init_fcb(void)
 {
     const struct flash_area *ptr;
+#if MYNEWT_VAL(LOG_FCB)
     struct fcb *fcbp;
+#elif MYNEWT_VAL(LOG_FCB2)
+    struct fcb2 *fcbp;
+#endif
     int rc;
 
     if (flash_area_open(MYNEWT_VAL(REBOOT_LOG_FLASH_AREA), &ptr)) {
         return SYS_EUNKNOWN;
     }
+
+    reboot_log_fcb.fl_entries = MYNEWT_VAL(REBOOT_LOG_ENTRY_COUNT);
     fcbp = &reboot_log_fcb.fl_fcb;
 #if MYNEWT_VAL(LOG_FCB)
     reboot_sector = *ptr;
@@ -101,6 +103,15 @@ log_reboot_init_fcb(void)
     fcbp->f_version = g_log_info.li_version;
     fcbp->f_sector_cnt = 1;
     fcbp->f_sectors = &reboot_sector;
+
+    rc = fcb_init(fcbp);
+    if (rc) {
+        flash_area_erase(ptr, 0, ptr->fa_size);
+        rc = fcb_init(fcbp);
+        if (rc) {
+            return rc;
+        }
+    }
 #endif
 #if MYNEWT_VAL(LOG_FCB2)
     fcbp->f_magic = 0x8EADBAE0;
@@ -112,17 +123,16 @@ log_reboot_init_fcb(void)
     reboot_sector.fsr_sector_count = 1;
     reboot_sector.fsr_sector_size = ptr->fa_size;
     reboot_sector.fsr_align = flash_area_align(ptr);
-#endif
-    reboot_log_fcb.fl_entries = MYNEWT_VAL(REBOOT_LOG_ENTRY_COUNT);
 
-    rc = fcb_init(fcbp);
+    rc = fcb2_init(fcbp);
     if (rc) {
         flash_area_erase(ptr, 0, ptr->fa_size);
-        rc = fcb_init(fcbp);
+        rc = fcb2_init(fcbp);
         if (rc) {
             return rc;
         }
     }
+#endif
 
     rc = log_register("reboot_log", &reboot_log, &log_fcb_handler,
                       &reboot_log_fcb, LOG_SYSLEVEL);

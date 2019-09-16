@@ -20,9 +20,9 @@
 
 TEST_CASE_SELF(fcb_test_getprev)
 {
-    struct fcb *fcb = &test_fcb;
-    struct fcb_entry loc;
-    struct fcb_entry prev;
+    struct fcb2 *fcb = &test_fcb;
+    struct fcb2_entry loc;
+    struct fcb2_entry prev;
     int rc;
     int i, j;
 
@@ -33,33 +33,33 @@ TEST_CASE_SELF(fcb_test_getprev)
     /*
      * Empty FCB returns error.
      */
-    rc = fcb_getprev(fcb, &prev);
-    TEST_ASSERT_FATAL(rc == FCB_ERR_NOVAR);
+    rc = fcb2_getprev(fcb, &prev);
+    TEST_ASSERT_FATAL(rc == FCB2_ERR_NOVAR);
 
     /*
      * Add one entry. getprev should find that guy, and then error.
      */
-    rc = fcb_append(fcb, 8, &loc);
+    rc = fcb2_append(fcb, 8, &loc);
     TEST_ASSERT(rc == 0);
-    rc = fcb_append_finish(&loc);
+    rc = fcb2_append_finish(&loc);
     TEST_ASSERT(rc == 0);
 
     prev.fe_range = NULL;
-    rc = fcb_getprev(fcb, &prev);
+    rc = fcb2_getprev(fcb, &prev);
     TEST_ASSERT_FATAL(rc == 0);
     TEST_ASSERT(!memcmp(&loc, &prev, sizeof(loc)));
 
-    rc = fcb_getprev(fcb, &prev);
-    TEST_ASSERT(rc == FCB_ERR_NOVAR);
+    rc = fcb2_getprev(fcb, &prev);
+    TEST_ASSERT(rc == FCB2_ERR_NOVAR);
 
     /*
      * Add enough entries to go to 2 sectors, should find them all.
      */
     fcb_tc_pretest(3);
     for (i = 0; ; i++) {
-        rc = fcb_append(fcb, i + 1, &loc);
+        rc = fcb2_append(fcb, i + 1, &loc);
         TEST_ASSERT(rc == 0);
-        rc = fcb_append_finish(&loc);
+        rc = fcb2_append_finish(&loc);
         TEST_ASSERT(rc == 0);
 
         if (loc.fe_sector == prev.fe_sector + 2) {
@@ -69,12 +69,12 @@ TEST_CASE_SELF(fcb_test_getprev)
 
     prev.fe_range = NULL;
     for (j = i; j >= 0; j--) {
-        rc = fcb_getprev(fcb, &prev);
+        rc = fcb2_getprev(fcb, &prev);
         TEST_ASSERT(rc == 0);
         TEST_ASSERT(prev.fe_data_len == j + 1);
     }
-    rc = fcb_getprev(fcb, &prev);
-    TEST_ASSERT(rc == FCB_ERR_NOVAR);
+    rc = fcb2_getprev(fcb, &prev);
+    TEST_ASSERT(rc == FCB2_ERR_NOVAR);
 
     /*
      * Clean the area. Fill 2 whole sectors with corrupt entries. And one
@@ -83,23 +83,23 @@ TEST_CASE_SELF(fcb_test_getprev)
     fcb_tc_pretest(3);
 
     for (i = 0; ; i++) {
-        rc = fcb_append(fcb, i + 1, &loc);
+        rc = fcb2_append(fcb, i + 1, &loc);
         TEST_ASSERT(rc == 0);
 
         if (loc.fe_sector == prev.fe_sector + 2) {
-            rc = fcb_append_finish(&loc);
+            rc = fcb2_append_finish(&loc);
             TEST_ASSERT(rc == 0);
             break;
         }
     }
 
     prev.fe_range = NULL;
-    rc = fcb_getprev(fcb, &prev);
+    rc = fcb2_getprev(fcb, &prev);
     TEST_ASSERT_FATAL(rc == 0);
     TEST_ASSERT(!memcmp(&loc, &prev, sizeof(loc)));
 
-    rc = fcb_getprev(fcb, &prev);
-    TEST_ASSERT(rc == FCB_ERR_NOVAR);
+    rc = fcb2_getprev(fcb, &prev);
+    TEST_ASSERT(rc == FCB2_ERR_NOVAR);
 
     /*
      * Create new. Rotate one sector, should be able to follow
@@ -109,28 +109,28 @@ TEST_CASE_SELF(fcb_test_getprev)
     fcb_tc_pretest(3);
 
     for (i = 0; ; i++) {
-        rc = fcb_append(fcb, i + 8, &loc);
-        if (rc == FCB_ERR_NOSPACE) {
+        rc = fcb2_append(fcb, i + 8, &loc);
+        if (rc == FCB2_ERR_NOSPACE) {
             break;
         }
         TEST_ASSERT(rc == 0);
-        rc = fcb_append_finish(&loc);
+        rc = fcb2_append_finish(&loc);
         TEST_ASSERT(rc == 0);
     }
 
     /*
      * Full. Rotate, add one more, and then walk backwards.
      */
-    fcb_rotate(fcb);
+    fcb2_rotate(fcb);
 
-    rc = fcb_append(fcb, i + 8, &loc);
+    rc = fcb2_append(fcb, i + 8, &loc);
     TEST_ASSERT(rc == 0);
-    rc = fcb_append_finish(&loc);
+    rc = fcb2_append_finish(&loc);
     TEST_ASSERT(rc == 0);
 
     for (j = i; j >= 0; j--) {
-        rc = fcb_getprev(fcb, &prev);
-        if (rc == FCB_ERR_NOVAR) {
+        rc = fcb2_getprev(fcb, &prev);
+        if (rc == FCB2_ERR_NOVAR) {
             TEST_ASSERT(i > 0);
             break;
         }

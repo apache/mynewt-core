@@ -47,7 +47,7 @@ config_init_fs(void)
 }
 
 #elif MYNEWT_VAL(CONFIG_FCB)
-#include "fcb/fcb.h"
+
 #include "config/config_fcb.h"
 
 static struct flash_area conf_fcb_area[MYNEWT_VAL(CONFIG_FCB_NUM_AREAS) + 1];
@@ -90,7 +90,6 @@ config_init_fcb(void)
 
 #elif MYNEWT_VAL(CONFIG_FCB2)
 
-#include "fcb/fcb.h"
 #include "config/config_fcb2.h"
 
 static struct flash_sector_range config_init_fcb2_sector_range;

@@ -65,9 +65,9 @@ TEST_CASE_SELF(config_test_compress_reset)
     }
 
     fa = cf.cf2_fcb.f_active_id;
-    rc = fcb_append_to_scratch(&cf.cf2_fcb);
+    rc = fcb2_append_to_scratch(&cf.cf2_fcb);
     TEST_ASSERT(rc == 0);
-    TEST_ASSERT(fcb_free_sector_cnt(&cf.cf2_fcb) == 0);
+    TEST_ASSERT(fcb2_free_sector_cnt(&cf.cf2_fcb) == 0);
     TEST_ASSERT(fa != cf.cf2_fcb.f_active_id);
 
     config_wipe_srcs();
@@ -85,7 +85,7 @@ TEST_CASE_SELF(config_test_compress_reset)
     rc = conf_fcb2_dst(&cf);
     TEST_ASSERT(rc == 0);
 
-    TEST_ASSERT(fcb_free_sector_cnt(&cf.cf2_fcb) == 1);
+    TEST_ASSERT(fcb2_free_sector_cnt(&cf.cf2_fcb) == 1);
     TEST_ASSERT(fa == cf.cf2_fcb.f_active_id);
 
     c2_var_count = 0;

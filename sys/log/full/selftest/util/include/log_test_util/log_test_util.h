@@ -22,7 +22,11 @@
 
 #include "os/mynewt.h"
 #include "testutil/testutil.h"
+#if MYNEWT_VAL(LOG_FCB)
 #include "fcb/fcb.h"
+#elif MYNEWT_VAL(LOG_FCB2)
+#include "fcb/fcb2.h"
+#endif
 #include "log/log.h"
 #include "log_test_util.h"
 
@@ -30,7 +34,11 @@
 extern "C" {
 #endif
 
+#if MYNEWT_VAL(LOG_FCB)
 extern struct fcb log_fcb;
+#elif MYNEWT_VAL(LOG_FCB2)
+extern struct fcb2 log_fcb;
+#endif
 extern struct log my_log;
 extern char *ltu_str_logs[];
 

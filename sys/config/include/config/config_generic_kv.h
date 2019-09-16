@@ -20,8 +20,14 @@
 #define __SYS_CONFIG_GENERIC_KV_H_
 
 #include <stddef.h>
+
 #include "config/config.h"
+#if MYNEWT_VAL(CONFIG_FCB)
 #include "fcb/fcb.h"
+#endif
+#if MYNEWT_VAL(CONFIG_FCB2)
+#include "fcb/fcb2.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -45,7 +51,12 @@ extern "C" {
  *
  * @return OS_OK on success, error code otherwise
  */
-int conf_fcb_kv_load(struct fcb *fcb, const char *name, char *value, size_t len);
+#if MYNEWT_VAL(CONFIG_FCB)
+int conf_fcb_kv_load(struct fcb *, const char *name, char *value, size_t len);
+#endif
+#if MYNEWT_VAL(CONFIG_FCB2)
+int conf_fcb2_kv_load(struct fcb2 *, const char *name, char *value, size_t len);
+#endif
 
 /**
  * Store value for given key to FCB key-value storage area
@@ -59,7 +70,12 @@ int conf_fcb_kv_load(struct fcb *fcb, const char *name, char *value, size_t len)
  *
  * @return OS_OK on success, error code otherwise
  */
-int conf_fcb_kv_save(struct fcb *fcb, const char *name, const char *value);
+#if MYNEWT_VAL(CONFIG_FCB)
+int conf_fcb_kv_save(struct fcb *, const char *name, const char *value);
+#endif
+#if MYNEWT_VAL(CONFIG_FCB2)
+int conf_fcb2_kv_save(struct fcb2 *, const char *name, const char *value);
+#endif
 
 #ifdef __cplusplus
 }
