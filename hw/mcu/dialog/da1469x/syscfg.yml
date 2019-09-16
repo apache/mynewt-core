@@ -43,7 +43,7 @@ syscfg.defs:
             state is disabled.
         value: 4
     MCU_GPIO_MAX_IRQ:
-        desriptin: >
+        description: >
             Maximum number of GPIO interrupts that can be configured at
             once.
         value: 4
