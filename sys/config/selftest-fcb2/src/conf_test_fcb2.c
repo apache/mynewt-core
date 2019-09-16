@@ -23,7 +23,7 @@
 #include <os/mynewt.h>
 #include <flash_map/flash_map.h>
 #include <testutil/testutil.h>
-#include <fcb/fcb.h>
+#include <fcb/fcb2.h>
 #include <config/config.h>
 #include <config/config_fcb2.h>
 #include <config_priv.h>

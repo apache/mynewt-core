@@ -20,10 +20,10 @@
 
 TEST_CASE_SELF(fcb_test_reset)
 {
-    struct fcb *fcb;
+    struct fcb2 *fcb;
     int rc;
     int i;
-    struct fcb_entry loc;
+    struct fcb2_entry loc;
     uint8_t test_data[128];
     int var_cnt;
 
@@ -32,35 +32,35 @@ TEST_CASE_SELF(fcb_test_reset)
     fcb = &test_fcb;
 
     var_cnt = 0;
-    rc = fcb_walk(fcb, FCB_SECTOR_OLDEST, fcb_test_data_walk_cb, &var_cnt);
+    rc = fcb2_walk(fcb, FCB2_SECTOR_OLDEST, fcb_test_data_walk_cb, &var_cnt);
     TEST_ASSERT(rc == 0);
     TEST_ASSERT(var_cnt == 0);
 
-    rc = fcb_append(fcb, 32, &loc);
+    rc = fcb2_append(fcb, 32, &loc);
     TEST_ASSERT(rc == 0);
 
     /*
      * No ready ones yet. CRC should not match.
      */
     var_cnt = 0;
-    rc = fcb_walk(fcb, FCB_SECTOR_OLDEST, fcb_test_data_walk_cb, &var_cnt);
+    rc = fcb2_walk(fcb, FCB2_SECTOR_OLDEST, fcb_test_data_walk_cb, &var_cnt);
     TEST_ASSERT(rc == 0);
     TEST_ASSERT(var_cnt == 0);
 
     for (i = 0; i < sizeof(test_data); i++) {
         test_data[i] = fcb_test_append_data(32, i);
     }
-    rc = fcb_write(&loc, 0, test_data, 32);
+    rc = fcb2_write(&loc, 0, test_data, 32);
     TEST_ASSERT(rc == 0);
 
-    rc = fcb_append_finish(&loc);
+    rc = fcb2_append_finish(&loc);
     TEST_ASSERT(rc == 0);
 
     /*
      * one entry
      */
     var_cnt = 32;
-    rc = fcb_walk(fcb, FCB_SECTOR_OLDEST, fcb_test_data_walk_cb, &var_cnt);
+    rc = fcb2_walk(fcb, FCB2_SECTOR_OLDEST, fcb_test_data_walk_cb, &var_cnt);
     TEST_ASSERT(rc == 0);
     TEST_ASSERT(var_cnt == 33);
 
@@ -72,35 +72,35 @@ TEST_CASE_SELF(fcb_test_reset)
     fcb->f_sector_cnt = 2;
     fcb->f_ranges = test_fcb_ranges;
 
-    rc = fcb_init(fcb);
+    rc = fcb2_init(fcb);
     TEST_ASSERT(rc == 0);
 
     var_cnt = 32;
-    rc = fcb_walk(fcb, FCB_SECTOR_OLDEST, fcb_test_data_walk_cb, &var_cnt);
+    rc = fcb2_walk(fcb, FCB2_SECTOR_OLDEST, fcb_test_data_walk_cb, &var_cnt);
     TEST_ASSERT(rc == 0);
     TEST_ASSERT(var_cnt == 33);
 
-    rc = fcb_append(fcb, 33, &loc);
+    rc = fcb2_append(fcb, 33, &loc);
     TEST_ASSERT(rc == 0);
 
     for (i = 0; i < sizeof(test_data); i++) {
         test_data[i] = fcb_test_append_data(33, i);
     }
-    rc = fcb_write(&loc, 0, test_data, 33);
+    rc = fcb2_write(&loc, 0, test_data, 33);
     TEST_ASSERT(rc == 0);
 
-    rc = fcb_append_finish(&loc);
+    rc = fcb2_append_finish(&loc);
     TEST_ASSERT(rc == 0);
 
     var_cnt = 32;
-    rc = fcb_walk(fcb, FCB_SECTOR_OLDEST, fcb_test_data_walk_cb, &var_cnt);
+    rc = fcb2_walk(fcb, FCB2_SECTOR_OLDEST, fcb_test_data_walk_cb, &var_cnt);
     TEST_ASSERT(rc == 0);
     TEST_ASSERT(var_cnt == 34);
 
     /*
      * Add partial one, make sure that we survive reset then.
      */
-    rc = fcb_append(fcb, 34, &loc);
+    rc = fcb2_append(fcb, 34, &loc);
     TEST_ASSERT(rc == 0);
 
     memset(fcb, 0, sizeof(*fcb));
@@ -108,35 +108,35 @@ TEST_CASE_SELF(fcb_test_reset)
     fcb->f_sector_cnt = 2;
     fcb->f_ranges = test_fcb_ranges;
 
-    rc = fcb_init(fcb);
+    rc = fcb2_init(fcb);
     TEST_ASSERT(rc == 0);
 
     /*
      * Walk should skip that.
      */
     var_cnt = 32;
-    rc = fcb_walk(fcb, FCB_SECTOR_OLDEST, fcb_test_data_walk_cb, &var_cnt);
+    rc = fcb2_walk(fcb, FCB2_SECTOR_OLDEST, fcb_test_data_walk_cb, &var_cnt);
     TEST_ASSERT(rc == 0);
     TEST_ASSERT(var_cnt == 34);
 
     /* Add a 3rd one, should go behind corrupt entry */
-    rc = fcb_append(fcb, 34, &loc);
+    rc = fcb2_append(fcb, 34, &loc);
     TEST_ASSERT(rc == 0);
 
     for (i = 0; i < sizeof(test_data); i++) {
         test_data[i] = fcb_test_append_data(34, i);
     }
-    rc = fcb_write(&loc, 0, test_data, 34);
+    rc = fcb2_write(&loc, 0, test_data, 34);
     TEST_ASSERT(rc == 0);
 
-    rc = fcb_append_finish(&loc);
+    rc = fcb2_append_finish(&loc);
     TEST_ASSERT(rc == 0);
 
     /*
      * Walk should skip corrupt entry, but report the next one.
      */
     var_cnt = 32;
-    rc = fcb_walk(fcb, FCB_SECTOR_OLDEST, fcb_test_data_walk_cb, &var_cnt);
+    rc = fcb2_walk(fcb, FCB2_SECTOR_OLDEST, fcb_test_data_walk_cb, &var_cnt);
     TEST_ASSERT(rc == 0);
     TEST_ASSERT(var_cnt == 35);
 }

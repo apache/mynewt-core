@@ -21,7 +21,7 @@
 
 #if MYNEWT_VAL(CONFIG_FCB2)
 
-#include <fcb/fcb.h>
+#include <fcb/fcb2.h>
 #include <string.h>
 
 #include "config/config.h"
@@ -65,7 +65,7 @@ conf_fcb2_src(struct conf_fcb2 *cf)
         cf->cf2_fcb.f_scratch_cnt = 0;
     }
     while (1) {
-        rc = fcb_init(&cf->cf2_fcb);
+        rc = fcb2_init(&cf->cf2_fcb);
         if (rc) {
             return OS_INVALID_PARM;
         }
@@ -75,8 +75,8 @@ conf_fcb2_src(struct conf_fcb2 *cf)
          * situation is recognized by checking if the scratch block is missing.
          */
         if (cf->cf2_fcb.f_scratch_cnt &&
-            fcb_free_sector_cnt(&cf->cf2_fcb) < 1) {
-            fcb_sector_erase(&cf->cf2_fcb, cf->cf2_fcb.f_active.fe_sector);
+            fcb2_free_sector_cnt(&cf->cf2_fcb) < 1) {
+            fcb2_sector_erase(&cf->cf2_fcb, cf->cf2_fcb.f_active.fe_sector);
         } else {
             break;
         }
@@ -98,7 +98,7 @@ conf_fcb2_dst(struct conf_fcb2 *cf)
 }
 
 static int
-conf_fcb2_load_cb(struct fcb_entry *loc, void *arg)
+conf_fcb2_load_cb(struct fcb2_entry *loc, void *arg)
 {
     struct conf_fcb2_load_cb_arg *argp;
     char buf[CONF_MAX_NAME_LEN + CONF_MAX_VAL_LEN + 32];
@@ -114,7 +114,7 @@ conf_fcb2_load_cb(struct fcb_entry *loc, void *arg)
         len = sizeof(buf) - 1;
     }
 
-    rc = fcb_read(loc, 0, buf, len);
+    rc = fcb2_read(loc, 0, buf, len);
     if (rc) {
         return 0;
     }
@@ -137,7 +137,7 @@ conf_fcb2_load(struct conf_store *cs, conf_store_load_cb cb, void *cb_arg)
 
     arg.cb = cb;
     arg.cb_arg = cb_arg;
-    rc = fcb_walk(&cf->cf2_fcb, FCB_SECTOR_OLDEST, conf_fcb2_load_cb, &arg);
+    rc = fcb2_walk(&cf->cf2_fcb, FCB2_SECTOR_OLDEST, conf_fcb2_load_cb, &arg);
     if (rc) {
         return OS_EINVAL;
     }
@@ -145,11 +145,11 @@ conf_fcb2_load(struct conf_store *cs, conf_store_load_cb cb, void *cb_arg)
 }
 
 static int
-conf_fcb2_var_read(struct fcb_entry *loc, char *buf, char **name, char **val)
+conf_fcb2_var_read(struct fcb2_entry *loc, char *buf, char **name, char **val)
 {
     int rc;
 
-    rc = fcb_read(loc, 0, buf, loc->fe_data_len);
+    rc = fcb2_read(loc, 0, buf, loc->fe_data_len);
     if (rc) {
         return rc;
     }
@@ -159,7 +159,7 @@ conf_fcb2_var_read(struct fcb_entry *loc, char *buf, char **name, char **val)
 }
 
 static void
-conf_fcb2_compress_internal(struct fcb *fcb,
+conf_fcb2_compress_internal(struct fcb2 *fcb,
                             int (*copy_or_not)(const char *name, const char *val,
                                                void *cn_arg),
                             void *cn_arg)
@@ -167,20 +167,20 @@ conf_fcb2_compress_internal(struct fcb *fcb,
     int rc;
     char buf1[CONF_MAX_NAME_LEN + CONF_MAX_VAL_LEN + 32];
     char buf2[CONF_MAX_NAME_LEN + CONF_MAX_VAL_LEN + 32];
-    struct fcb_entry loc1;
-    struct fcb_entry loc2;
+    struct fcb2_entry loc1;
+    struct fcb2_entry loc2;
     char *name1, *val1;
     char *name2, *val2;
     int copy;
 
-    rc = fcb_append_to_scratch(fcb);
+    rc = fcb2_append_to_scratch(fcb);
     if (rc) {
         return; /* XXX */
     }
 
     loc1.fe_range = NULL;
     loc1.fe_entry_num = 0;
-    while (fcb_getnext(fcb, &loc1) == 0) {
+    while (fcb2_getnext(fcb, &loc1) == 0) {
         if (loc1.fe_sector != fcb->f_oldest_sec) {
             break;
         }
@@ -193,7 +193,7 @@ conf_fcb2_compress_internal(struct fcb *fcb,
         }
         loc2 = loc1;
         copy = 1;
-        while (fcb_getnext(fcb, &loc2) == 0) {
+        while (fcb2_getnext(fcb, &loc2) == 0) {
             rc = conf_fcb2_var_read(&loc2, buf2, &name2, &val2);
             if (rc) {
                 continue;
@@ -216,21 +216,21 @@ conf_fcb2_compress_internal(struct fcb *fcb,
         /*
          * Can't find one. Must copy.
          */
-        rc = fcb_read(&loc1, 0, buf1, loc1.fe_data_len);
+        rc = fcb2_read(&loc1, 0, buf1, loc1.fe_data_len);
         if (rc) {
             continue;
         }
-        rc = fcb_append(fcb, loc1.fe_data_len, &loc2);
+        rc = fcb2_append(fcb, loc1.fe_data_len, &loc2);
         if (rc) {
             continue;
         }
-        rc = fcb_write(&loc2, 0, buf1, loc1.fe_data_len);
+        rc = fcb2_write(&loc2, 0, buf1, loc1.fe_data_len);
         if (rc) {
             continue;
         }
-        fcb_append_finish(&loc2);
+        fcb2_append_finish(&loc2);
     }
-    rc = fcb_rotate(fcb);
+    rc = fcb2_rotate(fcb);
     if (rc) {
         /* XXXX */
         ;
@@ -238,15 +238,15 @@ conf_fcb2_compress_internal(struct fcb *fcb,
 }
 
 static int
-conf_fcb2_append(struct fcb *fcb, char *buf, int len)
+conf_fcb2_append(struct fcb2 *fcb, char *buf, int len)
 {
     int rc;
     int i;
-    struct fcb_entry loc;
+    struct fcb2_entry loc;
 
     for (i = 0; i < 10; i++) {
-        rc = fcb_append(fcb, len, &loc);
-        if (rc != FCB_ERR_NOSPACE) {
+        rc = fcb2_append(fcb, len, &loc);
+        if (rc != FCB2_ERR_NOSPACE) {
             break;
         }
         if (fcb->f_scratch_cnt == 0) {
@@ -257,11 +257,11 @@ conf_fcb2_append(struct fcb *fcb, char *buf, int len)
     if (rc) {
         return OS_EINVAL;
     }
-    rc = fcb_write(&loc, 0, buf, len);
+    rc = fcb2_write(&loc, 0, buf, len);
     if (rc) {
         return OS_EINVAL;
     }
-    fcb_append_finish(&loc);
+    fcb2_append_finish(&loc);
     return OS_OK;
 }
 
@@ -270,7 +270,7 @@ conf_fcb2_save(struct conf_store *cs, const char *name, const char *value)
 {
     struct conf_fcb2 *cf = (struct conf_fcb2 *)cs;
 
-    return conf_fcb_kv_save(&cf->cf2_fcb, name, value);
+    return conf_fcb2_kv_save(&cf->cf2_fcb, name, value);
 }
 
 void
@@ -283,7 +283,7 @@ conf_fcb2_compress(struct conf_fcb2 *cf,
 }
 
 static int
-conf_kv_load_cb(struct fcb_entry *loc, void *arg)
+conf_kv_load_cb(struct fcb2_entry *loc, void *arg)
 {
     struct conf_kv_load_cb_arg *cb_arg = arg;
     char buf[CONF_MAX_NAME_LEN + CONF_MAX_VAL_LEN + 32];
@@ -297,7 +297,7 @@ conf_kv_load_cb(struct fcb_entry *loc, void *arg)
         len = sizeof(buf) - 1;
     }
 
-    rc = fcb_read(loc, 0, buf, len);
+    rc = fcb2_read(loc, 0, buf, len);
     if (rc) {
         return 0;
     }
@@ -319,7 +319,7 @@ conf_kv_load_cb(struct fcb_entry *loc, void *arg)
 }
 
 int
-conf_fcb_kv_load(struct fcb *fcb, const char *name, char *value, size_t len)
+conf_fcb2_kv_load(struct fcb2 *fcb, const char *name, char *value, size_t len)
 {
     struct conf_kv_load_cb_arg arg;
     int rc;
@@ -328,7 +328,7 @@ conf_fcb_kv_load(struct fcb *fcb, const char *name, char *value, size_t len)
     arg.value = value;
     arg.len = len;
 
-    rc = fcb_walk(fcb, 0, conf_kv_load_cb, &arg);
+    rc = fcb2_walk(fcb, 0, conf_kv_load_cb, &arg);
     if (rc) {
         return OS_EINVAL;
     }
@@ -337,7 +337,7 @@ conf_fcb_kv_load(struct fcb *fcb, const char *name, char *value, size_t len)
 }
 
 int
-conf_fcb_kv_save(struct fcb *fcb, const char *name, const char *value)
+conf_fcb2_kv_save(struct fcb2 *fcb, const char *name, const char *value)
 {
     char buf[CONF_MAX_NAME_LEN + CONF_MAX_VAL_LEN + 32];
     int len;

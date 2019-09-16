@@ -121,6 +121,8 @@ ltu_setup_fcb(struct fcb_log *fcb_log, struct log *log)
         rc = flash_area_erase(&fcb_areas[i], 0, fcb_areas[i].fa_size);
         TEST_ASSERT(rc == 0);
     }
+    rc = fcb_init(&fcb_log->fl_fcb);
+    TEST_ASSERT(rc == 0);
 #endif
 #if MYNEWT_VAL(LOG_FCB2)
     (void)i;
@@ -129,10 +131,9 @@ ltu_setup_fcb(struct fcb_log *fcb_log, struct log *log)
     fcb_log->fl_fcb.f_ranges = &fcb_range;
     rc = flash_area_erase(&fcb_range.fsr_flash_area, 0,
                           fcb_range.fsr_flash_area.fa_size);
-#endif
-
-    rc = fcb_init(&fcb_log->fl_fcb);
+    rc = fcb2_init(&fcb_log->fl_fcb);
     TEST_ASSERT(rc == 0);
+#endif
 
     log_register("log", log, &log_fcb_handler, fcb_log, LOG_SYSLEVEL);
 }

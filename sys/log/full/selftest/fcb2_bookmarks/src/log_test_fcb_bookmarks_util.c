@@ -58,7 +58,7 @@ ltfbu_max_entries(void)
 
     /* "+ 2" for CRC. */
     entry_size = LOG_BASE_ENTRY_HDR_SIZE + ltfbu_cfg.body_len +
-                 FCB_ENTRY_SIZE + 2;
+                 FCB2_ENTRY_SIZE + 2;
     entry_space = LTFBU_SECTOR_SIZE - 8;
 
     return entry_space / entry_size;
@@ -216,7 +216,7 @@ ltfbu_init(const struct ltfbu_cfg *cfg)
                      ltfbu_fcb_range.fsr_flash_area.fa_size);
     TEST_ASSERT_FATAL(rc == 0);
 
-    rc = fcb_init(&ltfbu_fcb_log.fl_fcb);
+    rc = fcb2_init(&ltfbu_fcb_log.fl_fcb);
     TEST_ASSERT_FATAL(rc == 0);
 
     if (cfg->bmark_count > 0) {

@@ -169,7 +169,7 @@ ltfwu_init(const struct ltfwu_cfg *cfg)
                           ltfwu_fcb_range.fsr_flash_area.fa_size);
     TEST_ASSERT_FATAL(rc == 0);
 
-    rc = fcb_init(&ltfwu_fcb_log.fl_fcb);
+    rc = fcb2_init(&ltfwu_fcb_log.fl_fcb);
     TEST_ASSERT_FATAL(rc == 0);
 
     log_register("log", &ltfwu_log, &log_fcb_handler, &ltfwu_fcb_log,

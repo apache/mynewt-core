@@ -68,9 +68,15 @@ log_fcb_closest_bmark(const struct fcb_log *fcb_log, uint32_t index)
     return closest;
 }
 
+#if MYNEWT_VAL(LOG_FCB)
 void
 log_fcb_add_bmark(struct fcb_log *fcb_log, const struct fcb_entry *entry,
                   uint32_t index)
+#elif MYNEWT_VAL(LOG_FCB2)
+void
+log_fcb_add_bmark(struct fcb_log *fcb_log, const struct fcb2_entry *entry,
+                  uint32_t index)
+#endif
 {
     struct log_fcb_bset *bset;
 

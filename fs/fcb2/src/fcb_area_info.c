@@ -17,19 +17,19 @@
  * under the License.
  */
 
-#include "fcb/fcb.h"
+#include "fcb/fcb2.h"
 #include "fcb_priv.h"
 
 int
-fcb_area_info(struct fcb *fcb, int sector, int *elemsp, int *bytesp)
+fcb2_area_info(struct fcb2 *fcb, int sector, int *elemsp, int *bytesp)
 {
-    struct fcb_entry loc;
-    struct fcb_sector_info info;
+    struct fcb2_entry loc;
+    struct fcb2_sector_info info;
     int rc;
     int elems = 0;
     int bytes = 0;
 
-    rc = fcb_get_sector_info(fcb, sector, &info);
+    rc = fcb2_get_sector_info(fcb, sector, &info);
     if (rc) {
         return rc;
     }
@@ -37,12 +37,12 @@ fcb_area_info(struct fcb *fcb, int sector, int *elemsp, int *bytesp)
     loc.fe_sector = info.si_sector_in_range + loc.fe_range->fsr_first_sector;
     loc.fe_entry_num = 0;
     /* In case caller passed oldest, get real sector number */
-    if (sector == FCB_SECTOR_OLDEST) {
-        sector =  loc.fe_sector;
+    if (sector == FCB2_SECTOR_OLDEST) {
+        sector = loc.fe_sector;
     }
 
     while (1) {
-        rc = fcb_getnext(fcb, &loc);
+        rc = fcb2_getnext(fcb, &loc);
         if (rc) {
             break;
         }

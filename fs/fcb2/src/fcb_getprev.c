@@ -18,11 +18,11 @@
  */
 #include <stddef.h>
 
-#include "fcb/fcb.h"
+#include "fcb/fcb2.h"
 #include "fcb_priv.h"
 
 static int
-fcb_sector_find_last(struct fcb *fcb, struct fcb_entry *loc)
+fcb2_sector_find_last(struct fcb2 *fcb, struct fcb2_entry *loc)
 {
     int rc;
     int last_valid = 0;
@@ -30,11 +30,11 @@ fcb_sector_find_last(struct fcb *fcb, struct fcb_entry *loc)
     loc->fe_entry_num = 1;
 
     do {
-        rc = fcb_elem_info(loc);
+        rc = fcb2_elem_info(loc);
         if (rc == 0) {
             last_valid = loc->fe_entry_num;
         }
-        if (rc == FCB_ERR_NOVAR) {
+        if (rc == FCB2_ERR_NOVAR) {
             /*
              * Out entries in this sector
              */
@@ -43,10 +43,10 @@ fcb_sector_find_last(struct fcb *fcb, struct fcb_entry *loc)
                 /*
                  * No valid entries in this sector.
                  */
-                return FCB_ERR_NOVAR;
+                return FCB2_ERR_NOVAR;
             } else {
                 loc->fe_entry_num = last_valid;
-                rc = fcb_elem_info(loc);
+                rc = fcb2_elem_info(loc);
                 assert(rc == 0); /* must be; just succeeded a bit earlier */
                 return rc;
             }
@@ -57,13 +57,13 @@ fcb_sector_find_last(struct fcb *fcb, struct fcb_entry *loc)
 }
 
 int
-fcb_getprev(struct fcb *fcb, struct fcb_entry *loc)
+fcb2_getprev(struct fcb2 *fcb, struct fcb2_entry *loc)
 {
     int rc;
 
     rc = os_mutex_pend(&fcb->f_mtx, OS_WAIT_FOREVER);
     if (rc && rc != OS_NOT_STARTED) {
-        return FCB_ERR_ARGS;
+        return FCB2_ERR_ARGS;
     }
     if (loc->fe_range == NULL) {
         /*
@@ -78,20 +78,20 @@ fcb_getprev(struct fcb *fcb, struct fcb_entry *loc)
              * Need to get from previous sector.
              */
             if (loc->fe_sector == fcb->f_oldest_sec) {
-                return FCB_ERR_NOVAR;
+                return FCB2_ERR_NOVAR;
             }
             if (loc->fe_sector == 0) {
                 loc->fe_sector = fcb->f_sector_cnt - 1;
             } else {
                 loc->fe_sector--;
             }
-            loc->fe_range = fcb_get_sector_range(fcb, loc->fe_sector);
-            rc = fcb_sector_find_last(fcb, loc);
+            loc->fe_range = fcb2_get_sector_range(fcb, loc->fe_sector);
+            rc = fcb2_sector_find_last(fcb, loc);
             if (rc == 0) {
                 break;
             }
         } else {
-            rc = fcb_elem_info(loc);
+            rc = fcb2_elem_info(loc);
             if (rc == 0) {
                 break;
             }
