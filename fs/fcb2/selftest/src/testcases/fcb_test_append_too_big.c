@@ -20,10 +20,10 @@
 
 TEST_CASE_SELF(fcb_test_append_too_big)
 {
-    struct fcb *fcb;
+    struct fcb2 *fcb;
     int rc;
     int len;
-    struct fcb_entry elem_loc;
+    struct fcb2_entry elem_loc;
 
     fcb_tc_pretest(2);
 
@@ -35,26 +35,26 @@ TEST_CASE_SELF(fcb_test_append_too_big)
      */
     len = fcb->f_active.fe_range->fsr_sector_size;
 
-    rc = fcb_append(fcb, len, &elem_loc);
+    rc = fcb2_append(fcb, len, &elem_loc);
     TEST_ASSERT(rc != 0);
 
     len--;
-    rc = fcb_append(fcb, len, &elem_loc);
+    rc = fcb2_append(fcb, len, &elem_loc);
     TEST_ASSERT(rc != 0);
 
-    len -= sizeof(struct fcb_disk_area);
-    rc = fcb_append(fcb, len, &elem_loc);
+    len -= sizeof(struct fcb2_disk_area);
+    rc = fcb2_append(fcb, len, &elem_loc);
     TEST_ASSERT(rc != 0);
 
     len = fcb->f_active.fe_range->fsr_sector_size -
-      (sizeof(struct fcb_disk_area) + 2 + 6);
-    rc = fcb_append(fcb, len, &elem_loc);
+      (sizeof(struct fcb2_disk_area) + 2 + 6);
+    rc = fcb2_append(fcb, len, &elem_loc);
     TEST_ASSERT(rc == 0);
 
-    rc = fcb_append_finish(&elem_loc);
+    rc = fcb2_append_finish(&elem_loc);
     TEST_ASSERT(rc == 0);
 
-    rc = fcb_elem_info(&elem_loc);
+    rc = fcb2_elem_info(&elem_loc);
     TEST_ASSERT(rc == 0);
     TEST_ASSERT(elem_loc.fe_data_len == len);
 }

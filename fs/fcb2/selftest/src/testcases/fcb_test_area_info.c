@@ -20,10 +20,10 @@
 
 TEST_CASE_SELF(fcb_test_area_info)
 {
-    struct fcb *fcb;
+    struct fcb2 *fcb;
     int rc;
     int i;
-    struct fcb_entry loc;
+    struct fcb2_entry loc;
     uint8_t test_data[128];
     int elem_cnts[2] = {0, 0};
     int area_elems[2];
@@ -34,21 +34,20 @@ TEST_CASE_SELF(fcb_test_area_info)
     fcb = &test_fcb;
 
     /* check that sector outside of range fails */
-    rc = fcb_area_info(fcb, fcb->f_sector_cnt, area_elems, area_bytes);
-    TEST_ASSERT(rc == FCB_ERR_ARGS);
-    rc = fcb_area_info(fcb, fcb->f_sector_cnt + 1, area_elems, area_bytes);
-    TEST_ASSERT(rc == FCB_ERR_ARGS);
+    rc = fcb2_area_info(fcb, fcb->f_sector_cnt, area_elems, area_bytes);
+    TEST_ASSERT(rc == FCB2_ERR_ARGS);
+    rc = fcb2_area_info(fcb, fcb->f_sector_cnt + 1, area_elems, area_bytes);
+    TEST_ASSERT(rc == FCB2_ERR_ARGS);
 
     /* output arguments are optional */
-    rc = fcb_area_info(fcb, 0, NULL, NULL);
+    rc = fcb2_area_info(fcb, 0, NULL, NULL);
     TEST_ASSERT(rc == 0);
 
     /*
      * Should be empty, with elem count and byte count zero.
      */
     for (i = 0; i < 2; i++) {
-        rc = fcb_area_info(fcb, 0, &area_elems[i],
-                           &area_bytes[i]);
+        rc = fcb2_area_info(fcb, 0, &area_elems[i], &area_bytes[i]);
         TEST_ASSERT(rc == 0);
         TEST_ASSERT(area_elems[i] == 0);
         TEST_ASSERT(area_bytes[i] == 0);
@@ -58,8 +57,8 @@ TEST_CASE_SELF(fcb_test_area_info)
      * Fill up the areas, make sure that reporting is ok.
      */
     while (1) {
-        rc = fcb_append(fcb, sizeof(test_data), &loc);
-        if (rc == FCB_ERR_NOSPACE) {
+        rc = fcb2_append(fcb, sizeof(test_data), &loc);
+        if (rc == FCB2_ERR_NOSPACE) {
             break;
         }
         if (loc.fe_sector == 0) {
@@ -70,15 +69,14 @@ TEST_CASE_SELF(fcb_test_area_info)
             TEST_ASSERT(0);
         }
 
-        rc = fcb_write(&loc, 0, test_data, sizeof(test_data));
+        rc = fcb2_write(&loc, 0, test_data, sizeof(test_data));
         TEST_ASSERT(rc == 0);
 
-        rc = fcb_append_finish(&loc);
+        rc = fcb2_append_finish(&loc);
         TEST_ASSERT(rc == 0);
 
         for (i = 0; i < 2; i++) {
-            rc = fcb_area_info(fcb, i, &area_elems[i],
-                               &area_bytes[i]);
+            rc = fcb2_area_info(fcb, i, &area_elems[i], &area_bytes[i]);
             TEST_ASSERT(rc == 0);
             TEST_ASSERT(area_elems[i] == elem_cnts[i]);
             TEST_ASSERT(area_bytes[i] == elem_cnts[i] * sizeof(test_data));
@@ -88,12 +86,12 @@ TEST_CASE_SELF(fcb_test_area_info)
     /*
      * Wipe out the oldest, should report zeroes for that area now.
      */
-    rc = fcb_rotate(fcb);
+    rc = fcb2_rotate(fcb);
     TEST_ASSERT(rc == 0);
 
-    rc = fcb_area_info(fcb, 0, &area_elems[0], &area_bytes[0]);
+    rc = fcb2_area_info(fcb, 0, &area_elems[0], &area_bytes[0]);
     TEST_ASSERT(rc == 0);
-    rc = fcb_area_info(fcb, 1, &area_elems[1], &area_bytes[1]);
+    rc = fcb2_area_info(fcb, 1, &area_elems[1], &area_bytes[1]);
     TEST_ASSERT(rc == 0);
     TEST_ASSERT(area_elems[0] == 0);
     TEST_ASSERT(area_bytes[0] == 0);
@@ -103,7 +101,7 @@ TEST_CASE_SELF(fcb_test_area_info)
     /*
      * Test oldest sector should be sector area 1.
      */
-    rc = fcb_area_info(fcb, FCB_SECTOR_OLDEST, &area_elems[0], &area_bytes[0]);
+    rc = fcb2_area_info(fcb, FCB2_SECTOR_OLDEST, &area_elems[0], &area_bytes[0]);
     TEST_ASSERT(rc == 0);
     TEST_ASSERT(area_elems[0] == elem_cnts[1]);
     TEST_ASSERT(area_bytes[0] == elem_cnts[1] * sizeof(test_data));

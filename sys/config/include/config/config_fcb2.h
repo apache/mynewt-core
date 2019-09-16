@@ -19,6 +19,8 @@
 #ifndef __SYS_CONFIG_FCB2_H_
 #define __SYS_CONFIG_FCB2_H_
 
+#include <fcb/fcb2.h>
+
 #include "config/config.h"
 #include "config/config_store.h"
 
@@ -28,7 +30,7 @@ extern "C" {
 
 struct conf_fcb2 {
     struct conf_store cf2_store;
-    struct fcb cf2_fcb;
+    struct fcb2 cf2_fcb;
 };
 
 /**
