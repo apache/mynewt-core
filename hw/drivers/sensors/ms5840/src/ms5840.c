@@ -432,8 +432,7 @@ ms5840_read_eeprom(struct sensor_itf *itf, uint16_t *coeff)
             goto err;
         }
 
-        payload[idx] = (((payload[idx] & 0xFF00) >> 8)|
-                        ((payload[idx] & 0x00FF) << 8));
+        payload[idx] = be16toh(payload[idx]);
     }
 
     rc = ms5840_crc_check(payload, (payload[MS5840_IDX_CRC] & 0xF000) >> 12);
