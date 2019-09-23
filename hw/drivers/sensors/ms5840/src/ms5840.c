@@ -423,7 +423,7 @@ ms5840_read_eeprom(struct sensor_itf *itf, uint16_t *coeff)
 {
     int idx;
     int rc;
-    uint16_t payload[MS5840_NUMBER_COEFFS];
+    uint16_t payload[MS5840_NUMBER_COEFFS + 1];
 
     for(idx = 0; idx < MS5840_NUMBER_COEFFS; idx++) {
         rc = ms5840_readlen(itf, MS5840_CMD_PROM_READ_ADDR0 + idx * 2,
