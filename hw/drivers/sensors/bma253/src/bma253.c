@@ -5454,7 +5454,7 @@ sensor_driver_unset_notification(struct sensor * sensor,
 {
 #if MYNEWT_VAL(BMA253_INT_ENABLE)
     struct bma253 * bma253;
-    enum bma253_power_mode request_power[3];
+    enum bma253_power_mode request_power[5];
     struct bma253_private_driver_data *pdd;
     int rc;
     struct bma253_notif_cfg *notif_cfg;
@@ -5496,6 +5496,12 @@ sensor_driver_unset_notification(struct sensor * sensor,
     pdd->notify_ctx.snec_evtype &= ~sensor_event_type;
     pdd->registered_mask &= ~BMA253_NOTIFY_MASK;
     disable_intpin(bma253);
+
+    request_power[0] = BMA253_POWER_MODE_SUSPEND;
+    request_power[1] = BMA253_POWER_MODE_STANDBY;
+    request_power[2] = BMA253_POWER_MODE_LPM_1;
+    request_power[3] = BMA253_POWER_MODE_LPM_2;
+    request_power[4] = BMA253_POWER_MODE_NORMAL;
 
     rc = interim_power(bma253,
                        request_power,
