@@ -3868,7 +3868,7 @@ init_intpin(struct bma253 * bma253,
 
     for (i = 0; i < MYNEWT_VAL(SENSOR_MAX_INTERRUPTS_PINS); i++){
         pin = bma253->sensor.s_itf.si_ints[i].host_pin;
-        if (pin > 0) {
+        if (pin >= 0) {
             break;
         }
     }
