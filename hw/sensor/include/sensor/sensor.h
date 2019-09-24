@@ -514,7 +514,7 @@ struct sensor_timestamp {
 };
 
 struct sensor_int {
-    uint8_t host_pin;
+    int8_t host_pin;
     uint8_t device_pin;
     uint8_t active;
 };
