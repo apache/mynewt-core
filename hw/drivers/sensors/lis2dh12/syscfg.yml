@@ -69,6 +69,16 @@ syscfg.defs:
         description: 'Minimum level for the LIS2DH12 log.'
         value: 1
 
+    LIS2DH12_ENABLE_I2C:
+        description: 'Enables I2C interface support, when set to 0 code size will be reduced'
+        value: 1
+    LIS2DH12_ENABLE_SPI:
+        description: 'Enables SPI interface support, when set to 0 code size will be reduced'
+        value: 1
+
+syscfg.restrictions:
+    - "(LIS2DH12_ENABLE_I2C == 1) || (LIS2DH12_ENABLE_SPI == 1)"
+
 syscfg.logs:
     LIS2DH12_LOG:
         module: MYNEWT_VAL(LIS2DH12_LOG_MODULE)

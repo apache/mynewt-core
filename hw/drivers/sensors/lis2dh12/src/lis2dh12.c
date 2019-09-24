@@ -494,9 +494,9 @@ lis2dh12_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
     } write_data;
     struct lis2dh12 *dev = (struct lis2dh12 *)itf->si_dev;
 
-    if (dev->node_is_spi) {
+    if (dev->node_is_spi && MYNEWT_VAL(LIS2DH12_ENABLE_SPI)) {
         addr |= LIS2DH12_SPI_ADDR_INC;
-    } else {
+    } else if (MYNEWT_VAL(LIS2DH12_ENABLE_I2C)) {
         addr |= LIS2DH12_I2C_ADDR_INC;
     }
 
@@ -514,9 +514,9 @@ lis2dh12_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
         return rc;
     }
 
-    if (itf->si_type == SENSOR_ITF_I2C) {
+    if (itf->si_type == SENSOR_ITF_I2C && MYNEWT_VAL(LIS2DH12_ENABLE_I2C)) {
         rc = lis2dh12_i2c_writelen(itf, addr, payload, len);
-    } else {
+    } else if (MYNEWT_VAL(LIS2DH12_ENABLE_SPI)) {
         rc = lis2dh12_spi_writelen(itf, addr, payload, len);
     }
 
@@ -544,10 +544,10 @@ lis2dh12_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
     struct lis2dh12 *dev = (struct lis2dh12 *)itf->si_dev;
 
-    if (dev->node_is_spi) {
+    if (dev->node_is_spi && MYNEWT_VAL(LIS2DH12_ENABLE_SPI)) {
         addr |= LIS2DH12_SPI_READ_CMD_BIT;
         addr |= LIS2DH12_SPI_ADDR_INC;
-    } else {
+    } else if (MYNEWT_VAL(LIS2DH12_ENABLE_I2C)) {
         addr |= LIS2DH12_I2C_ADDR_INC;
     }
 
@@ -558,9 +558,9 @@ lis2dh12_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
         return rc;
     }
 
-    if (itf->si_type == SENSOR_ITF_I2C) {
+    if (itf->si_type == SENSOR_ITF_I2C && MYNEWT_VAL(LIS2DH12_ENABLE_I2C)) {
         rc = lis2dh12_i2c_readlen(itf, addr, payload, len);
-    } else {
+    } else if (MYNEWT_VAL(LIS2DH12_ENABLE_SPI)) {
         rc = lis2dh12_spi_readlen(itf, addr, payload, len);
     }
 
@@ -1318,7 +1318,7 @@ lis2dh12_init(struct os_dev *dev, void *arg)
     }
 
 #if !MYNEWT_VAL(BUS_DRIVER_PRESENT)
-    if (sensor->s_itf.si_type == SENSOR_ITF_SPI) {
+    if (sensor->s_itf.si_type == SENSOR_ITF_SPI && MYNEWT_VAL(LIS2DH12_ENABLE_SPI)) {
 
         rc = hal_spi_disable(sensor->s_itf.si_num);
         if (rc) {
@@ -1964,7 +1964,7 @@ lis2dh12_sensor_read(struct sensor *sensor, sensor_type_t type,
     (void)itf;
 
 #if !MYNEWT_VAL(BUS_DRIVER_PRESENT)
-    if (itf->si_type == SENSOR_ITF_SPI) {
+    if (itf->si_type == SENSOR_ITF_SPI && MYNEWT_VAL(LIS2DH12_ENABLE_SPI)) {
 
         rc = hal_spi_disable(sensor->s_itf.si_num);
         if (rc) {
@@ -3023,7 +3023,7 @@ lis2dh12_config(struct lis2dh12 *lis2dh12, struct lis2dh12_cfg *cfg)
     (void)sensor;
 
 #if !MYNEWT_VAL(BUS_DRIVER_PRESENT)
-    if (itf->si_type == SENSOR_ITF_SPI) {
+    if (itf->si_type == SENSOR_ITF_SPI && MYNEWT_VAL(LIS2DH12_ENABLE_SPI)) {
 
         rc = hal_spi_disable(sensor->s_itf.si_num);
         if (rc) {
