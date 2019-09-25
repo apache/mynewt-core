@@ -374,7 +374,7 @@ static struct sensor_itf i2c_0_itf_tsl = {
 #endif
 
 #if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(TSL2591_OFB)
-static struct sensor_itf i2c_0_itf_tsl = {
+static struct sensor_itf i2c_0_itf_tsl2591 = {
     .si_type = SENSOR_ITF_I2C,
     .si_num  = 0,
     /*  I2C address for the TSL2591 (0x29) */
@@ -1804,7 +1804,7 @@ sensor_dev_create(void)
 
 #if MYNEWT_VAL(TSL2591_OFB)
     rc = os_dev_create((struct os_dev *) &tsl2591, "tsl2591_0",
-      OS_DEV_INIT_PRIMARY, 0, tsl2591_init, (void *)&i2c_0_itf_tsl);
+      OS_DEV_INIT_PRIMARY, 0, tsl2591_init, (void *)&i2c_0_itf_tsl2591);
     assert(rc == 0);
 
     rc = config_tsl2591_sensor();
