@@ -29,6 +29,8 @@
 #include "reboot/log_reboot.h"
 #include "bsp/bsp.h"
 #include "flash_map/flash_map.h"
+#include "tinycbor/cbor.h"
+#include "tinycbor/cbor_buf_writer.h"
 
 #if MYNEWT_VAL(REBOOT_LOG_FCB)
 #include "fcb/fcb.h"
@@ -162,9 +164,14 @@ log_reboot_write(const struct log_reboot_info *info)
     struct image_version ver;
     uint8_t hash[IMGMGR_HASH_LEN];
     char buf[MYNEWT_VAL(REBOOT_LOG_BUF_SIZE)];
+    uint8_t cbor_enc_buf[MYNEWT_VAL(REBOOT_LOG_BUF_SIZE)];
     int off;
     int rc;
     int i;
+    struct cbor_buf_writer writer;
+    struct CborEncoder enc;
+    struct CborEncoder map;
+    size_t cbor_buf_len;
 
 #if MYNEWT_VAL(REBOOT_LOG_FCB)
     {
@@ -180,36 +187,58 @@ log_reboot_write(const struct log_reboot_info *info)
         return rc;
     }
 
-    off = 0;
-    off += snprintf(buf + off, sizeof buf - off,
-                    "rsn:%s, cnt:%u, img:%u.%u.%u.%u, hash:",
-                    REBOOT_REASON_STR(info->reason), reboot_cnt, ver.iv_major,
-                    ver.iv_minor, ver.iv_revision,
-                    (unsigned int)ver.iv_build_num);
+    memset(cbor_enc_buf, 0, sizeof(cbor_enc_buf));
 
+    cbor_buf_writer_init(&writer, cbor_enc_buf, sizeof(cbor_enc_buf));
+    cbor_encoder_init(&enc, &writer.enc, 0);
+    rc = cbor_encoder_create_map(&enc, &map, CborIndefiniteLength);
+    if (rc != 0) {
+        return rc;
+    }
+
+    cbor_encode_text_stringz(&map, "rsn");
+    cbor_encode_text_stringz(&map, REBOOT_REASON_STR(info->reason));
+
+    cbor_encode_text_stringz(&map, "cnt");
+    cbor_encode_int(&map, reboot_cnt);
+
+    cbor_encode_text_stringz(&map, "img");
+    snprintf(buf, sizeof(buf), "%u.%u.%u.%u",
+                  ver.iv_major, ver.iv_minor, ver.iv_revision,
+                  (unsigned int) ver.iv_build_num);
+    cbor_encode_text_stringz(&map, buf);
+
+    cbor_encode_text_stringz(&map, "hash");
+    off = 0;
     for (i = 0; i < sizeof hash; i++) {
         off += snprintf(buf + off, sizeof buf - off, "%02x",
                         (unsigned int)hash[i]);
     }
+    cbor_encode_text_stringz(&map, buf);
 
     if (info->file != NULL) {
-        off += snprintf(buf + off, sizeof buf - off, ", die:%s:%d",
+        cbor_encode_text_stringz(&map, "die");
+        snprintf(buf, sizeof(buf), "%s:%d",
                 info->file, info->line);
+        cbor_encode_text_stringz(&map, buf);
     }
 
     if (info->pc != 0) {
-        off += snprintf(buf + off, sizeof buf - off, ", pc:0x%lx",
-                (unsigned long)info->pc);
+        cbor_encode_text_stringz(&map, "pc");
+        cbor_encode_int(&map, (unsigned long)info->pc);
     }
 
-    /* Make sure we don't log beyond the end of the source buffer. */
-    if (off > sizeof buf) {
-        off = sizeof buf;
+    /* Find length of the CBOR encoded log entry. */
+    cbor_buf_len = cbor_buf_writer_buffer_size(&writer, cbor_enc_buf) + 1;
+
+    rc = cbor_encoder_close_container(&enc, &map);
+    if (rc != 0) {
+        return SYS_ENOMEM;
     }
 
-    /* Log a reboot */
-    modlog_append(LOG_MODULE_REBOOT, LOG_LEVEL_CRITICAL, LOG_ETYPE_STRING,
-                  buf, off);
+    /* Log a CBOR encoded reboot record. */
+    modlog_append(LOG_MODULE_REBOOT, LOG_LEVEL_CRITICAL, LOG_ETYPE_CBOR,
+                  cbor_enc_buf, cbor_buf_len);
 
     return 0;
 }
