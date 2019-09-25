@@ -1,0 +1,74 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+syscfg.defs:
+    STM32_FLASH_SIZE_KB:
+        description: 'Total flash size in KB.'
+        value: 1024
+
+    UART_0:
+        description: 'Whether to enable UART0'
+        value:  1
+
+    TIMER_0:
+        description: 'Whether to enable TIMER_0'
+        value: 1
+
+    TIMER_1:
+        description: 'Whether to enable TIMER_1'
+        value: 0
+
+    TIMER_2:
+        description: 'Whether to enable TIMER_2'
+        value: 0
+
+syscfg.vals:
+    REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG
+    CONFIG_FCB_FLASH_AREA: FLASH_AREA_NFFS
+    NFFS_FLASH_AREA: FLASH_AREA_NFFS
+    COREDUMP_FLASH_AREA: FLASH_AREA_IMAGE_1
+    STM32_CLOCK_VOLTAGESCALING_CONFIG: 'PWR_REGULATOR_VOLTAGE_SCALE1'
+    STM32_CLOCK_LSI1: 1
+    STM32_CLOCK_LSI2: 0
+    STM32_CLOCK_LSI2_CALIBRATION: 0
+    STM32_CLOCK_LSE: 0
+    STM32_CLOCK_LSE_BYPASS: 0
+    STM32_CLOCK_MSI: 1
+    STM32_CLOCK_MSI_CALIBRATION: 'RCC_MSICALIBRATION_DEFAULT'
+    STM32_CLOCK_MSI_CLOCK_RANGE: 'RCC_MSIRANGE_8'  # 16MHz
+    STM32_CLOCK_HSI: 0
+    STM32_CLOCK_HSI_CALIBRATION: 'RCC_HSICALIBRATION_DEFAULT'
+    STM32_CLOCK_HSI48: 0
+    STM32_CLOCK_HSE: 0
+    STM32_CLOCK_HSE_BYPASS: 0
+    STM32_CLOCK_HSEPRE: 1  # 32 / 2 = 16MHz
+    STM32_CLOCK_PLL_PLLM: 'RCC_PLLM_DIV1'  # 16MHz
+    STM32_CLOCK_PLL_PLLN: 12  # 16 * 12 = 192MHz
+    STM32_CLOCK_PLL_PLLP: 'RCC_PLLP_DIV12'  # 192 / 12 = 16MHz
+    STM32_CLOCK_PLL_PLLR: 'RCC_PLLR_DIV3'  # 192 / 3 = 64MHz
+    STM32_CLOCK_PLL_PLLQ: 'RCC_PLLQ_DIV4'  # 192 / 4 = 48MHz
+    STM32_CLOCK_AHB_DIVIDER: 'RCC_SYSCLK_DIV1'
+    STM32_CLOCK_APB1_DIVIDER: 'RCC_HCLK_DIV1'
+    STM32_CLOCK_APB2_DIVIDER: 'RCC_HCLK_DIV1'
+    STM32_CLOCK_AHBCLK2_DIVIDER: 'RCC_SYSCLK_DIV2'
+    STM32_CLOCK_AHBCLK4_DIVIDER: 'RCC_SYSCLK_DIV1'
+    STM32_FLASH_LATENCY: 'FLASH_LATENCY_3'
+    STM32_FLASH_PREFETCH_ENABLE: 1
+    STM32_INSTRUCTION_CACHE_ENABLE: 1
+    STM32_DATA_CACHE_ENABLE: 1
