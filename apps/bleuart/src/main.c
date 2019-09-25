@@ -36,10 +36,6 @@
 #include "host/ble_gatt.h"
 #include "host/ble_l2cap.h"
 #include "host/ble_sm.h"
-#include "controller/ble_ll.h"
-
-/* RAM HCI transport. */
-#include "transport/ram/ble_hci_ram.h"
 
 /* Mandatory services. */
 #include "services/gap/ble_svc_gap.h"
