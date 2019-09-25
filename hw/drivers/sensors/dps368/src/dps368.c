@@ -309,7 +309,7 @@ dps368_set_oem_parameters(struct sensor_itf *itf)
         goto done;
     }
 
-    DPS368_LOG(INFO,"DPS368:OEM Parameters are set\n");
+    DPS368_LOG_INFO("DPS368:OEM Parameters are set\n");
 
 done:
     return rc;
@@ -381,7 +381,7 @@ dps368_set_mode(struct dps368 *dps368, dps3xx_operating_modes_e mode)
 
     if (dps368->mode == mode) {
         return 0;
-        DPS368_LOG(INFO, "Sensor is already in requested mode\n");
+        DPS368_LOG_INFO("Sensor is already in requested mode\n");
     }
 
 
@@ -727,9 +727,9 @@ int dps368_soft_reset(struct sensor *sensor)
     }
 
     if (ready == 0) {
-        DPS368_LOG(INFO, "Sensor is not ready after reset\n");
+        DPS368_LOG_INFO("Sensor is not ready after reset\n");
     } else {
-        DPS368_LOG(INFO, "Sensor is ready after reset\n");
+        DPS368_LOG_INFO("Sensor is ready after reset\n");
     }
 
     /*perform post init sequence*/
@@ -780,7 +780,7 @@ int dps368_init(struct os_dev *dev, void *arg)
         return rc;
     }
 
-    DPS368_LOG(INFO,"DPS368init:sensor_init:OK\n");
+    DPS368_LOG_INFO("DPS368init:sensor_init:OK\n");
 
     /* Add the pressure and temperature driver */
     rc = sensor_set_driver(sensor, SENSOR_TYPE_PRESSURE |
@@ -791,7 +791,7 @@ int dps368_init(struct os_dev *dev, void *arg)
         return rc;
     }
 
-    DPS368_LOG(INFO,"DPS368init:sensor_set_driver:OK\n");
+    DPS368_LOG_INFO("DPS368init:sensor_set_driver:OK\n");
 
     rc = sensor_set_interface(sensor, arg);
 
@@ -799,7 +799,7 @@ int dps368_init(struct os_dev *dev, void *arg)
         return rc;
     }
 
-    DPS368_LOG(INFO,"DPS368init:sensor_set_interface:OK\n");
+    DPS368_LOG_INFO("DPS368init:sensor_set_interface:OK\n");
 
     rc = sensor_mgr_register(sensor);
 
@@ -807,7 +807,7 @@ int dps368_init(struct os_dev *dev, void *arg)
         return rc;
     }
 
-    DPS368_LOG(INFO,"DPS368init:sensor_mgr_register:OK\n");
+    DPS368_LOG_INFO("DPS368init:sensor_mgr_register:OK\n");
 
 #if !MYNEWT_VAL(BUS_DRIVER_PRESENT)
     if (sensor->s_itf.si_type == SENSOR_ITF_SPI) {
@@ -862,14 +862,14 @@ int dps368_config(struct dps368 *dps368, struct dps368_cfg_s *cfg)
         }
 
         if (sensor_exist == 1) {
-            DPS368_LOG(INFO, "DPS368:Found during config init sequence\n");
+            DPS368_LOG_INFO("DPS368:Found during config init sequence\n");
         }
 
         if ((rc = dps368_soft_reset(&dps368->sensor))) {
             return rc;
         }
 
-        DPS368_LOG(INFO, "DPS368:Soft reset: OK\n");
+        DPS368_LOG_INFO("DPS368:Soft reset: OK\n");
 
         if ((rc = dps368_is_trim_complete(itf, &ready))) {
             STATS_INC(dps368->stats, read_errors); 
@@ -884,7 +884,7 @@ int dps368_config(struct dps368 *dps368, struct dps368_cfg_s *cfg)
                 return rc;
             }
 
-            DPS368_LOG(INFO, "DPS368:Calibration data prepared\n");
+            DPS368_LOG_INFO("DPS368:Calibration data prepared\n");
         }
 
     } else if (cfg->config_opt & DPS3xx_RECONF_ALL) {
@@ -913,13 +913,13 @@ int dps368_config(struct dps368 *dps368, struct dps368_cfg_s *cfg)
         return rc;
     }
 
-    DPS368_LOG(INFO, "DPS368:Reconfig done\n");
+    DPS368_LOG_INFO("DPS368:Reconfig done\n");
 
     if ((rc = dps368_set_mode(dps368, updated_cfg.mode))) {
         return rc;
     }
 
-    DPS368_LOG(INFO, "DPS368:Mode is set\n");
+    DPS368_LOG_INFO("DPS368:Mode is set\n");
 
     if ((rc = sensor_set_type_mask(&(dps368->sensor), cfg->chosen_type))) {
         return rc;
@@ -942,7 +942,7 @@ dps368_sensor_read(struct sensor *sensor, sensor_type_t type,
 
     if (dps368->mode == DPS3xx_MODE_IDLE) {
 
-        DPS368_LOG(ERROR,
+        DPS368_LOG_ERROR(
                 "Could not stream as mode is inappropriate\n "
                 "First set mode to Background or Command and then try again\n");
         return rc;
