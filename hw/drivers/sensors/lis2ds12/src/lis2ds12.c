@@ -43,7 +43,7 @@
 #define LIS2DS12_ST_NUM_READINGS 5
 
 //SLEEP_CHG and SLEEP_STATE interrupts aren't available on int1 or int2 so dont need to be enabled
-const struct lis2ds12_notif_cfg dflt_notif_cfg[] = {
+static const struct lis2ds12_notif_cfg dflt_notif_cfg[] = {
     { SENSOR_EVENT_TYPE_SINGLE_TAP,   0, LIS2DS12_INT1_CFG_SINGLE_TAP  },
     { SENSOR_EVENT_TYPE_DOUBLE_TAP,   0, LIS2DS12_INT1_CFG_DOUBLE_TAP  },
     { SENSOR_EVENT_TYPE_FREE_FALL,    0, LIS2DS12_INT1_CFG_FF          },

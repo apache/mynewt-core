@@ -56,7 +56,7 @@ static struct hal_spi_settings spi_lsm6dso_settings = {
 #endif /* BUS_DRIVER_PRESENT */
 
 /* Default event notification */
-const struct lsm6dso_notif_cfg dflt_notif_cfg[] = {
+static const struct lsm6dso_notif_cfg dflt_notif_cfg[] = {
     {
         .event = SENSOR_EVENT_TYPE_SINGLE_TAP,
         .int_num = 0,
