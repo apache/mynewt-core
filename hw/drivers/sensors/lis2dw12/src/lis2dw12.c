@@ -46,7 +46,7 @@
 
 #define LIS2DW12_ST_NUM_READINGS 5
 
-const struct lis2dw12_notif_cfg dflt_notif_cfg[] = {
+static const struct lis2dw12_notif_cfg dflt_notif_cfg[] = {
     {
       .event     = SENSOR_EVENT_TYPE_SINGLE_TAP,
       .int_num   = 0,
