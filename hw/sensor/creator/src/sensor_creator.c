@@ -441,7 +441,8 @@ static struct sensor_itf spi2c_0_itf_bma253 = {
 #endif
 #endif
 
-#if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(BMA2XX_OFB)
+#if MYNEWT_VAL(BMA2XX_OFB)
+#if MYNEWT_VAL(I2C_0)
 static struct sensor_itf spi2c_0_itf_bma2xx = {
     .si_type = SENSOR_ITF_I2C,
     .si_num  = 0,
@@ -453,8 +454,7 @@ static struct sensor_itf spi2c_0_itf_bma2xx = {
             MYNEWT_VAL(BMA2XX_INT_CFG_ACTIVE)}
     },
 };
-#endif
-#if MYNEWT_VAL(SPI_0_MASTER) && MYNEWT_VAL(BMA2XX_OFB)
+#elif MYNEWT_VAL(SPI_0_MASTER)
 //TODO:  Make INT pin nums configurable.  Leaving hardcoded
 //to handle multiple bma2xx sensor interface examples
 static struct sensor_itf spi2c_0_itf_bma2xx = {
@@ -468,6 +468,7 @@ static struct sensor_itf spi2c_0_itf_bma2xx = {
             MYNEWT_VAL(BMA2XX_INT_CFG_ACTIVE)}
     },
 };
+#endif
 #endif
 
 #if MYNEWT_VAL(BMP388_OFB)
