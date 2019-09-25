@@ -24,22 +24,30 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "stm32f4xx_hal_pwr_ex.h"
-#include "stm32f4xx_hal.h"
+#include "stm32wbxx_hal_pwr_ex.h"
+#include "stm32wbxx_hal_rcc.h"
+#include "stm32wbxx_hal.h"
 #include <assert.h>
 
 /*
  * This allows an user to have a custom clock configuration by zeroing
  * every possible clock source in the syscfg.
  */
-#if MYNEWT_VAL(STM32_CLOCK_HSE) || MYNEWT_VAL(STM32_CLOCK_LSE) || \
-    MYNEWT_VAL(STM32_CLOCK_HSI) || MYNEWT_VAL(STM32_CLOCK_LSI)
+#if MYNEWT_VAL(STM32_CLOCK_MSI) || MYNEWT_VAL(STM32_CLOCK_HSE) || \
+    MYNEWT_VAL(STM32_CLOCK_LSE) || MYNEWT_VAL(STM32_CLOCK_HSI) || \
+    MYNEWT_VAL(STM32_CLOCK_HSI48) || MYNEWT_VAL(STM32_CLOCK_LSI1) || \
+    MYNEWT_VAL(STM32_CLOCK_LSI2)
+
+#define TRNG_ENABLED (MYNEWT_VAL(TRNG) != 0)
 
 /*
- * HSI is turned on by default, but can be turned off and use HSE instead.
+ * HSI is turned on by default, but can be turned off and use HSE/HSI48 instead.
  */
-#if (((MYNEWT_VAL(STM32_CLOCK_HSE) != 0) + (MYNEWT_VAL(STM32_CLOCK_HSI) != 0)) < 1)
-#error "At least one of HSE or HSI clock source must be enabled"
+#if (((MYNEWT_VAL(STM32_CLOCK_MSI) != 0) + \
+      (MYNEWT_VAL(STM32_CLOCK_HSE) != 0) + \
+      (MYNEWT_VAL(STM32_CLOCK_HSI) != 0) + \
+      (MYNEWT_VAL(STM32_CLOCK_HSI48) != 0)) < 1)
+#error "At least one of MSI, HSE, HSI or HSI48 clock sources must be enabled"
 #endif
 
 void
@@ -48,11 +56,9 @@ SystemClock_Config(void)
     RCC_OscInitTypeDef osc_init;
     RCC_ClkInitTypeDef clk_init;
     HAL_StatusTypeDef status;
-
-    /*
-     * Enable Power Control clock
-     */
-    __HAL_RCC_PWR_CLK_ENABLE();
+#if TRNG_ENABLED
+    RCC_PeriphCLKInitTypeDef  pclk_init;
+#endif
 
     /*
      * The voltage scaling allows optimizing the power consumption when the
@@ -62,38 +68,43 @@ SystemClock_Config(void)
      */
     __HAL_PWR_VOLTAGESCALING_CONFIG(MYNEWT_VAL(STM32_CLOCK_VOLTAGESCALING_CONFIG));
 
-    /*
-     * Configure HSI as PLL source; this avoids an error reconfiguring the
-     * PLL when it is already set has the system clock source.
-     */
-    osc_init.OscillatorType = RCC_OSCILLATORTYPE_HSI;
-    osc_init.HSIState = RCC_HSI_ON;
-    osc_init.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
-    osc_init.PLL.PLLSource = RCC_PLLSOURCE_HSI;
-    osc_init.PLL.PLLN = RCC_PLLCFGR_PLLN_0;
-    osc_init.PLL.PLLP = RCC_PLLCFGR_PLLP_0;
-
-    status = HAL_RCC_OscConfig(&osc_init);
-    if (status != HAL_OK) {
-        assert(0);
-    }
-
     osc_init.OscillatorType = RCC_OSCILLATORTYPE_NONE;
 
     /*
-     * LSI is used to clock the independent watchdog and optionally the RTC.
-     * It can be disabled per user request, but is automatically enabled again
-     * when the IWDG is started.
+     * LSI1/2 is used to clock the independent watchdog and optionally the RTC.
+     * LSI2 can also be used for auto-wakeup from the RF system. When LSI2 is
+     * enabled LSI1 is automatically enabled no matter which config was set.
+     *
+     * Both can be disabled per user request, but LSI1 is automatically enabled
+     * again when the IWDG is started.
      *
      * XXX currently the watchdog is not optional, so there's no point in
-     * disabling LSI through syscfg.
+     * disabling LSI1 through syscfg.
      */
-    osc_init.OscillatorType |= RCC_OSCILLATORTYPE_LSI;
-#if MYNEWT_VAL(STM32_CLOCK_LSI)
-    osc_init.LSIState = RCC_LSI_ON;
-#else
+#if (MYNEWT_VAL(STM32_CLOCK_LSI1) == 0) && (MYNEWT_VAL(STM32_CLOCK_LSI2) == 0)
+
+    osc_init.OscillatorType |= RCC_OSCILLATORTYPE_LSI1 | RCC_OSCILLATORTYPE_LSI2;
     osc_init.LSIState = RCC_LSI_OFF;
+
+#else
+
+    osc_init.LSIState = RCC_LSI_ON;
+
+#if MYNEWT_VAL(STM32_CLOCK_LSI1)
+    osc_init.OscillatorType |= RCC_OSCILLATORTYPE_LSI1;
 #endif
+
+#if MYNEWT_VAL(STM32_CLOCK_LSI2)
+
+#if !IS_RCC_LSI2_CALIBRATION_VALUE(MYNEWT_VAL(STM32_CLOCK_LSI2_CALIBRATION))
+#error "Invalid LSI2 calibration value"
+#endif
+
+    osc_init.OscillatorType |= RCC_OSCILLATORTYPE_LSI2;
+    osc_init.LSI2CalibrationValue = MYNEWT_VAL(STM32_CLOCK_LSI2_CALIBRATION);
+#endif /* MYNEWT_VAL(STM32_CLOCK_LSI2) */
+
+#endif /* (MYNEWT_VAL(STM32_CLOCK_LSI1) == 0) && (MYNEWT_VAL(STM32_CLOCK_LSI2) == 0) */
 
     /*
      * LSE is only used to clock the RTC.
@@ -108,6 +119,28 @@ SystemClock_Config(void)
 #endif
 
     /*
+     * MSI Oscillator
+     */
+#if MYNEWT_VAL(STM32_CLOCK_MSI)
+
+#if (MYNEWT_VAL(STM32_CLOCK_MSI_CALIBRATION) > 255)
+#error "Invalid MSI calibration value"
+#endif
+#if !IS_RCC_MSI_CLOCK_RANGE(MYNEWT_VAL(STM32_CLOCK_MSI_CLOCK_RANGE))
+#error "Invalid MSI clock range"
+#endif
+
+    /* NOTE: MSI can't be disabled if it's the current PLL or SYSCLK source;
+     * leave it untouched in those cases, and disable later after a new source
+     * has been configured.
+     */
+    osc_init.OscillatorType |= RCC_OSCILLATORTYPE_MSI;
+    osc_init.MSIState = RCC_MSI_ON;
+    osc_init.MSICalibrationValue = MYNEWT_VAL(STM32_CLOCK_MSI_CALIBRATION);
+    osc_init.MSIClockRange = MYNEWT_VAL(STM32_CLOCK_MSI_CLOCK_RANGE);
+#endif
+
+    /*
      * HSE Oscillator (can be used as PLL, SYSCLK and RTC clock source)
      */
 #if MYNEWT_VAL(STM32_CLOCK_HSE)
@@ -116,6 +149,11 @@ SystemClock_Config(void)
     osc_init.HSEState = RCC_HSE_BYPASS;
 #else
     osc_init.HSEState = RCC_HSE_ON;
+#endif
+#if MYNEWT_VAL(STM32_CLOCK_HSEPRE)
+    __HAL_RCC_HSE_DIV2_ENABLE();
+#else
+    __HAL_RCC_HSE_DIV2_DISABLE();
 #endif
 #endif
 
@@ -131,20 +169,27 @@ SystemClock_Config(void)
     /* HSI calibration is not optional when HSI is enabled */
     osc_init.HSICalibrationValue = MYNEWT_VAL(STM32_CLOCK_HSI_CALIBRATION);
 
-#if MYNEWT_VAL(STM32_CLOCK_HSI) && \
-        !IS_RCC_CALIBRATION_VALUE(MYNEWT_VAL(STM32_CLOCK_HSI_CALIBRATION))
+#if (MYNEWT_VAL(STM32_CLOCK_HSI_CALIBRATION) > 127)
 #error "Invalid HSI calibration value"
 #endif
 #endif
 
     /*
-     * Default to HSE as source, when both HSE and HSI are enabled.
-     *
-     * TODO: option to let the PLL turned off could be added, because
-     * both HSI and HSE can be used as SYSCLK source.
+     * Can be used to drive USB and the TRNG
+     */
+#if MYNEWT_VAL(STM32_CLOCK_HSI48)
+    osc_init.OscillatorType |= RCC_OSCILLATORTYPE_HSI48;
+    osc_init.HSI48State = RCC_HSI48_ON;
+#endif
+
+    /*
+     * Default to MSI, HSE or HSI48 as PLL source when multiple high-speed
+     * sources are enabled.
      */
     osc_init.PLL.PLLState = RCC_PLL_ON;
-#if MYNEWT_VAL(STM32_CLOCK_HSE)
+#if MYNEWT_VAL(STM32_CLOCK_MSI)
+    osc_init.PLL.PLLSource = RCC_PLLSOURCE_MSI;
+#elif MYNEWT_VAL(STM32_CLOCK_HSE)
     osc_init.PLL.PLLSource = RCC_PLLSOURCE_HSE;
 #else
     osc_init.PLL.PLLSource = RCC_PLLSOURCE_HSI;
@@ -166,60 +211,56 @@ SystemClock_Config(void)
 #error "PLLQ value is invalid"
 #endif
 
-    osc_init.PLL.PLLM = MYNEWT_VAL(STM32_CLOCK_PLL_PLLM);
-    osc_init.PLL.PLLN = MYNEWT_VAL(STM32_CLOCK_PLL_PLLN);
-    osc_init.PLL.PLLP = MYNEWT_VAL(STM32_CLOCK_PLL_PLLP);
-    osc_init.PLL.PLLQ = MYNEWT_VAL(STM32_CLOCK_PLL_PLLQ);
-
-#if MYNEWT_VAL(STM32_CLOCK_PLL_PLLR)
-
 #if !IS_RCC_PLLR_VALUE(MYNEWT_VAL(STM32_CLOCK_PLL_PLLR))
 #error "PLLR value is invalid"
 #endif
 
+    osc_init.PLL.PLLM = MYNEWT_VAL(STM32_CLOCK_PLL_PLLM);
+    osc_init.PLL.PLLN = MYNEWT_VAL(STM32_CLOCK_PLL_PLLN);
+    osc_init.PLL.PLLP = MYNEWT_VAL(STM32_CLOCK_PLL_PLLP);
+    osc_init.PLL.PLLQ = MYNEWT_VAL(STM32_CLOCK_PLL_PLLQ);
     osc_init.PLL.PLLR = MYNEWT_VAL(STM32_CLOCK_PLL_PLLR);
-
-#endif /* MYNEWT_VAL(STM32_CLOCK_PLL_PLLR) */
 
     status = HAL_RCC_OscConfig(&osc_init);
     if (status != HAL_OK) {
         assert(0);
     }
 
-#if MYNEWT_VAL(STM32_CLOCK_ENABLE_OVERDRIVE)
     /*
-     * Activate the Over-Drive mode
+     * Select PLL as system clock source and configure the HCLK*, PCLK* and
+     * SYSCLK clocks dividers. HSI, HSE and MSI are also valid system clock
+     * sources, although there is no much point in supporting them now.
      */
-    status = HAL_PWREx_EnableOverDrive();
-    if (status != HAL_OK) {
-        assert(0);
-    }
-#endif
-
-    /*
-     * Select PLL as system clock source and configure the HCLK, PCLK1 and
-     * PCLK2 clocks dividers. HSI and HSE are also valid system clock sources,
-     * although there is no much point in supporting them now.
-     */
-    clk_init.ClockType = RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_HCLK |
-                         RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
+    clk_init.ClockType = RCC_CLOCKTYPE_HCLK4 | RCC_CLOCKTYPE_HCLK2 |
+        RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_PCLK1 |
+        RCC_CLOCKTYPE_PCLK2;
     clk_init.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
 
-#if !IS_RCC_HCLK(MYNEWT_VAL(STM32_CLOCK_AHB_DIVIDER))
+#if !IS_RCC_HCLKx(MYNEWT_VAL(STM32_CLOCK_AHB_DIVIDER))
 #error "AHB clock divider is invalid"
 #endif
 
-#if !IS_RCC_PCLK(MYNEWT_VAL(STM32_CLOCK_APB1_DIVIDER))
+#if !IS_RCC_PCLKx(MYNEWT_VAL(STM32_CLOCK_APB1_DIVIDER))
 #error "APB1 clock divider is invalid"
 #endif
 
-#if !IS_RCC_PCLK(MYNEWT_VAL(STM32_CLOCK_APB2_DIVIDER))
+#if !IS_RCC_PCLKx(MYNEWT_VAL(STM32_CLOCK_APB2_DIVIDER))
 #error "APB2 clock divider is invalid"
+#endif
+
+#if !IS_RCC_HCLKx(MYNEWT_VAL(STM32_CLOCK_AHBCLK2_DIVIDER))
+#error "HCLK2 divider is invalid"
+#endif
+
+#if !IS_RCC_HCLKx(MYNEWT_VAL(STM32_CLOCK_AHBCLK4_DIVIDER))
+#error "HCLK4 divider is invalid"
 #endif
 
     clk_init.AHBCLKDivider = MYNEWT_VAL(STM32_CLOCK_AHB_DIVIDER);
     clk_init.APB1CLKDivider = MYNEWT_VAL(STM32_CLOCK_APB1_DIVIDER);
     clk_init.APB2CLKDivider = MYNEWT_VAL(STM32_CLOCK_APB2_DIVIDER);
+    clk_init.AHBCLK2Divider = MYNEWT_VAL(STM32_CLOCK_AHBCLK2_DIVIDER);
+    clk_init.AHBCLK4Divider = MYNEWT_VAL(STM32_CLOCK_AHBCLK4_DIVIDER);
 
 #if !IS_FLASH_LATENCY(MYNEWT_VAL(STM32_FLASH_LATENCY))
 #error "Flash latency value is invalid"
@@ -230,9 +271,10 @@ SystemClock_Config(void)
         assert(0);
     }
 
-#if ((MYNEWT_VAL(STM32_CLOCK_HSI) == 0) || (MYNEWT_VAL(STM32_CLOCK_HSE) == 0))
+#if ((MYNEWT_VAL(STM32_CLOCK_HSI) == 0) || (MYNEWT_VAL(STM32_CLOCK_HSE) == 0) || \
+     (MYNEWT_VAL(STM32_CLOCK_HSI48) == 0) || (MYNEWT_VAL(STM32_CLOCK_MSI) == 0))
     /*
-     * Turn off HSE/HSI oscillator; this must be done at the end because
+     * Turn off HSE/HSI/HSI48 oscillator; this must be done at the end because
      * SYSCLK source has to be updated first.
      */
     osc_init.OscillatorType = RCC_OSCILLATORTYPE_NONE;
@@ -244,24 +286,38 @@ SystemClock_Config(void)
     osc_init.OscillatorType |= RCC_OSCILLATORTYPE_HSI;
     osc_init.HSIState = RCC_HSI_OFF;
 #endif
+#if (MYNEWT_VAL(STM32_CLOCK_HSI48) == 0)
+    osc_init.OscillatorType |= RCC_OSCILLATORTYPE_HSI48;
+    osc_init.HSI48State = RCC_HSI48_OFF;
+#endif
+#if (MYNEWT_VAL(STM32_CLOCK_MSI) == 0)
+    osc_init.OscillatorType |= RCC_OSCILLATORTYPE_MSI;
+    osc_init.MSIState = RCC_MSI_OFF;
+#endif
+
+#endif
+
     osc_init.PLL.PLLState = RCC_PLL_NONE;
 
     status = HAL_RCC_OscConfig(&osc_init);
     if (status != HAL_OK) {
         assert(0);
     }
+
+#if TRNG_ENABLED
+    pclk_init.PeriphClockSelection = RCC_PERIPHCLK_RNG;
+    /* Other clock sources are possible, but since right now we always
+     * configure the PLL, this should be ok
+     */
+    pclk_init.RngClockSelection = RCC_RNGCLKSOURCE_PLL;
+    status = HAL_RCCEx_PeriphCLKConfig(&pclk_init);
+    if (status != HAL_OK) {
+        assert(0);
+    }
 #endif
 
 #if PREFETCH_ENABLE
-#if defined(STM32F405xx) || defined(STM32F415xx) || defined(STM32F407xx) || \
-    defined(STM32F417xx)
-    /* RevA (prefetch must be off) or RevZ (prefetch can be on/off) */
-    if (HAL_GetREVID() == 0x1001) {
-        __HAL_FLASH_PREFETCH_BUFFER_ENABLE();
-    }
-#else
     __HAL_FLASH_PREFETCH_BUFFER_ENABLE();
-#endif
 #endif
 
 #if INSTRUCTION_CACHE_ENABLE
