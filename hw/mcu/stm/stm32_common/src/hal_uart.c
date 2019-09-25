@@ -65,7 +65,11 @@ static struct hal_uart_irq uart_irqs[3];
 #  define TC            USART_ISR_TC
 #  define RXDR(x)       ((x)->RDR)
 #  define TXDR(x)       ((x)->TDR)
+#if MYNEWT_VAL(MCU_STM32WB)
+#  define BAUD(x,y)     UART_DIV_SAMPLING16((x), (y), UART_PRESCALER_DIV1)
+#else
 #  define BAUD(x,y)     UART_DIV_SAMPLING16((x), (y))
+#endif
 #else
 #  define STATUS(x)     ((x)->SR)
 #  define RXNE          USART_SR_RXNE
@@ -209,12 +213,13 @@ uart_irq1(void)
     uart_irq_handler(0);
 }
 
+#ifdef USART2_BASE
 static void
 uart_irq2(void)
 {
     uart_irq_handler(1);
-
 }
+#endif
 
 #ifdef USART3_BASE
 static void
@@ -275,10 +280,12 @@ hal_uart_set_nvic(IRQn_Type irqn, struct hal_uart *uart)
         isr = (uint32_t)&uart_irq1;
         ui = &uart_irqs[0];
         break;
+#ifdef USART2_BASE
     case USART2_IRQn:
         isr = (uint32_t)&uart_irq2;
         ui = &uart_irqs[1];
         break;
+#endif
 #ifdef USART3_BASE
   #if !MYNEWT_VAL(MCU_STM32F0)
     case USART3_IRQn:
