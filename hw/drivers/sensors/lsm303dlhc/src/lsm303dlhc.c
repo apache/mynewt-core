@@ -439,8 +439,8 @@ lsm303dlhc_sensor_read(struct sensor *sensor, sensor_type_t type,
                 mg_lsb = 0.012F;
                 break;
             default:
-                LSM303DLHC_LOG(
-                    ERROR, "Unknown accel range: 0x%02X. Assuming +/-2G.\n",
+                LSM303DLHC_LOG_ERROR(
+                    "Unknown accel range: 0x%02X. Assuming +/-2G.\n",
                     lsm->cfg.accel_range);
                 mg_lsb = 0.001F;
                 break;
@@ -515,7 +515,7 @@ lsm303dlhc_sensor_read(struct sensor *sensor, sensor_type_t type,
                 gauss_lsb_z = 205;
                 break;
             default:
-                LSM303DLHC_LOG(ERROR,
+                LSM303DLHC_LOG_ERROR(
                                "Unknown mag gain: 0x%02X. Assuming +/-1.3g.\n",
                                lsm->cfg.mag_gain);
                 gauss_lsb_xy = 1100;
