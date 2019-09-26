@@ -18,7 +18,7 @@
 #
 
 syscfg.defs:
-    NEWTMGR_SHELL_SYSINIT_STAGE:
+    NMGR_SHELL_SYSINIT_STAGE:
         description: >
-            Sysinit stage for the shell Newtmgr transport.
+            Sysinit stage for the shell newtmgr transport.
         value: 501
