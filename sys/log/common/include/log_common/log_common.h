@@ -134,6 +134,13 @@ extern struct log_info g_log_info;
  */
 typedef void log_append_cb(struct log *log, uint32_t idx);
 
+/** @typdef log_notify_rotate_cb
+ * @brief Callback that is executed each time we are about to rotate a log.
+ * 
+ * @param log                   The log that is about to rotate 
+ */
+typedef void log_notify_rotate_cb(struct log *log);
+
 #ifdef __cplusplus
 }
 #endif
