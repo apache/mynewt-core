@@ -296,7 +296,7 @@ lis2dw12_spi_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
         rc = hal_spi_tx_val(itf->si_num, payload[i]);
         if (rc == 0xFFFF) {
             rc = SYS_EINVAL;
-            LIS2DW12_LOG_ERROR("SPI_%u write failed addr:0x%02X:0x%02X\n",
+            LIS2DW12_LOG_ERROR("SPI_%u write failed addr:0x%02X\n",
                          itf->si_num, addr);
             STATS_INC(g_lis2dw12stats, write_errors);
             goto err;
