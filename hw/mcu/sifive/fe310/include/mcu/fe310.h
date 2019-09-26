@@ -20,7 +20,11 @@
 #ifndef __MCU_FE310_H__
 #define __MCU_FE310_H__
 
-#include "os/mynewt.h"
+/*
+ * This is include is just so OS_TICKS_PER_SEC can be taken from
+ * syscfg. Do not change it os/mynewt.h.
+ */
+#include "syscfg/syscfg.h"
 
 #ifdef __cplusplus
 extern "C" {
