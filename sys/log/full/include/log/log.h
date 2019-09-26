@@ -114,6 +114,7 @@ struct log_handler {
     lh_append_mbuf_func_t log_append_mbuf;
     lh_append_mbuf_body_func_t log_append_mbuf_body;
     lh_walk_func_t log_walk;
+    lh_walk_func_t log_walk_sector;
     lh_flush_func_t log_flush;
 #if MYNEWT_VAL(LOG_STORAGE_INFO)
     lh_storage_info_func_t log_storage_info;
@@ -213,6 +214,7 @@ struct log {
     void *l_arg;
     STAILQ_ENTRY(log) l_next;
     log_append_cb *l_append_cb;
+    log_notify_rotate_cb *l_notify_erase_done_cb;
     uint8_t l_level;
     uint16_t l_max_entry_len;   /* Log body length; if 0 disables check. */
 #if MYNEWT_VAL(LOG_STATS)
@@ -594,6 +596,21 @@ int log_walk_body(struct log *log, log_walk_body_func_t walk_body_func,
         struct log_offset *log_offset);
 int log_flush(struct log *log);
 
+/**
+ * @brief      Walking a section of FCB.
+ *
+ * @param log                   The log to iterate.
+ * @param walk_body_func        The function to apply to each log entry.
+ * @param log_offset            Specifies the range of entries to process.
+ *                                  Entries not matching these criteria are
+ *                                  skipped during the walk.
+ *
+ * @return                      0 if the walk completed successfully;
+ *                              nonzero on error or if the walk was aborted.
+ */
+int log_walk_body_section(struct log *log, log_walk_body_func_t walk_body_func,
+              struct log_offset *log_offset);
+
 #if MYNEWT_VAL(LOG_MODULE_LEVELS)
 /**
  * @brief Retrieves the globally configured minimum log level for the specified
@@ -677,6 +694,17 @@ void log_set_max_entry_len(struct log *log, uint16_t max_entry_len);
  */
 int log_storage_info(struct log *log, struct log_storage_info *info);
 #endif
+
+/**
+ * Assign a callback function to be notified once the log deletes the oldest
+ * data to write in new data.
+ *
+ * @param log   The log
+ * @param cb    The callback function to be executed.
+ */
+void
+log_set_rotate_done_cb(struct log *log, log_notify_rotate_cb *cb);
+
 #if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
 /**
  * Set watermark on log
