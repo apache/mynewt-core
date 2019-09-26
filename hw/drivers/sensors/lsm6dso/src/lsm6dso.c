@@ -2095,7 +2095,7 @@ int lsm6dso_get_ag_data(struct sensor_itf *itf, sensor_type_t type, void *data,
             sensitivity = cfg->acc_sensitivity;
            break;
         default:
-            LSM6DSO_LOG_ERROR("Invalid sensor type: %d\n", type);
+            LSM6DSO_LOG_ERROR("Invalid sensor type: %d\n", (int)type);
             return SYS_EINVAL;
     }
 

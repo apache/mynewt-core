@@ -275,7 +275,7 @@ icp101xx_read(struct sensor_itf *itf, uint8_t * buf, uint32_t len)
     rc = i2cn_master_read(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10,
                           1, MYNEWT_VAL(ICP101XX_I2C_RETRIES));
     if (rc) {
-        ICP101XX_LOG_ERROR("Failed to read %d bytes from 0x%x\n", 
+        ICP101XX_LOG_ERROR("Failed to read %u bytes from 0x%x\n", len,
                      data_struct.address);
     }
 
