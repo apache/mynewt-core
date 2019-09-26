@@ -111,6 +111,48 @@ next_sector:
 }
 
 int
+fcb_getnext_nolock_sector(struct fcb *fcb, struct fcb_entry *loc)
+{
+    int rc;
+
+    if (loc->fe_area == NULL) {
+        /*
+         * Find the first one we have in flash.
+         */
+        loc->fe_area = fcb->f_oldest;
+    }
+    if (loc->fe_elem_off == 0) {
+        /*
+         * If offset is zero, we serve the first entry from the area.
+         */
+        loc->fe_elem_off = sizeof(struct fcb_disk_area);
+        rc = fcb_elem_info(fcb, loc);
+    } else {
+        rc = fcb_getnext_in_area(fcb, loc);
+    }
+    switch (rc) {
+    case 0:
+        return 0;
+    case FCB_ERR_CRC:
+        break;
+    default:
+        return FCB_ERR_NEXT_SECT;
+    }
+    while (rc == FCB_ERR_CRC) {
+        rc = fcb_getnext_in_area(fcb, loc);
+        if (rc == 0) {
+            return 0;
+        }
+
+        if (rc != FCB_ERR_CRC) {
+            return FCB_ERR_NEXT_SECT;
+        }
+    }
+
+    return FCB_ERR_NEXT_SECT;
+}
+
+int
 fcb_getnext(struct fcb *fcb, struct fcb_entry *loc)
 {
     int rc;
@@ -120,6 +162,21 @@ fcb_getnext(struct fcb *fcb, struct fcb_entry *loc)
         return FCB_ERR_ARGS;
     }
     rc = fcb_getnext_nolock(fcb, loc);
+    os_mutex_release(&fcb->f_mtx);
+
+    return rc;
+}
+
+int
+fcb_getnext_sector(struct fcb *fcb, struct fcb_entry *loc)
+{
+    int rc;
+
+    rc = os_mutex_pend(&fcb->f_mtx, OS_WAIT_FOREVER);
+    if (rc && rc != OS_NOT_STARTED) {
+        return FCB_ERR_ARGS;
+    }
+    rc = fcb_getnext_nolock_sector(fcb, loc);
     os_mutex_release(&fcb->f_mtx);
 
     return rc;

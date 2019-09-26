@@ -32,7 +32,7 @@ fcb_init(struct fcb *fcb)
     int max_align = 1;
     int align;
     int oldest = -1, newest = -1;
-    struct flash_area *oldest_fap = NULL, *newest_fap = NULL;
+    struct flash_area *oldest_fap = NULL, *newest_fap = NULL, *scratch_fap = NULL;
     struct fcb_disk_area fda;
 
     if (!fcb->f_sectors || fcb->f_sector_cnt - fcb->f_scratch_cnt < 1) {
@@ -56,11 +56,26 @@ fcb_init(struct fcb *fcb)
         if (oldest < 0) {
             oldest = newest = fda.fd_id;
             oldest_fap = newest_fap = fap;
+
+            fap++;
+            if (fap >= &fcb->f_sectors[fcb->f_sector_cnt]) {
+                scratch_fap = &fcb->f_sectors[0];
+            } else {
+                scratch_fap = fap;
+            }
             continue;
         }
         if (FCB_ID_GT(fda.fd_id, newest)) {
             newest = fda.fd_id;
             newest_fap = fap;
+           
+            fap++;
+            if (fap >= &fcb->f_sectors[fcb->f_sector_cnt]) {
+                scratch_fap = &fcb->f_sectors[0];
+            } else {
+                scratch_fap = fap;
+            }
+
         } else if (FCB_ID_GT(oldest, fda.fd_id)) {
             oldest = fda.fd_id;
             oldest_fap = fap;
@@ -76,7 +91,13 @@ fcb_init(struct fcb *fcb)
             return rc;
         }
         newest = oldest = 0;
+        scratch_fap = &fcb->f_sectors[fcb->f_sector_cnt-1];
     }
+
+    if (fcb->f_scratch) {
+        fcb->f_scratch = scratch_fap;
+    }
+
     fcb->f_align = max_align;
     fcb->f_oldest = oldest_fap;
     fcb->f_active.fe_area = newest_fap;
