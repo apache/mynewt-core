@@ -172,6 +172,8 @@ log_reboot_write(const struct log_reboot_info *info)
     struct CborEncoder enc;
     struct CborEncoder map;
     size_t cbor_buf_len;
+    uint32_t flags;
+    uint8_t state_flags;
 
 #if MYNEWT_VAL(REBOOT_LOG_FCB)
     {
@@ -182,7 +184,7 @@ log_reboot_write(const struct log_reboot_info *info)
     }
 #endif
 
-    rc = imgr_read_info(boot_current_slot, &ver, hash, NULL);
+    rc = imgr_read_info(boot_current_slot, &ver, hash, &flags);
     if (rc != 0) {
         return rc;
     }
@@ -227,6 +229,24 @@ log_reboot_write(const struct log_reboot_info *info)
         cbor_encode_text_stringz(&map, "pc");
         cbor_encode_int(&map, (unsigned long)info->pc);
     }
+
+    state_flags = imgmgr_state_flags(boot_current_slot);
+    cbor_encode_text_stringz(&map, "flags");
+    off = 0;
+    if (state_flags & IMGMGR_STATE_F_ACTIVE) {
+        off += snprintf(buf + off, sizeof buf - off, "%s ", "active");
+    }
+    if (!(flags & IMAGE_F_NON_BOOTABLE)) {
+    	off += snprintf(buf + off, sizeof buf - off, "%s ", "bootable");
+	}
+    if (state_flags & IMGMGR_STATE_F_CONFIRMED) {
+    	off += snprintf(buf + off, sizeof buf - off, "%s ", "confirmed");
+    }
+    if (state_flags & IMGMGR_STATE_F_PENDING) {
+    	off += snprintf(buf + off, sizeof buf - off, "%s ", "pending");
+    }
+    buf[off - 1] = '\0';
+    cbor_encode_text_stringz(&map, buf);
 
     /* Find length of the CBOR encoded log entry. */
     cbor_buf_len = cbor_buf_writer_buffer_size(&writer, cbor_enc_buf) + 1;
