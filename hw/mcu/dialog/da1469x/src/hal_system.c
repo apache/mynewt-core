@@ -67,10 +67,14 @@ hal_system_reset(void)
     hal_system_reset_cb();
 #endif
 
-    while (1) {
-        if (hal_debugger_connected()) {
+    while (1)
+    {
+#if MYNEWT_VAL(MCU_DEBUG_HALT_ON_RESET)
+        if(hal_debugger_connected())
+        {
             asm("bkpt");
         }
+#endif
         NVIC_SystemReset();
     }
 }

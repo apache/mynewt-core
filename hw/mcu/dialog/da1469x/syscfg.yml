@@ -81,6 +81,12 @@ syscfg.defs:
             Used internally by the newt tool.
         value: 1
 
+    MCU_DEBUG_HALT_ON_RESET:
+        description: >
+            Specifies the required alignment for internal flash writes.
+            Used internally by the newt tool.
+        value: 1
+
     RAM_RESIDENT:
         description: 'Compile app to be loaded to RAM'
         value: 0
