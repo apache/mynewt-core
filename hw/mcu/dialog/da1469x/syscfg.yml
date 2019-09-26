@@ -83,8 +83,8 @@ syscfg.defs:
 
     MCU_DEBUG_HALT_ON_RESET:
         description: >
-            Specifies the required alignment for internal flash writes.
-            Used internally by the newt tool.
+            Enables a breakpoint in hal_system_reset() when a debugger is attached.
+            Has no effect when debugger is not present.
         value: 1
 
     RAM_RESIDENT:
