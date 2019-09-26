@@ -36,8 +36,14 @@ fcb_new_area(struct fcb *fcb, int cnt)
         if (!rfa) {
             rfa = fa;
         }
-        if (fa == fcb->f_oldest) {
-            return NULL;
+        if (fcb->f_scratch) {
+            if (fa == fcb->f_scratch) {
+                return NULL;
+            }
+        } else {
+            if (fa == fcb->f_oldest) {
+                return NULL;
+            }
         }
     } while (i++ < cnt);
     return rfa;
