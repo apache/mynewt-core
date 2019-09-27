@@ -2981,22 +2981,22 @@ int lis2dh12_set_tap_cfg(struct sensor_itf *itf, struct lis2dh12_tap_settings *c
         return rc;
     }
 
-    lis2dh12_set_click_threshold(itf, cfg->click_ths);
+    rc = lis2dh12_set_click_threshold(itf, cfg->click_ths);
     if (rc) {
         return rc;
     }
 
-    lis2dh12_set_click_time_limit(itf, cfg->time_limit);
+    rc = lis2dh12_set_click_time_limit(itf, cfg->time_limit);
     if (rc) {
         return rc;
     }
 
-    lis2dh12_set_click_time_latency(itf, cfg->time_latency);
+    rc = lis2dh12_set_click_time_latency(itf, cfg->time_latency);
     if (rc) {
         return rc;
     }
 
-    lis2dh12_set_click_time_window(itf, cfg->time_window);
+    rc = lis2dh12_set_click_time_window(itf, cfg->time_window);
     if (rc) {
         return rc;
     }
