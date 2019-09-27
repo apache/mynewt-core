@@ -515,8 +515,9 @@ static int lsm6dso_spi_fixup(struct sensor *sensor, struct sensor_itf *itf,
         rc = hal_spi_enable(sensor->s_itf.si_num);
         if (rc) {
             return rc;
+        }
 
-        if (init)
+        if (init) {
             return hal_gpio_init_out(sensor->s_itf.si_cs_pin, 1);
         }
     }
