@@ -475,6 +475,9 @@ stm32l0xx
 # STM32L4xx SDK - BSD License
 stm32l4xx
 
+# STM32WBxx SDK - BSD License
+stm32wbxx
+
 # Fanstel EVBT840 BSP linker scripts - BSD License
 fanstel-ev-bt840_no_boot.ld
 split-fanstel-ev-bt840.ld
