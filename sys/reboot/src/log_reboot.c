@@ -189,9 +189,9 @@ log_reboot_write(const struct log_reboot_info *info)
         return rc;
     }
 
-    memset(cbor_enc_buf, 0, sizeof(cbor_enc_buf));
+    memset(cbor_enc_buf, 0, sizeof cbor_enc_buf);
 
-    cbor_buf_writer_init(&writer, cbor_enc_buf, sizeof(cbor_enc_buf));
+    cbor_buf_writer_init(&writer, cbor_enc_buf, sizeof cbor_enc_buf);
     cbor_encoder_init(&enc, &writer.enc, 0);
     rc = cbor_encoder_create_map(&enc, &map, CborIndefiniteLength);
     if (rc != 0) {
@@ -205,9 +205,9 @@ log_reboot_write(const struct log_reboot_info *info)
     cbor_encode_int(&map, reboot_cnt);
 
     cbor_encode_text_stringz(&map, "img");
-    snprintf(buf, sizeof(buf), "%u.%u.%u.%u",
+    snprintf(buf, sizeof buf, "%u.%u.%u.%u",
                   ver.iv_major, ver.iv_minor, ver.iv_revision,
-                  (unsigned int) ver.iv_build_num);
+                  (unsigned int)ver.iv_build_num);
     cbor_encode_text_stringz(&map, buf);
 
     cbor_encode_text_stringz(&map, "hash");
@@ -224,11 +224,10 @@ log_reboot_write(const struct log_reboot_info *info)
 
         /* If die filename is longer than 1/3 of total allocated
          * buffer, then trim the filename from left. */
-        if (strlen(info->file) > (sizeof(buf) / 3))
-        {
-            off = strlen(info->file) - (sizeof(buf)/3);
+        if (strlen(info->file) > ((sizeof buf) / 3)) {
+            off = strlen(info->file) - ((sizeof buf) / 3);
         }
-        snprintf(buf, sizeof(buf), "%s:%d",
+        snprintf(buf, sizeof buf, "%s:%d",
                 &info->file[off], info->line);
         cbor_encode_text_stringz(&map, buf);
     }
@@ -245,15 +244,17 @@ log_reboot_write(const struct log_reboot_info *info)
         off += snprintf(buf + off, sizeof buf - off, "%s ", "active");
     }
     if (!(flags & IMAGE_F_NON_BOOTABLE)) {
-    	off += snprintf(buf + off, sizeof buf - off, "%s ", "bootable");
-	}
+        off += snprintf(buf + off, sizeof buf - off, "%s ", "bootable");
+    }
     if (state_flags & IMGMGR_STATE_F_CONFIRMED) {
-    	off += snprintf(buf + off, sizeof buf - off, "%s ", "confirmed");
+        off += snprintf(buf + off, sizeof buf - off, "%s ", "confirmed");
     }
     if (state_flags & IMGMGR_STATE_F_PENDING) {
-    	off += snprintf(buf + off, sizeof buf - off, "%s ", "pending");
+        off += snprintf(buf + off, sizeof buf - off, "%s ", "pending");
     }
-    buf[off - 1] = '\0';
+    if (off > 1) {
+        buf[off - 1] = '\0';
+    }
     cbor_encode_text_stringz(&map, buf);
 
     /* Find length of the CBOR encoded log entry. */
