@@ -220,8 +220,16 @@ log_reboot_write(const struct log_reboot_info *info)
 
     if (info->file != NULL) {
         cbor_encode_text_stringz(&map, "die");
+        off  = 0;
+
+        /* If die filename is longer than 1/3 of total allocated
+         * buffer, then trim the filename from left. */
+        if (strlen(info->file) > (sizeof(buf) / 3))
+        {
+            off = strlen(info->file) - (sizeof(buf)/3);
+        }
         snprintf(buf, sizeof(buf), "%s:%d",
-                info->file, info->line);
+                &info->file[off], info->line);
         cbor_encode_text_stringz(&map, buf);
     }
 
