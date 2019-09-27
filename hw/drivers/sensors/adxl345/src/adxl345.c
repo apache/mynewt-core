@@ -843,8 +843,8 @@ adxl345_get_tap_settings(struct sensor_itf *itf, struct adxl345_tap_settings *se
     }
 
     settings->x_enable = (enables & (1 << 2)) != 0;
-    settings->x_enable = (enables & (1 << 1)) != 0;
-    settings->x_enable = (enables & (1 << 0)) != 0;
+    settings->y_enable = (enables & (1 << 1)) != 0;
+    settings->z_enable = (enables & (1 << 0)) != 0;
     settings->suppress = (enables & (1 << 3)) != 0;
 
     return 0;
