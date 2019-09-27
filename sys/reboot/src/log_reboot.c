@@ -211,6 +211,7 @@ log_reboot_write(const struct log_reboot_info *info)
     cbor_encode_text_stringz(&map, buf);
 
     cbor_encode_text_stringz(&map, "hash");
+    memset(buf, 0, sizeof buf);
     off = 0;
     for (i = 0; i < sizeof hash; i++) {
         off += snprintf(buf + off, sizeof buf - off, "%02x",
@@ -234,12 +235,14 @@ log_reboot_write(const struct log_reboot_info *info)
 
     if (info->pc != 0) {
         cbor_encode_text_stringz(&map, "pc");
-        cbor_encode_int(&map, (unsigned long)info->pc);
+        cbor_encode_int(&map, info->pc);
     }
 
     state_flags = imgmgr_state_flags(boot_current_slot);
     cbor_encode_text_stringz(&map, "flags");
     off = 0;
+    memset(buf, 0, sizeof buf);
+
     if (state_flags & IMGMGR_STATE_F_ACTIVE) {
         off += snprintf(buf + off, sizeof buf - off, "%s ", "active");
     }
