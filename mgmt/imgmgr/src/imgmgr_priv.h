@@ -22,6 +22,7 @@
 
 #include <stdint.h>
 #include "os/mynewt.h"
+#include "mgmt/mgmt.h"
 
 #ifdef __cplusplus
 extern "C" {

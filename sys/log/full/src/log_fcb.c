@@ -645,7 +645,7 @@ log_fcb_storage_info(struct log *log, struct log_storage_info *info)
 
 #if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
 static int
-log_fcb_new_watermark_index(struct log *log, struct log_offset *log_offset, void *dptr,
+log_fcb_new_watermark_index(struct log *log, struct log_offset *log_offset, const void *dptr,
                             uint16_t len)
 {
     struct fcb_entry *loc;
