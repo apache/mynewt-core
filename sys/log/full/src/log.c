@@ -228,7 +228,6 @@ log_module_register(uint8_t id, const char *name)
 const char *
 log_module_get_name(uint8_t module)
 {
-<<<<<<< HEAD
     int idx;
 
     switch (module) {
@@ -268,28 +267,6 @@ log_module_get_name(uint8_t module)
         idx = log_module_find_idx(module);
         if (idx != -1) {
             return g_log_module_list[idx].name;
-=======
-    if (module < LOG_MODULE_PERUSER) {
-        switch (module) {
-        case LOG_MODULE_DEFAULT:
-            return "DEFAULT";
-        case LOG_MODULE_OS:
-            return "OS";
-        case LOG_MODULE_MGMT:
-            return "MGMT";
-        case LOG_MODULE_NIMBLE_CTLR:
-            return "NIMBLE_CTLR";
-        case LOG_MODULE_NIMBLE_HOST:
-            return "NIMBLE_HOST";
-        case LOG_MODULE_NFFS:
-            return "NFFS";
-        case LOG_MODULE_REBOOT:
-            return "REBOOT";
-        case LOG_MODULE_IOTIVITY:
-            return "IOTIVITY";
-        case LOG_MODULE_TEST:
-            return "TEST";
->>>>>>> Cleanup and rearangemet: added struct omp_state, mgmt encoder/parser inited on oicmgr.
         }
     }
 
