@@ -33,6 +33,11 @@ extern "C" {
 /* XXX use some better defaults. For now it is min */
 #define BMA2XX_LOW_G_DELAY_MS_DEFAULT       2
 #define BMA2XX_HIGH_G_DELAY_MS_DEFAULT      2
+#define BMA2XX_LOW_G_THRESH_G_DEFAULT       0.375f
+#define BMA2XX_LOW_G_HYSTER_G_DEFAULT       0.125f
+#define BMA2XX_HIGH_G_THRESH_G_DEFAULT      1.5f
+#define BMA2XX_HIGH_G_HYSTER_G_DEFAULT      0.125f
+#define BMA2XX_ORIENT_HYSTER_G_DEFAULT      0.0625f
 
 /* Supported device models.  */
 enum bma2xx_model {
