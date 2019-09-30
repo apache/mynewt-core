@@ -247,21 +247,21 @@ log_reboot_write(const struct log_reboot_info *info)
         cbor_encode_int(&map, info->pc);
     }
 
-    state_flags = imgmgr_state_flags(boot_current_slot);
+    state_flags = img_mgmt_state_flags(boot_current_slot);
     cbor_encode_text_stringz(&map, "flags");
     off = 0;
     buf[0] = '\0';
 
-    if (state_flags & IMGMGR_STATE_F_ACTIVE) {
+    if (state_flags & IMG_MGMT_STATE_F_ACTIVE) {
         off += snprintf(buf + off, sizeof buf - off, "%s ", "active");
     }
     if (!(flags & IMAGE_F_NON_BOOTABLE)) {
         off += snprintf(buf + off, sizeof buf - off, "%s ", "bootable");
     }
-    if (state_flags & IMGMGR_STATE_F_CONFIRMED) {
+    if (state_flags & IMG_MGMT_STATE_F_CONFIRMED) {
         off += snprintf(buf + off, sizeof buf - off, "%s ", "confirmed");
     }
-    if (state_flags & IMGMGR_STATE_F_PENDING) {
+    if (state_flags & IMG_MGMT_STATE_F_PENDING) {
         off += snprintf(buf + off, sizeof buf - off, "%s ", "pending");
     }
     if (off > 1) {
