@@ -1485,7 +1485,11 @@ config_bma2xx_sensor(void)
 
     cfg.model = BMA2XX_BMA280;
     cfg.low_g_delay_ms = BMA2XX_LOW_G_DELAY_MS_DEFAULT;
+    cfg.low_g_thresh_g = BMA2XX_LOW_G_THRESH_G_DEFAULT;
+    cfg.low_g_hyster_g = BMA2XX_LOW_G_HYSTER_G_DEFAULT;
     cfg.high_g_delay_ms = BMA2XX_HIGH_G_DELAY_MS_DEFAULT;
+    cfg.high_g_thresh_g = BMA2XX_HIGH_G_THRESH_G_DEFAULT;
+    cfg.high_g_hyster_g = BMA2XX_HIGH_G_HYSTER_G_DEFAULT;
     cfg.g_range = BMA2XX_G_RANGE_2;
     cfg.filter_bandwidth = BMA2XX_FILTER_BANDWIDTH_500_HZ;
     cfg.use_unfiltered_data = false;
@@ -1497,6 +1501,7 @@ config_bma2xx_sensor(void)
     cfg.offset_x_g = 0.0;
     cfg.offset_y_g = 0.0;
     cfg.offset_z_g = 0.0;
+    cfg.orient_hyster_g = BMA2XX_ORIENT_HYSTER_G_DEFAULT;
     cfg.orient_blocking = BMA2XX_ORIENT_BLOCKING_NONE;
     cfg.orient_mode = BMA2XX_ORIENT_MODE_SYMMETRICAL;
     cfg.power_mode = BMA2XX_POWER_MODE_NORMAL;
