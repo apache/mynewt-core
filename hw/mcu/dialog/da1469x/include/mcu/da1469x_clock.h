@@ -21,6 +21,7 @@
 #define __MCU_DA1469X_CLOCK_H_
 
 #include <stdint.h>
+#include "mcu/da1469x_hal.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -93,6 +94,36 @@ uint32_t da1469x_clock_lp_rcx_freq_get(void);
  * Disable RCX
  */
 void da1469x_clock_lp_rcx_disable(void);
+
+/**
+ * Enable an AMBA clock
+ *
+ * @param idx
+ */
+static inline void
+da1469x_clock_amba_enable(uint32_t mask)
+{
+    uint32_t primask;
+
+    __HAL_DISABLE_INTERRUPTS(primask);
+    CRG_TOP->CLK_AMBA_REG |= mask;
+    __HAL_ENABLE_INTERRUPTS(primask);
+}
+
+/**
+ * Disable AMBA clock(s)
+ *
+ * @param uint32_t mask
+ */
+static inline void
+da1469x_clock_amba_disable(uint32_t mask)
+{
+    uint32_t primask;
+
+    __HAL_DISABLE_INTERRUPTS(primask);
+    CRG_TOP->CLK_AMBA_REG &= ~mask;
+    __HAL_ENABLE_INTERRUPTS(primask);
+}
 
 #ifdef __cplusplus
 }
