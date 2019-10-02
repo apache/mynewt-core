@@ -96,9 +96,9 @@ uint32_t da1469x_clock_lp_rcx_freq_get(void);
 void da1469x_clock_lp_rcx_disable(void);
 
 /**
- * Enable an AMBA clock
+ * Enable AMBA clock(s)
  *
- * @param idx
+ * @param mask
  */
 static inline void
 da1469x_clock_amba_enable(uint32_t mask)
