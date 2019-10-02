@@ -21,7 +21,7 @@
 #define __MCU_DA1469X_HAL_H_
 
 #include <assert.h>
-#include "mcu/cmsis_nvic.h"
+#include "mcu/mcu.h"
 #include "hal/hal_flash.h"
 
 #ifdef __cplusplus
