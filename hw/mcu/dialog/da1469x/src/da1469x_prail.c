@@ -153,6 +153,12 @@ da1469x_prail_dcdc_restore(void)
 #endif
 
 void
+da1469x_prail_dcdc_disable(void)
+{
+    DCDC->DCDC_CTRL1_REG &= ~DCDC_DCDC_CTRL1_REG_DCDC_ENABLE_Msk;
+}
+
+void
 da1469x_prail_initialize(void)
 {
     da1469x_prail_configure_3v0();
