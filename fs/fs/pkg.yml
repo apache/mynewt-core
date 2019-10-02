@@ -31,3 +31,6 @@ pkg.deps:
 
 pkg.deps.FS_CLI:
     - "@apache-mynewt-core/sys/shell"
+
+pkg.deps.FS_MGMT:
+    - "@apache-mynewt-mcumgr/cmd/fs/port/mynewt"
