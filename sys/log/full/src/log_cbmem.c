@@ -43,7 +43,11 @@ log_cbmem_append_body(struct log *log, const struct log_entry_hdr *hdr,
                 .flat_len = body_len,
             },
         },
+#if MYNEWT_VAL(LOG_VERSION) > 2
         .count = 3,
+#else
+        .count = 2,
+#endif
     };
 
 #if MYNEWT_VAL(LOG_VERSION) > 2
@@ -88,7 +92,11 @@ log_cbmem_append_mbuf_body(struct log *log, const struct log_entry_hdr *hdr,
                 .om = om,
             },
         },
+#if MYNEWT_VAL(LOG_VERSION) > 2
         .count = 3,
+#else
+        .count = 2,
+#endif
     };
 
 #if MYNEWT_VAL(LOG_VERSION) > 2

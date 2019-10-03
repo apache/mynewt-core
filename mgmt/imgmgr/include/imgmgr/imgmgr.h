@@ -106,8 +106,7 @@ imgr_read_info(int image_slot, struct image_version *ver, uint8_t *hash,
  *
  * @return 0 on success, non-zero on failure
  */
-uint8_t
-imgmgr_state_flags(int query_slot);
+uint8_t imgmgr_state_flags(int query_slot);
 
 /** @typedef imgr_upload_fn
  * @brief Application callback that is executed when an image upload request is
@@ -149,8 +148,7 @@ void imgr_set_upload_cb(imgr_upload_fn *cb, void *arg);
 typedef void (*imgmgr_dfu_cb)(void);
 
 /** Callback function pointers */
-typedef struct
-{
+typedef struct {
     imgmgr_dfu_cb dfu_started_cb;
     imgmgr_dfu_cb dfu_stopped_cb;
     imgmgr_dfu_cb dfu_pending_cb;
@@ -162,8 +160,7 @@ typedef struct
  *
  * @param cb_struct Ptr to callback struct
  */
-void
-imgmgr_register_callbacks(const imgmgr_dfu_callbacks_t *cb_struct);
+void imgmgr_register_callbacks(const imgmgr_dfu_callbacks_t *cb_struct);
 
 void imgmgr_dfu_stopped(void);
 void imgmgr_dfu_started(void);
