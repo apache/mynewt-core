@@ -257,9 +257,11 @@ log_fcb2_append_body(struct log *log, const struct log_entry_hdr *hdr,
     u8p = body;
 
     memcpy(buf, hdr, LOG_BASE_ENTRY_HDR_SIZE);
+#if MYNEWT_VAL(LOG_VERSION) > 2
     if (hdr->ue_flags & LOG_FLAGS_IMG_HASH) {
         memcpy(buf + LOG_BASE_ENTRY_HDR_SIZE, hdr->ue_imghash, LOG_IMG_HASHLEN);
     }
+#endif
     memcpy(buf + hdr_len, u8p, hdr_alignment);
 
     rc = fcb2_write(&loc, 0, buf, chunk_sz);
@@ -348,6 +350,7 @@ log_fcb2_append_mbuf_body(struct log *log, const struct log_entry_hdr *hdr,
     }
     len = LOG_BASE_ENTRY_HDR_SIZE;
 
+#if MYNEWT_VAL(LOG_VERSION) > 2
     if (hdr->ue_flags & LOG_FLAGS_IMG_HASH) {
         /* Write LOG_IMG_HASHLEN bytes of image hash */
         rc = fcb2_write(&loc, len, hdr->ue_imghash, LOG_IMG_HASHLEN);
@@ -356,7 +359,7 @@ log_fcb2_append_mbuf_body(struct log *log, const struct log_entry_hdr *hdr,
         }
         len += LOG_IMG_HASHLEN;
     }
-
+#endif
     rc = log_fcb2_write_mbuf(&loc, om, len);
     if (rc != 0) {
         return rc;
