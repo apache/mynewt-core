@@ -348,28 +348,23 @@ insert_char(char *pos, char c)
     }
 }
 
+/* Delete character at cursor position */
 static void
-del_char(char *pos, uint16_t end)
+del_char(char *pos)
 {
-    console_out('\b');
+    int left = trailing_chars;
 
-    if (end == 0) {
-        console_out(' ');
-        console_out('\b');
-        return;
-    }
-
-    cursor_save();
-
-    while (end-- > 0) {
+    while (left-- > 1) {
         *pos = *(pos + 1);
-        console_out(*(pos++));
+        console_out_nolock(*(pos++));
     }
-
-    console_out(' ');
 
     /* Move cursor back to right place */
-    cursor_restore();
+    if (trailing_chars) {
+        console_out_nolock(' ');
+        cursor_backward(trailing_chars);
+        trailing_chars--;
+    }
 }
 
 #if MYNEWT_VAL(CONSOLE_HISTORY_SIZE) > 0
@@ -656,8 +651,7 @@ ansi_cmd:
             break;
         }
 
-        cursor_forward(1);
-        del_char(&line[cur], --trailing_chars);
+        del_char(&line[cur]);
         break;
     default:
         break;
@@ -815,7 +809,10 @@ console_handle_char(uint8_t byte)
                 break;
             }
             if (cur > 0) {
-                del_char(&input->line[--cur], trailing_chars);
+                cursor_backward(1);
+                cur--;
+                trailing_chars++;
+                del_char(&input->line[cur]);
             }
             break;
         case ESC:
