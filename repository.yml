@@ -101,3 +101,10 @@ repo.deps:
         vers:
             master: 0-dev
             mynewt_1_7_0_tag: 1.3.1
+
+    apache-mynewt-mcumgr:
+        type: github
+        user: apache
+        repo: mynewt-mcumgr
+        vers:
+            master: 0-dev
