@@ -77,8 +77,7 @@ int imgr_my_version(struct image_version *ver);
  * Returns 1 if there is not a full image
  * Returns 2 if slot is empty
  */
-int
-imgr_get_current_hash(uint8_t *hash, uint16_t hashlen);
+int imgr_get_current_hash(uint8_t *hash, uint16_t hashlen);
 
 int imgmgr_find_best_area_id(void);
 
@@ -95,8 +94,7 @@ int imgmgr_find_best_area_id(void);
  * Returns 1 if there is not a full image
  * Returns 2 if slot is empty
  */
-int
-imgr_read_info(int image_slot, struct image_version *ver, uint8_t *hash,
+int imgr_read_info(int image_slot, struct image_version *ver, uint8_t *hash,
                uint32_t *flags);
 
 /**
