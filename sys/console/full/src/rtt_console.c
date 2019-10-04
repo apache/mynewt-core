@@ -106,15 +106,8 @@ console_out_nolock(int character)
 {
     char c = (char)character;
 
-    if (g_console_silence) {
-        return c;
-    }
-
     if ('\n' == c) {
         rtt_console_write_ch('\r');
-        console_is_midline = 0;
-    } else {
-        console_is_midline = 1;
     }
 
     rtt_console_write_ch(c);

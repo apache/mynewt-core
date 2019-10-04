@@ -156,10 +156,6 @@ uart_console_non_blocking_mode(void)
 int
 console_out_nolock(int c)
 {
-    if (g_console_silence) {
-        return c;
-    }
-
     /* Assure that there is a write cb installed; this enables to debug
      * code that is faulting before the console was initialized.
      */
@@ -169,9 +165,6 @@ console_out_nolock(int c)
 
     if ('\n' == c) {
         write_char_cb(uart_dev, '\r');
-        console_is_midline = 0;
-    } else {
-        console_is_midline = 1;
     }
     write_char_cb(uart_dev, c);
     uart_start_tx(uart_dev);

@@ -143,6 +143,18 @@ end:
     return rc;
 }
 
+static int
+console_filter_out(int c)
+{
+    if (g_console_silence) {
+        return c;
+    }
+
+    console_is_midline = (c != '\n') && (c != '\r');
+
+    return console_out_nolock(c);
+}
+
 int
 console_out(int c)
 {
@@ -153,7 +165,8 @@ console_out(int c)
     if (console_lock(timeout) != OS_OK) {
         return c;
     }
-    rc = console_out_nolock(c);
+
+    rc = console_filter_out(c);
 
     (void)console_unlock();
 
@@ -186,13 +199,13 @@ console_write(const char *str, int cnt)
 
     /* If the byte string is non nlip and we are silencing non nlip bytes,
      * do not let it go out on the console
-     */ 
+     */
     if (!g_is_output_nlip && g_console_silence_non_nlip) {
         goto done;
     }
 
     for (i = 0; i < cnt; i++) {
-        if (console_out_nolock((int)str[i]) == EOF) {
+        if (console_filter_out((int)str[i]) == EOF) {
             break;
         }
     }
@@ -816,7 +829,7 @@ console_handle_char(uint8_t byte)
                 prev_endl = byte;
                 break;
             }
-        
+
             prev_endl = byte;
             input->line[cur + end] = '\0';
             console_out('\r');
