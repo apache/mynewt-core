@@ -27,12 +27,6 @@
 int
 console_out_nolock(int c)
 {
-    if (g_console_silence) {
-        return c;
-    }
-
-    console_is_midline = (c != '\n');
-
     return ble_monitor_out(c);
 }
 
