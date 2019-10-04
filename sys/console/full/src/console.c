@@ -309,9 +309,10 @@ cursor_restore(void)
 }
 
 static void
-insert_char(char *pos, char c, uint16_t end)
+insert_char(char *pos, char c)
 {
     char tmp;
+    int end = trailing_chars;
 
     if (cur + end >= MYNEWT_VAL(CONSOLE_MAX_INPUT_LEN) - 1) {
         return;
@@ -319,7 +320,7 @@ insert_char(char *pos, char c, uint16_t end)
 
     if (echo) {
         /* Echo back to console */
-        console_out(c);
+        console_out_nolock(c);
     }
 
     ++cur;
@@ -332,17 +333,19 @@ insert_char(char *pos, char c, uint16_t end)
     tmp = *pos;
     *(pos++) = c;
 
-    cursor_save();
-
     while (end-- > 0) {
-        console_out(tmp);
+        if (echo) {
+            console_out_nolock(tmp);
+        }
         c = *pos;
         *(pos++) = tmp;
         tmp = c;
     }
 
     /* Move cursor back to right place */
-    cursor_restore();
+    if (echo) {
+        cursor_backward(trailing_chars);
+    }
 }
 
 static void
@@ -558,7 +561,7 @@ console_hist_move(char *line, uint8_t direction)
     console_clear_line();
     str = sh->lines[sh->curr];
     while (str && *str != '\0') {
-        insert_char(&line[cur], *str, trailing_chars);
+        insert_char(&line[cur], *str);
         ++str;
     }
 }
@@ -735,7 +738,7 @@ console_handle_char(uint8_t byte)
 
     if (handle_nlip(byte))  {
         if (byte == '\n') {
-            insert_char(&input->line[cur], byte, trailing_chars);
+            insert_char(&input->line[cur], byte);
             input->line[cur] = '\0';
             cur = 0;
             trailing_chars = 0;
@@ -756,14 +759,14 @@ console_handle_char(uint8_t byte)
         } else if (byte == CONSOLE_NLIP_PKT_START2) {
             /* Disable echo to not flood the UART */
             console_echo(0);
-            insert_char(&input->line[cur], CONSOLE_NLIP_PKT_START1, trailing_chars);
+            insert_char(&input->line[cur], CONSOLE_NLIP_PKT_START1);
         } else if (byte == CONSOLE_NLIP_DATA_START2) {
             /* Disable echo to not flood the UART */
             console_echo(0);
-            insert_char(&input->line[cur], CONSOLE_NLIP_DATA_START1, trailing_chars);
+            insert_char(&input->line[cur], CONSOLE_NLIP_DATA_START1);
         }
 
-        insert_char(&input->line[cur], byte, trailing_chars);
+        insert_char(&input->line[cur], byte);
 
         return 0;
     }
@@ -822,7 +825,7 @@ console_handle_char(uint8_t byte)
             esc_state |= ESC_ESC;
             break;
         default:
-            insert_char(&input->line[cur], byte, trailing_chars);
+            insert_char(&input->line[cur], byte);
             /* Falls through. */
         case '\r':
             /* Falls through. */
@@ -873,7 +876,7 @@ console_handle_char(uint8_t byte)
     }
 
     if (!g_console_ignore_non_nlip) {
-        insert_char(&input->line[cur], byte, trailing_chars);
+        insert_char(&input->line[cur], byte);
     }
     return 0;
 }
