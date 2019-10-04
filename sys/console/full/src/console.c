@@ -80,7 +80,10 @@ static int echo = MYNEWT_VAL(CONSOLE_ECHO);
 static unsigned int ansi_val, ansi_val_2;
 static bool rx_stalled;
 
-static uint16_t cur, end;
+/* Cursor position in input line */
+static uint16_t cur;
+/* Number of characters after cursor in input line */
+static uint16_t trailing_chars;
 static struct os_eventq avail_queue;
 static struct os_eventq *lines_queue;
 static completion_cb completion;
@@ -529,7 +532,7 @@ console_clear_line(void)
         cursor_backward(cur);
     }
     cur = 0;
-    end = 0;
+    trailing_chars = 0;
 
     cursor_clear_line();
 }
@@ -555,7 +558,7 @@ console_hist_move(char *line, uint8_t direction)
     console_clear_line();
     str = sh->lines[sh->curr];
     while (str && *str != '\0') {
-        insert_char(&line[cur], *str, end);
+        insert_char(&line[cur], *str, trailing_chars);
         ++str;
     }
 }
@@ -614,16 +617,16 @@ ansi_cmd:
             break;
         }
 
-        end += ansi_val;
+        trailing_chars += ansi_val;
         cur -= ansi_val;
         cursor_backward(ansi_val);
         break;
     case ANSI_FORWARD:
-        if (ansi_val > end) {
+        if (ansi_val > trailing_chars) {
             break;
         }
 
-        end -= ansi_val;
+        trailing_chars -= ansi_val;
         cur += ansi_val;
         cursor_forward(ansi_val);
         break;
@@ -633,25 +636,25 @@ ansi_cmd:
         }
 
         cursor_backward(cur);
-        end += cur;
+        trailing_chars += cur;
         cur = 0;
         break;
     case ANSI_END:
-        if (!end) {
+        if (!trailing_chars) {
             break;
         }
 
-        cursor_forward(end);
-        cur += end;
-        end = 0;
+        cursor_forward(trailing_chars);
+        cur += trailing_chars;
+        trailing_chars = 0;
         break;
     case ANSI_DEL:
-        if (!end) {
+        if (!trailing_chars) {
             break;
         }
 
         cursor_forward(1);
-        del_char(&line[cur], --end);
+        del_char(&line[cur], --trailing_chars);
         break;
     default:
         break;
@@ -688,11 +691,11 @@ handle_nlip(uint8_t byte)
 static int
 console_append_char(char *line, uint8_t byte)
 {
-    if (cur + end >= MYNEWT_VAL(CONSOLE_MAX_INPUT_LEN) - 1) {
+    if (cur + trailing_chars >= MYNEWT_VAL(CONSOLE_MAX_INPUT_LEN) - 1) {
         return 0;
     }
 
-    line[cur + end] = byte;
+    line[cur + trailing_chars] = byte;
 
     if (byte == '\0') {
         return 1;
@@ -732,10 +735,10 @@ console_handle_char(uint8_t byte)
 
     if (handle_nlip(byte))  {
         if (byte == '\n') {
-            insert_char(&input->line[cur], byte, end);
+            insert_char(&input->line[cur], byte, trailing_chars);
             input->line[cur] = '\0';
             cur = 0;
-            end = 0;
+            trailing_chars = 0;
             os_eventq_put(lines_queue, ev);
             nlip_state = 0;
 
@@ -753,14 +756,14 @@ console_handle_char(uint8_t byte)
         } else if (byte == CONSOLE_NLIP_PKT_START2) {
             /* Disable echo to not flood the UART */
             console_echo(0);
-            insert_char(&input->line[cur], CONSOLE_NLIP_PKT_START1, end);
+            insert_char(&input->line[cur], CONSOLE_NLIP_PKT_START1, trailing_chars);
         } else if (byte == CONSOLE_NLIP_DATA_START2) {
             /* Disable echo to not flood the UART */
             console_echo(0);
-            insert_char(&input->line[cur], CONSOLE_NLIP_DATA_START1, end);
+            insert_char(&input->line[cur], CONSOLE_NLIP_DATA_START1, trailing_chars);
         }
 
-        insert_char(&input->line[cur], byte, end);
+        insert_char(&input->line[cur], byte, trailing_chars);
 
         return 0;
     }
@@ -809,7 +812,7 @@ console_handle_char(uint8_t byte)
                 break;
             }
             if (cur > 0) {
-                del_char(&input->line[--cur], end);
+                del_char(&input->line[--cur], trailing_chars);
             }
             break;
         case ESC:
@@ -819,7 +822,7 @@ console_handle_char(uint8_t byte)
             esc_state |= ESC_ESC;
             break;
         default:
-            insert_char(&input->line[cur], byte, end);
+            insert_char(&input->line[cur], byte, trailing_chars);
             /* Falls through. */
         case '\r':
             /* Falls through. */
@@ -831,11 +834,11 @@ console_handle_char(uint8_t byte)
             }
 
             prev_endl = byte;
-            input->line[cur + end] = '\0';
+            input->line[cur + trailing_chars] = '\0';
             console_out('\r');
             console_out('\n');
             cur = 0;
-            end = 0;
+            trailing_chars = 0;
             os_eventq_put(lines_queue, ev);
 #if MYNEWT_VAL(CONSOLE_HISTORY_SIZE) > 0
             console_hist_add(input->line);
@@ -854,7 +857,7 @@ console_handle_char(uint8_t byte)
             if (g_console_ignore_non_nlip) {
                 break;
             }
-            if (completion && !end) {
+            if (completion && !trailing_chars) {
 #if MYNEWT_VAL(CONSOLE_UART_RX_BUF_SIZE) == 0
                 console_blocking_mode();
 #endif
@@ -870,7 +873,7 @@ console_handle_char(uint8_t byte)
     }
 
     if (!g_console_ignore_non_nlip) {
-        insert_char(&input->line[cur], byte, end);
+        insert_char(&input->line[cur], byte, trailing_chars);
     }
     return 0;
 }
