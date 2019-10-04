@@ -90,7 +90,7 @@ struct ltfwu_walk_arg {
 
 static int
 ltfwu_verify_log_walk(struct log *log, struct log_offset *log_offset,
-                      const struct log_entry_hdr *hdr, void *dptr,
+                      const struct log_entry_hdr *hdr, const void *dptr,
                       uint16_t len)
 {
     struct ltfwu_walk_arg *arg;
