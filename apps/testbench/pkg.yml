@@ -30,6 +30,7 @@ pkg.deps:
     - "@apache-mynewt-core/kernel/os"
     - "@apache-mynewt-core/mgmt/imgmgr"
     - "@apache-mynewt-core/mgmt/oicmgr"
+    - "@apache-mynewt-core/sys/reboot"
     - "@apache-mynewt-core/sys/config"
     - "@apache-mynewt-core/sys/console/full"
     - "@apache-mynewt-core/sys/id"

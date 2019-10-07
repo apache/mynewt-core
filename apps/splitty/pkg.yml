@@ -31,7 +31,7 @@ pkg.deps:
     - "@apache-mynewt-core/kernel/os"
     - "@apache-mynewt-core/mgmt/imgmgr"
     - "@apache-mynewt-core/mgmt/mgmt"
-    - "@apache-mynewt-core/mgmt/mgmt/transport/mgmt_shell"
+    - "@apache-mynewt-core/mgmt/smp/transport/smp_shell"
     - "@apache-mynewt-core/sys/config"
     - "@apache-mynewt-core/sys/console/full"
     - "@apache-mynewt-core/sys/id"
