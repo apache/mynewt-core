@@ -24,7 +24,7 @@
 
 #if MYNEWT_VAL(FS_MGMT)
 #include <fs_mgmt/fs_mgmt.h>
-#else
+#endif
 
 static SLIST_HEAD(, fs_ops) root_fops = SLIST_HEAD_INITIALIZER();
 
