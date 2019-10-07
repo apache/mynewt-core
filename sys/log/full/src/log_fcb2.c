@@ -416,7 +416,7 @@ log_fcb2_append_mbuf(struct log *log, struct os_mbuf *om)
 }
 
 static int
-log_fcb2_read(struct log *log, void *dptr, void *buf, uint16_t off, uint16_t len)
+log_fcb2_read(struct log *log, const void *dptr, void *buf, uint16_t off, uint16_t len)
 {
     struct fcb2_entry *loc;
     int rc;
@@ -435,7 +435,7 @@ log_fcb2_read(struct log *log, void *dptr, void *buf, uint16_t off, uint16_t len
 }
 
 static int
-log_fcb2_read_mbuf(struct log *log, void *dptr, struct os_mbuf *om,
+log_fcb2_read_mbuf(struct log *log, const void *dptr, struct os_mbuf *om,
                    uint16_t off, uint16_t len)
 {
     struct fcb2_entry *loc;
@@ -667,7 +667,7 @@ log_fcb2_storage_info(struct log *log, struct log_storage_info *info)
 #if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
 static int
 log_fcb2_new_watermark_index(struct log *log, struct log_offset *log_off,
-                             void *dptr, uint16_t len)
+                             const void *dptr, uint16_t len)
 {
     struct fcb2_entry *loc;
     struct fcb_log *fl;

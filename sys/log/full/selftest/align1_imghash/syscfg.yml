@@ -25,4 +25,6 @@ syscfg.vals:
     MSYS_1_BLOCK_COUNT: 1000
     LOG_FLAGS_IMAGE_HASH: 1
     IMGMGR_DUMMY_HDR: 1
+    LOG_MGMT: 0
+    IMG_MGMT: 0
     

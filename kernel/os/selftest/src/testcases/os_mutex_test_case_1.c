@@ -18,7 +18,6 @@
  */
 
 #include "os/mynewt.h"
-#include "runtest/runtest.h"
 #include "taskpool/taskpool.h"
 #include "os_test_priv.h"
 
