@@ -30,6 +30,10 @@
 
 static struct da1469x_gpadc_dev *da1469x_gpadc_dev;
 
+// 1/0.180265 * 1024 = 5680, 1/0.06907 * 1024 = 14825, 1/0.065067 * 1024 = 15737
+// 1/0.068603 * 1024 = 14926, 1/0.066215 * 1024 = 15464, 1/0.170288 * 1024 = 6013
+static uint16_t ildo_scalar[] = {5680,14825,15737,14926,15464,6013};
+
 static void
 da1469x_gpadc_resolve_pins(uint32_t ctrl, int *pin0p, int *pin1p)
 {
@@ -128,10 +132,12 @@ da1469x_gpadc_configure_channel(struct adc_dev *adev, uint8_t cnum,
 {
     uint32_t ctrl;
     uint32_t ctrl2;
+    uint32_t mux;
     uint16_t refmv;
 
     ctrl = GPADC->GP_ADC_CTRL_REG;
     ctrl2 = GPADC->GP_ADC_CTRL2_REG;
+    mux = GPADC->GP_ADC_MUX_REG;
 
     if (ctrl & GPADC_GP_ADC_CTRL_REG_GP_ADC_SE_Msk) {
         /*
@@ -139,11 +145,28 @@ da1469x_gpadc_configure_channel(struct adc_dev *adev, uint8_t cnum,
          */
         ctrl = ctrl & GPADC_GP_ADC_CTRL_REG_GP_ADC_SEL_Msk;
         ctrl = ctrl >> GPADC_GP_ADC_CTRL_REG_GP_ADC_SEL_Pos;
+
+        refmv = 1200; /* default: 0 - 1.2 V */
+
         if (ctrl == 8) {
-            /* Vbat has special scale */
-            refmv = 5000;
-        } else {
-            refmv = 1200; /* 0 - 1.2 V */
+            if(mux & GPADC_GP_ADC_MUX_REG_GP_ADC_MONITOR_SEL_Msk){
+                mux = mux >> GPADC_GP_ADC_MUX_REG_GP_ADC_MONITOR_SEL_Pos;
+                if(mux == 3 || mux == 4){
+                    /* Vbus/Vled has special scale */
+                    refmv = 6000;
+                } else {
+                    /* Vbat has special scale */
+                    refmv = 5000;
+                }
+            } else if(mux & GPADC_GP_ADC_MUX_REG_GP_ADC_LDO_SENSE_SEL_Msk){
+                mux = mux >> GPADC_GP_ADC_MUX_REG_GP_ADC_LDO_SENSE_SEL_Pos;
+                if(mux > 0 && mux <= 6){
+                    uint32_t scalar;
+                    scalar = (uint32_t) ildo_scalar[mux-1];
+                    scalar = (refmv * scalar) >> 10;
+                    refmv = (uint16_t)scalar;
+                }
+            }
         }
         if (ctrl2 & GPADC_GP_ADC_CTRL2_REG_GP_ADC_ATTN3X_Msk ||
             (ctrl >= 5 && ctrl <= 7)) {
