@@ -1184,6 +1184,14 @@ console_handle_char(uint8_t byte)
         case ETX:
             console_clear_line();
             break;
+        /* CTRL-L */
+        case VT:
+            if (MYNEWT_VAL(CONSOLE_STICKY_PROMPT)) {
+                request_terminal_size();
+            } else {
+                console_out_nolock(VT);
+            }
+            break;
         }
     } else {
         insert_char(&input->line[cur], byte);
