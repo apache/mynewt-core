@@ -641,9 +641,13 @@ ansi_cmd:
 #if MYNEWT_VAL(CONSOLE_HISTORY_SIZE) > 0
     case ANSI_UP:
     case ANSI_DOWN:
+#if MYNEWT_VAL(CONSOLE_UART_RX_BUF_SIZE) == 0
         console_blocking_mode();
+#endif
         console_hist_move(line, byte);
+#if MYNEWT_VAL(CONSOLE_UART_RX_BUF_SIZE) == 0
         console_non_blocking_mode();
+#endif
         break;
 #endif
     case ANSI_BACKWARD:
