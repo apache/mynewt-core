@@ -35,18 +35,6 @@
 #define LOG_HDR_SIZE 15
 #endif
 
-#if MYNEWT_VAL(LOG_FLAGS_IMAGE_HASH)
-#define LOG_HDR_SIZE 19
-#else
-#define LOG_HDR_SIZE 15
-#endif
-
-#if MYNEWT_VAL(LOG_FLAGS_IMAGE_HASH)
-#define LOG_HDR_SIZE 19
-#else
-#define LOG_HDR_SIZE 15
-#endif
-
 #ifdef __cplusplus
 extern "C" {
 #endif

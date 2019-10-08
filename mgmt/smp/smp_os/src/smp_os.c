@@ -39,10 +39,10 @@
 #include <tinycbor/cbor.h>
 #include <cborattr/cborattr.h>
 
-static int smp_def_console_echo(struct mgmt_ctxt *);
-static int smp_def_mpstat_read(struct mgmt_ctxt *njb);
-static int smp_datetime_get(struct mgmt_ctxt *njb);
-static int smp_datetime_set(struct mgmt_ctxt *njb);
+static int smp_def_console_echo(struct mgmt_ctxt *cb);
+static int smp_def_mpstat_read(struct mgmt_ctxt *cb);
+static int smp_datetime_get(struct mgmt_ctxt *cb);
+static int smp_datetime_set(struct mgmt_ctxt *cb);
 
 static const struct mgmt_handler smp_def_group_handlers[] = {
     [SMP_ID_CONS_ECHO_CTRL] = {

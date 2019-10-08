@@ -90,7 +90,7 @@ syscfg.defs:
             previous code did not limit the size of a response with only one
             entry in it.
         value: 400
-    
+
     LOG_MAX_USER_MODULES:
         description: 'Maximum number of user modules to register'
         value: 1

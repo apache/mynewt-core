@@ -60,8 +60,7 @@ int omgr_extract_req_hdr(oc_request_t *req, struct mgmt_hdr *out_hdr);
  * @param req   Ptr to the OIC request
  * @param mask  Interface mask
  */
-void
-omgr_process_request(oc_request_t *req, oc_interface_mask_t mask);
+void omgr_process_request(oc_request_t *req, oc_interface_mask_t mask);
 
 
 int omgr_pkg_init(void);

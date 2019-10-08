@@ -85,7 +85,6 @@ crash_test_mgmt_write(struct mgmt_ctxt *cb)
     os_callout_reset(&mynewt_os_mgmt_crash_callout,
                      delay_ms * OS_TICKS_PER_SEC / 1000);
 
-
     return 0;
 }
 

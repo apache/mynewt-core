@@ -88,7 +88,7 @@ omgr_reset_buf(void *m, void *arg)
     }
 
     /* We need to trim from the back because the head
-     * costains useful information which we do not wast
+     * costains useful information which we do not want
      * to get rid of
      */
     os_mbuf_adj(m, -1 * OS_MBUF_PKTLEN((struct os_mbuf *)m));
