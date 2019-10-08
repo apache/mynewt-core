@@ -20,13 +20,19 @@
 #ifndef __MCU_DA1469X_LPCLK_H_
 #define __MCU_DA1469X_LPCLK_H_
 
+#include <stdint.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-typedef void (da1469x_lpclk_cb)(void);
+typedef void (da1469x_lpclk_cb)(uint32_t freq);
 
 void da1469x_lpclk_register_cmac_cb(da1469x_lpclk_cb *cb);
+/* Stable lp clock enabled (e.g. switched to XTAL after settling) */
+void da1469x_lpclk_enabled(void);
+/* Frequency of lp clock changed (e.g. after RCX recalibration) */
+void da1469x_lpclk_updated(void);
 
 #ifdef __cplusplus
 }
