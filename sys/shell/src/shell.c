@@ -73,16 +73,19 @@ get_prompt(void)
 }
 
 static void
-print_prompt(void)
+print_prompt(const char *line)
 {
-    console_printf("%s%s", get_prompt(), MYNEWT_VAL(SHELL_PROMPT_SUFFIX));
+    char full_prompt[30];
+    strcpy(full_prompt, get_prompt());
+    strcat(full_prompt, MYNEWT_VAL(SHELL_PROMPT_SUFFIX));
+    console_prompt_set(full_prompt, line);
 }
 
 static void
 print_prompt_if_console(struct streamer *streamer)
 {
     if (streamer == streamer_console_get()) {
-        print_prompt();
+        print_prompt(NULL);
     }
 }
 
@@ -482,13 +485,13 @@ shell(struct os_event *ev)
     struct streamer *streamer;
 
     if (!ev) {
-        print_prompt();
+        print_prompt(NULL);
         return;
     }
 
     cmd = ev->ev_arg;
     if (!cmd) {
-        print_prompt();
+        print_prompt(NULL);
         return;
     }
 
@@ -615,8 +618,7 @@ complete_param(char *line, const char *param_prefix,
 
     if (common_chars >= 0) {
         /* multiple match, restore prompt */
-        print_prompt();
-        console_printf("%s", line);
+        print_prompt(line);
     } else {
         common_chars = strlen(first_match);
     }
@@ -704,8 +706,7 @@ complete_command(char *line, char *command_prefix,
         }
     }
     /* restore prompt */
-    print_prompt();
-    console_printf("%s", line);
+    print_prompt(line);
 }
 
 static void
@@ -721,8 +722,7 @@ complete_module(char *line, char *module_prefix,
         for (i = 0; i < num_of_shell_entities; i++) {
             console_printf("%s\n", shell_modules[i].name);
         }
-        print_prompt();
-        console_printf("%s", line);
+        print_prompt(line);
         return;
     }
 
@@ -765,8 +765,7 @@ complete_module(char *line, char *module_prefix,
 
     if (common_chars >= 0) {
         /* multiple match, restore prompt */
-        print_prompt();
-        console_printf("%s", line);
+        print_prompt(line);
     } else {
         common_chars = strlen(first_match);
         space = 1;
@@ -796,8 +795,7 @@ complete_select(char *line, char *cur,
     if (tok_len == 0) {
         console_printf("\n");
         print_modules(streamer_console_get());
-        print_prompt();
-        console_printf("%s", line);
+        print_prompt(line);
         return;
     }
 
@@ -833,8 +831,7 @@ completion(char *line, console_append_char_cb append_char)
         } else {
             print_module_commands(default_module, streamer_console_get());
         }
-        print_prompt();
-        console_printf("%s", line);
+        print_prompt(line);
         return;
     }
 
@@ -869,8 +866,7 @@ completion(char *line, console_append_char_cb append_char)
         if (tok_len == 0) {
             console_printf("\n");
             print_module_commands(module, streamer_console_get());
-            print_prompt();
-            console_printf("%s", line);
+            print_prompt(line);
             return;
         }
 
@@ -891,8 +887,7 @@ completion(char *line, console_append_char_cb append_char)
     if (tok_len == 0) {
         console_printf("\n");
         print_command_params(module, command, streamer_console_get());
-        print_prompt();
-        console_printf("%s", line);
+        print_prompt(line);
         return;
     }
     complete_param(line, cur, tok_len,
@@ -920,7 +915,7 @@ shell_register_default_module(const char *name)
 
     if (result != -1) {
         console_printf("\n");
-        print_prompt();
+        print_prompt(NULL);
     }
 }
 
