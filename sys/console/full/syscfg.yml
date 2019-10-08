@@ -49,6 +49,11 @@ syscfg.defs:
     CONSOLE_MAX_PROMPT_LEN:
         description: 'Maximum number of characters for prompt'
         value: 16
+    CONSOLE_STICKY_PROMPT:
+        description: >
+            If set to 1 prompt will be visble all the time at the
+            bottom of terminal if terminal was detected.
+        value: 0
 
     CONSOLE_UART_BAUD:
         description: 'Console UART baud rate.'

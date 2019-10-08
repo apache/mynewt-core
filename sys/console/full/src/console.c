@@ -49,6 +49,7 @@
 #define ANSI_END           'F'
 #define ANSI_HOME          'H'
 #define ANSI_DEL           '~'
+#define DSR_CPS            'R'
 
 #define ESC_ESC         (1 << 0)
 #define ESC_ANSI        (1 << 1)
@@ -98,6 +99,13 @@ bool g_console_silence_non_nlip;
 bool g_console_ignore_non_nlip;
 static struct os_mutex console_write_lock;
 
+/* Last character to write to console was LF but it was not printed yet */
+static bool holding_lf;
+static bool prompt_has_focus;
+static bool terminal_initialized;
+static bool terminal_size_requested;
+/* Maximum row as reported by terminal, 0 - terminal size is not known yet */
+static int max_row;
 /* Buffer for prompt */
 static char console_prompt[MYNEWT_VAL(CONSOLE_MAX_PROMPT_LEN)];
 /* Length of prompt stored in console_prompt */
@@ -173,6 +181,15 @@ console_write_nolock(const char *str, int cnt)
     }
 }
 
+/*
+ * Helper function to write null terminated strings.
+ */
+static void
+console_write_str(const char *str)
+{
+    console_write_nolock(str, strlen(str));
+}
+
 static int
 console_filter_out(int c)
 {
@@ -180,9 +197,57 @@ console_filter_out(int c)
         return c;
     }
 
-    console_is_midline = (c != '\n') && (c != '\r');
+    /* For nlip output or when prompt has console write character */
+    if (prompt_has_focus || g_is_output_nlip) {
+        return console_out_nolock(c);
+    }
 
-    return console_out_nolock(c);
+    /*
+     * For logs output don't write last newt line character at once.
+     * Writing new would scroll window and blank line would be
+     * visible as last line on terminal.
+     * When terminal size is known, last line is used for prompt
+     * and command line editing.
+     * Following code prevents empty line to separate last log
+     * line from prompt editor.
+     */
+    console_is_midline = c != '\n' && c != '\r';
+    if (MYNEWT_VAL(CONSOLE_STICKY_PROMPT) && max_row > 0) {
+        if (c == '\n') {
+            console_is_midline = false;
+            if (holding_lf) {
+                console_out_nolock(c);
+            } else {
+                holding_lf = true;
+            }
+        } else {
+            if (holding_lf) {
+                console_out_nolock('\n');
+                holding_lf = false;
+            }
+            console_is_midline = c != '\r';
+            c = console_out_nolock(c);
+        }
+    } else {
+        c = console_out_nolock(c);
+    }
+    return c;
+}
+
+/*
+ * Helper function to write sequence of characters to console with new
+ * line checking.
+ */
+static void
+console_filter_write(const char *str, int cnt)
+{
+    int i;
+
+    for (i = 0; i < cnt; i++) {
+        if (console_filter_out((int)str[i]) == EOF) {
+            break;
+        }
+    }
 }
 
 /*
@@ -217,6 +282,21 @@ add_ascii_num_with_char(char *str, unsigned int num, char c)
     return str;
 }
 
+/*
+ * Sends terminal escape sequence to set cursor at given row and column.
+ * CSI <row> ; <column> H
+ */
+static void
+console_cursor_set(int row, int column)
+{
+    char seq[24] = CSI;
+    char *p;
+
+    p = add_ascii_num_with_char(seq + 2, row, ';');
+    p = add_ascii_num_with_char(p, column, 'H');
+    console_write_nolock(seq, p - seq);
+}
+
 static inline void
 cursor_save(void)
 {
@@ -239,6 +319,94 @@ cursor_clear_line(void)
     console_out_nolock(ESC);
     console_out_nolock('[');
     console_out_nolock('K');
+}
+/*
+ * Function sends sequence to get terminal size.
+ * It does it by setting cursor position to some big numbers and
+ * then requesting cursor position which should be adjusted by
+ * terminal to actual terminal windows size.
+ */
+static void
+request_terminal_size(void)
+{
+    /* If terminal size was requested, forget any previous value. */
+    max_row = 0;
+    cursor_save();
+    console_write_str(CSI "1;999r" CSI "999;999H" CSI "6n");
+    cursor_restore();
+    terminal_size_requested = true;
+}
+
+static void
+console_init_terminal(void)
+{
+    if (MYNEWT_VAL(CONSOLE_STICKY_PROMPT) && !terminal_initialized) {
+        console_write_str(CSI "!p"
+                          CSI "1;999r"
+                          CSI "999;1H\n\n"
+                          CSI "A"
+                          CSI "s");
+        console_is_midline = 0;
+        terminal_initialized = true;
+        max_row = 0;
+    }
+}
+
+/*
+ * Switch output to prompt portion of the terminal (last line).
+ */
+static void
+console_switch_to_prompt(void)
+{
+    console_init_terminal();
+    /* If terminal size is not known yet, try asking terminal first */
+    if (MYNEWT_VAL(CONSOLE_STICKY_PROMPT) &&
+        max_row == 0 && !terminal_size_requested) {
+        request_terminal_size();
+    }
+    /*
+     * If terminal size is known and cursor is currently on log portion
+     * of the screen, save cursor position and set cursor at place
+     * that is in sync with 'cur' variable.
+     */
+    if (MYNEWT_VAL(CONSOLE_STICKY_PROMPT) &&
+        !prompt_has_focus && max_row) {
+        cursor_save();
+        prompt_has_focus = true;
+        console_cursor_set(max_row, prompt_len + cur + 1);
+    }
+}
+
+/*
+ * Switch to log portion of the terminal.
+ * Cursor will be restored somewhere above bottom line.
+ */
+static void
+console_switch_to_logs(void)
+{
+    if (g_is_output_nlip) {
+        return;
+    }
+    console_init_terminal();
+    if (MYNEWT_VAL(CONSOLE_STICKY_PROMPT) && prompt_has_focus) {
+        cursor_restore();
+        prompt_has_focus = false;
+    }
+}
+
+/*
+ * Set terminal scrolling region.
+ * CSI <top> ; <bottom> r
+ */
+static void
+console_set_scrolling_region(int top, int bottom)
+{
+    char seq[24] = CSI;
+    char *p;
+
+    p = add_ascii_num_with_char(seq + 2, top, ';');
+    p = add_ascii_num_with_char(p, bottom, 'r');
+    console_write_nolock(seq, p - seq);
 }
 
 void
@@ -263,8 +431,16 @@ console_prompt_set(const char *prompt, const char *line)
 
     locked = console_lock(1000) == OS_OK;
 
-    console_write(prompt, prompt_len);
-    console_write(line, cur);
+    console_switch_to_prompt();
+    if (MYNEWT_VAL(CONSOLE_STICKY_PROMPT) && prompt_has_focus) {
+        console_write_str(CSI "999;1H");
+        console_write_nolock(prompt, prompt_len);
+        console_write_nolock(line, cur);
+        console_write_str(CSI "K");
+    } else {
+        console_write(prompt, prompt_len);
+        console_write(line, cur);
+    }
 
     if (locked) {
         (void)console_unlock();
@@ -282,6 +458,8 @@ console_out(int c)
         return c;
     }
 
+    console_switch_to_logs();
+
     rc = console_filter_out(c);
 
     (void)console_unlock();
@@ -292,7 +470,6 @@ console_out(int c)
 void
 console_write(const char *str, int cnt)
 {
-    int i;
     const os_time_t timeout =
             os_time_ms_to_ticks32(MYNEWT_VAL(CONSOLE_DEFAULT_LOCK_TIMEOUT));
 
@@ -320,11 +497,8 @@ console_write(const char *str, int cnt)
         goto done;
     }
 
-    for (i = 0; i < cnt; i++) {
-        if (console_filter_out((int)str[i]) == EOF) {
-            break;
-        }
-    }
+    console_switch_to_logs();
+    console_filter_write(str, cnt);
 
 done:
     if (cnt > 0 && str[cnt - 1] == '\n') {
@@ -756,6 +930,23 @@ ansi_cmd:
 
         del_char(&line[cur]);
         break;
+    case DSR_CPS:
+        if (MYNEWT_VAL(CONSOLE_STICKY_PROMPT) && terminal_size_requested) {
+            terminal_size_requested = false;
+            max_row = ansi_val;
+            console_cursor_set(max_row - 1, 1);
+            cursor_save();
+            console_set_scrolling_region(1, max_row - 1);
+            if (prompt_len) {
+                console_cursor_set(max_row, 1);
+                console_write_nolock(console_prompt, prompt_len);
+                console_write_nolock(line, cur + trailing_chars);
+                console_write_str(CSI "K");
+                cursor_backward(trailing_chars);
+            }
+            cursor_restore();
+        }
+        break;
     default:
         break;
     }
@@ -854,7 +1045,9 @@ console_append_char(char *line, uint8_t byte)
 
     if (echo) {
         /* Echo back to console */
-        console_out(byte);
+        console_switch_to_prompt();
+        console_out_nolock(byte);
+        console_switch_to_logs();
     }
     ++cur;
     return 1;
@@ -890,6 +1083,8 @@ console_handle_char(uint8_t byte)
     if (console_lock(1000)) {
         return -1;
     }
+
+    console_switch_to_prompt();
 
     /* Handle ANSI escape mode */
     if (esc_state & ESC_ANSI) {
@@ -943,8 +1138,30 @@ console_handle_char(uint8_t byte)
 
             prev_endl = byte;
             input->line[cur + trailing_chars] = '\0';
-            console_out('\r');
-            console_out('\n');
+            if (MYNEWT_VAL(CONSOLE_STICKY_PROMPT) && prompt_has_focus) {
+                console_switch_to_logs();
+                /*
+                 * Cursor is always in the middle of the line since new lines
+                 * are held, so new line is needed here.
+                 */
+                console_out_nolock('\n');
+                /* Duplicate command line to log space */
+                console_write_str(console_prompt);
+                console_write_nolock(input->line, cur + trailing_chars);
+                /*
+                 * Add additional new line if log line was not finished,
+                 * this will avoid printing outstanding line at the end
+                 * of duplicated command line.
+                 */
+                if (console_is_midline) {
+                    console_out_nolock('\n');
+                }
+                console_switch_to_prompt();
+                console_clear_line();
+            } else {
+                console_filter_out('\r');
+                console_filter_out('\n');
+            }
 #if MYNEWT_VAL(CONSOLE_HISTORY_SIZE) > 0
             console_hist_add(input->line);
 #endif
@@ -955,7 +1172,9 @@ console_handle_char(uint8_t byte)
 #if MYNEWT_VAL(CONSOLE_UART_RX_BUF_SIZE) == 0
                 console_blocking_mode();
 #endif
+                console_switch_to_logs();
                 completion(input->line, console_append_char);
+                console_switch_to_prompt();
 #if MYNEWT_VAL(CONSOLE_UART_RX_BUF_SIZE) == 0
                 console_non_blocking_mode();
 #endif
