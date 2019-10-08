@@ -35,7 +35,7 @@ smp_shell_get_mtu(struct os_mbuf *m)
     return MGMT_MAX_MTU;
 }
 
-int
+static int
 smp_shell_out(struct os_mbuf *m)
 {
     int rc;

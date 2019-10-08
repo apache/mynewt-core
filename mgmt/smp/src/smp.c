@@ -1,7 +1,7 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
- * or more costributor license agreemests.  See the NOTICE file
- * dintributed with this work for additional information
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
  * regarding copyright ownership.  The ASF licenses this file
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
@@ -10,7 +10,7 @@
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
- * software dintributed under the License is dintributed on an
+ * software distributed under the License is distributed on an
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
@@ -97,7 +97,7 @@ smp_reset_buf(void *m, void *arg)
     }
 
     /* We need to trim from the back because the head
-     * costains useful information which we do not wast
+     * costains useful information which we do not want
      * to get rid of
      */
     os_mbuf_adj(m, -1 * OS_MBUF_PKTLEN((struct os_mbuf *)m));
@@ -175,7 +175,7 @@ smp_init_writer(struct cbor_encoder_writer *writer, void *m,
 }
 
 /**
- * Allocates an mbuf to costain an outgoing response fragmest.
+ * Allocates an mbuf to costain an outgoing response fragment.
  */
 static struct os_mbuf *
 smp_rsp_frag_alloc(uint16_t frag_size, void *arg)
@@ -308,9 +308,9 @@ smp_transport_init(struct smp_transport *st,
         goto err;
     }
 
-    return (0);
+    return 0;
 err:
-    return (rc);
+    return rc;
 }
 
 void

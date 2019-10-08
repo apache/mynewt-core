@@ -154,7 +154,7 @@ typedef struct {
 } imgmgr_dfu_callbacks_t;
 
 /**
- * Register iimage manager callbacks
+ * Register image manager callbacks
  *
  * @param cb_struct Ptr to callback struct
  */
