@@ -38,6 +38,7 @@
 #define EOT                0x04
 #define FF                 0x0B
 #define VT                 0x0C
+#define CSI                "\x1b["
 
 /* ANSI escape sequences */
 #define ANSI_ESC           '['
@@ -156,6 +157,22 @@ end:
     return rc;
 }
 
+/*
+ * Helper function to write sequence of characters to terminal without
+ * checking for new lines or anything else.
+ */
+static void
+console_write_nolock(const char *str, int cnt)
+{
+    int i;
+
+    for (i = 0; i < cnt; i++) {
+        if (console_out_nolock((int)str[i]) == EOF) {
+            break;
+        }
+    }
+}
+
 static int
 console_filter_out(int c)
 {
@@ -166,6 +183,38 @@ console_filter_out(int c)
     console_is_midline = (c != '\n') && (c != '\r');
 
     return console_out_nolock(c);
+}
+
+/*
+ * Helper function for terminal escape sequences with number parameter.
+ * It adds ascii encoded number plus one character.
+ */
+static char *
+add_ascii_num_with_char(char *str, unsigned int num, char c)
+{
+    char *p = str;
+    char *s;
+    char tmp;
+
+    /* Put digits in reverse order first. */
+    do {
+        *p++ = (num % 10) + '0';
+        num /= 10;
+    } while (num);
+    s = str;
+    str = p;
+    --p;
+    /* Revers order of characters, to get correct number representation */
+    while (s < p) {
+       tmp = *s;
+       *s++ = *p;
+       *p-- = tmp;
+    }
+
+    *str++ = c;
+    *str = '\0';
+
+    return str;
 }
 
 static inline void
@@ -337,13 +386,25 @@ console_non_blocking_mode(void)
 static inline void
 cursor_forward(unsigned int count)
 {
-    console_printf("\x1b[%uC", count);
+    char seq[14] = CSI;
+    char *p;
+
+    if (count) {
+        p = add_ascii_num_with_char(seq + 2, count, 'C');
+        console_write_nolock(seq, p - seq);
+    }
 }
 
 static inline void
 cursor_backward(unsigned int count)
 {
-    console_printf("\x1b[%uD", count);
+    char seq[14] = CSI;
+    char *p;
+
+    if (count) {
+        p = add_ascii_num_with_char(seq + 2, count, 'D');
+        console_write_nolock(seq, p - seq);
+    }
 }
 
 static void
