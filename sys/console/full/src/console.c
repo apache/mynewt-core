@@ -826,10 +826,14 @@ console_handle_char(uint8_t byte)
         return 0;
     }
 
+    if (console_lock(1000)) {
+        return -1;
+    }
+
     /* Handle ANSI escape mode */
     if (esc_state & ESC_ANSI) {
         handle_ansi(byte, input->line);
-        return 0;
+        goto unlock;
     }
 
     /* Handle escape mode */
@@ -845,7 +849,7 @@ console_handle_char(uint8_t byte)
             break;
         }
 
-        return 0;
+        goto unlock;
     }
 
     /* Handle special control characters */
@@ -901,11 +905,11 @@ console_handle_char(uint8_t byte)
             console_clear_line();
             break;
         }
-
-        return 0;
+    } else {
+        insert_char(&input->line[cur], byte);
     }
-
-    insert_char(&input->line[cur], byte);
+unlock:
+    (void)console_unlock();
 
     return 0;
 }
