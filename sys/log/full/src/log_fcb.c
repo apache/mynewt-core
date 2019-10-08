@@ -225,7 +225,6 @@ log_fcb_append_body(struct log *log, const struct log_entry_hdr *hdr,
 
     fcb_log = (struct fcb_log *)log->l_arg;
     fcb = &fcb_log->fl_fcb;
-    hdr_len;
 
     if (fcb->f_align > LOG_FCB_MAX_ALIGN) {
         return SYS_ENOTSUP;
