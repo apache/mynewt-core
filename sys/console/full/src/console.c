@@ -34,6 +34,10 @@
 #define ESC                0x1b
 #define DEL                0x7f
 #define BS                 0x08
+#define ETX                0x03
+#define EOT                0x04
+#define FF                 0x0B
+#define VT                 0x0C
 
 /* ANSI escape sequences */
 #define ANSI_ESC           '['
@@ -162,6 +166,30 @@ console_filter_out(int c)
     console_is_midline = (c != '\n') && (c != '\r');
 
     return console_out_nolock(c);
+}
+
+static inline void
+cursor_save(void)
+{
+    console_out_nolock(ESC);
+    console_out_nolock('[');
+    console_out_nolock('s');
+}
+
+static inline void
+cursor_restore(void)
+{
+    console_out_nolock(ESC);
+    console_out_nolock('[');
+    console_out_nolock('u');
+}
+
+static inline void
+cursor_clear_line(void)
+{
+    console_out_nolock(ESC);
+    console_out_nolock('[');
+    console_out_nolock('K');
 }
 
 void
@@ -318,32 +346,6 @@ cursor_backward(unsigned int count)
     console_printf("\x1b[%uD", count);
 }
 
-#if MYNEWT_VAL(CONSOLE_HISTORY_SIZE) > 0
-static inline void
-cursor_clear_line(void)
-{
-    console_out(ESC);
-    console_out('[');
-    console_out('K');
-}
-#endif
-
-static inline void
-cursor_save(void)
-{
-    console_out(ESC);
-    console_out('[');
-    console_out('s');
-}
-
-static inline void
-cursor_restore(void)
-{
-    console_out(ESC);
-    console_out('[');
-    console_out('u');
-}
-
 static void
 insert_char(char *pos, char c)
 {
@@ -401,6 +403,18 @@ del_char(char *pos)
         cursor_backward(trailing_chars);
         trailing_chars--;
     }
+}
+
+static void
+console_clear_line(void)
+{
+    if (cur) {
+        cursor_backward(cur);
+    }
+    cur = 0;
+    trailing_chars = 0;
+
+    cursor_clear_line();
 }
 
 #if MYNEWT_VAL(CONSOLE_HISTORY_SIZE) > 0
@@ -557,18 +571,6 @@ console_hist_add(char *line)
 
     /* Reset current pointer */
     sh->curr = sh->head;
-}
-
-static void
-console_clear_line(void)
-{
-    if (cur) {
-        cursor_backward(cur);
-    }
-    cur = 0;
-    trailing_chars = 0;
-
-    cursor_clear_line();
 }
 
 static void
@@ -893,6 +895,10 @@ console_handle_char(uint8_t byte)
                 console_non_blocking_mode();
 #endif
             }
+            break;
+        /* CTRL-C */
+        case ETX:
+            console_clear_line();
             break;
         }
 
