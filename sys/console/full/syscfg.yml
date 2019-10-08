@@ -46,6 +46,9 @@ syscfg.defs:
             Number of lines to be stored in console history.
             Set to "0" to disable console history.
         value: 0
+    CONSOLE_MAX_PROMPT_LEN:
+        description: 'Maximum number of characters for prompt'
+        value: 16
 
     CONSOLE_UART_BAUD:
         description: 'Console UART baud rate.'
