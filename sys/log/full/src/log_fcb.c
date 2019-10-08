@@ -200,7 +200,7 @@ log_fcb_hdr_body_bytes(uint8_t align, uint8_t hdr_len)
 
     /* Assume power-of-two alignment for faster modulo calculation. */
     assert((align & (align - 1)) == 0);
-    
+
     mod = hdr_len & (align - 1);
     if (mod == 0) {
         return 0;
@@ -392,24 +392,24 @@ log_fcb_append_mbuf(struct log *log, struct os_mbuf *om)
      * We do a pull up twice, once so that the base header is
      * contiguous, so that we read the flags correctly, second
      * time is so that we account for the image hash as well.
-     */    
+     */
     om = os_mbuf_pullup(om, LOG_BASE_ENTRY_HDR_SIZE);
-    
-    /* 
+
+    /*
      * We can just pass the om->om_data ptr as the log_entry_hdr
      * because the log_entry_hdr is a packed struct and does not
      * cause any alignment or padding issues
-     */  
+     */
     hdr_len = log_hdr_len((struct log_entry_hdr *)om->om_data);
-    
+
     om = os_mbuf_pullup(om, hdr_len);
-    
+
     memcpy(&hdr, om->om_data, hdr_len);
 
     os_mbuf_adj(om, hdr_len);
 
     rc = log_fcb_append_mbuf_body(log, &hdr, om);
-    
+
     os_mbuf_prepend(om, hdr_len);
 
     memcpy(om->om_data, &hdr, hdr_len);
@@ -731,7 +731,7 @@ log_fcb_copy_entry(struct log *log, struct fcb_entry *entry,
 
     dlen = min(entry->fe_data_len, LOG_PRINTF_MAX_ENTRY_LEN +
                hdr_len);
-    
+
     rc = log_fcb_read(log, entry, data, 0, dlen);
     if (rc < 0) {
         goto err;

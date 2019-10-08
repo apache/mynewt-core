@@ -67,6 +67,7 @@ int smp_transport_init(struct smp_transport *st,
         smp_transport_out_func_t output_func,
         smp_transport_get_mtu_func_t get_mtu_func);
 int smp_rx_req(struct smp_transport *st, struct os_mbuf *req);
+struct os_eventq *mgmt_evq_get(void);
 
 #ifdef __cplusplus
 }

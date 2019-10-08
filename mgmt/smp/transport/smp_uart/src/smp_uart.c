@@ -34,6 +34,12 @@
  * @{
  */
 
+/* NLIP packets sent over serial are fragmented into frames of 127 bytes or
+ * fewer. This 127-byte maximum applies to the entire frame, including header,
+ * CRC, and terminating newline.
+ */
+#define MGMT_NLIP_MAX_FRAME     127
+
 #define SHELL_NLIP_PKT          0x0609
 #define SHELL_NLIP_DATA         0x0414
 
