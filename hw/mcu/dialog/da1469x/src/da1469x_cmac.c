@@ -162,12 +162,12 @@ done:
 }
 
 static void
-da1469x_cmac_lpclk_cb(void)
+da1469x_cmac_lpclk_cb(uint32_t freq)
 {
     struct cmac_config_dynamic *cmac_config_dyn;
 
     cmac_config_dyn = CMAC_SYM_CONFIG_DYN;
-    cmac_config_dyn->enable_sleep = true;
+    cmac_config_dyn->enable_sleep = freq == 32768;
 }
 
 void
