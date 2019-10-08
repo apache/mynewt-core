@@ -129,6 +129,11 @@ console_out(int character)
     return 0;
 }
 
+static inline void
+console_prompt_set(const char *prompt, const char *line)
+{
+}
+
 static void inline
 console_silence(bool silent)
 {

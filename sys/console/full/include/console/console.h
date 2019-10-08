@@ -132,6 +132,17 @@ extern void console_rx_restart(void);
 int console_lock(int timeout);
 int console_unlock(void);
 
+/**
+ * Set prompt and current input line.
+ *
+ * This shows prompt with current input editor, cursor is placed
+ * at the end of line.
+ *
+ * @param prompt non-editable part of user input line
+ * @param line  editable part
+ */
+void console_prompt_set(const char *prompt, const char *line);
+
 #ifdef __cplusplus
 }
 #endif

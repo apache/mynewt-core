@@ -93,6 +93,11 @@ bool g_console_silence_non_nlip;
 bool g_console_ignore_non_nlip;
 static struct os_mutex console_write_lock;
 
+/* Buffer for prompt */
+static char console_prompt[MYNEWT_VAL(CONSOLE_MAX_PROMPT_LEN)];
+/* Length of prompt stored in console_prompt */
+static uint16_t prompt_len;
+
 /*
  * Default implementation in case all consoles are disabled - we just ignore any
  * output to console.
@@ -157,6 +162,36 @@ console_filter_out(int c)
     console_is_midline = (c != '\n') && (c != '\r');
 
     return console_out_nolock(c);
+}
+
+void
+console_prompt_set(const char *prompt, const char *line)
+{
+    bool locked;
+
+    prompt_len = strlen(prompt);
+
+    /* If this assert fails increase value of CONSOLE_MAX_PROMPT_LEN */
+    assert(MYNEWT_VAL(CONSOLE_MAX_PROMPT_LEN) > prompt_len);
+
+    strcpy(console_prompt, prompt);
+
+    /* Place cursor at the end, no trailing chars */
+    if (line) {
+        cur = strlen(line);
+    } else {
+        cur = 0;
+    }
+    trailing_chars = 0;
+
+    locked = console_lock(1000) == OS_OK;
+
+    console_write(prompt, prompt_len);
+    console_write(line, cur);
+
+    if (locked) {
+        (void)console_unlock();
+    }
 }
 
 int
