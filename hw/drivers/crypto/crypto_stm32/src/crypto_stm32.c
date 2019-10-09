@@ -33,8 +33,10 @@ CRYP_KEYSIZE_FROM_KEYLEN(uint16_t keylen)
     switch (keylen) {
     case 128:
         return CRYP_KEYSIZE_128B;
+#ifdef CRYP
     case 192:
         return CRYP_KEYSIZE_192B;
+#endif
     case 256:
         return CRYP_KEYSIZE_256B;
     default:
@@ -43,13 +45,21 @@ CRYP_KEYSIZE_FROM_KEYLEN(uint16_t keylen)
     }
 }
 
+#ifdef CRYP
+#define STM32_VALID_AES_KEYLEN(x) \
+    (((x) == 128) || ((x) == 192) || ((x) == 256))
+#else
+#define STM32_VALID_AES_KEYLEN(x) \
+    (((x) == 128) || ((x) == 256))
+#endif
+
 static bool
 stm32_has_support(struct crypto_dev *crypto, uint8_t op, uint16_t algo,
         uint16_t mode, uint16_t keylen)
 {
     (void)op;
 
-    if (algo != CRYPTO_ALGO_AES || !CRYPTO_VALID_AES_KEYLEN(keylen)) {
+    if (algo != CRYPTO_ALGO_AES || !STM32_VALID_AES_KEYLEN(keylen)) {
         return false;
     }
 
@@ -69,29 +79,52 @@ stm32_crypto_op(struct crypto_dev *crypto, uint8_t op, uint16_t algo,
         const uint8_t *inbuf, uint8_t *outbuf, uint32_t len)
 {
     HAL_StatusTypeDef status;
+    CRYP_ConfigTypeDef conf;
     uint32_t sz = 0;
     uint8_t i;
     uint8_t iv_save[AES_BLOCK_LEN];
     unsigned int inc;
     unsigned int carry;
     unsigned int v;
+    uint32_t key32[AES_MAX_KEY_LEN / sizeof(uint32_t)];
+    uint32_t iv32[AES_BLOCK_LEN / sizeof(uint32_t)];
 
     if (!stm32_has_support(crypto, op, algo, mode, keylen)) {
         return 0;
     }
 
-    g_hcryp.Init.KeySize = CRYP_KEYSIZE_FROM_KEYLEN(keylen);
-    g_hcryp.Init.pKey = (uint8_t *)key;
+    for (i = 0; i < keylen / (8 * sizeof(uint32_t)); i++) {
+        key32[i] = os_bswap_32(((uint32_t *)key)[i]);
+    }
+
+    conf.DataType = CRYP_DATATYPE_8B;
+    conf.KeySize = CRYP_KEYSIZE_FROM_KEYLEN(keylen);
+    conf.pKey = key32;
+    conf.DataWidthUnit = CRYP_DATAWIDTHUNIT_BYTE;
     switch (mode) {
-    case CRYPTO_MODE_CBC: /* fallthrough */
-    case CRYPTO_MODE_CTR:
-        g_hcryp.Init.pInitVect = (uint8_t *)iv;
+    case CRYPTO_MODE_ECB:
+        conf.Algorithm = CRYP_AES_ECB;
+        conf.pInitVect = NULL;
         break;
+    case CRYPTO_MODE_CBC:
+        conf.Algorithm = CRYP_AES_CBC;
+        conf.pInitVect = iv32;
+        break;
+    case CRYPTO_MODE_CTR:
+        conf.Algorithm = CRYP_AES_CTR;
+        conf.pInitVect = iv32;
+        break;
+    }
+
+    if (conf.pInitVect != NULL) {
+        for (i = 0; i < AES_BLOCK_LEN / sizeof(uint32_t); i++) {
+            iv32[i] = os_bswap_32(((uint32_t *)iv)[i]);
+        }
     }
 
     os_mutex_pend(&gmtx, OS_TIMEOUT_NEVER);
 
-    status = HAL_CRYP_Init(&g_hcryp);
+    status = HAL_CRYP_SetConfig(&g_hcryp, &conf);
     if (status != HAL_OK) {
         sz = 0;
         goto out;
@@ -100,24 +133,24 @@ stm32_crypto_op(struct crypto_dev *crypto, uint8_t op, uint16_t algo,
     switch (mode) {
     case CRYPTO_MODE_ECB:
         if (op == CRYPTO_OP_ENCRYPT) {
-            status = HAL_CRYP_AESECB_Encrypt(&g_hcryp, (uint8_t *)inbuf, len,
-                    outbuf, HAL_MAX_DELAY);
+            status = HAL_CRYP_Encrypt(&g_hcryp, (uint32_t *)inbuf, len,
+                    (uint32_t *)outbuf, HAL_MAX_DELAY);
         } else {
-            status = HAL_CRYP_AESECB_Decrypt(&g_hcryp, (uint8_t *)inbuf, len,
-                    outbuf, HAL_MAX_DELAY);
+            status = HAL_CRYP_Decrypt(&g_hcryp, (uint32_t *)inbuf, len,
+                    (uint32_t *)outbuf, HAL_MAX_DELAY);
         }
         break;
     case CRYPTO_MODE_CBC:
         if (op == CRYPTO_OP_ENCRYPT) {
-            status = HAL_CRYP_AESCBC_Encrypt(&g_hcryp, (uint8_t *)inbuf, len,
-                    outbuf, HAL_MAX_DELAY);
+            status = HAL_CRYP_Encrypt(&g_hcryp, (uint32_t *)inbuf, len,
+                    (uint32_t *)outbuf, HAL_MAX_DELAY);
             if (status == HAL_OK) {
                 memcpy(iv, &outbuf[len-AES_BLOCK_LEN], AES_BLOCK_LEN);
             }
         } else {
             memcpy(iv_save, &inbuf[len-AES_BLOCK_LEN], AES_BLOCK_LEN);
-            status = HAL_CRYP_AESCBC_Decrypt(&g_hcryp, (uint8_t *)inbuf, len,
-                    outbuf, HAL_MAX_DELAY);
+            status = HAL_CRYP_Decrypt(&g_hcryp, (uint32_t *)inbuf, len,
+                    (uint32_t *)outbuf, HAL_MAX_DELAY);
             if (status == HAL_OK) {
                 memcpy(iv, iv_save, AES_BLOCK_LEN);
             }
@@ -125,11 +158,11 @@ stm32_crypto_op(struct crypto_dev *crypto, uint8_t op, uint16_t algo,
         break;
     case CRYPTO_MODE_CTR:
         if (op == CRYPTO_OP_ENCRYPT) {
-            status = HAL_CRYP_AESCTR_Encrypt(&g_hcryp, (uint8_t *)inbuf, len,
-                    outbuf, HAL_MAX_DELAY);
+            status = HAL_CRYP_Encrypt(&g_hcryp, (uint32_t *)inbuf, len,
+                    (uint32_t *)outbuf, HAL_MAX_DELAY);
         } else {
-            status = HAL_CRYP_AESCTR_Decrypt(&g_hcryp, (uint8_t *)inbuf, len,
-                    outbuf, HAL_MAX_DELAY);
+            status = HAL_CRYP_Decrypt(&g_hcryp, (uint32_t *)inbuf, len,
+                    (uint32_t *)outbuf, HAL_MAX_DELAY);
         }
         if (status == HAL_OK) {
             inc = (len + AES_BLOCK_LEN - 1) / AES_BLOCK_LEN;
@@ -183,9 +216,19 @@ stm32_crypto_dev_open(struct os_dev *dev, uint32_t wait, void *arg)
     assert(crypto);
 
     if (!(dev->od_flags & OS_DEV_F_STATUS_OPEN)) {
+#ifdef CRYP
         __HAL_RCC_CRYP_CLK_ENABLE();
         g_hcryp.Instance = CRYP;
+#else
+        __HAL_RCC_AES1_CLK_ENABLE();
+        g_hcryp.Instance = AES1;
+#endif
         g_hcryp.Init.DataType = CRYP_DATATYPE_8B;
+        g_hcryp.Init.KeySize = CRYP_KEYSIZE_128B;
+        g_hcryp.Init.Algorithm = CRYP_AES_ECB;
+        if (HAL_CRYP_Init(&g_hcryp) != HAL_OK) {
+            return -1;
+        }
     }
 
     return 0;
