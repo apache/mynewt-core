@@ -836,6 +836,34 @@ console_hist_move(char *line, uint8_t direction)
 #endif
 
 static void
+handle_home(void)
+{
+    if (cur) {
+        cursor_backward(cur);
+        trailing_chars += cur;
+        cur = 0;
+    }
+}
+
+static void
+handle_delete(char *line)
+{
+    if (trailing_chars) {
+        del_char(&line[cur]);
+    }
+}
+
+static void
+handle_end(void)
+{
+    if (trailing_chars) {
+        cursor_forward(trailing_chars);
+        cur += trailing_chars;
+        trailing_chars = 0;
+    }
+}
+
+static void
 handle_ansi(uint8_t byte, char *line)
 {
     if (esc_state & ESC_ANSI_FIRST) {
@@ -906,29 +934,23 @@ ansi_cmd:
         cursor_forward(ansi_val);
         break;
     case ANSI_HOME:
-        if (!cur) {
-            break;
-        }
-
-        cursor_backward(cur);
-        trailing_chars += cur;
-        cur = 0;
+        handle_home();
         break;
     case ANSI_END:
-        if (!trailing_chars) {
-            break;
-        }
-
-        cursor_forward(trailing_chars);
-        cur += trailing_chars;
-        trailing_chars = 0;
+        handle_end();
         break;
-    case ANSI_DEL:
-        if (!trailing_chars) {
+    case '~':
+        switch (ansi_val) {
+        case 1:
+            handle_home();
+            break;
+        case 3:
+            handle_delete(line);
+            break;
+        case 4:
+            handle_end();
             break;
         }
-
-        del_char(&line[cur]);
         break;
     case DSR_CPS:
         if (MYNEWT_VAL(CONSOLE_STICKY_PROMPT) && terminal_size_requested) {
