@@ -80,7 +80,7 @@ define mn_mbuf_print
     end
 
     printf "Mbuf header: "
-    p *$om
+    p/r *$om
 
     if ($om)->om_pkthdr_len > sizeof (struct os_mbuf_pkthdr)
         printf "User header: "
