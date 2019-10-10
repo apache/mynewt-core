@@ -23,7 +23,7 @@
 #include <bsp/bsp.h>
 
 #include <mgmt/mgmt.h>
-#include <smp/smp.h>
+#include <mynewt_smp/smp.h>
 #include <uart/uart.h>
 
 #include <crc/crc16.h>
@@ -78,9 +78,9 @@ smp_uart_mtu(struct os_mbuf *m)
  * Called by mgmt to queue packet out to UART.
  */
 static int
-smp_uart_out(struct smp_transport *nt, struct os_mbuf *m)
+smp_uart_out(struct os_mbuf *m)
 {
-    struct smp_uart_state *sus = (struct smp_uart_state *)nt;
+    struct smp_uart_state *sus = &smp_uart_state;
     struct os_mbuf_pkthdr *mpkt;
     struct os_mbuf *n;
     uint16_t tmp_buf[6];
@@ -373,7 +373,7 @@ smp_uart_pkg_init(void)
     struct smp_uart_state *sus = &smp_uart_state;
     int rc;
     struct uart_conf uc = {
-        .uc_speed = MYNEWT_VAL(NMGR_UART_SPEED),
+        .uc_speed = MYNEWT_VAL(SMP_UART_SPEED),
         .uc_databits = 8,
         .uc_stopbits = 1,
         .uc_parity = UART_PARITY_NONE,
@@ -390,7 +390,7 @@ smp_uart_pkg_init(void)
     assert(rc == 0);
 
     sus->sus_dev =
-      (struct uart_dev *)os_dev_open(MYNEWT_VAL(NMGR_UART), 0, &uc);
+      (struct uart_dev *)os_dev_open(MYNEWT_VAL(SMP_UART), 0, &uc);
     assert(sus->sus_dev);
 
     sus->sus_cb_ev.ev_cb = smp_uart_rx_frame;
