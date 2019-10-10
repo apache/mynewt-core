@@ -196,11 +196,17 @@ Prints all mbufs in the first msys pool.  Both allocated and unallocated mbufs
 are printed.
 end
 
-define mn_msys1_free_print
+define mn_msys1_free_list
     set $om = os_msys_1_mempool.slh_first
 
     while $om != 0
         printf "Mbuf addr: %p\n", $om
         set $om = $om->mb_next.sle_next
     end
+end
+
+document mn_msys1_free_list
+usage: mn_msys1_free_list
+
+Prints the addresses of all free mbufs in the first msys pool.
 end
