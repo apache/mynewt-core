@@ -74,13 +74,13 @@ end
 define mn_mbuf_print
     set $om = (struct os_mbuf *)($arg0)
 
-    printf "Mbuf header: "
-    p *$om
-
     if ($om)->om_pkthdr_len > 0
         printf "Packet header: "
         mn_mbuf_pkthdr_print $om
     end
+
+    printf "Mbuf header: "
+    p *$om
 
     if ($om)->om_pkthdr_len > sizeof (struct os_mbuf_pkthdr)
         printf "User header: "
