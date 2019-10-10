@@ -100,9 +100,9 @@ define mn_mbuf_dump
     set $om = (struct os_mbuf *)($arg0)
     mn_mbuf_print $om
 
-    printf "Mbuf data: "
+    printf "Mbuf data:\n"
     set $len = ($om)->om_len
-    p/x *$om->om_data@$len
+    eval "x/%db $om->om_data", $len
 end
 
 document mn_mbuf_dump
