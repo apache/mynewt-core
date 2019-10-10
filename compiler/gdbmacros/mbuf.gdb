@@ -216,6 +216,17 @@ Prints all mbufs in the first msys pool.  Both allocated and unallocated mbufs
 are printed.
 end
 
+define mn_msys1_dump
+    mn_mbuf_pool_dump &os_msys_1_mbuf_pool
+end
+
+document mn_msys1_dump
+usage: mn_msys1_dump
+
+Dumps all mbufs in the first msys pool.  Both allocated and unallocated mbufs
+are dumped.
+end
+
 define mn_msys1_free_list
     set $om = os_msys_1_mempool.slh_first
 
