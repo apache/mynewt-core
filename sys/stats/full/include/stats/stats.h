@@ -27,6 +27,9 @@
 extern "C" {
 #endif
 
+STAILQ_HEAD(stats_registry_list, stats_hdr);
+extern struct stats_registry_list g_stats_registry;
+
 /** The stat group is periodically written to sys/config. */
 #define STATS_HDR_F_PERSIST             0x01
 
@@ -211,8 +214,8 @@ int stats_group_walk(stats_group_walk_func_t, void *);
 struct stats_hdr *stats_group_find(const char *name);
 
 /* Private */
-#if MYNEWT_VAL(STATS_NEWTMGR)
-int stats_nmgr_register_group(void);
+#if MYNEWT_VAL(STATS_MGMT)
+int stats_mgmt_register_group(void);
 #endif
 #if MYNEWT_VAL(STATS_CLI)
 int stats_shell_register(void);

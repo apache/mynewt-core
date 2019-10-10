@@ -31,12 +31,12 @@ syscfg.vals:
     LOG_FCB: 1
     CONFIG_FCB: 1
 
-    # Enable newtmgr commands.
-    STATS_NEWTMGR: 1
-    LOG_NEWTMGR: 1
+    # Enable mgmt commands.
+    STATS_MGMT: 1
+    LOG_MGMT: 1
 
     # Enable Config.
-    CONFIG_NEWTMGR: 1
+    CONFIG_MGMT: 1
 
     # OS main/default task
     OS_MAIN_STACK_SIZE: 468

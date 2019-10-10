@@ -27,5 +27,4 @@ pkg.deps:
     - "@apache-mynewt-core/sys/log/full"
     - "@apache-mynewt-core/sys/log/full/selftest/util"
     - "@apache-mynewt-core/test/testutil"
-    - "@apache-mynewt-core/mgmt/newtmgr"
     - "@apache-mynewt-core/boot/stub"

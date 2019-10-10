@@ -27,7 +27,7 @@ extern "C" {
 extern struct shell_cmd runtest_cmd_struct;
 #endif
 
-int runtest_nmgr_register_group(void);
+int runtest_mgmt_register_group(void);
 
 #ifdef __cplusplus
 }

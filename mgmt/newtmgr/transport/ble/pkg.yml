@@ -18,18 +18,5 @@
 #
 
 pkg.name: mgmt/newtmgr/transport/ble
-pkg.description: BLE transport newtmgr functionality.
-pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
-pkg.homepage: "http://mynewt.apache.org/"
-pkg.keywords:
-    - ble
-    - bluetooth
-
-pkg.deps:
-    - "@apache-mynewt-core/kernel/os"
-    - "@apache-mynewt-core/mgmt/mgmt"
-    - "@apache-mynewt-core/mgmt/newtmgr"
-    - "@apache-mynewt-nimble/nimble/host"
-
-pkg.init:
-    newtmgr_ble_pkg_init: 'MYNEWT_VAL(NEWTMGR_BLE_SYSINIT_STAGE)'
+pkg.type: transient
+pkg.link: "@apache-mynewt-core/mgmt/smp/transport/ble"

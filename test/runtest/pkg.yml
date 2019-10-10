@@ -23,12 +23,12 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps:
-    - "@apache-mynewt-core/encoding/cborattr"
+    - "@apache-mynewt-mcumgr/cborattr"
     - "@apache-mynewt-core/util/taskpool"
 pkg.deps.RUNTEST_CLI:
     - "@apache-mynewt-core/sys/shell"
-pkg.deps.RUNTEST_NEWTMGR:
-    - "@apache-mynewt-core/mgmt/mgmt"
+pkg.deps.RUNTEST_MGMT:
+    - "@apache-mynewt-mcumgr/mgmt"
     - "@apache-mynewt-core/encoding/json"
     - "@apache-mynewt-core/test/testutil"
 pkg.deps.RUNTEST_LOG:

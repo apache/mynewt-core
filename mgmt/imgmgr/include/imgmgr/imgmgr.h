@@ -44,17 +44,67 @@ extern "C" {
 #define IMGMGR_STATE_F_ACTIVE           0x04
 #define IMGMGR_STATE_F_PERMANENT        0x08
 
-/** @brief Generic callback function for events */
-typedef void (*imgrmgr_dfu_cb)(void);
+extern int boot_current_slot;
 
-/** Callback function pointers */
-typedef struct
-{
-    imgrmgr_dfu_cb dfu_started_cb;
-    imgrmgr_dfu_cb dfu_stopped_cb;
-    imgrmgr_dfu_cb dfu_pending_cb;
-    imgrmgr_dfu_cb dfu_confirmed_cb;
-} imgmgr_dfu_callbacks_t;
+void imgmgr_module_init(void);
+
+struct image_version;
+
+/**
+ * Parse version string in src, and fill in ver.
+ */
+int imgr_ver_parse(char *src, struct image_version *ver);
+
+/**
+ * Take version and convert it to string in dst.
+ */
+int imgr_ver_str(struct image_version *ver, char *dst);
+
+/**
+ * Returns version number of current image (if available).
+ */
+int imgr_my_version(struct image_version *ver);
+
+/**
+ * Read the current running image's build hash
+ *
+ * @param hash Ptr to hash to be filled up
+ * @param hashlen Length of hash to return
+ *
+ * Returns -2 if either of the argument is 0 or NULL
+ * Returns -1 if area is not readable
+ * Returns 0 if image in slot is ok
+ * Returns 1 if there is not a full image
+ * Returns 2 if slot is empty
+ */
+int imgr_get_current_hash(uint8_t *hash, uint16_t hashlen);
+
+int imgmgr_find_best_area_id(void);
+
+/**
+ * Reads image information
+ *
+ * @param  image_slot Slot to read image info from
+ * @param  ver        Ptr to image version
+ * @param  hash       Ptr to hash of the image read
+ * @param  flags      Ptr to flags of the image read
+ *
+ * Returns -1 if area is not readable
+ * Returns 0 if image in slot is ok
+ * Returns 1 if there is not a full image
+ * Returns 2 if slot is empty
+ */
+int imgr_read_info(int image_slot, struct image_version *ver, uint8_t *hash,
+               uint32_t *flags);
+
+/**
+ * Get state flags from the requested image
+ *
+ * @param query_slot slot to query from
+ *
+ * @return 0 on success, non-zero on failure
+ */
+uint8_t imgmgr_state_flags(int query_slot);
 
 /** @typedef imgr_upload_fn
  * @brief Application callback that is executed when an image upload request is
@@ -76,47 +126,6 @@ typedef struct
  */
 typedef int imgr_upload_fn(uint32_t offset, uint32_t size, void *arg);
 
-extern int boot_current_slot;
-
-void imgmgr_module_init(void);
-
-struct image_version;
-
-/*
- * Parse version string in src, and fill in ver.
- */
-int imgr_ver_parse(char *src, struct image_version *ver);
-
-/*
- * Take version and convert it to string in dst.
- */
-int imgr_ver_str(struct image_version *ver, char *dst);
-
-/*
- * Given flash_map slot id, read in image_version and/or image hash.
- */
-int imgr_read_info(int area_id, struct image_version *ver, uint8_t *hash, uint32_t *flags);
-
-/*
- * Returns version number of current image (if available).
- */
-int imgr_my_version(struct image_version *ver);
-
-/*
- * Read the current running image's build hash
- *
- * @param hash Ptr to hash to be filled up
- * @param hashlen Length of hash to return
- *
- * Returns -2 if either of the argument is 0 or NULL
- * Returns -1 if area is not readable
- * Returns 0 if image in slot is ok
- * Returns 1 if there is not a full image
- * Returns 2 if slot is empty
- */
-int
-imgr_get_current_hash(uint8_t *hash, uint16_t hashlen);
-
 /**
  * @brief Configures a callback that gets called whenever a valid image upload
  * request is received.
@@ -133,16 +142,29 @@ imgr_get_current_hash(uint8_t *hash, uint16_t hashlen);
  */
 void imgr_set_upload_cb(imgr_upload_fn *cb, void *arg);
 
-uint8_t imgmgr_state_flags(int query_slot);
-int imgmgr_state_slot_in_use(int slot);
-int imgmgr_state_set_pending(int slot, int permanent);
-int imgmgr_state_confirm(void);
-int imgmgr_find_best_area_id(void);
+/** @brief Generic callback function for events */
+typedef void (*imgmgr_dfu_cb)(void);
+
+/** Callback function pointers */
+typedef struct {
+    imgmgr_dfu_cb dfu_started_cb;
+    imgmgr_dfu_cb dfu_stopped_cb;
+    imgmgr_dfu_cb dfu_pending_cb;
+    imgmgr_dfu_cb dfu_confirmed_cb;
+} imgmgr_dfu_callbacks_t;
+
+/**
+ * Register image manager callbacks
+ *
+ * @param cb_struct Ptr to callback struct
+ */
 void imgmgr_register_callbacks(const imgmgr_dfu_callbacks_t *cb_struct);
+
 void imgmgr_dfu_stopped(void);
 void imgmgr_dfu_started(void);
 void imgmgr_dfu_pending(void);
 void imgmgr_dfu_confirmed(void);
+
 #ifdef __cplusplus
 }
 #endif

@@ -24,7 +24,7 @@ extern "C" {
 #endif
 
 /*
- * Adds the crash commands to your shell/newtmgr.
+ * Adds the crash commands to your shell/mgmt.
  */
 void crash_test_init(void);
 

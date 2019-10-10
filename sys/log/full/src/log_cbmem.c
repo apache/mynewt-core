@@ -27,27 +27,34 @@ log_cbmem_append_body(struct log *log, const struct log_entry_hdr *hdr,
 {
     struct cbmem *cbmem;
     struct cbmem_scat_gath sg = {
-        .entries = (struct cbmem_scat_gath_entry[3]) {
+        .entries = (struct cbmem_scat_gath_entry[]) {
             {
                 .flat_buf = hdr,
                 .flat_len = LOG_BASE_ENTRY_HDR_SIZE,
             },
+#if MYNEWT_VAL(LOG_VERSION) > 2
             {
                 .flat_buf = hdr->ue_imghash,
                 .flat_len = 0,
             },
+#endif
             {
                 .flat_buf = body,
                 .flat_len = body_len,
             },
         },
+#if MYNEWT_VAL(LOG_VERSION) > 2
         .count = 3,
+#else
+        .count = 2,
+#endif
     };
 
+#if MYNEWT_VAL(LOG_VERSION) > 2
     if (hdr->ue_flags & LOG_FLAGS_IMG_HASH) {
         sg.entries[1].flat_len = LOG_IMG_HASHLEN;
     }
-
+#endif
     cbmem = (struct cbmem *) log->l_arg;
 
     return cbmem_append_scat_gath(cbmem, &sg);
@@ -70,27 +77,33 @@ log_cbmem_append_mbuf_body(struct log *log, const struct log_entry_hdr *hdr,
 {
     struct cbmem *cbmem;
     struct cbmem_scat_gath sg = {
-        .entries = (struct cbmem_scat_gath_entry[3]) {
+        .entries = (struct cbmem_scat_gath_entry[]) {
             {
                 .flat_buf = hdr,
                 .flat_len = LOG_BASE_ENTRY_HDR_SIZE,
             },
+#if MYNEWT_VAL(LOG_VERSION) > 2
             {
                 .flat_buf = hdr->ue_imghash,
                 .flat_len = 0,
             },
+#endif
             {
                 .om = om,
             },
         },
+#if MYNEWT_VAL(LOG_VERSION) > 2
         .count = 3,
+#else
+        .count = 2,
+#endif
     };
 
-
+#if MYNEWT_VAL(LOG_VERSION) > 2
     if (hdr->ue_flags & LOG_FLAGS_IMG_HASH) {
         sg.entries[1].flat_len = LOG_IMG_HASHLEN;
     }
-
+#endif
     cbmem = (struct cbmem *) log->l_arg;
 
     return cbmem_append_scat_gath(cbmem, &sg);
@@ -140,7 +153,7 @@ log_cbmem_append_mbuf(struct log *log, struct os_mbuf *om)
 }
 
 static int
-log_cbmem_read(struct log *log, void *dptr, void *buf, uint16_t offset,
+log_cbmem_read(struct log *log, const void *dptr, void *buf, uint16_t offset,
         uint16_t len)
 {
     struct cbmem *cbmem;
@@ -156,7 +169,7 @@ log_cbmem_read(struct log *log, void *dptr, void *buf, uint16_t offset,
 }
 
 static int
-log_cbmem_read_mbuf(struct log *log, void *dptr, struct os_mbuf *om,
+log_cbmem_read_mbuf(struct log *log, const void *dptr, struct os_mbuf *om,
                     uint16_t offset, uint16_t len)
 {
     struct cbmem *cbmem;

@@ -257,9 +257,11 @@ log_fcb_append_body(struct log *log, const struct log_entry_hdr *hdr,
     u8p = body;
 
     memcpy(buf, hdr, LOG_BASE_ENTRY_HDR_SIZE);
+#if MYNEWT_VAL(LOG_VERSION) > 2
     if (hdr->ue_flags & LOG_FLAGS_IMG_HASH) {
         memcpy(buf + LOG_BASE_ENTRY_HDR_SIZE, hdr->ue_imghash, LOG_IMG_HASHLEN);
     }
+#endif
     memcpy(buf + hdr_len, u8p, hdr_alignment);
 
     rc = flash_area_write(loc.fe_area, loc.fe_data_off, buf, chunk_sz);
@@ -350,6 +352,7 @@ log_fcb_append_mbuf_body(struct log *log, const struct log_entry_hdr *hdr,
     }
     loc.fe_data_off += LOG_BASE_ENTRY_HDR_SIZE;
 
+#if MYNEWT_VAL(LOG_VERSION) > 2
     if (hdr->ue_flags & LOG_FLAGS_IMG_HASH) {
         /* Write LOG_IMG_HASHLEN bytes of image hash */
         rc = flash_area_write(loc.fe_area, loc.fe_data_off, hdr->ue_imghash, LOG_IMG_HASHLEN);
@@ -358,7 +361,7 @@ log_fcb_append_mbuf_body(struct log *log, const struct log_entry_hdr *hdr,
         }
         loc.fe_data_off += LOG_IMG_HASHLEN;
     }
-
+#endif
     rc = log_fcb_write_mbuf(&loc, om);
     if (rc != 0) {
         return rc;
@@ -415,7 +418,7 @@ log_fcb_append_mbuf(struct log *log, struct os_mbuf *om)
 }
 
 static int
-log_fcb_read(struct log *log, void *dptr, void *buf, uint16_t offset,
+log_fcb_read(struct log *log, const void *dptr, void *buf, uint16_t offset,
   uint16_t len)
 {
     struct fcb_entry *loc;
@@ -435,7 +438,7 @@ log_fcb_read(struct log *log, void *dptr, void *buf, uint16_t offset,
 }
 
 static int
-log_fcb_read_mbuf(struct log *log, void *dptr, struct os_mbuf *om,
+log_fcb_read_mbuf(struct log *log, const void *dptr, struct os_mbuf *om,
                   uint16_t offset, uint16_t len)
 {
     struct fcb_entry *loc;
@@ -641,7 +644,7 @@ log_fcb_storage_info(struct log *log, struct log_storage_info *info)
 
 #if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
 static int
-log_fcb_new_watermark_index(struct log *log, struct log_offset *log_offset, void *dptr,
+log_fcb_new_watermark_index(struct log *log, struct log_offset *log_offset, const void *dptr,
                             uint16_t len)
 {
     struct fcb_entry *loc;

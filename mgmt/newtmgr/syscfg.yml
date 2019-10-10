@@ -20,5 +20,5 @@
 syscfg.defs:
     NEWTMGR_SYSINIT_STAGE:
         description: >
-            Sysinit stage for newtmgr functionality.
+            Sysinit stage for Newtmgr functionality.
         value: 500

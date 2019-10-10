@@ -37,6 +37,7 @@
 #include <parse/parse.h>
 
 #include "imgmgr/imgmgr.h"
+#include "img_mgmt/img_mgmt.h"
 #include "imgmgr_priv.h"
 
 static int imgr_cli_cmd(int argc, char **argv);
@@ -74,7 +75,7 @@ imgr_cli_flags_str(uint32_t image_flags, uint8_t state_flags)
     memset(buf, ' ', sizeof buf);
     p = buf;
 
-    if (state_flags & IMGMGR_STATE_F_ACTIVE) {
+    if (state_flags & IMG_MGMT_STATE_F_ACTIVE) {
         *p = 'a';
     }
     p++;
@@ -82,11 +83,11 @@ imgr_cli_flags_str(uint32_t image_flags, uint8_t state_flags)
         *p = 'b';
     }
     p++;
-    if (state_flags & IMGMGR_STATE_F_CONFIRMED) {
+    if (state_flags & IMG_MGMT_STATE_F_CONFIRMED) {
         *p = 'c';
     }
     p++;
-    if (state_flags & IMGMGR_STATE_F_PENDING) {
+    if (state_flags & IMG_MGMT_STATE_F_PENDING) {
         *p = 'p';
     }
     p++;
@@ -106,13 +107,13 @@ imgr_cli_show_slot(int slot)
     uint32_t flags;
     uint8_t state_flags;
 
-    if (imgr_read_info(slot, &ver, hash, &flags)) {
+    if (img_mgmt_read_info(slot, &ver, hash, &flags)) {
         return;
     }
 
-    state_flags = imgmgr_state_flags(slot);
+    state_flags = img_mgmt_state_flags(slot);
 
-    (void)imgr_ver_str(&ver, ver_str);
+    (void)img_mgmt_ver_str(&ver, ver_str);
 
     console_printf("%d %8s: %s %s\n",
       slot, ver_str,
@@ -183,7 +184,7 @@ imgr_cli_set_pending(char *arg, int permanent)
         return;
     }
 
-    rc = imgmgr_state_set_pending(slot, permanent);
+    rc = img_mgmt_state_set_pending(slot, permanent);
     if (rc) {
         console_printf("Error setting slot %d to pending; rc=%d\n", slot, rc);
         return;
@@ -195,7 +196,7 @@ imgr_cli_confirm(void)
 {
     int rc;
 
-    rc = imgmgr_state_confirm();
+    rc = img_mgmt_state_confirm();
     if (rc != 0) {
         console_printf("Error confirming image state; rc=%d\n", rc);
         return;
@@ -211,16 +212,6 @@ imgr_cli_erase(void)
 
     area_id = imgmgr_find_best_area_id();
     if (area_id >= 0) {
-#if MYNEWT_VAL(LOG_FCB_SLOT1)
-        /*
-         * If logging to slot1 is enabled, make sure it's locked before erasing
-         * so log handler does not corrupt our data.
-         */
-        if (area_id == FLASH_AREA_IMAGE_1) {
-            log_fcb_slot1_lock();
-        }
-#endif
-
         rc = flash_area_open(area_id, &fa);
         if (rc) {
             console_printf("Error opening area %d\n", area_id);

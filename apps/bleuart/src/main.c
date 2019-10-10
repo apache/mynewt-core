@@ -24,7 +24,6 @@
 #include "os/mynewt.h"
 #include "bsp/bsp.h"
 #include "hal/hal_gpio.h"
-#include <imgmgr/imgmgr.h>
 
 /* BLE */
 #include "nimble/ble.h"
@@ -41,9 +40,9 @@
 #include "services/gap/ble_svc_gap.h"
 #include "services/gatt/ble_svc_gatt.h"
 
-/* Newtmgr include */
-#include "newtmgr/newtmgr.h"
-#include "nmgrble/newtmgr_ble.h"
+/* SMP include */
+#include "smp/smp.h"
+#include "smpble/smp_ble.h"
 #include "bleuart/bleuart.h"
 
 static int bleuart_gap_event(struct ble_gap_event *event, void *arg);

@@ -30,7 +30,7 @@
 #include <config/config.h>
 #include <flash_map/flash_map.h>
 #include <hal/hal_system.h>
-#include <newtmgr/newtmgr.h>
+#include <mgmt/mgmt.h>
 #include <bootutil/image.h>
 #include <bootutil/bootutil.h>
 #include <imgmgr/imgmgr.h>

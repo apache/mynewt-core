@@ -43,20 +43,8 @@ syscfg.defs:
         description: >
             Sysinit stage for image management functionality.
         value: 500
-
-    IMGMGR_LOG_MOD:
-        description: 'Module ID for the image manager structured log.'
-        value: 176
-    IMGMGR_LOG_LVL:
-        description: 'Minimum level for the image manager structured log.'
-        value: 15  # Log disabled by default.
     IMGMGR_DUMMY_HDR:
         description: 'Returns dummy image header data for imgr functions,
                       useful when there are no images present, Eg: unit
                       tests'
         value: 0
-
-syscfg.logs:
-    IMGMGR_LOG:
-        module: MYNEWT_VAL(IMGMGR_LOG_MOD)
-        level: MYNEWT_VAL(IMGMGR_LOG_LVL)

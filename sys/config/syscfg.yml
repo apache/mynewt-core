@@ -37,6 +37,10 @@ syscfg.defs:
             - '!CONFIG_FCB'
             - '!CONFIG_NFFS'
             - 'CONFIG_FCB_FLASH_AREA'
+    CONFIG_MGMT:
+        description: 'SMP access to config'
+        value: 0
+
     CONFIG_NEWTMGR:
         description: 'Newtmgr access to config'
         value: 0
@@ -99,3 +103,6 @@ syscfg.defs.CONFIG_NFFS:
 
 syscfg.vals.CONFIG_FCB2:
     CONFIG_FCB_MAGIC: 0xd0b1d0b1
+
+syscfg.vals.CONFIG_NEWTMGR:
+    CONFIG_MGMT: MYNEWT_VAL(CONFIG_NEWTMGR)

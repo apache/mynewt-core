@@ -21,10 +21,16 @@ syscfg.defs:
         value: 1
         restrictions:
             - SHELL_TASK
-    CRASH_TEST_NEWTMGR:
+    CRASH_TEST_MGMT:
         description: 'Newtmgr commands for crashing'
         value: 1
     CRASH_TEST_SYSINIT_STAGE:
         description: >
             Sysinit stage for crash test functionality.
         value: 500
+    CRASH_TEST_MGMT_DELAY:
+        description: >
+            When a reset command is received, the system waits this many
+            milliseconds before performing the reset. This delay allows time
+            for the mcumgr response to be delivered.
+        value: 100

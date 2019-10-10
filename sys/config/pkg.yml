@@ -27,9 +27,9 @@ pkg.deps:
     - "@apache-mynewt-core/encoding/base64"
 pkg.deps.CONFIG_CLI:
     - "@apache-mynewt-core/sys/shell"
-pkg.deps.CONFIG_NEWTMGR:
-    - "@apache-mynewt-core/encoding/cborattr"
-    - "@apache-mynewt-core/mgmt/mgmt"
+pkg.deps.CONFIG_MGMT:
+    - "@apache-mynewt-mcumgr/cborattr"
+    - "@apache-mynewt-mcumgr/mgmt"
 pkg.deps.CONFIG_FCB:
     - "@apache-mynewt-core/fs/fcb"
 pkg.deps.CONFIG_FCB2:

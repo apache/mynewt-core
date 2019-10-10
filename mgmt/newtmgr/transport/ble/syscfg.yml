@@ -20,5 +20,5 @@
 syscfg.defs:
     NEWTMGR_BLE_SYSINIT_STAGE:
         description: >
-            Sysinit stage for the BLE newtmgr transport.
+            Sysinit stage for the BLE smp transport.
         value: 501

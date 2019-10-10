@@ -30,3 +30,8 @@ syscfg.defs:
         description: >
             Sysinit stage for OIC manager functionality.
         value: 500
+
+    OICMGR_OIC_RESOURCE_NAME:
+        description: >
+            The OMP OIC Resource name. 
+        value: '"x.mynewt.nmgr"'

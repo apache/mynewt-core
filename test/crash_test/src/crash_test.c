@@ -30,7 +30,7 @@
 #if MYNEWT_VAL(CRASH_TEST_CLI)
 #include "shell/shell.h"
 #endif
-#if MYNEWT_VAL(CRASH_TEST_NEWTMGR)
+#if MYNEWT_VAL(CRASH_TEST_MGMT)
 #include "mgmt/mgmt.h"
 #endif
 
@@ -64,6 +64,26 @@ crash_device(char *how)
     return 0;
 }
 
+int
+crash_verify_cmd(char *how)
+{
+    if (!strcmp(how, "div0")) {
+        return 0;
+    } else if (!strcmp(how, "jump0")) {
+        return 0;
+    } else if (!strcmp(how, "ref0")) {
+        return 0;
+    } else if (!strcmp(how, "assert")) {
+        return 0;
+    } else if (!strcmp(how, "wdog")) {
+        return 0;
+    } else if (!strcmp(how, "wdog2")) {
+        return 0;
+    }
+
+    return -1;
+}
+
 void
 crash_test_init(void)
 {
@@ -73,7 +93,7 @@ crash_test_init(void)
 #if MYNEWT_VAL(CRASH_TEST_CLI)
     shell_cmd_register(&crash_cmd_struct);
 #endif
-#if MYNEWT_VAL(CRASH_TEST_NEWTMGR)
-    mgmt_group_register(&crash_test_nmgr_group);
+#if MYNEWT_VAL(CRASH_TEST_MGMT)
+    mgmt_register_group(&crash_test_mgmt_group);
 #endif
 }

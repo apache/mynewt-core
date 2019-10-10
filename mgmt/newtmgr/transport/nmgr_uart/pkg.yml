@@ -18,18 +18,5 @@
 #
 
 pkg.name: mgmt/newtmgr/transport/nmgr_uart
-pkg.description: Newtmgr transport over raw UART
-pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
-pkg.homepage: "http://mynewt.apache.org/"
-pkg.keywords:
-    - newtmgr
-    - uart
-
-pkg.deps:
-    - "@apache-mynewt-core/kernel/os"
-    - "@apache-mynewt-core/hw/drivers/uart"
-    - "@apache-mynewt-core/mgmt/newtmgr"
-    - "@apache-mynewt-core/util/crc"
-
-pkg.init:
-    nmgr_uart_pkg_init: 'MYNEWT_VAL(NMGR_UART_SYSINIT_STAGE)'
+pkg.type: transient
+pkg.link: "@apache-mynewt-core/mgmt/smp/transport/smp_uart"

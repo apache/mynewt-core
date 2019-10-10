@@ -24,6 +24,7 @@
 #include "flash_map/flash_map.h"
 #include "bootutil/image.h"
 #include "imgmgr/imgmgr.h"
+#include "img_mgmt/img_mgmt.h"
 #include "coredump/coredump.h"
 
 uint8_t coredump_disabled;
@@ -75,7 +76,7 @@ coredump_dump(void *regs, int regs_sz)
      */
     slot = flash_area_id_to_image_slot(MYNEWT_VAL(COREDUMP_FLASH_AREA));
     if (slot != -1) {
-        if (imgmgr_state_slot_in_use(slot)) {
+        if (img_mgmt_slot_in_use(slot)) {
             return;
         }
     }
@@ -95,7 +96,7 @@ coredump_dump(void *regs, int regs_sz)
     off = sizeof(hdr);
     dump_core_tlv(fa, &off, &tlv, regs);
 
-    if (imgr_read_info(boot_current_slot, &ver, hash, NULL) == 0) {
+    if (img_mgmt_read_info(boot_current_slot, &ver, hash, NULL) == 0) {
         tlv.ct_type = COREDUMP_TLV_IMAGE;
         tlv.ct_len = IMGMGR_HASH_LEN;
 

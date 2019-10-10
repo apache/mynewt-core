@@ -23,7 +23,7 @@
 #include "modlog/modlog.h"
 #include "bootutil/image.h"
 #include "bootutil/bootutil.h"
-#include "imgmgr/imgmgr.h"
+#include "img_mgmt/img_mgmt.h"
 #include "config/config.h"
 #include "config/config_file.h"
 #include "reboot/log_reboot.h"
@@ -172,7 +172,7 @@ static int
 log_reboot_write(const struct log_reboot_info *info)
 {
     struct image_version ver;
-    uint8_t hash[IMGMGR_HASH_LEN];
+    uint8_t hash[32];
     char buf[MYNEWT_VAL(REBOOT_LOG_BUF_SIZE)];
     uint8_t cbor_enc_buf[MYNEWT_VAL(REBOOT_LOG_BUF_SIZE)];
     int off;
@@ -194,7 +194,7 @@ log_reboot_write(const struct log_reboot_info *info)
     }
 #endif
 
-    rc = imgr_read_info(boot_current_slot, &ver, hash, &flags);
+    rc = img_mgmt_read_info(boot_current_slot, &ver, hash, &flags);
     if (rc != 0) {
         return rc;
     }
@@ -247,21 +247,21 @@ log_reboot_write(const struct log_reboot_info *info)
         cbor_encode_int(&map, info->pc);
     }
 
-    state_flags = imgmgr_state_flags(boot_current_slot);
+    state_flags = img_mgmt_state_flags(boot_current_slot);
     cbor_encode_text_stringz(&map, "flags");
     off = 0;
     buf[0] = '\0';
 
-    if (state_flags & IMGMGR_STATE_F_ACTIVE) {
+    if (state_flags & IMG_MGMT_STATE_F_ACTIVE) {
         off += snprintf(buf + off, sizeof buf - off, "%s ", "active");
     }
     if (!(flags & IMAGE_F_NON_BOOTABLE)) {
         off += snprintf(buf + off, sizeof buf - off, "%s ", "bootable");
     }
-    if (state_flags & IMGMGR_STATE_F_CONFIRMED) {
+    if (state_flags & IMG_MGMT_STATE_F_CONFIRMED) {
         off += snprintf(buf + off, sizeof buf - off, "%s ", "confirmed");
     }
-    if (state_flags & IMGMGR_STATE_F_PENDING) {
+    if (state_flags & IMG_MGMT_STATE_F_PENDING) {
         off += snprintf(buf + off, sizeof buf - off, "%s ", "pending");
     }
     if (off > 1) {

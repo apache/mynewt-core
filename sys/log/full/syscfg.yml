@@ -50,17 +50,6 @@ syscfg.defs:
         restrictions:
             - "!LOG_FCB"
 
-    LOG_FCB_SLOT1:
-        description: >
-            Support logging to FCB located in slot 1.
-            This is a thin wrapper over LOG_FCB which should be used if
-            destination FCB is located in slot 1 as it can detect when
-            a new image is uploaded to this slot and stop logging to
-            prevent data corruption.
-        value: 0
-        restrictions:
-            - "LOG_FCB"
-
     LOG_FCB_BOOKMARKS:
         description: >
             Enables the bookmarks optimization for FCB-backed log lookups.  To
@@ -79,6 +68,10 @@ syscfg.defs:
         value: 0
         restrictions:
             - SHELL_TASK
+
+    LOG_MGMT:
+        description: 'Expose "log" command in mgmt.'
+        value: 0
 
     LOG_NEWTMGR:
         description: 'Expose "log" command in newtmgr.'
@@ -123,7 +116,7 @@ syscfg.defs:
     LOG_STORAGE_WATERMARK:
         description: >
             Enable "set_watermark" API which can watermark log by entry index and
-            thus allow to e.g. keep track of read items in log e.g. (via newtmgr).
+            thus allow to e.g. keep track of read items in log e.g. (via mgmt).
             This also extends information returned by "storage_info" to number of
             bytes used by entries above watermark.
         value: 0
@@ -146,7 +139,6 @@ syscfg.defs:
         description: >
             Primary sysinit stage for logging functionality.
         value: 100
-    LOG_SYSINIT_STAGE_SLOT1:
-        description: >
-            Sysinit stage for logging to the second image slot.
-        value: 101
+
+syscfg.vals.LOG_NEWTMGR:
+    LOG_MGMT: MYNEWT_VAL(LOG_MGMT)

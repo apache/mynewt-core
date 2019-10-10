@@ -55,8 +55,8 @@ conf_init(void)
     rc = conf_cli_register();
     SYSINIT_PANIC_ASSERT(rc == 0);
 #endif
-#if MYNEWT_VAL(CONFIG_NEWTMGR)
-    rc = conf_nmgr_register();
+#if MYNEWT_VAL(CONFIG_MGMT)
+    rc = conf_mgmt_register();
     SYSINIT_PANIC_ASSERT(rc == 0);
 #endif
 

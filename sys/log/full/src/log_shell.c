@@ -45,7 +45,7 @@
 struct log_shell_cbor_reader {
     struct cbor_decoder_reader r;
     struct log *log;
-    void *dptr;
+    const void *dptr;
 };
 
 static uint8_t
@@ -133,7 +133,7 @@ log_shell_cbor_reader_cpy(struct cbor_decoder_reader *d, char *dst,
 
 static void
 log_shell_cbor_reader_init(struct log_shell_cbor_reader *cbr, struct log *log,
-                           void *dptr, uint16_t len)
+                           const void *dptr, uint16_t len)
 {
     cbr->r.get8 = &log_shell_cbor_reader_get8;
     cbr->r.get16 = &log_shell_cbor_reader_get16;
@@ -149,7 +149,7 @@ log_shell_cbor_reader_init(struct log_shell_cbor_reader *cbr, struct log *log,
 
 static int
 shell_log_dump_entry(struct log *log, struct log_offset *log_offset,
-                     const struct log_entry_hdr *ueh, void *dptr, uint16_t len)
+                     const struct log_entry_hdr *ueh, const void *dptr, uint16_t len)
 {
     char data[128 + 1];
     int dlen;
@@ -165,7 +165,6 @@ shell_log_dump_entry(struct log *log, struct log_offset *log_offset,
     bool read_hash = ueh->ue_flags & LOG_FLAGS_IMG_HASH;
 #else
     bool read_data = true;
-    bool read_hash = false;
 #endif
 
     dlen = min(len, 128);
@@ -178,11 +177,13 @@ shell_log_dump_entry(struct log *log, struct log_offset *log_offset,
         data[rc] = 0;
     }
 
+#if MYNEWT_VAL(LOG_VERSION) > 2
     if (read_hash) {
         console_printf("[ih=0x%x%x%x%x]", ueh->ue_imghash[0], ueh->ue_imghash[1],
                        ueh->ue_imghash[2], ueh->ue_imghash[3]);
     }
     console_printf(" [%llu] ", ueh->ue_ts);
+#endif
 
 #if MYNEWT_VAL(LOG_VERSION) <= 2
     console_write(data, strlen(data));

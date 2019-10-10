@@ -38,9 +38,9 @@ pkg.deps.LOG_CLI:
     - "@apache-mynewt-core/sys/shell"
     - "@apache-mynewt-core/encoding/base64"
 
-pkg.deps.LOG_NEWTMGR:
-    - "@apache-mynewt-core/mgmt/mgmt"
-    - "@apache-mynewt-core/encoding/cborattr"
+pkg.deps.LOG_MGMT:
+    - "@apache-mynewt-mcumgr/cmd/log_mgmt"
+    - "@apache-mynewt-mcumgr/cborattr"
     - "@apache-mynewt-core/encoding/tinycbor"
 
 pkg.deps.LOG_FLAGS_IMAGE_HASH:

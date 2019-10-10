@@ -18,19 +18,19 @@
 #
 
 pkg.name: mgmt/oicmgr
-pkg.description: Server-side newtmgr functionality for OIC
+pkg.description: Server-side SMP functionality for OIC
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
+    - omp
+    - oicmgr
+    - mgmt
 
 pkg.deps:
     - "@apache-mynewt-core/kernel/os"
     - "@apache-mynewt-core/net/oic"
-    - "@apache-mynewt-core/mgmt/mgmt"
-    - "@apache-mynewt-core/mgmt/newtmgr/nmgr_os"
-
-pkg.apis:
-    - newtmgr
+    - "@apache-mynewt-mcumgr/omp/port/mynewt"
+    - "@apache-mynewt-mcumgr/omp"
 
 pkg.init:
-    oicmgr_init: 'MYNEWT_VAL(OICMGR_SYSINIT_STAGE)'
+    omgr_pkg_init: 'MYNEWT_VAL(OICMGR_SYSINIT_STAGE)'

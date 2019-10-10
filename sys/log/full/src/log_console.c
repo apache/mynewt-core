@@ -39,10 +39,12 @@ log_console_print_hdr(const struct log_entry_hdr *hdr)
     console_printf("[ts=%lluus, mod=%u level=%u ",
                    hdr->ue_ts, hdr->ue_module, hdr->ue_level);
 
+#if MYNEWT_VAL(LOG_VERSION) > 3
     if (hdr->ue_flags & LOG_FLAGS_IMG_HASH) {
         console_printf("ih=0x%x%x%x%x", hdr->ue_imghash[0], hdr->ue_imghash[1],
                        hdr->ue_imghash[2], hdr->ue_imghash[3]);
     }
+#endif
     console_printf("]");
 }
 
@@ -71,7 +73,7 @@ log_console_append(struct log *log, void *buf, int len)
 }
 
 static int
-log_console_read(struct log *log, void *dptr, void *buf, uint16_t offset,
+log_console_read(struct log *log, const void *dptr, void *buf, uint16_t offset,
         uint16_t len)
 {
     /* You don't read console, console read you */

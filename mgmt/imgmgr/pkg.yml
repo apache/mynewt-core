@@ -26,12 +26,10 @@ pkg.keywords:
 pkg.deps:
     - "@apache-mynewt-core/boot/split"
     - "@apache-mynewt-core/encoding/base64"
-    - "@apache-mynewt-core/mgmt/mgmt"
     - "@apache-mynewt-core/sys/flash_map"
-    - "@apache-mynewt-core/sys/log/modlog"
+    - "@apache-mynewt-mcumgr/cmd/img_mgmt"
 
 pkg.req_apis:
-    - newtmgr
     - bootloader
 
 pkg.req_apis.LOG_FCB_SLOT1:

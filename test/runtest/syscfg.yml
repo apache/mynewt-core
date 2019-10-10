@@ -32,6 +32,9 @@ syscfg.defs:
         value: 0
         restrictions:
             - SHELL_TASK
+    RUNTEST_MGMT:
+        description: 'Enable mgmt command to execute tests'
+        value: 1
     RUNTEST_NEWTMGR:
         description: 'Enable newtmgr command to execute tests'
         value: 1
@@ -54,3 +57,6 @@ syscfg.defs:
         description: >
             Sysinit stage for runtest functionality.
         value: 500
+
+syscfg.vals.RUNTEST_NEWTMGR:
+        RUNTEST_MGMT: MYNEWT_VAL(RUNTEST_NEWTMGR)

@@ -157,11 +157,6 @@ log_init(void)
 #endif
 #endif
 
-#if MYNEWT_VAL(LOG_NEWTMGR)
-    rc = log_nmgr_register_group();
-    SYSINIT_PANIC_ASSERT(rc == 0);
-#endif
-
 #if MYNEWT_VAL(LOG_CONSOLE)
     log_console_init();
 #endif
@@ -317,7 +312,7 @@ struct log_read_hdr_arg {
 };
 
 static int
-log_read_hdr_walk(struct log *log, struct log_offset *log_offset, void *dptr,
+log_read_hdr_walk(struct log *log, struct log_offset *log_offset, const void *dptr,
                   uint16_t len)
 {
     struct log_read_hdr_arg *arg;
@@ -330,12 +325,14 @@ log_read_hdr_walk(struct log *log, struct log_offset *log_offset, void *dptr,
         arg->read_success = 1;
     }
 
+#if MYNEWT_VAL(LOG_VERSION) > 2
     if (arg->hdr->ue_flags & LOG_FLAGS_IMG_HASH) {
         rc = log_fill_current_img_hash(arg->hdr);
         if (!rc || rc == SYS_ENOTSUP) {
             arg->read_success = 1;
         }
     }
+#endif
 
     /* Abort the walk; only one header needed. */
     return 1;
@@ -439,17 +436,18 @@ log_set_append_cb(struct log *log, log_append_cb *cb)
     log->l_append_cb = cb;
 }
 
-#if MYNEWT_VAL(LOG_VERSION) > 2
 uint16_t
 log_hdr_len(const struct log_entry_hdr *hdr)
 {
+#if MYNEWT_VAL(LOG_VERSION) > 2
     if (hdr->ue_flags & LOG_FLAGS_IMG_HASH) {
         return LOG_BASE_ENTRY_HDR_SIZE + LOG_IMG_HASHLEN;
     }
+#endif
 
     return LOG_BASE_ENTRY_HDR_SIZE;
 }
-#endif
+
 
 static int
 log_chk_type(uint8_t etype)
@@ -853,7 +851,7 @@ struct log_walk_body_arg {
  * forwards the data to the body walk callback.
  */
 static int
-log_walk_body_fn(struct log *log, struct log_offset *log_offset, void *dptr,
+log_walk_body_fn(struct log *log, struct log_offset *log_offset, const void *dptr,
                  uint16_t len)
 {
     struct log_walk_body_arg *lwba;
@@ -910,7 +908,7 @@ log_walk_body(struct log *log, log_walk_body_func_t walk_body_func,
  * @return                      The number of bytes read; 0 on failure.
  */
 int
-log_read(struct log *log, void *dptr, void *buf, uint16_t off,
+log_read(struct log *log, const void *dptr, void *buf, uint16_t off,
          uint16_t len)
 {
     int rc;
@@ -921,7 +919,7 @@ log_read(struct log *log, void *dptr, void *buf, uint16_t off,
 }
 
 int
-log_read_hdr(struct log *log, void *dptr, struct log_entry_hdr *hdr)
+log_read_hdr(struct log *log, const void *dptr, struct log_entry_hdr *hdr)
 {
     int bytes_read;
 
@@ -930,6 +928,7 @@ log_read_hdr(struct log *log, void *dptr, struct log_entry_hdr *hdr)
         return SYS_EIO;
     }
 
+#if MYNEWT_VAL(LOG_VERSION) > 2
     if (hdr->ue_flags & LOG_FLAGS_IMG_HASH) {
         bytes_read = log_read(log, dptr, hdr->ue_imghash,
                               LOG_BASE_ENTRY_HDR_SIZE, LOG_IMG_HASHLEN);
@@ -937,12 +936,13 @@ log_read_hdr(struct log *log, void *dptr, struct log_entry_hdr *hdr)
             return SYS_EIO;
         }
     }
+#endif
 
     return 0;
 }
 
 int
-log_read_body(struct log *log, void *dptr, void *buf, uint16_t off,
+log_read_body(struct log *log, const void *dptr, void *buf, uint16_t off,
               uint16_t len)
 {
     int rc;
@@ -958,7 +958,7 @@ log_read_body(struct log *log, void *dptr, void *buf, uint16_t off,
 }
 
 int
-log_read_mbuf(struct log *log, void *dptr, struct os_mbuf *om, uint16_t off,
+log_read_mbuf(struct log *log, const void *dptr, struct os_mbuf *om, uint16_t off,
               uint16_t len)
 {
     int rc;
@@ -973,7 +973,7 @@ log_read_mbuf(struct log *log, void *dptr, struct os_mbuf *om, uint16_t off,
 }
 
 int
-log_read_mbuf_body(struct log *log, void *dptr, struct os_mbuf *om,
+log_read_mbuf_body(struct log *log, const void *dptr, struct os_mbuf *om,
                    uint16_t off, uint16_t len)
 {
     int rc;
@@ -1080,6 +1080,7 @@ log_set_max_entry_len(struct log *log, uint16_t max_entry_len)
     log->l_max_entry_len = max_entry_len;
 }
 
+#if MYNEWT_VAL(LOG_VERSION) > 2
 int
 log_fill_current_img_hash(struct log_entry_hdr *hdr)
 {
@@ -1089,8 +1090,8 @@ log_fill_current_img_hash(struct log_entry_hdr *hdr)
     /* We have to account for LOG_IMG_HASHLEN bytes of hash */
     return imgr_get_current_hash(hdr->ue_imghash, LOG_IMG_HASHLEN);
 #endif
-
     memset(hdr->ue_imghash, 0, LOG_IMG_HASHLEN);
 
     return SYS_ENOTSUP;
 }
+#endif

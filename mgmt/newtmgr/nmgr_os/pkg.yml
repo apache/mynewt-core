@@ -18,24 +18,5 @@
 #
 
 pkg.name: mgmt/newtmgr/nmgr_os
-pkg.description: Default newtmgr command.
-pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
-pkg.homepage: "http://mynewt.apache.org/"
-pkg.keywords:
-
-pkg.deps:
-    - "@apache-mynewt-core/hw/hal"
-    - "@apache-mynewt-core/time/datetime"
-    - "@apache-mynewt-core/kernel/os"
-    - "@apache-mynewt-core/mgmt/mgmt"
-    - "@apache-mynewt-core/encoding/tinycbor"
-    - "@apache-mynewt-core/encoding/cborattr"
-
-pkg.deps.LOG_SOFT_RESET:
-    - "@apache-mynewt-core/sys/reboot"
-
-pkg.deps.TIMEPERSIST:
-    - "@apache-mynewt-core/time/timepersist"
-
-pkg.req_apis:
-    - newtmgr
+pkg.type: transient
+pkg.link: "@apache-mynewt-core/mgmt/smp/smp_os"

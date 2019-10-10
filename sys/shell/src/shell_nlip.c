@@ -19,7 +19,7 @@
 
 #include "os/mynewt.h"
 
-#if MYNEWT_VAL(SHELL_NEWTMGR)
+#if MYNEWT_VAL(SHELL_MGMT)
 #include <stddef.h>
 #include "base64/base64.h"
 #include "crc/crc16.h"
@@ -27,6 +27,12 @@
 #include "mgmt/mgmt.h"
 #include "shell/shell.h"
 #include "shell_priv.h"
+
+/* NLIP packets sent over serial are fragmented into frames of 127 bytes or
+ * fewer. This 127-byte maximum applies to the entire frame, including header,
+ * CRC, and terminating newline.
+ */
+#define MGMT_NLIP_MAX_FRAME     127
 
 static shell_nlip_input_func_t g_shell_nlip_in_func;
 static void *g_shell_nlip_in_arg;
