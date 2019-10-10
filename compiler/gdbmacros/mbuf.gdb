@@ -185,6 +185,26 @@ Applies the mn_mbuf_print function to each element in the specified pool.  Both
 allocated and unallocated mbufs are printed.
 end
 
+define mn_mbuf_pool_dump
+    set $pool = ($arg0)
+    set $om = (struct os_mbuf *)$pool->omp_pool.mp_membuf_addr
+    set $elem_size = $pool->omp_databuf_len + sizeof (struct os_mbuf)
+    set $end = (uint8_t *)$om + $pool->omp_pool.mp_num_blocks * $elem_size
+
+    while $om < $end
+        printf "Mbuf addr: %p\n", $om
+        mn_mbuf_dump $om
+        set $om = (struct os_mbuf *)((uint8_t *)$om + $elem_size)
+    end
+end
+
+document mn_mbuf_pool_dump
+usage: mn_mbuf_pool_dump <struct os_mbuf_pool *>
+
+Applies the mn_mbuf_dump function to each element in the specified pool.  Both
+allocated and unallocated mbufs are dumped.
+end
+
 define mn_msys1_print
     mn_mbuf_pool_print &os_msys_1_mbuf_pool
 end
