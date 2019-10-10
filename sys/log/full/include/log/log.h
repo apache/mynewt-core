@@ -215,6 +215,9 @@ struct log {
     log_append_cb *l_append_cb;
     uint8_t l_level;
     uint16_t l_max_entry_len;   /* Log body length; if 0 disables check. */
+#if !MYNEWT_VAL(LOG_GLOBAL_IDX)
+    uint32_t l_idx;
+#endif
 #if MYNEWT_VAL(LOG_STATS)
     STATS_SECT_DECL(logs) l_stats;
 #endif

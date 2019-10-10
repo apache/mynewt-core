@@ -20,37 +20,12 @@
 #include "os/mynewt.h"
 #include "log_test_util/log_test_util.h"
 
-TEST_SUITE(log_test_suite_cbmem_flat)
+int
+main(int argc, char **argv)
 {
-    log_test_case_cbmem_append();
-    log_test_case_cbmem_append_body();
-    log_test_case_cbmem_printf();
-}
+    log_test_suite_fcb_flat();
+    log_test_suite_fcb_mbuf();
+    log_test_suite_misc();
 
-TEST_SUITE(log_test_suite_cbmem_mbuf)
-{
-    log_test_case_cbmem_append_mbuf();
-    log_test_case_cbmem_append_mbuf_body();
-}
-
-TEST_SUITE(log_test_suite_fcb_flat)
-{
-    log_test_case_fcb_append();
-    log_test_case_fcb_append_body();
-    log_test_case_fcb_printf();
-}
-
-TEST_SUITE(log_test_suite_fcb_mbuf)
-{
-    log_test_case_fcb_append_mbuf();
-    log_test_case_fcb_append_mbuf_body();
-}
-
-TEST_SUITE(log_test_suite_misc)
-{
-    log_test_case_level();
-    log_test_case_append_cb();
-#if MYNEWT_VAL(LOG_FCB)
-    log_test_case_2logs();
-#endif
+    return tu_any_failed;
 }

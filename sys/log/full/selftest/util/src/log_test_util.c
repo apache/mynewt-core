@@ -139,6 +139,41 @@ ltu_setup_fcb(struct fcb_log *fcb_log, struct log *log)
 }
 
 void
+ltu_setup_2fcbs(struct fcb_log *fcb_log1, struct log *log1,
+                struct fcb_log *fcb_log2, struct log *log2)
+{
+#if MYNEWT_VAL(LOG_FCB)
+    int rc;
+    int i;
+
+    for (i = 0; i < sizeof(fcb_areas) / sizeof(fcb_areas[0]); i++) {
+        rc = flash_area_erase(&fcb_areas[i], 0, fcb_areas[i].fa_size);
+        TEST_ASSERT(rc == 0);
+    }
+
+    memset(fcb_log1, 0, sizeof(struct fcb_log));
+    fcb_log1->fl_fcb.f_magic = 0x7EADBADF;
+    fcb_log1->fl_fcb.f_version = 0;
+    fcb_log1->fl_fcb.f_sectors = &fcb_areas[0];
+    fcb_log1->fl_fcb.f_sector_cnt = 1;
+    rc = fcb_init(&fcb_log1->fl_fcb);
+    TEST_ASSERT(rc == 0);
+    log_register("log1", log1, &log_fcb_handler, fcb_log1, LOG_SYSLEVEL);
+
+    memset(fcb_log2, 0, sizeof(struct fcb_log));
+    fcb_log2->fl_fcb.f_magic = 0x7EADBADF;
+    fcb_log2->fl_fcb.f_version = 0;
+    fcb_log2->fl_fcb.f_sectors = &fcb_areas[1];
+    fcb_log2->fl_fcb.f_sector_cnt = 1;
+    rc = fcb_init(&fcb_log2->fl_fcb);
+    TEST_ASSERT(rc == 0);
+    log_register("log2", log2, &log_fcb_handler, fcb_log2, LOG_SYSLEVEL);
+#else
+    TEST_ASSERT(0);
+#endif
+}
+
+void
 ltu_setup_cbmem(struct cbmem *cbmem, struct log *log)
 {
     cbmem_init(cbmem, ltu_cbmem_buf, sizeof ltu_cbmem_buf);

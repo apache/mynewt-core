@@ -45,6 +45,8 @@ extern char *ltu_str_logs[];
 struct os_mbuf *ltu_flat_to_fragged_mbuf(const void *flat, int len,
                                          int frag_sz);
 void ltu_setup_fcb(struct fcb_log *fcb_log, struct log *log);
+void ltu_setup_2fcbs(struct fcb_log *fcb_log1, struct log *log1,
+                     struct fcb_log *fcb_log2, struct log *log2);
 void ltu_setup_cbmem(struct cbmem *cbmem, struct log *log);
 void ltu_verify_contents(struct log *log);
 
@@ -69,6 +71,8 @@ TEST_CASE_DECL(log_test_case_fcb_append_mbuf_body);
 TEST_SUITE_DECL(log_test_suite_misc);
 TEST_CASE_DECL(log_test_case_level);
 TEST_CASE_DECL(log_test_case_append_cb);
+
+TEST_CASE_DECL(log_test_case_2logs);
 
 #ifdef __cplusplus
 }

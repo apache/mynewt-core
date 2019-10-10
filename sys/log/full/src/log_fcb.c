@@ -213,7 +213,8 @@ static int
 log_fcb_append_body(struct log *log, const struct log_entry_hdr *hdr,
                     const void *body, int body_len)
 {
-    uint8_t buf[LOG_BASE_ENTRY_HDR_SIZE + LOG_IMG_HASHLEN + LOG_FCB_MAX_ALIGN - 1];
+    uint8_t buf[LOG_BASE_ENTRY_HDR_SIZE + LOG_IMG_HASHLEN +
+                LOG_FCB_MAX_ALIGN - 1];
     struct fcb *fcb;
     struct fcb_entry loc;
     struct fcb_log *fcb_log;
@@ -346,7 +347,8 @@ log_fcb_append_mbuf_body(struct log *log, const struct log_entry_hdr *hdr,
         return rc;
     }
 
-    rc = flash_area_write(loc.fe_area, loc.fe_data_off, hdr, LOG_BASE_ENTRY_HDR_SIZE);
+    rc = flash_area_write(loc.fe_area, loc.fe_data_off, hdr,
+                          LOG_BASE_ENTRY_HDR_SIZE);
     if (rc != 0) {
         return rc;
     }
@@ -355,7 +357,8 @@ log_fcb_append_mbuf_body(struct log *log, const struct log_entry_hdr *hdr,
 #if MYNEWT_VAL(LOG_VERSION) > 2
     if (hdr->ue_flags & LOG_FLAGS_IMG_HASH) {
         /* Write LOG_IMG_HASHLEN bytes of image hash */
-        rc = flash_area_write(loc.fe_area, loc.fe_data_off, hdr->ue_imghash, LOG_IMG_HASHLEN);
+        rc = flash_area_write(loc.fe_area, loc.fe_data_off, hdr->ue_imghash,
+                              LOG_IMG_HASHLEN);
         if (rc != 0) {
             return rc;
         }
@@ -644,8 +647,8 @@ log_fcb_storage_info(struct log *log, struct log_storage_info *info)
 
 #if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
 static int
-log_fcb_new_watermark_index(struct log *log, struct log_offset *log_offset, const void *dptr,
-                            uint16_t len)
+log_fcb_new_watermark_index(struct log *log, struct log_offset *log_offset,
+                            const void *dptr, uint16_t len)
 {
     struct fcb_entry *loc;
     struct fcb_log *fl;
@@ -662,7 +665,8 @@ log_fcb_new_watermark_index(struct log *log, struct log_offset *log_offset, cons
     }
     /* Set log watermark to end of this element */
     if (ueh.ue_index >= log_offset->lo_index) {
-        fl->fl_watermark_off = loc->fe_area->fa_off + loc->fe_data_off + loc->fe_data_len;
+        fl->fl_watermark_off = loc->fe_area->fa_off + loc->fe_data_off +
+                               loc->fe_data_len;
         return 1;
     } else {
         return 0;
@@ -716,7 +720,8 @@ log_fcb_copy_entry(struct log *log, struct fcb_entry *entry,
                    struct fcb *dst_fcb)
 {
     struct log_entry_hdr ueh;
-    char data[LOG_PRINTF_MAX_ENTRY_LEN + LOG_BASE_ENTRY_HDR_SIZE + LOG_IMG_HASHLEN];
+    char data[LOG_PRINTF_MAX_ENTRY_LEN + LOG_BASE_ENTRY_HDR_SIZE +
+              LOG_IMG_HASHLEN];
     uint16_t hdr_len;
     int dlen;
     int rc;
