@@ -120,11 +120,14 @@ define mn_mbuf_chain_print
     while $om != 0
         printf "Mbuf addr: %p\n", $om
         mn_mbuf_print $om
+
         set $totlen += $om->om_len
         set $om = $om->om_next.sle_next
-    end
 
-    printf "total length: %d\n", $totlen
+        if $om != 0
+            printf "\n"
+        end
+    end
 end
 
 document mn_mbuf_chain_print
@@ -142,11 +145,14 @@ define mn_mbuf_chain_dump
     while $om != 0
         printf "Mbuf addr: %p\n", $om
         mn_mbuf_dump $om
+
         set $totlen += $om->om_len
         set $om = $om->om_next.sle_next
-    end
 
-    printf "total length: %d\n", $totlen
+        if $om != 0
+            printf "\n"
+        end
+    end
 end
 
 document mn_mbuf_chain_dump
