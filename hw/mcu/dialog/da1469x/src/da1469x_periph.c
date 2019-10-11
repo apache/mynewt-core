@@ -86,6 +86,7 @@ static const struct da1469x_uart_cfg os_bsp_uart0_cfg = {
     .pin_rx = MYNEWT_VAL(UART_0_PIN_RX),
     .pin_rts = -1,
     .pin_cts = -1,
+    .rx_pullup = MYNEWT_VAL(UART_0_RX_ENABLE_PULLUP)
 };
 #endif
 #if MYNEWT_VAL(UART_1)
@@ -95,6 +96,7 @@ static const struct da1469x_uart_cfg os_bsp_uart1_cfg = {
     .pin_rx = MYNEWT_VAL(UART_1_PIN_RX),
     .pin_rts = MYNEWT_VAL(UART_1_PIN_RTS),
     .pin_cts = MYNEWT_VAL(UART_1_PIN_CTS),
+    .rx_pullup = MYNEWT_VAL(UART_1_RX_ENABLE_PULLUP)
 };
 #endif
 #if MYNEWT_VAL(UART_2)
@@ -104,6 +106,7 @@ static const struct da1469x_uart_cfg os_bsp_uart2_cfg = {
     .pin_rx = MYNEWT_VAL(UART_2_PIN_RX),
     .pin_rts = MYNEWT_VAL(UART_2_PIN_RTS),
     .pin_cts = MYNEWT_VAL(UART_2_PIN_CTS),
+    .rx_pullup = MYNEWT_VAL(UART_2_RX_ENABLE_PULLUP)
 };
 #endif
 
