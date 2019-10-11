@@ -60,9 +60,9 @@ da1469x_prail_configure_1v8(void)
     /* XXX make rail configurable */
 
     POWER_CTRL_REG_SET(V18_LEVEL, 1);                   /* 1.800 V */
-    POWER_CTRL_REG_SET(LDO_1V8_RET_ENABLE_ACTIVE, 1);
+    POWER_CTRL_REG_SET(LDO_1V8_RET_ENABLE_ACTIVE, 0);
     POWER_CTRL_REG_SET(LDO_1V8_RET_ENABLE_SLEEP, 1);
-    POWER_CTRL_REG_SET(LDO_1V8_ENABLE, 0);
+    POWER_CTRL_REG_SET(LDO_1V8_ENABLE, 1);
 }
 
 static void
