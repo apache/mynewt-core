@@ -54,6 +54,7 @@ struct da1469x_uart_cfg {
     int8_t pin_rx;
     int8_t pin_rts;
     int8_t pin_cts;
+    uint8_t rx_pullup;
 };
 
 struct da1469x_hal_i2c_cfg {
