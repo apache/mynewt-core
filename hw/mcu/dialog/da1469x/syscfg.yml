@@ -252,6 +252,9 @@ syscfg.defs:
     UART_0_PIN_RX:
         description: 'RX pin for UART0'
         value: ''
+    UART_0_RX_ENABLE_PULLUP:
+        description: 'Enable internal pullup on RX pin. 0:none 1:enable pullup'
+        value: 0
 
     UART_1:
         description: Enable DA1469x UART 1 (UART2 peripheral)
@@ -268,6 +271,9 @@ syscfg.defs:
     UART_1_PIN_CTS:
         description: 'CTS pin for UART1'
         value: -1
+    UART_1_RX_ENABLE_PULLUP:
+        description: 'Enable internal pullup on RX pin. 0:none 1:enable pullup'
+        value: 0
 
     UART_2:
         description: Enable DA1469x UART 2 (UART3 peripheral)
@@ -284,6 +290,9 @@ syscfg.defs:
     UART_2_PIN_CTS:
         description: 'CTS pin for UART2'
         value: -1
+    UART_2_RX_ENABLE_PULLUP:
+        description: 'Enable internal pullup on RX pin. 0:none 1:enable pullup'
+        value: 0
 
     TIMER_0:
         description: Enable DA1469x timer 0 (Timer peripheral)

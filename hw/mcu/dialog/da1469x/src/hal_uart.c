@@ -40,6 +40,11 @@ struct da1469x_uart {
     volatile uint8_t tx_started : 1;
     volatile uint8_t rx_data;
 
+    /* Stores rx pin func for use during open/close and if there is a pullup */
+    mcu_gpio_func rx_pin_func;
+    int8_t        rx_pin;
+    uint8_t       rx_pullup;
+
     hal_uart_rx_char rx_func;
     hal_uart_tx_char tx_func;
     hal_uart_tx_done tx_done;
@@ -214,6 +219,8 @@ da1469x_uart_common_isr(struct da1469x_uart *uart)
         case 0x06: /* receiver line status */
             break;
         case 0x07: /* busy detect */
+            /* Clear the flag so if assert not defined no infinite loop here */
+            (void)regs->UART2_USR_REG;
             assert(0);
             break;
         case 0x0c: /* character timeout */
@@ -351,11 +358,15 @@ hal_uart_init(int port, void *arg)
     IRQn_Type irqn;
     void (* isr)(void);
     mcu_gpio_func gpiofunc[4]; /* RX, TX, RTS, CTS */
+    uint8_t rx_pullup;
 
     uart = da1469x_uart_resolve(port);
     if (!uart) {
         return SYS_EINVAL;
     }
+
+    /* Assume no need for internal rx pullup */
+    rx_pullup = 0;
 
     switch (port) {
 #if MYNEWT_VAL(UART_0)
@@ -367,6 +378,9 @@ hal_uart_init(int port, void *arg)
         gpiofunc[1] = MCU_GPIO_FUNC_UART_RX;
         gpiofunc[2] = 0;
         gpiofunc[3] = 0;
+#if MYNEWT_VAL(UART_0_RX_ENABLE_PULLUP)
+        rx_pullup = 1;
+#endif
         break;
 #endif
 #if MYNEWT_VAL(UART_1)
@@ -378,6 +392,9 @@ hal_uart_init(int port, void *arg)
         gpiofunc[1] = MCU_GPIO_FUNC_UART2_RX;
         gpiofunc[2] = MCU_GPIO_FUNC_UART2_RTSN;
         gpiofunc[3] = MCU_GPIO_FUNC_UART2_CTSN;
+#if MYNEWT_VAL(UART_1_RX_ENABLE_PULLUP)
+        rx_pullup = 1;
+#endif
         break;
 #endif
 #if MYNEWT_VAL(UART_2)
@@ -389,6 +406,9 @@ hal_uart_init(int port, void *arg)
         gpiofunc[1] = MCU_GPIO_FUNC_UART3_RX;
         gpiofunc[2] = MCU_GPIO_FUNC_UART3_RTSN;
         gpiofunc[3] = MCU_GPIO_FUNC_UART3_CTSN;
+#if MYNEWT_VAL(UART_2_RX_ENABLE_PULLUP)
+        rx_pullup = 1;
+#endif
         break;
 #endif
     default:
@@ -402,6 +422,11 @@ hal_uart_init(int port, void *arg)
 
     uart->regs = regs;
     uart->irqn = irqn;
+
+    /* These are for uart open/close to enable a pullup on the rx line */
+    uart->rx_pin_func = gpiofunc[1];
+    uart->rx_pin = cfg->pin_rx;
+    uart->rx_pullup = rx_pullup;
 
     mcu_gpio_set_pin_function(cfg->pin_tx, MCU_GPIO_MODE_OUTPUT, gpiofunc[0]);
     mcu_gpio_set_pin_function(cfg->pin_rx, MCU_GPIO_MODE_INPUT, gpiofunc[1]);
@@ -463,6 +488,22 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
     if (!baudrate_cfg) {
         return SYS_ENOTSUP;
     }
+
+    /* Enable pullup if configured */
+    if (uart->rx_pullup) {
+        mcu_gpio_set_pin_function(uart->rx_pin, MCU_GPIO_MODE_INPUT_PULLUP,
+                                  uart->rx_pin_func);
+    }
+
+    /*
+     * If the UART is busy we are not allowed to write to the LCR register.
+     * Doing so results in the "busy detect" error. Note that if either the
+     * TX or RX lines are held low the uart will be considered busy.
+     */
+    if (regs->UART2_USR_REG & UART2_UART2_USR_REG_UART_BUSY_Msk) {
+        return SYS_EBUSY;
+    }
+
     regs->UART2_LCR_REG |= UART2_UART2_LCR_REG_UART_DLAB_Msk;
     regs->UART2_IER_DLH_REG = (baudrate_cfg >> 16) & 0xff;
     regs->UART2_RBR_THR_DLL_REG = (baudrate_cfg >> 8) & 0xff;
@@ -543,6 +584,12 @@ hal_uart_close(int port)
     default:
         assert(0);
         break;
+    }
+
+    /* Set back to input with no pullup if pullup enabled */
+    if (uart->rx_pullup) {
+        mcu_gpio_set_pin_function(uart->rx_pin, MCU_GPIO_MODE_INPUT,
+                                  uart->rx_pin_func);
     }
 
     return 0;
