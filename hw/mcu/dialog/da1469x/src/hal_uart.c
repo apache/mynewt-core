@@ -40,6 +40,13 @@ struct da1469x_uart {
     volatile uint8_t tx_started : 1;
     volatile uint8_t rx_data;
 
+    /*
+     * Stores rx pin func and pointer to cfg. Needed to enable/disable pullup
+     * when the uart is opened/closed
+     */
+    mcu_gpio_func rx_pin_func;
+    struct da1469x_uart_cfg *cfg;
+
     hal_uart_rx_char rx_func;
     hal_uart_tx_char tx_func;
     hal_uart_tx_done tx_done;
@@ -214,6 +221,8 @@ da1469x_uart_common_isr(struct da1469x_uart *uart)
         case 0x06: /* receiver line status */
             break;
         case 0x07: /* busy detect */
+            /* Clear the flag so if assert not defined no infinite loop here */
+            (void)regs->UART2_USR_REG;
             assert(0);
             break;
         case 0x0c: /* character timeout */
@@ -403,6 +412,10 @@ hal_uart_init(int port, void *arg)
     uart->regs = regs;
     uart->irqn = irqn;
 
+    /* These are for uart open/close to enable a pullup on the rx line */
+    uart->rx_pin_func = gpiofunc[1];
+    uart->cfg = cfg;
+
     mcu_gpio_set_pin_function(cfg->pin_tx, MCU_GPIO_MODE_OUTPUT, gpiofunc[0]);
     mcu_gpio_set_pin_function(cfg->pin_rx, MCU_GPIO_MODE_INPUT, gpiofunc[1]);
     if (cfg->pin_rts >= 0) {
@@ -429,6 +442,7 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
     UART2_Type *regs;
     uint32_t reg;
     uint32_t baudrate_cfg;
+    uint32_t loop_count;
 
     uart = da1469x_uart_resolve(port);
     if (!uart) {
@@ -463,6 +477,34 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
     if (!baudrate_cfg) {
         return SYS_ENOTSUP;
     }
+
+    /* Enable pullup if configured */
+    if (uart->cfg->rx_pullup) {
+        mcu_gpio_set_pin_function(uart->cfg->pin_rx, MCU_GPIO_MODE_INPUT_PULLUP,
+                                  uart->rx_pin_func);
+    }
+
+    /*
+     * If the UART is busy we are not allowed to write to the LCR register.
+     * Doing so results in the "busy detect" error. Only reason UART should
+     * be busy here is if something is driving RX low.
+     *
+     * XXX: the loop counter here is ugly for sure. Did not want to assume
+     * an OS for the hal and instantiating a timer for this seemed pretty
+     * heavyweight. There are 4 instructions and I realize this time will be
+     * quite variable based on CPU clock and cache, etc.
+     *
+     * Did not want to simply poll and not break out as holding RX low would
+     * cause an infinite loop here.
+     */
+    loop_count = 0;
+    while (regs->UART2_USR_REG & UART2_UART2_USR_REG_UART_BUSY_Msk) {
+        ++loop_count;
+        if (loop_count > 10000) {
+            return SYS_EBUSY;
+        }
+    }
+
     regs->UART2_LCR_REG |= UART2_UART2_LCR_REG_UART_DLAB_Msk;
     regs->UART2_IER_DLH_REG = (baudrate_cfg >> 16) & 0xff;
     regs->UART2_RBR_THR_DLL_REG = (baudrate_cfg >> 8) & 0xff;
@@ -543,6 +585,12 @@ hal_uart_close(int port)
     default:
         assert(0);
         break;
+    }
+
+    /* Set back to input with no pullup if pullup enabled */
+    if (uart->cfg->rx_pullup) {
+        mcu_gpio_set_pin_function(uart->cfg->pin_rx, MCU_GPIO_MODE_INPUT,
+                                  uart->rx_pin_func);
     }
 
     return 0;
