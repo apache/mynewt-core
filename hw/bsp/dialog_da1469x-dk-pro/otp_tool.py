@@ -43,6 +43,7 @@ class Cmd(object):
     OTP_APPEND_VALUE = 5
     OTP_INIT = 6
     FLASH_ERASE = 7
+    TEST_ALIVE = 8
 
 
 class cmd_no_payload(NamedTuple):
@@ -570,6 +571,39 @@ def init_config_script(uart):
     print("Successfully initialized blank OTP")
 
 
+@click.option('-u', '--uart', required=True, help='uart port')
+@click.command(help='Test if the board is alive by sending and receving data')
+def test_alive_target(uart):
+    try:
+        ser = serial.Serial(port=uart, baudrate=1000000, timeout=1,
+                            bytesize=8, stopbits=serial.STOPBITS_ONE)
+    except serial.SerialException:
+        raise SystemExit("Failed to open serial port")
+
+    # length is unused, so set to 0
+    cmd = cmd_append_value(0xaa55aa55, Cmd.TEST_ALIVE, 0)
+    msg = struct.pack('III', *cmd)
+    # 20 payload bytes and 16 header bytes
+    rlen = 36
+
+    try:
+        ser.write(msg)
+    except serial.SerialException:
+        raise SystemExit("Failed to write to %s" % uart)
+
+    data = ser.read(rlen)
+    print(data)
+    if len(data) != rlen:
+        raise SystemExit("Failed to receive response, exiting")
+
+    response = cmd_response._make(struct.unpack_from('IIII', data))
+    if response.status != 0:
+        raise SystemExit('Failed to verify system status over UART: %d'
+                         % response.status)
+    else:
+        SystemExit("Successfully communicated with target")
+
+
 @click.group()
 def cli():
     pass
@@ -594,6 +628,7 @@ cli.add_command(disable_cmac_debugger)
 cli.add_command(disable_swd_debugger)
 cli.add_command(close_config_script)
 cli.add_command(init_config_script)
+cli.add_command(test_alive_target)
 
 
 if __name__ == '__main__':
