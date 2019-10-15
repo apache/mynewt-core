@@ -25,26 +25,26 @@
 #define MBEDTLS_OID_H
 
 #if !defined(MBEDTLS_CONFIG_FILE)
-#include "config.h"
+#include "mbedtls/config.h"
 #else
 #include MBEDTLS_CONFIG_FILE
 #endif
 
-#include "asn1.h"
-#include "pk.h"
+#include "mbedtls/asn1.h"
+#include "mbedtls/pk.h"
 
 #include <stddef.h>
 
 #if defined(MBEDTLS_CIPHER_C)
-#include "cipher.h"
+#include "mbedtls/cipher.h"
 #endif
 
 #if defined(MBEDTLS_MD_C)
-#include "md.h"
+#include "mbedtls/md.h"
 #endif
 
 #if defined(MBEDTLS_X509_USE_C) || defined(MBEDTLS_X509_CREATE_C)
-#include "x509.h"
+#include "mbedtls/x509.h"
 #endif
 
 #define MBEDTLS_ERR_OID_NOT_FOUND                         -0x002E  /**< OID is not found. */
