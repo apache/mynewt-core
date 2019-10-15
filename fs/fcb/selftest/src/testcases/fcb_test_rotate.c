@@ -34,6 +34,7 @@ TEST_CASE_SELF(fcb_test_rotate)
     fcb_tc_pretest(2);
 
     fcb = &test_fcb;
+    fcb->f_scratch = NULL;
 
     old_id = fcb->f_active_id;
     rc = fcb_rotate(fcb);

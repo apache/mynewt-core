@@ -35,7 +35,7 @@ TEST_CASE_SELF(fcb_test_multiple_scratch)
 
     fcb = &test_fcb;
     fcb->f_scratch_cnt = 1;
-
+    fcb->f_scratch = NULL;
     /*
      * Now fill up everything. We should be able to get 3 of the sectors
      * full.
