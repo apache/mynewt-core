@@ -127,6 +127,7 @@ fcb_tc_pretest(uint8_t sector_count)
     memset(fcb, 0, sizeof(*fcb));
     fcb->f_sector_cnt = sector_count;
     fcb->f_sectors = test_fcb_area; /* XXX */
+    fcb->f_scratch = NULL;
 
     rc = 0;
     rc = fcb_init(fcb);
