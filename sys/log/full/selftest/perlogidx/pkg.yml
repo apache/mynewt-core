@@ -1,4 +1,3 @@
-#
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -16,22 +15,15 @@
 # specific language governing permissions and limitations
 # under the License.
 #
+pkg.name: sys/log/full/selftest/perlogidx
+pkg.type: unittest
+pkg.description: "Log unit tests; unique index per log."
+pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
+pkg.homepage: "http://mynewt.apache.org/"
+pkg.keywords:
 
-syscfg.defs:
-    DFLT_LOG_MOD:
-        description: 'Numeric module ID to use for default log messages.'
-        value: 0
-    DFLT_LOG_LVL:
-        description: 'Minimum level for the default log.'
-        value: 1
-    LOG_GLOBAL_IDX:
-        description: >
-            Log entries indices are coming from same number space. Otherwise
-            every log has their own indexing.
-        value: 1
-
-syscfg.logs:
-    DFLT_LOG:
-        module: MYNEWT_VAL(DFLT_LOG_MOD)
-        level: MYNEWT_VAL(DFLT_LOG_LVL)
-
+pkg.deps: 
+    - "@apache-mynewt-core/sys/console/stub"
+    - "@apache-mynewt-core/sys/log/full"
+    - "@apache-mynewt-core/sys/log/full/selftest/util"
+    - "@apache-mynewt-core/test/testutil"

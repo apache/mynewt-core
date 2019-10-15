@@ -145,8 +145,9 @@ log_init(void)
 
     STAILQ_INIT(&g_log_list);
     g_log_info.li_version = MYNEWT_VAL(LOG_VERSION);
+#if MYNEWT_VAL(LOG_GLOBAL_IDX)
     g_log_info.li_next_index = 0;
-
+#endif
 #if MYNEWT_VAL(LOG_CLI)
     shell_cmd_register(&g_shell_log_cmd);
 #if MYNEWT_VAL(LOG_FCB_SLOT1)
@@ -392,6 +393,9 @@ log_register(char *name, struct log *log, const struct log_handler *lh,
     log->l_level = level;
     log->l_append_cb = NULL;
     log->l_max_entry_len = 0;
+#if !MYNEWT_VAL(LOG_GLOBAL_IDX)
+    log->l_idx = 0;
+#endif
 
     if (!log_registered(log)) {
         STAILQ_INSERT_TAIL(&g_log_list, log, l_next);
@@ -420,9 +424,15 @@ log_register(char *name, struct log *log, const struct log_handler *lh,
         rc = log_read_last_hdr(log, &hdr);
         if (rc == 0) {
             OS_ENTER_CRITICAL(sr);
+#if MYNEWT_VAL(LOG_GLOBAL_IDX)
             if (hdr.ue_index >= g_log_info.li_next_index) {
                 g_log_info.li_next_index = hdr.ue_index + 1;
             }
+#else
+            if (hdr.ue_index >= log->l_idx) {
+                log->l_idx = hdr.ue_index + 1;
+            }
+#endif
             OS_EXIT_CRITICAL(sr);
         }
     }
@@ -531,7 +541,11 @@ log_append_prepare(struct log *log, uint8_t module, uint8_t level,
     }
 
     OS_ENTER_CRITICAL(sr);
+#if MYNEWT_VAL(LOG_GLOBAL_IDX)
     idx = g_log_info.li_next_index++;
+#else
+    idx = log->l_idx++;
+#endif
     OS_EXIT_CRITICAL(sr);
 
     /* Try to get UTC Time */
@@ -674,7 +688,7 @@ log_append_mbuf_typed_no_free(struct log *log, uint8_t module, uint8_t level,
      * We do a pull up twice, once so that the base header is
      * contiguous, so that we read the flags correctly, second
      * time is so that we account for the image hash as well.
-     */    
+     */
     om = os_mbuf_pullup(om, LOG_BASE_ENTRY_HDR_SIZE);
     if (!om) {
         rc = -1;
@@ -954,7 +968,6 @@ log_read_body(struct log *log, const void *dptr, void *buf, uint16_t off,
     }
 
     return log_read(log, dptr, buf, log_hdr_len(&hdr) + off, len);
-    
 }
 
 int

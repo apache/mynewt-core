@@ -117,7 +117,9 @@ struct log;
 
 /* Global log info */
 struct log_info {
+#if MYNEWT_VAL(LOG_GLOBAL_IDX)
     uint32_t li_next_index;
+#endif
     uint8_t li_version;
 };
 
