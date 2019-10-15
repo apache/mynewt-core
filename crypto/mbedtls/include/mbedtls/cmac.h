@@ -28,6 +28,12 @@
 #ifndef MBEDTLS_CMAC_H
 #define MBEDTLS_CMAC_H
 
+#if !defined(MBEDTLS_CONFIG_FILE)
+#include "mbedtls/config.h"
+#else
+#include MBEDTLS_CONFIG_FILE
+#endif
+
 #include "mbedtls/cipher.h"
 
 #ifdef __cplusplus
