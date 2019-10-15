@@ -558,7 +558,7 @@ log_fcb_walk_sector(struct log *log, log_walk_func_t walk_func,
      * last entry), add a bookmark pointing to this walk's start location.
      */
     if (log_offset->lo_ts >= 0) {
-        fcb_log_add_bmark(fcb_log, &loc, log_offset->lo_index);
+        log_fcb_add_bmark(fcb_log, &loc, log_offset->lo_index);
     }
 #endif
     do {
