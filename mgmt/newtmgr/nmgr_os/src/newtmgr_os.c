@@ -41,6 +41,7 @@
 
 #include <tinycbor/cbor.h>
 #include <cborattr/cborattr.h>
+#include <imgmgr/imgmgr.h>
 
 static struct os_callout nmgr_reset_callout;
 
@@ -328,8 +329,10 @@ nmgr_reset(struct mgmt_cbuf *cb)
     os_callout_init(&nmgr_reset_callout, mgmt_evq_get(), nmgr_reset_tmo, NULL);
 
 #if MYNEWT_VAL(LOG_SOFT_RESET)
+    int reason = (imgmgr_state_any_pending())? HAL_RESET_DFU: HAL_RESET_REQUESTED;
+
     info = (struct log_reboot_info) {
-        .reason = HAL_RESET_REQUESTED,
+        .reason = reason,
         .file = NULL,
         .line = 0,
         .pc = 0,

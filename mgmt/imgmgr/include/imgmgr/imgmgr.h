@@ -121,6 +121,7 @@ void imgr_set_upload_cb(imgr_upload_fn *cb, void *arg);
 uint8_t imgmgr_state_flags(int query_slot);
 int imgmgr_state_slot_in_use(int slot);
 int imgmgr_state_set_pending(int slot, int permanent);
+int imgmgr_state_any_pending(void);
 int imgmgr_state_confirm(void);
 int imgmgr_find_best_area_id(void);
 void imgmgr_register_callbacks(const imgmgr_dfu_callbacks_t *cb_struct);

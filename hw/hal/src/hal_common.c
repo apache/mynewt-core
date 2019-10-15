@@ -77,6 +77,10 @@ hal_reset_cause_str(void)
         return "Low Voltage";
     case HAL_RESET_REQUESTED:
         return "User Requested";
+    case HAL_RESET_SYS_OFF_INT:
+        return "Power on External INT";
+    case HAL_RESET_DFU:
+        return "Reset for DFU";
     default:
         return "Unknown";
     }

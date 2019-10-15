@@ -119,7 +119,7 @@ imgmgr_state_flags(int query_slot)
     return flags;
 }
 
-static int
+int
 imgmgr_state_any_pending(void)
 {
     return (imgmgr_state_flags(0) & IMGMGR_STATE_F_PENDING) ||
