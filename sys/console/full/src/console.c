@@ -781,24 +781,18 @@ console_handle_char(uint8_t byte)
     }
     input = current_line_ev->ev_arg;
 
-    if (handle_nlip(byte)) {
+    if (handle_nlip(byte) || g_console_ignore_non_nlip) {
         return 0;
     }
 
     /* Handle ANSI escape mode */
     if (esc_state & ESC_ANSI) {
-        if (g_console_ignore_non_nlip) {
-            return 0;
-        }
         handle_ansi(byte, input->line);
         return 0;
     }
 
     /* Handle escape mode */
     if (esc_state & ESC_ESC) {
-        if (g_console_ignore_non_nlip) {
-            return 0;
-        }
         esc_state &= ~ESC_ESC;
         handle_ansi(byte, input->line);
         switch (byte) {
@@ -819,9 +813,6 @@ console_handle_char(uint8_t byte)
         switch (byte) {
         case DEL:
         case BS:
-            if (g_console_ignore_non_nlip) {
-                break;
-            }
             if (cur > 0) {
                 cursor_backward(1);
                 cur--;
@@ -830,9 +821,6 @@ console_handle_char(uint8_t byte)
             }
             break;
         case ESC:
-            if (g_console_ignore_non_nlip) {
-                break;
-            }
             esc_state |= ESC_ESC;
             break;
         default:
@@ -857,9 +845,6 @@ console_handle_char(uint8_t byte)
             console_handle_line();
             break;
         case '\t':
-            if (g_console_ignore_non_nlip) {
-                break;
-            }
             if (completion && !trailing_chars) {
 #if MYNEWT_VAL(CONSOLE_UART_RX_BUF_SIZE) == 0
                 console_blocking_mode();
@@ -875,9 +860,8 @@ console_handle_char(uint8_t byte)
         return 0;
     }
 
-    if (!g_console_ignore_non_nlip) {
-        insert_char(&input->line[cur], byte);
-    }
+    insert_char(&input->line[cur], byte);
+
     return 0;
 }
 
