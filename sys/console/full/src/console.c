@@ -86,6 +86,7 @@ static uint16_t cur;
 static uint16_t trailing_chars;
 static struct os_eventq avail_queue;
 static struct os_eventq *lines_queue;
+static struct os_event *current_line_ev;
 static completion_cb completion;
 bool g_console_silence;
 bool g_console_silence_non_nlip;
@@ -660,27 +661,80 @@ ansi_cmd:
     esc_state &= ~ESC_ANSI;
 }
 
+static void
+console_handle_line(void)
+{
+    cur = 0;
+    trailing_chars = 0;
+    os_eventq_put(lines_queue, current_line_ev);
+
+#if MYNEWT_VAL(CONSOLE_COMPAT)
+    if (console_compat_rx_cb) {
+        console_compat_rx_cb();
+    }
+#endif
+
+    current_line_ev = NULL;
+}
+
 static int
 handle_nlip(uint8_t byte)
 {
-    if ((nlip_state == NLIP_PKT_START2) ||
-        (nlip_state == NLIP_DATA_START2))
-    {
-        return 1;
+    int handled;
+    struct console_input *input;
+
+    input = current_line_ev->ev_arg;
+    handled = 0;
+
+    switch (nlip_state) {
+    case NLIP_PKT_START2:
+    case NLIP_DATA_START2:
+        handled = 1;
+        insert_char(&input->line[cur], byte);
+        if (byte == '\n') {
+            input->line[cur] = '\0';
+            console_echo(1);
+            nlip_state = 0;
+
+            console_handle_line();
+        }
+        break;
+    case NLIP_PKT_START1:
+        if (byte == CONSOLE_NLIP_PKT_START2) {
+            handled = 1;
+            nlip_state = NLIP_PKT_START2;
+            /* Disable echo to not flood the UART */
+            console_echo(0);
+            insert_char(&input->line[cur], CONSOLE_NLIP_PKT_START1);
+            insert_char(&input->line[cur], CONSOLE_NLIP_PKT_START2);
+        } else {
+            nlip_state = 0;
+        }
+        break;
+    case NLIP_DATA_START1:
+        if (byte == CONSOLE_NLIP_DATA_START2) {
+            handled = 1;
+            nlip_state = NLIP_DATA_START2;
+            /* Disable echo to not flood the UART */
+            console_echo(0);
+            insert_char(&input->line[cur], CONSOLE_NLIP_DATA_START1);
+            insert_char(&input->line[cur], CONSOLE_NLIP_DATA_START2);
+        } else {
+            nlip_state = 0;
+        }
+        break;
+    default:
+        if (byte == CONSOLE_NLIP_DATA_START1) {
+            handled = 1;
+            nlip_state = NLIP_DATA_START1;
+        } else if (byte == CONSOLE_NLIP_PKT_START1) {
+            handled = 1;
+            nlip_state = NLIP_PKT_START1;
+        }
+        break;
     }
 
-    if ((nlip_state == NLIP_PKT_START1) &&
-        (byte == CONSOLE_NLIP_PKT_START2)) {
-        nlip_state == NLIP_PKT_START2;
-        return 1;
-    } else if ((nlip_state == NLIP_DATA_START1) &&
-               (byte == CONSOLE_NLIP_DATA_START2)) {
-        nlip_state == NLIP_DATA_START2;
-        return 1;
-    } else {
-        nlip_state = 0;
-        return 0;
-    }
+    return handled;
 }
 
 static int
@@ -711,55 +765,23 @@ console_handle_char(uint8_t byte)
 #if !MYNEWT_VAL(CONSOLE_INPUT)
     return 0;
 #endif
-    static struct os_event *ev;
-    static struct console_input *input;
+    struct console_input *input;
     static char prev_endl = '\0';
 
     if (!lines_queue) {
         return 0;
     }
 
-    if (!ev) {
-        ev = os_eventq_get_no_wait(&avail_queue);
-        if (!ev) {
+    if (!current_line_ev) {
+        current_line_ev = os_eventq_get_no_wait(&avail_queue);
+        if (!current_line_ev) {
             rx_stalled = true;
             return -1;
         }
-        input = ev->ev_arg;
     }
+    input = current_line_ev->ev_arg;
 
-    if (handle_nlip(byte))  {
-        if (byte == '\n') {
-            insert_char(&input->line[cur], byte);
-            input->line[cur] = '\0';
-            cur = 0;
-            trailing_chars = 0;
-            os_eventq_put(lines_queue, ev);
-            nlip_state = 0;
-
-#if MYNEWT_VAL(CONSOLE_COMPAT)
-            if (console_compat_rx_cb) {
-                console_compat_rx_cb();
-            }
-#endif
-
-            input = NULL;
-            ev = NULL;
-            console_echo(1);
-            return 0;
-        /* Ignore characters if there's no more buffer space */
-        } else if (byte == CONSOLE_NLIP_PKT_START2) {
-            /* Disable echo to not flood the UART */
-            console_echo(0);
-            insert_char(&input->line[cur], CONSOLE_NLIP_PKT_START1);
-        } else if (byte == CONSOLE_NLIP_DATA_START2) {
-            /* Disable echo to not flood the UART */
-            console_echo(0);
-            insert_char(&input->line[cur], CONSOLE_NLIP_DATA_START1);
-        }
-
-        insert_char(&input->line[cur], byte);
-
+    if (handle_nlip(byte)) {
         return 0;
     }
 
@@ -795,12 +817,6 @@ console_handle_char(uint8_t byte)
     if (!isprint(byte)) {
         handle_ansi(byte, input->line);
         switch (byte) {
-        case CONSOLE_NLIP_PKT_START1:
-            nlip_state == NLIP_PKT_START1;
-            break;
-        case CONSOLE_NLIP_DATA_START1:
-            nlip_state == NLIP_DATA_START1;
-            break;
         case DEL:
         case BS:
             if (g_console_ignore_non_nlip) {
@@ -835,21 +851,10 @@ console_handle_char(uint8_t byte)
             input->line[cur + trailing_chars] = '\0';
             console_out('\r');
             console_out('\n');
-            cur = 0;
-            trailing_chars = 0;
-            os_eventq_put(lines_queue, ev);
 #if MYNEWT_VAL(CONSOLE_HISTORY_SIZE) > 0
             console_hist_add(input->line);
 #endif
-
-#if MYNEWT_VAL(CONSOLE_COMPAT)
-            if (console_compat_rx_cb) {
-                console_compat_rx_cb();
-            }
-#endif
-
-            input = NULL;
-            ev = NULL;
+            console_handle_line();
             break;
         case '\t':
             if (g_console_ignore_non_nlip) {
