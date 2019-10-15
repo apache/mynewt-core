@@ -56,10 +56,10 @@
 #define CONSOLE_NLIP_DATA_START1 (4)
 #define CONSOLE_NLIP_DATA_START2 (20)
 
-#define NLIP_PKT_START1  (1 << 0)
-#define NLIP_PKT_START2  (1 << 1)
-#define NLIP_DATA_START1 (1 << 2)
-#define NLIP_DATA_START2 (1 << 3)
+#define NLIP_PKT_START1  (CONSOLE_NLIP_PKT_START1)
+#define NLIP_PKT_START2  (CONSOLE_NLIP_PKT_START2)
+#define NLIP_DATA_START1 (CONSOLE_NLIP_DATA_START1)
+#define NLIP_DATA_START2 (CONSOLE_NLIP_DATA_START2)
 
 /* Indicates whether the previous line of output was completed. */
 int console_is_midline;
@@ -663,21 +663,19 @@ ansi_cmd:
 static int
 handle_nlip(uint8_t byte)
 {
-    if (((nlip_state & NLIP_PKT_START1) &&
-         (nlip_state & NLIP_PKT_START2)) ||
-        ((nlip_state & NLIP_DATA_START1) &&
-         (nlip_state & NLIP_DATA_START2)))
+    if ((nlip_state == NLIP_PKT_START2) ||
+        (nlip_state == NLIP_DATA_START2))
     {
         return 1;
     }
 
-    if ((nlip_state & NLIP_PKT_START1) &&
+    if ((nlip_state == NLIP_PKT_START1) &&
         (byte == CONSOLE_NLIP_PKT_START2)) {
-        nlip_state |= NLIP_PKT_START2;
+        nlip_state == NLIP_PKT_START2;
         return 1;
-    } else if ((nlip_state & NLIP_DATA_START1) &&
+    } else if ((nlip_state == NLIP_DATA_START1) &&
                (byte == CONSOLE_NLIP_DATA_START2)) {
-        nlip_state |= NLIP_DATA_START2;
+        nlip_state == NLIP_DATA_START2;
         return 1;
     } else {
         nlip_state = 0;
@@ -798,10 +796,10 @@ console_handle_char(uint8_t byte)
         handle_ansi(byte, input->line);
         switch (byte) {
         case CONSOLE_NLIP_PKT_START1:
-            nlip_state |= NLIP_PKT_START1;
+            nlip_state == NLIP_PKT_START1;
             break;
         case CONSOLE_NLIP_DATA_START1:
-            nlip_state |= NLIP_DATA_START1;
+            nlip_state == NLIP_DATA_START1;
             break;
         case DEL:
         case BS:
