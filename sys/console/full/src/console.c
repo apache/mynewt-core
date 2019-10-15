@@ -358,6 +358,9 @@ console_init_terminal(void)
 static void
 console_switch_to_prompt(void)
 {
+    struct console_input *input;
+    char c;
+
     console_init_terminal();
     /* If terminal size is not known yet, try asking terminal first */
     if (MYNEWT_VAL(CONSOLE_STICKY_PROMPT) &&
@@ -374,6 +377,17 @@ console_switch_to_prompt(void)
         cursor_save();
         prompt_has_focus = true;
         console_cursor_set(max_row, prompt_len + cur + 1);
+        if (MYNEWT_VAL(CONSOLE_PROMPT_SOFT_CURSOR)) {
+            if (trailing_chars && current_line_ev && current_line_ev->ev_arg) {
+                input = (struct console_input *)current_line_ev->ev_arg;
+                c = input->line[cur];
+            } else {
+                c = ' ';
+            }
+            console_write_str(CSI "0m");
+            console_out_nolock(c);
+            console_out_nolock('\b');
+        }
     }
 }
 
@@ -384,11 +398,27 @@ console_switch_to_prompt(void)
 static void
 console_switch_to_logs(void)
 {
+    struct console_input *input;
+    char c;
+
     if (g_is_output_nlip) {
         return;
     }
+
     console_init_terminal();
     if (MYNEWT_VAL(CONSOLE_STICKY_PROMPT) && prompt_has_focus) {
+        if (MYNEWT_VAL(CONSOLE_PROMPT_SOFT_CURSOR)) {
+            console_write_str(CSI);
+            console_write_str(MYNEWT_VAL(CONSOLE_PROMPT_SOFT_CURSOR_ATTR));
+            if (trailing_chars && current_line_ev && current_line_ev->ev_arg) {
+                input = (struct console_input *)current_line_ev->ev_arg;
+                c = input->line[cur];
+            } else {
+                c = ' ';
+            }
+            console_out_nolock(c);
+            console_write_str(CSI "0m\b");
+        }
         cursor_restore();
         prompt_has_focus = false;
     }
