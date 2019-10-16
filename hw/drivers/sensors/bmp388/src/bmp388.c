@@ -1041,6 +1041,12 @@ bmp3_set_op_mode(struct bmp3_dev *dev)
 
     if (rslt == BMP3_OK) {
         rslt = bmp3_get_op_mode(&last_set_mode, dev);
+
+        /* quit if sensor is already in the requested mode */
+        if (last_set_mode == curr_mode) {
+            return BMP3_OK;
+        }
+
         /* If the sensor is not in sleep mode put the device to sleep mode */
         if (last_set_mode != BMP3_SLEEP_MODE) {
             /* Device should be put to sleep before transiting to
@@ -1054,12 +1060,12 @@ bmp3_set_op_mode(struct bmp3_dev *dev)
             if (curr_mode == BMP3_NORMAL_MODE) {
                 /* Set normal mode and validate necessary settings */
                 rslt = set_normal_mode(dev);
+                delay_msec(5);
             } else if (curr_mode == BMP3_FORCED_MODE) {
                 /* Set forced mode */
                 rslt = write_power_mode(dev);
+                delay_msec(5);
             }
-            /* Give some time for device to change mode */
-            delay_msec(5);
         }
     }
 
