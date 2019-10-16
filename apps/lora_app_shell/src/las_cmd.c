@@ -145,10 +145,8 @@ static struct shell_cmd las_cmds[] = {
         .sc_cmd_func = las_cmd_link_chk,
     },
     {
-        NULL, NULL,
-#if MYNEWT_VAL(SHELL_CMD_HELP)
-        NULL
-#endif
+        .sc_cmd = NULL,
+        .sc_cmd_func = NULL
     },
 };
 
