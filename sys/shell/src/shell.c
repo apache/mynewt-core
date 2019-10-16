@@ -794,9 +794,6 @@ complete_select(char *line, char *cur,
     cur += tok_len + 1;
     tok_len = get_token(&cur, &null_terminated);
     if (tok_len == 0) {
-        if (default_module != -1) {
-            return;
-        }
         console_printf("\n");
         print_modules(streamer_console_get());
         print_prompt();
@@ -805,9 +802,7 @@ complete_select(char *line, char *cur,
     }
 
     if (null_terminated) {
-        if (default_module == -1) {
-            complete_module(line, cur, tok_len, append_char);
-        }
+        complete_module(line, cur, tok_len, append_char);
     }
 }
 
