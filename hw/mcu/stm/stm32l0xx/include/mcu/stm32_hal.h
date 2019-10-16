@@ -85,11 +85,8 @@ struct stm32_hal_spi_cfg {
 #include "stm32l0xx_hal_rcc.h"
 #include "stm32l0xx_hal_flash.h"
 #include "stm32l0xx_hal_flash_ex.h"
-/*
- * FIXME: __HAL_FLASH_BUFFER_CACHE_DISABLE() ?
- *        __HAL_FLASH_PREREAD_BUFFER_ENABLE() ?
- *        __HAL_FLASH_PREFETCH_BUFFER_ENABLE() ?
- */
+
+#define EMULATED_SECTOR_SIZE 2048
 #define STM32_HAL_FLASH_INIT()        \
     do {                              \
         __HAL_RCC_MIF_CLK_ENABLE();   \

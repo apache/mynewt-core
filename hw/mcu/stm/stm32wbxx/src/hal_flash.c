@@ -22,8 +22,6 @@
 #include <mcu/stm32_hal.h>
 #include "hal/hal_flash_int.h"
 
-#define _FLASH_SECTOR_SIZE  MYNEWT_VAL(STM32_FLASH_SECTOR_SIZE)
-
 int
 stm32_mcu_flash_erase_sector(const struct hal_flash *dev, uint32_t sector_address)
 {
@@ -31,7 +29,7 @@ stm32_mcu_flash_erase_sector(const struct hal_flash *dev, uint32_t sector_addres
     uint32_t PageError;
     HAL_StatusTypeDef rc;
 
-    if (!(sector_address & (_FLASH_SECTOR_SIZE - 1))) {
+    if (!(sector_address & (FLASH_PAGE_SIZE - 1))) {
         eraseinit.TypeErase = FLASH_TYPEERASE_PAGES;
         eraseinit.Page = (sector_address - dev->hf_base_addr) / FLASH_PAGE_SIZE;
         eraseinit.NbPages = 1;
