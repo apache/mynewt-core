@@ -101,12 +101,12 @@ stats_conf_set(int argc, char **argv, char *val)
 
             decode_len = base64_decode_len(val);
             if (decode_len > size) {
-                DEBUG_PANIC();
-                return OS_ENOMEM;
+                memset(data, 0, size);
+                base64_decode_maxlen(val, data, size);
+            } else {
+                memset(data, 0, size);
+                base64_decode(val, data);
             }
-
-            memset(data, 0, size);
-            base64_decode(val, data);
 
             return 0;
         }
