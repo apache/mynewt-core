@@ -698,7 +698,7 @@ complete_command(char *line, char *command_prefix,
      * More words match but there is nothing that could be appended
      * list all possible matches.
      */
-    console_printf("\n");
+    console_out('\n');
     console_printf("%s\n", commands[first_match].sc_cmd);
     for (i = first_match + 1; commands[i].sc_cmd; i++) {
         if (0 == strncmp(command_prefix, commands[i].sc_cmd, command_len)) {
@@ -718,7 +718,7 @@ complete_module(char *line, char *module_prefix,
     int common_chars = -1, space = 0;
 
     if (!module_len) {
-        console_printf("\n");
+        console_out('\n');
         for (i = 0; i < num_of_shell_entities; i++) {
             console_printf("%s\n", shell_modules[i].name);
         }
@@ -741,7 +741,7 @@ complete_module(char *line, char *module_prefix,
 
         /* more commands match, print first match */
         if (first_match && (common_chars < 0)) {
-            console_printf("\n");
+            console_out('\n');
             console_printf("%s\n", first_match);
             common_chars = strlen(first_match);
         }
@@ -793,7 +793,7 @@ complete_select(char *line, char *cur,
     cur += tok_len + 1;
     tok_len = get_token(&cur, &null_terminated);
     if (tok_len == 0) {
-        console_printf("\n");
+        console_out('\n');
         print_modules(streamer_console_get());
         print_prompt(line);
         return;
@@ -825,7 +825,7 @@ completion(char *line, console_append_char_cb append_char)
 
     /* empty token - print options */
     if (tok_len == 0) {
-        console_printf("\n");
+        console_out('\n');
         if (default_module == -1) {
             print_modules(streamer_console_get());
         } else {
@@ -864,7 +864,7 @@ completion(char *line, console_append_char_cb append_char)
         tok_len = get_token(&cur, &null_terminated);
 
         if (tok_len == 0) {
-            console_printf("\n");
+            console_out('\n');
             print_module_commands(module, streamer_console_get());
             print_prompt(line);
             return;
@@ -885,7 +885,7 @@ completion(char *line, console_append_char_cb append_char)
     cur += tok_len;
     tok_len = get_last_token(&cur);
     if (tok_len == 0) {
-        console_printf("\n");
+        console_out('\n');
         print_command_params(module, command, streamer_console_get());
         print_prompt(line);
         return;
@@ -914,7 +914,7 @@ shell_register_default_module(const char *name)
     int result = set_default_module(name);
 
     if (result != -1) {
-        console_printf("\n");
+        console_out('\n');
         print_prompt(NULL);
     }
 }
