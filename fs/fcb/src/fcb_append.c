@@ -36,7 +36,7 @@ fcb_new_area(struct fcb *fcb, int cnt)
         if (!rfa) {
             rfa = fa;
         }
-        if (fcb->f_scratch) {
+        if (fcb->f_scratch == NULL) {
             if (fa == fcb->f_scratch) {
                 return NULL;
             }
