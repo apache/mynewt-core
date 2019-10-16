@@ -127,10 +127,6 @@ syscfg.defs:
         description: Value read from erased flash.
         value: 0xff
 
-    STM32_FLASH_IS_LINEAR:
-        description: This MCU's Flash has one single sector size.
-        value: 0
-
     SPI_0_MASTER:
         description: 'SPI 0 master'
         value:  0

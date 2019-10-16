@@ -101,14 +101,6 @@ syscfg.defs:
         description: Value read from erased flash.
         value: 0xff
 
-    STM32_FLASH_IS_LINEAR:
-        description: This MCU's Flash has one single sector size.
-        value: 1
-
-    STM32_FLASH_SECTOR_SIZE:
-        description: This MCU's Flash sector size in bytes.
-        value: 2048
-
     I2C_0:
         description: 'I2C (TWI) interface 0'
         value:  0

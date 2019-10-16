@@ -23,14 +23,18 @@
 #include "hal/hal_flash_int.h"
 #include "hal/hal_watchdog.h"
 
-#define FLASH_IS_LINEAR    MYNEWT_VAL(STM32_FLASH_IS_LINEAR)
+#define FLASH_IS_LINEAR    defined(FLASH_PAGE_SIZE)
 #define FLASH_WRITE_SIZE   MYNEWT_VAL(MCU_FLASH_MIN_WRITE_SIZE)
 #define FLASH_ERASED_VAL   MYNEWT_VAL(MCU_FLASH_ERASED_VAL)
 
-#define _FLASH_SIZE         (MYNEWT_VAL(STM32_FLASH_SIZE_KB) * 1024)
+#define STM32_FLASH_SIZE   (MYNEWT_VAL(STM32_FLASH_SIZE_KB) * 1024)
 
 #if FLASH_IS_LINEAR
-#define _FLASH_SECTOR_SIZE  MYNEWT_VAL(STM32_FLASH_SECTOR_SIZE)
+#ifdef EMULATED_SECTOR_SIZE
+#define FLASH_SECTOR_SIZE  EMULATED_SECTOR_SIZE
+#else
+#define FLASH_SECTOR_SIZE  FLASH_PAGE_SIZE
+#endif
 #endif
 
 static int stm32_flash_read(const struct hal_flash *dev, uint32_t address,
@@ -55,13 +59,13 @@ const struct hal_flash_funcs stm32_flash_funcs = {
 extern const uint32_t stm32_flash_sectors[];
 #define FLASH_NUM_AREAS MYNEWT_VAL(STM32_FLASH_NUM_AREAS)
 #else
-#define FLASH_NUM_AREAS (_FLASH_SIZE / _FLASH_SECTOR_SIZE)
+#define FLASH_NUM_AREAS (STM32_FLASH_SIZE / FLASH_SECTOR_SIZE)
 #endif
 
 const struct hal_flash stm32_flash_dev = {
     .hf_itf = &stm32_flash_funcs,
     .hf_base_addr = FLASH_BASE,
-    .hf_size = _FLASH_SIZE,
+    .hf_size = STM32_FLASH_SIZE,
     .hf_sector_cnt = FLASH_NUM_AREAS,
     .hf_align = FLASH_WRITE_SIZE,
     .hf_erased_val = FLASH_ERASED_VAL,
@@ -230,8 +234,8 @@ stm32_flash_sector_info(const struct hal_flash *dev, int idx,
     (void)dev;
 
 #if FLASH_IS_LINEAR
-    *address = dev->hf_base_addr + _FLASH_SECTOR_SIZE * idx;
-    *sz = _FLASH_SECTOR_SIZE;
+    *address = dev->hf_base_addr + FLASH_SECTOR_SIZE * idx;
+    *sz = FLASH_SECTOR_SIZE;
 #else
     *address = stm32_flash_sectors[idx];
     *sz = stm32_flash_sectors[idx + 1] - stm32_flash_sectors[idx];
