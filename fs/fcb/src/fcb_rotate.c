@@ -48,8 +48,9 @@ fcb_rotate(struct fcb *fcb)
         fcb->f_active.fe_elem_off = sizeof(struct fcb_disk_area);
         fcb->f_active_id++;
     }
-    fcb->f_scratch = fcb->f_oldest;
-
+    if(fcb->f_scratch) {
+        fcb->f_scratch = fcb->f_oldest;
+    }
     fcb->f_oldest = fcb_getnext_area(fcb, fcb->f_oldest);
 out:
     os_mutex_release(&fcb->f_mtx);
