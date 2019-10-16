@@ -538,6 +538,7 @@ lwip_sendto(struct mn_socket *ms, struct os_mbuf *m,
             return rc;
         }
         os_mbuf_free_chain(m);
+        pbuf_free(p);
         return 0;
 #endif
 #if LWIP_TCP
