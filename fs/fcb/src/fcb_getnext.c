@@ -111,7 +111,7 @@ next_sector:
 }
 
 int
-fcb_getnext_nolock_sector(struct fcb *fcb, struct fcb_entry *loc)
+fcb_getnext_sector_nolock(struct fcb *fcb, struct fcb_entry *loc)
 {
     int rc;
 
@@ -176,7 +176,7 @@ fcb_getnext_sector(struct fcb *fcb, struct fcb_entry *loc)
     if (rc && rc != OS_NOT_STARTED) {
         return FCB_ERR_ARGS;
     }
-    rc = fcb_getnext_nolock_sector(fcb, loc);
+    rc = fcb_getnext_sector_nolock(fcb, loc);
     os_mutex_release(&fcb->f_mtx);
 
     return rc;
