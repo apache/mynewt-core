@@ -159,7 +159,7 @@ log_fcb_start_append(struct log *log, int len, struct fcb_entry *loc)
         }
 #endif
 
-        /* Check to see if the active region is in the scratch region */
+        /* Notify upper layer that a rotation is about to occur */
         if (log->l_rotate_notify_cb != NULL) {
             log->l_rotate_notify_cb(log);
         }
