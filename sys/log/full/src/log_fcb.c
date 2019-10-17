@@ -817,6 +817,7 @@ log_fcb_copy(struct log *log, struct fcb *src_fcb, struct fcb *dst_fcb,
 {
     struct fcb_entry entry;
     int rc;
+
     rc = 0;
     memset(&entry, 0, sizeof(entry));
     while (!fcb_getnext(src_fcb, &entry)) {
