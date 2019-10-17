@@ -772,6 +772,7 @@ log_fcb_copy_entry(struct log *log, struct fcb_entry *entry,
     struct fcb *fcb_tmp;
 
     rc = log_fcb_read(log, entry, &ueh, 0, LOG_BASE_ENTRY_HDR_SIZE);
+
     if (rc != LOG_BASE_ENTRY_HDR_SIZE) {
         goto err;
     }
