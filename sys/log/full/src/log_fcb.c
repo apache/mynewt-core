@@ -481,9 +481,19 @@ done:
     return len - rem_len;
 }
 
+/**
+ * @brief Common function for walking a single area or the full logs
+ *
+ * @param      The log
+ * @param[in]  The walk function
+ * @param      The log offset
+ * @param[in]  Reading either a single area or the full log
+ *
+ * @return     { description_of_the_return_value }
+ */
 static int
-log_fcb_walk(struct log *log, log_walk_func_t walk_func,
-             struct log_offset *log_offset)
+log_fcb_walk_impl(struct log *log, log_walk_func_t walk_func,
+             struct log_offset *log_offset, bool area)
 {
     struct fcb *fcb;
     struct fcb_log *fcb_log;
@@ -515,60 +525,42 @@ log_fcb_walk(struct log *log, log_walk_func_t walk_func,
     }
 #endif
 
-    do {
-        rc = walk_func(log, log_offset, &loc, loc.fe_data_len);
-        if (rc != 0) {
-            if (rc < 0) {
-                return rc;
-            } else {
-                return 0;
+    if (!area)
+    {
+       do {
+            rc = walk_func(log, log_offset, &loc, loc.fe_data_len);
+            if (rc != 0) {
+                if (rc < 0) {
+                    return rc;
+                } else {
+                    return 0;
+                }
             }
-        }
-    } while (fcb_getnext(fcb, &loc) == 0);
+        } while (fcb_getnext(fcb, &loc) == 0); 
+    } else {
+       do {
+            rc = walk_func(log, log_offset, &loc, loc.fe_data_len);
+            if (rc != 0) {
+                return rc;
+            }
+        } while (fcb_getnext_sector(fcb, &loc) == 0); 
+    }
 
     return 0;
 }
 
 static int
-log_fcb_walk_sector(struct log *log, log_walk_func_t walk_func,
+log_fcb_walk(struct log *log, log_walk_func_t walk_func,
              struct log_offset *log_offset)
 {
-    struct fcb *fcb;
-    struct fcb_log *fcb_log;
-    struct fcb_entry loc;
-    int rc;
+    return log_fcb_walk_impl(log, walk_func, log_offset, false);
+}
 
-    fcb_log = log->l_arg;
-    fcb = &fcb_log->fl_fcb;
-
-    /* Locate the starting point of the walk. */
-    rc = log_fcb_find_gte(log, log_offset, &loc);
-    switch (rc) {
-    case 0:
-        /* Found a starting point. */
-        break;
-    case SYS_ENOENT:
-        /* No entries match the offset criteria; nothing to walk. */
-        return 0;
-    default:
-        return rc;
-    }
-#if MYNEWT_VAL(LOG_FCB_BOOKMARKS)
-    /* If a minimum index was specified (i.e., we are not just retrieving the
-     * last entry), add a bookmark pointing to this walk's start location.
-     */
-    if (log_offset->lo_ts >= 0) {
-        log_fcb_add_bmark(fcb_log, &loc, log_offset->lo_index);
-    }
-#endif
-    do {
-        rc = walk_func(log, log_offset, &loc, loc.fe_data_len);
-        if (rc != 0) {
-            return rc;
-        }
-    } while (fcb_getnext_sector(fcb, &loc) == 0);
-
-    return 0;
+static int
+log_fcb_walk_area(struct log *log, log_walk_func_t walk_func,
+             struct log_offset *log_offset)
+{
+    return log_fcb_walk_impl(log, walk_func, log_offset, true);
 }
 
 static int
@@ -912,7 +904,7 @@ const struct log_handler log_fcb_handler = {
     .log_append_mbuf      = log_fcb_append_mbuf,
     .log_append_mbuf_body = log_fcb_append_mbuf_body,
     .log_walk             = log_fcb_walk,
-    .log_walk_sector      = log_fcb_walk_sector,
+    .log_walk_sector      = log_fcb_walk_area,
     .log_flush            = log_fcb_flush,
 #if MYNEWT_VAL(LOG_STORAGE_INFO)
     .log_storage_info     = log_fcb_storage_info,
