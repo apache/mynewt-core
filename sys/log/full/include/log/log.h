@@ -699,8 +699,7 @@ int log_storage_info(struct log *log, struct log_storage_info *info);
 #endif
 
 /**
- * Assign a callback function to be notified once the log deletes the oldest
- * data to write in new data.
+ * Assign a callback function to be notified when the log is about to be rotated.
  *
  * @param log   The log
  * @param cb    The callback function to be executed.
