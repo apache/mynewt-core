@@ -143,10 +143,6 @@ fcb_getnext_sector_nolock(struct fcb *fcb, struct fcb_entry *loc)
         if (rc == 0) {
             return 0;
         }
-
-        if (rc != FCB_ERR_CRC) {
-            return FCB_ERR_NEXT_SECT;
-        }
     }
 
     return FCB_ERR_NEXT_SECT;
