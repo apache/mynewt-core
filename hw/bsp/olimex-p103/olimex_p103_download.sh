@@ -36,6 +36,8 @@ if [ "$MFG_IMAGE" ]; then
     FLASH_OFFSET=0x08000000
 fi
 
+BOOT_LOADER=1
+
 common_file_to_load
 openocd_load
 openocd_reset_run
