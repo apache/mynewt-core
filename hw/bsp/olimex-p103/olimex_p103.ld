@@ -22,9 +22,9 @@
 /* Linker script to configure memory regions. */
 MEMORY
 {
-  FLASH (rx) :  ORIGIN = 0x08008000, LENGTH = 46K /* First image slot. */
+  FLASH (rx) :  ORIGIN = 0x08000000, LENGTH = 112K /* First image slot. */
   RAM (rwx) :   ORIGIN = 0x20000000, LENGTH = 20K
 }
 
-/* This linker script is used for images and thus contains an image header */
-_imghdr_size = 0x20;
+/* No bootloader */
+_imghdr_size = 0x0;

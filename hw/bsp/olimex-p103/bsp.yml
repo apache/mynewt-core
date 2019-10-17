@@ -25,9 +25,6 @@ bsp.compiler: compiler/arm-none-eabi-m3
 bsp.linkerscript:
     - "hw/bsp/olimex-p103/olimex_p103.ld"
     - "@apache-mynewt-core/hw/mcu/stm/stm32f1xx/stm32f103.ld"
-bsp.linkerscript.BOOT_LOADER.OVERWRITE:
-    - "hw/bsp/olimex-p103/boot-olimex_p103.ld"
-    - "@apache-mynewt-core/hw/mcu/stm/stm32f1xx/stm32f103.ld"
 bsp.downloadscript: "hw/bsp/olimex-p103/olimex_p103_download.sh"
 bsp.debugscript: "hw/bsp/olimex-p103/olimex_p103_debug.sh"
 bsp.downloadscript.WINDOWS.OVERWRITE: "hw/bsp/olimex-p103/olimex_p103_download.cmd"
@@ -38,29 +35,29 @@ bsp.flash_map:
         # System areas.
         FLASH_AREA_BOOTLOADER:
             device: 0
-            offset: 0x08000000
-            size: 16kB
+            offset: 0x08100000
+            size: 0kB
         FLASH_AREA_IMAGE_0:
             device: 0
-            offset: 0x08008000
-            size: 46kB
+            offset: 0x08000000
+            size: 112kB
         FLASH_AREA_IMAGE_1:
             device: 0
-            offset: 0x08013800
-            size: 46kB
+            offset: 0x08200000
+            size: 0kB
         FLASH_AREA_IMAGE_SCRATCH:
             device: 0
-            offset: 0x0801f000
-            size: 4kB
+            offset: 0x08300000
+            size: 0kB
 
         # User areas.
         FLASH_AREA_REBOOT_LOG:
             user_id: 0
             device: 0
-            offset: 0x08004000
+            offset: 0x0801c000
             size: 8kB
         FLASH_AREA_NFFS:
             user_id: 1
             device: 0
-            offset: 0x08006000
+            offset: 0x0801e000
             size: 8kB
