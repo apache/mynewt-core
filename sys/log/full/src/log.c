@@ -932,9 +932,17 @@ log_walk_body_section(struct log *log, log_walk_body_func_t walk_body_func,
     int rc;
 
     log_offset->lo_arg = &lwba;
+
+    if (!log->l_log->log-walk_sector)
+    {
+        rc = ENOTSUP;
+        goto err;
+    }
+
     rc = log->l_log->log_walk_sector(log, log_walk_body_fn, log_offset);
     log_offset->lo_arg = lwba.arg;
 
+err:
     return rc;
 }
 
