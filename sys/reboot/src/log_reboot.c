@@ -299,11 +299,14 @@ log_reboot(const struct log_reboot_info *info)
         return rc;
     }
 
-    /* Record that we have written a reboot entry for the current boot.  Upon
-     * rebooting, we won't write a second entry.
-     */
-    log_reboot_written = 1;
-    conf_save_one("reboot/written", "1");
+    if (info->reason != HAL_RESET_REQUESTED &&
+        info->reason != HAL_RESET_DFU) {
+        /* Record that we have written a reboot entry for the current boot.
+         * Upon rebooting, we won't write a second entry.
+         */
+        log_reboot_written = 1;
+        conf_save_one("reboot/written", "1");
+    }
 
     return 0;
 }
@@ -320,10 +323,10 @@ reboot_start(enum hal_reset_reason reason)
 {
     struct log_reboot_info info;
 
-    reboot_cnt_inc();
-
     /* If an entry wasn't written before the previous reboot, write one now. */
     if (!log_reboot_written) {
+        reboot_cnt_inc();
+
         info = (struct log_reboot_info) {
             .reason = reason,
             .file = NULL,

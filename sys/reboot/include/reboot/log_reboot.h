@@ -33,7 +33,8 @@ extern "C" {
             (reason == HAL_RESET_BROWNOUT ? "BROWNOUT" :                \
               (reason == HAL_RESET_REQUESTED ? "REQUESTED" :            \
                 (reason == HAL_RESET_SYS_OFF_INT ? "SYSTEM_OFF_INT" :   \
-                "UNKNOWN")))))))
+                  (reason == HAL_RESET_DFU ? "DFU" :                    \
+                "UNKNOWN"))))))))
 
 struct log_reboot_info {
     enum hal_reset_reason reason;

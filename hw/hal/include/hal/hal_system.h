@@ -70,6 +70,8 @@ enum hal_reset_reason {
     HAL_RESET_REQUESTED = 6,
     /** System Off, wakeup on external interrupt*/
     HAL_RESET_SYS_OFF_INT = 7,
+    /** Restart due to DFU */
+    HAL_RESET_DFU = 8,
 };
 
 /**
