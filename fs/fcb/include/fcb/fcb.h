@@ -60,7 +60,6 @@ struct fcb {
     /* Flash circular buffer internal state */
     struct os_mutex f_mtx;	/* Locking for accessing the FCB data */
     struct flash_area *f_oldest;
-    struct flash_area *f_scratch;
     struct fcb_entry f_active;
     uint16_t f_active_id;
     uint8_t f_align;		/* writes to flash have to aligned to this */
