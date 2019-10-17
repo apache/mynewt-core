@@ -65,6 +65,10 @@ syscfg.defs:
             For black and white (minicom) use "7m" - inverse
             For color (putty) use "30;42m" - black/green
         value: '"7m"'
+    CONSOLE_HIDE_CURSOR_IN_LOG_AREA:
+        description: >
+            Hide cursor in log area.
+        value: 1
 
     CONSOLE_UART_BAUD:
         description: 'Console UART baud rate.'

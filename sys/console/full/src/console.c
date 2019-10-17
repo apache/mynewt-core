@@ -387,6 +387,9 @@ console_switch_to_prompt(void)
             console_write_str(CSI "0m");
             console_out_nolock(c);
             console_out_nolock('\b');
+            if (MYNEWT_VAL(CONSOLE_HIDE_CURSOR_IN_LOG_AREA)) {
+                console_write_str(CSI "?25h");
+            }
         }
     }
 }
@@ -417,6 +420,9 @@ console_switch_to_logs(void)
                 c = ' ';
             }
             console_out_nolock(c);
+            if (MYNEWT_VAL(CONSOLE_HIDE_CURSOR_IN_LOG_AREA)) {
+                console_write_str(CSI "?25l");
+            }
             console_write_str(CSI "0m\b");
         }
         cursor_restore();
