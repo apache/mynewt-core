@@ -25,6 +25,7 @@ import binascii
 from typing import NamedTuple
 import os
 from cryptography.hazmat.primitives import serialization
+import base64
 
 # Add in path to mcuboot.  This is required to pull in keys module from imgtool
 import sys
@@ -151,13 +152,6 @@ def otp_read_key(index, segment, uart):
                          hex(response.status))
 
 
-def isBase64(data):
-    try:
-        return base64.b64encode(base64.b64decode(data)) == data
-    except Exception:
-        return False
-
-
 @click.argument('infile')
 @click.option('-u', '--uart', required=True, help='uart port')
 @click.option('-i', '--index', required=True, type=int, help='key slot index',
@@ -179,9 +173,13 @@ def otp_write_key(infile, index, segment, uart):
             else:
                 # read key from base64 encoded AES key file
                 buf = f.read()
-                if isBase64(buf):
-                    if len(buf) != 32:
-                        raise SystemExit("AES key file has incorrect length")
+                try:
+                    buf = base64.b64decode(buf)
+                except ValueError:
+                    raise SystemExit("Invalid base64 file")
+
+                if len(buf) != 32:
+                    raise SystemExit("AES key file has incorrect length")
             key = struct.unpack('IIIIIIII', buf)
     except IOError:
         raise SystemExit("Failed to read key from file")
@@ -330,7 +328,7 @@ def flash_read(uart, length, outfile, offset):
               help='flash address offset, in hex')
 @click.option('-l', '--length', type=int, required=True, help='size to erase')
 @click.option('-u', '--uart', required=True, help='uart port')
-@click.command(help='Write to flash')
+@click.command(help='Erase flash')
 def flash_erase(uart, offset, length):
     try:
         ser = serial.Serial(port=uart, baudrate=1000000, timeout=60,
