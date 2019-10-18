@@ -161,6 +161,7 @@ log_fcb_start_append(struct log *log, int len, struct fcb_entry *loc)
 
         /* Notify upper layer that a rotation is about to occur */
         if (log->l_rotate_notify_cb != NULL) {
+            fcb_append_to_scratch(fcb);
             log->l_rotate_notify_cb(log);
         }
 
