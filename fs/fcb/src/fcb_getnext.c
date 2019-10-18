@@ -111,7 +111,7 @@ next_sector:
 }
 
 int
- fcb_getnext(struct fcb *fcb, struct fcb_entry *loc)
+fcb_getnext(struct fcb *fcb, struct fcb_entry *loc)
 {
     int rc;
 
