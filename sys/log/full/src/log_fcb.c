@@ -498,6 +498,7 @@ log_fcb_walk_impl(struct log *log, log_walk_func_t walk_func,
     struct fcb *fcb;
     struct fcb_log *fcb_log;
     struct fcb_entry loc;
+    struct flash_area *fap;
     int rc;
 
     fcb_log = log->l_arg;
@@ -515,6 +516,7 @@ log_fcb_walk_impl(struct log *log, log_walk_func_t walk_func,
     default:
         return rc;
     }
+    fap = loc.fe_area;
 
 #if MYNEWT_VAL(LOG_FCB_BOOKMARKS)
     /* If a minimum index was specified (i.e., we are not just retrieving the
@@ -525,26 +527,22 @@ log_fcb_walk_impl(struct log *log, log_walk_func_t walk_func,
     }
 #endif
 
-    if (!area)
-    {
-       do {
-            rc = walk_func(log, log_offset, &loc, loc.fe_data_len);
-            if (rc != 0) {
-                if (rc < 0) {
-                    return rc;
-                } else {
-                    return 0;
-                }
+    do {
+        if (area) {
+            if (fap != loc.fe_area) {
+                return 0;
             }
-        } while (fcb_getnext(fcb, &loc) == 0); 
-    } else {
-       do {
-            rc = walk_func(log, log_offset, &loc, loc.fe_data_len);
-            if (rc != 0) {
+        }
+
+        rc = walk_func(log, log_offset, &loc, loc.fe_data_len);
+        if (rc != 0) {
+            if (rc < 0) {
                 return rc;
+            } else {
+                return 0;
             }
-        } while (fcb_getnext_sector(fcb, &loc) == 0); 
-    }
+        }
+    } while (fcb_getnext(fcb, &loc) == 0); 
 
     return 0;
 }
