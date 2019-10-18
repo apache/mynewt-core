@@ -542,7 +542,7 @@ log_fcb_walk_impl(struct log *log, log_walk_func_t walk_func,
                 return 0;
             }
         }
-    } while (fcb_getnext(fcb, &loc) == 0); 
+    } while (fcb_getnext(fcb, &loc) == 0);
 
     return 0;
 }
