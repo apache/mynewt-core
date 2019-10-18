@@ -21,27 +21,6 @@
 #include "fcb/fcb.h"
 #include "fcb_priv.h"
 
-/**
- * Check to see if area is at the newest point
- *
- * @param fcb
- *
- * @return fap area
- */
-struct flash_area *
-fcb_area_past_newest(struct fcb *fcb)
-{
-    struct flash_area *fap;
-
-    fap = fcb->f_active.fe_area;
-    fap++;
-    if (fap >= &fcb->f_sectors[fcb->f_sector_cnt]) {
-        return &fcb->f_sectors[0];
-    } else {
-        return fap;
-    }
-}
-
 static struct flash_area *
 fcb_new_area(struct fcb *fcb, int cnt)
 {
@@ -57,7 +36,7 @@ fcb_new_area(struct fcb *fcb, int cnt)
         if (!rfa) {
             rfa = fa;
         }
-        if (fcb->f_oldest == fcb_area_past_newest(fcb)) {
+        if (fa == fcb->f_oldest) {
             return NULL;
         }
     } while (i++ < cnt);
