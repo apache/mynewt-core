@@ -101,7 +101,6 @@ int fcb_append_finish(struct fcb *, struct fcb_entry *append_loc);
 typedef int (*fcb_walk_cb)(struct fcb_entry *loc, void *arg);
 int fcb_walk(struct fcb *, struct flash_area *, fcb_walk_cb cb, void *cb_arg);
 int fcb_getnext(struct fcb *, struct fcb_entry *loc);
-int fcb_getnext_sector(struct fcb *fcb, struct fcb_entry *loc);
 
 /**
  * Erases the data from oldest sector.
