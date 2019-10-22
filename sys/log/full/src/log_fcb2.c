@@ -170,8 +170,8 @@ log_fcb2_start_append(struct log *log, int len, struct fcb2_entry *loc)
 #endif
 
 #if MYNEWT_VAL(LOG_FCB_BOOKMARKS)
-        /* The FCB needs to be rotated.  Invalidate all bookmarks. */
-        log_fcb_clear_bmarks(fcb_log);
+        /* The FCB needs to be rotated. */
+        log_fcb_rotate_bmarks(fcb_log);
 #endif
 
         rc = fcb2_rotate(fcb);

@@ -36,6 +36,36 @@ log_fcb_init_bmarks(struct fcb_log *fcb_log,
 }
 
 void
+log_fcb_rotate_bmarks(struct fcb_log *fcb_log)
+{
+    int i;
+    struct log_fcb_bmark *bmark;
+    struct log_fcb_bset *bset;
+
+    bset = &fcb_log->fl_bset;
+
+    for (i = 0; i < bset->lfs_size; i++) {
+        bmark = &bset->lfs_bmarks[i];
+#if MYNEWT_VAL(LOG_FCB)
+        if (bmark->lfb_entry.fe_area != fcb_log->fl_fcb.f_oldest) {
+            continue;
+        }
+#endif
+#if MYNEWT_VAL(LOG_FCB2)
+        if (bmark->lfb_entry.fe_sector != fcb_log->fl_fcb.f_oldest_sec) {
+            continue;
+        }
+#endif
+        if (i != bset->lfs_size - 1) {
+            *bmark = bset->lfs_bmarks[bset->lfs_size - 1];
+            i--;
+        }
+        bset->lfs_size--;
+        bset->lfs_next = bset->lfs_size;
+    }
+}
+
+void
 log_fcb_clear_bmarks(struct fcb_log *fcb_log)
 {
     fcb_log->fl_bset.lfs_size = 0;
