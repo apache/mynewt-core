@@ -125,6 +125,14 @@ void log_fcb_init_bmarks(struct fcb_log *fcb_log,
 void log_fcb_clear_bmarks(struct fcb_log *fcb_log);
 
 /**
+ * @brief Remove bookmarks which point to oldest FCB/FCB2 area. This is
+ * meant to get called just before the area is rotated out.
+ *
+ * @param fcb_log               The fcb_log to operate on.
+ */
+void log_fcb_rotate_bmarks(struct fcb_log *fcb_log);
+
+/**
  * @brief Searches an fcb_log for the closest bookmark that comes before or at
  * the specified index.
  *
