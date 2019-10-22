@@ -28,7 +28,7 @@ pkg.deps:
     - "@apache-mynewt-mcumgr/mgmt"
     - "@apache-mynewt-mcumgr/cmd/stat_mgmt"
     - "@apache-mynewt-core/mgmt/oicmgr"
-    - "@apache-mynewt-core/mgmt/imgmgr"
+    - "@apache-mynewt-mcumgr/cmd/img_mgmt"
     - "@apache-mynewt-core/mgmt/smp/transport/smp_shell"
     - "@apache-mynewt-core/kernel/os"
     - "@mcuboot/boot/bootutil"
