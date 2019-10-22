@@ -160,6 +160,8 @@ get_destination_module(const char *module_str, int len)
 static const char *
 get_command_and_module(char *argv[], int *module, struct streamer *streamer)
 {
+    int def_module = default_module;
+    const char *first_arg = argv[0];
     *module = -1;
 
     if (!argv[0]) {
@@ -167,13 +169,18 @@ get_command_and_module(char *argv[], int *module, struct streamer *streamer)
         return NULL;
     }
 
-    if (default_module == -1) {
+    if (first_arg[0] == '/') {
+        first_arg++;
+        def_module = -1;
+    }
+
+    if (def_module == -1) {
         if (!argv[1] || argv[1][0] == '\0') {
             streamer_printf(streamer, "Unrecognized command: %s\n", argv[0]);
             return NULL;
         }
 
-        *module = get_destination_module(argv[0], -1);
+        *module = get_destination_module(first_arg, -1);
         if (*module == -1) {
             streamer_printf(streamer, "Illegal module %s\n", argv[0]);
             return NULL;
@@ -182,7 +189,7 @@ get_command_and_module(char *argv[], int *module, struct streamer *streamer)
         return argv[1];
     }
 
-    *module = default_module;
+    *module = def_module;
     return argv[0];
 }
 
@@ -358,6 +365,7 @@ shell_find_cmd(int argc, char *argv[], struct streamer *streamer)
 {
     const char *first_string = argv[0];
     int module = -1;
+    int def_module = default_module;
     const struct shell_module *shell_module;
     const char *command;
     int i;
@@ -365,6 +373,11 @@ shell_find_cmd(int argc, char *argv[], struct streamer *streamer)
     if (!first_string || first_string[0] == '\0') {
         streamer_printf(streamer, "Illegal parameter\n");
         return NULL;
+    }
+
+    if (first_string[0] == '/') {
+        first_string++;
+        def_module = -1;
     }
 
     if (!strcmp(first_string, "help")) {
@@ -375,7 +388,7 @@ shell_find_cmd(int argc, char *argv[], struct streamer *streamer)
         return &shell_cmd_select_module;
     }
 
-    if ((argc == 1) && (default_module == -1)) {
+    if ((argc == 1) && (def_module == -1)) {
         streamer_printf(streamer, "Missing parameter\n");
         return NULL;
     }
@@ -401,6 +414,7 @@ shell_exec(int argc, char **argv, struct streamer *streamer)
     const struct shell_cmd *cmd;
     size_t argc_offset = 0;
     int rc;
+    int def_module = default_module;
 
     cmd = shell_find_cmd(argc, argv, streamer);
     if (!cmd) {
@@ -415,10 +429,13 @@ shell_exec(int argc, char **argv, struct streamer *streamer)
         }
     }
 
+    if (argv[0][0] == '/') {
+        def_module = -1;
+    }
     /* Allow invoking a cmd with module name as a prefix; a command should
      * not know how it was invoked (with or without prefix)
      */
-    if (default_module == -1 && cmd != &shell_cmd_select_module &&
+    if (def_module == -1 && cmd != &shell_cmd_select_module &&
         cmd != &shell_cmd_help) {
         argc_offset = 1;
     }
@@ -811,6 +828,7 @@ completion(char *line, console_append_char_cb append_char)
     int tok_len;
     int module, command;
     int null_terminated = 0;
+    int def_module = default_module;
 
     /*
      * line to completion is not ended by '\0' as the line that gets from
@@ -822,14 +840,19 @@ completion(char *line, console_append_char_cb append_char)
 
     cur = line;
     tok_len = get_token(&cur, &null_terminated);
+    if (tok_len > 0 && cur[0] == '/') {
+        def_module = -1;
+        tok_len--;
+        cur++;
+    }
 
     /* empty token - print options */
     if (tok_len == 0) {
         console_out('\n');
-        if (default_module == -1) {
+        if (def_module == -1) {
             print_modules(streamer_console_get());
         } else {
-            print_module_commands(default_module, streamer_console_get());
+            print_module_commands(def_module, streamer_console_get());
         }
         print_prompt(line);
         return;
@@ -837,12 +860,12 @@ completion(char *line, console_append_char_cb append_char)
 
     /* token can be completed */
     if (null_terminated) {
-        if (default_module == -1) {
+        if (def_module == -1) {
             complete_module(line, cur, tok_len, append_char);
             return;
         }
         complete_command(line, cur, tok_len,
-                         default_module, append_char);
+                         def_module, append_char);
         return;
     }
 
@@ -851,8 +874,8 @@ completion(char *line, console_append_char_cb append_char)
         return;
     }
 
-    if (default_module != -1) {
-        module = default_module;
+    if (def_module != -1) {
+        module = def_module;
     } else {
         module = get_destination_module(cur, tok_len);
 
