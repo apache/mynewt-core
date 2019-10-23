@@ -140,5 +140,10 @@ syscfg.defs:
             Primary sysinit stage for logging functionality.
         value: 100
 
+    LOG_FCB_COPY_MAX_ENTRY_LEN:
+        description: >
+            Max entry length that can be copied from one fcb log to another.
+        value: 256
+
 syscfg.vals.LOG_NEWTMGR:
     LOG_MGMT: MYNEWT_VAL(LOG_MGMT)
