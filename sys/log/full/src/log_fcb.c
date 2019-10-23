@@ -755,7 +755,7 @@ log_fcb_copy_entry(struct log *log, struct fcb_entry *entry,
                    struct fcb *dst_fcb)
 {
     struct log_entry_hdr ueh;
-    char data[LOG_PRINTF_MAX_ENTRY_LEN + LOG_BASE_ENTRY_HDR_SIZE +
+    char data[MYNEWT_VAL(LOG_FCB_COPY_MAX_ENTRY_LEN) + LOG_BASE_ENTRY_HDR_SIZE +
               LOG_IMG_HASHLEN];
     uint16_t hdr_len;
     int dlen;
@@ -770,7 +770,7 @@ log_fcb_copy_entry(struct log *log, struct fcb_entry *entry,
 
     hdr_len = log_hdr_len(&ueh);
 
-    dlen = min(entry->fe_data_len, LOG_PRINTF_MAX_ENTRY_LEN +
+    dlen = min(entry->fe_data_len, MYNEWT_VAL(LOG_FCB_COPY_MAX_ENTRY_LEN) +
                hdr_len);
 
     rc = log_fcb_read(log, entry, data, 0, dlen);
