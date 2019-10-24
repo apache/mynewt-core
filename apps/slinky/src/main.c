@@ -38,7 +38,7 @@
 #include <reboot/log_reboot.h>
 #include <id/id.h>
 #include "modlog/modlog.h"
-#include "img_mgmt/img_mgmt.h"
+#include <imgmgr/imgmgr.h>
 
 #ifdef ARCH_sim
 #include <mcu/mcu_sim.h>
@@ -152,7 +152,7 @@ task1_handler(void *arg)
     g_led_pin = LED_BLINK_PIN;
     hal_gpio_init_out(g_led_pin, 1);
 
-    if (img_mgmt_my_version(&ver) == 0) {
+    if (imgr_my_version(&ver) == 0) {
         console_printf("\nSlinky %u.%u.%u.%u\n",
           ver.iv_major, ver.iv_minor, ver.iv_revision,
           (unsigned int)ver.iv_build_num);
