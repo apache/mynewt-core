@@ -22,6 +22,7 @@ import io
 import click
 import struct
 import binascii
+import base64
 from typing import NamedTuple
 import os
 from cryptography.hazmat.primitives import serialization
@@ -151,13 +152,6 @@ def otp_read_key(index, segment, uart):
                          hex(response.status))
 
 
-def isBase64(data):
-    try:
-        return base64.b64encode(base64.b64decode(data)) == data
-    except Exception:
-        return False
-
-
 @click.argument('infile')
 @click.option('-u', '--uart', required=True, help='uart port')
 @click.option('-i', '--index', required=True, type=int, help='key slot index',
@@ -172,17 +166,28 @@ def otp_write_key(infile, index, segment, uart):
         with open(infile, "rb") as f:
             if segment == 'signature':
                 # read key from ED25519 pem file
-                sig = keys.load(infile)
+                try:
+                    sig = keys.load(infile)
+                except ValueError:
+                    raise SystemExit("Invalid PEM file")
+
                 buf = sig._get_public().public_bytes(
                             encoding=serialization.Encoding.Raw,
                             format=serialization.PublicFormat.Raw)
             else:
                 # read key from base64 encoded AES key file
                 buf = f.read()
-                if isBase64(buf):
-                    if len(buf) != 32:
-                        raise SystemExit("AES key file has incorrect length")
+
+                try:
+                    buf = base64.decodestring(buf)
+                except ValueError:
+                    raise SystemExit("Invalid base 64 file")
+
+                if len(buf) != 32:
+                    raise SystemExit("AES key file has incorrect length")
+
             key = struct.unpack('IIIIIIII', buf)
+
     except IOError:
         raise SystemExit("Failed to read key from file")
 
