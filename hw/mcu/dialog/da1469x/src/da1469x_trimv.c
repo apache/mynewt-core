@@ -37,7 +37,7 @@
 #define MCU_OTPM_CS_LENGTH      (0x0400)
 #endif
 
-#define CS_ADDRESS              ((MCU_OTPM_BASE) + (MCU_OTPM_CS_OFFSET))
+#define CS_OFFSET               (MCU_OTPM_CS_OFFSET)
 #define CS_LENGTH               (MCU_OTPM_CS_LENGTH)
 
 #define CS_WORD_START           0xa5a5a5a5
@@ -57,9 +57,9 @@ static struct da1469x_trimv_group g_mcu_trimv_groups[GROUP_ID_MAX + 1];
 void
 da1469x_trimv_init_from_otp(void)
 {
-    uint32_t oaddr_start;
-    uint32_t oaddr_end;
-    uint32_t oaddr;
+    uint32_t offset_start;
+    uint32_t offset_end;
+    uint32_t offset;
     uint32_t ow;
     uint8_t trimv_group;
     uint8_t trimv_num_words;
@@ -68,28 +68,28 @@ da1469x_trimv_init_from_otp(void)
     memset(&g_mcu_trimv_groups, 0, sizeof(g_mcu_trimv_groups));
 
     /* Start of configuration script */
-    oaddr_start = CS_ADDRESS;
-    oaddr_end = CS_ADDRESS + CS_LENGTH;
-    oaddr = oaddr_start;
+    offset_start = CS_OFFSET;
+    offset_end = CS_OFFSET + CS_LENGTH;
+    offset = offset_start;
 
-    da1469x_otp_read(oaddr, &ow, sizeof(ow));
+    da1469x_otp_read(offset, &ow, sizeof(ow));
     if (ow != CS_WORD_START) {
         return;
     }
 
-    oaddr += 4;
+    offset += 4;
 
-    while (oaddr < oaddr_end) {
-        da1469x_otp_read(oaddr, &ow, sizeof(ow));
+    while (offset < offset_end) {
+        da1469x_otp_read(offset, &ow, sizeof(ow));
 
-        oaddr += 4;
+        offset += 4;
 
         if ((ow == CS_WORD_END) || (ow == CS_WORD_INVALID)) {
             /* End of CS or empty word */
             break;
         } else if ((ow & CS_WORD_TYPE_MASK) < CS_WORD_TYPE_BOOTER) {
             /* This is a register+value configuration, skip one more word */
-            oaddr += 4;
+            offset += 4;
         } else if ((ow & CS_WORD_TYPE_MASK) == CS_WORD_TYPE_TRIM) {
             trimv_num_words = (ow & 0x0000ff00) >> 8;
             trimv_group = ow & 0x000000ff;
@@ -101,11 +101,11 @@ da1469x_trimv_init_from_otp(void)
                  */
                 assert(g_mcu_trimv_groups[trimv_group].num_words == 0);
 
-                g_mcu_trimv_groups[trimv_group].index = (oaddr - oaddr_start) / 4;
+                g_mcu_trimv_groups[trimv_group].index = (offset - offset_start) / 4;
                 g_mcu_trimv_groups[trimv_group].num_words = trimv_num_words;
             }
 
-            oaddr += trimv_num_words * 4;
+            offset += trimv_num_words * 4;
         }
     }
 }
@@ -126,7 +126,7 @@ uint8_t
 da1469x_trimv_group_read(uint8_t group, uint32_t *buf, uint8_t num_words)
 {
     struct da1469x_trimv_group *grp = &g_mcu_trimv_groups[group];
-    uint32_t oaddr;
+    uint32_t offset;
     int rc;
 
     /* Silence warning if built without asserts */
@@ -138,9 +138,9 @@ da1469x_trimv_group_read(uint8_t group, uint32_t *buf, uint8_t num_words)
         return 0;
     }
 
-    oaddr = CS_ADDRESS + grp->index * 4;
+    offset = CS_OFFSET + grp->index * 4;
 
-    rc = da1469x_otp_read(oaddr, buf, num_words * 4);
+    rc = da1469x_otp_read(offset, buf, num_words * 4);
     assert(rc == 0);
 
     return num_words;
