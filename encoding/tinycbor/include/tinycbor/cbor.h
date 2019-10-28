@@ -197,7 +197,7 @@ CBOR_API CborError cbor_encode_byte_iovec(CborEncoder *encoder,
                                           const struct cbor_iovec iov[],
                                           int iov_len);
 CBOR_API CborError cbor_encode_floating_point(CborEncoder *encoder, CborType fpType, const void *value);
-CBOR_INLINE_API CborError cbor_encode_bytes_written(CborEncoder *encoder)
+CBOR_INLINE_API int cbor_encode_bytes_written(CborEncoder *encoder)
 {   return encoder->writer->bytes_written; }
 CBOR_INLINE_API CborError cbor_encode_boolean(CborEncoder *encoder, bool value)
 { return cbor_encode_simple_value(encoder, (int)value - 1 + (CborBooleanType & 0x1f)); }
