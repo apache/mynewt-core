@@ -44,6 +44,8 @@ extern "C" {
 #include <stdbool.h>
 #include <inttypes.h>
 
+#include "syscfg/syscfg.h"
+
 struct flash_area {
     uint8_t fa_id;
     uint8_t fa_device_id;
@@ -130,6 +132,14 @@ int flash_area_getnext_sector(int id, int *sec_id, struct flash_area *ret);
 
 int flash_area_id_from_image_slot(int slot);
 int flash_area_id_to_image_slot(int area_id);
+
+#if MYNEWT_VAL(SELFTEST)
+/**
+ * Adds areas from the hardcoded flash map that aren't present in, and don't
+ * overlap with, the manufacturing flash map.  Only exposed to unit tests.
+ */
+void flash_map_add_new_dflt_areas_extern(void);
+#endif
 
 #ifdef __cplusplus
 }
