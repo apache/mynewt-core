@@ -844,7 +844,7 @@ sensor_set_type_mask(struct sensor *sensor, sensor_type_t mask)
 static inline sensor_type_t
 sensor_check_type(struct sensor *sensor, sensor_type_t type)
 {
-    return (sensor->s_types & sensor->s_mask & type);
+    return (sensor_type_t)(sensor->s_types & sensor->s_mask & type);
 }
 
 /**
