@@ -37,12 +37,14 @@ struct flash_area *fa_sectors;
 TEST_CASE_DECL(flash_map_test_case_1)
 TEST_CASE_DECL(flash_map_test_case_2)
 TEST_CASE_DECL(flash_map_test_case_3)
+TEST_CASE_DECL(flash_map_test_case_new_areas)
 
 TEST_SUITE(flash_map_test_suite)
 {
     flash_map_test_case_1();
     flash_map_test_case_2();
     flash_map_test_case_3();
+    flash_map_test_case_new_areas();
 }
 
 int
