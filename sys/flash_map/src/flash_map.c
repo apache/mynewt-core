@@ -31,25 +31,41 @@
 const struct flash_area *flash_map;
 int flash_map_entries;
 
+static int
+flash_area_find_idx(uint8_t id)
+{
+    int i;
+
+    if (flash_map == NULL) {
+        return -1;
+    }
+
+    for (i = 0; i < flash_map_entries; i++) {
+        if (flash_map[i].fa_id == id) {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
 int
 flash_area_open(uint8_t id, const struct flash_area **fap)
 {
-    const struct flash_area *area;
-    int i;
+    int idx;
 
     if (flash_map == NULL) {
         return SYS_EACCES;
     }
 
-    for (i = 0; i < flash_map_entries; i++) {
-        area = flash_map + i;
-        if (area->fa_id == id) {
-            *fap = area;
-            return 0;
-        }
+    idx = flash_area_find_idx(id);
+    if (idx == -1) {
+        return SYS_ENOENT;
     }
 
-    return SYS_ENOENT;
+    *fap = &flash_map[idx];
+
+    return 0;
 }
 
 int
