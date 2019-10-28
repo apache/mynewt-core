@@ -151,6 +151,7 @@ def otp_read_key(index, segment, uart):
     else:
         raise SystemExit("Error reading key with status %s" %
                          hex(response.status))
+    return key
 
 
 @click.argument('infile')
@@ -336,7 +337,7 @@ def flash_read(uart, length, outfile, offset):
               help='flash address offset, in hex')
 @click.option('-l', '--length', type=int, required=True, help='size to erase')
 @click.option('-u', '--uart', required=True, help='uart port')
-@click.command(help='Write to flash')
+@click.command(help='Erase flash')
 def flash_erase(uart, offset, length):
     try:
         ser = serial.Serial(port=uart, baudrate=1000000, timeout=60,
