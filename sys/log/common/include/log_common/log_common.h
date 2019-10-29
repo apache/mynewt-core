@@ -139,7 +139,7 @@ typedef void log_append_cb(struct log *log, uint32_t idx);
  * 
  * @param log                   The log that is about to rotate 
  */
-typedef void log_notify_rotate_cb(struct log *log);
+typedef void log_notify_rotate_cb(const struct log *log);
 
 #ifdef __cplusplus
 }
