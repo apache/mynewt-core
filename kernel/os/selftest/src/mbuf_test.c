@@ -22,7 +22,7 @@
 #include "testutil/testutil.h"
 #include "os_test_priv.h"
 
-/* 
+/*
  * NOTE: currently, the buffer size cannot be changed as some tests are
  * hard-coded for this size.
  */
@@ -102,6 +102,7 @@ TEST_CASE_DECL(os_mbuf_test_extend)
 TEST_CASE_DECL(os_mbuf_test_adj)
 TEST_CASE_DECL(os_mbuf_test_get_pkthdr)
 TEST_CASE_DECL(os_mbuf_test_widen)
+TEST_CASE_DECL(os_mbuf_test_pack_chains)
 
 TEST_SUITE(os_mbuf_test_suite)
 {
@@ -113,4 +114,5 @@ TEST_SUITE(os_mbuf_test_suite)
     os_mbuf_test_adj();
     os_mbuf_test_get_pkthdr();
     os_mbuf_test_widen();
+    os_mbuf_test_pack_chains();
 }
