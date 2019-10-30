@@ -127,7 +127,7 @@ os_mbuf_test_pack_chains_create_chain(int num_mbufs, struct os_mbtpc_cd *mdata,
  *      with the bsd function rand() that returns 0..(2**31)-1.
  */
 unsigned int
-os_mbuf_test_pack_chans_rand(void)
+os_mbuf_test_pack_chains_rand(void)
 {
 	rand_next = rand_next * 1103515245 + 12345;
 	return ((unsigned int)(rand_next / 65536) % 32768);
@@ -189,7 +189,7 @@ TEST_CASE_SELF(os_mbuf_test_pack_chains)
     /* Fill the test data with random data */
     for (rc = 0; rc < 2048; ++rc) {
         os_mbuf_test_pack_chains_test_data[rc] =
-            (uint8_t)os_mbuf_test_pack_chans_rand();
+            (uint8_t)os_mbuf_test_pack_chains_rand();
     }
 
     /*
