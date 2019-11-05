@@ -145,7 +145,7 @@ rtt_console_poll_func(void *arg)
         while (key >= 0) {
             ret = console_handle_char((char)key);
             if (ret < 0) {
-                return;
+                break;
             }
             key = SEGGER_RTT_GetKey();
         }
