@@ -23,6 +23,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
+#include <bsp/bsp.h>
 
 #include "os/mynewt.h"
 #include "os/os_task.h"
@@ -689,9 +690,18 @@ console_clear_line(void)
 }
 
 #if MYNEWT_VAL(CONSOLE_HISTORY_SIZE) > 0
-static char console_hist_lines[ MYNEWT_VAL(CONSOLE_HISTORY_SIZE) ][ MYNEWT_VAL(CONSOLE_MAX_INPUT_LEN) ];
 
-static struct console_hist {
+#ifndef bssnz_t
+/* Just in case bsp.h does not define it, in this case console history will
+ * not be preserved across software resets
+ */
+#define bssnz_t
+#endif
+
+bssnz_t static char console_hist_lines[ MYNEWT_VAL(CONSOLE_HISTORY_SIZE) ][ MYNEWT_VAL(CONSOLE_MAX_INPUT_LEN) ];
+
+bssnz_t static struct console_hist {
+    uint32_t magic;
     uint8_t head;
     uint8_t tail;
     uint8_t size;
@@ -705,13 +715,16 @@ console_hist_init(void)
     struct console_hist *sh = &console_hist;
     int i;
 
-    memset(console_hist_lines, 0, sizeof(console_hist_lines));
-    memset(&console_hist, 0, sizeof(console_hist));
+    if (sh->magic != 0xBABEFACE) {
+        memset(console_hist_lines, 0, sizeof(console_hist_lines));
+        memset(&console_hist, 0, sizeof(console_hist));
 
-    sh->size = MYNEWT_VAL(CONSOLE_HISTORY_SIZE) + 1;
+        sh->size = MYNEWT_VAL(CONSOLE_HISTORY_SIZE) + 1;
 
-    for (i = 0; i < sh->size - 1; i++) {
-        sh->lines[i] = console_hist_lines[i];
+        for (i = 0; i < sh->size - 1; i++) {
+            sh->lines[i] = console_hist_lines[i];
+        }
+        sh->magic = 0xBABEFACE;
     }
 }
 
