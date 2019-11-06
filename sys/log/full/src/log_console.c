@@ -27,9 +27,6 @@
 #if MYNEWT_VAL(LOG_VERSION) > 2
 #include "tinycbor/cbor.h"
 #include "tinycbor/cbor_buf_reader.h"
-#endif
-
-static struct log log_console;
 
 static int
 log_console_dump_cbor_entry(const void *dptr, uint16_t len)
@@ -45,6 +42,9 @@ log_console_dump_cbor_entry(const void *dptr, uint16_t len)
     console_write("\n", 1);
     return 0;
 }
+#endif
+
+static struct log log_console;
 
 struct log *
 log_console_get(void)
@@ -58,7 +58,7 @@ log_console_print_hdr(const struct log_entry_hdr *hdr)
     console_printf("[ts=%lluus, mod=%u level=%u ",
                    hdr->ue_ts, hdr->ue_module, hdr->ue_level);
 
-#if MYNEWT_VAL(LOG_VERSION) > 3
+#if MYNEWT_VAL(LOG_VERSION) > 2
     if (hdr->ue_flags & LOG_FLAGS_IMG_HASH) {
         console_printf("ih=0x%x%x%x%x", hdr->ue_imghash[0], hdr->ue_imghash[1],
                        hdr->ue_imghash[2], hdr->ue_imghash[3]);
@@ -82,7 +82,9 @@ log_console_append_body(struct log *log, const struct log_entry_hdr *hdr,
     if (hdr->ue_etype != LOG_ETYPE_CBOR) {
         console_write(body, body_len);
     } else {
+#if MYNEWT_VAL(LOG_VERSION) > 2
         log_console_dump_cbor_entry(body, body_len);
+#endif
     }
     return (0);
 }

@@ -41,6 +41,11 @@ pkg.deps.LOG_FCB2:
 pkg.deps.LOG_CLI:
     - "@apache-mynewt-core/sys/shell"
     - "@apache-mynewt-core/encoding/base64"
+    - "@apache-mynewt-core/encoding/tinycbor"
+
+pkg.deps.'LOG_CONSOLE && LOG_VERSION > 2':
+    - "@apache-mynewt-mcumgr/cborattr"
+    - "@apache-mynewt-core/encoding/tinycbor"
 
 pkg.deps.LOG_MGMT:
     - "@apache-mynewt-mcumgr/cmd/log_mgmt"
