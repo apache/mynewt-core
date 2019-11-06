@@ -24,13 +24,18 @@
 void
 hal_system_reset(void)
 {
-
+    extern void _reset_handler(void);
 #if MYNEWT_VAL(HAL_SYSTEM_RESET_CB)
     hal_system_reset_cb();
 #endif
 
     while (1) {
         HAL_DEBUG_BREAK();
+        if (MYNEWT_VAL(HAL_SYSTEM_RESET_FULL)) {
+            ((void (*)(void))SPI0_MEM_ADDR)();
+        } else {
+            _reset_handler();
+        }
     }
 }
 
