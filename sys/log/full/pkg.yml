@@ -30,7 +30,7 @@ pkg.deps:
     - "@apache-mynewt-core/sys/log/common"
     - "@apache-mynewt-core/util/cbmem"
 
-pkg.deps.'LOG_VERSION > 2':
+pkg.deps.'LOG_CLI && LOG_VERSION > 2':
     - "@apache-mynewt-core/sys/log/util/cbor_reader"
 
 pkg.deps.LOG_FCB:
