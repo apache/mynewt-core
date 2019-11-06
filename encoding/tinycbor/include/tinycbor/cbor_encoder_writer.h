@@ -17,27 +17,24 @@
  * under the License.
  */
 
-#ifndef CBOR_BUF_WRITER_H
-#define CBOR_BUF_WRITER_H
-
-#include "tinycbor/cbor_encoder_writer.h"
+#ifndef CBOR_ENCODER_WRITER_H
+#define CBOR_ENCODER_WRITER_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-struct cbor_buf_writer {
-    cbor_encoder_writer enc;
-    uint8_t *ptr;
-    const uint8_t *end;
-};
+struct cbor_encoder_writer;
 
-void cbor_buf_writer_init(struct cbor_buf_writer *cb, uint8_t *buffer,
-                          size_t data);
-size_t cbor_buf_writer_buffer_size(struct cbor_buf_writer *cb,
-                                   const uint8_t *buffer);
+typedef int (cbor_encoder_write)(struct cbor_encoder_writer *, const char *data, int len);
+
+typedef struct cbor_encoder_writer {
+    cbor_encoder_write *write;
+    int                 bytes_written;
+} cbor_encoder_writer;
+
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* CBOR_BUF_WRITER_H */
+#endif /* CBOR_ENCODER_WRITER_H */

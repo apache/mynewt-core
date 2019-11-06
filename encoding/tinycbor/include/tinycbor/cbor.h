@@ -32,6 +32,9 @@
 #include <string.h>
 #include <stdio.h>
 
+#include "tinycbor/cbor_buf_writer.h"
+#include "tinycbor/cbor_buf_reader.h"
+
 #ifdef __cplusplus
 extern "C" {
 #else
@@ -157,15 +160,6 @@ typedef enum CborError {
 
 CBOR_API const char *cbor_error_string(CborError error);
 
-struct cbor_encoder_writer;
-
-typedef int (cbor_encoder_write)(struct cbor_encoder_writer *, const char *data, int len);
-
-typedef struct cbor_encoder_writer {
-    cbor_encoder_write *write;
-    int                 bytes_written;
-} cbor_encoder_writer;
-
 struct cbor_iovec {
     void   *iov_base;
     size_t iov_len;
@@ -173,7 +167,7 @@ struct cbor_iovec {
 
 /* Encoder API */
 struct CborEncoder {
-    cbor_encoder_writer *writer;
+    struct cbor_encoder_writer *writer;
     void *writer_arg;
     size_t added;
     int flags;
@@ -228,25 +222,6 @@ enum CborParserIteratorFlags
     CborIteratorFlag_NegativeInteger        = 0x02,
     CborIteratorFlag_UnknownLength          = 0x04,
     CborIteratorFlag_ContainerIsMap         = 0x20
-};
-
-struct cbor_decoder_reader;
-
-typedef uint8_t (cbor_reader_get8)(struct cbor_decoder_reader *d, int offset);
-typedef uint16_t (cbor_reader_get16)(struct cbor_decoder_reader *d, int offset);
-typedef uint32_t (cbor_reader_get32)(struct cbor_decoder_reader *d, int offset);
-typedef uint64_t (cbor_reader_get64)(struct cbor_decoder_reader *d, int offset);
-typedef uintptr_t (cbor_memcmp)(struct cbor_decoder_reader *d, char *buf, int offset, size_t len);
-typedef uintptr_t (cbor_memcpy)(struct cbor_decoder_reader *d, char *buf, int offset, size_t len);
-
-struct cbor_decoder_reader {
-    cbor_reader_get8  *get8;
-    cbor_reader_get16 *get16;
-    cbor_reader_get32 *get32;
-    cbor_reader_get64 *get64;
-    cbor_memcmp       *cmp;
-    cbor_memcpy       *cpy;
-    size_t             message_size;
 };
 
 struct CborParser

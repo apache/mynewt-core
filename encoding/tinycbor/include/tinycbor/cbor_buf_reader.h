@@ -25,7 +25,7 @@
 extern "C" {
 #endif
 
-#include <tinycbor/cbor.h>
+#include <tinycbor/cbor_decoder_reader.h>
 
 struct cbor_buf_reader {
     struct cbor_decoder_reader r;
