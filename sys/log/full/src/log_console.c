@@ -24,8 +24,27 @@
 #include <cbmem/cbmem.h>
 #include <console/console.h>
 #include "log/log.h"
+#if MYNEWT_VAL(LOG_VERSION) > 2
+#include "tinycbor/cbor.h"
+#include "tinycbor/cbor_buf_reader.h"
+#endif
 
 static struct log log_console;
+
+static int
+console_log_dump_cbor_entry(struct log *log, const void *dptr, uint16_t len)
+{
+    struct CborParser cbor_parser;
+    struct CborValue cbor_value;
+    struct cbor_buf_reader cbor_buf_reader;
+
+    cbor_buf_reader_init(&cbor_buf_reader, dptr, len);
+    cbor_parser_init(&cbor_buf_reader.r, 0, &cbor_parser, &cbor_value);
+    cbor_value_to_pretty(stdout, &cbor_value);
+
+    console_write("\n", 1);
+    return 0;
+}
 
 struct log *
 log_console_get(void)
@@ -60,16 +79,23 @@ log_console_append_body(struct log *log, const struct log_entry_hdr *hdr,
         log_console_print_hdr(hdr);
     }
 
-    console_write(body, body_len);
-
+    if (hdr->ue_etype != LOG_ETYPE_CBOR) {
+        console_write(body, body_len);
+    } else {
+        console_log_dump_cbor_entry(log, body, body_len);
+    }
     return (0);
 }
 
 static int
 log_console_append(struct log *log, void *buf, int len)
 {
-    return log_console_append_body(log, buf, (uint8_t *)buf + LOG_BASE_ENTRY_HDR_SIZE,
-                                   len - LOG_BASE_ENTRY_HDR_SIZE);
+    int hdr_len;
+
+    hdr_len = log_hdr_len(buf);
+
+    return log_console_append_body(log, buf, (uint8_t *)buf + hdr_len,
+                                   len - hdr_len);
 }
 
 static int
