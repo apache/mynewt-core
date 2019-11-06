@@ -17,18 +17,19 @@
 # under the License.
 #
 
-pkg.name: sys/log/util
-pkg.description: Utility library to be used by logging code.
+pkg.name: sys/log/util/log_cbor_reader
+pkg.description: CBOR reader utility for the logging library
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
     - logging
-    - utility
+    - CBOR
+    - reader
 
 pkg.deps:
-    - "@apache-mynewt-core/sys/log/common"
     - "@apache-mynewt-mcumgr/cborattr"
     - "@apache-mynewt-core/encoding/tinycbor"
+    - "@apache-mynewt-core/sys/log/common"
 
 pkg.req_apis:
     - log

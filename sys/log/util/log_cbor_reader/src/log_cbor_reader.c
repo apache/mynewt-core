@@ -20,7 +20,7 @@
 #include "os/mynewt.h"
 #include "log/log.h"
 #include "tinycbor/cbor.h"
-#include "cbor_reader.h"
+#include "log_cbor_reader/log_cbor_reader.h"
 #include "tinycbor/compilersupport_p.h"
 
 static uint8_t

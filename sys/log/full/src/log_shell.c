@@ -39,7 +39,7 @@
 #if MYNEWT_VAL(LOG_VERSION) > 2
 #include "tinycbor/cbor.h"
 #include "tinycbor/compilersupport_p.h"
-#include "cbor_reader.h"
+#include "log_cbor_reader/log_cbor_reader.h"
 #endif
 
 static int

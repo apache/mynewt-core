@@ -31,7 +31,7 @@ pkg.deps:
     - "@apache-mynewt-core/util/cbmem"
 
 pkg.deps.'LOG_CLI && LOG_VERSION > 2':
-    - "@apache-mynewt-core/sys/log/util/cbor_reader"
+    - "@apache-mynewt-core/sys/log/util/log_cbor_reader"
 
 pkg.deps.LOG_FCB:
     - "@apache-mynewt-core/hw/hal"

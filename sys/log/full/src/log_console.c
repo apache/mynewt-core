@@ -32,7 +32,7 @@
 static struct log log_console;
 
 static int
-console_log_dump_cbor_entry(struct log *log, const void *dptr, uint16_t len)
+log_console_dump_cbor_entry(const void *dptr, uint16_t len)
 {
     struct CborParser cbor_parser;
     struct CborValue cbor_value;
@@ -82,7 +82,7 @@ log_console_append_body(struct log *log, const struct log_entry_hdr *hdr,
     if (hdr->ue_etype != LOG_ETYPE_CBOR) {
         console_write(body, body_len);
     } else {
-        console_log_dump_cbor_entry(log, body, body_len);
+        log_console_dump_cbor_entry(body, body_len);
     }
     return (0);
 }
