@@ -79,13 +79,15 @@ log_console_append_body(struct log *log, const struct log_entry_hdr *hdr,
         log_console_print_hdr(hdr);
     }
 
+#if MYNEWT_VAL(LOG_VERSION) < 3
+    console_write(body, body_len);
+#else
     if (hdr->ue_etype != LOG_ETYPE_CBOR) {
         console_write(body, body_len);
     } else {
-#if MYNEWT_VAL(LOG_VERSION) > 2
         log_console_dump_cbor_entry(body, body_len);
-#endif
     }
+#endif
     return (0);
 }
 
