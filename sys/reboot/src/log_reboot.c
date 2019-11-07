@@ -171,6 +171,62 @@ reboot_cnt_inc(void)
 static int
 log_reboot_write(const struct log_reboot_info *info)
 {
+#if MYNEWT_VAL(LOG_VERSION < 3)
+    struct image_version ver;
+    uint8_t hash[32];
+    char buf[MYNEWT_VAL(REBOOT_LOG_BUF_SIZE)];
+    int off;
+    int rc;
+    int i;
+
+#if MYNEWT_VAL(REBOOT_LOG_FCB)
+    {
+        const struct flash_area *ptr;
+        if (flash_area_open(MYNEWT_VAL(REBOOT_LOG_FLASH_AREA), &ptr)) {
+            return 0;
+        }
+    }
+#endif
+
+    rc = img_mgmt_read_info(boot_current_slot, &ver, hash, NULL);
+    if (rc != 0) {
+        return rc;
+    }
+
+    off = 0;
+    off += snprintf(buf + off, sizeof buf - off,
+                    "rsn:%s, cnt:%u, img:%u.%u.%u.%u, hash:",
+                    REBOOT_REASON_STR(info->reason), reboot_cnt, ver.iv_major,
+                    ver.iv_minor, ver.iv_revision,
+                    (unsigned int)ver.iv_build_num);
+
+    for (i = 0; i < sizeof hash; i++) {
+        off += snprintf(buf + off, sizeof buf - off, "%02x",
+                        (unsigned int)hash[i]);
+    }
+
+    if (info->file != NULL) {
+        off += snprintf(buf + off, sizeof buf - off, ", die:%s:%d",
+                        info->file, info->line);
+    }
+
+    if (info->pc != 0) {
+        off += snprintf(buf + off, sizeof buf - off, ", pc:0x%lx",
+                        (unsigned long)info->pc);
+    }
+
+    /* Make sure we don't log beyond the end of the source buffer. */
+    if (off > sizeof buf) {
+        off = sizeof buf;
+    }
+
+    /* Log a reboot */
+    modlog_append(LOG_MODULE_REBOOT, LOG_LEVEL_CRITICAL, LOG_ETYPE_STRING,
+                  buf, off);
+
+    return 0;
+
+#else
     struct image_version ver;
     uint8_t hash[32];
     char buf[MYNEWT_VAL(REBOOT_LOG_BUF_SIZE)];
@@ -282,6 +338,7 @@ log_reboot_write(const struct log_reboot_info *info)
                   cbor_enc_buf, cbor_buf_len);
 
     return 0;
+#endif
 }
 
 int
