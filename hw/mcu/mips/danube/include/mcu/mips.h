@@ -22,4 +22,10 @@
 
 #define OS_TICKS_PER_SEC    (1000)
 
+static inline void
+hal_debug_break(void)
+{
+    __asm ("break");
+}
+
 #endif /* __MCU_MIPS_H__ */
