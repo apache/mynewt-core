@@ -27,7 +27,6 @@ JLINK_GDB_SERVER=JLinkGDBServer
 jlink_load () {
     GDB_CMD_FILE=.gdb_cmds
     GDB_OUT_FILE=.gdb_out
-    PORT=3333
 
     windows_detect
     parse_extra_jtag_cmd $EXTRA_JTAG_CMD
