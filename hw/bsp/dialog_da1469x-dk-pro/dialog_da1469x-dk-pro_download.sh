@@ -39,6 +39,7 @@ if [ "$MFG_IMAGE" ]; then
 fi
 
 parse_extra_jtag_cmd $EXTRA_JTAG_CMD
+jlink_target_cmd
 
 GDB_CMD_FILE=.gdb_load
 JLINK_LOG_FILE=.jlink_log
@@ -103,10 +104,14 @@ fi
 
 FILE_SIZE=$(file_size $FILE_NAME)
 
+if [ -z $JLINK_TARGET_HOST ]; then
+    JLINK_SERVER_CMD="shell sh -c \"trap '' 2; $JLINK_GDB_SERVER -device cortex-m33 -speed 4000 -if SWD -port $PORT -singlerun $EXTRA_JTAG_CMD > $JLINK_LOG_FILE 2>&1 &\""
+fi
+
 cat > $GDB_CMD_FILE <<EOF
 set pagination off
-shell sh -c "trap '' 2; $JLINK_GDB_SERVER -device cortex-m33 -speed 4000 -if SWD -port $PORT -singlerun $EXTRA_JTAG_CMD > $JLINK_LOG_FILE 2>&1 &"
-target remote localhost:$PORT
+$JLINK_SERVER_CMD
+$JLINK_TARGET_CMD
 mon reset
 mon halt
 restore $FLASH_LOADER.bin binary 0x20000000
