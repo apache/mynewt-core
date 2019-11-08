@@ -180,6 +180,11 @@ syscfg.defs:
             Interval for sanity check on main task. Setting a 0 will disable
             sanity check on main task. Value is in milliseconds.
         value: 0
+    OS_TASK_RUN_TIME_CPUTIME:
+        description: >
+            If set, run time is measured in cpu time ticks rather than OS time
+            ticks.
+        value: 0
 
 syscfg.vals.OS_DEBUG_MODE:
     OS_CRASH_STACKTRACE: 1
