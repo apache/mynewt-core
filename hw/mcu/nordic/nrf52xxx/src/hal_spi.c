@@ -1103,7 +1103,7 @@ hal_spi_txrx_noblock(int spi_num, void *txbuf, void *rxbuf, int len)
         goto err;
     }
 
-#if MYNEWT_VAL(MCU_NRF52832)
+#if MYNEWT_VAL_CHOICE(MCU_TARGET, nRF52832)
     /* There is a known issue in nRF52832 with sending 1 byte in SPIM mode that
      * it clocks out additional byte. For this reason, let us use SPI mode
      * for such a write
