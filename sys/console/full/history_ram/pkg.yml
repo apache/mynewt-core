@@ -17,8 +17,8 @@
 # under the License.
 #
 
-pkg.name: sys/console/full
-pkg.description: Text-based IO interface.
+pkg.name: sys/console/full/history_ram
+pkg.description: RAM only console history.
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
@@ -26,13 +26,7 @@ pkg.keywords:
 pkg.deps:
     - "@apache-mynewt-core/hw/hal"
     - "@apache-mynewt-core/kernel/os"
-pkg.deps.CONSOLE_UART:
-    - "@apache-mynewt-core/hw/drivers/uart"
-pkg.deps.CONSOLE_RTT:
-    - "@apache-mynewt-core/hw/drivers/rtt"
-pkg.deps.'CONSOLE_HISTORY == "ram"':
-    - "@apache-mynewt-core/sys/console/full/history_ram"
-pkg.apis: console
+    - "@apache-mynewt-core/sys/console/full"
 
 pkg.init:
-    console_pkg_init: 'MYNEWT_VAL(CONSOLE_SYSINIT_STAGE)'
+    console_history_pkg_init: 'MYNEWT_VAL(SHELL_SYSINIT_STAGE)'

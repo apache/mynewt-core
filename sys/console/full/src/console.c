@@ -30,6 +30,7 @@
 #include "console/console.h"
 #include "console/ticks.h"
 #include "console_priv.h"
+#include "console/history.h"
 
 /* Control characters */
 #define ESC                0x1b
@@ -689,198 +690,34 @@ console_clear_line(void)
     cursor_clear_line();
 }
 
-#if MYNEWT_VAL(CONSOLE_HISTORY_SIZE) > 0
+#if !MYNEWT_VAL_CHOICE(CONSOLE_HISTORY, none)
 
-#ifndef bssnz_t
-/* Just in case bsp.h does not define it, in this case console history will
- * not be preserved across software resets
- */
-#define bssnz_t
-#endif
-
-bssnz_t static char console_hist_lines[ MYNEWT_VAL(CONSOLE_HISTORY_SIZE) ][ MYNEWT_VAL(CONSOLE_MAX_INPUT_LEN) ];
-
-bssnz_t static struct console_hist {
-    uint32_t magic;
-    uint8_t head;
-    uint8_t tail;
-    uint8_t size;
-    uint8_t curr;
-    char *lines[ MYNEWT_VAL(CONSOLE_HISTORY_SIZE) + 1 ];
-} console_hist;
+/* Current history line, 0 - fresh line, 1 - latest line in history */
+static int history_line;
 
 static void
-console_hist_init(void)
+console_history_move(char *line, int direction)
 {
-    struct console_hist *sh = &console_hist;
-    int i;
+    int new_line;
 
-    if (sh->magic != 0xBABEFACE) {
-        memset(console_hist_lines, 0, sizeof(console_hist_lines));
-        memset(&console_hist, 0, sizeof(console_hist));
-
-        sh->size = MYNEWT_VAL(CONSOLE_HISTORY_SIZE) + 1;
-
-        for (i = 0; i < sh->size - 1; i++) {
-            sh->lines[i] = console_hist_lines[i];
-        }
-        sh->magic = 0xBABEFACE;
-    }
-}
-
-static size_t
-trim_whitespace(const char *str, size_t len, char *out)
-{
-    const char *end;
-    size_t out_size;
-
-    if (len == 0) {
-        return 0;
-    }
-
-    /* Trim leading space */
-    while (isspace((unsigned char)*str)) {
-        str++;
-    }
-
-    if (*str == 0) { /* All spaces? */
-        *out = 0;
-        return 0;
-    }
-
-    /* Trim trailing space */
-    end = str + strlen(str) - 1;
-    while (end > str && isspace((unsigned char)*end)) {
-        end--;
-    }
-
-    end++;
-
-    /* Set output size to minimum of trimmed string length and buffer size minus 1 */
-    out_size = min(end - str, len - 1);
-
-    /* Copy trimmed string and add null terminator */
-    memcpy(out, str, out_size);
-    out[out_size] = 0;
-
-    return out_size;
-}
-
-static uint8_t
-ring_buf_next(uint8_t i, uint8_t size)
-{
-    return (uint8_t) ((i + 1) % size);
-}
-
-static uint8_t
-ring_buf_prev(uint8_t i, uint8_t size)
-{
-    return i == 0 ? i = size - 1 : --i;
-}
-
-static bool
-console_hist_is_full(void)
-{
-    struct console_hist *sh = &console_hist;
-
-    return ring_buf_next(sh->head, sh->size) == sh->tail;
-}
-
-static bool
-console_hist_move_to_head(char *line)
-{
-    struct console_hist *sh = &console_hist;
-    char *match = NULL;
-    uint8_t prev, curr;
-
-    curr = sh->tail;
-    while (curr != sh->head) {
-        if (strcmp(sh->lines[curr], line) == 0) {
-            match = sh->lines[curr];
-            break;
-        }
-        curr = ring_buf_next(curr, sh->size);
-    }
-
-    if (!match) {
-        return false;
-    }
-
-    prev = curr;
-    curr = ring_buf_next(curr, sh->size);
-    while (curr != sh->head) {
-        sh->lines[prev] = sh->lines[curr];
-        prev = curr;
-        curr = ring_buf_next(curr, sh->size);
-    }
-
-    sh->lines[prev] = match;
-
-    return true;
-}
-
-static void
-console_hist_add(char *line)
-{
-    struct console_hist *sh = &console_hist;
-    char buf[MYNEWT_VAL(CONSOLE_MAX_INPUT_LEN)];
-    size_t len;
-
-    /* Reset current pointer */
-    sh->curr = sh->head;
-
-    len = trim_whitespace(line, sizeof(buf), buf);
-    if (!len) {
+    /* User requested line that is not typed yet */
+    if (history_line + direction < 0) {
         return;
     }
 
-    if (console_hist_move_to_head(buf)) {
+    new_line = console_history_get(history_line + direction, line,
+                                   MYNEWT_VAL(CONSOLE_MAX_INPUT_LEN));
+
+    /* No such line in history */
+    if (new_line < 0) {
         return;
     }
 
-    if (console_hist_is_full()) {
-        /*
-         * We have N buffers, but there are N+1 items in queue so one element is
-         * always empty. If queue is full we need to move buffer from oldest
-         * entry to current head and trim queue tail.
-         */
-        assert(sh->lines[sh->head] == NULL);
-        sh->lines[sh->head] = sh->lines[sh->tail];
-        sh->lines[sh->tail] = NULL;
-        sh->tail = ring_buf_next(sh->tail, sh->size);
-    }
-
-    strcpy(sh->lines[sh->head], buf);
-    sh->head = ring_buf_next(sh->head, sh->size);
-
-    /* Reset current pointer */
-    sh->curr = sh->head;
-}
-
-static void
-console_hist_move(char *line, uint8_t direction)
-{
-    struct console_hist *sh = &console_hist;
-    char *str = NULL;
-    uint8_t limit = direction ==  ANSI_UP ? sh->tail : sh->head;
-
-    /* no more history to return in this direction */
-    if (sh->curr == limit) {
-        return;
-    }
-
-    if (direction == ANSI_UP) {
-        sh->curr = ring_buf_prev(sh->curr, sh->size);
-    } else {
-        sh->curr = ring_buf_next(sh->curr, sh->size);
-    }
-
+    history_line = new_line;
     console_clear_line();
-    str = sh->lines[sh->curr];
-    while (str && *str != '\0') {
-        insert_char(&line[cur], *str);
-        ++str;
-    }
+    trailing_chars = 0;
+    cur = strlen(line);
+    console_write_nolock(line, cur);
 }
 #endif
 
@@ -952,16 +789,10 @@ handle_ansi(uint8_t byte, char *line)
 
 ansi_cmd:
     switch (byte) {
-#if MYNEWT_VAL(CONSOLE_HISTORY_SIZE) > 0
+#if !MYNEWT_VAL_CHOICE(CONSOLE_HISTORY, none)
     case ANSI_UP:
     case ANSI_DOWN:
-#if MYNEWT_VAL(CONSOLE_UART_RX_BUF_SIZE) == 0
-        console_blocking_mode();
-#endif
-        console_hist_move(line, byte);
-#if MYNEWT_VAL(CONSOLE_UART_RX_BUF_SIZE) == 0
-        console_non_blocking_mode();
-#endif
+        console_history_move(line, byte == ANSI_UP ? 1 : -1);
         break;
 #endif
     case ANSI_BACKWARD:
@@ -1233,8 +1064,9 @@ console_handle_char(uint8_t byte)
                 console_filter_out('\r');
                 console_filter_out('\n');
             }
-#if MYNEWT_VAL(CONSOLE_HISTORY_SIZE) > 0
-            console_hist_add(input->line);
+#if !MYNEWT_VAL_CHOICE(CONSOLE_HISTORY, none)
+            console_history_add(input->line);
+            history_line = 0;
 #endif
             console_handle_line();
             break;
@@ -1356,10 +1188,6 @@ console_pkg_init(void)
 
     os_eventq_init(&avail_queue);
     os_mutex_init(&console_write_lock);
-
-#if MYNEWT_VAL(CONSOLE_HISTORY_SIZE) > 0
-    console_hist_init();
-#endif
 
 #if MYNEWT_VAL(CONSOLE_UART)
     rc = uart_console_init();
