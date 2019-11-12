@@ -56,6 +56,7 @@ syscfg.defs:
         choices:
             - none  # no history support
             - ram   # history kept in ram for current session only
+            - log   # history kept in log
     CONSOLE_MAX_PROMPT_LEN:
         description: 'Maximum number of characters for prompt'
         value: 16
