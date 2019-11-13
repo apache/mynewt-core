@@ -41,11 +41,13 @@ syscfg.defs:
     CONSOLE_MAX_INPUT_LEN:
         description: 'Maximum input line length'
         value: 256
-    CONSOLE_HISTORY_SIZE:
+    CONSOLE_HISTORY:
         description: >
-            Number of lines to be stored in console history.
-            Set to "0" to disable console history.
-        value: 0
+            Select how console should handle command history.
+        value: none
+        choices:
+            - none  # no history support
+            - ram   # history kept in ram for current session only
     CONSOLE_MAX_PROMPT_LEN:
         description: 'Maximum number of characters for prompt'
         value: 16
@@ -124,3 +126,12 @@ syscfg.defs:
         description: >
             Sysinit stage for console functionality.
         value: 20
+
+    CONSOLE_HISTORY_SIZE:
+        description: >
+            This is no longer used.
+            Equivalent settings:
+                CONSOLE_HISTORY: ram
+                CONSOLE_HISTORY_RAM_HISTORY_SIZE: <n>   <- previous value of CONSOLE_HISTORY_SIZE
+        value: 0
+        defunct: 1
