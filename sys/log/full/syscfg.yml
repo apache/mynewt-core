@@ -135,6 +135,12 @@ syscfg.defs:
         value: 0
         restrictions: LOG_STORAGE_WATERMARK
 
+    LOG_PERSIST_INDEX:
+        description: >
+            Log index will be periodically saved to config area. This allows will
+            allow to have unique log indices even after factory reset.
+        value: 0
+
     LOG_SYSINIT_STAGE_MAIN:
         description: >
             Primary sysinit stage for logging functionality.

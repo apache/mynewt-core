@@ -37,6 +37,10 @@
 #include "shell/shell.h"
 #endif
 
+#if MYNEWT_VAL(LOG_PERSIST_INDEX)
+#include <config/config.h>
+#endif
+
 struct log_module_entry {
     int16_t id;
     const char *name;
@@ -131,6 +135,97 @@ log_conf_set(int argc, char **argv, char *val)
 #endif
 #endif
 
+#if MYNEWT_VAL(LOG_PERSIST_INDEX)
+
+static int
+persistent_index_conf_set(int argc, char **argv, char *val)
+{
+#if MYNEWT_VAL(LOG_GLOBAL_IDX)
+    g_log_info.li_persistent_index = atol(val);
+#else
+    struct log *log;
+
+    if (argc < 1) {
+        return -1;
+    }
+
+    /* Find proper log */
+    log = log_find(argv[0]);
+
+    if (!log) {
+        return -1;
+    }
+
+    log->l_persistent_index = atol(val);
+#endif
+    return 0;
+}
+
+#if MYNEWT_VAL(CONFIG_CLI)
+static int
+persistent_index_conf_export(void (*export_func)(char *name, char *val),
+                             enum conf_export_tgt tgt)
+{
+    char val_str[12];
+
+#if MYNEWT_VAL(LOG_GLOBAL_IDX)
+    export_func("persistent_index",
+                conf_str_from_value(CONF_INT32,
+                                    &g_log_info.li_persistent_index,
+                                    val_str, sizeof(val_str)));
+#else
+    struct log *log;
+    char name[16 + 1 + 20 + 1];
+
+    /* Find proper log */
+    STAILQ_FOREACH(log, &g_log_list, l_next) {
+        strcpy(name,  "persistent_index/");
+        strcat(name,  log->l_name);
+        export_func(name,
+                    conf_str_from_value(CONF_INT32,
+                                        &log->l_persistent_index,
+                                        val_str, sizeof(val_str)));
+    }
+
+#endif
+    return 0;
+}
+#else
+#define persistent_index_conf_set NULL
+#endif
+
+static struct conf_handler persistent_index_conf = {
+    .ch_name = "persistent_index",
+    .ch_get = NULL,
+    .ch_set = persistent_index_conf_set,
+    .ch_commit = NULL,
+    .ch_export = persistent_index_conf_export,
+};
+
+static void
+log_store_persistent_index_cb(struct os_event *ev)
+{
+    char str_val[12];
+    uint32_t *val;
+
+#if MYNEWT_VAL(LOG_GLOBAL_IDX)
+    const char *name = "persistent_index";
+    g_log_info.li_persistent_index = g_log_info.li_next_index + 1000;
+    val = &g_log_info.li_persistent_index;
+
+#else
+    struct log *log = (struct log *)ev->ev_arg;
+    char name[16 + 1 + 20 + 1] = "persistent_index/";
+
+    strcat(name, log->l_name);
+    log->l_persistent_index = log->l_idx + 1000;
+    val = &log->l_persistent_index;
+#endif
+    conf_save_one(name, conf_str_from_value(CONF_INT32,
+                                            val, str_val, sizeof(str_val)));
+}
+#endif
+
 void
 log_init(void)
 {
@@ -147,6 +242,9 @@ log_init(void)
     g_log_info.li_version = MYNEWT_VAL(LOG_VERSION);
 #if MYNEWT_VAL(LOG_GLOBAL_IDX)
     g_log_info.li_next_index = 0;
+#if MYNEWT_VAL(LOG_PERSIST_INDEX)
+    g_log_info.li_persist_store_event.ev_cb = log_store_persistent_index_cb;
+#endif
 #endif
 #if MYNEWT_VAL(LOG_CLI)
     shell_cmd_register(&g_shell_log_cmd);
@@ -167,6 +265,10 @@ log_init(void)
     rc = conf_register(&log_conf);
     SYSINIT_PANIC_ASSERT(rc == 0);
 #endif
+#endif
+#if MYNEWT_VAL(LOG_PERSIST_INDEX)
+    rc = conf_register(&persistent_index_conf);
+    SYSINIT_PANIC_ASSERT(rc == 0);
 #endif
 }
 
@@ -395,6 +497,10 @@ log_register(char *name, struct log *log, const struct log_handler *lh,
     log->l_max_entry_len = 0;
 #if !MYNEWT_VAL(LOG_GLOBAL_IDX)
     log->l_idx = 0;
+#if MYNEWT_VAL(LOG_PERSIST_INDEX)
+    log->l_persist_store_event.ev_arg = log;
+    log->l_persist_store_event.ev_cb = log_store_persistent_index_cb;
+#endif
 #endif
 
     if (!log_registered(log)) {
@@ -503,11 +609,50 @@ log_chk_max_entry_len(struct log *log, uint16_t len)
 }
 
 static int
+log_next_index(struct log *log)
+{
+    int sr;
+    uint32_t idx;
+
+    OS_ENTER_CRITICAL(sr);
+#if MYNEWT_VAL(LOG_GLOBAL_IDX)
+    idx = g_log_info.li_next_index++;
+#if MYNEWT_VAL(LOG_PERSIST_INDEX)
+    /* Index was not set yet ever, see if persistent value exists, one that
+     * should survive factory reset */
+    if (idx == 1 && g_log_info.li_persistent_index > 0) {
+        /* Device underwent factory reset, log index should not start over */
+        idx = g_log_info.li_persistent_index;
+        g_log_info.li_next_index = idx;
+    }
+    if (idx + 500 > g_log_info.li_persistent_index) {
+        os_eventq_put(os_eventq_dflt_get(), &g_log_info.li_persist_store_event);
+    }
+#endif
+#else
+    idx = log->l_idx++;
+#if MYNEWT_VAL(LOG_PERSIST_INDEX)
+    /* Index was not set yet ever, see if persistent value exists, one that
+     * should survive factory reset */
+    if (idx == 1 && log->l_persistent_index > 0) {
+        /* Device underwent factory reset, log index should not start over */
+        idx = log->l_persistent_index;
+        log->l_idx = idx;
+    }
+    if (idx + 500 > log->l_persistent_index) {
+        os_eventq_put(os_eventq_dflt_get(), &log->l_persist_store_event);
+    }
+#endif
+#endif
+    OS_EXIT_CRITICAL(sr);
+    return idx;
+}
+
+static int
 log_append_prepare(struct log *log, uint8_t module, uint8_t level,
                    uint8_t etype, struct log_entry_hdr *ue)
 {
     int rc;
-    int sr;
     struct os_timeval tv;
     uint32_t idx;
 
@@ -545,13 +690,7 @@ log_append_prepare(struct log *log, uint8_t module, uint8_t level,
         goto err;
     }
 
-    OS_ENTER_CRITICAL(sr);
-#if MYNEWT_VAL(LOG_GLOBAL_IDX)
-    idx = g_log_info.li_next_index++;
-#else
-    idx = log->l_idx++;
-#endif
-    OS_EXIT_CRITICAL(sr);
+    idx = log_next_index(log);
 
     /* Try to get UTC Time */
     rc = os_gettimeofday(&tv, NULL);

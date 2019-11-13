@@ -219,6 +219,10 @@ struct log {
     uint16_t l_max_entry_len;   /* Log body length; if 0 disables check. */
 #if !MYNEWT_VAL(LOG_GLOBAL_IDX)
     uint32_t l_idx;
+#if MYNEWT_VAL(LOG_PERSIST_INDEX)
+    uint32_t l_persistent_index;
+    struct os_event l_persist_store_event;
+#endif
 #endif
 #if MYNEWT_VAL(LOG_STATS)
     STATS_SECT_DECL(logs) l_stats;

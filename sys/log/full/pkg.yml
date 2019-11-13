@@ -55,6 +55,9 @@ pkg.deps.LOG_MGMT:
 pkg.deps.LOG_FLAGS_IMAGE_HASH:
     - "@apache-mynewt-core/mgmt/imgmgr"
 
+pkg.deps.LOG_PERSIST_INDEX:
+    - sys/config
+
 pkg.deps.LOG_STORAGE_WATERMARK:
     - sys/config
 

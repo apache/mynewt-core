@@ -119,6 +119,10 @@ struct log;
 struct log_info {
 #if MYNEWT_VAL(LOG_GLOBAL_IDX)
     uint32_t li_next_index;
+#if MYNEWT_VAL(LOG_PERSIST_INDEX)
+    uint32_t li_persistent_index;
+    struct os_event li_persist_store_event;
+#endif
 #endif
     uint8_t li_version;
 };
