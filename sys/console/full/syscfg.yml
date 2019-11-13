@@ -49,6 +49,11 @@ syscfg.defs:
             - none  # no history support
             - ram   # history kept in ram for current session only
             - log   # history kept in log
+    CONSOLE_HISTORY_AUTO_SEARCH:
+        description: >
+            When set to 1 history is automatically searched for lines starting with already typed
+            text.
+        value: 0
     CONSOLE_MAX_PROMPT_LEN:
         description: 'Maximum number of characters for prompt'
         value: 16

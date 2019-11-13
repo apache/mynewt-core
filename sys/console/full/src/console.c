@@ -621,30 +621,83 @@ cursor_backward(unsigned int count)
     }
 }
 
+static bool trailing_selection;
+
+/*
+ * The following two weak functions are here in case linker does not allow
+ * to eliminate dead code (console_history_search()).
+ */
+history_handle_t __attribute__((weak))
+console_history_find(history_handle_t start, history_find_type_t search_type,
+                     void *arg)
+{
+    return (history_handle_t )0;
+}
+
+int __attribute__((weak))
+console_history_get(history_handle_t handle, size_t offset, char *buf,
+                    size_t buf_size)
+{
+    return 0;
+}
+
+static void
+console_history_search(char *line, history_find_type_t direction)
+{
+    line[cur] = '\0';
+    history_line = console_history_find(history_line, direction, line);
+    /* No more lines backward, do nothing */
+    cursor_clear_line();
+    if (!history_line) {
+        trailing_chars = 0;
+    } else {
+        trailing_chars = console_history_get(history_line, cur,line + cur,
+                                             MYNEWT_VAL(CONSOLE_MAX_INPUT_LEN) - cur);
+        console_write_str(CSI "7m");
+        console_write_nolock(line + cur, trailing_chars);
+        console_write_str(CSI "0m");
+        cursor_backward(trailing_chars);
+        trailing_selection = true;
+    }
+}
+
 static void
 insert_char(char *pos, char c)
 {
     char tmp;
-    int end = trailing_chars;
+    int end;
 
-    if (cur + end >= MYNEWT_VAL(CONSOLE_MAX_INPUT_LEN) - 1) {
+    if ((!MYNEWT_VAL(CONSOLE_HISTORY_AUTO_SEARCH) || !trailing_selection) &&
+        cur + trailing_chars >= MYNEWT_VAL(CONSOLE_MAX_INPUT_LEN) - 1) {
         return;
     }
 
     if (echo) {
+        if (!MYNEWT_VAL_CHOICE(CONSOLE_HISTORY, none) &&
+            MYNEWT_VAL(CONSOLE_HISTORY_AUTO_SEARCH) && trailing_selection) {
+            cursor_clear_line();
+            trailing_chars = 0;
+            trailing_selection = false;
+        }
         /* Echo back to console */
         console_out_nolock(c);
     }
 
     ++cur;
 
-    if (end == 0) {
+    if (trailing_chars == 0) {
         *pos = c;
-        return;
+        if (!MYNEWT_VAL_CHOICE(CONSOLE_HISTORY, none) &&
+            MYNEWT_VAL(CONSOLE_HISTORY_AUTO_SEARCH) && cur > 1) {
+            history_line = 0;
+            console_history_search(pos - cur + 1, HFT_MATCH_PREV);
+            return;
+        }
     }
 
     tmp = *pos;
     *(pos++) = c;
+    end = trailing_chars;
 
     while (end-- > 0) {
         if (echo) {
@@ -661,11 +714,37 @@ insert_char(char *pos, char c)
     }
 }
 
+static void
+clear_selection(const char *line)
+{
+    if (MYNEWT_VAL(CONSOLE_HISTORY_AUTO_SEARCH) && trailing_selection) {
+        trailing_selection = false;
+        console_write_str(CSI "0m");
+        console_write_nolock(line + cur, trailing_chars);
+        cursor_backward(trailing_chars);
+    }
+}
+
+static void
+delete_selection(char *pos)
+{
+    if (MYNEWT_VAL(CONSOLE_HISTORY_AUTO_SEARCH) && trailing_selection) {
+        *pos = 0;
+        trailing_selection = false;
+        trailing_chars = 0;
+        cursor_clear_line();
+    }
+}
+
 /* Delete character at cursor position */
 static void
 del_char(char *pos)
 {
-    int left = trailing_chars;
+    int left;
+
+    delete_selection(pos);
+
+    left = trailing_chars;
 
     while (left-- > 1) {
         *pos = *(pos + 1);
@@ -721,13 +800,20 @@ console_history_move(char *line, history_find_type_t direction)
 static void
 console_handle_move(char *line, int direction)
 {
-    console_history_move(line, direction > 0 ? HFT_PREV : HFT_NEXT);
+    if (MYNEWT_VAL(CONSOLE_HISTORY_AUTO_SEARCH) && trailing_selection) {
+        console_history_search(line, direction > 0 ? HFT_MATCH_PREV :
+                                     HFT_MATCH_NEXT);
+    } else {
+        console_history_move(line, direction > 0 ? HFT_PREV : HFT_NEXT);
+    }
 }
 #endif
 
 static void
-handle_home(void)
+handle_home(char *line)
 {
+    clear_selection(line);
+
     if (cur) {
         cursor_backward(cur);
         trailing_chars += cur;
@@ -744,8 +830,10 @@ handle_delete(char *line)
 }
 
 static void
-handle_end(void)
+handle_end(char *line)
 {
+    clear_selection(line);
+
     if (trailing_chars) {
         cursor_forward(trailing_chars);
         cur += trailing_chars;
@@ -804,6 +892,7 @@ ansi_cmd:
             break;
         }
 
+        clear_selection(line);
         trailing_chars += ansi_val;
         cur -= ansi_val;
         cursor_backward(ansi_val);
@@ -813,26 +902,27 @@ ansi_cmd:
             break;
         }
 
+        clear_selection(line);
         trailing_chars -= ansi_val;
         cur += ansi_val;
         cursor_forward(ansi_val);
         break;
     case ANSI_HOME:
-        handle_home();
+        handle_home(line);
         break;
     case ANSI_END:
-        handle_end();
+        handle_end(line);
         break;
     case '~':
         switch (ansi_val) {
         case 1:
-            handle_home();
+            handle_home(line);
             break;
         case 3:
             handle_delete(line);
             break;
         case 4:
-            handle_end();
+            handle_end(line);
             break;
         }
         break;
@@ -959,6 +1049,16 @@ console_append_char(char *line, uint8_t byte)
     return 1;
 }
 
+static void
+handle_backspace(char *line)
+{
+    if (cur > 0) {
+        cursor_backward(1);
+        cur--;
+        trailing_chars++;
+        del_char(&line[cur]);
+    }
+}
 
 int
 console_handle_char(uint8_t byte)
@@ -1020,12 +1120,7 @@ console_handle_char(uint8_t byte)
         switch (byte) {
         case DEL:
         case BS:
-            if (cur > 0) {
-                cursor_backward(1);
-                cur--;
-                trailing_chars++;
-                del_char(&input->line[cur]);
-            }
+            handle_backspace(input->line);
             break;
         case ESC:
             esc_state |= ESC_ESC;
@@ -1071,11 +1166,18 @@ console_handle_char(uint8_t byte)
             if (!MYNEWT_VAL_CHOICE(CONSOLE_HISTORY, none)) {
                 console_history_add(input->line);
                 history_line = 0;
+                if (MYNEWT_VAL(CONSOLE_HISTORY_AUTO_SEARCH)) {
+                    trailing_selection = 0;
+                }
             }
             console_handle_line();
             break;
         case '\t':
-            if (completion && !trailing_chars) {
+            if (completion && (!trailing_chars ||
+                (MYNEWT_VAL(CONSOLE_HISTORY_AUTO_SEARCH) && trailing_selection))) {
+                if (MYNEWT_VAL(CONSOLE_HISTORY_AUTO_SEARCH) && trailing_selection) {
+                    delete_selection(input->line + cur);
+                }
 #if MYNEWT_VAL(CONSOLE_UART_RX_BUF_SIZE) == 0
                 console_blocking_mode();
 #endif
