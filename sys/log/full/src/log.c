@@ -297,12 +297,11 @@ log_find(const char *name)
     struct log *log;
 
     log = NULL;
-    do {
-        log = log_list_get_next(log);
+    while ((log = log_list_get_next(log)) != NULL) {
         if (strcmp(log->l_name, name) == 0) {
             break;
         }
-    } while (log != NULL);
+    }
 
     return log;
 }
