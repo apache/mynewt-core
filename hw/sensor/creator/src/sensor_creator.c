@@ -20,6 +20,7 @@
 #include <assert.h>
 #include <string.h>
 #include "os/mynewt.h"
+#include "bsp/bsp.h"
 
 #if MYNEWT_VAL(DRV2605_OFB)
 #include "hal/hal_gpio.h"
