@@ -726,7 +726,8 @@ icp101xx_get_data(struct icp101xx *icp101xx, struct icp101xx_cfg *cfg,
                   float * temperature, float * pressure)
 {
     int rc;
-    int32_t raw_press, raw_temp;
+    int32_t raw_press = 0;
+    int32_t raw_temp = 0;
     float pressure_pa;
     float temperature_degc;
 
