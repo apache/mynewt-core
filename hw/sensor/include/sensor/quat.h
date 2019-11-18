@@ -39,7 +39,7 @@ struct sensor_quat_data {
     uint8_t sqd_y_is_valid:1;
     uint8_t sqd_z_is_valid:1;
     uint8_t sqd_w_is_valid:1;
-} __attribute__((packed));
+};
 
 #ifdef __cplusplus
 }

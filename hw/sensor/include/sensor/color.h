@@ -60,7 +60,7 @@ struct sensor_color_data {
     uint16_t scd_cratio_is_valid:1;
     uint16_t scd_maxlux_is_valid:1;
     uint16_t scd_ir_is_valid:1;
-} __attribute__((packed));
+};
 
 #ifdef __cplusplus
 }

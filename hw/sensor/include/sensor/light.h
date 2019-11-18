@@ -38,7 +38,7 @@ struct sensor_light_data {
     uint8_t sld_full_is_valid:1;
     uint8_t sld_ir_is_valid:1;
     uint8_t sld_lux_is_valid:1;
-} __attribute__((packed));
+};
 
 #ifdef __cplusplus
 }

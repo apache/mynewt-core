@@ -35,7 +35,7 @@ struct sensor_temp_data {
 
     /* Validity */
     uint8_t std_temp_is_valid:1;
-} __attribute__((packed));
+};
 
 #ifdef __cplusplus
 }

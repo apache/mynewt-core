@@ -38,7 +38,7 @@ struct sensor_gyro_data {
     uint8_t sgd_x_is_valid:1;
     uint8_t sgd_y_is_valid:1;
     uint8_t sgd_z_is_valid:1;
-} __attribute__((packed));
+};
 
 #ifdef __cplusplus
 }
