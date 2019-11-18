@@ -28,6 +28,7 @@
 #include "bme280/bme280.h"
 #include "bme280_priv.h"
 #include "parse/parse.h"
+#include "bsp/bsp.h"
 
 static int bme280_shell_cmd(int argc, char **argv);
 
@@ -36,11 +37,15 @@ static struct shell_cmd bme280_shell_cmd_struct = {
     .sc_cmd_func = bme280_shell_cmd
 };
 
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+static struct sensor_itf g_sensor_itf;
+#else
 static struct sensor_itf g_sensor_itf = {
     .si_type = MYNEWT_VAL(BME280_SHELL_ITF_TYPE),
     .si_num = MYNEWT_VAL(BME280_SHELL_ITF_NUM),
     .si_cs_pin = MYNEWT_VAL(BME280_SHELL_CSPIN)
 };
+#endif
 
 static int
 bme280_shell_err_too_many_args(char *cmd_name)
@@ -396,11 +401,56 @@ bme280_shell_cmd(int argc, char **argv)
     return bme280_shell_err_unknown_arg(argv[1]);
 }
 
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+
+struct bme280 bme280_raw;
+#if MYNEWT_VAL(BME280_SHELL_ITF_TYPE) == SENSOR_ITF_I2C
+
+static const struct bus_i2c_node_cfg bme280_raw_cfg = {
+    .node_cfg = {
+        .bus_name = MYNEWT_VAL(BME280_SHELL_ITF_BUS),
+    },
+    .addr = MYNEWT_VAL(BME280_SHELL_ITF_ADDR),
+    .freq = 400,
+};
+#elif MYNEWT_VAL(BME280_SHELL_ITF_TYPE) == SENSOR_ITF_SPI
+
+static const struct bus_spi_node_cfg bme280_raw_cfg = {
+    .node_cfg = {
+        .bus_name = MYNEWT_VAL(BME280_SHELL_ITF_BUS),
+    },
+    .pin_cs = MYNEWT_VAL(BME280_SHELL_CSPIN),
+    .data_order = BUS_SPI_DATA_ORDER_MSB,
+    .mode = BUS_SPI_MODE_0,
+    .freq = 4000,
+};
+#endif
+
+#endif
+
 int
 bme280_shell_init(void)
 {
     int rc;
 
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    struct os_dev *dev = NULL;
+
+    g_sensor_itf.si_dev = (struct os_dev *)&bme280_raw;
+#if MYNEWT_VAL(BME280_SHELL_ITF_TYPE) == SENSOR_ITF_I2C
+    rc = bus_i2c_node_create("bme280_raw", &bme280_raw.i2c_node,
+                             &bme280_raw_cfg, &g_sensor_itf);
+#elif MYNEWT_VAL(BME280_SHELL_ITF_TYPE) == SENSOR_ITF_SPI
+    rc = bus_spi_node_create("bme280_raw", &bme280_raw.spi_node,
+                             &bme280_raw_cfg, &g_sensor_itf);
+#endif
+    if (rc == 0) {
+        dev = os_dev_open("bme280_raw", 0, NULL);
+    }
+    if (rc != 0 || dev == NULL) {
+        console_printf("Failed to create bme280_raw device\n");
+    }
+#endif
     rc = shell_cmd_register(&bme280_shell_cmd_struct);
     SYSINIT_PANIC_ASSERT(rc == 0);
 
