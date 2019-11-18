@@ -22,8 +22,12 @@
 #include <assert.h>
 
 #include "os/mynewt.h"
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+#include "bus/drivers/i2c_common.h"
+#else /* BUS_DRIVER_PRESENT */
 #include "hal/hal_i2c.h"
 #include "i2cn/i2cn.h"
+#endif /* BUS_DRIVER_PRESENT */
 #include "sensor/sensor.h"
 #include "sensor/accel.h"
 #include "sensor/mag.h"
@@ -94,6 +98,9 @@ lsm303dlhc_write8(struct sensor_itf *itf, uint8_t addr, uint8_t reg,
 {
     int rc;
     uint8_t payload[2] = { reg, value & 0xFF };
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    rc = bus_node_simple_write(itf->si_dev, payload, 2);
+#else
 
     struct hal_i2c_master_data data_struct = {
         .address = addr,
@@ -116,6 +123,7 @@ lsm303dlhc_write8(struct sensor_itf *itf, uint8_t addr, uint8_t reg,
     }
 
     sensor_itf_unlock(itf);
+#endif
 
     return rc;
 }
@@ -135,6 +143,10 @@ lsm303dlhc_read8(struct sensor_itf *itf, uint8_t addr, uint8_t reg,
                  uint8_t *value)
 {
     int rc;
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    rc = bus_node_write_read_transact(itf->si_dev, &reg, 1, value, 1,
+                                      OS_TICKS_PER_SEC / 10, BUS_F_NONE);
+#else
     uint8_t payload;
 
     struct hal_i2c_master_data data_struct = {
@@ -171,6 +183,7 @@ lsm303dlhc_read8(struct sensor_itf *itf, uint8_t addr, uint8_t reg,
 
 err:
     sensor_itf_unlock(itf);
+#endif
 
     return rc;
 }
@@ -190,12 +203,15 @@ lsm303dlhc_read48(struct sensor_itf *itf, uint8_t addr, uint8_t reg,
                   uint8_t *buffer)
 {
     int rc;
-    uint8_t payload[7] = { reg, 0, 0, 0, 0, 0, 0 };
 
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    rc = bus_node_write_read_transact(itf->si_dev, &reg, 1, buffer, 6,
+                                      OS_TICKS_PER_SEC / 10, BUS_F_NONE);
+#else
     struct hal_i2c_master_data data_struct = {
         .address = addr,
         .len = 1,
-        .buffer = payload
+        .buffer = &reg
     };
 
     /* Clear the supplied buffer */
@@ -216,7 +232,8 @@ lsm303dlhc_read48(struct sensor_itf *itf, uint8_t addr, uint8_t reg,
     }
 
     /* Read six bytes back */
-    memset(payload, 0, sizeof(payload));
+    memset(buffer, 0, 6);
+    data_struct.buffer = buffer;
     data_struct.len = 6;
     rc = i2cn_master_read(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1,
                           MYNEWT_VAL(LSM303DLHC_I2C_RETRIES));
@@ -227,11 +244,9 @@ lsm303dlhc_read48(struct sensor_itf *itf, uint8_t addr, uint8_t reg,
         STATS_INC(g_lsm303dlhcstats, errors);
     }
 
-    /* Copy the I2C results into the supplied buffer */
-    memcpy(buffer, payload, 6);
-
 err:
     sensor_itf_unlock(itf);
+#endif
 
     return rc;
 }
