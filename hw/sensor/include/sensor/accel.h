@@ -39,7 +39,7 @@ struct sensor_accel_data {
     uint8_t sad_x_is_valid:1;
     uint8_t sad_y_is_valid:1;
     uint8_t sad_z_is_valid:1;
-} __attribute__((packed));
+};
 
 #ifdef __cplusplus
 }
