@@ -25,11 +25,17 @@ syscfg.defs:
         description: 'Shell interface number for the BME280'
         value: 0
     BME280_SHELL_ITF_TYPE:
-        description: 'Shell interface type for the BME280'
+        description: 'Shell interface type for the BME280 (0 - SPI, 1 - I2C)'
         value: 0
+    BME280_SHELL_ITF_BUS:
+        description: 'Shell interface bus for the BME280 when bus driver is used'
+        value: '"spi0"'
     BME280_SHELL_CSPIN:
         description: 'CS pin for BME280'
         value : 3
+    BME280_SHELL_ITF_ADDR:
+        description: 'Slave address for BME280 (0x76 or 0x77)'
+        value : 0x77
     BME280_CLI:
         description: 'Enable shell support for the BME280'
         value: 0
