@@ -42,7 +42,7 @@ struct log;
 #define LOG_LEVEL_WARN     (2)
 #define LOG_LEVEL_ERROR    (3)
 #define LOG_LEVEL_CRITICAL (4)
-/* Up to 7 custom log levels. */
+/* Up to 10 custom log levels. */
 #define LOG_LEVEL_MAX      (15)
 
 #define LOG_LEVEL_STR(level) \
