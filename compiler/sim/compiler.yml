@@ -25,7 +25,7 @@ compiler.path.archive: "ar"
 compiler.path.objdump: "objdump"
 compiler.path.objsize: "size"
 compiler.path.objcopy: "objcopy"
-compiler.flags.base: [-m32, -Wall, -Werror, -ggdb]
+compiler.flags.base: [-m32, -Wall, -Werror, -ggdb, -ffunction-sections, -fdata-sections]
 compiler.ld.resolve_circular_deps: true
 
 compiler.flags.default: [compiler.flags.base, -O1]
@@ -33,7 +33,7 @@ compiler.flags.debug: [compiler.flags.base, -O0]
 compiler.as.flags: [-x, assembler-with-cpp]
 compiler.ld.mapfile: false
 compiler.ld.binfile: false
-compiler.ld.flags: [-lm]
+compiler.ld.flags: -lm -Wl,--gc-sections
 
 # Linux.
 compiler.flags.base.LINUX: [-DMN_LINUX]
@@ -45,6 +45,7 @@ compiler.path.as.DARWIN.OVERWRITE: "gcc"
 compiler.path.objdump.DARWIN.OVERWRITE: "gobjdump"
 compiler.path.objcopy.DARWIN.OVERWRITE: "gobjcopy"
 compiler.flags.base.DARWIN: [-DMN_OSX, -Wno-missing-braces]
+compiler.ld.flags.DARWIN.OVERWRITE: -lm -Wl,-dead_strip
 compiler.ld.resolve_circular_deps.DARWIN.OVERWRITE: false
 
 compiler.path.cc.FREEBSD.OVERWRITE: "gcc8"
