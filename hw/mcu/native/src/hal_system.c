@@ -28,6 +28,10 @@
 #include "mcu/mcu_sim.h"
 #include "hal_native_priv.h"
 
+#if MYNEWT_VAL(BLE_SOCK_USE_LINUX_BLUE)
+void ble_hci_sock_set_device(int dev);
+#endif
+
 void
 hal_system_reset(void)
 {
@@ -54,7 +58,7 @@ usage(char *progname, int rc)
 {
     const char msg1[] = "Usage: ";
     const char msg2[] =
-      "\n [-f flash_file][-u uart_log_file][--uart0 <file>][--uart1 <file>]\n"
+      "\n [-f flash_file][-u uart_log_file][--uart0 <file>][--uart1 <file>] [--hci <index>]\n"
       "     -f flash_file tells where binary flash file is located. It gets\n"
       "        created if it doesn't already exist.\n"
       "     -i hw_id sets system hardware id.\n"
@@ -80,6 +84,7 @@ mcu_sim_parse_args(int argc, char **argv)
         { "uart0",      required_argument,      0, 0 },
         { "uart1",      required_argument,      0, 0 },
         { "hwid",       required_argument,      0, 'i' },
+        { "hci",        required_argument,      0, 0 },
         { NULL }
     };
     int opt_idx;
@@ -125,6 +130,11 @@ mcu_sim_parse_args(int argc, char **argv)
                 break;
             case 5:
                 hal_bsp_set_hw_id((uint8_t *)optarg, strlen(optarg));
+                break;
+            case 6:
+#if MYNEWT_VAL(BLE_SOCK_USE_LINUX_BLUE)
+                ble_hci_sock_set_device(atoi(optarg));
+#endif
                 break;
             default:
                 usage(progname, -1);
