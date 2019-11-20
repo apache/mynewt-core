@@ -170,7 +170,8 @@ static HAL_StatusTypeDef SPI_WaitOnFlagUntilTimeout(struct __SPI_HandleTypeDef *
 @endverbatim
   * @{
   */
-
+#if 0
+// BW : The weak direction is ignored by gcc, and so fails to pick up the proper implementation from stm32l1xx_hal_spi_ex.c
 /**
   * @brief  Initializes the SPI according to the specified parameters 
   *         in the SPI_InitTypeDef and create the associated handle.
@@ -185,7 +186,7 @@ __weak HAL_StatusTypeDef HAL_SPI_Init(SPI_HandleTypeDef *hspi)
 
   return HAL_ERROR;
 }
-
+#endif 
 /**
   * @brief  DeInitializes the SPI peripheral 
   * @param  hspi: pointer to a SPI_HandleTypeDef structure that contains
