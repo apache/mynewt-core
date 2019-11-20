@@ -28,4 +28,4 @@ pkg.deps:
     - "@apache-mynewt-core/hw/drivers/uart"
 
 pkg.init:
-    uart_bitbang_pkg_init: 'MYNEWT_VAL(UARTBB_SYSINIT_STAGE)'
+#    uart_bitbang_pkg_init: 'MYNEWT_VAL(UARTBB_SYSINIT_STAGE)'
