@@ -54,12 +54,12 @@ syscfg.defs:
             When set to 1 history is automatically searched for lines starting with already typed
             text.
         value: 0
-    CONSOLE_MAX_PROMPT_LEN:
+    CONSOLE_PROMPT_MAX_LEN:
         description: 'Maximum number of characters for prompt'
         value: 16
-    CONSOLE_STICKY_PROMPT:
+    CONSOLE_PROMPT_STICKY:
         description: >
-            If set to 1 prompt will be visble all the time at the
+            If set to 1 prompt will be visible all the time at the
             bottom of terminal if terminal was detected.
         value: 0
     CONSOLE_PROMPT_SOFT_CURSOR:
@@ -73,7 +73,7 @@ syscfg.defs:
             For black and white (minicom) use "7m" - inverse
             For color (putty) use "30;42m" - black/green
         value: '"7m"'
-    CONSOLE_HIDE_CURSOR_IN_LOG_AREA:
+    CONSOLE_PROMPT_HIDE_CURSOR_IN_LOG_AREA:
         description: >
             Hide cursor in log area.
         value: 1
