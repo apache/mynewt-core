@@ -22,6 +22,7 @@
 #include "mcu/stm32_hal.h"
 #include "stm32_common/mcu.h"
 #include <assert.h>
+#include "os/mynewt.h"
 
  /* XXX: Notes
  * 1) Right now, we are not disabling the NVIC interrupt source; we only

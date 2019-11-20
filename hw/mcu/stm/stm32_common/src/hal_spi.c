@@ -172,6 +172,7 @@ stm32_resolve_spi_irq(SPI_HandleTypeDef *hspi)
 #endif
     default:
         assert(0);
+        return 0;
     }
 }
 
@@ -403,6 +404,7 @@ stm32_resolve_spi_irq_handler(SPI_HandleTypeDef *hspi)
 #endif
     default:
         assert(0);
+        return 0;
     }
 }
 

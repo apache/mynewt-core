@@ -24,6 +24,7 @@
 #include "bsp/bsp.h"
 #include <assert.h>
 #include <stdlib.h>
+#include "os/mynewt.h"
 
 struct hal_uart {
     USART_TypeDef *u_regs;

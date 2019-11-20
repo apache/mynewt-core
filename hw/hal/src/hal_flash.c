@@ -245,7 +245,7 @@ hal_flash_erase(uint8_t id, uint32_t address, uint32_t num_bytes)
     uint32_t end;
     uint32_t end_area;
     int i;
-    int rc;
+    int rc=0;
 
     hf = hal_bsp_flash_dev(id);
     if (!hf) {
@@ -293,7 +293,7 @@ hal_flash_erase(uint8_t id, uint32_t address, uint32_t num_bytes)
             }
         }
     }
-    return 0;
+    return rc;
 }
 
 int

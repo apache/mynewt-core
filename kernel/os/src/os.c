@@ -210,6 +210,7 @@ os_init_idle_task(void)
     os_cputime_timer_init(&os_wdog_monitor, os_wdog_monitor_tmo, NULL);
     os_cputime_timer_relative(&os_wdog_monitor, OS_WDOG_MONITOR_TMO);
 #endif
+    USEDBYASSERT(rc);
 }
 
 void
@@ -248,6 +249,7 @@ os_init(int (*main_fn)(int argc, char **arg))
 
     err = (os_error_t) os_dev_initialize_all(OS_DEV_INIT_SECONDARY);
     assert(err == OS_OK);
+    USEDBYASSERT(err);
 }
 
 void
@@ -261,6 +263,7 @@ os_start(void)
 
     err = os_arch_os_start();
     assert(err == OS_OK);
+    USEDBYASSERT(err);
 #else
     assert(0);
 #endif
@@ -296,6 +299,7 @@ os_pkg_init(void)
 
     os_mempool_module_init();
     os_msys_init();
+    USEDBYASSERT(err);
 }
 
 /**

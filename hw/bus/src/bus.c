@@ -530,9 +530,12 @@ bus_node_unlock(struct os_dev *node)
      * structs are broken) and OS_BAD_MUTEX (unlock shall be only done by the
      * same task which locked it).
      */
-    assert(err == OS_OK || err == OS_NOT_STARTED);
-
-    return 0;
+    if (err == OS_OK || err == OS_NOT_STARTED) {
+        return 0;
+    }
+    // Anything else is assertable (or if no asserts, return error)
+    assert(0);
+    return -1;
 }
 
 os_time_t
