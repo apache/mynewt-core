@@ -109,7 +109,7 @@ static bool terminal_size_requested;
 /* Maximum row as reported by terminal, 0 - terminal size is not known yet */
 static int max_row;
 /* Buffer for prompt */
-static char console_prompt[MYNEWT_VAL(CONSOLE_MAX_PROMPT_LEN)];
+static char console_prompt[MYNEWT_VAL(CONSOLE_PROMPT_MAX_LEN)];
 /* Length of prompt stored in console_prompt */
 static uint16_t prompt_len;
 /* Current history line, 0 no history line */
@@ -216,7 +216,7 @@ console_filter_out(int c)
      * line from prompt editor.
      */
     console_is_midline = c != '\n' && c != '\r';
-    if (MYNEWT_VAL(CONSOLE_STICKY_PROMPT) && max_row > 0) {
+    if (MYNEWT_VAL(CONSOLE_PROMPT_STICKY) && max_row > 0) {
         if (c == '\n') {
             console_is_midline = false;
             if (holding_lf) {
@@ -344,7 +344,7 @@ request_terminal_size(void)
 static void
 console_init_terminal(void)
 {
-    if (MYNEWT_VAL(CONSOLE_STICKY_PROMPT) && !terminal_initialized) {
+    if (MYNEWT_VAL(CONSOLE_PROMPT_STICKY) && !terminal_initialized) {
         console_write_str(CSI "!p"
                           CSI "1;999r"
                           CSI "999;1H\n\n"
@@ -367,7 +367,7 @@ console_switch_to_prompt(void)
 
     console_init_terminal();
     /* If terminal size is not known yet, try asking terminal first */
-    if (MYNEWT_VAL(CONSOLE_STICKY_PROMPT) &&
+    if (MYNEWT_VAL(CONSOLE_PROMPT_STICKY) &&
         max_row == 0 && !terminal_size_requested) {
         request_terminal_size();
     }
@@ -376,7 +376,7 @@ console_switch_to_prompt(void)
      * of the screen, save cursor position and set cursor at place
      * that is in sync with 'cur' variable.
      */
-    if (MYNEWT_VAL(CONSOLE_STICKY_PROMPT) &&
+    if (MYNEWT_VAL(CONSOLE_PROMPT_STICKY) &&
         !prompt_has_focus && max_row) {
         cursor_save();
         prompt_has_focus = true;
@@ -391,7 +391,7 @@ console_switch_to_prompt(void)
             console_write_str(CSI "0m");
             console_out_nolock(c);
             console_out_nolock('\b');
-            if (MYNEWT_VAL(CONSOLE_HIDE_CURSOR_IN_LOG_AREA)) {
+            if (MYNEWT_VAL(CONSOLE_PROMPT_HIDE_CURSOR_IN_LOG_AREA)) {
                 console_write_str(CSI "?25h");
             }
         }
@@ -413,7 +413,7 @@ console_switch_to_logs(void)
     }
 
     console_init_terminal();
-    if (MYNEWT_VAL(CONSOLE_STICKY_PROMPT) && prompt_has_focus) {
+    if (MYNEWT_VAL(CONSOLE_PROMPT_STICKY) && prompt_has_focus) {
         if (MYNEWT_VAL(CONSOLE_PROMPT_SOFT_CURSOR)) {
             console_write_str(CSI);
             console_write_str(MYNEWT_VAL(CONSOLE_PROMPT_SOFT_CURSOR_ATTR));
@@ -424,7 +424,7 @@ console_switch_to_logs(void)
                 c = ' ';
             }
             console_out_nolock(c);
-            if (MYNEWT_VAL(CONSOLE_HIDE_CURSOR_IN_LOG_AREA)) {
+            if (MYNEWT_VAL(CONSOLE_PROMPT_HIDE_CURSOR_IN_LOG_AREA)) {
                 console_write_str(CSI "?25l");
             }
             console_write_str(CSI "0m\b");
@@ -456,8 +456,8 @@ console_prompt_set(const char *prompt, const char *line)
 
     prompt_len = strlen(prompt);
 
-    /* If this assert fails increase value of CONSOLE_MAX_PROMPT_LEN */
-    assert(MYNEWT_VAL(CONSOLE_MAX_PROMPT_LEN) > prompt_len);
+    /* If this assert fails increase value of CONSOLE_PROMPT_MAX_LEN */
+    assert(MYNEWT_VAL(CONSOLE_PROMPT_MAX_LEN) > prompt_len);
 
     strcpy(console_prompt, prompt);
 
@@ -472,7 +472,7 @@ console_prompt_set(const char *prompt, const char *line)
     locked = console_lock(1000) == OS_OK;
 
     console_switch_to_prompt();
-    if (MYNEWT_VAL(CONSOLE_STICKY_PROMPT) && prompt_has_focus) {
+    if (MYNEWT_VAL(CONSOLE_PROMPT_STICKY) && prompt_has_focus) {
         console_write_str(CSI "999;1H");
         console_write_nolock(prompt, prompt_len);
         console_write_nolock(line, cur);
@@ -927,7 +927,7 @@ ansi_cmd:
         }
         break;
     case DSR_CPS:
-        if (MYNEWT_VAL(CONSOLE_STICKY_PROMPT) && terminal_size_requested) {
+        if (MYNEWT_VAL(CONSOLE_PROMPT_STICKY) && terminal_size_requested) {
             terminal_size_requested = false;
             max_row = ansi_val;
             console_cursor_set(max_row - 1, 1);
@@ -1139,7 +1139,7 @@ console_handle_char(uint8_t byte)
 
             prev_endl = byte;
             input->line[cur + trailing_chars] = '\0';
-            if (MYNEWT_VAL(CONSOLE_STICKY_PROMPT) && prompt_has_focus) {
+            if (MYNEWT_VAL(CONSOLE_PROMPT_STICKY) && prompt_has_focus) {
                 console_switch_to_logs();
                 /*
                  * Cursor is always in the middle of the line since new lines
@@ -1195,7 +1195,7 @@ console_handle_char(uint8_t byte)
             break;
         /* CTRL-L */
         case VT:
-            if (MYNEWT_VAL(CONSOLE_STICKY_PROMPT)) {
+            if (MYNEWT_VAL(CONSOLE_PROMPT_STICKY)) {
                 request_terminal_size();
             } else {
                 console_out_nolock(VT);
