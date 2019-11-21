@@ -233,7 +233,7 @@ da1469x_uart_common_isr(struct da1469x_uart *uart)
         }
     }
 
-    os_trace_isr_enter();
+    os_trace_isr_exit();
 }
 #endif
 
