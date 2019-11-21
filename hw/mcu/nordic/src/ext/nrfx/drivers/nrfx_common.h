@@ -43,6 +43,22 @@
 extern "C" {
 #endif
 
+#ifndef NRFX_STATIC_INLINE
+#ifdef NRFX_DECLARE_ONLY
+#define NRFX_STATIC_INLINE
+#else
+#define NRFX_STATIC_INLINE __STATIC_INLINE
+#endif
+#endif // NRFX_STATIC_INLINE
+
+#ifndef NRF_STATIC_INLINE
+#ifdef NRF_DECLARE_ONLY
+#define NRF_STATIC_INLINE
+#else
+#define NRF_STATIC_INLINE __STATIC_INLINE
+#endif
+#endif // NRF_STATIC_INLINE
+
 /**
  * @defgroup nrfx_common Common module
  * @{
@@ -136,6 +152,17 @@ extern "C" {
  */
 #define NRFX_ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
 
+/**
+ * @brief Macro for getting the offset (in bytes) from the beginning of a structure
+ *        of the specified type to its specified member.
+ *
+ * @param[in] type   Structure type.
+ * @param[in] member Structure member whose offset is searched for.
+ *
+ * @return Member offset in bytes.
+ */
+#define NRFX_OFFSETOF(type, member)  ((size_t)&(((type *)0)->member))
+
 /**@brief Macro for checking if given lengths of EasyDMA transfers do not exceed
  *        the limit of the specified peripheral.
  *
@@ -224,7 +251,7 @@ typedef enum
  * @retval true  The pointed object is located in the Data RAM region.
  * @retval false The pointed object is not located in the Data RAM region.
  */
-__STATIC_INLINE bool nrfx_is_in_ram(void const * p_object);
+NRF_STATIC_INLINE bool nrfx_is_in_ram(void const * p_object);
 
 /**
  * @brief Function for checking if an object is aligned to a 32-bit word
@@ -238,7 +265,7 @@ __STATIC_INLINE bool nrfx_is_in_ram(void const * p_object);
  * @retval true  The pointed object is aligned to a 32-bit word.
  * @retval false The pointed object is not aligned to a 32-bit word.
  */
-__STATIC_INLINE bool nrfx_is_word_aligned(void const * p_object);
+NRF_STATIC_INLINE bool nrfx_is_word_aligned(void const * p_object);
 
 /**
  * @brief Function for getting the interrupt number for the specified peripheral.
@@ -247,7 +274,7 @@ __STATIC_INLINE bool nrfx_is_word_aligned(void const * p_object);
  *
  * @return Interrupt number associated with the pointed peripheral.
  */
-__STATIC_INLINE IRQn_Type nrfx_get_irq_number(void const * p_reg);
+NRF_STATIC_INLINE IRQn_Type nrfx_get_irq_number(void const * p_reg);
 
 /**
  * @brief Function for converting an INTEN register bit position to the
@@ -263,7 +290,7 @@ __STATIC_INLINE IRQn_Type nrfx_get_irq_number(void const * p_reg);
  *
  * @sa nrfx_event_to_bitpos
  */
-__STATIC_INLINE uint32_t nrfx_bitpos_to_event(uint32_t bit);
+NRF_STATIC_INLINE uint32_t nrfx_bitpos_to_event(uint32_t bit);
 
 /**
  * @brief Function for converting an event identifier to the corresponding
@@ -279,39 +306,39 @@ __STATIC_INLINE uint32_t nrfx_bitpos_to_event(uint32_t bit);
  *
  * @sa nrfx_bitpos_to_event
  */
-__STATIC_INLINE uint32_t nrfx_event_to_bitpos(uint32_t event);
+NRF_STATIC_INLINE uint32_t nrfx_event_to_bitpos(uint32_t event);
 
 
-#ifndef SUPPRESS_INLINE_IMPLEMENTATION
+#ifndef NRF_DECLARE_ONLY
 
-__STATIC_INLINE bool nrfx_is_in_ram(void const * p_object)
+NRF_STATIC_INLINE bool nrfx_is_in_ram(void const * p_object)
 {
     return ((((uint32_t)p_object) & 0xE0000000u) == 0x20000000u);
 }
 
-__STATIC_INLINE bool nrfx_is_word_aligned(void const * p_object)
+NRF_STATIC_INLINE bool nrfx_is_word_aligned(void const * p_object)
 {
     return ((((uint32_t)p_object) & 0x3u) == 0u);
 }
 
-__STATIC_INLINE IRQn_Type nrfx_get_irq_number(void const * p_reg)
+NRF_STATIC_INLINE IRQn_Type nrfx_get_irq_number(void const * p_reg)
 {
     return (IRQn_Type)NRFX_IRQ_NUMBER_GET(p_reg);
 }
 
-__STATIC_INLINE uint32_t nrfx_bitpos_to_event(uint32_t bit)
+NRF_STATIC_INLINE uint32_t nrfx_bitpos_to_event(uint32_t bit)
 {
     static const uint32_t event_reg_offset = 0x100u;
     return event_reg_offset + (bit * sizeof(uint32_t));
 }
 
-__STATIC_INLINE uint32_t nrfx_event_to_bitpos(uint32_t event)
+NRF_STATIC_INLINE uint32_t nrfx_event_to_bitpos(uint32_t event)
 {
     static const uint32_t event_reg_offset = 0x100u;
     return (event - event_reg_offset) / sizeof(uint32_t);
 }
 
-#endif
+#endif // NRF_DECLARE_ONLY
 
 /** @} */
 

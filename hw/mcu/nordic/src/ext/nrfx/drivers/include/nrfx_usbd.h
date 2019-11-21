@@ -187,11 +187,11 @@ typedef struct
         } sof;                            /**< Data available for @ref NRFX_USBD_EVT_SOF. */
         struct {
             nrfx_usbd_ep_t        ep;     /**< Endpoint number. */
-        } isocrc;
+        } isocrc;                         /**< Isochronouns channel endpoint number. */
         struct {
             nrfx_usbd_ep_t        ep;     /**< Endpoint number. */
             nrfx_usbd_ep_status_t status; /**< Status for the endpoint. */
-        } eptransfer;
+        } eptransfer;                     /**< Endpoint transfer status. */
     } data;                               /**< Union to store event data. */
 } nrfx_usbd_evt_t;
 

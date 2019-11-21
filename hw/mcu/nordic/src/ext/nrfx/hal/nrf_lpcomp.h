@@ -73,10 +73,10 @@ typedef enum
     NRF_LPCOMP_REF_SUPPLY_13_16 = LPCOMP_REFSEL_REFSEL_Ref13_16Vdd, /**< Use supply with a 13/16 prescaler as reference. */
     NRF_LPCOMP_REF_SUPPLY_15_16 = LPCOMP_REFSEL_REFSEL_Ref15_16Vdd, /**< Use supply with a 15/16 prescaler as reference. */
 #endif
-    NRF_LPCOMP_REF_EXT_REF0        = LPCOMP_REFSEL_REFSEL_ARef |
-                       (LPCOMP_EXTREFSEL_EXTREFSEL_AnalogReference0 << 16),  /**< External reference 0. */
-    NRF_LPCOMP_CONFIG_REF_EXT_REF1 = LPCOMP_REFSEL_REFSEL_ARef |
-                        (LPCOMP_EXTREFSEL_EXTREFSEL_AnalogReference1 << 16), /**< External reference 1. */
+    NRF_LPCOMP_REF_EXT_REF0     = LPCOMP_REFSEL_REFSEL_ARef |
+                                  (LPCOMP_EXTREFSEL_EXTREFSEL_AnalogReference0 << 16), /**< External reference 0. */
+    NRF_LPCOMP_REF_EXT_REF1     = LPCOMP_REFSEL_REFSEL_ARef |
+                                  (LPCOMP_EXTREFSEL_EXTREFSEL_AnalogReference1 << 16), /**< External reference 1. */
 } nrf_lpcomp_ref_t;
 
 /** @brief LPCOMP input selection. */
@@ -128,29 +128,32 @@ typedef enum
     NRF_LPCOMP_SHORT_READY_SAMPLE_MASK = LPCOMP_SHORTS_READY_SAMPLE_Msk /*!< Shortcut between READY event and SAMPLE task. */
 } nrf_lpcomp_short_mask_t;
 
-#ifdef LPCOMP_FEATURE_HYST_PRESENT
+#if defined(LPCOMP_FEATURE_HYST_PRESENT) || defined(__NRFX_DOXYGEN__)
 /** @brief LPCOMP hysteresis. */
 typedef enum
 {
-    NRF_LPCOMP_HYST_NOHYST              = LPCOMP_HYST_HYST_NoHyst,      /**< Comparator hysteresis disabled. */
-    NRF_LPCOMP_HYST_50mV                = LPCOMP_HYST_HYST_Hyst50mV     /**< Comparator hysteresis enabled (typically 50 mV). */
+#ifdef LPCOMP_HYST_HYST_NoHyst
+    NRF_LPCOMP_HYST_NOHYST  = LPCOMP_HYST_HYST_NoHyst,   /**< Comparator hysteresis disabled. */
+#else
+    NRF_LPCOMP_HYST_NOHYST  = LPCOMP_HYST_HYST_Disabled, /**< Comparator hysteresis disabled. */
+#endif
+#ifdef LPCOMP_HYST_HYST_Hyst50mV
+    NRF_LPCOMP_HYST_ENABLED = LPCOMP_HYST_HYST_Hyst50mV  /**< Comparator hysteresis enabled (typically 50 mV). */
+#else
+    NRF_LPCOMP_HYST_ENABLED = LPCOMP_HYST_HYST_Enabled   /**< Comparator hysteresis enabled (typically 50 mV). */
+#endif
 }nrf_lpcomp_hysteresis_t;
 #endif // LPCOMP_FEATURE_HYST_PRESENT
 
 /** @brief LPCOMP configuration. */
 typedef struct
 {
-    nrf_lpcomp_ref_t            reference; /**< LPCOMP reference. */
-    nrf_lpcomp_detect_t         detection; /**< LPCOMP detection type. */
-#ifdef LPCOMP_FEATURE_HYST_PRESENT
-    nrf_lpcomp_hysteresis_t     hyst;      /**< LPCOMP hysteresis. */
+    nrf_lpcomp_ref_t        reference; /**< LPCOMP reference. */
+    nrf_lpcomp_detect_t     detection; /**< LPCOMP detection type. */
+#if defined(LPCOMP_FEATURE_HYST_PRESENT) || defined(__NRFX_DOXYGEN__)
+    nrf_lpcomp_hysteresis_t hyst;      /**< LPCOMP hysteresis. */
 #endif // LPCOMP_FEATURE_HYST_PRESENT
 } nrf_lpcomp_config_t;
-
-
-/** Default LPCOMP configuration. */
-#define NRF_LPCOMP_CONFIG_DEFAULT { NRF_LPCOMP_REF_SUPPLY_FOUR_EIGHT, NRF_LPCOMP_DETECT_DOWN }
-
 
 /**
  * @brief Function for configuring LPCOMP.
@@ -158,240 +161,264 @@ typedef struct
  * This function powers on LPCOMP and configures it. LPCOMP is in DISABLE state after configuration,
  * so it must be enabled before using it. All shorts are inactive, events are cleared, and LPCOMP is stopped.
  *
+ * @param[in] p_reg    Pointer to the structure of registers of the peripheral.
  * @param[in] p_config Configuration.
  */
-__STATIC_INLINE void nrf_lpcomp_configure(const nrf_lpcomp_config_t * p_config);
+NRF_STATIC_INLINE void nrf_lpcomp_configure(NRF_LPCOMP_Type *           p_reg,
+                                            nrf_lpcomp_config_t const * p_config);
 
 /**
  * @brief Function for selecting the LPCOMP input.
  *
  * This function selects the active input of LPCOMP.
  *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
  * @param[in] input Input to be selected.
  */
-__STATIC_INLINE void nrf_lpcomp_input_select(nrf_lpcomp_input_t input);
+NRF_STATIC_INLINE void nrf_lpcomp_input_select(NRF_LPCOMP_Type * p_reg, nrf_lpcomp_input_t input);
 
 /**
  * @brief Function for enabling the Low Power Comparator.
  *
  * This function enables LPCOMP.
+ *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
  */
-__STATIC_INLINE void nrf_lpcomp_enable(void);
+NRF_STATIC_INLINE void nrf_lpcomp_enable(NRF_LPCOMP_Type * p_reg);
 
 /**
  * @brief Function for disabling the Low Power Comparator.
  *
  * This function disables LPCOMP.
+ *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
  */
-__STATIC_INLINE void nrf_lpcomp_disable(void);
+NRF_STATIC_INLINE void nrf_lpcomp_disable(NRF_LPCOMP_Type * p_reg);
 
 /**
  * @brief Function for getting the last LPCOMP compare result.
  *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ *
  * @return The last compare result. If 0 then VIN+ < VIN-, if 1 then the opposite.
  */
-__STATIC_INLINE uint32_t nrf_lpcomp_result_get(void);
+NRF_STATIC_INLINE uint32_t nrf_lpcomp_result_get(NRF_LPCOMP_Type const * p_reg);
 
 /**
  * @brief Function for enabling interrupts from LPCOMP.
  *
- * @param[in] int_mask Mask of interrupts to be enabled.
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] mask  Mask of interrupts to be enabled.
  *
  * @sa nrf_lpcomp_int_disable
  * @sa nrf_lpcomp_int_enable_check
  */
-__STATIC_INLINE void nrf_lpcomp_int_enable(uint32_t int_mask);
+NRF_STATIC_INLINE void nrf_lpcomp_int_enable(NRF_LPCOMP_Type * p_reg, uint32_t mask);
 
 /**
  * @brief Function for disabling interrupts from LPCOMP.
  *
- * @param[in] int_mask Mask of interrupts to be disabled.
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] mask  Mask of interrupts to be disabled.
  *
  * @sa nrf_lpcomp_int_enable
  * @sa nrf_lpcomp_int_enable_check
  */
-__STATIC_INLINE void nrf_lpcomp_int_disable(uint32_t int_mask);
+NRF_STATIC_INLINE void nrf_lpcomp_int_disable(NRF_LPCOMP_Type * p_reg, uint32_t mask);
 
 /**
- * @brief Function for getting the enabled interrupts of LPCOMP.
+ * @brief Function for checking if the specified interrupts are enabled.
  *
- * @param[in] int_mask Mask of interrupts to be checked.
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] mask  Mask of interrupts to be checked.
  *
- * @retval true  Any of interrupts of the specified mask are enabled.
- * @retval false None interrupt specified by the mask are enabled.
- *
- * @sa nrf_lpcomp_int_enable
- * @sa nrf_lpcomp_int_disable
+ * @return Mask of enabled interrupts.
  */
-__STATIC_INLINE bool nrf_lpcomp_int_enable_check(uint32_t int_mask);
+NRF_STATIC_INLINE uint32_t nrf_lpcomp_int_enable_check(NRF_LPCOMP_Type const * p_reg,
+                                                       uint32_t                mask);
 
 /**
  * @brief Function for getting the address of the specified LPCOMP task register.
  *
- * @param[in] task LPCOMP task.
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] task  LPCOMP task.
  *
  * @return The address of the specified LPCOMP task.
  */
-__STATIC_INLINE uint32_t * nrf_lpcomp_task_address_get(nrf_lpcomp_task_t task);
+NRF_STATIC_INLINE uint32_t nrf_lpcomp_task_address_get(NRF_LPCOMP_Type const * p_reg,
+                                                       nrf_lpcomp_task_t       task);
 
 /**
  * @brief Function for getting the address of the specified LPCOMP event register.
  *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
  * @param[in] event LPCOMP event.
  *
  * @return The address of the specified LPCOMP event.
  */
-__STATIC_INLINE uint32_t * nrf_lpcomp_event_address_get(nrf_lpcomp_event_t event);
+NRF_STATIC_INLINE uint32_t nrf_lpcomp_event_address_get(NRF_LPCOMP_Type const * p_reg,
+                                                        nrf_lpcomp_event_t      event);
 
 /**
  * @brief  Function for setting LPCOMP shorts.
  *
- * @param[in] mask Mask of shortcuts.
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] mask  Mask of shortcuts.
  */
-__STATIC_INLINE void nrf_lpcomp_shorts_enable(uint32_t mask);
+NRF_STATIC_INLINE void nrf_lpcomp_shorts_enable(NRF_LPCOMP_Type * p_reg, uint32_t mask);
 
 /**
  * @brief Function for clearing LPCOMP shorts by mask.
  *
- * @param[in] mask Mask of shortcuts.
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] mask  Mask of shortcuts.
  */
-__STATIC_INLINE void nrf_lpcomp_shorts_disable(uint32_t mask);
+NRF_STATIC_INLINE void nrf_lpcomp_shorts_disable(NRF_LPCOMP_Type * p_reg, uint32_t mask);
 
 /**
  * @brief Function for setting the specified LPCOMP task.
  *
- * @param[in] task LPCOMP task to be set.
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] task  LPCOMP task to be set.
  */
-__STATIC_INLINE void nrf_lpcomp_task_trigger(nrf_lpcomp_task_t task);
+NRF_STATIC_INLINE void nrf_lpcomp_task_trigger(NRF_LPCOMP_Type * p_reg, nrf_lpcomp_task_t task);
 
 /**
  * @brief Function for clearing the specified LPCOMP event.
  *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
  * @param[in] event LPCOMP event to be cleared.
  */
-__STATIC_INLINE void nrf_lpcomp_event_clear(nrf_lpcomp_event_t event);
+NRF_STATIC_INLINE void nrf_lpcomp_event_clear(NRF_LPCOMP_Type * p_reg, nrf_lpcomp_event_t event);
 
 /**
  * @brief Function for retrieving the state of the LPCOMP event.
  *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
  * @param[in] event Event to be checked.
  *
  * @retval true  The event has been generated.
  * @retval false The event has not been generated.
  */
-__STATIC_INLINE bool nrf_lpcomp_event_check(nrf_lpcomp_event_t event);
+NRF_STATIC_INLINE bool nrf_lpcomp_event_check(NRF_LPCOMP_Type const * p_reg,
+                                              nrf_lpcomp_event_t      event);
 
-#ifndef SUPPRESS_INLINE_IMPLEMENTATION
+#ifndef NRF_DECLARE_ONLY
 
-__STATIC_INLINE void nrf_lpcomp_configure(const nrf_lpcomp_config_t * p_config)
+NRF_STATIC_INLINE void nrf_lpcomp_configure(NRF_LPCOMP_Type *           p_reg,
+                                            nrf_lpcomp_config_t const * p_config)
 {
-    NRF_LPCOMP->TASKS_STOP = 1;
-    NRF_LPCOMP->ENABLE     = LPCOMP_ENABLE_ENABLE_Disabled << LPCOMP_ENABLE_ENABLE_Pos;
-    NRF_LPCOMP->REFSEL     =
+    p_reg->TASKS_STOP = 1;
+    p_reg->ENABLE     = LPCOMP_ENABLE_ENABLE_Disabled << LPCOMP_ENABLE_ENABLE_Pos;
+    p_reg->REFSEL     =
         (p_config->reference << LPCOMP_REFSEL_REFSEL_Pos) & LPCOMP_REFSEL_REFSEL_Msk;
 
     //If external source is choosen extract analog reference index.
     if ((p_config->reference & LPCOMP_REFSEL_REFSEL_ARef)==LPCOMP_REFSEL_REFSEL_ARef)
     {
-        uint32_t extref       = p_config->reference >> 16;
-        NRF_LPCOMP->EXTREFSEL = (extref << LPCOMP_EXTREFSEL_EXTREFSEL_Pos) &
-                                LPCOMP_EXTREFSEL_EXTREFSEL_Msk;
+        uint32_t extref  = p_config->reference >> 16;
+        p_reg->EXTREFSEL = (extref << LPCOMP_EXTREFSEL_EXTREFSEL_Pos) &
+                           LPCOMP_EXTREFSEL_EXTREFSEL_Msk;
     }
 
-    NRF_LPCOMP->ANADETECT   =
-        (p_config->detection << LPCOMP_ANADETECT_ANADETECT_Pos) & LPCOMP_ANADETECT_ANADETECT_Msk;
+    p_reg->ANADETECT = (p_config->detection << LPCOMP_ANADETECT_ANADETECT_Pos) &
+                       LPCOMP_ANADETECT_ANADETECT_Msk;
 #ifdef LPCOMP_FEATURE_HYST_PRESENT
-    NRF_LPCOMP->HYST        = ((p_config->hyst) << LPCOMP_HYST_HYST_Pos) & LPCOMP_HYST_HYST_Msk;
+    p_reg->HYST      = ((p_config->hyst) << LPCOMP_HYST_HYST_Pos) & LPCOMP_HYST_HYST_Msk;
 #endif //LPCOMP_FEATURE_HYST_PRESENT
-    NRF_LPCOMP->SHORTS      = 0;
-    NRF_LPCOMP->INTENCLR    = LPCOMP_INTENCLR_CROSS_Msk | LPCOMP_INTENCLR_UP_Msk |
-                              LPCOMP_INTENCLR_DOWN_Msk | LPCOMP_INTENCLR_READY_Msk;
+    p_reg->SHORTS    = 0;
+    p_reg->INTENCLR  = LPCOMP_INTENCLR_CROSS_Msk | LPCOMP_INTENCLR_UP_Msk |
+                       LPCOMP_INTENCLR_DOWN_Msk | LPCOMP_INTENCLR_READY_Msk;
 }
 
-__STATIC_INLINE void nrf_lpcomp_input_select(nrf_lpcomp_input_t input)
+NRF_STATIC_INLINE void nrf_lpcomp_input_select(NRF_LPCOMP_Type * p_reg, nrf_lpcomp_input_t input)
 {
-    uint32_t lpcomp_enable_state = NRF_LPCOMP->ENABLE;
+    uint32_t lpcomp_enable_state = p_reg->ENABLE;
 
-    NRF_LPCOMP->ENABLE = LPCOMP_ENABLE_ENABLE_Disabled << LPCOMP_ENABLE_ENABLE_Pos;
-    NRF_LPCOMP->PSEL   =
-        ((uint32_t)input << LPCOMP_PSEL_PSEL_Pos) | (NRF_LPCOMP->PSEL & ~LPCOMP_PSEL_PSEL_Msk);
-    NRF_LPCOMP->ENABLE = lpcomp_enable_state;
+    p_reg->ENABLE = LPCOMP_ENABLE_ENABLE_Disabled << LPCOMP_ENABLE_ENABLE_Pos;
+    p_reg->PSEL   = ((uint32_t)input << LPCOMP_PSEL_PSEL_Pos) |
+                    (p_reg->PSEL & ~LPCOMP_PSEL_PSEL_Msk);
+    p_reg->ENABLE = lpcomp_enable_state;
 }
 
-__STATIC_INLINE void nrf_lpcomp_enable(void)
+NRF_STATIC_INLINE void nrf_lpcomp_enable(NRF_LPCOMP_Type * p_reg)
 {
-    NRF_LPCOMP->ENABLE = LPCOMP_ENABLE_ENABLE_Enabled << LPCOMP_ENABLE_ENABLE_Pos;
-    NRF_LPCOMP->EVENTS_READY = 0;
-    NRF_LPCOMP->EVENTS_DOWN  = 0;
-    NRF_LPCOMP->EVENTS_UP    = 0;
-    NRF_LPCOMP->EVENTS_CROSS = 0;
+    p_reg->ENABLE = LPCOMP_ENABLE_ENABLE_Enabled << LPCOMP_ENABLE_ENABLE_Pos;
+    p_reg->EVENTS_READY = 0;
+    p_reg->EVENTS_DOWN  = 0;
+    p_reg->EVENTS_UP    = 0;
+    p_reg->EVENTS_CROSS = 0;
 }
 
-__STATIC_INLINE void nrf_lpcomp_disable(void)
+NRF_STATIC_INLINE void nrf_lpcomp_disable(NRF_LPCOMP_Type * p_reg)
 {
-    NRF_LPCOMP->ENABLE = LPCOMP_ENABLE_ENABLE_Disabled << LPCOMP_ENABLE_ENABLE_Pos;
+    p_reg->ENABLE = LPCOMP_ENABLE_ENABLE_Disabled << LPCOMP_ENABLE_ENABLE_Pos;
 }
 
-__STATIC_INLINE uint32_t nrf_lpcomp_result_get(void)
+NRF_STATIC_INLINE uint32_t nrf_lpcomp_result_get(NRF_LPCOMP_Type const * p_reg)
 {
-    return (uint32_t)NRF_LPCOMP->RESULT;
+    return (uint32_t)p_reg->RESULT;
 }
 
-__STATIC_INLINE void nrf_lpcomp_int_enable(uint32_t int_mask)
+NRF_STATIC_INLINE void nrf_lpcomp_int_enable(NRF_LPCOMP_Type * p_reg, uint32_t mask)
 {
-    NRF_LPCOMP->INTENSET = int_mask;
+    p_reg->INTENSET = mask;
 }
 
-__STATIC_INLINE void nrf_lpcomp_int_disable(uint32_t int_mask)
+NRF_STATIC_INLINE void nrf_lpcomp_int_disable(NRF_LPCOMP_Type * p_reg, uint32_t mask)
 {
-    NRF_LPCOMP->INTENCLR = int_mask;
+    p_reg->INTENCLR = mask;
 }
 
-__STATIC_INLINE bool nrf_lpcomp_int_enable_check(uint32_t int_mask)
+NRF_STATIC_INLINE uint32_t nrf_lpcomp_int_enable_check(NRF_LPCOMP_Type const * p_reg,
+                                                       uint32_t                mask)
 {
-    return (NRF_LPCOMP->INTENSET & int_mask); // when read this register will return the value of INTEN.
+    return p_reg->INTENSET & mask; // when read this register will return the value of INTEN.
 }
 
-__STATIC_INLINE uint32_t * nrf_lpcomp_task_address_get(nrf_lpcomp_task_t task)
+NRF_STATIC_INLINE uint32_t nrf_lpcomp_task_address_get(NRF_LPCOMP_Type const * p_reg,
+                                                       nrf_lpcomp_task_t       task)
 {
-    return (uint32_t *)((uint8_t *)NRF_LPCOMP + task);
+    return (uint32_t)((uint8_t *)p_reg + task);
 }
 
-__STATIC_INLINE uint32_t * nrf_lpcomp_event_address_get(nrf_lpcomp_event_t event)
+NRF_STATIC_INLINE uint32_t nrf_lpcomp_event_address_get(NRF_LPCOMP_Type const * p_reg,
+                                                        nrf_lpcomp_event_t      event)
 {
-    return (uint32_t *)((uint8_t *)NRF_LPCOMP + event);
+    return (uint32_t)((uint8_t *)p_reg + event);
 }
 
-__STATIC_INLINE void nrf_lpcomp_shorts_enable(uint32_t short_mask)
+NRF_STATIC_INLINE void nrf_lpcomp_shorts_enable(NRF_LPCOMP_Type * p_reg, uint32_t short_mask)
 {
-    NRF_LPCOMP->SHORTS |= short_mask;
+    p_reg->SHORTS |= short_mask;
 }
 
-__STATIC_INLINE void nrf_lpcomp_shorts_disable(uint32_t short_mask)
+NRF_STATIC_INLINE void nrf_lpcomp_shorts_disable(NRF_LPCOMP_Type * p_reg, uint32_t short_mask)
 {
-    NRF_LPCOMP->SHORTS &= ~short_mask;
+    p_reg->SHORTS &= ~short_mask;
 }
 
-__STATIC_INLINE void nrf_lpcomp_task_trigger(nrf_lpcomp_task_t task)
+NRF_STATIC_INLINE void nrf_lpcomp_task_trigger(NRF_LPCOMP_Type * p_reg, nrf_lpcomp_task_t task)
 {
-    *( (volatile uint32_t *)( (uint8_t *)NRF_LPCOMP + (uint32_t)task) ) = 1;
+    *( (volatile uint32_t *)( (uint8_t *)p_reg + (uint32_t)task) ) = 1;
 }
 
-__STATIC_INLINE void nrf_lpcomp_event_clear(nrf_lpcomp_event_t event)
+NRF_STATIC_INLINE void nrf_lpcomp_event_clear(NRF_LPCOMP_Type * p_reg, nrf_lpcomp_event_t event)
 {
-    *( (volatile uint32_t *)( (uint8_t *)NRF_LPCOMP + (uint32_t)event) ) = 0;
+    *( (volatile uint32_t *)( (uint8_t *)p_reg + (uint32_t)event) ) = 0;
 #if __CORTEX_M == 0x04
-    volatile uint32_t dummy = *((volatile uint32_t *)((uint8_t *)NRF_LPCOMP + (uint32_t)event));
+    volatile uint32_t dummy = *((volatile uint32_t *)((uint8_t *)p_reg + (uint32_t)event));
     (void)dummy;
 #endif
 }
 
-__STATIC_INLINE bool nrf_lpcomp_event_check(nrf_lpcomp_event_t event)
+NRF_STATIC_INLINE bool nrf_lpcomp_event_check(NRF_LPCOMP_Type const * p_reg,
+                                              nrf_lpcomp_event_t      event)
 {
-    return (bool) (*(volatile uint32_t *)( (uint8_t *)NRF_LPCOMP + (uint32_t)event));
+    return (bool) (*(volatile uint32_t *)( (uint8_t *)p_reg + (uint32_t)event));
 }
 
-#endif // SUPPRESS_INLINE_IMPLEMENTATION
+#endif // NRF_DECLARE_ONLY
 
 /** @} */
 

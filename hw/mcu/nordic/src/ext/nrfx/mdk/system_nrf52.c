@@ -26,23 +26,12 @@ NOTICE: This file has been modified by Nordic Semiconductor ASA.
 #include <stdint.h>
 #include <stdbool.h>
 #include "nrf.h"
+#include "nrf_erratas.h"
 #include "system_nrf52.h"
 
 /*lint ++flb "Enter library region" */
 
 #define __SYSTEM_CLOCK_64M      (64000000UL)
-
-static bool errata_12(void);
-static bool errata_16(void);
-static bool errata_31(void);
-static bool errata_32(void);
-static bool errata_36(void);
-static bool errata_37(void);
-static bool errata_57(void);
-static bool errata_66(void);
-static bool errata_108(void);
-static bool errata_136(void);
-static bool errata_182(void);
 
 
 #if defined ( __CC_ARM )
@@ -81,31 +70,31 @@ void SystemInit(void)
     #endif
     
     /* Workaround for Errata 12 "COMP: Reference ladder not correctly calibrated" found at the Errata document
-       for your device located at https://www.nordicsemi.com/DocLib */
+       for your device located at https://infocenter.nordicsemi.com/index.jsp */
     if (errata_12()){
         *(volatile uint32_t *)0x40013540 = (*(uint32_t *)0x10000324 & 0x00001F00) >> 8;
     }
     
     /* Workaround for Errata 16 "System: RAM may be corrupt on wakeup from CPU IDLE" found at the Errata document
-       for your device located at https://www.nordicsemi.com/DocLib */
+       for your device located at https://infocenter.nordicsemi.com/index.jsp */
     if (errata_16()){
         *(volatile uint32_t *)0x4007C074 = 3131961357ul;
     }
 
     /* Workaround for Errata 31 "CLOCK: Calibration values are not correctly loaded from FICR at reset" found at the Errata document
-       for your device located at https://www.nordicsemi.com/DocLib */
+       for your device located at https://infocenter.nordicsemi.com/index.jsp */
     if (errata_31()){
         *(volatile uint32_t *)0x4000053C = ((*(volatile uint32_t *)0x10000244) & 0x0000E000) >> 13;
     }
 
     /* Workaround for Errata 32 "DIF: Debug session automatically enables TracePort pins" found at the Errata document
-       for your device located at https://www.nordicsemi.com/DocLib */
+       for your device located at https://infocenter.nordicsemi.com/index.jsp */
     if (errata_32()){
         CoreDebug->DEMCR &= ~CoreDebug_DEMCR_TRCENA_Msk;
     }
 
     /* Workaround for Errata 36 "CLOCK: Some registers are not reset when expected" found at the Errata document
-       for your device located at https://www.nordicsemi.com/DocLib  */
+       for your device located at https://infocenter.nordicsemi.com/index.jsp  */
     if (errata_36()){
         NRF_CLOCK->EVENTS_DONE = 0;
         NRF_CLOCK->EVENTS_CTTO = 0;
@@ -113,13 +102,13 @@ void SystemInit(void)
     }
 
     /* Workaround for Errata 37 "RADIO: Encryption engine is slow by default" found at the Errata document
-       for your device located at https://www.nordicsemi.com/DocLib  */
+       for your device located at https://infocenter.nordicsemi.com/index.jsp  */
     if (errata_37()){
         *(volatile uint32_t *)0x400005A0 = 0x3;
     }
 
     /* Workaround for Errata 57 "NFCT: NFC Modulation amplitude" found at the Errata document
-       for your device located at https://www.nordicsemi.com/DocLib  */
+       for your device located at https://infocenter.nordicsemi.com/index.jsp  */
     if (errata_57()){
         *(volatile uint32_t *)0x40005610 = 0x00000005;
         *(volatile uint32_t *)0x40005688 = 0x00000001;
@@ -128,7 +117,7 @@ void SystemInit(void)
     }
 
     /* Workaround for Errata 66 "TEMP: Linearity specification not met with default settings" found at the Errata document
-       for your device located at https://www.nordicsemi.com/DocLib  */
+       for your device located at https://infocenter.nordicsemi.com/index.jsp  */
     if (errata_66()){
         NRF_TEMP->A0 = NRF_FICR->TEMP.A0;
         NRF_TEMP->A1 = NRF_FICR->TEMP.A1;
@@ -150,13 +139,13 @@ void SystemInit(void)
     }
 
     /* Workaround for Errata 108 "RAM: RAM content cannot be trusted upon waking up from System ON Idle or System OFF mode" found at the Errata document
-       for your device located at https://www.nordicsemi.com/DocLib  */
+       for your device located at https://infocenter.nordicsemi.com/index.jsp  */
     if (errata_108()){
-        *(volatile uint32_t *)0x40000EE4 = *(volatile uint32_t *)0x10000258 & 0x0000004F;
+        *(volatile uint32_t *)0x40000EE4ul = *(volatile uint32_t *)0x10000258ul & 0x0000004Ful;
     }
     
     /* Workaround for Errata 136 "System: Bits in RESETREAS are set when they should not be" found at the Errata document
-       for your device located at https://www.nordicsemi.com/DocLib  */
+       for your device located at https://infocenter.nordicsemi.com/index.jsp  */
     if (errata_136()){
         if (NRF_POWER->RESETREAS & POWER_RESETREAS_RESETPIN_Msk){
             NRF_POWER->RESETREAS =  ~POWER_RESETREAS_RESETPIN_Msk;
@@ -164,7 +153,7 @@ void SystemInit(void)
     }
     
     /* Workaround for Errata 182 "RADIO: Fixes for anomalies #102, #106, and #107 do not take effect" found at the Errata document
-       for your device located at https://www.nordicsemi.com/DocLib  */
+       for your device located at https://infocenter.nordicsemi.com/index.jsp  */
     if (errata_182()){
         *(volatile uint32_t *) 0x4000173C |= (0x1 << 10);
     }
@@ -212,161 +201,6 @@ void SystemInit(void)
     #endif
 
     SystemCoreClockUpdate();
-}
-
-
-static bool errata_12(void)
-{
-    if ((((*(uint32_t *)0xF0000FE0) & 0x000000FF) == 0x6) && (((*(uint32_t *)0xF0000FE4) & 0x0000000F) == 0x0)){
-        if (((*(uint32_t *)0xF0000FE8) & 0x000000F0) == 0x30){
-            return true;
-        }
-        if (((*(uint32_t *)0xF0000FE8) & 0x000000F0) == 0x40){
-            return true;
-        }
-        if (((*(uint32_t *)0xF0000FE8) & 0x000000F0) == 0x50){
-            return true;
-        }
-    }
-
-    return false;
-}
-
-static bool errata_16(void)
-{
-    if ((((*(uint32_t *)0xF0000FE0) & 0x000000FF) == 0x6) && (((*(uint32_t *)0xF0000FE4) & 0x0000000F) == 0x0)){
-        if (((*(uint32_t *)0xF0000FE8) & 0x000000F0) == 0x30){
-            return true;
-        }
-    }
-
-    return false;
-}
-
-static bool errata_31(void)
-{
-    if ((((*(uint32_t *)0xF0000FE0) & 0x000000FF) == 0x6) && (((*(uint32_t *)0xF0000FE4) & 0x0000000F) == 0x0)){
-        if (((*(uint32_t *)0xF0000FE8) & 0x000000F0) == 0x30){
-            return true;
-        }
-        if (((*(uint32_t *)0xF0000FE8) & 0x000000F0) == 0x40){
-            return true;
-        }
-        if (((*(uint32_t *)0xF0000FE8) & 0x000000F0) == 0x50){
-            return true;
-        }
-    }
-
-    return false;
-}
-
-static bool errata_32(void)
-{
-    if ((((*(uint32_t *)0xF0000FE0) & 0x000000FF) == 0x6) && (((*(uint32_t *)0xF0000FE4) & 0x0000000F) == 0x0)){
-        if (((*(uint32_t *)0xF0000FE8) & 0x000000F0) == 0x30){
-            return true;
-        }
-    }
-
-    return false;
-}
-
-static bool errata_36(void)
-{
-    if ((((*(uint32_t *)0xF0000FE0) & 0x000000FF) == 0x6) && (((*(uint32_t *)0xF0000FE4) & 0x0000000F) == 0x0)){
-        if (((*(uint32_t *)0xF0000FE8) & 0x000000F0) == 0x30){
-            return true;
-        }
-        if (((*(uint32_t *)0xF0000FE8) & 0x000000F0) == 0x40){
-            return true;
-        }
-        if (((*(uint32_t *)0xF0000FE8) & 0x000000F0) == 0x50){
-            return true;
-        }
-    }
-
-    return false;
-}
-
-static bool errata_37(void)
-{
-    if ((((*(uint32_t *)0xF0000FE0) & 0x000000FF) == 0x6) && (((*(uint32_t *)0xF0000FE4) & 0x0000000F) == 0x0)){
-        if (((*(uint32_t *)0xF0000FE8) & 0x000000F0) == 0x30){
-            return true;
-        }
-    }
-
-    return false;
-}
-
-static bool errata_57(void)
-{
-    if ((((*(uint32_t *)0xF0000FE0) & 0x000000FF) == 0x6) && (((*(uint32_t *)0xF0000FE4) & 0x0000000F) == 0x0)){
-        if (((*(uint32_t *)0xF0000FE8) & 0x000000F0) == 0x30){
-            return true;
-        }
-    }
-
-    return false;
-}
-
-static bool errata_66(void)
-{
-    if ((((*(uint32_t *)0xF0000FE0) & 0x000000FF) == 0x6) && (((*(uint32_t *)0xF0000FE4) & 0x0000000F) == 0x0)){
-        if (((*(uint32_t *)0xF0000FE8) & 0x000000F0) == 0x50){
-            return true;
-        }
-    }
-
-    return false;
-}
-
-
-static bool errata_108(void)
-{
-    if ((((*(uint32_t *)0xF0000FE0) & 0x000000FF) == 0x6) && (((*(uint32_t *)0xF0000FE4) & 0x0000000F) == 0x0)){
-        if (((*(uint32_t *)0xF0000FE8) & 0x000000F0) == 0x30){
-            return true;
-        }
-        if (((*(uint32_t *)0xF0000FE8) & 0x000000F0) == 0x40){
-            return true;
-        }
-        if (((*(uint32_t *)0xF0000FE8) & 0x000000F0) == 0x50){
-            return true;
-        }
-    }
-
-    return false;
-}
-
-
-static bool errata_136(void)
-{
-    if ((((*(uint32_t *)0xF0000FE0) & 0x000000FF) == 0x6) && (((*(uint32_t *)0xF0000FE4) & 0x0000000F) == 0x0)){
-        if (((*(uint32_t *)0xF0000FE8) & 0x000000F0) == 0x30){
-            return true;
-        }
-        if (((*(uint32_t *)0xF0000FE8) & 0x000000F0) == 0x40){
-            return true;
-        }
-        if (((*(uint32_t *)0xF0000FE8) & 0x000000F0) == 0x50){
-            return true;
-        }
-    }
-
-    return false;
-}
-
-
-static bool errata_182(void)
-{
-    if (*(uint32_t *)0x10000130ul == 0x6ul){
-        if (*(uint32_t *)0x10000134ul == 0x6ul){
-            return true;
-        }
-    }
-
-    return false;
 }
 
 

@@ -44,6 +44,12 @@ POSSIBILITY OF SUCH DAMAGE.
 #define POWER_PRESENT
 #define POWER_COUNT 1
 
+/* Non-Volatile Memory Controller */
+#define NVMC_PRESENT
+#define NVMC_COUNT 1
+
+#define NVMC_FEATURE_CACHE_PRESENT
+
 /* GPIO */
 #define GPIO_PRESENT
 #define GPIO_COUNT 1
@@ -142,11 +148,11 @@ POSSIBILITY OF SUCH DAMAGE.
 #define UARTE2_EASYDMA_MAXCNT_SIZE 16
 #define UARTE3_EASYDMA_MAXCNT_SIZE 16
 
-
 /* Successive Approximation Analog to Digital Converter */
 #define SAADC_PRESENT
 #define SAADC_COUNT 1
 
+#define SAADC_CH_NUM 8
 #define SAADC_EASYDMA_MAXCNT_SIZE 15
 
 /* GPIO Tasks and Events */
@@ -183,6 +189,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #define IPC_COUNT 1
 
 #define IPC_CH_NUM 8
+#define IPC_CONF_NUM 8
 #define IPC_GPMEM_NUM 4
 
 /* FPU */

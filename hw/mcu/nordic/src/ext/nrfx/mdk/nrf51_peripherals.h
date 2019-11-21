@@ -44,6 +44,10 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #define POWER_FEATURE_RAMON_REGISTERS_PRESENT
 
+/* Non-Volatile Memory Controller */
+#define NVMC_PRESENT
+#define NVMC_COUNT 1
+
 /* Software Interrupts */
 #define SWI_PRESENT
 #define SWI_COUNT 6

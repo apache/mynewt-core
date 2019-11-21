@@ -52,9 +52,10 @@ static nrfx_drv_state_t             m_state = NRFX_DRV_STATE_UNINITIALIZED;
 
 static void lpcomp_execute_handler(nrf_lpcomp_event_t event, uint32_t event_mask)
 {
-    if (nrf_lpcomp_event_check(event) && nrf_lpcomp_int_enable_check(event_mask))
+    if (nrf_lpcomp_event_check(NRF_LPCOMP, event) &&
+        nrf_lpcomp_int_enable_check(NRF_LPCOMP, event_mask))
     {
-        nrf_lpcomp_event_clear(event);
+        nrf_lpcomp_event_clear(NRF_LPCOMP, event);
         NRFX_LOG_DEBUG("Event: %s.", EVT_TO_STR(event));
 
         m_lpcomp_event_handler(event);
@@ -98,31 +99,31 @@ nrfx_err_t nrfx_lpcomp_init(nrfx_lpcomp_config_t const * p_config,
     }
 #endif
 
-    nrf_lpcomp_configure(&(p_config->hal));
+    nrf_lpcomp_configure(NRF_LPCOMP, &(p_config->hal));
 
-    nrf_lpcomp_input_select(p_config->input);
+    nrf_lpcomp_input_select(NRF_LPCOMP, p_config->input);
 
     switch (p_config->hal.detection)
     {
         case NRF_LPCOMP_DETECT_UP:
-            nrf_lpcomp_int_enable(LPCOMP_INTENSET_UP_Msk);
+            nrf_lpcomp_int_enable(NRF_LPCOMP, LPCOMP_INTENSET_UP_Msk);
             break;
 
         case NRF_LPCOMP_DETECT_DOWN:
-            nrf_lpcomp_int_enable(LPCOMP_INTENSET_DOWN_Msk);
+            nrf_lpcomp_int_enable(NRF_LPCOMP, LPCOMP_INTENSET_DOWN_Msk);
             break;
 
         case NRF_LPCOMP_DETECT_CROSS:
-            nrf_lpcomp_int_enable(LPCOMP_INTENSET_CROSS_Msk);
+            nrf_lpcomp_int_enable(NRF_LPCOMP, LPCOMP_INTENSET_CROSS_Msk);
             break;
 
         default:
             break;
     }
-    nrf_lpcomp_shorts_enable(NRF_LPCOMP_SHORT_READY_SAMPLE_MASK);
+    nrf_lpcomp_shorts_enable(NRF_LPCOMP, NRF_LPCOMP_SHORT_READY_SAMPLE_MASK);
 
-    NRFX_IRQ_PRIORITY_SET(LPCOMP_IRQn, p_config->interrupt_priority);
-    NRFX_IRQ_ENABLE(LPCOMP_IRQn);
+    NRFX_IRQ_PRIORITY_SET(nrfx_get_irq_number(NRF_LPCOMP), p_config->interrupt_priority);
+    NRFX_IRQ_ENABLE(nrfx_get_irq_number(NRF_LPCOMP));
 
     m_state = NRFX_DRV_STATE_INITIALIZED;
 
@@ -134,7 +135,7 @@ nrfx_err_t nrfx_lpcomp_init(nrfx_lpcomp_config_t const * p_config,
 void nrfx_lpcomp_uninit(void)
 {
     NRFX_ASSERT(m_state != NRFX_DRV_STATE_UNINITIALIZED);
-    NRFX_IRQ_DISABLE(LPCOMP_IRQn);
+    NRFX_IRQ_DISABLE(nrfx_get_irq_number(NRF_LPCOMP));
     nrfx_lpcomp_disable();
 #if NRFX_CHECK(NRFX_PRS_ENABLED)
     nrfx_prs_release(NRF_LPCOMP);
@@ -147,8 +148,8 @@ void nrfx_lpcomp_uninit(void)
 void nrfx_lpcomp_enable(void)
 {
     NRFX_ASSERT(m_state == NRFX_DRV_STATE_INITIALIZED);
-    nrf_lpcomp_enable();
-    nrf_lpcomp_task_trigger(NRF_LPCOMP_TASK_START);
+    nrf_lpcomp_enable(NRF_LPCOMP);
+    nrf_lpcomp_task_trigger(NRF_LPCOMP, NRF_LPCOMP_TASK_START);
     m_state = NRFX_DRV_STATE_POWERED_ON;
     NRFX_LOG_INFO("Enabled.");
 }
@@ -156,8 +157,8 @@ void nrfx_lpcomp_enable(void)
 void nrfx_lpcomp_disable(void)
 {
     NRFX_ASSERT(m_state == NRFX_DRV_STATE_POWERED_ON);
-    nrf_lpcomp_disable();
-    nrf_lpcomp_task_trigger(NRF_LPCOMP_TASK_STOP);
+    nrf_lpcomp_disable(NRF_LPCOMP);
+    nrf_lpcomp_task_trigger(NRF_LPCOMP, NRF_LPCOMP_TASK_STOP);
     m_state = NRFX_DRV_STATE_INITIALIZED;
     NRFX_LOG_INFO("Disabled.");
 }

@@ -65,7 +65,8 @@ extern "C" {
     #define NRFX_PRS_BOX_1_ADDR     NRF_SPIM0
     // UART0, UARTE0
     #define NRFX_PRS_BOX_2_ADDR     NRF_UART0
-#elif defined(NRF52832_XXAA) || defined (NRF52832_XXAB)
+#elif defined(NRF52832_XXAA) || defined(NRF52832_XXAB) || \
+      defined(NRF52833_XXAA) || defined(NRF52840_XXAA)
     // SPIM0, SPIS0, TWIM0, TWIS0, SPI0, TWI0
     #define NRFX_PRS_BOX_0_ADDR     NRF_SPIM0
     // SPIM1, SPIS1, TWIM1, TWIS1, SPI1, TWI1
@@ -76,17 +77,16 @@ extern "C" {
     #define NRFX_PRS_BOX_3_ADDR     NRF_COMP
     // UARTE0, UART0
     #define NRFX_PRS_BOX_4_ADDR     NRF_UARTE0
-#elif defined(NRF52840_XXAA)
-    // SPIM0, SPIS0, TWIM0, TWIS0, SPI0, TWI0
-    #define NRFX_PRS_BOX_0_ADDR     NRF_SPIM0
-    // SPIM1, SPIS1, TWIM1, TWIS1, SPI1, TWI1
-    #define NRFX_PRS_BOX_1_ADDR     NRF_SPIM1
-    // SPIM2, SPIS2, SPI2
-    #define NRFX_PRS_BOX_2_ADDR     NRF_SPIM2
+#elif defined(NRF5340_XXAA_APPLICATION)
+    // SPIM0, SPIS0, TWIM0, TWIS0, UARTE0
+    #define NRFX_PRS_BOX_0_ADDR     NRF_UARTE0
+    // SPIM1, SPIS1, TWIM1, TWIS1, UARTE1
+    #define NRFX_PRS_BOX_1_ADDR     NRF_UARTE1
     // COMP, LPCOMP
-    #define NRFX_PRS_BOX_3_ADDR     NRF_COMP
-    // UARTE0, UART0
-    #define NRFX_PRS_BOX_4_ADDR     NRF_UARTE0
+    #define NRFX_PRS_BOX_2_ADDR     NRF_COMP
+#elif defined(NRF5340_XXAA_NETWORK)
+    // SPIM0, SPIS0, TWIM0, TWIS0, UARTE0
+    #define NRFX_PRS_BOX_0_ADDR     NRF_UARTE0
 #elif defined(NRF9160_XXAA)
     // UARTE0, SPIM0, SPIS0, TWIM0, TWIS0
     #define NRFX_PRS_BOX_0_ADDR     NRF_UARTE0

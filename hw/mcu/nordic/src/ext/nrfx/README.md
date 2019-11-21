@@ -16,7 +16,9 @@ SoCs, as well as startup and initialization files for them.
 * nRF52810
 * nRF52811
 * nRF52832
+* nRF52833
 * nRF52840
+* nRF5340
 * nRF9160
 
 ## Directories
@@ -24,12 +26,13 @@ SoCs, as well as startup and initialization files for them.
 ```
  .
  ├── doc             # Project documentation files
- ├── drivers         # nrfx drivers files
- │   └── include     # nrfx drivers headers
- │   └── src         # nrfx drivers sources
+ ├── drivers         # nrfx driver files
+ │   └── include     # nrfx driver headers
+ │   └── src         # nrfx driver sources
  ├── hal             # Hardware Access Layer files
- ├── mdk             # Nordic MDK files
- ├── soc             # Nordic SoC related files
+ ├── helpers         # nrfx driver helper files
+ ├── mdk             # nRF MDK files
+ ├── soc             # SoC specific files
  └── templates       # Templates of nrfx integration files
 ```
 

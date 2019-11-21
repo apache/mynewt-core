@@ -225,6 +225,11 @@ POSSIBILITY OF SUCH DAMAGE.\n
                     <value>0x52811</value>
                   </enumeratedValue>
                   <enumeratedValue>
+                    <name>N52832</name>
+                    <description>nRF52832</description>
+                    <value>0x52832</value>
+                  </enumeratedValue>
+                  <enumeratedValue>
                     <name>Unspecified</name>
                     <description>Unspecified</description>
                     <value>0xFFFFFFFF</value>
@@ -664,7 +669,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
       <size>0x20</size>
       <registers>
         <register>
-          <dim>0xF</dim>
+          <dim>0xD</dim>
           <dimIncrement>0x4</dimIncrement>
           <name>NRFFW[%s]</name>
           <description>Description collection: Reserved for Nordic firmware design</description>
@@ -9885,13 +9890,13 @@ POSSIBILITY OF SUCH DAMAGE.\n
         </register>
         <register>
           <name>EVENTS_EDEND</name>
-          <description>Sampling of energy detection complete. A new ED sample is ready for readout from the RADIO.EDSAMPLE register.</description>
+          <description>Sampling of energy detection complete. A new ED sample is ready for readout from the RADIO.EDSAMPLE register</description>
           <addressOffset>0x13C</addressOffset>
           <access>read-write</access>
           <fields>
             <field>
               <name>EVENTS_EDEND</name>
-              <description>Sampling of energy detection complete. A new ED sample is ready for readout from the RADIO.EDSAMPLE register.</description>
+              <description>Sampling of energy detection complete. A new ED sample is ready for readout from the RADIO.EDSAMPLE register</description>
               <lsb>0</lsb>
               <msb>0</msb>
               <enumeratedValues>
@@ -10119,13 +10124,13 @@ POSSIBILITY OF SUCH DAMAGE.\n
         </register>
         <register>
           <name>EVENTS_PHYEND</name>
-          <description>Generated in Ble_LR125Kbit, Ble_LR500Kbit and Ieee802154_250Kbit modes when last bit is sent on air.</description>
+          <description>Generated when last bit is sent on air</description>
           <addressOffset>0x16C</addressOffset>
           <access>read-write</access>
           <fields>
             <field>
               <name>EVENTS_PHYEND</name>
-              <description>Generated in Ble_LR125Kbit, Ble_LR500Kbit and Ieee802154_250Kbit modes when last bit is sent on air.</description>
+              <description>Generated when last bit is sent on air</description>
               <lsb>0</lsb>
               <msb>0</msb>
               <enumeratedValues>
@@ -12107,37 +12112,37 @@ POSSIBILITY OF SUCH DAMAGE.\n
               <enumeratedValues>
                 <enumeratedValue>
                   <name>Nrf_1Mbit</name>
-                  <description>1 Mbit/s Nordic proprietary radio mode</description>
+                  <description>1 Mbps Nordic proprietary radio mode</description>
                   <value>0</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>Nrf_2Mbit</name>
-                  <description>2 Mbit/s Nordic proprietary radio mode</description>
+                  <description>2 Mbps Nordic proprietary radio mode</description>
                   <value>1</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>Ble_1Mbit</name>
-                  <description>1 Mbit/s BLE</description>
+                  <description>1 Mbps BLE</description>
                   <value>3</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>Ble_2Mbit</name>
-                  <description>2 Mbit/s BLE</description>
+                  <description>2 Mbps BLE</description>
                   <value>4</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>Ble_LR125Kbit</name>
-                  <description>Long range 125 kbit/s TX, 125 kbit/s and 500 kbit/s RX</description>
+                  <description>Long range 125 kbps TX, 125 kbps and 500 kbps RX</description>
                   <value>5</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>Ble_LR500Kbit</name>
-                  <description>Long range 500 kbit/s TX, 125 kbit/s and 500 kbit/s RX</description>
+                  <description>Long range 500 kbps TX, 125 kbps and 500 kbps RX</description>
                   <value>6</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>Ieee802154_250Kbit</name>
-                  <description>IEEE 802.15.4-2006 250 kbit/s</description>
+                  <description>IEEE 802.15.4-2006 250 kbps</description>
                   <value>15</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -12272,7 +12277,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>ENDIAN</name>
-              <description>On air endianness of packet, this applies to the S0, LENGTH, S1 and the PAYLOAD fields.</description>
+              <description>On-air endianness of packet, this applies to the S0, LENGTH, S1, and the PAYLOAD fields.</description>
               <lsb>24</lsb>
               <msb>24</msb>
               <enumeratedValues>
@@ -12752,7 +12757,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
           <fields>
             <field>
               <name>DATAWHITEIV</name>
-              <description>Data whitening initial value. Bit 6 is hard-wired to '1', writing '0' to it has no effect, and it will always be read back and used by the device as '1'.</description>
+              <description>Data whitening initial value. Bit 6 is hardwired to '1', writing '0' to it has no effect, and it will always be read back and used by the device as '1'.</description>
               <lsb>0</lsb>
               <msb>6</msb>
             </field>
@@ -13175,7 +13180,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
             </field>
             <field>
               <name>CCACORRTHRES</name>
-              <description>CCA correlator busy threshold. Only relevant to CarrierMode, CarrierAndEdMode and CarrierOrEdMode.</description>
+              <description>CCA correlator busy threshold. Only relevant to CarrierMode, CarrierAndEdMode, and CarrierOrEdMode.</description>
               <lsb>16</lsb>
               <msb>23</msb>
             </field>
@@ -13596,10 +13601,11 @@ POSSIBILITY OF SUCH DAMAGE.\n
               <description>Clears GPIO pattern array for antenna control</description>
               <lsb>0</lsb>
               <msb>0</msb>
+              <modifiedWriteValues>oneToClear</modifiedWriteValues>
               <enumeratedValues>
                 <enumeratedValue>
                   <name>Clear</name>
-                  <description>Writing a '1' clears the GPIO pattern; writing a '0' has no effect</description>
+                  <description>Clear the GPIO pattern</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -13686,7 +13692,7 @@ POSSIBILITY OF SUCH DAMAGE.\n
                 <name>MAXCNT</name>
                 <description>Maximum number of buffer words to transfer</description>
                 <lsb>0</lsb>
-                <msb>15</msb>
+                <msb>12</msb>
               </field>
             </fields>
           </register>

@@ -106,7 +106,7 @@ extern "C" {
 // CCM_AAR_IRQn
 
 // WDT_IRQn
-#define nrfx_wdt_irq_handler        WDT_IRQHandler
+#define nrfx_wdt_0_irq_handler      WDT_IRQHandler
 
 // RTC1_IRQn
 #define nrfx_rtc_1_irq_handler      RTC1_IRQHandler
@@ -123,22 +123,22 @@ extern "C" {
 #endif
 
 // SWI0_EGU0_IRQn
-#define nrfx_swi_0_irq_handler      SWI0_EGU0_IRQHandler
+#define nrfx_egu_0_irq_handler      SWI0_EGU0_IRQHandler
 
 // SWI1_EGU1_IRQn
-#define nrfx_swi_1_irq_handler      SWI1_EGU1_IRQHandler
+#define nrfx_egu_1_irq_handler      SWI1_EGU1_IRQHandler
 
 // SWI2_EGU2_IRQn
-#define nrfx_swi_2_irq_handler      SWI2_EGU2_IRQHandler
+#define nrfx_egu_2_irq_handler      SWI2_EGU2_IRQHandler
 
 // SWI3_EGU3_IRQn
-#define nrfx_swi_3_irq_handler      SWI3_EGU3_IRQHandler
+#define nrfx_egu_3_irq_handler      SWI3_EGU3_IRQHandler
 
 // SWI4_EGU4_IRQn
-#define nrfx_swi_4_irq_handler      SWI4_EGU4_IRQHandler
+#define nrfx_egu_4_irq_handler      SWI4_EGU4_IRQHandler
 
 // SWI5_EGU5_IRQn
-#define nrfx_swi_5_irq_handler      SWI5_EGU5_IRQHandler
+#define nrfx_egu_5_irq_handler      SWI5_EGU5_IRQHandler
 
 // TIMER3_IRQn
 #define nrfx_timer_3_irq_handler    TIMER3_IRQHandler

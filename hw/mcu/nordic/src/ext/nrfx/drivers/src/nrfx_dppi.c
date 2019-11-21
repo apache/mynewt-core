@@ -49,7 +49,7 @@
 #endif
 
 #define DPPI_AVAILABLE_CHANNELS_MASK \
-    (((1UL << DPPI_CH_NUM) - 1) & (~NRFX_DPPI_CHANNELS_USED))
+    ((uint32_t)(((1ULL << DPPI_CH_NUM) - 1) & (~NRFX_DPPI_CHANNELS_USED)))
 
 #define DPPI_AVAILABLE_GROUPS_MASK   \
     (((1UL << DPPI_GROUP_NUM) - 1)   & (~NRFX_DPPI_GROUPS_USED))
@@ -61,12 +61,12 @@ static uint32_t m_allocated_channels;
 
 static uint8_t  m_allocated_groups;
 
-__STATIC_INLINE bool channel_is_allocated(uint8_t channel)
+static bool channel_is_allocated(uint8_t channel)
 {
     return ((m_allocated_channels & DPPI_BIT_SET(channel)) != 0);
 }
 
-__STATIC_INLINE bool group_is_allocated(nrf_dppi_channel_group_t group)
+static bool group_is_allocated(nrf_dppi_channel_group_t group)
 {
     return ((m_allocated_groups & DPPI_BIT_SET(group)) != 0);
 }
