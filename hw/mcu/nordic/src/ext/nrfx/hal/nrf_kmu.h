@@ -81,7 +81,7 @@ typedef enum
  * @param[in] p_reg Pointer to the structure of registers of the peripheral.
  * @param[in] task  Task to be activated.
  */
-__STATIC_INLINE void nrf_kmu_task_trigger(NRF_KMU_Type * p_reg, nrf_kmu_task_t task);
+NRF_STATIC_INLINE void nrf_kmu_task_trigger(NRF_KMU_Type * p_reg, nrf_kmu_task_t task);
 
 /**
  * @brief Function for getting the address of a specific KMU task register.
@@ -91,7 +91,8 @@ __STATIC_INLINE void nrf_kmu_task_trigger(NRF_KMU_Type * p_reg, nrf_kmu_task_t t
  *
  * @return Address of the specified task register.
  */
-__STATIC_INLINE uint32_t nrf_kmu_task_address_get(NRF_KMU_Type const * p_reg, nrf_kmu_task_t task);
+NRF_STATIC_INLINE uint32_t nrf_kmu_task_address_get(NRF_KMU_Type const * p_reg,
+                                                    nrf_kmu_task_t       task);
 
 /**
  * @brief Function for clearing a specific KMU event.
@@ -99,7 +100,7 @@ __STATIC_INLINE uint32_t nrf_kmu_task_address_get(NRF_KMU_Type const * p_reg, nr
  * @param[in] p_reg Pointer to the structure of registers of the peripheral.
  * @param[in] event Event to clear.
  */
-__STATIC_INLINE void nrf_kmu_event_clear(NRF_KMU_Type * p_reg, nrf_kmu_event_t event);
+NRF_STATIC_INLINE void nrf_kmu_event_clear(NRF_KMU_Type * p_reg, nrf_kmu_event_t event);
 
 /**
  * @brief Function for retrieving the state of the KMU event.
@@ -110,7 +111,7 @@ __STATIC_INLINE void nrf_kmu_event_clear(NRF_KMU_Type * p_reg, nrf_kmu_event_t e
  * @retval true  The event has been generated.
  * @retval false The event has not been generated.
  */
-__STATIC_INLINE bool nrf_kmu_event_check(NRF_KMU_Type const * p_reg, nrf_kmu_event_t event);
+NRF_STATIC_INLINE bool nrf_kmu_event_check(NRF_KMU_Type const * p_reg, nrf_kmu_event_t event);
 
 /**
  * @brief Function for getting the address of a specific KMU event register.
@@ -120,8 +121,8 @@ __STATIC_INLINE bool nrf_kmu_event_check(NRF_KMU_Type const * p_reg, nrf_kmu_eve
  *
  * @return Address of the specified event register.
  */
-__STATIC_INLINE uint32_t nrf_kmu_event_address_get(NRF_KMU_Type const * p_reg,
-                                                   nrf_kmu_event_t      event);
+NRF_STATIC_INLINE uint32_t nrf_kmu_event_address_get(NRF_KMU_Type const * p_reg,
+                                                     nrf_kmu_event_t      event);
 
 /**
  * @brief Function for enabling specified interrupts.
@@ -129,7 +130,7 @@ __STATIC_INLINE uint32_t nrf_kmu_event_address_get(NRF_KMU_Type const * p_reg,
  * @param[in] p_reg Pointer to the structure of registers of the peripheral.
  * @param[in] mask  Interrupts to be enabled.
  */
-__STATIC_INLINE void nrf_kmu_int_enable(NRF_KMU_Type * p_reg, uint32_t mask);
+NRF_STATIC_INLINE void nrf_kmu_int_enable(NRF_KMU_Type * p_reg, uint32_t mask);
 
 /**
  * @brief Function for disabling specified interrupts.
@@ -137,19 +138,17 @@ __STATIC_INLINE void nrf_kmu_int_enable(NRF_KMU_Type * p_reg, uint32_t mask);
  * @param[in] p_reg Pointer to the structure of registers of the peripheral.
  * @param[in] mask  Interrupts to be disabled.
  */
-__STATIC_INLINE void nrf_kmu_int_disable(NRF_KMU_Type * p_reg, uint32_t mask);
+NRF_STATIC_INLINE void nrf_kmu_int_disable(NRF_KMU_Type * p_reg, uint32_t mask);
 
 /**
- * @brief Function for retrieving the state of a given interrupt.
+ * @brief Function for checking if the specified interrupts are enabled.
  *
- * @param[in] p_reg   Pointer to the structure of registers of the peripheral.
- * @param[in] kmu_int Interrupt to be checked.
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] mask  Mask of interrupts to be checked.
  *
- * @retval true  The interrupt is enabled.
- * @retval false The interrupt is not enabled.
+ * @return Mask of enabled interrupts.
  */
-__STATIC_INLINE bool nrf_kmu_int_enable_check(NRF_KMU_Type const * p_reg,
-                                              nrf_kmu_int_mask_t   kmu_int);
+NRF_STATIC_INLINE uint32_t nrf_kmu_int_enable_check(NRF_KMU_Type const * p_reg, uint32_t mask);
 
 /**
  * @brief Function for retrieving the state of interrupts.
@@ -160,7 +159,7 @@ __STATIC_INLINE bool nrf_kmu_int_enable_check(NRF_KMU_Type const * p_reg,
  *
  * @return Bitmask with pending interrupts bits.
  */
-__STATIC_INLINE uint32_t nrf_kmu_intpend_get(NRF_KMU_Type const * p_reg);
+NRF_STATIC_INLINE uint32_t nrf_kmu_intpend_get(NRF_KMU_Type const * p_reg);
 
 /**
  * @brief Function for getting status bits of the KMU operation.
@@ -171,7 +170,7 @@ __STATIC_INLINE uint32_t nrf_kmu_intpend_get(NRF_KMU_Type const * p_reg);
  *
  * @return Bitmask with operation status bits.
  */
-__STATIC_INLINE uint32_t nrf_kmu_status_get(NRF_KMU_Type const * p_reg);
+NRF_STATIC_INLINE uint32_t nrf_kmu_status_get(NRF_KMU_Type const * p_reg);
 
 /**
  * @brief Function for selecting the key slot ID.
@@ -180,7 +179,7 @@ __STATIC_INLINE uint32_t nrf_kmu_status_get(NRF_KMU_Type const * p_reg);
  * @param[in] keyslot_id Key slot ID to be read over AHB or pushed over
  *                       secure APB when TASKS_PUSH_KEYSLOT is started.
  */
-__STATIC_INLINE void nrf_kmu_keyslot_set(NRF_KMU_Type * p_reg, uint8_t keyslot_id);
+NRF_STATIC_INLINE void nrf_kmu_keyslot_set(NRF_KMU_Type * p_reg, uint8_t keyslot_id);
 
 /**
  * @brief Function for getting the key slot ID.
@@ -189,76 +188,76 @@ __STATIC_INLINE void nrf_kmu_keyslot_set(NRF_KMU_Type * p_reg, uint8_t keyslot_i
  *
  * @return Key slot ID.
  */
-__STATIC_INLINE uint8_t nrf_kmu_keyslot_get(NRF_KMU_Type const * p_reg);
+NRF_STATIC_INLINE uint8_t nrf_kmu_keyslot_get(NRF_KMU_Type const * p_reg);
 
 
-#ifndef SUPPRESS_INLINE_IMPLEMENTATION
+#ifndef NRF_DECLARE_ONLY
 
-__STATIC_INLINE void nrf_kmu_task_trigger(NRF_KMU_Type * p_reg, nrf_kmu_task_t task)
+NRF_STATIC_INLINE void nrf_kmu_task_trigger(NRF_KMU_Type * p_reg, nrf_kmu_task_t task)
 {
     *((volatile uint32_t *)((uint8_t *)p_reg + (uint32_t)task)) = 0x1UL;
 }
 
-__STATIC_INLINE uint32_t nrf_kmu_task_address_get(NRF_KMU_Type const * p_reg, nrf_kmu_task_t task)
+NRF_STATIC_INLINE uint32_t nrf_kmu_task_address_get(NRF_KMU_Type const * p_reg,
+                                                    nrf_kmu_task_t       task)
 {
     return ((uint32_t)p_reg + (uint32_t)task);
 }
 
-__STATIC_INLINE void nrf_kmu_event_clear(NRF_KMU_Type * p_reg, nrf_kmu_event_t event)
+NRF_STATIC_INLINE void nrf_kmu_event_clear(NRF_KMU_Type * p_reg, nrf_kmu_event_t event)
 {
     *((volatile uint32_t *)((uint8_t *)p_reg + (uint32_t)event)) = 0x0UL;
     volatile uint32_t dummy = *((volatile uint32_t *)((uint8_t *)p_reg + (uint32_t)event));
     (void)dummy;
 }
 
-__STATIC_INLINE bool nrf_kmu_event_check(NRF_KMU_Type const * p_reg, nrf_kmu_event_t event)
+NRF_STATIC_INLINE bool nrf_kmu_event_check(NRF_KMU_Type const * p_reg, nrf_kmu_event_t event)
 {
     return (bool)*(volatile uint32_t *)((uint8_t *)p_reg + (uint32_t)event);
 }
 
-__STATIC_INLINE uint32_t nrf_kmu_event_address_get(NRF_KMU_Type const * p_reg,
-                                                   nrf_kmu_event_t      event)
+NRF_STATIC_INLINE uint32_t nrf_kmu_event_address_get(NRF_KMU_Type const * p_reg,
+                                                     nrf_kmu_event_t      event)
 {
     return ((uint32_t)p_reg + (uint32_t)event);
 }
 
-__STATIC_INLINE void nrf_kmu_int_enable(NRF_KMU_Type * p_reg, uint32_t mask)
+NRF_STATIC_INLINE void nrf_kmu_int_enable(NRF_KMU_Type * p_reg, uint32_t mask)
 {
     p_reg->INTENSET = mask;
 }
 
-__STATIC_INLINE void nrf_kmu_int_disable(NRF_KMU_Type * p_reg, uint32_t mask)
+NRF_STATIC_INLINE void nrf_kmu_int_disable(NRF_KMU_Type * p_reg, uint32_t mask)
 {
     p_reg->INTENCLR = mask;
 }
 
-__STATIC_INLINE bool nrf_kmu_int_enable_check(NRF_KMU_Type const * p_reg,
-                                              nrf_kmu_int_mask_t   kmu_int)
+NRF_STATIC_INLINE uint32_t nrf_kmu_int_enable_check(NRF_KMU_Type const * p_reg, uint32_t mask)
 {
-    return (bool)(p_reg->INTENSET & kmu_int);
+    return p_reg->INTENSET & mask;
 }
 
-__STATIC_INLINE uint32_t nrf_kmu_intpend_get(NRF_KMU_Type const * p_reg)
+NRF_STATIC_INLINE uint32_t nrf_kmu_intpend_get(NRF_KMU_Type const * p_reg)
 {
     return p_reg->INTPEND;
 }
 
-__STATIC_INLINE uint32_t nrf_kmu_status_get(NRF_KMU_Type const * p_reg)
+NRF_STATIC_INLINE uint32_t nrf_kmu_status_get(NRF_KMU_Type const * p_reg)
 {
     return p_reg->STATUS;
 }
 
-__STATIC_INLINE void nrf_kmu_keyslot_set(NRF_KMU_Type * p_reg, uint8_t keyslot_id)
+NRF_STATIC_INLINE void nrf_kmu_keyslot_set(NRF_KMU_Type * p_reg, uint8_t keyslot_id)
 {
     p_reg->SELECTKEYSLOT = (uint32_t) keyslot_id;
 }
 
-__STATIC_INLINE uint8_t nrf_kmu_keyslot_get(NRF_KMU_Type const * p_reg)
+NRF_STATIC_INLINE uint8_t nrf_kmu_keyslot_get(NRF_KMU_Type const * p_reg)
 {
     return (uint8_t) p_reg->SELECTKEYSLOT;
 }
 
-#endif // SUPPRESS_INLINE_IMPLEMENTATION
+#endif // NRF_DECLARE_ONLY
 
 /** @} */
 

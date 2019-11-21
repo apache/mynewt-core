@@ -128,6 +128,12 @@ typedef enum
 #if defined(TIMER_INTENSET_COMPARE5_Msk) || defined(__NRFX_DOXYGEN__)
     NRF_TIMER_TASK_CAPTURE5 = offsetof(NRF_TIMER_Type, TASKS_CAPTURE[5]), ///< Task for capturing the timer value on channel 5.
 #endif
+#if defined(TIMER_INTENSET_COMPARE6_Msk) || defined(__NRFX_DOXYGEN__)
+    NRF_TIMER_TASK_CAPTURE6 = offsetof(NRF_TIMER_Type, TASKS_CAPTURE[6]), ///< Task for capturing the timer value on channel 6.
+#endif
+#if defined(TIMER_INTENSET_COMPARE7_Msk) || defined(__NRFX_DOXYGEN__)
+    NRF_TIMER_TASK_CAPTURE7 = offsetof(NRF_TIMER_Type, TASKS_CAPTURE[7]), ///< Task for capturing the timer value on channel 7.
+#endif
 } nrf_timer_task_t;
 
 /** @brief Timer events. */
@@ -142,6 +148,12 @@ typedef enum
 #endif
 #if defined(TIMER_INTENSET_COMPARE5_Msk) || defined(__NRFX_DOXYGEN__)
     NRF_TIMER_EVENT_COMPARE5 = offsetof(NRF_TIMER_Type, EVENTS_COMPARE[5]), ///< Event from compare channel 5.
+#endif
+#if defined(TIMER_INTENSET_COMPARE6_Msk) || defined(__NRFX_DOXYGEN__)
+    NRF_TIMER_EVENT_COMPARE6 = offsetof(NRF_TIMER_Type, EVENTS_COMPARE[6]), ///< Event from compare channel 6.
+#endif
+#if defined(TIMER_INTENSET_COMPARE7_Msk) || defined(__NRFX_DOXYGEN__)
+    NRF_TIMER_EVENT_COMPARE7 = offsetof(NRF_TIMER_Type, EVENTS_COMPARE[7]), ///< Event from compare channel 7.
 #endif
 } nrf_timer_event_t;
 
@@ -241,8 +253,8 @@ typedef enum
  * @param[in] p_reg Pointer to the structure of registers of the peripheral.
  * @param[in] task  Task to be activated.
  */
-__STATIC_INLINE void nrf_timer_task_trigger(NRF_TIMER_Type * p_reg,
-                                            nrf_timer_task_t task);
+NRF_STATIC_INLINE void nrf_timer_task_trigger(NRF_TIMER_Type * p_reg,
+                                              nrf_timer_task_t task);
 
 /**
  * @brief Function for getting the address of the specified timer task register.
@@ -252,8 +264,8 @@ __STATIC_INLINE void nrf_timer_task_trigger(NRF_TIMER_Type * p_reg,
  *
  * @return Address of the specified task register.
  */
-__STATIC_INLINE uint32_t * nrf_timer_task_address_get(NRF_TIMER_Type * p_reg,
-                                                      nrf_timer_task_t task);
+NRF_STATIC_INLINE uint32_t nrf_timer_task_address_get(NRF_TIMER_Type const * p_reg,
+                                                      nrf_timer_task_t       task);
 
 /**
  * @brief Function for clearing the specified timer event.
@@ -261,8 +273,8 @@ __STATIC_INLINE uint32_t * nrf_timer_task_address_get(NRF_TIMER_Type * p_reg,
  * @param[in] p_reg Pointer to the structure of registers of the peripheral.
  * @param[in] event Event to clear.
  */
-__STATIC_INLINE void nrf_timer_event_clear(NRF_TIMER_Type *  p_reg,
-                                           nrf_timer_event_t event);
+NRF_STATIC_INLINE void nrf_timer_event_clear(NRF_TIMER_Type *  p_reg,
+                                             nrf_timer_event_t event);
 
 /**
  * @brief Function for retrieving the state of the TIMER event.
@@ -273,8 +285,8 @@ __STATIC_INLINE void nrf_timer_event_clear(NRF_TIMER_Type *  p_reg,
  * @retval true  The event has been generated.
  * @retval false The event has not been generated.
  */
-__STATIC_INLINE bool nrf_timer_event_check(NRF_TIMER_Type *  p_reg,
-                                           nrf_timer_event_t event);
+NRF_STATIC_INLINE bool nrf_timer_event_check(NRF_TIMER_Type const * p_reg,
+                                             nrf_timer_event_t      event);
 
 /**
  * @brief Function for getting the address of the specified timer event register.
@@ -284,8 +296,8 @@ __STATIC_INLINE bool nrf_timer_event_check(NRF_TIMER_Type *  p_reg,
  *
  * @return Address of the specified event register.
  */
-__STATIC_INLINE uint32_t * nrf_timer_event_address_get(NRF_TIMER_Type *  p_reg,
-                                                       nrf_timer_event_t event);
+NRF_STATIC_INLINE uint32_t nrf_timer_event_address_get(NRF_TIMER_Type const * p_reg,
+                                                       nrf_timer_event_t      event);
 
 /**
  * @brief Function for enabling the specified shortcuts.
@@ -293,8 +305,8 @@ __STATIC_INLINE uint32_t * nrf_timer_event_address_get(NRF_TIMER_Type *  p_reg,
  * @param[in] p_reg Pointer to the structure of registers of the peripheral.
  * @param[in] mask  Shortcuts to be enabled.
  */
-__STATIC_INLINE void nrf_timer_shorts_enable(NRF_TIMER_Type * p_reg,
-                                             uint32_t         mask);
+NRF_STATIC_INLINE void nrf_timer_shorts_enable(NRF_TIMER_Type * p_reg,
+                                               uint32_t         mask);
 
 /**
  * @brief Function for disabling the specified shortcuts.
@@ -302,8 +314,8 @@ __STATIC_INLINE void nrf_timer_shorts_enable(NRF_TIMER_Type * p_reg,
  * @param[in] p_reg Pointer to the structure of registers of the peripheral.
  * @param[in] mask  Shortcuts to be disabled.
  */
-__STATIC_INLINE void nrf_timer_shorts_disable(NRF_TIMER_Type * p_reg,
-                                              uint32_t         mask);
+NRF_STATIC_INLINE void nrf_timer_shorts_disable(NRF_TIMER_Type * p_reg,
+                                                uint32_t         mask);
 
 /**
  * @brief Function for enabling the specified interrupts.
@@ -311,8 +323,8 @@ __STATIC_INLINE void nrf_timer_shorts_disable(NRF_TIMER_Type * p_reg,
  * @param[in] p_reg Pointer to the structure of registers of the peripheral.
  * @param[in] mask  Mask of interrupts to be enabled.
  */
-__STATIC_INLINE void nrf_timer_int_enable(NRF_TIMER_Type * p_reg,
-                                          uint32_t         mask);
+NRF_STATIC_INLINE void nrf_timer_int_enable(NRF_TIMER_Type * p_reg,
+                                            uint32_t         mask);
 
 /**
  * @brief Function for disabling the specified interrupts.
@@ -320,20 +332,18 @@ __STATIC_INLINE void nrf_timer_int_enable(NRF_TIMER_Type * p_reg,
  * @param[in] p_reg Pointer to the structure of registers of the peripheral.
  * @param[in] mask  Mask of interrupts to be disabled.
  */
-__STATIC_INLINE void nrf_timer_int_disable(NRF_TIMER_Type * p_reg,
-                                           uint32_t         mask);
+NRF_STATIC_INLINE void nrf_timer_int_disable(NRF_TIMER_Type * p_reg,
+                                             uint32_t         mask);
 
 /**
- * @brief Function for retrieving the state of a given interrupt.
+ * @brief Function for checking if the specified interrupts are enabled.
  *
- * @param[in] p_reg     Pointer to the structure of registers of the peripheral.
- * @param[in] timer_int Interrupt to be checked.
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] mask  Mask of interrupts to be checked.
  *
- * @retval true  The interrupt is enabled.
- * @retval false The interrupt is not enabled.
+ * @return Mask of enabled interrupts.
  */
-__STATIC_INLINE bool nrf_timer_int_enable_check(NRF_TIMER_Type * p_reg,
-                                                uint32_t         timer_int);
+NRF_STATIC_INLINE uint32_t nrf_timer_int_enable_check(NRF_TIMER_Type const * p_reg, uint32_t mask);
 
 #if defined(DPPI_PRESENT) || defined(__NRFX_DOXYGEN__)
 /**
@@ -344,9 +354,9 @@ __STATIC_INLINE bool nrf_timer_int_enable_check(NRF_TIMER_Type * p_reg,
  * @param[in] task    Task for which to set the configuration.
  * @param[in] channel Channel through which to subscribe events.
  */
-__STATIC_INLINE void nrf_timer_subscribe_set(NRF_TIMER_Type * p_reg,
-                                             nrf_timer_task_t task,
-                                             uint8_t          channel);
+NRF_STATIC_INLINE void nrf_timer_subscribe_set(NRF_TIMER_Type * p_reg,
+                                               nrf_timer_task_t task,
+                                               uint8_t          channel);
 
 /**
  * @brief Function for clearing the subscribe configuration for a given
@@ -355,8 +365,8 @@ __STATIC_INLINE void nrf_timer_subscribe_set(NRF_TIMER_Type * p_reg,
  * @param[in] p_reg Pointer to the structure of registers of the peripheral.
  * @param[in] task  Task for which to clear the configuration.
  */
-__STATIC_INLINE void nrf_timer_subscribe_clear(NRF_TIMER_Type * p_reg,
-                                               nrf_timer_task_t task);
+NRF_STATIC_INLINE void nrf_timer_subscribe_clear(NRF_TIMER_Type * p_reg,
+                                                 nrf_timer_task_t task);
 
 /**
  * @brief Function for setting the publish configuration for a given
@@ -366,9 +376,9 @@ __STATIC_INLINE void nrf_timer_subscribe_clear(NRF_TIMER_Type * p_reg,
  * @param[in] event   Event for which to set the configuration.
  * @param[in] channel Channel through which to publish the event.
  */
-__STATIC_INLINE void nrf_timer_publish_set(NRF_TIMER_Type *  p_reg,
-                                           nrf_timer_event_t event,
-                                           uint8_t           channel);
+NRF_STATIC_INLINE void nrf_timer_publish_set(NRF_TIMER_Type *  p_reg,
+                                             nrf_timer_event_t event,
+                                             uint8_t           channel);
 
 /**
  * @brief Function for clearing the publish configuration for a given
@@ -377,8 +387,8 @@ __STATIC_INLINE void nrf_timer_publish_set(NRF_TIMER_Type *  p_reg,
  * @param[in] p_reg Pointer to the structure of registers of the peripheral.
  * @param[in] event Event for which to clear the configuration.
  */
-__STATIC_INLINE void nrf_timer_publish_clear(NRF_TIMER_Type *  p_reg,
-                                             nrf_timer_event_t event);
+NRF_STATIC_INLINE void nrf_timer_publish_clear(NRF_TIMER_Type *  p_reg,
+                                               nrf_timer_event_t event);
 #endif // defined(DPPI_PRESENT) || defined(__NRFX_DOXYGEN__)
 
 /**
@@ -387,8 +397,8 @@ __STATIC_INLINE void nrf_timer_publish_clear(NRF_TIMER_Type *  p_reg,
  * @param[in] p_reg Pointer to the structure of registers of the peripheral.
  * @param[in] mode  Timer mode.
  */
-__STATIC_INLINE void nrf_timer_mode_set(NRF_TIMER_Type * p_reg,
-                                        nrf_timer_mode_t mode);
+NRF_STATIC_INLINE void nrf_timer_mode_set(NRF_TIMER_Type * p_reg,
+                                          nrf_timer_mode_t mode);
 
 /**
  * @brief Function for retrieving the timer mode.
@@ -397,7 +407,7 @@ __STATIC_INLINE void nrf_timer_mode_set(NRF_TIMER_Type * p_reg,
  *
  * @return Timer mode.
  */
-__STATIC_INLINE nrf_timer_mode_t nrf_timer_mode_get(NRF_TIMER_Type * p_reg);
+NRF_STATIC_INLINE nrf_timer_mode_t nrf_timer_mode_get(NRF_TIMER_Type const * p_reg);
 
 /**
  * @brief Function for setting the timer bit width.
@@ -405,8 +415,8 @@ __STATIC_INLINE nrf_timer_mode_t nrf_timer_mode_get(NRF_TIMER_Type * p_reg);
  * @param[in] p_reg     Pointer to the structure of registers of the peripheral.
  * @param[in] bit_width Timer bit width.
  */
-__STATIC_INLINE void nrf_timer_bit_width_set(NRF_TIMER_Type *      p_reg,
-                                             nrf_timer_bit_width_t bit_width);
+NRF_STATIC_INLINE void nrf_timer_bit_width_set(NRF_TIMER_Type *      p_reg,
+                                               nrf_timer_bit_width_t bit_width);
 
 /**
  * @brief Function for retrieving the timer bit width.
@@ -415,7 +425,7 @@ __STATIC_INLINE void nrf_timer_bit_width_set(NRF_TIMER_Type *      p_reg,
  *
  * @return Timer bit width.
  */
-__STATIC_INLINE nrf_timer_bit_width_t nrf_timer_bit_width_get(NRF_TIMER_Type * p_reg);
+NRF_STATIC_INLINE nrf_timer_bit_width_t nrf_timer_bit_width_get(NRF_TIMER_Type const * p_reg);
 
 /**
  * @brief Function for setting the timer frequency.
@@ -423,8 +433,8 @@ __STATIC_INLINE nrf_timer_bit_width_t nrf_timer_bit_width_get(NRF_TIMER_Type * p
  * @param[in] p_reg     Pointer to the structure of registers of the peripheral.
  * @param[in] frequency Timer frequency.
  */
-__STATIC_INLINE void nrf_timer_frequency_set(NRF_TIMER_Type *      p_reg,
-                                             nrf_timer_frequency_t frequency);
+NRF_STATIC_INLINE void nrf_timer_frequency_set(NRF_TIMER_Type *      p_reg,
+                                               nrf_timer_frequency_t frequency);
 
 /**
  * @brief Function for retrieving the timer frequency.
@@ -433,16 +443,16 @@ __STATIC_INLINE void nrf_timer_frequency_set(NRF_TIMER_Type *      p_reg,
  *
  * @return Timer frequency.
  */
-__STATIC_INLINE nrf_timer_frequency_t nrf_timer_frequency_get(NRF_TIMER_Type * p_reg);
+NRF_STATIC_INLINE nrf_timer_frequency_t nrf_timer_frequency_get(NRF_TIMER_Type const * p_reg);
 
 /**
- * @brief Function for writing the capture/compare register for the specified channel.
+ * @brief Function for setting the capture/compare register for the specified channel.
  *
  * @param[in] p_reg      Pointer to the structure of registers of the peripheral.
  * @param[in] cc_channel The specified capture/compare channel.
  * @param[in] cc_value   Value to write to the capture/compare register.
  */
-__STATIC_INLINE void nrf_timer_cc_write(NRF_TIMER_Type *       p_reg,
+NRF_STATIC_INLINE void nrf_timer_cc_set(NRF_TIMER_Type *       p_reg,
                                         nrf_timer_cc_channel_t cc_channel,
                                         uint32_t               cc_value);
 
@@ -454,8 +464,8 @@ __STATIC_INLINE void nrf_timer_cc_write(NRF_TIMER_Type *       p_reg,
  *
  * @return Value from the specified capture/compare register.
  */
-__STATIC_INLINE uint32_t nrf_timer_cc_read(NRF_TIMER_Type *       p_reg,
-                                           nrf_timer_cc_channel_t cc_channel);
+NRF_STATIC_INLINE uint32_t nrf_timer_cc_get(NRF_TIMER_Type const * p_reg,
+                                            nrf_timer_cc_channel_t cc_channel);
 
 /**
  * @brief Function for getting the specified timer capture task.
@@ -464,7 +474,7 @@ __STATIC_INLINE uint32_t nrf_timer_cc_read(NRF_TIMER_Type *       p_reg,
  *
  * @return Capture task.
  */
-__STATIC_INLINE nrf_timer_task_t nrf_timer_capture_task_get(uint32_t channel);
+NRF_STATIC_INLINE nrf_timer_task_t nrf_timer_capture_task_get(uint32_t channel);
 
 /**
  * @brief Function for getting the specified timer compare event.
@@ -473,7 +483,7 @@ __STATIC_INLINE nrf_timer_task_t nrf_timer_capture_task_get(uint32_t channel);
  *
  * @return Compare event.
  */
-__STATIC_INLINE nrf_timer_event_t nrf_timer_compare_event_get(uint32_t channel);
+NRF_STATIC_INLINE nrf_timer_event_t nrf_timer_compare_event_get(uint32_t channel);
 
 /**
  * @brief Function for getting the specified timer compare interrupt.
@@ -482,7 +492,7 @@ __STATIC_INLINE nrf_timer_event_t nrf_timer_compare_event_get(uint32_t channel);
  *
  * @return Compare interrupt.
  */
-__STATIC_INLINE nrf_timer_int_mask_t nrf_timer_compare_int_get(uint32_t channel);
+NRF_STATIC_INLINE nrf_timer_int_mask_t nrf_timer_compare_int_get(uint32_t channel);
 
 /**
  * @brief Function for calculating the number of timer ticks for a given time
@@ -493,8 +503,8 @@ __STATIC_INLINE nrf_timer_int_mask_t nrf_timer_compare_int_get(uint32_t channel)
  *
  * @return Number of timer ticks.
  */
-__STATIC_INLINE uint32_t nrf_timer_us_to_ticks(uint32_t              time_us,
-                                               nrf_timer_frequency_t frequency);
+NRF_STATIC_INLINE uint32_t nrf_timer_us_to_ticks(uint32_t              time_us,
+                                                 nrf_timer_frequency_t frequency);
 
 /**
  * @brief Function for calculating the number of timer ticks for a given time
@@ -505,26 +515,46 @@ __STATIC_INLINE uint32_t nrf_timer_us_to_ticks(uint32_t              time_us,
  *
  * @return Number of timer ticks.
  */
-__STATIC_INLINE uint32_t nrf_timer_ms_to_ticks(uint32_t              time_ms,
-                                               nrf_timer_frequency_t frequency);
+NRF_STATIC_INLINE uint32_t nrf_timer_ms_to_ticks(uint32_t              time_ms,
+                                                 nrf_timer_frequency_t frequency);
 
+#if defined(TIMER_ONESHOTEN_ONESHOTEN_Msk) || defined(__NRFX_DOXYGEN__)
+/**
+ * @brief Function for enabling one-shot operation for the specified capture/compare channel.
+ *
+ * @param[in] p_reg      Pointer to the structure of registers of the peripheral.
+ * @param[in] cc_channel Capture/compare channel.
+ */
+NRF_STATIC_INLINE void nrf_timer_one_shot_enable(NRF_TIMER_Type *       p_reg,
+                                                 nrf_timer_cc_channel_t cc_channel);
 
-#ifndef SUPPRESS_INLINE_IMPLEMENTATION
+/**
+ * @brief Function for disabling one-shot operation for the specified capture/compare channel.
+ *
+ * @param[in] p_reg      Pointer to the structure of registers of the peripheral.
+ * @param[in] cc_channel Capture/compare channel.
+ */
+NRF_STATIC_INLINE void nrf_timer_one_shot_disable(NRF_TIMER_Type *       p_reg,
+                                                  nrf_timer_cc_channel_t cc_channel);
 
-__STATIC_INLINE void nrf_timer_task_trigger(NRF_TIMER_Type * p_reg,
-                                            nrf_timer_task_t task)
+#endif // defined(TIMER_ONESHOTEN_ONESHOTEN_Msk) || defined(__NRFX_DOXYGEN__)
+
+#ifndef NRF_DECLARE_ONLY
+
+NRF_STATIC_INLINE void nrf_timer_task_trigger(NRF_TIMER_Type * p_reg,
+                                              nrf_timer_task_t task)
 {
     *((volatile uint32_t *)((uint8_t *)p_reg + (uint32_t)task)) = 0x1UL;
 }
 
-__STATIC_INLINE uint32_t * nrf_timer_task_address_get(NRF_TIMER_Type * p_reg,
-                                                      nrf_timer_task_t task)
+NRF_STATIC_INLINE uint32_t nrf_timer_task_address_get(NRF_TIMER_Type const * p_reg,
+                                                      nrf_timer_task_t       task)
 {
-    return (uint32_t *)((uint8_t *)p_reg + (uint32_t)task);
+    return (uint32_t)((uint8_t *)p_reg + (uint32_t)task);
 }
 
-__STATIC_INLINE void nrf_timer_event_clear(NRF_TIMER_Type * p_reg,
-                                           nrf_timer_event_t event)
+NRF_STATIC_INLINE void nrf_timer_event_clear(NRF_TIMER_Type *  p_reg,
+                                             nrf_timer_event_t event)
 {
     *((volatile uint32_t *)((uint8_t *)p_reg + (uint32_t)event)) = 0x0UL;
 #if __CORTEX_M == 0x04
@@ -533,149 +563,146 @@ __STATIC_INLINE void nrf_timer_event_clear(NRF_TIMER_Type * p_reg,
 #endif
 }
 
-__STATIC_INLINE bool nrf_timer_event_check(NRF_TIMER_Type * p_reg,
-                                           nrf_timer_event_t event)
+NRF_STATIC_INLINE bool nrf_timer_event_check(NRF_TIMER_Type const * p_reg,
+                                             nrf_timer_event_t      event)
 {
     return (bool)*(volatile uint32_t *)((uint8_t *)p_reg + (uint32_t)event);
 }
 
-__STATIC_INLINE uint32_t * nrf_timer_event_address_get(NRF_TIMER_Type * p_reg,
-                                                       nrf_timer_event_t event)
+NRF_STATIC_INLINE uint32_t nrf_timer_event_address_get(NRF_TIMER_Type const * p_reg,
+                                                       nrf_timer_event_t      event)
 {
-    return (uint32_t *)((uint8_t *)p_reg + (uint32_t)event);
+    return (uint32_t)((uint8_t *)p_reg + (uint32_t)event);
 }
 
-__STATIC_INLINE void nrf_timer_shorts_enable(NRF_TIMER_Type * p_reg,
-                                             uint32_t mask)
+NRF_STATIC_INLINE void nrf_timer_shorts_enable(NRF_TIMER_Type * p_reg,
+                                               uint32_t         mask)
 {
     p_reg->SHORTS |= mask;
 }
 
-__STATIC_INLINE void nrf_timer_shorts_disable(NRF_TIMER_Type * p_reg,
-                                              uint32_t mask)
+NRF_STATIC_INLINE void nrf_timer_shorts_disable(NRF_TIMER_Type * p_reg,
+                                                uint32_t         mask)
 {
     p_reg->SHORTS &= ~(mask);
 }
 
-__STATIC_INLINE void nrf_timer_int_enable(NRF_TIMER_Type * p_reg,
-                                          uint32_t mask)
+NRF_STATIC_INLINE void nrf_timer_int_enable(NRF_TIMER_Type * p_reg,
+                                            uint32_t         mask)
 {
     p_reg->INTENSET = mask;
 }
 
-__STATIC_INLINE void nrf_timer_int_disable(NRF_TIMER_Type * p_reg,
-                                           uint32_t mask)
+NRF_STATIC_INLINE void nrf_timer_int_disable(NRF_TIMER_Type * p_reg,
+                                             uint32_t         mask)
 {
     p_reg->INTENCLR = mask;
 }
 
-__STATIC_INLINE bool nrf_timer_int_enable_check(NRF_TIMER_Type * p_reg,
-                                                uint32_t timer_int)
+NRF_STATIC_INLINE uint32_t nrf_timer_int_enable_check(NRF_TIMER_Type const * p_reg, uint32_t mask)
 {
-    return (bool)(p_reg->INTENSET & timer_int);
+    return p_reg->INTENSET & mask;
 }
 
 #if defined(DPPI_PRESENT)
-__STATIC_INLINE void nrf_timer_subscribe_set(NRF_TIMER_Type * p_reg,
-                                             nrf_timer_task_t task,
-                                             uint8_t          channel)
+NRF_STATIC_INLINE void nrf_timer_subscribe_set(NRF_TIMER_Type * p_reg,
+                                               nrf_timer_task_t task,
+                                               uint8_t          channel)
 {
     *((volatile uint32_t *) ((uint8_t *) p_reg + (uint32_t) task + 0x80uL)) =
             ((uint32_t)channel | TIMER_SUBSCRIBE_START_EN_Msk);
 }
 
-__STATIC_INLINE void nrf_timer_subscribe_clear(NRF_TIMER_Type * p_reg,
-                                               nrf_timer_task_t task)
+NRF_STATIC_INLINE void nrf_timer_subscribe_clear(NRF_TIMER_Type * p_reg,
+                                                 nrf_timer_task_t task)
 {
     *((volatile uint32_t *) ((uint8_t *) p_reg + (uint32_t) task + 0x80uL)) = 0;
 }
 
-__STATIC_INLINE void nrf_timer_publish_set(NRF_TIMER_Type *  p_reg,
-                                           nrf_timer_event_t event,
-                                           uint8_t           channel)
+NRF_STATIC_INLINE void nrf_timer_publish_set(NRF_TIMER_Type *  p_reg,
+                                             nrf_timer_event_t event,
+                                             uint8_t           channel)
 {
     *((volatile uint32_t *) ((uint8_t *) p_reg + (uint32_t) event + 0x80uL)) =
             ((uint32_t)channel | TIMER_PUBLISH_COMPARE_EN_Msk);
 }
 
-__STATIC_INLINE void nrf_timer_publish_clear(NRF_TIMER_Type *  p_reg,
-                                             nrf_timer_event_t event)
+NRF_STATIC_INLINE void nrf_timer_publish_clear(NRF_TIMER_Type *  p_reg,
+                                               nrf_timer_event_t event)
 {
     *((volatile uint32_t *) ((uint8_t *) p_reg + (uint32_t) event + 0x80uL)) = 0;
 }
 #endif // defined(DPPI_PRESENT)
 
-__STATIC_INLINE void nrf_timer_mode_set(NRF_TIMER_Type * p_reg,
-                                        nrf_timer_mode_t mode)
+NRF_STATIC_INLINE void nrf_timer_mode_set(NRF_TIMER_Type * p_reg,
+                                          nrf_timer_mode_t mode)
 {
     p_reg->MODE = (p_reg->MODE & ~TIMER_MODE_MODE_Msk) |
                     ((mode << TIMER_MODE_MODE_Pos) & TIMER_MODE_MODE_Msk);
 }
 
-__STATIC_INLINE nrf_timer_mode_t nrf_timer_mode_get(NRF_TIMER_Type * p_reg)
+NRF_STATIC_INLINE nrf_timer_mode_t nrf_timer_mode_get(NRF_TIMER_Type const * p_reg)
 {
     return (nrf_timer_mode_t)(p_reg->MODE);
 }
 
-__STATIC_INLINE void nrf_timer_bit_width_set(NRF_TIMER_Type * p_reg,
-                                             nrf_timer_bit_width_t bit_width)
+NRF_STATIC_INLINE void nrf_timer_bit_width_set(NRF_TIMER_Type *      p_reg,
+                                               nrf_timer_bit_width_t bit_width)
 {
     p_reg->BITMODE = (p_reg->BITMODE & ~TIMER_BITMODE_BITMODE_Msk) |
                        ((bit_width << TIMER_BITMODE_BITMODE_Pos) &
                             TIMER_BITMODE_BITMODE_Msk);
 }
 
-__STATIC_INLINE nrf_timer_bit_width_t nrf_timer_bit_width_get(NRF_TIMER_Type * p_reg)
+NRF_STATIC_INLINE nrf_timer_bit_width_t nrf_timer_bit_width_get(NRF_TIMER_Type const * p_reg)
 {
     return (nrf_timer_bit_width_t)(p_reg->BITMODE);
 }
 
-__STATIC_INLINE void nrf_timer_frequency_set(NRF_TIMER_Type * p_reg,
-                                             nrf_timer_frequency_t frequency)
+NRF_STATIC_INLINE void nrf_timer_frequency_set(NRF_TIMER_Type *      p_reg,
+                                               nrf_timer_frequency_t frequency)
 {
     p_reg->PRESCALER = (p_reg->PRESCALER & ~TIMER_PRESCALER_PRESCALER_Msk) |
                          ((frequency << TIMER_PRESCALER_PRESCALER_Pos) &
                               TIMER_PRESCALER_PRESCALER_Msk);
 }
 
-__STATIC_INLINE nrf_timer_frequency_t nrf_timer_frequency_get(NRF_TIMER_Type * p_reg)
+NRF_STATIC_INLINE nrf_timer_frequency_t nrf_timer_frequency_get(NRF_TIMER_Type const * p_reg)
 {
     return (nrf_timer_frequency_t)(p_reg->PRESCALER);
 }
 
-__STATIC_INLINE void nrf_timer_cc_write(NRF_TIMER_Type * p_reg,
+NRF_STATIC_INLINE void nrf_timer_cc_set(NRF_TIMER_Type *       p_reg,
                                         nrf_timer_cc_channel_t cc_channel,
                                         uint32_t               cc_value)
 {
     p_reg->CC[cc_channel] = cc_value;
 }
 
-__STATIC_INLINE uint32_t nrf_timer_cc_read(NRF_TIMER_Type * p_reg,
-                                           nrf_timer_cc_channel_t cc_channel)
+NRF_STATIC_INLINE uint32_t nrf_timer_cc_get(NRF_TIMER_Type const * p_reg,
+                                            nrf_timer_cc_channel_t cc_channel)
 {
     return (uint32_t)p_reg->CC[cc_channel];
 }
 
-__STATIC_INLINE nrf_timer_task_t nrf_timer_capture_task_get(uint32_t channel)
+NRF_STATIC_INLINE nrf_timer_task_t nrf_timer_capture_task_get(uint32_t channel)
 {
-    return (nrf_timer_task_t)
-        ((uint32_t)NRF_TIMER_TASK_CAPTURE0 + (channel * sizeof(uint32_t)));
+    return (nrf_timer_task_t)NRFX_OFFSETOF(NRF_TIMER_Type, TASKS_CAPTURE[channel]);
 }
 
-__STATIC_INLINE nrf_timer_event_t nrf_timer_compare_event_get(uint32_t channel)
+NRF_STATIC_INLINE nrf_timer_event_t nrf_timer_compare_event_get(uint32_t channel)
 {
-    return (nrf_timer_event_t)
-        ((uint32_t)NRF_TIMER_EVENT_COMPARE0 + (channel * sizeof(uint32_t)));
+    return (nrf_timer_event_t)NRFX_OFFSETOF(NRF_TIMER_Type, EVENTS_COMPARE[channel]);
 }
 
-__STATIC_INLINE nrf_timer_int_mask_t nrf_timer_compare_int_get(uint32_t channel)
+NRF_STATIC_INLINE nrf_timer_int_mask_t nrf_timer_compare_int_get(uint32_t channel)
 {
     return (nrf_timer_int_mask_t)
         ((uint32_t)NRF_TIMER_INT_COMPARE0_MASK << channel);
 }
 
-__STATIC_INLINE uint32_t nrf_timer_us_to_ticks(uint32_t              time_us,
-                                               nrf_timer_frequency_t frequency)
+NRF_STATIC_INLINE uint32_t nrf_timer_us_to_ticks(uint32_t              time_us,
+                                                 nrf_timer_frequency_t frequency)
 {
     // The "frequency" parameter here is actually the prescaler value, and the
     // timer runs at the following frequency: f = 16 MHz / 2^prescaler.
@@ -685,8 +712,8 @@ __STATIC_INLINE uint32_t nrf_timer_us_to_ticks(uint32_t              time_us,
     return (uint32_t)ticks;
 }
 
-__STATIC_INLINE uint32_t nrf_timer_ms_to_ticks(uint32_t              time_ms,
-                                               nrf_timer_frequency_t frequency)
+NRF_STATIC_INLINE uint32_t nrf_timer_ms_to_ticks(uint32_t              time_ms,
+                                                 nrf_timer_frequency_t frequency)
 {
     // The "frequency" parameter here is actually the prescaler value, and the
     // timer runs at the following frequency: f = 16000 kHz / 2^prescaler.
@@ -696,7 +723,21 @@ __STATIC_INLINE uint32_t nrf_timer_ms_to_ticks(uint32_t              time_ms,
     return (uint32_t)ticks;
 }
 
-#endif // SUPPRESS_INLINE_IMPLEMENTATION
+#if defined(TIMER_ONESHOTEN_ONESHOTEN_Msk)
+NRF_STATIC_INLINE void nrf_timer_one_shot_enable(NRF_TIMER_Type *       p_reg,
+                                                 nrf_timer_cc_channel_t cc_channel)
+{
+    p_reg->ONESHOTEN[cc_channel] = TIMER_ONESHOTEN_ONESHOTEN_Msk;
+}
+
+NRF_STATIC_INLINE void nrf_timer_one_shot_disable(NRF_TIMER_Type *       p_reg,
+                                                  nrf_timer_cc_channel_t cc_channel)
+{
+    p_reg->ONESHOTEN[cc_channel] = 0;
+}
+#endif // defined(TIMER_ONESHOTEN_ONESHOTEN_Msk)
+
+#endif // NRF_DECLARE_ONLY
 
 /** @} */
 

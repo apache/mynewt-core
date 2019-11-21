@@ -26,17 +26,13 @@ NOTICE: This file has been modified by Nordic Semiconductor ASA.
 #include <stdint.h>
 #include <stdbool.h>
 #include "nrf.h"
+#include "nrf_erratas.h"
 #include "system_nrf51.h"
 
 /*lint ++flb "Enter library region" */
 
 
 #define __SYSTEM_CLOCK      (16000000UL)     /*!< nRF51 devices use a fixed System Clock Frequency of 16MHz */
-
-static bool is_manual_peripheral_setup_needed(void);
-static bool is_disabled_in_debug_needed(void);
-static bool is_peripheral_domain_setup_needed(void);
-
 
 #if defined ( __CC_ARM )
     uint32_t SystemCoreClock __attribute__((used)) = __SYSTEM_CLOCK;
@@ -58,10 +54,10 @@ void SystemInit(void)
 
     /* Prepare the peripherals for use as indicated by the PAN 26 "System: Manual setup is required
        to enable the use of peripherals" found at Product Anomaly document for your device found at
-       https://www.nordicsemi.com/DocLib The side effect of executing these instructions in the devices
+       https://infocenter.nordicsemi.com/index.jsp The side effect of executing these instructions in the devices
        that do not need it is that the new peripherals in the second generation devices (LPCOMP for
        example) will not be available. */
-    if (is_manual_peripheral_setup_needed())
+    if (errata_26())
     {
         *(uint32_t volatile *)0x40000504 = 0xC007FFDF;
         *(uint32_t volatile *)0x40006C18 = 0x00008000;
@@ -69,16 +65,16 @@ void SystemInit(void)
 
     /* Disable PROTENSET registers under debug, as indicated by PAN 59 "MPU: Reset value of DISABLEINDEBUG
        register is incorrect" found at Product Anomaly document for your device found at
-       https://www.nordicsemi.com/DocLib There is no side effect of using these instruction if not needed. */
-    if (is_disabled_in_debug_needed())
+       https://infocenter.nordicsemi.com/index.jsp There is no side effect of using these instruction if not needed. */
+    if (errata_59())
     {
         NRF_MPU->DISABLEINDEBUG = MPU_DISABLEINDEBUG_DISABLEINDEBUG_Disabled << MPU_DISABLEINDEBUG_DISABLEINDEBUG_Pos;
     }
 
     /* Execute the following code to eliminate excessive current in sleep mode with RAM retention in nRF51802 devices,
        as indicated by PAN 76 "System: Excessive current in sleep mode with retention" found at Product Anomaly document
-       for your device found at https://www.nordicsemi.com/DocLib */
-    if (is_peripheral_domain_setup_needed()){
+       for your device found at https://infocenter.nordicsemi.com/index.jsp */
+    if (errata_76()){
         if (*(uint32_t volatile *)0x4006EC00 != 1){
             *(uint32_t volatile *)0x4006EC00 = 0x9375;
             while (*(uint32_t volatile *)0x4006EC00 != 1){
@@ -86,58 +82,6 @@ void SystemInit(void)
         }
         *(uint32_t volatile *)0x4006EC14 = 0xC0;
     }
-}
-
-
-static bool is_manual_peripheral_setup_needed(void)
-{
-    if ((((*(uint32_t *)0xF0000FE0) & 0x000000FF) == 0x1) && (((*(uint32_t *)0xF0000FE4) & 0x0000000F) == 0x0))
-    {
-        if ((((*(uint32_t *)0xF0000FE8) & 0x000000F0) == 0x00) && (((*(uint32_t *)0xF0000FEC) & 0x000000F0) == 0x0))
-        {
-            return true;
-        }
-        if ((((*(uint32_t *)0xF0000FE8) & 0x000000F0) == 0x10) && (((*(uint32_t *)0xF0000FEC) & 0x000000F0) == 0x0))
-        {
-            return true;
-        }
-        if ((((*(uint32_t *)0xF0000FE8) & 0x000000F0) == 0x30) && (((*(uint32_t *)0xF0000FEC) & 0x000000F0) == 0x0))
-        {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-static bool is_disabled_in_debug_needed(void)
-{
-    if ((((*(uint32_t *)0xF0000FE0) & 0x000000FF) == 0x1) && (((*(uint32_t *)0xF0000FE4) & 0x0000000F) == 0x0))
-    {
-        if ((((*(uint32_t *)0xF0000FE8) & 0x000000F0) == 0x40) && (((*(uint32_t *)0xF0000FEC) & 0x000000F0) == 0x0))
-        {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-static bool is_peripheral_domain_setup_needed(void)
-{
-    if ((((*(uint32_t *)0xF0000FE0) & 0x000000FF) == 0x1) && (((*(uint32_t *)0xF0000FE4) & 0x0000000F) == 0x0))
-    {
-        if ((((*(uint32_t *)0xF0000FE8) & 0x000000F0) == 0xA0) && (((*(uint32_t *)0xF0000FEC) & 0x000000F0) == 0x0))
-        {
-            return true;
-        }
-        if ((((*(uint32_t *)0xF0000FE8) & 0x000000F0) == 0xD0) && (((*(uint32_t *)0xF0000FEC) & 0x000000F0) == 0x0))
-        {
-            return true;
-        }
-    }
-
-    return false;
 }
 
 /*lint --flb "Leave library region" */

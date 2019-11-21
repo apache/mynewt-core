@@ -171,8 +171,8 @@ nrfx_err_t nrfx_i2s_init(nrfx_i2s_config_t const * p_config,
 
     m_cb.handler = handler;
 
-    NRFX_IRQ_PRIORITY_SET(I2S_IRQn, p_config->irq_priority);
-    NRFX_IRQ_ENABLE(I2S_IRQn);
+    NRFX_IRQ_PRIORITY_SET(nrfx_get_irq_number(NRF_I2S), p_config->irq_priority);
+    NRFX_IRQ_ENABLE(nrfx_get_irq_number(NRF_I2S));
 
     m_cb.state = NRFX_DRV_STATE_INITIALIZED;
 
@@ -187,7 +187,7 @@ void nrfx_i2s_uninit(void)
 
     nrfx_i2s_stop();
 
-    NRFX_IRQ_DISABLE(I2S_IRQn);
+    NRFX_IRQ_DISABLE(nrfx_get_irq_number(NRF_I2S));
 
     nrf_i2s_pins_set(NRF_I2S,
                      NRF_I2S_PIN_NOT_CONNECTED,

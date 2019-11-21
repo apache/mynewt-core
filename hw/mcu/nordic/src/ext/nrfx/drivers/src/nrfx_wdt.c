@@ -32,49 +32,46 @@
 #include <nrfx.h>
 
 #if NRFX_CHECK(NRFX_WDT_ENABLED)
+
+#if !(NRFX_CHECK(NRFX_WDT0_ENABLED) || NRFX_CHECK(NRFX_WDT1_ENABLED))
+#error "No enabled WDT instances. Check <nrfx_config.h>."
+#endif
+
 #include <nrfx_wdt.h>
 
 #define NRFX_LOG_MODULE WDT
 #include <nrfx_log.h>
 
-/**@brief WDT state. */
-static nrfx_drv_state_t m_state;
-
-/**@brief WDT alloc table. */
-static uint8_t m_alloc_index;
-
-#if !NRFX_CHECK(NRFX_WDT_CONFIG_NO_IRQ)
-/**@brief WDT event handler. */
-static nrfx_wdt_event_handler_t m_wdt_event_handler;
-
-/**@brief WDT interrupt handler. */
-void nrfx_wdt_irq_handler(void)
+// Control block - driver instance local data.
+typedef struct
 {
-    if (nrf_wdt_event_check(NRF_WDT_EVENT_TIMEOUT))
-    {
-        m_wdt_event_handler();
-        nrf_wdt_event_clear(NRF_WDT_EVENT_TIMEOUT);
-    }
-}
+    nrfx_drv_state_t         state;
+    uint8_t                  alloc_index;
+#if !NRFX_CHECK(NRFX_WDT_CONFIG_NO_IRQ)
+    nrfx_wdt_event_handler_t wdt_event_handler;
 #endif
+} wdt_control_block_t;
 
+static wdt_control_block_t m_cb[NRFX_WDT_ENABLED_COUNT];
 
-nrfx_err_t nrfx_wdt_init(nrfx_wdt_config_t const * p_config,
+nrfx_err_t nrfx_wdt_init(nrfx_wdt_t const *        p_instance,
+                         nrfx_wdt_config_t const * p_config,
                          nrfx_wdt_event_handler_t  wdt_event_handler)
 {
     NRFX_ASSERT(p_config);
     nrfx_err_t err_code;
 
-#if !NRFX_CHECK(NRFX_WDT_CONFIG_NO_IRQ)
-    NRFX_ASSERT(wdt_event_handler != NULL);
-    m_wdt_event_handler = wdt_event_handler;
-#else
-    NRFX_ASSERT(wdt_event_handler == NULL);
+    wdt_control_block_t * p_cb = &m_cb[p_instance->drv_inst_idx];
+
+#if NRFX_CHECK(NRFX_WDT_CONFIG_NO_IRQ)
     (void)wdt_event_handler;
+#else
+    p_cb->wdt_event_handler = wdt_event_handler;
 #endif
-    if (m_state == NRFX_DRV_STATE_UNINITIALIZED)
+
+    if (p_cb->state == NRFX_DRV_STATE_UNINITIALIZED)
     {
-        m_state = NRFX_DRV_STATE_INITIALIZED;
+        p_cb->state = NRFX_DRV_STATE_INITIALIZED;
     }
     else
     {
@@ -85,13 +82,20 @@ nrfx_err_t nrfx_wdt_init(nrfx_wdt_config_t const * p_config,
         return err_code;
     }
 
-    nrf_wdt_behaviour_set(p_config->behaviour);
+    nrf_wdt_behaviour_set(p_instance->p_reg, p_config->behaviour);
 
-    nrf_wdt_reload_value_set((p_config->reload_value * 32768) / 1000);
+    uint64_t ticks = (p_config->reload_value * 32768ULL) / 1000;
+    NRFX_ASSERT(ticks <= UINT32_MAX);
+
+    nrf_wdt_reload_value_set(p_instance->p_reg, (uint32_t) ticks);
 
 #if !NRFX_CHECK(NRFX_WDT_CONFIG_NO_IRQ)
-    NRFX_IRQ_PRIORITY_SET(WDT_IRQn, p_config->interrupt_priority);
-    NRFX_IRQ_ENABLE(WDT_IRQn);
+    if (wdt_event_handler)
+    {
+        nrf_wdt_int_enable(p_instance->p_reg, NRF_WDT_INT_TIMEOUT_MASK);
+        NRFX_IRQ_PRIORITY_SET(nrfx_get_irq_number(p_instance->p_reg), p_config->interrupt_priority);
+        NRFX_IRQ_ENABLE(nrfx_get_irq_number(p_instance->p_reg));
+    }
 #endif
 
     err_code = NRFX_SUCCESS;
@@ -100,40 +104,41 @@ nrfx_err_t nrfx_wdt_init(nrfx_wdt_config_t const * p_config,
 }
 
 
-void nrfx_wdt_enable(void)
+void nrfx_wdt_enable(nrfx_wdt_t const * p_instance)
 {
-    NRFX_ASSERT(m_alloc_index != 0);
-    NRFX_ASSERT(m_state == NRFX_DRV_STATE_INITIALIZED);
-#if !NRFX_CHECK(NRFX_WDT_CONFIG_NO_IRQ)
-    nrf_wdt_int_enable(NRF_WDT_INT_TIMEOUT_MASK);
-#endif
-    nrf_wdt_task_trigger(NRF_WDT_TASK_START);
-    m_state = NRFX_DRV_STATE_POWERED_ON;
+    wdt_control_block_t * p_cb = &m_cb[p_instance->drv_inst_idx];
+    NRFX_ASSERT(p_cb->alloc_index != 0);
+    NRFX_ASSERT(p_cb->state == NRFX_DRV_STATE_INITIALIZED);
+    nrf_wdt_task_trigger(p_instance->p_reg, NRF_WDT_TASK_START);
+    p_cb->state = NRFX_DRV_STATE_POWERED_ON;
     NRFX_LOG_INFO("Enabled.");
 }
 
 
-void nrfx_wdt_feed(void)
+void nrfx_wdt_feed(nrfx_wdt_t const * p_instance)
 {
-    NRFX_ASSERT(m_state == NRFX_DRV_STATE_POWERED_ON);
-    for (uint8_t i = 0; i < m_alloc_index; i++)
+    wdt_control_block_t const * p_cb = &m_cb[p_instance->drv_inst_idx];
+    NRFX_ASSERT(p_cb->state == NRFX_DRV_STATE_POWERED_ON);
+    for (uint8_t i = 0; i < p_cb->alloc_index; i++)
     {
-        nrf_wdt_reload_request_set((nrf_wdt_rr_register_t)(NRF_WDT_RR0 + i));
+        nrf_wdt_reload_request_set(p_instance->p_reg, (nrf_wdt_rr_register_t)(NRF_WDT_RR0 + i));
     }
 }
 
-nrfx_err_t nrfx_wdt_channel_alloc(nrfx_wdt_channel_id * p_channel_id)
+nrfx_err_t nrfx_wdt_channel_alloc(nrfx_wdt_t const * p_instance, nrfx_wdt_channel_id * p_channel_id)
 {
     nrfx_err_t result;
+    wdt_control_block_t * p_cb = &m_cb[p_instance->drv_inst_idx];
+
     NRFX_ASSERT(p_channel_id);
-    NRFX_ASSERT(m_state == NRFX_DRV_STATE_INITIALIZED);
+    NRFX_ASSERT(p_cb->state == NRFX_DRV_STATE_INITIALIZED);
 
     NRFX_CRITICAL_SECTION_ENTER();
-    if (m_alloc_index < NRF_WDT_CHANNEL_NUMBER)
+    if (p_cb->alloc_index < NRF_WDT_CHANNEL_NUMBER)
     {
-        *p_channel_id = (nrfx_wdt_channel_id)(NRF_WDT_RR0 + m_alloc_index);
-        m_alloc_index++;
-        nrf_wdt_reload_request_enable(*p_channel_id);
+        *p_channel_id = (nrfx_wdt_channel_id)(NRF_WDT_RR0 + p_cb->alloc_index);
+        p_cb->alloc_index++;
+        nrf_wdt_reload_request_enable(p_instance->p_reg, *p_channel_id);
         result = NRFX_SUCCESS;
     }
     else
@@ -145,10 +150,32 @@ nrfx_err_t nrfx_wdt_channel_alloc(nrfx_wdt_channel_id * p_channel_id)
     return result;
 }
 
-void nrfx_wdt_channel_feed(nrfx_wdt_channel_id channel_id)
+void nrfx_wdt_channel_feed(nrfx_wdt_t const * p_instance, nrfx_wdt_channel_id channel_id)
 {
-    NRFX_ASSERT(m_state == NRFX_DRV_STATE_POWERED_ON);
-    nrf_wdt_reload_request_set(channel_id);
+    NRFX_ASSERT(m_cb[p_instance->drv_inst_idx].state == NRFX_DRV_STATE_POWERED_ON);
+    nrf_wdt_reload_request_set(p_instance->p_reg, channel_id);
 }
+
+#if NRFX_CHECK(NRFX_WDT0_ENABLED) && !NRFX_CHECK(NRFX_WDT_CONFIG_NO_IRQ)
+void nrfx_wdt_0_irq_handler(void)
+{
+    if (nrf_wdt_event_check(NRF_WDT0, NRF_WDT_EVENT_TIMEOUT))
+    {
+        m_cb[NRFX_WDT0_INST_IDX].wdt_event_handler();
+        nrf_wdt_event_clear(NRF_WDT0, NRF_WDT_EVENT_TIMEOUT);
+    }
+}
+#endif
+
+#if NRFX_CHECK(NRFX_WDT1_ENABLED) && !NRFX_CHECK(NRFX_WDT_CONFIG_NO_IRQ)
+void nrfx_wdt_1_irq_handler(void)
+{
+    if (nrf_wdt_event_check(NRF_WDT1, NRF_WDT_EVENT_TIMEOUT))
+    {
+        m_cb[NRFX_WDT1_INST_IDX].wdt_event_handler();
+        nrf_wdt_event_clear(NRF_WDT1, NRF_WDT_EVENT_TIMEOUT);
+    }
+}
+#endif
 
 #endif // NRFX_CHECK(NRFX_WDT_ENABLED)

@@ -94,24 +94,54 @@ typedef struct
     uint32_t             pselcts;            ///< CTS pin number.
     uint32_t             pselrts;            ///< RTS pin number.
     void *               p_context;          ///< Context passed to interrupt handler.
-    nrf_uarte_hwfc_t     hwfc;               ///< Flow control configuration.
-    nrf_uarte_parity_t   parity;             ///< Parity configuration.
     nrf_uarte_baudrate_t baudrate;           ///< Baud rate.
     uint8_t              interrupt_priority; ///< Interrupt priority.
+    nrf_uarte_config_t   hal_cfg;            ///< Parity, flow control and stop bits settings.
 } nrfx_uarte_config_t;
 
-/** @brief UARTE default configuration. */
-#define NRFX_UARTE_DEFAULT_CONFIG                                                   \
+#if defined(UARTE_CONFIG_STOP_Msk) || defined(__NRFX_DOXYGEN__)
+    /** @brief UARTE additional stop bits configuration. */
+    #define NRFX_UARTE_DEFAULT_EXTENDED_STOP_CONFIG   \
+        .stop = (nrf_uarte_stop_t)NRF_UARTE_STOP_ONE,
+#else
+    #define NRFX_UARTE_DEFAULT_EXTENDED_STOP_CONFIG
+#endif
+
+#if defined(UARTE_CONFIG_PARITYTYPE_Msk) || defined(__NRFX_DOXYGEN__)
+    /** @brief UARTE additional parity type configuration. */
+    #define NRFX_UARTE_DEFAULT_EXTENDED_PARITYTYPE_CONFIG   \
+        .paritytype = NRF_UARTE_PARITYTYPE_EVEN,
+#else
+    #define NRFX_UARTE_DEFAULT_EXTENDED_PARITYTYPE_CONFIG
+#endif
+
+/**
+ * @brief UARTE driver default configuration.
+ *
+ * This configuration sets up UARTE with the following options:
+ * - hardware flow control disabled
+ * - no parity bit
+ * - one stop bit
+ * - baudrate: 115200
+ *
+ * @param[in] _pin_tx TX pin.
+ * @param[in] _pin_rx RX pin.
+ */
+#define NRFX_UARTE_DEFAULT_CONFIG(_pin_tx, _pin_rx)                                 \
 {                                                                                   \
-    .pseltxd            = NRF_UARTE_PSEL_DISCONNECTED,                              \
-    .pselrxd            = NRF_UARTE_PSEL_DISCONNECTED,                              \
+    .pseltxd            = _pin_tx,                                                  \
+    .pselrxd            = _pin_rx,                                                  \
     .pselcts            = NRF_UARTE_PSEL_DISCONNECTED,                              \
     .pselrts            = NRF_UARTE_PSEL_DISCONNECTED,                              \
     .p_context          = NULL,                                                     \
-    .hwfc               = (nrf_uarte_hwfc_t)NRFX_UARTE_DEFAULT_CONFIG_HWFC,         \
-    .parity             = (nrf_uarte_parity_t)NRFX_UARTE_DEFAULT_CONFIG_PARITY,     \
-    .baudrate           = (nrf_uarte_baudrate_t)NRFX_UARTE_DEFAULT_CONFIG_BAUDRATE, \
+    .baudrate           = NRF_UARTE_BAUDRATE_115200,                                \
     .interrupt_priority = NRFX_UARTE_DEFAULT_CONFIG_IRQ_PRIORITY,                   \
+    .hal_cfg            = {                                                         \
+        .hwfc           = NRF_UARTE_HWFC_DISABLED,                                  \
+        .parity         = NRF_UARTE_PARITY_EXCLUDED,                                \
+        NRFX_UARTE_DEFAULT_EXTENDED_STOP_CONFIG                                     \
+        NRFX_UARTE_DEFAULT_EXTENDED_PARITYTYPE_CONFIG                               \
+    }                                                                               \
 }
 
 /** @brief Structure for the UARTE transfer completion event. */
@@ -185,8 +215,8 @@ void nrfx_uarte_uninit(nrfx_uarte_t const * p_instance);
  *
  * @return Task address.
  */
-__STATIC_INLINE uint32_t nrfx_uarte_task_address_get(nrfx_uarte_t const * p_instance,
-                                                     nrf_uarte_task_t     task);
+NRFX_STATIC_INLINE uint32_t nrfx_uarte_task_address_get(nrfx_uarte_t const * p_instance,
+                                                        nrf_uarte_task_t     task);
 
 /**
  * @brief Function for getting the address of the specified UARTE event.
@@ -196,8 +226,8 @@ __STATIC_INLINE uint32_t nrfx_uarte_task_address_get(nrfx_uarte_t const * p_inst
  *
  * @return Event address.
  */
-__STATIC_INLINE uint32_t nrfx_uarte_event_address_get(nrfx_uarte_t const * p_instance,
-                                                      nrf_uarte_event_t    event);
+NRFX_STATIC_INLINE uint32_t nrfx_uarte_event_address_get(nrfx_uarte_t const * p_instance,
+                                                         nrf_uarte_event_t    event);
 
 /**
  * @brief Function for sending data over UARTE.
@@ -320,19 +350,19 @@ void nrfx_uarte_rx_abort(nrfx_uarte_t const * p_instance);
 uint32_t nrfx_uarte_errorsrc_get(nrfx_uarte_t const * p_instance);
 
 
-#ifndef SUPPRESS_INLINE_IMPLEMENTATION
-__STATIC_INLINE uint32_t nrfx_uarte_task_address_get(nrfx_uarte_t const * p_instance,
-                                                     nrf_uarte_task_t     task)
+#ifndef NRFX_DECLARE_ONLY
+NRFX_STATIC_INLINE uint32_t nrfx_uarte_task_address_get(nrfx_uarte_t const * p_instance,
+                                                        nrf_uarte_task_t     task)
 {
     return nrf_uarte_task_address_get(p_instance->p_reg, task);
 }
 
-__STATIC_INLINE uint32_t nrfx_uarte_event_address_get(nrfx_uarte_t const * p_instance,
-                                                      nrf_uarte_event_t    event)
+NRFX_STATIC_INLINE uint32_t nrfx_uarte_event_address_get(nrfx_uarte_t const * p_instance,
+                                                         nrf_uarte_event_t    event)
 {
     return nrf_uarte_event_address_get(p_instance->p_reg, event);
 }
-#endif // SUPPRESS_INLINE_IMPLEMENTATION
+#endif // NRFX_DECLARE_ONLY
 
 /** @} */
 

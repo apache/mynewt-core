@@ -45,6 +45,10 @@ POSSIBILITY OF SUCH DAMAGE.
 #define POWER_FEATURE_RAM_REGISTERS_PRESENT
 #define POWER_FEATURE_RAM_REGISTERS_COUNT       3
 
+/* Non-Volatile Memory Controller */
+#define NVMC_PRESENT
+#define NVMC_COUNT 1
+
 /* Systick timer */
 #define SYSTICK_PRESENT
 #define SYSTICK_COUNT 1

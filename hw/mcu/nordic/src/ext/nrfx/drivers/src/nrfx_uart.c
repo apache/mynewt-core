@@ -58,7 +58,7 @@ typedef struct
     uint8_t           const * p_tx_buffer;
     uint8_t                 * p_rx_buffer;
     uint8_t                 * p_rx_secondary_buffer;
-    size_t                    tx_buffer_length;
+    volatile size_t           tx_buffer_length;
     size_t                    rx_buffer_length;
     size_t                    rx_secondary_buffer_length;
     volatile size_t           tx_counter;
@@ -83,9 +83,9 @@ static void apply_config(nrfx_uart_t        const * p_instance,
     }
 
     nrf_uart_baudrate_set(p_instance->p_reg, p_config->baudrate);
-    nrf_uart_configure(p_instance->p_reg, p_config->parity, p_config->hwfc);
+    nrf_uart_configure(p_instance->p_reg, &p_config->hal_cfg);
     nrf_uart_txrx_pins_set(p_instance->p_reg, p_config->pseltxd, p_config->pselrxd);
-    if (p_config->hwfc == NRF_UART_HWFC_ENABLED)
+    if (p_config->hal_cfg.hwfc == NRF_UART_HWFC_ENABLED)
     {
         if (p_config->pselcts != NRF_UART_PSEL_DISCONNECTED)
         {
@@ -242,7 +242,10 @@ static void tx_byte(NRF_UART_Type * p_uart, uart_control_block_t * p_cb)
 
 static bool tx_blocking(NRF_UART_Type * p_uart, uart_control_block_t * p_cb)
 {
-    while (p_cb->tx_counter < p_cb->tx_buffer_length)
+    // Use a local variable to avoid undefined order of accessing two volatile variables
+    // in one statement.
+    size_t const tx_buffer_length = p_cb->tx_buffer_length;
+    while (p_cb->tx_counter < tx_buffer_length)
     {
         // Wait until the transmitter is ready to accept a new byte.
         // Exit immediately if the transfer has been aborted.
@@ -598,8 +601,10 @@ static void uart_irq_handler(NRF_UART_Type *        p_uart,
 
     if (nrf_uart_event_check(p_uart, NRF_UART_EVENT_TXDRDY))
     {
-        if (p_cb->tx_counter < p_cb->tx_buffer_length &&
-            !p_cb->tx_abort)
+        // Use a local variable to avoid undefined order of accessing two volatile variables
+        // in one statement.
+        size_t const tx_buffer_length = p_cb->tx_buffer_length;
+        if (p_cb->tx_counter < tx_buffer_length && !p_cb->tx_abort)
         {
             tx_byte(p_uart, p_cb);
         }

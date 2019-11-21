@@ -334,16 +334,15 @@ void nrfx_power_usbevt_uninit(void);
  *
  * @return Current USB power status.
  */
-__STATIC_INLINE nrfx_power_usb_state_t nrfx_power_usbstatus_get(void);
+NRFX_STATIC_INLINE nrfx_power_usb_state_t nrfx_power_usbstatus_get(void);
 
 #endif /* NRF_POWER_HAS_USBREG */
 
-#ifndef SUPPRESS_INLINE_IMPLEMENTATION
-
+#ifndef NRFX_DECLARE_ONLY
 #if NRF_POWER_HAS_USBREG
-__STATIC_INLINE nrfx_power_usb_state_t nrfx_power_usbstatus_get(void)
+NRFX_STATIC_INLINE nrfx_power_usb_state_t nrfx_power_usbstatus_get(void)
 {
-    uint32_t status = nrf_power_usbregstatus_get();
+    uint32_t status = nrf_power_usbregstatus_get(NRF_POWER);
     if(0 == (status & NRF_POWER_USBREGSTATUS_VBUSDETECT_MASK))
     {
         return NRFX_POWER_USB_STATE_DISCONNECTED;
@@ -355,8 +354,7 @@ __STATIC_INLINE nrfx_power_usb_state_t nrfx_power_usbstatus_get(void)
     return NRFX_POWER_USB_STATE_READY;
 }
 #endif /* NRF_POWER_HAS_USBREG */
-
-#endif /* SUPPRESS_INLINE_IMPLEMENTATION */
+#endif /* NRFX_DECLARE_ONLY */
 
 /** @} */
 

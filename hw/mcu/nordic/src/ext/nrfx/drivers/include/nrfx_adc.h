@@ -77,18 +77,28 @@ typedef struct
     } data;                           ///< Union to store event data.
 } nrfx_adc_evt_t;
 
-/** @brief Macro for initializing the ADC channel with the default configuration. */
+/**
+ * @brief ADC channel default configuration.
+ *
+ * This configuration sets up ADC channel with the following options:
+ * - 10 bits resolution
+ * - full scale input
+ * - reference voltage: 1.2 V
+ * - external reference input disabled
+ *
+ * @param[in] analog_input Analog input.
+ */
 #define NRFX_ADC_DEFAULT_CHANNEL(analog_input)                 \
- {                                                             \
-     NULL,                                                     \
-     {                                                         \
+{                                                              \
+    NULL,                                                      \
+    {                                                          \
         .resolution = NRF_ADC_CONFIG_RES_10BIT,                \
         .scaling    = NRF_ADC_CONFIG_SCALING_INPUT_FULL_SCALE, \
         .reference  = NRF_ADC_CONFIG_REF_VBG,                  \
-        .input      = (analog_input),                          \
+        .input      = (nrf_adc_config_input_t)analog_input,    \
         .extref     = NRF_ADC_CONFIG_EXTREFSEL_NONE            \
-     }                                                         \
- }
+    }                                                          \
+}
 
 /** @brief Forward declaration of the nrfx_adc_channel_t type. */
 typedef struct nrfx_adc_channel_s nrfx_adc_channel_t;
@@ -112,9 +122,9 @@ typedef struct
 } nrfx_adc_config_t;
 
 /** @brief ADC default configuration. */
-#define NRFX_ADC_DEFAULT_CONFIG                        \
-{                                                      \
-    .interrupt_priority = NRFX_ADC_CONFIG_IRQ_PRIORITY \
+#define NRFX_ADC_DEFAULT_CONFIG                                \
+{                                                              \
+    .interrupt_priority = NRFX_ADC_DEFAULT_CONFIG_IRQ_PRIORITY \
 }
 
 /**
@@ -206,8 +216,8 @@ void nrfx_adc_sample(void);
  * @retval NRFX_SUCCESS    Conversion was successful.
  * @retval NRFX_ERROR_BUSY The ADC driver is busy.
  */
-nrfx_err_t nrfx_adc_sample_convert(nrfx_adc_channel_t const * const p_channel,
-                                   nrf_adc_value_t                * p_value);
+nrfx_err_t nrfx_adc_sample_convert(nrfx_adc_channel_t const * p_channel,
+                                   nrf_adc_value_t *          p_value);
 
 /**
  * @brief Function for converting data to the buffer.
@@ -256,16 +266,14 @@ bool nrfx_adc_is_busy(void);
  *
  * @return Start task address.
  */
-__STATIC_INLINE uint32_t nrfx_adc_start_task_get(void);
+NRFX_STATIC_INLINE uint32_t nrfx_adc_start_task_get(void);
 
-#ifndef SUPPRESS_INLINE_IMPLEMENTATION
-
-__STATIC_INLINE uint32_t nrfx_adc_start_task_get(void)
+#ifndef NRFX_DECLARE_ONLY
+NRFX_STATIC_INLINE uint32_t nrfx_adc_start_task_get(void)
 {
-    return nrf_adc_task_address_get(NRF_ADC_TASK_START);
+    return nrf_adc_task_address_get(NRF_ADC, NRF_ADC_TASK_START);
 }
-
-#endif
+#endif // NRFX_DECLARE_ONLY
 
 /** @} */
 

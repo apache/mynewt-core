@@ -48,9 +48,7 @@ extern "C" {
  * (HFCLK) settings.
  */
 
-#if defined(NRF52810_XXAA) || \
-    defined(NRF52832_XXAA) || defined(NRF52832_XXAB) || \
-    defined(NRF52840_XXAA)
+#if defined(CLOCK_LFCLKSRC_BYPASS_Msk) && defined(CLOCK_LFCLKSRC_EXTERNAL_Msk)
 // Enable support for external LFCLK sources. Read more in the Product Specification.
 #define NRF_CLOCK_USE_EXTERNAL_LFCLK_SOURCES
 #endif
@@ -134,7 +132,11 @@ typedef enum
     NRF_CLOCK_INT_LF_STARTED_MASK = CLOCK_INTENSET_LFCLKSTARTED_Msk, /**< Interrupt on LFCLKSTARTED event. */
 #if (NRF_CLOCK_HAS_CALIBRATION) || defined(__NRFX_DOXYGEN__)
     NRF_CLOCK_INT_DONE_MASK       = CLOCK_INTENSET_DONE_Msk,         /**< Interrupt on DONE event. */
-    NRF_CLOCK_INT_CTTO_MASK       = CLOCK_INTENSET_CTTO_Msk          /**< Interrupt on CTTO event. */
+    NRF_CLOCK_INT_CTTO_MASK       = CLOCK_INTENSET_CTTO_Msk,         /**< Interrupt on CTTO event. */
+#endif
+#if defined(CLOCK_INTENSET_CTSTARTED_Msk) || defined(__NRFX_DOXYGEN__)
+    NRF_CLOCK_INT_CTSTARTED_MASK  = CLOCK_INTENSET_CTSTARTED_Msk,    /**< Interrupt on CTSTARTED event. */
+    NRF_CLOCK_INT_CTSTOPPED_MASK  = CLOCK_INTENSET_CTSTOPPED_Msk     /**< Interrupt on CTSTOPPED event. */
 #endif
 } nrf_clock_int_mask_t;
 
@@ -164,88 +166,104 @@ typedef enum
     NRF_CLOCK_EVENT_LFCLKSTARTED = offsetof(NRF_CLOCK_Type, EVENTS_LFCLKSTARTED), /**< LFCLK oscillator started.*/
 #if (NRF_CLOCK_HAS_CALIBRATION) || defined(__NRFX_DOXYGEN__)
     NRF_CLOCK_EVENT_DONE         = offsetof(NRF_CLOCK_Type, EVENTS_DONE),         /**< Calibration of LFCLK RC oscillator completed.*/
-    NRF_CLOCK_EVENT_CTTO         = offsetof(NRF_CLOCK_Type, EVENTS_CTTO)          /**< Calibration timer time-out.*/
+    NRF_CLOCK_EVENT_CTTO         = offsetof(NRF_CLOCK_Type, EVENTS_CTTO),         /**< Calibration timer time-out.*/
+#endif
+#if defined(CLOCK_INTENSET_CTSTARTED_Msk) || defined(__NRFX_DOXYGEN__)
+    NRF_CLOCK_EVENT_CTSTARTED    = offsetof(NRF_CLOCK_Type, EVENTS_CTSTARTED),    /**< Calibration timer started.*/
+    NRF_CLOCK_EVENT_CTSTOPPED    = offsetof(NRF_CLOCK_Type, EVENTS_CTSTOPPED)     /**< Calibration timer stopped.*/
 #endif
 } nrf_clock_event_t;
 
 /**
  * @brief Function for enabling the specified interrupt.
  *
- * @param[in] int_mask Interrupt.
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] mask  Mask of interrupts to be enabled.
  */
-__STATIC_INLINE void nrf_clock_int_enable(uint32_t int_mask);
+NRF_STATIC_INLINE void nrf_clock_int_enable(NRF_CLOCK_Type * p_reg, uint32_t mask);
 
 /**
  * @brief Function for disabling the specified interrupt.
  *
- * @param[in] int_mask Interrupt.
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] mask  Mask of interrupts to be disabled.
  */
-__STATIC_INLINE void nrf_clock_int_disable(uint32_t int_mask);
+NRF_STATIC_INLINE void nrf_clock_int_disable(NRF_CLOCK_Type * p_reg, uint32_t mask);
 
 /**
- * @brief Function for retrieving the state of the specified interrupt.
+ * @brief Function for checking if the specified interrupts are enabled.
  *
- * @param[in] int_mask Interrupt.
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] mask  Mask of interrupts to be checked.
  *
- * @retval true  The interrupt is enabled.
- * @retval false The interrupt is not enabled.
+ * @return Mask of enabled interrupts.
  */
-__STATIC_INLINE bool nrf_clock_int_enable_check(nrf_clock_int_mask_t int_mask);
+NRF_STATIC_INLINE uint32_t nrf_clock_int_enable_check(NRF_CLOCK_Type const * p_reg, uint32_t mask);
 
 /**
  * @brief Function for retrieving the address of the specified task.
  * @details This function can be used by the PPI module.
  *
- * @param[in] task CLOCK Task.
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] task  CLOCK Task.
  *
  * @return Address of the requested task register.
  */
-__STATIC_INLINE uint32_t nrf_clock_task_address_get(nrf_clock_task_t task);
+NRF_STATIC_INLINE uint32_t nrf_clock_task_address_get(NRF_CLOCK_Type const * p_reg,
+                                                      nrf_clock_task_t       task);
 
 /**
  * @brief Function for setting the specified task.
  *
- * @param[in] task Task to be activated.
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] task  Task to be activated.
  */
-__STATIC_INLINE void nrf_clock_task_trigger(nrf_clock_task_t task);
+NRF_STATIC_INLINE void nrf_clock_task_trigger(NRF_CLOCK_Type * p_reg, nrf_clock_task_t task);
 
 /**
  * @brief Function for retrieving the address of the specified event.
  * @details This function can be used by the PPI module.
  *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
  * @param[in] event CLOCK Event.
  *
  * @return Address of the specified event register.
  */
-__STATIC_INLINE uint32_t nrf_clock_event_address_get(nrf_clock_event_t event);
+NRF_STATIC_INLINE uint32_t nrf_clock_event_address_get(NRF_CLOCK_Type const * p_reg,
+                                                       nrf_clock_event_t      event);
 
 /**
  * @brief Function for clearing the specified event.
  *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
  * @param[in] event Event to clear.
  */
-__STATIC_INLINE void nrf_clock_event_clear(nrf_clock_event_t event);
+NRF_STATIC_INLINE void nrf_clock_event_clear(NRF_CLOCK_Type * p_reg, nrf_clock_event_t event);
 
 /**
  * @brief Function for retrieving the state of the specified event.
  *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
  * @param[in] event Event to be checked.
  *
  * @retval true  The event has been generated.
  * @retval false The event has not been generated.
  */
-__STATIC_INLINE bool nrf_clock_event_check(nrf_clock_event_t event);
+NRF_STATIC_INLINE bool nrf_clock_event_check(NRF_CLOCK_Type const * p_reg, nrf_clock_event_t event);
 
 /**
  * @brief Function for changing the low-frequency clock source.
  * @details This function cannot be called when the low-frequency clock is running.
  *
+ * @param[in] p_reg  Pointer to the structure of registers of the peripheral.
  * @param[in] source New low-frequency clock source.
  */
-__STATIC_INLINE void nrf_clock_lf_src_set(nrf_clock_lfclk_t source);
+NRF_STATIC_INLINE void nrf_clock_lf_src_set(NRF_CLOCK_Type * p_reg, nrf_clock_lfclk_t source);
 
 /**
  * @brief Function for retrieving the selected source for the low-frequency clock.
+ *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
  *
  * @retval NRF_CLOCK_LFCLK_RC    The internal 32 kHz RC oscillator
  *                               is the selected source for the low-frequency clock.
@@ -254,10 +272,12 @@ __STATIC_INLINE void nrf_clock_lf_src_set(nrf_clock_lfclk_t source);
  * @retval NRF_CLOCK_LFCLK_Synth The internal 32 kHz synthesizer from
  *                               the HFCLK is the selected source for the low-frequency clock.
  */
-__STATIC_INLINE nrf_clock_lfclk_t nrf_clock_lf_src_get(void);
+NRF_STATIC_INLINE nrf_clock_lfclk_t nrf_clock_lf_src_get(NRF_CLOCK_Type const * p_reg);
 
 /**
  * @brief Function for retrieving the active source of the low-frequency clock.
+ *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
  *
  * @retval NRF_CLOCK_LFCLK_RC    The internal 32 kHz RC oscillator
  *                               is the active source of the low-frequency clock.
@@ -266,11 +286,13 @@ __STATIC_INLINE nrf_clock_lfclk_t nrf_clock_lf_src_get(void);
  * @retval NRF_CLOCK_LFCLK_Synth The internal 32 kHz synthesizer from
  *                               the HFCLK is the active source of the low-frequency clock.
  */
-__STATIC_INLINE nrf_clock_lfclk_t nrf_clock_lf_actv_src_get(void);
+NRF_STATIC_INLINE nrf_clock_lfclk_t nrf_clock_lf_actv_src_get(NRF_CLOCK_Type const * p_reg);
 
 /**
  * @brief Function for retrieving the clock source for the LFCLK clock when
  *        the task LKCLKSTART is triggered.
+ *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
  *
  * @retval NRF_CLOCK_LFCLK_RC    The internal 32 kHz RC oscillator
  *                               is running and generating the LFCLK clock.
@@ -279,60 +301,73 @@ __STATIC_INLINE nrf_clock_lfclk_t nrf_clock_lf_actv_src_get(void);
  * @retval NRF_CLOCK_LFCLK_Synth The internal 32 kHz synthesizer from
  *                               the HFCLK is running and generating the LFCLK clock.
  */
-__STATIC_INLINE nrf_clock_lfclk_t nrf_clock_lf_srccopy_get(void);
+NRF_STATIC_INLINE nrf_clock_lfclk_t nrf_clock_lf_srccopy_get(NRF_CLOCK_Type const * p_reg);
 
 /**
  * @brief Function for retrieving the state of the LFCLK clock.
  *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ *
  * @retval false The LFCLK clock is not running.
  * @retval true  The LFCLK clock is running.
  */
-__STATIC_INLINE bool nrf_clock_lf_is_running(void);
+NRF_STATIC_INLINE bool nrf_clock_lf_is_running(NRF_CLOCK_Type const * p_reg);
 
 /**
  * @brief Function for retrieving the trigger status of the task LFCLKSTART.
  *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ *
  * @retval NRF_CLOCK_START_TASK_NOT_TRIGGERED The task LFCLKSTART has not been triggered.
  * @retval NRF_CLOCK_START_TASK_TRIGGERED     The task LFCLKSTART has been triggered.
  */
-__STATIC_INLINE nrf_clock_start_task_status_t nrf_clock_lf_start_task_status_get(void);
+NRF_STATIC_INLINE
+nrf_clock_start_task_status_t nrf_clock_lf_start_task_status_get(NRF_CLOCK_Type const * p_reg);
 
 /**
  * @brief Function for retrieving the active source of the high-frequency clock.
+ *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
  *
  * @retval NRF_CLOCK_HFCLK_LOW_ACCURACY  The internal RC oscillator is the active
  *                                       source of the high-frequency clock.
  * @retval NRF_CLOCK_HFCLK_HIGH_ACCURACY An external crystal oscillator is the active
  *                                       source of the high-frequency clock.
  */
-__STATIC_INLINE nrf_clock_hfclk_t nrf_clock_hf_src_get(void);
+NRF_STATIC_INLINE nrf_clock_hfclk_t nrf_clock_hf_src_get(NRF_CLOCK_Type const * p_reg);
 
 /**
  * @brief Function for retrieving the state of the HFCLK clock.
  *
+ * @param[in] p_reg   Pointer to the structure of registers of the peripheral.
  * @param[in] clk_src Clock source to be checked.
  *
  * @retval false The HFCLK clock is not running.
  * @retval true  The HFCLK clock is running.
  */
-__STATIC_INLINE bool nrf_clock_hf_is_running(nrf_clock_hfclk_t clk_src);
+NRF_STATIC_INLINE bool nrf_clock_hf_is_running(NRF_CLOCK_Type const * p_reg,
+                                               nrf_clock_hfclk_t      clk_src);
 
 /**
  * @brief Function for retrieving the trigger status of the task HFCLKSTART.
  *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ *
  * @retval NRF_CLOCK_START_TASK_NOT_TRIGGERED The task HFCLKSTART has not been triggered.
  * @retval NRF_CLOCK_START_TASK_TRIGGERED     The task HFCLKSTART has been triggered.
  */
-__STATIC_INLINE nrf_clock_start_task_status_t nrf_clock_hf_start_task_status_get(void);
+NRF_STATIC_INLINE
+nrf_clock_start_task_status_t nrf_clock_hf_start_task_status_get(NRF_CLOCK_Type const * p_reg);
 
 #if (NRF_CLOCK_HAS_CALIBRATION) || defined(__NRFX_DOXYGEN__)
 /**
  * @brief Function for changing the calibration timer interval.
  *
+ * @param[in] p_reg    Pointer to the structure of registers of the peripheral.
  * @param[in] interval New calibration timer interval in 0.25 s resolution
  *                     (range: 0.25 seconds to 31.75 seconds).
  */
-__STATIC_INLINE void nrf_clock_cal_timer_timeout_set(uint32_t interval);
+NRF_STATIC_INLINE void nrf_clock_cal_timer_timeout_set(NRF_CLOCK_Type * p_reg, uint32_t interval);
 #endif
 
 #if defined(DPPI_PRESENT) || defined(__NRFX_DOXYGEN__)
@@ -340,171 +375,183 @@ __STATIC_INLINE void nrf_clock_cal_timer_timeout_set(uint32_t interval);
  * @brief Function for setting the subscribe configuration for a given
  *        CLOCK task.
  *
+ * @param[in] p_reg   Pointer to the structure of registers of the peripheral.
  * @param[in] task    Task for which to set the configuration.
  * @param[in] channel Channel through which to subscribe events.
  */
-__STATIC_INLINE void nrf_clock_subscribe_set(nrf_clock_task_t task,
-                                             uint8_t          channel);
+NRF_STATIC_INLINE void nrf_clock_subscribe_set(NRF_CLOCK_Type * p_reg,
+                                               nrf_clock_task_t task,
+                                               uint8_t          channel);
 
 /**
  * @brief Function for clearing the subscribe configuration for a given
  *        CLOCK task.
  *
- * @param[in] task Task for which to clear the configuration.
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] task  Task for which to clear the configuration.
  */
-__STATIC_INLINE void nrf_clock_subscribe_clear(nrf_clock_task_t task);
+NRF_STATIC_INLINE void nrf_clock_subscribe_clear(NRF_CLOCK_Type * p_reg, nrf_clock_task_t task);
 
 /**
  * @brief Function for setting the publish configuration for a given
  *        CLOCK event.
  *
+ * @param[in] p_reg   Pointer to the structure of registers of the peripheral.
  * @param[in] event   Event for which to set the configuration.
  * @param[in] channel Channel through which to publish the event.
  */
-__STATIC_INLINE void nrf_clock_publish_set(nrf_clock_event_t event,
-                                           uint8_t           channel);
+NRF_STATIC_INLINE void nrf_clock_publish_set(NRF_CLOCK_Type *  p_reg,
+                                             nrf_clock_event_t event,
+                                             uint8_t           channel);
 
 /**
  * @brief Function for clearing the publish configuration for a given
  *        CLOCK event.
  *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
  * @param[in] event Event for which to clear the configuration.
  */
-__STATIC_INLINE void nrf_clock_publish_clear(nrf_clock_event_t event);
+NRF_STATIC_INLINE void nrf_clock_publish_clear(NRF_CLOCK_Type * p_reg, nrf_clock_event_t event);
 #endif // defined(DPPI_PRESENT) || defined(__NRFX_DOXYGEN__)
 
-#ifndef SUPPRESS_INLINE_IMPLEMENTATION
+#ifndef NRF_DECLARE_ONLY
 
-__STATIC_INLINE void nrf_clock_int_enable(uint32_t int_mask)
+NRF_STATIC_INLINE void nrf_clock_int_enable(NRF_CLOCK_Type * p_reg, uint32_t mask)
 {
-    NRF_CLOCK->INTENSET = int_mask;
+    p_reg->INTENSET = mask;
 }
 
-__STATIC_INLINE void nrf_clock_int_disable(uint32_t int_mask)
+NRF_STATIC_INLINE void nrf_clock_int_disable(NRF_CLOCK_Type * p_reg, uint32_t mask)
 {
-    NRF_CLOCK->INTENCLR = int_mask;
+    p_reg->INTENCLR = mask;
 }
 
-__STATIC_INLINE bool nrf_clock_int_enable_check(nrf_clock_int_mask_t int_mask)
+NRF_STATIC_INLINE uint32_t nrf_clock_int_enable_check(NRF_CLOCK_Type const * p_reg, uint32_t mask)
 {
-    return (bool)(NRF_CLOCK->INTENCLR & int_mask);
+    return p_reg->INTENSET & mask;
 }
 
-__STATIC_INLINE uint32_t nrf_clock_task_address_get(nrf_clock_task_t task)
+NRF_STATIC_INLINE uint32_t nrf_clock_task_address_get(NRF_CLOCK_Type const * p_reg,
+                                                      nrf_clock_task_t       task)
 {
-    return ((uint32_t )NRF_CLOCK + task);
+    return (uint32_t)((uint8_t *)p_reg + (uint32_t)task);
 }
 
-__STATIC_INLINE void nrf_clock_task_trigger(nrf_clock_task_t task)
+NRF_STATIC_INLINE void nrf_clock_task_trigger(NRF_CLOCK_Type * p_reg, nrf_clock_task_t task)
 {
-    *((volatile uint32_t *)((uint8_t *)NRF_CLOCK + task)) = 0x1UL;
+    *((volatile uint32_t *)((uint8_t *)p_reg + (uint32_t)task)) = 0x1UL;
 }
 
-__STATIC_INLINE uint32_t nrf_clock_event_address_get(nrf_clock_event_t event)
+NRF_STATIC_INLINE uint32_t nrf_clock_event_address_get(NRF_CLOCK_Type const * p_reg,
+                                                       nrf_clock_event_t      event)
 {
-    return ((uint32_t)NRF_CLOCK + event);
+    return (uint32_t)((uint8_t *)p_reg + (uint32_t)event);
 }
 
-__STATIC_INLINE void nrf_clock_event_clear(nrf_clock_event_t event)
+NRF_STATIC_INLINE void nrf_clock_event_clear(NRF_CLOCK_Type * p_reg, nrf_clock_event_t event)
 {
-    *((volatile uint32_t *)((uint8_t *)NRF_CLOCK + event)) = 0x0UL;
+    *((volatile uint32_t *)((uint8_t *)p_reg + (uint32_t)event)) = 0x0UL;
 #if __CORTEX_M == 0x04
-    volatile uint32_t dummy = *((volatile uint32_t *)((uint8_t *)NRF_CLOCK + (uint32_t)event));
+    volatile uint32_t dummy = *((volatile uint32_t *)((uint8_t *)p_reg + (uint32_t)event));
     (void)dummy;
 #endif
 }
 
-__STATIC_INLINE bool nrf_clock_event_check(nrf_clock_event_t event)
+NRF_STATIC_INLINE bool nrf_clock_event_check(NRF_CLOCK_Type const * p_reg, nrf_clock_event_t event)
 {
-    return (bool)*((volatile uint32_t *)((uint8_t *)NRF_CLOCK + event));
+    return (bool)*((volatile uint32_t *)((uint8_t *)p_reg + event));
 }
 
-__STATIC_INLINE void nrf_clock_lf_src_set(nrf_clock_lfclk_t source)
+NRF_STATIC_INLINE void nrf_clock_lf_src_set(NRF_CLOCK_Type * p_reg, nrf_clock_lfclk_t source)
 {
-    NRF_CLOCK->LFCLKSRC = (uint32_t)(source);
+    p_reg->LFCLKSRC = (uint32_t)(source);
 }
 
-__STATIC_INLINE nrf_clock_lfclk_t nrf_clock_lf_src_get(void)
+NRF_STATIC_INLINE nrf_clock_lfclk_t nrf_clock_lf_src_get(NRF_CLOCK_Type const * p_reg)
 {
-    return (nrf_clock_lfclk_t)(NRF_CLOCK->LFCLKSRC);
+    return (nrf_clock_lfclk_t)(p_reg->LFCLKSRC);
 }
 
-__STATIC_INLINE nrf_clock_lfclk_t nrf_clock_lf_actv_src_get(void)
+NRF_STATIC_INLINE nrf_clock_lfclk_t nrf_clock_lf_actv_src_get(NRF_CLOCK_Type const * p_reg)
 {
-    return (nrf_clock_lfclk_t)((NRF_CLOCK->LFCLKSTAT &
-                                CLOCK_LFCLKSTAT_SRC_Msk) >> CLOCK_LFCLKSTAT_SRC_Pos);
+    return (nrf_clock_lfclk_t)((p_reg->LFCLKSTAT & CLOCK_LFCLKSTAT_SRC_Msk)
+                                >> CLOCK_LFCLKSTAT_SRC_Pos);
 }
 
-__STATIC_INLINE nrf_clock_lfclk_t nrf_clock_lf_srccopy_get(void)
+NRF_STATIC_INLINE nrf_clock_lfclk_t nrf_clock_lf_srccopy_get(NRF_CLOCK_Type const * p_reg)
 {
-    return (nrf_clock_lfclk_t)((NRF_CLOCK->LFCLKSRCCOPY &
-                                CLOCK_LFCLKSRCCOPY_SRC_Msk) >> CLOCK_LFCLKSRCCOPY_SRC_Pos);
+    return (nrf_clock_lfclk_t)((p_reg->LFCLKSRCCOPY & CLOCK_LFCLKSRCCOPY_SRC_Msk)
+                                >> CLOCK_LFCLKSRCCOPY_SRC_Pos);
 }
 
-__STATIC_INLINE bool nrf_clock_lf_is_running(void)
+NRF_STATIC_INLINE bool nrf_clock_lf_is_running(NRF_CLOCK_Type const * p_reg)
 {
-    return ((NRF_CLOCK->LFCLKSTAT &
-             CLOCK_LFCLKSTAT_STATE_Msk) >> CLOCK_LFCLKSTAT_STATE_Pos);
+    return ((p_reg->LFCLKSTAT & CLOCK_LFCLKSTAT_STATE_Msk) >> CLOCK_LFCLKSTAT_STATE_Pos);
 }
 
-__STATIC_INLINE nrf_clock_start_task_status_t nrf_clock_lf_start_task_status_get(void)
+NRF_STATIC_INLINE
+nrf_clock_start_task_status_t nrf_clock_lf_start_task_status_get(NRF_CLOCK_Type const * p_reg)
 {
-    return (nrf_clock_start_task_status_t)((NRF_CLOCK->LFCLKRUN &
-                                 CLOCK_LFCLKRUN_STATUS_Msk) >> CLOCK_LFCLKRUN_STATUS_Pos);
+    return (nrf_clock_start_task_status_t)((p_reg->LFCLKRUN & CLOCK_LFCLKRUN_STATUS_Msk)
+                                            >> CLOCK_LFCLKRUN_STATUS_Pos);
 }
 
-__STATIC_INLINE nrf_clock_hfclk_t nrf_clock_hf_src_get(void)
+NRF_STATIC_INLINE nrf_clock_hfclk_t nrf_clock_hf_src_get(NRF_CLOCK_Type const * p_reg)
 {
-    return (nrf_clock_hfclk_t)((NRF_CLOCK->HFCLKSTAT &
-                                CLOCK_HFCLKSTAT_SRC_Msk) >> CLOCK_HFCLKSTAT_SRC_Pos);
+    return (nrf_clock_hfclk_t)((p_reg->HFCLKSTAT & CLOCK_HFCLKSTAT_SRC_Msk)
+                                >> CLOCK_HFCLKSTAT_SRC_Pos);
 }
 
-__STATIC_INLINE bool nrf_clock_hf_is_running(nrf_clock_hfclk_t clk_src)
+NRF_STATIC_INLINE bool nrf_clock_hf_is_running(NRF_CLOCK_Type const * p_reg,
+                                               nrf_clock_hfclk_t      clk_src)
 {
-    return (NRF_CLOCK->HFCLKSTAT & (CLOCK_HFCLKSTAT_STATE_Msk | CLOCK_HFCLKSTAT_SRC_Msk)) ==
+    return (p_reg->HFCLKSTAT & (CLOCK_HFCLKSTAT_STATE_Msk | CLOCK_HFCLKSTAT_SRC_Msk)) ==
             (CLOCK_HFCLKSTAT_STATE_Msk | (clk_src << CLOCK_HFCLKSTAT_SRC_Pos));
 }
 
-__STATIC_INLINE nrf_clock_start_task_status_t nrf_clock_hf_start_task_status_get(void)
+NRF_STATIC_INLINE
+nrf_clock_start_task_status_t nrf_clock_hf_start_task_status_get(NRF_CLOCK_Type const * p_reg)
 {
-    return (nrf_clock_start_task_status_t)((NRF_CLOCK->HFCLKRUN &
-                                 CLOCK_HFCLKRUN_STATUS_Msk) >> CLOCK_HFCLKRUN_STATUS_Pos);
+    return (nrf_clock_start_task_status_t)((p_reg->HFCLKRUN & CLOCK_HFCLKRUN_STATUS_Msk)
+                                            >> CLOCK_HFCLKRUN_STATUS_Pos);
 }
 
 #if (NRF_CLOCK_HAS_CALIBRATION)
-__STATIC_INLINE void nrf_clock_cal_timer_timeout_set(uint32_t interval)
+NRF_STATIC_INLINE void nrf_clock_cal_timer_timeout_set(NRF_CLOCK_Type * p_reg, uint32_t interval)
 {
-    NRF_CLOCK->CTIV = ((interval << CLOCK_CTIV_CTIV_Pos) & CLOCK_CTIV_CTIV_Msk);
+    p_reg->CTIV = ((interval << CLOCK_CTIV_CTIV_Pos) & CLOCK_CTIV_CTIV_Msk);
 }
 #endif
 
 #if defined(DPPI_PRESENT)
-__STATIC_INLINE void nrf_clock_subscribe_set(nrf_clock_task_t task,
-                                             uint8_t          channel)
+NRF_STATIC_INLINE void nrf_clock_subscribe_set(NRF_CLOCK_Type * p_reg,
+                                               nrf_clock_task_t task,
+                                               uint8_t          channel)
 {
-    *((volatile uint32_t *) ((uint8_t *) NRF_CLOCK + (uint32_t) task + 0x80uL)) =
+    *((volatile uint32_t *) ((uint8_t *)p_reg+ (uint32_t)task + 0x80uL)) =
             ((uint32_t)channel | CLOCK_SUBSCRIBE_HFCLKSTART_EN_Msk);
 }
 
-__STATIC_INLINE void nrf_clock_subscribe_clear(nrf_clock_task_t task)
+NRF_STATIC_INLINE void nrf_clock_subscribe_clear(NRF_CLOCK_Type * p_reg, nrf_clock_task_t task)
 {
-    *((volatile uint32_t *) ((uint8_t *) NRF_CLOCK + (uint32_t) task + 0x80uL)) = 0;
+    *((volatile uint32_t *) ((uint8_t *)p_reg + (uint32_t)task + 0x80uL)) = 0;
 }
 
-__STATIC_INLINE void nrf_clock_publish_set(nrf_clock_event_t event,
-                                           uint8_t           channel)
+NRF_STATIC_INLINE void nrf_clock_publish_set(NRF_CLOCK_Type *  p_reg,
+                                             nrf_clock_event_t event,
+                                             uint8_t           channel)
 {
-    *((volatile uint32_t *) ((uint8_t *) NRF_CLOCK + (uint32_t) event + 0x80uL)) =
+    *((volatile uint32_t *) ((uint8_t *)p_reg + (uint32_t)event + 0x80uL)) =
             ((uint32_t)channel | CLOCK_PUBLISH_HFCLKSTARTED_EN_Msk);
 }
 
-__STATIC_INLINE void nrf_clock_publish_clear(nrf_clock_event_t event)
+NRF_STATIC_INLINE void nrf_clock_publish_clear(NRF_CLOCK_Type * p_reg, nrf_clock_event_t event)
 {
-    *((volatile uint32_t *) ((uint8_t *) NRF_CLOCK + (uint32_t) event + 0x80uL)) = 0;
+    *((volatile uint32_t *) ((uint8_t *)p_reg + (uint32_t)event + 0x80uL)) = 0;
 }
 #endif // defined(DPPI_PRESENT)
 
-#endif // SUPPRESS_INLINE_IMPLEMENTATION
+#endif // NRF_DECLARE_ONLY
 
 /** @} */
 

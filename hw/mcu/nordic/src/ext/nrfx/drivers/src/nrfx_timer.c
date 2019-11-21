@@ -39,6 +39,22 @@
 #error "No enabled TIMER instances. Check <nrfx_config.h>."
 #endif
 
+#if NRFX_CHECK(NRFX_TIMER0_ENABLED) && ((1 << 0) & NRFX_TIMERS_USED)
+    #error "TIMER instance 0 is reserved for use outside of nrfx."
+#endif
+#if NRFX_CHECK(NRFX_TIMER1_ENABLED) && ((1 << 1) & NRFX_TIMERS_USED)
+    #error "TIMER instance 1 is reserved for use outside of nrfx."
+#endif
+#if NRFX_CHECK(NRFX_TIMER2_ENABLED) && ((1 << 2) & NRFX_TIMERS_USED)
+    #error "TIMER instance 2 is reserved for use outside of nrfx."
+#endif
+#if NRFX_CHECK(NRFX_TIMER3_ENABLED) && ((1 << 3) & NRFX_TIMERS_USED)
+    #error "TIMER instance 3 is reserved for use outside of nrfx."
+#endif
+#if NRFX_CHECK(NRFX_TIMER4_ENABLED) && ((1 << 4) & NRFX_TIMERS_USED)
+    #error "TIMER instance 4 is reserved for use outside of nrfx."
+#endif
+
 #include <nrfx_timer.h>
 
 #define NRFX_LOG_MODULE TIMER
@@ -54,7 +70,7 @@ typedef struct
 
 static timer_control_block_t m_cb[NRFX_TIMER_ENABLED_COUNT];
 
-nrfx_err_t nrfx_timer_init(nrfx_timer_t const * const  p_instance,
+nrfx_err_t nrfx_timer_init(nrfx_timer_t const *        p_instance,
                            nrfx_timer_config_t const * p_config,
                            nrfx_timer_event_handler_t  timer_event_handler)
 {
@@ -114,7 +130,7 @@ nrfx_err_t nrfx_timer_init(nrfx_timer_t const * const  p_instance,
     return err_code;
 }
 
-void nrfx_timer_uninit(nrfx_timer_t const * const p_instance)
+void nrfx_timer_uninit(nrfx_timer_t const * p_instance)
 {
     NRFX_IRQ_DISABLE(nrfx_get_irq_number(p_instance->p_reg));
 
@@ -129,7 +145,7 @@ void nrfx_timer_uninit(nrfx_timer_t const * const p_instance)
     NRFX_LOG_INFO("Uninitialized instance: %d.", p_instance->instance_id);
 }
 
-void nrfx_timer_enable(nrfx_timer_t const * const p_instance)
+void nrfx_timer_enable(nrfx_timer_t const * p_instance)
 {
     NRFX_ASSERT(m_cb[p_instance->instance_id].state == NRFX_DRV_STATE_INITIALIZED);
     nrf_timer_task_trigger(p_instance->p_reg, NRF_TIMER_TASK_START);
@@ -137,7 +153,7 @@ void nrfx_timer_enable(nrfx_timer_t const * const p_instance)
     NRFX_LOG_INFO("Enabled instance: %d.", p_instance->instance_id);
 }
 
-void nrfx_timer_disable(nrfx_timer_t const * const p_instance)
+void nrfx_timer_disable(nrfx_timer_t const * p_instance)
 {
     NRFX_ASSERT(m_cb[p_instance->instance_id].state != NRFX_DRV_STATE_UNINITIALIZED);
     nrf_timer_task_trigger(p_instance->p_reg, NRF_TIMER_TASK_SHUTDOWN);
@@ -145,33 +161,33 @@ void nrfx_timer_disable(nrfx_timer_t const * const p_instance)
     NRFX_LOG_INFO("Disabled instance: %d.", p_instance->instance_id);
 }
 
-bool nrfx_timer_is_enabled(nrfx_timer_t const * const p_instance)
+bool nrfx_timer_is_enabled(nrfx_timer_t const * p_instance)
 {
     NRFX_ASSERT(m_cb[p_instance->instance_id].state != NRFX_DRV_STATE_UNINITIALIZED);
     return (m_cb[p_instance->instance_id].state == NRFX_DRV_STATE_POWERED_ON);
 }
 
-void nrfx_timer_resume(nrfx_timer_t const * const p_instance)
+void nrfx_timer_resume(nrfx_timer_t const * p_instance)
 {
     NRFX_ASSERT(m_cb[p_instance->instance_id].state != NRFX_DRV_STATE_UNINITIALIZED);
     nrf_timer_task_trigger(p_instance->p_reg, NRF_TIMER_TASK_START);
     NRFX_LOG_INFO("Resumed instance: %d.", p_instance->instance_id);
 }
 
-void nrfx_timer_pause(nrfx_timer_t const * const p_instance)
+void nrfx_timer_pause(nrfx_timer_t const * p_instance)
 {
     NRFX_ASSERT(m_cb[p_instance->instance_id].state != NRFX_DRV_STATE_UNINITIALIZED);
     nrf_timer_task_trigger(p_instance->p_reg, NRF_TIMER_TASK_STOP);
     NRFX_LOG_INFO("Paused instance: %d.", p_instance->instance_id);
 }
 
-void nrfx_timer_clear(nrfx_timer_t const * const p_instance)
+void nrfx_timer_clear(nrfx_timer_t const * p_instance)
 {
     NRFX_ASSERT(m_cb[p_instance->instance_id].state != NRFX_DRV_STATE_UNINITIALIZED);
     nrf_timer_task_trigger(p_instance->p_reg, NRF_TIMER_TASK_CLEAR);
 }
 
-void nrfx_timer_increment(nrfx_timer_t const * const p_instance)
+void nrfx_timer_increment(nrfx_timer_t const * p_instance)
 {
     NRFX_ASSERT(m_cb[p_instance->instance_id].state != NRFX_DRV_STATE_UNINITIALIZED);
     NRFX_ASSERT(nrf_timer_mode_get(p_instance->p_reg) != NRF_TIMER_MODE_TIMER);
@@ -179,21 +195,21 @@ void nrfx_timer_increment(nrfx_timer_t const * const p_instance)
     nrf_timer_task_trigger(p_instance->p_reg, NRF_TIMER_TASK_COUNT);
 }
 
-uint32_t nrfx_timer_capture(nrfx_timer_t const * const p_instance,
-                            nrf_timer_cc_channel_t     cc_channel)
+uint32_t nrfx_timer_capture(nrfx_timer_t const *   p_instance,
+                            nrf_timer_cc_channel_t cc_channel)
 {
     NRFX_ASSERT(m_cb[p_instance->instance_id].state != NRFX_DRV_STATE_UNINITIALIZED);
     NRFX_ASSERT(cc_channel < p_instance->cc_channel_count);
 
     nrf_timer_task_trigger(p_instance->p_reg,
         nrf_timer_capture_task_get(cc_channel));
-    return nrf_timer_cc_read(p_instance->p_reg, cc_channel);
+    return nrf_timer_cc_get(p_instance->p_reg, cc_channel);
 }
 
-void nrfx_timer_compare(nrfx_timer_t const * const p_instance,
-                        nrf_timer_cc_channel_t     cc_channel,
-                        uint32_t                   cc_value,
-                        bool                       enable_int)
+void nrfx_timer_compare(nrfx_timer_t const *   p_instance,
+                        nrf_timer_cc_channel_t cc_channel,
+                        uint32_t               cc_value,
+                        bool                   enable_int)
 {
     nrf_timer_int_mask_t timer_int = nrf_timer_compare_int_get(cc_channel);
 
@@ -207,18 +223,18 @@ void nrfx_timer_compare(nrfx_timer_t const * const p_instance,
         nrf_timer_int_disable(p_instance->p_reg, timer_int);
     }
 
-    nrf_timer_cc_write(p_instance->p_reg, cc_channel, cc_value);
+    nrf_timer_cc_set(p_instance->p_reg, cc_channel, cc_value);
     NRFX_LOG_INFO("Timer id: %d, capture value set: %lu, channel: %d.",
                   p_instance->instance_id,
                   cc_value,
                   cc_channel);
 }
 
-void nrfx_timer_extended_compare(nrfx_timer_t const * const p_instance,
-                                 nrf_timer_cc_channel_t     cc_channel,
-                                 uint32_t                   cc_value,
-                                 nrf_timer_short_mask_t     timer_short_mask,
-                                 bool                       enable_int)
+void nrfx_timer_extended_compare(nrfx_timer_t const *   p_instance,
+                                 nrf_timer_cc_channel_t cc_channel,
+                                 uint32_t               cc_value,
+                                 nrf_timer_short_mask_t timer_short_mask,
+                                 bool                   enable_int)
 {
     nrf_timer_shorts_disable(p_instance->p_reg,
         (TIMER_SHORTS_COMPARE0_STOP_Msk  << cc_channel) |
@@ -236,8 +252,8 @@ void nrfx_timer_extended_compare(nrfx_timer_t const * const p_instance,
                   cc_channel);
 }
 
-void nrfx_timer_compare_int_enable(nrfx_timer_t const * const p_instance,
-                                   uint32_t                   channel)
+void nrfx_timer_compare_int_enable(nrfx_timer_t const * p_instance,
+                                   uint32_t             channel)
 {
     NRFX_ASSERT(m_cb[p_instance->instance_id].state != NRFX_DRV_STATE_UNINITIALIZED);
     NRFX_ASSERT(channel < p_instance->cc_channel_count);
@@ -248,8 +264,8 @@ void nrfx_timer_compare_int_enable(nrfx_timer_t const * const p_instance,
         nrf_timer_compare_int_get(channel));
 }
 
-void nrfx_timer_compare_int_disable(nrfx_timer_t const * const p_instance,
-                                    uint32_t                   channel)
+void nrfx_timer_compare_int_disable(nrfx_timer_t const * p_instance,
+                                    uint32_t             channel)
 {
     NRFX_ASSERT(m_cb[p_instance->instance_id].state != NRFX_DRV_STATE_UNINITIALIZED);
     NRFX_ASSERT(channel < p_instance->cc_channel_count);

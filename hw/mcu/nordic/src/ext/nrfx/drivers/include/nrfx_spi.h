@@ -34,6 +34,7 @@
 
 #include <nrfx.h>
 #include <hal/nrf_spi.h>
+#include <hal/nrf_gpio.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -53,6 +54,7 @@ typedef struct
     uint8_t        drv_inst_idx; ///< Index of the driver instance. For internal use only.
 } nrfx_spi_t;
 
+#ifndef __NRFX_DOXYGEN__
 enum {
 #if NRFX_CHECK(NRFX_SPI0_ENABLED)
     NRFX_SPI0_INST_IDX,
@@ -65,6 +67,7 @@ enum {
 #endif
     NRFX_SPI_ENABLED_COUNT
 };
+#endif
 
 /** @brief Macro for creating an instance of the SPI master driver. */
 #define NRFX_SPI_INSTANCE(id)                               \
@@ -103,20 +106,33 @@ typedef struct
     nrf_spi_frequency_t frequency;  ///< SPI frequency.
     nrf_spi_mode_t      mode;       ///< SPI mode.
     nrf_spi_bit_order_t bit_order;  ///< SPI bit order.
+    nrf_gpio_pin_pull_t miso_pull;  ///< MISO pull up configuration.
 } nrfx_spi_config_t;
 
-/** @brief SPI master instance default configuration. */
-#define NRFX_SPI_DEFAULT_CONFIG                           \
-{                                                         \
-    .sck_pin      = NRFX_SPI_PIN_NOT_USED,                \
-    .mosi_pin     = NRFX_SPI_PIN_NOT_USED,                \
-    .miso_pin     = NRFX_SPI_PIN_NOT_USED,                \
-    .ss_pin       = NRFX_SPI_PIN_NOT_USED,                \
-    .irq_priority = NRFX_SPI_DEFAULT_CONFIG_IRQ_PRIORITY, \
-    .orc          = 0xFF,                                 \
-    .frequency    = NRF_SPI_FREQ_4M,                      \
-    .mode         = NRF_SPI_MODE_0,                       \
-    .bit_order    = NRF_SPI_BIT_ORDER_MSB_FIRST,          \
+/**
+ * @brief SPI master instance default configuration.
+ * This configuration sets up SPI with the following options:
+ * - over-run character set to 0xFF
+ * - clock frequency 4 MHz
+ * - mode 0 enabled (SCK active high, sample on leading edge of clock)
+ * - MSB shifted out first
+ *
+ * @param[in] _pin_sck  SCK pin.
+ * @param[in] _pin_mosi MOSI pin.
+ * @param[in] _pin_miso MISO pin.
+ * @param[in] _pin_ss   SS pin.
+ */
+#define NRFX_SPI_DEFAULT_CONFIG(_pin_sck, _pin_mosi, _pin_miso, _pin_ss)    \
+{                                                                           \
+    .sck_pin      = _pin_sck,                                               \
+    .mosi_pin     = _pin_mosi,                                              \
+    .miso_pin     = _pin_miso,                                              \
+    .ss_pin       = _pin_ss,                                                \
+    .irq_priority = NRFX_SPI_DEFAULT_CONFIG_IRQ_PRIORITY,                   \
+    .orc          = 0xFF,                                                   \
+    .frequency    = NRF_SPI_FREQ_4M,                                        \
+    .mode         = NRF_SPI_MODE_0,                                         \
+    .bit_order    = NRF_SPI_BIT_ORDER_MSB_FIRST,                            \
 }
 
 /** @brief Single transfer descriptor structure. */
@@ -191,7 +207,7 @@ typedef void (* nrfx_spi_evt_handler_t)(nrfx_spi_evt_t const * p_event,
  *                                  possible only if @ref nrfx_prs module
  *                                  is enabled.
  */
-nrfx_err_t nrfx_spi_init(nrfx_spi_t const * const  p_instance,
+nrfx_err_t nrfx_spi_init(nrfx_spi_t const *        p_instance,
                          nrfx_spi_config_t const * p_config,
                          nrfx_spi_evt_handler_t    handler,
                          void *                    p_context);
@@ -201,7 +217,7 @@ nrfx_err_t nrfx_spi_init(nrfx_spi_t const * const  p_instance,
  *
  * @param[in] p_instance Pointer to the driver instance structure.
  */
-void nrfx_spi_uninit(nrfx_spi_t const * const p_instance);
+void nrfx_spi_uninit(nrfx_spi_t const * p_instance);
 
 /**
  * @brief Function for starting the SPI data transfer.
@@ -220,7 +236,7 @@ void nrfx_spi_uninit(nrfx_spi_t const * const p_instance);
  * @retval NRFX_ERROR_BUSY          The driver is not ready for a new transfer.
  * @retval NRFX_ERROR_NOT_SUPPORTED The provided parameters are not supported.
  */
-nrfx_err_t nrfx_spi_xfer(nrfx_spi_t const * const     p_instance,
+nrfx_err_t nrfx_spi_xfer(nrfx_spi_t const *           p_instance,
                          nrfx_spi_xfer_desc_t const * p_xfer_desc,
                          uint32_t                     flags);
 

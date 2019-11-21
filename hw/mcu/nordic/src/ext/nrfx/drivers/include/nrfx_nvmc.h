@@ -102,8 +102,13 @@ nrfx_err_t nrfx_nvmc_page_partial_erase_init(uint32_t address, uint32_t duration
 /**
  * @brief Function for performing a part of the complete page erase (also known as partial erase).
  *
- * Each part takes the amount of time specified during the initialization.
  * This function must be called several times to erase the whole page, once for each erase part.
+ *
+ * @note The actual time needed to perform each part of the page erase is longer than the partial
+ *       erase duration specified in the call to @ref nrfx_nvmc_page_partial_erase_init,
+ *       since the NVMC peripheral needs certain additional amount of time to handle the process.
+ *       For details regarding this additional time, see the "Electrical specification" section
+ *       for the NVMC peripheral in the Product Specification.
  *
  * @note Using a page that was not completely erased leads to undefined behavior.
  *       Depending on the source of the code being executed,
@@ -237,40 +242,40 @@ uint32_t nrfx_nvmc_flash_page_count_get(void);
  * @retval true  Last write completed successfully.
  * @retval false Last write is still in progress.
  */
-__STATIC_INLINE bool nrfx_nvmc_write_done_check(void);
+NRFX_STATIC_INLINE bool nrfx_nvmc_write_done_check(void);
 
-#if defined(NRF_NVMC_ICACHE_PRESENT)
+#if defined(NVMC_FEATURE_CACHE_PRESENT)
 /**
  * @brief Function for enabling the Instruction Cache (ICache).
  *
  * Enabling ICache reduces the amount of accesses to flash memory,
  * which can boost performance and lower power consumption.
  */
-__STATIC_INLINE void nrfx_nvmc_icache_enable(void);
+NRFX_STATIC_INLINE void nrfx_nvmc_icache_enable(void);
 
 /** @brief Function for disabling ICache. */
-__STATIC_INLINE void nrfx_nvmc_icache_disable(void);
+NRFX_STATIC_INLINE void nrfx_nvmc_icache_disable(void);
 
-#endif // defined(NRF_NVMC_ICACHE_PRESENT)
+#endif // defined(NVMC_FEATURE_CACHE_PRESENT)
 
-#ifndef SUPPRESS_INLINE_IMPLEMENTATION
-__STATIC_INLINE bool nrfx_nvmc_write_done_check(void)
+#ifndef NRFX_DECLARE_ONLY
+NRFX_STATIC_INLINE bool nrfx_nvmc_write_done_check(void)
 {
     return nrf_nvmc_ready_check(NRF_NVMC);
 }
 
-#if defined(NRF_NVMC_ICACHE_PRESENT)
-__STATIC_INLINE void nrfx_nvmc_icache_enable(void)
+#if defined(NVMC_FEATURE_CACHE_PRESENT)
+NRFX_STATIC_INLINE void nrfx_nvmc_icache_enable(void)
 {
     nrf_nvmc_icache_config_set(NRF_NVMC, NRF_NVMC_ICACHE_ENABLE_WITH_PROFILING);
 }
 
-__STATIC_INLINE void nrfx_nvmc_icache_disable(void)
+NRFX_STATIC_INLINE void nrfx_nvmc_icache_disable(void)
 {
     nrf_nvmc_icache_config_set(NRF_NVMC, NRF_NVMC_ICACHE_DISABLE);
 }
-#endif // defined(NRF_NVMC_ICACHE_PRESENT)
-#endif // SUPPRESS_INLINE_IMPLEMENTATION
+#endif // defined(NVMC_FEATURE_CACHE_PRESENT)
+#endif // NRFX_DECLARE_ONLY
 
 /** @} */
 

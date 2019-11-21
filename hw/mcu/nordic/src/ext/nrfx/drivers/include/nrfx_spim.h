@@ -34,6 +34,7 @@
 
 #include <nrfx.h>
 #include <hal/nrf_spim.h>
+#include <hal/nrf_gpio.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -88,67 +89,90 @@ enum {
 /** @brief Configuration structure of the SPIM driver instance. */
 typedef struct
 {
-    uint8_t sck_pin;      ///< SCK pin number.
-    uint8_t mosi_pin;     ///< MOSI pin number (optional).
-                          /**< Set to @ref NRFX_SPIM_PIN_NOT_USED
-                           *   if this signal is not needed. */
-    uint8_t miso_pin;     ///< MISO pin number (optional).
-                          /**< Set to @ref NRFX_SPIM_PIN_NOT_USED
-                           *   if this signal is not needed. */
-    uint8_t ss_pin;       ///< Slave Select pin number (optional).
-                          /**< Set to @ref NRFX_SPIM_PIN_NOT_USED
-                           *   if this signal is not needed. */
-    bool ss_active_high;  ///< Polarity of the Slave Select pin during transmission.
-    uint8_t irq_priority; ///< Interrupt priority.
-    uint8_t orc;          ///< Overrun character.
-                          /**< This character is used when all bytes from the TX buffer are sent,
-                               but the transfer continues due to RX. */
-    nrf_spim_frequency_t frequency; ///< SPIM frequency.
-    nrf_spim_mode_t      mode;      ///< SPIM mode.
-    nrf_spim_bit_order_t bit_order; ///< SPIM bit order.
+    uint8_t               sck_pin;        ///< SCK pin number.
+    uint8_t               mosi_pin;       ///< MOSI pin number (optional).
+                                          /**< Set to @ref NRFX_SPIM_PIN_NOT_USED
+                                           *   if this signal is not needed. */
+    uint8_t               miso_pin;       ///< MISO pin number (optional).
+                                          /**< Set to @ref NRFX_SPIM_PIN_NOT_USED
+                                           *   if this signal is not needed. */
+    uint8_t               ss_pin;         ///< Slave Select pin number (optional).
+                                          /**< Set to @ref NRFX_SPIM_PIN_NOT_USED
+                                           *   if this signal is not needed. */
+    bool                  ss_active_high; ///< Polarity of the Slave Select pin during transmission.
+    uint8_t               irq_priority;   ///< Interrupt priority.
+    uint8_t               orc;            ///< Overrun character.
+                                          /**< This character is used when all bytes from the TX buffer are sent,
+                                               but the transfer continues due to RX. */
+    nrf_spim_frequency_t frequency;       ///< SPIM frequency.
+    nrf_spim_mode_t      mode;            ///< SPIM mode.
+    nrf_spim_bit_order_t bit_order;       ///< SPIM bit order.
+    nrf_gpio_pin_pull_t  miso_pull;       ///< MISO pull up configuration.
 #if NRFX_CHECK(NRFX_SPIM_EXTENDED_ENABLED) || defined(__NRFX_DOXYGEN__)
-    uint8_t              dcx_pin;     ///< D/CX pin number (optional).
-    uint8_t              rx_delay;    ///< Sample delay for input serial data on MISO.
-                                      /**< The value specifies the delay, in number of 64 MHz clock cycles
-                                       *   (15.625 ns), from the the sampling edge of SCK (leading edge for
-                                       *   CONFIG.CPHA = 0, trailing edge for CONFIG.CPHA = 1) until
-                                       *   the input serial data is sampled. */
-    bool                 use_hw_ss;   ///< Indication to use software or hardware controlled Slave Select pin.
-    uint8_t              ss_duration; ///< Slave Select duration before and after transmission.
-                                      /**< Minimum duration between the edge of CSN and the edge of SCK and minimum
-                                       *   duration of CSN must stay inactive between transactions.
-                                       *   The value is specified in number of 64 MHz clock cycles (15.625 ns).
-                                       *   Supported only for hardware-controlled Slave Select. */
+    uint8_t              dcx_pin;         ///< D/CX pin number (optional).
+    uint8_t              rx_delay;        ///< Sample delay for input serial data on MISO.
+                                          /**< The value specifies the delay, in number of 64 MHz clock cycles
+                                           *   (15.625 ns), from the the sampling edge of SCK (leading edge for
+                                           *   CONFIG.CPHA = 0, trailing edge for CONFIG.CPHA = 1) until
+                                           *   the input serial data is sampled. */
+    bool                 use_hw_ss;       ///< Indication to use software or hardware controlled Slave Select pin.
+    uint8_t              ss_duration;     ///< Slave Select duration before and after transmission.
+                                          /**< Minimum duration between the edge of CSN and the edge of SCK.
+                                           *   Also, minimum duration of CSN inactivity between transactions.
+                                           *   The value is specified in number of 64 MHz clock cycles (15.625 ns).
+                                           *   Supported only for hardware-controlled Slave Select. */
 #endif
 } nrfx_spim_config_t;
 
 #if NRFX_CHECK(NRFX_SPIM_EXTENDED_ENABLED) || defined(__NRFX_DOXYGEN__)
 /**
- * @brief Extended default configuration of the SPIM instance.
+ * @brief SPIM driver extended default configuration.
+ *
+ * This configuration sets up SPIM additional options with the following values:
+ * - DCX pin disabled
+ * - RX sampling delay: 2 clock cycles
+ * - hardware SS disabled
+ * - hardware SS duration before and after transmission: 2 clock cycles
  */
-    #define NRFX_SPIM_DEFAULT_EXTENDED_CONFIG   \
-        .dcx_pin      = NRFX_SPIM_PIN_NOT_USED, \
-        .rx_delay     = 0x02,                   \
-        .use_hw_ss    = false,                  \
-        .ss_duration  = 0x02,
+#define NRFX_SPIM_DEFAULT_EXTENDED_CONFIG   \
+    .dcx_pin      = NRFX_SPIM_PIN_NOT_USED, \
+    .rx_delay     = 0x02,                   \
+    .use_hw_ss    = false,                  \
+    .ss_duration  = 0x02,
 #else
     #define NRFX_SPIM_DEFAULT_EXTENDED_CONFIG
 #endif
 
-/** @brief The default configuration of the SPIM master instance. */
-#define NRFX_SPIM_DEFAULT_CONFIG                             \
-{                                                            \
-    .sck_pin        = NRFX_SPIM_PIN_NOT_USED,                \
-    .mosi_pin       = NRFX_SPIM_PIN_NOT_USED,                \
-    .miso_pin       = NRFX_SPIM_PIN_NOT_USED,                \
-    .ss_pin         = NRFX_SPIM_PIN_NOT_USED,                \
-    .ss_active_high = false,                                 \
-    .irq_priority   = NRFX_SPIM_DEFAULT_CONFIG_IRQ_PRIORITY, \
-    .orc            = 0xFF,                                  \
-    .frequency      = NRF_SPIM_FREQ_4M,                      \
-    .mode           = NRF_SPIM_MODE_0,                       \
-    .bit_order      = NRF_SPIM_BIT_ORDER_MSB_FIRST,          \
-    NRFX_SPIM_DEFAULT_EXTENDED_CONFIG                        \
+/**
+ * @brief SPIM driver default configuration.
+ *
+ * This configuration sets up SPIM with the following options:
+ * - SS pin active low
+ * - over-run character set to 0xFF
+ * - clock frequency: 4 MHz
+ * - mode: 0 (SCK active high, sample on leading edge of the clock signa;)
+ * - MSB shifted out first
+ * - MISO pull-up disabled
+ *
+ * @param[in] _pin_sck  SCK pin.
+ * @param[in] _pin_mosi MOSI pin.
+ * @param[in] _pin_miso MISO pin.
+ * @param[in] _pin_ss   SS pin.
+ */
+#define NRFX_SPIM_DEFAULT_CONFIG(_pin_sck, _pin_mosi, _pin_miso, _pin_ss)   \
+{                                                                           \
+    .sck_pin        = _pin_sck,                                             \
+    .mosi_pin       = _pin_mosi,                                            \
+    .miso_pin       = _pin_miso,                                            \
+    .ss_pin         = _pin_ss,                                              \
+    .ss_active_high = false,                                                \
+    .irq_priority   = NRFX_SPIM_DEFAULT_CONFIG_IRQ_PRIORITY,                \
+    .orc            = 0xFF,                                                 \
+    .frequency      = NRF_SPIM_FREQ_4M,                                     \
+    .mode           = NRF_SPIM_MODE_0,                                      \
+    .bit_order      = NRF_SPIM_BIT_ORDER_MSB_FIRST,                         \
+    .miso_pull      = NRF_GPIO_PIN_NOPULL,                                  \
+    NRFX_SPIM_DEFAULT_EXTENDED_CONFIG                                       \
 }
 
 /** @brief Flag indicating that TX buffer address will be incremented after transfer. */
@@ -236,7 +260,7 @@ typedef void (* nrfx_spim_evt_handler_t)(nrfx_spim_evt_t const * p_event,
  * @retval NRFX_ERROR_NOT_SUPPORTED Requested configuration is not supported
  *                                  by the SPIM instance.
  */
-nrfx_err_t nrfx_spim_init(nrfx_spim_t const * const  p_instance,
+nrfx_err_t nrfx_spim_init(nrfx_spim_t const *        p_instance,
                           nrfx_spim_config_t const * p_config,
                           nrfx_spim_evt_handler_t    handler,
                           void *                     p_context);
@@ -246,7 +270,7 @@ nrfx_err_t nrfx_spim_init(nrfx_spim_t const * const  p_instance,
  *
  * @param[in] p_instance Pointer to the driver instance structure.
  */
-void       nrfx_spim_uninit(nrfx_spim_t const * const p_instance);
+void nrfx_spim_uninit(nrfx_spim_t const * p_instance);
 
 /**
  * @brief Function for starting the SPIM data transfer.
@@ -290,7 +314,7 @@ void       nrfx_spim_uninit(nrfx_spim_t const * const p_instance);
  * @retval NRFX_ERROR_INVALID_ADDR  The provided buffers are not placed in the Data
  *                                  RAM region.
  */
-nrfx_err_t nrfx_spim_xfer(nrfx_spim_t const * const     p_instance,
+nrfx_err_t nrfx_spim_xfer(nrfx_spim_t const *           p_instance,
                           nrfx_spim_xfer_desc_t const * p_xfer_desc,
                           uint32_t                      flags);
 
@@ -323,7 +347,7 @@ nrfx_err_t nrfx_spim_xfer(nrfx_spim_t const * const     p_instance,
  * @retval NRFX_ERROR_INVALID_ADDR  The provided buffers are not placed in the Data
  *                                  RAM region.
  */
-nrfx_err_t nrfx_spim_xfer_dcx(nrfx_spim_t const * const     p_instance,
+nrfx_err_t nrfx_spim_xfer_dcx(nrfx_spim_t const *           p_instance,
                               nrfx_spim_xfer_desc_t const * p_xfer_desc,
                               uint32_t                      flags,
                               uint8_t                       cmd_length);

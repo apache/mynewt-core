@@ -145,16 +145,26 @@ typedef struct
     uint8_t             interrupt_priority; //!< The priority of interrupt for the module to be set.
 } nrfx_twis_config_t;
 
-/** @brief Generate the default configuration for the TWIS driver instance. */
-#define NRFX_TWIS_DEFAULT_CONFIG                                                  \
-{                                                                                 \
-    .addr               = { NRFX_TWIS_DEFAULT_CONFIG_ADDR0,                       \
-                            NRFX_TWIS_DEFAULT_CONFIG_ADDR1 },                     \
-    .scl                = 31,                                                     \
-    .sda                = 31,                                                     \
-    .scl_pull           = (nrf_gpio_pin_pull_t)NRFX_TWIS_DEFAULT_CONFIG_SCL_PULL, \
-    .sda_pull           = (nrf_gpio_pin_pull_t)NRFX_TWIS_DEFAULT_CONFIG_SDA_PULL, \
-    .interrupt_priority = NRFX_TWIS_DEFAULT_CONFIG_IRQ_PRIORITY                   \
+/**
+ * @brief TWIS driver default configuration.
+ *
+ * This configuration sets up TWIS with the following options:
+ * - second slave address disabled
+ * - SCL pull-up disabled
+ * - SDA pull-up disabled
+ *
+ * @param[in] _pin_scl SCL pin.
+ * @param[in] _pin_sda SDA pin.
+ * @param[in] _addr    Slave address on TWI bus.
+ */
+#define NRFX_TWIS_DEFAULT_CONFIG(_pin_scl, _pin_sda, _addr)      \
+{                                                                \
+    .addr               = { _addr, 0x00 },                       \
+    .scl                = _pin_scl,                              \
+    .scl_pull           = NRF_GPIO_PIN_NOPULL,                   \
+    .sda                = _pin_sda,                              \
+    .sda_pull           = NRF_GPIO_PIN_NOPULL,                   \
+    .interrupt_priority = NRFX_TWIS_DEFAULT_CONFIG_IRQ_PRIORITY  \
 }
 
 /**
@@ -267,7 +277,7 @@ nrfx_err_t nrfx_twis_tx_prepare(nrfx_twis_t const * p_instance,
  *
  * @return Number of bytes sent.
  */
-__STATIC_INLINE size_t nrfx_twis_tx_amount(nrfx_twis_t const * p_instance);
+NRFX_STATIC_INLINE size_t nrfx_twis_tx_amount(nrfx_twis_t const * p_instance);
 
 /**
  * @brief Function for preparing the data for receiving.
@@ -301,7 +311,7 @@ nrfx_err_t nrfx_twis_rx_prepare(nrfx_twis_t const * p_instance,
  *
  * @return Number of bytes received.
  */
-__STATIC_INLINE size_t nrfx_twis_rx_amount(nrfx_twis_t const * p_instance);
+NRFX_STATIC_INLINE size_t nrfx_twis_rx_amount(nrfx_twis_t const * p_instance);
 
 /**
  * @brief Function for checking if the driver is busy right now.
@@ -366,17 +376,17 @@ bool nrfx_twis_is_pending_tx(nrfx_twis_t const * p_instance);
  */
 bool nrfx_twis_is_pending_rx(nrfx_twis_t const * p_instance);
 
-#ifndef SUPPRESS_INLINE_IMPLEMENTATION
-__STATIC_INLINE size_t nrfx_twis_tx_amount(nrfx_twis_t const * p_instance)
+#ifndef NRFX_DECLARE_ONLY
+NRFX_STATIC_INLINE size_t nrfx_twis_tx_amount(nrfx_twis_t const * p_instance)
 {
     return nrf_twis_tx_amount_get(p_instance->p_reg);
 }
 
-__STATIC_INLINE size_t nrfx_twis_rx_amount(nrfx_twis_t const * p_instance)
+NRFX_STATIC_INLINE size_t nrfx_twis_rx_amount(nrfx_twis_t const * p_instance)
 {
     return nrf_twis_rx_amount_get(p_instance->p_reg);
 }
-#endif // SUPPRESS_INLINE_IMPLEMENTATION
+#endif // NRFX_DECLARE_ONLY
 
 /** @} */
 

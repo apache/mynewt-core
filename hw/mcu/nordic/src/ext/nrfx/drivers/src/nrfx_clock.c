@@ -179,7 +179,7 @@ void nrfx_clock_enable(void)
 {
     NRFX_ASSERT(m_clock_cb.module_initialized);
     nrfx_power_clock_irq_init();
-    nrf_clock_lf_src_set((nrf_clock_lfclk_t)NRFX_CLOCK_CONFIG_LF_SRC);
+    nrf_clock_lf_src_set(NRF_CLOCK, (nrf_clock_lfclk_t)NRFX_CLOCK_CONFIG_LF_SRC);
 
 #if NRFX_CHECK(NRFX_POWER_ENABLED)
     nrfx_clock_irq_enabled = true;
@@ -198,11 +198,11 @@ void nrfx_clock_disable(void)
     {
         NRFX_IRQ_DISABLE(nrfx_get_irq_number(NRF_CLOCK));
     }
-    nrf_clock_int_disable(CLOCK_INTENSET_HFCLKSTARTED_Msk |
-                          CLOCK_INTENSET_LFCLKSTARTED_Msk |
+    nrf_clock_int_disable(NRF_CLOCK, CLOCK_INTENSET_HFCLKSTARTED_Msk |
+                                     CLOCK_INTENSET_LFCLKSTARTED_Msk |
 #if NRFX_CHECK(NRFX_CLOCK_CONFIG_LF_CAL_ENABLED)
-                          CLOCK_INTENSET_DONE_Msk |
-                          CLOCK_INTENSET_CTTO_Msk |
+                                     CLOCK_INTENSET_DONE_Msk |
+                                     CLOCK_INTENSET_CTTO_Msk |
 #endif
                           0);
 #if NRFX_CHECK(NRFX_POWER_ENABLED)
@@ -223,37 +223,37 @@ void nrfx_clock_uninit(void)
 void nrfx_clock_lfclk_start(void)
 {
     NRFX_ASSERT(m_clock_cb.module_initialized);
-    nrf_clock_event_clear(NRF_CLOCK_EVENT_LFCLKSTARTED);
-    nrf_clock_int_enable(NRF_CLOCK_INT_LF_STARTED_MASK);
+    nrf_clock_event_clear(NRF_CLOCK, NRF_CLOCK_EVENT_LFCLKSTARTED);
+    nrf_clock_int_enable(NRF_CLOCK, NRF_CLOCK_INT_LF_STARTED_MASK);
 
 #if NRFX_CHECK(USE_WORKAROUND_FOR_ANOMALY_132)
     nrfx_clock_anomaly_132();
 #endif
 
-    nrf_clock_task_trigger(NRF_CLOCK_TASK_LFCLKSTART);
+    nrf_clock_task_trigger(NRF_CLOCK, NRF_CLOCK_TASK_LFCLKSTART);
 }
 
 void nrfx_clock_lfclk_stop(void)
 {
     NRFX_ASSERT(m_clock_cb.module_initialized);
-    nrf_clock_task_trigger(NRF_CLOCK_TASK_LFCLKSTOP);
-    while (nrf_clock_lf_is_running())
+    nrf_clock_task_trigger(NRF_CLOCK, NRF_CLOCK_TASK_LFCLKSTOP);
+    while (nrf_clock_lf_is_running(NRF_CLOCK))
     {}
 }
 
 void nrfx_clock_hfclk_start(void)
 {
     NRFX_ASSERT(m_clock_cb.module_initialized);
-    nrf_clock_event_clear(NRF_CLOCK_EVENT_HFCLKSTARTED);
-    nrf_clock_int_enable(NRF_CLOCK_INT_HF_STARTED_MASK);
-    nrf_clock_task_trigger(NRF_CLOCK_TASK_HFCLKSTART);
+    nrf_clock_event_clear(NRF_CLOCK, NRF_CLOCK_EVENT_HFCLKSTARTED);
+    nrf_clock_int_enable(NRF_CLOCK, NRF_CLOCK_INT_HF_STARTED_MASK);
+    nrf_clock_task_trigger(NRF_CLOCK, NRF_CLOCK_TASK_HFCLKSTART);
 }
 
 void nrfx_clock_hfclk_stop(void)
 {
     NRFX_ASSERT(m_clock_cb.module_initialized);
-    nrf_clock_task_trigger(NRF_CLOCK_TASK_HFCLKSTOP);
-    while (nrf_clock_hf_is_running(NRF_CLOCK_HFCLK_HIGH_ACCURACY))
+    nrf_clock_task_trigger(NRF_CLOCK, NRF_CLOCK_TASK_HFCLKSTOP);
+    while (nrf_clock_hf_is_running(NRF_CLOCK, NRF_CLOCK_HFCLK_HIGH_ACCURACY))
     {}
 #if NRFX_CHECK(USE_WORKAROUND_FOR_ANOMALY_201)
     m_clock_cb.hfclk_started = false;
@@ -277,13 +277,13 @@ nrfx_err_t nrfx_clock_calibration_start(void)
 
     if (m_clock_cb.cal_state == CAL_STATE_IDLE)
     {
-        nrf_clock_event_clear(NRF_CLOCK_EVENT_DONE);
-        nrf_clock_int_enable(NRF_CLOCK_INT_DONE_MASK);
+        nrf_clock_event_clear(NRF_CLOCK, NRF_CLOCK_EVENT_DONE);
+        nrf_clock_int_enable(NRF_CLOCK, NRF_CLOCK_INT_DONE_MASK);
         m_clock_cb.cal_state = CAL_STATE_CAL;
 #if NRFX_CHECK(USE_WORKAROUND_FOR_ANOMALY_192)
         *(volatile uint32_t *)0x40000C34 = 0x00000002;
 #endif
-        nrf_clock_task_trigger(NRF_CLOCK_TASK_CAL);
+        nrf_clock_task_trigger(NRF_CLOCK, NRF_CLOCK_TASK_CAL);
     }
     else
     {
@@ -311,28 +311,28 @@ nrfx_err_t nrfx_clock_is_calibrating(void)
 void nrfx_clock_calibration_timer_start(uint8_t interval)
 {
 #if NRFX_CHECK(NRFX_CLOCK_CONFIG_LF_CAL_ENABLED)
-    nrf_clock_cal_timer_timeout_set(interval);
-    nrf_clock_event_clear(NRF_CLOCK_EVENT_CTTO);
-    nrf_clock_int_enable(NRF_CLOCK_INT_CTTO_MASK);
-    nrf_clock_task_trigger(NRF_CLOCK_TASK_CTSTART);
+    nrf_clock_cal_timer_timeout_set(NRF_CLOCK, interval);
+    nrf_clock_event_clear(NRF_CLOCK, NRF_CLOCK_EVENT_CTTO);
+    nrf_clock_int_enable(NRF_CLOCK, NRF_CLOCK_INT_CTTO_MASK);
+    nrf_clock_task_trigger(NRF_CLOCK, NRF_CLOCK_TASK_CTSTART);
 #endif
 }
 
 void nrfx_clock_calibration_timer_stop(void)
 {
 #if NRFX_CHECK(NRFX_CLOCK_CONFIG_LF_CAL_ENABLED)
-    nrf_clock_int_disable(NRF_CLOCK_INT_CTTO_MASK);
-    nrf_clock_task_trigger(NRF_CLOCK_TASK_CTSTOP);
+    nrf_clock_int_disable(NRF_CLOCK, NRF_CLOCK_INT_CTTO_MASK);
+    nrf_clock_task_trigger(NRF_CLOCK, NRF_CLOCK_TASK_CTSTOP);
 #endif
 }
 
 void nrfx_clock_irq_handler(void)
 {
-    if (nrf_clock_event_check(NRF_CLOCK_EVENT_HFCLKSTARTED))
+    if (nrf_clock_event_check(NRF_CLOCK, NRF_CLOCK_EVENT_HFCLKSTARTED))
     {
-        nrf_clock_event_clear(NRF_CLOCK_EVENT_HFCLKSTARTED);
+        nrf_clock_event_clear(NRF_CLOCK, NRF_CLOCK_EVENT_HFCLKSTARTED);
         NRFX_LOG_DEBUG("Event: %s.", EVT_TO_STR(NRF_CLOCK_EVENT_HFCLKSTARTED));
-        nrf_clock_int_disable(NRF_CLOCK_INT_HF_STARTED_MASK);
+        nrf_clock_int_disable(NRF_CLOCK, NRF_CLOCK_INT_HF_STARTED_MASK);
 
 #if NRFX_CHECK(USE_WORKAROUND_FOR_ANOMALY_201)
         if (!m_clock_cb.hfclk_started)
@@ -344,33 +344,33 @@ void nrfx_clock_irq_handler(void)
         m_clock_cb.event_handler(NRFX_CLOCK_EVT_HFCLK_STARTED);
 #endif
     }
-    if (nrf_clock_event_check(NRF_CLOCK_EVENT_LFCLKSTARTED))
+    if (nrf_clock_event_check(NRF_CLOCK, NRF_CLOCK_EVENT_LFCLKSTARTED))
     {
-        nrf_clock_event_clear(NRF_CLOCK_EVENT_LFCLKSTARTED);
+        nrf_clock_event_clear(NRF_CLOCK, NRF_CLOCK_EVENT_LFCLKSTARTED);
         NRFX_LOG_DEBUG("Event: %s.", EVT_TO_STR(NRF_CLOCK_EVENT_LFCLKSTARTED));
-        nrf_clock_int_disable(NRF_CLOCK_INT_LF_STARTED_MASK);
+        nrf_clock_int_disable(NRF_CLOCK, NRF_CLOCK_INT_LF_STARTED_MASK);
 
         m_clock_cb.event_handler(NRFX_CLOCK_EVT_LFCLK_STARTED);
     }
 
 #if NRFX_CHECK(NRFX_CLOCK_CONFIG_LF_CAL_ENABLED)
-    if (nrf_clock_event_check(NRF_CLOCK_EVENT_CTTO))
+    if (nrf_clock_event_check(NRF_CLOCK, NRF_CLOCK_EVENT_CTTO))
     {
-        nrf_clock_event_clear(NRF_CLOCK_EVENT_CTTO);
+        nrf_clock_event_clear(NRF_CLOCK, NRF_CLOCK_EVENT_CTTO);
         NRFX_LOG_DEBUG("Event: %s.", EVT_TO_STR(NRF_CLOCK_EVENT_CTTO));
-        nrf_clock_int_disable(NRF_CLOCK_INT_CTTO_MASK);
+        nrf_clock_int_disable(NRF_CLOCK, NRF_CLOCK_INT_CTTO_MASK);
 
         m_clock_cb.event_handler(NRFX_CLOCK_EVT_CTTO);
     }
 
-    if (nrf_clock_event_check(NRF_CLOCK_EVENT_DONE))
+    if (nrf_clock_event_check(NRF_CLOCK, NRF_CLOCK_EVENT_DONE))
     {
 #if NRFX_CHECK(USE_WORKAROUND_FOR_ANOMALY_192)
         *(volatile uint32_t *)0x40000C34 = 0x00000000;
 #endif
-        nrf_clock_event_clear(NRF_CLOCK_EVENT_DONE);
+        nrf_clock_event_clear(NRF_CLOCK, NRF_CLOCK_EVENT_DONE);
         NRFX_LOG_DEBUG("Event: %s.", EVT_TO_STR(NRF_CLOCK_EVENT_DONE));
-        nrf_clock_int_disable(NRF_CLOCK_INT_DONE_MASK);
+        nrf_clock_int_disable(NRF_CLOCK, NRF_CLOCK_INT_DONE_MASK);
         m_clock_cb.cal_state = CAL_STATE_IDLE;
         m_clock_cb.event_handler(NRFX_CLOCK_EVT_CAL_DONE);
     }
