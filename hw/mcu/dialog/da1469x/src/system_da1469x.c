@@ -37,7 +37,8 @@
 
 extern uint8_t __StackLimit;
 
-void SystemInit(void)
+void
+SystemInit(void)
 {
 #if MYNEWT_VAL(OS_SCHEDULING) && MYNEWT_VAL(MCU_DEEP_SLEEP)
     int idx;
