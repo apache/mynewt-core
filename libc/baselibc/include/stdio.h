@@ -88,8 +88,12 @@ __extern_inline char *strerror(int errnum)
 	return (char*)"error_str";
 }
 
+__extern_inline int putchar(int c)
+{
+    return fputc(c, stdout);
+}
+
 #define putc(c,f)  fputc((c),(f))
-#define putchar(c) fputc((c),stdout)
 #define getc(f) fgetc(f)
 #define getchar() fgetc(stdin)
 
