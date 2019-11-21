@@ -67,9 +67,6 @@ STATS_NAME_END(lsm303dlhc_stat_section)
 /* Global variable used to hold stats data */
 STATS_SECT_DECL(lsm303dlhc_stat_section) g_lsm303dlhcstats;
 
-#define LSM303DLHC_LOG(lvl_, ...) \
-    MODLOG_ ## lvl_(MYNEWT_VAL(LSM303DLHC_LOG_MODULE), __VA_ARGS__)
-
 /* Exports for the sensor API */
 static int lsm303dlhc_sensor_read(struct sensor *, sensor_type_t,
         sensor_data_func_t, void *, uint32_t);
@@ -112,9 +109,9 @@ lsm303dlhc_write8(struct sensor_itf *itf, uint8_t addr, uint8_t reg,
     rc = i2cn_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1,
                            MYNEWT_VAL(LSM303DLHC_I2C_RETRIES));
     if (rc) {
-        LSM303DLHC_LOG(ERROR,
-                       "Failed to write to 0x%02X:0x%02X with value 0x%02lX\n",
-                       addr, reg, value);
+        LSM303DLHC_LOG_ERROR(
+                "Failed to write to 0x%02X:0x%02X with value 0x%02lX\n",
+                addr, reg, value);
         STATS_INC(g_lsm303dlhcstats, errors);
     }
 
@@ -156,7 +153,7 @@ lsm303dlhc_read8(struct sensor_itf *itf, uint8_t addr, uint8_t reg,
     rc = i2cn_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1,
                            MYNEWT_VAL(LSM303DLHC_I2C_RETRIES));
     if (rc) {
-        LSM303DLHC_LOG(ERROR, "I2C access failed at address 0x%02X\n", addr);
+        LSM303DLHC_LOG_ERROR("I2C access failed at address 0x%02X\n", addr);
         STATS_INC(g_lsm303dlhcstats, errors);
         goto err;
     }
@@ -167,8 +164,8 @@ lsm303dlhc_read8(struct sensor_itf *itf, uint8_t addr, uint8_t reg,
                           MYNEWT_VAL(LSM303DLHC_I2C_RETRIES));
     *value = payload;
     if (rc) {
-        LSM303DLHC_LOG(ERROR, "Failed to read from 0x%02X:0x%02X\n",
-                       addr, reg);
+        LSM303DLHC_LOG_ERROR("Failed to read from 0x%02X:0x%02X\n",
+                             addr, reg);
         STATS_INC(g_lsm303dlhcstats, errors);
     }
 
@@ -213,7 +210,7 @@ lsm303dlhc_read48(struct sensor_itf *itf, uint8_t addr, uint8_t reg,
     rc = i2cn_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1,
                            MYNEWT_VAL(LSM303DLHC_I2C_RETRIES));
     if (rc) {
-        LSM303DLHC_LOG(ERROR, "I2C access failed at address 0x%02X\n", addr);
+        LSM303DLHC_LOG_ERROR("I2C access failed at address 0x%02X\n", addr);
         STATS_INC(g_lsm303dlhcstats, errors);
         goto err;
     }
@@ -225,8 +222,8 @@ lsm303dlhc_read48(struct sensor_itf *itf, uint8_t addr, uint8_t reg,
                           MYNEWT_VAL(LSM303DLHC_I2C_RETRIES));
 
     if (rc) {
-        LSM303DLHC_LOG(ERROR, "Failed to read from 0x%02X:0x%02X\n",
-                       addr, reg);
+        LSM303DLHC_LOG_ERROR("Failed to read from 0x%02X:0x%02X\n",
+                             addr, reg);
         STATS_INC(g_lsm303dlhcstats, errors);
     }
 
@@ -442,8 +439,8 @@ lsm303dlhc_sensor_read(struct sensor *sensor, sensor_type_t type,
                 mg_lsb = 0.012F;
                 break;
             default:
-                LSM303DLHC_LOG(
-                    ERROR, "Unknown accel range: 0x%02X. Assuming +/-2G.\n",
+                LSM303DLHC_LOG_ERROR(
+                    "Unknown accel range: 0x%02X. Assuming +/-2G.\n",
                     lsm->cfg.accel_range);
                 mg_lsb = 0.001F;
                 break;
@@ -518,7 +515,7 @@ lsm303dlhc_sensor_read(struct sensor *sensor, sensor_type_t type,
                 gauss_lsb_z = 205;
                 break;
             default:
-                LSM303DLHC_LOG(ERROR,
+                LSM303DLHC_LOG_ERROR(
                                "Unknown mag gain: 0x%02X. Assuming +/-1.3g.\n",
                                lsm->cfg.mag_gain);
                 gauss_lsb_xy = 1100;

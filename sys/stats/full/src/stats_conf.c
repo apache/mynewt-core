@@ -91,22 +91,15 @@ stats_conf_set(int argc, char **argv, char *val)
     struct stats_hdr *hdr;
     size_t size;
     void *data;
-    int decode_len;
 
     if (argc == 1) {
         hdr = stats_group_find(argv[0]);
         if (hdr != NULL) {
             size = stats_size(hdr);
             data = stats_data(hdr);
-
-            decode_len = base64_decode_len(val);
-            if (decode_len > size) {
-                DEBUG_PANIC();
-                return OS_ENOMEM;
-            }
-
+            
             memset(data, 0, size);
-            base64_decode(val, data);
+            base64_decode_maxlen(val, data, size);
 
             return 0;
         }

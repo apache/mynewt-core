@@ -32,7 +32,7 @@
 #include "imgmgr_priv.h"
 
 int
-imgr_core_list(struct mgmt_cbuf *cb)
+imgr_core_list(struct mgmt_ctxt *ctxt)
 {
     const struct flash_area *fa;
     struct coredump_header hdr;
@@ -52,7 +52,7 @@ imgr_core_list(struct mgmt_cbuf *cb)
         return MGMT_ERR_ENOENT;
     }
 
-    rc = mgmt_cbuf_setoerr(cb, 0);
+    rc = mgmt_write_rsp_status(ctxt, 0);
     if (rc != 0) {
         return rc;
     }
@@ -61,7 +61,7 @@ imgr_core_list(struct mgmt_cbuf *cb)
 }
 
 int
-imgr_core_load(struct mgmt_cbuf *cb)
+imgr_core_load(struct mgmt_ctxt *ctxt)
 {
     unsigned long long off = UINT_MAX;
     const struct cbor_attr_t dload_attr[2] = {
@@ -81,7 +81,7 @@ imgr_core_load(struct mgmt_cbuf *cb)
 
     hdr = (struct coredump_header *)data;
 
-    rc = cbor_read_object(&cb->it, dload_attr);
+    rc = cbor_read_object(&ctxt->it, dload_attr);
     if (rc || off == UINT_MAX) {
         return MGMT_ERR_EINVAL;
     }
@@ -114,17 +114,17 @@ imgr_core_load(struct mgmt_cbuf *cb)
         goto err_close;
     }
 
-    g_err |= cbor_encode_text_stringz(&cb->encoder, "rc");
-    g_err |= cbor_encode_int(&cb->encoder, MGMT_ERR_EOK);
-    g_err |= cbor_encode_text_stringz(&cb->encoder, "off");
-    g_err |= cbor_encode_int(&cb->encoder, off);
-    g_err |= cbor_encode_text_stringz(&cb->encoder, "data");
-    g_err |= cbor_encode_byte_string(&cb->encoder, data, sz);
+    g_err |= cbor_encode_text_stringz(&ctxt->encoder, "rc");
+    g_err |= cbor_encode_int(&ctxt->encoder, MGMT_ERR_EOK);
+    g_err |= cbor_encode_text_stringz(&ctxt->encoder, "off");
+    g_err |= cbor_encode_int(&ctxt->encoder, off);
+    g_err |= cbor_encode_text_stringz(&ctxt->encoder, "data");
+    g_err |= cbor_encode_byte_string(&ctxt->encoder, data, sz);
 
     /* Only include length in first response. */
     if (off == 0) {
-        g_err |= cbor_encode_text_stringz(&cb->encoder, "len");
-        g_err |= cbor_encode_uint(&cb->encoder, hdr->ch_size);
+        g_err |= cbor_encode_text_stringz(&ctxt->encoder, "len");
+        g_err |= cbor_encode_uint(&ctxt->encoder, hdr->ch_size);
     }
 
     flash_area_close(fa);
@@ -142,7 +142,7 @@ err_close:
  * Erase the area if it has a coredump, or the header is empty.
  */
 int
-imgr_core_erase(struct mgmt_cbuf *cb)
+imgr_core_erase(struct mgmt_ctxt *ctxt)
 {
     struct coredump_header hdr;
     const struct flash_area *fa;
@@ -164,7 +164,7 @@ imgr_core_erase(struct mgmt_cbuf *cb)
 
     flash_area_close(fa);
 
-    rc = mgmt_cbuf_setoerr(cb, rc);
+    rc = mgmt_write_rsp_status(ctxt, rc);
     if (rc != 0) {
         return rc;
     }

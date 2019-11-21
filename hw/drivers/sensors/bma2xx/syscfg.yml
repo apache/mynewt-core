@@ -42,9 +42,6 @@ syscfg.defs:
     BMA2XX_LOG:
         description: 'Enable BMA2XX logging'
         value: 0
-    BMA2XX_LOG_MODULE:
-        description: 'Numeric module ID to use for BMA2XX log messages'
-        value: 200
     BMA2XX_SHELL_DEV_NAME:
         description: 'BMA2XX Shell device name'
         value: "\"bma2xx_0\""
@@ -56,3 +53,17 @@ syscfg.defs:
             Number of retries to use for failed I2C communication.  A retry is
             used when the BMA2XX sends an unexpected NACK.
         value: 2
+
+    ### Log settings.
+
+    BMA2XX_LOG_MODULE:
+        description: 'Numeric module ID to use for BMA2XX log messages.'
+        value: 200
+    BMA2XX_LOG_LVL:
+        description: 'Minimum level for the BMA2XX log.'
+        value: 1
+
+syscfg.logs:
+    BMA2XX_LOG:
+        module: MYNEWT_VAL(BMA2XX_LOG_MODULE)
+        level: MYNEWT_VAL(BMA2XX_LOG_LVL)

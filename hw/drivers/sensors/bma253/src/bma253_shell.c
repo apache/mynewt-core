@@ -683,7 +683,7 @@ bma253_shell_cmd(int argc, char * argv[])
 
     dev = os_dev_open(MYNEWT_VAL(BMA253_SHELL_DEV_NAME), OS_TIMEOUT_NEVER, NULL);
     if (dev == NULL) {
-        console_printf("failed to open bma253_0 device\n");
+        console_printf("failed to open %s device\n", MYNEWT_VAL(BMA253_SHELL_DEV_NAME));
         return ENODEV;
     }
 

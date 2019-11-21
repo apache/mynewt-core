@@ -24,7 +24,6 @@
 #include "os/mynewt.h"
 #include "bsp/bsp.h"
 #include "hal/hal_gpio.h"
-#include <imgmgr/imgmgr.h>
 
 /* BLE */
 #include "nimble/ble.h"
@@ -36,18 +35,14 @@
 #include "host/ble_gatt.h"
 #include "host/ble_l2cap.h"
 #include "host/ble_sm.h"
-#include "controller/ble_ll.h"
-
-/* RAM HCI transport. */
-#include "transport/ram/ble_hci_ram.h"
 
 /* Mandatory services. */
 #include "services/gap/ble_svc_gap.h"
 #include "services/gatt/ble_svc_gatt.h"
 
-/* Newtmgr include */
-#include "newtmgr/newtmgr.h"
-#include "nmgrble/newtmgr_ble.h"
+/* SMP include */
+#include "smp/smp.h"
+#include "smpble/smp_ble.h"
 #include "bleuart/bleuart.h"
 
 static int bleuart_gap_event(struct ble_gap_event *event, void *arg);

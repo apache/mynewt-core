@@ -25,27 +25,27 @@
 #define MBEDTLS_SSL_H
 
 #if !defined(MBEDTLS_CONFIG_FILE)
-#include "config.h"
+#include "mbedtls/config.h"
 #else
 #include MBEDTLS_CONFIG_FILE
 #endif
 
-#include "bignum.h"
-#include "ecp.h"
+#include "mbedtls/bignum.h"
+#include "mbedtls/ecp.h"
 
-#include "ssl_ciphersuites.h"
+#include "mbedtls/ssl_ciphersuites.h"
 
 #if defined(MBEDTLS_X509_CRT_PARSE_C)
-#include "x509_crt.h"
-#include "x509_crl.h"
+#include "mbedtls/x509_crt.h"
+#include "mbedtls/x509_crl.h"
 #endif
 
 #if defined(MBEDTLS_DHM_C)
-#include "dhm.h"
+#include "mbedtls/dhm.h"
 #endif
 
 #if defined(MBEDTLS_ECDH_C)
-#include "ecdh.h"
+#include "mbedtls/ecdh.h"
 #endif
 
 #if defined(MBEDTLS_ZLIB_SUPPORT)
@@ -2033,7 +2033,7 @@ void mbedtls_ssl_conf_ca_chain( mbedtls_ssl_config *conf,
  *                 provision more than one cert/key pair (eg one ECDSA, one
  *                 RSA with SHA-256, one RSA with SHA-1). An adequate
  *                 certificate will be selected according to the client's
- *                 advertised capabilities. In case mutliple certificates are
+ *                 advertised capabilities. In case multiple certificates are
  *                 adequate, preference is given to the one set by the first
  *                 call to this function, then second, etc.
  *
@@ -2043,6 +2043,14 @@ void mbedtls_ssl_conf_ca_chain( mbedtls_ssl_config *conf,
  *                 be ignored and our only cert will be sent regardless of
  *                 whether it matches those preferences - the server can then
  *                 decide what it wants to do with it.
+ *
+ * \note           The provided \p pk_key needs to match the public key in the
+ *                 first certificate in \p own_cert, or all handshakes using
+ *                 that certificate will fail. It is your responsibility
+ *                 to ensure that; this function will not perform any check.
+ *                 You may use mbedtls_pk_check_pair() in order to perform
+ *                 this check yourself, but be aware that this function can
+ *                 be computationally expensive on some key types.
  *
  * \param conf     SSL configuration
  * \param own_cert own public certificate chain
@@ -2524,21 +2532,27 @@ void mbedtls_ssl_conf_cert_req_ca_list( mbedtls_ssl_config *conf,
 
 #if defined(MBEDTLS_SSL_MAX_FRAGMENT_LENGTH)
 /**
- * \brief          Set the maximum fragment length to emit and/or negotiate
- *                 (Default: the smaller of MBEDTLS_SSL_IN_CONTENT_LEN and
- *                 MBEDTLS_SSL_OUT_CONTENT_LEN, usually 2^14 bytes)
+ * \brief          Set the maximum fragment length to emit and/or negotiate.
+ *                 (Typical: the smaller of #MBEDTLS_SSL_IN_CONTENT_LEN and
+ *                 #MBEDTLS_SSL_OUT_CONTENT_LEN, usually `2^14` bytes)
  *                 (Server: set maximum fragment length to emit,
- *                 usually negotiated by the client during handshake
+ *                 usually negotiated by the client during handshake)
  *                 (Client: set maximum fragment length to emit *and*
  *                 negotiate with the server during handshake)
+ *                 (Default: #MBEDTLS_SSL_MAX_FRAG_LEN_NONE)
  *
- * \note           With TLS, this currently only affects ApplicationData (sent
- *                 with \c mbedtls_ssl_read()), not handshake messages.
- *                 With DTLS, this affects both ApplicationData and handshake.
+ * \note           On the client side, the maximum fragment length extension
+ *                 *will not* be used, unless the maximum fragment length has
+ *                 been set via this function to a value different than
+ *                 #MBEDTLS_SSL_MAX_FRAG_LEN_NONE.
  *
  * \note           This sets the maximum length for a record's payload,
  *                 excluding record overhead that will be added to it, see
  *                 \c mbedtls_ssl_get_record_expansion().
+ *
+ * \note           With TLS, this currently only affects ApplicationData (sent
+ *                 with \c mbedtls_ssl_read()), not handshake messages.
+ *                 With DTLS, this affects both ApplicationData and handshake.
  *
  * \note           For DTLS, it is also possible to set a limit for the total
  *                 size of daragrams passed to the transport layer, including
@@ -3192,7 +3206,7 @@ void mbedtls_ssl_free( mbedtls_ssl_context *ssl );
  *                 mbedtls_ssl_config_defaults() or mbedtls_ssl_config_free().
  *
  * \note           You need to call mbedtls_ssl_config_defaults() unless you
- *                 manually set all of the relevent fields yourself.
+ *                 manually set all of the relevant fields yourself.
  *
  * \param conf     SSL configuration context
  */

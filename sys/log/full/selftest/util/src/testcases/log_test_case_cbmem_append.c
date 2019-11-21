@@ -27,6 +27,7 @@ TEST_CASE_SELF(log_test_case_cbmem_append)
     char *str;
     int body_len;
     int i;
+    int rc;
 
     ltu_setup_cbmem(&cbmem, &log);
 
@@ -37,8 +38,9 @@ TEST_CASE_SELF(log_test_case_cbmem_append)
         }
 
         body_len = strlen(str);
-        memcpy(buf + LOG_ENTRY_HDR_SIZE, str, body_len);
-        log_append_typed(&log, 0, 0, LOG_ETYPE_STRING, buf, body_len);
+        memcpy(buf + LOG_HDR_SIZE, str, body_len);
+        rc = log_append_typed(&log, 0, 0, LOG_ETYPE_STRING, buf, body_len);
+        TEST_ASSERT_FATAL(rc == 0);
     }
 
     ltu_verify_contents(&log);

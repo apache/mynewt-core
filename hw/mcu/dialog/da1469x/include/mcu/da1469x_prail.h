@@ -44,6 +44,11 @@ void da1469x_prail_dcdc_restore(void);
 
 #endif
 
+/**
+ * Disable DCDC
+ */
+void da1469x_prail_dcdc_disable(void);
+
 #ifdef __cplusplus
 }
 #endif

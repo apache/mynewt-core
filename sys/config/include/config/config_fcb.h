@@ -19,6 +19,8 @@
 #ifndef __SYS_CONFIG_FCB_H_
 #define __SYS_CONFIG_FCB_H_
 
+#include <fcb/fcb.h>
+
 #include "config/config.h"
 #include "config/config_store.h"
 

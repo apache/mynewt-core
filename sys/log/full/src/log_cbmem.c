@@ -22,93 +22,138 @@
 #include "log/log.h"
 
 static int
-log_cbmem_append(struct log *log, void *buf, int len)
-{
-    struct cbmem *cbmem;
-    int rc;
-
-    cbmem = (struct cbmem *) log->l_arg;
-
-    rc = cbmem_append(cbmem, buf, len);
-    if (rc != 0) {
-        goto err;
-    }
-
-    return (0);
-err:
-    return (rc);
-}
-
-static int
 log_cbmem_append_body(struct log *log, const struct log_entry_hdr *hdr,
                       const void *body, int body_len)
 {
     struct cbmem *cbmem;
-
     struct cbmem_scat_gath sg = {
-        .entries = (struct cbmem_scat_gath_entry[2]) {
+        .entries = (struct cbmem_scat_gath_entry[]) {
             {
                 .flat_buf = hdr,
-                .flat_len = sizeof *hdr,
+                .flat_len = LOG_BASE_ENTRY_HDR_SIZE,
             },
+#if MYNEWT_VAL(LOG_VERSION) > 2
+            {
+                .flat_buf = hdr->ue_imghash,
+                .flat_len = 0,
+            },
+#endif
             {
                 .flat_buf = body,
                 .flat_len = body_len,
             },
         },
+#if MYNEWT_VAL(LOG_VERSION) > 2
+        .count = 3,
+#else
         .count = 2,
+#endif
     };
 
+#if MYNEWT_VAL(LOG_VERSION) > 2
+    if (hdr->ue_flags & LOG_FLAGS_IMG_HASH) {
+        sg.entries[1].flat_len = LOG_IMG_HASHLEN;
+    }
+#endif
     cbmem = (struct cbmem *) log->l_arg;
 
     return cbmem_append_scat_gath(cbmem, &sg);
 }
 
 static int
-log_cbmem_append_mbuf(struct log *log, const struct os_mbuf *om)
-{
-    struct cbmem *cbmem;
-    int rc;
+log_cbmem_append(struct log *log, void *buf, int len)
+{   
+    uint16_t hdr_len;
 
-    cbmem = (struct cbmem *) log->l_arg;
+    hdr_len = log_hdr_len(buf);
 
-    rc = cbmem_append_mbuf(cbmem, om);
-    if (rc != 0) {
-        goto err;
-    }
-
-    return (0);
-
-err:
-    return (rc);
+    return log_cbmem_append_body(log, buf, (uint8_t *)buf + hdr_len,
+                                 len - hdr_len);
 }
 
 static int
 log_cbmem_append_mbuf_body(struct log *log, const struct log_entry_hdr *hdr,
-                           const struct os_mbuf *om)
+                           struct os_mbuf *om)
 {
     struct cbmem *cbmem;
-
     struct cbmem_scat_gath sg = {
-        .entries = (struct cbmem_scat_gath_entry[2]) {
+        .entries = (struct cbmem_scat_gath_entry[]) {
             {
                 .flat_buf = hdr,
-                .flat_len = sizeof *hdr,
+                .flat_len = LOG_BASE_ENTRY_HDR_SIZE,
             },
+#if MYNEWT_VAL(LOG_VERSION) > 2
+            {
+                .flat_buf = hdr->ue_imghash,
+                .flat_len = 0,
+            },
+#endif
             {
                 .om = om,
             },
         },
+#if MYNEWT_VAL(LOG_VERSION) > 2
+        .count = 3,
+#else
         .count = 2,
+#endif
     };
 
+#if MYNEWT_VAL(LOG_VERSION) > 2
+    if (hdr->ue_flags & LOG_FLAGS_IMG_HASH) {
+        sg.entries[1].flat_len = LOG_IMG_HASHLEN;
+    }
+#endif
     cbmem = (struct cbmem *) log->l_arg;
 
     return cbmem_append_scat_gath(cbmem, &sg);
 }
 
 static int
-log_cbmem_read(struct log *log, void *dptr, void *buf, uint16_t offset,
+log_cbmem_append_mbuf(struct log *log, struct os_mbuf *om)
+{
+    int rc;
+    uint16_t mlen;
+    uint16_t hdr_len;
+    struct log_entry_hdr hdr;
+
+    mlen = os_mbuf_len(om);
+    if (mlen < LOG_BASE_ENTRY_HDR_SIZE) {
+        return SYS_ENOMEM;
+    }
+
+    /*
+     * We do a pull up twice, once so that the base header is
+     * contiguous, so that we read the flags correctly, second
+     * time is so that we account for the image hash as well.
+     */    
+
+    os_mbuf_pullup(om, LOG_BASE_ENTRY_HDR_SIZE);
+   
+    /* 
+     * We can just pass the om->om_data ptr as the log_entry_hdr
+     * because the log_entry_hdr is a packed struct and does not
+     * cause any alignment or padding issues
+     */  
+    hdr_len = log_hdr_len((struct log_entry_hdr *)om->om_data);
+    
+    os_mbuf_pullup(om, hdr_len);
+    
+    memcpy(&hdr, om->om_data, hdr_len);
+
+    os_mbuf_adj(om, hdr_len);
+
+    rc = log_cbmem_append_mbuf_body(log, &hdr, om);
+    
+    os_mbuf_prepend(om, hdr_len);
+
+    memcpy(om->om_data, &hdr, hdr_len);
+
+    return rc;
+}
+
+static int
+log_cbmem_read(struct log *log, const void *dptr, void *buf, uint16_t offset,
         uint16_t len)
 {
     struct cbmem *cbmem;
@@ -124,7 +169,7 @@ log_cbmem_read(struct log *log, void *dptr, void *buf, uint16_t offset,
 }
 
 static int
-log_cbmem_read_mbuf(struct log *log, void *dptr, struct os_mbuf *om,
+log_cbmem_read_mbuf(struct log *log, const void *dptr, struct os_mbuf *om,
                     uint16_t offset, uint16_t len)
 {
     struct cbmem *cbmem;

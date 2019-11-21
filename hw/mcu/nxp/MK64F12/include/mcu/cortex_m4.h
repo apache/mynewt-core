@@ -32,6 +32,12 @@ extern "C" {
 
 #define OS_TICKS_PER_SEC	(1000)
 
+static inline void
+hal_debug_break(void)
+{
+    __BKPT(1);
+}
+
 #ifdef __cplusplus
 }
 #endif

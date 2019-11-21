@@ -21,8 +21,8 @@
 TEST_CASE_SELF(fcb_test_append)
 {
     int rc;
-    struct fcb *fcb;
-    struct fcb_entry loc;
+    struct fcb2 *fcb;
+    struct fcb2_entry loc;
     uint8_t test_data[128];
     int i;
     int j;
@@ -36,16 +36,16 @@ TEST_CASE_SELF(fcb_test_append)
         for (j = 0; j < i; j++) {
             test_data[j] = fcb_test_append_data(i, j);
         }
-        rc = fcb_append(fcb, i, &loc);
+        rc = fcb2_append(fcb, i, &loc);
         TEST_ASSERT_FATAL(rc == 0);
-        rc = fcb_write(&loc, 0, test_data, i);
+        rc = fcb2_write(&loc, 0, test_data, i);
         TEST_ASSERT(rc == 0);
-        rc = fcb_append_finish(&loc);
+        rc = fcb2_append_finish(&loc);
         TEST_ASSERT(rc == 0);
     }
 
     var_cnt = 1;
-    rc = fcb_walk(fcb, 0, fcb_test_data_walk_cb, &var_cnt);
+    rc = fcb2_walk(fcb, 0, fcb_test_data_walk_cb, &var_cnt);
     TEST_ASSERT(rc == 0);
     TEST_ASSERT(var_cnt == sizeof(test_data));
 }

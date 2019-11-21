@@ -21,6 +21,7 @@
 #define __MCU_CORTEX_M0_H__
 
 #include "nrf51.h"
+#include "core_cm0.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -32,6 +33,12 @@ extern "C" {
  * cleanly into 32768 to avoid a systemic bias in the actual tick frequency.
  */
 #define OS_TICKS_PER_SEC    (128)
+
+static inline void
+hal_debug_break(void)
+{
+    __BKPT(1);
+}
 
 #ifdef __cplusplus
 }

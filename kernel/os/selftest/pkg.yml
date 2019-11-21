@@ -26,5 +26,5 @@ pkg.deps:
     - "@apache-mynewt-core/kernel/os"
     - "@apache-mynewt-core/sys/console/stub"
     - "@apache-mynewt-core/sys/log/stub"
-    - "@apache-mynewt-core/test/runtest"
+    - "@apache-mynewt-core/util/taskpool"
     - "@apache-mynewt-core/test/testutil"

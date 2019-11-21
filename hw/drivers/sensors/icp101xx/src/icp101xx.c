@@ -40,9 +40,6 @@ STATS_NAME_START(icp101xx_stat_section)
     STATS_NAME(icp101xx_stat_section, write_errors)
 STATS_NAME_END(icp101xx_stat_section)
 
-#define ICP101XX_LOG(lvl_, ...) \
-    MODLOG_ ## lvl_(MYNEWT_VAL(ICP101XX_LOG_MODULE), __VA_ARGS__)
-
 /* Exports for the sensor API.*/
 static int icp101xx_sensor_read(struct sensor *, sensor_type_t,
         sensor_data_func_t, void *, uint32_t);
@@ -96,7 +93,7 @@ icp101xx_sensor_read(struct sensor *sensor, sensor_type_t type,
     }
     if (icp101xx->cfg.skip_first_data) {
         icp101xx->cfg.skip_first_data = 0;
-        ICP101XX_LOG(DEBUG, "Skip 1rst data. Measurement not yet started.\n");
+        ICP101XX_LOG_DEBUG("Skip 1rst data. Measurement not yet started.\n");
         goto err;
     }
 
@@ -193,7 +190,7 @@ icp101xx_write_reg(struct sensor_itf *itf, uint16_t reg, uint8_t *buf,
     rc = i2cn_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC, 1,
                            MYNEWT_VAL(ICP101XX_I2C_RETRIES));
     if (rc) {
-        ICP101XX_LOG(ERROR,
+        ICP101XX_LOG_ERROR(
                      "Failed to write to 0x%02X:0x%02X\n",
                       data_struct.address, reg);
     }
@@ -230,7 +227,7 @@ icp101xx_read_reg(struct sensor_itf *itf, uint16_t reg, uint8_t *buf,
     rc = i2cn_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10,
                            1, MYNEWT_VAL(ICP101XX_I2C_RETRIES));
     if (rc) {
-        ICP101XX_LOG(ERROR, "I2C access failed at address 0x%02X\n",
+        ICP101XX_LOG_ERROR("I2C access failed at address 0x%02X\n",
                      data_struct.address);
         goto err;
     }
@@ -241,7 +238,7 @@ icp101xx_read_reg(struct sensor_itf *itf, uint16_t reg, uint8_t *buf,
     rc = i2cn_master_read(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10,
                           1, MYNEWT_VAL(ICP101XX_I2C_RETRIES));
     if (rc) {
-        ICP101XX_LOG(ERROR, "Failed to read from 0x%02X:0x%02X\n",
+        ICP101XX_LOG_ERROR("Failed to read from 0x%02X:0x%02X\n",
                      data_struct.address, reg);
     }
 
@@ -278,7 +275,7 @@ icp101xx_read(struct sensor_itf *itf, uint8_t * buf, uint32_t len)
     rc = i2cn_master_read(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10,
                           1, MYNEWT_VAL(ICP101XX_I2C_RETRIES));
     if (rc) {
-        ICP101XX_LOG(ERROR, "Failed to read %d bytes from 0x%x\n", 
+        ICP101XX_LOG_ERROR("Failed to read %u bytes from 0x%x\n", len,
                      data_struct.address);
     }
 
@@ -333,7 +330,7 @@ check_crc(uint8_t *frame)
     uint8_t crc = compute_crc(frame);
 
     if (crc != frame[ICP101XX_RESP_FRAME_LEN - 1]) {
-        ICP101XX_LOG(ERROR, "CRC computed 0x%x doesn't match 0x%x\n", crc,
+        ICP101XX_LOG_ERROR("CRC computed 0x%x doesn't match 0x%x\n", crc,
                      frame[ICP101XX_RESP_FRAME_LEN - 1]);
     }
     return (crc == frame[ICP101XX_RESP_FRAME_LEN - 1]);
@@ -378,7 +375,7 @@ read_otp(struct icp101xx *icp101xx, struct icp101xx_cfg *cfg, int16_t *calibrati
         }
     }
 
-    ICP101XX_LOG(DEBUG, "OTP : %d %d %d %d\n", 
+    ICP101XX_LOG_DEBUG("OTP : %d %d %d %d\n", 
                  calibration_data[0], calibration_data[1], calibration_data[2],
                  calibration_data[3]);
     
@@ -649,7 +646,7 @@ icp101xx_config(struct icp101xx *icp101xx, struct icp101xx_cfg *cfg)
         }
 
         if (id != ICP101XX_ID) {
-            ICP101XX_LOG(ERROR, "Bad chip id : %04X\n", id);
+            ICP101XX_LOG_ERROR("Bad chip id : %04X\n", id);
             rc = SYS_EINVAL;
             goto err;
         }
@@ -729,7 +726,8 @@ icp101xx_get_data(struct icp101xx *icp101xx, struct icp101xx_cfg *cfg,
                   float * temperature, float * pressure)
 {
     int rc;
-    int32_t raw_press, raw_temp;
+    int32_t raw_press = 0;
+    int32_t raw_temp = 0;
     float pressure_pa;
     float temperature_degc;
 
@@ -737,8 +735,8 @@ icp101xx_get_data(struct icp101xx *icp101xx, struct icp101xx_cfg *cfg,
     if (rc) {
         goto err;
     }
-    /* ICP101XX_LOG(DEBUG, "raw P = %d\n", raw_press); */
-    /* ICP101XX_LOG(DEBUG, "raw T = %d\n", raw_temp); */
+    /* ICP101XX_LOG_DEBUG("raw P = %d\n", raw_press); */
+    /* ICP101XX_LOG_DEBUG("raw T = %d\n", raw_temp); */
 
     rc = process_data(cfg, raw_press, raw_temp,
                       &pressure_pa, &temperature_degc);

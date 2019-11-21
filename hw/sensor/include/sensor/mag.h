@@ -38,7 +38,7 @@ struct sensor_mag_data {
     uint8_t smd_x_is_valid:1;
     uint8_t smd_y_is_valid:1;
     uint8_t smd_z_is_valid:1;
-} __attribute__((packed));
+};
 
 #ifdef __cplusplus
 }

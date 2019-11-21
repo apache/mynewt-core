@@ -33,10 +33,6 @@ struct fs_ops *safe_fs_ops_for(const char *fs_name);
 void fs_cli_init(void);
 #endif
 
-#if MYNEWT_VAL(FS_NMGR)
-int fs_nmgr_init(void);
-#endif
-
 #ifdef __cplusplus
 }
 #endif

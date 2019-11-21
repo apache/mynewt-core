@@ -28,13 +28,13 @@ pkg.keywords:
 pkg.deps:
     - "@apache-mynewt-core/hw/hal"
     - "@apache-mynewt-core/hw/cmsis-core"
-    - hw/mcu/dialog
+    - "@apache-mynewt-core/hw/mcu/dialog"
 
 pkg.deps.CHARGER:
-    - hw/drivers/chg_ctrl/da1469x_charger
+    - "@apache-mynewt-core/hw/drivers/chg_ctrl/da1469x_charger"
 
 pkg.deps.TRNG:
-    - "hw/drivers/trng/trng_da1469x"
+    - "@apache-mynewt-core/hw/drivers/trng/trng_da1469x"
 
 pkg.deps.'UART_0 || UART_1 || UART_2':
     - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
@@ -45,11 +45,14 @@ pkg.deps.'(I2C_0 || I2C_1) && BUS_DRIVER_PRESENT':
 pkg.deps.'(SPI_0_MASTER || SPI_1_MASTER) && BUS_DRIVER_PRESENT':
     - "@apache-mynewt-core/hw/bus/drivers/spi_hal"
 
+pkg.deps.'(PWM_0 || PWM_1 || PWM_2)':
+    - "@apache-mynewt-core/hw/drivers/pwm/pwm_da1469x"
+
 pkg.deps.GPADC:
-    - hw/drivers/adc/gpadc_da1469x
+    - "@apache-mynewt-core/hw/drivers/adc/gpadc_da1469x"
 
 pkg.deps.SDADC:
-    - hw/drivers/adc/sdadc_da1469x
+    - "@apache-mynewt-core/hw/drivers/adc/sdadc_da1469x"
 
 pkg.init:
     da1469x_lpclk_init: 1

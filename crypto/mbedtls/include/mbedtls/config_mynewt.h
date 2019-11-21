@@ -193,6 +193,11 @@ extern "C" {
 #else
 #undef MBEDTLS_AES_ROM_TABLES
 #endif
+#if MYNEWT_VAL(MBEDTLS_AES_FEWER_TABLES)
+#define MBEDTLS_AES_FEWER_TABLES
+#else
+#undef MBEDTLS_AES_FEWER_TABLES
+#endif
 #if MYNEWT_VAL(MBEDTLS_ARC4_C) == 0
 #undef MBEDTLS_ARC4_C
 #endif
@@ -244,6 +249,14 @@ extern "C" {
 #undef MBEDTLS_CTR_DRBG_C
 #endif
 
+#if MYNEWT_VAL(MBEDTLS_SHA256_ALT) == 0
+#undef MBEDTLS_SHA256_ALT
+#elif !defined(MBEDTLS_SHA256_ALT)
+#define MBEDTLS_SHA256_ALT 1
+#endif
+#if MYNEWT_VAL(MBEDTLS_SHA256_C) == 0
+#undef MBEDTLS_SHA256_C
+#endif
 #if MYNEWT_VAL(MBEDTLS_MD5_C) == 0
 #undef MBEDTLS_MD5_C
 #endif

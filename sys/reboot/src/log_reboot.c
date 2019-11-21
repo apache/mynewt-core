@@ -23,16 +23,14 @@
 #include "modlog/modlog.h"
 #include "bootutil/image.h"
 #include "bootutil/bootutil.h"
-#include "imgmgr/imgmgr.h"
+#include "img_mgmt/img_mgmt.h"
 #include "config/config.h"
 #include "config/config_file.h"
 #include "reboot/log_reboot.h"
 #include "bsp/bsp.h"
 #include "flash_map/flash_map.h"
-
-#if MYNEWT_VAL(REBOOT_LOG_FCB)
-#include "fcb/fcb.h"
-#endif
+#include "tinycbor/cbor.h"
+#include "tinycbor/cbor_buf_writer.h"
 
 uint16_t reboot_cnt;
 static char reboot_cnt_str[12];
@@ -55,7 +53,12 @@ struct conf_handler reboot_conf_handler = {
 #if MYNEWT_VAL(REBOOT_LOG_FCB)
 static struct fcb_log reboot_log_fcb;
 static struct log reboot_log;
-static struct flash_area sector;
+#if MYNEWT_VAL(LOG_FCB)
+static struct flash_area reboot_sector;
+#endif
+#if MYNEWT_VAL(LOG_FCB2)
+static struct flash_sector_range reboot_sector;
+#endif
 #endif
 
 
@@ -81,20 +84,25 @@ static int
 log_reboot_init_fcb(void)
 {
     const struct flash_area *ptr;
+#if MYNEWT_VAL(LOG_FCB)
     struct fcb *fcbp;
+#elif MYNEWT_VAL(LOG_FCB2)
+    struct fcb2 *fcbp;
+#endif
     int rc;
 
     if (flash_area_open(MYNEWT_VAL(REBOOT_LOG_FLASH_AREA), &ptr)) {
         return SYS_EUNKNOWN;
     }
-    fcbp = &reboot_log_fcb.fl_fcb;
-    sector = *ptr;
-    fcbp->f_sectors = &sector;
-    fcbp->f_sector_cnt = 1;
-    fcbp->f_magic = 0x7EADBADF;
-    fcbp->f_version = g_log_info.li_version;
 
     reboot_log_fcb.fl_entries = MYNEWT_VAL(REBOOT_LOG_ENTRY_COUNT);
+    fcbp = &reboot_log_fcb.fl_fcb;
+#if MYNEWT_VAL(LOG_FCB)
+    reboot_sector = *ptr;
+    fcbp->f_magic = 0x7EADBADF;
+    fcbp->f_version = g_log_info.li_version;
+    fcbp->f_sector_cnt = 1;
+    fcbp->f_sectors = &reboot_sector;
 
     rc = fcb_init(fcbp);
     if (rc) {
@@ -104,6 +112,27 @@ log_reboot_init_fcb(void)
             return rc;
         }
     }
+#endif
+#if MYNEWT_VAL(LOG_FCB2)
+    fcbp->f_magic = 0x8EADBAE0;
+    fcbp->f_version = g_log_info.li_version;
+    fcbp->f_sector_cnt = 1;
+    fcbp->f_range_cnt = 1;
+    fcbp->f_ranges = &reboot_sector;
+    reboot_sector.fsr_flash_area = *ptr;
+    reboot_sector.fsr_sector_count = 1;
+    reboot_sector.fsr_sector_size = ptr->fa_size;
+    reboot_sector.fsr_align = flash_area_align(ptr);
+
+    rc = fcb2_init(fcbp);
+    if (rc) {
+        flash_area_erase(ptr, 0, ptr->fa_size);
+        rc = fcb2_init(fcbp);
+        if (rc) {
+            return rc;
+        }
+    }
+#endif
 
     rc = log_register("reboot_log", &reboot_log, &log_fcb_handler,
                       &reboot_log_fcb, LOG_SYSLEVEL);
@@ -143,11 +172,18 @@ static int
 log_reboot_write(const struct log_reboot_info *info)
 {
     struct image_version ver;
-    uint8_t hash[IMGMGR_HASH_LEN];
+    uint8_t hash[32];
     char buf[MYNEWT_VAL(REBOOT_LOG_BUF_SIZE)];
+    uint8_t cbor_enc_buf[MYNEWT_VAL(REBOOT_LOG_BUF_SIZE)];
     int off;
     int rc;
     int i;
+    struct cbor_buf_writer writer;
+    struct CborEncoder enc;
+    struct CborEncoder map;
+    size_t cbor_buf_len;
+    uint32_t flags;
+    uint8_t state_flags;
 
 #if MYNEWT_VAL(REBOOT_LOG_FCB)
     {
@@ -158,41 +194,92 @@ log_reboot_write(const struct log_reboot_info *info)
     }
 #endif
 
-    rc = imgr_read_info(boot_current_slot, &ver, hash, NULL);
+    rc = img_mgmt_read_info(boot_current_slot, &ver, hash, &flags);
     if (rc != 0) {
         return rc;
     }
 
-    off = 0;
-    off += snprintf(buf + off, sizeof buf - off,
-                    "rsn:%s, cnt:%u, img:%u.%u.%u.%u, hash:",
-                    REBOOT_REASON_STR(info->reason), reboot_cnt, ver.iv_major,
-                    ver.iv_minor, ver.iv_revision,
-                    (unsigned int)ver.iv_build_num);
+    memset(cbor_enc_buf, 0, sizeof cbor_enc_buf);
 
+    cbor_buf_writer_init(&writer, cbor_enc_buf, sizeof cbor_enc_buf);
+    cbor_encoder_init(&enc, &writer.enc, 0);
+    rc = cbor_encoder_create_map(&enc, &map, CborIndefiniteLength);
+    if (rc != 0) {
+        return rc;
+    }
+
+    cbor_encode_text_stringz(&map, "rsn");
+    cbor_encode_text_stringz(&map, REBOOT_REASON_STR(info->reason));
+
+    cbor_encode_text_stringz(&map, "cnt");
+    cbor_encode_int(&map, reboot_cnt);
+
+    cbor_encode_text_stringz(&map, "img");
+    snprintf(buf, sizeof buf, "%u.%u.%u.%u",
+                  ver.iv_major, ver.iv_minor, ver.iv_revision,
+                  (unsigned int)ver.iv_build_num);
+    cbor_encode_text_stringz(&map, buf);
+
+    cbor_encode_text_stringz(&map, "hash");
+    off = 0;
     for (i = 0; i < sizeof hash; i++) {
         off += snprintf(buf + off, sizeof buf - off, "%02x",
                         (unsigned int)hash[i]);
     }
+    cbor_encode_text_stringz(&map, buf);
 
     if (info->file != NULL) {
-        off += snprintf(buf + off, sizeof buf - off, ", die:%s:%d",
-                info->file, info->line);
+        cbor_encode_text_stringz(&map, "die");
+        off  = 0;
+
+        /* If die filename is longer than 1/3 of total allocated
+         * buffer, then trim the filename from left. */
+        if (strlen(info->file) > ((sizeof buf) / 3)) {
+            off = strlen(info->file) - ((sizeof buf) / 3);
+        }
+        snprintf(buf, sizeof buf, "%s:%d",
+                &info->file[off], info->line);
+        cbor_encode_text_stringz(&map, buf);
     }
 
     if (info->pc != 0) {
-        off += snprintf(buf + off, sizeof buf - off, ", pc:0x%lx",
-                (unsigned long)info->pc);
+        cbor_encode_text_stringz(&map, "pc");
+        cbor_encode_int(&map, info->pc);
     }
 
-    /* Make sure we don't log beyond the end of the source buffer. */
-    if (off > sizeof buf) {
-        off = sizeof buf;
+    state_flags = img_mgmt_state_flags(boot_current_slot);
+    cbor_encode_text_stringz(&map, "flags");
+    off = 0;
+    buf[0] = '\0';
+
+    if (state_flags & IMG_MGMT_STATE_F_ACTIVE) {
+        off += snprintf(buf + off, sizeof buf - off, "%s ", "active");
+    }
+    if (!(flags & IMAGE_F_NON_BOOTABLE)) {
+        off += snprintf(buf + off, sizeof buf - off, "%s ", "bootable");
+    }
+    if (state_flags & IMG_MGMT_STATE_F_CONFIRMED) {
+        off += snprintf(buf + off, sizeof buf - off, "%s ", "confirmed");
+    }
+    if (state_flags & IMG_MGMT_STATE_F_PENDING) {
+        off += snprintf(buf + off, sizeof buf - off, "%s ", "pending");
+    }
+    if (off > 1) {
+        buf[off - 1] = '\0';
+    }
+    cbor_encode_text_stringz(&map, buf);
+
+    /* Find length of the CBOR encoded log entry. */
+    cbor_buf_len = cbor_buf_writer_buffer_size(&writer, cbor_enc_buf) + 1;
+
+    rc = cbor_encoder_close_container(&enc, &map);
+    if (rc != 0) {
+        return SYS_ENOMEM;
     }
 
-    /* Log a reboot */
-    modlog_append(LOG_MODULE_REBOOT, LOG_LEVEL_CRITICAL, LOG_ETYPE_STRING,
-                  buf, off);
+    /* Log a CBOR encoded reboot record. */
+    modlog_append(LOG_MODULE_REBOOT, LOG_LEVEL_CRITICAL, LOG_ETYPE_CBOR,
+                  cbor_enc_buf, cbor_buf_len);
 
     return 0;
 }
@@ -212,11 +299,14 @@ log_reboot(const struct log_reboot_info *info)
         return rc;
     }
 
-    /* Record that we have written a reboot entry for the current boot.  Upon
-     * rebooting, we won't write a second entry.
-     */
-    log_reboot_written = 1;
-    conf_save_one("reboot/written", "1");
+    if (info->reason != HAL_RESET_REQUESTED &&
+        info->reason != HAL_RESET_DFU) {
+        /* Record that we have written a reboot entry for the current boot.
+         * Upon rebooting, we won't write a second entry.
+         */
+        log_reboot_written = 1;
+        conf_save_one("reboot/written", "1");
+    }
 
     return 0;
 }
@@ -233,10 +323,10 @@ reboot_start(enum hal_reset_reason reason)
 {
     struct log_reboot_info info;
 
-    reboot_cnt_inc();
-
     /* If an entry wasn't written before the previous reboot, write one now. */
     if (!log_reboot_written) {
+        reboot_cnt_inc();
+
         info = (struct log_reboot_info) {
             .reason = reason,
             .file = NULL,

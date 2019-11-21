@@ -27,7 +27,7 @@ pkg.keywords:
 pkg.deps:
     - "@apache-mynewt-core/kernel/os"
     - "@apache-mynewt-core/net/oic"
-    - "@apache-mynewt-core/encoding/cborattr"
+    - "@apache-mynewt-mcumgr/cborattr"
     - "@apache-mynewt-core/sys/console/full"
     - "@apache-mynewt-core/sys/log/full"
     - "@apache-mynewt-core/sys/log/modlog"
@@ -37,7 +37,6 @@ pkg.deps.OC_TRANSPORT_SERIAL:
     - "@apache-mynewt-core/sys/shell"
 
 pkg.deps.OC_TRANSPORT_GATT:
-    - "@apache-mynewt-nimble/nimble/controller"
     - "@apache-mynewt-nimble/nimble/host"
     - "@apache-mynewt-nimble/nimble/host/store/ram"
-    - "@apache-mynewt-nimble/nimble/transport/ram"
+    - "@apache-mynewt-nimble/nimble/transport"

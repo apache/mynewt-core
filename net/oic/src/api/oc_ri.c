@@ -555,22 +555,22 @@ oc_ri_invoke_coap_entity_handler(struct coap_packet_rx *request,
 
   if (bad_request) {
     if (!m) {
-        OC_LOG(ERROR, "ocri: No bufs\n");
+        OC_LOG_ERROR("ocri: No bufs\n");
         response_buffer.code = oc_status_code(OC_STATUS_SERVICE_UNAVAILABLE);
     } else {
-        OC_LOG(ERROR, "ocri: Bad request\n");
+        OC_LOG_ERROR("ocri: Bad request\n");
         /* Return a 4.00 response */
         response_buffer.code = oc_status_code(OC_STATUS_BAD_REQUEST);
     }
     success = false;
   } else if (!cur_resource) {
-    OC_LOG(ERROR, "ocri: Could not find resource\n");
+    OC_LOG_ERROR("ocri: Could not find resource\n");
     /* Return a 4.04 response if the requested resource was not found */
     response_buffer.response_length = 0;
     response_buffer.code = oc_status_code(OC_STATUS_NOT_FOUND);
     success = false;
   } else if (!method_impl) {
-    OC_LOG(ERROR, "ocri: Could not find method\n");
+    OC_LOG_ERROR("ocri: Could not find method\n");
     /* Return a 4.05 response if the resource does not implement the
      * request method.
      */
@@ -578,7 +578,7 @@ oc_ri_invoke_coap_entity_handler(struct coap_packet_rx *request,
     response_buffer.code = oc_status_code(OC_STATUS_METHOD_NOT_ALLOWED);
     success = false;
   } else if (!authorized) {
-    OC_LOG(ERROR, "ocri: Subject not authorized\n");
+    OC_LOG_ERROR("ocri: Subject not authorized\n");
     /* If the requestor (subject) does not have access granted via an
      * access control entry in the ACL, then it is not authorized to
      * access the resource. A 4.03 response is sent.

@@ -23,7 +23,7 @@
 #include "os/util.h"
 #include "mcu/mcu.h"
 #include "mcu/da1469x_hal.h"
-#include <DA1469xAB.h>
+#include <mcu/mcu.h>
 
 struct da1469x_pwm {
     TIMER_Type *timer_regs;

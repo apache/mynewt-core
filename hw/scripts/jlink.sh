@@ -19,6 +19,21 @@
 
 JLINK_GDB_SERVER=JLinkGDBServer
 
+jlink_target_cmd () {
+    if [ -z $JLINK_REMOTE ]; then
+        JLINK_TARGET_CMD="target remote localhost:$PORT"
+    else
+        JLINK_TARGET_HOST=`echo $JLINK_REMOTE | cut -d : -f 1 -s`
+        if [ -z $JLINK_TARGET_HOST ]; then
+            JLINK_TARGET_HOST=$JLINK_REMOTE
+            JLINK_TARGET_PORT=2331
+        else
+            JLINK_TARGET_PORT=`echo $JLINK_REMOTE | cut -d : -f 2`
+        fi
+        JLINK_TARGET_CMD="target remote $JLINK_TARGET_HOST:$JLINK_TARGET_PORT"
+    fi
+}
+
 #
 # FILE_NAME is the file to load
 # FLASH_OFFSET is location in the flash
@@ -27,23 +42,23 @@ JLINK_GDB_SERVER=JLinkGDBServer
 jlink_load () {
     GDB_CMD_FILE=.gdb_cmds
     GDB_OUT_FILE=.gdb_out
-    PORT=3333
 
     windows_detect
     parse_extra_jtag_cmd $EXTRA_JTAG_CMD
+    jlink_target_cmd
 
     if [ $WINDOWS -eq 1 ]; then
-	JLINK_GDB_SERVER=JLinkGDBServerCL
+        JLINK_GDB_SERVER=JLinkGDBServerCL
     fi
     if [ -z $FILE_NAME ]; then
         echo "Missing filename"
         exit 1
     fi
     if [ ! -f "$FILE_NAME" ]; then
-	# tries stripping current path for readability
+        # tries stripping current path for readability
         FILE=${FILE_NAME##$(pwd)/}
-	echo "Cannot find file" $FILE
-	exit 1
+        echo "Cannot find file" $FILE
+        exit 1
     fi
     if [ -z $FLASH_OFFSET ]; then
         echo "Missing flash offset"
@@ -56,8 +71,10 @@ jlink_load () {
     # downloading somewhere in the flash. So need to figure out how to tell it
     # not to do that, or report failure if gdb fails to write this file
     #
-    echo "shell sh -c \"trap '' 2; $JLINK_GDB_SERVER -device $JLINK_DEV -speed 1000 -if SWD -port $PORT -singlerun $EXTRA_JTAG_CMD  &\" " > $GDB_CMD_FILE
-    echo "target remote localhost:$PORT" >> $GDB_CMD_FILE
+    if [ -z $JLINK_TARGET_HOST]; then
+        echo "shell sh -c \"trap '' 2; $JLINK_GDB_SERVER -device $JLINK_DEV -speed 1000 -if SWD -port $PORT -singlerun $EXTRA_JTAG_CMD  &\" " > $GDB_CMD_FILE
+    fi
+    echo "$JLINK_TARGET_CMD" >> $GDB_CMD_FILE
     echo "mon reset" >> $GDB_CMD_FILE
     echo "restore $FILE_NAME binary $FLASH_OFFSET" >> $GDB_CMD_FILE
 
@@ -85,22 +102,22 @@ jlink_load () {
 
     error=`echo $msgs | grep error`
     if [ -n "$error" ]; then
-	exit 1
+        exit 1
     fi
 
     error=`echo $msgs | grep -i failed`
     if [ -n "$error" ]; then
-	exit 1
+        exit 1
     fi
 
     error=`echo $msgs | grep -i "unknown / supported"`
     if [ -n "$error" ]; then
-	exit 1
+        exit 1
     fi
 
     error=`echo $msgs | grep -i "not found"`
     if [ -n "$error" ]; then
-	exit 1
+        exit 1
     fi
 
     return 0
@@ -116,9 +133,10 @@ jlink_load () {
 jlink_debug() {
     windows_detect
     if [ $WINDOWS -eq 1 ]; then
-	JLINK_GDB_SERVER=JLinkGDBServerCL
+        JLINK_GDB_SERVER=JLinkGDBServerCL
     fi
     parse_extra_jtag_cmd $EXTRA_JTAG_CMD
+    jlink_target_cmd
 
     if [ -z "$NO_GDB" ]; then
         GDB_CMD_FILE=.gdb_cmds
@@ -134,22 +152,24 @@ jlink_debug() {
 
         echo "Debugging" $FILE_NAME
 
-        if [ $WINDOWS -eq 1 ]; then
-            #
-            # Launch jlink server in a separate command interpreter, to make
-            # sure it doesn't get killed by Ctrl-C signal from bash.
-            #
-            $COMSPEC /C "start $COMSPEC /C $JLINK_GDB_SERVER -device $JLINK_DEV -speed 4000 -if SWD -port $PORT -singlerun $EXTRA_JTAG_CMD"
-        else
-            #
-            # Block Ctrl-C from getting passed to jlink server.
-            #
-            set -m
-            $JLINK_GDB_SERVER -device $JLINK_DEV -speed 4000 -if SWD -port $PORT -singlerun $EXTRA_JTAG_CMD  > /dev/null &
-            set +m
+        if [ -z $JLINK_TARGET_HOST]; then
+            if [ $WINDOWS -eq 1 ]; then
+                #
+                # Launch jlink server in a separate command interpreter, to make
+                # sure it doesn't get killed by Ctrl-C signal from bash.
+                #
+                $COMSPEC /C "start $COMSPEC /C $JLINK_GDB_SERVER -device $JLINK_DEV -speed 4000 -if SWD -port $PORT -singlerun $EXTRA_JTAG_CMD"
+            else
+                #
+                # Block Ctrl-C from getting passed to jlink server.
+                #
+                set -m
+                $JLINK_GDB_SERVER -device $JLINK_DEV -speed 4000 -if SWD -port $PORT -singlerun $EXTRA_JTAG_CMD  > /dev/null &
+                set +m
+            fi
         fi
 
-        echo "target remote localhost:$PORT" > $GDB_CMD_FILE
+        echo "$JLINK_TARGET_CMD" > $GDB_CMD_FILE
         # Whether target should be reset or not
         if [ ! -z "$RESET" ]; then
             echo "mon reset" >> $GDB_CMD_FILE
@@ -157,13 +177,13 @@ jlink_debug() {
         fi
         echo "$EXTRA_GDB_CMDS" >> $GDB_CMD_FILE
 
-	if [ $WINDOWS -eq 1 ]; then
-	    FILE_NAME=`echo $FILE_NAME | sed 's/\//\\\\/g'`
-	    $COMSPEC /C "start $COMSPEC /C arm-none-eabi-gdb -x $GDB_CMD_FILE $FILE_NAME"
-	else
+        if [ $WINDOWS -eq 1 ]; then
+            FILE_NAME=`echo $FILE_NAME | sed 's/\//\\\\/g'`
+            $COMSPEC /C "start $COMSPEC /C arm-none-eabi-gdb -x $GDB_CMD_FILE $FILE_NAME"
+        else
             arm-none-eabi-gdb -x $GDB_CMD_FILE $FILE_NAME
             rm $GDB_CMD_FILE
-	fi
+        fi
     else
         $JLINK_GDB_SERVER -device $JLINK_DEV -speed 4000 -if SWD -port $PORT -singlerun $EXTRA_JTAG_CMD
     fi

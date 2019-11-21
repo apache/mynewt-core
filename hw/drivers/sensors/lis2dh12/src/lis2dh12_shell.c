@@ -40,12 +40,25 @@ static struct shell_cmd lis2dh12_shell_cmd_struct = {
     .sc_cmd_func = lis2dh12_shell_cmd
 };
 
-static struct sensor_itf g_sensor_itf = {
-    .si_type = MYNEWT_VAL(LIS2DH12_SHELL_ITF_TYPE),
-    .si_num = MYNEWT_VAL(LIS2DH12_SHELL_ITF_NUM),
-    .si_cs_pin = MYNEWT_VAL(LIS2DH12_SHELL_CSPIN),
-    .si_addr = MYNEWT_VAL(LIS2DH12_SHELL_ITF_ADDR)
-};
+static struct sensor_itf *g_sensor_itf;
+static struct lis2dh12 *g_lis2dh12;
+
+static int
+lis2dh12_shell_open_device(void)
+{
+    if (g_sensor_itf) {
+        return 0;
+    }
+
+    g_lis2dh12 = (struct lis2dh12 *)os_dev_open(MYNEWT_VAL(LIS2DH12_SHELL_DEV_NAME),
+                                                1000, NULL);
+    if (g_lis2dh12) {
+        g_sensor_itf = &g_lis2dh12->sensor.s_itf;
+        return 0;
+    }
+
+    return SYS_ENODEV;
+}
 
 static int
 lis2dh12_shell_err_too_many_args(char *cmd_name)
@@ -100,7 +113,7 @@ lis2dh12_shell_cmd_read_chipid(int argc, char **argv)
     int rc;
     uint8_t chipid;
 
-    rc = lis2dh12_read8(&g_sensor_itf, LIS2DH12_REG_WHO_AM_I, &chipid);
+    rc = lis2dh12_read8(g_sensor_itf, LIS2DH12_REG_WHO_AM_I, &chipid);
     if (rc) {
         goto err;
     }
@@ -138,12 +151,12 @@ lis2dh12_shell_cmd_read(int argc, char **argv)
 
     while (samples--) {
 
-        rc = lis2dh12_get_fs(&g_sensor_itf, &fs);
+        rc = lis2dh12_get_fs(g_sensor_itf, &fs);
         if (rc) {
             return rc;
         }
         
-        rc = lis2dh12_get_data(&g_sensor_itf, fs,&x, &y, &z);
+        rc = lis2dh12_get_data(g_sensor_itf, fs,&x, &y, &z);
         if (rc) {
             console_printf("Read failed: %d\n", rc);
             return rc;
@@ -166,7 +179,7 @@ static void lis2dh12_shell_dump_reg(const char *name, uint8_t addr)
     uint8_t val = 0;
     int rc;
 
-    rc = lis2dh12_read8(&g_sensor_itf, addr, &val);
+    rc = lis2dh12_read8(g_sensor_itf, addr, &val);
     if (rc == 0) {
         console_printf("0x%02X (%s): 0x%02X\n", addr, name, val);
     } else {
@@ -243,7 +256,7 @@ lis2dh12_shell_cmd_peek(int argc, char **argv)
         return lis2dh12_shell_err_invalid_arg(argv[2]);
     }
 
-    rc = lis2dh12_read8(&g_sensor_itf, reg, &value);
+    rc = lis2dh12_read8(g_sensor_itf, reg, &value);
     if (rc) {
         console_printf("peek failed %d\n", rc);
     }else{
@@ -276,7 +289,7 @@ lis2dh12_shell_cmd_poke(int argc, char **argv)
         return lis2dh12_shell_err_invalid_arg(argv[3]);
     }
 
-    rc = lis2dh12_write8(&g_sensor_itf, reg, value);
+    rc = lis2dh12_write8(g_sensor_itf, reg, value);
     if (rc) {
         console_printf("poke failed %d\n", rc);
     }else{
@@ -292,7 +305,7 @@ lis2dh12_shell_cmd_test(int argc, char **argv)
     int rc;
     int result = 0;
 
-    rc = 0; //lis2dh12_run_self_test(&g_sensor_itf, &result);
+    rc = lis2dh12_run_self_test(g_sensor_itf, &result);
     if (rc) {
         goto err;
     }
@@ -313,6 +326,12 @@ lis2dh12_shell_cmd(int argc, char **argv)
 {
     if (argc == 1) {
         return lis2dh12_shell_help();
+    }
+
+    if (lis2dh12_shell_open_device()) {
+        console_printf("Error: device not found \"%s\"\n",
+                       MYNEWT_VAL(LIS2DH12_SHELL_DEV_NAME));
+        return 0;
     }
 
     /* Read command (get a new data sample) */

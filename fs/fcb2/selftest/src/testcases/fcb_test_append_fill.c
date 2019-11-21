@@ -20,10 +20,10 @@
 
 TEST_CASE_SELF(fcb_test_append_fill)
 {
-    struct fcb *fcb;
+    struct fcb2 *fcb;
     int rc;
     int i;
-    struct fcb_entry loc;
+    struct fcb2_entry loc;
     uint8_t test_data[128];
     int elem_cnts[2] = {0, 0};
     int aa_together_cnts[2];
@@ -44,8 +44,8 @@ TEST_CASE_SELF(fcb_test_append_fill)
     }
 
     while (1) {
-        rc = fcb_append(fcb, sizeof(test_data), &loc);
-        if (rc == FCB_ERR_NOSPACE) {
+        rc = fcb2_append(fcb, sizeof(test_data), &loc);
+        if (rc == FCB2_ERR_NOSPACE) {
             break;
         }
         if (loc.fe_sector == 0) {
@@ -56,29 +56,26 @@ TEST_CASE_SELF(fcb_test_append_fill)
             TEST_ASSERT(0);
         }
 
-        rc = fcb_write(&loc, 0, test_data, sizeof(test_data));
+        rc = fcb2_write(&loc, 0, test_data, sizeof(test_data));
         TEST_ASSERT(rc == 0);
 
-        rc = fcb_append_finish(&loc);
+        rc = fcb2_append_finish(&loc);
         TEST_ASSERT(rc == 0);
     }
     TEST_ASSERT(elem_cnts[0] > 0);
     TEST_ASSERT(elem_cnts[0] == elem_cnts[1]);
 
     memset(&aa_together_cnts, 0, sizeof(aa_together_cnts));
-    rc = fcb_walk(fcb, FCB_SECTOR_OLDEST, fcb_test_cnt_elems_cb, &aa_together);
+    rc = fcb2_walk(fcb, FCB2_SECTOR_OLDEST, fcb_test_cnt_elems_cb, &aa_together);
     TEST_ASSERT(rc == 0);
     TEST_ASSERT(aa_together.elem_cnts[0] == elem_cnts[0]);
     TEST_ASSERT(aa_together.elem_cnts[1] == elem_cnts[1]);
 
     memset(&aa_separate_cnts, 0, sizeof(aa_separate_cnts));
-    rc = fcb_walk(fcb, 0, fcb_test_cnt_elems_cb,
-      &aa_separate);
+    rc = fcb2_walk(fcb, 0, fcb_test_cnt_elems_cb, &aa_separate);
     TEST_ASSERT(rc == 0);
-    rc = fcb_walk(fcb, 1, fcb_test_cnt_elems_cb,
-      &aa_separate);
+    rc = fcb2_walk(fcb, 1, fcb_test_cnt_elems_cb, &aa_separate);
     TEST_ASSERT(rc == 0);
     TEST_ASSERT(aa_separate.elem_cnts[0] == elem_cnts[0]);
     TEST_ASSERT(aa_separate.elem_cnts[1] == elem_cnts[1]);
-
 }

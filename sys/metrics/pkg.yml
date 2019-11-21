@@ -27,7 +27,7 @@ pkg.keywords:
 pkg.deps:
     - kernel/os
     - sys/log/full
-    - encoding/tinycbor
+    - "@apache-mynewt-core/encoding/tinycbor"
 pkg.apis:
     - metrics
 pkg.deps.METRICS_CLI:

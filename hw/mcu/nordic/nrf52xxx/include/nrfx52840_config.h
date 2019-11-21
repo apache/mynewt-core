@@ -22,30 +22,101 @@
 
 #include "syscfg/syscfg.h"
 
+#ifndef NRFX_CLOCK_ENABLED
 #define NRFX_CLOCK_ENABLED 0
+#endif
+
+#ifndef NRFX_COMP_ENABLED
 #define NRFX_COMP_ENABLED 0
+#endif
+
+#ifndef NRFX_GPIOTE_ENABLED
 #define NRFX_GPIOTE_ENABLED 0
+#endif
+
+#ifndef NRFX_I2S_ENABLED
 #define NRFX_I2S_ENABLED 0
+#endif
+
+#ifndef NRFX_LPCOMP_ENABLED
 #define NRFX_LPCOMP_ENABLED 0
+#endif
+
+#ifndef NRFX_PDM_ENABLED
 #define NRFX_PDM_ENABLED 0
+#endif
+
+#ifndef NRFX_POWER_ENABLED
 #define NRFX_POWER_ENABLED 0
+#endif
+
+#ifndef NRFX_PPI_ENABLED
 #define NRFX_PPI_ENABLED 0
+#endif
+
+#ifndef NRFX_PRS_ENABLDE
 #define NRFX_PRS_ENABLDE 0
+#endif
+
+#ifndef NRFX_QDEC_ENABLED
 #define NRFX_QDEC_ENABLED 0
+#endif
+
+#ifndef NRFX_RNG_ENABLED
 #define NRFX_RNG_ENABLED 0
+#endif
+
+#ifndef NRFX_RTC_ENABLED
 #define NRFX_RTC_ENABLED 0
+#endif
+
+#ifndef NRFX_SPIM_ENABLED
 #define NRFX_SPIM_ENABLED 0
+#endif
+
+#ifndef NRFX_SPIS_ENABLED
 #define NRFX_SPIS_ENABLED 0
+#endif
+
+#ifndef NRFX_SPI_ENABLED
 #define NRFX_SPI_ENABLED 0
+#endif
+
+#ifndef NRFX_SWI_ENABLED
 #define NRFX_SWI_ENABLED 0
+#endif
+
+#ifndef NRFX_SYSTICK_ENABLED
 #define NRFX_SYSTICK_ENABLED 0
+#endif
+
+#ifndef NRFX_TIMER_ENABLED
 #define NRFX_TIMER_ENABLED 0
+#endif
+
+#ifndef NRFX_TWIM_ENABLED
 #define NRFX_TWIM_ENABLED 0
+#endif
+
+#ifndef NRFX_TWIS_ENABLED
 #define NRFX_TWIS_ENABLED 0
+#endif
+
+#ifndef NRFX_TWI_ENABLED
 #define NRFX_TWI_ENABLED 0
+#endif
+
+#ifndef NRFX_UARTE_ENABLED
 #define NRFX_UARTE_ENABLED 0
+#endif
+
+#ifndef NRFX_UART_ENABLED
 #define NRFX_UART_ENABLED 0
+#endif
+
+#ifndef NRFX_WDT_ENABLED
 #define NRFX_WDT_ENABLED 0
+#endif
 
 #if MYNEWT_VAL(ADC_0)
 #define NRFX_SAADC_ENABLED 1

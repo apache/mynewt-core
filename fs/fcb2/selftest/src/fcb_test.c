@@ -23,14 +23,14 @@
 #include "os/mynewt.h"
 #include "testutil/testutil.h"
 
-#include "fcb/fcb.h"
-#include "fcb/../../src/fcb_priv.h"
+#include "fcb/fcb2.h"
+#include "fcb_priv.h"
 
 #include "fcb_test.h"
 
 #include "flash_map/flash_map.h"
 
-struct fcb test_fcb;
+struct fcb2 test_fcb;
 
 struct flash_sector_range test_fcb_ranges[] = {
     [0] = {
@@ -62,7 +62,7 @@ fcb_test_wipe(void)
 }
 
 int
-fcb_test_empty_walk_cb(struct fcb_entry *loc, void *arg)
+fcb_test_empty_walk_cb(struct fcb2_entry *loc, void *arg)
 {
     TEST_ASSERT(0);
     return 0;
@@ -75,7 +75,7 @@ fcb_test_append_data(int msg_len, int off)
 }
 
 int
-fcb_test_data_walk_cb(struct fcb_entry *loc, void *arg)
+fcb_test_data_walk_cb(struct fcb2_entry *loc, void *arg)
 {
     uint16_t len;
     uint8_t test_data[128];
@@ -87,7 +87,7 @@ fcb_test_data_walk_cb(struct fcb_entry *loc, void *arg)
 
     TEST_ASSERT(len == *var_cnt);
 
-    rc = fcb_read(loc, 0, test_data, len);
+    rc = fcb2_read(loc, 0, test_data, len);
     TEST_ASSERT(rc == 0);
 
     for (i = 0; i < len; i++) {
@@ -98,7 +98,7 @@ fcb_test_data_walk_cb(struct fcb_entry *loc, void *arg)
 }
 
 int
-fcb_test_cnt_elems_cb(struct fcb_entry *loc, void *arg)
+fcb_test_cnt_elems_cb(struct fcb2_entry *loc, void *arg)
 {
     struct append_arg *aa = (struct append_arg *)arg;
     int idx;
@@ -111,7 +111,7 @@ fcb_test_cnt_elems_cb(struct fcb_entry *loc, void *arg)
 void
 fcb_tc_pretest(uint8_t sector_count)
 {
-    struct fcb *fcb;
+    struct fcb2 *fcb;
     int rc = 0;
 
     fcb_test_wipe();
@@ -124,7 +124,7 @@ fcb_tc_pretest(uint8_t sector_count)
     test_fcb_ranges[0].fsr_flash_area.fa_size =
         test_fcb_ranges[0].fsr_sector_size * sector_count;
 
-    rc = fcb_init(fcb);
+    rc = fcb2_init(fcb);
     if (rc != 0) {
         printf("fcb_tc_pretest rc == %x, %d\n", rc, rc);
         TEST_ASSERT(rc == 0);
@@ -141,6 +141,7 @@ TEST_CASE_DECL(fcb_test_rotate)
 TEST_CASE_DECL(fcb_test_multiple_scratch)
 TEST_CASE_DECL(fcb_test_last_of_n)
 TEST_CASE_DECL(fcb_test_area_info)
+TEST_CASE_DECL(fcb_test_getprev)
 
 TEST_SUITE(fcb_test_all)
 {
@@ -154,6 +155,7 @@ TEST_SUITE(fcb_test_all)
     fcb_test_multiple_scratch();
     fcb_test_last_of_n();
     fcb_test_area_info();
+    fcb_test_getprev();
 }
 
 int

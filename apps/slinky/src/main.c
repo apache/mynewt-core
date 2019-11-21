@@ -31,15 +31,14 @@
 #if MYNEWT_VAL(SPLIT_LOADER)
 #include "split/split.h"
 #endif
-#include <newtmgr/newtmgr.h>
 #include <bootutil/image.h>
 #include <bootutil/bootutil.h>
-#include <imgmgr/imgmgr.h>
 #include <assert.h>
 #include <string.h>
 #include <reboot/log_reboot.h>
 #include <id/id.h>
 #include "modlog/modlog.h"
+#include <imgmgr/imgmgr.h>
 
 #ifdef ARCH_sim
 #include <mcu/mcu_sim.h>
@@ -173,7 +172,7 @@ task1_handler(void *arg)
         /* Toggle the LED */
         prev_pin_state = hal_gpio_read(g_led_pin);
         curr_pin_state = hal_gpio_toggle(g_led_pin);
-        MODLOG_DFLT(INFO, "GPIO toggle from %u to %u",
+        DFLT_LOG_INFO("GPIO toggle from %u to %u",
                     prev_pin_state, curr_pin_state);
         STATS_INC(g_stats_gpio_toggle, toggles);
 

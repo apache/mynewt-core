@@ -21,10 +21,10 @@
 TEST_CASE_SELF(fcb_test_last_of_n)
 {
     const uint8_t ENTRIES = 5;
-    struct fcb *fcb;
+    struct fcb2 *fcb;
     int rc;
-    struct fcb_entry loc;
-    struct fcb_entry areas[ENTRIES];
+    struct fcb2_entry loc;
+    struct fcb2_entry areas[ENTRIES];
     uint8_t test_data[128];
     uint8_t i;
 
@@ -34,52 +34,52 @@ TEST_CASE_SELF(fcb_test_last_of_n)
     fcb->f_scratch_cnt = 1;
 
     /* No fcbs available */
-    rc = fcb_offset_last_n(fcb, 1, &loc);
-    assert (rc != 0);
+    rc = fcb2_offset_last_n(fcb, 1, &loc);
+    TEST_ASSERT(rc != 0);
 
     /*
      * Add some fcbs.
      */
     for (i = 0; i < ENTRIES; i++) {
-        rc = fcb_append(fcb, sizeof(test_data), &loc);
-        if (rc == FCB_ERR_NOSPACE) {
+        rc = fcb2_append(fcb, sizeof(test_data), &loc);
+        if (rc == FCB2_ERR_NOSPACE) {
             break;
         }
 
-        rc = fcb_write(&loc, 0, test_data, sizeof(test_data));
+        rc = fcb2_write(&loc, 0, test_data, sizeof(test_data));
         TEST_ASSERT(rc == 0);
 
-        rc = fcb_append_finish(&loc);
+        rc = fcb2_append_finish(&loc);
         TEST_ASSERT(rc == 0);
 
         areas[i] = loc;
     }
 
     /* last entry */
-    rc = fcb_offset_last_n(fcb, 1, &loc);
-    assert (rc == 0);
-    assert (areas[4].fe_sector == loc.fe_sector);
-    assert (areas[4].fe_data_off == loc.fe_data_off);
-    assert (areas[4].fe_data_len == loc.fe_data_len);
+    rc = fcb2_offset_last_n(fcb, 1, &loc);
+    TEST_ASSERT(rc == 0);
+    TEST_ASSERT(areas[4].fe_sector == loc.fe_sector);
+    TEST_ASSERT(areas[4].fe_data_off == loc.fe_data_off);
+    TEST_ASSERT(areas[4].fe_data_len == loc.fe_data_len);
 
     /* somewhere in the middle */
-    rc = fcb_offset_last_n(fcb, 3, &loc);
-    assert (rc == 0);
-    assert (areas[2].fe_sector == loc.fe_sector);
-    assert (areas[2].fe_data_off == loc.fe_data_off);
-    assert (areas[2].fe_data_len == loc.fe_data_len);
+    rc = fcb2_offset_last_n(fcb, 3, &loc);
+    TEST_ASSERT(rc == 0);
+    TEST_ASSERT(areas[2].fe_sector == loc.fe_sector);
+    TEST_ASSERT(areas[2].fe_data_off == loc.fe_data_off);
+    TEST_ASSERT(areas[2].fe_data_len == loc.fe_data_len);
 
     /* first entry */
-    rc = fcb_offset_last_n(fcb, 5, &loc);
-    assert (rc == 0);
-    assert (areas[0].fe_sector == loc.fe_sector);
-    assert (areas[0].fe_data_off == loc.fe_data_off);
-    assert (areas[0].fe_data_len == loc.fe_data_len);
+    rc = fcb2_offset_last_n(fcb, 5, &loc);
+    TEST_ASSERT(rc == 0);
+    TEST_ASSERT(areas[0].fe_sector == loc.fe_sector);
+    TEST_ASSERT(areas[0].fe_data_off == loc.fe_data_off);
+    TEST_ASSERT(areas[0].fe_data_len == loc.fe_data_len);
 
     /* after last valid entry, returns the first one like for 5 */
-    rc = fcb_offset_last_n(fcb, 6, &loc);
-    assert (rc == 0);
-    assert (areas[0].fe_sector == loc.fe_sector);
-    assert (areas[0].fe_data_off == loc.fe_data_off);
-    assert (areas[0].fe_data_len == loc.fe_data_len);
+    rc = fcb2_offset_last_n(fcb, 6, &loc);
+    TEST_ASSERT(rc == 0);
+    TEST_ASSERT(areas[0].fe_sector == loc.fe_sector);
+    TEST_ASSERT(areas[0].fe_data_off == loc.fe_data_off);
+    TEST_ASSERT(areas[0].fe_data_len == loc.fe_data_len);
 }

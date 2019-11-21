@@ -50,9 +50,6 @@ STATS_NAME_END(bno055_stat_section)
 /* Global variable used to hold stats data */
 STATS_SECT_DECL(bno055_stat_section) g_bno055stats;
 
-#define BNO055_LOG(lvl_, ...) \
-    MODLOG_ ## lvl_(MYNEWT_VAL(BNO055_LOG_MODULE), __VA_ARGS__)
-
 /* Exports for the sensor API.*/
 static int bno055_sensor_read(struct sensor *, sensor_type_t,
         sensor_data_func_t, void *, uint32_t);
@@ -79,6 +76,13 @@ bno055_write8(struct sensor_itf *itf, uint8_t reg, uint8_t value)
     int rc;
     uint8_t payload[2] = { reg, value};
 
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    rc = bus_node_simple_write(itf->si_dev, payload, 2);
+    if (rc) {
+        BNO055_LOG_ERROR("Write to bno055 failed %d\n", rc);
+        STATS_INC(g_bno055stats, errors);
+    }
+#else
     struct hal_i2c_master_data data_struct = {
         .address = itf->si_addr,
         .len = 2,
@@ -88,11 +92,12 @@ bno055_write8(struct sensor_itf *itf, uint8_t reg, uint8_t value)
     rc = i2cn_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC, 1,
                            MYNEWT_VAL(BNO055_I2C_RETRIES));
     if (rc) {
-        BNO055_LOG(ERROR,
+        BNO055_LOG_ERROR(
                    "Failed to write to 0x%02X:0x%02X with value 0x%02X\n",
                    data_struct.address, reg, value);
         STATS_INC(g_bno055stats, errors);
     }
+#endif
 
     return rc;
 }
@@ -115,6 +120,19 @@ bno055_writelen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
                               0, 0, 0, 0, 0, 0, 0, 0,
                               0, 0, 0, 0, 0, 0, 0};
 
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    if (len > (sizeof(payload) - 1)) {
+        return OS_EINVAL;
+    }
+
+    memcpy(payload, buffer, len);
+
+    rc = bus_node_simple_write(itf->si_dev, payload, len + 1);
+    if (rc) {
+        BNO055_LOG_ERROR("Write to bno055 failed %d\n", rc);
+        STATS_INC(g_bno055stats, errors);
+    }
+#else
     struct hal_i2c_master_data data_struct = {
         .address = itf->si_addr,
         .len = 1,
@@ -136,7 +154,7 @@ bno055_writelen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
     rc = i2cn_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1,
                            MYNEWT_VAL(BNO055_I2C_RETRIES));
     if (rc) {
-        BNO055_LOG(ERROR, "I2C access failed at address 0x%02X\n",
+        BNO055_LOG_ERROR("I2C access failed at address 0x%02X\n",
                    data_struct.address);
         STATS_INC(g_bno055stats, errors);
         goto err;
@@ -147,13 +165,14 @@ bno055_writelen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
     rc = i2cn_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10,
                            len, MYNEWT_VAL(BNO055_I2C_RETRIES));
     if (rc) {
-        BNO055_LOG(ERROR, "Failed to read from 0x%02X:0x%02X\n",
+        BNO055_LOG_ERROR("Failed to read from 0x%02X:0x%02X\n",
                    data_struct.address, reg);
         STATS_INC(g_bno055stats, errors);;
     }
 
 err:
     sensor_itf_unlock(itf);
+#endif
 
     return rc;
 }
@@ -171,8 +190,15 @@ int
 bno055_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
 {
     int rc;
-    uint8_t payload;
 
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    rc = bus_node_simple_write_read_transact(itf->si_dev, &reg, 1, value, 1);
+    if (rc) {
+        BNO055_LOG_ERROR("Read from bno055 failed %d\n", rc);
+        STATS_INC(g_bno055stats, errors);
+    }
+#else
+    uint8_t payload;
     struct hal_i2c_master_data data_struct = {
         .address = itf->si_addr,
         .len = 1,
@@ -189,7 +215,7 @@ bno055_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
     rc = i2cn_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 0,
                            MYNEWT_VAL(BNO055_I2C_RETRIES));
     if (rc) {
-        BNO055_LOG(ERROR,
+        BNO055_LOG_ERROR(
                    "I2C register write failed at address 0x%02X:0x%02X\n",
                    data_struct.address, reg);
         STATS_INC(g_bno055stats, errors);
@@ -202,13 +228,14 @@ bno055_read8(struct sensor_itf *itf, uint8_t reg, uint8_t *value)
                           MYNEWT_VAL(BNO055_I2C_RETRIES));
     *value = payload;
     if (rc) {
-        BNO055_LOG(ERROR, "Failed to read from 0x%02X:0x%02X\n",
+        BNO055_LOG_ERROR("Failed to read from 0x%02X:0x%02X\n",
                    data_struct.address, reg);
         STATS_INC(g_bno055stats, errors);
     }
 
 err:
     sensor_itf_unlock(itf);
+#endif
 
     return rc;
 }
@@ -228,6 +255,14 @@ bno055_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
                uint8_t len)
 {
     int rc;
+
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    rc = bus_node_simple_write_read_transact(itf->si_dev, &reg, 1, buffer, len);
+    if (rc) {
+        BNO055_LOG_ERROR("Read from bno055 failed %d\n", rc);
+        STATS_INC(g_bno055stats, errors);
+    }
+#else
     uint8_t payload[23] = { reg, 0, 0, 0, 0, 0, 0, 0,
                               0, 0, 0, 0, 0, 0, 0, 0,
                               0, 0, 0, 0, 0, 0, 0};
@@ -250,7 +285,7 @@ bno055_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
     rc = i2cn_master_write(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1,
                            MYNEWT_VAL(BNO055_I2C_RETRIES));
     if (rc) {
-        BNO055_LOG(ERROR, "I2C access failed at address 0x%02X\n",
+        BNO055_LOG_ERROR("I2C access failed at address 0x%02X\n",
                    data_struct.address);
         STATS_INC(g_bno055stats, errors);
         goto err;
@@ -262,7 +297,7 @@ bno055_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
     rc = i2cn_master_read(itf->si_num, &data_struct, OS_TICKS_PER_SEC / 10, 1,
                           MYNEWT_VAL(BNO055_I2C_RETRIES));
     if (rc) {
-        BNO055_LOG(ERROR, "Failed to read from 0x%02X:0x%02X\n",
+        BNO055_LOG_ERROR("Failed to read from 0x%02X:0x%02X\n",
                    data_struct.address, reg);
         STATS_INC(g_bno055stats, errors);
     }
@@ -272,6 +307,7 @@ bno055_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer,
 
 err:
     sensor_itf_unlock(itf);
+#endif
 
     return rc;
 }
@@ -649,7 +685,7 @@ bno055_placement_cfg(struct sensor_itf *itf, uint8_t placement)
         remap_sign = BNO055_REMAP_SIGN_P7;
         break;
     default:
-        BNO055_LOG(ERROR, "Invalid Axis config, Assuming P1(default) \n");
+        BNO055_LOG_ERROR("Invalid Axis config, Assuming P1(default) \n");
         rc = SYS_EINVAL;
         goto err;
     }
@@ -817,7 +853,7 @@ bno055_config(struct bno055 *bno055, struct bno055_cfg *cfg)
         }
 
         if (cfg->bc_opr_mode != mode) {
-            BNO055_LOG(ERROR, "Config mode and read mode do not match.\n");
+            BNO055_LOG_ERROR("Config mode and read mode do not match.\n");
             rc = SYS_EINVAL;
             goto err;
         }
@@ -917,7 +953,7 @@ bno055_find_reg(sensor_type_t type, uint8_t *reg)
             *reg = BNO055_GRAVITY_DATA_X_LSB_ADDR;
             break;
         default:
-            BNO055_LOG(ERROR, "Not supported sensor type: %d\n", (int)type);
+            BNO055_LOG_ERROR("Not supported sensor type: %d\n", (int)type);
             rc = SYS_EINVAL;
             break;
     }
@@ -1029,7 +1065,7 @@ bno055_get_vector_data(struct sensor_itf *itf, void *datastruct, int type)
             sad->sad_z_is_valid = 1;
             break;
         default:
-            BNO055_LOG(ERROR, "Not supported sensor type: %d\n", type);
+            BNO055_LOG_ERROR("Not supported sensor type: %d\n", type);
             rc = SYS_EINVAL;
             goto err;
     }
@@ -2234,3 +2270,29 @@ err:
     return rc;
 }
 
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+
+void
+init_node_cb(struct bus_node *node, void *arg)
+{
+    bno055_init((struct os_dev *)node, arg);
+}
+
+int
+bno055_create_sensor_dev(struct bno055 *dev, const char *name,
+                         const struct bus_i2c_node_cfg *i2c_cfg,
+                         struct sensor_itf *sensor_itf)
+{
+    struct bus_node_callbacks cbs = {
+        .init = init_node_cb,
+    };
+    int rc;
+
+    sensor_itf->si_dev = &dev->i2c_node.bnode.odev;
+    bus_node_set_callbacks((struct os_dev *)dev, &cbs);
+
+    rc = bus_i2c_node_create(name, &dev->i2c_node, i2c_cfg, sensor_itf);
+
+    return rc;
+}
+#endif

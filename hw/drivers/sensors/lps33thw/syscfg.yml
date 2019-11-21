@@ -23,9 +23,6 @@ syscfg.defs:
     LPS33THW_ITF_LOCK_TMO:
         description: 'LPS33THW interface lock timeout in milliseconds'
         value: 1000
-    LPS33THW_LOG_MODULE:
-        description: 'Numeric module ID to use for LPS33THW log messages'
-        value: 233
     LPS33THW_I2C_RETRIES:
         description: >
             Number of retries to use for failed I2C communication.  A retry is
@@ -39,7 +36,14 @@ syscfg.defs:
         description: 'Enables one shot mode on the sensor'
         value: 0
 
-syscfg.defs.!BUS_DRIVER_PRESENT:
+    LPS33THW_INT_CFG_ACTIVE:
+        description: 'Set 0 for active-low, 1 for active-high'
+        value: 1
+
+    LPS33THW_INT_PIN_HOST:
+        description: 'Interrupt pin number on host device connected to INT_DRDY on device'
+        value: 23
+
     LPS33THW_SHELL_ITF_NUM:
         description: 'Shell interface number for the LPS33THW'
         value: 0
@@ -53,7 +57,21 @@ syscfg.defs.!BUS_DRIVER_PRESENT:
         description: 'Slave address for LPS33THW'
         value : 0x5C
 
-syscfg.defs.BUS_DRIVER_PRESENT:
     LPS33THW_SHELL_NODE_NAME:
         description: 'Bus node name for the LPS33THW'
         value: '"lps33thw"'
+
+    ### Log settings.
+
+    LPS33THW_LOG_MODULE:
+        description: 'Numeric module ID to use for LPS33THW log messages.'
+        value: 233
+    LPS33THW_LOG_LVL:
+        description: 'Minimum level for the LPS33THW log.'
+        value: 1
+
+syscfg.logs:
+    LPS33THW_LOG:
+        module: MYNEWT_VAL(LPS33THW_LOG_MODULE)
+        level: MYNEWT_VAL(LPS33THW_LOG_LVL)
+

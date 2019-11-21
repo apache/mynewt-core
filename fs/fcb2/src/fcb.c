@@ -19,12 +19,12 @@
 #include <limits.h>
 #include <stdlib.h>
 
-#include "fcb/fcb.h"
+#include "fcb/fcb2.h"
 #include "fcb_priv.h"
 #include "string.h"
 
 int
-fcb_init(struct fcb *fcb)
+fcb2_init(struct fcb2 *fcb)
 {
     struct flash_sector_range *range;
     struct flash_sector_range *newest_srp = NULL;
@@ -32,20 +32,20 @@ fcb_init(struct fcb *fcb)
     int i;
     int oldest = -1, newest = -1;
     int oldest_sec = -1, newest_sec = -1;
-    struct fcb_disk_area fda;
+    struct fcb2_disk_area fda;
 
     if (!fcb->f_ranges || fcb->f_sector_cnt - fcb->f_scratch_cnt < 1) {
-        return FCB_ERR_ARGS;
+        return FCB2_ERR_ARGS;
     }
 
     /* Fill last used, first used */
     for (i = 0; i < fcb->f_sector_cnt; i++) {
-        range = fcb_get_sector_range(fcb, i);
+        range = fcb2_get_sector_range(fcb, i);
         /* Require alignment to be a power of two.  Some code depends on this
          * assumption.
          */
         assert((range->fsr_align & (range->fsr_align - 1)) == 0);
-        rc = fcb_sector_hdr_read(fcb, range, i, &fda);
+        rc = fcb2_sector_hdr_read(fcb, range, i, &fda);
         if (rc < 0) {
             return rc;
         }
@@ -58,11 +58,11 @@ fcb_init(struct fcb *fcb)
             newest_srp = range;
             continue;
         }
-        if (FCB_ID_GT(fda.fd_id, newest)) {
+        if (FCB2_ID_GT(fda.fd_id, newest)) {
             newest = fda.fd_id;
             newest_sec = i;
             newest_srp = range;
-        } else if (FCB_ID_GT(oldest, fda.fd_id)) {
+        } else if (FCB2_ID_GT(oldest, fda.fd_id)) {
             oldest = fda.fd_id;
             oldest_sec = i;
         }
@@ -73,7 +73,7 @@ fcb_init(struct fcb *fcb)
          */
         oldest_sec = newest_sec = 0;
         newest_srp = fcb->f_ranges;
-        rc = fcb_sector_hdr_init(fcb, newest_sec, 0);
+        rc = fcb2_sector_hdr_init(fcb, newest_sec, 0);
         if (rc) {
             return rc;
         }
@@ -83,14 +83,14 @@ fcb_init(struct fcb *fcb)
     fcb->f_active.fe_range = newest_srp;
     fcb->f_active.fe_sector = newest_sec;
     fcb->f_active.fe_data_off =
-        fcb_len_in_flash(newest_srp, sizeof(struct fcb_disk_area));
+        fcb2_len_in_flash(newest_srp, sizeof(struct fcb2_disk_area));
     fcb->f_active.fe_entry_num = 0;
     fcb->f_active_id = newest;
 
     while (1) {
-        rc = fcb_getnext_in_area(fcb, &fcb->f_active);
-        if (rc == FCB_ERR_NOVAR) {
-            rc = FCB_OK;
+        rc = fcb2_getnext_in_area(fcb, &fcb->f_active);
+        if (rc == FCB2_ERR_NOVAR) {
+            rc = FCB2_OK;
             break;
         }
         if (rc != 0) {
@@ -102,14 +102,14 @@ fcb_init(struct fcb *fcb)
 }
 
 int
-fcb_free_sector_cnt(struct fcb *fcb)
+fcb2_free_sector_cnt(struct fcb2 *fcb)
 {
     int i;
     int sector;
 
     sector = fcb->f_active.fe_sector;
     for (i = 0; i < fcb->f_sector_cnt; i++) {
-        sector = fcb_getnext_sector(fcb, sector);
+        sector = fcb2_getnext_sector(fcb, sector);
         if (sector == fcb->f_oldest_sec) {
             break;
         }
@@ -118,20 +118,21 @@ fcb_free_sector_cnt(struct fcb *fcb)
 }
 
 int
-fcb_is_empty(struct fcb *fcb)
+fcb2_is_empty(struct fcb2 *fcb)
 {
     return (fcb->f_active.fe_sector == fcb->f_oldest_sec &&
         fcb->f_active.fe_data_off ==
-            fcb_len_in_flash(fcb->f_active.fe_range, sizeof(struct fcb_disk_area)));
+            fcb2_len_in_flash(fcb->f_active.fe_range,
+                              sizeof(struct fcb2_disk_area)));
 }
 
 struct flash_sector_range *
-fcb_get_sector_range(const struct fcb *fcb, int sector)
+fcb2_get_sector_range(const struct fcb2 *fcb, int sector)
 {
     int i;
     struct flash_sector_range *srp = fcb->f_ranges;
 
-    if (FCB_SECTOR_OLDEST == sector) {
+    if (FCB2_SECTOR_OLDEST == sector) {
         sector = fcb->f_oldest_sec;
     }
     for (i = 0; i < fcb->f_range_cnt; ++i, ++srp) {
@@ -148,15 +149,15 @@ fcb_get_sector_range(const struct fcb *fcb, int sector)
  * Initialize erased sector for use.
  */
 int
-fcb_sector_hdr_init(struct fcb *fcb, int sector, uint16_t id)
+fcb2_sector_hdr_init(struct fcb2 *fcb, int sector, uint16_t id)
 {
-    struct fcb_disk_area fda;
-    struct fcb_sector_info info;
+    struct fcb2_disk_area fda;
+    struct fcb2_sector_info info;
     struct flash_sector_range *range;
     int sector_in_range;
     int rc;
 
-    rc = fcb_get_sector_info(fcb, sector, &info);
+    rc = fcb2_get_sector_info(fcb, sector, &info);
     if (rc) {
         return rc;
     }
@@ -172,7 +173,7 @@ fcb_sector_hdr_init(struct fcb *fcb, int sector, uint16_t id)
     rc = flash_area_write(&range->fsr_flash_area,
         sector_in_range * range->fsr_sector_size, &fda, sizeof(fda));
     if (rc) {
-        return FCB_ERR_FLASH;
+        return FCB2_ERR_FLASH;
     }
     return 0;
 }
@@ -184,10 +185,10 @@ fcb_sector_hdr_init(struct fcb *fcb, int sector, uint16_t id)
  * Returns 1 if sector has data.
  */
 int
-fcb_sector_hdr_read(struct fcb *fcb, struct flash_sector_range *srp,
-    uint16_t sec, struct fcb_disk_area *fdap)
+fcb2_sector_hdr_read(struct fcb2 *fcb, struct flash_sector_range *srp,
+                     uint16_t sec, struct fcb2_disk_area *fdap)
 {
-    struct fcb_disk_area fda;
+    struct fcb2_disk_area fda;
     int rc;
     uint32_t off = (sec - srp->fsr_first_sector) * srp->fsr_sector_size;
 
@@ -196,15 +197,15 @@ fcb_sector_hdr_read(struct fcb *fcb, struct flash_sector_range *srp,
     }
     rc = flash_area_read_is_empty(&srp->fsr_flash_area, off, fdap, sizeof(*fdap));
     if (rc < 0) {
-        return FCB_ERR_FLASH;
+        return FCB2_ERR_FLASH;
     } else if (rc == 1) {
         return 0;
     }
     if (fdap->fd_magic != fcb->f_magic) {
-        return FCB_ERR_MAGIC;
+        return FCB2_ERR_MAGIC;
     }
     if (fdap->fd_ver != fcb->f_version) {
-        return FCB_ERR_VERSION;
+        return FCB2_ERR_VERSION;
     }
     return 1;
 }
@@ -217,10 +218,8 @@ fcb_sector_hdr_read(struct fcb *fcb, struct flash_sector_range *srp,
  * @return 0 on there are any fcbs aviable; OS_ENOENT otherwise
  */
 int
-fcb_offset_last_n(struct fcb *fcb, uint8_t entries,
-        struct fcb_entry *last_n_entry)
+fcb2_offset_last_n(struct fcb2 *fcb, uint8_t entries, struct fcb2_entry *loc)
 {
-    struct fcb_entry loc;
     int i;
 
     /* assure a minimum amount of entries */
@@ -229,19 +228,16 @@ fcb_offset_last_n(struct fcb *fcb, uint8_t entries,
     }
 
     i = 0;
-    memset(&loc, 0, sizeof(loc));
-    while (!fcb_getnext(fcb, &loc)) {
-        if (i == 0) {
-            /* Start from the beginning of fcb entries */
-            *last_n_entry = loc;
-        } else if (i > (entries - 1)) {
-            /* Update last_n_entry after n entries and keep updating */
-            fcb_getnext(fcb, last_n_entry);
-        }
+    memset(loc, 0, sizeof(*loc));
+    while (!fcb2_getprev(fcb, loc)) {
+        --entries;
         i++;
+        if (entries == 0) {
+            break;
+        }
     }
 
-    return (i == 0) ? OS_ENOENT : 0;
+    return (i == 0) ? FCB2_ERR_NOVAR : 0;
 }
 
 /**
@@ -250,13 +246,13 @@ fcb_offset_last_n(struct fcb *fcb, uint8_t entries,
  * @return 0 on success; non-zero on failure
  */
 int
-fcb_clear(struct fcb *fcb)
+fcb2_clear(struct fcb2 *fcb)
 {
     int rc;
 
     rc = 0;
-    while (!fcb_is_empty(fcb)) {
-        rc = fcb_rotate(fcb);
+    while (!fcb2_is_empty(fcb)) {
+        rc = fcb2_rotate(fcb);
         if (rc) {
             break;
         }
@@ -265,8 +261,8 @@ fcb_clear(struct fcb *fcb)
 }
 
 int
-fcb_init_flash_area(struct fcb *fcb, int flash_area_id, uint32_t magic,
-    uint8_t version)
+fcb2_init_flash_area(struct fcb2 *fcb, int flash_area_id, uint32_t magic,
+                     uint8_t version)
 {
     const struct flash_area *fa;
     struct flash_sector_range *sector_ranges;
@@ -285,7 +281,8 @@ fcb_init_flash_area(struct fcb *fcb, int flash_area_id, uint32_t magic,
     assert(rc == 0 && sector_range_cnt > 0);
     sector_ranges = malloc(sizeof(struct flash_sector_range) * sector_range_cnt);
     assert(sector_ranges);
-    rc = flash_area_to_sector_ranges(flash_area_id, &sector_range_cnt, sector_ranges);
+    rc = flash_area_to_sector_ranges(flash_area_id, &sector_range_cnt,
+                                     sector_ranges);
     assert(rc == 0 && sector_range_cnt > 0);
 
     fcb->f_ranges = sector_ranges;
@@ -300,14 +297,14 @@ fcb_init_flash_area(struct fcb *fcb, int flash_area_id, uint32_t magic,
      * should be in dedicated flash area and nothing should prevent us from
      * creating log there.
      */
-    rc = fcb_init(fcb);
+    rc = fcb2_init(fcb);
     if (rc) {
         /* Need to erase full area here */
         rc = flash_area_open(flash_area_id, &fa);
         assert(rc == 0);
 
         flash_area_erase(fa, 0, fa->fa_size);
-        rc = fcb_init(fcb);
+        rc = fcb2_init(fcb);
         assert(rc == 0);
     }
 
@@ -315,13 +312,13 @@ fcb_init_flash_area(struct fcb *fcb, int flash_area_id, uint32_t magic,
 }
 
 int
-fcb_get_sector_info(const struct fcb *fcb, int sector,
-    struct fcb_sector_info *info)
+fcb2_get_sector_info(const struct fcb2 *fcb, int sector,
+                     struct fcb2_sector_info *info)
 {
     struct flash_sector_range *srp = fcb->f_ranges;
     int i;
 
-    if (sector == FCB_SECTOR_OLDEST) {
+    if (sector == FCB2_SECTOR_OLDEST) {
         sector = fcb->f_oldest_sec;
     }
 
@@ -336,11 +333,11 @@ fcb_get_sector_info(const struct fcb *fcb, int sector,
             sector * srp->fsr_sector_size;
         return 0;
     }
-    return FCB_ERR_ARGS;
+    return FCB2_ERR_ARGS;
 }
 
 int
-fcb_get_total_size(const struct fcb *fcb)
+fcb2_get_total_size(const struct fcb2 *fcb)
 {
     struct flash_sector_range *srp = fcb->f_ranges;
     int size = 0;
@@ -353,12 +350,12 @@ fcb_get_total_size(const struct fcb *fcb)
 }
 
 int
-fcb_sector_erase(const struct fcb *fcb, int sector)
+fcb2_sector_erase(const struct fcb2 *fcb, int sector)
 {
-    struct fcb_sector_info info;
+    struct fcb2_sector_info info;
     int rc;
 
-    rc = fcb_get_sector_info(fcb, sector, &info);
+    rc = fcb2_get_sector_info(fcb, sector, &info);
     if (rc) {
         goto end;
     }

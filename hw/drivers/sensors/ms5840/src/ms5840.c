@@ -68,9 +68,6 @@ STATS_NAME_END(ms5840_stat_section)
 /* Global variable used to hold stats data */
 STATS_SECT_DECL(ms5840_stat_section) g_ms5840stats;
 
-#define MS5840_LOG(lvl_, ...) \
-    MODLOG_ ## lvl_(MYNEWT_VAL(MS5840_LOG_MODULE), __VA_ARGS__)
-
 /* Exports for the sensor API */
 static int ms5840_sensor_read(struct sensor *, sensor_type_t,
         sensor_data_func_t, void *, uint32_t);
@@ -349,7 +346,7 @@ ms5840_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
     rc = i2cn_master_write(itf->si_num, &data_struct, MYNEWT_VAL(MS5840_I2C_TIMEOUT_TICKS), 1,
                            MYNEWT_VAL(MS5840_I2C_RETRIES));
     if (rc) {
-        MS5840_LOG(ERROR, "I2C write command write failed at address 0x%02X\n",
+        MS5840_LOG_ERROR("I2C write command write failed at address 0x%02X\n",
                    data_struct.address);
         STATS_INC(g_ms5840stats, write_errors);
     }
@@ -401,7 +398,7 @@ ms5840_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
     rc = i2cn_master_write_read_transact(itf->si_num, &wdata, &rdata, MYNEWT_VAL(MS5840_I2C_TIMEOUT_TICKS) * 2,
                                          1, MYNEWT_VAL(MS5840_I2C_RETRIES));
     if (rc) {
-        MS5840_LOG(ERROR, "Failed to read from 0x%02X:0x%02X\n",
+        MS5840_LOG_ERROR("Failed to read from 0x%02X:0x%02X\n",
                    itf->si_addr, addr);
         STATS_INC(g_ms5840stats, read_errors);
     }
@@ -426,7 +423,7 @@ ms5840_read_eeprom(struct sensor_itf *itf, uint16_t *coeff)
 {
     int idx;
     int rc;
-    uint16_t payload[MS5840_NUMBER_COEFFS];
+    uint16_t payload[MS5840_NUMBER_COEFFS + 1];
 
     for(idx = 0; idx < MS5840_NUMBER_COEFFS; idx++) {
         rc = ms5840_readlen(itf, MS5840_CMD_PROM_READ_ADDR0 + idx * 2,
@@ -435,14 +432,13 @@ ms5840_read_eeprom(struct sensor_itf *itf, uint16_t *coeff)
             goto err;
         }
 
-        payload[idx] = (((payload[idx] & 0xFF00) >> 8)|
-                        ((payload[idx] & 0x00FF) << 8));
+        payload[idx] = be16toh(payload[idx]);
     }
 
     rc = ms5840_crc_check(payload, (payload[MS5840_IDX_CRC] & 0xF000) >> 12);
     if (rc) {
         rc = SYS_EINVAL;
-        MS5840_LOG(ERROR, "Failure in CRC, 0x%02X\n",
+        MS5840_LOG_ERROR("Failure in CRC, 0x%02X\n",
                    payload[MS5840_IDX_CRC] &  0xF000 >> 12);
         STATS_INC(g_ms5840stats, eeprom_crc_errors);
         goto err;

@@ -39,6 +39,7 @@ if [ "$MFG_IMAGE" ]; then
 fi
 
 parse_extra_jtag_cmd $EXTRA_JTAG_CMD
+jlink_target_cmd
 
 GDB_CMD_FILE=.gdb_load
 JLINK_LOG_FILE=.jlink_log
@@ -46,7 +47,7 @@ JLINK_LOG_FILE=.jlink_log
 # flash_loader build for this BSP
 if [ -z $FLASH_LOADER ]; then
     FL_TGT=da1469x_flash_loader
-    FLASH_LOADER=$BIN_ROOT/targets/$FL_TGT/app/apps/flash_loader/flash_loader.elf
+    FLASH_LOADER=$BIN_ROOT/targets/$FL_TGT/app/@apache-mynewt-core/apps/flash_loader/flash_loader.elf
 fi
 if [ ! -f $FLASH_LOADER ]; then
     FILE=${FLASH_LOADER##$(pwd)/}
@@ -103,10 +104,14 @@ fi
 
 FILE_SIZE=$(file_size $FILE_NAME)
 
+if [ -z $JLINK_TARGET_HOST ]; then
+    JLINK_SERVER_CMD="shell sh -c \"trap '' 2; $JLINK_GDB_SERVER -device cortex-m33 -speed 4000 -if SWD -port $PORT -singlerun $EXTRA_JTAG_CMD > $JLINK_LOG_FILE 2>&1 &\""
+fi
+
 cat > $GDB_CMD_FILE <<EOF
 set pagination off
-shell sh -c "trap '' 2; $JLINK_GDB_SERVER -device cortex-m33 -speed 4000 -if SWD -port $PORT -singlerun $EXTRA_JTAG_CMD > $JLINK_LOG_FILE 2>&1 &"
-target remote localhost:$PORT
+$JLINK_SERVER_CMD
+$JLINK_TARGET_CMD
 mon reset
 mon halt
 restore $FLASH_LOADER.bin binary 0x20000000
@@ -120,6 +125,7 @@ set *(int *)0x38000010 = 0x00000066
 set *(int *)0x500000BC = 4
 set \$sp=*(int *)0x20000000
 set \$pc=*(int *)0x20000004
+set {int}0x38000080 = 0
 b main
 c
 d 1
@@ -142,8 +148,10 @@ quit
 
 EOF
 
-arm-none-eabi-gdb -x $GDB_CMD_FILE
-
+arm-none-eabi-gdb -batch -x $GDB_CMD_FILE
+if [ $? != 0 ]; then
+    exit 1
+fi
 # gdb appears to exit before jlinkgdbserver, so immediate
 # execution of debug script (i.e. from 'newt run'), will fail due
 # to 2 instances of jlinkgdbserver running. Slow exit from here for a bit.

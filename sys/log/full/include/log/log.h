@@ -25,6 +25,15 @@
 #if MYNEWT_VAL(LOG_STATS)
 #include "stats/stats.h"
 #endif
+#if MYNEWT_VAL(LOG_FCB) || MYNEWT_VAL(LOG_FCB2)
+#include "log/log_fcb.h"
+#endif
+
+#if MYNEWT_VAL(LOG_FLAGS_IMAGE_HASH)
+#define LOG_HDR_SIZE 19
+#else
+#define LOG_HDR_SIZE 15
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -67,24 +76,24 @@ struct log_storage_info {
 #endif
 
 typedef int (*log_walk_func_t)(struct log *, struct log_offset *log_offset,
-        void *dptr, uint16_t len);
+        const void *dptr, uint16_t len);
 
 typedef int (*log_walk_body_func_t)(struct log *log,
         struct log_offset *log_offset, const struct log_entry_hdr *hdr,
-        void *dptr, uint16_t len);
+        const void *dptr, uint16_t len);
 
-typedef int (*lh_read_func_t)(struct log *, void *dptr, void *buf,
+typedef int (*lh_read_func_t)(struct log *, const void *dptr, void *buf,
         uint16_t offset, uint16_t len);
-typedef int (*lh_read_mbuf_func_t)(struct log *, void *dptr, struct os_mbuf *om,
+typedef int (*lh_read_mbuf_func_t)(struct log *, const void *dptr, struct os_mbuf *om,
                                    uint16_t offset, uint16_t len);
 typedef int (*lh_append_func_t)(struct log *, void *buf, int len);
 typedef int (*lh_append_body_func_t)(struct log *log,
                                      const struct log_entry_hdr *hdr,
                                      const void *body, int body_len);
-typedef int (*lh_append_mbuf_func_t)(struct log *, const struct os_mbuf *om);
+typedef int (*lh_append_mbuf_func_t)(struct log *, struct os_mbuf *om);
 typedef int (*lh_append_mbuf_body_func_t)(struct log *log,
                                           const struct log_entry_hdr *hdr,
-                                          const struct os_mbuf *om);
+                                          struct os_mbuf *om);
 typedef int (*lh_walk_func_t)(struct log *,
         log_walk_func_t walk_func, struct log_offset *log_offset);
 typedef int (*lh_flush_func_t)(struct log *);
@@ -105,6 +114,7 @@ struct log_handler {
     lh_append_mbuf_func_t log_append_mbuf;
     lh_append_mbuf_body_func_t log_append_mbuf_body;
     lh_walk_func_t log_walk;
+    lh_walk_func_t log_walk_sector;
     lh_flush_func_t log_flush;
 #if MYNEWT_VAL(LOG_STORAGE_INFO)
     lh_storage_info_func_t log_storage_info;
@@ -115,6 +125,12 @@ struct log_handler {
     /* Functions called only internally (no API for apps) */
     lh_registered_func_t log_registered;
 };
+
+/* Image hash length to be looged */
+#define LOG_IMG_HASHLEN 4
+
+/* Flags used to indicate type of data in reserved payload*/
+#define LOG_FLAGS_IMG_HASH (1 << 0)
 
 #if MYNEWT_VAL(LOG_VERSION) == 2
 struct log_entry_hdr {
@@ -129,13 +145,15 @@ struct log_entry_hdr {
     uint32_t ue_index;
     uint8_t ue_module;
     uint8_t ue_level;
-    uint8_t ue_etype;
+    uint8_t ue_etype:4;
+    uint8_t ue_flags:4;
+    uint8_t ue_imghash[4];
 }__attribute__((__packed__));
 #else
 #error "Unsupported log version"
 #endif
 
-#define LOG_ENTRY_HDR_SIZE (sizeof(struct log_entry_hdr))
+#define LOG_BASE_ENTRY_HDR_SIZE (15)
 
 #define LOG_MODULE_STR(module)      log_module_get_name(module)
 
@@ -196,8 +214,12 @@ struct log {
     void *l_arg;
     STAILQ_ENTRY(log) l_next;
     log_append_cb *l_append_cb;
+    log_notify_rotate_cb *l_rotate_notify_cb;
     uint8_t l_level;
     uint16_t l_max_entry_len;   /* Log body length; if 0 disables check. */
+#if !MYNEWT_VAL(LOG_GLOBAL_IDX)
+    uint32_t l_idx;
+#endif
 #if MYNEWT_VAL(LOG_STATS)
     STATS_SECT_DECL(logs) l_stats;
 #endif
@@ -212,11 +234,7 @@ struct log *log_list_get_next(struct log *);
  *
  * This function associates user log module with given name.
  *
- * If \p id is non-zero, module is registered with selected id.
- * If \p id is zero, module id is selected automatically (first available).
- *
- * Up to `LOG_MAX_USER_MODULES` (syscfg) modules can be registered with ids
- * starting from `LOG_MODULE_PERUSER`.
+ * Up to `LOG_MAX_USER_MODULES` (syscfg) modules can be registered.
  *
  * @param id    Selected module id
  * @param name  Module name
@@ -264,11 +282,11 @@ struct log *log_find(const char *name);
  * @brief Writes the raw contents of a flat buffer to the specified log.
  *
  * NOTE: The flat buffer must have an initial padding of length
- * `LOG_ENTRY_HDR_SIZE`.  This padding is *not* reflected in the specified
+ * `LOG_HDR_SIZE`. This padding is *not* reflected in the specified
  * length.  So, to log the string "abc", you should pass the following
  * arguments to this function:
  *
- *     data: <padding>abc   (total of `LOG_ENTRY_HDR_SIZE`+3 bytes.)
+ *     data: <padding>abc   (total of `LOG_HDR_SIZE`+3 bytes.)
  *     len: 3
  *
  * @param log                   The log to write to.
@@ -294,11 +312,11 @@ int log_append_typed(struct log *log, uint8_t module, uint8_t level,
  * the caller via a write to the supplied mbuf pointer-to-pointer.
  *
  * NOTE: The mbuf must have an initial padding of length
- * `LOG_ENTRY_HDR_SIZE`.  So, to log the string "abc", you should pass an mbuf
+ * `LOG_HDR_SIZE`. So, to log the string "abc", you should pass an mbuf
  * with the following characteristics:
  *
  *     om_data: <padding>abc
- *     om_len: `LOG_ENTRY_HDR_SIZE` + 3
+ *     om_len: `LOG_HDR_SIZE` + 3
  *
  * @param log                   The log to write to.
  * @param module                The module ID of the entry to write.
@@ -323,11 +341,11 @@ int log_append_mbuf_typed_no_free(struct log *log, uint8_t module,
  * regardless of the outcome.
  *
  * NOTE: The mbuf must have an initial padding of length
- * `LOG_ENTRY_HDR_SIZE`.  So, to log the string "abc", you should pass an mbuf
+ * `LOG_HDR_SIZE`. So, to log the string "abc", you should pass an mbuf
  * with the following characteristics:
  *
  *     om_data: <padding>abc
- *     om_len: `LOG_ENTRY_HDR_SIZE` + 3
+ *     om_len: `LOG_HDR_SIZE` + 3
  *
  * @param log                   The log to write to.
  * @param module                The module ID of the entry to write.
@@ -411,11 +429,11 @@ void log_console_init(void);
  * @brief Writes the raw contents of a flat buffer to the specified log.
  *
  * NOTE: The flat buffer must have an initial padding of length
- * `LOG_ENTRY_HDR_SIZE`.  This padding is *not* reflected in the specified
+ * `LOG_HDR_SIZE`. This padding is *not* reflected in the specified
  * length.  So, to log the string "abc", you should pass the following
  * arguments to this function:
  *
- *     data: <padding>abc   (total of `LOG_ENTRY_HDR_SIZE`+3 bytes.)
+ *     data: <padding>abc   (total of `LOG_HDR_SIZE`+3 bytes.)
  *     len: 3
  *
  * @param log                   The log to write to.
@@ -443,11 +461,11 @@ log_append(struct log *log, uint8_t module, uint8_t level, void *data,
  * the caller via a write to the supplied mbuf pointer-to-pointer.
  *
  * NOTE: The mbuf must have an initial padding of length
- * `LOG_ENTRY_HDR_SIZE`.  So, to log the string "abc", you should pass an mbuf
+ * `LOG_HDR_SIZE`. So, to log the string "abc", you should pass an mbuf
  * with the following characteristics:
  *
  *     om_data: <padding>abc
- *     om_len: `LOG_ENTRY_HDR_SIZE` + 3
+ *     om_len: `LOG_HDR_SIZE` + 3
  *
  * @param log                   The log to write to.
  * @param module                The module ID of the entry to write.
@@ -474,11 +492,11 @@ log_append_mbuf_no_free(struct log *log, uint8_t module, uint8_t level,
  * regardless of the outcome.
  *
  * NOTE: The mbuf must have an initial padding of length
- * `LOG_ENTRY_HDR_SIZE`.  So, to log the string "abc", you should pass an mbuf
+ * `LOG_HDR_SIZE`. So, to log the string "abc", you should pass an mbuf
  * with the following characteristics:
  *
  *     om_data: <padding>abc
- *     om_len: `LOG_ENTRY_HDR_SIZE` + 3
+ *     om_len: `LOG_HDR_SIZE` + 3
  *
  * @param log                   The log to write to.
  * @param module                The module ID of the entry to write.
@@ -497,7 +515,7 @@ log_append_mbuf(struct log *log, uint8_t module, uint8_t level,
 
 void log_printf(struct log *log, uint8_t module, uint8_t level,
         const char *msg, ...);
-int log_read(struct log *log, void *dptr, void *buf, uint16_t off,
+int log_read(struct log *log, const void *dptr, void *buf, uint16_t off,
         uint16_t len);
 
 /**
@@ -511,7 +529,17 @@ int log_read(struct log *log, void *dptr, void *buf, uint16_t off,
  *
  * @return                      0 on success; nonzero on failure.
  */
-int log_read_hdr(struct log *log, void *dptr, struct log_entry_hdr *hdr);
+int log_read_hdr(struct log *log, const void *dptr, struct log_entry_hdr *hdr);
+
+/**
+ * @brief Reads the header length
+ *
+ * @param hdr Ptr to the header
+ * 
+ * @return Length of the header
+ */
+uint16_t
+log_hdr_len(const struct log_entry_hdr *hdr);
 
 /**
  * @brief Reads data from the body of a log entry into a flat buffer.
@@ -528,9 +556,9 @@ int log_read_hdr(struct log *log, void *dptr, struct log_entry_hdr *hdr);
  * @return                      The number of bytes actually read on success;
  *                              -1 on failure.
  */
-int log_read_body(struct log *log, void *dptr, void *buf, uint16_t off,
+int log_read_body(struct log *log, const void *dptr, void *buf, uint16_t off,
                   uint16_t len);
-int log_read_mbuf(struct log *log, void *dptr, struct os_mbuf *om, uint16_t off,
+int log_read_mbuf(struct log *log, const void *dptr, struct os_mbuf *om, uint16_t off,
                   uint16_t len);
 /**
  * @brief Reads data from the body of a log entry into an mbuf.
@@ -547,7 +575,7 @@ int log_read_mbuf(struct log *log, void *dptr, struct os_mbuf *om, uint16_t off,
  * @return                      The number of bytes actually read on success;
  *                              -1 on failure.
  */
-int log_read_mbuf_body(struct log *log, void *dptr, struct os_mbuf *om,
+int log_read_mbuf_body(struct log *log, const void *dptr, struct os_mbuf *om,
                        uint16_t off, uint16_t len);
 int log_walk(struct log *log, log_walk_func_t walk_func,
         struct log_offset *log_offset);
@@ -570,6 +598,21 @@ int log_walk(struct log *log, log_walk_func_t walk_func,
 int log_walk_body(struct log *log, log_walk_body_func_t walk_body_func,
         struct log_offset *log_offset);
 int log_flush(struct log *log);
+
+/**
+ * @brief      Walking a section of FCB.
+ *
+ * @param log                   The log to iterate.
+ * @param walk_body_func        The function to apply to each log entry.
+ * @param log_offset            Specifies the range of entries to process.
+ *                                  Entries not matching these criteria are
+ *                                  skipped during the walk.
+ *
+ * @return                      0 if the walk completed successfully;
+ *                              nonzero on error or if the walk was aborted.
+ */
+int log_walk_body_section(struct log *log, log_walk_body_func_t walk_body_func,
+              struct log_offset *log_offset);
 
 #if MYNEWT_VAL(LOG_MODULE_LEVELS)
 /**
@@ -654,6 +697,16 @@ void log_set_max_entry_len(struct log *log, uint16_t max_entry_len);
  */
 int log_storage_info(struct log *log, struct log_storage_info *info);
 #endif
+
+/**
+ * Assign a callback function to be notified when the log is about to be rotated.
+ *
+ * @param log   The log
+ * @param cb    The callback function to be executed.
+ */
+void
+log_set_rotate_notify_cb(struct log *log, log_notify_rotate_cb *cb);
+
 #if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
 /**
  * Set watermark on log
@@ -670,19 +723,25 @@ int log_storage_info(struct log *log, struct log_storage_info *info);
 int log_set_watermark(struct log *log, uint32_t index);
 #endif
 
+#if MYNEWT_VAL(LOG_VERSION) > 2
+/**
+ * Fill log current image hash
+ *
+ * @param hdr Ptr to the header
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+log_fill_current_img_hash(struct log_entry_hdr *hdr);
+#endif
+
 /* Handler exports */
 #if MYNEWT_VAL(LOG_CONSOLE)
 extern const struct log_handler log_console_handler;
 #endif
 extern const struct log_handler log_cbmem_handler;
-#if MYNEWT_VAL(LOG_FCB)
+#if MYNEWT_VAL(LOG_FCB) || MYNEWT_VAL(LOG_FCB2)
 extern const struct log_handler log_fcb_handler;
-extern const struct log_handler log_fcb_slot1_handler;
-#endif
-
-/* Private */
-#if MYNEWT_VAL(LOG_NEWTMGR)
-int log_nmgr_register_group(void);
 #endif
 
 #ifdef __cplusplus

@@ -21,7 +21,9 @@
 #include "mcu/da1469x_pd.h"
 #include "mcu/da1469x_pdc.h"
 #include "mcu/da1469x_prail.h"
-#include "DA1469xAB.h"
+#include "mcu/da1469x_clock.h"
+#include <mcu/da1469x_otp.h>
+#include "mcu/mcu.h"
 #include "da1469x_priv.h"
 
 #define PMU_ALL_SLEEP_MASK      (CRG_TOP_PMU_CTRL_REG_TIM_SLEEP_Msk | \
@@ -39,12 +41,14 @@ void SystemInit(void)
     int idx;
 #endif
 
+    /* TODO: Check chip version.
     assert(CHIP_VERSION->CHIP_ID1_REG == '2');
     assert(CHIP_VERSION->CHIP_ID2_REG == '5');
     assert(CHIP_VERSION->CHIP_ID3_REG == '2');
     assert(CHIP_VERSION->CHIP_ID4_REG == '2');
     assert(CHIP_VERSION->CHIP_REVISION_REG == 'A');
     assert(CHIP_VERSION->CHIP_TEST1_REG == 'B');
+     */
 
     /* Enable FPU when using hard-float */
 #if (__FPU_USED == 1)
@@ -99,13 +103,8 @@ void SystemInit(void)
     CRG_TOP->PMU_CTRL_REG |= CRG_TOP_PMU_CTRL_REG_RETAIN_CACHE_Msk;
 #endif
 
-    /* Switch OTPC to deep standby (DSTBY) mode */
-    CRG_TOP->CLK_AMBA_REG |= CRG_TOP_CLK_AMBA_REG_OTP_ENABLE_Msk;
-    OTPC->OTPC_MODE_REG = (OTPC->OTPC_MODE_REG &
-                           ~OTPC_OTPC_MODE_REG_OTPC_MODE_MODE_Msk) |
-                          (1 << OTPC_OTPC_MODE_REG_OTPC_MODE_MODE_Pos);
-    while (!(OTPC->OTPC_STAT_REG & OTPC_OTPC_STAT_REG_OTPC_STAT_MRDY_Msk));
-    CRG_TOP->CLK_AMBA_REG &= ~CRG_TOP_CLK_AMBA_REG_OTP_ENABLE_Msk;
+    /* initialize OTP and place in deep standby */
+    da1469x_otp_init();
 
     /* Initialize and configure power rails */
     da1469x_prail_initialize();

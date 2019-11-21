@@ -154,8 +154,7 @@ runtest_log_result(const char *msg, bool passed)
         runtest_total_fails++;
     }
 
-    MODLOG_INFO(
-        LOG_MODULE_TEST,
+    TEST_LOG_INFO(
         "{\"k\":\"%s\",\"n\":\"%s\",\"s\":\"%s\",\"m\":\"%s\",\"r\":%d}",
         runtest_token, n, s, m, passed);
 }
@@ -199,8 +198,8 @@ runtest_test_complete(void)
 {
 #if MYNEWT_VAL(RUNTEST_LOG)
     if (runtest_total_tests > 0) {
-        MODLOG_INFO(LOG_MODULE_TEST, "%s Done", runtest_token);
-        MODLOG_INFO(LOG_MODULE_TEST,
+        TEST_LOG_INFO("%s Done", runtest_token);
+        TEST_LOG_INFO(
                     "%s TESTBENCH TEST %s - Tests run:%d pass:%d fail:%d %s",
                     RUNTEST_PREFIX,
                     runtest_total_fails ? "FAILED" : "PASSED",
@@ -268,7 +267,7 @@ runtest_run(const char *test_name, const char *token)
 }
 
 /*
- * Package init routine to register newtmgr "run" commands
+ * Package init routine to register mgmt "run" commands
  */
 void
 runtest_init(void)
@@ -296,8 +295,8 @@ runtest_init(void)
     shell_cmd_register(&runtest_cmd_struct);
 #endif
 
-#if MYNEWT_VAL(RUNTEST_NEWTMGR)
-    rc = runtest_nmgr_register_group();
+#if MYNEWT_VAL(RUNTEST_MGMT)
+    rc = runtest_mgmt_register_group();
     SYSINIT_PANIC_ASSERT(rc == 0);
 #endif
 

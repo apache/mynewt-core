@@ -25,9 +25,6 @@ syscfg.defs:
         value: 0
         restrictions:
             - SHELL_TASK
-    STATS_NEWTMGR:
-        description: 'Expose the "stat" newtmgr command.'
-        value: 0
     STATS_PERSIST:
         description: >
             Enables persistent statistics.  Regardless of this setting's value,
@@ -65,3 +62,14 @@ syscfg.defs:
         description: >
             Sysinit stage for statistics functionality.
         value: 10
+    STATS_MGMT:
+        description: >
+            Enable stats management over SMP
+        value: 0
+    STATS_NEWTMGR:
+        description: >
+            Enable stats management over Newtmgr
+        value: 0
+
+syscfg.vals.STATS_NEWTMGR:
+    STATS_MGMT: MYNEWT_VAL(STATS_NEWTMGR)

@@ -32,7 +32,7 @@ syscfg.vals:
     # Include names for statistics.
     STATS_NAMES: 1
     STATS_CLI: 1
-    STATS_NEWTMGR: 1
+    STATS_MGMT: 1
 
     # Log reboot messages to a flash circular buffer.
     REBOOT_LOG_FCB: 1
@@ -48,13 +48,13 @@ syscfg.vals:
     LOG_CLI: 1
     CONFIG_CLI: 1
 
-    # Enable newtmgr commands.
-    LOG_NEWTMGR: 1
-    CONFIG_NEWTMGR: 1
+    # Enable mgmt commands.
+    LOG_MGMT: 1
+    CONFIG_MGMT: 1
 
     RUNTEST_LOG: 1
     RUNTEST_CLI: 1
-    RUNTEST_NEWTMGR: 1
+    RUNTEST_MGMT: 1
 
     CRASH_TEST_CLI: 1
     IMGMGR_CLI: 1

@@ -44,7 +44,7 @@ pkg.cflags.GPIO_AS_PIN_RESET:
     - '-DCONFIG_GPIO_AS_PINRESET=1'
 
 pkg.deps.BLE_CONTROLLER:
-    - "@apache-mynewt-core/hw/drivers/nimble/nrf52"
+    - "@apache-mynewt-nimble/nimble/drivers/nrf52"
 
 pkg.deps.TRNG:
     - "@apache-mynewt-core/hw/drivers/trng/trng_nrf52"

@@ -23,6 +23,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
+#include <bsp/bsp.h>
 
 #include "os/mynewt.h"
 #include "os/os_task.h"
@@ -34,6 +35,11 @@
 #define ESC                0x1b
 #define DEL                0x7f
 #define BS                 0x08
+#define ETX                0x03
+#define EOT                0x04
+#define FF                 0x0B
+#define VT                 0x0C
+#define CSI                "\x1b["
 
 /* ANSI escape sequences */
 #define ANSI_ESC           '['
@@ -44,6 +50,7 @@
 #define ANSI_END           'F'
 #define ANSI_HOME          'H'
 #define ANSI_DEL           '~'
+#define DSR_CPS            'R'
 
 #define ESC_ESC         (1 << 0)
 #define ESC_ANSI        (1 << 1)
@@ -56,10 +63,10 @@
 #define CONSOLE_NLIP_DATA_START1 (4)
 #define CONSOLE_NLIP_DATA_START2 (20)
 
-#define NLIP_PKT_START1  (1 << 0)
-#define NLIP_PKT_START2  (1 << 1)
-#define NLIP_DATA_START1 (1 << 2)
-#define NLIP_DATA_START2 (1 << 3)
+#define NLIP_PKT_START1  (CONSOLE_NLIP_PKT_START1)
+#define NLIP_PKT_START2  (CONSOLE_NLIP_PKT_START2)
+#define NLIP_DATA_START1 (CONSOLE_NLIP_DATA_START1)
+#define NLIP_DATA_START2 (CONSOLE_NLIP_DATA_START2)
 
 /* Indicates whether the previous line of output was completed. */
 int console_is_midline;
@@ -80,14 +87,30 @@ static int echo = MYNEWT_VAL(CONSOLE_ECHO);
 static unsigned int ansi_val, ansi_val_2;
 static bool rx_stalled;
 
-static uint16_t cur, end;
+/* Cursor position in input line */
+static uint16_t cur;
+/* Number of characters after cursor in input line */
+static uint16_t trailing_chars;
 static struct os_eventq avail_queue;
 static struct os_eventq *lines_queue;
+static struct os_event *current_line_ev;
 static completion_cb completion;
 bool g_console_silence;
 bool g_console_silence_non_nlip;
 bool g_console_ignore_non_nlip;
 static struct os_mutex console_write_lock;
+
+/* Last character to write to console was LF but it was not printed yet */
+static bool holding_lf;
+static bool prompt_has_focus;
+static bool terminal_initialized;
+static bool terminal_size_requested;
+/* Maximum row as reported by terminal, 0 - terminal size is not known yet */
+static int max_row;
+/* Buffer for prompt */
+static char console_prompt[MYNEWT_VAL(CONSOLE_MAX_PROMPT_LEN)];
+/* Length of prompt stored in console_prompt */
+static uint16_t prompt_len;
 
 /*
  * Default implementation in case all consoles are disabled - we just ignore any
@@ -143,6 +166,324 @@ end:
     return rc;
 }
 
+/*
+ * Helper function to write sequence of characters to terminal without
+ * checking for new lines or anything else.
+ */
+static void
+console_write_nolock(const char *str, int cnt)
+{
+    int i;
+
+    for (i = 0; i < cnt; i++) {
+        if (console_out_nolock((int)str[i]) == EOF) {
+            break;
+        }
+    }
+}
+
+/*
+ * Helper function to write null terminated strings.
+ */
+static void
+console_write_str(const char *str)
+{
+    console_write_nolock(str, strlen(str));
+}
+
+static int
+console_filter_out(int c)
+{
+    if (g_console_silence) {
+        return c;
+    }
+
+    /* For nlip output or when prompt has console write character */
+    if (prompt_has_focus || g_is_output_nlip) {
+        return console_out_nolock(c);
+    }
+
+    /*
+     * For logs output don't write last newt line character at once.
+     * Writing new would scroll window and blank line would be
+     * visible as last line on terminal.
+     * When terminal size is known, last line is used for prompt
+     * and command line editing.
+     * Following code prevents empty line to separate last log
+     * line from prompt editor.
+     */
+    console_is_midline = c != '\n' && c != '\r';
+    if (MYNEWT_VAL(CONSOLE_STICKY_PROMPT) && max_row > 0) {
+        if (c == '\n') {
+            console_is_midline = false;
+            if (holding_lf) {
+                console_out_nolock(c);
+            } else {
+                holding_lf = true;
+            }
+        } else {
+            if (holding_lf) {
+                console_out_nolock('\n');
+                holding_lf = false;
+            }
+            console_is_midline = c != '\r';
+            c = console_out_nolock(c);
+        }
+    } else {
+        c = console_out_nolock(c);
+    }
+    return c;
+}
+
+/*
+ * Helper function to write sequence of characters to console with new
+ * line checking.
+ */
+static void
+console_filter_write(const char *str, int cnt)
+{
+    int i;
+
+    for (i = 0; i < cnt; i++) {
+        if (console_filter_out((int)str[i]) == EOF) {
+            break;
+        }
+    }
+}
+
+/*
+ * Helper function for terminal escape sequences with number parameter.
+ * It adds ascii encoded number plus one character.
+ */
+static char *
+add_ascii_num_with_char(char *str, unsigned int num, char c)
+{
+    char *p = str;
+    char *s;
+    char tmp;
+
+    /* Put digits in reverse order first. */
+    do {
+        *p++ = (num % 10) + '0';
+        num /= 10;
+    } while (num);
+    s = str;
+    str = p;
+    --p;
+    /* Revers order of characters, to get correct number representation */
+    while (s < p) {
+       tmp = *s;
+       *s++ = *p;
+       *p-- = tmp;
+    }
+
+    *str++ = c;
+    *str = '\0';
+
+    return str;
+}
+
+/*
+ * Sends terminal escape sequence to set cursor at given row and column.
+ * CSI <row> ; <column> H
+ */
+static void
+console_cursor_set(int row, int column)
+{
+    char seq[24] = CSI;
+    char *p;
+
+    p = add_ascii_num_with_char(seq + 2, row, ';');
+    p = add_ascii_num_with_char(p, column, 'H');
+    console_write_nolock(seq, p - seq);
+}
+
+static inline void
+cursor_save(void)
+{
+    console_out_nolock(ESC);
+    console_out_nolock('[');
+    console_out_nolock('s');
+}
+
+static inline void
+cursor_restore(void)
+{
+    console_out_nolock(ESC);
+    console_out_nolock('[');
+    console_out_nolock('u');
+}
+
+static inline void
+cursor_clear_line(void)
+{
+    console_out_nolock(ESC);
+    console_out_nolock('[');
+    console_out_nolock('K');
+}
+/*
+ * Function sends sequence to get terminal size.
+ * It does it by setting cursor position to some big numbers and
+ * then requesting cursor position which should be adjusted by
+ * terminal to actual terminal windows size.
+ */
+static void
+request_terminal_size(void)
+{
+    /* If terminal size was requested, forget any previous value. */
+    max_row = 0;
+    cursor_save();
+    console_write_str(CSI "1;999r" CSI "999;999H" CSI "6n");
+    cursor_restore();
+    terminal_size_requested = true;
+}
+
+static void
+console_init_terminal(void)
+{
+    if (MYNEWT_VAL(CONSOLE_STICKY_PROMPT) && !terminal_initialized) {
+        console_write_str(CSI "!p"
+                          CSI "1;999r"
+                          CSI "999;1H\n\n"
+                          CSI "A"
+                          CSI "s");
+        console_is_midline = 0;
+        terminal_initialized = true;
+        max_row = 0;
+    }
+}
+
+/*
+ * Switch output to prompt portion of the terminal (last line).
+ */
+static void
+console_switch_to_prompt(void)
+{
+    struct console_input *input;
+    char c;
+
+    console_init_terminal();
+    /* If terminal size is not known yet, try asking terminal first */
+    if (MYNEWT_VAL(CONSOLE_STICKY_PROMPT) &&
+        max_row == 0 && !terminal_size_requested) {
+        request_terminal_size();
+    }
+    /*
+     * If terminal size is known and cursor is currently on log portion
+     * of the screen, save cursor position and set cursor at place
+     * that is in sync with 'cur' variable.
+     */
+    if (MYNEWT_VAL(CONSOLE_STICKY_PROMPT) &&
+        !prompt_has_focus && max_row) {
+        cursor_save();
+        prompt_has_focus = true;
+        console_cursor_set(max_row, prompt_len + cur + 1);
+        if (MYNEWT_VAL(CONSOLE_PROMPT_SOFT_CURSOR)) {
+            if (trailing_chars && current_line_ev && current_line_ev->ev_arg) {
+                input = (struct console_input *)current_line_ev->ev_arg;
+                c = input->line[cur];
+            } else {
+                c = ' ';
+            }
+            console_write_str(CSI "0m");
+            console_out_nolock(c);
+            console_out_nolock('\b');
+            if (MYNEWT_VAL(CONSOLE_HIDE_CURSOR_IN_LOG_AREA)) {
+                console_write_str(CSI "?25h");
+            }
+        }
+    }
+}
+
+/*
+ * Switch to log portion of the terminal.
+ * Cursor will be restored somewhere above bottom line.
+ */
+static void
+console_switch_to_logs(void)
+{
+    struct console_input *input;
+    char c;
+
+    if (g_is_output_nlip) {
+        return;
+    }
+
+    console_init_terminal();
+    if (MYNEWT_VAL(CONSOLE_STICKY_PROMPT) && prompt_has_focus) {
+        if (MYNEWT_VAL(CONSOLE_PROMPT_SOFT_CURSOR)) {
+            console_write_str(CSI);
+            console_write_str(MYNEWT_VAL(CONSOLE_PROMPT_SOFT_CURSOR_ATTR));
+            if (trailing_chars && current_line_ev && current_line_ev->ev_arg) {
+                input = (struct console_input *)current_line_ev->ev_arg;
+                c = input->line[cur];
+            } else {
+                c = ' ';
+            }
+            console_out_nolock(c);
+            if (MYNEWT_VAL(CONSOLE_HIDE_CURSOR_IN_LOG_AREA)) {
+                console_write_str(CSI "?25l");
+            }
+            console_write_str(CSI "0m\b");
+        }
+        cursor_restore();
+        prompt_has_focus = false;
+    }
+}
+
+/*
+ * Set terminal scrolling region.
+ * CSI <top> ; <bottom> r
+ */
+static void
+console_set_scrolling_region(int top, int bottom)
+{
+    char seq[24] = CSI;
+    char *p;
+
+    p = add_ascii_num_with_char(seq + 2, top, ';');
+    p = add_ascii_num_with_char(p, bottom, 'r');
+    console_write_nolock(seq, p - seq);
+}
+
+void
+console_prompt_set(const char *prompt, const char *line)
+{
+    bool locked;
+
+    prompt_len = strlen(prompt);
+
+    /* If this assert fails increase value of CONSOLE_MAX_PROMPT_LEN */
+    assert(MYNEWT_VAL(CONSOLE_MAX_PROMPT_LEN) > prompt_len);
+
+    strcpy(console_prompt, prompt);
+
+    /* Place cursor at the end, no trailing chars */
+    if (line) {
+        cur = strlen(line);
+    } else {
+        cur = 0;
+    }
+    trailing_chars = 0;
+
+    locked = console_lock(1000) == OS_OK;
+
+    console_switch_to_prompt();
+    if (MYNEWT_VAL(CONSOLE_STICKY_PROMPT) && prompt_has_focus) {
+        console_write_str(CSI "999;1H");
+        console_write_nolock(prompt, prompt_len);
+        console_write_nolock(line, cur);
+        console_write_str(CSI "K");
+    } else {
+        console_write(prompt, prompt_len);
+        console_write(line, cur);
+    }
+
+    if (locked) {
+        (void)console_unlock();
+    }
+}
+
 int
 console_out(int c)
 {
@@ -153,7 +494,10 @@ console_out(int c)
     if (console_lock(timeout) != OS_OK) {
         return c;
     }
-    rc = console_out_nolock(c);
+
+    console_switch_to_logs();
+
+    rc = console_filter_out(c);
 
     (void)console_unlock();
 
@@ -163,7 +507,6 @@ console_out(int c)
 void
 console_write(const char *str, int cnt)
 {
-    int i;
     const os_time_t timeout =
             os_time_ms_to_ticks32(MYNEWT_VAL(CONSOLE_DEFAULT_LOCK_TIMEOUT));
 
@@ -186,16 +529,13 @@ console_write(const char *str, int cnt)
 
     /* If the byte string is non nlip and we are silencing non nlip bytes,
      * do not let it go out on the console
-     */ 
+     */
     if (!g_is_output_nlip && g_console_silence_non_nlip) {
         goto done;
     }
 
-    for (i = 0; i < cnt; i++) {
-        if (console_out_nolock((int)str[i]) == EOF) {
-            break;
-        }
-    }
+    console_switch_to_logs();
+    console_filter_write(str, cnt);
 
 done:
     if (cnt > 0 && str[cnt - 1] == '\n') {
@@ -257,45 +597,32 @@ console_non_blocking_mode(void)
 static inline void
 cursor_forward(unsigned int count)
 {
-    console_printf("\x1b[%uC", count);
+    char seq[14] = CSI;
+    char *p;
+
+    if (count) {
+        p = add_ascii_num_with_char(seq + 2, count, 'C');
+        console_write_nolock(seq, p - seq);
+    }
 }
 
 static inline void
 cursor_backward(unsigned int count)
 {
-    console_printf("\x1b[%uD", count);
-}
+    char seq[14] = CSI;
+    char *p;
 
-#if MYNEWT_VAL(CONSOLE_HISTORY_SIZE) > 0
-static inline void
-cursor_clear_line(void)
-{
-    console_out(ESC);
-    console_out('[');
-    console_out('K');
-}
-#endif
-
-static inline void
-cursor_save(void)
-{
-    console_out(ESC);
-    console_out('[');
-    console_out('s');
-}
-
-static inline void
-cursor_restore(void)
-{
-    console_out(ESC);
-    console_out('[');
-    console_out('u');
+    if (count) {
+        p = add_ascii_num_with_char(seq + 2, count, 'D');
+        console_write_nolock(seq, p - seq);
+    }
 }
 
 static void
-insert_char(char *pos, char c, uint16_t end)
+insert_char(char *pos, char c)
 {
     char tmp;
+    int end = trailing_chars;
 
     if (cur + end >= MYNEWT_VAL(CONSOLE_MAX_INPUT_LEN) - 1) {
         return;
@@ -303,7 +630,7 @@ insert_char(char *pos, char c, uint16_t end)
 
     if (echo) {
         /* Echo back to console */
-        console_out(c);
+        console_out_nolock(c);
     }
 
     ++cur;
@@ -316,47 +643,65 @@ insert_char(char *pos, char c, uint16_t end)
     tmp = *pos;
     *(pos++) = c;
 
-    cursor_save();
-
     while (end-- > 0) {
-        console_out(tmp);
+        if (echo) {
+            console_out_nolock(tmp);
+        }
         c = *pos;
         *(pos++) = tmp;
         tmp = c;
     }
 
     /* Move cursor back to right place */
-    cursor_restore();
+    if (echo) {
+        cursor_backward(trailing_chars);
+    }
+}
+
+/* Delete character at cursor position */
+static void
+del_char(char *pos)
+{
+    int left = trailing_chars;
+
+    while (left-- > 1) {
+        *pos = *(pos + 1);
+        console_out_nolock(*(pos++));
+    }
+
+    /* Move cursor back to right place */
+    if (trailing_chars) {
+        console_out_nolock(' ');
+        cursor_backward(trailing_chars);
+        trailing_chars--;
+    }
 }
 
 static void
-del_char(char *pos, uint16_t end)
+console_clear_line(void)
 {
-    console_out('\b');
-
-    if (end == 0) {
-        console_out(' ');
-        console_out('\b');
-        return;
+    if (cur) {
+        cursor_backward(cur);
     }
+    cur = 0;
+    trailing_chars = 0;
 
-    cursor_save();
-
-    while (end-- > 0) {
-        *pos = *(pos + 1);
-        console_out(*(pos++));
-    }
-
-    console_out(' ');
-
-    /* Move cursor back to right place */
-    cursor_restore();
+    cursor_clear_line();
 }
 
 #if MYNEWT_VAL(CONSOLE_HISTORY_SIZE) > 0
-static char console_hist_lines[ MYNEWT_VAL(CONSOLE_HISTORY_SIZE) ][ MYNEWT_VAL(CONSOLE_MAX_INPUT_LEN) ];
 
-static struct console_hist {
+#ifndef bssnz_t
+/* Just in case bsp.h does not define it, in this case console history will
+ * not be preserved across software resets
+ */
+#define bssnz_t
+#endif
+
+bssnz_t static char console_hist_lines[ MYNEWT_VAL(CONSOLE_HISTORY_SIZE) ][ MYNEWT_VAL(CONSOLE_MAX_INPUT_LEN) ];
+
+bssnz_t static struct console_hist {
+    uint32_t magic;
     uint8_t head;
     uint8_t tail;
     uint8_t size;
@@ -370,13 +715,16 @@ console_hist_init(void)
     struct console_hist *sh = &console_hist;
     int i;
 
-    memset(console_hist_lines, 0, sizeof(console_hist_lines));
-    memset(&console_hist, 0, sizeof(console_hist));
+    if (sh->magic != 0xBABEFACE) {
+        memset(console_hist_lines, 0, sizeof(console_hist_lines));
+        memset(&console_hist, 0, sizeof(console_hist));
 
-    sh->size = MYNEWT_VAL(CONSOLE_HISTORY_SIZE) + 1;
+        sh->size = MYNEWT_VAL(CONSOLE_HISTORY_SIZE) + 1;
 
-    for (i = 0; i < sh->size - 1; i++) {
-        sh->lines[i] = console_hist_lines[i];
+        for (i = 0; i < sh->size - 1; i++) {
+            sh->lines[i] = console_hist_lines[i];
+        }
+        sh->magic = 0xBABEFACE;
     }
 }
 
@@ -510,18 +858,6 @@ console_hist_add(char *line)
 }
 
 static void
-console_clear_line(void)
-{
-    if (cur) {
-        cursor_backward(cur);
-    }
-    cur = 0;
-    end = 0;
-
-    cursor_clear_line();
-}
-
-static void
 console_hist_move(char *line, uint8_t direction)
 {
     struct console_hist *sh = &console_hist;
@@ -542,11 +878,39 @@ console_hist_move(char *line, uint8_t direction)
     console_clear_line();
     str = sh->lines[sh->curr];
     while (str && *str != '\0') {
-        insert_char(&line[cur], *str, end);
+        insert_char(&line[cur], *str);
         ++str;
     }
 }
 #endif
+
+static void
+handle_home(void)
+{
+    if (cur) {
+        cursor_backward(cur);
+        trailing_chars += cur;
+        cur = 0;
+    }
+}
+
+static void
+handle_delete(char *line)
+{
+    if (trailing_chars) {
+        del_char(&line[cur]);
+    }
+}
+
+static void
+handle_end(void)
+{
+    if (trailing_chars) {
+        cursor_forward(trailing_chars);
+        cur += trailing_chars;
+        trailing_chars = 0;
+    }
+}
 
 static void
 handle_ansi(uint8_t byte, char *line)
@@ -591,9 +955,13 @@ ansi_cmd:
 #if MYNEWT_VAL(CONSOLE_HISTORY_SIZE) > 0
     case ANSI_UP:
     case ANSI_DOWN:
+#if MYNEWT_VAL(CONSOLE_UART_RX_BUF_SIZE) == 0
         console_blocking_mode();
+#endif
         console_hist_move(line, byte);
+#if MYNEWT_VAL(CONSOLE_UART_RX_BUF_SIZE) == 0
         console_non_blocking_mode();
+#endif
         break;
 #endif
     case ANSI_BACKWARD:
@@ -601,44 +969,54 @@ ansi_cmd:
             break;
         }
 
-        end += ansi_val;
+        trailing_chars += ansi_val;
         cur -= ansi_val;
         cursor_backward(ansi_val);
         break;
     case ANSI_FORWARD:
-        if (ansi_val > end) {
+        if (ansi_val > trailing_chars) {
             break;
         }
 
-        end -= ansi_val;
+        trailing_chars -= ansi_val;
         cur += ansi_val;
         cursor_forward(ansi_val);
         break;
     case ANSI_HOME:
-        if (!cur) {
-            break;
-        }
-
-        cursor_backward(cur);
-        end += cur;
-        cur = 0;
+        handle_home();
         break;
     case ANSI_END:
-        if (!end) {
-            break;
-        }
-
-        cursor_forward(end);
-        cur += end;
-        end = 0;
+        handle_end();
         break;
-    case ANSI_DEL:
-        if (!end) {
+    case '~':
+        switch (ansi_val) {
+        case 1:
+            handle_home();
+            break;
+        case 3:
+            handle_delete(line);
+            break;
+        case 4:
+            handle_end();
             break;
         }
-
-        cursor_forward(1);
-        del_char(&line[cur], --end);
+        break;
+    case DSR_CPS:
+        if (MYNEWT_VAL(CONSOLE_STICKY_PROMPT) && terminal_size_requested) {
+            terminal_size_requested = false;
+            max_row = ansi_val;
+            console_cursor_set(max_row - 1, 1);
+            cursor_save();
+            console_set_scrolling_region(1, max_row - 1);
+            if (prompt_len) {
+                console_cursor_set(max_row, 1);
+                console_write_nolock(console_prompt, prompt_len);
+                console_write_nolock(line, cur + trailing_chars);
+                console_write_str(CSI "K");
+                cursor_backward(trailing_chars);
+            }
+            cursor_restore();
+        }
         break;
     default:
         break;
@@ -647,39 +1025,90 @@ ansi_cmd:
     esc_state &= ~ESC_ANSI;
 }
 
+static void
+console_handle_line(void)
+{
+    cur = 0;
+    trailing_chars = 0;
+    os_eventq_put(lines_queue, current_line_ev);
+
+#if MYNEWT_VAL(CONSOLE_COMPAT)
+    if (console_compat_rx_cb) {
+        console_compat_rx_cb();
+    }
+#endif
+
+    current_line_ev = NULL;
+}
+
 static int
 handle_nlip(uint8_t byte)
 {
-    if (((nlip_state & NLIP_PKT_START1) &&
-         (nlip_state & NLIP_PKT_START2)) ||
-        ((nlip_state & NLIP_DATA_START1) &&
-         (nlip_state & NLIP_DATA_START2)))
-    {
-        return 1;
+    int handled;
+    struct console_input *input;
+
+    input = current_line_ev->ev_arg;
+    handled = 0;
+
+    switch (nlip_state) {
+    case NLIP_PKT_START2:
+    case NLIP_DATA_START2:
+        handled = 1;
+        insert_char(&input->line[cur], byte);
+        if (byte == '\n') {
+            input->line[cur] = '\0';
+            console_echo(1);
+            nlip_state = 0;
+
+            console_handle_line();
+        }
+        break;
+    case NLIP_PKT_START1:
+        if (byte == CONSOLE_NLIP_PKT_START2) {
+            handled = 1;
+            nlip_state = NLIP_PKT_START2;
+            /* Disable echo to not flood the UART */
+            console_echo(0);
+            insert_char(&input->line[cur], CONSOLE_NLIP_PKT_START1);
+            insert_char(&input->line[cur], CONSOLE_NLIP_PKT_START2);
+        } else {
+            nlip_state = 0;
+        }
+        break;
+    case NLIP_DATA_START1:
+        if (byte == CONSOLE_NLIP_DATA_START2) {
+            handled = 1;
+            nlip_state = NLIP_DATA_START2;
+            /* Disable echo to not flood the UART */
+            console_echo(0);
+            insert_char(&input->line[cur], CONSOLE_NLIP_DATA_START1);
+            insert_char(&input->line[cur], CONSOLE_NLIP_DATA_START2);
+        } else {
+            nlip_state = 0;
+        }
+        break;
+    default:
+        if (byte == CONSOLE_NLIP_DATA_START1) {
+            handled = 1;
+            nlip_state = NLIP_DATA_START1;
+        } else if (byte == CONSOLE_NLIP_PKT_START1) {
+            handled = 1;
+            nlip_state = NLIP_PKT_START1;
+        }
+        break;
     }
 
-    if ((nlip_state & NLIP_PKT_START1) &&
-        (byte == CONSOLE_NLIP_PKT_START2)) {
-        nlip_state |= NLIP_PKT_START2;
-        return 1;
-    } else if ((nlip_state & NLIP_DATA_START1) &&
-               (byte == CONSOLE_NLIP_DATA_START2)) {
-        nlip_state |= NLIP_DATA_START2;
-        return 1;
-    } else {
-        nlip_state = 0;
-        return 0;
-    }
+    return handled;
 }
 
 static int
 console_append_char(char *line, uint8_t byte)
 {
-    if (cur + end >= MYNEWT_VAL(CONSOLE_MAX_INPUT_LEN) - 1) {
+    if (cur + trailing_chars >= MYNEWT_VAL(CONSOLE_MAX_INPUT_LEN) - 1) {
         return 0;
     }
 
-    line[cur + end] = byte;
+    line[cur + trailing_chars] = byte;
 
     if (byte == '\0') {
         return 1;
@@ -687,7 +1116,9 @@ console_append_char(char *line, uint8_t byte)
 
     if (echo) {
         /* Echo back to console */
-        console_out(byte);
+        console_switch_to_prompt();
+        console_out_nolock(byte);
+        console_switch_to_logs();
     }
     ++cur;
     return 1;
@@ -700,72 +1131,40 @@ console_handle_char(uint8_t byte)
 #if !MYNEWT_VAL(CONSOLE_INPUT)
     return 0;
 #endif
-    static struct os_event *ev;
-    static struct console_input *input;
+    struct console_input *input;
     static char prev_endl = '\0';
 
     if (!lines_queue) {
         return 0;
     }
 
-    if (!ev) {
-        ev = os_eventq_get_no_wait(&avail_queue);
-        if (!ev) {
+    if (!current_line_ev) {
+        current_line_ev = os_eventq_get_no_wait(&avail_queue);
+        if (!current_line_ev) {
             rx_stalled = true;
             return -1;
         }
-        input = ev->ev_arg;
     }
+    input = current_line_ev->ev_arg;
 
-    if (handle_nlip(byte))  {
-        if (byte == '\n') {
-            insert_char(&input->line[cur], byte, end);
-            input->line[cur] = '\0';
-            cur = 0;
-            end = 0;
-            os_eventq_put(lines_queue, ev);
-            nlip_state = 0;
-
-#if MYNEWT_VAL(CONSOLE_COMPAT)
-            if (console_compat_rx_cb) {
-                console_compat_rx_cb();
-            }
-#endif
-
-            input = NULL;
-            ev = NULL;
-            console_echo(1);
-            return 0;
-        /* Ignore characters if there's no more buffer space */
-        } else if (byte == CONSOLE_NLIP_PKT_START2) {
-            /* Disable echo to not flood the UART */
-            console_echo(0);
-            insert_char(&input->line[cur], CONSOLE_NLIP_PKT_START1, end);
-        } else if (byte == CONSOLE_NLIP_DATA_START2) {
-            /* Disable echo to not flood the UART */
-            console_echo(0);
-            insert_char(&input->line[cur], CONSOLE_NLIP_DATA_START1, end);
-        }
-
-        insert_char(&input->line[cur], byte, end);
-
+    if (handle_nlip(byte) || g_console_ignore_non_nlip) {
         return 0;
     }
+
+    if (console_lock(1000)) {
+        return -1;
+    }
+
+    console_switch_to_prompt();
 
     /* Handle ANSI escape mode */
     if (esc_state & ESC_ANSI) {
-        if (g_console_ignore_non_nlip) {
-            return 0;
-        }
         handle_ansi(byte, input->line);
-        return 0;
+        goto unlock;
     }
 
     /* Handle escape mode */
     if (esc_state & ESC_ESC) {
-        if (g_console_ignore_non_nlip) {
-            return 0;
-        }
         esc_state &= ~ESC_ESC;
         handle_ansi(byte, input->line);
         switch (byte) {
@@ -777,36 +1176,27 @@ console_handle_char(uint8_t byte)
             break;
         }
 
-        return 0;
+        goto unlock;
     }
 
     /* Handle special control characters */
     if (!isprint(byte)) {
         handle_ansi(byte, input->line);
         switch (byte) {
-        case CONSOLE_NLIP_PKT_START1:
-            nlip_state |= NLIP_PKT_START1;
-            break;
-        case CONSOLE_NLIP_DATA_START1:
-            nlip_state |= NLIP_DATA_START1;
-            break;
         case DEL:
         case BS:
-            if (g_console_ignore_non_nlip) {
-                break;
-            }
             if (cur > 0) {
-                del_char(&input->line[--cur], end);
+                cursor_backward(1);
+                cur--;
+                trailing_chars++;
+                del_char(&input->line[cur]);
             }
             break;
         case ESC:
-            if (g_console_ignore_non_nlip) {
-                break;
-            }
             esc_state |= ESC_ESC;
             break;
         default:
-            insert_char(&input->line[cur], byte, end);
+            insert_char(&input->line[cur], byte);
             /* Falls through. */
         case '\r':
             /* Falls through. */
@@ -816,49 +1206,70 @@ console_handle_char(uint8_t byte)
                 prev_endl = byte;
                 break;
             }
-        
+
             prev_endl = byte;
-            input->line[cur + end] = '\0';
-            console_out('\r');
-            console_out('\n');
-            cur = 0;
-            end = 0;
-            os_eventq_put(lines_queue, ev);
+            input->line[cur + trailing_chars] = '\0';
+            if (MYNEWT_VAL(CONSOLE_STICKY_PROMPT) && prompt_has_focus) {
+                console_switch_to_logs();
+                /*
+                 * Cursor is always in the middle of the line since new lines
+                 * are held, so new line is needed here.
+                 */
+                console_out_nolock('\n');
+                /* Duplicate command line to log space */
+                console_write_str(console_prompt);
+                console_write_nolock(input->line, cur + trailing_chars);
+                /*
+                 * Add additional new line if log line was not finished,
+                 * this will avoid printing outstanding line at the end
+                 * of duplicated command line.
+                 */
+                if (console_is_midline) {
+                    console_out_nolock('\n');
+                }
+                console_switch_to_prompt();
+                console_clear_line();
+            } else {
+                console_filter_out('\r');
+                console_filter_out('\n');
+            }
 #if MYNEWT_VAL(CONSOLE_HISTORY_SIZE) > 0
             console_hist_add(input->line);
 #endif
-
-#if MYNEWT_VAL(CONSOLE_COMPAT)
-            if (console_compat_rx_cb) {
-                console_compat_rx_cb();
-            }
-#endif
-
-            input = NULL;
-            ev = NULL;
+            console_handle_line();
             break;
         case '\t':
-            if (g_console_ignore_non_nlip) {
-                break;
-            }
-            if (completion && !end) {
+            if (completion && !trailing_chars) {
 #if MYNEWT_VAL(CONSOLE_UART_RX_BUF_SIZE) == 0
                 console_blocking_mode();
 #endif
+                console_switch_to_logs();
                 completion(input->line, console_append_char);
+                console_switch_to_prompt();
 #if MYNEWT_VAL(CONSOLE_UART_RX_BUF_SIZE) == 0
                 console_non_blocking_mode();
 #endif
             }
             break;
+        /* CTRL-C */
+        case ETX:
+            console_clear_line();
+            break;
+        /* CTRL-L */
+        case VT:
+            if (MYNEWT_VAL(CONSOLE_STICKY_PROMPT)) {
+                request_terminal_size();
+            } else {
+                console_out_nolock(VT);
+            }
+            break;
         }
-
-        return 0;
+    } else {
+        insert_char(&input->line[cur], byte);
     }
+unlock:
+    (void)console_unlock();
 
-    if (!g_console_ignore_non_nlip) {
-        insert_char(&input->line[cur], byte, end);
-    }
     return 0;
 }
 

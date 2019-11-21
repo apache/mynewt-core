@@ -24,9 +24,15 @@
 #ifndef MBEDTLS_PKCS12_H
 #define MBEDTLS_PKCS12_H
 
-#include "md.h"
-#include "cipher.h"
-#include "asn1.h"
+#if !defined(MBEDTLS_CONFIG_FILE)
+#include "mbedtls/config.h"
+#else
+#include MBEDTLS_CONFIG_FILE
+#endif
+
+#include "mbedtls/md.h"
+#include "mbedtls/cipher.h"
+#include "mbedtls/asn1.h"
 
 #include <stddef.h>
 
@@ -45,6 +51,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#if defined(MBEDTLS_ASN1_PARSE_C)
 
 /**
  * \brief            PKCS12 Password Based function (encryption / decryption)
@@ -86,6 +94,8 @@ int mbedtls_pkcs12_pbe( mbedtls_asn1_buf *pbe_params, int mode,
                 const unsigned char *pwd,  size_t pwdlen,
                 const unsigned char *input, size_t len,
                 unsigned char *output );
+
+#endif /* MBEDTLS_ASN1_PARSE_C */
 
 /**
  * \brief            The PKCS#12 derivation function uses a password and a salt

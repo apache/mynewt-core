@@ -17,13 +17,6 @@
 # under the License.
 #
 
-pkg.name: encoding/cborattr 
-pkg.description: CBOR encoding/decoding library 
-pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
-pkg.homepage: "http://mynewt.apache.org/"
-pkg.keywords:
-
-pkg.deps:
-    - "@apache-mynewt-core/encoding/tinycbor"
-
-pkg.cflags.FLOAT_USER: -DFLOAT_SUPPORT
+pkg.name: encoding/cborattr
+pkg.type: transient
+pkg.link: "@apache-mynewt-mcumgr/cborattr"

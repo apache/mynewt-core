@@ -26,14 +26,16 @@
 
 #define MCU_DMA_CHAN2CIDX(_chan)    ((_chan) - ((struct da1469x_dma_regs *)DMA))
 #define MCU_DMA_CIDX2CHAN(_cidx)    (&((struct da1469x_dma_regs *)DMA)[(_cidx)])
+#ifndef MCU_DMA_CHAN_MAX
 #define MCU_DMA_CHAN_MAX            (8)
+#endif
 
 #define MCU_DMA_SET_MUX(_cidx, _periph)             \
     do {                                            \
         DMA->DMA_REQ_MUX_REG =                      \
             (DMA->DMA_REQ_MUX_REG &                 \
-             ~(0xf << ((_cidx) * 4))) |             \
-            ((_periph) << ((_cidx) * 4));           \
+             ~(0xf << ((_cidx) * 2))) |             \
+            ((_periph) << ((_cidx) * 2));           \
     } while (0)
 #define MCU_DMA_GET_MUX(_cidx)                      \
     (DMA->DMA_REQ_MUX_REG >> ((_cidx) * 4) & 0xf)
@@ -43,8 +45,14 @@ struct da1469x_dma_interrupt_cfg {
     void *arg;
 };
 
+#if (MCU_DMA_CHAN_MAX) > 8
 static uint8_t g_da1469x_dma_acquired;
 static uint8_t g_da1469x_dma_isr_set;
+#else
+static uint16_t g_da1469x_dma_acquired;
+static uint16_t g_da1469x_dma_isr_set;
+#endif
+
 static struct da1469x_dma_interrupt_cfg g_da1469x_dma_isr_cfg[MCU_DMA_CHAN_MAX];
 
 static inline int

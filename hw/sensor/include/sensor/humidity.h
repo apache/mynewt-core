@@ -35,7 +35,7 @@ struct sensor_humid_data {
 
     /* Validity */
     uint8_t shd_humid_is_valid:1;
-} __attribute__((packed));
+};
 
 #ifdef __cplusplus
 }

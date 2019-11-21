@@ -48,7 +48,7 @@ dps368_i2c_write_reg(struct sensor_itf *itf, uint8_t reg, uint8_t value)
             MYNEWT_VAL(DPS368_I2C_RETRIES));
 
     if (rc) {
-        DPS368_LOG(ERROR,
+        DPS368_LOG_ERROR(
                 "Could not write to 0x%02X:0x%02X with value 0x%02X\n",
                 itf->si_addr, reg, value);
     }
@@ -78,7 +78,7 @@ dps368_spi_write_reg(struct sensor_itf *itf, uint8_t reg, uint8_t value)
     rc = hal_spi_tx_val(itf->si_num, reg & ~DPS368_SPI_READ_CMD_BIT);
     if (rc == 0xFFFF) {
         rc = SYS_EINVAL;
-        DPS368_LOG(ERROR, "SPI_%u register write failed addr:0x%02X\n",
+        DPS368_LOG_ERROR("SPI_%u register write failed addr:0x%02X\n",
                 itf->si_num, reg);
         goto err;
     }
@@ -87,7 +87,7 @@ dps368_spi_write_reg(struct sensor_itf *itf, uint8_t reg, uint8_t value)
     rc = hal_spi_tx_val(itf->si_num, value);
     if (rc == 0xFFFF) {
         rc = SYS_EINVAL;
-        DPS368_LOG(ERROR, "SPI_%u write failed addr:0x%02X\n", itf->si_num,
+        DPS368_LOG_ERROR("SPI_%u write failed addr:0x%02X\n", itf->si_num,
                 reg);
         goto err;
     }
@@ -134,7 +134,7 @@ dps368_i2c_read_regs(struct sensor_itf *itf, uint8_t reg, uint8_t size,
             MYNEWT_VAL(DPS368_I2C_TIMEOUT_TICKS) * (size + 1), 1,
             MYNEWT_VAL(DPS368_I2C_RETRIES));
     if (rc) {
-        DPS368_LOG(ERROR, "I2C access failed at address 0x%02X\n",
+        DPS368_LOG_ERROR("I2C access failed at address 0x%02X\n",
                 itf->si_addr);
         return rc;
     }
@@ -170,7 +170,7 @@ dps368_spi_read_regs(struct sensor_itf *itf, uint8_t reg, uint8_t size,
     retval = hal_spi_tx_val(itf->si_num, reg | DPS368_SPI_READ_CMD_BIT);
     if (retval == 0xFFFF) {
         rc = SYS_EINVAL;
-        DPS368_LOG(ERROR, "SPI_%u register write failed addr:0x%02X\n",
+        DPS368_LOG_ERROR("SPI_%u register write failed addr:0x%02X\n",
                 itf->si_num, reg);
         goto err;
     }
@@ -180,7 +180,7 @@ dps368_spi_read_regs(struct sensor_itf *itf, uint8_t reg, uint8_t size,
         retval = hal_spi_tx_val(itf->si_num, 0);
         if (retval == 0xFFFF) {
             rc = SYS_EINVAL;
-            DPS368_LOG(ERROR, "SPI_%u read failed addr:0x%02X\n", itf->si_num,
+            DPS368_LOG_ERROR("SPI_%u read failed addr:0x%02X\n", itf->si_num,
                     reg);
             goto err;
         }

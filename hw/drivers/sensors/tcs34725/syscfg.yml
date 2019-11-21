@@ -33,11 +33,22 @@ syscfg.defs:
     TCS34725_ITF_LOCK_TMO:
         description: 'TCS34725 interface lock timeout in milliseconds'
         value: 1000
-    TCS34725_LOG_MODULE:
-        description: 'Numeric module ID to use for TCS34725 log messages'
-        value: 254
     TCS34725_I2C_RETRIES:
         description: >
             Number of retries to use for failed I2C communication.  A retry is
             used when the TCS34725 sends an unexpected NACK.
         value: 2
+
+    ### Log settings.
+
+    TCS34725_LOG_MODULE:
+        description: 'Numeric module ID to use for TCS34725 log messages.'
+        value: 254
+    TCS34725_LOG_LVL:
+        description: 'Minimum level for the TCS34725 log.'
+        value: 1
+
+syscfg.logs:
+    TCS34725_LOG:
+        module: MYNEWT_VAL(TCS34725_LOG_MODULE)
+        level: MYNEWT_VAL(TCS34725_LOG_LVL)

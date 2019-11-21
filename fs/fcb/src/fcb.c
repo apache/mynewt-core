@@ -216,7 +216,7 @@ fcb_sector_hdr_read(struct fcb *fcb, struct flash_area *fap,
  * @param0 ptr to fcb
  * @param1 n number of fcb entries the user wants to get
  * @param2 ptr to the fcb_entry to be returned
- * @return 0 on there are any fcbs aviable; OS_ENOENT otherwise
+ * @return 0 on there are any fcbs aviable; FCB_ERR_NOVAR otherwise
  */
 int
 fcb_offset_last_n(struct fcb *fcb, uint8_t entries,
@@ -243,7 +243,7 @@ fcb_offset_last_n(struct fcb *fcb, uint8_t entries,
         i++;
     }
 
-    return (i == 0) ? OS_ENOENT : 0;
+    return (i == 0) ? FCB_ERR_NOVAR : 0;
 }
 
 /**

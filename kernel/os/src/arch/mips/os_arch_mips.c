@@ -38,6 +38,8 @@ uint32_t os_flags = OS_RUN_PRIV;
 
 extern struct os_task g_idle_task;
 
+void timer_handler(void);
+
 /* core timer interrupt */
 void __attribute__((interrupt, keep_interrupts_masked))
 _mips_isr_hw5(void)

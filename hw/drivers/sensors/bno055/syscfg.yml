@@ -21,23 +21,29 @@ syscfg.defs:
     BNO055_CLI:
         description: 'Enable shell support for the BNO055'
         value: 0
-    BNO055_SHELL_ITF_TYPE:
-        description: 'BNO055 interface type'
-        value: 1
-    BNO055_SHELL_ITF_NUM:
-        description: 'BNO055 interface number'
-        value: 0
-    BNO055_SHELL_ITF_ADDR:
-        description: 'BNO055 I2C Address'
-        value: 0x28
+    BNO055_SHELL_DEV_NAME:
+        description: 'System defined device to use in shell'
+        value: '"bno055_0"'
     BNO055_ITF_LOCK_TMO:
         description: 'BNO055 interface lock timeout in milliseconds'
         value: 1000
-    BNO055_LOG_MODULE:
-        description: 'Numeric module ID to use for BNO055 log messages'
-        value: 85
     BNO055_I2C_RETRIES:
         description: >
             Number of retries to use for failed I2C communication.  A retry is
             used when the BNO055 sends an unexpected NACK.
         value: 2
+
+    ### Log settings.
+
+    BNO055_LOG_MODULE:
+        description: 'Numeric module ID to use for BNO055 log messages.'
+        value: 87
+    BNO055_LOG_LVL:
+        description: 'Minimum level for the BNO055 log.'
+        value: 1
+
+syscfg.logs:
+    BNO055_LOG:
+        module: MYNEWT_VAL(BNO055_LOG_MODULE)
+        level: MYNEWT_VAL(BNO055_LOG_LVL)
+

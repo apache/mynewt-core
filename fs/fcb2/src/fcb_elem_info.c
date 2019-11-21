@@ -20,16 +20,16 @@
 #include <crc/crc8.h>
 #include <crc/crc16.h>
 
-#include "fcb/fcb.h"
+#include "fcb/fcb2.h"
 #include "fcb_priv.h"
 
 /*
  * Given offset in flash area, compute crc16 over the data.
  */
 int
-fcb_elem_crc16(struct fcb_entry *loc, uint16_t *c16p)
+fcb2_elem_crc16(struct fcb2_entry *loc, uint16_t *c16p)
 {
-    uint8_t tmp_str[FCB_TMP_BUF_SZ];
+    uint8_t tmp_str[FCB2_TMP_BUF_SZ];
     int blk_sz;
     uint16_t crc16;
     uint32_t off;
@@ -46,9 +46,9 @@ fcb_elem_crc16(struct fcb_entry *loc, uint16_t *c16p)
             blk_sz = sizeof(tmp_str);
         }
 
-        rc = fcb_read_from_sector(loc, off, tmp_str, blk_sz);
+        rc = fcb2_read_from_sector(loc, off, tmp_str, blk_sz);
         if (rc) {
-            return FCB_ERR_FLASH;
+            return FCB2_ERR_FLASH;
         }
         crc16 = crc16_ccitt(crc16, tmp_str, blk_sz);
     }
@@ -57,10 +57,10 @@ fcb_elem_crc16(struct fcb_entry *loc, uint16_t *c16p)
     return 0;
 }
 
-int
-fcb_read_entry(struct fcb_entry *loc)
+static int
+fcb2_read_entry(struct fcb2_entry *loc)
 {
-    uint8_t buf[FCB_ENTRY_SIZE];
+    uint8_t buf[FCB2_ENTRY_SIZE];
     uint8_t entry_crc;
     uint32_t entry_offset;
     uint32_t offset;
@@ -68,30 +68,31 @@ fcb_read_entry(struct fcb_entry *loc)
     int rc;
 
     assert(loc != NULL);
-    entry_offset = fcb_entry_location_in_range(loc);
+    entry_offset = fcb2_entry_location_in_range(loc);
     rc = flash_area_read_is_empty(&loc->fe_range->fsr_flash_area,
         entry_offset, buf, sizeof(buf));
     if (rc < 0) {
         /* Error reading from flash */
-        return FCB_ERR_FLASH;
+        return FCB2_ERR_FLASH;
     } else if (rc == 1) {
         /* Entry not filled on flash */
-        return FCB_ERR_NOVAR;
+        return FCB2_ERR_NOVAR;
     }
     /* Check entry CRC first */
-    entry_crc = crc8_calc(crc8_init(), buf, FCB_ENTRY_SIZE - 1);
-    if (entry_crc != buf[FCB_ENTRY_SIZE - 1]) {
-        return FCB_ERR_CRC;
+    entry_crc = crc8_calc(crc8_init(), buf, FCB2_ENTRY_SIZE - 1);
+    if (entry_crc != buf[FCB2_ENTRY_SIZE - 1]) {
+        return FCB2_ERR_CRC;
     }
     offset = (buf[0] << 16) | (buf[1] << 8) | (buf[2] << 0);
     len = (buf[3] << 8) | (buf[4] << 0);
     /* Sanity check for entry */
-    if (offset < fcb_len_in_flash(loc->fe_range, sizeof(struct fcb_disk_area)) ||
-        len > FCB_MAX_LEN ||
+    if (offset < fcb2_len_in_flash(loc->fe_range,
+                                   sizeof(struct fcb2_disk_area)) ||
+        len > FCB2_MAX_LEN ||
         offset + len > entry_offset) {
         /* Entry was found but data stored does not make any sense
          * report as CRC error so it can be skipped */
-        return FCB_ERR_CRC;
+        return FCB2_ERR_CRC;
     }
 
     /* Entry looks decent, pass to the caller */
@@ -102,30 +103,30 @@ fcb_read_entry(struct fcb_entry *loc)
 }
 
 int
-fcb_elem_info(struct fcb_entry *loc)
+fcb2_elem_info(struct fcb2_entry *loc)
 {
     int rc;
     uint16_t crc16;
     uint8_t fl_crc16[2];
 
     /* Read entry from the end of the sector */
-    rc = fcb_read_entry(loc);
+    rc = fcb2_read_entry(loc);
     if (rc != 0) {
         return rc;
     }
 
     /* Read actual data and calculate CRC */
-    rc = fcb_elem_crc16(loc, &crc16);
+    rc = fcb2_elem_crc16(loc, &crc16);
     if (rc) {
         return rc;
     }
 
     /* Read CRC from flash */
-    rc = fcb_read_from_sector(loc,
-        loc->fe_data_off + fcb_len_in_flash(loc->fe_range, loc->fe_data_len),
+    rc = fcb2_read_from_sector(loc,
+        loc->fe_data_off + fcb2_len_in_flash(loc->fe_range, loc->fe_data_len),
         &fl_crc16, 2);
     if (rc || get_be16(fl_crc16) != crc16) {
-        return FCB_ERR_CRC;
+        return FCB2_ERR_CRC;
     }
 
     return 0;

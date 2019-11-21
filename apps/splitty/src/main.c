@@ -30,7 +30,7 @@
 #include <config/config.h>
 #include <flash_map/flash_map.h>
 #include <hal/hal_system.h>
-#include <newtmgr/newtmgr.h>
+#include <mgmt/mgmt.h>
 #include <bootutil/image.h>
 #include <bootutil/bootutil.h>
 #include <imgmgr/imgmgr.h>
@@ -107,7 +107,7 @@ task1_handler(void *arg)
         /* Toggle the LED */
         prev_pin_state = hal_gpio_read(g_led_pin);
         curr_pin_state = hal_gpio_toggle(g_led_pin);
-        MODLOG_INFO(LOG_MODULE_DEFAULT, "GPIO toggle from %u to %u",
+        DFLT_LOG_INFO("GPIO toggle from %u to %u",
                     prev_pin_state, curr_pin_state);
         STATS_INC(g_stats_gpio_toggle, toggles);
 

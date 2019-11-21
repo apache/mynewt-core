@@ -27,6 +27,90 @@ syscfg.defs:
         description: MCUs are of STM32F7xx family
         value: 1
 
+    STM32_ENABLE_ICACHE:
+        description: Enable instruction caching
+        value: 1
+
+    STM32_CLOCK_VOLTAGESCALING_CONFIG:
+        description: Voltage scale
+        value: 0
+
+    STM32_CLOCK_LSI:
+        description: Enable low-speed internal clock source
+        value: 1
+
+    STM32_CLOCK_LSE:
+        description: Enable low-speed external clock source (aka RTC xtal)
+        value: 0
+
+    STM32_CLOCK_LSE_BYPASS:
+        description: 0 for 32768 xtal; 1 for input clock
+        value: 0
+
+    STM32_CLOCK_HSE:
+        description: Enable high-speed external clock source
+        value: 0
+
+    STM32_CLOCK_HSE_BYPASS:
+        description: 0 for xtal; 1 for input clock
+        value: 0
+
+    STM32_CLOCK_HSI:
+        description: Enable high-speed internal clock source
+        value: 1
+
+    STM32_CLOCK_HSI_CALIBRATION:
+        description: HSI calibration value
+        value: 0x10
+
+    STM32_CLOCK_PLL_PLLM:
+        description: PLL config M parameter
+        value: 0
+
+    STM32_CLOCK_PLL_PLLN:
+        description: PLL config N parameter
+        value: 0
+
+    STM32_CLOCK_PLL_PLLP:
+        description: PLL config P parameter
+        value: 0
+
+    STM32_CLOCK_PLL_PLLQ:
+        description: PLL config Q parameter
+        value: 0
+
+    STM32_CLOCK_PLL_PLLR:
+        description: PLL config R parameter
+        value: 0
+
+    STM32_CLOCK_ENABLE_OVERDRIVE:
+        description: Turn on over-drive mode (reach higher clock rates)
+        value: 0
+
+    STM32_CLOCK_AHB_DIVIDER:
+        description: AHB prescaler
+        value: 0
+
+    STM32_CLOCK_APB1_DIVIDER:
+        description: APB low-speed prescaler
+        value: 0
+
+    STM32_CLOCK_APB2_DIVIDER:
+        description: APB high-speed prescaler
+        value: 0
+
+    STM32_FLASH_LATENCY:
+        description: Number of wait-states
+        value: 0
+
+    STM32_ART_ACCLERATOR_ENABLE:
+        description: Enable ...
+        value: 0
+
+    STM32_FLASH_PREFETCH_ENABLE:
+        description: Enable pre-fetch of instructions (when latency > 0)
+        value: 0
+
     STM32_HAL_SPI_HAS_FIFO:
         description: This MCU has a SPI with FIFO
         value: 1
@@ -42,14 +126,6 @@ syscfg.defs:
     MCU_FLASH_ERASED_VAL:
         description: Value read from erased flash.
         value: 0xff
-
-    STM32_FLASH_IS_LINEAR:
-        description: This MCU's Flash has one single sector size.
-        value: 0
-
-    MCU_SYSCLK_PLL_HSI:
-        description: Configure PLL as sysclock driven by HSI.
-        value: 0
 
     SPI_0_MASTER:
         description: 'SPI 0 master'

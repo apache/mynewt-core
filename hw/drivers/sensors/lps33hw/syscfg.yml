@@ -35,9 +35,6 @@ syscfg.defs:
     LPS33HW_ITF_LOCK_TMO:
         description: 'LPS33HW interface lock timeout in milliseconds'
         value: 1000
-    LPS33HW_LOG_MODULE:
-        description: 'Numeric module ID to use for LPS33HW log messages'
-        value: 133
     LPS33HW_I2C_RETRIES:
         description: >
             Number of retries to use for failed I2C communication.  A retry is
@@ -50,3 +47,26 @@ syscfg.defs:
     LPS33HW_ONE_SHOT_MODE:
         description: 'Enables one shot mode on the sensor'
         value: 0
+
+    LPS33HW_INT_CFG_ACTIVE:
+        description: 'Set 0 for active-low, 1 for active-high'
+        value: 1
+
+    LPS33HW_INT_PIN_HOST:
+        description: 'Interrupt pin number on host device connected to INT_DRDY on device'
+        value: -1
+
+    ### Log settings.
+
+    LPS33HW_LOG_MODULE:
+        description: 'Numeric module ID to use for LPS33HW log messages.'
+        value: 133
+    LPS33HW_LOG_LVL:
+        description: 'Minimum level for the LPS33HW log.'
+        value: 1
+
+syscfg.logs:
+    LPS33HW_LOG:
+        module: MYNEWT_VAL(LPS33HW_LOG_MODULE)
+        level: MYNEWT_VAL(LPS33HW_LOG_LVL)
+

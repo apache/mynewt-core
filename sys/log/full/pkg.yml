@@ -29,23 +29,40 @@ pkg.deps:
     - "@apache-mynewt-core/sys/flash_map"
     - "@apache-mynewt-core/sys/log/common"
     - "@apache-mynewt-core/util/cbmem"
+
+pkg.deps.'LOG_CLI && LOG_VERSION > 2':
+    - "@apache-mynewt-core/sys/log/util/log_cbor_reader"
+
 pkg.deps.LOG_FCB:
     - "@apache-mynewt-core/hw/hal"
     - "@apache-mynewt-core/fs/fcb"
+pkg.deps.LOG_FCB2:
+    - "@apache-mynewt-core/fs/fcb2"
 pkg.deps.LOG_CLI:
     - "@apache-mynewt-core/sys/shell"
     - "@apache-mynewt-core/encoding/base64"
-
-pkg.deps.LOG_NEWTMGR:
-    - "@apache-mynewt-core/mgmt/mgmt"
-    - "@apache-mynewt-core/encoding/cborattr"
     - "@apache-mynewt-core/encoding/tinycbor"
+
+pkg.deps.'LOG_CONSOLE && LOG_VERSION > 2':
+    - "@apache-mynewt-mcumgr/cborattr"
+    - "@apache-mynewt-core/encoding/tinycbor"
+
+pkg.deps.LOG_MGMT:
+    - "@apache-mynewt-mcumgr/cmd/log_mgmt"
+    - "@apache-mynewt-mcumgr/cborattr"
+    - "@apache-mynewt-core/encoding/tinycbor"
+
+pkg.deps.LOG_FLAGS_IMAGE_HASH:
+    - "@apache-mynewt-core/mgmt/imgmgr"
 
 pkg.deps.LOG_STORAGE_WATERMARK:
     - sys/config
 
 pkg.apis:
     - log
+
+pkg.req_apis.LOG_STATS:
+    - stats
 
 pkg.init:
     log_init: 'MYNEWT_VAL(LOG_SYSINIT_STAGE_MAIN)'

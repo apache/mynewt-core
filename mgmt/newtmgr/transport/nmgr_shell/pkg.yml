@@ -18,17 +18,5 @@
 #
 
 pkg.name: mgmt/newtmgr/transport/nmgr_shell
-pkg.description: Newtmgr transport over shell
-pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
-pkg.homepage: "http://mynewt.apache.org/"
-pkg.keywords:
-    - newtmgr
-    - shell
-
-pkg.deps:
-    - "@apache-mynewt-core/kernel/os"
-    - "@apache-mynewt-core/sys/shell"
-    - "@apache-mynewt-core/mgmt/newtmgr"
-
-pkg.init:
-    nmgr_shell_pkg_init: 'MYNEWT_VAL(NMGR_SHELL_SYSINIT_STAGE)'
+pkg.type: transient
+pkg.link: "@apache-mynewt-core/mgmt/smp/transport/smp_shell"

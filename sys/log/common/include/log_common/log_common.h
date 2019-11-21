@@ -42,7 +42,7 @@ struct log;
 #define LOG_LEVEL_WARN     (2)
 #define LOG_LEVEL_ERROR    (3)
 #define LOG_LEVEL_CRITICAL (4)
-/* Up to 7 custom log levels. */
+/* Up to 10 custom log levels. */
 #define LOG_LEVEL_MAX      (15)
 
 #define LOG_LEVEL_STR(level) \
@@ -53,17 +53,21 @@ struct log;
     (LOG_LEVEL_CRITICAL == level ? "CRITICAL" :\
      "UNKNOWN")))))
 
-/* Log module, eventually this can be a part of the filter. */
-#define LOG_MODULE_DEFAULT          (0)
-#define LOG_MODULE_OS               (1)
-#define LOG_MODULE_NEWTMGR          (2)
-#define LOG_MODULE_NIMBLE_CTLR      (3)
-#define LOG_MODULE_NIMBLE_HOST      (4)
-#define LOG_MODULE_NFFS             (5)
-#define LOG_MODULE_REBOOT           (6)
-#define LOG_MODULE_IOTIVITY         (7)
-#define LOG_MODULE_TEST             (8)
-#define LOG_MODULE_PERUSER          (64)
+/* XXX: These module IDs are defined for backwards compatibility.  Application
+ * code should use the syscfg settings directly.  These defines will be removed
+ * in a future release.
+ */
+#define LOG_MODULE_DEFAULT          0
+#define LOG_MODULE_OS               1
+#define LOG_MODULE_NEWTMGR          2
+#define LOG_MODULE_NIMBLE_CTLR      3
+#define LOG_MODULE_NIMBLE_HOST      4
+#define LOG_MODULE_NFFS             5
+#define LOG_MODULE_REBOOT           6
+#define LOG_MODULE_IOTIVITY         7
+#define LOG_MODULE_TEST             8
+
+#define LOG_MODULE_PERUSER          64
 #define LOG_MODULE_MAX              (255)
 
 #define LOG_ETYPE_STRING         (0)
@@ -71,11 +75,6 @@ struct log;
 #define LOG_ETYPE_CBOR           (1)
 #define LOG_ETYPE_BINARY         (2)
 #endif
-
-/* Logging medium */
-#define LOG_STORE_CONSOLE    1
-#define LOG_STORE_CBMEM      2
-#define LOG_STORE_FCB        3
 
 /* UTC Timestamp for Jan 2016 00:00:00 */
 #define UTC01_01_2016    1451606400
@@ -118,7 +117,9 @@ struct log;
 
 /* Global log info */
 struct log_info {
+#if MYNEWT_VAL(LOG_GLOBAL_IDX)
     uint32_t li_next_index;
+#endif
     uint8_t li_version;
 };
 
@@ -132,6 +133,13 @@ extern struct log_info g_log_info;
  * @param idx                   The index of newly appended log entry.
  */
 typedef void log_append_cb(struct log *log, uint32_t idx);
+
+/** @typdef log_notify_rotate_cb
+ * @brief Callback that is executed each time we are about to rotate a log.
+ * 
+ * @param log                   The log that is about to rotate 
+ */
+typedef void log_notify_rotate_cb(const struct log *log);
 
 #ifdef __cplusplus
 }

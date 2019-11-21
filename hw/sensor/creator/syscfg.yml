@@ -29,6 +29,24 @@ syscfg.defs:
     LSM303DLHC_OFB:
         description: 'LSM303 is present'
         value : 0
+    LSM6DSO_OFB:
+        description: 'LSM6DSO is present'
+        value : 0
+    LSM6DSO_OFB_I2C_NUM:
+        description: 'I2C interface used for LSM6DS0'
+        value: 0
+        restrictions:
+         - '(LSM6DSO_OFB == 0) ||
+            ((LSM6DSO_OFB_I2C_NUM == 0) && (I2C_0 == 1)) ||
+            ((LSM6DSO_OFB_I2C_NUM == 1) && (I2C_1 == 1)) ||
+            ((LSM6DSO_OFB_I2C_NUM == 2) && (I2C_2 == 1))'
+    LSM6DSO_OFB_I2C_BUS:
+        description: 'I2C interface used for LSM6DSO'
+        value : '"i2c0"'
+    LSM6DSO_OFB_I2C_ADDR:
+        description: 'I2C address of LSM6DSO 0x6A or 0x6B'
+        value: 0x6A
+        range: 0x6A,0x6B
     MPU6050_OFB:
         description: 'MPU6050 is present'
         value : 0
@@ -46,6 +64,13 @@ syscfg.defs:
     BNO055_OFB:
         description: 'BNO055 is present'
         value : 0
+    BNO055_OFB_I2C_BUS:
+        description: 'I2C interface used for BNO055'
+        value : '"i2c0"'
+    BNO055_OFB_I2C_ADDR:
+        description: 'I2C address of BNO055 0x28 or 0x29'
+        value: 0x28
+        range: 0x28,0x29
     BME280_OFB:
         description: 'BME280 is present'
         value : 0
@@ -104,6 +129,20 @@ syscfg.defs:
     BMA253_OFB:
         description: 'BMA253 is present'
         value : 0
+    BMA253_OFB_BUS:
+        description: 'I2C or SPI interface used for BMA253'
+        value: '"i2c0"'
+    BMA253_OFB_INT1_PIN:
+        description: >
+            MCU's pin for INT1 of BMA253
+        value: -1
+    BMA253_OFB_INT2_PIN:
+        description: >
+            MCU's pin for INT2 of BMA253
+        value: -1
+    BMA253_OFB_I2C_ADDR:
+        description: 'I2C address of BMA253 0x18 or 0x19'
+        value: 0x18
     ADXL345_OFB:
         description: 'ADXL345 is present'
         value : 0
@@ -140,12 +179,74 @@ syscfg.defs:
     LIS2DW12_OFB:
         description: 'LIS2DW12 is present'
         value : 0
+    LIS2DH12_OFB:
+        description: 'LIS2DH12 is present'
+        value : 0
+    LIS2DH12_OFB_I2C_NUM:
+        description: 'I2C interface used for LIS2DH12'
+        value:
+        restrictions:
+         - '(LIS2DH12_OFB == 0) ||
+            ((LIS2DH12_OFB_I2C_NUM == 0) && (I2C_0 == 1)) ||
+            ((LIS2DH12_OFB_I2C_NUM == 1) && (I2C_1 == 1)) ||
+            ((LIS2DH12_OFB_I2C_NUM == 2) && (I2C_2 == 1)) ||
+            ((LIS2DH12_OFB_I2C_NUM == -1))'
+    LIS2DH12_OFB_ITF_ADDR:
+        description: 'I2C address of LIS2DH12 0x18 or 0x19'
+        value: 0x18
+        range: 0x18,0x19
+    LIS2DH12_OFB_INT1_PIN_HOST:
+        description: 'Host pin for LIS2DH12 INT1 pin'
+        value: -1
+    LIS2DH12_OFB_INT2_PIN_HOST:
+        description: 'Host pin for LIS2DH12 INT2 pin'
+        value: -1
+    LIS2DH12_OFB_INT_CFG_ACTIVE:
+        description: 'Set 0 for active-low, 1 for active-high'
+        value: 1
+    LIS2DH12_OFB_BUS:
+        description: 'I2C or SPI interface used for LIS2DH12'
+        value: '"i2c0"'
     BMA2XX_OFB:
         description: 'A sensor in the BMA2XX family is present'
         value : 0
     BMP388_OFB:
         description: 'A sensor in the BMP388 family is present'
         value : 0
+    BMP388_OFB_I2C_NUM:
+        description: 'I2C interface used for BMP388'
+        value: -1
+        restrictions:
+         - '(BMP388_OFB == 0) ||
+            ((BMP388_OFB_I2C_NUM == 0) && (I2C_0 == 1)) ||
+            ((BMP388_OFB_I2C_NUM == 1) && (I2C_1 == 1)) ||
+            ((BMP388_OFB_I2C_NUM == 2) && (I2C_2 == 1)) ||
+            ((BMP388_OFB_I2C_NUM == -1))'
+    BMP388_OFB_SPI_NUM:
+        description: 'SPI interface used for 388'
+        value: -1
+        restrictions:
+         - '(BMP388_OFB == 0) ||
+            ((BMP388_OFB_SPI_NUM == 0) && (SPI_0_MASTER == 1)) ||
+            ((BMP388_OFB_SPI_NUM == 1) && (SPI_1_MASTER == 1)) ||
+            ((BMP388_OFB_SPI_NUM == 2) && (SPI_2_MASTER == 1)) ||
+            ((BMP388_OFB_SPI_NUM == -1))'
+    BMP388_OFB_BUS:
+        description: 'I2C or SPI interface used for BMP388'
+        value: '"i2c0"'
+    BMP388_OFB_BAUDRATE:
+        description: 'BMP388 SPI speed'
+        value: 4000
+    BMP388_OFB_I2C_ADDR:
+        description: 'I2C address of BMP388 0x76 or 0x77'
+        value: 0x77
+        range: 0x76,0x77
+    BMP388_OFB_CS:
+        description: 'SPI CS pin for BMP388'
+        value:
+    BMP388_OFB_INT_PIN:
+        description: 'Host interrupt pin for BMP388'
+        value: -1
     LIS2DS12_OFB:
         description: 'LIS2DS12 is present'
         value : 0

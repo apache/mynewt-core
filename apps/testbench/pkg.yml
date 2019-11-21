@@ -30,6 +30,7 @@ pkg.deps:
     - "@apache-mynewt-core/kernel/os"
     - "@apache-mynewt-core/mgmt/imgmgr"
     - "@apache-mynewt-core/mgmt/oicmgr"
+    - "@apache-mynewt-core/sys/reboot"
     - "@apache-mynewt-core/sys/config"
     - "@apache-mynewt-core/sys/console/full"
     - "@apache-mynewt-core/sys/id"
@@ -44,10 +45,9 @@ pkg.deps:
     - "@apache-mynewt-core/util/cbmem/hosttest"
 
 pkg.deps.TESTBENCH_BLE:
-    - "@apache-mynewt-nimble/nimble/controller"
     - "@apache-mynewt-nimble/nimble/host"
     - "@apache-mynewt-nimble/nimble/host/services/gap"
     - "@apache-mynewt-nimble/nimble/host/services/gatt"
     - "@apache-mynewt-nimble/nimble/host/store/ram"
     - "@apache-mynewt-nimble/nimble/host/util"
-    - "@apache-mynewt-nimble/nimble/transport/ram"
+    - "@apache-mynewt-nimble/nimble/transport"

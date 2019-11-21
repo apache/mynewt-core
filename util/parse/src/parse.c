@@ -24,6 +24,7 @@
 #include <inttypes.h>
 #include <errno.h>
 #include <assert.h>
+#include <strings.h>
 #include "os/mynewt.h"
 #include "mn_socket/mn_socket.h"
 #include "parse/parse.h"

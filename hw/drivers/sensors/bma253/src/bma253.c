@@ -32,18 +32,8 @@
 #include "i2cn/i2cn.h"
 #include "hal/hal_spi.h"
 #endif
-
-#if MYNEWT_VAL(BMA253_LOG)
 #include "modlog/modlog.h"
-#endif
-
-#if MYNEWT_VAL(BMA253_LOG)
-
-#define BMA253_LOG(lvl_, ...) \
-    MODLOG_ ## lvl_(MYNEWT_VAL(BMA253_LOG_MODULE), __VA_ARGS__)
-#else
-#define BMA253_LOG(lvl_, ...)
-#endif
+#include "stats/stats.h"
 
 #define BMA253_NOTIFY_MASK  0x01
 #define BMA253_READ_MASK    0x02
@@ -118,12 +108,110 @@ const struct bma253_notif_cfg dflt_bma253_notif_cfg[] = {
     }    
 };
 
+/* Define the stats section and records */
+STATS_SECT_START(bma253_stat_section)
+    STATS_SECT_ENTRY(write_errors)
+    STATS_SECT_ENTRY(read_errors)
+#if MYNEWT_VAL(BMA253_NOTIF_STATS)
+    STATS_SECT_ENTRY(single_tap_notify)
+    STATS_SECT_ENTRY(double_tap_notify)
+    STATS_SECT_ENTRY(free_fall_notify)
+    STATS_SECT_ENTRY(sleep_notify)
+    STATS_SECT_ENTRY(wakeup_notify)
+    STATS_SECT_ENTRY(sleep_chg_notify)
+    STATS_SECT_ENTRY(orient_chg_notify)
+    STATS_SECT_ENTRY(orient_chg_x_l_notify)
+    STATS_SECT_ENTRY(orient_chg_y_l_notify)
+    STATS_SECT_ENTRY(orient_chg_z_l_notify)
+    STATS_SECT_ENTRY(orient_chg_x_h_notify)
+    STATS_SECT_ENTRY(orient_chg_y_h_notify)
+    STATS_SECT_ENTRY(orient_chg_z_h_notify)
+#endif
+STATS_SECT_END
+
+/* Define stat names for querying */
+STATS_NAME_START(bma253_stat_section)
+    STATS_NAME(bma253_stat_section, write_errors)
+    STATS_NAME(bma253_stat_section, read_errors)
+#if MYNEWT_VAL(BMA253_NOTIF_STATS)
+    STATS_NAME(bma253_stat_section, single_tap_notify)
+    STATS_NAME(bma253_stat_section, double_tap_notify)
+    STATS_NAME(bma253_stat_section, free_fall_notify)
+    STATS_NAME(bma253_stat_section, sleep_notify)
+    STATS_NAME(bma253_stat_section, wakeup_notify)
+    STATS_NAME(bma253_stat_section, sleep_chg_notify)
+    STATS_NAME(bma253_stat_section, orient_chg_notify)
+    STATS_NAME(bma253_stat_section, orient_chg_x_l_notify)
+    STATS_NAME(bma253_stat_section, orient_chg_y_l_notify)
+    STATS_NAME(bma253_stat_section, orient_chg_z_l_notify)
+    STATS_NAME(bma253_stat_section, orient_chg_x_h_notify)
+    STATS_NAME(bma253_stat_section, orient_chg_y_h_notify)
+    STATS_NAME(bma253_stat_section, orient_chg_z_h_notify)
+#endif
+STATS_NAME_END(bma253_stat_section)
+
+/* Global variable used to hold stats data */
+STATS_SECT_DECL(bma253_stat_section) g_bma253stats;
 
 static int
 sensor_driver_handle_interrupt(struct sensor * sensor);
 
 static int
 bma253_clear_fifo(const struct bma253 * bma253);
+
+static void
+bma253_inc_notif_stats(sensor_event_type_t event)
+{
+
+#if MYNEWT_VAL(BMA253_NOTIF_STATS)
+    switch (event) {
+        case SENSOR_EVENT_TYPE_SLEEP:
+            STATS_INC(g_bma253stats, sleep_notify);
+            break;
+        case SENSOR_EVENT_TYPE_SINGLE_TAP:
+            STATS_INC(g_bma253stats, single_tap_notify);
+            break;
+        case SENSOR_EVENT_TYPE_DOUBLE_TAP:
+            STATS_INC(g_bma253stats, double_tap_notify);
+            break;
+        case SENSOR_EVENT_TYPE_ORIENT_CHANGE:
+            STATS_INC(g_bma253stats, orient_chg_notify);
+            break;
+        case SENSOR_EVENT_TYPE_ORIENT_X_L_CHANGE:
+            STATS_INC(g_bma253stats, orient_chg_x_l_notify);
+            break;
+        case SENSOR_EVENT_TYPE_ORIENT_X_H_CHANGE:
+            STATS_INC(g_bma253stats, orient_chg_x_h_notify);
+            break;
+        case SENSOR_EVENT_TYPE_ORIENT_Y_L_CHANGE:
+            STATS_INC(g_bma253stats, orient_chg_y_l_notify);
+            break;
+        case SENSOR_EVENT_TYPE_ORIENT_Y_H_CHANGE:
+            STATS_INC(g_bma253stats, orient_chg_y_h_notify);
+            break;
+        case SENSOR_EVENT_TYPE_ORIENT_Z_L_CHANGE:
+            STATS_INC(g_bma253stats, orient_chg_z_l_notify);
+            break;
+        case SENSOR_EVENT_TYPE_ORIENT_Z_H_CHANGE:
+            STATS_INC(g_bma253stats, orient_chg_z_h_notify);
+            break;
+        case SENSOR_EVENT_TYPE_SLEEP_CHANGE:
+            STATS_INC(g_bma253stats, sleep_chg_notify);
+            break;
+        case SENSOR_EVENT_TYPE_WAKEUP:
+            STATS_INC(g_bma253stats, wakeup_notify);
+            break;
+        case SENSOR_EVENT_TYPE_FREE_FALL:
+            STATS_INC(g_bma253stats, free_fall_notify);
+            break;
+        default:
+            break;
+    }
+#endif
+
+    return;
+}
+
 
 static void
 delay_msec(uint32_t delay)
@@ -182,7 +270,7 @@ wait_interrupt(struct bma253_int * interrupt, enum bma253_int_num int_num)
         os_error_t error;
 
         error = os_sem_pend(&interrupt->wait, -1);
-        BMA253_LOG(DEBUG, "bma253_int\n");
+        BMA253_LOG_DEBUG("bma253_int\n");
         if (OS_OK != error) {
             assert(0);
         }
@@ -267,7 +355,7 @@ spi_readlen(
     retval = hal_spi_tx_val(itf->si_num, addr | BMA253_SPI_READ_CMD_BIT);
     if (retval == 0xFFFF) {
         rc = SYS_EINVAL;
-        BMA253_LOG(ERROR, "SPI_%u register write failed addr:0x%02X\n",
+        BMA253_LOG_ERROR("SPI_%u register write failed addr:0x%02X\n",
                    itf->si_num, addr);
         goto err;
     }
@@ -277,7 +365,7 @@ spi_readlen(
         retval = hal_spi_tx_val(itf->si_num, 0);
         if (retval == 0xFFFF) {
             rc = SYS_EINVAL;
-            BMA253_LOG(ERROR, "SPI_%u read failed addr:0x%02X\n",
+            BMA253_LOG_ERROR("SPI_%u read failed addr:0x%02X\n",
                        itf->si_num, addr);
             goto err;
         }
@@ -315,7 +403,7 @@ i2c_readlen(
     rc = i2cn_master_write(itf->si_num, &oper, OS_TICKS_PER_SEC / 10, 0,
                            MYNEWT_VAL(BMA253_I2C_RETRIES));
     if (rc != 0) {
-        BMA253_LOG(ERROR, "I2C access failed at address 0x%02X\n", addr);
+        BMA253_LOG_ERROR("I2C access failed at address 0x%02X\n", addr);
         goto err;
     }
 
@@ -326,7 +414,7 @@ i2c_readlen(
     rc = i2cn_master_read(itf->si_num, &oper, OS_TICKS_PER_SEC / 10, 1,
                           MYNEWT_VAL(BMA253_I2C_RETRIES));
     if (rc != 0) {
-        BMA253_LOG(ERROR, "I2C read failed at address 0x%02X length %u err: %d\n",
+        BMA253_LOG_ERROR("I2C read failed at address 0x%02X length %u err: %d\n",
                    addr, size, rc);
     }
 
@@ -348,7 +436,7 @@ get_registers(struct bma253 * bma253,
 
     if (size > 0) {
     } else {
-        BMA253_LOG(ERROR, "try to read 0 byte at address 0x%02X\n", addr);
+        BMA253_LOG_ERROR("try to read 0 byte at address 0x%02X\n", addr);
         return SYS_EINVAL;
     }
 
@@ -364,10 +452,10 @@ get_registers(struct bma253 * bma253,
 
     if (0 == rc) {
         if (bma253->bus_rw_mon && (1 == size)) {
-            BMA253_LOG(DEBUG, "bus_read@0x%02X:%02X\n", addr, data[0]);
+            BMA253_LOG_DEBUG("bus_read@0x%02X:%02X\n", addr, data[0]);
         }
     } else {
-        BMA253_LOG(ERROR, "bus_read@0x%02X rc:%d\n", addr, rc);
+        BMA253_LOG_ERROR("bus_read@0x%02X rc:%d\n", addr, rc);
     }
 
 
@@ -400,7 +488,7 @@ spi_writereg(
     rc = hal_spi_tx_val(itf->si_num, addr);
     if (rc == 0xFFFF) {
         rc = SYS_EINVAL;
-        BMA253_LOG(ERROR, "SPI_%u register write failed addr:0x%02X\n",
+        BMA253_LOG_ERROR("SPI_%u register write failed addr:0x%02X\n",
                 itf->si_num, addr);
         goto err;
     }
@@ -409,7 +497,7 @@ spi_writereg(
     rc = hal_spi_tx_val(itf->si_num, data);
     if (rc == 0xFFFF) {
         rc = SYS_EINVAL;
-        BMA253_LOG(ERROR, "SPI_%u write failed addr:0x%02X:0x%02X\n",
+        BMA253_LOG_ERROR("SPI_%u write failed addr:0x%02X:0x%02X\n",
                 itf->si_num, addr);
         goto err;
     }
@@ -443,7 +531,7 @@ i2c_writereg(
     rc = i2cn_master_write(itf->si_num, &oper, OS_TICKS_PER_SEC / 10, 1,
                            MYNEWT_VAL(BMA253_I2C_RETRIES));
     if (rc != 0) {
-        BMA253_LOG(ERROR, "I2C write failed at address 0x%02X single byte\n",
+        BMA253_LOG_ERROR("I2C write failed at address 0x%02X single byte\n",
                    addr);
     }
 
@@ -491,10 +579,10 @@ done:
 #endif
    if (0 == rc) {
        if (bma253->bus_rw_mon) {
-           BMA253_LOG(DEBUG, "bus_write@0x%02X:%02X\n", addr, data);
+           BMA253_LOG_DEBUG("bus_write@0x%02X:%02X\n", addr, data);
        }
    } else {
-       BMA253_LOG(ERROR, "bus_write@0x%02X:%02X rc:%d\n", addr, data, rc);
+       BMA253_LOG_ERROR("bus_write@0x%02X:%02X rc:%d\n", addr, data, rc);
    }
 
     if (!rc) {
@@ -667,20 +755,20 @@ quad_to_axis_trigger(struct axis_trigger * axis_trigger,
         case 0x01:
             axis_trigger->axis = AXIS_X;
             axis_trigger->axis_known = true;
-            BMA253_LOG(INFO, "tap from %c X axis\n", axis_trigger->sign ? '+' : '-');
+            BMA253_LOG_INFO("tap from %c X axis\n", axis_trigger->sign ? '+' : '-');
             break;
         case (1 << 1):
             axis_trigger->axis = AXIS_Y;
             axis_trigger->axis_known = true;
-            BMA253_LOG(INFO, "tap from %c Y axis\n", axis_trigger->sign ? '+' : '-');
+            BMA253_LOG_INFO("tap from %c Y axis\n", axis_trigger->sign ? '+' : '-');
             break;
         case (1 << 2):
             axis_trigger->axis = AXIS_Z;
             axis_trigger->axis_known = true;
-            BMA253_LOG(INFO, "tap from %c Z axis\n", axis_trigger->sign ? '+' : '-');
+            BMA253_LOG_INFO("tap from %c Z axis\n", axis_trigger->sign ? '+' : '-');
             break;
         default:
-            BMA253_LOG(INFO, "unknown %s quad bits 0x%02X\n",
+            BMA253_LOG_INFO("unknown %s quad bits 0x%02X\n",
                     name_bits, quad_bits);
             axis_trigger->axis = -1;
             axis_trigger->axis_known = false;
@@ -755,7 +843,7 @@ bma253_get_g_range(const struct bma253 * bma253,
 
     switch (data & 0x0F) {
     default:
-        BMA253_LOG(ERROR, "unknown PMU_RANGE reg value 0x%02X\n", data);
+        BMA253_LOG_ERROR("unknown PMU_RANGE reg value 0x%02X\n", data);
         *g_range = BMA253_G_RANGE_16;
         break;
     case 0x03:
@@ -896,7 +984,7 @@ bma253_get_power_settings(const struct bma253 * bma253,
 
     switch ((data[0] >> 5) & 0x07) {
     default:
-        BMA253_LOG(ERROR, "unknown PMU_LPW reg value 0x%02X\n", data[0]);
+        BMA253_LOG_ERROR("unknown PMU_LPW reg value 0x%02X\n", data[0]);
         power_settings->power_mode = BMA253_POWER_MODE_NORMAL;
         break;
     case 0x00:
@@ -1587,7 +1675,7 @@ bma253_set_int_latch(const struct bma253 * bma253,
 {
     uint8_t data;
 
-    BMA253_LOG(ERROR, "bma253_set_int_latch: %d reset: %d\n", int_latch, reset_ints);
+    BMA253_LOG_ERROR("bma253_set_int_latch: %d reset: %d\n", int_latch, reset_ints);
 
     data = 0;
     data |= reset_ints << 7;
@@ -1800,7 +1888,7 @@ bma253_set_high_g_int_cfg(const struct bma253 * bma253,
     data[0] = ((uint8_t)(high_g_int_cfg->hyster_g / hyster_scale) & 0x03) << 6;
     data[1] = (high_g_int_cfg->delay_ms >> 1) - 1;
     data[2] = high_g_int_cfg->thresh_g / thresh_scale;
-    BMA253_LOG(INFO, "set high g INT setting: 0x%x : %d 0x%x : %d 0x%x : %d\n", data[0], data[1], data[2]);
+    BMA253_LOG_INFO("set high g INT setting: 0x%x : %d 0x%x : %d 0x%x : %d\n", data[0], data[1], data[2]);
 
     rc = set_register((struct bma253 *)bma253, REG_ADDR_INT_2, data[0]);
     if (rc != 0) {
@@ -1945,12 +2033,12 @@ bma253_set_slow_no_mot_int_cfg(const struct bma253 * bma253,
     data[1] = slow_no_mot_int_cfg->thresh_g / thresh_scale;
 
     rc = set_register((struct bma253 *)bma253, REG_ADDR_INT_5, data[0]);
-    BMA253_LOG(ERROR, "set sleep INT setting: 0x%x rc: %d\n", data[0], rc);
+    BMA253_LOG_ERROR("set sleep INT setting: 0x%x rc: %d\n", data[0], rc);
     if (rc != 0) {
         return rc;
     }
     rc = set_register((struct bma253 *)bma253, REG_ADDR_INT_7, data[1]);
-    BMA253_LOG(ERROR, "set sleep INT setting: 0x%x rc: %d\n", data[1], rc);
+    BMA253_LOG_ERROR("set sleep INT setting: 0x%x rc: %d\n", data[1], rc);
     if (rc != 0) {
         return rc;
     }
@@ -2480,7 +2568,7 @@ bma253_enable_notify_interrupt(struct bma253_notif_cfg *notif_cfg,
     /* Configure route */
     rc = bma253_get_int_routes(bma253, &int_routes);
     if (rc != 0) {
-        BMA253_LOG(ERROR, "error bma253_get_int_routes: %d\n", rc);
+        BMA253_LOG_ERROR("error bma253_get_int_routes: %d\n", rc);
         return rc;
     }
     cfg = &bma253->cfg;
@@ -2598,7 +2686,7 @@ bma253_enable_notify_interrupt(struct bma253_notif_cfg *notif_cfg,
         orient_int_cfg.orient_mode = cfg->orient_int_cfg.orient_mode;
         orient_int_cfg.orient_blocking = cfg->orient_int_cfg.orient_blocking;
         rc = bma253_set_orient_int_cfg(bma253, &orient_int_cfg);
-        BMA253_LOG(ERROR, "set ORIENT INT seting: %d\n", rc);
+        BMA253_LOG_ERROR("set ORIENT INT seting: %d\n", rc);
     }
 
     /*set parameter for int*/
@@ -2607,7 +2695,7 @@ bma253_enable_notify_interrupt(struct bma253_notif_cfg *notif_cfg,
         slow_no_mot_int_cfg.thresh_g = cfg->slow_no_mot_int_cfg.thresh_g;
         rc = bma253_set_slow_no_mot_int_cfg(bma253, true, &slow_no_mot_int_cfg);
         if (rc != 0) {
-            BMA253_LOG(ERROR, "set sleep INT setting: %d\n", rc);
+            BMA253_LOG_ERROR("set sleep INT setting: %d\n", rc);
         }
     }
 
@@ -2616,7 +2704,7 @@ bma253_enable_notify_interrupt(struct bma253_notif_cfg *notif_cfg,
         slope_int_cfg.thresh_g = cfg->slope_int_cfg.thresh_g;
         rc = bma253_set_slope_int_cfg(bma253, &slope_int_cfg);
         if (rc != 0) {
-            BMA253_LOG(ERROR, "set wakeup INT setting: %d\n", rc);
+            BMA253_LOG_ERROR("set wakeup INT setting: %d\n", rc);
         }
     }
 
@@ -2631,7 +2719,7 @@ bma253_enable_notify_interrupt(struct bma253_notif_cfg *notif_cfg,
         high_g_int_cfg.thresh_g = cfg->high_g_int_cfg.thresh_g;
         rc = bma253_set_high_g_int_cfg(bma253, &high_g_int_cfg);
         if (rc != 0) {
-            BMA253_LOG(ERROR, "set high g INT setting: %d\n", rc);
+            BMA253_LOG_ERROR("set high g INT setting: %d\n", rc);
         }
     }
 
@@ -2650,7 +2738,7 @@ bma253_disable_notify_interrupt(struct bma253_notif_cfg *notif_cfg,
     /* Configure route */
     rc = bma253_get_int_routes(bma253, &int_routes);
     if (rc != 0) {
-        BMA253_LOG(ERROR, "error bma253_get_int_routes: %d\n", rc);
+        BMA253_LOG_ERROR("error bma253_get_int_routes: %d\n", rc);
         return rc;
     }
     switch (notif_cfg->int_cfg)
@@ -2704,7 +2792,7 @@ bma253_disable_notify_interrupt(struct bma253_notif_cfg *notif_cfg,
     {
     case BMA253_DOUBLE_TAP_INT:
         int_enable.d_tap_int_enable = false;
-        BMA253_LOG(ERROR, "set double INT enable: %d\n", rc);
+        BMA253_LOG_ERROR("set double INT enable: %d\n", rc);
         break;
     case BMA253_SINGLE_TAP_INT:
         int_enable.s_tap_int_enable = false;
@@ -3273,7 +3361,7 @@ bma253_get_fifo_cfg(const struct bma253 * bma253,
 
     switch ((data >> 6) & 0x03) {
     case 0x03:
-        BMA253_LOG(ERROR, "unknown FIFO_CONFIG_1 reg value 0x%02X\n", data);
+        BMA253_LOG_ERROR("unknown FIFO_CONFIG_1 reg value 0x%02X\n", data);
     case 0x00:
         fifo_cfg->fifo_mode = FIFO_MODE_BYPASS;
         break;
@@ -3345,11 +3433,12 @@ bma253_set_fifo_cfg(const struct bma253 * bma253,
     return set_register((struct bma253 *)bma253, REG_ADDR_FIFO_CONFIG_1, data);
 }
 
-    int
-bma253_read_and_handle_fifo_data(
-        struct bma253           *bma253,
-        enum fifo_data          fifo_data,
-        struct sensor_read_ctx  *sdsi)
+int
+bma253_read_and_handle_fifo_data(struct bma253 *bma253,
+                                 enum fifo_data fifo_data,
+                                 struct sensor_read_ctx *sdsi,
+                                 os_time_t stop_ticks,
+                                 uint32_t time_ms)
 {
     int     rc;
     uint32_t i;
@@ -3359,6 +3448,7 @@ bma253_read_and_handle_fifo_data(
     uint8_t *ff_buf = bma253->pdd.fifo_buf;
     uint32_t size;
     uint32_t frm_size;
+    os_time_t curr_ticks;
 
     /* current fifo frame counter */
     uint8_t ff_frm_cnt = 0;
@@ -3394,7 +3484,7 @@ bma253_read_and_handle_fifo_data(
     if (0 == rc) {
         if (!ff_or) {
         } else {
-            BMA253_LOG(WARN, "fifo_overrun: 0x%x\n", ff_frm_cnt);
+            BMA253_LOG_WARN("fifo_overrun: 0x%x\n", ff_frm_cnt);
             /* force the frame counter to be the max */
             ff_frm_cnt = SPEC_MAX_FIFO_DEPTH;
         }
@@ -3420,15 +3510,21 @@ bma253_read_and_handle_fifo_data(
     }
 
     for (i = 0; i < ff_frm_cnt; i++) {
+
+        curr_ticks = os_time_get();
+        if (time_ms != 0 && OS_TIME_TICK_GT(curr_ticks, stop_ticks)) {
+            return SYS_ETIMEOUT;
+        }
+
         compute_accel_data(bma253, accel_data,
                 (frm_size >> 1),
                 ff_buf + i * frm_size,
                 accel_scale);
 
 
-        sad.sad_x = accel_data[AXIS_X].accel_g;
-        sad.sad_y = accel_data[AXIS_Y].accel_g;
-        sad.sad_z = accel_data[AXIS_Z].accel_g;
+        sad.sad_x = accel_data[AXIS_X].accel_g * STANDARD_ACCEL_GRAVITY;
+        sad.sad_y = accel_data[AXIS_Y].accel_g * STANDARD_ACCEL_GRAVITY;
+        sad.sad_z = accel_data[AXIS_Z].accel_g * STANDARD_ACCEL_GRAVITY;
         sad.sad_x_is_valid = 1;
         sad.sad_y_is_valid = 1;
         sad.sad_z_is_valid = 1;
@@ -3437,7 +3533,6 @@ bma253_read_and_handle_fifo_data(
             break;
         }
     }
-
 
     return 0;
 }
@@ -3624,8 +3719,13 @@ reset_and_recfg(struct bma253 * bma253)
         return rc;
     }
 
-    fifo_cfg.fifo_mode = FIFO_MODE_BYPASS;
-    fifo_cfg.fifo_data = FIFO_DATA_X_AND_Y_AND_Z;
+    if (cfg->read_mode == BMA253_READ_M_POLL) {
+        fifo_cfg.fifo_mode = FIFO_MODE_BYPASS;
+        fifo_cfg.fifo_data = FIFO_DATA_X_AND_Y_AND_Z;
+    } else {
+        fifo_cfg.fifo_mode = FIFO_MODE_FIFO;
+        fifo_cfg.fifo_data = FIFO_DATA_X_AND_Y_AND_Z;
+    }
 
     rc = bma253_set_fifo_cfg(bma253, &fifo_cfg);
     if (rc != 0) {
@@ -3768,13 +3868,13 @@ init_intpin(struct bma253 * bma253,
 
     for (i = 0; i < MYNEWT_VAL(SENSOR_MAX_INTERRUPTS_PINS); i++){
         pin = bma253->sensor.s_itf.si_ints[i].host_pin;
-        if (pin > 0) {
+        if (pin >= 0) {
             break;
         }
     }
 
     if (pin < 0) {
-        BMA253_LOG(ERROR, "Interrupt pin not configured\n");
+        BMA253_LOG_ERROR("Interrupt pin not configured\n");
         return SYS_EINVAL;
     }
 
@@ -3790,7 +3890,7 @@ init_intpin(struct bma253 * bma253,
     } else if (bma253->sensor.s_itf.si_ints[pdd->int_num].device_pin == 2) {
         pdd->int_route = INT_ROUTE_PIN_2;
     } else {
-        BMA253_LOG(ERROR, "Route not configured\n");
+        BMA253_LOG_ERROR("Route not configured\n");
         return SYS_EINVAL;
     }
 
@@ -4173,7 +4273,7 @@ axis_offset_compensation(const struct bma253 * bma253,
     }
 
     if (!ready) {
-        BMA253_LOG(ERROR, "offset compensation already in progress\n");
+        BMA253_LOG_ERROR("offset compensation already in progress\n");
         return SYS_ETIMEOUT;
     }
 
@@ -4198,7 +4298,7 @@ axis_offset_compensation(const struct bma253 * bma253,
     }
 
     if (count == 0) {
-        BMA253_LOG(ERROR, "offset compensation did not complete\n");
+        BMA253_LOG_ERROR("offset compensation did not complete\n");
         return SYS_ETIMEOUT;
     }
 
@@ -4317,15 +4417,15 @@ bma253_query_offsets(struct bma253 * bma253,
 
     mismatch = false;
     if (cfg->offset_x_g != val_offset_x_g) {
-        BMA253_LOG(ERROR, "X compensation offset value mismatch\n");
+        BMA253_LOG_ERROR("X compensation offset value mismatch\n");
         mismatch = true;
     }
     if (cfg->offset_y_g != val_offset_y_g) {
-        BMA253_LOG(ERROR, "Y compensation offset value mismatch\n");
+        BMA253_LOG_ERROR("Y compensation offset value mismatch\n");
         mismatch = true;
     }
     if (cfg->offset_z_g != val_offset_z_g) {
-        BMA253_LOG(ERROR, "Z compensation offset value mismatch\n");
+        BMA253_LOG_ERROR("Z compensation offset value mismatch\n");
         mismatch = true;
     }
 
@@ -4400,7 +4500,6 @@ bma253_stream_read(struct sensor *sensor,
     struct int_enable int_enable = { 0 };
     os_time_t time_ticks;
     os_time_t stop_ticks;
-    os_time_t curr_ticks;
     struct bma253_private_driver_data *pdd;
 
     struct sensor_read_ctx sdsi;
@@ -4460,54 +4559,46 @@ bma253_stream_read(struct sensor *sensor,
     sdsi.user_func = read_func;
     sdsi.user_arg = read_arg;
 
-    for (;;) {
 #if MYNEWT_VAL(BMA253_INT_ENABLE)
         wait_interrupt(&bma253->intr, pdd->int_num);
         BMA253_UNUSED_VAR(cfg);
 #else
         switch (cfg->filter_bandwidth) {
-        case BMA253_FILTER_BANDWIDTH_7_81_HZ:
-            delay_msec(128);
+            case BMA253_FILTER_BANDWIDTH_7_81_HZ:
+                delay_msec(128);
             break;
-        case BMA253_FILTER_BANDWIDTH_15_63_HZ:
-            delay_msec(64);
+            case BMA253_FILTER_BANDWIDTH_15_63_HZ:
+                delay_msec(64);
             break;
-        case BMA253_FILTER_BANDWIDTH_31_25_HZ:
-            delay_msec(32);
+            case BMA253_FILTER_BANDWIDTH_31_25_HZ:
+                delay_msec(32);
             break;
-        case BMA253_FILTER_BANDWIDTH_62_5_HZ:
-            delay_msec(16);
+            case BMA253_FILTER_BANDWIDTH_62_5_HZ:
+                delay_msec(16);
             break;
-        case BMA253_FILTER_BANDWIDTH_125_HZ:
-            delay_msec(8);
+            case BMA253_FILTER_BANDWIDTH_125_HZ:
+                delay_msec(8);
             break;
-        case BMA253_FILTER_BANDWIDTH_250_HZ:
-            delay_msec(4);
+            case BMA253_FILTER_BANDWIDTH_250_HZ:
+                delay_msec(4);
             break;
-        case BMA253_FILTER_BANDWIDTH_500_HZ:
-            delay_msec(2);
+            case BMA253_FILTER_BANDWIDTH_500_HZ:
+                delay_msec(2);
             break;
-        case BMA253_FILTER_BANDWIDTH_1000_HZ:
-            delay_msec(1);
+            case BMA253_FILTER_BANDWIDTH_1000_HZ:
+                delay_msec(1);
             break;
-        default:
-            delay_msec(1000);
+            default:
+                delay_msec(1000);
             break;
-    }
+        }
 #endif
         rc = bma253_read_and_handle_fifo_data(bma253,
-                FIFO_DATA_X_AND_Y_AND_Z,
-                &sdsi);
+                 FIFO_DATA_X_AND_Y_AND_Z,
+                 &sdsi, stop_ticks, time_ms);
         if (rc != 0) {
             goto done;
         }
-
-
-        curr_ticks = os_time_get();
-        if (time_ms != 0 && OS_TIME_TICK_GT(curr_ticks, stop_ticks)) {
-            break;
-        }
-
 
         if (bma253->hw_cfg_pending) {
             rc = bma253_exec_pending_hw_cfg(bma253);
@@ -4517,7 +4608,6 @@ bma253_stream_read(struct sensor *sensor,
             sensor_driver_handle_interrupt(&bma253->sensor);
         }
 
-    }
 
     rc = bma253_set_int_enable(bma253, &int_enable_org);
     if (rc != 0) {
@@ -4643,7 +4733,7 @@ bma253_wait_for_orient(struct bma253 * bma253,
     pdd = &bma253->pdd;
 
     if (pdd->interrupt) {
-        BMA253_LOG(ERROR, "Interrupt used\n");
+        BMA253_LOG_ERROR("Interrupt used\n");
         return SYS_EINVAL;
     }
 
@@ -4720,7 +4810,7 @@ bma253_wait_for_high_g(struct bma253 * bma253)
     pdd = &bma253->pdd;
 
     if (pdd->interrupt) {
-        BMA253_LOG(ERROR, "Interrupt used\n");
+        BMA253_LOG_ERROR("Interrupt used\n");
         return SYS_EINVAL;
     }
 
@@ -4792,7 +4882,7 @@ bma253_wait_for_low_g(struct bma253 * bma253)
     pdd = &bma253->pdd;
 
     if (pdd->interrupt) {
-        BMA253_LOG(ERROR, "Interrupt used\n");
+        BMA253_LOG_ERROR("Interrupt used\n");
         return SYS_EINVAL;
     }
 
@@ -4895,7 +4985,7 @@ bma253_wait_for_tap(struct bma253 * bma253,
     }
 
     if (pdd->interrupt) {
-        BMA253_LOG(ERROR, "Interrupt used\n");
+        BMA253_LOG_ERROR("Interrupt used\n");
         return SYS_EINVAL;
     }
 
@@ -5013,7 +5103,7 @@ sensor_driver_read(struct sensor *sensor,
     if (cfg->read_mode == BMA253_READ_M_POLL) {
         rc = bma253_poll_read(sensor, sensor_type, data_func, data_arg, timeout);
     } else {
-        fifo_cfg.fifo_mode = FIFO_MODE_STREAM;
+        fifo_cfg.fifo_mode = FIFO_MODE_FIFO;
         fifo_cfg.fifo_data = FIFO_DATA_X_AND_Y_AND_Z;
         rc = bma253_set_fifo_cfg(bma253, &fifo_cfg);
         BMA253_DRV_CHECK_RC(rc);
@@ -5088,9 +5178,9 @@ bma253_poll_read(struct sensor * sensor,
             return rc;
         }
 
-        sad.sad_x = accel_data[AXIS_X].accel_g;
-        sad.sad_y = accel_data[AXIS_Y].accel_g;
-        sad.sad_z = accel_data[AXIS_Z].accel_g;
+        sad.sad_x = accel_data[AXIS_X].accel_g * STANDARD_ACCEL_GRAVITY;
+        sad.sad_y = accel_data[AXIS_Y].accel_g * STANDARD_ACCEL_GRAVITY;
+        sad.sad_z = accel_data[AXIS_Z].accel_g * STANDARD_ACCEL_GRAVITY;
         sad.sad_x_is_valid = 1;
         sad.sad_y_is_valid = 1;
         sad.sad_z_is_valid = 1;
@@ -5351,6 +5441,7 @@ bma253_notify(struct bma253 *bma253, uint8_t src,
 
     if (src & notif_cfg->notif_src) {
         sensor_mgr_put_notify_evt(&bma253->pdd.notify_ctx, event_type);
+        bma253_inc_notif_stats(event_type);
     }
 
     return 0;
@@ -5363,7 +5454,7 @@ sensor_driver_unset_notification(struct sensor * sensor,
 {
 #if MYNEWT_VAL(BMA253_INT_ENABLE)
     struct bma253 * bma253;
-    enum bma253_power_mode request_power[3];
+    enum bma253_power_mode request_power[5];
     struct bma253_private_driver_data *pdd;
     int rc;
     struct bma253_notif_cfg *notif_cfg;
@@ -5406,6 +5497,12 @@ sensor_driver_unset_notification(struct sensor * sensor,
     pdd->registered_mask &= ~BMA253_NOTIFY_MASK;
     disable_intpin(bma253);
 
+    request_power[0] = BMA253_POWER_MODE_SUSPEND;
+    request_power[1] = BMA253_POWER_MODE_STANDBY;
+    request_power[2] = BMA253_POWER_MODE_LPM_1;
+    request_power[3] = BMA253_POWER_MODE_LPM_2;
+    request_power[4] = BMA253_POWER_MODE_NORMAL;
+
     rc = interim_power(bma253,
                        request_power,
                        sizeof(request_power) / sizeof(*request_power));
@@ -5435,7 +5532,7 @@ sensor_driver_set_notification(struct sensor * sensor,
     struct bma253_private_driver_data *pdd;
     struct bma253_notif_cfg *notif_cfg;
 
-    BMA253_LOG(ERROR, "dd_set_notify %d\n", sensor_event_type);
+    BMA253_LOG_ERROR("dd_set_notify %d\n", sensor_event_type);
 
     if ((sensor_event_type & ~(SENSOR_EVENT_TYPE_DOUBLE_TAP |
                                SENSOR_EVENT_TYPE_SINGLE_TAP |
@@ -5472,7 +5569,7 @@ if ((sensor_event_type != SENSOR_EVENT_TYPE_DOUBLE_TAP) &&
     bma253 = (struct bma253 *)SENSOR_GET_DEVICE(sensor);
     pdd = &bma253->pdd;
 
-    if (pdd->registered_mask & BMA253_NOTIFY_MASK) {
+    if (pdd->notify_ctx.snec_evtype & sensor_event_type) {
         return SYS_EBUSY;
     }
 
@@ -5496,7 +5593,7 @@ if ((sensor_event_type != SENSOR_EVENT_TYPE_DOUBLE_TAP) &&
 
 done:
     if (rc != 0) {
-        BMA253_LOG(ERROR, "error setting notification: %d\n", rc);
+        BMA253_LOG_ERROR("error setting notification: %d\n", rc);
         pdd->notify_ctx.snec_evtype &= ~sensor_event_type;
         pdd->registered_mask &= ~BMA253_NOTIFY_MASK;
         disable_intpin(bma253);
@@ -5524,15 +5621,15 @@ sensor_driver_handle_interrupt(struct sensor * sensor)
     bma253 = (struct bma253 *)SENSOR_GET_DEVICE(sensor);
     pdd = &bma253->pdd;
 
-    BMA253_LOG(DEBUG, "!!!bma253_isr\n");
+    BMA253_LOG_DEBUG("!!!bma253_isr\n");
 
     rc = bma253_get_int_status(bma253, &int_status);
     if (rc != 0) {
-        BMA253_LOG(ERROR, "Cound not read int status err=0x%02x\n", rc);
+        BMA253_LOG_ERROR("Cound not read int status err=0x%02x\n", rc);
         return rc;
     }
-    BMA253_LOG(INFO, "read int status =0x%x\n", int_status.int_status_0.reg);
-    BMA253_LOG(INFO, "read int status3 =0x%x\n", int_status.int_status_3.reg);
+    BMA253_LOG_INFO("read int status =0x%x\n", int_status.int_status_0.reg);
+    BMA253_LOG_INFO("read int status3 =0x%x\n", int_status.int_status_3.reg);
 
     if (pdd->registered_mask & BMA253_NOTIFY_MASK) {
 
@@ -5609,7 +5706,7 @@ bma253_config(struct bma253 * bma253, struct bma253_cfg * cfg)
         return rc;
     }
     if (chip_id != REG_VALUE_CHIP_ID) {
-        BMA253_LOG(ERROR, "received incorrect chip ID 0x%02X\n", chip_id);
+        BMA253_LOG_ERROR("received incorrect chip ID 0x%02X\n", chip_id);
         return SYS_EINVAL;
     }
 
@@ -5635,7 +5732,7 @@ bma253_config(struct bma253 * bma253, struct bma253_cfg * cfg)
         bma253->cfg.max_num_notif = cfg->max_num_notif;
     }
 
-    BMA253_LOG(ERROR, "bma253->cfg.max_num_notif %d\n", bma253->cfg.max_num_notif);
+    BMA253_LOG_ERROR("bma253->cfg.max_num_notif %d\n", bma253->cfg.max_num_notif);
     return 0;
 }
 
@@ -5655,6 +5752,16 @@ bma253_init(struct os_dev * dev, void * arg)
 
     bma253 = (struct bma253 *)dev;
     sensor = &bma253->sensor;
+
+    /* Initialise the stats entry */
+    rc = stats_init(
+        STATS_HDR(g_bma253stats),
+        STATS_SIZE_INIT_PARMS(g_bma253stats, STATS_SIZE_32),
+        STATS_NAME_INIT_PARMS(bma253_stat_section));
+    SYSINIT_PANIC_ASSERT(rc == 0);
+    /* Register the entry with the stats registry */
+    rc = stats_register(dev->od_name, STATS_HDR(g_bma253stats));
+    SYSINIT_PANIC_ASSERT(rc == 0);
 
     rc = sensor_init(sensor, dev);
     if (rc != 0) {
@@ -5681,22 +5788,24 @@ bma253_init(struct os_dev * dev, void * arg)
         return rc;
     }
 
-#if MYNEWT_VAL(SPI_0_MASTER) || MYNEWT_VAL(SPI_1_MASTER) && !MYNEWT_VAL(BUS_DRIVER_PRESENT)
-    static struct hal_spi_settings spi_bma253_settings = {
-        .data_order = HAL_SPI_MSB_FIRST,
-        .data_mode  = HAL_SPI_MODE0,
-        .baudrate   = 4000,
-        .word_size  = HAL_SPI_WORD_SIZE_8BIT,
-    };
+#if (MYNEWT_VAL(SPI_0_MASTER) || MYNEWT_VAL(SPI_1_MASTER)) && !MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    if (sensor->s_itf.si_type == SENSOR_ITF_SPI) {
+        static struct hal_spi_settings spi_bma253_settings = {
+            .data_order = HAL_SPI_MSB_FIRST,
+            .data_mode  = HAL_SPI_MODE0,
+            .baudrate   = 4000,
+            .word_size  = HAL_SPI_WORD_SIZE_8BIT,
+        };
 
-    rc = hal_spi_config(sensor->s_itf.si_num, &spi_bma253_settings);
-    BMA253_DRV_CHECK_RC(rc);
+        rc = hal_spi_config(sensor->s_itf.si_num, &spi_bma253_settings);
+        BMA253_DRV_CHECK_RC(rc);
 
-    rc = hal_spi_enable(sensor->s_itf.si_num);
-    BMA253_DRV_CHECK_RC(rc);
+        rc = hal_spi_enable(sensor->s_itf.si_num);
+        BMA253_DRV_CHECK_RC(rc);
 
-    rc = hal_gpio_init_out(sensor->s_itf.si_cs_pin, 1);
-    BMA253_DRV_CHECK_RC(rc);
+        rc = hal_gpio_init_out(sensor->s_itf.si_cs_pin, 1);
+        BMA253_DRV_CHECK_RC(rc);
+    }
 #endif
 
 

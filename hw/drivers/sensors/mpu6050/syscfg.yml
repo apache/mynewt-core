@@ -20,11 +20,22 @@ syscfg.defs:
     MPU6050_ITF_LOCK_TMO:
         description: 'MPU6050 interface lock timeout in milliseconds'
         value: 1000
-    MPU6050_LOG_MODULE:
-        description: 'Numeric module ID to use for MPU6050 log messages'
-        value: 115
     MPU6050_I2C_RETRIES:
         description: >
             Number of retries to use for failed I2C communication.  A retry is
             used when the MPU6050 sends an unexpected NACK.
         value: 2
+
+    ### Log settings.
+
+    MPU6050_LOG_MODULE:
+        description: 'Numeric module ID to use for MPU6050 log messages.'
+        value: 115
+    MPU6050_LOG_LVL:
+        description: 'Minimum level for the MPU6050 log.'
+        value: 1
+
+syscfg.logs:
+    MPU6050_LOG:
+        module: MYNEWT_VAL(MPU6050_LOG_MODULE)
+        level: MYNEWT_VAL(MPU6050_LOG_LVL)

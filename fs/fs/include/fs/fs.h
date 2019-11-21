@@ -79,9 +79,9 @@ int fs_dirent_is_dir(const struct fs_dirent *);
 #define FS_EACCESS      12  /* Operation prohibited by file open mode */
 #define FS_EUNINIT      13  /* File system not initialized */
 
-#define FS_NMGR_ID_FILE     0
+#define FS_MGMT_ID_FILE     0
 
-#define FS_NMGR_MAX_NAME    64
+#define FS_MGMT_MAX_NAME    64
 
 #ifdef __cplusplus
 }

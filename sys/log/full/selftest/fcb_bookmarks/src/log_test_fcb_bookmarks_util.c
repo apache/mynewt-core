@@ -38,7 +38,7 @@ static int ltfbu_num_entry_idxs;
 static struct fcb_log ltfbu_fcb_log;
 static struct log ltfbu_log;
 
-static struct fcb_log_bmark ltfbu_bmarks[LTFBU_MAX_BMARKS];
+static struct log_fcb_bmark ltfbu_bmarks[LTFBU_MAX_BMARKS];
 
 static struct flash_area ltfbu_fcb_areas[] = {
     [0] = {
@@ -67,7 +67,7 @@ ltfbu_max_entries(void)
     crc_size = 1;
 
     /* "+ 1" for CRC. */
-    entry_size = sizeof (struct log_entry_hdr) + ltfbu_cfg.body_len +
+    entry_size = LOG_BASE_ENTRY_HDR_SIZE + ltfbu_cfg.body_len +
                  len_size + crc_size;
     entry_space = LTFBU_SECTOR_SIZE - 8;
 
@@ -99,7 +99,7 @@ ltfbu_expected_idxs(uint32_t start_idx)
         first++;
         count--;
     }
-    
+
     return (struct ltfbu_slice) {
         .idxs = &ltfbu_entry_idxs[first],
         .count = count,
@@ -160,7 +160,7 @@ struct ltfbu_walk_arg {
 
 static int
 ltfbu_verify_log_walk(struct log *log, struct log_offset *log_offset,
-                      const struct log_entry_hdr *hdr, void *dptr,
+                      const struct log_entry_hdr *hdr, const void *dptr,
                       uint16_t len)
 {
     struct ltfbu_walk_arg *arg;
@@ -231,7 +231,7 @@ ltfbu_init(const struct ltfbu_cfg *cfg)
     TEST_ASSERT_FATAL(rc == 0);
 
     if (cfg->bmark_count > 0) {
-        fcb_log_init_bmarks(&ltfbu_fcb_log, ltfbu_bmarks, cfg->bmark_count);
+        log_fcb_init_bmarks(&ltfbu_fcb_log, ltfbu_bmarks, cfg->bmark_count);
     }
 
     log_register("log", &ltfbu_log, &log_fcb_handler, &ltfbu_fcb_log,

@@ -44,12 +44,7 @@ hal_system_reset(void)
 #endif
 
     while (1) {
-        if (hal_debugger_connected()) {
-            /*
-             * If debugger is attached, breakpoint here.
-             */
-            asm("BRK_S");
-        }
+        HAL_DEBUG_BREAK();
 /* TODO: Reset system! */
         //NVIC_SystemReset();
     }

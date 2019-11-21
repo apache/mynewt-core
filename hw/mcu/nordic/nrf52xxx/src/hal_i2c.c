@@ -216,19 +216,23 @@ hal_i2c_clear_bus(int scl_pin, int sda_pin)
 {
     int i;
     NRF_GPIO_Type *scl_port, *sda_port;
+    int scl_pin_ix;
+    int sda_pin_ix;
     /* Resolve which GPIO port these pins belong to */
     scl_port = HAL_GPIO_PORT(scl_pin);
     sda_port = HAL_GPIO_PORT(sda_pin);
+    scl_pin_ix = HAL_GPIO_INDEX(scl_pin);
+    sda_pin_ix = HAL_GPIO_INDEX(sda_pin);
 
     /* Input connected, standard-low disconnected-high, pull-ups */
-    scl_port->PIN_CNF[scl_pin] = NRF52_SCL_PIN_CONF;
-    sda_port->PIN_CNF[sda_pin] = NRF52_SDA_PIN_CONF;
+    scl_port->PIN_CNF[scl_pin_ix] = NRF52_SCL_PIN_CONF;
+    sda_port->PIN_CNF[sda_pin_ix] = NRF52_SDA_PIN_CONF;
 
     hal_gpio_write(scl_pin, 1);
     hal_gpio_write(sda_pin, 1);
 
-    scl_port->PIN_CNF[scl_pin] = NRF52_SCL_PIN_CONF_CLR;
-    sda_port->PIN_CNF[sda_pin] = NRF52_SDA_PIN_CONF_CLR;
+    scl_port->PIN_CNF[scl_pin_ix] = NRF52_SCL_PIN_CONF_CLR;
+    sda_port->PIN_CNF[sda_pin_ix] = NRF52_SDA_PIN_CONF_CLR;
 
     hal_i2c_delay_us(4);
 
@@ -258,8 +262,8 @@ hal_i2c_clear_bus(int scl_pin, int sda_pin)
 
 ret:
     /* Restore GPIO config */
-    scl_port->PIN_CNF[scl_pin] = NRF52_SCL_PIN_CONF;
-    sda_port->PIN_CNF[sda_pin] = NRF52_SDA_PIN_CONF;
+    scl_port->PIN_CNF[scl_pin_ix] = NRF52_SCL_PIN_CONF;
+    sda_port->PIN_CNF[sda_pin_ix] = NRF52_SDA_PIN_CONF;
 }
 
 int

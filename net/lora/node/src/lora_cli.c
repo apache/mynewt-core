@@ -18,12 +18,15 @@
  */
 
 #include "os/mynewt.h"
+
+#if MYNEWT_VAL(LORA_NODE_CLI) || MYNEWT_VAL(LORA_NODE_LOG_CLI)
 #include <inttypes.h>
 #include <string.h>
 #include "shell/shell.h"
 #include "console/console.h"
 #include "parse/parse.h"
 #include "node/lora_priv.h"
+#endif
 
 #if MYNEWT_VAL(LORA_NODE_CLI)
 
@@ -554,15 +557,6 @@ err:
     return rc;
 }
 
-void
-lora_cli_init(void)
-{
-    int rc;
-
-    rc = shell_cmd_register(&lora_cli_cmd);
-    SYSINIT_PANIC_ASSERT_MSG(rc == 0, "Failed to register lora CLI command");
-}
-
 #endif /* MYNEWT_VAL(LORA_NODE_CLI) */
 
 #if MYNEWT_VAL(LORA_NODE_LOG_CLI) == 1
@@ -710,12 +704,21 @@ next_entry:
     return 0;
 }
 
+#endif /* MYNEWT_VAL(LORA_NODE_LOG_CLI) */
 
 void
 lora_cli_init(void)
 {
     int rc;
+
+    (void)rc;
+#if MYNEWT_VAL(LORA_NODE_CLI)
+    rc = shell_cmd_register(&lora_cli_cmd);
+    SYSINIT_PANIC_ASSERT_MSG(rc == 0, "Failed to register lora CLI command");
+#endif
+#if MYNEWT_VAL(LORA_NODE_LOG_CLI)
     rc = shell_cmd_register(&lora_node_log_cmd);
     assert(rc == 0);
-}
 #endif /* MYNEWT_VAL(LORA_NODE_LOG_CLI) */
+}
+

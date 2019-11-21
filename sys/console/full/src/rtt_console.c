@@ -106,15 +106,8 @@ console_out_nolock(int character)
 {
     char c = (char)character;
 
-    if (g_console_silence) {
-        return c;
-    }
-
     if ('\n' == c) {
         rtt_console_write_ch('\r');
-        console_is_midline = 0;
-    } else {
-        console_is_midline = 1;
     }
 
     rtt_console_write_ch(c);
@@ -152,7 +145,7 @@ rtt_console_poll_func(void *arg)
         while (key >= 0) {
             ret = console_handle_char((char)key);
             if (ret < 0) {
-                return;
+                break;
             }
             key = SEGGER_RTT_GetKey();
         }

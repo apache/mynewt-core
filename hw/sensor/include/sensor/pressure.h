@@ -35,7 +35,7 @@ struct sensor_press_data {
 
     /* Validity */
     uint8_t spd_press_is_valid:1;
-} __attribute__((packed));
+};
 
 #ifdef __cplusplus
 }

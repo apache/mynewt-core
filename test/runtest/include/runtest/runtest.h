@@ -25,8 +25,8 @@
 extern "C" {
 #endif
 
-#define RUNTEST_NMGR_OP_TEST    0
-#define RUNTEST_NMGR_OP_LIST    1
+#define RUNTEST_SMP_OP_TEST    0
+#define RUNTEST_SMP_OP_LIST    1
 
 /* Define the prefix to to add to all test log messages.  If the user's syscfg
  * specifies the `RUNTEST_PREFIX` setting, use that value.  Otherwise, generate

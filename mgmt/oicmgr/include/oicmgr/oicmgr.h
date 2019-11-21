@@ -23,6 +23,12 @@
 #include "oic/oc_ri.h"
 #include "mgmt/mgmt.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+extern const struct mgmt_streamer_cfg g_omp_cbor_cfg;
+
 /**
  * Process an oicmgr request.  On completion, an oicmgr response is sent back
  * to the client.
@@ -40,12 +46,26 @@ int omgr_oic_process_put(oc_request_t *req, oc_interface_mask_t mask);
  * Parses an oicmgr request and copies out the NMP header.
  *
  * @param req                   The oicmgr request to parse.
- * @param out_hdr               On success, the extracted NMP header gets
+ * @param out_hdr               On success, the extracted MGMT header gets
  *                                  written here.
  *
  * @return                      0 on success;
  *                              MGMT_ERR_EINVAL on parse failure.
  */
-int omgr_extract_req_hdr(oc_request_t *req, struct nmgr_hdr *out_hdr);
+int omgr_extract_req_hdr(oc_request_t *req, struct mgmt_hdr *out_hdr);
+
+/**
+ * Processes a single OMP request and sends the corresponding response(s).
+ *
+ * @param req   Ptr to the OIC request
+ * @param mask  Interface mask
+ */
+void omgr_process_request(oc_request_t *req, oc_interface_mask_t mask);
+
+
+int omgr_pkg_init(void);
+#ifdef __cplusplus
+}
+#endif
 
 #endif

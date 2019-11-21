@@ -27,16 +27,28 @@
 #include "mcu/cmsis_nvic.h"
 #include "hal/hal_gpio.h"
 #include "bsp/bsp.h"
-#include "DA1469xAB.h"
 
 /* GPIO interrupts */
-#define HAL_GPIO_MAX_IRQ        (4)
+#define HAL_GPIO_MAX_IRQ        MYNEWT_VAL(MCU_GPIO_MAX_IRQ)
 
 #define GPIO_REG(name) ((__IO uint32_t *)(GPIO_BASE + offsetof(GPIO_Type, name)))
 #define WAKEUP_REG(name) ((__IO uint32_t *)(WAKEUP_BASE + offsetof(WAKEUP_Type, name)))
 #define CRG_TOP_REG(name) ((__IO uint32_t *)(CRG_TOP_BASE + offsetof(CRG_TOP_Type, name)))
 
-#define GPIO_PORT(pin) (((unsigned)(pin)) >> 5)
+#ifndef MCU_GPIO_PORT0_PIN_COUNT
+#define MCU_GPIO_PORT0_PIN_COUNT 32
+#endif
+
+#if (MCU_GPIO_PORT0_PIN_COUNT) == 32
+#define GPIO_PORT(pin)          (((unsigned)(pin)) >> 5U)
+#define GPIO_PORT_PIN(pin)      (((unsigned)(pin)) & 31U)
+#else
+#define GPIO_PORT(pin)          (((unsigned)(pin)) < MCU_GPIO_PORT0_PIN_COUNT ? 0 : 1)
+#define GPIO_PORT_PIN(pin)      ((unsigned)(pin) < MCU_GPIO_PORT0_PIN_COUNT ? \
+                                (pin) : (pin) - MCU_GPIO_PORT0_PIN_COUNT)
+#endif
+
+#define GPIO_PIN_BIT(pin)       (1 << GPIO_PORT_PIN(pin))
 
 #define GPIO_PIN_DATA_REG_ADDR(pin)        (GPIO_REG(P0_DATA_REG) + GPIO_PORT(pin))
 #define GPIO_PIN_DATA_REG(pin)             *GPIO_PIN_DATA_REG_ADDR(pin)
@@ -56,12 +68,12 @@
 #define WKUP_SELECT_PX_REG_ADDR(pin)    (WAKEUP_REG(WKUP_SELECT_P0_REG) + GPIO_PORT(pin))
 #define WKUP_SELECT_PX_REG(pin)         *(WKUP_SELECT_PX_REG_ADDR(pin))
 #define WKUP_POL_PX_REG_ADDR(pin)       (WAKEUP_REG(WKUP_POL_P0_REG) + GPIO_PORT(pin))
-#define WKUP_POL_PX_SET_FALLING(pin)    do { *(WKUP_POL_PX_REG_ADDR(pin)) |= (1 << ((pin) & 31)); } while (0)
-#define WKUP_POL_PX_SET_RISING(pin)     do { *(WKUP_POL_PX_REG_ADDR(pin)) &= ~(1 << ((pin) & 31)); } while (0)
+#define WKUP_POL_PX_SET_FALLING(pin)    do { *(WKUP_POL_PX_REG_ADDR(pin)) |= GPIO_PIN_BIT(pin); } while (0)
+#define WKUP_POL_PX_SET_RISING(pin)     do { *(WKUP_POL_PX_REG_ADDR(pin)) &= ~GPIO_PIN_BIT(pin); } while (0)
 #define WKUP_STAT_PX_REG_ADDR(pin)      (WAKEUP_REG(WKUP_STATUS_P0_REG) + GPIO_PORT(pin))
-#define WKUP_STAT(pin)                  ((*(WKUP_STAT_PX_REG_ADDR(pin)) >> ((pin) & 31)) & 1)
+#define WKUP_STAT(pin)                  ((*(WKUP_STAT_PX_REG_ADDR(pin)) >> GPIO_PORT_PIN(pin)) & 1)
 #define WKUP_CLEAR_PX_REG_ADDR(pin)     (WAKEUP_REG(WKUP_CLEAR_P0_REG) + GPIO_PORT(pin))
-#define WKUP_CLEAR_PX(pin)              do { (*(WKUP_CLEAR_PX_REG_ADDR(pin)) = (1 << ((pin) & 31))); } while (0)
+#define WKUP_CLEAR_PX(pin)              do { (*(WKUP_CLEAR_PX_REG_ADDR(pin)) = GPIO_PIN_BIT(pin)); } while (0)
 #define WKUP_SEL_GPIO_PX_REG_ADDR(pin)  (WAKEUP_REG(WKUP_SEL_GPIO_P0_REG) + GPIO_PORT(pin))
 #define WKUP_SEL_GPIO_PX_REG(pin)       *(WKUP_SEL_GPIO_PX_REG_ADDR(pin))
 
@@ -74,10 +86,11 @@ struct hal_gpio_irq {
 
 static struct hal_gpio_irq hal_gpio_irqs[HAL_GPIO_MAX_IRQ];
 
-static uint32_t hal_gpio_latch_state[2];
-
+#if MYNEWT_VAL(MCU_GPIO_RETAINABLE_NUM) >= 0
+static uint32_t g_mcu_gpio_latch_state[2];
 static uint8_t g_mcu_gpio_retained_num;
 static struct da1469x_retreg g_mcu_gpio_retained[MYNEWT_VAL(MCU_GPIO_RETAINABLE_NUM)];
+#endif
 
 /*
  * We assume that any latched pin has default configuration, i.e. was either
@@ -97,6 +110,7 @@ static struct da1469x_retreg g_mcu_gpio_retained[MYNEWT_VAL(MCU_GPIO_RETAINABLE_
  * calling mcu_gpio_latch().
  */
 
+#if MYNEWT_VAL(MCU_GPIO_RETAINABLE_NUM) >= 0
 static void
 mcu_gpio_retained_add_port(uint32_t latch_val, volatile uint32_t *base_reg)
 {
@@ -117,14 +131,17 @@ mcu_gpio_retained_add_port(uint32_t latch_val, volatile uint32_t *base_reg)
         retreg++;
     }
 }
+#endif
 
 static void
 mcu_gpio_retained_refresh(void)
 {
+#if MYNEWT_VAL(MCU_GPIO_RETAINABLE_NUM) >= 0
     g_mcu_gpio_retained_num = 0;
 
     mcu_gpio_retained_add_port(CRG_TOP->P0_PAD_LATCH_REG, &GPIO->P0_00_MODE_REG);
     mcu_gpio_retained_add_port(CRG_TOP->P1_PAD_LATCH_REG, &GPIO->P1_00_MODE_REG);
+#endif
 }
 
 static inline void
@@ -143,7 +160,7 @@ mcu_gpio_unlatch(int pin)
 {
     __HAL_ASSERT_CRITICAL();
 
-    *GPIO_PIN_UNLATCH_ADDR(pin) = 1 << ((pin) & 31);
+    *GPIO_PIN_UNLATCH_ADDR(pin) = GPIO_PIN_BIT(pin);
     mcu_gpio_retained_refresh();
 }
 
@@ -158,7 +175,7 @@ mcu_gpio_latch(int pin)
 
     latch_pre = CRG_TOP->P0_PAD_LATCH_REG | CRG_TOP->P1_PAD_LATCH_REG;
 
-    *GPIO_PIN_LATCH_ADDR(pin) = 1 << ((pin) & 31);
+    *GPIO_PIN_LATCH_ADDR(pin) = GPIO_PIN_BIT(pin);
     mcu_gpio_retained_refresh();
 
     latch_post = CRG_TOP->P0_PAD_LATCH_REG | CRG_TOP->P1_PAD_LATCH_REG;
@@ -217,9 +234,9 @@ hal_gpio_init_out(int pin, int val)
     GPIO_PIN_MODE_REG(pin) = MCU_GPIO_MODE_OUTPUT;
 
     if (val) {
-        GPIO_PIN_SET_DATA_REG(pin) = (1 << (pin & 31));
+        GPIO_PIN_SET_DATA_REG(pin) = GPIO_PIN_BIT(pin);
     } else {
-        GPIO_PIN_RESET_DATA_REG(pin) = (1 << (pin & 31));
+        GPIO_PIN_RESET_DATA_REG(pin) = GPIO_PIN_BIT(pin);
     }
 
     mcu_gpio_unlatch(pin);
@@ -234,7 +251,7 @@ hal_gpio_deinit(int pin)
 {
     /* Reset mode to default value and latch pin */
     GPIO_PIN_MODE_REG(pin) = 0x200;
-    GPIO_PIN_RESET_DATA_REG(pin) = 1 << (pin & 31);
+    GPIO_PIN_RESET_DATA_REG(pin) = GPIO_PIN_BIT(pin);
 
     mcu_gpio_latch(pin);
 
@@ -245,16 +262,16 @@ void
 hal_gpio_write(int pin, int val)
 {
     if (val) {
-        GPIO_PIN_SET_DATA_REG(pin) = 1 << (pin & 31);
+        GPIO_PIN_SET_DATA_REG(pin) = GPIO_PIN_BIT(pin);
     } else {
-        GPIO_PIN_RESET_DATA_REG(pin) = 1 << (pin & 31);
+        GPIO_PIN_RESET_DATA_REG(pin) = GPIO_PIN_BIT(pin);
     }
 }
 
 int
 hal_gpio_read(int pin)
 {
-    return (GPIO_PIN_DATA_REG(pin) >> (pin & 31)) & 1;
+    return (GPIO_PIN_DATA_REG(pin) >> GPIO_PORT_PIN(pin)) & 1;
 }
 
 int
@@ -346,6 +363,8 @@ hal_gpio_irq_init(int pin, hal_gpio_irq_handler_t handler, void *arg,
     hal_gpio_irq_setup();
 
     i = hal_gpio_find_empty_slot();
+    /* If assert failed increase syscfg value MCU_GPIO_MAX_IRQ */
+    assert(i >= 0);
     if (i < 0) {
         return -1;
     }
@@ -391,13 +410,13 @@ hal_gpio_irq_release(int pin)
 void
 hal_gpio_irq_enable(int pin)
 {
-    WKUP_SEL_GPIO_PX_REG(pin) |= (1 << (pin & 31));
+    WKUP_SEL_GPIO_PX_REG(pin) |= GPIO_PIN_BIT(pin);
 }
 
 void
 hal_gpio_irq_disable(int pin)
 {
-    WKUP_SEL_GPIO_PX_REG(pin) &= ~(1 << (pin & 31));
+    WKUP_SEL_GPIO_PX_REG(pin) &= ~GPIO_PIN_BIT(pin);
     WKUP_CLEAR_PX(pin);
 }
 
@@ -421,12 +440,13 @@ mcu_gpio_set_pin_function(int pin, int mode, mcu_gpio_func func)
 void
 mcu_gpio_enter_sleep(void)
 {
+#if MYNEWT_VAL(MCU_GPIO_RETAINABLE_NUM) >= 0
     if (g_mcu_gpio_retained_num == 0) {
         return;
     }
 
-    hal_gpio_latch_state[0] = CRG_TOP->P0_PAD_LATCH_REG;
-    hal_gpio_latch_state[1] = CRG_TOP->P1_PAD_LATCH_REG;
+    g_mcu_gpio_latch_state[0] = CRG_TOP->P0_PAD_LATCH_REG;
+    g_mcu_gpio_latch_state[1] = CRG_TOP->P1_PAD_LATCH_REG;
 
     da1469x_retreg_update(g_mcu_gpio_retained, g_mcu_gpio_retained_num);
 
@@ -434,11 +454,13 @@ mcu_gpio_enter_sleep(void)
     CRG_TOP->P1_RESET_PAD_LATCH_REG = CRG_TOP_P1_PAD_LATCH_REG_P1_LATCH_EN_Msk;
 
     da1469x_pd_release(MCU_PD_DOMAIN_COM);
+#endif
 }
 
 void
 mcu_gpio_exit_sleep(void)
 {
+#if MYNEWT_VAL(MCU_GPIO_RETAINABLE_NUM) >= 0
     if (g_mcu_gpio_retained_num == 0) {
         return;
     }
@@ -451,6 +473,7 @@ mcu_gpio_exit_sleep(void)
     GPIO->P0_DATA_REG = GPIO->P0_DATA_REG;
     GPIO->P1_DATA_REG = GPIO->P1_DATA_REG;
 
-    CRG_TOP->P0_PAD_LATCH_REG = hal_gpio_latch_state[0];
-    CRG_TOP->P1_PAD_LATCH_REG = hal_gpio_latch_state[1];
+    CRG_TOP->P0_PAD_LATCH_REG = g_mcu_gpio_latch_state[0];
+    CRG_TOP->P1_PAD_LATCH_REG = g_mcu_gpio_latch_state[1];
+#endif
 }

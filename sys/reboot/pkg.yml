@@ -27,13 +27,18 @@ pkg.keywords:
 
 pkg.deps:
     - "@apache-mynewt-core/kernel/os"
-    - "@apache-mynewt-core/mgmt/imgmgr"
     - "@apache-mynewt-core/sys/config"
     - "@apache-mynewt-core/sys/flash_map"
     - "@apache-mynewt-core/sys/log/modlog"
+    - "@apache-mynewt-core/encoding/tinycbor"
+    - "@apache-mynewt-mcumgr/cmd/img_mgmt"
+    - "@mcuboot/boot/bootutil"
 
-pkg.deps.REBOOT_LOG_FCB:
+pkg.deps.(REBOOT_LOG_FCB && LOG_FCB):
     - "@apache-mynewt-core/fs/fcb"
+
+pkg.deps.(REBOOT_LOG_FCB && LOG_FCB2):
+    - "@apache-mynewt-core/fs/fcb2"
 
 pkg.init:
     log_reboot_pkg_init: 'MYNEWT_VAL(REBOOT_SYSINIT_STAGE)'

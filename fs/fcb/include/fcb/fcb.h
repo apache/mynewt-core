@@ -30,9 +30,11 @@ extern "C" {
 
 #include <inttypes.h>
 #include <limits.h>
+#include <assert.h>
 
-#include "os/mynewt.h"
-#include "flash_map/flash_map.h"
+#include <syscfg/syscfg.h>
+#include <os/os_mutex.h>
+#include <flash_map/flash_map.h>
 
 #define FCB_MAX_LEN	(CHAR_MAX | CHAR_MAX << 7) /* Max length of element */
 
@@ -66,57 +68,18 @@ struct fcb {
 /**
  * Error codes.
  */
-#define FCB_OK		0
-#define FCB_ERR_ARGS	-1
-#define FCB_ERR_FLASH	-2
-#define FCB_ERR_NOVAR   -3
-#define FCB_ERR_NOSPACE	-4
-#define FCB_ERR_NOMEM	-5
-#define FCB_ERR_CRC	-6
-#define FCB_ERR_MAGIC   -7
-#define FCB_ERR_VERSION -8
+#define FCB_OK             0
+#define FCB_ERR_ARGS      -1
+#define FCB_ERR_FLASH     -2
+#define FCB_ERR_NOVAR     -3
+#define FCB_ERR_NOSPACE   -4
+#define FCB_ERR_NOMEM     -5
+#define FCB_ERR_CRC       -6
+#define FCB_ERR_MAGIC     -7
+#define FCB_ERR_VERSION   -8
+#define FCB_ERR_NEXT_SECT -9
 
 int fcb_init(struct fcb *fcb);
-
-/** An individual fcb log bookmark. */
-struct fcb_log_bmark {
-    /* FCB entry that the bookmark points to. */
-    struct fcb_entry flb_entry;
-
-    /* The index of the log entry that the FCB entry contains. */
-    uint32_t flb_index;
-};
-
-/** A set of fcb log bookmarks. */
-struct fcb_log_bset {
-    /** Array of bookmarks. */
-    struct fcb_log_bmark *fls_bmarks;
-
-    /** The maximum number of bookmarks. */
-    int fls_cap;
-
-    /** The number of currently usable bookmarks. */
-    int fls_size;
-
-    /** The index where the next bookmark will get written. */
-    int fls_next;
-};
-
-/**
- * fcb_log is needed as the number of entries in a log
- */
-struct fcb_log {
-    struct fcb fl_fcb;
-    uint8_t fl_entries;
-
-#if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
-    /* Internal - tracking storage use */
-    uint32_t fl_watermark_off;
-#endif
-#if MYNEWT_VAL(LOG_FCB_BOOKMARKS)
-    struct fcb_log_bset fl_bset;
-#endif
-};
 
 /**
  * fcb_append() appends an entry to circular buffer. When writing the
@@ -128,7 +91,7 @@ int fcb_append(struct fcb *, uint16_t len, struct fcb_entry *loc);
 int fcb_append_finish(struct fcb *, struct fcb_entry *append_loc);
 
 /**
- * Walk over all log entries in FCB, or entries in a given flash_area.
+ * Walk over all entries in FCB.
  * cb gets called for every entry. If cb wants to stop the walk, it should
  * return non-zero value.
  *
@@ -177,65 +140,6 @@ int fcb_clear(struct fcb *fcb);
  */
 int fcb_area_info(struct fcb *fcb, struct flash_area *fa, int *elemsp,
                   int *bytesp);
-
-
-#if MYNEWT_VAL(LOG_FCB_BOOKMARKS)
-
-/**
- * Bookmarks are an optimization to speed up lookups in FCB-backed logs.  The
- * concept is simple: maintain a set of flash area+offset pairs corresponding
- * to recently found log entries.  When we perform a log lookup, the walk
- * starts from the bookmark closest to our desired entry rather than from the
- * beginning of the log.
- *
- * Bookmarks are stored in a circular buffer in the fcb_log object.  Each time
- * the log is walked, the starting point of the walk is added to the set of
- * bookmarks. 
- *
- * FCB rotation invalidates all bookmarks.  It is up to the client code to
- * clear a log's bookmarks whenever rotation occurs.
- */
-
-/**
- * @brief Configures an fcb_log to use the specified buffer for bookmarks.
- *
- * @param fcb_log               The log to configure.
- * @param bmarks                The buffer to use for bookmarks.
- * @param bmark_count           The bookmark capacity of the supplied buffer.
- */
-void fcb_log_init_bmarks(struct fcb_log *fcb_log,
-                         struct fcb_log_bmark *buf, int bmark_count);
-
-/**
- * @brief Erases all bookmarks from the supplied fcb_log.
- *
- * @param fcb_log               The fcb_log to clear.
- */
-void fcb_log_clear_bmarks(struct fcb_log *fcb_log);
-
-/**
- * @brief Searches an fcb_log for the closest bookmark that comes before or at
- * the specified index.
- *
- * @param fcb_log               The log to search.
- * @param index                 The index to look for.
- *
- * @return                      The closest bookmark on success;
- *                              NULL if the log has no applicable bookmarks.
- */
-const struct fcb_log_bmark *
-fcb_log_closest_bmark(const struct fcb_log *fcb_log, uint32_t index);
-
-/**
- * Inserts a bookmark into the provided log.
- *
- * @param fcb_log               The log to insert a bookmark into.
- * @param entry                 The entry the bookmark should point to.
- * @param index                 The log entry index of the bookmark.
- */
-void fcb_log_add_bmark(struct fcb_log *fcb_log, const struct fcb_entry *entry,
-                       uint32_t index);
-#endif
 
 #ifdef __cplusplus
 }

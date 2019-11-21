@@ -25,15 +25,18 @@
 #include "console/console.h"
 
 int
-console_out(int c)
+console_out_nolock(int c)
 {
-    if (g_console_silence) {
-        return c;
-    }
-
-    console_is_midline = (c != '\n');
-
     return ble_monitor_out(c);
+}
+
+void
+console_rx_restart(void)
+{
+    /*
+     * Function required by console
+     * TODO: Check if actual body is needed.
+     */
 }
 
 int

@@ -39,7 +39,7 @@ struct sensor_euler_data {
     uint8_t sed_h_is_valid:1;
     uint8_t sed_r_is_valid:1;
     uint8_t sed_p_is_valid:1;
-} __attribute__((packed));
+};
 
 #ifdef __cplusplus
 }

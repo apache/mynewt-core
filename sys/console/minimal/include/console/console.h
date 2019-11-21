@@ -128,6 +128,8 @@ extern int console_out(int character);
 int console_lock(int timeout);
 int console_unlock(void);
 
+void console_prompt_set(const char *prompt, const char *line);
+
 #ifdef __cplusplus
 }
 #endif

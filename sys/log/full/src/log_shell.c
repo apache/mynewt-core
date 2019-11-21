@@ -39,117 +39,12 @@
 #if MYNEWT_VAL(LOG_VERSION) > 2
 #include "tinycbor/cbor.h"
 #include "tinycbor/compilersupport_p.h"
-#endif
-
-#if MYNEWT_VAL(LOG_VERSION) > 2
-struct log_shell_cbor_reader {
-    struct cbor_decoder_reader r;
-    struct log *log;
-    void *dptr;
-};
-
-static uint8_t
-log_shell_cbor_reader_get8(struct cbor_decoder_reader *d, int offset)
-{
-    struct log_shell_cbor_reader *cbr = (struct log_shell_cbor_reader *)d;
-    uint8_t val = 0;
-
-    (void)log_read_body(cbr->log, cbr->dptr, &val, offset, sizeof(val));
-
-    return val;
-}
-
-static uint16_t
-log_shell_cbor_reader_get16(struct cbor_decoder_reader *d, int offset)
-{
-    struct log_shell_cbor_reader *cbr = (struct log_shell_cbor_reader *)d;
-    uint16_t val = 0;
-
-    (void)log_read_body(cbr->log, cbr->dptr, &val, offset, sizeof(val));
-
-    return cbor_ntohs(val);
-}
-
-static uint32_t
-log_shell_cbor_reader_get32(struct cbor_decoder_reader *d, int offset)
-{
-    struct log_shell_cbor_reader *cbr = (struct log_shell_cbor_reader *)d;
-    uint32_t val = 0;
-
-    (void)log_read_body(cbr->log, cbr->dptr, &val, offset, sizeof(val));
-
-    return cbor_ntohl(val);
-}
-
-static uint64_t
-log_shell_cbor_reader_get64(struct cbor_decoder_reader *d, int offset)
-{
-    struct log_shell_cbor_reader *cbr = (struct log_shell_cbor_reader *)d;
-    uint64_t val = 0;
-
-    (void)log_read_body(cbr->log, cbr->dptr, &val, offset, sizeof(val));
-
-    return cbor_ntohll(val);
-}
-
-static uintptr_t
-log_shell_cbor_reader_cmp(struct cbor_decoder_reader *d, char *dst,
-                          int src_offset, size_t len)
-{
-    struct log_shell_cbor_reader *cbr = (struct log_shell_cbor_reader *)d;
-    uint8_t buf[16];
-    int chunk_len;
-    int offset;
-    int rc;
-
-    offset = 0;
-
-    while (offset < len) {
-        chunk_len = min(len - offset, sizeof(buf));
-
-        log_read_body(cbr->log, cbr->dptr, buf, src_offset + offset, chunk_len);
-
-        rc = memcmp(&dst[offset], buf, chunk_len);
-        if (rc) {
-            return rc;
-        }
-
-        offset += chunk_len;
-    }
-
-    return 0;
-}
-
-static uintptr_t
-log_shell_cbor_reader_cpy(struct cbor_decoder_reader *d, char *dst,
-                          int src_offset, size_t len)
-{
-    struct log_shell_cbor_reader *cbr = (struct log_shell_cbor_reader *)d;
-
-    log_read_body(cbr->log, cbr->dptr, dst, src_offset, len);
-
-    return (uintptr_t)dst;
-}
-
-static void
-log_shell_cbor_reader_init(struct log_shell_cbor_reader *cbr, struct log *log,
-                           void *dptr, uint16_t len)
-{
-    cbr->r.get8 = &log_shell_cbor_reader_get8;
-    cbr->r.get16 = &log_shell_cbor_reader_get16;
-    cbr->r.get32 = &log_shell_cbor_reader_get32;
-    cbr->r.get64 = &log_shell_cbor_reader_get64;
-    cbr->r.cmp = &log_shell_cbor_reader_cmp;
-    cbr->r.cpy = &log_shell_cbor_reader_cpy;
-    cbr->r.message_size = len;
-    cbr->log = log;
-    cbr->dptr = dptr;
-}
+#include "log_cbor_reader/log_cbor_reader.h"
 #endif
 
 static int
 shell_log_dump_entry(struct log *log, struct log_offset *log_offset,
-                     const struct log_entry_hdr *ueh, void *dptr, uint16_t len)
+                     const struct log_entry_hdr *ueh, const void *dptr, uint16_t len)
 {
     char data[128 + 1];
     int dlen;
@@ -157,11 +52,12 @@ shell_log_dump_entry(struct log *log, struct log_offset *log_offset,
 #if MYNEWT_VAL(LOG_VERSION) > 2
     struct CborParser cbor_parser;
     struct CborValue cbor_value;
-    struct log_shell_cbor_reader cbor_reader;
+    struct log_cbor_reader cbor_reader;
     char tmp[32 + 1];
     int off;
     int blksz;
     bool read_data = ueh->ue_etype != LOG_ETYPE_CBOR;
+    bool read_hash = ueh->ue_flags & LOG_FLAGS_IMG_HASH;
 #else
     bool read_data = true;
 #endif
@@ -176,7 +72,13 @@ shell_log_dump_entry(struct log *log, struct log_offset *log_offset,
         data[rc] = 0;
     }
 
-    console_printf("[%llu] ", ueh->ue_ts);
+#if MYNEWT_VAL(LOG_VERSION) > 2
+    if (read_hash) {
+        console_printf("[ih=0x%x%x%x%x]", ueh->ue_imghash[0], ueh->ue_imghash[1],
+                       ueh->ue_imghash[2], ueh->ue_imghash[3]);
+    }
+    console_printf(" [%llu] ", ueh->ue_ts);
+#endif
 
 #if MYNEWT_VAL(LOG_VERSION) <= 2
     console_write(data, strlen(data));
@@ -186,7 +88,7 @@ shell_log_dump_entry(struct log *log, struct log_offset *log_offset,
         console_write(data, strlen(data));
         break;
     case LOG_ETYPE_CBOR:
-        log_shell_cbor_reader_init(&cbor_reader, log, dptr, len);
+        log_cbor_reader_init(&cbor_reader, log, dptr, len);
         cbor_parser_init(&cbor_reader.r, 0, &cbor_parser, &cbor_value);
         cbor_value_to_pretty(stdout, &cbor_value);
         break;

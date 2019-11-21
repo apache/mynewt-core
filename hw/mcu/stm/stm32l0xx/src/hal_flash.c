@@ -24,23 +24,12 @@
 #include "hal/hal_flash_int.h"
 #include "hal/hal_watchdog.h"
 
-/*
- * NOTE: the actual page size if 128 bytes, but that would mean an
- * enormous amount of pages, so here make it look like 1K.
+/* Since the sectors on L0xx are too small, avoid having the map each one
+ * of them by aggregating them into PAGES_PER_SECTOR amount.
  */
-#define _REAL_SECTOR_SIZE    128
-#define _FLASH_SECTOR_SIZE   MYNEWT_VAL(STM32_FLASH_SECTOR_SIZE)
-#define _PAGES_PER_SECTOR    8
-
-/* Since the sectors on L0 are too small, avoid having the map each one
- * of them by aggregating them into _PAGES_PER_SECTOR amount.
- *
- * This asserts the MCU constant is not changed, and if it's changed
- * intentionally alerts the user that this code needs to be updated
- * as well.
- */
-static_assert(_FLASH_SECTOR_SIZE == (_REAL_SECTOR_SIZE * _PAGES_PER_SECTOR),
-    "STM32_FLASH_SECTOR_SIZE was changed; the erase function needs updating!");
+static_assert(EMULATED_SECTOR_SIZE > FLASH_PAGE_SIZE,
+        "EMULATED_SECTOR_SIZE too small!");
+static const uint32_t PAGES_PER_SECTOR = EMULATED_SECTOR_SIZE / FLASH_PAGE_SIZE;
 
 int
 stm32_mcu_flash_erase_sector(const struct hal_flash *dev, uint32_t sector_address)
@@ -52,14 +41,14 @@ stm32_mcu_flash_erase_sector(const struct hal_flash *dev, uint32_t sector_addres
     (void)PageError;
     (void)dev;
 
-    if (!(sector_address & (_FLASH_SECTOR_SIZE - 1))) {
+    if (!(sector_address & (EMULATED_SECTOR_SIZE - 1))) {
         /* FIXME: why is an err flag set? */
         /* Clear status of previous operation. */
         STM32_HAL_FLASH_CLEAR_ERRORS();
 
         eraseinit.TypeErase = FLASH_TYPEERASE_PAGES;
         eraseinit.PageAddress = sector_address;
-        eraseinit.NbPages = _PAGES_PER_SECTOR;
+        eraseinit.NbPages = PAGES_PER_SECTOR;
         rc = HAL_FLASHEx_Erase(&eraseinit, &PageError);
         if (rc == HAL_OK) {
             return 0;

@@ -23,7 +23,10 @@
 #include "syscfg/syscfg.h"
 #include "mcu/cmsis_nvic.h"
 #include "mcu/da1469x_hal.h"
+#include "mcu/da1469x_pd.h"
 #include "mcu/da1469x_pdc.h"
+
+static uint32_t g_mcu_clock_rcx_freq;
 
 static inline bool
 da1469x_clock_is_xtal32m_settled(void)
@@ -117,6 +120,57 @@ da1469x_clock_lp_xtal32k_switch(void)
     CRG_TOP->CLK_CTRL_REG = (CRG_TOP->CLK_CTRL_REG &
                              ~CRG_TOP_CLK_CTRL_REG_LP_CLK_SEL_Msk) |
                             (2 << CRG_TOP_CLK_CTRL_REG_LP_CLK_SEL_Pos);
+}
+
+void
+da1469x_clock_lp_rcx_enable(void)
+{
+    CRG_TOP->CLK_RCX_REG  |= CRG_TOP_CLK_RCX_REG_RCX_ENABLE_Msk;
+}
+
+void
+da1469x_clock_lp_rcx_switch(void)
+{
+    CRG_TOP->CLK_CTRL_REG = (CRG_TOP->CLK_CTRL_REG &
+                             ~CRG_TOP_CLK_CTRL_REG_LP_CLK_SEL_Msk) |
+                            (1 << CRG_TOP_CLK_CTRL_REG_LP_CLK_SEL_Pos);
+}
+
+void
+da1469x_clock_lp_rcx_calibrate(void)
+{
+    /*
+     * XXX not sure what is a good value here, this is just some value that
+     *     seems to work fine; we need to check how accurate this is and perhaps
+     *     also make it configurable if necessary
+     */
+    const uint32_t ref_cnt = 100;
+    uint32_t ref_val;
+
+    da1469x_pd_acquire(MCU_PD_DOMAIN_PER);
+
+    assert(CRG_TOP->CLK_CTRL_REG & CRG_TOP_CLK_CTRL_REG_RUNNING_AT_XTAL32M_Msk);
+    assert(!(ANAMISC->CLK_REF_SEL_REG & ANAMISC_CLK_REF_SEL_REG_REF_CAL_START_Msk));
+
+    ANAMISC->CLK_REF_CNT_REG = ref_cnt;
+    ANAMISC->CLK_REF_SEL_REG = (3 << ANAMISC_CLK_REF_SEL_REG_REF_CLK_SEL_Pos) |
+                               ANAMISC_CLK_REF_SEL_REG_REF_CAL_START_Msk;
+
+    while (ANAMISC->CLK_REF_SEL_REG & ANAMISC_CLK_REF_SEL_REG_REF_CAL_START_Msk);
+
+    ref_val = ANAMISC->CLK_REF_VAL_REG;
+
+    da1469x_pd_release(MCU_PD_DOMAIN_PER);
+
+    g_mcu_clock_rcx_freq = 32000000 * ref_cnt / ref_val;
+}
+
+uint32_t
+da1469x_clock_lp_rcx_freq_get(void)
+{
+    assert(g_mcu_clock_rcx_freq);
+
+    return g_mcu_clock_rcx_freq;
 }
 
 void

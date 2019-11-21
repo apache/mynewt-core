@@ -218,10 +218,10 @@ main(void)
             }
 
             if (failed) {
-                console_printf("monobit: (%ld/%d) %f, block4: (%ld/%d) %f, block8: (%ld/%d) %f\n",
-                        blksz, monobit_fails, ((float)blksz - monobit_fails) / blksz,
-                        blksz, block4_fails, ((float)blksz - block4_fails) / blksz,
-                        blksz, block8_fails, ((float)blksz - block8_fails) / blksz);
+                console_printf("monobit: (%u/%u) %f, block4: (%u/%u) %f, block8: (%u/%u) %f\n",
+                        (unsigned int)blksz, (unsigned int)monobit_fails, ((float)blksz - monobit_fails) / blksz,
+                        (unsigned int)blksz, (unsigned int)block4_fails, ((float)blksz - block4_fails) / blksz,
+                        (unsigned int)blksz, (unsigned int)block8_fails, ((float)blksz - block8_fails) / blksz);
             }
 
             idx = 0;

@@ -30,9 +30,7 @@
 /* Assume the flash alignment requirement is no stricter than 8. */
 #define LOG_FCB_MAX_ALIGN   8
 
-static struct flash_area sector;
-
-static int log_fcb_rtr_erase(struct log *log, void *arg);
+static int log_fcb_rtr_erase(struct log *log);
 
 /**
  * Finds the first log entry whose "offset" is >= the one specified.  A log
@@ -59,7 +57,7 @@ log_fcb_find_gte(struct log *log, struct log_offset *log_offset,
                  struct fcb_entry *out_entry)
 {
 #if MYNEWT_VAL(LOG_FCB_BOOKMARKS)
-    const struct fcb_log_bmark *bmark;
+    const struct log_fcb_bmark *bmark;
 #endif
     struct log_entry_hdr hdr;
     struct fcb_log *fcb_log;
@@ -98,9 +96,9 @@ log_fcb_find_gte(struct log *log, struct log_offset *log_offset,
     }
 
 #if MYNEWT_VAL(LOG_FCB_BOOKMARKS)
-    bmark = fcb_log_closest_bmark(fcb_log, log_offset->lo_index);
+    bmark = log_fcb_closest_bmark(fcb_log, log_offset->lo_index);
     if (bmark != NULL) {
-        *out_entry = bmark->flb_entry;
+        *out_entry = bmark->lfb_entry;
     }
 #endif
 
@@ -144,7 +142,7 @@ log_fcb_start_append(struct log *log, int len, struct fcb_entry *loc)
         }
 
         if (fcb_log->fl_entries) {
-            rc = log_fcb_rtr_erase(log, fcb_log);
+            rc = log_fcb_rtr_erase(log);
             if (rc) {
                 goto err;
             }
@@ -161,9 +159,15 @@ log_fcb_start_append(struct log *log, int len, struct fcb_entry *loc)
         }
 #endif
 
+        /* Notify upper layer that a rotation is about to occur */
+        if (log->l_rotate_notify_cb != NULL) {
+            fcb_append_to_scratch(fcb);
+            log->l_rotate_notify_cb(log);
+        }
+
 #if MYNEWT_VAL(LOG_FCB_BOOKMARKS)
-        /* The FCB needs to be rotated.  Invalidate all bookmarks. */
-        fcb_log_clear_bmarks(fcb_log);
+        /* The FCB needs to be rotated. */
+        log_fcb_rotate_bmarks(fcb_log);
 #endif
 
         rc = fcb_rotate(fcb);
@@ -182,36 +186,7 @@ log_fcb_start_append(struct log *log, int len, struct fcb_entry *loc)
             fcb_log->fl_watermark_off = fcb->f_oldest->fa_off;
         }
 #endif
-
-
     }
-
-err:
-    return (rc);
-}
-
-static int
-log_fcb_append(struct log *log, void *buf, int len)
-{
-    struct fcb *fcb;
-    struct fcb_entry loc;
-    struct fcb_log *fcb_log;
-    int rc;
-
-    fcb_log = (struct fcb_log *)log->l_arg;
-    fcb = &fcb_log->fl_fcb;
-
-    rc = log_fcb_start_append(log, len, &loc);
-    if (rc) {
-        goto err;
-    }
-
-    rc = flash_area_write(loc.fe_area, loc.fe_data_off, buf, len);
-    if (rc) {
-        goto err;
-    }
-
-    rc = fcb_append_finish(fcb, &loc);
 
 err:
     return (rc);
@@ -223,14 +198,14 @@ err:
  * to satisfy the flash hardware's write alignment restrictions.
  */
 static int
-log_fcb_hdr_body_bytes(uint8_t align)
+log_fcb_hdr_body_bytes(uint8_t align, uint8_t hdr_len)
 {
     uint8_t mod;
 
     /* Assume power-of-two alignment for faster modulo calculation. */
     assert((align & (align - 1)) == 0);
 
-    mod = sizeof (struct log_entry_hdr) & (align - 1);
+    mod = hdr_len & (align - 1);
     if (mod == 0) {
         return 0;
     }
@@ -242,7 +217,8 @@ static int
 log_fcb_append_body(struct log *log, const struct log_entry_hdr *hdr,
                     const void *body, int body_len)
 {
-    uint8_t buf[sizeof (struct log_entry_hdr) + LOG_FCB_MAX_ALIGN - 1];
+    uint8_t buf[LOG_BASE_ENTRY_HDR_SIZE + LOG_IMG_HASHLEN +
+                LOG_FCB_MAX_ALIGN - 1];
     struct fcb *fcb;
     struct fcb_entry loc;
     struct fcb_log *fcb_log;
@@ -250,6 +226,7 @@ log_fcb_append_body(struct log *log, const struct log_entry_hdr *hdr,
     int hdr_alignment;
     int chunk_sz;
     int rc;
+    uint16_t hdr_len;
 
     fcb_log = (struct fcb_log *)log->l_arg;
     fcb = &fcb_log->fl_fcb;
@@ -258,26 +235,39 @@ log_fcb_append_body(struct log *log, const struct log_entry_hdr *hdr,
         return SYS_ENOTSUP;
     }
 
-    rc = log_fcb_start_append(log, sizeof *hdr + body_len, &loc);
+    hdr_len = log_hdr_len(hdr);
+
+    rc = log_fcb_start_append(log, hdr_len + body_len, &loc);
     if (rc != 0) {
         return rc;
     }
 
     /* Append the first chunk (header + x-bytes of body, where x is however
      * many bytes are required to increase the chunk size up to a multiple of
-     * the flash alignment).
+     * the flash alignment). If the hash flag is set, we have to account for
+     * appending the hash right after the header.
      */
-    hdr_alignment = log_fcb_hdr_body_bytes(fcb->f_align);
+    hdr_alignment = log_fcb_hdr_body_bytes(fcb->f_align, hdr_len);
     if (hdr_alignment > body_len) {
-        chunk_sz = sizeof *hdr + body_len;
+        chunk_sz = hdr_len + body_len;
     } else {
-        chunk_sz = sizeof *hdr + hdr_alignment;
+        chunk_sz = hdr_len + hdr_alignment;
     }
+
+    /*
+     * Based on the flags being set in the log header, we need to write
+     * specific fields to the flash
+     */
 
     u8p = body;
 
-    memcpy(buf, hdr, sizeof *hdr);
-    memcpy(buf + sizeof *hdr, u8p, hdr_alignment);
+    memcpy(buf, hdr, LOG_BASE_ENTRY_HDR_SIZE);
+#if MYNEWT_VAL(LOG_VERSION) > 2
+    if (hdr->ue_flags & LOG_FLAGS_IMG_HASH) {
+        memcpy(buf + LOG_BASE_ENTRY_HDR_SIZE, hdr->ue_imghash, LOG_IMG_HASHLEN);
+    }
+#endif
+    memcpy(buf + hdr_len, u8p, hdr_alignment);
 
     rc = flash_area_write(loc.fe_area, loc.fe_data_off, buf, chunk_sz);
     if (rc != 0) {
@@ -306,13 +296,24 @@ log_fcb_append_body(struct log *log, const struct log_entry_hdr *hdr,
 }
 
 static int
-log_fcb_write_mbuf(struct fcb_entry *loc, const struct os_mbuf *om)
+log_fcb_append(struct log *log, void *buf, int len)
+{
+    int hdr_len;
+
+    hdr_len = log_hdr_len(buf);
+
+    return log_fcb_append_body(log, buf, (uint8_t *)buf + hdr_len,
+                               len - hdr_len);
+}
+
+static int
+log_fcb_write_mbuf(struct fcb_entry *loc, struct os_mbuf *om)
 {
     int rc;
 
     while (om) {
-        rc = flash_area_write(loc->fe_area, loc->fe_data_off,
-                              om->om_data, om->om_len);
+        rc = flash_area_write(loc->fe_area, loc->fe_data_off, om->om_data,
+                              om->om_len);
         if (rc != 0) {
             return SYS_EIO;
         }
@@ -325,47 +326,8 @@ log_fcb_write_mbuf(struct fcb_entry *loc, const struct os_mbuf *om)
 }
 
 static int
-log_fcb_append_mbuf(struct log *log, const struct os_mbuf *om)
-{
-    struct fcb *fcb;
-    struct fcb_entry loc;
-    struct fcb_log *fcb_log;
-    int len;
-    int rc;
-
-    fcb_log = (struct fcb_log *)log->l_arg;
-    fcb = &fcb_log->fl_fcb;
-
-    /* This function expects to be able to write each mbuf without any
-     * buffering.
-     */
-    /* XXX: Fix this; buffer mbuf writes to satisfy flash alignment. */
-    if (fcb->f_align != 1) {
-        return SYS_ENOTSUP;
-    }
-
-    len = os_mbuf_len(om);
-    rc = log_fcb_start_append(log, len, &loc);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = log_fcb_write_mbuf(&loc, om);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = fcb_append_finish(fcb, &loc);
-    if (rc != 0) {
-        return rc;
-    }
-
-    return 0;
-}
-
-static int
 log_fcb_append_mbuf_body(struct log *log, const struct log_entry_hdr *hdr,
-                         const struct os_mbuf *om)
+                         struct os_mbuf *om)
 {
     struct fcb *fcb;
     struct fcb_entry loc;
@@ -383,18 +345,30 @@ log_fcb_append_mbuf_body(struct log *log, const struct log_entry_hdr *hdr,
         return SYS_ENOTSUP;
     }
 
-    len = sizeof *hdr + os_mbuf_len(om);
+    len = log_hdr_len(hdr) + os_mbuf_len(om);
     rc = log_fcb_start_append(log, len, &loc);
     if (rc != 0) {
         return rc;
     }
 
-    rc = flash_area_write(loc.fe_area, loc.fe_data_off, hdr, sizeof *hdr);
+    rc = flash_area_write(loc.fe_area, loc.fe_data_off, hdr,
+                          LOG_BASE_ENTRY_HDR_SIZE);
     if (rc != 0) {
         return rc;
     }
-    loc.fe_data_off += sizeof *hdr;
+    loc.fe_data_off += LOG_BASE_ENTRY_HDR_SIZE;
 
+#if MYNEWT_VAL(LOG_VERSION) > 2
+    if (hdr->ue_flags & LOG_FLAGS_IMG_HASH) {
+        /* Write LOG_IMG_HASHLEN bytes of image hash */
+        rc = flash_area_write(loc.fe_area, loc.fe_data_off, hdr->ue_imghash,
+                              LOG_IMG_HASHLEN);
+        if (rc != 0) {
+            return rc;
+        }
+        loc.fe_data_off += LOG_IMG_HASHLEN;
+    }
+#endif
     rc = log_fcb_write_mbuf(&loc, om);
     if (rc != 0) {
         return rc;
@@ -409,7 +383,49 @@ log_fcb_append_mbuf_body(struct log *log, const struct log_entry_hdr *hdr,
 }
 
 static int
-log_fcb_read(struct log *log, void *dptr, void *buf, uint16_t offset,
+log_fcb_append_mbuf(struct log *log, struct os_mbuf *om)
+{
+    int rc;
+    uint16_t mlen;
+    uint16_t hdr_len;
+    struct log_entry_hdr hdr;
+
+    mlen = os_mbuf_len(om);
+    if (mlen < LOG_BASE_ENTRY_HDR_SIZE) {
+        return SYS_ENOMEM;
+    }
+
+    /*
+     * We do a pull up twice, once so that the base header is
+     * contiguous, so that we read the flags correctly, second
+     * time is so that we account for the image hash as well.
+     */
+    om = os_mbuf_pullup(om, LOG_BASE_ENTRY_HDR_SIZE);
+
+    /*
+     * We can just pass the om->om_data ptr as the log_entry_hdr
+     * because the log_entry_hdr is a packed struct and does not
+     * cause any alignment or padding issues
+     */
+    hdr_len = log_hdr_len((struct log_entry_hdr *)om->om_data);
+
+    om = os_mbuf_pullup(om, hdr_len);
+
+    memcpy(&hdr, om->om_data, hdr_len);
+
+    os_mbuf_adj(om, hdr_len);
+
+    rc = log_fcb_append_mbuf_body(log, &hdr, om);
+
+    os_mbuf_prepend(om, hdr_len);
+
+    memcpy(om->om_data, &hdr, hdr_len);
+
+    return rc;
+}
+
+static int
+log_fcb_read(struct log *log, const void *dptr, void *buf, uint16_t offset,
   uint16_t len)
 {
     struct fcb_entry *loc;
@@ -429,7 +445,7 @@ log_fcb_read(struct log *log, void *dptr, void *buf, uint16_t offset,
 }
 
 static int
-log_fcb_read_mbuf(struct log *log, void *dptr, struct os_mbuf *om,
+log_fcb_read_mbuf(struct log *log, const void *dptr, struct os_mbuf *om,
                   uint16_t offset, uint16_t len)
 {
     struct fcb_entry *loc;
@@ -453,7 +469,6 @@ log_fcb_read_mbuf(struct log *log, void *dptr, struct os_mbuf *om,
         if (rc) {
             goto done;
         }
-
         rc = os_mbuf_append(om, data, read_len);
         if (rc) {
             goto done;
@@ -467,13 +482,24 @@ done:
     return len - rem_len;
 }
 
+/**
+ * @brief Common function for walking a single area or the full logs
+ *
+ * @param      The log
+ * @param[in]  The walk function
+ * @param      The log offset
+ * @param[in]  Reading either a single area or the full log
+ *
+ * @return     { description_of_the_return_value }
+ */
 static int
-log_fcb_walk(struct log *log, log_walk_func_t walk_func,
-             struct log_offset *log_offset)
+log_fcb_walk_impl(struct log *log, log_walk_func_t walk_func,
+             struct log_offset *log_offset, bool area)
 {
     struct fcb *fcb;
     struct fcb_log *fcb_log;
     struct fcb_entry loc;
+    struct flash_area *fap;
     int rc;
 
     fcb_log = log->l_arg;
@@ -491,24 +517,49 @@ log_fcb_walk(struct log *log, log_walk_func_t walk_func,
     default:
         return rc;
     }
+    fap = loc.fe_area;
 
 #if MYNEWT_VAL(LOG_FCB_BOOKMARKS)
     /* If a minimum index was specified (i.e., we are not just retrieving the
      * last entry), add a bookmark pointing to this walk's start location.
      */
     if (log_offset->lo_ts >= 0) {
-        fcb_log_add_bmark(fcb_log, &loc, log_offset->lo_index);
+        log_fcb_add_bmark(fcb_log, &loc, log_offset->lo_index);
     }
 #endif
 
     do {
+        if (area) {
+            if (fap != loc.fe_area) {
+                return 0;
+            }
+        }
+
         rc = walk_func(log, log_offset, &loc, loc.fe_data_len);
         if (rc != 0) {
-            return rc;
+            if (rc < 0) {
+                return rc;
+            } else {
+                return 0;
+            }
         }
     } while (fcb_getnext(fcb, &loc) == 0);
 
     return 0;
+}
+
+static int
+log_fcb_walk(struct log *log, log_walk_func_t walk_func,
+             struct log_offset *log_offset)
+{
+    return log_fcb_walk_impl(log, walk_func, log_offset, false);
+}
+
+static int
+log_fcb_walk_area(struct log *log, log_walk_func_t walk_func,
+             struct log_offset *log_offset)
+{
+    return log_fcb_walk_impl(log, walk_func, log_offset, true);
 }
 
 static int
@@ -521,7 +572,7 @@ log_fcb_flush(struct log *log)
     fcb = &fcb_log->fl_fcb;
 
 #if MYNEWT_VAL(LOG_FCB_BOOKMARKS)
-    fcb_log_clear_bmarks(fcb_log);
+    log_fcb_clear_bmarks(fcb_log);
 #endif
 
     return fcb_clear(fcb);
@@ -532,19 +583,28 @@ log_fcb_registered(struct log *log)
 {
 #if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
     struct fcb_log *fl;
+#if MYNEWT_VAL(LOG_PERSIST_WATERMARK)
     struct fcb *fcb;
     struct fcb_entry loc;
+#endif
 
     fl = (struct fcb_log *)log->l_arg;
+
+#if MYNEWT_VAL(LOG_PERSIST_WATERMARK)
     fcb = &fl->fl_fcb;
 
     /* Set watermark to first element */
     memset(&loc, 0, sizeof(loc));
+
     if (fcb_getnext(fcb, &loc)) {
         fl->fl_watermark_off = loc.fe_area->fa_off + loc.fe_elem_off;
     } else {
         fl->fl_watermark_off = fcb->f_oldest->fa_off;
     }
+#else
+    /* Initialize watermark to designated unknown value*/
+    fl->fl_watermark_off = 0xffffffff;
+#endif
 #endif
     return 0;
 }
@@ -603,9 +663,14 @@ log_fcb_storage_info(struct log *log, struct log_storage_info *info)
 #if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
     /* Calculate used size */
     fa_used = el_max - fl->fl_watermark_off;
-    if ((int32_t)fa_used < 0) {
+
+    if (fl->fl_watermark_off == 0xffffffff){
+        fa_used = 0xffffffff;
+    }
+    else if ((int32_t)fa_used < 0) {
         fa_used += fa_size;
     }
+
     info->used_unread = fa_used;
 #endif
 
@@ -617,47 +682,72 @@ log_fcb_storage_info(struct log *log, struct log_storage_info *info)
 
 #if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
 static int
+log_fcb_new_watermark_index(struct log *log, struct log_offset *log_offset,
+                            const void *dptr, uint16_t len)
+{
+    struct fcb_entry *loc;
+    struct fcb_log *fl;
+    struct log_entry_hdr ueh;
+    int rc;
+
+    loc = (struct fcb_entry*)dptr;
+    fl = (struct fcb_log *)log->l_arg;
+
+    rc = log_fcb_read(log, loc, &ueh, 0, sizeof(ueh));
+
+    if (rc != sizeof(ueh)) {
+        return -1;
+    }
+    /* Set log watermark to end of this element */
+    if (ueh.ue_index >= log_offset->lo_index) {
+        fl->fl_watermark_off = loc->fe_area->fa_off + loc->fe_data_off +
+                               loc->fe_data_len;
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+static int
 log_fcb_set_watermark(struct log *log, uint32_t index)
 {
+    int rc;
+    struct log_offset log_offset;
     struct fcb_log *fl;
     struct fcb *fcb;
-    struct log_entry_hdr ueh;
-    struct fcb_entry loc;
-    uint32_t end_off;
-    int rc;
 
     fl = (struct fcb_log *)log->l_arg;
     fcb = &fl->fl_fcb;
 
-    memset(&loc, 0, sizeof(loc));
-    end_off = fcb->f_oldest->fa_off;
-    rc = 0;
+    log_offset.lo_arg = NULL;
+    log_offset.lo_ts = 0;
+    log_offset.lo_index = index;
+    log_offset.lo_data_len = 0;
 
-    while (fcb_getnext(fcb, &loc) == 0) {
-        rc = log_fcb_read(log, &loc, &ueh, 0, sizeof(ueh));
-
-        if (rc != sizeof(ueh)) {
-            break;
-        }
-
-        if (ueh.ue_index > index) {
-            break;
-        }
-
-        /* Move end offset max pointer to end of this element */
-        end_off = loc.fe_area->fa_off + loc.fe_data_off + loc.fe_data_len;
+    /* Find where to start the walk, and set watermark accordingly */
+    rc = log_fcb_walk(log, log_fcb_new_watermark_index, &log_offset);
+    if (rc != 0) {
+        goto done;
     }
 
-    /* End of last element found is now our watermark */
-    fl->fl_watermark_off = end_off;
+    /* If there are no entries to read and the watermark has not been set */
+    if (fl->fl_watermark_off == 0xffffffff) {
+        fl->fl_watermark_off = fcb->f_oldest->fa_off;
+    }
 
-    return rc;
+    return (0);
+done:
+    return (rc);
 }
 #endif
 
 /**
  * Copies one log entry from source fcb to destination fcb
- * @param src_fcb, dst_fcb
+ *
+ * @param log      Log this operation applies to
+ * @param entry    FCB2 location for the entry being copied
+ * @param dst_fcb  FCB2 area where data is getting copied to.
+ *
  * @return 0 on success; non-zero on error
  */
 static int
@@ -665,23 +755,28 @@ log_fcb_copy_entry(struct log *log, struct fcb_entry *entry,
                    struct fcb *dst_fcb)
 {
     struct log_entry_hdr ueh;
-    char data[LOG_PRINTF_MAX_ENTRY_LEN + sizeof(ueh)];
+    char data[MYNEWT_VAL(LOG_FCB_COPY_MAX_ENTRY_LEN) + LOG_BASE_ENTRY_HDR_SIZE +
+              LOG_IMG_HASHLEN];
+    uint16_t hdr_len;
     int dlen;
     int rc;
     struct fcb *fcb_tmp;
 
-    rc = log_fcb_read(log, entry, &ueh, 0, sizeof(ueh));
-    if (rc != sizeof(ueh)) {
+    rc = log_fcb_read(log, entry, &ueh, 0, LOG_BASE_ENTRY_HDR_SIZE);
+
+    if (rc != LOG_BASE_ENTRY_HDR_SIZE) {
         goto err;
     }
 
-    dlen = min(entry->fe_data_len, LOG_PRINTF_MAX_ENTRY_LEN + sizeof(ueh));
+    hdr_len = log_hdr_len(&ueh);
+
+    dlen = min(entry->fe_data_len, MYNEWT_VAL(LOG_FCB_COPY_MAX_ENTRY_LEN) +
+               hdr_len);
 
     rc = log_fcb_read(log, entry, data, 0, dlen);
     if (rc < 0) {
         goto err;
     }
-    data[rc] = '\0';
 
     /* Changing the fcb to be logged to be dst fcb */
     fcb_tmp = &((struct fcb_log *)log->l_arg)->fl_fcb;
@@ -699,7 +794,12 @@ err:
 
 /**
  * Copies log entries from source fcb to destination fcb
- * @param src_fcb, dst_fcb, element offset to start copying
+ *
+ * @param log      Log this operation applies to
+ * @param src_fcb  FCB area which is the source of data
+ * @param dst_fcb  FCB area which is the target
+ * @param offset   Flash offset where to start the copy
+ *
  * @return 0 on success; non-zero on error
  */
 static int
@@ -710,7 +810,6 @@ log_fcb_copy(struct log *log, struct fcb *src_fcb, struct fcb *dst_fcb,
     int rc;
 
     rc = 0;
-
     memset(&entry, 0, sizeof(entry));
     while (!fcb_getnext(src_fcb, &entry)) {
         if (entry.fe_elem_off < offset) {
@@ -726,13 +825,15 @@ log_fcb_copy(struct log *log, struct fcb *src_fcb, struct fcb *dst_fcb,
 }
 
 /**
- * Flushes the log while restoring specified number of entries
+ * Flushes the log while keeping the specified number of entries
  * using image scratch
- * @param src_fcb, dst_fcb
+ *
+ * @param log      Log this operation applies to
+ *
  * @return 0 on success; non-zero on error
  */
 static int
-log_fcb_rtr_erase(struct log *log, void *arg)
+log_fcb_rtr_erase(struct log *log)
 {
     struct fcb_log *fcb_log;
     struct fcb fcb_scratch;
@@ -740,6 +841,7 @@ log_fcb_rtr_erase(struct log *log, void *arg)
     const struct flash_area *ptr;
     struct fcb_entry entry;
     int rc;
+    struct flash_area sector;
 
     rc = 0;
     if (!log) {
@@ -747,8 +849,8 @@ log_fcb_rtr_erase(struct log *log, void *arg)
         goto err;
     }
 
-    fcb_log = (struct fcb_log *)arg;
-    fcb = (struct fcb *)fcb_log;
+    fcb_log = log->l_arg;
+    fcb = &fcb_log->fl_fcb;
 
     memset(&fcb_scratch, 0, sizeof(fcb_scratch));
 
@@ -793,22 +895,23 @@ err:
 }
 
 const struct log_handler log_fcb_handler = {
-    .log_type = LOG_TYPE_STORAGE,
-    .log_read = log_fcb_read,
-    .log_read_mbuf = log_fcb_read_mbuf,
-    .log_append = log_fcb_append,
-    .log_append_body = log_fcb_append_body,
-    .log_append_mbuf = log_fcb_append_mbuf,
+    .log_type             = LOG_TYPE_STORAGE,
+    .log_read             = log_fcb_read,
+    .log_read_mbuf        = log_fcb_read_mbuf,
+    .log_append           = log_fcb_append,
+    .log_append_body      = log_fcb_append_body,
+    .log_append_mbuf      = log_fcb_append_mbuf,
     .log_append_mbuf_body = log_fcb_append_mbuf_body,
-    .log_walk = log_fcb_walk,
-    .log_flush = log_fcb_flush,
+    .log_walk             = log_fcb_walk,
+    .log_walk_sector      = log_fcb_walk_area,
+    .log_flush            = log_fcb_flush,
 #if MYNEWT_VAL(LOG_STORAGE_INFO)
-    .log_storage_info = log_fcb_storage_info,
+    .log_storage_info     = log_fcb_storage_info,
 #endif
 #if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
-    .log_set_watermark = log_fcb_set_watermark,
+    .log_set_watermark    = log_fcb_set_watermark,
 #endif
-    .log_registered = log_fcb_registered,
+    .log_registered       = log_fcb_registered,
 };
 
 #endif

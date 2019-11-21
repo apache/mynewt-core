@@ -24,7 +24,7 @@ pkg.homepage: "https://www.iotivity.org/"
 pkg.keywords:
 
 pkg.deps:
-    - "@apache-mynewt-core/encoding/cborattr"
+    - "@apache-mynewt-mcumgr/cborattr"
     - "@apache-mynewt-core/encoding/tinycbor"
     - "@apache-mynewt-core/kernel/os"
     - "@apache-mynewt-core/sys/log/modlog"

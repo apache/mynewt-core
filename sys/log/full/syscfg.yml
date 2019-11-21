@@ -26,26 +26,29 @@ syscfg.defs:
 
     LOG_VERSION:
         description: 'Log entry header version used.'
-        value: 2
+        value: 3
 
     LOG_LEVEL:
         description: 'Limits what level log messages are compiled in.'
         value: 0
 
+    LOG_FLAGS_IMAGE_HASH:
+        description: >
+            Enable logging of the first 4 bytes of the image hash. 0 - disable; 
+            1 - enable.
+        value: 0
+
     LOG_FCB:
         description: 'Support logging to FCB.'
         value: 0
+        restrictions:
+            - "!LOG_FCB2"
 
-    LOG_FCB_SLOT1:
-        description: >
-            Support logging to FCB located in slot 1.
-            This is a thin wrapper over LOG_FCB which should be used if
-            destination FCB is located in slot 1 as it can detect when
-            a new image is uploaded to this slot and stop logging to
-            prevent data corruption.
+    LOG_FCB2:
+        description: 'Support logging to FCB2.'
         value: 0
         restrictions:
-            - "LOG_FCB"
+            - "!LOG_FCB"
 
     LOG_FCB_BOOKMARKS:
         description: >
@@ -54,7 +57,7 @@ syscfg.defs:
             bookmark storage at runtime.
         value: 0
         restrictions:
-            - LOG_FCB
+            - (LOG_FCB || LOG_FCB2)
 
     LOG_CONSOLE:
         description: 'Support logging to console.'
@@ -65,6 +68,10 @@ syscfg.defs:
         value: 0
         restrictions:
             - SHELL_TASK
+
+    LOG_MGMT:
+        description: 'Expose "log" command in mgmt.'
+        value: 0
 
     LOG_NEWTMGR:
         description: 'Expose "log" command in newtmgr.'
@@ -109,17 +116,34 @@ syscfg.defs:
     LOG_STORAGE_WATERMARK:
         description: >
             Enable "set_watermark" API which can watermark log by entry index and
-            thus allow to e.g. keep track of read items in log e.g. (via newtmgr).
+            thus allow to e.g. keep track of read items in log e.g. (via mgmt).
             This also extends information returned by "storage_info" to number of
             bytes used by entries above watermark.
         value: 0
         restrictions: LOG_STORAGE_INFO
 
+    LOG_PERSIST_WATERMARK:
+        description: >
+            1 Persist storage of watermarks.
+            0 Do not persist watermarks
+            0 Initializes watermarks to unknown (0xffffffff)
+        value: 1
+
+    LOG_READ_WATERMARK_UPDATE:
+        description: >
+            Enables update of the log watermark after a log read
+        value: 0
+        restrictions: LOG_STORAGE_WATERMARK
+
     LOG_SYSINIT_STAGE_MAIN:
         description: >
             Primary sysinit stage for logging functionality.
         value: 100
-    LOG_SYSINIT_STAGE_SLOT1:
+
+    LOG_FCB_COPY_MAX_ENTRY_LEN:
         description: >
-            Sysinit stage for logging to the second image slot.
-        value: 101
+            Max entry length that can be copied from one fcb log to another.
+        value: 256
+
+syscfg.vals.LOG_NEWTMGR:
+    LOG_MGMT: MYNEWT_VAL(LOG_MGMT)

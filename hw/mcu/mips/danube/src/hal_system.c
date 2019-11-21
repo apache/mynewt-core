@@ -17,6 +17,7 @@
  * under the License.
  */
 
+#include "os/mynewt.h"
 #include "hal/hal_system.h"
 
 #include <stdint.h>

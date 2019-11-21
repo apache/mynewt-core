@@ -20,11 +20,11 @@
 #include <assert.h>
 #include <string.h>
 #include "syscfg/syscfg.h"
+#include "mcu/mcu.h"
 #include "mcu/da1469x_hal.h"
 #include "mcu/da1469x_prail.h"
 #include "mcu/da1469x_retreg.h"
 #include "os/util.h"
-#include "DA1469xAB.h"
 
 #define POWER_CTRL_REG_SET(_field, _val)                                        \
     CRG_TOP->POWER_CTRL_REG =                                                   \
@@ -60,9 +60,9 @@ da1469x_prail_configure_1v8(void)
     /* XXX make rail configurable */
 
     POWER_CTRL_REG_SET(V18_LEVEL, 1);                   /* 1.800 V */
-    POWER_CTRL_REG_SET(LDO_1V8_RET_ENABLE_ACTIVE, 1);
+    POWER_CTRL_REG_SET(LDO_1V8_RET_ENABLE_ACTIVE, 0);
     POWER_CTRL_REG_SET(LDO_1V8_RET_ENABLE_SLEEP, 1);
-    POWER_CTRL_REG_SET(LDO_1V8_ENABLE, 0);
+    POWER_CTRL_REG_SET(LDO_1V8_ENABLE, 1);
 }
 
 static void
@@ -151,6 +151,12 @@ da1469x_prail_dcdc_restore(void)
     }
 }
 #endif
+
+void
+da1469x_prail_dcdc_disable(void)
+{
+    DCDC->DCDC_CTRL1_REG &= ~DCDC_DCDC_CTRL1_REG_DCDC_ENABLE_Msk;
+}
 
 void
 da1469x_prail_initialize(void)

@@ -231,8 +231,6 @@ hal_bsp_init(void)
     int rc;
     (void)rc;
 
-    hal_system_clock_start();
-
 #if MYNEWT_VAL(TRNG)
     rc = os_dev_create(&os_bsp_trng.dev, "trng", OS_DEV_INIT_KERNEL,
                        OS_DEV_INIT_PRIO_DEFAULT, stm32_trng_dev_init, NULL);

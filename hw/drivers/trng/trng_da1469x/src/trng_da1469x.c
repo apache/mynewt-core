@@ -20,6 +20,7 @@
 #include <stdint.h>
 #include <trng/trng.h>
 #include <mcu/mcu.h>
+#include "mcu/da1469x_clock.h"
 
 #define DA1469X_TRNG_FIFO_SIZE  (32 * sizeof(uint32_t))
 #define DA1469X_TRNG_FIFO_ADDR  (0x30050000UL)
@@ -41,7 +42,7 @@ da1469x_trng_read(struct trng_dev *trng, void *ptr, size_t size)
     words_to_generate = size / sizeof(uint32_t);
     remaining_octets = size % sizeof(uint32_t);
 
-    CRG_TOP->CLK_AMBA_REG |= (1U << CRG_TOP_CLK_AMBA_REG_TRNG_CLK_ENABLE_Pos);
+    da1469x_clock_amba_enable(CRG_TOP_CLK_AMBA_REG_TRNG_CLK_ENABLE_Msk);
     TRNG->TRNG_CTRL_REG = TRNG_TRNG_CTRL_REG_TRNG_ENABLE_Msk;
 
     if (remaining_octets) {
@@ -64,7 +65,7 @@ da1469x_trng_read(struct trng_dev *trng, void *ptr, size_t size)
     }
 
     TRNG->TRNG_CTRL_REG = 0;
-    CRG_TOP->CLK_AMBA_REG &= ~(1U << CRG_TOP_CLK_AMBA_REG_TRNG_CLK_ENABLE_Pos);
+    da1469x_clock_amba_disable(CRG_TOP_CLK_AMBA_REG_TRNG_CLK_ENABLE_Msk);
 
     return size;
 }
@@ -74,14 +75,14 @@ da1469x_trng_get_u32(struct trng_dev *trng)
 {
     uint32_t ret;
 
-    CRG_TOP->CLK_AMBA_REG |= (1U << CRG_TOP_CLK_AMBA_REG_TRNG_CLK_ENABLE_Pos);
+    da1469x_clock_amba_enable(CRG_TOP_CLK_AMBA_REG_TRNG_CLK_ENABLE_Msk);
     TRNG->TRNG_CTRL_REG = TRNG_TRNG_CTRL_REG_TRNG_ENABLE_Msk;
     while (TRNG->TRNG_FIFOLVL_REG < 1);
 
     ret = *(uint32_t *)DA1469X_TRNG_FIFO_ADDR;
 
     TRNG->TRNG_CTRL_REG = 0;
-    CRG_TOP->CLK_AMBA_REG &= ~(1U << CRG_TOP_CLK_AMBA_REG_TRNG_CLK_ENABLE_Pos);
+    da1469x_clock_amba_disable(CRG_TOP_CLK_AMBA_REG_TRNG_CLK_ENABLE_Msk);
 
     return ret;
 }

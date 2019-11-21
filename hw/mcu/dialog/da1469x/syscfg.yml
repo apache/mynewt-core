@@ -31,14 +31,31 @@ syscfg.defs:
         description: >
             Specifies whether or not to enable SIMO DC-DC Converter.
         value: 0
-    
+
     MCU_GPIO_RETAINABLE_NUM:
         description: >
             Number of GPIO pins which can have its state retained in
             deep sleep. This applies only if deep sleep is enabled since
             PD_COM will be disabled before entering deep sleep and thus
             state of any configured GPIO has to be retained and restored.
+            If set to -1, power domain which controls GPIO pins will be
+            always active and thus retaining and restoring of GPIO pins
+            state is disabled.
         value: 4
+    MCU_GPIO_MAX_IRQ:
+        description: >
+            Maximum number of GPIO interrupts that can be configured at
+            once.
+        value: 4
+
+    MCU_LPCLK_SOURCE:
+        description: >
+            Selected low power clock source.
+        value: RC32K
+        choices:
+            - RC32K     # 32 kHz RC oscillator
+            - RCX       # ~15 kHz RC oscillator
+            - XTAL32K   # 32 kHz crystal oscillator
 
     MCU_CLOCK_XTAL32M_SETTLE_TIME_US:
         description: >
@@ -108,6 +125,30 @@ syscfg.defs:
             data before writing, i.e. each such transfer will be split into
             chunks of this size. Buffer is created on stack.
         value: 128
+    MCU_QSPIC_APP_CFG:
+        description: >
+            Enable application initialization of QSPIC settings. Syscfg values that
+            are defined for QSPIC_BURSTCMDA_REG, QSPIC_BURSTCMDB_REG or
+            QSPIC_CTRLMODE_REG will be applied by hal_flash_init.
+        value: 0
+    MCU_QSPIC_BURSTCMDA_INIT_VAL:
+        description: >
+            MCU initialization value for QSPIC_BURSTCMDA_REG
+        value: ''
+        restrictions:
+        - (MCU_QSPIC_APP_CFG)
+    MCU_QSPIC_BURSTCMDB_INIT_VAL:
+        description: >
+            MCU initialization value for QSPIC_BURSTCMDB_REG
+        value: ''
+        restrictions:
+        - (MCU_QSPIC_APP_CFG)
+    MCU_QSPIC_CTRLMODE_INIT_VAL:
+        description: >
+            MCU initialization value for QSPIC_CTRLMODE_REG
+        value: ''
+        restrictions:
+        - (MCU_QSPIC_APP_CFG)
 
 # MCU peripherals definitions
     I2C_0:
@@ -211,6 +252,9 @@ syscfg.defs:
     UART_0_PIN_RX:
         description: 'RX pin for UART0'
         value: ''
+    UART_0_RX_ENABLE_PULLUP:
+        description: 'Enable internal pullup on RX pin. 0:none 1:enable pullup'
+        value: 0
 
     UART_1:
         description: Enable DA1469x UART 1 (UART2 peripheral)
@@ -227,6 +271,9 @@ syscfg.defs:
     UART_1_PIN_CTS:
         description: 'CTS pin for UART1'
         value: -1
+    UART_1_RX_ENABLE_PULLUP:
+        description: 'Enable internal pullup on RX pin. 0:none 1:enable pullup'
+        value: 0
 
     UART_2:
         description: Enable DA1469x UART 2 (UART3 peripheral)
@@ -243,6 +290,9 @@ syscfg.defs:
     UART_2_PIN_CTS:
         description: 'CTS pin for UART2'
         value: -1
+    UART_2_RX_ENABLE_PULLUP:
+        description: 'Enable internal pullup on RX pin. 0:none 1:enable pullup'
+        value: 0
 
     TIMER_0:
         description: Enable DA1469x timer 0 (Timer peripheral)

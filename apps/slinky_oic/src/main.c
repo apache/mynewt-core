@@ -168,7 +168,7 @@ task1_handler(void *arg)
         /* Toggle the LED */
         prev_pin_state = hal_gpio_read(g_led_pin);
         curr_pin_state = hal_gpio_toggle(g_led_pin);
-        MODLOG_DFLT(INFO, "GPIO toggle from %u to %u",
+        DFLT_LOG_INFO("GPIO toggle from %u to %u",
                     prev_pin_state, curr_pin_state);
         STATS_INC(g_stats_gpio_toggle, toggles);
 

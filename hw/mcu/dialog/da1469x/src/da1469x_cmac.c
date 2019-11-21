@@ -23,10 +23,11 @@
 #include <string.h>
 #include "os/os.h"
 #include "mcu/cmsis_nvic.h"
+#include "mcu/da1469x_lpclk.h"
 #include "mcu/da1469x_cmac.h"
 #include "mcu/da1469x_hal.h"
 #include "mcu/da1469x_pdc.h"
-#include "DA1469xAB.h"
+#include "mcu/mcu.h"
 
 #define CMAC_SYM_CONFIG     ((void *)(0x00818f20 + MEMCTRL->CMI_CODE_BASE_REG))
 #define CMAC_SYM_CONFIG_DYN ((void *)(0x00821af8 + MEMCTRL->CMI_CODE_BASE_REG))
@@ -160,6 +161,15 @@ done:
     os_trace_isr_exit();
 }
 
+static void
+da1469x_cmac_lpclk_cb(uint32_t freq)
+{
+    struct cmac_config_dynamic *cmac_config_dyn;
+
+    cmac_config_dyn = CMAC_SYM_CONFIG_DYN;
+    cmac_config_dyn->enable_sleep = freq == 32768;
+}
+
 void
 da1469x_cmac_mbox_write(const uint8_t *buf, size_t len)
 {
@@ -267,7 +277,7 @@ da1469x_cmac_init(void)
     cmac_config->synth_tcs_length = 0;
     cmac_config->rfcu_tcs_length = 0;
     cmac_config->default_tx_power = 4;
-    cmac_config_dyn->enable_sleep = true;
+    cmac_config_dyn->enable_sleep = false;
 
     /* Release CMAC from reset */
     CRG_TOP->CLK_RADIO_REG &= ~CRG_TOP_CLK_RADIO_REG_CMAC_SYNCH_RESET_Msk;
@@ -288,4 +298,6 @@ da1469x_cmac_init(void)
     NVIC_EnableIRQ(CMAC2SYS_IRQn);
 
     da1469x_cmac_pdc_signal();
+
+    da1469x_lpclk_register_cmac_cb(da1469x_cmac_lpclk_cb);
 }

@@ -20,6 +20,7 @@
 #include <assert.h>
 #include <string.h>
 #include "os/mynewt.h"
+#include "bsp/bsp.h"
 
 #if MYNEWT_VAL(DRV2605_OFB)
 #include "hal/hal_gpio.h"
@@ -27,6 +28,9 @@
 #endif
 #if MYNEWT_VAL(LSM303DLHC_OFB)
 #include <lsm303dlhc/lsm303dlhc.h>
+#endif
+#if MYNEWT_VAL(LSM6DSO_OFB)
+#include <lsm6dso/lsm6dso.h>
 #endif
 #if MYNEWT_VAL(MPU6050_OFB)
 #include <mpu6050/mpu6050.h>
@@ -89,6 +93,10 @@
 #include <lis2dw12/lis2dw12.h>
 #endif
 
+#if MYNEWT_VAL(LIS2DH12_OFB)
+#include <lis2dh12/lis2dh12.h>
+#endif
+
 #if MYNEWT_VAL(LIS2DS12_OFB)
 #include <lis2ds12/lis2ds12.h>
 #endif
@@ -116,6 +124,10 @@ static struct drv2605 drv2605;
 
 #if MYNEWT_VAL(LSM303DLHC_OFB)
 static struct lsm303dlhc lsm303dlhc;
+#endif
+
+#if MYNEWT_VAL(LSM6DSO_OFB)
+static struct lsm6dso lsm6dso;
 #endif
 
 #if MYNEWT_VAL(MPU6050_OFB)
@@ -182,6 +194,10 @@ static struct lps33thw lps33thw;
 static struct lis2dw12 lis2dw12;
 #endif
 
+#if MYNEWT_VAL(LIS2DH12_OFB)
+static struct lis2dh12 lis2dh12;
+#endif
+
 #if MYNEWT_VAL(LIS2DS12_OFB)
 static struct lis2ds12 lis2ds12;
 #endif
@@ -238,7 +254,7 @@ static const struct bus_i2c_node_cfg bmp280_node_cfg = {
 #endif
 #if MYNEWT_VAL(BMP280_OFB_SPI_NUM) >= 0
 struct bus_spi_node_cfg bmp280_node_cfg = {
-    .node_cfg.bus_name = MYNEWT_VAL(BME280_OFB_SPI_BUS),
+    .node_cfg.bus_name = MYNEWT_VAL(BMP280_OFB_SPI_BUS),
     .pin_cs = MYNEWT_VAL(BMP280_OFB_CS),
     .mode = BUS_SPI_MODE_0,
     .data_order = HAL_SPI_MSB_FIRST,
@@ -246,18 +262,18 @@ struct bus_spi_node_cfg bmp280_node_cfg = {
 };
 #endif
 static struct sensor_itf bmp280_itf;
-#elif MYNEWT_VAL(I2C_0)
+#elif MYNEWT_VAL(BMP280_OFB_I2C_NUM) >= 0
 static struct sensor_itf i2c_0_itf_bmp = {
     .si_type = SENSOR_ITF_I2C,
-    .si_num = 0,
-    .si_addr = BMP280_DFLT_I2C_ADDR
+    .si_num = MYNEWT_VAL(BMP280_OFB_I2C_NUM),
+    .si_addr = MYNEWT_VAL(BMP280_OFB_I2C_ADDR),
 };
 #endif
 #endif
 
 #if MYNEWT_VAL(SPI_0_MASTER) && MYNEWT_VAL(BME280_OFB)
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
-struct bus_spi_node_cfg flash_spi_cfg = {
+struct bus_spi_node_cfg bme280_spi_cfg = {
     .node_cfg.bus_name = MYNEWT_VAL(BME280_OFB_SPI_BUS),
     .pin_cs = MYNEWT_VAL(BME280_OFB_CS),
     .mode = BUS_SPI_MODE_0,
@@ -291,6 +307,25 @@ static struct sensor_itf i2c_0_itf_lsm = {
 };
 #endif
 
+#if MYNEWT_VAL(LSM6DSO_OFB)
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+static const struct bus_i2c_node_cfg lsm6dso_node_cfg = {
+    .node_cfg = {
+        .bus_name = MYNEWT_VAL(LSM6DSO_OFB_I2C_BUS),
+    },
+    .addr = MYNEWT_VAL(LSM6DSO_OFB_I2C_ADDR),
+    .freq = 400,
+};
+static struct sensor_itf lsm6dso_i2c_itf;
+#else
+static struct sensor_itf lsm6dso_i2c_itf = {
+    .si_type = SENSOR_ITF_I2C,
+    .si_num  = MYNEWT_VAL(LSM6DSO_OFB_I2C_NUM),
+    .si_addr = MYNEWT_VAL(LSM6DSO_OFB_I2C_ADDR)
+};
+#endif
+#endif
+
 #if MYNEWT_VAL(MPU6050_OFB)
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
 static const struct bus_i2c_node_cfg mpu6050_node_cfg = {
@@ -310,13 +345,24 @@ static struct sensor_itf mpu6050_i2c_itf = {
 #endif
 #endif
 
-#if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(BNO055_OFB)
-static struct sensor_itf i2c_0_itf_bno = {
+#if MYNEWT_VAL(BNO055_OFB)
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+static const struct bus_i2c_node_cfg bno055_i2c_cfg = {
+    .node_cfg = {
+        .bus_name = MYNEWT_VAL(BNO055_OFB_I2C_BUS),
+    },
+    .addr = MYNEWT_VAL(BNO055_OFB_I2C_ADDR),
+    .freq = 400,
+};
+static struct sensor_itf bno055_i2c_itf;
+#elif MYNEWT_VAL(I2C_0)
+static struct sensor_itf bno055_i2c_itf = {
     .si_type = SENSOR_ITF_I2C,
     .si_num  = 0,
     /* HW I2C address for the BNO055 */
     .si_addr = 0x28
 };
+#endif
 #endif
 
 #if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(TSL2561_OFB)
@@ -329,7 +375,7 @@ static struct sensor_itf i2c_0_itf_tsl = {
 #endif
 
 #if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(TSL2591_OFB)
-static struct sensor_itf i2c_0_itf_tsl = {
+static struct sensor_itf i2c_0_itf_tsl2591 = {
     .si_type = SENSOR_ITF_I2C,
     .si_num  = 0,
     /*  I2C address for the TSL2591 (0x29) */
@@ -364,7 +410,24 @@ static struct sensor_itf i2c_0_itf_ms40 = {
 };
 #endif
 
-#if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(BMA253_OFB)
+#if MYNEWT_VAL(BMA253_OFB)
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+static const struct bus_i2c_node_cfg bma253_i2c_cfg = {
+    .node_cfg = {
+        .bus_name = MYNEWT_VAL(BMA253_OFB_BUS),
+    },
+    .addr = MYNEWT_VAL(BMA253_OFB_I2C_ADDR),
+    .freq = 400,
+};
+static struct sensor_itf spi2c_0_itf_bma253 = {
+    .si_ints = {
+        { MYNEWT_VAL(BMA253_OFB_INT1_PIN), MYNEWT_VAL(BMA253_INT_PIN_DEVICE),
+            MYNEWT_VAL(BMA253_INT_CFG_ACTIVE)},
+        { MYNEWT_VAL(BMA253_OFB_INT1_PIN), MYNEWT_VAL(BMA253_INT2_PIN_DEVICE),
+            MYNEWT_VAL(BMA253_INT_CFG_ACTIVE)}
+    },
+};
+#elif MYNEWT_VAL(I2C_0)
 static struct sensor_itf spi2c_0_itf_bma253 = {
     .si_type = SENSOR_ITF_I2C,
     .si_num  = 0,
@@ -377,8 +440,10 @@ static struct sensor_itf spi2c_0_itf_bma253 = {
     },
 };
 #endif
+#endif
 
-#if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(BMA2XX_OFB)
+#if MYNEWT_VAL(BMA2XX_OFB)
+#if MYNEWT_VAL(I2C_0)
 static struct sensor_itf spi2c_0_itf_bma2xx = {
     .si_type = SENSOR_ITF_I2C,
     .si_num  = 0,
@@ -390,8 +455,7 @@ static struct sensor_itf spi2c_0_itf_bma2xx = {
             MYNEWT_VAL(BMA2XX_INT_CFG_ACTIVE)}
     },
 };
-#endif
-#if MYNEWT_VAL(SPI_0_MASTER) && MYNEWT_VAL(BMA2XX_OFB)
+#elif MYNEWT_VAL(SPI_0_MASTER)
 //TODO:  Make INT pin nums configurable.  Leaving hardcoded
 //to handle multiple bma2xx sensor interface examples
 static struct sensor_itf spi2c_0_itf_bma2xx = {
@@ -406,16 +470,65 @@ static struct sensor_itf spi2c_0_itf_bma2xx = {
     },
 };
 #endif
+#endif
 
-#if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(BMP388_OFB)
-static struct sensor_itf spi2c_0_itf_bmp388= {
-    .si_type = SENSOR_ITF_I2C,
-    .si_num  = 0,
-    .si_addr = 0x76,
-    .si_ints = {
-        { 31, MYNEWT_VAL(BMP388_INT1_PIN_DEVICE),
-          MYNEWT_VAL(BMP388_INT1_CFG_ACTIVE)}}
+#if MYNEWT_VAL(BMP388_OFB)
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+#if MYNEWT_VAL(BMP388_OFB_I2C_NUM) >= 0
+static const struct bus_i2c_node_cfg bmp388_node_cfg = {
+    .node_cfg = {
+        .bus_name = MYNEWT_VAL(BMP388_OFB_BUS),
+    },
+    .addr = MYNEWT_VAL(BMP388_OFB_I2C_ADDR),
+    .freq = 400,
 };
+#elif MYNEWT_VAL(BMP388_OFB_SPI_NUM) >= 0
+struct bus_spi_node_cfg bmp388_node_cfg = {
+    .node_cfg.bus_name = MYNEWT_VAL(BMP388_OFB_BUS),
+    .pin_cs = MYNEWT_VAL(BMP388_OFB_CS),
+    .mode = BUS_SPI_MODE_0,
+    .data_order = HAL_SPI_MSB_FIRST,
+    .freq = MYNEWT_VAL(BMP388_OFB_BAUDRATE),
+};
+#endif
+static struct sensor_itf bmp388_itf = {
+    .si_ints = {
+        {
+            .host_pin = MYNEWT_VAL(BMP388_OFB_INT_PIN),
+            .device_pin = MYNEWT_VAL(BMP388_INT1_PIN_DEVICE),
+            .active = MYNEWT_VAL(BMP388_INT1_CFG_ACTIVE)
+        },
+    }
+};
+#else
+#if MYNEWT_VAL(BMP388_OFB_I2C_NUM) >= 0
+static struct sensor_itf spi2c_0_itf_bmp388 = {
+    .si_type = SENSOR_ITF_I2C,
+    .si_num  = MYNEWT_VAL(BMP388_OFB_I2C_NUM),
+    .si_addr = MYNEWT_VAL(BMP388_OFB_I2C_ADDR),
+    .si_ints = {
+        {
+            .host_pin = MYNEWT_VAL(BMP388_OFB_INT_PIN),
+            .device_pin = MYNEWT_VAL(BMP388_INT1_PIN_DEVICE),
+            .active = MYNEWT_VAL(BMP388_INT1_CFG_ACTIVE)
+        }
+    }
+};
+#elif MYNEWT_VAL(BMP388_OFB_SPI_NUM) >= 0
+static struct sensor_itf spi2c_0_itf_bmp388 = {
+    .si_type = SENSOR_ITF_SPI,
+    .si_num  = MYNEWT_VAL(BMP388_OFB_SPI_NUM),
+    .si_cs_pin = MYNEWT_VAL(BMP388_OFB_CS),
+    .si_ints = {
+        {
+            .host_pin = MYNEWT_VAL(BMP388_OFB_INT_PIN),
+            .device_pin = MYNEWT_VAL(BMP388_INT1_PIN_DEVICE),
+            .active = MYNEWT_VAL(BMP388_INT1_CFG_ACTIVE)
+        }
+    }
+};
+#endif
+#endif
 #endif
 
 #if MYNEWT_VAL(ADXL345_OFB)
@@ -439,7 +552,12 @@ static const struct bus_spi_node_cfg adxl345_node_cfg = {
     .freq = 4000,
 };
 #endif
-static struct sensor_itf adxl345_itf;
+static struct sensor_itf adxl345_itf = {
+    .si_ints = {
+        { MYNEWT_VAL(ADXL345_INT_PIN_HOST), MYNEWT_VAL(ADXL345_INT_PIN_DEVICE),
+          MYNEWT_VAL(ADXL345_INT_CFG_ACTIVE)}
+    }
+};
 #else
 static struct sensor_itf adxl_itf = {
     .si_type = SENSOR_ITF_I2C,
@@ -488,6 +606,48 @@ static struct sensor_itf i2c_0_itf_lis2ds12 = {
         { MYNEWT_VAL(LIS2DS12_INT1_PIN_HOST), MYNEWT_VAL(LIS2DS12_INT1_PIN_DEVICE),
           MYNEWT_VAL(LIS2DS12_INT1_CFG_ACTIVE)}}
 };
+#endif
+
+#if MYNEWT_VAL(LIS2DH12_OFB)
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+#if MYNEWT_VAL(LIS2DH12_OFB_I2C_NUM) >= 0
+static const struct bus_i2c_node_cfg lis2dh12_node_cfg = {
+    .node_cfg = {
+        .bus_name = MYNEWT_VAL(LIS2DH12_OFB_BUS),
+    },
+    .addr = MYNEWT_VAL(LIS2DH12_OFB_ITF_ADDR),
+    .freq = 400,
+};
+#elif MYNEWT_VAL(LIS2DH12_OFB_SPI_NUM) >= 0
+static const struct bus_spi_node_cfg lis2dh12_node_cfg = {
+    .node_cfg = {
+        .bus_name = MYNEWT_VAL(LIS2DH12_OFB_BUS),
+    },
+    .pin_cs = MYNEWT_VAL(LIS2DH12_OFB_CS),
+    .mode = BUS_SPI_MODE_3,
+    .data_order = BUS_SPI_DATA_ORDER_MSB,
+    .freq = 4000,
+};
+#endif
+static struct sensor_itf lis2dh12_itf = {
+    .si_ints = {
+        { MYNEWT_VAL(LIS2DH12_OFB_INT1_PIN_HOST), 1,
+            MYNEWT_VAL(LIS2DH12_OFB_INT_CFG_ACTIVE)},
+        { MYNEWT_VAL(LIS2DH12_OFB_INT2_PIN_HOST), 2,
+            MYNEWT_VAL(LIS2DH12_OFB_INT_CFG_ACTIVE)}}
+};
+#else
+static struct sensor_itf lis2dh12_itf = {
+    .si_type = SENSOR_ITF_I2C,
+    .si_num  = MYNEWT_VAL(LIS2DH12_OFB_I2C_NUM),
+    .si_addr = MYNEWT_VAL(LIS2DH12_OFB_ITF_ADDR),
+    .si_ints = {
+        { MYNEWT_VAL(LIS2DH12_OFB_INT1_PIN_HOST), 1,
+            MYNEWT_VAL(LIS2DH12_OFB_INT_CFG_ACTIVE)},
+        { MYNEWT_VAL(LIS2DH12_OFB_INT2_PIN_HOST), 2,
+            MYNEWT_VAL(LIS2DH12_OFB_INT_CFG_ACTIVE)}}
+};
+#endif
 #endif
 
 #if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(BME680_OFB)
@@ -812,6 +972,68 @@ config_lsm303dlhc_sensor(void)
                   SENSOR_TYPE_MAGNETIC_FIELD;
 
     rc = lsm303dlhc_config((struct lsm303dlhc *) dev, &lsmcfg);
+
+    os_dev_close(dev);
+    return rc;
+}
+#endif
+
+/**
+ * LSM6DSO Sensor default configuration used by the creator package
+ *
+ * @return 0 on success, non-zero on failure
+ */
+#if MYNEWT_VAL(LSM6DSO_OFB)
+static int
+config_lsm6dso_sensor(void)
+{
+    int rc;
+    struct os_dev *dev;
+    struct lsm6dso_cfg cfg = {
+        .acc_fs = LSM6DSO_ACCEL_FS_4G_VAL,
+        .acc_rate = LSM6DSO_ACCEL_52HZ_VAL,
+
+        .gyro_fs = LSM6DSO_GYRO_FS_500DPS_VAL,
+        .gyro_rate = LSM6DSO_GYRO_52HZ_VAL,
+
+        .wk = {
+            .hpf_slope = 1, /* High pass filter applied */
+            .wake_up_ths = 15,
+            .wake_up_dur = 3,
+            .sleep_duration = 3,
+        },
+        .fifo = {
+            .mode = LSM6DSO_FIFO_MODE_CONTINUOUS_VAL,
+            .wtm = 10,
+        },
+        .ff = {
+            .freefall_dur = 3,
+            .freefall_ths = 3,
+        },
+        .tap = {
+            .dur = 10,
+            .en_x = 1,
+            .en_y = 1,
+            .en_z = 1,
+            .en_dtap = 1,
+            .quiet = 0,
+            .shock = 0,
+            .tap_prio = 0,
+            .tap_ths = 20
+        },
+        .orientation = {
+            .en_4d = 0,
+            .ths_6d = 0,
+        },
+        .int1_pin_cfg = 0,
+        .int2_pin_cfg = 0,
+        .map_int2_to_int1 = 0,
+    };
+
+    dev = (struct os_dev *)os_dev_open("lsm6dso_0", OS_TIMEOUT_NEVER, NULL);
+    assert(dev != NULL);
+
+    rc = lsm6dso_config((struct lsm6dso *)dev, &cfg);
 
     os_dev_close(dev);
     return rc;
@@ -1151,6 +1373,35 @@ config_lis2dw12_sensor(void)
 #endif
 
 /**
+ * LIS2DH12 Sensor default configuration used by the creator package
+ *
+ * @return 0 on success, non-zero on failure
+ */
+#if MYNEWT_VAL(LIS2DH12_OFB)
+static int
+config_lis2dh12_sensor(void)
+{
+    int rc;
+    struct os_dev *dev;
+    struct lis2dh12_cfg cfg = {0};
+
+    dev = os_dev_open("lis2dh12_0", OS_TIMEOUT_NEVER, NULL);
+    assert(dev != NULL);
+
+    cfg.lc_s_mask = SENSOR_TYPE_ACCELEROMETER;
+    cfg.lc_rate = LIS2DH12_DATA_RATE_HN_1344HZ_L_5376HZ;
+    cfg.lc_fs = LIS2DH12_FS_2G;
+
+    rc = lis2dh12_config((struct lis2dh12 *)dev, &cfg);
+    assert(rc == 0);
+
+    os_dev_close(dev);
+
+    return rc;
+}
+#endif
+
+/**
  * LIS2DS12 Sensor default configuration used by the creator package
  *
  * @return 0 on success, non-zero on failure
@@ -1235,7 +1486,11 @@ config_bma2xx_sensor(void)
 
     cfg.model = BMA2XX_BMA280;
     cfg.low_g_delay_ms = BMA2XX_LOW_G_DELAY_MS_DEFAULT;
+    cfg.low_g_thresh_g = BMA2XX_LOW_G_THRESH_G_DEFAULT;
+    cfg.low_g_hyster_g = BMA2XX_LOW_G_HYSTER_G_DEFAULT;
     cfg.high_g_delay_ms = BMA2XX_HIGH_G_DELAY_MS_DEFAULT;
+    cfg.high_g_thresh_g = BMA2XX_HIGH_G_THRESH_G_DEFAULT;
+    cfg.high_g_hyster_g = BMA2XX_HIGH_G_HYSTER_G_DEFAULT;
     cfg.g_range = BMA2XX_G_RANGE_2;
     cfg.filter_bandwidth = BMA2XX_FILTER_BANDWIDTH_500_HZ;
     cfg.use_unfiltered_data = false;
@@ -1247,6 +1502,7 @@ config_bma2xx_sensor(void)
     cfg.offset_x_g = 0.0;
     cfg.offset_y_g = 0.0;
     cfg.offset_z_g = 0.0;
+    cfg.orient_hyster_g = BMA2XX_ORIENT_HYSTER_G_DEFAULT;
     cfg.orient_blocking = BMA2XX_ORIENT_BLOCKING_NONE;
     cfg.orient_mode = BMA2XX_ORIENT_MODE_SYMMETRICAL;
     cfg.power_mode = BMA2XX_POWER_MODE_NORMAL;
@@ -1280,7 +1536,7 @@ config_bmp388_sensor(void)
 
     cfg.int_pp_od = 0;
     cfg.int_latched = 0;
-    cfg.int_active_low = 1;
+    cfg.int_active_level = 1;
 
 
     /* options: BMP388_FIFO_M_BYPASS, BMP388_FIFO_M_FIFO */
@@ -1501,6 +1757,20 @@ sensor_dev_create(void)
     assert(rc == 0);
 #endif
 
+#if MYNEWT_VAL(LSM6DSO_OFB)
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    rc = lsm6dso_create_i2c_sensor_dev(&lsm6dso.i2c_node, "lsm6dso_0",
+                                       &lsm6dso_node_cfg, &lsm6dso_i2c_itf);
+#else
+    rc = os_dev_create((struct os_dev *)&lsm6dso, "lsm6dso_0",
+      OS_DEV_INIT_PRIMARY, 0, lsm6dso_init, (void *)&lsm6dso_i2c_itf);
+#endif
+    assert(rc == 0);
+
+    rc = config_lsm6dso_sensor();
+    assert(rc == 0);
+#endif
+
 #if MYNEWT_VAL(MPU6050_OFB)
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
     rc = mpu6050_create_i2c_sensor_dev(&mpu6050.i2c_node, "mpu6050_0",
@@ -1516,9 +1786,15 @@ sensor_dev_create(void)
 #endif
 
 #if MYNEWT_VAL(BNO055_OFB)
-    rc = os_dev_create((struct os_dev *) &bno055, "bno055_0",
-      OS_DEV_INIT_PRIMARY, 0, bno055_init, (void *)&i2c_0_itf_bno);
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    rc = bno055_create_sensor_dev(&bno055, "bno055_0", &bno055_i2c_cfg,
+                                  &bno055_i2c_itf);
     assert(rc == 0);
+#else
+    rc = os_dev_create((struct os_dev *) &bno055, "bno055_0",
+      OS_DEV_INIT_PRIMARY, 0, bno055_init, (void *)&bno055_i2c_itf);
+    assert(rc == 0);
+#endif
 
     rc = config_bno055_sensor();
     assert(rc == 0);
@@ -1535,7 +1811,7 @@ sensor_dev_create(void)
 
 #if MYNEWT_VAL(TSL2591_OFB)
     rc = os_dev_create((struct os_dev *) &tsl2591, "tsl2591_0",
-      OS_DEV_INIT_PRIMARY, 0, tsl2591_init, (void *)&i2c_0_itf_tsl);
+      OS_DEV_INIT_PRIMARY, 0, tsl2591_init, (void *)&i2c_0_itf_tsl2591);
     assert(rc == 0);
 
     rc = config_tsl2591_sensor();
@@ -1554,7 +1830,7 @@ sensor_dev_create(void)
 #if MYNEWT_VAL(BME280_OFB)
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
     rc = bme280_create_spi_sensor_dev(&bme280.spi_node, "bme280_0",
-                                      &flash_spi_cfg, &bme280_itf);
+                                      &bme280_spi_cfg, &bme280_itf);
     assert(rc == 0);
 #else
     rc = os_dev_create((struct os_dev *) &bme280, "bme280_0",
@@ -1603,9 +1879,15 @@ sensor_dev_create(void)
 #endif
 
 #if MYNEWT_VAL(BMA253_OFB)
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    rc = bma253_create_i2c_sensor_dev(&bma253.node, "bma253_0",
+                                      &bma253_i2c_cfg, &spi2c_0_itf_bma253);
+    assert(rc == 0);
+#else
     rc = os_dev_create((struct os_dev *)&bma253, "bma253_0",
       OS_DEV_INIT_PRIMARY, 0, bma253_init, &spi2c_0_itf_bma253);
     assert(rc == 0);
+#endif
 
     rc = config_bma253_sensor();
     assert(rc == 0);
@@ -1621,10 +1903,21 @@ sensor_dev_create(void)
 #endif
 
 #if MYNEWT_VAL(BMP388_OFB)
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+#if MYNEWT_VAL(BMP388_OFB_I2C_NUM) >= 0
+    rc = bmp388_create_i2c_sensor_dev(&bmp388.i2c_node, "bmp388_0",
+                                      &bmp388_node_cfg, &bmp388_itf);
+#elif MYNEWT_VAL(BMP388_OFB_SPI_NUM) >= 0
+    rc = bmp388_create_spi_sensor_dev(&bmp388.spi_node, "bmp388_0",
+                                      &bmp388_node_cfg, &bmp388_itf);
+#endif
+    assert(rc == 0);
+#else
     rc = os_dev_create((struct os_dev *)&bmp388, "bmp388_0",
       OS_DEV_INIT_PRIMARY, 0, bmp388_init, &spi2c_0_itf_bmp388);
     assert(rc == 0);
 
+#endif
     rc = config_bmp388_sensor();
     assert(rc == 0);
 #endif
@@ -1673,6 +1966,23 @@ sensor_dev_create(void)
     assert(rc == 0);
 
     rc = config_lis2dw12_sensor();
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(LIS2DH12_OFB)
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+#if MYNEWT_VAL(LIS2DH12_OFB_I2C_NUM) >= 0
+    rc = lis2dh12_create_i2c_sensor_dev(&lis2dh12.i2c_node, "lis2dh12_0",
+                                        &lis2dh12_node_cfg, &lis2dh12_itf);
+    assert(rc == 0);
+#endif
+#else
+    rc = os_dev_create((struct os_dev *)&lis2dh12, "lis2dh12_0",
+      OS_DEV_INIT_PRIMARY, 0, lis2dh12_init, &lis2dh12_itf);
+    assert(rc == 0);
+#endif
+
+    rc = config_lis2dh12_sensor();
     assert(rc == 0);
 #endif
 

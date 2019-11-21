@@ -42,11 +42,25 @@ static struct shell_cmd bno055_shell_cmd_struct = {
     .sc_cmd_func = bno055_shell_cmd
 };
 
-static struct sensor_itf g_sensor_itf = {
-    .si_type = MYNEWT_VAL(BNO055_SHELL_ITF_TYPE),
-    .si_num = MYNEWT_VAL(BNO055_SHELL_ITF_NUM),
-    .si_addr = MYNEWT_VAL(BNO055_SHELL_ITF_ADDR),
-};
+static struct sensor_itf *g_sensor_itf;
+static struct bno055 *g_bno055;
+
+static int
+bno055_shell_open_device(void)
+{
+    if (g_sensor_itf) {
+        return 0;
+    }
+
+    g_bno055 = (struct bno055 *)os_dev_open(MYNEWT_VAL(BNO055_SHELL_DEV_NAME),
+                                            1000, NULL);
+    if (g_bno055) {
+        g_sensor_itf = &g_bno055->sensor.s_itf;
+        return 0;
+    }
+
+    return SYS_ENODEV;
+}
 
 static int
 bno055_shell_err_too_many_args(char *cmd_name)
@@ -109,7 +123,7 @@ bno055_shell_cmd_sensor_offsets(int argc, char **argv)
 
     /* Display the chip id */
     if (argc == 2) {
-        rc = bno055_get_sensor_offsets(&g_sensor_itf, &bso);
+        rc = bno055_get_sensor_offsets(g_sensor_itf, &bso);
         if (rc) {
             console_printf("Read failed %d\n", rc);
             goto err;
@@ -150,7 +164,7 @@ bno055_shell_cmd_sensor_offsets(int argc, char **argv)
         bso.bso_acc_radius = offsetdata[9];
         bso.bso_mag_radius = offsetdata[10];
 
-        rc = bno055_set_sensor_offsets(&g_sensor_itf, &bso);
+        rc = bno055_set_sensor_offsets(g_sensor_itf, &bso);
         if (rc) {
             goto err;
         }
@@ -173,7 +187,7 @@ bno055_shell_cmd_get_chip_id(int argc, char **argv)
 
     /* Display the chip id */
     if (argc == 2) {
-        rc = bno055_get_chip_id(&g_sensor_itf, &id);
+        rc = bno055_get_chip_id(g_sensor_itf, &id);
         if (rc) {
             console_printf("Read failed %d", rc);
         }
@@ -195,7 +209,7 @@ bno055_shell_cmd_get_rev_info(int argc, char **argv)
 
     /* Display the rev ids */
     if (argc == 2) {
-        rc = bno055_get_rev_info(&g_sensor_itf, &ri);
+        rc = bno055_get_rev_info(g_sensor_itf, &ri);
         if (rc) {
             console_printf("Read failed %d", rc);
         }
@@ -253,7 +267,7 @@ bno055_shell_cmd_read(int argc, char **argv)
     while(samples--) {
 
         if (type == SENSOR_TYPE_ROTATION_VECTOR) {
-            rc = bno055_get_quat_data(&g_sensor_itf, databuf);
+            rc = bno055_get_quat_data(g_sensor_itf, databuf);
             if (rc) {
                 console_printf("Read failed: %d\n", rc);
                 goto err;
@@ -266,7 +280,7 @@ bno055_shell_cmd_read(int argc, char **argv)
             console_printf("w:%s\n", sensor_ftostr(sqd->sqd_w, tmpstr, 13));
 
         } else if (type == SENSOR_TYPE_EULER) {
-            rc = bno055_get_vector_data(&g_sensor_itf, databuf, type);
+            rc = bno055_get_vector_data(g_sensor_itf, databuf, type);
             if (rc) {
                 console_printf("Read failed: %d\n", rc);
                 goto err;
@@ -278,7 +292,7 @@ bno055_shell_cmd_read(int argc, char **argv)
             console_printf("p:%s\n", sensor_ftostr(sed->sed_p, tmpstr, 13));
 
         } else if (type == SENSOR_TYPE_TEMPERATURE) {
-            rc = bno055_get_temp(&g_sensor_itf, databuf);
+            rc = bno055_get_temp(g_sensor_itf, databuf);
             if (rc) {
                 console_printf("Read failed: %d\n", rc);
                 goto err;
@@ -287,7 +301,7 @@ bno055_shell_cmd_read(int argc, char **argv)
 
             console_printf("Temperature:%u\n", *temp);
         } else {
-            rc = bno055_get_vector_data(&g_sensor_itf, databuf, type);
+            rc = bno055_get_vector_data(g_sensor_itf, databuf, type);
             if (rc) {
                 console_printf("Read failed: %d\n", rc);
                 goto err;
@@ -319,7 +333,7 @@ bno055_shell_cmd_opr_mode(int argc, char **argv)
 
     /* Display the mode */
     if (argc == 2) {
-        rc = bno055_get_opr_mode(&g_sensor_itf, (uint8_t *)&val);
+        rc = bno055_get_opr_mode(g_sensor_itf, (uint8_t *)&val);
         if (rc) {
             goto err;
         }
@@ -337,7 +351,7 @@ bno055_shell_cmd_opr_mode(int argc, char **argv)
             return bno055_shell_err_invalid_arg(argv[2]);
         }
 
-        rc = bno055_set_opr_mode(&g_sensor_itf, val);
+        rc = bno055_set_opr_mode(g_sensor_itf, val);
         if (rc) {
             goto err;
         }
@@ -360,7 +374,7 @@ bno055_shell_cmd_pwr_mode(int argc, char **argv)
 
     /* Display the mode */
     if (argc == 2) {
-        rc = bno055_get_pwr_mode(&g_sensor_itf, (uint8_t *)&val);
+        rc = bno055_get_pwr_mode(g_sensor_itf, (uint8_t *)&val);
         if (rc) {
             goto err;
         }
@@ -374,7 +388,7 @@ bno055_shell_cmd_pwr_mode(int argc, char **argv)
             return bno055_shell_err_invalid_arg(argv[2]);
         }
 
-        rc = bno055_set_pwr_mode(&g_sensor_itf, val);
+        rc = bno055_set_pwr_mode(g_sensor_itf, val);
         if (rc) {
             goto err;
         }
@@ -397,7 +411,7 @@ bno055_shell_units_cmd(int argc, char **argv)
 
     /* Display the units */
     if (argc == 2) {
-        rc = bno055_get_units(&g_sensor_itf, (uint8_t *)&val);
+        rc = bno055_get_units(g_sensor_itf, (uint8_t *)&val);
         console_printf("Acc, linear acc, gravity: %s\n"
                        "Mag field strength: Micro Tesla\n"
                        "Ang rate: %s\n"
@@ -419,7 +433,7 @@ bno055_shell_units_cmd(int argc, char **argv)
             return bno055_shell_err_invalid_arg(argv[2]);
         }
 
-        rc = bno055_set_units(&g_sensor_itf, val);
+        rc = bno055_set_units(g_sensor_itf, val);
         if (rc) {
             goto err;
         }
@@ -442,7 +456,7 @@ bno055_shell_cmd_dumpreg(int argc, char **argv)
         return bno055_shell_err_invalid_arg(argv[2]);
     }
 
-    rc = bno055_read8(&g_sensor_itf, addr, &val);
+    rc = bno055_read8(g_sensor_itf, addr, &val);
     if (rc) {
         goto err;
     }
@@ -458,7 +472,7 @@ bno055_shell_cmd_reset(int argc, char **argv)
 {
     int rc;
     /* Reset sensor */
-    rc = bno055_write8(&g_sensor_itf, BNO055_SYS_TRIGGER_ADDR, BNO055_SYS_TRIGGER_RST_SYS);
+    rc = bno055_write8(g_sensor_itf, BNO055_SYS_TRIGGER_ADDR, BNO055_SYS_TRIGGER_RST_SYS);
     if (rc) {
         goto err;
     }
@@ -475,6 +489,10 @@ bno055_shell_cmd(int argc, char **argv)
         return bno055_shell_help();
     }
 
+    if (bno055_shell_open_device()) {
+        console_printf("Error: device not found \"%s\"\n",
+                       MYNEWT_VAL(BNO055_SHELL_DEV_NAME));
+    }
     /* Read command (get a new data sample) */
     if (argc > 1 && strcmp(argv[1], "r") == 0) {
         return bno055_shell_cmd_read(argc, argv);

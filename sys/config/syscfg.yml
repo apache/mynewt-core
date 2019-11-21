@@ -22,12 +22,25 @@ syscfg.defs:
         value: 0
         restrictions:
             - '!CONFIG_NFFS'
+            - '!CONFIG_FCB2'
             - 'CONFIG_FCB_FLASH_AREA'
     CONFIG_NFFS:
         description: 'Config default storage is in NFFS'
         value: 0
         restrictions:
             - '!CONFIG_FCB'
+            - '!CONFIG_FCB2'
+    CONFIG_FCB2:
+        description: 'Config default storage is in FCB2'
+        value: 0
+        restrictions:
+            - '!CONFIG_FCB'
+            - '!CONFIG_NFFS'
+            - 'CONFIG_FCB_FLASH_AREA'
+    CONFIG_MGMT:
+        description: 'SMP access to config'
+        value: 0
+
     CONFIG_NEWTMGR:
         description: 'Newtmgr access to config'
         value: 0
@@ -63,7 +76,7 @@ syscfg.defs:
             Config CLI commands read 1, write 2, read/write 3
         value: 3
 
-syscfg.defs.CONFIG_FCB:
+syscfg.defs.(CONFIG_FCB || CONFIG_FCB2):
     CONFIG_FCB_FLASH_AREA:
         description: 'BSP flash area for config'
         type: 'flash_owner'
@@ -88,3 +101,8 @@ syscfg.defs.CONFIG_NFFS:
         description: 'Limit how many items stored in file before compressing'
         value: 32
 
+syscfg.vals.CONFIG_FCB2:
+    CONFIG_FCB_MAGIC: 0xd0b1d0b1
+
+syscfg.vals.CONFIG_NEWTMGR:
+    CONFIG_MGMT: MYNEWT_VAL(CONFIG_NEWTMGR)

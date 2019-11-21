@@ -23,7 +23,7 @@
 #include "defs/sections.h"
 #include "mcu/da1469x_hal.h"
 #include "hal/hal_flash_int.h"
-#include "DA1469xAB.h"
+#include "mcu/mcu.h"
 
 #define CODE_QSPI_INLINE    __attribute__((always_inline)) inline
 
@@ -92,10 +92,6 @@ da1469x_qspi_mode_single(const struct hal_flash *dev)
                                  QSPIC_QSPIC_CTRLMODE_REG_QSPIC_IO2_DAT_Msk |
                                  QSPIC_QSPIC_CTRLMODE_REG_QSPIC_IO3_OEN_Msk |
                                  QSPIC_QSPIC_CTRLMODE_REG_QSPIC_IO3_DAT_Msk;
-
-    QSPIC->QSPIC_CTRLBUS_REG = QSPIC_QSPIC_CTRLBUS_REG_QSPIC_EN_CS_Msk;
-    da1469x_qspi_write8(dev, 0xff);
-    QSPIC->QSPIC_CTRLBUS_REG = QSPIC_QSPIC_CTRLBUS_REG_QSPIC_DIS_CS_Msk;
 }
 
 CODE_QSPI_INLINE static void
@@ -114,16 +110,17 @@ da1469x_qspi_mode_dual(const struct hal_flash *dev)
                                  QSPIC_QSPIC_CTRLMODE_REG_QSPIC_IO2_DAT_Msk |
                                  QSPIC_QSPIC_CTRLMODE_REG_QSPIC_IO3_OEN_Msk |
                                  QSPIC_QSPIC_CTRLMODE_REG_QSPIC_IO3_DAT_Msk;
-
-    QSPIC->QSPIC_CTRLBUS_REG = QSPIC_QSPIC_CTRLBUS_REG_QSPIC_EN_CS_Msk;
-    da1469x_qspi_write8(dev, 0xff);
-    QSPIC->QSPIC_CTRLBUS_REG = QSPIC_QSPIC_CTRLBUS_REG_QSPIC_DIS_CS_Msk;
 }
 
 CODE_QSPI_INLINE static void
 da1469x_qspi_mode_manual(const struct hal_flash *dev)
 {
     QSPIC->QSPIC_CTRLMODE_REG &= ~QSPIC_QSPIC_CTRLMODE_REG_QSPIC_AUTO_MD_Msk;
+    QSPIC->QSPIC_CTRLBUS_REG = QSPIC_QSPIC_CTRLBUS_REG_QSPIC_SET_SINGLE_Msk;
+    QSPIC->QSPIC_CTRLBUS_REG = QSPIC_QSPIC_CTRLBUS_REG_QSPIC_EN_CS_Msk;
+    da1469x_qspi_write8(dev, 0xff);
+    da1469x_qspi_write8(dev, 0xff);
+    QSPIC->QSPIC_CTRLBUS_REG = QSPIC_QSPIC_CTRLBUS_REG_QSPIC_DIS_CS_Msk;
 }
 
 CODE_QSPI_INLINE static void
@@ -251,11 +248,13 @@ da1469x_qspi_write(const struct hal_flash *dev, uint32_t address,
 {
     uint32_t primask;
     uint32_t written;
+    uint32_t ctrlmode;
 
     __HAL_DISABLE_INTERRUPTS(primask);
 
+    ctrlmode = QSPIC->QSPIC_CTRLMODE_REG;
+
     da1469x_qspi_mode_manual(dev);
-    da1469x_qspi_mode_single(dev);
 
     da1469x_qspi_wait_busy(dev);
 
@@ -270,8 +269,8 @@ da1469x_qspi_write(const struct hal_flash *dev, uint32_t address,
         da1469x_qspi_wait_busy(dev);
     }
 
-    da1469x_qspi_mode_quad(dev);
-    da1469x_qspi_mode_auto(dev);
+    /* Restore automode and bus mode */
+    QSPIC->QSPIC_CTRLMODE_REG = ctrlmode;
 
     /* XXX Should check if region was cached before flushing cache */
     CACHE->CACHE_CTRL1_REG |= CACHE_CACHE_CTRL1_REG_CACHE_FLUSH_Msk;
@@ -285,19 +284,21 @@ static sec_text_ram_core int
 da1469x_qspi_erase_sector(const struct hal_flash *dev, uint32_t sector_address)
 {
     uint32_t primask;
+    uint32_t ctrlmode;
 
     __HAL_DISABLE_INTERRUPTS(primask);
 
+    ctrlmode = QSPIC->QSPIC_CTRLMODE_REG;
+
     da1469x_qspi_mode_manual(dev);
-    da1469x_qspi_mode_single(dev);
 
     da1469x_qspi_wait_busy(dev);
     da1469x_qspi_cmd_enable_write(dev);
     da1469x_qspi_cmd_erase_sector(dev, sector_address);
     da1469x_qspi_wait_busy(dev);
 
-    da1469x_qspi_mode_quad(dev);
-    da1469x_qspi_mode_auto(dev);
+    /* Restore automode and bus mode */
+    QSPIC->QSPIC_CTRLMODE_REG = ctrlmode;
 
     /* XXX Should check if region was cached before flushing cache */
     CACHE->CACHE_CTRL1_REG |= CACHE_CACHE_CTRL1_REG_CACHE_FLUSH_Msk;
@@ -379,8 +380,36 @@ da1469x_hff_sector_info(const struct hal_flash *dev, int idx,
     return 0;
 }
 
-static int
-da1469x_hff_init(const struct hal_flash *dev)
+#if MYNEWT_VAL(MCU_QSPIC_APP_CFG)
+static sec_text_ram_core void
+da1469x_hff_mcu_custom_init(const struct hal_flash *dev)
 {
+    uint32_t primask;
+    uint32_t ctrlmode_reg = QSPIC->QSPIC_CTRLMODE_REG;
+    __HAL_DISABLE_INTERRUPTS(primask);
+    da1469x_qspi_mode_manual(dev);
+#if defined (MYNEWT_VAL_MCU_QSPIC_BURSTCMDA_INIT_VAL)
+    QSPIC->QSPIC_BURSTCMDA_REG = MYNEWT_VAL(MCU_QSPIC_BURSTCMDA_INIT_VAL);
+#endif
+#if defined (MYNEWT_VAL_MCU_QSPIC_BURSTCMDB_INIT_VAL)
+    QSPIC->QSPIC_BURSTCMDB_REG = MYNEWT_VAL(MCU_QSPIC_BURSTCMDB_INIT_VAL);
+#endif
+#if defined (MYNEWT_VAL_MCU_QSPIC_CTRLMODE_INIT_VAL)
+    QSPIC->QSPIC_CTRLMODE_REG = MYNEWT_VAL(MCU_QSPIC_CTRLMODE_INIT_VAL);
+#endif
+    if (ctrlmode_reg & QSPIC_QSPIC_CTRLMODE_REG_QSPIC_AUTO_MD_Msk) {
+        /* restore auto mode */
+        da1469x_qspi_mode_auto(dev);
+    }
+    __HAL_ENABLE_INTERRUPTS(primask);
+}
+#endif
+
+static int
+    da1469x_hff_init(const struct hal_flash *dev)
+{
+#if MYNEWT_VAL(MCU_QSPIC_APP_CFG)
+    da1469x_hff_mcu_custom_init(dev);
+#endif
     return 0;
 }

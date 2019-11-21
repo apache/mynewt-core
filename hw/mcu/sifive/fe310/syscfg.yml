@@ -77,3 +77,11 @@ syscfg.defs:
     OS_TICKLESS_SLEEP:
         description: 'Enable tickless sleep'
         value: 1
+    HAL_SYSTEM_RESET_FULL:
+        description: >
+            When set to 1, hal_system_reset() reboots by jumping to start of flash.
+            When set to 0, hal_system_reset() jumps directly to _reset_handler of
+            application skipping bootloader code.
+            This maybe useful when .bssnz section is being used to store data across
+            software reboots.
+        value: 1

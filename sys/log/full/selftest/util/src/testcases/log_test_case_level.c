@@ -21,7 +21,7 @@
 
 static int
 log_last_walk(struct log *log, struct log_offset *log_offset,
-              void *dptr, uint16_t len)
+              const void *dptr, uint16_t len)
 {
     uint32_t *idx;
 

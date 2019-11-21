@@ -32,5 +32,6 @@
 FILE_NAME=$BIN_BASENAME.elf
 CFG="-f $CORE_PATH/hw/bsp/hifive1/riscv_openocd.cfg"
 GDB=riscv64-unknown-elf-gdb
-
+# Magic value that is checked inside hal_debugger_connected()
+EXTRA_GDB_CMDS="set *0x100000BC=0x5151A2BC"
 openocd_debug

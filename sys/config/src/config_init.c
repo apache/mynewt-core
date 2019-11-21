@@ -47,7 +47,7 @@ config_init_fs(void)
 }
 
 #elif MYNEWT_VAL(CONFIG_FCB)
-#include "fcb/fcb.h"
+
 #include "config/config_fcb.h"
 
 static struct flash_area conf_fcb_area[MYNEWT_VAL(CONFIG_FCB_NUM_AREAS) + 1];
@@ -88,6 +88,43 @@ config_init_fcb(void)
     SYSINIT_PANIC_ASSERT(rc == 0);
 }
 
+#elif MYNEWT_VAL(CONFIG_FCB2)
+
+#include "config/config_fcb2.h"
+
+static struct flash_sector_range config_init_fcb2_sector_range;
+static struct conf_fcb2 config_init_conf_fcb2 = {
+    .cf2_fcb.f_magic = MYNEWT_VAL(CONFIG_FCB_MAGIC),
+    .cf2_fcb.f_range_cnt = 1,
+    .cf2_fcb.f_ranges = &config_init_fcb2_sector_range
+};
+
+static void
+config_init_fcb2(void)
+{
+    int cnt;
+    int rc;
+
+    cnt = 1;
+    rc = flash_area_to_sector_ranges(MYNEWT_VAL(CONFIG_FCB_FLASH_AREA), &cnt,
+                                     &config_init_fcb2_sector_range);
+    SYSINIT_PANIC_ASSERT(rc == 0);
+
+    config_init_conf_fcb2.cf2_fcb.f_sector_cnt =
+      config_init_fcb2_sector_range.fsr_sector_count;
+
+    rc = conf_fcb2_src(&config_init_conf_fcb2);
+    if (rc) {
+        flash_area_erase(&config_init_fcb2_sector_range.fsr_flash_area, 0,
+                         config_init_fcb2_sector_range.fsr_sector_count *
+                         config_init_fcb2_sector_range.fsr_sector_size);
+        rc = conf_fcb2_src(&config_init_conf_fcb2);
+    }
+    SYSINIT_PANIC_ASSERT(rc == 0);
+    rc = conf_fcb2_dst(&config_init_conf_fcb2);
+    SYSINIT_PANIC_ASSERT(rc == 0);
+}
+
 #endif
 #endif
 
@@ -104,6 +141,8 @@ config_pkg_init(void)
     config_init_fs();
 #elif MYNEWT_VAL(CONFIG_FCB)
     config_init_fcb();
+#elif MYNEWT_VAL(CONFIG_FCB2)
+    config_init_fcb2();
 #endif
 #endif
 }

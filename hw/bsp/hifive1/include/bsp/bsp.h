@@ -23,6 +23,14 @@
 extern "C" {
 #endif
 
+/* Define special stackos sections */
+#define sec_data_core   __attribute__((section(".data.core")))
+#define sec_bss_core    __attribute__((section(".bss.core")))
+#define sec_bss_nz_core __attribute__((section(".bss.core.nz")))
+
+/* More convenient section placement macros. */
+#define bssnz_t         sec_bss_nz_core
+
 #define HIFIVE_PIN_0                (16)
 #define HIFIVE_PIN_1                (17)
 #define HIFIVE_PIN_2                (18)

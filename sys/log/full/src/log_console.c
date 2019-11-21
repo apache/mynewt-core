@@ -24,6 +24,25 @@
 #include <cbmem/cbmem.h>
 #include <console/console.h>
 #include "log/log.h"
+#if MYNEWT_VAL(LOG_VERSION) > 2
+#include "tinycbor/cbor.h"
+#include "tinycbor/cbor_buf_reader.h"
+
+static int
+log_console_dump_cbor_entry(const void *dptr, uint16_t len)
+{
+    struct CborParser cbor_parser;
+    struct CborValue cbor_value;
+    struct cbor_buf_reader cbor_buf_reader;
+
+    cbor_buf_reader_init(&cbor_buf_reader, dptr, len);
+    cbor_parser_init(&cbor_buf_reader.r, 0, &cbor_parser, &cbor_value);
+    cbor_value_to_pretty(stdout, &cbor_value);
+
+    console_write("\n", 1);
+    return 0;
+}
+#endif
 
 static struct log log_console;
 
@@ -36,27 +55,16 @@ log_console_get(void)
 static void
 log_console_print_hdr(const struct log_entry_hdr *hdr)
 {
-    console_printf("[ts=%lluus, mod=%u level=%u] ",
+    console_printf("[ts=%lluus, mod=%u level=%u ",
                    hdr->ue_ts, hdr->ue_module, hdr->ue_level);
-}
 
-static int
-log_console_append(struct log *log, void *buf, int len)
-{
-    struct log_entry_hdr *hdr;
-
-    if (!console_is_init()) {
-        return (0);
+#if MYNEWT_VAL(LOG_VERSION) > 2
+    if (hdr->ue_flags & LOG_FLAGS_IMG_HASH) {
+        console_printf("ih=0x%x%x%x%x", hdr->ue_imghash[0], hdr->ue_imghash[1],
+                       hdr->ue_imghash[2], hdr->ue_imghash[3]);
     }
-
-    if (!console_is_midline) {
-        hdr = (struct log_entry_hdr *) buf;
-        log_console_print_hdr(hdr);
-    }
-
-    console_write((char *) buf + LOG_ENTRY_HDR_SIZE, len - LOG_ENTRY_HDR_SIZE);
-
-    return (0);
+#endif
+    console_printf("]");
 }
 
 static int
@@ -71,13 +79,29 @@ log_console_append_body(struct log *log, const struct log_entry_hdr *hdr,
         log_console_print_hdr(hdr);
     }
 
-    console_write(body, body_len);
-
+    if (hdr->ue_etype != LOG_ETYPE_CBOR) {
+        console_write(body, body_len);
+    } else {
+#if MYNEWT_VAL(LOG_VERSION) > 2
+        log_console_dump_cbor_entry(body, body_len);
+#endif
+    }
     return (0);
 }
 
 static int
-log_console_read(struct log *log, void *dptr, void *buf, uint16_t offset,
+log_console_append(struct log *log, void *buf, int len)
+{
+    int hdr_len;
+
+    hdr_len = log_hdr_len(buf);
+
+    return log_console_append_body(log, buf, (uint8_t *)buf + hdr_len,
+                                   len - hdr_len);
+}
+
+static int
+log_console_read(struct log *log, const void *dptr, void *buf, uint16_t offset,
         uint16_t len)
 {
     /* You don't read console, console read you */

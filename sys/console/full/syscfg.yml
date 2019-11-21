@@ -46,6 +46,29 @@ syscfg.defs:
             Number of lines to be stored in console history.
             Set to "0" to disable console history.
         value: 0
+    CONSOLE_MAX_PROMPT_LEN:
+        description: 'Maximum number of characters for prompt'
+        value: 16
+    CONSOLE_STICKY_PROMPT:
+        description: >
+            If set to 1 prompt will be visble all the time at the
+            bottom of terminal if terminal was detected.
+        value: 0
+    CONSOLE_PROMPT_SOFT_CURSOR:
+        description: >
+            Set this to 1 for VT102 like terminals in case of volume of
+            log prints makes it difficult to see cursor in prompt line.
+        value: 0
+    CONSOLE_PROMPT_SOFT_CURSOR_ATTR:
+        description: >
+            Terminal escape sequence for cursor graphics mode.
+            For black and white (minicom) use "7m" - inverse
+            For color (putty) use "30;42m" - black/green
+        value: '"7m"'
+    CONSOLE_HIDE_CURSOR_IN_LOG_AREA:
+        description: >
+            Hide cursor in log area.
+        value: 1
 
     CONSOLE_UART_BAUD:
         description: 'Console UART baud rate.'

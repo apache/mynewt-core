@@ -18,7 +18,7 @@
 #
 
 pkg.name: hw/drivers/sensors/ms5837
-pkg.description: Driver for the MS5837 light to digital sensor
+pkg.description: Driver for the MS5837 pressure sensor
 pkg.author: "Vipul Rahane <vipul@runtime.io>"
 pkg.homepage: "http://www.runtime.io/"
 pkg.keywords:

@@ -79,7 +79,7 @@
 #include "parse/parse.h"
 
 struct stream_read_context {
-    uint32_t count;
+    int count;
 };
 
 static int bmp388_shell_cmd(int argc, char **argv);
@@ -135,7 +135,7 @@ bmp388_shell_cmd_read_chipid(int argc, char **argv)
     uint8_t chipid;
     struct os_dev * dev;
     struct bmp388 *bmp388;
-    struct sensor_itf *itf;
+
     dev = os_dev_open(MYNEWT_VAL(BMP388_SHELL_DEV_NAME), OS_TIMEOUT_NEVER, NULL);
     if (dev == NULL) {
         console_printf("failed to open bmp388_0 device\n");
@@ -143,9 +143,8 @@ bmp388_shell_cmd_read_chipid(int argc, char **argv)
     }
 
     bmp388 = (struct bmp388 *)dev;
-    itf = SENSOR_GET_ITF(&(bmp388->sensor));
 
-    rc = bmp388_get_chip_id(itf, &chipid);
+    rc = bmp388_get_chip_id(bmp388, &chipid);
     if (rc) {
         goto err;
     }
@@ -167,27 +166,24 @@ int bmp388_stream_read_cb(struct sensor * sensors, void *arg, void *data,
     struct sensor_temp_data *std;
     struct sensor_press_data *spd;
 
-    if (sensortype & SENSOR_TYPE_PRESSURE)
-    {
+    if (sensortype & SENSOR_TYPE_PRESSURE) {
         spd = (struct sensor_press_data *)data;
         sensor_ftostr(spd->spd_press, buffer_pressure, sizeof(buffer_pressure));
         console_printf("pressure = %s \n",
                 buffer_pressure);
     }
 
-    if (sensortype & SENSOR_TYPE_AMBIENT_TEMPERATURE)
-    {
+    if (sensortype & SENSOR_TYPE_TEMPERATURE) {
         std = (struct sensor_temp_data *)data;
         sensor_ftostr(std->std_temp, buffer_temperature, sizeof(buffer_temperature));
         console_printf("temperature = %s \n",
                 buffer_temperature);
     }
 
-
-
-
     ctx = (struct stream_read_context *)arg;
-    ctx->count--;
+    if (--ctx->count <= 0) {
+        return 1;
+    }
 
     return 0;
 }
@@ -227,7 +223,7 @@ bmp388_shell_cmd_stream_read(int argc, char **argv)
     console_printf("bmp388_shell_cmd_streamread!\n");
 
     return bmp388_stream_read(&(bmp388->sensor),
-                                SENSOR_TYPE_PRESSURE | SENSOR_TYPE_AMBIENT_TEMPERATURE,
+                                SENSOR_TYPE_PRESSURE | SENSOR_TYPE_TEMPERATURE,
                                 bmp388_stream_read_cb,
                                 &ctx,
                                 0);
@@ -261,7 +257,6 @@ bmp388_shell_cmd_poll_read(int argc, char **argv)
             return bmp388_shell_err_invalid_arg(argv[3]);
         }
         report_interval = val;
-
     }
 
     dev = os_dev_open(MYNEWT_VAL(BMP388_SHELL_DEV_NAME), OS_TIMEOUT_NEVER, NULL);
@@ -275,12 +270,10 @@ bmp388_shell_cmd_poll_read(int argc, char **argv)
 
     console_printf("bmp388_shell_cmd_poll_read!\n");
 
-    if ((samples > 0) && (report_interval))
-    {
-        while (samples != 0)
-        {
+    if ((samples > 0) && (report_interval)) {
+        while (samples != 0) {
             bmp388_poll_read(&(bmp388->sensor),
-                                SENSOR_TYPE_PRESSURE | SENSOR_TYPE_AMBIENT_TEMPERATURE,
+                                SENSOR_TYPE_PRESSURE | SENSOR_TYPE_TEMPERATURE,
                                 bmp388_stream_read_cb,
                                 &ctx,
                                 0);
@@ -298,7 +291,7 @@ bmp388_shell_cmd_dump(int argc, char **argv)
     int rc = 0;
     struct os_dev * dev;
     struct bmp388 *bmp388;
-    struct sensor_itf *itf;
+
     if (argc > 2) {
         return bmp388_shell_err_too_many_args(argv[1]);
     }
@@ -309,10 +302,8 @@ bmp388_shell_cmd_dump(int argc, char **argv)
     }
 
     bmp388 = (struct bmp388 *)dev;
-    itf = SENSOR_GET_ITF(&(bmp388->sensor));
 
-
-    rc = bmp388_dump(itf);
+    rc = bmp388_dump(bmp388);
 
     return rc;
 }
@@ -324,7 +315,7 @@ bmp388_shell_cmd_test(int argc, char **argv)
     int result;
     struct os_dev * dev;
     struct bmp388 *bmp388;
-    struct sensor_itf *itf;
+
     dev = os_dev_open(MYNEWT_VAL(BMP388_SHELL_DEV_NAME), OS_TIMEOUT_NEVER, NULL);
     if (dev == NULL) {
         console_printf("failed to open bmp388_0 device\n");
@@ -332,9 +323,8 @@ bmp388_shell_cmd_test(int argc, char **argv)
     }
 
     bmp388 = (struct bmp388 *)dev;
-    itf = SENSOR_GET_ITF(&(bmp388->sensor));
 
-    rc = bmp388_run_self_test(itf, &result);
+    rc = bmp388_run_self_test(bmp388, &result);
     if (rc) {
         goto err;
     }

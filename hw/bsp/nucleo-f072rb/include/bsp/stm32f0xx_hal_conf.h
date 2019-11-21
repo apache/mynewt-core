@@ -33,11 +33,13 @@
   * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   *
   ******************************************************************************
-  */ 
+  */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
 #ifndef __STM32F0xx_HAL_CONF_H
 #define __STM32F0xx_HAL_CONF_H
+
+#include <syscfg/syscfg.h>
 
 #ifdef __cplusplus
  extern "C" {
@@ -48,7 +50,7 @@
 
 /* ########################## Module Selection ############################## */
 /**
-  * @brief This is the list of modules to be used in the HAL driver 
+  * @brief This is the list of modules to be used in the HAL driver
   */
 #define HAL_MODULE_ENABLED
 /* #define HAL_ADC_MODULE_ENABLED */
@@ -82,15 +84,15 @@
 /**
   * @brief Adjust the value of External High Speed oscillator (HSE) used in your application.
   *        This value is used by the RCC HAL module to compute the system frequency
-  *        (when HSE is used as system clock source, directly or through the PLL).  
+  *        (when HSE is used as system clock source, directly or through the PLL).
   */
-#if !defined  (HSE_VALUE) 
+#if !defined  (HSE_VALUE)
   #define HSE_VALUE    ((uint32_t)8000000) /*!< Value of the External oscillator in Hz */
 #endif /* HSE_VALUE */
 
 /**
-  * @brief In the following line adjust the External High Speed oscillator (HSE) Startup 
-  *        Timeout value 
+  * @brief In the following line adjust the External High Speed oscillator (HSE) Startup
+  *        Timeout value
   */
 #if !defined  (HSE_STARTUP_TIMEOUT)
   #define HSE_STARTUP_TIMEOUT    ((uint32_t)100)   /*!< Time out for HSE start up, in ms */
@@ -99,15 +101,15 @@
 /**
   * @brief Internal High Speed oscillator (HSI) value.
   *        This value is used by the RCC HAL module to compute the system frequency
-  *        (when HSI is used as system clock source, directly or through the PLL). 
+  *        (when HSI is used as system clock source, directly or through the PLL).
   */
 #if !defined  (HSI_VALUE)
   #define HSI_VALUE    ((uint32_t)8000000) /*!< Value of the Internal oscillator in Hz*/
 #endif /* HSI_VALUE */
 
 /**
-  * @brief In the following line adjust the Internal High Speed oscillator (HSI) Startup 
-  *        Timeout value 
+  * @brief In the following line adjust the Internal High Speed oscillator (HSI) Startup
+  *        Timeout value
   */
 #if !defined  (HSI_STARTUP_TIMEOUT)
  #define HSI_STARTUP_TIMEOUT   ((uint32_t)5000) /*!< Time out for HSI start up */
@@ -166,13 +168,13 @@
                                                                               /*  Warning: Must be set to higher priority for HAL_Delay()  */
                                                                               /*  and HAL_GetTick() usage under interrupt context          */
 #define  USE_RTOS                     0
-#define  PREFETCH_ENABLE              1
+#define  PREFETCH_ENABLE              MYNEWT_VAL(STM32_FLASH_PREFETCH_ENABLE)
 #define  INSTRUCTION_CACHE_ENABLE     0
 #define  DATA_CACHE_ENABLE            0
 
 /* ########################## Assert Selection ############################## */
 /**
-  * @brief Uncomment the line below to expanse the "assert_param" macro in the 
+  * @brief Uncomment the line below to expanse the "assert_param" macro in the
   *        HAL drivers code
   */
 /*#define USE_FULL_ASSERT    1*/
@@ -292,7 +294,7 @@
   * @brief  The assert_param macro is used for function's parameters check.
   * @param  expr: If expr is false, it calls assert_failed function
   *         which reports the name of the source file and the source
-  *         line number of the call that failed. 
+  *         line number of the call that failed.
   *         If expr is true, it returns no value.
   * @retval None
   */

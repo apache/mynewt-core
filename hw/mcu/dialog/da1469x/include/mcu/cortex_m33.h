@@ -20,13 +20,20 @@
 #ifndef __MCU_CORTEX_M33_H_
 #define __MCU_CORTEX_M33_H_
 
-#include "DA1469xAB.h"
+#include "mcu/mcu.h"
+#include "core_cm33.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #define OS_TICKS_PER_SEC    (128)
+
+static inline void
+hal_debug_break(void)
+{
+    __BKPT(1);
+}
 
 #ifdef __cplusplus
 }

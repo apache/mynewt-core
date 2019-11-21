@@ -77,7 +77,8 @@ struct stm32_hal_spi_cfg {
 #include "stm32l1xx_hal_def.h"
 #include "stm32l1xx_hal_flash.h"
 #include "stm32l1xx_hal_flash_ex.h"
-/* TODO: enable ACC64 + prefetch */
+
+#define EMULATED_SECTOR_SIZE 2048
 #define STM32_HAL_FLASH_INIT()        \
     do {                              \
         HAL_FLASH_Unlock();           \

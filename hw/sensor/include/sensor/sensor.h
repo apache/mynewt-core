@@ -514,7 +514,7 @@ struct sensor_timestamp {
 };
 
 struct sensor_int {
-    uint8_t host_pin;
+    int8_t host_pin;
     uint8_t device_pin;
     uint8_t active;
 };
@@ -844,7 +844,7 @@ sensor_set_type_mask(struct sensor *sensor, sensor_type_t mask)
 static inline sensor_type_t
 sensor_check_type(struct sensor *sensor, sensor_type_t type)
 {
-    return (sensor->s_types & sensor->s_mask & type);
+    return (sensor_type_t)(sensor->s_types & sensor->s_mask & type);
 }
 
 /**

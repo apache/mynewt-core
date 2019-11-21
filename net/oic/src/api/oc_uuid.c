@@ -94,8 +94,21 @@ oc_uuid_to_str(const oc_uuid_t *uuid, char *buffer, int buflen)
 }
 
 void
+oc_gen_randomize_uuid(oc_uuid_t *uuid)
+{
+    int i;
+
+    for(i = 0; i < 16; i++) {
+            uuid->id[i] = (uint8_t)rand();
+    }
+}
+
+void
 oc_gen_uuid(oc_uuid_t *uuid)
 {
+  /* Set to Random values as per type 4 */
+  oc_gen_randomize_uuid(uuid);
+
   hal_bsp_hw_id(&uuid->id[0], sizeof(uuid->id));
 
   /*  From RFC 4122

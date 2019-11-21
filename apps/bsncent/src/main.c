@@ -25,11 +25,7 @@
 
 /* BLE */
 #include "nimble/ble.h"
-#include "controller/ble_ll.h"
 #include "host/ble_hs.h"
-
-/* RAM HCI transport. */
-#include "transport/ram/ble_hci_ram.h"
 
 /* Mandatory services. */
 #include "services/gap/ble_svc_gap.h"
@@ -93,7 +89,7 @@ bsncent_on_subscribe(uint16_t conn_handle,
                      struct ble_gatt_attr *attr,
                      void *arg)
 {
-    MODLOG_DFLT(INFO, "Subscribe complete; status=%d conn_handle=%d "
+    DFLT_LOG_INFO("Subscribe complete; status=%d conn_handle=%d "
                       "attr_handle=%d\n",
                 error->status, conn_handle, attr->handle);
 
@@ -129,7 +125,7 @@ bsncent_subscribe(const struct peer *peer)
         &bsncent_chr_gendata_uuid.u,
         BLE_UUID16_DECLARE(BLE_GATT_DSC_CLT_CFG_UUID16));
     if (dsc == NULL) {
-        MODLOG_DFLT(ERROR, "Error: Peer lacks a CCCD for the generic data "
+        DFLT_LOG_ERROR("Error: Peer lacks a CCCD for the generic data "
                            "characteristic\n");
         goto err;
     }
@@ -139,7 +135,7 @@ bsncent_subscribe(const struct peer *peer)
     rc = ble_gattc_write_flat(peer->conn_handle, dsc->dsc.handle,
                               value, sizeof value, bsncent_on_subscribe, NULL);
     if (rc != 0) {
-        MODLOG_DFLT(ERROR, "Error: Failed to subscribe to characteristic; "
+        DFLT_LOG_ERROR("Error: Failed to subscribe to characteristic; "
                            "rc=%d\n", rc);
         goto err;
     }
@@ -160,7 +156,7 @@ bsncent_on_disc_complete(const struct peer *peer, int status, void *arg)
 
     if (status != 0) {
         /* Service discovery failed.  Terminate the connection. */
-        MODLOG_DFLT(ERROR, "Error: Service discovery failed; status=%d "
+        DFLT_LOG_ERROR("Error: Service discovery failed; status=%d "
                            "conn_handle=%d\n", status, peer->conn_handle);
         ble_gap_terminate(peer->conn_handle, BLE_ERR_REM_USER_CONN_TERM);
         return;
@@ -170,7 +166,7 @@ bsncent_on_disc_complete(const struct peer *peer, int status, void *arg)
      * list of services, characteristics, and descriptors that the peer
      * supports.
      */
-    MODLOG_DFLT(ERROR, "Service discovery complete; status=%d "
+    DFLT_LOG_ERROR("Service discovery complete; status=%d "
                        "conn_handle=%d\n", status, peer->conn_handle);
 
     /* Now subscribe to the gendata characterustic. */
@@ -186,7 +182,7 @@ bsncent_on_mtu_exchanged(uint16_t conn_handle,
     int rc;
 
     if (error->status != 0) {
-        MODLOG_DFLT(ERROR, "MTU exchange failed; rc=%d\n", error->status);
+        DFLT_LOG_ERROR("MTU exchange failed; rc=%d\n", error->status);
         ble_gap_terminate(conn_handle, BLE_ERR_REM_USER_CONN_TERM);
         return 0;
     }
@@ -194,7 +190,7 @@ bsncent_on_mtu_exchanged(uint16_t conn_handle,
     /* Perform service discovery. */
     rc = peer_disc_all(conn_handle, bsncent_on_disc_complete, NULL);
     if (rc != 0) {
-        MODLOG_DFLT(ERROR, "Failed to discover services; rc=%d\n", rc);
+        DFLT_LOG_ERROR("Failed to discover services; rc=%d\n", rc);
         ble_gap_terminate(conn_handle, BLE_ERR_REM_USER_CONN_TERM);
         return 0;
     }
@@ -210,7 +206,7 @@ bsncent_connect(void)
     rc = ble_gap_connect(BLE_OWN_ADDR_PUBLIC, NULL, BLE_HS_FOREVER,
                          &ble_gap_conn_params_bsn, bsncent_gap_event, NULL);
     if (rc != 0) {
-        MODLOG_DFLT(ERROR, "Error connecting; rc=%d\n", rc);
+        DFLT_LOG_ERROR("Error connecting; rc=%d\n", rc);
         if (!((rc == BLE_HS_EALREADY) || (rc == BLE_HS_EBUSY))) {
             /* Only assert if we are not already trying */
             assert(0);
@@ -225,7 +221,7 @@ bsncent_fill_wl(void)
 
     rc = ble_gap_wl_set(bsncent_peer_addrs, bsncent_num_peer_addrs);
     if (rc != 0) {
-        MODLOG_DFLT(ERROR, "Error setting white list; rc=%d\n", rc);
+        DFLT_LOG_ERROR("Error setting white list; rc=%d\n", rc);
         assert(0);
     }
 }
@@ -302,17 +298,17 @@ bsncent_gap_event(struct ble_gap_event *event, void *arg)
         /* A new connection was established or a connection attempt failed. */
         if (event->connect.status == 0) {
             /* Connection successfully established. */
-            MODLOG_DFLT(INFO, "Connection established ");
+            DFLT_LOG_INFO("Connection established ");
 
             rc = ble_gap_conn_find(event->connect.conn_handle, &desc);
             assert(rc == 0);
             print_conn_desc(&desc);
-            MODLOG_DFLT(INFO, "\n");
+            DFLT_LOG_INFO("\n");
 
             /* Remember peer. */
             rc = peer_add(event->connect.conn_handle);
             if (rc != 0) {
-                MODLOG_DFLT(ERROR, "Failed to add peer; rc=%d\n", rc);
+                DFLT_LOG_ERROR("Failed to add peer; rc=%d\n", rc);
                 assert(0);
             }
 
@@ -325,12 +321,12 @@ bsncent_gap_event(struct ble_gap_event *event, void *arg)
             rc = ble_gattc_exchange_mtu(event->connect.conn_handle,
                                         bsncent_on_mtu_exchanged, NULL);
             if (rc != 0) {
-                MODLOG_DFLT(ERROR, "Failed to exchange MTU; rc=%d\n", rc);
+                DFLT_LOG_ERROR("Failed to exchange MTU; rc=%d\n", rc);
                 return 0;
             }
         } else {
             /* Connection attempt failed; resume connecting. */
-            MODLOG_DFLT(ERROR, "Error: Connection failed; status=%d\n",
+            DFLT_LOG_ERROR("Error: Connection failed; status=%d\n",
                         event->connect.status);
             bsncent_connect();
         }
@@ -339,9 +335,9 @@ bsncent_gap_event(struct ble_gap_event *event, void *arg)
 
     case BLE_GAP_EVENT_DISCONNECT:
         /* Connection terminated. */
-        MODLOG_DFLT(INFO, "disconnect; reason=%d ", event->disconnect.reason);
+        DFLT_LOG_INFO("disconnect; reason=%d ", event->disconnect.reason);
         print_conn_desc(&event->disconnect.conn);
-        MODLOG_DFLT(INFO, "\n");
+        DFLT_LOG_INFO("\n");
 
         /* Forget about peer. */
         peer_delete(event->disconnect.conn.conn_handle);
@@ -352,7 +348,7 @@ bsncent_gap_event(struct ble_gap_event *event, void *arg)
 
     case BLE_GAP_EVENT_ENC_CHANGE:
         /* Encryption has been enabled or disabled for this connection. */
-        MODLOG_DFLT(INFO, "encryption change event; status=%d ",
+        DFLT_LOG_INFO("encryption change event; status=%d ",
                     event->enc_change.status);
         rc = ble_gap_conn_find(event->enc_change.conn_handle, &desc);
         assert(rc == 0);
@@ -361,7 +357,7 @@ bsncent_gap_event(struct ble_gap_event *event, void *arg)
 
     case BLE_GAP_EVENT_NOTIFY_RX:
         /* Peer sent us a notification or indication. */
-        MODLOG_DFLT(DEBUG, "received %s; conn_handle=%d attr_handle=%d "
+        DFLT_LOG_DEBUG("received %s; conn_handle=%d attr_handle=%d "
                            "attr_len=%d\n",
                     event->notify_rx.indication ?
                         "indication" :
@@ -377,7 +373,7 @@ bsncent_gap_event(struct ble_gap_event *event, void *arg)
         return 0;
 
     case BLE_GAP_EVENT_MTU:
-        MODLOG_DFLT(INFO, "mtu update event; conn_handle=%d cid=%d mtu=%d\n",
+        DFLT_LOG_INFO("mtu update event; conn_handle=%d cid=%d mtu=%d\n",
                     event->mtu.conn_handle,
                     event->mtu.channel_id,
                     event->mtu.value);
@@ -391,7 +387,7 @@ bsncent_gap_event(struct ble_gap_event *event, void *arg)
 static void
 bsncent_on_reset(int reason)
 {
-    MODLOG_DFLT(ERROR, "Resetting state; reason=%d\n", reason);
+    DFLT_LOG_ERROR("Resetting state; reason=%d\n", reason);
 }
 
 static void

@@ -31,25 +31,41 @@
 const struct flash_area *flash_map;
 int flash_map_entries;
 
+static int
+flash_area_find_idx(uint8_t id)
+{
+    int i;
+
+    if (flash_map == NULL) {
+        return -1;
+    }
+
+    for (i = 0; i < flash_map_entries; i++) {
+        if (flash_map[i].fa_id == id) {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
 int
 flash_area_open(uint8_t id, const struct flash_area **fap)
 {
-    const struct flash_area *area;
-    int i;
+    int idx;
 
     if (flash_map == NULL) {
         return SYS_EACCES;
     }
 
-    for (i = 0; i < flash_map_entries; i++) {
-        area = flash_map + i;
-        if (area->fa_id == id) {
-            *fap = area;
-            return 0;
-        }
+    idx = flash_area_find_idx(id);
+    if (idx == -1) {
+        return SYS_ENOENT;
     }
 
-    return SYS_ENOENT;
+    *fap = &flash_map[idx];
+
+    return 0;
 }
 
 int
@@ -390,6 +406,84 @@ flash_map_read_mfg(int max_areas,
     }
 }
 
+/**
+ * Determines if the specified flash area overlaps any areas in the flash map.
+ *
+ * @param area1                 The flash area to compare against the flash
+ *                                  map.
+ *
+ * @return                      True if there is an overlap; false otherwise.
+ */
+static bool
+flash_map_area_overlaps(const struct flash_area *area1)
+{
+    const struct flash_area *area2;
+    uint32_t end1;
+    uint32_t end2;
+    int i;
+
+    for (i = 0; i < flash_map_entries; i++) {
+        area2 = &flash_map[i];
+
+        if (area1->fa_device_id == area2->fa_device_id) {
+            end1 = area1->fa_off + area1->fa_size;
+            end2 = area2->fa_off + area2->fa_size;
+
+            if (end1 > area2->fa_off && area1->fa_off < end2) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+/**
+ * Adds areas from the hardcoded flash map that aren't present in, and don't
+ * overlap with, the manufacturing flash map.
+ */
+static void
+flash_map_add_new_dflt_areas(void)
+{
+    static const int num_dflt_entries =
+        sizeof sysflash_map_dflt / sizeof sysflash_map_dflt[0];
+
+    const struct flash_area *dflt_area;
+    struct flash_area *dst_area;
+    int i;
+    
+    for (i = 0; i < num_dflt_entries; i++) {
+        dflt_area = &sysflash_map_dflt[i];
+
+        /* If there is already a manufacturing area with this ID, discard the
+         * default area.
+         */
+        if (flash_area_find_idx(dflt_area->fa_id) == -1) {
+            /* Default flash map contains a new entry. */
+            if (flash_map_entries >= MYNEWT_VAL(FLASH_MAP_MAX_AREAS)) {
+                DFLT_LOG_DEBUG("failed to add default flash area: "
+                               "no room: id=%d",
+                               dflt_area->fa_id);
+                DEBUG_PANIC();
+                return;
+            } 
+
+            /* Add the default entry if it doesn't cause any overlaps. */
+            if (flash_map_area_overlaps(dflt_area)) {
+                DFLT_LOG_DEBUG("failed to add default flash area: "
+                               "overlap: id=%d",
+                               dflt_area->fa_id);
+            } else {
+                /* Cast away const. */
+                dst_area = (struct flash_area *) &flash_map[flash_map_entries];
+
+                *dst_area = *dflt_area;
+                flash_map_entries++;
+            }
+        }
+    }
+}
+
 void
 flash_map_init(void)
 {
@@ -420,8 +514,25 @@ flash_map_init(void)
      */
     rc = flash_map_read_mfg(sizeof mfg_areas / sizeof mfg_areas[0],
                             mfg_areas, &num_areas);
-    if (rc == 0 && num_areas > 0) {
-        flash_map = mfg_areas;
-        flash_map_entries = num_areas;
+    if (rc != 0 || num_areas == 0) {
+        return;
     }
+    flash_map = mfg_areas;
+    flash_map_entries = num_areas;
+
+    /* The hardcoded flash map may contain new areas that aren't present in the
+     * manufacturing flash map.  Try including them if they don't overlap with
+     * any mfg areas.
+     */
+    flash_map_add_new_dflt_areas();
 }
+
+#if MYNEWT_VAL(SELFTEST)
+
+void
+flash_map_add_new_dflt_areas_extern(void)
+{
+    flash_map_add_new_dflt_areas();
+}
+
+#endif

@@ -188,9 +188,6 @@ STATS_NAME_END(lis2dh12_stat_section)
 /* Global variable used to hold stats data */
 STATS_SECT_DECL(lis2dh12_stat_section) g_lis2dh12stats;
 
-#define LIS2DH12_LOG(lvl_, ...) \
-    MODLOG_ ## lvl_(MYNEWT_VAL(LIS2DH12_LOG_MODULE), __VA_ARGS__)
-
 /* Exports for the sensor API */
 static int lis2dh12_sensor_read(struct sensor *, sensor_type_t,
         sensor_data_func_t, void *, uint32_t);
@@ -211,6 +208,8 @@ static int lis2dh12_sensor_set_notification(struct sensor *,
 static int lis2dh12_sensor_unset_notification(struct sensor *,
                                               sensor_event_type_t);
 static int lis2dh12_sensor_handle_interrupt(struct sensor *);
+
+static int lis2dh12_set_self_test_mode(struct sensor_itf *, uint8_t);
 
 static const struct sensor_driver g_lis2dh12_sensor_driver = {
     .sd_read = lis2dh12_sensor_read,
@@ -263,7 +262,7 @@ lis2dh12_i2c_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
     rc = i2cn_master_write(itf->si_num, &data_struct, MYNEWT_VAL(LIS2DH12_I2C_TIMEOUT_TICKS), 1,
                            MYNEWT_VAL(LIS2DH12_I2C_RETRIES));
     if (rc) {
-        LIS2DH12_LOG(ERROR, "I2C access failed at address 0x%02X\n",
+        LIS2DH12_LOG_ERROR("I2C access failed at address 0x%02X\n",
                      data_struct.address);
         STATS_INC(g_lis2dh12stats, read_errors);
         goto err;
@@ -275,7 +274,7 @@ lis2dh12_i2c_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
     rc = i2cn_master_read(itf->si_num, &data_struct, MYNEWT_VAL(LIS2DH12_I2C_TIMEOUT_TICKS), 1,
                           MYNEWT_VAL(LIS2DH12_I2C_RETRIES));
     if (rc) {
-        LIS2DH12_LOG(ERROR, "Failed to read from 0x%02X:0x%02X\n",
+        LIS2DH12_LOG_ERROR("Failed to read from 0x%02X:0x%02X\n",
                      data_struct.address, addr);
         STATS_INC(g_lis2dh12stats, read_errors);
         goto err;
@@ -327,7 +326,7 @@ lis2dh12_spi_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
     retval = hal_spi_tx_val(itf->si_num, addr);
     if (retval == 0xFFFF) {
         rc = SYS_EINVAL;
-        LIS2DH12_LOG(ERROR, "SPI_%u register write failed addr:0x%02X\n",
+        LIS2DH12_LOG_ERROR("SPI_%u register write failed addr:0x%02X\n",
                      itf->si_num, addr);
         STATS_INC(g_lis2dh12stats, read_errors);
         goto err;
@@ -338,7 +337,7 @@ lis2dh12_spi_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
         retval = hal_spi_tx_val(itf->si_num, 0x55);
         if (retval == 0xFFFF) {
             rc = SYS_EINVAL;
-            LIS2DH12_LOG(ERROR, "SPI_%u read failed addr:0x%02X\n",
+            LIS2DH12_LOG_ERROR("SPI_%u read failed addr:0x%02X\n",
                          itf->si_num, addr);
             STATS_INC(g_lis2dh12stats, read_errors);
             goto err;
@@ -395,7 +394,7 @@ lis2dh12_i2c_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *buffer,
     rc = i2cn_master_write(itf->si_num, &data_struct, MYNEWT_VAL(LIS2DH12_I2C_TIMEOUT_TICKS), 1,
                            MYNEWT_VAL(LIS2DH12_I2C_RETRIES));
     if (rc) {
-        LIS2DH12_LOG(ERROR, "I2C access failed at address 0x%02X\n",
+        LIS2DH12_LOG_ERROR("I2C access failed at address 0x%02X\n",
                      data_struct.address);
         STATS_INC(g_lis2dh12stats, write_errors);
         goto err;
@@ -439,7 +438,7 @@ lis2dh12_spi_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
     rc = hal_spi_tx_val(itf->si_num, addr);
     if (rc == 0xFFFF) {
         rc = SYS_EINVAL;
-        LIS2DH12_LOG(ERROR, "SPI_%u register write failed addr:0x%02X\n",
+        LIS2DH12_LOG_ERROR("SPI_%u register write failed addr:0x%02X\n",
                      itf->si_num, addr);
         STATS_INC(g_lis2dh12stats, write_errors);
         goto err;
@@ -450,7 +449,7 @@ lis2dh12_spi_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
         rc = hal_spi_tx_val(itf->si_num, payload[i]);
         if (rc == 0xFFFF) {
             rc = SYS_EINVAL;
-            LIS2DH12_LOG(ERROR, "SPI_%u write failed addr:0x%02X\n",
+            LIS2DH12_LOG_ERROR("SPI_%u write failed addr:0x%02X\n",
                          itf->si_num, addr);
             STATS_INC(g_lis2dh12stats, write_errors);
             goto err;
@@ -495,9 +494,9 @@ lis2dh12_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
     } write_data;
     struct lis2dh12 *dev = (struct lis2dh12 *)itf->si_dev;
 
-    if (dev->node_is_spi) {
+    if (dev->node_is_spi && MYNEWT_VAL(LIS2DH12_ENABLE_SPI)) {
         addr |= LIS2DH12_SPI_ADDR_INC;
-    } else {
+    } else if (MYNEWT_VAL(LIS2DH12_ENABLE_I2C)) {
         addr |= LIS2DH12_I2C_ADDR_INC;
     }
 
@@ -515,9 +514,9 @@ lis2dh12_writelen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
         return rc;
     }
 
-    if (itf->si_type == SENSOR_ITF_I2C) {
+    if (itf->si_type == SENSOR_ITF_I2C && MYNEWT_VAL(LIS2DH12_ENABLE_I2C)) {
         rc = lis2dh12_i2c_writelen(itf, addr, payload, len);
-    } else {
+    } else if (MYNEWT_VAL(LIS2DH12_ENABLE_SPI)) {
         rc = lis2dh12_spi_writelen(itf, addr, payload, len);
     }
 
@@ -545,10 +544,10 @@ lis2dh12_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
 #if MYNEWT_VAL(BUS_DRIVER_PRESENT)
     struct lis2dh12 *dev = (struct lis2dh12 *)itf->si_dev;
 
-    if (dev->node_is_spi) {
+    if (dev->node_is_spi && MYNEWT_VAL(LIS2DH12_ENABLE_SPI)) {
         addr |= LIS2DH12_SPI_READ_CMD_BIT;
         addr |= LIS2DH12_SPI_ADDR_INC;
-    } else {
+    } else if (MYNEWT_VAL(LIS2DH12_ENABLE_I2C)) {
         addr |= LIS2DH12_I2C_ADDR_INC;
     }
 
@@ -559,9 +558,9 @@ lis2dh12_readlen(struct sensor_itf *itf, uint8_t addr, uint8_t *payload,
         return rc;
     }
 
-    if (itf->si_type == SENSOR_ITF_I2C) {
+    if (itf->si_type == SENSOR_ITF_I2C && MYNEWT_VAL(LIS2DH12_ENABLE_I2C)) {
         rc = lis2dh12_i2c_readlen(itf, addr, payload, len);
-    } else {
+    } else if (MYNEWT_VAL(LIS2DH12_ENABLE_SPI)) {
         rc = lis2dh12_spi_readlen(itf, addr, payload, len);
     }
 
@@ -716,7 +715,7 @@ lis2dh12_set_full_scale(struct sensor_itf *itf, uint8_t fs)
     uint8_t reg;
 
     if (fs > LIS2DH12_FS_16G) {
-        LIS2DH12_LOG(ERROR, "Invalid full scale value\n");
+        LIS2DH12_LOG_ERROR("Invalid full scale value\n");
         rc = SYS_EINVAL;
         goto err;
     }
@@ -760,7 +759,7 @@ lis2dh12_get_full_scale(struct sensor_itf *itf, uint8_t *fs)
         goto err;
     }
 
-    *fs = (reg & LIS2DH12_CTRL_REG4_FS) >> 4;
+    *fs = (reg & LIS2DH12_CTRL_REG4_FS);
 
     return 0;
 err:
@@ -806,7 +805,7 @@ lis2dh12_set_rate(struct sensor_itf *itf, uint8_t rate)
     uint8_t reg;
 
     if (rate > LIS2DH12_DATA_RATE_HN_1344HZ_L_5376HZ) {
-        LIS2DH12_LOG(ERROR, "Invalid rate value\n");
+        LIS2DH12_LOG_ERROR("Invalid rate value\n");
         rc = SYS_EINVAL;
         goto err;
     }
@@ -1135,7 +1134,11 @@ init_intpin(struct lis2dh12 *lis2dh12, int int_num, hal_gpio_irq_handler_t handl
 
     pin = lis2dh12->sensor.s_itf.si_ints[int_num].host_pin;
     if (pin >= 0) {
-        trig = lis2dh12->sensor.s_itf.si_ints[int_num].active;
+        if (lis2dh12->sensor.s_itf.si_ints[int_num].active) {
+            trig = HAL_GPIO_TRIG_RISING;
+        } else {
+            trig = HAL_GPIO_TRIG_FALLING;
+        }
 
         rc = hal_gpio_irq_init(pin,
                                handler,
@@ -1144,12 +1147,12 @@ init_intpin(struct lis2dh12 *lis2dh12, int int_num, hal_gpio_irq_handler_t handl
                                HAL_GPIO_PULL_NONE);
     }
     if (pin < 0) {
-        LIS2DH12_LOG(ERROR, "Interrupt pin not configured\n");
+        LIS2DH12_LOG_ERROR("Interrupt pin not configured\n");
         return SYS_EINVAL;
     }
 
     if (rc != 0) {
-        LIS2DH12_LOG(ERROR, "Failed to initialize interrupt pin %d\n", pin);
+        LIS2DH12_LOG_ERROR("Failed to initialize interrupt pin %d\n", pin);
         return rc;
     }
 
@@ -1315,7 +1318,7 @@ lis2dh12_init(struct os_dev *dev, void *arg)
     }
 
 #if !MYNEWT_VAL(BUS_DRIVER_PRESENT)
-    if (sensor->s_itf.si_type == SENSOR_ITF_SPI) {
+    if (sensor->s_itf.si_type == SENSOR_ITF_SPI && MYNEWT_VAL(LIS2DH12_ENABLE_SPI)) {
 
         rc = hal_spi_disable(sensor->s_itf.si_num);
         if (rc) {
@@ -1368,7 +1371,7 @@ err:
  * @param mode to set
  * @return 0 on success, non-zero on failure
  */
-int
+static int
 lis2dh12_set_self_test_mode(struct sensor_itf *itf, uint8_t mode)
 {
     uint8_t reg;
@@ -1390,15 +1393,15 @@ err:
 }
 
 /**
- * Sets the interrupt push-pull/open-drain selection
+ * Sets the interrupt signal activation level for both pins
  *
  * @param The sensor interface
- * @param interrupt setting (0 = push-pull, 1 = open-drain)
+ * @param interrupt pin polarity (0 = active high, 1 = active low)
  *
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dh12_set_int_pp_od(struct sensor_itf *itf, uint8_t mode)
+lis2dh12_set_int_polarity(struct sensor_itf *itf, uint8_t mode)
 {
     int rc;
     uint8_t reg;
@@ -1415,15 +1418,15 @@ lis2dh12_set_int_pp_od(struct sensor_itf *itf, uint8_t mode)
 }
 
 /**
- * Gets the interrupt push-pull/open-drain selection
+ * Gets the interrupt activation level
  *
  * @param The sensor interface
- * @param ptr to store setting (0 = push-pull, 1 = open-drain)
+ * @param ptr to store setting
  *
  * @return 0 on success, non-zero on failure
  */
 int
-lis2dh12_get_int_pp_od(struct sensor_itf *itf, uint8_t *mode)
+lis2dh12_get_int_polarity(struct sensor_itf *itf, uint8_t *int_pol)
 {
     int rc;
     uint8_t reg;
@@ -1433,7 +1436,7 @@ lis2dh12_get_int_pp_od(struct sensor_itf *itf, uint8_t *mode)
         return rc;
     }
 
-    *mode = (reg & LIS2DH12_CTRL_REG6_INT_POLARITY) ? 1 : 0;
+    *int_pol = (reg & LIS2DH12_CTRL_REG6_INT_POLARITY) ? 1 : 0;
 
     return 0;
 }
@@ -1961,7 +1964,7 @@ lis2dh12_sensor_read(struct sensor *sensor, sensor_type_t type,
     (void)itf;
 
 #if !MYNEWT_VAL(BUS_DRIVER_PRESENT)
-    if (itf->si_type == SENSOR_ITF_SPI) {
+    if (itf->si_type == SENSOR_ITF_SPI && MYNEWT_VAL(LIS2DH12_ENABLE_SPI)) {
 
         rc = hal_spi_disable(sensor->s_itf.si_num);
         if (rc) {
@@ -2183,7 +2186,7 @@ lis2dh12_sensor_handle_interrupt(struct sensor *sensor)
 
     rc = lis2dh12_clear_int1(itf, &int_src_bytes[0]);
     if (rc) {
-        LIS2DH12_LOG(ERROR, "Could not read INT1_SRC (err=0x%02x)\n", rc);
+        LIS2DH12_LOG_ERROR("Could not read INT1_SRC (err=0x%02x)\n", rc);
         goto err;
     }
 
@@ -2192,7 +2195,7 @@ lis2dh12_sensor_handle_interrupt(struct sensor *sensor)
 
     rc = lis2dh12_clear_int2(itf, &int_src_bytes[1]);
     if (rc) {
-        LIS2DH12_LOG(ERROR, "Could not read INT1_SRC (err=0x%02x)\n", rc);
+        LIS2DH12_LOG_ERROR("Could not read INT1_SRC (err=0x%02x)\n", rc);
         goto err;
     }
 
@@ -2266,7 +2269,7 @@ lis2dh12_sensor_handle_interrupt(struct sensor *sensor)
         /* Read click interrupt state from device */
         rc = lis2dh12_clear_click(itf, &click_src);
         if (rc) {
-            LIS2DH12_LOG(ERROR, "Could not read int src err=0x%02x\n", rc);
+            LIS2DH12_LOG_ERROR("Could not read int src err=0x%02x\n", rc);
             return rc;
         }
 
@@ -2978,22 +2981,22 @@ int lis2dh12_set_tap_cfg(struct sensor_itf *itf, struct lis2dh12_tap_settings *c
         return rc;
     }
 
-    lis2dh12_set_click_threshold(itf, cfg->click_ths);
+    rc = lis2dh12_set_click_threshold(itf, cfg->click_ths);
     if (rc) {
         return rc;
     }
 
-    lis2dh12_set_click_time_limit(itf, cfg->time_limit);
+    rc = lis2dh12_set_click_time_limit(itf, cfg->time_limit);
     if (rc) {
         return rc;
     }
 
-    lis2dh12_set_click_time_latency(itf, cfg->time_latency);
+    rc = lis2dh12_set_click_time_latency(itf, cfg->time_latency);
     if (rc) {
         return rc;
     }
 
-    lis2dh12_set_click_time_window(itf, cfg->time_window);
+    rc = lis2dh12_set_click_time_window(itf, cfg->time_window);
     if (rc) {
         return rc;
     }
@@ -3020,7 +3023,7 @@ lis2dh12_config(struct lis2dh12 *lis2dh12, struct lis2dh12_cfg *cfg)
     (void)sensor;
 
 #if !MYNEWT_VAL(BUS_DRIVER_PRESENT)
-    if (itf->si_type == SENSOR_ITF_SPI) {
+    if (itf->si_type == SENSOR_ITF_SPI && MYNEWT_VAL(LIS2DH12_ENABLE_SPI)) {
 
         rc = hal_spi_disable(sensor->s_itf.si_num);
         if (rc) {
@@ -3057,11 +3060,11 @@ lis2dh12_config(struct lis2dh12 *lis2dh12, struct lis2dh12_cfg *cfg)
         goto err;
     }
 
-    rc = lis2dh12_set_int_pp_od(itf, cfg->int_pp_od);
+    rc = lis2dh12_set_int_polarity(itf, cfg->int_pol);
     if (rc) {
         goto err;
     }
-    lis2dh12->cfg.int_pp_od = cfg->int_pp_od;
+    lis2dh12->cfg.int_pol = cfg->int_pol;
 
     rc = lis2dh12_pull_up_disc(itf, cfg->lc_pull_up_disc);
     if (rc) {

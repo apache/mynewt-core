@@ -76,12 +76,25 @@ static struct shell_cmd lsm6dso_shell_cmd_struct = {
     .sc_cmd_func = lsm6dso_shell_cmd
 };
 
-static struct sensor_itf g_sensor_itf = {
-    .si_type = MYNEWT_VAL(LSM6DSO_SHELL_ITF_TYPE),
-    .si_num = MYNEWT_VAL(LSM6DSO_SHELL_ITF_NUM),
-    .si_cs_pin = MYNEWT_VAL(LSM6DSO_SHELL_CSPIN),
-    .si_addr = MYNEWT_VAL(LSM6DSO_SHELL_ITF_ADDR)
-};
+static struct sensor_itf *g_sensor_itf;
+static struct lsm6dso *g_lsm6dso;
+
+static int
+lsm6dso_shell_open_device(void)
+{
+    if (g_sensor_itf) {
+        return 0;
+    }
+
+    g_lsm6dso = (struct lsm6dso *)os_dev_open(MYNEWT_VAL(LSM6DSO_SHELL_DEV_NAME),
+                                              1000, NULL);
+    if (g_lsm6dso) {
+        g_sensor_itf = &g_lsm6dso->sensor.s_itf;
+        return 0;
+    }
+
+    return SYS_ENODEV;
+}
 
 static int lsm6dso_shell_err_invalid_arg(char *cmd_name)
 {
@@ -149,7 +162,7 @@ static int lsm6dso_shell_cmd_dump(int argc, char **argv)
     }
 
     for (i = sreg; i <= ereg; i++) {
-        rc = lsm6dso_readlen(&g_sensor_itf, i, &value, 1);
+        rc = lsm6dso_readlen(g_sensor_itf, i, &value, 1);
         if (rc) {
             console_printf("dump failed %d\n", rc);
         } else {
@@ -180,7 +193,7 @@ static int lsm6dso_shell_cmd_read(int argc, char **argv)
         return lsm6dso_shell_err_invalid_arg(argv[2]);
    }
 
-    rc = lsm6dso_readlen(&g_sensor_itf, reg, &value, 1);
+    rc = lsm6dso_readlen(g_sensor_itf, reg, &value, 1);
     if (rc) {
         console_printf("read failed %d\n", rc);
     } else {
@@ -210,7 +223,7 @@ static int lsm6dso_shell_cmd_write(int argc, char **argv)
        return lsm6dso_shell_err_invalid_arg(argv[2]);
     }
 
-    rc = lsm6dso_writelen(&g_sensor_itf, reg, &value, 1);
+    rc = lsm6dso_writelen(g_sensor_itf, reg, &value, 1);
     if (rc) {
         console_printf("write failed %d\n", rc);
     }
@@ -223,7 +236,7 @@ static int lsm6dso_shell_cmd_test(int argc, char **argv)
     int rc;
     int result;
 
-    rc = lsm6dso_run_self_test(&g_sensor_itf, &result);
+    rc = lsm6dso_run_self_test(g_sensor_itf, &result);
     if (rc) {
         console_printf("test not started %d\n", rc);
     } else {
@@ -239,6 +252,11 @@ static int lsm6dso_shell_cmd(int argc, char **argv)
         lsm6dso_shell_help();
 
         return 0;
+    }
+
+    if (lsm6dso_shell_open_device()) {
+        console_printf("Error: device not found \"%s\"\n",
+                       MYNEWT_VAL(LSM6DSO_SHELL_DEV_NAME));
     }
 
     if (argc > 1 && strcmp(argv[1], "dump") == 0) {

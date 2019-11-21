@@ -19,7 +19,7 @@
 
 pkg.name: hw/bsp/dialog_da1469x-dk-pro
 pkg.type: bsp
-pkg.description: BSP definition for the Dialog DA1469x PRO development kit with DA1469x daughter board.
+pkg.description: BSP definition for the Dialog DA1469x PRO development kit with DA14699 daughter board.
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
@@ -32,4 +32,4 @@ pkg.cflags.HARDFLOAT:
 
 pkg.deps:
     - "@apache-mynewt-core/libc/baselibc"
-    - hw/mcu/dialog/da1469x
+    - "@apache-mynewt-core/hw/mcu/dialog/da14699"

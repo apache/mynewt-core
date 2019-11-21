@@ -1,0 +1,37 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+# 
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+syscfg.defs:
+    DFLT_LOG_MOD:
+        description: 'Numeric module ID to use for default log messages.'
+        value: 0
+    DFLT_LOG_LVL:
+        description: 'Minimum level for the default log.'
+        value: 1
+    LOG_GLOBAL_IDX:
+        description: >
+            Log entries indices are coming from same number space. Otherwise
+            every log has their own indexing.
+        value: 1
+
+syscfg.logs:
+    DFLT_LOG:
+        module: MYNEWT_VAL(DFLT_LOG_MOD)
+        level: MYNEWT_VAL(DFLT_LOG_LVL)
+

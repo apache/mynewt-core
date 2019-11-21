@@ -30,6 +30,8 @@ pkg.deps.DRV2605_OFB:
     - "@apache-mynewt-core/hw/drivers/drv2605"
 pkg.deps.LSM303DLHC_OFB:
     - "@apache-mynewt-core/hw/drivers/sensors/lsm303dlhc"
+pkg.deps.LSM6DSO_OFB:
+    - "@apache-mynewt-core/hw/drivers/sensors/lsm6dso"
 pkg.deps.MPU6050_OFB:
     - "@apache-mynewt-core/hw/drivers/sensors/mpu6050"
 pkg.deps.TSL2561_OFB:
@@ -56,6 +58,12 @@ pkg.deps.BMP388_OFB:
     - "@apache-mynewt-core/hw/drivers/sensors/bmp388"
 pkg.deps.LIS2DW12_OFB:
     - "@apache-mynewt-core/hw/drivers/sensors/lis2dw12"
+pkg.deps.LIS2DH12_OFB:
+    - "@apache-mynewt-core/hw/drivers/sensors/lis2dh12"
+pkg.deps.LIS2DS12_OFB:
+    - "@apache-mynewt-core/hw/drivers/sensors/lis2ds12"
+pkg.deps.BME680_OFB:
+    - "@apache-mynewt-core/hw/drivers/sensors/bme680"
 pkg.deps.LPS33HW_OFB:
     - "@apache-mynewt-core/hw/drivers/sensors/lps33hw"
 pkg.deps.LPS33THW_OFB:

@@ -21,12 +21,22 @@
 #define __MCU_CORTEX_M4_H__
 
 #include "nrf.h"
+#include "core_cm4.h"
+#include <syscfg/syscfg.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #define OS_TICKS_PER_SEC    (128)
+
+static inline void
+hal_debug_break(void)
+{
+#if !MYNEWT_VAL(MCU_DEBUG_IGNORE_BKPT)
+    __BKPT(1);
+#endif
+}
 
 #ifdef __cplusplus
 }

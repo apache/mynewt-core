@@ -94,9 +94,8 @@ stm32_tmr_cbs(struct stm32_hal_tmr *tmr)
     }
     ht = TAILQ_FIRST(&tmr->sht_timers);
     if (ht) {
-        tmr->sht_regs->CCR1 = ht->expiry;
+        tmr->sht_regs->CCR1 = ht->expiry & 0xFFFFU;
     } else {
-        TIM_CCxChannelCmd(tmr->sht_regs, TIM_CHANNEL_1, TIM_CCx_DISABLE);
         tmr->sht_regs->DIER &= ~TIM_DIER_CC1IE;
     }
 }
@@ -196,7 +195,7 @@ stm32_hw_setup(int num, TIM_TypeDef *regs)
     if (regs == TIM1) {
 #if MYNEWT_VAL(MCU_STM32F0)
         stm32_tmr_reg_irq(TIM1_CC_IRQn, func);
-#elif MYNEWT_VAL(MCU_STM32F3) || MYNEWT_VAL(MCU_STM32L4)
+#elif MYNEWT_VAL(MCU_STM32F3) || MYNEWT_VAL(MCU_STM32L4) || MYNEWT_VAL(MCU_STM32WB)
         stm32_tmr_reg_irq(TIM1_UP_TIM16_IRQn, func);
 #else
         stm32_tmr_reg_irq(TIM1_UP_TIM10_IRQn, func);
@@ -225,7 +224,7 @@ stm32_hw_setup(int num, TIM_TypeDef *regs)
 #ifdef TIM8
     if (regs == TIM8) {
         stm32_tmr_reg_irq(TIM8_CC_IRQn, func);
-#if MYNEWT_VAL(MCU_STM32F3) || MYNEWT_VAL(MCU_STM32L4)
+#if MYNEWT_VAL(MCU_STM32F3) || MYNEWT_VAL(MCU_STM32L4) || MYNEWT_VAL(MCU_STM32WB)
         stm32_tmr_reg_irq(TIM8_UP_IRQn, func);
 #else
         stm32_tmr_reg_irq(TIM8_UP_TIM13_IRQn, func);
@@ -245,7 +244,7 @@ stm32_hw_setup(int num, TIM_TypeDef *regs)
 #endif
 #ifdef TIM10
     if (regs == TIM10) {
-#if MYNEWT_VAL(MCU_STM32L1) || MYNEWT_VAL(MCU_STM32L4)
+#if MYNEWT_VAL(MCU_STM32L1) || MYNEWT_VAL(MCU_STM32L4) || MYNEWT_VAL(MCU_STM32WB)
         stm32_tmr_reg_irq(TIM10_IRQn, func);
 #else
         stm32_tmr_reg_irq(TIM1_UP_TIM10_IRQn, func);
@@ -509,7 +508,7 @@ hal_timer_config(int num, uint32_t freq_hz)
 
     memset(&init, 0, sizeof(init));
     init.Period = 0xffff;
-    init.Prescaler = prescaler;
+    init.Prescaler = prescaler - 1;
     init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
     init.CounterMode = TIM_COUNTERMODE_UP;
 
@@ -576,7 +575,7 @@ hal_timer_get_resolution(int num)
     if (num >= STM32_HAL_TIMER_MAX || !(tmr = stm32_tmr_devs[num])) {
         return -1;
     }
-    return (STM32_NSEC_PER_SEC / (SystemCoreClock / tmr->sht_regs->PSC));
+    return (STM32_NSEC_PER_SEC / (SystemCoreClock / (1 + tmr->sht_regs->PSC)));
 }
 
 static uint32_t
@@ -739,8 +738,7 @@ hal_timer_start_at(struct hal_timer *timer, uint32_t tick)
         tmr->sht_regs->DIER |= TIM_DIER_CC1IE;
     } else {
         if (timer == TAILQ_FIRST(&tmr->sht_timers)) {
-            TIM_CCxChannelCmd(tmr->sht_regs, TIM_CHANNEL_1, TIM_CCx_ENABLE);
-            tmr->sht_regs->CCR1 = timer->expiry;
+            tmr->sht_regs->CCR1 = timer->expiry & 0xFFFFU;
             tmr->sht_regs->DIER |= TIM_DIER_CC1IE;
         }
     }
@@ -780,10 +778,8 @@ hal_timer_stop(struct hal_timer *timer)
         timer->link.tqe_prev = NULL;
         if (reset_ocmp) {
             if (ht) {
-                tmr->sht_regs->CCR1 = ht->expiry;
+                tmr->sht_regs->CCR1 = ht->expiry & 0xFFFFU;
             } else {
-                TIM_CCxChannelCmd(tmr->sht_regs, TIM_CHANNEL_1,
-                  TIM_CCx_DISABLE);
                 tmr->sht_regs->DIER &= ~TIM_DIER_CC1IE;
             }
         }

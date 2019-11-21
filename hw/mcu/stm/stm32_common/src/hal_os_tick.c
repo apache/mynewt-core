@@ -24,6 +24,26 @@
 /*
  * XXX implement tickless mode.
  */
+
+/*
+ * Errata for STM32F405, STM32F407, STM32F415, STM32F417.
+ * When WFI instruction is placed at address like 0x080xxxx4
+ * (also seen for addresses ending with xxx2). System may
+ * crash.
+ * __WFI function places WFI instruction at address ending with x0 or x8
+ * for affected MCUs.
+ */
+#if defined(STM32F405xx) || defined(STM32F407xx) || \
+    defined(STM32F415xx) || defined(STM32F417xx)
+#undef __WFI
+__attribute__((aligned(8), naked)) void static
+__WFI(void)
+{
+     __ASM volatile("wfi\n"
+                    "bx lr");
+}
+#endif
+
 void
 os_tick_idle(os_time_t ticks)
 {

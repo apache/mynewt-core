@@ -75,7 +75,7 @@ oc_buffer_tx(struct os_event *ev)
 
     while ((m = os_mqueue_get(&oc_outq)) != NULL) {
         STAILQ_NEXT(OS_MBUF_PKTHDR(m), omp_next) = NULL;
-        OC_LOG(DEBUG, "oc_buffer_tx: ");
+        OC_LOG_DEBUG("oc_buffer_tx: ");
         OC_LOG_ENDPOINT(LOG_LEVEL_DEBUG, OC_MBUF_ENDPOINT(m));
 #ifdef OC_CLIENT
         if (OC_MBUF_ENDPOINT(m)->ep.oe_flags & OC_ENDPOINT_MULTICAST) {
@@ -85,7 +85,7 @@ oc_buffer_tx(struct os_event *ev)
 #ifdef OC_SECURITY
             /* XXX convert this */
             if (OC_MBUF_ENDPOINT(m)->flags & SECURED) {
-                OC_LOG(DEBUG, "oc_buffer_tx: DTLS\n");
+                OC_LOG_DEBUG("oc_buffer_tx: DTLS\n");
 
                 if (!oc_sec_dtls_connected(oe)) {
                     oc_process_post(&oc_dtls_handler,
@@ -114,7 +114,7 @@ oc_buffer_rx(struct os_event *ev)
 #endif
 
     while ((m = os_mqueue_get(&oc_inq)) != NULL) {
-        OC_LOG(DEBUG, "oc_buffer_rx: ");
+        OC_LOG_DEBUG("oc_buffer_rx: ");
         OC_LOG_ENDPOINT(LOG_LEVEL_DEBUG, OC_MBUF_ENDPOINT(m));
 
 #ifdef OC_SECURITY
@@ -123,7 +123,7 @@ oc_buffer_rx(struct os_event *ev)
          */
         b = m->om_data[0];
         if (b > 19 && b < 64) {
-            OC_LOG(DEBUG, "oc_buffer_rx: encrypted request\n");
+            OC_LOG_DEBUG("oc_buffer_rx: encrypted request\n");
             oc_process_post(&oc_dtls_handler, oc_events[UDP_TO_DTLS_EVENT], m);
         } else {
             coap_receive(m);

@@ -343,7 +343,7 @@ static const struct stm32_uart_cfg uart_cfg0 = {
 #if MYNEWT_VAL(UART_1)
 static const struct stm32_uart_cfg uart_cfg1 = {
     .suc_uart = USART2,
-    .suc_rcc_reg = &RCC->APB2ENR,
+    .suc_rcc_reg = &RCC->APB1ENR,
     .suc_rcc_dev = RCC_APB1ENR_USART2EN,
     .suc_pin_tx = MYNEWT_VAL(UART_1_TX),
     .suc_pin_rx = MYNEWT_VAL(UART_1_RX),
@@ -356,7 +356,7 @@ static const struct stm32_uart_cfg uart_cfg1 = {
 #if MYNEWT_VAL(UART_2)
 static const struct stm32_uart_cfg uart_cfg2 = {
     .suc_uart = USART3,
-    .suc_rcc_reg = &RCC->APB2ENR,
+    .suc_rcc_reg = &RCC->APB1ENR,
     .suc_rcc_dev = RCC_APB1ENR_USART3EN,
     .suc_pin_tx = MYNEWT_VAL(UART_2_TX),
     .suc_pin_rx = MYNEWT_VAL(UART_2_RX),

@@ -20,11 +20,22 @@ syscfg.defs:
     LSM303DLHC_ITF_LOCK_TMO:
         description: 'LSM303DLHC interface lock timeout in milliseconds'
         value: 1000
-    LSM303DLHC_LOG_MODULE:
-        description: 'Numeric module ID to use for LSM303DLHC log messages'
-        value: 195
     LSM303DLHC_I2C_RETRIES:
         description: >
             Number of retries to use for failed I2C communication.  A retry is
             used when the LSM303DLHC sends an unexpected NACK.
         value: 2
+
+    ### Log settings.
+
+    LSM303DLHC_LOG_MODULE:
+        description: 'Numeric module ID to use for LSM303DLHC log messages.'
+        value: 196
+    LSM303DLHC_LOG_LVL:
+        description: 'Minimum level for the LSM303DLHC log.'
+        value: 1
+
+syscfg.logs:
+    LSM303DLHC_LOG:
+        module: MYNEWT_VAL(LSM303DLHC_LOG_MODULE)
+        level: MYNEWT_VAL(LSM303DLHC_LOG_LVL)

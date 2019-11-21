@@ -74,13 +74,12 @@ extern "C" {
 #define BMP388_REG_WHO_AM_I                0x00
 
 
-int bmp388_i2c_write8(struct sensor_itf *itf, uint8_t reg, uint8_t value);
-int bmp388_i2c_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer, uint16_t len);
+int8_t bmp388_i2c_write8(struct sensor_itf *itf, uint8_t reg, uint8_t value);
+int8_t bmp388_i2c_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer, uint16_t len);
 
-int lis2dw12_spi_write8(struct sensor_itf *itf, uint8_t reg, uint8_t value);
-int bmp388_spi_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer, uint16_t len);
+int8_t bmp388_spi_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer, uint16_t len);
 
-int bmp388_readlen(struct sensor_itf *itf, uint8_t reg, uint8_t *buffer, uint16_t len);
+int8_t bmp388_readlen(struct bmp388 *bmp388, uint8_t reg, uint8_t *buffer, uint16_t len);
 
 #ifdef __cplusplus
 }

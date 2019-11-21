@@ -74,13 +74,13 @@ end
 define mn_mbuf_print
     set $om = (struct os_mbuf *)($arg0)
 
-    printf "Mbuf header: "
-    p *$om
-
     if ($om)->om_pkthdr_len > 0
         printf "Packet header: "
         mn_mbuf_pkthdr_print $om
     end
+
+    printf "Mbuf header: "
+    p/r *$om
 
     if ($om)->om_pkthdr_len > sizeof (struct os_mbuf_pkthdr)
         printf "User header: "
@@ -100,9 +100,9 @@ define mn_mbuf_dump
     set $om = (struct os_mbuf *)($arg0)
     mn_mbuf_print $om
 
-    printf "Mbuf data: "
+    printf "Mbuf data:\n"
     set $len = ($om)->om_len
-    p/x *$om->om_data@$len
+    eval "x/%db $om->om_data", $len
 end
 
 document mn_mbuf_dump
@@ -120,11 +120,14 @@ define mn_mbuf_chain_print
     while $om != 0
         printf "Mbuf addr: %p\n", $om
         mn_mbuf_print $om
+
         set $totlen += $om->om_len
         set $om = $om->om_next.sle_next
-    end
 
-    printf "total length: %d\n", $totlen
+        if $om != 0
+            printf "\n"
+        end
+    end
 end
 
 document mn_mbuf_chain_print
@@ -142,11 +145,14 @@ define mn_mbuf_chain_dump
     while $om != 0
         printf "Mbuf addr: %p\n", $om
         mn_mbuf_dump $om
+
         set $totlen += $om->om_len
         set $om = $om->om_next.sle_next
-    end
 
-    printf "total length: %d\n", $totlen
+        if $om != 0
+            printf "\n"
+        end
+    end
 end
 
 document mn_mbuf_chain_dump
@@ -179,6 +185,26 @@ Applies the mn_mbuf_print function to each element in the specified pool.  Both
 allocated and unallocated mbufs are printed.
 end
 
+define mn_mbuf_pool_dump
+    set $pool = ($arg0)
+    set $om = (struct os_mbuf *)$pool->omp_pool.mp_membuf_addr
+    set $elem_size = $pool->omp_databuf_len + sizeof (struct os_mbuf)
+    set $end = (uint8_t *)$om + $pool->omp_pool.mp_num_blocks * $elem_size
+
+    while $om < $end
+        printf "Mbuf addr: %p\n", $om
+        mn_mbuf_dump $om
+        set $om = (struct os_mbuf *)((uint8_t *)$om + $elem_size)
+    end
+end
+
+document mn_mbuf_pool_dump
+usage: mn_mbuf_pool_dump <struct os_mbuf_pool *>
+
+Applies the mn_mbuf_dump function to each element in the specified pool.  Both
+allocated and unallocated mbufs are dumped.
+end
+
 define mn_msys1_print
     mn_mbuf_pool_print &os_msys_1_mbuf_pool
 end
@@ -190,11 +216,28 @@ Prints all mbufs in the first msys pool.  Both allocated and unallocated mbufs
 are printed.
 end
 
-define mn_msys1_free_print
+define mn_msys1_dump
+    mn_mbuf_pool_dump &os_msys_1_mbuf_pool
+end
+
+document mn_msys1_dump
+usage: mn_msys1_dump
+
+Dumps all mbufs in the first msys pool.  Both allocated and unallocated mbufs
+are dumped.
+end
+
+define mn_msys1_free_list
     set $om = os_msys_1_mempool.slh_first
 
     while $om != 0
         printf "Mbuf addr: %p\n", $om
         set $om = $om->mb_next.sle_next
     end
+end
+
+document mn_msys1_free_list
+usage: mn_msys1_free_list
+
+Prints the addresses of all free mbufs in the first msys pool.
 end

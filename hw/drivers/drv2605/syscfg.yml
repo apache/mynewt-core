@@ -21,12 +21,6 @@ syscfg.defs:
     DRV2605_CLI:
         description: 'Enable shell support for the DRV2605'
         value: 0
-    DRV2605_LOG:
-        description: 'Enable DRV2605 logging'
-        value: 0
-    DRV2605_LOG_MODULE:
-        description: 'Numeric module ID to use for DRV2605 log messages'
-        value: 205
     DRV2605_STATS:
         description: 'Enable DRV2605 statistics'
         value: 0
@@ -76,3 +70,17 @@ syscfg.defs:
             Number of retries to use for failed I2C communication.  A retry is
             used when the DRV2605 sends an unexpected NACK.
         value: 2
+
+    ### Log settings.
+
+    DRV2605_LOG_MODULE:
+        description: 'Numeric module ID to use for DRV2605 log messages.'
+        value: 205
+    DRV2605_LOG_LVL:
+        description: 'Minimum level for the DRV2605 log.'
+        value: 15 # Disable logging by default.
+
+syscfg.logs:
+    DRV2605_LOG:
+        module: MYNEWT_VAL(DRV2605_LOG_MODULE)
+        level: MYNEWT_VAL(DRV2605_LOG_LVL)

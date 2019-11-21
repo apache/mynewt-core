@@ -90,10 +90,6 @@ syscfg.defs:
         description: 'Support COAP delayed responses for slow resousrces.'
         value: 1
 
-    OC_LOGGING:
-        description: 'Logging enabled'
-        value: 0
-
     OC_TRANS_SECURITY:
         description: >
             Enables per-resource transport layer security requirements.
@@ -133,3 +129,20 @@ syscfg.defs:
         description: >
             Sysinit stage for the LoRa OIC transport.
         value: 301
+
+    ### Log settings.
+
+    OC_LOGGING:
+        description: 'Logging enabled'
+        value: 0
+    OC_LOG_MOD:
+        description: 'Numeric module ID to use for OC log messages.'
+        value: 7
+    OC_LOG_LVL:
+        description: 'Minimum level for the OC log.'
+        value: 1
+
+syscfg.logs:
+    OC_LOG:
+        module: MYNEWT_VAL(OC_LOG_MOD)
+        level: MYNEWT_VAL(OC_LOG_LVL)
