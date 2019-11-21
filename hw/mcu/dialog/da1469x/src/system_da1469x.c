@@ -35,11 +35,20 @@
                                  CRG_TOP_SYS_STAT_REG_COM_IS_DOWN_Msk | \
                                  CRG_TOP_SYS_STAT_REG_RAD_IS_DOWN_Msk)
 
+extern uint8_t __StackLimit;
+
 void SystemInit(void)
 {
 #if MYNEWT_VAL(OS_SCHEDULING) && MYNEWT_VAL(MCU_DEEP_SLEEP)
     int idx;
 #endif
+
+    __asm__ volatile (".syntax unified              \n"
+                      "   msr  msplim, %[msplim]    \n"
+                      :
+                      : [msplim] "r" (&__StackLimit)
+                      :
+                     );
 
     /* TODO: Check chip version.
     assert(CHIP_VERSION->CHIP_ID1_REG == '2');
