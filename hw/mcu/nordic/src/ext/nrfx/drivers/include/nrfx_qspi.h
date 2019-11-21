@@ -56,31 +56,52 @@ typedef struct
     uint8_t              irq_priority; /**< Interrupt priority. */
 } nrfx_qspi_config_t;
 
-/** @brief QSPI instance default configuration. */
-#define NRFX_QSPI_DEFAULT_CONFIG                                        \
-{                                                                       \
-    .xip_offset  = NRFX_QSPI_CONFIG_XIP_OFFSET,                         \
-    .pins = {                                                           \
-       .sck_pin     = NRFX_QSPI_PIN_SCK,                                \
-       .csn_pin     = NRFX_QSPI_PIN_CSN,                                \
-       .io0_pin     = NRFX_QSPI_PIN_IO0,                                \
-       .io1_pin     = NRFX_QSPI_PIN_IO1,                                \
-       .io2_pin     = NRFX_QSPI_PIN_IO2,                                \
-       .io3_pin     = NRFX_QSPI_PIN_IO3,                                \
-    },                                                                  \
-    .prot_if = {                                                        \
-        .readoc     = (nrf_qspi_readoc_t)NRFX_QSPI_CONFIG_READOC,       \
-        .writeoc    = (nrf_qspi_writeoc_t)NRFX_QSPI_CONFIG_WRITEOC,     \
-        .addrmode   = (nrf_qspi_addrmode_t)NRFX_QSPI_CONFIG_ADDRMODE,   \
-        .dpmconfig  = false,                                            \
-    },                                                                  \
-    .phy_if = {                                                         \
-        .sck_delay  = (uint8_t)NRFX_QSPI_CONFIG_SCK_DELAY,              \
-        .dpmen      = false,                                            \
-        .spi_mode   = (nrf_qspi_spi_mode_t)NRFX_QSPI_CONFIG_MODE,       \
-        .sck_freq   = (nrf_qspi_frequency_t)NRFX_QSPI_CONFIG_FREQUENCY, \
-    },                                                                  \
-    .irq_priority   = (uint8_t)NRFX_QSPI_CONFIG_IRQ_PRIORITY,           \
+/**
+ * @brief QSPI instance default configuration.
+ *
+ * This configuration sets up QSPI with the following options:
+ * - no offset for address in the external memory for Execute in Place operation
+ * - single data line
+ * - FAST_READ opcode for reading
+ * - PP opcode for writing
+ * - 24 bit addressing mode
+ * - Deep Power-down disabled
+ * - clock frequency 2 MHz
+ * - SCK delay 5 clock ticks
+ * - mode 0 (data captured on the clock rising edge and transmitted on a falling edge. Clock base level is '0')
+ *
+ * @param[in] _pin_sck Pin for clock signal.
+ * @param[in] _pin_csn Pin for chip select signal.
+ * @param[in] _pin_io0 Pin 0 for I/O data.
+ * @param[in] _pin_io1 Pin 1 for I/O data.
+ * @param[in] _pin_io2 Pin 2 for I/O data.
+ * @param[in] _pin_io3 Pin 3 for I/O data.
+ */
+#define NRFX_QSPI_DEFAULT_CONFIG(_pin_sck, _pin_csn, _pin_io0,         \
+                                 _pin_io1, _pin_io2, _pin_io3)         \
+{                                                                      \
+    .xip_offset    = 0,                                                \
+    .pins = {                                                          \
+       .sck_pin    = _pin_sck,                                         \
+       .csn_pin    = _pin_csn,                                         \
+       .io0_pin    = _pin_io0,                                         \
+       .io1_pin    = _pin_io1,                                         \
+       .io2_pin    = _pin_io2,                                         \
+       .io3_pin    = _pin_io3                                          \
+    },                                                                 \
+    .prot_if = {                                                       \
+        .readoc    = NRF_QSPI_READOC_FASTREAD,                         \
+        .writeoc   = NRF_QSPI_WRITEOC_PP,                              \
+        .addrmode  = NRF_QSPI_ADDRMODE_24BIT,                          \
+        .dpmconfig = false,                                            \
+    },                                                                 \
+    .phy_if = {                                                        \
+        .sck_delay = 0x05,                                             \
+        .dpmen     = false,                                            \
+        .spi_mode  = NRF_QSPI_MODE_0,                                  \
+        .sck_freq  = NRF_QSPI_FREQ_32MDIV16,                           \
+    },                                                                 \
+    .irq_priority  = (uint8_t)NRFX_QSPI_DEFAULT_CONFIG_IRQ_PRIORITY,   \
 }
 
 /** @brief QSPI custom instruction helper with the default configuration. */
@@ -155,7 +176,8 @@ void nrfx_qspi_uninit(void);
  * @retval NRFX_SUCCESS            The operation was successful (blocking mode) or operation
  *                                 was commissioned (handler mode).
  * @retval NRFX_ERROR_BUSY         The driver currently handles another operation.
- * @retval NRFX_ERROR_INVALID_ADDR The provided buffer is not placed in the Data RAM region.
+ * @retval NRFX_ERROR_INVALID_ADDR The provided buffer is not placed in the Data RAM region
+ *                                 or its address is not aligned to a 32-bit word.
  */
 nrfx_err_t nrfx_qspi_read(void *   p_rx_buffer,
                           size_t   rx_buffer_length,
@@ -182,7 +204,8 @@ nrfx_err_t nrfx_qspi_read(void *   p_rx_buffer,
  * @retval NRFX_SUCCESS            The operation was successful (blocking mode) or operation
  *                                 was commissioned (handler mode).
  * @retval NRFX_ERROR_BUSY         The driver currently handles other operation.
- * @retval NRFX_ERROR_INVALID_ADDR The provided buffer is not placed in the Data RAM region.
+ * @retval NRFX_ERROR_INVALID_ADDR The provided buffer is not placed in the Data RAM region
+ *                                 or its address is not aligned to a 32-bit word.
  */
 nrfx_err_t nrfx_qspi_write(void const * p_tx_buffer,
                            size_t       tx_buffer_length,
@@ -206,9 +229,10 @@ nrfx_err_t nrfx_qspi_write(void const * p_tx_buffer,
  * @param[in] start_address Memory address to start erasing. If chip erase is performed, address
  *                          field is ommited.
  *
- * @retval NRFX_SUCCESS    The operation was successful (blocking mode) or operation
- *                         was commissioned (handler mode).
- * @retval NRFX_ERROR_BUSY The driver currently handles another operation.
+ * @retval NRFX_SUCCESS            The operation was successful (blocking mode) or operation
+ *                                 was commissioned (handler mode).
+ * @retval NRFX_ERROR_INVALID_ADDR The provided start address is not aligned to a 32-bit word.
+ * @retval NRFX_ERROR_BUSY         The driver currently handles another operation.
  */
 nrfx_err_t nrfx_qspi_erase(nrf_qspi_erase_len_t length,
                            uint32_t             start_address);

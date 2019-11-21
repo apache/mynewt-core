@@ -58,7 +58,7 @@
 #define EGU_IRQn(i)         EGU_IRQn_(i)
 #define EGU_IRQn_(i)        SWI##i##_EGU##i##_IRQn
 #define EGU_IRQHandler(i)   EGU_IRQHandler_(i)
-#define EGU_IRQHandler_(i)  nrfx_swi_##i##_irq_handler
+#define EGU_IRQHandler_(i)  nrfx_egu_##i##_irq_handler
 #define DMA_ISSUE_EGU_IDX           NRFX_PWM_NRF52_ANOMALY_109_EGU_INSTANCE
 #define DMA_ISSUE_EGU               NRFX_CONCAT_2(NRF_EGU, DMA_ISSUE_EGU_IDX)
 #define DMA_ISSUE_EGU_IRQn          EGU_IRQn(DMA_ISSUE_EGU_IDX)
@@ -72,12 +72,13 @@ typedef struct
     uint32_t                  starting_task_address;
 #endif
     nrfx_pwm_handler_t        handler;
+    void *                    p_context;
     nrfx_drv_state_t volatile state;
     uint8_t                   flags;
 } pwm_control_block_t;
 static pwm_control_block_t m_cb[NRFX_PWM_ENABLED_COUNT];
 
-static void configure_pins(nrfx_pwm_t const * const p_instance,
+static void configure_pins(nrfx_pwm_t const *        p_instance,
                            nrfx_pwm_config_t const * p_config)
 {
     uint32_t out_pins[NRF_PWM_CHANNEL_COUNT];
@@ -112,9 +113,10 @@ static void configure_pins(nrfx_pwm_t const * const p_instance,
 }
 
 
-nrfx_err_t nrfx_pwm_init(nrfx_pwm_t const * const p_instance,
+nrfx_err_t nrfx_pwm_init(nrfx_pwm_t const *        p_instance,
                          nrfx_pwm_config_t const * p_config,
-                         nrfx_pwm_handler_t        handler)
+                         nrfx_pwm_handler_t        handler,
+                         void *                    p_context)
 {
     NRFX_ASSERT(p_config);
 
@@ -132,6 +134,7 @@ nrfx_err_t nrfx_pwm_init(nrfx_pwm_t const * const p_instance,
     }
 
     p_cb->handler = handler;
+    p_cb->p_context = p_context;
 
     configure_pins(p_instance, p_config);
 
@@ -173,7 +176,7 @@ nrfx_err_t nrfx_pwm_init(nrfx_pwm_t const * const p_instance,
 }
 
 
-void nrfx_pwm_uninit(nrfx_pwm_t const * const p_instance)
+void nrfx_pwm_uninit(nrfx_pwm_t const * p_instance)
 {
     pwm_control_block_t * p_cb  = &m_cb[p_instance->drv_inst_idx];
     NRFX_ASSERT(p_cb->state != NRFX_DRV_STATE_UNINITIALIZED);
@@ -189,7 +192,7 @@ void nrfx_pwm_uninit(nrfx_pwm_t const * const p_instance)
 }
 
 
-static uint32_t start_playback(nrfx_pwm_t const * const p_instance,
+static uint32_t start_playback(nrfx_pwm_t const * p_instance,
                                pwm_control_block_t * p_cb,
                                uint8_t               flags,
                                nrf_pwm_task_t        starting_task)
@@ -250,10 +253,9 @@ static uint32_t start_playback(nrfx_pwm_t const * const p_instance,
         // the PWM by triggering the proper task from EGU interrupt handler,
         // it is not safe to do it directly via PPI.
         p_cb->starting_task_address = starting_task_address;
-        nrf_egu_int_enable(DMA_ISSUE_EGU,
-            nrf_egu_int_get(DMA_ISSUE_EGU, p_instance->drv_inst_idx));
-        return (uint32_t)nrf_egu_task_trigger_address_get(DMA_ISSUE_EGU,
-            p_instance->drv_inst_idx);
+        nrf_egu_int_enable(DMA_ISSUE_EGU, nrf_egu_channel_int_get(p_instance->drv_inst_idx));
+        return nrf_egu_task_address_get(DMA_ISSUE_EGU,
+                                        nrf_egu_trigger_task_get(p_instance->drv_inst_idx));
 #else
         return starting_task_address;
 #endif
@@ -264,7 +266,7 @@ static uint32_t start_playback(nrfx_pwm_t const * const p_instance,
 }
 
 
-uint32_t nrfx_pwm_simple_playback(nrfx_pwm_t const * const p_instance,
+uint32_t nrfx_pwm_simple_playback(nrfx_pwm_t const *         p_instance,
                                   nrf_pwm_sequence_t const * p_sequence,
                                   uint16_t                   playback_count,
                                   uint32_t                   flags)
@@ -309,7 +311,7 @@ uint32_t nrfx_pwm_simple_playback(nrfx_pwm_t const * const p_instance,
 }
 
 
-uint32_t nrfx_pwm_complex_playback(nrfx_pwm_t const * const p_instance,
+uint32_t nrfx_pwm_complex_playback(nrfx_pwm_t const *         p_instance,
                                    nrf_pwm_sequence_t const * p_sequence_0,
                                    nrf_pwm_sequence_t const * p_sequence_1,
                                    uint16_t                   playback_count,
@@ -356,8 +358,8 @@ uint32_t nrfx_pwm_complex_playback(nrfx_pwm_t const * const p_instance,
 }
 
 
-bool nrfx_pwm_stop(nrfx_pwm_t const * const p_instance,
-                   bool wait_until_stopped)
+bool nrfx_pwm_stop(nrfx_pwm_t const * p_instance,
+                   bool               wait_until_stopped)
 {
     NRFX_ASSERT(m_cb[p_instance->drv_inst_idx].state != NRFX_DRV_STATE_UNINITIALIZED);
 
@@ -385,7 +387,7 @@ bool nrfx_pwm_stop(nrfx_pwm_t const * const p_instance,
 }
 
 
-bool nrfx_pwm_is_stopped(nrfx_pwm_t const * const p_instance)
+bool nrfx_pwm_is_stopped(nrfx_pwm_t const * p_instance)
 {
     pwm_control_block_t * p_cb  = &m_cb[p_instance->drv_inst_idx];
     NRFX_ASSERT(p_cb->state != NRFX_DRV_STATE_UNINITIALIZED);
@@ -420,7 +422,7 @@ static void irq_handler(NRF_PWM_Type * p_pwm, pwm_control_block_t * p_cb)
         nrf_pwm_event_clear(p_pwm, NRF_PWM_EVENT_SEQEND0);
         if ((p_cb->flags & NRFX_PWM_FLAG_SIGNAL_END_SEQ0) && p_cb->handler)
         {
-            p_cb->handler(NRFX_PWM_EVT_END_SEQ0);
+            p_cb->handler(NRFX_PWM_EVT_END_SEQ0, p_cb->p_context);
         }
     }
     if (nrf_pwm_event_check(p_pwm, NRF_PWM_EVENT_SEQEND1))
@@ -428,7 +430,7 @@ static void irq_handler(NRF_PWM_Type * p_pwm, pwm_control_block_t * p_cb)
         nrf_pwm_event_clear(p_pwm, NRF_PWM_EVENT_SEQEND1);
         if ((p_cb->flags & NRFX_PWM_FLAG_SIGNAL_END_SEQ1) && p_cb->handler)
         {
-            p_cb->handler(NRFX_PWM_EVT_END_SEQ1);
+            p_cb->handler(NRFX_PWM_EVT_END_SEQ1, p_cb->p_context);
         }
     }
     // For LOOPSDONE the handler is called by default, but the user can disable
@@ -438,7 +440,7 @@ static void irq_handler(NRF_PWM_Type * p_pwm, pwm_control_block_t * p_cb)
         nrf_pwm_event_clear(p_pwm, NRF_PWM_EVENT_LOOPSDONE);
         if (!(p_cb->flags & NRFX_PWM_FLAG_NO_EVT_FINISHED) && p_cb->handler)
         {
-            p_cb->handler(NRFX_PWM_EVT_FINISHED);
+            p_cb->handler(NRFX_PWM_EVT_FINISHED, p_cb->p_context);
         }
     }
 
@@ -450,7 +452,7 @@ static void irq_handler(NRF_PWM_Type * p_pwm, pwm_control_block_t * p_cb)
         p_cb->state = NRFX_DRV_STATE_INITIALIZED;
         if (p_cb->handler)
         {
-            p_cb->handler(NRFX_PWM_EVT_STOPPED);
+            p_cb->handler(NRFX_PWM_EVT_STOPPED, p_cb->p_context);
         }
     }
 }
@@ -460,14 +462,12 @@ static void irq_handler(NRF_PWM_Type * p_pwm, pwm_control_block_t * p_cb)
 // See 'start_playback' why this is needed.
 void DMA_ISSUE_EGU_IRQHandler(void)
 {
-    int i;
-    for (i = 0; i < NRFX_PWM_ENABLED_COUNT; ++i)
+    for (uint8_t i = 0; i < NRFX_PWM_ENABLED_COUNT; i++)
     {
-        volatile uint32_t * p_event_reg =
-            nrf_egu_event_triggered_address_get(DMA_ISSUE_EGU, i);
-        if (*p_event_reg)
+        nrf_egu_event_t event = nrf_egu_triggered_event_get(i);
+        if (nrf_egu_event_check(DMA_ISSUE_EGU, event))
         {
-            *p_event_reg = 0;
+            nrf_egu_event_clear(DMA_ISSUE_EGU, event);
             *(volatile uint32_t *)(m_cb[i].starting_task_address) = 1;
         }
     }

@@ -61,20 +61,34 @@ typedef struct
     uint8_t              interrupt_priority; /**< QDEC interrupt priority. */
 } nrfx_qdec_config_t;
 
-/**@brief QDEC default configuration. */
-#define NRFX_QDEC_DEFAULT_CONFIG                                            \
-{                                                                           \
-    .reportper          = (nrf_qdec_reportper_t)NRFX_QDEC_CONFIG_REPORTPER, \
-    .sampleper          = (nrf_qdec_sampleper_t)NRFX_QDEC_CONFIG_SAMPLEPER, \
-    .psela              = NRFX_QDEC_CONFIG_PIO_A,                           \
-    .pselb              = NRFX_QDEC_CONFIG_PIO_B,                           \
-    .pselled            = NRFX_QDEC_CONFIG_PIO_LED,                         \
-    .ledpre             = NRFX_QDEC_CONFIG_LEDPRE,                          \
-    .ledpol             = (nrf_qdec_ledpol_t)NRFX_QDEC_CONFIG_LEDPOL,       \
-    .dbfen              = NRFX_QDEC_CONFIG_DBFEN,                           \
-    .sample_inten       = NRFX_QDEC_CONFIG_SAMPLE_INTEN,                    \
-    .interrupt_priority = NRFX_QDEC_CONFIG_IRQ_PRIORITY,                    \
-}
+/**
+ * @brief QDEC driver default configuration.
+ *
+ * This configuration sets up QDEC with the following options:
+ * - report period: 10 samples
+ * - sampling period: 16384 us
+ * - LED enabled for 500 us before sampling
+ * - LED polarity: active high
+ * - debouncing filter disabled
+ * - sample ready interrupt disabled
+ *
+ * @param[in] _pin_a   Pin for A encoder channel input.
+ * @param[in] _pin_b   Pin for B encoder channel input.
+ * @param[in] _pin_led Pin for LED output.
+ */
+#define NRFX_QDEC_DEFAULT_CONFIG(_pin_a, _pin_b, _pin_led)           \
+    {                                                                \
+        .reportper          = NRF_QDEC_REPORTPER_10,                 \
+        .sampleper          = NRF_QDEC_SAMPLEPER_16384us,            \
+        .psela              = _pin_a,                                \
+        .pselb              = _pin_b,                                \
+        .pselled            = _pin_led,                              \
+        .ledpre             = 500,                                   \
+        .ledpol             = NRF_QDEC_LEPOL_ACTIVE_HIGH,            \
+        .dbfen              = NRF_QDEC_DBFEN_DISABLE,                \
+        .sample_inten       = false,                                 \
+        .interrupt_priority = NRFX_QDEC_DEFAULT_CONFIG_IRQ_PRIORITY  \
+    }
 
 /** @brief QDEC sample event data. */
 typedef struct
@@ -159,10 +173,7 @@ void nrfx_qdec_accumulators_read(int16_t * p_acc, int16_t * p_accdbl);
  *
  * @return Task address.
  */
-__STATIC_INLINE uint32_t nrfx_qdec_task_address_get(nrf_qdec_task_t task)
-{
-    return (uint32_t)nrf_qdec_task_address_get(task);
-}
+NRFX_STATIC_INLINE uint32_t nrfx_qdec_task_address_get(nrf_qdec_task_t task);
 
 /**
  * @brief Function for returning the address of the specified QDEC event.
@@ -171,10 +182,19 @@ __STATIC_INLINE uint32_t nrfx_qdec_task_address_get(nrf_qdec_task_t task)
  *
  * @return Event address.
  */
-__STATIC_INLINE uint32_t nrfx_qdec_event_address_get(nrf_qdec_event_t event)
+NRFX_STATIC_INLINE uint32_t nrfx_qdec_event_address_get(nrf_qdec_event_t event);
+
+#ifndef NRFX_DECLARE_ONLY
+NRFX_STATIC_INLINE uint32_t nrfx_qdec_task_address_get(nrf_qdec_task_t task)
 {
-    return (uint32_t)nrf_qdec_event_address_get(event);
+    return nrf_qdec_task_address_get(NRF_QDEC, task);
 }
+
+NRFX_STATIC_INLINE uint32_t nrfx_qdec_event_address_get(nrf_qdec_event_t event)
+{
+    return nrf_qdec_event_address_get(NRF_QDEC, event);
+}
+#endif // NRFX_DECLARE_ONLY
 
 /** @} */
 

@@ -71,53 +71,53 @@ typedef enum
 /** @brief GPIOTE tasks. */
 typedef enum
 {
-    NRF_GPIOTE_TASKS_OUT_0     = offsetof(NRF_GPIOTE_Type, TASKS_OUT[0]), /**< Out task 0. */
-    NRF_GPIOTE_TASKS_OUT_1     = offsetof(NRF_GPIOTE_Type, TASKS_OUT[1]), /**< Out task 1. */
-    NRF_GPIOTE_TASKS_OUT_2     = offsetof(NRF_GPIOTE_Type, TASKS_OUT[2]), /**< Out task 2. */
-    NRF_GPIOTE_TASKS_OUT_3     = offsetof(NRF_GPIOTE_Type, TASKS_OUT[3]), /**< Out task 3. */
+    NRF_GPIOTE_TASK_OUT_0     = offsetof(NRF_GPIOTE_Type, TASKS_OUT[0]), /**< Out task 0. */
+    NRF_GPIOTE_TASK_OUT_1     = offsetof(NRF_GPIOTE_Type, TASKS_OUT[1]), /**< Out task 1. */
+    NRF_GPIOTE_TASK_OUT_2     = offsetof(NRF_GPIOTE_Type, TASKS_OUT[2]), /**< Out task 2. */
+    NRF_GPIOTE_TASK_OUT_3     = offsetof(NRF_GPIOTE_Type, TASKS_OUT[3]), /**< Out task 3. */
 #if (GPIOTE_CH_NUM > 4) || defined(__NRFX_DOXYGEN__)
-    NRF_GPIOTE_TASKS_OUT_4     = offsetof(NRF_GPIOTE_Type, TASKS_OUT[4]), /**< Out task 4. */
-    NRF_GPIOTE_TASKS_OUT_5     = offsetof(NRF_GPIOTE_Type, TASKS_OUT[5]), /**< Out task 5. */
-    NRF_GPIOTE_TASKS_OUT_6     = offsetof(NRF_GPIOTE_Type, TASKS_OUT[6]), /**< Out task 6. */
-    NRF_GPIOTE_TASKS_OUT_7     = offsetof(NRF_GPIOTE_Type, TASKS_OUT[7]), /**< Out task 7. */
+    NRF_GPIOTE_TASK_OUT_4     = offsetof(NRF_GPIOTE_Type, TASKS_OUT[4]), /**< Out task 4. */
+    NRF_GPIOTE_TASK_OUT_5     = offsetof(NRF_GPIOTE_Type, TASKS_OUT[5]), /**< Out task 5. */
+    NRF_GPIOTE_TASK_OUT_6     = offsetof(NRF_GPIOTE_Type, TASKS_OUT[6]), /**< Out task 6. */
+    NRF_GPIOTE_TASK_OUT_7     = offsetof(NRF_GPIOTE_Type, TASKS_OUT[7]), /**< Out task 7. */
 #endif
 #if defined(GPIOTE_FEATURE_SET_PRESENT) || defined(__NRFX_DOXYGEN__)
-    NRF_GPIOTE_TASKS_SET_0     = offsetof(NRF_GPIOTE_Type, TASKS_SET[0]), /**< Set task 0. */
-    NRF_GPIOTE_TASKS_SET_1     = offsetof(NRF_GPIOTE_Type, TASKS_SET[1]), /**< Set task 1. */
-    NRF_GPIOTE_TASKS_SET_2     = offsetof(NRF_GPIOTE_Type, TASKS_SET[2]), /**< Set task 2. */
-    NRF_GPIOTE_TASKS_SET_3     = offsetof(NRF_GPIOTE_Type, TASKS_SET[3]), /**< Set task 3. */
-    NRF_GPIOTE_TASKS_SET_4     = offsetof(NRF_GPIOTE_Type, TASKS_SET[4]), /**< Set task 4. */
-    NRF_GPIOTE_TASKS_SET_5     = offsetof(NRF_GPIOTE_Type, TASKS_SET[5]), /**< Set task 5. */
-    NRF_GPIOTE_TASKS_SET_6     = offsetof(NRF_GPIOTE_Type, TASKS_SET[6]), /**< Set task 6. */
-    NRF_GPIOTE_TASKS_SET_7     = offsetof(NRF_GPIOTE_Type, TASKS_SET[7]), /**< Set task 7. */
+    NRF_GPIOTE_TASK_SET_0     = offsetof(NRF_GPIOTE_Type, TASKS_SET[0]), /**< Set task 0. */
+    NRF_GPIOTE_TASK_SET_1     = offsetof(NRF_GPIOTE_Type, TASKS_SET[1]), /**< Set task 1. */
+    NRF_GPIOTE_TASK_SET_2     = offsetof(NRF_GPIOTE_Type, TASKS_SET[2]), /**< Set task 2. */
+    NRF_GPIOTE_TASK_SET_3     = offsetof(NRF_GPIOTE_Type, TASKS_SET[3]), /**< Set task 3. */
+    NRF_GPIOTE_TASK_SET_4     = offsetof(NRF_GPIOTE_Type, TASKS_SET[4]), /**< Set task 4. */
+    NRF_GPIOTE_TASK_SET_5     = offsetof(NRF_GPIOTE_Type, TASKS_SET[5]), /**< Set task 5. */
+    NRF_GPIOTE_TASK_SET_6     = offsetof(NRF_GPIOTE_Type, TASKS_SET[6]), /**< Set task 6. */
+    NRF_GPIOTE_TASK_SET_7     = offsetof(NRF_GPIOTE_Type, TASKS_SET[7]), /**< Set task 7. */
 #endif
 #if defined(GPIOTE_FEATURE_CLR_PRESENT) || defined(__NRFX_DOXYGEN__)
-    NRF_GPIOTE_TASKS_CLR_0     = offsetof(NRF_GPIOTE_Type, TASKS_CLR[0]), /**< Clear task 0. */
-    NRF_GPIOTE_TASKS_CLR_1     = offsetof(NRF_GPIOTE_Type, TASKS_CLR[1]), /**< Clear task 1. */
-    NRF_GPIOTE_TASKS_CLR_2     = offsetof(NRF_GPIOTE_Type, TASKS_CLR[2]), /**< Clear task 2. */
-    NRF_GPIOTE_TASKS_CLR_3     = offsetof(NRF_GPIOTE_Type, TASKS_CLR[3]), /**< Clear task 3. */
-    NRF_GPIOTE_TASKS_CLR_4     = offsetof(NRF_GPIOTE_Type, TASKS_CLR[4]), /**< Clear task 4. */
-    NRF_GPIOTE_TASKS_CLR_5     = offsetof(NRF_GPIOTE_Type, TASKS_CLR[5]), /**< Clear task 5. */
-    NRF_GPIOTE_TASKS_CLR_6     = offsetof(NRF_GPIOTE_Type, TASKS_CLR[6]), /**< Clear task 6. */
-    NRF_GPIOTE_TASKS_CLR_7     = offsetof(NRF_GPIOTE_Type, TASKS_CLR[7]), /**< Clear task 7. */
+    NRF_GPIOTE_TASK_CLR_0     = offsetof(NRF_GPIOTE_Type, TASKS_CLR[0]), /**< Clear task 0. */
+    NRF_GPIOTE_TASK_CLR_1     = offsetof(NRF_GPIOTE_Type, TASKS_CLR[1]), /**< Clear task 1. */
+    NRF_GPIOTE_TASK_CLR_2     = offsetof(NRF_GPIOTE_Type, TASKS_CLR[2]), /**< Clear task 2. */
+    NRF_GPIOTE_TASK_CLR_3     = offsetof(NRF_GPIOTE_Type, TASKS_CLR[3]), /**< Clear task 3. */
+    NRF_GPIOTE_TASK_CLR_4     = offsetof(NRF_GPIOTE_Type, TASKS_CLR[4]), /**< Clear task 4. */
+    NRF_GPIOTE_TASK_CLR_5     = offsetof(NRF_GPIOTE_Type, TASKS_CLR[5]), /**< Clear task 5. */
+    NRF_GPIOTE_TASK_CLR_6     = offsetof(NRF_GPIOTE_Type, TASKS_CLR[6]), /**< Clear task 6. */
+    NRF_GPIOTE_TASK_CLR_7     = offsetof(NRF_GPIOTE_Type, TASKS_CLR[7]), /**< Clear task 7. */
 #endif
-} nrf_gpiote_tasks_t;
+} nrf_gpiote_task_t;
 
 /** @brief GPIOTE events. */
 typedef enum
 {
-    NRF_GPIOTE_EVENTS_IN_0     = offsetof(NRF_GPIOTE_Type, EVENTS_IN[0]), /**< In event 0. */
-    NRF_GPIOTE_EVENTS_IN_1     = offsetof(NRF_GPIOTE_Type, EVENTS_IN[1]), /**< In event 1. */
-    NRF_GPIOTE_EVENTS_IN_2     = offsetof(NRF_GPIOTE_Type, EVENTS_IN[2]), /**< In event 2. */
-    NRF_GPIOTE_EVENTS_IN_3     = offsetof(NRF_GPIOTE_Type, EVENTS_IN[3]), /**< In event 3. */
+    NRF_GPIOTE_EVENT_IN_0     = offsetof(NRF_GPIOTE_Type, EVENTS_IN[0]), /**< In event 0. */
+    NRF_GPIOTE_EVENT_IN_1     = offsetof(NRF_GPIOTE_Type, EVENTS_IN[1]), /**< In event 1. */
+    NRF_GPIOTE_EVENT_IN_2     = offsetof(NRF_GPIOTE_Type, EVENTS_IN[2]), /**< In event 2. */
+    NRF_GPIOTE_EVENT_IN_3     = offsetof(NRF_GPIOTE_Type, EVENTS_IN[3]), /**< In event 3. */
 #if (GPIOTE_CH_NUM > 4) || defined(__NRFX_DOXYGEN__)
-    NRF_GPIOTE_EVENTS_IN_4     = offsetof(NRF_GPIOTE_Type, EVENTS_IN[4]), /**< In event 4. */
-    NRF_GPIOTE_EVENTS_IN_5     = offsetof(NRF_GPIOTE_Type, EVENTS_IN[5]), /**< In event 5. */
-    NRF_GPIOTE_EVENTS_IN_6     = offsetof(NRF_GPIOTE_Type, EVENTS_IN[6]), /**< In event 6. */
-    NRF_GPIOTE_EVENTS_IN_7     = offsetof(NRF_GPIOTE_Type, EVENTS_IN[7]), /**< In event 7. */
+    NRF_GPIOTE_EVENT_IN_4     = offsetof(NRF_GPIOTE_Type, EVENTS_IN[4]), /**< In event 4. */
+    NRF_GPIOTE_EVENT_IN_5     = offsetof(NRF_GPIOTE_Type, EVENTS_IN[5]), /**< In event 5. */
+    NRF_GPIOTE_EVENT_IN_6     = offsetof(NRF_GPIOTE_Type, EVENTS_IN[6]), /**< In event 6. */
+    NRF_GPIOTE_EVENT_IN_7     = offsetof(NRF_GPIOTE_Type, EVENTS_IN[7]), /**< In event 7. */
 #endif
-    NRF_GPIOTE_EVENTS_PORT     = offsetof(NRF_GPIOTE_Type, EVENTS_PORT), /**<  Port event. */
-} nrf_gpiote_events_t;
+    NRF_GPIOTE_EVENT_PORT     = offsetof(NRF_GPIOTE_Type, EVENTS_PORT), /**<  Port event. */
+} nrf_gpiote_event_t;
 
 /** @brief GPIOTE interrupts. */
 typedef enum
@@ -149,351 +149,470 @@ typedef enum
 /**
  * @brief Function for activating the specified GPIOTE task.
  *
- * @param[in] task Task.
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] task  Task.
  */
-__STATIC_INLINE void nrf_gpiote_task_set(nrf_gpiote_tasks_t task);
+NRF_STATIC_INLINE void nrf_gpiote_task_trigger(NRF_GPIOTE_Type * p_reg, nrf_gpiote_task_t task);
 
 /**
  * @brief Function for getting the address of the specified GPIOTE task.
  *
- * @param[in] task Task.
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] task  Task.
  *
  * @return Address of the specified task.
  */
-__STATIC_INLINE uint32_t nrf_gpiote_task_addr_get(nrf_gpiote_tasks_t task);
+NRF_STATIC_INLINE uint32_t nrf_gpiote_task_address_get(NRF_GPIOTE_Type const * p_reg,
+                                                       nrf_gpiote_task_t       task);
 
 /**
  * @brief Function for getting the state of the specified GPIOTE event.
  *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
  * @param[in] event Event.
  *
  * @retval true  The event is set.
  * @retval false The event is not set.
  */
-__STATIC_INLINE bool nrf_gpiote_event_is_set(nrf_gpiote_events_t event);
+NRF_STATIC_INLINE bool nrf_gpiote_event_check(NRF_GPIOTE_Type const * p_reg,
+                                              nrf_gpiote_event_t      event);
 
 /**
  * @brief Function for clearing the specified GPIOTE event.
  *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
  * @param[in] event Event.
  */
-__STATIC_INLINE void nrf_gpiote_event_clear(nrf_gpiote_events_t event);
+NRF_STATIC_INLINE void nrf_gpiote_event_clear(NRF_GPIOTE_Type * p_reg, nrf_gpiote_event_t event);
 
 /**
  * @brief Function for getting the address of the specified GPIOTE event.
  *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
  * @param[in] event Event.
  *
  * @return Address of the specified event.
  */
-__STATIC_INLINE uint32_t nrf_gpiote_event_addr_get(nrf_gpiote_events_t event);
+NRF_STATIC_INLINE uint32_t nrf_gpiote_event_address_get(NRF_GPIOTE_Type const * p_reg,
+                                                        nrf_gpiote_event_t      event);
 
 /**
  * @brief Function for enabling interrupts.
  *
- * @param[in] mask Mask of interrupts to be enabled.
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] mask  Mask of interrupts to be enabled.
  */
-__STATIC_INLINE void nrf_gpiote_int_enable(uint32_t mask);
+NRF_STATIC_INLINE void nrf_gpiote_int_enable(NRF_GPIOTE_Type * p_reg, uint32_t mask);
 
 /**
  * @brief Function for disabling interrupts.
  *
- * @param[in] mask Mask of interrupts to be disabled.
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] mask  Mask of interrupts to be disabled.
  */
-__STATIC_INLINE void nrf_gpiote_int_disable(uint32_t mask);
+NRF_STATIC_INLINE void nrf_gpiote_int_disable(NRF_GPIOTE_Type * p_reg, uint32_t mask);
 
 /**
- * @brief Function for checking if interrupts are enabled.
+ * @brief Function for checking if the specified interrupts are enabled.
  *
- * @param[in] mask Mask of interrupts to be checked.
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] mask  Mask of interrupts to be checked.
  *
- * @return Mask with enabled interrupts.
+ * @return Mask of enabled interrupts.
  */
-__STATIC_INLINE uint32_t nrf_gpiote_int_is_enabled(uint32_t mask);
+NRF_STATIC_INLINE uint32_t nrf_gpiote_int_enable_check(NRF_GPIOTE_Type const * p_reg,
+                                                       uint32_t                mask);
 
 #if defined(DPPI_PRESENT) || defined(__NRFX_DOXYGEN__)
 /**
  * @brief Function for setting the subscribe configuration for a given
  *        GPIOTE task.
  *
+ * @param[in] p_reg   Pointer to the structure of registers of the peripheral.
  * @param[in] task    Task for which to set the configuration.
  * @param[in] channel Channel through which to subscribe events.
  */
-__STATIC_INLINE void nrf_gpiote_subscribe_set(nrf_gpiote_tasks_t task,
-                                              uint8_t            channel);
+NRF_STATIC_INLINE void nrf_gpiote_subscribe_set(NRF_GPIOTE_Type * p_reg,
+                                                nrf_gpiote_task_t task,
+                                                uint8_t           channel);
 
 /**
  * @brief Function for clearing the subscribe configuration for a given
  *        GPIOTE task.
  *
- * @param[in] task Task for which to clear the configuration.
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] task  Task for which to clear the configuration.
  */
-__STATIC_INLINE void nrf_gpiote_subscribe_clear(nrf_gpiote_tasks_t task);
+NRF_STATIC_INLINE void nrf_gpiote_subscribe_clear(NRF_GPIOTE_Type * p_reg, nrf_gpiote_task_t task);
 
 /**
  * @brief Function for setting the publish configuration for a given
  *        GPIOTE event.
  *
+ * @param[in] p_reg   Pointer to the structure of registers of the peripheral.
  * @param[in] event   Event for which to set the configuration.
  * @param[in] channel Channel through which to publish the event.
  */
-__STATIC_INLINE void nrf_gpiote_publish_set(nrf_gpiote_events_t event,
-                                            uint8_t             channel);
+NRF_STATIC_INLINE void nrf_gpiote_publish_set(NRF_GPIOTE_Type *  p_reg,
+                                              nrf_gpiote_event_t event,
+                                              uint8_t            channel);
 
 /**
  * @brief Function for clearing the publish configuration for a given
  *        GPIOTE event.
  *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
  * @param[in] event Event for which to clear the configuration.
  */
-__STATIC_INLINE void nrf_gpiote_publish_clear(nrf_gpiote_events_t event);
+NRF_STATIC_INLINE void nrf_gpiote_publish_clear(NRF_GPIOTE_Type * p_reg, nrf_gpiote_event_t event);
 #endif // defined(DPPI_PRESENT) || defined(__NRFX_DOXYGEN__)
 
 /**
  * @brief Function for enabling a GPIOTE event.
  *
- * @param[in] idx Task-Event index.
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] idx   Task-Event index.
  */
-__STATIC_INLINE void nrf_gpiote_event_enable(uint32_t idx);
+NRF_STATIC_INLINE void nrf_gpiote_event_enable(NRF_GPIOTE_Type * p_reg, uint32_t idx);
 
 /**
  * @brief Function for disabling a GPIOTE event.
  *
- * @param[in] idx Task-Event index.
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] idx   Task-Event index.
  */
-__STATIC_INLINE void nrf_gpiote_event_disable(uint32_t idx);
+NRF_STATIC_INLINE void nrf_gpiote_event_disable(NRF_GPIOTE_Type * p_reg, uint32_t idx);
 
 /**
  * @brief Function for configuring a GPIOTE event.
  *
+ * @param[in] p_reg    Pointer to the structure of registers of the peripheral.
  * @param[in] idx      Task-Event index.
  * @param[in] pin      Pin associated with event.
  * @param[in] polarity Transition that should generate an event.
  */
-__STATIC_INLINE void nrf_gpiote_event_configure(uint32_t              idx,
-                                                uint32_t              pin,
-                                                nrf_gpiote_polarity_t polarity);
+NRF_STATIC_INLINE void nrf_gpiote_event_configure(NRF_GPIOTE_Type *     p_reg,
+                                                  uint32_t              idx,
+                                                  uint32_t              pin,
+                                                  nrf_gpiote_polarity_t polarity);
 
 /**
  * @brief Function for getting the pin associated with a GPIOTE event.
  *
- * @param[in] idx Task-Event index.
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] idx   Task-Event index.
  *
  * @return Pin number.
  */
-__STATIC_INLINE uint32_t nrf_gpiote_event_pin_get(uint32_t idx);
+NRF_STATIC_INLINE uint32_t nrf_gpiote_event_pin_get(NRF_GPIOTE_Type const * p_reg, uint32_t idx);
 
 /**
  * @brief Function for getting the polarity associated with a GPIOTE event.
  *
- * @param[in] idx Task-Event index.
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] idx   Task-Event index.
  *
  * @return Polarity.
  */
-__STATIC_INLINE nrf_gpiote_polarity_t nrf_gpiote_event_polarity_get(uint32_t idx);
+NRF_STATIC_INLINE nrf_gpiote_polarity_t nrf_gpiote_event_polarity_get(NRF_GPIOTE_Type const * p_reg,
+                                                                      uint32_t                idx);
 
 /**
  * @brief Function for enabling a GPIOTE task.
  *
- * @param[in] idx Task-Event index.
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] idx   Task-Event index.
  */
-__STATIC_INLINE void nrf_gpiote_task_enable(uint32_t idx);
+NRF_STATIC_INLINE void nrf_gpiote_task_enable(NRF_GPIOTE_Type * p_reg, uint32_t idx);
 
 /**
  * @brief Function for disabling a GPIOTE task.
  *
- * @param[in] idx Task-Event index.
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] idx   Task-Event index.
  */
-__STATIC_INLINE void nrf_gpiote_task_disable(uint32_t idx);
+NRF_STATIC_INLINE void nrf_gpiote_task_disable(NRF_GPIOTE_Type * p_reg, uint32_t idx);
 
 /**
  * @brief Function for configuring a GPIOTE task.
  *
  * @note  Function is not configuring mode field so task is disabled after this function is called.
  *
+ * @param[in] p_reg    Pointer to the structure of registers of the peripheral.
  * @param[in] idx      Task-Event index.
  * @param[in] pin      Pin associated with event.
  * @param[in] polarity Transition that should generate an event.
  * @param[in] init_val Initial value of the pin.
  */
-__STATIC_INLINE void nrf_gpiote_task_configure(uint32_t              idx,
-                                               uint32_t              pin,
-                                               nrf_gpiote_polarity_t polarity,
-                                               nrf_gpiote_outinit_t  init_val);
+NRF_STATIC_INLINE void nrf_gpiote_task_configure(NRF_GPIOTE_Type *     p_reg,
+                                                 uint32_t              idx,
+                                                 uint32_t              pin,
+                                                 nrf_gpiote_polarity_t polarity,
+                                                 nrf_gpiote_outinit_t  init_val);
 
 /**
  * @brief Function for forcing the specified state on the pin connected to GPIOTE.
  *
+ * @param[in] p_reg    Pointer to the structure of registers of the peripheral.
  * @param[in] idx      Task-Event index.
  * @param[in] init_val Pin state.
  */
-__STATIC_INLINE void nrf_gpiote_task_force(uint32_t idx, nrf_gpiote_outinit_t init_val);
+NRF_STATIC_INLINE void nrf_gpiote_task_force(NRF_GPIOTE_Type *    p_reg,
+                                             uint32_t             idx,
+                                             nrf_gpiote_outinit_t init_val);
 
 /**
  * @brief Function for resetting a GPIOTE task event configuration to the default state.
  *
- * @param[in] idx  Task-Event index.
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] idx   Task-Event index.
  */
-__STATIC_INLINE void nrf_gpiote_te_default(uint32_t idx);
+NRF_STATIC_INLINE void nrf_gpiote_te_default(NRF_GPIOTE_Type * p_reg, uint32_t idx);
 
 /**@brief Function for checking if particular Task-Event is enabled.
  *
- * @param[in]  idx        Task-Event index.
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] idx   Task-Event index.
  *
  * @retval true  The Task-Event mode is set to Task or Event.
  * @retval false The Task-Event mode is set to Disabled.
  */
-__STATIC_INLINE bool nrf_gpiote_te_is_enabled(uint32_t idx);
+NRF_STATIC_INLINE bool nrf_gpiote_te_is_enabled(NRF_GPIOTE_Type const * p_reg, uint32_t idx);
 
-#ifndef SUPPRESS_INLINE_IMPLEMENTATION
+/**
+ * @brief Function for getting the OUT task associated with the specified GPIOTE channel.
+ *
+ * @param[in] index Channel index.
+ *
+ * @return Requested OUT task.
+ */
+NRF_STATIC_INLINE nrf_gpiote_task_t nrf_gpiote_out_task_get(uint8_t index);
 
-__STATIC_INLINE void nrf_gpiote_task_set(nrf_gpiote_tasks_t task)
+#if defined(GPIOTE_FEATURE_SET_PRESENT) || defined(__NRFX_DOXYGEN__)
+/**
+ * @brief Function for getting the SET task associated with the specified GPIOTE channel.
+ *
+ * @param[in] index Channel index.
+ *
+ * @return Requested SET task.
+ */
+NRF_STATIC_INLINE nrf_gpiote_task_t nrf_gpiote_set_task_get(uint8_t index);
+#endif
+
+#if defined(GPIOTE_FEATURE_CLR_PRESENT) || defined(__NRFX_DOXYGEN__)
+/**
+ * @brief Function for getting the CLR task associated with the specified GPIOTE channel.
+ *
+ * @param[in] index Channel index.
+ *
+ * @return Requested CLR task.
+ */
+NRF_STATIC_INLINE nrf_gpiote_task_t nrf_gpiote_clr_task_get(uint8_t index);
+#endif
+
+/**
+ * @brief Function for getting the IN event associated with the specified GPIOTE channel.
+ *
+ * @param[in] index Channel index.
+ *
+ * @return Requested IN event.
+ */
+NRF_STATIC_INLINE nrf_gpiote_event_t nrf_gpiote_in_event_get(uint8_t index);
+
+#ifndef NRF_DECLARE_ONLY
+
+NRF_STATIC_INLINE void nrf_gpiote_task_trigger(NRF_GPIOTE_Type * p_reg, nrf_gpiote_task_t task)
 {
-    *(__IO uint32_t *)((uint32_t)NRF_GPIOTE + task) = 0x1UL;
+    *(volatile uint32_t *)((uint32_t)p_reg + task) = 0x1UL;
 }
 
-__STATIC_INLINE uint32_t nrf_gpiote_task_addr_get(nrf_gpiote_tasks_t task)
+NRF_STATIC_INLINE uint32_t nrf_gpiote_task_address_get(NRF_GPIOTE_Type const * p_reg,
+                                                       nrf_gpiote_task_t       task)
 {
-    return ((uint32_t)NRF_GPIOTE + task);
+    return ((uint32_t)p_reg + task);
 }
 
-__STATIC_INLINE bool nrf_gpiote_event_is_set(nrf_gpiote_events_t event)
+NRF_STATIC_INLINE bool nrf_gpiote_event_check(NRF_GPIOTE_Type const * p_reg,
+                                              nrf_gpiote_event_t      event)
 {
-    return (*(uint32_t *)nrf_gpiote_event_addr_get(event) == 0x1UL) ? true : false;
+    return (bool)*(volatile uint32_t *)((uint8_t *)p_reg + (uint32_t)event);
 }
 
-__STATIC_INLINE void nrf_gpiote_event_clear(nrf_gpiote_events_t event)
+NRF_STATIC_INLINE void nrf_gpiote_event_clear(NRF_GPIOTE_Type * p_reg, nrf_gpiote_event_t event)
 {
-    *(uint32_t *)nrf_gpiote_event_addr_get(event) = 0;
+    *((volatile uint32_t *)nrf_gpiote_event_address_get(p_reg, event)) = 0;
 #if __CORTEX_M == 0x04
-    volatile uint32_t dummy = *((volatile uint32_t *)nrf_gpiote_event_addr_get(event));
+    volatile uint32_t dummy = *((volatile uint32_t *)nrf_gpiote_event_address_get(p_reg, event));
     (void)dummy;
 #endif
 }
 
-__STATIC_INLINE uint32_t nrf_gpiote_event_addr_get(nrf_gpiote_events_t event)
+NRF_STATIC_INLINE uint32_t nrf_gpiote_event_address_get(NRF_GPIOTE_Type const * p_reg,
+                                                        nrf_gpiote_event_t      event)
 {
-    return ((uint32_t)NRF_GPIOTE + event);
+    return ((uint32_t)p_reg + event);
 }
 
-__STATIC_INLINE void nrf_gpiote_int_enable(uint32_t mask)
+NRF_STATIC_INLINE void nrf_gpiote_int_enable(NRF_GPIOTE_Type * p_reg, uint32_t mask)
 {
-    NRF_GPIOTE->INTENSET = mask;
+    p_reg->INTENSET = mask;
 }
 
-__STATIC_INLINE void nrf_gpiote_int_disable(uint32_t mask)
+NRF_STATIC_INLINE void nrf_gpiote_int_disable(NRF_GPIOTE_Type * p_reg, uint32_t mask)
 {
-    NRF_GPIOTE->INTENCLR = mask;
+    p_reg->INTENCLR = mask;
 }
 
-__STATIC_INLINE uint32_t nrf_gpiote_int_is_enabled(uint32_t mask)
+NRF_STATIC_INLINE uint32_t nrf_gpiote_int_enable_check(NRF_GPIOTE_Type const * p_reg, uint32_t mask)
 {
-    return (NRF_GPIOTE->INTENSET & mask);
+    return p_reg->INTENSET & mask;
 }
 
 #if defined(DPPI_PRESENT)
-__STATIC_INLINE void nrf_gpiote_subscribe_set(nrf_gpiote_tasks_t task,
-                                              uint8_t            channel)
+NRF_STATIC_INLINE void nrf_gpiote_subscribe_set(NRF_GPIOTE_Type * p_reg,
+                                                nrf_gpiote_task_t task,
+                                                uint8_t           channel)
 {
-    *((volatile uint32_t *) ((uint8_t *) NRF_GPIOTE + (uint32_t) task + 0x80uL)) =
+    *((volatile uint32_t *) ((uint8_t *) p_reg + (uint32_t) task + 0x80uL)) =
             ((uint32_t)channel | GPIOTE_SUBSCRIBE_OUT_EN_Msk);
 }
 
-__STATIC_INLINE void nrf_gpiote_subscribe_clear(nrf_gpiote_tasks_t task)
+NRF_STATIC_INLINE void nrf_gpiote_subscribe_clear(NRF_GPIOTE_Type * p_reg, nrf_gpiote_task_t task)
 {
-    *((volatile uint32_t *) ((uint8_t *) NRF_GPIOTE + (uint32_t) task + 0x80uL)) = 0;
+    *((volatile uint32_t *) ((uint8_t *) p_reg + (uint32_t) task + 0x80uL)) = 0;
 }
 
-__STATIC_INLINE void nrf_gpiote_publish_set(nrf_gpiote_events_t event,
-                                            uint8_t             channel)
+NRF_STATIC_INLINE void nrf_gpiote_publish_set(NRF_GPIOTE_Type *  p_reg,
+                                              nrf_gpiote_event_t event,
+                                              uint8_t            channel)
 {
-    *((volatile uint32_t *) ((uint8_t *) NRF_GPIOTE + (uint32_t) event + 0x80uL)) =
+    *((volatile uint32_t *) ((uint8_t *) p_reg + (uint32_t) event + 0x80uL)) =
             ((uint32_t)channel | GPIOTE_PUBLISH_IN_EN_Msk);
 }
 
-__STATIC_INLINE void nrf_gpiote_publish_clear(nrf_gpiote_events_t event)
+NRF_STATIC_INLINE void nrf_gpiote_publish_clear(NRF_GPIOTE_Type * p_reg, nrf_gpiote_event_t event)
 {
-    *((volatile uint32_t *) ((uint8_t *) NRF_GPIOTE + (uint32_t) event + 0x80uL)) = 0;
+    *((volatile uint32_t *) ((uint8_t *) p_reg + (uint32_t) event + 0x80uL)) = 0;
 }
 #endif // defined(DPPI_PRESENT)
 
-__STATIC_INLINE void nrf_gpiote_event_enable(uint32_t idx)
+NRF_STATIC_INLINE void nrf_gpiote_event_enable(NRF_GPIOTE_Type * p_reg, uint32_t idx)
 {
-   NRF_GPIOTE->CONFIG[idx] |= GPIOTE_CONFIG_MODE_Event;
+   p_reg->CONFIG[idx] |= GPIOTE_CONFIG_MODE_Event;
 }
 
-__STATIC_INLINE void nrf_gpiote_event_disable(uint32_t idx)
+NRF_STATIC_INLINE void nrf_gpiote_event_disable(NRF_GPIOTE_Type * p_reg, uint32_t idx)
 {
-   NRF_GPIOTE->CONFIG[idx] &= ~GPIOTE_CONFIG_MODE_Event;
+   p_reg->CONFIG[idx] &= ~GPIOTE_CONFIG_MODE_Event;
 }
 
-__STATIC_INLINE void nrf_gpiote_event_configure(uint32_t idx, uint32_t pin, nrf_gpiote_polarity_t polarity)
+NRF_STATIC_INLINE void nrf_gpiote_event_configure(NRF_GPIOTE_Type *     p_reg,
+                                                  uint32_t              idx,
+                                                  uint32_t              pin,
+                                                  nrf_gpiote_polarity_t polarity)
 {
-  NRF_GPIOTE->CONFIG[idx] &= ~(GPIOTE_CONFIG_PORT_PIN_Msk | GPIOTE_CONFIG_POLARITY_Msk);
-  NRF_GPIOTE->CONFIG[idx] |= ((pin << GPIOTE_CONFIG_PSEL_Pos) & GPIOTE_CONFIG_PORT_PIN_Msk) |
-                              ((polarity << GPIOTE_CONFIG_POLARITY_Pos) & GPIOTE_CONFIG_POLARITY_Msk);
+  p_reg->CONFIG[idx] &= ~(GPIOTE_CONFIG_PORT_PIN_Msk | GPIOTE_CONFIG_POLARITY_Msk);
+  p_reg->CONFIG[idx] |= ((pin << GPIOTE_CONFIG_PSEL_Pos) & GPIOTE_CONFIG_PORT_PIN_Msk) |
+                        ((polarity << GPIOTE_CONFIG_POLARITY_Pos) & GPIOTE_CONFIG_POLARITY_Msk);
 }
 
-__STATIC_INLINE uint32_t nrf_gpiote_event_pin_get(uint32_t idx)
+NRF_STATIC_INLINE uint32_t nrf_gpiote_event_pin_get(NRF_GPIOTE_Type const * p_reg, uint32_t idx)
 {
-    return ((NRF_GPIOTE->CONFIG[idx] & GPIOTE_CONFIG_PORT_PIN_Msk) >> GPIOTE_CONFIG_PSEL_Pos);
+    return ((p_reg->CONFIG[idx] & GPIOTE_CONFIG_PORT_PIN_Msk) >> GPIOTE_CONFIG_PSEL_Pos);
 }
 
-__STATIC_INLINE nrf_gpiote_polarity_t nrf_gpiote_event_polarity_get(uint32_t idx)
+NRF_STATIC_INLINE nrf_gpiote_polarity_t nrf_gpiote_event_polarity_get(NRF_GPIOTE_Type const * p_reg,
+                                                                      uint32_t                idx)
 {
-    return (nrf_gpiote_polarity_t)((NRF_GPIOTE->CONFIG[idx] & GPIOTE_CONFIG_POLARITY_Msk) >> GPIOTE_CONFIG_POLARITY_Pos);
+    return (nrf_gpiote_polarity_t)((p_reg->CONFIG[idx] & GPIOTE_CONFIG_POLARITY_Msk) >>
+                                   GPIOTE_CONFIG_POLARITY_Pos);
 }
 
-__STATIC_INLINE void nrf_gpiote_task_enable(uint32_t idx)
+NRF_STATIC_INLINE void nrf_gpiote_task_enable(NRF_GPIOTE_Type * p_reg, uint32_t idx)
 {
-    uint32_t final_config = NRF_GPIOTE->CONFIG[idx] | GPIOTE_CONFIG_MODE_Task;
+    uint32_t final_config = p_reg->CONFIG[idx] | GPIOTE_CONFIG_MODE_Task;
 #ifdef NRF51
     /* Workaround for the OUTINIT PAN. When nrf_gpiote_task_config() is called a glitch happens
     on the GPIO if the GPIO in question is already assigned to GPIOTE and the pin is in the
-    correct state in GPIOTE, but not in the OUT register. */
-    /* Configure channel to not existing, not connected to the pin, and configure as a tasks that will set it to proper level */
-    NRF_GPIOTE->CONFIG[idx] = final_config | (((31) << GPIOTE_CONFIG_PSEL_Pos) & GPIOTE_CONFIG_PORT_PIN_Msk);
+    correct state in GPIOTE, but not in the OUT register.
+    Configure channel to not existing, not connected to the pin,
+    and configure as a tasks that will set it to proper level */
+    p_reg->CONFIG[idx] = final_config |
+                         (((31) << GPIOTE_CONFIG_PSEL_Pos) & GPIOTE_CONFIG_PORT_PIN_Msk);
     __NOP();
     __NOP();
     __NOP();
 #endif
-    NRF_GPIOTE->CONFIG[idx] = final_config;
+    p_reg->CONFIG[idx] = final_config;
 }
 
-__STATIC_INLINE void nrf_gpiote_task_disable(uint32_t idx)
+NRF_STATIC_INLINE void nrf_gpiote_task_disable(NRF_GPIOTE_Type * p_reg, uint32_t idx)
 {
-    NRF_GPIOTE->CONFIG[idx] &= ~GPIOTE_CONFIG_MODE_Task;
+    p_reg->CONFIG[idx] &= ~GPIOTE_CONFIG_MODE_Task;
 }
 
-__STATIC_INLINE void nrf_gpiote_task_configure(uint32_t idx, uint32_t pin,
-                                                nrf_gpiote_polarity_t polarity,
-                                                nrf_gpiote_outinit_t  init_val)
+NRF_STATIC_INLINE void nrf_gpiote_task_configure(NRF_GPIOTE_Type *     p_reg,
+                                                 uint32_t              idx,
+                                                 uint32_t              pin,
+                                                 nrf_gpiote_polarity_t polarity,
+                                                 nrf_gpiote_outinit_t  init_val)
 {
-  NRF_GPIOTE->CONFIG[idx] &= ~(GPIOTE_CONFIG_PORT_PIN_Msk |
-                               GPIOTE_CONFIG_POLARITY_Msk |
-                               GPIOTE_CONFIG_OUTINIT_Msk);
+  p_reg->CONFIG[idx] &= ~(GPIOTE_CONFIG_PORT_PIN_Msk |
+                          GPIOTE_CONFIG_POLARITY_Msk |
+                          GPIOTE_CONFIG_OUTINIT_Msk);
 
-  NRF_GPIOTE->CONFIG[idx] |= ((pin << GPIOTE_CONFIG_PSEL_Pos) & GPIOTE_CONFIG_PORT_PIN_Msk) |
-                             ((polarity << GPIOTE_CONFIG_POLARITY_Pos) & GPIOTE_CONFIG_POLARITY_Msk) |
-                             ((init_val << GPIOTE_CONFIG_OUTINIT_Pos) & GPIOTE_CONFIG_OUTINIT_Msk);
+  p_reg->CONFIG[idx] |= ((pin << GPIOTE_CONFIG_PSEL_Pos) & GPIOTE_CONFIG_PORT_PIN_Msk) |
+                        ((polarity << GPIOTE_CONFIG_POLARITY_Pos) & GPIOTE_CONFIG_POLARITY_Msk) |
+                        ((init_val << GPIOTE_CONFIG_OUTINIT_Pos) & GPIOTE_CONFIG_OUTINIT_Msk);
 }
 
-__STATIC_INLINE void nrf_gpiote_task_force(uint32_t idx, nrf_gpiote_outinit_t init_val)
+NRF_STATIC_INLINE void nrf_gpiote_task_force(NRF_GPIOTE_Type *    p_reg,
+                                             uint32_t             idx,
+                                             nrf_gpiote_outinit_t init_val)
 {
-    NRF_GPIOTE->CONFIG[idx] = (NRF_GPIOTE->CONFIG[idx] & ~GPIOTE_CONFIG_OUTINIT_Msk)
-                              | ((init_val << GPIOTE_CONFIG_OUTINIT_Pos) & GPIOTE_CONFIG_OUTINIT_Msk);
+    p_reg->CONFIG[idx] = (p_reg->CONFIG[idx] & ~GPIOTE_CONFIG_OUTINIT_Msk) |
+                         ((init_val << GPIOTE_CONFIG_OUTINIT_Pos) & GPIOTE_CONFIG_OUTINIT_Msk);
 }
 
-__STATIC_INLINE void nrf_gpiote_te_default(uint32_t idx)
+NRF_STATIC_INLINE void nrf_gpiote_te_default(NRF_GPIOTE_Type * p_reg, uint32_t idx)
 {
-    NRF_GPIOTE->CONFIG[idx] = 0;
+    p_reg->CONFIG[idx] = 0;
 }
 
-__STATIC_INLINE bool nrf_gpiote_te_is_enabled(uint32_t idx)
+NRF_STATIC_INLINE bool nrf_gpiote_te_is_enabled(NRF_GPIOTE_Type const * p_reg, uint32_t idx)
 {
-    return (NRF_GPIOTE->CONFIG[idx] & GPIOTE_CONFIG_MODE_Msk) != GPIOTE_CONFIG_MODE_Disabled;
+    return (p_reg->CONFIG[idx] & GPIOTE_CONFIG_MODE_Msk) != GPIOTE_CONFIG_MODE_Disabled;
 }
-#endif //SUPPRESS_INLINE_IMPLEMENTATION
+
+NRF_STATIC_INLINE nrf_gpiote_task_t nrf_gpiote_out_task_get(uint8_t index)
+{
+    NRFX_ASSERT(index < GPIOTE_CH_NUM);
+    return (nrf_gpiote_task_t)NRFX_OFFSETOF(NRF_GPIOTE_Type, TASKS_OUT[index]);
+}
+
+#if defined(GPIOTE_FEATURE_SET_PRESENT)
+NRF_STATIC_INLINE nrf_gpiote_task_t nrf_gpiote_set_task_get(uint8_t index)
+{
+    NRFX_ASSERT(index < GPIOTE_CH_NUM);
+    return (nrf_gpiote_task_t)NRFX_OFFSETOF(NRF_GPIOTE_Type, TASKS_SET[index]);
+}
+#endif
+
+#if defined(GPIOTE_FEATURE_CLR_PRESENT)
+NRF_STATIC_INLINE nrf_gpiote_task_t nrf_gpiote_clr_task_get(uint8_t index)
+{
+    NRFX_ASSERT(index < GPIOTE_CH_NUM);
+    return (nrf_gpiote_task_t)NRFX_OFFSETOF(NRF_GPIOTE_Type, TASKS_CLR[index]);
+}
+#endif
+
+NRF_STATIC_INLINE nrf_gpiote_event_t nrf_gpiote_in_event_get(uint8_t index)
+{
+    NRFX_ASSERT(index < GPIOTE_CH_NUM);
+    return (nrf_gpiote_event_t)NRFX_OFFSETOF(NRF_GPIOTE_Type, EVENTS_IN[index]);
+}
+
+#endif // NRF_DECLARE_ONLY
 
 /** @} */
 

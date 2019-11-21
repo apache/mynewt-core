@@ -104,181 +104,226 @@ typedef enum
 /**
  * @brief Function for triggering a PDM task.
  *
- * @param[in] task PDM task.
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] task  PDM task.
  */
-__STATIC_INLINE void nrf_pdm_task_trigger(nrf_pdm_task_t task);
+NRF_STATIC_INLINE void nrf_pdm_task_trigger(NRF_PDM_Type * p_reg, nrf_pdm_task_t task);
 
 /**
  * @brief Function for getting the address of a PDM task register.
  *
- * @param[in] task PDM task.
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] task  PDM task.
  *
  * @return Address of the specified PDM task.
  */
-__STATIC_INLINE uint32_t nrf_pdm_task_address_get(nrf_pdm_task_t task);
+NRF_STATIC_INLINE uint32_t nrf_pdm_task_address_get(NRF_PDM_Type const * p_reg,
+                                                    nrf_pdm_task_t       task);
 
 /**
  * @brief Function for retrieving the state of the PDM event.
  *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
  * @param[in] event Event to be checked.
  *
  * @retval true  The event has been generated.
  * @retval false The event has not been generated.
  */
-__STATIC_INLINE bool nrf_pdm_event_check(nrf_pdm_event_t event);
+NRF_STATIC_INLINE bool nrf_pdm_event_check(NRF_PDM_Type const * p_reg, nrf_pdm_event_t event);
 
 /**
  * @brief Function for clearing a PDM event.
  *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
  * @param[in] event PDM event.
  */
-__STATIC_INLINE void nrf_pdm_event_clear(nrf_pdm_event_t event);
+NRF_STATIC_INLINE void nrf_pdm_event_clear(NRF_PDM_Type * p_reg, nrf_pdm_event_t event);
 
 /**
  * @brief Function for getting the address of a PDM event register.
  *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
  * @param[in] event PDM event.
  *
  * @return Address of the specified PDM event.
  */
-__STATIC_INLINE volatile uint32_t * nrf_pdm_event_address_get(nrf_pdm_event_t event);
+NRF_STATIC_INLINE uint32_t nrf_pdm_event_address_get(NRF_PDM_Type const * p_reg,
+                                                     nrf_pdm_event_t      event);
 
 /**
  * @brief Function for enabling PDM interrupts.
  *
- * @param[in] int_mask Mask of interrupts to be enabled.
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] mask  Mask of interrupts to be enabled.
  */
-__STATIC_INLINE void nrf_pdm_int_enable(uint32_t int_mask);
+NRF_STATIC_INLINE void nrf_pdm_int_enable(NRF_PDM_Type * p_reg, uint32_t mask);
 
 /**
- * @brief Function for retrieving the state of PDM interrupts.
+ * @brief Function for checking if the specified interrupts are enabled.
  *
- * @param[in] int_mask Mask of interrupts to be checked.
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] mask  Mask of interrupts to be checked.
  *
- * @retval true  All specified interrupts are enabled.
- * @retval false At least one of the given interrupts is not enabled.
+ * @return Mask of enabled interrupts.
  */
-__STATIC_INLINE bool nrf_pdm_int_enable_check(uint32_t int_mask);
+NRF_STATIC_INLINE uint32_t nrf_pdm_int_enable_check(NRF_PDM_Type const * p_reg, uint32_t mask);
 
 /**
  * @brief Function for disabling interrupts.
  *
- * @param[in] int_mask Mask of interrupts to be disabled.
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] mask  Mask of interrupts to be disabled.
  */
-__STATIC_INLINE void nrf_pdm_int_disable(uint32_t int_mask);
+NRF_STATIC_INLINE void nrf_pdm_int_disable(NRF_PDM_Type * p_reg, uint32_t mask);
 
 #if defined(DPPI_PRESENT) || defined(__NRFX_DOXYGEN__)
 /**
  * @brief Function for setting the subscribe configuration for a given
  *        PDM task.
  *
+ * @param[in] p_reg   Pointer to the structure of registers of the peripheral.
  * @param[in] task    Task for which to set the configuration.
  * @param[in] channel Channel through which to subscribe events.
  */
-__STATIC_INLINE void nrf_pdm_subscribe_set(nrf_pdm_task_t task,
-                                           uint8_t        channel);
+NRF_STATIC_INLINE void nrf_pdm_subscribe_set(NRF_PDM_Type * p_reg,
+                                             nrf_pdm_task_t task,
+                                             uint8_t        channel);
 
 /**
  * @brief Function for clearing the subscribe configuration for a given
  *        PDM task.
  *
- * @param[in] task Task for which to clear the configuration.
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] task  Task for which to clear the configuration.
  */
-__STATIC_INLINE void nrf_pdm_subscribe_clear(nrf_pdm_task_t task);
+NRF_STATIC_INLINE void nrf_pdm_subscribe_clear(NRF_PDM_Type * p_reg, nrf_pdm_task_t task);
 
 /**
  * @brief Function for setting the publish configuration for a given
  *        PDM event.
  *
+ * @param[in] p_reg   Pointer to the structure of registers of the peripheral.
  * @param[in] event   Event for which to set the configuration.
  * @param[in] channel Channel through which to publish the event.
  */
-__STATIC_INLINE void nrf_pdm_publish_set(nrf_pdm_event_t event,
-                                         uint8_t         channel);
+NRF_STATIC_INLINE void nrf_pdm_publish_set(NRF_PDM_Type *  p_reg,
+                                           nrf_pdm_event_t event,
+                                           uint8_t         channel);
 
 /**
  * @brief Function for clearing the publish configuration for a given
  *        PDM event.
  *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
  * @param[in] event Event for which to clear the configuration.
  */
-__STATIC_INLINE void nrf_pdm_publish_clear(nrf_pdm_event_t event);
+NRF_STATIC_INLINE void nrf_pdm_publish_clear(NRF_PDM_Type * p_reg, nrf_pdm_event_t event);
 #endif // defined(DPPI_PRESENT) || defined(__NRFX_DOXYGEN__)
 
 /**
  * @brief Function for enabling the PDM peripheral.
  *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ *
  * The PDM peripheral must be enabled before use.
  */
-__STATIC_INLINE void nrf_pdm_enable(void);
+NRF_STATIC_INLINE void nrf_pdm_enable(NRF_PDM_Type * p_reg);
 
-/** @brief Function for disabling the PDM peripheral. */
-__STATIC_INLINE void nrf_pdm_disable(void);
+/**
+ * @brief Function for disabling the PDM peripheral.
+ *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ */
+NRF_STATIC_INLINE void nrf_pdm_disable(NRF_PDM_Type * p_reg);
 
 /**
  * @brief Function for checking if the PDM peripheral is enabled.
  *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ *
  * @retval true  The PDM peripheral is enabled.
  * @retval false The PDM peripheral is not enabled.
  */
-__STATIC_INLINE bool nrf_pdm_enable_check(void);
+NRF_STATIC_INLINE bool nrf_pdm_enable_check(NRF_PDM_Type const * p_reg);
 
 /**
  * @brief Function for setting the PDM operation mode.
  *
+ * @param[in] p_reg    Pointer to the structure of registers of the peripheral.
  * @param[in] pdm_mode PDM operation mode.
  * @param[in] pdm_edge PDM sampling mode.
  */
-__STATIC_INLINE void nrf_pdm_mode_set(nrf_pdm_mode_t pdm_mode, nrf_pdm_edge_t pdm_edge);
+NRF_STATIC_INLINE void nrf_pdm_mode_set(NRF_PDM_Type * p_reg,
+                                        nrf_pdm_mode_t pdm_mode,
+                                        nrf_pdm_edge_t pdm_edge);
 
 /**
  * @brief Function for getting the PDM operation mode.
  *
+ * @param[in]  p_reg      Pointer to the structure of registers of the peripheral.
  * @param[out] p_pdm_mode PDM operation mode.
  * @param[out] p_pdm_edge PDM sampling mode.
  */
-__STATIC_INLINE void nrf_pdm_mode_get(nrf_pdm_mode_t * p_pdm_mode, nrf_pdm_edge_t * p_pdm_edge);
+NRF_STATIC_INLINE void nrf_pdm_mode_get(NRF_PDM_Type const * p_reg,
+                                        nrf_pdm_mode_t *     p_pdm_mode,
+                                        nrf_pdm_edge_t *     p_pdm_edge);
 
 /**
  * @brief Function for setting the PDM clock frequency.
  *
+ * @param[in] p_reg    Pointer to the structure of registers of the peripheral.
  * @param[in] pdm_freq PDM clock frequency.
  */
-__STATIC_INLINE void nrf_pdm_clock_set(nrf_pdm_freq_t pdm_freq);
+NRF_STATIC_INLINE void nrf_pdm_clock_set(NRF_PDM_Type * p_reg, nrf_pdm_freq_t pdm_freq);
 
 /**
  * @brief Function for getting the PDM clock frequency.
  *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ *
  * @return PDM clock frequency.
  */
-__STATIC_INLINE nrf_pdm_freq_t nrf_pdm_clock_get(void);
+NRF_STATIC_INLINE nrf_pdm_freq_t nrf_pdm_clock_get(NRF_PDM_Type const * p_reg);
 
 /**
  * @brief Function for setting up the PDM pins.
  *
+ * @param[in] p_reg    Pointer to the structure of registers of the peripheral.
  * @param[in] psel_clk CLK pin number.
  * @param[in] psel_din DIN pin number.
  */
-__STATIC_INLINE void nrf_pdm_psel_connect(uint32_t psel_clk, uint32_t psel_din);
+NRF_STATIC_INLINE void nrf_pdm_psel_connect(NRF_PDM_Type * p_reg,
+                                            uint32_t       psel_clk,
+                                            uint32_t       psel_din);
 
-/** @brief Function for disconnecting the PDM pins. */
-__STATIC_INLINE void nrf_pdm_psel_disconnect(void);
+/**
+ * @brief Function for disconnecting the PDM pins.
+ *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ */
+NRF_STATIC_INLINE void nrf_pdm_psel_disconnect(NRF_PDM_Type * p_reg);
 
 /**
  * @brief Function for setting the PDM gain.
  *
+ * @param[in] p_reg  Pointer to the structure of registers of the peripheral.
  * @param[in] gain_l Left channel gain.
  * @param[in] gain_r Right channel gain.
  */
-__STATIC_INLINE void nrf_pdm_gain_set(nrf_pdm_gain_t gain_l, nrf_pdm_gain_t gain_r);
+NRF_STATIC_INLINE void nrf_pdm_gain_set(NRF_PDM_Type * p_reg,
+                                        nrf_pdm_gain_t gain_l,
+                                        nrf_pdm_gain_t gain_r);
 
 /**
  * @brief Function for getting the PDM gain.
  *
+ * @param[in]  p_reg    Pointer to the structure of registers of the peripheral.
  * @param[out] p_gain_l Left channel gain.
  * @param[out] p_gain_r Right channel gain.
  */
-__STATIC_INLINE void nrf_pdm_gain_get(nrf_pdm_gain_t * p_gain_l, nrf_pdm_gain_t * p_gain_r);
+NRF_STATIC_INLINE void nrf_pdm_gain_get(NRF_PDM_Type const * p_reg,
+                                        nrf_pdm_gain_t *     p_gain_l,
+                                        nrf_pdm_gain_t *     p_gain_r);
 
 /**
  * @brief Function for setting the PDM sample buffer.
@@ -287,165 +332,182 @@ __STATIC_INLINE void nrf_pdm_gain_get(nrf_pdm_gain_t * p_gain_l, nrf_pdm_gain_t 
  * - For stereo mode: N 32-bit words.
  * - For mono mode: Ceil(N/2) 32-bit words.
  *
+ * @param[in] p_reg    Pointer to the structure of registers of the peripheral.
  * @param[in] p_buffer Pointer to the RAM address where samples are to be written with EasyDMA.
  * @param[in] num      Number of samples to allocate memory for in EasyDMA mode.
  */
-__STATIC_INLINE void nrf_pdm_buffer_set(uint32_t * p_buffer, uint32_t num);
+NRF_STATIC_INLINE void nrf_pdm_buffer_set(NRF_PDM_Type * p_reg, uint32_t * p_buffer, uint32_t num);
 
 /**
  * @brief Function for getting the current PDM sample buffer address.
  *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ *
  * @return Pointer to the current sample buffer.
  */
-__STATIC_INLINE uint32_t * nrf_pdm_buffer_get(void);
+NRF_STATIC_INLINE uint32_t * nrf_pdm_buffer_get(NRF_PDM_Type const * p_reg);
 
-#ifndef SUPPRESS_INLINE_IMPLEMENTATION
-__STATIC_INLINE void nrf_pdm_task_trigger(nrf_pdm_task_t task)
+#ifndef NRF_DECLARE_ONLY
+NRF_STATIC_INLINE void nrf_pdm_task_trigger(NRF_PDM_Type * p_reg, nrf_pdm_task_t task)
 {
-    *((volatile uint32_t *)((uint8_t *)NRF_PDM + (uint32_t)task)) = 0x1UL;
+    *((volatile uint32_t *)((uint8_t *)p_reg + (uint32_t)task)) = 0x1UL;
 }
 
-__STATIC_INLINE uint32_t nrf_pdm_task_address_get(nrf_pdm_task_t task)
+NRF_STATIC_INLINE uint32_t nrf_pdm_task_address_get(NRF_PDM_Type const * p_reg, nrf_pdm_task_t task)
 {
-    return (uint32_t)((uint8_t *)NRF_PDM + (uint32_t)task);
+    return (uint32_t)((uint8_t *)p_reg + (uint32_t)task);
 }
 
-__STATIC_INLINE bool nrf_pdm_event_check(nrf_pdm_event_t event)
+NRF_STATIC_INLINE bool nrf_pdm_event_check(NRF_PDM_Type const * p_reg, nrf_pdm_event_t event)
 {
-    return (bool)*(volatile uint32_t *)((uint8_t *)NRF_PDM + (uint32_t)event);
+    return (bool)*(volatile uint32_t *)((uint8_t *)p_reg + (uint32_t)event);
 }
 
-__STATIC_INLINE void nrf_pdm_event_clear(nrf_pdm_event_t event)
+NRF_STATIC_INLINE void nrf_pdm_event_clear(NRF_PDM_Type * p_reg, nrf_pdm_event_t event)
 {
-    *((volatile uint32_t *)((uint8_t *)NRF_PDM + (uint32_t)event)) = 0x0UL;
+    *((volatile uint32_t *)((uint8_t *)p_reg + (uint32_t)event)) = 0x0UL;
 #if __CORTEX_M == 0x04
-    volatile uint32_t dummy = *((volatile uint32_t *)((uint8_t *)NRF_PDM + (uint32_t)event));
+    volatile uint32_t dummy = *((volatile uint32_t *)((uint8_t *)p_reg + (uint32_t)event));
     (void)dummy;
 #endif
 }
 
-__STATIC_INLINE volatile uint32_t * nrf_pdm_event_address_get(nrf_pdm_event_t event)
+NRF_STATIC_INLINE uint32_t nrf_pdm_event_address_get(NRF_PDM_Type const * p_reg,
+                                                     nrf_pdm_event_t      event)
 {
-    return (volatile uint32_t *)((uint8_t *)NRF_PDM + (uint32_t)event);
+    return (uint32_t)((uint8_t *)p_reg + (uint32_t)event);
 }
 
-__STATIC_INLINE void nrf_pdm_int_enable(uint32_t int_mask)
+NRF_STATIC_INLINE void nrf_pdm_int_enable(NRF_PDM_Type * p_reg, uint32_t mask)
 {
-    NRF_PDM->INTENSET = int_mask;
+    p_reg->INTENSET = mask;
 }
 
-__STATIC_INLINE bool nrf_pdm_int_enable_check(uint32_t int_mask)
+NRF_STATIC_INLINE uint32_t nrf_pdm_int_enable_check(NRF_PDM_Type const * p_reg, uint32_t mask)
 {
-    return (bool)(NRF_PDM->INTENSET & int_mask);
+    return p_reg->INTENSET & mask;
 }
 
-__STATIC_INLINE void nrf_pdm_int_disable(uint32_t int_mask)
+NRF_STATIC_INLINE void nrf_pdm_int_disable(NRF_PDM_Type * p_reg, uint32_t mask)
 {
-    NRF_PDM->INTENCLR = int_mask;
+    p_reg->INTENCLR = mask;
 }
 
 #if defined(DPPI_PRESENT)
-__STATIC_INLINE void nrf_pdm_subscribe_set(nrf_pdm_task_t task,
-                                           uint8_t        channel)
+NRF_STATIC_INLINE void nrf_pdm_subscribe_set(NRF_PDM_Type * p_reg,
+                                             nrf_pdm_task_t task,
+                                             uint8_t        channel)
 {
-    *((volatile uint32_t *) ((uint8_t *) NRF_PDM + (uint32_t) task + 0x80uL)) =
+    *((volatile uint32_t *) ((uint8_t *) p_reg + (uint32_t) task + 0x80uL)) =
             ((uint32_t)channel | PDM_SUBSCRIBE_START_EN_Msk);
 }
 
-__STATIC_INLINE void nrf_pdm_subscribe_clear(nrf_pdm_task_t task)
+NRF_STATIC_INLINE void nrf_pdm_subscribe_clear(NRF_PDM_Type * p_reg, nrf_pdm_task_t task)
 {
-    *((volatile uint32_t *) ((uint8_t *) NRF_PDM + (uint32_t) task + 0x80uL)) = 0;
+    *((volatile uint32_t *) ((uint8_t *) p_reg + (uint32_t) task + 0x80uL)) = 0;
 }
 
-__STATIC_INLINE void nrf_pdm_publish_set(nrf_pdm_event_t event,
-                                         uint8_t         channel)
+NRF_STATIC_INLINE void nrf_pdm_publish_set(NRF_PDM_Type *  p_reg,
+                                           nrf_pdm_event_t event,
+                                           uint8_t         channel)
 {
-    *((volatile uint32_t *) ((uint8_t *) NRF_PDM + (uint32_t) event + 0x80uL)) =
+    *((volatile uint32_t *) ((uint8_t *) p_reg + (uint32_t) event + 0x80uL)) =
             ((uint32_t)channel | PDM_PUBLISH_STARTED_EN_Msk);
 }
 
-__STATIC_INLINE void nrf_pdm_publish_clear(nrf_pdm_event_t event)
+NRF_STATIC_INLINE void nrf_pdm_publish_clear(NRF_PDM_Type * p_reg, nrf_pdm_event_t event)
 {
-    *((volatile uint32_t *) ((uint8_t *) NRF_PDM + (uint32_t) event + 0x80uL)) = 0;
+    *((volatile uint32_t *) ((uint8_t *) p_reg + (uint32_t) event + 0x80uL)) = 0;
 }
 #endif // defined(DPPI_PRESENT)
 
-__STATIC_INLINE void nrf_pdm_enable(void)
+NRF_STATIC_INLINE void nrf_pdm_enable(NRF_PDM_Type * p_reg)
 {
-    NRF_PDM->ENABLE = (PDM_ENABLE_ENABLE_Enabled << PDM_ENABLE_ENABLE_Pos);
+    p_reg->ENABLE = (PDM_ENABLE_ENABLE_Enabled << PDM_ENABLE_ENABLE_Pos);
 }
 
-__STATIC_INLINE void nrf_pdm_disable(void)
+NRF_STATIC_INLINE void nrf_pdm_disable(NRF_PDM_Type * p_reg)
 {
-    NRF_PDM->ENABLE = (PDM_ENABLE_ENABLE_Disabled << PDM_ENABLE_ENABLE_Pos);
+    p_reg->ENABLE = (PDM_ENABLE_ENABLE_Disabled << PDM_ENABLE_ENABLE_Pos);
 }
 
-__STATIC_INLINE bool nrf_pdm_enable_check(void)
+NRF_STATIC_INLINE bool nrf_pdm_enable_check(NRF_PDM_Type const * p_reg)
 {
-    return (NRF_PDM->ENABLE == (PDM_ENABLE_ENABLE_Enabled << PDM_ENABLE_ENABLE_Pos));
+    return (p_reg->ENABLE == (PDM_ENABLE_ENABLE_Enabled << PDM_ENABLE_ENABLE_Pos));
 }
 
-__STATIC_INLINE void nrf_pdm_mode_set(nrf_pdm_mode_t pdm_mode, nrf_pdm_edge_t pdm_edge)
+NRF_STATIC_INLINE void nrf_pdm_mode_set(NRF_PDM_Type * p_reg,
+                                        nrf_pdm_mode_t pdm_mode,
+                                        nrf_pdm_edge_t pdm_edge)
 {
-    NRF_PDM->MODE = ((pdm_mode << PDM_MODE_OPERATION_Pos) & PDM_MODE_OPERATION_Msk)
+    p_reg->MODE = ((pdm_mode << PDM_MODE_OPERATION_Pos) & PDM_MODE_OPERATION_Msk)
                     | ((pdm_edge << PDM_MODE_EDGE_Pos) & PDM_MODE_EDGE_Msk);
 }
 
-__STATIC_INLINE void nrf_pdm_mode_get(nrf_pdm_mode_t * p_pdm_mode, nrf_pdm_edge_t * p_pdm_edge)
+NRF_STATIC_INLINE void nrf_pdm_mode_get(NRF_PDM_Type const * p_reg,
+                                        nrf_pdm_mode_t * p_pdm_mode,
+                                        nrf_pdm_edge_t * p_pdm_edge)
 {
-    uint32_t mode = NRF_PDM->MODE;
+    uint32_t mode = p_reg->MODE;
     *p_pdm_mode = (nrf_pdm_mode_t)((mode & PDM_MODE_OPERATION_Msk ) >> PDM_MODE_OPERATION_Pos);
     *p_pdm_edge = (nrf_pdm_edge_t)((mode & PDM_MODE_EDGE_Msk ) >> PDM_MODE_EDGE_Pos);
 }
 
-__STATIC_INLINE void nrf_pdm_clock_set(nrf_pdm_freq_t pdm_freq)
+NRF_STATIC_INLINE void nrf_pdm_clock_set(NRF_PDM_Type * p_reg, nrf_pdm_freq_t pdm_freq)
 {
-    NRF_PDM->PDMCLKCTRL = ((pdm_freq << PDM_PDMCLKCTRL_FREQ_Pos) & PDM_PDMCLKCTRL_FREQ_Msk);
+    p_reg->PDMCLKCTRL = ((pdm_freq << PDM_PDMCLKCTRL_FREQ_Pos) & PDM_PDMCLKCTRL_FREQ_Msk);
 }
 
-__STATIC_INLINE nrf_pdm_freq_t nrf_pdm_clock_get(void)
+NRF_STATIC_INLINE nrf_pdm_freq_t nrf_pdm_clock_get(NRF_PDM_Type const * p_reg)
 {
-     return (nrf_pdm_freq_t) ((NRF_PDM->PDMCLKCTRL << PDM_PDMCLKCTRL_FREQ_Pos) & PDM_PDMCLKCTRL_FREQ_Msk);
+     return (nrf_pdm_freq_t) ((p_reg->PDMCLKCTRL << PDM_PDMCLKCTRL_FREQ_Pos) &
+                              PDM_PDMCLKCTRL_FREQ_Msk);
 }
 
-__STATIC_INLINE void nrf_pdm_psel_connect(uint32_t psel_clk, uint32_t psel_din)
+NRF_STATIC_INLINE void nrf_pdm_psel_connect(NRF_PDM_Type * p_reg,
+                                            uint32_t       psel_clk,
+                                            uint32_t       psel_din)
 {
-    NRF_PDM->PSEL.CLK = psel_clk;
-    NRF_PDM->PSEL.DIN = psel_din;
+    p_reg->PSEL.CLK = psel_clk;
+    p_reg->PSEL.DIN = psel_din;
 }
 
-__STATIC_INLINE void nrf_pdm_psel_disconnect(void)
+NRF_STATIC_INLINE void nrf_pdm_psel_disconnect(NRF_PDM_Type * p_reg)
 {
-    NRF_PDM->PSEL.CLK = ((PDM_PSEL_CLK_CONNECT_Disconnected << PDM_PSEL_CLK_CONNECT_Pos)
+    p_reg->PSEL.CLK = ((PDM_PSEL_CLK_CONNECT_Disconnected << PDM_PSEL_CLK_CONNECT_Pos)
                          & PDM_PSEL_CLK_CONNECT_Msk);
-    NRF_PDM->PSEL.DIN = ((PDM_PSEL_DIN_CONNECT_Disconnected << PDM_PSEL_DIN_CONNECT_Pos)
+    p_reg->PSEL.DIN = ((PDM_PSEL_DIN_CONNECT_Disconnected << PDM_PSEL_DIN_CONNECT_Pos)
                          & PDM_PSEL_DIN_CONNECT_Msk);
 }
 
-__STATIC_INLINE void nrf_pdm_gain_set(nrf_pdm_gain_t gain_l, nrf_pdm_gain_t gain_r)
+NRF_STATIC_INLINE void nrf_pdm_gain_set(NRF_PDM_Type * p_reg,
+                                        nrf_pdm_gain_t gain_l,
+                                        nrf_pdm_gain_t gain_r)
 {
-    NRF_PDM->GAINL = gain_l;
-    NRF_PDM->GAINR = gain_r;
+    p_reg->GAINL = gain_l;
+    p_reg->GAINR = gain_r;
 }
 
-__STATIC_INLINE void nrf_pdm_gain_get(nrf_pdm_gain_t * p_gain_l, nrf_pdm_gain_t * p_gain_r)
+NRF_STATIC_INLINE void nrf_pdm_gain_get(NRF_PDM_Type const * p_reg,
+                                        nrf_pdm_gain_t *     p_gain_l,
+                                        nrf_pdm_gain_t *     p_gain_r)
 {
-    *p_gain_l = NRF_PDM->GAINL;
-    *p_gain_r = NRF_PDM->GAINR;
+    *p_gain_l = p_reg->GAINL;
+    *p_gain_r = p_reg->GAINR;
 }
 
-__STATIC_INLINE void nrf_pdm_buffer_set(uint32_t * p_buffer, uint32_t num)
+NRF_STATIC_INLINE void nrf_pdm_buffer_set(NRF_PDM_Type * p_reg, uint32_t * p_buffer, uint32_t num)
 {
-    NRF_PDM->SAMPLE.PTR = (uint32_t)p_buffer;
-    NRF_PDM->SAMPLE.MAXCNT = num;
+    p_reg->SAMPLE.PTR = (uint32_t)p_buffer;
+    p_reg->SAMPLE.MAXCNT = num;
 }
 
-__STATIC_INLINE uint32_t * nrf_pdm_buffer_get(void)
+NRF_STATIC_INLINE uint32_t * nrf_pdm_buffer_get(NRF_PDM_Type const * p_reg)
 {
-    return (uint32_t *)NRF_PDM->SAMPLE.PTR;
+    return (uint32_t *)p_reg->SAMPLE.PTR;
 }
 
-#endif // SUPPRESS_INLINE_IMPLEMENTATION
+#endif // NRF_DECLARE_ONLY
 /** @} */
 
 #ifdef __cplusplus

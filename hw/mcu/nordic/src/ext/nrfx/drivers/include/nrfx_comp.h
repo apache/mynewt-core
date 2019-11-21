@@ -104,31 +104,42 @@ typedef struct
     .th_up   = NRFX_VOLTAGE_THRESHOLD_TO_INT(1.5, 1.8)  \
 }
 
-/** @brief COMP driver default configuration including the COMP HAL configuration. */
+/**
+ * @brief COMP driver default configuration.
+ *
+ * This configuration sets up COMP with the following options:
+ * - single-ended mode
+ * - reference voltage: internal 1.8 V
+ * - lower threshold: 0.5 V
+ * - upper threshold: 1.5 V
+ * - high speed mode
+ * - hysteresis disabled
+ * - current source disabled
+ *
+ * @param[in] _input Analog input.
+ */
 #if defined (COMP_ISOURCE_ISOURCE_Msk) || defined (__NRFX_DOXYGEN__)
-#define NRFX_COMP_DEFAULT_CONFIG(_input)                                    \
-{                                                                           \
-    .reference          = (nrf_comp_ref_t)NRFX_COMP_CONFIG_REF,             \
-    .ext_ref            = NRF_COMP_EXT_REF_0,                               \
-    .main_mode          = (nrf_comp_main_mode_t)NRFX_COMP_CONFIG_MAIN_MODE, \
-    .threshold          = NRFX_COMP_CONFIG_TH,                              \
-    .speed_mode         = (nrf_comp_sp_mode_t)NRFX_COMP_CONFIG_SPEED_MODE,  \
-    .hyst               = (nrf_comp_hyst_t)NRFX_COMP_CONFIG_HYST,           \
-    .isource            = (nrf_isource_t)NRFX_COMP_CONFIG_ISOURCE,          \
-    .input              = (nrf_comp_input_t)_input,                         \
-    .interrupt_priority = NRFX_COMP_CONFIG_IRQ_PRIORITY                     \
+#define NRFX_COMP_DEFAULT_CONFIG(_input)                         \
+{                                                                \
+    .reference          = NRF_COMP_REF_Int1V8,                   \
+    .main_mode          = NRF_COMP_MAIN_MODE_SE,                 \
+    .threshold          = NRFX_COMP_CONFIG_TH,                   \
+    .speed_mode         = NRF_COMP_SP_MODE_High,                 \
+    .hyst               = NRF_COMP_HYST_NoHyst,                  \
+    .isource            = NRF_COMP_ISOURCE_Off,                  \
+    .input              = (nrf_comp_input_t)_input,              \
+    .interrupt_priority = NRFX_COMP_DEFAULT_CONFIG_IRQ_PRIORITY  \
 }
 #else
-#define NRFX_COMP_DEFAULT_CONFIG(_input)                                    \
-{                                                                           \
-    .reference          = (nrf_comp_ref_t)NRFX_COMP_CONFIG_REF,             \
-    .ext_ref            = NRF_COMP_EXT_REF_0,                               \
-    .main_mode          = (nrf_comp_main_mode_t)NRFX_COMP_CONFIG_MAIN_MODE, \
-    .threshold          = NRFX_COMP_CONFIG_TH,                              \
-    .speed_mode         = (nrf_comp_sp_mode_t)NRFX_COMP_CONFIG_SPEED_MODE,  \
-    .hyst               = (nrf_comp_hyst_t)NRFX_COMP_CONFIG_HYST,           \
-    .input              = (nrf_comp_input_t)_input,                         \
-    .interrupt_priority = NRFX_COMP_CONFIG_IRQ_PRIORITY                     \
+#define NRFX_COMP_DEFAULT_CONFIG(_input)                         \
+{                                                                \
+    .reference          = NRF_COMP_REF_Int1V8,                   \
+    .main_mode          = NRF_COMP_MAIN_MODE_SE,                 \
+    .threshold          = NRFX_COMP_CONFIG_TH,                   \
+    .speed_mode         = NRF_COMP_SP_MODE_High,                 \
+    .hyst               = NRF_COMP_HYST_NoHyst,                  \
+    .input              = (nrf_comp_input_t)_input,              \
+    .interrupt_priority = NRFX_COMP_DEFAULT_CONFIG_IRQ_PRIORITY  \
 }
 #endif
 
@@ -209,10 +220,7 @@ uint32_t nrfx_comp_sample(void);
  *
  * @return Address of the given COMP task.
  */
-__STATIC_INLINE uint32_t nrfx_comp_task_address_get(nrf_comp_task_t task)
-{
-    return (uint32_t)nrf_comp_task_address_get(task);
-}
+NRFX_STATIC_INLINE uint32_t nrfx_comp_task_address_get(nrf_comp_task_t task);
 
 /**
  * @brief Function for getting the address of a COMP event.
@@ -221,10 +229,19 @@ __STATIC_INLINE uint32_t nrfx_comp_task_address_get(nrf_comp_task_t task)
  *
  * @return Address of the given COMP event.
  */
-__STATIC_INLINE uint32_t nrfx_comp_event_address_get(nrf_comp_event_t event)
+NRFX_STATIC_INLINE uint32_t nrfx_comp_event_address_get(nrf_comp_event_t event);
+
+#ifndef NRFX_DECLARE_ONLY
+NRFX_STATIC_INLINE uint32_t nrfx_comp_task_address_get(nrf_comp_task_t task)
 {
-    return (uint32_t)nrf_comp_event_address_get(event);
+    return nrf_comp_task_address_get(NRF_COMP, task);
 }
+
+NRFX_STATIC_INLINE uint32_t nrfx_comp_event_address_get(nrf_comp_event_t event)
+{
+    return nrf_comp_event_address_get(NRF_COMP, event);
+}
+#endif // NRFX_DECLARE_ONLY
 
 /** @} */
 

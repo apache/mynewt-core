@@ -120,8 +120,8 @@ typedef struct {
  * @param[in] p_reg Pointer to the structure of registers of the peripheral.
  * @param[in] task  Task to be activated.
  */
-__STATIC_INLINE void nrf_ccm_task_trigger(NRF_CCM_Type * p_reg,
-                                          nrf_ccm_task_t task);
+NRF_STATIC_INLINE void nrf_ccm_task_trigger(NRF_CCM_Type * p_reg,
+                                            nrf_ccm_task_t task);
 
 /**
  * @brief Function for getting the address of a specific CCM task register.
@@ -131,8 +131,8 @@ __STATIC_INLINE void nrf_ccm_task_trigger(NRF_CCM_Type * p_reg,
  *
  * @return Address of the specified task register.
  */
-__STATIC_INLINE uint32_t nrf_ccm_task_address_get(NRF_CCM_Type const * p_reg,
-                                                  nrf_ccm_task_t       task);
+NRF_STATIC_INLINE uint32_t nrf_ccm_task_address_get(NRF_CCM_Type const * p_reg,
+                                                    nrf_ccm_task_t       task);
 
 /**
  * @brief Function for clearing a specific CCM event.
@@ -140,8 +140,8 @@ __STATIC_INLINE uint32_t nrf_ccm_task_address_get(NRF_CCM_Type const * p_reg,
  * @param[in] p_reg Pointer to the structure of registers of the peripheral.
  * @param[in] event Event to clear.
  */
-__STATIC_INLINE void nrf_ccm_event_clear(NRF_CCM_Type *  p_reg,
-                                         nrf_ccm_event_t event);
+NRF_STATIC_INLINE void nrf_ccm_event_clear(NRF_CCM_Type *  p_reg,
+                                           nrf_ccm_event_t event);
 
 /**
  * @brief Function for retrieving the state of a specific CCM event.
@@ -152,8 +152,8 @@ __STATIC_INLINE void nrf_ccm_event_clear(NRF_CCM_Type *  p_reg,
  * @retval true  The event has been generated.
  * @retval false The event has not been generated.
  */
-__STATIC_INLINE bool nrf_ccm_event_check(NRF_CCM_Type const * p_reg,
-                                         nrf_ccm_event_t      event);
+NRF_STATIC_INLINE bool nrf_ccm_event_check(NRF_CCM_Type const * p_reg,
+                                           nrf_ccm_event_t      event);
 
 /**
  * @brief Function for getting the address of a specific CCM event register.
@@ -163,8 +163,8 @@ __STATIC_INLINE bool nrf_ccm_event_check(NRF_CCM_Type const * p_reg,
  *
  * @return Address of the specified event register.
  */
-__STATIC_INLINE uint32_t nrf_ccm_event_address_get(NRF_CCM_Type const * p_reg,
-                                                   nrf_ccm_event_t      event);
+NRF_STATIC_INLINE uint32_t nrf_ccm_event_address_get(NRF_CCM_Type const * p_reg,
+                                                     nrf_ccm_event_t      event);
 
 /**
  * @brief Function for enabling specified interrupts.
@@ -172,7 +172,7 @@ __STATIC_INLINE uint32_t nrf_ccm_event_address_get(NRF_CCM_Type const * p_reg,
  * @param[in] p_reg Pointer to the structure of registers of the peripheral.
  * @param[in] mask  Interrupts to be enabled.
  */
-__STATIC_INLINE void nrf_ccm_int_enable(NRF_CCM_Type * p_reg, uint32_t mask);
+NRF_STATIC_INLINE void nrf_ccm_int_enable(NRF_CCM_Type * p_reg, uint32_t mask);
 
 /**
  * @brief Function for disabling specified interrupts.
@@ -180,33 +180,31 @@ __STATIC_INLINE void nrf_ccm_int_enable(NRF_CCM_Type * p_reg, uint32_t mask);
  * @param[in] p_reg Pointer to the structure of registers of the peripheral.
  * @param[in] mask  Interrupts to be disabled.
  */
-__STATIC_INLINE void nrf_ccm_int_disable(NRF_CCM_Type * p_reg, uint32_t mask);
+NRF_STATIC_INLINE void nrf_ccm_int_disable(NRF_CCM_Type * p_reg, uint32_t mask);
 
 /**
- * @brief Function for retrieving the state of a given interrupt.
+ * @brief Function for checking if the specified interrupts are enabled.
  *
- * @param[in] p_reg   Pointer to the structure of registers of the peripheral.
- * @param[in] ccm_int Interrupt to be checked.
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] mask  Mask of interrupts to be checked.
  *
- * @retval true  The interrupt is enabled.
- * @retval false The interrupt is not enabled.
+ * @return Mask of enabled interrupts.
  */
-__STATIC_INLINE bool nrf_ccm_int_enable_check(NRF_CCM_Type const * p_reg,
-                                              nrf_ccm_int_mask_t   ccm_int);
+NRF_STATIC_INLINE uint32_t nrf_ccm_int_enable_check(NRF_CCM_Type const * p_reg, uint32_t mask);
 
 /**
  * @brief Function for enabling the CCM peripheral.
  *
  * @param[in] p_reg  Pointer to the structure of registers of the peripheral.
  */
-__STATIC_INLINE void nrf_ccm_enable(NRF_CCM_Type * p_reg);
+NRF_STATIC_INLINE void nrf_ccm_enable(NRF_CCM_Type * p_reg);
 
 /**
  * @brief Function for disabling the CCM peripheral.
  *
  * @param[in] p_reg  Pointer to the structure of registers of the peripheral.
  */
-__STATIC_INLINE void nrf_ccm_disable(NRF_CCM_Type * p_reg);
+NRF_STATIC_INLINE void nrf_ccm_disable(NRF_CCM_Type * p_reg);
 
 /**
  * @brief Function for setting the CCM peripheral configuration.
@@ -214,8 +212,8 @@ __STATIC_INLINE void nrf_ccm_disable(NRF_CCM_Type * p_reg);
  * @param[in] p_reg    Pointer to the structure of registers of the peripheral.
  * @param[in] p_config Pointer to the structure with configuration to be set.
  */
-__STATIC_INLINE void nrf_ccm_configure(NRF_CCM_Type *           p_reg,
-                                       nrf_ccm_config_t const * p_config);
+NRF_STATIC_INLINE void nrf_ccm_configure(NRF_CCM_Type *           p_reg,
+                                         nrf_ccm_config_t const * p_config);
 
 #if defined(CCM_MAXPACKETSIZE_MAXPACKETSIZE_Pos) || defined(__NRFX_DOXYGEN__)
 /**
@@ -225,8 +223,8 @@ __STATIC_INLINE void nrf_ccm_configure(NRF_CCM_Type *           p_reg,
  * @param[in] p_reg Pointer to the structure of registers of the peripheral.
  * @param[in] size  Maximum length of the key-stream.
  */
-__STATIC_INLINE void nrf_ccm_maxpacketsize_set(NRF_CCM_Type * p_reg,
-                                               uint8_t        size);
+NRF_STATIC_INLINE void nrf_ccm_maxpacketsize_set(NRF_CCM_Type * p_reg,
+                                                 uint8_t        size);
 #endif // defined(CCM_MAXPACKETSIZE_MAXPACKETSIZE_Pos) || defined(__NRFX_DOXYGEN__)
 
 /**
@@ -237,7 +235,7 @@ __STATIC_INLINE void nrf_ccm_maxpacketsize_set(NRF_CCM_Type * p_reg,
  * @retval true  The MIC check passed.
  * @retval false The MIC check failed.
  */
-__STATIC_INLINE bool nrf_ccm_micstatus_get(NRF_CCM_Type const * p_reg);
+NRF_STATIC_INLINE bool nrf_ccm_micstatus_get(NRF_CCM_Type const * p_reg);
 
 /**
  * @brief Function for setting the pointer to the data structure
@@ -246,8 +244,8 @@ __STATIC_INLINE bool nrf_ccm_micstatus_get(NRF_CCM_Type const * p_reg);
  * @param[in] p_reg  Pointer to the structure of registers of the peripheral.
  * @param[in] p_data Pointer to the data structure.
  */
-__STATIC_INLINE void nrf_ccm_cnfptr_set(NRF_CCM_Type *   p_reg,
-                                        uint32_t const * p_data);
+NRF_STATIC_INLINE void nrf_ccm_cnfptr_set(NRF_CCM_Type *   p_reg,
+                                          uint32_t const * p_data);
 
 /**
  * @brief Function for getting the pointer to the data structure
@@ -257,7 +255,7 @@ __STATIC_INLINE void nrf_ccm_cnfptr_set(NRF_CCM_Type *   p_reg,
  *
  * @return Pointer to the data structure.
  */
-__STATIC_INLINE uint32_t * nrf_ccm_cnfptr_get(NRF_CCM_Type const * p_reg);
+NRF_STATIC_INLINE uint32_t * nrf_ccm_cnfptr_get(NRF_CCM_Type const * p_reg);
 
 /**
  * @brief Function for setting the input data pointer.
@@ -265,8 +263,8 @@ __STATIC_INLINE uint32_t * nrf_ccm_cnfptr_get(NRF_CCM_Type const * p_reg);
  * @param[in] p_reg  Pointer to the structure of registers of the peripheral.
  * @param[in] p_data Input data pointer.
  */
-__STATIC_INLINE void nrf_ccm_inptr_set(NRF_CCM_Type *   p_reg,
-                                       uint32_t const * p_data);
+NRF_STATIC_INLINE void nrf_ccm_inptr_set(NRF_CCM_Type *   p_reg,
+                                         uint32_t const * p_data);
 
 /**
  * @brief Function for getting the input data pointer.
@@ -275,7 +273,7 @@ __STATIC_INLINE void nrf_ccm_inptr_set(NRF_CCM_Type *   p_reg,
  *
  * @return Input data pointer.
  */
-__STATIC_INLINE uint32_t * nrf_ccm_inptr_get(NRF_CCM_Type const * p_reg);
+NRF_STATIC_INLINE uint32_t * nrf_ccm_inptr_get(NRF_CCM_Type const * p_reg);
 
 /**
  * @brief Function for setting the output data pointer.
@@ -283,8 +281,8 @@ __STATIC_INLINE uint32_t * nrf_ccm_inptr_get(NRF_CCM_Type const * p_reg);
  * @param[in] p_reg  Pointer to the structure of registers of the peripheral.
  * @param[in] p_data Output data pointer.
  */
-__STATIC_INLINE void nrf_ccm_outptr_set(NRF_CCM_Type *   p_reg,
-                                        uint32_t const * p_data);
+NRF_STATIC_INLINE void nrf_ccm_outptr_set(NRF_CCM_Type *   p_reg,
+                                          uint32_t const * p_data);
 
 /**
  * @brief Function for getting the output data pointer.
@@ -293,7 +291,7 @@ __STATIC_INLINE void nrf_ccm_outptr_set(NRF_CCM_Type *   p_reg,
  *
  * @return Output data pointer.
  */
-__STATIC_INLINE uint32_t * nrf_ccm_outptr_get(NRF_CCM_Type const * p_reg);
+NRF_STATIC_INLINE uint32_t * nrf_ccm_outptr_get(NRF_CCM_Type const * p_reg);
 
 /**
  * @brief Function for setting the pointer to the scratch area used for
@@ -302,8 +300,8 @@ __STATIC_INLINE uint32_t * nrf_ccm_outptr_get(NRF_CCM_Type const * p_reg);
  * @param[in] p_reg  Pointer to the structure of registers of the peripheral.
  * @param[in] p_area Pointer to the scratch area.
  */
-__STATIC_INLINE void nrf_ccm_scratchptr_set(NRF_CCM_Type *   p_reg,
-                                            uint32_t const * p_area);
+NRF_STATIC_INLINE void nrf_ccm_scratchptr_set(NRF_CCM_Type *   p_reg,
+                                              uint32_t const * p_area);
 
 /**
  * @brief Function for getting the pointer to the scratch area.
@@ -312,7 +310,7 @@ __STATIC_INLINE void nrf_ccm_scratchptr_set(NRF_CCM_Type *   p_reg,
  *
  * @return Pointer to the scratch area.
  */
-__STATIC_INLINE uint32_t * nrf_ccm_stratchptr_get(NRF_CCM_Type const * p_reg);
+NRF_STATIC_INLINE uint32_t * nrf_ccm_stratchptr_get(NRF_CCM_Type const * p_reg);
 
 #if defined(CCM_RATEOVERRIDE_RATEOVERRIDE_Pos) || defined(__NRFX_DOXYGEN__)
 /**
@@ -322,26 +320,26 @@ __STATIC_INLINE uint32_t * nrf_ccm_stratchptr_get(NRF_CCM_Type const * p_reg);
  * @param[in] datarate Override value to be applied when the RATEOVERRIDE task
  *                     is triggered.
  */
-__STATIC_INLINE void nrf_ccm_datarate_override_set(NRF_CCM_Type *     p_reg,
-                                                   nrf_ccm_datarate_t datarate);
+NRF_STATIC_INLINE void nrf_ccm_datarate_override_set(NRF_CCM_Type *     p_reg,
+                                                     nrf_ccm_datarate_t datarate);
 #endif // defined(CCM_RATEOVERRIDE_RATEOVERRIDE_Pos) || defined(__NRFX_DOXYGEN__)
 
-#ifndef SUPPRESS_INLINE_IMPLEMENTATION
+#ifndef NRF_DECLARE_ONLY
 
-__STATIC_INLINE void nrf_ccm_task_trigger(NRF_CCM_Type * p_reg,
-                                          nrf_ccm_task_t task)
+NRF_STATIC_INLINE void nrf_ccm_task_trigger(NRF_CCM_Type * p_reg,
+                                            nrf_ccm_task_t task)
 {
     *((volatile uint32_t *)((uint8_t *)p_reg + (uint32_t)task)) = 0x1UL;
 }
 
-__STATIC_INLINE uint32_t nrf_ccm_task_address_get(NRF_CCM_Type const * p_reg,
-                                                  nrf_ccm_task_t       task)
+NRF_STATIC_INLINE uint32_t nrf_ccm_task_address_get(NRF_CCM_Type const * p_reg,
+                                                    nrf_ccm_task_t       task)
 {
     return ((uint32_t)p_reg + (uint32_t)task);
 }
 
-__STATIC_INLINE void nrf_ccm_event_clear(NRF_CCM_Type *  p_reg,
-                                         nrf_ccm_event_t event)
+NRF_STATIC_INLINE void nrf_ccm_event_clear(NRF_CCM_Type *  p_reg,
+                                           nrf_ccm_event_t event)
 {
     *((volatile uint32_t *)((uint8_t *)p_reg + (uint32_t)event)) = 0x0UL;
 #if __CORTEX_M == 0x04
@@ -350,46 +348,45 @@ __STATIC_INLINE void nrf_ccm_event_clear(NRF_CCM_Type *  p_reg,
 #endif
 }
 
-__STATIC_INLINE bool nrf_ccm_event_check(NRF_CCM_Type const * p_reg,
-                                         nrf_ccm_event_t      event)
+NRF_STATIC_INLINE bool nrf_ccm_event_check(NRF_CCM_Type const * p_reg,
+                                           nrf_ccm_event_t      event)
 {
     return (bool)*(volatile uint32_t *)((uint8_t *)p_reg + (uint32_t)event);
 }
 
-__STATIC_INLINE uint32_t nrf_ccm_event_address_get(NRF_CCM_Type const * p_reg,
-                                                   nrf_ccm_event_t      event)
+NRF_STATIC_INLINE uint32_t nrf_ccm_event_address_get(NRF_CCM_Type const * p_reg,
+                                                     nrf_ccm_event_t      event)
 {
     return ((uint32_t)p_reg + (uint32_t)event);
 }
 
-__STATIC_INLINE void nrf_ccm_int_enable(NRF_CCM_Type * p_reg, uint32_t mask)
+NRF_STATIC_INLINE void nrf_ccm_int_enable(NRF_CCM_Type * p_reg, uint32_t mask)
 {
     p_reg->INTENSET = mask;
 }
 
-__STATIC_INLINE void nrf_ccm_int_disable(NRF_CCM_Type * p_reg, uint32_t mask)
+NRF_STATIC_INLINE void nrf_ccm_int_disable(NRF_CCM_Type * p_reg, uint32_t mask)
 {
     p_reg->INTENCLR = mask;
 }
 
-__STATIC_INLINE bool nrf_ccm_int_enable_check(NRF_CCM_Type const * p_reg,
-                                              nrf_ccm_int_mask_t   ccm_int)
+NRF_STATIC_INLINE uint32_t nrf_ccm_int_enable_check(NRF_CCM_Type const * p_reg, uint32_t mask)
 {
-    return (bool)(p_reg->INTENSET & ccm_int);
+    return p_reg->INTENSET & mask;
 }
 
-__STATIC_INLINE void nrf_ccm_enable(NRF_CCM_Type * p_reg)
+NRF_STATIC_INLINE void nrf_ccm_enable(NRF_CCM_Type * p_reg)
 {
     p_reg->ENABLE = (CCM_ENABLE_ENABLE_Enabled << CCM_ENABLE_ENABLE_Pos);
 }
 
-__STATIC_INLINE void nrf_ccm_disable(NRF_CCM_Type * p_reg)
+NRF_STATIC_INLINE void nrf_ccm_disable(NRF_CCM_Type * p_reg)
 {
     p_reg->ENABLE = (CCM_ENABLE_ENABLE_Disabled << CCM_ENABLE_ENABLE_Pos);
 }
 
-__STATIC_INLINE void nrf_ccm_configure(NRF_CCM_Type *           p_reg,
-                                       nrf_ccm_config_t const * p_config)
+NRF_STATIC_INLINE void nrf_ccm_configure(NRF_CCM_Type *           p_reg,
+                                         nrf_ccm_config_t const * p_config)
 {
     p_reg->MODE = (((uint32_t)p_config->mode     << CCM_MODE_MODE_Pos) |
 #if defined(CCM_MODE_DATARATE_Pos)
@@ -402,8 +399,8 @@ __STATIC_INLINE void nrf_ccm_configure(NRF_CCM_Type *           p_reg,
 }
 
 #if defined(CCM_MAXPACKETSIZE_MAXPACKETSIZE_Pos)
-__STATIC_INLINE void nrf_ccm_maxpacketsize_set(NRF_CCM_Type * p_reg,
-                                               uint8_t        size)
+NRF_STATIC_INLINE void nrf_ccm_maxpacketsize_set(NRF_CCM_Type * p_reg,
+                                                 uint8_t        size)
 {
     NRFX_ASSERT((size >= 0x1B) && (size <= 0xFB));
 
@@ -411,64 +408,64 @@ __STATIC_INLINE void nrf_ccm_maxpacketsize_set(NRF_CCM_Type * p_reg,
 }
 #endif // defined(CCM_MAXPACKETSIZE_MAXPACKETSIZE_Pos)
 
-__STATIC_INLINE bool nrf_ccm_micstatus_get(NRF_CCM_Type const * p_reg)
+NRF_STATIC_INLINE bool nrf_ccm_micstatus_get(NRF_CCM_Type const * p_reg)
 {
     return (bool)(p_reg->MICSTATUS);
 }
 
-__STATIC_INLINE void nrf_ccm_cnfptr_set(NRF_CCM_Type *   p_reg,
-                                        uint32_t const * p_data)
+NRF_STATIC_INLINE void nrf_ccm_cnfptr_set(NRF_CCM_Type *   p_reg,
+                                          uint32_t const * p_data)
 {
     p_reg->CNFPTR = (uint32_t)p_data;
 }
 
-__STATIC_INLINE uint32_t * nrf_ccm_cnfptr_get(NRF_CCM_Type const * p_reg)
+NRF_STATIC_INLINE uint32_t * nrf_ccm_cnfptr_get(NRF_CCM_Type const * p_reg)
 {
     return (uint32_t *)(p_reg->CNFPTR);
 }
 
-__STATIC_INLINE void nrf_ccm_inptr_set(NRF_CCM_Type *   p_reg,
-                                       uint32_t const * p_data)
+NRF_STATIC_INLINE void nrf_ccm_inptr_set(NRF_CCM_Type *   p_reg,
+                                         uint32_t const * p_data)
 {
     p_reg->INPTR = (uint32_t)p_data;
 }
 
-__STATIC_INLINE uint32_t * nrf_ccm_inptr_get(NRF_CCM_Type const * p_reg)
+NRF_STATIC_INLINE uint32_t * nrf_ccm_inptr_get(NRF_CCM_Type const * p_reg)
 {
     return (uint32_t *)(p_reg->INPTR);
 }
 
-__STATIC_INLINE void nrf_ccm_outptr_set(NRF_CCM_Type *   p_reg,
-                                        uint32_t const * p_data)
+NRF_STATIC_INLINE void nrf_ccm_outptr_set(NRF_CCM_Type *   p_reg,
+                                          uint32_t const * p_data)
 {
     p_reg->OUTPTR = (uint32_t)p_data;
 }
 
-__STATIC_INLINE uint32_t * nrf_ccm_outptr_get(NRF_CCM_Type const * p_reg)
+NRF_STATIC_INLINE uint32_t * nrf_ccm_outptr_get(NRF_CCM_Type const * p_reg)
 {
     return (uint32_t *)(p_reg->OUTPTR);
 }
 
-__STATIC_INLINE void nrf_ccm_scratchptr_set(NRF_CCM_Type *   p_reg,
-                                            uint32_t const * p_area)
+NRF_STATIC_INLINE void nrf_ccm_scratchptr_set(NRF_CCM_Type *   p_reg,
+                                              uint32_t const * p_area)
 {
     p_reg->SCRATCHPTR = (uint32_t)p_area;
 }
 
-__STATIC_INLINE uint32_t * nrf_ccm_stratchptr_get(NRF_CCM_Type const * p_reg)
+NRF_STATIC_INLINE uint32_t * nrf_ccm_stratchptr_get(NRF_CCM_Type const * p_reg)
 {
     return (uint32_t *)(p_reg->SCRATCHPTR);
 }
 
 #if defined(CCM_RATEOVERRIDE_RATEOVERRIDE_Pos)
-__STATIC_INLINE void nrf_ccm_datarate_override_set(NRF_CCM_Type *     p_reg,
-                                                   nrf_ccm_datarate_t datarate)
+NRF_STATIC_INLINE void nrf_ccm_datarate_override_set(NRF_CCM_Type *     p_reg,
+                                                     nrf_ccm_datarate_t datarate)
 {
     p_reg->RATEOVERRIDE = ((uint32_t)datarate << CCM_RATEOVERRIDE_RATEOVERRIDE_Pos);
 }
 #endif
 
-#endif // SUPPRESS_INLINE_IMPLEMENTATION
+#endif // NRF_DECLARE_ONLY
 
 /** @} */
 

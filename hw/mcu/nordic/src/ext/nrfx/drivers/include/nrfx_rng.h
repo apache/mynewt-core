@@ -60,11 +60,14 @@ typedef struct
  *            if (nrfx_rng_init(&config, handler)
  *            { ...
  *        @endcode
+ *
+ * This configuration sets up randon number generator with the following options:
+ * - error correction enabled
  */
-#define NRFX_RNG_DEFAULT_CONFIG                             \
-{                                                           \
-    .error_correction   = NRFX_RNG_CONFIG_ERROR_CORRECTION, \
-    .interrupt_priority = NRFX_RNG_CONFIG_IRQ_PRIORITY,     \
+#define NRFX_RNG_DEFAULT_CONFIG                                  \
+{                                                                \
+    .error_correction   = true,                                  \
+    .interrupt_priority = NRFX_RNG_DEFAULT_CONFIG_IRQ_PRIORITY,  \
 }
 
 /** @brief RNG driver event handler type. */

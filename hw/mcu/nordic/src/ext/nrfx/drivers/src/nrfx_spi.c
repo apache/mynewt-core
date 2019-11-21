@@ -66,7 +66,7 @@ typedef struct
 static spi_control_block_t m_cb[NRFX_SPI_ENABLED_COUNT];
 
 
-nrfx_err_t nrfx_spi_init(nrfx_spi_t const * const  p_instance,
+nrfx_err_t nrfx_spi_init(nrfx_spi_t const *        p_instance,
                          nrfx_spi_config_t const * p_config,
                          nrfx_spi_evt_handler_t    handler,
                          void *                    p_context)
@@ -146,7 +146,7 @@ nrfx_err_t nrfx_spi_init(nrfx_spi_t const * const  p_instance,
     if (p_config->miso_pin != NRFX_SPI_PIN_NOT_USED)
     {
         miso_pin = p_config->miso_pin;
-        nrf_gpio_cfg_input(miso_pin, (nrf_gpio_pin_pull_t)NRFX_SPI_MISO_PULL_CFG);
+        nrf_gpio_cfg_input(miso_pin, p_config->miso_pull);
     }
     else
     {
@@ -190,7 +190,7 @@ nrfx_err_t nrfx_spi_init(nrfx_spi_t const * const  p_instance,
     return err_code;
 }
 
-void nrfx_spi_uninit(nrfx_spi_t const * const p_instance)
+void nrfx_spi_uninit(nrfx_spi_t const * p_instance)
 {
     spi_control_block_t * p_cb = &m_cb[p_instance->drv_inst_idx];
     NRFX_ASSERT(p_cb->state != NRFX_DRV_STATE_UNINITIALIZED);
@@ -339,7 +339,7 @@ static void spi_xfer(NRF_SPI_Type               * p_spi,
     }
 }
 
-nrfx_err_t nrfx_spi_xfer(nrfx_spi_t     const * const p_instance,
+nrfx_err_t nrfx_spi_xfer(nrfx_spi_t const *           p_instance,
                          nrfx_spi_xfer_desc_t const * p_xfer_desc,
                          uint32_t                     flags)
 {

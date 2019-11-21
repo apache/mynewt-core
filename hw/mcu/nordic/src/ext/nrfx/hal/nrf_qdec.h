@@ -130,415 +130,482 @@ typedef enum
     NRF_QDEC_REPORTPER_DISABLED                                /**< QDEC reporting disabled.        */
 } nrf_qdec_reportper_t;
 
-/** @brief Function for enabling QDEC. */
-__STATIC_INLINE void nrf_qdec_enable(void);
+/**
+ * @brief Function for enabling QDEC.
+ *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ */
+NRF_STATIC_INLINE void nrf_qdec_enable(NRF_QDEC_Type * p_reg);
 
-/** @brief Function for disabling QDEC. */
-__STATIC_INLINE void nrf_qdec_disable(void);
+/**
+ * @brief Function for disabling QDEC.
+ *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ */
+NRF_STATIC_INLINE void nrf_qdec_disable(NRF_QDEC_Type * p_reg);
 
 /**
  * @brief Function for returning the enable state of QDEC.
  *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ *
  * @return State of the register.
  */
-__STATIC_INLINE uint32_t nrf_qdec_enable_get(void);
+NRF_STATIC_INLINE uint32_t nrf_qdec_enable_get(NRF_QDEC_Type const * p_reg);
 
 /**
  * @brief Function for enabling QDEC interrupts by mask.
  *
- * @param[in] mask Mask of interrupts to be enabled.
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] mask  Mask of interrupts to be enabled.
  */
-__STATIC_INLINE void nrf_qdec_int_enable(uint32_t mask);
+NRF_STATIC_INLINE void nrf_qdec_int_enable(NRF_QDEC_Type * p_reg, uint32_t mask);
 
 /**
  * @brief Function for disabling QDEC interrupts by mask.
  *
- * @param[in] mask Mask of interrupts to be disabled.
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] mask  Mask of interrupts to be disabled.
  */
-__STATIC_INLINE void nrf_qdec_int_disable(uint32_t mask);
+NRF_STATIC_INLINE void nrf_qdec_int_disable(NRF_QDEC_Type * p_reg, uint32_t mask);
 
 /**
- * @brief Function for getting the enabled interrupts of the QDEC.
+ * @brief Function for checking if the specified interrupts are enabled.
  *
- * @param[in] mask Mask of interrupts to be checked.
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] mask  Mask of interrupts to be checked.
  *
- * @return Bitfield with enabled interrupts.
+ * @return Mask of enabled interrupts.
  */
-__STATIC_INLINE uint32_t nrf_qdec_int_enable_check(nrf_qdec_int_mask_t mask);
+NRF_STATIC_INLINE uint32_t nrf_qdec_int_enable_check(NRF_QDEC_Type const * p_reg, uint32_t mask);
 
-/** @brief Function for enabling the QDEC debouncing filter. */
-__STATIC_INLINE void nrf_qdec_dbfen_enable(void);
+/**
+ * @brief Function for enabling the QDEC debouncing filter.
+ *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ */
+NRF_STATIC_INLINE void nrf_qdec_dbfen_enable(NRF_QDEC_Type * p_reg);
 
-/** @brief Function for disabling the QDEC debouncing filter. */
-__STATIC_INLINE void nrf_qdec_dbfen_disable(void);
+/**
+ * @brief Function for disabling the QDEC debouncing filter.
+ *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ */
+NRF_STATIC_INLINE void nrf_qdec_dbfen_disable(NRF_QDEC_Type * p_reg);
 
 /**
  * @brief Function for getting the state of the QDEC debouncing filter.
  *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ *
  * @retval NRF_QDEC_DBFEN_DISABLE The debouncing filter is disabled.
  * @retval NRF_QDEC_DBFEN_ENABLE  The debouncing filter is enabled.
  */
-__STATIC_INLINE uint32_t nrf_qdec_dbfen_get(void);
+NRF_STATIC_INLINE uint32_t nrf_qdec_dbfen_get(NRF_QDEC_Type const * p_reg);
 
 /**
  * @brief Function for assigning QDEC pins.
  *
+ * @param[in] p_reg   Pointer to the structure of registers of the peripheral.
  * @param[in] psela   Pin number.
  * @param[in] pselb   Pin number.
  * @param[in] pselled Pin number.
  */
-__STATIC_INLINE void nrf_qdec_pio_assign( uint32_t psela, uint32_t pselb, uint32_t pselled);
+NRF_STATIC_INLINE void nrf_qdec_pio_assign(NRF_QDEC_Type * p_reg,
+                                           uint32_t        psela,
+                                           uint32_t        pselb,
+                                           uint32_t        pselled);
 
 /**
  * @brief Function for setting the specified QDEC task.
  *
- * @param[in] task QDEC task to be triggered.
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] task  QDEC task to be triggered.
  */
-__STATIC_INLINE void nrf_qdec_task_trigger(nrf_qdec_task_t task);
+NRF_STATIC_INLINE void nrf_qdec_task_trigger(NRF_QDEC_Type * p_reg, nrf_qdec_task_t task);
 
 /**
  * @brief Function for retrieving the address of a QDEC task register.
  *
- * @param[in] task QDEC task to get its address.
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] task  QDEC task to get its address.
  *
  * @return Address of the specified QDEC task.
  */
-__STATIC_INLINE uint32_t * nrf_qdec_task_address_get(nrf_qdec_task_t task);
+NRF_STATIC_INLINE uint32_t nrf_qdec_task_address_get(NRF_QDEC_Type const * p_reg,
+                                                     nrf_qdec_task_t       task);
 
 /**
  * @brief Function for clearing the specified QDEC event.
  *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
  * @param[in] event QDEC event to be cleared.
  */
-__STATIC_INLINE void nrf_qdec_event_clear(nrf_qdec_event_t event);
+NRF_STATIC_INLINE void nrf_qdec_event_clear(NRF_QDEC_Type * p_reg, nrf_qdec_event_t event);
 
 /**
  * @brief Function for getting the state of the specified QDEC event.
  *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
  * @param[in] event QDEC event to be checked.
  *
  * @return State of the specified QDEC event.
  */
-__STATIC_INLINE uint32_t nrf_qdec_event_check(nrf_qdec_event_t event);
+NRF_STATIC_INLINE bool nrf_qdec_event_check(NRF_QDEC_Type const * p_reg, nrf_qdec_event_t event);
 
 /**
  * @brief Function for retrieving the address of the specified QDEC event register.
  *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
  * @param[in] event QDEC event to get its address.
  *
  * @return Address of the specified QDEC event.
  */
-__STATIC_INLINE uint32_t * nrf_qdec_event_address_get(nrf_qdec_event_t event);
+NRF_STATIC_INLINE uint32_t nrf_qdec_event_address_get(NRF_QDEC_Type const * p_reg,
+                                                      nrf_qdec_event_t      event);
 
 /**
  * @brief Function for setting QDEC shortcuts.
  *
- * @param[in] mask Mask of QDEC shortcuts to be set.
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] mask  Mask of QDEC shortcuts to be set.
  */
-__STATIC_INLINE void nrf_qdec_shorts_enable(uint32_t mask);
+NRF_STATIC_INLINE void nrf_qdec_shorts_enable(NRF_QDEC_Type * p_reg, uint32_t mask);
 
 /**
  * @brief Function for clearing shortcuts of the QDEC by mask.
  *
- * @param[in] mask Mask of QDEC shortcuts to be cleared.
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] mask  Mask of QDEC shortcuts to be cleared.
  */
-__STATIC_INLINE void nrf_qdec_shorts_disable(uint32_t mask);
+NRF_STATIC_INLINE void nrf_qdec_shorts_disable(NRF_QDEC_Type * p_reg, uint32_t mask);
 
 /**
- * @brief Function for retrieving value of the sampling period.
- *
- * @return Sample period @ref nrf_qdec_sampleper_t.
- */
-__STATIC_INLINE int32_t nrf_qdec_sampleper_reg_get(void);
-
-/**
- * @brief Function for converting return value of the @p nrf_qdec_sampleper_reg_get() function
+ * @brief Function for converting return value of the @ref nrf_qdec_sampleper_get function
  *        to microseconds.
  *
  * @param[in] sampleper The sampling period.
  *
  * @return Period in microseconds.
  */
-__STATIC_INLINE uint32_t nrf_qdec_sampleper_to_value(uint32_t sampleper);
+NRF_STATIC_INLINE uint32_t nrf_qdec_sampleper_to_value(nrf_qdec_sampleper_t sampleper);
 
 /**
  * @brief Function for setting value of the QDEC sampling period.
  *
- * @param[in] sample_per The sampling period.
+ * @param[in] p_reg     Pointer to the structure of registers of the peripheral.
+ * @param[in] sampleper The sampling period.
  */
-__STATIC_INLINE void nrf_qdec_sampleper_set(nrf_qdec_sampleper_t sample_per);
+NRF_STATIC_INLINE void nrf_qdec_sampleper_set(NRF_QDEC_Type *      p_reg,
+                                              nrf_qdec_sampleper_t sampleper);
+
+/**
+ * @brief Function for retrieving value of the QDEC sampling period.
+ *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ *
+ * @return Sampling period.
+ */
+NRF_STATIC_INLINE nrf_qdec_sampleper_t nrf_qdec_sampleper_get(NRF_QDEC_Type const * p_reg);
 
 /**
  * @brief Function for retrieving value of the QDEC SAMPLE register.
  *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ *
  * @return Value of the SAMPLE register.
  */
-__STATIC_INLINE int32_t nrf_qdec_sample_get(void);
+NRF_STATIC_INLINE int32_t nrf_qdec_sample_get(NRF_QDEC_Type const * p_reg);
 
 /**
  * @brief Function for retrieving value of the QDEC ACC register.
  *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ *
  * @return Value of the ACC register.
  */
-__STATIC_INLINE int32_t nrf_qdec_acc_get(void);
+NRF_STATIC_INLINE int32_t nrf_qdec_acc_get(NRF_QDEC_Type const * p_reg);
 
 /**
  * @brief Function for retrieving value of the QDEC ACCREAD register.
  *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ *
  * @return Value of the ACCREAD register.
  */
-__STATIC_INLINE int32_t nrf_qdec_accread_get(void);
+NRF_STATIC_INLINE int32_t nrf_qdec_accread_get(NRF_QDEC_Type const * p_reg);
 
 /**
  * @brief Function for retrieving value of the QDEC ACCDBL register.
  *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ *
  * @return Value of the ACCDBL register.
  */
-__STATIC_INLINE uint32_t nrf_qdec_accdbl_get(void);
+NRF_STATIC_INLINE uint32_t nrf_qdec_accdbl_get(NRF_QDEC_Type const * p_reg);
 
 /**
  * @brief Function for retrieving value of the QDEC ACCDBLREAD register.
  *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ *
  * @return Value of the ACCDBLREAD register.
  */
-__STATIC_INLINE uint32_t nrf_qdec_accdblread_get(void);
+NRF_STATIC_INLINE uint32_t nrf_qdec_accdblread_get(NRF_QDEC_Type const * p_reg);
 
 /**
  * @brief Function for setting delay time between setting LED active state and start sampling.
  *
+ * @param[in] p_reg   Pointer to the structure of registers of the peripheral.
  * @param[in] time_us Delay time (in microseconds) between setting LED active state
  *                    and start sampling.
  */
-__STATIC_INLINE void nrf_qdec_ledpre_set(uint32_t time_us);
+NRF_STATIC_INLINE void nrf_qdec_ledpre_set(NRF_QDEC_Type * p_reg, uint32_t time_us);
 
 /**
  * @brief Function for retrieving how long the LED is switched on before sampling.
  *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ *
  * @return The gap in time in microseconds between switched LED to active state and start sampling.
  */
-__STATIC_INLINE uint32_t nrf_qdec_ledpre_get(void);
+NRF_STATIC_INLINE uint32_t nrf_qdec_ledpre_get(NRF_QDEC_Type const * p_reg);
 
 /**
  * @brief Function for setting the report period (in samples).
  *
+ * @param[in] p_reg     Pointer to the structure of registers of the peripheral.
  * @param[in] reportper The number of samples.
  */
-__STATIC_INLINE void nrf_qdec_reportper_set(nrf_qdec_reportper_t reportper);
+NRF_STATIC_INLINE void nrf_qdec_reportper_set(NRF_QDEC_Type *      p_reg,
+                                              nrf_qdec_reportper_t reportper);
 
 /**
  * @brief Function for retrieving the report period.
  *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ *
  * @return The report period.
  */
-__STATIC_INLINE uint32_t nrf_qdec_reportper_reg_get(void);
+NRF_STATIC_INLINE uint32_t nrf_qdec_reportper_get(NRF_QDEC_Type const * p_reg);
 
 /**
  * @brief Function for retrieving the value of QDEC SAMPLEPER register.
  *
- * @param [in] reportper Reportper to be converted to amount of samples per report.
+ * @param[in] reportper Reportper to be converted to amount of samples per report.
  *
  * @return Number of samples per report.
  */
-__STATIC_INLINE uint32_t nrf_qdec_reportper_to_value(uint32_t reportper);
+NRF_STATIC_INLINE uint32_t nrf_qdec_reportper_to_value(uint32_t reportper);
 
 /**
  * @brief Function for setting the active level for the LED.
  *
- * @param[in] pol Level of the active signal of the LED.
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] pol   Level of the active signal of the LED.
  */
-__STATIC_INLINE void nrf_qdec_ledpol_set(nrf_qdec_ledpol_t pol);
+NRF_STATIC_INLINE void nrf_qdec_ledpol_set(NRF_QDEC_Type * p_reg, nrf_qdec_ledpol_t pol);
 
 /**
  * @brief Function for retrieving the active level for the LED.
  *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ *
  * @return Level of the active signal of the LED.
  */
-__STATIC_INLINE uint32_t nrf_qdec_ledpol_get(void);
+NRF_STATIC_INLINE uint32_t nrf_qdec_ledpol_get(NRF_QDEC_Type const * p_reg);
 
 
-#ifndef SUPPRESS_INLINE_IMPLEMENTATION
+#ifndef NRF_DECLARE_ONLY
 
-__STATIC_INLINE void nrf_qdec_enable(void)
+NRF_STATIC_INLINE void nrf_qdec_enable(NRF_QDEC_Type * p_reg)
 {
-    NRF_QDEC->ENABLE = NRF_QDEC_ENABLE;
+    p_reg->ENABLE = NRF_QDEC_ENABLE;
 }
 
-__STATIC_INLINE void nrf_qdec_disable(void)
+NRF_STATIC_INLINE void nrf_qdec_disable(NRF_QDEC_Type * p_reg)
 {
-    NRF_QDEC->ENABLE = NRF_QDEC_DISABLE;
+    p_reg->ENABLE = NRF_QDEC_DISABLE;
 }
 
-__STATIC_INLINE uint32_t nrf_qdec_enable_get(void)
+NRF_STATIC_INLINE uint32_t nrf_qdec_enable_get(NRF_QDEC_Type const * p_reg)
 {
-    return NRF_QDEC->ENABLE;
+    return p_reg->ENABLE;
 }
 
-__STATIC_INLINE void nrf_qdec_int_enable(uint32_t mask)
+NRF_STATIC_INLINE void nrf_qdec_int_enable(NRF_QDEC_Type * p_reg, uint32_t mask)
 {
-    NRF_QDEC->INTENSET = mask; // writing 0 has no effect
+    p_reg->INTENSET = mask; // writing 0 has no effect
 }
 
-__STATIC_INLINE void nrf_qdec_int_disable(uint32_t mask)
+NRF_STATIC_INLINE void nrf_qdec_int_disable(NRF_QDEC_Type * p_reg, uint32_t mask)
 {
-    NRF_QDEC->INTENCLR = mask; // writing 0 has no effect
+    p_reg->INTENCLR = mask; // writing 0 has no effect
 }
 
-__STATIC_INLINE uint32_t nrf_qdec_int_enable_check(nrf_qdec_int_mask_t mask)
+NRF_STATIC_INLINE uint32_t nrf_qdec_int_enable_check(NRF_QDEC_Type const * p_reg, uint32_t mask)
 {
-    return NRF_QDEC->INTENSET & mask; // when read this register will return the value of INTEN.
+    return p_reg->INTENSET & mask; // when read this register will return the value of INTEN.
 }
 
-__STATIC_INLINE void nrf_qdec_dbfen_enable(void)
+NRF_STATIC_INLINE void nrf_qdec_dbfen_enable(NRF_QDEC_Type * p_reg)
 {
-    NRF_QDEC->DBFEN = NRF_QDEC_DBFEN_ENABLE;
+    p_reg->DBFEN = NRF_QDEC_DBFEN_ENABLE;
 }
 
-__STATIC_INLINE void nrf_qdec_dbfen_disable(void)
+NRF_STATIC_INLINE void nrf_qdec_dbfen_disable(NRF_QDEC_Type * p_reg)
 {
-    NRF_QDEC->DBFEN = NRF_QDEC_DBFEN_DISABLE;
+    p_reg->DBFEN = NRF_QDEC_DBFEN_DISABLE;
 }
 
-__STATIC_INLINE uint32_t nrf_qdec_dbfen_get(void)
+NRF_STATIC_INLINE uint32_t nrf_qdec_dbfen_get(NRF_QDEC_Type const * p_reg)
 {
-    return NRF_QDEC->DBFEN;
+    return p_reg->DBFEN;
 }
 
-__STATIC_INLINE void nrf_qdec_pio_assign( uint32_t psela, uint32_t pselb, uint32_t pselled)
+NRF_STATIC_INLINE void nrf_qdec_pio_assign(NRF_QDEC_Type * p_reg,
+                                           uint32_t        psela,
+                                           uint32_t        pselb,
+                                           uint32_t        pselled)
 {
 #if defined(QDEC_PSEL_A_CONNECT_Pos)
-    NRF_QDEC->PSEL.A = psela;
+    p_reg->PSEL.A = psela;
 #else
-    NRF_QDEC->PSELA = psela;
+    p_reg->PSELA = psela;
 #endif
 
 #if defined(QDEC_PSEL_B_CONNECT_Pos)
-    NRF_QDEC->PSEL.B = pselb;
+    p_reg->PSEL.B = pselb;
 #else
-    NRF_QDEC->PSELB = pselb;
+    p_reg->PSELB = pselb;
 #endif
 
 #if defined(QDEC_PSEL_LED_CONNECT_Pos)
-    NRF_QDEC->PSEL.LED = pselled;
+    p_reg->PSEL.LED = pselled;
 #else
-    NRF_QDEC->PSELLED = pselled;
+    p_reg->PSELLED = pselled;
 #endif
 }
 
-__STATIC_INLINE void nrf_qdec_task_trigger(nrf_qdec_task_t task)
+NRF_STATIC_INLINE void nrf_qdec_task_trigger(NRF_QDEC_Type * p_reg, nrf_qdec_task_t task)
 {
-    *( (volatile uint32_t *)( (uint8_t *)NRF_QDEC + (uint32_t)task) ) = 1;
+    *( (volatile uint32_t *)( (uint8_t *)p_reg + (uint32_t)task) ) = 1;
 }
 
-__STATIC_INLINE uint32_t * nrf_qdec_task_address_get(nrf_qdec_task_t task)
+NRF_STATIC_INLINE uint32_t nrf_qdec_task_address_get(NRF_QDEC_Type const * p_reg,
+                                                     nrf_qdec_task_t       task)
 {
-    return (uint32_t *)( (uint8_t *)NRF_QDEC + (uint32_t)task);
+    return (uint32_t)( (uint8_t *)p_reg + (uint32_t)task);
 }
 
-__STATIC_INLINE void nrf_qdec_event_clear(nrf_qdec_event_t event)
+NRF_STATIC_INLINE void nrf_qdec_event_clear(NRF_QDEC_Type * p_reg, nrf_qdec_event_t event)
 {
-    *( (volatile uint32_t *)( (uint8_t *)NRF_QDEC + (uint32_t)event) ) = 0;
+    *( (volatile uint32_t *)( (uint8_t *)p_reg + (uint32_t)event) ) = 0;
 #if __CORTEX_M == 0x04
-    volatile uint32_t dummy = *((volatile uint32_t *)((uint8_t *)NRF_QDEC + event));
+    volatile uint32_t dummy = *((volatile uint32_t *)((uint8_t *)p_reg + event));
     (void)dummy;
 #endif
 }
 
-__STATIC_INLINE uint32_t nrf_qdec_event_check(nrf_qdec_event_t event)
+NRF_STATIC_INLINE bool nrf_qdec_event_check(NRF_QDEC_Type const * p_reg, nrf_qdec_event_t event)
 {
-    return *(volatile uint32_t *)( (uint8_t *)NRF_QDEC + (uint32_t)event);
+    return (bool)*(volatile uint32_t *)( (uint8_t *)p_reg + (uint32_t)event);
 }
 
-__STATIC_INLINE uint32_t * nrf_qdec_event_address_get(nrf_qdec_event_t event)
+NRF_STATIC_INLINE uint32_t nrf_qdec_event_address_get(NRF_QDEC_Type const * p_reg,
+                                                      nrf_qdec_event_t      event)
 {
-    return (uint32_t *)( (uint8_t *)NRF_QDEC + (uint32_t)event);
+    return (uint32_t)( (uint8_t *)p_reg + (uint32_t)event);
 }
 
-__STATIC_INLINE void nrf_qdec_shorts_enable(uint32_t mask)
+NRF_STATIC_INLINE void nrf_qdec_shorts_enable(NRF_QDEC_Type * p_reg, uint32_t mask)
 {
-    NRF_QDEC->SHORTS |= mask;
+    p_reg->SHORTS |= mask;
 }
 
-__STATIC_INLINE void nrf_qdec_shorts_disable(uint32_t mask)
+NRF_STATIC_INLINE void nrf_qdec_shorts_disable(NRF_QDEC_Type * p_reg, uint32_t mask)
 {
-    NRF_QDEC->SHORTS &= ~mask;
+    p_reg->SHORTS &= ~mask;
 }
 
-__STATIC_INLINE int32_t nrf_qdec_sampleper_reg_get(void)
-{
-    return NRF_QDEC->SAMPLEPER;
-}
-
-__STATIC_INLINE uint32_t nrf_qdec_sampleper_to_value(uint32_t sampleper)
+NRF_STATIC_INLINE uint32_t nrf_qdec_sampleper_to_value(nrf_qdec_sampleper_t sampleper)
 {
     return (1 << (7 + sampleper));
 }
 
-__STATIC_INLINE void nrf_qdec_sampleper_set(nrf_qdec_sampleper_t sample_per)
+NRF_STATIC_INLINE void nrf_qdec_sampleper_set(NRF_QDEC_Type *      p_reg,
+                                              nrf_qdec_sampleper_t sampleper)
 {
-    NRF_QDEC->SAMPLEPER = sample_per;
+    p_reg->SAMPLEPER = sampleper;
 }
 
-__STATIC_INLINE int32_t nrf_qdec_sample_get(void)
+NRF_STATIC_INLINE nrf_qdec_sampleper_t nrf_qdec_sampleper_get(NRF_QDEC_Type const * p_reg)
 {
-    return NRF_QDEC->SAMPLE;
+    return (nrf_qdec_sampleper_t)(p_reg->SAMPLEPER);
 }
 
-__STATIC_INLINE int32_t nrf_qdec_acc_get(void)
+NRF_STATIC_INLINE int32_t nrf_qdec_sample_get(NRF_QDEC_Type const * p_reg)
 {
-    return NRF_QDEC->ACC;
+    return p_reg->SAMPLE;
 }
 
-__STATIC_INLINE int32_t nrf_qdec_accread_get(void)
+NRF_STATIC_INLINE int32_t nrf_qdec_acc_get(NRF_QDEC_Type const * p_reg)
 {
-    return NRF_QDEC->ACCREAD;
+    return p_reg->ACC;
 }
 
-__STATIC_INLINE uint32_t nrf_qdec_accdbl_get(void)
+NRF_STATIC_INLINE int32_t nrf_qdec_accread_get(NRF_QDEC_Type const * p_reg)
 {
-    return NRF_QDEC->ACCDBL;
+    return p_reg->ACCREAD;
 }
 
-__STATIC_INLINE uint32_t nrf_qdec_accdblread_get(void)
+NRF_STATIC_INLINE uint32_t nrf_qdec_accdbl_get(NRF_QDEC_Type const * p_reg)
 {
-    return NRF_QDEC->ACCDBLREAD;
+    return p_reg->ACCDBL;
 }
 
-__STATIC_INLINE void nrf_qdec_ledpre_set(uint32_t time_us)
+NRF_STATIC_INLINE uint32_t nrf_qdec_accdblread_get(NRF_QDEC_Type const * p_reg)
 {
-    NRF_QDEC->LEDPRE = time_us;
+    return p_reg->ACCDBLREAD;
 }
 
-__STATIC_INLINE uint32_t nrf_qdec_ledpre_get(void)
+NRF_STATIC_INLINE void nrf_qdec_ledpre_set(NRF_QDEC_Type * p_reg, uint32_t time_us)
 {
-    return NRF_QDEC->LEDPRE;
+    p_reg->LEDPRE = time_us;
 }
 
-__STATIC_INLINE void nrf_qdec_reportper_set(nrf_qdec_reportper_t reportper)
+NRF_STATIC_INLINE uint32_t nrf_qdec_ledpre_get(NRF_QDEC_Type const * p_reg)
 {
-    NRF_QDEC->REPORTPER = reportper;
+    return p_reg->LEDPRE;
 }
 
-__STATIC_INLINE uint32_t nrf_qdec_reportper_reg_get(void)
+NRF_STATIC_INLINE void nrf_qdec_reportper_set(NRF_QDEC_Type *      p_reg,
+                                              nrf_qdec_reportper_t reportper)
 {
-    return NRF_QDEC->REPORTPER;
+    p_reg->REPORTPER = reportper;
 }
 
-__STATIC_INLINE uint32_t nrf_qdec_reportper_to_value(uint32_t reportper)
+NRF_STATIC_INLINE uint32_t nrf_qdec_reportper_get(NRF_QDEC_Type const * p_reg)
+{
+    return p_reg->REPORTPER;
+}
+
+NRF_STATIC_INLINE uint32_t nrf_qdec_reportper_to_value(uint32_t reportper)
 {
     return (reportper == NRF_QDEC_REPORTPER_10) ? 10 : reportper * 40;
 }
 
-__STATIC_INLINE void nrf_qdec_ledpol_set(nrf_qdec_ledpol_t pol)
+NRF_STATIC_INLINE void nrf_qdec_ledpol_set(NRF_QDEC_Type * p_reg, nrf_qdec_ledpol_t pol)
 {
-    NRF_QDEC->LEDPOL = pol;
+    p_reg->LEDPOL = pol;
 }
 
-__STATIC_INLINE uint32_t nrf_qdec_ledpol_get(void)
+NRF_STATIC_INLINE uint32_t nrf_qdec_ledpol_get(NRF_QDEC_Type const * p_reg)
 {
-    return NRF_QDEC->LEDPOL;
+    return p_reg->LEDPOL;
 }
 
-#endif // SUPPRESS_INLINE_IMPLEMENTATION
+#endif // NRF_DECLARE_ONLY
 
 /** @} */
 

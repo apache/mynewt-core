@@ -205,10 +205,12 @@ typedef void (*nrfx_gpiote_evt_handler_t)(nrfx_gpiote_pin_t pin, nrf_gpiote_pola
  * @details Only static configuration is supported to prevent the shared
  * resource being customized by the initiator.
  *
+ * @param[in] interrupt_priority Interrupt priority.
+ *
  * @retval NRFX_SUCCESS             Initialization was successful.
  * @retval NRFX_ERROR_INVALID_STATE The driver was already initialized.
  */
-nrfx_err_t nrfx_gpiote_init(void);
+nrfx_err_t nrfx_gpiote_init(uint8_t interrupt_priority);
 
 /**
  * @brief Function for checking if the GPIOTE module is initialized.
@@ -234,9 +236,9 @@ void nrfx_gpiote_uninit(void);
  * @param[in] pin      Pin.
  * @param[in] p_config Initial configuration.
  *
- * @retval NRFX_SUCCESS             Initialization was successful.
- * @retval NRFX_ERROR_INVALID_STATE The driver is not initialized or the pin is already used.
- * @retval NRFX_ERROR_NO_MEM        No GPIOTE channel is available.
+ * @retval NRFX_SUCCESS      Initialization was successful.
+ * @retval NRFX_ERROR_BUSY   The pin is already used.
+ * @retval NRFX_ERROR_NO_MEM No GPIOTE channel is available.
  */
 nrfx_err_t nrfx_gpiote_out_init(nrfx_gpiote_pin_t                pin,
                                 nrfx_gpiote_out_config_t const * p_config);
@@ -285,7 +287,19 @@ void nrfx_gpiote_out_task_enable(nrfx_gpiote_pin_t pin);
 void nrfx_gpiote_out_task_disable(nrfx_gpiote_pin_t pin);
 
 /**
- * @brief Function for getting the address of a configurable GPIOTE task.
+ * @brief Function for getting the OUT task for the specified output pin.
+ *
+ * @details The returned task identifier can be used within @ref nrf_gpiote_hal,
+ *          for example, to configure a DPPI channel.
+ *
+ * @param[in] pin Pin.
+ *
+ * @return OUT task associated with the specified output pin.
+ */
+nrf_gpiote_task_t nrfx_gpiote_out_task_get(nrfx_gpiote_pin_t pin);
+
+/**
+ * @brief Function for getting the address of the OUT task for the specified output pin.
  *
  * @param[in] pin Pin.
  *
@@ -295,7 +309,19 @@ uint32_t nrfx_gpiote_out_task_addr_get(nrfx_gpiote_pin_t pin);
 
 #if defined(GPIOTE_FEATURE_SET_PRESENT) || defined(__NRFX_DOXYGEN__)
 /**
- * @brief Function for getting the address of a configurable GPIOTE task.
+ * @brief Function for getting the SET task for the specified output pin.
+ *
+ * @details The returned task identifier can be used within @ref nrf_gpiote_hal,
+ *          for example, to configure a DPPI channel.
+ *
+ * @param[in] pin Pin.
+ *
+ * @return SET task associated with the specified output pin.
+ */
+nrf_gpiote_task_t nrfx_gpiote_set_task_get(nrfx_gpiote_pin_t pin);
+
+/**
+ * @brief Function for getting the address of the SET task for the specified output pin.
  *
  * @param[in] pin Pin.
  *
@@ -306,7 +332,19 @@ uint32_t nrfx_gpiote_set_task_addr_get(nrfx_gpiote_pin_t pin);
 
 #if defined(GPIOTE_FEATURE_CLR_PRESENT) || defined(__NRFX_DOXYGEN__)
 /**
- * @brief Function for getting the address of a configurable GPIOTE task.
+ * @brief Function for getting the CLR task for the specified output pin.
+ *
+ * @details The returned task identifier can be used within @ref nrf_gpiote_hal,
+ *          for example, to configure a DPPI channel.
+ *
+ * @param[in] pin Pin.
+ *
+ * @return CLR task associated with the specified output pin.
+ */
+nrf_gpiote_task_t nrfx_gpiote_clr_task_get(nrfx_gpiote_pin_t pin);
+
+/**
+ * @brief Function for getting the address of the SET task for the specified output pin.
  *
  * @param[in] pin Pin.
  *
@@ -334,9 +372,9 @@ uint32_t nrfx_gpiote_clr_task_addr_get(nrfx_gpiote_pin_t pin);
  * @param[in] p_config    Initial configuration.
  * @param[in] evt_handler User function to be called when the configured transition occurs.
  *
- * @retval NRFX_SUCCESS             Initialization was successful.
- * @retval NRFX_ERROR_INVALID_STATE The driver is not initialized or the pin is already used.
- * @retval NRFX_ERROR_NO_MEM        No GPIOTE channel is available.
+ * @retval NRFX_SUCCESS      Initialization was successful.
+ * @retval NRFX_ERROR_BUSY   The pin is already used.
+ * @retval NRFX_ERROR_NO_MEM No GPIOTE channel is available.
  */
 nrfx_err_t nrfx_gpiote_in_init(nrfx_gpiote_pin_t               pin,
                                nrfx_gpiote_in_config_t const * p_config,
@@ -378,6 +416,20 @@ void nrfx_gpiote_in_event_disable(nrfx_gpiote_pin_t pin);
  * @retval false The input pin is not set.
  */
 bool nrfx_gpiote_in_is_set(nrfx_gpiote_pin_t pin);
+
+/**
+ * @brief Function for getting the GPIOTE event for the specified input pin.
+ *
+ * @details The returned event identifier can be used within @ref nrf_gpiote_hal,
+ *          for example, to configure a DPPI channel.
+ *          If the pin is configured to use low-accuracy mode, the PORT event
+ *          is returned.
+ *
+ * @param[in] pin Pin.
+ *
+ * @return Event associated with the specified input pin.
+ */
+nrf_gpiote_event_t nrfx_gpiote_in_event_get(nrfx_gpiote_pin_t pin);
 
 /**
  * @brief Function for getting the address of a GPIOTE input pin event.

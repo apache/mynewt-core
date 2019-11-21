@@ -108,25 +108,25 @@ extern "C" {
 #define nrfx_rtc_1_irq_handler      RTC1_IRQHandler
 
 // WDT_IRQn
-#define nrfx_wdt_irq_handler        WDT_IRQHandler
+#define nrfx_wdt_0_irq_handler      WDT_IRQHandler
 
 // EGU0_IRQn
-#define nrfx_swi_0_irq_handler      EGU0_IRQHandler
+#define nrfx_egu_0_irq_handler      EGU0_IRQHandler
 
 // EGU1_IRQn
-#define nrfx_swi_1_irq_handler      EGU1_IRQHandler
+#define nrfx_egu_1_irq_handler      EGU1_IRQHandler
 
 // EGU2_IRQn
-#define nrfx_swi_2_irq_handler      EGU2_IRQHandler
+#define nrfx_egu_2_irq_handler      EGU2_IRQHandler
 
 // EGU3_IRQn
-#define nrfx_swi_3_irq_handler      EGU3_IRQHandler
+#define nrfx_egu_3_irq_handler      EGU3_IRQHandler
 
 // EGU4_IRQn
-#define nrfx_swi_4_irq_handler      EGU4_IRQHandler
+#define nrfx_egu_4_irq_handler      EGU4_IRQHandler
 
 // EGU5_IRQn
-#define nrfx_swi_5_irq_handler      EGU5_IRQHandler
+#define nrfx_egu_5_irq_handler      EGU5_IRQHandler
 
 // PWM0_IRQn
 #define nrfx_pwm_0_irq_handler      PWM0_IRQHandler
