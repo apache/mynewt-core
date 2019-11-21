@@ -26,8 +26,6 @@ extern "C" {
 #define assert(x) ((x) ? (void)0 : OS_CRASH())
 
 #endif
-// Macro to help avoid unused variable warnings from compiler when the var was only used for an assert..
-#define USEDBYASSERT(x) (void)sizeof(x)
 
 #if __STDC_VERSION__ >= 201112L && !defined __cplusplus
 #define static_assert _Static_assert

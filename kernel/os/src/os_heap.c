@@ -33,8 +33,8 @@ os_malloc_lock(void)
     if (g_os_started) {
         rc = os_mutex_pend(&os_malloc_mutex, 0xffffffff);
         assert(rc == 0);
+        (void)rc;   // variable UNUSED if NDEBUG
     }
-    USEDBYASSERT(rc);
 #endif
 }
 
@@ -47,8 +47,8 @@ os_malloc_unlock(void)
     if (g_os_started) {
         rc = os_mutex_release(&os_malloc_mutex);
         assert(rc == 0);
+        (void)rc;   // variable UNUSED if NDEBUG
     }
-    USEDBYASSERT(rc);
 #endif
 }
 
