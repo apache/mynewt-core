@@ -183,6 +183,8 @@ PendSV_Handler:
         STR     R12,[R1,#0]             /* Update stack pointer in current task */
         STR     R2,[R3]                 /* g_current_task = highest ready */
 
+        LDR     R12,[R2,#4]             /* get stack bottom of task we will start */
+        MSR     PSPLIM,R12              /* update stack limit register */
         LDR     R12,[R2,#0]             /* get stack pointer of task we will start */
 #if MYNEWT_VAL(HARDFLOAT)
         LDMIA   R12!,{R4-R11,LR}        /* Restore New Context */
