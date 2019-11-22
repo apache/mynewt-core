@@ -93,10 +93,10 @@ os_task_init(struct os_task *t, const char *name, os_task_func_t func,
     }
 
     _clear_stack(stack_bottom, stack_size);
-    t->t_stacktop = &stack_bottom[stack_size];
+    t->t_stackbottom = stack_bottom;
     t->t_stacksize = stack_size;
-    t->t_stackptr = os_arch_task_stack_init(t, t->t_stacktop,
-            t->t_stacksize);
+    t->t_stackptr = os_arch_task_stack_init(t, &stack_bottom[stack_size],
+                                            t->t_stacksize);
 
     STAILQ_FOREACH(task, &g_os_task_list, t_os_task_list) {
         assert(t->t_prio != task->t_prio);
@@ -178,8 +178,8 @@ os_task_info_get(const struct os_task *task, struct os_task_info *oti)
     oti->oti_taskid = task->t_taskid;
     oti->oti_state = task->t_state;
 
-    top = task->t_stacktop;
-    bottom = task->t_stacktop - task->t_stacksize;
+    bottom = task->t_stackbottom;
+    top = bottom + task->t_stacksize;
     while (bottom < top) {
         if (*bottom != OS_STACK_PATTERN) {
             break;
@@ -187,7 +187,7 @@ os_task_info_get(const struct os_task *task, struct os_task_info *oti)
         ++bottom;
     }
 
-    oti->oti_stkusage = (uint16_t) (task->t_stacktop - bottom);
+    oti->oti_stkusage = (uint16_t) (top - bottom);
     oti->oti_stksize = task->t_stacksize;
     oti->oti_cswcnt = task->t_ctx_sw_cnt;
     oti->oti_runtime = task->t_run_time;
