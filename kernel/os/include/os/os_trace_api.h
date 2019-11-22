@@ -108,8 +108,8 @@ os_trace_task_info(const struct os_task *t)
     ti.TaskID = (uint32_t)t;
     ti.sName = t->t_name;
     ti.Prio = t->t_prio;
-    ti.StackBase = (uint32_t)&t->t_stacktop;
     ti.StackSize = t->t_stacksize * sizeof(os_stack_t);
+    ti.StackBase = (uint32_t)&t->t_stackbottom + ti.StackSize;
 
     SEGGER_SYSVIEW_SendTaskInfo(&ti);
 }

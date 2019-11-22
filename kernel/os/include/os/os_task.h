@@ -84,10 +84,15 @@ typedef void (*os_task_func_t)(void *);
  * Structure containing information about a running task
  */
 struct os_task {
+    /*
+     * t_stackptr and t_stackbottom fields may be accessed directly from
+     * assembly code and should never be moved in this structure.
+     */
+
     /** Current stack pointer for this task */
     os_stack_t *t_stackptr;
-    /** Pointer to top of this task's stack */
-    os_stack_t *t_stacktop;
+    /** Pointer to bottom of this task's stack */
+    os_stack_t *t_stackbottom;
     /** Size of this task's stack */
     uint16_t t_stacksize;
     /** Task ID */

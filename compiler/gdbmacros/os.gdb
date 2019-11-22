@@ -25,7 +25,7 @@ define os_tasks
 			printf " "
 		end
 		printf "%4d %5p ", $task->t_prio, $task->t_state
-		printf "%10p %6d ", $task->t_stacktop, $task->t_stacksize
+		printf "%10p %6d ", $task->t_stackbottom, $task->t_stacksize
 		printf "%10p %s\n", $task, $task->t_name
 		set $task = $task->t_os_task_list.stqe_next
 	end
@@ -89,7 +89,8 @@ define os_task_stack_dump
     set $task = $arg0
 
     set $stackptr = $task.t_stackptr
-    set $num_words = $task.t_stacktop - $stackptr
+    set $stacktop = $task.t_stackbottom + $task.t_stacksize
+    set $num_words = $stacktop - $stackptr
 
     os_stack_dump_range $stackptr $num_words
 end
