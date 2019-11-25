@@ -97,6 +97,7 @@ os_idle_task(void *arg)
     os_time_t iticks, sticks, cticks;
     os_time_t sanity_last;
     os_time_t sanity_itvl_ticks;
+    os_time_t sanity_to_next;
 
     sanity_itvl_ticks = (MYNEWT_VAL(SANITY_INTERVAL) * OS_TICKS_PER_SEC) / 1000;
     sanity_last = 0;
@@ -111,7 +112,7 @@ os_idle_task(void *arg)
         ++g_os_idle_ctr;
 
         now = os_time_get();
-        if (OS_TIME_TICK_GT(now, sanity_last + sanity_itvl_ticks)) {
+        if (OS_TIME_TICK_GEQ(now, sanity_last + sanity_itvl_ticks)) {
             os_sanity_run();
             /* Tickle the watchdog after successfully running sanity */
             hal_watchdog_tickle();
@@ -127,10 +128,17 @@ os_idle_task(void *arg)
         sticks = os_sched_wakeup_ticks(now);
         cticks = os_callout_wakeup_ticks(now);
         iticks = min(sticks, cticks);
-        /* Wakeup in time to run sanity as well from the idle context,
-         * as the idle task does not schedule itself.
+
+        /*
+         * Need to wake up on time for next sanity check. Make sure next sanity
+         * happens on next interval in case it was already performed on current
+         * tick.
          */
-        iticks = min(iticks, ((sanity_last + sanity_itvl_ticks) - now));
+        sanity_to_next = sanity_last + sanity_itvl_ticks - now;
+        if ((int)sanity_to_next <= 0) {
+            sanity_to_next += sanity_itvl_ticks;
+        }
+        iticks = min(iticks, sanity_to_next);
 
         if (iticks < MIN_IDLE_TICKS) {
             iticks = 0;
