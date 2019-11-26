@@ -28,30 +28,34 @@ extern "C" {
 
 #include "stm32l4xx_hal.h"
 #include "stm32l4xx_hal_def.h"
-
-#include "stm32l4xx_mynewt_hal.h"
-
-/* hal_watchdog */
-#include "stm32l4xx_hal_iwdg.h"
-#define STM32_HAL_WATCHDOG_CUSTOM_INIT(x)           \
-    do {                                            \
-        (x)->Init.Window = IWDG_WINDOW_DISABLE;     \
-    } while (0)
-
-/* hal_system_start */
-#define STM32_HAL_FLASH_REMAP()                  \
-    do {                                         \
-        SYSCFG->MEMRMP = 0;                      \
-        __DSB();                                 \
-    } while (0)
-
-/* hal_spi */
 #include "stm32l4xx.h"
 #include "stm32l4xx_hal_dma.h"
 #include "stm32l4xx_hal_spi.h"
 #include "stm32l4xx_hal_gpio.h"
 #include "stm32l4xx_hal_gpio_ex.h"
 #include "stm32l4xx_hal_rcc.h"
+#include "stm32l4xx_hal_iwdg.h"
+#include "stm32l4xx_hal_i2c.h"
+#include "stm32l4xx_hal_uart.h"
+#include "mcu/stm32l4_bsp.h"
+#include "stm32l4xx_hal_tim.h"
+#include "stm32l4xx_ll_bus.h"
+#include "stm32l4xx_ll_tim.h"
+#include "stm32l4xx_hal_def.h"
+#include "stm32l4xx_hal_flash.h"
+#include "stm32l4xx_hal_flash_ex.h"
+#include "stm32l4xx_mynewt_hal.h"
+
+#define STM32_HAL_WATCHDOG_CUSTOM_INIT(x)           \
+    do {                                            \
+        (x)->Init.Window = IWDG_WINDOW_DISABLE;     \
+    } while (0)
+
+#define STM32_HAL_FLASH_REMAP()                  \
+    do {                                         \
+        SYSCFG->MEMRMP = 0;                      \
+        __DSB();                                 \
+    } while (0)
 
 struct stm32_hal_spi_cfg {
     int ss_pin;                     /* for slave mode */
@@ -61,25 +65,8 @@ struct stm32_hal_spi_cfg {
     int irq_prio;
 };
 
-/* hal_i2c */
-#include "stm32l4xx_hal_i2c.h"
-#include "mcu/stm32l4xx_mynewt_hal.h"
-
-/* hal_uart */
-#include "stm32l4xx_hal_uart.h"
-#include "mcu/stm32l4_bsp.h"
-
-/* hal_timer */
-#include "stm32l4xx_hal_tim.h"
-#include "stm32l4xx_ll_bus.h"
-#include "stm32l4xx_ll_tim.h"
-
 #define STM32_HAL_TIMER_MAX     (3)
 
-/* hal_flash */
-#include "stm32l4xx_hal_def.h"
-#include "stm32l4xx_hal_flash.h"
-#include "stm32l4xx_hal_flash_ex.h"
 #define STM32_HAL_FLASH_INIT()        \
     do {                              \
         HAL_FLASH_Unlock();           \
