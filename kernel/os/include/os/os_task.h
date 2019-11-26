@@ -232,6 +232,23 @@ struct os_task_info {
 struct os_task *os_task_info_get_next(const struct os_task *,
         struct os_task_info *);
 
+/**
+ * Get following info about specified task
+ * - Priority
+ * - Task ID
+ * - State (READY, SLEEP)
+ * - Total Stack Usage
+ * - Stack Size
+ * - Context Switch Count
+ * - Runtime
+ * - Last & Next Sanity checkin
+ * - Task Name
+ *
+ *  @param task The task to get info about
+ *  @param oti  The OS task info structure to fill out.
+ */
+void os_task_info_get(const struct os_task *task, struct os_task_info *oti);
+
 #ifdef __cplusplus
 }
 #endif
