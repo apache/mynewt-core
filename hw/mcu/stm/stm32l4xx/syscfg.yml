@@ -63,6 +63,102 @@ syscfg.defs:
         description: MCUs are of STM32L4xx family
         value: 1
 
+    STM32_CLOCK_VOLTAGESCALING_CONFIG:
+        description: Adjust voltage scale
+        value: 0
+
+    STM32_CLOCK_LSI:
+        description: Enable low-speed internal clock source
+        value: 0
+
+    STM32_CLOCK_LSE:
+        description: Enable low-speed external clock source (aka RTC xtal)
+        value: 0
+
+    STM32_CLOCK_LSE_BYPASS:
+        description: 0 for 32768 xtal; 1 for input clock
+        value: 0
+
+    STM32_CLOCK_MSI:
+        description: Enable multi-speed internal clock source
+        value: 1
+
+    STM32_CLOCK_MSI_CALIBRATION:
+        description: MSI calibration value
+        value: 'RCC_MSICALIBRATION_DEFAULT'
+
+    STM32_CLOCK_MSI_CLOCK_RANGE:
+        description: MSI clock range
+        value: 'RCC_MSICALIBRATION_DEFAULT'
+
+    STM32_CLOCK_HSE:
+        description: Enable high-speed external clock source
+        value: 0
+
+    STM32_CLOCK_HSE_BYPASS:
+        description: 0 for xtal; 1 for input clock
+        value: 0
+
+    STM32_CLOCK_HSI:
+        description: Enable high-speed internal clock source
+        value: 1
+
+    STM32_CLOCK_HSI_CALIBRATION:
+        description: HSI calibration value
+        value: 'RCC_HSICALIBRATION_DEFAULT'
+
+    STM32_CLOCK_HSI48:
+        description: Enable high-speed 48MHz internal clock source
+        value: 0
+
+    STM32_CLOCK_PLL_PLLM:
+        description: PLL config M parameter
+        value: 0
+
+    STM32_CLOCK_PLL_PLLN:
+        description: PLL config N parameter
+        value: 0
+
+    STM32_CLOCK_PLL_PLLP:
+        description: PLL config P parameter
+        value: 0
+
+    STM32_CLOCK_PLL_PLLQ:
+        description: PLL config Q parameter
+        value: 0
+
+    STM32_CLOCK_PLL_PLLR:
+        description: PLL config R parameter
+        value: 0
+
+    STM32_CLOCK_AHB_DIVIDER:
+        description: AHB CLK1 prescaler (64MHz max)
+        value: 0
+
+    STM32_CLOCK_APB1_DIVIDER:
+        description: APB low-speed prescaler (64MHz max)
+        value: 0
+
+    STM32_CLOCK_APB2_DIVIDER:
+        description: APB high-speed prescaler (64MHz max)
+        value: 0
+
+    STM32_FLASH_LATENCY:
+        description: Number of wait-states
+        value: 0
+
+    STM32_FLASH_PREFETCH_ENABLE:
+        description: Enable pre-fetch of instructions (when latency > 0)
+        value: 0
+
+    STM32_INSTRUCTION_CACHE_ENABLE:
+        description: Enable flash instruction cache
+        value: 0
+
+    STM32_DATA_CACHE_ENABLE:
+        description: Enable flash data cache
+        value: 0
+
     STM32_HAL_SPI_HAS_FIFO:
         description: This MCU has a SPI with FIFO
         value: 1
