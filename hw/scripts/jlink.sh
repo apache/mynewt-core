@@ -152,7 +152,7 @@ jlink_debug() {
 
         echo "Debugging" $FILE_NAME
 
-        if [ -z $JLINK_TARGET_HOST]; then
+        if [ -z $JLINK_TARGET_HOST ]; then
             if [ $WINDOWS -eq 1 ]; then
                 #
                 # Launch jlink server in a separate command interpreter, to make
