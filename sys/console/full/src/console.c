@@ -1048,12 +1048,11 @@ handle_nlip(uint8_t byte)
     struct console_input *input;
 
     input = current_line_ev->ev_arg;
-    handled = 0;
+    handled = 1;
 
     switch (nlip_state) {
     case NLIP_PKT_START2:
     case NLIP_DATA_START2:
-        handled = 1;
         insert_char(&input->line[cur], byte);
         if (byte == '\n') {
             input->line[cur] = '\0';
@@ -1065,7 +1064,6 @@ handle_nlip(uint8_t byte)
         break;
     case NLIP_PKT_START1:
         if (byte == CONSOLE_NLIP_PKT_START2) {
-            handled = 1;
             nlip_state = NLIP_PKT_START2;
             /* Disable echo to not flood the UART */
             console_echo(0);
@@ -1073,11 +1071,11 @@ handle_nlip(uint8_t byte)
             insert_char(&input->line[cur], CONSOLE_NLIP_PKT_START2);
         } else {
             nlip_state = 0;
+            handled = g_console_ignore_non_nlip;
         }
         break;
     case NLIP_DATA_START1:
         if (byte == CONSOLE_NLIP_DATA_START2) {
-            handled = 1;
             nlip_state = NLIP_DATA_START2;
             /* Disable echo to not flood the UART */
             console_echo(0);
@@ -1085,15 +1083,17 @@ handle_nlip(uint8_t byte)
             insert_char(&input->line[cur], CONSOLE_NLIP_DATA_START2);
         } else {
             nlip_state = 0;
+            handled = g_console_ignore_non_nlip;
         }
         break;
     default:
         if (byte == CONSOLE_NLIP_DATA_START1) {
-            handled = 1;
             nlip_state = NLIP_DATA_START1;
         } else if (byte == CONSOLE_NLIP_PKT_START1) {
-            handled = 1;
             nlip_state = NLIP_PKT_START1;
+        } else {
+            /* For old code compatibility end of lines characters pass through */
+            handled = g_console_ignore_non_nlip && byte != '\r' && byte != '\n';
         }
         break;
     }
@@ -1147,7 +1147,7 @@ console_handle_char(uint8_t byte)
     }
     input = current_line_ev->ev_arg;
 
-    if (handle_nlip(byte) || g_console_ignore_non_nlip) {
+    if (handle_nlip(byte)) {
         return 0;
     }
 
