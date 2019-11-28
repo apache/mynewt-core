@@ -34,11 +34,15 @@ static struct shell_cmd tcs34725_shell_cmd_struct = {
     .sc_cmd_func = tcs34725_shell_cmd
 };
 
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+static struct sensor_itf g_sensor_itf;
+#else
 static struct sensor_itf g_sensor_itf = {
     .si_type = MYNEWT_VAL(TCS34725_SHELL_ITF_TYPE),
     .si_num = MYNEWT_VAL(TCS34725_SHELL_ITF_NUM),
     .si_addr = MYNEWT_VAL(TCS34725_SHELL_ITF_ADDR)
 };
+#endif
 
 static int
 tcs34725_shell_err_too_many_args(char *cmd_name)
@@ -491,11 +495,38 @@ tcs34725_shell_cmd(int argc, char **argv)
     return tcs34725_shell_err_unknown_arg(argv[1]);
 }
 
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+
+struct tcs34725 tcs34725_raw;
+
+static const struct bus_i2c_node_cfg tcs34725_raw_cfg = {
+    .node_cfg = {
+        .bus_name = MYNEWT_VAL(TCS34725_SHELL_ITF_BUS),
+    },
+    .addr = MYNEWT_VAL(TCS34725_SHELL_ITF_ADDR),
+    .freq = 400,
+};
+
+#endif
+
 int
 tcs34725_shell_init(void)
 {
     int rc;
 
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    struct os_dev *dev = NULL;
+
+    g_sensor_itf.si_dev = (struct os_dev *)&tcs34725_raw;
+    rc = bus_i2c_node_create("tcs34725_raw", &tcs34725_raw.i2c_node,
+                             &tcs34725_raw_cfg, &g_sensor_itf);
+    if (rc == 0) {
+        dev = os_dev_open("tcs34725_raw", 0, NULL);
+    }
+    if (rc != 0 || dev == NULL) {
+        console_printf("Failed to create tcs34725_raw device\n");
+    }
+#endif
     rc = shell_cmd_register(&tcs34725_shell_cmd_struct);
     SYSINIT_PANIC_ASSERT(rc == 0);
 
