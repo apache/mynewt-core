@@ -383,13 +383,22 @@ static struct sensor_itf i2c_0_itf_tsl2591 = {
 };
 #endif
 
-#if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(TCS34725_OFB)
+#if MYNEWT_VAL(TCS34725_OFB)
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+struct bus_i2c_node_cfg tcs34725_i2c_cfg = {
+    .node_cfg.bus_name = MYNEWT_VAL(TCS34725_OFB_I2C_BUS),
+    .addr = MYNEWT_VAL(TCS34725_OFB_I2C_ADDR),
+    .freq = 400,
+};
+static struct sensor_itf i2c_0_itf_tcs;
+#elif MYNEWT_VAL(I2C_0)
 static struct sensor_itf i2c_0_itf_tcs = {
     .si_type = SENSOR_ITF_I2C,
     .si_num  = 0,
     /* HW I2C address for the TCS34725 */
     .si_addr = 0x29
 };
+#endif
 #endif
 
 #if MYNEWT_VAL(I2C_0) && MYNEWT_VAL(MS5837_OFB)
@@ -1819,12 +1828,21 @@ sensor_dev_create(void)
 #endif
 
 #if MYNEWT_VAL(TCS34725_OFB)
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    rc = tcs34725_create_i2c_sensor_dev(&tcs34725.i2c_node, "tcs34725_0",
+                                        &tcs34725_i2c_cfg, &i2c_0_itf_tcs);
+    assert(rc == 0);
+
+    rc = config_tcs34725_sensor();
+    assert(rc == 0);
+#else
     rc = os_dev_create((struct os_dev *) &tcs34725, "tcs34725_0",
       OS_DEV_INIT_PRIMARY, 0, tcs34725_init, (void *)&i2c_0_itf_tcs);
     assert(rc == 0);
 
     rc = config_tcs34725_sensor();
     assert(rc == 0);
+#endif
 #endif
 
 #if MYNEWT_VAL(BME280_OFB)

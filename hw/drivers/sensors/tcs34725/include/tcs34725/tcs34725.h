@@ -47,7 +47,11 @@ struct tcs34725_cfg {
 };
 
 struct tcs34725 {
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+    struct bus_i2c_node i2c_node;
+#else
     struct os_dev dev;
+#endif
     struct sensor sensor;
     struct tcs34725_cfg cfg;
     os_time_t last_read_time;
@@ -212,6 +216,22 @@ tcs34725_get_rawdata(struct sensor_itf *itf, uint16_t *r, uint16_t *g,
 int
 tcs34725_get_int_limits(struct sensor_itf *itf, uint16_t *low, uint16_t *high);
 
+#if MYNEWT_VAL(BUS_DRIVER_PRESENT)
+
+/**
+ * Create I2C bus node for TCS34725 sensor
+ *
+ * @param node        Bus node
+ * @param name        Device name
+ * @param i2c_cfg     I2C node configuration
+ * @param sensor_itf  Sensors interface
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int tcs34725_create_i2c_sensor_dev(struct bus_i2c_node *node, const char *name,
+                                   const struct bus_i2c_node_cfg *i2c_cfg,
+                                   struct sensor_itf *sensor_itf);
+#endif
 
 #ifdef __cplusplus
 }
