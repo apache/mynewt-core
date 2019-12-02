@@ -27,11 +27,8 @@
 #  - RESET set if target should be reset when attaching
 #  - NO_GDB set if we should not start gdb to debug
 #
-. $CORE_PATH/hw/scripts/openocd.sh
+. $CORE_PATH/hw/scripts/stlink.sh
 
 FILE_NAME=$BIN_BASENAME.elf
-CFG="-s $BSP_PATH -f b-l072z-lrwan1.cfg"
-# Exit openocd when gdb detaches.
-EXTRA_JTAG_CMD="$EXTRA_JTAG_CMD; stm32l0.cpu configure -event gdb-detach {if {[stm32l0.cpu curstate] eq \"halted\"} resume;shutdown}"
 
-openocd_debug
+stlink_debug
