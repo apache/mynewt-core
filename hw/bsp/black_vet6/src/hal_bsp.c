@@ -29,7 +29,7 @@
 #include "trng/trng.h"
 #include "trng_stm32/trng_stm32.h"
 #endif
-#if MYNEWT_VAL(UART_0)
+#if MYNEWT_VAL(UART_0) || MYNEWT_VAL(UART_1) || MYNEWT_VAL(UART_2)
 #include "uart/uart.h"
 #include "uart_hal/uart_hal.h"
 #endif
