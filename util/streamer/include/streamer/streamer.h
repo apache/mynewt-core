@@ -20,6 +20,8 @@
 #ifndef H_STREAMER_
 #define H_STREAMER_
 
+#include <stdarg.h>
+
 #include "os/mynewt.h"
 
 struct streamer;
@@ -28,7 +30,7 @@ typedef int streamer_write_fn(struct streamer *streamer,
                               const void *src, size_t len);
 
 typedef int streamer_vprintf_fn(struct streamer *streamer,
-                                const char *fmt, va_list ap); 
+                                const char *fmt, va_list ap);
 
 struct streamer_cfg {
     streamer_write_fn *write_cb;
