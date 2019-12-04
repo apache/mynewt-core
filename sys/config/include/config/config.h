@@ -355,6 +355,28 @@ char *conf_str_from_bytes(void *vp, int vp_len, char *buf, int buf_len);
 #define CONF_VALUE_SET(str, type, val)                                  \
     conf_value_from_str((str), (type), &(val), sizeof(val))
 
+/**
+ * @brief Locks the config package.
+ *
+ * If another task tries to read or write a setting while the config package is
+ * locked, the operation will block until the package is unlocked.  The locking
+ * task is permitted to read and write settings as usual.  A call to
+ * `conf_lock()` should always be followed by `conf_unlock()`.
+ *
+ * Typical usage of the config API does not require manual locking.
+ * This function is only needed for unusual use cases such as temporarily
+ * changing the destination medium for an isolated series of writes.
+ */
+void conf_lock(void);
+
+/**
+ * @brief Unlocks the config package.
+ *
+ * This function reverts the effects of the `conf_lock()` function.  Typical
+ * usage of the config API does not require manual locking.
+ */
+void conf_unlock(void);
+
 #ifdef __cplusplus
 }
 #endif

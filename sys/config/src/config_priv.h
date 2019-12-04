@@ -27,12 +27,6 @@ extern "C" {
 int conf_cli_register(void);
 int conf_mgmt_register(void);
 
-/*
- * Lock config subsystem.
- */
-void conf_lock(void);
-void conf_unlock(void);
-
 struct mgmt_cbuf;
 int conf_line_parse(char *buf, char **namep, char **valp);
 int conf_line_make(char *dst, int dlen, const char *name, const char *val);
