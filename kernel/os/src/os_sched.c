@@ -77,12 +77,12 @@ os_sched_ctx_sw_hook(struct os_task *next_t)
     uint32_t ticks;
 
 #if MYNEWT_VAL(OS_CTX_SW_STACK_CHECK)
-    os_stack_t *top;
+    os_stack_t *stack;
     int i;
 
-    top = g_current_task->t_stacktop - g_current_task->t_stacksize;
+    stack = g_current_task->t_stackbottom;
     for (i = 0; i < MYNEWT_VAL(OS_CTX_SW_STACK_GUARD); i++) {
-        assert(top[i] == OS_STACK_PATTERN);
+        assert(stack[i] == OS_STACK_PATTERN);
     }
 #endif
     next_t->t_ctx_sw_cnt++;
