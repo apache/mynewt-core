@@ -38,6 +38,10 @@ syscfg.defs:
         description: 'Specifies path to ED25519 private key PEM file'
         value: ''
 
+    USER_AES_SLOT:
+        description: 'Specifies AES key slot for OTP user data encryption and decryption'
+        value: -1
+
 syscfg.defs.BUS_DRIVER_PRESENT:
     BSP_FLASH_SPI_NAME:
         description: 'SPIFLASH device name'
