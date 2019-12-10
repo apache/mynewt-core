@@ -200,14 +200,26 @@ nrf_timer_set_ocmp(struct nrf51_hal_timer *bsptimer, uint32_t expiry)
         delta_t = (int32_t)(expiry - temp);
 
         /*
-         * The nrf documentation states that you must set the output
-         * compare to 2 greater than the counter to guarantee an interrupt.
-         * Since the counter can tick once while we check, we make sure
-         * it is greater than 2.
+         * The nRF51xxx documentation states that COMPARE event is guaranteed
+         * only if value written to CC register is at least 2 greater than the
+         * current counter value. We also need to account for possible extra
+         * tick during calculations so effectively any delta less than 3 needs
+         * to be handled differently. TICK event is used to have interrupt on
+         * each subsequent tick so we won't miss any and in case we detected
+         * mentioned extra tick during calculations, interrupt is triggered
+         * immediately. Delta 0 or less means we should always fire immediately.
          */
-        if (delta_t < 3) {
+        if (delta_t < 1) {
+            rtctimer->INTENCLR = RTC_INTENCLR_TICK_Msk;
             NVIC_SetPendingIRQ(bsptimer->tmr_irq_num);
-        } else  {
+        } else if (delta_t < 3) {
+            rtctimer->INTENSET = RTC_INTENSET_TICK_Msk;
+            if (rtctimer->COUNTER != cntr) {
+                NVIC_SetPendingIRQ(bsptimer->tmr_irq_num);
+            }
+        } else {
+            rtctimer->INTENCLR = RTC_INTENCLR_TICK_Msk;
+
             if (delta_t < (1UL << 24)) {
                 rtctimer->CC[NRF_RTC_TIMER_CC_INT] = expiry & 0x00ffffff;
             } else {
@@ -252,6 +264,7 @@ static void
 nrf_rtc_disable_ocmp(NRF_RTC_Type *rtctimer)
 {
     rtctimer->INTENCLR = NRF_TIMER_INT_MASK(NRF_RTC_TIMER_CC_INT);
+    rtctimer->INTENCLR = RTC_INTENCLR_TICK_Msk;
 }
 
 static uint32_t
@@ -310,7 +323,6 @@ hal_timer_read_bsptimer(struct nrf51_hal_timer *bsptimer)
 static void
 hal_timer_chk_queue(struct nrf51_hal_timer *bsptimer)
 {
-    int32_t delta;
     uint32_t tcntr;
     uint32_t ctx;
     struct hal_timer *timer;
@@ -318,17 +330,12 @@ hal_timer_chk_queue(struct nrf51_hal_timer *bsptimer)
     /* disable interrupts */
     __HAL_DISABLE_INTERRUPTS(ctx);
     while ((timer = TAILQ_FIRST(&bsptimer->hal_timer_q)) != NULL) {
-        if (bsptimer->tmr_16bit) {
+        if (bsptimer->tmr_16bit || bsptimer->tmr_rtc) {
             tcntr = hal_timer_read_bsptimer(bsptimer);
-            delta = 0;
-        } else if (bsptimer->tmr_rtc) {
-            tcntr = hal_timer_read_bsptimer(bsptimer);
-            delta = -3;
         } else {
             tcntr = nrf_read_timer_cntr(bsptimer->tmr_reg);
-            delta = 0;
         }
-        if ((int32_t)(tcntr - timer->expiry) >= delta) {
+        if ((int32_t)(tcntr - timer->expiry) >= 0) {
             TAILQ_REMOVE(&bsptimer->hal_timer_q, timer, link);
             timer->link.tqe_prev = NULL;
             timer->cb_func(timer->cb_arg);
@@ -418,6 +425,7 @@ hal_rtc_timer_irq_handler(struct nrf51_hal_timer *bsptimer)
 {
     uint32_t overflow;
     uint32_t compare;
+    uint32_t tick;
     NRF_RTC_Type *rtctimer;
 
     os_trace_isr_enter();
@@ -427,6 +435,11 @@ hal_rtc_timer_irq_handler(struct nrf51_hal_timer *bsptimer)
     compare = rtctimer->EVENTS_COMPARE[NRF_RTC_TIMER_CC_INT];
     if (compare) {
        rtctimer->EVENTS_COMPARE[NRF_RTC_TIMER_CC_INT] = 0;
+    }
+
+    tick = rtctimer->EVENTS_TICK;
+    if (tick) {
+        rtctimer->EVENTS_TICK = 0;
     }
 
     overflow = rtctimer->EVENTS_OVRFLW;
