@@ -533,9 +533,9 @@ bus_node_unlock(struct os_dev *node)
     if (err == OS_OK || err == OS_NOT_STARTED) {
         return 0;
     }
-    // Anything else is assertable (or if no asserts, return error)
+    /* Anything else is assertable (or if no asserts, return error) */
     assert(0);
-    return -1;
+    return err;
 }
 
 os_time_t

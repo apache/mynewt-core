@@ -172,7 +172,7 @@ stm32_resolve_spi_irq(SPI_HandleTypeDef *hspi)
 #endif
     default:
         assert(0);
-        return 0;
+        return SPI1_IRQn;
     }
 }
 
