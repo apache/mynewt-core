@@ -117,22 +117,23 @@ shell_conf_command(int argc, char **argv)
         }
         console_printf("%s", val);
         return 0;
-    } else {
-        if (!strcmp(name, "dump")) {
-            if (!val || !strcmp(val, "running")) {
-                conf_dump_running();
-            }
+    } else if (!strcmp(name, "delete")) {
+        name = val;
+        val = "";
+    } else if (!strcmp(name, "dump")) {
+        if (!val || !strcmp(val, "running")) {
+            conf_dump_running();
+        }
 #if MYNEWT_VAL(CONFIG_CLI_DEBUG)
-            if (val && !strcmp(val, "saved")) {
-                conf_dump_saved();
-            }
+        if (val && !strcmp(val, "saved")) {
+            conf_dump_saved();
+        }
 #endif
+        return 0;
+    } else {
+        if (!strcmp(name, "save")) {
+            conf_save();
             return 0;
-        } else {
-            if (!strcmp(name, "save")) {
-                conf_save();
-                return 0;
-            }
         }
     }
     if (!val) {
