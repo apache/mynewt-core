@@ -29,3 +29,6 @@ pkg.keywords:
 pkg.deps:
     - "@apache-mynewt-core/hw/drivers/flash/enc_flash"
     - "@apache-mynewt-core/hw/drivers/crypto"
+
+pkg.restrictions:
+    - "CRYPTO"
