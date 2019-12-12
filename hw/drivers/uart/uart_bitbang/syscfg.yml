@@ -28,5 +28,5 @@ syscfg.defs:
         value: -1
 
 syscfg.restrictions:
-    - UARTBB_0_PIN_TX >= 0 && UARTBB_0_PIN_RX >= 0
+    - UARTBB_0_PIN_TX >= 0
     - CONSOLE_UART_BAUD <= 19200
