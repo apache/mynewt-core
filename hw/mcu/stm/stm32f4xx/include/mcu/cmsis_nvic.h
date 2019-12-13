@@ -11,6 +11,8 @@
 
 #if defined(STM32F401xE) || defined(STM32F407xx)
  #define MCU_NUM_PERIPH_VECTORS 82
+#elif defined(STM32F411xE)
+ #define MCU_NUM_PERIPH_VECTORS 86
 #elif defined(STM32F427xx) || defined(STM32F429xx) || defined(STM32F439xx)
  #define MCU_NUM_PERIPH_VECTORS 91
 #elif defined(STM32F413xx)
