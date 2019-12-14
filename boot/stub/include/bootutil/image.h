@@ -36,6 +36,7 @@ struct flash_area;
 #define IMAGE_MAGIC_V1              0x96f3b83c
 #define IMAGE_MAGIC_NONE            0xffffffff
 #define IMAGE_TLV_INFO_MAGIC        0x6907
+#define IMAGE_PROT_TLV_INFO_MAGIC   0x6908
 
 #define IMAGE_HEADER_SIZE           32
 
