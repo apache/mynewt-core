@@ -48,6 +48,7 @@ struct stats_hdr {
     int s_map_cnt;
 #endif
     STAILQ_ENTRY(stats_hdr) s_next;
+    uint8_t data[0];
 };
 
 /**
@@ -59,6 +60,7 @@ struct stats_persisted_hdr {
     struct stats_hdr sp_hdr;
     struct os_callout sp_persist_timer;
     os_time_t sp_persist_delay;
+    uint8_t data[0];
 };
 
 #define STATS_SECT_DECL(__name)             \

@@ -81,13 +81,9 @@ struct stats_registry_list g_stats_registry =
     STAILQ_HEAD_INITIALIZER(g_stats_registry);
 
 static size_t
-stats_offset(const struct stats_hdr *hdr)
+stats_data_offset(const struct stats_hdr *hdr)
 {
-    if (hdr->s_flags & STATS_HDR_F_PERSIST) {
-        return sizeof (struct stats_persisted_hdr);
-    } else {
-        return sizeof (struct stats_hdr);
-    }
+    return (uintptr_t)stats_data_ro(hdr) - (uintptr_t)hdr;
 }
 
 size_t
@@ -96,13 +92,24 @@ stats_size(const struct stats_hdr *hdr)
     return hdr->s_cnt * hdr->s_size;
 }
 
-void *
-stats_data(const struct stats_hdr *hdr)
+const void *
+stats_data_ro(const struct stats_hdr *hdr)
 {
-    size_t offset;
+    if (hdr->s_flags & STATS_HDR_F_PERSIST) {
+        return &((const struct stats_persisted_hdr *)hdr)->data[0];
+    } else {
+        return &hdr->data[0];
+    }
+}
 
-    offset = stats_offset(hdr);
-    return (uint8_t *)hdr + offset;
+void *
+stats_data_rw(struct stats_hdr *hdr)
+{
+    if (hdr->s_flags & STATS_HDR_F_PERSIST) {
+        return &((struct stats_persisted_hdr *)hdr)->data[0];
+    } else {
+        return &hdr->data[0];
+    }
 }
 
 static int
@@ -197,7 +204,7 @@ stats_walk(struct stats_hdr *hdr, stats_walk_func_t walk_func, void *arg)
     int i;
 #endif
 
-    start = stats_offset(hdr);
+    start = stats_data_offset(hdr);
     cur = start;
     end = start + stats_size(hdr);
 
@@ -292,10 +299,7 @@ int
 stats_init(struct stats_hdr *shdr, uint8_t size, uint8_t cnt,
         const struct stats_name_map *map, uint8_t map_cnt)
 {
-    size_t offset;
-
-    offset = stats_offset(shdr);
-    memset((uint8_t *)shdr + offset, 0, size * cnt);
+    memset(stats_data_rw(shdr), 0, size * cnt);
 
     shdr->s_size = size;
     shdr->s_cnt = cnt;

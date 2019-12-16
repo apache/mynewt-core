@@ -47,7 +47,17 @@ size_t stats_size(const struct stats_hdr *hdr);
  *
  * @param hdr                   The stat group to pull data from.
  */
-void *stats_data(const struct stats_hdr *hdr);
+const void *stats_data_ro(const struct stats_hdr *hdr);
+
+/**
+ * @brief Retrieves the address of the first stat in the specified group.
+ *
+ * This is the same as stats_data_ro() except it returns non-const pointer
+ * so parameter specifying stat group is also non-const.
+ *
+ * @param hdr                   The stat group to pull data from.
+ */
+void *stats_data_rw(struct stats_hdr *hdr);
 
 /**
  * @brief Writes the specified stat group to sys/config.

@@ -61,10 +61,10 @@ static void
 stats_conf_serialize(const struct stats_hdr *hdr, void *buf)
 {
     size_t rawlen;
-    void *data;
+    const void *data;
 
     rawlen = stats_size(hdr);
-    data = stats_data(hdr);
+    data = stats_data_ro(hdr);
 
     conf_str_from_bytes(data, rawlen, buf, MYNEWT_VAL(STATS_PERSIST_BUF_SIZE));
 }
@@ -96,8 +96,8 @@ stats_conf_set(int argc, char **argv, char *val)
         hdr = stats_group_find(argv[0]);
         if (hdr != NULL) {
             size = stats_size(hdr);
-            data = stats_data(hdr);
-            
+            data = stats_data_rw(hdr);
+
             memset(data, 0, size);
             base64_decode_maxlen(val, data, size);
 

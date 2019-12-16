@@ -347,7 +347,7 @@ char *conf_str_from_value(enum conf_type type, void *vp, char *buf,
  *
  * @return 0 on success, non-zero on failure.
  */
-char *conf_str_from_bytes(void *vp, int vp_len, char *buf, int buf_len);
+char *conf_str_from_bytes(const void *vp, int vp_len, char *buf, int buf_len);
 
 /**
  * Convert a string into a value of type

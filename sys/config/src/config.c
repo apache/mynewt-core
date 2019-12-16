@@ -258,7 +258,7 @@ conf_str_from_value(enum conf_type type, void *vp, char *buf, int buf_len)
 }
 
 char *
-conf_str_from_bytes(void *vp, int vp_len, char *buf, int buf_len)
+conf_str_from_bytes(const void *vp, int vp_len, char *buf, int buf_len)
 {
     if (BASE64_ENCODE_SIZE(vp_len) > buf_len) {
         return NULL;
