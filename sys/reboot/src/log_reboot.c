@@ -33,8 +33,6 @@
 #include "tinycbor/cbor_buf_writer.h"
 
 uint16_t reboot_cnt;
-static char reboot_cnt_str[12];
-static char log_reboot_written_str[12];
 static int8_t log_reboot_written;
 
 static char *reboot_conf_get(int argc, char **argv, char *buf, int max_len);
@@ -346,12 +344,10 @@ reboot_conf_get(int argc, char **argv, char *buf, int max_len)
 {
     if (argc == 1) {
         if (!strcmp(argv[0], "reboot_cnt")) {
-            return conf_str_from_value(CONF_INT16, &reboot_cnt,
-                                       reboot_cnt_str, sizeof reboot_cnt_str);
+            return conf_str_from_value(CONF_INT16, &reboot_cnt, buf, max_len);
         } else if (!strcmp(argv[0], "written")) {
             return conf_str_from_value(CONF_BOOL, &log_reboot_written,
-                                       log_reboot_written_str,
-                                       sizeof log_reboot_written_str);
+                                       buf, max_len);
         }
     }
     return NULL;
@@ -375,9 +371,14 @@ static int
 reboot_conf_export(void (*func)(char *name, char *val),
                    enum conf_export_tgt tgt)
 {
+    char str[12];
+
     if (tgt == CONF_EXPORT_SHOW) {
-        func("reboot/reboot_cnt", reboot_cnt_str);
-        func("reboot/written", log_reboot_written_str);
+        func("reboot/reboot_cnt",
+             conf_str_from_value(CONF_INT16, &reboot_cnt, str, sizeof str));
+        func("reboot/written",
+             conf_str_from_value(CONF_BOOL, &log_reboot_written, str,
+                                 sizeof str));
     }
     return 0;
 }
