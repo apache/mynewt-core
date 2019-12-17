@@ -34,27 +34,34 @@ struct aes_128_data {
 static bool
 nrf52_crypto_ecb_start(const struct aes_128_data *crypto_data)
 {
-    int ctr = 0x100000;
-    bool rc = true;
+    bool rc;
+    uint32_t end;
+    uint32_t err;
 
+    /* Just to be sure, always stop ECB and clear END/ERROR registers */
+    NRF_ECB->TASKS_STOPECB = 1;
+    NRF_ECB->EVENTS_ENDECB = 0;
+    NRF_ECB->EVENTS_ERRORECB = 0;
+
+    /* Set the data pointer and start ECB */
     NRF_ECB->ECBDATAPTR = (uint32_t)crypto_data;
     NRF_ECB->TASKS_STARTECB = 1;
 
-    while (ctr-- > 0) {
-        if (NRF_ECB->EVENTS_ENDECB) {
-            break;
-        }
-        if (NRF_ECB->EVENTS_ERRORECB) {
-            NRF_ECB->TASKS_STOPECB = 1;
-            rc = false;
+    while (1) {
+        end = NRF_ECB->EVENTS_ENDECB;
+        err = NRF_ECB->EVENTS_ERRORECB;
+        if (end || err) {
+            if (err) {
+                rc = false;
+            } else {
+                rc = true;
+            }
             break;
         }
     }
-    if (ctr == 0) {
-        NRF_ECB->TASKS_STOPECB = 1;
-    }
-    NRF_ECB->EVENTS_ENDECB = 0;
-    NRF_ECB->EVENTS_ERRORECB = 0;
+
+    /* While not necessary in all cases, stop ECB just as a precaution */
+    NRF_ECB->TASKS_STOPECB = 1;
 
     return rc;
 }
@@ -69,6 +76,8 @@ nrf52_crypto_encrypt_ecb(struct crypto_dev *crypto, const uint8_t *key,
 
     os_mutex_pend(&gmtx, OS_TIMEOUT_NEVER);
 
+    crypto->in_use = true;
+
     memcpy(crypto_data.key, key, AES_128_KEY_LEN);
 
     i = 0;
@@ -80,9 +89,13 @@ nrf52_crypto_encrypt_ecb(struct crypto_dev *crypto, const uint8_t *key,
 
         memcpy(crypto_data.plain, &inbuf[i], len);
 
-        /* XXX might sleep for a tick and try again? */
-        if (nrf52_crypto_ecb_start(&crypto_data) == false) {
-            break;
+        while (nrf52_crypto_ecb_start(&crypto_data) == false) {
+            /*
+             * If this fails it means that the AES engine was used causing the
+             * operation to abort. Just try again as the upper layer code does
+             * not seem to handle errors well. This condition should be
+             * temporary.
+             */
         }
 
         memcpy(&outbuf[i], crypto_data.cipher, len);
@@ -91,6 +104,8 @@ nrf52_crypto_encrypt_ecb(struct crypto_dev *crypto, const uint8_t *key,
         remain -= len;
         len = remain;
     }
+
+    crypto->in_use = false;
 
     os_mutex_release(&gmtx);
 

@@ -414,3 +414,9 @@ crypto_has_support(struct crypto_dev *crypto, uint8_t op, uint16_t algo,
     assert(crypto->interface.has_support);
     return crypto->interface.has_support(crypto, op, algo, mode, keylen);
 }
+
+bool
+crypto_in_use(struct crypto_dev *crypto)
+{
+    return crypto->in_use;
+}
