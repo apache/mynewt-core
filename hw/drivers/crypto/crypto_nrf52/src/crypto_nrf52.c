@@ -76,7 +76,7 @@ nrf52_crypto_encrypt_ecb(struct crypto_dev *crypto, const uint8_t *key,
 
     os_mutex_pend(&gmtx, OS_TIMEOUT_NEVER);
 
-    crypto->in_use = 1;
+    crypto->in_use = true;
 
     memcpy(crypto_data.key, key, AES_128_KEY_LEN);
 
@@ -105,7 +105,7 @@ nrf52_crypto_encrypt_ecb(struct crypto_dev *crypto, const uint8_t *key,
         len = remain;
     }
 
-    crypto->in_use = 0;
+    crypto->in_use = false;
 
     os_mutex_release(&gmtx);
 

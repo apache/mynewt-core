@@ -91,7 +91,7 @@ struct crypto_interface {
 struct crypto_dev {
     struct os_dev dev;
     struct crypto_interface interface;
-    int in_use;
+    bool in_use;
 };
 
 struct crypto_iovec {
@@ -204,10 +204,10 @@ bool crypto_has_support(struct crypto_dev *crypto, uint8_t op, uint16_t algo,
  *
  * @param crypto   OS device
  *
- * @return 0: crypto not in use 1: crypto in use
+ * @return true: crypto not in use, false otherwise
  *
  */
-int crypto_in_use(struct crypto_dev *crypto);
+bool crypto_in_use(struct crypto_dev *crypto);
 
 /*
  * AES helpers
