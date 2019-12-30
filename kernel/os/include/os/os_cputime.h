@@ -88,9 +88,9 @@ extern struct os_cputime_data g_os_cputime;
 #define CPUTIME_LT(__t1, __t2) ((int32_t)   ((__t1) - (__t2)) < 0)
 /** evaluates to true if t1 is after t2 in time */
 #define CPUTIME_GT(__t1, __t2) ((int32_t)   ((__t1) - (__t2)) > 0)
-/** evaluates to true if t1 is after t2 in time */
-#define CPUTIME_GEQ(__t1, __t2) ((int32_t)  ((__t1) - (__t2)) >= 0)
 /** evaluates to true if t1 is on or after t2 in time */
+#define CPUTIME_GEQ(__t1, __t2) ((int32_t)  ((__t1) - (__t2)) >= 0)
+/** evaluates to true if t1 is on or before t2 in time */
 #define CPUTIME_LEQ(__t1, __t2) ((int32_t)  ((__t1) - (__t2)) <= 0)
 
 /**
