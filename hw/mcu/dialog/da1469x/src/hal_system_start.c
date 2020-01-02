@@ -86,7 +86,7 @@ boot_custom_start(uintptr_t flash_base, struct boot_rsp *rsp)
     const struct flash_area *fap;
     uint32_t off;
     uint16_t len;
-    uint8_t type;
+    uint16_t type;
     uint8_t buf[8];
     uint8_t key;
     uint32_t nonce[2];
