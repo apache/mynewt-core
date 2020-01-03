@@ -36,7 +36,24 @@ static coap_packet_t oc_c_request[1];
 static bool
 dispatch_coap_request(void)
 {
-    int response_length = oc_rep_finalize();
+    int response_length;
+
+    response_length = oc_rep_finalize();
+    if (response_length == -1) {
+        /* A return of -1 indicates some cbor error */
+        os_mbuf_free_chain(oc_c_rsp);
+        oc_c_rsp = NULL;
+        if (!oc_c_transaction) {
+            if (oc_c_message) {
+                os_mbuf_free_chain(oc_c_message);
+                oc_c_message = NULL;
+            }
+        } else {
+            coap_clear_transaction(oc_c_transaction);
+            oc_c_transaction = NULL;
+        }
+        return false;
+    }
 
     if (response_length) {
         oc_c_request->payload_m = oc_c_rsp;
