@@ -17,16 +17,15 @@
 
 language: go
 
+dist: bionic
 _addons: &addon_conf
   apt:
-    sources:
-      - ubuntu-toolchain-r-test
     packages:
-      - gcc-7-multilib
+      - gcc-8-multilib
       - linux-libc-dev:i386
 
 go:
-  - "1.12"
+  - "1.13"
 
 git:
   depth: false
@@ -34,57 +33,57 @@ git:
 matrix:
   include:
     # RAT Report
-    - os: linux
-      language: python
-      python:
-        - "3.5"
-      env:
-        - TEST=RAT
-        - DEBUG=1
+    #- os: linux
+    #  language: python
+    #  python:
+    #    - "3.5"
+    #  env:
+    #    - TEST=RAT
+    #    - DEBUG=1
 
     # newt build <targets>
-    - os: linux
-      env:
-        - TEST=BUILD_TARGETS
-        - VM_AMOUNT=4
-        - TARGET_SET=1
-    - os: linux
-      env:
-        - TEST=BUILD_TARGETS
-        - VM_AMOUNT=4
-        - TARGET_SET=2
-    - os: linux
-      env:
-        - TEST=BUILD_TARGETS
-        - VM_AMOUNT=4
-        - TARGET_SET=3
-    - os: linux
-      env:
-        - TEST=BUILD_TARGETS
-        - VM_AMOUNT=4
-        - TARGET_SET=4
+    #- os: linux
+    #  env:
+    #    - TEST=BUILD_TARGETS
+    #    - VM_AMOUNT=4
+    #    - TARGET_SET=1
+    #- os: linux
+    #  env:
+    #    - TEST=BUILD_TARGETS
+    #    - VM_AMOUNT=4
+    #    - TARGET_SET=2
+    #- os: linux
+    #  env:
+    #    - TEST=BUILD_TARGETS
+    #    - VM_AMOUNT=4
+    #    - TARGET_SET=3
+    #- os: linux
+    #  env:
+    #    - TEST=BUILD_TARGETS
+    #    - VM_AMOUNT=4
+    #    - TARGET_SET=4
 
     # newt build <blinky-for-BSP>
-    - os: linux
-      env:
-        - TEST=BUILD_BLINKY
-        - VM_AMOUNT=4
-        - TARGET_SET=1
-    - os: linux
-      env:
-        - TEST=BUILD_BLINKY
-        - VM_AMOUNT=4
-        - TARGET_SET=2
-    - os: linux
-      env:
-        - TEST=BUILD_BLINKY
-        - VM_AMOUNT=4
-        - TARGET_SET=3
-    - os: linux
-      env:
-        - TEST=BUILD_BLINKY
-        - VM_AMOUNT=4
-        - TARGET_SET=4
+    #- os: linux
+    #  env:
+    #    - TEST=BUILD_BLINKY
+    #    - VM_AMOUNT=4
+    #    - TARGET_SET=1
+    #- os: linux
+    #  env:
+    #    - TEST=BUILD_BLINKY
+    #    - VM_AMOUNT=4
+    #    - TARGET_SET=2
+    #- os: linux
+    #  env:
+    #    - TEST=BUILD_BLINKY
+    #    - VM_AMOUNT=4
+    #    - TARGET_SET=3
+    #- os: linux
+    #  env:
+    #    - TEST=BUILD_BLINKY
+    #    - VM_AMOUNT=4
+    #    - TARGET_SET=4
 
     # newt test all (Linux)
     - os: linux
@@ -107,29 +106,29 @@ matrix:
         - TARGET_SET=3
 
     # newt test all (osx)
-    - os: osx
-      osx_image: xcode9.2
-      env:
-        - TEST=TEST_ALL
-        - VM_AMOUNT=3
-        - TARGET_SET=1
-    - os: osx
-      osx_image: xcode9.2
-      env:
-        - TEST=TEST_ALL
-        - VM_AMOUNT=3
-        - TARGET_SET=2
-    - os: osx
-      osx_image: xcode9.2
-      env:
-        - TEST=TEST_ALL
-        - VM_AMOUNT=3
-        - TARGET_SET=3
-    - os: windows
-      env:
-        - TEST=BUILD_TARGETS_WINDOWS
-        - VM_AMOUNT=1
-        - TARGET_SET=1
+    #- os: osx
+    #  osx_image: xcode9.2
+    #  env:
+    #    - TEST=TEST_ALL
+    #    - VM_AMOUNT=3
+    #    - TARGET_SET=1
+    #- os: osx
+    #  osx_image: xcode9.2
+    #  env:
+    #    - TEST=TEST_ALL
+    #    - VM_AMOUNT=3
+    #    - TARGET_SET=2
+    #- os: osx
+    #  osx_image: xcode9.2
+    #  env:
+    #    - TEST=TEST_ALL
+    #    - VM_AMOUNT=3
+    #    - TARGET_SET=3
+    #- os: windows
+    #  env:
+    #    - TEST=BUILD_TARGETS_WINDOWS
+    #    - VM_AMOUNT=1
+    #    - TARGET_SET=1
 
 before_install:
   - printenv
@@ -137,7 +136,7 @@ before_install:
   - if [ "${TEST}" != "RAT" ]; then go version; fi
 
 install:
-  - git clone https://github.com/JuulLabs-OSS/mynewt-travis-ci $HOME/ci
+  - git clone --branch add-test-all-debug --depth=1 https://github.com/utzig/mynewt-travis-ci $HOME/ci
   - chmod +x $HOME/ci/*.sh
   - |
     if [ "${TEST}" == "RAT" ]; then
@@ -155,7 +154,7 @@ before_script:
       cp -R $HOME/ci/mynewt-core-project.yml project.yml
       mkdir -p targets
       cp -R $HOME/ci/mynewt-core-targets targets
-      newt install
+      newt upgrade
       # pass in the number of target sets
       $HOME/ci/prepare_test.sh $VM_AMOUNT
     fi
@@ -165,8 +164,7 @@ script:
   # might have extra dependencies hard to provide, non-common toolchains, etc
   # NOTE: "native" is here to avoid having to install gcc-multilib
   - export IGNORED_BSPS="ci40 embarc_emsk hifive1 native-armv7 native-mips
-                         pic32mx470_6lp_clicker pic32mz2048_wi-fire sensorhub
-                         native"
+                         pic32mx470_6lp_clicker pic32mz2048_wi-fire native"
   - |
     if [ "${TEST}" != "RAT" ]; then
       $HOME/ci/run_test.sh
