@@ -33,6 +33,10 @@ syscfg.defs:
         description: 'Timer 0'
         value:  1
 
+    ETH_0:
+        description: 'Ethernet driver for LwIP'
+        value: 0
+
 syscfg.vals:
     REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG
     CONFIG_FCB_FLASH_AREA: FLASH_AREA_NFFS
