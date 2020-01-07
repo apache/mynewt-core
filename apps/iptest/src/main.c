@@ -396,18 +396,6 @@ main(int argc, char **argv)
     mcu_sim_parse_args(argc, argv);
 #endif
 
-#ifndef ARCH_sim
-    {
-        /*
-         * XXX set mac address when using STM32 ethernet XXX
-         * XXX move this somewhere else XXX
-         */
-        static uint8_t mac[6]= { 0, 1, 1, 2, 2, 3 };
-        int stm32_eth_set_hwaddr(uint8_t *addr);
-        stm32_eth_set_hwaddr(mac);
-    }
-#endif
-
     sysinit();
 
     console_printf("iptest\n");
