@@ -26,6 +26,11 @@
 #include <uart_hal/uart_hal.h>
 #endif
 
+#if MYNEWT_VAL(ETH_0)
+#include <stm32_eth/stm32_eth.h>
+#include <stm32_eth/stm32_eth_cfg.h>
+#endif
+
 #if MYNEWT_VAL(TRNG)
 #include "trng/trng.h"
 #include "trng_stm32/trng_stm32.h"
@@ -116,6 +121,41 @@ static const struct stm32_uart_cfg uart_cfg[UART_CNT] = {
         .suc_pin_af = GPIO_AF7_USART3,
         .suc_irqn = USART3_IRQn
     }
+};
+#endif
+
+#if MYNEWT_VAL(ETH_0)
+static const struct stm32_eth_cfg eth_cfg = {
+    /*
+     * PORTA
+     *   PA1 - ETH_RMII_REF_CLK
+     *   PA2 - ETH_RMII_MDIO
+     *   PA7 - ETH_RMII_CRS_DV
+     */
+    .sec_port_mask[0] = (1 << 1) | (1 << 2) | (1 << 7),
+
+    /*
+     * PORTB
+     *   PB13 - ETH_RMII_TXD1
+     */
+    .sec_port_mask[1] = (1 << 13),
+
+    /*
+     * PORTC
+     *   PC1 - ETH_RMII_MDC
+     *   PC4 - ETH_RMII_RXD0
+     *   PC5 - ETH_RMII_RXD1
+     */
+    .sec_port_mask[2] = (1 << 1) | (1 << 4) | (1 << 5),
+
+    /*
+     * PORTG
+     *   PG11 - ETH_RMII_TXEN
+     *   PG13 - ETH_RMII_TXD0
+     */
+    .sec_port_mask[6] = (1 << 11) | (1 << 13),
+    .sec_phy_type = LAN_8742_RMII,
+    .sec_phy_irq = -1
 };
 #endif
 
@@ -235,6 +275,15 @@ hal_bsp_init(void)
 #if MYNEWT_VAL(SPI_0_SLAVE)
     rc = hal_spi_init(0, (void *)&os_bsp_spi0s_cfg, HAL_SPI_TYPE_SLAVE);
     assert(rc == 0);
+#endif
+
+#if (MYNEWT_VAL(OS_CPUTIME_TIMER_NUM) >= 0)
+    rc = os_cputime_init(MYNEWT_VAL(OS_CPUTIME_FREQ));
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(ETH_0)
+    stm32_eth_init(&eth_cfg);
 #endif
 }
 
