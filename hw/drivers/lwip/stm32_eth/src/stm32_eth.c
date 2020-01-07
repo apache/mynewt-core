@@ -510,12 +510,8 @@ stm32_eth_open(void)
          */
         return -1;
     }
-    if (ses->st_eth.Init.MACAddr == NULL) {
-        /*
-         * MAC address not set
-         */
-        return -1;
-    }
+
+    stm32_eth_set_hwaddr(MYNEWT_VAL(STM32_MAC_ADDR));
 
     if (ses->cfg->sec_phy_irq >= 0) {
         rc = hal_gpio_irq_init(ses->cfg->sec_phy_irq, stm32_phy_isr, ses,
