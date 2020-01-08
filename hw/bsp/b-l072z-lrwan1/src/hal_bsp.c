@@ -46,6 +46,37 @@
 
 #include "bsp/bsp.h"
 
+#define TIMER_0_TIM TIM2
+#define TIMER_1_TIM TIM3
+#define TIMER_2_TIM TIM21
+
+#if MYNEWT_VAL(LORA_NODE)
+
+/*
+ * Sanity checks for when LoRaWAN is enabled.
+ */
+
+#if   ((MYNEWT_VAL(LORA_MAC_TIMER_NUM) == 0) && !MYNEWT_VAL(TIMER_0))
+#error "TIMER_0 is used by LoRa and has to be enabled"
+#elif ((MYNEWT_VAL(LORA_MAC_TIMER_NUM) == 1) && !MYNEWT_VAL(TIMER_1))
+#error "TIMER_1 is used by LoRa and has to be enabled"
+#elif ((MYNEWT_VAL(LORA_MAC_TIMER_NUM) == 2) && !MYNEWT_VAL(TIMER_2))
+#error "TIMER_2 is used by LoRa and has to be enabled"
+#endif
+
+#if   ((MYNEWT_VAL(SX1276_SPI_IDX) == 0) && !MYNEWT_VAL(SPI_0_MASTER))
+#error "SPI_0_MASTER is used by LoRa and has to be enabled"
+#elif ((MYNEWT_VAL(SX1276_SPI_IDX) == 1) && !MYNEWT_VAL(SPI_1_MASTER))
+#error "SPI_1_MASTER is used by LoRa and has to be enabled"
+#endif
+
+#if (MYNEWT_VAL(OS_CPUTIME_TIMER_NUM) < 0)
+#error "OS_CPUTIME_TIMER_NUM is used by LoRa and has to be enabled"
+#endif
+
+#endif /* MYNEWT_VAL(LORA_NODE) */
+
+
 #if MYNEWT_VAL(UART_0)
 static struct uart_dev hal_uart0;
 
@@ -79,7 +110,11 @@ static struct stm32_hal_i2c_cfg i2c_cfg0 = {
 
 #if MYNEWT_VAL(SPI_1_SLAVE) || MYNEWT_VAL(SPI_1_MASTER)
 struct stm32_hal_spi_cfg spi1_cfg = {
+#if (MYNEWT_VAL(LORA_NODE) && (MYNEWT_VAL(SX1276_SPI_IDX) == 1))
+    .ss_pin   = MYNEWT_VAL(SX1276_SPI_CS_PIN),
+#else
     .ss_pin   = MCU_GPIO_PORTB(12),
+#endif
     .sck_pin  = MCU_GPIO_PORTB(13),
     .miso_pin = MCU_GPIO_PORTB(14),
     .mosi_pin = MCU_GPIO_PORTB(15),
@@ -128,15 +163,15 @@ hal_bsp_init(void)
 #endif
 
 #if MYNEWT_VAL(TIMER_0)
-    hal_timer_init(0, TIM2);
+    hal_timer_init(0, TIMER_0_TIM);
 #endif
 
 #if MYNEWT_VAL(TIMER_1)
-    hal_timer_init(1, TIM3);
+    hal_timer_init(1, TIMER_1_TIM);
 #endif
 
 #if MYNEWT_VAL(TIMER_2)
-    hal_timer_init(2, TIM21);
+    hal_timer_init(2, TIMER_2_TIM);
 #endif
 
 #if (MYNEWT_VAL(OS_CPUTIME_TIMER_NUM) >= 0)
@@ -182,15 +217,15 @@ void lora_bsp_enable_mac_timer(void)
     /* Turn on the LoRa MAC timer. This function is automatically
      * called by the LoRa stack when exiting low power mode.*/
     #if MYNEWT_VAL(LORA_MAC_TIMER_NUM) == 0
-        #define TIMER_INIT  TIM2
+        #define LORA_TIM  TIMER_0_TIM
     #elif MYNEWT_VAL(LORA_MAC_TIMER_NUM) == 1
-        #define TIMER_INIT  TIM3
+        #define LORA_TIM  TIMER_1_TIM
     #elif MYNEWT_VAL(LORA_MAC_TIMER_NUM) == 2
-        #define TIMER_INIT  TIM21
+        #define LORA_TIM  TIMER_2_TIM
     #else
         #error "Invalid LORA_MAC_TIMER_NUM"
     #endif
 
-    hal_timer_init(MYNEWT_VAL(LORA_MAC_TIMER_NUM), TIMER_INIT);
+    hal_timer_init(MYNEWT_VAL(LORA_MAC_TIMER_NUM), LORA_TIM);
 }
 #endif
