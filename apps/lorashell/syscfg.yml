@@ -27,3 +27,4 @@ syscfg.vals:
     STATS_NAMES: 1
     SHELL_TASK: 1
     LORA_NODE_CLI: 1
+    SHELL_CMD_ARGC_MAX: 16
