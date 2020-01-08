@@ -126,12 +126,6 @@ err:
     return (rc);
 }
 
-os_stack_t *
-os_task_stacktop_get(struct os_task *t)
-{
-    return &t->t_stackbottom[t->t_stacksize];
-}
-
 int
 os_task_remove(struct os_task *t)
 {

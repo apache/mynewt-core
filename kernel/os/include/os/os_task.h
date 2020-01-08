@@ -172,15 +172,6 @@ int os_task_init(struct os_task *, const char *, os_task_func_t, void *,
 int os_task_remove(struct os_task *t);
 
 /**
- * Return pointer to top of stack for given task
- *
- * @param t The task
- *
- * @return pointer to top of stack
- */
-os_stack_t *os_task_stacktop_get(struct os_task *t);
-
-/**
  * Return the number of tasks initialized.
  *
  * @return number of tasks initialized
