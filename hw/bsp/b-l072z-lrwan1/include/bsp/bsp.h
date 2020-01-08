@@ -43,6 +43,16 @@ extern uint8_t _ram_start;
 #define LED_3           MCU_GPIO_PORTB(7)  /* LD4 - red */
 #define LED_4           MCU_GPIO_PORTA(5)  /* LD2 - green */
 
+/* SX1276 pins */
+#define SX1276_DIO0         MCU_GPIO_PORTB(4)
+#define SX1276_DIO1         MCU_GPIO_PORTB(1)
+#define SX1276_DIO2         MCU_GPIO_PORTB(0)
+#define SX1276_DIO3         MCU_GPIO_PORTC(13)
+#define SX1276_DIO4         MCU_GPIO_PORTA(5)
+/* NOTE: DIO5 is not used, but must be defined */
+#define SX1276_DIO5         (-1)
+#define SX1276_NRESET       MCU_GPIO_PORTC(0)
+
 /* UART */
 #define UART_CNT 1
 
