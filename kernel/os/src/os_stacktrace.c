@@ -78,16 +78,14 @@ os_stacktrace(uintptr_t sp)
     uintptr_t addr;
     uintptr_t end;
     struct os_task *t;
-    os_stack_t *stacktop;
 
     sp &= ~(sizeof(uintptr_t) - 1);
     end = sp + OS_STACK_DEPTH_MAX;
 
     if (g_os_started && g_current_task) {
         t = g_current_task;
-        stacktop = os_task_stacktop_get(t);
-        if (end > (uintptr_t)stacktop) {
-            end = (uintptr_t)stacktop;
+        if (sp > (uintptr_t)t->t_stacktop && end > (uintptr_t)t->t_stacktop) {
+            end = (uintptr_t)t->t_stacktop;
         }
     } else {
         t = NULL;
