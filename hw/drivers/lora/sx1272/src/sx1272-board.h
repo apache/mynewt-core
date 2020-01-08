@@ -16,9 +16,6 @@ Maintainer: Miguel Luis and Gregory Cristian
 #define __SX1272_ARCH_H__
 
 #define RADIO_SPI_IDX           MYNEWT_VAL(SX1272_SPI_IDX)
-#if RADIO_SPI_IDX != 0
-#error "Invalid SX1272_SPI_IDX value. Must be zero"
-#endif
 
 #if MYNEWT_VAL(SX1272_SPI_CS_PIN) == -1
 #error "Must set SX1272_SPI_CS_PIN pin (spi slave select)"
