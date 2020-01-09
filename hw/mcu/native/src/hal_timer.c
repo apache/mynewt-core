@@ -26,7 +26,7 @@
  * For native cpu implementation.
  */
 static uint8_t native_timer_task_started;
-#define NATIVE_TIMER_STACK_SIZE   (1024)
+#define NATIVE_TIMER_STACK_SIZE   OS_STACK_ALIGN(1024)
 static os_stack_t native_timer_stack[NATIVE_TIMER_STACK_SIZE];
 static struct os_task native_timer_task_struct;
 static struct os_eventq native_timer_evq;

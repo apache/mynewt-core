@@ -161,7 +161,7 @@ taskpool_alloc(os_task_func_t task_handler, uint8_t prio,
 
     rc = os_task_init(&entry->task, entry->name, taskpool_wrapper,
                       entry, prio, OS_WAIT_FOREVER, entry->stack,
-                      MYNEWT_VAL(TASKPOOL_STACK_SIZE));
+                      OS_STACK_ALIGN(MYNEWT_VAL(TASKPOOL_STACK_SIZE)));
     if (rc != 0) {
         taskpool_lock();
         entry->state = TASKPOOL_STATE_UNUSED;
