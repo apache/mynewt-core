@@ -23,7 +23,7 @@
 #define RTCB_READ_TASK_PRIO     10
 #define RTCB_WRITE_TASK_PRIO    11
 
-#define RTCB_STACK_SIZE         1024
+#define RTCB_STACK_SIZE         OS_STACK_ALIGN(1024)
 
 static void rtcb_evcb_read(struct os_event *ev);
 static void rtcb_evcb_write(struct os_event *ev);
