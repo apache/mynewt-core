@@ -207,10 +207,6 @@ hal_spi_init_master(const struct da1469x_hal_spi *spi,
         mcu_gpio_set_pin_function(cfg->pin_di, MCU_GPIO_MODE_INPUT,
                                   spi->hw->spi_di_func);
     }
-    if (cfg->pin_ss >= 0) {
-        mcu_gpio_set_pin_function(cfg->pin_ss, MCU_GPIO_MODE_INPUT,
-                                  spi->hw->spi_ss_func);
-    }
 
     spi->hw->regs->SPI_CLEAR_INT_REG = 0;
     spi->hw->regs->SPI_CTRL_REG = 0;
