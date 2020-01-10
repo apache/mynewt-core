@@ -21,7 +21,7 @@
 /**
  * @addtogroup OSKernel
  * @{
- *   @defgroup OSGeneral
+ *   @defgroup OSMalloc
  *   @{
  */
 
@@ -78,6 +78,6 @@ void *os_realloc(void *ptr, size_t size);
 
 
 /**
- *   @} OSGeneral
+ *   @} OSMalloc
  * @} OS Kernel
  */
