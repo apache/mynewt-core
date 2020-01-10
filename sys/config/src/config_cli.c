@@ -83,6 +83,48 @@ conf_dump_saved(void)
 }
 #endif
 
+#if (MYNEWT_VAL(CONFIG_CLI_RW) & 2) == 2
+static void
+shell_concat_vals(char *buf, int num_vals, char **vals)
+{
+    int remlen;
+    int len;
+    int off;
+    int i;
+
+    off = 0;
+    remlen = CONF_MAX_VAL_LEN;
+
+    for (i = 0; i < num_vals; i++) {
+        /* Add a space before all tokens except the first. */
+        if (i > 0) {
+            buf[off] = ' ';
+            off++;
+            remlen--;
+        }
+
+        /* Write as much of the next token as can fit. */
+        len = strlen(vals[i]);
+        if (len > remlen) {
+            len = remlen;
+        }
+
+        memcpy(&buf[off], vals[i], len);
+        off += len;
+        remlen -= len;
+
+        /* Stop writing tokens if we're out of room or if there is only room
+         * for one more space.
+         */
+        if (remlen <= 1) {
+            break;
+        }
+    }
+
+    buf[off] = '\0';
+}
+#endif
+
 static int
 shell_conf_command(int argc, char **argv)
 {
@@ -93,21 +135,28 @@ shell_conf_command(int argc, char **argv)
     int rc;
 
     (void)rc;
-    switch (argc) {
+
 #if (MYNEWT_VAL(CONFIG_CLI_RW) & 1) == 1
-    case 2:
+    /* Read. */
+    if (argc == 2) {
         name = argv[1];
-        break;
+    }
 #endif
+
 #if (MYNEWT_VAL(CONFIG_CLI_RW) & 2) == 2
-    case 3:
+    /* Write. */
+    if (argc >= 3) {
         name = argv[1];
-        val = argv[2];
-        break;
+
+        shell_concat_vals(tmp_buf, argc - 2, &argv[2]);
+        val = tmp_buf;
+    }
 #endif
-    default:
+
+    if (name == NULL) {
         goto err;
     }
+
     if (!strcmp(name, "commit")) {
         rc = conf_commit(val);
         if (rc) {
