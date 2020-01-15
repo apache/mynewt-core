@@ -24,6 +24,3 @@ struct log_info g_log_info;
 const struct log_handler log_console_handler;
 const struct log_handler log_cbmem_handler;
 const struct log_handler log_fcb_handler;
-#if MYNEWT_VAL(LOG_FCB_SLOT1)
-const struct log_handler log_fcb_slot1_handler;
-#endif

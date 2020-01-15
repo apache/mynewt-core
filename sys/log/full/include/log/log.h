@@ -132,14 +132,7 @@ struct log_handler {
 /* Flags used to indicate type of data in reserved payload*/
 #define LOG_FLAGS_IMG_HASH (1 << 0)
 
-#if MYNEWT_VAL(LOG_VERSION) == 2
-struct log_entry_hdr {
-    int64_t ue_ts;
-    uint32_t ue_index;
-    uint8_t ue_module;
-    uint8_t ue_level;
-}__attribute__((__packed__));
-#elif MYNEWT_VAL(LOG_VERSION) == 3
+#if MYNEWT_VAL(LOG_VERSION) == 3
 struct log_entry_hdr {
     int64_t ue_ts;
     uint32_t ue_index;
@@ -723,7 +716,6 @@ log_set_rotate_notify_cb(struct log *log, log_notify_rotate_cb *cb);
 int log_set_watermark(struct log *log, uint32_t index);
 #endif
 
-#if MYNEWT_VAL(LOG_VERSION) > 2
 /**
  * Fill log current image hash
  *
@@ -733,7 +725,6 @@ int log_set_watermark(struct log *log, uint32_t index);
  */
 int
 log_fill_current_img_hash(struct log_entry_hdr *hdr);
-#endif
 
 /* Handler exports */
 #if MYNEWT_VAL(LOG_CONSOLE)

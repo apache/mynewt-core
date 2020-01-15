@@ -18,7 +18,6 @@
 
 syscfg.vals:
     LOG_FCB: 1
-    LOG_VERSION: 3
     MCU_FLASH_MIN_WRITE_SIZE: 1
 
     # The mbuf append tests allocate lots of mbufs; ensure no exhaustion.

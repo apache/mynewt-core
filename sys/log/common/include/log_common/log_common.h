@@ -30,8 +30,6 @@ extern "C" {
 struct log;
 
 #define LOG_VERSION_V3  3
-#define LOG_VERSION_V2  2
-#define LOG_VERSION_V1  1
 
 #define LOG_TYPE_STREAM  (0)
 #define LOG_TYPE_MEMORY  (1)
@@ -71,10 +69,8 @@ struct log;
 #define LOG_MODULE_MAX              (255)
 
 #define LOG_ETYPE_STRING         (0)
-#if MYNEWT_VAL(LOG_VERSION) > 2
 #define LOG_ETYPE_CBOR           (1)
 #define LOG_ETYPE_BINARY         (2)
-#endif
 
 /* UTC Timestamp for Jan 2016 00:00:00 */
 #define UTC01_01_2016    1451606400

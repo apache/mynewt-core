@@ -325,14 +325,12 @@ log_read_hdr_walk(struct log *log, struct log_offset *log_offset, const void *dp
         arg->read_success = 1;
     }
 
-#if MYNEWT_VAL(LOG_VERSION) > 2
     if (arg->hdr->ue_flags & LOG_FLAGS_IMG_HASH) {
         rc = log_fill_current_img_hash(arg->hdr);
         if (!rc || rc == SYS_ENOTSUP) {
             arg->read_success = 1;
         }
     }
-#endif
 
     /* Abort the walk; only one header needed. */
     return 1;
@@ -448,11 +446,9 @@ log_set_append_cb(struct log *log, log_append_cb *cb)
 uint16_t
 log_hdr_len(const struct log_entry_hdr *hdr)
 {
-#if MYNEWT_VAL(LOG_VERSION) > 2
     if (hdr->ue_flags & LOG_FLAGS_IMG_HASH) {
         return LOG_BASE_ENTRY_HDR_SIZE + LOG_IMG_HASHLEN;
     }
-#endif
 
     return LOG_BASE_ENTRY_HDR_SIZE;
 }
@@ -470,7 +466,6 @@ log_chk_type(uint8_t etype)
 
     rc = OS_OK;
 
-#if MYNEWT_VAL(LOG_VERSION) > 2
     switch(etype) {
         case LOG_ETYPE_STRING:
         case LOG_ETYPE_BINARY:
@@ -480,7 +475,6 @@ log_chk_type(uint8_t etype)
             rc = OS_ERROR;
             break;
     }
-#endif
 
     return rc;
 }
@@ -563,7 +557,6 @@ log_append_prepare(struct log *log, uint8_t module, uint8_t level,
     ue->ue_level = level;
     ue->ue_module = module;
     ue->ue_index = idx;
-#if MYNEWT_VAL(LOG_VERSION) > 2
     ue->ue_etype = etype;
     /* Clear flags before assigning */
     ue->ue_flags = 0;
@@ -572,9 +565,6 @@ log_append_prepare(struct log *log, uint8_t module, uint8_t level,
     if (rc == SYS_ENOTSUP) {
         rc = 0;
     }
-#endif
-#else
-    assert(etype == LOG_ETYPE_STRING);
 #endif
 
 err:
@@ -970,7 +960,6 @@ log_read_hdr(struct log *log, const void *dptr, struct log_entry_hdr *hdr)
         return SYS_EIO;
     }
 
-#if MYNEWT_VAL(LOG_VERSION) > 2
     if (hdr->ue_flags & LOG_FLAGS_IMG_HASH) {
         bytes_read = log_read(log, dptr, hdr->ue_imghash,
                               LOG_BASE_ENTRY_HDR_SIZE, LOG_IMG_HASHLEN);
@@ -978,7 +967,6 @@ log_read_hdr(struct log *log, const void *dptr, struct log_entry_hdr *hdr)
             return SYS_EIO;
         }
     }
-#endif
 
     return 0;
 }
@@ -1121,7 +1109,6 @@ log_set_max_entry_len(struct log *log, uint16_t max_entry_len)
     log->l_max_entry_len = max_entry_len;
 }
 
-#if MYNEWT_VAL(LOG_VERSION) > 2
 int
 log_fill_current_img_hash(struct log_entry_hdr *hdr)
 {
@@ -1135,4 +1122,3 @@ log_fill_current_img_hash(struct log_entry_hdr *hdr)
 
     return SYS_ENOTSUP;
 }
-#endif

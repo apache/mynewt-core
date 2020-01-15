@@ -20,6 +20,5 @@
 syscfg.vals:
     LOG_FCB: 1
     LOG_CLI: 1
-    LOG_VERSION: 3
     METRICS_CLI: 1
     SHELL_TASK: 1
