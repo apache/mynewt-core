@@ -33,6 +33,19 @@ git:
 
 matrix:
   include:
+    # Style checking
+    - os: linux
+      language: python
+      python:
+        - "3.5"
+      addons:
+        apt:
+          packages:
+            - "python3-pip"
+      env:
+        - TEST=STYLE
+        - DEBUG=1
+
     # RAT Report
     - os: linux
       language: python
@@ -134,7 +147,7 @@ matrix:
 before_install:
   - printenv
   - export GOPATH=$HOME/gopath
-  - if [ "${TEST}" != "RAT" ]; then go version; fi
+  - if [ "${TEST}" != "RAT" && "${TEST}" != "STYLE" ]; then go version; fi
 
 install:
   - git clone https://github.com/JuulLabs-OSS/mynewt-travis-ci $HOME/ci
@@ -142,13 +155,17 @@ install:
   - |
     if [ "${TEST}" == "RAT" ]; then
       pip install requests
+    elif [ "${TEST}" == "STYLE" ]; then
+      pip3 install requests
     else
       $HOME/ci/${TRAVIS_OS_NAME}_travis_install.sh
     fi
 
 before_script:
   - |
-    if [ "${TEST}" != "RAT" ]; then
+    if [ "${TEST}" == "STYLE" ]; then
+      $HOME/ci/install_uncrustify.sh
+    elif [ "${TEST}" != "RAT" ]; then
       newt version
       gcc --version
       if [ "${TEST}" != "TEST_ALL" ]; then arm-none-eabi-gcc --version; fi
@@ -168,10 +185,12 @@ script:
                          pic32mx470_6lp_clicker pic32mz2048_wi-fire sensorhub
                          native"
   - |
-    if [ "${TEST}" != "RAT" ]; then
-      $HOME/ci/run_test.sh
-    else
+    if [ "${TEST}" == "STYLE" ]; then
+      python3 $HOME/ci/check_style.py
+    elif [ "${TEST}" == "RAT" ]; then
       python $HOME/ci/check_license.py
+    else
+      $HOME/ci/run_test.sh
     fi
 
 cache:
