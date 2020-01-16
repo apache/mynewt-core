@@ -1,0 +1,10 @@
+# Skip those directories while doing style checks in the CI. Do not add '/' at
+# the beginning!
+
+apps/coremark
+crypto/mbedtls
+crypto/tinycrypt
+libc/baselibc
+net/ip/lwip_base
+net/lora/node/src/mac
+net/mqtt/eclipse
