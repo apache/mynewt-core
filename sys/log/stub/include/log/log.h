@@ -132,9 +132,6 @@ log_set_max_entry_len(struct log *log, uint16_t max_entry_len)
 extern const struct log_handler log_console_handler;
 extern const struct log_handler log_cbmem_handler;
 extern const struct log_handler log_fcb_handler;
-#if MYNEWT_VAL(LOG_FCB_SLOT1)
-extern const struct log_handler log_fcb_slot1_handler;
-#endif
 
 #if MYNEWT_VAL(LOG_CONSOLE)
 static inline struct log *

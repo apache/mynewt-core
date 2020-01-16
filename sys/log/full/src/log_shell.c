@@ -30,17 +30,12 @@
 
 #include "cbmem/cbmem.h"
 #include "log/log.h"
-#if MYNEWT_VAL(LOG_FCB_SLOT1)
-#include "log/log_fcb_slot1.h"
-#endif
 #include "shell/shell.h"
 #include "console/console.h"
 #include "base64/hex.h"
-#if MYNEWT_VAL(LOG_VERSION) > 2
 #include "tinycbor/cbor.h"
 #include "tinycbor/compilersupport_p.h"
 #include "log_cbor_reader/log_cbor_reader.h"
-#endif
 
 static int
 shell_log_dump_entry(struct log *log, struct log_offset *log_offset,
@@ -49,7 +44,6 @@ shell_log_dump_entry(struct log *log, struct log_offset *log_offset,
     char data[128 + 1];
     int dlen;
     int rc = 0;
-#if MYNEWT_VAL(LOG_VERSION) > 2
     struct CborParser cbor_parser;
     struct CborValue cbor_value;
     struct log_cbor_reader cbor_reader;
@@ -58,9 +52,6 @@ shell_log_dump_entry(struct log *log, struct log_offset *log_offset,
     int blksz;
     bool read_data = ueh->ue_etype != LOG_ETYPE_CBOR;
     bool read_hash = ueh->ue_flags & LOG_FLAGS_IMG_HASH;
-#else
-    bool read_data = true;
-#endif
 
     dlen = min(len, 128);
 
@@ -72,17 +63,12 @@ shell_log_dump_entry(struct log *log, struct log_offset *log_offset,
         data[rc] = 0;
     }
 
-#if MYNEWT_VAL(LOG_VERSION) > 2
     if (read_hash) {
         console_printf("[ih=0x%x%x%x%x]", ueh->ue_imghash[0], ueh->ue_imghash[1],
                        ueh->ue_imghash[2], ueh->ue_imghash[3]);
     }
     console_printf(" [%llu] ", ueh->ue_ts);
-#endif
 
-#if MYNEWT_VAL(LOG_VERSION) <= 2
-    console_write(data, strlen(data));
-#else
     switch (ueh->ue_etype) {
     case LOG_ETYPE_STRING:
         console_write(data, strlen(data));
@@ -105,7 +91,6 @@ shell_log_dump_entry(struct log *log, struct log_offset *log_offset,
             console_write("...", 3);
         }
     }
-#endif
 
     console_write("\n", 1);
     return 0;
@@ -163,40 +148,6 @@ err:
     return (rc);
 }
 
-#if MYNEWT_VAL(LOG_FCB_SLOT1)
-int
-shell_log_slot1_cmd(int argc, char **argv)
-{
-    const struct flash_area *fa;
-    int rc;
-
-    if (argc == 1) {
-        console_printf("slot1 state is: %s\n",
-                       log_fcb_slot1_is_locked() ? "locked" : "unlocked");
-    } else {
-        if (!strcasecmp(argv[1], "lock")) {
-            log_fcb_slot1_lock();
-            console_printf("slot1 locked\n");
-        } else if (!strcasecmp(argv[1], "unlock")) {
-            log_fcb_slot1_unlock();
-            console_printf("slot1 unlocked\n");
-        } else if (!strcasecmp(argv[1], "erase")) {
-            rc = flash_area_open(FLASH_AREA_IMAGE_1, &fa);
-            if (rc) {
-                return -1;
-            }
-
-            flash_area_erase(fa, 0, fa->fa_size);
-
-            console_printf("slot1 erased\n");
-        } else {
-            return -1;
-        }
-    }
-
-    return 0;
-}
-#endif
 
 #if MYNEWT_VAL(LOG_STORAGE_INFO)
 int

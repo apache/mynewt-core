@@ -30,20 +30,18 @@ pkg.deps:
     - "@apache-mynewt-core/sys/log/common"
     - "@apache-mynewt-core/util/cbmem"
 
-pkg.deps.'LOG_CLI && LOG_VERSION > 2':
-    - "@apache-mynewt-core/sys/log/util/log_cbor_reader"
-
 pkg.deps.LOG_FCB:
     - "@apache-mynewt-core/hw/hal"
     - "@apache-mynewt-core/fs/fcb"
 pkg.deps.LOG_FCB2:
     - "@apache-mynewt-core/fs/fcb2"
 pkg.deps.LOG_CLI:
+    - "@apache-mynewt-core/sys/log/util/log_cbor_reader"
     - "@apache-mynewt-core/sys/shell"
     - "@apache-mynewt-core/encoding/base64"
     - "@apache-mynewt-core/encoding/tinycbor"
 
-pkg.deps.'LOG_CONSOLE && LOG_VERSION > 2':
+pkg.deps.LOG_CONSOLE:
     - "@apache-mynewt-mcumgr/cborattr"
     - "@apache-mynewt-core/encoding/tinycbor"
 
@@ -66,6 +64,3 @@ pkg.req_apis.LOG_STATS:
 
 pkg.init:
     log_init: 'MYNEWT_VAL(LOG_SYSINIT_STAGE_MAIN)'
-
-pkg.init.LOG_FCB_SLOT1:
-    log_init_slot1: 'MYNEWT_VAL(LOG_SYSINIT_STAGE_SLOT1)'

@@ -17,7 +17,6 @@
 #
 
 syscfg.vals:
-    LOG_VERSION: 3
     LOG_FCB2: 1
     LOG_STORAGE_INFO: 1
     LOG_STORAGE_WATERMARK: 1

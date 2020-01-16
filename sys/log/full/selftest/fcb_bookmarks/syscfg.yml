@@ -17,6 +17,5 @@
 #
 
 syscfg.vals:
-    LOG_VERSION: 3
     LOG_FCB: 1
     LOG_FCB_BOOKMARKS: 1
