@@ -22,6 +22,7 @@
 #include "mcu/da1469x_pdc.h"
 #include "mcu/da1469x_prail.h"
 #include "mcu/da1469x_clock.h"
+#include "mcu/da1469x_trimv.h"
 #include <mcu/da1469x_otp.h>
 #include "mcu/mcu.h"
 #include "da1469x_priv.h"
@@ -88,6 +89,18 @@ SystemInit(void)
     NVIC_DisableIRQ(PDC_IRQn);
     NVIC_ClearPendingIRQ(PDC_IRQn);
 
+    /*
+     * We need to parse trim values from CS to apply them when each power domain
+     * is enabled so need to do this before any PD is acquired. Need to initialize
+     * OTP before that.
+     */
+    da1469x_otp_init();
+    da1469x_trimv_init_from_otp();
+    da1469x_pd_init();
+
+    /* PD_SYS is already running so let's acquire it to apply preferred settings */
+    da1469x_pd_acquire(MCU_PD_DOMAIN_SYS);
+
 #if MYNEWT_VAL(OS_SCHEDULING) && MYNEWT_VAL(MCU_DEEP_SLEEP)
     /* Make sure PD_TIM domain is always up for Timer2 to be running */
     da1469x_pd_acquire(MCU_PD_DOMAIN_TIM);
@@ -107,14 +120,9 @@ SystemInit(void)
     da1469x_pdc_ack(idx);
     g_mcu_pdc_combo_idx = idx;
 
-    CRG_TOP->PMU_CTRL_REG |= CRG_TOP_PMU_CTRL_REG_SYS_SLEEP_Msk;
-
     /* Enable cache retainability */
     CRG_TOP->PMU_CTRL_REG |= CRG_TOP_PMU_CTRL_REG_RETAIN_CACHE_Msk;
 #endif
-
-    /* initialize OTP and place in deep standby */
-    da1469x_otp_init();
 
     /* Initialize and configure power rails */
     da1469x_prail_initialize();

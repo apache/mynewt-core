@@ -19,6 +19,7 @@
 
 #include <assert.h>
 #include "mcu/da1469x_clock.h"
+#include "mcu/da1469x_pd.h"
 #include "mcu/da1469x_pdc.h"
 #include "mcu/da1469x_prail.h"
 #include "mcu/mcu.h"
@@ -65,17 +66,23 @@ da1469x_sleep(os_time_t ticks)
         return;
     }
 
+    /* PD_SYS will not be disabled here until we enter deep sleep, so don't wait */
+    da1469x_pd_release_nowait(MCU_PD_DOMAIN_SYS);
+
     mcu_gpio_enter_sleep();
     ret = da1469x_m33_sleep();
     mcu_gpio_exit_sleep();
     if (!ret) {
-        /* We were not sleeping, just return */
+        /* We were not sleeping, no need to apply PD_SYS settings again */
+        da1469x_pd_acquire_noconf(MCU_PD_DOMAIN_SYS);
         return;
     }
 
 #if MYNEWT_VAL(MCU_DCDC_ENABLE)
     da1469x_prail_dcdc_restore();
 #endif
+
+    da1469x_pd_acquire(MCU_PD_DOMAIN_SYS);
 
     /*
      * If PDC entry for "combo" wakeup is pending, but none of CMAC2SYS, WKUP
