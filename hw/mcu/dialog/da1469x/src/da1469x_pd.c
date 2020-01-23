@@ -40,8 +40,6 @@ static const struct da1469x_pd_desc g_da1469x_pd_desc[] = {
                             CRG_TOP_SYS_STAT_REG_SYS_IS_DOWN_Pos },
     [MCU_PD_DOMAIN_PER] = { CRG_TOP_PMU_CTRL_REG_PERIPH_SLEEP_Pos,
                             CRG_TOP_SYS_STAT_REG_PER_IS_DOWN_Pos },
-    [MCU_PD_DOMAIN_RAD] = { CRG_TOP_PMU_CTRL_REG_RADIO_SLEEP_Pos,
-                            CRG_TOP_SYS_STAT_REG_RAD_IS_DOWN_Pos},
     [MCU_PD_DOMAIN_TIM] = { CRG_TOP_PMU_CTRL_REG_TIM_SLEEP_Pos,
                             CRG_TOP_SYS_STAT_REG_TIM_IS_DOWN_Pos },
     [MCU_PD_DOMAIN_COM] = { CRG_TOP_PMU_CTRL_REG_COM_SLEEP_Pos,
