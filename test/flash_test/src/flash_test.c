@@ -224,6 +224,7 @@ flash_speed_test(int flash_dev, uint32_t addr, int sz, int move)
         if (rc) {
             console_printf("hal_flash_read(%d, 0x%x, %d) = %d\n",
               flash_dev, (unsigned int)addr + off, (unsigned int)sz, rc);
+            free(data_buf);
             return -1;
         }
         if (move) {
