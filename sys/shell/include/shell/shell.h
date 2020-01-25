@@ -88,7 +88,7 @@ struct shell_module {
 #if MYNEWT_VAL(SHELL_CMD_HELP)
 #define SHELL_HELP_(help_) (help_)
 #else
-#define SHELL_HELP_(help_)
+#define SHELL_HELP_(help_) NULL
 #endif
 
 /**
