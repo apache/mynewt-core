@@ -51,7 +51,7 @@
 /*
  * Max time to wait for interrupt.
  */
-#define LIS2DH12_MAX_INT_WAIT (4 * OS_TICKS_PER_SEC)
+#define LIS2DH12_MAX_INT_WAIT (1 * OS_TICKS_PER_SEC)
 
 static const struct lis2dh12_notif_cfg dflt_notif_cfg[] = {
     {
