@@ -515,6 +515,7 @@ hal_timer_stop(struct hal_timer *timer)
         return 0;
     }
 
+    reset = 0;
     tmr = timer->bsp_timer;
 
     __HAL_DISABLE_INTERRUPTS(primask);
