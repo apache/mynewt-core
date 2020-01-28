@@ -217,8 +217,8 @@ da1469x_pd_acquire_noconf(uint8_t pd)
     return da1469x_pd_acquire_internal(pd, false);
 }
 
-int
-da1469x_pd_release(uint8_t pd)
+static int
+da1469x_pd_release_internal(uint8_t pd, bool wait)
 {
     struct da1469x_pd_data *pdd;
     uint32_t primask;
@@ -237,8 +237,10 @@ da1469x_pd_release(uint8_t pd)
         bitmask = 1 << g_da1469x_pd_desc[pd].pmu_sleep_bit;
         CRG_TOP->PMU_CTRL_REG |= bitmask;
 
-        bitmask = 1 << g_da1469x_pd_desc[pd].stat_down_bit;
-        while ((CRG_TOP->SYS_STAT_REG & bitmask) == 0);
+        if (wait) {
+            bitmask = 1 << g_da1469x_pd_desc[pd].stat_down_bit;
+            while ((CRG_TOP->SYS_STAT_REG & bitmask) == 0);
+        }
 
         ret = 1;
     }
@@ -249,29 +251,13 @@ da1469x_pd_release(uint8_t pd)
 }
 
 int
+da1469x_pd_release(uint8_t pd)
+{
+    return da1469x_pd_release_internal(pd, true);
+}
+
+int
 da1469x_pd_release_nowait(uint8_t pd)
 {
-    struct da1469x_pd_data *pdd;
-    uint32_t primask;
-    uint32_t bitmask;
-    int ret = 0;
-
-    assert(pd < PD_COUNT);
-
-    pdd = &g_da1469x_pd_data[pd];
-
-    __HAL_DISABLE_INTERRUPTS(primask);
-
-    assert(pdd->refcnt > 0);
-
-    if (--pdd->refcnt == 0) {
-        bitmask = 1 << g_da1469x_pd_desc[pd].pmu_sleep_bit;
-        CRG_TOP->PMU_CTRL_REG |= bitmask;
-
-        ret = 1;
-    }
-
-    __HAL_ENABLE_INTERRUPTS(primask);
-
-    return ret;
+    return da1469x_pd_release_internal(pd, false);
 }
