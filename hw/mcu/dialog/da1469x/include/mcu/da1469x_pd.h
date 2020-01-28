@@ -28,13 +28,20 @@
 extern "C" {
 #endif
 
+/*
+ * Note: Make sure that controllable (i.e. those that can be acquired/released)
+ * power domains are listed before other domains. This allows to save space in
+ * control structures since non-controllable domains are not included there.
+ */
+
 /* Available (controllable) power domains */
 #define MCU_PD_DOMAIN_SYS           0
 #define MCU_PD_DOMAIN_PER           1
 #define MCU_PD_DOMAIN_TIM           2
 #define MCU_PD_DOMAIN_COM           3
-
-#define MCU_PD_DOMAIN_COUNT         4
+/* Remaining (non-controllable) power domains */
+#define MCU_PD_DOMAIN_AON           4
+#define MCU_PD_DOMAIN_RAD           5
 
 int da1469x_pd_init(void);
 int da1469x_pd_acquire(uint8_t pd);
