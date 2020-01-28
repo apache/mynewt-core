@@ -101,10 +101,10 @@ SystemInit(void)
     /* PD_SYS is already running so let's acquire it to apply preferred settings */
     da1469x_pd_acquire(MCU_PD_DOMAIN_SYS);
 
-#if MYNEWT_VAL(OS_SCHEDULING) && MYNEWT_VAL(MCU_DEEP_SLEEP)
-    /* Make sure PD_TIM domain is always up for Timer2 to be running */
+    /* We'll need PD_TIM for XTAL32M and also for os_tick so let's enable it now */
     da1469x_pd_acquire(MCU_PD_DOMAIN_TIM);
 
+#if MYNEWT_VAL(OS_SCHEDULING) && MYNEWT_VAL(MCU_DEEP_SLEEP)
     /* Allow Timer2 (os_tick) to wake up M33 from deep sleep */
     idx = da1469x_pdc_add(MCU_PDC_TRIGGER_TIMER2, MCU_PDC_MASTER_M33,
                           MCU_PDC_EN_XTAL);
