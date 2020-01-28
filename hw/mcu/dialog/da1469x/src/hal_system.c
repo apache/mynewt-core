@@ -86,8 +86,7 @@ hal_system_clock_start(void)
     /* Reset clock dividers to 0 */
     CRG_TOP->CLK_AMBA_REG &= ~(CRG_TOP_CLK_AMBA_REG_HCLK_DIV_Msk | CRG_TOP_CLK_AMBA_REG_PCLK_DIV_Msk);
 
-    /* Make sure PD_TIM is up since this is where XTAL32M state machine runs */
-    da1469x_pd_acquire(MCU_PD_DOMAIN_TIM);
+    /* PD_TIM is already started in SystemInit */
 
     /* Switch to XTAL32M and disable RC32M */
     da1469x_clock_sys_xtal32m_init();
