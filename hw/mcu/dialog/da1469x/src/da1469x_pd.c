@@ -38,6 +38,7 @@ struct da1469x_pd_data {
     uint32_t *trimv_words;
 };
 
+/* Only include controllable power domains here */
 static const struct da1469x_pd_desc g_da1469x_pd_desc[] = {
     [MCU_PD_DOMAIN_SYS] = { CRG_TOP_PMU_CTRL_REG_SYS_SLEEP_Pos,
                             CRG_TOP_SYS_STAT_REG_SYS_IS_DOWN_Pos },
@@ -126,6 +127,14 @@ static void
 da1469x_pd_apply_preferred(uint8_t pd)
 {
     switch (pd) {
+    case MCU_PD_DOMAIN_AON:
+        if (get_reg32(0x500000f8) == 0x00008800) {
+            set_reg32(0x500000f8, 0x00007700);
+        }
+        set_reg32_mask(0x50000050, 0x00001000, 0x00001020);
+        set_reg32(0x500000a4, 0x000000ca);
+        set_reg32_mask(0x50000064, 0x0003ffff, 0x041e6ef4);
+        break;
     case MCU_PD_DOMAIN_SYS:
         set_reg32_mask(0x50040400, 0x00000c00, 0x003f6a78);
         set_reg32_mask(0x50040454, 0x000003ff, 0x00000002);
@@ -143,17 +152,6 @@ da1469x_pd_apply_preferred(uint8_t pd)
     }
 }
 
-static void
-apply_preferred_pd_aon(void)
-{
-    if (get_reg32(0x500000f8) == 0x00008800) {
-        set_reg32(0x500000f8, 0x00007700);
-    }
-    set_reg32_mask(0x50000050, 0x00001000, 0x00001020);
-    set_reg32(0x500000a4, 0x000000ca);
-    set_reg32_mask(0x50000064, 0x0003ffff, 0x041e6ef4);
-}
-
 int
 da1469x_pd_init(void)
 {
@@ -161,7 +159,7 @@ da1469x_pd_init(void)
      * Apply now for always-on domain which, as name suggests, is always on so
      * need to do this only once.
      */
-    apply_preferred_pd_aon();
+    da1469x_pd_apply_preferred(MCU_PD_DOMAIN_AON);
 
     da1469x_pd_load_trimv(MCU_PD_DOMAIN_SYS, 1);
     da1469x_pd_load_trimv(MCU_PD_DOMAIN_COM, 2);
