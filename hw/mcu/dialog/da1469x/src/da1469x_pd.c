@@ -25,14 +25,17 @@
 #include "mcu/da1469x_trimv.h"
 #include "os/util.h"
 
+#define PD_COUNT    (ARRAY_SIZE(g_da1469x_pd_desc))
+
 struct da1469x_pd_desc {
     uint8_t pmu_sleep_bit;
     uint8_t stat_down_bit; /* up is +1 */
 };
 
-struct da1469x_pd_trimv {
-    uint8_t count;
-    uint32_t *words;
+struct da1469x_pd_data {
+    uint8_t refcnt;
+    uint8_t trimv_count;
+    uint32_t *trimv_words;
 };
 
 static const struct da1469x_pd_desc g_da1469x_pd_desc[] = {
@@ -46,51 +49,51 @@ static const struct da1469x_pd_desc g_da1469x_pd_desc[] = {
                             CRG_TOP_SYS_STAT_REG_COM_IS_DOWN_Pos},
 };
 
-static uint8_t g_da1469x_pd_refcnt[ ARRAY_SIZE(g_da1469x_pd_desc) ];
-static struct da1469x_pd_trimv g_da1469x_pd_trimv[ ARRAY_SIZE(g_da1469x_pd_desc) ];
+static struct da1469x_pd_data g_da1469x_pd_data[PD_COUNT];
 
 static void
 da1469x_pd_load_trimv(uint8_t pd, uint8_t group)
 {
-    struct da1469x_pd_trimv *tv;
+    struct da1469x_pd_data *pdd;
 
-    assert(pd < ARRAY_SIZE(g_da1469x_pd_desc));
+    assert(pd < PD_COUNT);
 
-    tv = &g_da1469x_pd_trimv[pd];
-    tv->count = da1469x_trimv_group_num_words_get(group);
-    if (tv->count == 0) {
+    pdd = &g_da1469x_pd_data[pd];
+    pdd->trimv_count = da1469x_trimv_group_num_words_get(group);
+    if (pdd->trimv_count == 0) {
         return;
     }
 
-    tv->words = calloc(tv->count, 4);
-    if (!tv->words) {
-        tv->count = 0;
+    pdd->trimv_words = calloc(pdd->trimv_count, 4);
+    if (!pdd->trimv_words) {
+        pdd->trimv_count = 0;
         assert(0);
         return;
     }
 
-    tv->count = da1469x_trimv_group_read(group, tv->words, tv->count);
-    tv->count /= 2;
+    pdd->trimv_count = da1469x_trimv_group_read(group, pdd->trimv_words,
+                                                pdd->trimv_count);
+    pdd->trimv_count /= 2;
 }
 
 static void
 da1469x_pd_apply_trimv(uint8_t pd)
 {
-    struct da1469x_pd_trimv *tv;
+    struct da1469x_pd_data *pdd;
     volatile uint32_t *reg;
     uint32_t val;
     int idx;
 
-    assert(pd < ARRAY_SIZE(g_da1469x_pd_desc));
+    assert(pd < PD_COUNT);
 
-    tv = &g_da1469x_pd_trimv[pd];
-    if (tv->count == 0) {
+    pdd = &g_da1469x_pd_data[pd];
+    if (pdd->trimv_count == 0) {
         return;
     }
 
-    for (idx = 0; idx < tv->count; idx++) {
-        reg = (void *)tv->words[idx * 2];
-        val = tv->words[idx * 2 + 1];
+    for (idx = 0; idx < pdd->trimv_count; idx++) {
+        reg = &pdd->trimv_words[idx * 2];
+        val = pdd->trimv_words[idx * 2 + 1];
         *reg = val;
     }
 }
@@ -171,18 +174,20 @@ da1469x_pd_init(void)
 static int
 da1469x_pd_acquire_internal(uint8_t pd, bool load)
 {
-    uint8_t *refcnt;
+    struct da1469x_pd_data *pdd;
     uint32_t primask;
     uint32_t bitmask;
     int ret = 0;
 
-    assert(pd < ARRAY_SIZE(g_da1469x_pd_desc));
-    refcnt = &g_da1469x_pd_refcnt[pd];
+    assert(pd < PD_COUNT);
+
+    pdd = &g_da1469x_pd_data[pd];
 
     __HAL_DISABLE_INTERRUPTS(primask);
 
-    assert(*refcnt < UINT8_MAX);
-    if ((*refcnt)++ == 0) {
+    assert(pdd->refcnt < UINT8_MAX);
+
+    if (pdd->refcnt++ == 0) {
         bitmask = 1 << g_da1469x_pd_desc[pd].pmu_sleep_bit;
         CRG_TOP->PMU_CTRL_REG &= ~bitmask;
 
@@ -217,18 +222,20 @@ da1469x_pd_acquire_noconf(uint8_t pd)
 int
 da1469x_pd_release(uint8_t pd)
 {
-    uint8_t *refcnt;
+    struct da1469x_pd_data *pdd;
     uint32_t primask;
     uint32_t bitmask;
     int ret = 0;
 
-    assert(pd < MCU_PD_DOMAIN_COUNT);
-    refcnt = &g_da1469x_pd_refcnt[pd];
+    assert(pd < PD_COUNT);
+
+    pdd = &g_da1469x_pd_data[pd];
 
     __HAL_DISABLE_INTERRUPTS(primask);
 
-    assert(*refcnt > 0);
-    if (--(*refcnt) == 0) {
+    assert(pdd->refcnt > 0);
+
+    if (--pdd->refcnt == 0) {
         bitmask = 1 << g_da1469x_pd_desc[pd].pmu_sleep_bit;
         CRG_TOP->PMU_CTRL_REG |= bitmask;
 
@@ -246,18 +253,20 @@ da1469x_pd_release(uint8_t pd)
 int
 da1469x_pd_release_nowait(uint8_t pd)
 {
-    uint8_t *refcnt;
+    struct da1469x_pd_data *pdd;
     uint32_t primask;
     uint32_t bitmask;
     int ret = 0;
 
-    assert(pd < MCU_PD_DOMAIN_COUNT);
-    refcnt = &g_da1469x_pd_refcnt[pd];
+    assert(pd < PD_COUNT);
+
+    pdd = &g_da1469x_pd_data[pd];
 
     __HAL_DISABLE_INTERRUPTS(primask);
 
-    assert(*refcnt > 0);
-    if (--(*refcnt) == 0) {
+    assert(pdd->refcnt > 0);
+
+    if (--pdd->refcnt == 0) {
         bitmask = 1 << g_da1469x_pd_desc[pd].pmu_sleep_bit;
         CRG_TOP->PMU_CTRL_REG |= bitmask;
 
