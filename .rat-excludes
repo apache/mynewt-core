@@ -15,6 +15,7 @@ uncrustify.cfg
 README.md
 .mailmap
 version.txt
+.style_ignored_dirs
 
 # unit tests executables
 bin
@@ -272,6 +273,7 @@ clock_config.h
 # CMSIS Cortex-M4, STM32f4 - BSD License.
 STM32F4xx
 STM32F4xx_HAL_Driver
+stm32f4xx
 
 # NXP SDK - BSD License.
 sdk-2.0-frdm-k64f_b160321
@@ -328,6 +330,7 @@ mqtt
 # CMSIS Cortex-M7, STM32f7 - BSD License.
 STM32F7xx
 STM32F7xx_HAL_Driver
+stm32f7xx
 
 # LORA - BSD License
 lora
@@ -389,6 +392,13 @@ stm32f1xx_hal_conf.h
 system_stm32f1xx.c
 startup_stm32f103xb.s
 
+# NUCLEO-F411RE BSP - BSD License
+startup_STM32F411.s
+
+# NUCLEO-WB55 BSP - BSD License
+startup_stm32wb55xx_cm4.s
+stm32wbxx_hal_conf.h
+
 # Microchip PIC32 SDK - BSD License
 p32mz2048efg100.h
 pic32_init_cache.S
@@ -429,6 +439,7 @@ apollo2.ld
 # CMSIS Cortex-M4, STM32f3 - BSD License.
 STM32F3xx
 STM32F3xx_HAL_Driver
+stm32f3xx
 
 # Nucleo-F303K8, Nucleo-F303RE - BSD License.
 system_stm32f3xx.c
