@@ -19,7 +19,7 @@
 
 syscfg.defs:
     STM32_FLASH_SIZE_KB:
-        description: 'Total flash size in KB.'
+        description: 'Total flash size in KB'
         value: 256
 
     UART_0:
@@ -40,6 +40,15 @@ syscfg.defs:
         description: 'Support for timer 2'
         value: 0
 
+    LSM303DLHC_ONB:
+        description: 'Onboard lsm303dlhc sensor'
+        value:  0
+
+    STM32F3DISCOVERY_SYSINIT_STAGE:
+        description: >
+            Sysinit stage for the STM32F3-Discovery BSP
+        value: 400
+
 syscfg.vals:
     REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG
     CONFIG_FCB_FLASH_AREA: FLASH_AREA_NFFS
@@ -59,3 +68,6 @@ syscfg.vals:
     STM32_CLOCK_APB2_DIVIDER: 'RCC_HCLK_DIV1'
     STM32_FLASH_LATENCY: 'FLASH_LATENCY_2'
     STM32_FLASH_PREFETCH_ENABLE: 1
+
+syscfg.restrictions:
+    - "!LSM303DLHC_ONB || I2C_0"

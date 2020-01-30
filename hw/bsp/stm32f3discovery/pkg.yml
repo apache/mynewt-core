@@ -41,3 +41,9 @@ pkg.deps.UART_0:
 
 pkg.deps.UART_1:
     - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
+
+pkg.deps.LSM303DLHC_ONB:
+    - "@apache-mynewt-core/hw/drivers/sensors/lsm303dlhc"
+
+pkg.init:
+    config_lsm303dlhc_sensor: 'MYNEWT_VAL(STM32F3DISCOVERY_SYSINIT_STAGE)'
