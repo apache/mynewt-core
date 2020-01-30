@@ -20,7 +20,7 @@
 syscfg.defs:
     STM32_FLASH_SIZE_KB:
         description: 'Total flash size in KB.'
-        value: 1024
+        value: 256
 
     UART_0:
         description: 'Whether to enable UART0'
@@ -49,7 +49,7 @@ syscfg.vals:
     BOOT_SERIAL_DETECT_PIN: 0  # USER button
     BOOT_SERIAL_DETECT_PIN_CFG: 'HAL_GPIO_PULL_NONE'
     BOOT_SERIAL_DETECT_PIN_VAL: 1
-    STM32_CLOCK_HSI: 0
+    STM32_CLOCK_HSI: 1
     STM32_CLOCK_HSE: 1
     STM32_CLOCK_HSE_BYPASS: 1
     STM32_CLOCK_PLL_MUL: 'RCC_PLL_MUL9'
