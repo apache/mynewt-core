@@ -34,7 +34,6 @@ pkg.deps:
     - "@apache-mynewt-core/sys/stats/full"
     - "@apache-mynewt-core/hw/sensor/creator"
     - "@apache-mynewt-core/sys/reboot"
-    - "@apache-mynewt-core/mgmt/smp/transport/ble"
     - "@apache-mynewt-core/sys/id"
     - "@apache-mynewt-core/mgmt/imgmgr"
     - "@apache-mynewt-core/test/flash_test"
@@ -44,6 +43,7 @@ pkg.deps.SENSOR_OIC:
    #- mgmt/oicmgr
 
 pkg.deps.SENSOR_BLE:
+    - "@apache-mynewt-core/mgmt/smp/transport/ble"
     - "@apache-mynewt-nimble/nimble/host"
     - "@apache-mynewt-nimble/nimble/host/services/gap"
     - "@apache-mynewt-nimble/nimble/host/services/gatt"
