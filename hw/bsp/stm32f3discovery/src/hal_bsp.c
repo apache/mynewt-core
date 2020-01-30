@@ -50,6 +50,19 @@
 #include "mcu/mcu.h"
 #include "os/os_cputime.h"
 
+#if MYNEWT_VAL(LSM303DLHC_ONB)
+#include "lsm303dlhc/lsm303dlhc.h"
+static struct lsm303dlhc lsm303dlhc;
+#endif
+
+#if MYNEWT_VAL(LSM303DLHC_ONB)
+static struct sensor_itf i2c_0_itf = {
+    .si_type = SENSOR_ITF_I2C,
+    .si_num = 0,
+    .si_addr = 0, /* sensor config function sets the addresses */
+};
+#endif
+
 #if MYNEWT_VAL(UART_0)
 static struct uart_dev hal_uart[1];
 
@@ -100,8 +113,8 @@ static struct stm32_hal_i2c_cfg i2c_cfg0 = {
     .hic_i2c = I2C1,
     .hic_rcc_reg = &RCC->APB1ENR,
     .hic_rcc_dev = RCC_APB1ENR_I2C1EN,
-    .hic_pin_sda = MCU_GPIO_PORTB(9),
-    .hic_pin_scl = MCU_GPIO_PORTB(8),
+    .hic_pin_sda = MCU_GPIO_PORTB(7),
+    .hic_pin_scl = MCU_GPIO_PORTB(6),
     .hic_pin_af = GPIO_AF4_I2C1,
     .hic_10bit = 0,
     .hic_timingr = 0x10420F13,    /* 100KHz at 8MHz of SysCoreClock */
@@ -155,6 +168,57 @@ hal_bsp_get_nvic_priority(int irq_num, uint32_t pri)
     return pri;
 }
 
+/**
+ * LSM303DLHC sensor default configuration
+ *
+ * @return 0 on success, non-zero on failure
+ */
+void
+config_lsm303dlhc_sensor(void)
+{
+#if MYNEWT_VAL(LSM303DLHC_ONB)
+    int rc;
+    struct os_dev *dev;
+    struct lsm303dlhc_cfg lsmcfg;
+
+    dev = (struct os_dev *) os_dev_open("lsm303dlhc_0", OS_TIMEOUT_NEVER, NULL);
+    assert(dev != NULL);
+
+    /* read once per sec.  API should take this value in ms. */
+    lsmcfg.accel_rate = LSM303DLHC_ACCEL_RATE_1;
+    lsmcfg.accel_range = LSM303DLHC_ACCEL_RANGE_2;
+    /* Device I2C addr for accelerometer */
+    lsmcfg.acc_addr = LSM303DLHC_ADDR_ACCEL;
+    /* Device I2C addr for magnetometer */
+    lsmcfg.mag_addr = LSM303DLHC_ADDR_MAG;
+    /* Set default mag gain to +/-1.3 gauss */
+    lsmcfg.mag_gain = LSM303DLHC_MAG_GAIN_1_3;
+    /* Set default mag sample rate to 15Hz */
+    lsmcfg.mag_rate = LSM303DLHC_MAG_RATE_15;
+
+    lsmcfg.mask = SENSOR_TYPE_ACCELEROMETER |
+                  SENSOR_TYPE_MAGNETIC_FIELD;
+
+    rc = lsm303dlhc_config((struct lsm303dlhc *)dev, &lsmcfg);
+    assert(rc == 0);
+
+    os_dev_close(dev);
+#endif
+}
+
+static void
+sensor_dev_create(void)
+{
+    int rc;
+    (void)rc;
+
+#if MYNEWT_VAL(LSM303DLHC_ONB)
+    rc = os_dev_create((struct os_dev *)&lsm303dlhc, "lsm303dlhc_0",
+                       OS_DEV_INIT_PRIMARY, 0, lsm303dlhc_init,
+                       (void *)&i2c_0_itf);
+    assert(rc == 0);
+#endif
+}
 
 void
 hal_bsp_init(void)
@@ -207,6 +271,8 @@ hal_bsp_init(void)
     rc = hal_spi_init(1, &spi1_cfg, HAL_SPI_TYPE_SLAVE);
     assert(rc == 0);
 #endif
+
+    sensor_dev_create();
 
 #if (MYNEWT_VAL(OS_CPUTIME_TIMER_NUM) >= 0)
     rc = os_cputime_init(MYNEWT_VAL(OS_CPUTIME_FREQ));
