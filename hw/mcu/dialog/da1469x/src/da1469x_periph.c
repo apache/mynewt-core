@@ -47,6 +47,11 @@
 #include "trng/trng.h"
 #include "trng_da1469x.h"
 #endif
+#if MYNEWT_VAL(CRYPTO)
+#include "crypto/crypto.h"
+#include "crypto_da1469x/crypto_da1469x.h"
+#endif
+
 #if MYNEWT_VAL(PWM_0) || MYNEWT_VAL(PWM_1) || MYNEWT_VAL(PWM_2)
 #include "pwm/pwm.h"
 #include "pwm_da1469x/pwm_da1469x.h"
@@ -54,6 +59,10 @@
 
 #if MYNEWT_VAL(TRNG)
 static struct trng_dev os_bsp_trng;
+#endif
+
+#if MYNEWT_VAL(CRYPTO)
+static struct crypto_dev os_bsp_crypto;
 #endif
 
 #if MYNEWT_VAL(SPI_0_MASTER) || MYNEWT_VAL(SPI_1_MASTER)
@@ -291,6 +300,21 @@ da1469x_periph_create_trng(void)
 }
 
 static void
+da1469x_periph_create_crypto(void)
+{
+    int rc;
+
+    (void)rc;
+
+#if MYNEWT_VAL(CRYPTO)
+    rc = os_dev_create(&os_bsp_crypto.dev, "crypto",
+                       OS_DEV_INIT_KERNEL, OS_DEV_INIT_PRIO_DEFAULT,
+                       da1469x_crypto_dev_init, NULL);
+    assert(rc == 0);
+#endif
+}
+
+static void
 da1469x_periph_create_adc(void)
 {
     int rc;
@@ -469,6 +493,7 @@ da1469x_periph_create(void)
     da1469x_periph_create_adc();
     da1469x_periph_create_pwm();
     da1469x_periph_create_trng();
+    da1469x_periph_create_crypto();
     da1469x_periph_create_uart();
     da1469x_periph_create_i2c();
     da1469x_periph_create_spi();
