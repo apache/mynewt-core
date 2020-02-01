@@ -36,6 +36,9 @@ pkg.deps.CHARGER:
 pkg.deps.TRNG:
     - "@apache-mynewt-core/hw/drivers/trng/trng_da1469x"
 
+pkg.deps.CRYPTO:
+    - "@apache-mynewt-core/hw/drivers/crypto/crypto_da1469x"
+
 pkg.deps.'UART_0 || UART_1 || UART_2':
     - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
 

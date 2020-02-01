@@ -316,6 +316,10 @@ syscfg.defs:
         description: 'Enable DA1469x TRNG'
         value: 0
 
+    CRYPTO:
+        description: 'Enable DA1469x AES HW'
+        value: 0
+
     PWM_0:
         description: 'Enable DA1469x PWM 0'
         value: 0
