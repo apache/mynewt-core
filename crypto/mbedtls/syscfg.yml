@@ -125,6 +125,11 @@ syscfg.defs:
   MBEDTLS_ENTROPY_C:
     value: 1
 
+  # Default value for hardware backed entropy source.
+  # Override from app's syscfg
+  MBEDTLS_ENTROPY_HARDWARE_ALT:
+    value: 0
+
   # PKCS#1 v1.5 not supported by MCUBoot
   MBEDTLS_PKCS1_V15:
     value: 1
