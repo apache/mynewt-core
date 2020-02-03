@@ -88,7 +88,7 @@ get_key_size_mask(int keysize)
 }
 
 void
-do_encrypt(const struct hal_flash *h_dev, uint32_t *ctr, const uint8_t *src, uint8_t *tgt, int off, int cnt)
+do_encrypt(const struct hal_flash *h_dev, uint32_t *ctr, const uint8_t *src, uint8_t *tgt)
 {
     /* Select AES CTR, set CRYPTO_ALG_MD bits to 10 */
     uint32_t algo_sel = (2 << AES_HASH_CRYPTO_CTRL_REG_CRYPTO_ALG_MD_Pos);
@@ -139,12 +139,15 @@ enc_flash_crypt_arch(struct enc_flash_dev *edev, uint32_t blk_addr,
     struct eflash_da1469x_dev *dev = EDEV_TO_DA1469X(edev);
     const struct hal_flash *h_dev = edev->efd_hwdev;
     uint32_t ctr[4] = {0};
+    uint8_t blk[ENC_FLASH_BLK] = {0};
 
     ctr[0] = (uint32_t) ((blk_addr - h_dev->hf_base_addr) / ENC_FLASH_BLK);
 
+    memcpy(blk + off, src, cnt);
     os_sem_pend(&dev->ef_sem, OS_TIMEOUT_NEVER);
-    do_encrypt(h_dev, ctr, src, tgt, off, cnt);
+    do_encrypt(h_dev, ctr, blk, blk);
     os_sem_release(&dev->ef_sem);
+    memcpy(tgt, blk + off, cnt);
 }
 
 /* Key is securely DMA transferred from OTP user data key slot */
