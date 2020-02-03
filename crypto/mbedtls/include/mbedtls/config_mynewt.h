@@ -47,6 +47,7 @@ extern "C" {
 #endif
 
 #define MBEDTLS_SHA256_SMALLER     /* comes with performance hit */
+#define MBEDTLS_ENTROPY_HARDWARE_ALT /* hardware entropy source */
 
 /**
  * \name SECTION: Module configuration options
@@ -290,6 +291,10 @@ extern "C" {
 
 #if MYNEWT_VAL(MBEDTLS_ENTROPY_C) == 0
 #undef MBEDTLS_ENTROPY_C
+#endif
+
+#if MYNEWT_VAL(MBEDTLS_ENTROPY_HARDWARE_ALT) == 0
+#undef MBEDTLS_ENTROPY_HARDWARE_ALT
 #endif
 
 #if MYNEWT_VAL(MBEDTLS_PKCS1_V15) == 0
