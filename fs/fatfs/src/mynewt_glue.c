@@ -211,6 +211,44 @@ drivenumber_from_disk(char *disk_name)
     return disk_number;
 }
 
+/**
+ * Converts fs path to fatfs path
+ *
+ * Function changes mmc0:/dir/file.ext to 0:/dir/file.ext
+ *
+ * @param fs_path
+ * @return pointer to allocated memory with fatfs path
+ */
+static char *
+fatfs_path_from_fs_path(const char *fs_path)
+{
+    char *disk;
+    int drive_number;
+    char *file_path = NULL;
+    char *fatfs_path = NULL;
+
+    disk = disk_name_from_path(fs_path);
+    if (disk == NULL) {
+        goto err;
+    }
+    drive_number = drivenumber_from_disk(disk);
+    free(disk);
+    file_path = disk_filepath_from_path(fs_path);
+
+    if (file_path == NULL) {
+        goto err;
+    }
+
+    fatfs_path = malloc(strlen(file_path) + 3);
+    if (fatfs_path == NULL) {
+        goto err;
+    }
+    sprintf(fatfs_path, "%d:%s", drive_number, file_path);
+err:
+    free(file_path);
+    return fatfs_path;
+}
+
 static int
 fatfs_open(const char *path, uint8_t access_flags, struct fs_file **out_fs_file)
 {
@@ -218,10 +256,7 @@ fatfs_open(const char *path, uint8_t access_flags, struct fs_file **out_fs_file)
     FIL *out_file = NULL;
     BYTE mode;
     struct fatfs_file *file = NULL;
-    char *disk;
-    int number;
-    char *filepath;
-    char drivepath[255 + DRIVE_LEN];  /* FIXME */
+    char *fatfs_path = NULL;
     int rc;
 
     file = malloc(sizeof(struct fatfs_file));
@@ -251,13 +286,12 @@ fatfs_open(const char *path, uint8_t access_flags, struct fs_file **out_fs_file)
         mode |= FA_CREATE_ALWAYS;
     }
 
-    disk = disk_name_from_path(path);
-    number = drivenumber_from_disk(disk);
-    filepath = disk_filepath_from_path(path);
-    sprintf(drivepath, "%d:%s", number, filepath);
-    free(filepath);
-
-    res = f_open(out_file, drivepath, mode);
+    fatfs_path = fatfs_path_from_fs_path(path);
+    if (fatfs_path == NULL) {
+        rc = FS_ENOMEM;
+        goto out;
+    }
+    res = f_open(out_file, fatfs_path, mode);
     if (res != FR_OK) {
         rc = fatfs_to_vfs_error(res);
         goto out;
@@ -269,6 +303,7 @@ fatfs_open(const char *path, uint8_t access_flags, struct fs_file **out_fs_file)
     rc = FS_EOK;
 
 out:
+    free(fatfs_path);
     if (rc != FS_EOK) {
         if (file) free(file);
         if (out_file) free(out_file);
@@ -352,9 +387,16 @@ static int
 fatfs_unlink(const char *path)
 {
     FRESULT res;
+    char *fatfs_path;
 
-    //FIXME: handle disk
-    res = f_unlink(path);
+    fatfs_path = fatfs_path_from_fs_path(path);
+
+    if (fatfs_path == NULL) {
+        return FS_ENOMEM;
+    }
+    res = f_unlink(fatfs_path);
+    free(fatfs_path);
+
     return fatfs_to_vfs_error(res);
 }
 
@@ -362,9 +404,22 @@ static int
 fatfs_rename(const char *from, const char *to)
 {
     FRESULT res;
+    char *fatfs_src_path;
+    char *fatfs_dst_path;
 
-    //FIXME: handle disk
-    res = f_rename(from, to);
+    fatfs_src_path = fatfs_path_from_fs_path(from);
+    fatfs_dst_path = fatfs_path_from_fs_path(to);
+
+    if (fatfs_src_path == NULL || fatfs_dst_path == NULL) {
+        free(fatfs_src_path);
+        free(fatfs_dst_path);
+        return FS_ENOMEM;
+    }
+
+    res = f_rename(fatfs_src_path, fatfs_dst_path);
+    free(fatfs_src_path);
+    free(fatfs_dst_path);
+
     return fatfs_to_vfs_error(res);
 }
 
@@ -372,8 +427,15 @@ static int
 fatfs_mkdir(const char *path)
 {
     FRESULT res;
+    char *fatfs_path;
 
-    res = f_mkdir(path);
+    fatfs_path = fatfs_path_from_fs_path(path);
+
+    if (fatfs_path == NULL) {
+        return FS_ENOMEM;
+    }
+
+    res = f_mkdir(fatfs_path);
     return fatfs_to_vfs_error(res);
 }
 
@@ -383,10 +445,7 @@ fatfs_opendir(const char *path, struct fs_dir **out_fs_dir)
     FRESULT res;
     FATFS_DIR *out_dir = NULL;
     struct fatfs_dir *dir = NULL;
-    char *disk;
-    int number;
-    char *filepath;
-    char drivepath[255 + DRIVE_LEN];  /* FIXME */
+    char *fatfs_path = NULL;
     int rc;
 
     dir = malloc(sizeof(struct fatfs_dir));
@@ -401,13 +460,9 @@ fatfs_opendir(const char *path, struct fs_dir **out_fs_dir)
         goto out;
     }
 
-    disk = disk_name_from_path(path);
-    number = drivenumber_from_disk(disk);
-    filepath = disk_filepath_from_path(path);
-    sprintf(drivepath, "%d:%s", number, filepath);
-    free(filepath);
+    fatfs_path = fatfs_path_from_fs_path(path);
 
-    res = f_opendir(out_dir, drivepath);
+    res = f_opendir(out_dir, fatfs_path);
     if (res != FR_OK) {
         rc = fatfs_to_vfs_error(res);
         goto out;
@@ -419,6 +474,7 @@ fatfs_opendir(const char *path, struct fs_dir **out_fs_dir)
     rc = FS_EOK;
 
 out:
+    free(fatfs_path);
     if (rc != FS_EOK) {
         if (dir) free(dir);
         if (out_dir) free(out_dir);
