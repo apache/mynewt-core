@@ -423,7 +423,7 @@ out:
         if (dir) free(dir);
         if (out_dir) free(out_dir);
     }
-    return FS_EOK;
+    return rc;
 }
 
 static int
