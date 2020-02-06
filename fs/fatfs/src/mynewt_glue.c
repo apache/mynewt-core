@@ -184,7 +184,7 @@ drivenumber_from_disk(char *disk_name)
     struct mounted_disk *new_disk;
     int disk_number;
     FATFS *fs;
-    char path[DRIVE_LEN];
+    char path[6];
 
     disk_number = 0;
     if (disk_name) {
@@ -198,7 +198,7 @@ drivenumber_from_disk(char *disk_name)
 
     /* XXX: check for errors? */
     fs = malloc(sizeof(FATFS));
-    sprintf(path, "%d:", disk_number);
+    sprintf(path, "%d:", (uint8_t)disk_number);
     f_mount(fs, path, 1);
 
     /* FIXME */
