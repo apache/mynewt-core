@@ -66,6 +66,14 @@ typedef enum conf_type {
     CONF_DOUBLE,
     /** Boolean */
     CONF_BOOL,
+    /** 8-bit unsigned integer */
+    CONF_UINT8,
+    /** 16-bit unsigned integer */
+    CONF_UINT16,
+    /** 32-bit unsigned integer */
+    CONF_UINT32,
+    /** 64-bit unsigned integer */
+    CONF_UINT64,
 } __attribute__((__packed__)) conf_type_t;
 
 /**
