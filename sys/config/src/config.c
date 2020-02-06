@@ -154,6 +154,8 @@ conf_value_from_str(char *val_str, enum conf_type type, void *vp, int maxlen)
 {
     int32_t val;
     int64_t val64;
+    uint32_t uval;
+    uint64_t uval64;
     char *eptr;
 
     if (!val_str) {
@@ -194,6 +196,34 @@ conf_value_from_str(char *val_str, enum conf_type type, void *vp, int maxlen)
         }
         *(int64_t *)vp = val64;
         break;
+    case CONF_UINT8:
+    case CONF_UINT16:
+    case CONF_UINT32:
+        uval = strtoul(val_str, &eptr, 0);
+        if (*eptr != '\0') {
+            goto err;
+        }
+        if (type == CONF_UINT8) {
+            if (uval > UINT8_MAX) {
+                goto err;
+            }
+            *(uint8_t *)vp = uval;
+        } else if (type == CONF_UINT16) {
+            if (uval > UINT16_MAX) {
+                goto err;
+            }
+            *(uint16_t *)vp = uval;
+        } else if (type == CONF_UINT32) {
+            *(uint32_t *)vp = uval;
+        }
+        break;
+    case CONF_UINT64:
+        uval64 = strtoull(val_str, &eptr, 0);
+        if (*eptr != '\0') {
+            goto err;
+        }
+        *(uint64_t *)vp = uval64;
+        break;
     case CONF_STRING:
         val = strlen(val_str);
         if (val + 1 > maxlen) {
@@ -229,6 +259,7 @@ char *
 conf_str_from_value(enum conf_type type, void *vp, char *buf, int buf_len)
 {
     int32_t val;
+    uint32_t uval;
 
     if (type == CONF_STRING) {
         return vp;
@@ -251,6 +282,21 @@ conf_str_from_value(enum conf_type type, void *vp, char *buf, int buf_len)
         return buf;
     case CONF_INT64:
         snprintf(buf, buf_len, "%lld", *(long long *)vp);
+        return buf;
+    case CONF_UINT8:
+    case CONF_UINT16:
+    case CONF_UINT32:
+        if (type == CONF_UINT8) {
+            uval = *(uint8_t *)vp;
+        } else if (type == CONF_UINT16) {
+            uval = *(uint16_t *)vp;
+        } else {
+            uval = *(uint32_t *)vp;
+        }
+        snprintf(buf, buf_len, "%lu", (unsigned long)uval);
+        return buf;
+    case CONF_UINT64:
+        snprintf(buf, buf_len, "%llu", *(unsigned long long *)vp);
         return buf;
     default:
         return NULL;
