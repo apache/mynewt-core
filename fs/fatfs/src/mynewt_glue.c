@@ -314,15 +314,15 @@ out:
 static int
 fatfs_close(struct fs_file *fs_file)
 {
-    FRESULT res;
+    FRESULT res = FR_OK;
     FIL *file = ((struct fatfs_file *) fs_file)->file;
 
-    if (file == NULL) {
-        return FS_EOK;
+    if (file != NULL) {
+        res = f_close(file);
+        free(file);
     }
 
-    res = f_close(file);
-    free(file);
+    free(fs_file);
     return fatfs_to_vfs_error(res);
 }
 
@@ -509,6 +509,7 @@ fatfs_closedir(struct fs_dir *fs_dir)
 
     res = f_closedir(dir);
     free(dir);
+    free(fs_dir);
     return fatfs_to_vfs_error(res);
 }
 
