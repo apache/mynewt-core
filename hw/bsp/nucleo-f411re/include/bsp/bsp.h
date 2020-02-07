@@ -44,9 +44,6 @@ extern uint8_t _ram_start;
 /* Button pin */
 #define BUTTON_1        MCU_GPIO_PORTC(13)
 
-/* UART */
-#define UART_CNT 3
-
 /* Arduino pins */
 #define ARDUINO_PIN_D0      MCU_GPIO_PORTA(3)
 #define ARDUINO_PIN_D1      MCU_GPIO_PORTA(2)

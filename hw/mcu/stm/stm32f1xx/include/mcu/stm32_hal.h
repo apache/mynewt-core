@@ -44,6 +44,7 @@ extern "C" {
 #include "stm32f1xx_hal_spi.h"
 #include "stm32f1xx_hal_gpio.h"
 #include "stm32f1xx_hal_gpio_ex.h"
+#include <stm32f1xx_ll_gpio.h>       /* AF remapping */
 #include "stm32f1xx_hal_rcc.h"
 
 struct stm32_hal_spi_cfg {

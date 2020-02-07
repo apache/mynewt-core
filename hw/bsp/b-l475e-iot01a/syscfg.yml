@@ -22,22 +22,6 @@ syscfg.defs:
         description: 'Total flash size in KB.'
         value: 1024
 
-    UART_0:
-        description: 'Whether to enable UART0'
-        value:  1
-
-    TIMER_0:
-        description: 'Whether to enable TIMER_0'
-        value: 1
-
-    TIMER_1:
-        description: 'Whether to enable TIMER_1'
-        value: 0
-
-    TIMER_2:
-        description: 'Whether to enable TIMER_2'
-        value: 0
-
     LPS22HB_ONB:
         description: 'Enable onboard LPS22HB pressure sensor'
         value:  0
@@ -71,3 +55,16 @@ syscfg.vals:
     STM32_FLASH_PREFETCH_ENABLE: 0
     STM32_INSTRUCTION_CACHE_ENABLE: 1
     STM32_DATA_CACHE_ENABLE: 1
+    UART_0_PIN_TX: 'MCU_GPIO_PORTB(6)'
+    UART_0_PIN_RX: 'MCU_GPIO_PORTB(7)'
+    I2C_0_PIN_SCL: 'MCU_GPIO_PORTB(8)'
+    I2C_0_PIN_SDA: 'MCU_GPIO_PORTB(9)'
+    I2C_1_PIN_SCL: 'MCU_GPIO_PORTB(11)'
+    I2C_1_PIN_SDA: 'MCU_GPIO_PORTB(10)'
+    SPI_0_PIN_SCK: 'MCU_GPIO_PORTA(5)'
+    SPI_0_PIN_MOSI: 'MCU_GPIO_PORTA(7)'
+    SPI_0_PIN_MISO: 'MCU_GPIO_PORTA(6)'
+    SPI_0_PIN_SS: 'MCU_GPIO_PORTA(2)'
+    TIMER_0_TIM: 'TIM2'
+    TIMER_1_TIM: 'TIM3'
+    TIMER_2_TIM: 'TIM4'

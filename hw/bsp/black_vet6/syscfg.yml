@@ -35,88 +35,6 @@ syscfg.defs:
         description: "ADC_3"
         value:  0
 
-    UART_0:
-        description: 'Whether to enable UART0'
-        value:  1
-    UART_0_TX:
-        description: 'USART1 TX pin. TX from J6 connector'
-        value:  'MCU_GPIO_PORTA(9)'
-    UART_0_RX:
-        description: 'USART1 RX pin. RX from J6 connector'
-        value:  'MCU_GPIO_PORTA(10)'
-    UART_0_RTS:
-        description: 'USART1 RTS pin.'
-        value:  -1
-    UART_0_CTS:
-        description: 'USART1 CTS pin.'
-        value:  -1
-
-    UART_1:
-        description: 'Whether to enable UART0'
-        value:  1
-    UART_1_TX:
-        description: 'USART2 TX pin. PA2, PD5'
-        value:  'MCU_GPIO_PORTD(5)'
-    UART_1_RX:
-        description: 'USART2 RX pin. PA3, PD6'
-        value:  'MCU_GPIO_PORTD(6)'
-    UART_1_RTS:
-        description: 'USART2 RTS pin.'
-        value:  -1
-    UART_1_CTS:
-        description: 'USART2 CTS pin.'
-        value:  -1
-
-    UART_2:
-        description: 'Whether to enable UART0'
-        value:  1
-    UART_2_TX:
-        description: 'USART3 TX pin. PB10, PC10, PD8'
-        value:  'MCU_GPIO_PORTD(8)'
-    UART_2_RX:
-        description: 'USART3 RX pin. PB11, PC11, PD9'
-        value:  'MCU_GPIO_PORTD(9)'
-    UART_2_RTS:
-        description: 'USART3 RTS pin.'
-        value:  -1
-    UART_2_CTS:
-        description: 'USART3 CTS pin.'
-        value:  -1
-
-    SPI_0_SCK:
-        description: 'SPI_0 clock pin'
-        value: 'MCU_GPIO_PORTB(3)'
-    SPI_0_MISO:
-        description: 'SPI_0 MISO pin'
-        value: 'MCU_GPIO_PORTB(4)'
-    SPI_0_MOSI:
-        description: 'SPI_0 MOSI pin'
-        value: 'MCU_GPIO_PORTB(5)'
-
-    SPI_1_SCK:
-        description: 'SPI_1 clock pin'
-        value: 'MCU_GPIO_PORTB(13)'
-    SPI_1_MISO:
-        description: 'SPI_1 MISO pin'
-        value: 'MCU_GPIO_PORTB(14)'
-    SPI_1_MOSI:
-        description: 'SPI_1 MOSI pin'
-        value: 'MCU_GPIO_PORTB(15)'
-
-    TIMER_0:
-        description: 'Enable TIMER_0, (TIM2 up to 84MHz, 32 bits)'
-        value: 1
-    TIMER_1:
-        description: 'Enable TIMER_1, (TIM3 up to 84MHz, 16 bits)'
-        value: 0
-    TIMER_2:
-        description: 'Enable TIMER_2, (TIM4 up to 84MHz, 16 bits)'
-        value: 0
-
-    ETH_0:
-        description: 'Ethernet driver for LwIP'
-        value: 0
-
 syscfg.vals:
     REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG
     CONFIG_FCB_FLASH_AREA: FLASH_AREA_NFFS
@@ -166,3 +84,24 @@ syscfg.vals:
     SPIFLASH_TCE_MAXIMUM: 10000000
 
     BSP_FLASH_SPI_BUS: '"spi0"'
+
+    UART_0_PIN_TX: 'MCU_GPIO_PORTA(9)'
+    UART_0_PIN_RX: 'MCU_GPIO_PORTA(10)'
+    UART_1: 1
+    UART_1_PIN_TX: 'MCU_GPIO_PORTD(5)'
+    UART_1_PIN_RX: 'MCU_GPIO_PORTD(6)'
+    UART_2: 1
+    UART_2_PIN_TX: 'MCU_GPIO_PORTD(8)'
+    UART_2_PIN_RX: 'MCU_GPIO_PORTD(9)'
+    SPI_0_PIN_SS: 'MCU_GPIO_PORTA(4)'
+    SPI_0_PIN_SCK: 'MCU_GPIO_PORTB(3)'
+    SPI_0_PIN_MISO: 'MCU_GPIO_PORTB(4)'
+    SPI_0_PIN_MOSI: 'MCU_GPIO_PORTB(5)'
+    SPI_1_PIN_SCK: 'MCU_GPIO_PORTB(13)'
+    SPI_1_PIN_MISO: 'MCU_GPIO_PORTB(14)'
+    SPI_1_PIN_MOSI: 'MCU_GPIO_PORTB(15)'
+    I2C_0_PIN_SCL: 'MCU_GPIO_PORTB(8)'
+    I2C_0_PIN_SDA: 'MCU_GPIO_PORTB(9)'
+    TIMER_0_TIM: 'TIM2'
+    TIMER_1_TIM: 'TIM3'
+    TIMER_2_TIM: 'TIM4'

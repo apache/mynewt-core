@@ -18,58 +18,43 @@
  */
 #include <assert.h>
 
+#include "bsp/bsp.h"
 #include "os/mynewt.h"
-
-#if MYNEWT_VAL(UART_0)
-#include <uart/uart.h>
-#include <uart_hal/uart_hal.h>
-#endif
 
 #include <hal/hal_bsp.h>
 #include <hal/hal_flash_int.h>
-#include <hal/hal_gpio.h>
 #include <hal/hal_system.h>
-#include <hal/hal_timer.h>
 
 #include <stm32f746xx.h>
-#include <mcu/stm32f7_bsp.h>
-#include <stm32f7xx_hal_gpio_ex.h>
+#include <stm32_common/stm32_hal.h>
 
 #if MYNEWT_VAL(ETH_0)
 #include <stm32_eth/stm32_eth.h>
 #include <stm32_eth/stm32_eth_cfg.h>
 #endif
 
-#include "bsp/bsp.h"
-
-#if PWM_CNT
+#if MYNEWT_VAL(PWM_0) || MYNEWT_VAL(PWM_1) || MYNEWT_VAL(PWM_2)
 #include <pwm_stm32/pwm_stm32.h>
-static struct pwm_dev stm32_pwm_dev_driver[PWM_CNT];
-static const char *stm32_pwm_dev_name[PWM_CNT] = {
-#if PWM_CNT > 0
-    "pwm0",
 #endif
-#if PWM_CNT > 1
-    "pwm1",
-#endif
-#if PWM_CNT > 2
-    "pwm2",
-#endif
-};
 
-static struct stm32_pwm_conf  stm32_pwm_config[PWM_CNT] = {
 #if MYNEWT_VAL(PWM_0)
-    { TIM3, TIM3_IRQn },
+struct stm32_pwm_conf os_bsp_pwm0_cfg = {
+    .tim = TIM3,
+    .irq = TIM3_IRQn,
+};
 #endif
 #if MYNEWT_VAL(PWM_1)
-    { TIM4, TIM4_IRQn },
+struct stm32_pwm_conf os_bsp_pwm1_cfg = {
+    .tim = TIM4,
+    .irq = TIM4_IRQn,
+};
 #endif
 #if MYNEWT_VAL(PWM_2)
-    { TIM11, TIM1_TRG_COM_TIM11_IRQn },
-#endif
+struct stm32_pwm_conf os_bsp_pwm2_cfg = {
+    .tim = TIM11,
+    .irq = TIM1_TRG_COM_TIM11_IRQn,
 };
-
-#endif /* PWM_CNT */
+#endif
 
 const uint32_t stm32_flash_sectors[] = {
     0x08000000,     /* 32kB  */
@@ -86,27 +71,24 @@ const uint32_t stm32_flash_sectors[] = {
 const uint32_t STM32_FLASH_NUM_AREAS = (sizeof(stm32_flash_sectors) /
                                         sizeof(stm32_flash_sectors[0]) - 1);
 
-
 #if MYNEWT_VAL(UART_0)
-static struct uart_dev hal_uart0;
-
-static const struct stm32_uart_cfg uart_cfg[UART_CNT] = {
-    [0] = {
-        .suc_uart = USART1,
-        .suc_rcc_reg = &RCC->APB2ENR,
-        .suc_rcc_dev = RCC_APB2ENR_USART1EN,
-        .suc_pin_tx = MCU_GPIO_PORTA(9),     /* PD8 */
-        .suc_pin_rx = MCU_GPIO_PORTB(7),     /* PB7 */
-        .suc_pin_rts = -1,
-        .suc_pin_cts = -1,
-        .suc_pin_af = GPIO_AF7_USART1,
-        .suc_irqn = USART1_IRQn,
-    }
+const struct stm32_uart_cfg os_bsp_uart0_cfg = {
+    .suc_uart = USART1,
+    .suc_rcc_reg = &RCC->APB2ENR,
+    .suc_rcc_dev = RCC_APB2ENR_USART1EN,
+    .suc_pin_tx = MYNEWT_VAL(UART_0_PIN_TX),
+    .suc_pin_rx = MYNEWT_VAL(UART_0_PIN_RX),
+    .suc_pin_rts = MYNEWT_VAL(UART_0_PIN_RTS),
+    .suc_pin_cts = MYNEWT_VAL(UART_0_PIN_CTS),
+    .suc_pin_rts = -1,
+    .suc_pin_cts = -1,
+    .suc_pin_af = GPIO_AF7_USART1,
+    .suc_irqn = USART1_IRQn,
 };
 #endif
 
 #if MYNEWT_VAL(ETH_0)
-static const struct stm32_eth_cfg eth_cfg = {
+const struct stm32_eth_cfg os_bsp_eth0_cfg = {
     /*
      * PORTA
      *   PA1 - ETH_RMII_REF_CLK
@@ -174,66 +156,7 @@ hal_bsp_core_dump(int *area_cnt)
 void
 hal_bsp_init(void)
 {
-    int rc;
-
-    (void)rc;
-
-#if MYNEWT_VAL(UART_0)
-    rc = os_dev_create((struct os_dev *) &hal_uart0, "uart0",
-      OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *)&uart_cfg[0]);
-    assert(rc == 0);
-#endif
-
-#if MYNEWT_VAL(TIMER_0)
-    hal_timer_init(0, TIM1);
-#endif
-
-#if MYNEWT_VAL(TIMER_1)
-    hal_timer_init(1, TIM8);
-#endif
-
-#if MYNEWT_VAL(TIMER_2)
-    hal_timer_init(2, TIM9);
-#endif
-
-#if (MYNEWT_VAL(OS_CPUTIME_TIMER_NUM) >= 0)
-    rc = os_cputime_init(MYNEWT_VAL(OS_CPUTIME_FREQ));
-    assert(rc == 0);
-#endif
-
-#if MYNEWT_VAL(ETH_0)
-    stm32_eth_init(&eth_cfg);
-#endif
-
-#if MYNEWT_VAL(PWM_0)
-    rc = os_dev_create((struct os_dev *) &stm32_pwm_dev_driver[PWM_0_DEV_ID],
-        (char*)stm32_pwm_dev_name[PWM_0_DEV_ID],
-        OS_DEV_INIT_KERNEL,
-        OS_DEV_INIT_PRIO_DEFAULT,
-        stm32_pwm_dev_init,
-        &stm32_pwm_config[PWM_0_DEV_ID]);
-    assert(rc == 0);
-#endif
-
-#if MYNEWT_VAL(PWM_1)
-    rc = os_dev_create((struct os_dev *) &stm32_pwm_dev_driver[PWM_1_DEV_ID],
-        (char*)stm32_pwm_dev_name[PWM_1_DEV_ID],
-        OS_DEV_INIT_KERNEL,
-        OS_DEV_INIT_PRIO_DEFAULT,
-        stm32_pwm_dev_init,
-        &stm32_pwm_config[PWM_1_DEV_ID]);
-    assert(rc == 0);
-#endif
-
-#if MYNEWT_VAL(PWM_2)
-    rc = os_dev_create((struct os_dev *) &stm32_pwm_dev_driver[PWM_2_DEV_ID],
-        (char*)stm32_pwm_dev_name[PWM_2_DEV_ID],
-        OS_DEV_INIT_KERNEL,
-        OS_DEV_INIT_PRIO_DEFAULT,
-        stm32_pwm_dev_init,
-        &stm32_pwm_config[PWM_2_DEV_ID]);
-    assert(rc == 0);
-#endif
+    stm32_periph_create();
 }
 
 /**

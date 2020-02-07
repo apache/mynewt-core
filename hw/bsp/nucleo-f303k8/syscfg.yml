@@ -22,27 +22,6 @@ syscfg.defs:
         description: 'Total flash size in KB.'
         value: 64
 
-    UART_0:
-        description: 'Whether to enable UART0'
-        value:  1
-    UART_1:
-        description: 'Whether to enable UART1'
-        value:  0
-
-    TIMER_0:
-        description: 'Support for timer 0'
-        value: 1
-
-    PWM_0:
-        description: 'Support for PWM 0'
-        value: 0
-    PWM_1:
-        description: 'Support for PWM 1'
-        value: 0
-    PWM_2:
-        description: 'Support for PWM 2'
-        value: 0
-
 syscfg.vals:
     REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG
     CONFIG_FCB_FLASH_AREA: FLASH_AREA_NFFS
@@ -58,3 +37,12 @@ syscfg.vals:
     STM32_CLOCK_APB2_DIVIDER: 'RCC_HCLK_DIV1'
     STM32_FLASH_LATENCY: 'FLASH_LATENCY_2'
     STM32_FLASH_PREFETCH_ENABLE: 1
+    UART_0_PIN_TX: 'MCU_GPIO_PORTA(2)'
+    UART_0_PIN_RX: 'MCU_GPIO_PORTA(15)'
+    UART_0_PIN_RTS: 'MCU_GPIO_PORTA(1)'
+    UART_0_PIN_CTS: 'MCU_GPIO_PORTA(0)'
+    UART_1_PIN_TX: 'MCU_GPIO_PORTA(9)'
+    UART_1_PIN_RX: 'MCU_GPIO_PORTA(10)'
+    UART_1_PIN_RTS: 'MCU_GPIO_PORTA(12)'
+    UART_1_PIN_CTS: 'MCU_GPIO_PORTA(11)'
+    TIMER_0_TIM: 'TIM15'

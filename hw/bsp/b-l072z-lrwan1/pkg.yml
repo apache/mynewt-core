@@ -34,10 +34,5 @@ pkg.deps:
     - "@apache-mynewt-core/hw/mcu/stm/stm32l0xx"
     - "@apache-mynewt-core/libc/baselibc"
 
-pkg.deps.UART_0:
-    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
-pkg.deps.UART_1:
-    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
-
 pkg.deps.LORA_NODE:
     - "@apache-mynewt-core/hw/drivers/lora/sx1276"

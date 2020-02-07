@@ -20,7 +20,7 @@
 #include "hal/hal_uart.h"
 #include "hal/hal_gpio.h"
 #include "mcu/cmsis_nvic.h"
-#include "mcu/stm32_hal.h"
+#include "stm32_common/stm32_hal.h"
 #include "bsp/bsp.h"
 #include <assert.h>
 #include <stdlib.h>
@@ -86,8 +86,11 @@ hal_uart_init_cbs(int port, hal_uart_tx_char tx_func, hal_uart_tx_done tx_done,
 {
     struct hal_uart *u;
 
+    if (port < 0 || port >= UART_CNT) {
+        return -1;
+    }
     u = &uarts[port];
-    if (port >= UART_CNT || u->u_open) {
+    if (u->u_open) {
         return -1;
     }
     u->u_rx_func = rx_func;
@@ -191,10 +194,14 @@ hal_uart_blocking_tx(int port, uint8_t data)
     struct hal_uart *u;
     USART_TypeDef *regs;
 
-    u = &uarts[port];
-    if (port >= UART_CNT || !u->u_open) {
+    if (port < 0 || port >= UART_CNT) {
         return;
     }
+    u = &uarts[port];
+    if (!u->u_open) {
+        return;
+    }
+
     regs = u->u_regs;
 
     while (!(STATUS(regs) & TXE));
@@ -353,7 +360,7 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
     GPIO_InitTypeDef gpio;
 #endif
 
-    if (port >= UART_CNT) {
+    if (port < 0 || port >= UART_CNT) {
         return -1;
     }
 
@@ -506,7 +513,7 @@ hal_uart_init(int port, void *arg)
 {
     struct hal_uart *u;
 
-    if (port >= UART_CNT) {
+    if (port < 0 || port >= UART_CNT) {
         return -1;
     }
     u = &uarts[port];
@@ -520,7 +527,7 @@ hal_uart_close(int port)
 {
     struct hal_uart *u;
 
-    if (port >= UART_CNT) {
+    if (port < 0 || port >= UART_CNT) {
         return -1;
     }
     u = &uarts[port];

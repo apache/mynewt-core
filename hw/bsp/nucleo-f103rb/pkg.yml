@@ -31,6 +31,3 @@ pkg.cflags: -DSTM32F103xB
 pkg.deps:
     - "@apache-mynewt-core/hw/mcu/stm/stm32f1xx"
     - "@apache-mynewt-core/libc/baselibc"
-
-pkg.deps.UART_0:
-    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
