@@ -26,6 +26,7 @@
 
 #include <os/queue.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -114,6 +115,7 @@ typedef enum conf_export_tgt conf_export_tgt_t;
  * @return A pointer to val or NULL if error.
  */
 typedef char *(*conf_get_handler_t)(int argc, char **argv, char *val, int val_len_max);
+typedef char *(*conf_get_handler_ext_t)(int argc, char **argv, char *val, int val_len_max, void *arg);
 
 /**
  * Set the configuration variable pointed to by argc and argv.  See
@@ -128,6 +130,7 @@ typedef char *(*conf_get_handler_t)(int argc, char **argv, char *val, int val_le
  * @return 0 on success, non-zero error code on failure.
  */
 typedef int (*conf_set_handler_t)(int argc, char **argv, char *val);
+typedef int (*conf_set_handler_ext_t)(int argc, char **argv, char *val, void *arg);
 
 /**
  * Commit shadow configuration state to the active configuration.
@@ -135,6 +138,7 @@ typedef int (*conf_set_handler_t)(int argc, char **argv, char *val);
  * @return 0 on success, non-zero error code on failure.
  */
 typedef int (*conf_commit_handler_t)(void);
+typedef int (*conf_commit_handler_ext_t)(void *arg);
 
 /**
  * Called per-configuration variable being exported.
@@ -154,7 +158,9 @@ typedef void (*conf_export_func_t)(char *name, char *val);
  * @return 0 on success, non-zero error code on failure.
  */
 typedef int (*conf_export_handler_t)(conf_export_func_t export_func,
-        conf_export_tgt_t tgt);
+                                     conf_export_tgt_t tgt);
+typedef int (*conf_export_handler_ext_t)(conf_export_func_t export_func,
+                                         conf_export_tgt_t tgt, void *arg);
 
 /**
  * Configuration handler, used to register a config item/subtree.
@@ -165,14 +171,40 @@ struct conf_handler {
      * The name of the conifguration item/subtree
      */
     char *ch_name;
+
+    /**
+     * Whether to use the extended callbacks.
+     * false: standard
+     * true:  extended
+     */
+    bool ch_ext;
+
     /** Get configuration value */
-    conf_get_handler_t ch_get;
+    union {
+        conf_get_handler_t ch_get;
+        conf_get_handler_ext_t ch_get_ext;
+    };
+
     /** Set configuration value */
-    conf_set_handler_t ch_set;
+    union {
+        conf_set_handler_t ch_set;
+        conf_set_handler_ext_t ch_set_ext;
+    };
+
     /** Commit configuration value */
-    conf_commit_handler_t ch_commit;
+    union {
+        conf_commit_handler_t ch_commit;
+        conf_commit_handler_ext_t ch_commit_ext;
+    };
+
     /** Export configuration value */
-    conf_export_handler_t ch_export;
+    union {
+        conf_export_handler_t ch_export;
+        conf_export_handler_ext_t ch_export_ext;
+    };
+
+    /** Custom argument that gets passed to the extended callbacks */
+    void *ch_arg;
 };
 
 void conf_init(void);

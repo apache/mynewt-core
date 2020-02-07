@@ -34,6 +34,12 @@ int conf_line_make2(char *dst, int dlen, const char *name, const char *value);
 struct conf_handler *conf_parse_and_lookup(char *name, int *name_argc,
                                            char *name_argv[]);
 
+/**
+ * Executes a conf_handler's "export" callback and returns the result.
+ */
+int conf_export_cb(struct conf_handler *ch, conf_export_func_t export_func,
+                   conf_export_tgt_t tgt);
+
 SLIST_HEAD(conf_store_head, conf_store);
 extern struct conf_store_head conf_load_srcs;
 SLIST_HEAD(conf_handler_head, conf_handler);

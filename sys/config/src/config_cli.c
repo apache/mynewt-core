@@ -51,9 +51,7 @@ conf_dump_running(void)
 
     conf_lock();
     SLIST_FOREACH(ch, &conf_handlers, ch_list) {
-        if (ch->ch_export) {
-            ch->ch_export(conf_running_one, CONF_EXPORT_SHOW);
-        }
+        conf_export_cb(ch, conf_running_one, CONF_EXPORT_SHOW);
     }
     conf_unlock();
 }
