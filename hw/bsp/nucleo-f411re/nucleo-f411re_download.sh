@@ -37,3 +37,4 @@ fi
 
 common_file_to_load
 stlink_load
+
