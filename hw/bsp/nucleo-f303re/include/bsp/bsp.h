@@ -46,22 +46,11 @@ extern uint8_t _ccram_start;
 
 /* LED pins */
 #define LED_BLINK_PIN_1   MCU_GPIO_PORTA(5)
-    
+
 #define LED_BLINK_PIN LED_BLINK_PIN_1
-    
+
 /* Buttons */
 #define BTN_USER_1        MCU_GPIO_PORTC(13)
-
-/* UART ports */
-#define UART_CNT (MYNEWT_VAL(UART_0) + MYNEWT_VAL(UART_1))
-#define UART_0_DEV_ID   0
-#define UART_1_DEV_ID   (UART_0_DEV_ID + MYNEWT_VAL(UART_0))
-
-/* PWM */
-#define PWM_CNT (MYNEWT_VAL(PWM_0) + MYNEWT_VAL(PWM_1) + MYNEWT_VAL(PWM_2))
-#define PWM_0_DEV_ID    0
-#define PWM_1_DEV_ID    (PWM_0_DEV_ID + MYNEWT_VAL(PWM_0))
-#define PWM_2_DEV_ID    (PWM_1_DEV_ID + MYNEWT_VAL(PWM_1))
 
 /* This defines the maximum NFFS areas (block) are in the BSPs NFS file 
  * system space.  This in conjunction with flash map determines how 

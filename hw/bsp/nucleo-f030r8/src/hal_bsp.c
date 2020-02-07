@@ -16,84 +16,64 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include <stddef.h>
+#include <assert.h>
 
+#include "bsp/bsp.h"
 #include "os/mynewt.h"
 
-#include "assert.h"
-#include "bsp/bsp.h"
-#include "hal/hal_bsp.h"
-#include "hal/hal_flash_int.h"
-#include "hal/hal_gpio.h"
-#include "hal/hal_system.h"
-#include "mcu/mcu.h"
-#include "mcu/stm32f0_bsp.h"
-#include "stm32f0xx.h"
-#include "stm32f0xx_hal.h"
-#include "stm32f0xx_hal_gpio.h"
-#include "stm32f0xx_hal_rcc.h"
-#include "mcu/stm32f0xx_mynewt_hal.h"
+#include <hal/hal_bsp.h>
+#include <hal/hal_flash_int.h>
+#include <hal/hal_system.h>
 
-#if MYNEWT_VAL(I2C_0)
-#include "stm32f0xx_hal_i2c.h"
-#include "hal/hal_i2c.h"
+#include <stm32f030x8.h>
+#include <stm32_common/stm32_hal.h>
+
+#if MYNEWT_VAL(PWM_0) || MYNEWT_VAL(PWM_1) || MYNEWT_VAL(PWM_2)
+#include <pwm_stm32/pwm_stm32.h>
 #endif
 
-#if MYNEWT_VAL(UART_0) || MYNEWT_VAL(UART_1)
-
-/*
- * It is necessary to include uart/uart.h before stm32fxx_hal_uart.h gets included
- * due to a name conflict for UART_PARITY_NONE.
- */
-#include "stm32f0xx_hal_usart.h"
-#include "stm32f0xx_hal_usart_ex.h"
-#include <uart/uart.h>
-#include <uart_hal/uart_hal.h>
-static struct uart_dev hal_uart[UART_CNT];
-
-static const struct 
-stm32_uart_cfg uart_cfg[UART_CNT] = {
-    [0] = {
-        .suc_uart    = USART2,
-        .suc_rcc_reg = &RCC->APB1ENR,
-        .suc_rcc_dev = RCC_APB1ENR_USART2EN,
-        .suc_pin_tx  = MCU_GPIO_PORTA(2),
-        .suc_pin_rx  = MCU_GPIO_PORTA(3),
-        .suc_pin_rts = -1,
-        .suc_pin_cts = -1,
-        .suc_pin_af  = GPIO_AF1_USART2,
-        .suc_irqn    = USART2_IRQn
-    },
-    [1] = {
-        .suc_uart    = USART1,
-        .suc_rcc_reg = &RCC->APB2ENR,
-        .suc_rcc_dev = RCC_APB2ENR_USART1EN,
-        .suc_pin_tx  = MCU_GPIO_PORTA(9),
-        .suc_pin_rx  = MCU_GPIO_PORTA(10),
-        .suc_pin_rts = -1,
-        .suc_pin_cts = -1,
-        .suc_pin_af  = GPIO_AF1_USART1,
-        .suc_irqn    = USART1_IRQn
-    }
+#if MYNEWT_VAL(UART_0)
+const struct stm32_uart_cfg os_bsp_uart0_cfg = {
+    .suc_uart = USART2,
+    .suc_rcc_reg = &RCC->APB1ENR,
+    .suc_rcc_dev = RCC_APB1ENR_USART2EN,
+    .suc_pin_tx = MYNEWT_VAL(UART_0_PIN_TX),
+    .suc_pin_rx = MYNEWT_VAL(UART_0_PIN_RX),
+    .suc_pin_rts = MYNEWT_VAL(UART_0_PIN_RTS),
+    .suc_pin_cts = MYNEWT_VAL(UART_0_PIN_CTS),
+    .suc_pin_af = GPIO_AF1_USART2,
+    .suc_irqn = USART2_IRQn,
 };
 #endif
 
+#if MYNEWT_VAL(UART_1)
+const struct stm32_uart_cfg os_bsp_uart1_cfg = {
+    .suc_uart = USART1,
+    .suc_rcc_reg = &RCC->APB2ENR,
+    .suc_rcc_dev = RCC_APB2ENR_USART1EN,
+    .suc_pin_tx = MYNEWT_VAL(UART_1_PIN_TX),
+    .suc_pin_rx = MYNEWT_VAL(UART_1_PIN_RX),
+    .suc_pin_rts = MYNEWT_VAL(UART_1_PIN_RTS),
+    .suc_pin_cts = MYNEWT_VAL(UART_1_PIN_CTS),
+    .suc_pin_af = GPIO_AF1_USART1,
+    .suc_irqn = USART1_IRQn,
+};
+#endif
 
 #if MYNEWT_VAL(I2C_0)
-static struct 
-stm32_hal_i2c_cfg i2c_cfg0 = {
+const struct stm32_hal_i2c_cfg os_bsp_i2c0_cfg = {
     .hic_i2c = I2C1,
     .hic_rcc_reg = &RCC->APB1ENR,
     .hic_rcc_dev = RCC_APB1ENR_I2C1EN,
-    .hic_pin_sda = MCU_GPIO_PORTB(9),     /* PB9 on CN3 */
-    .hic_pin_scl = MCU_GPIO_PORTB(8),     /* PB8 on CN3 */
+    .hic_pin_sda = MYNEWT_VAL(I2C_0_PIN_SDA),
+    .hic_pin_scl = MYNEWT_VAL(I2C_0_PIN_SCL),
     .hic_pin_af = GPIO_AF3_I2C1,
     .hic_10bit = 0,
     .hic_timingr = 0x10420F13,      /* FIXME: 100KHz at 8MHz of SysCoreClock */
 };
 #endif
 
-static const struct 
+static const struct
 hal_bsp_mem_dump dump_cfg[] = {
     [0] = {
         .hbmd_start = &_ram_start,
@@ -140,34 +120,5 @@ hal_bsp_get_nvic_priority(int irq_num, uint32_t pri)
 void
 hal_bsp_init(void)
 {
-    int rc;
-    (void)rc;  /* in case there are no devices declared */
-
-#if MYNEWT_VAL(UART_0)
-    rc = os_dev_create((struct os_dev *) &hal_uart[UART_0_DEV_ID], "uart0",
-      OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *)&uart_cfg[UART_0_DEV_ID]);
-    assert(rc == 0);
-#endif
-
-#if MYNEWT_VAL(UART_1)
-    rc = os_dev_create((struct os_dev *) &hal_uart[UART_1_DEV_ID], "uart1",
-      OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *)&uart_cfg[UART_1_DEV_ID]);
-    assert(rc == 0);
-#endif
-
-#if MYNEWT_VAL(TIMER_0)
-    rc = hal_timer_init(0, TIM15);
-    assert(rc == 0);
-#endif
-
-#if MYNEWT_VAL(I2C_0)
-    rc = hal_i2c_init(0, &i2c_cfg0);
-    assert(rc == 0);
-#endif
-
-#if (MYNEWT_VAL(OS_CPUTIME_TIMER_NUM) >= 0)
-    rc = os_cputime_init(MYNEWT_VAL(OS_CPUTIME_FREQ));
-    assert(rc == 0);
-#endif
-
+    stm32_periph_create();
 }

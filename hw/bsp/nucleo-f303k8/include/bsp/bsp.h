@@ -46,19 +46,8 @@ extern uint8_t _ccram_start;
 
 /* LED pins */
 #define LED_BLINK_PIN_1   MCU_GPIO_PORTB(3)
-    
-#define LED_BLINK_PIN LED_BLINK_PIN_1
-   
-/* UART ports */
-#define UART_CNT (MYNEWT_VAL(UART_0) + MYNEWT_VAL(UART_1))
-#define UART_0_DEV_ID   0
-#define UART_1_DEV_ID   (UART_0_DEV_ID + MYNEWT_VAL(UART_0))
 
-/* PWM */
-#define PWM_CNT (MYNEWT_VAL(PWM_0) + MYNEWT_VAL(PWM_1) + MYNEWT_VAL(PWM_2))
-#define PWM_0_DEV_ID    0
-#define PWM_1_DEV_ID    (PWM_0_DEV_ID + MYNEWT_VAL(PWM_0))
-#define PWM_2_DEV_ID    (PWM_1_DEV_ID + MYNEWT_VAL(PWM_1))
+#define LED_BLINK_PIN LED_BLINK_PIN_1
 
 /* Arduino nano pins */
 #define ARDUINO_PIN_D0      MCU_GPIO_PORTA(10)

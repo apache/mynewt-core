@@ -18,24 +18,24 @@
  */
 #include <assert.h>
 
+#include "bsp/bsp.h"
 #include "os/mynewt.h"
-#include <bsp/bsp.h>
-#include <mcu/cmsis_nvic.h>
-#include <flash_map/flash_map.h>
-#include <stm32f429xx.h>
-#include <stm32f4xx_hal_gpio_ex.h>
-
-#if MYNEWT_VAL(UART_0)
-#include <uart/uart.h>
-#include <uart_hal/uart_hal.h>
-#endif
 
 #include <hal/hal_bsp.h>
-#include <hal/hal_gpio.h>
-#include <hal/hal_timer.h>
+#include <hal/hal_flash_int.h>
 #include <hal/hal_system.h>
 
-#include <mcu/stm32f4_bsp.h>
+#include <stm32f429xx.h>
+#include <stm32_common/stm32_hal.h>
+
+#if MYNEWT_VAL(ETH_0)
+#include <stm32_eth/stm32_eth.h>
+#include <stm32_eth/stm32_eth_cfg.h>
+#endif
+
+#if MYNEWT_VAL(PWM_0) || MYNEWT_VAL(PWM_1) || MYNEWT_VAL(PWM_2)
+#include <pwm_stm32/pwm_stm32.h>
+#endif
 
 const uint32_t stm32_flash_sectors[] = {
     /* Bank 1 */
@@ -72,21 +72,17 @@ static_assert(MYNEWT_VAL(STM32_FLASH_NUM_AREAS) + 1 == SZ,
         "STM32_FLASH_NUM_AREAS does not match flash sectors");
 
 #if MYNEWT_VAL(UART_0)
-static struct uart_dev hal_uart0;
-
 /* UART connected to st-link */
-static const struct stm32_uart_cfg uart_cfg[UART_CNT] = {
-    [0] = {
-        .suc_uart = USART1,
-        .suc_rcc_reg = &RCC->APB2ENR,
-        .suc_rcc_dev = RCC_APB2ENR_USART1EN,
-        .suc_pin_tx = MCU_GPIO_PORTA(9),
-        .suc_pin_rx = MCU_GPIO_PORTA(10),
-        .suc_pin_rts = -1,
-        .suc_pin_cts = -1,
-        .suc_pin_af = GPIO_AF7_USART1,
-        .suc_irqn = USART1_IRQn
-    }
+const struct stm32_uart_cfg os_bsp_uart0_cfg = {
+    .suc_uart = USART1,
+    .suc_rcc_reg = &RCC->APB2ENR,
+    .suc_rcc_dev = RCC_APB2ENR_USART1EN,
+    .suc_pin_tx = MYNEWT_VAL(UART_0_PIN_TX),
+    .suc_pin_rx = MYNEWT_VAL(UART_0_PIN_RX),
+    .suc_pin_rts = MYNEWT_VAL(UART_0_PIN_RTS),
+    .suc_pin_cts = MYNEWT_VAL(UART_0_PIN_CTS),
+    .suc_pin_af = GPIO_AF7_USART1,
+    .suc_irqn = USART1_IRQn,
 };
 #endif
 
@@ -124,27 +120,7 @@ hal_bsp_core_dump(int *area_cnt)
 void
 hal_bsp_init(void)
 {
-    int rc;
-
-    (void)rc;
-
-#if MYNEWT_VAL(UART_0)
-    rc = os_dev_create((struct os_dev *) &hal_uart0, "uart0",
-      OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *)&uart_cfg[0]);
-    assert(rc == 0);
-#endif
-
-#if MYNEWT_VAL(TIMER_0)
-    hal_timer_init(0, TIM9);
-#endif
-
-#if MYNEWT_VAL(TIMER_1)
-    hal_timer_init(1, TIM10);
-#endif
-
-#if MYNEWT_VAL(TIMER_2)
-    hal_timer_init(2, TIM11);
-#endif
+    stm32_periph_create();
 }
 
 /**

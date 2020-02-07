@@ -18,37 +18,19 @@
  */
 #include <assert.h>
 
+#include "bsp/bsp.h"
 #include "os/mynewt.h"
 
-#if MYNEWT_VAL(UART_0)
-#include <uart/uart.h>
-#include <uart_hal/uart_hal.h>
-#endif
-
 #include <hal/hal_bsp.h>
-#include <hal/hal_gpio.h>
 #include <hal/hal_flash_int.h>
-#include <hal/hal_timer.h>
-
-#if MYNEWT_VAL(SPI_1_MASTER) || MYNEWT_VAL(SPI_1_SLAVE)
-#include <hal/hal_spi.h>
-#endif
+#include <hal/hal_system.h>
 
 #include <stm32l072xx.h>
-#include <stm32l0xx_hal_rcc.h>
-#include <stm32l0xx_hal_pwr.h>
-#include <stm32l0xx_hal_flash.h>
-#include <stm32l0xx_hal_gpio_ex.h>
-#include <mcu/stm32l0_bsp.h>
-#include "mcu/stm32l0xx_mynewt_hal.h"
-#include "mcu/stm32_hal.h"
-#include "hal/hal_i2c.h"
+#include <stm32_common/stm32_hal.h>
 
-#include "bsp/bsp.h"
-
-#define TIMER_0_TIM TIM2
-#define TIMER_1_TIM TIM3
-#define TIMER_2_TIM TIM21
+#if MYNEWT_VAL(PWM_0) || MYNEWT_VAL(PWM_1) || MYNEWT_VAL(PWM_2)
+#include <pwm_stm32/pwm_stm32.h>
+#endif
 
 #if MYNEWT_VAL(LORA_NODE)
 
@@ -76,48 +58,44 @@
 
 #endif /* MYNEWT_VAL(LORA_NODE) */
 
-
 #if MYNEWT_VAL(UART_0)
-static struct uart_dev hal_uart0;
-
-static const struct stm32_uart_cfg uart_cfg[UART_CNT] = {
-    [0] = {
-        .suc_uart = USART2,
-        .suc_rcc_reg = &RCC->APB1ENR,
-        .suc_rcc_dev = RCC_APB1ENR_USART2EN,
-        .suc_pin_tx = MCU_GPIO_PORTA(2),
-        .suc_pin_rx = MCU_GPIO_PORTA(3),
-        .suc_pin_rts = -1,
-        .suc_pin_cts = -1,
-        .suc_pin_af = GPIO_AF4_USART2,
-        .suc_irqn = USART2_IRQn
-    }
+const struct stm32_uart_cfg os_bsp_uart0_cfg = {
+    .suc_uart = USART2,
+    .suc_rcc_reg = &RCC->APB1ENR,
+    .suc_rcc_dev = RCC_APB1ENR_USART2EN,
+    .suc_pin_tx = MYNEWT_VAL(UART_0_PIN_TX),
+    .suc_pin_rx = MYNEWT_VAL(UART_0_PIN_RX),
+    .suc_pin_rts = MYNEWT_VAL(UART_0_PIN_RTS),
+    .suc_pin_cts = MYNEWT_VAL(UART_0_PIN_CTS),
+    .suc_pin_af = GPIO_AF4_USART2,
+    .suc_irqn = USART2_IRQn,
 };
 #endif
 
 #if MYNEWT_VAL(I2C_0)
-static struct stm32_hal_i2c_cfg i2c_cfg0 = {
+const struct stm32_hal_i2c_cfg os_bsp_i2c0_cfg = {
     .hic_i2c = I2C1,
     .hic_rcc_reg = &RCC->APB1ENR,
     .hic_rcc_dev = RCC_APB1ENR_I2C1EN,
-    .hic_pin_sda = MCU_GPIO_PORTB(9),     /* PB9 on CN3 */
-    .hic_pin_scl = MCU_GPIO_PORTB(8),     /* PB8 on CN3 */
+    .hic_pin_sda = MYNEWT_VAL(I2C_0_PIN_SDA),
+    .hic_pin_scl = MYNEWT_VAL(I2C_0_PIN_SCL),
     .hic_pin_af = GPIO_AF4_I2C1,
     .hic_10bit = 0,
     .hic_timingr = 0x10420F13,      /* FIXME: 100KHz at 8MHz of SysCoreClock */
 };
 #endif
 
-#if MYNEWT_VAL(SPI_1_SLAVE) || MYNEWT_VAL(SPI_1_MASTER)
-struct stm32_hal_spi_cfg spi1_cfg = {
+#if ((MYNEWT_VAL(SPI_1_SLAVE) || MYNEWT_VAL(SPI_1_MASTER)) && \
+    MYNEWT_VAL(SPI_1_CUSTOM_CFG))
+const struct stm32_hal_spi_cfg os_bsp_spi1_cfg = {
 #if (MYNEWT_VAL(LORA_NODE) && (MYNEWT_VAL(SX1276_SPI_IDX) == 1))
-    .ss_pin   = MYNEWT_VAL(SX1276_SPI_CS_PIN),
+    .ss_pin = MYNEWT_VAL(SX1276_SPI_CS_PIN),
 #else
-    .ss_pin   = MCU_GPIO_PORTB(12),
+    .ss_pin = MYNEWT_VAL(SPI_1_PIN_SS),
 #endif
-    .sck_pin  = MCU_GPIO_PORTB(13),
-    .miso_pin = MCU_GPIO_PORTB(14),
-    .mosi_pin = MCU_GPIO_PORTB(15),
+    .sck_pin = MYNEWT_VAL(SPI_1_PIN_SCK),
+    .miso_pin = MYNEWT_VAL(SPI_1_PIN_MISO),
+    .mosi_pin = MYNEWT_VAL(SPI_1_PIN_MOSI),
     .irq_prio = 2,
 };
 #endif
@@ -152,47 +130,7 @@ hal_bsp_core_dump(int *area_cnt)
 void
 hal_bsp_init(void)
 {
-    int rc;
-
-    (void)rc;
-
-#if MYNEWT_VAL(UART_0)
-    rc = os_dev_create((struct os_dev *) &hal_uart0, "uart0",
-      OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *)&uart_cfg[0]);
-    assert(rc == 0);
-#endif
-
-#if MYNEWT_VAL(TIMER_0)
-    hal_timer_init(0, TIMER_0_TIM);
-#endif
-
-#if MYNEWT_VAL(TIMER_1)
-    hal_timer_init(1, TIMER_1_TIM);
-#endif
-
-#if MYNEWT_VAL(TIMER_2)
-    hal_timer_init(2, TIMER_2_TIM);
-#endif
-
-#if (MYNEWT_VAL(OS_CPUTIME_TIMER_NUM) >= 0)
-    rc = os_cputime_init(MYNEWT_VAL(OS_CPUTIME_FREQ));
-    assert(rc == 0);
-#endif
-
-#if MYNEWT_VAL(SPI_1_MASTER)
-    rc = hal_spi_init(1, &spi1_cfg, HAL_SPI_TYPE_MASTER);
-    assert(rc == 0);
-#endif
-
-#if MYNEWT_VAL(SPI_1_SLAVE)
-    rc = hal_spi_init(1, &spi1_cfg, HAL_SPI_TYPE_SLAVE);
-    assert(rc == 0);
-#endif
-
-#if MYNEWT_VAL(I2C_0)
-    rc = hal_i2c_init(0, &i2c_cfg0);
-    assert(rc == 0);
-#endif
+    stm32_periph_create();
 }
 
 /**
@@ -217,11 +155,11 @@ void lora_bsp_enable_mac_timer(void)
     /* Turn on the LoRa MAC timer. This function is automatically
      * called by the LoRa stack when exiting low power mode.*/
     #if MYNEWT_VAL(LORA_MAC_TIMER_NUM) == 0
-        #define LORA_TIM  TIMER_0_TIM
+        #define LORA_TIM  MYNEWT_VAL(TIMER_0_TIM)
     #elif MYNEWT_VAL(LORA_MAC_TIMER_NUM) == 1
-        #define LORA_TIM  TIMER_1_TIM
+        #define LORA_TIM  MYNEWT_VAL(TIMER_1_TIM)
     #elif MYNEWT_VAL(LORA_MAC_TIMER_NUM) == 2
-        #define LORA_TIM  TIMER_2_TIM
+        #define LORA_TIM  MYNEWT_VAL(TIMER_2_TIM)
     #else
         #error "Invalid LORA_MAC_TIMER_NUM"
     #endif

@@ -16,40 +16,31 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 #include <assert.h>
-#include "os/mynewt.h"
+
 #include "bsp/bsp.h"
+#include "os/mynewt.h"
+
+#include <hal/hal_bsp.h>
+#include <hal/hal_flash_int.h>
+#include <hal/hal_system.h>
+
 #include "stm32f407xx.h"
-#include "stm32f4xx_hal_gpio_ex.h"
-#include "stm32f4xx_hal_dma.h"
-#include "stm32f4xx_hal_adc.h"
-#include "flash_map/flash_map.h"
-#if MYNEWT_VAL(TRNG)
-#include "trng/trng.h"
-#include "trng_stm32/trng_stm32.h"
+#include <stm32_common/stm32_hal.h>
+
+#if MYNEWT_VAL(ETH_0)
+#include <stm32_eth/stm32_eth.h>
+#include <stm32_eth/stm32_eth_cfg.h>
 #endif
-#if MYNEWT_VAL(UART_0)
-#include "uart/uart.h"
-#include "uart_hal/uart_hal.h"
+
+#if MYNEWT_VAL(PWM_0) || MYNEWT_VAL(PWM_1) || MYNEWT_VAL(PWM_2)
+#include <pwm_stm32/pwm_stm32.h>
 #endif
+
 #if MYNEWT_VAL(ADC_1) || MYNEWT_VAL(ADC_2) || MYNEWT_VAL(ADC_3)
+#include "stm32f4xx_hal_adc.h"
 #include "adc_stm32f4/adc_stm32f4.h"
 #endif
-#include "hal/hal_i2c.h"
-#include "hal/hal_timer.h"
-#include "hal/hal_bsp.h"
-#include "hal/hal_gpio.h"
-#if MYNEWT_VAL(SPI_0_MASTER) || MYNEWT_VAL(SPI_0_SLAVE)
-#include "hal/hal_spi.h"
-#endif
-#if MYNEWT_VAL(ETH_0)
-#include "stm32_eth/stm32_eth.h"
-#include "stm32_eth/stm32_eth_cfg.h"
-#endif
-#include "mcu/stm32_hal.h"
-#include "mcu/stm32f4_bsp.h"
-#include "mcu/stm32f4xx_mynewt_hal.h"
 
 const uint32_t stm32_flash_sectors[] = {
     0x08000000,     /* 16kB */
@@ -70,14 +61,6 @@ const uint32_t stm32_flash_sectors[] = {
 #define SZ (sizeof(stm32_flash_sectors) / sizeof(stm32_flash_sectors[0]))
 static_assert(MYNEWT_VAL(STM32_FLASH_NUM_AREAS) + 1 == SZ,
         "STM32_FLASH_NUM_AREAS does not match flash sectors");
-
-#if MYNEWT_VAL(TRNG)
-static struct trng_dev os_bsp_trng;
-#endif
-
-#if MYNEWT_VAL(UART_0)
-struct uart_dev hal_uart0;
-#endif
 
 #if MYNEWT_VAL(ADC_1)
 struct adc_dev my_dev_adc1;
@@ -280,43 +263,35 @@ struct adc_chan_config adc3_chan4_config = STM32F4_ADC3_DEFAULT_SAC;
 struct stm32f4_adc_dev_cfg adc3_config = STM32F4_ADC3_DEFAULT_CONFIG;
 #endif
 
-#if MYNEWT_VAL(I2C_0)
-static struct stm32_hal_i2c_cfg i2c_cfg0 = {
-    .hic_i2c = I2C1,
-    .hic_rcc_reg = &RCC->APB1ENR,
-    .hic_rcc_dev = RCC_APB1ENR_I2C1EN,
-    .hic_pin_sda = MCU_GPIO_PORTB(9),		/* PB9 */
-    .hic_pin_scl = MCU_GPIO_PORTB(8),		/* PB8 */
-    .hic_pin_af = GPIO_AF4_I2C1,
-    .hic_10bit = 0,
-    .hic_speed = 100000				/* 100kHz */
-};
-#endif
-
-#if MYNEWT_VAL(SPI_0_SLAVE) || MYNEWT_VAL(SPI_0_MASTER)
-struct stm32_hal_spi_cfg spi0_cfg = {
-    .ss_pin = MCU_GPIO_PORTA(4),		/* PA4 */
-    .sck_pin  = MCU_GPIO_PORTA(5),		/* PA5 */
-    .miso_pin = MCU_GPIO_PORTA(6),		/* PA6 */
-    .mosi_pin = MCU_GPIO_PORTB(5),		/* PB5 */
-    .irq_prio = 2
-};
-#endif
 #if MYNEWT_VAL(UART_0)
-static const struct stm32_uart_cfg uart_cfg0 = {
+const struct stm32_uart_cfg os_bsp_uart0_cfg = {
     .suc_uart = USART6,
     .suc_rcc_reg = &RCC->APB2ENR,
     .suc_rcc_dev = RCC_APB2ENR_USART6EN,
-    .suc_pin_tx = MCU_GPIO_PORTC(6),	/* PC6 */
-    .suc_pin_rx = MCU_GPIO_PORTC(7),	/* PC7 */
-    .suc_pin_rts = -1,
-    .suc_pin_cts = -1,
+    .suc_pin_tx = MYNEWT_VAL(UART_0_PIN_TX),
+    .suc_pin_rx = MYNEWT_VAL(UART_0_PIN_RX),
+    .suc_pin_rts = MYNEWT_VAL(UART_0_PIN_RTS),
+    .suc_pin_cts = MYNEWT_VAL(UART_0_PIN_CTS),
     .suc_pin_af = GPIO_AF8_USART6,
     .suc_irqn = USART6_IRQn
 };
 #endif
+
+#if MYNEWT_VAL(I2C_0)
+const struct stm32_hal_i2c_cfg os_bsp_i2c0_cfg = {
+    .hic_i2c = I2C1,
+    .hic_rcc_reg = &RCC->APB1ENR,
+    .hic_rcc_dev = RCC_APB1ENR_I2C1EN,
+    .hic_pin_sda = MYNEWT_VAL(I2C_0_PIN_SDA),
+    .hic_pin_scl = MYNEWT_VAL(I2C_0_PIN_SCL),
+    .hic_pin_af = GPIO_AF4_I2C1,
+    .hic_10bit = 0,
+    .hic_speed = 100000,
+};
+#endif
+
 #if MYNEWT_VAL(ETH_0)
-static const struct stm32_eth_cfg eth_cfg = {
+const struct stm32_eth_cfg os_bsp_eth0_cfg = {
     /*
      * PORTA
      *   PA1 - ETH_RMII_REF_CLK
@@ -345,6 +320,7 @@ static const struct stm32_eth_cfg eth_cfg = {
     .sec_phy_irq = MCU_GPIO_PORTA(3)
 };
 #endif
+
 static const struct hal_bsp_mem_dump dump_cfg[] = {
     [0] = {
         .hbmd_start = &_ram_start,
@@ -405,27 +381,7 @@ hal_bsp_init(void)
 
     (void)rc;
 
-#if MYNEWT_VAL(TRNG)
-    rc = os_dev_create(&os_bsp_trng.dev, "trng", OS_DEV_INIT_KERNEL,
-                       OS_DEV_INIT_PRIO_DEFAULT, stm32_trng_dev_init, NULL);
-    assert(rc == 0);
-#endif
-
-#if MYNEWT_VAL(SPI_0_MASTER)
-    rc = hal_spi_init(0, &spi0_cfg, HAL_SPI_TYPE_MASTER);
-    assert(rc == 0);
-#endif
-
-#if MYNEWT_VAL(SPI_0_SLAVE)
-    rc = hal_spi_init(0, &spi0_cfg, HAL_SPI_TYPE_SLAVE);
-    assert(rc == 0);
-#endif
-
-#if MYNEWT_VAL(UART_0)
-    rc = os_dev_create((struct os_dev *) &hal_uart0, "uart0",
-      OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *)&uart_cfg0);
-    assert(rc == 0);
-#endif
+    stm32_periph_create();
 
 #if MYNEWT_VAL(ADC_1)
     rc = os_dev_create((struct os_dev *) &my_dev_adc1, "adc1",
@@ -443,25 +399,6 @@ hal_bsp_init(void)
     rc = os_dev_create((struct os_dev *) &my_dev_adc3, "adc3",
             OS_DEV_INIT_KERNEL, OS_DEV_INIT_PRIO_DEFAULT,
             stm32f4_adc_dev_init, &adc3_config);
-    assert(rc == 0);
-#endif
-
-#if MYNEWT_VAL(I2C_0)
-    rc = hal_i2c_init(0, &i2c_cfg0);
-    assert(rc == 0);
-#endif
-
-#if MYNEWT_VAL(TIMER_0)
-    hal_timer_init(0, TIM9);
-#endif
-
-#if (MYNEWT_VAL(OS_CPUTIME_TIMER_NUM) >= 0)
-    rc = os_cputime_init(MYNEWT_VAL(OS_CPUTIME_FREQ));
-    assert(rc == 0);
-#endif
-
-#if MYNEWT_VAL(ETH_0)
-    rc = stm32_eth_init(&eth_cfg);
     assert(rc == 0);
 #endif
 }

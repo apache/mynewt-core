@@ -49,11 +49,8 @@ extern uint8_t _ccram_start;
 
 #define BTN_USER_1         MCU_GPIO_PORTA(0)
 
-#define UART_CNT           1
-#define UART_DEV_NAME      "uart0"
-
-/* This defines the maximum NFFS areas (block) are in the BSPs NFS file 
- * system space.  This in conjunction with flash map determines how 
+/* This defines the maximum NFFS areas (block) are in the BSPs NFS file
+ * system space.  This in conjunction with flash map determines how
  * many NFS blocks there will be.  A minimum is the number of individually
  * erasable sectors in the flash area and the maximum is this number. If
  * your max is less than the number of sectors then the NFFS will combine

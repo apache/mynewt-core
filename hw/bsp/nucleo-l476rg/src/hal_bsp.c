@@ -18,38 +18,22 @@
  */
 #include <assert.h>
 
+#include "bsp/bsp.h"
 #include "os/mynewt.h"
 
-#if MYNEWT_VAL(UART_0)
-#include <uart/uart.h>
-#include <uart_hal/uart_hal.h>
-#endif
-
 #include <hal/hal_bsp.h>
-#include <hal/hal_gpio.h>
 #include <hal/hal_flash_int.h>
-#include <hal/hal_timer.h>
-
-#if MYNEWT_VAL(SPI_0_MASTER) || MYNEWT_VAL(SPI_0_SLAVE)
-#include <hal/hal_spi.h>
-#endif
+#include <hal/hal_system.h>
 
 #include <stm32l476xx.h>
-#include <stm32l4xx_hal_rcc.h>
-#include <stm32l4xx_hal_pwr.h>
-#include <stm32l4xx_hal_flash.h>
-#include <stm32l4xx_hal_gpio_ex.h>
-#include <mcu/stm32l4_bsp.h>
-#include "mcu/stm32l4xx_mynewt_hal.h"
-#include "mcu/stm32_hal.h"
-#include "hal/hal_i2c.h"
+#include <stm32_common/stm32_hal.h>
 
-#include "bsp/bsp.h"
+#if MYNEWT_VAL(PWM_0) || MYNEWT_VAL(PWM_1) || MYNEWT_VAL(PWM_2)
+#include <pwm_stm32/pwm_stm32.h>
+#endif
 
 #if MYNEWT_VAL(UART_0)
-static struct uart_dev hal_uart0;
-
-static const struct stm32_uart_cfg uart0_cfg = {
+const struct stm32_uart_cfg os_bsp_uart0_cfg = {
     .suc_uart = USART2,
     .suc_rcc_reg = &RCC->APB1ENR1,
     .suc_rcc_dev = RCC_APB1ENR1_USART2EN,
@@ -63,9 +47,7 @@ static const struct stm32_uart_cfg uart0_cfg = {
 #endif
 
 #if MYNEWT_VAL(UART_1)
-static struct uart_dev hal_uart1;
-
-static const struct stm32_uart_cfg uart1_cfg = {
+const struct stm32_uart_cfg os_bsp_uart1_cfg = {
     .suc_uart = USART1,
     .suc_rcc_reg = &RCC->APB2ENR,
     .suc_rcc_dev = RCC_APB2ENR_USART1EN,
@@ -85,7 +67,7 @@ static const struct stm32_uart_cfg uart1_cfg = {
  * be removed (they are the default connections) and SB46/SB52 need to
  * be added.
  */
-static struct stm32_hal_i2c_cfg i2c_cfg0 = {
+const struct stm32_hal_i2c_cfg os_bsp_i2c0_cfg = {
     .hic_i2c = I2C1,
     .hic_rcc_reg = &RCC->APB1ENR1,
     .hic_rcc_dev = RCC_APB1ENR1_I2C1EN,
@@ -98,7 +80,7 @@ static struct stm32_hal_i2c_cfg i2c_cfg0 = {
 #endif
 
 #if MYNEWT_VAL(I2C_1)
-static struct stm32_hal_i2c_cfg i2c_cfg1 = {
+const struct stm32_hal_i2c_cfg os_bsp_i2c1_cfg = {
     .hic_i2c = I2C2,
     .hic_rcc_reg = &RCC->APB1ENR1,
     .hic_rcc_dev = RCC_APB1ENR1_I2C2EN,
@@ -117,7 +99,7 @@ static struct stm32_hal_i2c_cfg i2c_cfg1 = {
  * If solder brides are removed I2C_2 can't be accessed since only PC0, PC1
  * are present on Nucleo-64 board for I2C3 to use.
  */
-static struct stm32_hal_i2c_cfg i2c_cfg2 = {
+const struct stm32_hal_i2c_cfg os_bsp_i2c2_cfg = {
     .hic_i2c = I2C3,
     .hic_rcc_reg = &RCC->APB1ENR1,
     .hic_rcc_dev = RCC_APB1ENR1_I2C3EN,
@@ -126,16 +108,6 @@ static struct stm32_hal_i2c_cfg i2c_cfg2 = {
     .hic_pin_af = GPIO_AF4_I2C3,
     .hic_10bit = 0,
     .hic_timingr = 0x00000E14,            /* 100KHz at 4MHz of SysCoreClock */
-};
-#endif
-
-#if MYNEWT_VAL(SPI_0_SLAVE) || MYNEWT_VAL(SPI_0_MASTER)
-struct stm32_hal_spi_cfg spi0_cfg = {
-    .ss_pin   = MCU_GPIO_PORTA(4),
-    .sck_pin  = MCU_GPIO_PORTA(5),
-    .miso_pin = MCU_GPIO_PORTA(6),
-    .mosi_pin = MCU_GPIO_PORTA(7),
-    .irq_prio = 2,
 };
 #endif
 
@@ -169,63 +141,7 @@ hal_bsp_core_dump(int *area_cnt)
 void
 hal_bsp_init(void)
 {
-    int rc;
-
-    (void)rc;
-
-#if MYNEWT_VAL(UART_0)
-    rc = os_dev_create((struct os_dev *) &hal_uart0, "uart0",
-      OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *)&uart0_cfg);
-    assert(rc == 0);
-#endif
-
-#if MYNEWT_VAL(UART_1)
-    rc = os_dev_create((struct os_dev *) &hal_uart1, "uart1",
-      OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *)&uart1_cfg);
-    assert(rc == 0);
-#endif
-
-#if MYNEWT_VAL(TIMER_0)
-    hal_timer_init(0, TIM2);
-#endif
-
-#if MYNEWT_VAL(TIMER_1)
-    hal_timer_init(1, TIM3);
-#endif
-
-#if MYNEWT_VAL(TIMER_2)
-    hal_timer_init(2, TIM4);
-#endif
-
-#if MYNEWT_VAL(SPI_0_MASTER)
-    rc = hal_spi_init(0, &spi0_cfg, HAL_SPI_TYPE_MASTER);
-    assert(rc == 0);
-#endif
-
-#if (MYNEWT_VAL(OS_CPUTIME_TIMER_NUM) >= 0)
-    rc = os_cputime_init(MYNEWT_VAL(OS_CPUTIME_FREQ));
-    assert(rc == 0);
-#endif
-
-#if MYNEWT_VAL(SPI_0_SLAVE)
-    rc = hal_spi_init(0, &spi0_cfg, HAL_SPI_TYPE_SLAVE);
-    assert(rc == 0);
-#endif
-
-#if MYNEWT_VAL(I2C_0)
-    rc = hal_i2c_init(0, &i2c_cfg0);
-    assert(rc == 0);
-#endif
-
-#if MYNEWT_VAL(I2C_1)
-    rc = hal_i2c_init(1, &i2c_cfg1);
-    assert(rc == 0);
-#endif
-
-#if MYNEWT_VAL(I2C_2)
-    rc = hal_i2c_init(2, &i2c_cfg2);
-    assert(rc == 0);
-#endif
+    stm32_periph_create();
 }
 
 /**

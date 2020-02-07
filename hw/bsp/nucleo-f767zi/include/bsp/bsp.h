@@ -58,14 +58,6 @@ extern uint8_t _ram2_start;
 /* BUTTON pins */
 #define BTN_USER_1      MCU_GPIO_PORTC(13)
 
-/* UART */
-#define UART_CNT        1
-
-#define PWM_CNT (MYNEWT_VAL(PWM_0) + MYNEWT_VAL(PWM_1) + MYNEWT_VAL(PWM_2))
-#define PWM_0_DEV_ID    0
-#define PWM_1_DEV_ID    (PWM_0_DEV_ID + MYNEWT_VAL(PWM_0))
-#define PWM_2_DEV_ID    (PWM_1_DEV_ID + MYNEWT_VAL(PWM_1))
-
 /* Arduino pins */
 #define ARDUINO_PIN_D0      MCU_GPIO_PORTG(9)
 #define ARDUINO_PIN_D1      MCU_GPIO_PORTG(14)

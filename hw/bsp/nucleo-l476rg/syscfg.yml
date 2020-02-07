@@ -22,50 +22,6 @@ syscfg.defs:
         description: 'Total flash size in KB.'
         value: 1024
 
-    UART_0:
-        description: 'Whether to enable USART2'
-        value:  1
-    UART_0_PIN_TX:
-        description: 'TX pin for USART2, PA2, PD5'
-        value: MCU_GPIO_PORTA(2)
-    UART_0_PIN_RX:
-        description: 'RX pin for USART2, PA3, PD6'
-        value: MCU_GPIO_PORTA(3)
-    UART_0_PIN_CTS:
-        description: 'CTS pin for USART2, PA0, PD3'
-        value: -1
-    UART_0_PIN_RTS:
-        description: 'RTS pin for USART2, PA1, PD4'
-        value: -1
-
-    UART_1:
-        description: 'Whether to enable USART1'
-        value:  0
-    UART_1_PIN_TX:
-        description: 'TX pin for USART1, PA9, PB6'
-        value: MCU_GPIO_PORTA(9)
-    UART_1_PIN_RX:
-        description: 'RX pin for USART1, PA10, PB7'
-        value: MCU_GPIO_PORTA(10)
-    UART_1_PIN_CTS:
-        description: 'CTS pin for USART1, PA11, PB4'
-        value: -1
-    UART_1_PIN_RTS:
-        description: 'RTS pin for USART1, PA12, PB3'
-        value: -1
-
-    TIMER_0:
-        description: 'Whether to enable TIMER_0'
-        value: 1
-
-    TIMER_1:
-        description: 'Whether to enable TIMER_1'
-        value: 0
-
-    TIMER_2:
-        description: 'Whether to enable TIMER_2'
-        value: 0
-
 syscfg.vals:
     REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG
     CONFIG_FCB_FLASH_AREA: FLASH_AREA_NFFS
@@ -95,3 +51,20 @@ syscfg.vals:
     STM32_FLASH_PREFETCH_ENABLE: 0
     STM32_INSTRUCTION_CACHE_ENABLE: 1
     STM32_DATA_CACHE_ENABLE: 1
+    UART_0_PIN_TX: 'MCU_GPIO_PORTA(2)'
+    UART_0_PIN_RX: 'MCU_GPIO_PORTA(3)'
+    UART_1_PIN_TX: 'MCU_GPIO_PORTA(9)'
+    UART_1_PIN_RX: 'MCU_GPIO_PORTA(10)'
+    I2C_0_PIN_SCL: 'MCU_GPIO_PORTB(8)'
+    I2C_0_PIN_SDA: 'MCU_GPIO_PORTB(9)'
+    I2C_1_PIN_SCL: 'MCU_GPIO_PORTB(10)'
+    I2C_1_PIN_SDA: 'MCU_GPIO_PORTB(11)'
+    I2C_2_PIN_SCL: 'MCU_GPIO_PORTC(0)'
+    I2C_2_PIN_SDA: 'MCU_GPIO_PORTC(1)'
+    SPI_0_PIN_SS: 'MCU_GPIO_PORTA(4)'
+    SPI_0_PIN_SCK: 'MCU_GPIO_PORTA(5)'
+    SPI_0_PIN_MISO: 'MCU_GPIO_PORTA(6)'
+    SPI_0_PIN_MOSI: 'MCU_GPIO_PORTA(7)'
+    TIMER_0_TIM: 'TIM2'
+    TIMER_1_TIM: 'TIM3'
+    TIMER_2_TIM: 'TIM4'

@@ -42,9 +42,6 @@ extern uint8_t _ram_start;
 #define LED_BLINK_PIN       MCU_GPIO_PORTB(5)
 #define LED_2               MCU_GPIO_PORTB(0)
 
-/* UART */
-#define UART_CNT 1
-
 /* Arduino pins */
 #define ARDUINO_PIN_D0      MCU_GPIO_PORTA(3)
 #define ARDUINO_PIN_D1      MCU_GPIO_PORTA(2)

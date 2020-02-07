@@ -16,114 +16,67 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include <stddef.h>
+#include <assert.h>
 
+#include "bsp/bsp.h"
 #include "os/mynewt.h"
 
-#if MYNEWT_VAL(UART_0) || MYNEWT_VAL(UART_1)
-/*
- * It is necessary to include uart/uart.h before stm32fxx_hal_uart.h gets included
- * due to a name conflict for UART_PARITY_NONE.
- */
-#include <uart/uart.h>
-#include <uart_hal/uart_hal.h>
+#include <hal/hal_bsp.h>
+#include <hal/hal_flash_int.h>
+#include <hal/hal_system.h>
+
+#include <stm32f3xx.h>
+#include <stm32_common/stm32_hal.h>
+
+#if MYNEWT_VAL(PWM_0) || MYNEWT_VAL(PWM_1) || MYNEWT_VAL(PWM_2)
+#include <pwm_stm32/pwm_stm32.h>
 #endif
 
-#include "assert.h"
-#include "bsp/bsp.h"
-#include "hal/hal_bsp.h"
-#include "hal/hal_flash_int.h"
-#include "hal/hal_gpio.h"
-#include "hal/hal_system.h"
-#include "mcu/mcu.h"
-#include "mcu/stm32f3_bsp.h"
-#include "stm32f3xx.h"
-#include "stm32f3xx_hal.h"
-#include "stm32f3xx_hal_gpio.h"
-#include "stm32f3xx_hal_rcc.h"
-
-#if MYNEWT_VAL(UART_0) || MYNEWT_VAL(UART_1)
-static struct uart_dev hal_uart[UART_CNT];
-
-static const struct stm32_uart_cfg uart_cfg[UART_CNT] = {
 #if MYNEWT_VAL(UART_0)
-    {
-        .suc_uart    = USART2,
-        .suc_rcc_reg = &RCC->APB1ENR,
-        .suc_rcc_dev = RCC_APB1ENR_USART2EN,
-        .suc_pin_tx  = MCU_GPIO_PORTA(2),
-        .suc_pin_rx  = MCU_GPIO_PORTA(3),
-        .suc_pin_rts = MCU_GPIO_PORTA(1),
-        .suc_pin_cts = MCU_GPIO_PORTA(0),
-        .suc_pin_af  = GPIO_AF7_USART2,
-        .suc_irqn    = USART2_IRQn
-    },
+const struct stm32_uart_cfg os_bsp_uart0_cfg = {
+    .suc_uart = USART2,
+    .suc_rcc_reg = &RCC->APB1ENR,
+    .suc_rcc_dev = RCC_APB1ENR_USART2EN,
+    .suc_pin_tx = MYNEWT_VAL(UART_0_PIN_TX),
+    .suc_pin_rx = MYNEWT_VAL(UART_0_PIN_RX),
+    .suc_pin_rts = MYNEWT_VAL(UART_0_PIN_RTS),
+    .suc_pin_cts = MYNEWT_VAL(UART_0_PIN_CTS),
+    .suc_pin_af = GPIO_AF7_USART2,
+    .suc_irqn = USART2_IRQn,
+};
 #endif
 #if MYNEWT_VAL(UART_1)
-    {
-        .suc_uart    = USART1,
-        .suc_rcc_reg = &RCC->APB2ENR,
-        .suc_rcc_dev = RCC_APB2ENR_USART1EN,
-        .suc_pin_tx  = MCU_GPIO_PORTA(9),
-        .suc_pin_rx  = MCU_GPIO_PORTA(10),
-        .suc_pin_rts = MCU_GPIO_PORTA(12),
-        .suc_pin_cts = MCU_GPIO_PORTA(11),
-        .suc_pin_af  = GPIO_AF7_USART1,
-        .suc_irqn    = USART1_IRQn
-    },
-#endif
+const struct stm32_uart_cfg os_bsp_uart1_cfg = {
+    .suc_uart = USART1,
+    .suc_rcc_reg = &RCC->APB2ENR,
+    .suc_rcc_dev = RCC_APB2ENR_USART1EN,
+    .suc_pin_tx = MYNEWT_VAL(UART_1_PIN_TX),
+    .suc_pin_rx = MYNEWT_VAL(UART_1_PIN_RX),
+    .suc_pin_rts = MYNEWT_VAL(UART_1_PIN_RTS),
+    .suc_pin_cts = MYNEWT_VAL(UART_1_PIN_CTS),
+    .suc_pin_af = GPIO_AF7_USART1,
+    .suc_irqn = USART1_IRQn,
 };
-
-const struct stm32_uart_cfg *
-bsp_uart_config(int port)
-{
-    assert(port < UART_CNT);
-    return &uart_cfg[port];
-}
-
-static char *stm32_uart_dev_name[UART_CNT] = {
-#if UART_CNT > 0
-    "uart0",
-#endif
-#if UART_CNT > 1
-    "uart1",
-#endif
-};
-
 #endif
 
-
-#if PWM_CNT
-#include <pwm_stm32/pwm_stm32.h>
-static struct pwm_dev stm32_pwm_dev_driver[PWM_CNT];
-static const char *stm32_pwm_dev_name[PWM_CNT] = {
-#if PWM_CNT > 0
-    "pwm0",
-#endif
-#if PWM_CNT > 1
-    "pwm1",
-#endif
-#if PWM_CNT > 2
-    "pwm2",
-#endif
-};
-
-static struct stm32_pwm_conf  stm32_pwm_config[PWM_CNT] = {
 #if MYNEWT_VAL(PWM_0)
-    { TIM2, TIM2_IRQn },
+struct stm32_pwm_conf os_bsp_pwm0_cfg = {
+    .tim = TIM2,
+    .irq = TIM2_IRQn,
+};
 #endif
 #if MYNEWT_VAL(PWM_1)
-    { TIM4, TIM4_IRQn },
+struct stm32_pwm_conf os_bsp_pwm1_cfg = {
+    .tim = TIM4,
+    .irq = TIM4_IRQn,
+};
 #endif
 #if MYNEWT_VAL(PWM_2)
-    { TIM3, TIM3_IRQn },
-#endif
+struct stm32_pwm_conf os_bsp_pwm2_cfg = {
+    .tim = TIM3,
+    .irq = TIM3_IRQn,
 };
-
-
 #endif
-
-
 
 static const struct hal_bsp_mem_dump dump_cfg[] = {
     [0] = {
@@ -176,63 +129,5 @@ hal_bsp_get_nvic_priority(int irq_num, uint32_t pri)
 void
 hal_bsp_init(void)
 {
-    int rc;
-    (void)rc;  /* in case there are no devices declared */
-
-#if MYNEWT_VAL(UART_0)
-    rc = os_dev_create((struct os_dev *)&hal_uart[UART_0_DEV_ID],
-        stm32_uart_dev_name[UART_0_DEV_ID],
-        OS_DEV_INIT_PRIMARY, 0, uart_hal_init,
-        (void *)&uart_cfg[UART_0_DEV_ID]);
-    assert(rc == 0);
-#endif
-
-#if MYNEWT_VAL(UART_1)
-    rc = os_dev_create((struct os_dev *)&hal_uart[UART_1_DEV_ID],
-        stm32_uart_dev_name[UART_1_DEV_ID],
-        OS_DEV_INIT_PRIMARY, 0, uart_hal_init,
-        (void *)&uart_cfg[UART_1_DEV_ID]);
-    assert(rc == 0);
-#endif
-
-#if MYNEWT_VAL(TIMER_0)
-    rc = hal_timer_init(0, TIM15);
-    assert(rc == 0);
-#endif
-
-#if (MYNEWT_VAL(OS_CPUTIME_TIMER_NUM) >= 0)
-    rc = os_cputime_init(MYNEWT_VAL(OS_CPUTIME_FREQ));
-    assert(rc == 0);
-#endif
-
-#if MYNEWT_VAL(PWM_0)
-    rc = os_dev_create((struct os_dev *) &stm32_pwm_dev_driver[PWM_0_DEV_ID],
-        (char*)stm32_pwm_dev_name[PWM_0_DEV_ID],
-        OS_DEV_INIT_KERNEL,
-        OS_DEV_INIT_PRIO_DEFAULT,
-        stm32_pwm_dev_init,
-        &stm32_pwm_config[PWM_0_DEV_ID]);
-    assert(rc == 0);
-#endif
-
-#if MYNEWT_VAL(PWM_1)
-    rc = os_dev_create((struct os_dev *) &stm32_pwm_dev_driver[PWM_1_DEV_ID],
-        (char*)stm32_pwm_dev_name[PWM_1_DEV_ID],
-        OS_DEV_INIT_KERNEL,
-        OS_DEV_INIT_PRIO_DEFAULT,
-        stm32_pwm_dev_init,
-        &stm32_pwm_config[PWM_1_DEV_ID]);
-    assert(rc == 0);
-#endif
-
-#if MYNEWT_VAL(PWM_2)
-    rc = os_dev_create((struct os_dev *) &stm32_pwm_dev_driver[PWM_2_DEV_ID],
-        (char*)stm32_pwm_dev_name[PWM_2_DEV_ID],
-        OS_DEV_INIT_KERNEL,
-        OS_DEV_INIT_PRIO_DEFAULT,
-        stm32_pwm_dev_init,
-        &stm32_pwm_config[PWM_2_DEV_ID]);
-    assert(rc == 0);
-#endif
-
+    stm32_periph_create();
 }

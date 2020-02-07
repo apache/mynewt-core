@@ -17,10 +17,6 @@
 #
 
 syscfg.defs:
-    I2C_0:
-        description: 'I2C (TWI) interface 0'
-        value:  0
-
     MCU_FLASH_MIN_WRITE_SIZE:
         description: >
             Specifies the required alignment for internal flash writes.
@@ -122,25 +118,3 @@ syscfg.defs:
     MCU_FLASH_ERASED_VAL:
         description: Value read from erased flash.
         value: 0
-
-    SPI_0_MASTER:
-        description: 'SPI 0 master'
-        value:  0
-        restrictions:
-            - "!SPI_0_SLAVE"
-    SPI_0_SLAVE:
-        description: 'SPI 0 slave'
-        value:  0
-        restrictions:
-            - "!SPI_0_MASTER"
-
-    SPI_1_MASTER:
-        description: 'SPI 1 master'
-        value:  0
-        restrictions:
-            - "!SPI_1_SLAVE"
-    SPI_1_SLAVE:
-        description: 'SPI 1 slave'
-        value:  0
-        restrictions:
-            - "!SPI_1_MASTER"

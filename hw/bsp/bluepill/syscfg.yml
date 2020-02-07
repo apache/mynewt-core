@@ -22,22 +22,6 @@ syscfg.defs:
         description: 'Total flash size in KB.'
         value: 128
 
-    UART_0:
-        description: 'UART 0'
-        value:  1
-
-    TIMER_0:
-        description: 'Timer 0'
-        value:  1
-
-    TIMER_1:
-        description: 'Timer 1'
-        value:  0
-
-    TIMER_2:
-        description: 'Timer 2'
-        value:  0
-
 syscfg.vals:
     REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG
     CONFIG_FCB_FLASH_AREA: FLASH_AREA_NFFS
@@ -53,3 +37,18 @@ syscfg.vals:
     STM32_CLOCK_APB2_DIVIDER: 'RCC_HCLK_DIV1'
     STM32_FLASH_LATENCY: 'FLASH_LATENCY_2'
     STM32_FLASH_PREFETCH_ENABLE: 1
+    UART_0_PIN_TX: 'MCU_GPIO_PORTA(2)'
+    UART_0_PIN_RX: 'MCU_GPIO_PORTA(3)'
+    SPI_0_PIN_SS: 'MCU_GPIO_PORTA(4)'
+    SPI_0_PIN_SCK: 'MCU_GPIO_PORTA(5)'
+    SPI_0_PIN_MISO: 'MCU_GPIO_PORTA(6)'
+    SPI_0_PIN_MOSI: 'MCU_GPIO_PORTA(7)'
+    SPI_1_PIN_SS: 'MCU_GPIO_PORTB(12)'
+    SPI_1_PIN_SCK: 'MCU_GPIO_PORTB(13)'
+    SPI_1_PIN_MISO: 'MCU_GPIO_PORTB(14)'
+    SPI_1_PIN_MOSI: 'MCU_GPIO_PORTB(15)'
+    I2C_0_PIN_SCL: 'MCU_GPIO_PORTB(6)'
+    I2C_0_PIN_SDA: 'MCU_GPIO_PORTB(7)'
+    TIMER_0_TIM: 'TIM2'
+    TIMER_1_TIM: 'TIM3'
+    TIMER_2_TIM: 'TIM4'

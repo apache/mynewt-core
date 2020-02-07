@@ -36,12 +36,6 @@ pkg.deps:
     - "@apache-mynewt-core/hw/mcu/stm/stm32f3xx"
     - "@apache-mynewt-core/libc/baselibc"
 
-pkg.deps.UART_0:
-    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
-
-pkg.deps.UART_1:
-    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
-
 pkg.deps.LSM303DLHC_ONB:
     - "@apache-mynewt-core/hw/drivers/sensors/lsm303dlhc"
 

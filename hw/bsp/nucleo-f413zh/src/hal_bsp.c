@@ -16,28 +16,21 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 #include <assert.h>
 
+#include "bsp/bsp.h"
 #include "os/mynewt.h"
 
-#if MYNEWT_VAL(UART_0)
-#include <uart/uart.h>
-#include <uart_hal/uart_hal.h>
-#endif
-
 #include <hal/hal_bsp.h>
-#include <hal/hal_gpio.h>
-#include <hal/hal_timer.h>
+#include <hal/hal_flash_int.h>
+#include <hal/hal_system.h>
 
-#include <stm32f4xx_hal_gpio_ex.h>
-#include "mcu/stm32_hal.h"
-#include <mcu/stm32f4_bsp.h>
-#include "mcu/stm32f4xx_mynewt_hal.h"
-#include "hal/hal_i2c.h"
-#include "hal/hal_spi.h"
+#include <stm32f413xx.h>
+#include <stm32_common/stm32_hal.h>
 
-#include "bsp/bsp.h"
+#if MYNEWT_VAL(PWM_0) || MYNEWT_VAL(PWM_1) || MYNEWT_VAL(PWM_2)
+#include <pwm_stm32/pwm_stm32.h>
+#endif
 
 const uint32_t stm32_flash_sectors[] = {
     0x08000000,     /* 16kB */
@@ -64,56 +57,29 @@ static_assert(MYNEWT_VAL(STM32_FLASH_NUM_AREAS) + 1 == SZ,
         "STM32_FLASH_NUM_AREAS does not match flash sectors");
 
 #if MYNEWT_VAL(UART_0)
-static struct uart_dev hal_uart0;
-
-static const struct stm32_uart_cfg uart_cfg[UART_CNT] = {
-    [0] = {
-        .suc_uart = USART3,
-        .suc_rcc_reg = &RCC->APB1ENR,
-        .suc_rcc_dev = RCC_APB1ENR_USART3EN,
-        .suc_pin_tx = MCU_GPIO_PORTD(8),	/* PD8 */
-        .suc_pin_rx = MCU_GPIO_PORTD(9),	/* PD9 */
-        .suc_pin_rts = -1,
-        .suc_pin_cts = -1,
-        .suc_pin_af = GPIO_AF7_USART3,
-        .suc_irqn = USART3_IRQn
-    }
+const struct stm32_uart_cfg os_bsp_uart0_cfg = {
+    .suc_uart = USART3,
+    .suc_rcc_reg = &RCC->APB1ENR,
+    .suc_rcc_dev = RCC_APB1ENR_USART3EN,
+    .suc_pin_tx = MYNEWT_VAL(UART_0_PIN_TX),
+    .suc_pin_rx = MYNEWT_VAL(UART_0_PIN_RX),
+    .suc_pin_rts = MYNEWT_VAL(UART_0_PIN_RTS),
+    .suc_pin_cts = MYNEWT_VAL(UART_0_PIN_CTS),
+    .suc_pin_af = GPIO_AF7_USART3,
+    .suc_irqn = USART3_IRQn
 };
 #endif
 
 #if MYNEWT_VAL(I2C_0)
-static struct stm32_hal_i2c_cfg i2c_cfg0 = {
+const struct stm32_hal_i2c_cfg os_bsp_i2c0_cfg = {
     .hic_i2c = I2C1,
     .hic_rcc_reg = &RCC->APB1ENR,
     .hic_rcc_dev = RCC_APB1ENR_I2C1EN,
-    .hic_pin_sda = MCU_GPIO_PORTB(9),       /* PB9 */
-    .hic_pin_scl = MCU_GPIO_PORTB(8),       /* PB8 */
+    .hic_pin_sda = MYNEWT_VAL(I2C_0_PIN_SDA),
+    .hic_pin_scl = MYNEWT_VAL(I2C_0_PIN_SCL),
     .hic_pin_af = GPIO_AF4_I2C1,
     .hic_10bit = 0,
-    .hic_speed = 100000,                    /* 100kHz */
-};
-#endif
-
-#if MYNEWT_VAL(SPI_0_MASTER)
-/*
- * NOTE: Our HAL expects that the SS pin, if used, is treated as a gpio line
- * and is handled outside the SPI routines.
- */
-static const struct stm32_hal_spi_cfg os_bsp_spi0m_cfg = {
-    .sck_pin      = MCU_GPIO_PORTB(3),
-    .mosi_pin     = MCU_GPIO_PORTB(5),
-    .miso_pin     = MCU_GPIO_PORTB(4),
-    .irq_prio     = 2,
-};
-#endif
-
-#if MYNEWT_VAL(SPI_0_SLAVE)
-static const struct stm32_hal_spi_cfg os_bsp_spi0s_cfg = {
-    .sck_pin      = MCU_GPIO_PORTB(3),
-    .mosi_pin     = MCU_GPIO_PORTB(5),
-    .miso_pin     = MCU_GPIO_PORTB(4),
-    .ss_pin       = MCU_GPIO_PORTA(4),
-    .irq_prio     = 2,
+    .hic_speed = 100000,
 };
 #endif
 
@@ -151,33 +117,7 @@ hal_bsp_core_dump(int *area_cnt)
 void
 hal_bsp_init(void)
 {
-    int rc;
-
-    (void)rc;
-
-#if MYNEWT_VAL(UART_0)
-    rc = os_dev_create((struct os_dev *) &hal_uart0, "uart0",
-      OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *)&uart_cfg[0]);
-    assert(rc == 0);
-#endif
-#if MYNEWT_VAL(TIMER_0)
-    hal_timer_init(0, TIM9);
-#endif
-
-#if MYNEWT_VAL(I2C_0)
-    rc = hal_i2c_init(0, &i2c_cfg0);
-    assert(rc == 0);
-#endif
-
-#if MYNEWT_VAL(SPI_0_MASTER)
-    rc = hal_spi_init(0, (void *)&os_bsp_spi0m_cfg, HAL_SPI_TYPE_MASTER);
-    assert(rc == 0);
-#endif
-
-#if MYNEWT_VAL(SPI_0_SLAVE)
-    rc = hal_spi_init(0, (void *)&os_bsp_spi0s_cfg, HAL_SPI_TYPE_SLAVE);
-    assert(rc == 0);
-#endif
+    stm32_periph_create();
 }
 
 /**

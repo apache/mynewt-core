@@ -1,0 +1,196 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
+syscfg.defs:
+    TIMER_0:
+        description: 'Timer 0'
+        value:  1
+    TIMER_0_TIM:
+        description: 'TIMx used by OS TIMER_0'
+        value: ''
+    TIMER_1:
+        description: 'Timer 1'
+        value: 0
+    TIMER_1_TIM:
+        description: 'TIMx used by OS TIMER_1'
+        value: ''
+    TIMER_2:
+        description: 'Timer 2'
+        value: 0
+    TIMER_2_TIM:
+        description: 'TIMx used by OS TIMER_2'
+        value: ''
+
+    UART_0:
+        description: 'UART 0'
+        value:  1
+    UART_0_PIN_TX:
+        description: 'UART_0 TX pin'
+        value: -1
+    UART_0_PIN_RX:
+        description: 'UART_0 RX pin'
+        value: -1
+    UART_0_PIN_RTS:
+        description: 'UART_0 RTS pin'
+        value: -1
+    UART_0_PIN_CTS:
+        description: 'UART_0 CTS pin'
+        value: -1
+
+    UART_1:
+        description: 'UART 1'
+        value:  0
+    UART_1_PIN_TX:
+        description: 'UART_1 TX pin'
+        value: -1
+    UART_1_PIN_RX:
+        description: 'UART_1 RX pin'
+        value: -1
+    UART_1_PIN_RTS:
+        description: 'UART_1 RTS pin'
+        value: -1
+    UART_1_PIN_CTS:
+        description: 'UART_1 CTS pin'
+        value: -1
+
+    UART_2:
+        description: 'UART 2'
+        value:  0
+    UART_2_PIN_TX:
+        description: 'UART_2 TX pin'
+        value: -1
+    UART_2_PIN_RX:
+        description: 'UART_2 RX pin'
+        value: -1
+    UART_2_PIN_RTS:
+        description: 'UART_2 RTS pin'
+        value: -1
+    UART_2_PIN_CTS:
+        description: 'UART_2 CTS pin'
+        value: -1
+
+    SPI_0_MASTER:
+        description: 'SPI 0 master'
+        value:  0
+        restrictions:
+            - "!SPI_0_SLAVE"
+    SPI_0_SLAVE:
+        description: 'SPI 0 slave'
+        value:  0
+        restrictions:
+            - "!SPI_0_MASTER"
+    SPI_0:
+        description: 'SPI 0 enabled'
+        value: 'MYNEWT_VAL_SPI_0_MASTER || MYNEWT_VAL_SPI_0_SLAVE'
+    SPI_0_CUSTOM_CFG:
+        description: 'Allow SPI_0 configuration override'
+        value: 0
+    SPI_0_PIN_SCK:
+        description: 'SCK pin for SPI_0'
+        value: ''
+    SPI_0_PIN_MOSI:
+        description: 'MOSI pin for SPI_0'
+        value: ''
+    SPI_0_PIN_MISO:
+        description: 'MISO pin for SPI_0'
+        value: ''
+    SPI_0_PIN_SS:
+        description: 'SS pin for SPI_0'
+        value: ''
+
+    SPI_1_MASTER:
+        description: 'SPI 1 master'
+        value:  0
+        restrictions:
+            - "!SPI_1_SLAVE"
+    SPI_1_SLAVE:
+        description: 'SPI 1 slave'
+        value:  0
+        restrictions:
+            - "!SPI_1_MASTER"
+    SPI_1:
+        description: 'SPI 1 enabled'
+        value: 'MYNEWT_VAL_SPI_1_MASTER || MYNEWT_VAL_SPI_1_SLAVE'
+    SPI_1_CUSTOM_CFG:
+        description: 'Allow SPI_1 configuration override'
+        value: 0
+    SPI_1_PIN_SCK:
+        description: 'SCK pin for SPI_1'
+        value: ''
+    SPI_1_PIN_MOSI:
+        description: 'MOSI pin for SPI_1'
+        value: ''
+    SPI_1_PIN_MISO:
+        description: 'MISO pin for SPI_1'
+        value: ''
+    SPI_1_PIN_SS:
+        description: 'SS pin for SPI_1'
+        value: ''
+
+    I2C_0:
+        description: 'I2C (TWI) interface 0'
+        value:  0
+    I2C_0_PIN_SCL:
+        description: 'SCL pin for I2C_0'
+        value: -1
+    I2C_0_PIN_SDA:
+        description: 'SDA pin for I2C_0'
+        value: -1
+    I2C_1:
+        description: 'I2C (TWI) interface 1'
+        value:  0
+    I2C_1_PIN_SCL:
+        description: 'SCL pin for I2C_1'
+        value: -1
+    I2C_1_PIN_SDA:
+        description: 'SDA pin for I2C_1'
+        value: -1
+    I2C_2:
+        description: 'I2C (TWI) interface 2'
+        value:  0
+    I2C_2_PIN_SCL:
+        description: 'SCL pin for I2C_2'
+        value: -1
+    I2C_2_PIN_SDA:
+        description: 'SDA pin for I2C_2'
+        value: -1
+
+    TRNG:
+        description: 'True Random Number Generator (RNG)'
+        value: 0
+
+    CRYPTO:
+        description: 'Enable HW Cryptography module (CRYP)'
+        value: 0
+
+    HASH:
+        description: 'Enable HW hash module (HASH)'
+        value: 0
+
+    PWM_0:
+        description: 'Support for PWM 0'
+        value: 0
+    PWM_1:
+        description: 'Support for PWM 1'
+        value: 0
+    PWM_2:
+        description: 'Support for PWM 2'
+        value: 0
+
+    ETH_0:
+        description: 'Ethernet driver for LwIP'
+        value: 0

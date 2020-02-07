@@ -53,9 +53,6 @@ extern uint8_t _ram_start;
 #define SX1276_DIO5         (-1)
 #define SX1276_NRESET       MCU_GPIO_PORTC(0)
 
-/* UART */
-#define UART_CNT 1
-
 #ifdef __cplusplus
 }
 #endif

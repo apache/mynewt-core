@@ -45,14 +45,6 @@ extern uint8_t _itcmram_start;
 /* LED pins */
 #define LED_BLINK_PIN   MCU_GPIO_PORTI(1)
 
-/* UART */
-#define UART_CNT        1
-
-#define PWM_CNT (MYNEWT_VAL(PWM_0) + MYNEWT_VAL(PWM_1) + MYNEWT_VAL(PWM_2))
-#define PWM_0_DEV_ID    0
-#define PWM_1_DEV_ID    (PWM_0_DEV_ID + MYNEWT_VAL(PWM_0))
-#define PWM_2_DEV_ID    (PWM_1_DEV_ID + MYNEWT_VAL(PWM_1))
-
 #ifdef __cplusplus
 }
 #endif

@@ -42,21 +42,6 @@ extern uint8_t _ram_start;
 /* One led LED pin, two names */
 #define LED_BLINK_PIN   ARDUINO_PIN_D13
 
-/* UART ports */
-enum {
-#if MYNEWT_VAL(UART_0)
-    UART_0_DEV_ID,
-#endif
-#if MYNEWT_VAL(UART_1)
-    UART_1_DEV_ID,
-#endif
-#if MYNEWT_VAL(UART_2)
-    UART_2_DEV_ID,
-#endif
-};
-
-#define UART_CNT (MYNEWT_VAL(UART_0) + MYNEWT_VAL(UART_1) + MYNEWT_VAL(UART_2))
-
 /* Arduino pins */
 #define ARDUINO_PIN_D0      MCU_GPIO_PORTA(3)
 #define ARDUINO_PIN_D1      MCU_GPIO_PORTA(2)

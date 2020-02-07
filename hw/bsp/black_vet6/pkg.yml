@@ -44,9 +44,3 @@ pkg.deps.ADC_2:
     - "@apache-mynewt-core/hw/drivers/adc/adc_stm32f4"
 pkg.deps.ADC_3:
     - "@apache-mynewt-core/hw/drivers/adc/adc_stm32f4"
-
-pkg.deps.UART_0:
-    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
-
-pkg.deps.ETH_0:
-    - "@apache-mynewt-core/hw/drivers/lwip/stm32_eth"
