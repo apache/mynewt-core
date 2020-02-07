@@ -309,6 +309,84 @@ conf_str_from_bytes(void *vp, int vp_len, char *buf, int buf_len)
     return buf;
 }
 
+/**
+ * Executes a conf_handler's "get" callback and returns the result.
+ */
+static char *
+conf_get_cb(struct conf_handler *ch, int argc, char **argv, char *val,
+            int val_len_max)
+{
+    if (ch->ch_ext) {
+        if (ch->ch_get_ext != NULL) {
+            return ch->ch_get_ext(argc, argv, val, val_len_max, ch->ch_arg);
+        }
+    } else {
+        if (ch->ch_get != NULL) {
+            return ch->ch_get(argc, argv, val, val_len_max);
+        }
+    }
+
+    return NULL;
+}
+
+/**
+ * Executes a conf_handler's "set" callback and returns the result.
+ */
+static int
+conf_set_cb(struct conf_handler *ch, int argc, char **argv, char *val)
+{
+    if (ch->ch_ext) {
+        if (ch->ch_set_ext != NULL) {
+            return ch->ch_set_ext(argc, argv, val, ch->ch_arg);
+        }
+    } else {
+        if (ch->ch_set != NULL) {
+            return ch->ch_set(argc, argv, val);
+        }
+    }
+
+    return OS_ERROR;
+}
+
+/**
+ * Executes a conf_handler's "commit" callback and returns the result.
+ */
+static int
+conf_commit_cb(struct conf_handler *ch)
+{
+    if (ch->ch_ext) {
+        if (ch->ch_commit_ext != NULL) {
+            return ch->ch_commit_ext(ch->ch_arg);
+        }
+    } else {
+        if (ch->ch_commit != NULL) {
+            return ch->ch_commit();
+        }
+    }
+
+    return 0;
+}
+
+/**
+ * Executes a conf_handler's "export" callback and returns the result.
+ */
+int
+conf_export_cb(struct conf_handler *ch, conf_export_func_t export_func,
+               conf_export_tgt_t tgt)
+{
+    if (ch->ch_ext) {
+        if (ch->ch_export_ext != NULL) {
+            return ch->ch_export_ext(export_func, tgt, ch->ch_arg);
+        }
+    } else {
+        if (ch->ch_export != NULL) {
+            return ch->ch_export(export_func, tgt);
+        }
+    }
+
+    return 0;
+}
+
 int
 conf_set_value(char *name, char *val_str)
 {
@@ -323,7 +401,9 @@ conf_set_value(char *name, char *val_str)
         rc = OS_INVALID_PARM;
         goto out;
     }
-    rc = ch->ch_set(name_argc - 1, &name_argv[1], val_str);
+
+    rc = conf_set_cb(ch, name_argc - 1, &name_argv[1], val_str);
+
 out:
     conf_unlock();
     return rc;
@@ -349,14 +429,13 @@ conf_get_value(char *name, char *buf, int buf_len)
         goto out;
     }
 
-    if (!ch->ch_get) {
-        goto out;
-    }
-    rval = ch->ch_get(name_argc - 1, &name_argv[1], buf, buf_len);
+    rval = conf_get_cb(ch, name_argc - 1, &name_argv[1], buf, buf_len);
+
 out:
     conf_unlock();
     return rval;
 }
+
 
 int
 conf_commit(char *name)
@@ -374,16 +453,12 @@ conf_commit(char *name)
             rc = OS_INVALID_PARM;
             goto out;
         }
-        if (ch->ch_commit) {
-            rc = ch->ch_commit();
-        } else {
-            rc = 0;
-        }
+        rc = conf_commit_cb(ch);
     } else {
         rc = 0;
         SLIST_FOREACH(ch, &conf_handlers, ch_list) {
             if (ch->ch_commit) {
-                rc2 = ch->ch_commit();
+                rc2 = conf_commit_cb(ch);
                 if (!rc) {
                     rc = rc2;
                 }

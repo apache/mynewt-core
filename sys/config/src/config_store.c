@@ -260,16 +260,15 @@ conf_save_tree(char *name)
     int rc;
 
     conf_lock();
+
     ch = conf_parse_and_lookup(name, &name_argc, name_argv);
     if (!ch) {
         rc = OS_INVALID_PARM;
         goto out;
     }
-    if (ch->ch_export) {
-        rc = ch->ch_export(conf_store_one, CONF_EXPORT_PERSIST);
-    } else {
-        rc = 0;
-    }
+
+    rc = conf_export_cb(ch, conf_store_one, CONF_EXPORT_PERSIST);
+
 out:
     conf_unlock();
     return rc;
@@ -300,11 +299,9 @@ conf_save(void)
     }
     rc = 0;
     SLIST_FOREACH(ch, &conf_handlers, ch_list) {
-        if (ch->ch_export) {
-            rc2 = ch->ch_export(conf_store_one, CONF_EXPORT_PERSIST);
-            if (!rc) {
-                rc = rc2;
-            }
+        rc2 = conf_export_cb(ch, conf_store_one, CONF_EXPORT_PERSIST);
+        if (!rc) {
+            rc = rc2;
         }
     }
     if (cs->cs_itf->csi_save_end) {
