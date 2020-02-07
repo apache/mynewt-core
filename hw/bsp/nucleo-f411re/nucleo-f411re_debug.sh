@@ -33,3 +33,4 @@
 FILE_NAME=$BIN_BASENAME.elf
 
 stlink_debug
+
