@@ -22,8 +22,8 @@
 #include "bootutil/bootutil.h"
 #include "bootutil/image.h"
 #include "config/config.h"
+#include "scfg/scfg.h"
 #include "split/split.h"
-#include "split_priv.h"
 
 #define LOADER_IMAGE_SLOT   0
 #define SPLIT_IMAGE_SLOT    1
@@ -31,6 +31,19 @@
 
 static int8_t split_mode_cur;
 static int8_t split_app_active;
+
+static struct scfg_group split_scfg = {
+    .settings = (const struct scfg_setting[]) {
+        {
+            .name = "status",
+            .val = &split_mode_cur,
+            .type = CONF_INT8,
+        },
+
+        /* No more settings. */
+        { 0 },
+    },
+};
 
 void
 split_app_init(void)
@@ -40,7 +53,7 @@ split_app_init(void)
     /* Ensure this function only gets called by sysinit. */
     SYSINIT_ASSERT_ACTIVE();
 
-    rc = split_conf_init();
+    rc = scfg_register(&split_scfg, "split");
     assert(rc == 0);
 }
 
@@ -98,6 +111,24 @@ split_mode_set(split_mode_t split_mode)
     }
 
     split_mode_cur = split_mode;
+    return 0;
+}
+
+int
+split_write_split(split_mode_t split_mode)
+{
+    int rc;
+
+    rc = split_mode_set(split_mode);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = scfg_save_val(&split_scfg, &split_mode_cur);
+    if (rc != 0) {
+        return rc;
+    }
+
     return 0;
 }
 
