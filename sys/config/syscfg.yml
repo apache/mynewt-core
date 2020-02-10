@@ -41,10 +41,6 @@ syscfg.defs:
         description: 'SMP access to config'
         value: 0
 
-    CONFIG_NEWTMGR:
-        description: 'Newtmgr access to config'
-        value: 0
-
     CONFIG_CLI:
         description: 'CLI commands for accessing config'
         value: 0
