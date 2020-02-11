@@ -37,7 +37,7 @@
 #include <pwm_stm32/pwm_stm32.h>
 #endif
 
-#if MYNEWT_VAL(ADC_1) || MYNEWT_VAL(ADC_2) || MYNEWT_VAL(ADC_3)
+#if MYNEWT_VAL(ADC_0) || MYNEWT_VAL(ADC_1) || MYNEWT_VAL(ADC_2)
 #include "stm32f4xx_hal_adc.h"
 #include "adc_stm32f4/adc_stm32f4.h"
 #endif
@@ -62,205 +62,131 @@ const uint32_t stm32_flash_sectors[] = {
 static_assert(MYNEWT_VAL(STM32_FLASH_NUM_AREAS) + 1 == SZ,
         "STM32_FLASH_NUM_AREAS does not match flash sectors");
 
-#if MYNEWT_VAL(ADC_1)
-struct adc_dev my_dev_adc1;
-#endif
-#if MYNEWT_VAL(ADC_2)
-struct adc_dev my_dev_adc2;
-#endif
-#if MYNEWT_VAL(ADC_3)
-struct adc_dev my_dev_adc3;
-#endif
-
-#if MYNEWT_VAL(ADC_1)
+#if MYNEWT_VAL(ADC_0) || MYNEWT_VAL(ADC_1) || MYNEWT_VAL(ADC_2)
 /*
- * adc_handle is defined earlier because the DMA handle's
- * parent needs to be pointing to the adc_handle
+ * Helper macros to build ADC data structures
  */
-extern ADC_HandleTypeDef adc1_handle;
-
-#define STM32F4_DEFAULT_DMA00_HANDLE {\
-    .Instance = DMA2_Stream0,\
-    .Init.Channel = DMA_CHANNEL_0,\
-    .Init.Direction = DMA_PERIPH_TO_MEMORY,\
-    .Init.PeriphInc = DMA_PINC_DISABLE,\
-    .Init.MemInc = DMA_MINC_ENABLE,\
-    .Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD,\
-    .Init.MemDataAlignment = DMA_MDATAALIGN_WORD,\
-    .Init.Mode = DMA_CIRCULAR,\
-    .Init.Priority = DMA_PRIORITY_HIGH,\
-    .Init.FIFOMode = DMA_FIFOMODE_DISABLE,\
-    .Init.FIFOThreshold = DMA_FIFO_THRESHOLD_HALFFULL,\
-    .Init.MemBurst = DMA_MBURST_SINGLE,\
-    .Init.PeriphBurst = DMA_PBURST_SINGLE,\
-    .Parent = &adc1_handle,\
+#define STM32F4_DEFAULT_DMA_HANDLE(instance, channel, parent) {           \
+        .Instance = (instance),                                           \
+        .Init.Channel = (channel),                                        \
+        .Init.Direction = DMA_PERIPH_TO_MEMORY,                           \
+        .Init.PeriphInc = DMA_PINC_DISABLE,                               \
+        .Init.MemInc = DMA_MINC_ENABLE,                                   \
+        .Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD,                  \
+        .Init.MemDataAlignment = DMA_MDATAALIGN_WORD,                     \
+        .Init.Mode = DMA_CIRCULAR,                                        \
+        .Init.Priority = DMA_PRIORITY_HIGH,                               \
+        .Init.FIFOMode = DMA_FIFOMODE_DISABLE,                            \
+        .Init.FIFOThreshold = DMA_FIFO_THRESHOLD_HALFFULL,                \
+        .Init.MemBurst = DMA_MBURST_SINGLE,                               \
+        .Init.PeriphBurst = DMA_PBURST_SINGLE,                            \
+        .Parent = (parent),                                               \
 }
 
-DMA_HandleTypeDef adc1_dma00_handle = STM32F4_DEFAULT_DMA00_HANDLE;
+#define ADC_INIT_HANDLE(name, instance, dma_handle)                       \
+    ADC_HandleTypeDef (name) = {                                          \
+        .Init = {                                                         \
+            .ClockPrescaler = ADC_CLOCKPRESCALER_PCLK_DIV2,               \
+            .Resolution = ADC_RESOLUTION12b,                              \
+            .DataAlign = ADC_DATAALIGN_RIGHT,                             \
+            .ScanConvMode = DISABLE,                                      \
+            .EOCSelection = DISABLE,                                      \
+            .ContinuousConvMode = ENABLE,                                 \
+            .NbrOfConversion = 1,                                         \
+            .DiscontinuousConvMode = DISABLE,                             \
+            .NbrOfDiscConversion = 0,                                     \
+            .ExternalTrigConv = ADC_SOFTWARE_START,                       \
+            .ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE,        \
+            .DMAContinuousRequests = ENABLE,                              \
+        },                                                                \
+        .Instance = (instance),                                           \
+        .NbrOfCurrentConversionRank = 0,                                  \
+        .DMA_Handle = (dma_handle),                                       \
+        .Lock = HAL_UNLOCKED,                                             \
+        .State = 0,                                                       \
+        .ErrorCode = 0,                                                   \
+    }
 #endif
 
-#if MYNEWT_VAL(ADC_2)
+#if MYNEWT_VAL(ADC_0)
+ADC_HandleTypeDef adc0_handle;
 
-extern ADC_HandleTypeDef adc2_handle;
+DMA_HandleTypeDef adc0_dma00_handle = STM32F4_DEFAULT_DMA_HANDLE(
+    DMA2_Stream0, DMA_CHANNEL_0, &adc0_handle);
 
-#define STM32F4_DEFAULT_DMA21_HANDLE {\
-    .Instance = DMA2_Stream2,\
-    .Init.Channel = DMA_CHANNEL_1,\
-    .Init.Direction = DMA_PERIPH_TO_MEMORY,\
-    .Init.PeriphInc = DMA_PINC_DISABLE,\
-    .Init.MemInc = DMA_MINC_ENABLE,\
-    .Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD,\
-    .Init.MemDataAlignment = DMA_MDATAALIGN_WORD,\
-    .Init.Mode = DMA_CIRCULAR,\
-    .Init.Priority = DMA_PRIORITY_HIGH,\
-    .Init.FIFOMode = DMA_FIFOMODE_DISABLE,\
-    .Init.FIFOThreshold = DMA_FIFO_THRESHOLD_HALFFULL,\
-    .Init.MemBurst = DMA_MBURST_SINGLE,\
-    .Init.PeriphBurst = DMA_PBURST_SINGLE,\
-    .Parent = &adc2_handle,\
-}
+ADC_INIT_HANDLE(adc0_handle, ADC1, &adc0_dma00_handle);
 
-DMA_HandleTypeDef adc2_dma21_handle = STM32F4_DEFAULT_DMA21_HANDLE;
+struct stm32f4_adc_dev_cfg os_bsp_adc0_cfg = {
+    .sac_chan_count = 16,
+    .sac_chans = (struct adc_chan_config [16]) {
+        [0] = { 0 },
+        [1] = { 0 },
+        [2] = { 0 },
+        [3] = { 0 },
+        [4] = { 0 },
+        [5] = { 0 },
+        [6] = { 0 },
+        [7] = { 0 },
+        [8] = { 0 },
+        [9] = { 0 },
+        [10] = {
+            .c_refmv = 3300,
+            .c_res = 12,
+            .c_configured = 1,
+            .c_cnum = ADC_CHANNEL_10,
+        },
+    },
+    .sac_adc_handle = &adc0_handle,
+};
 #endif
-
-
-#if MYNEWT_VAL(ADC_3)
-
-extern ADC_HandleTypeDef adc3_handle;
-
-#define STM32F4_DEFAULT_DMA12_HANDLE {\
-    .Instance = DMA2_Stream1,\
-    .Init.Channel = DMA_CHANNEL_2,\
-    .Init.Direction = DMA_PERIPH_TO_MEMORY,\
-    .Init.PeriphInc = DMA_PINC_DISABLE,\
-    .Init.MemInc = DMA_MINC_ENABLE,\
-    .Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD,\
-    .Init.MemDataAlignment = DMA_MDATAALIGN_WORD,\
-    .Init.Mode = DMA_CIRCULAR,\
-    .Init.Priority = DMA_PRIORITY_HIGH,\
-    .Init.FIFOMode = DMA_FIFOMODE_DISABLE,\
-    .Init.FIFOThreshold = DMA_FIFO_THRESHOLD_HALFFULL,\
-    .Init.MemBurst = DMA_MBURST_SINGLE,\
-    .Init.PeriphBurst = DMA_PBURST_SINGLE,\
-    .Parent = &adc3_handle,\
-}
-
-DMA_HandleTypeDef adc3_dma12_handle = STM32F4_DEFAULT_DMA12_HANDLE;
-#endif
-
-#define STM32F4_ADC_DEFAULT_INIT_TD {\
-    .ClockPrescaler = ADC_CLOCKPRESCALER_PCLK_DIV2,\
-    .Resolution = ADC_RESOLUTION12b,\
-    .DataAlign = ADC_DATAALIGN_RIGHT,\
-    .ScanConvMode = DISABLE,\
-    .EOCSelection = DISABLE,\
-    .ContinuousConvMode = ENABLE,\
-    .NbrOfConversion = 1,\
-    .DiscontinuousConvMode = DISABLE,\
-    .NbrOfDiscConversion = 0,\
-    .ExternalTrigConv = ADC_SOFTWARE_START,\
-    .ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE,\
-    .DMAContinuousRequests = ENABLE\
-}
 
 #if MYNEWT_VAL(ADC_1)
+ADC_HandleTypeDef adc1_handle;
 
-/*****************ADC1 Config ***************/
-#define STM32F4_DEFAULT_ADC1_HANDLE {\
-    .Init = STM32F4_ADC_DEFAULT_INIT_TD,\
-    .Instance = ADC1,\
-    .NbrOfCurrentConversionRank = 0,\
-    .DMA_Handle = &adc1_dma00_handle,\
-    .Lock = HAL_UNLOCKED,\
-    .State = 0,\
-    .ErrorCode = 0\
-}
+DMA_HandleTypeDef adc1_dma21_handle = STM32F4_DEFAULT_DMA_HANDLE(
+    DMA2_Stream2, DMA_CHANNEL_1, &adc1_handle);
 
-ADC_HandleTypeDef adc1_handle = STM32F4_DEFAULT_ADC1_HANDLE;
+ADC_INIT_HANDLE(adc1_handle, ADC2, &adc1_dma21_handle);
 
-#define STM32F4_ADC1_DEFAULT_SAC {\
-    .c_refmv = 3300,\
-    .c_res   = 12,\
-    .c_configured = 1,\
-    .c_cnum = ADC_CHANNEL_10\
-}
-
-struct adc_chan_config adc1_chan10_config = STM32F4_ADC1_DEFAULT_SAC;
-
-#define STM32F4_ADC1_DEFAULT_CONFIG {\
-    .sac_chan_count = 16,\
-    .sac_chans = (struct adc_chan_config [16]){{0},{0},{0},{0},{0},{0},{0},{0},{0},{0},STM32F4_ADC1_DEFAULT_SAC},\
-    .sac_adc_handle = &adc1_handle,\
-}
-
-struct stm32f4_adc_dev_cfg adc1_config = STM32F4_ADC1_DEFAULT_CONFIG;
-/*********************************************/
+struct stm32f4_adc_dev_cfg os_bsp_adc1_cfg = {
+    .sac_chan_count = 16,
+    .sac_chans = (struct adc_chan_config [16]) {
+        [0] = { 0 },
+        [1] = {
+            .c_refmv = 3300,
+            .c_res = 12,
+            .c_configured = 1,
+            .c_cnum = ADC_CHANNEL_1,
+        },
+    },
+    .sac_adc_handle = &adc1_handle,
+};
 #endif
 
 #if MYNEWT_VAL(ADC_2)
+ADC_HandleTypeDef adc2_handle;
 
-/*****************ADC2 Config ***************/
-#define STM32F4_DEFAULT_ADC2_HANDLE {\
-    .Init = STM32F4_ADC_DEFAULT_INIT_TD,\
-    .Instance = ADC2,\
-    .NbrOfCurrentConversionRank = 0,\
-    .DMA_Handle = &adc2_dma21_handle,\
-    .Lock = HAL_UNLOCKED,\
-    .State = 0,\
-    .ErrorCode = 0\
-}
+DMA_HandleTypeDef adc2_dma12_handle = STM32F4_DEFAULT_DMA_HANDLE(
+    DMA2_Stream1, DMA_CHANNEL_2, &adc2_handle);
 
-ADC_HandleTypeDef adc2_handle = STM32F4_DEFAULT_ADC2_HANDLE;
+ADC_INIT_HANDLE(adc2_handle, ADC3, &adc2_dma12_handle);
 
-#define STM32F4_ADC2_DEFAULT_SAC {\
-    .c_refmv = 3300,\
-    .c_res   = 12,\
-    .c_configured = 1,\
-    .c_cnum = ADC_CHANNEL_1\
-}
-
-struct adc_chan_config adc2_chan1_config = STM32F4_ADC2_DEFAULT_SAC;
-
-#define STM32F4_ADC2_DEFAULT_CONFIG {\
-    .sac_chan_count = 16,\
-    .sac_chans = (struct adc_chan_config [16]){{0},STM32F4_ADC1_DEFAULT_SAC}\
-    .sac_adc_handle = &adc2_handle,\
-}
-
-struct stm32f4_adc_dev_cfg adc2_config = STM32F4_ADC2_DEFAULT_CONFIG;
-/*********************************************/
-#endif
-
-#if MYNEWT_VAL(ADC_3)
-
-#define STM32F4_DEFAULT_ADC3_HANDLE {\
-    .Init = STM32F4_ADC_DEFAULT_INIT_TD,\
-    .Instance = ADC3,\
-    .NbrOfCurrentConversionRank = 0,\
-    .DMA_Handle = &adc3_dma12_handle,\
-    .Lock = HAL_UNLOCKED,\
-    .State = 0,\
-    .ErrorCode = 0\
-}
-
-ADC_HandleTypeDef adc3_handle = STM32F4_DEFAULT_ADC3_HANDLE;
-
-#define STM32F4_ADC3_DEFAULT_SAC {\
-    .c_refmv = 3300,\
-    .c_res   = 12,\
-    .c_configured = 1,\
-    .c_cnum = ADC_CHANNEL_4\
-}
-
-struct adc_chan_config adc3_chan4_config = STM32F4_ADC3_DEFAULT_SAC;
-
-#define STM32F4_ADC3_DEFAULT_CONFIG {\
-    .sac_chan_count = 16,\
-    .sac_chans = (struct adc_chan_config [16]){{0},{0},{0},{0},STM32F4_ADC3_DEFAULT_SAC},\
-    .sac_adc_handle = &adc3_handle,\
-}
-
-struct stm32f4_adc_dev_cfg adc3_config = STM32F4_ADC3_DEFAULT_CONFIG;
+struct stm32f4_adc_dev_cfg os_bsp_adc2_cfg = {
+    .sac_chan_count = 16,
+    .sac_chans = (struct adc_chan_config [16]) {
+        [0] = { 0 },
+        [1] = { 0 },
+        [2] = { 0 },
+        [3] = { 0 },
+        [4] = {
+            .c_refmv = 3300,
+            .c_res = 12,
+            .c_configured = 1,
+            .c_cnum = ADC_CHANNEL_4,
+        },
+    },
+    .sac_adc_handle = &adc2_handle,
+};
 #endif
 
 #if MYNEWT_VAL(I2C_0)
@@ -419,28 +345,5 @@ hal_bsp_get_nvic_priority(int irq_num, uint32_t pri)
 void
 hal_bsp_init(void)
 {
-    int rc;
-
-    (void)rc;
-
     stm32_periph_create();
-
-#if MYNEWT_VAL(ADC_1)
-    rc = os_dev_create((struct os_dev *) &my_dev_adc1, "adc1",
-            OS_DEV_INIT_KERNEL, OS_DEV_INIT_PRIO_DEFAULT,
-            stm32f4_adc_dev_init, &adc1_config);
-    assert(rc == 0);
-#endif
-#if MYNEWT_VAL(ADC_2)
-    rc = os_dev_create((struct os_dev *) &my_dev_adc2, "adc2",
-            OS_DEV_INIT_KERNEL, OS_DEV_INIT_PRIO_DEFAULT,
-            stm32f4_adc_dev_init, &adc2_config);
-    assert(rc == 0);
-#endif
-#if MYNEWT_VAL(ADC_3)
-    rc = os_dev_create((struct os_dev *) &my_dev_adc3, "adc3",
-            OS_DEV_INIT_KERNEL, OS_DEV_INIT_PRIO_DEFAULT,
-            stm32f4_adc_dev_init, &adc3_config);
-    assert(rc == 0);
-#endif
 }
