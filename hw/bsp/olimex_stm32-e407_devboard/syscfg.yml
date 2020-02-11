@@ -25,16 +25,6 @@ syscfg.defs:
         description: 'Number of flash sectors for a non-linear STM32 MCU.'
         value: 12
 
-    ADC_1:
-        description: "ADC_1"
-        value:  0
-    ADC_2:
-        description: "ADC_2"
-        value:  0
-    ADC_3:
-        description: "ADC_3"
-        value:  0
-
 syscfg.vals:
     REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG
     CONFIG_FCB_FLASH_AREA: FLASH_AREA_NFFS

@@ -47,6 +47,12 @@
 #include <stm32_eth/stm32_eth.h>
 #include <stm32_eth/stm32_eth_cfg.h>
 #endif
+#if MYNEWT_VAL(ADC_0) || MYNEWT_VAL(ADC_1) || MYNEWT_VAL(ADC_2)
+#include "stm32f4xx_hal_dma.h"
+#include "stm32f4xx_hal_adc.h"
+#include "adc_stm32f4/adc_stm32f4.h"
+#endif
+
 #include "mcu/stm32_hal.h"
 
 #if MYNEWT_VAL(PWM_0)
@@ -81,6 +87,19 @@ extern const struct stm32_uart_cfg os_bsp_uart0_cfg;
 #if MYNEWT_VAL(UART_1)
 static struct uart_dev os_bsp_uart1;
 static const struct stm32_uart_cfg os_bsp_uart1_cfg;
+#endif
+
+#if MYNEWT_VAL(ADC_0)
+static struct adc_dev os_bsp_adc0;
+extern struct stm32f4_adc_dev_cfg os_bsp_adc0_cfg;
+#endif
+#if MYNEWT_VAL(ADC_1)
+static struct adc_dev os_bsp_adc1;
+extern struct stm32f4_adc_dev_cfg os_bsp_adc1_cfg;
+#endif
+#if MYNEWT_VAL(ADC_2)
+static struct adc_dev os_bsp_adc2;
+extern struct stm32f4_adc_dev_cfg os_bsp_adc2_cfg;
 #endif
 
 #if MYNEWT_VAL(I2C_0)
@@ -338,6 +357,33 @@ stm32_periph_create_spi(void)
 }
 
 static void
+stm32_periph_create_adc(void)
+{
+    int rc;
+
+    (void)rc;
+
+#if MYNEWT_VAL(ADC_0)
+    rc = os_dev_create((struct os_dev *) &os_bsp_adc0, "adc0",
+                       OS_DEV_INIT_KERNEL, OS_DEV_INIT_PRIO_DEFAULT,
+                       stm32f4_adc_dev_init, &os_bsp_adc0_cfg);
+    assert(rc == 0);
+#endif
+#if MYNEWT_VAL(ADC_1)
+    rc = os_dev_create((struct os_dev *) &os_bsp_adc1, "adc1",
+                       OS_DEV_INIT_KERNEL, OS_DEV_INIT_PRIO_DEFAULT,
+                       stm32f4_adc_dev_init, &os_bsp_adc1_cfg);
+    assert(rc == 0);
+#endif
+#if MYNEWT_VAL(ADC_2)
+    rc = os_dev_create((struct os_dev *) &os_bsp_adc2, "adc2",
+                       OS_DEV_INIT_KERNEL, OS_DEV_INIT_PRIO_DEFAULT,
+                       stm32f4_adc_dev_init, &os_bsp_adc2_cfg);
+    assert(rc == 0);
+#endif
+}
+
+static void
 stm32_periph_create_eth(void)
 {
     int rc;
@@ -361,5 +407,6 @@ stm32_periph_create(void)
     stm32_periph_create_uart();
     stm32_periph_create_i2c();
     stm32_periph_create_spi();
+    stm32_periph_create_adc();
     stm32_periph_create_eth();
 }
