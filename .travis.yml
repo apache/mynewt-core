@@ -172,7 +172,7 @@ before_script:
       cp -R $HOME/ci/mynewt-core-project.yml project.yml
       mkdir -p targets
       cp -R $HOME/ci/mynewt-core-targets targets
-      newt install
+      newt upgrade
       # pass in the number of target sets
       $HOME/ci/prepare_test.sh $VM_AMOUNT
     fi
