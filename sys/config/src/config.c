@@ -258,45 +258,45 @@ conf_bytes_from_str(char *val_str, void *vp, int *len)
 char *
 conf_str_from_value(enum conf_type type, void *vp, char *buf, int buf_len)
 {
-    int32_t val;
-    uint32_t uval;
+    int64_t val;
+    uint64_t uval;
 
     if (type == CONF_STRING) {
         return vp;
     }
     switch (type) {
+    case CONF_BOOL:
     case CONF_INT8:
     case CONF_INT16:
     case CONF_INT32:
-    case CONF_BOOL:
+    case CONF_INT64:
         if (type == CONF_BOOL) {
             val = *(bool *)vp;
         } else if (type == CONF_INT8) {
             val = *(int8_t *)vp;
         } else if (type == CONF_INT16) {
             val = *(int16_t *)vp;
-        } else {
+        } else if (type == CONF_INT32) {
             val = *(int32_t *)vp;
+        } else {
+            val = *(int64_t *)vp;
         }
-        snprintf(buf, buf_len, "%ld", (long)val);
-        return buf;
-    case CONF_INT64:
-        snprintf(buf, buf_len, "%lld", *(long long *)vp);
+        snprintf(buf, buf_len, "%lld", val);
         return buf;
     case CONF_UINT8:
     case CONF_UINT16:
     case CONF_UINT32:
+    case CONF_UINT64:
         if (type == CONF_UINT8) {
             uval = *(uint8_t *)vp;
         } else if (type == CONF_UINT16) {
             uval = *(uint16_t *)vp;
-        } else {
+        } else if (type == CONF_UINT32) {
             uval = *(uint32_t *)vp;
+        } else {
+            uval = *(uint64_t *)vp;
         }
-        snprintf(buf, buf_len, "%lu", (unsigned long)uval);
-        return buf;
-    case CONF_UINT64:
-        snprintf(buf, buf_len, "%llu", *(unsigned long long *)vp);
+        snprintf(buf, buf_len, "%llu", uval);
         return buf;
     default:
         return NULL;
