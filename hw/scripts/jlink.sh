@@ -34,6 +34,12 @@ jlink_target_cmd () {
     fi
 }
 
+jlink_sn () {
+    if [ -n "$JLINK_SN" ]; then
+        EXTRA_JTAG_CMD="-select usb=$JLINK_SN " $EXTRA_JTAG_CMD
+    fi
+}
+
 #
 # FILE_NAME is the file to load
 # FLASH_OFFSET is location in the flash
@@ -46,6 +52,7 @@ jlink_load () {
     windows_detect
     parse_extra_jtag_cmd $EXTRA_JTAG_CMD
     jlink_target_cmd
+    jlink_sn
 
     if [ $WINDOWS -eq 1 ]; then
         JLINK_GDB_SERVER=JLinkGDBServerCL
@@ -137,6 +144,7 @@ jlink_debug() {
     fi
     parse_extra_jtag_cmd $EXTRA_JTAG_CMD
     jlink_target_cmd
+    jlink_sn
 
     if [ -z "$NO_GDB" ]; then
         GDB_CMD_FILE=.gdb_cmds

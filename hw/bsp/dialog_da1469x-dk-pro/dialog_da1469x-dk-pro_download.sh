@@ -40,6 +40,7 @@ fi
 
 parse_extra_jtag_cmd $EXTRA_JTAG_CMD
 jlink_target_cmd
+jlink_sn
 
 GDB_CMD_FILE=.gdb_load
 JLINK_LOG_FILE=.jlink_log
