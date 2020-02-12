@@ -102,10 +102,12 @@ os_idle_task(void *arg)
     sanity_itvl_ticks = (MYNEWT_VAL(SANITY_INTERVAL) * OS_TICKS_PER_SEC) / 1000;
     sanity_last = 0;
 
+#if MYNEWT_VAL(WATCHDOG_INTERVAL) > 0
     hal_watchdog_tickle();
 #if MYNEWT_VAL(OS_WATCHDOG_MONITOR)
     os_cputime_timer_stop(&os_wdog_monitor);
     os_cputime_timer_relative(&os_wdog_monitor, OS_WDOG_MONITOR_TMO);
+#endif
 #endif
 
     while (1) {
@@ -114,11 +116,13 @@ os_idle_task(void *arg)
         now = os_time_get();
         if (OS_TIME_TICK_GEQ(now, sanity_last + sanity_itvl_ticks)) {
             os_sanity_run();
+#if MYNEWT_VAL(WATCHDOG_INTERVAL) > 0
             /* Tickle the watchdog after successfully running sanity */
             hal_watchdog_tickle();
 #if MYNEWT_VAL(OS_WATCHDOG_MONITOR)
             os_cputime_timer_stop(&os_wdog_monitor);
             os_cputime_timer_relative(&os_wdog_monitor, OS_WDOG_MONITOR_TMO);
+#endif
 #endif
             sanity_last = now;
         }
@@ -211,12 +215,14 @@ os_init_idle_task(void)
     rc = os_sanity_init();
     assert(rc == 0);
 
+#if MYNEWT_VAL(WATCHDOG_INTERVAL) > 0
     rc = hal_watchdog_init(MYNEWT_VAL(WATCHDOG_INTERVAL));
     assert(rc == 0);
 
 #if MYNEWT_VAL(OS_WATCHDOG_MONITOR)
     os_cputime_timer_init(&os_wdog_monitor, os_wdog_monitor_tmo, NULL);
     os_cputime_timer_relative(&os_wdog_monitor, OS_WDOG_MONITOR_TMO);
+#endif
 #endif
 }
 

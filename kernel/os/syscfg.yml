@@ -193,3 +193,6 @@ syscfg.vals.OS_DEBUG_MODE:
     OS_MEMPOOL_POISON: 1
     OS_TIME_DEBUG: 1
     OS_EVENTQ_DEBUG: 1
+
+syscfg.restrictions:
+    - "!OS_WATCHDOG_MONITOR || WATCHDOG_INTERVAL > 0"
