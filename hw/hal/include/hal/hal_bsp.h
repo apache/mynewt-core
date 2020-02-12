@@ -68,6 +68,7 @@ const struct hal_bsp_mem_dump *hal_bsp_core_dump(int *area_cnt);
  *
  * @return                      The length of the hardware ID.
  */
+__attribute__((deprecated))
 int hal_bsp_hw_id_len(void);
 
 /**
@@ -79,6 +80,7 @@ int hal_bsp_hw_id_len(void);
  *
  * @return 0 on success, non-zero error code on failure
  */
+__attribute__((deprecated))
 int hal_bsp_hw_id(uint8_t *id, int max_len);
 
 /** Full System On */
