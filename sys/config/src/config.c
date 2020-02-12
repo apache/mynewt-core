@@ -152,21 +152,20 @@ conf_parse_and_lookup(char *name, int *name_argc, char *name_argv[])
 int
 conf_value_from_str(char *val_str, enum conf_type type, void *vp, int maxlen)
 {
-    int32_t val;
-    int64_t val64;
-    uint32_t uval;
-    uint64_t uval64;
+    int64_t val;
+    uint64_t uval;
     char *eptr;
 
     if (!val_str) {
         goto err;
     }
     switch (type) {
+    case CONF_BOOL:
     case CONF_INT8:
     case CONF_INT16:
     case CONF_INT32:
-    case CONF_BOOL:
-        val = strtol(val_str, &eptr, 0);
+    case CONF_INT64:
+        val = strtoll(val_str, &eptr, 0);
         if (*eptr != '\0') {
             goto err;
         }
@@ -176,30 +175,29 @@ conf_value_from_str(char *val_str, enum conf_type type, void *vp, int maxlen)
             }
             *(bool *)vp = val;
         } else if (type == CONF_INT8) {
-            if (val < INT8_MIN || val > UINT8_MAX) {
+            if (val < INT8_MIN || val > INT8_MAX) {
                 goto err;
             }
             *(int8_t *)vp = val;
         } else if (type == CONF_INT16) {
-            if (val < INT16_MIN || val > UINT16_MAX) {
+            if (val < INT16_MIN || val > INT16_MAX) {
                 goto err;
             }
             *(int16_t *)vp = val;
         } else if (type == CONF_INT32) {
+            if (val < INT32_MIN || val > INT32_MAX) {
+                goto err;
+            }
             *(int32_t *)vp = val;
+        } else {
+            *(int64_t *)vp = val;
         }
-        break;
-    case CONF_INT64:
-        val64 = strtoll(val_str, &eptr, 0);
-        if (*eptr != '\0') {
-            goto err;
-        }
-        *(int64_t *)vp = val64;
         break;
     case CONF_UINT8:
     case CONF_UINT16:
     case CONF_UINT32:
-        uval = strtoul(val_str, &eptr, 0);
+    case CONF_UINT64:
+        uval = strtoull(val_str, &eptr, 0);
         if (*eptr != '\0') {
             goto err;
         }
@@ -214,15 +212,13 @@ conf_value_from_str(char *val_str, enum conf_type type, void *vp, int maxlen)
             }
             *(uint16_t *)vp = uval;
         } else if (type == CONF_UINT32) {
+            if (uval > UINT32_MAX) {
+                goto err;
+            }
             *(uint32_t *)vp = uval;
+        } else {
+            *(uint64_t *)vp = uval;
         }
-        break;
-    case CONF_UINT64:
-        uval64 = strtoull(val_str, &eptr, 0);
-        if (*eptr != '\0') {
-            goto err;
-        }
-        *(uint64_t *)vp = uval64;
         break;
     case CONF_STRING:
         val = strlen(val_str);
