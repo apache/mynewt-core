@@ -24,7 +24,7 @@ import os
 
 @click.argument('infile')
 @click.option('-u', '--uart', required=True, help='uart port')
-@click.command(help='Close out OTP configuration script')
+@click.command(help='Load the provided file using serial load protocol')
 def load(infile, uart):
     try:
         ser = serial.Serial(port=uart, baudrate=115200, timeout=10,
