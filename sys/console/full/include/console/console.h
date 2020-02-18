@@ -62,7 +62,7 @@ int console_read(char *str, int cnt, int *newline);
 void console_blocking_mode(void);
 void console_non_blocking_mode(void);
 /**
- * Switch console echo state for input data on (on != 0) or off ( on= 0) 
+ * Switch console echo state for input data on or off
  *
  * @param on Let console know if it should echo the input (!= 0),
  *        or disable the echo (= 0).
