@@ -70,6 +70,7 @@ hal_system_reset(void)
 
     while (1) {
         HAL_DEBUG_BREAK();
+        CRG_TOP->SYS_CTRL_REG = 0x20;
         NVIC_SystemReset();
     }
 }
