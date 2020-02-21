@@ -206,6 +206,10 @@ CBOR_INLINE_API CborError cbor_encode_null(CborEncoder *encoder)
 CBOR_INLINE_API CborError cbor_encode_undefined(CborEncoder *encoder)
 { return cbor_encode_simple_value(encoder, CborUndefinedType & 0x1f); }
 
+CBOR_API size_t cbor_encode_int_get_size(uint64_t ui);
+CBOR_INLINE_API size_t cbor_encode_string_get_size(size_t s)
+{ return cbor_encode_int_get_size(s) + s; }
+
 CBOR_INLINE_API CborError cbor_encode_half_float(CborEncoder *encoder, const void *value)
 { return cbor_encode_floating_point(encoder, CborHalfFloatType, value); }
 CBOR_INLINE_API CborError cbor_encode_float(CborEncoder *encoder, float value)

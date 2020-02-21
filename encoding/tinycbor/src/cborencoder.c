@@ -388,6 +388,31 @@ static CborError encode_string(CborEncoder *encoder, size_t length, uint8_t shif
 }
 
 /**
+ * Returns size in bytes it will take to encode \a ui.
+ *
+ */
+size_t cbor_encode_int_get_size(uint64_t ui)
+{
+    size_t s = 1;
+
+    if (ui >= Value8Bit) {
+        s += 1;
+        if (ui > 0xffU) {
+            s += 1;
+        }
+        if (ui > 0xffffU) {
+            s += 2;
+        }
+        if (ui > 0xffffffffU) {
+            s += 4;
+        }
+    }
+
+    return s;
+}
+
+
+/**
  * \fn CborError cbor_encode_text_stringz(CborEncoder *encoder, const char *string)
  *
  * Appends the null-terminated text string \a string to the CBOR stream
