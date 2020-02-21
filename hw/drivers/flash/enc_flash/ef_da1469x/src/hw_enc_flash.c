@@ -41,13 +41,10 @@ do_dma_key_tx(const struct hal_flash *h_dev, uint32_t slot)
     da1469x_clock_amba_enable(CRG_TOP_CLK_AMBA_REG_OTP_ENABLE_Msk);
     da1469x_otp_set_mode(OTPC_MODE_READ);
 
-    /* program start and end addresses */
-    QSPIC->QSPIC_CTR_SADDR_REG = h_dev->hf_base_addr;
-    QSPIC->QSPIC_CTR_EADDR_REG = h_dev->hf_size + h_dev->hf_base_addr;
-
     /* securely DMA hardware key from secret storage to QSPI decrypt engine */
     dma_regs->DMA_REQ_MUX_REG |= 0xf000;
     dma_regs->DMA7_LEN_REG = 8;
+    /* program source and destination addresses */
     dma_regs->DMA7_A_START_REG = MCU_OTPM_BASE + OTP_SEGMENT_USER_DATA_KEYS +
                                  (32 * (slot));
     dma_regs->DMA7_B_START_REG = (uint32_t)&AES_HASH->CRYPTO_KEYS_START;
