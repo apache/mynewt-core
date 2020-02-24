@@ -200,6 +200,10 @@ stm32_periph_create_timers(void)
     rc = hal_timer_init(5, MYNEWT_VAL(TIMER_5_TIM));
     assert(rc == 0);
 #endif
+#if (MYNEWT_VAL(OS_CPUTIME_TIMER_NUM) >= 0)
+    rc = os_cputime_init(MYNEWT_VAL(OS_CPUTIME_FREQ));
+    assert(rc == 0);
+#endif
 }
 
 static void
