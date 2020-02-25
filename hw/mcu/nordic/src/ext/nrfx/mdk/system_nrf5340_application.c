@@ -32,7 +32,9 @@ NOTICE: This file has been modified by Nordic Semiconductor ASA.
 /*lint ++flb "Enter library region" */
 
 
-#define __SYSTEM_CLOCK      (128000000UL)     /*!< NRF5340 application core uses a fixed System Clock Frequency of 128MHz */
+/* NRF5340 application core uses a variable System Clock Frequency that starts at 64MHz */
+#define __SYSTEM_CLOCK_MAX      (128000000UL)
+#define __SYSTEM_CLOCK_INITIAL  ( 64000000UL)
 
 #define TRACE_PIN_CNF_VALUE (   (GPIO_PIN_CNF_DIR_Output << GPIO_PIN_CNF_DIR_Pos) | \
                                 (GPIO_PIN_CNF_INPUT_Connect << GPIO_PIN_CNF_INPUT_Pos) | \
@@ -48,19 +50,19 @@ NOTICE: This file has been modified by Nordic Semiconductor ASA.
 #define TRACE_TRACEDATA3_PIN TAD_PSEL_TRACEDATA3_PIN_Tracedata3
 
 #if defined ( __CC_ARM )
-    uint32_t SystemCoreClock __attribute__((used)) = __SYSTEM_CLOCK;
+    uint32_t SystemCoreClock __attribute__((used)) = __SYSTEM_CLOCK_INITIAL;  
 #elif defined ( __ICCARM__ )
-    __root uint32_t SystemCoreClock = __SYSTEM_CLOCK;
+    __root uint32_t SystemCoreClock = __SYSTEM_CLOCK_INITIAL;
 #elif defined   ( __GNUC__ )
-    uint32_t SystemCoreClock __attribute__((used)) = __SYSTEM_CLOCK;
+    uint32_t SystemCoreClock __attribute__((used)) = __SYSTEM_CLOCK_INITIAL;
 #endif
 
 void SystemCoreClockUpdate(void)
 {
 #if defined(NRF_TRUSTZONE_NONSECURE)
-    SystemCoreClock = __SYSTEM_CLOCK >> (NRF_CLOCK_NS->HFCLKCTRL & (CLOCK_HFCLKCTRL_HCLK_Msk));
+    SystemCoreClock = __SYSTEM_CLOCK_MAX >> (NRF_CLOCK_NS->HFCLKCTRL & (CLOCK_HFCLKCTRL_HCLK_Msk));
 #else
-    SystemCoreClock = __SYSTEM_CLOCK >> (NRF_CLOCK_S->HFCLKCTRL & (CLOCK_HFCLKCTRL_HCLK_Msk));
+    SystemCoreClock = __SYSTEM_CLOCK_MAX >> (NRF_CLOCK_S->HFCLKCTRL & (CLOCK_HFCLKCTRL_HCLK_Msk));
 #endif
 }
 
@@ -78,7 +80,7 @@ void SystemInit(void)
         /* Trimming of the device. Copy all the trimming values from FICR into the target addresses. Trim
          until one ADDR is not initialized. */
         uint32_t index = 0;
-        for (index = 0; index < 256ul && NRF_FICR_S->TRIMCNF[index].ADDR != (uint32_t *)0xFFFFFFFFul; index++){
+        for (index = 0; index < 32ul && NRF_FICR_S->TRIMCNF[index].ADDR != (uint32_t *)0xFFFFFFFFul; index++){
             #if defined ( __ICCARM__ )
                 /* IAR will complain about the order of volatile pointer accesses. */
                 #pragma diag_suppress=Pa082
@@ -89,36 +91,33 @@ void SystemInit(void)
             #endif
         }
 
+        /* errata 64 must be before errata 42, as errata 42 is dependant on the changes in errata 64*/
         /* Workaround for Errata 64 "VREGMAIN has invalid configuration when CPU is running at 128 MHz" found at the Errata document
            for your device located at https://infocenter.nordicsemi.com/index.jsp  */
-        if (errata_64())
+        if (nrf53_errata_64())
         {
-            *((volatile uint32_t *)0x50004708ul) = 0x3;
+            *((volatile uint32_t *)0x5000470Cul) = 0x29ul;
+            *((volatile uint32_t *)0x5000473Cul) = 0x3ul;
         }
 
         /* Workaround for Errata 42 "Reset value of HFCLKCTRL is invalid" found at the Errata document
            for your device located at https://infocenter.nordicsemi.com/index.jsp  */
-        if (errata_42())
+        if (nrf53_errata_42())
         {
             *((volatile uint32_t *)0x50039530ul) = 0xBEEF0044ul;
             NRF_CLOCK_S->HFCLKCTRL = CLOCK_HFCLKCTRL_HCLK_Div2 << CLOCK_HFCLKCTRL_HCLK_Pos;
-
-            if (errata_64())
-            {
-                *((volatile uint32_t *)0x50004710ul) = 0x0;
-            }
         }
 
         /* Workaround for Errata 46 "Higher power consumption of LFRC" found at the Errata document
            for your device located at https://infocenter.nordicsemi.com/index.jsp  */
-        if (errata_46())
+        if (nrf53_errata_46())
         {
             *((volatile uint32_t *)0x5003254Cul) = 0;
         }
 
         /* Workaround for Errata 49 "SLEEPENTER and SLEEPEXIT events asserted after pin reset" found at the Errata document
            for your device located at https://infocenter.nordicsemi.com/index.jsp  */
-        if (errata_49())
+        if (nrf53_errata_49())
         {
             if (NRF_RESET_S->RESETREAS & RESET_RESETREAS_RESETPIN_Msk)
             {
@@ -129,11 +128,18 @@ void SystemInit(void)
 
         /* Workaround for Errata 55 "Bits in RESETREAS are set when they should not be" found at the Errata document
            for your device located at https://infocenter.nordicsemi.com/index.jsp  */
-        if (errata_55())
+        if (nrf53_errata_55())
         {
             if (NRF_RESET_S->RESETREAS & RESET_RESETREAS_RESETPIN_Msk){
                 NRF_RESET_S->RESETREAS = ~RESET_RESETREAS_RESETPIN_Msk;
             }
+        }
+
+        /* Workaround for Errata 69 "VREGMAIN configuration is not retained in System OFF" found at the Errata document
+           for your device located at https://infocenter.nordicsemi.com/index.jsp  */
+        if (nrf53_errata_69())
+        {
+            *((volatile uint32_t *)0x5000470Cul) =0x65ul;
         }
         
         #if defined(CONFIG_NFCT_PINS_AS_GPIOS)

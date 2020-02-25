@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 - 2019, Nordic Semiconductor ASA
+ * Copyright (c) 2015 - 2020, Nordic Semiconductor ASA
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -36,6 +36,10 @@
 
 #ifdef __cplusplus
 extern "C" {
+#endif
+
+#ifndef NRF_WDT0
+#define NRF_WDT0 NRF_WDT
 #endif
 
 /**

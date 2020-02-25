@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 - 2019, Nordic Semiconductor ASA
+ * Copyright (c) 2015 - 2020, Nordic Semiconductor ASA
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -109,17 +109,19 @@ typedef struct
 }
 
 /** @brief Flag indicating that TX buffer address will be incremented after the transfer. */
-#define NRFX_TWIM_FLAG_TX_POSTINC          (1UL << 0)
+#define NRFX_TWIM_FLAG_TX_POSTINC             (1UL << 0)
 /** @brief Flag indicating that RX buffer address will be incremented after the transfer. */
-#define NRFX_TWIM_FLAG_RX_POSTINC          (1UL << 1)
+#define NRFX_TWIM_FLAG_RX_POSTINC             (1UL << 1)
 /** @brief Flag indicating that the interrupt after each transfer will be suppressed, and the event handler will not be called. */
-#define NRFX_TWIM_FLAG_NO_XFER_EVT_HANDLER (1UL << 2)
+#define NRFX_TWIM_FLAG_NO_XFER_EVT_HANDLER    (1UL << 2)
 /** @brief Flag indicating that the transfer will be set up, but not started. */
-#define NRFX_TWIM_FLAG_HOLD_XFER           (1UL << 3)
+#define NRFX_TWIM_FLAG_HOLD_XFER              (1UL << 3)
 /** @brief Flag indicating that the transfer will be executed multiple times. */
-#define NRFX_TWIM_FLAG_REPEATED_XFER       (1UL << 4)
+#define NRFX_TWIM_FLAG_REPEATED_XFER          (1UL << 4)
 /** @brief Flag indicating that the TX transfer will not end with a stop condition. */
-#define NRFX_TWIM_FLAG_TX_NO_STOP          (1UL << 5)
+#define NRFX_TWIM_FLAG_TX_NO_STOP             (1UL << 5)
+/** @brief Flag indicating that checks for spurious STOP condition will not be performed. */
+#define NRFX_TWIM_FLAG_NO_SPURIOUS_STOP_CHECK (1UL << 6)
 
 /** @brief TWI master driver event types. */
 typedef enum
@@ -272,6 +274,10 @@ void nrfx_twim_disable(nrfx_twim_t const * p_instance);
  *   the driver does not set the driver instance into busy state, so you must ensure that the next transfers are set up
  *   when TWIM is not active.
  * - @ref NRFX_TWIM_FLAG_TX_NO_STOP - No stop condition after the TX transfer.
+ * - @ref NRFX_TWIM_FLAG_NO_SPURIOUS_STOP_CHECK - Checks for spurious STOP conditions are disabled.
+ *        Used together with @ref NRFX_TWIM_FLAG_NO_XFER_EVT_HANDLER can result in lower power consumption
+ *        when transfers are triggered externally and CPU is sleeping.
+ *        Use only with I2C standard-compliant slave devices.
  *
  * @note
  * Some flag combinations are invalid:

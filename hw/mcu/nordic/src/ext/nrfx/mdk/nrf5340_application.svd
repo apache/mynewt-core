@@ -1156,9 +1156,9 @@ POSSIBILITY OF SUCH DAMAGE.
             <register>
               <name>DEST</name>
               <description>Description cluster: Destination address where content of the key value registers (KEYSLOT.KEYn.VALUE[0-3])
-          will be pushed by KMU. Note that this address MUST match that of a peripherals
+          will be pushed by KMU. Note that this address must match that of a peripherals
           APB mapped write-only key registers, else the KMU can push this key value into
-          an address range which the CPU can potentially read!</description>
+          an address range which the CPU can potentially read.</description>
               <addressOffset>0x000</addressOffset>
               <access>read-write</access>
               <resetValue>0xFFFFFFFF</resetValue>
@@ -6861,7 +6861,7 @@ POSSIBILITY OF SUCH DAMAGE.
               <enumeratedValues>
                 <enumeratedValue>
                   <name>Inactive</name>
-                  <description>Normal voltage mode. Voltage supplied on VDD.</description>
+                  <description>Normal voltage mode. Voltage supplied on VDD and VDDH.</description>
                   <value>0</value>
                 </enumeratedValue>
                 <enumeratedValue>
@@ -7204,13 +7204,13 @@ POSSIBILITY OF SUCH DAMAGE.
       <registers>
         <register>
           <name>TASKS_HFCLKSTART</name>
-          <description>Start HFCLK source</description>
+          <description>Start HFCLK128M/HFCLK64M source as selected in HFCLKSRC</description>
           <addressOffset>0x000</addressOffset>
           <access>write-only</access>
           <fields>
             <field>
               <name>TASKS_HFCLKSTART</name>
-              <description>Start HFCLK source</description>
+              <description>Start HFCLK128M/HFCLK64M source as selected in HFCLKSRC</description>
               <lsb>0</lsb>
               <msb>0</msb>
               <enumeratedValues>
@@ -7225,13 +7225,13 @@ POSSIBILITY OF SUCH DAMAGE.
         </register>
         <register>
           <name>TASKS_HFCLKSTOP</name>
-          <description>Stop HFCLK source</description>
+          <description>Stop HFCLK128M/HFCLK64M source</description>
           <addressOffset>0x004</addressOffset>
           <access>write-only</access>
           <fields>
             <field>
               <name>TASKS_HFCLKSTOP</name>
-              <description>Stop HFCLK source</description>
+              <description>Stop HFCLK128M/HFCLK64M source</description>
               <lsb>0</lsb>
               <msb>0</msb>
               <enumeratedValues>
@@ -7246,13 +7246,13 @@ POSSIBILITY OF SUCH DAMAGE.
         </register>
         <register>
           <name>TASKS_LFCLKSTART</name>
-          <description>Start LFCLK source</description>
+          <description>Start LFCLK source as selected in LFCLKSRC</description>
           <addressOffset>0x008</addressOffset>
           <access>write-only</access>
           <fields>
             <field>
               <name>TASKS_LFCLKSTART</name>
-              <description>Start LFCLK source</description>
+              <description>Start LFCLK source as selected in LFCLKSRC</description>
               <lsb>0</lsb>
               <msb>0</msb>
               <enumeratedValues>
@@ -7288,13 +7288,13 @@ POSSIBILITY OF SUCH DAMAGE.
         </register>
         <register>
           <name>TASKS_CAL</name>
-          <description>Start RCOSC32k calibration</description>
+          <description>Start calibration of LFRC oscillator</description>
           <addressOffset>0x010</addressOffset>
           <access>write-only</access>
           <fields>
             <field>
               <name>TASKS_CAL</name>
-              <description>Start RCOSC32k calibration</description>
+              <description>Start calibration of LFRC oscillator</description>
               <lsb>0</lsb>
               <msb>0</msb>
               <enumeratedValues>
@@ -7351,13 +7351,13 @@ POSSIBILITY OF SUCH DAMAGE.
         </register>
         <register>
           <name>TASKS_HFCLK192MSTART</name>
-          <description>Start HFCLK192M source</description>
+          <description>Start HFCLK192M source as selected in HFCLK192MSRC</description>
           <addressOffset>0x020</addressOffset>
           <access>write-only</access>
           <fields>
             <field>
               <name>TASKS_HFCLK192MSTART</name>
-              <description>Start HFCLK192M source</description>
+              <description>Start HFCLK192M source as selected in HFCLK192MSRC</description>
               <lsb>0</lsb>
               <msb>0</msb>
               <enumeratedValues>
@@ -7672,13 +7672,13 @@ POSSIBILITY OF SUCH DAMAGE.
         </register>
         <register>
           <name>EVENTS_HFCLKSTARTED</name>
-          <description>HFCLK source started</description>
+          <description>HFCLK128M/HFCLK64M source started</description>
           <addressOffset>0x100</addressOffset>
           <access>read-write</access>
           <fields>
             <field>
               <name>EVENTS_HFCLKSTARTED</name>
-              <description>HFCLK source started</description>
+              <description>HFCLK128M/HFCLK64M source started</description>
               <lsb>0</lsb>
               <msb>0</msb>
               <enumeratedValues>
@@ -7724,13 +7724,13 @@ POSSIBILITY OF SUCH DAMAGE.
         </register>
         <register>
           <name>EVENTS_DONE</name>
-          <description>Calibration of LFCLK RC oscillator complete event</description>
+          <description>Calibration of LFRC oscillator complete event</description>
           <addressOffset>0x11C</addressOffset>
           <access>read-write</access>
           <fields>
             <field>
               <name>EVENTS_DONE</name>
-              <description>Calibration of LFCLK RC oscillator complete event</description>
+              <description>Calibration of LFRC oscillator complete event</description>
               <lsb>0</lsb>
               <msb>0</msb>
               <enumeratedValues>
@@ -8470,7 +8470,7 @@ POSSIBILITY OF SUCH DAMAGE.
         </register>
         <register>
           <name>HFCLKSTAT</name>
-          <description>Status indicating which HFCLK source is running Note: Value of this register in any CLOCK instance reflects status only due to configurations/actions in that CLOCK instance.</description>
+          <description>Status indicating which HFCLK128M/HFCLK64M source is running Note: Value of this register in any CLOCK instance reflects status only due to configurations/actions in that CLOCK instance.</description>
           <addressOffset>0x40C</addressOffset>
           <access>read-only</access>
           <fields>
@@ -8482,12 +8482,12 @@ POSSIBILITY OF SUCH DAMAGE.
               <enumeratedValues>
                 <enumeratedValue>
                   <name>HFINT</name>
-                  <description>HFCLK clock source: HFINT - 128 MHz on-chip oscillator</description>
+                  <description>Clock source: HFINT - 128 MHz on-chip oscillator</description>
                   <value>0</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>HFXO</name>
-                  <description>HFCLK clock source: HFXO - 128 MHz clock derived from external 32 MHz crystal oscillator</description>
+                  <description>Clock source: HFXO - 128 MHz clock derived from external 32 MHz crystal oscillator</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -8693,7 +8693,7 @@ POSSIBILITY OF SUCH DAMAGE.
         </register>
         <register>
           <name>HFCLKAUDIOSTAT</name>
-          <description>Which HFCLKAUDIO source is running</description>
+          <description>Status indicating which HFCLKAUDIO source is running</description>
           <addressOffset>0x454</addressOffset>
           <access>read-only</access>
           <fields>
@@ -8763,7 +8763,7 @@ POSSIBILITY OF SUCH DAMAGE.
         </register>
         <register>
           <name>HFCLK192MSTAT</name>
-          <description>Which HFCLK192M source is running</description>
+          <description>Status indicating which HFCLK192M source is running</description>
           <addressOffset>0x45C</addressOffset>
           <access>read-only</access>
           <fields>
@@ -8825,7 +8825,7 @@ POSSIBILITY OF SUCH DAMAGE.
         </register>
         <register>
           <name>HFCLKSRC</name>
-          <description>Clock source for HFCLK</description>
+          <description>Clock source for HFCLK128M/HFCLK64M</description>
           <addressOffset>0x514</addressOffset>
           <access>read-write</access>
           <resetValue>0x00000001</resetValue>
@@ -8852,7 +8852,7 @@ POSSIBILITY OF SUCH DAMAGE.
         </register>
         <register>
           <name>LFCLKSRC</name>
-          <description>Clock source for the LFCLK</description>
+          <description>Clock source for LFCLK</description>
           <addressOffset>0x518</addressOffset>
           <access>read-write</access>
           <resetValue>0x00000001</resetValue>
@@ -8889,7 +8889,7 @@ POSSIBILITY OF SUCH DAMAGE.
         </register>
         <register>
           <name>HFCLKCTRL</name>
-          <description>HFCLK frequency configuration</description>
+          <description>HFCLK128M frequency configuration</description>
           <addressOffset>0x558</addressOffset>
           <access>read-write</access>
           <resetValue>0x00000001</resetValue>
@@ -8938,7 +8938,7 @@ POSSIBILITY OF SUCH DAMAGE.
         </cluster>
         <register>
           <name>HFCLKALWAYSRUN</name>
-          <description>Automatic or manual control of HFCLK</description>
+          <description>Automatic or manual control of HFCLK128M/HFCLK64M</description>
           <addressOffset>0x570</addressOffset>
           <access>read-only</access>
           <fields>
@@ -9016,7 +9016,7 @@ POSSIBILITY OF SUCH DAMAGE.
         </register>
         <register>
           <name>HFCLK192MSRC</name>
-          <description>Clock source for the HFCLK192M oscillator</description>
+          <description>Clock source for HFCLK192M</description>
           <addressOffset>0x580</addressOffset>
           <access>read-write</access>
           <resetValue>0x00000001</resetValue>
@@ -9696,7 +9696,7 @@ POSSIBILITY OF SUCH DAMAGE.
             </field>
             <field>
               <name>DOG0</name>
-              <description>Reset from watchdog timer 0 detected</description>
+              <description>Reset from application watchdog timer 0 detected</description>
               <lsb>1</lsb>
               <msb>1</msb>
               <enumeratedValues>
@@ -9732,7 +9732,7 @@ POSSIBILITY OF SUCH DAMAGE.
             </field>
             <field>
               <name>SREQ</name>
-              <description>Reset from AIRCR.SYSRESETREQ detected</description>
+              <description>Reset from application soft reset detected</description>
               <lsb>3</lsb>
               <msb>3</msb>
               <enumeratedValues>
@@ -9750,7 +9750,7 @@ POSSIBILITY OF SUCH DAMAGE.
             </field>
             <field>
               <name>LOCKUP</name>
-              <description>Reset from CPU lockup detected</description>
+              <description>Reset from application CPU lockup detected</description>
               <lsb>4</lsb>
               <msb>4</msb>
               <enumeratedValues>
@@ -9822,7 +9822,7 @@ POSSIBILITY OF SUCH DAMAGE.
             </field>
             <field>
               <name>LSREQ</name>
-              <description>Reset from local soft reset detected</description>
+              <description>Reset from network soft reset detected</description>
               <lsb>16</lsb>
               <msb>16</msb>
               <enumeratedValues>
@@ -9840,7 +9840,7 @@ POSSIBILITY OF SUCH DAMAGE.
             </field>
             <field>
               <name>LLOCKUP</name>
-              <description>Reset from local CPU lockup detected</description>
+              <description>Reset from network CPU lockup detected</description>
               <lsb>17</lsb>
               <msb>17</msb>
               <enumeratedValues>
@@ -9858,7 +9858,7 @@ POSSIBILITY OF SUCH DAMAGE.
             </field>
             <field>
               <name>LDOG</name>
-              <description>Reset from local watchdog timer detected</description>
+              <description>Reset from network watchdog timer detected</description>
               <lsb>18</lsb>
               <msb>18</msb>
               <enumeratedValues>
@@ -9876,7 +9876,7 @@ POSSIBILITY OF SUCH DAMAGE.
             </field>
             <field>
               <name>MFORCEOFF</name>
-              <description>Force off reset from Application core detected</description>
+              <description>Force off reset from application core detected</description>
               <lsb>23</lsb>
               <msb>23</msb>
               <enumeratedValues>
@@ -9912,7 +9912,7 @@ POSSIBILITY OF SUCH DAMAGE.
             </field>
             <field>
               <name>DOG1</name>
-              <description>Reset from watchdog timer 1 detected</description>
+              <description>Reset from application watchdog timer 1 detected</description>
               <lsb>25</lsb>
               <msb>25</msb>
               <enumeratedValues>
@@ -9948,7 +9948,7 @@ POSSIBILITY OF SUCH DAMAGE.
             </field>
             <field>
               <name>LCTRLAP</name>
-              <description>Reset from local CTRL-AP detected</description>
+              <description>Reset from network CTRL-AP detected</description>
               <lsb>27</lsb>
               <msb>27</msb>
               <enumeratedValues>
@@ -9968,20 +9968,20 @@ POSSIBILITY OF SUCH DAMAGE.
         </register>
         <cluster>
           <name>NETWORK</name>
-          <description>ULP Network core control</description>
+          <description>ULP network core control</description>
           <headerStructName>RESET_NETWORK</headerStructName>
           <access>read-write</access>
           <addressOffset>0x610</addressOffset>
           <register>
             <name>FORCEOFF</name>
-            <description>Force off power and clock in Network core</description>
+            <description>Force off power and clock in network core</description>
             <addressOffset>0x004</addressOffset>
             <access>read-write</access>
             <resetValue>0x00000001</resetValue>
             <fields>
               <field>
                 <name>FORCEOFF</name>
-                <description>Force off power and clock in Network core</description>
+                <description>Force off power and clock in network core</description>
                 <lsb>0</lsb>
                 <msb>0</msb>
                 <enumeratedValues>
@@ -18595,25 +18595,261 @@ POSSIBILITY OF SUCH DAMAGE.
       </interrupt>
     </peripheral>
     <peripheral derivedFrom="SPIM0_NS">
-      <name>SPIM2_NS</name>
+      <name>SPIM4_NS</name>
       <description>Serial Peripheral Interface Master with EasyDMA 4</description>
       <baseAddress>0x4000A000</baseAddress>
       <!--Security dma=SA-->
       <!--Security securemapping=US-->
       <interrupt>
-        <name>SPIM2</name>
+        <name>SPIM4</name>
         <value>10</value>
       </interrupt>
     </peripheral>
     <peripheral derivedFrom="SPIM0_NS">
-      <name>SPIM2_S</name>
+      <name>SPIM4_S</name>
       <description>Serial Peripheral Interface Master with EasyDMA 5</description>
       <baseAddress>0x5000A000</baseAddress>
       <!--Security dma=SA-->
       <!--Security securemapping=US-->
       <interrupt>
-        <name>SPIM2</name>
+        <name>SPIM4</name>
         <value>10</value>
+      </interrupt>
+    </peripheral>
+    <peripheral derivedFrom="SPIM0_NS">
+      <name>SPIM2_NS</name>
+      <description>Serial Peripheral Interface Master with EasyDMA 6</description>
+      <baseAddress>0x4000B000</baseAddress>
+      <!--Security dma=SA-->
+      <!--Security securemapping=US-->
+      <interrupt>
+        <name>SPIM2_SPIS2_TWIM2_TWIS2_UARTE2</name>
+        <value>11</value>
+      </interrupt>
+    </peripheral>
+    <peripheral derivedFrom="SPIS0_NS">
+      <name>SPIS2_NS</name>
+      <description>SPI Slave 4</description>
+      <baseAddress>0x4000B000</baseAddress>
+      <alternatePeripheral>SPIM2_NS</alternatePeripheral>
+      <!--Security dma=SA-->
+      <!--Security securemapping=US-->
+      <interrupt>
+        <name>SPIM2_SPIS2_TWIM2_TWIS2_UARTE2</name>
+        <value>11</value>
+      </interrupt>
+    </peripheral>
+    <peripheral derivedFrom="TWIM0_NS">
+      <name>TWIM2_NS</name>
+      <description>I2C compatible Two-Wire Master Interface with EasyDMA 4</description>
+      <baseAddress>0x4000B000</baseAddress>
+      <alternatePeripheral>SPIM2_NS</alternatePeripheral>
+      <!--Security dma=SA-->
+      <!--Security securemapping=US-->
+      <interrupt>
+        <name>SPIM2_SPIS2_TWIM2_TWIS2_UARTE2</name>
+        <value>11</value>
+      </interrupt>
+    </peripheral>
+    <peripheral derivedFrom="TWIS0_NS">
+      <name>TWIS2_NS</name>
+      <description>I2C compatible Two-Wire Slave Interface with EasyDMA 4</description>
+      <baseAddress>0x4000B000</baseAddress>
+      <alternatePeripheral>SPIM2_NS</alternatePeripheral>
+      <!--Security dma=SA-->
+      <!--Security securemapping=US-->
+      <interrupt>
+        <name>SPIM2_SPIS2_TWIM2_TWIS2_UARTE2</name>
+        <value>11</value>
+      </interrupt>
+    </peripheral>
+    <peripheral derivedFrom="UARTE0_NS">
+      <name>UARTE2_NS</name>
+      <description>UART with EasyDMA 4</description>
+      <baseAddress>0x4000B000</baseAddress>
+      <alternatePeripheral>SPIM2_NS</alternatePeripheral>
+      <!--Security dma=SA-->
+      <!--Security securemapping=US-->
+      <interrupt>
+        <name>SPIM2_SPIS2_TWIM2_TWIS2_UARTE2</name>
+        <value>11</value>
+      </interrupt>
+    </peripheral>
+    <peripheral derivedFrom="SPIM0_NS">
+      <name>SPIM2_S</name>
+      <description>Serial Peripheral Interface Master with EasyDMA 7</description>
+      <baseAddress>0x5000B000</baseAddress>
+      <!--Security dma=SA-->
+      <!--Security securemapping=US-->
+      <interrupt>
+        <name>SPIM2_SPIS2_TWIM2_TWIS2_UARTE2</name>
+        <value>11</value>
+      </interrupt>
+    </peripheral>
+    <peripheral derivedFrom="SPIS0_NS">
+      <name>SPIS2_S</name>
+      <description>SPI Slave 5</description>
+      <baseAddress>0x5000B000</baseAddress>
+      <alternatePeripheral>SPIM2_S</alternatePeripheral>
+      <!--Security dma=SA-->
+      <!--Security securemapping=US-->
+      <interrupt>
+        <name>SPIM2_SPIS2_TWIM2_TWIS2_UARTE2</name>
+        <value>11</value>
+      </interrupt>
+    </peripheral>
+    <peripheral derivedFrom="TWIM0_NS">
+      <name>TWIM2_S</name>
+      <description>I2C compatible Two-Wire Master Interface with EasyDMA 5</description>
+      <baseAddress>0x5000B000</baseAddress>
+      <alternatePeripheral>SPIM2_S</alternatePeripheral>
+      <!--Security dma=SA-->
+      <!--Security securemapping=US-->
+      <interrupt>
+        <name>SPIM2_SPIS2_TWIM2_TWIS2_UARTE2</name>
+        <value>11</value>
+      </interrupt>
+    </peripheral>
+    <peripheral derivedFrom="TWIS0_NS">
+      <name>TWIS2_S</name>
+      <description>I2C compatible Two-Wire Slave Interface with EasyDMA 5</description>
+      <baseAddress>0x5000B000</baseAddress>
+      <alternatePeripheral>SPIM2_S</alternatePeripheral>
+      <!--Security dma=SA-->
+      <!--Security securemapping=US-->
+      <interrupt>
+        <name>SPIM2_SPIS2_TWIM2_TWIS2_UARTE2</name>
+        <value>11</value>
+      </interrupt>
+    </peripheral>
+    <peripheral derivedFrom="UARTE0_NS">
+      <name>UARTE2_S</name>
+      <description>UART with EasyDMA 5</description>
+      <baseAddress>0x5000B000</baseAddress>
+      <alternatePeripheral>SPIM2_S</alternatePeripheral>
+      <!--Security dma=SA-->
+      <!--Security securemapping=US-->
+      <interrupt>
+        <name>SPIM2_SPIS2_TWIM2_TWIS2_UARTE2</name>
+        <value>11</value>
+      </interrupt>
+    </peripheral>
+    <peripheral derivedFrom="SPIM0_NS">
+      <name>SPIM3_NS</name>
+      <description>Serial Peripheral Interface Master with EasyDMA 8</description>
+      <baseAddress>0x4000C000</baseAddress>
+      <!--Security dma=SA-->
+      <!--Security securemapping=US-->
+      <interrupt>
+        <name>SPIM3_SPIS3_TWIM3_TWIS3_UARTE3</name>
+        <value>12</value>
+      </interrupt>
+    </peripheral>
+    <peripheral derivedFrom="SPIS0_NS">
+      <name>SPIS3_NS</name>
+      <description>SPI Slave 6</description>
+      <baseAddress>0x4000C000</baseAddress>
+      <alternatePeripheral>SPIM3_NS</alternatePeripheral>
+      <!--Security dma=SA-->
+      <!--Security securemapping=US-->
+      <interrupt>
+        <name>SPIM3_SPIS3_TWIM3_TWIS3_UARTE3</name>
+        <value>12</value>
+      </interrupt>
+    </peripheral>
+    <peripheral derivedFrom="TWIM0_NS">
+      <name>TWIM3_NS</name>
+      <description>I2C compatible Two-Wire Master Interface with EasyDMA 6</description>
+      <baseAddress>0x4000C000</baseAddress>
+      <alternatePeripheral>SPIM3_NS</alternatePeripheral>
+      <!--Security dma=SA-->
+      <!--Security securemapping=US-->
+      <interrupt>
+        <name>SPIM3_SPIS3_TWIM3_TWIS3_UARTE3</name>
+        <value>12</value>
+      </interrupt>
+    </peripheral>
+    <peripheral derivedFrom="TWIS0_NS">
+      <name>TWIS3_NS</name>
+      <description>I2C compatible Two-Wire Slave Interface with EasyDMA 6</description>
+      <baseAddress>0x4000C000</baseAddress>
+      <alternatePeripheral>SPIM3_NS</alternatePeripheral>
+      <!--Security dma=SA-->
+      <!--Security securemapping=US-->
+      <interrupt>
+        <name>SPIM3_SPIS3_TWIM3_TWIS3_UARTE3</name>
+        <value>12</value>
+      </interrupt>
+    </peripheral>
+    <peripheral derivedFrom="UARTE0_NS">
+      <name>UARTE3_NS</name>
+      <description>UART with EasyDMA 6</description>
+      <baseAddress>0x4000C000</baseAddress>
+      <alternatePeripheral>SPIM3_NS</alternatePeripheral>
+      <!--Security dma=SA-->
+      <!--Security securemapping=US-->
+      <interrupt>
+        <name>SPIM3_SPIS3_TWIM3_TWIS3_UARTE3</name>
+        <value>12</value>
+      </interrupt>
+    </peripheral>
+    <peripheral derivedFrom="SPIM0_NS">
+      <name>SPIM3_S</name>
+      <description>Serial Peripheral Interface Master with EasyDMA 9</description>
+      <baseAddress>0x5000C000</baseAddress>
+      <!--Security dma=SA-->
+      <!--Security securemapping=US-->
+      <interrupt>
+        <name>SPIM3_SPIS3_TWIM3_TWIS3_UARTE3</name>
+        <value>12</value>
+      </interrupt>
+    </peripheral>
+    <peripheral derivedFrom="SPIS0_NS">
+      <name>SPIS3_S</name>
+      <description>SPI Slave 7</description>
+      <baseAddress>0x5000C000</baseAddress>
+      <alternatePeripheral>SPIM3_S</alternatePeripheral>
+      <!--Security dma=SA-->
+      <!--Security securemapping=US-->
+      <interrupt>
+        <name>SPIM3_SPIS3_TWIM3_TWIS3_UARTE3</name>
+        <value>12</value>
+      </interrupt>
+    </peripheral>
+    <peripheral derivedFrom="TWIM0_NS">
+      <name>TWIM3_S</name>
+      <description>I2C compatible Two-Wire Master Interface with EasyDMA 7</description>
+      <baseAddress>0x5000C000</baseAddress>
+      <alternatePeripheral>SPIM3_S</alternatePeripheral>
+      <!--Security dma=SA-->
+      <!--Security securemapping=US-->
+      <interrupt>
+        <name>SPIM3_SPIS3_TWIM3_TWIS3_UARTE3</name>
+        <value>12</value>
+      </interrupt>
+    </peripheral>
+    <peripheral derivedFrom="TWIS0_NS">
+      <name>TWIS3_S</name>
+      <description>I2C compatible Two-Wire Slave Interface with EasyDMA 7</description>
+      <baseAddress>0x5000C000</baseAddress>
+      <alternatePeripheral>SPIM3_S</alternatePeripheral>
+      <!--Security dma=SA-->
+      <!--Security securemapping=US-->
+      <interrupt>
+        <name>SPIM3_SPIS3_TWIM3_TWIS3_UARTE3</name>
+        <value>12</value>
+      </interrupt>
+    </peripheral>
+    <peripheral derivedFrom="UARTE0_NS">
+      <name>UARTE3_S</name>
+      <description>UART with EasyDMA 7</description>
+      <baseAddress>0x5000C000</baseAddress>
+      <alternatePeripheral>SPIM3_S</alternatePeripheral>
+      <!--Security dma=SA-->
+      <!--Security securemapping=US-->
+      <interrupt>
+        <name>SPIM3_SPIS3_TWIM3_TWIS3_UARTE3</name>
+        <value>12</value>
       </interrupt>
     </peripheral>
     <peripheral>
@@ -34281,6 +34517,28 @@ POSSIBILITY OF SUCH DAMAGE.
         <value>35</value>
       </interrupt>
     </peripheral>
+    <peripheral derivedFrom="PWM0_NS">
+      <name>PWM3_NS</name>
+      <description>Pulse width modulation unit 6</description>
+      <baseAddress>0x40024000</baseAddress>
+      <!--Security dma=SA-->
+      <!--Security securemapping=US-->
+      <interrupt>
+        <name>PWM3</name>
+        <value>36</value>
+      </interrupt>
+    </peripheral>
+    <peripheral derivedFrom="PWM0_NS">
+      <name>PWM3_S</name>
+      <description>Pulse width modulation unit 7</description>
+      <baseAddress>0x50024000</baseAddress>
+      <!--Security dma=SA-->
+      <!--Security securemapping=US-->
+      <interrupt>
+        <name>PWM3</name>
+        <value>36</value>
+      </interrupt>
+    </peripheral>
     <peripheral>
       <name>PDM0_NS</name>
       <description>Pulse Density Modulation (Digital Microphone) Interface 0</description>
@@ -34851,7 +35109,7 @@ POSSIBILITY OF SUCH DAMAGE.
           <fields>
             <field>
               <name>FREQ</name>
-              <description>PDM_CLK frequency configuration Enumerations are deprecated, use
+              <description>PDM_CLK frequency configuration. Enumerations are deprecated, use
         PDMCLKCTRL equation to find the register value. The 12 least significant bits of the
         register are ignored and shall be set to zero.</description>
               <lsb>0</lsb>
@@ -34951,17 +35209,17 @@ POSSIBILITY OF SUCH DAMAGE.
               <enumeratedValues>
                 <enumeratedValue>
                   <name>MinGain</name>
-                  <description>-20dB gain adjustment (minimum)</description>
+                  <description>-20 dB gain adjustment (minimum)</description>
                   <value>0x00</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>DefaultGain</name>
-                  <description>0dB gain adjustment</description>
+                  <description>0 dB gain adjustment</description>
                   <value>0x28</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>MaxGain</name>
-                  <description>+20dB gain adjustment (maximum)</description>
+                  <description>+20 dB gain adjustment (maximum)</description>
                   <value>0x50</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -34983,17 +35241,17 @@ POSSIBILITY OF SUCH DAMAGE.
               <enumeratedValues>
                 <enumeratedValue>
                   <name>MinGain</name>
-                  <description>-20dB gain adjustment (minimum)</description>
+                  <description>-20 dB gain adjustment (minimum)</description>
                   <value>0x00</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>DefaultGain</name>
-                  <description>0dB gain adjustment</description>
+                  <description>0 dB gain adjustment</description>
                   <value>0x28</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>MaxGain</name>
-                  <description>+20dB gain adjustment (maximum)</description>
+                  <description>+20 dB gain adjustment (maximum)</description>
                   <value>0x50</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -35127,7 +35385,7 @@ POSSIBILITY OF SUCH DAMAGE.
               <enumeratedValues>
                 <enumeratedValue>
                   <name>PCLK32M</name>
-                  <description>32MHz peripheral clock</description>
+                  <description>32 MHz peripheral clock</description>
                   <value>0</value>
                 </enumeratedValue>
                 <enumeratedValue>
@@ -43926,7 +44184,7 @@ POSSIBILITY OF SUCH DAMAGE.
       <!--Security securemapping=US-->
     </peripheral>
     <peripheral>
-      <name>QDEC_NS</name>
+      <name>QDEC0_NS</name>
       <description>Quadrature Decoder 0</description>
       <baseAddress>0x40033000</baseAddress>
       <headerStructName>QDEC</headerStructName>
@@ -43938,7 +44196,7 @@ POSSIBILITY OF SUCH DAMAGE.
         <usage>registers</usage>
       </addressBlock>
       <interrupt>
-        <name>QDEC</name>
+        <name>QDEC0</name>
         <value>51</value>
       </interrupt>
       <groupName>QDEC</groupName>
@@ -45333,15 +45591,37 @@ POSSIBILITY OF SUCH DAMAGE.
         </register>
       </registers>
     </peripheral>
-    <peripheral derivedFrom="QDEC_NS">
-      <name>QDEC_S</name>
+    <peripheral derivedFrom="QDEC0_NS">
+      <name>QDEC0_S</name>
       <description>Quadrature Decoder 1</description>
       <baseAddress>0x50033000</baseAddress>
       <!--Security dma=NA-->
       <!--Security securemapping=US-->
       <interrupt>
-        <name>QDEC</name>
+        <name>QDEC0</name>
         <value>51</value>
+      </interrupt>
+    </peripheral>
+    <peripheral derivedFrom="QDEC0_NS">
+      <name>QDEC1_NS</name>
+      <description>Quadrature Decoder 2</description>
+      <baseAddress>0x40034000</baseAddress>
+      <!--Security dma=NA-->
+      <!--Security securemapping=US-->
+      <interrupt>
+        <name>QDEC1</name>
+        <value>52</value>
+      </interrupt>
+    </peripheral>
+    <peripheral derivedFrom="QDEC0_NS">
+      <name>QDEC1_S</name>
+      <description>Quadrature Decoder 3</description>
+      <baseAddress>0x50034000</baseAddress>
+      <!--Security dma=NA-->
+      <!--Security securemapping=US-->
+      <interrupt>
+        <name>QDEC1</name>
+        <value>52</value>
       </interrupt>
     </peripheral>
     <peripheral>
@@ -57615,19 +57895,9 @@ POSSIBILITY OF SUCH DAMAGE.
                   <value>11</value>
                 </enumeratedValue>
                 <enumeratedValue>
-                  <name>E0H1</name>
-                  <description>Extra high drive '0', high drive '1'</description>
-                  <value>12</value>
-                </enumeratedValue>
-                <enumeratedValue>
-                  <name>H0E1</name>
-                  <description>High drive '0', extra high drive '1'</description>
-                  <value>13</value>
-                </enumeratedValue>
-                <enumeratedValue>
                   <name>D0E1</name>
                   <description>Disconnect '0', extra high drive '1' (normally used for wired-or connections)</description>
-                  <value>14</value>
+                  <value>13</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>E0D1</name>

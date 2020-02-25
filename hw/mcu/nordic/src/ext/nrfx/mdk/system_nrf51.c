@@ -57,7 +57,7 @@ void SystemInit(void)
        https://infocenter.nordicsemi.com/index.jsp The side effect of executing these instructions in the devices
        that do not need it is that the new peripherals in the second generation devices (LPCOMP for
        example) will not be available. */
-    if (errata_26())
+    if (nrf51_errata_26())
     {
         *(uint32_t volatile *)0x40000504 = 0xC007FFDF;
         *(uint32_t volatile *)0x40006C18 = 0x00008000;
@@ -66,7 +66,7 @@ void SystemInit(void)
     /* Disable PROTENSET registers under debug, as indicated by PAN 59 "MPU: Reset value of DISABLEINDEBUG
        register is incorrect" found at Product Anomaly document for your device found at
        https://infocenter.nordicsemi.com/index.jsp There is no side effect of using these instruction if not needed. */
-    if (errata_59())
+    if (nrf51_errata_59())
     {
         NRF_MPU->DISABLEINDEBUG = MPU_DISABLEINDEBUG_DISABLEINDEBUG_Disabled << MPU_DISABLEINDEBUG_DISABLEINDEBUG_Pos;
     }
@@ -74,7 +74,7 @@ void SystemInit(void)
     /* Execute the following code to eliminate excessive current in sleep mode with RAM retention in nRF51802 devices,
        as indicated by PAN 76 "System: Excessive current in sleep mode with retention" found at Product Anomaly document
        for your device found at https://infocenter.nordicsemi.com/index.jsp */
-    if (errata_76()){
+    if (nrf51_errata_76()){
         if (*(uint32_t volatile *)0x4006EC00 != 1){
             *(uint32_t volatile *)0x4006EC00 = 0x9375;
             while (*(uint32_t volatile *)0x4006EC00 != 1){
@@ -82,6 +82,8 @@ void SystemInit(void)
         }
         *(uint32_t volatile *)0x4006EC14 = 0xC0;
     }
+
+    SystemCoreClockUpdate();
 }
 
 /*lint --flb "Leave library region" */

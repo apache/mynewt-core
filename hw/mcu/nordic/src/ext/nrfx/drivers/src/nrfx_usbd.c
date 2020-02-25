@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 - 2019, Nordic Semiconductor ASA
+ * Copyright (c) 2016 - 2020, Nordic Semiconductor ASA
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -809,19 +809,19 @@ static inline void usbd_ep_abort(nrfx_usbd_ep_t ep)
             /* Workaround: Disarm the endpoint if there is any data buffered. */
             if(ep != NRFX_USBD_EPIN0)
             {
-                *((volatile uint32_t *)(NRF_USBD_BASE + 0x800)) = 0x7B6 + (2u * (NRF_USBD_EP_NR_GET(ep) - 1));
-                uint8_t temp = *((volatile uint32_t *)(NRF_USBD_BASE + 0x804));
+                *((volatile uint32_t *)((uint32_t)(NRF_USBD) + 0x800)) = 0x7B6 + (2u * (NRF_USBD_EP_NR_GET(ep) - 1));
+                uint8_t temp = *((volatile uint32_t *)((uint32_t)(NRF_USBD) + 0x804));
                 temp |= (1U << 1);
-                *((volatile uint32_t *)(NRF_USBD_BASE + 0x804)) |= temp;
-                (void)(*((volatile uint32_t *)(NRF_USBD_BASE + 0x804)));
+                *((volatile uint32_t *)((uint32_t)(NRF_USBD) + 0x804)) |= temp;
+                (void)(*((volatile uint32_t *)((uint32_t)(NRF_USBD) + 0x804)));
             }
             else
             {
-                *((volatile uint32_t *)(NRF_USBD_BASE + 0x800)) = 0x7B4;
-                uint8_t temp = *((volatile uint32_t *)(NRF_USBD_BASE + 0x804));
+                *((volatile uint32_t *)((uint32_t)(NRF_USBD) + 0x800)) = 0x7B4;
+                uint8_t temp = *((volatile uint32_t *)((uint32_t)(NRF_USBD) + 0x804));
                 temp |= (1U << 2);
-                *((volatile uint32_t *)(NRF_USBD_BASE + 0x804)) |= temp;
-                (void)(*((volatile uint32_t *)(NRF_USBD_BASE + 0x804)));
+                *((volatile uint32_t *)((uint32_t)(NRF_USBD) + 0x804)) |= temp;
+                (void)(*((volatile uint32_t *)((uint32_t)(NRF_USBD) + 0x804)));
             }
         }
         if ((m_ep_dma_waiting | (~m_ep_ready)) & (1U << ep2bit(ep)))
@@ -1466,7 +1466,7 @@ static void usbd_dmareq_process(void)
                     }
 
                     nrfx_systick_delay_us(30);
-                    while (0 == (0x20 & *((volatile uint32_t *)(NRF_USBD_BASE + 0x474))))
+                    while (0 == (0x20 & *((volatile uint32_t *)((uint32_t)(NRF_USBD) + 0x474))))
                     {
                         nrfx_systick_delay_us(2);
                     }
@@ -1573,54 +1573,54 @@ void nrfx_usbd_irq_handler(void)
         {
             uint8_t usbi, uoi, uii;
             /* Testing */
-            *((volatile uint32_t *)(NRF_USBD_BASE + 0x800)) = 0x7A9;
-            uii = (uint8_t)(*((volatile uint32_t *)(NRF_USBD_BASE + 0x804)));
+            *((volatile uint32_t *)((uint32_t)(NRF_USBD) + 0x800)) = 0x7A9;
+            uii = (uint8_t)(*((volatile uint32_t *)((uint32_t)(NRF_USBD) + 0x804)));
             if (0 != uii)
             {
-                uii &= (uint8_t)(*((volatile uint32_t *)(NRF_USBD_BASE + 0x804)));
+                uii &= (uint8_t)(*((volatile uint32_t *)((uint32_t)(NRF_USBD) + 0x804)));
             }
 
-            *((volatile uint32_t *)(NRF_USBD_BASE + 0x800)) = 0x7AA;
-            uoi = (uint8_t)(*((volatile uint32_t *)(NRF_USBD_BASE + 0x804)));
+            *((volatile uint32_t *)((uint32_t)(NRF_USBD) + 0x800)) = 0x7AA;
+            uoi = (uint8_t)(*((volatile uint32_t *)((uint32_t)(NRF_USBD) + 0x804)));
             if (0 != uoi)
             {
-                uoi &= (uint8_t)(*((volatile uint32_t *)(NRF_USBD_BASE + 0x804)));
+                uoi &= (uint8_t)(*((volatile uint32_t *)((uint32_t)(NRF_USBD) + 0x804)));
             }
-            *((volatile uint32_t *)(NRF_USBD_BASE + 0x800)) = 0x7AB;
-            usbi = (uint8_t)(*((volatile uint32_t *)(NRF_USBD_BASE + 0x804)));
+            *((volatile uint32_t *)((uint32_t)(NRF_USBD) + 0x800)) = 0x7AB;
+            usbi = (uint8_t)(*((volatile uint32_t *)((uint32_t)(NRF_USBD) + 0x804)));
             if (0 != usbi)
             {
-                usbi &= (uint8_t)(*((volatile uint32_t *)(NRF_USBD_BASE + 0x804)));
+                usbi &= (uint8_t)(*((volatile uint32_t *)((uint32_t)(NRF_USBD) + 0x804)));
             }
             /* Processing */
-            *((volatile uint32_t *)(NRF_USBD_BASE + 0x800)) = 0x7AC;
-            uii &= (uint8_t)*((volatile uint32_t *)(NRF_USBD_BASE + 0x804));
+            *((volatile uint32_t *)((uint32_t)(NRF_USBD) + 0x800)) = 0x7AC;
+            uii &= (uint8_t)*((volatile uint32_t *)((uint32_t)(NRF_USBD) + 0x804));
             if (0 != uii)
             {
                 uint8_t rb;
                 m_simulated_dataepstatus |= ((uint32_t)uii) << NRFX_USBD_EPIN_BITPOS_0;
-                *((volatile uint32_t *)(NRF_USBD_BASE + 0x800)) = 0x7A9;
-                *((volatile uint32_t *)(NRF_USBD_BASE + 0x804)) = uii;
-                rb = (uint8_t)*((volatile uint32_t *)(NRF_USBD_BASE + 0x804));
+                *((volatile uint32_t *)((uint32_t)(NRF_USBD) + 0x800)) = 0x7A9;
+                *((volatile uint32_t *)((uint32_t)(NRF_USBD) + 0x804)) = uii;
+                rb = (uint8_t)*((volatile uint32_t *)((uint32_t)(NRF_USBD) + 0x804));
                 NRFX_USBD_LOG_PROTO1_FIX_PRINTF("   uii: 0x%.2x (0x%.2x)", uii, rb);
                 (void)rb;
             }
 
-            *((volatile uint32_t *)(NRF_USBD_BASE + 0x800)) = 0x7AD;
-            uoi &= (uint8_t)*((volatile uint32_t *)(NRF_USBD_BASE + 0x804));
+            *((volatile uint32_t *)((uint32_t)(NRF_USBD) + 0x800)) = 0x7AD;
+            uoi &= (uint8_t)*((volatile uint32_t *)((uint32_t)(NRF_USBD) + 0x804));
             if (0 != uoi)
             {
                 uint8_t rb;
                 m_simulated_dataepstatus |= ((uint32_t)uoi) << NRFX_USBD_EPOUT_BITPOS_0;
-                *((volatile uint32_t *)(NRF_USBD_BASE + 0x800)) = 0x7AA;
-                *((volatile uint32_t *)(NRF_USBD_BASE + 0x804)) = uoi;
-                rb = (uint8_t)*((volatile uint32_t *)(NRF_USBD_BASE + 0x804));
+                *((volatile uint32_t *)((uint32_t)(NRF_USBD) + 0x800)) = 0x7AA;
+                *((volatile uint32_t *)((uint32_t)(NRF_USBD) + 0x804)) = uoi;
+                rb = (uint8_t)*((volatile uint32_t *)((uint32_t)(NRF_USBD) + 0x804));
                 NRFX_USBD_LOG_PROTO1_FIX_PRINTF("   uoi: 0x%.2u (0x%.2x)", uoi, rb);
                 (void)rb;
             }
 
-            *((volatile uint32_t *)(NRF_USBD_BASE + 0x800)) = 0x7AE;
-            usbi &= (uint8_t)*((volatile uint32_t *)(NRF_USBD_BASE + 0x804));
+            *((volatile uint32_t *)((uint32_t)(NRF_USBD) + 0x800)) = 0x7AE;
+            usbi &= (uint8_t)*((volatile uint32_t *)((uint32_t)(NRF_USBD) + 0x804));
             if (0 != usbi)
             {
                 uint8_t rb;
@@ -1632,9 +1632,9 @@ void nrfx_usbd_irq_handler(void)
                 {
                     active |= USBD_INTEN_USBRESET_Msk;
                 }
-                *((volatile uint32_t *)(NRF_USBD_BASE + 0x800)) = 0x7AB;
-                *((volatile uint32_t *)(NRF_USBD_BASE + 0x804)) = usbi;
-                rb = (uint8_t)*((volatile uint32_t *)(NRF_USBD_BASE + 0x804));
+                *((volatile uint32_t *)((uint32_t)(NRF_USBD) + 0x800)) = 0x7AB;
+                *((volatile uint32_t *)((uint32_t)(NRF_USBD) + 0x804)) = usbi;
+                rb = (uint8_t)*((volatile uint32_t *)((uint32_t)(NRF_USBD) + 0x804));
                 NRFX_USBD_LOG_PROTO1_FIX_PRINTF("   usbi: 0x%.2u (0x%.2x)", usbi, rb);
                 (void)rb;
             }
@@ -1791,8 +1791,8 @@ void nrfx_usbd_enable(void)
 
     if (nrfx_usbd_errata_166())
     {
-        *((volatile uint32_t *)(NRF_USBD_BASE + 0x800)) = 0x7E3;
-        *((volatile uint32_t *)(NRF_USBD_BASE + 0x804)) = 0x40;
+        *((volatile uint32_t *)((uint32_t)(NRF_USBD) + 0x800)) = 0x7E3;
+        *((volatile uint32_t *)((uint32_t)(NRF_USBD) + 0x804)) = 0x40;
         __ISB();
         __DSB();
     }
@@ -2339,9 +2339,9 @@ void nrfx_usbd_transfer_out_drop(nrfx_usbd_ep_t ep)
     {
         NRFX_CRITICAL_SECTION_ENTER();
         m_ep_ready &= ~(1U << ep2bit(ep));
-        *((volatile uint32_t *)(NRF_USBD_BASE + 0x800)) = 0x7C5 + (2u * NRF_USBD_EP_NR_GET(ep));
-        *((volatile uint32_t *)(NRF_USBD_BASE + 0x804)) = 0;
-        (void)(*((volatile uint32_t *)(NRF_USBD_BASE + 0x804)));
+        *((volatile uint32_t *)((uint32_t)(NRF_USBD) + 0x800)) = 0x7C5 + (2u * NRF_USBD_EP_NR_GET(ep));
+        *((volatile uint32_t *)((uint32_t)(NRF_USBD) + 0x804)) = 0;
+        (void)(*((volatile uint32_t *)((uint32_t)(NRF_USBD) + 0x804)));
         NRFX_CRITICAL_SECTION_EXIT();
     }
     else

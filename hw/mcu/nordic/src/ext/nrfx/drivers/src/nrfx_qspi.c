@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 - 2019, Nordic Semiconductor ASA
+ * Copyright (c) 2016 - 2020, Nordic Semiconductor ASA
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -393,6 +393,50 @@ nrfx_err_t nrfx_qspi_chip_erase(void)
 {
     return nrfx_qspi_erase(NRF_QSPI_ERASE_LEN_ALL, 0);
 }
+
+#if NRF_QSPI_HAS_XIP_ENC
+nrfx_err_t nrfx_qspi_xip_encrypt(nrf_qspi_encryption_t const * p_config)
+{
+    if (m_cb.is_busy)
+    {
+        return NRFX_ERROR_BUSY;
+    }
+
+    if (p_config)
+    {
+        nrf_qspi_xip_encryption_configure(NRF_QSPI, p_config);
+        nrf_qspi_xip_encryption_set(NRF_QSPI, true);
+    }
+    else
+    {
+        nrf_qspi_xip_encryption_set(NRF_QSPI, false);
+    }
+
+    return NRFX_SUCCESS;
+}
+#endif
+
+#if NRF_QSPI_HAS_DMA_ENC
+nrfx_err_t nrfx_qspi_dma_encrypt(nrf_qspi_encryption_t const * p_config)
+{
+    if (m_cb.is_busy)
+    {
+        return NRFX_ERROR_BUSY;
+    }
+
+    if (p_config)
+    {
+        nrf_qspi_dma_encryption_configure(NRF_QSPI, p_config);
+        nrf_qspi_dma_encryption_set(NRF_QSPI, true);
+    }
+    else
+    {
+        nrf_qspi_dma_encryption_set(NRF_QSPI, false);
+    }
+
+    return NRFX_SUCCESS;
+}
+#endif
 
 void nrfx_qspi_irq_handler(void)
 {

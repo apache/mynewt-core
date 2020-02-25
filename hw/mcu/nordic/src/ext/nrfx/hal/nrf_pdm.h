@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 - 2019, Nordic Semiconductor ASA
+ * Copyright (c) 2015 - 2020, Nordic Semiconductor ASA
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -37,12 +37,30 @@
 extern "C" {
 #endif
 
+#ifndef NRF_PDM0
+#define NRF_PDM0 NRF_PDM
+#endif
+
 /**
  * @defgroup nrf_pdm_hal PDM HAL
  * @{
  * @ingroup nrf_pdm
  * @brief   Hardware access layer for managing the Pulse Density Modulation (PDM) peripheral.
  */
+
+#if defined(PDM_MCLKCONFIG_SRC_Msk) || defined(__NRFX_DOXYGEN__)
+/** @brief Symbol indicating whether master clock source configuration is available. */
+#define NRF_PDM_HAS_MCLKCONFIG 1
+#else
+#define NRF_PDM_HAS_MCLKCONFIG 0
+#endif
+
+#if defined(PDM_RATIO_RATIO_Msk) || defined(__NRFX_DOXYGEN__)
+/** @brief Symbol indicating whether ratio configuration is available. */
+#define NRF_PDM_HAS_RATIO_CONFIG 1
+#else
+#define NRF_PDM_HAS_RATIO_CONFIG 0
+#endif
 
 /** @brief Minimum value of PDM gain. */
 #define NRF_PDM_GAIN_MINIMUM  0x00
@@ -83,8 +101,27 @@ typedef enum
 {
     NRF_PDM_FREQ_1000K = PDM_PDMCLKCTRL_FREQ_1000K,   ///< PDM_CLK = 1.000 MHz.
     NRF_PDM_FREQ_1032K = PDM_PDMCLKCTRL_FREQ_Default, ///< PDM_CLK = 1.032 MHz.
-    NRF_PDM_FREQ_1067K = PDM_PDMCLKCTRL_FREQ_1067K    ///< PDM_CLK = 1.067 MHz.
+    NRF_PDM_FREQ_1067K = PDM_PDMCLKCTRL_FREQ_1067K,   ///< PDM_CLK = 1.067 MHz.
+#if defined(PDM_PDMCLKCTRL_FREQ_1231K) || defined(__NRFX_DOXYGEN__)
+    NRF_PDM_FREQ_1231K = PDM_PDMCLKCTRL_FREQ_1231K,   ///< PDM_CLK = 1.231 MHz.
+#endif
+#if defined(PDM_PDMCLKCTRL_FREQ_1280K) || defined(__NRFX_DOXYGEN__)
+    NRF_PDM_FREQ_1280K = PDM_PDMCLKCTRL_FREQ_1280K,   ///< PDM_CLK = 1.280 MHz.
+#endif
+#if defined(PDM_PDMCLKCTRL_FREQ_1333K) || defined(__NRFX_DOXYGEN__)
+    NRF_PDM_FREQ_1333K = PDM_PDMCLKCTRL_FREQ_1333K    ///< PDM_CLK = 1.333 MHz.
+#endif
 } nrf_pdm_freq_t;
+
+
+#if NRF_PDM_HAS_RATIO_CONFIG
+/** @brief PDM ratio between PDM_CLK and output sample rate. */
+typedef enum
+{
+    NRF_PDM_RATIO_64X = PDM_RATIO_RATIO_Ratio64, ///< Ratio of 64.
+    NRF_PDM_RATIO_80X = PDM_RATIO_RATIO_Ratio80  ///< Ratio of 80.
+} nrf_pdm_ratio_t;
+#endif
 
 /** @brief PDM operation mode. */
 typedef enum
@@ -100,6 +137,14 @@ typedef enum
     NRF_PDM_EDGE_LEFTRISING  = PDM_MODE_EDGE_LeftRising    ///< Left (or mono) is sampled on rising edge of PDM_CLK.
 } nrf_pdm_edge_t;
 
+#if NRF_PDM_HAS_MCLKCONFIG
+/** @brief PDM master clock source selection. */
+typedef enum
+{
+    NRF_PDM_MCLKSRC_PCLK32M = PDM_MCLKCONFIG_SRC_PCLK32M, ///< 32MHz peripheral clock.
+    NRF_PDM_MCLKSRC_ACLK    = PDM_MCLKCONFIG_SRC_ACLK     ///< Audio PLL clock.
+} nrf_pdm_mclksrc_t;
+#endif
 
 /**
  * @brief Function for triggering a PDM task.
@@ -347,6 +392,26 @@ NRF_STATIC_INLINE void nrf_pdm_buffer_set(NRF_PDM_Type * p_reg, uint32_t * p_buf
  */
 NRF_STATIC_INLINE uint32_t * nrf_pdm_buffer_get(NRF_PDM_Type const * p_reg);
 
+#if NRF_PDM_HAS_RATIO_CONFIG
+/**
+ * @brief Function for setting ratio between PDM_CLK and output sample rate.
+ *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] ratio Ratio between PDM_CLK and output sample rate.
+ */
+NRF_STATIC_INLINE void nrf_pdm_ratio_set(NRF_PDM_Type * p_reg, nrf_pdm_ratio_t ratio);
+#endif
+
+#if NRF_PDM_HAS_MCLKCONFIG
+/**
+ * @brief Function for configuring PDM master clock source.
+ *
+ * @param[in] p_reg   Pointer to the structure of registers of the peripheral.
+ * @param[in] mclksrc Master Clock source selection.
+ */
+NRF_STATIC_INLINE void nrf_pdm_mclksrc_configure(NRF_PDM_Type * p_reg, nrf_pdm_mclksrc_t mclksrc);
+#endif
+
 #ifndef NRF_DECLARE_ONLY
 NRF_STATIC_INLINE void nrf_pdm_task_trigger(NRF_PDM_Type * p_reg, nrf_pdm_task_t task)
 {
@@ -506,6 +571,20 @@ NRF_STATIC_INLINE uint32_t * nrf_pdm_buffer_get(NRF_PDM_Type const * p_reg)
 {
     return (uint32_t *)p_reg->SAMPLE.PTR;
 }
+
+#if NRF_PDM_HAS_RATIO_CONFIG
+NRF_STATIC_INLINE void nrf_pdm_ratio_set(NRF_PDM_Type * p_reg, nrf_pdm_ratio_t ratio)
+{
+    p_reg->RATIO = ratio;
+}
+#endif
+
+#if NRF_PDM_HAS_MCLKCONFIG
+NRF_STATIC_INLINE void nrf_pdm_mclksrc_configure(NRF_PDM_Type * p_reg, nrf_pdm_mclksrc_t mclksrc)
+{
+    p_reg->MCLKCONFIG = mclksrc;
+}
+#endif
 
 #endif // NRF_DECLARE_ONLY
 /** @} */

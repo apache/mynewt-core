@@ -37,3273 +37,3585 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <stdbool.h>
 #include "compiler_abstraction.h"
 
-static bool errata_1(void) __UNUSED;
-static bool errata_2(void) __UNUSED;
-static bool errata_3(void) __UNUSED;
-static bool errata_4(void) __UNUSED;
-static bool errata_5(void) __UNUSED;
-static bool errata_6(void) __UNUSED;
-static bool errata_7(void) __UNUSED;
-static bool errata_8(void) __UNUSED;
-static bool errata_9(void) __UNUSED;
-static bool errata_10(void) __UNUSED;
-static bool errata_11(void) __UNUSED;
-static bool errata_12(void) __UNUSED;
-static bool errata_13(void) __UNUSED;
-static bool errata_14(void) __UNUSED;
-static bool errata_15(void) __UNUSED;
-static bool errata_16(void) __UNUSED;
-static bool errata_17(void) __UNUSED;
-static bool errata_18(void) __UNUSED;
-static bool errata_19(void) __UNUSED;
-static bool errata_20(void) __UNUSED;
-static bool errata_21(void) __UNUSED;
-static bool errata_22(void) __UNUSED;
-static bool errata_23(void) __UNUSED;
-static bool errata_24(void) __UNUSED;
-static bool errata_25(void) __UNUSED;
-static bool errata_26(void) __UNUSED;
-static bool errata_27(void) __UNUSED;
-static bool errata_28(void) __UNUSED;
-static bool errata_29(void) __UNUSED;
-static bool errata_30(void) __UNUSED;
-static bool errata_31(void) __UNUSED;
-static bool errata_32(void) __UNUSED;
-static bool errata_33(void) __UNUSED;
-static bool errata_34(void) __UNUSED;
-static bool errata_35(void) __UNUSED;
-static bool errata_36(void) __UNUSED;
-static bool errata_37(void) __UNUSED;
-static bool errata_38(void) __UNUSED;
-static bool errata_39(void) __UNUSED;
-static bool errata_40(void) __UNUSED;
-static bool errata_41(void) __UNUSED;
-static bool errata_42(void) __UNUSED;
-static bool errata_43(void) __UNUSED;
-static bool errata_44(void) __UNUSED;
-static bool errata_45(void) __UNUSED;
-static bool errata_46(void) __UNUSED;
-static bool errata_47(void) __UNUSED;
-static bool errata_48(void) __UNUSED;
-static bool errata_49(void) __UNUSED;
-static bool errata_50(void) __UNUSED;
-static bool errata_51(void) __UNUSED;
-static bool errata_52(void) __UNUSED;
-static bool errata_53(void) __UNUSED;
-static bool errata_54(void) __UNUSED;
-static bool errata_55(void) __UNUSED;
-static bool errata_56(void) __UNUSED;
-static bool errata_57(void) __UNUSED;
-static bool errata_58(void) __UNUSED;
-static bool errata_59(void) __UNUSED;
-static bool errata_60(void) __UNUSED;
-static bool errata_61(void) __UNUSED;
-static bool errata_62(void) __UNUSED;
-static bool errata_63(void) __UNUSED;
-static bool errata_64(void) __UNUSED;
-static bool errata_65(void) __UNUSED;
-static bool errata_66(void) __UNUSED;
-static bool errata_67(void) __UNUSED;
-static bool errata_68(void) __UNUSED;
-static bool errata_69(void) __UNUSED;
-static bool errata_70(void) __UNUSED;
-static bool errata_71(void) __UNUSED;
-static bool errata_72(void) __UNUSED;
-static bool errata_73(void) __UNUSED;
-static bool errata_74(void) __UNUSED;
-static bool errata_75(void) __UNUSED;
-static bool errata_76(void) __UNUSED;
-static bool errata_77(void) __UNUSED;
-static bool errata_78(void) __UNUSED;
-
-static bool errata_1(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return true;
-                case 0x01ul:
-                    return true;
-                case 0x02ul:
-                    return false;
-                case 0x03ul:
-                    return true;
-                case 0x04ul:
-                    return false;
-                case 0x07ul:
-                    return false;
-                case 0x08ul:
-                    return false;
-                case 0x09ul:
-                    return false;
-                case 0x0Aul:
-                    return false;
-                case 0x0Bul:
-                    return false;
-                case 0x0Cul:
-                    return false;
-                case 0x0Dul:
-                    return false;
-                default:
-                    return false;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_2(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return true;
-                case 0x01ul:
-                    return true;
-                case 0x02ul:
-                    return false;
-                case 0x03ul:
-                    return true;
-                case 0x04ul:
-                    return false;
-                case 0x07ul:
-                    return false;
-                case 0x08ul:
-                    return false;
-                case 0x09ul:
-                    return false;
-                case 0x0Aul:
-                    return false;
-                case 0x0Bul:
-                    return false;
-                case 0x0Cul:
-                    return false;
-                case 0x0Dul:
-                    return false;
-                default:
-                    return false;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_3(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return true;
-                case 0x01ul:
-                    return true;
-                case 0x02ul:
-                    return false;
-                case 0x03ul:
-                    return true;
-                case 0x04ul:
-                    return false;
-                case 0x07ul:
-                    return false;
-                case 0x08ul:
-                    return false;
-                case 0x09ul:
-                    return false;
-                case 0x0Aul:
-                    return false;
-                case 0x0Bul:
-                    return false;
-                case 0x0Cul:
-                    return false;
-                case 0x0Dul:
-                    return false;
-                default:
-                    return false;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_4(void)
-{
-    return false;
-}
-
-static bool errata_5(void)
-{
-    return false;
-}
-
-static bool errata_6(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return true;
-                case 0x01ul:
-                    return true;
-                case 0x02ul:
-                    return false;
-                case 0x03ul:
-                    return true;
-                case 0x04ul:
-                    return false;
-                case 0x07ul:
-                    return false;
-                case 0x08ul:
-                    return false;
-                case 0x09ul:
-                    return false;
-                case 0x0Aul:
-                    return false;
-                case 0x0Bul:
-                    return false;
-                case 0x0Cul:
-                    return false;
-                case 0x0Dul:
-                    return false;
-                default:
-                    return false;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_7(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return true;
-                case 0x01ul:
-                    return true;
-                case 0x02ul:
-                    return false;
-                case 0x03ul:
-                    return true;
-                case 0x04ul:
-                    return false;
-                case 0x07ul:
-                    return false;
-                case 0x08ul:
-                    return false;
-                case 0x09ul:
-                    return false;
-                case 0x0Aul:
-                    return false;
-                case 0x0Bul:
-                    return false;
-                case 0x0Cul:
-                    return false;
-                case 0x0Dul:
-                    return false;
-                default:
-                    return false;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_8(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return true;
-                case 0x01ul:
-                    return true;
-                case 0x02ul:
-                    return false;
-                case 0x03ul:
-                    return true;
-                case 0x04ul:
-                    return false;
-                case 0x07ul:
-                    return false;
-                case 0x08ul:
-                    return false;
-                case 0x09ul:
-                    return false;
-                case 0x0Aul:
-                    return false;
-                case 0x0Bul:
-                    return false;
-                case 0x0Cul:
-                    return false;
-                case 0x0Dul:
-                    return false;
-                default:
-                    return false;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_9(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return true;
-                case 0x01ul:
-                    return true;
-                case 0x02ul:
-                    return false;
-                case 0x03ul:
-                    return true;
-                case 0x04ul:
-                    return false;
-                case 0x07ul:
-                    return false;
-                case 0x08ul:
-                    return false;
-                case 0x09ul:
-                    return false;
-                case 0x0Aul:
-                    return false;
-                case 0x0Bul:
-                    return false;
-                case 0x0Cul:
-                    return false;
-                case 0x0Dul:
-                    return false;
-                default:
-                    return false;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_10(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return true;
-                case 0x01ul:
-                    return true;
-                case 0x02ul:
-                    return false;
-                case 0x03ul:
-                    return true;
-                case 0x04ul:
-                    return false;
-                case 0x07ul:
-                    return false;
-                case 0x08ul:
-                    return false;
-                case 0x09ul:
-                    return false;
-                case 0x0Aul:
-                    return false;
-                case 0x0Bul:
-                    return false;
-                case 0x0Cul:
-                    return false;
-                case 0x0Dul:
-                    return false;
-                default:
-                    return false;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_11(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return true;
-                case 0x01ul:
-                    return true;
-                case 0x02ul:
-                    return false;
-                case 0x03ul:
-                    return true;
-                case 0x04ul:
-                    return false;
-                case 0x07ul:
-                    return false;
-                case 0x08ul:
-                    return false;
-                case 0x09ul:
-                    return false;
-                case 0x0Aul:
-                    return false;
-                case 0x0Bul:
-                    return false;
-                case 0x0Cul:
-                    return false;
-                case 0x0Dul:
-                    return false;
-                default:
-                    return false;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_12(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return true;
-                case 0x01ul:
-                    return true;
-                case 0x02ul:
-                    return false;
-                case 0x03ul:
-                    return true;
-                case 0x04ul:
-                    return false;
-                case 0x07ul:
-                    return false;
-                case 0x08ul:
-                    return false;
-                case 0x09ul:
-                    return false;
-                case 0x0Aul:
-                    return false;
-                case 0x0Bul:
-                    return false;
-                case 0x0Cul:
-                    return false;
-                case 0x0Dul:
-                    return false;
-                default:
-                    return false;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_13(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return true;
-                case 0x01ul:
-                    return true;
-                case 0x02ul:
-                    return false;
-                case 0x03ul:
-                    return true;
-                case 0x04ul:
-                    return false;
-                case 0x07ul:
-                    return false;
-                case 0x08ul:
-                    return false;
-                case 0x09ul:
-                    return false;
-                case 0x0Aul:
-                    return false;
-                case 0x0Bul:
-                    return false;
-                case 0x0Cul:
-                    return false;
-                case 0x0Dul:
-                    return false;
-                default:
-                    return false;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_14(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return true;
-                case 0x01ul:
-                    return true;
-                case 0x02ul:
-                    return false;
-                case 0x03ul:
-                    return true;
-                case 0x04ul:
-                    return false;
-                case 0x07ul:
-                    return false;
-                case 0x08ul:
-                    return false;
-                case 0x09ul:
-                    return false;
-                case 0x0Aul:
-                    return false;
-                case 0x0Bul:
-                    return false;
-                case 0x0Cul:
-                    return false;
-                case 0x0Dul:
-                    return false;
-                default:
-                    return false;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_15(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return true;
-                case 0x01ul:
-                    return true;
-                case 0x02ul:
-                    return false;
-                case 0x03ul:
-                    return true;
-                case 0x04ul:
-                    return false;
-                case 0x07ul:
-                    return false;
-                case 0x08ul:
-                    return false;
-                case 0x09ul:
-                    return false;
-                case 0x0Aul:
-                    return false;
-                case 0x0Bul:
-                    return false;
-                case 0x0Cul:
-                    return false;
-                case 0x0Dul:
-                    return false;
-                default:
-                    return false;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_16(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return true;
-                case 0x01ul:
-                    return true;
-                case 0x02ul:
-                    return false;
-                case 0x03ul:
-                    return true;
-                case 0x04ul:
-                    return false;
-                case 0x07ul:
-                    return false;
-                case 0x08ul:
-                    return false;
-                case 0x09ul:
-                    return false;
-                case 0x0Aul:
-                    return false;
-                case 0x0Bul:
-                    return false;
-                case 0x0Cul:
-                    return false;
-                case 0x0Dul:
-                    return false;
-                default:
-                    return false;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_17(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return true;
-                case 0x01ul:
-                    return true;
-                case 0x02ul:
-                    return false;
-                case 0x03ul:
-                    return true;
-                case 0x04ul:
-                    return false;
-                case 0x07ul:
-                    return false;
-                case 0x08ul:
-                    return false;
-                case 0x09ul:
-                    return false;
-                case 0x0Aul:
-                    return false;
-                case 0x0Bul:
-                    return false;
-                case 0x0Cul:
-                    return false;
-                case 0x0Dul:
-                    return false;
-                default:
-                    return false;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_18(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return true;
-                case 0x01ul:
-                    return true;
-                case 0x02ul:
-                    return false;
-                case 0x03ul:
-                    return true;
-                case 0x04ul:
-                    return false;
-                case 0x07ul:
-                    return false;
-                case 0x08ul:
-                    return false;
-                case 0x09ul:
-                    return false;
-                case 0x0Aul:
-                    return false;
-                case 0x0Bul:
-                    return false;
-                case 0x0Cul:
-                    return false;
-                case 0x0Dul:
-                    return false;
-                default:
-                    return false;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_19(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return true;
-                case 0x01ul:
-                    return true;
-                case 0x02ul:
-                    return false;
-                case 0x03ul:
-                    return true;
-                case 0x04ul:
-                    return false;
-                case 0x07ul:
-                    return false;
-                case 0x08ul:
-                    return false;
-                case 0x09ul:
-                    return false;
-                case 0x0Aul:
-                    return false;
-                case 0x0Bul:
-                    return false;
-                case 0x0Cul:
-                    return false;
-                case 0x0Dul:
-                    return false;
-                default:
-                    return false;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_20(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return true;
-                case 0x01ul:
-                    return true;
-                case 0x02ul:
-                    return false;
-                case 0x03ul:
-                    return true;
-                case 0x04ul:
-                    return false;
-                case 0x07ul:
-                    return false;
-                case 0x08ul:
-                    return false;
-                case 0x09ul:
-                    return false;
-                case 0x0Aul:
-                    return false;
-                case 0x0Bul:
-                    return false;
-                case 0x0Cul:
-                    return false;
-                case 0x0Dul:
-                    return false;
-                default:
-                    return false;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_21(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return true;
-                case 0x01ul:
-                    return true;
-                case 0x02ul:
-                    return false;
-                case 0x03ul:
-                    return true;
-                case 0x04ul:
-                    return false;
-                case 0x07ul:
-                    return false;
-                case 0x08ul:
-                    return false;
-                case 0x09ul:
-                    return false;
-                case 0x0Aul:
-                    return false;
-                case 0x0Bul:
-                    return false;
-                case 0x0Cul:
-                    return false;
-                case 0x0Dul:
-                    return false;
-                default:
-                    return false;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_22(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return true;
-                case 0x01ul:
-                    return true;
-                case 0x02ul:
-                    return false;
-                case 0x03ul:
-                    return true;
-                case 0x04ul:
-                    return false;
-                case 0x07ul:
-                    return false;
-                case 0x08ul:
-                    return false;
-                case 0x09ul:
-                    return false;
-                case 0x0Aul:
-                    return false;
-                case 0x0Bul:
-                    return false;
-                case 0x0Cul:
-                    return false;
-                case 0x0Dul:
-                    return false;
-                default:
-                    return false;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_23(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return true;
-                case 0x01ul:
-                    return true;
-                case 0x02ul:
-                    return false;
-                case 0x03ul:
-                    return true;
-                case 0x04ul:
-                    return false;
-                case 0x07ul:
-                    return false;
-                case 0x08ul:
-                    return false;
-                case 0x09ul:
-                    return false;
-                case 0x0Aul:
-                    return false;
-                case 0x0Bul:
-                    return false;
-                case 0x0Cul:
-                    return false;
-                case 0x0Dul:
-                    return false;
-                default:
-                    return false;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_24(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return true;
-                case 0x01ul:
-                    return true;
-                case 0x02ul:
-                    return false;
-                case 0x03ul:
-                    return true;
-                case 0x04ul:
-                    return false;
-                case 0x07ul:
-                    return false;
-                case 0x08ul:
-                    return false;
-                case 0x09ul:
-                    return false;
-                case 0x0Aul:
-                    return false;
-                case 0x0Bul:
-                    return false;
-                case 0x0Cul:
-                    return false;
-                case 0x0Dul:
-                    return false;
-                default:
-                    return false;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_25(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return true;
-                case 0x01ul:
-                    return true;
-                case 0x02ul:
-                    return false;
-                case 0x03ul:
-                    return true;
-                case 0x04ul:
-                    return false;
-                case 0x07ul:
-                    return false;
-                case 0x08ul:
-                    return false;
-                case 0x09ul:
-                    return false;
-                case 0x0Aul:
-                    return false;
-                case 0x0Bul:
-                    return false;
-                case 0x0Cul:
-                    return false;
-                case 0x0Dul:
-                    return false;
-                default:
-                    return false;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_26(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return true;
-                case 0x01ul:
-                    return true;
-                case 0x02ul:
-                    return false;
-                case 0x03ul:
-                    return true;
-                case 0x04ul:
-                    return false;
-                case 0x07ul:
-                    return false;
-                case 0x08ul:
-                    return false;
-                case 0x09ul:
-                    return false;
-                case 0x0Aul:
-                    return false;
-                case 0x0Bul:
-                    return false;
-                case 0x0Cul:
-                    return false;
-                case 0x0Dul:
-                    return false;
-                default:
-                    return false;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_27(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return true;
-                case 0x01ul:
-                    return true;
-                case 0x02ul:
-                    return false;
-                case 0x03ul:
-                    return true;
-                case 0x04ul:
-                    return false;
-                case 0x07ul:
-                    return false;
-                case 0x08ul:
-                    return false;
-                case 0x09ul:
-                    return false;
-                case 0x0Aul:
-                    return false;
-                case 0x0Bul:
-                    return false;
-                case 0x0Cul:
-                    return false;
-                case 0x0Dul:
-                    return false;
-                default:
-                    return false;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_28(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return true;
-                case 0x01ul:
-                    return true;
-                case 0x02ul:
-                    return false;
-                case 0x03ul:
-                    return true;
-                case 0x04ul:
-                    return false;
-                case 0x07ul:
-                    return false;
-                case 0x08ul:
-                    return false;
-                case 0x09ul:
-                    return false;
-                case 0x0Aul:
-                    return false;
-                case 0x0Bul:
-                    return false;
-                case 0x0Cul:
-                    return false;
-                case 0x0Dul:
-                    return false;
-                default:
-                    return false;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_29(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return true;
-                case 0x01ul:
-                    return true;
-                case 0x02ul:
-                    return false;
-                case 0x03ul:
-                    return true;
-                case 0x04ul:
-                    return false;
-                case 0x07ul:
-                    return false;
-                case 0x08ul:
-                    return false;
-                case 0x09ul:
-                    return false;
-                case 0x0Aul:
-                    return false;
-                case 0x0Bul:
-                    return false;
-                case 0x0Cul:
-                    return false;
-                case 0x0Dul:
-                    return false;
-                default:
-                    return false;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_30(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return true;
-                case 0x01ul:
-                    return true;
-                case 0x02ul:
-                    return false;
-                case 0x03ul:
-                    return true;
-                case 0x04ul:
-                    return false;
-                case 0x07ul:
-                    return false;
-                case 0x08ul:
-                    return false;
-                case 0x09ul:
-                    return false;
-                case 0x0Aul:
-                    return false;
-                case 0x0Bul:
-                    return false;
-                case 0x0Cul:
-                    return false;
-                case 0x0Dul:
-                    return false;
-                default:
-                    return false;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_31(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return true;
-                case 0x01ul:
-                    return true;
-                case 0x02ul:
-                    return false;
-                case 0x03ul:
-                    return true;
-                case 0x04ul:
-                    return false;
-                case 0x07ul:
-                    return false;
-                case 0x08ul:
-                    return false;
-                case 0x09ul:
-                    return false;
-                case 0x0Aul:
-                    return false;
-                case 0x0Bul:
-                    return false;
-                case 0x0Cul:
-                    return false;
-                case 0x0Dul:
-                    return false;
-                default:
-                    return false;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_32(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return true;
-                case 0x01ul:
-                    return true;
-                case 0x02ul:
-                    return false;
-                case 0x03ul:
-                    return true;
-                case 0x04ul:
-                    return false;
-                case 0x07ul:
-                    return false;
-                case 0x08ul:
-                    return false;
-                case 0x09ul:
-                    return false;
-                case 0x0Aul:
-                    return false;
-                case 0x0Bul:
-                    return false;
-                case 0x0Cul:
-                    return false;
-                case 0x0Dul:
-                    return false;
-                default:
-                    return false;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_33(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return true;
-                case 0x01ul:
-                    return true;
-                case 0x02ul:
-                    return false;
-                case 0x03ul:
-                    return true;
-                case 0x04ul:
-                    return false;
-                case 0x07ul:
-                    return false;
-                case 0x08ul:
-                    return false;
-                case 0x09ul:
-                    return false;
-                case 0x0Aul:
-                    return false;
-                case 0x0Bul:
-                    return false;
-                case 0x0Cul:
-                    return false;
-                case 0x0Dul:
-                    return false;
-                default:
-                    return false;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_34(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return true;
-                case 0x01ul:
-                    return true;
-                case 0x02ul:
-                    return false;
-                case 0x03ul:
-                    return true;
-                case 0x04ul:
-                    return false;
-                case 0x07ul:
-                    return false;
-                case 0x08ul:
-                    return false;
-                case 0x09ul:
-                    return false;
-                case 0x0Aul:
-                    return false;
-                case 0x0Bul:
-                    return false;
-                case 0x0Cul:
-                    return false;
-                case 0x0Dul:
-                    return false;
-                default:
-                    return false;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_35(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return true;
-                case 0x01ul:
-                    return true;
-                case 0x02ul:
-                    return true;
-                case 0x03ul:
-                    return true;
-                case 0x04ul:
-                    return true;
-                case 0x07ul:
-                    return false;
-                case 0x08ul:
-                    return false;
-                case 0x09ul:
-                    return false;
-                case 0x0Aul:
-                    return false;
-                case 0x0Bul:
-                    return false;
-                case 0x0Cul:
-                    return false;
-                case 0x0Dul:
-                    return false;
-                default:
-                    return false;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_36(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return true;
-                case 0x01ul:
-                    return true;
-                case 0x02ul:
-                    return false;
-                case 0x03ul:
-                    return true;
-                case 0x04ul:
-                    return false;
-                case 0x07ul:
-                    return false;
-                case 0x08ul:
-                    return false;
-                case 0x09ul:
-                    return false;
-                case 0x0Aul:
-                    return false;
-                case 0x0Bul:
-                    return false;
-                case 0x0Cul:
-                    return false;
-                case 0x0Dul:
-                    return false;
-                default:
-                    return false;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_37(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return true;
-                case 0x01ul:
-                    return true;
-                case 0x02ul:
-                    return false;
-                case 0x03ul:
-                    return true;
-                case 0x04ul:
-                    return false;
-                case 0x07ul:
-                    return false;
-                case 0x08ul:
-                    return false;
-                case 0x09ul:
-                    return false;
-                case 0x0Aul:
-                    return false;
-                case 0x0Bul:
-                    return false;
-                case 0x0Cul:
-                    return false;
-                case 0x0Dul:
-                    return false;
-                default:
-                    return false;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_38(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return true;
-                case 0x01ul:
-                    return true;
-                case 0x02ul:
-                    return true;
-                case 0x03ul:
-                    return true;
-                case 0x04ul:
-                    return true;
-                case 0x07ul:
-                    return true;
-                case 0x08ul:
-                    return true;
-                case 0x09ul:
-                    return true;
-                case 0x0Aul:
-                    return true;
-                case 0x0Bul:
-                    return true;
-                case 0x0Cul:
-                    return true;
-                case 0x0Dul:
-                    return true;
-                default:
-                    return true;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_39(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return true;
-                case 0x01ul:
-                    return true;
-                case 0x02ul:
-                    return true;
-                case 0x03ul:
-                    return true;
-                case 0x04ul:
-                    return true;
-                case 0x07ul:
-                    return false;
-                case 0x08ul:
-                    return false;
-                case 0x09ul:
-                    return false;
-                case 0x0Aul:
-                    return false;
-                case 0x0Bul:
-                    return false;
-                case 0x0Cul:
-                    return false;
-                case 0x0Dul:
-                    return false;
-                default:
-                    return false;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_40(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return true;
-                case 0x01ul:
-                    return true;
-                case 0x02ul:
-                    return true;
-                case 0x03ul:
-                    return true;
-                case 0x04ul:
-                    return true;
-                case 0x07ul:
-                    return false;
-                case 0x08ul:
-                    return false;
-                case 0x09ul:
-                    return false;
-                case 0x0Aul:
-                    return false;
-                case 0x0Bul:
-                    return false;
-                case 0x0Cul:
-                    return false;
-                case 0x0Dul:
-                    return false;
-                default:
-                    return false;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_41(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return true;
-                case 0x01ul:
-                    return true;
-                case 0x02ul:
-                    return true;
-                case 0x03ul:
-                    return true;
-                case 0x04ul:
-                    return true;
-                case 0x07ul:
-                    return false;
-                case 0x08ul:
-                    return false;
-                case 0x09ul:
-                    return false;
-                case 0x0Aul:
-                    return false;
-                case 0x0Bul:
-                    return false;
-                case 0x0Cul:
-                    return false;
-                case 0x0Dul:
-                    return false;
-                default:
-                    return false;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_42(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return true;
-                case 0x01ul:
-                    return true;
-                case 0x02ul:
-                    return true;
-                case 0x03ul:
-                    return true;
-                case 0x04ul:
-                    return true;
-                case 0x07ul:
-                    return false;
-                case 0x08ul:
-                    return false;
-                case 0x09ul:
-                    return false;
-                case 0x0Aul:
-                    return false;
-                case 0x0Bul:
-                    return false;
-                case 0x0Cul:
-                    return false;
-                case 0x0Dul:
-                    return false;
-                default:
-                    return false;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_43(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return false;
-                case 0x01ul:
-                    return false;
-                case 0x02ul:
-                    return true;
-                case 0x03ul:
-                    return false;
-                case 0x04ul:
-                    return true;
-                case 0x07ul:
-                    return false;
-                case 0x08ul:
-                    return false;
-                case 0x09ul:
-                    return false;
-                case 0x0Aul:
-                    return false;
-                case 0x0Bul:
-                    return false;
-                case 0x0Cul:
-                    return false;
-                case 0x0Dul:
-                    return false;
-                default:
-                    return false;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_44(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return true;
-                case 0x01ul:
-                    return true;
-                case 0x02ul:
-                    return true;
-                case 0x03ul:
-                    return true;
-                case 0x04ul:
-                    return true;
-                case 0x07ul:
-                    return false;
-                case 0x08ul:
-                    return false;
-                case 0x09ul:
-                    return false;
-                case 0x0Aul:
-                    return false;
-                case 0x0Bul:
-                    return false;
-                case 0x0Cul:
-                    return false;
-                case 0x0Dul:
-                    return false;
-                default:
-                    return false;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_45(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return true;
-                case 0x01ul:
-                    return true;
-                case 0x02ul:
-                    return true;
-                case 0x03ul:
-                    return true;
-                case 0x04ul:
-                    return true;
-                case 0x07ul:
-                    return false;
-                case 0x08ul:
-                    return false;
-                case 0x09ul:
-                    return false;
-                case 0x0Aul:
-                    return false;
-                case 0x0Bul:
-                    return false;
-                case 0x0Cul:
-                    return false;
-                case 0x0Dul:
-                    return false;
-                default:
-                    return false;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_46(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return false;
-                case 0x01ul:
-                    return false;
-                case 0x02ul:
-                    return true;
-                case 0x03ul:
-                    return false;
-                case 0x04ul:
-                    return true;
-                case 0x07ul:
-                    return true;
-                case 0x08ul:
-                    return true;
-                case 0x09ul:
-                    return true;
-                case 0x0Aul:
-                    return false;
-                case 0x0Bul:
-                    return true;
-                case 0x0Cul:
-                    return true;
-                case 0x0Dul:
-                    return false;
-                default:
-                    return false;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_47(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return true;
-                case 0x01ul:
-                    return true;
-                case 0x02ul:
-                    return true;
-                case 0x03ul:
-                    return true;
-                case 0x04ul:
-                    return true;
-                case 0x07ul:
-                    return false;
-                case 0x08ul:
-                    return false;
-                case 0x09ul:
-                    return false;
-                case 0x0Aul:
-                    return false;
-                case 0x0Bul:
-                    return false;
-                case 0x0Cul:
-                    return false;
-                case 0x0Dul:
-                    return false;
-                default:
-                    return false;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_48(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return true;
-                case 0x01ul:
-                    return true;
-                case 0x02ul:
-                    return true;
-                case 0x03ul:
-                    return true;
-                case 0x04ul:
-                    return true;
-                case 0x07ul:
-                    return false;
-                case 0x08ul:
-                    return false;
-                case 0x09ul:
-                    return false;
-                case 0x0Aul:
-                    return false;
-                case 0x0Bul:
-                    return false;
-                case 0x0Cul:
-                    return false;
-                case 0x0Dul:
-                    return false;
-                default:
-                    return false;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_49(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return false;
-                case 0x01ul:
-                    return false;
-                case 0x02ul:
-                    return true;
-                case 0x03ul:
-                    return false;
-                case 0x04ul:
-                    return true;
-                case 0x07ul:
-                    return false;
-                case 0x08ul:
-                    return false;
-                case 0x09ul:
-                    return false;
-                case 0x0Aul:
-                    return false;
-                case 0x0Bul:
-                    return false;
-                case 0x0Cul:
-                    return false;
-                case 0x0Dul:
-                    return false;
-                default:
-                    return false;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_50(void)
-{
-    return false;
-}
-
-static bool errata_51(void)
-{
-    return false;
-}
-
-static bool errata_52(void)
-{
-    return false;
-}
-
-static bool errata_53(void)
-{
-    return false;
-}
-
-static bool errata_54(void)
-{
-    return false;
-}
-
-static bool errata_55(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return true;
-                case 0x01ul:
-                    return true;
-                case 0x02ul:
-                    return false;
-                case 0x03ul:
-                    return true;
-                case 0x04ul:
-                    return false;
-                case 0x07ul:
-                    return false;
-                case 0x08ul:
-                    return false;
-                case 0x09ul:
-                    return false;
-                case 0x0Aul:
-                    return false;
-                case 0x0Bul:
-                    return false;
-                case 0x0Cul:
-                    return false;
-                case 0x0Dul:
-                    return false;
-                default:
-                    return false;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_56(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return true;
-                case 0x01ul:
-                    return true;
-                case 0x02ul:
-                    return true;
-                case 0x03ul:
-                    return true;
-                case 0x04ul:
-                    return true;
-                case 0x07ul:
-                    return false;
-                case 0x08ul:
-                    return false;
-                case 0x09ul:
-                    return false;
-                case 0x0Aul:
-                    return false;
-                case 0x0Bul:
-                    return false;
-                case 0x0Cul:
-                    return false;
-                case 0x0Dul:
-                    return false;
-                default:
-                    return false;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_57(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return true;
-                case 0x01ul:
-                    return true;
-                case 0x02ul:
-                    return true;
-                case 0x03ul:
-                    return true;
-                case 0x04ul:
-                    return true;
-                case 0x07ul:
-                    return false;
-                case 0x08ul:
-                    return false;
-                case 0x09ul:
-                    return false;
-                case 0x0Aul:
-                    return false;
-                case 0x0Bul:
-                    return false;
-                case 0x0Cul:
-                    return false;
-                case 0x0Dul:
-                    return false;
-                default:
-                    return false;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_58(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return false;
-                case 0x01ul:
-                    return false;
-                case 0x02ul:
-                    return true;
-                case 0x03ul:
-                    return false;
-                case 0x04ul:
-                    return true;
-                case 0x07ul:
-                    return false;
-                case 0x08ul:
-                    return false;
-                case 0x09ul:
-                    return false;
-                case 0x0Aul:
-                    return false;
-                case 0x0Bul:
-                    return false;
-                case 0x0Cul:
-                    return false;
-                case 0x0Dul:
-                    return false;
-                default:
-                    return false;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_59(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return false;
-                case 0x01ul:
-                    return false;
-                case 0x02ul:
-                    return true;
-                case 0x03ul:
-                    return false;
-                case 0x04ul:
-                    return true;
-                case 0x07ul:
-                    return false;
-                case 0x08ul:
-                    return false;
-                case 0x09ul:
-                    return false;
-                case 0x0Aul:
-                    return false;
-                case 0x0Bul:
-                    return false;
-                case 0x0Cul:
-                    return false;
-                case 0x0Dul:
-                    return false;
-                default:
-                    return false;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_60(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return false;
-                case 0x01ul:
-                    return false;
-                case 0x02ul:
-                    return true;
-                case 0x03ul:
-                    return false;
-                case 0x04ul:
-                    return true;
-                case 0x07ul:
-                    return false;
-                case 0x08ul:
-                    return false;
-                case 0x09ul:
-                    return false;
-                case 0x0Aul:
-                    return false;
-                case 0x0Bul:
-                    return false;
-                case 0x0Cul:
-                    return false;
-                case 0x0Dul:
-                    return false;
-                default:
-                    return false;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_61(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return false;
-                case 0x01ul:
-                    return false;
-                case 0x02ul:
-                    return true;
-                case 0x03ul:
-                    return false;
-                case 0x04ul:
-                    return true;
-                case 0x07ul:
-                    return true;
-                case 0x08ul:
-                    return true;
-                case 0x09ul:
-                    return true;
-                case 0x0Aul:
-                    return true;
-                case 0x0Bul:
-                    return true;
-                case 0x0Cul:
-                    return true;
-                case 0x0Dul:
-                    return true;
-                default:
-                    return true;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_62(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return false;
-                case 0x01ul:
-                    return false;
-                case 0x02ul:
-                    return true;
-                case 0x03ul:
-                    return false;
-                case 0x04ul:
-                    return true;
-                case 0x07ul:
-                    return false;
-                case 0x08ul:
-                    return false;
-                case 0x09ul:
-                    return false;
-                case 0x0Aul:
-                    return false;
-                case 0x0Bul:
-                    return false;
-                case 0x0Cul:
-                    return false;
-                case 0x0Dul:
-                    return false;
-                default:
-                    return false;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_63(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return true;
-                case 0x01ul:
-                    return true;
-                case 0x02ul:
-                    return true;
-                case 0x03ul:
-                    return true;
-                case 0x04ul:
-                    return true;
-                case 0x07ul:
-                    return false;
-                case 0x08ul:
-                    return false;
-                case 0x09ul:
-                    return false;
-                case 0x0Aul:
-                    return false;
-                case 0x0Bul:
-                    return false;
-                case 0x0Cul:
-                    return false;
-                case 0x0Dul:
-                    return false;
-                default:
-                    return false;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_64(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return true;
-                case 0x01ul:
-                    return true;
-                case 0x02ul:
-                    return true;
-                case 0x03ul:
-                    return true;
-                case 0x04ul:
-                    return true;
-                case 0x07ul:
-                    return false;
-                case 0x08ul:
-                    return false;
-                case 0x09ul:
-                    return false;
-                case 0x0Aul:
-                    return false;
-                case 0x0Bul:
-                    return false;
-                case 0x0Cul:
-                    return false;
-                case 0x0Dul:
-                    return false;
-                default:
-                    return false;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_65(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return true;
-                case 0x01ul:
-                    return true;
-                case 0x02ul:
-                    return true;
-                case 0x03ul:
-                    return true;
-                case 0x04ul:
-                    return true;
-                case 0x07ul:
-                    return false;
-                case 0x08ul:
-                    return false;
-                case 0x09ul:
-                    return false;
-                case 0x0Aul:
-                    return false;
-                case 0x0Bul:
-                    return false;
-                case 0x0Cul:
-                    return false;
-                case 0x0Dul:
-                    return false;
-                default:
-                    return false;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_66(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return false;
-                case 0x01ul:
-                    return false;
-                case 0x02ul:
-                    return true;
-                case 0x03ul:
-                    return false;
-                case 0x04ul:
-                    return true;
-                case 0x07ul:
-                    return true;
-                case 0x08ul:
-                    return true;
-                case 0x09ul:
-                    return true;
-                case 0x0Aul:
-                    return false;
-                case 0x0Bul:
-                    return true;
-                case 0x0Cul:
-                    return true;
-                case 0x0Dul:
-                    return false;
-                default:
-                    return false;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_67(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return false;
-                case 0x01ul:
-                    return false;
-                case 0x02ul:
-                    return true;
-                case 0x03ul:
-                    return false;
-                case 0x04ul:
-                    return true;
-                case 0x07ul:
-                    return true;
-                case 0x08ul:
-                    return true;
-                case 0x09ul:
-                    return true;
-                case 0x0Aul:
-                    return true;
-                case 0x0Bul:
-                    return true;
-                case 0x0Cul:
-                    return true;
-                case 0x0Dul:
-                    return true;
-                default:
-                    return true;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_68(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return false;
-                case 0x01ul:
-                    return false;
-                case 0x02ul:
-                    return true;
-                case 0x03ul:
-                    return false;
-                case 0x04ul:
-                    return true;
-                case 0x07ul:
-                    return false;
-                case 0x08ul:
-                    return false;
-                case 0x09ul:
-                    return false;
-                case 0x0Aul:
-                    return false;
-                case 0x0Bul:
-                    return false;
-                case 0x0Cul:
-                    return false;
-                case 0x0Dul:
-                    return false;
-                default:
-                    return false;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_69(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return false;
-                case 0x01ul:
-                    return false;
-                case 0x02ul:
-                    return false;
-                case 0x03ul:
-                    return false;
-                case 0x04ul:
-                    return false;
-                case 0x07ul:
-                    return true;
-                case 0x08ul:
-                    return true;
-                case 0x09ul:
-                    return false;
-                case 0x0Aul:
-                    return false;
-                case 0x0Bul:
-                    return true;
-                case 0x0Cul:
-                    return true;
-                case 0x0Dul:
-                    return false;
-                default:
-                    return false;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_70(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return false;
-                case 0x01ul:
-                    return false;
-                case 0x02ul:
-                    return true;
-                case 0x03ul:
-                    return false;
-                case 0x04ul:
-                    return true;
-                case 0x07ul:
-                    return true;
-                case 0x08ul:
-                    return true;
-                case 0x09ul:
-                    return true;
-                case 0x0Aul:
-                    return true;
-                case 0x0Bul:
-                    return true;
-                case 0x0Cul:
-                    return true;
-                case 0x0Dul:
-                    return true;
-                default:
-                    return true;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_71(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return false;
-                case 0x01ul:
-                    return false;
-                case 0x02ul:
-                    return false;
-                case 0x03ul:
-                    return false;
-                case 0x04ul:
-                    return false;
-                case 0x07ul:
-                    return true;
-                case 0x08ul:
-                    return true;
-                case 0x09ul:
-                    return false;
-                case 0x0Aul:
-                    return false;
-                case 0x0Bul:
-                    return true;
-                case 0x0Cul:
-                    return true;
-                case 0x0Dul:
-                    return false;
-                default:
-                    return false;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_72(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return true;
-                case 0x01ul:
-                    return true;
-                case 0x02ul:
-                    return true;
-                case 0x03ul:
-                    return true;
-                case 0x04ul:
-                    return true;
-                case 0x07ul:
-                    return true;
-                case 0x08ul:
-                    return true;
-                case 0x09ul:
-                    return true;
-                case 0x0Aul:
-                    return true;
-                case 0x0Bul:
-                    return true;
-                case 0x0Cul:
-                    return true;
-                case 0x0Dul:
-                    return true;
-                default:
-                    return true;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_73(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return false;
-                case 0x01ul:
-                    return false;
-                case 0x02ul:
-                    return false;
-                case 0x03ul:
-                    return false;
-                case 0x04ul:
-                    return false;
-                case 0x07ul:
-                    return true;
-                case 0x08ul:
-                    return true;
-                case 0x09ul:
-                    return true;
-                case 0x0Aul:
-                    return false;
-                case 0x0Bul:
-                    return true;
-                case 0x0Cul:
-                    return true;
-                case 0x0Dul:
-                    return false;
-                default:
-                    return false;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_74(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return false;
-                case 0x01ul:
-                    return false;
-                case 0x02ul:
-                    return true;
-                case 0x03ul:
-                    return false;
-                case 0x04ul:
-                    return true;
-                case 0x07ul:
-                    return true;
-                case 0x08ul:
-                    return true;
-                case 0x09ul:
-                    return true;
-                case 0x0Aul:
-                    return false;
-                case 0x0Bul:
-                    return true;
-                case 0x0Cul:
-                    return true;
-                case 0x0Dul:
-                    return false;
-                default:
-                    return false;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_75(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return false;
-                case 0x01ul:
-                    return false;
-                case 0x02ul:
-                    return true;
-                case 0x03ul:
-                    return false;
-                case 0x04ul:
-                    return true;
-                case 0x07ul:
-                    return true;
-                case 0x08ul:
-                    return true;
-                case 0x09ul:
-                    return true;
-                case 0x0Aul:
-                    return true;
-                case 0x0Bul:
-                    return true;
-                case 0x0Cul:
-                    return true;
-                case 0x0Dul:
-                    return true;
-                default:
-                    return true;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_76(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return false;
-                case 0x01ul:
-                    return false;
-                case 0x02ul:
-                    return false;
-                case 0x03ul:
-                    return false;
-                case 0x04ul:
-                    return false;
-                case 0x07ul:
-                    return false;
-                case 0x08ul:
-                    return false;
-                case 0x09ul:
-                    return false;
-                case 0x0Aul:
-                    return true;
-                case 0x0Bul:
-                    return false;
-                case 0x0Cul:
-                    return false;
-                case 0x0Dul:
-                    return true;
-                default:
-                    return true;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
-}
-
-static bool errata_77(void)
-{
-    return false;
-}
-
-static bool errata_78(void)
-{
-    uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
-    uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
-
-    switch(var1)
-    {
-        case 0x01:
-            switch(var2)
-            {
-                case 0x00ul:
-                    return false;
-                case 0x01ul:
-                    return false;
-                case 0x02ul:
-                    return true;
-                case 0x03ul:
-                    return false;
-                case 0x04ul:
-                    return true;
-                case 0x07ul:
-                    return true;
-                case 0x08ul:
-                    return true;
-                case 0x09ul:
-                    return true;
-                case 0x0Aul:
-                    return false;
-                case 0x0Bul:
-                    return true;
-                case 0x0Cul:
-                    return true;
-                case 0x0Dul:
-                    return false;
-                default:
-                    return false;
-                break;
-            }
-        break;
-
-    }
-
-    return false;
+static bool nrf51_errata_1(void) __UNUSED;
+static bool nrf51_errata_2(void) __UNUSED;
+static bool nrf51_errata_3(void) __UNUSED;
+static bool nrf51_errata_4(void) __UNUSED;
+static bool nrf51_errata_5(void) __UNUSED;
+static bool nrf51_errata_6(void) __UNUSED;
+static bool nrf51_errata_7(void) __UNUSED;
+static bool nrf51_errata_8(void) __UNUSED;
+static bool nrf51_errata_9(void) __UNUSED;
+static bool nrf51_errata_10(void) __UNUSED;
+static bool nrf51_errata_11(void) __UNUSED;
+static bool nrf51_errata_12(void) __UNUSED;
+static bool nrf51_errata_13(void) __UNUSED;
+static bool nrf51_errata_14(void) __UNUSED;
+static bool nrf51_errata_15(void) __UNUSED;
+static bool nrf51_errata_16(void) __UNUSED;
+static bool nrf51_errata_17(void) __UNUSED;
+static bool nrf51_errata_18(void) __UNUSED;
+static bool nrf51_errata_19(void) __UNUSED;
+static bool nrf51_errata_20(void) __UNUSED;
+static bool nrf51_errata_21(void) __UNUSED;
+static bool nrf51_errata_22(void) __UNUSED;
+static bool nrf51_errata_23(void) __UNUSED;
+static bool nrf51_errata_24(void) __UNUSED;
+static bool nrf51_errata_25(void) __UNUSED;
+static bool nrf51_errata_26(void) __UNUSED;
+static bool nrf51_errata_27(void) __UNUSED;
+static bool nrf51_errata_28(void) __UNUSED;
+static bool nrf51_errata_29(void) __UNUSED;
+static bool nrf51_errata_30(void) __UNUSED;
+static bool nrf51_errata_31(void) __UNUSED;
+static bool nrf51_errata_32(void) __UNUSED;
+static bool nrf51_errata_33(void) __UNUSED;
+static bool nrf51_errata_34(void) __UNUSED;
+static bool nrf51_errata_35(void) __UNUSED;
+static bool nrf51_errata_36(void) __UNUSED;
+static bool nrf51_errata_37(void) __UNUSED;
+static bool nrf51_errata_38(void) __UNUSED;
+static bool nrf51_errata_39(void) __UNUSED;
+static bool nrf51_errata_40(void) __UNUSED;
+static bool nrf51_errata_41(void) __UNUSED;
+static bool nrf51_errata_42(void) __UNUSED;
+static bool nrf51_errata_43(void) __UNUSED;
+static bool nrf51_errata_44(void) __UNUSED;
+static bool nrf51_errata_45(void) __UNUSED;
+static bool nrf51_errata_46(void) __UNUSED;
+static bool nrf51_errata_47(void) __UNUSED;
+static bool nrf51_errata_48(void) __UNUSED;
+static bool nrf51_errata_49(void) __UNUSED;
+static bool nrf51_errata_50(void) __UNUSED;
+static bool nrf51_errata_51(void) __UNUSED;
+static bool nrf51_errata_52(void) __UNUSED;
+static bool nrf51_errata_53(void) __UNUSED;
+static bool nrf51_errata_54(void) __UNUSED;
+static bool nrf51_errata_55(void) __UNUSED;
+static bool nrf51_errata_56(void) __UNUSED;
+static bool nrf51_errata_57(void) __UNUSED;
+static bool nrf51_errata_58(void) __UNUSED;
+static bool nrf51_errata_59(void) __UNUSED;
+static bool nrf51_errata_60(void) __UNUSED;
+static bool nrf51_errata_61(void) __UNUSED;
+static bool nrf51_errata_62(void) __UNUSED;
+static bool nrf51_errata_63(void) __UNUSED;
+static bool nrf51_errata_64(void) __UNUSED;
+static bool nrf51_errata_65(void) __UNUSED;
+static bool nrf51_errata_66(void) __UNUSED;
+static bool nrf51_errata_67(void) __UNUSED;
+static bool nrf51_errata_68(void) __UNUSED;
+static bool nrf51_errata_69(void) __UNUSED;
+static bool nrf51_errata_70(void) __UNUSED;
+static bool nrf51_errata_71(void) __UNUSED;
+static bool nrf51_errata_72(void) __UNUSED;
+static bool nrf51_errata_73(void) __UNUSED;
+static bool nrf51_errata_74(void) __UNUSED;
+static bool nrf51_errata_75(void) __UNUSED;
+static bool nrf51_errata_76(void) __UNUSED;
+static bool nrf51_errata_77(void) __UNUSED;
+static bool nrf51_errata_78(void) __UNUSED;
+
+static bool nrf51_errata_1(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return true;
+                    case 0x01ul:
+                        return true;
+                    case 0x02ul:
+                        return false;
+                    case 0x03ul:
+                        return true;
+                    case 0x04ul:
+                        return false;
+                    case 0x07ul:
+                        return false;
+                    case 0x08ul:
+                        return false;
+                    case 0x09ul:
+                        return false;
+                    case 0x0Aul:
+                        return false;
+                    case 0x0Bul:
+                        return false;
+                    case 0x0Cul:
+                        return false;
+                    case 0x0Dul:
+                        return false;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_2(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return true;
+                    case 0x01ul:
+                        return true;
+                    case 0x02ul:
+                        return false;
+                    case 0x03ul:
+                        return true;
+                    case 0x04ul:
+                        return false;
+                    case 0x07ul:
+                        return false;
+                    case 0x08ul:
+                        return false;
+                    case 0x09ul:
+                        return false;
+                    case 0x0Aul:
+                        return false;
+                    case 0x0Bul:
+                        return false;
+                    case 0x0Cul:
+                        return false;
+                    case 0x0Dul:
+                        return false;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_3(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return true;
+                    case 0x01ul:
+                        return true;
+                    case 0x02ul:
+                        return false;
+                    case 0x03ul:
+                        return true;
+                    case 0x04ul:
+                        return false;
+                    case 0x07ul:
+                        return false;
+                    case 0x08ul:
+                        return false;
+                    case 0x09ul:
+                        return false;
+                    case 0x0Aul:
+                        return false;
+                    case 0x0Bul:
+                        return false;
+                    case 0x0Cul:
+                        return false;
+                    case 0x0Dul:
+                        return false;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_4(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_5(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_6(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return true;
+                    case 0x01ul:
+                        return true;
+                    case 0x02ul:
+                        return false;
+                    case 0x03ul:
+                        return true;
+                    case 0x04ul:
+                        return false;
+                    case 0x07ul:
+                        return false;
+                    case 0x08ul:
+                        return false;
+                    case 0x09ul:
+                        return false;
+                    case 0x0Aul:
+                        return false;
+                    case 0x0Bul:
+                        return false;
+                    case 0x0Cul:
+                        return false;
+                    case 0x0Dul:
+                        return false;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_7(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return true;
+                    case 0x01ul:
+                        return true;
+                    case 0x02ul:
+                        return false;
+                    case 0x03ul:
+                        return true;
+                    case 0x04ul:
+                        return false;
+                    case 0x07ul:
+                        return false;
+                    case 0x08ul:
+                        return false;
+                    case 0x09ul:
+                        return false;
+                    case 0x0Aul:
+                        return false;
+                    case 0x0Bul:
+                        return false;
+                    case 0x0Cul:
+                        return false;
+                    case 0x0Dul:
+                        return false;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_8(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return true;
+                    case 0x01ul:
+                        return true;
+                    case 0x02ul:
+                        return false;
+                    case 0x03ul:
+                        return true;
+                    case 0x04ul:
+                        return false;
+                    case 0x07ul:
+                        return false;
+                    case 0x08ul:
+                        return false;
+                    case 0x09ul:
+                        return false;
+                    case 0x0Aul:
+                        return false;
+                    case 0x0Bul:
+                        return false;
+                    case 0x0Cul:
+                        return false;
+                    case 0x0Dul:
+                        return false;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_9(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return true;
+                    case 0x01ul:
+                        return true;
+                    case 0x02ul:
+                        return false;
+                    case 0x03ul:
+                        return true;
+                    case 0x04ul:
+                        return false;
+                    case 0x07ul:
+                        return false;
+                    case 0x08ul:
+                        return false;
+                    case 0x09ul:
+                        return false;
+                    case 0x0Aul:
+                        return false;
+                    case 0x0Bul:
+                        return false;
+                    case 0x0Cul:
+                        return false;
+                    case 0x0Dul:
+                        return false;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_10(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return true;
+                    case 0x01ul:
+                        return true;
+                    case 0x02ul:
+                        return false;
+                    case 0x03ul:
+                        return true;
+                    case 0x04ul:
+                        return false;
+                    case 0x07ul:
+                        return false;
+                    case 0x08ul:
+                        return false;
+                    case 0x09ul:
+                        return false;
+                    case 0x0Aul:
+                        return false;
+                    case 0x0Bul:
+                        return false;
+                    case 0x0Cul:
+                        return false;
+                    case 0x0Dul:
+                        return false;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_11(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return true;
+                    case 0x01ul:
+                        return true;
+                    case 0x02ul:
+                        return false;
+                    case 0x03ul:
+                        return true;
+                    case 0x04ul:
+                        return false;
+                    case 0x07ul:
+                        return false;
+                    case 0x08ul:
+                        return false;
+                    case 0x09ul:
+                        return false;
+                    case 0x0Aul:
+                        return false;
+                    case 0x0Bul:
+                        return false;
+                    case 0x0Cul:
+                        return false;
+                    case 0x0Dul:
+                        return false;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_12(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return true;
+                    case 0x01ul:
+                        return true;
+                    case 0x02ul:
+                        return false;
+                    case 0x03ul:
+                        return true;
+                    case 0x04ul:
+                        return false;
+                    case 0x07ul:
+                        return false;
+                    case 0x08ul:
+                        return false;
+                    case 0x09ul:
+                        return false;
+                    case 0x0Aul:
+                        return false;
+                    case 0x0Bul:
+                        return false;
+                    case 0x0Cul:
+                        return false;
+                    case 0x0Dul:
+                        return false;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_13(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return true;
+                    case 0x01ul:
+                        return true;
+                    case 0x02ul:
+                        return false;
+                    case 0x03ul:
+                        return true;
+                    case 0x04ul:
+                        return false;
+                    case 0x07ul:
+                        return false;
+                    case 0x08ul:
+                        return false;
+                    case 0x09ul:
+                        return false;
+                    case 0x0Aul:
+                        return false;
+                    case 0x0Bul:
+                        return false;
+                    case 0x0Cul:
+                        return false;
+                    case 0x0Dul:
+                        return false;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_14(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return true;
+                    case 0x01ul:
+                        return true;
+                    case 0x02ul:
+                        return false;
+                    case 0x03ul:
+                        return true;
+                    case 0x04ul:
+                        return false;
+                    case 0x07ul:
+                        return false;
+                    case 0x08ul:
+                        return false;
+                    case 0x09ul:
+                        return false;
+                    case 0x0Aul:
+                        return false;
+                    case 0x0Bul:
+                        return false;
+                    case 0x0Cul:
+                        return false;
+                    case 0x0Dul:
+                        return false;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_15(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return true;
+                    case 0x01ul:
+                        return true;
+                    case 0x02ul:
+                        return false;
+                    case 0x03ul:
+                        return true;
+                    case 0x04ul:
+                        return false;
+                    case 0x07ul:
+                        return false;
+                    case 0x08ul:
+                        return false;
+                    case 0x09ul:
+                        return false;
+                    case 0x0Aul:
+                        return false;
+                    case 0x0Bul:
+                        return false;
+                    case 0x0Cul:
+                        return false;
+                    case 0x0Dul:
+                        return false;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_16(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return true;
+                    case 0x01ul:
+                        return true;
+                    case 0x02ul:
+                        return false;
+                    case 0x03ul:
+                        return true;
+                    case 0x04ul:
+                        return false;
+                    case 0x07ul:
+                        return false;
+                    case 0x08ul:
+                        return false;
+                    case 0x09ul:
+                        return false;
+                    case 0x0Aul:
+                        return false;
+                    case 0x0Bul:
+                        return false;
+                    case 0x0Cul:
+                        return false;
+                    case 0x0Dul:
+                        return false;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_17(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return true;
+                    case 0x01ul:
+                        return true;
+                    case 0x02ul:
+                        return false;
+                    case 0x03ul:
+                        return true;
+                    case 0x04ul:
+                        return false;
+                    case 0x07ul:
+                        return false;
+                    case 0x08ul:
+                        return false;
+                    case 0x09ul:
+                        return false;
+                    case 0x0Aul:
+                        return false;
+                    case 0x0Bul:
+                        return false;
+                    case 0x0Cul:
+                        return false;
+                    case 0x0Dul:
+                        return false;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_18(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return true;
+                    case 0x01ul:
+                        return true;
+                    case 0x02ul:
+                        return false;
+                    case 0x03ul:
+                        return true;
+                    case 0x04ul:
+                        return false;
+                    case 0x07ul:
+                        return false;
+                    case 0x08ul:
+                        return false;
+                    case 0x09ul:
+                        return false;
+                    case 0x0Aul:
+                        return false;
+                    case 0x0Bul:
+                        return false;
+                    case 0x0Cul:
+                        return false;
+                    case 0x0Dul:
+                        return false;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_19(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return true;
+                    case 0x01ul:
+                        return true;
+                    case 0x02ul:
+                        return false;
+                    case 0x03ul:
+                        return true;
+                    case 0x04ul:
+                        return false;
+                    case 0x07ul:
+                        return false;
+                    case 0x08ul:
+                        return false;
+                    case 0x09ul:
+                        return false;
+                    case 0x0Aul:
+                        return false;
+                    case 0x0Bul:
+                        return false;
+                    case 0x0Cul:
+                        return false;
+                    case 0x0Dul:
+                        return false;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_20(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return true;
+                    case 0x01ul:
+                        return true;
+                    case 0x02ul:
+                        return false;
+                    case 0x03ul:
+                        return true;
+                    case 0x04ul:
+                        return false;
+                    case 0x07ul:
+                        return false;
+                    case 0x08ul:
+                        return false;
+                    case 0x09ul:
+                        return false;
+                    case 0x0Aul:
+                        return false;
+                    case 0x0Bul:
+                        return false;
+                    case 0x0Cul:
+                        return false;
+                    case 0x0Dul:
+                        return false;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_21(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return true;
+                    case 0x01ul:
+                        return true;
+                    case 0x02ul:
+                        return false;
+                    case 0x03ul:
+                        return true;
+                    case 0x04ul:
+                        return false;
+                    case 0x07ul:
+                        return false;
+                    case 0x08ul:
+                        return false;
+                    case 0x09ul:
+                        return false;
+                    case 0x0Aul:
+                        return false;
+                    case 0x0Bul:
+                        return false;
+                    case 0x0Cul:
+                        return false;
+                    case 0x0Dul:
+                        return false;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_22(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return true;
+                    case 0x01ul:
+                        return true;
+                    case 0x02ul:
+                        return false;
+                    case 0x03ul:
+                        return true;
+                    case 0x04ul:
+                        return false;
+                    case 0x07ul:
+                        return false;
+                    case 0x08ul:
+                        return false;
+                    case 0x09ul:
+                        return false;
+                    case 0x0Aul:
+                        return false;
+                    case 0x0Bul:
+                        return false;
+                    case 0x0Cul:
+                        return false;
+                    case 0x0Dul:
+                        return false;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_23(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return true;
+                    case 0x01ul:
+                        return true;
+                    case 0x02ul:
+                        return false;
+                    case 0x03ul:
+                        return true;
+                    case 0x04ul:
+                        return false;
+                    case 0x07ul:
+                        return false;
+                    case 0x08ul:
+                        return false;
+                    case 0x09ul:
+                        return false;
+                    case 0x0Aul:
+                        return false;
+                    case 0x0Bul:
+                        return false;
+                    case 0x0Cul:
+                        return false;
+                    case 0x0Dul:
+                        return false;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_24(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return true;
+                    case 0x01ul:
+                        return true;
+                    case 0x02ul:
+                        return false;
+                    case 0x03ul:
+                        return true;
+                    case 0x04ul:
+                        return false;
+                    case 0x07ul:
+                        return false;
+                    case 0x08ul:
+                        return false;
+                    case 0x09ul:
+                        return false;
+                    case 0x0Aul:
+                        return false;
+                    case 0x0Bul:
+                        return false;
+                    case 0x0Cul:
+                        return false;
+                    case 0x0Dul:
+                        return false;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_25(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return true;
+                    case 0x01ul:
+                        return true;
+                    case 0x02ul:
+                        return false;
+                    case 0x03ul:
+                        return true;
+                    case 0x04ul:
+                        return false;
+                    case 0x07ul:
+                        return false;
+                    case 0x08ul:
+                        return false;
+                    case 0x09ul:
+                        return false;
+                    case 0x0Aul:
+                        return false;
+                    case 0x0Bul:
+                        return false;
+                    case 0x0Cul:
+                        return false;
+                    case 0x0Dul:
+                        return false;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_26(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return true;
+                    case 0x01ul:
+                        return true;
+                    case 0x02ul:
+                        return false;
+                    case 0x03ul:
+                        return true;
+                    case 0x04ul:
+                        return false;
+                    case 0x07ul:
+                        return false;
+                    case 0x08ul:
+                        return false;
+                    case 0x09ul:
+                        return false;
+                    case 0x0Aul:
+                        return false;
+                    case 0x0Bul:
+                        return false;
+                    case 0x0Cul:
+                        return false;
+                    case 0x0Dul:
+                        return false;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_27(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return true;
+                    case 0x01ul:
+                        return true;
+                    case 0x02ul:
+                        return false;
+                    case 0x03ul:
+                        return true;
+                    case 0x04ul:
+                        return false;
+                    case 0x07ul:
+                        return false;
+                    case 0x08ul:
+                        return false;
+                    case 0x09ul:
+                        return false;
+                    case 0x0Aul:
+                        return false;
+                    case 0x0Bul:
+                        return false;
+                    case 0x0Cul:
+                        return false;
+                    case 0x0Dul:
+                        return false;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_28(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return true;
+                    case 0x01ul:
+                        return true;
+                    case 0x02ul:
+                        return false;
+                    case 0x03ul:
+                        return true;
+                    case 0x04ul:
+                        return false;
+                    case 0x07ul:
+                        return false;
+                    case 0x08ul:
+                        return false;
+                    case 0x09ul:
+                        return false;
+                    case 0x0Aul:
+                        return false;
+                    case 0x0Bul:
+                        return false;
+                    case 0x0Cul:
+                        return false;
+                    case 0x0Dul:
+                        return false;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_29(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return true;
+                    case 0x01ul:
+                        return true;
+                    case 0x02ul:
+                        return false;
+                    case 0x03ul:
+                        return true;
+                    case 0x04ul:
+                        return false;
+                    case 0x07ul:
+                        return false;
+                    case 0x08ul:
+                        return false;
+                    case 0x09ul:
+                        return false;
+                    case 0x0Aul:
+                        return false;
+                    case 0x0Bul:
+                        return false;
+                    case 0x0Cul:
+                        return false;
+                    case 0x0Dul:
+                        return false;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_30(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return true;
+                    case 0x01ul:
+                        return true;
+                    case 0x02ul:
+                        return false;
+                    case 0x03ul:
+                        return true;
+                    case 0x04ul:
+                        return false;
+                    case 0x07ul:
+                        return false;
+                    case 0x08ul:
+                        return false;
+                    case 0x09ul:
+                        return false;
+                    case 0x0Aul:
+                        return false;
+                    case 0x0Bul:
+                        return false;
+                    case 0x0Cul:
+                        return false;
+                    case 0x0Dul:
+                        return false;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_31(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return true;
+                    case 0x01ul:
+                        return true;
+                    case 0x02ul:
+                        return false;
+                    case 0x03ul:
+                        return true;
+                    case 0x04ul:
+                        return false;
+                    case 0x07ul:
+                        return false;
+                    case 0x08ul:
+                        return false;
+                    case 0x09ul:
+                        return false;
+                    case 0x0Aul:
+                        return false;
+                    case 0x0Bul:
+                        return false;
+                    case 0x0Cul:
+                        return false;
+                    case 0x0Dul:
+                        return false;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_32(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return true;
+                    case 0x01ul:
+                        return true;
+                    case 0x02ul:
+                        return false;
+                    case 0x03ul:
+                        return true;
+                    case 0x04ul:
+                        return false;
+                    case 0x07ul:
+                        return false;
+                    case 0x08ul:
+                        return false;
+                    case 0x09ul:
+                        return false;
+                    case 0x0Aul:
+                        return false;
+                    case 0x0Bul:
+                        return false;
+                    case 0x0Cul:
+                        return false;
+                    case 0x0Dul:
+                        return false;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_33(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return true;
+                    case 0x01ul:
+                        return true;
+                    case 0x02ul:
+                        return false;
+                    case 0x03ul:
+                        return true;
+                    case 0x04ul:
+                        return false;
+                    case 0x07ul:
+                        return false;
+                    case 0x08ul:
+                        return false;
+                    case 0x09ul:
+                        return false;
+                    case 0x0Aul:
+                        return false;
+                    case 0x0Bul:
+                        return false;
+                    case 0x0Cul:
+                        return false;
+                    case 0x0Dul:
+                        return false;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_34(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return true;
+                    case 0x01ul:
+                        return true;
+                    case 0x02ul:
+                        return false;
+                    case 0x03ul:
+                        return true;
+                    case 0x04ul:
+                        return false;
+                    case 0x07ul:
+                        return false;
+                    case 0x08ul:
+                        return false;
+                    case 0x09ul:
+                        return false;
+                    case 0x0Aul:
+                        return false;
+                    case 0x0Bul:
+                        return false;
+                    case 0x0Cul:
+                        return false;
+                    case 0x0Dul:
+                        return false;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_35(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return true;
+                    case 0x01ul:
+                        return true;
+                    case 0x02ul:
+                        return true;
+                    case 0x03ul:
+                        return true;
+                    case 0x04ul:
+                        return true;
+                    case 0x07ul:
+                        return false;
+                    case 0x08ul:
+                        return false;
+                    case 0x09ul:
+                        return false;
+                    case 0x0Aul:
+                        return false;
+                    case 0x0Bul:
+                        return false;
+                    case 0x0Cul:
+                        return false;
+                    case 0x0Dul:
+                        return false;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_36(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return true;
+                    case 0x01ul:
+                        return true;
+                    case 0x02ul:
+                        return false;
+                    case 0x03ul:
+                        return true;
+                    case 0x04ul:
+                        return false;
+                    case 0x07ul:
+                        return false;
+                    case 0x08ul:
+                        return false;
+                    case 0x09ul:
+                        return false;
+                    case 0x0Aul:
+                        return false;
+                    case 0x0Bul:
+                        return false;
+                    case 0x0Cul:
+                        return false;
+                    case 0x0Dul:
+                        return false;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_37(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return true;
+                    case 0x01ul:
+                        return true;
+                    case 0x02ul:
+                        return false;
+                    case 0x03ul:
+                        return true;
+                    case 0x04ul:
+                        return false;
+                    case 0x07ul:
+                        return false;
+                    case 0x08ul:
+                        return false;
+                    case 0x09ul:
+                        return false;
+                    case 0x0Aul:
+                        return false;
+                    case 0x0Bul:
+                        return false;
+                    case 0x0Cul:
+                        return false;
+                    case 0x0Dul:
+                        return false;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_38(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return true;
+                    case 0x01ul:
+                        return true;
+                    case 0x02ul:
+                        return true;
+                    case 0x03ul:
+                        return true;
+                    case 0x04ul:
+                        return true;
+                    case 0x07ul:
+                        return true;
+                    case 0x08ul:
+                        return true;
+                    case 0x09ul:
+                        return true;
+                    case 0x0Aul:
+                        return true;
+                    case 0x0Bul:
+                        return true;
+                    case 0x0Cul:
+                        return true;
+                    case 0x0Dul:
+                        return true;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_39(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return true;
+                    case 0x01ul:
+                        return true;
+                    case 0x02ul:
+                        return true;
+                    case 0x03ul:
+                        return true;
+                    case 0x04ul:
+                        return true;
+                    case 0x07ul:
+                        return false;
+                    case 0x08ul:
+                        return false;
+                    case 0x09ul:
+                        return false;
+                    case 0x0Aul:
+                        return false;
+                    case 0x0Bul:
+                        return false;
+                    case 0x0Cul:
+                        return false;
+                    case 0x0Dul:
+                        return false;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_40(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return true;
+                    case 0x01ul:
+                        return true;
+                    case 0x02ul:
+                        return true;
+                    case 0x03ul:
+                        return true;
+                    case 0x04ul:
+                        return true;
+                    case 0x07ul:
+                        return false;
+                    case 0x08ul:
+                        return false;
+                    case 0x09ul:
+                        return false;
+                    case 0x0Aul:
+                        return false;
+                    case 0x0Bul:
+                        return false;
+                    case 0x0Cul:
+                        return false;
+                    case 0x0Dul:
+                        return false;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_41(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return true;
+                    case 0x01ul:
+                        return true;
+                    case 0x02ul:
+                        return true;
+                    case 0x03ul:
+                        return true;
+                    case 0x04ul:
+                        return true;
+                    case 0x07ul:
+                        return false;
+                    case 0x08ul:
+                        return false;
+                    case 0x09ul:
+                        return false;
+                    case 0x0Aul:
+                        return false;
+                    case 0x0Bul:
+                        return false;
+                    case 0x0Cul:
+                        return false;
+                    case 0x0Dul:
+                        return false;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_42(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return true;
+                    case 0x01ul:
+                        return true;
+                    case 0x02ul:
+                        return true;
+                    case 0x03ul:
+                        return true;
+                    case 0x04ul:
+                        return true;
+                    case 0x07ul:
+                        return false;
+                    case 0x08ul:
+                        return false;
+                    case 0x09ul:
+                        return false;
+                    case 0x0Aul:
+                        return false;
+                    case 0x0Bul:
+                        return false;
+                    case 0x0Cul:
+                        return false;
+                    case 0x0Dul:
+                        return false;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_43(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return false;
+                    case 0x01ul:
+                        return false;
+                    case 0x02ul:
+                        return true;
+                    case 0x03ul:
+                        return false;
+                    case 0x04ul:
+                        return true;
+                    case 0x07ul:
+                        return false;
+                    case 0x08ul:
+                        return false;
+                    case 0x09ul:
+                        return false;
+                    case 0x0Aul:
+                        return false;
+                    case 0x0Bul:
+                        return false;
+                    case 0x0Cul:
+                        return false;
+                    case 0x0Dul:
+                        return false;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_44(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return true;
+                    case 0x01ul:
+                        return true;
+                    case 0x02ul:
+                        return true;
+                    case 0x03ul:
+                        return true;
+                    case 0x04ul:
+                        return true;
+                    case 0x07ul:
+                        return false;
+                    case 0x08ul:
+                        return false;
+                    case 0x09ul:
+                        return false;
+                    case 0x0Aul:
+                        return false;
+                    case 0x0Bul:
+                        return false;
+                    case 0x0Cul:
+                        return false;
+                    case 0x0Dul:
+                        return false;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_45(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return true;
+                    case 0x01ul:
+                        return true;
+                    case 0x02ul:
+                        return true;
+                    case 0x03ul:
+                        return true;
+                    case 0x04ul:
+                        return true;
+                    case 0x07ul:
+                        return false;
+                    case 0x08ul:
+                        return false;
+                    case 0x09ul:
+                        return false;
+                    case 0x0Aul:
+                        return false;
+                    case 0x0Bul:
+                        return false;
+                    case 0x0Cul:
+                        return false;
+                    case 0x0Dul:
+                        return false;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_46(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return false;
+                    case 0x01ul:
+                        return false;
+                    case 0x02ul:
+                        return true;
+                    case 0x03ul:
+                        return false;
+                    case 0x04ul:
+                        return true;
+                    case 0x07ul:
+                        return true;
+                    case 0x08ul:
+                        return true;
+                    case 0x09ul:
+                        return true;
+                    case 0x0Aul:
+                        return false;
+                    case 0x0Bul:
+                        return true;
+                    case 0x0Cul:
+                        return true;
+                    case 0x0Dul:
+                        return false;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_47(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return true;
+                    case 0x01ul:
+                        return true;
+                    case 0x02ul:
+                        return true;
+                    case 0x03ul:
+                        return true;
+                    case 0x04ul:
+                        return true;
+                    case 0x07ul:
+                        return false;
+                    case 0x08ul:
+                        return false;
+                    case 0x09ul:
+                        return false;
+                    case 0x0Aul:
+                        return false;
+                    case 0x0Bul:
+                        return false;
+                    case 0x0Cul:
+                        return false;
+                    case 0x0Dul:
+                        return false;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_48(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return true;
+                    case 0x01ul:
+                        return true;
+                    case 0x02ul:
+                        return true;
+                    case 0x03ul:
+                        return true;
+                    case 0x04ul:
+                        return true;
+                    case 0x07ul:
+                        return false;
+                    case 0x08ul:
+                        return false;
+                    case 0x09ul:
+                        return false;
+                    case 0x0Aul:
+                        return false;
+                    case 0x0Bul:
+                        return false;
+                    case 0x0Cul:
+                        return false;
+                    case 0x0Dul:
+                        return false;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_49(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return false;
+                    case 0x01ul:
+                        return false;
+                    case 0x02ul:
+                        return true;
+                    case 0x03ul:
+                        return false;
+                    case 0x04ul:
+                        return true;
+                    case 0x07ul:
+                        return false;
+                    case 0x08ul:
+                        return false;
+                    case 0x09ul:
+                        return false;
+                    case 0x0Aul:
+                        return false;
+                    case 0x0Bul:
+                        return false;
+                    case 0x0Cul:
+                        return false;
+                    case 0x0Dul:
+                        return false;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_50(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_51(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_52(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_53(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_54(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_55(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return true;
+                    case 0x01ul:
+                        return true;
+                    case 0x02ul:
+                        return false;
+                    case 0x03ul:
+                        return true;
+                    case 0x04ul:
+                        return false;
+                    case 0x07ul:
+                        return false;
+                    case 0x08ul:
+                        return false;
+                    case 0x09ul:
+                        return false;
+                    case 0x0Aul:
+                        return false;
+                    case 0x0Bul:
+                        return false;
+                    case 0x0Cul:
+                        return false;
+                    case 0x0Dul:
+                        return false;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_56(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return true;
+                    case 0x01ul:
+                        return true;
+                    case 0x02ul:
+                        return true;
+                    case 0x03ul:
+                        return true;
+                    case 0x04ul:
+                        return true;
+                    case 0x07ul:
+                        return false;
+                    case 0x08ul:
+                        return false;
+                    case 0x09ul:
+                        return false;
+                    case 0x0Aul:
+                        return false;
+                    case 0x0Bul:
+                        return false;
+                    case 0x0Cul:
+                        return false;
+                    case 0x0Dul:
+                        return false;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_57(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return true;
+                    case 0x01ul:
+                        return true;
+                    case 0x02ul:
+                        return true;
+                    case 0x03ul:
+                        return true;
+                    case 0x04ul:
+                        return true;
+                    case 0x07ul:
+                        return false;
+                    case 0x08ul:
+                        return false;
+                    case 0x09ul:
+                        return false;
+                    case 0x0Aul:
+                        return false;
+                    case 0x0Bul:
+                        return false;
+                    case 0x0Cul:
+                        return false;
+                    case 0x0Dul:
+                        return false;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_58(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return false;
+                    case 0x01ul:
+                        return false;
+                    case 0x02ul:
+                        return true;
+                    case 0x03ul:
+                        return false;
+                    case 0x04ul:
+                        return true;
+                    case 0x07ul:
+                        return false;
+                    case 0x08ul:
+                        return false;
+                    case 0x09ul:
+                        return false;
+                    case 0x0Aul:
+                        return false;
+                    case 0x0Bul:
+                        return false;
+                    case 0x0Cul:
+                        return false;
+                    case 0x0Dul:
+                        return false;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_59(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return false;
+                    case 0x01ul:
+                        return false;
+                    case 0x02ul:
+                        return true;
+                    case 0x03ul:
+                        return false;
+                    case 0x04ul:
+                        return true;
+                    case 0x07ul:
+                        return false;
+                    case 0x08ul:
+                        return false;
+                    case 0x09ul:
+                        return false;
+                    case 0x0Aul:
+                        return false;
+                    case 0x0Bul:
+                        return false;
+                    case 0x0Cul:
+                        return false;
+                    case 0x0Dul:
+                        return false;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_60(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return false;
+                    case 0x01ul:
+                        return false;
+                    case 0x02ul:
+                        return true;
+                    case 0x03ul:
+                        return false;
+                    case 0x04ul:
+                        return true;
+                    case 0x07ul:
+                        return false;
+                    case 0x08ul:
+                        return false;
+                    case 0x09ul:
+                        return false;
+                    case 0x0Aul:
+                        return false;
+                    case 0x0Bul:
+                        return false;
+                    case 0x0Cul:
+                        return false;
+                    case 0x0Dul:
+                        return false;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_61(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return false;
+                    case 0x01ul:
+                        return false;
+                    case 0x02ul:
+                        return true;
+                    case 0x03ul:
+                        return false;
+                    case 0x04ul:
+                        return true;
+                    case 0x07ul:
+                        return true;
+                    case 0x08ul:
+                        return true;
+                    case 0x09ul:
+                        return true;
+                    case 0x0Aul:
+                        return true;
+                    case 0x0Bul:
+                        return true;
+                    case 0x0Cul:
+                        return true;
+                    case 0x0Dul:
+                        return true;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_62(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return false;
+                    case 0x01ul:
+                        return false;
+                    case 0x02ul:
+                        return true;
+                    case 0x03ul:
+                        return false;
+                    case 0x04ul:
+                        return true;
+                    case 0x07ul:
+                        return false;
+                    case 0x08ul:
+                        return false;
+                    case 0x09ul:
+                        return false;
+                    case 0x0Aul:
+                        return false;
+                    case 0x0Bul:
+                        return false;
+                    case 0x0Cul:
+                        return false;
+                    case 0x0Dul:
+                        return false;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_63(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return true;
+                    case 0x01ul:
+                        return true;
+                    case 0x02ul:
+                        return true;
+                    case 0x03ul:
+                        return true;
+                    case 0x04ul:
+                        return true;
+                    case 0x07ul:
+                        return false;
+                    case 0x08ul:
+                        return false;
+                    case 0x09ul:
+                        return false;
+                    case 0x0Aul:
+                        return false;
+                    case 0x0Bul:
+                        return false;
+                    case 0x0Cul:
+                        return false;
+                    case 0x0Dul:
+                        return false;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_64(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return true;
+                    case 0x01ul:
+                        return true;
+                    case 0x02ul:
+                        return true;
+                    case 0x03ul:
+                        return true;
+                    case 0x04ul:
+                        return true;
+                    case 0x07ul:
+                        return false;
+                    case 0x08ul:
+                        return false;
+                    case 0x09ul:
+                        return false;
+                    case 0x0Aul:
+                        return false;
+                    case 0x0Bul:
+                        return false;
+                    case 0x0Cul:
+                        return false;
+                    case 0x0Dul:
+                        return false;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_65(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return true;
+                    case 0x01ul:
+                        return true;
+                    case 0x02ul:
+                        return true;
+                    case 0x03ul:
+                        return true;
+                    case 0x04ul:
+                        return true;
+                    case 0x07ul:
+                        return false;
+                    case 0x08ul:
+                        return false;
+                    case 0x09ul:
+                        return false;
+                    case 0x0Aul:
+                        return false;
+                    case 0x0Bul:
+                        return false;
+                    case 0x0Cul:
+                        return false;
+                    case 0x0Dul:
+                        return false;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_66(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return false;
+                    case 0x01ul:
+                        return false;
+                    case 0x02ul:
+                        return true;
+                    case 0x03ul:
+                        return false;
+                    case 0x04ul:
+                        return true;
+                    case 0x07ul:
+                        return true;
+                    case 0x08ul:
+                        return true;
+                    case 0x09ul:
+                        return true;
+                    case 0x0Aul:
+                        return false;
+                    case 0x0Bul:
+                        return true;
+                    case 0x0Cul:
+                        return true;
+                    case 0x0Dul:
+                        return false;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_67(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return false;
+                    case 0x01ul:
+                        return false;
+                    case 0x02ul:
+                        return true;
+                    case 0x03ul:
+                        return false;
+                    case 0x04ul:
+                        return true;
+                    case 0x07ul:
+                        return true;
+                    case 0x08ul:
+                        return true;
+                    case 0x09ul:
+                        return true;
+                    case 0x0Aul:
+                        return true;
+                    case 0x0Bul:
+                        return true;
+                    case 0x0Cul:
+                        return true;
+                    case 0x0Dul:
+                        return true;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_68(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return false;
+                    case 0x01ul:
+                        return false;
+                    case 0x02ul:
+                        return true;
+                    case 0x03ul:
+                        return false;
+                    case 0x04ul:
+                        return true;
+                    case 0x07ul:
+                        return false;
+                    case 0x08ul:
+                        return false;
+                    case 0x09ul:
+                        return false;
+                    case 0x0Aul:
+                        return false;
+                    case 0x0Bul:
+                        return false;
+                    case 0x0Cul:
+                        return false;
+                    case 0x0Dul:
+                        return false;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_69(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return false;
+                    case 0x01ul:
+                        return false;
+                    case 0x02ul:
+                        return false;
+                    case 0x03ul:
+                        return false;
+                    case 0x04ul:
+                        return false;
+                    case 0x07ul:
+                        return true;
+                    case 0x08ul:
+                        return true;
+                    case 0x09ul:
+                        return false;
+                    case 0x0Aul:
+                        return false;
+                    case 0x0Bul:
+                        return true;
+                    case 0x0Cul:
+                        return true;
+                    case 0x0Dul:
+                        return false;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_70(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return false;
+                    case 0x01ul:
+                        return false;
+                    case 0x02ul:
+                        return true;
+                    case 0x03ul:
+                        return false;
+                    case 0x04ul:
+                        return true;
+                    case 0x07ul:
+                        return true;
+                    case 0x08ul:
+                        return true;
+                    case 0x09ul:
+                        return true;
+                    case 0x0Aul:
+                        return true;
+                    case 0x0Bul:
+                        return true;
+                    case 0x0Cul:
+                        return true;
+                    case 0x0Dul:
+                        return true;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_71(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return false;
+                    case 0x01ul:
+                        return false;
+                    case 0x02ul:
+                        return false;
+                    case 0x03ul:
+                        return false;
+                    case 0x04ul:
+                        return false;
+                    case 0x07ul:
+                        return true;
+                    case 0x08ul:
+                        return true;
+                    case 0x09ul:
+                        return false;
+                    case 0x0Aul:
+                        return false;
+                    case 0x0Bul:
+                        return true;
+                    case 0x0Cul:
+                        return true;
+                    case 0x0Dul:
+                        return false;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_72(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return true;
+                    case 0x01ul:
+                        return true;
+                    case 0x02ul:
+                        return true;
+                    case 0x03ul:
+                        return true;
+                    case 0x04ul:
+                        return true;
+                    case 0x07ul:
+                        return true;
+                    case 0x08ul:
+                        return true;
+                    case 0x09ul:
+                        return true;
+                    case 0x0Aul:
+                        return true;
+                    case 0x0Bul:
+                        return true;
+                    case 0x0Cul:
+                        return true;
+                    case 0x0Dul:
+                        return true;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_73(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return false;
+                    case 0x01ul:
+                        return false;
+                    case 0x02ul:
+                        return false;
+                    case 0x03ul:
+                        return false;
+                    case 0x04ul:
+                        return false;
+                    case 0x07ul:
+                        return true;
+                    case 0x08ul:
+                        return true;
+                    case 0x09ul:
+                        return true;
+                    case 0x0Aul:
+                        return false;
+                    case 0x0Bul:
+                        return true;
+                    case 0x0Cul:
+                        return true;
+                    case 0x0Dul:
+                        return false;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_74(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return false;
+                    case 0x01ul:
+                        return false;
+                    case 0x02ul:
+                        return true;
+                    case 0x03ul:
+                        return false;
+                    case 0x04ul:
+                        return true;
+                    case 0x07ul:
+                        return true;
+                    case 0x08ul:
+                        return true;
+                    case 0x09ul:
+                        return true;
+                    case 0x0Aul:
+                        return false;
+                    case 0x0Bul:
+                        return true;
+                    case 0x0Cul:
+                        return true;
+                    case 0x0Dul:
+                        return false;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_75(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return false;
+                    case 0x01ul:
+                        return false;
+                    case 0x02ul:
+                        return true;
+                    case 0x03ul:
+                        return false;
+                    case 0x04ul:
+                        return true;
+                    case 0x07ul:
+                        return true;
+                    case 0x08ul:
+                        return true;
+                    case 0x09ul:
+                        return true;
+                    case 0x0Aul:
+                        return true;
+                    case 0x0Bul:
+                        return true;
+                    case 0x0Cul:
+                        return true;
+                    case 0x0Dul:
+                        return true;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_76(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return false;
+                    case 0x01ul:
+                        return false;
+                    case 0x02ul:
+                        return false;
+                    case 0x03ul:
+                        return false;
+                    case 0x04ul:
+                        return false;
+                    case 0x07ul:
+                        return false;
+                    case 0x08ul:
+                        return false;
+                    case 0x09ul:
+                        return false;
+                    case 0x0Aul:
+                        return true;
+                    case 0x0Bul:
+                        return false;
+                    case 0x0Cul:
+                        return false;
+                    case 0x0Dul:
+                        return true;
+                }
+            }
+        #endif
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_77(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        return false;
+    #endif
+}
+
+static bool nrf51_errata_78(void)
+{
+    #ifndef NRF51_SERIES
+        return false;
+    #else
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            uint32_t var1 = ((*(uint32_t *)0xF0000FE0ul) & 0x000000FFul);
+            uint32_t var2 = ((*(uint32_t *)0xF0000FE8ul) & 0x000000F0ul) >> 4;
+        #endif
+        #if defined (NRF51422_XXAA) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAB) || defined (DEVELOP_IN_NRF51422)\
+         || defined (NRF51422_XXAC) || defined (DEVELOP_IN_NRF51422)
+            if (var1 == 0x01)
+            {
+                switch(var2)
+                {
+                    case 0x00ul:
+                        return false;
+                    case 0x01ul:
+                        return false;
+                    case 0x02ul:
+                        return true;
+                    case 0x03ul:
+                        return false;
+                    case 0x04ul:
+                        return true;
+                    case 0x07ul:
+                        return true;
+                    case 0x08ul:
+                        return true;
+                    case 0x09ul:
+                        return true;
+                    case 0x0Aul:
+                        return false;
+                    case 0x0Bul:
+                        return true;
+                    case 0x0Cul:
+                        return true;
+                    case 0x0Dul:
+                        return false;
+                }
+            }
+        #endif
+        return false;
+    #endif
 }
 
 #endif /* NRF51_ERRATAS_H */
