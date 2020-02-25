@@ -127,7 +127,7 @@ SystemInit(void)
     /* Initialize and configure power rails */
     da1469x_prail_initialize();
 #if MYNEWT_VAL(MCU_DCDC_ENABLE)
-    da1469x_prail_dcdc_enable();
+    da1469x_prail_dcdc_initialize();
 #endif
 
     /* Latch all pins. We will unlatch them when initialized to do something. */

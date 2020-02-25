@@ -23,6 +23,7 @@
 #include "mcu/da1469x_lpclk.h"
 #include "mcu/da1469x_pd.h"
 #include "mcu/da1469x_pdc.h"
+#include "mcu/da1469x_prail.h"
 #include "hal/hal_system.h"
 #include "os/os_cputime.h"
 
@@ -33,6 +34,10 @@ static enum hal_reset_reason g_hal_reset_reason;
 void
 hal_system_init(void)
 {
+#if MYNEWT_VAL(MCU_DCDC_ENABLE)
+    da1469x_prail_dcdc_enable();
+#endif
+
     /*
      * RESET_STAT_REG has to be cleared to allow HW set bits during next reset
      * so we should read it now and keep result for application to check at any

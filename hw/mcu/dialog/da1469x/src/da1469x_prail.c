@@ -108,7 +108,7 @@ da1469x_prail_configure_1v4(void)
 
 #if MYNEWT_VAL(MCU_DCDC_ENABLE)
 void
-da1469x_prail_dcdc_enable(void)
+da1469x_prail_dcdc_initialize(void)
 {
     DCDC->DCDC_V18_REG |= DCDC_DCDC_V18_REG_DCDC_V18_ENABLE_HV_Msk;
     DCDC->DCDC_V18_REG &= ~DCDC_DCDC_V18_REG_DCDC_V18_ENABLE_LV_Msk;
@@ -121,7 +121,12 @@ da1469x_prail_dcdc_enable(void)
 
     DCDC->DCDC_V14_REG |= DCDC_DCDC_VDD_REG_DCDC_VDD_ENABLE_HV_Msk;
     DCDC->DCDC_V14_REG |= DCDC_DCDC_VDD_REG_DCDC_VDD_ENABLE_LV_Msk;
+}
 
+void
+da1469x_prail_dcdc_enable(void)
+{
+    /* Retain current DCDC configuration, it needs to be restored after wakeup */
     da1469x_retreg_init(g_mcu_dcdc_config, ARRAY_SIZE(g_mcu_dcdc_config));
     da1469x_retreg_assign(&g_mcu_dcdc_config[0], &DCDC->DCDC_V18_REG);
     da1469x_retreg_assign(&g_mcu_dcdc_config[1], &DCDC->DCDC_V18P_REG);

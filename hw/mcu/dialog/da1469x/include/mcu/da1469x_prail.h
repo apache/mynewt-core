@@ -31,6 +31,11 @@ void da1469x_prail_initialize(void);
 #if MYNEWT_VAL(MCU_DCDC_ENABLE)
 
 /**
+ * Initialize DCDC
+ */
+void da1469x_prail_dcdc_initialize(void);
+
+/**
  * Enable DCDC
  */
 void da1469x_prail_dcdc_enable(void);
