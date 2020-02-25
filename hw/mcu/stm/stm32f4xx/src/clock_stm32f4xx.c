@@ -64,14 +64,13 @@ SystemClock_Config(void)
 
     /*
      * Configure HSI as PLL source; this avoids an error reconfiguring the
-     * PLL when it is already set has the system clock source.
+     * PLL when it is already set as the system clock source.
      */
     osc_init.OscillatorType = RCC_OSCILLATORTYPE_HSI;
     osc_init.HSIState = RCC_HSI_ON;
     osc_init.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
     osc_init.PLL.PLLSource = RCC_PLLSOURCE_HSI;
-    osc_init.PLL.PLLN = RCC_PLLCFGR_PLLN_0;
-    osc_init.PLL.PLLP = RCC_PLLCFGR_PLLP_0;
+    osc_init.PLL.PLLState = RCC_PLL_NONE;
 
     status = HAL_RCC_OscConfig(&osc_init);
     if (status != HAL_OK) {
