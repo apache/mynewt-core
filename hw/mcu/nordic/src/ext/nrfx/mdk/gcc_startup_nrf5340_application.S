@@ -68,7 +68,7 @@ __HeapBase:
 __HeapLimit:
     .size __HeapLimit, . - __HeapLimit
 
-    .section .isr_vector
+    .section .isr_vector, "ax"
     .align 2
     .globl __isr_vector
 __isr_vector:
@@ -100,9 +100,9 @@ __isr_vector:
     .long   0                           /*Reserved */
     .long   SPIM0_SPIS0_TWIM0_TWIS0_UARTE0_IRQHandler
     .long   SPIM1_SPIS1_TWIM1_TWIS1_UARTE1_IRQHandler
-    .long   SPIM2_IRQHandler
-    .long   0                           /*Reserved */
-    .long   0                           /*Reserved */
+    .long   SPIM4_IRQHandler
+    .long   SPIM2_SPIS2_TWIM2_TWIS2_UARTE2_IRQHandler
+    .long   SPIM3_SPIS3_TWIM3_TWIS3_UARTE3_IRQHandler
     .long   GPIOTE0_IRQHandler
     .long   SAADC_IRQHandler
     .long   TIMER0_IRQHandler
@@ -126,7 +126,7 @@ __isr_vector:
     .long   PWM0_IRQHandler
     .long   PWM1_IRQHandler
     .long   PWM2_IRQHandler
-    .long   0                           /*Reserved */
+    .long   PWM3_IRQHandler
     .long   0                           /*Reserved */
     .long   PDM0_IRQHandler
     .long   0                           /*Reserved */
@@ -141,8 +141,8 @@ __isr_vector:
     .long   0                           /*Reserved */
     .long   0                           /*Reserved */
     .long   0                           /*Reserved */
-    .long   QDEC_IRQHandler
-    .long   0                           /*Reserved */
+    .long   QDEC0_IRQHandler
+    .long   QDEC1_IRQHandler
     .long   0                           /*Reserved */
     .long   USBD_IRQHandler
     .long   USBREGULATOR_IRQHandler
@@ -504,7 +504,9 @@ Default_Handler:
     IRQ  CLOCK_POWER_IRQHandler
     IRQ  SPIM0_SPIS0_TWIM0_TWIS0_UARTE0_IRQHandler
     IRQ  SPIM1_SPIS1_TWIM1_TWIS1_UARTE1_IRQHandler
-    IRQ  SPIM2_IRQHandler
+    IRQ  SPIM4_IRQHandler
+    IRQ  SPIM2_SPIS2_TWIM2_TWIS2_UARTE2_IRQHandler
+    IRQ  SPIM3_SPIS3_TWIM3_TWIS3_UARTE3_IRQHandler
     IRQ  GPIOTE0_IRQHandler
     IRQ  SAADC_IRQHandler
     IRQ  TIMER0_IRQHandler
@@ -524,13 +526,15 @@ Default_Handler:
     IRQ  PWM0_IRQHandler
     IRQ  PWM1_IRQHandler
     IRQ  PWM2_IRQHandler
+    IRQ  PWM3_IRQHandler
     IRQ  PDM0_IRQHandler
     IRQ  I2S0_IRQHandler
     IRQ  IPC_IRQHandler
     IRQ  QSPI_IRQHandler
     IRQ  NFCT_IRQHandler
     IRQ  GPIOTE1_IRQHandler
-    IRQ  QDEC_IRQHandler
+    IRQ  QDEC0_IRQHandler
+    IRQ  QDEC1_IRQHandler
     IRQ  USBD_IRQHandler
     IRQ  USBREGULATOR_IRQHandler
     IRQ  KMU_IRQHandler

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 - 2019, Nordic Semiconductor ASA
+ * Copyright (c) 2017 - 2020, Nordic Semiconductor ASA
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,9 +34,6 @@
 #if NRFX_CHECK(NRFX_POWER_ENABLED)
 
 #include <nrfx_power.h>
-#if defined(REGULATORS_PRESENT)
-#include <hal/nrf_regulators.h>
-#endif
 
 #if NRFX_CHECK(NRFX_CLOCK_ENABLED)
 extern bool nrfx_clock_irq_enabled;
@@ -108,7 +105,10 @@ nrfx_err_t nrfx_power_init(nrfx_power_config_t const * p_config)
 
 #if NRF_POWER_HAS_DCDCEN_VDDH
     nrf_power_dcdcen_vddh_set(NRF_POWER, p_config->dcdcenhv);
+#elif NRF_REGULATORS_HAS_DCDCEN_VDDH
+    nrf_regulators_dcdcen_vddh_set(NRF_REGULATORS, p_config->dcdcenhv);
 #endif
+
 #if NRF_POWER_HAS_DCDCEN
     nrf_power_dcdcen_set(NRF_POWER, p_config->dcdcen);
 #elif defined(REGULATORS_PRESENT)
@@ -132,19 +132,19 @@ void nrfx_power_uninit(void)
     {
         NRFX_IRQ_DISABLE(nrfx_get_irq_number(NRF_POWER));
     }
-#if NRF_POWER_HAS_POFCON
+#if NRFX_POWER_SUPPORTS_POFCON
     nrfx_power_pof_uninit();
 #endif
 #if NRF_POWER_HAS_SLEEPEVT
     nrfx_power_sleepevt_uninit();
 #endif
-#if NRF_POWER_HAS_USBREG
+#if NRF_POWER_HAS_USBREG || defined(USBREG_PRESENT)
     nrfx_power_usbevt_uninit();
 #endif
     m_initialized = false;
 }
 
-#if NRF_POWER_HAS_POFCON
+#if NRFX_POWER_SUPPORTS_POFCON
 void nrfx_power_pof_init(nrfx_power_pofwarn_config_t const * p_config)
 {
     NRFX_ASSERT(p_config != NULL);
@@ -159,10 +159,18 @@ void nrfx_power_pof_init(nrfx_power_pofwarn_config_t const * p_config)
 
 void nrfx_power_pof_enable(nrfx_power_pofwarn_config_t const * p_config)
 {
+#if NRF_POWER_HAS_POFCON
     nrf_power_pofcon_set(NRF_POWER, true, p_config->thr);
-#if NRF_POWER_HAS_VDDH
-    nrf_power_pofcon_vddh_set(NRF_POWER, p_config->thrvddh);
+#elif NRF_REGULATORS_HAS_POFCON
+    nrf_regulators_pofcon_set(NRF_REGULATORS, true, p_config->thr);
 #endif
+
+#if NRF_POWER_HAS_POFCON_VDDH
+    nrf_power_pofcon_vddh_set(NRF_POWER, p_config->thrvddh);
+#elif NRF_REGULATORS_HAS_POFCON_VDDH
+    nrf_regulators_pofcon_vddh_set(NRF_REGULATORS, p_config->thrvddh);
+#endif
+
     if (m_pofwarn_handler != NULL)
     {
         nrf_power_int_enable(NRF_POWER, NRF_POWER_INT_POFWARN_MASK);
@@ -171,7 +179,11 @@ void nrfx_power_pof_enable(nrfx_power_pofwarn_config_t const * p_config)
 
 void nrfx_power_pof_disable(void)
 {
+#if NRF_POWER_HAS_POFCON
     nrf_power_pofcon_set(NRF_POWER, false, NRF_POWER_POFTHR_V27);
+#elif NRF_REGULATORS_HAS_POFCON
+    nrf_regulators_pofcon_set(NRF_REGULATORS, false, NRF_REGULATORS_POFTHR_V27);
+#endif
     nrf_power_int_disable(NRF_POWER, NRF_POWER_INT_POFWARN_MASK);
 }
 
@@ -179,7 +191,7 @@ void nrfx_power_pof_uninit(void)
 {
     m_pofwarn_handler = NULL;
 }
-#endif // NRF_POWER_HAS_POFCON
+#endif // NRFX_POWER_SUPPORTS_POFCON
 
 #if NRF_POWER_HAS_SLEEPEVT
 void nrfx_power_sleepevt_init(nrfx_power_sleepevt_config_t const * p_config)
@@ -249,8 +261,11 @@ void nrfx_power_usbevt_disable(void)
 
 void nrfx_power_usbevt_uninit(void)
 {
+    nrfx_power_usbevt_disable();
     m_usbevt_handler = NULL;
 }
+
+
 #endif /* NRF_POWER_HAS_USBREG */
 
 
@@ -258,7 +273,7 @@ void nrfx_power_irq_handler(void)
 {
     uint32_t enabled = nrf_power_int_enable_get(NRF_POWER);
 
-#if NRF_POWER_HAS_POFCON
+#if NRFX_POWER_SUPPORTS_POFCON
     if ((0 != (enabled & NRF_POWER_INT_POFWARN_MASK)) &&
         nrf_power_event_get_and_clear(NRF_POWER, NRF_POWER_EVENT_POFWARN))
     {

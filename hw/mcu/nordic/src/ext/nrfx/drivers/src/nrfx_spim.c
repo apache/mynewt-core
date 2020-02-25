@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 - 2019, Nordic Semiconductor ASA
+ * Copyright (c) 2015 - 2020, Nordic Semiconductor ASA
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,7 +34,8 @@
 #if NRFX_CHECK(NRFX_SPIM_ENABLED)
 
 #if !(NRFX_CHECK(NRFX_SPIM0_ENABLED) || NRFX_CHECK(NRFX_SPIM1_ENABLED) || \
-      NRFX_CHECK(NRFX_SPIM2_ENABLED) || NRFX_CHECK(NRFX_SPIM3_ENABLED))
+      NRFX_CHECK(NRFX_SPIM2_ENABLED) || NRFX_CHECK(NRFX_SPIM3_ENABLED) || \
+      NRFX_CHECK(NRFX_SPIM4_ENABLED))
 #error "No enabled SPIM instances. Check <nrfx_config.h>."
 #endif
 
@@ -121,29 +122,45 @@
 #define SPIM3_SUPPORTED_FREQ_VALIDATE(...)  0
 #endif
 
+#if NRFX_CHECK(NRFX_SPIM4_ENABLED)
+#define SPIM4_LENGTH_VALIDATE(...)          SPIMX_LENGTH_VALIDATE(SPIM4, __VA_ARGS__)
+#define SPIM4_HW_CSN_PRESENT_VALIDATE(...)  SPIMX_HW_CSN_PRESENT_VALIDATE(SPIM4, __VA_ARGS__)
+#define SPIM4_DCX_PRESENT_VALIDATE(...)     SPIMX_DCX_PRESENT_VALIDATE(SPIM4, __VA_ARGS__)
+#define SPIM4_SUPPORTED_FREQ_VALIDATE(...)  SPIMX_SUPPORTED_FREQ_VALIDATE(SPIM4, __VA_ARGS__)
+#else
+#define SPIM4_LENGTH_VALIDATE(...)          0
+#define SPIM4_HW_CSN_PRESENT_VALIDATE(...)  0
+#define SPIM4_DCX_PRESENT_VALIDATE(...)     0
+#define SPIM4_SUPPORTED_FREQ_VALIDATE(...)  0
+#endif
+
 #define SPIM_LENGTH_VALIDATE(drv_inst_idx, rx_len, tx_len)  \
     (SPIM0_LENGTH_VALIDATE(drv_inst_idx, rx_len, tx_len) || \
      SPIM1_LENGTH_VALIDATE(drv_inst_idx, rx_len, tx_len) || \
      SPIM2_LENGTH_VALIDATE(drv_inst_idx, rx_len, tx_len) || \
-     SPIM3_LENGTH_VALIDATE(drv_inst_idx, rx_len, tx_len))
+     SPIM3_LENGTH_VALIDATE(drv_inst_idx, rx_len, tx_len) || \
+     SPIM4_LENGTH_VALIDATE(drv_inst_idx, rx_len, tx_len))
 
 #define SPIM_HW_CSN_PRESENT_VALIDATE(drv_inst_idx)  \
     (SPIM0_HW_CSN_PRESENT_VALIDATE(drv_inst_idx) || \
      SPIM1_HW_CSN_PRESENT_VALIDATE(drv_inst_idx) || \
      SPIM2_HW_CSN_PRESENT_VALIDATE(drv_inst_idx) || \
-     SPIM3_HW_CSN_PRESENT_VALIDATE(drv_inst_idx))
+     SPIM3_HW_CSN_PRESENT_VALIDATE(drv_inst_idx) || \
+     SPIM4_HW_CSN_PRESENT_VALIDATE(drv_inst_idx))
 
 #define SPIM_DCX_PRESENT_VALIDATE(drv_inst_idx)  \
     (SPIM0_DCX_PRESENT_VALIDATE(drv_inst_idx) || \
      SPIM1_DCX_PRESENT_VALIDATE(drv_inst_idx) || \
      SPIM2_DCX_PRESENT_VALIDATE(drv_inst_idx) || \
-     SPIM3_DCX_PRESENT_VALIDATE(drv_inst_idx))
+     SPIM3_DCX_PRESENT_VALIDATE(drv_inst_idx) || \
+     SPIM4_DCX_PRESENT_VALIDATE(drv_inst_idx))
 
 #define SPIM_SUPPORTED_FREQ_VALIDATE(drv_inst_idx, freq)  \
     (SPIM0_SUPPORTED_FREQ_VALIDATE(drv_inst_idx, freq) || \
      SPIM1_SUPPORTED_FREQ_VALIDATE(drv_inst_idx, freq) || \
      SPIM2_SUPPORTED_FREQ_VALIDATE(drv_inst_idx, freq) || \
-     SPIM3_SUPPORTED_FREQ_VALIDATE(drv_inst_idx, freq))
+     SPIM3_SUPPORTED_FREQ_VALIDATE(drv_inst_idx, freq) || \
+     SPIM4_SUPPORTED_FREQ_VALIDATE(drv_inst_idx, freq))
 
 #if defined(NRF52840_XXAA) && (NRFX_CHECK(NRFX_SPIM3_ENABLED))
 // Enable workaround for nRF52840 anomaly 195 (SPIM3 continues to draw current after disable).
@@ -270,6 +287,9 @@ nrfx_err_t nrfx_spim_init(nrfx_spim_t const *        p_instance,
         #endif
         #if NRFX_CHECK(NRFX_SPIM3_ENABLED)
         nrfx_spim_3_irq_handler,
+        #endif
+        #if NRFX_CHECK(NRFX_SPIM4_ENABLED)
+        nrfx_spim_4_irq_handler,
         #endif
     };
     if (nrfx_prs_acquire(p_instance->p_reg,
@@ -751,6 +771,13 @@ void nrfx_spim_2_irq_handler(void)
 void nrfx_spim_3_irq_handler(void)
 {
     irq_handler(NRF_SPIM3, &m_cb[NRFX_SPIM3_INST_IDX]);
+}
+#endif
+
+#if NRFX_CHECK(NRFX_SPIM4_ENABLED)
+void nrfx_spim_4_irq_handler(void)
+{
+    irq_handler(NRF_SPIM4, &m_cb[NRFX_SPIM4_INST_IDX]);
 }
 #endif
 

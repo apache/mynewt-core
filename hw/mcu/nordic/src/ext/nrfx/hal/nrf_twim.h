@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 - 2019, Nordic Semiconductor ASA
+ * Copyright (c) 2015 - 2020, Nordic Semiconductor ASA
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -104,9 +104,12 @@ typedef enum
 /** @brief TWIM master clock frequency. */
 typedef enum
 {
-    NRF_TWIM_FREQ_100K = TWIM_FREQUENCY_FREQUENCY_K100, ///< 100 kbps.
-    NRF_TWIM_FREQ_250K = TWIM_FREQUENCY_FREQUENCY_K250, ///< 250 kbps.
-    NRF_TWIM_FREQ_400K = TWIM_FREQUENCY_FREQUENCY_K400  ///< 400 kbps.
+    NRF_TWIM_FREQ_100K  = TWIM_FREQUENCY_FREQUENCY_K100, ///< 100 kbps.
+    NRF_TWIM_FREQ_250K  = TWIM_FREQUENCY_FREQUENCY_K250, ///< 250 kbps.
+    NRF_TWIM_FREQ_400K  = TWIM_FREQUENCY_FREQUENCY_K400, ///< 400 kbps.
+#if defined(TWIM_FREQUENCY_FREQUENCY_K1000) || defined(__NRFX_DOXYGEN__)
+    NRF_TWIM_FREQ_1000K = TWIM_FREQUENCY_FREQUENCY_K1000 ///< 1000 kbps.
+#endif
 } nrf_twim_frequency_t;
 
 /** @brief TWIM error source. */
@@ -350,6 +353,15 @@ NRF_STATIC_INLINE void nrf_twim_shorts_set(NRF_TWIM_Type * p_reg,
                                            uint32_t        mask);
 
 /**
+ * @brief Function for getting the shortcut setting.
+ *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ *
+ * @return Current shortcut configuration.
+ */
+NRF_STATIC_INLINE uint32_t nrf_twim_shorts_get(NRF_TWIM_Type const * p_reg);
+
+/**
  * @brief Function for getting the amount of transmitted bytes.
  *
  * @param[in] p_reg Pointer to the structure of registers of the peripheral.
@@ -551,6 +563,11 @@ NRF_STATIC_INLINE void nrf_twim_shorts_set(NRF_TWIM_Type * p_reg,
                                            uint32_t mask)
 {
     p_reg->SHORTS = mask;
+}
+
+NRF_STATIC_INLINE uint32_t nrf_twim_shorts_get(NRF_TWIM_Type const * p_reg)
+{
+    return p_reg->SHORTS;
 }
 
 NRF_STATIC_INLINE size_t nrf_twim_txd_amount_get(NRF_TWIM_Type const * p_reg)

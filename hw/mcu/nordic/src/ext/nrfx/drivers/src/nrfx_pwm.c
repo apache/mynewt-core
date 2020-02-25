@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 - 2019, Nordic Semiconductor ASA
+ * Copyright (c) 2015 - 2020, Nordic Semiconductor ASA
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -92,16 +92,19 @@ static void configure_pins(nrfx_pwm_t const *        p_instance,
             bool inverted = output_pin &  NRFX_PWM_PIN_INVERTED;
             out_pins[i]   = output_pin & ~NRFX_PWM_PIN_INVERTED;
 
-            if (inverted)
+            if (!p_config->skip_gpio_cfg)
             {
-                nrf_gpio_pin_set(out_pins[i]);
-            }
-            else
-            {
-                nrf_gpio_pin_clear(out_pins[i]);
-            }
+                if (inverted)
+                {
+                    nrf_gpio_pin_set(out_pins[i]);
+                }
+                else
+                {
+                    nrf_gpio_pin_clear(out_pins[i]);
+                }
 
-            nrf_gpio_cfg_output(out_pins[i]);
+                nrf_gpio_cfg_output(out_pins[i]);
+            }
         }
         else
         {
@@ -365,14 +368,22 @@ bool nrfx_pwm_stop(nrfx_pwm_t const * p_instance,
 
     bool ret_val = false;
 
+    // Deactivate shortcuts before triggering the STOP task, otherwise the PWM
+    // could be immediately started again if the LOOPSDONE event occurred in
+    // the same peripheral clock cycle as the STOP task was triggered.
+    nrf_pwm_shorts_set(p_instance->p_registers, 0);
+
+    // Trigger the STOP task even if the PWM appears to be already stopped.
+    // It won't harm, but it could help if for some strange reason the stopped
+    // status was not reported correctly.
+    nrf_pwm_task_trigger(p_instance->p_registers, NRF_PWM_TASK_STOP);
+
     if (nrfx_pwm_is_stopped(p_instance))
     {
         ret_val = true;
     }
     else
     {
-        nrf_pwm_task_trigger(p_instance->p_registers, NRF_PWM_TASK_STOP);
-
         do {
             if (nrfx_pwm_is_stopped(p_instance))
             {

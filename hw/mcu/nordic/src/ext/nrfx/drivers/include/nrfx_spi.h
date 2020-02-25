@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 - 2019, Nordic Semiconductor ASA
+ * Copyright (c) 2015 - 2020, Nordic Semiconductor ASA
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -116,6 +116,7 @@ typedef struct
  * - clock frequency 4 MHz
  * - mode 0 enabled (SCK active high, sample on leading edge of clock)
  * - MSB shifted out first
+ * - MISO pull-up disabled
  *
  * @param[in] _pin_sck  SCK pin.
  * @param[in] _pin_mosi MOSI pin.
@@ -133,6 +134,7 @@ typedef struct
     .frequency    = NRF_SPI_FREQ_4M,                                        \
     .mode         = NRF_SPI_MODE_0,                                         \
     .bit_order    = NRF_SPI_BIT_ORDER_MSB_FIRST,                            \
+    .miso_pull    = NRF_GPIO_PIN_NOPULL,                                    \
 }
 
 /** @brief Single transfer descriptor structure. */

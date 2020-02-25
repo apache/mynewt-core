@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 - 2019, Nordic Semiconductor ASA
+ * Copyright (c) 2014 - 2020, Nordic Semiconductor ASA
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -70,7 +70,7 @@ typedef struct
  *
  * @param[in] _input Comparator input pin.
  */
-#ifdef NRF52_SERIES
+#if defined(LPCOMP_FEATURE_HYST_PRESENT)
 #define NRFX_LPCOMP_DEFAULT_CONFIG(_input)                         \
 {                                                                  \
     .hal    = {  NRF_LPCOMP_REF_SUPPLY_4_8,                        \
