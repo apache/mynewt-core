@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 - 2019, Nordic Semiconductor ASA
+ * Copyright (c) 2015 - 2020, Nordic Semiconductor ASA
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -219,7 +219,7 @@ typedef union {
  *       SEQ[n].REFRESH and SEQ[n].ENDDELAY registers in the peripheral,
  *       respectively) are ignored at the end of a complex sequence
  *       playback, indicated by the LOOPSDONE event.
- *       See the @linkProductSpecification52 for more information.
+ *       See the Product Specification for more information.
  */
 typedef struct
 {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 - 2019, Nordic Semiconductor ASA
+ * Copyright (c) 2015 - 2020, Nordic Semiconductor ASA
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -73,9 +73,9 @@ static nrfx_pdm_cb_t m_cb;
 
 void nrfx_pdm_irq_handler(void)
 {
-    if (nrf_pdm_event_check(NRF_PDM, NRF_PDM_EVENT_STARTED))
+    if (nrf_pdm_event_check(NRF_PDM0, NRF_PDM_EVENT_STARTED))
     {
-        nrf_pdm_event_clear(NRF_PDM, NRF_PDM_EVENT_STARTED);
+        nrf_pdm_event_clear(NRF_PDM0, NRF_PDM_EVENT_STARTED);
         NRFX_LOG_DEBUG("Event: %s.", EVT_TO_STR(NRF_PDM_EVENT_STARTED));
 
         uint8_t finished_buffer = m_cb.active_buffer;
@@ -125,11 +125,11 @@ void nrfx_pdm_irq_handler(void)
             m_cb.op_state = NRFX_PDM_STATE_RUNNING;
         }
     }
-    else if (nrf_pdm_event_check(NRF_PDM, NRF_PDM_EVENT_STOPPED))
+    else if (nrf_pdm_event_check(NRF_PDM0, NRF_PDM_EVENT_STOPPED))
     {
-        nrf_pdm_event_clear(NRF_PDM, NRF_PDM_EVENT_STOPPED);
+        nrf_pdm_event_clear(NRF_PDM0, NRF_PDM_EVENT_STOPPED);
         NRFX_LOG_DEBUG("Event: %s.", EVT_TO_STR(NRF_PDM_EVENT_STOPPED));
-        nrf_pdm_disable(NRF_PDM);
+        nrf_pdm_disable(NRF_PDM0);
         m_cb.op_state = NRFX_PDM_STATE_IDLE;
 
         // Release the buffers.
@@ -200,21 +200,28 @@ nrfx_err_t nrfx_pdm_init(nrfx_pdm_config_t const * p_config,
     m_cb.event_handler = event_handler;
     m_cb.op_state = NRFX_PDM_STATE_IDLE;
 
-    nrf_pdm_clock_set(NRF_PDM, p_config->clock_freq);
-    nrf_pdm_mode_set(NRF_PDM, p_config->mode, p_config->edge);
-    nrf_pdm_gain_set(NRF_PDM, p_config->gain_l, p_config->gain_r);
+#if NRF_PDM_HAS_RATIO_CONFIG
+    nrf_pdm_ratio_set(NRF_PDM0, p_config->ratio);
+#endif
+
+#if NRF_PDM_HAS_MCLKCONFIG
+    nrf_pdm_mclksrc_configure(NRF_PDM0, p_config->mclksrc);
+#endif
+    nrf_pdm_clock_set(NRF_PDM0, p_config->clock_freq);
+    nrf_pdm_mode_set(NRF_PDM0, p_config->mode, p_config->edge);
+    nrf_pdm_gain_set(NRF_PDM0, p_config->gain_l, p_config->gain_r);
 
     nrf_gpio_cfg_output(p_config->pin_clk);
     nrf_gpio_pin_clear(p_config->pin_clk);
     nrf_gpio_cfg_input(p_config->pin_din, NRF_GPIO_PIN_NOPULL);
-    nrf_pdm_psel_connect(NRF_PDM, p_config->pin_clk, p_config->pin_din);
+    nrf_pdm_psel_connect(NRF_PDM0, p_config->pin_clk, p_config->pin_din);
 
-    nrf_pdm_event_clear(NRF_PDM, NRF_PDM_EVENT_STARTED);
-    nrf_pdm_event_clear(NRF_PDM, NRF_PDM_EVENT_END);
-    nrf_pdm_event_clear(NRF_PDM, NRF_PDM_EVENT_STOPPED);
-    nrf_pdm_int_enable(NRF_PDM, NRF_PDM_INT_STARTED | NRF_PDM_INT_STOPPED);
-    NRFX_IRQ_PRIORITY_SET(nrfx_get_irq_number(NRF_PDM), p_config->interrupt_priority);
-    NRFX_IRQ_ENABLE(nrfx_get_irq_number(NRF_PDM));
+    nrf_pdm_event_clear(NRF_PDM0, NRF_PDM_EVENT_STARTED);
+    nrf_pdm_event_clear(NRF_PDM0, NRF_PDM_EVENT_END);
+    nrf_pdm_event_clear(NRF_PDM0, NRF_PDM_EVENT_STOPPED);
+    nrf_pdm_int_enable(NRF_PDM0, NRF_PDM_INT_STARTED | NRF_PDM_INT_STOPPED);
+    NRFX_IRQ_PRIORITY_SET(nrfx_get_irq_number(NRF_PDM0), p_config->interrupt_priority);
+    NRFX_IRQ_ENABLE(nrfx_get_irq_number(NRF_PDM0));
     m_cb.drv_state = NRFX_DRV_STATE_INITIALIZED;
 
     err_code = NRFX_SUCCESS;
@@ -226,8 +233,8 @@ nrfx_err_t nrfx_pdm_init(nrfx_pdm_config_t const * p_config,
 
 void nrfx_pdm_uninit(void)
 {
-    nrf_pdm_disable(NRF_PDM);
-    nrf_pdm_psel_disconnect(NRF_PDM);
+    nrf_pdm_disable(NRF_PDM0);
+    nrf_pdm_psel_disconnect(NRF_PDM0);
     m_cb.drv_state = NRFX_DRV_STATE_UNINITIALIZED;
     NRFX_LOG_INFO("Uninitialized.");
 }
@@ -235,15 +242,15 @@ void nrfx_pdm_uninit(void)
 static void pdm_start()
 {
     m_cb.drv_state = NRFX_DRV_STATE_POWERED_ON;
-    nrf_pdm_enable(NRF_PDM);
-    nrf_pdm_event_clear(NRF_PDM, NRF_PDM_EVENT_STARTED);
-    nrf_pdm_task_trigger(NRF_PDM, NRF_PDM_TASK_START);
+    nrf_pdm_enable(NRF_PDM0);
+    nrf_pdm_event_clear(NRF_PDM0, NRF_PDM_EVENT_STARTED);
+    nrf_pdm_task_trigger(NRF_PDM0, NRF_PDM_TASK_START);
 }
 
 static void pdm_buf_request()
 {
     m_cb.irq_buff_request = 1;
-    NRFX_IRQ_PENDING_SET(nrfx_get_irq_number(NRF_PDM));
+    NRFX_IRQ_PENDING_SET(nrfx_get_irq_number(NRF_PDM0));
 }
 
 nrfx_err_t nrfx_pdm_start(void)
@@ -296,7 +303,7 @@ nrfx_err_t nrfx_pdm_buffer_set(int16_t * buffer, uint16_t buffer_length)
     nrfx_err_t err_code = NRFX_SUCCESS;
 
     // Enter the PDM critical section.
-    NRFX_IRQ_DISABLE(nrfx_get_irq_number(NRF_PDM));
+    NRFX_IRQ_DISABLE(nrfx_get_irq_number(NRF_PDM0));
 
     uint8_t next_buffer = (~m_cb.active_buffer) & 0x01;
     if (m_cb.op_state == NRFX_PDM_STATE_STARTING)
@@ -313,7 +320,7 @@ nrfx_err_t nrfx_pdm_buffer_set(int16_t * buffer, uint16_t buffer_length)
     {
         m_cb.buff_address[next_buffer] = buffer;
         m_cb.buff_length[next_buffer] = buffer_length;
-        nrf_pdm_buffer_set(NRF_PDM, (uint32_t *)buffer, buffer_length);
+        nrf_pdm_buffer_set(NRF_PDM0, (uint32_t *)buffer, buffer_length);
 
         if (m_cb.drv_state != NRFX_DRV_STATE_POWERED_ON)
         {
@@ -321,7 +328,7 @@ nrfx_err_t nrfx_pdm_buffer_set(int16_t * buffer, uint16_t buffer_length)
         }
     }
 
-    NRFX_IRQ_ENABLE(nrfx_get_irq_number(NRF_PDM));
+    NRFX_IRQ_ENABLE(nrfx_get_irq_number(NRF_PDM0));
     return err_code;
 }
 
@@ -335,7 +342,7 @@ nrfx_err_t nrfx_pdm_stop(void)
         if (m_cb.op_state == NRFX_PDM_STATE_IDLE ||
             m_cb.op_state == NRFX_PDM_STATE_STARTING)
         {
-            nrf_pdm_disable(NRF_PDM);
+            nrf_pdm_disable(NRF_PDM0);
             m_cb.op_state = NRFX_PDM_STATE_IDLE;
             err_code = NRFX_SUCCESS;
             NRFX_LOG_INFO("Function: %s, error code: %s.",
@@ -352,7 +359,7 @@ nrfx_err_t nrfx_pdm_stop(void)
     m_cb.drv_state = NRFX_DRV_STATE_INITIALIZED;
     m_cb.op_state = NRFX_PDM_STATE_STOPPING;
 
-    nrf_pdm_task_trigger(NRF_PDM, NRF_PDM_TASK_STOP);
+    nrf_pdm_task_trigger(NRF_PDM0, NRF_PDM_TASK_STOP);
     err_code = NRFX_SUCCESS;
     NRFX_LOG_INFO("Function: %s, error code: %s.", __func__, NRFX_LOG_ERROR_STRING_GET(err_code));
     return err_code;

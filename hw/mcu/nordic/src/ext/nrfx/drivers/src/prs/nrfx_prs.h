@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 - 2019, Nordic Semiconductor ASA
+ * Copyright (c) 2017 - 2020, Nordic Semiconductor ASA
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -82,8 +82,12 @@ extern "C" {
     #define NRFX_PRS_BOX_0_ADDR     NRF_UARTE0
     // SPIM1, SPIS1, TWIM1, TWIS1, UARTE1
     #define NRFX_PRS_BOX_1_ADDR     NRF_UARTE1
+    // SPIM2, SPIS2, TWIM2, TWIS2, UARTE2
+    #define NRFX_PRS_BOX_2_ADDR     NRF_UARTE2
+    // SPIM3, SPIS3, TWIM3, TWIS3, UARTE3
+    #define NRFX_PRS_BOX_3_ADDR     NRF_UARTE3
     // COMP, LPCOMP
-    #define NRFX_PRS_BOX_2_ADDR     NRF_COMP
+    #define NRFX_PRS_BOX_4_ADDR     NRF_COMP
 #elif defined(NRF5340_XXAA_NETWORK)
     // SPIM0, SPIS0, TWIM0, TWIS0, UARTE0
     #define NRFX_PRS_BOX_0_ADDR     NRF_UARTE0

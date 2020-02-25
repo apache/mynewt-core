@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 - 2019, Nordic Semiconductor ASA
+ * Copyright (c) 2016 - 2020, Nordic Semiconductor ASA
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -45,6 +45,34 @@ extern "C" {
  * @brief   Hardware access layer for managing the QSPI peripheral.
  */
 
+#if defined(QSPI_XIPEN_XIPEN_Msk) || defined(__NRFX_DOXYGEN__)
+/** @brief Symbol indicating whether XIP can be explicitly enabled or disabled via XIPEN register. */
+#define NRF_QSPI_HAS_XIPEN 1
+#else
+#define NRF_QSPI_HAS_XIPEN 0
+#endif
+
+#if defined(QSPI_XIP_ENC_ENABLE_ENABLE_Msk) || defined(__NRFX_DOXYGEN__)
+/** @brief Symbol indicating whether encryption for XIP is present. */
+#define NRF_QSPI_HAS_XIP_ENC 1
+#else
+#define NRF_QSPI_HAS_XIP_ENC 0
+#endif
+
+#if defined(QSPI_DMA_ENC_ENABLE_ENABLE_Msk) || defined(__NRFX_DOXYGEN__)
+/** @brief Symbol indicating whether encryption for EasyDMA is present. */
+#define NRF_QSPI_HAS_DMA_ENC 1
+#else
+#define NRF_QSPI_HAS_DMA_ENC 0
+#endif
+
+#if defined(NRF53_SERIES) || defined(__NRFX_DOXYGEN__)
+/** @brief Value representing QSPI base clock frequency. */
+#define NRF_QSPI_BASE_CLOCK_FREQ 96000000uL
+#else
+#define NRF_QSPI_BASE_CLOCK_FREQ 32000000uL
+#endif
+
 /**
  * @brief This value can be used as a parameter for the @ref nrf_qspi_pins_set
  *        function to specify that a given QSPI signal (SCK, CSN, IO0, IO1, IO2, or IO3)
@@ -78,26 +106,46 @@ typedef enum
     NRF_QSPI_INT_READY_MASK = QSPI_INTENSET_READY_Msk /**< Interrupt on READY event. */
 } nrf_qspi_int_mask_t;
 
-/** @brief QSPI frequency divider values. */
+/** @brief QSPI base clock frequency divider values. */
 typedef enum
 {
-    NRF_QSPI_FREQ_32MDIV1,  /**< 32.0 MHz. */
-    NRF_QSPI_FREQ_32MDIV2,  /**< 16.0 MHz. */
-    NRF_QSPI_FREQ_32MDIV3,  /**< 10.6 MHz. */
-    NRF_QSPI_FREQ_32MDIV4,  /**< 8.00 MHz. */
-    NRF_QSPI_FREQ_32MDIV5,  /**< 6.40 MHz. */
-    NRF_QSPI_FREQ_32MDIV6,  /**< 5.33 MHz. */
-    NRF_QSPI_FREQ_32MDIV7,  /**< 4.57 MHz. */
-    NRF_QSPI_FREQ_32MDIV8,  /**< 4.00 MHz. */
-    NRF_QSPI_FREQ_32MDIV9,  /**< 3.55 MHz. */
-    NRF_QSPI_FREQ_32MDIV10, /**< 3.20 MHz. */
-    NRF_QSPI_FREQ_32MDIV11, /**< 2.90 MHz. */
-    NRF_QSPI_FREQ_32MDIV12, /**< 2.66 MHz. */
-    NRF_QSPI_FREQ_32MDIV13, /**< 2.46 MHz. */
-    NRF_QSPI_FREQ_32MDIV14, /**< 2.29 MHz. */
-    NRF_QSPI_FREQ_32MDIV15, /**< 2.13 MHz. */
-    NRF_QSPI_FREQ_32MDIV16, /**< 2.00 MHz. */
+    NRF_QSPI_FREQ_DIV1,  /**< Divide by 1. */
+    NRF_QSPI_FREQ_DIV2,  /**< Divide by 2. */
+    NRF_QSPI_FREQ_DIV3,  /**< Divide by 3. */
+    NRF_QSPI_FREQ_DIV4,  /**< Divide by 4. */
+    NRF_QSPI_FREQ_DIV5,  /**< Divide by 5. */
+    NRF_QSPI_FREQ_DIV6,  /**< Divide by 6. */
+    NRF_QSPI_FREQ_DIV7,  /**< Divide by 7. */
+    NRF_QSPI_FREQ_DIV8,  /**< Divide by 8. */
+    NRF_QSPI_FREQ_DIV9,  /**< Divide by 9. */
+    NRF_QSPI_FREQ_DIV10, /**< Divide by 10. */
+    NRF_QSPI_FREQ_DIV11, /**< Divide by 11. */
+    NRF_QSPI_FREQ_DIV12, /**< Divide by 12. */
+    NRF_QSPI_FREQ_DIV13, /**< Divide by 13. */
+    NRF_QSPI_FREQ_DIV14, /**< Divide by 14. */
+    NRF_QSPI_FREQ_DIV15, /**< Divide by 15. */
+    NRF_QSPI_FREQ_DIV16, /**< Divide by 16. */
 } nrf_qspi_frequency_t;
+
+#if defined(NRF52_SERIES)
+/** Symbols translation for backward compatibility. */
+#define NRF_QSPI_FREQ_32MDIV1  NRF_QSPI_FREQ_DIV1
+#define NRF_QSPI_FREQ_32MDIV2  NRF_QSPI_FREQ_DIV2
+#define NRF_QSPI_FREQ_32MDIV3  NRF_QSPI_FREQ_DIV3
+#define NRF_QSPI_FREQ_32MDIV4  NRF_QSPI_FREQ_DIV4
+#define NRF_QSPI_FREQ_32MDIV5  NRF_QSPI_FREQ_DIV5
+#define NRF_QSPI_FREQ_32MDIV6  NRF_QSPI_FREQ_DIV6
+#define NRF_QSPI_FREQ_32MDIV7  NRF_QSPI_FREQ_DIV7
+#define NRF_QSPI_FREQ_32MDIV8  NRF_QSPI_FREQ_DIV8
+#define NRF_QSPI_FREQ_32MDIV9  NRF_QSPI_FREQ_DIV9
+#define NRF_QSPI_FREQ_32MDIV10 NRF_QSPI_FREQ_DIV10
+#define NRF_QSPI_FREQ_32MDIV11 NRF_QSPI_FREQ_DIV11
+#define NRF_QSPI_FREQ_32MDIV12 NRF_QSPI_FREQ_DIV12
+#define NRF_QSPI_FREQ_32MDIV13 NRF_QSPI_FREQ_DIV13
+#define NRF_QSPI_FREQ_32MDIV14 NRF_QSPI_FREQ_DIV14
+#define NRF_QSPI_FREQ_32MDIV15 NRF_QSPI_FREQ_DIV15
+#define NRF_QSPI_FREQ_32MDIV16 NRF_QSPI_FREQ_DIV16
+#endif
 
 /** @brief Interface configuration for a read operation. */
 typedef enum
@@ -171,10 +219,10 @@ typedef struct
     uint8_t io0_pin; /**< IO0/MOSI pin number. */
     uint8_t io1_pin; /**< IO1/MISO pin number. */
     uint8_t io2_pin; /**< IO2 pin number (optional).
-                      * Set to @ref NRF_QSPI_PIN_NOT_CONNECTED if this signal is not needed.
+                      *   Set to @ref NRF_QSPI_PIN_NOT_CONNECTED if this signal is not needed.
                       */
     uint8_t io3_pin; /**< IO3 pin number (optional).
-                      * Set to @ref NRF_QSPI_PIN_NOT_CONNECTED if this signal is not needed.
+                      *   Set to @ref NRF_QSPI_PIN_NOT_CONNECTED if this signal is not needed.
                       */
 } nrf_qspi_pins_t;
 
@@ -215,9 +263,26 @@ typedef struct
     uint8_t              sck_delay; /**< tSHSL, tWHSL, and tSHWL in number of 16 MHz periods (62.5ns). */
     bool                 dpmen;     /**< Enable the DPM feature. */
     nrf_qspi_spi_mode_t  spi_mode;  /**< SPI phase and polarization. */
-    nrf_qspi_frequency_t sck_freq;  /**< SCK frequency given as enum @ref nrf_qspi_frequency_t. */
+    nrf_qspi_frequency_t sck_freq;  /**< SCK frequency given as QSPI base clock frequency divider.
+                                     *   To calculate @p sck_freq value corresponding to chosen frequency,
+                                     *   use the following equation:
+                                     *
+                                     *   sck_freq = (NRF_QSPI_BASE_CLOCK_FREQ / frequency) - 1
+                                     *
+                                     *   @note Achievable frequencies are determined by available
+                                     *         divider values and QSPI base clock frequency.
+                                     */
 } nrf_qspi_phy_conf_t;
 
+
+#if NRF_QSPI_HAS_XIP_ENC || NRF_QSPI_HAS_DMA_ENC
+/** @brief QSPI encryption settings for XIP and DMA transfers. */
+typedef struct
+{
+    uint32_t key[4];   /**< AES 128-bit key, stored on 4 32-bit words. */
+    uint32_t nonce[3]; /**< AES 96-bit nonce, stored on 3 32-bit words. */
+} nrf_qspi_encryption_t;
+#endif
 
 /**
  * @brief Function for activating the specified QSPI task.
@@ -499,6 +564,56 @@ NRF_STATIC_INLINE void nrf_qspi_cinstr_long_transfer_continue(NRF_QSPI_Type *   
                                                               nrf_qspi_cinstr_len_t length,
                                                               bool                  finalize);
 
+#if NRF_QSPI_HAS_XIPEN
+/**
+ * @brief Function for enabling or disabling Execute in Place (XIP) operation.
+ *
+ * @note XIP can be enabled after reset. See Product Specification.
+ *
+ * @param[in] p_reg  Pointer to the structure of registers of the peripheral.
+ * @param[in] enable True if XIP is to be enabled, false otherwise.
+ */
+NRF_STATIC_INLINE void nrf_qspi_xip_set(NRF_QSPI_Type * p_reg, bool enable);
+#endif
+
+#if NRF_QSPI_HAS_XIP_ENC
+/**
+ * @brief Function for configuring the XIP encryption.
+ *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] p_cfg Pointer to encryption configuration structure.
+ */
+NRF_STATIC_INLINE void nrf_qspi_xip_encryption_configure(NRF_QSPI_Type *               p_reg,
+                                                         nrf_qspi_encryption_t const * p_cfg);
+
+/**
+ * @brief Function for enabling or disabling the XIP encryption.
+ *
+ * @param[in] p_reg  Pointer to the structure of registers of the peripheral.
+ * @param[in] enable True if XIP encryption is to be enabled, false otherwise.
+ */
+NRF_STATIC_INLINE void nrf_qspi_xip_encryption_set(NRF_QSPI_Type * p_reg, bool enable);
+#endif
+
+#if NRF_QSPI_HAS_DMA_ENC
+/**
+ * @brief Function for configuring the EasyDMA encryption.
+ *
+ * @param[in] p_reg Pointer to the structure of registers of the peripheral.
+ * @param[in] p_cfg Pointer to encryption configuration structure.
+ */
+NRF_STATIC_INLINE void nrf_qspi_dma_encryption_configure(NRF_QSPI_Type *               p_reg,
+                                                         nrf_qspi_encryption_t const * p_cfg);
+
+/**
+ * @brief Function for enabling or disabling the EasyDMA encryption.
+ *
+ * @param[in] p_reg  Pointer to the structure of registers of the peripheral.
+ * @param[in] enable True if EasyDMA encryption is to be enabled, false otherwise.
+ */
+NRF_STATIC_INLINE void nrf_qspi_dma_encryption_set(NRF_QSPI_Type * p_reg, bool enable);
+#endif
+
 #ifndef NRF_DECLARE_ONLY
 
 NRF_STATIC_INLINE void nrf_qspi_task_trigger(NRF_QSPI_Type * p_reg, nrf_qspi_task_t task)
@@ -779,6 +894,55 @@ NRF_STATIC_INLINE void nrf_qspi_cinstr_long_transfer_continue(NRF_QSPI_Type *   
     p_reg->CINSTRCONF = mask;
 }
 
+#if NRF_QSPI_HAS_XIPEN
+NRF_STATIC_INLINE void nrf_qspi_xip_set(NRF_QSPI_Type * p_reg, bool enable)
+{
+    p_reg->XIPEN = (enable ? QSPI_XIPEN_XIPEN_Enable << QSPI_XIPEN_XIPEN_Pos
+                           : QSPI_XIPEN_XIPEN_Disable << QSPI_XIPEN_XIPEN_Pos);
+}
+#endif
+
+#if NRF_QSPI_HAS_XIP_ENC
+NRF_STATIC_INLINE void nrf_qspi_xip_encryption_configure(NRF_QSPI_Type *               p_reg,
+                                                         nrf_qspi_encryption_t const * p_cfg)
+{
+    p_reg->XIP_ENC.KEY0 = p_cfg->key[0];
+    p_reg->XIP_ENC.KEY1 = p_cfg->key[1];
+    p_reg->XIP_ENC.KEY2 = p_cfg->key[2];
+    p_reg->XIP_ENC.KEY3 = p_cfg->key[3];
+    p_reg->XIP_ENC.NONCE0 = p_cfg->nonce[0];
+    p_reg->XIP_ENC.NONCE1 = p_cfg->nonce[1];
+    p_reg->XIP_ENC.NONCE2 = p_cfg->nonce[2];
+}
+
+NRF_STATIC_INLINE void nrf_qspi_xip_encryption_set(NRF_QSPI_Type * p_reg, bool enable)
+{
+    p_reg->XIP_ENC.ENABLE =
+        (enable ? QSPI_XIP_ENC_ENABLE_ENABLE_Enabled << QSPI_XIP_ENC_ENABLE_ENABLE_Pos
+                : QSPI_XIP_ENC_ENABLE_ENABLE_Disabled << QSPI_XIP_ENC_ENABLE_ENABLE_Pos);
+}
+#endif
+
+#if NRF_QSPI_HAS_DMA_ENC
+NRF_STATIC_INLINE void nrf_qspi_dma_encryption_configure(NRF_QSPI_Type *               p_reg,
+                                                         nrf_qspi_encryption_t const * p_cfg)
+{
+    p_reg->DMA_ENC.KEY0 = p_cfg->key[0];
+    p_reg->DMA_ENC.KEY1 = p_cfg->key[1];
+    p_reg->DMA_ENC.KEY2 = p_cfg->key[2];
+    p_reg->DMA_ENC.KEY3 = p_cfg->key[3];
+    p_reg->DMA_ENC.NONCE0 = p_cfg->nonce[0];
+    p_reg->DMA_ENC.NONCE1 = p_cfg->nonce[1];
+    p_reg->DMA_ENC.NONCE2 = p_cfg->nonce[2];
+}
+
+NRF_STATIC_INLINE void nrf_qspi_dma_encryption_set(NRF_QSPI_Type * p_reg, bool enable)
+{
+    p_reg->DMA_ENC.ENABLE =
+        (enable ? QSPI_DMA_ENC_ENABLE_ENABLE_Enabled << QSPI_DMA_ENC_ENABLE_ENABLE_Pos
+                : QSPI_DMA_ENC_ENABLE_ENABLE_Disabled << QSPI_DMA_ENC_ENABLE_ENABLE_Pos);
+}
+#endif
 #endif // NRF_DECLARE_ONLY
 
 /** @} */

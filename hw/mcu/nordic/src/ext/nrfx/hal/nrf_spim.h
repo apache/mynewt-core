@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 - 2019, Nordic Semiconductor ASA
+ * Copyright (c) 2015 - 2020, Nordic Semiconductor ASA
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -57,21 +57,24 @@ extern "C" {
     (NRFX_CHECK(SPIM0_FEATURE_HARDWARE_CSN_PRESENT) || \
      NRFX_CHECK(SPIM1_FEATURE_HARDWARE_CSN_PRESENT) || \
      NRFX_CHECK(SPIM2_FEATURE_HARDWARE_CSN_PRESENT) || \
-     NRFX_CHECK(SPIM3_FEATURE_HARDWARE_CSN_PRESENT))
+     NRFX_CHECK(SPIM3_FEATURE_HARDWARE_CSN_PRESENT) || \
+     NRFX_CHECK(SPIM4_FEATURE_HARDWARE_CSN_PRESENT))
 
 /** @brief Macro for checking if the DCX pin control is available. */
 #define NRF_SPIM_DCX_PRESENT                  \
     (NRFX_CHECK(SPIM0_FEATURE_DCX_PRESENT) || \
      NRFX_CHECK(SPIM1_FEATURE_DCX_PRESENT) || \
      NRFX_CHECK(SPIM2_FEATURE_DCX_PRESENT) || \
-     NRFX_CHECK(SPIM3_FEATURE_DCX_PRESENT))
+     NRFX_CHECK(SPIM3_FEATURE_DCX_PRESENT) || \
+     NRFX_CHECK(SPIM4_FEATURE_DCX_PRESENT))
 
 /** @brief Macro for checking if the RXDELAY function is available. */
 #define NRF_SPIM_RXDELAY_PRESENT                  \
     (NRFX_CHECK(SPIM0_FEATURE_RXDELAY_PRESENT) || \
      NRFX_CHECK(SPIM1_FEATURE_RXDELAY_PRESENT) || \
      NRFX_CHECK(SPIM2_FEATURE_RXDELAY_PRESENT) || \
-     NRFX_CHECK(SPIM3_FEATURE_RXDELAY_PRESENT))
+     NRFX_CHECK(SPIM3_FEATURE_RXDELAY_PRESENT) || \
+     NRFX_CHECK(SPIM4_FEATURE_RXDELAY_PRESENT))
 
 #if defined(NRF_SPIM_DCX_PRESENT) || defined(__NRFX_DOXYGEN__)
 /**

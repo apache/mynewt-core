@@ -296,7 +296,7 @@ POSSIBILITY OF SUCH DAMAGE.
             <description>Code memory page size in bytes</description>
             <addressOffset>0x020</addressOffset>
             <access>read-only</access>
-            <resetValue>0xFFFFFFFF</resetValue>
+            <resetValue>0x00000800</resetValue>
             <fields>
               <field>
                 <name>CODEPAGESIZE</name>
@@ -318,7 +318,7 @@ POSSIBILITY OF SUCH DAMAGE.
             <description>Code memory size</description>
             <addressOffset>0x024</addressOffset>
             <access>read-only</access>
-            <resetValue>0xFFFFFFFF</resetValue>
+            <resetValue>0x00000080</resetValue>
             <fields>
               <field>
                 <name>CODESIZE</name>
@@ -340,7 +340,7 @@ POSSIBILITY OF SUCH DAMAGE.
             <description>Device type</description>
             <addressOffset>0x028</addressOffset>
             <access>read-only</access>
-            <resetValue>0xFFFFFFFF</resetValue>
+            <resetValue>0x00000000</resetValue>
             <fields>
               <field>
                 <name>DEVICETYPE</name>
@@ -2026,9 +2026,9 @@ POSSIBILITY OF SUCH DAMAGE.
               <description>CPU ID</description>
               <lsb>0</lsb>
               <msb>7</msb>
-              </field>
-            </fields>
-          </register>
+            </field>
+          </fields>
+        </register>
       </registers>
     </peripheral>
     <peripheral>
@@ -2128,13 +2128,13 @@ POSSIBILITY OF SUCH DAMAGE.
       <registers>
         <register>
           <name>TASKS_HFCLKSTART</name>
-          <description>Start HFCLK source</description>
+          <description>Start HFCLK128M/HFCLK64M source as selected in HFCLKSRC</description>
           <addressOffset>0x000</addressOffset>
           <access>write-only</access>
           <fields>
             <field>
               <name>TASKS_HFCLKSTART</name>
-              <description>Start HFCLK source</description>
+              <description>Start HFCLK128M/HFCLK64M source as selected in HFCLKSRC</description>
               <lsb>0</lsb>
               <msb>0</msb>
               <enumeratedValues>
@@ -2149,13 +2149,13 @@ POSSIBILITY OF SUCH DAMAGE.
         </register>
         <register>
           <name>TASKS_HFCLKSTOP</name>
-          <description>Stop HFCLK source</description>
+          <description>Stop HFCLK128M/HFCLK64M source</description>
           <addressOffset>0x004</addressOffset>
           <access>write-only</access>
           <fields>
             <field>
               <name>TASKS_HFCLKSTOP</name>
-              <description>Stop HFCLK source</description>
+              <description>Stop HFCLK128M/HFCLK64M source</description>
               <lsb>0</lsb>
               <msb>0</msb>
               <enumeratedValues>
@@ -2170,13 +2170,13 @@ POSSIBILITY OF SUCH DAMAGE.
         </register>
         <register>
           <name>TASKS_LFCLKSTART</name>
-          <description>Start LFCLK source</description>
+          <description>Start LFCLK source as selected in LFCLKSRC</description>
           <addressOffset>0x008</addressOffset>
           <access>write-only</access>
           <fields>
             <field>
               <name>TASKS_LFCLKSTART</name>
-              <description>Start LFCLK source</description>
+              <description>Start LFCLK source as selected in LFCLKSRC</description>
               <lsb>0</lsb>
               <msb>0</msb>
               <enumeratedValues>
@@ -2212,13 +2212,13 @@ POSSIBILITY OF SUCH DAMAGE.
         </register>
         <register>
           <name>TASKS_CAL</name>
-          <description>Start RCOSC32k calibration</description>
+          <description>Start calibration of LFRC oscillator</description>
           <addressOffset>0x010</addressOffset>
           <access>write-only</access>
           <fields>
             <field>
               <name>TASKS_CAL</name>
-              <description>Start RCOSC32k calibration</description>
+              <description>Start calibration of LFRC oscillator</description>
               <lsb>0</lsb>
               <msb>0</msb>
               <enumeratedValues>
@@ -2275,13 +2275,13 @@ POSSIBILITY OF SUCH DAMAGE.
         </register>
         <register>
           <name>TASKS_HFCLK192MSTART</name>
-          <description>Start HFCLK192M source</description>
+          <description>Start HFCLK192M source as selected in HFCLK192MSRC</description>
           <addressOffset>0x020</addressOffset>
           <access>write-only</access>
           <fields>
             <field>
               <name>TASKS_HFCLK192MSTART</name>
-              <description>Start HFCLK192M source</description>
+              <description>Start HFCLK192M source as selected in HFCLK192MSRC</description>
               <lsb>0</lsb>
               <msb>0</msb>
               <enumeratedValues>
@@ -2596,13 +2596,13 @@ POSSIBILITY OF SUCH DAMAGE.
         </register>
         <register>
           <name>EVENTS_HFCLKSTARTED</name>
-          <description>HFCLK source started</description>
+          <description>HFCLK128M/HFCLK64M source started</description>
           <addressOffset>0x100</addressOffset>
           <access>read-write</access>
           <fields>
             <field>
               <name>EVENTS_HFCLKSTARTED</name>
-              <description>HFCLK source started</description>
+              <description>HFCLK128M/HFCLK64M source started</description>
               <lsb>0</lsb>
               <msb>0</msb>
               <enumeratedValues>
@@ -2648,13 +2648,13 @@ POSSIBILITY OF SUCH DAMAGE.
         </register>
         <register>
           <name>EVENTS_DONE</name>
-          <description>Calibration of LFCLK RC oscillator complete event</description>
+          <description>Calibration of LFRC oscillator complete event</description>
           <addressOffset>0x11C</addressOffset>
           <access>read-write</access>
           <fields>
             <field>
               <name>EVENTS_DONE</name>
-              <description>Calibration of LFCLK RC oscillator complete event</description>
+              <description>Calibration of LFRC oscillator complete event</description>
               <lsb>0</lsb>
               <msb>0</msb>
               <enumeratedValues>
@@ -3394,7 +3394,7 @@ POSSIBILITY OF SUCH DAMAGE.
         </register>
         <register>
           <name>HFCLKSTAT</name>
-          <description>Status indicating which HFCLK source is running Note: Value of this register in any CLOCK instance reflects status only due to configurations/actions in that CLOCK instance.</description>
+          <description>Status indicating which HFCLK128M/HFCLK64M source is running Note: Value of this register in any CLOCK instance reflects status only due to configurations/actions in that CLOCK instance.</description>
           <addressOffset>0x40C</addressOffset>
           <access>read-only</access>
           <fields>
@@ -3406,12 +3406,12 @@ POSSIBILITY OF SUCH DAMAGE.
               <enumeratedValues>
                 <enumeratedValue>
                   <name>HFINT</name>
-                  <description>HFCLK clock source: HFINT - 128 MHz on-chip oscillator</description>
+                  <description>Clock source: HFINT - 128 MHz on-chip oscillator</description>
                   <value>0</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>HFXO</name>
-                  <description>HFCLK clock source: HFXO - 128 MHz clock derived from external 32 MHz crystal oscillator</description>
+                  <description>Clock source: HFXO - 128 MHz clock derived from external 32 MHz crystal oscillator</description>
                   <value>1</value>
                 </enumeratedValue>
               </enumeratedValues>
@@ -3617,7 +3617,7 @@ POSSIBILITY OF SUCH DAMAGE.
         </register>
         <register>
           <name>HFCLKAUDIOSTAT</name>
-          <description>Which HFCLKAUDIO source is running</description>
+          <description>Status indicating which HFCLKAUDIO source is running</description>
           <addressOffset>0x454</addressOffset>
           <access>read-only</access>
           <fields>
@@ -3687,7 +3687,7 @@ POSSIBILITY OF SUCH DAMAGE.
         </register>
         <register>
           <name>HFCLK192MSTAT</name>
-          <description>Which HFCLK192M source is running</description>
+          <description>Status indicating which HFCLK192M source is running</description>
           <addressOffset>0x45C</addressOffset>
           <access>read-only</access>
           <fields>
@@ -3749,7 +3749,7 @@ POSSIBILITY OF SUCH DAMAGE.
         </register>
         <register>
           <name>HFCLKSRC</name>
-          <description>Clock source for HFCLK</description>
+          <description>Clock source for HFCLK128M/HFCLK64M</description>
           <addressOffset>0x514</addressOffset>
           <access>read-write</access>
           <resetValue>0x00000001</resetValue>
@@ -3776,7 +3776,7 @@ POSSIBILITY OF SUCH DAMAGE.
         </register>
         <register>
           <name>LFCLKSRC</name>
-          <description>Clock source for the LFCLK</description>
+          <description>Clock source for LFCLK</description>
           <addressOffset>0x518</addressOffset>
           <access>read-write</access>
           <resetValue>0x00000001</resetValue>
@@ -3813,7 +3813,7 @@ POSSIBILITY OF SUCH DAMAGE.
         </register>
         <register>
           <name>HFCLKCTRL</name>
-          <description>HFCLK frequency configuration</description>
+          <description>HFCLK128M frequency configuration</description>
           <addressOffset>0x558</addressOffset>
           <access>read-write</access>
           <resetValue>0x00000000</resetValue>
@@ -3862,7 +3862,7 @@ POSSIBILITY OF SUCH DAMAGE.
         </cluster>
         <register>
           <name>HFCLKALWAYSRUN</name>
-          <description>Automatic or manual control of HFCLK</description>
+          <description>Automatic or manual control of HFCLK128M/HFCLK64M</description>
           <addressOffset>0x570</addressOffset>
           <access>read-only</access>
           <fields>
@@ -3940,7 +3940,7 @@ POSSIBILITY OF SUCH DAMAGE.
         </register>
         <register>
           <name>HFCLK192MSRC</name>
-          <description>Clock source for the HFCLK192M oscillator</description>
+          <description>Clock source for HFCLK192M</description>
           <addressOffset>0x580</addressOffset>
           <access>read-write</access>
           <resetValue>0x00000001</resetValue>
@@ -4620,7 +4620,7 @@ POSSIBILITY OF SUCH DAMAGE.
             </field>
             <field>
               <name>DOG0</name>
-              <description>Reset from watchdog timer 0 detected</description>
+              <description>Reset from application watchdog timer 0 detected</description>
               <lsb>1</lsb>
               <msb>1</msb>
               <enumeratedValues>
@@ -4656,7 +4656,7 @@ POSSIBILITY OF SUCH DAMAGE.
             </field>
             <field>
               <name>SREQ</name>
-              <description>Reset from AIRCR.SYSRESETREQ detected</description>
+              <description>Reset from application soft reset detected</description>
               <lsb>3</lsb>
               <msb>3</msb>
               <enumeratedValues>
@@ -4674,7 +4674,7 @@ POSSIBILITY OF SUCH DAMAGE.
             </field>
             <field>
               <name>LOCKUP</name>
-              <description>Reset from CPU lockup detected</description>
+              <description>Reset from application CPU lockup detected</description>
               <lsb>4</lsb>
               <msb>4</msb>
               <enumeratedValues>
@@ -4746,7 +4746,7 @@ POSSIBILITY OF SUCH DAMAGE.
             </field>
             <field>
               <name>LSREQ</name>
-              <description>Reset from local soft reset detected</description>
+              <description>Reset from network soft reset detected</description>
               <lsb>16</lsb>
               <msb>16</msb>
               <enumeratedValues>
@@ -4764,7 +4764,7 @@ POSSIBILITY OF SUCH DAMAGE.
             </field>
             <field>
               <name>LLOCKUP</name>
-              <description>Reset from local CPU lockup detected</description>
+              <description>Reset from network CPU lockup detected</description>
               <lsb>17</lsb>
               <msb>17</msb>
               <enumeratedValues>
@@ -4782,7 +4782,7 @@ POSSIBILITY OF SUCH DAMAGE.
             </field>
             <field>
               <name>LDOG</name>
-              <description>Reset from local watchdog timer detected</description>
+              <description>Reset from network watchdog timer detected</description>
               <lsb>18</lsb>
               <msb>18</msb>
               <enumeratedValues>
@@ -4800,7 +4800,7 @@ POSSIBILITY OF SUCH DAMAGE.
             </field>
             <field>
               <name>MFORCEOFF</name>
-              <description>Force off reset from Application core detected</description>
+              <description>Force off reset from application core detected</description>
               <lsb>23</lsb>
               <msb>23</msb>
               <enumeratedValues>
@@ -4836,7 +4836,7 @@ POSSIBILITY OF SUCH DAMAGE.
             </field>
             <field>
               <name>DOG1</name>
-              <description>Reset from watchdog timer 1 detected</description>
+              <description>Reset from application watchdog timer 1 detected</description>
               <lsb>25</lsb>
               <msb>25</msb>
               <enumeratedValues>
@@ -4872,7 +4872,7 @@ POSSIBILITY OF SUCH DAMAGE.
             </field>
             <field>
               <name>LCTRLAP</name>
-              <description>Reset from local CTRL-AP detected</description>
+              <description>Reset from network CTRL-AP detected</description>
               <lsb>27</lsb>
               <msb>27</msb>
               <enumeratedValues>
@@ -4892,20 +4892,20 @@ POSSIBILITY OF SUCH DAMAGE.
         </register>
         <cluster>
           <name>NETWORK</name>
-          <description>ULP Network core control</description>
+          <description>ULP network core control</description>
           <headerStructName>RESET_NETWORK</headerStructName>
           <access>read-write</access>
           <addressOffset>0x610</addressOffset>
           <register>
             <name>FORCEOFF</name>
-            <description>Force off power and clock in Network core</description>
+            <description>Force off power and clock in network core</description>
             <addressOffset>0x004</addressOffset>
             <access>read-write</access>
             <resetValue>0x00000001</resetValue>
             <fields>
               <field>
                 <name>FORCEOFF</name>
-                <description>Force off power and clock in Network core</description>
+                <description>Force off power and clock in network core</description>
                 <lsb>0</lsb>
                 <msb>0</msb>
                 <enumeratedValues>
@@ -38120,19 +38120,9 @@ POSSIBILITY OF SUCH DAMAGE.
                   <value>11</value>
                 </enumeratedValue>
                 <enumeratedValue>
-                  <name>E0H1</name>
-                  <description>Extra high drive '0', high drive '1'</description>
-                  <value>12</value>
-                </enumeratedValue>
-                <enumeratedValue>
-                  <name>H0E1</name>
-                  <description>High drive '0', extra high drive '1'</description>
-                  <value>13</value>
-                </enumeratedValue>
-                <enumeratedValue>
                   <name>D0E1</name>
                   <description>Disconnect '0', extra high drive '1' (normally used for wired-or connections)</description>
-                  <value>14</value>
+                  <value>13</value>
                 </enumeratedValue>
                 <enumeratedValue>
                   <name>E0D1</name>

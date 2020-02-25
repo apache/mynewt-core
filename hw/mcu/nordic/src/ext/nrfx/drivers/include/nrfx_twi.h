@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 - 2019, Nordic Semiconductor ASA
+ * Copyright (c) 2015 - 2020, Nordic Semiconductor ASA
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -117,7 +117,8 @@ typedef enum
     NRFX_TWI_EVT_DONE,         ///< Transfer completed event.
     NRFX_TWI_EVT_ADDRESS_NACK, ///< Error event: NACK received after sending the address.
     NRFX_TWI_EVT_DATA_NACK,    ///< Error event: NACK received after sending a data byte.
-    NRFX_TWI_EVT_OVERRUN       ///< Error event: The unread data is replaced by new data.
+    NRFX_TWI_EVT_OVERRUN,      ///< Error event: The unread data is replaced by new data.
+    NRFX_TWI_EVT_BUS_ERROR     ///< Error event: An unexpected transition occurred on the bus.
 } nrfx_twi_evt_type_t;
 
 /** @brief TWI master driver transfer types. */
@@ -265,7 +266,7 @@ void nrfx_twi_disable(nrfx_twi_t const * p_instance);
  * @retval NRFX_SUCCESS                   The procedure is successful.
  * @retval NRFX_ERROR_BUSY                The driver is not ready for a new transfer.
  * @retval NRFX_ERROR_NOT_SUPPORTED       The provided parameters are not supported.
- * @retval NRFX_ERROR_INTERNAL            An error is detected by hardware.
+ * @retval NRFX_ERROR_INTERNAL            An unexpected transition occurred on the bus.
  * @retval NRFX_ERROR_INVALID_STATE       Other direction of transaction is suspended on the bus.
  * @retval NRFX_ERROR_DRV_TWI_ERR_OVERRUN The unread data is replaced by new data (TXRX and RX)
  * @retval NRFX_ERROR_DRV_TWI_ERR_ANACK   Negative acknowledgement (NACK) is received after sending

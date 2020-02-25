@@ -95,9 +95,9 @@ __vector_table
         DCD     0                         ; Reserved
         DCD     SPIM0_SPIS0_TWIM0_TWIS0_UARTE0_IRQHandler
         DCD     SPIM1_SPIS1_TWIM1_TWIS1_UARTE1_IRQHandler
-        DCD     SPIM2_IRQHandler
-        DCD     0                         ; Reserved
-        DCD     0                         ; Reserved
+        DCD     SPIM4_IRQHandler
+        DCD     SPIM2_SPIS2_TWIM2_TWIS2_UARTE2_IRQHandler
+        DCD     SPIM3_SPIS3_TWIM3_TWIS3_UARTE3_IRQHandler
         DCD     GPIOTE0_IRQHandler
         DCD     SAADC_IRQHandler
         DCD     TIMER0_IRQHandler
@@ -121,7 +121,7 @@ __vector_table
         DCD     PWM0_IRQHandler
         DCD     PWM1_IRQHandler
         DCD     PWM2_IRQHandler
-        DCD     0                         ; Reserved
+        DCD     PWM3_IRQHandler
         DCD     0                         ; Reserved
         DCD     PDM0_IRQHandler
         DCD     0                         ; Reserved
@@ -136,8 +136,8 @@ __vector_table
         DCD     0                         ; Reserved
         DCD     0                         ; Reserved
         DCD     0                         ; Reserved
-        DCD     QDEC_IRQHandler
-        DCD     0                         ; Reserved
+        DCD     QDEC0_IRQHandler
+        DCD     QDEC1_IRQHandler
         DCD     0                         ; Reserved
         DCD     USBD_IRQHandler
         DCD     USBREGULATOR_IRQHandler
@@ -429,9 +429,19 @@ SPIM0_SPIS0_TWIM0_TWIS0_UARTE0_IRQHandler
 SPIM1_SPIS1_TWIM1_TWIS1_UARTE1_IRQHandler
         B .
 
-        PUBWEAK  SPIM2_IRQHandler
+        PUBWEAK  SPIM4_IRQHandler
         SECTION .text:CODE:REORDER:NOROOT(1)
-SPIM2_IRQHandler
+SPIM4_IRQHandler
+        B .
+
+        PUBWEAK  SPIM2_SPIS2_TWIM2_TWIS2_UARTE2_IRQHandler
+        SECTION .text:CODE:REORDER:NOROOT(1)
+SPIM2_SPIS2_TWIM2_TWIS2_UARTE2_IRQHandler
+        B .
+
+        PUBWEAK  SPIM3_SPIS3_TWIM3_TWIS3_UARTE3_IRQHandler
+        SECTION .text:CODE:REORDER:NOROOT(1)
+SPIM3_SPIS3_TWIM3_TWIS3_UARTE3_IRQHandler
         B .
 
         PUBWEAK  GPIOTE0_IRQHandler
@@ -529,6 +539,11 @@ PWM1_IRQHandler
 PWM2_IRQHandler
         B .
 
+        PUBWEAK  PWM3_IRQHandler
+        SECTION .text:CODE:REORDER:NOROOT(1)
+PWM3_IRQHandler
+        B .
+
         PUBWEAK  PDM0_IRQHandler
         SECTION .text:CODE:REORDER:NOROOT(1)
 PDM0_IRQHandler
@@ -559,9 +574,14 @@ NFCT_IRQHandler
 GPIOTE1_IRQHandler
         B .
 
-        PUBWEAK  QDEC_IRQHandler
+        PUBWEAK  QDEC0_IRQHandler
         SECTION .text:CODE:REORDER:NOROOT(1)
-QDEC_IRQHandler
+QDEC0_IRQHandler
+        B .
+
+        PUBWEAK  QDEC1_IRQHandler
+        SECTION .text:CODE:REORDER:NOROOT(1)
+QDEC1_IRQHandler
         B .
 
         PUBWEAK  USBD_IRQHandler

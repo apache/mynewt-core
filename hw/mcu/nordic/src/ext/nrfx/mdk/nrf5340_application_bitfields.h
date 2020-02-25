@@ -204,25 +204,25 @@ POSSIBILITY OF SUCH DAMAGE.
 /* Description: Clock management 0 */
 
 /* Register: CLOCK_TASKS_HFCLKSTART */
-/* Description: Start HFCLK source */
+/* Description: Start HFCLK128M/HFCLK64M source as selected in HFCLKSRC */
 
-/* Bit 0 : Start HFCLK source */
+/* Bit 0 : Start HFCLK128M/HFCLK64M source as selected in HFCLKSRC */
 #define CLOCK_TASKS_HFCLKSTART_TASKS_HFCLKSTART_Pos (0UL) /*!< Position of TASKS_HFCLKSTART field. */
 #define CLOCK_TASKS_HFCLKSTART_TASKS_HFCLKSTART_Msk (0x1UL << CLOCK_TASKS_HFCLKSTART_TASKS_HFCLKSTART_Pos) /*!< Bit mask of TASKS_HFCLKSTART field. */
 #define CLOCK_TASKS_HFCLKSTART_TASKS_HFCLKSTART_Trigger (1UL) /*!< Trigger task */
 
 /* Register: CLOCK_TASKS_HFCLKSTOP */
-/* Description: Stop HFCLK source */
+/* Description: Stop HFCLK128M/HFCLK64M source */
 
-/* Bit 0 : Stop HFCLK source */
+/* Bit 0 : Stop HFCLK128M/HFCLK64M source */
 #define CLOCK_TASKS_HFCLKSTOP_TASKS_HFCLKSTOP_Pos (0UL) /*!< Position of TASKS_HFCLKSTOP field. */
 #define CLOCK_TASKS_HFCLKSTOP_TASKS_HFCLKSTOP_Msk (0x1UL << CLOCK_TASKS_HFCLKSTOP_TASKS_HFCLKSTOP_Pos) /*!< Bit mask of TASKS_HFCLKSTOP field. */
 #define CLOCK_TASKS_HFCLKSTOP_TASKS_HFCLKSTOP_Trigger (1UL) /*!< Trigger task */
 
 /* Register: CLOCK_TASKS_LFCLKSTART */
-/* Description: Start LFCLK source */
+/* Description: Start LFCLK source as selected in LFCLKSRC */
 
-/* Bit 0 : Start LFCLK source */
+/* Bit 0 : Start LFCLK source as selected in LFCLKSRC */
 #define CLOCK_TASKS_LFCLKSTART_TASKS_LFCLKSTART_Pos (0UL) /*!< Position of TASKS_LFCLKSTART field. */
 #define CLOCK_TASKS_LFCLKSTART_TASKS_LFCLKSTART_Msk (0x1UL << CLOCK_TASKS_LFCLKSTART_TASKS_LFCLKSTART_Pos) /*!< Bit mask of TASKS_LFCLKSTART field. */
 #define CLOCK_TASKS_LFCLKSTART_TASKS_LFCLKSTART_Trigger (1UL) /*!< Trigger task */
@@ -236,9 +236,9 @@ POSSIBILITY OF SUCH DAMAGE.
 #define CLOCK_TASKS_LFCLKSTOP_TASKS_LFCLKSTOP_Trigger (1UL) /*!< Trigger task */
 
 /* Register: CLOCK_TASKS_CAL */
-/* Description: Start RCOSC32k calibration */
+/* Description: Start calibration of LFRC oscillator */
 
-/* Bit 0 : Start RCOSC32k calibration */
+/* Bit 0 : Start calibration of LFRC oscillator */
 #define CLOCK_TASKS_CAL_TASKS_CAL_Pos (0UL) /*!< Position of TASKS_CAL field. */
 #define CLOCK_TASKS_CAL_TASKS_CAL_Msk (0x1UL << CLOCK_TASKS_CAL_TASKS_CAL_Pos) /*!< Bit mask of TASKS_CAL field. */
 #define CLOCK_TASKS_CAL_TASKS_CAL_Trigger (1UL) /*!< Trigger task */
@@ -260,9 +260,9 @@ POSSIBILITY OF SUCH DAMAGE.
 #define CLOCK_TASKS_HFCLKAUDIOSTOP_TASKS_HFCLKAUDIOSTOP_Trigger (1UL) /*!< Trigger task */
 
 /* Register: CLOCK_TASKS_HFCLK192MSTART */
-/* Description: Start HFCLK192M source */
+/* Description: Start HFCLK192M source as selected in HFCLK192MSRC */
 
-/* Bit 0 : Start HFCLK192M source */
+/* Bit 0 : Start HFCLK192M source as selected in HFCLK192MSRC */
 #define CLOCK_TASKS_HFCLK192MSTART_TASKS_HFCLK192MSTART_Pos (0UL) /*!< Position of TASKS_HFCLK192MSTART field. */
 #define CLOCK_TASKS_HFCLK192MSTART_TASKS_HFCLK192MSTART_Msk (0x1UL << CLOCK_TASKS_HFCLK192MSTART_TASKS_HFCLK192MSTART_Pos) /*!< Bit mask of TASKS_HFCLK192MSTART field. */
 #define CLOCK_TASKS_HFCLK192MSTART_TASKS_HFCLK192MSTART_Trigger (1UL) /*!< Trigger task */
@@ -393,9 +393,9 @@ POSSIBILITY OF SUCH DAMAGE.
 #define CLOCK_SUBSCRIBE_HFCLK192MSTOP_CHIDX_Msk (0xFFUL << CLOCK_SUBSCRIBE_HFCLK192MSTOP_CHIDX_Pos) /*!< Bit mask of CHIDX field. */
 
 /* Register: CLOCK_EVENTS_HFCLKSTARTED */
-/* Description: HFCLK source started */
+/* Description: HFCLK128M/HFCLK64M source started */
 
-/* Bit 0 : HFCLK source started */
+/* Bit 0 : HFCLK128M/HFCLK64M source started */
 #define CLOCK_EVENTS_HFCLKSTARTED_EVENTS_HFCLKSTARTED_Pos (0UL) /*!< Position of EVENTS_HFCLKSTARTED field. */
 #define CLOCK_EVENTS_HFCLKSTARTED_EVENTS_HFCLKSTARTED_Msk (0x1UL << CLOCK_EVENTS_HFCLKSTARTED_EVENTS_HFCLKSTARTED_Pos) /*!< Bit mask of EVENTS_HFCLKSTARTED field. */
 #define CLOCK_EVENTS_HFCLKSTARTED_EVENTS_HFCLKSTARTED_NotGenerated (0UL) /*!< Event not generated */
@@ -411,9 +411,9 @@ POSSIBILITY OF SUCH DAMAGE.
 #define CLOCK_EVENTS_LFCLKSTARTED_EVENTS_LFCLKSTARTED_Generated (1UL) /*!< Event generated */
 
 /* Register: CLOCK_EVENTS_DONE */
-/* Description: Calibration of LFCLK RC oscillator complete event */
+/* Description: Calibration of LFRC oscillator complete event */
 
-/* Bit 0 : Calibration of LFCLK RC oscillator complete event */
+/* Bit 0 : Calibration of LFRC oscillator complete event */
 #define CLOCK_EVENTS_DONE_EVENTS_DONE_Pos (0UL) /*!< Position of EVENTS_DONE field. */
 #define CLOCK_EVENTS_DONE_EVENTS_DONE_Msk (0x1UL << CLOCK_EVENTS_DONE_EVENTS_DONE_Pos) /*!< Bit mask of EVENTS_DONE field. */
 #define CLOCK_EVENTS_DONE_EVENTS_DONE_NotGenerated (0UL) /*!< Event not generated */
@@ -654,7 +654,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #define CLOCK_HFCLKRUN_STATUS_Triggered (1UL) /*!< Task triggered */
 
 /* Register: CLOCK_HFCLKSTAT */
-/* Description: Status indicating which HFCLK source is running Note: Value of this register in any CLOCK instance reflects status only due to configurations/actions in that CLOCK instance. */
+/* Description: Status indicating which HFCLK128M/HFCLK64M source is running Note: Value of this register in any CLOCK instance reflects status only due to configurations/actions in that CLOCK instance. */
 
 /* Bit 16 : HFCLK state */
 #define CLOCK_HFCLKSTAT_STATE_Pos (16UL) /*!< Position of STATE field. */
@@ -671,8 +671,8 @@ POSSIBILITY OF SUCH DAMAGE.
 /* Bit 0 : Active clock source */
 #define CLOCK_HFCLKSTAT_SRC_Pos (0UL) /*!< Position of SRC field. */
 #define CLOCK_HFCLKSTAT_SRC_Msk (0x1UL << CLOCK_HFCLKSTAT_SRC_Pos) /*!< Bit mask of SRC field. */
-#define CLOCK_HFCLKSTAT_SRC_HFINT (0UL) /*!< HFCLK clock source: HFINT - 128 MHz on-chip oscillator */
-#define CLOCK_HFCLKSTAT_SRC_HFXO (1UL) /*!< HFCLK clock source: HFXO - 128 MHz clock derived from external 32 MHz crystal oscillator */
+#define CLOCK_HFCLKSTAT_SRC_HFINT (0UL) /*!< Clock source: HFINT - 128 MHz on-chip oscillator */
+#define CLOCK_HFCLKSTAT_SRC_HFXO (1UL) /*!< Clock source: HFXO - 128 MHz clock derived from external 32 MHz crystal oscillator */
 
 /* Register: CLOCK_LFCLKRUN */
 /* Description: Status indicating that LFCLKSTART task has been triggered */
@@ -727,7 +727,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #define CLOCK_HFCLKAUDIORUN_STATUS_Triggered (1UL) /*!< Task triggered */
 
 /* Register: CLOCK_HFCLKAUDIOSTAT */
-/* Description: Which HFCLKAUDIO source is running */
+/* Description: Status indicating which HFCLKAUDIO source is running */
 
 /* Bit 16 : HFCLKAUDIO state */
 #define CLOCK_HFCLKAUDIOSTAT_STATE_Pos (16UL) /*!< Position of STATE field. */
@@ -751,7 +751,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #define CLOCK_HFCLK192MRUN_STATUS_Triggered (1UL) /*!< Task triggered */
 
 /* Register: CLOCK_HFCLK192MSTAT */
-/* Description: Which HFCLK192M source is running */
+/* Description: Status indicating which HFCLK192M source is running */
 
 /* Bit 16 : HFCLK192M state */
 #define CLOCK_HFCLK192MSTAT_STATE_Pos (16UL) /*!< Position of STATE field. */
@@ -772,7 +772,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #define CLOCK_HFCLK192MSTAT_SRC_HFXO (1UL) /*!< Clock source: HFXO - derived from external 32 MHz crystal oscillator */
 
 /* Register: CLOCK_HFCLKSRC */
-/* Description: Clock source for HFCLK */
+/* Description: Clock source for HFCLK128M/HFCLK64M */
 
 /* Bit 0 : Select which HFCLK source is started by the HFCLKSTART task */
 #define CLOCK_HFCLKSRC_SRC_Pos (0UL) /*!< Position of SRC field. */
@@ -781,7 +781,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #define CLOCK_HFCLKSRC_SRC_HFXO (1UL) /*!< HFCLKSTART task starts HFXO oscillator */
 
 /* Register: CLOCK_LFCLKSRC */
-/* Description: Clock source for the LFCLK */
+/* Description: Clock source for LFCLK */
 
 /* Bits 1..0 : Select which LFCLK source is started by the LFCLKSTART task */
 #define CLOCK_LFCLKSRC_SRC_Pos (0UL) /*!< Position of SRC field. */
@@ -792,7 +792,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #define CLOCK_LFCLKSRC_SRC_LFSYNT (3UL) /*!< 32.768 kHz synthesized from HFCLK */
 
 /* Register: CLOCK_HFCLKCTRL */
-/* Description: HFCLK frequency configuration */
+/* Description: HFCLK128M frequency configuration */
 
 /* Bit 0 : High frequency clock HCLK */
 #define CLOCK_HFCLKCTRL_HCLK_Pos (0UL) /*!< Position of HCLK field. */
@@ -808,7 +808,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #define CLOCK_HFCLKAUDIO_FREQUENCY_FREQUENCY_Msk (0xFFFFUL << CLOCK_HFCLKAUDIO_FREQUENCY_FREQUENCY_Pos) /*!< Bit mask of FREQUENCY field. */
 
 /* Register: CLOCK_HFCLKALWAYSRUN */
-/* Description: Automatic or manual control of HFCLK */
+/* Description: Automatic or manual control of HFCLK128M/HFCLK64M */
 
 /* Bit 0 : Ensure clock is always running */
 #define CLOCK_HFCLKALWAYSRUN_ALWAYSRUN_Pos (0UL) /*!< Position of ALWAYSRUN field. */
@@ -835,7 +835,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #define CLOCK_HFCLKAUDIOALWAYSRUN_ALWAYSRUN_AlwaysRun (1UL) /*!< Ensure clock is always running */
 
 /* Register: CLOCK_HFCLK192MSRC */
-/* Description: Clock source for the HFCLK192M oscillator */
+/* Description: Clock source for HFCLK192M */
 
 /* Bit 0 : Select which HFCLK192M source is started by the HFCLK192MSTART task */
 #define CLOCK_HFCLK192MSRC_SRC_Pos (0UL) /*!< Position of SRC field. */
@@ -8574,9 +8574,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #define GPIO_PIN_CNF_DRIVE_E0S1 (9UL) /*!< Extra high drive '0', standard '1' */
 #define GPIO_PIN_CNF_DRIVE_S0E1 (10UL) /*!< Standard '0', extra high drive '1' */
 #define GPIO_PIN_CNF_DRIVE_E0E1 (11UL) /*!< Extra high drive '0', extra high drive '1' */
-#define GPIO_PIN_CNF_DRIVE_E0H1 (12UL) /*!< Extra high drive '0', high drive '1' */
-#define GPIO_PIN_CNF_DRIVE_H0E1 (13UL) /*!< High drive '0', extra high drive '1' */
-#define GPIO_PIN_CNF_DRIVE_D0E1 (14UL) /*!< Disconnect '0', extra high drive '1' (normally used for wired-or connections) */
+#define GPIO_PIN_CNF_DRIVE_D0E1 (13UL) /*!< Disconnect '0', extra high drive '1' (normally used for wired-or connections) */
 #define GPIO_PIN_CNF_DRIVE_E0D1 (15UL) /*!< Extra high drive '0', disconnect '1' (normally used for wired-and connections) */
 
 /* Bits 3..2 : Pull configuration */
@@ -8791,7 +8789,7 @@ POSSIBILITY OF SUCH DAMAGE.
 /* Register: PDM_PDMCLKCTRL */
 /* Description: PDM clock generator control */
 
-/* Bits 31..0 : PDM_CLK frequency configuration Enumerations are deprecated, use
+/* Bits 31..0 : PDM_CLK frequency configuration. Enumerations are deprecated, use
         PDMCLKCTRL equation to find the register value. The 12 least significant bits of the
         register are ignored and shall be set to zero. */
 #define PDM_PDMCLKCTRL_FREQ_Pos (0UL) /*!< Position of FREQ field. */
@@ -8824,9 +8822,9 @@ POSSIBILITY OF SUCH DAMAGE.
 /* Bits 6..0 : Left output gain adjustment, in 0.5 dB steps, around the default module gain (see electrical parameters) 0x00    -20 dB gain adjust 0x01  -19.5 dB gain adjust (...) 0x27   -0.5 dB gain adjust 0x28      0 dB gain adjust 0x29   +0.5 dB gain adjust (...) 0x4F  +19.5 dB gain adjust 0x50    +20 dB gain adjust */
 #define PDM_GAINL_GAINL_Pos (0UL) /*!< Position of GAINL field. */
 #define PDM_GAINL_GAINL_Msk (0x7FUL << PDM_GAINL_GAINL_Pos) /*!< Bit mask of GAINL field. */
-#define PDM_GAINL_GAINL_MinGain (0x00UL) /*!< -20dB gain adjustment (minimum) */
-#define PDM_GAINL_GAINL_DefaultGain (0x28UL) /*!< 0dB gain adjustment */
-#define PDM_GAINL_GAINL_MaxGain (0x50UL) /*!< +20dB gain adjustment (maximum) */
+#define PDM_GAINL_GAINL_MinGain (0x00UL) /*!< -20 dB gain adjustment (minimum) */
+#define PDM_GAINL_GAINL_DefaultGain (0x28UL) /*!< 0 dB gain adjustment */
+#define PDM_GAINL_GAINL_MaxGain (0x50UL) /*!< +20 dB gain adjustment (maximum) */
 
 /* Register: PDM_GAINR */
 /* Description: Right output gain adjustment */
@@ -8834,9 +8832,9 @@ POSSIBILITY OF SUCH DAMAGE.
 /* Bits 6..0 : Right output gain adjustment, in 0.5 dB steps, around the default module gain (see electrical parameters) */
 #define PDM_GAINR_GAINR_Pos (0UL) /*!< Position of GAINR field. */
 #define PDM_GAINR_GAINR_Msk (0x7FUL << PDM_GAINR_GAINR_Pos) /*!< Bit mask of GAINR field. */
-#define PDM_GAINR_GAINR_MinGain (0x00UL) /*!< -20dB gain adjustment (minimum) */
-#define PDM_GAINR_GAINR_DefaultGain (0x28UL) /*!< 0dB gain adjustment */
-#define PDM_GAINR_GAINR_MaxGain (0x50UL) /*!< +20dB gain adjustment (maximum) */
+#define PDM_GAINR_GAINR_MinGain (0x00UL) /*!< -20 dB gain adjustment (minimum) */
+#define PDM_GAINR_GAINR_DefaultGain (0x28UL) /*!< 0 dB gain adjustment */
+#define PDM_GAINR_GAINR_MaxGain (0x50UL) /*!< +20 dB gain adjustment (maximum) */
 
 /* Register: PDM_RATIO */
 /* Description: Selects the ratio between PDM_CLK and output sample rate. Change PDMCLKCTRL accordingly. */
@@ -8887,7 +8885,7 @@ POSSIBILITY OF SUCH DAMAGE.
 /* Bit 0 : Master clock source selection */
 #define PDM_MCLKCONFIG_SRC_Pos (0UL) /*!< Position of SRC field. */
 #define PDM_MCLKCONFIG_SRC_Msk (0x1UL << PDM_MCLKCONFIG_SRC_Pos) /*!< Bit mask of SRC field. */
-#define PDM_MCLKCONFIG_SRC_PCLK32M (0UL) /*!< 32MHz peripheral clock */
+#define PDM_MCLKCONFIG_SRC_PCLK32M (0UL) /*!< 32 MHz peripheral clock */
 #define PDM_MCLKCONFIG_SRC_ACLK (1UL) /*!< Audio PLL clock */
 
 /* Register: PDM_SAMPLE_PTR */
@@ -10751,7 +10749,7 @@ POSSIBILITY OF SUCH DAMAGE.
 /* Bit 0 : VREGH status */
 #define REGULATORS_MAINREGSTATUS_VREGH_Pos (0UL) /*!< Position of VREGH field. */
 #define REGULATORS_MAINREGSTATUS_VREGH_Msk (0x1UL << REGULATORS_MAINREGSTATUS_VREGH_Pos) /*!< Bit mask of VREGH field. */
-#define REGULATORS_MAINREGSTATUS_VREGH_Inactive (0UL) /*!< Normal voltage mode. Voltage supplied on VDD. */
+#define REGULATORS_MAINREGSTATUS_VREGH_Inactive (0UL) /*!< Normal voltage mode. Voltage supplied on VDD and VDDH. */
 #define REGULATORS_MAINREGSTATUS_VREGH_Active (1UL) /*!< High voltage mode. Voltage supplied on VDDH. */
 
 /* Register: REGULATORS_SYSTEMOFF */
@@ -10839,7 +10837,7 @@ POSSIBILITY OF SUCH DAMAGE.
 /* Register: RESET_RESETREAS */
 /* Description: Reset reason */
 
-/* Bit 27 : Reset from local CTRL-AP detected */
+/* Bit 27 : Reset from network CTRL-AP detected */
 #define RESET_RESETREAS_LCTRLAP_Pos (27UL) /*!< Position of LCTRLAP field. */
 #define RESET_RESETREAS_LCTRLAP_Msk (0x1UL << RESET_RESETREAS_LCTRLAP_Pos) /*!< Bit mask of LCTRLAP field. */
 #define RESET_RESETREAS_LCTRLAP_NotDetected (0UL) /*!< Not detected */
@@ -10851,7 +10849,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #define RESET_RESETREAS_VBUS_NotDetected (0UL) /*!< Not detected */
 #define RESET_RESETREAS_VBUS_Detected (1UL) /*!< Detected */
 
-/* Bit 25 : Reset from watchdog timer 1 detected */
+/* Bit 25 : Reset from application watchdog timer 1 detected */
 #define RESET_RESETREAS_DOG1_Pos (25UL) /*!< Position of DOG1 field. */
 #define RESET_RESETREAS_DOG1_Msk (0x1UL << RESET_RESETREAS_DOG1_Pos) /*!< Bit mask of DOG1 field. */
 #define RESET_RESETREAS_DOG1_NotDetected (0UL) /*!< Not detected */
@@ -10863,25 +10861,25 @@ POSSIBILITY OF SUCH DAMAGE.
 #define RESET_RESETREAS_NFC_NotDetected (0UL) /*!< Not detected */
 #define RESET_RESETREAS_NFC_Detected (1UL) /*!< Detected */
 
-/* Bit 23 : Force off reset from Application core detected */
+/* Bit 23 : Force off reset from application core detected */
 #define RESET_RESETREAS_MFORCEOFF_Pos (23UL) /*!< Position of MFORCEOFF field. */
 #define RESET_RESETREAS_MFORCEOFF_Msk (0x1UL << RESET_RESETREAS_MFORCEOFF_Pos) /*!< Bit mask of MFORCEOFF field. */
 #define RESET_RESETREAS_MFORCEOFF_NotDetected (0UL) /*!< Not detected */
 #define RESET_RESETREAS_MFORCEOFF_Detected (1UL) /*!< Detected */
 
-/* Bit 18 : Reset from local watchdog timer detected */
+/* Bit 18 : Reset from network watchdog timer detected */
 #define RESET_RESETREAS_LDOG_Pos (18UL) /*!< Position of LDOG field. */
 #define RESET_RESETREAS_LDOG_Msk (0x1UL << RESET_RESETREAS_LDOG_Pos) /*!< Bit mask of LDOG field. */
 #define RESET_RESETREAS_LDOG_NotDetected (0UL) /*!< Not detected */
 #define RESET_RESETREAS_LDOG_Detected (1UL) /*!< Detected */
 
-/* Bit 17 : Reset from local CPU lockup detected */
+/* Bit 17 : Reset from network CPU lockup detected */
 #define RESET_RESETREAS_LLOCKUP_Pos (17UL) /*!< Position of LLOCKUP field. */
 #define RESET_RESETREAS_LLOCKUP_Msk (0x1UL << RESET_RESETREAS_LLOCKUP_Pos) /*!< Bit mask of LLOCKUP field. */
 #define RESET_RESETREAS_LLOCKUP_NotDetected (0UL) /*!< Not detected */
 #define RESET_RESETREAS_LLOCKUP_Detected (1UL) /*!< Detected */
 
-/* Bit 16 : Reset from local soft reset detected */
+/* Bit 16 : Reset from network soft reset detected */
 #define RESET_RESETREAS_LSREQ_Pos (16UL) /*!< Position of LSREQ field. */
 #define RESET_RESETREAS_LSREQ_Msk (0x1UL << RESET_RESETREAS_LSREQ_Pos) /*!< Bit mask of LSREQ field. */
 #define RESET_RESETREAS_LSREQ_NotDetected (0UL) /*!< Not detected */
@@ -10905,13 +10903,13 @@ POSSIBILITY OF SUCH DAMAGE.
 #define RESET_RESETREAS_OFF_NotDetected (0UL) /*!< Not detected */
 #define RESET_RESETREAS_OFF_Detected (1UL) /*!< Detected */
 
-/* Bit 4 : Reset from CPU lockup detected */
+/* Bit 4 : Reset from application CPU lockup detected */
 #define RESET_RESETREAS_LOCKUP_Pos (4UL) /*!< Position of LOCKUP field. */
 #define RESET_RESETREAS_LOCKUP_Msk (0x1UL << RESET_RESETREAS_LOCKUP_Pos) /*!< Bit mask of LOCKUP field. */
 #define RESET_RESETREAS_LOCKUP_NotDetected (0UL) /*!< Not detected */
 #define RESET_RESETREAS_LOCKUP_Detected (1UL) /*!< Detected */
 
-/* Bit 3 : Reset from AIRCR.SYSRESETREQ detected */
+/* Bit 3 : Reset from application soft reset detected */
 #define RESET_RESETREAS_SREQ_Pos (3UL) /*!< Position of SREQ field. */
 #define RESET_RESETREAS_SREQ_Msk (0x1UL << RESET_RESETREAS_SREQ_Pos) /*!< Bit mask of SREQ field. */
 #define RESET_RESETREAS_SREQ_NotDetected (0UL) /*!< Not detected */
@@ -10923,7 +10921,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #define RESET_RESETREAS_CTRLAP_NotDetected (0UL) /*!< Not detected */
 #define RESET_RESETREAS_CTRLAP_Detected (1UL) /*!< Detected */
 
-/* Bit 1 : Reset from watchdog timer 0 detected */
+/* Bit 1 : Reset from application watchdog timer 0 detected */
 #define RESET_RESETREAS_DOG0_Pos (1UL) /*!< Position of DOG0 field. */
 #define RESET_RESETREAS_DOG0_Msk (0x1UL << RESET_RESETREAS_DOG0_Pos) /*!< Bit mask of DOG0 field. */
 #define RESET_RESETREAS_DOG0_NotDetected (0UL) /*!< Not detected */
@@ -10936,9 +10934,9 @@ POSSIBILITY OF SUCH DAMAGE.
 #define RESET_RESETREAS_RESETPIN_Detected (1UL) /*!< Detected */
 
 /* Register: RESET_NETWORK_FORCEOFF */
-/* Description: Force off power and clock in Network core */
+/* Description: Force off power and clock in network core */
 
-/* Bit 0 : Force off power and clock in Network core */
+/* Bit 0 : Force off power and clock in network core */
 #define RESET_NETWORK_FORCEOFF_FORCEOFF_Pos (0UL) /*!< Position of FORCEOFF field. */
 #define RESET_NETWORK_FORCEOFF_FORCEOFF_Msk (0x1UL << RESET_NETWORK_FORCEOFF_FORCEOFF_Pos) /*!< Bit mask of FORCEOFF field. */
 #define RESET_NETWORK_FORCEOFF_FORCEOFF_Release (0UL) /*!< Release force off signal */
@@ -16504,9 +16502,9 @@ POSSIBILITY OF SUCH DAMAGE.
 
 /* Register: UICR_KEYSLOT_CONFIG_DEST */
 /* Description: Description cluster: Destination address where content of the key value registers (KEYSLOT.KEYn.VALUE[0-3])
-          will be pushed by KMU. Note that this address MUST match that of a peripherals
+          will be pushed by KMU. Note that this address must match that of a peripherals
           APB mapped write-only key registers, else the KMU can push this key value into
-          an address range which the CPU can potentially read! */
+          an address range which the CPU can potentially read. */
 
 /* Bits 31..0 : Secure APB destination address */
 #define UICR_KEYSLOT_CONFIG_DEST_DEST_Pos (0UL) /*!< Position of DEST field. */

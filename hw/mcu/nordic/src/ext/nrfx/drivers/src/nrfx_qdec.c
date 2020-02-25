@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 - 2019, Nordic Semiconductor ASA
+ * Copyright (c) 2015 - 2020, Nordic Semiconductor ASA
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -141,8 +141,8 @@ nrfx_err_t nrfx_qdec_init(nrfx_qdec_config_t const * p_config,
     }
 
     nrf_qdec_int_enable(NRF_QDEC, int_mask);
-    NRFX_IRQ_PRIORITY_SET(QDEC_IRQn, p_config->interrupt_priority);
-    NRFX_IRQ_ENABLE(QDEC_IRQn);
+    NRFX_IRQ_PRIORITY_SET(nrfx_get_irq_number(NRF_QDEC), p_config->interrupt_priority);
+    NRFX_IRQ_ENABLE(nrfx_get_irq_number(NRF_QDEC));
 
     m_state = NRFX_DRV_STATE_INITIALIZED;
 
@@ -155,7 +155,7 @@ void nrfx_qdec_uninit(void)
 {
     NRFX_ASSERT(m_state != NRFX_DRV_STATE_UNINITIALIZED);
     nrfx_qdec_disable();
-    NRFX_IRQ_DISABLE(QDEC_IRQn);
+    NRFX_IRQ_DISABLE(nrfx_get_irq_number(NRF_QDEC));
     m_state = NRFX_DRV_STATE_UNINITIALIZED;
     NRFX_LOG_INFO("Uninitialized.");
 }
