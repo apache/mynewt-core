@@ -41,19 +41,8 @@ syscfg.defs:
     RTT_TERMINAL_BUFFER_SIZE_UP:
         description: >
             Size of terminal output buffer (up-buffer).
-        value: 'MYNEWT_VAL_RTT_BUFFER_SIZE_UP'
+        value: 1024
     RTT_TERMINAL_BUFFER_SIZE_DOWN:
         description: >
             Size of terminal input buffer (down-buffer).
-        value: 'MYNEWT_VAL_RTT_BUFFER_SIZE_DOWN'
-
-# Values below are deprecated and only used for backwards compatibility.
-# Please use new values instead.
-    RTT_BUFFER_SIZE_UP:
-        description: 'Use RTT_TERMINAL_BUFFER_SIZE_UP instead'
-        deprecated: 1
-        value: 1024
-    RTT_BUFFER_SIZE_DOWN:
-        description: 'Use RTT_TERMINAL_BUFFER_SIZE_DOWN instead'
-        deprecated: 1
         value: 16
