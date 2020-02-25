@@ -3,7 +3,7 @@
 *                        The Embedded Experts                        *
 **********************************************************************
 *                                                                    *
-*            (c) 1995 - 2018 SEGGER Microcontroller GmbH             *
+*            (c) 1995 - 2019 SEGGER Microcontroller GmbH             *
 *                                                                    *
 *       www.segger.com     Support: support@segger.com               *
 *                                                                    *
@@ -21,20 +21,10 @@
 *                                                                    *
 * Redistribution and use in source and binary forms, with or         *
 * without modification, are permitted provided that the following    *
-* conditions are met:                                                *
+* condition is met:                                                  *
 *                                                                    *
 * o Redistributions of source code must retain the above copyright   *
-*   notice, this list of conditions and the following disclaimer.    *
-*                                                                    *
-* o Redistributions in binary form must reproduce the above          *
-*   copyright notice, this list of conditions and the following      *
-*   disclaimer in the documentation and/or other materials provided  *
-*   with the distribution.                                           *
-*                                                                    *
-* o Neither the name of SEGGER Microcontroller GmbH                  *
-*   nor the names of its contributors may be used to endorse or      *
-*   promote products derived from this software without specific     *
-*   prior written permission.                                        *
+*   notice, this condition and the following disclaimer.             *
 *                                                                    *
 * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND             *
 * CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,        *
@@ -56,7 +46,7 @@ File    : SEGGER_RTT.c
 Purpose : Implementation of SEGGER real-time transfer (RTT) which
           allows real-time communication on targets which support
           debugger memory accesses while the CPU is running.
-Revision: $Rev: 13375 $
+Revision: $Rev: 17697 $
 
 Additional information:
           Type "int" is assumed to be 32-bits in size
@@ -134,6 +124,10 @@ Additional information:
 
 #ifndef   STRLEN
   #define STRLEN(a)                                       strlen((a))
+#endif
+
+#ifndef   STRCPY
+  #define STRCPY(pDest, pSrc, NumBytes)                   strcpy((pDest), (pSrc))
 #endif
 
 #ifndef   SEGGER_RTT_MEMCPY_USE_BYTELOOP
@@ -252,7 +246,7 @@ SEGGER_RTT_PUT_CB_SECTION(SEGGER_RTT_CB_ALIGN(SEGGER_RTT_CB _SEGGER_RTT));
 SEGGER_RTT_PUT_BUFFER_SECTION(SEGGER_RTT_BUFFER_ALIGN(static char _acUpBuffer  [BUFFER_SIZE_UP]));
 SEGGER_RTT_PUT_BUFFER_SECTION(SEGGER_RTT_BUFFER_ALIGN(static char _acDownBuffer[BUFFER_SIZE_DOWN]));
 
-static char _ActiveTerminal;
+static unsigned char _ActiveTerminal;
 
 /*********************************************************************
 *
@@ -304,8 +298,8 @@ static void _DoInit(void) {
   // Copy Id string in three steps to make sure "SEGGER RTT" is not found
   // in initializer memory (usually flash) by J-Link
   //
-  strcpy(&p->acID[7], "RTT");
-  strcpy(&p->acID[0], "SEGGER");
+  STRCPY(&p->acID[7], "RTT", 9);
+  STRCPY(&p->acID[0], "SEGGER", 7);
   p->acID[6] = ' ';
 }
 
@@ -504,6 +498,105 @@ static unsigned _GetAvailWriteSpace(SEGGER_RTT_BUFFER_UP* pRing) {
 */
 /*********************************************************************
 *
+*       SEGGER_RTT_ReadUpBufferNoLock()
+*
+*  Function description
+*    Reads characters from SEGGER real-time-terminal control block
+*    which have been previously stored by the application.
+*    Do not lock against interrupts and multiple access.
+*    Used to do the same operation that J-Link does, to transfer 
+*    RTT data via other channels, such as TCP/IP or UART.
+*
+*  Parameters
+*    BufferIndex  Index of Up-buffer to be used.
+*    pBuffer      Pointer to buffer provided by target application, to copy characters from RTT-up-buffer to.
+*    BufferSize   Size of the target application buffer.
+*
+*  Return value
+*    Number of bytes that have been read.
+*
+*  Additional information
+*    This function must not be called when J-Link might also do RTT.
+*/
+unsigned SEGGER_RTT_ReadUpBufferNoLock(unsigned BufferIndex, void* pData, unsigned BufferSize) {
+  unsigned                NumBytesRem;
+  unsigned                NumBytesRead;
+  unsigned                RdOff;
+  unsigned                WrOff;
+  unsigned char*          pBuffer;
+  SEGGER_RTT_BUFFER_UP*   pRing;
+#if SEGGER_RTT_MEMCPY_USE_BYTELOOP
+  const char*             pSrc;
+#endif
+  //
+  INIT();
+  pRing = &_SEGGER_RTT.aUp[BufferIndex];
+  pBuffer = (unsigned char*)pData;
+  RdOff = pRing->RdOff;
+  WrOff = pRing->WrOff;
+  NumBytesRead = 0u;
+  //
+  // Read from current read position to wrap-around of buffer, first
+  //
+  if (RdOff > WrOff) {
+    NumBytesRem = pRing->SizeOfBuffer - RdOff;
+    NumBytesRem = MIN(NumBytesRem, BufferSize);
+#if SEGGER_RTT_MEMCPY_USE_BYTELOOP
+    pSrc = pRing->pBuffer + RdOff;
+    NumBytesRead += NumBytesRem;
+    BufferSize   -= NumBytesRem;
+    RdOff        += NumBytesRem;
+    while (NumBytesRem--) {
+      *pBuffer++ = *pSrc++;
+    };
+#else
+    SEGGER_RTT_MEMCPY(pBuffer, pRing->pBuffer + RdOff, NumBytesRem);
+    NumBytesRead += NumBytesRem;
+    pBuffer      += NumBytesRem;
+    BufferSize   -= NumBytesRem;
+    RdOff        += NumBytesRem;
+#endif
+    //
+    // Handle wrap-around of buffer
+    //
+    if (RdOff == pRing->SizeOfBuffer) {
+      RdOff = 0u;
+    }
+  }
+  //
+  // Read remaining items of buffer
+  //
+  NumBytesRem = WrOff - RdOff;
+  NumBytesRem = MIN(NumBytesRem, BufferSize);
+  if (NumBytesRem > 0u) {
+#if SEGGER_RTT_MEMCPY_USE_BYTELOOP
+    pSrc = pRing->pBuffer + RdOff;
+    NumBytesRead += NumBytesRem;
+    BufferSize   -= NumBytesRem;
+    RdOff        += NumBytesRem;
+    while (NumBytesRem--) {
+      *pBuffer++ = *pSrc++;
+    };
+#else
+    SEGGER_RTT_MEMCPY(pBuffer, pRing->pBuffer + RdOff, NumBytesRem);
+    NumBytesRead += NumBytesRem;
+    pBuffer      += NumBytesRem;
+    BufferSize   -= NumBytesRem;
+    RdOff        += NumBytesRem;
+#endif
+  }
+  //
+  // Update read offset of buffer
+  //
+  if (NumBytesRead) {
+    pRing->RdOff = RdOff;
+  }
+  //
+  return NumBytesRead;
+}
+
+/*********************************************************************
+*
 *       SEGGER_RTT_ReadNoLock()
 *
 *  Function description
@@ -589,6 +682,47 @@ unsigned SEGGER_RTT_ReadNoLock(unsigned BufferIndex, void* pData, unsigned Buffe
   if (NumBytesRead) {
     pRing->RdOff = RdOff;
   }
+  //
+  return NumBytesRead;
+}
+
+/*********************************************************************
+*
+*       SEGGER_RTT_ReadUpBuffer
+*
+*  Function description
+*    Reads characters from SEGGER real-time-terminal control block
+*    which have been previously stored by the application.
+*    Used to do the same operation that J-Link does, to transfer 
+*    RTT data via other channels, such as TCP/IP or UART.
+*
+*  Parameters
+*    BufferIndex  Index of Up-buffer to be used.
+*    pBuffer      Pointer to buffer provided by target application, to copy characters from RTT-up-buffer to.
+*    BufferSize   Size of the target application buffer.
+*
+*  Return value
+*    Number of bytes that have been read.
+*
+*  Additional information
+*    This function must not be called when J-Link might also do RTT.
+*    This function locks against all other RTT operations. I.e. during
+*    the read operation, writing is also locked.
+*    If only one consumer reads from the up buffer, 
+*    call sEGGER_RTT_ReadUpBufferNoLock() instead.
+*/
+unsigned SEGGER_RTT_ReadUpBuffer(unsigned BufferIndex, void* pBuffer, unsigned BufferSize) {
+  unsigned NumBytesRead;
+  //
+  SEGGER_RTT_LOCK();
+  //
+  // Call the non-locking read function
+  //
+  NumBytesRead = SEGGER_RTT_ReadUpBufferNoLock(BufferIndex, pBuffer, BufferSize);
+  //
+  // Finish up.
+  //
+  SEGGER_RTT_UNLOCK();
   //
   return NumBytesRead;
 }
@@ -806,6 +940,87 @@ CopyStraight:
 
 /*********************************************************************
 *
+*       SEGGER_RTT_WriteDownBufferNoLock
+*
+*  Function description
+*    Stores a specified number of characters in SEGGER RTT
+*    control block inside a <Down> buffer.
+*    SEGGER_RTT_WriteDownBufferNoLock does not lock the application.
+*    Used to do the same operation that J-Link does, to transfer 
+*    RTT data from other channels, such as TCP/IP or UART.
+*
+*  Parameters
+*    BufferIndex  Index of "Down"-buffer to be used.
+*    pBuffer      Pointer to character array. Does not need to point to a \0 terminated string.
+*    NumBytes     Number of bytes to be stored in the SEGGER RTT control block.
+*
+*  Return value
+*    Number of bytes which have been stored in the "Down"-buffer.
+*
+*  Notes
+*    (1) Data is stored according to buffer flags.
+*    (2) For performance reasons this function does not call Init()
+*        and may only be called after RTT has been initialized.
+*        Either by calling SEGGER_RTT_Init() or calling another RTT API function first.
+*
+*  Additional information
+*    This function must not be called when J-Link might also do RTT.
+*/
+unsigned SEGGER_RTT_WriteDownBufferNoLock(unsigned BufferIndex, const void* pBuffer, unsigned NumBytes) {
+  unsigned                Status;
+  unsigned                Avail;
+  const char*             pData;
+  SEGGER_RTT_BUFFER_UP*   pRing;
+
+  pData = (const char *)pBuffer;
+  //
+  // Get "to-target" ring buffer.
+  // It is save to cast that to a "to-host" buffer. Up and Down buffer differ in volatility of offsets that might be modified by J-Link.
+  //
+  pRing = (SEGGER_RTT_BUFFER_UP*)&_SEGGER_RTT.aDown[BufferIndex];
+  //
+  // How we output depends upon the mode...
+  //
+  switch (pRing->Flags) {
+  case SEGGER_RTT_MODE_NO_BLOCK_SKIP:
+    //
+    // If we are in skip mode and there is no space for the whole
+    // of this output, don't bother.
+    //
+    Avail = _GetAvailWriteSpace(pRing);
+    if (Avail < NumBytes) {
+      Status = 0u;
+    } else {
+      Status = NumBytes;
+      _WriteNoCheck(pRing, pData, NumBytes);
+    }
+    break;
+  case SEGGER_RTT_MODE_NO_BLOCK_TRIM:
+    //
+    // If we are in trim mode, trim to what we can output without blocking.
+    //
+    Avail = _GetAvailWriteSpace(pRing);
+    Status = Avail < NumBytes ? Avail : NumBytes;
+    _WriteNoCheck(pRing, pData, Status);
+    break;
+  case SEGGER_RTT_MODE_BLOCK_IF_FIFO_FULL:
+    //
+    // If we are in blocking mode, output everything.
+    //
+    Status = _WriteBlocking(pRing, pData, NumBytes);
+    break;
+  default:
+    Status = 0u;
+    break;
+  }
+  //
+  // Finish up.
+  //
+  return Status;
+}
+
+/*********************************************************************
+*
 *       SEGGER_RTT_WriteNoLock
 *
 *  Function description
@@ -875,6 +1090,48 @@ unsigned SEGGER_RTT_WriteNoLock(unsigned BufferIndex, const void* pBuffer, unsig
   }
   //
   // Finish up.
+  //
+  return Status;
+}
+
+/*********************************************************************
+*
+*       SEGGER_RTT_WriteDownBuffer
+*
+*  Function description
+*    Stores a specified number of characters in SEGGER RTT control block in a <Down> buffer.
+*
+*  Parameters
+*    BufferIndex  Index of "Up"-buffer to be used (e.g. 0 for "Terminal").
+*    pBuffer      Pointer to character array. Does not need to point to a \0 terminated string.
+*    NumBytes     Number of bytes to be stored in the SEGGER RTT control block.
+*
+*  Return value
+*    Number of bytes which have been stored in the "Down"-buffer.
+*
+*  Notes
+*    (1) Data is stored according to buffer flags.
+*
+*  Additional information
+*    This function must not be called when J-Link might also do RTT.
+*    This function locks against all other RTT operations. I.e. during
+*    the write operation, writing from the application is also locked.
+*    If only one consumer writes to the down buffer, 
+*    call SEGGER_RTT_WriteDownBufferNoLock() instead.
+*/
+unsigned SEGGER_RTT_WriteDownBuffer(unsigned BufferIndex, const void* pBuffer, unsigned NumBytes) {
+  unsigned Status;
+  //
+  INIT();
+  SEGGER_RTT_LOCK();
+  //
+  // Call the non-locking write function
+  //
+  Status = SEGGER_RTT_WriteDownBufferNoLock(BufferIndex, pBuffer, NumBytes);
+  //
+  // Finish up.
+  //
+  SEGGER_RTT_UNLOCK();
   //
   return Status;
 }
@@ -1571,7 +1828,7 @@ void SEGGER_RTT_Init (void) {
 *    >= 0  O.K.
 *     < 0  Error (e.g. if RTT is configured for non-blocking mode and there was no space in the buffer to set the new terminal Id)
 */
-int SEGGER_RTT_SetTerminal (char TerminalId) {
+int SEGGER_RTT_SetTerminal (unsigned char TerminalId) {
   unsigned char         ac[2];
   SEGGER_RTT_BUFFER_UP* pRing;
   unsigned Avail;
@@ -1581,8 +1838,8 @@ int SEGGER_RTT_SetTerminal (char TerminalId) {
   //
   r = 0;
   ac[0] = 0xFFu;
-  if ((unsigned char)TerminalId < (unsigned char)sizeof(_aTerminalId)) { // We only support a certain number of channels
-    ac[1] = _aTerminalId[(unsigned char)TerminalId];
+  if (TerminalId < sizeof(_aTerminalId)) { // We only support a certain number of channels
+    ac[1] = _aTerminalId[TerminalId];
     pRing = &_SEGGER_RTT.aUp[0];    // Buffer 0 is always reserved for terminal I/O, so we can use index 0 here, fixed
     SEGGER_RTT_LOCK();    // Lock to make sure that no other task is writing into buffer, while we are and number of free bytes in buffer does not change downwards after checking and before writing
     if ((pRing->Flags & SEGGER_RTT_MODE_MASK) == SEGGER_RTT_MODE_BLOCK_IF_FIFO_FULL) {
@@ -1621,7 +1878,7 @@ int SEGGER_RTT_SetTerminal (char TerminalId) {
 *     < 0 - Error.
 *
 */
-int SEGGER_RTT_TerminalOut (char TerminalId, const char* s) {
+int SEGGER_RTT_TerminalOut (unsigned char TerminalId, const char* s) {
   int                   Status;
   unsigned              FragLen;
   unsigned              Avail;
@@ -1696,5 +1953,53 @@ int SEGGER_RTT_TerminalOut (char TerminalId, const char* s) {
   return Status;
 }
 
+/*********************************************************************
+*
+*       SEGGER_RTT_GetAvailWriteSpace
+*
+*  Function description
+*    Returns the number of bytes available in the ring buffer.
+*
+*  Parameters
+*    BufferIndex  Index of the up buffer.
+*
+*  Return value
+*    Number of bytes that are free in the selected up buffer.
+*/
+unsigned SEGGER_RTT_GetAvailWriteSpace (unsigned BufferIndex){
+  return _GetAvailWriteSpace(&_SEGGER_RTT.aUp[BufferIndex]);
+}
+
+
+/*********************************************************************
+*
+*       SEGGER_RTT_GetBytesInBuffer()
+*
+*  Function description
+*    Returns the number of bytes currently used in the up buffer.
+*
+*  Parameters
+*    BufferIndex  Index of the up buffer.
+*
+*  Return value
+*    Number of bytes that are used in the buffer.
+*/
+unsigned SEGGER_RTT_GetBytesInBuffer(unsigned BufferIndex) {
+  unsigned RdOff;
+  unsigned WrOff;
+  unsigned r;
+  //
+  // Avoid warnings regarding volatile access order.  It's not a problem
+  // in this case, but dampen compiler enthusiasm.
+  //
+  RdOff = _SEGGER_RTT.aUp[BufferIndex].RdOff;
+  WrOff = _SEGGER_RTT.aUp[BufferIndex].WrOff;
+  if (RdOff <= WrOff) {
+    r = WrOff - RdOff;
+  } else {
+    r = _SEGGER_RTT.aUp[BufferIndex].SizeOfBuffer - (WrOff - RdOff);
+  }
+  return r;
+}
 
 /*************************** End of file ****************************/
