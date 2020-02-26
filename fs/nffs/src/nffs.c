@@ -63,6 +63,7 @@ static int nffs_close(struct fs_file *fs_file);
 static int nffs_read(struct fs_file *fs_file, uint32_t len, void *out_data,
   uint32_t *out_len);
 static int nffs_write(struct fs_file *fs_file, const void *data, int len);
+static int nffs_flush(struct fs_file *fs_file);
 static int nffs_seek(struct fs_file *fs_file, uint32_t offset);
 static uint32_t nffs_getpos(const struct fs_file *fs_file);
 static int nffs_file_len(const struct fs_file *fs_file, uint32_t *out_len);
@@ -81,6 +82,7 @@ struct fs_ops nffs_ops = {
     .f_close = nffs_close,
     .f_read = nffs_read,
     .f_write = nffs_write,
+    .f_flush = nffs_flush,
 
     .f_seek = nffs_seek,
     .f_getpos = nffs_getpos,
@@ -239,6 +241,23 @@ nffs_close(struct fs_file *fs_file)
     nffs_unlock();
 
     return rc;
+}
+
+/**
+ * NFFS flushes file content to flash
+ *
+ * @param file              The file handle to flush.
+ *
+ * @return                  0
+ */
+static int
+nffs_flush(struct fs_file *fs_file)
+{
+    /*
+     * TODO: Check if file flush implementation is needed.
+     * For now just return success.
+     */
+    return 0;
 }
 
 /**

@@ -38,6 +38,7 @@ static int fatfs_close(struct fs_file *fs_file);
 static int fatfs_read(struct fs_file *fs_file, uint32_t len, void *out_data,
   uint32_t *out_len);
 static int fatfs_write(struct fs_file *fs_file, const void *data, int len);
+static int fatfs_flush(struct fs_file *fs_file);
 static int fatfs_seek(struct fs_file *fs_file, uint32_t offset);
 static uint32_t fatfs_getpos(const struct fs_file *fs_file);
 static int fatfs_file_len(const struct fs_file *fs_file, uint32_t *out_len);
@@ -79,6 +80,7 @@ static struct fs_ops fatfs_ops = {
     .f_close = fatfs_close,
     .f_read = fatfs_read,
     .f_write = fatfs_write,
+    .f_flush = fatfs_flush,
 
     .f_seek = fatfs_seek,
     .f_getpos = fatfs_getpos,
@@ -380,6 +382,17 @@ fatfs_write(struct fs_file *fs_file, const void *data, int len)
     if (len != out_len) {
         return FS_EFULL;
     }
+    return fatfs_to_vfs_error(res);
+}
+
+static int
+fatfs_flush(struct fs_file *fs_file)
+{
+    FRESULT res;
+    FIL *file = ((struct fatfs_file *)fs_file)->file;
+
+    res = f_sync(file);
+
     return fatfs_to_vfs_error(res);
 }
 

@@ -52,6 +52,7 @@ int fs_closedir(struct fs_dir *);
 int fs_dirent_name(const struct fs_dirent *, size_t max_len,
   char *out_name, uint8_t *out_name_len);
 int fs_dirent_is_dir(const struct fs_dirent *);
+int fs_flush(struct fs_file *);
 
 /**
  * File access flags.
