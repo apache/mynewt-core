@@ -349,11 +349,11 @@ fatfs_getpos(const struct fs_file *fs_file)
 static int
 fatfs_file_len(const struct fs_file *fs_file, uint32_t *out_len)
 {
-    uint32_t offset;
     FIL *file = ((struct fatfs_file *) fs_file)->file;
 
-    offset = (uint32_t) f_size(file);
-    return offset;
+    *out_len = (uint32_t) f_size(file);
+
+    return FS_EOK;
 }
 
 static int
