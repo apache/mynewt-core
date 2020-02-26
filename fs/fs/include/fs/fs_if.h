@@ -36,6 +36,7 @@ struct fs_ops {
     int (*f_read)(struct fs_file *file, uint32_t len, void *out_data,
       uint32_t *out_len);
     int (*f_write)(struct fs_file *file, const void *data, int len);
+    int (*f_flush)(struct fs_file *file);
 
     int (*f_seek)(struct fs_file *file, uint32_t offset);
     uint32_t (*f_getpos)(const struct fs_file *file);
