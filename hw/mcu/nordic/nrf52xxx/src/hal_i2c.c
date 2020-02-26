@@ -514,6 +514,7 @@ hal_i2c_master_write(uint8_t i2c_num, struct hal_i2c_master_data *pdata,
     regs->SHORTS = 0;
 
     hal_i2c_trigger_start(regs, &regs->TASKS_STARTTX);
+    regs->TASKS_RESUME = 1;
 
     start = os_time_get();
     for (i = 0; i < pdata->len; i++) {
