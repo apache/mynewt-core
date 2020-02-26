@@ -172,81 +172,84 @@ static int
 nrf51_adc_configure_channel(struct adc_dev *dev, uint8_t cnum,
                             void *cfgdata)
 {
-    int rc;
-    nrfx_adc_channel_config_t *cc_cfg;
-    int reference;
+    nrf_adc_config_t *cc_cfg;
     uint16_t refmv;
     uint8_t res;
 
     if (global_adc_config == NULL) {
-        rc = OS_ERROR;
-        goto err;
+        return OS_ERROR;
     }
 
-    //store nrf_adc_chan for nrf51_adc_read_channel
+    /* store nrf_adc_chan for nrf51_adc_read_channel */
     nrf_adc_chan = cfgdata;
 
     nrfx_adc_channel_enable(nrf_adc_chan);
 
-    // they play shenanigans storing the reference bit fields so we have to as well
-    cc_cfg = &nrf_adc_chan->config.config;
-    reference = cc_cfg->reference | (cc_cfg->external_reference << ADC_CONFIG_EXTREFSEL_Pos);
+    cc_cfg = &nrf_adc_chan->config;
 
     /* Set the resolution and reference voltage for this channel to
-    * enable conversion functions.
-    */
+     * enable conversion functions.
+     */
     switch (cc_cfg->resolution) {
-        case NRF_ADC_CONFIG_RES_8BIT:
-            res = 8;
-            break;
-        case NRF_ADC_CONFIG_RES_9BIT:
-            res = 9;
-            break;
-        case NRF_ADC_CONFIG_RES_10BIT:
-            res = 10;
-            break;
-        default:
-            assert(0);
+    case NRF_ADC_CONFIG_RES_8BIT:
+        res = 8;
+        break;
+    case NRF_ADC_CONFIG_RES_9BIT:
+        res = 9;
+        break;
+    case NRF_ADC_CONFIG_RES_10BIT:
+        res = 10;
+        break;
+    default:
+        assert(0);
     }
 
-    switch (reference) {
-        case NRF_ADC_CONFIG_REF_VBG:
-            refmv = 1200; /* 1.2V for NRF51 */
-            break;
-        case NRF_ADC_CONFIG_REF_EXT_REF0:
+    switch (cc_cfg->reference) {
+    case NRF_ADC_CONFIG_REF_VBG:
+        refmv = 1200; /* 1.2V for NRF51 */
+        break;
+    case NRF_ADC_CONFIG_REF_SUPPLY_ONE_HALF:
+        refmv = init_adc_config->nadc_refmv_vdd / 2;
+        break;
+    case NRF_ADC_CONFIG_REF_SUPPLY_ONE_THIRD:
+        refmv = init_adc_config->nadc_refmv_vdd / 3;
+        break;
+    case NRF_ADC_CONFIG_REF_EXT:
+        switch (cc_cfg->extref) {
+        case NRF_ADC_CONFIG_EXTREFSEL_AREF0:
             refmv = init_adc_config->nadc_refmv0;
             break;
-        case NRF_ADC_CONFIG_REF_EXT_REF1:
+        case NRF_ADC_CONFIG_EXTREFSEL_AREF1:
             refmv = init_adc_config->nadc_refmv1;
             break;
-        case NRF_ADC_CONFIG_REF_SUPPLY_ONE_HALF:
-            refmv = init_adc_config->nadc_refmv_vdd / 2;
-            break;
-        case NRF_ADC_CONFIG_REF_SUPPLY_ONE_THIRD:
-            refmv = init_adc_config->nadc_refmv_vdd / 3;
-            break;
+        case NRF_ADC_CONFIG_EXTREFSEL_NONE:
         default:
             assert(0);
+            break;
+        }
+        break;
+    default:
+        assert(0);
     }
 
     /* Adjust reference voltage for gain. */
-    switch (cc_cfg->input) {
-        case NRF_ADC_CONFIG_SCALING_INPUT_FULL_SCALE:
-            break;
-        case NRF_ADC_CONFIG_SCALING_INPUT_ONE_THIRD:
-            refmv *= 3;
-            break;
-        case NRF_ADC_CONFIG_SCALING_INPUT_TWO_THIRDS:
-            refmv = (refmv * 3) / 2;
-            break;
-        case NRF_ADC_CONFIG_SCALING_SUPPLY_ONE_THIRD:
-            refmv = refmv * 3;
-            break;
-        case NRF_ADC_CONFIG_SCALING_SUPPLY_TWO_THIRDS:
-            refmv = (refmv * 3) / 2;
-            break;
-        default:
-            break;
+    switch (cc_cfg->scaling) {
+    case NRF_ADC_CONFIG_SCALING_INPUT_FULL_SCALE:
+        break;
+    case NRF_ADC_CONFIG_SCALING_INPUT_ONE_THIRD:
+        refmv *= 3;
+        break;
+    case NRF_ADC_CONFIG_SCALING_INPUT_TWO_THIRDS:
+        refmv = (refmv * 3) / 2;
+        break;
+    case NRF_ADC_CONFIG_SCALING_SUPPLY_ONE_THIRD:
+        refmv = refmv * 3;
+        break;
+    case NRF_ADC_CONFIG_SCALING_SUPPLY_TWO_THIRDS:
+        refmv = (refmv * 3) / 2;
+        break;
+    default:
+        break;
     }
 
     /* Store these values in channel definitions, for conversions to
@@ -257,9 +260,7 @@ nrf51_adc_configure_channel(struct adc_dev *dev, uint8_t cnum,
     dev->ad_chans[cnum].c_configured = 1;
     dev->ad_chans[cnum].c_cnum = cnum;
 
-    return (0);
-err:
-    return (rc);
+    return 0;
 }
 
 /**
