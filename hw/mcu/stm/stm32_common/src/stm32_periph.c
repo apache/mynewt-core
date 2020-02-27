@@ -88,6 +88,10 @@ extern const struct stm32_uart_cfg os_bsp_uart0_cfg;
 static struct uart_dev os_bsp_uart1;
 extern const struct stm32_uart_cfg os_bsp_uart1_cfg;
 #endif
+#if MYNEWT_VAL(UART_2)
+static struct uart_dev os_bsp_uart2;
+extern const struct stm32_uart_cfg os_bsp_uart2_cfg;
+#endif
 
 #if MYNEWT_VAL(ADC_0)
 static struct adc_dev os_bsp_adc0;
@@ -294,6 +298,12 @@ stm32_periph_create_uart(void)
     rc = os_dev_create(&os_bsp_uart1.ud_dev, "uart1",
                        OS_DEV_INIT_PRIMARY, 1, uart_hal_init,
                        (void *)&os_bsp_uart1_cfg);
+    assert(rc == 0);
+#endif
+#if MYNEWT_VAL(UART_2)
+    rc = os_dev_create(&os_bsp_uart2.ud_dev, "uart2",
+                       OS_DEV_INIT_PRIMARY, 1, uart_hal_init,
+                       (void *)&os_bsp_uart2_cfg);
     assert(rc == 0);
 #endif
 }
