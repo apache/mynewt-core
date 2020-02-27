@@ -86,7 +86,7 @@ extern const struct stm32_uart_cfg os_bsp_uart0_cfg;
 #endif
 #if MYNEWT_VAL(UART_1)
 static struct uart_dev os_bsp_uart1;
-static const struct stm32_uart_cfg os_bsp_uart1_cfg;
+extern const struct stm32_uart_cfg os_bsp_uart1_cfg;
 #endif
 
 #if MYNEWT_VAL(ADC_0)
