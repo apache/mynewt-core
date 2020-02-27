@@ -449,6 +449,7 @@ nrf52_adc_sample(struct adc_dev *dev)
     int cnum;
     int cnum_last = 0;
     int used_chans = 0;
+    int size;
 
     if (nrf_saadc_busy_check(NRF_SAADC)) {
         return OS_EBUSY;
@@ -478,8 +479,8 @@ nrf52_adc_sample(struct adc_dev *dev)
     }
 
     nrf_saadc_resolution_set(NRF_SAADC, g_drv_instance.resolution);
-    nrf_saadc_buffer_init(NRF_SAADC, g_drv_instance.primary_buf,
-                          g_drv_instance.primary_size);
+    size = g_drv_instance.primary_size / sizeof(nrf_saadc_value_t);
+    nrf_saadc_buffer_init(NRF_SAADC, g_drv_instance.primary_buf, size);
 
     nrf_saadc_event_clear(NRF_SAADC, NRF_SAADC_EVENT_END);
     nrf_saadc_event_clear(NRF_SAADC, NRF_SAADC_EVENT_CALIBRATEDONE);
@@ -592,9 +593,9 @@ nrf52_adc_size_buffer(struct adc_dev *dev, int chans, int samples)
 void
 nrf52_saadc_irq_handler(void)
 {
-    adc_event_type_t ev = ADC_EVENT_CALIBRATED;
     void *buf = NULL;
     int bufsize = 0;
+    int size;
 
     if (global_adc_dev == NULL || !global_adc_dev->ad_event_handler_func) {
         ++nrf52_saadc_stats.saadc_events_failed;
@@ -613,26 +614,25 @@ nrf52_saadc_irq_handler(void)
             g_drv_instance.secondary_buf = NULL;
             g_drv_instance.secondary_size = 0;
 
-            nrf_saadc_buffer_init(NRF_SAADC,
-                                  g_drv_instance.primary_buf,
-                                  g_drv_instance.primary_size);
+            size = g_drv_instance.primary_size / sizeof(nrf_saadc_value_t);
+            nrf_saadc_buffer_init(NRF_SAADC, g_drv_instance.primary_buf, size);
         } else {
             nrf_saadc_int_disable(NRF_SAADC, NRF_SAADC_INT_ALL);
             nrf_saadc_task_trigger(NRF_SAADC, NRF_SAADC_TASK_STOP);
             nrf_saadc_disable(NRF_SAADC);
         }
 
-
-        ev = ADC_EVENT_RESULT;
         global_adc_dev->ad_event_handler_func(global_adc_dev,
                                               global_adc_dev->ad_event_handler_arg,
-                                              ev, buf, bufsize);
+                                              ADC_EVENT_RESULT,
+                                              buf, bufsize);
     } else if (nrf_saadc_event_check(NRF_SAADC, NRF_SAADC_EVENT_CALIBRATEDONE)) {
         nrf_saadc_event_clear(NRF_SAADC, NRF_SAADC_EVENT_CALIBRATEDONE);
 
         global_adc_dev->ad_event_handler_func(global_adc_dev,
                                               global_adc_dev->ad_event_handler_arg,
-                                              ev, buf, bufsize);
+                                              ADC_EVENT_CALIBRATED,
+                                              buf, bufsize);
 
         nrf_saadc_task_trigger(NRF_SAADC, NRF_SAADC_TASK_STOP);
         nrf_saadc_task_trigger(NRF_SAADC, NRF_SAADC_TASK_START);
