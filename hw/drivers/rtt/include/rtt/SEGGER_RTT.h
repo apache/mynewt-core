@@ -226,7 +226,8 @@ unsigned     SEGGER_RTT_GetBytesInBuffer        (unsigned BufferIndex);
 *
 **********************************************************************
 */
-unsigned     SEGGER_RTT_ReadUpBuffer            (unsigned BufferIndex, void* pBuffer, unsigned BufferSize);
+unsigned     SEGGER_RTT_ReadUpBuffer            (unsigned BufferIndex,
+        void* pBuffer, unsigned BufferSize);
 unsigned     SEGGER_RTT_ReadUpBufferNoLock      (unsigned BufferIndex, void* pData, unsigned BufferSize);
 unsigned     SEGGER_RTT_WriteDownBuffer         (unsigned BufferIndex, const void* pBuffer, unsigned NumBytes);
 unsigned     SEGGER_RTT_WriteDownBufferNoLock   (unsigned BufferIndex, const void* pBuffer, unsigned NumBytes);
@@ -283,7 +284,7 @@ int SEGGER_RTT_vprintf(unsigned BufferIndex, const char * sFormat, va_list * pPa
 #define RTT_CTRL_TEXT_RED             "\x1B[2;31m"
 #define RTT_CTRL_TEXT_GREEN           "\x1B[2;32m"
 #define RTT_CTRL_TEXT_YELLOW          "\x1B[2;33m"
-#define RTT_CTRL_TEXT_BLUE            "\x1B[2;34m"
+#define RTT_CTRL_TEXT_BLUE "\x1B[2;34m"
 #define RTT_CTRL_TEXT_MAGENTA         "\x1B[2;35m"
 #define RTT_CTRL_TEXT_CYAN            "\x1B[2;36m"
 #define RTT_CTRL_TEXT_WHITE           "\x1B[2;37m"

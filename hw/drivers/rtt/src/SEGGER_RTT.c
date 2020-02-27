@@ -394,9 +394,11 @@ static void _WriteNoCheck(SEGGER_RTT_BUFFER_UP* pRing, const char* pData, unsign
   char*    pDst;
 #endif
 
-  WrOff = pRing->WrOff;
-  Rem = pRing->SizeOfBuffer - WrOff;
-  if (Rem > NumBytes) {
+  WrOff =  pRing->WrOff;
+  Rem =
+      pRing->SizeOfBuffer - WrOff;
+  if (Rem > NumBytes) 
+  {
     //
     // All data fits before wrap around
     //
