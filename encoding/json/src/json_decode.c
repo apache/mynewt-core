@@ -526,6 +526,7 @@ json_read_array(struct json_buffer *jb, const struct json_array_t *arr)
     json_skip_ws(jb);
 
     if (json_peek(jb) == ']') {
+        jb->jb_read_next(jb);
         goto breakout;
     }
 
