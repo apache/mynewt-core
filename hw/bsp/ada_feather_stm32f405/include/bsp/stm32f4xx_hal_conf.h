@@ -102,6 +102,8 @@
 #define HAL_RNG_MODULE_ENABLED
 #define HAL_SPI_MODULE_ENABLED
 #define HAL_TIM_MODULE_ENABLED
+#define HAL_USART_MODULE_ENABLED
+#define HAL_UART_MODULE_ENABLED
 #define HAL_CORTEX_MODULE_ENABLED
 #endif
 
@@ -116,7 +118,7 @@
 #endif /* HSE_VALUE */
 
 #if !defined  (HSE_STARTUP_TIMEOUT)
-  #define HSE_STARTUP_TIMEOUT    ((uint32_t)5000)   /*!< Time out for HSE start up, in ms */
+  #define HSE_STARTUP_TIMEOUT    ((uint32_t)100)   /*!< Time out for HSE start up, in ms */
 #endif /* HSE_STARTUP_TIMEOUT */
 
 /**

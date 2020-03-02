@@ -191,15 +191,15 @@ struct stm32f4_adc_dev_cfg os_bsp_adc2_cfg = {
 
 #if MYNEWT_VAL(UART_0)
 const struct stm32_uart_cfg os_bsp_uart0_cfg = {
-    .suc_uart = USART6,
-    .suc_rcc_reg = &RCC->APB2ENR,
-    .suc_rcc_dev = RCC_APB2ENR_USART6EN,
+    .suc_uart = USART3,
+    .suc_rcc_reg = &RCC->APB1ENR,
+    .suc_rcc_dev = RCC_APB1ENR_USART3EN,
     .suc_pin_tx = MYNEWT_VAL(UART_0_PIN_TX),
     .suc_pin_rx = MYNEWT_VAL(UART_0_PIN_RX),
     .suc_pin_rts = MYNEWT_VAL(UART_0_PIN_RTS),
     .suc_pin_cts = MYNEWT_VAL(UART_0_PIN_CTS),
-    .suc_pin_af = GPIO_AF8_USART6,
-    .suc_irqn = USART6_IRQn
+    .suc_pin_af = GPIO_AF7_USART3,
+    .suc_irqn = USART3_IRQn
 };
 #endif
 
