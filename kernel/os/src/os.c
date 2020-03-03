@@ -69,10 +69,11 @@ OS_TASK_STACK_DEFINE(g_os_main_stack, OS_MAIN_STACK_SIZE);
 static struct hal_timer os_wdog_monitor;
 #endif
 
+#if MYNEWT_VAL(WATCHDOG_INTERVAL) > 0
 #if MYNEWT_VAL(WATCHDOG_INTERVAL) - 200 < MYNEWT_VAL(SANITY_INTERVAL)
 #error "Watchdog interval - 200 < sanity interval"
 #endif
-
+#endif
 
 /* Default zero.  Set by the architecture specific code when os is started.
  */
@@ -270,8 +271,10 @@ os_start(void)
 #if MYNEWT_VAL(OS_SCHEDULING)
     os_error_t err;
 
+#if MYNEWT_VAL(WATCHDOG_INTERVAL) > 0
     /* Enable the watchdog prior to starting the OS */
     hal_watchdog_enable();
+#endif
 
     err = os_arch_os_start();
     assert(err == OS_OK);
@@ -289,11 +292,13 @@ os_reboot(int reason)
 void
 os_system_reset(void)
 {
+#if MYNEWT_VAL(WATCHDOG_INTERVAL) > 0
     /* Tickle watchdog just before re-entering bootloader.  Depending on what
      * the system has been doing lately, the watchdog timer might be close to
      * firing.
      */
     hal_watchdog_tickle();
+#endif
     hal_system_reset();
 }
 
