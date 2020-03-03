@@ -32,7 +32,7 @@
 #endif
 
 /* Include BSP header to allow it to override defines if required */
-#include "bsp/bsp_defs.h"
+#include "bsp/bsp.h"
 
 /**
  * @defgroup OSKernel Operating System Kernel
