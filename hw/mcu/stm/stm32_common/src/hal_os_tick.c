@@ -22,9 +22,6 @@
 #include <hal/hal_os_tick.h>
 #include <hal/hal_bsp.h>
 #include "bsp/bsp.h"
-#include "system_stm32l1xx.h"
-#include "core_cm3.h"
-#include "stm32l151xc.h"
 
 /*
  * Errata for STM32F405, STM32F407, STM32F415, STM32F417.
@@ -34,7 +31,6 @@
  * __WFI function places WFI instruction at address ending with x0 or x8
  * for affected MCUs.
  */
-#include "stm32l1xx_hal.h"
 
 #if defined(STM32F405xx) || defined(STM32F407xx) || \
     defined(STM32F415xx) || defined(STM32F417xx)
@@ -52,8 +48,10 @@ __WFI(void)
 extern void stm32_power_enter(int power_mode, uint32_t durationMS);
 extern void stm32_tick_init(uint32_t os_ticks_per_sec, int prio);
 #else
-static void stm32_tick_init(uint32_t os_ticks_per_sec, int prio) {
-        /*nb of ticks per seconds is hardcoded in HAL_InitTick(..) to have 1ms/tick */
+static void 
+stm32_tick_init(uint32_t os_ticks_per_sec, int prio) 
+{
+    /*nb of ticks per seconds is hardcoded in HAL_InitTick(..) to have 1ms/tick */
     assert(os_ticks_per_sec == OS_TICKS_PER_SEC);
     
     uint32_t reload_val;
@@ -79,12 +77,12 @@ static void stm32_tick_init(uint32_t os_ticks_per_sec, int prio) {
 #endif
 
 }
-static void stm32_power_enter(int power_mode, uint32_t durationMS)
+
+static void 
+stm32_power_enter(int power_mode, uint32_t durationMS)
 {
     __DSB();
     __WFI();
-}
-void stm32_tickless_init() {
 }
 
 #endif
@@ -94,12 +92,12 @@ void
 os_tick_idle(os_time_t ticks)
 {
     /* default mode will enter in WFI */
-    int power_mode=HAL_BSP_POWER_WFI;
+    int power_mode = HAL_BSP_POWER_WFI;
 
     OS_ASSERT_CRITICAL();
 
     /* if < MIN_TICKS, then just leave standard SYSTICK and WFI to and wakeup in 1ms */
-    if (ticks==0) { 
+    if (ticks == 0) { 
         __DSB();
         __WFI();
         return;
@@ -110,7 +108,7 @@ os_tick_idle(os_time_t ticks)
 
 #if MYNEWT_VAL(BSP_POWER_SETUP)
     /* ask bsp for lowest power mode that is possible */
-    power_mode=hal_bsp_power_handler_get_mode(timeMS);
+    power_mode = hal_bsp_power_handler_get_mode(timeMS);
 
     /* Tell BSP we enter sleep, so it should shut down any board periphs it can for the mode it wants */
     hal_bsp_power_handler_sleep_enter(power_mode);
