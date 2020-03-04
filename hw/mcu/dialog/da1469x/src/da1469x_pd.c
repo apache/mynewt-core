@@ -96,7 +96,7 @@ da1469x_pd_apply_trimv(uint8_t pd)
     }
 
     for (idx = 0; idx < pdd->trimv_count; idx++) {
-        reg = &pdd->trimv_words[idx * 2];
+        reg = (uint32_t *) pdd->trimv_words[idx * 2];
         val = pdd->trimv_words[idx * 2 + 1];
         *reg = val;
     }
