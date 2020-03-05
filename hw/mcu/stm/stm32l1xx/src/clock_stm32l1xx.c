@@ -270,17 +270,15 @@ SystemClock_RestartPLL(void)
     __HAL_RCC_HSI_ENABLE( );
 
     /* Wait till HSI is ready */
-    while( __HAL_RCC_GET_FLAG(RCC_FLAG_HSIRDY) == RESET )
-    {
+    while( __HAL_RCC_GET_FLAG(RCC_FLAG_HSIRDY) == RESET) {
     }
 #endif
-#if MYNEWT_VAL(STM32_CLOCK_HSI)
+#if MYNEWT_VAL(STM32_CLOCK_MSI)
     /* Enable MSI */
     __HAL_RCC_MSI_ENABLE( );
 
     /* Wait till MSI is ready */
-    while( __HAL_RCC_GET_FLAG(RCC_FLAG_MSIRDY) == RESET )
-    {
+    while( __HAL_RCC_GET_FLAG(RCC_FLAG_MSIRDY) == RESET) {
     }
 #endif
 
@@ -288,16 +286,14 @@ SystemClock_RestartPLL(void)
     __HAL_RCC_PLL_ENABLE( );
 
     /* Wait till PLL is ready */
-    while( __HAL_RCC_GET_FLAG(RCC_FLAG_PLLRDY) == RESET )
-    {
+    while( __HAL_RCC_GET_FLAG(RCC_FLAG_PLLRDY) == RESET) {
     }
 
     /* Select PLL as system clock source */
-    __HAL_RCC_SYSCLK_CONFIG ( RCC_SYSCLKSOURCE_PLLCLK );
+    __HAL_RCC_SYSCLK_CONFIG (RCC_SYSCLKSOURCE_PLLCLK);
 
     /* Wait till PLL is used as system clock source */
-    while(__HAL_RCC_GET_SYSCLK_SOURCE( ) != RCC_SYSCLKSOURCE_STATUS_PLLCLK)
-    {
+    while(__HAL_RCC_GET_SYSCLK_SOURCE( ) != RCC_SYSCLKSOURCE_STATUS_PLLCLK) {
     }
 }
 #endif

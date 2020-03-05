@@ -62,7 +62,7 @@ hal_mcu_halt()
 }
 
 void 
-stm32_tick_init(uint32_t os_ticks_per_sec, int prio) 
+stm32_tick_init(uint32_t os_ticks_per_sec, int prio)
 {
     /* Even for tickless we use SYSTICK for normal tick.*/
     /* nb of ticks per seconds is hardcoded in HAL_InitTick(..) to have 1ms/tick */
@@ -103,11 +103,11 @@ stm32_tick_init(uint32_t os_ticks_per_sec, int prio)
 }
 
 void 
-stm32_tickless_start(uint32_t timeMS) 
+stm32_tickless_start(uint32_t timeMS)
 {
 
     /* Start RTC alarm for in this amount of time */
-    if(timeMS > 0) {
+    if (timeMS > 0) {
         hal_rtc_enable_wakeup(timeMS);
     }
     /* Stop SYSTICK */
@@ -117,7 +117,7 @@ stm32_tickless_start(uint32_t timeMS)
 }
 
 void 
-stm32_tickless_stop(uint32_t timeMS) 
+stm32_tickless_stop(uint32_t timeMS)
 {
     
     /* add asleep duration to tick counter : how long we should have slept for minus any remaining time */
@@ -187,7 +187,7 @@ stm32_power_enter(int power_mode, uint32_t durationMS)
     case HAL_BSP_POWER_WFI: {
         HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
 
-        SystemClock_RestartPLL();            
+//        SystemClock_RestartPLL();            
         break;
     }
     case HAL_BSP_POWER_ON:
