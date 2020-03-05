@@ -585,7 +585,7 @@ lis2ds12_set_rate(struct sensor_itf *itf, uint8_t rate)
     uint8_t reg;
 
     // TODO probably not the best check for me
-    if (rate > LIS2DS12_DATA_RATE_LP_10BIT_400HZ) {
+    if (0 != (rate & ~(LIS2DS12_CTRL_REG1_ODR | LIS2DS12_CTRL_REG1_HF_ODR))) {
         LIS2DS12_LOG_ERROR("Invalid rate value\n");
         rc = SYS_EINVAL;
         goto err;
