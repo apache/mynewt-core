@@ -46,14 +46,22 @@ syscfg.vals:
     STM32_FLASH_PREFETCH_ENABLE: 1
     STM32_INSTRUCTION_CACHE_ENABLE: 1
     STM32_DATA_CACHE_ENABLE: 1
+    # UART0 is on the large breakout connector, pins TX and RX.
     UART_0_PIN_TX: 'MCU_GPIO_PORTB(10)'
     UART_0_PIN_RX: 'MCU_GPIO_PORTB(11)'
     UART_0_PIN_RTS: -1
     UART_0_PIN_CTS: -1
-    SPI_0_PIN_SS: 'MCU_GPIO_PORTC(5)'
-    SPI_0_PIN_SCK: 'MCU_GPIO_PORTB(5)'
-    SPI_0_PIN_MISO: 'MCU_GPIO_PORTB(14)'
-    SPI_0_PIN_MOSI: 'MCU_GPIO_PORTB(15)'
+    # SPI0 is connected to onboard SPI Flash
+    SPI_0_PIN_SS: 'MCU_GPIO_PORTA(15)'
+    SPI_0_PIN_SCK: 'MCU_GPIO_PORTB(3)'
+    SPI_0_PIN_MISO: 'MCU_GPIO_PORTB(4)'
+    SPI_0_PIN_MOSI: 'MCU_GPIO_PORTB(5)'
+    # SPI1 is on the large breakout connector, pins A5, SCK, MO, and MI.
+    SPI_1_PIN_SS: 'MCU_GPIO_PORTC(5)'
+    SPI_1_PIN_SCK: 'MCU_GPIO_PORTB(13)'
+    SPI_1_PIN_MISO: 'MCU_GPIO_PORTB(14)'
+    SPI_1_PIN_MOSI: 'MCU_GPIO_PORTB(15)'
+    # I2C0 is on the STEMMA connector, and the small breakout connector, pins SCL and SDA.
     I2C_0_PIN_SCL: 'MCU_GPIO_PORTB(6)'
     I2C_0_PIN_SDA: 'MCU_GPIO_PORTB(7)'
     TIMER_0_TIM: 'TIM9'
