@@ -22,6 +22,8 @@
 #include "stm32l1xx_hal_rcc.h"
 #include "stm32l1xx_hal_rtc.h"
 #include "stm32l1xx_hal_pwr.h"
+#include "stm32l1xx_ll_rcc.h"
+
 #include "bsp.h"
 #include "limits.h"
 
