@@ -520,7 +520,7 @@ lis2ds12_set_full_scale(struct sensor_itf *itf, uint8_t fs)
     int rc;
     uint8_t reg;
 
-    if (fs > LIS2DS12_FS_8G) {
+    if (0 != (fs & ~LIS2DS12_CTRL_REG1_FS)) {
         LIS2DS12_LOG_ERROR("Invalid full scale value\n");
         rc = SYS_EINVAL;
         goto err;
