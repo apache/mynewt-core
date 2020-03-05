@@ -27,10 +27,9 @@
 #  - RESET set if target should be reset when attaching
 #  - NO_GDB set if we should not start gdb to debug
 #
-. $CORE_PATH/hw/scripts/jlink.sh
+
+. $CORE_PATH/hw/scripts/stlink.sh
 
 FILE_NAME=$BIN_BASENAME.elf
 
-JLINK_DEV="STM32F405RG"
-
-jlink_debug
+stlink_debug
