@@ -24,6 +24,7 @@
 #include "mcu/da1469x_hal.h"
 #include "hal/hal_flash_int.h"
 #include "mcu/mcu.h"
+#include <stdbool.h>
 
 #define CODE_QSPI_INLINE    __attribute__((always_inline)) inline
 
@@ -330,9 +331,9 @@ da1469x_hff_in_flash_addr_space(const void *src)
      * Due to the remap specified in the datasheet, 0->0x80000 (8 MBytes) are
      * remapped, hence that needs to be considered as well.
      */
-    if ((((uint32_t)src < MCU_MEM_QSPIF_M_START_ADDRESS)       &&
+    if ((((uint32_t)src < MCU_MEM_QSPIF_M_START_ADDRESS) &&
          ((uint32_t)src >= MCU_MEM_QSPIF_M_END_REMAP_ADDRESS)) ||
-         ((uint32_t)src >= MCU_MEM_QSPIF_M_END_ADDRESS)) {
+        ((uint32_t)src >= MCU_MEM_QSPIF_M_END_ADDRESS)) {
         return false;
     }
 
