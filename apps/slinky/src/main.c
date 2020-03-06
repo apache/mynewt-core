@@ -19,12 +19,10 @@
 
 #include "os/mynewt.h"
 #include <bsp/bsp.h>
-#include <hal/hal_gpio.h>
 #include <hal/hal_flash.h>
 #include <console/console.h>
 #include <shell/shell.h>
 #include <log/log.h>
-#include <stats/stats.h>
 #include <config/config.h>
 #include "flash_map/flash_map.h"
 #include <hal/hal_system.h>
@@ -43,6 +41,7 @@
 #ifdef ARCH_sim
 #include <mcu/mcu_sim.h>
 #endif
+#include "led.h"
 
 /* Task 1 */
 #define TASK1_PRIO (8)
@@ -62,19 +61,6 @@ static volatile int g_task2_loops;
 
 /* Global test semaphore */
 static struct os_sem g_test_sem;
-
-/* For LED toggling */
-static int g_led_pin;
-
-STATS_SECT_START(gpio_stats)
-STATS_SECT_ENTRY(toggles)
-STATS_SECT_END
-
-static STATS_SECT_DECL(gpio_stats) g_stats_gpio_toggle;
-
-static STATS_NAME_START(gpio_stats)
-STATS_NAME(gpio_stats, toggles)
-STATS_NAME_END(gpio_stats)
 
 static char *test_conf_get(int argc, char **argv, char *val, int max_len);
 static int test_conf_set(int argc, char **argv, char *val);
@@ -145,12 +131,7 @@ static void
 task1_handler(void *arg)
 {
     struct os_task *t;
-    int prev_pin_state, curr_pin_state;
     struct image_version ver;
-
-    /* Set the led pin for the E407 devboard */
-    g_led_pin = LED_BLINK_PIN;
-    hal_gpio_init_out(g_led_pin, 1);
 
     if (imgr_my_version(&ver) == 0) {
         console_printf("\nSlinky %u.%u.%u.%u\n",
@@ -169,12 +150,8 @@ task1_handler(void *arg)
         /* Wait one second */
         os_time_delay(OS_TICKS_PER_SEC);
 
-        /* Toggle the LED */
-        prev_pin_state = hal_gpio_read(g_led_pin);
-        curr_pin_state = hal_gpio_toggle(g_led_pin);
-        DFLT_LOG_INFO("GPIO toggle from %u to %u",
-                    prev_pin_state, curr_pin_state);
-        STATS_INC(g_stats_gpio_toggle, toggles);
+        /* Toggle the LED and update stats */
+        toggle_led();
 
         /* Release semaphore to task 2 */
         os_sem_release(&g_test_sem);
@@ -258,12 +235,7 @@ main(int argc, char **argv)
     rc = modlog_register(LOG_MODULE_DEFAULT, &my_log, LOG_LEVEL_DEBUG, NULL);
     assert(rc == 0);
 
-    stats_init(STATS_HDR(g_stats_gpio_toggle),
-               STATS_SIZE_INIT_PARMS(g_stats_gpio_toggle, STATS_SIZE_32),
-               STATS_NAME_INIT_PARMS(gpio_stats));
-
-    stats_register("gpio_toggle", STATS_HDR(g_stats_gpio_toggle));
-
+    init_led_stats();
     reboot_start(hal_reset_cause());
 
     init_tasks();
