@@ -13,3 +13,9 @@ net/mqtt/eclipse
 hw/mcu/nxp/kinetis/MK64F12/src
 hw/mcu/nxp/kinetis/MK8xF/MK82F
 hw/bsp/frdm-k82f/src
+
+# Skip upstream LittleFS code but check Mynewt glue
+fs/littlefs/include/littlefs/lfs.h
+fs/littlefs/include/littlefs/lfs_util.h
+fs/littlefs/src/lfs.c
+fs/littlefs/src/lfs_util.c
