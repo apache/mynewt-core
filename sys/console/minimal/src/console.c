@@ -53,6 +53,7 @@ static struct os_eventq compat_lines_queue;
 
 static int nlip_state;
 static int echo = MYNEWT_VAL(CONSOLE_ECHO);
+static int console_is_interactive = MYNEWT_VAL(CONSOLE_ECHO);
 
 static uint8_t cur, end;
 static struct os_eventq *avail_queue;
@@ -72,6 +73,7 @@ void
 console_echo(int on)
 {
     echo = on;
+    console_is_interactive = on;
 }
 
 int
@@ -240,7 +242,7 @@ insert_char(char *pos, char c, uint8_t end)
         return;
     }
 
-    if (echo) {
+    if (console_is_interactive) {
         /* Echo back to console */
         console_out(c);
     }
@@ -315,16 +317,16 @@ console_handle_char(uint8_t byte)
 
             input = NULL;
             ev = NULL;
-            console_echo(1);
+            console_is_interactive = echo;
             return 0;
         /* Ignore characters if there's no more buffer space */
         } else if (byte == CONSOLE_NLIP_PKT_START2) {
             /* Disable echo to not flood the UART */
-            console_echo(0);
+            console_is_interactive = 0;
             insert_char(&input->line[cur], CONSOLE_NLIP_PKT_START1, end);
         } else if (byte == CONSOLE_NLIP_DATA_START2) {
             /* Disable echo to not flood the UART */
-            console_echo(0);
+            console_is_interactive = 0;
             insert_char(&input->line[cur], CONSOLE_NLIP_DATA_START1, end);
         }
 

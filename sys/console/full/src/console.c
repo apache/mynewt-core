@@ -85,6 +85,7 @@ static struct os_eventq compat_lines_queue;
 static int esc_state;
 static int nlip_state;
 static int echo = MYNEWT_VAL(CONSOLE_ECHO);
+static int console_is_interactive = MYNEWT_VAL(CONSOLE_ECHO);
 static unsigned int ansi_val, ansi_val_2;
 static bool rx_stalled;
 
@@ -128,6 +129,7 @@ console_out_nolock(int c)
 void
 console_echo(int on)
 {
+    console_is_interactive = on;
     echo = on;
 }
 
@@ -674,7 +676,7 @@ insert_char(char *pos, char c)
         return;
     }
 
-    if (echo) {
+    if (console_is_interactive) {
         if (!MYNEWT_VAL_CHOICE(CONSOLE_HISTORY, none) &&
             MYNEWT_VAL(CONSOLE_HISTORY_AUTO_SEARCH) && trailing_selection) {
             cursor_clear_line();
@@ -702,7 +704,7 @@ insert_char(char *pos, char c)
     end = trailing_chars;
 
     while (end-- > 0) {
-        if (echo) {
+        if (console_is_interactive) {
             console_out_nolock(tmp);
         }
         c = *pos;
@@ -711,7 +713,7 @@ insert_char(char *pos, char c)
     }
 
     /* Move cursor back to right place */
-    if (echo) {
+    if (console_is_interactive) {
         cursor_backward(trailing_chars);
     }
 }
@@ -983,7 +985,7 @@ handle_nlip(uint8_t byte)
         insert_char(&input->line[cur], byte);
         if (byte == '\n') {
             input->line[cur] = '\0';
-            console_echo(1);
+            console_is_interactive = echo;
             nlip_state = 0;
 
             console_handle_line();
@@ -993,7 +995,7 @@ handle_nlip(uint8_t byte)
         if (byte == CONSOLE_NLIP_PKT_START2) {
             nlip_state = NLIP_PKT_START2;
             /* Disable echo to not flood the UART */
-            console_echo(0);
+            console_is_interactive = 0;
             insert_char(&input->line[cur], CONSOLE_NLIP_PKT_START1);
             insert_char(&input->line[cur], CONSOLE_NLIP_PKT_START2);
         } else {
@@ -1005,7 +1007,7 @@ handle_nlip(uint8_t byte)
         if (byte == CONSOLE_NLIP_DATA_START2) {
             nlip_state = NLIP_DATA_START2;
             /* Disable echo to not flood the UART */
-            console_echo(0);
+            console_is_interactive = 0;
             insert_char(&input->line[cur], CONSOLE_NLIP_DATA_START1);
             insert_char(&input->line[cur], CONSOLE_NLIP_DATA_START2);
         } else {
@@ -1041,7 +1043,7 @@ console_append_char(char *line, uint8_t byte)
         return 1;
     }
 
-    if (echo) {
+    if (console_is_interactive) {
         /* Echo back to console */
         console_switch_to_prompt();
         console_out_nolock(byte);
@@ -1085,6 +1087,16 @@ console_handle_char(uint8_t byte)
     input = current_line_ev->ev_arg;
 
     if (MYNEWT_VAL(CONSOLE_NLIP) && handle_nlip(byte)) {
+        return 0;
+    }
+
+    if (!console_is_interactive) {
+        if (byte == '\r' || byte == '\n') {
+            input->line[cur + trailing_chars] = '\0';
+            console_handle_line();
+        } else {
+            insert_char(&input->line[cur], byte);
+        }
         return 0;
     }
 
