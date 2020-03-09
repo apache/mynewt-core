@@ -1021,8 +1021,15 @@ handle_nlip(uint8_t byte)
         } else if (byte == CONSOLE_NLIP_PKT_START1) {
             nlip_state = NLIP_PKT_START1;
         } else {
-            /* For old code compatibility end of lines characters pass through */
-            handled = g_console_ignore_non_nlip && byte != '\r' && byte != '\n';
+            if (!g_console_ignore_non_nlip) {
+                handled = 0;
+            } else if ((byte == '\r' || byte == '\n') && MYNEWT_VAL(CONSOLE_NLIP_ECHO_LF)) {
+                /* For old code compatibility end of lines characters pass through */
+                if (0 == console_lock(1000)) {
+                    console_out_nolock(byte);
+                    console_unlock();
+                }
+            }
         }
         break;
     }

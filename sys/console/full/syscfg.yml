@@ -38,6 +38,13 @@ syscfg.defs:
     CONSOLE_NLIP:
         description: 'Enable NLIP handling in console code'
         value: 1
+    CONSOLE_NLIP_ECHO_LF:
+        description: >
+            Enable LF echo even if function console_ignore_non_nlip()
+            was called to ignore any non NLIP input. This allows for
+            simple check if application is running correctly
+            by using simple terminal.
+        value: 0
     CONSOLE_COMPAT:
         description: 'Console backward compatibility'
         value: 1
