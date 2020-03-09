@@ -149,25 +149,27 @@ console_write(const char *str, int cnt)
         return;
     }
 
-    if (cnt >= 2 && str[0] == CONSOLE_NLIP_DATA_START1 &&
-        str[1] == CONSOLE_NLIP_DATA_START2) {
-        g_is_output_nlip = 1;
-    }
+    if (MYNEWT_VAL(CONSOLE_NLIP)) {
+        if (cnt >= 2 && str[0] == CONSOLE_NLIP_DATA_START1 &&
+            str[1] == CONSOLE_NLIP_DATA_START2) {
+            g_is_output_nlip = 1;
+        }
 
-    /* From the shell the first byte is always \n followed by the
-     * actual pkt start bytes, hence checking byte 1 and 2
-     */
-    if (cnt >= 3 && str[1] == CONSOLE_NLIP_PKT_START1 &&
-        str[2] == CONSOLE_NLIP_PKT_START2) {
-        g_is_output_nlip = 1;
-    }
+        /* From the shell the first byte is always \n followed by the
+         * actual pkt start bytes, hence checking byte 1 and 2
+         */
+        if (cnt >= 3 && str[1] == CONSOLE_NLIP_PKT_START1 &&
+            str[2] == CONSOLE_NLIP_PKT_START2) {
+            g_is_output_nlip = 1;
+        }
 
 
-    /* If the byte string is non nlip and we are silencing non nlip bytes,
-     * do not let it go out on the console
-     */ 
-    if (!g_is_output_nlip && g_console_silence_non_nlip) {
-        goto done;
+        /* If the byte string is non nlip and we are silencing non nlip bytes,
+         * do not let it go out on the console
+         */
+        if (!g_is_output_nlip && g_console_silence_non_nlip) {
+            goto done;
+        }
     }
 
     for (i = 0; i < cnt; i++) {
@@ -177,7 +179,7 @@ console_write(const char *str, int cnt)
     }
 
 done:
-    if (cnt > 0 && str[cnt - 1] == '\n') {
+    if (MYNEWT_VAL(CONSOLE_NLIP) && cnt > 0 && str[cnt - 1] == '\n') {
         g_is_output_nlip = 0;
     }
     (void)console_unlock();
@@ -296,7 +298,7 @@ console_handle_char(uint8_t byte)
         input = ev->ev_arg;
     }
 
-    if (handle_nlip(byte))  {
+    if (MYNEWT_VAL(CONSOLE_NLIP) && handle_nlip(byte)) {
         if (byte == '\n') {
             insert_char(&input->line[cur], byte, end);
             input->line[cur] = '\0';
@@ -334,12 +336,14 @@ console_handle_char(uint8_t byte)
     /* Handle special control characters */
     if (!isprint(byte)) {
         switch (byte) {
+#if MYNEWT_VAL(CONSOLE_NLIP)
         case CONSOLE_NLIP_PKT_START1:
             nlip_state |= NLIP_PKT_START1;
             break;
         case CONSOLE_NLIP_DATA_START1:
             nlip_state |= NLIP_DATA_START1;
             break;
+#endif
         default:
             insert_char(&input->line[cur], byte, end);
             /* Falls through. */

@@ -517,31 +517,33 @@ console_write(const char *str, int cnt)
         return;
     }
 
-    if (cnt >= 2 && str[0] == CONSOLE_NLIP_DATA_START1 &&
-        str[1] == CONSOLE_NLIP_DATA_START2) {
-        g_is_output_nlip = 1;
-    }
+    if (MYNEWT_VAL(CONSOLE_NLIP)) {
+        if (cnt >= 2 && str[0] == CONSOLE_NLIP_DATA_START1 &&
+            str[1] == CONSOLE_NLIP_DATA_START2) {
+            g_is_output_nlip = 1;
+        }
 
-    /* From the shell the first byte is always \n followed by the
-     * actual pkt start bytes, hence checking byte 1 and 2
-     */
-    if (cnt >= 3 && str[1] == CONSOLE_NLIP_PKT_START1 &&
-        str[2] == CONSOLE_NLIP_PKT_START2) {
-        g_is_output_nlip = 1;
-    }
+        /* From the shell the first byte is always \n followed by the
+         * actual pkt start bytes, hence checking byte 1 and 2
+         */
+        if (cnt >= 3 && str[1] == CONSOLE_NLIP_PKT_START1 &&
+            str[2] == CONSOLE_NLIP_PKT_START2) {
+            g_is_output_nlip = 1;
+        }
 
-    /* If the byte string is non nlip and we are silencing non nlip bytes,
-     * do not let it go out on the console
-     */
-    if (!g_is_output_nlip && g_console_silence_non_nlip) {
-        goto done;
+        /* If the byte string is non nlip and we are silencing non nlip bytes,
+         * do not let it go out on the console
+         */
+        if (!g_is_output_nlip && g_console_silence_non_nlip) {
+            goto done;
+        }
     }
 
     console_switch_to_logs();
     console_filter_write(str, cnt);
 
 done:
-    if (cnt > 0 && str[cnt - 1] == '\n') {
+    if (MYNEWT_VAL(CONSOLE_NLIP) && cnt > 0 && str[cnt - 1] == '\n') {
         g_is_output_nlip = 0;
     }
     (void)console_unlock();
@@ -1082,7 +1084,7 @@ console_handle_char(uint8_t byte)
     }
     input = current_line_ev->ev_arg;
 
-    if (handle_nlip(byte)) {
+    if (MYNEWT_VAL(CONSOLE_NLIP) && handle_nlip(byte)) {
         return 0;
     }
 

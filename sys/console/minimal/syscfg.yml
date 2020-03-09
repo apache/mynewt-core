@@ -29,6 +29,9 @@ syscfg.defs:
     CONSOLE_ECHO:
         description: 'Default console echo'
         value: 1
+    CONSOLE_NLIP:
+        description: 'Enable NLIP handling in console code'
+        value: 1
     CONSOLE_COMPAT:
         description: 'Console backward compatibility'
         value: 1
