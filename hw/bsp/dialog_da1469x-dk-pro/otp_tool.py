@@ -119,12 +119,12 @@ def read_exact(device, length):
     return data
 
 
-@click.option('-i', '--index', required=True, type=int, help='key slot index',
-              callback=validate_slot_index)
-@click.option('-u', '--uart', required=True, help='uart port')
-@click.option('-s', '--segment', type=click.Choice(['signature', 'data',
-              'qspi']), help='OTP segment', required=True)
-@click.command(help='Read a single key from OTP key segment')
+def validate_response(response):
+    if response.som != 0x55aa55aa:
+        raise SystemExit("SOM not valid, invalid response")
+    return True
+
+
 def otp_read_key(index, segment, uart):
     seg_map = {'signature': 0, 'data': 1, 'qspi': 2}
 
@@ -145,9 +145,10 @@ def otp_read_key(index, segment, uart):
     data = read_exact(ser, 16)
 
     response = cmd_response._make(struct.unpack_from('IIII', data))
+    validate_response(response)
+
     if response.status == 0:
         key = ser.read(32)
-        print("key:" + key.hex())
     else:
         raise SystemExit("Error reading key with status %s" %
                          hex(response.status))
@@ -214,6 +215,8 @@ def otp_write_key(infile, index, segment, uart):
     data = read_exact(ser, 16)
 
     response = cmd_response._make(struct.unpack_from('IIII', data))
+    validate_response(response)
+
     if response.status == 0:
         print("Key successfully updated")
     else:
@@ -252,6 +255,8 @@ def otp_read_config(uart, outfile):
     data = read_exact(ser, 16)
 
     response = cmd_response._make(struct.unpack_from('IIII', data))
+    validate_response(response)
+
     if response.status == 0:
         data = ser.read(response.length)
         if len(data) != response.length:
@@ -303,6 +308,8 @@ def flash_read(uart, length, outfile, offset):
         data = read_exact(ser, 16)
 
         response = cmd_response._make(struct.unpack_from('IIII', data))
+        validate_response(response)
+
         if response.status == 0:
             data = ser.read(response.length)
             if len(data) != response.length:
@@ -358,6 +365,8 @@ def flash_erase(uart, offset, length):
     data = read_exact(ser, 16)
 
     response = cmd_response._make(struct.unpack_from('IIII', data))
+    validate_response(response)
+
     if response.status != 0:
             raise SystemExit("Failed to erase flash, exiting")
 
@@ -407,6 +416,8 @@ def flash_write(uart, infile, offset, block_size):
         data = read_exact(ser, 16)
 
         response = cmd_response._make(struct.unpack_from('IIII', data))
+        validate_response(response)
+
         if response.status != 0:
             raise SystemExit("Flash write failed w/ %s, exiting" %
                              hex(response.status))
@@ -442,6 +453,8 @@ def send_otp_config_payload(uart, data):
     data = read_exact(ser, 16)
 
     response = cmd_response._make(struct.unpack_from('IIII', data))
+    validate_response(response)
+
     if response.status == 0:
         data = ser.read(response.length)
         if len(data) != response.length:
@@ -566,6 +579,8 @@ def init_config_script(uart):
     data = read_exact(ser, 16)
 
     response = cmd_response._make(struct.unpack_from('IIII', data))
+    validate_response(response)
+
     if response.status != 0:
         raise SystemExit('Failed to initialize OTP with status %d'
                          % response.status)
@@ -593,16 +608,17 @@ def test_alive_target(uart):
         raise SystemExit("Failed to write to %s" % uart)
 
     data = ser.read(rlen)
-    print(data)
     if len(data) != rlen:
         raise SystemExit("Failed to receive response, exiting")
 
     response = cmd_response._make(struct.unpack_from('IIII', data))
+    validate_response(response)
+
     if response.status != 0:
         raise SystemExit('Failed to verify system status over UART: %d'
                          % response.status)
     else:
-        SystemExit("Successfully communicated with target")
+        print("Successfully communicated with target")
 
 
 @click.group()
@@ -611,7 +627,6 @@ def cli():
 
 
 cli.add_command(otp_read_config)
-cli.add_command(otp_read_key)
 cli.add_command(otp_write_key)
 cli.add_command(flash_read)
 cli.add_command(flash_write)
