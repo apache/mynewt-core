@@ -1,0 +1,80 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+syscfg.defs:
+    BOOT_SECURE:
+        description: 'Set to indicate that ROM bootloader is secure'
+        value: 0
+
+    BOOT_AES_SLOT:
+        description: 'Denotes OTP QSPI FW key index used for encryption'
+        value: -1
+
+    BOOT_SIG_SLOT:
+        description: 'Denotes OTP signature key index used for validation'
+        value: -1
+
+    BOOT_AES_KEY:
+        description: 'Specifies path to AES-256-CTR key in base64 format'
+        value: ''
+
+    BOOT_SIG_PEM:
+        description: 'Specifies path to ED25519 private key PEM file'
+        value: ''
+
+    USER_AES_SLOT:
+        description: 'Specifies AES key slot for OTP user data encryption and decryption'
+        value: -1
+
+syscfg.defs.BUS_DRIVER_PRESENT:
+    BSP_FLASH_SPI_NAME:
+        description: 'SPIFLASH device name'
+        value: '"spiflash0"'
+    BSP_FLASH_SPI_BUS:
+        description: 'bus name SPIFLASH is connected to'
+        value:
+
+syscfg.vals:
+    MCU_DCDC_ENABLE: 1
+    # Setting for QSPI Flash
+    QSPI_FLASH_ADDRESS_LENGTH: 24
+    QSPI_FLASH_SECTOR_SIZE: 4096
+    QSPI_FLASH_SECTOR_COUNT: 256
+    QSPI_FLASH_PAGE_SIZE: 256
+    QSPI_FLASH_CMD_QUAD_INPUT_PAGE_PROGRAM: 0x32
+    # Set default pins for peripherals
+    UART_0_PIN_TX: 9
+    UART_0_PIN_RX: 8
+    UART_1_PIN_TX: 9
+    UART_1_PIN_RX: 8
+    UART_1_PIN_RTS: 32
+    UART_1_PIN_CTS: 7
+    I2C_0_PIN_SCL: 29
+    I2C_0_PIN_SDA: 28
+    SPI_0_MASTER_PIN_SCK: 27
+    SPI_0_MASTER_PIN_MOSI: 24
+    SPI_0_MASTER_PIN_MISO: 26
+    # Configure flash areas
+    CONFIG_FCB_FLASH_AREA: FLASH_AREA_NFFS
+    REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG
+    NFFS_FLASH_AREA: FLASH_AREA_NFFS
+    COREDUMP_FLASH_AREA: FLASH_AREA_IMAGE_1
+
+syscfg.vals.'BLE_HCI_TRANSPORT == "dialog_cmac"':
+    TRNG: 1
