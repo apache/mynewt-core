@@ -134,6 +134,10 @@ console_out(int c)
 void
 console_prompt_set(const char *prompt, const char *line)
 {
+    if (!console_is_interactive) {
+        return;
+    }
+
     console_write(prompt, strlen(prompt));
     if (line) {
         console_write(line, strlen(line));

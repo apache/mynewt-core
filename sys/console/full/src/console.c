@@ -471,6 +471,10 @@ console_prompt_set(const char *prompt, const char *line)
     }
     trailing_chars = 0;
 
+    if (!console_is_interactive) {
+        return;
+    }
+
     locked = console_lock(1000) == OS_OK;
 
     console_switch_to_prompt();
