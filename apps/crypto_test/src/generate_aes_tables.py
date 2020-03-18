@@ -23,8 +23,12 @@ import os
 
 
 AES_128_KEY = "aes_128_key"
-AES_128_ECB_INPUT = "aes_128_ecb_input"
+AES_128_INPUT = "aes_128_input"
 AES_128_ECB_EXPECTED = "aes_128_ecb_expected"
+AES_128_CBC_IV = "aes_128_cbc_iv"
+AES_128_CBC_EXPECTED = "aes_128_cbc_expected"
+AES_128_CTR_NONCE = "aes_128_ctr_nonce"
+AES_128_CTR_EXPECTED = "aes_128_ctr_expected"
 
 LICENSE = """
 /*
@@ -59,20 +63,14 @@ def write_buffer(f, name, _type, buffer):
     li = list(buffer)
     for i, el in enumerate(li):
         if i % 8 == 0:
-            f.write("\n  ")
+            f.write("\n    ")
         else:
             f.write(" ")
         f.write("0x{:02x},".format(el))
     f.write("\n};\n\n")
 
 
-def write_aes_128_tables(f):
-    key = os.urandom(16)
-    write_buffer(f, AES_128_KEY, "uint8_t", key)
-
-    inbuf = os.urandom(4096)
-    write_buffer(f, AES_128_ECB_INPUT, "uint8_t", inbuf)
-
+def write_aes_128_ecb_tables(f, key, inbuf):
     backend = default_backend()
     cipher = Cipher(algorithms.AES(key), modes.ECB(), backend=backend)
     encryptor = cipher.encryptor()
@@ -80,7 +78,33 @@ def write_aes_128_tables(f):
     write_buffer(f, AES_128_ECB_EXPECTED, "uint8_t", ct)
 
 
+def write_aes_128_cbc_tables(f, key, inbuf, iv):
+    backend = default_backend()
+    cipher = Cipher(algorithms.AES(key), modes.CBC(iv), backend=backend)
+    encryptor = cipher.encryptor()
+    ct = encryptor.update(inbuf) + encryptor.finalize()
+    write_buffer(f, AES_128_CBC_EXPECTED, "uint8_t", ct)
+
+
+def write_aes_128_ctr_tables(f, key, inbuf, nonce):
+    backend = default_backend()
+    cipher = Cipher(algorithms.AES(key), modes.CTR(nonce), backend=backend)
+    encryptor = cipher.encryptor()
+    ct = encryptor.update(inbuf) + encryptor.finalize()
+    write_buffer(f, AES_128_CTR_EXPECTED, "uint8_t", ct)
+
+
 if __name__ == "__main__":
     with open("tables.c", "w") as f:
         write_header(f)
-        write_aes_128_tables(f)
+        key = os.urandom(16)
+        write_buffer(f, AES_128_KEY, "uint8_t", key)
+        iv = os.urandom(16)
+        write_buffer(f, AES_128_CBC_IV, "uint8_t", iv)
+        nonce = os.urandom(16)
+        write_buffer(f, AES_128_CTR_NONCE, "uint8_t", nonce)
+        inbuf = os.urandom(4096)
+        write_buffer(f, AES_128_INPUT, "uint8_t", inbuf)
+        write_aes_128_ecb_tables(f, key, inbuf)
+        write_aes_128_cbc_tables(f, key, inbuf, iv)
+        write_aes_128_ctr_tables(f, key, inbuf, nonce)

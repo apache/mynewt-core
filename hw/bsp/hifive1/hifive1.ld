@@ -23,7 +23,7 @@ ENTRY( _reset_handler )
 
 SECTIONS
 {
-  __stack_size = DEFINED(__stack_size) ? __stack_size : 2K;
+  __stack_size = DEFINED(__stack_size) ? __stack_size : 512;
   .imghdr (NOLOAD):
   {
       . = . + _imghdr_size;

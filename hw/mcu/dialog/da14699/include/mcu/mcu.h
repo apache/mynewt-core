@@ -145,6 +145,7 @@ void mcu_gpio_set_pin_function(int pin, int mode, mcu_gpio_func func);
 void mcu_gpio_enter_sleep(void);
 void mcu_gpio_exit_sleep(void);
 
+#define MCU_MEM_QSPIF_M_END_REMAP_ADDRESS (0x800000)
 #define MCU_MEM_QSPIF_M_START_ADDRESS   (0x16000000)
 #define MCU_MEM_QSPIF_M_END_ADDRESS     (0x18000000)
 #define MCU_MEM_SYSRAM_START_ADDRESS    (0x20000000)

@@ -46,8 +46,10 @@ extern "C" {
 #undef MBEDTLS_SELF_TEST
 #endif
 
-#define MBEDTLS_SHA256_SMALLER     /* comes with performance hit */
+#define MBEDTLS_SHA256_SMALLER       /* comes with performance hit */
 #define MBEDTLS_ENTROPY_HARDWARE_ALT /* hardware entropy source */
+#define MBEDTLS_NIST_KW_C            /* encrypted images with AES-KW */
+#define MBEDTLS_AES_ALT              /* enable HW based AES */
 
 /**
  * \name SECTION: Module configuration options
@@ -183,8 +185,6 @@ extern "C" {
 
 #if MYNEWT_VAL(MBEDTLS_AES_ALT) == 0
 #undef MBEDTLS_AES_ALT
-#elif !defined(MBEDTLS_AES_ALT)
-#define MBEDTLS_AES_ALT 1
 #endif
 #if MYNEWT_VAL(MBEDTLS_AES_C) == 0
 #undef MBEDTLS_AES_C
