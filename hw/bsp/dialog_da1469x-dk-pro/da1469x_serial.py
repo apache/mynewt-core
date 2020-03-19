@@ -26,8 +26,9 @@ from datetime import datetime
 
 @click.argument('infile')
 @click.option('-u', '--uart', required=True, help='uart port')
+@click.option('-r', '--reset_script', required=True, help='Custom reset script to switch to serial load')
 @click.command(help='Load the provided file using serial load protocol')
-def load(infile, uart):
+def load(infile, uart, reset_script):
     try:
         ser = serial.Serial(port=uart, baudrate=115200, timeout=0.010,
                             bytesize=8, stopbits=serial.STOPBITS_ONE)
@@ -65,8 +66,8 @@ def load(infile, uart):
         if not som_detected and not reset_triggered:
             if elapsed.microseconds >= reset_delay_us:
                 print("Triggering SWD reset...")
-                reset = path.join(path.dirname(__file__), 'reset.sh &')
-                os.system(reset)
+                # Run in background
+                os.system(reset_script + " &")
                 reset_triggered = True
 
         msg = ser.read(1)
