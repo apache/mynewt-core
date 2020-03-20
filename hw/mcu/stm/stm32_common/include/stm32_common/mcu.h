@@ -106,6 +106,8 @@ extern "C" {
  */
 #define MCU_AFIO_PIN_NONE       (0xFFFF)
 
+void stm32_start_bootloader(void);
+
 #ifdef __cplusplus
 }
 #endif
