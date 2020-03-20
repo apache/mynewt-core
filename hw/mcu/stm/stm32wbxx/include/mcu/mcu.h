@@ -28,6 +28,11 @@ extern "C" {
 
 #define SVC_IRQ_NUMBER SVC_IRQn
 
+#if defined(STM32WB50xx) || \
+    defined(STM32WB55xx)
+#define STM32_SYSTEM_MEMORY     0x1FFF0000
+#endif
+
 #ifdef __cplusplus
 }
 #endif

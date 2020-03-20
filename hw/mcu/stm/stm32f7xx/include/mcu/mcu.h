@@ -26,6 +26,14 @@
 extern "C" {
 #endif
 
+#if defined(STM32F722xx) || defined(STM32F723xx) || \
+    defined(STM32F732xx) || defined(STM32F733xx) || \
+    defined(STM32F745xx) || defined(STM32F746xx) || \
+    defined(STM32F756xx) || \
+    defined(STM32F767xx) || defined(STM32F769xx) || \
+    defined(STM32F777xx) || defined(STM32F779xx)
+#define STM32_SYSTEM_MEMORY     0x1FF00000
+#endif
 
 #ifdef __cplusplus
 }
