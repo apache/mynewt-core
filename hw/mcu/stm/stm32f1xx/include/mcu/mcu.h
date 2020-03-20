@@ -28,6 +28,19 @@ extern "C" {
 
 #define SVC_IRQ_NUMBER SVCall_IRQn
 
+#if defined(STM32F100xB) || defined(STM32F100xE) || \
+    defined(STM32F101x6) || defined(STM32F101xB) || defined(STM32F101xE) || \
+    defined(STM32F102x6) || defined(STM32F102xB) || \
+    defined(STM32F103x6) || defined(STM32F103xB) || defined(STM32F103xE)
+#define STM32_SYSTEM_MEMORY     0x1FFFF000
+#elif defined(STM32F105xC) || \
+    defined(STM32F107xC)
+#define STM32_SYSTEM_MEMORY     0x1FFFB000
+#elif defined(STM32F101xG) || \
+    defined(STM32F103xG)
+#define STM32_SYSTEM_MEMORY     0x1FFFE000
+#endif
+
 #ifdef __cplusplus
 }
 #endif
