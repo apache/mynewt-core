@@ -25,7 +25,7 @@ syscfg.defs:
 syscfg.vals:
     # Sim isn't flash constrained, so include filename, line number, and
     # message in asserts and sysinit panic messages.
-    BASELIBC_ASSERT_FILE_LINE: 1
+    OS_CRASH_FILE_LINE: 1
     SYSINIT_PANIC_FILE_LINE: 1
     SYSINIT_PANIC_MESSAGE: 1
 
