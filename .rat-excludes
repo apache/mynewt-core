@@ -512,3 +512,6 @@ reel_board
 dialog_da1469x-dk-pro
 da1469x
 DA1469xAB.h
+
+# Bosch BMP388 driver - BSD License
+bmp388
