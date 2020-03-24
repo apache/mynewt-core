@@ -442,3 +442,7 @@ under the Apache License v2.0. Bundled files are:
 This product bundles part of embARC BSP SDK by Synopsys, which is available
 under the "3-clause BSD" license. Bundled files are:
     * hw/mcu/arc/src/ext/sdk
+
+This products bundles BMP388 driver by Bosch Sensortec GmbH , which is available
+under the "3-clause BSD" license. For details, see:
+    * hw/drivers/sensors/bmp388
