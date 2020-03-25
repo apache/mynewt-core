@@ -230,88 +230,219 @@ license.  For details, see encoding/json/
 
 This product bundles and partly derives from parts of the Nordic nRF52 SDK,
 which are available under a BSD style license.  Relevant files are:
-    * hw/bsp/nrf51dk/src/arch/cortex_m0/gcc_startup_nrf51.s
-    * hw/bsp/nrf51dk/src/arch/cortex_m0/gcc_startup_nrf51_split.s
-    * hw/bsp/nrf52840pdk/src/arch/cortex_m4/gcc_startup_nrf52840.s
-    * hw/bsp/nrf52840pdk/src/arch/cortex_m4/gcc_startup_nrf52_split.s
-    * hw/bsp/nrf52dk/src/arch/cortex_m4/gcc_startup_nrf52.s
-    * hw/bsp/nrf52dk/src/arch/cortex_m4/gcc_startup_nrf52_split.s
-    * hw/mcu/nordic/src/ext/nRF5_SDK_11.0.0_89a8197/components/toolchain/system_nrf51.c
-    * hw/mcu/nordic/src/ext/nRF5_SDK_11.0.0_89a8197/components/toolchain/system_nrf51.h
-    * hw/mcu/nordic/src/ext/nRF5_SDK_11.0.0_89a8197/components/toolchain/system_nrf51422.c
-    * hw/mcu/nordic/src/ext/nRF5_SDK_11.0.0_89a8197/components/toolchain/system_nrf52.c
-    * hw/mcu/nordic/src/ext/nRF5_SDK_11.0.0_89a8197/components/toolchain/system_nrf52.h
-    * hw/mcu/nordic/src/ext/nRF5_SDK_11.0.0_89a8197/components/toolchain/system_nrf52840.c
-    * hw/mcu/nordic/src/ext/nRF5_SDK_11.0.0_89a8197/components/toolchain/system_nrf52840.h
+    * hw/bsp/nrf51-arduino_101/src/arch/cortex_m0/gcc_startup_nrf51.s
+    * hw/bsp/puckjs/src/arch/cortex_m4/gcc_startup_nrf52.s
+    * hw/bsp/puckjs/src/arch/cortex_m4/gcc_startup_nrf52_split.s
+    * hw/bsp/reel_board/src/arch/cortex_m4/gcc_startup_nrf52840.s
+    * hw/bsp/reel_board/src/arch/cortex_m4/gcc_startup_nrf52_split.s
+    * hw/bsp/nordic_pca10028-16k/src/arch/cortex_m0/gcc_startup_nrf51.s
+    * hw/bsp/nordic_pca10028-16k/src/arch/cortex_m0/gcc_startup_nrf51_split.s
+    * hw/bsp/dwm1001-dev/src/arch/cortex_m4/gcc_startup_nrf52.s
+    * hw/bsp/dwm1001-dev/src/arch/cortex_m4/gcc_startup_nrf52_split.s
+    * hw/bsp/nrf51-blenano/src/arch/cortex_m0/gcc_startup_nrf51.s
+    * hw/bsp/nrf51-blenano/src/arch/cortex_m0/gcc_startup_nrf51_split.s
+    * hw/bsp/ble400/src/arch/cortex_m0/gcc_startup_nrf51.s
+    * hw/bsp/ble400/src/arch/cortex_m0/gcc_startup_nrf51_split.s
+    * hw/bsp/bmd200/src/arch/cortex_m0/gcc_startup_nrf51.s
+    * hw/bsp/bmd200/src/arch/cortex_m0/gcc_startup_nrf51_split.s
+    * hw/bsp/fanstel-ev-bt840/src/arch/cortex_m4/gcc_startup_nrf52840.s
+    * hw/bsp/fanstel-ev-bt840/src/arch/cortex_m4/gcc_startup_nrf52_split.s
+    * hw/bsp/nordic_pca10040/src/arch/cortex_m4/gcc_startup_nrf52.s
+    * hw/bsp/nordic_pca10040/src/arch/cortex_m4/gcc_startup_nrf52_split.s
+    * hw/bsp/calliope_mini/src/arch/cortex_m0/gcc_startup_nrf51.s
+    * hw/bsp/calliope_mini/src/arch/cortex_m0/gcc_startup_nrf51_split.s
+    * hw/bsp/ruuvitag_rev_b/src/arch/cortex_m4/gcc_startup_nrf52.s
+    * hw/bsp/ruuvitag_rev_b/src/arch/cortex_m4/gcc_startup_nrf52_split.s
+    * hw/bsp/vbluno52/src/arch/cortex_m4/gcc_startup_nrf52.s
+    * hw/bsp/vbluno52/src/arch/cortex_m4/gcc_startup_nrf52_split.s
+    * hw/bsp/ada_feather_nrf52/src/arch/cortex_m4/gcc_startup_nrf52.s
+    * hw/bsp/ada_feather_nrf52/src/arch/cortex_m4/gcc_startup_nrf52_split.s
+    * hw/bsp/telee02/src/arch/cortex_m4/gcc_startup_nrf52.s
+    * hw/bsp/telee02/src/arch/cortex_m4/gcc_startup_nrf52_split.s
+    * hw/bsp/bmd300eval/src/arch/cortex_m4/gcc_startup_nrf52.s
+    * hw/bsp/bmd300eval/src/arch/cortex_m4/gcc_startup_nrf52_split.s
+    * hw/bsp/nordic_pca10056/src/arch/cortex_m4/gcc_startup_nrf52840.s
+    * hw/bsp/nordic_pca10056/src/arch/cortex_m4/gcc_startup_nrf52_split.s
+    * hw/bsp/nina-b1/src/arch/cortex_m4/gcc_startup_nrf52.s
+    * hw/bsp/nina-b1/src/arch/cortex_m4/gcc_startup_nrf52_split.s
+    * hw/bsp/bbc_microbit/src/arch/cortex_m0/gcc_startup_nrf51.s
+    * hw/bsp/bbc_microbit/src/arch/cortex_m0/gcc_startup_nrf51_split.s
+    * hw/bsp/arduino_primo_nrf52/src/arch/cortex_m4/gcc_startup_nrf52.s
+    * hw/bsp/arduino_primo_nrf52/src/arch/cortex_m4/gcc_startup_nrf52_split.s
+    * hw/bsp/vbluno51/src/arch/cortex_m0/gcc_startup_nrf51.s
+    * hw/bsp/vbluno51/src/arch/cortex_m0/gcc_startup_nrf51_split.s
+    * hw/bsp/nordic_pca10028/src/arch/cortex_m0/gcc_startup_nrf51.s
+    * hw/bsp/nordic_pca10028/src/arch/cortex_m0/gcc_startup_nrf51_split.s
+    * hw/bsp/nordic_pca20020/src/arch/cortex_m4/gcc_startup_nrf52.s
+    * hw/bsp/nordic_pca20020/src/arch/cortex_m4/gcc_startup_nrf52_split.s
+    * hw/bsp/rb-blend2/src/arch/cortex_m4/gcc_startup_nrf52.s
+    * hw/bsp/rb-blend2/src/arch/cortex_m4/gcc_startup_nrf52_split.s
+    * hw/bsp/rb-nano2/src/arch/cortex_m4/gcc_startup_nrf52.s
+    * hw/bsp/rb-nano2/src/arch/cortex_m4/gcc_startup_nrf52_split.s
+    * hw/mcu/nordic/nrf51xxx/src/system_nrf51.c
+    * hw/mcu/nordic/nrf52xxx/src/system_nrf52.c
 
-This product bundles Gary S. Brown's CRC32 implementation, which is available under the following license:
-    COPYRIGHT (C) 1986 Gary S. Brown.  You may use this program, or
-    code or tables extracted from it, as desired without restriction.
+This product bundles Gary S. Brown's CRC32 implementation, which is available
+under the following license:
+COPYRIGHT (C) 1986 Gary S. Brown.  You may use this program, or
+code or tables extracted from it, as desired without restriction.
 
 This product bundles parts of CMSIS-CORE, which is available under the
 "3-clause BSD" license.  Bundled files are:
-    * hw/cmsis-core/
+    * hw/cmsis-core/src/ext/cmsis_armcc_V6.h
+    * hw/cmsis-core/src/ext/core_cmFunc.h
+    * hw/cmsis-core/src/ext/core_cmInstr.h
+    * hw/cmsis-core/src/ext/core_cmSimd.h
     * kernel/os/src/arch/cortex_m0/m0/HAL_CM0.s
     * kernel/os/src/arch/cortex_m0/m0/SVC_Table.s
+    * kernel/os/src/arch/cortex_m3/m3/HAL_CM3.s
+    * kernel/os/src/arch/cortex_m3/m3/SVC_Table.s
     * kernel/os/src/arch/cortex_m4/m4/HAL_CM4.s
     * kernel/os/src/arch/cortex_m4/m4/SVC_Table.s
+    * kernel/os/src/arch/cortex_m7/m7/SVC_Table.s
+    * kernel/os/src/arch/cortex_m7/m7/HAL_CM7.s
+    * kernel/os/src/arch/cortex_m7/m7/SVC_Table.s
+    * kernel/os/src/arch/cortex_m33/m33/HAL_CM33.s
+    * kernel/os/src/arch/cortex_m33/m33/SVC_Table.s
 
 This product bundles additional files from CMSIS-CORE, but these files are
 missing licensing information.  The BSD license was subsequently added to
 these files in later releases.  These files are:
     * hw/cmsis-core/src/cmsis_nvic.c
     * hw/mcu/ambiq/apollo2/include/mcu/cmsis_nvic.h
+    * hw/mcu/dialog/da1469x/include/mcu/cmsis_nvic.h
     * hw/mcu/nordic/nrf51xxx/include/mcu/cmsis_nvic.h
     * hw/mcu/nordic/nrf52xxx/include/mcu/cmsis_nvic.h
-    * hw/mcu/nxp/MK64F12/include/mcu/cmsis_nvic.h
     * hw/mcu/nxp/mkw41z/include/mcu/cmsis_nvic.h
-    * hw/mcu/stm/stm32f1xx/include/mcu/cmsis_nvic.h
-    * hw/mcu/stm/stm32f3xx/include/mcu/cmsis_nvic.h
-    * hw/mcu/stm/stm32f4xx/include/mcu/cmsis_nvic.h
-    * hw/mcu/stm/stm32f7xx/include/mcu/cmsis_nvic.h
+    * hw/mcu/nxp/MK64F12/include/mcu/cmsis_nvic.h
     * hw/mcu/stm/stm32l1xx/include/mcu/cmsis_nvic.h
+    * hw/mcu/stm/stm32f0xx/include/mcu/cmsis_nvic.h
+    * hw/mcu/stm/stm32f3xx/include/mcu/cmsis_nvic.h
+    * hw/mcu/stm/stm32l0xx/include/mcu/cmsis_nvic.h
+    * hw/mcu/stm/stm32f4xx/include/mcu/cmsis_nvic.h
+    * hw/mcu/stm/stm32l4xx/include/mcu/cmsis_nvic.h
+    * hw/mcu/stm/stm32wbxx/include/mcu/cmsis_nvic.h
+    * hw/mcu/stm/stm32f1xx/include/mcu/cmsis_nvic.h
+    * hw/mcu/stm/stm32f7xx/include/mcu/cmsis_nvic.h
 
+This product bundles parts of STM32 SDK by STMicroelectronics, which is
+available under the "3-clause BSD" license.  Bundled files are:
+    * hw/mcu/stm/stm32_common/src/stm32_driver_mod_i2c_v1.c
+    * hw/mcu/stm/stm32_common/src/stm32_driver_mod_i2c_v2.c
+    * hw/mcu/stm/stm32_common/src/stm32_driver_mod_spi.c
+    * hw/mcu/stm/stm32_common/src/stm32_driver_mod_timer.c
+    
 This product bundles parts of STM32CubeF4 1.5, which is available under the
 "3-clause BSD" license.  Bundled files are:
     * hw/mcu/stm/stm32f4xx/src/ext
-    * hw/bsp/nucleo-f401re/src/arch/cortex_m4/startup_STM32F40x.s
+    * hw/mcu/stm/stm32f4xx/src/clock_stm32f4xx.c
+    * hw/mcu/stm/stm32f4xx/src/system_stm32f4xx.c
+    * hw/bsp/ada_feather_stm32f405/include/bsp/stm32f4xx_hal_conf.h
+    * hw/bsp/ada_feather_stm32f405/src/arch/cortex_m4/startup_STM32F40x.s
+    * hw/bsp/black_vet6/include/bsp/stm32f4xx_hal_conf.h
+    * hw/bsp/black_vet6/src/arch/cortex_m4/startup_STM32F40x.s
     * hw/bsp/nucleo-f401re/include/bsp/stm32f4xx_hal_conf.h
-    * hw/bsp/nucleo-f401re/src/system_stm32f4xx.c
-    * hw/bsp/olimex_stm32-e407_devboard/src/arch/cortex_m4/startup_STM32F40x.s
+    * hw/bsp/nucleo-f401re/src/arch/cortex_m4/startup_STM32F40x.s
     * hw/bsp/olimex_stm32-e407_devboard/include/bsp/stm32f4xx_hal_conf.h
-    * hw/bsp/olimex_stm32-e407_devboard/src/system_stm32f4xx.c
-    * hw/bsp/stm32f4discovery/src/arch/cortex_m4/startup_STM32F40x.s
+    * hw/bsp/olimex_stm32-e407_devboard/src/arch/cortex_m4/startup_STM32F40x.s
     * hw/bsp/stm32f4discovery/include/bsp/stm32f4xx_hal_conf.h
-    * hw/bsp/stm32f4discovery/src/system_stm32f4xx.c
+    * hw/bsp/stm32f4discovery/src/arch/cortex_m4/startup_STM32F40x.s
+    * hw/bsp/nucleo-f411re/include/bsp/stm32f4xx_hal_conf.h
+    * hw/bsp/nucleo-f411re/src/arch/cortex_m4/startup_STM32F411.s
+    * hw/bsp/nucleo-f413zh/include/bsp/stm32f4xx_hal_conf.h
+    * hw/bsp/nucleo-f413zh/src/arch/cortex_m4/startup_stm32f413xx.s
+    * hw/bsp/nucleo-f439zi/include/bsp/stm32f4xx_hal_conf.h
+    * hw/bsp/nucleo-f439zi/src/arch/cortex_m4/startup_stm32f439xx.s
+    * hw/bsp/stm32f411discovery/include/bsp/stm32f4xx_hal_conf.h
+    * hw/bsp/stm32f411discovery/src/arch/cortex_m4/startup_STM32F411.s
+    * hw/bsp/stm32f429discovery/include/bsp/stm32f4xx_hal_conf.h
+    * hw/bsp/stm32f429discovery/src/arch/cortex_m4/startup_STM32F429x.s
 
 This product bundles parts of STM32CubeF7, which is available under the
 "3-clause BSD" license.  Bundled files are:
     * hw/mcu/stm/stm32f7xx/src/ext
-    * hw/bsp/stm32f767-nucleo/include/bsp/stm32f7xx_hal_conf.h
-    * hw/bsp/stm32f767-nucleo/src/system_stm32f7xx.c
-    * hw/bsp/stm32f767-nucleo/src/arch/cortex_m7/startup_stm32f767xx.s
+    * hw/mcu/stm/stm32f7xx/src/clock_stm32f7xx.c
+    * hw/mcu/stm/stm32f7xx/src/system_stm32f7xx.c
+    * hw/bsp/nucleo-f767zi/include/bsp/stm32f7xx_hal_conf.h
+    * hw/bsp/nucleo-f767zi/src/arch/cortex_m7/startup_stm32f767xx.s
+    * /hw/bsp/stm32f7discovery/include/bsp/stm32f7xx_hal_conf.h
+    * hw/bsp/stm32f7discovery/src/arch/cortex_m7/startup_stm32f746xx.s
+    * hw/bsp/nucleo-f746zg/include/bsp/stm32f7xx_hal_conf.h
+    * hw/bsp/nucleo-f746zg/src/arch/cortex_m7/startup_stm32f746xx.s
 
 This product bundles parts of STM32CubeF3, which is available under the
 "3-clause BSD" license.  Bundled files are:
     * hw/mcu/stm/stm32f3xx/src/ext
-    * hw/bsp/stm32f3discovery
+    * hw/mcu/stm/stm32f3xx/src/clock_stm32f3xx.c
+    * hw/mcu/stm/stm32f3xx/src/system_stm32f3xx.c
+    * hw/bsp/stm32f3discovery/include/bsp/stm32f3xx_hal_conf.h
+    * hw/bsp/stm32f3discovery/src/arch/cortex_m4/startup_stm32f303xc.s
+    * hw/bsp/nucleo-f303k8/include/bsp/stm32f3xx_hal_conf.h
+    * hw/bsp/nucleo-f303k8/src/arch/cortex_m4/startup_stm32f303x8.s
+    * hw/bsp/nucleo-f303re/include/bsp/stm32f3xx_hal_conf.h
+    * hw/bsp/nucleo-f303re/src/arch/cortex_m4/startup_stm32f303xe.s
 
 This product bundles parts of stm32l1xx, which is available under the
 "3-clause BSD" license.  Bundled files are:
-    * hw/bsp/stm32l152discovery/src/system_stm32l1xx.c
-    * hw/bsp/stm32l152discovery/include/bsp/stm32l1xx_hal_conf.h
-    * hw/bsp/stm32l152discovery/src/system_stm32l1xx.c
     * hw/mcu/stm/stm32l1xx/src/ext/
+    * hw/mcu/stm/stm32l1xx/src/clock_stm32l1xx.c
+    * hw/mcu/stm/stm32l1xx/src/system_stm32l1xx.c
+    * hw/bsp/stm32l152discovery/include/bsp/stm32l1xx_hal_conf.h
+    * hw/bsp/stm32l152discovery/src/arch/cortex_m3/startup_stm32l152xc.s
 
 This product bundles parts of stm32f1xx, which is available under the
 "3-clause BSD" license.  Bundled files are:
-    * hw/bsp/olimex-p103/include/bsp/stm32f1xx_hal_conf.h
-    * hw/bsp/olimex-p103/src/system_stm32f1xx.c
     * hw/mcu/stm/stm32f1xx/src/ext/
+    * hw/mcu/stm/stm32f1xx/src/clock_stm32f1xx.c
+    * hw/mcu/stm/stm32f1xx/src/system_stm32f1xx.c
+    * hw/bsp/bluepill/include/bsp/stm32f1xx_hal_conf.h
+    *.w/bsp/bluepill/src/arch/cortex_m3/startup_stm32f103xb.s
+    * hw/bsp/nucleo-f103rb/include/bsp/stm32f1xx_hal_conf.h
+    * hw/bsp/nucleo-f103rb/src/arch/cortex_m3/startup_stm32f103xb.s
+    * hw/bsp/olimex-p103/include/bsp/stm32f1xx_hal_conf.h
+    * hw/bsp/olimex-p103/src/arch/cortex_m3/startup_stm32f103xb.s
+    
+This product bundles parts of stm32f0xx, which is available under the
+"3-clause BSD" license.  Bundled files are:
+    * hw/mcu/stm/stm32f0xx/src/ext
+    * hw/mcu/stm/stm32f0xx/src/clock_stm32f0xx.c
+    * hw/mcu/stm/stm32f0xx/src/system_stm32f0xx.c
+    * hw/bsp/nucleo-f030r8/include/bsp/stm32f0xx_hal_conf.h
+  . * hw/bsp/nucleo-f030r8/src/arch/cortex_m0/startup_stm32f030x8.s
+    * hw/bsp/nucleo-f072rb/include/bsp/stm32f0xx_hal_conf.h
+    * hw/bsp/nucleo-f072rb/src/arch/cortex_m0/startup_stm32f072xb.s
+    
+This product bundles parts of stm32l0xx, which is available under the
+"3-clause BSD" license.  Bundled files are:
+    * hw/mcu/stm/stm32l0xx/src/clock_stm32l0xx.c
+    * hw/mcu/stm/stm32l0xx/src/system_stm32l0xx.c
+    * hw/mcu/stm/stm32l0xx/src/ext/
+    * hw/bsp/b-l072z-lrwan1/include/bsp/stm32l0xx_hal_conf.h
+    * hw/bsp/b-l072z-lrwan1/src/arch/cortex_m0/startup_stm32l072xx.s
+    
+This product bundles parts of stm32l4xx, which is available under the
+"3-clause BSD" license.  Bundled files are:
+    * hw/mcu/stm/stm32l4xx/src/clock_stm32l4xx.c
+    * hw/mcu/stm/stm32l4xx/src/system_stm32l4xx.c
+    * w/mcu/stm/stm32l4xx/src/ext/
+    * hw/bsp/b-l475e-iot01a/include/bsp/stm32l4xx_hal_conf.h
+    * hw/bsp/b-l475e-iot01a/src/arch/cortex_m4/startup_stm32l475xx.s
+    * hw/bsp/nucleo-l476rg/include/bsp/stm32l4xx_hal_conf.h
+    * hw/bsp/nucleo-l476rg/src/arch/cortex_m4/startup_stm32l476xx.s
+
+This product bundles parts of stm32wbxx, which is available under the
+"3-clause BSD" license.  Bundled files are:
+    * hw/mcu/stm/stm32wbxx/stm32wb55.ld
+    * hw/mcu/stm/stm32wbxx/src/clock_stm32wbxx.c
+    * hw/mcu/stm/stm32wbxx/src/system_stm32wbxx.c
+    * hw/mcu/stm/stm32wbxx/src/ext/stm32cube-version.md
+    * hw/bsp/p-nucleo-wb55/include/bsp/stm32wbxx_hal_conf.h
+    * hw/bsp/p-nucleo-wb55/src/arch/cortex_m4/startup_stm32wb55xx_cm4.s
 
 This product bundles parts of nrfx, which is available under the
 "3-clause BSD" license.  For detalils see:
     * hw/mcu/nordic/src/ext/nrfx/LICENSE
+    * hw/mcu/nordic/include/nrfx_glue.h
 
 This product bundles FATFS, which is available under a
 "1-clause BSD" style license.  Bundled files are:
@@ -320,19 +451,107 @@ This product bundles FATFS, which is available under a
     * fs/fatfs/include/fatfs/ffconf.h
     * fs/fatfs/include/fatfs/integer.h
     * fs/fatfs/src/ff.c
-    * fs/fatfs/src/option/unicode.c
 
-This product bundles part of linker scripts Nordic Semiconductor nRF5 devices, which is available under the
-"modified Tcl/Tk" license.  Bundled files are:
-    * hw/bsp/nrf52840pdk/split-nrf52840pdk.ld
-    * hw/bsp/nrf52840pdk/nrf52840pdk_no_boot.ld
-    * hw/bsp/bmd300eval/bmd300eval_no_boot.ld
-    * hw/bsp/nrf51dk-16kbram/nrf51dk-16kbram_no_boot.ld
-    * hw/bsp/nrf51dk/nrf51dk_no_boot.ld
-    * hw/bsp/nrf52dk/nrf52dk_no_boot.ld
+This product bundles part of linker scripts from Nordic Semiconductor,
+which is available under the "modified Tcl/Tk" license.  Bundled files are:
+    * hw/mcu/ambiq/apollo2/apollo2.ld
+    * hw/mcu/dialog/da1469x/da1469x.ld
+    * hw/mcu/dialog/da1469x/da1469x_ram_resident.ld
     * hw/mcu/nordic/nrf51xxx/nrf51.ld
     * hw/mcu/nordic/nrf52xxx/nrf52.ld
-    * hw/mcu/ambiq/apollo2/apollo2.ld
+    * hw/mcu/nordic/nrf52xxx/nrf52_ram_resident.ld
+    * hw/bsp/ada_feather_nrf52/ada_feather_nrf52_no_boot.ld
+    * hw/bsp/ada_feather_nrf52/boot-nrf52xxaa.ld
+    * hw/bsp/ada_feather_nrf52/nrf52xxaa.ld
+    * hw/bsp/ada_feather_nrf52/split_ada_feather_nrf52.ld
+    * hw/bsp/apollo2_evb/apollo2.ld
+    * hw/bsp/apollo2_evb/boot-apollo2.ld
+    * hw/bsp/arduino_primo_nrf52/boot-nrf52xxaa.ld
+    * hw/bsp/arduino_primo_nrf52/nrf52xxaa.ld
+    * hw/bsp/arduino_primo_nrf52/primo_no_boot.ld
+    * hw/bsp/arduino_primo_nrf52/split-primo.ld
+    * hw/bsp/bbc_microbit/boot-nrf51xxac.ld
+    * hw/bsp/bbc_microbit/split-microbit.ld
+    * hw/bsp/ble400/ble400_no_boot.ld
+    * hw/bsp/ble400/boot-nrf51xxac.ld
+    * hw/bsp/ble400/nrf51xxac.ld
+    * hw/bsp/ble400/split-ble400.ld
+    * hw/bsp/bluepill/boot-bluepill.ld
+    * hw/bsp/bmd200/boot-nrf51xxac.ld
+    * hw/bsp/bmd200/nrf51dk_no_boot.ld
+    * hw/bsp/bmd200/nrf51xxac.ld
+    * hw/bsp/bmd200/split-nrf51dk.ld
+    * hw/bsp/bmd300eval/bmd300eval_no_boot.ld
+    * hw/bsp/bmd300eval/boot-nrf52xxaa.ld
+    * hw/bsp/bmd300eval/nrf52xxaa.ld
+    * hw/bsp/bmd300eval/split-bmd300eval.ld
+    * hw/bsp/calliope_mini/boot-nrf51xxac.ld
+    * hw/bsp/calliope_mini/split-calliope_mini.ld
+    * hw/bsp/dwm1001-dev/boot-nrf52xxaa.ld
+    * hw/bsp/dwm1001-dev/dwm1001-dev_no_boot.ld
+    * hw/bsp/dwm1001-dev/nrf52xxaa.ld
+    * hw/bsp/dwm1001-dev/split-dwm1001-dev.ld
+    * hw/bsp/fanstel-ev-bt840/fanstel-ev-bt840_no_boot.ld
+    * hw/bsp/fanstel-ev-bt840/split-fanstel-ev-bt840.ld
+    * hw/bsp/nina-b1/boot-nrf52xxaa.ld
+    * hw/bsp/nina-b1/nrf52dk_no_boot.ld
+    * hw/bsp/nina-b1/nrf52xxaa.ld
+    * hw/bsp/nina-b1/split-nrf52dk.ld
+    * hw/bsp/nordic_pca10028-16k/boot-nrf51xxaa.ld
+    * hw/bsp/nordic_pca10028-16k/nordic_pca10028-16k_no_boot.ld
+    * hw/bsp/nordic_pca10028-16k/nrf51xxaa.ld
+    * hw/bsp/nordic_pca10028-16k/split-nordic_pca10028-16k.ld
+    * hw/bsp/nordic_pca10028/boot-nrf51xxac.ld
+    * hw/bsp/nordic_pca10028/nordic_pca10028_no_boot.ld
+    * hw/bsp/nordic_pca10028/nrf51xxac.ld
+    * hw/bsp/nordic_pca10028/split-nordic_pca10028.ld
+    * hw/bsp/nordic_pca10040/boot-nrf52xxaa.ld
+    * hw/bsp/nordic_pca10040/nordic_pca10040_no_boot.ld
+    * hw/bsp/nordic_pca10040/nrf52xxaa.ld
+    * hw/bsp/nordic_pca10040/split-nordic_pca10040.ld
+    * hw/bsp/nordic_pca10056/nordic_pca10056_no_boot.ld
+    * hw/bsp/nordic_pca10056/split-nordic_pca10056.ld
+    * hw/bsp/nordic_pca20020/boot-nrf52xxaa.ld
+    * hw/bsp/nordic_pca20020/nordic_pca20020_no_boot.ld
+    * hw/bsp/nordic_pca20020/nrf52xxaa.ld
+    * hw/bsp/nordic_pca20020/split-nordic_pca20020.ld
+    * hw/bsp/nrf51-arduino_101/boot-nrf51xxaa.ld
+    * hw/bsp/nrf51-arduino_101/nrf51dk-16kbram_no_boot.ld
+    * hw/bsp/nrf51-arduino_101/nrf51xxaa.ld
+    * hw/bsp/nrf51-blenano/boot-nrf51xxac.ld
+    * hw/bsp/nrf51-blenano/nrf51dk_no_boot.ld
+    * hw/bsp/nrf51-blenano/nrf51xxac.ld
+    * hw/bsp/nrf51-blenano/split-nrf51dk.ld
+    * hw/bsp/puckjs/boot-nrf52xxaa.ld
+    * hw/bsp/puckjs/nrf52xxaa.ld
+    * hw/bsp/puckjs/puckjs_no_boot.ld
+    * hw/bsp/puckjs/split_puckjs.ld
+    * hw/bsp/rb-blend2/boot-nrf52xxaa.ld
+    * hw/bsp/rb-blend2/nrf52xxaa.ld
+    * hw/bsp/rb-blend2/rb-blend2_no_boot.ld
+    * hw/bsp/rb-blend2/split-rb-blend2.ld
+    * hw/bsp/rb-nano2/boot-nrf52xxaa.ld
+    * hw/bsp/rb-nano2/nrf52xxaa.ld
+    * hw/bsp/rb-nano2/rb-nano2_no_boot.ld
+    * hw/bsp/rb-nano2/split-rb-nano2.ld
+    * hw/bsp/reel_board/reel_board_no_boot.ld
+    * hw/bsp/reel_board/split-reel_board.ld
+    * hw/bsp/ruuvitag_rev_b/boot-nrf52xxaa.ld
+    * hw/bsp/ruuvitag_rev_b/nrf52xxaa.ld
+    * hw/bsp/ruuvitag_rev_b/ruuvitag_rev_b_no_boot.ld
+    * hw/bsp/ruuvitag_rev_b/split-ruuvitag_rev_b.ld
+    * hw/bsp/telee02/boot-nrf52xxaa.ld
+    * hw/bsp/telee02/nrf52xxaa.ld
+    * hw/bsp/telee02/split-telee02.ld
+    * hw/bsp/telee02/telee02_no_boot.ld
+    * hw/bsp/vbluno51/boot-nrf51xxac.ld
+    * hw/bsp/vbluno51/nrf51xxac.ld
+    * hw/bsp/vbluno51/split-vbluno51.ld
+    * hw/bsp/vbluno51/vbluno51_no_boot.ld
+    * hw/bsp/vbluno52/boot-nrf52xxaa.ld
+    * hw/bsp/vbluno52/nrf52xxaa.ld
+    * hw/bsp/vbluno52/split-vbluno52.ld
+    * hw/bsp/vbluno52/vbluno52_no_boot.ld
 
 This product bundles part of NXP/FreeScale SDK, which is available
 under the "3-clause BSD" license. Bundled files are:
@@ -350,11 +569,21 @@ This product bundles part of NXP mkw41z, which is available under the
     * hw/bsp/usbmkw41z/no-boot-mkw41z512.ld
     * hw/bsp/usbmkw41z/src/arch/cortex_m0/gcc_startup_mkw41z.s
 
+This product bundles part of NXP frdm-k64f, which is available under the
+"3-clause BSD" license.  Bundled files are:
+    * hw/bsp/frdm-k64f/MK64FN1M0xxx12_flash.ld
+    * hw/bsp/frdm-k64f/boot-MK64FN1M0xxx12_flash.ld
+    * hw/bsp/frdm-k64f/src/clock_config.c
+    * hw/bsp/frdm-k64f/src/clock_config.h
+    * hw/bsp/frdm-k64f/src/arch/cortex_m4/startup_MK64F12.S
+
 This product bundles part of mips architecture and ci40, which is available
 under the "3-clause BSD" license.  Bundled files are:
     * kernel/os/src/arch/mips/asm/ctx.S
     * kernel/os/src/arch/mips/asm/excpt_isr.S
     * hw/bsp/ci40/uhi32.ld
+    * hw/bsp/ci40/src/arch/mips/abiflags.S
+    * hw/bsp/ci40/src/arch/mips/gcc_startup_mips.S
 
 This product bundles LwIP, which is available under the "3-clause BSD"
 license. For details, and bundled files see:
@@ -370,6 +599,12 @@ This product bundles parts of the Generic SX1276 driver from Semtech, which
 is available under the "3-clause BSD" license. For details, see:
     * apps/loraping/src/main.c
     * hw/drivers/lora/sx1276/LICENSE.txt
+    * hw/drivers/lora/sx1276
+
+This product bundles parts of the Generic SX1272 driver from Semtech, which
+is available under the "3-clause BSD" license. For details, see:
+    * hw/drivers/lora/sx1272/LICENSE.txt
+    * hw/drivers/lora/sx1272
 
 This product bundles parts of SEGGER RTT, which is available under the
 "3-clause BSD" license. For details, see:
@@ -381,68 +616,70 @@ This products bundle Adafruit's tsl2561 driver, which is available under the
 
 This products bundles Amiq Micro Apollo 2, which is available under the
 "3-clause BSD" license. Bundled files are:
+    * hw/mcu/ambiq/src/ext/AmbiqSuite
     * hw/mcu/ambiq/apollo2/include/mcu/apollo2.h
     * hw/mcu/ambiq/apollo2/include/mcu/system_apollo2.h
+    * hw/bsp/apollo2_evb/include/bsp/apollo_nvic.h
+    * hw/bsp/apollo2_evb/src/system_apollo2.c
+    * hw/bsp/apollo2_evb/src/arch/cortex_m4/gcc_startup.s
 
 This product bundles processor headers for PIC32 by Microchip Technology
 Inc., which is available under the "3-clause BSD" license. Bundled files are:
     * hw/mcu/microchip/pic32mx470f512h/include/mcu/p32mx470f512h.h
     * hw/mcu/microchip/pic32mx470f512h/include/mcu/ppic32mx.h
+    * hw/mcu/microchip/pic32mz2048efg100/include/mcu/p32mz2048efg100.h
+    * hw/bsp/pic32mx470_6lp_clicker/src/sbrk.c
+    * hw/bsp/pic32mz2048_wi-fire/src/sbrk.c
+    * kernel/os/include/os/arch/pic32/os/cp0defs.h
+    * kernel/os/src/arch/pic32/startup/cache-err-exception.S
+    * kernel/os/src/arch/pic32/startup/crt0.S
+    * kernel/os/src/arch/pic32/startup/simple-tlb-refill-exception.S
+    * kernel/os/src/arch/pic32/stubs/pic32_init_cache.S
+    * kernel/os/src/arch/pic32/stubs/pic32_init_tlb_ebi_sqi.S
 
 This product bundles MIPS processor low-level macros by Imagination
 Technologies Limited, which is available under the "3-clause BSD" license.
 Bundled files are included inside:
     * hw/mips-hal/src/arch/mips
-
+    
 This product bundles parts of LoRaWAN endpoint stack by Semtech, which is
 available under the "3-clause BSD" license. For details, see:
+    * net/lora/node/
     * net/lora/node/LICENSE.txt
 
 This product bundles Eclipse Paho's MQTT by IBM Corp. which is available
 under the Eclipse Public License 1.0. For details see:
+    * net/mqtt/eclipse/
     * net/mqtt/eclipse/LICENSE.txt
 
 This product bundles SEGGER SystemView, which is available under the
 "3-clause BSD" license. For details, see:
     * sys/sysview/vendor
 
-This product bundles normalizer.css, affix.js and scrollspy.js by Twitter
-which are available under the MIT license. Bundled files are:
-    * docs/_static/css/bootstrap-3.0.3.min.css
-    * docs/themes/mynewt/static/js/affix.js
-    * docs/themes/mynewt/static/js/scrollspy.js
-
 This product bundles tinycbor by Intel Corporation, which is available under
 the MIT license. For details see:
-    * encoding/tinycbor/include/tinycbor
-
-This product bundles FontAwesome by Dave Gandy, which is available under the
-SIL Open Font License 1.1. Bundled files are:
-    * docs/themes/mynewt/static/fonts/fontawesome-webfont.eot
-    * docs/themes/mynewt/static/fonts/fontawesome-webfont.svg
-    * docs/themes/mynewt/static/fonts/fontawesome-webfont.ttf
-    * docs/themes/mynewt/static/fonts/fontawesome-webfont.woff
-    * docs/themes/mynewt/static/fonts/FontAwesome.otf
-
-This product bundles Inconsolata by Raph Levien, which is available under the
-SIL Open Font License 1.1. Bundled files are:
-    * docs/themes/mynewt/static/fonts/Inconsolata-Bold.ttf
-    * docs/themes/mynewt/static/fonts/Inconsolata-Regular.ttf
-
-This product bundles Lato by Łukasz Dziedzic, which is available under the
-SIL Open Font License 1.1. Bundled files are:
-    * docs/themes/mynewt/static/fonts/Lato-Bold.ttf
-    * docs/themes/mynewt/static/fonts/Lato-Regular.ttf
-
-This product bundles RobotSlab by Christian Robertson, which is available
-under the Apache License v2.0. Bundled files are:
-    * docs/themes/mynewt/static/fonts/RobotoSlab-Bold.ttf
-    * docs/themes/mynewt/static/fonts/RobotoSlab-Regular.ttf
+    * encoding/tinycbor
 
 This product bundles part of embARC BSP SDK by Synopsys, which is available
 under the "3-clause BSD" license. Bundled files are:
     * hw/mcu/arc/src/ext/sdk
+    * hw/mcu/arc/snps/src/arch/arc/arc_startup.S
+    * hw/bsp/embarc_emsk/arc_core.ld
+    * hw/bsp/embarc_emsk/include/bsp/arc_core_config.h
+    * hw/bsp/embarc_emsk/include/bsp/embARC_BSP_config.h
+    * hw/bsp/embarc_emsk/src/board.c
+
+This product bundles part of IoTivity-Constrained, which is partially available
+under the "3-clause BSD" license. Bundled files are:
+    * net/oic/include/oic/messaging/coap/
+    * net/oic/src/messaging/coap/
+    * net/oic/include/oic/port/oc_random.h
+    * net/oic/src/port/oc_clock.h
 
 This products bundles BMP388 driver by Bosch Sensortec GmbH , which is available
 under the "3-clause BSD" license. For details, see:
     * hw/drivers/sensors/bmp388
+
+This product bundles part of DA1469 SDK by Dialog Semiconductor which is
+available under the "3-clause BSD" license. Bundled files are:
+    * hw/mcu/dialog/include/DA1469xAB.h
