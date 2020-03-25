@@ -23,43 +23,15 @@ bin
 # CRC16 - BSD License.
 crc16.*
 
-# Nordic nRF51 SDK - BSD License.
-nrf51dk_no_boot.ld
+
+# Nordic nRF5 SDK - BSD License.
 system_nrf51.c
 gcc_startup_nrf51.s
-nrf51dk-16kbram_no_boot.ld
-boot-nrf51xxaa.ld
-nrf51xxaa.ld
-boot-nrf51xxac.ld
-nrf51xxac.ld
-split-nrf51dk.ld
-boot-nrf51xxac.ld
-nrf51xxac.ld
-split-nrf51dk.ld
-split-nrf51dk-16kbram.ld
-nrf51.ld
 nrf51.h
 nrf51_bitfields.h
 nrf51_deprecated.h
 system_nrf51.h
 gcc_startup_nrf51_split.s
-
-# Nordic nRF52 SDK - BSD License.
-nrf52dk_no_boot.ld
-bmd300eval_no_boot.ld
-boot-nrf52xxaa.ld
-nrf52xxaa.ld
-primo_no_boot.ld
-split-primo.ld
-split-bmd300eval.ld
-split-nrf52dk.ld
-rb-nano2_no_boot.ld
-split-rb-nano2.ld
-nrf52.ld
-nrf52_ram_resident.ld
-ada_feather_nrf52_no_boot.ld
-split_ada_feather_nrf52.ld
-split-microbit.ld
 system_nrf52.c
 gcc_startup_nrf52.s
 nrf51_to_nrf52.h
@@ -75,9 +47,6 @@ nrf52840_peripherals.h
 nrf52_to_nrf52840.h
 system_nrf52840.c
 system_nrf52840.h
-
-# Nordic nRF51 SDK - BSD License.
-# Nordic nRF52 SDK - BSD License.
 compiler_abstraction.h
 nrf.h
 nrf52_name_change.h
@@ -88,15 +57,38 @@ uicr_config.h
 iar_startup_nrf51.s
 iar_startup_nrf52.s
 
-# Nordic BLE400 SDK - BSD License
+# Linker scripts for Nordics nRF5X - TCL license
+nrf51dk_no_boot.ld
+nrf51dk-16kbram_no_boot.ld
+boot-nrf51xxaa.ld
+nrf51xxaa.ld
+boot-nrf51xxac.ld
+nrf51xxac.ld
+split-nrf51dk.ld
+boot-nrf51xxac.ld
+nrf51xxac.ld
+split-nrf51dk.ld
+split-nrf51dk-16kbram.ld
+nrf51.ld
+nrf52dk_no_boot.ld
+bmd300eval_no_boot.ld
+boot-nrf52xxaa.ld
+nrf52xxaa.ld
+primo_no_boot.ld
+split-primo.ld
+split-bmd300eval.ld
+split-nrf52dk.ld
+rb-nano2_no_boot.ld
+split-rb-nano2.ld
+nrf52.ld
+nrf52_ram_resident.ld
+ada_feather_nrf52_no_boot.ld
+split_ada_feather_nrf52.ld
+split-microbit.ld
 ble400_no_boot.ld
 split-ble400.ld
-
-# Nordic nRF52 Thingy SDK - BSD License
 nrf52-thingy_no_boot.ld
 split-nrf52-thingy.ld
-
-# Nordic SDK - BSD License
 nordic_pca10028_no_boot.ld
 split-nordic_pca10028.ld
 nordic_pca10028-16k_no_boot.ld
@@ -107,22 +99,21 @@ nordic_pca10056_no_boot.ld
 split-nordic_pca10056.ld
 nordic_pca20020_no_boot.ld
 split-nordic_pca20020.ld
-
-# RedBear Blend2 SDK - BSD License
 rb-blend2_no_boot.ld
 split-rb-blend2.ld
-
-# Telenor ee02 SDK - BSD License
 split-telee02.ld
 telee02_no_boot.ld
-
-# VBLUno51 board - BSD License
 split-vbluno51.ld
 vbluno51_no_boot.ld
-
-# VBLUno52 board - BSD License
 split-vbluno52.ld
 vbluno52_no_boot.ld
+apollo2.ld
+dwm1001-dev_no_boot.ld
+split-dwm1001-dev.ld
+fanstel-ev-bt840_no_boot.ld
+split-fanstel-ev-bt840.ld
+puckjs_no_boot.ld
+split_puckjs.ld
 
 # STM32 HAL - BSD License
 stm32_driver_mod_i2c_v1.c
@@ -433,9 +424,6 @@ system_apollo2.h
 system_apollo2.c
 apollo_nvic.h
 
-# Apollo2 linker script - MIT License
-apollo2.ld
-
 # CMSIS Cortex-M4, STM32f3 - BSD License.
 STM32F3xx
 STM32F3xx_HAL_Driver
@@ -469,16 +457,8 @@ stm32f1xx
 arc
 embarc_emsk
 
-# DWM1001 - BSD Licence
-dwm1001-dev_no_boot.ld
-split-dwm1001-dev.ld
-
 # olimex-p103 - BSD and APL 2.0 License
 olimex-p103
-
-# puckjs - BSD License
-puckjs_no_boot.ld
-split_puckjs.ld
 
 # STM32L0xx SDK - BSD License
 stm32l0xx
@@ -488,10 +468,6 @@ stm32l4xx
 
 # STM32WBxx SDK - BSD License
 stm32wbxx
-
-# Fanstel EVBT840 BSP linker scripts - BSD License
-fanstel-ev-bt840_no_boot.ld
-split-fanstel-ev-bt840.ld
 
 # B-L072Z-LRWAN1 BSP - BSD License
 b-l072z-lrwan1
