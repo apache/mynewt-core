@@ -20,14 +20,17 @@ import serial
 import io
 import click
 import os
+import os.path as path
+from datetime import datetime
 
 
 @click.argument('infile')
 @click.option('-u', '--uart', required=True, help='uart port')
+@click.option('-r', '--reset_script', required=True, help='Custom reset script to switch to serial load')
 @click.command(help='Load the provided file using serial load protocol')
-def load(infile, uart):
+def load(infile, uart, reset_script):
     try:
-        ser = serial.Serial(port=uart, baudrate=115200, timeout=10,
+        ser = serial.Serial(port=uart, baudrate=115200, timeout=0.010,
                             bytesize=8, stopbits=serial.STOPBITS_ONE)
     except serial.SerialException:
         raise SystemExit("Failed to open serial port")
@@ -51,21 +54,32 @@ def load(infile, uart):
     # - If XOR matches, host sends 0x6 as final ack
     # - board boots image after receiving ACK from host
 
-#    if len(msg) == 0:
-#        raise SystemExit("Read timed out, exiting")
-
-    print("Please reset board to enter ROM uart recovery")
+    som_detected = False
+    reset_triggered = False
+    prev = datetime.now()
+    reset_delay_us = 250000
 
     while True:
+        elapsed = datetime.now() - prev
+        if elapsed.seconds >= 15:
+            raise SystemExit("Failed to receive SOM, aborting")
+        if not som_detected and not reset_triggered:
+            if elapsed.microseconds >= reset_delay_us:
+                print("Triggering SWD reset...")
+                # Run in background
+                os.system(reset_script + " &")
+                reset_triggered = True
+
         msg = ser.read(1)
-        print(msg)
-        if msg[0] == 0x2:
+        if len(msg) > 0 and msg[0] == 0x2:
+            print(msg)
+            som_detected = True
             print("Detected serial boot protocol")
             msg = bytes([0x1])
             msg += bytes([len(data) & 0xff])
             msg += bytes([len(data) >> 8])
             ser.write(msg)
-
+            ser.timeout = 10
             msg = ser.read()
             if len(msg) == 0:
                 raise SystemExit("Failed to receive SOH ACK, aborting")
