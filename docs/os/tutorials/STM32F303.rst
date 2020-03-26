@@ -49,45 +49,6 @@ re-use that project.
 
 **Note:** Don't forget to change into the ``myproj`` directory.
 
-Import External STM32F3 Library support
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The STM32F303 support for Mynewt lives in an external repository. It's
-necessary to add another repository to the project. To do this, edit the
-file ``project.yml`` in the root directory of your project ``myproj``
-
-This requires two changes to this file.
-
-1. You must define the properties of the external repository that you
-   want to add
-2. You must include the repository in your project.
-
-Edit the file ``project.yml`` with your favorite editor and add the
-following repository details in the file (after the core repository).
-This gives newt the information to contact the repository and extract
-its contents. In this case, the repository is on github in the
-``runtimeco`` collection. Its name is ``mynewt-stm32f3`` and we will
-accept any version up to the latest. You can look at the contents
-`here <https://github.com/runtimeco/mynewt_stm32f3>`__.
-
-::
-
-    repository.mynewt_stm32f3:
-        type: github
-        vers: 0-latest
-        user: runtimeco
-        repo: mynewt_stm32f3
-
-In the same file, add the following highlighted line to the
-``project.repositories`` variable. This tells newt to download the
-repository contents into your project.
-
-::
-
-    project.repositories:
-        - apache-mynewt-core
-        - mynewt_stm32f3
-
 Install dependencies
 ~~~~~~~~~~~~~~~~~~~~
 
@@ -121,23 +82,23 @@ the bootloader which allows you to upgrade your mynewt applications.
 
     $ newt target create stmf3_blinky
     $ newt target set stmf3_blinky build_profile=optimized
-    $ newt target set stmf3_blinky bsp=@mynewt_stm32f3/hw/bsp/stm32f3discovery
+    $ newt target set stmf3_blinky bsp=@apache-mynewt-core/hw/bsp/stm32f3discovery
     $ newt target set stmf3_blinky app=apps/blinky
 
     $ newt target create stmf3_boot
-    $ newt target set stmf3_boot app=@apache-mynewt-core/apps/boot
-    $ newt target set stmf3_boot bsp=@mynewt_stm32f3/hw/bsp/stm32f3discovery
+    $ newt target set stmf3_boot app=@mcuboot/boot/mynewt
+    $ newt target set stmf3_boot bsp=@apache-mynewt-core/hw/bsp/stm32f3discovery
     $ newt target set stmf3_boot build_profile=optimized
 
     $ newt target show
 
     targets/stmf3_blinky
         app=apps/blinky
-        bsp=@mynewt_stm32f3/hw/bsp/stm32f3discovery
+        bsp=@apache-mynewt-core/hw/bsp/stm32f3discovery
         build_profile=optimized
     targets/stmf3_boot
-        app=apps/boot
-        bsp=@mynewt_stm32f3/hw/bsp/stm32f3discovery
+        app=@mcuboot/boot/mynewt
+        bsp=@apache-mynewt-core/hw/bsp/stm32f3discovery
         build_profile=optimized
 
 Build the target executables
