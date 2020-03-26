@@ -1,0 +1,69 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+# Settings this BSP defines.
+syscfg.defs:
+    BSP_NRF52:
+        description: 'Set to indicate that BSP has NRF52'
+        value: 1
+
+# Settings this BSP overrides.
+syscfg.vals:
+    # Enable nRF52832 MCU
+    MCU_TARGET: nRF52832
+
+    # 32.768 kHz crystal oscillator
+    MCU_LFCLK_SOURCE: LFXO      
+
+    # Enable DC/DC regulator
+    MCU_DCDC_ENABLED: 1
+
+    ###########################################################################
+    # Default Pins for Peripherals
+
+    # SPI port 0 connected to ST7789 display
+    SPI_0_MASTER_PIN_SCK:  2  # P0.02: SPI-SCK, LCD_SCK
+    SPI_0_MASTER_PIN_MOSI: 3  # P0.03: SPI-MOSI, LCD_SDI
+    SPI_0_MASTER_PIN_MISO: 4  # P0.04: SPI-MISO
+
+    # I2C port 1 connected to CST816S touch controller, BMA421 accelerometer, HRS3300 heart rate sensor 
+    I2C_1_PIN_SCL: 7  # P0.07: BMA421-SCL, HRS3300-SCL, TP-SCLOUT
+    I2C_1_PIN_SDA: 6  # P0.06: BMA421-SDA, HRS3300-SDA, TP-SDAI/O
+
+    # UART port 0 is disabled
+    UART_0: 0
+
+    # Configure NFC pins as GPIO P0.09, P0.10
+    NFC_PINS_AS_GPIO: 1
+
+    # ADC needed for battery voltage
+    ADC_0: 1
+
+    # Define flash areas
+    CONFIG_FCB_FLASH_AREA: FLASH_AREA_NFFS
+    REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG
+    NFFS_FLASH_AREA: FLASH_AREA_NFFS
+    COREDUMP_FLASH_AREA: FLASH_AREA_IMAGE_1
+
+syscfg.vals.BLE_CONTROLLER:
+    TIMER_0: 0
+    TIMER_5: 1
+    OS_CPUTIME_FREQ: 32768
+    OS_CPUTIME_TIMER_NUM: 5
+    BLE_LL_RFMGMT_ENABLE_TIME: 1500
