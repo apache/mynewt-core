@@ -6,6 +6,7 @@ Drivers
 
    flash <flash>
    mmc <mmc>
+   Charge Control <chg_ctrl>
 
 
 Description
@@ -153,4 +154,6 @@ includes:
 | ``sensors``                            | TODO: sensors.           |
 +----------------------------------------+--------------------------+
 | ``uart``                               | TODO: UART driver.       |
++----------------------------------------+--------------------------+
+| ``chg_ctrl``                           | Charge control drivers.  |
 +----------------------------------------+--------------------------+
