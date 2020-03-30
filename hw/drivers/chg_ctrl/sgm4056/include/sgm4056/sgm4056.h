@@ -27,6 +27,10 @@ struct sgm4056_dev_config {
 
 struct sgm4056_dev {
     struct os_dev dev;
+#if MYNEWT_VAL(SGM4056_USE_CHARGE_CONTROL)
+    struct charge_control chg_ctrl;
+    struct os_event interrupt_event;
+#endif
     struct sgm4056_dev_config config;
 };
 
