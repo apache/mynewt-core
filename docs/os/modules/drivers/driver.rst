@@ -2,11 +2,11 @@ Drivers
 =======
 
 .. toctree::
-   :maxdepth: 1
+   :hidden:
 
    flash <flash>
    mmc <mmc>
-   Charge Control <chg_ctrl>
+   Charge Control <chg_ctrl/chg_ctrl>
 
 
 Description
