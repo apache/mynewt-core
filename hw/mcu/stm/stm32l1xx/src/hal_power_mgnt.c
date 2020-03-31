@@ -166,7 +166,7 @@ stm32_power_enter(int power_mode, uint32_t durationMS)
         HAL_PWREx_DisableFastWakeUp( );
         /* Enters StandBy mode */
         HAL_PWR_EnterSTANDBYMode();
-
+        // STANDBY mode has halted the clocks and will be running on MSI - restart correctly
         SystemClock_RestartPLL();
         break;
     }
@@ -180,14 +180,13 @@ stm32_power_enter(int power_mode, uint32_t durationMS)
         HAL_PWREx_DisableFastWakeUp( );
         /* Enters Stop mode not in PWR_MAINREGULATOR_ON*/
         HAL_PWR_EnterSTOPMode(PWR_LOWPOWERREGULATOR_ON, PWR_STOPENTRY_WFI);
-
+        // STOP mode has halted the clocks and will be running on MSI - restart correctly
         SystemClock_RestartPLL();
         break;
     }
     case HAL_BSP_POWER_WFI: {
         HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
-
-//        SystemClock_RestartPLL();            
+        // Clock is not interuppted in SLEEP mode, no need to restart it
         break;
     }
     case HAL_BSP_POWER_ON:

@@ -231,12 +231,8 @@ run_test_vectors(struct crypto_dev *crypto, struct test_vectors *test_mode)
 
 #if MYNEWT_VAL(CRYPTOTEST_BENCHMARK)
 extern uint8_t aes_128_key[];
-extern uint8_t aes_128_input[];
+extern uint8_t aes_128_ecb_input[];
 extern uint8_t aes_128_ecb_expected[];
-extern uint8_t aes_128_cbc_expected[];
-extern uint8_t aes_128_cbc_iv[];
-extern uint8_t aes_128_ctr_expected[];
-extern uint8_t aes_128_ctr_nonce[];
 
 typedef void (* block_encrypt_func_t)(void *, const uint8_t *, uint8_t *);
 
@@ -272,73 +268,13 @@ run_benchmark(char *name, block_encrypt_func_t encfn, void *data, uint8_t iter)
     t = os_time_get();
     for (i = 0; i < iter; i++) {
         for (blkidx = 0; blkidx < 4096; blkidx += AES_BLOCK_LEN) {
-            encfn(data, &aes_128_input[blkidx], output);
+            encfn(data, &aes_128_ecb_input[blkidx], output);
             if (memcmp(output, &aes_128_ecb_expected[blkidx],
                         AES_BLOCK_LEN)) {
                 printf("fail... blkidx=%u\n", blkidx);
                 for (j = 0; j < AES_BLOCK_LEN; j++) {
                     printf("[%02x]<%02x> ", output[j],
                             aes_128_ecb_expected[blkidx + j]);
-                }
-                return;
-            }
-        }
-    }
-    printf("done in %lu ticks\n", os_time_get() - t);
-}
-
-static void
-run_cbc_bench(struct crypto_dev *crypto, uint8_t iter)
-{
-    int i, j;
-    uint8_t iv[AES_BLOCK_LEN];
-    uint8_t output[AES_BLOCK_LEN];
-    uint16_t blkidx;
-    os_time_t t;
-
-    printf("AES-128-CBC - running %d iterations of 4096 block encrypt... ", iter);
-    t = os_time_get();
-    for (i = 0; i < iter; i++) {
-        memcpy(iv, aes_128_cbc_iv, AES_BLOCK_LEN);
-        for (blkidx = 0; blkidx < 4096; blkidx += AES_BLOCK_LEN) {
-            (void)crypto_encrypt_aes_cbc(crypto, aes_128_key, 128, iv,
-                    &aes_128_input[blkidx], output, AES_BLOCK_LEN);
-            if (memcmp(output, &aes_128_cbc_expected[blkidx],
-                        AES_BLOCK_LEN)) {
-                printf("fail... blkidx=%u\n", blkidx);
-                for (j = 0; j < AES_BLOCK_LEN; j++) {
-                    printf("[%02x]<%02x> ", output[j],
-                            aes_128_cbc_expected[blkidx + j]);
-                }
-                return;
-            }
-        }
-    }
-    printf("done in %lu ticks\n", os_time_get() - t);
-}
-
-static void
-run_ctr_bench(struct crypto_dev *crypto, uint8_t iter)
-{
-    int i, j;
-    uint8_t output[AES_BLOCK_LEN];
-    uint8_t nonce[AES_BLOCK_LEN];
-    uint16_t blkidx;
-    os_time_t t;
-
-    printf("AES-128-CTR - running %d iterations of 4096 block encrypt... ", iter);
-    t = os_time_get();
-    for (i = 0; i < iter; i++) {
-        memcpy(nonce, aes_128_ctr_nonce, AES_BLOCK_LEN);
-        for (blkidx = 0; blkidx < 4096; blkidx += AES_BLOCK_LEN) {
-            (void)crypto_encrypt_aes_ctr(crypto, aes_128_key, 128, nonce,
-                    &aes_128_input[blkidx], output, AES_BLOCK_LEN);
-            if (memcmp(output, &aes_128_ctr_expected[blkidx],
-                        AES_BLOCK_LEN)) {
-                printf("fail... blkidx=%u\n", blkidx);
-                for (j = 0; j < AES_BLOCK_LEN; j++) {
-                    printf("[%02x]<%02x> ", output[j],
-                            aes_128_ctr_expected[blkidx + j]);
                 }
                 return;
             }
@@ -362,7 +298,7 @@ concurrency_test_handler(void *arg)
     blkidx = ok = fail = 0;
     while (blkidx < 4096) {
         (void)crypto_encrypt_aes_ecb(crypto, aes_128_key, 128,
-                &aes_128_input[blkidx], output, AES_BLOCK_LEN);
+                &aes_128_ecb_input[blkidx], output, AES_BLOCK_LEN);
         if (memcmp(output, &aes_128_ecb_expected[blkidx], AES_BLOCK_LEN)) {
             fail++;
         } else {
@@ -706,13 +642,6 @@ main(void)
         run_benchmark("TINYCRYPT", tc_enc_block, &tc_aes, iterations);
         os_time_delay(OS_TICKS_PER_SEC);
     }
-
-    printf("\n=== CRYPTO benchmarks ===\n");
-    run_cbc_bench(crypto, 50);
-    os_time_delay(OS_TICKS_PER_SEC);
-
-    run_ctr_bench(crypto, 50);
-    os_time_delay(OS_TICKS_PER_SEC);
 #endif
 
 #if MYNEWT_VAL(CRYPTOTEST_CONCURRENCY)

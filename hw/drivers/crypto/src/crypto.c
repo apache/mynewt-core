@@ -19,8 +19,6 @@
 
 #include "crypto/crypto.h"
 
-#include <stdint.h>
-
 /*
  * Implement modes using ECB for non-available HW support
  */
@@ -37,12 +35,6 @@ crypto_do_ctr(struct crypto_dev *crypto, const void *key, uint16_t keylen,
     uint8_t *inbuf8 = (uint8_t *)inbuf;
     uint8_t _nonce[AES_BLOCK_LEN];
     uint8_t _out[AES_BLOCK_LEN];
-#if defined(__ARM_FEATURE_UNALIGNED)
-    /* accelerate operations doing 32-bit XORs */
-    uint32_t *outbuf32;
-    uint32_t *inbuf32;
-    uint32_t *_out32 = (uint32_t *)_out;
-#endif
     int rc;
 
     if (crypto->interface.encrypt == NULL) {
@@ -64,25 +56,9 @@ crypto_do_ctr(struct crypto_dev *crypto, const void *key, uint16_t keylen,
             return sz + rc;
         }
 
-#if defined(__ARM_FEATURE_UNALIGNED)
-        /*
-         * For full blocks increase speed by doing 32-bit XOR; maintain the
-         * stream semantics doing byte XORs for smaller sizes (end of buffer).
-         */
-        if (len == AES_BLOCK_LEN) {
-            inbuf32 = (uint32_t *)inbuf8;
-            outbuf32 = (uint32_t *)outbuf8;
-            for (i = 0; i < len / 4; i++) {
-                outbuf32[i] = inbuf32[i] ^ _out32[i];
-            }
-        } else {
-#endif
-            for (i = 0; i < len; i++) {
-                outbuf8[i] = inbuf8[i] ^ _out[i];
-            }
-#if defined(__ARM_FEATURE_UNALIGNED)
+        for (i = 0; i < len; i++) {
+            outbuf8[i] = inbuf8[i] ^ _out[i];
         }
-#endif
 
         for (i = AES_BLOCK_LEN; i > 0; --i) {
             if (++_nonce[i - 1] != 0) {
@@ -110,18 +86,12 @@ crypto_do_cbc(struct crypto_dev *crypto, uint8_t op, const void *key,
     size_t remain;
     uint32_t i;
     uint32_t j;
+    uint8_t tmp[AES_BLOCK_LEN];
     const uint8_t *ivp;
     uint8_t iv_save[AES_BLOCK_LEN * 2];
     uint8_t ivpos;
     uint8_t *outbuf8 = (uint8_t *)outbuf;
     const uint8_t *inbuf8 = (const uint8_t *)inbuf;
-#if defined(__ARM_FEATURE_UNALIGNED)
-    uint32_t tmp32[AES_BLOCK_LEN / 4];
-    uint32_t *outbuf32 = (uint32_t *)outbuf;
-    const uint32_t *inbuf32 = (uint32_t *)inbuf;
-#else
-    uint8_t tmp[AES_BLOCK_LEN];
-#endif
     bool inplace;
     int rc;
 
@@ -148,25 +118,13 @@ crypto_do_cbc(struct crypto_dev *crypto, uint8_t op, const void *key,
         }
 
         if (op == CRYPTO_OP_ENCRYPT) {
-#if defined(__ARM_FEATURE_UNALIGNED)
-            for (j = 0; j < AES_BLOCK_LEN / 4; j++) {
-                tmp32[j] = ((uint32_t *)ivp)[j] ^ inbuf32[(i / 4) + j];
-            }
-#else
             for (j = 0; j < AES_BLOCK_LEN; j++) {
                 tmp[j] = ivp[j] ^ inbuf8[j+i];
             }
-#endif
 
             rc = crypto->interface.encrypt(crypto, CRYPTO_ALGO_AES,
-                                           CRYPTO_MODE_ECB,
-                                           (const uint8_t *)key, keylen, NULL,
-#if defined(__ARM_FEATURE_UNALIGNED)
-                                           (uint8_t *)tmp32,
-#else
-                                           tmp,
-#endif
-                                           &outbuf8[i], AES_BLOCK_LEN);
+                    CRYPTO_MODE_ECB, (const uint8_t *)key, keylen, NULL, tmp,
+                    &outbuf8[i], AES_BLOCK_LEN);
             if (rc != AES_BLOCK_LEN) {
                 return rc;
             }
@@ -174,15 +132,8 @@ crypto_do_cbc(struct crypto_dev *crypto, uint8_t op, const void *key,
             ivp = &outbuf8[i];
         } else {
             rc = crypto->interface.decrypt(crypto, CRYPTO_ALGO_AES,
-                                           CRYPTO_MODE_ECB,
-                                           (const uint8_t *)key, keylen, NULL,
-                                           &inbuf8[i],
-#if defined(__ARM_FEATURE_UNALIGNED)
-                                           (uint8_t *)tmp32,
-#else
-                                           tmp,
-#endif
-                                           AES_BLOCK_LEN);
+                    CRYPTO_MODE_ECB, (const uint8_t *)key, keylen, NULL,
+                    &inbuf8[i], tmp, AES_BLOCK_LEN);
             if (rc != AES_BLOCK_LEN) {
                 return rc;
             }
@@ -191,15 +142,9 @@ crypto_do_cbc(struct crypto_dev *crypto, uint8_t op, const void *key,
                 memcpy(&iv_save[ivpos], &inbuf8[i], AES_BLOCK_LEN);
             }
 
-#if defined(__ARM_FEATURE_UNALIGNED)
-            for (j = 0; j < AES_BLOCK_LEN / 4; j++) {
-                outbuf32[(i / 4) + j] = ((uint32_t *)ivp)[j] ^ tmp32[j];
-            }
-#else
             for (j = 0; j < AES_BLOCK_LEN; j++) {
                 outbuf8[i+j] = ivp[j] ^ tmp[j];
             }
-#endif
 
             if (inplace) {
                 ivp = &iv_save[ivpos];

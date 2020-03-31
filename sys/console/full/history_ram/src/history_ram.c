@@ -157,69 +157,28 @@ console_history_add(const char *line)
     return 1;
 }
 
-/**
- * Function returns line from history
- *
- * @param line_num 1 - based line counter, 1 - last line in history
- *
- * @return line with given number or NULL if line_num is out of range
- */
-static const char *
-console_history_line(uint8_t line_num)
-{
-    int head = console_hist.head;
-
-    if (line_num > console_hist.count) {
-        return NULL;
-    } else {
-        return console_hist.lines[(head + console_hist.count - line_num) % console_hist.count];
-    }
-}
-
 history_handle_t
 console_history_find(history_handle_t start, history_find_type_t search_type,
                      void *arg)
 {
-    const char *history_line;
-    const char *pattern;
-    size_t pattern_size;
-    int num = 0;
-    int direction;
+    int num;
 
     switch (search_type) {
     case HFT_PREV:
         num = start + (arg ? *(int *)arg : 1);
         if (num > console_hist.count) {
-            num = 0;
+            return 0;
         }
-        break;
+        return num;
     case HFT_NEXT:
         num = start - (arg ? *(int *)arg : 1);
         if (num <= 0) {
-            num = 0;
+            return 0;
         }
-        break;
-    case HFT_MATCH_NEXT:
-    case HFT_MATCH_PREV:
-        direction = (search_type == HFT_MATCH_NEXT) ? -1 : 1;
-        pattern = (const char *)arg;
-        pattern_size = strlen(pattern);
-        num = start;
-        while (1) {
-            num += direction;
-            history_line = console_history_line(num);
-            if (history_line == NULL) {
-                num = 0;
-            } else if (strncmp(history_line, pattern, pattern_size) != 0) {
-                continue;
-            }
-            break;
-        }
-        break;
+        return num;
     default:
-        break;
+        return 0;
     }
-    return num;
 }
 
 int

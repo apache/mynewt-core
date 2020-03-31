@@ -24,7 +24,6 @@
 #include "mcu/da1469x_hal.h"
 #include "hal/hal_flash_int.h"
 #include "mcu/mcu.h"
-#include <stdbool.h>
 
 #define CODE_QSPI_INLINE    __attribute__((always_inline)) inline
 
@@ -324,22 +323,6 @@ da1469x_hff_read(const struct hal_flash *dev, uint32_t address, void *dst,
     return 0;
 }
 
-static bool
-da1469x_hff_in_flash_addr_space(const void *src)
-{
-    /*
-     * Due to the remap specified in the datasheet, 0->0x80000 (8 MBytes) are
-     * remapped, hence that needs to be considered as well.
-     */
-    if ((((uint32_t)src < MCU_MEM_QSPIF_M_START_ADDRESS) &&
-         ((uint32_t)src >= MCU_MEM_QSPIF_M_END_REMAP_ADDRESS)) ||
-        ((uint32_t)src >= MCU_MEM_QSPIF_M_END_ADDRESS)) {
-        return false;
-    }
-
-    return true;
-}
-
 static int
 da1469x_hff_write(const struct hal_flash *dev, uint32_t address,
                   const void *src, uint32_t num_bytes)
@@ -347,10 +330,12 @@ da1469x_hff_write(const struct hal_flash *dev, uint32_t address,
     uint8_t buf[ MYNEWT_VAL(QSPI_FLASH_READ_BUFFER_SIZE) ];
     uint32_t chunk_len;
 
-    /* We can write directly if 'src' is outside flash memory, otherwise we
+    /*
+     * We can write directly if 'src' is outside flash memory, otherwise we
      * need to read data to RAM first and then write to flash.
      */
-    if (da1469x_hff_in_flash_addr_space(src) == false) {
+    if (((uint32_t)src < MCU_MEM_QSPIF_M_START_ADDRESS) ||
+        ((uint32_t)src >= MCU_MEM_QSPIF_M_END_ADDRESS)) {
         return da1469x_qspi_write(dev, address, src, num_bytes);
     }
 

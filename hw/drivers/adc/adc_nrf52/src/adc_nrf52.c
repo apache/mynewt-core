@@ -295,7 +295,7 @@ nrf52_adc_configure_channel(struct adc_dev *dev, uint8_t cnum, void *cfgdata)
     uint16_t refmv;
     nrf_saadc_resolution_t res;
 
-    if (cnum >= SAADC_CH_NUM) {
+    if (cnum > SAADC_CH_NUM) {
         return OS_EINVAL;
     }
 

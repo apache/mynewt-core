@@ -256,9 +256,6 @@ is received. The two event queues are used as follows:
    pointers to the callback and the :c:data:`console_input` buffer, must be
    added to the avail_queue.
 
-Minimal Console Example
-"""""""""""""""""""""""
-
 Here is a code excerpt that shows how to use the
 :c:func:`console_set_queues()` function. The example adds one event to the
 avail_queue and uses the OS default event queue for the lines_queue.
@@ -301,49 +298,6 @@ avail_queue and uses the OS default event queue for the lines_queue.
         os_eventq_put(&avail_queue, &myapp_console_event);
 
         console_set_queues(&avail_queue, os_eventq_dflt_get());
-    }
-
-Full Console Example
-""""""""""""""""""""
-
-For the full console, setting the queue is done via
-:c:func:`console_line_queue_set()`. This example uses the OS default event
-queue for calling the line received callback.
-
-.. code-block:: c
-
-    static void myapp_process_input(struct os_event *ev);
-
-    static struct console_input myapp_console_buf;
-
-    static struct os_event myapp_console_event = {
-        .ev_cb = myapp_process_input,
-        .ev_arg = &myapp_console_buf
-    };
-
-    /* Event callback to process a line of input from console. */
-    static void
-    myapp_process_input(struct os_event *ev)
-    {
-        char *line;
-        struct console_input *input;
-
-        input = ev->ev_arg;
-        assert (input != NULL);
-
-        line = input->line;
-        /* Do some work with line */
-             ....
-        /* Done processing line. Add the event back to the avail_queue */
-        console_line_event_put(ev);
-        return;
-    }
-
-    static void
-    myapp_init(void)
-    {
-        console_line_event_put(&myapp_console_event);
-        console_line_queue_set(os_eventq_dflt_get());
     }
 
 API

@@ -128,41 +128,26 @@ os_arch_save_sr(void)
 {
     uint32_t isr_ctx;
 
-#if MCU_CRITICAL_BASEPRI
-    isr_ctx = __get_BASEPRI();
-    __set_BASEPRI((MCU_CRITICAL_BASEPRI) << (8 - __NVIC_PRIO_BITS));
-#else
-    isr_ctx = __get_PRIMASK() & 1;
+    isr_ctx = __get_PRIMASK();
     __disable_irq();
-#endif
-
-    return isr_ctx;
+    return (isr_ctx & 1);
 }
 
 void
 os_arch_restore_sr(os_sr_t isr_ctx)
 {
-#if MCU_CRITICAL_BASEPRI
-    __set_BASEPRI(isr_ctx);
-#else
     if (!isr_ctx) {
         __enable_irq();
     }
-#endif
 }
 
 int
 os_arch_in_critical(void)
 {
-    int ret;
+    uint32_t isr_ctx;
 
-#if MCU_CRITICAL_BASEPRI
-    ret = __get_BASEPRI() > 0;
-#else
-    ret = __get_PRIMASK() & 1;
-#endif
-
-    return ret;
+    isr_ctx = __get_PRIMASK();
+    return (isr_ctx & 1);
 }
 
 static void

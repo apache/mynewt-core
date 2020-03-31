@@ -64,13 +64,9 @@ stm32_has_support(struct crypto_dev *crypto, uint8_t op, uint16_t algo,
     }
 
     switch (mode) {
-    case CRYPTO_MODE_ECB:
-#if MYNEWT_VAL(CRYPTO_HW_AES_CBC)
-    case CRYPTO_MODE_CBC:
-#endif
-#if MYNEWT_VAL(CRYPTO_HW_AES_CTR)
+    case CRYPTO_MODE_ECB: /* fallthrough */
+    case CRYPTO_MODE_CBC: /* fallthrough */
     case CRYPTO_MODE_CTR:
-#endif
         return true;
     }
 
@@ -86,18 +82,12 @@ stm32_crypto_op(struct crypto_dev *crypto, uint8_t op, uint16_t algo,
     CRYP_ConfigTypeDef conf;
     uint32_t sz = 0;
     uint8_t i;
-#if MYNEWT_VAL(CRYPTO_HW_AES_CTR)
+    uint8_t iv_save[AES_BLOCK_LEN];
     unsigned int inc;
     unsigned int carry;
     unsigned int v;
-#endif
-#if MYNEWT_VAL(CRYPTO_HW_AES_CBC)
-    uint8_t iv_save[AES_BLOCK_LEN];
-#endif
     uint32_t key32[AES_MAX_KEY_LEN / sizeof(uint32_t)];
-#if (MYNEWT_VAL(CRYPTO_HW_AES_CTR) || MYNEWT_VAL(CRYPTO_HW_AES_CBC))
     uint32_t iv32[AES_BLOCK_LEN / sizeof(uint32_t)];
-#endif
 
     if (!stm32_has_support(crypto, op, algo, mode, keylen)) {
         return 0;
@@ -116,27 +106,21 @@ stm32_crypto_op(struct crypto_dev *crypto, uint8_t op, uint16_t algo,
         conf.Algorithm = CRYP_AES_ECB;
         conf.pInitVect = NULL;
         break;
-#if MYNEWT_VAL(CRYPTO_HW_AES_CBC)
     case CRYPTO_MODE_CBC:
         conf.Algorithm = CRYP_AES_CBC;
         conf.pInitVect = iv32;
         break;
-#endif
-#if MYNEWT_VAL(CRYPTO_HW_AES_CTR)
     case CRYPTO_MODE_CTR:
         conf.Algorithm = CRYP_AES_CTR;
         conf.pInitVect = iv32;
         break;
-#endif
     }
 
-#if (MYNEWT_VAL(CRYPTO_HW_AES_CTR) || MYNEWT_VAL(CRYPTO_HW_AES_CBC))
     if (conf.pInitVect != NULL) {
         for (i = 0; i < AES_BLOCK_LEN / sizeof(uint32_t); i++) {
             iv32[i] = os_bswap_32(((uint32_t *)iv)[i]);
         }
     }
-#endif
 
     os_mutex_pend(&gmtx, OS_TIMEOUT_NEVER);
 
@@ -150,31 +134,28 @@ stm32_crypto_op(struct crypto_dev *crypto, uint8_t op, uint16_t algo,
     case CRYPTO_MODE_ECB:
         if (op == CRYPTO_OP_ENCRYPT) {
             status = HAL_CRYP_Encrypt(&g_hcryp, (uint32_t *)inbuf, len,
-                                      (uint32_t *)outbuf, HAL_MAX_DELAY);
+                    (uint32_t *)outbuf, HAL_MAX_DELAY);
         } else {
             status = HAL_CRYP_Decrypt(&g_hcryp, (uint32_t *)inbuf, len,
-                                      (uint32_t *)outbuf, HAL_MAX_DELAY);
+                    (uint32_t *)outbuf, HAL_MAX_DELAY);
         }
         break;
-#if MYNEWT_VAL(CRYPTO_HW_AES_CBC)
     case CRYPTO_MODE_CBC:
         if (op == CRYPTO_OP_ENCRYPT) {
             status = HAL_CRYP_Encrypt(&g_hcryp, (uint32_t *)inbuf, len,
-                                      (uint32_t *)outbuf, HAL_MAX_DELAY);
+                    (uint32_t *)outbuf, HAL_MAX_DELAY);
             if (status == HAL_OK) {
                 memcpy(iv, &outbuf[len-AES_BLOCK_LEN], AES_BLOCK_LEN);
             }
         } else {
             memcpy(iv_save, &inbuf[len-AES_BLOCK_LEN], AES_BLOCK_LEN);
             status = HAL_CRYP_Decrypt(&g_hcryp, (uint32_t *)inbuf, len,
-                                      (uint32_t *)outbuf, HAL_MAX_DELAY);
+                    (uint32_t *)outbuf, HAL_MAX_DELAY);
             if (status == HAL_OK) {
                 memcpy(iv, iv_save, AES_BLOCK_LEN);
             }
         }
         break;
-#endif
-#if MYNEWT_VAL(CRYPTO_HW_AES_CTR)
     case CRYPTO_MODE_CTR:
         if (op == CRYPTO_OP_ENCRYPT) {
             status = HAL_CRYP_Encrypt(&g_hcryp, (uint32_t *)inbuf, len,
@@ -194,7 +175,6 @@ stm32_crypto_op(struct crypto_dev *crypto, uint8_t op, uint16_t algo,
             }
         }
         break;
-#endif
     default:
         sz = 0;
         goto out;
