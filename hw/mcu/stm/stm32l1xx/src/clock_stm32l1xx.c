@@ -253,47 +253,7 @@ SystemClock_Config(void)
 void
 SystemClock_RestartPLL(void)
 {
-    __HAL_RCC_PWR_CLK_ENABLE( );
-    __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
-
-#if MYNEWT_VAL(STM32_CLOCK_HSE)
-    /* Enable HSE */
-    __HAL_RCC_HSE_CONFIG(RCC_HSE_ON);
-
-    /* Wait till HSE is ready */
-    while(__HAL_RCC_GET_FLAG(RCC_FLAG_HSERDY) == RESET)
-    {
-    }
-#endif 
-#if MYNEWT_VAL(STM32_CLOCK_HSI)
-    /* Enable HSI */
-    __HAL_RCC_HSI_ENABLE( );
-
-    /* Wait till HSI is ready */
-    while( __HAL_RCC_GET_FLAG(RCC_FLAG_HSIRDY) == RESET) {
-    }
-#endif
-#if MYNEWT_VAL(STM32_CLOCK_MSI)
-    /* Enable MSI */
-    __HAL_RCC_MSI_ENABLE( );
-
-    /* Wait till MSI is ready */
-    while( __HAL_RCC_GET_FLAG(RCC_FLAG_MSIRDY) == RESET) {
-    }
-#endif
-
-    /* Enable PLL */
-    __HAL_RCC_PLL_ENABLE( );
-
-    /* Wait till PLL is ready */
-    while( __HAL_RCC_GET_FLAG(RCC_FLAG_PLLRDY) == RESET) {
-    }
-
-    /* Select PLL as system clock source */
-    __HAL_RCC_SYSCLK_CONFIG (RCC_SYSCLKSOURCE_PLLCLK);
-
-    /* Wait till PLL is used as system clock source */
-    while(__HAL_RCC_GET_SYSCLK_SOURCE( ) != RCC_SYSCLKSOURCE_STATUS_PLLCLK) {
-    }
+    /* Restart clock by reconfiguring it as at startup. */
+    SystemClock_Config();
 }
 #endif
