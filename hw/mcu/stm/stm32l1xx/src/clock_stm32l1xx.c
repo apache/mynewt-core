@@ -253,7 +253,7 @@ SystemClock_Config(void)
 void
 SystemClock_RestartPLL(void)
 {
-    // Use the startup clock config function to be sure of restarting clocks with correct config
+    /* Use the startup clock config function to be sure of restarting clocks with correct config */
     SystemClock_Config();
 }
 #endif
