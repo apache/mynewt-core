@@ -32,6 +32,14 @@ extern "C" {
 extern char id_serial[];
 #endif
 
+#if MYNEWT_VAL(ID_SERIAL_MFG_PRESENT)
+/*
+ * Maximum expected serial_mfg number string length.
+ */
+#define ID_SERIAL_MFG_MAX_LEN       MYNEWT_VAL(ID_SERIAL_MFG_MAX_LEN)
+extern char id_serial_mfg[];
+#endif
+
 #if MYNEWT_VAL(ID_MANUFACTURER_LOCAL)
 /*
  * Maximum expected manufacturer string length.

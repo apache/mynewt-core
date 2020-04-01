@@ -24,6 +24,13 @@ syscfg.defs:
         description: Maximum length of id/serial value
         value: 64
 
+    ID_SERIAL_MFG_PRESENT:
+        description: 'Device manufacturing serial number exported as sys/id/serial_mfg.'
+        value: 0
+    ID_SERIAL_MFG_MAX_LEN:
+        description: Maximum length of id/serial_mfg value
+        value: 32
+
     ID_MANUFACTURER_PRESENT:
         description: 'Device manufacturer string exported as sys/id/mfger.'
         value: 0
