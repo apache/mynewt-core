@@ -29,6 +29,7 @@
 #include "bsp/bsp.h"
 #include "mcu/nrf52_hal.h"
 #include "mcu/nrf52_periph.h"
+#include "sgm4056/sgm4056.h"
 
 /** What memory to include in coredump. */
 static const struct hal_bsp_mem_dump dump_cfg[] = {
@@ -88,12 +89,26 @@ hal_bsp_get_nvic_priority(int irq_num, uint32_t pri)
     return cfg_pri;
 }
 
+static struct sgm4056_dev os_bsp_charger;
+static struct sgm4056_dev_config os_bsp_charger_config = {
+    .power_presence_pin = CHARGER_POWER_PRESENCE_PIN,
+    .charge_indicator_pin = CHARGER_CHARGE_PIN,
+};
+
 void
 hal_bsp_init(void)
 {
+    int rc;
+
     /* Make sure system clocks have started. */
     hal_system_clock_start();
 
     /* Create all available nRF52840 peripherals */
     nrf52_periph_create();
+
+    /* Create charge controller */
+    rc = os_dev_create(&os_bsp_charger.dev, "charger",
+                       OS_DEV_INIT_KERNEL, OS_DEV_INIT_PRIO_DEFAULT,
+                       sgm4056_dev_init, &os_bsp_charger_config);
+    assert(rc == 0);
 }

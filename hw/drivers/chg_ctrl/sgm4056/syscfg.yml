@@ -17,22 +17,7 @@
 # under the License.
 #
 
-pkg.name: "hw/bsp/pinetime"
-pkg.type: bsp
-pkg.description: "BSP definition for the Pine64 PineTime smartwatch"
-pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
-pkg.homepage: "http://mynewt.apache.org/"
-pkg.keywords:
-    - nrf52
-    - Pine64
-    - PineTime
-
-pkg.cflags:
-    - '-DNRF52'
-    # TODO: Move to more specific variable, however this currently causes a build failure '-DNRF52832_XXAA'
-
-pkg.deps:
-    - '@apache-mynewt-core/hw/mcu/nordic/nrf52xxx'
-    - '@apache-mynewt-core/kernel/os'
-    - '@apache-mynewt-core/libc/baselibc'
-    - '@apache-mynewt-core/hw/drivers/chg_ctrl/sgm4056'
+syscfg.defs:
+    SGM4056_USE_CHARGE_CONTROL:
+        description: 'Enable charge control integration'
+        value: 1
