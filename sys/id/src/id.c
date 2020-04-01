@@ -51,6 +51,9 @@ const char *id_app_str = "";
 #if MYNEWT_VAL(ID_SERIAL_PRESENT)
 char id_serial[ID_SERIAL_MAX_LEN];
 #endif
+#if MYNEWT_VAL(ID_SERIAL_MFG_PRESENT)
+char id_serial_mfg[ID_SERIAL_MFG_MAX_LEN];
+#endif
 #if MYNEWT_VAL(ID_MANUFACTURER_LOCAL)
 char id_manufacturer[ID_MANUFACTURER_MAX_LEN];
 #endif
@@ -88,6 +91,10 @@ id_conf_get(int argc, char **argv, char *val, int val_len_max)
         } else if (!strcmp(argv[0], "serial")) {
             return (char *)id_serial;
 #endif
+#if MYNEWT_VAL(ID_SERIAL_MFG_PRESENT)
+        } else if (!strcmp(argv[0], "serial_mfg")) {
+            return (char *)id_serial_mfg;
+#endif
 #if MYNEWT_VAL(ID_MANUFACTURER_PRESENT)
         } else if (!strcmp(argv[0], "mfger")) {
             return (char *)id_manufacturer;
@@ -114,6 +121,11 @@ id_conf_set(int argc, char **argv, char *val)
 #if MYNEWT_VAL(ID_SERIAL_PRESENT)
         if (!strcmp(argv[0], "serial")) {
             return CONF_VALUE_SET(val, CONF_STRING, id_serial);
+        }
+#endif
+#if MYNEWT_VAL(ID_SERIAL_MFG_PRESENT)
+        if (!strcmp(argv[0], "serial_mfg")) {
+            return CONF_VALUE_SET(val, CONF_STRING, id_serial_mfg);
         }
 #endif
 #if MYNEWT_VAL(ID_MANUFACTURER_LOCAL)
@@ -154,6 +166,9 @@ id_conf_export(void (*export_func)(char *name, char *val),
 #if MYNEWT_VAL(ID_SERIAL_PRESENT)
     export_func("id/serial", id_serial);
 #endif /* ID_SERIAL_PRESENT */
+#if MYNEWT_VAL(ID_SERIAL_MFG_PRESENT)
+    export_func("id/serial_mfg", id_serial_mfg);
+#endif /* ID_SERIAL_MFG_PRESENT */
 #if MYNEWT_VAL(ID_MANUFACTURER_PRESENT)
 #if MYNEWT_VAL(ID_MANUFACTURER_LOCAL)
     export_func("id/mfger", id_manufacturer);
