@@ -30,6 +30,8 @@ pkg.deps.CONSOLE_UART:
     - "@apache-mynewt-core/hw/drivers/uart"
 pkg.deps.CONSOLE_RTT:
     - "@apache-mynewt-core/hw/drivers/rtt"
+pkg.deps.CONSOLE_SEMIHOSTING:
+    - "@apache-mynewt-core/hw/drivers/semihosting"
 pkg.deps.'CONSOLE_HISTORY == "ram"':
     - "@apache-mynewt-core/sys/console/full/history_ram"
 pkg.deps.'CONSOLE_HISTORY == "log"':

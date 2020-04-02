@@ -1220,6 +1220,9 @@ console_is_init(void)
 #if MYNEWT_VAL(CONSOLE_RTT)
     return rtt_console_is_init();
 #endif
+#if MYNEWT_VAL(CONSOLE_SEMIHOSTING)
+    return semihosting_console_is_init();
+#endif
 #if MYNEWT_VAL(CONSOLE_BLE_MONITOR)
     return ble_monitor_console_is_init();
 #endif

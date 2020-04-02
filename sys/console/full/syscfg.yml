@@ -23,6 +23,9 @@ syscfg.defs:
     CONSOLE_RTT:
         description: 'Set console output to RTT'
         value: 0
+    CONSOLE_SEMIHOSTING:
+        description: 'Set console output to ARM semihosting'
+        value: 0
     CONSOLE_BLE_MONITOR:
         description: 'Set console output to BLE Monitor'
         value: 0
@@ -123,6 +126,10 @@ syscfg.defs:
             value may affect RTT console responsiveness, using small value may
             affect device performance due to more frequent polling.
         value: 250
+
+    CONSOLE_SEMIHOSTING_TX_BUF_SIZE:
+        description: 'ARM semihosting console transmit buffer size'
+        value: 128
 
     CONSOLE_DEFAULT_LOCK_TIMEOUT:
         description: 'Default timeout (in ms) for console_lock() function used in console_write.'
