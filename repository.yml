@@ -60,6 +60,8 @@ repo.newt_compatibility:
     # present.
     0.0.0:
         0.0.0: good
+    0.0.1:
+        0.0.1: good
 
     # Core 1.1.0+ requires newt 1.1.0+ (feature: self-overrides).
     # Core 1.4.0+ requires newt 1.4.0+ (feature: sync repo deps).
