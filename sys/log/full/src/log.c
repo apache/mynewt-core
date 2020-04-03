@@ -371,7 +371,7 @@ log_read_last_hdr(struct log *log, struct log_entry_hdr *out_hdr)
  * Associate an instantiation of a log with the logging infrastructure
  */
 int
-log_register(char *name, struct log *log, const struct log_handler *lh,
+log_register(const char *name, struct log *log, const struct log_handler *lh,
              void *arg, uint8_t level)
 {
     struct log_entry_hdr hdr;

@@ -40,7 +40,7 @@ struct log_handler {
 };
 
 static inline int
-log_register(char *name, struct log *log, const struct log_handler *h,
+log_register(const char *name, struct log *log, const struct log_handler *h,
              void *arg, uint8_t level)
 {
     return 0;
