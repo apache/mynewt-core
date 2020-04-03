@@ -202,7 +202,7 @@ STATS_SECT_END
 #endif
 
 struct log {
-    char *l_name;
+    const char *l_name;
     const struct log_handler *l_log;
     void *l_arg;
     STAILQ_ENTRY(log) l_next;
@@ -248,7 +248,7 @@ uint8_t log_module_register(uint8_t id, const char *name);
 const char *log_module_get_name(uint8_t id);
 
 /* Log functions, manipulate a single log */
-int log_register(char *name, struct log *log, const struct log_handler *,
+int log_register(const char *name, struct log *log, const struct log_handler *,
                  void *arg, uint8_t level);
 
 /**
