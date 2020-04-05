@@ -30,6 +30,9 @@
 #include "mcu/nrf52_hal.h"
 #include "mcu/nrf52_periph.h"
 #include "sgm4056/sgm4056.h"
+#include "battery/battery_adc.h"
+#include "adc_nrf52/adc_nrf52.h"
+#include <nrf_saadc.h>
 
 /** What memory to include in coredump. */
 static const struct hal_bsp_mem_dump dump_cfg[] = {
@@ -89,6 +92,51 @@ hal_bsp_get_nvic_priority(int irq_num, uint32_t pri)
     return cfg_pri;
 }
 
+static struct adc_dev_cfg hal_bsp_adc_dev_config = {
+    .resolution = ADC_RESOLUTION_10BIT,
+    .oversample = ADC_OVERSAMPLE_DISABLED,
+    .calibrate = false,
+};
+
+static struct adc_chan_cfg hal_bsp_adc_channel_config = {
+    .gain = ADC_GAIN1_6,
+    .reference = ADC_REFERENCE_INTERNAL,
+    .acq_time = ADC_ACQTIME_10US,
+    .pin = NRF_SAADC_INPUT_AIN7,
+    .differential = false,
+    .pin_negative = -1,
+};
+
+static struct battery hal_bsp_battery_dev;
+
+static struct battery_adc hal_bsp_battery_adc_dev;
+
+static struct battery_adc_cfg hal_bsp_battery_config = {
+    .battery = &hal_bsp_battery_dev.b_dev,
+    .adc_dev_name = "adc0",
+    .adc_open_arg = &hal_bsp_adc_dev_config,
+    .adc_channel_cfg = &hal_bsp_adc_channel_config,
+    .channel = 0,
+    .mul = 2,
+    .div = 1,
+};
+
+static void
+hal_bsp_battery_init(void)
+{
+    int rc;
+
+    rc = os_dev_create(&hal_bsp_battery_dev.b_dev, "battery",
+                       OS_DEV_INIT_KERNEL, OS_DEV_INIT_PRIO_DEFAULT,
+                       battery_init, NULL);
+    assert(rc == 0);
+
+    rc = os_dev_create(&hal_bsp_battery_adc_dev.dev.dev, "battery_adc",
+                       OS_DEV_INIT_KERNEL, OS_DEV_INIT_PRIO_DEFAULT,
+                       battery_adc_init, &hal_bsp_battery_config);
+    assert(rc == 0);
+}
+
 static struct sgm4056_dev os_bsp_charger;
 static struct sgm4056_dev_config os_bsp_charger_config = {
     .power_presence_pin = CHARGER_POWER_PRESENCE_PIN,
@@ -111,4 +159,6 @@ hal_bsp_init(void)
                        OS_DEV_INIT_KERNEL, OS_DEV_INIT_PRIO_DEFAULT,
                        sgm4056_dev_init, &os_bsp_charger_config);
     assert(rc == 0);
+
+    hal_bsp_battery_init();
 }
