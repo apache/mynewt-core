@@ -125,14 +125,26 @@ def validate_response(response):
     return True
 
 
-def otp_read_key(index, segment, uart):
-    seg_map = {'signature': 0, 'data': 1, 'qspi': 2}
-
+def get_serial_port(port, baudrate, timeout, bytesize, stopbits):
     try:
-        ser = serial.Serial(port=uart, baudrate=1000000, timeout=1,
-                            bytesize=8, stopbits=serial.STOPBITS_ONE)
+        ser = serial.Serial(port=port, baudrate=baudrate, timeout=timeout,
+                            bytesize=bytesize, stopbits=stopbits)
     except serial.SerialException:
         raise SystemExit("Failed to open serial port")
+    # drain serial port buffer
+    try:
+        while True:
+            data = ser.read(1)
+            if len(data) == 0:
+                break
+    except serial.SerialException:
+        raise SystemExit("Failed to open serial port")
+    return ser
+
+
+def otp_read_key(index, segment, uart):
+    seg_map = {'signature': 0, 'data': 1, 'qspi': 2}
+    ser = get_serial_port(uart, 1000000, 1, 8, serial.STOPBITS_ONE)
 
     cmd = cmd_read_key(0xaa55aa55, Cmd.OTP_READ_KEY, seg_map[segment], index)
     data = struct.pack('IIII', *cmd)
@@ -196,11 +208,7 @@ def otp_write_key(infile, index, segment, uart):
 
     seg_map = {'signature': 0, 'data': 1, 'qspi': 2}
 
-    try:
-        ser = serial.Serial(port=uart, baudrate=1000000, timeout=1,
-                            bytesize=8, stopbits=serial.STOPBITS_ONE)
-    except serial.SerialException:
-        raise SystemExit("Failed to open serial port")
+    ser = get_serial_port(uart, 1000000, 1, 8, serial.STOPBITS_ONE)
 
     cmd = cmd_write_key(0xaa55aa55, Cmd.OTP_WRITE_KEY, seg_map[segment], index)
     # swap endianness of data to little endian
@@ -237,11 +245,7 @@ def generate_payload(data):
 @click.option('-u', '--uart', required=True, help='uart port')
 @click.command(help='Read data from OTP configuration script area')
 def otp_read_config(uart, outfile):
-    try:
-        ser = serial.Serial(port=uart, baudrate=1000000, timeout=1,
-                            bytesize=8, stopbits=serial.STOPBITS_ONE)
-    except serial.SerialException:
-        raise SystemExit("Failed to open serial port")
+    ser = get_serial_port(uart, 1000000, 1, 8, serial.STOPBITS_ONE)
 
     # length is unused, so set to 0
     cmd = cmd_append_value(0xaa55aa55, Cmd.OTP_READ_CONFIG, 0)
@@ -277,11 +281,7 @@ def otp_read_config(uart, outfile):
 @click.option('-u', '--uart', required=True, help='uart port')
 @click.command(help='Read from flash')
 def flash_read(uart, length, outfile, offset):
-    try:
-        ser = serial.Serial(port=uart, baudrate=1000000, timeout=1,
-                            bytesize=8, stopbits=serial.STOPBITS_ONE)
-    except serial.SerialException:
-        raise SystemExit("Failed to open serial port")
+    ser = get_serial_port(uart, 1000000, 1, 8, serial.STOPBITS_ONE)
 
     try:
         f = open(outfile, "wb")
@@ -346,11 +346,7 @@ def flash_read(uart, length, outfile, offset):
 @click.option('-u', '--uart', required=True, help='uart port')
 @click.command(help='Erase flash')
 def flash_erase(uart, offset, length):
-    try:
-        ser = serial.Serial(port=uart, baudrate=1000000, timeout=60,
-                            bytesize=8, stopbits=serial.STOPBITS_ONE)
-    except serial.SerialException:
-        raise SystemExit("Failed to open serial port")
+    ser = get_serial_port(uart, 1000000, 1, 8, serial.STOPBITS_ONE)
 
     # length is unused, so set to 0
     offset = int(offset, 16)
@@ -379,11 +375,7 @@ def flash_erase(uart, offset, length):
 @click.option('-u', '--uart', required=True, help='uart port')
 @click.command(help='Write to flash')
 def flash_write(uart, infile, offset, block_size):
-    try:
-        ser = serial.Serial(port=uart, baudrate=1000000, timeout=1,
-                            bytesize=8, stopbits=serial.STOPBITS_ONE)
-    except serial.SerialException:
-        raise SystemExit("Failed to open serial port")
+    ser = get_serial_port(uart, 1000000, 1, 8, serial.STOPBITS_ONE)
 
     try:
         f = open(infile, "rb")
@@ -429,11 +421,7 @@ def flash_write(uart, infile, offset, block_size):
 
 
 def send_otp_config_payload(uart, data):
-    try:
-        ser = serial.Serial(port=uart, baudrate=1000000, timeout=1,
-                            bytesize=8, stopbits=serial.STOPBITS_ONE)
-    except serial.SerialException:
-        raise SystemExit("Failed to open serial port")
+    ser = get_serial_port(uart, 1000000, 1, 8, serial.STOPBITS_ONE)
 
     data_bytes = generate_payload(data)
 
@@ -561,11 +549,7 @@ def close_config_script(uart):
 @click.option('-u', '--uart', required=True, help='uart port')
 @click.command(help='Initialize blank OTP Config script')
 def init_config_script(uart):
-    try:
-        ser = serial.Serial(port=uart, baudrate=1000000, timeout=1,
-                            bytesize=8, stopbits=serial.STOPBITS_ONE)
-    except serial.SerialException:
-        raise SystemExit("Failed to open serial port")
+    ser = get_serial_port(uart, 1000000, 1, 8, serial.STOPBITS_ONE)
 
     # length is unused, so set to 0
     cmd = cmd_append_value(0xaa55aa55, Cmd.OTP_INIT, 0)
@@ -590,11 +574,7 @@ def init_config_script(uart):
 @click.option('-u', '--uart', required=True, help='uart port')
 @click.command(help='Test if the board is alive by sending and receving data')
 def test_alive_target(uart):
-    try:
-        ser = serial.Serial(port=uart, baudrate=1000000, timeout=1,
-                            bytesize=8, stopbits=serial.STOPBITS_ONE)
-    except serial.SerialException:
-        raise SystemExit("Failed to open serial port")
+    ser = get_serial_port(uart, 1000000, 1, 8, serial.STOPBITS_ONE)
 
     # length is unused, so set to 0
     cmd = cmd_append_value(0xaa55aa55, Cmd.TEST_ALIVE, 0)
