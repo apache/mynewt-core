@@ -26,7 +26,7 @@ from datetime import datetime
 
 @click.argument('infile')
 @click.option('-u', '--uart', required=True, help='uart port')
-@click.option('-r', '--reset_script', required=True, help='Custom reset script to switch to serial load')
+@click.option('-r', '--reset_script', required=False, help='Custom reset script to switch to serial load')
 @click.command(help='Load the provided file using serial load protocol')
 def load(infile, uart, reset_script):
     try:
@@ -59,12 +59,15 @@ def load(infile, uart, reset_script):
     prev = datetime.now()
     reset_delay_us = 250000
 
+    if reset_script is None:
+            print("Please reset board to enter ROM uart recovery")
+
     while True:
         elapsed = datetime.now() - prev
         if elapsed.seconds >= 15:
             raise SystemExit("Failed to receive SOM, aborting")
         if not som_detected and not reset_triggered:
-            if elapsed.microseconds >= reset_delay_us:
+            if reset_script and elapsed.microseconds >= reset_delay_us:
                 print("Triggering SWD reset...")
                 # Run in background
                 os.system(reset_script + " &")
