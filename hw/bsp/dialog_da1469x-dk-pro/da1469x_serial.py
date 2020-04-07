@@ -35,6 +35,15 @@ def load(infile, uart, reset_script):
     except serial.SerialException:
         raise SystemExit("Failed to open serial port")
 
+    # drain serial port buffer
+    try:
+        while True:
+            data = ser.read(1)
+            if len(data) == 0:
+                break
+    except serial.SerialException:
+        raise SystemExit("Failed to open serial port")
+
     try:
         f = open(infile, "rb")
     except IOError:
