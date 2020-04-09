@@ -27,19 +27,26 @@
 #include "tinycbor/cbor_mbuf_writer.h"
 #include "shell_priv.h"
 
-static struct mgmt_group shell_bridge_group;
-
-static int shell_bridge_exec(struct mgmt_cbuf *cb);
+static int shell_bridge_exec(struct mgmt_ctxt *cb);
 
 static struct mgmt_handler shell_bridge_group_handlers[] = {
     [SHELL_NMGR_OP_EXEC] = { NULL, shell_bridge_exec },
+};
+
+#define SHELL_MGMT_HANDLER_CNT \
+    (sizeof shell_bridge_group_handlers / sizeof shell_bridge_group_handlers[0])
+
+static struct mgmt_group shell_bridge_group = {
+    .mg_handlers = shell_bridge_group_handlers,
+    .mg_handlers_count = SHELL_MGMT_HANDLER_CNT,
+    .mg_group_id = MGMT_GROUP_ID_SHELL,
 };
 
 /**
  * Handler for the `shell exec` newtmgr command.
  */
 static int
-shell_bridge_exec(struct mgmt_cbuf *cb)
+shell_bridge_exec(struct mgmt_ctxt *cb)
 {
     char line[MYNEWT_VAL(SHELL_BRIDGE_MAX_IN_LEN)];
     char *argv[MYNEWT_VAL(SHELL_CMD_ARGC_MAX)];
@@ -93,15 +100,7 @@ shell_bridge_exec(struct mgmt_cbuf *cb)
 int
 shell_bridge_init(void)
 {
-    int rc;
-
-    MGMT_GROUP_SET_HANDLERS(&shell_bridge_group, shell_bridge_group_handlers);
-    shell_bridge_group.mg_group_id = MGMT_GROUP_ID_SHELL;
-
-    rc = mgmt_group_register(&shell_bridge_group);
-    if (rc) {
-        return rc;
-    }
+    mgmt_register_group(&shell_bridge_group);
 
     return 0;
 }
