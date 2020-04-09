@@ -31,8 +31,11 @@
 /*Follower needs a resolution similar to wakeup timer resolution.                               */
 /*RTC_SSR is the subsecond downcounter used for calendar block and clocked by LSE subdivided    */
 /*by asynchronous prescaler                                                                     */
+/* Note : using the RTC_SSR in this way will break the RTC as its clocks the RTC calendar at a
+ * rate different from 1Hz, as we want the SSR to roll over after as long as possible.  */
 
-/* Asynchronous prediv to get 1kHz about (close to SysTick frequency). Then ck_apre = 1024Hz    */
+/* Asynchronous prediv to get 1kHz about (close to SysTick frequency) to clock the RTC_SSR. 
+ * This gives ck_apre = 1024Hz    */
 #define DIVIDED_FOLLOWER_FREQUENCY                  1024
 #define FOLLOWER_PRESCALER_A                        (LSE_VALUE / DIVIDED_FOLLOWER_FREQUENCY)
 #define PREDIV_A                                    (FOLLOWER_PRESCALER_A - 1)
@@ -41,6 +44,10 @@
 /*    The ck_apre clock is used to clock the binary RTC_SSR subseconds downcounter. When it     */
 /*    reaches 0, RTC_SSR is reloaded with the content of PREDIV_S. RTC_SSR is available in      */
 /*    in Cat.2, Cat.3, Cat.4, Cat.5 and Cat.6 devices only                                      */
+/* Use as large a reload value (prescaler) as possible so we can measure a time interval as long 
+ * as possible. At 1.024kHz, the maximim 15 bit value is 32765, so this is about 32s before it rolls 
+ * over twice which would break the calculation...
+ */
 #define FOLLOWER_PRESCALER_S                        32768
 #define PREDIV_S                                    (FOLLOWER_PRESCALER_S - 1)
 
@@ -68,17 +75,9 @@
  */
 #define DIVC(X, N)                                (((X) + (N) -1) / (N))
 
-
-#define RTC_CLOCK_PRESCALER                         16.0f
-#define DIVIDED_RTC_FREQUENCY                       (((float)LSE_VALUE)/RTC_CLOCK_PRESCALER)
-#define DIVIDED_RTC_PERIOD                          (1.0f/DIVIDED_RTC_FREQUENCY)
-#define MIN_RTC_PERIOD_SEC                          (1.0f*DIVIDED_RTC_PERIOD)
-#define MAX_RTC_PERIOD_SEC                          (65535.0f*DIVIDED_RTC_PERIOD)
-#define MIN_RTC_PERIOD_MSEC                         (1000.0f*MIN_RTC_PERIOD_SEC)
-#define MAX_RTC_PERIOD_MSEC                         (1000.0f*MAX_RTC_PERIOD_SEC)
-
-
-
+#define RTC_CLOCK_PRESCALER                         (16)
+#define RTC_FREQUENCY                               (LSE_VALUE/RTC_CLOCK_PRESCALER)
+#define MAX_RTC_PERIOD_MSEC                         (1000*(65536/RTC_FREQUENCY))
 
 /*!
  * RTC timer context 
@@ -254,7 +253,7 @@ hal_rtc_init(RTC_DateTypeDef *date, RTC_TimeTypeDef *time)
     
     /*Initialises start value of the follower*/
     WakeUpTimer_Settings.follower_counter_start = 
-        (FOLLOWER_PRESCALER_S - (uint32_t)((RtcHandle.Instance->SSR) & RTC_SSR_SS));
+        ((RtcHandle.Instance->SSR) & RTC_SSR_SS);
 
     assert(rc == 0);
     
@@ -294,8 +293,9 @@ hal_rtc_enable_wakeup(uint32_t time_ms)
     if (time_ms < (uint32_t)(MAX_RTC_PERIOD_MSEC)) {
         /* 0 < time_ms < 32 sec */
         WakeUpTimer_Settings.clk_srce_sel = RTC_WAKEUPCLOCK_RTCCLK_DIV16;
-        WakeUpTimer_Settings.autoreload_timer = (uint32_t)(time_ms / (MIN_RTC_PERIOD_MSEC));
+        WakeUpTimer_Settings.autoreload_timer = (uint32_t)((time_ms * RTC_FREQUENCY) / 1000);
     } else if (time_ms < (uint32_t)(18 * 60 * 60 * 1000)) {   
+        assert(0);      /* not supported yet */
         /* 32 sec < time_ms < 18h */
         WakeUpTimer_Settings.clk_srce_sel = RTC_WAKEUPCLOCK_CK_SPRE_16BITS;
         /* load counter */
@@ -303,6 +303,7 @@ hal_rtc_enable_wakeup(uint32_t time_ms)
         /* do little adjustement */
         WakeUpTimer_Settings.autoreload_timer -= 1;
     } else {
+        assert(0);      /* not supported yet */
         /* 18h < time_ms < 36h */
         /*
          * TODO : setup wakeup with ALARM feature instead of WAKEUP     
@@ -318,29 +319,24 @@ hal_rtc_enable_wakeup(uint32_t time_ms)
     assert (rc == HAL_OK);
 
     WakeUpTimer_Settings.follower_counter_start = 
-        (FOLLOWER_PRESCALER_S - (uint32_t)((RtcHandle.Instance->SSR) & RTC_SSR_SS));
+        ((RtcHandle.Instance->SSR) & RTC_SSR_SS);
 }
 
 uint32_t 
 hal_rtc_get_elapsed_wakeup_timer(void)
 {
-    volatile uint16_t time_ms, follower_counter_elapsed;
-    
-    /*RTC_SSR is a downcounter*/
-    follower_counter_elapsed = (FOLLOWER_PRESCALER_S - (uint16_t)((RtcHandle.Instance->SSR) & RTC_SSR_SS));
-
-    /*elapsed counts is the difference between saved start counter and actual counter */
-    follower_counter_elapsed -= WakeUpTimer_Settings.follower_counter_start;
-
-    /*when stop-time wrap around the counter then elapsed time is more than expected */
-    if (follower_counter_elapsed > FOLLOWER_PRESCALER_S) {
-        follower_counter_elapsed -= (((1<<(CHAR_BIT * sizeof(follower_counter_elapsed)))-1) - FOLLOWER_PRESCALER_S);
+    uint32_t time_ms;    
+    uint16_t counter_now = ((RtcHandle.Instance->SSR) & RTC_SSR_SS);
+    /* Note RTC_SSR is a downcounter (in fact this register is the value of the divider used to generate the RTC clock) */
+    int16_t follower_counter_elapsed = WakeUpTimer_Settings.follower_counter_start - counter_now;
+    if (follower_counter_elapsed<0) {
+        /* add max counter value ie what it reset back to */
+        follower_counter_elapsed += (uint16_t)FOLLOWER_PRESCALER_S;     
+        assert(follower_counter_elapsed>0);     /* this would be bad */
     }
-
-    /*convert it into ms*/
-    time_ms = ((follower_counter_elapsed * 1000) / DIVIDED_FOLLOWER_FREQUENCY);
-    
-    return (uint32_t)time_ms;
+    /* convert it into ms */
+    time_ms = (((uint32_t)follower_counter_elapsed * 1000) / DIVIDED_FOLLOWER_FREQUENCY);
+    return time_ms;
 
 }
 
