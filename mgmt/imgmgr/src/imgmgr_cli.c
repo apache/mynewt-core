@@ -40,7 +40,8 @@
 #include "img_mgmt/img_mgmt.h"
 #include "imgmgr_priv.h"
 
-static int imgr_cli_cmd(int argc, char **argv);
+static int imgr_cli_cmd(const struct shell_cmd *cmd, int argc, char **argv,
+                        struct streamer *streamer);
 
 #if MYNEWT_VAL(SHELL_CMD_HELP)
 static const struct shell_cmd_help imgr_cli_help = {
@@ -52,18 +53,15 @@ static const struct shell_cmd_help imgr_cli_help = {
 };
 #endif
 
-static struct shell_cmd shell_imgr_cmd = {
-    .sc_cmd = "imgr",
-    .sc_cmd_func = imgr_cli_cmd,
-#if MYNEWT_VAL(SHELL_CMD_HELP)
-    .help = &imgr_cli_help,
-#endif
+static struct shell_cmd shell_imgr_cmd[] = {
+    SHELL_CMD_EXT("imgr", imgr_cli_cmd, &imgr_cli_help),
+    { 0 },
 };
 
 static void
-imgr_cli_too_few_args(void)
+imgr_cli_too_few_args(struct streamer *streamer)
 {
-    console_printf("Too few args\n");
+    streamer_printf(streamer, "Too few args\n");
 }
 
 static const char *
@@ -98,7 +96,7 @@ imgr_cli_flags_str(uint32_t image_flags, uint8_t state_flags)
 }
 
 static void
-imgr_cli_show_slot(int slot)
+imgr_cli_show_slot(int slot, struct streamer *streamer)
 {
     uint8_t hash[IMGMGR_HASH_LEN]; /* SHA256 hash */
     char hash_str[IMGMGR_HASH_LEN * 2 + 1];
@@ -115,7 +113,7 @@ imgr_cli_show_slot(int slot)
 
     (void)img_mgmt_ver_str(&ver, ver_str);
 
-    console_printf("%d %8s: %s %s\n",
+    streamer_printf(streamer, "%d %8s: %s %s\n",
       slot, ver_str,
       hex_format(hash, IMGMGR_HASH_LEN, hash_str, sizeof(hash_str)),
       imgr_cli_flags_str(flags, state_flags));
@@ -144,7 +142,7 @@ imgr_cli_hash_parse(const char *arg, int *out_slot)
 }
 
 static int
-imgr_cli_slot_or_hash_parse(const char *arg, int *out_slot)
+imgr_cli_slot_or_hash_parse(const char *arg, int *out_slot, struct streamer *streamer)
 {
     int rc;
 
@@ -163,48 +161,48 @@ imgr_cli_slot_or_hash_parse(const char *arg, int *out_slot)
         return 0;
 
     case SYS_ENOENT:
-        console_printf("No image with hash: %s\n", arg);
+        streamer_printf(streamer, "No image with hash: %s\n", arg);
         return rc;
 
     default:
-        console_printf("Invalid slot number or image hash: %s\n", arg);
+        streamer_printf(streamer, "Invalid slot number or image hash: %s\n", arg);
         return rc;
     }
 }
 
 static void
-imgr_cli_set_pending(char *arg, int permanent)
+imgr_cli_set_pending(char *arg, int permanent, struct streamer *streamer)
 {
     int slot;
     int rc;
 
     /* Parts of the system assume slot is 0 or 1; enforce here. */
-    rc = imgr_cli_slot_or_hash_parse(arg, &slot);
+    rc = imgr_cli_slot_or_hash_parse(arg, &slot, streamer);
     if (rc != 0) {
         return;
     }
 
     rc = img_mgmt_state_set_pending(slot, permanent);
     if (rc) {
-        console_printf("Error setting slot %d to pending; rc=%d\n", slot, rc);
+        streamer_printf(streamer, "Error setting slot %d to pending; rc=%d\n", slot, rc);
         return;
     }
 }
 
 static void
-imgr_cli_confirm(void)
+imgr_cli_confirm(struct streamer *streamer)
 {
     int rc;
 
     rc = img_mgmt_state_confirm();
     if (rc != 0) {
-        console_printf("Error confirming image state; rc=%d\n", rc);
+        streamer_printf(streamer, "Error confirming image state; rc=%d\n", rc);
         return;
     }
 }
 
 static void
-imgr_cli_erase(void)
+imgr_cli_erase(struct streamer *streamer)
 {
     const struct flash_area *fa;
     int area_id;
@@ -214,52 +212,52 @@ imgr_cli_erase(void)
     if (area_id >= 0) {
         rc = flash_area_open(area_id, &fa);
         if (rc) {
-            console_printf("Error opening area %d\n", area_id);
+            streamer_printf(streamer, "Error opening area %d\n", area_id);
             return;
         }
         rc = flash_area_erase(fa, 0, fa->fa_size);
         flash_area_close(fa);
         if (rc) {
-            console_printf("Error erasing area rc=%d\n", rc);
+            streamer_printf(streamer, "Error erasing area rc=%d\n", rc);
         }
     } else {
         /*
          * No slot where to erase!
          */
-        console_printf("No suitable area to erase\n");
+        streamer_printf(streamer, "No suitable area to erase\n");
     }
 }
 
 static int
-imgr_cli_cmd(int argc, char **argv)
+imgr_cli_cmd(const struct shell_cmd *cmd, int argc, char **argv, struct streamer *streamer)
 {
     int i;
 
     if (argc < 2) {
-        imgr_cli_too_few_args();
+        imgr_cli_too_few_args(streamer);
         return 0;
     }
     if (!strcmp(argv[1], "list")) {
         for (i = 0; i < 2; i++) {
-            imgr_cli_show_slot(i);
+            imgr_cli_show_slot(i, streamer);
         }
     } else if (!strcmp(argv[1], "test")) {
         if (argc < 3) {
-            imgr_cli_too_few_args();
+            imgr_cli_too_few_args(streamer);
             return 0;
         } else {
-            imgr_cli_set_pending(argv[2], 0);
+            imgr_cli_set_pending(argv[2], 0, streamer);
         }
     } else if (!strcmp(argv[1], "confirm")) {
         if (argc < 3) {
-            imgr_cli_confirm();
+            imgr_cli_confirm(streamer);
         } else {
-            imgr_cli_set_pending(argv[2], 1);
+            imgr_cli_set_pending(argv[2], 1, streamer);
         }
     } else if (!strcmp(argv[1], "erase")) {
-        imgr_cli_erase();
+        imgr_cli_erase(streamer);
     } else {
-        console_printf("Unknown cmd\n");
+        streamer_printf(streamer, "Unknown cmd\n");
     }
     return 0;
 }
@@ -267,6 +265,6 @@ imgr_cli_cmd(int argc, char **argv)
 int
 imgr_cli_register(void)
 {
-    return shell_cmd_register(&shell_imgr_cmd);
+    return shell_cmd_register(shell_imgr_cmd);
 }
 #endif /* MYNEWT_VAL(IMGMGR_CLI) */
