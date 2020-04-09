@@ -27,7 +27,6 @@
 #include <hal/hal_bsp.h>
 
 #include <shell/shell.h>
-#include <console/console.h>
 
 #include <bootutil/image.h>
 #include <bootutil/bootutil.h>
