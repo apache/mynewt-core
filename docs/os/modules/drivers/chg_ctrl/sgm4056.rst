@@ -1,0 +1,101 @@
+..
+  #
+  # Copyright 2020 Casper Meijn <casper@meijn.net>
+  #
+  # Licensed under the Apache License, Version 2.0 (the "License");
+  # you may not use this file except in compliance with the License.
+  # You may obtain a copy of the License at
+  #
+  #     http://www.apache.org/licenses/LICENSE-2.0
+  #
+  # Unless required by applicable law or agreed to in writing, software
+  # distributed under the License is distributed on an "AS IS" BASIS,
+  # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  # See the License for the specific language governing permissions and
+  # limitations under the License.
+  #
+  
+SGM4056 Charger
+===============
+
+The SGM4056 charger is able to report its status via two output pins. If 
+these pins are connected to GPIO inputs, then the ``sgm4056`` driver can 
+derive the charger status. 
+
+Initialization
+--------------
+
+Initialization of the ``sgm4056`` driver is normally done in the BSP. This is 
+done by creating a OS device using ``os_dev_create``. 
+
+.. code-block:: c
+
+    #include "sgm4056/sgm4056.h"
+
+    ...
+
+    static struct sgm4056_dev os_bsp_charger;
+    static struct sgm4056_dev_config os_bsp_charger_config = {
+        .power_presence_pin = CHARGER_POWER_PRESENCE_PIN,
+        .charge_indicator_pin = CHARGER_CHARGE_PIN,
+    };
+
+    void
+    hal_bsp_init(void)
+    {
+        int rc;
+
+        ...
+
+        /* Create charge controller */
+        rc = os_dev_create(&os_bsp_charger.dev, "charger",
+                        OS_DEV_INIT_KERNEL, OS_DEV_INIT_PRIO_DEFAULT,
+                        sgm4056_dev_init, &os_bsp_charger_config);
+        assert(rc == 0);
+    }
+
+First we create a instance of ``struct sgm4056_dev``, this will be initialised 
+later. Then we create a instance of ``struct sgm4056_dev_config``, which contains
+the pin numbers of the gpio connected to the charger. Then we call ``os_dev_create``
+with a pointer to the device, a device name, some defaults, the ``sgm4056_dev_init`` 
+initializor and a pointer to config. 
+
+Usage
+-----
+
+There a two ways to use the driver: directly or via :doc:`charge-control <chg_ctrl>`. 
+
+When using the driver directly, you need to open the OS device and then use the driver functions.
+
+.. code-block:: c
+
+    #include "sgm4056/sgm4056.h"
+
+    ...
+
+    int
+    main(int argc, char **argv)
+    {
+        struct sgm4056_dev *charger;
+
+        charger = (struct sgm4056_dev *) os_dev_open("charger", 0, 0);
+        assert(charger);
+
+        while (1) {
+            rc = sgm4056_get_charger_status(charger, &charger_status);
+            assert(rc == 0);
+
+            console_printf("Charger state = %i\n", charger_status);
+            console_flush();
+        }
+    }
+
+When using ``charge-control`` interface, you need to enable it in syscfg and 
+then follow the general instructions at :doc:`chg_ctrl`.
+
+.. code-block:: yaml
+
+    syscfg.vals:
+        # Enable charge control integration
+        SGM4056_USE_CHARGE_CONTROL: 1
+

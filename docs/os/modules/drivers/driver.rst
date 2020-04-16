@@ -2,10 +2,11 @@ Drivers
 =======
 
 .. toctree::
-   :maxdepth: 1
+   :hidden:
 
    flash <flash>
    mmc <mmc>
+   Charge Control <chg_ctrl/chg_ctrl>
 
 
 Description
@@ -153,4 +154,6 @@ includes:
 | ``sensors``                            | TODO: sensors.           |
 +----------------------------------------+--------------------------+
 | ``uart``                               | TODO: UART driver.       |
++----------------------------------------+--------------------------+
+| ``chg_ctrl``                           | Charge control drivers.  |
 +----------------------------------------+--------------------------+
