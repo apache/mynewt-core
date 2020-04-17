@@ -47,6 +47,9 @@ stm32_hal_timer_get_freq(void *timx)
 #ifdef TIM1
     case (uintptr_t)TIM1:
 #endif
+#ifdef TIM2
+    case (uintptr_t)TIM2:
+#endif
 #ifdef TIM3
     case (uintptr_t)TIM3:
 #endif
