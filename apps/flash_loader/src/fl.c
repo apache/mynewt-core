@@ -172,8 +172,10 @@ main(int argc, char **argv)
 
     hal_bsp_init();
     flash_map_init();
+#if MYNEWT_VAL(WATCHDOG_INTERVAL) > 0
     hal_watchdog_init(MYNEWT_VAL(WATCHDOG_INTERVAL));
     hal_watchdog_enable();
+#endif
 
     fl_data = malloc(MYNEWT_VAL(FLASH_LOADER_DL_SZ));
     assert(fl_data);
@@ -221,7 +223,9 @@ main(int argc, char **argv)
             rc = FL_RC_UNKNOWN_CMD_ERR;
             break;
         }
+#if MYNEWT_VAL(WATCHDOG_INTERVAL) > 0
         hal_watchdog_tickle();
+#endif
         if (fl_cmd_rc <= FL_RC_OK) {
             fl_cmd_rc = rc;
         }

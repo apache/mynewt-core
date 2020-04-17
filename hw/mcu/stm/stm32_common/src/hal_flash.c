@@ -133,7 +133,7 @@ stm32_flash_write_linear(const struct hal_flash *dev, uint32_t address,
          * Long writes take excessive time, and stall the idle thread,
          * so tickling the watchdog here to avoid reset...
          */
-        if (!(i % 32)) {
+        if (MYNEWT_VAL(WATCHDOG_INTERVAL) > 0 && !(i % 32)) {
             hal_watchdog_tickle();
         }
     }
