@@ -250,10 +250,88 @@ SystemClock_Config(void)
 #endif
 }
 
+/** Reconfig system clock to use PLL after return from a low power mode. Clock must be on MSI before calling this.
+ * Note that the clocking config itself should have been setup at startup by SystemClock_Config().
+ */
 void
 SystemClock_RestartPLL(void)
 {
-    /* Restart clock by reconfiguring it as at startup. */
-    SystemClock_Config();
+    /** STOP or STANDBY modes have stopped the PLL and made MSI the the system clock. 
+     * No changes should have taken place to the PLL MUL/DIV or to the peripheral clocks
+     * */
+    /* MSI must be enabled, and be the system clock source */
+    if (__HAL_RCC_GET_FLAG(RCC_FLAG_MSIRDY) == RESET) {
+        assert(0);
+    }
+    if (__HAL_RCC_GET_SYSCLK_SOURCE( ) != RCC_SYSCLKSOURCE_STATUS_MSI) {
+        assert(0);
+    }
+    /* PLL must be disabled  */
+    if (__HAL_RCC_GET_FLAG(RCC_FLAG_PLLRDY) != RESET) {
+        assert(0);
+    }
+    /* Ok, turn on appropriate clock and use it */
+    __HAL_RCC_PWR_CLK_ENABLE( );
+    __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
+    /* also check have the right clock source for the config */
+#if MYNEWT_VAL(STM32_CLOCK_HSE)
+    if (__HAL_RCC_GET_PLL_OSCSOURCE()!=RCC_PLLSOURCE_HSE) {
+        assert(0);
+    }
+    /* Enable HSE */
+    __HAL_RCC_HSE_CONFIG(RCC_HSE_ON);
+
+    /* Wait till HSE is ready */
+    while(__HAL_RCC_GET_FLAG(RCC_FLAG_HSERDY) == RESET)
+    {
+    }
+#endif
+#if MYNEWT_VAL(STM32_CLOCK_HSI)
+    /* Enable HSI */
+    __HAL_RCC_HSI_ENABLE( );
+
+    /* Wait till HSI is ready */
+    while( __HAL_RCC_GET_FLAG(RCC_FLAG_HSIRDY) == RESET) {
+    }
+    if (__HAL_RCC_GET_PLL_OSCSOURCE()!=RCC_PLLSOURCE_HSI) {
+        assert(0);
+    }
+#endif
+
+    /* Enable PLL */
+    __HAL_RCC_PLL_ENABLE( );
+
+    /* Wait till PLL is ready */
+    while( __HAL_RCC_GET_FLAG(RCC_FLAG_PLLRDY) == RESET) {
+    }
+
+    /* Select PLL as system clock source */
+    __HAL_RCC_SYSCLK_CONFIG (RCC_SYSCLKSOURCE_PLLCLK);
+
+    /* Wait till PLL is used as system clock source */
+    while(__HAL_RCC_GET_SYSCLK_SOURCE( ) != RCC_SYSCLKSOURCE_STATUS_PLLCLK) {
+    }
 }
+
+/* drop sysclock back to MSI in prepration for STOP or STANDBY mode.
+ * Normally the STM32 should do this automatically, but there are cases where it hasn't done so...
+ */
+void SystemClock_StopPLL(void) {
+    /* Enable the Multi Speed oscillator (MSI). */
+    __HAL_RCC_MSI_ENABLE();
+
+    /* Wait till MSI is ready */
+    while(__HAL_RCC_GET_FLAG(RCC_FLAG_MSIRDY) == RESET)  {
+    }
+    /* Select MSI as system clock source */
+    __HAL_RCC_SYSCLK_CONFIG (RCC_SYSCLKSOURCE_MSI);
+
+    /* Wait till MSI is used as system clock source */
+    while(__HAL_RCC_GET_SYSCLK_SOURCE( ) != RCC_SYSCLKSOURCE_STATUS_MSI) {
+    }
+    /* Disable the main PLL. */
+    __HAL_RCC_PLL_DISABLE();
+
+}
+
 #endif

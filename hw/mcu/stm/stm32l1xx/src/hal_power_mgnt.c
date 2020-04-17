@@ -27,6 +27,7 @@
 #include "stm32l1xx_hal_rtc.h"
 
 extern void SystemClock_RestartPLL(void);
+extern void SystemClock_StopPLL(void);
 
 extern void hal_rtc_enable_wakeup(uint32_t time_ms);
 extern void hal_rtc_disable_wakeup(void);
@@ -106,7 +107,7 @@ void
 stm32_tickless_start(uint32_t timeMS)
 {
 
-    /* Start RTC alarm for in this amount of time */
+    /* Start RTC alarm for in this amount of time if not 0 (note: case of timeMS==0 is used for HALT ie never coming back) */
     if (timeMS > 0) {
         hal_rtc_enable_wakeup(timeMS);
     }
@@ -121,8 +122,8 @@ stm32_tickless_stop(uint32_t timeMS)
 {
     
     /* add asleep duration to tick counter : how long we should have slept for minus any remaining time */
-    volatile uint32_t asleep_ms = hal_rtc_get_elapsed_wakeup_timer();
-    volatile int asleep_ticks = os_time_ms_to_ticks32(asleep_ms);
+    uint32_t asleep_ms = hal_rtc_get_elapsed_wakeup_timer();
+    int asleep_ticks = os_time_ms_to_ticks32(asleep_ms);
     assert(asleep_ticks >= 0);
     os_time_advance(asleep_ticks);
 
@@ -133,21 +134,20 @@ stm32_tickless_stop(uint32_t timeMS)
     NVIC_EnableIRQ(SysTick_IRQn);
     /* reenable SysTick */
     SET_BIT(SysTick->CTRL,SysTick_CTRL_TICKINT_Msk);
-    
 }
 
 void 
 stm32_power_enter(int power_mode, uint32_t durationMS)
 {
     /* if sleep time was less than MIN_TICKS, it is 0. Just do usual WFI and systick will wake us in 1ms */
-    if (durationMS == 0) {
+    if (durationMS < 100) {
         HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
         return;
     }
 
-    if (durationMS >= 32000) {
-        /* 32 sec is the largest value of wakeuptimer   leave 100ms slack */
-        durationMS = (32000 - 100); 
+    /* 32 sec is the largest value of wakeuptimer   leave 500ms slack */
+    if (durationMS > 31500) {
+        durationMS = 31500; 
     }
 
     /* begin tickless */
@@ -163,7 +163,9 @@ stm32_power_enter(int power_mode, uint32_t durationMS)
         /* Enable Ultra low power mode */
         HAL_PWREx_EnableUltraLowPower( );
         /* Enable the fast wake up from Ultra low power mode */
-        HAL_PWREx_DisableFastWakeUp( );
+        HAL_PWREx_EnableFastWakeUp( );
+        /* System clock down to MSI */
+        SystemClock_StopPLL();
         /* Enters StandBy mode */
         HAL_PWR_EnterSTANDBYMode();
         /* STANDBY mode has halted the clocks and will be running on MSI - restart correctly */
@@ -177,7 +179,9 @@ stm32_power_enter(int power_mode, uint32_t durationMS)
         /* Enable Ultra low power mode */
         HAL_PWREx_EnableUltraLowPower( );
         /* Enable the fast wake up from Ultra low power mode */
-        HAL_PWREx_DisableFastWakeUp( );
+        HAL_PWREx_EnableFastWakeUp( );
+        /* System clock down to MSI */
+        SystemClock_StopPLL();
         /* Enters Stop mode not in PWR_MAINREGULATOR_ON*/
         HAL_PWR_EnterSTOPMode(PWR_LOWPOWERREGULATOR_ON, PWR_STOPENTRY_WFI);
         /* STOP mode has halted the clocks and will be running on MSI - restart correctly */
