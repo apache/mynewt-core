@@ -48,6 +48,10 @@ syscfg.vals:
 
     # UART port 0 is disabled
     UART_0: 0
+    CONSOLE_UART: 0
+
+    # Enable ARM semihosting console
+    CONSOLE_SEMIHOSTING: 1
 
     # Configure NFC pins as GPIO P0.09, P0.10
     NFC_PINS_AS_GPIO: 1
