@@ -41,6 +41,13 @@ syscfg.defs:
         description: 'SMP access to config'
         value: 0
 
+    CONFIG_MGMT_RW:
+        description: >
+            Config management access: 1=read-only, 2=write-only, 3=read/write
+            No effect if `CONFIG_MGMT` is 0.
+        value: 3
+        range: 1,2,3
+
     CONFIG_CLI:
         description: 'CLI commands for accessing config'
         value: 0

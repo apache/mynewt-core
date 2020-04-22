@@ -28,11 +28,29 @@
 #include "config/config.h"
 #include "config_priv.h"
 
+#define CONFIG_MGMT_READ    (MYNEWT_VAL(CONFIG_MGMT_RW) & 1)
+#define CONFIG_MGMT_WRITE   (MYNEWT_VAL(CONFIG_MGMT_RW) & 2)
+
+#if CONFIG_MGMT_READ
 static int conf_mgmt_read(struct mgmt_ctxt *);
+#endif
+#if CONFIG_MGMT_WRITE
 static int conf_mgmt_write(struct mgmt_ctxt *);
+#endif
 
 static const struct mgmt_handler conf_mgmt_handlers[] = {
-    [CONF_NMGR_OP] = { conf_mgmt_read, conf_mgmt_write}
+    [CONF_NMGR_OP] = {
+#if CONFIG_MGMT_READ
+        conf_mgmt_read,
+#else
+        NULL,
+#endif
+#if CONFIG_MGMT_WRITE
+        conf_mgmt_write,
+#else
+        NULL,
+#endif
+    }
 };
 
 static struct mgmt_group conf_mgmt_group = {
@@ -41,6 +59,7 @@ static struct mgmt_group conf_mgmt_group = {
     .mg_group_id = MGMT_GROUP_ID_CONFIG
 };
 
+#if CONFIG_MGMT_READ
 static int
 conf_mgmt_read(struct mgmt_ctxt *cb)
 {
@@ -80,7 +99,9 @@ conf_mgmt_read(struct mgmt_ctxt *cb)
     }
     return 0;
 }
+#endif
 
+#if CONFIG_MGMT_WRITE
 static int
 conf_mgmt_write(struct mgmt_ctxt *cb)
 {
@@ -141,6 +162,7 @@ conf_mgmt_write(struct mgmt_ctxt *cb)
     }
     return 0;
 }
+#endif
 
 int
 conf_mgmt_register(void)
