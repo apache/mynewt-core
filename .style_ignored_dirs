@@ -5,6 +5,7 @@ apps/coremark
 crypto/mbedtls
 crypto/tinycrypt
 hw/drivers/rtt
+hw/drivers/semihosting
 libc/baselibc
 net/ip/lwip_base
 net/lora/node/src/mac

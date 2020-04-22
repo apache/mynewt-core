@@ -31,6 +31,7 @@
 
 FILE_NAME=$BIN_BASENAME.elf
 CFG="-f interface/stlink.cfg -f target/nrf52.cfg"
+EXTRA_GDB_CMDS='monitor arm semihosting enable'
 # Exit openocd when gdb detaches.
 EXTRA_JTAG_CMD="$EXTRA_JTAG_CMD; nrf52.cpu configure -event gdb-detach {if {[nrf52.cpu curstate] eq \"halted\"} resume;shutdown}"
 
