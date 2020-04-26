@@ -48,6 +48,9 @@ pkg.deps.I2C_2: test/i2c_scan
 pkg.deps.CONFIG_NFFS:
     - "@apache-mynewt-core/fs/nffs"
 
+pkg.deps.CONFIG_LITTLEFS:
+    - "@apache-mynewt-core/fs/littlefs"
+
 pkg.deps.CONFIG_FCB:
     - "@apache-mynewt-core/fs/fcb"
 
