@@ -1,0 +1,163 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+syscfg.defs:
+    MCU_FLASH_MIN_WRITE_SIZE:
+        description: >
+            Specifies the required alignment for internal flash writes.
+            Used internally by the newt tool.
+        value: 1
+
+    MCU_DCDC_ENABLED:
+        description: >
+            Specifies whether or not to enable DC/DC regulator. This requires
+            external circuitry so is defined to be zero by default and
+            expected to be overridden by the BSP.
+        value: 0
+
+    MCU_LFCLK_SOURCE:
+        description: >
+            Selected source for low frequency clock (LFCLK).
+        value:
+        choices:
+            - LFRC      # 32.768 kHz RC oscillator
+            - LFXO      # 32.768 kHz crystal oscillator
+            - LFSYNTH   # 32.768 kHz synthesized from HFCLK
+
+    MCU_GPIO_USE_PORT_EVENT:
+        description: >
+            When enabled, hal_gpio will use GPIOTE PORT event instead of PIN
+            events for interrupts. This mode may be less accurate (i.e. pulse
+            length needs to be longer in order to be detected) but it reduces
+            power consumption since it does not require HFCLK to be running.
+            Refer to nRF5340 Product Specification document for more details.
+        value: 0
+
+    MCU_DEBUG_IGNORE_BKPT:
+       description: >
+            When enabled, asm(bkpt) will be ignored. If not set, it will hit
+            the breakpoint wherever it gets called, For example, reset and crash
+       value: 0
+
+# MCU peripherals definitions
+    PWM_0:
+        description: 'Enable nRF5340 PWM 0'
+        value: 0
+    PWM_1:
+        description: 'Enable nRF5340 PWM 1'
+        value: 0
+    PWM_2:
+        description: 'Enable nRF5340 PWM 2'
+        value: 0
+    PWM_3:
+        description: 'Enable nRF5340 PWM 3'
+        value: 0
+
+    UART_0:
+        description: 'Enable nRF5340 UART0'
+        value: 1
+    UART_0_PIN_TX:
+        description: 'TX pin for UART0'
+        value: ''
+    UART_0_PIN_RX:
+        description: 'RX pin for UART0'
+        value: ''
+    UART_0_PIN_RTS:
+        description: 'RTS pin for UART0'
+        value: -1
+    UART_0_PIN_CTS:
+        description: 'CTS pin for UART0'
+        value: -1
+
+    UART_1:
+        description: 'Enable nRF5340 UART1'
+        value: 0
+    UART_1_PIN_TX:
+        description: 'TX pin for UART1'
+        value: ''
+    UART_1_PIN_RX:
+        description: 'RX pin for UART1'
+        value: ''
+    UART_1_PIN_RTS:
+        description: 'RTS pin for UART1'
+        value: -1
+    UART_1_PIN_CTS:
+        description: 'CTS pin for UART1'
+        value: -1
+
+    UART_2:
+        description: 'Enable nRF5340 UART2'
+        value: 0
+    UART_2_PIN_TX:
+        description: 'TX pin for UART2'
+        value: ''
+    UART_2_PIN_RX:
+        description: 'RX pin for UART2'
+        value: ''
+    UART_2_PIN_RTS:
+        description: 'RTS pin for UART2'
+        value: -1
+    UART_2_PIN_CTS:
+        description: 'CTS pin for UART2'
+        value: -1
+
+    UART_3:
+        description: 'Enable nRF5340 UART3'
+        value: 0
+    UART_3_PIN_TX:
+        description: 'TX pin for UART3'
+        value: ''
+    UART_3_PIN_RX:
+        description: 'RX pin for UART3'
+        value: ''
+    UART_3_PIN_RTS:
+        description: 'RTS pin for UART3'
+        value: -1
+    UART_3_PIN_CTS:
+        description: 'CTS pin for UART3'
+        value: -1
+        
+    TIMER_0:
+        description: 'Enable nRF5340 Timer 0'
+        value:  1
+    TIMER_1:
+        description: 'Enable nRF5340 Timer 1'
+        value:  0
+    TIMER_2:
+        description: 'Enable nRF5340 Timer 2'
+        value:  0
+    TIMER_3:
+        description: 'Enable nRF5340 RTC 0'
+        value:  0
+    TIMER_4:
+        description: 'Enable nRF5340 RTC 1'
+        value:  0
+
+    NFC_PINS_AS_GPIO:
+        description: 'Use NFC pins as GPIOs instead of NFC functionality'
+        value: 1
+
+    GPIO_AS_PIN_RESET:
+        description: 'Enable pin reset'
+        value: 0
+
+syscfg.restrictions:
+    - "!UART_0 || (UART_0_PIN_TX && UART_0_PIN_RX)"
+    - "!UART_1 || (UART_1_PIN_TX && UART_1_PIN_RX)"
+    - "!UART_2 || (UART_2_PIN_TX && UART_2_PIN_RX)"
+    - "!UART_3 || (UART_3_PIN_TX && UART_3_PIN_RX)"

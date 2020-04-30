@@ -105,6 +105,9 @@ nordic_pca10056_no_boot.ld
 split-nordic_pca10056.ld
 nordic_pca20020_no_boot.ld
 split-nordic_pca20020.ld
+nrf5340.ld
+nrf5340_ram_resident.ld
+nordic_pca10095_no_boot.ld
 rb-blend2_no_boot.ld
 split-rb-blend2.ld
 split-telee02.ld
@@ -505,3 +508,7 @@ DA1469xAB.h
 
 # Bosch BMP388 driver - BSD License
 bmp388
+
+# Nordic NRF5340 SDK - APL2 license
+system_nrf5340.c
+gcc_startup_nrf5340.s
