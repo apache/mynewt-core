@@ -34,3 +34,8 @@ syscfg.defs:
         description: >
             Sysinit stage for USB device functionality.
         value: 500
+    USBD_STD_DESCRIPTORS:
+        description: >
+            Include descriptor support. This allows to easily use CDC, MSC, HID device
+            functionality.
+        value: 1
