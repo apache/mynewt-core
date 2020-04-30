@@ -1,4 +1,4 @@
-#
+#!/bin/sh
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -7,7 +7,7 @@
 # "License"); you may not use this file except in compliance
 # with the License.  You may obtain a copy of the License at
 #
-#  http://www.apache.org/licenses/LICENSE-2.0
+#   http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing,
 # software distributed under the License is distributed on an
@@ -17,29 +17,21 @@
 # under the License.
 #
 
-pkg.name: hw/mcu/nordic
-pkg.description: Common MCU definitions for Nordic NRF5x and NRF91 series chips.
-pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
-pkg.homepage: "http://mynewt.apache.org/"
-pkg.keywords:
-    - nrf53
-    - nrf52
-    - nrf51
-    - nrfx
-    - nrf91
+# Called with following variables set:
+#  - CORE_PATH is absolute path to @apache-mynewt-core
+#  - BSP_PATH is absolute path to hw/bsp/bsp_name
+#  - BIN_BASENAME is the path to prefix to target binary,
+#    .elf appended to name is the ELF file
+#  - FEATURES holds the target features string
+#  - EXTRA_JTAG_CMD holds extra parameters to pass to jtag software
+#  - RESET set if target should be reset when attaching
+#  - NO_GDB set if we should not start gdb to debug
+#
 
-pkg.type: sdk
+. $CORE_PATH/hw/scripts/jlink.sh
 
-pkg.ign_dirs:
-    - "soc"
-    - "templates"
-    - "mdk"
+FILE_NAME=$BIN_BASENAME.elf
+JLINK_DEV="nrf5340_xxaa_app"
 
-pkg.src_dirs:
-    - "src/ext/nrfx/"
+jlink_debug
 
-pkg.cflags: -std=gnu99
-
-pkg.deps:
-    - "@apache-mynewt-core/hw/hal"
-    - "@apache-mynewt-core/hw/cmsis-core"
