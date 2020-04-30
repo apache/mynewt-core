@@ -6,7 +6,7 @@
 # to you under the Apache License, Version 2.0 (the
 # "License"); you may not use this file except in compliance
 # with the License.  You may obtain a copy of the License at
-# 
+#
 #  http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing,
@@ -17,28 +17,19 @@
 # under the License.
 #
 
-pkg.name: sys/console/full
-pkg.description: Text-based IO interface.
+pkg.name: hw/usb/tinyusb/cdc_console
+pkg.description: Console over USB CDC.
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
+    - console
+    - usb
 
 pkg.deps:
     - "@apache-mynewt-core/hw/hal"
     - "@apache-mynewt-core/kernel/os"
-pkg.deps.CONSOLE_UART:
-    - "@apache-mynewt-core/hw/drivers/uart"
-pkg.deps.CONSOLE_RTT:
-    - "@apache-mynewt-core/hw/drivers/rtt"
-pkg.deps.CONSOLE_SEMIHOSTING:
-    - "@apache-mynewt-core/hw/drivers/semihosting"
-pkg.deps.CONSOLE_USB:
-    - "@apache-mynewt-core/hw/usb/tinyusb/cdc_console"
-pkg.deps.'CONSOLE_HISTORY == "ram"':
-    - "@apache-mynewt-core/sys/console/full/history_ram"
-pkg.deps.'CONSOLE_HISTORY == "log"':
-    - "@apache-mynewt-core/sys/console/full/history_log"
-pkg.apis: console
+    - "@apache-mynewt-core/hw/usb/tinyusb"
+    - "@tinyusb/tinyusb"
 
 pkg.init:
-    console_pkg_init: 'MYNEWT_VAL(CONSOLE_SYSINIT_STAGE)'
+    usb_cdc_console_pkg_init: 'MYNEWT_VAL(CONSOLE_SYSINIT_STAGE)'
