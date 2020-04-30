@@ -45,4 +45,10 @@ Vendor and product ID must be specified in **syscfg.vals:** section
 ```yaml
     USBD_VID: 0xABCD
     USBD_PID: 0x1234
+
+```
+To use console over USB, set those values in **syscfg.vals:** section
+```yaml
+    CONSOLE_USB: 1
+    USBD_CDC: 1
 ```

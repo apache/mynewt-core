@@ -26,6 +26,9 @@ syscfg.defs:
     CONSOLE_SEMIHOSTING:
         description: 'Set console output to ARM semihosting'
         value: 0
+    CONSOLE_USB:
+        description: 'Set console to USB'
+        value: 0
     CONSOLE_BLE_MONITOR:
         description: 'Set console output to BLE Monitor'
         value: 0
