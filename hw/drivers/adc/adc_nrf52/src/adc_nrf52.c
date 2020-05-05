@@ -53,6 +53,7 @@ struct nrf52_saadc_dev_global {
     nrf_saadc_oversample_t oversample;
     struct nrf52_adc_chan channels[SAADC_CH_NUM];
     bool calibrate;
+    bool calibrated;
 };
 
 static struct nrf52_saadc_dev_global g_drv_instance;
@@ -305,6 +306,7 @@ nrf52_adc_configure_channel(struct adc_dev *dev, uint8_t cnum, void *cfgdata)
 
     channel_unconf(cnum);
     dev->ad_chans[cnum].c_configured = 0;
+    g_drv_instance.calibrated = false;
     if (!cfgdata) {
         nrf_saadc_channel_init(NRF_SAADC, cnum,
                                &g_drv_instance.channels[cnum].nrf_chan);
@@ -490,7 +492,7 @@ nrf52_adc_sample(struct adc_dev *dev)
     /* Start Sampling */
     nrf_saadc_enable(NRF_SAADC);
 
-    if (g_drv_instance.calibrate) {
+    if (g_drv_instance.calibrate && (!g_drv_instance.calibrated)) {
         nrf_saadc_task_trigger(NRF_SAADC, NRF_SAADC_TASK_CALIBRATEOFFSET);
     } else {
         nrf_saadc_task_trigger(NRF_SAADC, NRF_SAADC_TASK_STOP);
@@ -544,6 +546,15 @@ nrf52_adc_read_channel(struct adc_dev *dev, uint8_t cnum, int *result)
     nrf_saadc_resolution_set(NRF_SAADC, g_drv_instance.resolution);
     nrf_saadc_buffer_init(NRF_SAADC, &adc_value, 1);
     nrf_saadc_enable(NRF_SAADC);
+
+    if (g_drv_instance.calibrate && (!g_drv_instance.calibrated)) {
+        nrf_saadc_task_trigger(NRF_SAADC, NRF_SAADC_TASK_CALIBRATEOFFSET);
+        while (!nrf_saadc_event_check(NRF_SAADC,
+                                      NRF_SAADC_EVENT_CALIBRATEDONE));
+        nrf_saadc_event_clear(NRF_SAADC, NRF_SAADC_EVENT_CALIBRATEDONE);
+        nrf_saadc_task_trigger(NRF_SAADC, NRF_SAADC_TASK_STOP);
+        g_drv_instance.calibrated = true;
+    }
 
     nrf_saadc_task_trigger(NRF_SAADC, NRF_SAADC_TASK_START);
     nrf_saadc_task_trigger(NRF_SAADC, NRF_SAADC_TASK_SAMPLE);
@@ -629,6 +640,7 @@ nrf52_saadc_irq_handler(void)
     } else if (nrf_saadc_event_check(NRF_SAADC, NRF_SAADC_EVENT_CALIBRATEDONE)) {
         nrf_saadc_event_clear(NRF_SAADC, NRF_SAADC_EVENT_CALIBRATEDONE);
 
+        g_drv_instance.calibrated = true;
         global_adc_dev->ad_event_handler_func(global_adc_dev,
                                               global_adc_dev->ad_event_handler_arg,
                                               ADC_EVENT_CALIBRATED,
