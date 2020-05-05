@@ -293,6 +293,8 @@ static int
 nrf52_adc_configure_channel(struct adc_dev *dev, uint8_t cnum, void *cfgdata)
 {
     struct adc_chan_cfg *cfg = (struct adc_chan_cfg *) cfgdata;
+    nrf_saadc_channel_config_t *nrf_chan =
+        &g_drv_instance.channels[cnum].nrf_chan;
     uint16_t refmv;
     nrf_saadc_resolution_t res;
 
@@ -308,8 +310,7 @@ nrf52_adc_configure_channel(struct adc_dev *dev, uint8_t cnum, void *cfgdata)
     dev->ad_chans[cnum].c_configured = 0;
     g_drv_instance.calibrated = false;
     if (!cfgdata) {
-        nrf_saadc_channel_init(NRF_SAADC, cnum,
-                               &g_drv_instance.channels[cnum].nrf_chan);
+        nrf_saadc_channel_init(NRF_SAADC, cnum, nrf_chan);
         return 0;
     }
 
@@ -332,13 +333,11 @@ nrf52_adc_configure_channel(struct adc_dev *dev, uint8_t cnum, void *cfgdata)
 
     switch (cfg->reference) {
     case ADC_REFERENCE_INTERNAL:
-        g_drv_instance.channels[cnum].nrf_chan.reference =
-            NRF_SAADC_REFERENCE_INTERNAL;
+        nrf_chan->reference = NRF_SAADC_REFERENCE_INTERNAL;
         refmv = 600; /* 0.6V for NRF52 */
         break;
     case ADC_REFERENCE_VDD_DIV_4:
-        g_drv_instance.channels[cnum].nrf_chan.reference =
-            NRF_SAADC_REFERENCE_VDD4;
+        nrf_chan->reference = NRF_SAADC_REFERENCE_VDD4;
         refmv = init_cfg->nadc_refmv / 4;
         break;
     default:
@@ -348,24 +347,31 @@ nrf52_adc_configure_channel(struct adc_dev *dev, uint8_t cnum, void *cfgdata)
     /* Adjust reference voltage for gain. */
     switch (cfg->gain) {
     case ADC_GAIN1_6:
+        nrf_chan->gain = NRF_SAADC_GAIN1_6;
         refmv *= 6;
         break;
     case ADC_GAIN1_5:
+        nrf_chan->gain = NRF_SAADC_GAIN1_5;
         refmv *= 5;
         break;
     case ADC_GAIN1_4:
+        nrf_chan->gain = NRF_SAADC_GAIN1_4;
         refmv *= 4;
         break;
     case ADC_GAIN1_3:
+        nrf_chan->gain = NRF_SAADC_GAIN1_3;
         refmv *= 3;
         break;
     case ADC_GAIN1_2:
+        nrf_chan->gain = NRF_SAADC_GAIN1_2;
         refmv *= 2;
         break;
     case ADC_GAIN2:
+        nrf_chan->gain = NRF_SAADC_GAIN2;
         refmv /= 2;
         break;
     case ADC_GAIN4:
+        nrf_chan->gain = NRF_SAADC_GAIN4;
         refmv /= 4;
         break;
     default:
@@ -374,14 +380,12 @@ nrf52_adc_configure_channel(struct adc_dev *dev, uint8_t cnum, void *cfgdata)
 
     g_drv_instance.channels[cnum].pin_p = cfg->pin;
     if (cfg->differential) {
-        g_drv_instance.channels[cnum].nrf_chan.mode =
-            NRF_SAADC_MODE_DIFFERENTIAL;
+        nrf_chan->mode = NRF_SAADC_MODE_DIFFERENTIAL;
         g_drv_instance.channels[cnum].pin_n = cfg->pin_negative;
     }
 
     /* Init Channel's registers */
-    nrf_saadc_channel_init(NRF_SAADC, cnum,
-                           &g_drv_instance.channels[cnum].nrf_chan);
+    nrf_saadc_channel_init(NRF_SAADC, cnum, nrf_chan);
 
     /* Store these values in channel definitions, for conversions to
      * milivolts.
