@@ -53,7 +53,7 @@ syscfg.defs:
 
     STM32_CLOCK_MSI_CLOCK_RANGE:
         description: MSI clock range
-        value: 'RCC_MSICALIBRATION_DEFAULT'
+        value: 'RCC_MSIRANGE_8'
 
     STM32_CLOCK_HSE:
         description: Enable high-speed external clock source
@@ -96,15 +96,15 @@ syscfg.defs:
         value: 0
 
     STM32_CLOCK_AHB_DIVIDER:
-        description: AHB CLK1 prescaler (64MHz max)
+        description: AHB CLK1 prescaler (80MHz max)
         value: 0
 
     STM32_CLOCK_APB1_DIVIDER:
-        description: APB low-speed prescaler (64MHz max)
+        description: APB low-speed prescaler (80MHz max)
         value: 0
 
     STM32_CLOCK_APB2_DIVIDER:
-        description: APB high-speed prescaler (64MHz max)
+        description: APB high-speed prescaler (80MHz max)
         value: 0
 
     STM32_FLASH_LATENCY:
