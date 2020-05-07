@@ -55,6 +55,14 @@ syscfg.defs:
        value: 0
 
 # MCU peripherals definitions
+    ADC_0:
+        description: 'Enable nRF5340 ADC 0'
+        value:  0
+
+    ADC_0_REFMV_0:
+        description: 'reference mV in AREF0 if used'
+        value: 0
+
     PWM_0:
         description: 'Enable nRF5340 PWM 0'
         value: 0
