@@ -22,6 +22,16 @@ syscfg.defs:
     BSP_NRF52:
         description: 'Set to indicate that BSP has NRF52'
         value: 1
+    BSP_BATTERY:
+        description: 'Setup battery driver in the BSP'
+        value: 1
+    BSP_CHARGER:
+        description: 'Setup charger driver in the BSP'
+        value: 1
+
+syscfg.vals.BOOT_LOADER:
+    BSP_BATTERY: 0
+    BSP_CHARGER: 0
 
 # Settings this BSP overrides.
 syscfg.vals:
@@ -56,14 +66,15 @@ syscfg.vals:
     # Configure NFC pins as GPIO P0.09, P0.10
     NFC_PINS_AS_GPIO: 1
 
-    # ADC needed for battery voltage
-    ADC_0: 1
-
     # Define flash areas
     CONFIG_FCB_FLASH_AREA: FLASH_AREA_NFFS
     REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG
     NFFS_FLASH_AREA: FLASH_AREA_NFFS
     COREDUMP_FLASH_AREA: FLASH_AREA_IMAGE_1
+
+syscfg.vals.BSP_BATTERY:
+    # ADC needed for battery voltage
+    ADC_0: 1
 
 syscfg.vals.BLE_CONTROLLER:
     TIMER_0: 0
