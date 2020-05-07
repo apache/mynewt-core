@@ -35,6 +35,10 @@ pkg.deps:
     - '@apache-mynewt-core/hw/mcu/nordic/nrf52xxx'
     - '@apache-mynewt-core/kernel/os'
     - '@apache-mynewt-core/libc/baselibc'
+
+pkg.deps.BSP_CHARGER:
     - '@apache-mynewt-core/hw/drivers/chg_ctrl/sgm4056'
+
+pkg.deps.BSP_BATTERY:
     - '@apache-mynewt-core/hw/battery'
     - '@apache-mynewt-core/hw/drivers/adc'
