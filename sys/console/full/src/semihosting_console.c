@@ -44,7 +44,7 @@ semihosting_console_write(unsigned char c)
 {
     *semihosting_tx_buffer_pos = c;
     semihosting_tx_buffer_pos++;
-    if (semihosting_tx_buffer_pos > semihosting_tx_buffer + sizeof(semihosting_tx_buffer)) {
+    if (semihosting_tx_buffer_pos >= semihosting_tx_buffer + sizeof(semihosting_tx_buffer)) {
         semihosting_console_flush();
     }
 }
