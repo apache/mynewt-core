@@ -16,47 +16,27 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#ifndef __UTIL_BASE64_H
-#define __UTIL_BASE64_H
 
-#include <stdint.h>
-#include <string.h>
+#ifndef H_BASE64_TEST_PRIV_
+#define H_BASE64_TEST_PRIV_
+
+#include "testutil/testutil.h"
+#include "base64/base64.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/**
- * base64_decoder: used for decoding chunked data.  All public fields must be
- * initialized before use.
- */
-struct base64_decoder {
-    /*** public */
-    const char *src;
-    void *dst;
-    int src_len; /* <=0 if src ends with '\0' */
-    int dst_len; /* <=0 if dst unbounded */
+TEST_SUITE_DECL(hex_fmt_test_suite);
 
-    /*** private */
-    char buf[4];
-    int buf_len;
-};
-
-int base64_encode(const void *, int, char *, uint8_t);
-int base64_decode(const char *, void *buf);
-int base64_pad(char *, int);
-int base64_decode_len(const char *str);
-int base64_decode_maxlen(const char *str, void *data, int len);
-
-/**
- * Decodes base64 data using the provided decoder.
- */
-int base64_decoder_go(struct base64_decoder *dec);
-
-#define BASE64_ENCODE_SIZE(__size) (((((__size) - 1) / 3) * 4) + 4)
+TEST_CASE_DECL(hex2str);
+TEST_CASE_DECL(str2hex);
+TEST_CASE_DECL(decode_basic);
+TEST_CASE_DECL(decode_maxlen);
+TEST_CASE_DECL(decode_chunks);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __UTIL_BASE64_H__ */
+#endif

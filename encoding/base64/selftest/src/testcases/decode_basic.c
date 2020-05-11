@@ -16,24 +16,41 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include <assert.h>
-#include <stddef.h>
+
 #include "os/mynewt.h"
-#include "testutil/testutil.h"
-#include "encoding_test_priv.h"
+#include "base64_test_priv.h"
 
-TEST_CASE_DECL(hex2str)
-TEST_CASE_DECL(str2hex)
-
-TEST_SUITE(hex_fmt_test_suite)
+static void
+pass(const char *src, const char *expected)
 {
-    hex2str();
-    str2hex();
+    char dst[1024];
+    int len;
+
+    len = base64_decode(src, dst);
+    TEST_ASSERT_FATAL(len == strlen(expected));
+    TEST_ASSERT(memcmp(dst, expected, len) == 0);
 }
 
-int
-main(int argc, char **argv)
+static void
+fail(const char *src)
 {
-    hex_fmt_test_suite();
-    return tu_case_failed;
+    char dst[1024];
+    int len;
+
+    len = base64_decode(src, dst);
+    TEST_ASSERT(len == -1);
+}
+
+TEST_CASE_SELF(decode_basic)
+{
+    pass("dGhlIGRpZSBpcyBjYXN0", "the die is cast");
+    pass("c29tZSB0ZXh0IHdpdGggcGFkZGluZw==", "some text with padding");
+
+    /* Contains invalid character (space). */
+    fail("c29tZSB0ZXh IHdpdGggcGFkZGluZw==");
+
+    /* Incomplete input. */
+    fail("c29tZSB0ZXh0IHdpdGggcGFkZGluZw=");
+    fail("c29tZSB0ZXh0IHdpdGggcGFkZGluZw");
+    fail("c29tZSB0ZXh0IHdpdGggcGFkZGluZ");
 }
