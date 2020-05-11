@@ -40,9 +40,10 @@
 
 #include <stdlib.h>
 #include <string.h>
-
+#include <limits.h>
 #include <stdio.h>
 
+#include <os/mynewt.h>
 #include <base64/base64.h>
 
 static const char base64_chars[] =
@@ -149,63 +150,24 @@ token_decode(const char *token)
 int
 base64_decode(const char *str, void *data)
 {
-    const char *p;
-    unsigned char *q;
+    struct base64_decoder dec = {
+        .src = str,
+        .dst = data,
+    };
 
-    q = data;
-    for (p = str; *p && (*p == '=' || strchr(base64_chars, *p)); p += 4) {
-        unsigned int val = token_decode(p);
-        unsigned int marker = (val >> 24) & 0xff;
-        if (val == DECODE_ERROR) {
-            return -1;
-        }
-        *q++ = (val >> 16) & 0xff;
-        if (marker < 2) {
-            *q++ = (val >> 8) & 0xff;
-        }
-        if (marker < 1) {
-            *q++ = val & 0xff;
-        }
-    }
-    return q - (unsigned char *) data;
+    return base64_decoder_go(&dec);
 }
 
 int
 base64_decode_maxlen(const char *str, void *data, int len)
 {
-    const char *p;
-    unsigned char *q;
+    struct base64_decoder dec = {
+        .src = str,
+        .dst = data,
+        .dst_len = len,
+    };
 
-    q = data;
-    for (p = str; *p && (*p == '=' || strchr(base64_chars, *p)); p += 4) {
-        unsigned int val = token_decode(p);
-        unsigned int marker = (val >> 24) & 0xff;
-
-        if (val == DECODE_ERROR) {
-            return -1;
-        }
-
-        *q++ = (val >> 16) & 0xff;
-        if (q - (unsigned char *)data >= len) {
-            break;
-        }
-
-        if (marker < 2) {
-            *q++ = (val >> 8) & 0xff;
-            if (q - (unsigned char *)data >= len) {
-                break;
-            }
-        }
-
-        if (marker < 1) {
-            *q++ = val & 0xff;
-            if (q - (unsigned char *)data >= len) {
-                break;
-            }
-        }
-    }
-
-    return q - (unsigned char *) data;
+    return base64_decoder_go(&dec);
 }
 
 int
@@ -218,4 +180,105 @@ base64_decode_len(const char *str)
         len--;
     }
     return len * 3 / 4;
+}
+
+int
+base64_decoder_go(struct base64_decoder *dec)
+{
+    unsigned int marker;
+    unsigned int val;
+    uint8_t *dst;
+    char sval;
+    int read_len;
+    int src_len;
+    int src_rem;
+    int src_off;
+    int dst_len;
+    int dst_off;
+    int i;
+
+    dst = dec->dst;
+    dst_off = 0;
+    src_off = 0;
+
+    /* A length <= 0 means "unbounded". */
+    if (dec->src_len <= 0) {
+        src_len = INT_MAX;
+    } else {
+        src_len = dec->src_len;
+    }
+    if (dec->dst_len <= 0) {
+        dst_len = INT_MAX;
+    } else {
+        dst_len = dec->dst_len;
+    }
+
+    while (1) {
+        src_rem = src_len - src_off;
+        if (src_rem == 0) {
+            /* End of source input. */
+            break;
+        }
+
+        if (dec->src[src_off] == '\0') {
+            /* End of source string. */
+            break;
+        }
+
+        /* Account for possibility of partial token from previous call. */
+        read_len = 4 - dec->buf_len;
+
+        /* Detect invalid input. */
+        for (i = 0; i < read_len; i++) {
+            sval = dec->src[src_off + i];
+            if (sval != '=' && strchr(base64_chars, sval) == NULL) {
+                /* Invalid base64 character. */
+                return -1;
+            }
+        }
+
+        if (src_rem < read_len) {
+            /* Input contains a partial token.  Stash it for use during the
+             * next call.
+             */
+            memcpy(&dec->buf[dec->buf_len], &dec->src[src_off], src_rem);
+            dec->buf_len += src_rem;
+            break;
+        }
+
+        /* Copy full token into buf and decode it. */
+        memcpy(&dec->buf[dec->buf_len], &dec->src[src_off], read_len);
+        val = token_decode(dec->buf);
+        if (val == DECODE_ERROR) {
+            return -1;
+        }
+        src_off += read_len;
+        dec->buf_len = 0;
+
+        marker = (val >> 24) & 0xff;
+
+        if (dst_off >= dst_len) {
+            break;
+        }
+        dst[dst_off] = (val >> 16) & 0xff;
+        dst_off++;
+
+        if (marker < 2) {
+            if (dst_off >= dst_len) {
+                break;
+            }
+            dst[dst_off] = (val >> 8) & 0xff;
+            dst_off++;
+        }
+
+        if (marker < 1) {
+            if (dst_off >= dst_len) {
+                break;
+            }
+            dst[dst_off] = val & 0xff;
+            dst_off++;
+        }
+    }
+
+    return dst_off;
 }
