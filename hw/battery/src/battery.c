@@ -297,6 +297,10 @@ battery_find_property(struct os_dev *battery,
             if (prop) {
                 struct battery_property *p =
                     calloc(1, sizeof(struct battery_property));
+                if (!p) {
+                    /* If an allocation fails, return NULL */
+                    return NULL;
+                }
                 if (prop->bp_prop_num == 0) {
                     prop->bp_prop_num = ++bat->b_all_property_count;
                     assert(bat->b_all_property_count <= BATTERY_MAX_PROPERTY_COUNT);
@@ -314,6 +318,7 @@ battery_find_property(struct os_dev *battery,
             }
         }
     }
+
     return res;
 }
 
