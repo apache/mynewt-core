@@ -33,7 +33,10 @@ sys.path.append(os.path.join(os.getcwd(), "repos", "mcuboot", "scripts",
                 "imgtool"))
 import keys as keys
 
-
+# Cmds that apply for the dialog BSP are defined here.
+# Custom Commands are defined in the custom BSP starting
+# at a different offset so that the default command set
+# can be expanded if needed.
 class Cmd(object):
     OTP_READ_KEY = 0
     OTP_WRITE_KEY = 1
@@ -44,7 +47,6 @@ class Cmd(object):
     OTP_INIT = 6
     FLASH_ERASE = 7
     TEST_ALIVE = 8
-
 
 class cmd_no_payload(NamedTuple):
     som: int
