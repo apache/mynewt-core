@@ -87,9 +87,7 @@ oc_endpoint_has_conn(struct oc_endpoint *oe)
     return oc_endpoint_use_tcp(oe);
 }
 
-#define OC_MBUF_ENDPOINT(m)                                            \
-    ((struct oc_endpoint *)((uint8_t *)m + sizeof(struct os_mbuf) +    \
-                            sizeof(struct os_mbuf_pkthdr)))
+#define OC_MBUF_ENDPOINT(m) ((struct oc_endpoint *) OS_MBUF_USRHDR(m))
 
 #ifdef OC_SECURITY
 uint16_t oc_connectivity_get_dtls_port(void);
