@@ -17,28 +17,29 @@
 # under the License.
 #
 
-pkg.name: hw/mcu/nordic
-pkg.description: Common MCU definitions for Nordic NRF51, NRF52 and NRF91 series chips.
+pkg.name: hw/bsp/nordic_pca10090
+pkg.type: bsp
+pkg.description: BSP definition for the Nordic PCA10090 (nRF9160 DK)
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
-    - nrf52
-    - nrf51
-    - nrfx
-    - nrf91
+    - nrf9160
+    - nrf9160dk
+    - nordic
+    - pca10090
 
-pkg.type: sdk
+pkg.cflags:
+     - '-DNRF9160_XXAA'
+     - '-mcmse'
+     - '-D__ARM_FEATURE_CMSE=3'
 
-pkg.ign_dirs:
-    - "soc"
-    - "templates"
-    - "mdk"
-
-pkg.src_dirs:
-    - "src/ext/nrfx/"
-
-pkg.cflags: -std=gnu99 -DNRF52_PAN_28
+pkg.cflags.HARDFLOAT:
+    - -mfloat-abi=hard -mfpu=fpv4-sp-d16
 
 pkg.deps:
-    - "@apache-mynewt-core/hw/hal"
-    - "@apache-mynewt-core/hw/cmsis-core"
+    - "@apache-mynewt-core/hw/mcu/nordic/nrf91xxx"
+    - "@apache-mynewt-core/libc/baselibc"
+
+pkg.deps.UARTBB_0:
+    - "@apache-mynewt-core/hw/drivers/uart/uart_bitbang"
+

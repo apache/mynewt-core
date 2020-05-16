@@ -1,4 +1,3 @@
-#
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -17,28 +16,15 @@
 # under the License.
 #
 
-pkg.name: hw/mcu/nordic
-pkg.description: Common MCU definitions for Nordic NRF51, NRF52 and NRF91 series chips.
-pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
-pkg.homepage: "http://mynewt.apache.org/"
-pkg.keywords:
-    - nrf52
-    - nrf51
-    - nrfx
-    - nrf91
-
-pkg.type: sdk
-
-pkg.ign_dirs:
-    - "soc"
-    - "templates"
-    - "mdk"
-
-pkg.src_dirs:
-    - "src/ext/nrfx/"
-
-pkg.cflags: -std=gnu99 -DNRF52_PAN_28
-
-pkg.deps:
-    - "@apache-mynewt-core/hw/hal"
-    - "@apache-mynewt-core/hw/cmsis-core"
+syscfg.defs:
+    I2C_NRF91_TWIM_STAT:
+        description: >
+            Enable statistics for driver errors and applied workarounds.
+        value: 0
+    I2C_NRF91_TWIM_SCL_RECOVERY_DELAY_USEC:
+        description: >
+            Time to wait for activity on SCL line after triggering start task
+            before restarting TWIM controller. This is to recover from state
+            where controller is unresponsive due to glitch on I2C bus.
+            Note: Default value seems to work fine, but may need to be tuned.
+        value: 500

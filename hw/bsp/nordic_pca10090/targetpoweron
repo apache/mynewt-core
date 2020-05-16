@@ -1,0 +1,13 @@
+/*
+* Read the CTRL-AP register 0xC (APPROTECTSTATUS).
+* If the register reads 0x00000001, device is unprotected.
+* if it reads 0x00000000, protection is enabled.
+* See ARM ADIv5 manual For more info.
+*/
+power on
+SWDSelect
+SWDWriteDP 1 0x50000000
+SWDWriteDP 2 0x01000000
+SWDReadAP 3
+SWDReadAP 3
+exit

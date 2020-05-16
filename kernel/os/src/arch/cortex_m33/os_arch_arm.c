@@ -21,11 +21,10 @@
 #include <hal/hal_bsp.h>
 #include <hal/hal_os_tick.h>
 #include <mcu/cmsis_nvic.h>
-
 #include "os_priv.h"
 
 /*
- * From HAL_CM4.s
+ * From HAL_CM33.s
  */
 extern void SVC_Handler(void);
 extern void PendSV_Handler(void);
