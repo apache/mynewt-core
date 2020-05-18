@@ -8,10 +8,10 @@
 #include <ctype.h>
 #include <stdarg.h>
 #include <stddef.h>
-#include <inttypes.h>
 #include <string.h>
 #include <limits.h>
 #include <stdio.h>
+#include <strntoimax.h>
 
 #ifndef LONG_BIT
 #define LONG_BIT (CHAR_BIT*sizeof(long))

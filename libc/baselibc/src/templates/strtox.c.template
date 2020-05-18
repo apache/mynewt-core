@@ -6,7 +6,7 @@
 
 #include <stddef.h>
 #include <stdlib.h>
-#include <inttypes.h>
+#include <strntoimax.h>
 
 TYPE NAME(const char *nptr, char **endptr, int base)
 {
