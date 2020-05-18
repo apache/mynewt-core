@@ -29,7 +29,7 @@ compiler.flags.base: >
     -Wall -Werror -ggdb -DARCH_sim
 compiler.ld.resolve_circular_deps: true
 
-compiler.flags.default: [compiler.flags.base, -O1]
+compiler.flags.default: [compiler.flags.base, -O1, -fno-common]
 compiler.flags.debug: [compiler.flags.base, -O0]
 compiler.as.flags: [-x, assembler-with-cpp]
 compiler.ld.mapfile: false

@@ -25,7 +25,7 @@ compiler.path.objdump: arc-elf32-objdump
 compiler.path.objsize: arc-elf32-size
 compiler.path.objcopy: arc-elf32-objcopy
 
-compiler.flags.default: [-mno-sdata, -Wall, -Werror, -fno-exceptions, -fomit-frame-pointer, -ffunction-sections, -fdata-sections]
+compiler.flags.default: [-mno-sdata, -Wall, -Werror, -fno-exceptions, -fomit-frame-pointer, -ffunction-sections, -fdata-sections, -fno-common]
 compiler.flags.optimized: [compiler.flags.default, -Os, -ggdb]
 compiler.flags.debug: [compiler.flags.default, -Og, -ggdb]
 
