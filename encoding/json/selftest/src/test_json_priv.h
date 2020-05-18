@@ -28,14 +28,14 @@
 extern "C" {
 #endif
 
-char *output;
-char *output1;
-char *outputboolspace;
-char *outputboolempty;
+extern char *output;
+extern char *output1;
+extern char *outputboolspace;
+extern char *outputboolempty;
 
 #define JSON_BIGBUF_SIZE    192
-char *bigbuf;
-int buf_index;
+extern char *bigbuf;
+extern int buf_index;
 
 /* a test structure to hold the json flat buffer and pass bytes
  * to the decoder */

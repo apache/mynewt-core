@@ -36,9 +36,6 @@
 extern "C" {
 #endif
 
-extern struct nffs_hash_entry *nffs_test_touched_entries;
-int nffs_test_num_touched_entries;
-
 extern int flash_native_memset(uint32_t offset, uint8_t c, uint32_t len);
 
 void nffs_test_util_assert_ent_name(struct fs_dirent *dirent,

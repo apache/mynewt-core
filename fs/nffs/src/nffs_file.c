@@ -23,7 +23,7 @@
 #include "nffs/nffs.h"
 #include "fs/fs_if.h"
 
-struct fs_ops nffs_ops;
+extern struct fs_ops nffs_ops;
 
 static struct nffs_file *
 nffs_file_alloc(void)
