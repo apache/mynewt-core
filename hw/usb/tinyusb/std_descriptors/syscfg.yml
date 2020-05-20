@@ -62,6 +62,9 @@ syscfg.defs:
     USBD_MSC:
         description: Enable MSC device
         value: 0
+    USBD_BTH:
+        description: Enable BT HCI device
+        value: 0
 
     USBD_CDC_DATA_OUT_EP:
         description: CDC data out endpoint number
@@ -91,6 +94,10 @@ syscfg.defs:
         description: String for HID interface
         value: NULL
 
+    USBD_BTH_DESCRIPTOR_STRING:
+        description: String for BT descriptor
+        value: NULL
+
     USBD_HID_REPORT_EP:
         description: HID report endpoint number
         value:
@@ -118,4 +125,23 @@ syscfg.defs:
         value: 0
     USBD_HID_REPORT_ID_MOUSE:
         description: HID keyboard report ID
+        value:
+
+    USBD_BTH_EVENT_EP:
+        description: BTH event endpoint number
+        value:
+    USBD_BTH_EVENT_EP_SIZE:
+        description: BTH event endpoint size
+        value:
+    USBD_BTH_EVENT_EP_INTERVAL:
+        description: BTH event endpoint interval
+        value:
+    USBD_BTH_DATA_IN_EP:
+        description: BTH data in endpoint number
+        value:
+    USBD_BTH_DATA_OUT_EP:
+        description: BTH data out endpoint number
+        value:
+    USBD_BTH_DATA_EP_SIZE:
+        description: BTH data endpoints size
         value:

@@ -41,6 +41,7 @@
 #define CDC_IF_STR_IX (MYNEWT_VAL(USBD_CDC_DESCRIPTOR_STRING) == NULL ? 0 : 4)
 #define MSC_IF_STR_IX (MYNEWT_VAL(USBD_MSC_DESCRIPTOR_STRING) == NULL ? 0 : 5)
 #define HID_IF_STR_IX (MYNEWT_VAL(USBD_HID_DESCRIPTOR_STRING) == NULL ? 0 : 6)
+#define BTH_IF_STR_IX (MYNEWT_VAL(USBD_BTH_DESCRIPTOR_STRING) == NULL ? 0 : 7)
 
 
 #if CFG_TUD_HID
@@ -112,7 +113,11 @@ const tusb_desc_device_t desc_device = {
     .bDescriptorType    = TUSB_DESC_DEVICE,
     .bcdUSB             = 0x0200,
 
-#if CFG_TUD_CDC
+#if CFG_TUD_BTH
+    .bDeviceClass       = TUD_BT_APP_CLASS,
+    .bDeviceSubClass    = TUD_BT_APP_SUBCLASS,
+    .bDeviceProtocol    = TUD_BT_PROTOCOL_PRIMARY_CONTROLLER,
+#elif CFG_TUD_CDC
     /*
      * Use Interface Association Descriptor (IAD) for CDC
      * As required by USB Specs IAD's subclass must be common class (2) and protocol must be IAD (1)
@@ -154,6 +159,13 @@ tud_descriptor_device_cb(void)
  */
 
 enum {
+#if CFG_TUD_BTH
+    ITF_NUM_BTH,
+#if CFG_TUD_BTH_ISO_ALT_COUNT > 0
+    ITF_NUM_BTH_VOICE,
+#endif
+#endif
+
 #if CFG_TUD_CDC
     ITF_NUM_CDC,
     ITF_NUM_CDC_DATA,
@@ -174,11 +186,18 @@ enum {
                              CFG_TUD_CDC * TUD_CDC_DESC_LEN + \
                              CFG_TUD_MSC * TUD_MSC_DESC_LEN + \
                              CFG_TUD_HID * TUD_HID_DESC_LEN + \
+                             CFG_TUD_BTH * TUD_BTH_DESC_LEN + \
                              0)
 
 const uint8_t desc_configuration[] = {
     TUD_CONFIG_DESCRIPTOR(CONFIG_NUM, ITF_NUM_TOTAL, 0, CONFIG_TOTAL_LEN, TUSB_DESC_CONFIG_ATT_REMOTE_WAKEUP,
                           MYNEWT_VAL(USBD_CONFIGURATION_MAX_POWER)),
+
+#if CFG_TUD_BTH
+    TUD_BTH_DESCRIPTOR(ITF_NUM_BTH, BTH_IF_STR_IX, USBD_BTH_EVENT_EP, USBD_BTH_EVENT_EP_SIZE,
+                       USBD_BTH_EVENT_EP_INTERVAL, USBD_BTH_DATA_IN_EP, USBD_BTH_DATA_OUT_EP, USBD_BTH_DATA_EP_SIZE,
+                       0, 9, 17, 25, 33, 49),
+#endif
 
 #if CFG_TUD_CDC
     TUD_CDC_DESCRIPTOR(ITF_NUM_CDC, CDC_IF_STR_IX, USBD_CDC_NOTIFY_EP, USBD_CDC_NOTIFY_EP_SIZE,
@@ -216,6 +235,7 @@ const char *string_desc_arr[] = {
     MYNEWT_VAL(USBD_CDC_DESCRIPTOR_STRING),
     MYNEWT_VAL(USBD_MSC_DESCRIPTOR_STRING),
     MYNEWT_VAL(USBD_HID_DESCRIPTOR_STRING),
+    MYNEWT_VAL(USBD_BTH_DESCRIPTOR_STRING),
 };
 
 static uint16_t desc_string[MYNEWT_VAL(USBD_STRING_DESCRIPTOR_MAX_LENGTH) + 1];

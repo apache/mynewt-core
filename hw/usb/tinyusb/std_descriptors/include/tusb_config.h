@@ -76,6 +76,10 @@ extern "C" {
 #define CFG_TUD_USBTMC           0
 #define CFG_TUD_DFU_RT           0
 #define CFG_TUD_NET              0
+#define CFG_TUD_BTH              MYNEWT_VAL(USBD_BTH)
+
+/* Minimal number for alternative interfaces that is recognized by Windows as Bluetooth radio controller */
+#define CFG_TUD_BTH_ISO_ALT_COUNT 2
 
 /*  CDC FIFO size of TX and RX */
 #define CFG_TUD_CDC_RX_BUFSIZE   64
