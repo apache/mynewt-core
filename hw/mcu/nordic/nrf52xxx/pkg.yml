@@ -73,3 +73,6 @@ pkg.deps.PWM_2:
 pkg.deps.PWM_3:
     - "@apache-mynewt-core/hw/drivers/pwm/pwm_nrf52"
 
+pkg.deps.TEMP:
+    - "@apache-mynewt-core/hw/drivers/temp/temp_nrf52"
+
