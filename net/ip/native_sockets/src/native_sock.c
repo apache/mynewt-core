@@ -584,7 +584,6 @@ native_sock_recvfrom(struct mn_socket *s, struct os_mbuf **mp,
         return native_sock_err_to_mn_err(errno);
     }
     if (ns->ns_type == SOCK_STREAM && rc == 0) {
-        mn_socket_readable(&ns->ns_sock, MN_ECONNABORTED);
         ns->ns_poll = 0;
         native_sock_poll_rebuild(&native_sock_state);
         return MN_ECONNABORTED;
