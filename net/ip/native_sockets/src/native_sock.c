@@ -248,6 +248,15 @@ native_sock_addr_to_mn_addr(struct sockaddr *sa, struct mn_sockaddr *ms)
     return 0;
 }
 
+static void
+native_sock_set_nonblocking(struct native_sock *ns)
+{
+    int rc;
+
+    rc = fcntl(ns->ns_fd, F_SETFL, fcntl(ns->ns_fd, F_GETFL, 0) | O_NONBLOCK);
+    assert(rc == 0);
+}
+
 int
 native_sock_create(struct mn_socket **sp, uint8_t domain,
   uint8_t type, uint8_t proto)
@@ -255,7 +264,6 @@ native_sock_create(struct mn_socket **sp, uint8_t domain,
     struct native_sock_state *nss = &native_sock_state;
     struct native_sock *ns;
     int idx;
-    int rc;
 
     switch (domain) {
     case MN_PF_INET:
@@ -293,13 +301,11 @@ native_sock_create(struct mn_socket **sp, uint8_t domain,
     os_sem_init(&ns->ns_sem, 0);
     idx = socket(domain, type, proto);
 
-    /* Make the socket nonblocking. */
-    rc = fcntl(idx, F_SETFL, fcntl(idx, F_GETFL, 0) | O_NONBLOCK);
-    assert(rc == 0);
-
     ns->ns_fd = idx;
     ns->ns_pf = domain;
     ns->ns_type = type;
+    native_sock_set_nonblocking(ns);
+
     os_mutex_release(&nss->mtx);
     if (idx < 0) {
         return MN_ENOBUFS;
@@ -782,6 +788,8 @@ socket_task(void *arg)
                     }
                     new_ns->ns_type = ns->ns_type;
                     new_ns->ns_sock.ms_ops = &native_sock_ops;
+                    native_sock_set_nonblocking(new_ns);
+
                     os_mutex_release(&nss->mtx);
                     if (mn_socket_newconn(&ns->ns_sock, &new_ns->ns_sock)) {
                         /*
