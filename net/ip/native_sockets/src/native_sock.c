@@ -28,6 +28,7 @@
 #include <sys/ioctl.h>
 #include <sys/un.h>
 #include <stdio.h>
+#include <signal.h>
 
 #include "os/mynewt.h"
 #include "mn_socket/mn_socket.h"
@@ -858,6 +859,8 @@ native_sock_init(void)
     if (i) {
         return -1;
     }
+
+    signal(SIGPIPE, SIG_IGN);
 
     return 0;
 }
