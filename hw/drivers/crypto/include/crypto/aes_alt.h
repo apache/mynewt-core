@@ -30,11 +30,10 @@ extern "C" {
 
 #include <crypto/crypto.h>
 
-typedef struct mbedtls_aes_context
-{
+typedef struct mbedtls_aes_context {
     struct crypto_dev *crypto;
     uint8_t key[AES_MAX_KEY_LEN];
-    uint8_t keylen;
+    unsigned int keylen;
 } mbedtls_aes_context;
 
 void mbedtls_aes_init(mbedtls_aes_context *ctx);

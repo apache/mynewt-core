@@ -23,6 +23,7 @@
 
 #include "crypto/crypto.h"
 #include "crypto/aes_alt.h"
+#include "mbedtls/aes.h"
 
 void
 mbedtls_aes_init(mbedtls_aes_context *ctx)
@@ -40,9 +41,9 @@ mbedtls_aes_free(mbedtls_aes_context *ctx)
     memset(ctx, 0, sizeof(*ctx));
 }
 
-int
-mbedtls_aes_setkey_enc(mbedtls_aes_context *ctx, const unsigned char *key,
-        unsigned int keybits)
+static int
+mbedtls_aes_setkey(mbedtls_aes_context *ctx, const unsigned char *key,
+                   unsigned int keybits)
 {
     switch (keybits) {
     case AES_128_KEY_LEN * 8:
@@ -53,15 +54,49 @@ mbedtls_aes_setkey_enc(mbedtls_aes_context *ctx, const unsigned char *key,
         return 0;
     }
 
-    return -1;
+    return MBEDTLS_ERR_AES_INVALID_KEY_LENGTH;
+}
+
+static int
+mbedtls_aes_validate_input(mbedtls_aes_context *ctx, const unsigned char *key,
+                           unsigned int keybits)
+{
+    assert(ctx);
+
+    if (key == NULL) {
+        return MBEDTLS_ERR_AES_INVALID_KEY_LENGTH;
+    }
+
+    return 0;
+}
+
+int
+mbedtls_aes_setkey_enc(mbedtls_aes_context *ctx, const unsigned char *key,
+                       unsigned int keybits)
+{
+    int ret = mbedtls_aes_validate_input(ctx, key, keybits);
+
+    if (ret != 0) {
+        return ret;
+    }
+
+    return mbedtls_aes_setkey(ctx, key, keybits);
+}
+
+int
+mbedtls_aes_setkey_dec(mbedtls_aes_context *ctx, const unsigned char *key,
+                       unsigned int keybits)
+{
+    return mbedtls_aes_setkey_enc(ctx, key, keybits);
 }
 
 int
 mbedtls_aes_crypt_ecb(mbedtls_aes_context *ctx, int mode,
-        const unsigned char input[16], unsigned char output[16])
+                      const unsigned char input[16], unsigned char output[16])
 {
-    return crypto_encrypt_aes_ecb(ctx->crypto, ctx->key, ctx->keylen,
-            (const uint8_t *)input, (uint8_t *)output, AES_BLOCK_LEN);
+    int ret = crypto_encrypt_aes_ecb(ctx->crypto, ctx->key, ctx->keylen,
+                                     (const uint8_t *)input, (uint8_t *)output, AES_BLOCK_LEN);
+    return (ret == AES_BLOCK_LEN) ? 0 : -1;
 }
 
 #endif /* MYNEWT_VAL(MBEDTLS_AES_ALT) */
