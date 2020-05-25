@@ -1,0 +1,1 @@
+MEMFAULT_METRICS_KEY_DEFINE(MainTaskStackHwm, kMemfaultMetricType_Unsigned)

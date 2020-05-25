@@ -1,4 +1,3 @@
-#
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -16,39 +15,28 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-
-pkg.name: kernel/os
-pkg.description: Mynewt operating system core.
+pkg.name: apps/bleprph_memfault
+pkg.type: app
+pkg.description: Simple BLE peripheral application demonstrating Memfault SDK.
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
-
+pkg.cflags:
+    - "-DMEMFAULT_TRACE_REASON_USER_DEFS_FILE=\"memfault_trace_reason_user_config.def\""
 pkg.deps:
-    - "@apache-mynewt-core/sys/sys"
-    - "@apache-mynewt-core/sys/sysdown"
+    - "@mcuboot/boot/bootutil"
+    - "@apache-mynewt-core/kernel/os"
+    - "@apache-mynewt-nimble/nimble/host"
+    - "@apache-mynewt-nimble/nimble/host/services/gap"
+    - "@apache-mynewt-nimble/nimble/host/services/gatt"
+    - "@apache-mynewt-nimble/nimble/host/store/config"
+    - "@apache-mynewt-nimble/nimble/transport"
+    - "@apache-mynewt-core/sys/console/full"
+    - "@apache-mynewt-core/sys/log/full"
+    - "@apache-mynewt-core/sys/log/modlog"
+    - "@apache-mynewt-core/sys/stats/full"
+    - "@apache-mynewt-core/mgmt/oicmgr"
     - "@apache-mynewt-core/sys/sysinit"
-    - "@apache-mynewt-core/util/mem"
-
-pkg.req_apis:
-    - console
-
-pkg.deps.OS_CLI:
     - "@apache-mynewt-core/sys/shell"
-
-pkg.deps.OS_COREDUMP:
-    - "@apache-mynewt-core/sys/coredump"
-
-pkg.deps.BSP_SIMULATED:
-    - "@apache-mynewt-core/kernel/sim"
-
-pkg.deps.OS_SYSVIEW:
-    - "@apache-mynewt-core/sys/sysview"
-
-pkg.deps.OS_CRASH_LOG:
-    - "@apache-mynewt-core/sys/reboot"
-
-pkg.deps.SYS_MEMFAULT:
+    - "@apache-mynewt-core/sys/id"
     - "@apache-mynewt-core/sys/memfault"
-
-pkg.init:
-    os_pkg_init: 'MYNEWT_VAL(OS_SYSINIT_STAGE)'

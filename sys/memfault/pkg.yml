@@ -17,38 +17,32 @@
 # under the License.
 #
 
-pkg.name: kernel/os
-pkg.description: Mynewt operating system core.
+pkg.name: sys/memfault
+pkg.description: Memfault integration package (https://memfault.com/)
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
-
+pkg.type: sdk
 pkg.deps:
-    - "@apache-mynewt-core/sys/sys"
-    - "@apache-mynewt-core/sys/sysdown"
-    - "@apache-mynewt-core/sys/sysinit"
-    - "@apache-mynewt-core/util/mem"
-
-pkg.req_apis:
-    - console
-
-pkg.deps.OS_CLI:
+    - "@apache-mynewt-core/kernel/os"
     - "@apache-mynewt-core/sys/shell"
+    - "@apache-mynewt-core/sys/flash_map"
+    - "@apache-mynewt-core/hw/hal"
+    - "@apache-mynewt-core/mgmt/imgmgr"
+    - "@mcuboot/boot/bootutil"
 
-pkg.deps.OS_COREDUMP:
-    - "@apache-mynewt-core/sys/coredump"
-
-pkg.deps.BSP_SIMULATED:
-    - "@apache-mynewt-core/kernel/sim"
-
-pkg.deps.OS_SYSVIEW:
-    - "@apache-mynewt-core/sys/sysview"
-
-pkg.deps.OS_CRASH_LOG:
-    - "@apache-mynewt-core/sys/reboot"
-
-pkg.deps.SYS_MEMFAULT:
-    - "@apache-mynewt-core/sys/memfault"
-
+pkg.deps.MEMFAULT_MGMT:
+    - "@apache-mynewt-mcumgr/cmd/memfault_mgmt"
 pkg.init:
-    os_pkg_init: 'MYNEWT_VAL(OS_SYSINIT_STAGE)'
+    memfault_platform_core_init: 501
+pkg.ign_dirs:
+pkg.include_dirs:
+    - "ext/components/core/include"
+    - "ext/components/demo/include"
+    - "ext/components/http/include"
+    - "ext/components/metrics/include"
+    - "ext/components/panics/include"
+    - "ext/components/util/include"
+pkg.src_dirs:
+    - "src"
+    - "ext/components/"
