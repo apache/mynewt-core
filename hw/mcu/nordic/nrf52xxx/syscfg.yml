@@ -80,6 +80,12 @@ syscfg.defs:
             the breakpoint wherever it gets called, For example, reset and crash
        value: 0
 
+    OS_TICKS_PER_SEC:
+        description: >
+            Desired ticks frequency in Hz. Note: Value must be a power of 2.
+        value: 128
+        range: 128,256,512,1024
+
 # MCU peripherals definitions
     I2C_0:
         description: 'Enable nRF52xxx I2C (TWI) 0'
