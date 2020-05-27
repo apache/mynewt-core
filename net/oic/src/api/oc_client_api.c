@@ -132,22 +132,40 @@ free_rsp:
 }
 
 bool
-oc_do_delete(const char *uri, oc_server_handle_t *server,
-             oc_response_handler_t handler, oc_qos_t qos)
+oc_init_req(oc_method_t method, const char *uri, oc_server_handle_t *server,
+            const char *query, oc_response_handler_t handler, oc_qos_t qos)
 {
     oc_client_cb_t *cb;
     bool status = false;
+    oc_string_t q;
 
-    cb = oc_ri_alloc_client_cb(uri, server, OC_DELETE, handler, qos);
+    cb = oc_ri_alloc_client_cb(uri, server, method, handler, qos);
     if (!cb) {
         return false;
     }
 
-    status = prepare_coap_request(cb, NULL);
+    if (query && strlen(query)) {
+        oc_concat_strings(&q, "?", query);
+        status = prepare_coap_request(cb, &q);
+        oc_free_string(&q);
+    } else {
+        status = prepare_coap_request(cb, NULL);
+    }
 
+    return status;
+}
+
+bool
+oc_do_delete(const char *uri, oc_server_handle_t *server,
+             oc_response_handler_t handler, oc_qos_t qos)
+{
+    bool status;
+
+    status = oc_init_req(OC_DELETE, uri, server, NULL, handler, qos);
     if (status) {
         status = dispatch_coap_request();
     }
+
     return status;
 }
 
@@ -155,26 +173,13 @@ bool
 oc_do_get(const char *uri, oc_server_handle_t *server, const char *query,
           oc_response_handler_t handler, oc_qos_t qos)
 {
-    oc_client_cb_t *cb;
-    bool status = false;
-    oc_string_t q;
+    bool status;
 
-    cb = oc_ri_alloc_client_cb(uri, server, OC_GET, handler, qos);
-    if (!cb) {
-        return false;
-    }
-
-    if (query && strlen(query)) {
-        oc_concat_strings(&q, "?", query);
-        status = prepare_coap_request(cb, &q);
-        oc_free_string(&q);
-    } else {
-        status = prepare_coap_request(cb, NULL);
-    }
-
+    status = oc_init_req(OC_GET, uri, server, NULL, handler, qos);
     if (status) {
         status = dispatch_coap_request();
     }
+
     return status;
 }
 
@@ -182,60 +187,32 @@ bool
 oc_init_put(const char *uri, oc_server_handle_t *server, const char *query,
             oc_response_handler_t handler, oc_qos_t qos)
 {
-    oc_client_cb_t *cb;
-    bool status = false;
-    oc_string_t q;
-
-    cb = oc_ri_alloc_client_cb(uri, server, OC_PUT, handler, qos);
-    if (!cb) {
-        return false;
-    }
-
-    if (query && strlen(query)) {
-        oc_concat_strings(&q, "?", query);
-        status = prepare_coap_request(cb, &q);
-        oc_free_string(&q);
-    } else {
-        status = prepare_coap_request(cb, NULL);
-    }
-
-    return status;
+    return oc_init_req(OC_PUT, uri, server, query, handler, qos);
 }
 
 bool
 oc_init_post(const char *uri, oc_server_handle_t *server, const char *query,
              oc_response_handler_t handler, oc_qos_t qos)
 {
-    oc_client_cb_t *cb;
-    bool status = false;
-    oc_string_t q;
+    return oc_init_req(OC_POST, uri, server, query, handler, qos);
+}
 
-    cb = oc_ri_alloc_client_cb(uri, server, OC_POST, handler, qos);
-    if (!cb) {
-        return false;
-    }
-
-    if (query && strlen(query)) {
-        oc_concat_strings(&q, "?", query);
-        status = prepare_coap_request(cb, &q);
-        oc_free_string(&q);
-    } else {
-        status = prepare_coap_request(cb, NULL);
-    }
-
-    return status;
+bool
+oc_do_req(void)
+{
+    return dispatch_coap_request();
 }
 
 bool
 oc_do_put(void)
 {
-    return dispatch_coap_request();
+    return oc_do_req();
 }
 
 bool
 oc_do_post(void)
 {
-    return dispatch_coap_request();
+    return oc_do_req();
 }
 
 bool
