@@ -171,6 +171,9 @@ run_test_vectors(struct crypto_dev *crypto, struct test_vectors *test_mode)
     int i;
     uint32_t sz;
     uint32_t asksz;
+#if MYNEWT_VAL(CRYPTOTEST_LOCAL_BUF)
+    uint8_t inbuf_ram[AES_BLOCK_LEN] = {0};
+#endif
 
     algo = test_mode->algo;
     mode = test_mode->mode;
@@ -188,7 +191,12 @@ run_test_vectors(struct crypto_dev *crypto, struct test_vectors *test_mode)
     for (i = 0; i < test_mode->len; i++) {
         printf("\tvector %d: ", i);
         vector = &vectors[i];
+#if MYNEWT_VAL(CRYPTOTEST_LOCAL_BUF)
+        memcpy(inbuf_ram, vector->plain, AES_BLOCK_LEN);
+        inbuf = inbuf_ram;
+#else
         inbuf = (uint8_t *)vector->plain;
+#endif
 
         asksz = AES_BLOCK_LEN;
         if (mode == CRYPTO_MODE_CTR) {
@@ -212,7 +220,12 @@ run_test_vectors(struct crypto_dev *crypto, struct test_vectors *test_mode)
     for (i = 0; i < test_mode->len; i++) {
         printf("\tvector %d: ", i);
         vector = &vectors[i];
+#if MYNEWT_VAL(CRYPTOTEST_LOCAL_BUF)
+        memcpy(inbuf_ram, vector->cipher, AES_BLOCK_LEN);
+        inbuf = inbuf_ram;
+#else
         inbuf = (uint8_t *)vector->cipher;
+#endif
 
         asksz = AES_BLOCK_LEN;
         if (mode == CRYPTO_MODE_CTR) {

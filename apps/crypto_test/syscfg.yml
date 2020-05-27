@@ -42,6 +42,9 @@ syscfg.defs:
     CRYPTOTEST_BENCHMARK:
         description: Enable benchmark against tinycrypt/mbedTLS
         value: 1
+    CRYPTOTEST_LOCAL_BUF:
+        description: If Crypto HW can't access flash, use RAM based input buf (e.g da1469x)
+        value: 0
 
 syscfg.vals:
     CRYPTO: 1
