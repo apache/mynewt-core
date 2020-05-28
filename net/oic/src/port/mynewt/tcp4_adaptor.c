@@ -294,27 +294,51 @@ oc_connectivity_shutdown_tcp4(void)
     }
 }
 
-static void
-oc_event_tcp4(struct os_event *ev)
+/**
+ * Receives all buffered packets sent over the given connection.
+ */
+static int
+oc_tcp4_recv_conn(struct oc_tcp4_conn *conn)
 {
     struct mn_sockaddr_in from;
-    struct oc_tcp4_conn *conn;
     struct os_mbuf *frag;
     int rc;
 
-    SLIST_FOREACH(conn, &oc_tcp4_conn_list, next) {
-        while (1) {
-            rc = mn_recvfrom(conn->sock, &frag, (struct mn_sockaddr *) &from);
-            if (rc != 0) {
-                if (rc != MN_EAGAIN) {
-                    oc_tcp4_err(conn->sock, rc);
-                }
-                os_eventq_put(oc_evq_get(), &oc_tcp4_read_event);
-                return;
-            }
-
+    /* Keep receiving until there are no more pending packets. */
+    while (1) {
+        rc = mn_recvfrom(conn->sock, &frag, (struct mn_sockaddr *) &from);
+        switch (rc) {
+        case 0:
             assert(OS_MBUF_IS_PKTHDR(frag));
             oc_tcp_rx_frag(conn->sock, frag, &from);
+            break;
+
+        case MN_EAGAIN:
+            // No more packets to receive.
+            return 0;
+
+        default:
+            return rc;
+        }
+    }
+}
+
+static void
+oc_event_tcp4(struct os_event *ev)
+{
+    struct oc_tcp4_conn *conn;
+    int rc;
+
+    SLIST_FOREACH(conn, &oc_tcp4_conn_list, next) {
+        rc = oc_tcp4_recv_conn(conn);
+        if (rc != 0) {
+            /* The connection is in a bad state and needs to be removed from
+             * the list.  We can't continue looping after modifying the list,
+             * so enqueue "receive" event and return.
+             */
+            oc_tcp4_err(conn->sock, rc);
+            os_eventq_put(oc_evq_get(), &oc_tcp4_read_event);
+            return;
         }
     }
 }
