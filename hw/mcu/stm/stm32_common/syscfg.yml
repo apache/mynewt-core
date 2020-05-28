@@ -141,6 +141,64 @@ syscfg.defs:
         description: 'SS pin for SPI_1'
         value: ''
 
+    SPI_2_MASTER:
+        description: 'SPI 2 master'
+        value:  0
+        restrictions:
+            - "!SPI_2_SLAVE"
+    SPI_2_SLAVE:
+        description: 'SPI 2 slave'
+        value:  0
+        restrictions:
+            - "!SPI_2_MASTER"
+    SPI_2:
+        description: 'SPI 2 enabled'
+        value: 'MYNEWT_VAL_SPI_2_MASTER || MYNEWT_VAL_SPI_2_SLAVE'
+    SPI_2_CUSTOM_CFG:
+        description: 'Allow SPI_2 configuration override'
+        value: 0
+    SPI_2_PIN_SCK:
+        description: 'SCK pin for SPI_2'
+        value: ''
+    SPI_2_PIN_MOSI:
+        description: 'MOSI pin for SPI_2'
+        value: ''
+    SPI_2_PIN_MISO:
+        description: 'MISO pin for SPI_2'
+        value: ''
+    SPI_2_PIN_SS:
+        description: 'SS pin for SPI_2'
+        value: ''
+
+    SPI_3_MASTER:
+        description: 'SPI 2 master'
+        value:  0
+        restrictions:
+            - "!SPI_3_SLAVE"
+    SPI_3_SLAVE:
+        description: 'SPI 2 slave'
+        value:  0
+        restrictions:
+            - "!SPI_3_MASTER"
+    SPI_3:
+        description: 'SPI 2 enabled'
+        value: 'MYNEWT_VAL_SPI_3_MASTER || MYNEWT_VAL_SPI_3_SLAVE'
+    SPI_3_CUSTOM_CFG:
+        description: 'Allow SPI_3 configuration override'
+        value: 0
+    SPI_3_PIN_SCK:
+        description: 'SCK pin for SPI_3'
+        value: ''
+    SPI_3_PIN_MOSI:
+        description: 'MOSI pin for SPI_3'
+        value: ''
+    SPI_3_PIN_MISO:
+        description: 'MISO pin for SPI_3'
+        value: ''
+    SPI_3_PIN_SS:
+        description: 'SS pin for SPI_3'
+        value: ''
+
     I2C_0:
         description: 'I2C (TWI) interface 0'
         value:  0
