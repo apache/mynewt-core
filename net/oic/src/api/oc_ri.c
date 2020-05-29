@@ -896,7 +896,8 @@ oc_ri_alloc_client_cb(const char *uri, oc_server_handle_t *server,
     cb->discovery = false;
     cb->timestamp = oc_clock_time();
     cb->observe_seq = -1;
-    memcpy(&cb->server, server, sizeof(oc_server_handle_t));
+
+    memcpy(&cb->server, server, oc_endpoint_size(&server->endpoint));
 
     os_callout_init(&cb->callout, oc_evq_get(), oc_ri_remove_cb, cb);
 

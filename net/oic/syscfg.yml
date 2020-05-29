@@ -42,6 +42,12 @@ syscfg.defs:
         description: 'Support Lora'
         value: '0'
 
+    OC_TRANSPORT_TCP4:
+        description: 'Enables OIC transport over TCP/IPv4'
+        value: 0
+        restrictions:
+            - OC_TRANSPORT_IP
+
     OC_LORA_PORT:
         description: 'Which LORA port to use'
         value: 0xbb
@@ -129,6 +135,15 @@ syscfg.defs:
         description: >
             Sysinit stage for the LoRa OIC transport.
         value: 301
+    OC_SYSINIT_STAGE_TCP4:
+        description: >
+            Sysinit stage for the TCP4 OIC transport.
+        value: 301
+
+    OC_TCP4_MAX_CONNS:
+        description: >
+            Maximum CoAP-aware TCP connections.
+        value: 4
 
     ### Log settings.
 

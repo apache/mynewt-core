@@ -44,7 +44,7 @@ struct oc_ep_hdr {
  */
 typedef struct oc_endpoint {
     struct oc_ep_hdr ep;
-    uint8_t _res[23];          /* based on size of oc_endpoint_ip6 */
+    uint8_t _res[29];          /* based on size of oc_endpoint_tcp */
 } oc_endpoint_t;
 
 /*
@@ -87,9 +87,7 @@ oc_endpoint_has_conn(struct oc_endpoint *oe)
     return oc_endpoint_use_tcp(oe);
 }
 
-#define OC_MBUF_ENDPOINT(m)                                            \
-    ((struct oc_endpoint *)((uint8_t *)m + sizeof(struct os_mbuf) +    \
-                            sizeof(struct os_mbuf_pkthdr)))
+#define OC_MBUF_ENDPOINT(m) ((struct oc_endpoint *) OS_MBUF_USRHDR(m))
 
 #ifdef OC_SECURITY
 uint16_t oc_connectivity_get_dtls_port(void);

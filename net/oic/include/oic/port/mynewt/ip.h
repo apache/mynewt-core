@@ -20,6 +20,8 @@
 #ifndef __OIC_MYNEWT_IP_H_
 #define __OIC_MYNEWT_IP_H_
 
+#include "oic/port/oc_connectivity.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
