@@ -60,3 +60,4 @@ pkg.init:
     oc_register_serial: 'MYNEWT_VAL(OC_SYSINIT_STAGE_SERIAL)'
     oc_register_gatt: 'MYNEWT_VAL(OC_SYSINIT_STAGE_GATT)'
     oc_register_lora: 'MYNEWT_VAL(OC_SYSINIT_STAGE_LORA)'
+    oc_register_tcp4: 'MYNEWT_VAL(OC_SYSINIT_STAGE_TCP4)'

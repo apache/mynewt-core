@@ -231,17 +231,19 @@ coap_receive(struct os_mbuf **mp)
             }
             transaction->type = response->type;
         }
-    } else { // Fix this
-        /* handle responses */
-        if (message->type == COAP_TYPE_CON) {
-            erbium_status_code = EMPTY_ACK_RESPONSE;
-        } else if (message->type == COAP_TYPE_ACK) {
-            /* transactions are closed through lookup below */
-        } else if (message->type == COAP_TYPE_RST) {
+    } else {
+        if (!oc_endpoint_use_tcp(&endpoint)) {
+            /* handle responses */
+            if (message->type == COAP_TYPE_CON) {
+                erbium_status_code = EMPTY_ACK_RESPONSE;
+            } else if (message->type == COAP_TYPE_ACK) {
+                /* transactions are closed through lookup below */
+            } else if (message->type == COAP_TYPE_RST) {
 #ifdef OC_SERVER
-            /* cancel possible subscriptions */
-            coap_remove_observer_by_mid(OC_MBUF_ENDPOINT(m), message->mid);
+                /* cancel possible subscriptions */
+                coap_remove_observer_by_mid(OC_MBUF_ENDPOINT(m), message->mid);
 #endif
+            }
         }
 
         /* Open transaction now cleared for ACK since mid matches */

@@ -60,9 +60,11 @@ static struct os_event oc_sock4_read_event = {
 #define COAP_PORT_UNSECURED (5683)
 
 /* 224.0.1.187 */
+#if MYNEWT_VAL(OC_SERVER)
 static const struct mn_in_addr coap_all_nodes_v4 = {
     .s_addr = htonl(0xe00001bb)
 };
+#endif
 
 STATS_SECT_START(oc_ip4_stats)
     STATS_SECT_ENTRY(iframe)

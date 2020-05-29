@@ -44,7 +44,7 @@ struct oc_ep_hdr {
  */
 typedef struct oc_endpoint {
     struct oc_ep_hdr ep;
-    uint8_t _res[23];          /* based on size of oc_endpoint_ip6 */
+    uint8_t _res[29];          /* based on size of oc_endpoint_tcp */
 } oc_endpoint_t;
 
 /*

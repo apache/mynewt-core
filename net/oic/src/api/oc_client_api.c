@@ -265,6 +265,7 @@ oc_stop_observe(const char *uri, oc_server_handle_t *server)
 
 #if MYNEWT_VAL(OC_CLIENT_DISCOVERY_ENABLE)
 #if MYNEWT_VAL(OC_TRANSPORT_IP)
+#if MYNEWT_VAL(OC_TRANSPORT_IPV4) || MYNEWT_VAL(OC_TRANSPORT_IPV6)
 static bool
 oc_send_ip_discovery(oc_server_handle_t *handle, const char *rt,
                      oc_discovery_cb_t handler)
@@ -292,6 +293,7 @@ oc_send_ip_discovery(oc_server_handle_t *handle, const char *rt,
     }
     return status;
 }
+#endif
 
 #if MYNEWT_VAL(OC_TRANSPORT_IPV6)
 bool
